@@ -1,0 +1,5 @@
+#!/bin/sh
+
+DIR=`arch`
+
+exec /mnt/home/stefano/openssl/bin/$DIR/openssl "$@"

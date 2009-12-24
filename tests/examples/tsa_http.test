@@ -1,0 +1,46 @@
+#!/bin/sh
+
+. ../.function
+
+## tsa_http.test -- Test TSA feature
+
+start_msg tsa_http
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+rm -rf tsa_http.log TSA/log \
+		 out/userver_tcp.out err/userver_tcp.err \
+       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]*
+
+DIR_CMD="../../examples/userver"
+
+start_prg_background userver_tcp -c tsa_http.cfg
+$SLEEP
+
+rm -f TSA/response/response*
+
+#../../tmp/openssl/ssl/misc/tsget -h http://127.0.0.1:8443/tsa TSA/request/tsq.req
+$NC -w 2 127.0.0.1 80 <TSA/request/http.req >TSA/response/response
+tail -c +140 TSA/response/response > TSA/response/response.tsr
+
+TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
+						 -in TSA/response/response.tsr -CApath TSA/CA/CApath > out/tsa_http.out
+
+rm -f TSA/response/response*
+
+#../../tmp/openssl/ssl/misc/tsget -h http://127.0.0.1:8443/tsa TSA/request/tsq.req
+$NC -w 2 127.0.0.1 80 <TSA/request/http.req >TSA/response/response
+tail -c +140 TSA/response/response > TSA/response/response.tsr
+
+kill_prg userver_tcp TERM
+
+mv err/userver_tcp.err err/tsa_http.err
+
+TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
+						 -in TSA/response/response.tsr -CApath TSA/CA/CApath >> out/tsa_http.out
+
+# Test against expected output
+test_output_diff tsa_http

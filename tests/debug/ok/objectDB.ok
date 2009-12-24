@@ -1,0 +1,48 @@
+Figlio 0xbffff300   size    8   level  5
+test_objectDB.cpp(97)
+int main(int, char**)
+
+figlio
+--------------------------------------------------------------------------------
+Genitore 0xbfffeae0   size    8   level  5
+test_objectDB.cpp(98)
+int main(int, char**)
+
+genitore
+--------------------------------------------------------------------------------
+Figlio 0x4007b6a4   size    8   level  5
+test_objectDB.cpp(74)
+void one()
+
+figlio
+--------------------------------------------------------------------------------
+Figlio 0x4007b6ac   size    8   level  5
+test_objectDB.cpp(74)
+void one()
+
+figlio
+--------------------------------------------------------------------------------
+Figlio 0x4007b6b4   size    8   level  5
+test_objectDB.cpp(74)
+void one()
+
+figlio
+--------------------------------------------------------------------------------
+Figlio 0x4007b624   size    8   level  5
+test_objectDB.cpp(81)
+void two()
+
+figlio
+--------------------------------------------------------------------------------
+Figlio 0x4007b62c   size    8   level  5
+test_objectDB.cpp(81)
+void two()
+
+figlio
+--------------------------------------------------------------------------------
+Figlio 0x4007b634   size    8   level  5
+test_objectDB.cpp(81)
+void two()
+
+figlio
+--------------------------------------------------------------------------------

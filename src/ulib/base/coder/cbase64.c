@@ -1,0 +1,226 @@
+// ============================================================================
+//
+// = LIBRARY
+//    ulibase - c++ library
+//
+// = FILENAME
+//    cbase64.c
+//
+// = AUTHOR
+//    Stefano Casazza
+//
+// ============================================================================
+
+#include <ulib/base/utility.h>
+#include <ulib/base/coder/base64.h>
+
+#include <ctype.h>
+
+/*
+for (int i = 0; i < sizeof(u_alphabet); ++i) { member[u_alphabet[i]]  = 1; decoder[u_alphabet[i]] = i; }
+*/
+
+static unsigned char member[256] = {
+001, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 001, 000, 000, 000, 001,
+001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 000, 000, 000, 000, 000, 000,
+000, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001,
+001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 000, 000, 000, 000, 000,
+000, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001,
+001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 001, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000 };
+
+static unsigned char decoder[256] = {
+'@', 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 076, 000, 000, 000, 077,
+064, 065, 066, 067, 070, 071, 072, 073, 074, 075, 000, 000, 000, 000, 000, 000,
+000, 000, 001, 002, 003, 004, 005, 006, 007, 010, 011, 012, 013, 014, 015, 016,
+017, 020, 021, 022, 023, 024, 025, 026, 027, 030, 031, 000, 000, 000, 000, 000,
+000, 032, 033, 034, 035, 036, 037, 040, 041, 042, 043, 044, 045, 046, 047, 050,
+051, 052, 053, 054, 055, 056, 057, 060, 061, 062, 063, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
+000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000 };
+
+#define PAD '='
+
+// #define MAX_COLUMNS 72
+
+int u_base64_errors;
+
+uint32_t u_base64_encode(const unsigned char* input, uint32_t len, unsigned char* result, int max_columns)
+{
+   uint32_t i;
+   unsigned char* r = result;
+   int char_count = 0, bits = 0, cols = 0;
+
+   U_INTERNAL_TRACE("u_base64_encode(%.*s,%u,%p,%d)", len, input, len, result, max_columns)
+
+   U_INTERNAL_ASSERT_POINTER(input)
+
+   for (i = 0; i < len; ++i)
+      {
+      bits += input[i];
+
+      char_count++;
+
+      if (char_count == 3)
+         {
+         *r++ = u_alphabet[ bits >> 18];
+         *r++ = u_alphabet[(bits >> 12) & 0x3f];
+         *r++ = u_alphabet[(bits >>  6) & 0x3f];
+         *r++ = u_alphabet[ bits        & 0x3f];
+
+         if (max_columns)
+            {
+            cols += 4;
+
+            if (cols == max_columns)
+               {
+               cols = 0;
+
+               if (u_line_terminator_len == 2) *r++ = '\r';
+                                               *r++ = '\n';
+               }
+            }
+
+         bits       = 0;
+         char_count = 0;
+         }
+      else
+         {
+         bits <<= 8;
+         }
+      }
+
+   if (char_count != 0)
+      {
+      bits <<= (16 - (8 * char_count));
+
+      *r++ = u_alphabet[ bits >> 18];
+      *r++ = u_alphabet[(bits >> 12) & 0x3f];
+
+      if (char_count == 1)
+         {
+         *r++ = PAD;
+         *r++ = PAD;
+         }
+      else
+         {
+         *r++ = u_alphabet[(bits >> 6) & 0x3f];
+         *r++ = PAD;
+         }
+      }
+
+   if (max_columns && cols > 0)
+      {
+      if (u_line_terminator_len == 2) *r++ = '\r';
+                                      *r++ = '\n';
+      }
+
+   *r = 0;
+
+   return (r - result);
+}
+
+uint32_t u_base64_decode(const unsigned char* input, uint32_t len, unsigned char* result)
+{
+   unsigned char c;
+   uint32_t input_len, i = 0;
+   unsigned char* r = result;
+   int char_count = 0, bits = 0;
+   const unsigned char* ptr = input;
+   const unsigned char* end = input + len;
+
+   U_INTERNAL_TRACE("u_base64_decode(%.*s,%u,%p)", len, input, len, result)
+
+   U_INTERNAL_ASSERT_POINTER(input)
+
+   u_base64_errors = 0;
+
+   while ((ptr < end) && (*ptr != '\0') && (member[(int)*(ptr)] == 1 || *ptr == PAD || u_isspace(*ptr))) ++ptr;
+
+   input_len = ptr - input;
+
+   U_INTERNAL_PRINT("input_len = %d *ptr = %d", input_len, *ptr)
+
+   for (; i < input_len; ++i)
+      {
+      c = input[i];
+
+      if (c == PAD) break;
+
+      if (!member[(int)c]) continue;
+
+      U_INTERNAL_ASSERT_EQUALS(u_isbase64(c),true)
+
+      bits += decoder[(int)c];
+
+      ++char_count;
+
+      if (char_count == 4)
+         {
+         *r++ =  bits >> 16;
+         *r++ = (bits >> 8) & 0xff;
+         *r++ =  bits       & 0xff;
+
+         bits = char_count = 0;
+         }
+      else
+         {
+         bits <<= 6;
+         }
+      }
+
+   if (i == input_len)
+      {
+      if (char_count)
+         {
+         ++u_base64_errors;
+
+         U_INTERNAL_PRINT("Decoding incomplete: at least %d bits truncated", (4 - char_count) * 6)
+         }
+      }
+   else
+      {
+      switch (char_count)
+         {
+         case 1:
+            {
+            ++u_base64_errors;
+
+            U_INTERNAL_PRINT("Decoding incomplete: at least 2 bits missing", 0)
+            }
+         break;
+
+         case 2:
+            *r++ = bits >> 10;
+         break;
+
+         case 3:
+            {
+            *r++ =  bits >> 16;
+            *r++ = (bits >>  8) & 0xff;
+            }
+         break;
+         }
+      }
+
+   *r = 0;
+
+   return (r - result);
+}

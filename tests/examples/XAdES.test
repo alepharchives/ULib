@@ -1,0 +1,36 @@
+#!/bin/sh
+
+. ../.function
+
+start_msg XAdES
+
+rm -f tsa_http.log TSA/log \
+		out/sign.out err/sign.err \
+		trace.*sign*.[0-9]* object.*sign*.[0-9]* \
+		out/userver_tcp.out err/userver_tcp.err \
+      trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]*
+
+#UTRACE="0 10M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+DIR_CMD="../../examples/userver"
+
+#STRACE=$TRUSS
+start_prg_background userver_tcp -c tsa_http.cfg
+
+$SLEEP
+DIR_CMD="../../examples/XAdES"
+
+#VALGRIND="valgrind -v --leak-check=full"
+start_prg sign -c XAdES.cfg -k inp/XAdES/AlicePrivRSASign_epk.pem -p password -X inp/XAdES/AliceRSASignByCarl.pem.cer \
+					inp/XAdES/xmldsig-input.txt inp/XAdES/text
+
+mv err/userver_tcp.err err/TSA.err
+
+$SLEEP
+kill_prg userver_tcp TERM
+
+# Test against expected output
+test_output_wc w sign

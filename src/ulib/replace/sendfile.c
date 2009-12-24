@@ -1,0 +1,84 @@
+/* sendfile.c */
+
+#if !defined(U_ALL_C)
+#  include <ulib/base/top.h>
+#  ifdef HAVE_CONFIG_H
+#     include <ulib/internal/config.h>
+#  endif
+#  include <ulib/base/bottom.h>
+#endif
+
+#include <string.h>
+#include <errno.h>
+
+/*
+ * Could also use sendfilev() on Solaris >= 8:
+ *
+ * http://docs.sun.com/db/doc/816-0217/6m6nhtaps?a=view
+ */
+
+/**
+   This call copies data between one file descriptor and another. Either or both of these file descriptors may refer to a socket (but see below).
+   in_fd should be a file descriptor opened for reading and out_fd should be a descriptor opened for writing. offset is a pointer to a variable
+   holding the input file pointer position from which sendfile() will start reading data. When sendfile() returns, this variable will be set to
+   the offset of the byte following the last byte that was read. Because this copying is done within the kernel, sendfile() does not need to spend
+   time transferring data to and from user space.
+
+   @param offset  offset in input to start writing; updated on return to reflect the number of bytes sent.
+   @param size    is the number of bytes to copy between file descriptors.
+
+   sendfile() returns the number of bytes sent, if transmission succeeded. If there was an error, it returns -1 with errno set. It should never return 0
+*/
+
+extern U_EXPORT ssize_t sendfile(int ofd, int ifd, off_t* offset, size_t size);
+
+U_EXPORT ssize_t sendfile(int ofd, int ifd, off_t* offset, size_t size)
+{
+   char* p;
+   char buf[262144];    /* we're not recursive */
+   size_t n = size;
+   ssize_t r_in, r_out, wanted;
+
+   while (n > 0)
+      {
+      wanted = (size > sizeof(buf) ? sizeof(buf) : n);
+      r_in   = read(ifd, buf, (size_t) wanted);
+
+      if (r_in <= 0)
+         {
+         if (errno == EINTR ||
+             errno == EAGAIN) continue;
+
+         return -1;
+         }
+
+      n -= r_in;
+      p  = buf;
+
+      /* We now have r_in bytes waiting to go out, starting at p. Keep going until they're all written out. */
+
+      while (r_in > 0)
+         {
+#     ifdef __MINGW32__
+         r_out = send(ofd, p, (size_t) r_in, 0);
+#     else
+         r_out = write(ofd, p, (size_t) r_in);
+#     endif
+
+         if (r_out <= 0)
+            {
+            if (errno == EINTR ||
+                errno == EAGAIN) continue;
+
+            return -1;
+            }
+
+         r_in -= r_out;
+         p    += r_out;
+         }
+      }
+
+   *offset += size;
+
+   return size;
+}

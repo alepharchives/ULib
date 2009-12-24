@@ -1,0 +1,55 @@
+#!/bin/sh /etc/rc.common
+#
+# lg's changelog:
+#
+#	2009/10/28: _pgrep(), _pkill()
+#
+
+START=90
+STOP=39
+
+#export UTRACE="-0 10M 0"
+#export UOBJDUMP="0 100k 10"
+#export USIMERR="error.sim"
+
+descr='nodog the excellent'
+cmdline='/usr/sbin/userver_tcp -c /etc/nodog.conf'
+errfile=/tmp/nodog.err
+
+send_info_to_authserver() {
+	eval authserver=`awk '
+		/^[ 	]*AUTH_SERVICE_URL[ 	]/ { print $2 }' /etc/nodog.conf`
+
+	/usr/sbin/uclient -c /etc/uclient.conf "${authserver}start_ap?ap=`uname -n`"
+}
+
+_pgrep() {
+	test "$1" || return
+	local pids=`ps | grep "$1" | grep -v grep | awk '{ print $1 }'`
+	test "$pids" && echo $pids ; }
+	
+_pkill() {
+	local pids=`_pgrep "$2"`
+	test "$pids" && kill -$1 $pids ; }
+
+start() {
+	_pgrep "$cmdline" > /dev/null && {
+		echo "$descr is ALREADY running." ; return ; }
+	
+	echo "starting $descr"
+	
+	send_info_to_authserver
+	rm -f /tmp/firewall.err
+	$cmdline 2>> $errfile &
+}
+
+stop() {
+	_pgrep "$cmdline" > /dev/null &&
+		echo "stopping $descr" ||
+		echo "$descr is NOT running."
+
+	_pkill USR1 "$cmdline" # backup log
+	sleep 2
+	/usr/lib/nodog/bin/upload-logs.sh # send log
+	_pkill TERM "$cmdline"
+}

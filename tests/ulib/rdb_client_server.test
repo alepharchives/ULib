@@ -1,0 +1,42 @@
+#!/bin/sh
+
+. ../.function
+
+## rdb_client_server.test -- Test rdb client server feature
+
+start_msg rdb_server
+start_msg rdb_client
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+# fallisce se NFS...
+
+if [ "$TERM" = "msys"   ] || \
+   [ "$TERM" = "cygwin" ]
+then
+	ARG1="/c/msys/1.0/etc/test_rdb"
+	rm -f /etc/test_rdb*
+else
+   ARG1="tmp/test_rdb"
+   rm -f tmp/test_rdb*
+fi
+
+start_cmd_background "$WINELOADER ./test_rdb_server$SUFFIX $ARG1 <inp/cdb.input >>out/rdb_client.out 2>>err/rdb_client.err"
+start_prg 				 rdb_client
+
+if [ "$TERM" = "msys"   ] || \
+   [ "$TERM" = "cygwin" ]
+then
+   rm -f /etc/test_rdb*
+else
+	rm -f tmp/test.rdb*
+fi
+
+$SLEEP
+kill_prg test_rdb_server TERM
+
+# Test against expected output
+test_output_diff rdb_client

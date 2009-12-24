@@ -1,0 +1,1339 @@
+/* include/ulib/internal/config.h.in.  Generated from configure.in by autoheader.  */
+
+
+/* hack for BROKEN autoheader, since it will not predicitably order
+   macros by any obvious means. */
+
+#undef HAVE_UNISTD_H
+#undef HAVE_FEATURES_H
+#undef HAVE_SYS_TYPES_H
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#ifndef	WIN32
+#ifdef	HAVE_FEATURES_H
+#include <features.h>
+#endif
+#endif
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+	
+
+
+#undef HAVE_SYS_TIME_H
+#undef TIME_WITH_SYS_TIME
+#if TIME_WITH_SYS_TIME
+#include <sys/time.h>
+#else
+#if HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#endif
+	
+
+
+
+#undef HAVE_SYS_TYPES_STD
+#undef HAVE_SYS_TYPES_64
+#undef HAVE_LONG_LONG
+#undef HAVE_SYS_TYPES
+
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#ifdef	HAVE_BITS_WORSIZE_H
+#include <bits/wordtypes.h>
+#endif
+
+#ifdef HAVE_SYS_TYPES_STD
+typedef int8_t int8;
+typedef u_int8_t uint8;
+typedef int16_t int16;
+typedef u_int16_t uint16;
+typedef int32_t int32;
+typedef u_int32_t uint32;
+#	ifdef HAVE_SYS_TYPES_64
+#		define HAVE_64_BITS
+typedef int64_t int64;
+typedef u_int64_t uint64;
+#	endif
+#elif !defined(__sun) && !defined(__SUN__)
+typedef char int8;
+typedef unsigned char uint8;
+typedef short int16;
+typedef unsigned short uint16;
+typedef int int32;
+typedef unsigned int uint32;
+#endif
+
+#ifndef HAVE_SYS_TYPES_64
+#if defined(__WORDSIZE) || defined(__arch64__)
+#if __WORDSIZE >= 64 || defined(__arch64__)
+typedef long int int64;
+typedef unsigned long int uint64;
+#define	HAVE_SYS_TYPES_64
+#define	HAVE_64_BITS
+#endif
+#endif
+#endif
+
+#ifndef	HAVE_SYS_TYPES_64
+#ifdef	__GNUC__
+#if defined(HAVE_LONG_LONG) || defined(_LONGLONG)
+__extension__
+typedef long long int int64;
+__extension__
+typedef unsigned long long int uint64;
+#define	HAVE_SYS_TYPES_64
+#define	HAVE_64_BITS
+#endif
+#endif
+#endif
+
+#ifndef HAVE_SYS_TYPES_64
+#if defined(HAVE_LONG_LONG) || defined(_LONGLONG)
+#define HAVE_64_BITS
+typedef long long int64;
+typedef unsigned long long uint64;
+#endif
+#endif
+	
+
+/* have new with init */
+#undef CCXX_HAVE_NEW_INIT
+
+/* has c++ namespaces */
+#undef CCXX_NAMESPACES
+
+/* NAT support */
+#undef CCXX_NAT
+
+/* C Flags */
+#undef CFLAGS_VAR
+
+/* Define to 1 if the `closedir' function returns void instead of `int'. */
+#undef CLOSEDIR_VOID
+
+/* aix fixes needed */
+#undef COMMON_AIX_FIXES
+
+/* Preprocessor Flags */
+#undef CPPFLAGS_VAR
+
+/* C++ Flags */
+#undef CXXFLAGS_VAR
+
+/* define if you have d_namlen in struct dirent */
+#undef DIRENT_HAVE_D_NAMLEN
+
+/* define if you have d_reclen in struct dirent */
+#undef DIRENT_HAVE_D_RECLEN
+
+/* Define to 1 if the fallocate() function is supported */
+#undef FALLOCATE_IS_SUPPORTED
+
+/* GNU C/C++ Compiler version */
+#undef GCC_VERSION
+
+/* Define to 1 if you have the <alloca.h> header file. */
+#undef HAVE_ALLOCA_H
+
+/* Define to 1 if you have the <arpa/inet.h> header file. */
+#undef HAVE_ARPA_INET_H
+
+/* Define to 1 if you have the <assert.h> header file. */
+#undef HAVE_ASSERT_H
+
+/* atomic aix operations */
+#undef HAVE_ATOMIC_AIX
+
+/* Define to 1 if you have the <bits/atomicity.h> header file. */
+#undef HAVE_BITS_ATOMICITY_H
+
+/* Define to 1 if you have the <bits/wordsize.h> header file. */
+#undef HAVE_BITS_WORDSIZE_H
+
+/* have bool type */
+#undef HAVE_BOOL_TYPE
+
+/* Define to 1 if you have the <bsd/signal.h> header file. */
+#undef HAVE_BSD_SIGNAL_H
+
+/* Define to 1 if you have the `clock_gettime' function. */
+#undef HAVE_CLOCK_GETTIME
+
+/* Define to 1 if you have the `daemon' function. */
+#undef HAVE_DAEMON
+
+/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
+   */
+#undef HAVE_DIRENT_H
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you have the <endian.h> header file. */
+#undef HAVE_ENDIAN_H
+
+/* Define to 1 if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* Define to 1 if you have the <execinfo.h> header file. */
+#undef HAVE_EXECINFO_H
+
+/* Define to 1 if you have the `fallocate' function. */
+#undef HAVE_FALLOCATE
+
+/* Define to 1 if you have the `fallocate64' function. */
+#undef HAVE_FALLOCATE64
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the <features.h> header file. */
+#undef HAVE_FEATURES_H
+
+/* Define to 1 if you have the `fnmatch' function. */
+#undef HAVE_FNMATCH
+
+/* has gcc atomic functions */
+#undef HAVE_GCC_BITS_ATOMIC
+
+/* has __gnu_cxx atomic functions */
+#undef HAVE_GCC_CXX_BITS_ATOMIC
+
+/* Define to 1 if you have the `getaddrinfo' function. */
+#undef HAVE_GETADDRINFO
+
+/* reentrant getgrnam */
+#undef HAVE_GETGRNAM_R
+
+/* ipv6 host lookup */
+#undef HAVE_GETHOSTBYNAME2
+
+/* Define to 1 if you have the `getnameinfo' function. */
+#undef HAVE_GETNAMEINFO
+
+/* have getopt header */
+#undef HAVE_GETOPT
+
+/* Define to 1 if you have the <getopt.h> header file. */
+#undef HAVE_GETOPT_H
+
+/* Define to 1 if you have the `getopt_long' function. */
+#undef HAVE_GETOPT_LONG
+
+/* reentrant getnam */
+#undef HAVE_GETPWNAM_R
+
+/* reentrant getuid */
+#undef HAVE_GETPWUID_R
+
+/* Define to 1 if you have the `gmtime_r' function. */
+#undef HAVE_GMTIME_R
+
+/* enable gcc visibility features */
+#undef HAVE_GNUC_VISIBILTY
+
+/* have hires */
+#undef HAVE_HIRES_TIMER
+
+/* has inet_aton */
+#undef HAVE_INET_ATON
+
+/* Define to 1 if you have the `inet_ntop' function. */
+#undef HAVE_INET_NTOP
+
+/* ipv6 support */
+#undef HAVE_INET_PTON
+
+/* inet sockets */
+#undef HAVE_INET_SOCKETS
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* struct iphdr needed for IPv6 support */
+#undef HAVE_IPHDR
+
+/* Define if enable ipv6 support */
+#undef HAVE_IPV6
+
+/* Define to 1 if you have the <ip_compat.h> header file. */
+#undef HAVE_IP_COMPAT_H
+
+/* Define to 1 if you have the <ip_fil_compat.h> header file. */
+#undef HAVE_IP_FIL_COMPAT_H
+
+/* Define to 1 if you have the <ip_fil.h> header file. */
+#undef HAVE_IP_FIL_H
+
+/* Define to 1 if you have the <ip_nat.h> header file. */
+#undef HAVE_IP_NAT_H
+
+/* enable Large File Support features */
+#undef HAVE_LFS
+
+/* Define to 1 if you have the `dl' library (-ldl). */
+#undef HAVE_LIBDL
+
+/* Define to 1 if you have the `malloc' library (-lmalloc). */
+#undef HAVE_LIBMALLOC
+
+/* Define to 1 if you have the `nsl' library (-lnsl). */
+#undef HAVE_LIBNSL
+
+/* Define to 1 if you have the `posix4' library (-lposix4). */
+#undef HAVE_LIBPOSIX4
+
+/* Define to 1 if you have the `pthread' library (-lpthread). */
+#undef HAVE_LIBPTHREAD
+
+/* Define to 1 if you have the `socket' library (-lsocket). */
+#undef HAVE_LIBSOCKET
+
+/* Define to 1 if you have the `z' library (-lz). */
+#undef HAVE_LIBZ
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if you have the <linux/in6.h> header file. */
+#undef HAVE_LINUX_IN6_H
+
+/* Define to 1 if you have the <linux/netfilter_ipv4.h> header file. */
+#undef HAVE_LINUX_NETFILTER_IPV4_H
+
+/* Define to 1 if you have the <linux/netfilter_ipv4/ipt_ACCOUNT.h> header
+   file. */
+#undef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
+
+/* Define to 1 if you have the <linux/netfilter_ipv6.h> header file. */
+#undef HAVE_LINUX_NETFILTER_IPV6_H
+
+/* reentrant localtime */
+#undef HAVE_LOCALTIME_R
+
+/* have long longs */
+#undef HAVE_LONG_LONG
+
+/* mach dybloader */
+#undef HAVE_MACH_DYLD
+
+/* Define to 1 if you have the <mach-o/dyld.h> header file. */
+#undef HAVE_MACH_O_DYLD_H
+
+/* Define if struct siginfo have member <si_addr>. */
+#undef HAVE_MEMBER_SI_ADDR
+
+/* Define to 1 if you have the `memcmp' function. */
+#undef HAVE_MEMCMP
+
+/* Define to 1 if you have the `memcpy' function. */
+#undef HAVE_MEMCPY
+
+/* Define to 1 if you have the `memmem' function. */
+#undef HAVE_MEMMEM
+
+/* Define to 1 if you have the `memmove' function. */
+#undef HAVE_MEMMOVE
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `memrchr' function. */
+#undef HAVE_MEMRCHR
+
+/* Define to 1 if you have the `memset' function. */
+#undef HAVE_MEMSET
+
+/* Define to 1 if you have the `mkdtemp' function. */
+#undef HAVE_MKDTEMP
+
+/* Define to 1 if you have the `mlock' function. */
+#undef HAVE_MLOCK
+
+/* Define to 1 if you have the `mlockall' function. */
+#undef HAVE_MLOCKALL
+
+/* support for plugin modules */
+#undef HAVE_MODULES
+
+/* Define to 1 if you have the `mremap' function. */
+#undef HAVE_MREMAP
+
+/* define if have function nanosleep */
+#undef HAVE_NANOSLEEP
+
+/* IPF NAT support */
+#undef HAVE_NAT_IPF
+
+/* NetFilter NAT support */
+#undef HAVE_NAT_NETFILTER
+
+/* PF NAT support */
+#undef HAVE_NAT_PF
+
+/* Define to 1 if you have the <ndir.h> header file. */
+#undef HAVE_NDIR_H
+
+/* Define to 1 if you have the <netinet6/in6.h> header file. */
+#undef HAVE_NETINET6_IN6_H
+
+/* Define to 1 if you have the <netinet/inet.h> header file. */
+#undef HAVE_NETINET_INET_H
+
+/* Define to 1 if you have the <netinet/in.h> header file. */
+#undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the <netinet/in_systm.h> header file. */
+#undef HAVE_NETINET_IN_SYSTM_H
+
+/* Define to 1 if you have the <netinet/ip_compat.h> header file. */
+#undef HAVE_NETINET_IP_COMPAT_H
+
+/* Define to 1 if you have the <netinet/ip_fil_compat.h> header file. */
+#undef HAVE_NETINET_IP_FIL_COMPAT_H
+
+/* Define to 1 if you have the <netinet/ip_fil.h> header file. */
+#undef HAVE_NETINET_IP_FIL_H
+
+/* Define to 1 if you have the <netinet/ip.h> header file. */
+#undef HAVE_NETINET_IP_H
+
+/* Define to 1 if you have the <netinet/ip_nat.h> header file. */
+#undef HAVE_NETINET_IP_NAT_H
+
+/* Define to 1 if you have the <netpacket/packet.h> header file. */
+#undef HAVE_NETPACKET_PACKET_H
+
+/* Define to 1 if you have the <net/if.h> header file. */
+#undef HAVE_NET_IF_H
+
+/* Define to 1 if you have the <net/pfvar.h> header file. */
+#undef HAVE_NET_PFVAR_H
+
+/* define if the compiler implements old style iostreams */
+#undef HAVE_OLD_IOSTREAM
+
+/* Define to 1 if you have the `poll' function. */
+#undef HAVE_POLL
+
+/* Define to 1 if you have the <poll.h> header file. */
+#undef HAVE_POLL_H
+
+/* Define to 1 if you have the `pread' function. */
+#undef HAVE_PREAD
+
+/* has pwrite */
+#undef HAVE_PREAD_PWRITE
+
+/* has stack size */
+#undef HAVE_PTHREAD_ATTR_SETSTACKSIZE
+
+/* has cancel */
+#undef HAVE_PTHREAD_CANCEL
+
+/* has non portable delay */
+#undef HAVE_PTHREAD_DELAY_NP
+
+/* posix thread header */
+#undef HAVE_PTHREAD_H
+
+/* has mach link */
+#undef HAVE_PTHREAD_MACH_THREAD_NP
+
+/* has non portable setkind */
+#undef HAVE_PTHREAD_MUTEXATTR_SETKIND_NP
+
+/* has setttype */
+#undef HAVE_PTHREAD_MUTEXATTR_SETTYPE
+
+/* has non portable settype */
+#undef HAVE_PTHREAD_MUTEXATTR_SETTYPE_NP
+
+/* has nanosleep */
+#undef HAVE_PTHREAD_NANOSLEEP
+
+/* Define to 1 if you have the <pthread_np.h> header file. */
+#undef HAVE_PTHREAD_NP_H
+
+/* has rwlock support */
+#undef HAVE_PTHREAD_RWLOCK
+
+/* has sched yield */
+#undef HAVE_PTHREAD_SCHED_YIELD
+
+/* has setcancel */
+#undef HAVE_PTHREAD_SETCANCEL
+
+/* has setcanceltype */
+#undef HAVE_PTHREAD_SETCANCELTYPE
+
+/* has suspend */
+#undef HAVE_PTHREAD_SUSPEND
+
+/* has yield */
+#undef HAVE_PTHREAD_YIELD
+
+/* has np yield */
+#undef HAVE_PTHREAD_YIELD_NP
+
+/* reentrant readdir */
+#undef HAVE_READDIR_R
+
+/* Define to 1 if you have the `sched_getscheduler' function. */
+#undef HAVE_SCHED_GETSCHEDULER
+
+/* Define to 1 if you have the <sched.h> header file. */
+#undef HAVE_SCHED_H
+
+/* Define to 1 if you have the <select.h> header file. */
+#undef HAVE_SELECT_H
+
+/* Define to 1 if you have the <semaphore.h> header file. */
+#undef HAVE_SEMAPHORE_H
+
+/* Define to 1 if you have the `sendfile' function. */
+#undef HAVE_SENDFILE
+
+/* Define to 1 if you have the `setenv' function. */
+#undef HAVE_SETENV
+
+/* Define to 1 if you have the `setitimer' function. */
+#undef HAVE_SETITIMER
+
+/* have shload plugins */
+#undef HAVE_SHL_LOAD
+
+/* Define to 1 if you have the `sigaction' function. */
+#undef HAVE_SIGACTION
+
+/* Define if exist type siginfo_t */
+#undef HAVE_SIGINFO_T
+
+/* Define to 1 if you have the <signal.h> header file. */
+#undef HAVE_SIGNAL_H
+
+/* Define to 1 if you have the `sigwait' function. */
+#undef HAVE_SIGWAIT
+
+/* 2 argument form */
+#undef HAVE_SIGWAIT2
+
+/* has socklen_t type */
+#undef HAVE_SOCKLEN_T
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strcasecmp' function. */
+#undef HAVE_STRCASECMP
+
+/* Define to 1 if you have the <streambuf.h> header file. */
+#undef HAVE_STREAMBUF_H
+
+/* Define to 1 if you have the `strerror' function. */
+#undef HAVE_STRERROR
+
+/* reentrant strerror */
+#undef HAVE_STRERROR_R
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strndup' function. */
+#undef HAVE_STRNDUP
+
+/* Define to 1 if you have the `strptime' function. */
+#undef HAVE_STRPTIME
+
+/* Define to 1 if you have the `strsignal' function. */
+#undef HAVE_STRSIGNAL
+
+/* Define to 1 if you have the <strstream.h> header file. */
+#undef HAVE_STRSTREAM_H
+
+/* Define to 1 if you have the `strtof' function. */
+#undef HAVE_STRTOF
+
+/* reentrant strtok */
+#undef HAVE_STRTOK_R
+
+/* Define to 1 if you have the `strtold' function. */
+#undef HAVE_STRTOLD
+
+/* Define to 1 if you have the `strtoull' function. */
+#undef HAVE_STRTOULL
+
+/* Define to 1 if `struct stat' is a member of `st_blocks'. */
+#undef HAVE_STRUCT_STAT_ST_BLOCKS
+
+/* Define to 1 if your `struct stat' has `st_blocks'. Deprecated, use
+   `HAVE_STRUCT_STAT_ST_BLOCKS' instead. */
+#undef HAVE_ST_BLOCKS
+
+/* Define to 1 if you have the <sysexits.h> header file. */
+#undef HAVE_SYSEXITS_H
+
+/* Define to 1 if you have the <sys/atomic.h> header file. */
+#undef HAVE_SYS_ATOMIC_H
+
+/* Define to 1 if you have the <sys/atomic_op.h> header file. */
+#undef HAVE_SYS_ATOMIC_OP_H
+
+/* Define to 1 if you have the <sys/dir.h> header file. */
+#undef HAVE_SYS_DIR_H
+
+/* Define to 1 if you have the <sys/fcntl.h> header file. */
+#undef HAVE_SYS_FCNTL_H
+
+/* Define to 1 if you have the <sys/ioctl.h> header file. */
+#undef HAVE_SYS_IOCTL_H
+
+/* solaris endian */
+#undef HAVE_SYS_ISA_DEFS_H
+
+/* Define to 1 if you have the <sys/libcsys.h> header file. */
+#undef HAVE_SYS_LIBCSYS_H
+
+/* Define to 1 if you have the <sys/ndir.h> header file. */
+#undef HAVE_SYS_NDIR_H
+
+/* Define to 1 if you have the <sys/poll.h> header file. */
+#undef HAVE_SYS_POLL_H
+
+/* Define to 1 if you have the <sys/sched.h> header file. */
+#undef HAVE_SYS_SCHED_H
+
+/* Define to 1 if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
+
+/* Define to 1 if you have the <sys/sendfile.h> header file. */
+#undef HAVE_SYS_SENDFILE_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/sockio.h> header file. */
+#undef HAVE_SYS_SOCKIO_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/stream.h> header file. */
+#undef HAVE_SYS_STREAM_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* have 64 bit longs */
+#undef HAVE_SYS_TYPES_64
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* have systypes */
+#undef HAVE_SYS_TYPES_STD
+
+/* Define to 1 if you have the <sys/un.h> header file. */
+#undef HAVE_SYS_UN_H
+
+/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to 1 if you have the <termios.h> header file. */
+#undef HAVE_TERMIOS_H
+
+/* Define to 1 if you have the <thread.h> header file. */
+#undef HAVE_THREAD_H
+
+/* Define to 1 if you have the `timegm' function. */
+#undef HAVE_TIMEGM
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* has unix domain sockets */
+#undef HAVE_UNIX_SOCKETS
+
+/* Define to 1 if you have the <winsock2.h> header file. */
+#undef HAVE_WINSOCK2_H
+
+/* Define to 1 if you have the <winsock.h> header file. */
+#undef HAVE_WINSOCK_H
+
+/* Define if socket option SO_RCVTIMEO is implemented */
+#undef HAVE_WORKING_SOCKET_OPTION_SO_RCVTIMEO
+
+/* has usable atomic functions */
+#undef HAVE_WORKING_SYS_ATOMIC_H
+
+/* Define if enable ZIP support */
+#undef HAVE_ZIP
+
+/* Linker Flags */
+#undef LDFLAGS_VAR
+
+/* LD Linker version */
+#undef LD_VERSION
+
+/* Standard C lib version */
+#undef LIBC_VERSION
+
+/* Libraries */
+#undef LIBS_VAR
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
+/* Define to 1 if `major', `minor', and `makedev' are declared in <mkdev.h>.
+   */
+#undef MAJOR_IN_MKDEV
+
+/* Define to 1 if `major', `minor', and `makedev' are declared in
+   <sysmacros.h>. */
+#undef MAJOR_IN_SYSMACROS
+
+/* Operating System */
+#undef OS
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* mutex type */
+#undef PTHREAD_MUTEXTYPE_RECURSIVE
+
+/* Define as the return type of signal handlers (`int' or `void'). */
+#undef RETSIGTYPE
+
+/* The size of `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of `long long', as computed by sizeof. */
+#undef SIZEOF_LONG_LONG
+
+/* The size of `off_t', as computed by sizeof. */
+#undef SIZEOF_OFF_T
+
+/* The size of `ptrdiff_t', as computed by sizeof. */
+#undef SIZEOF_PTRDIFF_T
+
+/* The size of `short', as computed by sizeof. */
+#undef SIZEOF_SHORT
+
+/* The size of `size_t', as computed by sizeof. */
+#undef SIZEOF_SIZE_T
+
+/* The size of `unsigned char', as computed by sizeof. */
+#undef SIZEOF_UNSIGNED_CHAR
+
+/* The size of `void *', as computed by sizeof. */
+#undef SIZEOF_VOID_P
+
+/* The size of `__int64', as computed by sizeof. */
+#undef SIZEOF___INT64
+
+/* Define to 1 if the `S_IS*' macros in <sys/stat.h> do not work properly. */
+#undef STAT_MACROS_BROKEN
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Stardard GNU C++ Library version */
+#undef STDGPP_VERSION
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
+/* Define to 1 if your <sys/time.h> declares `struct tm'. */
+#undef TM_IN_SYS_TIME
+
+/* Define if use parser generator bison/yacc */
+#undef USE_PARSER
+
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# undef _POSIX_PTHREAD_SEMANTICS
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# undef _TANDEM_SOURCE
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
+
+
+/* enable memory pool features */
+#undef U_MEMORY_POOL
+
+/* Define if we don't use openssl */
+#undef U_NO_SSL
+
+/* enable use of our versions of the memory operators */
+#undef U_OVERLOAD_NEW_DELETE
+
+/* Version number of package */
+#undef VERSION
+
+/* bsd system using linuxthreads */
+#undef WITH_LINUXTHREADS
+
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
+#undef YYTEXT_POINTER
+
+/* Bison version */
+#undef _BISON_VERSION
+
+/* libcURL - multiprotocol file transfer library version */
+#undef _CURL_VERSION
+
+/* Expat version */
+#undef _EXPAT_VERSION
+
+/* Flex version */
+#undef _FLEX_VERSION
+
+/* Ldap version */
+#undef _LDAP_VERSION
+
+/* libevent - event notification library version */
+#undef _LIBEVENT_VERSION
+
+/* libSSH version */
+#undef _LIBSSH_VERSION
+
+/* libuuid - version library to create a new UUID value */
+#undef _LIBUUID_VERSION
+
+/* libxml2 - Version 2 of the library to manipulate XML files */
+#undef _LIBXML2_VERSION
+
+/* libz - general purpose compression library version */
+#undef _LIBZ_VERSION
+
+/* libmagic - magic number recognition library version */
+#undef _MAGIC_VERSION
+
+/* Define to 1 if on MINIX. */
+#undef _MINIX
+
+/* libmysql - MySQL Database System library version */
+#undef _MYSQL_VERSION
+
+/* OpenSSL version */
+#undef _OPENSSL_VERSION
+
+/* Operating System version */
+#undef _OS_VERSION
+
+/* PCRE - Perl compatible regular expressions version */
+#undef _PCRE_VERSION
+
+/* Define to 2 if the system does not provide POSIX.1 features except with
+   this defined. */
+#undef _POSIX_1_SOURCE
+
+/* Define to 1 if you need to in order for `stat' and other things to work. */
+#undef _POSIX_SOURCE
+
+/* endian byte order */
+#undef __BYTE_ORDER
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `long' if <sys/types.h> does not define. */
+#undef ptrdiff_t
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t
+
+
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#else
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
+#endif
+
+#if defined(HAVE_POLL) && defined(POLLRDNORM)
+#define	USE_POLL
+#endif
+
+	
+
+
+
+#ifdef HAVE_SYS_LIBCSYS_H
+#include <sys/libcsys.h>
+#endif
+
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#else
+#ifdef HAVE_WINSOCK_H
+#include <winsock.h>
+#else
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#ifdef HAVE_SELECT_H
+#include <select.h>
+#else
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+#endif
+
+#ifdef HAVE_NETINET_IN_H
+#if defined(__hpux) && defined(_XOPEN_SOURCE_EXTENDED)
+#undef _XOPEN_SOURCE_EXTENDED
+#endif
+#include <netinet/in.h>
+#ifdef	__hpux
+#define	_XOPEN_SOURCE_EXTENDED
+#endif
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#include <netdb.h>
+#endif
+
+#ifdef	HAVE_NETINET6_IN6_H
+#include <netinet6/in6.h>
+#endif
+
+#ifdef	HAVE_LINIX_IN6_H
+#include <linux/in6.h>
+#endif
+
+#ifdef HAVE_NETINET_IN_SYSTM_H
+#include <netinet/in_systm.h>
+#endif
+#ifdef HAVE_NETINET_IP_H
+#include <netinet/ip.h>
+#endif
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
+#endif
+#endif
+#endif
+
+#ifndef HAVE_INET_ATON
+#define inet_aton(cp, addr) (((*(unsigned long int *)(addr)) = inet_addr(cp)) != -1)
+#endif
+
+#ifndef SUN_LEN
+#ifdef SCM_RIGHTS
+#define HAVE_UN_LEN
+#endif
+#ifdef __linux__
+#define HAVE_UN_LEN
+#endif
+#ifdef HAVE_UN_LEN
+#define SUN_LEN(ptr) sizeof(sockaddr_un.sun_len) + sizeof(sockaddr_un.sun_family) + sizeof(sockaddr_un.sun_path) + 1
+#else
+#define SUN_LEN(ptr) ((size_t)((struct sockaddr_un *)0)->sun_path) + strlen((ptr)->sun_path))
+#endif
+#endif
+
+#ifndef	_OSF_SOURCE
+#ifndef HAVE_SOCKLEN_T
+#if defined(i386) && defined(__svr4__)
+#define HAVE_SOCKLEN_U
+#else
+#if defined(__CYGWIN32__)
+#define socklen_t int
+#else
+typedef int socklen_t;
+#endif
+#endif
+
+#ifdef HAVE_SOCKLEN_U
+#if !defined(__CYGWIN32__) && !defined(__MINGW32__)
+typedef unsigned socklen_t;
+#else
+typedef int socklen_t;
+#endif
+#endif
+#endif
+#endif
+
+#ifdef  __hpux
+#ifdef  mutable
+#undef  mutable
+#endif
+#endif
+
+#if defined(AF_INET6) && defined(HAVE_INET_PTON)
+#define	CCXX_IPV6
+#endif
+
+#define	CCXX_MULTIFAMILY_IP
+
+	
+
+
+#ifndef HAVE_BOOL_TYPE
+typedef enum { true=1, false=0 } bool;
+#endif
+
+
+	
+
+
+#ifdef CCXX_NAMESPACES
+#define USING(x) using namespace x;
+#else
+#define USING(x)
+#endif
+
+#ifdef  __KCC
+#define KAI_NONSTD_IOSTREAM 1
+#endif
+	
+
+
+
+#ifndef HAVE_FCNTL_H
+#ifdef HAVE_SYS_FCNTL_H
+#include <sys/fcntl.h>
+#endif
+#else
+#include <fcntl.h>
+#ifndef O_NDELAY
+#ifdef HAVE_SYS_FCNTL_H
+#include <sys/fcntl.h>
+#endif
+#endif
+#endif
+	
+
+
+#if defined(HAVE_ENDIAN_H)
+ #include <endian.h>
+#elif defined(HAVE_SYS_ISA_DEFS_H)
+ #include <sys/isa_defs.h>
+ #ifdef	_LITTLE_ENDIAN
+  #define	__BYTE_ORDER 1234
+ #else
+  #define	__BYTE_ORDER 4321
+ #endif
+ #if _ALIGNMENT_REQUIRED > 0
+  #define	__BYTE_ALIGNMENT _MAX_ALIGNMENT
+ #else
+  #define	__BYTE_ALIGNMENT 1
+ #endif
+#endif
+
+#ifndef	__LITTLE_ENDIAN
+#define __LITTLE_ENDIAN 1234
+#define __BIG_ENDIAN 4321
+#endif
+
+#ifndef	__BYTE_ORDER
+#define	__BYTE_ORDER 1234
+#endif
+
+#ifndef	__BYTE_ALIGNMENT
+#if defined(SPARC) || defined(sparc)
+#if defined(__arch64__) || defined(__sparcv9)
+#define	__BYTE_ALIGNMENT 8
+#else
+#define	__BYTE_ALIGNMENT 4
+#endif
+#endif
+#endif
+
+#ifndef	__BYTE_ALIGNMENT
+#define	__BYTE_ALIGNMENT 1
+#endif
+
+	
+
+
+#ifdef HAVE_SIGACTION
+#ifdef HAVE_BSD_SIGNAL_H
+#undef HAVE_BSD_SIGNAL_H
+#endif
+#endif
+
+/* Cause problem with Solaris... and perhaps Digital Unix?
+  However, the autoconf test in ost_signal defines _POSIX_PTHREAD_SEMANTICS 
+ when trying to compile sigwait2. */
+
+#ifdef  HAVE_SIGWAIT2
+#ifndef	_POSIX_PTHREAD_SEMANTICS
+#define _POSIX_PTHREAD_SEMANTICS
+#endif
+#endif
+
+#ifdef HAVE_BSD_SIGNAL_H
+#include <bsd/signal.h>
+#else
+#include <signal.h>
+#endif
+#ifndef SA_ONESHOT
+#define SA_ONESHOT SA_RESETHAND
+#endif
+
+	
+
+
+#include <string.h>
+#ifdef HAVE_STRINGS_H
+#ifndef	_AIX
+#include <strings.h>
+#endif
+#endif
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+
+#ifndef HAVE_SNPRINTF
+#ifdef  WIN32
+#define snprintf        _snprintf
+#define vsnprintf       _vsnprintf
+#endif
+#endif
+
+#ifdef HAVE_STRCASECMP
+#ifndef stricmp
+#define stricmp(x,y) strcasecmp(x,y)
+#endif
+#ifndef strnicmp
+#define strnicmp(x,y,n) strncasecmp(x,y,n)
+#endif
+#ifndef	stristr
+#define	stristr(x, y) strcasestr(x,y)
+#endif
+#endif
+
+	
+
+
+#ifdef HAVE_THREAD_H
+#include "@thrprefix@/thread.h"
+#if defined(i386) && defined(__svr4__) && !defined(__sun)
+#define _THR_UNIXWARE
+#endif
+#if defined(__SVR4) && defined(__sun)
+#define _THR_SUNOS5
+#else
+#if defined(__SVR4__) && defined(__SUN__)
+#define _THR_SUNOS5
+#endif
+#endif
+#endif
+
+#ifdef HAVE_WORKING_SYS_ATOMIC_H
+#include <sys/atomic.h>
+#define HAVE_ATOMIC
+#elif defined(HAVE_ATOMIC_AIX)
+#include <sys/atomic_op.h>
+#ifndef	HAVE_ATOMIC
+#define	HAVE_ATOMIC
+#endif
+#endif
+
+#if defined(__cplusplus)
+#if defined(HAVE_GCC_BITS_ATOMIC) || defined(HAVE_GCC_CXX_BITS_ATOMIC)
+#include <bits/atomicity.h>
+#define HAVE_ATOMIC
+#endif
+#endif
+
+#if defined(HAVE_PTHREAD_H) && ( defined(_THREAD_SAFE) || defined(_REENTRANT) )
+
+#ifdef	__QNX__
+#define	__EXT_QNX
+#endif
+
+#include <pthread.h>
+
+#ifdef HAVE_PTHREAD_NP_H
+#include <pthread_np.h>
+#endif
+
+#ifdef HAVE_SEMAPHORE_H
+#include <semaphore.h>
+#endif
+#ifdef _POSIX_PRIORITY_SCHEDULING
+#ifdef HAVE_SCHED_H
+#include <sched.h>
+#else
+#ifdef HAVE_SYS_SCHED_H
+#include <sys/sched.h>
+#endif
+#endif
+#endif
+
+#define __PTHREAD_H__
+#ifndef PTHREAD_MUTEXTYPE_RECURSIVE
+#ifdef  MUTEX_TYPE_COUNTING_FAST
+#define PTHREAD_MUTEXTYPE_RECURSIVE MUTEX_TYPE_COUNTING_FAST
+#endif
+#endif
+#ifndef PTHREAD_MUTEXTYPE_RECURSIVE
+#ifdef  PTHREAD_MUTEX_RECURSIVE
+#define PTHREAD_MUTEXTYPE_RECURSIVE PTHREAD_MUTEX_RECURSIVE
+#endif
+#endif
+#ifndef HAVE_PTHREAD_MUTEXATTR_SETTYPE
+#if     HAVE_PTHREAD_MUTEXATTR_SETKIND_NP
+#ifndef PTHREAD_MUTEXTYPE_RECURSIVE
+#define PTHREAD_MUTEXTYPE_RECURSIVE PTHREAD_MUTEX_RECURSIVE_NP
+#endif
+#define pthread_mutexattr_gettype(x, y) pthread_mutexattr_getkind_np(x, y)
+#define pthread_mutexattr_settype(x, y) pthread_mutexattr_setkind_np(x, y)
+#endif
+#if     HAVE_PTHREAD_MUTEXATTR_SETTYPE_NP
+#ifndef PTHREAD_MUTEXTYPE_RECURSIVE
+#define PTHREAD_MUTEXTYPE_RECURSIVE PTHREAD_MUTEXTYPE_RECURSIVE_NP
+#endif
+#define pthread_mutexattr_settype(x, y) pthread_mutexattr_settype_np(x, y)
+#define pthread_mutexattr_gettype(x, y) pthread_mutexattr_gettype_np(x, y)
+#endif
+#endif
+
+#ifdef	HAVE_PTHREAD_MACH_THREAD_NP
+#define	_THR_MACH
+#endif
+
+#ifndef HAVE_PTHREAD_YIELD
+#ifdef	HAVE_PTHREAD_YIELD_NP
+#define	pthread_yield() pthread_yield_np()
+#define	HAVE_PTHREAD_YIELD
+#endif
+#endif
+
+#ifndef HAVE_PTHREAD_YIELD
+#ifdef HAVE_PTHREAD_SCHED_YIELD
+#define pthread_yield() sched_yield()
+#define HAVE_PTHREAD_YIELD
+#endif
+#endif
+
+#ifndef HAVE_PTHREAD_DELAY
+#ifdef HAVE_PTHREAD_DELAY_NP
+#define HAVE_PTHREAD_DELAY
+#define pthread_delay(x) pthread_delay_np(x)
+#endif
+#if defined(HAVE_PTHREAD_NANOSLEEP)
+#ifndef HAVE_PTHREAD_DELAY
+#define HAVE_PTHREAD_DELAY
+#ifdef __FreeBSD__
+#ifdef __cplusplus
+extern "C" int nanosleep(const struct timespec *rqtp, struct timespec *rmtp);
+#endif
+#endif
+#define pthread_delay(x) nanosleep(x, NULL)
+#endif
+#endif
+#endif
+
+#ifdef HAVE_PTHREAD_ATTR_SETSTACK
+#ifndef PTHREAD_STACK_MIN
+#define PTHREAD_STACK_MIN 32768
+#endif
+#endif
+
+#ifndef HAVE_PTHREAD_CANCEL
+#ifdef SIGCANCEL
+#define CCXX_SIG_THREAD_CANCEL SIGCANCEL
+#else
+#define CCXX_SIG_THREAD_CANCEL SIGQUIT
+#endif
+#define pthread_cancel(x) pthread_kill(x, CCXX_SIG_THREAD_CANCEL)
+#define	pthread_setcanceltype(x, y)
+#define	pthread_setcancelstate(x, y)
+#endif
+
+#ifndef HAVE_PTHREAD_SETCANCELTYPE
+#ifdef HAVE_PTHREAD_SETCANCEL
+enum
+{ PTHREAD_CANCEL_ASYNCHRONOUS = CANCEL_ON,
+  PTHREAD_CANCEL_DEFERRED = CANCEL_OFF};
+enum
+{ PTHREAD_CANCEL_ENABLE = CANCEL_ON,
+  PTHREAD_CANCEL_DISABLE = CANCEL_OFF};
+#define pthread_setcancelstate(x, y) \
+        (y == NULL) ? pthread_setcancel(x) : *y = pthread_setcancel
+#define pthread_setcanceltype(x, y) \
+        (y == NULL) ? pthread_setasynccancel(x) | *y = pthread_setasynccancel(x)
+#else
+#define pthread_setcanceltype(x, y)
+#define pthread_setcancelstate(x, y)
+#endif
+#endif
+
+#ifdef  _AIX
+#ifdef  HAVE_PTHREAD_SUSPEND
+#undef  HAVE_PTHREAD_SUSPEND
+#endif
+#endif
+
+#endif
+
+
+	
+
+
+
+#ifndef HAVE_STRERROR_R
+#define strerror_r(e, b, l) b = ::strerror(e)
+#endif
+
+#ifndef	HAVE_GETPWUID_R
+#define	getpwuid_r(uid, rec, buf, size, ptr) ptr = ::getpwuid(uid)
+#define	getpwnam_r(name, rec, buf, size, ptr) ptr = ::getpwnam(name)
+#endif
+
+	

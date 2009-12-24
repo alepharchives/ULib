@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../.function
+
+## entity.test -- Test entity feature
+
+start_msg entity
+
+#UTRACE="0 5M 1"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg entity < inp/entity.input
+
+# openssl smime -verify -noverify -in inp/pkcs7.eml -out inp/pkcs7.out
+
+# Test against expected output
+test_output_wc w entity

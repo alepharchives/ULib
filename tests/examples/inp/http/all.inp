@@ -1,0 +1,47 @@
+GET /inp/http/data HTTP/1.1
+Host: localhost
+Connection: Keep-Alive
+
+GET /inp/http/data/file HTTP/1.1
+Host: localhost
+Connection: Keep-Alive
+Range: bytes=0-63
+
+GET /inp/http/data/file HTTP/1.1
+Host: localhost
+Connection: Keep-Alive
+Range: bytes=0-31
+
+GET /inp/http/data/file HTTP/1.1
+Host: localhost
+Connection: Keep-Alive
+Range: bytes=32-63
+
+GET /vuoto.txt HTTP/1.1
+Connection: Keep-Alive
+Host: localhost
+
+GET /cgi-bin/postlogin.sh?user=Steve+Johnson HTTP/1.1
+Host: localhost
+Connection: Keep-Alive
+Cookie: ulib_sid=stefano&1221930499&07e0d88c2f5b6a385827adcee28ebdad
+
+head  /tmp   HTTP/1.1
+Host: localhost
+Accept-Encoding: gzip,deflate
+Connection: Keep-Alive
+Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x
+
+get  /tmp   HTTP/1.1
+Host: localhost
+Accept-Encoding: gzip,deflate
+Connection: Keep-Alive
+Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x
+
+get  /tmp   HTTP/1.1
+Host: localhost
+If-Modified-Since: Tue, 15 Sep 2020 16:22:19 GMT
+Connection: Keep-Alive
+Authorization: Digest username="s.casazza", realm="Protected Area", nonce="1235411342", uri="/tmp", algorithm=MD5, response="409f91ad888cc96aea0cec4491677075",qop=auth, nc=00000001, cnonce="00603edc385b7a70"
+Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x
+

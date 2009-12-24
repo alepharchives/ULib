@@ -1,0 +1,11 @@
+	{Call   routine1(2,3)
+	}Return routine1(2,3) = 6
+	c = 6
+	::signal(4,0x8049510) = (nil)
+	{Call   manage_sigpipe(4)
+		::open("/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp"...,2,666) = -1 - ENOENT (2, No such file or directory)
+		::open("tmp/prova",102,666) = 4
+	}Return manage_sigpipe(4)
+	::raise(4) = 0
+	result raise() = 0
+}Return main(1) = 0

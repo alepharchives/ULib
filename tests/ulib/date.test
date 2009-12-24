@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. ../.function
+
+## date.test -- Test date feature
+
+start_msg date
+
+#UTRACE="0 5M 1"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg date < inp/date.input
+
+# Test against expected output
+test_output_wc w date

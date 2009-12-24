@@ -1,0 +1,42 @@
+#!/bin/sh
+
+. ../.function
+
+## misc.test -- Test misc feature
+
+start_msg misc
+
+type whoami >/dev/null 2>&1
+RESULT=$?
+
+if [ $RESULT -eq 0 ]; then
+	ARG1=`whoami`
+else
+# 	ARG1="Administrator" # WIN2000AS
+#	ARG1='"stefano casazza"' # WINXP
+#  ARG1='"admin"' # laptop
+   ARG1='"stefano"' # ridwhan
+fi
+
+ARG2=`hostname`
+ARG3=`date +'%d/%m/%y %H:%M:%S'`
+ARG4=/var/spool/mail
+
+cat << EOF >tmp/c
+c
+c
+c
+c
+c
+EOF
+
+start_prg misc "$ARG1" "$ARG2" $ARG3 $ARG4 < tmp/c
+
+# Test against expected output
+if [ -n "$WINELOADER" ]
+then
+	N1=`grep expect out/misc.out`
+	test_output "$N1"
+else
+	test_output_diff misc
+fi

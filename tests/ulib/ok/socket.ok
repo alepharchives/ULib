@@ -1,0 +1,140 @@
+TCP IPv4 Echo Server
+
+Created Server Socket - Socket Details
+ - Name    : 0.0.0.0
+ - Family  : IPv4
+ - Address : 0.0.0.0
+ - Port    : 11011
+
+Waiting for Connection...
+Connection Made...
+
+Listening Server Socket - Socket Details
+ - Name    : 0.0.0.0
+ - Family  : IPv4
+ - Address : 0.0.0.0
+ - Port    : 11011
+
+Client Communication Socket on
+ - Name    : 0.0.0.0
+ - Family  : IPv4
+ - Address : 0.0.0.0
+ - Port    : 11011
+
+Is Connected to
+ - Name    : localhost
+ - Family  : IPv4
+ - Address : 127.0.0.1
+ - Port    : 49402
+
+Host name       = 0.0.0.0
+Host address    = 0.0.0.0
+Node name       = stefano
+MAC address     = 0016ECFB46DA
+Network device  = lo
+Network address = 10.0.0.0/255.0.0.0
+
+Received 11 bytes of data
+Buffer : [hello_World]
+
+Echoing data to client...
+
+Sent 11 bytes of data
+
+Closing Client Socket...
+
+Waiting for Connection...
+TCP IPv4 Echo Client
+
+Using Echo Server
+ - Name    : localhost
+ - Family  : IPv4
+ - Address : 127.0.0.1
+ - Port    : 11011
+
+Socket Connected...
+Socket Details - Local Information
+ - Name    : localhost
+ - Family  : IPv4
+ - Address : 127.0.0.1
+ - Port    : 49402
+
+Socket Details - Server Information
+ - Name    : localhost
+ - Family  : IPv4
+ - Address : 127.0.0.1
+ - Port    : 11011
+
+Send Buffer    : [hello_World]
+Receive Buffer : []
+
+Sending Echo Request...
+Sent 11 bytes of data
+
+Receiving Echo Response...
+Received 11 bytes of data
+Send Buffer    : [hello_World]
+Receive Buffer : [hello_World]
+UDP IPv4 Echo Server
+
+Created Server Socket - Socket Details
+ - Name    : 0.0.0.0
+ - Family  : IPv4
+ - Address : 0.0.0.0
+ - Port    : 11011
+
+Waiting for data on :
+ - Name    : 0.0.0.0
+ - Family  : IPv4
+ - Address : 0.0.0.0
+ - Port    : 11011
+
+Received datagram from :
+ - Name    : localhost
+ - Family  : IPv4
+ - Address : 127.0.0.1
+ - Port    : 51152
+ - Size    : 11 bytes
+ - Buffer  : [hello_World]
+
+Echoing datagram to client...
+
+Sent 11 bytes of data
+
+Waiting for data on :
+ - Name    : 0.0.0.0
+ - Family  : IPv4
+ - Address : 0.0.0.0
+ - Port    : 11011
+
+UDP IPv4 Echo Client
+
+Using Echo Server
+ - Name    : localhost
+ - Family  : IPv4
+ - Address : 127.0.0.1
+ - Port    : 11011
+
+Socket Connected (UDP connected socket)...
+Socket Details - Local Information
+ - Name    : localhost
+ - Family  : IPv4
+ - Address : 127.0.0.1
+ - Port    : 51152
+
+Socket Details - Server Information
+ - Name    : localhost
+ - Family  : IPv4
+ - Address : 127.0.0.1
+ - Port    : 11011
+
+Send Buffer    : [hello_World]
+Receive Buffer : []
+
+Sending Echo Request...
+Sent 11 bytes of data
+
+Receiving Echo Response...
+Received 11 bytes of data
+Send Buffer    : [hello_World]
+Receive Buffer : [hello_World]

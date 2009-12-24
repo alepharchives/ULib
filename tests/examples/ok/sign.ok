@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="SigID">
+  <ds:SignedInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
+    <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></ds:SignatureMethod>
+    <ds:Reference URI="#ObjID_1">
+      <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+      <ds:DigestValue>67LBqx1fquyNS8kRiei8PofjvgI=</ds:DigestValue>
+    </ds:Reference>
+    <ds:Reference URI="#ObjID_2">
+      <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+      <ds:DigestValue>7VDC3KuuTByH465p+Rzvn8391FE=</ds:DigestValue>
+    </ds:Reference>
+    <ds:Reference URI="#SigID-SignedProperties" Type="http://uri.etsi.org/01903#SignedProperties">
+      <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+      <ds:DigestValue>101n49dsCPbBJ2DSa+l6dLekukU=</ds:DigestValue>
+    </ds:Reference>
+  </ds:SignedInfo>
+  <ds:SignatureValue xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+nkql8UTosRs+bvXRR0FaCdoh4odPIP8t2VcAfA+D7biza3N6qatPYsWjaTiIZ7VY
+FoCf4ibwxpRJ0yLlZe5AxDX9p+uHRiJXVvA9SBAGqkWirZEo2SLxAAG/ttHkK2n1
+OMlnuFz7YJ8yy7iXj0t3H8KAHObKlMG/LuHWuluLTmY=
+  </ds:SignatureValue>
+  <ds:KeyInfo>
+    <ds:KeyValue>
+      <ds:RSAKeyValue>
+        <ds:Modulus>
+4IlzOY3Y9fXoh3Y5f06wBbtTg94Pt6vcfcd1KQ0FLm0S36aGJtTSb6pYKfyX7PqC
+UQ8wgL6xUJ5GRPEsu9gyz8ZobwfZsGCsvu40CWoT9fcFBZPfXro1Vtlh/xl/yYHm
++Gzqh0Bw76xtLHSfLfpVOrmZdwKmSFKMTvNXOFd0V18=
+        </ds:Modulus>
+        <ds:Exponent>AQAB
+</ds:Exponent>
+      </ds:RSAKeyValue>
+    </ds:KeyValue>
+    <ds:X509Data>
+      <ds:X509SubjectName>
+        CN=AliceRSA
+      </ds:X509SubjectName>
+      <ds:X509IssuerSerial>
+        <ds:X509IssuerName>
+          CN=CarlRSA
+        </ds:X509IssuerName>
+        <ds:X509SerialNumber>4294967295</ds:X509SerialNumber>
+      </ds:X509IssuerSerial>
+      <ds:X509Certificate>
+MIICLDCCAZWgAwIBAgIQRjRrx4AAVrwR024uxBCzsDANBgkqhkiG9w0BAQUFADAS
+MRAwDgYDVQQDEwdDYXJsUlNBMB4XDTk5MDkxOTAxMDg0N1oXDTM5MTIzMTIzNTk1
+OVowEzERMA8GA1UEAxMIQWxpY2VSU0EwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJ
+AoGBAOCJczmN2PX16Id2OX9OsAW7U4PeD7er3H3HdSkNBS5tEt+mhibU0m+qWCn8
+l+z6glEPMIC+sVCeRkTxLLvYMs/GaG8H2bBgrL7uNAlqE/X3BQWT3166NVbZYf8Z
+f8mB5vhs6odAcO+sbSx0ny36VTq5mXcCpkhSjE7zVzhXdFdfAgMBAAGjgYEwfzAM
+BgNVHRMBAf8EAjAAMA4GA1UdDwEB/wQEAwIGwDAfBgNVHSMEGDAWgBTp4JAnrHgg
+eprTTPJCN04irp44uzAdBgNVHQ4EFgQUd9K00bdMioqjzkWdzuw8oDrj/1AwHwYD
+VR0RBBgwFoEUQWxpY2VSU0FAZXhhbXBsZS5jb20wDQYJKoZIhvcNAQEFBQADgYEA
+PnBHqEjME1iPylFxa042GF0EfoCxjU3MyqOPzH1WyLzPbrMcWakgqgWBqE4lradw
+FHUv9ceb0Q7pY9Jkt8ZmbnMhVN/0uiVdfUnTlGsiNnRzuErsL2Tt0z3Sp0LF6DeK
+tNufZ+S9n/n+dO/q+e5jatg/SyUJtdgadq7rm9tJsCI=
+      </ds:X509Certificate>
+    </ds:X509Data>
+  </ds:KeyInfo>
+  <ds:Object xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="ObjID_1">some text
+  with spaces and CR-LF.</ds:Object>
+  <ds:Object xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="ObjID_2">some text</ds:Object>
+  <ds:Object xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <xades:QualifyingProperties Target="#SigID">
+      <xades:SignedProperties xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="SigID-SignedProperties">
+        <xades:SignedSignatureProperties>
+          <xades:SigningTime>2009-12-18T16:07:18Z</xades:SigningTime>
+          <xades:SigningCertificate>
+            <xades:Cert>
+              <xades:CertDigest>
+                <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+                <ds:DigestValue>swxIhVBVwuZM4xlkktS4ODGms8s=</ds:DigestValue>
+              </xades:CertDigest>
+              <xades:IssuerSerial>
+                <ds:X509IssuerName>
+                  CN=CarlRSA
+                </ds:X509IssuerName>
+                <ds:X509SerialNumber>4294967295</ds:X509SerialNumber>
+              </xades:IssuerSerial>
+            </xades:Cert>
+          </xades:SigningCertificate>
+          <xades:SignaturePolicyIdentifier>
+            <xades:SignaturePolicyImplied></xades:SignaturePolicyImplied>
+          </xades:SignaturePolicyIdentifier>
+          <xades:SignatureProductionPlace>
+            <xades:City>sesto fiorentino</xades:City>
+            <xades:StateOrProvince>FI</xades:StateOrProvince>
+            <xades:PostalCode>50100</xades:PostalCode>
+            <xades:CountryName>Italy</xades:CountryName>
+          </xades:SignatureProductionPlace>
+          <xades:SignerRole>
+            <xades:ClaimedRoles>
+              <xades:ClaimedRole>Amministratore UNIREL</xades:ClaimedRole>
+            </xades:ClaimedRoles>
+          </xades:SignerRole>
+        </xades:SignedSignatureProperties>
+        <xades:SignedDataObjectProperties>
+         <xades:DataObjectFormat ObjectReference="#ObjID_1">
+           <xades:MimeType>text/plain</xades:MimeType>
+         </xades:DataObjectFormat>
+         <xades:DataObjectFormat ObjectReference="#ObjID_2">
+           <xades:MimeType>text/plain</xades:MimeType>
+         </xades:DataObjectFormat>
+         <xades:AllDataObjectsTimeStamp>
+           <xades:EncapsulatedTimeStamp>
+           </xades:EncapsulatedTimeStamp>
+         </xades:AllDataObjectsTimeStamp>
+        </xades:SignedDataObjectProperties>
+      </xades:SignedProperties>
+      <xades:UnsignedProperties>
+        <xades:UnsignedSignatureProperties>
+          <xades:SignatureTimeStamp>
+          </xades:SignatureTimeStamp>
+        </xades:UnsignedSignatureProperties>
+      </xades:UnsignedProperties>
+    </xades:QualifyingProperties>
+  </ds:Object>
+</ds:Signature>

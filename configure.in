@@ -1,0 +1,961 @@
+# configure.in -- Process this file with autoconf to produce configure
+#
+# An autoconf script to automatically configure ULib.
+#
+# Process this file with autoconf to produce a configure script.
+#
+# AC_PREREQ(2.54)
+#
+# The autoconf documentation states that this is the recommended sequence for this file:
+#
+#  `AC_INIT(FILE)'
+#
+#  checks for programs
+#  checks for libraries
+#  checks for header files
+#  checks for typedefs
+#  checks for structures
+#  checks for variables
+#  checks for compiler characteristics
+#  checks for library functions
+#  checks for system services
+#  `AC_OUTPUT([FILE...])'
+
+# SECTION 1: `AC_INIT(FILE)'
+#
+# This macro must be the very first invoked.
+# Its argument names a file that must exist in the directory where autoconf will run, just to check things
+
+AC_INIT(include/ulib/internal/common.h)
+
+# Versioning
+VERSION="1.0.5"
+#shared library versioning
+GENERIC_LIBRARY_VERSION=1:0:5
+#                       | | |
+#                +------+ | +---+
+#                |        |     |
+#             current:revision:age
+#                |        |     |
+#                |        |     +- increment if interfaces have been added
+#                |        |        set to zero if interfaces have been removed or changed
+#                |        +- increment if source code has changed
+#                |           set to zero if current is incremented
+#                +- increment if interfaces have been added, removed or changed
+AC_SUBST(GENERIC_LIBRARY_VERSION)
+
+dnl this is a C++ library after all..
+AC_LANG(C++)
+
+AC_CONFIG_AUX_DIR(autoconf)
+
+# Check what platform we are running on.
+AC_CANONICAL_SYSTEM
+
+# Every other copy of the package version number gets its value from here
+AM_INIT_AUTOMAKE(ULib, [$VERSION])
+
+# Generate a header file with all settings, a config.h file (Automake will add -DHAVE_CONFIG_H)
+AM_CONFIG_HEADER(include/ulib/internal/config.h)
+
+# SECTION 2: checks for programs
+
+AC_PROG_CPP
+AC_PROG_CXX
+AC_PROG_CXXCPP
+
+# Check for the compiler support
+if test "${GCC}" = "yes" ; then
+	# We don't want gcc 2.7
+	AC_MSG_CHECKING([for a supported version of gcc])
+	gcc_version=`${CC} --version | head -n1`
+	case "${gcc_version}" in
+		gcc-2.7.*)
+		AC_MSG_RESULT([no (${gcc_version})])
+		AC_MSG_ERROR([please use a recent (>= gcc-2.95) version of gcc])
+		;;
+		*)
+		AC_MSG_RESULT([ok (${gcc_version})])
+		;;
+	esac
+#else
+#  AC_MSG_ERROR([ULib relies on GCC to be compiled])
+fi
+
+# SECTION 2: Configure script command line options
+
+# Updating library version information
+# ==========================================================================================================
+# If you want to use libtool's versioning system, then you must specify the version information to libtool
+# using the `-version-info' flag during link mode (Note: Link mode)
+#
+# This flag accepts an argument of the form `CURRENT[:REVISION[:AGE]]'. So, passing `-version-info 3:12:1' sets CURRENT to 3, REVISION to 12, and AGE to 1
+#
+# If either REVISION or AGE are omitted, they default to 0. Also note that AGE must be less than or equal to the CURRENT interface number.
+#
+# Here are a set of rules to help you update your library version information:
+#
+#  1. Start with version information of `0:0:0' for each libtool library.
+#
+#  2. Update the version information only immediately before a public
+#     release of your software.  More frequent updates are unnecessary,
+#     and only guarantee that the current interface number gets larger
+#     faster.
+#
+#  3. If the library source code has changed at all since the last
+#     update, then increment REVISION (`C:R:A' becomes `C:r+1:A').
+#
+#  4. If any interfaces have been added, removed, or changed since the
+#     last update, increment CURRENT, and set REVISION to 0.
+#
+#  5. If any interfaces have been added since the last public release,
+#     then increment AGE.
+#
+#  6. If any interfaces have been removed since the last public release,
+#     then set AGE to 0.
+#
+#   *NEVER* try to set the interface numbers so that they correspond to the release number of your package. This is an abuse that only
+#   fosters misunderstanding of the purpose of library versions. Instead, use the `-release' flag (Note: Release numbers), but be warned
+#   that every release of your package will not be binary compatible with any other release.
+# ==========================================================================================================
+
+# By default, this macro turns on shared libraries if they are available, and also enables static libraries
+# if they don't conflict with the shared libraries. You can modify these defaults by calling either the
+# `AC_DISABLE_SHARED' or `AC_DISABLE_STATIC' macros:
+
+AC_LIBTOOL_WIN32_DLL
+AM_DISABLE_STATIC
+
+# Common C++
+OST_PROG_CC_POSIX
+OST_PROG_COMMON
+OST_PROJ_LIBRARY(ULIB,[$VERSION],1:0:0)
+OST_AUTOMAKE_MODE
+OST_MAINTAINER_MODE
+OST_WIN32
+OST_CC_FCNTL
+OST_CC_SYSTIME
+OST_CC_TYPES
+OST_CC_ENDIAN
+OST_CC_SIGNAL
+OST_CC_STRING
+OST_CC_DYNAMIC
+OST_LIB_PTHREAD
+OST_LIB_REENTRANT
+OST_LIB_POLL
+OST_SYS_SOCKET
+OST_DEBUG
+OST_CC_GETOPT
+
+dnl ********************************************************
+dnl * Options to pass to libtool
+dnl ********************************************************
+
+LIBRARY_LIBTOOL_OPTIONS="$LT_ULIB_VERSION"
+MODULE_LIBTOOL_OPTIONS="-export-dynamic -avoid-version"
+
+# define OS - Operating System
+OS=`uname -sr`
+if test "$cross_compiling" = "yes"; then
+#  AM_CONDITIONAL(CROSS_COMPILED, true)
+	OS="Build on <${OS}> for Target <${target}>"
+fi
+AC_DEFINE_UNQUOTED(OS, "$OS", [Operating System])
+
+os_version=`uname -a`
+AC_DEFINE_UNQUOTED(_OS_VERSION, "${os_version}", [Operating System version])
+AC_MSG_CHECKING([for a supported OS])
+case "$target_os" in
+	*linux*)
+	AC_MSG_RESULT([ok (${target_os})])
+
+	# Ok, this is linux. Check the kernel version
+	AC_MSG_CHECKING([for the kernel version])
+
+	kernel=`uname -r`
+
+	case "${kernel}" in
+		2.6.*)
+		AC_MSG_RESULT([2.6 family (${kernel})])
+#		AC_DEFINE([KERNEL_2_6], 1, [Define to 1 if you're using Linux 2.6.x])
+		;;
+
+		2.4.*)
+		AC_MSG_RESULT([2.4 family (${kernel})])
+#		AC_DEFINE([KERNEL_2_4], 1, [Define to 1 if you're using Linux 2.4.x])
+		;;
+
+		*)
+		AC_MSG_RESULT([unsupported (${kernel})])
+		AC_MSG_ERROR([ULib works on kernels 2.4, 2.6])
+		;;
+	esac
+
+	AM_CONDITIONAL(LINUX, true)
+	AM_CONDITIONAL(MINGW, false)
+	AM_CONDITIONAL(CYGWIN, false)
+	AM_CONDITIONAL(SOLARIS, false)
+	;;
+
+	mingw32*)
+	AC_MSG_RESULT([ok (${target_os})])
+
+   CPPFLAGS="${CPPFLAGS} -D__USE_CRTIMP"
+
+	if test "$enable_static" = "yes"; then
+		AC_MSG_WARN([Disabling static library build, must build as DLL on Windows])
+		enable_static=no
+	fi
+	if test "$enable_shared" = "no"; then
+		AC_MSG_WARN([Enabling shared library build, must build as DLL on Windows])
+	fi
+	enable_shared=yes
+	# with WINE don't work...
+	ac_cv_func_getopt_long=no
+
+	AC_CHECK_TOOL(WINDRES, windres, no)
+	if test "$WINDRES" = no; then
+		AC_MSG_ERROR([*** Could not find an implementation of windres in your PATH])
+	fi
+	AC_CHECK_PROG(ms_librarian, lib.exe, yes, no)
+
+	# We currently use .def files on Windows
+	# Note that -module isn't included here since automake needs to see it to know
+	# that something like mod_http.la is a valid libtool archive
+	LIBRARY_LIBTOOL_OPTIONS="$LIBRARY_LIBTOOL_OPTIONS -no-undefined"
+	 MODULE_LIBTOOL_OPTIONS=" $MODULE_LIBTOOL_OPTIONS -no-undefined"
+
+	AM_CONDITIONAL(LINUX, false)
+	AM_CONDITIONAL(MINGW, true)
+	AM_CONDITIONAL(CYGWIN, false)
+	AM_CONDITIONAL(SOLARIS, false)
+	;;
+
+	cygwin*)
+	AC_MSG_RESULT([ok (${target_os})])
+
+	AM_CONDITIONAL(LINUX, false)
+	AM_CONDITIONAL(MINGW, false)
+	AM_CONDITIONAL(CYGWIN, true)
+	AM_CONDITIONAL(SOLARIS, false)
+	;;
+
+	*solaris*)
+	AC_MSG_RESULT([ok (${target_os})])
+
+	AM_CONDITIONAL(LINUX, false)
+	AM_CONDITIONAL(MINGW, false)
+	AM_CONDITIONAL(CYGWIN, false)
+	AM_CONDITIONAL(SOLARIS, true)
+	;;
+
+	*)
+	AC_MSG_RESULT([no (${target_os})])
+
+	AM_CONDITIONAL(LINUX, false)
+	AM_CONDITIONAL(MINGW, false)
+	AM_CONDITIONAL(CYGWIN, false)
+	AM_CONDITIONAL(SOLARIS, false)
+	;;
+esac
+
+AM_CONDITIONAL(MS_LIB_AVAILABLE, test x$ms_librarian = xyes)
+
+AC_PROG_LIBTOOL
+
+AC_SUBST(LIBRARY_LIBTOOL_OPTIONS)
+AC_SUBST(MODULE_LIBTOOL_OPTIONS)
+
+# C++ stuff must done after library and header (some C++ define require some header)
+
+# NB: for define macro USING for namespace...
+OST_CXX_NAMESPACE
+OST_CXX_NEW_INIT
+
+#OST_CXX_PROGRAMMING
+#OST_CXX_IOSTREAM
+#OST_CXX_MUTABLE
+#OST_SGI_STLPORT
+#OST_CXX_NOEXCEPTIONS
+
+dnl initialize all the info variables to 'no'
+     ulib_ssl_msg="no     (--with-ssl)"
+     ulib_ssh_msg="no     (--with-ssh)"
+    ulib_pcre_msg="no     (--with-pcre)"
+    ulib_ldap_msg="no     (--with-ldap)"
+    ulib_libz_msg="no     (--with-libz)"
+    ulib_curl_msg="no     (--with-curl)"
+   ulib_expat_msg="no     (--with-expat)"
+   ulib_magic_msg="no     (--with-magic)"
+  ulib_parser_msg="no     (--with-parser)"
+   ulib_mysql_msg="no     (--with-mysql)"
+ ulib_libuuid_msg="no     (--with-libuuid)"
+ulib_libevent_msg="no     (--with-libevent)"
+ ulib_libxml2_msg="no     (--with-libxml2)"
+    ulib_ipv6_msg="no     (--with-ipv6)"
+     ulib_pch_msg="no     (--enable-pch)"
+     ulib_LFS_msg="no     (--enable-LFS)"
+     ulib_dbg_msg="no     (--enable-debug)"
+   ulib_final_msg="no     (--enable-final)"
+     ulib_zip_msg="no     (--enable-zip)"
+    ulib_memp_msg="no     (--enable-memory-pool)"
+# ulib_manual_msg="no     (--enable-manual)"
+
+# Add --{enable,disable,with,without}-feature options.
+AC_COMPILATION_OPTIONS
+
+# SECTION 3: check for programs <--- moved before section 2
+
+AC_MSG_CHECKING(if you want to enable use of bison/yacc)
+AC_ARG_WITH(parser,
+	[  --with-parser           use parser generator bison/yacc],
+	[use_parser=$withval],
+	[use_parser=no])
+AC_MSG_RESULT($use_parser)
+if test "$use_parser" = "yes" ; then
+	AC_PROG_YACC
+	AC_PROG_LEX
+	# Just additional warning checks, since AC_PROG just sets 'yacc' even without one present
+   AC_CHECK_PROGS(XYACC,$YACC bison yacc,none)
+   if test "$XYACC" = "none"
+   then
+    	AC_MSG_ERROR([no suitable bison/yacc found. Please install the 'bison' package.])
+   fi
+   AC_CHECK_PROGS(XLEX,$LEX flex lex,none)
+   if test "$XLEX" = "none"
+   then
+    	AC_MSG_ERROR([no suitable lex found. Please install the 'flex' package.])
+   fi
+	ulib_parser_msg="enabled"
+	flex_version=$(flex --version | head -n 1)
+	bison_version=$(bison --version | head -n 1)
+	AM_CONDITIONAL(USE_PARSER, true)
+	AC_DEFINE(USE_PARSER, 1, [Define if use parser generator bison/yacc])
+else
+	flex_version="None"
+	bison_version="None"
+	AM_CONDITIONAL(USE_PARSER, false)
+fi
+
+AC_MSG_CHECKING(if you want to use distcc)
+AC_ARG_WITH(distcc,
+	[  --with-distcc           use distcc],
+	[use_distcc=$withval],
+	[use_distcc=no])
+AC_MSG_RESULT($use_distcc)
+
+# SECTION 4: checks for libraries
+
+AC_CHECK_LIB(dl,dlopen)
+AC_CHECK_LIB(nsl,inet_ntop)
+AC_CHECK_LIB(pthread,sem_init)
+AC_CHECK_LIB(posix4,nanosleep)
+AC_CHECK_LIB(socket,socketpair)
+
+#AC_CHECK_LIB(fcgi, FCGX_Accept, FCGI_LIBS="-lfcgi++ -lfcgi", AC_MSG_ERROR([FastCGI libraries not found]))
+#AC_SUBST(FCGI_LIBS)
+
+libz_version="None"
+pcre_version="None"
+ldap_version="None"
+expat_version="None"
+libssh_version="None"
+libcurl_version="None"
+openssl_version="None"
+libmagic_version="None"
+libmysql_version="None"
+libuuid_version="None"
+libevent_version="None"
+libxml2_version="None"
+
+AC_CHECK_PACKAGE
+AC_SUBST(PRG_LDFLAGS)
+
+AM_CONDITIONAL(SSL, 		 test "$HAVE_SSL"		  = "yes")
+AM_CONDITIONAL(SSH, 		 test "$HAVE_SSH"		  = "yes")
+AM_CONDITIONAL(SSL_TS,	 test "$HAVE_SSL_TS"	  = "yes")
+AM_CONDITIONAL(PCRE, 	 test "$HAVE_PCRE"	  = "yes")
+AM_CONDITIONAL(LDAP, 	 test "$HAVE_LDAP"	  = "yes")
+AM_CONDITIONAL(CURL, 	 test "$HAVE_CURL"	  = "yes")
+AM_CONDITIONAL(LIBZ, 	 test "$HAVE_LIBZ"	  = "yes")
+AM_CONDITIONAL(EXPAT, 	 test "$HAVE_EXPAT"	  = "yes")
+AM_CONDITIONAL(MAGIC, 	 test "$HAVE_MAGIC"	  = "yes")
+AM_CONDITIONAL(MYSQL, 	 test "$HAVE_MYSQL"	  = "yes")
+AM_CONDITIONAL(LIBEVENT, test "$HAVE_LIBEVENT" = "yes")
+AM_CONDITIONAL(LIBXML2,  test "$HAVE_LIBXML2"  = "yes")
+
+AC_DEFINE_UNQUOTED(_FLEX_VERSION,  	 "${flex_version}",     [Flex version])
+AC_DEFINE_UNQUOTED(_BISON_VERSION, 	 "${bison_version}",    [Bison version])
+AC_DEFINE_UNQUOTED(_PCRE_VERSION, 	 "${pcre_version}", 	   [PCRE - Perl compatible regular expressions version])
+AC_DEFINE_UNQUOTED(_LDAP_VERSION, 	 "${ldap_version}", 	   [Ldap version])
+AC_DEFINE_UNQUOTED(_EXPAT_VERSION, 	 "${expat_version}",    [Expat version])
+AC_DEFINE_UNQUOTED(_LIBZ_VERSION,  	 "${libz_version}", 	   [libz - general purpose compression library version])
+AC_DEFINE_UNQUOTED(_LIBSSH_VERSION,  "${libssh_version}",   [libSSH version])
+AC_DEFINE_UNQUOTED(_OPENSSL_VERSION, "${openssl_version}",  [OpenSSL version])
+AC_DEFINE_UNQUOTED(_CURL_VERSION, 	 "${libcurl_version}",  [libcURL - multiprotocol file transfer library version])
+AC_DEFINE_UNQUOTED(_MAGIC_VERSION, 	 "${libmagic_version}", [libmagic - magic number recognition library version])
+AC_DEFINE_UNQUOTED(_MYSQL_VERSION, 	 "${libmysql_version}", [libmysql - MySQL Database System library version])
+AC_DEFINE_UNQUOTED(_LIBUUID_VERSION, "${libuuid_version}",  [libuuid - version library to create a new UUID value])
+AC_DEFINE_UNQUOTED(_LIBEVENT_VERSION,"${libevent_version}", [libevent - event notification library version])
+AC_DEFINE_UNQUOTED(_LIBXML2_VERSION, "${libxml2_version}",  [libxml2 - Version 2 of the library to manipulate XML files])
+ 
+LIBS_SAVE=${LIBS}
+
+if test "$HAVE_LIBZ" = "yes"; then
+	AC_CHECK_LIB(z,crc32)
+	ulib_libz_msg="enabled"
+fi
+
+if test "$HAVE_PCRE" = "yes"; then
+	ulib_pcre_msg="enabled"
+fi
+
+if test "$HAVE_CURL" = "yes"; then
+	ulib_curl_msg="enabled"
+fi
+
+if test "$HAVE_LDAP" = "yes"; then
+	ulib_ldap_msg="enabled"
+fi
+
+if test "$HAVE_EXPAT" = "yes"; then
+	ulib_expat_msg="enabled"
+fi
+
+if test "$HAVE_MAGIC" = "yes"; then
+	ulib_magic_msg="enabled"
+fi
+
+if test "$HAVE_SSL" = "yes"; then
+#	AC_CHECK_LIB(crypto,OPENSSL_config) // conflit with ssh library...
+   ulib_ssl_msg="enabled"
+	case "$target_os" in
+		mingw32*)
+		LIBS_SAVE="${LIBS_SAVE} -lwsock32 -lgdi32 -lz";
+		;;
+		cygwin*)
+		;;
+	esac
+else
+	AC_DEFINE(U_NO_SSL, 1, [Define if we don't use openssl])
+fi
+
+if test "$HAVE_SSH" = "yes"; then
+   ulib_ssh_msg="enabled"
+fi
+
+if test "$HAVE_MYSQL" = "yes"; then
+   ulib_mysql_msg="enabled"
+fi
+
+if test "$HAVE_LIBUUID" = "yes"; then
+   ulib_libuuid_msg="enabled"
+fi
+
+if test "$HAVE_LIBEVENT" = "yes"; then
+   ulib_libevent_msg="enabled"
+fi
+
+if test "$HAVE_LIBXML2" = "yes"; then
+   ulib_libxml2_msg="enabled"
+fi
+
+LIBS=${LIBS_SAVE}
+
+# SECTION 5: checks for header files
+
+AC_HEADER_STDC
+AC_HEADER_TIME
+AC_HEADER_MAJOR
+AC_HEADER_DIRENT
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS([assert.h endian.h execinfo.h ndir.h semaphore.h string.h netpacket/packet.h sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h \
+						sysexits.h termios.h streambuf.h linux/netfilter_ipv4/ipt_ACCOUNT.h])
+
+# SECTION 6: Checks for typedefs
+
+if test "$target_os" = "cygwin"; then
+	AC_DEFINE(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])
+else
+	AC_CHECK_TYPE(siginfo_t, [AC_DEFINE_UNQUOTED(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])], [], [#include <signal.h>])
+fi
+
+AC_TYPE_SIGNAL
+
+# SECTION 7: checks for structures.
+
+AC_STRUCT_TM
+AC_HEADER_STAT
+AC_MEMBER_SI_ADDR
+AC_STRUCT_ST_BLOCKS
+
+# for miniLZO
+AC_C_CONST
+AC_CHECK_TYPE(ptrdiff_t,long)
+AC_TYPE_SIZE_T
+AC_CHECK_SIZEOF(unsigned char)
+AC_CHECK_SIZEOF(short)
+AC_CHECK_SIZEOF(int)
+AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(size_t)
+AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(__int64)
+AC_CHECK_SIZEOF(void *)
+AC_CHECK_SIZEOF(ptrdiff_t)
+AC_CHECK_FUNCS([memcmp memcpy memmove memset memrchr])
+
+AC_CHECK_TYPE([struct iphdr],[AC_DEFINE(HAVE_IPHDR, 1, [struct iphdr needed for IPv6 support])],[],
+[#include <netinet/ip.h>])
+
+AC_CHECK_MEMBER(struct dirent.d_reclen,AC_DEFINE(DIRENT_HAVE_D_RECLEN,1,[define if you have d_reclen in struct dirent]),,
+[ #include <dirent.h> ])
+AC_CHECK_MEMBER(struct dirent.d_namlen,AC_DEFINE(DIRENT_HAVE_D_NAMLEN,1,[define if you have d_namlen in struct dirent]),,
+[ #include <dirent.h> ])
+
+# SECTION 8: checks for variables
+
+# SECTION 9: checks for compiler characteristics
+
+# SECTION 10: checks for library functions
+
+AC_FUNC_NANOSLEEP
+AC_FUNC_CLOSEDIR_VOID
+# Check for functions in one big call, to reduce the size of configure
+AC_CHECK_FUNCS([daemon fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem mremap pread sendfile strndup mkdtemp strptime strtof \
+					 strtoull strtold gmtime_r timegm strerror strsignal])
+
+AM_CONDITIONAL(PREAD,		 test "$ac_cv_func_pread"				= "yes")
+AM_CONDITIONAL(DAEMON,		 test "$ac_cv_func_daemon"				= "yes")
+AM_CONDITIONAL(TIMEGM,		 test "$ac_cv_func_timegm"				= "yes")
+AM_CONDITIONAL(MREMAP,      test "$ac_cv_func_mremap"				= "yes")
+AM_CONDITIONAL(MEMRCHR,     test "$ac_cv_func_memrchr"		   = "yes")
+AM_CONDITIONAL(STRNDUP,     test "$ac_cv_func_strndup"		   = "yes")
+AM_CONDITIONAL(MKDTEMP,     test "$ac_cv_func_mkdtemp"		   = "yes")
+AM_CONDITIONAL(FNMATCH,		 test "$ac_cv_func_fnmatch"		   = "yes")
+AM_CONDITIONAL(STRPTIME,    test "$ac_cv_func_strptime"		   = "yes")
+AM_CONDITIONAL(GMTIME_R,	 test "$ac_cv_func_gmtime_r"		   = "yes")
+AM_CONDITIONAL(SENDFILE,    test "$ac_cv_func_sendfile"		   = "yes")
+AM_CONDITIONAL(FALLOCATE,	 test "$ac_cv_func_fallocate"			= "yes")
+AM_CONDITIONAL(FALLOCATE64, test "$ac_cv_func_fallocate64"		= "yes")
+AM_CONDITIONAL(NANOSLEEP,   test "$ac_cv_func_nanosleep"			= "yes")
+AM_CONDITIONAL(SEMAPHORE,   test "$ac_cv_lib_pthread_sem_init" = "yes")
+AM_CONDITIONAL(GETOPT_LONG, test "$ac_cv_func_getopt_long"	   = "yes")
+
+# SECTION 11: checks for function characteristics
+
+if test "$ost_cv_ipv6" = "yes"; then
+	ulib_ipv6_msg="enabled"
+	AC_DEFINE(HAVE_IPV6, 1, [Define if enable ipv6 support])
+fi
+
+# SECTION 12: checks for type characteristics
+
+# SECTION 13: checks for system services
+
+if test "$cross_compiling" != "yes"; then
+	AC_TRY_FALLOCATE
+	AM_SOCKET_SO_RCVTIMEO
+fi
+
+# SECTION 14: checks for aggregated features
+
+# SECTION 15: Final checks
+
+if test "$enable_debug" = "yes"; then
+	ULIB="ulib_g"
+   ulib_dbg_msg="enabled"
+	AM_CONDITIONAL(DEBUG, true)
+else
+	ULIB="ulib"
+	AM_CONDITIONAL(DEBUG, false)
+fi
+
+AC_SUBST(ULIB)
+
+if test "$enable_memory_pool" = "yes"; then
+   ulib_memp_msg="enabled"
+	AM_CONDITIONAL(MEMORY_POOL, true)
+	if test "$enable_overload_new_delete" = "yes"; then
+		AC_DEFINE(U_OVERLOAD_NEW_DELETE, 1, [enable use of our versions of the memory operators])
+	fi
+else
+	AM_CONDITIONAL(MEMORY_POOL, false)
+fi
+
+if test "$enable_zip" = "yes"; then
+	ulib_zip_msg="enabled"
+	AC_DEFINE(HAVE_ZIP, 1, [Define if enable ZIP support])
+	AM_CONDITIONAL(ZIP,  true)
+else
+	AM_CONDITIONAL(ZIP, false)
+fi
+
+if test "$enable_LFS" = "yes"; then
+	ulib_LFS_msg="enabled"
+	CPPFLAGS="${CPPFLAGS} -D_FILE_OFFSET_BITS=64"
+	AC_DEFINE(SIZEOF_OFF_T, 8, [Define if enable LFS support])
+else
+	AC_CHECK_SIZEOF(off_t)
+fi
+
+if test "$enable_pch" = "yes" ; then
+	DIR=`pwd`
+	ulib_pch_msg="enabled"
+	CPPFLAGS="-include $DIR/include/ulib/all.h -Winvalid-pch ${CPPFLAGS}"
+fi
+
+if test "${enable_shared}" != "yes"; then
+	enable_final="yes"
+	AM_CONDITIONAL(PLUGIN, false)
+else
+	case "$target_os" in
+		mingw32*)
+		enable_final="yes"
+		AC_DEFINE(HAVE_MODULES, [1], [support for plugin modules])
+		AM_CONDITIONAL(PLUGIN, true)
+		;;
+		*)
+		AM_CONDITIONAL(PLUGIN, test "$ost_cv_dynloader" = "yes")
+		;;
+	esac
+fi
+
+if test "${target_os}" = "mingw32"; then
+	LIBS="${LIBS} -lwinmm -lws2_32"
+fi
+
+if test "$enable_final" = "yes"; then
+	ulib_final_msg="enabled"
+	AM_CONDITIONAL(FINAL, true)
+else
+	AM_CONDITIONAL(FINAL, false)
+fi
+
+# if gcc compiler add values to *FLAGS...
+
+if test "$GCC" = "yes" ; then
+	AC_CC_TRY_FLAG
+
+	gcc_version_raw=`echo ${gcc_version} | cut -d' ' -f3`
+	# NB: this is the only version of gcc compiler that work with...
+	AM_CONDITIONAL(MOD_SHIB, test "$enable_debug" = "yes" && test "$gcc_version_raw" = "4.2.2")
+
+	# Also to turn various gcc/glibc-specific preprocessor checks
+	MAYBE_FLAGS="$MAYBE_FLAGS -finline -flto \
+		-findirect-inlining -ftree-switch-conversion -floop-interchange -floop-strip-mine -floop-block \
+		-Wstrict-aliasing=2 -Wp,-D_FORTIFY_SOURCE=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op \
+		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wno-format -Wno-format-extra-args -Wno-unused-result"
+
+#	-fno-common
+#  -Wno-missing-field-initializers -Wno-attributes -Wno-long-long
+
+	if test "$enable_debug" = "yes"; then
+		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations"
+		if test "$HAVE_SSL" = "yes"; then
+			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-parameter"
+		fi
+	else
+		MAYBE_FLAGS="$MAYBE_FLAGS -Winline -Wno-unused-parameter -Wno-unused-variable"
+	fi
+
+	if test "$use_distcc" != "yes" ; then
+		MAYBE_FLAGS="$MAYBE_FLAGS -mtune=native" # NB: distcc don't work with this...
+	fi
+
+	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
+		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition"
+
+	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti \
+		-Wno-deprecated"
+
+	AC_CACHE_CHECK([for gcc supported flags], ulib_cv_flags, [
+		echo
+		FLAGS=""
+		CC_FLAGS=""
+		CXX_FLAGS=""
+
+		# Some warning options are not supported by all versions of gcc, so test all desired options against the current compiler.
+		# Note that there are some order dependencies here. Specifically, an option that disables a warning will have no net effect
+		# if a later option then enables that warnings, (perhaps implicitly). So we put some grouped options (-Wall and -Wextra) up
+		# front and the -Wno options last.
+
+		# ------------------------------------------------
+		# Set the test language as C
+		# ------------------------------------------------
+		AC_LANG_C
+
+		for W in $CC_MAYBE_FLAGS; do
+			AC_CC_TRY_FLAG([$W], [CC_FLAGS="$CC_FLAGS $W"])
+		done
+		ulib_cv_CC_flags=$CC_FLAGS
+		# ------------------------------------------------
+
+		# reset the test language as C++
+
+		AC_LANG_CPLUSPLUS
+
+		for W in $MAYBE_FLAGS; do
+			AC_CC_TRY_FLAG([$W], [FLAGS="$FLAGS $W"])
+		done
+		ulib_cv_flags=$FLAGS
+
+		for W in $CXX_MAYBE_FLAGS; do
+			AC_CC_TRY_FLAG([$W], [CXX_FLAGS="$CXX_FLAGS $W"])
+		done
+		ulib_cv_CXX_flags=$CXX_FLAGS
+
+		AC_MSG_CHECKING([which gcc flags were supported])
+	])
+
+	# NB: "-g -O2" e' gia' inserito in configure...
+	CPPFLAGS="${CPPFLAGS} -pipe -D_GNU_SOURCE"
+
+	if test "$enable_profiling" != "yes"; then
+		CPPFLAGS="${CPPFLAGS} -fomit-frame-pointer"
+	fi
+
+	CFLAGS="${CFLAGS} $ulib_cv_CC_flags"
+	CPPFLAGS="${CPPFLAGS} $ulib_cv_flags"
+
+	if test "$ac_cv_cxx_visibility_inlines_hidden_flag" = "yes" ; then
+		case "$target_os" in
+			mingw32*)
+			;;
+			*)
+			AC_DEFINE(HAVE_GNUC_VISIBILTY, 1, [enable gcc visibility features])
+			CXXFLAGS="${CXXFLAGS} -fvisibility=hidden -fvisibility-inlines-hidden"
+			;;
+		esac
+	fi
+
+	CXXFLAGS="${CXXFLAGS} $ulib_cv_CXX_flags"
+fi
+
+if test "$with_gnu_ld" = "yes"; then
+	LDFLAGS="${LDFLAGS} -Wl,-O1"
+	case "$target_os" in
+		mingw32*)
+		LDFLAGS="${LDFLAGS} -Wl,--enable-auto-import"
+		;;
+		cygwin*)
+		;;
+		solaris*)
+		;;
+		*)
+		LDFLAGS="${LDFLAGS} -Wl,-z,now"
+		if test "$enable_new_ldflags" = "yes"; then
+			LDFLAGS="${LDFLAGS} -Wl,--enable-new-dtags -Wl,--as-needed"
+		fi
+		;;
+	esac
+fi
+
+# manauale
+
+AC_PATH_PROG(DOXYGEN, doxygen, no)
+AM_CONDITIONAL(DOXY, test "$DOXYGEN" != "no")
+AC_SUBST(DOXYGEN)
+
+# sostituzioni
+
+ULIB_LIBS="${LIBS}"
+ULIB_CFLAGS="${CFLAGS}"
+ULIB_LDFLAGS="${LDFLAGS}"
+ULIB_CXXFLAGS="${CXXFLAGS}"
+ULIB_CPPFLAGS="${CPPFLAGS}"
+
+AC_SUBST(ULIB_LIBS)
+AC_SUBST(ULIB_CFLAGS)
+AC_SUBST(ULIB_LDFLAGS)
+AC_SUBST(ULIB_CXXFLAGS)
+AC_SUBST(ULIB_CPPFLAGS)
+
+AC_DEFINE_UNQUOTED(LIBS_VAR, 		"${LIBS}", 		[Libraries])
+AC_DEFINE_UNQUOTED(CFLAGS_VAR,	"${CFLAGS}",	[C Flags])
+AC_DEFINE_UNQUOTED(LDFLAGS_VAR, 	"${LDFLAGS}", 	[Linker Flags])
+AC_DEFINE_UNQUOTED(CXXFLAGS_VAR, "${CXXFLAGS}", [C++ Flags])
+AC_DEFINE_UNQUOTED(CPPFLAGS_VAR, "${CPPFLAGS}", [Preprocessor Flags])
+
+# rpm spec
+
+RPM_REQUIRE=rpmpkgreq.lst
+AC_SUBST_FILE([RPM_REQUIRE])
+
+# --enable-new-ldflags
+#
+# --with-parser    use parser generator bison/yacc
+# --with-ssh       use system      SSH library - [will check /usr /usr/local]
+# --with-curl      use system     cURL library - [will check /usr /usr/local]
+# --with-ldap      use system openLDAP library - [will check /usr /usr/local]
+# --with-mysql     use system    MySQL library - [will check /usr /usr/local]
+# --with-libevent  use system libevent library - [will check /usr /usr/local]
+# --with-libxml2   use system  libxml2 library - [will check /usr /usr/local]
+
+RPM_CONFIGURE="--enable-static --enable-shared --enable-final --with-ssl --with-expat --with-magic --with-pcre --with-libuuid --with-libz --enable-zip"
+AC_SUBST([RPM_CONFIGURE])
+
+# Collect building environment
+AC_COMPILATION_ENVIRONMENT
+
+if test "$prefix" = "NONE"; then
+	prefix="/usr/local"
+	pkglibexecdir="/usr/local/libexec/ulib"
+else
+	pkglibexecdir="$prefix/libexec/ulib"
+fi
+
+echo \
+"------------------------------------------------------------------------
+configure: Configured to build src/ulib/libulib:
+
+          ULib version: ${VERSION}
+            Host setup: ${host}
+        Install prefix: ${prefix}
+        Install plugin: ${pkglibexecdir}
+      Operating System: $os_version
+          C++ Compiler: ${CXX} ( $gcc_version )
+             C   Flags: ${CFLAGS}
+             C++ Flags: ${CXXFLAGS}
+    Preprocessor Flags: ${CPPFLAGS}
+          Linker Flags: ${LDFLAGS}
+                Linker: ${LD} ( $ld_version )
+             Libraries: ${LIBS}
+  Standard C   library: ${libc_version}
+  Standard C++ library: ${stdgpp_version}
+
+           LFS support: ${ulib_LFS_msg}
+         debug support: ${ulib_dbg_msg}
+           zip support: ${ulib_zip_msg}
+      final build mode: ${ulib_final_msg}
+    precompiled header: ${ulib_pch_msg}
+   memory pool support: ${ulib_memp_msg}
+          ipv6 support: ${ulib_ipv6_msg}
+          LIBZ support: ${ulib_libz_msg}
+          LIBZ library: ${libz_version}
+          PCRE support: ${ulib_pcre_msg}
+          PCRE library: ${pcre_version}
+           SSL support: ${ulib_ssl_msg}
+           SSL library: ${openssl_version}
+           SSH support: ${ulib_ssh_msg}
+           SSH library: ${libssh_version}
+          LDAP support: ${ulib_ldap_msg}
+          LDAP library: ${ldap_version}
+          cURL support: ${ulib_curl_msg}
+          cURL library: ${libcurl_version}
+           XML support: ${ulib_expat_msg}
+         Expat library: ${expat_version}
+         MAGIC support: ${ulib_magic_msg}
+         MAGIC library: ${libmagic_version}
+         MySQL support: ${ulib_mysql_msg}
+         MySQL library: ${libmysql_version}
+       libuuid support: ${ulib_libuuid_msg}
+       libuuid library: ${libuuid_version}
+      libevent support: ${ulib_libevent_msg}
+      libevent library: ${libevent_version}
+       libxml2 support: ${ulib_libxml2_msg}
+       libxml2 library: ${libxml2_version}
+      LEX/YACC support: ${ulib_parser_msg}
+      Lexical analyzer: ${LEX} ( ${flex_version} )
+      Parser generator: ${YACC} ( ${bison_version} )
+            Build ULib: Shared=${enable_shared}, Static=${enable_static}
+
+See include/ulib/internal/config.h for further configuration information.
+------------------------------------------------------------------------"
+#      Built-in manual: ${ulib_manual_msg}
+
+# Verify the integrity of the current configuration.
+
+# Check for availablity of "old style" C++ strstream header
+AC_CHECK_HEADERS([strstream.h])
+
+# Determine kind of C++ iostream support
+AC_CXX_OLD_IOSTREAM
+
+# SECTION 16: `AC_OUTPUT([FILE...])' read Makefile.in and write Makefile
+
+AC_OUTPUT(Makefile \
+			 rpm.sh \
+			 ULib.spec \
+			 m4/Makefile \
+			 doc/Makefile \
+			 src/Makefile \
+			 include/Makefile \
+			 contrib/Makefile \
+			 src/ulib/Makefile \
+			 src/ulib/ULib.rc \
+			 src/ulib/ULib.pc \
+			 src/ulib/plugin/Makefile \
+			 src/ulib/plugin/usp/Makefile \
+			 src/ulib/plugin/mod_shib/Makefile \
+			 include/ulib/Makefile \
+			 contrib/HCSP/Makefile \
+			 contrib/RSIGN/Makefile \
+			 contrib/signer/Makefile \
+			 examples/Makefile \
+			 examples/IR/Makefile \
+			 examples/cgi/Makefile \
+			 examples/csp/Makefile \
+			 examples/lcsp/Makefile \
+			 examples/rsign/Makefile \
+			 examples/XAdES/Makefile \
+			 examples/xml2txt/Makefile \
+			 examples/uclient/Makefile \
+			 examples/userver/Makefile \
+			 examples/PEC_log/Makefile \
+			 examples/workflow/Makefile \
+			 examples/doc_parse/Makefile \
+			 examples/lrp_session/Makefile \
+			 examples/http_header/Makefile \
+			 examples/test_manager/Makefile \
+			 examples/doc_classifier/Makefile \
+			 examples/form_completion/Makefile \
+			 examples/simple_client_server/Makefile \
+			 examples/download_accelerator/Makefile \
+			 examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec \
+			 examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec \
+			 examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec  examples/PEC_log/PEC_log.spec \
+			 examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec \
+			 tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile)
+
+#			 examples/parser/Makefile \
+#			 src/ulib/base/Makefile src/ulib/debug/Makefile \
+#			 ulib-config ,[chmod a+x ulib-config] )
+
+# Common C++
+cd include/ulib/internal
+mv config.h config.tmp
+sed -e s!"@thrprefix@/thread.h"!"thread.h"! < config.tmp > config.h
+rm -f config.tmp
+cd ../../..
+
+echo
+echo "***"
+
+CPPFLAGS="-DHAVE_CONFIG_H -I${srcdir}/include ${CPPFLAGS}"
+
+if test "$enable_pch" = "yes" ; then
+	AC_MSG_CHECKING(build precompiled headers for ${srcdir}/include/ulib/all.h)
+	echo "rm -f ${srcdir}/include/ulib/all.h.gch" >  ${srcdir}/PCH.cmd
+	echo "${CXX} ${CPPFLAGS} ${CXXFLAGS} -c ${srcdir}/include/ulib/all.h -o ${srcdir}/include/ulib/all.h.gch" >> ${srcdir}/PCH.cmd
+	rm -f ${srcdir}/include/ulib/all.h.gch
+	${CXX} ${CPPFLAGS} ${CXXFLAGS} -c ${srcdir}/include/ulib/all.h -o ${srcdir}/include/ulib/all.h.gch
+	test -f ${srcdir}/include/ulib/all.h.gch && AC_MSG_RESULT(OK)
+fi
+
+AC_CACHE_CHECK([if generated configuration is usable], ac_cv_configuration_is_usable,
+[AC_TRY_COMPILE([
+#include "src/ulib/internal/common.cpp"
+], [int a = 0; a += 1;], [ac_cv_configuration_is_usable="yes"], [ac_cv_configuration_is_usable="no"])
+])
+
+if test "$ac_cv_configuration_is_usable" = "no" ; then
+	# It appears that ulib/internal/common.cpp not compiled. If it didn't compile then there would be no chance that the rest would compile.
+	AC_MSG_ERROR([The generated configuration appears to be unusable.
+	Please verify that your system path and environment variables are correct.])
+	exit 1
+fi
+
+echo
+echo "You are now ready to build ULib"
+echo "Enter the following command: make && make install"
+echo "***"

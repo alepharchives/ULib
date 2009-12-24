@@ -1,0 +1,14 @@
+## Makefile.am for examples/xml2txt
+
+EXTRA_DIST = *.spec*
+
+DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
+
+xml2txt_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la
+xml2txt_SOURCES = xml2txt.cpp
+xml2txt_LDFLAGS = $(PRG_LDFLAGS)
+
+noinst_PROGRAMS = xml2txt
+
+clean-local:
+	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out

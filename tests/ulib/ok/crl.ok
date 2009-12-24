@@ -1,0 +1,23 @@
+{ Certificate Revocation List (CRL):
+        Version 1 (0x0)
+        Signature Algorithm: md5WithRSAEncryption
+        Issuer: /C=IT/ST=Some-State/O=Unirel spa/CN=stefano
+        Last Update: Jun 14 16:10:15 2007 GMT
+        Next Update: May 27 16:10:15 2018 GMT
+No Revoked Certificates.
+    Signature Algorithm: md5WithRSAEncryption
+        38:d2:d6:e6:12:2b:a4:98:90:bd:9e:70:d2:4e:88:11:ba:b3:
+        fe:06:89:45:67:a9:52:8b:0b:81:1a:6a:ee:ba:da:54:58:9f:
+        c9:9c:81:f5:5a:da:f7:d9:ab:88:2b:96:61:fc:00:4e:aa:c7:
+        2b:c3:d0:e2:bb:a5:26:99:a7:97:24:12:9c:ab:2a:ac:93:15:
+        fa:d9:53:dc:f0:21:95:10:e3:f5:e4:f6:47:88:22:aa:d1:09:
+        02:19:67:6e:1c:d1:25:cb:1a:02:b3:6a:78:9b:a3:5f:ce:af:
+        47:b7:17:9a:87:99:9c:64:a0:b6:b5:7d:f8:c7:ca:09:d7:63:
+        d7:34
+ }
+1
+/C=IT/ST=Some-State/O=Unirel spa/CN=stefano
+1
+0
+070614161015Z
+180527161015Z

@@ -1,0 +1,232 @@
+HTTP/1.0 505 HTTP Version Not Supported
+Server: ULib/1.0
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 501 Not Implemented
+Server: ULib/1.0
+Connection: close
+Allow: GET, HEAD, POST
+Content-Length: 0
+
+HTTP/1.0 411 Length Required
+Server: ULib/1.0
+Connection: close
+Content-Length: 0
+
+HTTP/1.0 400 Bad Request
+Server: ULib/1.0
+Connection: close
+Content-Length: 272
+Content-Type: text/html; charset=iso-8859-1
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>400 Bad Request</title>
+</head><body>
+<h1>Bad Request</h1>
+<p>Your browser sent a request that this server could not understand.<br />
+</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.0 404 Not Found
+Date: Thu, 24 Dec 2009 11:13:46 GMT
+Server: ULib/1.0
+Connection: close
+Content-Type: text/html; charset=iso-8859-1
+Content-Length: 364
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>The requested URL /xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx was not found on this server.<br />
+</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.0 403 Forbidden
+Date: Thu, 24 Dec 2009 11:13:47 GMT
+Server: ULib/1.0
+Connection: close
+Content-Type: text/html; charset=iso-8859-1
+Content-Length: 269
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>403 Forbidden</title>
+</head><body>
+<h1>Forbidden</h1>
+<p>You don't have permission to access /../../../linux on this server.<br />
+</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.0 500 Internal Server Error
+Server: ULib/1.0
+Connection: close
+Content-Length: 565
+Content-Type: text/html; charset=iso-8859-1
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>500 Internal Server Error</title>
+</head><body>
+<h1>Internal Server Error</h1>
+<p>The server encountered an internal error or misconfiguration and was unable to complete your request.</p>
+<p>Please contact the server administrator, and inform them of the time the error occurred, and anything you might have done that may have caused the error.</p>
+<p>More information about this error may be available in the server error log.</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.0 401 Unauthorized
+Server: ULib/1.0
+Connection: close
+WWW-Authenticate: Basic realm="Protected Area"
+
+HTTP/1.1 200 OK
+Server: ULib/1.0
+Date: Thu, 24 Dec 2009 11:13:54 GMT
+Last-Modified: Fri, 20 Feb 2009 14:50:49 GMT
+Content-Type: text/plain; charset=us-ascii
+Content-Length: 63
+
+this is the web_server testsuite inp/http/data/index.html file
+HTTP/1.1 206 Partial Content
+Server: ULib/1.0
+Date: Thu, 24 Dec 2009 11:13:54 GMT
+Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
+Content-Range: bytes 0-63/64
+Content-Type: text/plain; charset=us-ascii
+Content-Length: 64
+
+123456781234567
+345678903456789
+234567892345678
+012345670123456
+HTTP/1.1 206 Partial Content
+Server: ULib/1.0
+Date: Thu, 24 Dec 2009 11:13:54 GMT
+Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
+Content-Range: bytes 0-31/64
+Content-Type: text/plain; charset=us-ascii
+Content-Length: 32
+
+123456781234567
+345678903456789
+HTTP/1.1 206 Partial Content
+Server: ULib/1.0
+Date: Thu, 24 Dec 2009 11:13:54 GMT
+Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
+Content-Range: bytes 32-63/64
+Content-Type: text/plain; charset=us-ascii
+Content-Length: 32
+
+234567892345678
+012345670123456
+HTTP/1.1 200 OK
+Server: ULib/1.0
+Date: Thu, 24 Dec 2009 11:13:54 GMT
+Last-Modified: Thu, 24 Dec 2009 11:13:54 GMT
+Content-Type: application/octet-stream
+Content-Length: 0
+
+HTTP/1.1 200 OK
+Server: ULib/1.0
+Date: Thu, 24 Dec 2009 11:13:54 GMT
+Last-Modified: Wed, 23 Dec 2009 19:13:44 GMT
+Content-Type: text/html; charset=iso-8859-1
+Content-Length: 474
+
+HTTP/1.1 200 OK
+Server: ULib/1.0
+Date: Thu, 24 Dec 2009 11:13:54 GMT
+Last-Modified: Wed, 23 Dec 2009 19:13:44 GMT
+Content-Type: text/html; charset=iso-8859-1
+Content-Length: 474
+
+<html><head><title></title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/.."><img align="absbottom" border="0" src="/icons/menu.gif"> Up one level</a></td><td></td><td></td></tr><tr><td><a href="/tmp/c"><img align="absbottom" border="0" src="/icons/gopher-unknown.gif"> c</a></td><td align="right" valign="bottom">0 KB</td><td align="right" valign="bottom">23/12/09 18:53:17</td></tr></table><hr><address>ULib Server</address>
+</body></html>HTTP/1.1 304 Not Modified
+Server: ULib/1.0
+Date: Thu, 24 Dec 2009 11:13:54 GMT
+Content-Length: 0
+
+HTTP/1.1 500 Internal Server Error
+Server: ULib/1.0
+Connection: close
+Date: Thu, 24 Dec 2009 11:13:54 GMT
+Content-Length: 565
+Content-Type: text/html; charset=iso-8859-1
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>500 Internal Server Error</title>
+</head><body>
+<h1>Internal Server Error</h1>
+<p>The server encountered an internal error or misconfiguration and was unable to complete your request.</p>
+<p>Please contact the server administrator, and inform them of the time the error occurred, and anything you might have done that may have caused the error.</p>
+<p>More information about this error may be available in the server error log.</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+HTTP/1.1 302 Found
+Server: ULib/1.0
+Connection: close
+Date: Thu, 24 Dec 2009 11:14:00 GMT
+Set-Cookie: ulib_sid=Steve Johnson&1261739640&173e5804b55b89024419645affcf1713; expires=Fri, 25 Dec 2009 11:14:00 GMT
+Location: http://localhost:4433/cgi-bin/postlogin.sh?user=Steve Johnson
+Content-Type: text/html; charset=iso-8859-1
+Content-Length: 298
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>302 Found</title>
+</head><body>
+<h1>Found</h1>
+<p>The document has moved <a href="http://localhost:4433/cgi-bin/postlogin.sh?user=Steve Johnson">here</a>.<br />
+</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title></title>
+</head>
+<body>
+  <table align="center" class="table">
+    <tr>
+      <td class="table_header" colspan="2"><b>Your file have been uploaded!</b></td>
+    </tr>
+    <tr>
+      <td class="table_body"><br>
+      <b>File #1:</b> <a href="/uploads/vuoto.txt" target="_blank">/uploads/vuoto.txt</a><br>
+      <br>
+      <br>
+      <a href="/cgi-bin/uploader.sh">Go Back</a><br></td>
+    </tr>
+  </table>
+</body>
+</html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title></title>
+</head>
+<body>
+  <table align="center" class="table">
+    <tr>
+      <td class="table_header" colspan="2"><b>Your file have been uploaded!</b></td>
+    </tr>
+    <tr>
+      <td class="table_body"><br>
+      <b>File #1:</b> <a href="/uploads/operazione.xml" target="_blank">/uploads/operazione.xml</a><br>
+      <br>
+      <br>
+      <a href="/cgi-bin/uploader.sh">Go Back</a><br></td>
+    </tr>
+  </table>
+</body>
+</html>

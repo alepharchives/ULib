@@ -1,0 +1,58 @@
+## Makefile.am for examples/IR
+
+DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
+
+EXTRA_DIST = IR.h posting.h cquery.h *.spec*
+
+ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
+
+gendoc_LDADD   	= $(ulib_la)
+gendoc_SOURCES 	= gendoc.cpp
+gendoc_LDFLAGS 	= $(PRG_LDFLAGS)
+
+index1_LDADD      = libIR.la libposting.la $(ulib_la)
+index1_SOURCES    = index1.cpp
+index1_LDFLAGS    = $(PRG_LDFLAGS)
+
+index2_LDADD      = libIR.la libposting.la $(ulib_la)
+index2_SOURCES    = index2.cpp
+index2_LDFLAGS    = $(PRG_LDFLAGS)
+
+db_dump_LDADD     = libIR.la libposting.la $(ulib_la)
+db_dump_SOURCES   = db_dump.cpp
+db_dump_LDFLAGS   = $(PRG_LDFLAGS)
+
+db_check_LDADD    = libIR.la libposting.la $(ulib_la)
+db_check_SOURCES  = db_check.cpp
+db_check_LDFLAGS  = $(PRG_LDFLAGS)
+
+update_LDADD   	= libIR.la libposting.la $(ulib_la)
+update_SOURCES 	= update.cpp
+update_LDFLAGS 	= $(PRG_LDFLAGS)
+
+query_LDADD    	= libcquery.la libIR.la libposting.la $(ulib_la)
+query_SOURCES  	= query.cpp
+query_LDFLAGS  	= $(PRG_LDFLAGS)
+
+libIR_la_SOURCES 		 = IR.cpp
+libcquery_la_SOURCES  = cquery.cpp
+libposting_la_SOURCES = posting.cpp
+
+## for convenience library
+noinst_LTLIBRARIES = libcquery.la libIR.la libposting.la
+
+noinst_PROGRAMS = gendoc index1 index2 db_dump db_check query update
+
+## usp web section
+## --------------------------------------------------------------------------------------------------------------------------
+moduledir = $(libexecdir)/ulib
+MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
+
+SUFFIXES = .cpp .lo .la
+
+.lo.la:
+	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< libcquery.la libIR.la libposting.la $(ulib_la) $(LIBS)
+## --------------------------------------------------------------------------------------------------------------------------
+
+clean-local:
+	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out

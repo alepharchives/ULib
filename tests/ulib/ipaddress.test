@@ -1,0 +1,58 @@
+#!/bin/sh
+
+. ../.function
+
+## ipaddress.test -- Test ipaddress feature
+
+start_msg ipaddress
+
+#UTRACE="0 5M 1"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+if [ "$TERM" = "msys"   ] || \
+	[ "$TERM" = "cygwin" ]
+then
+ 	ARG1=david
+ 	ARG2="unirel.intranet"
+#	echo "This test failed because this system lacks the functionality..."
+else
+	type hostname >/dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		ARG1=`hostname -s`
+		if [ $? -ne 0 ]; then
+			ARG1=`hostname`
+		fi
+	elif [ -f /etc/hostname ]; then
+		ARG1=`cat /etc/hostname`
+	else
+		ARG1="stefano"
+	fi
+	hostname --version 2>&1 | grep net-tools >/dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		ARG2=`hostname -d`
+	else
+		type domainname >/dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			ARG2=`domainname`
+		elif [ -f /etc/domainname ]; then
+			ARG2=`cat /etc/domainname`
+		else
+			ARG2="unirel.intranet"
+		fi
+	fi
+
+	if [ -z "$ARG1" ]
+	then
+		ARG1=sparky
+		ARG2=unirel.test
+		hostname   $ARG1
+		domainname $ARG2
+	fi
+fi
+
+start_prg ipaddress $ARG1 $ARG2
+
+# Test against expected output
+test_output_wc w ipaddress

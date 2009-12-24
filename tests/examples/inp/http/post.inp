@@ -1,0 +1,7 @@
+POST /cgi-bin/login.sh HTTP/1.1
+Host: localhost
+Connection: Keep-Alive
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 47
+
+realname=Steve+Johnson&email=steevo@idocs.com

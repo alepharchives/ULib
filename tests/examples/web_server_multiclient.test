@@ -1,0 +1,55 @@
+#!/bin/sh
+
+. ../.function
+
+## web_server_multiclient.test -- Test web_server feature
+
+start_msg web_server_multiclient
+
+rm -f web_server_multiclient.log \
+		out/userver_tcp.out err/userver_tcp.err err/web_server_multiclient \
+      trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]*
+
+#UTRACE="0 15M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+if [ "$TERM" = "msys" ]; then
+	export TMPDIR="c:/tmp"
+fi
+
+DIR_CMD="../../examples/userver"
+
+CURDIR=`pwd`
+cd ../../src/ulib/plugin/usp/; make benchmarking.la >/dev/null 2>&1 || exit 1
+cd $CURDIR
+
+mkdir -p usp
+cd usp
+rm -f *.so
+if [ "$TERM" = "msys" ]; then
+   cp ../../../src/ulib/.libs/libulib*.dll ..
+   cp ../../../src/ulib/plugin/usp/.libs/benchmarking.dll .
+else
+   ln -sf ../../../src/ulib/plugin/usp/.libs/benchmarking.so
+fi
+cd $CURDIR
+
+#STRACE=$TRUSS
+start_prg_background userver_tcp -c web_server_multiclient.cfg
+$SLEEP
+$SLEEP
+
+ab -k -n 100 -c 50 http://127.0.0.1/usp/benchmarking.usp?name=stefano >/dev/null 2>&1
+$SLEEP
+
+kill_prg userver_tcp TERM
+$SLEEP
+$SYNC
+
+mv err/userver_tcp.err err/web_server_multiclient.err
+cat web_server_multiclient.log > out/web_server_multiclient.out
+
+# Test against expected output
+test_output_wc l web_server_multiclient

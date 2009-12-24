@@ -1,0 +1,41 @@
+## ----------------------------------------------------------------------------------------------
+## server - configuration parameters
+## ----------------------------------------------------------------------------------------------
+## USE_IPV6		  flag to indicate use of ipv6
+## PORT			  port to listen
+## WELCOME_MSG   message of welcome
+## LOG_FILE      locations for file log
+## LOG_FILE_SZ   memory size for file log
+## ALLOWED_IP	  list of comma separated client address for IP-based access control (IPADDR[/MASK])
+## PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
+##																							  1 - classic, forking after accept client)
+##																							 >1 - pool of process serialize plus monitoring process)
+## ----------------------------------------------------------------------------------------------
+
+SERVER {
+
+	USE_IPV6		no
+
+	PORT			10001
+
+	WELCOME_MSG "generic server ready."
+
+	LOG_FILE    server.log
+	LOG_FILE_SZ 1M
+
+	ALLOWED_IP	127.0.0.1
+##	ALLOWED_IP	127.0.0.1,10.30.0.0/16
+
+##	PREFORK_CHILD 2
+}
+
+## -----------------------------------------------------------------------------
+## request and response (type STRING or FILE)
+## -----------------------------------------------------------------------------
+[
+STRING  "GET / HTTP/1.?*\r\n\r\n"
+FILE    inp/forbiddenMessage.html
+
+STRING  "GET /buldog.gif HTTP/1.?*\r\n\r\n"
+FILE    inp/buldog.html
+]

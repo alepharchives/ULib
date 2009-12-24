@@ -1,0 +1,48 @@
+dn:   cn=Leonardo Secci,o=mail
+cn:   Leonardo Secci
+mail: leonardo.secci@unirel.com; leonardo.secci@t-bizcom.com; leonardo.secci@unirel.it
+
+dn:   cn=Cyrus Administrator,o=mail
+cn:   Cyrus Administrator
+mail: postmaster@unirel.com; postmaster@unirel.it; abuse@unirel.com; abuse@unirel.it; spam@unirel.com; spam@unirel.it; webmaster@unirel.com; webmaster@unirel.it
+
+dn:   cn=Alberico Gualfetti,o=mail
+cn:   Alberico Gualfetti
+mail: alberico.gualfetti@unirel.com; alberico.gualfetti@unirel.it; alberico@unirel.com; alberico@unirel.it; alberico.gualfetti@t-bizcom.com; alberico@t-bizcom.com
+
+dn:   cn=Marco Crescioli,o=mail
+cn:   Marco Crescioli
+mail: marco.crescioli@unirel.com; marco@unirel.com; marco.crescioli@unirel.it; marco@unirel.it
+
+dn:   cn=Leonardo Ghivizzani,o=mail
+cn:   Leonardo Ghivizzani
+mail: leonardo.ghivizzani@unirel.com; leonardo@unirel.com; lg@unirel.com; leonardo.ghivizzani@unirel.it; leonardo@unirel.it; lg@unirel.it; ghivizzani@unirel.com; leonardo.ghivizzani@t-bizcom.com
+
+dn:   cn=Stefano Casazza,o=mail
+cn:   Stefano Casazza
+mail: stefano.casazza@unirel.com; stefano@unirel.com; stefano.casazza@unirel.it; stefano@unirel.it
+
+dn:   cn=Marco Dani,o=mail
+cn:   Marco Dani
+mail: marco.dani@unirel.com; marcod@unirel.com; marco.dani@unirel.it; marcod@unirel.it
+
+dn:   cn=Team Pongo,o=mail
+cn:   Team Pongo
+mail: pongo@unirel.com; pongo@unirel.it
+
+dn:   cn=Sabrina Papucci,o=mail
+cn:   Sabrina Papucci
+mail: sabrina.papucci@unirel.com; sabrina@unirel.com; saab@unirel.com; segreteria@unirel.com; sabrina.papucci@unirel.it; sabrina@unirel.it; saab@unirel.it; segreteria@unirel.it; amministrazione@unirel.com
+
+dn:   cn=Info,o=mail
+cn:   Info
+mail: info@unirel.com; info@unirel.it
+
+dn:   cn=Remo Tabanelli,o=mail
+cn:   Remo Tabanelli
+mail: remo.tabanelli@t-bizcom.com; remo@t-bizcom.com; remo.tabanelli@unirel.com
+
+dn:   cn=Tutti Quanti,o=mail
+cn:   Tutti Quanti
+mail: tuttiquanti@unirel.com; tuttiquanti@unirel.it
+

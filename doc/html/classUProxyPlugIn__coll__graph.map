@@ -1,0 +1,22 @@
+<map id="G" name="G">
+<area shape="rect" id="node2" href="$classUServerPlugIn.html" title="UServerPlugIn" alt="" coords="315,1243,416,1271"/>
+<area shape="rect" id="node4" href="$classUVector_3_01UString_01_4.html" title="UVector\&lt; UString \&gt;" alt="" coords="440,1243,571,1271"/>
+<area shape="rect" id="node6" href="$classUHttpClient.html" title="UHttpClient\&lt; USocket \&gt;" alt="" coords="595,1243,749,1271"/>
+<area shape="rect" id="node8" href="$classUHttpClient__Base.html" title="UHttpClient_Base" alt="" coords="707,1057,827,1085"/>
+<area shape="rect" id="node50" href="$classUHttpClient.html" title="Creates and manages a client connection with a HTTP server." alt="" coords="600,1150,744,1178"/>
+<area shape="rect" id="node10" href="$classUClient__Base.html" title="UClient_Base" alt="" coords="529,977,625,1005"/>
+<area shape="rect" id="node44" href="$classUClient.html" title="UClient\&lt; USocket \&gt;" alt="" coords="445,1150,576,1178"/>
+<area shape="rect" id="node47" href="$classUClient.html" title="Handles a connections with a server." alt="" coords="548,1057,668,1085"/>
+<area shape="rect" id="node12" href="$classULog.html" title="ULog" alt="" coords="531,810,581,838"/>
+<area shape="rect" id="node14" href="$classUFile.html" title="UFile" alt="" coords="613,426,664,454"/>
+<area shape="rect" id="node16" href="$classUString.html" title="UString" alt="" coords="633,99,697,127"/>
+<area shape="rect" id="node30" href="$classUSocket.html" title="basic IP socket functionality" alt="" coords="309,810,376,838"/>
+<area shape="rect" id="node32" href="$classUIPAddress.html" title="UIPAddress" alt="" coords="189,426,275,454"/>
+<area shape="rect" id="node39" href="$classUMimeHeader.html" title="UMimeHeader" alt="" coords="881,426,983,454"/>
+<area shape="rect" id="node19" href="$classUStringRep.html" title="UStringRep" alt="" coords="623,6,708,34"/>
+<area shape="rect" id="node23" href="$structULog_1_1log__data.html" title="ULog::log_data" alt="" coords="485,426,589,454"/>
+<area shape="rect" id="node25" href="$classULock.html" title="ULock" alt="" coords="64,426,123,454"/>
+<area shape="rect" id="node27" href="$classUSemaphore.html" title="USemaphore" alt="" coords="5,99,96,127"/>
+<area shape="rect" id="node35" href="$unionuupcAddress.html" title="uupcAddress" alt="" coords="120,99,211,127"/>
+<area shape="rect" id="node41" href="$classUHashMap_3_01UString_01_4.html" title="UHashMap\&lt; UString \&gt;" alt="" coords="931,99,1077,127"/>
+</map>

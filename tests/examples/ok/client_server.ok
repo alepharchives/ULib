@@ -1,0 +1,26 @@
+09/12/09 13:56:19> *** STARTUP client (pid 9044) [root@stefano] ***
+09/12/09 13:56:19> client connected to  3 '127.0.0.1:10001'
+09/12/09 13:56:19> received welcome message "generic server ready." from  3 '127.0.0.1:10001'
+09/12/09 13:56:19> send request "GET / HTTP/1.1\r\nConnection: Keep-Alive\r\nUser-Agent: Mozilla/5.0 (compatible; Konqueror/3.1; Linux; it, en_US, en)\r\nAccept: text/*, image/jpeg, image/png, image/*, */*\r\nAccept-Encoding: x-gzip, x-deflate, gzip, deflate, identity\r\nAccept-Charset: iso-8859-1, utf-8;q=0.5, *;q=0.5\r\nAccept-Language: it, en\r\nHost: 127.0.0.1\r\n\r\n" to   3 '127.0.0.1:10001'
+09/12/09 13:56:19> received response "<!doctype html public \"-//w3c//dtd html 4.0 transitional//en\">\r\n<html>\r\n<head>\r\n   <meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\">\r\n</head>\r\n<body>\r\n\r\n<center>\r\n<h1>\r\nUProxy: Autorizzazione negata\r\n</h1>\r\n</center>\r\n<center>\r\n<p>\r\n<br>\r\n<img SRC=\"buldog.gif\" ALT=\"Buldog\">\r\n</center>\r\n</body>\r\n</html>\r\n" from  3 '127.0.0.1:10001'
+09/12/09 13:56:19> send request "GET /buldog.gif HTTP/1.1\r\nConnection: Keep-Alive\r\nUser-Agent: Mozilla/5.0 (compatible; Konqueror/3.1; Linux; it, en_US, en)\r\nAccept: text/*, image/jpeg, image/png, image/*, */*\r\nAccept-Encoding: x-gzip, x-deflate, gzip, deflate, identity\r\nAccept-Charset: iso-8859-1, utf-8;q=0.5, *;q=0.5\r\nAccept-Language: it, en\r\nHost: 127.0.0.1\r\n\r\n" to   3 '127.0.0.1:10001'
+09/12/09 13:56:19> received response "HTTP/1.1 200 OK\nDate: Tue, 02 Sep 2003 11:56:10 GMT\nServer: Apache/1.3.26 (Unix) mod_ssl/2.8.10 OpenSSL/0.9.6e DAV/1.0.3\nLast-Modified: Fri, 09 Feb 2001 14:25:19 GMT\nETag: \"1a3744-6e9-3a83fdcf\"\nAccept-Ranges: bytes\nContent-Length: 1769\nKeep-Alive: timeout=15, max=100\nConnection: Keep-Alive\nContent-Type: image/gif\n\nGIF89a0\002F\000\343\000\000\322\264\214\365\336\263\346\346\372\334\334\334\276\276\276/OO\377\000\000\377cGp\200\220\277\277\277\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000!\371\004\001\000\000\t\000,\000\000\000\0000\002F\000\000\004\3760\311I\253\2758\353\315\273\377`(\216di\236h\252\256l\353\276p,\3174V\024u\256\357|\357\377\300\240p\030$ \bH\242r\311l:\237\320\250TcDX\257\205\343`[ L\277\340\260xL.\327\214\267.\"\273m\273\335\331\354\206\2206\333\357\370\274~\277Z\277\333\b\177\202H[k\b6mr|\213\214\215\216\217M~\202\205\201\223\003\225\225"... from  3 '127.0.0.1:10001'
+09/12/09 13:56:19> closing client connection to  3 '127.0.0.1:10001'
+09/12/09 13:56:19> *** SHUTDOWN client (pid 9044) [root@stefano] ***
+09/12/09 13:56:18> *** STARTUP server (pid 9028) [root@stefano] ***
+09/12/09 13:56:18> HOST registered as: stefano:10001
+09/12/09 13:56:18> SERVER IP ADDRESS registered as: 10.30.1.131
+09/12/09 13:56:18> working directory (DOCUMENT_ROOT) changed to '/usr/src/ULib-1.0.5/tests/examples'
+09/12/09 13:56:18> file data users permission: '.htpasswd' loaded
+09/12/09 13:56:18> file data users permission: '.htdigest' loaded
+09/12/09 13:56:18> waiting for connection
+09/12/09 13:56:19> new client connected from  5 '127.0.0.1:52365', 1 clients currently connected
+09/12/09 13:56:19> sent welcome message to  5 '127.0.0.1:52365'
+09/12/09 13:56:19> received request (323 bytes) "GET / HTTP/1.1\r\nConnection: Keep-Alive\r\nUser-Agent: Mozilla/5.0 (compatible; Konqueror/3.1; Linux; it, en_US, en)\r\nAccept: text/"... from  5 '127.0.0.1:52365'
+09/12/09 13:56:19> sent response (328 bytes) "<!doctype html public \"-//w3c//dtd html 4.0 transitional//en\">\r\n<html>\r\n<head>\r\n   <meta http-equiv=\"Content-Type\" content=\"text"... to  5 '127.0.0.1:52365'
+09/12/09 13:56:19> received request (333 bytes) "GET /buldog.gif HTTP/1.1\r\nConnection: Keep-Alive\r\nUser-Agent: Mozilla/5.0 (compatible; Konqueror/3.1; Linux; it, en_US, en)\r\nAcc"... from  5 '127.0.0.1:52365'
+09/12/09 13:56:19> sent response (2085 bytes) "HTTP/1.1 200 OK\nDate: Tue, 02 Sep 2003 11:56:10 GMT\nServer: Apache/1.3.26 (Unix) mod_ssl/2.8.10 OpenSSL/0.9.6e DAV/1.0.3\nLast-Mo"... to  5 '127.0.0.1:52365'
+09/12/09 13:56:20> client closed connection from  5 '127.0.0.1:52365', 0 clients still connected
+09/12/09 13:56:20> waiting for connection
+09/12/09 13:56:21> --- SIGTERM (Interrupt) ---
+09/12/09 13:56:21> *** SHUTDOWN server (pid 9028) [root@stefano] ***

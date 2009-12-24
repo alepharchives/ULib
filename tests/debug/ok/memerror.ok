@@ -1,0 +1,18 @@
+{Call   main(1,0xbffffb54)
+test_memerror: ERROR ON MEMORY
+-------------------------------------
+ pid: 10713
+ file: test_memerror.cpp
+ line: 26
+ function: UInt::operator int () const
+ assertion: "((memory).invariant())" [this = 0x8194138 _this = (nil) - FMR]
+-------------------------------------
+test_memerror: ERROR ON MEMORY
+-------------------------------------
+ pid: 10713
+ file: ../../include/ulib/debug/error_memory.h
+ line: 30
+ function: UMemoryError::~UMemoryError ()
+ assertion: "((*this).invariant())" [this = 0xbffff2c0 _this = 0xff - ABW]
+-------------------------------------
+}Return main(1,0xbffffb54) = 0

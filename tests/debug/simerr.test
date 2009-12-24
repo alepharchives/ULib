@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. ../.function
+
+## simerr -- Test simulation error feature
+
+start_msg simerr trace
+
+ UTRACE="0 1k 1"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg trace with_simulation_error
+
+# Test against expected output
+test_output_wc l simerr trace.*test_trace*.[0-9]*

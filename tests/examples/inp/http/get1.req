@@ -1,0 +1,11 @@
+GET / HTTP/1.1
+Host: dummy
+Content-Length: 1200
+Authorization: Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==
+Authorization: Digest Name1=Value1
+Cookie: Name=value
+Cookie: $Version=1; NameA=valueA;
+  NameB = ValueB;$Path="/=;" ; $Domain=domain1;
+  NameC = ValueC;$Domain="/=;" ; $Path=domain1;
+  $Port="123"
+

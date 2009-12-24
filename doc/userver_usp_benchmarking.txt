@@ -1,0 +1,311 @@
+# (gentoo environment)
+root@stefano /usr/src/ULib-1.0.5 # cat /proc/cpuinfo
+processor       : 0
+vendor_id       : GenuineIntel
+cpu family      : 15
+model           : 4
+model name      : Intel(R) Pentium(R) 4 CPU 2.80GHz
+stepping        : 3
+cpu MHz         : 2806.793
+cache size      : 2048 KB
+fpu             : yes
+fpu_exception   : yes
+cpuid level     : 5
+wp              : yes
+flags           : fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx lm constant_tsc up pebs bts pni dtes64 monitor ds_cpl est cid cx16 xtpr
+bogomips        : 5613.58
+clflush size    : 64
+cache_alignment : 128
+address sizes   : 36 bits physical, 48 bits virtual
+
+# (Note that I don't use schedtool to restrict the program because I don't have multi core)
+
+# compile on (gentoo environment)
+cd ULib-1.0.5
+./configure && make
+
+# run server
+cd tests/examples
+./benchmarking.sh
+----------------------------------------
+start userver_tcp with plugin:
+   PLUGIN			"( mod_usp mod_http )"
+   PREFORK_CHILD  5 ## BETTER CONTEXT FOR ME
+## LOG_FILE			benchmarking.log
+----------------------------------------
+
+Test Result Procedures:
+-----------------------------------------------------------------------------------------------------------------------
+Each test case was run three times, and the best result is used. Server was rebooted after testing each server software.
+-----------------------------------------------------------------------------------------------------------------------
+
+*** START COMMON INFO ****
+----------------------------------------
+This is ApacheBench, Version 2.3 <$Revision: 655654 $>
+
+INFO: POST header == 
+---
+GET /usp/benchmarking.usp?name=stefano HTTP/1.0
+Host: stefano
+User-Agent: ApacheBench/2.3
+Accept: */*
+
+---
+LOG: header received:
+HTTP/1.0 200 OK
+Server: ULib/1.0
+Connection: close
+Content-Length: 23
+Content-Type: text/html; charset=iso-8859-1
+
+<h1>Hello stefano</h1>
+---
+Server Software:        ULib/1.0
+Server Hostname:        stefano
+Server Port:            80
+
+Document Path:          /usp/benchmarking.usp?name=stefano
+Document Length:        23 bytes
+----------------------------------------
+*** END COMMON INFO ****
+
+# run command on another computer (gentoo also)
+
+ab -n 100000 -c10 http://stefano/usp/benchmarking.usp?name=stefano
+
+# result
+----------------------------------------
+Concurrency Level:      10
+Time taken for tests:   9.356 seconds
+Complete requests:      100000
+Failed requests:        0
+Write errors:           0
+Total transferred:      14400000 bytes
+HTML transferred:       2300000 bytes
+Requests per second:    10688.64 [#/sec] (mean)
+Time per request:       0.936 [ms] (mean)
+Time per request:       0.094 [ms] (mean, across all concurrent requests)
+Transfer rate:          1503.09 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.1      0       1
+Processing:     0    1   0.3      1      10
+Waiting:        0    1   0.3      1      10
+Total:          1    1   0.3      1      11
+
+Percentage of the requests served within a certain time (ms)
+  50%      1
+  66%      1
+  75%      1
+  80%      1
+  90%      1
+  95%      1
+  98%      1
+  99%      2
+ 100%     11 (longest request)
+----------------------------------------
+
+# run command on another computer (gentoo also)
+
+ab -n 100000 -c5 http://stefano/usp/benchmarking.usp?name=stefano
+
+# result
+----------------------------------------
+Concurrency Level:      5
+Time taken for tests:   9.901 seconds
+Complete requests:      100000
+Failed requests:        0
+Write errors:           0
+Total transferred:      14400000 bytes
+HTML transferred:       2300000 bytes
+Requests per second:    10100.00 [#/sec] (mean)
+Time per request:       0.495 [ms] (mean)
+Time per request:       0.099 [ms] (mean, across all concurrent requests)
+Transfer rate:          1420.31 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.0      0       0
+Processing:     0    0   0.0      0       4
+Waiting:        0    0   0.0      0       4
+Total:          0    0   0.0      0       4
+
+Percentage of the requests served within a certain time (ms)
+  50%      0
+  66%      0
+  75%      0
+  80%      0
+  90%      1
+  95%      1
+  98%      1
+  99%      1
+ 100%      4 (longest request)
+----------------------------------------
+
+*** same but with LIBEVENT wrapped ***
+
+# run command on another computer (gentoo also)
+
+ab -n 100000 -c5 http://stefano/usp/benchmarking.usp?name=stefano
+
+# result
+----------------------------------------
+Concurrency Level:      5
+Time taken for tests:   10.396 seconds
+Complete requests:      100000
+Failed requests:        0
+Write errors:           0
+Total transferred:      18100000 bytes
+HTML transferred:       2300000 bytes
+Requests per second:    9619.41 [#/sec] (mean)
+Time per request:       0.520 [ms] (mean)
+Time per request:       0.104 [ms] (mean, across all concurrent requests)
+Transfer rate:          1700.31 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.0      0       0
+Processing:     0    0   0.0      0       1
+Waiting:        0    0   0.0      0       1
+Total:          0    0   0.0      0       1
+
+Percentage of the requests served within a certain time (ms)
+  50%      0
+  66%      1
+  75%      1
+  80%      1
+  90%      1
+  95%      1
+  98%      1
+  99%      1
+ 100%      1 (longest request)
+----------------------------------------
+
+*** same but running in WindowXP (cross-compiling context FEDORA MinGW) ***
+
+# run command on another computer (gentoo also)
+
+ab -n 100000 -c5 http://stefano/usp/benchmarking.usp?name=stefano
+
+# result
+----------------------------------------
+Concurrency Level:      5
+Time taken for tests:   28.987 seconds
+Complete requests:      100000
+Failed requests:        0
+Write errors:           0
+Total transferred:      18100000 bytes
+HTML transferred:       2300000 bytes
+Requests per second:    3449.87 [#/sec] (mean)
+Time per request:       1.449 [ms] (mean)
+Time per request:       0.290 [ms] (mean, across all concurrent requests)
+Transfer rate:          609.79 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.1      0       1
+Processing:     0    1   0.2      1      22
+Waiting:        0    1   0.2      1      22
+Total:          1    1   0.2      1      23
+
+Percentage of the requests served within a certain time (ms)
+  50%      1
+  66%      1
+  75%      1
+  80%      2
+  90%      2
+  95%      2
+  98%      2
+  99%      2
+ 100%     23 (longest request)
+----------------------------------------
+
+*** picoLisp-2.3.7 reference ***
+
+# run command on another computer (gentoo also)
+
+ab -n 100000 -c10 http://stefano:8080/?name=stefano
+
+# result
+----------------------------------------
+Concurrency Level:      10
+Time taken for tests:   18.515 seconds
+Complete requests:      100000
+Failed requests:        0
+Write errors:           0
+Total transferred:      41300000 bytes
+HTML transferred:       24800000 bytes
+Requests per second:    5400.95 [#/sec] (mean)
+Time per request:       1.852 [ms] (mean)
+Time per request:       0.185 [ms] (mean, across all concurrent requests)
+Transfer rate:          2178.31 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0  30.0      0    3000
+Processing:     1    1   6.9      1     604
+Waiting:        0    1   6.9      1     604
+Total:          1    2  30.8      1    3004
+
+Percentage of the requests served within a certain time (ms)
+  50%      1
+  66%      1
+  75%      1
+  80%      1
+  90%      1
+  95%      1
+  98%      2
+  99%      5
+ 100%   3004 (longest request)
+----------------------------------------
+
+*** VARNISH (2.0.3) reference ***
+
+# ps
+# varnishd,9286 -P /var/run/varnish.pid -a :6081 -T localhost:6082 -f /etc/varnish/default.vcl -l 1G -u varnish -g varnish -s file,/var/lib/varnish/varnish_storage.bin,1G
+
+# run command on another computer (gentoo also)
+
+ab -n 100000 -c10 http://stefano:6081/?name=stefano
+
+# result
+----------------------------------------
+Server Software:        Varnish
+Server Hostname:        stefano
+Server Port:            6081
+
+Document Path:          /?name=stefano
+Document Length:        466 bytes
+
+Concurrency Level:      10
+Time taken for tests:   23.780 seconds
+Complete requests:      100000
+Failed requests:        0
+Write errors:           0
+Non-2xx responses:      100000
+Total transferred:      70100000 bytes
+HTML transferred:       46600000 bytes
+Requests per second:    4205.18 [#/sec] (mean)
+Time per request:       2.378 [ms] (mean)
+Time per request:       0.238 [ms] (mean, across all concurrent requests)
+Transfer rate:          2878.74 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0  25.1      0    2999
+Processing:     0    2   1.5      1      71
+Waiting:        0    2   1.4      1      71
+Total:          1    2  25.1      2    3002
+
+Percentage of the requests served within a certain time (ms)
+  50%      2
+  66%      3
+  75%      3
+  80%      3
+  90%      4
+  95%      5
+  98%      6
+  99%      6
+ 100%   3002 (longest request)
+----------------------------------------

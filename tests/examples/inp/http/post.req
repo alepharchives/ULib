@@ -1,0 +1,289 @@
+POST /intranet/clienti.nsf/d7e8736344c912f2c125619a0032bd48?OpenForm&Seq=1 HTTP/1.0
+Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, application/vnd.ms-powerpoint, application/vnd.ms-excel, application/msword, */*
+Referer: https://tac.int.e-securitypoint.it/intranet/clienti.nsf/d7e8736344c912f2c125619a0032bd48?OpenForm
+Accept-Language: it
+Content-Type: multipart/form-data; boundary=---------------------------7d31ae2b210630
+User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)  MlsProxy2.1.9
+Host: tac.int.e-securitypoint.it
+Content-Length: 7346
+Pragma: no-cache
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="__Click"
+
+d7e8736344c912f2c125619a0032bd48/$V5ACTIONS/0.1CC
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="Rag_Soc"
+
+aaaaaa
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="Ind_Soc"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="Citta"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="CAP"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="NT_Centr"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="NT_FAX"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="N_Add"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="Attivita"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="Sett_Merc"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="Rag_Soc_Gruppo"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="acc_manager"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="prof_service"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_nominativo_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_ruolo_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_tel_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_email_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_fax_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_indirizzo_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_nominativo_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_ruolo_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_tel_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_email_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_fax_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_indirizzo_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_nominativo_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_ruolo_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_tel_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_email_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_fax_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirgen_indirizzo_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_nominativo_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_ruolo_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_tel_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_email_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_fax_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_indirizzo_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_nominativo_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_ruolo_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_tel_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_email_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_fax_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_indirizzo_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_nominativo_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_ruolo_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_tel_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_email_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_fax_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dircom_indirizzo_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_nominativo_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_ruolo_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_tel_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_email_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_fax_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_indirizzo_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_nominativo_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_ruolo_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_tel_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_email_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_fax_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_indirizzo_2"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_nominativo_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_ruolo_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_tel_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_email_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_fax_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="dirtec_indirizzo_3"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="diramm_nominativo_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="diramm_ruolo_1"
+
+
+-----------------------------7d31ae2b210630
+Content-Disposition: form-data; name="diramm_tel_1"
+-----------------------------7d31ae2b210630--

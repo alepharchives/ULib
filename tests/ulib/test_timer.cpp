@@ -1,0 +1,136 @@
+// test_timer.cpp
+
+#include <ulib/timer.h>
+#include <ulib/string.h>
+
+#include <iostream>
+
+static char buffer[4096];
+
+class MyAlarm1 : public UEventTime {
+public:
+
+   // COSTRUTTORI
+
+   MyAlarm1(long sec, long usec) : UEventTime(sec, usec)
+      {
+      U_TRACE_REGISTER_OBJECT(0, MyAlarm1, "%ld,%ld", sec, usec)
+      }
+
+   virtual ~MyAlarm1()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, MyAlarm1)
+      }
+
+   virtual int handlerTime()
+      {
+      U_TRACE(0+256, "MyAlarm1::handlerTime()")
+
+      // return value:
+      // ---------------
+      // -1 - normal
+      //  0 - monitoring
+      // ---------------
+
+      cout.write(buffer, u_snprintf(buffer, sizeof(buffer), "MyAlarm1::handlerTime() u_now = %2D expire = %#2D\n", UEventTime::expire()));
+
+      U_RETURN(-1);
+      }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UEventTime::dump(reset); }
+#endif
+};
+
+class MyAlarm2 : public MyAlarm1 {
+public:
+
+   // COSTRUTTORI
+
+   MyAlarm2(long sec, long usec) : MyAlarm1(sec, usec)
+      {
+      U_TRACE_REGISTER_OBJECT(0, MyAlarm2, "%ld,%ld", sec, usec)
+      }
+
+   virtual ~MyAlarm2()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, MyAlarm2)
+      }
+
+   virtual int handlerTime()
+      {
+      U_TRACE(0+256, "MyAlarm2::handlerTime()")
+
+      // return value:
+      // ---------------
+      // -1 - normal
+      //  0 - monitoring
+      // ---------------
+
+      cout.write(buffer, u_snprintf(buffer, sizeof(buffer), "MyAlarm2::handlerTime() u_now = %2D expire = %#2D\n", UEventTime::expire()));
+
+      U_RETURN(0);
+      }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return MyAlarm1::dump(reset); }
+#endif
+};
+
+#define U_MILLISEC 1000L
+
+int U_EXPORT main (int argc, char* argv[])
+{
+   U_ULIB_INIT(argv);
+
+   U_TRACE(5,"main(%d)",argc)
+
+   UTimeVal s(0L, 50 * U_MILLISEC);
+   MyAlarm1* a = U_NEW(MyAlarm1(0L, 50 * U_MILLISEC));
+   MyAlarm2* b = U_NEW(MyAlarm2(0L, 50 * U_MILLISEC));
+
+   UTimer::init(false);
+
+   UTimer::insert(a, false);
+   UTimer::insert(b, false);
+
+#ifdef DEBUG
+   if (argc > 2) UTimer::printInfo(cout);
+#endif
+
+   UTimer::erase(a, true, false);
+
+#ifdef DEBUG
+   if (argc > 2) UTimer::printInfo(cout);
+#endif
+
+   int n = (argc > 1 ? atoi(argv[1]) : 5);
+
+   for (int i = 0; i < n; ++i)
+      {
+#  ifdef HAVE_NANOSLEEP
+      s.nanosleep();
+#  else
+      for (int t = 0; t < 1000 * 1024; ++t) {}
+#  endif
+
+      (void) UTimer::insert(U_NEW(MyAlarm1(0L, 50 * U_MILLISEC)));
+
+#ifdef DEBUG
+      if (argc > 2) UTimer::printInfo(cout);
+#endif
+      }
+
+   s.nanosleep();
+   s.nanosleep();
+
+   UTimer::stop();
+
+#ifdef DEBUG
+   if (argc > 2) UTimer::printInfo(cout);
+#endif
+   UTimer::clear(false);
+#ifdef DEBUG
+   if (argc > 2) UTimer::printInfo(cout);
+#endif
+}
