@@ -410,7 +410,7 @@ void UClientImage_Base::run()
 
       pClientImage->pevent = U_NEW(UEvent<UClientImage_Base>(pClientImage->UEventFd::fd, EV_READ | EV_PERSIST, *pClientImage));
 
-      UDispatcher::add(*pevent);
+      UDispatcher::add(*(pClientImage->pevent));
 #  endif
 
       return;
