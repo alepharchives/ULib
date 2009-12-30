@@ -41,7 +41,7 @@ X509* UCertificate::readX509(const UString& x, const char* format)
 
       UString buffer(length);
 
-      if (UBase64::decode((const unsigned char*)x.data(), length, buffer) == false) goto next;
+      if (UBase64::decode(x.data(), length, buffer) == false) goto next;
 
       tmp    = buffer;
       format = "DER";

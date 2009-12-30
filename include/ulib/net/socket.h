@@ -146,7 +146,7 @@ public:
 
       U_INTERNAL_DUMP("errno = %d", errno)
 
-      iState = (errno == EAGAIN ? TIMEOUT : (USocket::close(), BROKEN));
+      iState = (errno == EAGAIN ? TIMEOUT : (closesocket(), BROKEN));
       }
 
    /**
@@ -438,6 +438,15 @@ public:
 
 #  ifdef TCP_DEFER_ACCEPT
       (void) setSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (const void*)&value, sizeof(uint32_t));
+#  endif
+      }
+
+   void setTcpQuickAck(uint32_t value)
+      {
+      U_TRACE(0, "USocket::setTcpQuickAck(%u)", value)
+
+#  ifdef TCP_QUICKACK
+      (void) setSockOpt(SOL_TCP, TCP_QUICKACK, (const void*)&value, sizeof(uint32_t));
 #  endif
       }
 

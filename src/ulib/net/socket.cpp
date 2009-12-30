@@ -122,10 +122,9 @@ void USocket::close()
 {
    U_TRACE(0, "USocket::close()")
 
-   USocket::closesocket();
+   iState = CLOSE;
 
-   iState    = CLOSE;
-   iSockDesc = -1;
+   USocket::closesocket();
 }
 
 bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)
@@ -418,6 +417,8 @@ void USocket::closesocket()
 #else
    (void) U_SYSCALL(close, "%d", iSockDesc);
 #endif
+
+   iSockDesc = -1;
 }
 
 bool USocket::connectServer(const UString& server, int iServPort)

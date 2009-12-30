@@ -133,11 +133,9 @@ UClientImage_Base::UClientImage_Base()
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
-#ifdef HAVE_LIBEVENT
-   pevent = 0;
-#endif
-
-   pClientImage = this;
+   pClientImage      = this;
+   UEventFd::fd      = socket->iSockDesc;
+   UEventFd::op_mask = R_OK; // NB: W_OK == 2, R_OK == 4...
 
    if (UServer_Base::isLog() == false) logbuf = 0;
    else
@@ -148,6 +146,10 @@ UClientImage_Base::UClientImage_Base()
       }
 
    clientAddress = socket->remoteIPAddress();
+
+#ifdef HAVE_LIBEVENT
+   pevent = 0;
+#endif
 }
 
 void UClientImage_Base::destroy()
@@ -383,10 +385,6 @@ void UClientImage_Base::run()
 
    if (UServer_Base::isLog())
       {
-#  ifdef HAVE_SSL
-      if (socket->isSSL()) ((UClientImage<USSLSocket>*)pClientImage)->logCertificate();
-#  endif
-
       UServer_Base::log->log("new client connected from %.*s, %u clients currently connected\n",
                                  U_STRING_TO_TRACE(*(pClientImage->logbuf)), UServer_Base::num_connection);
       }
@@ -397,9 +395,6 @@ void UClientImage_Base::run()
 
       if (USocketExt::write(socket, *msg_welcome) == false) goto dtor;
       }
-
-   pClientImage->UEventFd::fd      = socket->iSockDesc;
-   pClientImage->UEventFd::op_mask = R_OK; // W_OK == 2, R_OK == 4...
 
    if (pClientImage->handlerRead() != U_NOTIFIER_DELETE)
       {
@@ -541,4 +536,24 @@ const char* UClientImage_Base::dump(bool reset) const
    return 0;
 }
 
+#ifdef HAVE_SSL
+
+const char* UClientImage<USSLSocket>::dump(bool reset) const
+{
+   UClientImage_Base::dump(false);
+
+   *UObjectIO::os << '\n'
+                  << "ssl                               " << (void*)ssl;
+
+   if (reset)
+      {
+      UObjectIO::output();
+
+      return UObjectIO::buffer_output;
+      }
+
+   return 0;
+}
+
+#endif
 #endif

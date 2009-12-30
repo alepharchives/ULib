@@ -24,10 +24,10 @@ HttpBaAuthorization::HttpBaAuthorization(const char* name_, unsigned name_len, c
 
 #ifdef U_PROXY_UNIT
    Base64engine eng;
-   long pos = eng.decode((unsigned char*)ptr, len, (unsigned char*)buffer.data());
+   long pos = eng.decode(ptr, len, (unsigned char*)buffer.data());
    buffer.resize(pos);
 #else
-   if (UBase64::decode((const unsigned char*)ptr, len, buffer))
+   if (UBase64::decode(ptr, len, buffer))
 #endif
       {
       U_INTERNAL_DUMP("buffer = %.*S", U_STRING_TO_TRACE(buffer))

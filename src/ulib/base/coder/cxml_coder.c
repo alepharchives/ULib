@@ -140,11 +140,11 @@ uint32_t u_xml_encode(const unsigned char* input, uint32_t len, unsigned char* r
    return (r - result);
 }
 
-uint32_t u_xml_decode(const unsigned char* input, uint32_t len, unsigned char* result)
+uint32_t u_xml_decode(const char* input, uint32_t len, unsigned char* result)
 {
-         unsigned char ch;
+                  char ch;
          unsigned char* r   = result;
-   const unsigned char* end = input + len;
+   const          char* end = input + len;
 
    U_INTERNAL_TRACE("u_xml_decode(%.*s,%u,%p,%lu)", len, input, len, result)
 

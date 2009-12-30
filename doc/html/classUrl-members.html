@@ -26,7 +26,7 @@
 </div>
 <div class="contents">
 <h1>Url Member List</h1>This is the complete list of members for <a class="el" href="classUrl.html">Url</a>, including all inherited members.<table>
-  <tr class="memlist"><td><a class="el" href="classUrl.html#ad9ba5e0c1094cd005cdf97c65b76b788">addQuery</a>(const char *entry, const char *value)</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
+  <tr class="memlist"><td><a class="el" href="classUrl.html#a2b189450c50614791b4f06300e7471a3">addQuery</a>(const char *entry, uint32_t entry_len, const char *value, uint32_t value_len)</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUrl.html#a67e687fd4b016b58670c83966b14ccfc">decode</a>(const char *input, uint32_t len, UString &amp;buffer, bool no_line_break=false)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [inline, static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>decode</b>(const UString &amp;input, UString &amp;buffer, bool no_line_break=false) (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [inline, static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>empty</b>() const  (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [inline]</code></td></tr>
@@ -44,6 +44,7 @@
   <tr class="memlist"><td><a class="el" href="classUrl.html#a05be7001d9b7b9d0b8a2a9b902200c8b">getPort</a>()</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUrl.html#ad42fff9ba730f2f90e48be0077043051">getPort</a>(char *buffer, uint32_t size)</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUrl.html#a35f1678e0de818e125f23eef7d6aee40">getQuery</a>()</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>getQuery</b>(UVector&lt; UString &gt; &amp;vec) (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUrl.html#a1c97f24d6cbeafee8ec998af94db7f76">getService</a>()</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>getUrlData</b>() const  (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>getUrlDataLen</b>() const  (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [inline]</code></td></tr>
@@ -67,7 +68,8 @@
   <tr class="memlist"><td><a class="el" href="classUrl.html#ab59302a84159f5acee26988fdbe5bf53">setHost</a>(const char *host_, uint32_t n)</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUrl.html#a38754b22c28b99d6693dcdd07e9bfd99">setPath</a>(const char *path, uint32_t n)</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUrl.html#ae65beb5bd1299f74aff03435c7d327cd">setPort</a>(uint32_t port)</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
-  <tr class="memlist"><td><a class="el" href="classUrl.html#a67cdc738e13103c555c7f1f32167aeab">setQuery</a>(const char *query, uint32_t n)</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
+  <tr class="memlist"><td><a class="el" href="classUrl.html#a41ef87c937431528d0ad45f4059edefb">setQuery</a>(UVector&lt; UString &gt; &amp;vec)</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>setQuery</b>(const char *query, uint32_t n) (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUrl.html#a12810f98dbe64ef0fa2ce48a623a9ed5">setService</a>(const char *service, uint32_t n)</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUrl.html#a1731a6384e1e362a4ce9a2a080bbab2c">setUser</a>(const char *user, uint32_t n)</td><td><a class="el" href="classUrl.html">Url</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>str_allocate</b>() (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [static]</code></td></tr>
@@ -76,16 +78,16 @@
   <tr bgcolor="#f0f0f0"><td><b>str_https</b> (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>str_pop3</b> (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>str_smtp</b> (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [static]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>url</b> (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [protected]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUrl.html#a76175fc053c812874335730416cbef3f">Url</a>()</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [inline]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUrl.html#ac35802c4f7070bceff3d125deb7b8b55">Url</a>(const UString &amp;x)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [inline]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUrl.html#a5d8718aaa6e2d660a1b592edd3c7492d">Url</a>(const char *t, uint32_t tlen)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>Url</b>(const Url &amp;u) (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [inline]</code></td></tr>
-  <tr bgcolor="#f0f0f0"><td><b>url</b> (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>user_begin</b> (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>user_end</b> (defined in <a class="el" href="classUrl.html">Url</a>)</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [protected]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUrl.html#a269111e50e800f0965c50aa40a6ce49d">~Url</a>()</td><td><a class="el" href="classUrl.html">Url</a></td><td><code> [inline]</code></td></tr>
 </table></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 24 13:47:01 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Dec 30 19:20:50 2009 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

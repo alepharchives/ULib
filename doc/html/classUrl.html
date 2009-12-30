@@ -76,9 +76,13 @@ bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isHTTPS</b> ()</td></
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUrl.html#af21b048bcfb3ff342f7c4d9e5eeaff51">getFile</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUrl.html#a7296a950b23b612698d461ffcab9e0e1">isQuery</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUrl.html#a35f1678e0de818e125f23eef7d6aee40">getQuery</a> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUrl.html#a67cdc738e13103c555c7f1f32167aeab">setQuery</a> (const char *query, uint32_t n)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8901921a235ac567c4e3e73a49f53893"></a><!-- doxytag: member="Url::getQuery" ref="a8901921a235ac567c4e3e73a49f53893" args="(UVector&lt; UString &gt; &amp;vec)" -->
+uint32_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>getQuery</b> (UVector&lt; <a class="el" href="classUString.html">UString</a> &gt; &amp;vec)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUrl.html#a41ef87c937431528d0ad45f4059edefb">setQuery</a> (UVector&lt; <a class="el" href="classUString.html">UString</a> &gt; &amp;vec)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a67cdc738e13103c555c7f1f32167aeab"></a><!-- doxytag: member="Url::setQuery" ref="a67cdc738e13103c555c7f1f32167aeab" args="(const char *query, uint32_t n)" -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>setQuery</b> (const char *query, uint32_t n)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUrl.html#a7ab011451bd5f0d7fd459449624250f7">eraseQuery</a> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUrl.html#ad9ba5e0c1094cd005cdf97c65b76b788">addQuery</a> (const char *entry, const char *value)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUrl.html#a2b189450c50614791b4f06300e7471a3">addQuery</a> (const char *entry, uint32_t entry_len, const char *value, uint32_t value_len)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUrl.html#af5dd4773bbb1818f274eb47949407b06">firstQuery</a> (<a class="el" href="classUString.html">UString</a> &amp;entry, <a class="el" href="classUString.html">UString</a> &amp;value)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUrl.html#ac726337f6a7a111498f574d3bbbef601">nextQuery</a> (<a class="el" href="classUString.html">UString</a> &amp;entry, <a class="el" href="classUString.html">UString</a> &amp;value)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUrl.html#a8f74bda0281b15dbd5e71f955a7fea87">findQuery</a> (<a class="el" href="classUString.html">UString</a> &amp;entry, <a class="el" href="classUString.html">UString</a> &amp;value)</td></tr>
@@ -152,7 +156,8 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>Constructor of the class. This constructor creates an empty class. </p>
+<p>Constructor of the class.</p>
+<p>This constructor creates an empty class. </p>
 
 </div>
 </div>
@@ -171,7 +176,8 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>Constructor of the class. This constructor copy the url from the string.</p>
+<p>Constructor of the class.</p>
+<p>This constructor copy the url from the string.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>x</em>&nbsp;</td><td>Reference to a string with an url </td></tr>
@@ -205,7 +211,8 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>Constructor of the class. This constructor set the url from the char buffer.</p>
+<p>Constructor of the class.</p>
+<p>This constructor set the url from the char buffer.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>t</em>&nbsp;</td><td>Pointer to a char buffer with an url </td></tr>
@@ -234,7 +241,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 </div>
 </div>
 <hr/><h2>Member Function Documentation</h2>
-<a class="anchor" id="ad9ba5e0c1094cd005cdf97c65b76b788"></a><!-- doxytag: member="Url::addQuery" ref="ad9ba5e0c1094cd005cdf97c65b76b788" args="(const char *entry, const char *value)" -->
+<a class="anchor" id="a2b189450c50614791b4f06300e7471a3"></a><!-- doxytag: member="Url::addQuery" ref="a2b189450c50614791b4f06300e7471a3" args="(const char *entry, uint32_t entry_len, const char *value, uint32_t value_len)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -247,8 +254,20 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
         <tr>
           <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">uint32_t&nbsp;</td>
+          <td class="paramname"> <em>entry_len</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">const char *&nbsp;</td>
-          <td class="paramname"> <em>value</em></td><td>&nbsp;</td>
+          <td class="paramname"> <em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t&nbsp;</td>
+          <td class="paramname"> <em>value_len</em></td><td>&nbsp;</td>
         </tr>
         <tr>
           <td></td>
@@ -258,19 +277,14 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>This methode add's a new entry to the query. The entry and the value will first encoded and then added to the url. To seperate the entry's the '&amp;' character is been used.</p>
+<p>This methode add's a new entry to the query.</p>
+<p>The entry and the value will first encoded and then added to the url. To seperate the entry's the '&amp;' character is been used.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>entry</em>&nbsp;</td><td>Name of the entry. </p>
-<ul>
-<li>entry = 0 No query will be added. </li>
-</ul>
-</td></tr>
-    <tr><td valign="top"></td><td valign="top"><em>value</em>&nbsp;</td><td>Value of the entry. </p>
-<ul>
-<li>value = 0 only the entry will be added. </li>
-</ul>
-</td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>entry</em>&nbsp;</td><td>Name of the entry. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>entry_len</em>&nbsp;</td><td>len string entry = 0 No query will be added. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>value</em>&nbsp;</td><td>Value of the entry. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>value_len</em>&nbsp;</td><td>len string value = 0 only the entry will be added. </td></tr>
   </table>
   </dd>
 </dl>
@@ -313,7 +327,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>Decode a string </p>
+<p>Decode a string</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>input</em>&nbsp;</td><td>string to decode </td></tr>
@@ -361,11 +375,14 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>Converts a Unicode string into the MIME <code>x-www-form-urlencoded</code> format. To convert a String, each Unicode character is examined in turn:</p>
+<p>Converts a Unicode string into the MIME <code>x-www-form-urlencoded</code> format.</p>
+<p>To convert a String, each Unicode character is examined in turn:</p>
 <ul>
-<li>The ASCII characters 'a' through 'z', 'A' through 'Z', '0' through '9', and ".", "-", "*", "_" remain the same.</li>
+<li>The ASCII characters 'a' through 'z', 'A' through 'Z', '0' through '9', and ".", "-", "*", "_" remain the same.<ul>
 <li>The space character ' '(U+20) is converted into a plus sign '+'.</li>
 <li>All other characters are converted into their UTF-8 equivalent and the subsequent bytes are encoded as the 3-byte string "%xy", where xy is the two-digit hexadecimal representation of the byte.</li>
+</ul>
+</li>
 </ul>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
@@ -456,7 +473,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>This methode search for the query entry and decode it. </p>
+<p>This methode search for the query entry and decode it.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>entry</em>&nbsp;</td><td>Buffer for the name of the entry. </td></tr>
@@ -471,7 +488,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
   </table>
   </dd>
 </dl>
-<dl class="see"><dt><b>See also:</b></dt><dd>NextQuery, AddQuery; </dd></dl>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="classUrl.html#ac726337f6a7a111498f574d3bbbef601">nextQuery</a>, <a class="el" href="classUrl.html#a2b189450c50614791b4f06300e7471a3">addQuery</a>; </dd></dl>
 
 </div>
 </div>
@@ -499,7 +516,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>This methode get the first query entry and decode it. </p>
+<p>This methode get the first query entry and decode it.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>entry</em>&nbsp;</td><td>Buffer for the name of the entry. </td></tr>
@@ -514,7 +531,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
   </table>
   </dd>
 </dl>
-<dl class="see"><dt><b>See also:</b></dt><dd>NextQuery, AddQuery; </dd></dl>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="classUrl.html#ac726337f6a7a111498f574d3bbbef601">nextQuery</a>, <a class="el" href="classUrl.html#a2b189450c50614791b4f06300e7471a3">addQuery</a>; </dd></dl>
 
 </div>
 </div>
@@ -532,7 +549,8 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>Returns the file name for this URL. The file name consists of the path plus the query (if present). For example, the file name for the following URL is <em>'/search</em>?q=xml'. <code><a href="http://www.google.com/search?q=xml">http://www.google.com/search?q=xml</a></code> </p>
+<p>Returns the file name for this URL. The file name consists of the path plus the query (if present).</p>
+<p>For example, the file name for the following URL is <em>'/search</em>?q=xml'. <code><a href="http://www.google.com/search?q=xml">http://www.google.com/search?q=xml</a></code> </p>
 
 </div>
 </div>
@@ -550,7 +568,8 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>This methode returns the host name part of the URL. Not all URLs contain a host name, but those that do specify the host as part of the authority segment which is contained between the <code>'//'</code> and the following <code>'/'</code> or <code>'</code>?' characters. The host name is a sub-string of the authority part, with user and port number information removed. For example, the following URL's host is <code>www.elcel.com</code> : <code><a href="http://user:password@www.elcel.com:80/index.html">http://user:password@www.elcel.com:80/index.html</a></code> If there is no host specified the buffer will be empty.</p>
+<p>This methode returns the host name part of the URL.</p>
+<p>Not all URLs contain a host name, but those that do specify the host as part of the authority segment which is contained between the <code>'//'</code> and the following <code>'/'</code> or <code>'</code>?' characters. The host name is a sub-string of the authority part, with user and port number information removed. For example, the following URL's host is <code>www.elcel.com</code> : <code><a href="http://user:password@www.elcel.com:80/index.html">http://user:password@www.elcel.com:80/index.html</a></code> If there is no host specified the buffer will be empty.</p>
 <dl class="return"><dt><b>Returns:</b></dt><dd>str. </dd></dl>
 
 </div>
@@ -569,7 +588,9 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>This methode returns the path for this URL. The path consists of the file name part of the URL without any query information. For example, the path for the following URL is <em>'/search'</em>. <code><a href="http://www.google.com/search?q=xml">http://www.google.com/search?q=xml</a></code> If there is no path specified the buffer contains '/'.</p>
+<p>This methode returns the path for this URL.</p>
+<p>The path consists of the file name part of the URL without any query information.</p>
+<p>For example, the path for the following URL is <em>'/search'</em>. <code><a href="http://www.google.com/search?q=xml">http://www.google.com/search?q=xml</a></code> If there is no path specified the buffer contains '/'.</p>
 <dl class="return"><dt><b>Returns:</b></dt><dd>str. </dd></dl>
 
 </div>
@@ -616,7 +637,8 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>This returns the port number from the URL or -1 if no port number is present. The port number is usually contained within the authority part of the URL and is separated from the host by a colon character. For example, the following URL has a port number of 81: <code><a href="http://www.acme.org:81">http://www.acme.org:81</a></code> If there is no port, translate the service to a port number.</p>
+<p>This returns the port number from the URL or -1 if no port number is present.</p>
+<p>The port number is usually contained within the authority part of the URL and is separated from the host by a colon character. For example, the following URL has a port number of 81: <code><a href="http://www.acme.org:81">http://www.acme.org:81</a></code> If there is no port, translate the service to a port number.</p>
 <dl><dt><b>Return values:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>0..65535</em>&nbsp;</td><td>specified port. </td></tr>
@@ -641,7 +663,8 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>This methode returns the portion of the file after (but not including) '?' which represents the start of a query string. If there is no query specified the buffer will be empty.</p>
+<p>This methode returns the portion of the file after (but not including) '?' which represents the start of a query string.</p>
+<p>If there is no query specified the buffer will be empty.</p>
 <dl class="return"><dt><b>Returns:</b></dt><dd>str. </dd></dl>
 
 </div>
@@ -660,7 +683,8 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>This methode returns the specified service of the url. If there is no service specified the buffer will be empty. The service has no ':' char at the end!</p>
+<p>This methode returns the specified service of the url.</p>
+<p>If there is no service specified the buffer will be empty. The service has no ':' char at the end!</p>
 <dl class="return"><dt><b>Returns:</b></dt><dd>str. </dd></dl>
 
 </div>
@@ -679,7 +703,8 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>This methode returns the user identifier part of the UserInfo part of this URL. This method assumes that UserInfo is structured like this: <code></code> &lt;userid&gt;:&lt;password&gt; If there is no user specified the buffer will be empty.</p>
+<p>This methode returns the user identifier part of the UserInfo part of this URL.</p>
+<p>This method assumes that UserInfo is structured like this: <code></code> &lt;userid&gt;:&lt;password&gt; If there is no user specified the buffer will be empty.</p>
 <dl class="return"><dt><b>Returns:</b></dt><dd>str. </dd></dl>
 
 </div>
@@ -698,7 +723,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>Checks if there is a host specified. </p>
+<p>Checks if there is a host specified.</p>
 <dl><dt><b>Return values:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>true</em>&nbsp;</td><td>It has a host. </td></tr>
@@ -752,7 +777,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>This methode get the next query entry and decode it. </p>
+<p>This methode get the next query entry and decode it.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>entry</em>&nbsp;</td><td>Buffer for the name of the entry. </td></tr>
@@ -767,7 +792,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
   </table>
   </dd>
 </dl>
-<dl class="see"><dt><b>See also:</b></dt><dd>FirstQuery, AddQuery; </dd></dl>
+<dl class="see"><dt><b>See also:</b></dt><dd><a class="el" href="classUrl.html#af5dd4773bbb1818f274eb47949407b06">firstQuery</a>, <a class="el" href="classUrl.html#a2b189450c50614791b4f06300e7471a3">addQuery</a>; </dd></dl>
 
 </div>
 </div>
@@ -795,10 +820,11 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>This methode set the host. </p>
+<p>This methode set the host.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
-    <tr><td valign="top"></td><td valign="top"><em>host_</em>&nbsp;</td><td>host to set. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>host</em>&nbsp;</td><td>host to set. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>n</em>&nbsp;</td><td>len string host to set. </td></tr>
   </table>
   </dd>
 </dl>
@@ -829,7 +855,8 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>This methode set the path of the url. If the first char is not an '/' it will be added.</p>
+<p>This methode set the path of the url.</p>
+<p>If the first char is not an '/' it will be added.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>path</em>&nbsp;</td><td>Path to set. </td></tr>
@@ -854,36 +881,27 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>Set the port number. </p>
+<p>Set the port number.</p>
 <dl class="warning"><dt><b>Warning:</b></dt><dd>only possible if a url is specified. </dd></dl>
 
 </div>
 </div>
-<a class="anchor" id="a67cdc738e13103c555c7f1f32167aeab"></a><!-- doxytag: member="Url::setQuery" ref="a67cdc738e13103c555c7f1f32167aeab" args="(const char *query, uint32_t n)" -->
+<a class="anchor" id="a41ef87c937431528d0ad45f4059edefb"></a><!-- doxytag: member="Url::setQuery" ref="a41ef87c937431528d0ad45f4059edefb" args="(UVector&lt; UString &gt; &amp;vec)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">bool Url::setQuery </td>
           <td>(</td>
-          <td class="paramtype">const char *&nbsp;</td>
-          <td class="paramname"> <em>query</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramtype">UVector&lt; <a class="el" href="classUString.html">UString</a> &gt; &amp;&nbsp;</td>
+          <td class="paramname"> <em>vec</em></td>
+          <td>&nbsp;)&nbsp;</td>
           <td></td>
-          <td class="paramtype">uint32_t&nbsp;</td>
-          <td class="paramname"> <em>n</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
-<p>This methode set the query of the url. If the first char is not an '/' it will be added.</p>
+<p>This methode set the query of the url.</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>query</em>&nbsp;</td><td>Query to set. </td></tr>
@@ -917,7 +935,8 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>This methode set the service of the url. The should no ':' char at the end!</p>
+<p>This methode set the service of the url.</p>
+<p>The should no ':' char at the end!</p>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>service</em>&nbsp;</td><td>Service to set. </td></tr>
@@ -966,7 +985,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 <li>src/ulib/url.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 24 13:47:01 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Dec 30 19:20:50 2009 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

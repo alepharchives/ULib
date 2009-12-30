@@ -19,7 +19,7 @@ rm -f nocat.log \
 
 DIR_CMD="../../examples/userver"
 
-wget -qO /tmp/wget.out "http://10.30.1.131/start_ap?ap=`uname -n`"
+wget -qO /tmp/wget.out "https://10.30.1.131/start_ap?ap=`uname -n`"
 
 #STRACE=$TRUSS
  start_prg_background userver_tcp -c nocat.cfg

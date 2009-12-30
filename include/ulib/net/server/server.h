@@ -102,6 +102,8 @@ public:
    // IP_ADDRESS    public ip address of host for the interface connected to the Internet (autodetected if not specified)
    // ALLOWED_IP    list of comma separated client address for IP-based access control (IPADDR[/MASK])
    //
+   // USE_TCP_OPTIMIZATION flag indicating the use of TCP/IP options to optimize data transmission (TCP_CORK, TCP_DEFER_ACCEPT, TCP_QUICKACK)
+   //
    // PID_FILE      write pid on file indicated
    // WELCOME_MSG   message of welcome to send initially to client
    // RUN_AS_USER   downgrade the security to that of user account
@@ -109,6 +111,7 @@ public:
    //
    // LOG_FILE      locations for file log
    // LOG_FILE_SZ   memory size for file log
+   // LOG_MSG_SIZE  limit length of print network message to LOG_MSG_SIZE chars (default 128)
    //
    // PLUGIN        list of plugins to load, a flexible way to add specific functionality to the server
    // PLUGIN_DIR    directory of plugins to load
@@ -140,6 +143,7 @@ public:
    static const UString* str_PREFORK_CHILD;
    static const UString* str_LOG_FILE;
    static const UString* str_LOG_FILE_SZ;
+   static const UString* str_LOG_MSG_SIZE;
    static const UString* str_CERT_FILE;
    static const UString* str_KEY_FILE;
    static const UString* str_PASSWORD;
@@ -164,6 +168,7 @@ public:
    static const UString* str_IP_ADDRESS;
    static const UString* str_MAX_KEEP_ALIVE;
    static const UString* str_PID_FILE;
+   static const UString* str_USE_TCP_OPTIMIZATION;
 
    static void str_allocate();
 
@@ -300,6 +305,8 @@ public:
 
    // manage log server...
 
+   static ULog* log;
+
    static bool isLog() { return (log != 0); }
 
    static void openLog(const UString& name, uint32_t size)
@@ -407,15 +414,14 @@ protected:
               max_Keep_Alive, // Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session
               num_connection;
 
-   static ULog* log;
    static UString* host;
-   static bool flag_loop;
    static UProcess* proc;
    static USocket* socket;
    static UString* htpasswd;
    static UString* htdigest;
    static UServer_Base* pthis;
    static UVector<UIPAllow*>* vallow_IP;
+   static bool flag_loop, flag_use_tcp_optimization;
 
             UServer_Base(UFileConfig* cfg);
    virtual ~UServer_Base();
@@ -441,6 +447,8 @@ protected:
    virtual int handlerRead() // This method is called to accept a new connection on the server socket
       {
       U_TRACE(0, "UServer_Base::handlerRead()")
+
+      U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
 
       (void) socket->acceptClient(UClientImage_Base::socket);
 
@@ -517,7 +525,13 @@ protected:
       {
       U_TRACE(0, "UServer::newClientImage()")
 
+#  ifdef DEBUG
+      UClientImage_Base* pClientImage = U_NEW(UClientImage<Socket>);
+
+      U_INTERNAL_ASSERT_EQUALS(pClientImage, UClientImage_Base::pClientImage)
+#  else
       (void) U_NEW(UClientImage<Socket>);
+#  endif
       }
 
 private:
@@ -593,7 +607,13 @@ protected:
       {
       U_TRACE(0, "UServer<USSLSocket>::newClientImage()")
 
+#  ifdef DEBUG
+      UClientImage_Base* pClientImage = U_NEW(UClientImage<USSLSocket>);
+
+      U_INTERNAL_ASSERT_EQUALS(pClientImage, UClientImage_Base::pClientImage)
+#  else
       (void) U_NEW(UClientImage<USSLSocket>);
+#  endif
       }
 
 private:

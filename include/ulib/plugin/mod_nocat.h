@@ -120,6 +120,7 @@ public:
    static UString* str_ACCESS_CMD;
    static UString* str_RESET_CMD;
    static UString* str_DECRYPT_CMD;
+   static UString* str_DECRYPT_KEY;
    static UString* str_CHECK_BY_ARPING;
    static UString* str_Action;
    static UString* str_Permit;
@@ -175,7 +176,7 @@ protected:
    UCommand cmd, pgp;
    Url auth_service_url, logout_url; // NB: we need *_url before vfwopt to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
    UVector<UString> vfwopt, vInternalDevice, vLocalNetwork;
-   UString input, output, location, init_cmd, reset_cmd, access_cmd, decrypt_cmd, mode, gateway, access_point, auth_ip;
+   UString input, output, location, init_cmd, reset_cmd, access_cmd, decrypt_cmd, decrypt_key, mode, gateway, access_point, auth_ip;
 
    static Url* info;
    static bool arping;

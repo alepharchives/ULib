@@ -9,6 +9,7 @@
 #include <ulib/utility/services.h>
 #include <ulib/utility/xml_escape.h>
 #include <ulib/utility/string_ext.h>
+#include <ulib/xml/libxml2/document.h>
 
 #ifdef HAVE_SSL_TS
 #  include <ulib/ssl/timestamp.h>
@@ -296,7 +297,7 @@ public:
                                  U_STRING_TO_TRACE(DataObjectFormat),
                                  U_STRING_TO_TRACE(allDataObjectTimestamp));
 
-      to_digest = UServices::xmlC14N(signedProperties);
+      to_digest = UXML2Document(signedProperties).xmlC14N();
 
       UString signedPropertiesDigestValue(200U);
 
@@ -414,7 +415,7 @@ public:
          if (u_endsWith(file, strlen(file), U_CONSTANT_TO_PARAM(".xml")) == false) document_to_add = document;
          else
             {
-            document_to_add = UServices::xmlC14N(document);
+            document_to_add = UXML2Document(document).xmlC14N();
 
             UString tmp(document.size() * 4);
 
@@ -437,7 +438,7 @@ public:
 
          XMLDSIGObject += Object;
 
-         to_digest = UServices::xmlC14N(Object);
+         to_digest = UXML2Document(Object).xmlC14N();
          // ---------------------------------------------------------------------------------------------------------------
 
          // ---------------------------------------------------------------------------------------------------------------
@@ -478,7 +479,7 @@ public:
                           U_STRING_TO_TRACE(XMLDSIGReference),
                           U_STRING_TO_TRACE(XAdESReference));
 
-      UString to_sign = UServices::xmlC14N(SignedInfo);
+      UString to_sign = UXML2Document(SignedInfo).xmlC14N();
       // ---------------------------------------------------------------------------------------------------------------
 
       // ---------------------------------------------------------------------------------------------------------------
@@ -492,7 +493,7 @@ public:
 
       if (signature_timestamp.empty() == false)
          {
-         to_digest = UServices::xmlC14N(SignatureValue);
+         to_digest = UXML2Document(SignatureValue).xmlC14N();
 
          UString token = getTimeStampToken(to_digest, signature_timestamp);
 

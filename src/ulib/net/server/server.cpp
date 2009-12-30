@@ -35,6 +35,7 @@ int                      UServer_Base::max_Keep_Alive;
 int                      UServer_Base::preforked_num_kids;
 bool                     UServer_Base::flag_loop;
 bool                     UServer_Base::digest_authentication;
+bool                     UServer_Base::flag_use_tcp_optimization;
 char                     UServer_Base::mod_name[20];
 ULog*                    UServer_Base::log;
 UString*                 UServer_Base::host;
@@ -60,6 +61,7 @@ const UString* UServer_Base::str_RUN_AS_USER;
 const UString* UServer_Base::str_PREFORK_CHILD;
 const UString* UServer_Base::str_LOG_FILE;
 const UString* UServer_Base::str_LOG_FILE_SZ;
+const UString* UServer_Base::str_LOG_MSG_SIZE;
 const UString* UServer_Base::str_CERT_FILE;
 const UString* UServer_Base::str_KEY_FILE;
 const UString* UServer_Base::str_PASSWORD;
@@ -84,6 +86,7 @@ const UString* UServer_Base::str_RESPONSE_TYPE;
 const UString* UServer_Base::str_IP_ADDRESS;
 const UString* UServer_Base::str_MAX_KEEP_ALIVE;
 const UString* UServer_Base::str_PID_FILE;
+const UString* UServer_Base::str_USE_TCP_OPTIMIZATION;
 
 UString*       UServer_Base::htpasswd;
 UString*       UServer_Base::htdigest;
@@ -103,6 +106,7 @@ void UServer_Base::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_PREFORK_CHILD,0)
    U_INTERNAL_ASSERT_EQUALS(str_LOG_FILE,0)
    U_INTERNAL_ASSERT_EQUALS(str_LOG_FILE_SZ,0)
+   U_INTERNAL_ASSERT_EQUALS(str_LOG_MSG_SIZE,0)
    U_INTERNAL_ASSERT_EQUALS(str_CERT_FILE,0)
    U_INTERNAL_ASSERT_EQUALS(str_KEY_FILE,0)
    U_INTERNAL_ASSERT_EQUALS(str_PASSWORD,0)
@@ -127,6 +131,7 @@ void UServer_Base::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_IP_ADDRESS,0)
    U_INTERNAL_ASSERT_EQUALS(str_MAX_KEEP_ALIVE,0)
    U_INTERNAL_ASSERT_EQUALS(str_PID_FILE,0)
+   U_INTERNAL_ASSERT_EQUALS(str_USE_TCP_OPTIMIZATION,0)
 
    U_INTERNAL_ASSERT_EQUALS(str_htdigest,0)
    U_INTERNAL_ASSERT_EQUALS(str_htpasswd,0)
@@ -141,6 +146,7 @@ void UServer_Base::str_allocate()
    { U_STRINGREP_FROM_CONSTANT("PREFORK_CHILD") },
    { U_STRINGREP_FROM_CONSTANT("LOG_FILE") },
    { U_STRINGREP_FROM_CONSTANT("LOG_FILE_SZ") },
+   { U_STRINGREP_FROM_CONSTANT("LOG_MSG_SIZE") },
    { U_STRINGREP_FROM_CONSTANT("CERT_FILE") },
    { U_STRINGREP_FROM_CONSTANT("KEY_FILE") },
    { U_STRINGREP_FROM_CONSTANT("PASSWORD") },
@@ -165,6 +171,7 @@ void UServer_Base::str_allocate()
    { U_STRINGREP_FROM_CONSTANT("IP_ADDRESS") },
    { U_STRINGREP_FROM_CONSTANT("MAX_KEEP_ALIVE") },
    { U_STRINGREP_FROM_CONSTANT("PID_FILE") },
+   { U_STRINGREP_FROM_CONSTANT("USE_TCP_OPTIMIZATION") },
 
    { U_STRINGREP_FROM_CONSTANT(".htdigest") },
    { U_STRINGREP_FROM_CONSTANT(".htpasswd") }
@@ -179,33 +186,35 @@ void UServer_Base::str_allocate()
    U_NEW_ULIB_OBJECT(str_PREFORK_CHILD,         U_STRING_FROM_STRINGREP_STORAGE(6));
    U_NEW_ULIB_OBJECT(str_LOG_FILE,              U_STRING_FROM_STRINGREP_STORAGE(7));
    U_NEW_ULIB_OBJECT(str_LOG_FILE_SZ,           U_STRING_FROM_STRINGREP_STORAGE(8));
-   U_NEW_ULIB_OBJECT(str_CERT_FILE,             U_STRING_FROM_STRINGREP_STORAGE(9));
-   U_NEW_ULIB_OBJECT(str_KEY_FILE,              U_STRING_FROM_STRINGREP_STORAGE(10));
-   U_NEW_ULIB_OBJECT(str_PASSWORD,              U_STRING_FROM_STRINGREP_STORAGE(11));
-   U_NEW_ULIB_OBJECT(str_CA_FILE,               U_STRING_FROM_STRINGREP_STORAGE(12));
-   U_NEW_ULIB_OBJECT(str_CA_PATH,               U_STRING_FROM_STRINGREP_STORAGE(13));
-   U_NEW_ULIB_OBJECT(str_VERIFY_MODE,           U_STRING_FROM_STRINGREP_STORAGE(14));
-   U_NEW_ULIB_OBJECT(str_ALLOWED_IP,            U_STRING_FROM_STRINGREP_STORAGE(15));
-   U_NEW_ULIB_OBJECT(str_NAME_SOCKET,           U_STRING_FROM_STRINGREP_STORAGE(16));
-   U_NEW_ULIB_OBJECT(str_DOCUMENT_ROOT,         U_STRING_FROM_STRINGREP_STORAGE(17));
-   U_NEW_ULIB_OBJECT(str_PLUGIN,                U_STRING_FROM_STRINGREP_STORAGE(18));
-   U_NEW_ULIB_OBJECT(str_PLUGIN_DIR,            U_STRING_FROM_STRINGREP_STORAGE(19));
-   U_NEW_ULIB_OBJECT(str_REQ_TIMEOUT,           U_STRING_FROM_STRINGREP_STORAGE(20));
-   U_NEW_ULIB_OBJECT(str_CGI_TIMEOUT,           U_STRING_FROM_STRINGREP_STORAGE(21));
-   U_NEW_ULIB_OBJECT(str_VIRTUAL_HOST,          U_STRING_FROM_STRINGREP_STORAGE(22));
-   U_NEW_ULIB_OBJECT(str_DIGEST_AUTHENTICATION, U_STRING_FROM_STRINGREP_STORAGE(23));
-   U_NEW_ULIB_OBJECT(str_URI,                   U_STRING_FROM_STRINGREP_STORAGE(24));
-   U_NEW_ULIB_OBJECT(str_HOST,                  U_STRING_FROM_STRINGREP_STORAGE(25));
-   U_NEW_ULIB_OBJECT(str_USER,                  U_STRING_FROM_STRINGREP_STORAGE(26));
-   U_NEW_ULIB_OBJECT(str_SERVER,                U_STRING_FROM_STRINGREP_STORAGE(27));
-   U_NEW_ULIB_OBJECT(str_METHOD_NAME,           U_STRING_FROM_STRINGREP_STORAGE(28));
-   U_NEW_ULIB_OBJECT(str_RESPONSE_TYPE,         U_STRING_FROM_STRINGREP_STORAGE(29));
-   U_NEW_ULIB_OBJECT(str_IP_ADDRESS,            U_STRING_FROM_STRINGREP_STORAGE(30));
-   U_NEW_ULIB_OBJECT(str_MAX_KEEP_ALIVE,        U_STRING_FROM_STRINGREP_STORAGE(31));
-   U_NEW_ULIB_OBJECT(str_PID_FILE,              U_STRING_FROM_STRINGREP_STORAGE(32));
+   U_NEW_ULIB_OBJECT(str_LOG_MSG_SIZE,          U_STRING_FROM_STRINGREP_STORAGE(9));
+   U_NEW_ULIB_OBJECT(str_CERT_FILE,             U_STRING_FROM_STRINGREP_STORAGE(10));
+   U_NEW_ULIB_OBJECT(str_KEY_FILE,              U_STRING_FROM_STRINGREP_STORAGE(11));
+   U_NEW_ULIB_OBJECT(str_PASSWORD,              U_STRING_FROM_STRINGREP_STORAGE(12));
+   U_NEW_ULIB_OBJECT(str_CA_FILE,               U_STRING_FROM_STRINGREP_STORAGE(13));
+   U_NEW_ULIB_OBJECT(str_CA_PATH,               U_STRING_FROM_STRINGREP_STORAGE(14));
+   U_NEW_ULIB_OBJECT(str_VERIFY_MODE,           U_STRING_FROM_STRINGREP_STORAGE(15));
+   U_NEW_ULIB_OBJECT(str_ALLOWED_IP,            U_STRING_FROM_STRINGREP_STORAGE(16));
+   U_NEW_ULIB_OBJECT(str_NAME_SOCKET,           U_STRING_FROM_STRINGREP_STORAGE(17));
+   U_NEW_ULIB_OBJECT(str_DOCUMENT_ROOT,         U_STRING_FROM_STRINGREP_STORAGE(18));
+   U_NEW_ULIB_OBJECT(str_PLUGIN,                U_STRING_FROM_STRINGREP_STORAGE(19));
+   U_NEW_ULIB_OBJECT(str_PLUGIN_DIR,            U_STRING_FROM_STRINGREP_STORAGE(20));
+   U_NEW_ULIB_OBJECT(str_REQ_TIMEOUT,           U_STRING_FROM_STRINGREP_STORAGE(21));
+   U_NEW_ULIB_OBJECT(str_CGI_TIMEOUT,           U_STRING_FROM_STRINGREP_STORAGE(22));
+   U_NEW_ULIB_OBJECT(str_VIRTUAL_HOST,          U_STRING_FROM_STRINGREP_STORAGE(23));
+   U_NEW_ULIB_OBJECT(str_DIGEST_AUTHENTICATION, U_STRING_FROM_STRINGREP_STORAGE(24));
+   U_NEW_ULIB_OBJECT(str_URI,                   U_STRING_FROM_STRINGREP_STORAGE(25));
+   U_NEW_ULIB_OBJECT(str_HOST,                  U_STRING_FROM_STRINGREP_STORAGE(26));
+   U_NEW_ULIB_OBJECT(str_USER,                  U_STRING_FROM_STRINGREP_STORAGE(27));
+   U_NEW_ULIB_OBJECT(str_SERVER,                U_STRING_FROM_STRINGREP_STORAGE(28));
+   U_NEW_ULIB_OBJECT(str_METHOD_NAME,           U_STRING_FROM_STRINGREP_STORAGE(29));
+   U_NEW_ULIB_OBJECT(str_RESPONSE_TYPE,         U_STRING_FROM_STRINGREP_STORAGE(30));
+   U_NEW_ULIB_OBJECT(str_IP_ADDRESS,            U_STRING_FROM_STRINGREP_STORAGE(31));
+   U_NEW_ULIB_OBJECT(str_MAX_KEEP_ALIVE,        U_STRING_FROM_STRINGREP_STORAGE(32));
+   U_NEW_ULIB_OBJECT(str_PID_FILE,              U_STRING_FROM_STRINGREP_STORAGE(33));
+   U_NEW_ULIB_OBJECT(str_USE_TCP_OPTIMIZATION,  U_STRING_FROM_STRINGREP_STORAGE(34));
 
-   U_NEW_ULIB_OBJECT(str_htdigest,              U_STRING_FROM_STRINGREP_STORAGE(33));
-   U_NEW_ULIB_OBJECT(str_htpasswd,              U_STRING_FROM_STRINGREP_STORAGE(34));
+   U_NEW_ULIB_OBJECT(str_htdigest,              U_STRING_FROM_STRINGREP_STORAGE(35));
+   U_NEW_ULIB_OBJECT(str_htpasswd,              U_STRING_FROM_STRINGREP_STORAGE(36));
 }
 
 UServer_Base::UServer_Base(UFileConfig* cfg)
@@ -257,6 +266,7 @@ UServer_Base::~UServer_Base()
    if (UHTTP::tmpdir)
       {
       delete UHTTP::tmpdir;
+      delete UHTTP::qcontent;
       delete UHTTP::form_name_value;
       }
 
@@ -286,6 +296,8 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // IP_ADDRESS    public ip address of host for the interface connected to the Internet (autodetected if not specified)
    // ALLOWED_IP    list of comma separated client address for IP-based access control (IPADDR[/MASK])
    //
+   // USE_TCP_OPTIMIZATION flag indicating the use of TCP/IP options to optimize data transmission (TCP_CORK, TCP_DEFER_ACCEPT, TCP_QUICKACK)
+   //
    // PID_FILE      write pid on file indicated
    // WELCOME_MSG   message of welcome to send initially to client
    // RUN_AS_USER   downgrade the security to that of user account
@@ -293,6 +305,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    //
    // LOG_FILE      locations   for file log
    // LOG_FILE_SZ   memory size for file log
+   // LOG_MSG_SIZE  limit length of print network message to LOG_MSG_SIZE chars (default 128)
    //
    // PLUGIN        list of plugins to load, a flexible way to add specific functionality to the server
    // PLUGIN_DIR    directory of plugins to load
@@ -324,14 +337,16 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    document_root  = cfg[*str_DOCUMENT_ROOT];
 
 #ifdef HAVE_IPV6
-   UClientImage_Base::bIPv6 = cfg.readBoolean(*str_USE_IPV6);
+   UClientImage_Base::bIPv6   = cfg.readBoolean(*str_USE_IPV6);
 #endif
+   flag_use_tcp_optimization  = cfg.readBoolean(*str_USE_TCP_OPTIMIZATION);
 
-   port           = cfg.readLong(*str_PORT, U_DEFAULT_PORT);
-   req_timeout    = cfg.readLong(*str_REQ_TIMEOUT);
-   cgi_timeout    = cfg.readLong(*str_CGI_TIMEOUT);
-   log_file_sz    = cfg.readLong(*str_LOG_FILE_SZ);
-   max_Keep_Alive = cfg.readLong(*str_MAX_KEEP_ALIVE);
+   port                       = cfg.readLong(*str_PORT, U_DEFAULT_PORT);
+   req_timeout                = cfg.readLong(*str_REQ_TIMEOUT);
+   cgi_timeout                = cfg.readLong(*str_CGI_TIMEOUT);
+   log_file_sz                = cfg.readLong(*str_LOG_FILE_SZ);
+   max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE);
+   u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE, 128);
 
 #ifndef __MINGW32__
    preforked_num_kids = cfg.readLong(*str_PREFORK_CHILD);
@@ -474,7 +489,7 @@ void UServer_Base::init()
    if (name_sock.empty() == false) UUnixSocket::setPath(name_sock.data()); // unix socket...
 #endif
 
-   if (socket->setServer(server, port, 256) == false)
+   if (socket->setServer(server, port, 1024) == false)
       {
       if (server.empty()) server = U_STRING_FROM_CONSTANT("*");
 
@@ -613,15 +628,36 @@ void UServer_Base::init()
          }
       }
 
-   if (name_sock.empty()) // no unix socket...
+   if (flag_use_tcp_optimization)
       {
-   // socket->setBufferRCV(64 * 1024);
-   // socket->setBufferSND(64 * 1024);
+      U_ASSERT_EQUALS(name_sock.empty(), true) // no unix socket...
 
-      // NB: OPTIMIZATION in benchmarking with ab...
-      
-                                               socket->setTcpCork(1U);        // 8.9k -> 9.6k
-      if (UClientImage_Base::msg_welcome == 0) socket->setTcpDeferAccept(1U); // 8.5k -> 8.9k
+      /* On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries.
+       */
+
+      socket->setTcpCork(1U);
+
+      /* Linux (along with some other OSs) includes a TCP_DEFER_ACCEPT option in its TCP implementation.
+       * Set on a server-side listening socket, it instructs the kernel not to wait for the final ACK packet
+       * and not to initiate the process until the first packet of real data has arrived. After sending the SYN/ACK,
+       * the server will then wait for a data packet from a client. Now, only three packets will be sent over the
+       * network, and the connection establishment delay will be significantly reduced, which is typical for HTTP.
+       */
+
+      socket->setTcpDeferAccept(1U);
+
+      /* Another way to prevent delays caused by sending useless packets is to use the TCP_QUICKACK option.
+       * This option is different from TCP_DEFER_ACCEPT, as it can be used not only to manage the process of
+       * connection establishment, but it can be used also during the normal data transfer process. In addition,
+       * it can be set on either side of the client-server connection. Delaying sending of the ACK packet could
+       * be useful if it is known that the user data will be sent soon, and it is better to set the ACK flag on
+       * that data packet to minimize overhead. When the sender is sure that data will be immediately be sent
+       * (multiple packets), the TCP_QUICKACK option can be set to 0. The default value of this option is 1 for
+       * sockets in the connected state, which will be reset by the kernel to 1 immediately after the first use.
+       * (This is a one-time option)
+       */
+
+      socket->setTcpQuickAck(0U);
       }
 }
 
@@ -827,7 +863,7 @@ void UServer_Base::run()
 
             U_INTERNAL_DUMP("down to %u children", nkids)
 
-            U_SRV_LOG_VAR("child (pid %d) exited with value %d, down to %u children", pid, status, nkids);
+            U_SRV_LOG_VAR("child (pid %d) exited with value %d (%s), down to %u children", pid, status, UProcess::exitInfo(status), nkids);
             }
 
          /* Another little safety brake here: since children should not exit

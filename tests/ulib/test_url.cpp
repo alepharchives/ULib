@@ -130,7 +130,7 @@ int U_EXPORT main(int argc, char* argv[])
    U_ASSERT( entry == U_STRING_FROM_CONSTANT("var2") )
    U_ASSERT( value == U_STRING_FROM_CONSTANT("ba") )
 
-   u.addQuery("var3", "co");
+   u.addQuery(U_CONSTANT_TO_PARAM("var3"), U_CONSTANT_TO_PARAM("co"));
 
    u.firstQuery(entry, value);
    u.nextQuery(entry, value);

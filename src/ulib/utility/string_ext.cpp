@@ -38,7 +38,7 @@ UString UStringExt::BIOtoString(BIO* bio)
       {
       UString result(len);
 
-      (void) memcpy(result.data(), buffer, len);
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", result.data(), buffer, len);
 
       result.size_adjust(len);
 
@@ -75,7 +75,7 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
 
          if (len)
             {
-            (void) memcpy(x.rep->end(), s + start, len);
+            (void) U_SYSCALL(memcpy, "%p,%p,%u", x.rep->end(), s + start, len);
 
             x.rep->_length += len;
             }
@@ -109,7 +109,7 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 
    void* p;
    uint32_t start = 0, end, len;
-   UString x(U_min((n / n1) * n2, 256 * 1024 * 1024)); // caso peggiore...
+   UString x(U_min((n / n1) * (n2 ? n2 : 1), 256 * 1024 * 1024)); // caso peggiore...
 
    while ((p = u_find(s + start, n - start, a, n1)))
       {
@@ -122,12 +122,12 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 
       if (len)
          {
-         (void) memcpy(x.rep->end(), s + start, len);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", x.rep->end(), s + start, len);
 
          x.rep->_length += len;
          }
 
-      (void) memcpy(x.rep->end(), b, n2);
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", x.rep->end(), b, n2);
 
       x.rep->_length += n2;
 
@@ -293,14 +293,14 @@ UString UStringExt::expandEnvVar(const char* s, uint32_t n)
 
       if (n1)
          {
-         (void) memcpy(ptr,           s, len);
-         (void) memcpy(ptr + len, value,  n1);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr,           s, len);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr + len, value,  n1);
 
          x.rep->_length += len + n1;
          }
       else
          {
-         (void) memcpy(ptr, s, len + end);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, len + end);
 
          x.rep->_length += len + end;
          }
@@ -340,7 +340,7 @@ UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
          {
          sz = p - s;
 
-         (void) memcpy(str, s, sz);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", str, s, sz);
 
          s    = p + 1;
          str += sz;
@@ -354,7 +354,7 @@ UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
          {
          sz = end - s;
 
-         (void) memcpy(str, s, sz);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", str, s, sz);
 
          sz1 += sz;
 
@@ -391,7 +391,7 @@ UString UStringExt::removeEscape(const char* s, uint32_t n)
          {
          sz = p - s;
 
-         (void) memcpy(str, s, sz);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", str, s, sz);
 
          s    = p + 1;
          str += sz;
@@ -402,7 +402,7 @@ UString UStringExt::removeEscape(const char* s, uint32_t n)
          {
          sz = end - s;
 
-         (void) memcpy(str, s, sz);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", str, s, sz);
 
          sz1 += sz;
 
@@ -443,7 +443,7 @@ UString UStringExt::stripWhiteSpace(const char* s, uint32_t n)
 
       if (sz)
          {
-         (void) memcpy(result.data(), &s[start], sz);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", result.data(), &s[start], sz);
 
          result.size_adjust(sz);
          }
@@ -481,7 +481,7 @@ loop:
 
    sz1 = (s - p);
 
-   (void) memcpy(str + sz, p, sz1); // result.append(p, sz1);
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", str + sz, p, sz1); // result.append(p, sz1);
 
    sz += sz1;
 
@@ -673,13 +673,13 @@ UString UStringExt::compress(const UString& s)
 
    // copy magic byte
 
-   (void) memcpy(ptr, U_CONSTANT_TO_PARAM(U_LZOP_COMPRESS));
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, U_CONSTANT_TO_PARAM(U_LZOP_COMPRESS));
 
    ptr += U_CONSTANT_SIZE(U_LZOP_COMPRESS);
 
    // copy original size
 
-   (void) memcpy(ptr, &sz, sizeof(uint32_t));
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, &sz, sizeof(uint32_t));
 
    ptr += sizeof(uint32_t);
 
@@ -819,67 +819,6 @@ UString UStringExt::toupper(const UString& x)
 
 // retrieve information on form elements as couple <name1>=<value1>&<name2>=<value2>&...
 
-uint32_t UStringExt::getNameValueFormData(const UString& content, UVector<UString>& name_value)
-{
-   U_TRACE(0, "UStringExt::getNameValueFormData(%.*S,%p)", U_STRING_TO_TRACE(content), &name_value)
-
-   U_ASSERT(content.empty() == false)
-
-   // Parse the data in one fell swoop for efficiency
-
-   uint32_t n = name_value.size(),
-            size = content.size(),
-            result, pos, oldPos = 0, len;
-   UString name(U_CAPACITY), value(U_CAPACITY);
-
-   while (true)
-      {
-      // Find the '=' separating the name from its value
-
-      pos = content.find_first_of('=', oldPos);
-
-      // If no '=', we're finished
-
-      if (pos == U_NOT_FOUND) break;
-
-      // name is URL encoded...
-
-      len = pos - oldPos;
-
-      name.setBuffer(len);
-
-      Url::decode(content.c_pointer(oldPos), len, name);
-
-      name_value.push_back(name);
-
-      // Find the '&' separating subsequent name/value pairs
-
-      oldPos = ++pos;
-
-      pos = content.find_first_of('&', oldPos);
-
-      // Even if an '&' wasn't found the rest of the string is a value and value is URL encoded...
-
-      len = (pos == U_NOT_FOUND ? size : pos) - oldPos;
-
-      value.setBuffer(len);
-
-      Url::decode(content.c_pointer(oldPos), len, value);
-
-      name_value.push_back(value);
-
-      if (pos == U_NOT_FOUND) break;
-
-      // Update parse position
-
-      oldPos = ++pos;
-      }
-
-   result = (name_value.size() - n);
-
-   U_RETURN(result);
-}
-
 uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UString>& name_value, const char* delim, uint32_t dlen)
 {
    U_TRACE(0, "UStringExt::getNameValueFromData(%.*S,%p,%.*S,%u)", U_STRING_TO_TRACE(content), &name_value, dlen, delim, dlen)
@@ -888,12 +827,13 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 
    // Parse the data in one fell swoop for efficiency
 
-   UString value;
    const char* ptr;
    const char* end = content.end();
-   uint32_t result, pos, oldPos = 0,
-            n = name_value.size(),
-            size = content.size();
+
+   UString name(U_CAPACITY), value(U_CAPACITY);
+
+   bool form  = (dlen == 1 && *delim == '&');
+   uint32_t n = name_value.size(), size = content.size(), result, pos, oldPos = 0, len;
 
    while (true)
       {
@@ -905,30 +845,63 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 
       if (pos == U_NOT_FOUND) break;
 
-      // name is already decoded...
+      len = pos - oldPos;
 
-      name_value.push_back(content.substr(oldPos, pos - oldPos));
+      if (form)
+         {
+         // name is URL encoded...
 
-      // Find the delim separating subsequent name/value pairs
+         name.setBuffer(len);
+
+         Url::decode(content.c_pointer(oldPos), len, name);
+
+         name_value.push_back(name);
+         }
+      else
+         {
+         // name is already decoded...
+
+         name_value.push_back(content.substr(oldPos, len));
+         }
+
+      // Find the delimitator separating subsequent name/value pairs
 
       oldPos = ++pos;
 
-      if (content.c_char(pos) == '"')
+      if (form)
          {
-         ptr = content.c_pointer(++pos);
+         pos = content.find_first_of('&', oldPos);
+         }
+      else
+         {
+         if (content.c_char(pos) == '"')
+            {
+            ptr = content.c_pointer(++pos);
 
-         U_SKIP_QUOTED_STRING(ptr,end,'"')
+            U_SKIP_QUOTED_STRING(ptr,end,'"')
 
-         pos = content.distance(ptr);
+            pos = content.distance(ptr);
+            }
+
+         pos = content.find_first_of(delim, pos, dlen);
          }
 
-      pos = content.find_first_of(delim, pos, dlen);
+      // Even if an delimitator wasn't found the rest of the string is a value and value is already decoded...
 
-      // Even if an delim wasn't found the rest of the string is a value and value is already decoded...
+      len = (pos == U_NOT_FOUND ? size : pos) - oldPos;
 
-      value = content.substr(oldPos, (pos == U_NOT_FOUND ? size : pos) - oldPos);
+      if (form)
+         {
+         value.setBuffer(len);
 
-      if (value.isQuoted()) value.unQuote();
+         Url::decode(content.c_pointer(oldPos), len, value);
+         }
+      else
+         {
+         value = content.substr(oldPos, len);
+
+         if (value.isQuoted()) value.unQuote();
+         }
 
       name_value.push_back(value);
 
@@ -936,14 +909,21 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 
       // Update parse position
 
-      ptr = content.c_pointer(pos);
-
-      do {
-         if (++ptr >= end) goto end;
+      if (form)
+         {
+         oldPos = ++pos;
          }
-      while (memchr(delim, *ptr, dlen));
+      else
+         {
+         ptr = content.c_pointer(pos);
 
-      oldPos = content.distance(ptr);
+         do {
+            if (++ptr >= end) goto end;
+            }
+         while (memchr(delim, *ptr, dlen));
+
+         oldPos = content.distance(ptr);
+         }
       }
 
 end:
@@ -963,7 +943,7 @@ void UStringExt::buildTokenInt(const char* token, uint32_t value, UString& buffe
 
    char* ptr = buffer.c_pointer(start);
 
-   (void) memcpy(ptr, token, U_TOKEN_NM);
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, token, U_TOKEN_NM);
 
    u_int2hex(ptr + U_TOKEN_NM, value);
 

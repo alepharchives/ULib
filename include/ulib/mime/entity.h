@@ -184,7 +184,7 @@ public:
 
       U_ASSERT(content_type.empty() || isURLEncoded())
 
-      return UStringExt::getNameValueFormData(content, name_value);
+      return UStringExt::getNameValueFromData(content, name_value);
       }
 
    // read with socket

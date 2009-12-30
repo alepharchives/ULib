@@ -159,22 +159,6 @@ struct U_EXPORT UServices {
    static UString getUUID();
 #endif
 
-
-#ifdef HAVE_LIBXML2
-   /* Canonical XML implementation (http://www.w3.org/TR/2001/REC-xml-c14n-20010315)
-    *
-    * Enum xmlC14NMode {
-    *    XML_C14N_1_0           = 0 : Origianal C14N 1.0 spec
-    *    XML_C14N_EXCLUSIVE_1_0 = 1 : Exclusive C14N 1.0 spec
-    *    XML_C14N_1_1           = 2 : C14N 1.1 spec
-    * }
-    */
-
-   static UString xmlC14N(const char* data, uint32_t size, int mode, int with_comments, unsigned char** inclusive_namespaces);
-
-   static UString xmlC14N(const UString& data, int mode = 0) { return xmlC14N(U_STRING_TO_PARAM(data), mode, 0, 0); }
-#endif
-
 #ifdef HAVE_SSL
    /* setup OPENSSL standard certificate directory. The X509_STORE holds the tables etc for verification stuff.
    A X509_STORE_CTX is used while validating a single certificate. The X509_STORE has X509_LOOKUPs for looking

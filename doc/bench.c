@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
    {
        sprintf(str,
        "/usr/sbin/ab -n 1000000 -c %u    -t 1" // NO Keep-Alives
-//     "/usr/sbin/ab -n 1000000 -c %u -k -t 1" // KEEP-ALIVES (ab don't distribute the requests across process)
+//     "/usr/sbin/ab -n 1000000 -c %u -k -t 1" // KEEP-ALIVES (NB: ab don't distribute the requests across process)
        " \"http://10.30.1.131/usp/hello_world.usp\""  // ULib / teepeedee2
 //     " \"http://10.30.1.131/csp?hello\""
 //     " \"http://192.168.200.88:8080/100.html\""

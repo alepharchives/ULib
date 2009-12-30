@@ -107,8 +107,10 @@ bool USSLSocket::useDHFile(const char* dh_file)
    /*
 #ifdef DEBUG
    unsigned char buf[512];
-   int len  = i2d_DHparams(dh, 0);
-   int size = i2d_DHparams(dh, (unsigned char**)&buf);
+
+   int len  = i2d_DHparams(dh, 0),
+       size = i2d_DHparams(dh, (unsigned char**)&buf);
+
    U_INTERNAL_DUMP("len = %d buf(%d) = %#.*S", len, size, size, buf)
 #endif
    */
@@ -227,7 +229,7 @@ bool USSLSocket::setContext(const char* cert_file,
 
    if (ret != 1)
       {
-      U_DUMP("status = %.*S", 512, status())
+      U_DUMP("status = %.*S", 512, status(true))
 
       U_RETURN(false);
       }
@@ -235,9 +237,9 @@ bool USSLSocket::setContext(const char* cert_file,
    U_RETURN(true);
 }
 
-U_NO_EXPORT const char* USSLSocket::status(bool flag)
+const char* USSLSocket::status(SSL* ssl, int ret, bool flag)
 {
-   U_TRACE(1, "USSLSocket::status(%b)", flag)
+   U_TRACE(1, "USSLSocket::status(%p,%d,%b)", ssl, ret, flag)
 
    const char* descr  = "SSL_ERROR_NONE";
    const char* errstr = "ok";
@@ -335,7 +337,7 @@ const char* USSLSocket::getError()
       }
    else if (ret != SSL_ERROR_NONE)
       {
-      (void) status();
+      (void) status(true);
 
       U_RETURN(u_buffer);
       }
@@ -408,7 +410,7 @@ bool USSLSocket::askForClientCertificate()
 
    if (ret != 1)
       {
-      U_DUMP("status = %.*S", 512, status())
+      U_DUMP("status = %.*S", 512, status(true))
 
       U_RETURN(false);
       }
@@ -417,7 +419,7 @@ bool USSLSocket::askForClientCertificate()
 
    if (ret != 1)
       {
-      U_DUMP("status = %.*S", 512, status())
+      U_DUMP("status = %.*S", 512, status(true))
 
       U_RETURN(false);
       }
@@ -426,7 +428,7 @@ bool USSLSocket::askForClientCertificate()
 
    if (ret != 1)
       {
-      U_DUMP("status = %.*S", 512, status())
+      U_DUMP("status = %.*S", 512, status(true))
 
       U_RETURN(false);
       }
@@ -437,7 +439,7 @@ bool USSLSocket::askForClientCertificate()
 
    if (ret != 1)
       {
-      U_DUMP("status = %.*S", 512, status())
+      U_DUMP("status = %.*S", 512, status(true))
 
       U_RETURN(false);
       }
@@ -455,7 +457,7 @@ void USSLSocket::closesocket()
       {
       ret = U_SYSCALL(SSL_shutdown, "%p", ssl); // Send SSL shutdown signal to peer
 
-      U_DUMP("status = %.*S", 512, status())
+      U_DUMP("status = %.*S", 512, status(true))
 
       U_SYSCALL_VOID(SSL_set_shutdown, "%p,%d", ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
 
@@ -471,52 +473,69 @@ USocket* USSLSocket::accept(USSLSocket* pcNewConnection)
 {
    U_TRACE(1, "USSLSocket::accept(%p)", pcNewConnection)
 
-   bool reuse = (pcNewConnection->ssl != 0);
+   bool reuse = (ssl != 0);
 
    U_INTERNAL_DUMP("reuse = %b", reuse)
 
 retry:
-   if (reuse)                  (void) U_SYSCALL(SSL_clear, "%p", pcNewConnection->ssl); // reuse old
-   else pcNewConnection->ssl = (SSL*) U_SYSCALL(SSL_new,   "%p", ctx);
+   if (reuse) (void) U_SYSCALL(SSL_clear, "%p", ssl); // reuse old
+   else ssl = (SSL*) U_SYSCALL(SSL_new,   "%p", ctx);
 
-   // When beginning a new handshake, the SSL engine must know whether it must call the connect (client) or accept (server) routines.
-   // Even though it may be clear from the method chosen, whether client or server mode was requested, the handshake routines must be explicitly set.
-   // U_SYSCALL_VOID(SSL_set_accept_state, "%p", pcNewConnection->ssl); // init SSL server session
+   // --------------------------------------------------------------------------------------------------
+   // When beginning a new handshake, the SSL engine must know whether it must call the connect (client)
+   // or accept (server) routines. Even though it may be clear from the method chosen, whether client or
+   // server mode was requested, the handshake routines must be explicitly set.
+   // --------------------------------------------------------------------------------------------------
+   // U_SYSCALL_VOID(SSL_set_accept_state, "%p", ssl); // init SSL server session
+   // --------------------------------------------------------------------------------------------------
 
    ret = 0;
 
-   if (U_SYSCALL(SSL_set_fd, "%p,%d", pcNewConnection->ssl, pcNewConnection->iSockDesc)) // get SSL to use our socket
+   if (U_SYSCALL(SSL_set_fd, "%p,%d", ssl, pcNewConnection->iSockDesc)) // get SSL to use our socket
       {
 loop:
-      ret = U_SYSCALL(SSL_accept, "%p", pcNewConnection->ssl); // get SSL handshake with client
+      errno = 0;
+      ret   = U_SYSCALL(SSL_accept, "%p", ssl); // get SSL handshake with client
 
-      if (ret == 1) goto end;
+      if (ret == 1)
+         {
+         pcNewConnection->ssl = ssl;
 
-      ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
+         ssl = 0;
 
-      U_DUMP("status = %.*S", 512, status(false))
+         goto end;
+         }
 
-      if (ret == SSL_ERROR_WANT_READ  ||
-          ret == SSL_ERROR_WANT_WRITE ||
-          ret == SSL_ERROR_WANT_ACCEPT) goto loop;
+      if (errno == 0)
+         {
+         ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
+
+         U_DUMP("status = %.*S", 512, status(false))
+
+         if (ret == SSL_ERROR_WANT_READ  ||
+             ret == SSL_ERROR_WANT_WRITE ||
+             ret == SSL_ERROR_WANT_ACCEPT) goto loop;
+         }
       }
 
    if (ret != 1)
       {
       if (reuse)
          {
-         U_DUMP("status = %.*S", 512, pcNewConnection->status())
-
-         reuse = false;
+         U_DUMP("status = %.*S", 512, status(true))
 
          U_SYSCALL_VOID(SSL_free, "%p", ssl);
 
-         ssl = 0;
+         ssl   = 0;
+         reuse = false;
 
          goto retry;
          }
 
-      pcNewConnection->close();
+      pcNewConnection->USocket::closesocket();
+
+      pcNewConnection->iState    = -errno;
+      pcNewConnection->iSockDesc = -1;
       }
 
 end:
@@ -558,15 +577,20 @@ int USSLSocket::recv(void* pBuffer, int iBufferLen)
       {
       U_INTERNAL_ASSERT_POINTER(ssl)
 loop:
+      errno      = 0;
       iBytesRead = U_SYSCALL(SSL_read, "%p,%p,%d", ssl, CAST(pBuffer), iBufferLen);
 
       if (iBytesRead <= 0)
          {
-         ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
+         if (errno) iState = -errno;
+         else
+            {
+            ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
 
-         U_DUMP("status = %.*S", 512, status(false))
+            U_DUMP("status = %.*S", 512, status(false))
 
-         if (ret == SSL_ERROR_WANT_READ) goto loop;
+            if (ret == SSL_ERROR_WANT_READ) goto loop;
+            }
          }
       }
 
@@ -590,15 +614,20 @@ int USSLSocket::send(const void* pData, int iDataLen)
       {
       U_INTERNAL_ASSERT_POINTER(ssl)
 loop:
+      errno       = 0;
       iBytesWrite = U_SYSCALL(SSL_write, "%p,%p,%d", ssl, CAST(pData), iDataLen);
 
       if (iBytesWrite <= 0)
          {
-         ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
+         if (errno) iState = -errno;
+         else
+            {
+            ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
 
-         U_DUMP("status = %.*S", 512, status(false))
+            U_DUMP("status = %.*S", 512, status(false))
 
-         if (ret == SSL_ERROR_WANT_WRITE) goto loop;
+            if (ret == SSL_ERROR_WANT_WRITE) goto loop;
+            }
          }
       }
 

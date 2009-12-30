@@ -185,80 +185,6 @@ UString UServices::getUUID()
 }
 #endif
 
-#ifdef HAVE_LIBXML2
-#  include <libxml/xpath.h>
-#  include <libxml/parser.h>
-#  include <libxml/c14n.h>
-#  include <libxml/xpathInternals.h>
-
-// Canonical XML implementation (http://www.w3.org/TR/2001/REC-xml-c14n-20010315)
-
-UString UServices::xmlC14N(const char* buffer, uint32_t size, int mode, int with_comments, unsigned char** inclusive_namespaces)
-{
-   U_TRACE(1, "UServices::xmlC14N(%.*S,%u,%d,%d,%d,%p)", size, buffer, size, mode, with_comments, inclusive_namespaces)
-
-#ifndef LIBXML_C14N_ENABLED
-   U_ERROR("XPath/Canonicalization support not compiled in libxml2", 0);
-#endif
-
-   /*
-    * build an XML tree from a file; we need to add default
-    * attributes and resolve all character and entities references
-    */
-
-   xmlLoadExtDtdDefaultValue = XML_DETECT_IDS | XML_COMPLETE_ATTRS;
-
-   U_SYSCALL_VOID(xmlSubstituteEntitiesDefault, "%d", 1);
-
-   /*
-    * Do not fetch DTD over network
-    */
-
-   // xmlExternalEntityLoader defaultEntityLoader = xmlNoNetExternalEntityLoader;
-
-   U_SYSCALL_VOID(xmlSetExternalEntityLoader, "%p", xmlNoNetExternalEntityLoader);
-
-   xmlLoadExtDtdDefaultValue = 0;
-
-   xmlDocPtr doc = (xmlDocPtr) U_SYSCALL(xmlParseMemory, "%p,%d", buffer, size);
-
-   if (doc == NULL) U_ERROR("unable to parse buffer data", 0);
-
-   /*
-    * Check the document is of the right kind
-    */
-
-   if (U_SYSCALL(xmlDocGetRootElement, "%p", doc) == NULL) U_ERROR("empty document for buffer data", 0);
-
-   /*
-    * Canonical form
-    */
-
-   xmlChar* result = NULL;
-
-   int ret = U_SYSCALL(xmlC14NDocDumpMemory, "%p,%p,%d,%p,%d,%p", doc, NULL, mode, inclusive_namespaces, with_comments, &result);
-
-   if (ret < 0) U_ERROR("failed to canonicalize buffer data (%d)", ret);
-
-   UString output;
-
-   if (result != NULL)
-      {
-      (void) output.replace((const char*)result);
-
-      U_SYSCALL_VOID(xmlFree, "%p", result);
-      }
-
-   /*
-    * Cleanup
-    */ 
-
-   U_SYSCALL_VOID(xmlFreeDoc, "%p", doc);
-
-   U_RETURN_STRING(output);
-}
-#endif
-
 #ifdef HAVE_SSL
 #  include <openssl/err.h>
 #  include <openssl/engine.h>
@@ -491,7 +417,7 @@ EVP_PKEY* UServices::loadKey(const UString& x, const char* format, bool _private
 
       UString buffer(length);
 
-      if (UBase64::decode((const unsigned char*)x.data(), length, buffer) == false) goto next;
+      if (UBase64::decode(x.data(), length, buffer) == false) goto next;
 
       tmp    = buffer;
       format = "DER";

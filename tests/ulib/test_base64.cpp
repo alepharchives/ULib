@@ -18,7 +18,7 @@ static void check(const UString& dati, const UString& file)
    */
 
    UBase64::encode( (const unsigned char*)U_STRING_TO_PARAM(dati),    buffer1);
-   UBase64::decode( (const unsigned char*)U_STRING_TO_PARAM(buffer1), buffer2);
+   UBase64::decode(                       U_STRING_TO_PARAM(buffer1), buffer2);
 
    U_INTERNAL_DUMP("buffer1 = %#.*S", U_STRING_TO_TRACE(buffer1))
    U_INTERNAL_DUMP("dati    = %#.*S", U_STRING_TO_TRACE(dati))

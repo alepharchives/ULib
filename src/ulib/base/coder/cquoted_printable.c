@@ -149,11 +149,11 @@ uint32_t u_quoted_printable_encode(const unsigned char* inptr, uint32_t len, uns
 
 /* this decodes rfc2047's version of quoted-printable */
 
-uint32_t u_quoted_printable_decode(const unsigned char* inptr, uint32_t len, unsigned char* out)
+uint32_t u_quoted_printable_decode(const char* inptr, uint32_t len, unsigned char* out)
 {
-         unsigned char c0, c1, v;
-   const unsigned char* inend  = inptr + len;
-         unsigned char* outptr = out;
+         char c0, c1, v;
+   const    char* inend  = inptr + len;
+   unsigned char* outptr = out;
 
    U_INTERNAL_TRACE("u_quoted_printable_decode(%.*s,%u,%p)", len, inptr, len, out)
 
@@ -177,8 +177,8 @@ uint32_t u_quoted_printable_decode(const unsigned char* inptr, uint32_t len, uns
          c0 = *(inptr+1);
          c1 = *(inptr+2);
 
-         if (isxdigit(c0) &&
-             isxdigit(c1))
+         if (u_isxdigit(c0) &&
+             u_isxdigit(c1))
             {
             v = ((u_hexc2int(c0) & 0x0f) << 4) |
                  (u_hexc2int(c1) & 0x0f);

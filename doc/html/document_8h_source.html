@@ -87,14 +87,14 @@
 <a name="l00064"></a>00064 
 <a name="l00065"></a>00065         <span class="comment">// Costruttori</span>
 <a name="l00066"></a>00066 
-<a name="l00067"></a>00067         <a class="code" href="classUXML2Document.html">UXML2Document</a>(<span class="keyword">const</span> xmlChar* version = (<span class="keyword">const</span> xmlChar*)<span class="stringliteral">&quot;1.0&quot;</span>)
+<a name="l00067"></a>00067         <a class="code" href="classUXML2Document.html">UXML2Document</a>()
 <a name="l00068"></a>00068                 {
-<a name="l00069"></a>00069                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUXML2Document.html">UXML2Document</a>, <span class="stringliteral">&quot;%S&quot;</span>, version)
+<a name="l00069"></a>00069                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUXML2Document.html">UXML2Document</a>, <span class="stringliteral">&quot;&quot;</span>, 0)
 <a name="l00070"></a>00070 
-<a name="l00071"></a>00071                 impl_ = (xmlDocPtr) U_SYSCALL(xmlNewDoc, <span class="stringliteral">&quot;%S&quot;</span>, version);
-<a name="l00072"></a>00072 
-<a name="l00073"></a>00073                 impl_-&gt;_private = <span class="keyword">this</span>;
-<a name="l00074"></a>00074                 }
+<a name="l00071"></a>00071                 impl_ = (xmlDocPtr) U_SYSCALL(xmlNewDoc, <span class="stringliteral">&quot;%S&quot;</span>, (xmlChar*)<span class="stringliteral">&quot;1.0&quot;</span>);
+<a name="l00072"></a>00072                 }
+<a name="l00073"></a>00073 
+<a name="l00074"></a>00074         <a class="code" href="classUXML2Document.html">UXML2Document</a>(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; data);
 <a name="l00075"></a>00075 
 <a name="l00076"></a>00076         ~<a class="code" href="classUXML2Document.html">UXML2Document</a>()
 <a name="l00077"></a>00077                 {
@@ -202,47 +202,53 @@
 <a name="l00223"></a>00223                 U_RETURN_POINTER(entity,_xmlEntity);
 <a name="l00224"></a>00224                 }
 <a name="l00225"></a>00225 
-<a name="l00234"></a>00234         <span class="keywordtype">bool</span> writeToFile(<span class="keyword">const</span> <span class="keywordtype">char</span>* filename, <span class="keyword">const</span> <span class="keywordtype">char</span>* encoding = 0, <span class="keywordtype">bool</span> formatted = <span class="keyword">false</span>);
-<a name="l00235"></a>00235 
-<a name="l00245"></a>00245         xmlChar* writeToString(<span class="keywordtype">int</span>&amp; length, <span class="keyword">const</span> <span class="keywordtype">char</span>* encoding = 0, <span class="keywordtype">bool</span> formatted = <span class="keyword">false</span>);
+<a name="l00235"></a>00235         xmlNodePtr findNode(<span class="keyword">const</span> xmlNodePtr parent, <span class="keyword">const</span> xmlChar* name, <span class="keyword">const</span> xmlChar* ns);
+<a name="l00236"></a>00236 
+<a name="l00245"></a>00245         <span class="keywordtype">bool</span> writeToFile(<span class="keyword">const</span> <span class="keywordtype">char</span>* filename, <span class="keyword">const</span> <span class="keywordtype">char</span>* encoding = 0, <span class="keywordtype">bool</span> formatted = <span class="keyword">false</span>);
 <a name="l00246"></a>00246 
-<a name="l00247"></a>00247         <span class="comment">// Access the underlying libxml2 implementation.</span>
-<a name="l00248"></a>00248 
-<a name="l00249"></a>00249         xmlDocPtr cobj() { <span class="keywordflow">return</span> impl_; }
-<a name="l00250"></a>00250 
-<a name="l00251"></a>00251 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00252"></a>00252 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00253"></a>00253 <span class="preprocessor">#endif</span>
-<a name="l00254"></a>00254 <span class="preprocessor"></span>
-<a name="l00255"></a>00255 <span class="keyword">protected</span>:
-<a name="l00256"></a>00256         xmlDocPtr impl_;
+<a name="l00256"></a>00256         xmlChar* writeToString(<span class="keywordtype">int</span>&amp; length, <span class="keyword">const</span> <span class="keywordtype">char</span>* encoding = 0, <span class="keywordtype">bool</span> formatted = <span class="keyword">false</span>);
 <a name="l00257"></a>00257 
-<a name="l00258"></a>00258         <a class="code" href="classUXML2Document.html">UXML2Document</a>(xmlDocPtr doc) : impl_(doc)
-<a name="l00259"></a>00259                 {
-<a name="l00260"></a>00260                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUXML2Document.html">UXML2Document</a>, <span class="stringliteral">&quot;%p&quot;</span>, doc)
-<a name="l00261"></a>00261 
-<a name="l00262"></a>00262                 impl_-&gt;_private = this;
-<a name="l00263"></a>00263                 }
-<a name="l00264"></a>00264 
-<a name="l00274"></a><a class="code" href="classUXML2Document.html#a31774bafc5d6838f6a2dc0e4fe3c8d1d">00274</a>         xmlEntityPtr getEntity(const <span class="keywordtype">char</span>* name)
-<a name="l00275"></a>00275                 {
-<a name="l00276"></a>00276                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Document::getEntity(%S)&quot;</span>, name)
-<a name="l00277"></a>00277 
-<a name="l00278"></a>00278                 U_INTERNAL_ASSERT_POINTER(impl_)
+<a name="l00267"></a>00267         <a class="code" href="classUString.html">UString</a> xmlC14N(<span class="keywordtype">int</span> mode = 0, <span class="keywordtype">int</span> with_comments = 0, <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>** inclusive_namespaces = 0);
+<a name="l00268"></a>00268 
+<a name="l00269"></a>00269         <span class="comment">// Access the underlying libxml2 implementation.</span>
+<a name="l00270"></a>00270 
+<a name="l00271"></a>00271         xmlDocPtr cobj() { <span class="keywordflow">return</span> impl_; }
+<a name="l00272"></a>00272 
+<a name="l00273"></a>00273 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00274"></a>00274 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00275"></a>00275 <span class="preprocessor">#endif</span>
+<a name="l00276"></a>00276 <span class="preprocessor"></span>
+<a name="l00277"></a>00277 <span class="keyword">protected</span>:
+<a name="l00278"></a>00278         xmlDocPtr impl_;
 <a name="l00279"></a>00279 
-<a name="l00280"></a>00280                 xmlEntityPtr node = (xmlEntityPtr) U_SYSCALL(xmlGetDocEntity, <span class="stringliteral">&quot;%p,%S&quot;</span>, impl_, (<span class="keyword">const</span> xmlChar*)name);
+<a name="l00280"></a>00280         <span class="keyword">static</span> <span class="keywordtype">bool</span> binit;
 <a name="l00281"></a>00281 
-<a name="l00282"></a>00282                 U_RETURN_POINTER(node,_xmlEntity);
-<a name="l00283"></a>00283                 }
-<a name="l00284"></a>00284 
-<a name="l00285"></a>00285 <span class="keyword">private</span>:
-<a name="l00286"></a>00286         <a class="code" href="classUXML2Document.html">UXML2Document</a>(<span class="keyword">const</span> <a class="code" href="classUXML2Document.html">UXML2Document</a>&amp;)            {}
-<a name="l00287"></a>00287         <a class="code" href="classUXML2Document.html">UXML2Document</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUXML2Document.html">UXML2Document</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00288"></a>00288 };
-<a name="l00289"></a>00289 
-<a name="l00290"></a>00290 <span class="preprocessor">#endif</span>
+<a name="l00282"></a>00282         <span class="keyword">static</span> <span class="keywordtype">void</span> init();
+<a name="l00283"></a>00283 
+<a name="l00284"></a>00284         <a class="code" href="classUXML2Document.html">UXML2Document</a>(xmlDocPtr doc) : impl_(doc)
+<a name="l00285"></a>00285                 {
+<a name="l00286"></a>00286                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUXML2Document.html">UXML2Document</a>, <span class="stringliteral">&quot;%p&quot;</span>, doc)
+<a name="l00287"></a>00287                 }
+<a name="l00288"></a>00288 
+<a name="l00298"></a><a class="code" href="classUXML2Document.html#a31774bafc5d6838f6a2dc0e4fe3c8d1d">00298</a>         xmlEntityPtr getEntity(<span class="keyword">const</span> <span class="keywordtype">char</span>* name)
+<a name="l00299"></a>00299                 {
+<a name="l00300"></a>00300                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Document::getEntity(%S)&quot;</span>, name)
+<a name="l00301"></a>00301 
+<a name="l00302"></a>00302                 U_INTERNAL_ASSERT_POINTER(impl_)
+<a name="l00303"></a>00303 
+<a name="l00304"></a>00304                 xmlEntityPtr node = (xmlEntityPtr) U_SYSCALL(xmlGetDocEntity, <span class="stringliteral">&quot;%p,%S&quot;</span>, impl_, (<span class="keyword">const</span> xmlChar*)name);
+<a name="l00305"></a>00305 
+<a name="l00306"></a>00306                 U_RETURN_POINTER(node,_xmlEntity);
+<a name="l00307"></a>00307                 }
+<a name="l00308"></a>00308 
+<a name="l00309"></a>00309 <span class="keyword">private</span>:
+<a name="l00310"></a>00310         <a class="code" href="classUXML2Document.html">UXML2Document</a>(<span class="keyword">const</span> <a class="code" href="classUXML2Document.html">UXML2Document</a>&amp;)            {}
+<a name="l00311"></a>00311         <a class="code" href="classUXML2Document.html">UXML2Document</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUXML2Document.html">UXML2Document</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00312"></a>00312 };
+<a name="l00313"></a>00313 
+<a name="l00314"></a>00314 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 24 13:46:59 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Dec 30 19:20:47 2009 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

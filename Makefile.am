@@ -3,7 +3,7 @@
 AUTOMAKE_OPTIONS = no-dependencies ## dist-shar dist-zip
 ACLOCAL_AMFLAGS  = -I m4
 
-EXTRA_DIST = autoconf configure.help TODO LICENSE README.md README.LZO cdb README.cdb README.configure *.spec* \
+EXTRA_DIST = autoconf configure.help TODO LICENSE* README.md README.LZO cdb README.cdb README.configure *.spec* \
 				 ULib.m4 rpm.sh rpmpkgreq.lst rpmpkgreq.lst.suse openwrt \
 				 doc/html doc/Doxyfile doc/userver_usp_benchmarking.txt doc/bench.c
 

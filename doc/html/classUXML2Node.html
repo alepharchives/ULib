@@ -43,8 +43,9 @@ void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setNameSpace</b> (xml
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#a7a1cd235b6eeced04f5e255cb6baa2f9">setNameSpaceDeclaration</a> (const char *ns_uri, const char *ns_prefix=0)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afb2c89415e8174fd025d1ca3ec4eb279"></a><!-- doxytag: member="UXML2Node::getNameSpacePrefix" ref="afb2c89415e8174fd025d1ca3ec4eb279" args="() const " -->
 const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getNameSpacePrefix</b> () const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4ad2e3c74b0be77b50e5065e0adb63a4"></a><!-- doxytag: member="UXML2Node::getNameSpaceUri" ref="a4ad2e3c74b0be77b50e5065e0adb63a4" args="() const " -->
-const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getNameSpaceUri</b> () const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5c69095ec769d7ed118bda005874b195"></a><!-- doxytag: member="UXML2Node::getNameSpaceUri" ref="a5c69095ec769d7ed118bda005874b195" args="()" -->
+const xmlChar *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getNameSpaceUri</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#a4b96f01fef746db4777cf0183f720155">checkNodeName</a> (const xmlChar *name, const xmlChar *ns)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#ab26a08d397dffc6c9adfbf06345ea0ca">getLine</a> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#a5126b9051238d08d624e97c678d6d8a5">getParent</a> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#af5e79df6a2a64cded557a9d2519fcbbc">getNextSibling</a> () const </td></tr>
@@ -194,6 +195,43 @@ xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>impl_</b></td><
 
 </div>
 </div>
+<a class="anchor" id="a4b96f01fef746db4777cf0183f720155"></a><!-- doxytag: member="UXML2Node::checkNodeName" ref="a4b96f01fef746db4777cf0183f720155" args="(const xmlChar *name, const xmlChar *ns)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool UXML2Node::checkNodeName </td>
+          <td>(</td>
+          <td class="paramtype">const xmlChar *&nbsp;</td>
+          <td class="paramname"> <em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const xmlChar *&nbsp;</td>
+          <td class="paramname"> <em>ns</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [inline]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Checks that the node has a given name and a given namespace href.</p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>cur</em>&nbsp;</td><td>the pointer to an XML node </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>name</em>&nbsp;</td><td>the name </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>ns</em>&nbsp;</td><td>the namespace href</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd>true if the node matches or false otherwise. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ac07f1aaf51645fbc68cf4a05870b6ce3"></a><!-- doxytag: member="UXML2Node::find" ref="ac07f1aaf51645fbc68cf4a05870b6ce3" args="(UVector&lt; xmlNodePtr &gt; &amp;vec, const xmlChar *xpath, UVector&lt; UString &gt; &amp;namespaces) const " -->
 <div class="memitem">
 <div class="memproto">
@@ -219,7 +257,7 @@ xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>impl_</b></td><
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td><td> const<code> [inline]</code></td>
+          <td></td><td></td><td> const</td>
         </tr>
       </table>
 </div>
@@ -437,7 +475,7 @@ xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>impl_</b></td><
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td></td><td><code> [inline]</code></td>
+          <td></td><td></td><td></td>
         </tr>
       </table>
 </div>
@@ -570,7 +608,7 @@ xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>impl_</b></td><
 <li>src/ulib/xml/libxml2/node.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 24 13:47:02 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Dec 30 19:20:52 2009 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

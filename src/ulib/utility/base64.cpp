@@ -30,7 +30,7 @@ void UBase64::encode(const unsigned char* s, uint32_t n, UString& buffer, int ma
    buffer.size_adjust(pos);
 }
 
-bool UBase64::decode(const unsigned char* s, uint32_t n, UString& buffer)
+bool UBase64::decode(const char* s, uint32_t n, UString& buffer)
 {
    U_TRACE(0, "UBase64::decode(%.*S,%u,%.*S)", n, s, n, U_STRING_TO_TRACE(buffer))
 

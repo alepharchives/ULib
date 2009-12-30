@@ -1,7 +1,7 @@
 // test_des3.cpp
 
 #include <ulib/file.h>
-#include <ulib/base/ssl/des3.h>
+#include <ulib/utility/des3.h>
 
 #include <iostream>
 
@@ -9,16 +9,14 @@ static void check(const UString& dati, const char* file)
 {
    U_TRACE(5,"check(%p,%S)", dati.data(), file)
 
-   long pos;
-   UString buffer1(dati.size() + 32), buffer2(dati.size());
+   UString buffer1(dati.size() + 32),
+           buffer2(dati.size());
 
-   pos = u_des3_encode( (const unsigned char*)U_STRING_TO_PARAM(dati),    (unsigned char*)buffer1.data());
-   buffer1.size_adjust(pos);
-   pos = u_des3_decode( (const unsigned char*)U_STRING_TO_PARAM(buffer1), (unsigned char*)buffer2.data());
-   buffer2.size_adjust(pos);
+   UDES3::encode(dati,    buffer1);
+   UDES3::decode(buffer1, buffer2);
 
-   U_INTERNAL_DUMP("buffer1 = %#.*S", U_STRING_TO_TRACE(buffer1))
    U_INTERNAL_DUMP("dati    = %#.*S", U_STRING_TO_TRACE(dati))
+   U_INTERNAL_DUMP("buffer1 = %#.*S", U_STRING_TO_TRACE(buffer1))
    U_INTERNAL_DUMP("buffer2 = %#.*S", U_STRING_TO_TRACE(buffer2))
 
    /*
@@ -46,7 +44,7 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5,"main(%d)", argc)
 
-   u_des3_key( argv[1] );
+   UDES3::setPassword(argv[1]);
 
    /*
    u_printf_string_max_length = 256;

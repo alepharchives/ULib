@@ -61,7 +61,7 @@ struct U_EXPORT UEscape {
       {
       U_TRACE(0, "UEscape::decode(%.*S,%u,%.*S)", n, s, n, U_STRING_TO_TRACE(buffer))
 
-      uint32_t pos = u_escape_decode(s, n, (unsigned char*) buffer.data());
+      uint32_t pos = u_escape_decode(s, n, (unsigned char*)buffer.data());
 
       buffer.size_adjust(pos);
 

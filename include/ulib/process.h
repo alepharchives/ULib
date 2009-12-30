@@ -90,7 +90,9 @@ public:
 
    // STATUS CHILD
 
-   char* exitInfo() const;
+   static char* exitInfo(int status);
+
+          char* exitInfo() const { return exitInfo(status); }
 
    static int exitValue(int status)
       {
@@ -98,7 +100,7 @@ public:
 
       int exit_value = (WIFEXITED(status)
                            ? WEXITSTATUS(status)
-                           : (  WTERMSIG(status) << 8));
+                           : (WTERMSIG(status) << 8));
 
       U_RETURN(exit_value);
       }

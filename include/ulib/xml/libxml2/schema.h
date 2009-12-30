@@ -14,7 +14,7 @@
 #ifndef ULIB_UXML2SCHEMA_H
 #define ULIB_UXML2SCHEMA_H 1
 
-#include <ulib/xml/libxml2/node.h>
+#include <ulib/xml/libxml2/document.h>
 
 #include <libxml/xmlschemas.h>
 #include <libxml/xmlschemastypes.h>
@@ -64,27 +64,8 @@ public:
    * @param XMLSchema document
    */
 
-   UXML2Schema(const UString& xmldoc)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UXML2Schema, "%.*S", U_STRING_TO_TRACE(xmldoc))
-
-      xmlSchemaParserCtxtPtr context = (xmlSchemaParserCtxtPtr) U_SYSCALL(xmlSchemaNewMemParserCtxt, "%S,%u", U_STRING_TO_PARAM(xmldoc));
-
-      ctxt  = 0;
-      impl_ = (xmlSchemaPtr) U_SYSCALL(xmlSchemaParse, "%p", context);
-
-      impl_->_private = this;
-
-      U_SYSCALL_VOID(xmlSchemaFreeParserCtxt, "%p", context);
-      }
-
-   ~UXML2Schema()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UXML2Schema)
-
-                U_SYSCALL_VOID(xmlSchemaFree,          "%p", impl_);
-      if (ctxt) U_SYSCALL_VOID(xmlSchemaFreeValidCtxt, "%p", ctxt);
-      }
+    UXML2Schema(const UString& xmldoc);
+   ~UXML2Schema();
 
    const char* getName() const
       {
@@ -119,8 +100,14 @@ public:
       U_RETURN(result);
       }
 
-   bool validate(xmlDocPtr doc);
-   bool validate(const UString& docfile);
+   bool validate(UXML2Document& doc);
+
+   /** Write the schema to a file.
+   *
+   * @param filename
+   */
+
+   void writeToFile(const char* filename);
 
    // Access the underlying libxml2 implementation.
 
@@ -140,8 +127,6 @@ protected:
    UXML2Schema(xmlSchemaPtr schema) : impl_(schema)
       {
       U_TRACE_REGISTER_OBJECT(0, UXML2Schema, "%p", schema)
-
-      impl_->_private = this;
       }
 
 private:

@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/url.h>
+#include <ulib/utility/string_ext.h>
 
 UString* Url::str_ftp;
 UString* Url::str_smtp;
@@ -287,17 +288,56 @@ UString Url::getQuery()
    U_RETURN_STRING(query);
 }
 
+uint32_t Url::getQuery(UVector<UString>& vec)
+{
+   U_TRACE(0, "Url::getQuery(%p)", &vec)
+
+   uint32_t n = vec.size();
+
+   UString query = getQuery();
+
+   if (query.empty() == false) (void) UStringExt::getNameValueFromData(query, vec);
+
+   uint32_t result = (vec.size() - n);
+
+   U_RETURN(result);
+}
+
 bool Url::setQuery(const char* query_, uint32_t n)
 {
    U_TRACE(0, "Url::setQuery(%S,%u)", query_, n)
 
    U_INTERNAL_ASSERT_POINTER(query_)
 
-   if (prepeare_for_query())
+   if (prepeareForQuery())
       {
       if (*query_ == '?') ++query_;
 
       (void) url.replace(path_end + 1, url.size() - path_end - 1, query_, n);
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+bool Url::setQuery(UVector<UString>& vec)
+{
+   U_TRACE(0, "Url::setQuery(%p)", &vec)
+
+   U_INTERNAL_ASSERT_EQUALS(vec.empty(),false)
+
+   if (prepeareForQuery())
+      {
+      UString name, value;
+
+      for (uint32_t i = 0, n  = vec.size(); i < n; ++i)
+         {
+         name  = vec[i++];
+         value = vec[i];
+
+         addQuery(U_STRING_TO_PARAM(name), U_STRING_TO_PARAM(value));
+         }
 
       U_RETURN(true);
       }
@@ -314,8 +354,8 @@ UString Url::getFile()
 
    if (query.empty() == false)
       {
-      file.push_back('?');
-      file.append(query);
+             file.push_back('?');
+      (void) file.append(query);
       }
 
    U_RETURN_STRING(file);
@@ -327,7 +367,7 @@ void Url::findpos()
 
    int temp;
 
-   service_end = U_STRING_FIND(url,0,"//");
+   service_end = U_STRING_FIND(url, 0, "//");
 
    if (service_end < 0)
       {
@@ -397,11 +437,11 @@ void Url::findpos()
    query = path_end;
 }
 
-U_NO_EXPORT bool Url::prepeare_for_query()
+U_NO_EXPORT bool Url::prepeareForQuery()
 {
-   U_TRACE(0, "Url::prepeare_for_query()")
+   U_TRACE(0, "Url::prepeareForQuery()")
 
-   // Only posible if there is a url
+   // NB: Only posible if there is a url
 
    if (host_begin < host_end)
       {
@@ -420,15 +460,15 @@ U_NO_EXPORT bool Url::prepeare_for_query()
    U_RETURN(false);
 }
 
-void Url::addQuery(const char* entry, const char* value)
+void Url::addQuery(const char* entry, uint32_t entry_len, const char* value, uint32_t value_len)
 {
-   U_TRACE(0, "Url::addQuery(%S,%S)", entry, value)
+   U_TRACE(0, "Url::addQuery(%.*S,%u,%.*S,%u)", entry_len, entry, entry_len, value_len, value, value_len)
 
-   if (prepeare_for_query() && entry)
+   if (prepeareForQuery() && entry)
       {
-      uint32_t v_size = 0, b_size = strlen(entry), e_size = b_size;
+      uint32_t v_size = 0, b_size = entry_len, e_size = b_size;
 
-      if (value) v_size = strlen(value);
+      if (value) v_size = value_len;
 
       if (e_size < v_size) b_size = v_size;
 
@@ -439,7 +479,7 @@ void Url::addQuery(const char* entry, const char* value)
 
       if (*url.rbegin() != '?') url.push_back('&');
 
-      url.append(buffer, result);
+      (void) url.append(buffer, result);
 
       if (value)
          {
@@ -447,14 +487,14 @@ void Url::addQuery(const char* entry, const char* value)
 
          result = u_url_encode((const unsigned char*)value, v_size, (unsigned char*)buffer, U_RFC2231);
 
-         url.append(buffer, result);
+         (void) url.append(buffer, result);
          }
       }
 }
 
-U_NO_EXPORT bool Url::next_query_pos(int& entry_start, int& entry_end, int& value_start, int& value_end)
+U_NO_EXPORT bool Url::nextQueryPos(int& entry_start, int& entry_end, int& value_start, int& value_end)
 {
-   U_TRACE(0, "Url::next_query_pos(%p,%p,%p,%p)", &entry_start, &entry_end, &value_start, &value_end)
+   U_TRACE(0, "Url::nextQueryPos(%p,%p,%p,%p)", &entry_start, &entry_end, &value_start, &value_end)
 
    int end = url.size();
 
@@ -506,7 +546,7 @@ bool Url::nextQuery(UString& entry, UString& value)
 
    int entry_start, entry_end, value_start, value_end;
 
-   if (next_query_pos(entry_start, entry_end, value_start, value_end))
+   if (nextQueryPos(entry_start, entry_end, value_start, value_end))
       {
       decode(url.c_pointer(entry_start), entry_end - entry_start, entry);
       decode(url.c_pointer(value_start), value_end - value_start, value);

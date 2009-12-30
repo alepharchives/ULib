@@ -29,8 +29,8 @@ typedef struct mimeentry {
 static struct mimeentry mimetab[] = {
    ENTRY( "htm",     "text/html" ),
    ENTRY( "html",    "text/html" ),
-   ENTRY( "dtd",     "text/xml" ),
-   ENTRY( "xml",     "text/xml" ),
+   ENTRY( "dtd",     "application/xml" ),
+   ENTRY( "xml",     "application/xml" ),
    ENTRY( "ico",     "image/x-icon" ),
    ENTRY( "txt",     "text/plain" ),
    ENTRY( "ps",      "application/postscript" ),

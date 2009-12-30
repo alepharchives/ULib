@@ -98,7 +98,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(pClientImage, this)
 
-      return genericReset();
+      genericReset();
       }
 
    // define method VIRTUAL of class UEventFd
@@ -196,9 +196,15 @@ private:
 template <> class U_EXPORT UClientImage<USSLSocket> : public UClientImage_Base {
 public:
 
+   SSL* ssl;
+
    UClientImage() : UClientImage_Base()
       {
       U_TRACE_REGISTER_OBJECT(0, UClientImage<USSLSocket>, "", 0)
+
+      ssl = getSocket()->ssl;
+
+      if (logbuf) logCertificate();
       }
 
    virtual ~UClientImage()
@@ -207,6 +213,12 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(socket)
       U_INTERNAL_ASSERT_EQUALS(socket->isSSL(), true)
+
+      // NB: we need this because we reuse the same object USocket...
+
+      getSocket()->ssl = ssl;
+
+      U_INTERNAL_DUMP("ssl = %p", ssl)
       }
 
    // SERVICES
@@ -224,10 +236,25 @@ public:
       UClientImage_Base::logCertificate(getSocket()->getPeerCertificate());
       }
 
+   // define method VIRTUAL of class UClientImage_Base
+
+   virtual void reset()
+      {
+      U_TRACE(0, "UClientImage<USSLSocket>::reset()")
+
+      UClientImage_Base::genericReset();
+
+      // NB: we need this because we reuse the same object USocket...
+
+      getSocket()->ssl = ssl;
+
+      U_INTERNAL_DUMP("ssl = %p", ssl)
+      }
+
    // DEBUG
 
 #ifdef DEBUG
-   const char* dump(bool reset) const { return UClientImage_Base::dump(reset); }
+   const char* dump(bool reset) const;
 #endif
 
 private:

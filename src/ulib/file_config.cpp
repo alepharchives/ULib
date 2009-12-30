@@ -101,9 +101,11 @@ bool UFileConfig::searchForObjectStream(const char* section, uint32_t len)
 {
    U_TRACE(0, "UFileConfig::searchForObjectStream(%.*S,%u)", len, section, len)
 
-   U_INTERNAL_DUMP("_size = %u", _size)
+   U_INTERNAL_DUMP("_size = %u _start = %.*S", _size, 10, _start)
 
    if (len == 0) section = "{";
+
+   const char* save_start = _start;
 
 loop:
    U_SKIP(_start,_end,loop,done)
@@ -153,6 +155,10 @@ loop:
    U_RETURN(true);
 
 done:
+   _start = save_start;
+
+   U_INTERNAL_DUMP("_size = %u _start = %.*S", _size, 10, _start)
+
    U_RETURN(false);
 }
 

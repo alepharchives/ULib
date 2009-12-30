@@ -553,8 +553,10 @@ fi
 # SECTION 13: checks for system services
 
 if test "$cross_compiling" != "yes"; then
-	AC_TRY_FALLOCATE
 	AM_SOCKET_SO_RCVTIMEO
+	if test "$ac_cv_func_fallocate" = "yes" && test "$ac_cv_func_fallocate64" = "yes"; then
+		AC_TRY_FALLOCATE
+	fi
 fi
 
 # SECTION 14: checks for aggregated features

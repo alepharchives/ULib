@@ -79,6 +79,8 @@
 #define U_URL_TO_PARAM(url) (url).getUrlData(),(url).getUrlDataLen()
 #define U_URL_TO_TRACE(url) (url).getUrlDataLen(),(url).getUrlData()
 
+template <class T> class UVector;
+
 class U_EXPORT Url {
 public:
 
@@ -96,8 +98,9 @@ public:
    static UString* str_https;
 
    /** Constructor of the class.
-   This constructor creates an empty class.
-   */
+    *
+    * This constructor creates an empty class.
+    */
 
    Url()
       {
@@ -109,10 +112,11 @@ public:
       }
 
    /** Constructor of the class.
-   This constructor copy the url from the string.
-
-   @param x Reference to a string with an url
-   */
+    *
+    * This constructor copy the url from the string.
+    *
+    * @param x Reference to a string with an url
+    */
 
    Url(const UString& x) : url(x)
       {
@@ -124,10 +128,11 @@ public:
       }
 
    /** Constructor of the class.
-   This constructor set the url from the char buffer.
-
-   @param t Pointer to a char buffer with an url
-   */
+    *
+    * This constructor set the url from the char buffer. 
+    *
+    * @param t Pointer to a char buffer with an url
+    */
 
    Url(const char* t, uint32_t tlen) : url(t, tlen)
       {
@@ -194,11 +199,12 @@ public:
    uint32_t    getUrlDataLen() const { return url.size(); }
 
    /** This methode returns the specified service of the url.
-   If there is no service specified the buffer will be empty.
-   The service has no ':' char at the end!
-
-   @return str.
-   */
+    *
+    * If there is no service specified the buffer will be empty.
+    * The service has no ':' char at the end!
+    *
+    * @return str.
+    */
 
    UString getService();
 
@@ -225,27 +231,29 @@ public:
       }
 
    /** This methode set the service of the url.
-   The should no ':' char at the end!
-
-   @param service Service to set.
-   */
+    *
+    * The should no ':' char at the end!
+    *
+    * @param service Service to set.
+    */
 
    void setService(const char* service, uint32_t n);
 
    /** This methode returns the user identifier part of the UserInfo part of this URL.
-   This method assumes that UserInfo is structured like this:
-   @c <userid>:<password>
-   If there is no user specified the buffer will be empty.
-
-   @return str.
-   */
+    *
+    * This method assumes that UserInfo is structured like this:
+    * @c <userid>:<password>
+    * If there is no user specified the buffer will be empty.
+    *
+    * @return str.
+    */
 
    UString getUser();
 
    /** This methode set the user of the url.
-
-   @param user User to set.
-   */
+    *
+    * @param user User to set.
+    */
 
    bool setUser(const char* user, uint32_t n);
 
@@ -265,9 +273,10 @@ public:
       }
 
    /** Checks if there is a host specified.
-   @retval true  It has a host.
-   @retval false There is no host, so it will be a local file.
-   */
+    *
+    * @retval true  It has a host.
+    * @retval false There is no host, so it will be a local file.
+    */
 
    bool isLocalFile()
       {
@@ -279,32 +288,36 @@ public:
       }
 
    /** This methode returns the host name part of the URL.
-   Not all URLs contain a host name, but those that do specify the host as part of the authority segment which is contained
-   between the @c '//' and the following @c '/' or @c '?' characters.
-   The host name is a sub-string of the authority part, with user and port number information removed.
-   For example, the following URL's host is @c www.elcel.com : @c http://user:password@www.elcel.com:80/index.html
-   If there is no host specified the buffer will be empty.
-
-   @return str.
-   */
+    *
+    * Not all URLs contain a host name, but those that do specify the host as part of the authority segment which is contained
+    * between the @c '//' and the following @c '/' or @c '?' characters.
+    * The host name is a sub-string of the authority part, with user and port number information removed.
+    * For example, the following URL's host is @c www.elcel.com : @c http://user:password@www.elcel.com:80/index.html
+    * If there is no host specified the buffer will be empty.
+    *
+    * @return str.
+    */
 
    UString getHost();
 
    /** This methode set the host.
-   @param host_ host to set.
-   */
+    *
+    * @param host  host to set.
+    * @param n     len string host to set.
+    */
 
    void setHost(const char* host_, uint32_t n);
 
    /** This returns the port number from the URL or -1 if no port number is present.
-   The port number is usually contained within the authority part of the URL and is
-   separated from the host by a colon character. For example, the following URL has
-   a port number of 81: @c http://www.acme.org:81
-   If there is no port, translate the service to a port number.
-
-   @retval 0..65535 specified port.
-   @retval       -1 no port specified.
-   */
+    *
+    * The port number is usually contained within the authority part of the URL and is
+    * separated from the host by a colon character. For example, the following URL has
+    * a port number of 81: @c http://www.acme.org:81
+    * If there is no port, translate the service to a port number. 
+    *
+    * @retval 0..65535 specified port.
+    * @retval       -1 no port specified.
+    */
 
    int getPort();
 
@@ -314,42 +327,46 @@ public:
    uint32_t getPort(char* buffer, uint32_t size);
 
    /** Set the port number.
-   @warning only possible if a url is specified.
-   */
+    *
+    * @warning only possible if a url is specified.
+    */
 
    bool setPort(uint32_t port);
 
    /** This methode returns the path for this URL.
-   The path consists of the file name part of the URL without any query information.
-   For example, the path for the following URL is @a '/search'.
-   @c http://www.google.com/search?q=xml
-   If there is no path specified the buffer contains '/'.
-
-   @return str.
-   */
+    *
+    * The path consists of the file name part of the URL without any query information.
+    *
+    * For example, the path for the following URL is @a '/search'.
+    * @c http://www.google.com/search?q=xml
+    * If there is no path specified the buffer contains '/'. 
+    *
+    * @return str.
+    */
 
    UString getPath();
 
    /** This methode set the path of the url.
-   If the first char is not an '/' it will be added.
-
-   @param path Path to set.
-   */
+    *
+    * If the first char is not an '/' it will be added. 
+    *
+    * @param path Path to set.
+    */
 
    void setPath(const char* path, uint32_t n);
 
-   /** Returns the file name for this URL. The file name consists of
-   the path plus the query (if present).
-   For example, the file name for the following URL is @a '/search?q=xml'.
-   @c http://www.google.com/search?q=xml
-   */
+   /** Returns the file name for this URL. The file name consists of the path plus the query (if present).
+    *
+    * For example, the file name for the following URL is @a '/search?q=xml'.
+    * @c http://www.google.com/search?q=xml
+    */
 
    UString getFile();
 
    /** This methode check the existence of the query from the url.
-
-   @return bool.
-   */
+    *
+    * @return bool.
+    */
 
    bool isQuery()
       {
@@ -360,21 +377,22 @@ public:
       U_RETURN(result);
       }
 
-   /** This methode returns the portion of the file after (but not including) '?' which
-   represents the start of a query string.
-   If there is no query specified the buffer will be empty.
+   /** This methode returns the portion of the file after (but not including) '?' which represents the start of a query string.
+    *
+    * If there is no query specified the buffer will be empty.
+    *
+    * @return str.
+    */
 
-   @return str.
-   */
-
-   UString getQuery();
+   UString  getQuery();
+   uint32_t getQuery(UVector<UString>& vec);
 
    /** This methode set the query of the url.
-   If the first char is not an '/' it will be added.
+    *
+    * @param query Query to set.
+    */
 
-   @param query Query to set.
-   */
-
+   bool setQuery(UVector<UString>& vec);
    bool setQuery(const char* query, uint32_t n);
 
    /** This methode erase the query from the url.
@@ -393,64 +411,69 @@ public:
       }
 
    /** This methode add's a new entry to the query.
-   The entry and the value will first encoded and then added to the url.
-   To seperate the entry's the '&' character is been used.
+    *
+    * The entry and the value will first encoded and then added to the url.
+    * To seperate the entry's the '&' character is been used.
+    *
+    * @param entry      Name of the entry.
+    * @param entry_len  len string entry = 0 No query will be added.
+    * @param value      Value of the entry.
+    * @param value_len  len string value = 0 only the entry will be added.
+    */
 
-   @param entry Name of the entry.
-   @arg entry = 0 No query will be added.
-   @param value Value of the entry.
-   @arg value = 0 only the entry will be added.
-   */
-
-   void addQuery(const char* entry, const char* value);
+   void addQuery(const char* entry, uint32_t entry_len, const char* value, uint32_t value_len);
 
    /** This methode get the first query entry and decode it.
-   @param entry Buffer for the name of the entry.
-   @param value Buffer for the value of the entry.
-
-   @retval true The first entry found.
-   @retval false No entry found.
-
-   @see NextQuery, AddQuery;
-   */
+    *
+    * @param entry Buffer for the name of the entry.
+    * @param value Buffer for the value of the entry.
+    *
+    * @retval true The first entry found.
+    * @retval false No entry found.
+    *
+    * @see nextQuery, addQuery;
+    */
 
    bool firstQuery(UString& entry, UString& value);
 
    /** This methode get the next query entry and decode it.
-   @param entry Buffer for the name of the entry.
-   @param value Buffer for the value of the entry.
-
-   @retval true The first entry found.
-   @retval false No entry found.
-
-   @see FirstQuery, AddQuery;
-   */
+    *
+    * @param entry Buffer for the name of the entry.
+    * @param value Buffer for the value of the entry.
+    *
+    * @retval true The first entry found.
+    * @retval false No entry found. 
+    *
+    * @see firstQuery, addQuery;
+    */
 
    bool nextQuery(UString& entry, UString& value);
 
    /** This methode search for the query entry and decode it.
-   @param entry Buffer for the name of the entry.
-   @param value Buffer for the value of the entry.
-
-   @retval true entry found.
-   @retval false No entry found.
-
-   @see NextQuery, AddQuery;
-   */
+    *
+    * @param entry Buffer for the name of the entry.
+    * @param value Buffer for the value of the entry.
+    *
+    * @retval true entry found.
+    * @retval false No entry found.
+    *
+    * @see nextQuery, addQuery;
+    */
 
    bool findQuery(UString& entry, UString& value);
 
    /** Converts a Unicode string into the MIME @c x-www-form-urlencoded format.
-   To convert a String, each Unicode character is examined in turn:
-   - The ASCII characters 'a' through 'z', 'A' through 'Z', '0' through '9', and ".", "-", "*", "_" remain the same.
-   - The space character ' '(U+20) is converted into a plus sign '+'.
-   - All other characters are converted into their UTF-8 equivalent and the subsequent bytes are encoded
-     as the 3-byte string "%xy", where xy is the two-digit hexadecimal representation of the byte.
-
-   @param input  string to encode
-   @param len    size of the encoded string
-   @param buffer buffer for the encoded string. The size of the buffer has to be 3 * len
-   */
+    *
+    * To convert a String, each Unicode character is examined in turn:
+    * - The ASCII characters 'a' through 'z', 'A' through 'Z', '0' through '9', and ".", "-", "*", "_" remain the same.
+    *   - The space character ' '(U+20) is converted into a plus sign '+'.
+    *   - All other characters are converted into their UTF-8 equivalent and the subsequent bytes are encoded
+    *   as the 3-byte string "%xy", where xy is the two-digit hexadecimal representation of the byte.
+    *
+    * @param input  string to encode
+    * @param len    size of the encoded string
+    * @param buffer buffer for the encoded string. The size of the buffer has to be 3 * len
+    */
 
    static void encode(const char* input, uint32_t len, UString& buffer, const char* extra_enc_chars = 0)
       {
@@ -465,16 +488,17 @@ public:
       { encode(input.data(), input.size(), buffer, extra_enc_chars); }
 
    /** Decode a string
-   @param input  string to decode
-   @param len    size of the encoded string
-   @param buffer buffer for the decoded string. The size of the buffer has to be at minimum len
-   */
+    *
+    * @param input  string to decode
+    * @param len    size of the encoded string
+    * @param buffer buffer for the decoded string. The size of the buffer has to be at minimum len
+    */
 
    static void decode(const char* input, uint32_t len, UString& buffer, bool no_line_break = false)
       {
       U_TRACE(0, "Url::decode(%.*S,%u,%p,%b)", len, input, len, &buffer, no_line_break)
 
-      buffer.size_adjust(u_url_decode((const unsigned char*)input, len, (unsigned char*)buffer.data(), no_line_break));
+      buffer.size_adjust(u_url_decode(input, len, (unsigned char*)buffer.data(), no_line_break));
 
       U_INTERNAL_DUMP("buffer.size() = %u", buffer.size())
       }
@@ -513,11 +537,11 @@ protected:
 private:
    /** prepeats the string to add a query.
    */
-   bool prepeare_for_query() U_NO_EXPORT;
+   bool prepeareForQuery() U_NO_EXPORT;
 
    /** get the positions of the next query entry.
    */
-   bool next_query_pos(int& entry_start, int& entry_end, int& value_start, int& value_end) U_NO_EXPORT;
+   bool nextQueryPos(int& entry_start, int& entry_end, int& value_start, int& value_end) U_NO_EXPORT;
 };
 
 #endif

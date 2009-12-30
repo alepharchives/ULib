@@ -1,0 +1,51 @@
+#!/bin/sh
+
+. ../.function
+
+start_msg attack
+
+rm -f attack.log* web_server.log* \
+		out/uclient.out err/uclient.err \
+      out/userver_tcp.out err/userver_tcp.err \
+		trace.*uclient*.[0-9]* object.*uclient*.[0-9]* \
+		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]*
+
+#UTRACE="0 10M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+DIR_CMD="../../examples/userver"
+
+#STRACE=$TRUSS
+start_prg_background userver_tcp -c attack_server.cfg
+
+$SLEEP
+DIR_CMD="../../examples/uclient"
+
+i=0
+while read URI
+do
+
+	start_prg uclient -c attack_client.cfg "http://127.0.0.1$URI" &
+
+   let "i = i + 1"
+
+	if [ $i -gt 10 ]; then
+
+		i=0
+
+		sleep 1
+	fi
+
+done < inp/attack.txt
+
+$SLEEP
+kill_prg userver_tcp TERM
+
+mv out/uclient.out	  out/attack_client.out
+mv err/uclient.err	  err/attack_client.err
+mv err/userver_tcp.err err/attack_server.err
+
+# Test against expected output
+test_output_diff attack_client

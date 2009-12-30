@@ -13,6 +13,80 @@
 
 #include <ulib/xml/libxml2/node.h>
 
+const xmlChar* UXML2Node::getNameSpaceUri()
+{
+   U_TRACE(0, "UXML2Node::getNameSpaceUri()")
+
+   U_INTERNAL_ASSERT_POINTER(impl_)
+
+   // check for impl_ if is actually of type xmlDoc, instead of just xmlNode.
+   // This can be an issue when calling this method on a UXML2Node returned by find().
+   // Therefore, a call to impl_->ns would be invalid.
+
+   const xmlChar* result = (impl_->type != XML_DOCUMENT_NODE && impl_->ns && impl_->ns->href ? impl_->ns->href : 0);
+
+   // do we have a namespace in the node ?
+
+   if (result == 0)
+      {
+      // search for default namespace
+
+      xmlNsPtr ns = getNamespace(0);
+
+      if (ns) result = ns->href;
+      }
+
+   U_RETURN_POINTER(result,xmlChar);
+}
+
+xmlNodePtr UXML2Node::importNode(const xmlNodePtr node, bool recursive)
+{
+   U_TRACE(1, "UXML2Node::importNode(%p,%b)", node, recursive)
+
+   U_INTERNAL_ASSERT_POINTER(impl_)
+   U_INTERNAL_ASSERT_POINTER(impl_->doc)
+
+   // Create the node, by copying:
+
+   xmlNodePtr imported_node = (xmlNodePtr) U_SYSCALL(xmlDocCopyNode, "%p,%p,%d", node, impl_->doc, recursive);
+
+   if (imported_node)
+      {
+      // Add the node:
+
+      xmlNodePtr added_node = (xmlNodePtr) U_SYSCALL(xmlAddChild, "%p,%p", impl_, imported_node);
+
+      if (!added_node)
+         {
+         U_SYSCALL_VOID(xmlFreeNode, "%p", imported_node);
+
+         imported_node = 0;
+         }
+      }
+
+   U_RETURN_POINTER(imported_node,_xmlNode);
+}
+
+uint32_t UXML2Node::find(UVector<xmlNodePtr>& vec, const xmlChar* xpath, UVector<UString>& namespaces) const
+{
+   U_TRACE(1, "UXML2Node::find(%p,%S,%p)", &vec, xpath, &namespaces)
+
+   U_INTERNAL_ASSERT_POINTER(impl_)
+   U_INTERNAL_ASSERT_POINTER(impl_->doc)
+
+   xmlXPathContextPtr ctxt = (xmlXPathContextPtr) U_SYSCALL(xmlXPathNewContext, "%p", impl_->doc);
+
+   ctxt->node = impl_;
+
+   for (uint32_t i = 0, n = namespaces.size(); i < n; i += 2)
+      {
+      U_SYSCALL_VOID(xmlXPathRegisterNs, "%p,%S,%S", ctxt, (const xmlChar*)namespaces[i].c_str(),
+                                                           (const xmlChar*)namespaces[i+1].c_str());
+      }
+
+   return find_impl(vec, ctxt, xpath);
+}
+
 uint32_t UXML2Node::getChildren(UVector<xmlNodePtr>& children, const xmlChar* name) const
 {
    U_TRACE(0, "UXML2Node::getChildren(%p,%S)", &children, name)

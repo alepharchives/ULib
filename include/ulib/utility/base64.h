@@ -25,10 +25,10 @@ struct U_EXPORT UBase64 {
    static void encode(const UString& s, UString& buffer, int max_columns = 0)
       { encode((const unsigned char*)U_STRING_TO_PARAM(s), buffer, max_columns); }
 
-   static bool decode(const unsigned char* s, uint32_t n, UString& buffer);
+   static bool decode(const char* s, uint32_t n, UString& buffer);
 
    static bool decode(const UString& s, UString& buffer)
-      { return decode((const unsigned char*)U_STRING_TO_PARAM(s), buffer); }
+      { return decode(U_STRING_TO_PARAM(s), buffer); }
 };
 
 #endif

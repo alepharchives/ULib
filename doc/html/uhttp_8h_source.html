@@ -389,114 +389,115 @@
 <a name="l00366"></a>00366         <span class="comment">// (such as checkboxes, radio buttons, and text fields), or uploaded files</span>
 <a name="l00367"></a>00367 
 <a name="l00368"></a>00368         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* tmpdir;
-<a name="l00369"></a>00369         <span class="keyword">static</span> <a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a>* form_name_value;
-<a name="l00370"></a>00370 
-<a name="l00371"></a>00371         <span class="keyword">static</span> <span class="keywordtype">void</span>  initForm();
-<a name="l00372"></a>00372         <span class="keyword">static</span> <span class="keywordtype">void</span> resetForm();
-<a name="l00373"></a>00373         <span class="keyword">static</span> <span class="keywordtype">void</span>   getFormValue(<a class="code" href="classUString.html">UString</a>&amp; buffer, uint32_t n);
-<a name="l00374"></a>00374 
-<a name="l00375"></a>00375         <span class="keyword">static</span> uint32_t processHTTPForm();
-<a name="l00376"></a>00376 
-<a name="l00377"></a>00377         <span class="comment">// param: &quot;[ data expire path domain secure HttpOnly ]&quot;</span>
-<a name="l00378"></a>00378         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------------</span>
-<a name="l00379"></a>00379         <span class="comment">// string -- Data to put into the cookie                        -- must</span>
-<a name="l00380"></a>00380         <span class="comment">// int   -- Lifetime of the cookie in HOURS             -- must (0 -&gt; valid until browser exit)</span>
-<a name="l00381"></a>00381         <span class="comment">// string -- Path where the cookie can be used  --  opt</span>
-<a name="l00382"></a>00382         <span class="comment">// string -- Domain which can read the cookie   --  opt</span>
-<a name="l00383"></a>00383         <span class="comment">// bool  -- Secure mode                                                         --  opt</span>
-<a name="l00384"></a>00384         <span class="comment">// bool  -- Only allow HTTP usage                                       --  opt</span>
-<a name="l00385"></a>00385         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------------</span>
-<a name="l00386"></a>00386         <span class="comment">// RET: Set-Cookie: ulib_sid=data&amp;expire&amp;HMAC-MD5(data&amp;expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly</span>
-<a name="l00387"></a>00387 
-<a name="l00388"></a>00388         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPCookie(<span class="keywordtype">bool</span> sh_script);
-<a name="l00389"></a>00389         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> setHTTPCookie(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; param);
-<a name="l00390"></a>00390 
-<a name="l00391"></a>00391         <span class="comment">// CGI</span>
-<a name="l00392"></a>00392 
-<a name="l00393"></a>00393         <span class="keyword">static</span> <span class="keywordtype">bool</span> isCGIRequest();
-<a name="l00394"></a>00394         <span class="keyword">static</span> <span class="keywordtype">bool</span> processCGIOutput();
-<a name="l00395"></a>00395         <span class="keyword">static</span> <span class="keywordtype">void</span> setCGIShellScript(<a class="code" href="classUString.html">UString</a>&amp; command);
-<a name="l00396"></a>00396         <span class="keyword">static</span> <span class="keywordtype">void</span> setCGIEnvironment(<a class="code" href="classUString.html">UString</a>&amp; environment, <span class="keywordtype">bool</span> sh_script);
-<a name="l00397"></a>00397         <span class="keyword">static</span> <span class="keywordtype">bool</span> processCGIRequest(<a class="code" href="classUCommand.html">UCommand</a>* pcmd, <a class="code" href="classUString.html">UString</a>* penvironment, <a class="code" href="classUFile.html">UFile</a>* file);
-<a name="l00398"></a>00398         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPCgiResponse(<span class="keywordtype">int</span> nResponseCode, uint32_t content_length, <span class="keywordtype">bool</span> header_content_length);
-<a name="l00399"></a>00399 
-<a name="l00400"></a>00400         <span class="comment">//      Accept-Language: en-us,en;q=0.5</span>
-<a name="l00401"></a>00401         <span class="comment">// ----------------------------------------------------</span>
-<a name="l00402"></a>00402         <span class="comment">// take only the first 2 character (it, en, de fr, ...)</span>
-<a name="l00403"></a>00403 
-<a name="l00404"></a>00404         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getAcceptLanguage()
-<a name="l00405"></a>00405                 {
-<a name="l00406"></a>00406                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::getAcceptLanguage()&quot;</span>)
-<a name="l00407"></a>00407 
-<a name="l00408"></a>00408                 <span class="keyword">const</span> <span class="keywordtype">char</span>* ptr = getHTTPHeaderValuePtr(*USocket::str_accept_language);
-<a name="l00409"></a>00409 
-<a name="l00410"></a>00410                 <span class="keyword">const</span> <span class="keywordtype">char</span>* accept_language = (ptr ? ptr : <span class="stringliteral">&quot;en&quot;</span>);
-<a name="l00411"></a>00411 
-<a name="l00412"></a>00412                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;accept_language = %.2S&quot;</span>, ptr)
-<a name="l00413"></a>00413 
-<a name="l00414"></a>00414                 U_RETURN_POINTER(accept_language,<span class="keyword">const</span> <span class="keywordtype">char</span>);
-<a name="l00415"></a>00415                 }
-<a name="l00416"></a>00416 
-<a name="l00417"></a>00417         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getBrowserMSIE()
-<a name="l00418"></a>00418                 {
-<a name="l00419"></a>00419                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::getBrowserMSIE()&quot;</span>)
-<a name="l00420"></a>00420 
-<a name="l00421"></a>00421                 <span class="keyword">const</span> <span class="keywordtype">char</span>* browserMSIE = <span class="stringliteral">&quot;&quot;</span>;
-<a name="l00422"></a>00422 
-<a name="l00423"></a>00423                 <span class="comment">// check User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)</span>
-<a name="l00424"></a>00424 
-<a name="l00425"></a>00425                 <span class="keyword">const</span> <span class="keywordtype">char</span>* ptr = getHTTPHeaderValuePtr(*USocket::str_user_agent);
-<a name="l00426"></a>00426 
-<a name="l00427"></a>00427                 <span class="keywordflow">if</span> (ptr &amp;&amp; (u_find(ptr, 30, U_CONSTANT_TO_PARAM(<span class="stringliteral">&quot;MSIE&quot;</span>)) != 0)) browserMSIE = <span class="stringliteral">&quot;1&quot;</span>;
-<a name="l00428"></a>00428 
-<a name="l00429"></a>00429                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;browserMSIE = %S&quot;</span>, browserMSIE)
-<a name="l00430"></a>00430 
-<a name="l00431"></a>00431                 U_RETURN_POINTER(browserMSIE,<span class="keyword">const</span> <span class="keywordtype">char</span>);
-<a name="l00432"></a>00432                 }
-<a name="l00433"></a>00433 
-<a name="l00434"></a>00434         <span class="comment">// check for &quot;Accept-Encoding: deflate&quot; in header request...</span>
-<a name="l00435"></a>00435 
-<a name="l00436"></a>00436         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHTTPAcceptEncodingDeflate(uint32_t content_length)
-<a name="l00437"></a>00437                 {
-<a name="l00438"></a>00438                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isHTTPAcceptEncodingDeflate(%u)&quot;</span>, content_length)
-<a name="l00439"></a>00439 
-<a name="l00440"></a>00440 <span class="preprocessor">#       ifdef HAVE_LIBZ</span>
-<a name="l00441"></a>00441 <span class="preprocessor"></span>                U_RETURN(http_info.accept_deflate &amp;&amp; content_length &gt; 1400); <span class="comment">// SIZE THRESHOLD FOR DEFLATE...</span>
-<a name="l00442"></a>00442 <span class="preprocessor">#       endif</span>
-<a name="l00443"></a>00443 <span class="preprocessor"></span>
-<a name="l00444"></a>00444                 U_RETURN(<span class="keyword">false</span>);
-<a name="l00445"></a>00445                 }
-<a name="l00446"></a>00446 
-<a name="l00447"></a>00447         <span class="comment">// check for &quot;Connection: close&quot; in headers...</span>
-<a name="l00448"></a>00448 
-<a name="l00449"></a>00449         <span class="keyword">static</span> <span class="keywordtype">int</span> checkForHTTPConnectionClose();
-<a name="l00450"></a>00450 
-<a name="l00451"></a>00451         <span class="comment">// set HTTP main error message</span>
-<a name="l00452"></a>00452 
-<a name="l00453"></a>00453         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPNotFound();
-<a name="l00454"></a>00454         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPForbidden();
-<a name="l00455"></a>00455         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPBadRequest();
-<a name="l00456"></a>00456         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPInternalError();
-<a name="l00457"></a>00457         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPServiceUnavailable();
-<a name="l00458"></a>00458         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPUnAuthorized(<span class="keywordtype">bool</span> digest);
-<a name="l00459"></a>00459 
-<a name="l00460"></a>00460         <span class="comment">// get HTTP response message</span>
-<a name="l00461"></a>00461 
-<a name="l00462"></a>00462         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPRedirectResponse(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; ext, <span class="keyword">const</span> <span class="keywordtype">char</span>* ptr_location, uint32_t len_location);
-<a name="l00463"></a>00463         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPHeaderForResponse(<span class="keywordtype">int</span> nResponseCode, <span class="keyword">const</span> <span class="keywordtype">char</span>* content_type, <span class="keywordtype">bool</span> bclose, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; body);
-<a name="l00464"></a>00464 
-<a name="l00465"></a>00465 <span class="keyword">private</span>:
-<a name="l00466"></a>00466         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>  getHTTPHeaderForResponse() U_NO_EXPORT;
-<a name="l00467"></a>00467         <span class="keyword">static</span> uint32_t processHTTPForm(<a class="code" href="classUMimeMultipart.html">UMimeMultipart</a>&amp; form) U_NO_EXPORT;
-<a name="l00468"></a>00468         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>  getHTTPHeaderForResponse(<span class="keywordtype">int</span> nResponseCode, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; content) U_NO_EXPORT;
-<a name="l00469"></a>00469 
-<a name="l00470"></a>00470         <a class="code" href="classUHTTP.html">UHTTP</a>(<span class="keyword">const</span> <a class="code" href="classUHTTP.html">UHTTP</a>&amp;)            {}
-<a name="l00471"></a>00471         <a class="code" href="classUHTTP.html">UHTTP</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUHTTP.html">UHTTP</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00472"></a>00472 };
-<a name="l00473"></a>00473 
-<a name="l00474"></a>00474 <span class="preprocessor">#endif</span>
+<a name="l00369"></a>00369         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* qcontent;
+<a name="l00370"></a>00370         <span class="keyword">static</span> <a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a>* form_name_value;
+<a name="l00371"></a>00371 
+<a name="l00372"></a>00372         <span class="keyword">static</span> <span class="keywordtype">void</span>  initForm();
+<a name="l00373"></a>00373         <span class="keyword">static</span> <span class="keywordtype">void</span> resetForm();
+<a name="l00374"></a>00374         <span class="keyword">static</span> <span class="keywordtype">void</span>   getFormValue(<a class="code" href="classUString.html">UString</a>&amp; buffer, uint32_t n);
+<a name="l00375"></a>00375 
+<a name="l00376"></a>00376         <span class="keyword">static</span> uint32_t processHTTPForm();
+<a name="l00377"></a>00377 
+<a name="l00378"></a>00378         <span class="comment">// param: &quot;[ data expire path domain secure HttpOnly ]&quot;</span>
+<a name="l00379"></a>00379         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------------</span>
+<a name="l00380"></a>00380         <span class="comment">// string -- Data to put into the cookie                        -- must</span>
+<a name="l00381"></a>00381         <span class="comment">// int   -- Lifetime of the cookie in HOURS             -- must (0 -&gt; valid until browser exit)</span>
+<a name="l00382"></a>00382         <span class="comment">// string -- Path where the cookie can be used  --  opt</span>
+<a name="l00383"></a>00383         <span class="comment">// string -- Domain which can read the cookie   --  opt</span>
+<a name="l00384"></a>00384         <span class="comment">// bool  -- Secure mode                                                         --  opt</span>
+<a name="l00385"></a>00385         <span class="comment">// bool  -- Only allow HTTP usage                                       --  opt</span>
+<a name="l00386"></a>00386         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------------</span>
+<a name="l00387"></a>00387         <span class="comment">// RET: Set-Cookie: ulib_sid=data&amp;expire&amp;HMAC-MD5(data&amp;expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly</span>
+<a name="l00388"></a>00388 
+<a name="l00389"></a>00389         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPCookie(<span class="keywordtype">bool</span> sh_script);
+<a name="l00390"></a>00390         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> setHTTPCookie(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; param);
+<a name="l00391"></a>00391 
+<a name="l00392"></a>00392         <span class="comment">// CGI</span>
+<a name="l00393"></a>00393 
+<a name="l00394"></a>00394         <span class="keyword">static</span> <span class="keywordtype">bool</span> isCGIRequest();
+<a name="l00395"></a>00395         <span class="keyword">static</span> <span class="keywordtype">bool</span> processCGIOutput();
+<a name="l00396"></a>00396         <span class="keyword">static</span> <span class="keywordtype">void</span> setCGIShellScript(<a class="code" href="classUString.html">UString</a>&amp; command);
+<a name="l00397"></a>00397         <span class="keyword">static</span> <span class="keywordtype">void</span> setCGIEnvironment(<a class="code" href="classUString.html">UString</a>&amp; environment, <span class="keywordtype">bool</span> sh_script);
+<a name="l00398"></a>00398         <span class="keyword">static</span> <span class="keywordtype">bool</span> processCGIRequest(<a class="code" href="classUCommand.html">UCommand</a>* pcmd, <a class="code" href="classUString.html">UString</a>* penvironment, <a class="code" href="classUFile.html">UFile</a>* file);
+<a name="l00399"></a>00399         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPCgiResponse(<span class="keywordtype">int</span> nResponseCode, uint32_t content_length, <span class="keywordtype">bool</span> header_content_length);
+<a name="l00400"></a>00400 
+<a name="l00401"></a>00401         <span class="comment">//      Accept-Language: en-us,en;q=0.5</span>
+<a name="l00402"></a>00402         <span class="comment">// ----------------------------------------------------</span>
+<a name="l00403"></a>00403         <span class="comment">// take only the first 2 character (it, en, de fr, ...)</span>
+<a name="l00404"></a>00404 
+<a name="l00405"></a>00405         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getAcceptLanguage()
+<a name="l00406"></a>00406                 {
+<a name="l00407"></a>00407                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::getAcceptLanguage()&quot;</span>)
+<a name="l00408"></a>00408 
+<a name="l00409"></a>00409                 <span class="keyword">const</span> <span class="keywordtype">char</span>* ptr = getHTTPHeaderValuePtr(*USocket::str_accept_language);
+<a name="l00410"></a>00410 
+<a name="l00411"></a>00411                 <span class="keyword">const</span> <span class="keywordtype">char</span>* accept_language = (ptr ? ptr : <span class="stringliteral">&quot;en&quot;</span>);
+<a name="l00412"></a>00412 
+<a name="l00413"></a>00413                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;accept_language = %.2S&quot;</span>, ptr)
+<a name="l00414"></a>00414 
+<a name="l00415"></a>00415                 U_RETURN_POINTER(accept_language,<span class="keyword">const</span> <span class="keywordtype">char</span>);
+<a name="l00416"></a>00416                 }
+<a name="l00417"></a>00417 
+<a name="l00418"></a>00418         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getBrowserMSIE()
+<a name="l00419"></a>00419                 {
+<a name="l00420"></a>00420                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::getBrowserMSIE()&quot;</span>)
+<a name="l00421"></a>00421 
+<a name="l00422"></a>00422                 <span class="keyword">const</span> <span class="keywordtype">char</span>* browserMSIE = <span class="stringliteral">&quot;&quot;</span>;
+<a name="l00423"></a>00423 
+<a name="l00424"></a>00424                 <span class="comment">// check User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)</span>
+<a name="l00425"></a>00425 
+<a name="l00426"></a>00426                 <span class="keyword">const</span> <span class="keywordtype">char</span>* ptr = getHTTPHeaderValuePtr(*USocket::str_user_agent);
+<a name="l00427"></a>00427 
+<a name="l00428"></a>00428                 <span class="keywordflow">if</span> (ptr &amp;&amp; (u_find(ptr, 30, U_CONSTANT_TO_PARAM(<span class="stringliteral">&quot;MSIE&quot;</span>)) != 0)) browserMSIE = <span class="stringliteral">&quot;1&quot;</span>;
+<a name="l00429"></a>00429 
+<a name="l00430"></a>00430                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;browserMSIE = %S&quot;</span>, browserMSIE)
+<a name="l00431"></a>00431 
+<a name="l00432"></a>00432                 U_RETURN_POINTER(browserMSIE,<span class="keyword">const</span> <span class="keywordtype">char</span>);
+<a name="l00433"></a>00433                 }
+<a name="l00434"></a>00434 
+<a name="l00435"></a>00435         <span class="comment">// check for &quot;Accept-Encoding: deflate&quot; in header request...</span>
+<a name="l00436"></a>00436 
+<a name="l00437"></a>00437         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHTTPAcceptEncodingDeflate(uint32_t content_length)
+<a name="l00438"></a>00438                 {
+<a name="l00439"></a>00439                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isHTTPAcceptEncodingDeflate(%u)&quot;</span>, content_length)
+<a name="l00440"></a>00440 
+<a name="l00441"></a>00441 <span class="preprocessor">#       ifdef HAVE_LIBZ</span>
+<a name="l00442"></a>00442 <span class="preprocessor"></span>                U_RETURN(http_info.accept_deflate &amp;&amp; content_length &gt; 1400); <span class="comment">// SIZE THRESHOLD FOR DEFLATE...</span>
+<a name="l00443"></a>00443 <span class="preprocessor">#       endif</span>
+<a name="l00444"></a>00444 <span class="preprocessor"></span>
+<a name="l00445"></a>00445                 U_RETURN(<span class="keyword">false</span>);
+<a name="l00446"></a>00446                 }
+<a name="l00447"></a>00447 
+<a name="l00448"></a>00448         <span class="comment">// check for &quot;Connection: close&quot; in headers...</span>
+<a name="l00449"></a>00449 
+<a name="l00450"></a>00450         <span class="keyword">static</span> <span class="keywordtype">int</span> checkForHTTPConnectionClose();
+<a name="l00451"></a>00451 
+<a name="l00452"></a>00452         <span class="comment">// set HTTP main error message</span>
+<a name="l00453"></a>00453 
+<a name="l00454"></a>00454         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPNotFound();
+<a name="l00455"></a>00455         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPForbidden();
+<a name="l00456"></a>00456         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPBadRequest();
+<a name="l00457"></a>00457         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPInternalError();
+<a name="l00458"></a>00458         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPServiceUnavailable();
+<a name="l00459"></a>00459         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPUnAuthorized(<span class="keywordtype">bool</span> digest);
+<a name="l00460"></a>00460 
+<a name="l00461"></a>00461         <span class="comment">// get HTTP response message</span>
+<a name="l00462"></a>00462 
+<a name="l00463"></a>00463         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPRedirectResponse(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; ext, <span class="keyword">const</span> <span class="keywordtype">char</span>* ptr_location, uint32_t len_location);
+<a name="l00464"></a>00464         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPHeaderForResponse(<span class="keywordtype">int</span> nResponseCode, <span class="keyword">const</span> <span class="keywordtype">char</span>* content_type, <span class="keywordtype">bool</span> bclose, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; body);
+<a name="l00465"></a>00465 
+<a name="l00466"></a>00466 <span class="keyword">private</span>:
+<a name="l00467"></a>00467         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>  getHTTPHeaderForResponse() U_NO_EXPORT;
+<a name="l00468"></a>00468         <span class="keyword">static</span> uint32_t processHTTPForm(<a class="code" href="classUMimeMultipart.html">UMimeMultipart</a>&amp; form) U_NO_EXPORT;
+<a name="l00469"></a>00469         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>  getHTTPHeaderForResponse(<span class="keywordtype">int</span> nResponseCode, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; content) U_NO_EXPORT;
+<a name="l00470"></a>00470 
+<a name="l00471"></a>00471         <a class="code" href="classUHTTP.html">UHTTP</a>(<span class="keyword">const</span> <a class="code" href="classUHTTP.html">UHTTP</a>&amp;)            {}
+<a name="l00472"></a>00472         <a class="code" href="classUHTTP.html">UHTTP</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUHTTP.html">UHTTP</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00473"></a>00473 };
+<a name="l00474"></a>00474 
+<a name="l00475"></a>00475 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 24 13:46:59 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Dec 30 19:20:47 2009 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

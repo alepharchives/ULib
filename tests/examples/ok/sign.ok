@@ -13,13 +13,13 @@
     </ds:Reference>
     <ds:Reference URI="#SigID-SignedProperties" Type="http://uri.etsi.org/01903#SignedProperties">
       <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-      <ds:DigestValue>101n49dsCPbBJ2DSa+l6dLekukU=</ds:DigestValue>
+      <ds:DigestValue>GrdtXLAnO7YJMexTxnMAFIss4v4=</ds:DigestValue>
     </ds:Reference>
   </ds:SignedInfo>
   <ds:SignatureValue xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
-nkql8UTosRs+bvXRR0FaCdoh4odPIP8t2VcAfA+D7biza3N6qatPYsWjaTiIZ7VY
-FoCf4ibwxpRJ0yLlZe5AxDX9p+uHRiJXVvA9SBAGqkWirZEo2SLxAAG/ttHkK2n1
-OMlnuFz7YJ8yy7iXj0t3H8KAHObKlMG/LuHWuluLTmY=
+CMPNJiuCuVK12w0OYWolF0am3g219CjJh9xK/Rn+ZjYn4pcW8b+32kzVNdl8y8cH
+haH5aOf38gbAPKPgbl/Cuk+cyBW6hNoJ1kmz/fhVYmAr48X7tS2kI/tudR+AX2w0
+i3IvcP4MtxDt+wzKDv7c+vsreclfYQk03acgtzN4EEk=
   </ds:SignatureValue>
   <ds:KeyInfo>
     <ds:KeyValue>
@@ -29,8 +29,7 @@ OMlnuFz7YJ8yy7iXj0t3H8KAHObKlMG/LuHWuluLTmY=
 UQ8wgL6xUJ5GRPEsu9gyz8ZobwfZsGCsvu40CWoT9fcFBZPfXro1Vtlh/xl/yYHm
 +Gzqh0Bw76xtLHSfLfpVOrmZdwKmSFKMTvNXOFd0V18=
         </ds:Modulus>
-        <ds:Exponent>AQAB
-</ds:Exponent>
+        <ds:Exponent>AQAB</ds:Exponent>
       </ds:RSAKeyValue>
     </ds:KeyValue>
     <ds:X509Data>
@@ -66,7 +65,7 @@ tNufZ+S9n/n+dO/q+e5jatg/SyUJtdgadq7rm9tJsCI=
     <xades:QualifyingProperties Target="#SigID">
       <xades:SignedProperties xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="SigID-SignedProperties">
         <xades:SignedSignatureProperties>
-          <xades:SigningTime>2009-12-18T16:07:18Z</xades:SigningTime>
+          <xades:SigningTime>2009-12-28T20:01:15Z</xades:SigningTime>
           <xades:SigningCertificate>
             <xades:Cert>
               <xades:CertDigest>

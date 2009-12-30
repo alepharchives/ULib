@@ -13,6 +13,8 @@
 
 #include <ulib/date.h>
 #include <ulib/file_config.h>
+#include <ulib/utility/des3.h>
+#include <ulib/utility/base64.h>
 #include <ulib/utility/escape.h>
 #include <ulib/net/ipt_ACCOUNT.h>
 #include <ulib/utility/services.h>
@@ -33,6 +35,7 @@ UString* UNoCatPlugIn::str_AUTH_SERVICE_URL;
 UString* UNoCatPlugIn::str_LOGOUT_URL;
 UString* UNoCatPlugIn::str_LOGIN_TIMEOUT;
 UString* UNoCatPlugIn::str_DECRYPT_CMD;
+UString* UNoCatPlugIn::str_DECRYPT_KEY;
 UString* UNoCatPlugIn::str_INIT_CMD;
 UString* UNoCatPlugIn::str_RESET_CMD;
 UString* UNoCatPlugIn::str_ACCESS_CMD;
@@ -457,15 +460,23 @@ bool UNoCatPlugIn::checkSignedData(const char* ptr, uint32_t len)
 
    UString buffer(U_CAPACITY);
 
-   Url::decode(ptr, len, buffer);
+   if (decrypt_key.empty() == false)
+      {
+      if (UBase64::decode(ptr, len, buffer)) UDES3::decode(buffer, output);
+      else                                   output.setEmpty();
+      }
+   else
+      {
+      Url::decode(ptr, len, buffer);
 
-   input.snprintf("-----BEGIN PGP MESSAGE-----\n\n"
-                  "%.*s"
-                  "\n-----END PGP MESSAGE-----", U_STRING_TO_TRACE(buffer));
+      input.snprintf("-----BEGIN PGP MESSAGE-----\n\n"
+                     "%.*s"
+                     "\n-----END PGP MESSAGE-----", U_STRING_TO_TRACE(buffer));
 
-   (void) pgp.execute(&input, &output, -1, fd_stderr);
+      (void) pgp.execute(&input, &output, -1, fd_stderr);
 
-   UServer_Base::logCommandMsgError(pgp.getCommand());
+      UServer_Base::logCommandMsgError(pgp.getCommand());
+      }
 
    bool result = (output.empty() == false);
 
@@ -478,8 +489,10 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    U_INTERNAL_ASSERT_POINTER(peer)
 
+   Url destination;
    bool result = true;
    UHashMap<UString> args;
+   UVector<UString> name_value;
    UString token, action, peer_ip;
 
    args.allocate();
@@ -519,7 +532,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    if (peer->mac != args[*str_Mac])
       {
-      U_SRV_LOG_VAR("Different MAC '%.*s' in ticket from peer %.*s", U_STRING_TO_TRACE(peer->mac), U_STRING_TO_TRACE(peer_ip));
+      U_SRV_LOG_VAR("Different MAC %.*S in ticket from peer %.*s", U_STRING_TO_TRACE(peer->mac), U_STRING_TO_TRACE(peer_ip));
 
       goto error;
       }
@@ -532,10 +545,32 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
    else if (action == *str_Deny)     deny(peer, false, false);
    else
       {
-      U_SRV_LOG_VAR("Can't make sense of action '%.*s' in ticket from peer %.*s", U_STRING_TO_TRACE(action), U_STRING_TO_TRACE(peer_ip));
+      U_SRV_LOG_VAR("Can't make sense of action %.*S in ticket from peer %.*s", U_STRING_TO_TRACE(action), U_STRING_TO_TRACE(peer_ip));
 
       goto error;
       }
+
+   // get redirect (destination)
+
+   destination.set(args[*str_Redirect]);
+
+   if (destination.getQuery(name_value) == 0)
+      {
+      U_SRV_LOG_VAR("Can't make sense of Redirect %.*S in ticket from peer %.*s", U_URL_TO_TRACE(destination), U_STRING_TO_TRACE(peer_ip));
+
+      goto error;
+      }
+
+   destination.eraseQuery();
+
+   if (destination.setQuery(name_value) == false)
+      {
+      U_SRV_LOG_VAR("Error on setting Redirect in ticket from peer %.*s", U_STRING_TO_TRACE(peer_ip));
+
+      goto error;
+      }
+
+   (void) location.replace(destination.get());
 
    // set user name
 
@@ -544,10 +579,6 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
    // get mode
 
    mode = args[*str_Mode].copy();
-
-   // get destination
-
-   (void) location.replace(args[*str_Redirect]);
 
    // get traffic available
 
@@ -637,8 +668,6 @@ void UNoCatPlugIn::addPeerInfo(UModNoCatPeer* peer, time_t logout)
 {
    U_TRACE(0, "UNoCatPlugIn::addPeerInfo(%p,%ld)", peer, logout)
 
-   char buffer[32];
-
    // $1 -> mac
    // $2 -> ip
    // $3 -> gateway
@@ -648,31 +677,33 @@ void UNoCatPlugIn::addPeerInfo(UModNoCatPeer* peer, time_t logout)
    // $7 -> connected
    // $8 -> traffic
 
-   U_INTERNAL_ASSERT(peer->mac.isNullTerminated())
-   U_INTERNAL_ASSERT(peer->ip.isNullTerminated())
    U_INTERNAL_ASSERT(gateway.isNullTerminated())
-   U_INTERNAL_ASSERT(access_point.isNullTerminated())
+   U_INTERNAL_ASSERT(peer->ip.isNullTerminated())
+   U_INTERNAL_ASSERT(peer->mac.isNullTerminated())
    U_INTERNAL_ASSERT(peer->user.isNullTerminated())
+   U_INTERNAL_ASSERT(access_point.isNullTerminated())
 
+   info->addQuery(U_STRING_TO_PARAM(*str_Mac),     U_STRING_TO_PARAM(peer->mac));
+   info->addQuery(U_CONSTANT_TO_PARAM("ip"),       U_STRING_TO_PARAM(peer->ip));
+   info->addQuery(U_CONSTANT_TO_PARAM("gateway"),  U_STRING_TO_PARAM(gateway));
+   info->addQuery(U_CONSTANT_TO_PARAM("ap"),       U_STRING_TO_PARAM(access_point));
+   info->addQuery(U_STRING_TO_PARAM(*str_User),    U_STRING_TO_PARAM(peer->user));
 
-   info->addQuery(str_Mac->data(),  peer->mac.data());
-   info->addQuery("ip",             peer->ip.data());
-   info->addQuery("gateway",        gateway.data());
-   info->addQuery("ap",             access_point.data());
-   info->addQuery(str_User->data(), peer->user.data());
+   UString buffer = UStringExt::numberToString(logout); // NB: (-1|0) mean NOT logout (only info)...
 
-   (void) snprintf(buffer, sizeof(buffer), "%ld", logout); // NB: (-1|0) mean NOT logout (only info)...
-   info->addQuery("logout", buffer);
+   info->addQuery(U_CONSTANT_TO_PARAM("logout"), U_STRING_TO_PARAM(buffer));
 
-   (void) snprintf(buffer, sizeof(buffer), "%ld", u_now.tv_sec - peer->ctime);
-                                                                 peer->ctime = u_now.tv_sec;
-   info->addQuery("connected", buffer);
+   buffer = UStringExt::numberToString(u_now.tv_sec - peer->ctime);
+                                                      peer->ctime = u_now.tv_sec;
+
+   info->addQuery(U_CONSTANT_TO_PARAM("connected"), U_STRING_TO_PARAM(buffer));
 
    getTraffic();
 
-   (void) snprintf(buffer, sizeof(buffer), "%u", peer->ctraffic);
-                                                 peer->ctraffic = 0;
-   info->addQuery("traffic", buffer);
+   buffer.snprintf("%u", peer->ctraffic);
+                         peer->ctraffic = 0;
+
+   info->addQuery(U_CONSTANT_TO_PARAM("traffic"), U_STRING_TO_PARAM(buffer));
 }
 
 void UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
@@ -894,6 +925,7 @@ void UNoCatPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_ACCESS_CMD,0)
    U_INTERNAL_ASSERT_EQUALS(str_RESET_CMD,0)
    U_INTERNAL_ASSERT_EQUALS(str_DECRYPT_CMD,0)
+   U_INTERNAL_ASSERT_EQUALS(str_DECRYPT_KEY,0)
    U_INTERNAL_ASSERT_EQUALS(str_CHECK_BY_ARPING,0)
    U_INTERNAL_ASSERT_EQUALS(str_Action,0)
    U_INTERNAL_ASSERT_EQUALS(str_Permit,0)
@@ -916,6 +948,7 @@ void UNoCatPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("RESET_CMD") },
       { U_STRINGREP_FROM_CONSTANT("ACCESS_CMD") },
       { U_STRINGREP_FROM_CONSTANT("DECRYPT_CMD") },
+      { U_STRINGREP_FROM_CONSTANT("DECRYPT_KEY") },
       { U_STRINGREP_FROM_CONSTANT("CHECK_BY_ARPING") },
       { U_STRINGREP_FROM_CONSTANT("Action") },
       { U_STRINGREP_FROM_CONSTANT("Permit") },
@@ -938,20 +971,21 @@ void UNoCatPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_RESET_CMD,          U_STRING_FROM_STRINGREP_STORAGE(4));
    U_NEW_ULIB_OBJECT(str_ACCESS_CMD,         U_STRING_FROM_STRINGREP_STORAGE(5));
    U_NEW_ULIB_OBJECT(str_DECRYPT_CMD,        U_STRING_FROM_STRINGREP_STORAGE(6));
-   U_NEW_ULIB_OBJECT(str_CHECK_BY_ARPING,    U_STRING_FROM_STRINGREP_STORAGE(7));
+   U_NEW_ULIB_OBJECT(str_DECRYPT_KEY,        U_STRING_FROM_STRINGREP_STORAGE(7));
+   U_NEW_ULIB_OBJECT(str_CHECK_BY_ARPING,    U_STRING_FROM_STRINGREP_STORAGE(8));
 
-   U_NEW_ULIB_OBJECT(str_Action,             U_STRING_FROM_STRINGREP_STORAGE(8));
-   U_NEW_ULIB_OBJECT(str_Permit,             U_STRING_FROM_STRINGREP_STORAGE(9));
-   U_NEW_ULIB_OBJECT(str_Deny,               U_STRING_FROM_STRINGREP_STORAGE(10));
-   U_NEW_ULIB_OBJECT(str_Mode,               U_STRING_FROM_STRINGREP_STORAGE(11));
-   U_NEW_ULIB_OBJECT(str_Redirect,           U_STRING_FROM_STRINGREP_STORAGE(12));
-   U_NEW_ULIB_OBJECT(str_renew,              U_STRING_FROM_STRINGREP_STORAGE(13));
-   U_NEW_ULIB_OBJECT(str_Mac,                U_STRING_FROM_STRINGREP_STORAGE(14));
-   U_NEW_ULIB_OBJECT(str_Timeout,            U_STRING_FROM_STRINGREP_STORAGE(15));
-   U_NEW_ULIB_OBJECT(str_Token,              U_STRING_FROM_STRINGREP_STORAGE(16));
-   U_NEW_ULIB_OBJECT(str_User,               U_STRING_FROM_STRINGREP_STORAGE(17));
-   U_NEW_ULIB_OBJECT(str_anonymous,          U_STRING_FROM_STRINGREP_STORAGE(18));
-   U_NEW_ULIB_OBJECT(str_Traffic,            U_STRING_FROM_STRINGREP_STORAGE(19));
+   U_NEW_ULIB_OBJECT(str_Action,             U_STRING_FROM_STRINGREP_STORAGE(9));
+   U_NEW_ULIB_OBJECT(str_Permit,             U_STRING_FROM_STRINGREP_STORAGE(10));
+   U_NEW_ULIB_OBJECT(str_Deny,               U_STRING_FROM_STRINGREP_STORAGE(11));
+   U_NEW_ULIB_OBJECT(str_Mode,               U_STRING_FROM_STRINGREP_STORAGE(12));
+   U_NEW_ULIB_OBJECT(str_Redirect,           U_STRING_FROM_STRINGREP_STORAGE(13));
+   U_NEW_ULIB_OBJECT(str_renew,              U_STRING_FROM_STRINGREP_STORAGE(14));
+   U_NEW_ULIB_OBJECT(str_Mac,                U_STRING_FROM_STRINGREP_STORAGE(15));
+   U_NEW_ULIB_OBJECT(str_Timeout,            U_STRING_FROM_STRINGREP_STORAGE(16));
+   U_NEW_ULIB_OBJECT(str_Token,              U_STRING_FROM_STRINGREP_STORAGE(17));
+   U_NEW_ULIB_OBJECT(str_User,               U_STRING_FROM_STRINGREP_STORAGE(18));
+   U_NEW_ULIB_OBJECT(str_anonymous,          U_STRING_FROM_STRINGREP_STORAGE(19));
+   U_NEW_ULIB_OBJECT(str_Traffic,            U_STRING_FROM_STRINGREP_STORAGE(20));
 }
 
 // Server-wide hooks
@@ -969,6 +1003,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
    // LOGOUT_URL        URL to redirect user after logout
    // LOGIN_TIMEOUT     Number of seconds after a client's last login/renewal to terminate their connection
    // DECRYPT_CMD       PGP command stuff
+   // DECRYPT_KEY       DES3 password stuff
    // INIT_CMD          shell commands to  init           the firewall
    // RESET_CMD         shell commands to reset           the firewall
    // ACCESS_CMD        shell commands to  open and close the firewall
@@ -982,10 +1017,11 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
             logout_url.set(cfg[*str_LOGOUT_URL]);
       auth_service_url.set(cfg[*str_AUTH_SERVICE_URL]);
 
-      init_cmd      = cfg[*str_INIT_CMD];
-      reset_cmd     = cfg[*str_RESET_CMD];
-      access_cmd    = cfg[*str_ACCESS_CMD];
-      decrypt_cmd   = cfg[*str_DECRYPT_CMD];
+      init_cmd    = cfg[*str_INIT_CMD];
+      reset_cmd   = cfg[*str_RESET_CMD];
+      access_cmd  = cfg[*str_ACCESS_CMD];
+      decrypt_cmd = cfg[*str_DECRYPT_CMD];
+      decrypt_key = cfg[*str_DECRYPT_KEY];
 
       arping        = cfg.readBoolean(*str_CHECK_BY_ARPING);
       login_timeout = cfg.readLong(*str_LOGIN_TIMEOUT);
@@ -1105,8 +1141,10 @@ int UNoCatPlugIn::handlerInit()
 
    (void) UFile::writeTo(U_STRING_FROM_CONSTANT("/tmp/firewall.opt"), opt);
 
-   cmd.set(   init_cmd, (char**)0);
-   pgp.set(decrypt_cmd, (char**)0);
+                                     cmd.set(   init_cmd, (char**)0);
+   if (decrypt_cmd.empty() == false) pgp.set(decrypt_cmd, (char**)0);
+
+   if (decrypt_key.empty() == false) UDES3::setPassword(decrypt_key.c_str());
 
 #ifdef DEBUG
    fd_stderr = UFile::creat("/tmp/firewall.err", O_WRONLY | O_APPEND, PERM_FILE);
@@ -1333,11 +1371,14 @@ int UNoCatPlugIn::handlerRequest()
             goto set_location;
             }
 
-         UString printable(output.size() * 4);
+         if (UServer_Base::isLog())
+            {
+            UString printable(output.size() * 4);
 
-         UEscape::encode(output, printable);
+            UEscape::encode(output, printable);
 
-         U_SRV_LOG_VAR("auth message: %.*s", U_STRING_TO_TRACE(printable));
+            UServer_Base::log->log("%sauth message: %.*s\n", UServer_Base::mod_name, U_STRING_TO_TRACE(printable));
+            }
 
          if (peer == 0 ||
              checkAuthMessage(peer) == false)
@@ -1443,6 +1484,7 @@ const char* UNoCatPlugIn::dump(bool reset) const
                   << "reset_cmd        (UString                  " << (void*)&reset_cmd        << ")\n"
                   << "access_cmd       (UString                  " << (void*)&access_cmd       << ")\n"
                   << "decrypt_cmd      (UString                  " << (void*)&decrypt_cmd      << ")\n"
+                  << "decrypt_key      (UString                  " << (void*)&decrypt_key      << ")\n"
                   << "access_point     (UString                  " << (void*)&access_point     << ")\n"
                   << "status_content   (UString                  " << (void*)status_content    << ")\n"
                   << "cmd              (UCommand                 " << (void*)&cmd              << ")\n"

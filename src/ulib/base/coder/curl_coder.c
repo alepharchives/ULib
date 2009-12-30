@@ -73,11 +73,11 @@ uint32_t u_url_encode(const unsigned char* input, uint32_t len, unsigned char* r
    return (r - result);
 }
 
-uint32_t u_url_decode(const unsigned char* input, uint32_t len, unsigned char* result, bool no_line_break)
+uint32_t u_url_decode(const char* input, uint32_t len, unsigned char* result, bool no_line_break)
 {
    uint32_t i;
    unsigned char* r = result;
-   unsigned char ch, hex[3] = { '\0', '\0', '\0' };
+   char ch, hex[3]  = { '\0', '\0', '\0' };
 
    U_INTERNAL_TRACE("u_url_decode(%.*s,%u,%p,%lu,%d)", len, input, len, result, no_line_break)
 

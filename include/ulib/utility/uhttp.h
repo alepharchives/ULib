@@ -366,6 +366,7 @@ public:
    // (such as checkboxes, radio buttons, and text fields), or uploaded files
 
    static UString* tmpdir;
+   static UString* qcontent;
    static UVector<UString>* form_name_value;
 
    static void  initForm();

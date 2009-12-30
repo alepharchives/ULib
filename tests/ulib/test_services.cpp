@@ -26,7 +26,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( buffer == U_STRING_FROM_CONSTANT(TESTOB) )
 
-   U_ASSERT( UBase64::decode( (const unsigned char*)U_CONSTANT_TO_PARAM(TESTOB), buffer) == true )
+   U_ASSERT( UBase64::decode( U_CONSTANT_TO_PARAM(TESTOB), buffer) == true )
 
    U_ASSERT( buffer == U_STRING_FROM_CONSTANT(TESTOA) )
 

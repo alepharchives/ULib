@@ -134,7 +134,7 @@ void UMimeEntity::decodeBody()
          {
          UString buffer(length);
 
-         if (UBase64::decode((const unsigned char*)content.data(), length, buffer))
+         if (UBase64::decode(content.data(), length, buffer))
             {
             content = buffer;
 
@@ -145,7 +145,7 @@ void UMimeEntity::decodeBody()
          {
          UString buffer(length);
 
-         if (UQuotedPrintable::decode((const unsigned char*)content.data(), length, buffer))
+         if (UQuotedPrintable::decode(content.data(), length, buffer))
             {
             content = buffer;
 

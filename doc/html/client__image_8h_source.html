@@ -115,7 +115,7 @@
 <a name="l00098"></a>00098 
 <a name="l00099"></a>00099                 U_INTERNAL_ASSERT_EQUALS(pClientImage, <span class="keyword">this</span>)
 <a name="l00100"></a>00100 
-<a name="l00101"></a>00101                 <span class="keywordflow">return</span> genericReset();
+<a name="l00101"></a>00101                 genericReset();
 <a name="l00102"></a>00102                 }
 <a name="l00103"></a>00103 
 <a name="l00104"></a>00104         <span class="comment">// define method VIRTUAL of class UEventFd</span>
@@ -213,50 +213,77 @@
 <a name="l00196"></a>00196 <span class="keyword">template</span> &lt;&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>&lt;<a class="code" href="classUSSLSocket.html">USSLSocket</a>&gt; : <span class="keyword">public</span> <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a> {
 <a name="l00197"></a>00197 <span class="keyword">public</span>:
 <a name="l00198"></a>00198 
-<a name="l00199"></a>00199         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>() : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>()
-<a name="l00200"></a>00200                 {
-<a name="l00201"></a>00201                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>, <span class="stringliteral">&quot;&quot;</span>, 0)
-<a name="l00202"></a>00202                 }
-<a name="l00203"></a>00203 
-<a name="l00204"></a>00204         <span class="keyword">virtual</span> ~<a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>()
-<a name="l00205"></a>00205                 {
-<a name="l00206"></a>00206                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>)
-<a name="l00207"></a>00207 
-<a name="l00208"></a>00208                 U_INTERNAL_ASSERT_POINTER(socket)
-<a name="l00209"></a>00209                 U_INTERNAL_ASSERT_EQUALS(socket-&gt;isSSL(), true)
-<a name="l00210"></a>00210                 }
-<a name="l00211"></a>00211 
-<a name="l00212"></a>00212         <span class="comment">// SERVICES</span>
+<a name="l00199"></a>00199         SSL* ssl;
+<a name="l00200"></a>00200 
+<a name="l00201"></a>00201         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>() : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>()
+<a name="l00202"></a>00202                 {
+<a name="l00203"></a>00203                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>, <span class="stringliteral">&quot;&quot;</span>, 0)
+<a name="l00204"></a>00204 
+<a name="l00205"></a>00205                 ssl = getSocket()-&gt;ssl;
+<a name="l00206"></a>00206 
+<a name="l00207"></a>00207                 if (logbuf) logCertificate();
+<a name="l00208"></a>00208                 }
+<a name="l00209"></a>00209 
+<a name="l00210"></a>00210         virtual ~<a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>()
+<a name="l00211"></a>00211                 {
+<a name="l00212"></a>00212                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>)
 <a name="l00213"></a>00213 
-<a name="l00214"></a>00214         static <a class="code" href="classUSSLSocket.html">USSLSocket</a>* getSocket() { <span class="keywordflow">return</span> (<a class="code" href="classUSSLSocket.html">USSLSocket</a>*)socket; }
-<a name="l00215"></a>00215 
-<a name="l00216"></a>00216         <span class="comment">// aggiungo nel log il certificato Peer del client (&quot;issuer&quot;,&quot;serial&quot;)</span>
-<a name="l00217"></a>00217 
-<a name="l00218"></a>00218         <span class="keywordtype">void</span> logCertificate()
-<a name="l00219"></a>00219                 {
-<a name="l00220"></a>00220                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage&lt;USSLSocket&gt;::logCertificate()&quot;</span>)
-<a name="l00221"></a>00221 
-<a name="l00222"></a>00222                 <span class="comment">// NB: OpenSSL already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...</span>
+<a name="l00214"></a>00214                 U_INTERNAL_ASSERT_POINTER(socket)
+<a name="l00215"></a>00215                 U_INTERNAL_ASSERT_EQUALS(socket-&gt;isSSL(), true)
+<a name="l00216"></a>00216 
+<a name="l00217"></a>00217                 <span class="comment">// NB: we need this because we reuse the same object USocket...</span>
+<a name="l00218"></a>00218 
+<a name="l00219"></a>00219                 getSocket()-&gt;ssl = ssl;
+<a name="l00220"></a>00220 
+<a name="l00221"></a>00221                 U_INTERNAL_DUMP(&quot;ssl = %p&quot;, ssl)
+<a name="l00222"></a>00222                 }
 <a name="l00223"></a>00223 
-<a name="l00224"></a>00224                 <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>::logCertificate(getSocket()-&gt;getPeerCertificate());
-<a name="l00225"></a>00225                 }
-<a name="l00226"></a>00226 
-<a name="l00227"></a>00227         <span class="comment">// DEBUG</span>
-<a name="l00228"></a>00228 
-<a name="l00229"></a>00229 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00230"></a>00230 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UClientImage_Base::dump(reset); }
-<a name="l00231"></a>00231 <span class="preprocessor">#endif</span>
-<a name="l00232"></a>00232 <span class="preprocessor"></span>
-<a name="l00233"></a>00233 <span class="keyword">private</span>:
-<a name="l00234"></a>00234         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp;) : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>() {}
-<a name="l00235"></a>00235         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp;)                              { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00236"></a>00236 };
-<a name="l00237"></a>00237 
-<a name="l00238"></a>00238 <span class="preprocessor">#endif</span>
-<a name="l00239"></a>00239 <span class="preprocessor"></span>
-<a name="l00240"></a>00240 <span class="preprocessor">#endif</span>
+<a name="l00224"></a>00224         <span class="comment">// SERVICES</span>
+<a name="l00225"></a>00225 
+<a name="l00226"></a>00226         static <a class="code" href="classUSSLSocket.html">USSLSocket</a>* getSocket() { <span class="keywordflow">return</span> (<a class="code" href="classUSSLSocket.html">USSLSocket</a>*)socket; }
+<a name="l00227"></a>00227 
+<a name="l00228"></a>00228         <span class="comment">// aggiungo nel log il certificato Peer del client (&quot;issuer&quot;,&quot;serial&quot;)</span>
+<a name="l00229"></a>00229 
+<a name="l00230"></a>00230         <span class="keywordtype">void</span> logCertificate()
+<a name="l00231"></a>00231                 {
+<a name="l00232"></a>00232                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage&lt;USSLSocket&gt;::logCertificate()&quot;</span>)
+<a name="l00233"></a>00233 
+<a name="l00234"></a>00234                 <span class="comment">// NB: OpenSSL already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...</span>
+<a name="l00235"></a>00235 
+<a name="l00236"></a>00236                 <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>::logCertificate(getSocket()-&gt;getPeerCertificate());
+<a name="l00237"></a>00237                 }
+<a name="l00238"></a>00238 
+<a name="l00239"></a>00239         <span class="comment">// define method VIRTUAL of class UClientImage_Base</span>
+<a name="l00240"></a>00240 
+<a name="l00241"></a>00241         virtual <span class="keywordtype">void</span> reset()
+<a name="l00242"></a>00242                 {
+<a name="l00243"></a>00243                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage&lt;USSLSocket&gt;::reset()&quot;</span>)
+<a name="l00244"></a>00244 
+<a name="l00245"></a>00245                 <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>::genericReset();
+<a name="l00246"></a>00246 
+<a name="l00247"></a>00247                 <span class="comment">// NB: we need this because we reuse the same object USocket...</span>
+<a name="l00248"></a>00248 
+<a name="l00249"></a>00249                 getSocket()-&gt;ssl = ssl;
+<a name="l00250"></a>00250 
+<a name="l00251"></a>00251                 U_INTERNAL_DUMP(&quot;ssl = %p&quot;, ssl)
+<a name="l00252"></a>00252                 }
+<a name="l00253"></a>00253 
+<a name="l00254"></a>00254         <span class="comment">// DEBUG</span>
+<a name="l00255"></a>00255 
+<a name="l00256"></a>00256 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00257"></a>00257 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00258"></a>00258 <span class="preprocessor">#endif</span>
+<a name="l00259"></a>00259 <span class="preprocessor"></span>
+<a name="l00260"></a>00260 <span class="keyword">private</span>:
+<a name="l00261"></a>00261         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp;) : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>() {}
+<a name="l00262"></a>00262         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp;)                              { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00263"></a>00263 };
+<a name="l00264"></a>00264 
+<a name="l00265"></a>00265 <span class="preprocessor">#endif</span>
+<a name="l00266"></a>00266 <span class="preprocessor"></span>
+<a name="l00267"></a>00267 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 24 13:46:59 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Dec 30 19:20:47 2009 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

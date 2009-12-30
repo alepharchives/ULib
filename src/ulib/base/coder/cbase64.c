@@ -65,6 +65,7 @@ int u_base64_errors;
 uint32_t u_base64_encode(const unsigned char* input, uint32_t len, unsigned char* result, int max_columns)
 {
    uint32_t i;
+   bool columns = false;
    unsigned char* r = result;
    int char_count = 0, bits = 0, cols = 0;
 
@@ -91,7 +92,8 @@ uint32_t u_base64_encode(const unsigned char* input, uint32_t len, unsigned char
 
             if (cols == max_columns)
                {
-               cols = 0;
+               cols    = 0;
+               columns = true;
 
                if (u_line_terminator_len == 2) *r++ = '\r';
                                                *r++ = '\n';
@@ -126,7 +128,7 @@ uint32_t u_base64_encode(const unsigned char* input, uint32_t len, unsigned char
          }
       }
 
-   if (max_columns && cols > 0)
+   if (columns && cols > 0)
       {
       if (u_line_terminator_len == 2) *r++ = '\r';
                                       *r++ = '\n';
@@ -137,14 +139,14 @@ uint32_t u_base64_encode(const unsigned char* input, uint32_t len, unsigned char
    return (r - result);
 }
 
-uint32_t u_base64_decode(const unsigned char* input, uint32_t len, unsigned char* result)
+uint32_t u_base64_decode(const char* input, uint32_t len, unsigned char* result)
 {
-   unsigned char c;
+   char c;
    uint32_t input_len, i = 0;
    unsigned char* r = result;
    int char_count = 0, bits = 0;
-   const unsigned char* ptr = input;
-   const unsigned char* end = input + len;
+   const char* ptr = input;
+   const char* end = input + len;
 
    U_INTERNAL_TRACE("u_base64_decode(%.*s,%u,%p)", len, input, len, result)
 

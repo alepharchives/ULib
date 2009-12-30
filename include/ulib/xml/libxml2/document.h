@@ -64,14 +64,14 @@ public:
 
    // Costruttori
 
-   UXML2Document(const xmlChar* version = (const xmlChar*)"1.0")
+   UXML2Document()
       {
-      U_TRACE_REGISTER_OBJECT(0, UXML2Document, "%S", version)
+      U_TRACE_REGISTER_OBJECT(0, UXML2Document, "", 0)
 
-      impl_ = (xmlDocPtr) U_SYSCALL(xmlNewDoc, "%S", version);
-
-      impl_->_private = this;
+      impl_ = (xmlDocPtr) U_SYSCALL(xmlNewDoc, "%S", (xmlChar*)"1.0");
       }
+
+   UXML2Document(const UString& data);
 
    ~UXML2Document()
       {
@@ -223,6 +223,17 @@ public:
       U_RETURN_POINTER(entity,_xmlEntity);
       }
 
+   /** Searches all children of the @parent node having given name and namespace href.
+    *
+    * @param parent  the pointer to XML node.
+    * @param name    the name.
+    * @param ns      the namespace href (may be NULL).
+    *
+    * @return        the pointer to the found node or NULL if an error occurs or node is not found.
+    */
+
+   xmlNodePtr findNode(const xmlNodePtr parent, const xmlChar* name, const xmlChar* ns);
+
    /** Write the document to a file.
    *
    * @param filename
@@ -244,6 +255,17 @@ public:
 
    xmlChar* writeToString(int& length, const char* encoding = 0, bool formatted = false);
 
+   /** Canonical XML implementation (http://www.w3.org/TR/2001/REC-xml-c14n-20010315)
+    *
+    * Enum xmlC14NMode {
+    *    XML_C14N_1_0           = 0 : Origianal C14N 1.0 spec
+    *    XML_C14N_EXCLUSIVE_1_0 = 1 : Exclusive C14N 1.0 spec
+    *    XML_C14N_1_1           = 2 : C14N 1.1 spec
+    * }
+    */
+
+   UString xmlC14N(int mode = 0, int with_comments = 0, unsigned char** inclusive_namespaces = 0);
+
    // Access the underlying libxml2 implementation.
 
    xmlDocPtr cobj() { return impl_; }
@@ -255,11 +277,13 @@ public:
 protected:
    xmlDocPtr impl_;
 
+   static bool binit;
+
+   static void init();
+
    UXML2Document(xmlDocPtr doc) : impl_(doc)
       {
       U_TRACE_REGISTER_OBJECT(0, UXML2Document, "%p", doc)
-
-      impl_->_private = this;
       }
 
    /** Retrieve an Entity.

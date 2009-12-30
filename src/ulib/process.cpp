@@ -493,33 +493,37 @@ int UProcess::waitAll()
    U_RETURN(result);
 }
 
-char* UProcess::exitInfo() const
+char* UProcess::exitInfo(int status)
 {
-   U_TRACE(0, "UProcess::exitInfo()")
+   U_TRACE(0, "UProcess::exitInfo(%d)", status)
 
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_EQUALS(running,false)
+   uint32_t n = 0;
 
    static char buffer[128];
-
-   uint32_t n;
 
    if (WIFEXITED(status))
       {
       n = u_snprintf(buffer, sizeof(buffer), "Exit %d", WEXITSTATUS(status));
       }
-
-   else // if (WIFSIGNALED(status))
+   else if (WIFSIGNALED(status))
       {
-#  ifndef    WCOREDUMP
-#     define WCOREDUMP(status) ((status) & 0200) // settimo bit
+#  ifndef WCOREDUMP
+#  define WCOREDUMP(status) ((status) & 0200) // settimo bit
 #  endif
 
       n = u_snprintf(buffer, sizeof(buffer), "Signal %Y%s", WTERMSIG(status), (WCOREDUMP(status) ? " - core dumped" : ""));
       }
-
-   // else if (WIFSTOPPED(status)) n = u_snprintf(buffer, sizeof(buffer), "Signal %Y", WSTOPSIG(status));
+   else if (WIFSTOPPED(status))
+      {
+      n = u_snprintf(buffer, sizeof(buffer), "Signal %Y", WSTOPSIG(status));
+      }
+#  ifndef WIFCONTINUED
+#  define WIFCONTINUED(status)  ((status) == 0xffff)
+#  endif
+   else if (WIFCONTINUED(status))
+      {
+      n = u_snprintf(buffer, sizeof(buffer), "SIGCONT", 0);
+      }
 
    buffer[n] = '\0';
 

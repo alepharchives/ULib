@@ -113,56 +113,58 @@
 <a name="l00090"></a>00090 
 <a name="l00091"></a>00091         <span class="comment">// STATUS CHILD</span>
 <a name="l00092"></a>00092 
-<a name="l00093"></a>00093         <span class="keywordtype">char</span>* exitInfo() <span class="keyword">const</span>;
+<a name="l00093"></a>00093         <span class="keyword">static</span> <span class="keywordtype">char</span>* exitInfo(<span class="keywordtype">int</span> status);
 <a name="l00094"></a>00094 
-<a name="l00095"></a>00095         <span class="keyword">static</span> <span class="keywordtype">int</span> exitValue(<span class="keywordtype">int</span> status)
-<a name="l00096"></a>00096                 {
-<a name="l00097"></a>00097                 U_TRACE(0, <span class="stringliteral">&quot;UProcess::exitValue(%d)&quot;</span>, status)
-<a name="l00098"></a>00098 
-<a name="l00099"></a>00099                 <span class="keywordtype">int</span> exit_value = (WIFEXITED(status)
-<a name="l00100"></a>00100                                                                         ? WEXITSTATUS(status)
-<a name="l00101"></a>00101                                                                         : (  WTERMSIG(status) &lt;&lt; 8));
-<a name="l00102"></a>00102 
-<a name="l00103"></a>00103                 U_RETURN(exit_value);
-<a name="l00104"></a>00104                 }
-<a name="l00105"></a>00105 
-<a name="l00106"></a>00106         <span class="keywordtype">int</span> exitValue()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> exitValue(status); }
+<a name="l00095"></a>00095                          <span class="keywordtype">char</span>* exitInfo()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> exitInfo(status); }
+<a name="l00096"></a>00096 
+<a name="l00097"></a>00097         <span class="keyword">static</span> <span class="keywordtype">int</span> exitValue(<span class="keywordtype">int</span> status)
+<a name="l00098"></a>00098                 {
+<a name="l00099"></a>00099                 U_TRACE(0, <span class="stringliteral">&quot;UProcess::exitValue(%d)&quot;</span>, status)
+<a name="l00100"></a>00100 
+<a name="l00101"></a>00101                 <span class="keywordtype">int</span> exit_value = (WIFEXITED(status)
+<a name="l00102"></a>00102                                                                         ? WEXITSTATUS(status)
+<a name="l00103"></a>00103                                                                         : (WTERMSIG(status) &lt;&lt; 8));
+<a name="l00104"></a>00104 
+<a name="l00105"></a>00105                 U_RETURN(exit_value);
+<a name="l00106"></a>00106                 }
 <a name="l00107"></a>00107 
-<a name="l00108"></a>00108         <span class="comment">// Inter Process Comunication (IPC)</span>
+<a name="l00108"></a>00108         <span class="keywordtype">int</span> exitValue()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> exitValue(status); }
 <a name="l00109"></a>00109 
-<a name="l00110"></a>00110         <span class="keyword">static</span> <span class="keywordtype">int</span> filedes[6]; <span class="comment">// 3 serie di pipe to manage file descriptors for child I/O redirection...</span>
+<a name="l00110"></a>00110         <span class="comment">// Inter Process Comunication (IPC)</span>
 <a name="l00111"></a>00111 
-<a name="l00112"></a>00112         <span class="keyword">static</span> <span class="keywordtype">void</span> pipe(<span class="keywordtype">int</span> fdp);
+<a name="l00112"></a>00112         <span class="keyword">static</span> <span class="keywordtype">int</span> filedes[6]; <span class="comment">// 3 serie di pipe to manage file descriptors for child I/O redirection...</span>
 <a name="l00113"></a>00113 
-<a name="l00114"></a>00114         <span class="comment">// services for EXEC</span>
+<a name="l00114"></a>00114         <span class="keyword">static</span> <span class="keywordtype">void</span> pipe(<span class="keywordtype">int</span> fdp);
 <a name="l00115"></a>00115 
-<a name="l00116"></a>00116         <span class="keyword">static</span> <span class="keywordtype">void</span> nice(<span class="keywordtype">int</span> inc);
-<a name="l00117"></a>00117         <span class="keyword">static</span> <span class="keywordtype">void</span> setProcessGroup();
-<a name="l00118"></a>00118         <span class="keyword">static</span> <span class="keywordtype">void</span> kill(pid_t pid, <span class="keywordtype">int</span> sig);
-<a name="l00119"></a>00119 
-<a name="l00120"></a>00120         <span class="comment">// exec with internal vfork() with management of file descriptors for child I/O redirection...</span>
+<a name="l00116"></a>00116         <span class="comment">// services for EXEC</span>
+<a name="l00117"></a>00117 
+<a name="l00118"></a>00118         <span class="keyword">static</span> <span class="keywordtype">void</span> nice(<span class="keywordtype">int</span> inc);
+<a name="l00119"></a>00119         <span class="keyword">static</span> <span class="keywordtype">void</span> setProcessGroup();
+<a name="l00120"></a>00120         <span class="keyword">static</span> <span class="keywordtype">void</span> kill(pid_t pid, <span class="keywordtype">int</span> sig);
 <a name="l00121"></a>00121 
-<a name="l00122"></a>00122         <span class="keyword">static</span> pid_t execute(<span class="keyword">const</span> <span class="keywordtype">char</span>* pathname, <span class="keywordtype">char</span>* argv[], <span class="keywordtype">char</span>* envp[], <span class="keywordtype">bool</span> fd_stdin, <span class="keywordtype">bool</span> fd_stdout, <span class="keywordtype">bool</span> fd_stderr);
+<a name="l00122"></a>00122         <span class="comment">// exec with internal vfork() with management of file descriptors for child I/O redirection...</span>
 <a name="l00123"></a>00123 
-<a name="l00124"></a>00124 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00125"></a>00125 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span>) <span class="keyword">const</span>;
-<a name="l00126"></a>00126 <span class="preprocessor">#endif</span>
-<a name="l00127"></a>00127 <span class="preprocessor"></span>
-<a name="l00128"></a>00128 <span class="keyword">protected</span>:
-<a name="l00129"></a>00129         pid_t _pid;
-<a name="l00130"></a>00130         <span class="keywordtype">int</span> status;
-<a name="l00131"></a>00131         <span class="keywordtype">bool</span> running;
-<a name="l00132"></a>00132 
-<a name="l00133"></a>00133         <span class="keyword">static</span> <span class="keyword">inline</span> <span class="keywordtype">void</span> setStdInOutErr(<span class="keywordtype">bool</span> fd_stdin, <span class="keywordtype">bool</span> fd_stdout, <span class="keywordtype">bool</span> fd_stderr) U_NO_EXPORT;
+<a name="l00124"></a>00124         <span class="keyword">static</span> pid_t execute(<span class="keyword">const</span> <span class="keywordtype">char</span>* pathname, <span class="keywordtype">char</span>* argv[], <span class="keywordtype">char</span>* envp[], <span class="keywordtype">bool</span> fd_stdin, <span class="keywordtype">bool</span> fd_stdout, <span class="keywordtype">bool</span> fd_stderr);
+<a name="l00125"></a>00125 
+<a name="l00126"></a>00126 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00127"></a>00127 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span>) <span class="keyword">const</span>;
+<a name="l00128"></a>00128 <span class="preprocessor">#endif</span>
+<a name="l00129"></a>00129 <span class="preprocessor"></span>
+<a name="l00130"></a>00130 <span class="keyword">protected</span>:
+<a name="l00131"></a>00131         pid_t _pid;
+<a name="l00132"></a>00132         <span class="keywordtype">int</span> status;
+<a name="l00133"></a>00133         <span class="keywordtype">bool</span> running;
 <a name="l00134"></a>00134 
-<a name="l00135"></a>00135 <span class="keyword">private</span>:
-<a name="l00136"></a>00136         <a class="code" href="classUProcess.html">UProcess</a>(<span class="keyword">const</span> <a class="code" href="classUProcess.html">UProcess</a>&amp;)            {}
-<a name="l00137"></a>00137         <a class="code" href="classUProcess.html">UProcess</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUProcess.html">UProcess</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00138"></a>00138 };
-<a name="l00139"></a>00139 
-<a name="l00140"></a>00140 <span class="preprocessor">#endif</span>
+<a name="l00135"></a>00135         <span class="keyword">static</span> <span class="keyword">inline</span> <span class="keywordtype">void</span> setStdInOutErr(<span class="keywordtype">bool</span> fd_stdin, <span class="keywordtype">bool</span> fd_stdout, <span class="keywordtype">bool</span> fd_stderr) U_NO_EXPORT;
+<a name="l00136"></a>00136 
+<a name="l00137"></a>00137 <span class="keyword">private</span>:
+<a name="l00138"></a>00138         <a class="code" href="classUProcess.html">UProcess</a>(<span class="keyword">const</span> <a class="code" href="classUProcess.html">UProcess</a>&amp;)            {}
+<a name="l00139"></a>00139         <a class="code" href="classUProcess.html">UProcess</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUProcess.html">UProcess</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00140"></a>00140 };
+<a name="l00141"></a>00141 
+<a name="l00142"></a>00142 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 24 13:46:59 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Dec 30 19:20:47 2009 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

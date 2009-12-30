@@ -53,7 +53,7 @@ OtpAuthToken::OtpAuthToken(CryptEngine* eng_, const UString& buf)
    pos = eng1.decode((unsigned char*)buf.data(), (long)buf.size(), ptr);
    pos = eng->decrypt(ptr, pos, (unsigned char*)buffer.data());
 #else
-   pos = u_base64_decode((const unsigned char*)buf.data(), buf.size(), ptr);
+   pos = u_base64_decode(buf.data(), buf.size(), ptr);
 #  ifdef HAVE_SSL
    pos = u_des3_decode(ptr, pos, (unsigned char*)buffer.data());
 #  endif

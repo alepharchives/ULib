@@ -233,7 +233,9 @@ protected:
    int ret;
    bool active;
 
-   const char* status(bool flag = true) U_NO_EXPORT;
+   static const char* status(SSL* ssl, int ret, bool flag);
+
+          const char* status(bool flag) const { return status(ssl, ret, flag); }
 
 private:
    USSLSocket(const USSLSocket&) : UTCPSocket(false) {}

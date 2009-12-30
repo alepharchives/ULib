@@ -188,7 +188,7 @@ long u_des3_decode(const unsigned char* inp, long len, unsigned char* out)
    BIO* wbio;
    BIO* benc;
    char mbuf[sizeof(U_STR_MAGIC)-1];
-   unsigned magic_len = sizeof(U_STR_MAGIC)-1;
+   unsigned int magic_len = sizeof(U_STR_MAGIC)-1;
 
    U_INTERNAL_TRACE("u_des3_decode(%.*s,%ld,%p)", len, inp, len, out)
 

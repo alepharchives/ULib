@@ -24,7 +24,7 @@ extern "C" {
 */
 
 extern U_EXPORT uint32_t u_xml_encode(const unsigned char* s, uint32_t n, unsigned char* result);
-extern U_EXPORT uint32_t u_xml_decode(const unsigned char* s, uint32_t n, unsigned char* result);
+extern U_EXPORT uint32_t u_xml_decode(const          char* s, uint32_t n, unsigned char* result);
 
 #ifdef __cplusplus
 }

@@ -80,5 +80,5 @@
 #endif
 
 #ifdef HAVE_LIBXML2
-#  include "ulib/xml/libxml2/node.h"
+#  include "ulib/xml/libxml2/schema.h"
 #endif

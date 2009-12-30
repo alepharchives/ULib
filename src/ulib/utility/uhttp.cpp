@@ -23,6 +23,7 @@
 #include <ulib/utility/string_ext.h>
 
 UString*          UHTTP::tmpdir;
+UString*          UHTTP::qcontent;
 uhttpheader       UHTTP::http_info;
 UVector<UString>* UHTTP::form_name_value;
 
@@ -228,7 +229,7 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
     * See http://ietf.org/rfc/rfc2616.txt for further information about HTTP request methods
     **/
 
-   while (u_isspace(*ptr)) ++ptr; // skip space...
+   while (u_isspace(*ptr)) ++ptr; // RFC 2616 4.1 "servers SHOULD ignore any empty line(s) received where a Request-Line is expected."
 
    unsigned char c = u_toupper(ptr[0]);
 
@@ -284,7 +285,7 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
 
    ptr += http_info.method_len;
 
-   while (u_isspace(*++ptr)) {} // skip space...
+   while (u_isspace(*++ptr)) {} // RFC 2616 19.3 "[servers] SHOULD accept any amount of SP or HT characters between [Request-Line] fields"
 
    http_info.uri = ptr;
 
@@ -292,15 +293,15 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
       {
       c = *ptr;
 
-      if (u_isspace(c)) break;
+      if (c == ' ') break;
 
-      /* check uri for invalid characters */
+      /* check uri for invalid characters (NB: \n can happen because openssl base64...) */
 
       if (c <=  32 ||
           c == 127 ||
           c == 255)
          {
-         U_INTERNAL_DUMP("invalid character %C in URI", c)
+         U_WARNING("invalid character %C in URI %.*S", c, ptr - http_info.uri, http_info.uri);
 
          U_RETURN(false);
          }
@@ -331,7 +332,7 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
 
    U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
 
-   while (u_isspace(*++ptr)) {} // skip space...
+   while (u_isspace(*++ptr)) {} // RFC 2616 19.3 "[servers] SHOULD accept any amount of SP or HT characters between [Request-Line] fields"
 
    if (U_STRNCMP(ptr, "HTTP/1.")) U_RETURN(false);
 
@@ -1137,6 +1138,7 @@ void UHTTP::initForm()
 {
    U_TRACE(0, "UHTTP::initForm()")
 
+   qcontent        = U_NEW(UString);
    tmpdir          = U_NEW(UString(100U));
    form_name_value = U_NEW(UVector<UString>);
 }
@@ -1148,6 +1150,7 @@ void UHTTP::resetForm()
    U_INTERNAL_ASSERT_POINTER(form_name_value)
 
    form_name_value->clear();
+          qcontent->clear();
 
    // clean temporary directory, if any...
 
@@ -1163,16 +1166,17 @@ void UHTTP::getFormValue(UString& buffer, uint32_t n)
 {
    U_TRACE(0, "UHTTP::getFormValue(%.*S,%u)", U_STRING_TO_TRACE(buffer), n)
 
-   U_ASSERT_MAJOR(buffer.capacity(),0)
+   U_ASSERT_MAJOR(buffer.capacity(),1000)
    U_INTERNAL_ASSERT_POINTER(form_name_value)
 
-   if (n >= form_name_value->size()) buffer.setEmpty();
-   else
+   if (n >= form_name_value->size())
       {
-      UString value = (*form_name_value)[n];
+      buffer.setEmpty();
 
-      buffer.snprintf("%.*s", U_STRING_TO_TRACE(value));
+      return;
       }
+
+   (void) buffer.replace((*form_name_value)[n]);
 }
 
 U_NO_EXPORT uint32_t UHTTP::processHTTPForm(UMimeMultipart& form)
@@ -1226,11 +1230,10 @@ uint32_t UHTTP::processHTTPForm()
    U_TRACE(0, "UHTTP::processHTTPForm()")
 
    uint32_t n = 0;
-   UString content;
 
    if (tmpdir == 0) initForm();
 
-   if (isHttpGET()) content = UString(U_HTTP_QUERY_TO_PARAM);
+   if (isHttpGET()) *qcontent = UString(U_HTTP_QUERY_TO_PARAM);
    else
       {
       // POST
@@ -1243,7 +1246,7 @@ uint32_t UHTTP::processHTTPForm()
 
       if (ptr)
          {
-         if (U_STRNCMP(ptr, "application/x-www-form-urlencoded") == 0) content = *UClientImage_Base::body;
+         if (U_STRNCMP(ptr, "application/x-www-form-urlencoded") == 0) *qcontent = *UClientImage_Base::body;
          else
             {
             // multipart/form-data (FILE UPLOAD)
@@ -1262,7 +1265,7 @@ uint32_t UHTTP::processHTTPForm()
          }
       }
 
-   if (content.empty() == false) n = UStringExt::getNameValueFormData(content, *form_name_value);
+   if (qcontent->empty() == false) n = UStringExt::getNameValueFromData(*qcontent, *form_name_value);
 
    U_RETURN(n);
 }
@@ -1416,6 +1419,8 @@ UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, const char* content_t
 UString UHTTP::getHTTPRedirectResponse(const UString& ext, const char* ptr_location, uint32_t len_location)
 {
    U_TRACE(0, "UHTTP::getHTTPRedirectResponse(%.*S,%.*S,%u)", U_STRING_TO_TRACE(ext), len_location, ptr_location, len_location)
+
+   U_ASSERT_EQUALS(u_find(ptr_location,len_location,"\n",1),0)
 
    if (http_info.is_connection_close == U_MAYBE) http_info.is_connection_close = U_YES;
 
@@ -2259,16 +2264,9 @@ bool UHTTP::processCGIOutput()
       {
       location = ptr + U_CONSTANT_SIZE("Location: ");
 
-      ptr = strchr(location, '\n');
+      ptr = strchr(location, (u_line_terminator_len == 1 ? '\n' : '\r'));
 
       U_INTERNAL_ASSERT_POINTER(ptr)
-
-      if (u_line_terminator_len == 2)
-         {
-         U_INTERNAL_ASSERT_EQUALS(ptr[-1], '\r')
-
-         --ptr;
-         }
 
       *UClientImage_Base::wbuffer = getHTTPRedirectResponse(set_cookie, location, ptr - location);
 

@@ -59,8 +59,6 @@ public:
    UXML2Node(xmlNodePtr node) : impl_(node)
       {
       U_TRACE_REGISTER_OBJECT(0, UXML2Node, "%p", node)
-
-      impl_->_private = this;
       }
 
    ~UXML2Node()
@@ -178,17 +176,24 @@ public:
       U_RETURN(result);
       }
 
-   const char* getNameSpaceUri() const
+   const xmlChar* getNameSpaceUri();
+
+   /** Checks that the node has a given name and a given namespace href.
+   *
+   * @param cur   the pointer to an XML node
+   * @param name  the name
+   * @param ns    the namespace href
+   *
+   * @returns     true if the node matches or false otherwise.
+   */
+
+   bool checkNodeName(const xmlChar* name, const xmlChar* ns)
       {
-      U_TRACE(0, "UXML2Node::getNameSpaceUri()")
+      U_TRACE(0, "UXML2Node::checkNodeName(%S,%S)", name, ns)
 
       U_INTERNAL_ASSERT_POINTER(impl_)
 
-      // check for impl_ if is actually of type xmlDoc, instead of just xmlNode.
-      // This can be an issue when calling this method on a UXML2Node returned by find().
-      // Therefore, a call to impl_->ns would be invalid.
-
-      const char* result = (impl_->type != XML_DOCUMENT_NODE && impl_->ns && impl_->ns->href ? (const char*)impl_->ns->href : "");
+      bool result = (xmlStrEqual(impl_->name, name) && xmlStrEqual(getNameSpaceUri(), ns));
 
       U_RETURN(result);
       }
@@ -318,33 +323,7 @@ public:
    * @returns The newly-created node.
    */
 
-   xmlNodePtr importNode(const xmlNodePtr node, bool recursive = true)
-      {
-      U_TRACE(1, "UXML2Node::importNode(%p,%b)", node, recursive)
-
-      U_INTERNAL_ASSERT_POINTER(impl_)
-      U_INTERNAL_ASSERT_POINTER(impl_->doc)
-
-      // Create the node, by copying:
-
-      xmlNodePtr imported_node = (xmlNodePtr) U_SYSCALL(xmlDocCopyNode, "%p,%p,%d", node, impl_->doc, recursive);
-
-      if (imported_node)
-         {
-         // Add the node:
-
-         xmlNodePtr added_node = (xmlNodePtr) U_SYSCALL(xmlAddChild, "%p,%p", impl_, imported_node);
-
-         if (!added_node)
-            {
-            U_SYSCALL_VOID(xmlFreeNode, "%p", imported_node);
-
-            imported_node = 0;
-            }
-         }
-
-      U_RETURN_POINTER(imported_node,_xmlNode);
-      }
+   xmlNodePtr importNode(const xmlNodePtr node, bool recursive = true);
 
    /** Return the XPath of this node.
    *
@@ -387,25 +366,7 @@ public:
    * @param namespaces  A vector of namespace prefixes to namespace URIs to be used while finding.
    */
 
-   uint32_t find(UVector<xmlNodePtr>& vec, const xmlChar* xpath, UVector<UString>& namespaces) const
-      {
-      U_TRACE(1, "UXML2Node::find(%p,%S,%p)", &vec, xpath, &namespaces)
-
-      U_INTERNAL_ASSERT_POINTER(impl_)
-      U_INTERNAL_ASSERT_POINTER(impl_->doc)
-
-      xmlXPathContextPtr ctxt = (xmlXPathContextPtr) U_SYSCALL(xmlXPathNewContext, "%p", impl_->doc);
-
-      ctxt->node = impl_;
-
-      for (uint32_t i = 0, n = namespaces.size(); i < n; i += 2)
-         {
-         U_SYSCALL_VOID(xmlXPathRegisterNs, "%p,%S,%S", ctxt, (const xmlChar*)namespaces[i].c_str(),
-                                                              (const xmlChar*)namespaces[i+1].c_str());
-         }
-
-      return find_impl(vec, ctxt, xpath);
-      }
+   uint32_t find(UVector<xmlNodePtr>& vec, const xmlChar* xpath, UVector<UString>& namespaces) const;
 
    // Access the underlying libxml2 implementation.
 

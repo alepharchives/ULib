@@ -75,19 +75,19 @@ struct U_EXPORT UStringExt {
                              const char* b, uint32_t n2);
 
    static UString substitute(const UString& s, char a, char b)
-      { return UStringExt::substitute(U_STRING_TO_PARAM(s), &a, 1, &b, 1); }
+      { return substitute(U_STRING_TO_PARAM(s), &a, 1, &b, 1); }
 
    static UString substitute(const UString& s, char a, const char* b, uint32_t n2)
-      { return UStringExt::substitute(U_STRING_TO_PARAM(s), &a, 1, b, n2); }
+      { return substitute(U_STRING_TO_PARAM(s), &a, 1, b, n2); }
 
    static UString substitute(const UString& s, const char* a, uint32_t n1, char b)
-      { return UStringExt::substitute(U_STRING_TO_PARAM(s), a, n1, &b, 1); }
+      { return substitute(U_STRING_TO_PARAM(s), a, n1, &b, 1); }
 
    static UString substitute(const UString& s, const char* a, uint32_t n1, const char* b, uint32_t n2)
-      { return UStringExt::substitute(U_STRING_TO_PARAM(s), a, n1, b, n2); }
+      { return substitute(U_STRING_TO_PARAM(s), a, n1, b, n2); }
 
    static UString substitute(const UString& s, const UString& a, const UString& b)
-      { return UStringExt::substitute(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a), U_STRING_TO_PARAM(b)); }
+      { return substitute(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a), U_STRING_TO_PARAM(b)); }
 
    // dos2unix '\n' convertor
 
@@ -96,17 +96,17 @@ struct U_EXPORT UStringExt {
    // convert tabs to spaces
 
    static UString expandTab(const char* s, uint32_t n, int tab = 3);
-   static UString expandTab(const UString& s, int tab = 3) { return UStringExt::expandTab(U_STRING_TO_PARAM(s), tab); }
+   static UString expandTab(const UString& s, int tab = 3) { return expandTab(U_STRING_TO_PARAM(s), tab); }
 
    // expand path (~/... and ~user/... plus $var and $var/...)
 
    static UString expandPath(const char* s, uint32_t n);
-   static UString expandPath(const UString& s) { return UStringExt::expandPath(U_STRING_TO_PARAM(s)); }
+   static UString expandPath(const UString& s) { return expandPath(U_STRING_TO_PARAM(s)); }
 
    // recursively expand environment variables if needed
 
    static UString expandEnvVar(const char* s, uint32_t n);
-   static UString expandEnvVar(const UString& s) { return UStringExt::expandEnvVar(U_STRING_TO_PARAM(s)); }
+   static UString expandEnvVar(const UString& s) { return expandEnvVar(U_STRING_TO_PARAM(s)); }
 
    static void putenv(const char* name, uint32_t value)
       {
@@ -177,13 +177,13 @@ struct U_EXPORT UStringExt {
    // Returns a string that has whitespace removed from the start and the end
 
    static UString stripWhiteSpace(const char* s, uint32_t n);
-   static UString stripWhiteSpace(const UString& s) { return UStringExt::stripWhiteSpace(U_STRING_TO_PARAM(s)); }
+   static UString stripWhiteSpace(const UString& s) { return stripWhiteSpace(U_STRING_TO_PARAM(s)); }
 
    // returns a string that has whitespace removed from the start and the end, and which has each sequence of internal
    // whitespace replaced with a single space
 
    static UString simplifyWhiteSpace(const char* s, uint32_t n);
-   static UString simplifyWhiteSpace(const UString& s) { return UStringExt::simplifyWhiteSpace(U_STRING_TO_PARAM(s)); }
+   static UString simplifyWhiteSpace(const UString& s) { return simplifyWhiteSpace(U_STRING_TO_PARAM(s)); }
 
    // Sort two version numbers, comparing equivalently seperated strings of digits numerically
    // ----------------------------------------------------------------------------------------
@@ -194,10 +194,10 @@ struct U_EXPORT UStringExt {
    static int compareversion(const char* a, uint32_t n1, const char* b, uint32_t n2);
 
    static int compareversion(const UString& s, const UString& a)
-      { return UStringExt::compareversion(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a)); }
+      { return compareversion(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a)); }
 
    static int compareversion(const UString& s, const char* a, uint32_t n)
-      { return UStringExt::compareversion(U_STRING_TO_PARAM(s), a, n); }
+      { return compareversion(U_STRING_TO_PARAM(s), a, n); }
 
    /* Verifies that the passed string is actually an e-mail address */
 
@@ -212,8 +212,7 @@ struct U_EXPORT UStringExt {
 
    // retrieve information on form elements as couple <name1>=<value1>&<name2>=<value2>&...
 
-   static uint32_t getNameValueFormData(const UString& content, UVector<UString>& name_value);
-   static uint32_t getNameValueFromData(const UString& content, UVector<UString>& name_value, const char* delim, uint32_t dlen);
+   static uint32_t getNameValueFromData(const UString& content, UVector<UString>& name_value, const char* delim = "&", uint32_t dlen = 1);
 
 #  define U_TOKEN_NM 4U
 #  define U_TOKEN_LN (U_TOKEN_NM + 8U)
@@ -233,7 +232,7 @@ struct U_EXPORT UStringExt {
       {
       U_TRACE(0, "UStringExt::buildTokenString(%S,%.*S,%.*S)", token, U_STRING_TO_TRACE(value), U_STRING_TO_TRACE(buffer))
 
-      UStringExt::buildTokenInt(token, value.size(), buffer);
+      buildTokenInt(token, value.size(), buffer);
 
       buffer.append(value);
       }
@@ -244,11 +243,11 @@ struct U_EXPORT UStringExt {
 
       uint32_t argc = vec.size();
 
-      UStringExt::buildTokenInt(token, argc, buffer);
+      buildTokenInt(token, argc, buffer);
 
       for (uint32_t i = 0; i < argc; ++i)
          {
-         UStringExt::buildTokenString("ARGV", vec[i], buffer);
+         buildTokenString("ARGV", vec[i], buffer);
          }
       }
 };

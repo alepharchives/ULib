@@ -125,7 +125,9 @@ int UHttpPlugIn::handlerRead()
 {
    U_TRACE(0, "UHttpPlugIn::handlerRead()")
 
-   UClientImage_Base::genericReset();
+   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
+
+   UClientImage_Base::pClientImage->reset();
 
    UHTTP::resetHTTPInfo();
 
