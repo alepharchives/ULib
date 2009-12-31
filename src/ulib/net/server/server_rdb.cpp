@@ -23,7 +23,7 @@ const char* URDBServer::dump(bool reset) const
    UServer<UTCPSocket>::dump(false);
 
    *UObjectIO::os << '\n'
-                  << "rdb           (URDB     " << (void*)rdb << ')';
+                  << "rdb           (URDB       " << (void*)rdb << ')';
 
    if (reset)
       {

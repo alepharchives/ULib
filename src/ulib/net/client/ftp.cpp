@@ -152,7 +152,7 @@ inline bool UFtpClient::readPortToConnect()
 
    // find address in form ip1,ip2,ip3,ip4,p1,p2
 
-   while (*s && !isdigit(*s)) { ++s; }
+   while (*s && !u_isdigit(*s)) { ++s; }
 
    int i, addr[6];
 
@@ -160,7 +160,7 @@ inline bool UFtpClient::readPortToConnect()
       {
       addr[i] = 0;
 
-      while (isdigit(*s)) { addr[i] = 10 * addr[i] + *s++ - '0'; }
+      while (u_isdigit(*s)) { addr[i] = 10 * addr[i] + *s++ - '0'; }
 
       if (*s == ',' || i == 5)
          {

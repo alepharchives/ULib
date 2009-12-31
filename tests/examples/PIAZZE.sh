@@ -4,7 +4,7 @@
 
 start_msg PIAZZE
 
-DOC_ROOT=/srv/wifi-portal/PIAZZE_APERTE
+DOC_ROOT=/srv/wifi-portal/www
 
 rm -f PIAZZE.log err/PIAZZE.err \
       out/userver_tcp.out err/userver_tcp.err \
@@ -15,8 +15,8 @@ rm -f PIAZZE.log err/PIAZZE.err \
 		$DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* \
 		/tmp/processCGIRequest.err
 
-#UTRACE="0 10M 0"
-#UOBJDUMP="0 100k 10"
+ UTRACE="0 10M 0"
+ UOBJDUMP="0 100k 10"
 #USIMERR="error.accept"
  export UTRACE UOBJDUMP USIMERR
 

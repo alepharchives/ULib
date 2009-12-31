@@ -499,8 +499,8 @@ typedef unsigned long long uint64;
 /* Define to 1 if you have the <semaphore.h> header file. */
 #undef HAVE_SEMAPHORE_H
 
-/* Define to 1 if you have the `sendfile' function. */
-#undef HAVE_SENDFILE
+/* Define to 1 if you have the `sendfile64' function. */
+#undef HAVE_SENDFILE64
 
 /* Define to 1 if you have the `setenv' function. */
 #undef HAVE_SETENV

@@ -20,8 +20,14 @@
 #  include <sys/uio.h>
 #endif
 
-#if defined(HAVE_SYS_SENDFILE_H)
+#ifdef HAVE_SYS_SENDFILE_H
+#  ifndef HAVE_SENDFILE64
+#     undef __USE_FILE_OFFSET64
+#  endif
 #  include <sys/sendfile.h>
+#  ifndef HAVE_SENDFILE64
+#     define __USE_FILE_OFFSET64
+#  endif
 #endif
 
 #include <errno.h>
@@ -477,27 +483,6 @@ public:
 
    // MODIFIER
 
-   void setNonBlocking() const
-      {
-      U_TRACE(1, "UFile::setNonBlocking()")
-
-      U_ASSERT(socket() == true)
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
-      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
-      int flags = U_SYSCALL(fcntl, "%d,%d,%d", fd, F_GETFL, 0);
-
-      // ----------------------------------------------------------------------------------------
-      // determina se le operazioni I/O sul descrittore indicato sono di tipo bloccante o meno...
-      // ----------------------------------------------------------------------------------------
-      // flags & ~O_NONBLOCK: read() e write() bloccanti     (casi normali)
-      // flags |  O_NONBLOCK: read() e write() non bloccanti (casi speciali)
-      // ----------------------------------------------------------------------------------------
-
-      if ((flags & O_NONBLOCK) != O_NONBLOCK) (void) U_SYSCALL(fcntl, "%d,%d,%d", fd, F_SETFL, flags | O_NONBLOCK);
-      }
-
    bool modified()
       {
       U_TRACE(1, "UFile::modified()")
@@ -508,6 +493,8 @@ public:
 
       U_RETURN(mtime != st_mtime);
       }
+
+   static int setNonBlocking(int fd, int flags, bool block);
 
 #ifdef __MINGW32__
 #undef mkdir

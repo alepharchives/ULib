@@ -62,6 +62,7 @@
   <tr bgcolor="#f0f0f0"><td><b>getBufferSND</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>getFd</b>() const  (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>getLocalInfo</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>getMsgError</b>(const char *&amp;pmsg) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [virtual]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>getRecipientAddress</b>() const  (defined in <a class="el" href="classUSmtpClient.html">USmtpClient</a>)</td><td><a class="el" href="classUSmtpClient.html">USmtpClient</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>getRemoteInfo</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>getRemoteInfo</b>(UString &amp;buffer) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
@@ -142,9 +143,9 @@
   <tr class="memlist"><td><a class="el" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">socket</a>(int domain, int type, int protocol)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline, static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>socket</b>(int iSocketType, int protocol=0) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>startTLS</b>() (defined in <a class="el" href="classUSmtpClient.html">USmtpClient</a>)</td><td><a class="el" href="classUSmtpClient.html">USmtpClient</a></td><td></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>State</b> enum name (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>state</b> (defined in <a class="el" href="classUSmtpClient.html">USmtpClient</a>)</td><td><a class="el" href="classUSmtpClient.html">USmtpClient</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>state</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
-  <tr bgcolor="#f0f0f0"><td><b>State</b> enum name (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSmtpClient.html#a393abf99b8e965dab48cbb2b60edcab8">status</a>()</td><td><a class="el" href="classUSmtpClient.html">USmtpClient</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>str_accept_encoding</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>str_accept_language</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [static]</code></td></tr>
@@ -187,7 +188,7 @@
   <tr bgcolor="#f0f0f0"><td><b>~USocket</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline, virtual]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>~UTCPSocket</b>() (defined in <a class="el" href="classUTCPSocket.html">UTCPSocket</a>)</td><td><a class="el" href="classUTCPSocket.html">UTCPSocket</a></td><td><code> [inline, virtual]</code></td></tr>
 </table></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Dec 30 19:20:51 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 31 17:08:57 2009 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

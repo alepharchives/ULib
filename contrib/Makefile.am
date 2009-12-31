@@ -22,12 +22,12 @@ MAINTAINERCLEANFILES = Makefile.in
 ##    	export NFILE; \
 ##    done
 
-SUBDIRS = RSIGN
+SUBDIRS =
 
 if MINGW
 SUBDIRS += signer
 if SSL
-SUBDIRS += HCSP
+SUBDIRS += HCSP RSIGN
 endif
 endif
 

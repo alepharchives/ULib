@@ -15,6 +15,7 @@
 #define ULIB_QUERY_PARSER_H 1
 
 #include <ulib/tokenizer.h>
+#include <ulib/container/vector.h>
 
 class UQueryParser;
 
@@ -155,6 +156,9 @@ private:
 
    friend class UQueryParser;
 };
+
+// override the default...
+template <> inline void u_destroy(UQueryNode** ptr, uint32_t n) { U_TRACE(0,"u_destroy<UQueryNode*>(%p,%u)", ptr, n) }
 
 /*
 Parser for a language of boolean expressions.

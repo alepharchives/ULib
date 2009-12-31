@@ -37,7 +37,7 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @MINGW_TRUE@am__append_1 = signer
-@MINGW_TRUE@@SSL_TRUE@am__append_2 = HCSP
+@MINGW_TRUE@@SSL_TRUE@am__append_2 = HCSP RSIGN
 subdir = contrib
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -79,7 +79,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = RSIGN signer HCSP
+DIST_SUBDIRS = signer HCSP RSIGN
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -334,7 +334,7 @@ EXTRA_DIST = HCSP/Makefile.in HCSP/Makefile.am HCSP/HCSP.c \
 				 RSIGN/Makefile.in RSIGN/Makefile.am RSIGN/RSIGN.c RSIGN/RSIGN.err
 
 MAINTAINERCLEANFILES = Makefile.in
-SUBDIRS = RSIGN $(am__append_1) $(am__append_2)
+SUBDIRS = $(am__append_1) $(am__append_2)
 all: all-recursive
 
 .SUFFIXES:

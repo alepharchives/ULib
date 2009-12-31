@@ -211,7 +211,7 @@ char* UServices::getOpenSSLError(char* buffer, uint32_t buffer_size, uint32_t* p
       buffer_size = 4096;
       }
 
-   uint32_t long i;
+   long i;
    uint32_t size = 0;
    char* ptr = buffer;
 
@@ -223,9 +223,8 @@ char* UServices::getOpenSSLError(char* buffer, uint32_t buffer_size, uint32_t* p
 
       U_INTERNAL_DUMP("buf = %.*S", strlen(buf), buf)
 
-      ptr += size;
-
-      size += u_snprintf(ptr, buffer_size - (ptr - buffer), "(%ld, %s)%s", i, buf, u_line_terminator);
+      ptr  += size;
+      size += u_snprintf(ptr, buffer_size - (ptr - buffer), "(%ld, %s)", i, buf);
 
       U_INTERNAL_ASSERT_MINOR(size,buffer_size)
       }

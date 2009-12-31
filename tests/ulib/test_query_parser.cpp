@@ -1,10 +1,6 @@
 // test_query_parser.cpp
 
 #include <ulib/query/parser.h>
-#include <ulib/container/vector.h>
-
-// override the default...
-template <> inline void u_destroy(UQueryNode** ptr, uint32_t n) { U_TRACE(0,"u_destroy<UQueryNode*>(%p,%u)", ptr, n) }
 
 static bool eval(UStringRep* word)
 {

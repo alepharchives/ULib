@@ -19,7 +19,6 @@
 
 #include <ctype.h>
 #include <stdlib.h>
-#include <stddef.h>
 
 #ifdef HAVE_SYSEXITS_H
 #  include <sysexits.h>

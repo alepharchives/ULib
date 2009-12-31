@@ -202,6 +202,8 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UClientImage<USSLSocket>, "", 0)
 
+      // NB: we need this because we reuse the same object USocket...
+
       ssl = getSocket()->ssl;
 
       if (logbuf) logCertificate();
@@ -214,11 +216,16 @@ public:
       U_INTERNAL_ASSERT_POINTER(socket)
       U_INTERNAL_ASSERT_EQUALS(socket->isSSL(), true)
 
-      // NB: we need this because we reuse the same object USocket...
+      if (socket->isOpen())
+         {
+         U_INTERNAL_DUMP("ssl = %p ssl_fd = %d fd = %d sock_fd = %d", ssl, SSL_get_fd(ssl), UEventFd::fd, socket->getFd())
 
-      getSocket()->ssl = ssl;
+         U_INTERNAL_ASSERT_EQUALS(SSL_get_fd(ssl), UEventFd::fd)
 
-      U_INTERNAL_DUMP("ssl = %p", ssl)
+         // NB: we need this because we reuse the same object USocket...
+
+         getSocket()->ssl = ssl;
+         }
       }
 
    // SERVICES
@@ -242,13 +249,17 @@ public:
       {
       U_TRACE(0, "UClientImage<USSLSocket>::reset()")
 
-      UClientImage_Base::genericReset();
+      U_INTERNAL_ASSERT_EQUALS(pClientImage, this)
+
+      U_INTERNAL_DUMP("ssl = %p ssl_fd = %d fd = %d", ssl, SSL_get_fd(ssl), UEventFd::fd)
+
+      U_INTERNAL_ASSERT(UEventFd::fd == SSL_get_fd(ssl))
 
       // NB: we need this because we reuse the same object USocket...
 
       getSocket()->ssl = ssl;
 
-      U_INTERNAL_DUMP("ssl = %p", ssl)
+      UClientImage_Base::genericReset();
       }
 
    // DEBUG

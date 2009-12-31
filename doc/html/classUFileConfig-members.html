@@ -120,7 +120,7 @@
   <tr bgcolor="#f0f0f0"><td><b>searchForObjectStream</b>(const char *section=0, uint32_t len=0) (defined in <a class="el" href="classUFileConfig.html">UFileConfig</a>)</td><td><a class="el" href="classUFileConfig.html">UFileConfig</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>sendfile</b>(int out_fd, off_t *poffset=0, size_t count=0) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setFd</b>(int _fd) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
-  <tr bgcolor="#f0f0f0"><td><b>setNonBlocking</b>() const  (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>setNonBlocking</b>(int fd, int flags, bool block) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setPath</b>(const UString &amp;path) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setPath</b>(const UFile &amp;file, char *buffer_path, const char *suffix, uint32_t len) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setPathFromFile</b>(const UFile &amp;file, char *buffer_path, const char *suffix, uint32_t len) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [static]</code></td></tr>
@@ -153,7 +153,7 @@
   <tr bgcolor="#f0f0f0"><td><b>~UFile</b>() (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>~UFileConfig</b>() (defined in <a class="el" href="classUFileConfig.html">UFileConfig</a>)</td><td><a class="el" href="classUFileConfig.html">UFileConfig</a></td><td><code> [inline]</code></td></tr>
 </table></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Dec 30 19:20:48 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 31 17:08:56 2009 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

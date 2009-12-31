@@ -30,6 +30,7 @@ int                      UServer_Base::req_timeout;
 int                      UServer_Base::cgi_timeout;
 int                      UServer_Base::log_file_sz;
 int                      UServer_Base::verify_mode;
+int                      UServer_Base::socket_flags = -1;
 int                      UServer_Base::num_connection;
 int                      UServer_Base::max_Keep_Alive;
 int                      UServer_Base::preforked_num_kids;
@@ -704,6 +705,33 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
    UInterrupt::insert(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
 }
 
+int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
+{
+   U_TRACE(0, "UServer_Base::handlerRead()")
+
+   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
+
+   if (isPreForked())
+      {
+      /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
+       * a readability event because the connection might have been removed by an asynchronous network error or
+       * another thread before accept() is called. If this happens then the call will block waiting for the next
+       * connection to arrive. To ensure that accept() never blocks, the passed socket sockfd needs to have the
+       * O_NONBLOCK flag set (see socket(7)).
+       */
+
+      U_INTERNAL_DUMP("num_connection = %d", num_connection)
+
+      (void) UFile::setNonBlocking(socket->getFd(), -1, (num_connection == 0));
+      }
+
+   (void) socket->acceptClient(UClientImage_Base::socket);
+
+   UServer_Base::handlerNewConnection();
+
+   U_RETURN(U_NOTIFIER_OK);
+}
+
 void UServer_Base::handlerNewConnection()
 {
    U_TRACE(1, "UServer_Base::handlerNewConnection()")
@@ -715,15 +743,14 @@ void UServer_Base::handlerNewConnection()
 
    if (UClientImage_Base::socket->isConnected() == false)
       {
-      if (flag_loop == false) return; // check for SIGTERM event...
+      if (flag_loop) // check for SIGTERM event...
+         {
+         const char* msg_error = 0;
 
-      const char* msg_error = "";
+         UClientImage_Base::socket->getMsgError(msg_error);
 
-#  ifdef HAVE_SSL
-      if (UClientImage_Base::socket->isSSL()) msg_error = ((USSLSocket*)UClientImage_Base::socket)->getError();
-#  endif
-
-      U_SRV_LOG_VAR("accept new client failed %s", msg_error);
+         U_SRV_LOG_VAR("accept new client failed %S", msg_error);
+         }
 
       return;
       }
@@ -1072,33 +1099,35 @@ void UServer_Base::operator()(int fd, short event)
 
 const char* UServer_Base::dump(bool reset) const
 {
-   *UObjectIO::os << "port                    " << port                    << '\n'
-                  << "flag_loop               " << flag_loop               << '\n'
-                  << "verify_mode             " << verify_mode             << '\n'
-                  << "req_timeout             " << req_timeout             << '\n'
-                  << "cgi_timeout             " << cgi_timeout             << '\n'
-                  << "verify_mode             " << verify_mode             << '\n'
-                  << "log_file_sz             " << log_file_sz             << '\n'
-                  << "num_connection          " << num_connection          << '\n'
-                  << "preforked_num_kids      " << preforked_num_kids      << '\n'
-                  << "digest_authentication   " << digest_authentication   << '\n'
-                  << "log           (ULog     " << (void*)log              << ")\n"
-                  << "socket        (USocket  " << (void*)socket           << ")\n"
-                  << "host          (UString  " << (void*)host             << ")\n"
-                  << "server        (UString  " << (void*)&server          << ")\n"
-                  << "log_file      (UString  " << (void*)&log_file        << ")\n"
-                  << "ca_file       (UString  " << (void*)&ca_file         << ")\n"
-                  << "ca_path       (UString  " << (void*)&ca_path         << ")\n"
-                  << "allow_IP      (UString  " << (void*)&allow_IP        << ")\n"
-                  << "key_file      (UString  " << (void*)&key_file        << ")\n"
-                  << "password      (UString  " << (void*)&password        << ")\n"
-                  << "cert_file     (UString  " << (void*)&cert_file       << ")\n"
-                  << "name_sock     (UString  " << (void*)&name_sock       << ")\n"
-                  << "htpasswd      (UString  " << (void*)htpasswd         << ")\n"
-                  << "htdigest      (UString  " << (void*)htdigest         << ")\n"
-                  << "IP_address    (UString  " << (void*)&IP_address      << ")\n"
-                  << "document_root (UString  " << (void*)&document_root   << ")\n"
-                  << "proc          (UProcess " << (void*)proc             << ')';
+   *UObjectIO::os << "port                      " << port                        << '\n'
+                  << "flag_loop                 " << flag_loop                   << '\n'
+                  << "verify_mode               " << verify_mode                 << '\n'
+                  << "req_timeout               " << req_timeout                 << '\n'
+                  << "cgi_timeout               " << cgi_timeout                 << '\n'
+                  << "verify_mode               " << verify_mode                 << '\n'
+                  << "log_file_sz               " << log_file_sz                 << '\n'
+                  << "socket_flags              " << socket_flags                << '\n'
+                  << "num_connection            " << num_connection              << '\n'
+                  << "preforked_num_kids        " << preforked_num_kids          << '\n'
+                  << "digest_authentication     " << digest_authentication       << '\n'
+                  << "flag_use_tcp_optimization " << flag_use_tcp_optimization   << '\n'
+                  << "log           (ULog       " << (void*)log                  << ")\n"
+                  << "socket        (USocket    " << (void*)socket               << ")\n"
+                  << "host          (UString    " << (void*)host                 << ")\n"
+                  << "server        (UString    " << (void*)&server              << ")\n"
+                  << "log_file      (UString    " << (void*)&log_file            << ")\n"
+                  << "ca_file       (UString    " << (void*)&ca_file             << ")\n"
+                  << "ca_path       (UString    " << (void*)&ca_path             << ")\n"
+                  << "allow_IP      (UString    " << (void*)&allow_IP            << ")\n"
+                  << "key_file      (UString    " << (void*)&key_file            << ")\n"
+                  << "password      (UString    " << (void*)&password            << ")\n"
+                  << "cert_file     (UString    " << (void*)&cert_file           << ")\n"
+                  << "name_sock     (UString    " << (void*)&name_sock           << ")\n"
+                  << "htpasswd      (UString    " << (void*)htpasswd             << ")\n"
+                  << "htdigest      (UString    " << (void*)htdigest             << ")\n"
+                  << "IP_address    (UString    " << (void*)&IP_address          << ")\n"
+                  << "document_root (UString    " << (void*)&document_root       << ")\n"
+                  << "proc          (UProcess   " << (void*)proc                 << ')';
 
    if (reset)
       {

@@ -32,6 +32,8 @@
 #include <ulib/base/color.h>
 #include <ulib/base/macro.h>
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

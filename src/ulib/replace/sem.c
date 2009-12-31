@@ -6,6 +6,7 @@
 #     include <ulib/internal/config.h>
 #  endif
 #  include <ulib/base/bottom.h>
+#  include <ulib/base/macro.h>
 #endif
 
 #include <unistd.h>

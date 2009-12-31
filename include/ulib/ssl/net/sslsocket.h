@@ -73,16 +73,14 @@ public:
 
    // VARIE
 
-   const char* getError();
-
-   bool secureConnection(int fd);
-
    void setActive(bool flag)
       {
       U_TRACE(0, "USSLSocket::setActive(%b)", flag)
 
       active = flag;
       }
+
+   bool secureConnection(int fd);
 
    /**
    Load Diffie-Hellman parameters from file. These are used to generate a DH key exchange.
@@ -191,6 +189,8 @@ public:
 
    virtual void closesocket();
 
+   virtual void getMsgError(const char*& pmsg);
+
    virtual int send(const void* pData,   int iDataLen);
    virtual int recv(      void* pBuffer, int iBufferLen);
 
@@ -235,7 +235,7 @@ protected:
 
    static const char* status(SSL* ssl, int ret, bool flag);
 
-          const char* status(bool flag) const { return status(ssl, ret, flag); }
+          const char* status(bool flag) const { u_buffer_len = 0; return status(ssl, ret, flag); }
 
 private:
    USSLSocket(const USSLSocket&) : UTCPSocket(false) {}

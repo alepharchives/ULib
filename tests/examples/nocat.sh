@@ -4,7 +4,7 @@
 
 start_msg nocat
 
-DOC_ROOT=/srv/wifi-portal/PIAZZE_APERTE
+DOC_ROOT=/srv/wifi-portal/www
 
 rm -f nocat.log \
 		/tmp/firewall.err \

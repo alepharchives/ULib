@@ -582,6 +582,8 @@ public:
 
    virtual void closesocket();
 
+   virtual void getMsgError(const char*& pmsg);
+
    /**
    This method is called to connect the socket to a server TCP socket that is specified
    by the provided IP Address and port number. We call the connect() method to perform the connection

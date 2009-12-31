@@ -45,12 +45,10 @@ Collaboration diagram for USSLSocket:</div>
 <tr><td colspan="2"><h2>Public Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a313ff5aaadc686fea8bd71a75fa968e9"></a><!-- doxytag: member="USSLSocket::USSLSocket" ref="a313ff5aaadc686fea8bd71a75fa968e9" args="(bool bSocketIsIPv6=false, SSL_CTX *ctx=0, bool tls=false)" -->
 &nbsp;</td><td class="memItemRight" valign="bottom"><b>USSLSocket</b> (bool bSocketIsIPv6=false, SSL_CTX *ctx=0, bool tls=false)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8ec390538ff273c41b54420c6f3e0f32"></a><!-- doxytag: member="USSLSocket::getError" ref="a8ec390538ff273c41b54420c6f3e0f32" args="()" -->
-const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getError</b> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4c65a49c008ef2c19638ea5b3d901f73"></a><!-- doxytag: member="USSLSocket::secureConnection" ref="a4c65a49c008ef2c19638ea5b3d901f73" args="(int fd)" -->
-bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>secureConnection</b> (int fd)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1d750b5adb4dc39dc05b2141d7ee0f92"></a><!-- doxytag: member="USSLSocket::setActive" ref="a1d750b5adb4dc39dc05b2141d7ee0f92" args="(bool flag)" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setActive</b> (bool flag)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4c65a49c008ef2c19638ea5b3d901f73"></a><!-- doxytag: member="USSLSocket::secureConnection" ref="a4c65a49c008ef2c19638ea5b3d901f73" args="(int fd)" -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>secureConnection</b> (int fd)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a33ce67f6abd2cd5f16133b9880ff3212">useDHFile</a> (const char *dh_file=0)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#abe397cea9afdffa6dbcde5c7b64b0d44">setContext</a> (const char *cert_file, const char *private_key_file, const char *<a class="el" href="structpasswd.html">passwd</a>, const char *CAfile, const char *CApath, int mode=SSL_VERIFY_PEER_STRICT|SSL_VERIFY_CLIENT_ONCE)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a7c4e740a7eda5dbed1e7c9389354d3f0">setVerifyDepth</a> (int depth=1)</td></tr>
@@ -62,6 +60,8 @@ void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setActive</b> (bool f
 virtual bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isSSL</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a786f1585b36e0da5afc0e3648ad29801"></a><!-- doxytag: member="USSLSocket::closesocket" ref="a786f1585b36e0da5afc0e3648ad29801" args="()" -->
 virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><b>closesocket</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a21209e4f23e144e3af29ad57775479a3"></a><!-- doxytag: member="USSLSocket::getMsgError" ref="a21209e4f23e144e3af29ad57775479a3" args="(const char *&amp;pmsg)" -->
+virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><b>getMsgError</b> (const char *&amp;pmsg)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">virtual int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a62f67a3914309051da7bbc5aae9c810b">send</a> (const void *pData, int iDataLen)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">virtual int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a3328737002f68158e924f0f0ebf6c2bc">recv</a> (void *pBuffer, int iBufferLen)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">virtual bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a1b5266042cfe25954c792612f46b7d80">connectServer</a> (const <a class="el" href="classUString.html">UString</a> &amp;server, int iServPort)</td></tr>
@@ -426,7 +426,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/ssl/net/sslsocket.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Dec 30 19:20:51 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 31 17:08:57 2009 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

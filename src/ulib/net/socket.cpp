@@ -421,6 +421,24 @@ void USocket::closesocket()
    iSockDesc = -1;
 }
 
+void USocket::getMsgError(const char*& msg)
+{
+   U_TRACE(0, "USocket::getMsgError(%p)", &msg)
+
+   U_INTERNAL_DUMP("iState = %d", iState)
+
+   if (isSysError())
+      {
+      errno = -iState;
+
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len,0)
+
+      (void) u_snprintf(u_buffer, sizeof(u_buffer), "%R", NULL);
+
+      msg = (u_buffer + 3);
+      }
+}
+
 bool USocket::connectServer(const UString& server, int iServPort)
 {
    U_TRACE(1, "USocket::connectServer(%.*S,%d)", U_STRING_TO_TRACE(server), iServPort)

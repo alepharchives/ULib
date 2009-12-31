@@ -521,7 +521,7 @@ AC_CHECK_MEMBER(struct dirent.d_namlen,AC_DEFINE(DIRENT_HAVE_D_NAMLEN,1,[define 
 AC_FUNC_NANOSLEEP
 AC_FUNC_CLOSEDIR_VOID
 # Check for functions in one big call, to reduce the size of configure
-AC_CHECK_FUNCS([daemon fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem mremap pread sendfile strndup mkdtemp strptime strtof \
+AC_CHECK_FUNCS([daemon fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem mremap pread sendfile64 strndup mkdtemp strptime strtof \
 					 strtoull strtold gmtime_r timegm strerror strsignal])
 
 AM_CONDITIONAL(PREAD,		 test "$ac_cv_func_pread"				= "yes")
@@ -534,7 +534,7 @@ AM_CONDITIONAL(MKDTEMP,     test "$ac_cv_func_mkdtemp"		   = "yes")
 AM_CONDITIONAL(FNMATCH,		 test "$ac_cv_func_fnmatch"		   = "yes")
 AM_CONDITIONAL(STRPTIME,    test "$ac_cv_func_strptime"		   = "yes")
 AM_CONDITIONAL(GMTIME_R,	 test "$ac_cv_func_gmtime_r"		   = "yes")
-AM_CONDITIONAL(SENDFILE,    test "$ac_cv_func_sendfile"		   = "yes")
+AM_CONDITIONAL(SENDFILE,    test "$ac_cv_func_sendfile64"	   = "yes")
 AM_CONDITIONAL(FALLOCATE,	 test "$ac_cv_func_fallocate"			= "yes")
 AM_CONDITIONAL(FALLOCATE64, test "$ac_cv_func_fallocate64"		= "yes")
 AM_CONDITIONAL(NANOSLEEP,   test "$ac_cv_func_nanosleep"			= "yes")

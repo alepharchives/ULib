@@ -1497,7 +1497,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             *bp++ = '"';
 
-            maxlen = (prec >= 0 ? prec : 64);
+            maxlen = (prec >= 0 ? prec : 128);
 
             if (maxlen > u_printf_string_max_length) maxlen = u_printf_string_max_length;
 

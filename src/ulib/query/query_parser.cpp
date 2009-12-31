@@ -12,7 +12,6 @@
 // ============================================================================
 
 #include <ulib/query/parser.h>
-#include <ulib/container/vector.h>
 
 bPFpr                 UQueryParser::function;
 uint32_t              UQueryParser::partial;
@@ -713,7 +712,7 @@ U_NO_EXPORT void UQueryNode::destroyDNFOrNodes(UQueryNode* root)
 }
 
 // override the default...
-template <> inline void u_destroy(UQueryNode** ptr, uint32_t n) { U_TRACE(0,"u_destroy<UQueryNode*>(%p,%u)", ptr, n) }
+// template <> inline void u_destroy(UQueryNode** ptr, uint32_t n) { U_TRACE(0,"u_destroy<UQueryNode*>(%p,%u)", ptr, n) }
 
 U_NO_EXPORT UQueryNode* UQueryNode::joinTreesWithOrNodes(UVector<UQueryNode*>& trees)
 {

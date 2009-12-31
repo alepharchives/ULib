@@ -411,6 +411,7 @@ protected:
               cgi_timeout,    // the time-out value in seconds for read output cgi process
               log_file_sz,    // memory size for file log
               verify_mode,    // mode of verification ssl connection
+              socket_flags,   // file descriptor flags from fcntl(fd, F_GETFL, 0)
               max_Keep_Alive, // Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session
               num_connection;
 
@@ -444,18 +445,7 @@ protected:
 
    // define method VIRTUAL of class UEventFd
 
-   virtual int handlerRead() // This method is called to accept a new connection on the server socket
-      {
-      U_TRACE(0, "UServer_Base::handlerRead()")
-
-      U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
-
-      (void) socket->acceptClient(UClientImage_Base::socket);
-
-      UServer_Base::handlerNewConnection();
-
-      U_RETURN(U_NOTIFIER_OK);
-      }
+   virtual int handlerRead(); // This method is called to accept a new connection on the server socket
 
    // method VIRTUAL to redefine
 

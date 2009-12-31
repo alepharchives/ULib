@@ -471,66 +471,68 @@
 <a name="l00582"></a>00582 
 <a name="l00583"></a>00583         virtual <span class="keywordtype">void</span> closesocket();
 <a name="l00584"></a>00584 
-<a name="l00590"></a>00590         virtual <span class="keywordtype">bool</span> connectServer(const <a class="code" href="classUString.html">UString</a>&amp; server, <span class="keywordtype">int</span> iServPort);
-<a name="l00591"></a>00591 
-<a name="l00598"></a>00598         virtual <span class="keywordtype">bool</span> setServer(                                                                   <span class="keywordtype">int</span> port, <span class="keywordtype">int</span> iBackLog);
-<a name="l00599"></a>00599         virtual <span class="keywordtype">bool</span> setServer(const <a class="code" href="classUString.html">UString</a>&amp; cLocalAddr, <span class="keywordtype">int</span> port, <span class="keywordtype">int</span> iBackLog);
-<a name="l00600"></a>00600 
-<a name="l00609"></a><a class="code" href="classUSocket.html#ab2db1524c94b038a4eeace5e272d1e15">00609</a>         virtual <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* acceptClient()                                                           { <span class="keywordflow">return</span> <span class="keyword">this</span>; }
-<a name="l00610"></a>00610         <span class="keyword">virtual</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* acceptClient(<a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* pcNewConnection) { <span class="keywordflow">return</span> pcNewConnection; }
-<a name="l00611"></a>00611 
-<a name="l00619"></a><a class="code" href="classUSocket.html#a8822b76fde425ed0472e3f6faaa8e40c">00619</a>         <span class="keyword">virtual</span> <span class="keywordtype">int</span> recv(<span class="keywordtype">void</span>* pBuffer, <span class="keywordtype">int</span> iBufLength)
-<a name="l00620"></a>00620                 {
-<a name="l00621"></a>00621                 U_TRACE(0, <span class="stringliteral">&quot;USocket::recv(%p,%d)&quot;</span>, pBuffer, iBufLength)
-<a name="l00622"></a>00622 
-<a name="l00623"></a>00623                 U_CHECK_MEMORY
+<a name="l00585"></a>00585         virtual <span class="keywordtype">void</span> getMsgError(const <span class="keywordtype">char</span>*&amp; pmsg);
+<a name="l00586"></a>00586 
+<a name="l00592"></a>00592         virtual <span class="keywordtype">bool</span> connectServer(const <a class="code" href="classUString.html">UString</a>&amp; server, <span class="keywordtype">int</span> iServPort);
+<a name="l00593"></a>00593 
+<a name="l00600"></a>00600         virtual <span class="keywordtype">bool</span> setServer(                                                                   <span class="keywordtype">int</span> port, <span class="keywordtype">int</span> iBackLog);
+<a name="l00601"></a>00601         virtual <span class="keywordtype">bool</span> setServer(const <a class="code" href="classUString.html">UString</a>&amp; cLocalAddr, <span class="keywordtype">int</span> port, <span class="keywordtype">int</span> iBackLog);
+<a name="l00602"></a>00602 
+<a name="l00611"></a><a class="code" href="classUSocket.html#ab2db1524c94b038a4eeace5e272d1e15">00611</a>         virtual <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* acceptClient()                                                           { <span class="keywordflow">return</span> <span class="keyword">this</span>; }
+<a name="l00612"></a>00612         <span class="keyword">virtual</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* acceptClient(<a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* pcNewConnection) { <span class="keywordflow">return</span> pcNewConnection; }
+<a name="l00613"></a>00613 
+<a name="l00621"></a><a class="code" href="classUSocket.html#a8822b76fde425ed0472e3f6faaa8e40c">00621</a>         <span class="keyword">virtual</span> <span class="keywordtype">int</span> recv(<span class="keywordtype">void</span>* pBuffer, <span class="keywordtype">int</span> iBufLength)
+<a name="l00622"></a>00622                 {
+<a name="l00623"></a>00623                 U_TRACE(0, <span class="stringliteral">&quot;USocket::recv(%p,%d)&quot;</span>, pBuffer, iBufLength)
 <a name="l00624"></a>00624 
-<a name="l00625"></a>00625                 U_INTERNAL_ASSERT(isOpen())
+<a name="l00625"></a>00625                 U_CHECK_MEMORY
 <a name="l00626"></a>00626 
-<a name="l00627"></a>00627                 <span class="keywordtype">int</span> iBytesRead = recv(iSockDesc, CAST(pBuffer), iBufLength, 0);
+<a name="l00627"></a>00627                 U_INTERNAL_ASSERT(isOpen())
 <a name="l00628"></a>00628 
-<a name="l00629"></a>00629                 U_RETURN(iBytesRead);
-<a name="l00630"></a>00630                 }
-<a name="l00631"></a>00631 
-<a name="l00639"></a>00639         <span class="keyword">virtual</span> <span class="keywordtype">int</span> send(<span class="keyword">const</span> <span class="keywordtype">void</span>* pPayload, <span class="keywordtype">int</span> iPayloadLength);
-<a name="l00640"></a>00640         <span class="comment">// -----------------------------------------------------------------------------------------------------------</span>
-<a name="l00641"></a>00641 
-<a name="l00642"></a>00642         <span class="comment">// DEBUG</span>
+<a name="l00629"></a>00629                 <span class="keywordtype">int</span> iBytesRead = recv(iSockDesc, CAST(pBuffer), iBufLength, 0);
+<a name="l00630"></a>00630 
+<a name="l00631"></a>00631                 U_RETURN(iBytesRead);
+<a name="l00632"></a>00632                 }
+<a name="l00633"></a>00633 
+<a name="l00641"></a>00641         <span class="keyword">virtual</span> <span class="keywordtype">int</span> send(<span class="keyword">const</span> <span class="keywordtype">void</span>* pPayload, <span class="keywordtype">int</span> iPayloadLength);
+<a name="l00642"></a>00642         <span class="comment">// -----------------------------------------------------------------------------------------------------------</span>
 <a name="l00643"></a>00643 
-<a name="l00644"></a>00644 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00645"></a>00645 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00646"></a>00646 <span class="preprocessor">#endif</span>
-<a name="l00647"></a>00647 <span class="preprocessor"></span>
-<a name="l00648"></a>00648 <span class="keyword">protected</span>:
-<a name="l00649"></a>00649         <span class="keywordtype">int</span> iSockDesc, iState, iLocalPort, iRemotePort;
-<a name="l00650"></a>00650         <a class="code" href="classUIPAddress.html">UIPAddress</a> cLocalAddress, cRemoteAddress;
-<a name="l00651"></a>00651         <span class="keywordtype">bool</span> bIPv6Socket, bLocalSet;
-<a name="l00652"></a>00652 
-<a name="l00653"></a>00653         <span class="keywordtype">bool</span> connect();
-<a name="l00654"></a>00654         <span class="keywordtype">bool</span> bind(<a class="code" href="classSocketAddress.html">SocketAddress</a>&amp; cLocal);
-<a name="l00655"></a>00655         <span class="keywordtype">bool</span> setServer(<a class="code" href="classSocketAddress.html">SocketAddress</a>&amp; cLocal, <span class="keywordtype">int</span> iBackLog);
-<a name="l00656"></a>00656 
-<a name="l00662"></a>00662         <span class="keywordtype">void</span> setLocal();
-<a name="l00663"></a>00663 
-<a name="l00664"></a>00664 <span class="keyword">private</span>:
-<a name="l00665"></a>00665         <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>(<span class="keyword">const</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>&amp;)            {}
-<a name="l00666"></a>00666         <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00667"></a>00667 
-<a name="l00668"></a>00668         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSSHSocket.html">USSHSocket</a>;
-<a name="l00669"></a>00669         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUTCPSocket.html">UTCPSocket</a>;
-<a name="l00670"></a>00670         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSSLSocket.html">USSLSocket</a>;
-<a name="l00671"></a>00671         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUUnixSocket.html">UUnixSocket</a>;
-<a name="l00672"></a>00672         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSmtpClient.html" title="Creates and manages a client connection with a remote SMTP server.">USmtpClient</a>;
-<a name="l00673"></a>00673         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUImapClient.html" title="Creates and manages a client connection with a remote IMAP server.">UImapClient</a>;
-<a name="l00674"></a>00674         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUPop3Client.html" title="Creates and manages a client connection with a remote POP3 server.">UPop3Client</a>;
-<a name="l00675"></a>00675         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUServer__Base.html">UServer_Base</a>;
-<a name="l00676"></a>00676         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSSLFtpClient.html" title="Creates and manages a secure client connection with a remote FTP server.">USSLFtpClient</a>;
-<a name="l00677"></a>00677         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>;
-<a name="l00678"></a>00678 };
-<a name="l00679"></a>00679 
-<a name="l00680"></a>00680 <span class="preprocessor">#endif</span>
+<a name="l00644"></a>00644         <span class="comment">// DEBUG</span>
+<a name="l00645"></a>00645 
+<a name="l00646"></a>00646 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00647"></a>00647 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00648"></a>00648 <span class="preprocessor">#endif</span>
+<a name="l00649"></a>00649 <span class="preprocessor"></span>
+<a name="l00650"></a>00650 <span class="keyword">protected</span>:
+<a name="l00651"></a>00651         <span class="keywordtype">int</span> iSockDesc, iState, iLocalPort, iRemotePort;
+<a name="l00652"></a>00652         <a class="code" href="classUIPAddress.html">UIPAddress</a> cLocalAddress, cRemoteAddress;
+<a name="l00653"></a>00653         <span class="keywordtype">bool</span> bIPv6Socket, bLocalSet;
+<a name="l00654"></a>00654 
+<a name="l00655"></a>00655         <span class="keywordtype">bool</span> connect();
+<a name="l00656"></a>00656         <span class="keywordtype">bool</span> bind(<a class="code" href="classSocketAddress.html">SocketAddress</a>&amp; cLocal);
+<a name="l00657"></a>00657         <span class="keywordtype">bool</span> setServer(<a class="code" href="classSocketAddress.html">SocketAddress</a>&amp; cLocal, <span class="keywordtype">int</span> iBackLog);
+<a name="l00658"></a>00658 
+<a name="l00664"></a>00664         <span class="keywordtype">void</span> setLocal();
+<a name="l00665"></a>00665 
+<a name="l00666"></a>00666 <span class="keyword">private</span>:
+<a name="l00667"></a>00667         <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>(<span class="keyword">const</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>&amp;)            {}
+<a name="l00668"></a>00668         <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00669"></a>00669 
+<a name="l00670"></a>00670         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSSHSocket.html">USSHSocket</a>;
+<a name="l00671"></a>00671         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUTCPSocket.html">UTCPSocket</a>;
+<a name="l00672"></a>00672         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSSLSocket.html">USSLSocket</a>;
+<a name="l00673"></a>00673         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUUnixSocket.html">UUnixSocket</a>;
+<a name="l00674"></a>00674         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSmtpClient.html" title="Creates and manages a client connection with a remote SMTP server.">USmtpClient</a>;
+<a name="l00675"></a>00675         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUImapClient.html" title="Creates and manages a client connection with a remote IMAP server.">UImapClient</a>;
+<a name="l00676"></a>00676         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUPop3Client.html" title="Creates and manages a client connection with a remote POP3 server.">UPop3Client</a>;
+<a name="l00677"></a>00677         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUServer__Base.html">UServer_Base</a>;
+<a name="l00678"></a>00678         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSSLFtpClient.html" title="Creates and manages a secure client connection with a remote FTP server.">USSLFtpClient</a>;
+<a name="l00679"></a>00679         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>;
+<a name="l00680"></a>00680 };
+<a name="l00681"></a>00681 
+<a name="l00682"></a>00682 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Dec 30 19:20:47 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 31 17:08:54 2009 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>
