@@ -42,7 +42,6 @@
   <tr bgcolor="#f0f0f0"><td><b>creat</b>(const UString &amp;path, int flags=O_TRUNC|O_RDWR, mode_t mode=PERM_FILE) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>cwd_len_save</b> (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>cwd_save</b> (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [static]</code></td></tr>
-  <tr bgcolor="#f0f0f0"><td><b>data_available</b> (defined in <a class="el" href="classULog.html">ULog</a>)</td><td><a class="el" href="classULog.html">ULog</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>dir</b>() const  (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>empty</b>() const  (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>eof</b>() const  (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
@@ -67,6 +66,7 @@
   <tr bgcolor="#f0f0f0"><td><b>handlerSIGUSR1</b>(int signo) (defined in <a class="el" href="classULog.html">ULog</a>)</td><td><a class="el" href="classULog.html">ULog</a></td><td><code> [inline, protected, static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>init</b>() (defined in <a class="el" href="classULog.html">ULog</a>)</td><td><a class="el" href="classULog.html">ULog</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>inode</b>() (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>isBlocking</b>(int fd, int &amp;flags) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline, static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>isMapped</b>() const  (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>isOpen</b>() (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>isPathRelativ</b>(const UString &amp;name) const  (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
@@ -121,9 +121,9 @@
   <tr bgcolor="#f0f0f0"><td><b>rmdir</b>(const char *path, bool remove_all=false) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>rmdirs</b>(const char *path, bool remove_all=false) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>sendfile</b>(int out_fd, off_t *poffset=0, size_t count=0) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>setBlocking</b>(int fd, int &amp;flags, bool block) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setClient</b>() (defined in <a class="el" href="classULog.html">ULog</a>)</td><td><a class="el" href="classULog.html">ULog</a></td><td><code> [inline, static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setFd</b>(int _fd) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
-  <tr bgcolor="#f0f0f0"><td><b>setNonBlocking</b>(int fd, int flags, bool block) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setPath</b>(const UString &amp;path) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setPath</b>(const UFile &amp;file, char *buffer_path, const char *suffix, uint32_t len) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setPathFromFile</b>(const UFile &amp;file, char *buffer_path, const char *suffix, uint32_t len) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [static]</code></td></tr>
@@ -155,7 +155,7 @@
   <tr bgcolor="#f0f0f0"><td><b>~UFile</b>() (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>~ULog</b>() (defined in <a class="el" href="classULog.html">ULog</a>)</td><td><a class="el" href="classULog.html">ULog</a></td><td></td></tr>
 </table></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 31 17:08:56 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 2 16:38:12 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

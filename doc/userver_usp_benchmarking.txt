@@ -27,12 +27,13 @@ cd ULib-1.0.5
 # run server
 cd tests/examples
 ./benchmarking.sh
-----------------------------------------
+------------------------------------------------------------------------
 start userver_tcp with plugin:
-   PLUGIN			"( mod_usp mod_http )"
-   PREFORK_CHILD  5 ## BETTER CONTEXT FOR ME
-## LOG_FILE			benchmarking.log
-----------------------------------------
+   PLUGIN               "( mod_usp mod_http )"
+   USE_TCP_OPTIMIZATION yes # (TCP_CORK, TCP_DEFER_ACCEPT, TCP_QUICKACK)
+   PREFORK_CHILD        5   # BETTER CONTEXT FOR ME (in my environment)
+## LOG_FILE             benchmarking.log
+------------------------------------------------------------------------
 
 Test Result Procedures:
 -----------------------------------------------------------------------------------------------------------------------
@@ -71,28 +72,28 @@ Document Length:        23 bytes
 
 # run command on another computer (gentoo also)
 
-ab -n 100000 -c10 http://stefano/usp/benchmarking.usp?name=stefano
+ab -n 100000 -c10 "http://stefano/usp/benchmarking.usp?name=stefano"
 
 # result
 ----------------------------------------
 Concurrency Level:      10
-Time taken for tests:   9.356 seconds
-Complete requests:      100000
+Time taken for tests:   1.000 seconds
+Complete requests:      11171
 Failed requests:        0
 Write errors:           0
-Total transferred:      14400000 bytes
-HTML transferred:       2300000 bytes
-Requests per second:    10688.64 [#/sec] (mean)
-Time per request:       0.936 [ms] (mean)
-Time per request:       0.094 [ms] (mean, across all concurrent requests)
-Transfer rate:          1503.09 [Kbytes/sec] received
+Total transferred:      1608768 bytes
+HTML transferred:       256956 bytes
+Requests per second:    11170.36 [#/sec] (mean)
+Time per request:       0.895 [ms] (mean)
+Time per request:       0.090 [ms] (mean, across all concurrent requests)
+Transfer rate:          1570.97 [Kbytes/sec] received
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
 Connect:        0    0   0.1      0       1
-Processing:     0    1   0.3      1      10
-Waiting:        0    1   0.3      1      10
-Total:          1    1   0.3      1      11
+Processing:     0    1   0.1      1       4
+Waiting:        0    0   0.1      0       4
+Total:          1    1   0.1      1       4
 
 Percentage of the requests served within a certain time (ms)
   50%      1
@@ -102,84 +103,8 @@ Percentage of the requests served within a certain time (ms)
   90%      1
   95%      1
   98%      1
-  99%      2
- 100%     11 (longest request)
-----------------------------------------
-
-# run command on another computer (gentoo also)
-
-ab -n 100000 -c5 http://stefano/usp/benchmarking.usp?name=stefano
-
-# result
-----------------------------------------
-Concurrency Level:      5
-Time taken for tests:   9.901 seconds
-Complete requests:      100000
-Failed requests:        0
-Write errors:           0
-Total transferred:      14400000 bytes
-HTML transferred:       2300000 bytes
-Requests per second:    10100.00 [#/sec] (mean)
-Time per request:       0.495 [ms] (mean)
-Time per request:       0.099 [ms] (mean, across all concurrent requests)
-Transfer rate:          1420.31 [Kbytes/sec] received
-
-Connection Times (ms)
-              min  mean[+/-sd] median   max
-Connect:        0    0   0.0      0       0
-Processing:     0    0   0.0      0       4
-Waiting:        0    0   0.0      0       4
-Total:          0    0   0.0      0       4
-
-Percentage of the requests served within a certain time (ms)
-  50%      0
-  66%      0
-  75%      0
-  80%      0
-  90%      1
-  95%      1
-  98%      1
   99%      1
  100%      4 (longest request)
-----------------------------------------
-
-*** same but with LIBEVENT wrapped ***
-
-# run command on another computer (gentoo also)
-
-ab -n 100000 -c5 http://stefano/usp/benchmarking.usp?name=stefano
-
-# result
-----------------------------------------
-Concurrency Level:      5
-Time taken for tests:   10.396 seconds
-Complete requests:      100000
-Failed requests:        0
-Write errors:           0
-Total transferred:      18100000 bytes
-HTML transferred:       2300000 bytes
-Requests per second:    9619.41 [#/sec] (mean)
-Time per request:       0.520 [ms] (mean)
-Time per request:       0.104 [ms] (mean, across all concurrent requests)
-Transfer rate:          1700.31 [Kbytes/sec] received
-
-Connection Times (ms)
-              min  mean[+/-sd] median   max
-Connect:        0    0   0.0      0       0
-Processing:     0    0   0.0      0       1
-Waiting:        0    0   0.0      0       1
-Total:          0    0   0.0      0       1
-
-Percentage of the requests served within a certain time (ms)
-  50%      0
-  66%      1
-  75%      1
-  80%      1
-  90%      1
-  95%      1
-  98%      1
-  99%      1
- 100%      1 (longest request)
 ----------------------------------------
 
 *** same but running in WindowXP (cross-compiling context FEDORA MinGW) ***

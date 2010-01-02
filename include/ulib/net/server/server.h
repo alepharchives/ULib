@@ -239,6 +239,13 @@ public:
    //                                                                    >1 - pool of serialized processes plus monitoring process)
    // -----------------------------------------------------------------------------------------------------------------------------
 
+   typedef struct shared_data {
+      int socket_flags;          // socket accept descriptor flags from fcntl(fd, F_GETFL, 0)
+      int tot_connection;
+   } shared_data;
+
+   static ULock* lock;
+   static shared_data* ptr;
    static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves
 
    static bool isPreForked()
@@ -411,7 +418,6 @@ protected:
               cgi_timeout,    // the time-out value in seconds for read output cgi process
               log_file_sz,    // memory size for file log
               verify_mode,    // mode of verification ssl connection
-              socket_flags,   // file descriptor flags from fcntl(fd, F_GETFL, 0)
               max_Keep_Alive, // Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session
               num_connection;
 
@@ -428,6 +434,8 @@ protected:
    virtual ~UServer_Base();
 
    static void handlerNewConnection();
+   static void handlerCloseConnection();
+   static const char* getNumConnection();
 
 #ifdef HAVE_MODULES
    static UVector<UServerPlugIn*>* vplugin;

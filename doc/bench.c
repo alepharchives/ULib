@@ -77,15 +77,15 @@
 // ----------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-   int   i, j, nbr, best, worse, aver;
+   int   i, j, nbr, best, worse, aver, inc = 10;
    char  str[256], buff[10000];
    FILE *f, *fo=fopen("test.txt", "w+b");
 
-   for(i=10; i<=LOOP; i+=10)
+   for(i=10; i<=LOOP; i+=inc)
    {
        sprintf(str,
        "/usr/sbin/ab -n 1000000 -c %u    -t 1" // NO Keep-Alives
-//     "/usr/sbin/ab -n 1000000 -c %u -k -t 1" // KEEP-ALIVES (NB: ab don't distribute the requests across process)
+//     "/usr/sbin/ab -n 1000000 -c %u -k -t 1" // KEEP-ALIVES
        " \"http://10.30.1.131/usp/hello_world.usp\""  // ULib / teepeedee2
 //     " \"http://10.30.1.131/csp?hello\""
 //     " \"http://192.168.200.88:8080/100.html\""
@@ -140,6 +140,8 @@ fault:
       printf("##### %4u,%5u,%5u,%5u #####\n", i, worse, aver, best);
       fprintf(fo, "%u,%u,%u,%u\n", i, worse, aver, best);
       fflush(fo); // in case we interrupt the test
+
+		if (i == 50) inc = 50;
    }
    fclose(fo);
    return 0;

@@ -17,8 +17,6 @@
 #include <ulib/file.h>
 #include <ulib/utility/lock.h>
 
-#define SHM_ptr (ULog::ptr+sizeof(ULog::log_data))
-
 class ULog;
 
 typedef void (*vPFpf)(const ULog*);
@@ -38,7 +36,6 @@ public:
    static const char* fmt;
    static char* file_limit;
    static const char* prefix;
-   static uint32_t data_available;
    static vPF backup_log_function;
 
    // COSTRUTTORI

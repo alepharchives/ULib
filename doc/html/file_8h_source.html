@@ -307,7 +307,7 @@
 <a name="l00284"></a>00284 
 <a name="l00285"></a>00285         <span class="keywordtype">void</span> setFd(<span class="keywordtype">int</span> _fd)
 <a name="l00286"></a>00286                 {
-<a name="l00287"></a>00287                 U_TRACE(0, <span class="stringliteral">&quot;UFile::getFd(%d)&quot;</span>, _fd)
+<a name="l00287"></a>00287                 U_TRACE(0, <span class="stringliteral">&quot;UFile::setFd(%d)&quot;</span>, _fd)
 <a name="l00288"></a>00288 
 <a name="l00289"></a>00289                 U_CHECK_MEMORY
 <a name="l00290"></a>00290 
@@ -517,397 +517,412 @@
 <a name="l00494"></a>00494                 U_RETURN(mtime != st_mtime);
 <a name="l00495"></a>00495                 }
 <a name="l00496"></a>00496 
-<a name="l00497"></a>00497         <span class="keyword">static</span> <span class="keywordtype">int</span> setNonBlocking(<span class="keywordtype">int</span> fd, <span class="keywordtype">int</span> flags, <span class="keywordtype">bool</span> block);
-<a name="l00498"></a>00498 
-<a name="l00499"></a>00499 <span class="preprocessor">#ifdef __MINGW32__</span>
-<a name="l00500"></a>00500 <span class="preprocessor"></span><span class="preprocessor">#undef mkdir</span>
-<a name="l00501"></a>00501 <span class="preprocessor"></span><span class="preprocessor">#undef unlink</span>
-<a name="l00502"></a>00502 <span class="preprocessor"></span><span class="preprocessor">#undef rename</span>
-<a name="l00503"></a>00503 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
-<a name="l00504"></a>00504 <span class="preprocessor"></span>
-<a name="l00505"></a>00505         <span class="keyword">static</span> <span class="keywordtype">bool</span> unlink(<span class="keyword">const</span> <span class="keywordtype">char</span>* pathname)
-<a name="l00506"></a>00506                 {
-<a name="l00507"></a>00507                 U_TRACE(1, <span class="stringliteral">&quot;UFile::unlink(%S)&quot;</span>, pathname)
+<a name="l00497"></a>00497         <span class="keyword">static</span> <span class="keywordtype">bool</span> isBlocking(<span class="keywordtype">int</span> fd, <span class="keywordtype">int</span>&amp; flags) <span class="comment">// actual state is blocking...?</span>
+<a name="l00498"></a>00498                 {
+<a name="l00499"></a>00499                 U_TRACE(1, <span class="stringliteral">&quot;UFile::isBlocking(%d,%d)&quot;</span>, fd, flags)
+<a name="l00500"></a>00500 
+<a name="l00501"></a>00501                 U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+<a name="l00502"></a>00502 
+<a name="l00503"></a>00503                 <span class="keywordflow">if</span> (flags == -1) flags = U_SYSCALL(fcntl, <span class="stringliteral">&quot;%d,%d,%d&quot;</span>, fd, F_GETFL, 0);
+<a name="l00504"></a>00504 
+<a name="l00505"></a>00505                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;O_NONBLOCK = %B, flags = %B&quot;</span>, O_NONBLOCK, flags)
+<a name="l00506"></a>00506 
+<a name="l00507"></a>00507                 <span class="keywordtype">bool</span> blocking = ((flags &amp; O_NONBLOCK) != O_NONBLOCK);
 <a name="l00508"></a>00508 
-<a name="l00509"></a>00509 <span class="preprocessor">#  ifdef __MINGW32__</span>
-<a name="l00510"></a>00510 <span class="preprocessor"></span>                <span class="keywordtype">bool</span> result = (U_SYSCALL(unlink_w32, <span class="stringliteral">&quot;%S&quot;</span>, U_PATH_CONV(pathname)) == 0);
-<a name="l00511"></a>00511 <span class="preprocessor">#  else</span>
-<a name="l00512"></a>00512 <span class="preprocessor"></span>                <span class="keywordtype">bool</span> result = (U_SYSCALL(unlink,     <span class="stringliteral">&quot;%S&quot;</span>,                               pathname)  == 0);
-<a name="l00513"></a>00513 <span class="preprocessor">#  endif</span>
-<a name="l00514"></a>00514 <span class="preprocessor"></span>
-<a name="l00515"></a>00515                 U_RETURN(result);
-<a name="l00516"></a>00516                 }
-<a name="l00517"></a>00517 
-<a name="l00518"></a>00518         <span class="keywordtype">bool</span> unlink()
-<a name="l00519"></a>00519                 {
-<a name="l00520"></a>00520                 U_TRACE(0, <span class="stringliteral">&quot;UFile::unlink()&quot;</span>)
-<a name="l00521"></a>00521 
-<a name="l00522"></a>00522                 U_CHECK_MEMORY
-<a name="l00523"></a>00523                 U_INTERNAL_ASSERT_POINTER(path_relativ)
-<a name="l00524"></a>00524 
-<a name="l00525"></a>00525                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;path_relativ(%u) = %.*S&quot;</span>, path_relativ_len, path_relativ_len, path_relativ)
-<a name="l00526"></a>00526 
-<a name="l00527"></a>00527                 <span class="keywordtype">bool</span> result = UFile::unlink(path_relativ);
-<a name="l00528"></a>00528 
-<a name="l00529"></a>00529                 U_RETURN(result);
-<a name="l00530"></a>00530                 }
-<a name="l00531"></a>00531 
-<a name="l00532"></a>00532         <span class="keywordtype">void</span> fsync()
-<a name="l00533"></a>00533                 {
-<a name="l00534"></a>00534                 U_TRACE(1, <span class="stringliteral">&quot;UFile::fsync()&quot;</span>)
-<a name="l00535"></a>00535 
-<a name="l00536"></a>00536                 U_CHECK_MEMORY
-<a name="l00537"></a>00537 
-<a name="l00538"></a>00538                 U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+<a name="l00509"></a>00509                 U_RETURN(blocking);
+<a name="l00510"></a>00510                 }
+<a name="l00511"></a>00511 
+<a name="l00512"></a>00512         <span class="keyword">static</span> <span class="keywordtype">void</span> setBlocking(<span class="keywordtype">int</span> fd, <span class="keywordtype">int</span>&amp; flags, <span class="keywordtype">bool</span> block);
+<a name="l00513"></a>00513 
+<a name="l00514"></a>00514 <span class="preprocessor">#ifdef __MINGW32__</span>
+<a name="l00515"></a>00515 <span class="preprocessor"></span><span class="preprocessor">#undef mkdir</span>
+<a name="l00516"></a>00516 <span class="preprocessor"></span><span class="preprocessor">#undef unlink</span>
+<a name="l00517"></a>00517 <span class="preprocessor"></span><span class="preprocessor">#undef rename</span>
+<a name="l00518"></a>00518 <span class="preprocessor"></span><span class="preprocessor">#endif</span>
+<a name="l00519"></a>00519 <span class="preprocessor"></span>
+<a name="l00520"></a>00520         <span class="keyword">static</span> <span class="keywordtype">bool</span> unlink(<span class="keyword">const</span> <span class="keywordtype">char</span>* pathname)
+<a name="l00521"></a>00521                 {
+<a name="l00522"></a>00522                 U_TRACE(1, <span class="stringliteral">&quot;UFile::unlink(%S)&quot;</span>, pathname)
+<a name="l00523"></a>00523 
+<a name="l00524"></a>00524 <span class="preprocessor">#  ifdef __MINGW32__</span>
+<a name="l00525"></a>00525 <span class="preprocessor"></span>                <span class="keywordtype">bool</span> result = (U_SYSCALL(unlink_w32, <span class="stringliteral">&quot;%S&quot;</span>, U_PATH_CONV(pathname)) == 0);
+<a name="l00526"></a>00526 <span class="preprocessor">#  else</span>
+<a name="l00527"></a>00527 <span class="preprocessor"></span>                <span class="keywordtype">bool</span> result = (U_SYSCALL(unlink,     <span class="stringliteral">&quot;%S&quot;</span>,                               pathname)  == 0);
+<a name="l00528"></a>00528 <span class="preprocessor">#  endif</span>
+<a name="l00529"></a>00529 <span class="preprocessor"></span>
+<a name="l00530"></a>00530                 U_RETURN(result);
+<a name="l00531"></a>00531                 }
+<a name="l00532"></a>00532 
+<a name="l00533"></a>00533         <span class="keywordtype">bool</span> unlink()
+<a name="l00534"></a>00534                 {
+<a name="l00535"></a>00535                 U_TRACE(0, <span class="stringliteral">&quot;UFile::unlink()&quot;</span>)
+<a name="l00536"></a>00536 
+<a name="l00537"></a>00537                 U_CHECK_MEMORY
+<a name="l00538"></a>00538                 U_INTERNAL_ASSERT_POINTER(path_relativ)
 <a name="l00539"></a>00539 
-<a name="l00540"></a>00540                 U_INTERNAL_ASSERT_POINTER(path_relativ)
+<a name="l00540"></a>00540                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;path_relativ(%u) = %.*S&quot;</span>, path_relativ_len, path_relativ_len, path_relativ)
 <a name="l00541"></a>00541 
-<a name="l00542"></a>00542                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;path_relativ(%u) = %.*S&quot;</span>, path_relativ_len, path_relativ_len, path_relativ)
+<a name="l00542"></a>00542                 <span class="keywordtype">bool</span> result = UFile::unlink(path_relativ);
 <a name="l00543"></a>00543 
-<a name="l00544"></a>00544                 (void) U_SYSCALL(fsync, <span class="stringliteral">&quot;%d&quot;</span>, fd);
+<a name="l00544"></a>00544                 U_RETURN(result);
 <a name="l00545"></a>00545                 }
 <a name="l00546"></a>00546 
-<a name="l00547"></a>00547         <span class="keywordtype">bool</span> fallocate(off_t n);
-<a name="l00548"></a>00548         <span class="keywordtype">bool</span> ftruncate(off_t n);
-<a name="l00549"></a>00549 
-<a name="l00550"></a>00550         <span class="keyword">static</span> <span class="keywordtype">bool</span> chdir(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, <span class="keywordtype">bool</span> flag_save = <span class="keyword">false</span>);
-<a name="l00551"></a>00551 
-<a name="l00552"></a>00552         <span class="comment">// LOCKING</span>
-<a name="l00553"></a>00553 
-<a name="l00554"></a>00554         <span class="keywordtype">bool</span> lock(<span class="keywordtype">short</span> l_type = F_WRLCK, off_t start = 0, off_t len = 0) <span class="keyword">const</span>; <span class="comment">/* set the lock, waiting if necessary */</span>
-<a name="l00555"></a>00555 
-<a name="l00556"></a>00556         <span class="keywordtype">bool</span> unlock(off_t start = 0, off_t len = 0)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> lock(F_UNLCK, start, len); }
-<a name="l00557"></a>00557 
-<a name="l00558"></a>00558         <span class="comment">// MEMORY MAPPED I/O</span>
-<a name="l00559"></a>00559 
-<a name="l00560"></a>00560         <span class="keyword">static</span> <span class="keywordtype">char</span>* mmap(<span class="keywordtype">size_t</span> length,
-<a name="l00561"></a>00561                                                         <span class="keywordtype">int</span> fd = -1,
-<a name="l00562"></a>00562                                                         <span class="keywordtype">int</span> prot = PROT_READ | PROT_WRITE,
-<a name="l00563"></a>00563                                                         <span class="keywordtype">int</span> flags = MAP_SHARED | MAP_ANONYMOUS,
-<a name="l00564"></a>00564                                                         off_t offset = 0)
-<a name="l00565"></a>00565                 {
-<a name="l00566"></a>00566                 U_TRACE(1, <span class="stringliteral">&quot;UFile::mmap(%lu,%d,%d,%d,%I)&quot;</span>, length, fd, prot, flags, offset)
-<a name="l00567"></a>00567 
-<a name="l00568"></a>00568 <span class="preprocessor">#  ifndef HAVE_ARCH64</span>
-<a name="l00569"></a>00569 <span class="preprocessor"></span>                U_INTERNAL_ASSERT_RANGE(1UL,length,3UL*1024UL*1024UL*1024UL) <span class="comment">// limit of linux system</span>
-<a name="l00570"></a>00570 <span class="preprocessor">#  endif</span>
-<a name="l00571"></a>00571 <span class="preprocessor"></span>
-<a name="l00572"></a>00572                 <span class="keywordtype">char</span>* map = (<span class="keywordtype">char</span>*) U_SYSCALL(mmap, <span class="stringliteral">&quot;%d,%lu,%d,%d,%d,%I&quot;</span>, 0, length, prot, flags, fd, offset);
-<a name="l00573"></a>00573 
-<a name="l00574"></a>00574                 <span class="keywordflow">return</span> map;
-<a name="l00575"></a>00575                 }
-<a name="l00576"></a>00576 
-<a name="l00577"></a>00577         <span class="keywordtype">bool</span> isMapped()<span class="keyword"> const</span>
-<a name="l00578"></a>00578 <span class="keyword">                </span>{
-<a name="l00579"></a>00579                 U_TRACE(0, <span class="stringliteral">&quot;UFile::isMapped()&quot;</span>)
-<a name="l00580"></a>00580 
-<a name="l00581"></a>00581                 U_CHECK_MEMORY
+<a name="l00547"></a>00547         <span class="keywordtype">void</span> fsync()
+<a name="l00548"></a>00548                 {
+<a name="l00549"></a>00549                 U_TRACE(1, <span class="stringliteral">&quot;UFile::fsync()&quot;</span>)
+<a name="l00550"></a>00550 
+<a name="l00551"></a>00551                 U_CHECK_MEMORY
+<a name="l00552"></a>00552 
+<a name="l00553"></a>00553                 U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+<a name="l00554"></a>00554 
+<a name="l00555"></a>00555                 U_INTERNAL_ASSERT_POINTER(path_relativ)
+<a name="l00556"></a>00556 
+<a name="l00557"></a>00557                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;path_relativ(%u) = %.*S&quot;</span>, path_relativ_len, path_relativ_len, path_relativ)
+<a name="l00558"></a>00558 
+<a name="l00559"></a>00559                 (void) U_SYSCALL(fsync, <span class="stringliteral">&quot;%d&quot;</span>, fd);
+<a name="l00560"></a>00560                 }
+<a name="l00561"></a>00561 
+<a name="l00562"></a>00562         <span class="keywordtype">bool</span> fallocate(off_t n);
+<a name="l00563"></a>00563         <span class="keywordtype">bool</span> ftruncate(off_t n);
+<a name="l00564"></a>00564 
+<a name="l00565"></a>00565         <span class="keyword">static</span> <span class="keywordtype">bool</span> chdir(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, <span class="keywordtype">bool</span> flag_save = <span class="keyword">false</span>);
+<a name="l00566"></a>00566 
+<a name="l00567"></a>00567         <span class="comment">// LOCKING</span>
+<a name="l00568"></a>00568 
+<a name="l00569"></a>00569         <span class="keywordtype">bool</span> lock(<span class="keywordtype">short</span> l_type = F_WRLCK, off_t start = 0, off_t len = 0) <span class="keyword">const</span>; <span class="comment">/* set the lock, waiting if necessary */</span>
+<a name="l00570"></a>00570 
+<a name="l00571"></a>00571         <span class="keywordtype">bool</span> unlock(off_t start = 0, off_t len = 0)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> lock(F_UNLCK, start, len); }
+<a name="l00572"></a>00572 
+<a name="l00573"></a>00573         <span class="comment">// MEMORY MAPPED I/O</span>
+<a name="l00574"></a>00574 
+<a name="l00575"></a>00575         <span class="keyword">static</span> <span class="keywordtype">char</span>* mmap(<span class="keywordtype">size_t</span> length,
+<a name="l00576"></a>00576                                                         <span class="keywordtype">int</span> fd = -1,
+<a name="l00577"></a>00577                                                         <span class="keywordtype">int</span> prot = PROT_READ | PROT_WRITE,
+<a name="l00578"></a>00578                                                         <span class="keywordtype">int</span> flags = MAP_SHARED | MAP_ANONYMOUS,
+<a name="l00579"></a>00579                                                         off_t offset = 0)
+<a name="l00580"></a>00580                 {
+<a name="l00581"></a>00581                 U_TRACE(1, <span class="stringliteral">&quot;UFile::mmap(%lu,%d,%d,%d,%I)&quot;</span>, length, fd, prot, flags, offset)
 <a name="l00582"></a>00582 
-<a name="l00583"></a>00583                 U_RETURN(map != MAP_FAILED);
-<a name="l00584"></a>00584                 }
-<a name="l00585"></a>00585 
-<a name="l00586"></a>00586         <span class="keywordtype">char</span>* getMap()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> map; }
-<a name="l00587"></a>00587 
-<a name="l00588"></a>00588                          <span class="keywordtype">void</span> munmap();
-<a name="l00589"></a>00589         <span class="keyword">static</span> <span class="keywordtype">void</span> munmap(<span class="keywordtype">void</span>* map, <span class="keywordtype">size_t</span> length)
-<a name="l00590"></a>00590                 {
-<a name="l00591"></a>00591                 U_TRACE(1, <span class="stringliteral">&quot;UFile::munmap(%p,%lu)&quot;</span>, map, length)
-<a name="l00592"></a>00592 
-<a name="l00593"></a>00593                 U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
-<a name="l00594"></a>00594 
-<a name="l00595"></a>00595                 (void) U_SYSCALL(munmap, <span class="stringliteral">&quot;%p,%lu&quot;</span>, map, length);
-<a name="l00596"></a>00596                 }
+<a name="l00583"></a>00583 <span class="preprocessor">#  ifndef HAVE_ARCH64</span>
+<a name="l00584"></a>00584 <span class="preprocessor"></span>                U_INTERNAL_ASSERT_RANGE(1UL,length,3UL*1024UL*1024UL*1024UL) <span class="comment">// limit of linux system</span>
+<a name="l00585"></a>00585 <span class="preprocessor">#  endif</span>
+<a name="l00586"></a>00586 <span class="preprocessor"></span>
+<a name="l00587"></a>00587                 <span class="keywordtype">char</span>* map = (<span class="keywordtype">char</span>*) U_SYSCALL(mmap, <span class="stringliteral">&quot;%d,%lu,%d,%d,%d,%I&quot;</span>, 0, length, prot, flags, fd, offset);
+<a name="l00588"></a>00588 
+<a name="l00589"></a>00589                 <span class="keywordflow">return</span> map;
+<a name="l00590"></a>00590                 }
+<a name="l00591"></a>00591 
+<a name="l00592"></a>00592         <span class="keywordtype">bool</span> isMapped()<span class="keyword"> const</span>
+<a name="l00593"></a>00593 <span class="keyword">                </span>{
+<a name="l00594"></a>00594                 U_TRACE(0, <span class="stringliteral">&quot;UFile::isMapped()&quot;</span>)
+<a name="l00595"></a>00595 
+<a name="l00596"></a>00596                 U_CHECK_MEMORY
 <a name="l00597"></a>00597 
-<a name="l00598"></a>00598         <span class="keyword">static</span> <span class="keywordtype">void</span> msync(<span class="keywordtype">char</span>* ptr, <span class="keywordtype">char</span>* page, <span class="keywordtype">int</span> flags = MS_SYNC); <span class="comment">// flushes changes made to memory mapped file back to disk</span>
-<a name="l00599"></a>00599 
-<a name="l00600"></a>00600         <span class="comment">// mremap expands (or shrinks) an existing memory  mapping, potentially moving it at the same time</span>
-<a name="l00601"></a>00601         <span class="comment">// (controlled by the flags argument and the available virtual address space)</span>
+<a name="l00598"></a>00598                 U_RETURN(map != MAP_FAILED);
+<a name="l00599"></a>00599                 }
+<a name="l00600"></a>00600 
+<a name="l00601"></a>00601         <span class="keywordtype">char</span>* getMap()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> map; }
 <a name="l00602"></a>00602 
-<a name="l00603"></a>00603         <span class="keyword">static</span> <span class="keywordtype">void</span>* mremap(<span class="keywordtype">void</span>* old_address, <span class="keywordtype">size_t</span> old_size, <span class="keywordtype">size_t</span> new_size, <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> flags = 0) <span class="comment">// MREMAP_MAYMOVE == 1</span>
-<a name="l00604"></a>00604                 {
-<a name="l00605"></a>00605                 U_TRACE(1, <span class="stringliteral">&quot;UFile::mremap(%p,%lu,%lu,%lu)&quot;</span>, old_address, old_size, new_size, flags)
-<a name="l00606"></a>00606 
-<a name="l00607"></a>00607                 <span class="keywordtype">void</span>* result = U_SYSCALL(mremap, <span class="stringliteral">&quot;%p,%lu,%lu,%lu&quot;</span>, old_address, old_size, new_size, flags);
-<a name="l00608"></a>00608 
-<a name="l00609"></a>00609                 U_RETURN(result);
-<a name="l00610"></a>00610                 }
-<a name="l00611"></a>00611 
-<a name="l00612"></a>00612         <span class="keywordtype">bool</span> memmap(<span class="keywordtype">int</span> prot = PROT_READ, <a class="code" href="classUString.html">UString</a>* str = 0, off_t offset = 0, <span class="keywordtype">size_t</span> length = 0);
-<a name="l00613"></a>00613 
-<a name="l00614"></a>00614         <span class="keywordtype">char</span>* eof()<span class="keyword"> const</span>
-<a name="l00615"></a>00615 <span class="keyword">                </span>{
-<a name="l00616"></a>00616                 U_TRACE(0, <span class="stringliteral">&quot;UFile::eof()&quot;</span>)
+<a name="l00603"></a>00603                          <span class="keywordtype">void</span> munmap();
+<a name="l00604"></a>00604         <span class="keyword">static</span> <span class="keywordtype">void</span> munmap(<span class="keywordtype">void</span>* map, <span class="keywordtype">size_t</span> length)
+<a name="l00605"></a>00605                 {
+<a name="l00606"></a>00606                 U_TRACE(1, <span class="stringliteral">&quot;UFile::munmap(%p,%lu)&quot;</span>, map, length)
+<a name="l00607"></a>00607 
+<a name="l00608"></a>00608                 U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
+<a name="l00609"></a>00609 
+<a name="l00610"></a>00610                 (void) U_SYSCALL(munmap, <span class="stringliteral">&quot;%p,%lu&quot;</span>, map, length);
+<a name="l00611"></a>00611                 }
+<a name="l00612"></a>00612 
+<a name="l00613"></a>00613         <span class="keyword">static</span> <span class="keywordtype">void</span> msync(<span class="keywordtype">char</span>* ptr, <span class="keywordtype">char</span>* page, <span class="keywordtype">int</span> flags = MS_SYNC); <span class="comment">// flushes changes made to memory mapped file back to disk</span>
+<a name="l00614"></a>00614 
+<a name="l00615"></a>00615         <span class="comment">// mremap expands (or shrinks) an existing memory  mapping, potentially moving it at the same time</span>
+<a name="l00616"></a>00616         <span class="comment">// (controlled by the flags argument and the available virtual address space)</span>
 <a name="l00617"></a>00617 
-<a name="l00618"></a>00618                 U_CHECK_MEMORY
-<a name="l00619"></a>00619 
-<a name="l00620"></a>00620                 U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
+<a name="l00618"></a>00618         <span class="keyword">static</span> <span class="keywordtype">void</span>* mremap(<span class="keywordtype">void</span>* old_address, <span class="keywordtype">size_t</span> old_size, <span class="keywordtype">size_t</span> new_size, <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> flags = 0) <span class="comment">// MREMAP_MAYMOVE == 1</span>
+<a name="l00619"></a>00619                 {
+<a name="l00620"></a>00620                 U_TRACE(1, <span class="stringliteral">&quot;UFile::mremap(%p,%lu,%lu,%lu)&quot;</span>, old_address, old_size, new_size, flags)
 <a name="l00621"></a>00621 
-<a name="l00622"></a>00622                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;st_size = %I map_size = %u&quot;</span>, st_size, map_size)
+<a name="l00622"></a>00622                 <span class="keywordtype">void</span>* result = U_SYSCALL(mremap, <span class="stringliteral">&quot;%p,%lu,%lu,%lu&quot;</span>, old_address, old_size, new_size, flags);
 <a name="l00623"></a>00623 
-<a name="l00624"></a>00624                 <span class="keywordtype">char</span>* result = map + (st_size ? st_size : map_size);
-<a name="l00625"></a>00625 
-<a name="l00626"></a>00626                 U_RETURN(result);
-<a name="l00627"></a>00627                 }
+<a name="l00624"></a>00624                 U_RETURN(result);
+<a name="l00625"></a>00625                 }
+<a name="l00626"></a>00626 
+<a name="l00627"></a>00627         <span class="keywordtype">bool</span> memmap(<span class="keywordtype">int</span> prot = PROT_READ, <a class="code" href="classUString.html">UString</a>* str = 0, off_t offset = 0, <span class="keywordtype">size_t</span> length = 0);
 <a name="l00628"></a>00628 
-<a name="l00629"></a>00629                          <a class="code" href="classUString.html">UString</a> getContent(                                                              <span class="keywordtype">bool</span> brdonly = <span class="keyword">true</span>,  <span class="keywordtype">bool</span> bstat = <span class="keyword">false</span>, <span class="keywordtype">bool</span> bmap = <span class="keyword">true</span>);
-<a name="l00630"></a>00630         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> contentOf(<span class="keyword">const</span> <span class="keywordtype">char</span>*     pathname, <span class="keywordtype">int</span> flags = O_RDONLY, <span class="keywordtype">bool</span> bstat = <span class="keyword">false</span>, <span class="keywordtype">bool</span> bmap = <span class="keyword">true</span>);
-<a name="l00631"></a>00631         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> contentOf(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; pathname, <span class="keywordtype">int</span> flags = O_RDONLY, <span class="keywordtype">bool</span> bstat = <span class="keyword">false</span>, <span class="keywordtype">bool</span> bmap = <span class="keyword">true</span>);
+<a name="l00629"></a>00629         <span class="keywordtype">char</span>* eof()<span class="keyword"> const</span>
+<a name="l00630"></a>00630 <span class="keyword">                </span>{
+<a name="l00631"></a>00631                 U_TRACE(0, <span class="stringliteral">&quot;UFile::eof()&quot;</span>)
 <a name="l00632"></a>00632 
-<a name="l00633"></a>00633         <span class="keyword">const</span> <span class="keywordtype">char</span>* getMimeType();
+<a name="l00633"></a>00633                 U_CHECK_MEMORY
 <a name="l00634"></a>00634 
-<a name="l00635"></a>00635         <span class="comment">// PREAD - PWRITE</span>
+<a name="l00635"></a>00635                 U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
 <a name="l00636"></a>00636 
-<a name="l00637"></a>00637         <span class="keyword">static</span> <span class="keywordtype">bool</span> pread(<span class="keywordtype">int</span> fd, <span class="keywordtype">void</span>* buf, <span class="keywordtype">size_t</span> count, off_t offset)
-<a name="l00638"></a>00638                 {
-<a name="l00639"></a>00639                 U_TRACE(1, <span class="stringliteral">&quot;UFile::pread(%d,%p,%lu,%I)&quot;</span>, fd, buf, count, offset)
+<a name="l00637"></a>00637                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;st_size = %I map_size = %u&quot;</span>, st_size, map_size)
+<a name="l00638"></a>00638 
+<a name="l00639"></a>00639                 <span class="keywordtype">char</span>* result = map + (st_size ? st_size : map_size);
 <a name="l00640"></a>00640 
-<a name="l00641"></a>00641                 <span class="keywordtype">bool</span> result = (U_SYSCALL(pread, <span class="stringliteral">&quot;%d,%p,%lu,%I&quot;</span>, fd, buf, count, offset) == (ssize_t)count);
-<a name="l00642"></a>00642 
-<a name="l00643"></a>00643                 U_RETURN(result);
-<a name="l00644"></a>00644                 }
-<a name="l00645"></a>00645 
-<a name="l00646"></a>00646         <span class="keyword">static</span> <span class="keywordtype">bool</span> pwrite(<span class="keywordtype">int</span> fd, <span class="keyword">const</span> <span class="keywordtype">void</span>* buf, <span class="keywordtype">size_t</span> count, off_t offset)
-<a name="l00647"></a>00647                 {
-<a name="l00648"></a>00648                 U_TRACE(1, <span class="stringliteral">&quot;UFile::pwrite(%d,%p,%lu,%I)&quot;</span>, fd, buf, count, offset)
+<a name="l00641"></a>00641                 U_RETURN(result);
+<a name="l00642"></a>00642                 }
+<a name="l00643"></a>00643 
+<a name="l00644"></a>00644                          <a class="code" href="classUString.html">UString</a> getContent(                                                              <span class="keywordtype">bool</span> brdonly = <span class="keyword">true</span>,  <span class="keywordtype">bool</span> bstat = <span class="keyword">false</span>, <span class="keywordtype">bool</span> bmap = <span class="keyword">true</span>);
+<a name="l00645"></a>00645         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> contentOf(<span class="keyword">const</span> <span class="keywordtype">char</span>*     pathname, <span class="keywordtype">int</span> flags = O_RDONLY, <span class="keywordtype">bool</span> bstat = <span class="keyword">false</span>, <span class="keywordtype">bool</span> bmap = <span class="keyword">true</span>);
+<a name="l00646"></a>00646         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> contentOf(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; pathname, <span class="keywordtype">int</span> flags = O_RDONLY, <span class="keywordtype">bool</span> bstat = <span class="keyword">false</span>, <span class="keywordtype">bool</span> bmap = <span class="keyword">true</span>);
+<a name="l00647"></a>00647 
+<a name="l00648"></a>00648         <span class="keyword">const</span> <span class="keywordtype">char</span>* getMimeType();
 <a name="l00649"></a>00649 
-<a name="l00650"></a>00650                 <span class="keywordtype">bool</span> result = (U_SYSCALL(pwrite, <span class="stringliteral">&quot;%d,%p,%lu,%I&quot;</span>, fd, buf, count, offset) == (ssize_t)count);
+<a name="l00650"></a>00650         <span class="comment">// PREAD - PWRITE</span>
 <a name="l00651"></a>00651 
-<a name="l00652"></a>00652                 U_RETURN(result);
-<a name="l00653"></a>00653                 }
-<a name="l00654"></a>00654 
-<a name="l00655"></a>00655         <span class="keywordtype">bool</span> pread(                     <span class="keywordtype">void</span>* buf, <span class="keywordtype">size_t</span> count, off_t offset);
-<a name="l00656"></a>00656         <span class="keywordtype">bool</span> pwrite(<span class="keyword">const</span> <span class="keywordtype">void</span>* buf, <span class="keywordtype">size_t</span> count, off_t offset);
+<a name="l00652"></a>00652         <span class="keyword">static</span> <span class="keywordtype">bool</span> pread(<span class="keywordtype">int</span> fd, <span class="keywordtype">void</span>* buf, <span class="keywordtype">size_t</span> count, off_t offset)
+<a name="l00653"></a>00653                 {
+<a name="l00654"></a>00654                 U_TRACE(1, <span class="stringliteral">&quot;UFile::pread(%d,%p,%lu,%I)&quot;</span>, fd, buf, count, offset)
+<a name="l00655"></a>00655 
+<a name="l00656"></a>00656                 <span class="keywordtype">bool</span> result = (U_SYSCALL(pread, <span class="stringliteral">&quot;%d,%p,%lu,%I&quot;</span>, fd, buf, count, offset) == (ssize_t)count);
 <a name="l00657"></a>00657 
-<a name="l00658"></a>00658         <span class="comment">// SERVICES</span>
-<a name="l00659"></a>00659 
-<a name="l00660"></a>00660         <span class="keyword">static</span> <span class="keywordtype">bool</span> access(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, <span class="keywordtype">int</span> mode = R_OK | X_OK)
-<a name="l00661"></a>00661                 {
-<a name="l00662"></a>00662                 U_TRACE(1, <span class="stringliteral">&quot;UFile::access(%S,%d)&quot;</span>, path, mode)
-<a name="l00663"></a>00663 
-<a name="l00664"></a>00664                 <span class="keywordtype">bool</span> result = (U_SYSCALL(access, <span class="stringliteral">&quot;%S,%d&quot;</span>, U_PATH_CONV(path), mode) == 0);
-<a name="l00665"></a>00665 
-<a name="l00666"></a>00666                 U_RETURN(result);
-<a name="l00667"></a>00667                 }
-<a name="l00668"></a>00668 
-<a name="l00669"></a>00669         <span class="keyword">static</span> <span class="keywordtype">bool</span> stat(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, <span class="keyword">struct</span> stat* buf)
-<a name="l00670"></a>00670                 {
-<a name="l00671"></a>00671                 U_TRACE(1, <span class="stringliteral">&quot;UFile::stat(%S,%p)&quot;</span>, path, buf)
+<a name="l00658"></a>00658                 U_RETURN(result);
+<a name="l00659"></a>00659                 }
+<a name="l00660"></a>00660 
+<a name="l00661"></a>00661         <span class="keyword">static</span> <span class="keywordtype">bool</span> pwrite(<span class="keywordtype">int</span> fd, <span class="keyword">const</span> <span class="keywordtype">void</span>* buf, <span class="keywordtype">size_t</span> count, off_t offset)
+<a name="l00662"></a>00662                 {
+<a name="l00663"></a>00663                 U_TRACE(1, <span class="stringliteral">&quot;UFile::pwrite(%d,%p,%lu,%I)&quot;</span>, fd, buf, count, offset)
+<a name="l00664"></a>00664 
+<a name="l00665"></a>00665                 <span class="keywordtype">bool</span> result = (U_SYSCALL(pwrite, <span class="stringliteral">&quot;%d,%p,%lu,%I&quot;</span>, fd, buf, count, offset) == (ssize_t)count);
+<a name="l00666"></a>00666 
+<a name="l00667"></a>00667                 U_RETURN(result);
+<a name="l00668"></a>00668                 }
+<a name="l00669"></a>00669 
+<a name="l00670"></a>00670         <span class="keywordtype">bool</span> pread(                     <span class="keywordtype">void</span>* buf, <span class="keywordtype">size_t</span> count, off_t offset);
+<a name="l00671"></a>00671         <span class="keywordtype">bool</span> pwrite(<span class="keyword">const</span> <span class="keywordtype">void</span>* buf, <span class="keywordtype">size_t</span> count, off_t offset);
 <a name="l00672"></a>00672 
-<a name="l00673"></a>00673                 <span class="keywordtype">bool</span> result = (U_SYSCALL(stat, <span class="stringliteral">&quot;%S,%p&quot;</span>, U_PATH_CONV(path), buf) == 0);
+<a name="l00673"></a>00673         <span class="comment">// SERVICES</span>
 <a name="l00674"></a>00674 
-<a name="l00675"></a>00675                 U_RETURN(result);
-<a name="l00676"></a>00676                 }
-<a name="l00677"></a>00677 
-<a name="l00678"></a>00678         <span class="keyword">static</span> <span class="keywordtype">bool</span> write(<span class="keywordtype">int</span> fd, <span class="keyword">const</span> <span class="keywordtype">void</span>* buf, <span class="keywordtype">size_t</span> count)
-<a name="l00679"></a>00679                 {
-<a name="l00680"></a>00680                 U_TRACE(1, <span class="stringliteral">&quot;UFile::write(%d,%p,%lu)&quot;</span>, fd, buf, count)
-<a name="l00681"></a>00681 
-<a name="l00682"></a>00682                 <span class="keywordtype">bool</span> result = (U_SYSCALL(write, <span class="stringliteral">&quot;%d,%p,%lu&quot;</span>, fd, buf, count) == (ssize_t)count);
+<a name="l00675"></a>00675         <span class="keyword">static</span> <span class="keywordtype">bool</span> access(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, <span class="keywordtype">int</span> mode = R_OK | X_OK)
+<a name="l00676"></a>00676                 {
+<a name="l00677"></a>00677                 U_TRACE(1, <span class="stringliteral">&quot;UFile::access(%S,%d)&quot;</span>, path, mode)
+<a name="l00678"></a>00678 
+<a name="l00679"></a>00679                 <span class="keywordtype">bool</span> result = (U_SYSCALL(access, <span class="stringliteral">&quot;%S,%d&quot;</span>, U_PATH_CONV(path), mode) == 0);
+<a name="l00680"></a>00680 
+<a name="l00681"></a>00681                 U_RETURN(result);
+<a name="l00682"></a>00682                 }
 <a name="l00683"></a>00683 
-<a name="l00684"></a>00684                 U_RETURN(result);
-<a name="l00685"></a>00685                 }
-<a name="l00686"></a>00686 
-<a name="l00687"></a>00687         <span class="keyword">static</span> <span class="keywordtype">int</span> writev(<span class="keywordtype">int</span> fd, <span class="keyword">const</span> <span class="keyword">struct</span> <a class="code" href="structiovec.html">iovec</a>* iov, <span class="keywordtype">int</span> n)
-<a name="l00688"></a>00688                 {
-<a name="l00689"></a>00689                 U_TRACE(1, <span class="stringliteral">&quot;UFile::writev(%d,%p,%d)&quot;</span>, fd, iov, n)
-<a name="l00690"></a>00690 
-<a name="l00691"></a>00691                 <span class="keywordtype">int</span> result = U_SYSCALL(writev, <span class="stringliteral">&quot;%d,%p,%d&quot;</span>, fd, iov, n);
+<a name="l00684"></a>00684         <span class="keyword">static</span> <span class="keywordtype">bool</span> stat(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, <span class="keyword">struct</span> stat* buf)
+<a name="l00685"></a>00685                 {
+<a name="l00686"></a>00686                 U_TRACE(1, <span class="stringliteral">&quot;UFile::stat(%S,%p)&quot;</span>, path, buf)
+<a name="l00687"></a>00687 
+<a name="l00688"></a>00688                 <span class="keywordtype">bool</span> result = (U_SYSCALL(stat, <span class="stringliteral">&quot;%S,%p&quot;</span>, U_PATH_CONV(path), buf) == 0);
+<a name="l00689"></a>00689 
+<a name="l00690"></a>00690                 U_RETURN(result);
+<a name="l00691"></a>00691                 }
 <a name="l00692"></a>00692 
-<a name="l00693"></a>00693                 U_RETURN(result);
-<a name="l00694"></a>00694                 }
-<a name="l00695"></a>00695 
-<a name="l00696"></a>00696         <span class="keywordtype">int</span> writev(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code" href="structiovec.html">iovec</a>* iov, <span class="keywordtype">int</span> n)<span class="keyword"> const</span>
-<a name="l00697"></a>00697 <span class="keyword">                </span>{
-<a name="l00698"></a>00698                 U_TRACE(0, <span class="stringliteral">&quot;UFile::writev(%p,%d)&quot;</span>, iov, n)
-<a name="l00699"></a>00699 
-<a name="l00700"></a>00700                 U_CHECK_MEMORY
+<a name="l00693"></a>00693         <span class="keyword">static</span> <span class="keywordtype">bool</span> write(<span class="keywordtype">int</span> fd, <span class="keyword">const</span> <span class="keywordtype">void</span>* buf, <span class="keywordtype">size_t</span> count)
+<a name="l00694"></a>00694                 {
+<a name="l00695"></a>00695                 U_TRACE(1, <span class="stringliteral">&quot;UFile::write(%d,%p,%lu)&quot;</span>, fd, buf, count)
+<a name="l00696"></a>00696 
+<a name="l00697"></a>00697                 <span class="keywordtype">bool</span> result = (U_SYSCALL(write, <span class="stringliteral">&quot;%d,%p,%lu&quot;</span>, fd, buf, count) == (ssize_t)count);
+<a name="l00698"></a>00698 
+<a name="l00699"></a>00699                 U_RETURN(result);
+<a name="l00700"></a>00700                 }
 <a name="l00701"></a>00701 
-<a name="l00702"></a>00702                 U_INTERNAL_ASSERT_DIFFERS(fd, -1)
-<a name="l00703"></a>00703                 U_INTERNAL_ASSERT_POINTER(path_relativ)
-<a name="l00704"></a>00704 
-<a name="l00705"></a>00705                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;path_relativ(%u) = %.*S&quot;</span>, path_relativ_len, path_relativ_len, path_relativ)
-<a name="l00706"></a>00706 
-<a name="l00707"></a>00707                 <span class="keywordtype">int</span> result = UFile::writev(fd, iov, n);
-<a name="l00708"></a>00708 
-<a name="l00709"></a>00709                 U_RETURN(result);
-<a name="l00710"></a>00710                 }
-<a name="l00711"></a>00711 
-<a name="l00712"></a>00712                          <span class="keywordtype">bool</span> write(                                                            <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; data, <span class="keywordtype">bool</span> append = <span class="keyword">false</span>);
-<a name="l00713"></a>00713         <span class="keyword">static</span> <span class="keywordtype">bool</span> writeTo(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; path,  <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; data, <span class="keywordtype">bool</span> append = <span class="keyword">false</span>);
-<a name="l00714"></a>00714         <span class="keyword">static</span> <span class="keywordtype">bool</span> writeToTmpl(<span class="keyword">const</span> <span class="keywordtype">char</span>* tmpl, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; data, <span class="keywordtype">bool</span> append = <span class="keyword">false</span>);
-<a name="l00715"></a>00715 
-<a name="l00716"></a>00716         <span class="comment">// rename</span>
-<a name="l00717"></a>00717 
-<a name="l00718"></a>00718                          <span class="keywordtype">bool</span> rename(                                                    <span class="keyword">const</span> <span class="keywordtype">char</span>* newpath);
-<a name="l00719"></a>00719         <span class="keyword">static</span> <span class="keywordtype">bool</span> rename(<span class="keyword">const</span> <span class="keywordtype">char</span>* oldpath, <span class="keyword">const</span> <span class="keywordtype">char</span>* newpath)
-<a name="l00720"></a>00720                 {
-<a name="l00721"></a>00721                 U_TRACE(1, <span class="stringliteral">&quot;UFile::rename(%S,%S)&quot;</span>, oldpath, newpath)
-<a name="l00722"></a>00722 
-<a name="l00723"></a>00723 <span class="preprocessor">#  ifdef __MINGW32__</span>
-<a name="l00724"></a>00724 <span class="preprocessor"></span>                <span class="keywordtype">bool</span> result = (U_SYSCALL(rename_w32, <span class="stringliteral">&quot;%S,%S&quot;</span>, oldpath, newpath) != -1);
-<a name="l00725"></a>00725 <span class="preprocessor">#  else</span>
-<a name="l00726"></a>00726 <span class="preprocessor"></span>                <span class="keywordtype">bool</span> result = (U_SYSCALL(rename,                 <span class="stringliteral">&quot;%S,%S&quot;</span>, oldpath, newpath) != -1);
-<a name="l00727"></a>00727 <span class="preprocessor">#  endif</span>
-<a name="l00728"></a>00728 <span class="preprocessor"></span>
-<a name="l00729"></a>00729                 U_RETURN(result);
-<a name="l00730"></a>00730                 }
-<a name="l00731"></a>00731 
-<a name="l00732"></a>00732         <span class="comment">// symlink</span>
-<a name="l00733"></a>00733 
-<a name="l00734"></a>00734 <span class="preprocessor">#ifndef __MINGW32__</span>
-<a name="l00735"></a>00735 <span class="preprocessor"></span>
-<a name="l00736"></a>00736         <span class="keyword">static</span> <span class="keywordtype">bool</span> symlink(<span class="keyword">const</span> <span class="keywordtype">char</span>* oldpath, <span class="keyword">const</span> <span class="keywordtype">char</span>* newpath)
-<a name="l00737"></a>00737                 {
-<a name="l00738"></a>00738                 U_TRACE(1, <span class="stringliteral">&quot;UFile::symlink(%S,%S)&quot;</span>, oldpath, newpath)
-<a name="l00739"></a>00739 
-<a name="l00740"></a>00740                 <span class="keywordtype">bool</span> result = (U_SYSCALL(symlink, <span class="stringliteral">&quot;%S,%S&quot;</span>, oldpath, newpath) != -1);
-<a name="l00741"></a>00741 
-<a name="l00742"></a>00742                 U_RETURN(result);
-<a name="l00743"></a>00743                 }
-<a name="l00744"></a>00744 
-<a name="l00745"></a>00745         <span class="keywordtype">bool</span> symlink(<span class="keyword">const</span> <span class="keywordtype">char</span>* newpath)
-<a name="l00746"></a>00746                 {
-<a name="l00747"></a>00747                 U_TRACE(0, <span class="stringliteral">&quot;UFile::symlink(%S)&quot;</span>, newpath)
+<a name="l00702"></a>00702         <span class="keyword">static</span> <span class="keywordtype">int</span> writev(<span class="keywordtype">int</span> fd, <span class="keyword">const</span> <span class="keyword">struct</span> <a class="code" href="structiovec.html">iovec</a>* iov, <span class="keywordtype">int</span> n)
+<a name="l00703"></a>00703                 {
+<a name="l00704"></a>00704                 U_TRACE(1, <span class="stringliteral">&quot;UFile::writev(%d,%p,%d)&quot;</span>, fd, iov, n)
+<a name="l00705"></a>00705 
+<a name="l00706"></a>00706                 <span class="keywordtype">int</span> result = U_SYSCALL(writev, <span class="stringliteral">&quot;%d,%p,%d&quot;</span>, fd, iov, n);
+<a name="l00707"></a>00707 
+<a name="l00708"></a>00708                 U_RETURN(result);
+<a name="l00709"></a>00709                 }
+<a name="l00710"></a>00710 
+<a name="l00711"></a>00711         <span class="keywordtype">int</span> writev(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code" href="structiovec.html">iovec</a>* iov, <span class="keywordtype">int</span> n)<span class="keyword"> const</span>
+<a name="l00712"></a>00712 <span class="keyword">                </span>{
+<a name="l00713"></a>00713                 U_TRACE(0, <span class="stringliteral">&quot;UFile::writev(%p,%d)&quot;</span>, iov, n)
+<a name="l00714"></a>00714 
+<a name="l00715"></a>00715                 U_CHECK_MEMORY
+<a name="l00716"></a>00716 
+<a name="l00717"></a>00717                 U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+<a name="l00718"></a>00718                 U_INTERNAL_ASSERT_POINTER(path_relativ)
+<a name="l00719"></a>00719 
+<a name="l00720"></a>00720                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;path_relativ(%u) = %.*S&quot;</span>, path_relativ_len, path_relativ_len, path_relativ)
+<a name="l00721"></a>00721 
+<a name="l00722"></a>00722                 <span class="keywordtype">int</span> result = UFile::writev(fd, iov, n);
+<a name="l00723"></a>00723 
+<a name="l00724"></a>00724                 U_RETURN(result);
+<a name="l00725"></a>00725                 }
+<a name="l00726"></a>00726 
+<a name="l00727"></a>00727                          <span class="keywordtype">bool</span> write(                                                            <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; data, <span class="keywordtype">bool</span> append = <span class="keyword">false</span>);
+<a name="l00728"></a>00728         <span class="keyword">static</span> <span class="keywordtype">bool</span> writeTo(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; path,  <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; data, <span class="keywordtype">bool</span> append = <span class="keyword">false</span>);
+<a name="l00729"></a>00729         <span class="keyword">static</span> <span class="keywordtype">bool</span> writeToTmpl(<span class="keyword">const</span> <span class="keywordtype">char</span>* tmpl, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; data, <span class="keywordtype">bool</span> append = <span class="keyword">false</span>);
+<a name="l00730"></a>00730 
+<a name="l00731"></a>00731         <span class="comment">// rename</span>
+<a name="l00732"></a>00732 
+<a name="l00733"></a>00733                          <span class="keywordtype">bool</span> rename(                                                    <span class="keyword">const</span> <span class="keywordtype">char</span>* newpath);
+<a name="l00734"></a>00734         <span class="keyword">static</span> <span class="keywordtype">bool</span> rename(<span class="keyword">const</span> <span class="keywordtype">char</span>* oldpath, <span class="keyword">const</span> <span class="keywordtype">char</span>* newpath)
+<a name="l00735"></a>00735                 {
+<a name="l00736"></a>00736                 U_TRACE(1, <span class="stringliteral">&quot;UFile::rename(%S,%S)&quot;</span>, oldpath, newpath)
+<a name="l00737"></a>00737 
+<a name="l00738"></a>00738 <span class="preprocessor">#  ifdef __MINGW32__</span>
+<a name="l00739"></a>00739 <span class="preprocessor"></span>                <span class="keywordtype">bool</span> result = (U_SYSCALL(rename_w32, <span class="stringliteral">&quot;%S,%S&quot;</span>, oldpath, newpath) != -1);
+<a name="l00740"></a>00740 <span class="preprocessor">#  else</span>
+<a name="l00741"></a>00741 <span class="preprocessor"></span>                <span class="keywordtype">bool</span> result = (U_SYSCALL(rename,                 <span class="stringliteral">&quot;%S,%S&quot;</span>, oldpath, newpath) != -1);
+<a name="l00742"></a>00742 <span class="preprocessor">#  endif</span>
+<a name="l00743"></a>00743 <span class="preprocessor"></span>
+<a name="l00744"></a>00744                 U_RETURN(result);
+<a name="l00745"></a>00745                 }
+<a name="l00746"></a>00746 
+<a name="l00747"></a>00747         <span class="comment">// symlink</span>
 <a name="l00748"></a>00748 
-<a name="l00749"></a>00749                 U_CHECK_MEMORY
-<a name="l00750"></a>00750 
-<a name="l00751"></a>00751                 U_INTERNAL_ASSERT_POINTER(path_relativ)
-<a name="l00752"></a>00752 
-<a name="l00753"></a>00753                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;path_relativ(%u) = %.*S&quot;</span>, path_relativ_len, path_relativ_len, path_relativ)
+<a name="l00749"></a>00749 <span class="preprocessor">#ifndef __MINGW32__</span>
+<a name="l00750"></a>00750 <span class="preprocessor"></span>
+<a name="l00751"></a>00751         <span class="keyword">static</span> <span class="keywordtype">bool</span> symlink(<span class="keyword">const</span> <span class="keywordtype">char</span>* oldpath, <span class="keyword">const</span> <span class="keywordtype">char</span>* newpath)
+<a name="l00752"></a>00752                 {
+<a name="l00753"></a>00753                 U_TRACE(1, <span class="stringliteral">&quot;UFile::symlink(%S,%S)&quot;</span>, oldpath, newpath)
 <a name="l00754"></a>00754 
-<a name="l00755"></a>00755                 <span class="keywordtype">bool</span> result = symlink(path_relativ, newpath);
+<a name="l00755"></a>00755                 <span class="keywordtype">bool</span> result = (U_SYSCALL(symlink, <span class="stringliteral">&quot;%S,%S&quot;</span>, oldpath, newpath) != -1);
 <a name="l00756"></a>00756 
 <a name="l00757"></a>00757                 U_RETURN(result);
 <a name="l00758"></a>00758                 }
 <a name="l00759"></a>00759 
-<a name="l00760"></a>00760 <span class="preprocessor">#endif</span>
-<a name="l00761"></a>00761 <span class="preprocessor"></span>
-<a name="l00762"></a>00762         <span class="comment">/*</span>
-<a name="l00763"></a>00763 <span class="comment">        Expands all symbolic links and resolves references to &apos;/./&apos;, &apos;/../&apos; and extra &apos;/&apos; characters in the null</span>
-<a name="l00764"></a>00764 <span class="comment">        terminated string named by path and stores the canonicalized absolute pathname in the return string.</span>
-<a name="l00765"></a>00765 <span class="comment">        The resulting string will have no symbolic link, &apos;/./&apos; or &apos;/../&apos; components</span>
-<a name="l00766"></a>00766 <span class="comment">        */</span>
+<a name="l00760"></a>00760         <span class="keywordtype">bool</span> symlink(<span class="keyword">const</span> <span class="keywordtype">char</span>* newpath)
+<a name="l00761"></a>00761                 {
+<a name="l00762"></a>00762                 U_TRACE(0, <span class="stringliteral">&quot;UFile::symlink(%S)&quot;</span>, newpath)
+<a name="l00763"></a>00763 
+<a name="l00764"></a>00764                 U_CHECK_MEMORY
+<a name="l00765"></a>00765 
+<a name="l00766"></a>00766                 U_INTERNAL_ASSERT_POINTER(path_relativ)
 <a name="l00767"></a>00767 
-<a name="l00768"></a>00768         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getRealPath(<span class="keyword">const</span> <span class="keywordtype">char</span>* path);
+<a name="l00768"></a>00768                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;path_relativ(%u) = %.*S&quot;</span>, path_relativ_len, path_relativ_len, path_relativ)
 <a name="l00769"></a>00769 
-<a name="l00770"></a>00770         <span class="comment">// TEMP FILES</span>
+<a name="l00770"></a>00770                 <span class="keywordtype">bool</span> result = symlink(path_relativ, newpath);
 <a name="l00771"></a>00771 
-<a name="l00772"></a>00772                          <span class="keywordtype">bool</span> mkTemp(<span class="keyword">const</span> <span class="keywordtype">char</span>* _tmpl = <span class="stringliteral">&quot;lockXXXXXX&quot;</span>);  <span class="comment">// temporary  file for locking...</span>
-<a name="l00773"></a>00773         <span class="keyword">static</span> <span class="keywordtype">bool</span> mkTempStorage(<a class="code" href="classUString.html">UString</a>&amp; space, off_t size); <span class="comment">// temporary space for upload file...</span>
+<a name="l00772"></a>00772                 U_RETURN(result);
+<a name="l00773"></a>00773                 }
 <a name="l00774"></a>00774 
-<a name="l00775"></a>00775         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------</span>
-<a name="l00776"></a>00776         <span class="comment">// create a unique temporary file</span>
-<a name="l00777"></a>00777         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------</span>
-<a name="l00778"></a>00778         <span class="comment">// char pathname[] = &quot;/tmp/dataXXXXXX&quot;</span>
-<a name="l00779"></a>00779         <span class="comment">// The last six characters of template must be XXXXXX and these are replaced with a string that makes the filename unique</span>
-<a name="l00780"></a>00780         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------</span>
-<a name="l00781"></a>00781 
-<a name="l00782"></a>00782         <span class="keyword">static</span> <span class="keywordtype">int</span> mkstemp(<span class="keywordtype">char</span>* _template)
-<a name="l00783"></a>00783                 {
-<a name="l00784"></a>00784                 U_TRACE(1, <span class="stringliteral">&quot;UFile::mkstemp(%S)&quot;</span>, _template)
-<a name="l00785"></a>00785 
-<a name="l00786"></a>00786                 errno = 0; <span class="comment">// mkstemp may not set it on error</span>
-<a name="l00787"></a>00787 
-<a name="l00788"></a>00788                 <span class="keywordtype">int</span> fd = U_SYSCALL(mkstemp, <span class="stringliteral">&quot;%S&quot;</span>, U_PATH_CONV(_template));
+<a name="l00775"></a>00775 <span class="preprocessor">#endif</span>
+<a name="l00776"></a>00776 <span class="preprocessor"></span>
+<a name="l00777"></a>00777         <span class="comment">/*</span>
+<a name="l00778"></a>00778 <span class="comment">        Expands all symbolic links and resolves references to &apos;/./&apos;, &apos;/../&apos; and extra &apos;/&apos; characters in the null</span>
+<a name="l00779"></a>00779 <span class="comment">        terminated string named by path and stores the canonicalized absolute pathname in the return string.</span>
+<a name="l00780"></a>00780 <span class="comment">        The resulting string will have no symbolic link, &apos;/./&apos; or &apos;/../&apos; components</span>
+<a name="l00781"></a>00781 <span class="comment">        */</span>
+<a name="l00782"></a>00782 
+<a name="l00783"></a>00783         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getRealPath(<span class="keyword">const</span> <span class="keywordtype">char</span>* path);
+<a name="l00784"></a>00784 
+<a name="l00785"></a>00785         <span class="comment">// TEMP FILES</span>
+<a name="l00786"></a>00786 
+<a name="l00787"></a>00787                          <span class="keywordtype">bool</span> mkTemp(<span class="keyword">const</span> <span class="keywordtype">char</span>* _tmpl = <span class="stringliteral">&quot;lockXXXXXX&quot;</span>);  <span class="comment">// temporary  file for locking...</span>
+<a name="l00788"></a>00788         <span class="keyword">static</span> <span class="keywordtype">bool</span> mkTempStorage(<a class="code" href="classUString.html">UString</a>&amp; space, off_t size); <span class="comment">// temporary space for upload file...</span>
 <a name="l00789"></a>00789 
-<a name="l00790"></a>00790                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;_template = %S&quot;</span>, _template)
-<a name="l00791"></a>00791 
-<a name="l00792"></a>00792                 U_RETURN(fd);
-<a name="l00793"></a>00793                 }
-<a name="l00794"></a>00794 
+<a name="l00790"></a>00790         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------</span>
+<a name="l00791"></a>00791         <span class="comment">// create a unique temporary file</span>
+<a name="l00792"></a>00792         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------</span>
+<a name="l00793"></a>00793         <span class="comment">// char pathname[] = &quot;/tmp/dataXXXXXX&quot;</span>
+<a name="l00794"></a>00794         <span class="comment">// The last six characters of template must be XXXXXX and these are replaced with a string that makes the filename unique</span>
 <a name="l00795"></a>00795         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------</span>
-<a name="l00796"></a>00796         <span class="comment">// mkdtemp - create a unique temporary directory</span>
-<a name="l00797"></a>00797         <span class="comment">// ------------------------------------------------------------------------------------------------------------</span>
-<a name="l00798"></a>00798         <span class="comment">// The mkdtemp() function generates a uniquely-named temporary directory from template. The last six characters</span>
-<a name="l00799"></a>00799         <span class="comment">// of template must be XXXXXX and these are replaced with a string that makes the directory name unique.</span>
-<a name="l00800"></a>00800         <span class="comment">// The directory is then created with permissions 0700. Since it will be modified, template must not be a string</span>
-<a name="l00801"></a>00801         <span class="comment">// constant, but should be declared as a character array.</span>
-<a name="l00802"></a>00802         <span class="comment">// ------------------------------------------------------------------------------------------------------------</span>
-<a name="l00803"></a>00803 
-<a name="l00804"></a>00804         <span class="keyword">static</span> <span class="keywordtype">bool</span> mkdtemp(<a class="code" href="classUString.html">UString</a>&amp; _template);
-<a name="l00805"></a>00805 
-<a name="l00806"></a>00806         <span class="comment">/*</span>
-<a name="l00807"></a>00807 <span class="comment">        sendfile() copies data between one file descriptor and another. Either or both of these file descriptors may refer to a socket.</span>
-<a name="l00808"></a>00808 <span class="comment">        OUT_FD should be a descriptor opened for writing. POFFSET is a pointer to a variable holding the input file pointer position from</span>
-<a name="l00809"></a>00809 <span class="comment">        which sendfile() will start reading data. When sendfile() returns, this variable will be set to the offset of the byte following</span>
-<a name="l00810"></a>00810 <span class="comment">        the last byte that was read. COUNT is the number of bytes to copy between file descriptors. Because this copying is done within</span>
-<a name="l00811"></a>00811 <span class="comment">        the kernel, sendfile() does not need to spend time transferring data to and from user space.</span>
-<a name="l00812"></a>00812 <span class="comment">        */</span>
-<a name="l00813"></a>00813 
-<a name="l00814"></a>00814         <span class="keywordtype">bool</span> sendfile(<span class="keywordtype">int</span> out_fd, off_t* poffset = 0, <span class="keywordtype">size_t</span> count = 0)
-<a name="l00815"></a>00815                 {
-<a name="l00816"></a>00816                 U_TRACE(1, <span class="stringliteral">&quot;UFile::sendfile(%d,%p,%lu)&quot;</span>, out_fd, poffset, count)
-<a name="l00817"></a>00817 
-<a name="l00818"></a>00818                 U_CHECK_MEMORY
-<a name="l00819"></a>00819 
-<a name="l00820"></a>00820                 U_INTERNAL_ASSERT_DIFFERS(fd, -1)
-<a name="l00821"></a>00821                 U_INTERNAL_ASSERT_MAJOR(st_size, 0)
-<a name="l00822"></a>00822                 U_INTERNAL_ASSERT_POINTER(path_relativ)
-<a name="l00823"></a>00823 
-<a name="l00824"></a>00824                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;path_relativ(%u) = %.*S&quot;</span>, path_relativ_len, path_relativ_len, path_relativ)
-<a name="l00825"></a>00825 
-<a name="l00826"></a>00826                 <span class="keywordflow">if</span> (count == 0) count = st_size;
-<a name="l00827"></a>00827 
-<a name="l00828"></a>00828                 <span class="keywordtype">bool</span> result = (U_SYSCALL(sendfile, <span class="stringliteral">&quot;%d,%d,%p,%lu&quot;</span>, out_fd, fd, poffset, count) == (ssize_t)count);
-<a name="l00829"></a>00829 
-<a name="l00830"></a>00830                 U_RETURN(result);
-<a name="l00831"></a>00831                 }
+<a name="l00796"></a>00796 
+<a name="l00797"></a>00797         <span class="keyword">static</span> <span class="keywordtype">int</span> mkstemp(<span class="keywordtype">char</span>* _template)
+<a name="l00798"></a>00798                 {
+<a name="l00799"></a>00799                 U_TRACE(1, <span class="stringliteral">&quot;UFile::mkstemp(%S)&quot;</span>, _template)
+<a name="l00800"></a>00800 
+<a name="l00801"></a>00801                 errno = 0; <span class="comment">// mkstemp may not set it on error</span>
+<a name="l00802"></a>00802 
+<a name="l00803"></a>00803                 <span class="keywordtype">int</span> fd = U_SYSCALL(mkstemp, <span class="stringliteral">&quot;%S&quot;</span>, U_PATH_CONV(_template));
+<a name="l00804"></a>00804 
+<a name="l00805"></a>00805                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;_template = %S&quot;</span>, _template)
+<a name="l00806"></a>00806 
+<a name="l00807"></a>00807                 U_RETURN(fd);
+<a name="l00808"></a>00808                 }
+<a name="l00809"></a>00809 
+<a name="l00810"></a>00810         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------</span>
+<a name="l00811"></a>00811         <span class="comment">// mkdtemp - create a unique temporary directory</span>
+<a name="l00812"></a>00812         <span class="comment">// ------------------------------------------------------------------------------------------------------------</span>
+<a name="l00813"></a>00813         <span class="comment">// The mkdtemp() function generates a uniquely-named temporary directory from template. The last six characters</span>
+<a name="l00814"></a>00814         <span class="comment">// of template must be XXXXXX and these are replaced with a string that makes the directory name unique.</span>
+<a name="l00815"></a>00815         <span class="comment">// The directory is then created with permissions 0700. Since it will be modified, template must not be a string</span>
+<a name="l00816"></a>00816         <span class="comment">// constant, but should be declared as a character array.</span>
+<a name="l00817"></a>00817         <span class="comment">// ------------------------------------------------------------------------------------------------------------</span>
+<a name="l00818"></a>00818 
+<a name="l00819"></a>00819         <span class="keyword">static</span> <span class="keywordtype">bool</span> mkdtemp(<a class="code" href="classUString.html">UString</a>&amp; _template);
+<a name="l00820"></a>00820 
+<a name="l00821"></a>00821         <span class="comment">/*</span>
+<a name="l00822"></a>00822 <span class="comment">        sendfile() copies data between one file descriptor and another. Either or both of these file descriptors may refer to a socket.</span>
+<a name="l00823"></a>00823 <span class="comment">        OUT_FD should be a descriptor opened for writing. POFFSET is a pointer to a variable holding the input file pointer position from</span>
+<a name="l00824"></a>00824 <span class="comment">        which sendfile() will start reading data. When sendfile() returns, this variable will be set to the offset of the byte following</span>
+<a name="l00825"></a>00825 <span class="comment">        the last byte that was read. COUNT is the number of bytes to copy between file descriptors. Because this copying is done within</span>
+<a name="l00826"></a>00826 <span class="comment">        the kernel, sendfile() does not need to spend time transferring data to and from user space.</span>
+<a name="l00827"></a>00827 <span class="comment">        */</span>
+<a name="l00828"></a>00828 
+<a name="l00829"></a>00829         <span class="keywordtype">bool</span> sendfile(<span class="keywordtype">int</span> out_fd, off_t* poffset = 0, <span class="keywordtype">size_t</span> count = 0)
+<a name="l00830"></a>00830                 {
+<a name="l00831"></a>00831                 U_TRACE(1, <span class="stringliteral">&quot;UFile::sendfile(%d,%p,%lu)&quot;</span>, out_fd, poffset, count)
 <a name="l00832"></a>00832 
-<a name="l00833"></a>00833         <span class="comment">// DIR OP</span>
+<a name="l00833"></a>00833                 U_CHECK_MEMORY
 <a name="l00834"></a>00834 
-<a name="l00835"></a>00835         <span class="keyword">static</span> <span class="keywordtype">bool</span> mkdir(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, mode_t mode);
-<a name="l00836"></a>00836 
-<a name="l00837"></a>00837         <span class="keyword">static</span> <span class="keywordtype">bool</span> rmdir(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, <span class="keywordtype">bool</span> remove_all = <span class="keyword">false</span>);
+<a name="l00835"></a>00835                 U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+<a name="l00836"></a>00836                 U_INTERNAL_ASSERT_MAJOR(st_size, 0)
+<a name="l00837"></a>00837                 U_INTERNAL_ASSERT_POINTER(path_relativ)
 <a name="l00838"></a>00838 
-<a name="l00839"></a>00839         <span class="comment">// Creates all directories in this path. This method returns true if all directories in this path are created</span>
+<a name="l00839"></a>00839                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;path_relativ(%u) = %.*S&quot;</span>, path_relativ_len, path_relativ_len, path_relativ)
 <a name="l00840"></a>00840 
-<a name="l00841"></a>00841         <span class="keyword">static</span> <span class="keywordtype">bool</span> mkdirs(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, mode_t mode = PERM_DIRECTORY);
+<a name="l00841"></a>00841                 <span class="keywordflow">if</span> (count == 0) count = st_size;
 <a name="l00842"></a>00842 
-<a name="l00843"></a>00843         <span class="comment">// If path includes more than one pathname component, remove it, then strip the last component</span>
-<a name="l00844"></a>00844         <span class="comment">// and remove the resulting directory, etc., until all components have been removed.</span>
-<a name="l00845"></a>00845         <span class="comment">// The pathname component must be empty...</span>
-<a name="l00846"></a>00846 
-<a name="l00847"></a>00847         <span class="keyword">static</span> <span class="keywordtype">bool</span> rmdirs(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, <span class="keywordtype">bool</span> remove_all = <span class="keyword">false</span>);
-<a name="l00848"></a>00848 
-<a name="l00849"></a>00849         <span class="comment">// LS</span>
-<a name="l00850"></a>00850 
-<a name="l00851"></a>00851         <span class="keyword">static</span> uint32_t listContentOf(<a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a>&amp; vec,                     <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* dir = 0, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* filter = 0);
-<a name="l00852"></a>00852         <span class="keyword">static</span> <span class="keywordtype">void</span>              listRecursiveContentOf(<a class="code" href="classUTree_3_01UString_01_4.html">UTree&lt;UString&gt;</a>&amp; tree, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* dir = 0, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* filter = 0);
-<a name="l00853"></a>00853         <span class="keyword">static</span> uint32_t buildFilenameListFrom(<a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a>&amp; vec, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; arg,                 <span class="keywordtype">char</span> sep = <span class="charliteral">&apos;,&apos;</span>);
-<a name="l00854"></a>00854 
-<a name="l00855"></a>00855         <span class="comment">// DEBUG</span>
-<a name="l00856"></a>00856 
-<a name="l00857"></a>00857 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00858"></a>00858 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00859"></a>00859 <span class="preprocessor">#endif</span>
-<a name="l00860"></a>00860 <span class="preprocessor"></span>
-<a name="l00861"></a>00861 <span class="keyword">protected</span>:
-<a name="l00862"></a>00862         <span class="keywordtype">char</span>* map;
-<a name="l00863"></a>00863         <span class="keyword">const</span> <span class="keywordtype">char</span>* path_relativ;  <span class="comment">// la stringa potrebbe non essere scrivibile...</span>
-<a name="l00864"></a>00864         uint32_t path_relativ_len;
+<a name="l00843"></a>00843                 <span class="keywordtype">bool</span> result = (U_SYSCALL(sendfile, <span class="stringliteral">&quot;%d,%d,%p,%lu&quot;</span>, out_fd, fd, poffset, count) == (ssize_t)count);
+<a name="l00844"></a>00844 
+<a name="l00845"></a>00845                 U_RETURN(result);
+<a name="l00846"></a>00846                 }
+<a name="l00847"></a>00847 
+<a name="l00848"></a>00848         <span class="comment">// DIR OP</span>
+<a name="l00849"></a>00849 
+<a name="l00850"></a>00850         <span class="keyword">static</span> <span class="keywordtype">bool</span> mkdir(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, mode_t mode);
+<a name="l00851"></a>00851 
+<a name="l00852"></a>00852         <span class="keyword">static</span> <span class="keywordtype">bool</span> rmdir(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, <span class="keywordtype">bool</span> remove_all = <span class="keyword">false</span>);
+<a name="l00853"></a>00853 
+<a name="l00854"></a>00854         <span class="comment">// Creates all directories in this path. This method returns true if all directories in this path are created</span>
+<a name="l00855"></a>00855 
+<a name="l00856"></a>00856         <span class="keyword">static</span> <span class="keywordtype">bool</span> mkdirs(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, mode_t mode = PERM_DIRECTORY);
+<a name="l00857"></a>00857 
+<a name="l00858"></a>00858         <span class="comment">// If path includes more than one pathname component, remove it, then strip the last component</span>
+<a name="l00859"></a>00859         <span class="comment">// and remove the resulting directory, etc., until all components have been removed.</span>
+<a name="l00860"></a>00860         <span class="comment">// The pathname component must be empty...</span>
+<a name="l00861"></a>00861 
+<a name="l00862"></a>00862         <span class="keyword">static</span> <span class="keywordtype">bool</span> rmdirs(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, <span class="keywordtype">bool</span> remove_all = <span class="keyword">false</span>);
+<a name="l00863"></a>00863 
+<a name="l00864"></a>00864         <span class="comment">// LS</span>
 <a name="l00865"></a>00865 
-<a name="l00866"></a>00866         <span class="keywordtype">int</span> fd;
-<a name="l00867"></a>00867         <span class="keywordtype">size_t</span> map_size;                                <span class="comment">// size to mmap(), may be larger than the size of the file...</span>
-<a name="l00868"></a>00868         <a class="code" href="classUString.html">UString</a> pathname;
+<a name="l00866"></a>00866         <span class="keyword">static</span> uint32_t listContentOf(<a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a>&amp; vec,                     <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* dir = 0, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* filter = 0);
+<a name="l00867"></a>00867         <span class="keyword">static</span> <span class="keywordtype">void</span>              listRecursiveContentOf(<a class="code" href="classUTree_3_01UString_01_4.html">UTree&lt;UString&gt;</a>&amp; tree, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* dir = 0, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* filter = 0);
+<a name="l00868"></a>00868         <span class="keyword">static</span> uint32_t buildFilenameListFrom(<a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a>&amp; vec, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; arg,                 <span class="keywordtype">char</span> sep = <span class="charliteral">&apos;,&apos;</span>);
 <a name="l00869"></a>00869 
-<a name="l00870"></a>00870         <span class="keywordtype">void</span> setPathRelativ();
-<a name="l00871"></a>00871         <span class="keywordtype">void</span> substitute(<a class="code" href="classUFile.html">UFile</a>&amp; file);
-<a name="l00872"></a>00872         <span class="keywordtype">void</span> setPath(<span class="keyword">const</span> <a class="code" href="classUFile.html">UFile</a>&amp; file, <span class="keywordtype">char</span>* buffer_path, <span class="keyword">const</span> <span class="keywordtype">char</span>* suffix, uint32_t len);
-<a name="l00873"></a>00873 
-<a name="l00874"></a>00874 <span class="keyword">private</span>:
-<a name="l00875"></a>00875 <span class="preprocessor">#ifdef __MINGW32__</span>
-<a name="l00876"></a>00876 <span class="preprocessor"></span>        uint64_t u_inode;
-<a name="l00877"></a>00877 <span class="preprocessor">#endif</span>
-<a name="l00878"></a>00878 <span class="preprocessor"></span>
-<a name="l00879"></a>00879         <a class="code" href="classUFile.html">UFile</a>(<span class="keyword">const</span> <a class="code" href="classUFile.html">UFile</a>&amp;)            {}
-<a name="l00880"></a>00880         <a class="code" href="classUFile.html">UFile</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUFile.html">UFile</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00881"></a>00881 
-<a name="l00882"></a>00882         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classURDB.html" title="URDB is a fast, Reliable, simple class for creating and reading DataBases.">URDB</a>;
-<a name="l00883"></a>00883 };
+<a name="l00870"></a>00870         <span class="comment">// DEBUG</span>
+<a name="l00871"></a>00871 
+<a name="l00872"></a>00872 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00873"></a>00873 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00874"></a>00874 <span class="preprocessor">#endif</span>
+<a name="l00875"></a>00875 <span class="preprocessor"></span>
+<a name="l00876"></a>00876 <span class="keyword">protected</span>:
+<a name="l00877"></a>00877         <span class="keywordtype">char</span>* map;
+<a name="l00878"></a>00878         <span class="keyword">const</span> <span class="keywordtype">char</span>* path_relativ;  <span class="comment">// la stringa potrebbe non essere scrivibile...</span>
+<a name="l00879"></a>00879         uint32_t path_relativ_len;
+<a name="l00880"></a>00880 
+<a name="l00881"></a>00881         <span class="keywordtype">int</span> fd;
+<a name="l00882"></a>00882         <span class="keywordtype">size_t</span> map_size;                                <span class="comment">// size to mmap(), may be larger than the size of the file...</span>
+<a name="l00883"></a>00883         <a class="code" href="classUString.html">UString</a> pathname;
 <a name="l00884"></a>00884 
-<a name="l00885"></a>00885 <span class="preprocessor">#endif</span>
+<a name="l00885"></a>00885         <span class="keywordtype">void</span> setPathRelativ();
+<a name="l00886"></a>00886         <span class="keywordtype">void</span> substitute(<a class="code" href="classUFile.html">UFile</a>&amp; file);
+<a name="l00887"></a>00887         <span class="keywordtype">void</span> setPath(<span class="keyword">const</span> <a class="code" href="classUFile.html">UFile</a>&amp; file, <span class="keywordtype">char</span>* buffer_path, <span class="keyword">const</span> <span class="keywordtype">char</span>* suffix, uint32_t len);
+<a name="l00888"></a>00888 
+<a name="l00889"></a>00889 <span class="keyword">private</span>:
+<a name="l00890"></a>00890 <span class="preprocessor">#ifdef __MINGW32__</span>
+<a name="l00891"></a>00891 <span class="preprocessor"></span>        uint64_t u_inode;
+<a name="l00892"></a>00892 <span class="preprocessor">#endif</span>
+<a name="l00893"></a>00893 <span class="preprocessor"></span>
+<a name="l00894"></a>00894         <a class="code" href="classUFile.html">UFile</a>(<span class="keyword">const</span> <a class="code" href="classUFile.html">UFile</a>&amp;)            {}
+<a name="l00895"></a>00895         <a class="code" href="classUFile.html">UFile</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUFile.html">UFile</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00896"></a>00896 
+<a name="l00897"></a>00897         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classURDB.html" title="URDB is a fast, Reliable, simple class for creating and reading DataBases.">URDB</a>;
+<a name="l00898"></a>00898 };
+<a name="l00899"></a>00899 
+<a name="l00900"></a>00900 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 31 17:08:54 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 2 16:38:08 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

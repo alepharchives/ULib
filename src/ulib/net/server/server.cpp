@@ -23,34 +23,37 @@
 #  include <ulib/net/unixsocket.h>
 #endif
 
-#define U_DEFAULT_PORT 80
+#define U_DEFAULT_PORT     80
+#define U_SOCKET_FLAGS     ptr->socket_flags
+#define U_TOT_CONNECTION   ptr->tot_connection
 
-int                      UServer_Base::port;
-int                      UServer_Base::req_timeout;
-int                      UServer_Base::cgi_timeout;
-int                      UServer_Base::log_file_sz;
-int                      UServer_Base::verify_mode;
-int                      UServer_Base::socket_flags = -1;
-int                      UServer_Base::num_connection;
-int                      UServer_Base::max_Keep_Alive;
-int                      UServer_Base::preforked_num_kids;
-bool                     UServer_Base::flag_loop;
-bool                     UServer_Base::digest_authentication;
-bool                     UServer_Base::flag_use_tcp_optimization;
-char                     UServer_Base::mod_name[20];
-ULog*                    UServer_Base::log;
-UString*                 UServer_Base::host;
-USocket*                 UServer_Base::socket;
-UProcess*                UServer_Base::proc;
-UServer_Base*            UServer_Base::pthis;
-UVector<UIPAllow*>*      UServer_Base::vallow_IP;
+int                        UServer_Base::port;
+int                        UServer_Base::req_timeout;
+int                        UServer_Base::cgi_timeout;
+int                        UServer_Base::log_file_sz;
+int                        UServer_Base::verify_mode;
+int                        UServer_Base::num_connection;
+int                        UServer_Base::max_Keep_Alive;
+int                        UServer_Base::preforked_num_kids;
+bool                       UServer_Base::flag_loop;
+bool                       UServer_Base::digest_authentication;
+bool                       UServer_Base::flag_use_tcp_optimization;
+char                       UServer_Base::mod_name[20];
+ULog*                      UServer_Base::log;
+ULock*                     UServer_Base::lock;
+UString*                   UServer_Base::host;
+USocket*                   UServer_Base::socket;
+UProcess*                  UServer_Base::proc;
+UServer_Base*              UServer_Base::pthis;
+UVector<UIPAllow*>*        UServer_Base::vallow_IP;
+UServer_Base::shared_data* UServer_Base::ptr;
 #ifdef HAVE_MODULES
-UVector<UServerPlugIn*>* UServer_Base::vplugin;
+UVector<UServerPlugIn*>*   UServer_Base::vplugin;
 #endif
 #ifdef HAVE_LIBEVENT
-UEvent<UServer_Base>*    UServer_Base::pevent;
+UEvent<UServer_Base>*      UServer_Base::pevent;
 #else
-UEventTime*              UServer_Base::ptime;
+UEventTime*                UServer_Base::ptime;
 #endif
 
 const UString* UServer_Base::str_USE_IPV6;
@@ -279,6 +282,13 @@ UServer_Base::~UServer_Base()
    if (vallow_IP)  delete vallow_IP;
 
    UClientImage_Base::clear();
+
+   if (lock)
+      {
+      if (lock->isShared()) UFile::munmap(ptr, sizeof(shared_data) + sizeof(sem_t));
+
+      delete lock;
+      }
 }
 
 void UServer_Base::loadConfigParam(UFileConfig& cfg)
@@ -349,10 +359,6 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE);
    u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE, 128);
 
-#ifndef __MINGW32__
-   preforked_num_kids = cfg.readLong(*str_PREFORK_CHILD);
-#endif
-
    if (cgi_timeout) UCommand::setTimeout(cgi_timeout);
 
    UClientImage_Base::setMsgWelcome(cfg[*str_MSG_WELCOME]);
@@ -364,6 +370,27 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    password    = cfg[*str_PASSWORD];
    cert_file   = cfg[*str_CERT_FILE];
    verify_mode = cfg.readLong(*str_VERIFY_MODE);
+#endif
+
+   U_INTERNAL_ASSERT_EQUALS(lock,0)
+
+   lock = U_NEW(ULock);
+
+   U_INTERNAL_ASSERT_POINTER(lock)
+
+#ifndef __MINGW32__
+   preforked_num_kids = cfg.readLong(*str_PREFORK_CHILD);
+
+   if (isPreForked())
+      {
+      ptr = (shared_data*) UFile::mmap(sizeof(shared_data) + sizeof(sem_t));
+
+      U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
+
+      U_SOCKET_FLAGS = -1; // NB: to init...
+
+      lock->init((sem_t*)((char*)ptr + sizeof(shared_data)));
+      }
 #endif
 
    // write pid on file...
@@ -711,18 +738,32 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
 
+   /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
+    * a readability event because the connection might have been removed by an asynchronous network error or
+    * another thread before accept() is called. If this happens then the call will block waiting for the next
+    * connection to arrive. To ensure that accept() never blocks, the passed socket sockfd needs to have the
+    * O_NONBLOCK flag set (see socket(7)).
+    */
+
    if (isPreForked())
       {
-      /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
-       * a readability event because the connection might have been removed by an asynchronous network error or
-       * another thread before accept() is called. If this happens then the call will block waiting for the next
-       * connection to arrive. To ensure that accept() never blocks, the passed socket sockfd needs to have the
-       * O_NONBLOCK flag set (see socket(7)).
-       */
+      bool block = (num_connection == 0);
 
-      U_INTERNAL_DUMP("num_connection = %d", num_connection)
+      U_INTERNAL_DUMP("block = %b num_connection = %d", block, num_connection)
 
-      (void) UFile::setNonBlocking(socket->getFd(), -1, (num_connection == 0));
+      if (block != UFile::isBlocking(UEventFd::fd, U_SOCKET_FLAGS))
+         {
+         lock->lock();
+
+         U_SOCKET_FLAGS = (block ? (U_SOCKET_FLAGS & ~O_NONBLOCK)
+                                 : (U_SOCKET_FLAGS |  O_NONBLOCK));
+
+         U_INTERNAL_DUMP("flags = %B", U_SOCKET_FLAGS)
+
+         (void) U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_SETFL, U_SOCKET_FLAGS);
+
+         lock->unlock();
+         }
       }
 
    (void) socket->acceptClient(UClientImage_Base::socket);
@@ -730,6 +771,47 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
    UServer_Base::handlerNewConnection();
 
    U_RETURN(U_NOTIFIER_OK);
+}
+
+const char* UServer_Base::getNumConnection()
+{
+   U_TRACE(0, "UServer_Base::handlerCloseConnection()")
+
+   static char buffer[32];
+
+   if (isPreForked()) (void) u_snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
+   else               (void) u_snprintf(buffer, sizeof(buffer), "%d",      num_connection);
+
+   U_RETURN(buffer);
+}
+
+void UServer_Base::handlerCloseConnection()
+{
+   U_TRACE(0, "UServer_Base::handlerCloseConnection()")
+
+   U_INTERNAL_ASSERT_POINTER(pthis)
+   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
+
+   --num_connection;
+
+   U_INTERNAL_DUMP("num_connection = %d", num_connection)
+
+   if (isPreForked())
+      {
+      U_TOT_CONNECTION--;
+
+      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+      }
+
+   if (isLog())
+      {
+      log->log("client closed connection from %.*s, %s clients still connected\n",
+                     U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
+
+      U_INTERNAL_DUMP("fd = %d", UClientImage_Base::pClientImage->UEventFd::fd)
+
+      U_ASSERT(UClientImage_Base::pClientImage->UEventFd::fd == UClientImage_Base::pClientImage->logbuf->strtol())
+      }
 }
 
 void UServer_Base::handlerNewConnection()
@@ -779,7 +861,13 @@ void UServer_Base::handlerNewConnection()
    //                                                                    >1 - pool of process serialize plus monitoring process)
    // --------------------------------------------------------------------------------------------------------------------------
 
-   if (isClassic())
+   if (isPreForked())
+      {
+      U_TOT_CONNECTION++;
+
+      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+      }
+   else if (isClassic())
       {
       U_INTERNAL_ASSERT_POINTER(proc)
 
@@ -800,9 +888,19 @@ void UServer_Base::handlerNewConnection()
          }
       }
 
-   if (req_timeout) (void) UClientImage_Base::socket->setTimeoutRCV(req_timeout * 1000);
-
    pthis->newClientImage();
+
+   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
+
+   if (isLog())
+      {
+      U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage->logbuf)
+
+      log->log("new client connected from %.*s, %s clients currently connected\n",
+                        U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
+      }
+
+   if (req_timeout) (void) UClientImage_Base::socket->setTimeoutRCV(req_timeout * 1000);
 
    UClientImage_Base::run();
 }
@@ -1106,12 +1204,12 @@ const char* UServer_Base::dump(bool reset) const
                   << "cgi_timeout               " << cgi_timeout                 << '\n'
                   << "verify_mode               " << verify_mode                 << '\n'
                   << "log_file_sz               " << log_file_sz                 << '\n'
-                  << "socket_flags              " << socket_flags                << '\n'
                   << "num_connection            " << num_connection              << '\n'
                   << "preforked_num_kids        " << preforked_num_kids          << '\n'
                   << "digest_authentication     " << digest_authentication       << '\n'
                   << "flag_use_tcp_optimization " << flag_use_tcp_optimization   << '\n'
                   << "log           (ULog       " << (void*)log                  << ")\n"
+                  << "lock          (ULock      " << (void*)lock                 << ")\n"
                   << "socket        (USocket    " << (void*)socket               << ")\n"
                   << "host          (UString    " << (void*)host                 << ")\n"
                   << "server        (UString    " << (void*)&server              << ")\n"

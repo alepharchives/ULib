@@ -29,7 +29,6 @@ bool            ULog::bsyslog;
 ULog*           ULog::pthis;
 char*           ULog::file_limit;
 ULock*          ULog::lock;
-uint32_t        ULog::data_available;
 const char*     ULog::fmt = "*** %s %N (pid %P) [%U@%H] ***\n";
 const char*     ULog::prefix;
 ULog::log_data* ULog::ptr;
@@ -106,7 +105,7 @@ void ULog::setShared()
 
       log_data* tmp = ptr;
 
-      ptr = (log_data*) UFile::mmap(sizeof(log_data) + sizeof(sem_t) + data_available);
+      ptr = (log_data*) UFile::mmap(sizeof(log_data) + sizeof(sem_t));
 
       U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
 
@@ -269,7 +268,7 @@ void ULog::close()
 
          lock->unlock();
 
-         if (lock->isShared()) UFile::munmap(ptr, sizeof(log_data) + sizeof(sem_t) + data_available);
+         if (lock->isShared()) UFile::munmap(ptr, sizeof(log_data) + sizeof(sem_t));
 
          return;
          }

@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/file.h>
 #include <ulib/timeval.h>
 #include <ulib/net/socket.h>
 #include <ulib/utility/interrupt.h>
@@ -138,7 +139,12 @@ bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)
       checkErrno(iBytesTransferred);
 
 #  ifdef DEBUG
-      if (iState == TIMEOUT) U_INTERNAL_ASSERT((fcntl(iSockDesc,F_GETFL,0) & O_NONBLOCK) != O_NONBLOCK)
+      if (iState == TIMEOUT)
+         {
+         int flags = -1;
+
+         U_ASSERT(UFile::isBlocking(iSockDesc, flags))
+         }
 #  endif
 
       U_RETURN(false);

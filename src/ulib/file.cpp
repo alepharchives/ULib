@@ -702,39 +702,37 @@ bool UFile::pwrite(const void* buf, size_t count, off_t offset)
    U_RETURN(result);
 }
 
-int UFile::setNonBlocking(int fd, int flags, bool block)
+void UFile::setBlocking(int fd, int& flags, bool block)
 {
-   U_TRACE(1, "UFile::setNonBlocking(%d,%d,%b)", fd, flags, block)
+   U_TRACE(1, "UFile::setBlocking(%d,%d,%b)", fd, flags, block)
 
    U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
-/* ------------------------------------------------------
- * #define O_RDONLY           00
- * #define O_WRONLY           01
- * #define O_RDWR             02
- * #define O_ACCMODE        0003
- * #define O_CREAT          0100 // not fcntl
- * #define O_EXCL           0200 // not fcntl
- * #define O_NOCTTY         0400 // not fcntl
- * #define O_TRUNC         01000 // not fcntl
- * #define O_APPEND        02000
- * #define O_NONBLOCK      04000
- * #define O_SYNC         010000
- * #define O_ASYNC        020000
- * #define O_DIRECT       040000 // Direct disk access
- * #define O_DIRECTORY   0200000 // Must be a directory
- * #define O_NOFOLLOW    0400000 // Do not follow links
- * #define O_NOATIME    01000000 // Do not set atime
- * #define O_CLOEXEC    02000000 // Set close_on_exec
- * ------------------------------------------------------
- * #define O_NDELAY      O_NONBLOCK
- * #define O_FSYNC       O_SYNC
- * ------------------------------------------------------
- */
+   /* ------------------------------------------------------
+   * #define O_RDONLY           00
+   * #define O_WRONLY           01
+   * #define O_RDWR             02
+   * #define O_ACCMODE        0003
+   * #define O_CREAT          0100 // not fcntl
+   * #define O_EXCL           0200 // not fcntl
+   * #define O_NOCTTY         0400 // not fcntl
+   * #define O_TRUNC         01000 // not fcntl
+   * #define O_APPEND        02000
+   * #define O_NONBLOCK      04000
+   * #define O_SYNC         010000
+   * #define O_ASYNC        020000
+   * #define O_DIRECT       040000 // Direct disk access
+   * #define O_DIRECTORY   0200000 // Must be a directory
+   * #define O_NOFOLLOW    0400000 // Do not follow links
+   * #define O_NOATIME    01000000 // Do not set atime
+   * #define O_CLOEXEC    02000000 // Set close_on_exec
+   * ------------------------------------------------------
+   * #define O_NDELAY    O_NONBLOCK
+   * #define O_FSYNC     O_SYNC
+   * ------------------------------------------------------
+   */
 
-   if (flags == -1) flags = U_SYSCALL(fcntl, "%d,%d,%d", fd, F_GETFL, 0);
-
-   bool blocking = ((flags & O_NONBLOCK) != O_NONBLOCK); // actual state is blocking...?
+   bool blocking = isBlocking(fd, flags); // actual state is blocking...?
 
    // ----------------------------------------------------------------------------------------
    // determina se le operazioni I/O sul descrittore indicato sono di tipo bloccante o meno...
@@ -743,14 +741,15 @@ int UFile::setNonBlocking(int fd, int flags, bool block)
    // flags |  O_NONBLOCK: read() e write() non bloccanti (casi speciali)
    // ----------------------------------------------------------------------------------------
 
-   int mask = (block ? (blocking ? 0                     : (flags & ~O_NONBLOCK))
-                     : (blocking ? (flags | O_NONBLOCK)  : 0));
+   if (block != blocking)
+      {
+      flags = (blocking ? (flags |  O_NONBLOCK) 
+                        : (flags & ~O_NONBLOCK));
 
-   U_INTERNAL_DUMP("blocking = %b mask = %B", blocking, mask)
+      U_INTERNAL_DUMP("flags = %B", flags)
 
-   if (mask) (void) U_SYSCALL(fcntl, "%d,%d,%d", fd, F_SETFL, (flags = mask));
-
-   U_RETURN(flags);
+      (void) U_SYSCALL(fcntl, "%d,%d,%d", fd, F_SETFL, flags);
+      }
 }
 
 // risolve link simbolici e/o riferimenti a "./" and "../"

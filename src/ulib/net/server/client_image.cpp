@@ -159,19 +159,7 @@ void UClientImage_Base::destroy()
    U_INTERNAL_ASSERT_POINTER(socket)
    U_INTERNAL_ASSERT_POINTER(pClientImage)
 
-   UServer_Base::num_connection--;
-
-   U_INTERNAL_DUMP("num_connection = %d", UServer_Base::num_connection)
-
-   if (UServer_Base::isLog())
-      {
-      UServer_Base::log->log("client closed connection from %.*s, %u clients still connected\n",
-                              U_STRING_TO_TRACE(*(pClientImage->logbuf)), UServer_Base::num_connection);
-
-      U_INTERNAL_DUMP("fd = %d", pClientImage->UEventFd::fd)
-
-      U_ASSERT(pClientImage->UEventFd::fd == pClientImage->logbuf->strtol())
-      }
+   UServer_Base::handlerCloseConnection();
 
 #ifdef DEBUG
    if (pClientImage->logbuf) delete pClientImage->logbuf;
@@ -382,12 +370,6 @@ void UClientImage_Base::run()
 
    U_INTERNAL_ASSERT_POINTER(socket)
    U_INTERNAL_ASSERT_POINTER(pClientImage)
-
-   if (UServer_Base::isLog())
-      {
-      UServer_Base::log->log("new client connected from %.*s, %u clients currently connected\n",
-                                 U_STRING_TO_TRACE(*(pClientImage->logbuf)), UServer_Base::num_connection);
-      }
 
    if (msg_welcome)
       {

@@ -40,135 +40,132 @@
 <a name="l00017"></a>00017 <span class="preprocessor">#include &lt;ulib/file.h&gt;</span>
 <a name="l00018"></a>00018 <span class="preprocessor">#include &lt;ulib/utility/lock.h&gt;</span>
 <a name="l00019"></a>00019 
-<a name="l00020"></a>00020 <span class="preprocessor">#define SHM_ptr (ULog::ptr+sizeof(ULog::log_data))</span>
-<a name="l00021"></a>00021 <span class="preprocessor"></span>
-<a name="l00022"></a>00022 <span class="keyword">class </span><a class="code" href="classULog.html">ULog</a>;
+<a name="l00020"></a>00020 <span class="keyword">class </span><a class="code" href="classULog.html">ULog</a>;
+<a name="l00021"></a>00021 
+<a name="l00022"></a>00022 <span class="keyword">typedef</span> void (*vPFpf)(<span class="keyword">const</span> <a class="code" href="classULog.html">ULog</a>*);
 <a name="l00023"></a>00023 
-<a name="l00024"></a>00024 <span class="keyword">typedef</span> void (*vPFpf)(<span class="keyword">const</span> <a class="code" href="classULog.html">ULog</a>*);
-<a name="l00025"></a>00025 
-<a name="l00026"></a><a class="code" href="classULog.html">00026</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classULog.html">ULog</a> : <span class="keyword">public</span> <a class="code" href="classUFile.html">UFile</a> {
-<a name="l00027"></a>00027 <span class="keyword">public</span>:
-<a name="l00028"></a>00028 
-<a name="l00029"></a><a class="code" href="structULog_1_1log__data.html">00029</a>         <span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="structULog_1_1log__data.html">log_data</a> {
-<a name="l00030"></a>00030                 <span class="keywordtype">char</span>* file_ptr;
-<a name="l00031"></a>00031                 <span class="keywordtype">char</span>* file_page;
-<a name="l00032"></a>00032         } <a class="code" href="structULog_1_1log__data.html">log_data</a>;
-<a name="l00033"></a>00033 
-<a name="l00034"></a>00034         <span class="keyword">static</span> <a class="code" href="classULog.html">ULog</a>* pthis;
-<a name="l00035"></a>00035         <span class="keyword">static</span> <a class="code" href="classULock.html">ULock</a>* lock;
-<a name="l00036"></a>00036         <span class="keyword">static</span> <span class="keywordtype">bool</span>     bsyslog;
-<a name="l00037"></a>00037         <span class="keyword">static</span> <a class="code" href="structULog_1_1log__data.html">log_data</a>* ptr;
-<a name="l00038"></a>00038         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* fmt;
-<a name="l00039"></a>00039         <span class="keyword">static</span> <span class="keywordtype">char</span>* file_limit;
-<a name="l00040"></a>00040         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* prefix;
-<a name="l00041"></a>00041         <span class="keyword">static</span> uint32_t data_available;
-<a name="l00042"></a>00042         <span class="keyword">static</span> vPF backup_log_function;
-<a name="l00043"></a>00043 
-<a name="l00044"></a>00044         <span class="comment">// COSTRUTTORI</span>
-<a name="l00045"></a>00045 
-<a name="l00046"></a>00046         <a class="code" href="classULog.html">ULog</a>()
-<a name="l00047"></a>00047                 {
-<a name="l00048"></a>00048                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classULog.html">ULog</a>, <span class="stringliteral">&quot;&quot;</span>, 0)
+<a name="l00024"></a><a class="code" href="classULog.html">00024</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classULog.html">ULog</a> : <span class="keyword">public</span> <a class="code" href="classUFile.html">UFile</a> {
+<a name="l00025"></a>00025 <span class="keyword">public</span>:
+<a name="l00026"></a>00026 
+<a name="l00027"></a><a class="code" href="structULog_1_1log__data.html">00027</a>         <span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="structULog_1_1log__data.html">log_data</a> {
+<a name="l00028"></a>00028                 <span class="keywordtype">char</span>* file_ptr;
+<a name="l00029"></a>00029                 <span class="keywordtype">char</span>* file_page;
+<a name="l00030"></a>00030         } <a class="code" href="structULog_1_1log__data.html">log_data</a>;
+<a name="l00031"></a>00031 
+<a name="l00032"></a>00032         <span class="keyword">static</span> <a class="code" href="classULog.html">ULog</a>* pthis;
+<a name="l00033"></a>00033         <span class="keyword">static</span> <a class="code" href="classULock.html">ULock</a>* lock;
+<a name="l00034"></a>00034         <span class="keyword">static</span> <span class="keywordtype">bool</span>     bsyslog;
+<a name="l00035"></a>00035         <span class="keyword">static</span> <a class="code" href="structULog_1_1log__data.html">log_data</a>* ptr;
+<a name="l00036"></a>00036         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* fmt;
+<a name="l00037"></a>00037         <span class="keyword">static</span> <span class="keywordtype">char</span>* file_limit;
+<a name="l00038"></a>00038         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* prefix;
+<a name="l00039"></a>00039         <span class="keyword">static</span> vPF backup_log_function;
+<a name="l00040"></a>00040 
+<a name="l00041"></a>00041         <span class="comment">// COSTRUTTORI</span>
+<a name="l00042"></a>00042 
+<a name="l00043"></a>00043         <a class="code" href="classULog.html">ULog</a>()
+<a name="l00044"></a>00044                 {
+<a name="l00045"></a>00045                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classULog.html">ULog</a>, <span class="stringliteral">&quot;&quot;</span>, 0)
+<a name="l00046"></a>00046 
+<a name="l00047"></a>00047                 U_INTERNAL_ASSERT_EQUALS(ptr,0)
+<a name="l00048"></a>00048                 }
 <a name="l00049"></a>00049 
-<a name="l00050"></a>00050                 U_INTERNAL_ASSERT_EQUALS(ptr,0)
-<a name="l00051"></a>00051                 }
-<a name="l00052"></a>00052 
-<a name="l00053"></a>00053         <a class="code" href="classULog.html">ULog</a>(const <a class="code" href="classUString.html">UString</a>&amp; path, uint32_t size = 1024 * 1024) : <a class="code" href="classUFile.html">UFile</a>(path)
-<a name="l00054"></a>00054                 {
-<a name="l00055"></a>00055                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classULog.html">ULog</a>, <span class="stringliteral">&quot;%.*S,%u&quot;</span>, U_STRING_TO_TRACE(path), size)
-<a name="l00056"></a>00056 
-<a name="l00057"></a>00057                 U_INTERNAL_ASSERT_EQUALS(ptr,0)
+<a name="l00050"></a>00050         <a class="code" href="classULog.html">ULog</a>(const <a class="code" href="classUString.html">UString</a>&amp; path, uint32_t size = 1024 * 1024) : <a class="code" href="classUFile.html">UFile</a>(path)
+<a name="l00051"></a>00051                 {
+<a name="l00052"></a>00052                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classULog.html">ULog</a>, <span class="stringliteral">&quot;%.*S,%u&quot;</span>, U_STRING_TO_TRACE(path), size)
+<a name="l00053"></a>00053 
+<a name="l00054"></a>00054                 U_INTERNAL_ASSERT_EQUALS(ptr,0)
+<a name="l00055"></a>00055 
+<a name="l00056"></a>00056                 (<span class="keywordtype">void</span>) <a class="code" href="classULog.html">ULog</a>::open(size);
+<a name="l00057"></a>00057                 }
 <a name="l00058"></a>00058 
-<a name="l00059"></a>00059                 (<span class="keywordtype">void</span>) <a class="code" href="classULog.html">ULog</a>::open(size);
-<a name="l00060"></a>00060                 }
-<a name="l00061"></a>00061 
-<a name="l00062"></a>00062         ~<a class="code" href="classULog.html">ULog</a>();
-<a name="l00063"></a>00063 
-<a name="l00064"></a>00064         <span class="comment">// VARIE</span>
-<a name="l00065"></a>00065 
-<a name="l00066"></a>00066         <span class="keywordtype">bool</span> open(const <a class="code" href="classUString.html">UString</a>&amp; path, uint32_t size = 1024 * 1024, mode_t mode = 0664) { UFile::setPath(path); <span class="keywordflow">return</span> ULog::open(size, mode); }
-<a name="l00067"></a>00067 
-<a name="l00068"></a>00068         <span class="keyword">static</span> <span class="keywordtype">void</span> init();
-<a name="l00069"></a>00069         <span class="keyword">static</span> <span class="keywordtype">void</span> close();
-<a name="l00070"></a>00070         <span class="keyword">static</span> <span class="keywordtype">void</span> reopen();
-<a name="l00071"></a>00071         <span class="keyword">static</span> <span class="keywordtype">bool</span> isSysLog() { <span class="keywordflow">return</span> bsyslog; }
-<a name="l00072"></a>00072 
-<a name="l00073"></a>00073         <span class="comment">// manage shared log</span>
-<a name="l00074"></a>00074 
-<a name="l00075"></a>00075         <span class="keyword">static</span> <span class="keywordtype">void</span> setShared();
-<a name="l00076"></a>00076 
-<a name="l00077"></a>00077         <span class="comment">// set log mode</span>
-<a name="l00078"></a>00078 
-<a name="l00079"></a>00079         <span class="keyword">static</span> <span class="keywordtype">void</span> setClient()
-<a name="l00080"></a>00080                 {
-<a name="l00081"></a>00081                 U_TRACE(0, <span class="stringliteral">&quot;ULog::setClient()&quot;</span>)
-<a name="l00082"></a>00082 
-<a name="l00083"></a>00083                 prefix = &quot;%4D&gt; &quot;;
+<a name="l00059"></a>00059         ~<a class="code" href="classULog.html">ULog</a>();
+<a name="l00060"></a>00060 
+<a name="l00061"></a>00061         <span class="comment">// VARIE</span>
+<a name="l00062"></a>00062 
+<a name="l00063"></a>00063         <span class="keywordtype">bool</span> open(const <a class="code" href="classUString.html">UString</a>&amp; path, uint32_t size = 1024 * 1024, mode_t mode = 0664) { UFile::setPath(path); <span class="keywordflow">return</span> ULog::open(size, mode); }
+<a name="l00064"></a>00064 
+<a name="l00065"></a>00065         <span class="keyword">static</span> <span class="keywordtype">void</span> init();
+<a name="l00066"></a>00066         <span class="keyword">static</span> <span class="keywordtype">void</span> close();
+<a name="l00067"></a>00067         <span class="keyword">static</span> <span class="keywordtype">void</span> reopen();
+<a name="l00068"></a>00068         <span class="keyword">static</span> <span class="keywordtype">bool</span> isSysLog() { <span class="keywordflow">return</span> bsyslog; }
+<a name="l00069"></a>00069 
+<a name="l00070"></a>00070         <span class="comment">// manage shared log</span>
+<a name="l00071"></a>00071 
+<a name="l00072"></a>00072         <span class="keyword">static</span> <span class="keywordtype">void</span> setShared();
+<a name="l00073"></a>00073 
+<a name="l00074"></a>00074         <span class="comment">// set log mode</span>
+<a name="l00075"></a>00075 
+<a name="l00076"></a>00076         <span class="keyword">static</span> <span class="keywordtype">void</span> setClient()
+<a name="l00077"></a>00077                 {
+<a name="l00078"></a>00078                 U_TRACE(0, <span class="stringliteral">&quot;ULog::setClient()&quot;</span>)
+<a name="l00079"></a>00079 
+<a name="l00080"></a>00080                 prefix = &quot;%4D&gt; &quot;;
+<a name="l00081"></a>00081 
+<a name="l00082"></a>00082                 init();
+<a name="l00083"></a>00083                 }
 <a name="l00084"></a>00084 
-<a name="l00085"></a>00085                 init();
-<a name="l00086"></a>00086                 }
-<a name="l00087"></a>00087 
-<a name="l00088"></a>00088         static <span class="keywordtype">void</span> setServer(<span class="keywordtype">bool</span> shared)
-<a name="l00089"></a>00089                 {
-<a name="l00090"></a>00090                 U_TRACE(0, <span class="stringliteral">&quot;ULog::setServer(%b)&quot;</span>, shared)
-<a name="l00091"></a>00091 
-<a name="l00092"></a>00092                 if (shared) setShared();
-<a name="l00093"></a>00093 
-<a name="l00094"></a>00094                 prefix = &quot;(pid %P) %4D&gt; &quot;;
+<a name="l00085"></a>00085         static <span class="keywordtype">void</span> setServer(<span class="keywordtype">bool</span> shared)
+<a name="l00086"></a>00086                 {
+<a name="l00087"></a>00087                 U_TRACE(0, <span class="stringliteral">&quot;ULog::setServer(%b)&quot;</span>, shared)
+<a name="l00088"></a>00088 
+<a name="l00089"></a>00089                 if (shared) setShared();
+<a name="l00090"></a>00090 
+<a name="l00091"></a>00091                 prefix = &quot;(pid %P) %4D&gt; &quot;;
+<a name="l00092"></a>00092 
+<a name="l00093"></a>00093                 init();
+<a name="l00094"></a>00094                 }
 <a name="l00095"></a>00095 
-<a name="l00096"></a>00096                 init();
-<a name="l00097"></a>00097                 }
-<a name="l00098"></a>00098 
-<a name="l00099"></a>00099         static <span class="keywordtype">bool</span> isShared()
-<a name="l00100"></a>00100                 {
-<a name="l00101"></a>00101                 U_TRACE(0, <span class="stringliteral">&quot;ULog::isShared()&quot;</span>)
-<a name="l00102"></a>00102 
-<a name="l00103"></a>00103                 U_INTERNAL_ASSERT_POINTER(pthis)
-<a name="l00104"></a>00104 
-<a name="l00105"></a>00105                 <span class="keywordtype">bool</span> result = pthis-&gt;lock-&gt;isShared();
+<a name="l00096"></a>00096         static <span class="keywordtype">bool</span> isShared()
+<a name="l00097"></a>00097                 {
+<a name="l00098"></a>00098                 U_TRACE(0, <span class="stringliteral">&quot;ULog::isShared()&quot;</span>)
+<a name="l00099"></a>00099 
+<a name="l00100"></a>00100                 U_INTERNAL_ASSERT_POINTER(pthis)
+<a name="l00101"></a>00101 
+<a name="l00102"></a>00102                 <span class="keywordtype">bool</span> result = pthis-&gt;lock-&gt;isShared();
+<a name="l00103"></a>00103 
+<a name="l00104"></a>00104                 U_RETURN(result);
+<a name="l00105"></a>00105                 }
 <a name="l00106"></a>00106 
-<a name="l00107"></a>00107                 U_RETURN(result);
-<a name="l00108"></a>00108                 }
-<a name="l00109"></a>00109 
-<a name="l00110"></a>00110         <span class="comment">// write with prefix</span>
-<a name="l00111"></a>00111 
-<a name="l00112"></a>00112         static <span class="keywordtype">void</span> log(const <span class="keywordtype">char</span>* format, ...);           <span class="comment">// (buffer write == 4096)</span>
-<a name="l00113"></a>00113 
-<a name="l00114"></a>00114         <span class="comment">// write direct without prefix</span>
+<a name="l00107"></a>00107         <span class="comment">// write with prefix</span>
+<a name="l00108"></a>00108 
+<a name="l00109"></a>00109         static <span class="keywordtype">void</span> log(const <span class="keywordtype">char</span>* format, ...);           <span class="comment">// (buffer write == 4096)</span>
+<a name="l00110"></a>00110 
+<a name="l00111"></a>00111         <span class="comment">// write direct without prefix</span>
+<a name="l00112"></a>00112 
+<a name="l00113"></a>00113         static <span class="keywordtype">void</span> write(const <span class="keywordtype">char</span>* format, ...);         <span class="comment">// (buffer write == 4096)</span>
+<a name="l00114"></a>00114         static <span class="keywordtype">void</span> write(const struct <a class="code" href="structiovec.html">iovec</a>* iov, <span class="keywordtype">int</span> n);
 <a name="l00115"></a>00115 
-<a name="l00116"></a>00116         static <span class="keywordtype">void</span> write(const <span class="keywordtype">char</span>* format, ...);         <span class="comment">// (buffer write == 4096)</span>
-<a name="l00117"></a>00117         static <span class="keywordtype">void</span> write(const struct <a class="code" href="structiovec.html">iovec</a>* iov, <span class="keywordtype">int</span> n);
-<a name="l00118"></a>00118 
-<a name="l00119"></a>00119         <span class="comment">// flushes changes made to memory mapped log file back to disk</span>
-<a name="l00120"></a>00120 
-<a name="l00121"></a>00121         static <span class="keywordtype">void</span> msync();
-<a name="l00122"></a>00122 
-<a name="l00123"></a>00123 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00124"></a>00124 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00125"></a>00125 <span class="preprocessor">#endif</span>
-<a name="l00126"></a>00126 <span class="preprocessor"></span>
-<a name="l00127"></a>00127 <span class="keyword">protected</span>:
-<a name="l00128"></a>00128         <span class="keywordtype">bool</span> open(uint32_t size, mode_t mode = 0664);
+<a name="l00116"></a>00116         <span class="comment">// flushes changes made to memory mapped log file back to disk</span>
+<a name="l00117"></a>00117 
+<a name="l00118"></a>00118         static <span class="keywordtype">void</span> msync();
+<a name="l00119"></a>00119 
+<a name="l00120"></a>00120 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00121"></a>00121 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00122"></a>00122 <span class="preprocessor">#endif</span>
+<a name="l00123"></a>00123 <span class="preprocessor"></span>
+<a name="l00124"></a>00124 <span class="keyword">protected</span>:
+<a name="l00125"></a>00125         <span class="keywordtype">bool</span> open(uint32_t size, mode_t mode = 0664);
+<a name="l00126"></a>00126 
+<a name="l00127"></a>00127 <span class="preprocessor">#ifdef HAVE_LIBZ</span>
+<a name="l00128"></a>00128 <span class="preprocessor"></span>        <span class="keyword">static</span> <span class="keywordtype">void</span> backup(); <span class="comment">// if overwrite log file compress it with gzip...</span>
 <a name="l00129"></a>00129 
-<a name="l00130"></a>00130 <span class="preprocessor">#ifdef HAVE_LIBZ</span>
-<a name="l00131"></a>00131 <span class="preprocessor"></span>        <span class="keyword">static</span> <span class="keywordtype">void</span> backup(); <span class="comment">// if overwrite log file compress it with gzip...</span>
-<a name="l00132"></a>00132 
-<a name="l00133"></a>00133         <span class="keyword">static</span> RETSIGTYPE handlerSIGUSR1(<span class="keywordtype">int</span> signo) <span class="comment">// manage signal SIGUSR1</span>
-<a name="l00134"></a>00134                 {
-<a name="l00135"></a>00135                 U_TRACE(0, <span class="stringliteral">&quot;ULog::handlerSIGUSR1(%d)&quot;</span>, signo)
-<a name="l00136"></a>00136 
-<a name="l00137"></a>00137                 backup();
-<a name="l00138"></a>00138                 }
-<a name="l00139"></a>00139 <span class="preprocessor">#endif</span>
-<a name="l00140"></a>00140 <span class="preprocessor"></span>
-<a name="l00141"></a>00141 <span class="keyword">private</span>:
-<a name="l00142"></a>00142         <a class="code" href="classULog.html">ULog</a>(<span class="keyword">const</span> <a class="code" href="classULog.html">ULog</a>&amp;) : <a class="code" href="classUFile.html">UFile</a>()  {}
-<a name="l00143"></a>00143         <a class="code" href="classULog.html">ULog</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classULog.html">ULog</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00144"></a>00144 };
-<a name="l00145"></a>00145 
-<a name="l00146"></a>00146 <span class="preprocessor">#endif</span>
+<a name="l00130"></a>00130         <span class="keyword">static</span> RETSIGTYPE handlerSIGUSR1(<span class="keywordtype">int</span> signo) <span class="comment">// manage signal SIGUSR1</span>
+<a name="l00131"></a>00131                 {
+<a name="l00132"></a>00132                 U_TRACE(0, <span class="stringliteral">&quot;ULog::handlerSIGUSR1(%d)&quot;</span>, signo)
+<a name="l00133"></a>00133 
+<a name="l00134"></a>00134                 backup();
+<a name="l00135"></a>00135                 }
+<a name="l00136"></a>00136 <span class="preprocessor">#endif</span>
+<a name="l00137"></a>00137 <span class="preprocessor"></span>
+<a name="l00138"></a>00138 <span class="keyword">private</span>:
+<a name="l00139"></a>00139         <a class="code" href="classULog.html">ULog</a>(<span class="keyword">const</span> <a class="code" href="classULog.html">ULog</a>&amp;) : <a class="code" href="classUFile.html">UFile</a>()  {}
+<a name="l00140"></a>00140         <a class="code" href="classULog.html">ULog</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classULog.html">ULog</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00141"></a>00141 };
+<a name="l00142"></a>00142 
+<a name="l00143"></a>00143 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 31 17:08:54 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 2 16:38:08 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

@@ -158,8 +158,10 @@ static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>open</b> (const
 static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>creat</b> (const char *pathname, int flags=O_TRUNC|O_RDWR, mode_t mode=PERM_FILE)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0e8fcc6977751204557eee1ae557a441"></a><!-- doxytag: member="UFile::close" ref="a0e8fcc6977751204557eee1ae557a441" args="(int fd)" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>close</b> (int fd)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af0cc6f9d48dcf88adb0a0e927864f73d"></a><!-- doxytag: member="UFile::setNonBlocking" ref="af0cc6f9d48dcf88adb0a0e927864f73d" args="(int fd, int flags, bool block)" -->
-static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>setNonBlocking</b> (int fd, int flags, bool block)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adfcc39c5a1bfabe160b82f8a124efb0a"></a><!-- doxytag: member="UFile::isBlocking" ref="adfcc39c5a1bfabe160b82f8a124efb0a" args="(int fd, int &amp;flags)" -->
+static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isBlocking</b> (int fd, int &amp;flags)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abf74148240e5cd5841d1290b9d75924c"></a><!-- doxytag: member="UFile::setBlocking" ref="abf74148240e5cd5841d1290b9d75924c" args="(int fd, int &amp;flags, bool block)" -->
+static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setBlocking</b> (int fd, int &amp;flags, bool block)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aae9df900e89eb4082de56c2f5368944b"></a><!-- doxytag: member="UFile::unlink" ref="aae9df900e89eb4082de56c2f5368944b" args="(const char *pathname)" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>unlink</b> (const char *pathname)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a948a9261a592786ee4bf9587d3a085bf"></a><!-- doxytag: member="UFile::chdir" ref="a948a9261a592786ee4bf9587d3a085bf" args="(const char *path, bool flag_save=false)" -->
@@ -252,7 +254,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/file.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Dec 31 17:08:56 2009 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 2 16:38:11 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

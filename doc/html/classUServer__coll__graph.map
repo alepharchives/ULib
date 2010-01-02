@@ -1,17 +1,18 @@
 <map id="G" name="G">
-<area shape="rect" id="node2" href="$classUServer__Base.html" title="UServer_Base" alt="" coords="389,686,488,714"/>
-<area shape="rect" id="node4" href="$classUEventFd.html" title="UEventFd" alt="" coords="139,593,213,621"/>
-<area shape="rect" id="node6" href="$classULog.html" title="ULog" alt="" coords="551,593,601,621"/>
-<area shape="rect" id="node8" href="$classUFile.html" title="UFile" alt="" coords="603,266,653,294"/>
-<area shape="rect" id="node10" href="$classUString.html" title="UString" alt="" coords="273,99,337,127"/>
-<area shape="rect" id="node26" href="$classUSocket.html" title="basic IP socket functionality" alt="" coords="237,593,304,621"/>
-<area shape="rect" id="node28" href="$classUIPAddress.html" title="UIPAddress" alt="" coords="75,266,160,294"/>
-<area shape="rect" id="node13" href="$classUStringRep.html" title="UStringRep" alt="" coords="263,6,348,34"/>
-<area shape="rect" id="node17" href="$structULog_1_1log__data.html" title="ULog::log_data" alt="" coords="475,266,579,294"/>
-<area shape="rect" id="node19" href="$classULock.html" title="ULock" alt="" coords="677,266,736,294"/>
-<area shape="rect" id="node21" href="$classUSemaphore.html" title="USemaphore" alt="" coords="661,99,752,127"/>
-<area shape="rect" id="node24" href="$classUProcess.html" title="UProcess" alt="" coords="675,593,747,621"/>
-<area shape="rect" id="node31" href="$unionuupcAddress.html" title="uupcAddress" alt="" coords="5,99,96,127"/>
-<area shape="rect" id="node35" href="$classUEventTime.html" title="UEventTime" alt="" coords="771,593,861,621"/>
-<area shape="rect" id="node37" href="$classUTimeVal.html" title="UTimeVal" alt="" coords="777,266,855,294"/>
+<area shape="rect" id="node2" href="$classUServer__Base.html" title="UServer_Base" alt="" coords="379,686,477,714"/>
+<area shape="rect" id="node4" href="$classUEventFd.html" title="UEventFd" alt="" coords="5,593,80,621"/>
+<area shape="rect" id="node6" href="$classULog.html" title="ULog" alt="" coords="181,593,232,621"/>
+<area shape="rect" id="node8" href="$classUFile.html" title="UFile" alt="" coords="181,266,232,294"/>
+<area shape="rect" id="node10" href="$classUString.html" title="UString" alt="" coords="440,99,504,127"/>
+<area shape="rect" id="node28" href="$classUSocket.html" title="basic IP socket functionality" alt="" coords="305,593,372,621"/>
+<area shape="rect" id="node30" href="$classUIPAddress.html" title="UIPAddress" alt="" coords="384,266,469,294"/>
+<area shape="rect" id="node13" href="$classUStringRep.html" title="UStringRep" alt="" coords="429,6,515,34"/>
+<area shape="rect" id="node17" href="$structULog_1_1log__data.html" title="ULog::log_data" alt="" coords="256,266,360,294"/>
+<area shape="rect" id="node19" href="$classULock.html" title="ULock" alt="" coords="99,266,157,294"/>
+<area shape="rect" id="node21" href="$classUSemaphore.html" title="USemaphore" alt="" coords="83,99,173,127"/>
+<area shape="rect" id="node23" href="$structUServer__Base_1_1shared__data.html" title="UServer_Base::shared_data" alt="" coords="396,593,564,621"/>
+<area shape="rect" id="node26" href="$classUProcess.html" title="UProcess" alt="" coords="588,593,660,621"/>
+<area shape="rect" id="node33" href="$unionuupcAddress.html" title="uupcAddress" alt="" coords="212,99,303,127"/>
+<area shape="rect" id="node38" href="$classUEventTime.html" title="UEventTime" alt="" coords="812,593,903,621"/>
+<area shape="rect" id="node40" href="$classUTimeVal.html" title="UTimeVal" alt="" coords="857,266,935,294"/>
 </map>

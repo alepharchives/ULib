@@ -284,7 +284,7 @@ public:
 
    void setFd(int _fd)
       {
-      U_TRACE(0, "UFile::getFd(%d)", _fd)
+      U_TRACE(0, "UFile::setFd(%d)", _fd)
 
       U_CHECK_MEMORY
 
@@ -494,7 +494,22 @@ public:
       U_RETURN(mtime != st_mtime);
       }
 
-   static int setNonBlocking(int fd, int flags, bool block);
+   static bool isBlocking(int fd, int& flags) // actual state is blocking...?
+      {
+      U_TRACE(1, "UFile::isBlocking(%d,%d)", fd, flags)
+
+      U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+
+      if (flags == -1) flags = U_SYSCALL(fcntl, "%d,%d,%d", fd, F_GETFL, 0);
+
+      U_INTERNAL_DUMP("O_NONBLOCK = %B, flags = %B", O_NONBLOCK, flags)
+
+      bool blocking = ((flags & O_NONBLOCK) != O_NONBLOCK);
+
+      U_RETURN(blocking);
+      }
+
+   static void setBlocking(int fd, int& flags, bool block);
 
 #ifdef __MINGW32__
 #undef mkdir
