@@ -635,7 +635,7 @@ fi
 
 # if gcc compiler add values to *FLAGS...
 
-if test "$GCC" = "yes" ; then
+if test "$GCC" = "yes"; then
 	AC_CC_TRY_FLAG
 
 	gcc_version_raw=`echo ${gcc_version} | cut -d' ' -f3`
@@ -646,7 +646,15 @@ if test "$GCC" = "yes" ; then
 	MAYBE_FLAGS="$MAYBE_FLAGS -finline -flto \
 		-findirect-inlining -ftree-switch-conversion -floop-interchange -floop-strip-mine -floop-block \
 		-Wstrict-aliasing=2 -Wp,-D_FORTIFY_SOURCE=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op \
-		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wno-format -Wno-format-extra-args -Wno-unused-result"
+		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wno-format -Wno-format-extra-args"
+
+	case "${gcc_version_raw}" in
+		4.5.*)
+			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result"
+		;;
+		*)
+		;;
+	esac
 
 #	-fno-common
 #  -Wno-missing-field-initializers -Wno-attributes -Wno-long-long
