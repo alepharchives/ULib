@@ -186,7 +186,7 @@ public:
    static bool isIPv6()        { return UClientImage_Base::bIPv6; }
    static int  getPort()       { return port; }
    static int  getCgiTimeout() { return cgi_timeout; }
-   static int  getReqTimeout() { return req_timeout; }
+   static int  getReqTimeout() { return USocket::req_timeout; }
 
    // manage authorization data...
 
@@ -361,6 +361,13 @@ public:
       U_RETURN(result);
       }
 
+   static bool useTcpOptimization()
+      {
+      U_TRACE(0, "UServer_Base::useTcpOptimization()")
+
+      U_RETURN(flag_use_tcp_optimization);
+      }
+
    // NETWORK CTX
 
    static UString getNodeName()                               { return USocketExt::getNodeName(); }
@@ -414,7 +421,6 @@ protected:
            IP_address;  // IP address of this server
 
    static int port,           // the port number to bind to
-              req_timeout,    // the time-out value in seconds for client send request
               cgi_timeout,    // the time-out value in seconds for read output cgi process
               log_file_sz,    // memory size for file log
               verify_mode,    // mode of verification ssl connection

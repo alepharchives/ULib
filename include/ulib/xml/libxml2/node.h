@@ -217,7 +217,16 @@ public:
    * @returns The next sibling
    */
 
-   xmlNodePtr getNextSibling() const { return impl_->next; }
+   static xmlNodePtr getNextSibling(xmlNodePtr node)
+      {
+      U_TRACE(0, "UXML2Node::getNextSibling(%p)", node)
+
+      while (node && (node->type != XML_ELEMENT_NODE)) node = node->next;
+
+      U_RETURN_POINTER(node, xmlNode);
+      }
+
+   xmlNodePtr getNextSibling() const { return getNextSibling(impl_->next); }
 
    /** Get the previous sibling for this node.
    *
@@ -313,6 +322,18 @@ public:
 
       U_SYSCALL_VOID(xmlUnlinkNode, "%p", node);
       U_SYSCALL_VOID(xmlFreeNode,   "%p", node);
+      }
+
+   /** Search and get the value of an attribute associated to a node
+   */
+
+   static const char* getProp(xmlNodePtr node, const char* name)
+      {
+      U_TRACE(1, "UXML2Node::getProp(%p,%S)", node, name)
+
+      const char* prop = (const char*) U_SYSCALL(xmlGetProp, "%p,%S", node, (const xmlChar*)name);
+
+      U_RETURN(prop);
       }
 
    /** Import node(s) from another document under this node, without affecting the source node.

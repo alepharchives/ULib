@@ -18,7 +18,7 @@ rm -f tsa_http.log TSA/log \
 DIR_CMD="../../examples/XAdES"
 
 #STRACE=$TRUSS
-start_prg verify -c XAdESv.cfg /usr/portage/sys-boot/gnu-efi/metadata.xml out/sign.out /usr/portage/lxde-base/metadata.xml
+start_prg verify -c XAdESv.cfg out/sign.out # /usr/portage/sys-boot/gnu-efi/metadata.xml /usr/portage/lxde-base/metadata.xml
 
 # Test against expected output
 test_output_wc w verify

@@ -41,7 +41,7 @@ start_prg_background userver_tcp -c web_server_multiclient.cfg
 $SLEEP
 $SLEEP
 
-ab -k -n 100 -c 50 http://127.0.0.1/usp/benchmarking.usp?name=stefano >/dev/null 2>&1
+ab -k -n 100 -c 2 http://127.0.0.1/usp/benchmarking.usp?name=stefano >/dev/null 2>&1
 $SLEEP
 
 kill_prg userver_tcp TERM

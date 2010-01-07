@@ -42,6 +42,8 @@ xmlDtdPtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>setInternalSubse
 <tr><td class="memItemLeft" align="right" valign="top">xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Document.html#a71d644f9678fc7065794d05c055564a1">addComment</a> (const char *content)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">xmlEntityPtr&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Document.html#a1396f91f9604e567cab11b7f472935e7">setEntityDeclaration</a> (const char *name, xmlEntityType type, const char *publicId, const char *systemId, const char *content)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Document.html#aba9516853969de06b9630a0e06c7cdea">findNode</a> (const xmlNodePtr parent, const xmlChar *name, const xmlChar *ns)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Document.html#aad18799734230fccead1700c9a755713">findChild</a> (const xmlNodePtr parent, const xmlChar *name, const xmlChar *ns)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Document.html#a5036dbe45d6f276f3698469cd56c5b4f">findParent</a> (const xmlNodePtr cur, const xmlChar *name, const xmlChar *ns)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Document.html#af7d5c8e8d9bf6796dd6f410186214e1f">writeToFile</a> (const char *filename, const char *encoding=0, bool formatted=false)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">xmlChar *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Document.html#a09dbcc326efd7b121c12568128cbdadd">writeToString</a> (int &amp;length, const char *encoding=0, bool formatted=false)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Document.html#aba42dd29b8a1d06bc625a50bdc577e35">xmlC14N</a> (int mode=0, int with_comments=0, unsigned char **inclusive_namespaces=0)</td></tr>
@@ -167,6 +169,49 @@ static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>binit</b></td>
 
 </div>
 </div>
+<a class="anchor" id="aad18799734230fccead1700c9a755713"></a><!-- doxytag: member="UXML2Document::findChild" ref="aad18799734230fccead1700c9a755713" args="(const xmlNodePtr parent, const xmlChar *name, const xmlChar *ns)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">xmlNodePtr UXML2Document::findChild </td>
+          <td>(</td>
+          <td class="paramtype">const xmlNodePtr&nbsp;</td>
+          <td class="paramname"> <em>parent</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const xmlChar *&nbsp;</td>
+          <td class="paramname"> <em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const xmlChar *&nbsp;</td>
+          <td class="paramname"> <em>ns</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Searches a direct child of the  node having given name and namespace href.</p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>parent</em>&nbsp;</td><td>the pointer to XML node. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>name</em>&nbsp;</td><td>the name. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>ns</em>&nbsp;</td><td>the namespace href (may be NULL).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd>the pointer to the found node or NULL if an error occurs or node is not found. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="aba9516853969de06b9630a0e06c7cdea"></a><!-- doxytag: member="UXML2Document::findNode" ref="aba9516853969de06b9630a0e06c7cdea" args="(const xmlNodePtr parent, const xmlChar *name, const xmlChar *ns)" -->
 <div class="memitem">
 <div class="memproto">
@@ -201,6 +246,49 @@ static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>binit</b></td>
 <dl><dt><b>Parameters:</b></dt><dd>
   <table border="0" cellspacing="2" cellpadding="0">
     <tr><td valign="top"></td><td valign="top"><em>parent</em>&nbsp;</td><td>the pointer to XML node. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>name</em>&nbsp;</td><td>the name. </td></tr>
+    <tr><td valign="top"></td><td valign="top"><em>ns</em>&nbsp;</td><td>the namespace href (may be NULL).</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="return"><dt><b>Returns:</b></dt><dd>the pointer to the found node or NULL if an error occurs or node is not found. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a5036dbe45d6f276f3698469cd56c5b4f"></a><!-- doxytag: member="UXML2Document::findParent" ref="a5036dbe45d6f276f3698469cd56c5b4f" args="(const xmlNodePtr cur, const xmlChar *name, const xmlChar *ns)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">xmlNodePtr UXML2Document::findParent </td>
+          <td>(</td>
+          <td class="paramtype">const xmlNodePtr&nbsp;</td>
+          <td class="paramname"> <em>cur</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const xmlChar *&nbsp;</td>
+          <td class="paramname"> <em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const xmlChar *&nbsp;</td>
+          <td class="paramname"> <em>ns</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Searches the ancestors axis of the  node for a node having given name and namespace href.</p>
+<dl><dt><b>Parameters:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign="top"></td><td valign="top"><em>cur</em>&nbsp;</td><td>the pointer to an XML node. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>name</em>&nbsp;</td><td>the name. </td></tr>
     <tr><td valign="top"></td><td valign="top"><em>ns</em>&nbsp;</td><td>the namespace href (may be NULL).</td></tr>
   </table>
@@ -455,7 +543,7 @@ static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>binit</b></td>
 <li>src/ulib/xml/libxml2/document.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 2 16:38:18 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Jan 7 17:25:02 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

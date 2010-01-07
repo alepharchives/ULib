@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
    {
        sprintf(str,
        "/usr/sbin/ab -n 1000000 -c %u    -t 1" // NO Keep-Alives
-//     "/usr/sbin/ab -n 1000000 -c %u -k -t 1" // KEEP-ALIVES
+//     "/usr/sbin/ab -n 1000000 -c %u -k -t 1" // KEEP-ALIVES (USE_TCP_OPTIMIZATION no !!!)
        " \"http://10.30.1.131/usp/hello_world.usp\""  // ULib / teepeedee2
 //     " \"http://10.30.1.131/csp?hello\""
 //     " \"http://192.168.200.88:8080/100.html\""
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
       {
 fault:
          system(str);
-         Sleep(1000); // Windows needs to take its breath after system() calls
+         sleep(0.5); // needs to take its breath after system() calls
          // get the information we need from res.txt
          if(!(f=fopen("ab.txt", "rb")))
          {

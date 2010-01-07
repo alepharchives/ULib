@@ -90,6 +90,54 @@ xmlNodePtr UXML2Document::findNode(const xmlNodePtr parent, const xmlChar* name,
    U_RETURN_POINTER(0, xmlNode);
 }
 
+xmlNodePtr UXML2Document::findChild(const xmlNodePtr parent, const xmlChar* name, const xmlChar* ns)
+{
+   U_TRACE(0, "UXML2Document::findChild(%p,%S,%S)", parent, name, ns)
+
+   U_INTERNAL_ASSERT_POINTER(name)
+   U_INTERNAL_ASSERT_POINTER(parent)
+
+   xmlNodePtr cur = parent->children;
+
+   while (cur)
+      {
+      if (cur->type == XML_ELEMENT_NODE &&
+          UXML2Node(cur).checkNodeName(name, ns))
+         {
+         U_RETURN_POINTER(cur, xmlNode);
+         }
+
+      cur = cur->next;
+      }
+
+   U_RETURN_POINTER(0, xmlNode);
+}
+
+xmlNodePtr UXML2Document::findParent(const xmlNodePtr cur, const xmlChar* name, const xmlChar* ns)
+{
+   U_TRACE(0, "UXML2Document::findParent(%p,%S,%S)", cur, name, ns)
+
+   U_INTERNAL_ASSERT_POINTER(cur)
+   U_INTERNAL_ASSERT_POINTER(name)
+
+   xmlNodePtr ret;
+
+   if (cur->type == XML_ELEMENT_NODE &&
+       UXML2Node(cur).checkNodeName(name, ns))
+      {
+      U_RETURN_POINTER(cur, xmlNode);
+      }
+
+   if (cur->parent)
+      {
+      ret = findParent(cur->parent, name, ns);
+
+      if (ret) U_RETURN_POINTER(ret, xmlNode);
+      }
+
+   U_RETURN_POINTER(0, xmlNode);
+}
+
 bool UXML2Document::writeToFile(const char* filename, const char* encoding, bool formatted)
 {
    U_TRACE(1, "UXML2Document::writeToFile(%S,%S,%b)", filename, encoding, formatted)

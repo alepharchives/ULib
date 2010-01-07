@@ -42,8 +42,8 @@
   <tr bgcolor="#f0f0f0"><td><b>close</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>CLOSE</b> enum value (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>closesocket</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [virtual]</code></td></tr>
-  <tr bgcolor="#f0f0f0"><td><b>CONNECT</b> enum value (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>connect</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [protected]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>CONNECT</b> enum value (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUUnixSocket.html#a838f30157d3d2310183925eec4cad101">connectServer</a>(const UString &amp;pathname, int iServPort)</td><td><a class="el" href="classUUnixSocket.html">UUnixSocket</a></td><td><code> [virtual]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#a71bc5eac4f1b8237ffce461020d4c5f8">USocket::connectServer</a>(const UIPAddress &amp;cAddr, int iServPort)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>cRemoteAddress</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [protected]</code></td></tr>
@@ -79,6 +79,7 @@
   <tr class="memlist"><td><a class="el" href="classUSocket.html#ab7f67685682bd52c3ea65c97d377f4a0">recvFrom</a>(void *pBuffer, int iBufLength, uint32_t uiFlags, UIPAddress &amp;cSourceIP, int &amp;iSourcePortNumber)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>remoteIPAddress</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#a3f4f19c9fede9968e6977d96d97bd033">remotePortNumber</a>()</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>req_timeout</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [protected, static]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUUnixSocket.html#aef0e816a44155a85a2b9d31fbb61e99e">send</a>(const void *pPayload, int iPayloadLength)</td><td><a class="el" href="classUUnixSocket.html">UUnixSocket</a></td><td><code> [virtual]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#afe35fa4e9376b03f0ffa96cc1cad6826">sendBinary16Bits</a>(int iData)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#ab2d74ccb56a5b06593a0a845e205af38">sendBinary32Bits</a>(uint32_t lData)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
@@ -94,6 +95,7 @@
   <tr class="memlist"><td><a class="el" href="classUSocket.html#a59e0688b094fdd5ab29706f3074cd5c0">setSockOpt</a>(int iCodeLevel, int iOptionName, const void *pOptionData, uint32_t iDataLength)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#a833a54ea53ae6e054029659733780b0e">setTcpCork</a>(uint32_t corked)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#ac5ac3939478953bdef244223e38c7e12">setTcpDeferAccept</a>(uint32_t value)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>setTcpNoDelay</b>(uint32_t value) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setTcpQuickAck</b>(uint32_t value) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#a21d81dc932813d3728551db0326dc91a">setTimeoutRCV</a>(uint32_t timeoutMS=U_TIMEOUT)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setTimeoutSND</b>(uint32_t timeoutMS=U_TIMEOUT) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
@@ -129,7 +131,7 @@
   <tr bgcolor="#f0f0f0"><td><b>~USocket</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline, virtual]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>~UUnixSocket</b>() (defined in <a class="el" href="classUUnixSocket.html">UUnixSocket</a>)</td><td><a class="el" href="classUUnixSocket.html">UUnixSocket</a></td><td><code> [inline, virtual]</code></td></tr>
 </table></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 2 16:38:18 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Jan 7 17:25:02 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

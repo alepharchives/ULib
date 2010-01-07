@@ -104,8 +104,8 @@
   <tr bgcolor="#f0f0f0"><td><b>localPortNumber</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUImapClient.html#a5fe5a6cafed4945e0ad32d359db293e9">login</a>(const char *user, const char *passwd)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>LOGIN</b> enum value (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
-  <tr class="memlist"><td><a class="el" href="classUImapClient.html#a5fce244fb1e5b8a02fe0528297fc3039">logout</a>()</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>LOGOUT</b> enum value (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
+  <tr class="memlist"><td><a class="el" href="classUImapClient.html#a5fce244fb1e5b8a02fe0528297fc3039">logout</a>()</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>MailboxFlag</b> enum name (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>MailboxInfo</b> typedef (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>MDNSent</b> enum value (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
@@ -126,6 +126,7 @@
   <tr bgcolor="#f0f0f0"><td><b>REMOVE</b> enum value (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUImapClient.html#a5af3705dc6daf0fc5d53164e1cfe6b9f">removeMailbox</a>(const UString &amp;name)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUImapClient.html#a7ab332aeaa965724a7646627e5539924">renameMailbox</a>(const UString &amp;from, const UString &amp;to)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>req_timeout</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [protected, static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>response</b> (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td><code> [protected]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUImapClient.html#a2faaa2fff8a4b3071d56ffef3080e95d">search</a>(int *ret, const UString &amp;spec, const char *charSet=&quot;&quot;, bool usingUID=false)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>SEEN</b> enum value (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
@@ -148,15 +149,16 @@
   <tr class="memlist"><td><a class="el" href="classUSocket.html#a59e0688b094fdd5ab29706f3074cd5c0">setSockOpt</a>(int iCodeLevel, int iOptionName, const void *pOptionData, uint32_t iDataLength)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#a833a54ea53ae6e054029659733780b0e">setTcpCork</a>(uint32_t corked)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#ac5ac3939478953bdef244223e38c7e12">setTcpDeferAccept</a>(uint32_t value)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>setTcpNoDelay</b>(uint32_t value) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setTcpQuickAck</b>(uint32_t value) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#a21d81dc932813d3728551db0326dc91a">setTimeoutRCV</a>(uint32_t timeoutMS=U_TIMEOUT)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setTimeoutSND</b>(uint32_t timeoutMS=U_TIMEOUT) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">socket</a>(int domain, int type, int protocol)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline, static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>socket</b>(int iSocketType, int protocol=0) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>startTLS</b>() (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>State</b> enum name (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>state</b> (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>state</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
-  <tr bgcolor="#f0f0f0"><td><b>State</b> enum name (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>status</b>(const UString &amp;mailboxName, StatusInfo &amp;retval, int items=MESSAGE_COUNT|RECENT_COUNT|NEXT_UID|UID_VALIDITY|UNSEEN) (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUImapClient.html#ab7e523e07b4c628f20cbff6463af0785">StatusInfo</a> typedef</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>StatusInfoType</b> enum name (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
@@ -222,7 +224,7 @@
   <tr bgcolor="#f0f0f0"><td><b>~USocket</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline, virtual]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>~UTCPSocket</b>() (defined in <a class="el" href="classUTCPSocket.html">UTCPSocket</a>)</td><td><a class="el" href="classUTCPSocket.html">UTCPSocket</a></td><td><code> [inline, virtual]</code></td></tr>
 </table></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 2 16:38:12 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Jan 7 17:24:59 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

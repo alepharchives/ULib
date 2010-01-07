@@ -193,116 +193,134 @@
 <a name="l00207"></a>00207 
 <a name="l00213"></a><a class="code" href="classUXML2Node.html#a5126b9051238d08d624e97c678d6d8a5">00213</a>         xmlNodePtr <a class="code" href="classUXML2Node.html#a5126b9051238d08d624e97c678d6d8a5">getParent</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> (impl_-&gt;parent &amp;&amp; impl_-&gt;parent-&gt;type == XML_ELEMENT_NODE ? impl_-&gt;parent : 0); }
 <a name="l00214"></a>00214 
-<a name="l00220"></a><a class="code" href="classUXML2Node.html#af5e79df6a2a64cded557a9d2519fcbbc">00220</a>         xmlNodePtr <a class="code" href="classUXML2Node.html#af5e79df6a2a64cded557a9d2519fcbbc">getNextSibling</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> impl_-&gt;next; }
-<a name="l00221"></a>00221 
-<a name="l00227"></a><a class="code" href="classUXML2Node.html#a3be3cad8da105dc1506b33845242bc92">00227</a>         xmlNodePtr <a class="code" href="classUXML2Node.html#a3be3cad8da105dc1506b33845242bc92">getPreviousSibling</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> impl_-&gt;prev; }
+<a name="l00220"></a><a class="code" href="classUXML2Node.html#abf8ae5882358e97fe11620ea9866097f">00220</a>         <span class="keyword">static</span> xmlNodePtr getNextSibling(xmlNodePtr node)
+<a name="l00221"></a>00221                 {
+<a name="l00222"></a>00222                 U_TRACE(0, <span class="stringliteral">&quot;UXML2Node::getNextSibling(%p)&quot;</span>, node)
+<a name="l00223"></a>00223 
+<a name="l00224"></a>00224                 <span class="keywordflow">while</span> (node &amp;&amp; (node-&gt;type != XML_ELEMENT_NODE)) node = node-&gt;next;
+<a name="l00225"></a>00225 
+<a name="l00226"></a>00226                 U_RETURN_POINTER(node, xmlNode);
+<a name="l00227"></a>00227                 }
 <a name="l00228"></a>00228 
-<a name="l00235"></a>00235         uint32_t getChildren(UVector&lt;xmlNodePtr&gt;&amp; children, <span class="keyword">const</span> xmlChar* name) <span class="keyword">const</span>;
-<a name="l00236"></a>00236 
-<a name="l00245"></a><a class="code" href="classUXML2Node.html#ace650ae3693b3962111a205498f7ef7e">00245</a>         xmlNodePtr addChild(<span class="keyword">const</span> xmlChar* name, <span class="keyword">const</span> xmlChar* ns_prefix = 0)
-<a name="l00246"></a>00246                 {
-<a name="l00247"></a>00247                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Node::addChild(%S,%S)&quot;</span>, name, ns_prefix)
-<a name="l00248"></a>00248 
-<a name="l00249"></a>00249                 U_INTERNAL_ASSERT_POINTER(impl_)
-<a name="l00250"></a>00250 
-<a name="l00251"></a>00251                 xmlNodePtr node  = 0;
-<a name="l00252"></a>00252                 xmlNodePtr child = createNewChildNode(name, ns_prefix);
-<a name="l00253"></a>00253 
-<a name="l00254"></a>00254                 <span class="keywordflow">if</span> (child) node = (xmlNodePtr) U_SYSCALL(xmlAddChild, <span class="stringliteral">&quot;%p,%p&quot;</span>, impl_, child);
-<a name="l00255"></a>00255 
-<a name="l00256"></a>00256                 U_RETURN_POINTER(node,_xmlNode);
-<a name="l00257"></a>00257                 }
-<a name="l00258"></a>00258 
-<a name="l00268"></a><a class="code" href="classUXML2Node.html#adb454a51a914e497b420c70b8fd2521b">00268</a>         xmlNodePtr addChild(xmlNodePtr previous_sibling, <span class="keyword">const</span> xmlChar* name, <span class="keyword">const</span> xmlChar* ns_prefix = 0)
-<a name="l00269"></a>00269                 {
-<a name="l00270"></a>00270                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Node::addChild(%p,%S,%S)&quot;</span>, previous_sibling, name, ns_prefix)
-<a name="l00271"></a>00271 
-<a name="l00272"></a>00272                 U_INTERNAL_ASSERT_POINTER(previous_sibling)
-<a name="l00273"></a>00273 
-<a name="l00274"></a>00274                 xmlNodePtr node  = 0;
-<a name="l00275"></a>00275                 xmlNodePtr child = createNewChildNode(name, ns_prefix);
-<a name="l00276"></a>00276 
-<a name="l00277"></a>00277                 <span class="keywordflow">if</span> (child) node = (xmlNodePtr) U_SYSCALL(xmlAddNextSibling, <span class="stringliteral">&quot;%p,%p&quot;</span>, previous_sibling, child);
-<a name="l00278"></a>00278 
-<a name="l00279"></a>00279                 U_RETURN_POINTER(node,_xmlNode);
-<a name="l00280"></a>00280                 }
-<a name="l00281"></a>00281 
-<a name="l00291"></a><a class="code" href="classUXML2Node.html#a5ac50168f5a3dd66bb1385414d2a2c05">00291</a>         xmlNodePtr addChildBefore(xmlNodePtr next_sibling, <span class="keyword">const</span> xmlChar* name, <span class="keyword">const</span> xmlChar* ns_prefix = 0)
-<a name="l00292"></a>00292                 {
-<a name="l00293"></a>00293                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Node::addChildBefore(%p,%S,%S)&quot;</span>, next_sibling, name, ns_prefix)
-<a name="l00294"></a>00294 
-<a name="l00295"></a>00295                 U_INTERNAL_ASSERT_POINTER(next_sibling)
-<a name="l00296"></a>00296 
-<a name="l00297"></a>00297                 xmlNodePtr node  = 0;
-<a name="l00298"></a>00298                 xmlNodePtr child = createNewChildNode(name, ns_prefix);
-<a name="l00299"></a>00299 
-<a name="l00300"></a>00300                 <span class="keywordflow">if</span> (child) node = (xmlNodePtr) U_SYSCALL(xmlAddPrevSibling, <span class="stringliteral">&quot;%p,%p&quot;</span>, next_sibling, child);
-<a name="l00301"></a>00301 
-<a name="l00302"></a>00302                 U_RETURN_POINTER(node,_xmlNode);
-<a name="l00303"></a>00303                 }
-<a name="l00304"></a>00304 
-<a name="l00310"></a><a class="code" href="classUXML2Node.html#a60754e2b2f41db4e883ef23a55359407">00310</a>         <span class="keyword">static</span> <span class="keywordtype">void</span> removeChild(xmlNodePtr node)
-<a name="l00311"></a>00311                 {
-<a name="l00312"></a>00312                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Node::removeChild(%p)&quot;</span>, node)
+<a name="l00229"></a>00229         xmlNodePtr getNextSibling()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> getNextSibling(impl_-&gt;next); }
+<a name="l00230"></a>00230 
+<a name="l00236"></a><a class="code" href="classUXML2Node.html#a3be3cad8da105dc1506b33845242bc92">00236</a>         xmlNodePtr <a class="code" href="classUXML2Node.html#a3be3cad8da105dc1506b33845242bc92">getPreviousSibling</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> impl_-&gt;prev; }
+<a name="l00237"></a>00237 
+<a name="l00244"></a>00244         uint32_t getChildren(UVector&lt;xmlNodePtr&gt;&amp; children, <span class="keyword">const</span> xmlChar* name) <span class="keyword">const</span>;
+<a name="l00245"></a>00245 
+<a name="l00254"></a><a class="code" href="classUXML2Node.html#ace650ae3693b3962111a205498f7ef7e">00254</a>         xmlNodePtr addChild(<span class="keyword">const</span> xmlChar* name, <span class="keyword">const</span> xmlChar* ns_prefix = 0)
+<a name="l00255"></a>00255                 {
+<a name="l00256"></a>00256                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Node::addChild(%S,%S)&quot;</span>, name, ns_prefix)
+<a name="l00257"></a>00257 
+<a name="l00258"></a>00258                 U_INTERNAL_ASSERT_POINTER(impl_)
+<a name="l00259"></a>00259 
+<a name="l00260"></a>00260                 xmlNodePtr node  = 0;
+<a name="l00261"></a>00261                 xmlNodePtr child = createNewChildNode(name, ns_prefix);
+<a name="l00262"></a>00262 
+<a name="l00263"></a>00263                 <span class="keywordflow">if</span> (child) node = (xmlNodePtr) U_SYSCALL(xmlAddChild, <span class="stringliteral">&quot;%p,%p&quot;</span>, impl_, child);
+<a name="l00264"></a>00264 
+<a name="l00265"></a>00265                 U_RETURN_POINTER(node,_xmlNode);
+<a name="l00266"></a>00266                 }
+<a name="l00267"></a>00267 
+<a name="l00277"></a><a class="code" href="classUXML2Node.html#adb454a51a914e497b420c70b8fd2521b">00277</a>         xmlNodePtr addChild(xmlNodePtr previous_sibling, <span class="keyword">const</span> xmlChar* name, <span class="keyword">const</span> xmlChar* ns_prefix = 0)
+<a name="l00278"></a>00278                 {
+<a name="l00279"></a>00279                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Node::addChild(%p,%S,%S)&quot;</span>, previous_sibling, name, ns_prefix)
+<a name="l00280"></a>00280 
+<a name="l00281"></a>00281                 U_INTERNAL_ASSERT_POINTER(previous_sibling)
+<a name="l00282"></a>00282 
+<a name="l00283"></a>00283                 xmlNodePtr node  = 0;
+<a name="l00284"></a>00284                 xmlNodePtr child = createNewChildNode(name, ns_prefix);
+<a name="l00285"></a>00285 
+<a name="l00286"></a>00286                 <span class="keywordflow">if</span> (child) node = (xmlNodePtr) U_SYSCALL(xmlAddNextSibling, <span class="stringliteral">&quot;%p,%p&quot;</span>, previous_sibling, child);
+<a name="l00287"></a>00287 
+<a name="l00288"></a>00288                 U_RETURN_POINTER(node,_xmlNode);
+<a name="l00289"></a>00289                 }
+<a name="l00290"></a>00290 
+<a name="l00300"></a><a class="code" href="classUXML2Node.html#a5ac50168f5a3dd66bb1385414d2a2c05">00300</a>         xmlNodePtr addChildBefore(xmlNodePtr next_sibling, <span class="keyword">const</span> xmlChar* name, <span class="keyword">const</span> xmlChar* ns_prefix = 0)
+<a name="l00301"></a>00301                 {
+<a name="l00302"></a>00302                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Node::addChildBefore(%p,%S,%S)&quot;</span>, next_sibling, name, ns_prefix)
+<a name="l00303"></a>00303 
+<a name="l00304"></a>00304                 U_INTERNAL_ASSERT_POINTER(next_sibling)
+<a name="l00305"></a>00305 
+<a name="l00306"></a>00306                 xmlNodePtr node  = 0;
+<a name="l00307"></a>00307                 xmlNodePtr child = createNewChildNode(name, ns_prefix);
+<a name="l00308"></a>00308 
+<a name="l00309"></a>00309                 <span class="keywordflow">if</span> (child) node = (xmlNodePtr) U_SYSCALL(xmlAddPrevSibling, <span class="stringliteral">&quot;%p,%p&quot;</span>, next_sibling, child);
+<a name="l00310"></a>00310 
+<a name="l00311"></a>00311                 U_RETURN_POINTER(node,_xmlNode);
+<a name="l00312"></a>00312                 }
 <a name="l00313"></a>00313 
-<a name="l00314"></a>00314                 U_SYSCALL_VOID(xmlUnlinkNode, <span class="stringliteral">&quot;%p&quot;</span>, node);
-<a name="l00315"></a>00315                 U_SYSCALL_VOID(xmlFreeNode,     <span class="stringliteral">&quot;%p&quot;</span>, node);
-<a name="l00316"></a>00316                 }
-<a name="l00317"></a>00317 
-<a name="l00326"></a>00326         xmlNodePtr importNode(<span class="keyword">const</span> xmlNodePtr node, <span class="keywordtype">bool</span> recursive = <span class="keyword">true</span>);
-<a name="l00327"></a>00327 
-<a name="l00333"></a><a class="code" href="classUXML2Node.html#adc328ac85afd3847d94b6cc0d6d552ae">00333</a>         <span class="keyword">const</span> <span class="keywordtype">char</span>* getPath()<span class="keyword"> const</span>
-<a name="l00334"></a>00334 <span class="keyword">                </span>{
-<a name="l00335"></a>00335                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Node::getPath()&quot;</span>)
-<a name="l00336"></a>00336 
-<a name="l00337"></a>00337                 U_INTERNAL_ASSERT_POINTER(impl_)
+<a name="l00319"></a><a class="code" href="classUXML2Node.html#a60754e2b2f41db4e883ef23a55359407">00319</a>         <span class="keyword">static</span> <span class="keywordtype">void</span> removeChild(xmlNodePtr node)
+<a name="l00320"></a>00320                 {
+<a name="l00321"></a>00321                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Node::removeChild(%p)&quot;</span>, node)
+<a name="l00322"></a>00322 
+<a name="l00323"></a>00323                 U_SYSCALL_VOID(xmlUnlinkNode, <span class="stringliteral">&quot;%p&quot;</span>, node);
+<a name="l00324"></a>00324                 U_SYSCALL_VOID(xmlFreeNode,     <span class="stringliteral">&quot;%p&quot;</span>, node);
+<a name="l00325"></a>00325                 }
+<a name="l00326"></a>00326 
+<a name="l00330"></a><a class="code" href="classUXML2Node.html#a84cec3ddb111e00df716bb01627ced7b">00330</a>         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getProp(xmlNodePtr node, <span class="keyword">const</span> <span class="keywordtype">char</span>* name)
+<a name="l00331"></a>00331                 {
+<a name="l00332"></a>00332                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Node::getProp(%p,%S)&quot;</span>, node, name)
+<a name="l00333"></a>00333 
+<a name="l00334"></a>00334                 <span class="keyword">const</span> <span class="keywordtype">char</span>* prop = (<span class="keyword">const</span> <span class="keywordtype">char</span>*) U_SYSCALL(xmlGetProp, <span class="stringliteral">&quot;%p,%S&quot;</span>, node, (<span class="keyword">const</span> xmlChar*)name);
+<a name="l00335"></a>00335 
+<a name="l00336"></a>00336                 U_RETURN(prop);
+<a name="l00337"></a>00337                 }
 <a name="l00338"></a>00338 
-<a name="l00339"></a>00339                 <span class="keyword">const</span> <span class="keywordtype">char</span>* path = (<span class="keyword">const</span> <span class="keywordtype">char</span>*) U_SYSCALL(xmlGetNodePath, <span class="stringliteral">&quot;%p&quot;</span>, impl_);
-<a name="l00340"></a>00340 
-<a name="l00341"></a>00341                 U_RETURN(path);
-<a name="l00342"></a>00342                 }
-<a name="l00343"></a>00343 
-<a name="l00349"></a><a class="code" href="classUXML2Node.html#a98448ca01fb7095fe29df952907d61c4">00349</a>         uint32_t find(UVector&lt;xmlNodePtr&gt;&amp; vec, <span class="keyword">const</span> xmlChar* xpath)<span class="keyword"> const</span>
-<a name="l00350"></a>00350 <span class="keyword">                </span>{
-<a name="l00351"></a>00351                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Node::find(%p,%S)&quot;</span>, &amp;vec, xpath)
-<a name="l00352"></a>00352 
-<a name="l00353"></a>00353                 U_INTERNAL_ASSERT_POINTER(impl_)
-<a name="l00354"></a>00354                 U_INTERNAL_ASSERT_POINTER(impl_-&gt;doc)
-<a name="l00355"></a>00355 
-<a name="l00356"></a>00356                 xmlXPathContextPtr ctxt = (xmlXPathContextPtr) U_SYSCALL(xmlXPathNewContext, <span class="stringliteral">&quot;%p&quot;</span>, impl_-&gt;doc);
+<a name="l00347"></a>00347         xmlNodePtr importNode(<span class="keyword">const</span> xmlNodePtr node, <span class="keywordtype">bool</span> recursive = <span class="keyword">true</span>);
+<a name="l00348"></a>00348 
+<a name="l00354"></a><a class="code" href="classUXML2Node.html#adc328ac85afd3847d94b6cc0d6d552ae">00354</a>         <span class="keyword">const</span> <span class="keywordtype">char</span>* getPath()<span class="keyword"> const</span>
+<a name="l00355"></a>00355 <span class="keyword">                </span>{
+<a name="l00356"></a>00356                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Node::getPath()&quot;</span>)
 <a name="l00357"></a>00357 
-<a name="l00358"></a>00358                 ctxt-&gt;node = impl_;
+<a name="l00358"></a>00358                 U_INTERNAL_ASSERT_POINTER(impl_)
 <a name="l00359"></a>00359 
-<a name="l00360"></a>00360                 <span class="keywordflow">return</span> find_impl(vec, ctxt, xpath);
-<a name="l00361"></a>00361                 }
-<a name="l00362"></a>00362 
-<a name="l00369"></a>00369         uint32_t find(UVector&lt;xmlNodePtr&gt;&amp; vec, <span class="keyword">const</span> xmlChar* xpath, <a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a>&amp; namespaces) <span class="keyword">const</span>;
-<a name="l00370"></a>00370 
-<a name="l00371"></a>00371         <span class="comment">// Access the underlying libxml2 implementation.</span>
-<a name="l00372"></a>00372 
-<a name="l00373"></a>00373         xmlNodePtr cobj() { <span class="keywordflow">return</span>      impl_; }
-<a name="l00374"></a>00374 
-<a name="l00375"></a>00375 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00376"></a>00376 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00377"></a>00377 <span class="preprocessor">#endif</span>
-<a name="l00378"></a>00378 <span class="preprocessor"></span>
-<a name="l00379"></a>00379 <span class="keyword">protected</span>:
-<a name="l00380"></a>00380         xmlNodePtr impl_;
-<a name="l00381"></a>00381 
-<a name="l00382"></a>00382         <span class="keyword">static</span> uint32_t find_impl(UVector&lt;xmlNodePtr&gt;&amp; vec, xmlXPathContext* ctxt, <span class="keyword">const</span> xmlChar* xpath);
+<a name="l00360"></a>00360                 <span class="keyword">const</span> <span class="keywordtype">char</span>* path = (<span class="keyword">const</span> <span class="keywordtype">char</span>*) U_SYSCALL(xmlGetNodePath, <span class="stringliteral">&quot;%p&quot;</span>, impl_);
+<a name="l00361"></a>00361 
+<a name="l00362"></a>00362                 U_RETURN(path);
+<a name="l00363"></a>00363                 }
+<a name="l00364"></a>00364 
+<a name="l00370"></a><a class="code" href="classUXML2Node.html#a98448ca01fb7095fe29df952907d61c4">00370</a>         uint32_t find(UVector&lt;xmlNodePtr&gt;&amp; vec, <span class="keyword">const</span> xmlChar* xpath)<span class="keyword"> const</span>
+<a name="l00371"></a>00371 <span class="keyword">                </span>{
+<a name="l00372"></a>00372                 U_TRACE(1, <span class="stringliteral">&quot;UXML2Node::find(%p,%S)&quot;</span>, &amp;vec, xpath)
+<a name="l00373"></a>00373 
+<a name="l00374"></a>00374                 U_INTERNAL_ASSERT_POINTER(impl_)
+<a name="l00375"></a>00375                 U_INTERNAL_ASSERT_POINTER(impl_-&gt;doc)
+<a name="l00376"></a>00376 
+<a name="l00377"></a>00377                 xmlXPathContextPtr ctxt = (xmlXPathContextPtr) U_SYSCALL(xmlXPathNewContext, <span class="stringliteral">&quot;%p&quot;</span>, impl_-&gt;doc);
+<a name="l00378"></a>00378 
+<a name="l00379"></a>00379                 ctxt-&gt;node = impl_;
+<a name="l00380"></a>00380 
+<a name="l00381"></a>00381                 <span class="keywordflow">return</span> find_impl(vec, ctxt, xpath);
+<a name="l00382"></a>00382                 }
 <a name="l00383"></a>00383 
-<a name="l00384"></a>00384         <span class="comment">// Create the C instance ready to be added to the parent node.</span>
-<a name="l00385"></a>00385 
-<a name="l00386"></a>00386         xmlNodePtr createNewChildNode(<span class="keyword">const</span> xmlChar* name, <span class="keyword">const</span> xmlChar* ns_prefix = 0);
-<a name="l00387"></a>00387 
-<a name="l00388"></a>00388 <span class="keyword">private</span>:
-<a name="l00389"></a>00389    UXML2Node(<span class="keyword">const</span> UXML2Node&amp;)            {}
-<a name="l00390"></a>00390    UXML2Node&amp; operator=(<span class="keyword">const</span> UXML2Node&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00391"></a>00391 };
-<a name="l00392"></a>00392 
-<a name="l00393"></a>00393 <span class="preprocessor">#endif</span>
+<a name="l00390"></a>00390         uint32_t find(UVector&lt;xmlNodePtr&gt;&amp; vec, <span class="keyword">const</span> xmlChar* xpath, <a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a>&amp; namespaces) <span class="keyword">const</span>;
+<a name="l00391"></a>00391 
+<a name="l00392"></a>00392         <span class="comment">// Access the underlying libxml2 implementation.</span>
+<a name="l00393"></a>00393 
+<a name="l00394"></a>00394         xmlNodePtr cobj() { <span class="keywordflow">return</span>      impl_; }
+<a name="l00395"></a>00395 
+<a name="l00396"></a>00396 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00397"></a>00397 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00398"></a>00398 <span class="preprocessor">#endif</span>
+<a name="l00399"></a>00399 <span class="preprocessor"></span>
+<a name="l00400"></a>00400 <span class="keyword">protected</span>:
+<a name="l00401"></a>00401         xmlNodePtr impl_;
+<a name="l00402"></a>00402 
+<a name="l00403"></a>00403         <span class="keyword">static</span> uint32_t find_impl(UVector&lt;xmlNodePtr&gt;&amp; vec, xmlXPathContext* ctxt, <span class="keyword">const</span> xmlChar* xpath);
+<a name="l00404"></a>00404 
+<a name="l00405"></a>00405         <span class="comment">// Create the C instance ready to be added to the parent node.</span>
+<a name="l00406"></a>00406 
+<a name="l00407"></a>00407         xmlNodePtr createNewChildNode(<span class="keyword">const</span> xmlChar* name, <span class="keyword">const</span> xmlChar* ns_prefix = 0);
+<a name="l00408"></a>00408 
+<a name="l00409"></a>00409 <span class="keyword">private</span>:
+<a name="l00410"></a>00410    UXML2Node(<span class="keyword">const</span> UXML2Node&amp;)            {}
+<a name="l00411"></a>00411    UXML2Node&amp; operator=(<span class="keyword">const</span> UXML2Node&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00412"></a>00412 };
+<a name="l00413"></a>00413 
+<a name="l00414"></a>00414 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 2 16:38:09 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Jan 7 17:24:57 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

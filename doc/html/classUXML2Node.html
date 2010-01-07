@@ -48,7 +48,8 @@ const xmlChar *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getNameSpa
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#a4b96f01fef746db4777cf0183f720155">checkNodeName</a> (const xmlChar *name, const xmlChar *ns)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#ab26a08d397dffc6c9adfbf06345ea0ca">getLine</a> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#a5126b9051238d08d624e97c678d6d8a5">getParent</a> () const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#af5e79df6a2a64cded557a9d2519fcbbc">getNextSibling</a> () const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af5e79df6a2a64cded557a9d2519fcbbc"></a><!-- doxytag: member="UXML2Node::getNextSibling" ref="af5e79df6a2a64cded557a9d2519fcbbc" args="() const " -->
+xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>getNextSibling</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#a3be3cad8da105dc1506b33845242bc92">getPreviousSibling</a> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">uint32_t&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#a0e1c48d24f17de58528eb78aabced774">getChildren</a> (UVector&lt; xmlNodePtr &gt; &amp;children, const xmlChar *name) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#ace650ae3693b3962111a205498f7ef7e">addChild</a> (const xmlChar *name, const xmlChar *ns_prefix=0)</td></tr>
@@ -61,7 +62,9 @@ const xmlChar *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getNameSpa
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a761b78b7971c704017679ea4a1cbaf53"></a><!-- doxytag: member="UXML2Node::cobj" ref="a761b78b7971c704017679ea4a1cbaf53" args="()" -->
 xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>cobj</b> ()</td></tr>
 <tr><td colspan="2"><h2>Static Public Member Functions</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#abf8ae5882358e97fe11620ea9866097f">getNextSibling</a> (xmlNodePtr node)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">static void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#a60754e2b2f41db4e883ef23a55359407">removeChild</a> (xmlNodePtr node)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#a84cec3ddb111e00df716bb01627ced7b">getProp</a> (xmlNodePtr node, const char *name)</td></tr>
 <tr><td colspan="2"><h2>Protected Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad3fa1b89ad93fdb826c40ffcf5f175bc"></a><!-- doxytag: member="UXML2Node::createNewChildNode" ref="ad3fa1b89ad93fdb826c40ffcf5f175bc" args="(const xmlChar *name, const xmlChar *ns_prefix=0)" -->
 xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>createNewChildNode</b> (const xmlChar *name, const xmlChar *ns_prefix=0)</td></tr>
@@ -380,16 +383,17 @@ xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>impl_</b></td><
 
 </div>
 </div>
-<a class="anchor" id="af5e79df6a2a64cded557a9d2519fcbbc"></a><!-- doxytag: member="UXML2Node::getNextSibling" ref="af5e79df6a2a64cded557a9d2519fcbbc" args="() const " -->
+<a class="anchor" id="abf8ae5882358e97fe11620ea9866097f"></a><!-- doxytag: member="UXML2Node::getNextSibling" ref="abf8ae5882358e97fe11620ea9866097f" args="(xmlNodePtr node)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">xmlNodePtr UXML2Node::getNextSibling </td>
+          <td class="memname">static xmlNodePtr UXML2Node::getNextSibling </td>
           <td>(</td>
-          <td class="paramname"></td>
+          <td class="paramtype">xmlNodePtr&nbsp;</td>
+          <td class="paramname"> <em>node</em></td>
           <td>&nbsp;)&nbsp;</td>
-          <td> const<code> [inline]</code></td>
+          <td><code> [inline, static]</code></td>
         </tr>
       </table>
 </div>
@@ -453,6 +457,34 @@ xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>impl_</b></td><
 <div class="memdoc">
 <p>Get the previous sibling for this node.</p>
 <dl class="return"><dt><b>Returns:</b></dt><dd>The previous sibling </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a84cec3ddb111e00df716bb01627ced7b"></a><!-- doxytag: member="UXML2Node::getProp" ref="a84cec3ddb111e00df716bb01627ced7b" args="(xmlNodePtr node, const char *name)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">static const char* UXML2Node::getProp </td>
+          <td>(</td>
+          <td class="paramtype">xmlNodePtr&nbsp;</td>
+          <td class="paramname"> <em>node</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const char *&nbsp;</td>
+          <td class="paramname"> <em>name</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [inline, static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Search and get the value of an attribute associated to a node </p>
 
 </div>
 </div>
@@ -608,7 +640,7 @@ xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>impl_</b></td><
 <li>src/ulib/xml/libxml2/node.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 2 16:38:18 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Jan 7 17:25:02 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

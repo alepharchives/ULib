@@ -2795,6 +2795,20 @@ next:
 
    *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(nResponseCode, ext); // NB: this assignment make also the unmmap() of file...
 
+   /* On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
+    * ------------------------------------------------------------------------------------------------------
+    * if we set the TCP_CORK option on the socket, our header packet will be padded with the bulk data
+    * and all the data will be transferred automatically in the packets according to size. When finished
+    * with the bulk data transfer, it is advisable to uncork the connection by unsetting the TCP_CORK option
+    * so that any partial frames that are left can go out. This is equally important to corking. To sum it up,
+    * we recommend setting the TCP_CORK option when you're sure that you will be sending multiple data sets
+    * together (such as header and a body of HTTP response), with no delays between them. This can greatly
+    * benefit the performance of WWW, FTP, and file servers, as well as simplifying your life
+    * ------------------------------------------------------------------------------------------------------
+    */
+
+   if (UServer_Base::useTcpOptimization()) UClientImage_Base::socket->setTcpCork(1U);
+
 send_header:
 
    if (UClientImage_Base::genericHandlerWrite() == U_NOTIFIER_OK &&
@@ -2814,6 +2828,8 @@ send_header:
          {
          if (file.sendfile(UClientImage_Base::socket->getFd(), &start, size) == false) result = false;
          }
+
+      if (UServer_Base::useTcpOptimization()) UClientImage_Base::socket->setTcpCork(0U);
       }
 
    if (file.isOpen()) file.close();

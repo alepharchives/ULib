@@ -25016,10 +25016,22 @@ fi
 		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wno-format -Wno-format-extra-args"
 
 	case "${gcc_version_raw}" in
-		4.5.*)
-			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result"
+		2.*)
+		;;
+		3.*)
+		;;
+		4.0.*)
+		;;
+		4.1.*)
+		;;
+		4.2.*)
+		;;
+		4.3.*)
+		;;
+		4.4.*)
 		;;
 		*)
+			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result"
 		;;
 	esac
 

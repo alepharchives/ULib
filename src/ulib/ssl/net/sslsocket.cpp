@@ -324,15 +324,20 @@ const char* USSLSocket::status(SSL* ssl, int ret, bool flag)
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len,0)
 
-   (void) sprintf(u_buffer, "(%d, %s) - %s ", ret, descr, errstr);
+   u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "(%d, %s) - %s", ret, descr, errstr);
 
-   uint32_t size = strlen(u_buffer), psize;
+   uint32_t len;
 
-   U_INTERNAL_DUMP("u_buffer = %.*S", size, u_buffer)
+   char* sslerr = UServices::getOpenSSLError(0, 0, &len);
 
-   (void) UServices::getOpenSSLError(u_buffer + size, 4096 - size, &psize);
+   if (len)
+      {
+      u_buffer[u_buffer_len++] = ' ';
 
-   u_buffer_len = size + psize;
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", (void*)(u_buffer + u_buffer_len), sslerr, len+1);
+
+      u_buffer_len += len;
+      }
 
    U_RETURN(u_buffer);
 }
@@ -346,7 +351,7 @@ void USSLSocket::getMsgError(const char*& msg)
    if (ret == SSL_ERROR_NONE) USocket::getMsgError(msg);
    else
       {
-      if (u_buffer_len == 0) (void) status(true);
+      if (u_buffer_len == 0) (void) status(false);
 
       msg = u_buffer;
 
@@ -520,11 +525,12 @@ loop:
 
       pcNewConnection->ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
 
-      U_DUMP("status = %.*S", 512, status(ssl, pcNewConnection->ret, false))
+      U_DUMP("status = %.*S", 512, (u_buffer_len = 0, status(ssl, pcNewConnection->ret, false)))
 
-      if (pcNewConnection->ret == SSL_ERROR_WANT_READ  ||
-          pcNewConnection->ret == SSL_ERROR_WANT_WRITE ||
-          pcNewConnection->ret == SSL_ERROR_WANT_ACCEPT) goto loop;
+      if (USocket::req_timeout == 0 &&
+          (pcNewConnection->ret == SSL_ERROR_WANT_READ  ||
+           pcNewConnection->ret == SSL_ERROR_WANT_WRITE ||
+           pcNewConnection->ret == SSL_ERROR_WANT_ACCEPT)) goto loop;
       }
 
    if (ret != 1)

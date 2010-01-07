@@ -234,6 +234,28 @@ public:
 
    xmlNodePtr findNode(const xmlNodePtr parent, const xmlChar* name, const xmlChar* ns);
 
+   /** Searches a direct child of the @parent node having given name and namespace href.
+    *
+    * @param parent  the pointer to XML node.
+    * @param name    the name.
+    * @param ns      the namespace href (may be NULL).
+    *
+    * @return        the pointer to the found node or NULL if an error occurs or node is not found.
+    */
+
+   xmlNodePtr findChild(const xmlNodePtr parent, const xmlChar* name, const xmlChar* ns);
+
+   /** Searches the ancestors axis of the @cur node for a node having given name and namespace href.
+    *
+    * @param cur     the pointer to an XML node.
+    * @param name    the name.
+    * @param ns      the namespace href (may be NULL).
+    *
+    * @return        the pointer to the found node or NULL if an error occurs or node is not found.
+    */
+
+   xmlNodePtr findParent(const xmlNodePtr cur, const xmlChar* name, const xmlChar* ns);
+
    /** Write the document to a file.
    *
    * @param filename

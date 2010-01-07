@@ -129,11 +129,7 @@ loop:
       {
       pcNewConnection->iState = CONNECT;
 
-      /* we can do this in UServer...
-      pcNewConnection->bLocalSet   = true;
-      pcNewConnection->iLocalPort  =
-      pcNewConnection->iRemotePort = 0;
-      */
+      if (USocket::req_timeout) (void) pcNewConnection->setTimeoutRCV(USocket::req_timeout * 1000);
       }
    else
       {

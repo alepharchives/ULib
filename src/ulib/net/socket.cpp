@@ -24,6 +24,8 @@
 
 #include "socket_address.cpp"
 
+int      USocket::req_timeout;
+
 UString* USocket::str_host;
 UString* USocket::str_range;
 UString* USocket::str_close;
@@ -538,16 +540,12 @@ loop:
       {
       pcNewConnection->iState = CONNECT;
 
-      /* we can do this in UServer...
-      pcNewConnection->bLocalSet     = true;
-      pcNewConnection->iLocalPort    = iLocalPort;
-      pcNewConnection->cLocalAddress = cLocalAddress;
-      */
-
       cRemote.getPortNumber(pcNewConnection->iRemotePort);
       cRemote.getIPAddress( pcNewConnection->cRemoteAddress);
 
       U_INTERNAL_ASSERT_EQUALS(pcNewConnection->bIPv6Socket, (cRemoteAddress.getAddressFamily() == AF_INET6))
+
+      if (req_timeout) (void) pcNewConnection->setTimeoutRCV(req_timeout * 1000);
 
       U_RETURN(true);
       }
@@ -591,6 +589,7 @@ const char* USocket::dump(bool reset) const
                   << "iLocalPort                    " << iLocalPort             << '\n'
                   << "iRemotePort                   " << iRemotePort            << '\n'
                   << "bIPv6Socket                   " << bIPv6Socket            << '\n'
+                  << "req_timeout                   " << req_timeout            << '\n'
                   << "cLocalAddress   (UIPAddress   " << (void*)&cLocalAddress  << ")\n"
                   << "cRemoteAddress  (UIPAddress   " << (void*)&cRemoteAddress << ')';
 

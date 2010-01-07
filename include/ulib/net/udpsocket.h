@@ -44,8 +44,11 @@ public:
    We try to bind the USocket to the specified port number and any local IP Address using the bind() method.
    */
 
-   virtual bool setServer(                           int port, int iBackLog) { return (USocket::socket(SOCK_DGRAM) && USocket::setServer(            port, 0)); }
-   virtual bool setServer(const UString& cLocalAddr, int port, int iBackLog) { return (USocket::socket(SOCK_DGRAM) && USocket::setServer(cLocalAddr, port, 0)); }
+   virtual bool setServer(int port, int iBackLog)
+      { return (USocket::socket(SOCK_DGRAM) && USocket::setServer(port, 0)); }
+
+   virtual bool setServer(const UString& cLocalAddr, int port, int iBackLog)
+      { return (USocket::socket(SOCK_DGRAM) && USocket::setServer(cLocalAddr, port, 0)); }
 
    // DEBUG
 

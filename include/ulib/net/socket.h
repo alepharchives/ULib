@@ -450,6 +450,15 @@ public:
 #  endif
       }
 
+   void setTcpNoDelay(uint32_t value)
+      {
+      U_TRACE(0, "USocket::setTcpNoDelay(%u)", value)
+
+#  ifdef TCP_NODELAY
+      (void) setSockOpt(SOL_TCP, TCP_NODELAY, (const void*)&value, sizeof(uint32_t));
+#  endif
+      }
+
    /**
    Enables/disables the @c SO_TIMEOUT pseudo option
 
@@ -651,6 +660,8 @@ protected:
    int iSockDesc, iState, iLocalPort, iRemotePort;
    UIPAddress cLocalAddress, cRemoteAddress;
    bool bIPv6Socket, bLocalSet;
+
+   static int req_timeout; // the time-out value in seconds for client send request
 
    bool connect();
    bool bind(SocketAddress& cLocal);

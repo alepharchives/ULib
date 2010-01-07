@@ -28,7 +28,6 @@
 #define U_TOT_CONNECTION   ptr->tot_connection
 
 int                        UServer_Base::port;
-int                        UServer_Base::req_timeout;
 int                        UServer_Base::cgi_timeout;
 int                        UServer_Base::log_file_sz;
 int                        UServer_Base::verify_mode;
@@ -298,7 +297,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    U_ASSERT_EQUALS(cfg.empty(), false)
 
    // --------------------------------------------------------------------------------------------------------------------------------------
-   // UServer - configuration parameters
+   // userver - configuration parameters
    // --------------------------------------------------------------------------------------------------------------------------------------
    // USE_IPV6      flag indicating the use of ipv6
    // SERVER        host name or ip address for the listening socket
@@ -353,10 +352,10 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    flag_use_tcp_optimization  = cfg.readBoolean(*str_USE_TCP_OPTIMIZATION);
 
    port                       = cfg.readLong(*str_PORT, U_DEFAULT_PORT);
-   req_timeout                = cfg.readLong(*str_REQ_TIMEOUT);
    cgi_timeout                = cfg.readLong(*str_CGI_TIMEOUT);
    log_file_sz                = cfg.readLong(*str_LOG_FILE_SZ);
    max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE);
+   USocket::req_timeout       = cfg.readLong(*str_REQ_TIMEOUT);
    u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE, 128);
 
    if (cgi_timeout) UCommand::setTimeout(cgi_timeout);
@@ -660,10 +659,19 @@ void UServer_Base::init()
       {
       U_ASSERT_EQUALS(name_sock.empty(), true) // no unix socket...
 
-      /* On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries.
+      socket->setBufferRCV(65536);
+      socket->setBufferSND(65536);
+
+      /* Let's say an application just issued a request to send a small block of data. Now, we could
+       * either send the data immediately or wait for more data. Some interactive and client-server
+       * applications will benefit greatly if we send the data right away. For example, when we are
+       * sending a short request and awaiting a large response, the relative overhead is low compared
+       * to the total amount of data transferred, and the response time could be much better if the
+       * request is sent immediately. This is achieved by setting the TCP_NODELAY option on the socket,
+       * which disables the Nagle algorithm.
        */
 
-      socket->setTcpCork(1U);
+      socket->setTcpNoDelay(1U);
 
       /* Linux (along with some other OSs) includes a TCP_DEFER_ACCEPT option in its TCP implementation.
        * Set on a server-side listening socket, it instructs the kernel not to wait for the final ACK packet
@@ -780,7 +788,7 @@ const char* UServer_Base::getNumConnection()
    static char buffer[32];
 
    if (isPreForked()) (void) u_snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
-   else               (void) u_snprintf(buffer, sizeof(buffer), "%d",      num_connection);
+   else               (void) u_snprintf(buffer, sizeof(buffer),  "%d",     num_connection);
 
    U_RETURN(buffer);
 }
@@ -900,8 +908,6 @@ void UServer_Base::handlerNewConnection()
                         U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
       }
 
-   if (req_timeout) (void) UClientImage_Base::socket->setTimeoutRCV(req_timeout * 1000);
-
    UClientImage_Base::run();
 }
 
@@ -923,7 +929,7 @@ void UServer_Base::run()
 #ifndef HAVE_LIBEVENT
    UNotifier::exit_loop_wait_event_for_signal = true;
 
-   if (req_timeout) ptime = U_NEW(UEventTime(req_timeout, 0L));
+   if (USocket::req_timeout) ptime = U_NEW(UEventTime(USocket::req_timeout, 0L));
 #endif
 
    // --------------------------------------------------------------------------------------------------------------------------
@@ -946,8 +952,8 @@ void UServer_Base::run()
 
    if (isPreForked())
       {
-      UTimeVal to_sleep(1L);
       int pid, status, nkids = 0;
+      UTimeVal to_sleep(0L, 500000L);
 
       U_INTERNAL_ASSERT_POINTER(proc)
 
@@ -1197,10 +1203,10 @@ void UServer_Base::operator()(int fd, short event)
 
 const char* UServer_Base::dump(bool reset) const
 {
-   *UObjectIO::os << "port                      " << port                        << '\n'
+   *UObjectIO::os << "ptr                       " << (void*)ptr                  << '\n'
+                  << "port                      " << port                        << '\n'
                   << "flag_loop                 " << flag_loop                   << '\n'
                   << "verify_mode               " << verify_mode                 << '\n'
-                  << "req_timeout               " << req_timeout                 << '\n'
                   << "cgi_timeout               " << cgi_timeout                 << '\n'
                   << "verify_mode               " << verify_mode                 << '\n'
                   << "log_file_sz               " << log_file_sz                 << '\n'
