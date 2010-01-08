@@ -1071,6 +1071,8 @@ wait:
 
             U_SRV_LOG_TIMEOUT((UClientImage_Base*)(item->handler_event_fd));
 
+            UClientImage_Base::timeout = true;
+
             UNotifier::erase(item->handler_event_fd, true);
             }
          }
