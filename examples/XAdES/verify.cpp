@@ -34,6 +34,80 @@ public:
       U_TRACE(5, "Application::~Application()")
       }
 
+   bool processReference(xmlNodePtr ref)
+      {
+      U_TRACE(5, "Application::processReference(%p)", ref)
+
+      /* Reference is an element that may occur one or more times. It specifies
+       * a digest algorithm and digest value, and optionally an identifier of the 
+       * object being signed, the type of the object, and/or a list of transforms 
+       * to be applied prior to digesting. The identification (URI) and transforms 
+       * describe how the digested content (i.e., the input to the digest method) 
+       * was created. The Type attribute facilitates the processing of referenced 
+       * data. For example, while this specification makes no requirements over 
+       * external data, an application may wish to signal that the referent is a 
+       * Manifest. An optional ID attribute permits a Reference to be referenced 
+       * from elsewhere
+       */
+
+      const char* id           = 0;
+      const char* uri          = 0;
+      const char* type         = 0;
+      const char* digestMethod = 0;
+
+      xmlNodePtr node, digestValueNode = 0;
+
+      while (ref &&
+             UXML2Node(ref).checkNodeName((const xmlChar*)"Reference",
+                                          (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
+         {
+         // read attributes first
+
+         id   = UXML2Node::getProp(ref, "Id");
+         uri  = UXML2Node::getProp(ref, "URI");
+         type = UXML2Node::getProp(ref, "Type");
+
+         // first is optional Transforms node
+
+         node = UXML2Node::getNextSibling(ref->children);
+
+         if (node &&
+             UXML2Node(node).checkNodeName((const xmlChar*)"Transforms",
+                                           (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
+            {
+            node = UXML2Node::getNextSibling(node->next);
+            }
+
+         // next node is required DigestMethod
+
+         if (node &&
+             UXML2Node(node).checkNodeName((const xmlChar*)"DigestMethod",
+                                           (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
+            {
+            digestMethod = UXML2Node::getProp(node, "Algorithm");
+
+            node = UXML2Node::getNextSibling(node->next);
+            }
+
+         // last node is required DigestValue
+
+         if (node &&
+             UXML2Node(node).checkNodeName((const xmlChar*)"DigestValue",
+                                           (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
+            {
+            digestValueNode = node;
+            }
+
+         // if there is something left than it's an error
+
+         if (node) U_RETURN(false);
+
+         ref = UXML2Node::getNextSibling(ref->next);
+         }
+
+      U_RETURN(true);
+      }
+
    void run(int argc, char* argv[], char* env[])
       {
       U_TRACE(5, "Application::run(%d,%p,%p)", argc, argv, env)
@@ -96,7 +170,7 @@ public:
 
             if (signature == 0) continue;
 
-            const char* id = UXML2Node::getProp(signature, "Id"); 
+            const char* signature_id = UXML2Node::getProp(signature, "Id"); 
 
             // first node is required SignedInfo
 
@@ -170,7 +244,6 @@ public:
                 UXML2Node(cur).checkNodeName((const xmlChar*)"CanonicalizationMethod",
                                              (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) continue;
 
-
             const char* c14nMethod = UXML2Node::getProp(cur, "Algorithm");
 
             if (U_STREQ(c14nMethod, "http://www.w3.org/TR/2001/REC-xml-c14n-20010315") == false) continue;
@@ -187,16 +260,7 @@ public:
 
             // calculate references
 
-            cur = UXML2Node::getNextSibling(cur->next);
-
-            while (cur &&
-                   UXML2Node(cur).checkNodeName((const xmlChar*)"Reference",
-                                                (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
-               {
-               // create reference
-
-               cur = UXML2Node::getNextSibling(cur->next);
-               }
+            if (processReference(UXML2Node::getNextSibling(cur->next)) == false) continue;
 
             UApplication::exit_value = 0;
             }

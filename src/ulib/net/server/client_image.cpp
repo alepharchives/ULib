@@ -15,7 +15,6 @@
 #include <ulib/net/server/server.h>
 
 bool               UClientImage_Base::bIPv6;
-bool               UClientImage_Base::timeout;
 bool               UClientImage_Base::write_off;  // NB: we not send response because we can have used sendfile() etc...
 USocket*           UClientImage_Base::socket;
 UString*           UClientImage_Base::body;
@@ -174,17 +173,6 @@ void UClientImage_Base::destroy()
 
       socket->iSockDesc = pClientImage->UEventFd::fd;
 
-      U_INTERNAL_DUMP("timeout = %b", timeout)
-
-      if (timeout)
-         {
-         timeout = false;
-
-         static struct linger l = { 1, 0 };
-
-         socket->setSockOpt(SOL_SOCKET, SO_LINGER, (const void*)&l, sizeof(struct linger)); // send RST - ECONNRESET
-         }
-
       socket->closesocket();
       }
 }
@@ -333,12 +321,7 @@ bool UClientImage_Base::isClose()
 
    U_INTERNAL_DUMP("timeout = %b", socket->isTimeout())
 
-   if (socket->isTimeout())
-      {
-      timeout = true;
-
-      U_SRV_LOG_TIMEOUT(pClientImage);
-      }
+   if (socket->isTimeout()) U_SRV_LOG_TIMEOUT(pClientImage);
 
    if (rbuffer->empty() || socket->isConnected() == false) U_RETURN(true);
 

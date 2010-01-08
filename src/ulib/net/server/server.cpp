@@ -1050,6 +1050,7 @@ wait:
             }
 
          UNotifier* item;
+         UClientImage_Base* cimg;
 
          while (true)
             {
@@ -1067,11 +1068,14 @@ wait:
             U_INTERNAL_DUMP("item = %p", item)
 
             U_INTERNAL_ASSERT_POINTER(item)
-            U_INTERNAL_ASSERT_POINTER(item->handler_event_fd)
 
-            U_SRV_LOG_TIMEOUT((UClientImage_Base*)(item->handler_event_fd));
+            cimg = (UClientImage_Base*)(item->handler_event_fd);
 
-            UClientImage_Base::timeout = true;
+            U_INTERNAL_ASSERT_POINTER(cimg)
+
+            U_SRV_LOG_TIMEOUT(cimg);
+
+            cimg->socket->iState = USocket::TIMEOUT;
 
             UNotifier::erase(item->handler_event_fd, true);
             }

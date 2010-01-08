@@ -418,6 +418,38 @@ void USocket::closesocket()
 
    U_INTERNAL_ASSERT(isOpen())
 
+   U_INTERNAL_DUMP("isTimeout() = %b", isTimeout())
+
+   if (isTimeout())
+      {
+      /*
+      static struct linger l = { 1, 0 };
+
+      (void) setSockOpt(SOL_SOCKET, SO_LINGER, (const void*)&l, sizeof(struct linger)); // send RST - ECONNRESET
+      */
+
+      /* The shutdown() tells the receiver the server is done sending data. No
+       * more data is going to be send. More importantly, it doesn't close the
+       * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
+       */
+
+      (void) U_SYSCALL(shutdown, "%d,%d", iSockDesc, SHUT_WR);
+
+      /* At this point, the socket layer has to wait until the receiver has
+       * acknowledged the FIN packet by receiving a ACK packet. This is done by
+       * using the recv() command in a loop until 0 or less value is returned.
+       * Once recv() returns 0 (or less),  1/2 of the socket is closed
+       */
+
+      char buf[8*1024];
+
+      while (recv(iSockDesc, buf, sizeof(buf)) > 0);
+
+      iState = CLOSE;
+      }
+
+   // Then you can close the second half of the socket by calling closesocket()
+
 #ifdef __MINGW32__
    (void) U_SYSCALL(closesocket, "%d", (SOCKET)iSockDesc);
 #elif defined(DEBUG)
