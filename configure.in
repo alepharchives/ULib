@@ -72,7 +72,7 @@ if test "${GCC}" = "yes" ; then
 	case "${gcc_version}" in
 		gcc-2.7.*)
 		AC_MSG_RESULT([no (${gcc_version})])
-		AC_MSG_ERROR([please use a recent (>= gcc-2.95) version of gcc])
+		AC_MSG_ERROR([please use a more recent (>= gcc-2.95) version of gcc])
 		;;
 		*)
 		AC_MSG_RESULT([ok (${gcc_version})])

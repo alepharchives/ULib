@@ -30,7 +30,7 @@ cd tests/examples
 ------------------------------------------------------------------------
 start userver_tcp with plugin:
    PLUGIN               "( mod_usp mod_http )"
-   USE_TCP_OPTIMIZATION yes # (TCP_CORK, TCP_DEFER_ACCEPT, TCP_QUICKACK)
+   USE_TCP_OPTIMIZATION yes # (NODELAY/CORK, DEFER_ACCEPT, QUICKACK)
    PREFORK_CHILD        5   # BETTER CONTEXT FOR ME (in my environment)
 ## LOG_FILE             benchmarking.log
 ------------------------------------------------------------------------
@@ -72,28 +72,28 @@ Document Length:        23 bytes
 
 # run command on another computer (gentoo also)
 
-ab -n 100000 -c10 "http://stefano/usp/benchmarking.usp?name=stefano"
+ab -n 100000 -c10 -t 1 "http://stefano/usp/benchmarking.usp?name=stefano"
 
 # result
 ----------------------------------------
 Concurrency Level:      10
 Time taken for tests:   1.000 seconds
-Complete requests:      11171
+Complete requests:      10118
 Failed requests:        0
 Write errors:           0
-Total transferred:      1608768 bytes
-HTML transferred:       256956 bytes
-Requests per second:    11170.36 [#/sec] (mean)
-Time per request:       0.895 [ms] (mean)
-Time per request:       0.090 [ms] (mean, across all concurrent requests)
-Transfer rate:          1570.97 [Kbytes/sec] received
+Total transferred:      1457280 bytes
+HTML transferred:       232760 bytes
+Requests per second:    10116.71 [#/sec] (mean)
+Time per request:       0.988 [ms] (mean)
+Time per request:       0.099 [ms] (mean, across all concurrent requests)
+Transfer rate:          1422.94 [Kbytes/sec] received
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
 Connect:        0    0   0.1      0       1
-Processing:     0    1   0.1      1       4
-Waiting:        0    0   0.1      0       4
-Total:          1    1   0.1      1       4
+Processing:     0    1   1.1      1      12
+Waiting:        0    1   0.9      1      12
+Total:          0    1   1.1      1      13
 
 Percentage of the requests served within a certain time (ms)
   50%      1
@@ -102,9 +102,9 @@ Percentage of the requests served within a certain time (ms)
   80%      1
   90%      1
   95%      1
-  98%      1
-  99%      1
- 100%      4 (longest request)
+  98%      5
+  99%      8
+ 100%     13 (longest request)
 ----------------------------------------
 
 *** same but running in WindowXP (cross-compiling context FEDORA MinGW) ***

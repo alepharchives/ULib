@@ -32,12 +32,14 @@ else
 fi
 cd $CURDIR
 
+ulimit -n 100000
+
 #STRACE=$TRUSS
  start_prg_background userver_tcp -c benchmarking.cfg
 #start_prg_background userver_ssl -c benchmarking_ssl.cfg
 
 # run command on another computer
-# ab -f SSL3 -n 100000 -c10 http://stefano/usp/hello_world.usp
+# ab -f SSL3 -n 100000 -c10 -t 1 https://stefano/usp/hello_world.usp
 
 #$SLEEP
 #killall userver_tcp userver_ssl

@@ -349,7 +349,7 @@ thrprefix = @thrprefix@
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/examples/http_header/include
 EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN nocat wi-auth WAGSM RA icons IR/WEB IR/benchmark IR/doc_dir *.cfg *.test *.sh \
-				 index.html .htpasswd .htdigest cgi-bin www.sito?.com error_msg workflow doc_parse favicon.ico
+				 index.html 100.html .htpasswd .htdigest cgi-bin www.sito?.com error_msg workflow doc_parse favicon.ico
 
 TESTS = client_server.test test_manager.test IR.test $(am__append_1) \
 	$(am__append_2) $(am__append_3) $(am__append_4) \

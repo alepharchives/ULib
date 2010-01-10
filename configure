@@ -5222,7 +5222,7 @@ $as_echo_n "checking for a supported version of gcc... " >&6; }
 		gcc-2.7.*)
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no (${gcc_version})" >&5
 $as_echo "no (${gcc_version})" >&6; }
-		as_fn_error "please use a recent (>= gcc-2.95) version of gcc" "$LINENO" 5
+		as_fn_error "please use a more recent (>= gcc-2.95) version of gcc" "$LINENO" 5
 		;;
 		*)
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ok (${gcc_version})" >&5

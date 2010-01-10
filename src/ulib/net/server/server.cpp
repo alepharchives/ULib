@@ -1077,7 +1077,7 @@ wait:
 
             cimg->socket->iState = USocket::TIMEOUT;
 
-            UNotifier::erase(item->handler_event_fd, true);
+            UNotifier::erase(cimg, true);
             }
          }
 #  endif

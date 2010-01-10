@@ -125,9 +125,9 @@ void USocket::close()
 {
    U_TRACE(0, "USocket::close()")
 
-   iState = CLOSE;
-
    USocket::closesocket();
+
+   iState = CLOSE;
 }
 
 bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)
@@ -444,8 +444,6 @@ void USocket::closesocket()
       char buf[8*1024];
 
       while (recv(iSockDesc, buf, sizeof(buf)) > 0);
-
-      iState = CLOSE;
       }
 
    // Then you can close the second half of the socket by calling closesocket()

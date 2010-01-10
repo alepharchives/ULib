@@ -73,13 +73,17 @@ public:
       // SOCKET_NAME    file name   for the listening socket
       // IP_ADDRESS     public ip address of host for the interface connected to the Internet (autodetected if not specified)
       // ALLOWED_IP     list of comma separated client address for IP-based access control (IPADDR[/MASK])
+      //
+      // USE_TCP_OPTIMIZATION flag indicating the use of TCP/IP options to optimize data transmission (TCP_CORK, TCP_DEFER_ACCEPT, TCP_QUICKACK)
+
       // PID_FILE       write pid on file indicated
       // WELCOME_MSG    message of welcome to send initially to client
-      // RUN_AS_USER    change the current working directory to the user's home dir, and downgrade security to that user account
+      // RUN_AS_USER    downgrade security to that user account
       // DOCUMENT_ROOT  The directory out of which you will serve your documents
       //
       // LOG_FILE       locations for file log
       // LOG_FILE_SZ    memory size for file log
+      // LOG_MSG_SIZE  limit length of print network message to LOG_MSG_SIZE chars (default 128)
       //
       // PLUGIN         list of plugins to load, a flexible way to add specific functionality to the server
       // PLUGIN_DIR     directory of plugins to load

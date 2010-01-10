@@ -32,6 +32,8 @@ else
 fi
 cd $CURDIR
 
+ulimit -n 100000
+
 #STRACE=$TRUSS
  start_prg_background userver_tcp -c benchmarking.cfg
 #start_prg_background userver_ssl -c benchmarking_ssl.cfg
