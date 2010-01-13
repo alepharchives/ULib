@@ -74,11 +74,11 @@
 #  include <ulib/mysql/mysql.h>
 #endif
 
+#ifdef HAVE_LIBXML2
+#  include "ulib/xml/libxml2/schema.h"
+#endif
+
 #ifdef HAVE_EXPAT
 #  include <ulib/xml/soap/soap_client.h>
 #  include <ulib/xml/soap/soap_object.h>
-#endif
-
-#ifdef HAVE_LIBXML2
-#  include "ulib/xml/libxml2/schema.h"
 #endif

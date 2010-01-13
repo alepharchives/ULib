@@ -108,10 +108,6 @@ public:
 
       (void) cfg.open(cfg_str);
 
-#  ifdef U_SSL_SOCKET
-      USSLSocket::method = (SSL_METHOD*) SSLv23_server_method();
-#  endif
-
       server = new Server(&cfg);
 
       server->go();

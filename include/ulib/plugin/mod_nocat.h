@@ -45,6 +45,7 @@ UServer has 5 hooks which are used in different states of the execution of the r
 RETURNS:
   U_PLUGIN_HANDLER_GO_ON    if ok
   U_PLUGIN_HANDLER_FINISHED if the final output is prepared
+  U_PLUGIN_HANDLER_AGAIN    if the request is empty (NONBLOCKING)
 
   U_PLUGIN_HANDLER_ERROR    on error
 */

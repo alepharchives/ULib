@@ -307,8 +307,8 @@ bool UPop3Client::login(const char* user, const char* passwd)
       if (syncCommand(-1, "USER %s", user) &&
           syncCommand(-1, "PASS %s", passwd))
          {
-         state            = TRANSACTION;
-         USocket::state() = USocket::LOGIN;
+         state           = TRANSACTION;
+         USocket::iState = USocket::LOGIN;
 
          U_RETURN(true);
          }

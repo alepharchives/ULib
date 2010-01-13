@@ -24,7 +24,13 @@
 
 #include "socket_address.cpp"
 
-int      USocket::req_timeout;
+#ifndef HAVE_ACCEPT4
+#  define SOCK_NONBLOCK   04000 /* Atomically mark descriptor(s) as non-blocking */
+#  define SOCK_CLOEXEC 02000000 /* Atomically set close-on-exec flag for the new descriptor(s) */
+#endif
+
+int USocket::req_timeout;
+int USocket::accept4_flags = SOCK_NONBLOCK | SOCK_CLOEXEC; // If flags is 0, then accept4() is the same as accept()
 
 UString* USocket::str_host;
 UString* USocket::str_range;
@@ -121,22 +127,13 @@ void USocket::str_allocate()
    U_NEW_ULIB_OBJECT(str_X_Forwarded_For,       U_STRING_FROM_STRINGREP_STORAGE(20));
 }
 
-void USocket::close()
-{
-   U_TRACE(0, "USocket::close()")
-
-   USocket::closesocket();
-
-   iState = CLOSE;
-}
-
 bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)
 {
    U_TRACE(0, "USocket::checkIO(%d,%d)", iBytesTransferred, iMaxBytesTransfer)
 
    U_INTERNAL_ASSERT(iBytesTransferred <= iMaxBytesTransfer)
 
-   if (iBytesTransferred <= 0)
+   if (iBytesTransferred < 0)
       {
       checkErrno(iBytesTransferred);
 
@@ -418,9 +415,9 @@ void USocket::closesocket()
 
    U_INTERNAL_ASSERT(isOpen())
 
-   U_INTERNAL_DUMP("isTimeout() = %b", isTimeout())
+   U_INTERNAL_DUMP("isBroken() = %b", isBroken())
 
-   if (isTimeout())
+   if (isBroken())
       {
       /*
       static struct linger l = { 1, 0 };
@@ -563,7 +560,11 @@ bool USocket::accept(USocket* pcNewConnection)
    socklen_t slDummy = cRemote.sizeOf();
 
 loop:
-   pcNewConnection->iSockDesc = U_SYSCALL(accept, "%d,%p,%p", iSockDesc, (sockaddr*)cRemote, &slDummy);
+#ifdef HAVE_ACCEPT4
+   pcNewConnection->iSockDesc = U_SYSCALL(accept4, "%d,%p,%p,%d", iSockDesc, (sockaddr*)cRemote, &slDummy, accept4_flags);
+#else
+   pcNewConnection->iSockDesc = U_SYSCALL(accept,  "%d,%p,%p",    iSockDesc, (sockaddr*)cRemote, &slDummy);
+#endif
 
    if (pcNewConnection->iSockDesc == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
    if (pcNewConnection->iSockDesc != -1)
@@ -575,7 +576,9 @@ loop:
 
       U_INTERNAL_ASSERT_EQUALS(pcNewConnection->bIPv6Socket, (cRemoteAddress.getAddressFamily() == AF_INET6))
 
-      if (req_timeout) (void) pcNewConnection->setTimeoutRCV(req_timeout * 1000);
+#  ifndef HAVE_ACCEPT4
+      if (accept4_flags) (void) U_SYSCALL(fcntl, "%d,%d,%d", pcNewConnection->iSockDesc, F_SETFL, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+#  endif
 
       U_RETURN(true);
       }

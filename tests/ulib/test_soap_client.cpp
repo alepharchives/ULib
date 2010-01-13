@@ -1,8 +1,11 @@
 // test_soap_client.cpp
 
-#define U_NO_SSL
-
 #include <ulib/notifier.h>
+
+#ifndef U_NO_SSL
+#define U_NO_SSL
+#endif
+
 #include <ulib/utility/services.h>
 #include <ulib/xml/soap/soap_client.h>
 
@@ -22,7 +25,7 @@ public:
 
       uint32_t size = this->request.size();
 
-      bool result = (UNotifier::write(STDOUT_FILENO, this->request.data(), size, 0) == size);
+      bool result = (UNotifier::write(STDOUT_FILENO, this->request.data(), size) == size);
 
       U_RETURN(result);
       }
@@ -31,7 +34,7 @@ public:
       {
       U_TRACE(0, "UTestSOAPClient::readResponse()")
 
-      bool result = (UServices::read(STDIN_FILENO, this->response, 1) > 0);
+      bool result = (UServices::read(STDIN_FILENO, this->response, 1 * 1000) > 0);
 
       U_RETURN(result);
       }

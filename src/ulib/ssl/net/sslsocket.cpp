@@ -563,7 +563,17 @@ USocket* USSLSocket::acceptClient(USocket* pcNewConnection)
 {
    U_TRACE(0, "USSLSocket::acceptClient(%p)", pcNewConnection)
 
-   if (UTCPSocket::accept(pcNewConnection) && active) (void) accept((USSLSocket*)pcNewConnection);
+   if (UTCPSocket::accept(pcNewConnection) && active)
+      {
+      if (USocket::req_timeout)
+         {
+         U_INTERNAL_ASSERT_EQUALS(UTCPSocket::accept4_flags, 0)
+
+         (void) pcNewConnection->setTimeoutRCV(req_timeout * 1000);
+         }
+
+      (void) accept((USSLSocket*)pcNewConnection);
+      }
 
    U_RETURN_POINTER(pcNewConnection, USocket);
 }

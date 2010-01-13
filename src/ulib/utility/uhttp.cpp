@@ -371,7 +371,12 @@ bool UHTTP::readHTTPHeader(USocket* s, UString& rbuffer)
 start:
    U_INTERNAL_DUMP("startHeader = %u", http_info.startHeader)
 
-   if ((rbuffer.size() <= http_info.startHeader || endHeader == U_NOT_FOUND) && USocketExt::read(s, rbuffer) == false) goto error;
+   if ((endHeader == U_NOT_FOUND ||
+        rbuffer.size() <= http_info.startHeader) &&
+       USocketExt::read(s, rbuffer) == false)
+      {
+      goto error;
+      }
 
    ptr       = rbuffer.c_pointer(http_info.startHeader);
    endHeader = u_findEndHeader(ptr, rbuffer.remain(ptr));
@@ -510,7 +515,7 @@ start:
             pbuffer = &rbuffer;
             }
 
-         if (USocketExt::read(s, *pbuffer, http_info.clength - body_byte_read) == false) U_RETURN(false);
+         if (USocketExt::read(s, *pbuffer, http_info.clength - body_byte_read, 3 * 1000) == false) U_RETURN(false);
 
          U_INTERNAL_DUMP("pbuffer = %.*S", U_STRING_TO_TRACE(*pbuffer))
          }
@@ -532,8 +537,7 @@ start:
       {
       if (body_byte_read                                                 &&
           isHTTPRequest(rbuffer.c_pointer(http_info.endHeader)) == false && // check if pipeline...
-          UNotifier::waitForRead(s->getFd(), 3)                 == 1     && // wait 3 sec for other data...
-          USocketExt::read(s, rbuffer))
+          USocketExt::read(s, rbuffer, U_SINGLE_READ, 3 * 1000))            // wait max 3 sec for other data...
          {
          // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
 
@@ -702,7 +706,10 @@ bool UHTTP::readHTTP(USocket* socket, UString& rbuffer, UString& body)
    USocketExt::size_message = 0; // manage buffered read (pipelining)
 
    if (readHTTPHeader(socket, rbuffer)       == false ||
-       readHTTPBody(  socket, rbuffer, body) == false) U_RETURN(false);
+       readHTTPBody(  socket, rbuffer, body) == false)
+      {
+      U_RETURN(false);
+      }
 
    // --------------------------------
    // check in header request for:

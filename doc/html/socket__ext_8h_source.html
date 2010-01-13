@@ -65,7 +65,7 @@
 <a name="l00042"></a>00042 
 <a name="l00043"></a>00043         <span class="comment">// read while not received count data</span>
 <a name="l00044"></a>00044 
-<a name="l00045"></a>00045         <span class="keyword">static</span> <span class="keywordtype">bool</span> read(<a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* s, <a class="code" href="classUString.html">UString</a>&amp; buffer, <span class="keywordtype">int</span> count = U_SINGLE_READ);
+<a name="l00045"></a>00045         <span class="keyword">static</span> <span class="keywordtype">bool</span> read(<a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* s, <a class="code" href="classUString.html">UString</a>&amp; buffer, <span class="keywordtype">int</span> count = U_SINGLE_READ, <span class="keywordtype">int</span> timeoutMS = -1);
 <a name="l00046"></a>00046 
 <a name="l00047"></a>00047         <span class="comment">// read while not received token, return position of token in buffer</span>
 <a name="l00048"></a>00048 
@@ -160,7 +160,7 @@
 <a name="l00137"></a>00137 
 <a name="l00138"></a>00138 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Jan 8 19:50:43 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Jan 13 17:53:46 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

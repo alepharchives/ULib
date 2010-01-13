@@ -35,7 +35,7 @@ protected:
       USocketExt::size_message  = 0; // manage buffered read (pipelining)
 
       int result = (USocketExt::read(socket, *rbuffer) ? U_NOTIFIER_OK
-                                                       : U_NOTIFIER_DELETE); // return false at method UClientImage_Base::run()
+                                                       : U_NOTIFIER_DELETE);
 
       // check if close connection... (read() == 0)
 

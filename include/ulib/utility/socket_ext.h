@@ -42,7 +42,7 @@ struct U_EXPORT USocketExt {
 
    // read while not received count data
 
-   static bool read(USocket* s, UString& buffer, int count = U_SINGLE_READ);
+   static bool read(USocket* s, UString& buffer, int count = U_SINGLE_READ, int timeoutMS = -1);
 
    // read while not received token, return position of token in buffer
 

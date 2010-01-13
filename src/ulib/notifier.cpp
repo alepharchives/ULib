@@ -530,6 +530,10 @@ void UNotifier::waitForEvent(struct pollfd* fds, int timeoutMS)
 {
    U_TRACE(1, "UNotifier::waitForEvent(%p,%d)", fds, timeoutMS)
 
+#ifdef DEBUG
+   if (timeoutMS != -1) U_INTERNAL_ASSERT_MAJOR(timeoutMS,499)
+#endif
+
 loop:
    result = U_SYSCALL(poll, "%p,%d,%d", fds, 1, timeoutMS);
 
@@ -543,6 +547,10 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
    U_TRACE(0, "UNotifier::waitForRead(%d,%d)", fd, timeoutMS)
 
    U_INTERNAL_ASSERT_RANGE(0,fd,4096)
+
+#ifdef DEBUG
+   if (timeoutMS != -1) U_INTERNAL_ASSERT_MAJOR(timeoutMS,499)
+#endif
 
 #ifdef __MINGW32__
 
@@ -558,7 +566,7 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
 
 #endif
 
-   UEventTime time(0L, timeoutMS * U_MILLISEC);
+   UEventTime time(0L, timeoutMS * 1000L);
    UEventTime* ptime = (timeoutMS < 0 ? 0 : (time.adjust(), &time));
 
    fd_set fdmask;
@@ -576,6 +584,10 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
 
    U_INTERNAL_ASSERT_RANGE(0,fd,4096)
 
+#ifdef DEBUG
+   if (timeoutMS != -1) U_INTERNAL_ASSERT_MAJOR(timeoutMS,499)
+#endif
+
 #ifdef __MINGW32__
 
    if (is_socket(fd) == false) U_RETURN(1);
@@ -590,7 +602,7 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
 
 #endif
 
-   UEventTime time(0L, timeoutMS * U_MILLISEC);
+   UEventTime time(0L, timeoutMS * 1000L);
    UEventTime* ptime = (timeoutMS < 0 ? 0 : (time.adjust(), &time));
 
    fd_set fdmask;

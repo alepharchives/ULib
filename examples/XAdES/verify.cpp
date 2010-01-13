@@ -151,7 +151,7 @@ public:
 
          content = doc.getContent();
 
-         if (U_MEMCMP(doc.getMimeType(), "application/xml") == false)
+         if (U_MEMCMP(doc.getMimeType(), "application/xml") == 0)
             {
             U_WARNING("I can't verify this kind of document: %.*S", U_FILE_TO_TRACE(doc));
 

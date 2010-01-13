@@ -285,58 +285,59 @@
 <a name="l00262"></a>00262 <span class="comment">RETURNS:</span>
 <a name="l00263"></a>00263 <span class="comment">  U_PLUGIN_HANDLER_GO_ON         if ok</span>
 <a name="l00264"></a>00264 <span class="comment">  U_PLUGIN_HANDLER_FINISHED if the final output is prepared</span>
-<a name="l00265"></a>00265 <span class="comment"></span>
-<a name="l00266"></a>00266 <span class="comment">  U_PLUGIN_HANDLER_ERROR         on error</span>
-<a name="l00267"></a>00267 <span class="comment">*/</span>
-<a name="l00268"></a>00268 
-<a name="l00269"></a>00269 <span class="keyword">class </span><a class="code" href="classUModProxyService.html">UModProxyService</a>;
-<a name="l00270"></a>00270 
-<a name="l00271"></a><a class="code" href="classUShibPlugIn.html">00271</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUShibPlugIn.html">UShibPlugIn</a> : <span class="keyword">public</span> <a class="code" href="classUServerPlugIn.html">UServerPlugIn</a> {
-<a name="l00272"></a>00272 <span class="keyword">public</span>:
-<a name="l00273"></a>00273 
-<a name="l00274"></a>00274         <span class="comment">// COSTRUTTORI</span>
-<a name="l00275"></a>00275 
-<a name="l00276"></a>00276                                 <a class="code" href="classUShibPlugIn.html">UShibPlugIn</a>();
-<a name="l00277"></a>00277         <span class="keyword">virtual</span> ~<a class="code" href="classUShibPlugIn.html">UShibPlugIn</a>();
-<a name="l00278"></a>00278 
-<a name="l00279"></a>00279         <span class="comment">// define method VIRTUAL of class UServerPlugIn</span>
-<a name="l00280"></a>00280 
-<a name="l00281"></a>00281         <span class="comment">// Server-wide hooks</span>
-<a name="l00282"></a>00282 
-<a name="l00283"></a>00283         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerConfig(<a class="code" href="classUFileConfig.html">UFileConfig</a>&amp; cfg);
-<a name="l00284"></a>00284         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerInit();
-<a name="l00285"></a>00285 
-<a name="l00286"></a>00286         <span class="comment">// Connection-wide hooks</span>
-<a name="l00287"></a>00287 
-<a name="l00288"></a>00288         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRead()
-<a name="l00289"></a>00289                 {
-<a name="l00290"></a>00290                 U_TRACE(0, <span class="stringliteral">&quot;UShibPlugIn::handlerRead()&quot;</span>)
-<a name="l00291"></a>00291 
-<a name="l00292"></a>00292                 U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-<a name="l00293"></a>00293                 }
-<a name="l00294"></a>00294 
-<a name="l00295"></a>00295         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRequest();
-<a name="l00296"></a>00296         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerReset();
-<a name="l00297"></a>00297 
-<a name="l00298"></a>00298         <span class="comment">// DEBUG</span>
-<a name="l00299"></a>00299 
-<a name="l00300"></a>00300 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00301"></a>00301 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00302"></a>00302 <span class="preprocessor">#endif</span>
-<a name="l00303"></a>00303 <span class="preprocessor"></span>
-<a name="l00304"></a>00304 <span class="keyword">protected</span>:
-<a name="l00305"></a>00305         <a class="code" href="classUString.html">UString</a> cookies;
-<a name="l00306"></a>00306         ShibTargetConfig* conf;
-<a name="l00307"></a>00307         UVector&lt;UModProxyService*&gt; vservice;
-<a name="l00308"></a>00308 
-<a name="l00309"></a>00309 <span class="keyword">private</span>:
-<a name="l00310"></a>00310         <a class="code" href="classUShibPlugIn.html">UShibPlugIn</a>(<span class="keyword">const</span> <a class="code" href="classUShibPlugIn.html">UShibPlugIn</a>&amp;) : <a class="code" href="classUServerPlugIn.html">UServerPlugIn</a>() {}
-<a name="l00311"></a>00311         <a class="code" href="classUShibPlugIn.html">UShibPlugIn</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUShibPlugIn.html">UShibPlugIn</a>&amp;)                { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00312"></a>00312 };
-<a name="l00313"></a>00313 
-<a name="l00314"></a>00314 <span class="preprocessor">#endif</span>
+<a name="l00265"></a>00265 <span class="comment">  U_PLUGIN_HANDLER_AGAIN    if the request is empty (NONBLOCKING)</span>
+<a name="l00266"></a>00266 <span class="comment"></span>
+<a name="l00267"></a>00267 <span class="comment">  U_PLUGIN_HANDLER_ERROR         on error</span>
+<a name="l00268"></a>00268 <span class="comment">*/</span>
+<a name="l00269"></a>00269 
+<a name="l00270"></a>00270 <span class="keyword">class </span><a class="code" href="classUModProxyService.html">UModProxyService</a>;
+<a name="l00271"></a>00271 
+<a name="l00272"></a><a class="code" href="classUShibPlugIn.html">00272</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUShibPlugIn.html">UShibPlugIn</a> : <span class="keyword">public</span> <a class="code" href="classUServerPlugIn.html">UServerPlugIn</a> {
+<a name="l00273"></a>00273 <span class="keyword">public</span>:
+<a name="l00274"></a>00274 
+<a name="l00275"></a>00275         <span class="comment">// COSTRUTTORI</span>
+<a name="l00276"></a>00276 
+<a name="l00277"></a>00277                                 <a class="code" href="classUShibPlugIn.html">UShibPlugIn</a>();
+<a name="l00278"></a>00278         <span class="keyword">virtual</span> ~<a class="code" href="classUShibPlugIn.html">UShibPlugIn</a>();
+<a name="l00279"></a>00279 
+<a name="l00280"></a>00280         <span class="comment">// define method VIRTUAL of class UServerPlugIn</span>
+<a name="l00281"></a>00281 
+<a name="l00282"></a>00282         <span class="comment">// Server-wide hooks</span>
+<a name="l00283"></a>00283 
+<a name="l00284"></a>00284         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerConfig(<a class="code" href="classUFileConfig.html">UFileConfig</a>&amp; cfg);
+<a name="l00285"></a>00285         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerInit();
+<a name="l00286"></a>00286 
+<a name="l00287"></a>00287         <span class="comment">// Connection-wide hooks</span>
+<a name="l00288"></a>00288 
+<a name="l00289"></a>00289         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRead()
+<a name="l00290"></a>00290                 {
+<a name="l00291"></a>00291                 U_TRACE(0, <span class="stringliteral">&quot;UShibPlugIn::handlerRead()&quot;</span>)
+<a name="l00292"></a>00292 
+<a name="l00293"></a>00293                 U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+<a name="l00294"></a>00294                 }
+<a name="l00295"></a>00295 
+<a name="l00296"></a>00296         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRequest();
+<a name="l00297"></a>00297         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerReset();
+<a name="l00298"></a>00298 
+<a name="l00299"></a>00299         <span class="comment">// DEBUG</span>
+<a name="l00300"></a>00300 
+<a name="l00301"></a>00301 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00302"></a>00302 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00303"></a>00303 <span class="preprocessor">#endif</span>
+<a name="l00304"></a>00304 <span class="preprocessor"></span>
+<a name="l00305"></a>00305 <span class="keyword">protected</span>:
+<a name="l00306"></a>00306         <a class="code" href="classUString.html">UString</a> cookies;
+<a name="l00307"></a>00307         ShibTargetConfig* conf;
+<a name="l00308"></a>00308         UVector&lt;UModProxyService*&gt; vservice;
+<a name="l00309"></a>00309 
+<a name="l00310"></a>00310 <span class="keyword">private</span>:
+<a name="l00311"></a>00311         <a class="code" href="classUShibPlugIn.html">UShibPlugIn</a>(<span class="keyword">const</span> <a class="code" href="classUShibPlugIn.html">UShibPlugIn</a>&amp;) : <a class="code" href="classUServerPlugIn.html">UServerPlugIn</a>() {}
+<a name="l00312"></a>00312         <a class="code" href="classUShibPlugIn.html">UShibPlugIn</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUShibPlugIn.html">UShibPlugIn</a>&amp;)                { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00313"></a>00313 };
+<a name="l00314"></a>00314 
+<a name="l00315"></a>00315 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Jan 8 19:50:42 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Jan 13 17:53:46 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

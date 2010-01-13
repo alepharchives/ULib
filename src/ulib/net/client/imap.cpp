@@ -280,8 +280,8 @@ bool UImapClient::login(const char* user, const char* passwd)
       {
       if (syncCommand("LOGIN %s %s", user, passwd))
          {
-         state            = AUTHENTICATED;
-         USocket::state() = USocket::LOGIN;
+         state           = AUTHENTICATED;
+         USocket::iState = USocket::LOGIN;
 
          U_RETURN(true);
          }
@@ -811,7 +811,7 @@ bool UImapClient::selectMailbox(const UString& name, MailboxInfo& retval)
       {
       // Don't re-select.
 
-      if (state == SELECTED &&
+      if (state    == SELECTED &&
           selected == name)
          {
          U_RETURN(true);

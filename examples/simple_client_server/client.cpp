@@ -182,8 +182,6 @@ public:
 
       if (flag_log) ulog->close();
 
-      pcClientSocket->close();
-
 #ifdef DEBUG
       delete ulog;
       delete pcClientSocket;

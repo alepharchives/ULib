@@ -135,7 +135,8 @@ int UHttpPlugIn::handlerRead()
 
    // check if close connection... (read() == 0)
 
-   if (UClientImage_Base::isClose()) U_RETURN(U_PLUGIN_HANDLER_ERROR); // return false at method UClientImage_Base::run()...
+   if (UClientImage_Base::socket->isClosed()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   if (UClientImage_Base::rbuffer->empty())   U_RETURN(U_PLUGIN_HANDLER_AGAIN);
 
    if (UServer_Base::isLog()) UClientImage_Base::logRequest();
 

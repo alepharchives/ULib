@@ -81,26 +81,23 @@ int main(int argc, char *argv[])
    char  str[256], buff[10000];
    FILE *f, *fo=fopen("test.txt", "w+b");
 
-   for(i=10; i<=LOOP; i+=inc)
+   for(i=0; i<=LOOP; i+=inc)
    {
        sprintf(str,
-       "/usr/sbin/ab -n 1000000 -c %u    -t 1" // NO Keep-Alives
-//     "/usr/sbin/ab -n 1000000 -c %u -k -t 1" // KEEP-ALIVES (USE_TCP_OPTIMIZATION no !!!)
-       " \"http://10.30.1.131/usp/hello_world.usp\""  // ULib / teepeedee2
+       "/usr/sbin/ab -n 1000000 -c %u    -t 1"							 // NO Keep-Alives
+//     "/usr/sbin/ab -n 1000000 -c %u -k -t 1"							 // KEEP-ALIVES
+//     " \"http://10.30.1.131/usp/benchmarking.usp?name=stefano\"" // ULib / teepeedee2
+       " \"http://10.30.1.131/100.html\""
+//     " \"http://10.30.1.131/csp?benchmarking\""
+//     " \"http://10.30.1.131/usp/hello_world.usp\""					 // ULib / teepeedee2
 //     " \"http://10.30.1.131/csp?hello\""
-//     " \"http://192.168.200.88:8080/100.html\""
-//     " \"http://192.168.200.88:8080/csp?loan&name=Eva&amount=10000&rate=3.5&term=1\""
-//     " \"http://192.168.200.88:8080/csp?loan&name=Eva&amount=10000&rate=3.5&term=10\""
-//     " \"http://192.168.200.88:8080/hello.php\""
-//     " \"http://192.168.200.88:8080/loan.php?name=Eva&amount=10000&rate=3.5&term=1\""
-//     " \"http://192.168.200.88:8080/loan.php?name=Eva&amount=10000&rate=3.5&term=10\""
-       " > ab.txt", i);
+       " > ab.txt", i?i:1);
 
       for(best=0, aver=0, worse=0xffff0, j=0; j<ITER; j++)
       {
 fault:
          system(str);
-         sleep(0.5); // needs to take its breath after system() calls
+      // sleep(1); // I needs to take a breath after system() calls
          // get the information we need from res.txt
          if(!(f=fopen("ab.txt", "rb")))
          {
@@ -137,11 +134,11 @@ fault:
       aver/=ITER;
 
       // display data for convenience and save data on disk
-      printf("##### %4u,%5u,%5u,%5u #####\n", i, worse, aver, best);
-      fprintf(fo, "%u,%u,%u,%u\n", i, worse, aver, best);
+      printf("##### %4u,%5u,%5u,%5u #####\n", i?i:1, worse, aver, best);
+      fprintf(fo, "%u,%u,%u,%u\n", i?i:1, worse, aver, best);
       fflush(fo); // in case we interrupt the test
 
-		if (i == 50) inc = 50;
+	//	if (i == 50) inc = 50;
    }
    fclose(fo);
    return 0;

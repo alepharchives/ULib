@@ -521,8 +521,8 @@ AC_CHECK_MEMBER(struct dirent.d_namlen,AC_DEFINE(DIRENT_HAVE_D_NAMLEN,1,[define 
 AC_FUNC_NANOSLEEP
 AC_FUNC_CLOSEDIR_VOID
 # Check for functions in one big call, to reduce the size of configure
-AC_CHECK_FUNCS([daemon fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem mremap pread sendfile64 strndup mkdtemp strptime strtof \
-					 strtoull strtold gmtime_r timegm strerror strsignal])
+AC_CHECK_FUNCS([accept4 daemon fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem mremap \
+					 pread sendfile64 strndup mkdtemp strptime strtof strtoull strtold gmtime_r timegm strerror strsignal])
 
 AM_CONDITIONAL(PREAD,		 test "$ac_cv_func_pread"				= "yes")
 AM_CONDITIONAL(DAEMON,		 test "$ac_cv_func_daemon"				= "yes")

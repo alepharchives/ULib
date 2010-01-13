@@ -1,8 +1,11 @@
 // test_http.cpp
 
-#define U_NO_SSL
-
 #include <ulib/file.h>
+
+#ifndef U_NO_SSL
+#define U_NO_SSL
+#endif
+
 #include <ulib/net/tcpsocket.h>
 #include <ulib/net/client/http.h>
 

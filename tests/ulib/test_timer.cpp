@@ -77,17 +77,15 @@ public:
 #endif
 };
 
-#define U_MILLISEC 1000L
-
 int U_EXPORT main (int argc, char* argv[])
 {
    U_ULIB_INIT(argv);
 
    U_TRACE(5,"main(%d)",argc)
 
-   UTimeVal s(0L, 50 * U_MILLISEC);
-   MyAlarm1* a = U_NEW(MyAlarm1(0L, 50 * U_MILLISEC));
-   MyAlarm2* b = U_NEW(MyAlarm2(0L, 50 * U_MILLISEC));
+   UTimeVal s(0L, 50L * 1000L);
+   MyAlarm1* a = U_NEW(MyAlarm1(0L, 50L * 1000L));
+   MyAlarm2* b = U_NEW(MyAlarm2(0L, 50L * 1000L));
 
    UTimer::init(false);
 
@@ -114,7 +112,7 @@ int U_EXPORT main (int argc, char* argv[])
       for (int t = 0; t < 1000 * 1024; ++t) {}
 #  endif
 
-      (void) UTimer::insert(U_NEW(MyAlarm1(0L, 50 * U_MILLISEC)));
+      (void) UTimer::insert(U_NEW(MyAlarm1(0L, 50L * 1000L)));
 
 #ifdef DEBUG
       if (argc > 2) UTimer::printInfo(cout);

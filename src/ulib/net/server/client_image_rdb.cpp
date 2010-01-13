@@ -42,11 +42,21 @@ int URDBClientImage::handlerRead()
 
    URPC::resetRPCInfo();
 
-   int result = (URPC::readRPC(socket, *rbuffer) ? U_NOTIFIER_OK
-                                                 : U_NOTIFIER_DELETE); // return false at method UClientImage_Base::run()
+   // read the RPC request
 
-   if (result == U_NOTIFIER_OK)
+   bool is_rpc_msg = URPC::readRPC(UClientImage_Base::socket, *UClientImage_Base::rbuffer);
+
+   // check if close connection... (read() == 0)
+
+   if (UClientImage_Base::socket->isClosed()) U_RETURN(U_NOTIFIER_DELETE);
+   if (UClientImage_Base::rbuffer->empty())   U_RETURN(U_NOTIFIER_OK);
+
+   if (UServer_Base::isLog()) UClientImage_Base::logRequest();
+
+   if (is_rpc_msg)
       {
+      int result = U_NOTIFIER_OK;
+
       // Process the RPC message
 
       const char* ptr = rbuffer->data();
@@ -196,9 +206,11 @@ int URDBClientImage::handlerRead()
       U_SRV_LOG_VAR_WITH_ADDR("method %.4S return %s for", ptr, res);
 
       result = handlerWrite();
+
+      U_RETURN(result);
       }
 
-   U_RETURN(result);
+   U_RETURN(U_NOTIFIER_DELETE);
 }
 
 // DEBUG

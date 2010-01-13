@@ -1,6 +1,10 @@
 // test_rdb_client.cpp
 
+#include <ulib/string.h>
+
+#ifndef U_NO_SSL
 #define U_NO_SSL
+#endif
 
 #include <ulib/net/tcpsocket.h>
 #include <ulib/net/client/client_rdb.h>

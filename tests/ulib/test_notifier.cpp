@@ -186,8 +186,8 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
-   MyAlarm1* a = U_NEW(MyAlarm1(0L, 50 * U_MILLISEC));
-   MyAlarm2* b = U_NEW(MyAlarm2(0L, 50 * U_MILLISEC));
+   MyAlarm1* a = U_NEW(MyAlarm1(1L, 0L));
+   MyAlarm2* b = U_NEW(MyAlarm2(1L, 0L));
 
    UTimer::init(true);
    UTimer::insert(a);
@@ -209,21 +209,21 @@ int U_EXPORT main(int argc, char* argv[])
    pipe(fd);
 
 #ifdef __unix__
-   U_ASSERT(UNotifier::waitForRead( fd[0], 1) == 0)
+   U_ASSERT(UNotifier::waitForRead( fd[0], 500) <= 0)
 #endif
-   U_ASSERT(UNotifier::waitForWrite(fd[1], 1) == 1)
+   U_ASSERT(UNotifier::waitForWrite(fd[1], 500) == 1)
 
-   UEventTime timeout(0L, 50 * U_MILLISEC);
+   UEventTime timeout;
 
    for (i = 0; i < n; ++i)
       {
-      timeout.setMicroSecond(100 * U_MILLISEC);
+      timeout.setMicroSecond(100L * 1000L);
 
       UNotifier::waitForEvent(&timeout);
 
-      UNotifier::waitForRead(fd[0], 1);
+      UNotifier::waitForRead(fd[0], 500);
 
-      (void) UTimer::insert(U_NEW(MyAlarm1(0L, 50 * U_MILLISEC)));
+      (void) UTimer::insert(U_NEW(MyAlarm1(1L, 0L)));
 
       timeout.nanosleep();
 
@@ -251,7 +251,7 @@ int U_EXPORT main(int argc, char* argv[])
 #endif
 
 #ifdef __unix__
-   U_ASSERT(UNotifier::waitForRead(  STDIN_FILENO, 1) == 0)
+   U_ASSERT(UNotifier::waitForRead(  STDIN_FILENO, 1 * 1000) <= 0)
 #endif
-   U_ASSERT(UNotifier::waitForWrite(STDOUT_FILENO, 1) == 1)
+   U_ASSERT(UNotifier::waitForWrite(STDOUT_FILENO, 1 * 1000) == 1)
 }

@@ -28,12 +28,15 @@ uint32_t USocketExt::size_message;
 
 // Socket I/O
 
-bool USocketExt::read(USocket* socket, UString& buffer, int count) // read while not received count data
-{
-   U_TRACE(0, "USocketExt::read(%p,%.*S,%d)", socket, U_STRING_TO_TRACE(buffer), count)
+// param timeoutMS specified the timeout value, in milliseconds.
+// A negative value indicates no timeout, i.e. an infinite wait
 
-   U_INTERNAL_ASSERT(socket->isConnected())
+bool USocketExt::read(USocket* socket, UString& buffer, int count, int timeoutMS) // read while not received count data
+{
+   U_TRACE(0, "USocketExt::read(%p,%.*S,%d,%d)", socket, U_STRING_TO_TRACE(buffer), count, timeoutMS)
+
    U_INTERNAL_ASSERT_DIFFERS(count,0)
+   U_INTERNAL_ASSERT(socket->isConnected())
 
    ssize_t value;
    uint32_t start;
@@ -87,37 +90,50 @@ loop:
 
    ptr = buffer.c_pointer(start);
 
-   do {
-      value = socket->recv(ptr + byte_read, (single_read ? U_CAPACITY : count - byte_read));
+   U_INTERNAL_DUMP("single_read = %b", single_read)
 
-      U_INTERNAL_DUMP("value = %d", value)
+read:
+   value = socket->recv(ptr + byte_read, (single_read ? U_CAPACITY : count - byte_read));
 
-      if (value <= 0)
+   if (value <= 0)
+      {
+      if (value == 0) socket->close(); // EOF
+      else
          {
          socket->checkErrno(value);
 
-         break; // EOF
+         if (timeoutMS != -1     &&
+             socket->isTimeout() &&
+             UNotifier::waitForRead(socket->getFd(), timeoutMS) == 1)
+            {
+            socket->iState = USocket::CONNECT;
+
+            goto read;
+            }
          }
 
-      byte_read += value;
+      U_RETURN(false);
+      }
 
-      if (single_read) // only one read()...
+   byte_read += value;
+
+   // check if only one read()...
+
+   if (single_read &&
+       count != U_SINGLE_READ)
+      {
+      pcount = (byte_read - count); // NB: here pcount is always == 0...
+
+      if (pcount >= 0)
          {
-         if (count != U_SINGLE_READ)
-            {
-            pcount = (byte_read - count); // NB: here pcount is always == 0...
-
-            if (pcount >= 0)
-               {
-               pbuffer   = buffer.data();
-               byte_read = count;
-               }
-            }
-
-         U_INTERNAL_DUMP("byte_read = %d count = %d pcount = %d", byte_read, count, pcount)
+         pbuffer   = buffer.data();
+         byte_read = count;
          }
       }
-   while (byte_read < count);
+
+   U_INTERNAL_DUMP("byte_read = %d count = %d pcount = %d", byte_read, count, pcount)
+
+   if (byte_read < count) goto read;
 
 done:
    buffer.size_adjust_force(start + byte_read);
@@ -141,15 +157,17 @@ uint32_t USocketExt::read(USocket* s, UString& buffer, const char* token, uint32
 
    U_INTERNAL_ASSERT(s->isConnected())
 
-   uint32_t pos_token, start = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua...
+   uint32_t count = 0, pos_token, start = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua...
 
-   while (USocketExt::read(s, buffer, U_SINGLE_READ))
+   while (USocketExt::read(s, buffer, U_SINGLE_READ, 3 * 1000))
       {
       pos_token = buffer.find(token, (start > token_len ? start - token_len - 1 : 0), token_len);
 
       if (pos_token != U_NOT_FOUND) U_RETURN(pos_token);
 
       start = buffer.size();
+
+      if (count++ > 10) break;
       }
 
    U_RETURN(U_NOT_FOUND);
@@ -161,7 +179,7 @@ bool USocketExt::write(USocket* s, const char* ptr, uint32_t count)
 {
    U_TRACE(0, "USocketExt::write(%p,%.*S,%u)", s, count, ptr, count)
 
-   U_INTERNAL_ASSERT(s->isConnected())
+   U_INTERNAL_ASSERT(s->isOpen())
 
    ssize_t value;
    bool write_again;
@@ -191,7 +209,7 @@ int USocketExt::vsyncCommand(USocket* s, char* buffer, uint32_t buffer_size, con
 {
    U_TRACE(0, "USocketExt::vsyncCommand(%p,%p,%u,%S)", s, buffer, buffer_size, format)
 
-   U_INTERNAL_ASSERT(s->isConnected())
+   U_INTERNAL_ASSERT(s->isOpen())
 
    uint32_t buffer_len = u_vsnprintf(buffer, buffer_size-2, format, argp);
 
@@ -210,7 +228,7 @@ int USocketExt::vsyncCommandML(USocket* s, char* buffer, uint32_t buffer_size, c
 {
    U_TRACE(0, "USocketExt::vsyncCommandML(%p,%p,%u,%S)", s, buffer, buffer_size, format)
 
-   U_INTERNAL_ASSERT(s->isConnected())
+   U_INTERNAL_ASSERT(s->isOpen())
 
    uint32_t buffer_len = u_vsnprintf(buffer, buffer_size-2, format, argp);
 
@@ -229,7 +247,7 @@ int USocketExt::vsyncCommandToken(USocket* s, UString& buffer, const char* forma
 {
    U_TRACE(0, "USocketExt::vsyncCommandToken(%p,%.*S,%S)", s, U_STRING_TO_TRACE(buffer), format)
 
-   U_INTERNAL_ASSERT(s->isConnected())
+   U_INTERNAL_ASSERT(s->isOpen())
    U_ASSERT(buffer.empty() == true)
 
    static uint32_t cmd_count;

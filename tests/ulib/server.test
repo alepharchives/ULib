@@ -11,7 +11,7 @@ start_msg server
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
-#STRACE=$TRUSS
+#STRACE=$LTRUSS
 start_prg_background server ../../src/ulib/plugin/.libs mod_http # '"mod_http mod_soap"'
 
 $SLEEP

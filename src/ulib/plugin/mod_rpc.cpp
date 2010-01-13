@@ -79,11 +79,10 @@ int URpcPlugIn::handlerRead()
 
    // check if close connection... (read() == 0)
 
-   if (UClientImage_Base::isClose() == false &&
-            UServer_Base::isLog())
-      {
-      UClientImage_Base::logRequest();
-      }
+   if (UClientImage_Base::socket->isClosed()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   if (UClientImage_Base::rbuffer->empty())   U_RETURN(U_PLUGIN_HANDLER_AGAIN);
+
+   if (UServer_Base::isLog()) UClientImage_Base::logRequest();
 
    U_RETURN(is_rpc_msg ? U_PLUGIN_HANDLER_FINISHED : U_PLUGIN_HANDLER_ERROR);
 }

@@ -39,11 +39,15 @@ UServer has 5 hooks which are used in different states of the execution of the r
 RETURNS:
   U_PLUGIN_HANDLER_GO_ON    if ok
   U_PLUGIN_HANDLER_FINISHED if the final output is prepared
+  U_PLUGIN_HANDLER_AGAIN    if the request is empty (NONBLOCKING)
 
   U_PLUGIN_HANDLER_ERROR    on error
 */
 
-enum PluginHandlerReturn { U_PLUGIN_HANDLER_ERROR = -1, U_PLUGIN_HANDLER_GO_ON = 0, U_PLUGIN_HANDLER_FINISHED = 1 };
+enum PluginHandlerReturn { U_PLUGIN_HANDLER_ERROR    = -1,
+                           U_PLUGIN_HANDLER_GO_ON    =  0,
+                           U_PLUGIN_HANDLER_FINISHED =  1,
+                           U_PLUGIN_HANDLER_AGAIN    =  2 };
 
 class UFileConfig;
 
@@ -57,14 +61,14 @@ public:
 
    // Server-wide hooks
 
-   virtual int handlerConfig(UFileConfig& cfg)  = 0;
-   virtual int handlerInit()                    = 0;
+   virtual int handlerConfig(UFileConfig& cfg) = 0;
+   virtual int handlerInit()                   = 0;
 
    // Connection-wide hooks
 
-   virtual int handlerRead()     = 0;
-   virtual int handlerRequest()  = 0;
-   virtual int handlerReset()    = 0;
+   virtual int handlerRead()    = 0;
+   virtual int handlerRequest() = 0;
+   virtual int handlerReset()   = 0;
 
 private:
    UServerPlugIn(const UServerPlugIn&)            {}

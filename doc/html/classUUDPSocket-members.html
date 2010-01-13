@@ -27,6 +27,7 @@
 <div class="contents">
 <h1>UUDPSocket Member List</h1>This is the complete list of members for <a class="el" href="classUUDPSocket.html">UUDPSocket</a>, including all inherited members.<table>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#afe635340565fa7eba1e7139955d63532">accept</a>(USocket *pcConnection)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>accept4_flags</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [protected, static]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#ab2db1524c94b038a4eeace5e272d1e15">acceptClient</a>()</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline, virtual]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>acceptClient</b>(USocket *pcNewConnection) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline, virtual]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#abb900b23d64b5fb858d9ac190c917e78">bind</a>(int iLocalPort=0)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
@@ -38,7 +39,7 @@
   <tr class="memlist"><td><a class="el" href="classUSocket.html#a2c487b569842c6524738fc03080c4dd0">checkErrno</a>(int value)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#aeeedd9dd467a3cc2e8641142808bdefa">checkIO</a>(int iBytesTransferred, int iMaxBytesTransfer)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>cLocalAddress</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [protected]</code></td></tr>
-  <tr bgcolor="#f0f0f0"><td><b>close</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>close</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>CLOSE</b> enum value (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>closesocket</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [virtual]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>CONNECT</b> enum value (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
@@ -99,8 +100,8 @@
   <tr bgcolor="#f0f0f0"><td><b>setTimeoutSND</b>(uint32_t timeoutMS=U_TIMEOUT) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">socket</a>(int domain, int type, int protocol)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline, static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>socket</b>(int iSocketType, int protocol=0) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
-  <tr bgcolor="#f0f0f0"><td><b>state</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>State</b> enum name (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>state</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>str_accept_encoding</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>str_accept_language</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>str_allocate</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [static]</code></td></tr>
@@ -129,7 +130,7 @@
   <tr bgcolor="#f0f0f0"><td><b>~USocket</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline, virtual]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>~UUDPSocket</b>() (defined in <a class="el" href="classUUDPSocket.html">UUDPSocket</a>)</td><td><a class="el" href="classUUDPSocket.html">UUDPSocket</a></td><td><code> [inline, virtual]</code></td></tr>
 </table></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Jan 8 19:50:48 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Jan 13 17:54:02 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

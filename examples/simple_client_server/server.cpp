@@ -54,8 +54,9 @@ protected:
 
       rbuffer->setEmpty();
 
-      int result = (USocketExt::read(socket, *rbuffer) ? U_NOTIFIER_OK
-                                                       : U_NOTIFIER_DELETE); // return false at method UClientImage_Base::run()
+      int result = (USocketExt::read(socket, *rbuffer, U_SINGLE_READ, 3 * 1000)
+                           ? U_NOTIFIER_OK
+                           : U_NOTIFIER_DELETE);
 
       if (result == U_NOTIFIER_OK)
          {

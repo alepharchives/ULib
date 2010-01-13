@@ -26,10 +26,12 @@
 #  include <netinet/tcp.h>
 #endif
 
-#ifndef HAVE_IPV6
-#  ifndef AF_INET6
-#     define AF_INET6 AF_INET
-#  endif
+#if !defined(HAVE_IPV6) && !defined(AF_INET6)
+#  define AF_INET6 AF_INET
+#endif
+
+#ifndef   SOL_TCP
+#  define SOL_TCP IPPROTO_TCP
 #endif
 
 /**
@@ -43,6 +45,7 @@
    they use class UIPAddress instances and port numbers rather than sockaddr structures
 */
 
+class USocketExt;
 class USSHSocket;
 class USSLSocket;
 class UTCPSocket;
@@ -142,11 +145,13 @@ public:
       {
       U_TRACE(0, "USocket::checkErrno(%d)", value)
 
-      U_INTERNAL_ASSERT(value <= 0)
+      U_INTERNAL_ASSERT(value < 0)
 
       U_INTERNAL_DUMP("errno = %d", errno)
 
       iState = (errno == EAGAIN ? TIMEOUT : (closesocket(), BROKEN));
+
+      U_INTERNAL_DUMP("state = %d", iState)
       }
 
    /**
@@ -183,7 +188,14 @@ public:
 
    int getFd() const { return iSockDesc; }
 
-   void close();
+   void close()
+      {
+      U_TRACE(0, "USocket::close()")
+
+      closesocket();
+
+      iState = CLOSE;
+      }
 
    /**
    The getsockopt() function is called with the provided parameters to obtain the desired value
@@ -661,7 +673,8 @@ protected:
    UIPAddress cLocalAddress, cRemoteAddress;
    bool bIPv6Socket, bLocalSet;
 
-   static int req_timeout; // the time-out value in seconds for client send request
+   static int req_timeout,    // the time-out value in seconds for client send request
+              accept4_flags;  // If flags is 0, then accept4() is the same as accept()
 
    bool connect();
    bool bind(SocketAddress& cLocal);
@@ -678,16 +691,18 @@ private:
    USocket(const USocket&)            {}
    USocket& operator=(const USocket&) { return *this; }
 
-   friend class USSHSocket;
-   friend class UTCPSocket;
-   friend class USSLSocket;
-   friend class UUnixSocket;
-   friend class USmtpClient;
-   friend class UImapClient;
-   friend class UPop3Client;
-   friend class UServer_Base;
-   friend class USSLFtpClient;
-   friend class UClientImage_Base;
+                      friend class USocketExt;
+                      friend class USSHSocket;
+                      friend class UTCPSocket;
+                      friend class USSLSocket;
+                      friend class UUnixSocket;
+                      friend class USmtpClient;
+                      friend class UImapClient;
+                      friend class UPop3Client;
+                      friend class UServer_Base;
+                      friend class USSLFtpClient;
+                      friend class UClientImage_Base;
+   template <class T> friend class UServer;
 };
 
 #endif

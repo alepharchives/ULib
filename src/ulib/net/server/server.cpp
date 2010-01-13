@@ -678,6 +678,7 @@ void UServer_Base::init()
        * and not to initiate the process until the first packet of real data has arrived. After sending the SYN/ACK,
        * the server will then wait for a data packet from a client. Now, only three packets will be sent over the
        * network, and the connection establishment delay will be significantly reduced, which is typical for HTTP.
+       * NB: Takes an integer value (seconds)
        */
 
       socket->setTcpDeferAccept(1U);
@@ -783,7 +784,7 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 
 const char* UServer_Base::getNumConnection()
 {
-   U_TRACE(0, "UServer_Base::handlerCloseConnection()")
+   U_TRACE(0, "UServer_Base::getNumConnection()")
 
    static char buffer[32];
 
@@ -1075,7 +1076,7 @@ wait:
 
             U_SRV_LOG_TIMEOUT(cimg);
 
-            cimg->socket->iState = USocket::TIMEOUT;
+            cimg->socket->iState = USocket::BROKEN;
 
             UNotifier::erase(cimg, true);
             }

@@ -38,7 +38,8 @@ public:
    by the provided IP Address and port number. We call the connect() method to perform the connection.
    */
 
-   virtual bool connectServer(const UString& server, int iServPort) { return (USocket::socket(SOCK_DGRAM) && USocket::connectServer(server, iServPort)); }
+   virtual bool connectServer(const UString& server, int iServPort)
+      { return (USocket::socket(SOCK_DGRAM) && USocket::connectServer(server, iServPort)); }
 
    /**
    We try to bind the USocket to the specified port number and any local IP Address using the bind() method.

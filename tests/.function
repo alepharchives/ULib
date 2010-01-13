@@ -186,6 +186,11 @@ start_prg_background() {
 
 	test_prg "$@"
 
+	if [ -n "$STRACE" -a "$STRACE" = "$LTRUSS" ]; then
+		CMD=".libs/$CMD"
+		export LD_LIBRARY_PATH=../../src/ulib/.libs
+	fi
+
 	PID=`( eval "$VALGRIND $WINELOADER $STRACE $CMD >>out/$1.out 2>>err/$1.err &"; echo $! )`
 
 	$SLEEP

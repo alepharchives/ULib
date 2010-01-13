@@ -70,7 +70,6 @@ public:
    // SERVICES
 
    static void run();
-   static bool isClose();              // check if close connection... (read() == 0)
    static void genericReset();
    static int  genericHandlerRead();
    static int  genericHandlerWrite();

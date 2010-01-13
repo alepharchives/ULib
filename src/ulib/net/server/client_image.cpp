@@ -310,24 +310,6 @@ bool UClientImage_Base::isPipeline()
    U_RETURN(false);
 }
 
-// check if close connection... (read() == 0)
-
-bool UClientImage_Base::isClose()
-{
-   U_TRACE(0, "UClientImage_Base::isClose()")
-
-   U_INTERNAL_ASSERT_POINTER(socket)
-   U_INTERNAL_ASSERT_POINTER(pClientImage)
-
-   U_INTERNAL_DUMP("timeout = %b", socket->isTimeout())
-
-   if (socket->isTimeout()) U_SRV_LOG_TIMEOUT(pClientImage);
-
-   if (rbuffer->empty() || socket->isConnected() == false) U_RETURN(true);
-
-   U_RETURN(false);
-}
-
 int UClientImage_Base::genericHandlerRead()
 {
    U_TRACE(0, "UClientImage_Base::genericHandlerRead()")
@@ -356,7 +338,7 @@ int UClientImage_Base::genericHandlerRead()
          {
          USocketExt::pcount = 0; // reset read data available...
 
-         U_RETURN(U_NOTIFIER_DELETE); // return false at method UClientImage_Base::run()...
+         U_RETURN(U_NOTIFIER_DELETE);
          }
       }
    while (isPipeline());
@@ -423,7 +405,7 @@ int UClientImage_Base::genericHandlerWrite()
 
    // check for error...
 
-   if (socket->isConnected() == false) U_RETURN(U_NOTIFIER_DELETE);
+   if (socket->isClosed()) U_RETURN(U_NOTIFIER_DELETE);
 
    U_INTERNAL_ASSERT_POINTER(wbuffer)
 

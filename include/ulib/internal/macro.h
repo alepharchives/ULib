@@ -14,8 +14,7 @@
 #ifndef ULIB_MACRO_H
 #define ULIB_MACRO_H 1
 
-#define U_MILLISEC    1000L
-#define U_TIMEOUT     (20L * U_MILLISEC)
+#define U_TIMEOUT     (20L * 1000L)
 #define U_SINGLE_READ -1
 
 #define U_SIZEOF_UStringRep sizeof(ustringrep)
