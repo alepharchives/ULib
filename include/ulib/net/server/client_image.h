@@ -73,6 +73,7 @@ public:
    static void genericReset();
    static int  genericHandlerRead();
    static int  genericHandlerWrite();
+   static void checkForPipeline(const UString& rbuffer); // check if data read already available... (pipelining)
 
    // log
 

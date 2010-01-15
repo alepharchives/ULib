@@ -917,7 +917,7 @@
 <a name="l00894"></a>00894 <span class="keyword">                </span>{ <span class="keywordflow">return</span> find(str.data(), pos, str.size(), how_much); }
 <a name="l00895"></a>00895 
 <a name="l00896"></a>00896         uint32_t find(<span class="keywordtype">char</span> c,             uint32_t pos = 0) <span class="keyword">const</span>;
-<a name="l00897"></a>00897         uint32_t find(<span class="keyword">const</span> <span class="keywordtype">char</span>* s, uint32_t pos = 0)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> find(s, pos, strlen(s)); }
+<a name="l00897"></a>00897         uint32_t find(<span class="keyword">const</span> <span class="keywordtype">char</span>* s, uint32_t pos = 0)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> find(s, pos, strlen(s), U_NOT_FOUND); }
 <a name="l00898"></a>00898 
 <a name="l00899"></a>00899         <span class="comment">// The `rfind&apos; function searches from end to beginning string for a specified string (possibly a single</span>
 <a name="l00900"></a>00900         <span class="comment">// character) and returns its starting position. You can supply the parameter pos to specify the position</span>
@@ -963,7 +963,7 @@
 <a name="l00940"></a>00940         uint32_t findnocase(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; str, uint32_t pos = 0, uint32_t how_much = U_NOT_FOUND)<span class="keyword"> const</span>
 <a name="l00941"></a>00941 <span class="keyword">                </span>{ <span class="keywordflow">return</span> findnocase(str.data(), pos, str.size(), how_much); }
 <a name="l00942"></a>00942 
-<a name="l00943"></a>00943         uint32_t findnocase(<span class="keyword">const</span> <span class="keywordtype">char</span>* s, uint32_t pos = 0)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> findnocase(s, pos, strlen(s)); }
+<a name="l00943"></a>00943         uint32_t findnocase(<span class="keyword">const</span> <span class="keywordtype">char</span>* s, uint32_t pos = 0)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> findnocase(s, pos, strlen(s), U_NOT_FOUND); }
 <a name="l00944"></a>00944 
 <a name="l00945"></a>00945         <span class="comment">// Compare</span>
 <a name="l00946"></a>00946 
@@ -1263,7 +1263,7 @@
 <a name="l01240"></a>01240 
 <a name="l01241"></a>01241 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Jan 13 17:53:46 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Jan 15 19:55:49 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

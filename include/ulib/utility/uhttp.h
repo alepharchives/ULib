@@ -92,7 +92,7 @@ typedef struct uhttpheader {
    uint32_t nResponseCode, version,
             startHeader, endHeader, szHeader,
             method_len, uri_len, query_len, host_len,
-            method_type, clength, keep_alive, is_connection_close, is_php, accept_deflate;
+            method_type, clength, keep_alive, is_connection_close, is_php;
 } uhttpheader;
 
 enum HTTPMethodType { HTTP_POST = 1, HTTP_GET = 2, HTTP_HEAD = 3 };
@@ -160,6 +160,8 @@ public:
 
    // HTTP header representation
 
+   static const char* ptrC;
+   static const char* ptrH;
    static uhttpheader http_info;
 
    static void setHTTPMethod(const char* method, uint32_t method_len)
@@ -273,8 +275,7 @@ public:
       {
       U_TRACE(0, "UHTTP::isHTTPRequest()")
 
-      bool result = (http_info.method_type &&
-                     http_info.szHeader);
+      bool result = (http_info.method_type && http_info.szHeader);
 
       U_RETURN(result);
       }
@@ -402,48 +403,15 @@ public:
    // ----------------------------------------------------
    // take only the first 2 character (it, en, de fr, ...)
 
-   static const char* getAcceptLanguage()
-      {
-      U_TRACE(0, "UHTTP::getAcceptLanguage()")
-
-      const char* ptr = getHTTPHeaderValuePtr(*USocket::str_accept_language);
-
-      const char* accept_language = (ptr ? ptr : "en");
-
-      U_INTERNAL_DUMP("accept_language = %.2S", ptr)
-
-      U_RETURN_POINTER(accept_language,const char);
-      }
-
-   static const char* getBrowserMSIE()
-      {
-      U_TRACE(0, "UHTTP::getBrowserMSIE()")
-
-      const char* browserMSIE = "";
-
-      // check User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
-
-      const char* ptr = getHTTPHeaderValuePtr(*USocket::str_user_agent);
-
-      if (ptr && (u_find(ptr, 30, U_CONSTANT_TO_PARAM("MSIE")) != 0)) browserMSIE = "1";
-
-      U_INTERNAL_DUMP("browserMSIE = %S", browserMSIE)
-
-      U_RETURN_POINTER(browserMSIE,const char);
-      }
+   static const char* getAcceptLanguage();
 
    // check for "Accept-Encoding: deflate" in header request...
 
-   static bool isHTTPAcceptEncodingDeflate(uint32_t content_length)
-      {
-      U_TRACE(0, "UHTTP::isHTTPAcceptEncodingDeflate(%u)", content_length)
+   static bool isHTTPAcceptEncodingDeflate(uint32_t content_length);
 
-#  ifdef HAVE_LIBZ
-      U_RETURN(http_info.accept_deflate && content_length > 1400); // SIZE THRESHOLD FOR DEFLATE...
-#  endif
+   // check for MSIE in "User-Agent: ...." in header request...
 
-      U_RETURN(false);
-      }
+   static const char* getBrowserMSIE();
 
    // check for "Connection: close" in headers...
 

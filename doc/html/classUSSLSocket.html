@@ -60,10 +60,10 @@ bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>secureConnection</b> 
 virtual bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isSSL</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a786f1585b36e0da5afc0e3648ad29801"></a><!-- doxytag: member="USSLSocket::closesocket" ref="a786f1585b36e0da5afc0e3648ad29801" args="()" -->
 virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><b>closesocket</b> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a21209e4f23e144e3af29ad57775479a3"></a><!-- doxytag: member="USSLSocket::getMsgError" ref="a21209e4f23e144e3af29ad57775479a3" args="(const char *&amp;pmsg)" -->
-virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><b>getMsgError</b> (const char *&amp;pmsg)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">virtual int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a62f67a3914309051da7bbc5aae9c810b">send</a> (const void *pData, int iDataLen)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">virtual int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a3328737002f68158e924f0f0ebf6c2bc">recv</a> (void *pBuffer, int iBufferLen)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aef8a9abee65057b84d9a550104ebbb1c"></a><!-- doxytag: member="USSLSocket::getMsgError" ref="aef8a9abee65057b84d9a550104ebbb1c" args="(char *buffer, uint32_t buffer_size)" -->
+virtual const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getMsgError</b> (char *buffer, uint32_t buffer_size)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">virtual bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a1b5266042cfe25954c792612f46b7d80">connectServer</a> (const <a class="el" href="classUString.html">UString</a> &amp;server, int iServPort)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="classUSocket.html">USocket</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#ab6601bf1976add465a5a5f012cf9781e">acceptClient</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUSocket.html">USocket</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#ad193ec26179fee25a85e4648cdd4a3e3">accept</a> (<a class="el" href="classUSSLSocket.html">USSLSocket</a> *pcNewConnection)</td></tr>
@@ -75,8 +75,8 @@ static SSL_METHOD *&nbsp;</td><td class="memItemRight" valign="bottom"><b>method
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae842be1813d1574c78f884114a2f1d8d"></a><!-- doxytag: member="USSLSocket::status" ref="ae842be1813d1574c78f884114a2f1d8d" args="(bool flag) const " -->
 const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>status</b> (bool flag) const </td></tr>
 <tr><td colspan="2"><h2>Static Protected Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5c1cf1b2fcdcb58de2f9c03685c0a65a"></a><!-- doxytag: member="USSLSocket::status" ref="a5c1cf1b2fcdcb58de2f9c03685c0a65a" args="(SSL *ssl, int ret, bool flag)" -->
-static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>status</b> (SSL *ssl, int ret, bool flag)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1d8f24dff1219117d62f0f300ca4690c"></a><!-- doxytag: member="USSLSocket::status" ref="a1d8f24dff1219117d62f0f300ca4690c" args="(SSL *ssl, int ret, bool flag, char *buffer, uint32_t buffer_size)" -->
+static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>status</b> (SSL *ssl, int ret, bool flag, char *buffer, uint32_t buffer_size)</td></tr>
 <tr><td colspan="2"><h2>Protected Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8f8b81eda4d76d78824ffe66fe8c427d"></a><!-- doxytag: member="USSLSocket::ssl" ref="a8f8b81eda4d76d78824ffe66fe8c427d" args="" -->
 SSL *&nbsp;</td><td class="memItemRight" valign="bottom"><b>ssl</b></td></tr>
@@ -426,7 +426,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/ssl/net/sslsocket.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Jan 13 17:54:00 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Jan 15 19:55:54 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

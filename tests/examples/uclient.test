@@ -23,9 +23,9 @@ start_prg_background userver_tcp -c web_server.cfg
 $SLEEP
 DIR_CMD="../../examples/uclient"
 
-start_prg uclient -u server.log -c uclient.cfg http://127.0.0.1/cgi-bin/uploader.sh
+start_prg uclient -u inp/PEC/PEC.log -c uclient.cfg http://127.0.0.1/cgi-bin/uploader.sh
 
-diff server.log uploads/server.log
+diff inp/PEC/PEC.log uploads/PEC.log
 RESULT=$?
 
 $SLEEP

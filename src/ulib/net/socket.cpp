@@ -456,9 +456,9 @@ void USocket::closesocket()
    iSockDesc = -1;
 }
 
-void USocket::getMsgError(const char*& msg)
+const char* USocket::getMsgError(char* buffer, uint32_t buffer_size)
 {
-   U_TRACE(0, "USocket::getMsgError(%p)", &msg)
+   U_TRACE(0, "USocket::getMsgError(%p,%u)", buffer, buffer_size)
 
    U_INTERNAL_DUMP("iState = %d", iState)
 
@@ -466,12 +466,14 @@ void USocket::getMsgError(const char*& msg)
       {
       errno = -iState;
 
-      U_INTERNAL_ASSERT_EQUALS(u_buffer_len,0)
+      (void) u_snprintf(buffer, buffer_size, "%R", NULL);
 
-      (void) u_snprintf(u_buffer, sizeof(u_buffer), "%R", NULL);
+      buffer += 3;
 
-      msg = (u_buffer + 3);
+      U_RETURN((const char*)buffer);
       }
+
+   U_RETURN((const char*)0);
 }
 
 bool USocket::connectServer(const UString& server, int iServPort)

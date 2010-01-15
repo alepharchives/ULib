@@ -104,6 +104,17 @@ public:
       U_RETURN(result);
       }
 
+   static bool isMemoryMapped()
+      {
+      U_TRACE(0, "ULog::isMemoryMapped()")
+
+      U_INTERNAL_ASSERT_POINTER(pthis)
+
+      bool result = (file_limit != 0);
+
+      U_RETURN(result);
+      }
+
    // write with prefix
 
    static void log(const char* format, ...);           // (buffer write == 4096)

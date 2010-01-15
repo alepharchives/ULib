@@ -132,10 +132,10 @@
 <a name="l00189"></a>00189 
 <a name="l00190"></a>00190         virtual <span class="keywordtype">void</span> closesocket();
 <a name="l00191"></a>00191 
-<a name="l00192"></a>00192         virtual <span class="keywordtype">void</span> getMsgError(const <span class="keywordtype">char</span>*&amp; pmsg);
-<a name="l00193"></a>00193 
-<a name="l00194"></a>00194         virtual <span class="keywordtype">int</span> send(const <span class="keywordtype">void</span>* pData,   <span class="keywordtype">int</span> iDataLen);
-<a name="l00195"></a>00195         virtual <span class="keywordtype">int</span> recv(      <span class="keywordtype">void</span>* pBuffer, <span class="keywordtype">int</span> iBufferLen);
+<a name="l00192"></a>00192         virtual <span class="keywordtype">int</span> send(const <span class="keywordtype">void</span>* pData,   <span class="keywordtype">int</span> iDataLen);
+<a name="l00193"></a>00193         virtual <span class="keywordtype">int</span> recv(      <span class="keywordtype">void</span>* pBuffer, <span class="keywordtype">int</span> iBufferLen);
+<a name="l00194"></a>00194 
+<a name="l00195"></a>00195         virtual const <span class="keywordtype">char</span>* getMsgError(<span class="keywordtype">char</span>* buffer, uint32_t buffer_size);
 <a name="l00196"></a>00196 
 <a name="l00202"></a><a class="code" href="classUSSLSocket.html#a1b5266042cfe25954c792612f46b7d80">00202</a>         virtual <span class="keywordtype">bool</span> connectServer(const <a class="code" href="classUString.html">UString</a>&amp; server, <span class="keywordtype">int</span> iServPort)
 <a name="l00203"></a>00203                 {
@@ -164,9 +164,9 @@
 <a name="l00233"></a>00233         <span class="keywordtype">int</span> ret;
 <a name="l00234"></a>00234         <span class="keywordtype">bool</span> active;
 <a name="l00235"></a>00235 
-<a name="l00236"></a>00236         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* status(SSL* ssl, <span class="keywordtype">int</span> ret, <span class="keywordtype">bool</span> flag);
+<a name="l00236"></a>00236         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* status(SSL* ssl, <span class="keywordtype">int</span> ret, <span class="keywordtype">bool</span> flag, <span class="keywordtype">char</span>* buffer, uint32_t buffer_size);
 <a name="l00237"></a>00237 
-<a name="l00238"></a>00238                          <span class="keyword">const</span> <span class="keywordtype">char</span>* status(<span class="keywordtype">bool</span> flag)<span class="keyword"> const </span>{ u_buffer_len = 0; <span class="keywordflow">return</span> status(ssl, ret, flag); }
+<a name="l00238"></a>00238                          <span class="keyword">const</span> <span class="keywordtype">char</span>* status(<span class="keywordtype">bool</span> flag)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> status(ssl, ret, flag, 0, 0); }
 <a name="l00239"></a>00239 
 <a name="l00240"></a>00240 <span class="keyword">private</span>:
 <a name="l00241"></a>00241         <a class="code" href="classUSSLSocket.html">USSLSocket</a>(<span class="keyword">const</span> <a class="code" href="classUSSLSocket.html">USSLSocket</a>&amp;) : <a class="code" href="classUTCPSocket.html">UTCPSocket</a>(false) {}
@@ -180,7 +180,7 @@
 <a name="l00249"></a>00249 
 <a name="l00250"></a>00250 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Jan 13 17:53:46 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Jan 15 19:55:49 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

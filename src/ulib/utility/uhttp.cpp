@@ -25,6 +25,8 @@
 UString*          UHTTP::tmpdir;
 UString*          UHTTP::qcontent;
 uhttpheader       UHTTP::http_info;
+const char*       UHTTP::ptrC;
+const char*       UHTTP::ptrH;
 UVector<UString>* UHTTP::form_name_value;
 
 const UString*    UHTTP::str_frm_response;
@@ -146,6 +148,14 @@ void UHTTP::str_allocate()
    U_NEW_ULIB_OBJECT(str_frm_bad_request,          U_STRING_FROM_STRINGREP_STORAGE(4));
    U_NEW_ULIB_OBJECT(str_frm_internal_error,       U_STRING_FROM_STRINGREP_STORAGE(5));
    U_NEW_ULIB_OBJECT(str_frm_service_unavailable,  U_STRING_FROM_STRINGREP_STORAGE(6));
+
+   // init
+
+   U_INTERNAL_ASSERT_POINTER(USocket::str_host)
+   U_INTERNAL_ASSERT_POINTER(USocket::str_connection)
+
+   ptrH = USocket::str_host->c_pointer(1);
+   ptrC = USocket::str_connection->c_pointer(1);
 }
 
 /* read HTTP message
@@ -375,7 +385,7 @@ start:
         rbuffer.size() <= http_info.startHeader) &&
        USocketExt::read(s, rbuffer) == false)
       {
-      goto error;
+      U_RETURN(false);
       }
 
    ptr       = rbuffer.c_pointer(http_info.startHeader);
@@ -383,11 +393,11 @@ start:
 
    if (endHeader == U_NOT_FOUND)
       {
-      if (rbuffer.isBinary()) goto error;
+      if (rbuffer.isBinary()) U_RETURN(false);
 
       // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
 
-      if (count++ > 5) goto error;
+      if (count++ > 5) U_RETURN(false);
 
       goto start;
       }
@@ -400,7 +410,7 @@ start:
 
    // NB: http_info.startHeader is needed for loop...
 
-   if (scanfHTTPHeader(rbuffer.c_pointer(http_info.endHeader)) == false) goto error;
+   if (scanfHTTPHeader(rbuffer.c_pointer(http_info.endHeader)) == false) U_RETURN(false);
 
    http_info.startHeader += http_info.endHeader;
 
@@ -453,16 +463,6 @@ start:
                         20, rbuffer.c_pointer(http_info.endHeader))
 
    U_RETURN(true);
-
-error:
-   // manage buffered read
-
-   USocketExt::pcount  = rbuffer.size();
-   USocketExt::pbuffer = rbuffer.data();
-
-   U_INTERNAL_DUMP("pcount = %d pbuffer = %p", USocketExt::pcount, USocketExt::pbuffer)
-
-   U_RETURN(false);
 }
 
 bool UHTTP::readHTTPBody(USocket* s, UString& rbuffer, UString& body)
@@ -546,30 +546,7 @@ start:
          goto start; // retry search for 'Content-Length: ' or chunk...
          }
 
-      USocketExt::size_message = http_info.endHeader + http_info.clength;
-
-      U_INTERNAL_DUMP("size_message = %u", USocketExt::size_message)
-
-      if (body.empty())
-         {
-         if (http_info.clength) body = rbuffer.substr(http_info.endHeader, http_info.clength);
-
-         // manage buffered read
-
-         uint32_t size = rbuffer.size();
-
-         U_INTERNAL_DUMP("rbuffer.size() = %u pcount = %d pbuffer = %p", size, USocketExt::pcount, USocketExt::pbuffer)
-
-         U_INTERNAL_ASSERT_MAJOR((int32_t)USocketExt::size_message,0)
-
-         if (size > USocketExt::size_message)
-            {
-            USocketExt::pcount  = size - USocketExt::size_message;
-            USocketExt::pbuffer = rbuffer.data();
-
-            U_INTERNAL_DUMP("pcount = %d pbuffer = %p", USocketExt::pcount, USocketExt::pbuffer)
-            }
-         }
+      if (body.empty() && http_info.clength) body = rbuffer.substr(http_info.endHeader, http_info.clength);
       }
    else
       {
@@ -621,17 +598,17 @@ start:
          chunk_terminator_len = U_CONSTANT_SIZE(U_CRLF2);
          }
 
-      USocketExt::size_message = rbuffer.find(chunk_terminator, http_info.endHeader, chunk_terminator_len);
+      count = rbuffer.find(chunk_terminator, http_info.endHeader, chunk_terminator_len);
 
-      if (USocketExt::size_message == U_NOT_FOUND) USocketExt::size_message = USocketExt::read(s, rbuffer, chunk_terminator, chunk_terminator_len);
+      if (count == U_NOT_FOUND) count = USocketExt::read(s, rbuffer, chunk_terminator, chunk_terminator_len);
 
-      if (USocketExt::size_message == U_NOT_FOUND) U_RETURN(false);
+      if (count == U_NOT_FOUND) U_RETURN(false);
 
-      USocketExt::size_message += chunk_terminator_len; // NB: il messaggio comprende anche la blank line...
+      count += chunk_terminator_len; // NB: il messaggio comprende anche la blank line...
 
-      U_INTERNAL_DUMP("size_message = %u", USocketExt::size_message)
+      U_INTERNAL_DUMP("count = %u", count)
 
-      http_info.clength = (USocketExt::size_message - http_info.endHeader);
+      http_info.clength = (count - http_info.endHeader);
 
       U_INTERNAL_DUMP("http_info.clength = %u", http_info.clength)
 
@@ -669,7 +646,7 @@ start:
          inp += chunkSize + u_line_terminator_len;
          out += chunkSize;
 
-         U_INTERNAL_ASSERT(inp <= (rbuffer.c_pointer(USocketExt::size_message)))
+         U_INTERNAL_ASSERT(inp <= (rbuffer.c_pointer(count)))
          }
       }
 
@@ -684,11 +661,122 @@ start:
    U_RETURN(true);
 }
 
+bool UHTTP::readHTTP(USocket* socket, UString& rbuffer, UString& body)
+{
+   U_TRACE(0, "UHTTP::readHTTP(%p,%.*S,%.*S)", socket, U_STRING_TO_TRACE(rbuffer), U_STRING_TO_TRACE(body))
+
+   USocketExt::size_message = 0; // manage buffered read (pipelining)
+
+   if (readHTTPHeader(socket, rbuffer) == false)
+      {
+      // manage buffered read (pipelining)
+
+      USocketExt::pcount  = rbuffer.size();
+      USocketExt::pbuffer = rbuffer.data();
+
+      U_INTERNAL_DUMP("size_message = %u pcount = %d pbuffer = %p", USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
+
+      U_RETURN(false);
+      }
+
+   if (http_info.method_type)
+      {
+      // --------------------------------
+      // check in header request for:
+      // --------------------------------
+      // "Host: ..."
+      // "Connection: ..."
+      // --------------------------------
+
+      const char* p;
+      unsigned char c;
+      const char* ptr    = rbuffer.data();
+      uint32_t pos, pos1 = http_info.startHeader, pos2, l;
+
+      while (pos1 < http_info.endHeader)
+         {
+      // U_INTERNAL_DUMP("rbuffer = %.*S", 80, rbuffer.c_pointer(pos1))
+
+         pos2 = rbuffer.find('\n', pos1);
+
+         if (pos2 == U_NOT_FOUND) pos2 = http_info.endHeader;
+
+         c = ptr[pos1];
+
+      // U_INTERNAL_DUMP("c = %C", c)
+
+         if (c == 'H' || // "Host: ..."
+             c == 'C')   // "Connection: ..."
+            {
+            pos = rbuffer.find(':', ++pos1);
+
+         // U_INTERNAL_DUMP("pos = %u, pos2 = %u", pos, pos2)
+
+            U_INTERNAL_ASSERT_MINOR(pos,pos2)
+
+            p = ptr + pos1;
+            l = pos - pos1;
+
+            do { ++pos; } while (pos < http_info.endHeader && u_isspace(ptr[pos]));
+
+            if (c == 'H' &&
+                l == 3   &&
+                memcmp(p, ptrH, l) == 0)
+               {
+               http_info.host     = ptr  + pos;
+               http_info.host_len = pos2 - pos -1;
+
+               U_INTERNAL_DUMP("http_info.host = %.*S", U_HTTP_HOST_TO_TRACE)
+               }
+            else if (l == 9 &&
+                     memcmp(p, ptrC, l) == 0)
+               {
+               U_INTERNAL_DUMP("Connection: = %.*S", pos2 - pos - 1, rbuffer.c_pointer(pos))
+
+               U_INTERNAL_ASSERT_EQUALS(c, 'C')
+
+               p = ptr + pos;
+
+               if (U_STRNEQ(p, "close"))
+                  {
+                  http_info.is_connection_close = U_YES;
+
+                  U_INTERNAL_DUMP("http_info.is_connection_close = %d", http_info.is_connection_close);
+                  }
+               else if (U_STRNCASECMP(p, "keep-alive") == 0)
+                  {
+                  http_info.keep_alive = 1;
+
+                  U_INTERNAL_DUMP("http_info.keep_alive = %d", http_info.keep_alive);
+                  }
+               }
+            }
+
+         pos1 = pos2 + 1;
+         }
+
+      if (http_info.method_type != HTTP_POST) goto end;
+      }
+
+   if (readHTTPBody(socket, rbuffer, body) == false) U_RETURN(false);
+
+end:
+   // manage buffered read (pipelining)
+
+   USocketExt::size_message = http_info.endHeader + http_info.clength;
+
+   UClientImage_Base::checkForPipeline(rbuffer);
+
+   U_RETURN(true);
+}
+
 const char* UHTTP::getHTTPHeaderValuePtr(const UString& name)
 {
    U_TRACE(0, "UHTTP::getHTTPHeaderValuePtr(%.*S)", U_STRING_TO_TRACE(name))
 
    uint32_t header_line = UClientImage_Base::rbuffer->find(name, http_info.startHeader, http_info.szHeader);
+
+   if (header_line == U_NOT_FOUND) header_line = UClientImage_Base::rbuffer->findnocase(name, http_info.startHeader, http_info.szHeader); 
 
    if (header_line == U_NOT_FOUND) U_RETURN((const char*)0);
 
@@ -699,108 +787,56 @@ const char* UHTTP::getHTTPHeaderValuePtr(const UString& name)
    U_RETURN(ptr_header_value);
 }
 
-bool UHTTP::readHTTP(USocket* socket, UString& rbuffer, UString& body)
+// Accept-Language: en-us,en;q=0.5
+// ----------------------------------------------------
+// take only the first 2 character (it, en, de fr, ...)
+
+const char* UHTTP::getAcceptLanguage()
 {
-   U_TRACE(0, "UHTTP::readHTTP(%p,%.*S,%.*S)", socket, U_STRING_TO_TRACE(rbuffer), U_STRING_TO_TRACE(body))
+   U_TRACE(0, "UHTTP::getAcceptLanguage()")
 
-   USocketExt::size_message = 0; // manage buffered read (pipelining)
+   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_accept_language);
 
-   if (readHTTPHeader(socket, rbuffer)       == false ||
-       readHTTPBody(  socket, rbuffer, body) == false)
+   const char* accept_language = (ptr ? ptr : "en");
+
+   U_INTERNAL_DUMP("accept_language = %.2S", ptr)
+
+   U_RETURN_POINTER(accept_language,const char);
+}
+
+const char* UHTTP::getBrowserMSIE()
+{
+   U_TRACE(0, "UHTTP::getBrowserMSIE()")
+
+   const char* browserMSIE = "";
+
+   // check User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
+
+   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_user_agent);
+
+   if (ptr && (u_find(ptr, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)) browserMSIE = "1";
+
+   U_INTERNAL_DUMP("browserMSIE = %S", browserMSIE)
+
+   U_RETURN_POINTER(browserMSIE,const char);
+}
+
+// check for "Accept-Encoding: deflate" in header request...
+
+bool UHTTP::isHTTPAcceptEncodingDeflate(uint32_t content_length)
+{
+   U_TRACE(0, "UHTTP::isHTTPAcceptEncodingDeflate(%u)", content_length)
+
+#ifdef HAVE_LIBZ
+   if (content_length > 1400) // SIZE THRESHOLD FOR DEFLATE...
       {
-      U_RETURN(false);
+      const char* ptr = getHTTPHeaderValuePtr(*USocket::str_accept_encoding);
+
+      if (ptr && (u_find(ptr, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)) U_RETURN(true);
       }
+#endif
 
-   // --------------------------------
-   // check in header request for:
-   // --------------------------------
-   // "Host: ..."
-   // "Connection: ..."
-   // "Accept-Encoding: ...deflate..."
-   // --------------------------------
-
-   const char* p;
-   unsigned char c;
-   const char* ptr    = rbuffer.data();
-   uint32_t pos, pos1 = http_info.startHeader, pos2, l,
-                 lA   = USocket::str_accept_encoding->size() - 1,
-                 lC   = USocket::str_connection->size() - 1,
-                 lH   = USocket::str_host->size() - 1;
-   const char* ptrA   = USocket::str_accept_encoding->c_pointer(1);
-   const char* ptrC   = USocket::str_connection->c_pointer(1);
-   const char* ptrH   = USocket::str_host->c_pointer(1);
-
-   while (pos1 < http_info.endHeader)
-      {
-      U_INTERNAL_DUMP("rbuffer = %.*S", 80, rbuffer.c_pointer(pos1))
-
-      pos2 = rbuffer.find('\n', pos1);
-
-      if (pos2 == U_NOT_FOUND) pos2 = http_info.endHeader;
-
-      c = ptr[pos1];
-
-   // U_INTERNAL_DUMP("c = %C", c)
-
-      if (c == 'A' || // "Accept-Encoding: ..."
-          c == 'C' || // "Connection: ..."
-          c == 'H')   // "Host: ..."
-         {
-         pos = rbuffer.find(':', ++pos1);
-
-      // U_INTERNAL_DUMP("pos = %u, pos2 = %u", pos, pos2)
-
-         U_INTERNAL_ASSERT_MINOR(pos,pos2)
-
-         p = ptr + pos1;
-         l = pos - pos1;
-
-         do { ++pos; } while (pos < http_info.endHeader && u_isspace(ptr[pos]));
-
-         if (c == 'A' &&
-             l == lA  &&
-             memcmp(p, ptrA, l) == 0)
-            {
-            http_info.accept_deflate = (u_find(ptr + pos, pos2 - pos - 1, U_CONSTANT_TO_PARAM("deflate")) != 0);
-
-            U_INTERNAL_DUMP("http_info.accept_deflate = %u", http_info.accept_deflate)
-            }
-         else if (c == 'C' &&
-                  l == lC  &&
-                  memcmp(p, ptrC, l) == 0)
-            {
-            U_INTERNAL_DUMP("Connection: = %.*S", pos2 - pos - 1, rbuffer.c_pointer(pos))
-
-            p = ptr + pos;
-
-            if (U_STRNEQ(p, "close"))
-               {
-               http_info.is_connection_close = U_YES;
-
-               U_INTERNAL_DUMP("http_info.is_connection_close = %d", http_info.is_connection_close);
-               }
-            else if (U_STRNCASECMP(p, "keep-alive") == 0)
-               {
-               http_info.keep_alive = 1;
-
-               U_INTERNAL_DUMP("http_info.keep_alive = %d", http_info.keep_alive);
-               }
-            }
-         else if (c == 'H' &&
-                  l == lH  &&
-                  memcmp(p, ptrH, l) == 0)
-            {
-            http_info.host     = ptr  + pos;
-            http_info.host_len = pos2 - pos -1;
-
-            U_INTERNAL_DUMP("http_info.host = %.*S", U_HTTP_HOST_TO_TRACE)
-            }
-         }
-
-      pos1 = pos2 + 1;
-      }
-
-   U_RETURN(true);
+   U_RETURN(false);
 }
 
 // check for "Connection: close" in headers...
@@ -2420,7 +2456,7 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penvironment, UFile* file
    static int fd_stderr = UServices::getDevNull();
 #endif
 
-   // NB: if server HTTP 1.0 (ex: nodog) process the HTTP CGI request with fork....
+   // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
 
    if (UServer_Base::preforked_num_kids == 0)
       {
@@ -2444,7 +2480,13 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penvironment, UFile* file
             {
             u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
 
-            if (ULog::isShared() == false) UServer_Base::log = 0;
+            if (ULog::isMemoryMapped() &&
+                ULog::isShared() == false)
+               {
+               // NB: we need locking to write log...
+
+               UServer_Base::log = 0;
+               }
             }
          }
       }

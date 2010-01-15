@@ -836,9 +836,9 @@ void UServer_Base::handlerNewConnection()
       {
       if (flag_loop) // check for SIGTERM event...
          {
-         const char* msg_error = 0;
+         char buffer[4096];
 
-         UClientImage_Base::socket->getMsgError(msg_error);
+         const char* msg_error = UClientImage_Base::socket->getMsgError(buffer, sizeof(buffer));
 
          U_SRV_LOG_VAR("accept new client failed %S", msg_error);
          }
@@ -896,6 +896,8 @@ void UServer_Base::handlerNewConnection()
             }
          }
       }
+
+   U_INTERNAL_DUMP("u_buffer_len = %u", u_buffer_len)
 
    pthis->newClientImage();
 

@@ -393,9 +393,7 @@ bool USmtpClient::sendMessage(bool secure)
 #endif
             s = this;
 
-   int size = msg.size(), n = s->send(msg.data(), size);
-
-   response = (s->checkIO(n, size) ? USocketExt::readMultilineReply(s) : USocket::BROKEN);
+   response = (USocketExt::write(s, msg) ? USocketExt::readMultilineReply(s) : USocket::BROKEN);
 
    setStateFromResponse();
 

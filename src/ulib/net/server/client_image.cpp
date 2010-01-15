@@ -271,6 +271,26 @@ end:
 
 // check if read data already available... (pipelining)
 
+void UClientImage_Base::checkForPipeline(const UString& rbuffer)
+{
+   U_TRACE(0, "UClientImage_Base::checkForPipeline(%.*S)", U_STRING_TO_TRACE(rbuffer))
+
+   uint32_t size = rbuffer.size();
+
+   U_INTERNAL_DUMP("rbuffer.size() = %u size_message = %u pcount = %d pbuffer = %p",
+                     size, USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
+
+   U_INTERNAL_ASSERT_MAJOR((int32_t)USocketExt::size_message,0)
+
+   if (size > USocketExt::size_message)
+      {
+      USocketExt::pcount  = size - USocketExt::size_message;
+      USocketExt::pbuffer = rbuffer.data();
+
+      U_INTERNAL_DUMP("pcount = %d pbuffer = %p", USocketExt::pcount, USocketExt::pbuffer)
+      }
+}
+
 bool UClientImage_Base::isPipeline()
 {
    U_TRACE(0, "UClientImage_Base::isPipeline()")

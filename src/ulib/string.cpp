@@ -866,7 +866,7 @@ uint32_t UString::find(const char* s, uint32_t pos, uint32_t s_len, uint32_t how
 
    uint32_t n      = rep->fold(pos, how_much);
    const char* str = rep->str;
-   const char* ptr = (const char*) u_find(str + pos, n, s, s_len); // u_find() is inline...
+   const char* ptr = (const char*) u_find(str + pos, n, s, s_len);
 
    U_RETURN(ptr ? ptr - str : U_NOT_FOUND);
 }
@@ -875,14 +875,16 @@ uint32_t UString::findnocase(const char* s, uint32_t pos, uint32_t s_len, uint32
 {
    U_TRACE(0, "UString::findnocase(%S,%u,%u,%u)", s, pos, s_len, how_much)
 
-   const char* str = rep->str;
+   U_INTERNAL_ASSERT_MAJOR(s_len,1)
+
+   uint32_t n      = rep->fold(pos, how_much);
+   const char* str = rep->str + pos;
 
    // gcc - cannot optimize possibly infinite loops ???
 
-   for (uint32_t xpos = pos, n = rep->fold(pos, how_much) - s_len; xpos <= n; ++xpos)
-      {
-      if (strncasecmp(str + xpos, s, s_len) == 0) U_RETURN(xpos);
-      }
+   uint32_t xpos = 0;
+
+   for (; (xpos + s_len) <= n; ++xpos) if (strncasecmp(str + xpos, s, s_len) == 0) U_RETURN(pos+xpos);
 
    U_RETURN(U_NOT_FOUND);
 }

@@ -238,9 +238,17 @@ bool USSLSocket::setContext(const char* cert_file,
    U_RETURN(true);
 }
 
-const char* USSLSocket::status(SSL* ssl, int ret, bool flag)
+const char* USSLSocket::status(SSL* ssl, int ret, bool flag, char* buffer, uint32_t buffer_size)
 {
-   U_TRACE(1, "USSLSocket::status(%p,%d,%b)", ssl, ret, flag)
+   U_TRACE(1, "USSLSocket::status(%p,%d,%b,%p,%u)", ssl, ret, flag, buffer, buffer_size)
+
+   if (buffer == 0)
+      {
+      static char lbuffer[4096];
+
+      buffer      = lbuffer;
+      buffer_size = 4096;
+      }
 
    const char* descr  = "SSL_ERROR_NONE";
    const char* errstr = "ok";
@@ -322,41 +330,30 @@ const char* USSLSocket::status(SSL* ssl, int ret, bool flag)
          }
       }
 
-   U_INTERNAL_ASSERT_EQUALS(u_buffer_len,0)
-
-   u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "(%d, %s) - %s", ret, descr, errstr);
-
-   uint32_t len;
+   uint32_t len, buffer_len = u_snprintf(buffer, buffer_size, "(%d, %s) - %s", ret, descr, errstr);
 
    char* sslerr = UServices::getOpenSSLError(0, 0, &len);
 
    if (len)
       {
-      u_buffer[u_buffer_len++] = ' ';
+      buffer[buffer_len++] = ' ';
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", (void*)(u_buffer + u_buffer_len), sslerr, len+1);
-
-      u_buffer_len += len;
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", (void*)(buffer + buffer_len), sslerr, len+1);
       }
 
-   U_RETURN(u_buffer);
+   U_RETURN((const char*)buffer);
 }
 
-void USSLSocket::getMsgError(const char*& msg)
+const char* USSLSocket::getMsgError(char* buffer, uint32_t buffer_size)
 {
-   U_TRACE(0, "USSLSocket::getMsgError(%p)", &msg)
+   U_TRACE(0, "USSLSocket::getMsgError(%p,%u)", buffer, buffer_size)
 
    U_INTERNAL_DUMP("ret = %d", ret)
 
-   if (ret == SSL_ERROR_NONE) USocket::getMsgError(msg);
-   else
-      {
-      if (u_buffer_len == 0) (void) status(false);
+   buffer = (char*) (ret == SSL_ERROR_NONE ? USocket::getMsgError(buffer, buffer_size)
+                                           : status(ssl, ret, false, buffer, buffer_size));
 
-      msg = u_buffer;
-
-      u_buffer_len = 0;
-      }
+   U_RETURN((const char*)buffer);
 }
 
 bool USSLSocket::secureConnection(int fd)
@@ -525,7 +522,7 @@ loop:
 
       pcNewConnection->ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
 
-      U_DUMP("status = %.*S", 512, (u_buffer_len = 0, status(ssl, pcNewConnection->ret, false)))
+      U_DUMP("status = %.*S", 512, status(ssl, pcNewConnection->ret, false, 0, 0))
 
       if (USocket::req_timeout == 0 &&
           (pcNewConnection->ret == SSL_ERROR_WANT_READ  ||
@@ -595,7 +592,7 @@ int USSLSocket::recv(void* pBuffer, int iBufferLen)
 {
    U_TRACE(1, "USSLSocket::recv(%p,%d)", pBuffer, iBufferLen)
 
-   U_INTERNAL_ASSERT_EQUALS(USocket::isConnected(), true)
+   U_INTERNAL_ASSERT(USocket::isConnected())
 
    int iBytesRead;
 
@@ -632,7 +629,7 @@ int USSLSocket::send(const void* pData, int iDataLen)
 {
    U_TRACE(1, "USSLSocket::send(%p,%d)", pData, iDataLen)
 
-   U_INTERNAL_ASSERT_EQUALS(USocket::isConnected(), true)
+   U_INTERNAL_ASSERT(USocket::isOpen())
 
    int iBytesWrite;
 

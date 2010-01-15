@@ -189,10 +189,10 @@ public:
 
    virtual void closesocket();
 
-   virtual void getMsgError(const char*& pmsg);
-
    virtual int send(const void* pData,   int iDataLen);
    virtual int recv(      void* pBuffer, int iBufferLen);
+
+   virtual const char* getMsgError(char* buffer, uint32_t buffer_size);
 
    /**
    This method is called to connect the socket to a server SSL that is specified
@@ -233,9 +233,9 @@ protected:
    int ret;
    bool active;
 
-   static const char* status(SSL* ssl, int ret, bool flag);
+   static const char* status(SSL* ssl, int ret, bool flag, char* buffer, uint32_t buffer_size);
 
-          const char* status(bool flag) const { u_buffer_len = 0; return status(ssl, ret, flag); }
+          const char* status(bool flag) const { return status(ssl, ret, flag, 0, 0); }
 
 private:
    USSLSocket(const USSLSocket&) : UTCPSocket(false) {}

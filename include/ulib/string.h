@@ -894,7 +894,7 @@ public:
       { return find(str.data(), pos, str.size(), how_much); }
 
    uint32_t find(char c,        uint32_t pos = 0) const;
-   uint32_t find(const char* s, uint32_t pos = 0) const { return find(s, pos, strlen(s)); }
+   uint32_t find(const char* s, uint32_t pos = 0) const { return find(s, pos, strlen(s), U_NOT_FOUND); }
 
    // The `rfind' function searches from end to beginning string for a specified string (possibly a single
    // character) and returns its starting position. You can supply the parameter pos to specify the position
@@ -940,7 +940,7 @@ public:
    uint32_t findnocase(const UString& str, uint32_t pos = 0, uint32_t how_much = U_NOT_FOUND) const
       { return findnocase(str.data(), pos, str.size(), how_much); }
 
-   uint32_t findnocase(const char* s, uint32_t pos = 0) const { return findnocase(s, pos, strlen(s)); }
+   uint32_t findnocase(const char* s, uint32_t pos = 0) const { return findnocase(s, pos, strlen(s), U_NOT_FOUND); }
 
    // Compare
 

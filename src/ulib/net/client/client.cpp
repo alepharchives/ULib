@@ -298,12 +298,11 @@ bool UClient_Base::sendRequest()
 {
    U_TRACE(0, "UClient_Base::sendRequest()")
 
-   U_INTERNAL_ASSERT_EQUALS(socket->isConnected(), true)
+   U_INTERNAL_ASSERT(socket->isOpen())
 
-   uint32_t size = request.size();
-   bool result   = socket->checkIO(socket->send((void*)request.data(), size), size);
+   bool result = USocketExt::write(socket, request);
 
-   if (log) ULog::log("send request (%u bytes) %#.*S to %.*s\n", size, U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(logbuf));
+   if (log) ULog::log("send request (%u bytes) %#.*S to %.*s\n", request.size(), U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(logbuf));
 
    U_RETURN(result);
 }

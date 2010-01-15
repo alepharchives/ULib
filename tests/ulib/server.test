@@ -16,10 +16,10 @@ start_prg_background server ../../src/ulib/plugin/.libs mod_http # '"mod_http mo
 
 $SLEEP
 
-#$TRUSS $NC -w 1 127.0.0.1 80 <inp/http/form_enctype.http	  >out/server.out 2>trace.out
- 		  $NC -w 2 127.0.0.1 80 <inp/http/form_enctype.http	  >out/server.out
+#$TRUSS $NC -w 1 127.0.0.1 80 <inp/http/form_enctype.http     >out/server.out 2>trace.out
+        $NC -w 2 127.0.0.1 80 <inp/http/form_enctype.http     >out/server.out
 $SLEEP
-  		  $NC -w 2 127.0.0.1 80 <inp/http/form_enctype_1.http  >>out/server.out
+        $NC -w 2 127.0.0.1 80 <inp/http/form_enctype_1.http  >>out/server.out
 $SLEEP
 
 kill_prg test_server TERM

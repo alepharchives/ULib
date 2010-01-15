@@ -603,7 +603,7 @@ public:
 
    virtual void closesocket();
 
-   virtual void getMsgError(const char*& pmsg);
+   virtual const char* getMsgError(char* buffer, uint32_t buffer_size);
 
    /**
    This method is called to connect the socket to a server TCP socket that is specified

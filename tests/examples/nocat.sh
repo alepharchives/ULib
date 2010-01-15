@@ -17,9 +17,12 @@ rm -f nocat.log \
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
-DIR_CMD="../../examples/userver"
+DIR_CMD="../../examples/uclient"
 
-wget -qO /tmp/wget.out "https://10.30.1.131/start_ap?ap=`uname -n`"
+#STRACE=$TRUSS
+start_prg uclient -i -c uclient.cfg "https://10.30.1.131/start_ap?ap=`uname -n`"
+
+DIR_CMD="../../examples/userver"
 
 #STRACE=$TRUSS
  start_prg_background userver_tcp -c nocat.cfg
