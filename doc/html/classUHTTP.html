@@ -30,7 +30,7 @@ Collaboration diagram for UHTTP:</div>
 <div class="dynsection">
 <div class="center"><img src="classUHTTP__coll__graph.png" border="0" usemap="#UHTTP_coll__map" alt="Collaboration graph"/></div>
 <map name="UHTTP_coll__map" id="UHTTP_coll__map">
-<area shape="rect" id="node2" href="structuhttpheader.html" title="uhttpheader" alt="" coords="5,99,88,127"/><area shape="rect" id="node4" href="classUString.html" title="UString" alt="" coords="112,99,176,127"/><area shape="rect" id="node7" href="classUStringRep.html" title="UStringRep" alt="" coords="101,6,187,34"/><area shape="rect" id="node10" href="classUVector_3_01UString_01_4.html" title="UVector\&lt; UString \&gt;" alt="" coords="281,99,412,127"/></map>
+<area shape="rect" id="node2" href="structuhttpheader.html" title="uhttpheader" alt="" coords="235,721,317,749"/><area shape="rect" id="node4" href="classUMimeMultipart.html" title="UMimeMultipart" alt="" coords="341,721,453,749"/><area shape="rect" id="node6" href="classUMimeEntity.html" title="UMimeEntity" alt="" coords="269,570,365,598"/><area shape="rect" id="node8" href="classUString.html" title="UString" alt="" coords="392,99,456,127"/><area shape="rect" id="node14" href="classUMimeHeader.html" title="UMimeHeader" alt="" coords="84,370,185,398"/><area shape="rect" id="node23" href="classUFile.html" title="UFile" alt="" coords="481,450,532,478"/><area shape="rect" id="node11" href="classUStringRep.html" title="UStringRep" alt="" coords="381,6,467,34"/><area shape="rect" id="node16" href="classUHashMap_3_01UString_01_4.html" title="UHashMap\&lt; UString \&gt;" alt="" coords="5,99,152,127"/><area shape="rect" id="node21" href="classUVector_3_01UString_01_4.html" title="UVector\&lt; UString \&gt;" alt="" coords="528,721,659,749"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 
 <p><a href="classUHTTP-members.html">List of all members.</a></p>
@@ -63,12 +63,12 @@ static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isHTTPRequest<
 static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getHTTPStatus</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad469750a0d13e4d4964c9ad3851d7719"></a><!-- doxytag: member="UHTTP::getHTTPStatusDescription" ref="ad469750a0d13e4d4964c9ad3851d7719" args="()" -->
 static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getHTTPStatusDescription</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a80a42390db46f5ce243fbd3d42fd894c"></a><!-- doxytag: member="UHTTP::readHTTPRequest" ref="a80a42390db46f5ce243fbd3d42fd894c" args="()" -->
+static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>readHTTPRequest</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae59626cff6a9f20c79d3d243f47ebeaa"></a><!-- doxytag: member="UHTTP::readHTTPHeader" ref="ae59626cff6a9f20c79d3d243f47ebeaa" args="(USocket *socket, UString &amp;rbuffer)" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>readHTTPHeader</b> (<a class="el" href="classUSocket.html">USocket</a> *socket, <a class="el" href="classUString.html">UString</a> &amp;rbuffer)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a58a1dc68f121ce3836ab5b92c73bc37f"></a><!-- doxytag: member="UHTTP::readHTTPBody" ref="a58a1dc68f121ce3836ab5b92c73bc37f" args="(USocket *socket, UString &amp;rbuffer, UString &amp;body)" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>readHTTPBody</b> (<a class="el" href="classUSocket.html">USocket</a> *socket, <a class="el" href="classUString.html">UString</a> &amp;rbuffer, <a class="el" href="classUString.html">UString</a> &amp;body)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a43c4bbf836e7e5cacb5e7ab67770b48b"></a><!-- doxytag: member="UHTTP::readHTTP" ref="a43c4bbf836e7e5cacb5e7ab67770b48b" args="(USocket *socket, UString &amp;rbuffer, UString &amp;body)" -->
-static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>readHTTP</b> (<a class="el" href="classUSocket.html">USocket</a> *socket, <a class="el" href="classUString.html">UString</a> &amp;rbuffer, <a class="el" href="classUString.html">UString</a> &amp;body)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7ba90d09db50ef6a95d099eaa7098eb2"></a><!-- doxytag: member="UHTTP::isHTTPRequest" ref="a7ba90d09db50ef6a95d099eaa7098eb2" args="()" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isHTTPRequest</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a46df73bdecbfe7f69e5fb67bd8a70c20"></a><!-- doxytag: member="UHTTP::isHttpGET" ref="a46df73bdecbfe7f69e5fb67bd8a70c20" args="()" -->
@@ -87,26 +87,24 @@ static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isHTTPDirector
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isUSPRequest</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab7c9cd16a99942a21f826530ff8f15c9"></a><!-- doxytag: member="UHTTP::isPHPRequest" ref="ab7c9cd16a99942a21f826530ff8f15c9" args="()" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isPHPRequest</b> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a532d0c67b61f1c8853eecd8a616f3100"></a><!-- doxytag: member="UHTTP::openFile" ref="a532d0c67b61f1c8853eecd8a616f3100" args="(UFile &amp;file)" -->
-static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>openFile</b> (<a class="el" href="classUFile.html">UFile</a> &amp;file)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaf45f554f3e1162b8eb3b5f529c24e99"></a><!-- doxytag: member="UHTTP::checkHTTPRequest" ref="aaf45f554f3e1162b8eb3b5f529c24e99" args="(UFile &amp;file)" -->
-static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>checkHTTPRequest</b> (<a class="el" href="classUFile.html">UFile</a> &amp;file)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a797b447ce2c42b792a7a8589d7d58b9b"></a><!-- doxytag: member="UHTTP::processHTTPGetRequest" ref="a797b447ce2c42b792a7a8589d7d58b9b" args="(UFile &amp;file)" -->
-static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>processHTTPGetRequest</b> (<a class="el" href="classUFile.html">UFile</a> &amp;file)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9ba39584b9ab2051a5d4aa1bb7ff4a2b"></a><!-- doxytag: member="UHTTP::getTimeIfNeeded" ref="a9ba39584b9ab2051a5d4aa1bb7ff4a2b" args="()" -->
+static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>getTimeIfNeeded</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afd9e1c39fe0b7921c7f687296e781c35"></a><!-- doxytag: member="UHTTP::checkHTTPRequest" ref="afd9e1c39fe0b7921c7f687296e781c35" args="()" -->
+static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>checkHTTPRequest</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a11a16ab6e4e3e166596554fcbb8f9d2d"></a><!-- doxytag: member="UHTTP::processHTTPGetRequest" ref="a11a16ab6e4e3e166596554fcbb8f9d2d" args="()" -->
+static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>processHTTPGetRequest</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a85afc9bedfe927bccc16460d283769c2"></a><!-- doxytag: member="UHTTP::processHTTPAuthorization" ref="a85afc9bedfe927bccc16460d283769c2" args="(bool digest, const UString &amp;request_uri)" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>processHTTPAuthorization</b> (bool digest, const <a class="el" href="classUString.html">UString</a> &amp;request_uri)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ada8f473b9a184fc18b9ff52e1ad83250"></a><!-- doxytag: member="UHTTP::getHTMLDirectoryList" ref="ada8f473b9a184fc18b9ff52e1ad83250" args="(const UFile &amp;dir)" -->
-static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>getHTMLDirectoryList</b> (const <a class="el" href="classUFile.html">UFile</a> &amp;dir)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5f458d8d8a0f0615f07c83c8a2372c3b"></a><!-- doxytag: member="UHTTP::getHTMLDirectoryList" ref="a5f458d8d8a0f0615f07c83c8a2372c3b" args="()" -->
+static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>getHTMLDirectoryList</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4b7fcd68c055babf9368d779df708fbd"></a><!-- doxytag: member="UHTTP::getHTTPHeaderValuePtr" ref="a4b7fcd68c055babf9368d779df708fbd" args="(const UString &amp;name)" -->
 static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getHTTPHeaderValuePtr</b> (const <a class="el" href="classUString.html">UString</a> &amp;name)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a019e964083a8a78a602ee4a491d913bf"></a><!-- doxytag: member="UHTTP::initForm" ref="a019e964083a8a78a602ee4a491d913bf" args="()" -->
-static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>initForm</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a927a5ba1e10aed1de687d9c6d414fae5"></a><!-- doxytag: member="UHTTP::resetForm" ref="a927a5ba1e10aed1de687d9c6d414fae5" args="()" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>resetForm</b> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a56eebbcd15489890951ca76357c7b6f1"></a><!-- doxytag: member="UHTTP::getFormValue" ref="a56eebbcd15489890951ca76357c7b6f1" args="(UString &amp;buffer, uint32_t n)" -->
-static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>getFormValue</b> (<a class="el" href="classUString.html">UString</a> &amp;buffer, uint32_t n)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4af8227e1275a934013ebd4d61f500f0"></a><!-- doxytag: member="UHTTP::processHTTPForm" ref="a4af8227e1275a934013ebd4d61f500f0" args="()" -->
 static uint32_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>processHTTPForm</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a56eebbcd15489890951ca76357c7b6f1"></a><!-- doxytag: member="UHTTP::getFormValue" ref="a56eebbcd15489890951ca76357c7b6f1" args="(UString &amp;buffer, uint32_t n)" -->
+static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>getFormValue</b> (<a class="el" href="classUString.html">UString</a> &amp;buffer, uint32_t n)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9237413ed8c8dce7de2462ac4eed2eec"></a><!-- doxytag: member="UHTTP::getHTTPCookie" ref="a9237413ed8c8dce7de2462ac4eed2eec" args="(bool sh_script)" -->
 static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>getHTTPCookie</b> (bool sh_script)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a57a77dd27766f1011db065e4b8a95a1e"></a><!-- doxytag: member="UHTTP::setHTTPCookie" ref="a57a77dd27766f1011db065e4b8a95a1e" args="(const UString &amp;param)" -->
@@ -119,8 +117,8 @@ static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>processCGIOutp
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setCGIShellScript</b> (<a class="el" href="classUString.html">UString</a> &amp;command)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a459a9be19bbe74d779b19b50b58b2c2e"></a><!-- doxytag: member="UHTTP::setCGIEnvironment" ref="a459a9be19bbe74d779b19b50b58b2c2e" args="(UString &amp;environment, bool sh_script)" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setCGIEnvironment</b> (<a class="el" href="classUString.html">UString</a> &amp;environment, bool sh_script)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aec18e0763cdd87d35719e2f8ea5e0f31"></a><!-- doxytag: member="UHTTP::processCGIRequest" ref="aec18e0763cdd87d35719e2f8ea5e0f31" args="(UCommand *pcmd, UString *penvironment, UFile *file)" -->
-static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>processCGIRequest</b> (<a class="el" href="classUCommand.html">UCommand</a> *pcmd, <a class="el" href="classUString.html">UString</a> *penvironment, <a class="el" href="classUFile.html">UFile</a> *file)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae0e9747bb90172242a887e56ebb9225e"></a><!-- doxytag: member="UHTTP::processCGIRequest" ref="ae0e9747bb90172242a887e56ebb9225e" args="(UCommand *pcmd, UString *penvironment)" -->
+static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>processCGIRequest</b> (<a class="el" href="classUCommand.html">UCommand</a> *pcmd, <a class="el" href="classUString.html">UString</a> *penvironment)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="add12c86e9e0861b2bf501e45102f09e1"></a><!-- doxytag: member="UHTTP::setHTTPCgiResponse" ref="add12c86e9e0861b2bf501e45102f09e1" args="(int nResponseCode, uint32_t content_length, bool header_content_length)" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setHTTPCgiResponse</b> (int nResponseCode, uint32_t content_length, bool header_content_length)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9b335031e3af5a6189d1fa189f2fc3e9"></a><!-- doxytag: member="UHTTP::getAcceptLanguage" ref="a9b335031e3af5a6189d1fa189f2fc3e9" args="()" -->
@@ -143,10 +141,10 @@ static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setHTTPInterna
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setHTTPServiceUnavailable</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af64e951bc7aa055c9fb8a235d0b7e306"></a><!-- doxytag: member="UHTTP::setHTTPUnAuthorized" ref="af64e951bc7aa055c9fb8a235d0b7e306" args="(bool digest)" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setHTTPUnAuthorized</b> (bool digest)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1140acddfafbd659ba1002236b8470cd"></a><!-- doxytag: member="UHTTP::getHTTPHeaderForResponse" ref="a1140acddfafbd659ba1002236b8470cd" args="(int nResponseCode, const char *content_type, const UString &amp;body)" -->
+static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>getHTTPHeaderForResponse</b> (int nResponseCode, const char *content_type, const <a class="el" href="classUString.html">UString</a> &amp;body)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aff3b7b3d5c6c9bb09e78ea94d301995e"></a><!-- doxytag: member="UHTTP::getHTTPRedirectResponse" ref="aff3b7b3d5c6c9bb09e78ea94d301995e" args="(const UString &amp;ext, const char *ptr_location, uint32_t len_location)" -->
 static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>getHTTPRedirectResponse</b> (const <a class="el" href="classUString.html">UString</a> &amp;ext, const char *ptr_location, uint32_t len_location)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aafbe7bb1cddc3f35a6a7bc792f7f1145"></a><!-- doxytag: member="UHTTP::getHTTPHeaderForResponse" ref="aafbe7bb1cddc3f35a6a7bc792f7f1145" args="(int nResponseCode, const char *content_type, bool bclose, const UString &amp;body)" -->
-static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>getHTTPHeaderForResponse</b> (int nResponseCode, const char *content_type, bool bclose, const <a class="el" href="classUString.html">UString</a> &amp;body)</td></tr>
 <tr><td colspan="2"><h2>Static Public Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a19984c1712914f602d228d4ec0677636"></a><!-- doxytag: member="UHTTP::str_frm_response" ref="a19984c1712914f602d228d4ec0677636" args="" -->
 static const <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_frm_response</b></td></tr>
@@ -168,10 +166,14 @@ static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>ptrC</
 static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>ptrH</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0242ab9849c332e80245632fa0dc82fe"></a><!-- doxytag: member="UHTTP::http_info" ref="a0242ab9849c332e80245632fa0dc82fe" args="" -->
 static <a class="el" href="structuhttpheader.html">uhttpheader</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>http_info</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7e724cea40069a9c4e8d3574380cd56a"></a><!-- doxytag: member="UHTTP::file" ref="a7e724cea40069a9c4e8d3574380cd56a" args="" -->
+static <a class="el" href="classUFile.html">UFile</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>file</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2417156b07dc648fb179591f083884b0"></a><!-- doxytag: member="UHTTP::tmpdir" ref="a2417156b07dc648fb179591f083884b0" args="" -->
 static <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>tmpdir</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3ab05e44f30628c5924d6428bd8dbadd"></a><!-- doxytag: member="UHTTP::qcontent" ref="a3ab05e44f30628c5924d6428bd8dbadd" args="" -->
 static <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>qcontent</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0b63b1db7503fc0f0f4702d567be64d5"></a><!-- doxytag: member="UHTTP::formMulti" ref="a0b63b1db7503fc0f0f4702d567be64d5" args="" -->
+static <a class="el" href="classUMimeMultipart.html">UMimeMultipart</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>formMulti</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1b3df029b9cf094a85731d8ff16bda66"></a><!-- doxytag: member="UHTTP::form_name_value" ref="a1b3df029b9cf094a85731d8ff16bda66" args="" -->
 static UVector&lt; <a class="el" href="classUString.html">UString</a> &gt; *&nbsp;</td><td class="memItemRight" valign="bottom"><b>form_name_value</b></td></tr>
 </table>
@@ -212,7 +214,7 @@ static UVector&lt; <a class="el" href="classUString.html">UString</a> &gt; *&nbs
 <li>src/ulib/utility/uhttp.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Jan 15 19:55:51 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 23 17:17:36 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

@@ -16,7 +16,6 @@
 
 #include <ulib/log.h>
 #include <ulib/process.h>
-#include <ulib/utility/uhttp.h>
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/socket_ext.h>
 #include <ulib/net/server/client_image.h>
@@ -226,9 +225,9 @@ public:
 
    // Connection-wide hooks
 
-   static int pluginsHandlerRead()     { return (vplugin ? plugins_handlerRead()    : U_PLUGIN_HANDLER_GO_ON); }
-   static int pluginsHandlerRequest()  { return (vplugin ? plugins_handlerRequest() : U_PLUGIN_HANDLER_GO_ON); }
-   static int pluginsHandlerReset()    { return (vplugin ? plugins_handlerReset()   : U_PLUGIN_HANDLER_GO_ON); }
+   static int pluginsHandlerRead()     { return (vplugin ? plugins_handlerRead()    : U_PLUGIN_HANDLER_ERROR); }
+   static int pluginsHandlerRequest()  { return (vplugin ? plugins_handlerRequest() : U_PLUGIN_HANDLER_ERROR); }
+   static int pluginsHandlerReset()    { return (vplugin ? plugins_handlerReset()   : U_PLUGIN_HANDLER_ERROR); }
 #endif
 
    // -----------------------------------------------------------------------------------------------------------------------------
@@ -241,7 +240,7 @@ public:
 
    typedef struct shared_data {
       int socket_flags;          // socket accept descriptor flags from fcntl(fd, F_GETFL, 0)
-      int tot_connection;
+      sig_atomic_t tot_connection;
    } shared_data;
 
    static ULock* lock;
@@ -283,26 +282,6 @@ public:
       proc->setProcessGroup();
       }
 
-   static bool isParent()
-      {
-      U_TRACE(0, "UServer_Base::isParent()")
-
-      bool result = (proc && proc->parent());
-
-      U_RETURN(result);
-      }
-
-   static bool isChild()
-      {
-      U_TRACE(0, "UServer_Base::isChild()")
-
-      U_INTERNAL_ASSERT_POINTER(proc)
-
-      bool result = (proc->child());
-
-      U_RETURN(result);
-      }
-
    static void sendSigTERM()
       {
       U_TRACE(0, "UServer_Base::sendSigTERM()")
@@ -329,13 +308,6 @@ public:
    static void      logCommandMsgError(const char* cmd);
    static UCommand* loadConfigCommand(UFileConfig& cfg, bool bset);
 
-   static void getTimeIfNeeded()
-      {
-      U_TRACE(0, "UServer_Base::getTimeIfNeeded()")
-
-      if (UHTTP::http_info.version == 0 && (log == 0 || ULog::isSysLog())) (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
-      }
-
    // check if we can go to blocking on accept()...
 
    static bool isClientConnect()
@@ -344,7 +316,7 @@ public:
 
       U_INTERNAL_DUMP("num_connection = %d", num_connection)
 
-      bool result = (isClassic() ? isChild()
+      bool result = (isClassic() ? proc->child()
                                  : num_connection > 0);
 
       U_RETURN(result);
@@ -439,9 +411,11 @@ protected:
             UServer_Base(UFileConfig* cfg);
    virtual ~UServer_Base();
 
+   static const char* getNumConnection();
+
    static void handlerNewConnection();
    static void handlerCloseConnection();
-   static const char* getNumConnection();
+   static bool handlerTimeoutConnection(void* value);
 
 #ifdef HAVE_MODULES
    static UVector<UServerPlugIn*>* vplugin;

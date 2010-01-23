@@ -257,7 +257,8 @@ public:
       }
 
    static void getHTTPInfo(const UString& request, UString& method,       UString& uri);
-   static void setHTTPInfo(                  const UString& method, const UString& uri) { setHTTPInfo(U_STRING_TO_PARAM(method), U_STRING_TO_PARAM(uri)); }
+   static void setHTTPInfo(                  const UString& method, const UString& uri)
+      { setHTTPInfo(U_STRING_TO_PARAM(method), U_STRING_TO_PARAM(uri)); }
 
    static bool    isHTTPRequest(const char* ptr);
    static bool scanfHTTPHeader( const char* ptr);
@@ -265,20 +266,13 @@ public:
    static const char* getHTTPStatus();
    static const char* getHTTPStatusDescription();
 
+   static bool readHTTPRequest();
    static bool readHTTPHeader(USocket* socket, UString& rbuffer);
    static bool readHTTPBody(  USocket* socket, UString& rbuffer, UString& body);
-   static bool readHTTP(      USocket* socket, UString& rbuffer, UString& body);
 
    // TYPE
 
-   static bool isHTTPRequest()
-      {
-      U_TRACE(0, "UHTTP::isHTTPRequest()")
-
-      bool result = (http_info.method_type && http_info.szHeader);
-
-      U_RETURN(result);
-      }
+   static bool isHTTPRequest() { return (http_info.method_type && http_info.szHeader); }
 
    static bool isHttpGET()
       {
@@ -333,7 +327,7 @@ public:
       {
       U_TRACE(0, "UHTTP::isHTTPDirectoryRequest()")
 
-      U_ASSERT(isHTTPRequest())
+      U_INTERNAL_ASSERT(isHTTPRequest())
 
       bool result = (U_HTTP_URI[UHTTP::http_info.uri_len - 1] == '/');
 
@@ -344,7 +338,7 @@ public:
       {
       U_TRACE(0, "UHTTP::isUSPRequest()")
 
-      U_ASSERT(isHTTPRequest())
+      U_INTERNAL_ASSERT(isHTTPRequest())
 
       bool result = (U_STRNCMP(U_HTTP_URI, "/usp/") == 0 &&
                      u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".usp")));
@@ -354,13 +348,15 @@ public:
 
    // SERVICES
 
+   static UFile* file;
+
    static bool isPHPRequest();
-   static bool openFile(UFile& file);
-   static bool checkHTTPRequest(UFile& file);
-   static bool processHTTPGetRequest(UFile& file);
+   static void getTimeIfNeeded();
+   static bool checkHTTPRequest();
+   static bool processHTTPGetRequest();
    static bool processHTTPAuthorization(bool digest, const UString& request_uri);
 
-   static UString     getHTMLDirectoryList(const UFile& dir);
+   static UString     getHTMLDirectoryList();
    static const char* getHTTPHeaderValuePtr(const UString& name);
 
    // retrieve information on specific HTML form elements
@@ -368,13 +364,12 @@ public:
 
    static UString* tmpdir;
    static UString* qcontent;
+   static UMimeMultipart* formMulti;
    static UVector<UString>* form_name_value;
 
-   static void  initForm();
-   static void resetForm();
-   static void   getFormValue(UString& buffer, uint32_t n);
-
+   static void     resetForm();
    static uint32_t processHTTPForm();
+   static void     getFormValue(UString& buffer, uint32_t n);
 
    // param: "[ data expire path domain secure HttpOnly ]"
    // ----------------------------------------------------------------------------------------------------------------------------
@@ -396,7 +391,7 @@ public:
    static bool processCGIOutput();
    static void setCGIShellScript(UString& command);
    static void setCGIEnvironment(UString& environment, bool sh_script);
-   static bool processCGIRequest(UCommand* pcmd, UString* penvironment, UFile* file);
+   static bool processCGIRequest(UCommand* pcmd, UString* penvironment);
    static void setHTTPCgiResponse(int nResponseCode, uint32_t content_length, bool header_content_length);
 
    // Accept-Language: en-us,en;q=0.5
@@ -428,13 +423,13 @@ public:
 
    // get HTTP response message
 
+   static UString getHTTPHeaderForResponse(int nResponseCode, const char* content_type, const UString& body);
    static UString getHTTPRedirectResponse(const UString& ext, const char* ptr_location, uint32_t len_location);
-   static UString getHTTPHeaderForResponse(int nResponseCode, const char* content_type, bool bclose, const UString& body);
 
 private:
+   static bool     openFile() U_NO_EXPORT;
    static UString  getHTTPHeaderForResponse() U_NO_EXPORT;
-   static uint32_t processHTTPForm(UMimeMultipart& form) U_NO_EXPORT;
-   static UString  getHTTPHeaderForResponse(int nResponseCode, const UString& content) U_NO_EXPORT;
+   static UString  getHTTPHeaderForResponse(int nResponseCode, UString& content) U_NO_EXPORT;
 
    UHTTP(const UHTTP&)            {}
    UHTTP& operator=(const UHTTP&) { return *this; }

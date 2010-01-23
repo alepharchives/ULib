@@ -66,9 +66,20 @@ public:
    static void init(bool async = true);
    static void clear(bool clean_alarm);
 
-   static void    insert(UEventTime* alarm,                  bool set_timer = true);
-   static void     erase(UEventTime* alarm, bool flag_reuse, bool set_timer = true);
-   static bool isHandler(UEventTime* alarm);
+   static void insert(UEventTime* alarm,                  bool set_timer = true);
+   static void  erase(UEventTime* alarm, bool flag_reuse, bool set_timer = true);
+
+   static bool isHandler(UEventTime* alarm)
+      {
+      U_TRACE(0, "UTimer::isHandler(%p)", alarm)
+
+      for (UTimer* item = first; item; item = item->next)
+         {
+         if (item->alarm == alarm) U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
    // manage signal
 

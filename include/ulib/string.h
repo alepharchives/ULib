@@ -493,6 +493,7 @@ private:
    ~UStringRep() { U_TRACE_UNREGISTER_OBJECT(0, UStringRep) }
 
    explicit UStringRep(const char* t);
+   explicit UStringRep(const char* t, uint32_t tlen);
 
    UStringRep(const UStringRep&)            {}
    UStringRep& operator=(const UStringRep&) { return *this; }

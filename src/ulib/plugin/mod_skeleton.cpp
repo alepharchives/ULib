@@ -4,17 +4,16 @@
 //    ulib - c++ library
 //
 // = FILENAME
-//    mod_skeleton.cpp - this is a skeleton for a server plugin
+//    mod_skeleton.cpp - this is a skeleton for a userver plugin
 //
 // = AUTHOR
 //    Stefano Casazza
 //
 // ============================================================================
 
-#include <mod_skeleton.h>
-
 #include <ulib/file_config.h>
-#include <ulib/net/client/client_image.h>
+#include <ulib/plugin/mod_skeleton.h>
+#include <ulib/net/server/client_image.h>
 
 U_CREAT_FUNC(USkeletonPlugIn)
 

@@ -232,45 +232,17 @@ void UTimer::erase(UEventTime* a, bool flag_reuse, bool set_timer)
    if (set_timer) setTimer();
 }
 
-bool UTimer::isHandler(UEventTime* a)
-{
-   U_TRACE(0, "UTimer::isHandler(%p)", a)
-
-   U_INTERNAL_ASSERT_POINTER(first)
-
-   UTimer* item =  first;
-   UTimer** ptr = &first;
-
-   do {
-      if (item->alarm == a) U_RETURN(true);
-
-      ptr = &(*ptr)->next;
-      }
-   while ((item = *ptr));
-
-   U_RETURN(false);
-}
-
 void UTimer::clear(bool clean_alarm)
 {
    U_TRACE(0, "UTimer::clear(%b)", clean_alarm)
 
    U_INTERNAL_DUMP("first = %p pool = %p", first, pool)
 
+   UTimer* item = first;
+
    if (first)
       {
-      if (clean_alarm)
-         {
-         UTimer* item =  first;
-         UTimer** ptr = &first;
-
-         do {
-            item->alarm = 0;
-
-            ptr = &(*ptr)->next;
-            }
-         while ((item = *ptr));
-         }
+      if (clean_alarm) do { item->alarm = 0; } while ((item = item->next));
 
       delete first;
              first = 0;
@@ -278,18 +250,9 @@ void UTimer::clear(bool clean_alarm)
 
    if (pool)
       {
-      if (clean_alarm)
-         {
-         UTimer* item =  pool;
-         UTimer** ptr = &pool;
+      item = pool;
 
-         do {
-            item->alarm = 0;
-
-            ptr = &(*ptr)->next;
-            }
-         while ((item = *ptr));
-         }
+      if (clean_alarm) do { item->alarm = 0; } while ((item = item->next));
 
       delete pool;
              pool = 0;

@@ -4,7 +4,7 @@
 //    ulib - c++ library
 //
 // = FILENAME
-//    mod_rpc.cpp - this is a plugin rpc for UServer
+//    mod_rpc.cpp - this is a plugin rpc for userver
 //
 // = AUTHOR
 //    Stefano Casazza
@@ -68,10 +68,6 @@ int URpcPlugIn::handlerInit()
 int URpcPlugIn::handlerRead()
 {
    U_TRACE(0, "URpcPlugIn::handlerRead()")
-
-   U_INTERNAL_ASSERT_POINTER(rpc_parser)
-
-   UClientImage_Base::genericReset();
 
    // read the RPC request
 

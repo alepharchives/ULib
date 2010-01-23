@@ -60,8 +60,8 @@ Collaboration diagram for USocket:</div>
 <tr><td colspan="2"><h2>Public Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a20fc62f827373cb0be37aae18dd13f48"></a><!-- doxytag: member="USocket::USocket" ref="a20fc62f827373cb0be37aae18dd13f48" args="(bool bSocketIsIPv6=false)" -->
 &nbsp;</td><td class="memItemRight" valign="bottom"><b>USocket</b> (bool bSocketIsIPv6=false)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa6f82591e2b0d4746f4458e3e1a2b17f"></a><!-- doxytag: member="USocket::state" ref="aa6f82591e2b0d4746f4458e3e1a2b17f" args="()" -->
-int &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>state</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a825e3756f7852f3aa6ec299210e6056f"></a><!-- doxytag: member="USocket::getFd" ref="a825e3756f7852f3aa6ec299210e6056f" args="() const " -->
+int&nbsp;</td><td class="memItemRight" valign="bottom"><b>getFd</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a70c8aa518fe10a74e22f4c9eacb16c05"></a><!-- doxytag: member="USocket::isOpen" ref="a70c8aa518fe10a74e22f4c9eacb16c05" args="() const " -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isOpen</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a17f09a186e7e53fb266e9e4c7a532d3f"></a><!-- doxytag: member="USocket::isClosed" ref="a17f09a186e7e53fb266e9e4c7a532d3f" args="() const " -->
@@ -80,8 +80,6 @@ bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isSysError</b> () con
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSocket.html#aeeedd9dd467a3cc2e8641142808bdefa">checkIO</a> (int iBytesTransferred, int iMaxBytesTransfer)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7b4283cdd26371dcdcb8f512eb28a372"></a><!-- doxytag: member="USocket::socket" ref="a7b4283cdd26371dcdcb8f512eb28a372" args="(int iSocketType, int protocol=0)" -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>socket</b> (int iSocketType, int protocol=0)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a825e3756f7852f3aa6ec299210e6056f"></a><!-- doxytag: member="USocket::getFd" ref="a825e3756f7852f3aa6ec299210e6056f" args="() const " -->
-int&nbsp;</td><td class="memItemRight" valign="bottom"><b>getFd</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4820dcc312573757328a0a8b0965ce38"></a><!-- doxytag: member="USocket::close" ref="a4820dcc312573757328a0a8b0965ce38" args="()" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><b>close</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSocket.html#af6afbf857fd9a1875428a3002a365664">getSockOpt</a> (int iCodeLevel, int iOptionName, void *pOptionData, uint32_t &amp;iDataLength)</td></tr>
@@ -92,15 +90,15 @@ void&nbsp;</td><td class="memItemRight" valign="bottom"><b>close</b> ()</td></tr
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>bind</b> (<a class="el" href="classUIPAddress.html">UIPAddress</a> &amp;cLocalAddr, int iLocalPort=0)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSocket.html#a1299b5bc49ffe00729a0bd6571e05cbd">listen</a> (int iBackLog=5)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSocket.html#afe635340565fa7eba1e7139955d63532">accept</a> (<a class="el" href="classUSocket.html">USocket</a> *pcConnection)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSocket.html#a810a388386d247a12ce25c1b310510b7">setLocal</a> (const <a class="el" href="classUIPAddress.html">UIPAddress</a> &amp;addr)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac9b37cebe7af0a29acff9bcdb53e84f4"></a><!-- doxytag: member="USocket::isLocalSet" ref="ac9b37cebe7af0a29acff9bcdb53e84f4" args="() const " -->
-bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isLocalSet</b> () const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a855d29ae87d399d098829e05916220ce"></a><!-- doxytag: member="USocket::localPortNumber" ref="a855d29ae87d399d098829e05916220ce" args="()" -->
-int&nbsp;</td><td class="memItemRight" valign="bottom"><b>localPortNumber</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSocket.html#a855d29ae87d399d098829e05916220ce">localPortNumber</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4e1237385f9860c2836ec997f6de2d41"></a><!-- doxytag: member="USocket::localIPAddress" ref="a4e1237385f9860c2836ec997f6de2d41" args="()" -->
 <a class="el" href="classUIPAddress.html">UIPAddress</a> &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>localIPAddress</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a67acff9b98357079e59f01f4f1f563f0"></a><!-- doxytag: member="USocket::getLocalInfo" ref="a67acff9b98357079e59f01f4f1f563f0" args="()" -->
 const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getLocalInfo</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a810a388386d247a12ce25c1b310510b7"></a><!-- doxytag: member="USocket::setLocal" ref="a810a388386d247a12ce25c1b310510b7" args="(const UIPAddress &amp;addr)" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setLocal</b> (const <a class="el" href="classUIPAddress.html">UIPAddress</a> &amp;addr)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac9b37cebe7af0a29acff9bcdb53e84f4"></a><!-- doxytag: member="USocket::isLocalSet" ref="ac9b37cebe7af0a29acff9bcdb53e84f4" args="() const " -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isLocalSet</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSocket.html#a3f4f19c9fede9968e6977d96d97bd033">remotePortNumber</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aedf003b252e6200bb895882b06a1dfb9"></a><!-- doxytag: member="USocket::remoteIPAddress" ref="aedf003b252e6200bb895882b06a1dfb9" args="()" -->
 <a class="el" href="classUIPAddress.html">UIPAddress</a> &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>remoteIPAddress</b> ()</td></tr>
@@ -198,6 +196,8 @@ static <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class=
 <tr><td colspan="2"><h2>Protected Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa5e5c8290c3a909550d4b61905019362"></a><!-- doxytag: member="USocket::connect" ref="aa5e5c8290c3a909550d4b61905019362" args="()" -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>connect</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afe9e66dcddc62768ed9055427f3c8e67"></a><!-- doxytag: member="USocket::setRemote" ref="afe9e66dcddc62768ed9055427f3c8e67" args="()" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setRemote</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac64e11044d2c0fca020aead0f0802b54"></a><!-- doxytag: member="USocket::bind" ref="ac64e11044d2c0fca020aead0f0802b54" args="(SocketAddress &amp;cLocal)" -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>bind</b> (<a class="el" href="classSocketAddress.html">SocketAddress</a> &amp;cLocal)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a54c1ce47ad603eb07b7a62df722262ce"></a><!-- doxytag: member="USocket::setServer" ref="a54c1ce47ad603eb07b7a62df722262ce" args="(SocketAddress &amp;cLocal, int iBackLog)" -->
@@ -494,6 +494,24 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 </div>
 <div class="memdoc">
 <p>The iBackLog parameter indicates the number of unconnected sockets that can be pending in the socket queue </p>
+
+</div>
+</div>
+<a class="anchor" id="a855d29ae87d399d098829e05916220ce"></a><!-- doxytag: member="USocket::localPortNumber" ref="a855d29ae87d399d098829e05916220ce" args="()" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int USocket::localPortNumber </td>
+          <td>(</td>
+          <td class="paramname"></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td><code> [inline]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Get details of the IP address and port number bound to the local socket </p>
 
 </div>
 </div>
@@ -799,25 +817,6 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 
 </div>
 </div>
-<a class="anchor" id="a810a388386d247a12ce25c1b310510b7"></a><!-- doxytag: member="USocket::setLocal" ref="a810a388386d247a12ce25c1b310510b7" args="(const UIPAddress &amp;addr)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void USocket::setLocal </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="classUIPAddress.html">UIPAddress</a> &amp;&nbsp;</td>
-          <td class="paramname"> <em>addr</em></td>
-          <td>&nbsp;)&nbsp;</td>
-          <td><code> [inline]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-<p>Get details of the IP address and port number bound to the local socket </p>
-
-</div>
-</div>
 <a class="anchor" id="a222bc630111a7fcf21a3ae519c51ff90"></a><!-- doxytag: member="USocket::setServer" ref="a222bc630111a7fcf21a3ae519c51ff90" args="(int port, int iBackLog)" -->
 <div class="memitem">
 <div class="memproto">
@@ -1000,7 +999,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/net/socket.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Jan 15 19:55:54 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 23 17:17:38 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

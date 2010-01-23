@@ -361,7 +361,7 @@ bool ULDAP::init(const char* url)
    /* Get the URL scheme (either ldap or ldaps) */
 
 #ifdef HAVE_LDAP_SSL_H
-   if (memcmp(url, U_CONSTANT_TO_PARAM("ldaps:")) == 0)
+   if (U_MEMCMP(url, "ldaps:") == 0)
       {
       /* Making encrypted connection */
 

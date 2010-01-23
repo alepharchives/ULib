@@ -139,426 +139,422 @@
 <a name="l00127"></a>00127                 <span class="keywordflow">if</span> (isOpen()) USocket::closesocket();
 <a name="l00128"></a>00128                 }
 <a name="l00129"></a>00129 
-<a name="l00130"></a>00130         <span class="keywordtype">int</span>&amp; state()             { <span class="keywordflow">return</span> iState; }
-<a name="l00131"></a>00131 
-<a name="l00132"></a>00132         <span class="keywordtype">bool</span> isOpen()<span class="keyword"> const      </span>{ <span class="keywordflow">return</span> (iSockDesc != -1); }
-<a name="l00133"></a>00133         <span class="keywordtype">bool</span> isClosed()<span class="keyword"> const    </span>{ <span class="keywordflow">return</span> (iSockDesc == -1); }
-<a name="l00134"></a>00134         <span class="keywordtype">bool</span> isConnected()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> (iState &gt;= CONNECT); }
-<a name="l00135"></a>00135         <span class="keywordtype">bool</span> isLogin()<span class="keyword"> const     </span>{ <span class="keywordflow">return</span> (iState == LOGIN); }
-<a name="l00136"></a>00136         <span class="keywordtype">bool</span> isTimeout()<span class="keyword"> const   </span>{ <span class="keywordflow">return</span> (iState == TIMEOUT); }
-<a name="l00137"></a>00137         <span class="keywordtype">bool</span> isBroken()<span class="keyword"> const    </span>{ <span class="keywordflow">return</span> (iState == BROKEN); }
-<a name="l00138"></a>00138         <span class="keywordtype">bool</span> isSysError()<span class="keyword"> const  </span>{ <span class="keywordflow">return</span> (iState  &lt; CLOSE); }
-<a name="l00139"></a>00139 
-<a name="l00144"></a><a class="code" href="classUSocket.html#a2c487b569842c6524738fc03080c4dd0">00144</a>         <span class="keywordtype">void</span> checkErrno(<span class="keywordtype">int</span> value)
-<a name="l00145"></a>00145                 {
-<a name="l00146"></a>00146                 U_TRACE(0, <span class="stringliteral">&quot;USocket::checkErrno(%d)&quot;</span>, value)
-<a name="l00147"></a>00147 
-<a name="l00148"></a>00148                 U_INTERNAL_ASSERT(value &lt; 0)
-<a name="l00149"></a>00149 
-<a name="l00150"></a>00150                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;errno = %d&quot;</span>, errno)
-<a name="l00151"></a>00151 
-<a name="l00152"></a>00152                 iState = (errno == EAGAIN ? TIMEOUT : (closesocket(), BROKEN));
-<a name="l00153"></a>00153 
-<a name="l00154"></a>00154                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;state = %d&quot;</span>, iState)
-<a name="l00155"></a>00155                 }
-<a name="l00156"></a>00156 
-<a name="l00161"></a>00161         <span class="keywordtype">bool</span> checkIO(<span class="keywordtype">int</span> iBytesTransferred, <span class="keywordtype">int</span> iMaxBytesTransfer);
-<a name="l00162"></a>00162 
-<a name="l00169"></a><a class="code" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">00169</a>         <span class="keyword">static</span> <span class="keywordtype">int</span> socket(<span class="keywordtype">int</span> domain, <span class="keywordtype">int</span> type, <span class="keywordtype">int</span> protocol)
-<a name="l00170"></a>00170                 {
-<a name="l00171"></a>00171                 U_TRACE(1, <span class="stringliteral">&quot;USocket::socket(%d,%d,%d)&quot;</span>, domain, type, protocol)
-<a name="l00172"></a>00172 
-<a name="l00173"></a>00173                 <span class="keywordtype">int</span> fd = U_SYSCALL(socket, <span class="stringliteral">&quot;%d,%d,%d&quot;</span>, domain, type, protocol);
-<a name="l00174"></a>00174 
-<a name="l00175"></a>00175                 U_RETURN(fd);
-<a name="l00176"></a>00176                 }
-<a name="l00177"></a>00177 
-<a name="l00178"></a>00178         <span class="keywordtype">bool</span> socket(<span class="keywordtype">int</span> iSocketType, <span class="keywordtype">int</span> protocol = 0)
-<a name="l00179"></a>00179                 {
-<a name="l00180"></a>00180                 U_TRACE(1, <span class="stringliteral">&quot;USocket::socket(%d,%d)&quot;</span>, iSocketType, protocol)
-<a name="l00181"></a>00181 
-<a name="l00182"></a>00182                 U_INTERNAL_ASSERT(isClosed())
-<a name="l00183"></a>00183 
-<a name="l00184"></a>00184                 iSockDesc = socket(bIPv6Socket ? AF_INET6 : AF_INET, iSocketType, protocol);
-<a name="l00185"></a>00185 
-<a name="l00186"></a>00186                 U_RETURN(isOpen());
-<a name="l00187"></a>00187                 }
-<a name="l00188"></a>00188 
-<a name="l00189"></a>00189         <span class="keywordtype">int</span> getFd()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> iSockDesc; }
-<a name="l00190"></a>00190 
-<a name="l00191"></a>00191         <span class="keywordtype">void</span> close()
-<a name="l00192"></a>00192                 {
-<a name="l00193"></a>00193                 U_TRACE(0, <span class="stringliteral">&quot;USocket::close()&quot;</span>)
-<a name="l00194"></a>00194 
-<a name="l00195"></a>00195                 closesocket();
+<a name="l00130"></a>00130         <span class="keywordtype">int</span>  getFd()<span class="keyword"> const               </span>{ <span class="keywordflow">return</span>  iSockDesc; }
+<a name="l00131"></a>00131         <span class="keywordtype">bool</span> isOpen()<span class="keyword"> const      </span>{ <span class="keywordflow">return</span> (iSockDesc != -1); }
+<a name="l00132"></a>00132         <span class="keywordtype">bool</span> isClosed()<span class="keyword"> const    </span>{ <span class="keywordflow">return</span> (iSockDesc == -1); }
+<a name="l00133"></a>00133         <span class="keywordtype">bool</span> isConnected()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> (iState &gt;= CONNECT); }
+<a name="l00134"></a>00134         <span class="keywordtype">bool</span> isLogin()<span class="keyword"> const     </span>{ <span class="keywordflow">return</span> (iState == LOGIN); }
+<a name="l00135"></a>00135         <span class="keywordtype">bool</span> isTimeout()<span class="keyword"> const   </span>{ <span class="keywordflow">return</span> (iState == TIMEOUT); }
+<a name="l00136"></a>00136         <span class="keywordtype">bool</span> isBroken()<span class="keyword"> const    </span>{ <span class="keywordflow">return</span> (iState == BROKEN); }
+<a name="l00137"></a>00137         <span class="keywordtype">bool</span> isSysError()<span class="keyword"> const  </span>{ <span class="keywordflow">return</span> (iState  &lt; CLOSE); }
+<a name="l00138"></a>00138 
+<a name="l00143"></a><a class="code" href="classUSocket.html#a2c487b569842c6524738fc03080c4dd0">00143</a>         <span class="keywordtype">void</span> checkErrno(<span class="keywordtype">int</span> value)
+<a name="l00144"></a>00144                 {
+<a name="l00145"></a>00145                 U_TRACE(0, <span class="stringliteral">&quot;USocket::checkErrno(%d)&quot;</span>, value)
+<a name="l00146"></a>00146 
+<a name="l00147"></a>00147                 U_INTERNAL_ASSERT(value &lt; 0)
+<a name="l00148"></a>00148 
+<a name="l00149"></a>00149                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;errno = %d&quot;</span>, errno)
+<a name="l00150"></a>00150 
+<a name="l00151"></a>00151                 iState = (errno == EAGAIN ? TIMEOUT : (closesocket(), BROKEN));
+<a name="l00152"></a>00152 
+<a name="l00153"></a>00153                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;state = %d&quot;</span>, iState)
+<a name="l00154"></a>00154                 }
+<a name="l00155"></a>00155 
+<a name="l00160"></a>00160         <span class="keywordtype">bool</span> checkIO(<span class="keywordtype">int</span> iBytesTransferred, <span class="keywordtype">int</span> iMaxBytesTransfer);
+<a name="l00161"></a>00161 
+<a name="l00168"></a><a class="code" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">00168</a>         <span class="keyword">static</span> <span class="keywordtype">int</span> socket(<span class="keywordtype">int</span> domain, <span class="keywordtype">int</span> type, <span class="keywordtype">int</span> protocol)
+<a name="l00169"></a>00169                 {
+<a name="l00170"></a>00170                 U_TRACE(1, <span class="stringliteral">&quot;USocket::socket(%d,%d,%d)&quot;</span>, domain, type, protocol)
+<a name="l00171"></a>00171 
+<a name="l00172"></a>00172                 <span class="keywordtype">int</span> fd = U_SYSCALL(socket, <span class="stringliteral">&quot;%d,%d,%d&quot;</span>, domain, type, protocol);
+<a name="l00173"></a>00173 
+<a name="l00174"></a>00174                 U_RETURN(fd);
+<a name="l00175"></a>00175                 }
+<a name="l00176"></a>00176 
+<a name="l00177"></a>00177         <span class="keywordtype">bool</span> socket(<span class="keywordtype">int</span> iSocketType, <span class="keywordtype">int</span> protocol = 0)
+<a name="l00178"></a>00178                 {
+<a name="l00179"></a>00179                 U_TRACE(1, <span class="stringliteral">&quot;USocket::socket(%d,%d)&quot;</span>, iSocketType, protocol)
+<a name="l00180"></a>00180 
+<a name="l00181"></a>00181                 U_INTERNAL_ASSERT(isClosed())
+<a name="l00182"></a>00182 
+<a name="l00183"></a>00183                 iSockDesc = socket(bIPv6Socket ? AF_INET6 : AF_INET, iSocketType, protocol);
+<a name="l00184"></a>00184 
+<a name="l00185"></a>00185                 U_RETURN(isOpen());
+<a name="l00186"></a>00186                 }
+<a name="l00187"></a>00187 
+<a name="l00188"></a>00188         <span class="keywordtype">void</span> close()
+<a name="l00189"></a>00189                 {
+<a name="l00190"></a>00190                 U_TRACE(0, <span class="stringliteral">&quot;USocket::close()&quot;</span>)
+<a name="l00191"></a>00191 
+<a name="l00192"></a>00192                 closesocket();
+<a name="l00193"></a>00193 
+<a name="l00194"></a>00194                 iState = CLOSE;
+<a name="l00195"></a>00195                 }
 <a name="l00196"></a>00196 
-<a name="l00197"></a>00197                 iState = CLOSE;
-<a name="l00198"></a>00198                 }
-<a name="l00199"></a>00199 
-<a name="l00204"></a><a class="code" href="classUSocket.html#af6afbf857fd9a1875428a3002a365664">00204</a>         <span class="keywordtype">bool</span> getSockOpt(<span class="keywordtype">int</span> iCodeLevel, <span class="keywordtype">int</span> iOptionName, <span class="keywordtype">void</span>* pOptionData, uint32_t&amp; iDataLength)
-<a name="l00205"></a>00205                 {
-<a name="l00206"></a>00206                 U_TRACE(1, <span class="stringliteral">&quot;USocket::getSockOpt(%d,%d,%p,%p)&quot;</span>, iCodeLevel, iOptionName, pOptionData, iDataLength)
-<a name="l00207"></a>00207 
-<a name="l00208"></a>00208                 U_CHECK_MEMORY
-<a name="l00209"></a>00209 
-<a name="l00210"></a>00210                 U_INTERNAL_ASSERT(isOpen())
-<a name="l00211"></a>00211 
-<a name="l00212"></a>00212                 <span class="keywordtype">bool</span> result = (U_SYSCALL(getsockopt, <span class="stringliteral">&quot;%d,%d,%d,%p,%p&quot;</span>, iSockDesc, iCodeLevel, iOptionName, CAST(pOptionData), (socklen_t*)&amp;iDataLength) == 0);
+<a name="l00201"></a><a class="code" href="classUSocket.html#af6afbf857fd9a1875428a3002a365664">00201</a>         <span class="keywordtype">bool</span> getSockOpt(<span class="keywordtype">int</span> iCodeLevel, <span class="keywordtype">int</span> iOptionName, <span class="keywordtype">void</span>* pOptionData, uint32_t&amp; iDataLength)
+<a name="l00202"></a>00202                 {
+<a name="l00203"></a>00203                 U_TRACE(1, <span class="stringliteral">&quot;USocket::getSockOpt(%d,%d,%p,%p)&quot;</span>, iCodeLevel, iOptionName, pOptionData, iDataLength)
+<a name="l00204"></a>00204 
+<a name="l00205"></a>00205                 U_CHECK_MEMORY
+<a name="l00206"></a>00206 
+<a name="l00207"></a>00207                 U_INTERNAL_ASSERT(isOpen())
+<a name="l00208"></a>00208 
+<a name="l00209"></a>00209                 <span class="keywordtype">bool</span> result = (U_SYSCALL(getsockopt, <span class="stringliteral">&quot;%d,%d,%d,%p,%p&quot;</span>, iSockDesc, iCodeLevel, iOptionName, CAST(pOptionData), (socklen_t*)&amp;iDataLength) == 0);
+<a name="l00210"></a>00210 
+<a name="l00211"></a>00211                 U_RETURN(result);
+<a name="l00212"></a>00212                 }
 <a name="l00213"></a>00213 
-<a name="l00214"></a>00214                 U_RETURN(result);
-<a name="l00215"></a>00215                 }
-<a name="l00216"></a>00216 
-<a name="l00221"></a><a class="code" href="classUSocket.html#a59e0688b094fdd5ab29706f3074cd5c0">00221</a>         <span class="keywordtype">bool</span> setSockOpt(<span class="keywordtype">int</span> iCodeLevel, <span class="keywordtype">int</span> iOptionName, <span class="keyword">const</span> <span class="keywordtype">void</span>* pOptionData, uint32_t iDataLength)
-<a name="l00222"></a>00222                 {
-<a name="l00223"></a>00223                 U_TRACE(1, <span class="stringliteral">&quot;USocket::setSockOpt(%d,%d,%p,%u)&quot;</span>, iCodeLevel, iOptionName, pOptionData, iDataLength)
-<a name="l00224"></a>00224 
-<a name="l00225"></a>00225                 U_CHECK_MEMORY
-<a name="l00226"></a>00226 
-<a name="l00227"></a>00227                 U_INTERNAL_ASSERT(isOpen())
-<a name="l00228"></a>00228 
-<a name="l00229"></a>00229                 <span class="keywordtype">bool</span> result = (U_SYSCALL(setsockopt, <span class="stringliteral">&quot;%d,%d,%d,%p,%u&quot;</span>, iSockDesc, iCodeLevel, iOptionName, CAST(pOptionData), iDataLength) == 0);
+<a name="l00218"></a><a class="code" href="classUSocket.html#a59e0688b094fdd5ab29706f3074cd5c0">00218</a>         <span class="keywordtype">bool</span> setSockOpt(<span class="keywordtype">int</span> iCodeLevel, <span class="keywordtype">int</span> iOptionName, <span class="keyword">const</span> <span class="keywordtype">void</span>* pOptionData, uint32_t iDataLength)
+<a name="l00219"></a>00219                 {
+<a name="l00220"></a>00220                 U_TRACE(1, <span class="stringliteral">&quot;USocket::setSockOpt(%d,%d,%p,%u)&quot;</span>, iCodeLevel, iOptionName, pOptionData, iDataLength)
+<a name="l00221"></a>00221 
+<a name="l00222"></a>00222                 U_CHECK_MEMORY
+<a name="l00223"></a>00223 
+<a name="l00224"></a>00224                 U_INTERNAL_ASSERT(isOpen())
+<a name="l00225"></a>00225 
+<a name="l00226"></a>00226                 <span class="keywordtype">bool</span> result = (U_SYSCALL(setsockopt, <span class="stringliteral">&quot;%d,%d,%d,%p,%u&quot;</span>, iSockDesc, iCodeLevel, iOptionName, CAST(pOptionData), iDataLength) == 0);
+<a name="l00227"></a>00227 
+<a name="l00228"></a>00228                 U_RETURN(result);
+<a name="l00229"></a>00229                 }
 <a name="l00230"></a>00230 
-<a name="l00231"></a>00231                 U_RETURN(result);
-<a name="l00232"></a>00232                 }
-<a name="l00233"></a>00233 
-<a name="l00238"></a><a class="code" href="classUSocket.html#a71bc5eac4f1b8237ffce461020d4c5f8">00238</a>         <span class="keywordtype">bool</span> connectServer(<span class="keyword">const</span> <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; cAddr, <span class="keywordtype">int</span> iServPort)
-<a name="l00239"></a>00239                 {
-<a name="l00240"></a>00240                 U_TRACE(1, <span class="stringliteral">&quot;USocket::connectServer(%p,%d)&quot;</span>, &amp;cAddr, iServPort)
-<a name="l00241"></a>00241 
-<a name="l00242"></a>00242                 U_CHECK_MEMORY
-<a name="l00243"></a>00243 
-<a name="l00244"></a>00244                 U_INTERNAL_ASSERT(isOpen())
+<a name="l00235"></a><a class="code" href="classUSocket.html#a71bc5eac4f1b8237ffce461020d4c5f8">00235</a>         <span class="keywordtype">bool</span> connectServer(<span class="keyword">const</span> <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; cAddr, <span class="keywordtype">int</span> iServPort)
+<a name="l00236"></a>00236                 {
+<a name="l00237"></a>00237                 U_TRACE(1, <span class="stringliteral">&quot;USocket::connectServer(%p,%d)&quot;</span>, &amp;cAddr, iServPort)
+<a name="l00238"></a>00238 
+<a name="l00239"></a>00239                 U_CHECK_MEMORY
+<a name="l00240"></a>00240 
+<a name="l00241"></a>00241                 U_INTERNAL_ASSERT(isOpen())
+<a name="l00242"></a>00242 
+<a name="l00243"></a>00243                 iRemotePort    = iServPort;
+<a name="l00244"></a>00244                 cRemoteAddress = cAddr;
 <a name="l00245"></a>00245 
-<a name="l00246"></a>00246                 iRemotePort    = iServPort;
-<a name="l00247"></a>00247                 cRemoteAddress = cAddr;
-<a name="l00248"></a>00248 
-<a name="l00249"></a>00249                 <span class="keywordflow">if</span> (connect()) U_RETURN(<span class="keyword">true</span>);
+<a name="l00246"></a>00246                 <span class="keywordflow">if</span> (connect()) U_RETURN(<span class="keyword">true</span>);
+<a name="l00247"></a>00247 
+<a name="l00248"></a>00248                 U_RETURN(<span class="keyword">false</span>);
+<a name="l00249"></a>00249                 }
 <a name="l00250"></a>00250 
-<a name="l00251"></a>00251                 U_RETURN(<span class="keyword">false</span>);
-<a name="l00252"></a>00252                 }
-<a name="l00253"></a>00253 
-<a name="l00259"></a>00259         <span class="keywordtype">bool</span> bind(                                                               <span class="keywordtype">int</span> iLocalPort = 0);
-<a name="l00260"></a>00260         <span class="keywordtype">bool</span> bind(<a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; cLocalAddr, <span class="keywordtype">int</span> iLocalPort = 0);
-<a name="l00261"></a>00261 
-<a name="l00266"></a><a class="code" href="classUSocket.html#a1299b5bc49ffe00729a0bd6571e05cbd">00266</a>         <span class="keywordtype">void</span> listen(<span class="keywordtype">int</span> iBackLog = 5)
-<a name="l00267"></a>00267                 {
-<a name="l00268"></a>00268                 U_TRACE(1, <span class="stringliteral">&quot;USocket::listen(%d)&quot;</span>, iBackLog)
-<a name="l00269"></a>00269 
-<a name="l00270"></a>00270                 U_CHECK_MEMORY
-<a name="l00271"></a>00271 
-<a name="l00272"></a>00272                 U_INTERNAL_ASSERT(isOpen())
+<a name="l00256"></a>00256         <span class="keywordtype">bool</span> bind(                                                               <span class="keywordtype">int</span> iLocalPort = 0);
+<a name="l00257"></a>00257         <span class="keywordtype">bool</span> bind(<a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; cLocalAddr, <span class="keywordtype">int</span> iLocalPort = 0);
+<a name="l00258"></a>00258 
+<a name="l00263"></a><a class="code" href="classUSocket.html#a1299b5bc49ffe00729a0bd6571e05cbd">00263</a>         <span class="keywordtype">void</span> listen(<span class="keywordtype">int</span> iBackLog = 5)
+<a name="l00264"></a>00264                 {
+<a name="l00265"></a>00265                 U_TRACE(1, <span class="stringliteral">&quot;USocket::listen(%d)&quot;</span>, iBackLog)
+<a name="l00266"></a>00266 
+<a name="l00267"></a>00267                 U_CHECK_MEMORY
+<a name="l00268"></a>00268 
+<a name="l00269"></a>00269                 U_INTERNAL_ASSERT(isOpen())
+<a name="l00270"></a>00270 
+<a name="l00271"></a>00271                 (void) U_SYSCALL(listen, <span class="stringliteral">&quot;%d,%d&quot;</span>, iSockDesc, iBackLog);
+<a name="l00272"></a>00272                 }
 <a name="l00273"></a>00273 
-<a name="l00274"></a>00274                 (void) U_SYSCALL(listen, <span class="stringliteral">&quot;%d,%d&quot;</span>, iSockDesc, iBackLog);
-<a name="l00275"></a>00275                 }
-<a name="l00276"></a>00276 
-<a name="l00282"></a>00282         <span class="keywordtype">bool</span> accept(<a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* pcConnection);
-<a name="l00283"></a>00283 
-<a name="l00288"></a><a class="code" href="classUSocket.html#a810a388386d247a12ce25c1b310510b7">00288</a>         <span class="keywordtype">void</span> setLocal(<span class="keyword">const</span> <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; addr)
-<a name="l00289"></a>00289                 {
-<a name="l00290"></a>00290                 U_TRACE(0, <span class="stringliteral">&quot;USocket::setLocal(%p)&quot;</span>, &amp;addr)
-<a name="l00291"></a>00291 
-<a name="l00292"></a>00292                 bLocalSet     = <span class="keyword">true</span>;
-<a name="l00293"></a>00293                 cLocalAddress = addr;
+<a name="l00279"></a>00279         <span class="keywordtype">bool</span> accept(<a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* pcConnection);
+<a name="l00280"></a>00280 
+<a name="l00285"></a><a class="code" href="classUSocket.html#a855d29ae87d399d098829e05916220ce">00285</a>         <span class="keywordtype">int</span> localPortNumber()
+<a name="l00286"></a>00286                 {
+<a name="l00287"></a>00287                 U_TRACE(0, <span class="stringliteral">&quot;USocket::localPortNumber()&quot;</span>)
+<a name="l00288"></a>00288 
+<a name="l00289"></a>00289                 U_CHECK_MEMORY
+<a name="l00290"></a>00290 
+<a name="l00291"></a>00291                 U_INTERNAL_ASSERT(isLocalSet())
+<a name="l00292"></a>00292 
+<a name="l00293"></a>00293                 U_RETURN(iLocalPort);
 <a name="l00294"></a>00294                 }
 <a name="l00295"></a>00295 
-<a name="l00296"></a>00296         <span class="keywordtype">bool</span> isLocalSet()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> bLocalSet; }
-<a name="l00297"></a>00297 
-<a name="l00298"></a>00298         <span class="keywordtype">int</span> localPortNumber()
-<a name="l00299"></a>00299                 {
-<a name="l00300"></a>00300                 U_TRACE(0, <span class="stringliteral">&quot;USocket::localPortNumber()&quot;</span>)
+<a name="l00296"></a>00296         <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; localIPAddress()
+<a name="l00297"></a>00297                 {
+<a name="l00298"></a>00298                 U_TRACE(0, <span class="stringliteral">&quot;USocket::localIPAddress()&quot;</span>)
+<a name="l00299"></a>00299 
+<a name="l00300"></a>00300                 U_CHECK_MEMORY
 <a name="l00301"></a>00301 
-<a name="l00302"></a>00302                 U_CHECK_MEMORY
+<a name="l00302"></a>00302                 U_INTERNAL_ASSERT(isLocalSet())
 <a name="l00303"></a>00303 
-<a name="l00304"></a>00304                 U_INTERNAL_ASSERT(isLocalSet())
-<a name="l00305"></a>00305 
-<a name="l00306"></a>00306                 U_RETURN(iLocalPort);
-<a name="l00307"></a>00307                 }
-<a name="l00308"></a>00308 
-<a name="l00309"></a>00309         <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; localIPAddress()
-<a name="l00310"></a>00310                 {
-<a name="l00311"></a>00311                 U_TRACE(0, <span class="stringliteral">&quot;USocket::localIPAddress()&quot;</span>)
+<a name="l00304"></a>00304                 return cLocalAddress;
+<a name="l00305"></a>00305                 }
+<a name="l00306"></a>00306 
+<a name="l00307"></a>00307         const <span class="keywordtype">char</span>* getLocalInfo()
+<a name="l00308"></a>00308                 {
+<a name="l00309"></a>00309                 U_TRACE(0, <span class="stringliteral">&quot;USocket::getLocalInfo()&quot;</span>)
+<a name="l00310"></a>00310 
+<a name="l00311"></a>00311                 U_CHECK_MEMORY
 <a name="l00312"></a>00312 
-<a name="l00313"></a>00313                 U_CHECK_MEMORY
+<a name="l00313"></a>00313                 U_INTERNAL_ASSERT(isLocalSet())
 <a name="l00314"></a>00314 
-<a name="l00315"></a>00315                 U_INTERNAL_ASSERT(isLocalSet())
+<a name="l00315"></a>00315                 const <span class="keywordtype">char</span>* address = cLocalAddress.getAddressString();
 <a name="l00316"></a>00316 
-<a name="l00317"></a>00317                 return cLocalAddress;
+<a name="l00317"></a>00317                 U_RETURN(address);
 <a name="l00318"></a>00318                 }
 <a name="l00319"></a>00319 
-<a name="l00320"></a>00320         const <span class="keywordtype">char</span>* getLocalInfo()
+<a name="l00320"></a>00320         <span class="keywordtype">void</span> setLocal(const <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; addr)
 <a name="l00321"></a>00321                 {
-<a name="l00322"></a>00322                 U_TRACE(0, <span class="stringliteral">&quot;USocket::getLocalInfo()&quot;</span>)
+<a name="l00322"></a>00322                 U_TRACE(0, <span class="stringliteral">&quot;USocket::setLocal(%p)&quot;</span>, &amp;addr)
 <a name="l00323"></a>00323 
-<a name="l00324"></a>00324                 U_CHECK_MEMORY
-<a name="l00325"></a>00325 
-<a name="l00326"></a>00326                 U_INTERNAL_ASSERT(isLocalSet())
+<a name="l00324"></a>00324                 bLocalSet     = true;
+<a name="l00325"></a>00325                 cLocalAddress = addr;
+<a name="l00326"></a>00326                 }
 <a name="l00327"></a>00327 
-<a name="l00328"></a>00328                 const <span class="keywordtype">char</span>* address = cLocalAddress.getAddressString();
+<a name="l00328"></a>00328         <span class="keywordtype">bool</span> isLocalSet()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> bLocalSet; }
 <a name="l00329"></a>00329 
-<a name="l00330"></a>00330                 U_RETURN(address);
-<a name="l00331"></a>00331                 }
-<a name="l00332"></a>00332 
-<a name="l00337"></a><a class="code" href="classUSocket.html#a3f4f19c9fede9968e6977d96d97bd033">00337</a>         <span class="keywordtype">int</span> remotePortNumber()
-<a name="l00338"></a>00338                 {
-<a name="l00339"></a>00339                 U_TRACE(0, <span class="stringliteral">&quot;USocket::remotePortNumber()&quot;</span>)
-<a name="l00340"></a>00340 
-<a name="l00341"></a>00341                 U_CHECK_MEMORY
+<a name="l00334"></a><a class="code" href="classUSocket.html#a3f4f19c9fede9968e6977d96d97bd033">00334</a>         <span class="keywordtype">int</span> remotePortNumber()
+<a name="l00335"></a>00335                 {
+<a name="l00336"></a>00336                 U_TRACE(0, <span class="stringliteral">&quot;USocket::remotePortNumber()&quot;</span>)
+<a name="l00337"></a>00337 
+<a name="l00338"></a>00338                 U_CHECK_MEMORY
+<a name="l00339"></a>00339 
+<a name="l00340"></a>00340                 U_RETURN(iRemotePort);
+<a name="l00341"></a>00341                 }
 <a name="l00342"></a>00342 
-<a name="l00343"></a>00343                 U_RETURN(iRemotePort);
-<a name="l00344"></a>00344                 }
-<a name="l00345"></a>00345 
-<a name="l00346"></a>00346         <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; remoteIPAddress()
-<a name="l00347"></a>00347                 {
-<a name="l00348"></a>00348                 U_TRACE(0, <span class="stringliteral">&quot;USocket::remoteIPAddress()&quot;</span>)
-<a name="l00349"></a>00349 
-<a name="l00350"></a>00350                 U_CHECK_MEMORY
+<a name="l00343"></a>00343         <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; remoteIPAddress()
+<a name="l00344"></a>00344                 {
+<a name="l00345"></a>00345                 U_TRACE(0, <span class="stringliteral">&quot;USocket::remoteIPAddress()&quot;</span>)
+<a name="l00346"></a>00346 
+<a name="l00347"></a>00347                 U_CHECK_MEMORY
+<a name="l00348"></a>00348 
+<a name="l00349"></a>00349                 return cRemoteAddress;
+<a name="l00350"></a>00350                 }
 <a name="l00351"></a>00351 
-<a name="l00352"></a>00352                 return cRemoteAddress;
-<a name="l00353"></a>00353                 }
-<a name="l00354"></a>00354 
-<a name="l00355"></a>00355         const <span class="keywordtype">char</span>* getRemoteInfo()
-<a name="l00356"></a>00356                 {
-<a name="l00357"></a>00357                 U_TRACE(0, <span class="stringliteral">&quot;USocket::getRemoteInfo()&quot;</span>)
-<a name="l00358"></a>00358 
-<a name="l00359"></a>00359                 U_CHECK_MEMORY
-<a name="l00360"></a>00360 
-<a name="l00361"></a>00361                 const <span class="keywordtype">char</span>* address = (iRemotePort ? cRemoteAddress.getAddressString() : &quot;localhost&quot;);
+<a name="l00352"></a>00352         const <span class="keywordtype">char</span>* getRemoteInfo()
+<a name="l00353"></a>00353                 {
+<a name="l00354"></a>00354                 U_TRACE(0, <span class="stringliteral">&quot;USocket::getRemoteInfo()&quot;</span>)
+<a name="l00355"></a>00355 
+<a name="l00356"></a>00356                 U_CHECK_MEMORY
+<a name="l00357"></a>00357 
+<a name="l00358"></a>00358                 const <span class="keywordtype">char</span>* address = (iRemotePort ? cRemoteAddress.getAddressString() : &quot;localhost&quot;);
+<a name="l00359"></a>00359 
+<a name="l00360"></a>00360                 U_RETURN(address);
+<a name="l00361"></a>00361                 }
 <a name="l00362"></a>00362 
-<a name="l00363"></a>00363                 U_RETURN(address);
-<a name="l00364"></a>00364                 }
-<a name="l00365"></a>00365 
-<a name="l00366"></a>00366         <span class="keywordtype">void</span> getRemoteInfo(<a class="code" href="classUString.html">UString</a>&amp; buffer)
-<a name="l00367"></a>00367                 {
-<a name="l00368"></a>00368                 U_TRACE(0, <span class="stringliteral">&quot;USocket::getRemoteInfo(%p)&quot;</span>, &amp;buffer)
-<a name="l00369"></a>00369 
-<a name="l00370"></a>00370                 const <span class="keywordtype">char</span>* address = getRemoteInfo();
-<a name="l00371"></a>00371 
-<a name="l00372"></a>00372                 <span class="keywordtype">int</span> len = u_snprintf(buffer.data(), buffer.capacity(), &quot;%2d &apos;%s:%u&apos;&quot;, iSockDesc, address, iRemotePort);
+<a name="l00363"></a>00363         <span class="keywordtype">void</span> getRemoteInfo(<a class="code" href="classUString.html">UString</a>&amp; buffer)
+<a name="l00364"></a>00364                 {
+<a name="l00365"></a>00365                 U_TRACE(0, <span class="stringliteral">&quot;USocket::getRemoteInfo(%p)&quot;</span>, &amp;buffer)
+<a name="l00366"></a>00366 
+<a name="l00367"></a>00367                 const <span class="keywordtype">char</span>* address = getRemoteInfo();
+<a name="l00368"></a>00368 
+<a name="l00369"></a>00369                 <span class="keywordtype">int</span> len = u_snprintf(buffer.data(), buffer.capacity(), &quot;%2d &apos;%s:%u&apos;&quot;, iSockDesc, address, iRemotePort);
+<a name="l00370"></a>00370 
+<a name="l00371"></a>00371                 buffer.size_adjust(len);
+<a name="l00372"></a>00372                 }
 <a name="l00373"></a>00373 
-<a name="l00374"></a>00374                 buffer.size_adjust(len);
-<a name="l00375"></a>00375                 }
-<a name="l00376"></a>00376 
-<a name="l00381"></a><a class="code" href="classUSocket.html#af94c6040ed50b9c4393097f6b6810b4e">00381</a>         uint32_t getBufferRCV()
-<a name="l00382"></a>00382                 {
-<a name="l00383"></a>00383                 U_TRACE(1, <span class="stringliteral">&quot;USocket::getBufferRCV()&quot;</span>)
-<a name="l00384"></a>00384 
-<a name="l00385"></a>00385                 uint32_t size, tmp = <span class="keyword">sizeof</span>(uint32_t);
-<a name="l00386"></a>00386 
-<a name="l00387"></a>00387                 getSockOpt(SOL_SOCKET, SO_RCVBUF, (<span class="keywordtype">void</span>*)&amp;size, tmp);
+<a name="l00378"></a><a class="code" href="classUSocket.html#af94c6040ed50b9c4393097f6b6810b4e">00378</a>         uint32_t getBufferRCV()
+<a name="l00379"></a>00379                 {
+<a name="l00380"></a>00380                 U_TRACE(1, <span class="stringliteral">&quot;USocket::getBufferRCV()&quot;</span>)
+<a name="l00381"></a>00381 
+<a name="l00382"></a>00382                 uint32_t size, tmp = <span class="keyword">sizeof</span>(uint32_t);
+<a name="l00383"></a>00383 
+<a name="l00384"></a>00384                 getSockOpt(SOL_SOCKET, SO_RCVBUF, (<span class="keywordtype">void</span>*)&amp;size, tmp);
+<a name="l00385"></a>00385 
+<a name="l00386"></a>00386                 U_RETURN(size);
+<a name="l00387"></a>00387                 }
 <a name="l00388"></a>00388 
-<a name="l00389"></a>00389                 U_RETURN(size);
-<a name="l00390"></a>00390                 }
-<a name="l00391"></a>00391 
-<a name="l00392"></a>00392         uint32_t getBufferSND()
-<a name="l00393"></a>00393                 {
-<a name="l00394"></a>00394                 U_TRACE(1, <span class="stringliteral">&quot;USocket::getBufferSND()&quot;</span>)
-<a name="l00395"></a>00395 
-<a name="l00396"></a>00396                 uint32_t size, tmp = sizeof(uint32_t);
-<a name="l00397"></a>00397 
-<a name="l00398"></a>00398                 getSockOpt(SOL_SOCKET, SO_SNDBUF, (<span class="keywordtype">void</span>*)&amp;size, tmp);
+<a name="l00389"></a>00389         uint32_t getBufferSND()
+<a name="l00390"></a>00390                 {
+<a name="l00391"></a>00391                 U_TRACE(1, <span class="stringliteral">&quot;USocket::getBufferSND()&quot;</span>)
+<a name="l00392"></a>00392 
+<a name="l00393"></a>00393                 uint32_t size, tmp = sizeof(uint32_t);
+<a name="l00394"></a>00394 
+<a name="l00395"></a>00395                 getSockOpt(SOL_SOCKET, SO_SNDBUF, (<span class="keywordtype">void</span>*)&amp;size, tmp);
+<a name="l00396"></a>00396 
+<a name="l00397"></a>00397                 U_RETURN(size);
+<a name="l00398"></a>00398                 }
 <a name="l00399"></a>00399 
-<a name="l00400"></a>00400                 U_RETURN(size);
-<a name="l00401"></a>00401                 }
-<a name="l00402"></a>00402 
-<a name="l00403"></a>00403         <span class="keywordtype">bool</span> setBufferRCV(uint32_t size)
-<a name="l00404"></a>00404                 {
-<a name="l00405"></a>00405                 U_TRACE(1, <span class="stringliteral">&quot;USocket::setBufferRCV(%u)&quot;</span>, size)
-<a name="l00406"></a>00406 
-<a name="l00407"></a>00407                 bool result = setSockOpt(SOL_SOCKET, SO_RCVBUF, (const <span class="keywordtype">void</span>*)&amp;size, sizeof(uint32_t));
+<a name="l00400"></a>00400         <span class="keywordtype">bool</span> setBufferRCV(uint32_t size)
+<a name="l00401"></a>00401                 {
+<a name="l00402"></a>00402                 U_TRACE(1, <span class="stringliteral">&quot;USocket::setBufferRCV(%u)&quot;</span>, size)
+<a name="l00403"></a>00403 
+<a name="l00404"></a>00404                 bool result = setSockOpt(SOL_SOCKET, SO_RCVBUF, (const <span class="keywordtype">void</span>*)&amp;size, sizeof(uint32_t));
+<a name="l00405"></a>00405 
+<a name="l00406"></a>00406                 U_RETURN(result);
+<a name="l00407"></a>00407                 }
 <a name="l00408"></a>00408 
-<a name="l00409"></a>00409                 U_RETURN(result);
-<a name="l00410"></a>00410                 }
-<a name="l00411"></a>00411 
-<a name="l00412"></a>00412         <span class="keywordtype">bool</span> setBufferSND(uint32_t size)
-<a name="l00413"></a>00413                 {
-<a name="l00414"></a>00414                 U_TRACE(1, <span class="stringliteral">&quot;USocket::setBufferSND(%u)&quot;</span>, size)
-<a name="l00415"></a>00415 
-<a name="l00416"></a>00416                 bool result = setSockOpt(SOL_SOCKET, SO_SNDBUF, (const <span class="keywordtype">void</span>*)&amp;size, sizeof(uint32_t));
+<a name="l00409"></a>00409         <span class="keywordtype">bool</span> setBufferSND(uint32_t size)
+<a name="l00410"></a>00410                 {
+<a name="l00411"></a>00411                 U_TRACE(1, <span class="stringliteral">&quot;USocket::setBufferSND(%u)&quot;</span>, size)
+<a name="l00412"></a>00412 
+<a name="l00413"></a>00413                 bool result = setSockOpt(SOL_SOCKET, SO_SNDBUF, (const <span class="keywordtype">void</span>*)&amp;size, sizeof(uint32_t));
+<a name="l00414"></a>00414 
+<a name="l00415"></a>00415                 U_RETURN(result);
+<a name="l00416"></a>00416                 }
 <a name="l00417"></a>00417 
-<a name="l00418"></a>00418                 U_RETURN(result);
-<a name="l00419"></a>00419                 }
-<a name="l00420"></a>00420 
-<a name="l00432"></a><a class="code" href="classUSocket.html#a833a54ea53ae6e054029659733780b0e">00432</a>         <span class="keywordtype">void</span> setTcpCork(uint32_t corked)
-<a name="l00433"></a>00433                 {
-<a name="l00434"></a>00434                 U_TRACE(0, <span class="stringliteral">&quot;USocket::setTcpCork(%u)&quot;</span>, corked)
-<a name="l00435"></a>00435 
-<a name="l00436"></a>00436 <span class="preprocessor">#       ifdef TCP_CORK</span>
-<a name="l00437"></a>00437 <span class="preprocessor"></span>                (void) setSockOpt(SOL_TCP, TCP_CORK, (<span class="keyword">const</span> <span class="keywordtype">void</span>*)&amp;corked, <span class="keyword">sizeof</span>(uint32_t));
-<a name="l00438"></a>00438 <span class="preprocessor">#       endif</span>
-<a name="l00439"></a>00439 <span class="preprocessor"></span>                }
-<a name="l00440"></a>00440 
-<a name="l00447"></a><a class="code" href="classUSocket.html#ac5ac3939478953bdef244223e38c7e12">00447</a>         <span class="keywordtype">void</span> setTcpDeferAccept(uint32_t value)
-<a name="l00448"></a>00448                 {
-<a name="l00449"></a>00449                 U_TRACE(0, <span class="stringliteral">&quot;USocket::setTcpDeferAccept(%u)&quot;</span>, value)
-<a name="l00450"></a>00450 
-<a name="l00451"></a>00451 <span class="preprocessor">#       ifdef TCP_DEFER_ACCEPT</span>
-<a name="l00452"></a>00452 <span class="preprocessor"></span>                (void) setSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (<span class="keyword">const</span> <span class="keywordtype">void</span>*)&amp;value, <span class="keyword">sizeof</span>(uint32_t));
-<a name="l00453"></a>00453 <span class="preprocessor">#       endif</span>
-<a name="l00454"></a>00454 <span class="preprocessor"></span>                }
-<a name="l00455"></a>00455 
-<a name="l00456"></a>00456         <span class="keywordtype">void</span> setTcpQuickAck(uint32_t value)
-<a name="l00457"></a>00457                 {
-<a name="l00458"></a>00458                 U_TRACE(0, <span class="stringliteral">&quot;USocket::setTcpQuickAck(%u)&quot;</span>, value)
-<a name="l00459"></a>00459 
-<a name="l00460"></a>00460 <span class="preprocessor">#       ifdef TCP_QUICKACK</span>
-<a name="l00461"></a>00461 <span class="preprocessor"></span>                (void) setSockOpt(SOL_TCP, TCP_QUICKACK, (<span class="keyword">const</span> <span class="keywordtype">void</span>*)&amp;value, <span class="keyword">sizeof</span>(uint32_t));
-<a name="l00462"></a>00462 <span class="preprocessor">#       endif</span>
-<a name="l00463"></a>00463 <span class="preprocessor"></span>                }
-<a name="l00464"></a>00464 
-<a name="l00465"></a>00465         <span class="keywordtype">void</span> setTcpNoDelay(uint32_t value)
-<a name="l00466"></a>00466                 {
-<a name="l00467"></a>00467                 U_TRACE(0, <span class="stringliteral">&quot;USocket::setTcpNoDelay(%u)&quot;</span>, value)
-<a name="l00468"></a>00468 
-<a name="l00469"></a>00469 <span class="preprocessor">#       ifdef TCP_NODELAY</span>
-<a name="l00470"></a>00470 <span class="preprocessor"></span>                (void) setSockOpt(SOL_TCP, TCP_NODELAY, (<span class="keyword">const</span> <span class="keywordtype">void</span>*)&amp;value, <span class="keyword">sizeof</span>(uint32_t));
-<a name="l00471"></a>00471 <span class="preprocessor">#       endif</span>
-<a name="l00472"></a>00472 <span class="preprocessor"></span>                }
-<a name="l00473"></a>00473 
-<a name="l00486"></a>00486         <span class="comment">// define SO_RCVTIMEO SO_SNDTIMEO</span>
-<a name="l00487"></a>00487 
-<a name="l00488"></a>00488         <span class="keywordtype">bool</span> setTimeoutRCV(uint32_t timeoutMS = U_TIMEOUT);
-<a name="l00489"></a>00489         <span class="keywordtype">bool</span> setTimeoutSND(uint32_t timeoutMS = U_TIMEOUT);
-<a name="l00490"></a>00490 
-<a name="l00496"></a>00496         <span class="keywordtype">int</span> recvFrom(<span class="keywordtype">void</span>* pBuffer, <span class="keywordtype">int</span> iBufLength, uint32_t uiFlags, <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; cSourceIP, <span class="keywordtype">int</span>&amp; iSourcePortNumber);
-<a name="l00497"></a>00497 
-<a name="l00502"></a>00502         <span class="keywordtype">int</span> sendTo(<span class="keywordtype">void</span>* pPayload, <span class="keywordtype">int</span> iPayloadLength, uint32_t uiFlags, <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; cDestinationIP, <span class="keywordtype">int</span> iDestinationPortNumber);
-<a name="l00503"></a>00503 
-<a name="l00511"></a>00511         <span class="keyword">static</span> ssize_t recv(<span class="keywordtype">int</span> fd, <span class="keywordtype">void</span>* buf, <span class="keywordtype">size_t</span> len, <span class="keywordtype">int</span> flags = 0);
-<a name="l00512"></a>00512 
-<a name="l00520"></a><a class="code" href="classUSocket.html#acc370dcba9600975d1a875034db07723">00520</a>         <span class="keywordtype">int</span> recvBinary16Bits()
-<a name="l00521"></a>00521                 {
-<a name="l00522"></a>00522                 U_TRACE(0, <span class="stringliteral">&quot;USocket::recvBinary16Bits()&quot;</span>)
-<a name="l00523"></a>00523 
-<a name="l00524"></a>00524                 uint16_t uiNetOrder;
-<a name="l00525"></a>00525                 <span class="keywordtype">int</span> iBytesLeft = <span class="keyword">sizeof</span>(uint16_t);
-<a name="l00526"></a>00526                 <span class="keywordtype">char</span>* pcEndReadBuffer = ((<span class="keywordtype">char</span>*)&amp;uiNetOrder) + iBytesLeft;
+<a name="l00429"></a><a class="code" href="classUSocket.html#a833a54ea53ae6e054029659733780b0e">00429</a>         <span class="keywordtype">void</span> setTcpCork(uint32_t corked)
+<a name="l00430"></a>00430                 {
+<a name="l00431"></a>00431                 U_TRACE(0, <span class="stringliteral">&quot;USocket::setTcpCork(%u)&quot;</span>, corked)
+<a name="l00432"></a>00432 
+<a name="l00433"></a>00433 <span class="preprocessor">#       ifdef TCP_CORK</span>
+<a name="l00434"></a>00434 <span class="preprocessor"></span>                (void) setSockOpt(SOL_TCP, TCP_CORK, (<span class="keyword">const</span> <span class="keywordtype">void</span>*)&amp;corked, <span class="keyword">sizeof</span>(uint32_t));
+<a name="l00435"></a>00435 <span class="preprocessor">#       endif</span>
+<a name="l00436"></a>00436 <span class="preprocessor"></span>                }
+<a name="l00437"></a>00437 
+<a name="l00444"></a><a class="code" href="classUSocket.html#ac5ac3939478953bdef244223e38c7e12">00444</a>         <span class="keywordtype">void</span> setTcpDeferAccept(uint32_t value)
+<a name="l00445"></a>00445                 {
+<a name="l00446"></a>00446                 U_TRACE(0, <span class="stringliteral">&quot;USocket::setTcpDeferAccept(%u)&quot;</span>, value)
+<a name="l00447"></a>00447 
+<a name="l00448"></a>00448 <span class="preprocessor">#       ifdef TCP_DEFER_ACCEPT</span>
+<a name="l00449"></a>00449 <span class="preprocessor"></span>                (void) setSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (<span class="keyword">const</span> <span class="keywordtype">void</span>*)&amp;value, <span class="keyword">sizeof</span>(uint32_t));
+<a name="l00450"></a>00450 <span class="preprocessor">#       endif</span>
+<a name="l00451"></a>00451 <span class="preprocessor"></span>                }
+<a name="l00452"></a>00452 
+<a name="l00453"></a>00453         <span class="keywordtype">void</span> setTcpQuickAck(uint32_t value)
+<a name="l00454"></a>00454                 {
+<a name="l00455"></a>00455                 U_TRACE(0, <span class="stringliteral">&quot;USocket::setTcpQuickAck(%u)&quot;</span>, value)
+<a name="l00456"></a>00456 
+<a name="l00457"></a>00457 <span class="preprocessor">#       ifdef TCP_QUICKACK</span>
+<a name="l00458"></a>00458 <span class="preprocessor"></span>                (void) setSockOpt(SOL_TCP, TCP_QUICKACK, (<span class="keyword">const</span> <span class="keywordtype">void</span>*)&amp;value, <span class="keyword">sizeof</span>(uint32_t));
+<a name="l00459"></a>00459 <span class="preprocessor">#       endif</span>
+<a name="l00460"></a>00460 <span class="preprocessor"></span>                }
+<a name="l00461"></a>00461 
+<a name="l00462"></a>00462         <span class="keywordtype">void</span> setTcpNoDelay(uint32_t value)
+<a name="l00463"></a>00463                 {
+<a name="l00464"></a>00464                 U_TRACE(0, <span class="stringliteral">&quot;USocket::setTcpNoDelay(%u)&quot;</span>, value)
+<a name="l00465"></a>00465 
+<a name="l00466"></a>00466 <span class="preprocessor">#       ifdef TCP_NODELAY</span>
+<a name="l00467"></a>00467 <span class="preprocessor"></span>                (void) setSockOpt(SOL_TCP, TCP_NODELAY, (<span class="keyword">const</span> <span class="keywordtype">void</span>*)&amp;value, <span class="keyword">sizeof</span>(uint32_t));
+<a name="l00468"></a>00468 <span class="preprocessor">#       endif</span>
+<a name="l00469"></a>00469 <span class="preprocessor"></span>                }
+<a name="l00470"></a>00470 
+<a name="l00483"></a>00483         <span class="keywordtype">bool</span> setTimeoutRCV(uint32_t timeoutMS = U_TIMEOUT);
+<a name="l00484"></a>00484         <span class="keywordtype">bool</span> setTimeoutSND(uint32_t timeoutMS = U_TIMEOUT);
+<a name="l00485"></a>00485 
+<a name="l00491"></a>00491         <span class="keywordtype">int</span> recvFrom(<span class="keywordtype">void</span>* pBuffer, <span class="keywordtype">int</span> iBufLength, uint32_t uiFlags, <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; cSourceIP, <span class="keywordtype">int</span>&amp; iSourcePortNumber);
+<a name="l00492"></a>00492 
+<a name="l00497"></a>00497         <span class="keywordtype">int</span> sendTo(<span class="keywordtype">void</span>* pPayload, <span class="keywordtype">int</span> iPayloadLength, uint32_t uiFlags, <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; cDestinationIP, <span class="keywordtype">int</span> iDestinationPortNumber);
+<a name="l00498"></a>00498 
+<a name="l00506"></a>00506         <span class="keyword">static</span> ssize_t recv(<span class="keywordtype">int</span> fd, <span class="keywordtype">void</span>* buf, <span class="keywordtype">size_t</span> len, <span class="keywordtype">int</span> flags = 0);
+<a name="l00507"></a>00507 
+<a name="l00515"></a><a class="code" href="classUSocket.html#acc370dcba9600975d1a875034db07723">00515</a>         <span class="keywordtype">int</span> recvBinary16Bits()
+<a name="l00516"></a>00516                 {
+<a name="l00517"></a>00517                 U_TRACE(0, <span class="stringliteral">&quot;USocket::recvBinary16Bits()&quot;</span>)
+<a name="l00518"></a>00518 
+<a name="l00519"></a>00519                 uint16_t uiNetOrder;
+<a name="l00520"></a>00520                 <span class="keywordtype">int</span> iBytesLeft = <span class="keyword">sizeof</span>(uint16_t);
+<a name="l00521"></a>00521                 <span class="keywordtype">char</span>* pcEndReadBuffer = ((<span class="keywordtype">char</span>*)&amp;uiNetOrder) + iBytesLeft;
+<a name="l00522"></a>00522 
+<a name="l00523"></a>00523                 <span class="keywordflow">do</span> {
+<a name="l00524"></a>00524                         iBytesLeft -= recv((<span class="keywordtype">void</span>*)(pcEndReadBuffer - iBytesLeft), iBytesLeft);
+<a name="l00525"></a>00525                         }
+<a name="l00526"></a>00526                 <span class="keywordflow">while</span> (iBytesLeft);
 <a name="l00527"></a>00527 
-<a name="l00528"></a>00528                 <span class="keywordflow">do</span> {
-<a name="l00529"></a>00529                         iBytesLeft -= recv((<span class="keywordtype">void</span>*)(pcEndReadBuffer - iBytesLeft), iBytesLeft);
-<a name="l00530"></a>00530                         }
-<a name="l00531"></a>00531                 <span class="keywordflow">while</span> (iBytesLeft);
-<a name="l00532"></a>00532 
-<a name="l00533"></a>00533                 U_RETURN((<span class="keywordtype">int</span>)ntohs(uiNetOrder));
-<a name="l00534"></a>00534                 }
-<a name="l00535"></a>00535 
-<a name="l00543"></a><a class="code" href="classUSocket.html#a10e830a235a8982580ef713979b93412">00543</a>         uint32_t recvBinary32Bits()
-<a name="l00544"></a>00544                 {
-<a name="l00545"></a>00545                 U_TRACE(0, <span class="stringliteral">&quot;USocket::recvBinary32Bits()&quot;</span>)
-<a name="l00546"></a>00546 
-<a name="l00547"></a>00547                 uint32_t uiNetOrder;
-<a name="l00548"></a>00548                 <span class="keywordtype">int</span> iBytesLeft = <span class="keyword">sizeof</span>(uint32_t);
-<a name="l00549"></a>00549                 <span class="keywordtype">char</span>* pcEndReadBuffer = ((<span class="keywordtype">char</span>*)&amp;uiNetOrder) + iBytesLeft;
+<a name="l00528"></a>00528                 U_RETURN((<span class="keywordtype">int</span>)ntohs(uiNetOrder));
+<a name="l00529"></a>00529                 }
+<a name="l00530"></a>00530 
+<a name="l00538"></a><a class="code" href="classUSocket.html#a10e830a235a8982580ef713979b93412">00538</a>         uint32_t recvBinary32Bits()
+<a name="l00539"></a>00539                 {
+<a name="l00540"></a>00540                 U_TRACE(0, <span class="stringliteral">&quot;USocket::recvBinary32Bits()&quot;</span>)
+<a name="l00541"></a>00541 
+<a name="l00542"></a>00542                 uint32_t uiNetOrder;
+<a name="l00543"></a>00543                 <span class="keywordtype">int</span> iBytesLeft = <span class="keyword">sizeof</span>(uint32_t);
+<a name="l00544"></a>00544                 <span class="keywordtype">char</span>* pcEndReadBuffer = ((<span class="keywordtype">char</span>*)&amp;uiNetOrder) + iBytesLeft;
+<a name="l00545"></a>00545 
+<a name="l00546"></a>00546                 <span class="keywordflow">do</span> {
+<a name="l00547"></a>00547                         iBytesLeft -= recv((<span class="keywordtype">void</span>*)(pcEndReadBuffer - iBytesLeft), iBytesLeft);
+<a name="l00548"></a>00548                         }
+<a name="l00549"></a>00549                 <span class="keywordflow">while</span> (iBytesLeft);
 <a name="l00550"></a>00550 
-<a name="l00551"></a>00551                 <span class="keywordflow">do</span> {
-<a name="l00552"></a>00552                         iBytesLeft -= recv((<span class="keywordtype">void</span>*)(pcEndReadBuffer - iBytesLeft), iBytesLeft);
-<a name="l00553"></a>00553                         }
-<a name="l00554"></a>00554                 <span class="keywordflow">while</span> (iBytesLeft);
-<a name="l00555"></a>00555 
-<a name="l00556"></a>00556                 U_RETURN(ntohl(uiNetOrder));
-<a name="l00557"></a>00557                 }
-<a name="l00558"></a>00558 
-<a name="l00565"></a><a class="code" href="classUSocket.html#afe35fa4e9376b03f0ffa96cc1cad6826">00565</a>         <span class="keywordtype">bool</span> sendBinary16Bits(<span class="keywordtype">int</span> iData)
-<a name="l00566"></a>00566                 {
-<a name="l00567"></a>00567                 U_TRACE(0, <span class="stringliteral">&quot;USocket::sendBinary16Bits(%d)&quot;</span>, iData)
-<a name="l00568"></a>00568 
-<a name="l00569"></a>00569                 uint16_t uiNetOrder = htons(iData);
+<a name="l00551"></a>00551                 U_RETURN(ntohl(uiNetOrder));
+<a name="l00552"></a>00552                 }
+<a name="l00553"></a>00553 
+<a name="l00560"></a><a class="code" href="classUSocket.html#afe35fa4e9376b03f0ffa96cc1cad6826">00560</a>         <span class="keywordtype">bool</span> sendBinary16Bits(<span class="keywordtype">int</span> iData)
+<a name="l00561"></a>00561                 {
+<a name="l00562"></a>00562                 U_TRACE(0, <span class="stringliteral">&quot;USocket::sendBinary16Bits(%d)&quot;</span>, iData)
+<a name="l00563"></a>00563 
+<a name="l00564"></a>00564                 uint16_t uiNetOrder = htons(iData);
+<a name="l00565"></a>00565 
+<a name="l00566"></a>00566                 <span class="keywordtype">bool</span> result = (send(&amp;uiNetOrder, <span class="keyword">sizeof</span>(uint16_t)) == <span class="keyword">sizeof</span>(uint16_t));
+<a name="l00567"></a>00567 
+<a name="l00568"></a>00568                 U_RETURN(result);
+<a name="l00569"></a>00569                 }
 <a name="l00570"></a>00570 
-<a name="l00571"></a>00571                 <span class="keywordtype">bool</span> result = (send(&amp;uiNetOrder, <span class="keyword">sizeof</span>(uint16_t)) == <span class="keyword">sizeof</span>(uint16_t));
-<a name="l00572"></a>00572 
-<a name="l00573"></a>00573                 U_RETURN(result);
-<a name="l00574"></a>00574                 }
-<a name="l00575"></a>00575 
-<a name="l00582"></a><a class="code" href="classUSocket.html#ab2d74ccb56a5b06593a0a845e205af38">00582</a>         <span class="keywordtype">bool</span> sendBinary32Bits(uint32_t lData)
-<a name="l00583"></a>00583                 {
-<a name="l00584"></a>00584                 U_TRACE(0, <span class="stringliteral">&quot;UTCPSocket::sendBinary32Bits(%u)&quot;</span>, lData)
-<a name="l00585"></a>00585 
-<a name="l00586"></a>00586                 uint32_t uiNetOrder = htonl(lData);
+<a name="l00577"></a><a class="code" href="classUSocket.html#ab2d74ccb56a5b06593a0a845e205af38">00577</a>         <span class="keywordtype">bool</span> sendBinary32Bits(uint32_t lData)
+<a name="l00578"></a>00578                 {
+<a name="l00579"></a>00579                 U_TRACE(0, <span class="stringliteral">&quot;UTCPSocket::sendBinary32Bits(%u)&quot;</span>, lData)
+<a name="l00580"></a>00580 
+<a name="l00581"></a>00581                 uint32_t uiNetOrder = htonl(lData);
+<a name="l00582"></a>00582 
+<a name="l00583"></a>00583                 <span class="keywordtype">bool</span> result = (send(&amp;uiNetOrder, <span class="keyword">sizeof</span>(uint32_t)) == <span class="keyword">sizeof</span>(uint32_t));
+<a name="l00584"></a>00584 
+<a name="l00585"></a>00585                 U_RETURN(result);
+<a name="l00586"></a>00586                 }
 <a name="l00587"></a>00587 
-<a name="l00588"></a>00588                 <span class="keywordtype">bool</span> result = (send(&amp;uiNetOrder, <span class="keyword">sizeof</span>(uint32_t)) == <span class="keyword">sizeof</span>(uint32_t));
-<a name="l00589"></a>00589 
-<a name="l00590"></a>00590                 U_RETURN(result);
-<a name="l00591"></a>00591                 }
-<a name="l00592"></a>00592 
-<a name="l00593"></a>00593         <span class="comment">// -----------------------------------------------------------------------------------------------------------</span>
-<a name="l00594"></a>00594         <span class="comment">// VIRTUAL METHOD</span>
-<a name="l00595"></a>00595         <span class="comment">// -----------------------------------------------------------------------------------------------------------</span>
-<a name="l00596"></a>00596 
-<a name="l00597"></a>00597         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> isSSL()<span class="keyword"> const</span>
-<a name="l00598"></a>00598 <span class="keyword">                </span>{
-<a name="l00599"></a>00599                 U_TRACE(0, <span class="stringliteral">&quot;USocket::isSSL()&quot;</span>)
+<a name="l00588"></a>00588         <span class="comment">// -----------------------------------------------------------------------------------------------------------</span>
+<a name="l00589"></a>00589         <span class="comment">// VIRTUAL METHOD</span>
+<a name="l00590"></a>00590         <span class="comment">// -----------------------------------------------------------------------------------------------------------</span>
+<a name="l00591"></a>00591 
+<a name="l00592"></a>00592         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> isSSL()<span class="keyword"> const</span>
+<a name="l00593"></a>00593 <span class="keyword">                </span>{
+<a name="l00594"></a>00594                 U_TRACE(0, <span class="stringliteral">&quot;USocket::isSSL()&quot;</span>)
+<a name="l00595"></a>00595 
+<a name="l00596"></a>00596                 U_RETURN(false);
+<a name="l00597"></a>00597                 }
+<a name="l00598"></a>00598 
+<a name="l00599"></a>00599         virtual <span class="keywordtype">void</span> closesocket();
 <a name="l00600"></a>00600 
-<a name="l00601"></a>00601                 U_RETURN(false);
-<a name="l00602"></a>00602                 }
-<a name="l00603"></a>00603 
-<a name="l00604"></a>00604         virtual <span class="keywordtype">void</span> closesocket();
-<a name="l00605"></a>00605 
-<a name="l00606"></a>00606         virtual const <span class="keywordtype">char</span>* getMsgError(<span class="keywordtype">char</span>* buffer, uint32_t buffer_size);
-<a name="l00607"></a>00607 
-<a name="l00613"></a>00613         virtual <span class="keywordtype">bool</span> connectServer(const <a class="code" href="classUString.html">UString</a>&amp; server, <span class="keywordtype">int</span> iServPort);
-<a name="l00614"></a>00614 
-<a name="l00621"></a>00621         virtual <span class="keywordtype">bool</span> setServer(                                                                   <span class="keywordtype">int</span> port, <span class="keywordtype">int</span> iBackLog);
-<a name="l00622"></a>00622         virtual <span class="keywordtype">bool</span> setServer(const <a class="code" href="classUString.html">UString</a>&amp; cLocalAddr, <span class="keywordtype">int</span> port, <span class="keywordtype">int</span> iBackLog);
-<a name="l00623"></a>00623 
-<a name="l00632"></a><a class="code" href="classUSocket.html#ab2db1524c94b038a4eeace5e272d1e15">00632</a>         virtual <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* acceptClient()                                                           { <span class="keywordflow">return</span> <span class="keyword">this</span>; }
-<a name="l00633"></a>00633         <span class="keyword">virtual</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* acceptClient(<a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* pcNewConnection) { <span class="keywordflow">return</span> pcNewConnection; }
-<a name="l00634"></a>00634 
-<a name="l00642"></a><a class="code" href="classUSocket.html#a8822b76fde425ed0472e3f6faaa8e40c">00642</a>         <span class="keyword">virtual</span> <span class="keywordtype">int</span> recv(<span class="keywordtype">void</span>* pBuffer, <span class="keywordtype">int</span> iBufLength)
-<a name="l00643"></a>00643                 {
-<a name="l00644"></a>00644                 U_TRACE(0, <span class="stringliteral">&quot;USocket::recv(%p,%d)&quot;</span>, pBuffer, iBufLength)
-<a name="l00645"></a>00645 
-<a name="l00646"></a>00646                 U_CHECK_MEMORY
-<a name="l00647"></a>00647 
-<a name="l00648"></a>00648                 U_INTERNAL_ASSERT(isOpen())
+<a name="l00601"></a>00601         virtual const <span class="keywordtype">char</span>* getMsgError(<span class="keywordtype">char</span>* buffer, uint32_t buffer_size);
+<a name="l00602"></a>00602 
+<a name="l00608"></a>00608         virtual <span class="keywordtype">bool</span> connectServer(const <a class="code" href="classUString.html">UString</a>&amp; server, <span class="keywordtype">int</span> iServPort);
+<a name="l00609"></a>00609 
+<a name="l00616"></a>00616         virtual <span class="keywordtype">bool</span> setServer(                                                                   <span class="keywordtype">int</span> port, <span class="keywordtype">int</span> iBackLog);
+<a name="l00617"></a>00617         virtual <span class="keywordtype">bool</span> setServer(const <a class="code" href="classUString.html">UString</a>&amp; cLocalAddr, <span class="keywordtype">int</span> port, <span class="keywordtype">int</span> iBackLog);
+<a name="l00618"></a>00618 
+<a name="l00627"></a><a class="code" href="classUSocket.html#ab2db1524c94b038a4eeace5e272d1e15">00627</a>         virtual <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* acceptClient()                                                           { <span class="keywordflow">return</span> <span class="keyword">this</span>; }
+<a name="l00628"></a>00628         <span class="keyword">virtual</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* acceptClient(<a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* pcNewConnection) { <span class="keywordflow">return</span> pcNewConnection; }
+<a name="l00629"></a>00629 
+<a name="l00637"></a><a class="code" href="classUSocket.html#a8822b76fde425ed0472e3f6faaa8e40c">00637</a>         <span class="keyword">virtual</span> <span class="keywordtype">int</span> recv(<span class="keywordtype">void</span>* pBuffer, <span class="keywordtype">int</span> iBufLength)
+<a name="l00638"></a>00638                 {
+<a name="l00639"></a>00639                 U_TRACE(0, <span class="stringliteral">&quot;USocket::recv(%p,%d)&quot;</span>, pBuffer, iBufLength)
+<a name="l00640"></a>00640 
+<a name="l00641"></a>00641                 U_CHECK_MEMORY
+<a name="l00642"></a>00642 
+<a name="l00643"></a>00643                 U_INTERNAL_ASSERT(isOpen())
+<a name="l00644"></a>00644 
+<a name="l00645"></a>00645                 <span class="keywordtype">int</span> iBytesRead = recv(iSockDesc, CAST(pBuffer), iBufLength, 0);
+<a name="l00646"></a>00646 
+<a name="l00647"></a>00647                 U_RETURN(iBytesRead);
+<a name="l00648"></a>00648                 }
 <a name="l00649"></a>00649 
-<a name="l00650"></a>00650                 <span class="keywordtype">int</span> iBytesRead = recv(iSockDesc, CAST(pBuffer), iBufLength, 0);
-<a name="l00651"></a>00651 
-<a name="l00652"></a>00652                 U_RETURN(iBytesRead);
-<a name="l00653"></a>00653                 }
-<a name="l00654"></a>00654 
-<a name="l00662"></a>00662         <span class="keyword">virtual</span> <span class="keywordtype">int</span> send(<span class="keyword">const</span> <span class="keywordtype">void</span>* pPayload, <span class="keywordtype">int</span> iPayloadLength);
-<a name="l00663"></a>00663         <span class="comment">// -----------------------------------------------------------------------------------------------------------</span>
-<a name="l00664"></a>00664 
-<a name="l00665"></a>00665         <span class="comment">// DEBUG</span>
-<a name="l00666"></a>00666 
-<a name="l00667"></a>00667 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00668"></a>00668 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00669"></a>00669 <span class="preprocessor">#endif</span>
-<a name="l00670"></a>00670 <span class="preprocessor"></span>
-<a name="l00671"></a>00671 <span class="keyword">protected</span>:
-<a name="l00672"></a>00672         <span class="keywordtype">int</span> iSockDesc, iState, iLocalPort, iRemotePort;
-<a name="l00673"></a>00673         <a class="code" href="classUIPAddress.html">UIPAddress</a> cLocalAddress, cRemoteAddress;
-<a name="l00674"></a>00674         <span class="keywordtype">bool</span> bIPv6Socket, bLocalSet;
-<a name="l00675"></a>00675 
-<a name="l00676"></a>00676         <span class="keyword">static</span> <span class="keywordtype">int</span> req_timeout,         <span class="comment">// the time-out value in seconds for client send request</span>
-<a name="l00677"></a>00677                                   accept4_flags;        <span class="comment">// If flags is 0, then accept4() is the same as accept()</span>
+<a name="l00657"></a>00657         <span class="keyword">virtual</span> <span class="keywordtype">int</span> send(<span class="keyword">const</span> <span class="keywordtype">void</span>* pPayload, <span class="keywordtype">int</span> iPayloadLength);
+<a name="l00658"></a>00658         <span class="comment">// -----------------------------------------------------------------------------------------------------------</span>
+<a name="l00659"></a>00659 
+<a name="l00660"></a>00660         <span class="comment">// DEBUG</span>
+<a name="l00661"></a>00661 
+<a name="l00662"></a>00662 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00663"></a>00663 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00664"></a>00664 <span class="preprocessor">#endif</span>
+<a name="l00665"></a>00665 <span class="preprocessor"></span>
+<a name="l00666"></a>00666 <span class="keyword">protected</span>:
+<a name="l00667"></a>00667         <span class="keywordtype">int</span> iSockDesc, iState, iLocalPort, iRemotePort;
+<a name="l00668"></a>00668         <a class="code" href="classUIPAddress.html">UIPAddress</a> cLocalAddress, cRemoteAddress;
+<a name="l00669"></a>00669         <span class="keywordtype">bool</span> bIPv6Socket, bLocalSet;
+<a name="l00670"></a>00670 
+<a name="l00671"></a>00671         <span class="keyword">static</span> <span class="keywordtype">int</span> req_timeout,         <span class="comment">// the time-out value in seconds for client send request</span>
+<a name="l00672"></a>00672                                   accept4_flags;        <span class="comment">// If flags is 0, then accept4() is the same as accept()</span>
+<a name="l00673"></a>00673 
+<a name="l00674"></a>00674         <span class="keywordtype">bool</span> connect();
+<a name="l00675"></a>00675         <span class="keywordtype">void</span> setRemote();
+<a name="l00676"></a>00676         <span class="keywordtype">bool</span> bind(<a class="code" href="classSocketAddress.html">SocketAddress</a>&amp; cLocal);
+<a name="l00677"></a>00677         <span class="keywordtype">bool</span> setServer(<a class="code" href="classSocketAddress.html">SocketAddress</a>&amp; cLocal, <span class="keywordtype">int</span> iBackLog);
 <a name="l00678"></a>00678 
-<a name="l00679"></a>00679         <span class="keywordtype">bool</span> connect();
-<a name="l00680"></a>00680         <span class="keywordtype">bool</span> bind(<a class="code" href="classSocketAddress.html">SocketAddress</a>&amp; cLocal);
-<a name="l00681"></a>00681         <span class="keywordtype">bool</span> setServer(<a class="code" href="classSocketAddress.html">SocketAddress</a>&amp; cLocal, <span class="keywordtype">int</span> iBackLog);
-<a name="l00682"></a>00682 
-<a name="l00688"></a>00688         <span class="keywordtype">void</span> setLocal();
+<a name="l00684"></a>00684         <span class="keywordtype">void</span> setLocal();
+<a name="l00685"></a>00685 
+<a name="l00686"></a>00686 <span class="keyword">private</span>:
+<a name="l00687"></a>00687         <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>(<span class="keyword">const</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>&amp;)            {}
+<a name="l00688"></a>00688         <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
 <a name="l00689"></a>00689 
-<a name="l00690"></a>00690 <span class="keyword">private</span>:
-<a name="l00691"></a>00691         <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>(<span class="keyword">const</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>&amp;)            {}
-<a name="l00692"></a>00692         <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00693"></a>00693 
-<a name="l00694"></a>00694                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="structUSocketExt.html">USocketExt</a>;
-<a name="l00695"></a>00695                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSSHSocket.html">USSHSocket</a>;
-<a name="l00696"></a>00696                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUTCPSocket.html">UTCPSocket</a>;
-<a name="l00697"></a>00697                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSSLSocket.html">USSLSocket</a>;
-<a name="l00698"></a>00698                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUUnixSocket.html">UUnixSocket</a>;
-<a name="l00699"></a>00699                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSmtpClient.html" title="Creates and manages a client connection with a remote SMTP server.">USmtpClient</a>;
-<a name="l00700"></a>00700                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUImapClient.html" title="Creates and manages a client connection with a remote IMAP server.">UImapClient</a>;
-<a name="l00701"></a>00701                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUPop3Client.html" title="Creates and manages a client connection with a remote POP3 server.">UPop3Client</a>;
-<a name="l00702"></a>00702                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUServer__Base.html">UServer_Base</a>;
-<a name="l00703"></a>00703                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSSLFtpClient.html" title="Creates and manages a secure client connection with a remote FTP server.">USSLFtpClient</a>;
-<a name="l00704"></a>00704                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>;
-<a name="l00705"></a>00705         <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt; <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUServer.html" title="Handles incoming connections.">UServer</a>;
-<a name="l00706"></a>00706 };
-<a name="l00707"></a>00707 
-<a name="l00708"></a>00708 <span class="preprocessor">#endif</span>
+<a name="l00690"></a>00690                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="structUSocketExt.html">USocketExt</a>;
+<a name="l00691"></a>00691                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSSHSocket.html">USSHSocket</a>;
+<a name="l00692"></a>00692                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUTCPSocket.html">UTCPSocket</a>;
+<a name="l00693"></a>00693                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSSLSocket.html">USSLSocket</a>;
+<a name="l00694"></a>00694                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUUnixSocket.html">UUnixSocket</a>;
+<a name="l00695"></a>00695                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSmtpClient.html" title="Creates and manages a client connection with a remote SMTP server.">USmtpClient</a>;
+<a name="l00696"></a>00696                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUImapClient.html" title="Creates and manages a client connection with a remote IMAP server.">UImapClient</a>;
+<a name="l00697"></a>00697                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUPop3Client.html" title="Creates and manages a client connection with a remote POP3 server.">UPop3Client</a>;
+<a name="l00698"></a>00698                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUServer__Base.html">UServer_Base</a>;
+<a name="l00699"></a>00699                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUSSLFtpClient.html" title="Creates and manages a secure client connection with a remote FTP server.">USSLFtpClient</a>;
+<a name="l00700"></a>00700                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>;
+<a name="l00701"></a>00701         <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt; <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUServer.html" title="Handles incoming connections.">UServer</a>;
+<a name="l00702"></a>00702 };
+<a name="l00703"></a>00703 
+<a name="l00704"></a>00704 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Jan 15 19:55:49 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 23 17:17:34 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

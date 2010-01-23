@@ -34,6 +34,26 @@ public:
       U_TRACE(5, "Application::~Application()")
       }
 
+   UString loadURI(const char* uri)
+      {
+      U_TRACE(5, "Application::loadURI(%S)", uri)
+
+      /*
+      if (xmlNoNetExists(uri))
+         {
+         xmlCurrentExternalEntityLoader(URL, ID, ctxt));
+         }
+      else
+         {
+         char* canonicFilename = (char*) xmlCanonicPath((const xmlChar*)uri);
+
+         ret = xmlCurrentExternalEntityLoader(canonicFilename, ID, ctxt);
+
+         xmlFree(canonicFilename);
+         }
+      */
+      }
+
    bool processReference(xmlNodePtr ref)
       {
       U_TRACE(5, "Application::processReference(%p)", ref)

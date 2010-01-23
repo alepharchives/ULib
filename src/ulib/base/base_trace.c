@@ -22,7 +22,7 @@
 #include <stddef.h>
 
 int      u_trace_fd;
-char     u_trace_tab[100]; /* 100 max indent */
+char     u_trace_tab[256]; /* 256 max indent */
 uint32_t u_trace_num_tab;
 
 static int      level_active;
@@ -65,7 +65,7 @@ void u_trace_writev(const struct iovec* iov, int n)
 {
    U_INTERNAL_TRACE("u_trace_writev(%p,%d)", iov, n)
 
-   U_INTERNAL_ASSERT_MINOR(u_trace_num_tab,100)
+   U_INTERNAL_ASSERT_MINOR(u_trace_num_tab,sizeof(u_trace_tab))
 
    if (file_size == 0) writev(u_trace_fd, iov, n);
    else
@@ -198,7 +198,7 @@ void u_trace_init(bool force, bool info, bool offset)
       level_active = (force ? 0 : -1);
       }
 
-   (void) memset(u_trace_tab, '\t', 100);
+   (void) memset(u_trace_tab, '\t', sizeof(u_trace_tab));
 
    if (level_active >= 0)
       {

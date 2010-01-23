@@ -71,8 +71,6 @@ bool URPC::readTokenVector(USocket* s, const char* token, UString& buffer, UVect
 
    U_ASSERT(buffer.empty() == true)
 
-   USocketExt::size_message  = 0; // manage buffered read (pipelining)
-
    uint32_t i    = 0,
             argc = readTokenInt(s, token, buffer);
 

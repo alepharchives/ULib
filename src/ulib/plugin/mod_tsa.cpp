@@ -4,7 +4,7 @@
 //    ulib - c++ library
 //
 // = FILENAME
-//    mod_tsa.cpp - this is a plugin tsa for UServer
+//    mod_tsa.cpp - this is a plugin tsa for userver
 //
 // = AUTHOR
 //    Stefano Casazza
@@ -13,6 +13,7 @@
 
 #include <ulib/command.h>
 #include <ulib/file_config.h>
+#include <ulib/utility/uhttp.h>
 #include <ulib/plugin/mod_tsa.h>
 #include <ulib/net/server/server.h>
 
@@ -71,7 +72,7 @@ int UTsaPlugIn::handlerRequest()
       goto end;
       }
 
-   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, "application/timestamp-reply", false, *UClientImage_Base::wbuffer);
+   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, "application/timestamp-reply", *UClientImage_Base::wbuffer);
 
 end:
 

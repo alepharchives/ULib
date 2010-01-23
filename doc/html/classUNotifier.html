@@ -44,7 +44,7 @@ static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>clear</b> ()</
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>erase</b> (<a class="el" href="classUEventFd.html">UEventFd</a> *handler_event, bool flag_reuse)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a389811a79aefd04070db9e91f04ab6"></a><!-- doxytag: member="UNotifier::insert" ref="a9a389811a79aefd04070db9e91f04ab6" args="(UEventFd *handler_event)" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>insert</b> (<a class="el" href="classUEventFd.html">UEventFd</a> *handler_event)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8d9db51d84ea9fbd1d550634c2e68b30"></a><!-- doxytag: member="UNotifier::isHandler" ref="a8d9db51d84ea9fbd1d550634c2e68b30" args="(UEventFd *handler_event)" -->
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2b66bbba01a18ff6c886c81c081df5c4"></a><!-- doxytag: member="UNotifier::isHandler" ref="a2b66bbba01a18ff6c886c81c081df5c4" args="(UEventFd *handler_event)" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isHandler</b> (<a class="el" href="classUEventFd.html">UEventFd</a> *handler_event)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af1993b17281ab215ab50917d9d50675c"></a><!-- doxytag: member="UNotifier::removeBadFd" ref="af1993b17281ab215ab50917d9d50675c" args="()" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>removeBadFd</b> ()</td></tr>
@@ -58,6 +58,8 @@ static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>waitForWrite</b
 static uint32_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>read</b> (int fd, char *buf, int count=U_SINGLE_READ, int timeoutMS=U_INTERNAL_TIMEOUT)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aed03291539f0e3cddceb9c270455d8fb"></a><!-- doxytag: member="UNotifier::write" ref="aed03291539f0e3cddceb9c270455d8fb" args="(int fd, const char *str, int count, int timeoutMS=&#45;1)" -->
 static uint32_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>write</b> (int fd, const char *str, int count, int timeoutMS=-1)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6123530e71c0860e6a4247022e4b07e4"></a><!-- doxytag: member="UNotifier::callForAllEntry" ref="a6123530e71c0860e6a4247022e4b07e4" args="(bPFpv function)" -->
+static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>callForAllEntry</b> (bPFpv function)</td></tr>
 <tr><td colspan="2"><h2>Static Public Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7e95018fe8d0e0c59d376611672ba231"></a><!-- doxytag: member="UNotifier::fd_set_read" ref="a7e95018fe8d0e0c59d376611672ba231" args="" -->
 static fd_set&nbsp;</td><td class="memItemRight" valign="bottom"><b>fd_set_read</b></td></tr>
@@ -72,6 +74,8 @@ static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>fd_read_cnt</b>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a67359b9523ecf51c811bdb60c184bdaf"></a><!-- doxytag: member="UNotifier::fd_write_cnt" ref="a67359b9523ecf51c811bdb60c184bdaf" args="" -->
 static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>fd_write_cnt</b></td></tr>
 <tr><td colspan="2"><h2>Static Protected Member Functions</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a54692a16f85e9db21c403eb27d03ad0d"></a><!-- doxytag: member="UNotifier::preallocate" ref="a54692a16f85e9db21c403eb27d03ad0d" args="(uint32_t n)" -->
+static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>preallocate</b> (uint32_t n)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5691b463a7c55b3bd3dabf91b6f5fc44"></a><!-- doxytag: member="UNotifier::waitForEvent" ref="a5691b463a7c55b3bd3dabf91b6f5fc44" args="(int fd_max, fd_set *read_set, fd_set *write_set, UEventTime *timeout)" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>waitForEvent</b> (int fd_max, fd_set *read_set, fd_set *write_set, <a class="el" href="classUEventTime.html">UEventTime</a> *timeout)</td></tr>
 <tr><td colspan="2"><h2>Protected Attributes</h2></td></tr>
@@ -99,7 +103,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 <li>src/ulib/notifier.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Jan 15 19:55:52 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 23 17:17:37 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

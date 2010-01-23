@@ -175,7 +175,7 @@ public:
              get_response() == false) break;
          }
 
-      if (pcClientSocket->state() != USocket::BROKEN)
+      if (pcClientSocket->isBroken() == false)
          {
          LOG_MSGb("closing client connection to");
          }

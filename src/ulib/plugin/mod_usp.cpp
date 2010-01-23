@@ -4,7 +4,7 @@
 //    ulib - c++ library
 //
 // = FILENAME
-//    mod_usp.cpp - this is a plugin usp (ULib Servlet Page) for UServer
+//    mod_usp.cpp - this is a plugin usp (ULib Servlet Page) for userver
 //
 // = AUTHOR
 //    Stefano Casazza
@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/file_config.h>
+#include <ulib/utility/uhttp.h>
 #include <ulib/plugin/mod_usp.h>
 #include <ulib/container/vector.h>
 #include <ulib/net/server/server.h>
@@ -71,31 +72,30 @@ int UUspPlugIn::handlerInit()
    if (UFile::chdir("usp", true))
       {
       UString name;
-      UDynamic* page;
       const char* ptr;
       UVector<UString> vec;
       uint32_t n = UFile::listContentOf(vec);
 
       for (uint32_t i = 0; i < n; ++i)
          {
-         name = vec[i];
-         ptr  = name.c_str();
-         page = U_NEW(UDynamic);
+         name      = vec[i];
+         ptr       = name.c_str();
+         last_page = U_NEW(UDynamic);
 
-         if (page->load(ptr) == false) delete page;
+         if (last_page->load(ptr) == false) delete last_page;
          else
             {
-            UString key(100U);
+            last_key.setBuffer(100U);
 
-            key.snprintf("%.*s.usp", name.size() - U_LEN_SUFFIX, ptr);
+            last_key.snprintf("%.*s.usp", name.size() - U_LEN_SUFFIX, ptr);
 
-            u_canonicalize_pathname(key.data());
+            u_canonicalize_pathname(last_key.data());
 
-            key.size_adjust();
+            last_key.size_adjust();
 
-            pages.insert(key, page);
+            pages.insert(last_key, last_page);
 
-            U_SRV_LOG_VAR("found: usp/%s, USP service registered (URI): /usp/%.*s", ptr+2, U_STRING_TO_TRACE(key));
+            U_SRV_LOG_VAR("found: usp/%s, USP service registered (URI): /usp/%.*s", ptr+2, U_STRING_TO_TRACE(last_key));
             }
          }
 
@@ -132,18 +132,23 @@ int UUspPlugIn::handlerRequest()
 
    // check if dynamic page (ULib Servlet Page)
 
-   UDynamic* page = pages[UString(U_HTTP_URI_TO_PARAM_SHIFT(U_CONSTANT_SIZE("/usp/")))];
-
-   if (page == 0)
+   if (last_key.equal(U_HTTP_URI_TO_PARAM_SHIFT(U_CONSTANT_SIZE("/usp/"))) == false)
       {
-      U_SRV_LOG_VAR("USP request '%.*s' NOT available...", U_HTTP_URI_TO_TRACE);
+      (void) last_key.replace(U_HTTP_URI_TO_PARAM_SHIFT(U_CONSTANT_SIZE("/usp/")));
 
-      UHTTP::setHTTPServiceUnavailable(); // set Service Unavailable error response...
+      last_page = pages[last_key];
 
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      if (last_page == 0)
+         {
+         U_SRV_LOG_VAR("USP request '%.*s' NOT available...", U_HTTP_URI_TO_TRACE);
+
+         UHTTP::setHTTPServiceUnavailable(); // set Service Unavailable error response...
+
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         }
       }
 
-   runDynamicPage = (vPFpv)(*page)["runDynamicPage"];
+   runDynamicPage = (vPFpv)(*last_page)["runDynamicPage"];
 
    // retrieve information on specific HTML form elements
    // (such as checkboxes, radio buttons, and text fields), or uploaded files
@@ -179,7 +184,9 @@ int UUspPlugIn::handlerRequest()
 
 const char* UUspPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "pages (UHashMap<UDynamic*> " << (void*)&pages  << ')';
+   *UObjectIO::os << "last_page                     " << (void*)last_page << '\n'
+                  << "last_key (UString             " << (void*)&last_key << ")\n"
+                  << "pages    (UHashMap<UDynamic*> " << (void*)&pages    << ')';
 
    if (reset)
       {

@@ -11,7 +11,7 @@ mkdir -p out err tmp
 #EXEC_ON_EXIT="/utility/stack_dump.sh"
 #WINELOADER=wine
 #VALGRIND=valgrind
-TRUSS="strace -f -s 100"
+TRUSS="strace -t -f -s 100"
 LTRUSS="ltrace -f -S --demangle -n 3"
 #STRACE="$LTRUSS"
 export UTRACE UOBJDUMP USIMERR EXEC_ON_EXIT VALGRIND WINELOADER TRUSS LTRUSS STRACE PID RESULT

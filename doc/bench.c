@@ -77,27 +77,32 @@
 // ----------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-   int   i, j, nbr, best, worse, aver, inc = 10;
+   int   i, j, nbr, best, worse, aver, inc = 10,
+			start		= (argv[2]?atoi(argv[2]):0),
+			to_sleep = (argv[3]?atoi(argv[3]):0);
    char  str[256], buff[10000];
    FILE *f, *fo=fopen("test.txt", "w+b");
 
-   for(i=0; i<=LOOP; i+=inc)
+   for(i=start; i<=LOOP; i+=inc)
    {
-       sprintf(str,
-       "/usr/sbin/ab -n 1000000 -c %u    -t 1"							 // NO Keep-Alives
-//     "/usr/sbin/ab -n 1000000 -c %u -k -t 1"							 // KEEP-ALIVES
-//     " \"http://10.30.1.131/usp/benchmarking.usp?name=stefano\"" // ULib / teepeedee2
-       " \"http://10.30.1.131/100.html\""
-//     " \"http://10.30.1.131/csp?benchmarking\""
-//     " \"http://10.30.1.131/usp/hello_world.usp\""					 // ULib / teepeedee2
-//     " \"http://10.30.1.131/csp?hello\""
-       " > ab.txt", i?i:1);
+       (void) sprintf(str,
+       "/usr/sbin/ab -n 1000000 -c %u    -t 1"				 // NO Keep-Alives
+//     "/usr/sbin/ab -n 1000000 -c %u -k -t 1"				 // KEEP-ALIVES
+//     " \"http://%s/usp/benchmarking.usp?name=stefano\"" // ULib / teepeedee2
+//     " \"http://%s/csp?benchmarking?name=stefano\""
+//     " \"http://%s/100.html\""
+       " \"http://%s/1000.html\""
+//     " \"http://%s/usp/hello_world.usp\""					 // ULib / teepeedee2
+//     " \"http://%s/csp?hello\""
+       " > ab.txt", i?i:1, argv[1]);
 
       for(best=0, aver=0, worse=0xffff0, j=0; j<ITER; j++)
       {
 fault:
          system(str);
-      // sleep(1); // I needs to take a breath after system() calls
+
+         if (to_sleep) sleep(to_sleep); // I needs to take a breath after system() calls
+
          // get the information we need from res.txt
          if(!(f=fopen("ab.txt", "rb")))
          {

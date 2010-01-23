@@ -283,7 +283,7 @@ public:
 
       bool result = (iAddressType   == cOtherAddr.iAddressType) &&
                     (iAddressLength == cOtherAddr.iAddressLength) &&
-                    (memcmp(pcAddress.p, cOtherAddr.pcAddress.p, iAddressLength) == 0);
+                    (U_SYSCALL(memcmp, "%p,%p,%u", pcAddress.p, cOtherAddr.pcAddress.p, iAddressLength) == 0);
 
       U_RETURN(result);
       }
@@ -292,11 +292,9 @@ public:
 
    // ASSEGNAZIONE
 
-   UIPAddress& operator=(const UIPAddress& cOtherAddr)
+   void set(const UIPAddress& cOtherAddr)
       {
-      U_TRACE(1, "UIPAddress::operator=(%p)", &cOtherAddr)
-
-      U_MEMORY_TEST_COPY(cOtherAddr)
+      U_TRACE(1, "UIPAddress::set(%p)", &cOtherAddr)
 
       iAddressType = cOtherAddr.iAddressType;
 
@@ -304,6 +302,24 @@ public:
 
       if ((bHostNameUnresolved   = cOtherAddr.bHostNameUnresolved)   == false) strHostName = cOtherAddr.strHostName;
       if ((bStrAddressUnresolved = cOtherAddr.bStrAddressUnresolved) == false) (void) strcpy(pcStrAddress, cOtherAddr.pcStrAddress);
+      }
+
+   UIPAddress(const UIPAddress& cOtherAddr)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UIPAddress, "%p", &cOtherAddr)
+
+      U_MEMORY_TEST_COPY(cOtherAddr)
+
+      set(cOtherAddr);
+      }
+
+   UIPAddress& operator=(const UIPAddress& cOtherAddr)
+      {
+      U_TRACE(1, "UIPAddress::operator=(%p)", &cOtherAddr)
+
+      U_MEMORY_TEST_COPY(cOtherAddr)
+
+      set(cOtherAddr);
 
       return *this;
       }
@@ -325,8 +341,6 @@ protected:
    void resolveStrAddress();
 
 private:
-   UIPAddress(const UIPAddress&) {}
-
    friend class USocket;
 };
 

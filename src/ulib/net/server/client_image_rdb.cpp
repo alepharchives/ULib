@@ -36,8 +36,6 @@ int URDBClientImage::handlerRead()
    U_INTERNAL_ASSERT_POINTER(rbuffer)
    U_INTERNAL_ASSERT_POINTER(wbuffer)
 
-   pClientImage = this; // NB: we need this because we reuse the same object UClientImage_Base...
-
    reset(); // virtual method
 
    URPC::resetRPCInfo();
@@ -223,7 +221,7 @@ const char* URDBClientImage::dump(bool reset) const
    UClientImage<UTCPSocket>::dump(false);
 
    *UObjectIO::os << '\n'
-                  << "rdb             (URDB             " << (void*)rdb << ')';
+                  << "rdb             (URDB              " << (void*)rdb << ')';
 
    if (reset)
       {

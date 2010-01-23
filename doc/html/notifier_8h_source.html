@@ -100,66 +100,90 @@
 <a name="l00077"></a>00077 
 <a name="l00078"></a>00078         <span class="keyword">static</span> <span class="keywordtype">void</span> clear();
 <a name="l00079"></a>00079 
-<a name="l00080"></a>00080         <span class="keyword">static</span> <span class="keywordtype">void</span>              erase(<a class="code" href="classUEventFd.html">UEventFd</a>* handler_event, <span class="keywordtype">bool</span> flag_reuse);
-<a name="l00081"></a>00081         <span class="keyword">static</span> <span class="keywordtype">void</span>             insert(<a class="code" href="classUEventFd.html">UEventFd</a>* handler_event);
-<a name="l00082"></a>00082         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHandler(<a class="code" href="classUEventFd.html">UEventFd</a>* handler_event);
-<a name="l00083"></a>00083 
-<a name="l00084"></a>00084         <span class="comment">// rimuove i descrittori di file diventati invalidi (possibile con EPIPE)</span>
-<a name="l00085"></a>00085 
-<a name="l00086"></a>00086         <span class="keyword">static</span> <span class="keywordtype">void</span> removeBadFd();
-<a name="l00087"></a>00087 
-<a name="l00088"></a>00088         <span class="comment">// return false if there are no more events registered</span>
-<a name="l00089"></a>00089 
-<a name="l00090"></a>00090         <span class="keyword">static</span> <span class="keywordtype">bool</span> waitForEvent(<a class="code" href="classUEventTime.html">UEventTime</a>* timeout);
+<a name="l00080"></a>00080         <span class="keyword">static</span> <span class="keywordtype">void</span>      erase(<a class="code" href="classUEventFd.html">UEventFd</a>* handler_event, <span class="keywordtype">bool</span> flag_reuse);
+<a name="l00081"></a>00081         <span class="keyword">static</span> <span class="keywordtype">void</span>     insert(<a class="code" href="classUEventFd.html">UEventFd</a>* handler_event);
+<a name="l00082"></a>00082 
+<a name="l00083"></a>00083         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHandler(<a class="code" href="classUEventFd.html">UEventFd</a>* handler_event)
+<a name="l00084"></a>00084                 {
+<a name="l00085"></a>00085                 U_TRACE(0, <span class="stringliteral">&quot;UNotifier::isHandler(%p)&quot;</span>, handler_event)
+<a name="l00086"></a>00086 
+<a name="l00087"></a>00087                 <span class="keywordflow">for</span> (<a class="code" href="classUNotifier.html">UNotifier</a>* item = first; item; item = item-&gt;next)
+<a name="l00088"></a>00088                         {
+<a name="l00089"></a>00089                         <span class="keywordflow">if</span> (item-&gt;handler_event_fd == handler_event) U_RETURN(<span class="keyword">true</span>);
+<a name="l00090"></a>00090                         }
 <a name="l00091"></a>00091 
-<a name="l00092"></a>00092 <span class="preprocessor">#ifdef USE_POLL</span>
-<a name="l00093"></a>00093 <span class="preprocessor"></span>        <span class="keyword">static</span> <span class="keywordtype">void</span> waitForEvent(<span class="keyword">struct</span> pollfd* ufds, <span class="keywordtype">int</span> timeoutMS = -1);
-<a name="l00094"></a>00094 <span class="preprocessor">#endif</span>
-<a name="l00095"></a>00095 <span class="preprocessor"></span>
-<a name="l00096"></a>00096         <span class="comment">// READ - WRITE</span>
-<a name="l00097"></a>00097 
-<a name="l00098"></a>00098         <span class="comment">// param timeoutMS specified the timeout value, in milliseconds.</span>
-<a name="l00099"></a>00099         <span class="comment">// A negative value indicates wait for event with no timeout, i.e. an infinite wait</span>
+<a name="l00092"></a>00092                 U_RETURN(<span class="keyword">false</span>);
+<a name="l00093"></a>00093                 }
+<a name="l00094"></a>00094 
+<a name="l00095"></a>00095         <span class="comment">// rimuove i descrittori di file diventati invalidi (possibile con EPIPE)</span>
+<a name="l00096"></a>00096 
+<a name="l00097"></a>00097         <span class="keyword">static</span> <span class="keywordtype">void</span> removeBadFd();
+<a name="l00098"></a>00098 
+<a name="l00099"></a>00099         <span class="comment">// return false if there are no more events registered</span>
 <a name="l00100"></a>00100 
-<a name="l00101"></a>00101         <span class="keyword">static</span> <span class="keywordtype">int</span> waitForRead( <span class="keywordtype">int</span> fd, <span class="keywordtype">int</span> timeoutMS = -1);
-<a name="l00102"></a>00102         <span class="keyword">static</span> <span class="keywordtype">int</span> waitForWrite(<span class="keywordtype">int</span> fd, <span class="keywordtype">int</span> timeoutMS = -1);
-<a name="l00103"></a>00103 
-<a name="l00104"></a>00104         <span class="keyword">static</span> uint32_t  read(<span class="keywordtype">int</span> fd,       <span class="keywordtype">char</span>* buf, <span class="keywordtype">int</span> count = U_SINGLE_READ, <span class="keywordtype">int</span> timeoutMS = U_INTERNAL_TIMEOUT);
-<a name="l00105"></a>00105         <span class="keyword">static</span> uint32_t write(<span class="keywordtype">int</span> fd, <span class="keyword">const</span> <span class="keywordtype">char</span>* str, <span class="keywordtype">int</span> count,                 <span class="keywordtype">int</span> timeoutMS = -1);
-<a name="l00106"></a>00106 
-<a name="l00107"></a>00107         <span class="comment">// STREAM</span>
+<a name="l00101"></a>00101         <span class="keyword">static</span> <span class="keywordtype">bool</span> waitForEvent(<a class="code" href="classUEventTime.html">UEventTime</a>* timeout);
+<a name="l00102"></a>00102 
+<a name="l00103"></a>00103 <span class="preprocessor">#ifdef USE_POLL</span>
+<a name="l00104"></a>00104 <span class="preprocessor"></span>        <span class="keyword">static</span> <span class="keywordtype">void</span> waitForEvent(<span class="keyword">struct</span> pollfd* ufds, <span class="keywordtype">int</span> timeoutMS = -1);
+<a name="l00105"></a>00105 <span class="preprocessor">#endif</span>
+<a name="l00106"></a>00106 <span class="preprocessor"></span>
+<a name="l00107"></a>00107         <span class="comment">// READ - WRITE</span>
 <a name="l00108"></a>00108 
-<a name="l00109"></a>00109         <span class="keyword">friend</span> U_EXPORT ostream&amp; operator&lt;&lt;(ostream&amp; os, <span class="keyword">const</span> <a class="code" href="classUNotifier.html">UNotifier</a>&amp; n);
-<a name="l00110"></a>00110 
-<a name="l00111"></a>00111 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00112"></a>00112 <span class="preprocessor"></span>        <span class="keyword">static</span> <span class="keywordtype">void</span> printInfo(ostream&amp; os);
-<a name="l00113"></a>00113         <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00114"></a>00114 <span class="preprocessor">#endif</span>
-<a name="l00115"></a>00115 <span class="preprocessor"></span>
-<a name="l00116"></a>00116 <span class="keyword">protected</span>:
-<a name="l00117"></a>00117         <a class="code" href="classUNotifier.html">UNotifier</a>* next;
-<a name="l00118"></a>00118         <a class="code" href="classUEventFd.html">UEventFd</a>* handler_event_fd;
+<a name="l00109"></a>00109         <span class="comment">// param timeoutMS specified the timeout value, in milliseconds.</span>
+<a name="l00110"></a>00110         <span class="comment">// A negative value indicates wait for event with no timeout, i.e. an infinite wait</span>
+<a name="l00111"></a>00111 
+<a name="l00112"></a>00112         <span class="keyword">static</span> <span class="keywordtype">int</span> waitForRead( <span class="keywordtype">int</span> fd, <span class="keywordtype">int</span> timeoutMS = -1);
+<a name="l00113"></a>00113         <span class="keyword">static</span> <span class="keywordtype">int</span> waitForWrite(<span class="keywordtype">int</span> fd, <span class="keywordtype">int</span> timeoutMS = -1);
+<a name="l00114"></a>00114 
+<a name="l00115"></a>00115         <span class="keyword">static</span> uint32_t  read(<span class="keywordtype">int</span> fd,       <span class="keywordtype">char</span>* buf, <span class="keywordtype">int</span> count = U_SINGLE_READ, <span class="keywordtype">int</span> timeoutMS = U_INTERNAL_TIMEOUT);
+<a name="l00116"></a>00116         <span class="keyword">static</span> uint32_t write(<span class="keywordtype">int</span> fd, <span class="keyword">const</span> <span class="keywordtype">char</span>* str, <span class="keywordtype">int</span> count,                 <span class="keywordtype">int</span> timeoutMS = -1);
+<a name="l00117"></a>00117 
+<a name="l00118"></a>00118         <span class="comment">// Call function for all entry</span>
 <a name="l00119"></a>00119 
-<a name="l00120"></a>00120         <span class="keyword">static</span> <a class="code" href="classUNotifier.html">UNotifier</a>* pool;
-<a name="l00121"></a>00121         <span class="keyword">static</span> <a class="code" href="classUNotifier.html">UNotifier</a>* first;
-<a name="l00122"></a>00122         <span class="keyword">static</span> <span class="keywordtype">bool</span> exit_loop_wait_event_for_signal;
+<a name="l00120"></a>00120         <span class="keyword">static</span> <span class="keywordtype">void</span> callForAllEntry(bPFpv function);
+<a name="l00121"></a>00121 
+<a name="l00122"></a>00122         <span class="comment">// STREAM</span>
 <a name="l00123"></a>00123 
-<a name="l00124"></a>00124         <span class="keyword">static</span> <span class="keywordtype">void</span> waitForEvent(<span class="keywordtype">int</span> fd_max, fd_set* read_set, fd_set* write_set, <a class="code" href="classUEventTime.html">UEventTime</a>* timeout);
+<a name="l00124"></a>00124         <span class="keyword">friend</span> U_EXPORT ostream&amp; operator&lt;&lt;(ostream&amp; os, <span class="keyword">const</span> <a class="code" href="classUNotifier.html">UNotifier</a>&amp; n);
 <a name="l00125"></a>00125 
-<a name="l00126"></a>00126 <span class="keyword">private</span>:
-<a name="l00127"></a>00127                          <span class="keywordtype">void</span> outputEntry(ostream&amp; os) <span class="keyword">const</span> U_NO_EXPORT;
-<a name="l00128"></a>00128         <span class="keyword">static</span> <span class="keywordtype">bool</span> handlerResult(<span class="keywordtype">int</span>&amp; n, <a class="code" href="classUNotifier.html">UNotifier</a>* i, <a class="code" href="classUNotifier.html">UNotifier</a>** ptr, <a class="code" href="classUEventFd.html">UEventFd</a>* handler_event, <span class="keywordtype">bool</span> bread, <span class="keywordtype">bool</span> bwrite, <span class="keywordtype">bool</span> flag_handler_call) U_NO_EXPORT; 
-<a name="l00129"></a>00129 
-<a name="l00130"></a>00130         <span class="keyword">friend</span> <span class="keyword">class            </span><a class="code" href="classUServer__Base.html">UServer_Base</a>;
-<a name="l00131"></a>00131         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>;
-<a name="l00132"></a>00132 
-<a name="l00133"></a>00133         <a class="code" href="classUNotifier.html">UNotifier</a>(<span class="keyword">const</span> <a class="code" href="classUNotifier.html">UNotifier</a>&amp;)            {}
-<a name="l00134"></a>00134         <a class="code" href="classUNotifier.html">UNotifier</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUNotifier.html">UNotifier</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00135"></a>00135 };
-<a name="l00136"></a>00136 
-<a name="l00137"></a>00137 <span class="preprocessor">#endif</span>
+<a name="l00126"></a>00126 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00127"></a>00127 <span class="preprocessor"></span>        <span class="keyword">static</span> <span class="keywordtype">void</span> printInfo(ostream&amp; os);
+<a name="l00128"></a>00128 
+<a name="l00129"></a>00129         <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00130"></a>00130 <span class="preprocessor">#endif</span>
+<a name="l00131"></a>00131 <span class="preprocessor"></span>
+<a name="l00132"></a>00132 <span class="keyword">protected</span>:
+<a name="l00133"></a>00133         <a class="code" href="classUNotifier.html">UNotifier</a>* next;
+<a name="l00134"></a>00134         <a class="code" href="classUEventFd.html">UEventFd</a>* handler_event_fd;
+<a name="l00135"></a>00135 
+<a name="l00136"></a>00136         <span class="keyword">static</span> <a class="code" href="classUNotifier.html">UNotifier</a>* pool;
+<a name="l00137"></a>00137         <span class="keyword">static</span> <a class="code" href="classUNotifier.html">UNotifier</a>* first;
+<a name="l00138"></a>00138         <span class="keyword">static</span> <span class="keywordtype">bool</span> exit_loop_wait_event_for_signal;
+<a name="l00139"></a>00139 
+<a name="l00140"></a>00140         <span class="keyword">static</span> <span class="keywordtype">void</span> preallocate(uint32_t n);
+<a name="l00141"></a>00141         <span class="keyword">static</span> <span class="keywordtype">void</span> waitForEvent(<span class="keywordtype">int</span> fd_max, fd_set* read_set, fd_set* write_set, <a class="code" href="classUEventTime.html">UEventTime</a>* timeout);
+<a name="l00142"></a>00142 
+<a name="l00143"></a>00143 <span class="keyword">private</span>:
+<a name="l00144"></a>00144         <span class="keywordtype">void</span> outputEntry(ostream&amp; os) <span class="keyword">const</span> U_NO_EXPORT;
+<a name="l00145"></a>00145 
+<a name="l00146"></a>00146         <span class="keyword">static</span> <span class="keywordtype">void</span>     eraseHandler(<a class="code" href="classUEventFd.html">UEventFd</a>* handler_event) U_NO_EXPORT;
+<a name="l00147"></a>00147         <span class="keyword">static</span> <span class="keywordtype">void</span>     eraseItem(<a class="code" href="classUNotifier.html">UNotifier</a>* item, <span class="keywordtype">bool</span> flag_reuse) U_NO_EXPORT;
+<a name="l00148"></a>00148 
+<a name="l00149"></a>00149         <span class="keyword">static</span> <span class="keywordtype">bool</span> handlerResult(<span class="keywordtype">int</span>&amp; n, <a class="code" href="classUNotifier.html">UNotifier</a>*  i,
+<a name="l00150"></a>00150                                                                                                  <a class="code" href="classUNotifier.html">UNotifier</a>** ptr,
+<a name="l00151"></a>00151                                                                                                  <a class="code" href="classUEventFd.html">UEventFd</a>* handler_event,
+<a name="l00152"></a>00152                                                                                                  <span class="keywordtype">bool</span> bread, <span class="keywordtype">bool</span> bwrite, <span class="keywordtype">bool</span> flag_handler_call) U_NO_EXPORT; 
+<a name="l00153"></a>00153 
+<a name="l00154"></a>00154         <span class="keyword">friend</span> <span class="keyword">class            </span><a class="code" href="classUServer__Base.html">UServer_Base</a>;
+<a name="l00155"></a>00155         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>;
+<a name="l00156"></a>00156 
+<a name="l00157"></a>00157         <a class="code" href="classUNotifier.html">UNotifier</a>(<span class="keyword">const</span> <a class="code" href="classUNotifier.html">UNotifier</a>&amp;)            {}
+<a name="l00158"></a>00158         <a class="code" href="classUNotifier.html">UNotifier</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUNotifier.html">UNotifier</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00159"></a>00159 };
+<a name="l00160"></a>00160 
+<a name="l00161"></a>00161 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Jan 15 19:55:49 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 23 17:17:34 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

@@ -93,10 +93,6 @@ static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isClassic</b> 
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isSerialize</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1e2f842dff774ec1e3fb2dfcba12de55"></a><!-- doxytag: member="UServer_Base::setProcessManager" ref="a1e2f842dff774ec1e3fb2dfcba12de55" args="()" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setProcessManager</b> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa827a958b62265af77b390a624da3d30"></a><!-- doxytag: member="UServer_Base::isParent" ref="aa827a958b62265af77b390a624da3d30" args="()" -->
-static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isParent</b> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab2cbf42dbeece0c1328cb31f6be00367"></a><!-- doxytag: member="UServer_Base::isChild" ref="ab2cbf42dbeece0c1328cb31f6be00367" args="()" -->
-static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isChild</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a60d9df12ae3e8037173ba5da32f3b456"></a><!-- doxytag: member="UServer_Base::sendSigTERM" ref="a60d9df12ae3e8037173ba5da32f3b456" args="()" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>sendSigTERM</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7699fcd2f4a2b9222117a36735a2b4ea"></a><!-- doxytag: member="UServer_Base::isLog" ref="a7699fcd2f4a2b9222117a36735a2b4ea" args="()" -->
@@ -107,8 +103,6 @@ static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>openLog</b> (c
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>logCommandMsgError</b> (const char *cmd)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aec0e2911ff64f03b43b39ee41a783dc4"></a><!-- doxytag: member="UServer_Base::loadConfigCommand" ref="aec0e2911ff64f03b43b39ee41a783dc4" args="(UFileConfig &amp;cfg, bool bset)" -->
 static <a class="el" href="classUCommand.html">UCommand</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>loadConfigCommand</b> (<a class="el" href="classUFileConfig.html">UFileConfig</a> &amp;cfg, bool bset)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a07dcda9e83a69f7dd3c02da5b54d2c54"></a><!-- doxytag: member="UServer_Base::getTimeIfNeeded" ref="a07dcda9e83a69f7dd3c02da5b54d2c54" args="()" -->
-static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>getTimeIfNeeded</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a563f67a5e2531eb17b42655cbb559ab6"></a><!-- doxytag: member="UServer_Base::isClientConnect" ref="a563f67a5e2531eb17b42655cbb559ab6" args="()" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isClientConnect</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3f35e4dc1247c5f10d2d37246c30957b"></a><!-- doxytag: member="UServer_Base::getMaxKeepAlive" ref="a3f35e4dc1247c5f10d2d37246c30957b" args="()" -->
@@ -231,12 +225,14 @@ virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerSignal
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5dc9b87f9320cfffa692d780472e7fa3"></a><!-- doxytag: member="UServer_Base::newClientImage" ref="a5dc9b87f9320cfffa692d780472e7fa3" args="()=0" -->
 virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><b>newClientImage</b> ()=0</td></tr>
 <tr><td colspan="2"><h2>Static Protected Member Functions</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a20cd9ce018413f0ee1518c3f3a4fff54"></a><!-- doxytag: member="UServer_Base::getNumConnection" ref="a20cd9ce018413f0ee1518c3f3a4fff54" args="()" -->
+static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getNumConnection</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3868610f993913f4e67b1d15006f7212"></a><!-- doxytag: member="UServer_Base::handlerNewConnection" ref="a3868610f993913f4e67b1d15006f7212" args="()" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerNewConnection</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afed1ad4733dc868d56d663ab73a5ae14"></a><!-- doxytag: member="UServer_Base::handlerCloseConnection" ref="afed1ad4733dc868d56d663ab73a5ae14" args="()" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerCloseConnection</b> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a20cd9ce018413f0ee1518c3f3a4fff54"></a><!-- doxytag: member="UServer_Base::getNumConnection" ref="a20cd9ce018413f0ee1518c3f3a4fff54" args="()" -->
-static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getNumConnection</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8a221b7a71a1e4f3d023bd8a99c9e198"></a><!-- doxytag: member="UServer_Base::handlerTimeoutConnection" ref="a8a221b7a71a1e4f3d023bd8a99c9e198" args="(void *value)" -->
+static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerTimeoutConnection</b> (void *value)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a81ef7931106b6b99e2023c484914186d"></a><!-- doxytag: member="UServer_Base::plugins_handlerInit" ref="a81ef7931106b6b99e2023c484914186d" args="()" -->
 static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>plugins_handlerInit</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a55583658c1a4b3c9a15fb4c9a80fe56f"></a><!-- doxytag: member="UServer_Base::plugins_handlerRead" ref="a55583658c1a4b3c9a15fb4c9a80fe56f" args="()" -->
@@ -337,7 +333,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/net/server/server.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Jan 15 19:55:53 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 23 17:17:38 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

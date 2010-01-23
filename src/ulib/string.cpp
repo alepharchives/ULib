@@ -85,6 +85,15 @@ UStringRep::UStringRep(const char* t)
    set(strlen(t), 0, t);
 }
 
+UStringRep::UStringRep(const char* t, uint32_t tlen)
+{
+   U_TRACE(0, "UStringRep::UStringRep(%.*S,%u)", tlen, t, tlen)
+
+   U_INTERNAL_ASSERT_POINTER(t)
+
+   set(tlen, 0, t);
+}
+
 UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* ptr)
 {
    U_TRACE(1, "UStringRep::create(%u,%u,%p)", length, capacity, ptr)
@@ -951,7 +960,7 @@ uint32_t UString::rfind(const char* s, uint32_t pos, uint32_t n) const
       const char* str = rep->str;
 
       do {
-         if (memcmp(str + pos, s, n) == 0) U_RETURN(pos);
+         if (U_SYSCALL(memcmp, "%p,%p,%u", str + pos, s, n) == 0) U_RETURN(pos);
          }
       while (pos-- > 0);
       }

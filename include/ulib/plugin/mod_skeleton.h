@@ -64,8 +64,8 @@ public:
    virtual int handlerReset();
 
 private:
-   USkeletonPlugIn(const USkeletonPlugIn&)            {}
-   USkeletonPlugIn& operator=(const USkeletonPlugIn&) { return *this; }
+   USkeletonPlugIn(const USkeletonPlugIn&) : UServerPlugIn() {}
+   USkeletonPlugIn& operator=(const USkeletonPlugIn&)        { return *this; }
 };
 
 #endif

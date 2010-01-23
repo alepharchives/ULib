@@ -322,7 +322,10 @@ bool UClient_Base::readResponse()
 
    clearData();
 
-   if (UHTTP::readHTTP(socket, buffer, response)) // read HTTP message data
+   // read HTTP message data
+
+   if (UHTTP::readHTTPHeader(socket, buffer) &&
+       UHTTP::readHTTPBody(  socket, buffer, response))
       {
       if (log) logResponse(buffer);
 

@@ -128,7 +128,7 @@ bool UFtpClient::login(const char* user, const char* passwd)
 
    if (response == FTP_USER_LOGGED_IN)
       {
-      USocket::state() = USocket::LOGIN;
+      USocket::iState = USocket::LOGIN;
 
       U_RETURN(true);
       }

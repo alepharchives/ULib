@@ -14,6 +14,7 @@
 #include <ulib/date.h>
 #include <ulib/file_config.h>
 #include <ulib/utility/des3.h>
+#include <ulib/utility/uhttp.h>
 #include <ulib/utility/base64.h>
 #include <ulib/utility/escape.h>
 #include <ulib/net/ipt_ACCOUNT.h>
@@ -608,7 +609,7 @@ UModNoCatPeer* UNoCatPlugIn::creatNewPeer(const char* peer_ip)
 
    UModNoCatPeer* peer = U_NEW(UModNoCatPeer(peer_ip));
 
-   *((UIPAddress*)peer) = UClientImage_Base::pClientImage->clientAddress;
+   *((UIPAddress*)peer) = UClientImage_Base::remoteIPAddress();
 
    if (peer->mac.empty() && strncmp(peer_ip, gateway.data(), strlen(peer_ip)) == 0) peer->mac = UServer_Base::getMacAddress(vfwopt[5].data()); // extdev
    if (peer->mac.empty())                                                           peer->mac = U_STRING_FROM_CONSTANT("00:00:00:00:00:00");
@@ -862,14 +863,16 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo()
       return;
       }
 
+   UHTTP::http_info.is_connection_close = U_YES;
+
    if (isPingAsyncPending())
       {
-      *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_NO_CONTENT, 0, true, UString::getStringNull());
+      *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_NO_CONTENT, 0, UString::getStringNull());
 
       return;
       }
 
-   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_NOT_MODIFIED, 0, true, UString::getStringNull());
+   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_NOT_MODIFIED, 0, UString::getStringNull());
 }
 
 UModNoCatPeer* UNoCatPlugIn::getPeerFromMAC(const UString& mac)
@@ -1239,7 +1242,7 @@ int UNoCatPlugIn::handlerRequest()
    U_INTERNAL_DUMP("host = %.*S gateway = %.*S access_point = %.*S peer_ip = %S auth_ip = %.*S",
                      U_STRING_TO_TRACE(host), U_STRING_TO_TRACE(gateway), U_STRING_TO_TRACE(access_point), peer_ip, U_STRING_TO_TRACE(auth_ip))
 
-   UServer_Base::getTimeIfNeeded();
+   UHTTP::getTimeIfNeeded();
 
    // NB: check for request from AUTH
 

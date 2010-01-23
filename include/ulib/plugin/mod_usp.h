@@ -101,6 +101,8 @@ public:
 #endif
 
 protected:
+   UString last_key;
+   UDynamic* last_page;
    UHashMap<UDynamic*> pages;
 
    static void* argument;

@@ -15,8 +15,8 @@ rm -f PIAZZE.log err/PIAZZE.err \
 		$DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* \
 		/tmp/processCGIRequest.err
 
- UTRACE="0 10M 0"
- UOBJDUMP="0 100k 10"
+#UTRACE="0 10M 0"
+#UOBJDUMP="0 100k 10"
 #USIMERR="error.accept"
  export UTRACE UOBJDUMP USIMERR
 
@@ -25,7 +25,7 @@ DIR_CMD="../../examples/userver"
 #ifconfig eth0:220 192.168.220.102 up					 2>/dev/null
 #ip route add 192.168.220.0/24 via 192.168.220.254  2>/dev/null
 
-#STRACE=$TRUSS
+ STRACE=$TRUSS
 #start_prg_background userver_tcp -c PIAZZE.cfg
  start_prg_background userver_ssl -c PIAZZE.cfg
 

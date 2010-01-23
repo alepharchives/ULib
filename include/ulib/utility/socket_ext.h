@@ -37,8 +37,10 @@ struct U_EXPORT USocketExt {
    // manage buffered read
 
    static int pcount;
-   static char* pbuffer;
    static uint32_t size_message;
+#ifdef DEBUG
+   static char* pbuffer;
+#endif
 
    // read while not received count data
 

@@ -4,7 +4,7 @@
 //    ulib - c++ library
 //
 // = FILENAME
-//    mod_proxy.cpp - this is a plugin proxy for server
+//    mod_proxy.cpp - this is a plugin proxy for userver
 //
 // = AUTHOR
 //    Stefano Casazza
@@ -114,7 +114,7 @@ int UProxyPlugIn::handlerRequest()
           command.duplicate();
       environment.duplicate();
 
-      esito = UHTTP::processCGIRequest(pcmd, 0, 0);
+      esito = UHTTP::processCGIRequest(pcmd, 0);
 
       pcmd->reset(command, environment);
 

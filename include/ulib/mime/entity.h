@@ -34,6 +34,7 @@
 // If the content type is 'message'   then the body contains an encapsulated message
 // If the content type is 'multipart' then the body contains one or more body parts
 
+class UHTTP;
 class UMimeMultipart;
 
 class U_EXPORT UMimeEntity {
@@ -57,12 +58,19 @@ public:
 
       endHeader   = item.endHeader;
       startHeader = item.startHeader;
+
       // passaggio di consegne...
+
       header      = item.header;
                     item.header = 0;
       }
 
-   ~UMimeEntity();
+   ~UMimeEntity()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UMimeEntity)
+
+      if (header) delete header;
+      }
 
    // VARIE
 
@@ -221,10 +229,13 @@ protected:
       {
       U_TRACE(0, "UMimeEntity::clear()")
 
-      U_INTERNAL_ASSERT_POINTER(header)
+      if (header)
+         {
+         startHeader = 0;
 
-      delete header;
-             header = 0;
+         delete header;
+                header = 0;
+         }
       }
 
    bool checkContentType()
@@ -245,6 +256,7 @@ protected:
 private:
    UMimeEntity& operator=(const UMimeEntity&) { return *this; }
 
+   friend class UHTTP;
    friend class UMimeMultipart;
 };
 
@@ -304,14 +316,8 @@ private:
 // If the content type is 'multipart' then the body contains one or more body parts.
 
 class U_EXPORT UMimeMultipart : public UMimeEntity {
-private:
-   void init()
-      {
-      boundary = UMimeHeader::getBoundary(content_type);
-
-      (void) parse();
-      }
 public:
+
    // COSTRUTTORI
 
    UMimeMultipart() : UMimeEntity()
@@ -335,7 +341,10 @@ public:
       init();
       }
 
-   ~UMimeMultipart();
+   ~UMimeMultipart()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UMimeMultipart)
+      }
 
    // VARIE
 
@@ -363,7 +372,7 @@ public:
    UString getPreamble() const { return preamble; } 
    UString getEpilogue() const { return epilogue; }
 
-   bool isDigest() const { return isType(U_CONSTANT_TO_PARAM("digest")); }
+   bool isDigest() const { return UMimeEntity::isType(U_CONSTANT_TO_PARAM("digest")); }
 
    // manage parts
 
@@ -390,6 +399,15 @@ protected:
    UString boundary, preamble, epilogue;
    UVector<UMimeEntity*> bodypart;
    bool isFinal;
+
+   void init()
+      {
+      U_TRACE(0, "UMimeMultipart::init()")
+
+      boundary = UMimeHeader::getBoundary(content_type);
+
+      (void) parse();
+      }
 
                  bool findBoundary(uint32_t pos) U_NO_EXPORT;
    static inline bool isOnlyWhiteSpaceOrDashesUntilEndOfLine(const char* current, const char* end) U_NO_EXPORT;

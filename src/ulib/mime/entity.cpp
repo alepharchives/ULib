@@ -37,13 +37,6 @@ UMimeEntity::UMimeEntity(const UString& _data, uint32_t _startHeader) : data(_da
    if (parse() && body.empty() == false) decodeBody();
 }
 
-UMimeEntity::~UMimeEntity()
-{
-   U_TRACE_UNREGISTER_OBJECT(0, UMimeEntity)
-
-   if (header) delete header;
-}
-
 bool UMimeEntity::isXML() const                { return UMimeHeader::isXML(content_type); }
 bool UMimeEntity::isText() const               { return UMimeHeader::isText(content_type); }
 bool UMimeEntity::isPKCS7() const              { return UMimeHeader::isPKCS7(content_type); }
@@ -190,11 +183,6 @@ bool UMimeEntity::readBody(USocket* socket)
    if (result && checkContentType()) decodeBody();
 
    U_RETURN(result);
-}
-
-UMimeMultipart::~UMimeMultipart()
-{
-   U_TRACE_UNREGISTER_OBJECT(0, UMimeMultipart)
 }
 
 // checks whether [current,end[ matches -*[\r\t ]*(\n|$)

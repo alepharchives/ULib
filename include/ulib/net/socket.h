@@ -127,8 +127,7 @@ public:
       if (isOpen()) USocket::closesocket();
       }
 
-   int& state()             { return iState; }
-
+   int  getFd() const       { return  iSockDesc; }
    bool isOpen() const      { return (iSockDesc != -1); }
    bool isClosed() const    { return (iSockDesc == -1); }
    bool isConnected() const { return (iState >= CONNECT); }
@@ -185,8 +184,6 @@ public:
 
       U_RETURN(isOpen());
       }
-
-   int getFd() const { return iSockDesc; }
 
    void close()
       {
@@ -285,16 +282,6 @@ public:
    Get details of the IP address and port number bound to the local socket
    */
 
-   void setLocal(const UIPAddress& addr)
-      {
-      U_TRACE(0, "USocket::setLocal(%p)", &addr)
-
-      bLocalSet     = true;
-      cLocalAddress = addr;
-      }
-
-   bool isLocalSet() const { return bLocalSet; }
-
    int localPortNumber()
       {
       U_TRACE(0, "USocket::localPortNumber()")
@@ -329,6 +316,16 @@ public:
 
       U_RETURN(address);
       }
+
+   void setLocal(const UIPAddress& addr)
+      {
+      U_TRACE(0, "USocket::setLocal(%p)", &addr)
+
+      bLocalSet     = true;
+      cLocalAddress = addr;
+      }
+
+   bool isLocalSet() const { return bLocalSet; }
 
    /**
    Get details of the IP address and port number bound to the remote socket
@@ -482,8 +479,6 @@ public:
 
    @param timeoutMS the specified timeout value, in milliseconds. A zero value indicates no timeout, i.e. an infinite wait
    */
-
-   // define SO_RCVTIMEO SO_SNDTIMEO
 
    bool setTimeoutRCV(uint32_t timeoutMS = U_TIMEOUT);
    bool setTimeoutSND(uint32_t timeoutMS = U_TIMEOUT);
@@ -677,6 +672,7 @@ protected:
               accept4_flags;  // If flags is 0, then accept4() is the same as accept()
 
    bool connect();
+   void setRemote();
    bool bind(SocketAddress& cLocal);
    bool setServer(SocketAddress& cLocal, int iBackLog);
 

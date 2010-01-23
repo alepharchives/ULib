@@ -31,18 +31,17 @@ protected:
       {
       U_TRACE(5, "USSLClientImage::handlerRead()")
 
-      pClientImage = this; // NB: we need this because we reuse the same object UClientImage_Base...
-
-      UClientImage_Base::genericReset();
-
-      USocketExt::size_message  = 0; // manage buffered read (pipelining)
+      reset(); // virtual method
 
       int result = (USocketExt::read(socket, *rbuffer) ? U_NOTIFIER_OK
                                                        : U_NOTIFIER_DELETE);
 
       // check if close connection... (read() == 0)
 
-      if (rbuffer->empty() == false && UServer_Base::isLog()) logRequest();
+      if (UClientImage_Base::socket->isClosed()) U_RETURN(U_NOTIFIER_DELETE);
+      if (UClientImage_Base::rbuffer->empty())   U_RETURN(U_NOTIFIER_OK);
+
+      if (UServer_Base::isLog()) UClientImage_Base::logRequest();
 
       if (result == U_NOTIFIER_OK)
          {
@@ -56,8 +55,6 @@ protected:
 
             U_INTERNAL_ASSERT_EQUALS(x509, 0)
 
-            /*
-            */
             if (getSocket()->askForClientCertificate())
                {
                X509* x509 = getSocket()->getPeerCertificate();
@@ -68,7 +65,9 @@ protected:
                }
             }
 
-         USocketExt::size_message = rbuffer->size(); // manage buffered read (pipelining)
+         // manage buffered read (pipelining)
+
+         *wbuffer = rbuffer->substr(0U, (USocketExt::size_message = rbuffer->size()));
 
          result = handlerWrite();
          }

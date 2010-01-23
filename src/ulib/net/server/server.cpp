@@ -245,7 +245,7 @@ UServer_Base::~UServer_Base()
 
 #ifdef HAVE_LIBEVENT
    if (pevent &&
-       isParent())
+       proc->parent())
       {
       UDispatcher::del(pevent);
                 delete pevent;
@@ -265,13 +265,6 @@ UServer_Base::~UServer_Base()
       UPlugIn<void*>::clear();
       }
 #endif
-
-   if (UHTTP::tmpdir)
-      {
-      delete UHTTP::tmpdir;
-      delete UHTTP::qcontent;
-      delete UHTTP::form_name_value;
-      }
 
    if (log)        delete log;
    if (host)       delete host;
@@ -379,6 +372,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
 #ifndef __MINGW32__
    preforked_num_kids = cfg.readLong(*str_PREFORK_CHILD);
+#endif
 
    if (isPreForked())
       {
@@ -386,11 +380,8 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
       U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
 
-      U_SOCKET_FLAGS = -1; // NB: to init...
-
       lock->init((sem_t*)((char*)ptr + sizeof(shared_data)));
       }
-#endif
 
    // write pid on file...
 
@@ -469,7 +460,7 @@ int UServer_Base::loadPlugins(const UString& plugin_dir, UVector<UString>& plugi
 
 // manage plugin handler hooks...
 
-#define U_PLUGIN_HANDLER(xxx)                                                                \
+#  define U_PLUGIN_HANDLER(xxx)                                                              \
                                                                                              \
 int UServer_Base::plugins_handler##xxx()                                                     \
 {                                                                                            \
@@ -655,6 +646,17 @@ void UServer_Base::init()
          }
       }
 
+   if (isPreForked())
+      {
+      U_SOCKET_FLAGS = U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_GETFL, 0);
+
+      U_INTERNAL_DUMP("O_NONBLOCK = %B, U_SOCKET_FLAGS = %B", O_NONBLOCK, U_SOCKET_FLAGS)
+
+#  ifndef HAVE_LIBEVENT
+      UNotifier::preallocate(max_Keep_Alive / preforked_num_kids);
+#  endif
+      }
+
    if (flag_use_tcp_optimization)
       {
       U_ASSERT_EQUALS(name_sock.empty(), true) // no unix socket...
@@ -715,7 +717,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
    // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
    UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)SIG_IGN);
 
-   if (isParent()) sendSigTERM();
+   if (proc->parent()) sendSigTERM();
 }
 
 RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
@@ -724,7 +726,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    U_INTERNAL_ASSERT_POINTER(pthis)
 
-   U_ASSERT(isParent())
+   U_INTERNAL_ASSERT(proc->parent())
 
    U_SRV_LOG_MSG("--- SIGHUP (Interrupt) ---");
 
@@ -816,10 +818,6 @@ void UServer_Base::handlerCloseConnection()
       {
       log->log("client closed connection from %.*s, %s clients still connected\n",
                      U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
-
-      U_INTERNAL_DUMP("fd = %d", UClientImage_Base::pClientImage->UEventFd::fd)
-
-      U_ASSERT(UClientImage_Base::pClientImage->UEventFd::fd == UClientImage_Base::pClientImage->logbuf->strtol())
       }
 }
 
@@ -880,20 +878,19 @@ void UServer_Base::handlerNewConnection()
       {
       U_INTERNAL_ASSERT_POINTER(proc)
 
-      if (proc->fork())
+      if (proc->fork() &&
+          proc->parent())
          {
-         if (proc->child())
-            {
-            if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
-            }
-         else
-            {
-            UClientImage_Base::socket->close();
+         UClientImage_Base::socket->close();
 
-            (void) UProcess::waitpid(); // per evitare piu' di 1 zombie...
+         (void) UProcess::waitpid(); // per evitare piu' di 1 zombie...
 
-            return;
-            }
+         return;
+         }
+
+      if (proc->child())
+         {
+         if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
          }
       }
 
@@ -912,6 +909,23 @@ void UServer_Base::handlerNewConnection()
       }
 
    UClientImage_Base::run();
+}
+
+bool UServer_Base::handlerTimeoutConnection(void* cimg)
+{
+   U_TRACE(0, "UServer_Base::handlerTimeoutConnection(%p)", cimg)
+
+   U_INTERNAL_ASSERT_POINTER(cimg)
+
+   // NB: check to avoid to delete himself...
+
+   if (cimg == pthis) U_RETURN(false);
+
+   U_SRV_LOG_TIMEOUT((UClientImage_Base*)cimg);
+
+   ((UClientImage_Base*)cimg)-> resetSocket(USocket::BROKEN);
+
+   U_RETURN(true);
 }
 
 void UServer_Base::run()
@@ -943,6 +957,8 @@ void UServer_Base::run()
 
    setProcessManager();
 
+   U_INTERNAL_ASSERT_POINTER(proc)
+
    // NB: if serialize (0 and >1) we ask to notify for request of connection,
    //     in this way only in the classic model the forked child don't accept new client...
 
@@ -956,30 +972,27 @@ void UServer_Base::run()
    if (isPreForked())
       {
       int pid, status, nkids = 0;
-      UTimeVal to_sleep(0L, 500000L);
-
-      U_INTERNAL_ASSERT_POINTER(proc)
+      UTimeVal to_sleep(0L, 500 * 1000L);
 
       while (flag_loop)
          {
          while (nkids < preforked_num_kids)
             {
-            if (proc->fork())
+            if (proc->fork() &&
+                proc->parent())
                {
-               if (proc->child())
-                  {
-                  if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
+               ++nkids;
 
-                  goto preforked_child;
-                  }
-               else
-                  {
-                  ++nkids;
+               U_INTERNAL_DUMP("up to %u children", nkids)
 
-                  U_INTERNAL_DUMP("up to %u children", nkids)
+               U_SRV_LOG_VAR("started new child (pid %ld), up to %u children", proc->pid(), nkids);
+               }
 
-                  U_SRV_LOG_VAR("started new child (pid %ld), up to %u children", proc->pid(), nkids);
-                  }
+            if (proc->child())
+               {
+               if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
+
+               goto preforked_child;
                }
 
             /* Don't start them too quickly, or we might overwhelm a machine that's having trouble. */
@@ -1052,36 +1065,7 @@ wait:
             break;
             }
 
-         UNotifier* item;
-         UClientImage_Base* cimg;
-
-         while (true)
-            {
-            item = UNotifier::first;
-
-            U_INTERNAL_DUMP("item = %p", item)
-
-            U_INTERNAL_ASSERT_POINTER(item)
-            U_INTERNAL_ASSERT_POINTER(item->handler_event_fd)
-
-            // NB: check to avoid to delete himself...
-
-            if (item->handler_event_fd == pthis && (item = item->next) == 0) break;
-
-            U_INTERNAL_DUMP("item = %p", item)
-
-            U_INTERNAL_ASSERT_POINTER(item)
-
-            cimg = (UClientImage_Base*)(item->handler_event_fd);
-
-            U_INTERNAL_ASSERT_POINTER(cimg)
-
-            U_SRV_LOG_TIMEOUT(cimg);
-
-            cimg->socket->iState = USocket::BROKEN;
-
-            UNotifier::erase(cimg, true);
-            }
+         UNotifier::callForAllEntry(handlerTimeoutConnection);
          }
 #  endif
       }
@@ -1089,13 +1073,17 @@ wait:
    if (flag_loop && isPreForked()) goto wait; // if we are preforked don't go away...
 
 end:
-
-   // NB: needed because only the parent process must close the log...
-
-   if (isLog() && proc)
+   if (isPreForked())
       {
-      if (isChild()) log = 0;
-      else           (void) proc->waitAll();
+      if (proc->parent()) (void) proc->waitAll();
+      else
+         {
+         // NB: needed because only the parent process must close the log...
+
+         U_INTERNAL_ASSERT(proc->child())
+
+         if (isLog()) log = 0;
+         }
       }
 }
 

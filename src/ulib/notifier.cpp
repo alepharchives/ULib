@@ -99,8 +99,11 @@ bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** ptr, UEventFd
 
                // this must be done in some way with libevent...
 
-               delete item->handler_event_fd;
-                      item->handler_event_fd = 0;
+               U_INTERNAL_ASSERT_EQUALS(handler_event, item->handler_event_fd)
+
+               delete handler_event;
+
+               item->handler_event_fd = 0;
 
                U_RETURN(false);
                }
@@ -162,8 +165,11 @@ bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** ptr, UEventFd
 
                // this must be done in some way with libevent...
 
-               delete item->handler_event_fd;
-                      item->handler_event_fd = 0;
+               U_INTERNAL_ASSERT_EQUALS(handler_event, item->handler_event_fd)
+
+               delete handler_event;
+
+               item->handler_event_fd = 0;
 
                U_RETURN(false);
                }
@@ -414,6 +420,85 @@ void UNotifier::insert(UEventFd* handler_event)
    first      = item;
 }
 
+void UNotifier::preallocate(uint32_t n)
+{
+   U_TRACE(0+256, "UNotifier::preallocate(%u)", n)
+
+   UNotifier* item;
+
+   for (uint32_t i = 0; i < n; ++i)
+      {
+      item = U_NEW(UNotifier);
+
+      item->next = pool;
+      pool       = item;
+      }
+
+   U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
+}
+
+U_NO_EXPORT void UNotifier::eraseHandler(UEventFd* handler_event)
+{
+   U_TRACE(0, "UNotifier::eraseHandler(%p)", handler_event)
+
+   if (handler_event->op_mask & R_OK)
+      {
+      U_INTERNAL_ASSERT(FD_ISSET(handler_event->fd, &fd_set_read))
+
+      --fd_read_cnt;
+
+      U_INTERNAL_ASSERT(fd_read_cnt >= 0)
+
+      FD_CLR(handler_event->fd, &fd_set_read);
+
+      U_INTERNAL_DUMP("fd_set_read = %B", __FDS_BITS(&fd_set_read)[0])
+      }
+
+   if (handler_event->op_mask & W_OK)
+      {
+      U_INTERNAL_ASSERT(FD_ISSET(handler_event->fd, &fd_set_write))
+
+      --fd_write_cnt;
+
+      U_INTERNAL_ASSERT(fd_write_cnt >= 0)
+
+      FD_CLR(handler_event->fd, &fd_set_write);
+
+      U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+      }
+
+   if (handler_event->fd == (fd_set_max - 1)) fd_set_max = handler_event->fd;
+}
+
+U_NO_EXPORT void UNotifier::eraseItem(UNotifier* item, bool flag_reuse)
+{
+   U_TRACE(0, "UNotifier::eraseItem(%p,%b)", item, flag_reuse)
+
+   U_INTERNAL_ASSERT_POINTER(item)
+
+   if (flag_reuse)
+      {
+      item->next = pool;
+      pool       = item;
+
+      delete item->handler_event_fd;
+             item->handler_event_fd = 0;
+
+      U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
+      }
+   else
+      {
+      item->next             = 0;
+      item->handler_event_fd = 0;
+
+      delete item;
+      }
+
+#ifdef DEBUG
+   if (first) U_INTERNAL_DUMP("first = %O", U_OBJECT_TO_TRACE(*first))
+#endif
+}
+
 void UNotifier::erase(UEventFd* handler_event, bool flag_reuse)
 {
    U_TRACE(0, "UNotifier::erase(%p,%b)", handler_event, flag_reuse)
@@ -427,53 +512,11 @@ void UNotifier::erase(UEventFd* handler_event, bool flag_reuse)
    do {
       if (item->handler_event_fd == handler_event)
          {
-         if (handler_event->op_mask & R_OK)
-            {
-            U_INTERNAL_ASSERT(FD_ISSET(handler_event->fd, &fd_set_read))
-
-            --fd_read_cnt;
-
-            U_INTERNAL_ASSERT(fd_read_cnt >= 0)
-
-            FD_CLR(handler_event->fd, &fd_set_read);
-
-            U_INTERNAL_DUMP("fd_set_read = %B", __FDS_BITS(&fd_set_read)[0])
-            }
-
-         if (handler_event->op_mask & W_OK)
-            {
-            U_INTERNAL_ASSERT(FD_ISSET(handler_event->fd, &fd_set_write))
-
-            --fd_write_cnt;
-
-            U_INTERNAL_ASSERT(fd_write_cnt >= 0)
-
-            FD_CLR(handler_event->fd, &fd_set_write);
-
-            U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
-            }
-
-         if (handler_event->fd == (fd_set_max - 1)) fd_set_max = handler_event->fd;
+         eraseHandler(handler_event);
 
          *ptr = item->next;
 
-         if (flag_reuse)
-            {
-            item->next = pool;
-            pool       = item;
-
-            delete item->handler_event_fd;
-                   item->handler_event_fd = 0;
-
-            U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
-            }
-         else
-            {
-            item->next             = 0;
-            item->handler_event_fd = 0;
-
-            delete item;
-            }
+         eraseItem(item, flag_reuse);
 
          break;
          }
@@ -483,28 +526,41 @@ void UNotifier::erase(UEventFd* handler_event, bool flag_reuse)
    while ((item = *ptr));
 }
 
-bool UNotifier::isHandler(UEventFd* handler_event)
+// Call function for all entry
+
+void UNotifier::callForAllEntry(bPFpv function)
 {
-   U_TRACE(0, "UNotifier::isHandler(%p)", handler_event)
+   U_TRACE(0, "UNotifier::callForAllEntry(%p)", function)
 
    U_INTERNAL_ASSERT_POINTER(first)
+
+   UEventFd* handler_event;
 
    UNotifier* item =  first;
    UNotifier** ptr = &first;
 
    do {
-      if (item->handler_event_fd == handler_event) U_RETURN(true);
+      handler_event = item->handler_event_fd;
+
+      if (function(handler_event))
+         {
+         eraseHandler(handler_event);
+
+         *ptr = item->next;
+
+         eraseItem(item, true);
+
+         continue;
+         }
 
       ptr = &(*ptr)->next;
       }
    while ((item = *ptr));
-
-   U_RETURN(false);
 }
 
 void UNotifier::clear()
 {
-   U_TRACE(0, "UNotifier::clear()")
+   U_TRACE(0+256, "UNotifier::clear()")
 
    U_INTERNAL_DUMP("first = %p pool = %p", first, pool)
 

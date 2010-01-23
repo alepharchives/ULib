@@ -78,22 +78,22 @@ ab -n 100000 -c10 -t 1 "http://stefano/usp/benchmarking.usp?name=stefano"
 ----------------------------------------
 Concurrency Level:      10
 Time taken for tests:   1.000 seconds
-Complete requests:      10118
+Complete requests:      10457
 Failed requests:        0
 Write errors:           0
-Total transferred:      1457280 bytes
-HTML transferred:       232760 bytes
-Requests per second:    10116.71 [#/sec] (mean)
-Time per request:       0.988 [ms] (mean)
-Time per request:       0.099 [ms] (mean, across all concurrent requests)
-Transfer rate:          1422.94 [Kbytes/sec] received
+Total transferred:      1506096 bytes
+HTML transferred:       240557 bytes
+Requests per second:    10455.34 [#/sec] (mean)
+Time per request:       0.956 [ms] (mean)
+Time per request:       0.096 [ms] (mean, across all concurrent requests)
+Transfer rate:          1470.56 [Kbytes/sec] received
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
 Connect:        0    0   0.1      0       1
-Processing:     0    1   1.1      1      12
-Waiting:        0    1   0.9      1      12
-Total:          0    1   1.1      1      13
+Processing:     0    1   0.4      1      10
+Waiting:        0    1   0.3      1      10
+Total:          1    1   0.4      1      10
 
 Percentage of the requests served within a certain time (ms)
   50%      1
@@ -102,9 +102,9 @@ Percentage of the requests served within a certain time (ms)
   80%      1
   90%      1
   95%      1
-  98%      5
-  99%      8
- 100%     13 (longest request)
+  98%      1
+  99%      2
+ 100%     10 (longest request)
 ----------------------------------------
 
 *** same but running in WindowXP (cross-compiling context FEDORA MinGW) ***

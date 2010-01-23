@@ -77,9 +77,20 @@ public:
 
    static void clear();
 
-   static void     erase(UEventFd* handler_event, bool flag_reuse);
-   static void    insert(UEventFd* handler_event);
-   static bool isHandler(UEventFd* handler_event);
+   static void  erase(UEventFd* handler_event, bool flag_reuse);
+   static void insert(UEventFd* handler_event);
+
+   static bool isHandler(UEventFd* handler_event)
+      {
+      U_TRACE(0, "UNotifier::isHandler(%p)", handler_event)
+
+      for (UNotifier* item = first; item; item = item->next)
+         {
+         if (item->handler_event_fd == handler_event) U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
    // rimuove i descrittori di file diventati invalidi (possibile con EPIPE)
 
@@ -104,12 +115,17 @@ public:
    static uint32_t  read(int fd,       char* buf, int count = U_SINGLE_READ, int timeoutMS = U_INTERNAL_TIMEOUT);
    static uint32_t write(int fd, const char* str, int count,                 int timeoutMS = -1);
 
+   // Call function for all entry
+
+   static void callForAllEntry(bPFpv function);
+
    // STREAM
 
    friend U_EXPORT ostream& operator<<(ostream& os, const UNotifier& n);
 
 #ifdef DEBUG
    static void printInfo(ostream& os);
+
    const char* dump(bool reset) const;
 #endif
 
@@ -121,11 +137,19 @@ protected:
    static UNotifier* first;
    static bool exit_loop_wait_event_for_signal;
 
+   static void preallocate(uint32_t n);
    static void waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
 
 private:
-          void outputEntry(ostream& os) const U_NO_EXPORT;
-   static bool handlerResult(int& n, UNotifier* i, UNotifier** ptr, UEventFd* handler_event, bool bread, bool bwrite, bool flag_handler_call) U_NO_EXPORT; 
+   void outputEntry(ostream& os) const U_NO_EXPORT;
+
+   static void eraseHandler(UEventFd* handler_event) U_NO_EXPORT;
+   static void eraseItem(UNotifier* item, bool flag_reuse) U_NO_EXPORT;
+
+   static bool handlerResult(int& n, UNotifier*  i,
+                                     UNotifier** ptr,
+                                     UEventFd* handler_event,
+                                     bool bread, bool bwrite, bool flag_handler_call) U_NO_EXPORT; 
 
    friend class      UServer_Base;
    friend class UClientImage_Base;

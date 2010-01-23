@@ -4,7 +4,7 @@
 //    ulib - c++ library
 //
 // = FILENAME
-//    mod_http.cpp - this is a plugin http for UServer
+//    mod_http.cpp - this is a plugin http for userver
 //
 // = AUTHOR
 //    Stefano Casazza
@@ -13,7 +13,8 @@
 
 #include <ulib/url.h>
 #include <ulib/file_config.h>
-#include <ulib/mime/header.h>
+#include <ulib/mime/entity.h>
+#include <ulib/utility/uhttp.h>
 #include <ulib/plugin/mod_http.h>
 #include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
@@ -39,6 +40,22 @@ void UHttpPlugIn::str_allocate()
 
    U_NEW_ULIB_OBJECT(str_URI_PROTECTED_MASK,       U_STRING_FROM_STRINGREP_STORAGE(0));
    U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP, U_STRING_FROM_STRINGREP_STORAGE(1));
+}
+
+UHttpPlugIn::~UHttpPlugIn()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UHttpPlugIn)
+
+   if (UHTTP::file)
+      {
+      delete UHTTP::file;
+      delete UHTTP::tmpdir;
+      delete UHTTP::qcontent;
+      delete UHTTP::formMulti;
+      delete UHTTP::form_name_value;
+      }
+
+   if (vallow_IP) delete vallow_IP;
 }
 
 UString* UHttpPlugIn::getCGIEnvironment()
@@ -97,8 +114,31 @@ int UHttpPlugIn::handlerInit()
 {
    U_TRACE(0, "UHttpPlugIn::handlerInit()")
 
-   UHTTP::initForm();
+   // init global var...
+
    UHTTP::str_allocate();
+
+   U_INTERNAL_ASSERT_EQUALS(UHTTP::file,0)
+
+   UHTTP::file = U_NEW(UFile);
+
+   U_INTERNAL_ASSERT_POINTER(USocket::str_host)
+   U_INTERNAL_ASSERT_POINTER(USocket::str_connection)
+
+   UHTTP::ptrH = USocket::str_host->c_pointer(1);
+   UHTTP::ptrC = USocket::str_connection->c_pointer(1);
+
+   // init form processing var...
+
+   U_INTERNAL_ASSERT_EQUALS(UHTTP::tmpdir,0)
+   U_INTERNAL_ASSERT_EQUALS(UHTTP::qcontent,0)
+   U_INTERNAL_ASSERT_EQUALS(UHTTP::formMulti,0)
+   U_INTERNAL_ASSERT_EQUALS(UHTTP::form_name_value,0)
+
+   UHTTP::tmpdir          = U_NEW(UString(100U));
+   UHTTP::qcontent        = U_NEW(UString);
+   UHTTP::formMulti       = U_NEW(UMimeMultipart);
+   UHTTP::form_name_value = U_NEW(UVector<UString>);
 
    if (        Url::str_ftp  == 0)         Url::str_allocate();
    if (UMimeHeader::str_name == 0) UMimeHeader::str_allocate();
@@ -125,13 +165,7 @@ int UHttpPlugIn::handlerRead()
 {
    U_TRACE(0, "UHttpPlugIn::handlerRead()")
 
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
-
-   UClientImage_Base::pClientImage->reset();
-
-   UHTTP::resetHTTPInfo();
-
-   bool is_http_msg = UHTTP::readHTTP(UClientImage_Base::socket, *UClientImage_Base::rbuffer, *UClientImage_Base::body);
+   bool is_http_req = UHTTP::readHTTPRequest();
 
    // check if close connection... (read() == 0)
 
@@ -144,7 +178,7 @@ int UHttpPlugIn::handlerRead()
    const char* content_type = 0;
    int nResponseCode = HTTP_NOT_IMPLEMENTED;
 
-   if (is_http_msg)
+   if (is_http_req)
       {
       if (UHTTP::http_info.version == 1)
          {
@@ -275,11 +309,15 @@ int UHttpPlugIn::handlerRead()
          }
       }
 
-   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(nResponseCode, content_type, true, *UClientImage_Base::body);
+   UHTTP::http_info.is_connection_close = U_YES;
+
+   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(nResponseCode, content_type, *UClientImage_Base::body);
 
 send_response:
 
-   (void) UClientImage_Base::genericHandlerWrite();
+   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
+
+   (void) UClientImage_Base::pClientImage->handlerWrite();
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }
@@ -292,19 +330,20 @@ int UHttpPlugIn::handlerRequest()
 
    // process the HTTP request
 
-   UFile file;
-
-   if (UHTTP::checkHTTPRequest(file))
+   if (UHTTP::checkHTTPRequest())
       {
       if (UHTTP::isPHPRequest() ||
           UHTTP::isCGIRequest())
          {
-         (void) UHTTP::processCGIRequest((UCommand*)0, getCGIEnvironment(), &file);
+         (void) UHTTP::processCGIRequest((UCommand*)0, getCGIEnvironment());
          }
       else
          {
-         if (UHTTP::isHttpPOST()) {}                                          // NB: we don't want to process the form here (other plugin, USP or TSA)...
-         else                     (void) UHTTP::processHTTPGetRequest(file);  // GET,HEAD
+         // NB: we don't want to process the form here (other plugin, USP or TSA)...
+
+         if (UHTTP::isHttpPOST()) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+
+         (void) UHTTP::processHTTPGetRequest(); // GET,HEAD
          }
       }
 

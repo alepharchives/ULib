@@ -64,12 +64,7 @@ public:
       if (str_URI_PROTECTED_MASK == 0) str_allocate();
       }
 
-   virtual ~UHttpPlugIn()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UHttpPlugIn)
-
-      if (vallow_IP) delete vallow_IP;
-      }
+   virtual ~UHttpPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
 

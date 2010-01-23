@@ -649,7 +649,7 @@ int UStringExt::compareversion(const char* a, uint32_t alen, const char* b, uint
       uint32_t n1 = apos2-apos1,
                n2 = bpos2-bpos1;
 
-      cval = memcmp(a+apos1, b+bpos1, U_min(n1, n2));
+      cval = U_SYSCALL(memcmp, "%p,%p,%u", a+apos1, b+bpos1, U_min(n1, n2));
 
       if (cval) U_RETURN(cval < 1 ? -1 : 1);
       }
@@ -746,7 +746,7 @@ UString UStringExt::gunzip(const UString& s, uint32_t sz) // .gz uncompress
       {
       // check magic byte
 
-      if (memcmp(s.rep->str, U_CONSTANT_TO_PARAM(GZIP_MAGIC))) sz = s.rep->_length * 10;
+      if (U_MEMCMP(s.rep->str, GZIP_MAGIC)) sz = s.rep->_length * 10;
       else
          {
          // read original size
@@ -823,7 +823,7 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 {
    U_TRACE(0, "UStringExt::getNameValueFromData(%.*S,%p,%.*S,%u)", U_STRING_TO_TRACE(content), &name_value, dlen, delim, dlen)
 
-   U_ASSERT(content.empty() == false)
+   U_ASSERT_EQUALS(content.empty(),false)
 
    // Parse the data in one fell swoop for efficiency
 

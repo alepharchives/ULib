@@ -12,7 +12,7 @@ start_msg server
  export UTRACE UOBJDUMP USIMERR
 
 #STRACE=$LTRUSS
-start_prg_background server ../../src/ulib/plugin/.libs mod_http # '"mod_http mod_soap"'
+start_prg_background server ../../src/ulib/plugin/.libs '"mod_http mod_echo"' # '"mod_http mod_soap"'
 
 $SLEEP
 

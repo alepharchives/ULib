@@ -23,8 +23,10 @@
 #endif
 
 int      USocketExt::pcount;
-char*    USocketExt::pbuffer;
 uint32_t USocketExt::size_message;
+#ifdef DEBUG
+char*    USocketExt::pbuffer;
+#endif
 
 // Socket I/O
 
@@ -126,8 +128,10 @@ read:
 
       if (pcount >= 0)
          {
-         pbuffer   = buffer.data();
          byte_read = count;
+#     ifdef DEBUG
+         pbuffer   = buffer.data();
+#     endif
          }
       }
 

@@ -237,8 +237,28 @@ void USocket::setLocal()
    if (U_SYSCALL(getsockname, "%d,%p,%p", iSockDesc, (sockaddr*)cLocal, &slDummy) == 0)
       {
       bLocalSet = true;
+
       cLocal.getPortNumber(iLocalPort);
       cLocal.getIPAddress(cLocalAddress);
+      }
+}
+
+void USocket::setRemote()
+{
+   U_TRACE(1, "USocket::setRemote()")
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+
+   SocketAddress cRemote;
+
+   socklen_t slDummy = cRemote.sizeOf();
+
+   if (U_SYSCALL(getpeername, "%d,%p,%p", iSockDesc, (sockaddr*)cRemote, &slDummy) == 0)
+      {
+      cRemote.getPortNumber(iRemotePort);
+      cRemote.getIPAddress(cRemoteAddress);
       }
 }
 
@@ -440,7 +460,7 @@ void USocket::closesocket()
 
       char buf[8*1024];
 
-      while (recv(iSockDesc, buf, sizeof(buf)) > 0);
+      while (recv(iSockDesc, buf, sizeof(buf)) > 0 || errno == EAGAIN);
       }
 
    // Then you can close the second half of the socket by calling closesocket()

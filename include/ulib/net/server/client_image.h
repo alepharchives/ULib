@@ -15,6 +15,7 @@
 #define U_CLIENT_IMAGE_H 1
 
 #include <ulib/event/event_fd.h>
+#include <ulib/utility/socket_ext.h>
 
 #ifdef HAVE_SSL
 #  include <ulib/ssl/certificate.h>
@@ -41,6 +42,7 @@
    @brief Handles accepted connections from UServer's client
 */
 
+class UHTTP;
 class UServer_Base;
 
 class U_EXPORT UClientImage_Base : public UEventFd {
@@ -49,7 +51,7 @@ public:
    // NB: these are public for plugin access...
 
    UString* logbuf;
-   UIPAddress clientAddress;
+   UIPAddress* clientAddress;
 
    static UString* body;
    static USocket* socket;
@@ -64,25 +66,55 @@ public:
    static UString* _buffer;
    static UString* _encoded;
 
-   static void clear();
-   static void init(USocket* p);
-
    // SERVICES
 
+   static void clear();
    static void run();
+   static void resetBuffer();
    static void genericReset();
-   static int  genericHandlerRead();
-   static int  genericHandlerWrite();
-   static void checkForPipeline(const UString& rbuffer); // check if data read already available... (pipelining)
+   static void init(USocket* p);
+
+   // check if data read already available... (pipelining)
+
+   static bool isPipeline(uint32_t size)
+      {
+      U_TRACE(0, "UClientImage_Base::isPipeline(%u)", size)
+
+      U_INTERNAL_DUMP("size_message = %u pcount = %d pbuffer = %p", USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
+
+      if ((int32_t)USocketExt::size_message  > 0 && size &&
+          (USocketExt::pcount                > 0 || size > USocketExt::size_message))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
    // log
-
-   static void logCertificate(void* x509);   // aggiungo nel log il certificato Peer del client ("issuer","serial")
 
    static void logRequest( const char* filereq = FILETEST_REQ);
    static void logResponse(const char* fileres = FILETEST_RES);
 
-   // get remote ip address (check for X-Forwarded-For: client1, proxy1, proxy2)
+   static void logCertificate(void* x509); // aggiungo nel log il certificato Peer del client ("issuer","serial")
+
+   // get remote ip address
+
+   static UIPAddress& remoteIPAddress()
+      {
+      U_TRACE(0, "UClientImage_Base::remoteIPAddress()")
+
+      U_INTERNAL_ASSERT_POINTER(socket)
+      U_INTERNAL_ASSERT_POINTER(pClientImage)
+
+      if (pClientImage->logbuf) return *pClientImage->clientAddress;
+
+      socket->setRemote();
+
+      return socket->remoteIPAddress();
+      }
+
+   // check for X-Forwarded-For: client1, proxy1, proxy2
 
    static const char* getRemoteInfo(uint32_t* plen);
 
@@ -96,30 +128,15 @@ public:
       {
       U_TRACE(0, "UClientImage_Base::reset()")
 
-      U_INTERNAL_ASSERT_EQUALS(pClientImage, this)
+      reuse(); // NB: we need this because we reuse the same object USocket...
 
       genericReset();
       }
 
    // define method VIRTUAL of class UEventFd
 
-   virtual int handlerRead()
-      {
-      U_TRACE(0, "UClientImage_Base::handlerRead()")
-
-      pClientImage = this; // NB: we need this because we reuse the same object UClientImage_Base...
-
-      return genericHandlerRead();
-      }
-
-   virtual int handlerWrite()
-      {
-      U_TRACE(0, "UClientImage_Base::handlerWrite()")
-
-      U_INTERNAL_ASSERT_EQUALS(pClientImage, this)
-
-      return genericHandlerWrite();
-      }
+   virtual int handlerRead();
+   virtual int handlerWrite();
 
 #ifdef HAVE_LIBEVENT
    UEvent<UClientImage_Base>* pevent;
@@ -135,8 +152,28 @@ public:
 #endif
 
 protected:
-
    static UString* msg_welcome;
+
+   // NB: we need this because we reuse the same object USocket...
+
+   void reuse()
+      {
+      U_TRACE(0, "UClientImage_Base::reuse()")
+
+      pClientImage = this;
+
+      U_INTERNAL_DUMP("pClientImage = %p fd = %d socket->iSockDesc = %d", pClientImage, UEventFd::fd, socket->iSockDesc)
+      }
+
+   void resetSocket(USocket::State state)
+      {
+      U_TRACE(0, "UClientImage_Base::resetSocket(%d)", state)
+
+      U_INTERNAL_DUMP("pClientImage = %p fd = %d socket->iSockDesc = %d", pClientImage, UEventFd::fd, socket->iSockDesc)
+
+      socket->iState    = state;
+      socket->iSockDesc = UEventFd::fd;
+      }
 
    // COSTRUTTORI
 
@@ -145,7 +182,7 @@ protected:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UClientImage_Base)
 
-      pClientImage = this; // NB: we need this because we reuse the same object UClientImage_Base...
+      reuse(); // NB: we need this because we reuse the same object USocket...
 
       destroy();
       }
@@ -156,10 +193,35 @@ protected:
 
    static bool isPipeline();
 
+   static void checkForPipeline()
+      {
+      U_TRACE(0, "UClientImage_Base::checkForPipeline()")
+
+      U_INTERNAL_ASSERT_POINTER(rbuffer)
+
+      uint32_t size = rbuffer->size();
+
+      U_INTERNAL_DUMP("rbuffer->size() = %u size_message = %u pcount = %d pbuffer = %p",
+                       size, USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
+
+      U_INTERNAL_ASSERT_MAJOR((int32_t)USocketExt::size_message,0)
+
+      if (size > USocketExt::size_message)
+         {
+         USocketExt::pcount  = size - USocketExt::size_message;
+#     ifdef DEBUG
+         USocketExt::pbuffer = rbuffer->data();
+#     endif
+
+         U_INTERNAL_DUMP("pcount = %d pbuffer = %p", USocketExt::pcount, USocketExt::pbuffer)
+         }
+      }
+
 private:
    UClientImage_Base(const UClientImage_Base&) : UEventFd() {}
    UClientImage_Base& operator=(const UClientImage_Base&)   { return *this; }
 
+   friend class UHTTP;
    friend class UServer_Base;
 };
 
@@ -249,17 +311,13 @@ public:
       {
       U_TRACE(0, "UClientImage<USSLSocket>::reset()")
 
-      U_INTERNAL_ASSERT_EQUALS(pClientImage, this)
-
       U_INTERNAL_DUMP("ssl = %p ssl_fd = %d fd = %d", ssl, SSL_get_fd(ssl), UEventFd::fd)
 
       U_INTERNAL_ASSERT(UEventFd::fd == SSL_get_fd(ssl))
 
-      // NB: we need this because we reuse the same object USocket...
+      getSocket()->ssl = ssl; // NB: we need this because we reuse the same object USocket...
 
-      getSocket()->ssl = ssl;
-
-      UClientImage_Base::genericReset();
+      UClientImage_Base::reset();
       }
 
    // DEBUG

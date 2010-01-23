@@ -1,6 +1,11 @@
 <map id="G" name="G">
-<area shape="rect" id="node2" href="$structuhttpheader.html" title="uhttpheader" alt="" coords="5,99,88,127"/>
-<area shape="rect" id="node4" href="$classUString.html" title="UString" alt="" coords="112,99,176,127"/>
-<area shape="rect" id="node7" href="$classUStringRep.html" title="UStringRep" alt="" coords="101,6,187,34"/>
-<area shape="rect" id="node10" href="$classUVector_3_01UString_01_4.html" title="UVector\&lt; UString \&gt;" alt="" coords="281,99,412,127"/>
+<area shape="rect" id="node2" href="$structuhttpheader.html" title="uhttpheader" alt="" coords="235,721,317,749"/>
+<area shape="rect" id="node4" href="$classUMimeMultipart.html" title="UMimeMultipart" alt="" coords="341,721,453,749"/>
+<area shape="rect" id="node6" href="$classUMimeEntity.html" title="UMimeEntity" alt="" coords="269,570,365,598"/>
+<area shape="rect" id="node8" href="$classUString.html" title="UString" alt="" coords="392,99,456,127"/>
+<area shape="rect" id="node14" href="$classUMimeHeader.html" title="UMimeHeader" alt="" coords="84,370,185,398"/>
+<area shape="rect" id="node23" href="$classUFile.html" title="UFile" alt="" coords="481,450,532,478"/>
+<area shape="rect" id="node11" href="$classUStringRep.html" title="UStringRep" alt="" coords="381,6,467,34"/>
+<area shape="rect" id="node16" href="$classUHashMap_3_01UString_01_4.html" title="UHashMap\&lt; UString \&gt;" alt="" coords="5,99,152,127"/>
+<area shape="rect" id="node21" href="$classUVector_3_01UString_01_4.html" title="UVector\&lt; UString \&gt;" alt="" coords="528,721,659,749"/>
 </map>
