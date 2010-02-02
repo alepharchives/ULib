@@ -4,8 +4,8 @@ Four Debian releases are available on the main site:
 Debian 4.0r8, or etch.  Access this release through dists/oldstable.
 Debian 4.0r8 was released Thursday, 09 April 2009.
 
-Debian 5.0.3, or lenny.  Access this release through dists/stable
-Debian 5.0.3 was released Friday, 04 September 2009.
+Debian 5.0.4, or lenny.  Access this release through dists/stable
+Debian 5.0.4 was released Friday, 29 January 2010.
 
 Testing, or squeeze.  Access this release through dists/testing.  The
 current tested development snapshot is named squeeze.  Packages which

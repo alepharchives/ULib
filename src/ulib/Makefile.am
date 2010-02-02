@@ -154,7 +154,7 @@ SRC_CPP += xml/expat/attribute.cpp xml/expat/element.cpp xml/expat/xml_parser.cp
 endif
 
 if LIBXML2
-SRC_CPP += xml/libxml2/node.cpp xml/libxml2/document.cpp xml/libxml2/schema.cpp
+SRC_CPP += xml/libxml2/node.cpp xml/libxml2/document.cpp xml/libxml2/schema.cpp xml/libxml2/transform.cpp xml/libxml2/context.cpp
 endif
 
 if MAGIC

@@ -137,6 +137,11 @@ protected:
    static UNotifier* first;
    static bool exit_loop_wait_event_for_signal;
 
+   // nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
+
+   static int  getNFDS();
+   static void setNFDS(int fd);
+
    static void preallocate(uint32_t n);
    static void waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
 

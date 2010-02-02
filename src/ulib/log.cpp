@@ -59,8 +59,11 @@ bool ULog::open(uint32_t size, mode_t mode)
 #  ifndef __MINGW32__
       U_SYSCALL_VOID(openlog, "%S,%d,%d", u_progname, LOG_PID, LOG_LOCAL0);
 #  endif
+
+      U_RETURN(true);
       }
-   else if (UFile::creat(O_CREAT | O_RDWR | O_APPEND, mode))
+
+   if (UFile::creat(O_CREAT | O_RDWR | O_APPEND, mode))
       {
       off_t file_size = 0;
 
@@ -71,9 +74,7 @@ bool ULog::open(uint32_t size, mode_t mode)
          if (UFile::ftruncate(size)                == false ||
              UFile::memmap(PROT_READ | PROT_WRITE) == false)
             {
-            U_ERROR("cannot init log file %.*S...", U_FILE_TO_TRACE(*this));
-
-            U_RETURN(false);
+            goto end;
             }
          }
 
@@ -88,9 +89,14 @@ bool ULog::open(uint32_t size, mode_t mode)
       lock = U_NEW(ULock);
 
       U_INTERNAL_ASSERT_POINTER(lock)
+
+      U_RETURN(true);
       }
 
-   U_RETURN(true);
+end:
+   U_ERROR("cannot init log file %.*S...", U_FILE_TO_TRACE(*this));
+
+   U_RETURN(false);
 }
 
 void ULog::setShared()

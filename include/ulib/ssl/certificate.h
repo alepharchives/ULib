@@ -306,6 +306,7 @@ public:
    * Returns if a private key matches the public key of this certificate
    */
 
+#ifdef HAVE_OPENSSL_98
    static bool matchPrivateKey(X509* a, EVP_PKEY* privateKey)
       {
       U_TRACE(1, "UCertificate::matchPrivateKey(%p,%p)", a, privateKey)
@@ -320,6 +321,7 @@ public:
       }
 
    bool matchPrivateKey(EVP_PKEY* privateKey) const { return matchPrivateKey(x509, privateKey); }
+#endif
 
    /**
    * Returns the earliest time that the certificate is valid

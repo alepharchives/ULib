@@ -236,6 +236,17 @@ char* UServices::getOpenSSLError(char* buffer, uint32_t buffer_size, uint32_t* p
 
 // setup OPENSSL standard certificate directory
 
+void UServices::setCApath(const char* _CApath)
+{
+   U_TRACE(0, "UServices::setCApath(%S)", _CApath)
+
+   U_INTERNAL_ASSERT(_CApath && *_CApath)
+
+   if (CApath == 0) CApath = U_NEW(UString);
+
+   *CApath = UFile::getRealPath(_CApath);
+}
+
 const char* UServices::verify_status(long result)
 {
    U_TRACE(0, "UServices::verify_status(%ld)", result)
@@ -359,18 +370,24 @@ bool UServices::setupOpenSSLStore(const char* CAfile, const char* _CApath, int s
 
    U_INTERNAL_ASSERT((CAfile && *CAfile) || (_CApath && *_CApath))
 
+   if (_CApath)
+      {
+      setCApath(_CApath);
+
+      U_INTERNAL_ASSERT(CApath->isNullTerminated())
+
+      _CApath = CApath->data();
+      }
+
    if (store) U_SYSCALL_VOID(X509_STORE_free, "%p", store);
 
    store = (X509_STORE*) U_SYSCALL_NO_PARAM(X509_STORE_new);
 
-   if (U_SYSCALL(X509_STORE_set_default_paths, "%p", store)                     == 0 || // add a lookup file/method
-                                                                                        // to an X509 store
+   if (U_SYSCALL(X509_STORE_set_default_paths, "%p", store) == 0 || // add a lookup file/method to an X509 store
        U_SYSCALL(X509_STORE_load_locations, "%p,%S,%S", store, CAfile, _CApath) == 0)
       {
       U_RETURN(false);
       }
-
-   if (_CApath) setCApath(_CApath);
 
 #ifdef HAVE_OPENSSL_97
    U_SYSCALL_VOID(X509_STORE_set_flags, "%p,%d", store, store_flags); // X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL

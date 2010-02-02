@@ -65,6 +65,7 @@ xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>cobj</b> ()</td
 <tr><td class="memItemLeft" align="right" valign="top">static xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#abf8ae5882358e97fe11620ea9866097f">getNextSibling</a> (xmlNodePtr node)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">static void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#a60754e2b2f41db4e883ef23a55359407">removeChild</a> (xmlNodePtr node)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#a84cec3ddb111e00df716bb01627ced7b">getProp</a> (xmlNodePtr node, const char *name)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static xmlChar *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUXML2Node.html#a69a0c96e1fb47319210c564bba753575">getContent</a> (xmlNodePtr node)</td></tr>
 <tr><td colspan="2"><h2>Protected Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad3fa1b89ad93fdb826c40ffcf5f175bc"></a><!-- doxytag: member="UXML2Node::createNewChildNode" ref="ad3fa1b89ad93fdb826c40ffcf5f175bc" args="(const xmlChar *name, const xmlChar *ns_prefix=0)" -->
 xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>createNewChildNode</b> (const xmlChar *name, const xmlChar *ns_prefix=0)</td></tr>
@@ -342,6 +343,25 @@ xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>impl_</b></td><
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a class="anchor" id="a69a0c96e1fb47319210c564bba753575"></a><!-- doxytag: member="UXML2Node::getContent" ref="a69a0c96e1fb47319210c564bba753575" args="(xmlNodePtr node)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">static xmlChar* UXML2Node::getContent </td>
+          <td>(</td>
+          <td class="paramtype">xmlNodePtr&nbsp;</td>
+          <td class="paramname"> <em>node</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td><code> [inline, static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Get the value of an content associated to a node </p>
 
 </div>
 </div>
@@ -640,7 +660,7 @@ xmlNodePtr&nbsp;</td><td class="memItemRight" valign="bottom"><b>impl_</b></td><
 <li>src/ulib/xml/libxml2/node.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 23 17:17:39 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Tue Feb 2 20:00:53 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

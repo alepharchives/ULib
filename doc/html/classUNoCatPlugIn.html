@@ -59,6 +59,8 @@ static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_allocate</
 <tr><td colspan="2"><h2>Static Public Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3f7cae0aac10db8d8d33289ef290b429"></a><!-- doxytag: member="UNoCatPlugIn::str_AUTH_SERVICE_URL" ref="a3f7cae0aac10db8d8d33289ef290b429" args="" -->
 static <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_AUTH_SERVICE_URL</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aec1aa17d1a985d7a34e06aad55129afc"></a><!-- doxytag: member="UNoCatPlugIn::str_AUTH_SERVICE_IP" ref="aec1aa17d1a985d7a34e06aad55129afc" args="" -->
+static <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_AUTH_SERVICE_IP</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a34c9ab6a4c40bf17eb18a48baf60c94f"></a><!-- doxytag: member="UNoCatPlugIn::str_LOGOUT_URL" ref="a34c9ab6a4c40bf17eb18a48baf60c94f" args="" -->
 static <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_LOGOUT_URL</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a58cee0f372a652feeec783e44931c2c2"></a><!-- doxytag: member="UNoCatPlugIn::str_LOGIN_TIMEOUT" ref="a58cee0f372a652feeec783e44931c2c2" args="" -->
@@ -176,6 +178,8 @@ UVector&lt; <a class="el" href="classUString.html">UString</a> &gt;&nbsp;</td><t
 <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>access_point</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab82588d76f5eb567c5371d911309ce80"></a><!-- doxytag: member="UNoCatPlugIn::auth_ip" ref="ab82588d76f5eb567c5371d911309ce80" args="" -->
 <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>auth_ip</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeaa5edb626a021fd629a1f649a5d682a"></a><!-- doxytag: member="UNoCatPlugIn::auth_ip_mask" ref="aeaa5edb626a021fd629a1f649a5d682a" args="" -->
+<a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>auth_ip_mask</b></td></tr>
 <tr><td colspan="2"><h2>Static Protected Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa9516b40adfb96f595dd747c27594b1e"></a><!-- doxytag: member="UNoCatPlugIn::info" ref="aa9516b40adfb96f595dd747c27594b1e" args="" -->
 static <a class="el" href="classUrl.html">Url</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>info</b></td></tr>
@@ -197,6 +201,8 @@ static <a class="el" href="classUNoCatPlugIn.html">UNoCatPlugIn</a> *&nbsp;</td>
 static <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>status_content</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a48861c84c1777937416c0d148c170197"></a><!-- doxytag: member="UNoCatPlugIn::last_request_check" ref="a48861c84c1777937416c0d148c170197" args="" -->
 static time_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>last_request_check</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3bea0ed4f50ad3dc2b9a9b9c1bf8f3b7"></a><!-- doxytag: member="UNoCatPlugIn::vauth_ip" ref="a3bea0ed4f50ad3dc2b9a9b9c1bf8f3b7" args="" -->
+static UVector&lt; <a class="el" href="classUIPAllow.html">UIPAllow</a> * &gt; *&nbsp;</td><td class="memItemRight" valign="bottom"><b>vauth_ip</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae5ec25e6f514ee9b4d787e1b1c3587a5"></a><!-- doxytag: member="UNoCatPlugIn::vaddr" ref="ae5ec25e6f514ee9b4d787e1b1c3587a5" args="" -->
 static UVector&lt; <a class="el" href="classUIPAddress.html">UIPAddress</a> * &gt; **&nbsp;</td><td class="memItemRight" valign="bottom"><b>vaddr</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a23c4c1a8fd715310b46ed6394629bb4d"></a><!-- doxytag: member="UNoCatPlugIn::peers" ref="a23c4c1a8fd715310b46ed6394629bb4d" args="" -->
@@ -220,7 +226,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/plugin/mod_nocat.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 23 17:17:37 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Tue Feb 2 20:00:51 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

@@ -71,8 +71,6 @@ long&nbsp;</td><td class="memItemRight" valign="bottom"><b>hashCode</b> ()</td><
 <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>getSignable</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a36737967763188c075625749dc455f8f"></a><!-- doxytag: member="UCertificate::getSubjectPublicKey" ref="a36737967763188c075625749dc455f8f" args="() const " -->
 EVP_PKEY *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getSubjectPublicKey</b> () const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7521d58613607b7126ec298a7b3e5cb4"></a><!-- doxytag: member="UCertificate::matchPrivateKey" ref="a7521d58613607b7126ec298a7b3e5cb4" args="(EVP_PKEY *privateKey) const " -->
-bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>matchPrivateKey</b> (EVP_PKEY *privateKey) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">const char *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a5e0433fe6a4cf56a87c333bd04f6b913">getNotBefore</a> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">const char *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#ab66b1958039a14baef88cf4d66dd85c4">getNotAfter</a> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a8408f26c839ad20e5fb5da39d377ab95">checkValidity</a> () const </td></tr>
@@ -115,7 +113,6 @@ static long&nbsp;</td><td class="memItemRight" valign="bottom"><b>hashCode</b> (
 <tr><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a96ae81c39b4f961889ea13610014f3db">getSignatureAlgorithm</a> (X509 *a)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#ac8daa46ea6fd6cb6f5c7a007995ff99d">getSignable</a> (X509 *x509)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">static EVP_PKEY *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a3cb01e2b4abebc14bf38171175bd28f6">getSubjectPublicKey</a> (X509 *a)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a323552b38c202ef7228a5c83ad2c2af1">matchPrivateKey</a> (X509 *a, EVP_PKEY *privateKey)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">static void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a065039a9274951a85c32fde7020ca7c0">setForLog</a> (X509 *a, <a class="el" href="classUString.html">UString</a> &amp;buffer, const char *fmt=&quot; (\&quot;%.*s\&quot;,\&quot;%ld\&quot;)&quot;)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5ea5f063390bde4086db68b6800d9156"></a><!-- doxytag: member="UCertificate::STACK_OF" ref="a5ea5f063390bde4086db68b6800d9156" args="(X509)*loadCerts(const UString &amp;content)" -->
 static&nbsp;</td><td class="memItemRight" valign="bottom"><b>STACK_OF</b> (X509)*loadCerts(const <a class="el" href="classUString.html">UString</a> &amp;content)</td></tr>
@@ -405,7 +402,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
       </table>
 </div>
 <div class="memdoc">
-<p>Returns the earliest time that the certificate is valid </p>
+<p>Returns if a private key matches the public key of this certificate Returns the earliest time that the certificate is valid </p>
 
 </div>
 </div>
@@ -596,34 +593,6 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 
 </div>
 </div>
-<a class="anchor" id="a323552b38c202ef7228a5c83ad2c2af1"></a><!-- doxytag: member="UCertificate::matchPrivateKey" ref="a323552b38c202ef7228a5c83ad2c2af1" args="(X509 *a, EVP_PKEY *privateKey)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">static bool UCertificate::matchPrivateKey </td>
-          <td>(</td>
-          <td class="paramtype">X509 *&nbsp;</td>
-          <td class="paramname"> <em>a</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">EVP_PKEY *&nbsp;</td>
-          <td class="paramname"> <em>privateKey</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td><code> [inline, static]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-<p>Returns if a private key matches the public key of this certificate </p>
-
-</div>
-</div>
 <a class="anchor" id="aef5105eef902550958a7524f4aced3e9"></a><!-- doxytag: member="UCertificate::readX509" ref="aef5105eef902550958a7524f4aced3e9" args="(const UString &amp;x, const char *format=0)" -->
 <div class="memitem">
 <div class="memproto">
@@ -713,7 +682,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 <li>src/ulib/ssl/certificate.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Sat Jan 23 17:17:35 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Tue Feb 2 20:00:50 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

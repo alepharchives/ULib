@@ -122,7 +122,9 @@
 #ifdef HAVE_LIBXML2
 #  include "xml/libxml2/node.cpp"
 #  include "xml/libxml2/schema.cpp"
+#  include "xml/libxml2/context.cpp"
 #  include "xml/libxml2/document.cpp"
+#  include "xml/libxml2/transform.cpp"
 #endif
 
 #ifdef HAVE_LDAP

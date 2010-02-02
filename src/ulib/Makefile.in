@@ -78,7 +78,7 @@ target_triplet = @target@
 @EXPAT_TRUE@am__append_31 = xml/expat/attribute.cpp xml/expat/element.cpp xml/expat/xml_parser.cpp \
 @EXPAT_TRUE@		     xml/soap/soap_fault.cpp xml/soap/soap_gen_method.cpp xml/soap/soap_parser.cpp xml/soap/soap_encoder.cpp
 
-@LIBXML2_TRUE@am__append_32 = xml/libxml2/node.cpp xml/libxml2/document.cpp xml/libxml2/schema.cpp
+@LIBXML2_TRUE@am__append_32 = xml/libxml2/node.cpp xml/libxml2/document.cpp xml/libxml2/schema.cpp xml/libxml2/transform.cpp xml/libxml2/context.cpp
 @MAGIC_TRUE@am__append_33 = magic/magic.cpp
 @MYSQL_TRUE@am__append_34 = mysql/mysql.cpp
 @LIBEVENT_TRUE@am__append_35 = libevent/event.cpp
@@ -174,6 +174,7 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	xml/soap/soap_gen_method.cpp xml/soap/soap_parser.cpp \
 	xml/soap/soap_encoder.cpp xml/libxml2/node.cpp \
 	xml/libxml2/document.cpp xml/libxml2/schema.cpp \
+	xml/libxml2/transform.cpp xml/libxml2/context.cpp \
 	magic/magic.cpp mysql/mysql.cpp libevent/event.cpp \
 	net/unixsocket.cpp all_c.c all_cpp.cpp
 @DEBUG_TRUE@am__objects_1 = base_trace.lo
@@ -224,7 +225,8 @@ am__objects_21 = base.lo base_error.lo hash.lo utility.lo minilzo.lo \
 @EXPAT_TRUE@am__objects_33 = attribute.lo element.lo xml_parser.lo \
 @EXPAT_TRUE@	soap_fault.lo soap_gen_method.lo soap_parser.lo \
 @EXPAT_TRUE@	soap_encoder.lo
-@LIBXML2_TRUE@am__objects_34 = node.lo document.lo schema.lo
+@LIBXML2_TRUE@am__objects_34 = node.lo document.lo schema.lo \
+@LIBXML2_TRUE@	transform.lo context.lo
 @MAGIC_TRUE@am__objects_35 = magic.lo
 @MYSQL_TRUE@am__objects_36 = mysql.lo
 @LIBEVENT_TRUE@am__objects_37 = event.lo
@@ -668,6 +670,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/command.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/common.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/compress.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/context.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cquoted_printable.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/curl.Plo@am__quote@
@@ -772,6 +775,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timeval.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tokenizer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trace.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/transform.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tree.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uhttp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unixsocket.Plo@am__quote@
@@ -1635,6 +1639,20 @@ schema.lo: xml/libxml2/schema.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='xml/libxml2/schema.cpp' object='schema.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o schema.lo `test -f 'xml/libxml2/schema.cpp' || echo '$(srcdir)/'`xml/libxml2/schema.cpp
+
+transform.lo: xml/libxml2/transform.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT transform.lo -MD -MP -MF "$(DEPDIR)/transform.Tpo" -c -o transform.lo `test -f 'xml/libxml2/transform.cpp' || echo '$(srcdir)/'`xml/libxml2/transform.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/transform.Tpo" "$(DEPDIR)/transform.Plo"; else rm -f "$(DEPDIR)/transform.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='xml/libxml2/transform.cpp' object='transform.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o transform.lo `test -f 'xml/libxml2/transform.cpp' || echo '$(srcdir)/'`xml/libxml2/transform.cpp
+
+context.lo: xml/libxml2/context.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT context.lo -MD -MP -MF "$(DEPDIR)/context.Tpo" -c -o context.lo `test -f 'xml/libxml2/context.cpp' || echo '$(srcdir)/'`xml/libxml2/context.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/context.Tpo" "$(DEPDIR)/context.Plo"; else rm -f "$(DEPDIR)/context.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='xml/libxml2/context.cpp' object='context.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o context.lo `test -f 'xml/libxml2/context.cpp' || echo '$(srcdir)/'`xml/libxml2/context.cpp
 
 magic.lo: magic/magic.cpp
 @am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT magic.lo -MD -MP -MF "$(DEPDIR)/magic.Tpo" -c -o magic.lo `test -f 'magic/magic.cpp' || echo '$(srcdir)/'`magic/magic.cpp; \

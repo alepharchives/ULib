@@ -180,8 +180,38 @@ public:
 #endif
 
 private:
-   UHttpClient(const UHttpClient&)            {}
-   UHttpClient& operator=(const UHttpClient&) { return *this; }
+   UHttpClient(const UHttpClient&) : UClient_Base(0), UHttpClient_Base(0), UClient<Socket>(0) {}
+   UHttpClient& operator=(const UHttpClient&)                                                 { return *this; }
 };
+
+#ifdef HAVE_SSL // specializzazione con USSLSocket
+
+template <> class U_EXPORT UHttpClient<USSLSocket> : public UHttpClient_Base,  public UClient<USSLSocket> {
+public:
+
+   UHttpClient(UFileConfig* cfg) : UClient_Base(cfg), UHttpClient_Base(cfg), UClient<USSLSocket>(cfg)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UHttpClient<USSLSocket>, "%p", cfg)
+      }
+
+   ~UHttpClient()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UHttpClient<USSLSocket>)
+      }
+
+   // DEBUG
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UHttpClient_Base::dump(reset); }
+#endif
+
+protected:
+
+private:
+   UHttpClient<USSLSocket>(const UHttpClient<USSLSocket>&) : UClient_Base(0), UHttpClient_Base(0), UClient<USSLSocket>(0) {}
+   UHttpClient<USSLSocket>& operator=(const UHttpClient<USSLSocket>&)                                                     { return *this; }
+};
+
+#endif
 
 #endif

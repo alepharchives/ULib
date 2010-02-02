@@ -34,6 +34,37 @@ UNotifier::~UNotifier()
    if (handler_event_fd) delete handler_event_fd;
 }
 
+// nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
+
+void UNotifier::setNFDS(int fd)
+{
+   U_TRACE(0, "UNotifier::setNFDS(%d)", fd)
+
+   U_INTERNAL_DUMP("fd_set_max = %d", fd_set_max)
+
+   if (fd == (fd_set_max-1)) fd_set_max = ((fd_read_cnt  && FD_ISSET(fd-1, &fd_set_read)) ||
+                                           (fd_write_cnt && FD_ISSET(fd-1, &fd_set_write))
+                                                ? fd : getNFDS());
+
+   U_INTERNAL_ASSERT(fd >= fd_set_max)
+}
+
+int UNotifier::getNFDS()
+{
+   U_TRACE(0, "UNotifier::getNFDS()")
+
+   U_INTERNAL_DUMP("fd_set_max = %d", fd_set_max)
+
+   int nfds = 0;
+
+   for (UNotifier* item = first; item; item = item->next)
+      {
+      if (nfds <= item->handler_event_fd->fd) nfds = item->handler_event_fd->fd + 1;
+      }
+
+   U_RETURN(nfds);
+}
+
 // NB: n e' necessario per la rientranza delle funzioni (vedi test_notifier...) 
 
 U_NO_EXPORT
@@ -95,7 +126,7 @@ bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** ptr, UEventFd
 
                U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
 
-               if (handler_event->fd == (fd_set_max - 1)) fd_set_max = handler_event->fd;
+               setNFDS(handler_event->fd);
 
                // this must be done in some way with libevent...
 
@@ -161,7 +192,7 @@ bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** ptr, UEventFd
 
                U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
 
-               if (handler_event->fd == (fd_set_max - 1)) fd_set_max = handler_event->fd;
+               setNFDS(handler_event->fd);
 
                // this must be done in some way with libevent...
 
@@ -311,6 +342,7 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 
    if (empty()) U_RETURN(false);
 
+   U_ASSERT_EQUALS(fd_set_max, getNFDS())
    U_INTERNAL_ASSERT(fd_read_cnt > 0 || fd_write_cnt > 0)
 
    fd_set read_set, write_set;
@@ -466,8 +498,6 @@ U_NO_EXPORT void UNotifier::eraseHandler(UEventFd* handler_event)
 
       U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
       }
-
-   if (handler_event->fd == (fd_set_max - 1)) fd_set_max = handler_event->fd;
 }
 
 U_NO_EXPORT void UNotifier::eraseItem(UNotifier* item, bool flag_reuse)
@@ -475,6 +505,8 @@ U_NO_EXPORT void UNotifier::eraseItem(UNotifier* item, bool flag_reuse)
    U_TRACE(0, "UNotifier::eraseItem(%p,%b)", item, flag_reuse)
 
    U_INTERNAL_ASSERT_POINTER(item)
+
+   setNFDS(item->handler_event_fd->fd);
 
    if (flag_reuse)
       {

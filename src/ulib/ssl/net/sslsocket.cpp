@@ -189,24 +189,6 @@ bool USSLSocket::setContext(const char* cert_file,
 
    if (CAfile || CApath)
       {
-      /*
-      if (CAfile)
-         {
-         result = U_SYSCALL(SSL_CTX_load_verify_locations, "%p,%S,%S", ctx, CAfile, 0);
-
-         if (result == 0) U_RETURN(false);
-         }
-
-      if (CApath)
-         {
-         result = U_SYSCALL(SSL_CTX_load_verify_locations, "%p,%S,%S", ctx, 0, CApath);
-
-         if (result == 0) U_RETURN(false);
-
-         UServices::setCApath(CApath);
-         }
-      */
-
       if (UServices::setupOpenSSLStore(CAfile, CApath) == false) U_RETURN(false);
 
       U_SYSCALL_VOID(SSL_CTX_set_cert_store, "%p,%p", ctx, UServices::store);

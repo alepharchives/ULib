@@ -174,16 +174,7 @@ struct U_EXPORT UServices {
    static int verify_depth;            /* how far to go looking up certs */
    static X509* verify_current_cert;   /* current certificate */
 
-   static void setCApath(const char* _CApath)
-      {
-      U_TRACE(0, "UServices::setCApath(%S)", _CApath)
-
-      U_INTERNAL_ASSERT(_CApath && *_CApath)
-
-      if (CApath) delete CApath;
-
-      U_NEW_ULIB_OBJECT(CApath, UString(_CApath));
-      }
+   static void setCApath(const char* _CApath);
 
    static void setVerifyCallback(verify_cb func)
       {

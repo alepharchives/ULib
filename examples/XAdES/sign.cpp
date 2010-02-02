@@ -340,7 +340,9 @@ public:
 
       UCertificate cert(x);
 
+#  ifdef HAVE_OPENSSL_98
       if (cert.matchPrivateKey(u_pkey) == false) U_ERROR("the private key doesn't matches the public key of the certificate", 0);
+#  endif
 
       // manage file configuration
 

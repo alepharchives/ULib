@@ -1,6 +1,3 @@
 <map id="G" name="G">
-<area shape="rect" id="node1" href="$classUDynamic.html" title="Dynamic class file loader." alt="" coords="5,30,85,58"/>
-<area shape="rect" id="node3" href="$classUPlugIn_3_01void_01_5_01_4.html" title="UPlugIn\&lt; void * \&gt;" alt="" coords="135,5,255,33"/>
-<area shape="rect" id="node7" href="$classURUBY.html" title="URUBY" alt="" coords="161,55,228,83"/>
-<area shape="rect" id="node5" href="$classUPlugIn_3_01T_01_5_01_4.html" title="UPlugIn\&lt; T * \&gt;" alt="" coords="304,5,411,33"/>
+<area shape="rect" id="node1" href="$classUDSIGContext.html" title="UDSIGContext" alt="" coords="5,5,109,33"/>
 </map>

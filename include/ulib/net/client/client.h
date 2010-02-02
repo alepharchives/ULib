@@ -18,6 +18,11 @@
 #include <ulib/net/rpc/rpc.h>
 #include <ulib/utility/uhttp.h>
 
+#ifdef HAVE_SSL
+#  include <ulib/ssl/certificate.h>
+#  include <ulib/ssl/net/sslsocket.h>
+#endif
+
 /**
    @class UClient
 
@@ -90,7 +95,6 @@ public:
    UString     getResponse() const     { return response; }
    const char* getResponseData() const { return response.data(); }
 
-   bool connect();
    void logResponse(const UString& data);
    void loadConfigParam(UFileConfig& file);
    bool setHostPort(const UString& host, int port);
@@ -103,6 +107,7 @@ public:
 
    // method to redefine
 
+   bool connect();
    void clearData();
    bool sendRequest();
    bool readResponse();
@@ -238,13 +243,30 @@ public:
 
    Socket* getSocket() { return (Socket*) socket; }
 
-   // method VIRTUAL to redefine
+   // DEBUG
 
-   bool connect()
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UClient_Base::dump(reset); }
+#endif
+
+private:
+   UClient(const UClient&) : UClient_Base(0) {}
+   UClient& operator=(const UClient&)        { return *this; }
+};
+
+#ifdef HAVE_SSL // specializzazione con USSLSocket
+
+template <> class U_EXPORT UClient<USSLSocket> : virtual public UClient_Base {
+public:
+
+   UClient(UFileConfig* cfg) : UClient_Base(cfg)
       {
-      U_TRACE(0, "UClient::connect()")
+      U_TRACE_REGISTER_OBJECT(0, UClient<USSLSocket>, "%p", cfg)
 
-#  ifndef U_NO_SSL
+      USSLSocket::method = (SSL_METHOD*) SSLv3_client_method();
+
+      socket = U_NEW(USSLSocket(bIPv6));
+
       // These are the 1024 bit DH parameters from "Assigned Number for SKIP Protocols"
       // (http://www.skip-vpn.org/spec/numbers.html).
       // See there for how they were generated.
@@ -258,10 +280,14 @@ public:
          {
          U_ERROR("SSL setContext() failed...", 0);
          }
-#  endif
-
-      return UClient_Base::connect();
       }
+
+   ~UClient()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UClient<USSLSocket>)
+      }
+
+   USSLSocket* getSocket() { return (USSLSocket*) socket; }
 
    // DEBUG
 
@@ -270,8 +296,10 @@ public:
 #endif
 
 private:
-   UClient(const UClient&) : UClient_Base(0) {}
-   UClient& operator=(const UClient&)        { return *this; }
+   UClient<USSLSocket>(const UClient<USSLSocket>&) : UClient_Base(0) {}
+   UClient<USSLSocket>& operator=(const UClient<USSLSocket>&)        { return *this; }
 };
+
+#endif
 
 #endif

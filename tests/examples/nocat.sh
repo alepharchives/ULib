@@ -6,14 +6,13 @@ start_msg nocat
 
 DOC_ROOT=/srv/wifi-portal/www
 
-rm -f nocat.log \
-		/tmp/firewall.err \
-      out/userver_tcp.out err/userver_tcp.err \
-		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* \
+rm -f nocat.log uclient.log /tmp/firewall.err \
+		out/uclient.out err/uclient.err out/userver_tcp.out err/userver_tcp.err \
+		trace.*uclient*.[0-9]* object.*uclient*.[0-9]* trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* \
 #		$DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]*
 
-#UTRACE="0 10M 0"
-#UOBJDUMP="0 100k 10"
+ UTRACE="0 10M 0"
+ UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 

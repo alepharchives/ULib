@@ -33,6 +33,7 @@
 U_CREAT_FUNC(UNoCatPlugIn)
 
 UString* UNoCatPlugIn::str_AUTH_SERVICE_URL;
+UString* UNoCatPlugIn::str_AUTH_SERVICE_IP;
 UString* UNoCatPlugIn::str_LOGOUT_URL;
 UString* UNoCatPlugIn::str_LOGIN_TIMEOUT;
 UString* UNoCatPlugIn::str_DECRYPT_CMD;
@@ -69,6 +70,7 @@ uint32_t                  UNoCatPlugIn::login_timeout;
 UString*                  UNoCatPlugIn::status_content;
 UIptAccount*              UNoCatPlugIn::ipt;
 UNoCatPlugIn*             UNoCatPlugIn::pthis;
+UVector<UIPAllow*>*       UNoCatPlugIn::vauth_ip;
 UVector<UIPAddress*>**    UNoCatPlugIn::vaddr;
 UHashMap<UModNoCatPeer*>* UNoCatPlugIn::peers;
 
@@ -315,6 +317,7 @@ UNoCatPlugIn::~UNoCatPlugIn()
       delete peers;
       }
 
+   if (vauth_ip)       delete vauth_ip;
    if (status_content) delete status_content;
 
    if (login_timeout)
@@ -922,6 +925,7 @@ void UNoCatPlugIn::str_allocate()
    U_TRACE(0, "UNoCatPlugIn::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_AUTH_SERVICE_URL,0)
+   U_INTERNAL_ASSERT_EQUALS(str_AUTH_SERVICE_IP,0)
    U_INTERNAL_ASSERT_EQUALS(str_LOGOUT_URL,0)
    U_INTERNAL_ASSERT_EQUALS(str_LOGIN_TIMEOUT,0)
    U_INTERNAL_ASSERT_EQUALS(str_INIT_CMD,0)
@@ -945,6 +949,7 @@ void UNoCatPlugIn::str_allocate()
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("AUTH_SERVICE_URL") },
+      { U_STRINGREP_FROM_CONSTANT("AUTH_SERVICE_IP") },
       { U_STRINGREP_FROM_CONSTANT("LOGOUT_URL") },
       { U_STRINGREP_FROM_CONSTANT("LOGIN_TIMEOUT") },
       { U_STRINGREP_FROM_CONSTANT("INIT_CMD") },
@@ -968,27 +973,28 @@ void UNoCatPlugIn::str_allocate()
    };
 
    U_NEW_ULIB_OBJECT(str_AUTH_SERVICE_URL,   U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_LOGOUT_URL,         U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_LOGIN_TIMEOUT,      U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_INIT_CMD,           U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_RESET_CMD,          U_STRING_FROM_STRINGREP_STORAGE(4));
-   U_NEW_ULIB_OBJECT(str_ACCESS_CMD,         U_STRING_FROM_STRINGREP_STORAGE(5));
-   U_NEW_ULIB_OBJECT(str_DECRYPT_CMD,        U_STRING_FROM_STRINGREP_STORAGE(6));
-   U_NEW_ULIB_OBJECT(str_DECRYPT_KEY,        U_STRING_FROM_STRINGREP_STORAGE(7));
-   U_NEW_ULIB_OBJECT(str_CHECK_BY_ARPING,    U_STRING_FROM_STRINGREP_STORAGE(8));
+   U_NEW_ULIB_OBJECT(str_AUTH_SERVICE_IP,    U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_LOGOUT_URL,         U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_LOGIN_TIMEOUT,      U_STRING_FROM_STRINGREP_STORAGE(3));
+   U_NEW_ULIB_OBJECT(str_INIT_CMD,           U_STRING_FROM_STRINGREP_STORAGE(4));
+   U_NEW_ULIB_OBJECT(str_RESET_CMD,          U_STRING_FROM_STRINGREP_STORAGE(5));
+   U_NEW_ULIB_OBJECT(str_ACCESS_CMD,         U_STRING_FROM_STRINGREP_STORAGE(6));
+   U_NEW_ULIB_OBJECT(str_DECRYPT_CMD,        U_STRING_FROM_STRINGREP_STORAGE(7));
+   U_NEW_ULIB_OBJECT(str_DECRYPT_KEY,        U_STRING_FROM_STRINGREP_STORAGE(8));
+   U_NEW_ULIB_OBJECT(str_CHECK_BY_ARPING,    U_STRING_FROM_STRINGREP_STORAGE(9));
 
-   U_NEW_ULIB_OBJECT(str_Action,             U_STRING_FROM_STRINGREP_STORAGE(9));
-   U_NEW_ULIB_OBJECT(str_Permit,             U_STRING_FROM_STRINGREP_STORAGE(10));
-   U_NEW_ULIB_OBJECT(str_Deny,               U_STRING_FROM_STRINGREP_STORAGE(11));
-   U_NEW_ULIB_OBJECT(str_Mode,               U_STRING_FROM_STRINGREP_STORAGE(12));
-   U_NEW_ULIB_OBJECT(str_Redirect,           U_STRING_FROM_STRINGREP_STORAGE(13));
-   U_NEW_ULIB_OBJECT(str_renew,              U_STRING_FROM_STRINGREP_STORAGE(14));
-   U_NEW_ULIB_OBJECT(str_Mac,                U_STRING_FROM_STRINGREP_STORAGE(15));
-   U_NEW_ULIB_OBJECT(str_Timeout,            U_STRING_FROM_STRINGREP_STORAGE(16));
-   U_NEW_ULIB_OBJECT(str_Token,              U_STRING_FROM_STRINGREP_STORAGE(17));
-   U_NEW_ULIB_OBJECT(str_User,               U_STRING_FROM_STRINGREP_STORAGE(18));
-   U_NEW_ULIB_OBJECT(str_anonymous,          U_STRING_FROM_STRINGREP_STORAGE(19));
-   U_NEW_ULIB_OBJECT(str_Traffic,            U_STRING_FROM_STRINGREP_STORAGE(20));
+   U_NEW_ULIB_OBJECT(str_Action,             U_STRING_FROM_STRINGREP_STORAGE(10));
+   U_NEW_ULIB_OBJECT(str_Permit,             U_STRING_FROM_STRINGREP_STORAGE(11));
+   U_NEW_ULIB_OBJECT(str_Deny,               U_STRING_FROM_STRINGREP_STORAGE(12));
+   U_NEW_ULIB_OBJECT(str_Mode,               U_STRING_FROM_STRINGREP_STORAGE(13));
+   U_NEW_ULIB_OBJECT(str_Redirect,           U_STRING_FROM_STRINGREP_STORAGE(14));
+   U_NEW_ULIB_OBJECT(str_renew,              U_STRING_FROM_STRINGREP_STORAGE(15));
+   U_NEW_ULIB_OBJECT(str_Mac,                U_STRING_FROM_STRINGREP_STORAGE(16));
+   U_NEW_ULIB_OBJECT(str_Timeout,            U_STRING_FROM_STRINGREP_STORAGE(17));
+   U_NEW_ULIB_OBJECT(str_Token,              U_STRING_FROM_STRINGREP_STORAGE(18));
+   U_NEW_ULIB_OBJECT(str_User,               U_STRING_FROM_STRINGREP_STORAGE(19));
+   U_NEW_ULIB_OBJECT(str_anonymous,          U_STRING_FROM_STRINGREP_STORAGE(20));
+   U_NEW_ULIB_OBJECT(str_Traffic,            U_STRING_FROM_STRINGREP_STORAGE(21));
 }
 
 // Server-wide hooks
@@ -1002,6 +1008,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
    // -----------------------------------------------------------------------------------------------------------------------------------
    // FIREWALL OPTIONS  vector of the params for setup the default firewall rules (write data to /tmp/firewall.opt)
    //
+   // AUTH_SERVICE_IP   authservice address IP-based access control (IPADDR[/MASK])
    // AUTH_SERVICE_URL  URL to the login script at the authservice. Must be set to the address of your authentication service
    // LOGOUT_URL        URL to redirect user after logout
    // LOGIN_TIMEOUT     Number of seconds after a client's last login/renewal to terminate their connection
@@ -1020,11 +1027,12 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
             logout_url.set(cfg[*str_LOGOUT_URL]);
       auth_service_url.set(cfg[*str_AUTH_SERVICE_URL]);
 
-      init_cmd    = cfg[*str_INIT_CMD];
-      reset_cmd   = cfg[*str_RESET_CMD];
-      access_cmd  = cfg[*str_ACCESS_CMD];
-      decrypt_cmd = cfg[*str_DECRYPT_CMD];
-      decrypt_key = cfg[*str_DECRYPT_KEY];
+      init_cmd     = cfg[*str_INIT_CMD];
+      reset_cmd    = cfg[*str_RESET_CMD];
+      access_cmd   = cfg[*str_ACCESS_CMD];
+      decrypt_cmd  = cfg[*str_DECRYPT_CMD];
+      decrypt_key  = cfg[*str_DECRYPT_KEY];
+      auth_ip_mask = cfg[*str_AUTH_SERVICE_IP];
 
       arping        = cfg.readBoolean(*str_CHECK_BY_ARPING);
       login_timeout = cfg.readLong(*str_LOGIN_TIMEOUT);
@@ -1032,6 +1040,20 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
       U_INTERNAL_DUMP("login_timeout = %ld", login_timeout)
 
       if (login_timeout > U_NOCAT_MAX_TIMEOUT) login_timeout = U_NOCAT_MAX_TIMEOUT; // check for safe timeout...
+
+      // Instructs server to consider AUTH connections these from the IP address IPADDR. A CIDR mask length can be supplied optionally after
+      // a trailing slash, e.g. 192.168.0.0/24, in which case addresses that match in the most significant MASK bits will be allowed.
+
+      if (auth_ip_mask.empty() == false)
+         {
+         vauth_ip = U_NEW(UVector<UIPAllow*>);
+
+         if (UIPAllow::parseMask(auth_ip_mask, *vauth_ip) == 0)
+            {
+            delete vauth_ip;
+                   vauth_ip = 0;
+            }
+         }
 
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
@@ -1047,11 +1069,11 @@ int UNoCatPlugIn::handlerInit()
    int port = UServer_Base::getPort();
    UString extdev, intdev, localnet, opt, sport = UStringExt::numberToString(port);
 
+   auth_ip = auth_service_url.getHost();
+
    // get IP address of AUTH host...
 
    UIPAddress addr;
-
-   auth_ip = auth_service_url.getHost();
 
    if (addr.setHostName(auth_ip, UClientImage_Base::bIPv6) == false)
       {
@@ -1062,6 +1084,11 @@ int UNoCatPlugIn::handlerInit()
       (void) auth_ip.replace(addr.getAddressString());
 
       U_SRV_LOG_VAR("AUTH host registered: %.*s", U_STRING_TO_TRACE(auth_ip));
+      }
+
+   if (vauth_ip)
+      {
+      U_SRV_LOG_VAR("AUTH request (IPADDR[/MASK]) registered: %.*s", U_STRING_TO_TRACE(auth_ip_mask));
       }
 
    /*
@@ -1246,7 +1273,10 @@ int UNoCatPlugIn::handlerRequest()
 
    // NB: check for request from AUTH
 
-   if (peer_ip == auth_ip)
+   bool is_request_from_AUTH = (vauth_ip == 0 ? peer_ip == auth_ip
+                                              : UIPAllow::isAllowed(UClientImage_Base::socket->remoteIPAddress().getInAddr(), *vauth_ip));
+
+   if (is_request_from_AUTH)
       {
       U_SRV_LOG_VAR("request from AUTH: %.*s", U_HTTP_URI_TO_TRACE);
 
@@ -1489,6 +1519,7 @@ const char* UNoCatPlugIn::dump(bool reset) const
                   << "decrypt_cmd      (UString                  " << (void*)&decrypt_cmd      << ")\n"
                   << "decrypt_key      (UString                  " << (void*)&decrypt_key      << ")\n"
                   << "access_point     (UString                  " << (void*)&access_point     << ")\n"
+                  << "auth_ip_mask     (UString                  " << (void*)&auth_ip_mask     << ")\n"
                   << "status_content   (UString                  " << (void*)status_content    << ")\n"
                   << "cmd              (UCommand                 " << (void*)&cmd              << ")\n"
                   << "pgp              (UCommand                 " << (void*)&pgp              << ")\n"

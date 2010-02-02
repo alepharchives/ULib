@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/application.h>
+#include <ulib/utility/services.h>
 
 #ifdef HAVE_LIBXML2
 #  include <libxml/parser.h>
@@ -34,6 +35,10 @@ UApplication::~UApplication()
       delete str;
              str = 0;
       }
+
+#ifdef HAVE_SSL
+   if (UServices::CApath) delete UServices::CApath;
+#endif
 
 #ifdef HAVE_LIBXML2 // Shutdown libxml
    U_SYSCALL_VOID_NO_PARAM(xmlCleanupParser);

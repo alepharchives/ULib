@@ -84,8 +84,6 @@ public:
 
       (void) cfg.open(cfg_str);
 
-      USSLSocket::method = (SSL_METHOD*) SSLv3_client_method();
-
       client = new UHttpClient<USSLSocket>(&cfg);
 
       user             = cfg[*UServer_Base::str_USER];

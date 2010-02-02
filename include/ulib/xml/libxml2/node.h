@@ -336,6 +336,18 @@ public:
       U_RETURN(prop);
       }
 
+   /** Get the value of an content associated to a node
+   */
+
+   static xmlChar* getContent(xmlNodePtr node)
+      {
+      U_TRACE(1, "UXML2Node::getContent(%p)", node)
+
+      xmlChar* content = (xmlChar*) U_SYSCALL(xmlNodeGetContent, "%p", node);
+
+      U_RETURN_POINTER(content, xmlChar);
+      }
+
    /** Import node(s) from another document under this node, without affecting the source node.
    *
    * @param node      The node to copy and insert under the current node.

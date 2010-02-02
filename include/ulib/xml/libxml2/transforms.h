@@ -4,22 +4,27 @@
 //    ulib - c++ library
 //
 // = FILENAME
-//    transforms.h - wrapping of libxml2
+//    transforms.h - xml Digital SIGnature with libxml2
 //
 // = AUTHOR
 //    Stefano Casazza
 //
 // ============================================================================
 
-#ifndef ULIB_UXML2TRANSFORM_H
-#define ULIB_UXML2TRANSFORM_H 1
+#ifndef ULIB_DSIG_TRANSFORM_H
+#define ULIB_DSIG_TRANSFORM_H 1
 
+#include <ulib/container/vector.h>
 #include <ulib/xml/libxml2/document.h>
 
-#include <libxml/tree.h>
-#include <libxml/xpath.h>
+#include <libxml/uri.h>
+#include <libxml/xmlIO.h>
 
-class U_EXPORT UBaseTranform {
+class UDSIGContext;
+class UReferenceCtx;
+class UTransformCtx;
+
+class UBaseTransform {
 public:
 
    // Check for memory error
@@ -32,7 +37,7 @@ public:
    // The transform usage bit mask
 
    enum Usage {
-      NONE       = 0x0000, // usage is unknown or undefined
+   // NONE       = 0x0000, // usage is unknown or undefined
       DSIG       = 0x0001, // Transform could be used in <dsig:Transform>
       C14N       = 0x0002, // Transform could be used in <dsig:CanonicalizationMethod>
       DIGEST     = 0x0004, // Transform could be used in <dsig:DigestMethod>
@@ -41,87 +46,418 @@ public:
       ANY        = 0xFFFF  // Transform could be used for operation
    };
 
-   Usage usage;      // the allowed transforms usages
-   const char* name; // the transform's name
-   const char* href; // the transform's identification string (href)
+   // The transform execution status
 
-            UBaseTranform() {}
-   virtual ~UBaseTranform() {}
+   enum State {
+   // NONE     = 0,  // status unknown
+      WORKING  = 1,  // transform is executed
+      FINISHED = 2,  // transform finished
+      OK       = 3,  // transform succeeded
+      FAIL     = 4   // transform failed (an error occur)
+   };
+
+   // The transform operation
+
+   enum Operation {
+   // NONE     = 0,  // operation is unknown
+      ENCODE   = 1,  // encode operation (for base64 transform)
+      DECODE   = 2,  // decode operation (for base64 transform)
+      SIGN     = 3,  // sign or digest operation
+      VERIFY   = 4,  // verification of signature or digest operation
+      ENCRYPT  = 5,  // encryption operation
+      DECRYPT  = 6,  // decryption operation
+   };
+
+   // COSTRUTTORI
+
+   UBaseTransform()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UBaseTransform, "", 0)
+
+      status    = 0;
+      operation = 0;
+      }
+
+   virtual ~UBaseTransform()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UBaseTransform)
+      }
 
    // method VIRTUAL to define
 
-   virtual int readNode()     { return 0; } // the XML node read method
-   virtual int writeNode()    { return 0; } // the XML node write method
-   virtual int setKey()       { return 0; } // the set key method
-   virtual int setKeyReq()    { return 0; } // the set key requirements method
-   virtual int verify()       { return 0; } // the verify method (for digest and signature transforms)
-   virtual int getDataType()  { return 0; } // the input/output data type query method
-   virtual int pushBin()      { return 0; } // the binary data "push thru chain" processing method
-   virtual int popBin()       { return 0; } // the binary data "pop from chain" procesing method
-   virtual int pushXml()      { return 0; } // the XML data "push thru chain" processing method
-   virtual int popXml()       { return 0; } // the XML data "pop from chain" procesing method
-   virtual int execute()      { return 0; } // the low level data processing method used by default implementations of pushBin,popBin,pushXml and popXml
+   virtual int         usage() = 0; // the allowed transforms usages
+   virtual const char* name()  = 0; // the transform's name
+   virtual const char* href()  = 0; // the transform's identification string (href)
+
+   virtual bool verify()                     { return true; } // the verify method (for digest and signature transforms)
+   virtual bool setKey(xmlNodePtr node)      { return true; } // the set key method
+   virtual bool popBin(xmlNodePtr node)      { return true; } // the binary data "pop from chain" procesing method
+   virtual bool popXml(xmlNodePtr node)      { return true; } // the XML data "pop from chain" procesing method
+   virtual bool execute(xmlNodePtr node)     { return true; } // the low level data processing method used by default pushBin,popBin,pushXml and popXml
+   virtual bool pushBin(xmlNodePtr node)     { return true; } // the binary data "push thru chain" processing method
+   virtual bool pushXml(xmlNodePtr node)     { return true; } // the XML data "push thru chain" processing method
+   virtual bool readNode(xmlNodePtr node)    { return true; } // the XML node read method
+   virtual bool writeNode(xmlNodePtr node)   { return true; } // the XML node write method
+   virtual bool setKeyReq(xmlNodePtr node)   { return true; } // the set key requirements method
+   virtual bool getDataType(xmlNodePtr node) { return true; } // the input/output data type query method
+
+#ifdef DEBUG
+   const char* dump(bool reset) const;
+#endif
+
+protected:
+   int status;          // the current status
+   int operation;       // the transform's operation
+   UString inBuf;       // the input binary data buffer
+   UString outBuf;      // the output binary data buffer
+   xmlNodePtr inNodes;  // the input XML nodes
+   xmlNodePtr outNodes; // the output XML nodes
+   xmlNodePtr hereNode; // the pointer to transform's <dsig:Transform /> node
 
 private:
-   UBaseTranform(const UBaseTranform&)            {}
-   UBaseTranform& operator=(const UBaseTranform&) { return *this; }
+   UBaseTransform(const UBaseTransform&)            {}
+   UBaseTransform& operator=(const UBaseTransform&) { return *this; }
+
+   friend class UDSIGContext;
+   friend class UTransformCtx;
+   friend class UReferenceCtx;
 };
 
- /*
-  * The Base64 transform klass (http://www.w3.org/TR/xmldsig-core/#sec-Base-64).
-  * The normative specification for base64 decoding transforms is RFC 2045
-  * (http://www.ietf.org/rfc/rfc2045.txt). The base64 Transform element has 
-  * no content. The input is decoded by the algorithms. This transform is 
-  * useful if an application needs to sign the raw data associated with 
-  * the encoded content of an element.
-  */
+/*
+ * The Base64 transform klass (http://www.w3.org/TR/xmldsig-core/#sec-Base-64).
+ * The normative specification for base64 decoding transforms is RFC 2045
+ * (http://www.ietf.org/rfc/rfc2045.txt). The base64 Transform element has 
+ * no content. The input is decoded by the algorithms. This transform is 
+ * useful if an application needs to sign the raw data associated with 
+ * the encoded content of an element.
+ */
 
-class U_EXPORT UTranformBase64 {
+class UTranformBase64 : public UBaseTransform {
 public:
+
+   // COSTRUTTORI
 
    UTranformBase64()
       {
       U_TRACE_REGISTER_OBJECT(0, UTranformBase64, "", 0)
-
-      usage = DSIG;
-      name  = "base64";
-      href  = "http://www.w3.org/2000/09/xmldsig#base64";
       }
 
-   ~UTranformBase64()
+   virtual ~UTranformBase64()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UTranformBase64)
       }
 
+   // define method VIRTUAL of class UBaseTransform
+
+   virtual int         usage() { return _usage; } // the allowed transforms usages
+   virtual const char* name()  { return _name;  } // the transform's name
+   virtual const char* href()  { return _href;  } // the transform's identification string (href)
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
+#endif
+
+protected:
+   static int _usage;        // the allowed transforms usages
+   static const char* _name; // the transform's name
+   static const char* _href; // the transform's identification string (href)
+
 private:
-   UTranformBase64(const UTranformBase64&)            {}
-   UTranformBase64& operator=(const UTranformBase64&) { return *this; }
+   UTranformBase64(const UTranformBase64&) : UBaseTransform() {}
+   UTranformBase64& operator=(const UTranformBase64&)         { return *this; }
+
+   friend class UDSIGContext;
+   friend class UTransformCtx;
+   friend class UReferenceCtx;
 };
 
-class U_EXPORT UTranformInclC14N {
+// Inclusive (regular) canonicalization that omits comments transform class
+// (http://www.w3.org/TR/xmldsig-core/#sec-c14nAlg and http://www.w3.org/TR/2001/REC-xml-c14n-20010315)
+
+class U_EXPORT UTranformInclC14N : public UBaseTransform {
 public:
+
+   // COSTRUTTORI
 
    UTranformInclC14N()
       {
       U_TRACE_REGISTER_OBJECT(0, UTranformInclC14N, "", 0)
-
-      usage = DSIG;
-      name  = "base64";
-      href  = "http://www.w3.org/2000/09/xmldsig#base64";
       }
 
-   ~UTranformInclC14N()
+   virtual ~UTranformInclC14N()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UTranformInclC14N)
       }
 
+   // define method VIRTUAL of class UBaseTransform
+
+   virtual int         usage() { return _usage; } // the allowed transforms usages
+   virtual const char* name()  { return _name;  } // the transform's name
+   virtual const char* href()  { return _href;  } // the transform's identification string (href)
+
+   virtual bool popBin(xmlNodePtr node)      { return false; } // the binary data "pop from chain" procesing method
+   virtual bool pushXml(xmlNodePtr node)     { return false; } // the XML data "push thru chain" processing method
+   virtual bool getDataType(xmlNodePtr node) { return false; } // the input/output data type query method
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
+#endif
+
+protected:
+   static int _usage;        // the allowed transforms usages
+   static const char* _name; // the transform's name
+   static const char* _href; // the transform's identification string (href)
+
 private:
-   UTranformInclC14N(const UTranformInclC14N&)            {}
-   UTranformInclC14N& operator=(const UTranformInclC14N&) { return *this; }
+   UTranformInclC14N(const UTranformInclC14N&) : UBaseTransform() {}
+   UTranformInclC14N& operator=(const UTranformInclC14N&)         { return *this; }
+
+   friend class UDSIGContext;
+   friend class UTransformCtx;
+   friend class UReferenceCtx;
 };
 
+class UTranformXPointer : public UBaseTransform {
+public:
 
-class U_EXPORT UXML2Transform {
+   UTranformXPointer()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UTranformXPointer, "", 0)
+      }
+
+   virtual ~UTranformXPointer()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UTranformXPointer)
+      }
+
+   // define method VIRTUAL of class UBaseTransform
+
+   virtual int         usage() { return _usage; } // the allowed transforms usages
+   virtual const char* name()  { return _name;  } // the transform's name
+   virtual const char* href()  { return _href;  } // the transform's identification string (href)
+
+   virtual bool popXml(xmlNodePtr node)      { return false; } // the XML data "pop from chain" procesing method
+   virtual bool pushXml(xmlNodePtr node)     { return false; } // the XML data "push thru chain" processing method
+   virtual bool execute(xmlNodePtr node)     { return false; } // the low level data processing method used by default pushBin,popBin,pushXml and popXml
+   virtual bool readNode(xmlNodePtr node)    { return false; } // the XML node read method
+   virtual bool getDataType(xmlNodePtr node) { return false; } // the input/output data type query method
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
+#endif
+
+protected:
+   static int _usage;        // the allowed transforms usages
+   static const char* _name; // the transform's name
+   static const char* _href; // the transform's identification string (href)
+
+private:
+   UTranformXPointer(const UTranformXPointer&) : UBaseTransform() {}
+   UTranformXPointer& operator=(const UTranformXPointer&)         { return *this; }
+
+   friend class UDSIGContext;
+   friend class UTransformCtx;
+   friend class UReferenceCtx;
+};
+
+class UTranformSha1 : public UBaseTransform {
+public:
+
+   // COSTRUTTORI
+
+   UTranformSha1()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UTranformSha1, "", 0)
+      }
+
+   virtual ~UTranformSha1()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UTranformSha1)
+      }
+
+   // define method VIRTUAL of class UBaseTransform
+
+   virtual int         usage() { return _usage; } // the allowed transforms usages
+   virtual const char* name()  { return _name;  } // the transform's name
+   virtual const char* href()  { return _href;  } // the transform's identification string (href)
+
+   virtual bool verify()                     { return false; } // the verify method (for digest and signature transforms)
+   virtual bool popBin(xmlNodePtr node)      { return false; } // the binary data "pop from chain" procesing method
+   virtual bool execute(xmlNodePtr node)     { return false; } // the low level data processing method used by default pushBin,popBin,pushXml and popXml
+   virtual bool pushBin(xmlNodePtr node)     { return false; } // the binary data "push thru chain" processing method
+   virtual bool getDataType(xmlNodePtr node) { return false; } // the input/output data type query method
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
+#endif
+
+protected:
+   static int _usage;        // the allowed transforms usages
+   static const char* _name; // the transform's name
+   static const char* _href; // the transform's identification string (href)
+
+private:
+   UTranformSha1(const UTranformSha1&) : UBaseTransform() {}
+   UTranformSha1& operator=(const UTranformSha1&)         { return *this; }
+
+   friend class UDSIGContext;
+   friend class UTransformCtx;
+   friend class UReferenceCtx;
+};
+
+class U_EXPORT UTranformRsaMd5 : public UBaseTransform {
+public:
+
+   // COSTRUTTORI
+
+   UTranformRsaMd5()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UTranformRsaMd5, "", 0)
+      }
+
+   virtual ~UTranformRsaMd5()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UTranformRsaMd5)
+      }
+
+   // define method VIRTUAL of class UBaseTransform
+
+   virtual int         usage() { return _usage; } // the allowed transforms usages
+   virtual const char* name()  { return _name;  } // the transform's name
+   virtual const char* href()  { return _href;  } // the transform's identification string (href)
+
+   virtual bool verify()                     { return false; } // the verify method (for digest and signature transforms)
+   virtual bool setKey(xmlNodePtr node)      { return false; } // the set key method
+   virtual bool popBin(xmlNodePtr node)      { return false; } // the binary data "pop from chain" procesing method
+   virtual bool execute(xmlNodePtr node)     { return false; } // the low level data processing method used by default pushBin,popBin,pushXml and popXml
+   virtual bool pushBin(xmlNodePtr node)     { return false; } // the binary data "push thru chain" processing method
+   virtual bool setKeyReq(xmlNodePtr node)   { return false; } // the set key requirements method
+   virtual bool getDataType(xmlNodePtr node) { return false; } // the input/output data type query method
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
+#endif
+
+protected:
+   static int _usage;        // the allowed transforms usages
+   static const char* _name; // the transform's name
+   static const char* _href; // the transform's identification string (href)
+
+private:
+   UTranformRsaMd5(const UTranformRsaMd5&) : UBaseTransform() {}
+   UTranformRsaMd5& operator=(const UTranformRsaMd5&)         { return *this; }
+
+   friend class UDSIGContext;
+   friend class UTransformCtx;
+   friend class UReferenceCtx;
+};
+
+class UTranformRsaSha1 : public UBaseTransform {
+public:
+
+   // COSTRUTTORI
+
+   UTranformRsaSha1()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UTranformRsaSha1, "", 0)
+      }
+
+   virtual ~UTranformRsaSha1()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UTranformRsaSha1)
+      }
+
+   // define method VIRTUAL of class UBaseTransform
+
+   virtual int         usage() { return _usage; } // the allowed transforms usages
+   virtual const char* name()  { return _name;  } // the transform's name
+   virtual const char* href()  { return _href;  } // the transform's identification string (href)
+
+   virtual bool verify()                     { return false; } // the verify method (for digest and signature transforms)
+   virtual bool setKey(xmlNodePtr node)      { return false; } // the set key method
+   virtual bool popBin(xmlNodePtr node)      { return false; } // the binary data "pop from chain" procesing method
+   virtual bool execute(xmlNodePtr node)     { return false; } // the low level data processing method used by default pushBin,popBin,pushXml and popXml
+   virtual bool pushBin(xmlNodePtr node)     { return false; } // the binary data "push thru chain" processing method
+   virtual bool setKeyReq(xmlNodePtr node)   { return false; } // the set key requirements method
+   virtual bool getDataType(xmlNodePtr node) { return false; } // the input/output data type query method
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
+#endif
+
+protected:
+   static int _usage;        // the allowed transforms usages
+   static const char* _name; // the transform's name
+   static const char* _href; // the transform's identification string (href)
+
+private:
+   UTranformRsaSha1(const UTranformRsaSha1&) : UBaseTransform() {}
+   UTranformRsaSha1& operator=(const UTranformRsaSha1&)         { return *this; }
+
+   friend class UDSIGContext;
+   friend class UTransformCtx;
+   friend class UReferenceCtx;
+};
+
+/*
+ * Input URI transform
+ */
+
+class UIOCallback;
+
+class UTranformInputURI : public UBaseTransform {
+public:
+
+   // COSTRUTTORI
+
+   UTranformInputURI(const char* uri);
+
+   virtual ~UTranformInputURI()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UTranformInputURI)
+      }
+
+   // define method VIRTUAL of class UBaseTransform
+
+   virtual int         usage() { return _usage; } // the allowed transforms usages
+   virtual const char* name()  { return _name;  } // the transform's name
+   virtual const char* href()  { return _href;  } // the transform's identification string (href)
+
+   virtual bool popBin(xmlNodePtr node)      { return false; } // the binary data "pop from chain" procesing method
+   virtual bool getDataType(xmlNodePtr node) { return false; } // the input/output data type query method
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
+#endif
+
+protected:
+   void* clbksCtx;
+   UIOCallback* clbks;
+
+   static int _usage;        // the allowed transforms usages
+   static const char* _name; // the transform's name
+   static const char* _href; // the transform's identification string (href)
+
+   static UVector<UIOCallback*>* allIOCallbacks;
+
+   // SERVICES
+
+   static UIOCallback* find(const char* uri);
+
+private:
+   UTranformInputURI(const UTranformInputURI&) : UBaseTransform() {}
+   UTranformInputURI& operator=(const UTranformInputURI&)         { return *this; }
+
+   friend class UDSIGContext;
+   friend class UTransformCtx;
+   friend class UReferenceCtx;
+};
+
+/*
+ * Input I/O callback list
+ */
+
+class UIOCallback {
 public:
 
    // Check for memory error
@@ -131,82 +467,25 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // The transform execution status
-
-   enum State {
-      NONE     = 0,  // status unknown
-      WORKING  = 1,  // transform is executed
-      FINISHED = 2,  // transform finished
-      OK       = 3,  // transform succeeded
-      FAIL     = 4   // transform failed (an error occur)
-   };
-
-   // transform data type bit mask
-
-   enum DataType {
-      NONE   = 0x0000, // transform data type is unknown or nor data expected
-      BINARY = 0x0001, // binary transform data
-      XML    = 0x0002  // xml transform data
-   };
-
-   // URI transform type bit mask
-
-   enum UriType {
-      NONE          = 0x0000, // URI type is unknown or not set
-      EMPTY         = 0x0001, // empty URI ("") type
-      SAME_DOCUMENT = 0x0002, // same document ("#...") but not empty ("") URI type
-      TYPE_LOCAL    = 0x0004, // local URI ("file:///....") type
-      TYPE_REMOTE   = 0x0008, // remote URI type
-      TYPE_ANY      = 0xFFFF  // Any URI type
-   };
-
-   // The transform operation
-
-   enum Operation {
-      NONE     = 0,  // operation is unknown
-      ENCODE   = 1,  // encode operation (for base64 transform)
-      DECODE   = 2,  // decode operation (for base64 transform)
-      SIGN     = 3,  // sign or digest operation
-      VERIFY   = 4   // verification of signature or digest operation
-      ENCRYPT  = 5,  // encryption operation
-      DECRYPT  = 6,  // decryption operation
-   };
-
-   // The transform operation mode
-
-   enum Mode {
-      NONE = 0, // mode unknown
-      PUSH = 1, // pushing data thru transform
-      POP  = 2  // popping data from transform
-   };
-
-   // The transform structure
-
-   typedef struct transform {
-      Status status;       // the current status
-      Operation operation; // the transform's operation
-      UBaseTranform* id;   // the transform id (pointer to)
-      UString inBuf;       // the input binary data buffer
-      UString outBuf;      // the output binary data buffer
-      xmlNodePtr hereNode; // the pointer to transform's <dsig:Transform /> node
-      xmlNodePtr inNodes;  // the input XML nodes
-      xmlNodePtr outNodes; // the output XML nodes
-   } transform;
-
    // COSTRUTTORI
 
-    UXML2Transform(const UString& xmldoc);
-   ~UXML2Transform();
-
-   const char* getName() const
+   UIOCallback(xmlInputMatchCallback matchFunc,
+               xmlInputOpenCallback  openFunc,
+               xmlInputReadCallback  readFunc,
+               xmlInputCloseCallback closeFunc)
       {
-      U_TRACE(0, "UXML2Transform::getName()")
+      U_TRACE_REGISTER_OBJECT(0, UIOCallback, "%p,%p,%p,%p", matchFunc, openFunc, readFunc, closeFunc)
 
-      U_INTERNAL_ASSERT_POINTER(impl_)
 
-      const char* result = (impl_->name ? (const char*)impl_->name : "");
+      matchcallback = matchFunc;
+      opencallback  = openFunc;
+      readcallback  = readFunc; 
+      closecallback = closeFunc;
+      }
 
-      U_RETURN(result);
+   ~UIOCallback()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UIOCallback)
       }
 
 #ifdef DEBUG
@@ -214,18 +493,16 @@ public:
 #endif
 
 protected:
+   xmlInputMatchCallback matchcallback;
+   xmlInputOpenCallback  opencallback;
+   xmlInputReadCallback  readcallback;
+   xmlInputCloseCallback closecallback;
 
-    int status,         // the transforms chain processing status
-        enabledUris;    // the allowed transform data source uri types
-
-    xmlChar* uri;       // the data source URI without xpointer expression
-    xmlChar* xptrExpr;  // the xpointer expression from data source URI (if any)
-
-   // xmlSecPtrList  enabledTransforms;
-    
 private:
-   UXML2Transform(const UXML2Transform&)            {}
-   UXML2Transform& operator=(const UXML2Transform&) { return *this; }
+   UIOCallback(const UIOCallback&)            {}
+   UIOCallback& operator=(const UIOCallback&) { return *this; }
+
+   friend class UTranformInputURI;
 };
 
 #endif

@@ -53,16 +53,15 @@ protected:
 
             X509* x509 = getSocket()->getPeerCertificate();
 
-            U_INTERNAL_ASSERT_EQUALS(x509, 0)
-
-            if (getSocket()->askForClientCertificate())
+            if (x509 == 0 &&
+                getSocket()->askForClientCertificate())
                {
-               X509* x509 = getSocket()->getPeerCertificate();
+               x509 = getSocket()->getPeerCertificate();
 
                U_INTERNAL_ASSERT_DIFFERS(x509, 0)
-
-               cerr << UCertificate(x509).print();
                }
+
+            if (x509) cerr << UCertificate(x509).print();
             }
 
          // manage buffered read (pipelining)
