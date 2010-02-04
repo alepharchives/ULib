@@ -42,11 +42,21 @@ void UNotifier::setNFDS(int fd)
 
    U_INTERNAL_DUMP("fd_set_max = %d", fd_set_max)
 
-   if (fd == (fd_set_max-1)) fd_set_max = ((fd_read_cnt  && FD_ISSET(fd-1, &fd_set_read)) ||
-                                           (fd_write_cnt && FD_ISSET(fd-1, &fd_set_write))
-                                                ? fd : getNFDS());
+   if (fd == (fd_set_max-1))
+      {
+      bool is_last = (fd_read_cnt  && FD_ISSET(fd-1, &fd_set_read)) ||
+                     (fd_write_cnt && FD_ISSET(fd-1, &fd_set_write));
 
-   U_INTERNAL_ASSERT(fd >= fd_set_max)
+      U_INTERNAL_DUMP("is_last = %b", is_last)
+
+      if (is_last) fd_set_max = fd;
+      else
+         {
+         fd_set_max = getNFDS();
+
+         U_INTERNAL_ASSERT(fd >= fd_set_max)
+         }
+      }
 }
 
 int UNotifier::getNFDS()

@@ -372,15 +372,15 @@ bool UMimeMultipart::parse()
 {
    U_TRACE(0, "UMimeMultipart::parse()")
 
-   U_ASSERT(content.empty()  == false)
+   U_ASSERT( content.empty() == false)
    U_ASSERT(boundary.empty() == false)
 
    // Assume the starting position is the beginning of a line
 
-   buf    = content.data();
+   buf    =  content.data();
    bbuf   = boundary.data();
    blen   = boundary.size();
-   endPos = content.size();
+   endPos =  content.size();
 
    // Find the preamble
 
@@ -449,6 +449,19 @@ bool UMimeMultipart::parse()
    U_INTERNAL_DUMP("getNumBodyPart() = %u", getNumBodyPart())
 
    U_RETURN(parse_result = true);
+}
+
+void UMimeMultipart::clear()
+{
+   U_TRACE(0, "UMimeMultipart::::clear()")
+
+   boundary.clear();
+   preamble.clear();
+   epilogue.clear();
+
+   bodypart.clear();
+
+   UMimeEntity::clear();
 }
 
 // STREAMS

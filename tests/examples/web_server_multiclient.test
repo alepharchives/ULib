@@ -7,7 +7,7 @@
 start_msg web_server_multiclient
 
 rm -f web_server_multiclient.log \
-		out/userver_tcp.out err/userver_tcp.err err/web_server_multiclient \
+		out/userver_tcp.out err/userver_tcp.err err/web_server_multiclient.err \
       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]*
 
 #UTRACE="0 15M 0"
@@ -49,6 +49,7 @@ $SLEEP
 $SYNC
 
 mv err/userver_tcp.err err/web_server_multiclient.err
+
 cat web_server_multiclient.log > out/web_server_multiclient.out
 
 # Test against expected output

@@ -1189,7 +1189,8 @@ void UHTTP::resetForm()
    U_INTERNAL_ASSERT_POINTER(formMulti)
    U_INTERNAL_ASSERT_POINTER(form_name_value)
 
-         formMulti->clear();
+   if (formMulti->isEmpty() == false) formMulti->clear();
+
    form_name_value->clear();
           qcontent->clear();
 

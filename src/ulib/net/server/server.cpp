@@ -35,6 +35,7 @@ int                        UServer_Base::num_connection;
 int                        UServer_Base::max_Keep_Alive;
 int                        UServer_Base::preforked_num_kids;
 bool                       UServer_Base::flag_loop;
+bool                       UServer_Base::block_on_accept;
 bool                       UServer_Base::digest_authentication;
 bool                       UServer_Base::flag_use_tcp_optimization;
 char                       UServer_Base::mod_name[20];
@@ -364,24 +365,9 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    verify_mode = cfg.readLong(*str_VERIFY_MODE);
 #endif
 
-   U_INTERNAL_ASSERT_EQUALS(lock,0)
-
-   lock = U_NEW(ULock);
-
-   U_INTERNAL_ASSERT_POINTER(lock)
-
 #ifndef __MINGW32__
    preforked_num_kids = cfg.readLong(*str_PREFORK_CHILD);
 #endif
-
-   if (isPreForked())
-      {
-      ptr = (shared_data*) UFile::mmap(sizeof(shared_data) + sizeof(sem_t));
-
-      U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
-
-      lock->init((sem_t*)((char*)ptr + sizeof(shared_data)));
-      }
 
    // write pid on file...
 
@@ -516,7 +502,30 @@ void UServer_Base::init()
 
    UEventFd::fd = socket->getFd();
 
-   if (log_file.empty() == false) openLog(log_file, log_file_sz);
+   if (log_file.empty()) (void) U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_SETFL, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+   else
+      {
+      block_on_accept = true;
+
+      openLog(log_file, log_file_sz);
+
+      if (isPreForked())
+         {
+         U_INTERNAL_ASSERT_EQUALS(lock,0)
+
+         lock = U_NEW(ULock);
+         ptr  = (shared_data*) UFile::mmap(sizeof(shared_data) + sizeof(sem_t));
+
+         U_INTERNAL_ASSERT_POINTER(lock)
+         U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
+
+         lock->init((sem_t*)((char*)ptr + sizeof(shared_data)));
+
+         U_SOCKET_FLAGS = U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_GETFL, 0);
+
+         U_INTERNAL_DUMP("O_NONBLOCK = %B, U_SOCKET_FLAGS = %B", O_NONBLOCK, U_SOCKET_FLAGS)
+         }
+      }
 
    // get name host
 
@@ -632,31 +641,6 @@ void UServer_Base::init()
    if (pluginsHandlerInit() != U_PLUGIN_HANDLER_GO_ON) U_ERROR("initialization of plugins FAILED. Going down...", 0);
 #endif
 
-   if (as_user.empty() == false)
-      {
-      const char* user = as_user.data();
-
-      if (u_ranAsUser(user, false))
-         {
-         U_SRV_LOG_VAR("server run with user '%s' permission", user);
-         }
-      else
-         {
-         U_ERROR("set user '%s' context failed...", user);
-         }
-      }
-
-   if (isPreForked())
-      {
-      U_SOCKET_FLAGS = U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_GETFL, 0);
-
-      U_INTERNAL_DUMP("O_NONBLOCK = %B, U_SOCKET_FLAGS = %B", O_NONBLOCK, U_SOCKET_FLAGS)
-
-#  ifndef HAVE_LIBEVENT
-      UNotifier::preallocate(max_Keep_Alive / preforked_num_kids);
-#  endif
-      }
-
    if (flag_use_tcp_optimization)
       {
       U_ASSERT_EQUALS(name_sock.empty(), true) // no unix socket...
@@ -685,6 +669,20 @@ void UServer_Base::init()
 
       socket->setTcpDeferAccept(1U);
 
+      /*
+       * La variabile sysctl net.core.somaxconn limita la dimensione della coda in ascolto per le connessioni TCP.
+       * Il valore predefinito è di 128, generalmente troppo basso per una gestione robusta di nuove connessioni in
+       * ambienti come i web server molto carichi. Per tali ambienti, è consigliato aumentare questo valore a 1024
+       * o maggiore. Il demone di servizio può a sua volta limitare la dimensione della coda (e.g. sendmail(8), o
+       * Apache) ma spesso avrà una direttiva nel proprio file di configurazione per correggere la dimensione della
+       * coda. Grosse code di ascolto aiutano anche ad evitare attacchi di tipo Denial of Service (DoS).
+       */
+
+      if (UFile::writeToTmpl("/proc/sys/net/core/somaxconn", UStringExt::numberToString(1024)))
+         {
+         U_SRV_LOG_MSG("size of the listen queue for accepting new TCP connections set to 1024");
+         }
+
       /* Another way to prevent delays caused by sending useless packets is to use the TCP_QUICKACK option.
        * This option is different from TCP_DEFER_ACCEPT, as it can be used not only to manage the process of
        * connection establishment, but it can be used also during the normal data transfer process. In addition,
@@ -697,6 +695,20 @@ void UServer_Base::init()
        */
 
       socket->setTcpQuickAck(0U);
+      }
+
+   if (as_user.empty() == false)
+      {
+      const char* user = as_user.data();
+
+      if (u_ranAsUser(user, false))
+         {
+         U_SRV_LOG_VAR("server run with user '%s' permission", user);
+         }
+      else
+         {
+         U_ERROR("set user '%s' context failed...", user);
+         }
       }
 }
 
@@ -756,7 +768,8 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
     * O_NONBLOCK flag set (see socket(7)).
     */
 
-   if (isPreForked())
+   if (block_on_accept &&
+       isPreForked())
       {
       bool block = (num_connection == 0);
 
@@ -790,8 +803,8 @@ const char* UServer_Base::getNumConnection()
 
    static char buffer[32];
 
-   if (isPreForked()) (void) u_snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
-   else               (void) u_snprintf(buffer, sizeof(buffer),  "%d",     num_connection);
+   if (block_on_accept && isPreForked()) (void) u_snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
+   else                                  (void) u_snprintf(buffer, sizeof(buffer),  "%d",     num_connection);
 
    U_RETURN(buffer);
 }
@@ -807,7 +820,8 @@ void UServer_Base::handlerCloseConnection()
 
    U_INTERNAL_DUMP("num_connection = %d", num_connection)
 
-   if (isPreForked())
+   if (block_on_accept &&
+       isPreForked())
       {
       U_TOT_CONNECTION--;
 
@@ -832,7 +846,8 @@ void UServer_Base::handlerNewConnection()
 
    if (UClientImage_Base::socket->isConnected() == false)
       {
-      if (flag_loop) // check for SIGTERM event...
+      if (flag_loop && // check for SIGTERM event...
+          block_on_accept)
          {
          char buffer[4096];
 
@@ -870,9 +885,12 @@ void UServer_Base::handlerNewConnection()
 
    if (isPreForked())
       {
-      U_TOT_CONNECTION++;
+      if (block_on_accept)
+         {
+         U_TOT_CONNECTION++;
 
-      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+         U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+         }
       }
    else if (isClassic())
       {
@@ -947,6 +965,8 @@ void UServer_Base::run()
    UNotifier::exit_loop_wait_event_for_signal = true;
 
    if (USocket::req_timeout) ptime = U_NEW(UEventTime(USocket::req_timeout, 0L));
+
+   if (isPreForked()) UNotifier::preallocate(max_Keep_Alive / preforked_num_kids);
 #endif
 
    // --------------------------------------------------------------------------------------------------------------------------
@@ -1026,7 +1046,8 @@ preforked_child:
 
    while (flag_loop)
       {
-      if (isClientConnect() == false) // check if we can block on accept()...
+      if (block_on_accept &&
+          isClientConnect() == false) // check if we can block on accept()...
          {
 wait:
          U_SRV_LOG_MSG("waiting for connection");
@@ -1208,6 +1229,7 @@ const char* UServer_Base::dump(bool reset) const
                   << "verify_mode               " << verify_mode                 << '\n'
                   << "log_file_sz               " << log_file_sz                 << '\n'
                   << "num_connection            " << num_connection              << '\n'
+                  << "block_on_accept           " << block_on_accept             << '\n'
                   << "preforked_num_kids        " << preforked_num_kids          << '\n'
                   << "digest_authentication     " << digest_authentication       << '\n'
                   << "flag_use_tcp_optimization " << flag_use_tcp_optimization   << '\n'

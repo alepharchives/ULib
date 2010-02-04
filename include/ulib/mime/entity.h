@@ -76,6 +76,15 @@ public:
 
    UMimeHeader* getHeader() const { return header; }
 
+   bool isEmpty()
+      {
+      U_TRACE(0, "UMimeEntity::isEmpty()")
+
+      bool result = content.empty();
+
+      U_RETURN(result);
+      }
+
    void setEmpty()
       {
       U_TRACE(0, "UMimeEntity::setEmpty()")
@@ -83,6 +92,10 @@ public:
       U_INTERNAL_ASSERT_POINTER(header)
 
       data.setEmpty();
+
+              body.clear();
+           content.clear();
+      content_type.clear();
 
       header->clear();
       }
@@ -349,6 +362,7 @@ public:
    // VARIE
 
    bool parse();
+   void clear();
 
    void setContent(const UString& _content)
       {

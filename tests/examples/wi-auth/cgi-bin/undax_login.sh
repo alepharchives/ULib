@@ -8,19 +8,7 @@ set_ENV $0
 
 if [ "$REQUEST_METHOD" = "GET" ]; then
 
-	if [ "$REQUEST_URI" = "/$BASE_NAME" ]; then
-
-		if [ $# -eq 0 ]; then
-
-			login_request_from_PIAZZE
-
-		elif [ $# -eq 7 ]; then
-
-			login_request_from_nocat "$@"
-
-		fi
-
-	elif [ "$REQUEST_URI" = "/logout" ]; then
+	if [ "$REQUEST_URI" = "/logout" ]; then
 
 		if [ $# -le 1 ]; then
 
@@ -42,24 +30,9 @@ if [ "$REQUEST_METHOD" = "GET" ]; then
 
 elif [ "$REQUEST_METHOD" = "POST" -a "$REQUEST_URI" = "/$BASE_NAME" ]; then
 
-	if [ $# -eq 4 ]; then
+	if [ $# -ge 4 ]; then
 
-		login_request_from_PIAZZE "$@"
-
-	elif [ $# -eq 10 ]; then # login request from nocat
-
-		# $1	-> mac
-		# $2  -> ip
-		# $3	-> redirect
-		# $4	-> gateway
-		# $5	-> timeout
-		# $6	-> token
-		# $7	-> ap
-		# $8	-> uid
-		# $9	-> pass
-		# $10 -> button
-
-		auth_check_card "$1" "$2" "$3" "$4" "$5" "$6" "$7" realm "$8" "$9" "${10}"
+		login_request "$@"
 
 	fi
 

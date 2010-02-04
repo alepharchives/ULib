@@ -406,7 +406,7 @@ protected:
    static UString* htdigest;
    static UServer_Base* pthis;
    static UVector<UIPAllow*>* vallow_IP;
-   static bool flag_loop, flag_use_tcp_optimization;
+   static bool flag_loop, flag_use_tcp_optimization, block_on_accept;
 
             UServer_Base(UFileConfig* cfg);
    virtual ~UServer_Base();

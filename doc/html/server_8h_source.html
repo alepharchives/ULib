@@ -411,7 +411,7 @@
 <a name="l00406"></a>00406         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* htdigest;
 <a name="l00407"></a>00407         <span class="keyword">static</span> <a class="code" href="classUServer__Base.html">UServer_Base</a>* pthis;
 <a name="l00408"></a>00408         <span class="keyword">static</span> UVector&lt;UIPAllow*&gt;* vallow_IP;
-<a name="l00409"></a>00409         <span class="keyword">static</span> <span class="keywordtype">bool</span> flag_loop, flag_use_tcp_optimization;
+<a name="l00409"></a>00409         <span class="keyword">static</span> <span class="keywordtype">bool</span> flag_loop, flag_use_tcp_optimization, block_on_accept;
 <a name="l00410"></a>00410 
 <a name="l00411"></a>00411                                 <a class="code" href="classUServer__Base.html">UServer_Base</a>(<a class="code" href="classUFileConfig.html">UFileConfig</a>* cfg);
 <a name="l00412"></a>00412         <span class="keyword">virtual</span> ~<a class="code" href="classUServer__Base.html">UServer_Base</a>();
@@ -601,7 +601,7 @@
 <a name="l00606"></a>00606 <span class="preprocessor"></span>
 <a name="l00607"></a>00607 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Tue Feb 2 20:00:48 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Thu Feb 4 19:31:37 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

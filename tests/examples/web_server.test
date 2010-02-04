@@ -7,7 +7,7 @@
 start_msg web_server
 
 rm -f web_server.log uploads/* \
-      out/userver_tcp.out err/userver_tcp.err \
+      out/userver_tcp.out err/userver_tcp.err web_server.err \
       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]*
 
 #UTRACE="0 5M 0"
@@ -21,7 +21,7 @@ fi
 
 DIR_CMD="../../examples/userver"
 
-##STRACE=$TRUSS
+#STRACE=$TRUSS
 start_prg_background userver_tcp -c web_server.cfg
 $SLEEP
 

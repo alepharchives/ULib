@@ -8,8 +8,8 @@ rm -f web_server.log \
       out/userver_tcp.out err/userver_tcp.err \
 		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]*
 
- UTRACE="0 10M 0"
- UOBJDUMP="0 100k 10"
+#UTRACE="0 10M 0"
+#UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 

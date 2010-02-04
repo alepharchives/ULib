@@ -32,7 +32,8 @@ else
 fi
 cd $CURDIR
 
-ulimit -n 100000
+#ulimit -n 100000
+#echo 1024 > /proc/sys/net/core/somaxconn
 
 #STRACE=$TRUSS
  start_prg_background userver_tcp -c benchmarking.cfg
