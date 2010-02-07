@@ -20,6 +20,7 @@
 #include <libxml/uri.h>
 #include <libxml/xmlIO.h>
 
+class UXPathData;
 class UDSIGContext;
 class UReferenceCtx;
 class UTransformCtx;
@@ -220,6 +221,8 @@ private:
 class UTranformXPointer : public UBaseTransform {
 public:
 
+   // COSTRUTTORI
+
    UTranformXPointer()
       {
       U_TRACE_REGISTER_OBJECT(0, UTranformXPointer, "", 0)
@@ -228,6 +231,8 @@ public:
    virtual ~UTranformXPointer()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UTranformXPointer)
+
+      dataList.clear();
       }
 
    // define method VIRTUAL of class UBaseTransform
@@ -250,6 +255,10 @@ protected:
    static int _usage;        // the allowed transforms usages
    static const char* _name; // the transform's name
    static const char* _href; // the transform's identification string (href)
+
+   UVector<UXPathData*> dataList;
+
+   bool setExpr(const char* expr, int nodeSetType, xmlNodePtr node);
 
 private:
    UTranformXPointer(const UTranformXPointer&) : UBaseTransform() {}

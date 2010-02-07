@@ -308,8 +308,6 @@ public:
    static void      logCommandMsgError(const char* cmd);
    static UCommand* loadConfigCommand(UFileConfig& cfg, bool bset);
 
-   // check if we can go to blocking on accept()...
-
    static bool isClientConnect()
       {
       U_TRACE(0, "UServer_Base::isClientConnect()")
@@ -526,8 +524,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UServer<USSLSocket>, "%p", cfg)
 
-      USSLSocket::method     = (SSL_METHOD*) SSLv23_server_method();
-      USocket::accept4_flags = 0;
+      USSLSocket::method            = (SSL_METHOD*) SSLv23_server_method();
+      USocket::accept4_flags        = 0;
+      UServer_Base::block_on_accept = true;
 
       socket =                U_NEW(USSLSocket(UClientImage_Base::bIPv6));
       UClientImage_Base::init(U_NEW(USSLSocket(UClientImage_Base::bIPv6, getSocket()->ctx)));

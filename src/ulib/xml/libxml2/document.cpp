@@ -24,8 +24,8 @@ void UXML2Document::init()
    binit = true;
 
    /*
-    * build an XML tree from a file; we need to add default
-    * attributes and resolve all character and entities references
+    * build an XML tree from a file; we need to add default attributes
+    * and resolve all character and entities references: required for c14n!
     */
 
    xmlLoadExtDtdDefaultValue = XML_DETECT_IDS | XML_COMPLETE_ATTRS;

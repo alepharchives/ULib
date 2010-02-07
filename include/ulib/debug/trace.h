@@ -35,9 +35,11 @@
    trace_sysreturn((error), format, ret); \
    return ret; }
 
-typedef void*       pvoid_t;
-typedef char*       pchar_t;
-typedef const char* pcchar_t;
+typedef                void* pvoid_t;
+typedef                char* pchar_t;
+typedef const          char* pcchar_t;
+typedef       unsigned char* puchar_t;
+typedef const unsigned char* pcuchar_t;
 
 // typedef int (*x11error_t)  (void*, void*);
 // typedef int (*x11IOerror_t)(void*);
@@ -89,6 +91,8 @@ public:
                                                    ret == (void*)-1)
    U_MANAGE_SYSRETURN_VALUE(pchar_t,       "%S",   ret ==  0)
    U_MANAGE_SYSRETURN_VALUE(pcchar_t,      "%S",   ret ==  0)
+   U_MANAGE_SYSRETURN_VALUE(puchar_t,      "%S",   ret ==  0)
+   U_MANAGE_SYSRETURN_VALUE(pcuchar_t,     "%S",   ret ==  0)
    U_MANAGE_SYSRETURN_VALUE(sighandler_t,  "%p",   ret == (sighandler_t) SIG_ERR)
 
 #if SIZEOF_OFF_T != SIZEOF_LONG
@@ -97,8 +101,8 @@ public:
    U_MANAGE_SYSRETURN_VALUE(loff_t,        "%I",   ret == -1LL) /* Type of file sizes and offsets (LFS) */
 #endif
 
-   // U_MANAGE_SYSRETURN_VALUE(x11error_t,   "%p", ret == (x11error_t) 0)
-   // U_MANAGE_SYSRETURN_VALUE(x11IOerror_t, "%p", ret == (x11IOerror_t) 0)
+// U_MANAGE_SYSRETURN_VALUE(x11error_t,   "%p", ret == (x11error_t) 0)
+// U_MANAGE_SYSRETURN_VALUE(x11IOerror_t, "%p", ret == (x11IOerror_t) 0)
 
    // Attivazione-disattivazione temporanea
 

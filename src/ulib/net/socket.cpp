@@ -15,6 +15,7 @@
 #include <ulib/timeval.h>
 #include <ulib/net/socket.h>
 #include <ulib/utility/interrupt.h>
+#include <ulib/utility/string_ext.h>
 
 #include <errno.h>
 
@@ -528,7 +529,23 @@ bool USocket::setServer(SocketAddress& cLocal, int iBackLog)
 
    if (bind(cLocal))
       {
-      if (iBackLog) listen(iBackLog);
+      if (iBackLog)
+         {
+         /*
+          * La variabile sysctl net.core.somaxconn limita la dimensione della coda in ascolto per le connessioni TCP.
+          * Il valore predefinito è di 128, generalmente troppo basso per una gestione robusta di nuove connessioni in
+          * ambienti come i web server molto carichi. Per tali ambienti, è consigliato aumentare questo valore a 1024
+          * o maggiore. Il demone di servizio può a sua volta limitare la dimensione della coda (e.g. sendmail(8), o
+          * Apache) ma spesso avrà una direttiva nel proprio file di configurazione per correggere la dimensione della
+          * coda. Grosse code di ascolto aiutano anche ad evitare attacchi di tipo Denial of Service (DoS).
+          */
+
+#     if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+         (void) UFile::writeToTmpl("/proc/sys/net/core/somaxconn", UStringExt::numberToString(iBackLog * 2));
+#     endif
+
+         listen(iBackLog);
+         }
 
       U_RETURN(true);
       }

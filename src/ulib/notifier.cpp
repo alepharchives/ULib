@@ -69,8 +69,10 @@ int UNotifier::getNFDS()
 
    for (UNotifier* item = first; item; item = item->next)
       {
-      if (nfds <= item->handler_event_fd->fd) nfds = item->handler_event_fd->fd + 1;
+      if (nfds < item->handler_event_fd->fd) nfds = item->handler_event_fd->fd;
       }
+
+   ++nfds;
 
    U_RETURN(nfds);
 }

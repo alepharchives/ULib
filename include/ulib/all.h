@@ -75,7 +75,9 @@
 #endif
 
 #ifdef HAVE_LIBXML2
+#  include "ulib/xml/libxml2/xpath.h"
 #  include "ulib/xml/libxml2/schema.h"
+#  include "ulib/xml/libxml2/context.h"
 #endif
 
 #ifdef HAVE_EXPAT

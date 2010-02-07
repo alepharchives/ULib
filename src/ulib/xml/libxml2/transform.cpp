@@ -11,7 +11,7 @@
 //
 // ============================================================================
 
-#include <ulib/xml/libxml2/transforms.h>
+#include <ulib/xml/libxml2/xpath.h>
 
 // the allowed transforms usages
 // the transform's name
@@ -46,6 +46,26 @@ const char* UTranformRsaMd5::_href     = "http://www.w3.org/2001/04/xmldsig-more
 int         UTranformRsaSha1::_usage   = SIGNATURE;
 const char* UTranformRsaSha1::_name    = "rsa-sha1";
 const char* UTranformRsaSha1::_href    = "http://www.w3.org/2000/09/xmldsig#rsa-sha1";
+
+bool UTranformXPointer::setExpr(const char* expr, int nodeSetType, xmlNodePtr node)
+{
+   U_TRACE(0, "UTranformXPointer::setExpr(%S,%d,%p)", expr, nodeSetType, node)
+
+   UBaseTransform::hereNode = node;
+
+   UXPathData* data = U_NEW(UXPathData(UXPathData::XPOINTER, nodeSetType, expr));
+
+   if (data->registerNamespaces(node))
+      {
+      dataList.push(data);
+
+      U_RETURN(true);
+      }
+
+   delete data;
+
+   U_RETURN(false);
+}
 
 // Opens the given @uri for reading.
 
@@ -120,8 +140,7 @@ const char* UBaseTransform::dump(bool reset) const
 
 const char* UIOCallback::dump(bool reset) const
 {
-   *UObjectIO::os
-                  << "opencallback  " << (void*)opencallback  << '\n'
+   *UObjectIO::os << "opencallback  " << (void*)opencallback  << '\n'
                   << "readcallback  " << (void*)readcallback  << '\n'
                   << "closecallback " << (void*)closecallback << '\n'
                   << "matchcallback " << (void*)matchcallback;

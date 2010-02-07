@@ -14,9 +14,11 @@
 #ifndef ULIB_DSIG_XPATH_H
 #define ULIB_DSIG_XPATH_H 1
 
-#include <ulib/xml/libxml2/transform.h>
+#include <ulib/xml/libxml2/transforms.h>
 
-#include <libxml/xpath.h>
+#include <libxml/xpointer.h>
+
+class UTranformXPointer;
 
 class U_EXPORT UXPathData {
 public:
@@ -37,13 +39,13 @@ public:
    // The basic nodes sets types
 
    enum NodeSetType {
-      NORMAL,                       // nodes set = nodes in the list.
-      INVERT,                       // nodes set = all document nodes minus nodes in the list.
-      TREE,                         // nodes set = nodes in the list and all their subtress.
-      TREE_WITHOUT_COMMENTS,        // nodes set = nodes in the list and all their subtress but no comment nodes.
-      TREE_INVERT,                  // nodes set = all document nodes minus nodes in the list and all their subtress.
-      TREE_WITHOUT_COMMENTS_INVERT, // nodes set = all document nodes minus (nodes in the list and all their subtress plus all comment nodes).
-      LIST                          // nodes set = all nodes in the chidren list of nodes sets.
+      NORMAL,                       // nodes in the list.
+      INVERT,                       // all document nodes minus nodes in the list.
+      TREE,                         // nodes in the list and all their subtrees.
+      TREE_WITHOUT_COMMENTS,        // nodes in the list and all their subtrees but no comment nodes.
+      TREE_INVERT,                  // all document nodes minus nodes in the list and all their subtrees.
+      TREE_WITHOUT_COMMENTS_INVERT, // all document nodes minus (nodes in the list and all their subtress plus all comment nodes).
+      LIST                          // all nodes in the chidren list of nodes sets.
    };
 
    // The simple nodes sets operations
@@ -54,15 +56,10 @@ public:
       UNION
    };
 
-   UXPathData()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UXPathData, "", 0)
-      }
+   // COSTRUTTORI
 
-   ~UXPathData()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UXPathData)
-      }
+    UXPathData(int data_type, int nodeSetType, const char* expr);
+   ~UXPathData();
 
 #ifdef DEBUG
    const char* dump(bool reset) const;
@@ -73,11 +70,15 @@ protected:
    int nodeSetOp;
    int nodeSetType;    
    const char* expr;
-// xmlXPathContextPtr ctx;
+   xmlXPathContextPtr ctx;
+
+   bool registerNamespaces(xmlNodePtr node); /* register namespaces */
 
 private:
    UXPathData(const UXPathData&)            {}
    UXPathData& operator=(const UXPathData&) { return *this; }
+
+   friend class UTranformXPointer;
 };
 
 #endif

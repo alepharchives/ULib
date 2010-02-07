@@ -48,7 +48,7 @@ public:
 
    // Costruttori e distruttore
 
-   UVector(uint32_t n = 64) // create an empty vector with a size estimate
+   UVector(uint32_t n = 64U) // create an empty vector with a size estimate
       {
       U_TRACE_REGISTER_OBJECT(0, UVector<void*>, "%u", n)
 

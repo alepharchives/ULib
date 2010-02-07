@@ -268,6 +268,8 @@ UServer_Base::~UServer_Base()
 #endif
 
    if (log)        delete log;
+   if (ptr)        UFile::munmap(ptr, sizeof(shared_data) + sizeof(sem_t));
+   if (lock)       delete lock;
    if (host)       delete host;
    if (proc)       delete proc;
    if (htpasswd)   delete htpasswd;
@@ -275,13 +277,6 @@ UServer_Base::~UServer_Base()
    if (vallow_IP)  delete vallow_IP;
 
    UClientImage_Base::clear();
-
-   if (lock)
-      {
-      if (lock->isShared()) UFile::munmap(ptr, sizeof(shared_data) + sizeof(sem_t));
-
-      delete lock;
-      }
 }
 
 void UServer_Base::loadConfigParam(UFileConfig& cfg)
@@ -407,7 +402,7 @@ int UServer_Base::loadPlugins(const UString& plugin_dir, UVector<UString>& plugi
    UServerPlugIn* plugin;
    int result = U_PLUGIN_HANDLER_GO_ON;
 
-   vplugin = U_NEW(UVector<UServerPlugIn*>);
+   vplugin = U_NEW(UVector<UServerPlugIn*>(10));
 
    if (plugin_dir.empty() == false) UPlugIn<void*>::setPluginDirectory(plugin_dir.c_str());
 
@@ -502,30 +497,9 @@ void UServer_Base::init()
 
    UEventFd::fd = socket->getFd();
 
-   if (log_file.empty()) (void) U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_SETFL, O_RDWR | O_NONBLOCK | O_CLOEXEC);
-   else
-      {
-      block_on_accept = true;
+   // open log
 
-      openLog(log_file, log_file_sz);
-
-      if (isPreForked())
-         {
-         U_INTERNAL_ASSERT_EQUALS(lock,0)
-
-         lock = U_NEW(ULock);
-         ptr  = (shared_data*) UFile::mmap(sizeof(shared_data) + sizeof(sem_t));
-
-         U_INTERNAL_ASSERT_POINTER(lock)
-         U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
-
-         lock->init((sem_t*)((char*)ptr + sizeof(shared_data)));
-
-         U_SOCKET_FLAGS = U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_GETFL, 0);
-
-         U_INTERNAL_DUMP("O_NONBLOCK = %B, U_SOCKET_FLAGS = %B", O_NONBLOCK, U_SOCKET_FLAGS)
-         }
-      }
+   if (log_file.empty() ==  false) openLog(log_file, log_file_sz);
 
    // get name host
 
@@ -549,9 +523,11 @@ void UServer_Base::init()
       IP_address = server;
       }
 
-   /* The above code does NOT make a connection or send any packets (to 64.233.187.99 which is google). Since UDP is a stateless protocol connect()
-    * merely makes a system call which figures out how to route the packets based on the address and what interface (and therefore IP address) it
-    * should bind to. Returns an array containing the family (AF_INET), local port, and local address (which is what we want) of the socket.
+   /* The above code does NOT make a connection or send any packets (to 64.233.187.99 which is google).
+    * Since UDP is a stateless protocol connect() merely makes a system call which figures out how to
+    * route the packets based on the address and what interface (and therefore IP address) it should
+    * bind to. Returns an array containing the family (AF_INET), local port, and local address (which
+    * is what we want) of the socket.
     */
 
    UUDPSocket cClientSocket(UClientImage_Base::bIPv6);
@@ -565,10 +541,11 @@ void UServer_Base::init()
 
    U_SRV_LOG_VAR("SERVER IP ADDRESS registered as: %.*s", U_STRING_TO_TRACE(IP_address));
 
-   // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be supplied optionally after
-   // a trailing slash, e.g. 192.168.0.0/24, in which case addresses that match in the most significant MASK bits will be allowed.
-   // If no options are specified, all clients are allowed. Unauthorized connections are rejected by closing the TCP connection
-   // immediately. A warning is logged on the server but nothing is sent to the client.
+   // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be
+   // supplied optionally after a trailing slash, e.g. 192.168.0.0/24, in which case addresses that
+   // match in the most significant MASK bits will be allowed. If no options are specified, all clients
+   // are allowed. Unauthorized connections are rejected by closing the TCP connection immediately. A
+   // warning is logged on the server but nothing is sent to the client.
 
    if (allow_IP.empty() == false)
       {
@@ -603,6 +580,38 @@ void UServer_Base::init()
       }
 
    U_SRV_LOG_VAR("working directory (DOCUMENT_ROOT) changed to '%s'", document_root.data());
+
+   // manage shared data...
+
+   if (isPreForked())
+      {
+      U_INTERNAL_ASSERT_EQUALS(ptr,0)
+
+      ptr = (shared_data*) UFile::mmap(sizeof(shared_data) + sizeof(sem_t));
+
+      U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
+      }
+
+   // manage block on accept...
+
+   if (block_on_accept == false)
+      {
+      (void) U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_SETFL, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+      }
+   else if (isPreForked())
+      {
+      U_INTERNAL_ASSERT_EQUALS(lock,0)
+
+      lock = U_NEW(ULock);
+
+      U_INTERNAL_ASSERT_POINTER(lock)
+
+      lock->init((sem_t*)((char*)ptr + sizeof(shared_data)));
+
+      U_SOCKET_FLAGS = U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_GETFL, 0);
+
+      U_INTERNAL_DUMP("O_NONBLOCK = %B, U_SOCKET_FLAGS = %B", O_NONBLOCK, U_SOCKET_FLAGS)
+      }
 
    // manage authorization data...
 
@@ -664,24 +673,11 @@ void UServer_Base::init()
        * and not to initiate the process until the first packet of real data has arrived. After sending the SYN/ACK,
        * the server will then wait for a data packet from a client. Now, only three packets will be sent over the
        * network, and the connection establishment delay will be significantly reduced, which is typical for HTTP.
+       *
        * NB: Takes an integer value (seconds)
        */
 
       socket->setTcpDeferAccept(1U);
-
-      /*
-       * La variabile sysctl net.core.somaxconn limita la dimensione della coda in ascolto per le connessioni TCP.
-       * Il valore predefinito è di 128, generalmente troppo basso per una gestione robusta di nuove connessioni in
-       * ambienti come i web server molto carichi. Per tali ambienti, è consigliato aumentare questo valore a 1024
-       * o maggiore. Il demone di servizio può a sua volta limitare la dimensione della coda (e.g. sendmail(8), o
-       * Apache) ma spesso avrà una direttiva nel proprio file di configurazione per correggere la dimensione della
-       * coda. Grosse code di ascolto aiutano anche ad evitare attacchi di tipo Denial of Service (DoS).
-       */
-
-      if (UFile::writeToTmpl("/proc/sys/net/core/somaxconn", UStringExt::numberToString(1024)))
-         {
-         U_SRV_LOG_MSG("size of the listen queue for accepting new TCP connections set to 1024");
-         }
 
       /* Another way to prevent delays caused by sending useless packets is to use the TCP_QUICKACK option.
        * This option is different from TCP_DEFER_ACCEPT, as it can be used not only to manage the process of
@@ -768,8 +764,7 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
     * O_NONBLOCK flag set (see socket(7)).
     */
 
-   if (block_on_accept &&
-       isPreForked())
+   if (lock)
       {
       bool block = (num_connection == 0);
 
@@ -803,8 +798,8 @@ const char* UServer_Base::getNumConnection()
 
    static char buffer[32];
 
-   if (block_on_accept && isPreForked()) (void) u_snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
-   else                                  (void) u_snprintf(buffer, sizeof(buffer),  "%d",     num_connection);
+   if (isPreForked() && isLog()) (void) u_snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
+   else                          (void) u_snprintf(buffer, sizeof(buffer), "%d",      num_connection);
 
    U_RETURN(buffer);
 }
@@ -813,25 +808,23 @@ void UServer_Base::handlerCloseConnection()
 {
    U_TRACE(0, "UServer_Base::handlerCloseConnection()")
 
-   U_INTERNAL_ASSERT_POINTER(pthis)
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
 
    --num_connection;
 
    U_INTERNAL_DUMP("num_connection = %d", num_connection)
 
-   if (block_on_accept &&
-       isPreForked())
-      {
-      U_TOT_CONNECTION--;
-
-      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
-      }
-
    if (isLog())
       {
+      if (isPreForked())
+         {
+         U_TOT_CONNECTION--;
+
+         U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+         }
+
       log->log("client closed connection from %.*s, %s clients still connected\n",
-                     U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
+                  U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
       }
 }
 
@@ -846,8 +839,8 @@ void UServer_Base::handlerNewConnection()
 
    if (UClientImage_Base::socket->isConnected() == false)
       {
-      if (flag_loop && // check for SIGTERM event...
-          block_on_accept)
+      if (isLog() &&
+          flag_loop) // check for SIGTERM event...
          {
          char buffer[4096];
 
@@ -885,7 +878,7 @@ void UServer_Base::handlerNewConnection()
 
    if (isPreForked())
       {
-      if (block_on_accept)
+      if (isLog())
          {
          U_TOT_CONNECTION++;
 
@@ -1046,8 +1039,10 @@ preforked_child:
 
    while (flag_loop)
       {
+      // check if we can go to blocking on accept()...
+
       if (block_on_accept &&
-          isClientConnect() == false) // check if we can block on accept()...
+          isClientConnect() == false)
          {
 wait:
          U_SRV_LOG_MSG("waiting for connection");

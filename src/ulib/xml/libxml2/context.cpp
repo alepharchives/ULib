@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/utility/base64.h>
+#include <ulib/xml/libxml2/xpath.h>
 #include <ulib/xml/libxml2/context.h>
 
 #ifdef LIBXML_FTP_ENABLED 
@@ -538,18 +539,17 @@ bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
 
    // next node is optional KeyInfo
 
-   cur = UXML2Node::getNextSibling(signValueNode->next);
+   keyInfoNode = UXML2Node::getNextSibling(signValueNode->next);
 
-   if (cur &&
-       UXML2Node(cur).checkNodeName((const xmlChar*)"KeyInfo",
-                                    (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false)
+   if (          keyInfoNode &&
+       UXML2Node(keyInfoNode).checkNodeName((const xmlChar*)"KeyInfo",
+                                            (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
       {
-      keyInfoNode = 0;
+      cur = UXML2Node::getNextSibling(keyInfoNode->next);
       }
    else
       {
-      keyInfoNode = cur;
-      cur         = UXML2Node::getNextSibling(cur->next);
+      cur = keyInfoNode;
       }
 
    // next nodes are optional Object nodes
@@ -575,7 +575,7 @@ bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
 
    /* references processing might change the status */
 
-   if (status != UReferenceCtx::UNKNOWN) goto end;
+   if (status != UReferenceCtx::UNKNOWN) U_RETURN(true);
 
    /* as the result, we should have sign and c14n methods set */
 
@@ -747,7 +747,7 @@ bool UDSIGContext::verify(UXML2Document& document)
 
    /* references processing might change the status */
 
-   if (status != UReferenceCtx::UNKNOWN) goto end;
+   if (status != UReferenceCtx::UNKNOWN) U_RETURN(true);
 
    /* verify SignatureValue node content */
 
@@ -799,7 +799,7 @@ bool UReferenceCtx::processNode(xmlNodePtr node)
 
    /* set start URI (and check that it is enabled!) */
 
-   if (transformCtx.setURI(uri) == false) goto end;
+   if (transformCtx.setURI(uri, node) == false) goto end;
 
    // first is optional Transforms node
 
@@ -1022,7 +1022,9 @@ end:
 
 /* Parses uri and adds xpointer transforms if required.
  *
- * The following examples demonstrate what the URI attribute identifies and how it is dereferenced 
+ * The following examples demonstrate what the URI attribute identifies
+ * and how it is dereferenced 
+ *
  * (http://www.w3.org/TR/xmldsig-core/#sec-ReferenceProcessingModel):
  *
  * - URI="http://example.com/bar.xml"
@@ -1053,9 +1055,9 @@ end:
  * all descendents including namespaces and attributes -- but not comments.
  */
 
-bool UTransformCtx::setURI(const char* uri)
+bool UTransformCtx::setURI(const char* uri, xmlNodePtr node)
 {
-   U_TRACE(0, "UTransformCtx::setURI(%S)", uri)
+   U_TRACE(0, "UTransformCtx::setURI(%S,%p)", uri, node)
 
    /* check uri */
 
@@ -1103,6 +1105,8 @@ bool UTransformCtx::setURI(const char* uri)
 
    /* do we have barename or full xpointer? */
 
+   int nodeSetType = UXPathData::TREE;
+
    if (U_STRNEQ(xptr, "#xmlns(") ||
        U_STRNEQ(xptr, "#xpointer("))
       {
@@ -1117,18 +1121,24 @@ bool UTransformCtx::setURI(const char* uri)
       (void) u_snprintf(buf, sizeof(buf), "xpointer(id(\'%s\'))", xptr + 1);
 
       xptr = buf;
+
+      nodeSetType = UXPathData::TREE_WITHOUT_COMMENTS;
       }
 
    U_INTERNAL_DUMP("this->uri = %S xptr = %S", this->uri, xptr)
 
-   /* we need to create XPointer transform to execute expr
+   // we need to create XPointer transform to execute expr
 
-   xmlSecTransformPtr transform = xmlSecTransformCtxCreateAndPrepend(ctx, xmlSecTransformXPointerId);
+   UTranformXPointer* transform = U_NEW(UTranformXPointer());
 
-   ret = xmlSecTransformXPointerSetExpr(transform, xptr, nodeSetType, hereNode);
-   */
+   if (transform->setExpr(xptr, nodeSetType, node))
+      {
+      chain.insert(0, transform);
 
-   U_RETURN(true);
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 // DEBUG

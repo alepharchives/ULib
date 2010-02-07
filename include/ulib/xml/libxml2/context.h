@@ -47,7 +47,7 @@ public:
 
    // URI transform type bit mask
 
-   enum Uritype {
+   enum UriType {
    // NONE          = 0x0000, // URI type is unknown or not set
       EMPTY         = 0x0001, // empty URI ("") type
       SAME_DOCUMENT = 0x0002, // same document ("#...") but not empty ("") URI type
@@ -96,7 +96,7 @@ protected:
    // SERVICES
 
    bool execute();
-   bool setURI(const char* uri);
+   bool setURI(const char* uri, xmlNodePtr node);
    bool nodesListRead(xmlNodePtr node, int usage);
    bool verifyNodeContent(UBaseTransform* transform, xmlNodePtr node);
 
