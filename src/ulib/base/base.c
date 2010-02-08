@@ -89,7 +89,7 @@ bool                u_exec_failed;
 char                u_hostname[255];
 char                u_user_name[32];
 uint32_t            u_hostname_len, u_user_name_len;
-uint32_t            u_printf_string_max_length = 128;
+ int32_t            u_printf_string_max_length = 128;
 const char*         u_tmpdir;
 const unsigned char u_alphabet[64]  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const unsigned char u_hex_upper[16] = "0123456789ABCDEF";
@@ -1499,7 +1499,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             maxlen = (prec >= 0 ? prec : 128);
 
-            if (maxlen > u_printf_string_max_length) maxlen = u_printf_string_max_length;
+            if (maxlen > u_printf_string_max_length) maxlen = (u_printf_string_max_length < 0 ? 128 : u_printf_string_max_length);
 
             remaining = (buffer_size - ret - 100);
 

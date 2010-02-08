@@ -141,7 +141,7 @@ with flag '7' => format: %a, %d %b %Y %H:%M:%S     (HTTP header)
          default format: %a, %d %b %Y %H:%M:%S GMT (HTTP header) (use u_now)
 ---------------------------------------------------------------------------------
 */
-extern U_EXPORT uint32_t u_printf_string_max_length; /* default = 256 */
+extern U_EXPORT int32_t u_printf_string_max_length; /* default = 128 */
 
 extern U_EXPORT void        u_printf(                                    const char* format, ...);
 extern U_EXPORT uint32_t  u_snprintf(char* buffer, uint32_t buffer_size, const char* format, ...);

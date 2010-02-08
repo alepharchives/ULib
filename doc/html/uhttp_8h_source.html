@@ -410,57 +410,59 @@
 <a name="l00387"></a>00387 
 <a name="l00388"></a>00388         <span class="comment">// CGI</span>
 <a name="l00389"></a>00389 
-<a name="l00390"></a>00390         <span class="keyword">static</span> <span class="keywordtype">bool</span> isCGIRequest();
-<a name="l00391"></a>00391         <span class="keyword">static</span> <span class="keywordtype">bool</span> processCGIOutput();
-<a name="l00392"></a>00392         <span class="keyword">static</span> <span class="keywordtype">void</span> setCGIShellScript(<a class="code" href="classUString.html">UString</a>&amp; command);
-<a name="l00393"></a>00393         <span class="keyword">static</span> <span class="keywordtype">void</span> setCGIEnvironment(<a class="code" href="classUString.html">UString</a>&amp; environment, <span class="keywordtype">bool</span> sh_script);
-<a name="l00394"></a>00394         <span class="keyword">static</span> <span class="keywordtype">bool</span> processCGIRequest(<a class="code" href="classUCommand.html">UCommand</a>* pcmd, <a class="code" href="classUString.html">UString</a>* penvironment);
-<a name="l00395"></a>00395         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPCgiResponse(<span class="keywordtype">int</span> nResponseCode, uint32_t content_length, <span class="keywordtype">bool</span> header_content_length);
-<a name="l00396"></a>00396 
-<a name="l00397"></a>00397         <span class="comment">//      Accept-Language: en-us,en;q=0.5</span>
-<a name="l00398"></a>00398         <span class="comment">// ----------------------------------------------------</span>
-<a name="l00399"></a>00399         <span class="comment">// take only the first 2 character (it, en, de fr, ...)</span>
-<a name="l00400"></a>00400 
-<a name="l00401"></a>00401         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getAcceptLanguage();
+<a name="l00390"></a>00390         <span class="keyword">static</span> <span class="keywordtype">char</span> cgi_dir[PATH_MAX];
+<a name="l00391"></a>00391 
+<a name="l00392"></a>00392         <span class="keyword">static</span> <span class="keywordtype">bool</span> isCGIRequest();
+<a name="l00393"></a>00393         <span class="keyword">static</span> <span class="keywordtype">bool</span> processCGIOutput();
+<a name="l00394"></a>00394         <span class="keyword">static</span> <span class="keywordtype">void</span> setCGIShellScript(<a class="code" href="classUString.html">UString</a>&amp; command);
+<a name="l00395"></a>00395         <span class="keyword">static</span> <span class="keywordtype">void</span> setCGIEnvironment(<a class="code" href="classUString.html">UString</a>&amp; environment, <span class="keywordtype">bool</span> sh_script);
+<a name="l00396"></a>00396         <span class="keyword">static</span> <span class="keywordtype">bool</span> processCGIRequest(<a class="code" href="classUCommand.html">UCommand</a>* pcmd, <a class="code" href="classUString.html">UString</a>* penvironment);
+<a name="l00397"></a>00397         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPCgiResponse(<span class="keywordtype">int</span> nResponseCode, uint32_t content_length, <span class="keywordtype">bool</span> header_content_length);
+<a name="l00398"></a>00398 
+<a name="l00399"></a>00399         <span class="comment">//      Accept-Language: en-us,en;q=0.5</span>
+<a name="l00400"></a>00400         <span class="comment">// ----------------------------------------------------</span>
+<a name="l00401"></a>00401         <span class="comment">// take only the first 2 character (it, en, de fr, ...)</span>
 <a name="l00402"></a>00402 
-<a name="l00403"></a>00403         <span class="comment">// check for &quot;Accept-Encoding: deflate&quot; in header request...</span>
+<a name="l00403"></a>00403         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getAcceptLanguage();
 <a name="l00404"></a>00404 
-<a name="l00405"></a>00405         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHTTPAcceptEncodingDeflate(uint32_t content_length);
+<a name="l00405"></a>00405         <span class="comment">// check for &quot;Accept-Encoding: deflate&quot; in header request...</span>
 <a name="l00406"></a>00406 
-<a name="l00407"></a>00407         <span class="comment">// check for MSIE in &quot;User-Agent: ....&quot; in header request...</span>
+<a name="l00407"></a>00407         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHTTPAcceptEncodingDeflate(uint32_t content_length);
 <a name="l00408"></a>00408 
-<a name="l00409"></a>00409         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getBrowserMSIE();
+<a name="l00409"></a>00409         <span class="comment">// check for MSIE in &quot;User-Agent: ....&quot; in header request...</span>
 <a name="l00410"></a>00410 
-<a name="l00411"></a>00411         <span class="comment">// check for &quot;Connection: close&quot; in headers...</span>
+<a name="l00411"></a>00411         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getBrowserMSIE();
 <a name="l00412"></a>00412 
-<a name="l00413"></a>00413         <span class="keyword">static</span> <span class="keywordtype">int</span> checkForHTTPConnectionClose();
+<a name="l00413"></a>00413         <span class="comment">// check for &quot;Connection: close&quot; in headers...</span>
 <a name="l00414"></a>00414 
-<a name="l00415"></a>00415         <span class="comment">// set HTTP main error message</span>
+<a name="l00415"></a>00415         <span class="keyword">static</span> <span class="keywordtype">int</span> checkForHTTPConnectionClose();
 <a name="l00416"></a>00416 
-<a name="l00417"></a>00417         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPNotFound();
-<a name="l00418"></a>00418         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPForbidden();
-<a name="l00419"></a>00419         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPBadRequest();
-<a name="l00420"></a>00420         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPInternalError();
-<a name="l00421"></a>00421         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPServiceUnavailable();
-<a name="l00422"></a>00422         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPUnAuthorized(<span class="keywordtype">bool</span> digest);
-<a name="l00423"></a>00423 
-<a name="l00424"></a>00424         <span class="comment">// get HTTP response message</span>
+<a name="l00417"></a>00417         <span class="comment">// set HTTP main error message</span>
+<a name="l00418"></a>00418 
+<a name="l00419"></a>00419         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPNotFound();
+<a name="l00420"></a>00420         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPForbidden();
+<a name="l00421"></a>00421         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPBadRequest();
+<a name="l00422"></a>00422         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPInternalError();
+<a name="l00423"></a>00423         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPServiceUnavailable();
+<a name="l00424"></a>00424         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPUnAuthorized(<span class="keywordtype">bool</span> digest);
 <a name="l00425"></a>00425 
-<a name="l00426"></a>00426         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPHeaderForResponse(<span class="keywordtype">int</span> nResponseCode, <span class="keyword">const</span> <span class="keywordtype">char</span>* content_type, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; body);
-<a name="l00427"></a>00427         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPRedirectResponse(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; ext, <span class="keyword">const</span> <span class="keywordtype">char</span>* ptr_location, uint32_t len_location);
-<a name="l00428"></a>00428 
-<a name="l00429"></a>00429 <span class="keyword">private</span>:
-<a name="l00430"></a>00430         <span class="keyword">static</span> <span class="keywordtype">bool</span>              openFile() U_NO_EXPORT;
-<a name="l00431"></a>00431         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>  getHTTPHeaderForResponse() U_NO_EXPORT;
-<a name="l00432"></a>00432         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>  getHTTPHeaderForResponse(<span class="keywordtype">int</span> nResponseCode, <a class="code" href="classUString.html">UString</a>&amp; content) U_NO_EXPORT;
-<a name="l00433"></a>00433 
-<a name="l00434"></a>00434         <a class="code" href="classUHTTP.html">UHTTP</a>(<span class="keyword">const</span> <a class="code" href="classUHTTP.html">UHTTP</a>&amp;)            {}
-<a name="l00435"></a>00435         <a class="code" href="classUHTTP.html">UHTTP</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUHTTP.html">UHTTP</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00436"></a>00436 };
-<a name="l00437"></a>00437 
-<a name="l00438"></a>00438 <span class="preprocessor">#endif</span>
+<a name="l00426"></a>00426         <span class="comment">// get HTTP response message</span>
+<a name="l00427"></a>00427 
+<a name="l00428"></a>00428         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPHeaderForResponse(<span class="keywordtype">int</span> nResponseCode, <span class="keyword">const</span> <span class="keywordtype">char</span>* content_type, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; body);
+<a name="l00429"></a>00429         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPRedirectResponse(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; ext, <span class="keyword">const</span> <span class="keywordtype">char</span>* ptr_location, uint32_t len_location);
+<a name="l00430"></a>00430 
+<a name="l00431"></a>00431 <span class="keyword">private</span>:
+<a name="l00432"></a>00432         <span class="keyword">static</span> <span class="keywordtype">bool</span>              openFile() U_NO_EXPORT;
+<a name="l00433"></a>00433         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>  getHTTPHeaderForResponse() U_NO_EXPORT;
+<a name="l00434"></a>00434         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>  getHTTPHeaderForResponse(<span class="keywordtype">int</span> nResponseCode, <a class="code" href="classUString.html">UString</a>&amp; content) U_NO_EXPORT;
+<a name="l00435"></a>00435 
+<a name="l00436"></a>00436         <a class="code" href="classUHTTP.html">UHTTP</a>(<span class="keyword">const</span> <a class="code" href="classUHTTP.html">UHTTP</a>&amp;)            {}
+<a name="l00437"></a>00437         <a class="code" href="classUHTTP.html">UHTTP</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUHTTP.html">UHTTP</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00438"></a>00438 };
+<a name="l00439"></a>00439 
+<a name="l00440"></a>00440 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Sun Feb 7 16:59:14 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Mon Feb 8 17:39:27 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

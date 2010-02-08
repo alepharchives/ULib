@@ -387,6 +387,8 @@ public:
 
    // CGI
 
+   static char cgi_dir[PATH_MAX];
+
    static bool isCGIRequest();
    static bool processCGIOutput();
    static void setCGIShellScript(UString& command);

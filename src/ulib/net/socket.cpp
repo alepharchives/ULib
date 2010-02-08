@@ -301,6 +301,10 @@ ssize_t USocket::recv(int fd, void* buf, size_t len, int flags)
 
    ssize_t n;
 
+#ifndef DEBUG
+   errno = 0;
+#endif
+
 loop:
    n = U_SYSCALL(recv, "%d,%p,%d,%d", fd, CAST(buf), len, flags);
 

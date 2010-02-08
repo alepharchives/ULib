@@ -23,6 +23,7 @@
 #include <ulib/utility/socket_ext.h>
 #include <ulib/utility/string_ext.h>
 
+char              UHTTP::cgi_dir[PATH_MAX];
 UFile*            UHTTP::file;
 UString*          UHTTP::tmpdir;
 UString*          UHTTP::qcontent;
@@ -624,7 +625,7 @@ start:
 
          U_INTERNAL_DUMP("chunkSize = %u inp[0] = %C", chunkSize, inp[0])
 
-         U_INTERNAL_ASSERT_DIFFERS(u_isxdigit(*inp),0)
+         U_INTERNAL_ASSERT(u_isxdigit(*inp))
 
          // The last chunk is followed by zero or more trailers, followed by a blank line
 
@@ -810,7 +811,7 @@ const char* UHTTP::getBrowserMSIE()
 
    const char* ptr = getHTTPHeaderValuePtr(*USocket::str_user_agent);
 
-   if (ptr && (u_find(ptr, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)) browserMSIE = "1";
+   if (ptr && (u_find(ptr, 30, U_CONSTANT_TO_PARAM("MSIE")) != 0)) browserMSIE = "1";
 
    U_INTERNAL_DUMP("browserMSIE = %S", browserMSIE)
 
@@ -1013,20 +1014,20 @@ UString UHTTP::getHTTPCookie(bool sh_script)
 
       U_INTERNAL_DUMP("cookie = %.*S", cookie_len, cookie_ptr)
 
-      if (U_STRNCMP(cookie_ptr, "ulib_sid="))
+      if (U_STRNEQ(cookie_ptr, "ulib_sid="))
          {
-         if (sh_script) U_RETURN_STRING(UString::getStringNull());
+         const char* token = cookie_ptr + U_CONSTANT_SIZE("ulib_sid=");
 
-         UString result(cookie_ptr, cookie_len);
+         UString data = UServices::getTokenData(token);
 
-         U_RETURN_STRING(result);
+         U_RETURN_STRING(data);
          }
 
-      const char* token = cookie_ptr + U_CONSTANT_SIZE("ulib_sid=");
+      if (sh_script) U_RETURN_STRING(UString::getStringNull());
 
-      UString data = UServices::getTokenData(token);
+      UString result(cookie_ptr, cookie_len);
 
-      U_RETURN_STRING(data);
+      U_RETURN_STRING(result);
       }
 
    U_RETURN_STRING(UString::getStringNull());
@@ -1205,7 +1206,7 @@ void UHTTP::resetForm()
 }
 
 // retrieve information on specific HTML form elements
-// (such as checkboxes, radio buttons, and text fields), on uploaded files
+// (such as checkboxes, radio buttons, and text fields, or uploaded files)
 
 void UHTTP::getFormValue(UString& buffer, uint32_t n)
 {
@@ -1235,7 +1236,7 @@ uint32_t UHTTP::processHTTPForm()
       {
       *qcontent = UString(U_HTTP_QUERY_TO_PARAM);
 
-      goto end;
+      goto get_name_value;
       }
 
    // ------------------------------------------------------------------------
@@ -1250,16 +1251,16 @@ uint32_t UHTTP::processHTTPForm()
 
    if (ptr == 0) U_RETURN(0);
 
-   if (U_STRNCMP(ptr, "application/x-www-form-urlencoded") == 0)
+   if (U_STRNEQ(ptr, "application/x-www-form-urlencoded"))
       {
       *qcontent = *UClientImage_Base::body;
 
-      goto end;
+      goto get_name_value;
       }
 
    // multipart/form-data (FILE UPLOAD)
 
-   U_INTERNAL_ASSERT_EQUALS(U_STRNCMP(ptr, "multipart/form-data"), 0)
+   U_INTERNAL_ASSERT(U_STRNEQ(ptr, "multipart/form-data"))
 
    {
    UString boundary;
@@ -1310,7 +1311,8 @@ uint32_t UHTTP::processHTTPForm()
    U_RETURN(n);
    }
 
-end:
+get_name_value:
+
    if (qcontent->empty() == false) n = UStringExt::getNameValueFromData(*qcontent, *form_name_value);
 
    U_RETURN(n);
@@ -1323,6 +1325,9 @@ U_NO_EXPORT UString UHTTP::getHTTPHeaderForResponse()
 {
    U_TRACE(0, "UHTTP::getHTTPHeaderForResponse()")
 
+   U_INTERNAL_DUMP("http_info.version = %u http_info.keep_alive = %u http_info.is_connection_close = %u",
+                    http_info.version,     http_info.keep_alive,     http_info.is_connection_close)
+
    /*
    Max Keep-Alive Requests
 
@@ -1333,9 +1338,6 @@ U_NO_EXPORT UString UHTTP::getHTTPHeaderForResponse()
 
    Tips: [Performance] Set it to a resonable high value (256). Value <= 1 will disable Keep-Alive.
    */
-
-   U_INTERNAL_DUMP("http_info.version = %u http_info.keep_alive = %u http_info.is_connection_close = %u",
-                    http_info.version,     http_info.keep_alive,     http_info.is_connection_close)
 
    if (UServer_Base::isMaxKeepAlive())
       {
@@ -1880,23 +1882,39 @@ bool UHTTP::isCGIRequest()
 {
    U_TRACE(0, "UHTTP::isCGIRequest()")
 
-   const char* ptr = U_HTTP_URI + http_info.uri_len - 1;
+   uint32_t sz     = http_info.uri_len - 1;
+   const char* ptr = U_HTTP_URI + sz;
 
    U_INTERNAL_ASSERT_POINTER(ptr)
 
-   if    (*ptr == '/') U_RETURN(false); // NB: ends with '/'...
-   while (*ptr != '/') --ptr;
-   while (*ptr == '/') --ptr;
+   if (*ptr == '/') U_RETURN(false); // NB: ends with '/'...
 
-   uint32_t sz = U_CONSTANT_SIZE("/cgi-bin/");
+   while (*ptr != '/')
+      {
+      --sz;
+      --ptr;
+      }
 
-   ptr -= sz - 2;
+   while (*ptr == '/')
+      {
+      --sz;
+      --ptr;
+      }
 
-   U_INTERNAL_DUMP("ptr = %.*S", sz, ptr)
+   uint32_t szCGI = U_CONSTANT_SIZE("/cgi-bin/");
 
-   bool result = (memcmp(ptr, "/cgi-bin/", sz) == 0);
+   if (U_SYSCALL(memcmp, "%S,%S,%u", ptr - szCGI + 2, "/cgi-bin/", szCGI) == 0)
+      {
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", cgi_dir, U_HTTP_URI + 1, sz);
 
-   U_RETURN(result);
+      cgi_dir[sz] = '\0';
+
+      U_INTERNAL_DUMP("cgi_dir = %S", cgi_dir)
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 void UHTTP::setCGIEnvironment(UString& environment, bool sh_script)
@@ -2045,7 +2063,7 @@ void UHTTP::setCGIEnvironment(UString& environment, bool sh_script)
                    "HTTP_COOKIE=%.*s\n"
                    "HTTP_REFERER=%.*s\n"
                    "PATH=/usr/local/bin:/usr/bin:/bin\n"
-                   "PWD=%w%.*s\n"
+                   "PWD=%w%s\n"
                    "SCRIPT_FILENAME=%w%.*s\n",
                    UClientImage_Base::body->size(),
                    U_HTTP_QUERY_TO_TRACE,
@@ -2055,12 +2073,13 @@ void UHTTP::setCGIEnvironment(UString& environment, bool sh_script)
                    U_STRING_TO_TRACE(name),
                    UServer_Base::port,
                    http_info.version + '0',
+                   // ext
                    U_STRING_TO_TRACE(ip_server),
                    (sh_script ? UHTTP::getBrowserMSIE() : ""),
                    UHTTP::getAcceptLanguage(),
                    U_STRING_TO_TRACE(cookie),
                    referer_len, referer_ptr,
-                   U_HTTP_URI_TO_TRACE,
+                   cgi_dir,
                    U_HTTP_URI_TO_TRACE);
 
 #ifdef HAVE_SSL
@@ -2329,7 +2348,7 @@ bool UHTTP::processCGIOutput()
 
       uint32_t diff = location - ptr + 1; // NB: we cut also \n...
 
-      U_INTERNAL_ASSERT_MINOR(diff,endHeader)
+      U_INTERNAL_ASSERT_MINOR(diff, endHeader)
 
       sz        -= diff;
       endHeader -= diff;
@@ -2492,27 +2511,6 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penvironment)
     */
 
    bool result = false;
-   char cgi_dir[PATH_MAX];
-   uint32_t sz = http_info.uri_len - 1;
-   const char* ptr = U_HTTP_URI + sz;
-
-   while (*ptr != '/')
-      {
-      --sz;
-      --ptr;
-      }
-
-   while (*ptr == '/')
-      {
-      --sz;
-      --ptr;
-      }
-
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", cgi_dir, U_HTTP_URI + 1, sz);
-
-   cgi_dir[sz] = '\0';
-
-   U_INTERNAL_DUMP("cgi_dir = %S", cgi_dir)
 
    if (UFile::chdir(cgi_dir, true))
       {

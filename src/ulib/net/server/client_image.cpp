@@ -47,11 +47,26 @@ void UClientImage_Base::logRequest(const char* filereq)
    U_ASSERT_EQUALS(rbuffer->empty(), false)
    U_INTERNAL_ASSERT_POINTER(pClientImage->logbuf)
 
+   uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
+
+   U_INTERNAL_DUMP("u_printf_string_max_length = %d UHTTP::http_info.endHeader = %u", u_printf_string_max_length, UHTTP::http_info.endHeader)
+
+   if (u_printf_string_max_length == -1)
+      {
+      if (UHTTP::isHTTPRequest()) // NB: only HTTP header...
+         {
+         u_printf_string_max_length = (UHTTP::http_info.endHeader ? UHTTP::http_info.endHeader : rbuffer->size()); 
+
+         U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
+         }
+      }
+
    UServer_Base::log->log("%sreceived request (%u bytes) %#.*S from %.*s\n", UServer_Base::mod_name, rbuffer->size(),
                                                                              U_STRING_TO_TRACE(*rbuffer), U_STRING_TO_TRACE(*(pClientImage->logbuf)));
 
-/* Test for GCC == 3.3.3 (SuSE Linux) */
-#if GCC_VERSION != 30303 
+   u_printf_string_max_length = u_printf_string_max_length_save;
+
+#if GCC_VERSION != 30303 /* Test for GCC == 3.3.3 (SuSE Linux) */
    if (filereq) (void) UFile::writeToTmpl(filereq, *rbuffer, true);
 #endif
 }
@@ -66,11 +81,26 @@ void UClientImage_Base::logResponse(const char* fileres)
    U_ASSERT_EQUALS(wbuffer->empty(), false)
    U_INTERNAL_ASSERT_POINTER(pClientImage->logbuf)
 
+   U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
+
+   uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
+
+   if (u_printf_string_max_length == -1)
+      {
+      if (UHTTP::isHTTPRequest()) // NB: only HTTP header...
+         {
+         u_printf_string_max_length = u_findEndHeader(U_STRING_TO_PARAM(*wbuffer));
+
+         U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
+         }
+      }
+
    UServer_Base::log->log("%ssent response (%u bytes) %#.*S to %.*s\n", UServer_Base::mod_name, wbuffer->size(),
                                                                         U_STRING_TO_TRACE(*wbuffer), U_STRING_TO_TRACE(*(pClientImage->logbuf)));
 
-/* Test for GCC == 3.3.3 (SuSE Linux) */
-#if GCC_VERSION != 30303 
+   u_printf_string_max_length = u_printf_string_max_length_save;
+
+#if GCC_VERSION != 30303 /* Test for GCC == 3.3.3 (SuSE Linux) */
    if (fileres) (void) UFile::writeToTmpl(fileres, *wbuffer, true);
 #endif
 }
