@@ -682,7 +682,28 @@ bool UTransformCtx::execute()
 
       chain.insert(0, uriTransform);
 
-   // ret = xmlSecTransformCtxUriExecute(ctx, ctx->uri);
+      // Process binary data from the URI using transforms chain in ctx
+
+      /* ret = xmlSecTransformCtxUriExecute(ctx, ctx->uri);
+
+      int ret;
+      xmlSecTransformPtr uriTransform;
+
+      uriTransform = xmlSecTransformCtxCreateAndPrepend(ctx, xmlSecTransformInputURIId);
+
+      ret = xmlSecTransformInputURIOpen(uriTransform, uri);
+
+      // we do not need to do something special for this transform
+
+      ret = xmlSecTransformCtxPrepare(ctx, xmlSecTransformDataTypeUnknown);
+
+      // Now we have a choice: we either can push from first transform or pop 
+      // from last. Our C14N transforms prefers push, so push data!
+
+      ret = xmlSecTransformPump(uriTransform, uriTransform->next, ctx);     
+
+      ctx->status = xmlSecTransformStatusFinished;
+      */
       }
    else
       {

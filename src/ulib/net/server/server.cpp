@@ -402,7 +402,7 @@ int UServer_Base::loadPlugins(const UString& plugin_dir, UVector<UString>& plugi
    UServerPlugIn* plugin;
    int result = U_PLUGIN_HANDLER_GO_ON;
 
-   vplugin = U_NEW(UVector<UServerPlugIn*>(10));
+   vplugin = U_NEW(UVector<UServerPlugIn*>(10U));
 
    if (plugin_dir.empty() == false) UPlugIn<void*>::setPluginDirectory(plugin_dir.c_str());
 
