@@ -175,7 +175,16 @@ public:
    * Returns true if the signature of the request verifies.
    */
 
-   bool verify(EVP_PKEY* publicKey) const;
+   bool verify(EVP_PKEY* publicKey) const
+      {
+      U_TRACE(0, "UPKCS10::verify(%p)", publicKey)
+
+      U_INTERNAL_ASSERT_POINTER(request)
+
+      if (U_SYSCALL(X509_REQ_verify, "%p,%p", request, publicKey) <= 0) U_RETURN(false);
+
+      U_RETURN(true);
+      }
 
    /**
    * Returns either the DER or PEM encoding of the CertificateRequest (depending on the value of format)

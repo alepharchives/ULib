@@ -15,6 +15,22 @@
 #include <ulib/net/rpc/rpc_parser.h>
 #include <ulib/net/rpc/rpc_encoder.h>
 
+// gcc: call is unlikely and code size would grow
+
+URPCParser::URPCParser(UVector<UString>* arg)
+{
+   U_TRACE_REGISTER_OBJECT(0, URPCParser, "%p", arg)
+
+   if (arg == 0)
+      {
+      URPC::allocate();
+
+      arg = URPC::rpc_info;
+      }
+
+   envelope.arg = arg;
+}
+
 void URPCParser::clearData()
 {
    U_TRACE(0, "URPCParser::clearData()")

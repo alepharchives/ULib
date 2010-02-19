@@ -40,7 +40,7 @@ Collaboration diagram for UInterrupt:</div>
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>init</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4a441055f652e052a868cb9cd2d8f807"></a><!-- doxytag: member="UInterrupt::setMaskInterrupt" ref="a4a441055f652e052a868cb9cd2d8f807" args="(sigset_t *mask, int signo)" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setMaskInterrupt</b> (sigset_t *mask, int signo)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad505ca4a7096faa47a5446eb2fb33921"></a><!-- doxytag: member="UInterrupt::handlerInterrupt" ref="ad505ca4a7096faa47a5446eb2fb33921" args="(int signo)" -->
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab7b1ad97961b3ca424faefcb924fc8d6"></a><!-- doxytag: member="UInterrupt::handlerInterrupt" ref="ab7b1ad97961b3ca424faefcb924fc8d6" args="(int signo)" -->
 static RETSIGTYPE&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerInterrupt</b> (int signo)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a05ea70721402966f18672087a1bdcb9a"></a><!-- doxytag: member="UInterrupt::handlerInterruptWithInfo" ref="a05ea70721402966f18672087a1bdcb9a" args="(int signo, siginfo_t *info, void *)" -->
 static RETSIGTYPE&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerInterruptWithInfo</b> (int signo, siginfo_t *info, void *)</td></tr>
@@ -48,11 +48,11 @@ static RETSIGTYPE&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerI
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>disable</b> (sigset_t *mask, sigset_t *mask_old)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a301cebae6ba263c1226dd8fa37d522fb"></a><!-- doxytag: member="UInterrupt::enable" ref="a301cebae6ba263c1226dd8fa37d522fb" args="(sigset_t *mask)" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>enable</b> (sigset_t *mask)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a62007a5889b2b0d9459b55acc75982c1"></a><!-- doxytag: member="UInterrupt::handlerSignal" ref="a62007a5889b2b0d9459b55acc75982c1" args="(int signo)" -->
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab0b5b92cbf68c34a864424b90e60b508"></a><!-- doxytag: member="UInterrupt::handlerSignal" ref="ab0b5b92cbf68c34a864424b90e60b508" args="(int signo)" -->
 static RETSIGTYPE&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerSignal</b> (int signo)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a249fc8959ca268219f7a1fd5a7391567"></a><!-- doxytag: member="UInterrupt::setHandlerForSignal" ref="a249fc8959ca268219f7a1fd5a7391567" args="(int signo, sighandler_t function)" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setHandlerForSignal</b> (int signo, sighandler_t function)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a856fbaa46e443b776fdcc1091b2982bf"></a><!-- doxytag: member="UInterrupt::waitForSignal" ref="a856fbaa46e443b776fdcc1091b2982bf" args="(int signo)" -->
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a14b3c4ee73e926a4b822082b8ebe622d"></a><!-- doxytag: member="UInterrupt::waitForSignal" ref="a14b3c4ee73e926a4b822082b8ebe622d" args="(int signo)" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>waitForSignal</b> (int signo)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af10feccec41e9bdc3aec85d99d434d73"></a><!-- doxytag: member="UInterrupt::sendSignal" ref="af10feccec41e9bdc3aec85d99d434d73" args="(int signo, pid_t pid)" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>sendSignal</b> (int signo, pid_t pid)</td></tr>
@@ -60,7 +60,7 @@ static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>sendSignal</b>
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>erase</b> (int signo)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ada9d2cd3c8d807a868285563c802e162"></a><!-- doxytag: member="UInterrupt::insert" ref="ada9d2cd3c8d807a868285563c802e162" args="(int signo, sighandler_t handler)" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>insert</b> (int signo, sighandler_t handler)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afa61c83d618e28c60ae6e3c3e178af6f"></a><!-- doxytag: member="UInterrupt::handlerEventSignal" ref="afa61c83d618e28c60ae6e3c3e178af6f" args="(int signo)" -->
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a480b6a7e15dff64edc226f2cf6093c64"></a><!-- doxytag: member="UInterrupt::handlerEventSignal" ref="a480b6a7e15dff64edc226f2cf6093c64" args="(int signo)" -->
 static RETSIGTYPE&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerEventSignal</b> (int signo)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac2b0c296f8ec0f096229f4804bf6ebee"></a><!-- doxytag: member="UInterrupt::callHandlerSignal" ref="ac2b0c296f8ec0f096229f4804bf6ebee" args="()" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>callHandlerSignal</b> ()</td></tr>
@@ -129,7 +129,7 @@ static sighandler_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>handle
 <li>src/ulib/utility/interrupt.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Mon Feb 8 17:39:29 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Feb 19 12:37:31 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

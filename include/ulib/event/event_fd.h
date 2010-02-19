@@ -18,6 +18,9 @@
 #define U_NOTIFIER_DELETE -1
 #define U_NOTIFIER_UPDATE -2
 
+#define U_READ_IN    0x001 // NB: same as EPOLLIN
+#define U_WRITE_OUT  0x004 // NB: same as EPOLLOUT
+
 class U_EXPORT UEventFd {
 public:
 
@@ -28,7 +31,7 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   int fd, op_mask; // R_OK, W_OK -- NB: W_OK == 2, R_OK == 4...
+   int fd, op_mask; // U_READ_IN | U_WRITE_OUT
 
             UEventFd() {}
    virtual ~UEventFd() {}

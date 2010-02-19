@@ -242,22 +242,7 @@ public:
       return open(flags);
       }
 
-   bool creat(int flags = O_TRUNC | O_RDWR, mode_t mode = PERM_FILE)
-      {
-      U_TRACE(0, "UFile::creat(%d,%d)", flags, mode)
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_EQUALS(fd, -1)
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
-      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
-      fd = UFile::open(path_relativ, flags | O_CREAT, mode);
-
-      U_RETURN(fd != -1);
-      }
-
+   bool creat(                     int flags = O_TRUNC | O_RDWR, mode_t mode = PERM_FILE);
    bool creat(const UString& path, int flags = O_TRUNC | O_RDWR, mode_t mode = PERM_FILE);
 
    bool isOpen()

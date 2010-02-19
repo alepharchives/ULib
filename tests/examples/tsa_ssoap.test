@@ -65,6 +65,7 @@ $LCMD <TSA/request/soap.req >TSA/response/soap.res 2>>err/tsa_ssoap.err
  tail -c +427 TSA/response/soap.res | cut -d'<' -f1 | $WINELOADER ../base/crypto_base64$SUFFIX -d > TSA/response/soap.tsr
 #tail -c +427 TSA/response/soap.res																					  > TSA/response/soap.tsr
 
+$SLEEP
 kill_prg userver_ssl TERM
 
 mv err/userver_ssl.err err/tsa_soap.err

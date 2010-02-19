@@ -42,64 +42,64 @@
 <a name="l00019"></a>00019 
 <a name="l00020"></a>00020 <span class="preprocessor">#include &lt;event.h&gt;</span>
 <a name="l00021"></a>00021 
-<a name="l00022"></a>00022 <span class="comment">/*</span>
-<a name="l00023"></a>00023 <span class="comment"> * libevent is a popular API that provides a mechanism to execute a callback</span>
-<a name="l00024"></a>00024 <span class="comment"> * function when a specific event occurs on a file descriptor or after a</span>
-<a name="l00025"></a>00025 <span class="comment"> * timeout has been reached. Furthermore, libevent also support callbacks due</span>
-<a name="l00026"></a>00026 <span class="comment"> * to signals or regular timeouts.</span>
-<a name="l00027"></a>00027 <span class="comment"> */</span>
-<a name="l00028"></a>00028 
-<a name="l00035"></a><a class="code" href="classUEvent__Base.html">00035</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUEvent__Base.html">UEvent_Base</a> : <span class="keyword">public</span> event
-<a name="l00036"></a>00036 {
-<a name="l00037"></a>00037 <span class="keyword">public</span>:
-<a name="l00038"></a>00038 
-<a name="l00039"></a>00039         <span class="comment">// NB: l&apos;oggetto puo&apos; essere usato come (struct event) in quanto UMemoryError viene allocato dopo...</span>
-<a name="l00040"></a>00040         U_MEMORY_TEST
-<a name="l00041"></a>00041 
-<a name="l00042"></a>00042         <span class="comment">// Allocator e Deallocator</span>
-<a name="l00043"></a>00043         U_MEMORY_ALLOCATOR
-<a name="l00044"></a>00044         U_MEMORY_DEALLOCATOR
-<a name="l00045"></a>00045 
-<a name="l00052"></a><a class="code" href="classUEvent__Base.html#a71f958ac0734dd762a5e7505251da745">00052</a>         <span class="keywordtype">int</span> <a class="code" href="classUEvent__Base.html#a71f958ac0734dd762a5e7505251da745">fd</a>() { <span class="keywordflow">return</span> EVENT_FD(<span class="keyword">this</span>); }
-<a name="l00053"></a>00053 
-<a name="l00063"></a><a class="code" href="classUEvent__Base.html#a2eb3304d92f06cd7b85f7bf4a764d939">00063</a>         <span class="keywordtype">bool</span> pending(<span class="keywordtype">short</span> ev = EV_READ, <a class="code" href="classUTimeVal.html">UTimeVal</a>* tv = 0)
-<a name="l00064"></a>00064                 {
-<a name="l00065"></a>00065                 U_TRACE(1, <span class="stringliteral">&quot;UEvent_Base::pending(%hd,%p)&quot;</span>, ev, tv)
-<a name="l00066"></a>00066 
-<a name="l00067"></a>00067                 <span class="keywordflow">if</span> (U_SYSCALL(event_pending, <span class="stringliteral">&quot;%p,%hd,%p&quot;</span>, <span class="keyword">this</span>, ev, tv)) U_RETURN(<span class="keyword">true</span>);
-<a name="l00068"></a>00068 
-<a name="l00069"></a>00069                 U_RETURN(<span class="keyword">false</span>);
-<a name="l00070"></a>00070                 }
-<a name="l00071"></a>00071 
-<a name="l00078"></a><a class="code" href="classUEvent__Base.html#a7d4dee0f221edbc2290db9c41c5e4c1c">00078</a>         <span class="keywordtype">bool</span> <a class="code" href="classUEvent__Base.html#a7d4dee0f221edbc2290db9c41c5e4c1c">timeout</a>(<a class="code" href="classUTimeVal.html">UTimeVal</a>&amp; tv) { <span class="keywordflow">return</span> pending(EV_TIMEOUT, &amp;tv); }
-<a name="l00079"></a>00079 
-<a name="l00090"></a><a class="code" href="classUEvent__Base.html#a49e826714331548b2d3c47db948a3e76">00090</a>         <span class="keywordtype">bool</span> priority(<span class="keywordtype">int</span> priority)
-<a name="l00091"></a>00091                 {
-<a name="l00092"></a>00092                 U_TRACE(1, <span class="stringliteral">&quot;UEvent_Base::priority(%d)&quot;</span>, priority)
-<a name="l00093"></a>00093 
-<a name="l00094"></a>00094                 U_INTERNAL_ASSERT_MSG((ev_flags &amp; EVLIST_ACTIVE) != 0, <span class="stringliteral">&quot;can&apos;t change the priority of an active event&quot;</span>)
-<a name="l00095"></a>00095 
-<a name="l00096"></a>00096                 <span class="keywordflow">if</span> (U_SYSCALL(event_priority_set, <span class="stringliteral">&quot;%p,%d&quot;</span>, <span class="keyword">this</span>, priority)) U_RETURN(<span class="keyword">false</span>);
-<a name="l00097"></a>00097 
-<a name="l00098"></a>00098                 U_RETURN(<span class="keyword">true</span>);
-<a name="l00099"></a>00099                 }
-<a name="l00100"></a>00100 
-<a name="l00101"></a>00101 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00102"></a>00102 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00103"></a>00103 <span class="preprocessor">#endif</span>
-<a name="l00104"></a>00104 <span class="preprocessor"></span>
-<a name="l00105"></a>00105 <span class="keyword">protected</span>:
-<a name="l00106"></a>00106         <a class="code" href="classUEvent__Base.html">UEvent_Base</a>()                                                                            {} <span class="comment">// NB: This is an concept class, you can&apos;t instantiate it.</span>
-<a name="l00107"></a>00107 
-<a name="l00108"></a>00108 <span class="keyword">private</span>:
-<a name="l00109"></a>00109         <a class="code" href="classUEvent__Base.html">UEvent_Base</a>(<span class="keyword">const</span> <a class="code" href="classUEvent__Base.html">UEvent_Base</a>&amp;)                          {}
-<a name="l00110"></a>00110         <a class="code" href="classUEvent__Base.html">UEvent_Base</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUEvent__Base.html">UEvent_Base</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00111"></a>00111 };
-<a name="l00112"></a>00112 
-<a name="l00128"></a>00128 <span class="keyword">typedef</span> void (*ccallback_type)(int, short, <span class="keywordtype">void</span>*); <span class="comment">// C function used as callback in the C API</span>
-<a name="l00129"></a>00129 
-<a name="l00130"></a><a class="code" href="classUEvent.html">00130</a> <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUEvent.html">UEvent</a> : <span class="keyword">public</span> <a class="code" href="classUEvent__Base.html">UEvent_Base</a>
-<a name="l00131"></a>00131 {
+<a name="l00022"></a>00022 <span class="keyword">extern</span> U_EXPORT <span class="keyword">struct </span>event_base* u_ev_base;
+<a name="l00023"></a>00023 
+<a name="l00024"></a>00024 <span class="comment">/*</span>
+<a name="l00025"></a>00025 <span class="comment"> * libevent is a popular API that provides a mechanism to execute a callback</span>
+<a name="l00026"></a>00026 <span class="comment"> * function when a specific event occurs on a file descriptor or after a</span>
+<a name="l00027"></a>00027 <span class="comment"> * timeout has been reached. Furthermore, libevent also support callbacks due</span>
+<a name="l00028"></a>00028 <span class="comment"> * to signals or regular timeouts.</span>
+<a name="l00029"></a>00029 <span class="comment"> */</span>
+<a name="l00030"></a>00030 
+<a name="l00037"></a><a class="code" href="classUEvent__Base.html">00037</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUEvent__Base.html">UEvent_Base</a> : <span class="keyword">public</span> event {
+<a name="l00038"></a>00038 <span class="keyword">public</span>:
+<a name="l00039"></a>00039 
+<a name="l00040"></a>00040         <span class="comment">// NB: l&apos;oggetto puo&apos; essere usato come (struct event) in quanto UMemoryError viene allocato dopo...</span>
+<a name="l00041"></a>00041         U_MEMORY_TEST
+<a name="l00042"></a>00042 
+<a name="l00043"></a>00043         <span class="comment">// Allocator e Deallocator</span>
+<a name="l00044"></a>00044         U_MEMORY_ALLOCATOR
+<a name="l00045"></a>00045         U_MEMORY_DEALLOCATOR
+<a name="l00046"></a>00046 
+<a name="l00053"></a><a class="code" href="classUEvent__Base.html#a71f958ac0734dd762a5e7505251da745">00053</a>         <span class="keywordtype">int</span> <a class="code" href="classUEvent__Base.html#a71f958ac0734dd762a5e7505251da745">fd</a>() { <span class="keywordflow">return</span> EVENT_FD(<span class="keyword">this</span>); }
+<a name="l00054"></a>00054 
+<a name="l00064"></a><a class="code" href="classUEvent__Base.html#a2eb3304d92f06cd7b85f7bf4a764d939">00064</a>         <span class="keywordtype">bool</span> pending(<span class="keywordtype">short</span> ev = EV_READ, <a class="code" href="classUTimeVal.html">UTimeVal</a>* tv = 0)
+<a name="l00065"></a>00065                 {
+<a name="l00066"></a>00066                 U_TRACE(1, <span class="stringliteral">&quot;UEvent_Base::pending(%hd,%p)&quot;</span>, ev, tv)
+<a name="l00067"></a>00067 
+<a name="l00068"></a>00068                 <span class="keywordflow">if</span> (U_SYSCALL(event_pending, <span class="stringliteral">&quot;%p,%hd,%p&quot;</span>, <span class="keyword">this</span>, ev, tv)) U_RETURN(<span class="keyword">true</span>);
+<a name="l00069"></a>00069 
+<a name="l00070"></a>00070                 U_RETURN(<span class="keyword">false</span>);
+<a name="l00071"></a>00071                 }
+<a name="l00072"></a>00072 
+<a name="l00079"></a><a class="code" href="classUEvent__Base.html#a7d4dee0f221edbc2290db9c41c5e4c1c">00079</a>         <span class="keywordtype">bool</span> <a class="code" href="classUEvent__Base.html#a7d4dee0f221edbc2290db9c41c5e4c1c">timeout</a>(<a class="code" href="classUTimeVal.html">UTimeVal</a>&amp; tv) { <span class="keywordflow">return</span> pending(EV_TIMEOUT, &amp;tv); }
+<a name="l00080"></a>00080 
+<a name="l00091"></a><a class="code" href="classUEvent__Base.html#a49e826714331548b2d3c47db948a3e76">00091</a>         <span class="keywordtype">bool</span> priority(<span class="keywordtype">int</span> priority)
+<a name="l00092"></a>00092                 {
+<a name="l00093"></a>00093                 U_TRACE(1, <span class="stringliteral">&quot;UEvent_Base::priority(%d)&quot;</span>, priority)
+<a name="l00094"></a>00094 
+<a name="l00095"></a>00095                 U_INTERNAL_ASSERT_MSG((ev_flags &amp; EVLIST_ACTIVE) != 0, <span class="stringliteral">&quot;can&apos;t change the priority of an active event&quot;</span>)
+<a name="l00096"></a>00096 
+<a name="l00097"></a>00097                 <span class="keywordflow">if</span> (U_SYSCALL(event_priority_set, <span class="stringliteral">&quot;%p,%d&quot;</span>, <span class="keyword">this</span>, priority)) U_RETURN(<span class="keyword">false</span>);
+<a name="l00098"></a>00098 
+<a name="l00099"></a>00099                 U_RETURN(<span class="keyword">true</span>);
+<a name="l00100"></a>00100                 }
+<a name="l00101"></a>00101 
+<a name="l00102"></a>00102 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00103"></a>00103 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00104"></a>00104 <span class="preprocessor">#endif</span>
+<a name="l00105"></a>00105 <span class="preprocessor"></span>
+<a name="l00106"></a>00106 <span class="keyword">protected</span>:
+<a name="l00107"></a>00107         <a class="code" href="classUEvent__Base.html">UEvent_Base</a>()                                                                            {} <span class="comment">// NB: This is an concept class, you can&apos;t instantiate it.</span>
+<a name="l00108"></a>00108 
+<a name="l00109"></a>00109 <span class="keyword">private</span>:
+<a name="l00110"></a>00110         <a class="code" href="classUEvent__Base.html">UEvent_Base</a>(<span class="keyword">const</span> <a class="code" href="classUEvent__Base.html">UEvent_Base</a>&amp;)                          {}
+<a name="l00111"></a>00111         <a class="code" href="classUEvent__Base.html">UEvent_Base</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUEvent__Base.html">UEvent_Base</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00112"></a>00112 };
+<a name="l00113"></a>00113 
+<a name="l00129"></a>00129 <span class="keyword">typedef</span> void (*ccallback_type)(int, short, <span class="keywordtype">void</span>*); <span class="comment">// C function used as callback in the C API</span>
+<a name="l00130"></a>00130 
+<a name="l00131"></a><a class="code" href="classUEvent.html">00131</a> <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUEvent.html">UEvent</a> : <span class="keyword">public</span> <a class="code" href="classUEvent__Base.html">UEvent_Base</a> {
 <a name="l00132"></a>00132 <span class="keyword">public</span>:
 <a name="l00133"></a>00133 
 <a name="l00142"></a><a class="code" href="classUEvent.html#aeceb65780438daa0fd16d1829a524ae9">00142</a>         <a class="code" href="classUEvent.html">UEvent</a>(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev, F&amp; handler)
@@ -135,37 +135,37 @@
 <a name="l00172"></a>00172         <a class="code" href="classUEvent.html">UEvent&lt;F&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUEvent.html">UEvent&lt;F&gt;</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
 <a name="l00173"></a>00173 };
 <a name="l00174"></a>00174 
-<a name="l00181"></a><a class="code" href="classUEvent_3_01ccallback__type_01_4.html">00181</a> <span class="keyword">template</span> &lt;&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUEvent.html">UEvent</a>&lt;ccallback_type&gt; : <span class="keyword">public</span> <a class="code" href="classUEvent__Base.html">UEvent_Base</a>
-<a name="l00182"></a>00182 {
-<a name="l00183"></a>00183 <span class="keyword">public</span>:
-<a name="l00184"></a>00184 
-<a name="l00194"></a><a class="code" href="classUEvent_3_01ccallback__type_01_4.html#adb18a519709254cc5105c597fff43272">00194</a>         <a class="code" href="classUEvent.html">UEvent</a>(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev, ccallback_type handler, <span class="keywordtype">void</span>* arg = 0)
-<a name="l00195"></a>00195                 {
-<a name="l00196"></a>00196                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>, <span class="stringliteral">&quot;%d,%hd,%p,%p&quot;</span>, fd, ev, handler, arg)
-<a name="l00197"></a>00197 
-<a name="l00198"></a>00198                 U_SYSCALL_VOID(event_set, <span class="stringliteral">&quot;%p,%d,%hd,%p,%p&quot;</span>, <span class="keyword">this</span>, fd, ev, handler, arg);
-<a name="l00199"></a>00199                 }
-<a name="l00200"></a>00200 
-<a name="l00201"></a>00201         ~<a class="code" href="classUEvent.html">UEvent</a>()
-<a name="l00202"></a>00202                 {
-<a name="l00203"></a>00203                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUEvent.html">UEvent</a>)
-<a name="l00204"></a>00204                 }
-<a name="l00205"></a>00205 
-<a name="l00206"></a>00206 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00207"></a>00207 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UEvent_Base::dump(reset); }
-<a name="l00208"></a>00208 <span class="preprocessor">#endif</span>
-<a name="l00209"></a>00209 <span class="preprocessor"></span>
-<a name="l00210"></a>00210 <span class="keyword">protected</span>:
-<a name="l00211"></a>00211         <a class="code" href="classUEvent.html">UEvent</a>() {}
-<a name="l00212"></a>00212 
-<a name="l00213"></a>00213 <span class="keyword">private</span>:
-<a name="l00214"></a>00214         <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>&amp;) : <a class="code" href="classUEvent__Base.html">UEvent_Base</a>() {}
-<a name="l00215"></a>00215         <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>&amp;)                 { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00216"></a>00216 };
-<a name="l00217"></a>00217 
-<a name="l00233"></a><a class="code" href="classUTimerEv.html">00233</a> <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUTimerEv.html">UTimerEv</a> : <span class="keyword">public</span> <a class="code" href="classUEvent.html">UEvent</a>&lt;F&gt;
-<a name="l00234"></a>00234 {
-<a name="l00241"></a>00241         <a class="code" href="classUTimerEv.html">UTimerEv</a>(F&amp; handler)
+<a name="l00181"></a><a class="code" href="classUEvent_3_01ccallback__type_01_4.html">00181</a> <span class="keyword">template</span> &lt;&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUEvent.html">UEvent</a>&lt;ccallback_type&gt; : <span class="keyword">public</span> <a class="code" href="classUEvent__Base.html">UEvent_Base</a> {
+<a name="l00182"></a>00182 <span class="keyword">public</span>:
+<a name="l00183"></a>00183 
+<a name="l00193"></a><a class="code" href="classUEvent_3_01ccallback__type_01_4.html#adb18a519709254cc5105c597fff43272">00193</a>         <a class="code" href="classUEvent.html">UEvent</a>(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev, ccallback_type handler, <span class="keywordtype">void</span>* arg = 0)
+<a name="l00194"></a>00194                 {
+<a name="l00195"></a>00195                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>, <span class="stringliteral">&quot;%d,%hd,%p,%p&quot;</span>, fd, ev, handler, arg)
+<a name="l00196"></a>00196 
+<a name="l00197"></a>00197                 U_SYSCALL_VOID(event_set, <span class="stringliteral">&quot;%p,%d,%hd,%p,%p&quot;</span>, <span class="keyword">this</span>, fd, ev, handler, arg);
+<a name="l00198"></a>00198                 }
+<a name="l00199"></a>00199 
+<a name="l00200"></a>00200         ~<a class="code" href="classUEvent.html">UEvent</a>()
+<a name="l00201"></a>00201                 {
+<a name="l00202"></a>00202                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUEvent.html">UEvent</a>)
+<a name="l00203"></a>00203                 }
+<a name="l00204"></a>00204 
+<a name="l00205"></a>00205 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00206"></a>00206 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UEvent_Base::dump(reset); }
+<a name="l00207"></a>00207 <span class="preprocessor">#endif</span>
+<a name="l00208"></a>00208 <span class="preprocessor"></span>
+<a name="l00209"></a>00209 <span class="keyword">protected</span>:
+<a name="l00210"></a>00210         <a class="code" href="classUEvent.html">UEvent</a>() {}
+<a name="l00211"></a>00211 
+<a name="l00212"></a>00212 <span class="keyword">private</span>:
+<a name="l00213"></a>00213         <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>&amp;) : <a class="code" href="classUEvent__Base.html">UEvent_Base</a>() {}
+<a name="l00214"></a>00214         <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>&amp;)                 { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00215"></a>00215 };
+<a name="l00216"></a>00216 
+<a name="l00232"></a><a class="code" href="classUTimerEv.html">00232</a> <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUTimerEv.html">UTimerEv</a> : <span class="keyword">public</span> <a class="code" href="classUEvent.html">UEvent</a>&lt;F&gt; {
+<a name="l00233"></a>00233 <span class="keyword">public</span>:
+<a name="l00234"></a>00234 
+<a name="l00241"></a><a class="code" href="classUTimerEv.html#acccc65edd594d7df8a7d3a984606d74d">00241</a>         <a class="code" href="classUTimerEv.html">UTimerEv</a>(F&amp; handler)
 <a name="l00242"></a>00242                 {
 <a name="l00243"></a>00243                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUTimerEv.html">UTimerEv</a>, <span class="stringliteral">&quot;%p&quot;</span>, &amp;handler)
 <a name="l00244"></a>00244 
@@ -190,268 +190,263 @@
 <a name="l00263"></a>00263 };
 <a name="l00264"></a>00264 
 <a name="l00265"></a>00265 
-<a name="l00274"></a><a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">00274</a> <span class="keyword">template</span> &lt;&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUTimerEv.html">UTimerEv</a>&lt;ccallback_type&gt; : <span class="keyword">public</span> <a class="code" href="classUEvent.html">UEvent</a>&lt;ccallback_type&gt;
-<a name="l00275"></a>00275 {
-<a name="l00276"></a>00276 <span class="keyword">public</span>:
-<a name="l00277"></a>00277 
-<a name="l00285"></a><a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html#a168ba7ca409682570e388d79b7db55ba">00285</a>         <a class="code" href="classUTimerEv.html">UTimerEv</a>(ccallback_type handler, <span class="keywordtype">void</span>* arg = 0)
-<a name="l00286"></a>00286                 {
-<a name="l00287"></a>00287                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">UTimerEv&lt;ccallback_type&gt;</a>, <span class="stringliteral">&quot;%p,%p&quot;</span>, handler, arg)
-<a name="l00288"></a>00288 
-<a name="l00289"></a>00289                 U_SYSCALL_VOID(event_set, <span class="stringliteral">&quot;%p,%d,%hd,%p,%p&quot;</span>, <span class="keyword">this</span>, -1, 0, handler, arg);
-<a name="l00290"></a>00290                 }
-<a name="l00291"></a>00291 
-<a name="l00292"></a>00292         ~<a class="code" href="classUTimerEv.html">UTimerEv</a>()
-<a name="l00293"></a>00293                 {
-<a name="l00294"></a>00294                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUTimerEv.html">UTimerEv</a>)
-<a name="l00295"></a>00295                 }
-<a name="l00296"></a>00296 
-<a name="l00297"></a>00297 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00298"></a>00298 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UEvent_Base::dump(reset); }
-<a name="l00299"></a>00299 <span class="preprocessor">#endif</span>
-<a name="l00300"></a>00300 <span class="preprocessor"></span>
-<a name="l00301"></a>00301 <span class="keyword">protected</span>:
-<a name="l00302"></a>00302         <a class="code" href="classUTimerEv.html">UTimerEv</a>() {}
-<a name="l00303"></a>00303 
-<a name="l00304"></a>00304 <span class="keyword">private</span>:
-<a name="l00305"></a>00305         <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">UTimerEv&lt;ccallback_type&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">UTimerEv&lt;ccallback_type&gt;</a>&amp;) : <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>() {}
-<a name="l00306"></a>00306         <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">UTimerEv&lt;ccallback_type&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">UTimerEv&lt;ccallback_type&gt;</a>&amp;)                                             { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00307"></a>00307 };
-<a name="l00308"></a>00308 
-<a name="l00324"></a><a class="code" href="classUSignal.html">00324</a> <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUSignal.html">USignal</a> : <span class="keyword">public</span> <a class="code" href="classUEvent.html">UEvent</a>&lt;F&gt;
-<a name="l00325"></a>00325 {
-<a name="l00326"></a>00326 <span class="keyword">public</span>:
-<a name="l00327"></a>00327 
-<a name="l00335"></a><a class="code" href="classUSignal.html#a27c6602647c8a5dc7dba6a652745c875">00335</a>         <a class="code" href="classUSignal.html">USignal</a>(<span class="keywordtype">int</span> signum, F&amp; handler)
-<a name="l00336"></a>00336                 {
-<a name="l00337"></a>00337                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUSignal.html">USignal</a>, <span class="stringliteral">&quot;%d,%p&quot;</span>, signum, &amp;handler)
-<a name="l00338"></a>00338 
-<a name="l00339"></a>00339                 U_SYSCALL_VOID(event_set, <span class="stringliteral">&quot;%p,%d,%hd,%p,%p&quot;</span>, <span class="keyword">this</span>, signum, EV_SIGNAL | EV_PERSIST, <a class="code" href="classUEvent.html">UEvent&lt;F&gt;::wrapper</a>, (<span class="keywordtype">void</span>*)&amp;handler);
-<a name="l00340"></a>00340                 }
-<a name="l00341"></a>00341 
-<a name="l00342"></a>00342         ~<a class="code" href="classUSignal.html">USignal</a>()
-<a name="l00343"></a>00343                 {
-<a name="l00344"></a>00344                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUSignal.html">USignal</a>)
-<a name="l00345"></a>00345                 }
-<a name="l00346"></a>00346 
-<a name="l00353"></a><a class="code" href="classUSignal.html#a948d2c1701bc32095227bb92fb0aaaee">00353</a>         <span class="keywordtype">int</span> <a class="code" href="classUSignal.html#a948d2c1701bc32095227bb92fb0aaaee">signum</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> EVENT_SIGNAL(<span class="keyword">this</span>); }
-<a name="l00354"></a>00354 
-<a name="l00355"></a>00355 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00356"></a>00356 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UEvent_Base::dump(reset); }
-<a name="l00357"></a>00357 <span class="preprocessor">#endif</span>
-<a name="l00358"></a>00358 <span class="preprocessor"></span>
-<a name="l00359"></a>00359 <span class="keyword">protected</span>:
-<a name="l00360"></a>00360         <a class="code" href="classUSignal.html">USignal</a>() {}
-<a name="l00361"></a>00361 
-<a name="l00362"></a>00362 <span class="keyword">private</span>:
-<a name="l00363"></a>00363         <a class="code" href="classUSignal.html">USignal</a>(<span class="keyword">const</span> <a class="code" href="classUSignal.html">USignal</a>&amp;)            {}
-<a name="l00364"></a>00364         <a class="code" href="classUSignal.html">USignal</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUSignal.html">USignal</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00365"></a>00365 };
-<a name="l00366"></a>00366 
-<a name="l00367"></a>00367 
-<a name="l00376"></a><a class="code" href="classUSignal_3_01ccallback__type_01_4.html">00376</a> <span class="keyword">template</span> &lt;&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUSignal.html">USignal</a>&lt;ccallback_type&gt; : <span class="keyword">public</span> <a class="code" href="classUEvent.html">UEvent</a>&lt;ccallback_type&gt;
-<a name="l00377"></a>00377 {
-<a name="l00378"></a>00378 <span class="keyword">public</span>:
-<a name="l00379"></a>00379 
-<a name="l00388"></a><a class="code" href="classUSignal_3_01ccallback__type_01_4.html#a52901866abcc88a0dcec00f1fbe172d1">00388</a>         <a class="code" href="classUSignal.html">USignal</a>(<span class="keywordtype">int</span> signum, ccallback_type handler, <span class="keywordtype">void</span>* arg = 0)
-<a name="l00389"></a>00389                 {
-<a name="l00390"></a>00390                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">USignal&lt;ccallback_type&gt;</a>, <span class="stringliteral">&quot;%d,%p,%p&quot;</span>, signum, handler, arg)
+<a name="l00274"></a><a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">00274</a> <span class="keyword">template</span> &lt;&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUTimerEv.html">UTimerEv</a>&lt;ccallback_type&gt; : <span class="keyword">public</span> <a class="code" href="classUEvent.html">UEvent</a>&lt;ccallback_type&gt; {
+<a name="l00275"></a>00275 <span class="keyword">public</span>:
+<a name="l00276"></a>00276 
+<a name="l00284"></a><a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html#a168ba7ca409682570e388d79b7db55ba">00284</a>         <a class="code" href="classUTimerEv.html">UTimerEv</a>(ccallback_type handler, <span class="keywordtype">void</span>* arg = 0)
+<a name="l00285"></a>00285                 {
+<a name="l00286"></a>00286                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">UTimerEv&lt;ccallback_type&gt;</a>, <span class="stringliteral">&quot;%p,%p&quot;</span>, handler, arg)
+<a name="l00287"></a>00287 
+<a name="l00288"></a>00288                 U_SYSCALL_VOID(event_set, <span class="stringliteral">&quot;%p,%d,%hd,%p,%p&quot;</span>, <span class="keyword">this</span>, -1, 0, handler, arg);
+<a name="l00289"></a>00289                 }
+<a name="l00290"></a>00290 
+<a name="l00291"></a>00291         ~<a class="code" href="classUTimerEv.html">UTimerEv</a>()
+<a name="l00292"></a>00292                 {
+<a name="l00293"></a>00293                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUTimerEv.html">UTimerEv</a>)
+<a name="l00294"></a>00294                 }
+<a name="l00295"></a>00295 
+<a name="l00296"></a>00296 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00297"></a>00297 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UEvent_Base::dump(reset); }
+<a name="l00298"></a>00298 <span class="preprocessor">#endif</span>
+<a name="l00299"></a>00299 <span class="preprocessor"></span>
+<a name="l00300"></a>00300 <span class="keyword">protected</span>:
+<a name="l00301"></a>00301         <a class="code" href="classUTimerEv.html">UTimerEv</a>() {}
+<a name="l00302"></a>00302 
+<a name="l00303"></a>00303 <span class="keyword">private</span>:
+<a name="l00304"></a>00304         <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">UTimerEv&lt;ccallback_type&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">UTimerEv&lt;ccallback_type&gt;</a>&amp;) : <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>() {}
+<a name="l00305"></a>00305         <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">UTimerEv&lt;ccallback_type&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">UTimerEv&lt;ccallback_type&gt;</a>&amp;)                                             { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00306"></a>00306 };
+<a name="l00307"></a>00307 
+<a name="l00323"></a><a class="code" href="classUSignal.html">00323</a> <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUSignal.html">USignal</a> : <span class="keyword">public</span> <a class="code" href="classUEvent.html">UEvent</a>&lt;F&gt; {
+<a name="l00324"></a>00324 <span class="keyword">public</span>:
+<a name="l00325"></a>00325 
+<a name="l00333"></a><a class="code" href="classUSignal.html#a27c6602647c8a5dc7dba6a652745c875">00333</a>         <a class="code" href="classUSignal.html">USignal</a>(<span class="keywordtype">int</span> signum, F&amp; handler)
+<a name="l00334"></a>00334                 {
+<a name="l00335"></a>00335                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUSignal.html">USignal</a>, <span class="stringliteral">&quot;%d,%p&quot;</span>, signum, &amp;handler)
+<a name="l00336"></a>00336 
+<a name="l00337"></a>00337                 U_SYSCALL_VOID(event_set, <span class="stringliteral">&quot;%p,%d,%hd,%p,%p&quot;</span>, <span class="keyword">this</span>, signum, EV_SIGNAL | EV_PERSIST, <a class="code" href="classUEvent.html">UEvent&lt;F&gt;::wrapper</a>, (<span class="keywordtype">void</span>*)&amp;handler);
+<a name="l00338"></a>00338                 }
+<a name="l00339"></a>00339 
+<a name="l00340"></a>00340         ~<a class="code" href="classUSignal.html">USignal</a>()
+<a name="l00341"></a>00341                 {
+<a name="l00342"></a>00342                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUSignal.html">USignal</a>)
+<a name="l00343"></a>00343                 }
+<a name="l00344"></a>00344 
+<a name="l00351"></a><a class="code" href="classUSignal.html#a948d2c1701bc32095227bb92fb0aaaee">00351</a>         <span class="keywordtype">int</span> <a class="code" href="classUSignal.html#a948d2c1701bc32095227bb92fb0aaaee">signum</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> EVENT_SIGNAL(<span class="keyword">this</span>); }
+<a name="l00352"></a>00352 
+<a name="l00353"></a>00353 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00354"></a>00354 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UEvent_Base::dump(reset); }
+<a name="l00355"></a>00355 <span class="preprocessor">#endif</span>
+<a name="l00356"></a>00356 <span class="preprocessor"></span>
+<a name="l00357"></a>00357 <span class="keyword">protected</span>:
+<a name="l00358"></a>00358         <a class="code" href="classUSignal.html">USignal</a>() {}
+<a name="l00359"></a>00359 
+<a name="l00360"></a>00360 <span class="keyword">private</span>:
+<a name="l00361"></a>00361         <a class="code" href="classUSignal.html">USignal</a>(<span class="keyword">const</span> <a class="code" href="classUSignal.html">USignal</a>&amp;)            {}
+<a name="l00362"></a>00362         <a class="code" href="classUSignal.html">USignal</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUSignal.html">USignal</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00363"></a>00363 };
+<a name="l00364"></a>00364 
+<a name="l00365"></a>00365 
+<a name="l00374"></a><a class="code" href="classUSignal_3_01ccallback__type_01_4.html">00374</a> <span class="keyword">template</span> &lt;&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUSignal.html">USignal</a>&lt;ccallback_type&gt; : <span class="keyword">public</span> <a class="code" href="classUEvent.html">UEvent</a>&lt;ccallback_type&gt; {
+<a name="l00375"></a>00375 <span class="keyword">public</span>:
+<a name="l00376"></a>00376 
+<a name="l00385"></a><a class="code" href="classUSignal_3_01ccallback__type_01_4.html#a52901866abcc88a0dcec00f1fbe172d1">00385</a>         <a class="code" href="classUSignal.html">USignal</a>(<span class="keywordtype">int</span> signum, ccallback_type handler, <span class="keywordtype">void</span>* arg = 0)
+<a name="l00386"></a>00386                 {
+<a name="l00387"></a>00387                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">USignal&lt;ccallback_type&gt;</a>, <span class="stringliteral">&quot;%d,%p,%p&quot;</span>, signum, handler, arg)
+<a name="l00388"></a>00388 
+<a name="l00389"></a>00389                 U_SYSCALL_VOID(event_set, <span class="stringliteral">&quot;%p,%d,%hd,%p,%p&quot;</span>, <span class="keyword">this</span>, signum, EV_SIGNAL | EV_PERSIST, handler, arg);
+<a name="l00390"></a>00390                 }
 <a name="l00391"></a>00391 
-<a name="l00392"></a>00392                 U_SYSCALL_VOID(event_set, <span class="stringliteral">&quot;%p,%d,%hd,%p,%p&quot;</span>, <span class="keyword">this</span>, signum, EV_SIGNAL | EV_PERSIST, handler, arg);
-<a name="l00393"></a>00393                 }
-<a name="l00394"></a>00394 
-<a name="l00395"></a>00395         ~<a class="code" href="classUSignal.html">USignal</a>()
-<a name="l00396"></a>00396                 {
-<a name="l00397"></a>00397                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUSignal.html">USignal</a>)
-<a name="l00398"></a>00398                 }
-<a name="l00399"></a>00399 
-<a name="l00406"></a><a class="code" href="classUSignal_3_01ccallback__type_01_4.html#adfde65aa3e6dc8c40da7be42da92b4a9">00406</a>         <span class="keywordtype">int</span> <a class="code" href="classUSignal_3_01ccallback__type_01_4.html#adfde65aa3e6dc8c40da7be42da92b4a9">signum</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> EVENT_SIGNAL(<span class="keyword">this</span>); }
-<a name="l00407"></a>00407 
-<a name="l00408"></a>00408 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00409"></a>00409 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UEvent_Base::dump(reset); }
-<a name="l00410"></a>00410 <span class="preprocessor">#endif</span>
-<a name="l00411"></a>00411 <span class="preprocessor"></span>
-<a name="l00412"></a>00412 <span class="keyword">protected</span>:
-<a name="l00413"></a>00413         <a class="code" href="classUSignal.html">USignal</a>() {}
-<a name="l00414"></a>00414 
-<a name="l00415"></a>00415 <span class="keyword">private</span>:
-<a name="l00416"></a>00416         <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">USignal&lt;ccallback_type&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">USignal&lt;ccallback_type&gt;</a>&amp;) : <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>() {}
-<a name="l00417"></a>00417         <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">USignal&lt;ccallback_type&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">USignal&lt;ccallback_type&gt;</a>&amp;)                                        { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00418"></a>00418 };
-<a name="l00419"></a>00419 
-<a name="l00420"></a>00420 <span class="keyword">typedef</span> <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>   <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">cevent</a>;        <span class="comment">// Shortcut to C-style event.</span>
-<a name="l00421"></a>00421 <span class="keyword">typedef</span> <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">USignal&lt;ccallback_type&gt;</a>  <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">csignal</a>;       <span class="comment">// Shortcut to C-style signal handler.</span>
-<a name="l00422"></a>00422 <span class="keyword">typedef</span> <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">UTimerEv&lt;ccallback_type&gt;</a> <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">ctimer</a>;  <span class="comment">// Shortcut to C-style timer.</span>
-<a name="l00423"></a>00423 
-<a name="l00433"></a><a class="code" href="classUMemCb.html">00433</a> <span class="keyword">template</span> &lt;<span class="keyword">typename</span> O, <span class="keyword">typename</span> M&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUMemCb.html">UMemCb</a>
-<a name="l00434"></a>00434 {
-<a name="l00435"></a>00435 <span class="keyword">public</span>:
-<a name="l00436"></a>00436 
-<a name="l00450"></a><a class="code" href="classUMemCb.html#a88fc3694216eb7ad6241b2420e0b79f4">00450</a>         <a class="code" href="classUMemCb.html#a88fc3694216eb7ad6241b2420e0b79f4">UMemCb</a>(O&amp; <span class="keywordtype">object</span>, M method) : _object(object), _method(method) {}
-<a name="l00451"></a>00451 
-<a name="l00452"></a>00452         <span class="keywordtype">void</span> operator()(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev) { (_object.*_method)(fd, ev); }
-<a name="l00453"></a>00453 
-<a name="l00454"></a>00454 <span class="keyword">protected</span>:
-<a name="l00455"></a>00455         O&amp; _object;
-<a name="l00456"></a>00456         M  _method;
-<a name="l00457"></a>00457 };
-<a name="l00458"></a>00458 
-<a name="l00473"></a><a class="code" href="classUDispatcher.html">00473</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUDispatcher.html">UDispatcher</a>
-<a name="l00474"></a>00474 {
-<a name="l00475"></a>00475 <span class="keyword">public</span>:
-<a name="l00476"></a>00476 
-<a name="l00477"></a>00477         <span class="comment">// Miscellaneous constants</span>
-<a name="l00478"></a>00478 
-<a name="l00479"></a>00479         <span class="keyword">enum</span> {
-<a name="l00480"></a>00480                 DEFAULT_PRIORITY = -1,                                  <span class="comment">// Default priority (the middle value).</span>
-<a name="l00481"></a>00481                 ONCE                              = EVLOOP_ONCE,     <span class="comment">// Loop just once.</span>
-<a name="l00482"></a>00482                 NONBLOCK                          = EVLOOP_NONBLOCK  <span class="comment">// Don&apos;t block the event loop.</span>
-<a name="l00483"></a>00483         };
-<a name="l00484"></a>00484 
-<a name="l00491"></a><a class="code" href="classUDispatcher.html#a81d9198b0e12285bc2fbde179a0913bb">00491</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> priority_init(<span class="keywordtype">int</span> npriorities)
-<a name="l00492"></a>00492                 {
-<a name="l00493"></a>00493                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::priority_init(%d)&quot;</span>, npriorities)
+<a name="l00392"></a>00392         ~<a class="code" href="classUSignal.html">USignal</a>()
+<a name="l00393"></a>00393                 {
+<a name="l00394"></a>00394                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUSignal.html">USignal</a>)
+<a name="l00395"></a>00395                 }
+<a name="l00396"></a>00396 
+<a name="l00403"></a><a class="code" href="classUSignal_3_01ccallback__type_01_4.html#adfde65aa3e6dc8c40da7be42da92b4a9">00403</a>         <span class="keywordtype">int</span> <a class="code" href="classUSignal_3_01ccallback__type_01_4.html#adfde65aa3e6dc8c40da7be42da92b4a9">signum</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> EVENT_SIGNAL(<span class="keyword">this</span>); }
+<a name="l00404"></a>00404 
+<a name="l00405"></a>00405 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00406"></a>00406 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UEvent_Base::dump(reset); }
+<a name="l00407"></a>00407 <span class="preprocessor">#endif</span>
+<a name="l00408"></a>00408 <span class="preprocessor"></span>
+<a name="l00409"></a>00409 <span class="keyword">protected</span>:
+<a name="l00410"></a>00410         <a class="code" href="classUSignal.html">USignal</a>() {}
+<a name="l00411"></a>00411 
+<a name="l00412"></a>00412 <span class="keyword">private</span>:
+<a name="l00413"></a>00413         <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">USignal&lt;ccallback_type&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">USignal&lt;ccallback_type&gt;</a>&amp;) : <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>() {}
+<a name="l00414"></a>00414         <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">USignal&lt;ccallback_type&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">USignal&lt;ccallback_type&gt;</a>&amp;)                                        { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00415"></a>00415 };
+<a name="l00416"></a>00416 
+<a name="l00417"></a>00417 <span class="keyword">typedef</span> <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">UEvent&lt;ccallback_type&gt;</a>   <a class="code" href="classUEvent_3_01ccallback__type_01_4.html">cevent</a>;        <span class="comment">// Shortcut to C-style event.</span>
+<a name="l00418"></a>00418 <span class="keyword">typedef</span> <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">USignal&lt;ccallback_type&gt;</a>  <a class="code" href="classUSignal_3_01ccallback__type_01_4.html">csignal</a>;       <span class="comment">// Shortcut to C-style signal handler.</span>
+<a name="l00419"></a>00419 <span class="keyword">typedef</span> <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">UTimerEv&lt;ccallback_type&gt;</a> <a class="code" href="classUTimerEv_3_01ccallback__type_01_4.html">ctimer</a>;  <span class="comment">// Shortcut to C-style timer.</span>
+<a name="l00420"></a>00420 
+<a name="l00430"></a><a class="code" href="classUMemCb.html">00430</a> <span class="keyword">template</span> &lt;<span class="keyword">typename</span> O, <span class="keyword">typename</span> M&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUMemCb.html">UMemCb</a> {
+<a name="l00431"></a>00431 <span class="keyword">public</span>:
+<a name="l00432"></a>00432 
+<a name="l00446"></a><a class="code" href="classUMemCb.html#a88fc3694216eb7ad6241b2420e0b79f4">00446</a>         <a class="code" href="classUMemCb.html#a88fc3694216eb7ad6241b2420e0b79f4">UMemCb</a>(O&amp; <span class="keywordtype">object</span>, M method) : _object(object), _method(method) {}
+<a name="l00447"></a>00447 
+<a name="l00448"></a>00448         <span class="keywordtype">void</span> operator()(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev) { (_object.*_method)(fd, ev); }
+<a name="l00449"></a>00449 
+<a name="l00450"></a>00450 <span class="keyword">protected</span>:
+<a name="l00451"></a>00451         O&amp; _object;
+<a name="l00452"></a>00452         M  _method;
+<a name="l00453"></a>00453 };
+<a name="l00454"></a>00454 
+<a name="l00469"></a><a class="code" href="classUDispatcher.html">00469</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUDispatcher.html">UDispatcher</a> {
+<a name="l00470"></a>00470 <span class="keyword">public</span>:
+<a name="l00471"></a>00471 
+<a name="l00472"></a>00472         <span class="comment">// Miscellaneous constants</span>
+<a name="l00473"></a>00473 
+<a name="l00474"></a>00474         <span class="keyword">enum</span> {
+<a name="l00475"></a>00475                 DEFAULT_PRIORITY = -1,                                  <span class="comment">// Default priority (the middle value).</span>
+<a name="l00476"></a>00476                 ONCE                              = EVLOOP_ONCE,     <span class="comment">// Loop just once.</span>
+<a name="l00477"></a>00477                 NONBLOCK                          = EVLOOP_NONBLOCK  <span class="comment">// Don&apos;t block the event loop.</span>
+<a name="l00478"></a>00478         };
+<a name="l00479"></a>00479 
+<a name="l00486"></a><a class="code" href="classUDispatcher.html#a81d9198b0e12285bc2fbde179a0913bb">00486</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> priority_init(<span class="keywordtype">int</span> npriorities)
+<a name="l00487"></a>00487                 {
+<a name="l00488"></a>00488                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::priority_init(%d)&quot;</span>, npriorities)
+<a name="l00489"></a>00489 
+<a name="l00490"></a>00490                 <span class="keywordflow">if</span> (U_SYSCALL(event_base_priority_init, <span class="stringliteral">&quot;%p,%d&quot;</span>, u_ev_base, npriorities)) U_RETURN(<span class="keyword">false</span>);
+<a name="l00491"></a>00491 
+<a name="l00492"></a>00492                 U_RETURN(<span class="keyword">true</span>);
+<a name="l00493"></a>00493                 }
 <a name="l00494"></a>00494 
-<a name="l00495"></a>00495                 <span class="keywordflow">if</span> (U_SYSCALL(event_base_priority_init, <span class="stringliteral">&quot;%p,%d&quot;</span>, u_ev_base, npriorities)) U_RETURN(<span class="keyword">false</span>);
-<a name="l00496"></a>00496 
-<a name="l00497"></a>00497                 U_RETURN(<span class="keyword">true</span>);
-<a name="l00498"></a>00498                 }
-<a name="l00499"></a>00499 
-<a name="l00507"></a><a class="code" href="classUDispatcher.html#abeab4e364c2697273e482c8cdc334f51">00507</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> add(<a class="code" href="classUEvent__Base.html">UEvent_Base</a>&amp; e, <span class="keywordtype">int</span> priority = DEFAULT_PRIORITY)
-<a name="l00508"></a>00508                 {
-<a name="l00509"></a>00509                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add(%p,%d)&quot;</span>, &amp;e, priority)
-<a name="l00510"></a>00510 
-<a name="l00511"></a>00511         <span class="comment">//      if (U_SYSCALL(event_base_set, &quot;%p,%p&quot;, u_ev_base, &amp;e)) U_RETURN(false);</span>
-<a name="l00512"></a>00512 
-<a name="l00513"></a>00513                 <span class="keywordflow">if</span> (priority != DEFAULT_PRIORITY &amp;&amp;
-<a name="l00514"></a>00514                          U_SYSCALL(event_priority_set, <span class="stringliteral">&quot;%p,%d&quot;</span>, &amp;e, priority))
-<a name="l00515"></a>00515                         {
-<a name="l00516"></a>00516                         U_RETURN(<span class="keyword">false</span>);
-<a name="l00517"></a>00517                         }
+<a name="l00502"></a><a class="code" href="classUDispatcher.html#abeab4e364c2697273e482c8cdc334f51">00502</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> add(<a class="code" href="classUEvent__Base.html">UEvent_Base</a>&amp; e, <span class="keywordtype">int</span> priority = DEFAULT_PRIORITY)
+<a name="l00503"></a>00503                 {
+<a name="l00504"></a>00504                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add(%p,%d)&quot;</span>, &amp;e, priority)
+<a name="l00505"></a>00505 
+<a name="l00506"></a>00506         <span class="comment">//      if (U_SYSCALL(event_base_set, &quot;%p,%p&quot;, u_ev_base, &amp;e)) U_RETURN(false);</span>
+<a name="l00507"></a>00507 
+<a name="l00508"></a>00508                 <span class="keywordflow">if</span> (priority != DEFAULT_PRIORITY &amp;&amp;
+<a name="l00509"></a>00509                          U_SYSCALL(event_priority_set, <span class="stringliteral">&quot;%p,%d&quot;</span>, &amp;e, priority))
+<a name="l00510"></a>00510                         {
+<a name="l00511"></a>00511                         U_RETURN(<span class="keyword">false</span>);
+<a name="l00512"></a>00512                         }
+<a name="l00513"></a>00513 
+<a name="l00514"></a>00514                 <span class="keywordflow">if</span> (U_SYSCALL(event_add, <span class="stringliteral">&quot;%p,%p&quot;</span>, &amp;e, 0)) U_RETURN(<span class="keyword">false</span>);
+<a name="l00515"></a>00515 
+<a name="l00516"></a>00516                 U_RETURN(<span class="keyword">true</span>);
+<a name="l00517"></a>00517                 }
 <a name="l00518"></a>00518 
-<a name="l00519"></a>00519                 <span class="keywordflow">if</span> (U_SYSCALL(event_add, <span class="stringliteral">&quot;%p,%p&quot;</span>, &amp;e, 0)) U_RETURN(<span class="keyword">false</span>);
-<a name="l00520"></a>00520 
-<a name="l00521"></a>00521                 U_RETURN(<span class="keyword">true</span>);
-<a name="l00522"></a>00522                 }
-<a name="l00523"></a>00523 
-<a name="l00535"></a><a class="code" href="classUDispatcher.html#a6f02975784a84bc5b6feb1faac34c0f6">00535</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> add(<a class="code" href="classUEvent__Base.html">UEvent_Base</a>&amp; e, <span class="keyword">const</span> <a class="code" href="classUTimeVal.html">UTimeVal</a>&amp; to, <span class="keywordtype">int</span> priority = DEFAULT_PRIORITY)
-<a name="l00536"></a>00536                 {
-<a name="l00537"></a>00537                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add(%p,%O,%d)&quot;</span>, &amp;e, U_OBJECT_TO_TRACE(to), priority)
-<a name="l00538"></a>00538 
-<a name="l00539"></a>00539         <span class="comment">//      if (U_SYSCALL(event_base_set, &quot;%p,%p&quot;, u_ev_base, &amp;e)) U_RETURN(false);</span>
-<a name="l00540"></a>00540 
-<a name="l00541"></a>00541                 <span class="keywordflow">if</span> (priority != DEFAULT_PRIORITY &amp;&amp;
-<a name="l00542"></a>00542                          U_SYSCALL(event_priority_set, <span class="stringliteral">&quot;%p,%d&quot;</span>, &amp;e, priority))
-<a name="l00543"></a>00543                         {
-<a name="l00544"></a>00544                         U_RETURN(<span class="keyword">false</span>);
-<a name="l00545"></a>00545                         }
+<a name="l00530"></a><a class="code" href="classUDispatcher.html#a6f02975784a84bc5b6feb1faac34c0f6">00530</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> add(<a class="code" href="classUEvent__Base.html">UEvent_Base</a>&amp; e, <span class="keyword">const</span> <a class="code" href="classUTimeVal.html">UTimeVal</a>&amp; to, <span class="keywordtype">int</span> priority = DEFAULT_PRIORITY)
+<a name="l00531"></a>00531                 {
+<a name="l00532"></a>00532                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add(%p,%O,%d)&quot;</span>, &amp;e, U_OBJECT_TO_TRACE(to), priority)
+<a name="l00533"></a>00533 
+<a name="l00534"></a>00534         <span class="comment">//      if (U_SYSCALL(event_base_set, &quot;%p,%p&quot;, u_ev_base, &amp;e)) U_RETURN(false);</span>
+<a name="l00535"></a>00535 
+<a name="l00536"></a>00536                 <span class="keywordflow">if</span> (priority != DEFAULT_PRIORITY &amp;&amp;
+<a name="l00537"></a>00537                          U_SYSCALL(event_priority_set, <span class="stringliteral">&quot;%p,%d&quot;</span>, &amp;e, priority))
+<a name="l00538"></a>00538                         {
+<a name="l00539"></a>00539                         U_RETURN(<span class="keyword">false</span>);
+<a name="l00540"></a>00540                         }
+<a name="l00541"></a>00541 
+<a name="l00542"></a>00542                 <span class="keywordflow">if</span> (U_SYSCALL(event_add, <span class="stringliteral">&quot;%p,%p&quot;</span>, &amp;e, (timeval*)&amp;to)) U_RETURN(<span class="keyword">false</span>);
+<a name="l00543"></a>00543 
+<a name="l00544"></a>00544                 U_RETURN(<span class="keyword">true</span>);
+<a name="l00545"></a>00545                 }
 <a name="l00546"></a>00546 
-<a name="l00547"></a>00547                 <span class="keywordflow">if</span> (U_SYSCALL(event_add, <span class="stringliteral">&quot;%p,%p&quot;</span>, &amp;e, (timeval*)&amp;to)) U_RETURN(<span class="keyword">false</span>);
-<a name="l00548"></a>00548 
-<a name="l00549"></a>00549                 U_RETURN(<span class="keyword">true</span>);
-<a name="l00550"></a>00550                 }
-<a name="l00551"></a>00551 
-<a name="l00563"></a><a class="code" href="classUDispatcher.html#acce37ec4fec73430d4d00ff214d5f7b6">00563</a>         <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">static</span> <span class="keywordtype">bool</span> add_once(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev, F&amp; handler)
-<a name="l00564"></a>00564                 {
-<a name="l00565"></a>00565                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add_once(%d,%hd,%p)&quot;</span>, fd, ev, &amp;handler)
+<a name="l00558"></a><a class="code" href="classUDispatcher.html#acce37ec4fec73430d4d00ff214d5f7b6">00558</a>         <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">static</span> <span class="keywordtype">bool</span> add_once(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev, F&amp; handler)
+<a name="l00559"></a>00559                 {
+<a name="l00560"></a>00560                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add_once(%d,%hd,%p)&quot;</span>, fd, ev, &amp;handler)
+<a name="l00561"></a>00561 
+<a name="l00562"></a>00562                 <span class="keywordflow">if</span> (U_SYSCALL(event_once, <span class="stringliteral">&quot;%d,%hd,%p,%p,%p&quot;</span>, fd, ev, UDispatcher::wrapper&lt;F&gt;, (<span class="keywordtype">void</span>*)&amp;handler, 0)) U_RETURN(<span class="keyword">false</span>);
+<a name="l00563"></a>00563 
+<a name="l00564"></a>00564                 U_RETURN(<span class="keyword">true</span>);
+<a name="l00565"></a>00565                 }
 <a name="l00566"></a>00566 
-<a name="l00567"></a>00567                 <span class="keywordflow">if</span> (U_SYSCALL(event_once, <span class="stringliteral">&quot;%d,%hd,%p,%p,%p&quot;</span>, fd, ev, UDispatcher::wrapper&lt;F&gt;, (<span class="keywordtype">void</span>*)&amp;handler, 0)) U_RETURN(<span class="keyword">false</span>);
-<a name="l00568"></a>00568 
-<a name="l00569"></a>00569                 U_RETURN(<span class="keyword">true</span>);
-<a name="l00570"></a>00570                 }
-<a name="l00571"></a>00571 
-<a name="l00584"></a><a class="code" href="classUDispatcher.html#a77ea95d80d1c4abc72711c7a54f8282e">00584</a>         <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">static</span> <span class="keywordtype">bool</span> add_once(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev, F&amp; handler, <span class="keyword">const</span> <a class="code" href="classUTimeVal.html">UTimeVal</a>&amp; to)
-<a name="l00585"></a>00585                 {
-<a name="l00586"></a>00586                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add_once(%d,%hd,%p,%O)&quot;</span>, fd, ev, &amp;handler, U_OBJECT_TO_TRACE(to))
+<a name="l00579"></a><a class="code" href="classUDispatcher.html#a77ea95d80d1c4abc72711c7a54f8282e">00579</a>         <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">static</span> <span class="keywordtype">bool</span> add_once(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev, F&amp; handler, <span class="keyword">const</span> <a class="code" href="classUTimeVal.html">UTimeVal</a>&amp; to)
+<a name="l00580"></a>00580                 {
+<a name="l00581"></a>00581                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add_once(%d,%hd,%p,%O)&quot;</span>, fd, ev, &amp;handler, U_OBJECT_TO_TRACE(to))
+<a name="l00582"></a>00582 
+<a name="l00583"></a>00583                 <span class="keywordflow">if</span> (U_SYSCALL(event_once, <span class="stringliteral">&quot;%d,%hd,%p,%p,%p&quot;</span>, fd, ev, UDispatcher::wrapper&lt;F&gt;, (<span class="keywordtype">void</span>*)&amp;handler, (timeval*)&amp;to)) U_RETURN(<span class="keyword">false</span>);
+<a name="l00584"></a>00584 
+<a name="l00585"></a>00585                 U_RETURN(<span class="keyword">true</span>);
+<a name="l00586"></a>00586                 }
 <a name="l00587"></a>00587 
-<a name="l00588"></a>00588                 <span class="keywordflow">if</span> (U_SYSCALL(event_once, <span class="stringliteral">&quot;%d,%hd,%p,%p,%p&quot;</span>, fd, ev, UDispatcher::wrapper&lt;F&gt;, (<span class="keywordtype">void</span>*)&amp;handler, (timeval*)&amp;to)) U_RETURN(<span class="keyword">false</span>);
-<a name="l00589"></a>00589 
-<a name="l00590"></a>00590                 U_RETURN(<span class="keyword">true</span>);
-<a name="l00591"></a>00591                 }
-<a name="l00592"></a>00592 
-<a name="l00605"></a><a class="code" href="classUDispatcher.html#a626bd928ae68f756e1657b077d44ee53">00605</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> add_once(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev, ccallback_type handler, <span class="keywordtype">void</span>* arg)
-<a name="l00606"></a>00606                 {
-<a name="l00607"></a>00607                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add_once(%d,%hd,%p,%p)&quot;</span>, fd, ev, handler, arg)
+<a name="l00600"></a><a class="code" href="classUDispatcher.html#a626bd928ae68f756e1657b077d44ee53">00600</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> add_once(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev, ccallback_type handler, <span class="keywordtype">void</span>* arg)
+<a name="l00601"></a>00601                 {
+<a name="l00602"></a>00602                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add_once(%d,%hd,%p,%p)&quot;</span>, fd, ev, handler, arg)
+<a name="l00603"></a>00603 
+<a name="l00604"></a>00604                 <span class="keywordflow">if</span> (U_SYSCALL(event_once, <span class="stringliteral">&quot;%d,%hd,%p,%p,%p&quot;</span>, fd, ev, handler, arg, 0)) U_RETURN(<span class="keyword">false</span>);
+<a name="l00605"></a>00605 
+<a name="l00606"></a>00606                 U_RETURN(<span class="keyword">true</span>);
+<a name="l00607"></a>00607                 }
 <a name="l00608"></a>00608 
-<a name="l00609"></a>00609                 <span class="keywordflow">if</span> (U_SYSCALL(event_once, <span class="stringliteral">&quot;%d,%hd,%p,%p,%p&quot;</span>, fd, ev, handler, arg, 0)) U_RETURN(<span class="keyword">false</span>);
-<a name="l00610"></a>00610 
-<a name="l00611"></a>00611                 U_RETURN(<span class="keyword">true</span>);
-<a name="l00612"></a>00612                 }
-<a name="l00613"></a>00613 
-<a name="l00627"></a><a class="code" href="classUDispatcher.html#af140c14d67ecfca3b1f531888ce3b263">00627</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> add_once(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev, ccallback_type handler, <span class="keywordtype">void</span>* arg, <span class="keyword">const</span> <a class="code" href="classUTimeVal.html">UTimeVal</a>&amp; to)
-<a name="l00628"></a>00628                 {
-<a name="l00629"></a>00629                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add_once(%d,%hd,%p,%p,%O)&quot;</span>, fd, ev, handler, arg, U_OBJECT_TO_TRACE(to))
+<a name="l00622"></a><a class="code" href="classUDispatcher.html#af140c14d67ecfca3b1f531888ce3b263">00622</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> add_once(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev, ccallback_type handler, <span class="keywordtype">void</span>* arg, <span class="keyword">const</span> <a class="code" href="classUTimeVal.html">UTimeVal</a>&amp; to)
+<a name="l00623"></a>00623                 {
+<a name="l00624"></a>00624                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add_once(%d,%hd,%p,%p,%O)&quot;</span>, fd, ev, handler, arg, U_OBJECT_TO_TRACE(to))
+<a name="l00625"></a>00625 
+<a name="l00626"></a>00626                 <span class="keywordflow">if</span> (U_SYSCALL(event_once, <span class="stringliteral">&quot;%d,%hd,%p,%p,%p&quot;</span>, fd, ev, handler, arg, (timeval*)&amp;to)) U_RETURN(<span class="keyword">false</span>);
+<a name="l00627"></a>00627 
+<a name="l00628"></a>00628                 U_RETURN(<span class="keyword">true</span>);
+<a name="l00629"></a>00629                 }
 <a name="l00630"></a>00630 
-<a name="l00631"></a>00631                 <span class="keywordflow">if</span> (U_SYSCALL(event_once, <span class="stringliteral">&quot;%d,%hd,%p,%p,%p&quot;</span>, fd, ev, handler, arg, (timeval*)&amp;to)) U_RETURN(<span class="keyword">false</span>);
-<a name="l00632"></a>00632 
-<a name="l00633"></a>00633                 U_RETURN(<span class="keyword">true</span>);
-<a name="l00634"></a>00634                 }
-<a name="l00635"></a>00635 
-<a name="l00646"></a><a class="code" href="classUDispatcher.html#a84bc84dfd08f8b262b421e5e9642d3ad">00646</a>         <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">static</span> <span class="keywordtype">bool</span> add_once_timer(F&amp; handler, <span class="keyword">const</span> <a class="code" href="classUTimeVal.html">UTimeVal</a>&amp; to)
-<a name="l00647"></a>00647                 {
-<a name="l00648"></a>00648                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add_once_timer(%p,%O)&quot;</span>, &amp;handler, U_OBJECT_TO_TRACE(to))
+<a name="l00641"></a><a class="code" href="classUDispatcher.html#a84bc84dfd08f8b262b421e5e9642d3ad">00641</a>         <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">static</span> <span class="keywordtype">bool</span> add_once_timer(F&amp; handler, <span class="keyword">const</span> <a class="code" href="classUTimeVal.html">UTimeVal</a>&amp; to)
+<a name="l00642"></a>00642                 {
+<a name="l00643"></a>00643                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add_once_timer(%p,%O)&quot;</span>, &amp;handler, U_OBJECT_TO_TRACE(to))
+<a name="l00644"></a>00644 
+<a name="l00645"></a>00645                 <span class="keywordflow">if</span> (U_SYSCALL(event_once,<span class="stringliteral">&quot;%d,%hd,%p,%p,%p&quot;</span>,-1,EV_TIMEOUT,UDispatcher::wrapper&lt;F&gt;,(<span class="keywordtype">void</span>*)&amp;handler,(timeval*)&amp;to)) U_RETURN(<span class="keyword">false</span>);
+<a name="l00646"></a>00646 
+<a name="l00647"></a>00647                 U_RETURN(<span class="keyword">true</span>);
+<a name="l00648"></a>00648                 }
 <a name="l00649"></a>00649 
-<a name="l00650"></a>00650                 <span class="keywordflow">if</span> (U_SYSCALL(event_once,<span class="stringliteral">&quot;%d,%hd,%p,%p,%p&quot;</span>,-1,EV_TIMEOUT,UDispatcher::wrapper&lt;F&gt;,(<span class="keywordtype">void</span>*)&amp;handler,(timeval*)&amp;to)) U_RETURN(<span class="keyword">false</span>);
-<a name="l00651"></a>00651 
-<a name="l00652"></a>00652                 U_RETURN(<span class="keyword">true</span>);
-<a name="l00653"></a>00653                 }
-<a name="l00654"></a>00654 
-<a name="l00666"></a><a class="code" href="classUDispatcher.html#ae303886cd7e7abc7884729fe4838d61f">00666</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> add_once_timer(ccallback_type handler, <span class="keywordtype">void</span>* arg, <span class="keyword">const</span> <a class="code" href="classUTimeVal.html">UTimeVal</a>&amp; to)
-<a name="l00667"></a>00667                 {
-<a name="l00668"></a>00668                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add_once_timer(%p,%p,%O)&quot;</span>, handler, arg, U_OBJECT_TO_TRACE(to))
+<a name="l00661"></a><a class="code" href="classUDispatcher.html#ae303886cd7e7abc7884729fe4838d61f">00661</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> add_once_timer(ccallback_type handler, <span class="keywordtype">void</span>* arg, <span class="keyword">const</span> <a class="code" href="classUTimeVal.html">UTimeVal</a>&amp; to)
+<a name="l00662"></a>00662                 {
+<a name="l00663"></a>00663                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::add_once_timer(%p,%p,%O)&quot;</span>, handler, arg, U_OBJECT_TO_TRACE(to))
+<a name="l00664"></a>00664 
+<a name="l00665"></a>00665                 <span class="keywordflow">if</span> (U_SYSCALL(event_once, <span class="stringliteral">&quot;%d,%hd,%p,%p,%p&quot;</span>, -1, EV_TIMEOUT, handler, arg, (timeval*)&amp;to)) U_RETURN(<span class="keyword">false</span>);
+<a name="l00666"></a>00666 
+<a name="l00667"></a>00667                 U_RETURN(<span class="keyword">true</span>);
+<a name="l00668"></a>00668                 }
 <a name="l00669"></a>00669 
-<a name="l00670"></a>00670                 <span class="keywordflow">if</span> (U_SYSCALL(event_once, <span class="stringliteral">&quot;%d,%hd,%p,%p,%p&quot;</span>, -1, EV_TIMEOUT, handler, arg, (timeval*)&amp;to)) U_RETURN(<span class="keyword">false</span>);
-<a name="l00671"></a>00671 
-<a name="l00672"></a>00672                 U_RETURN(<span class="keyword">true</span>);
-<a name="l00673"></a>00673                 }
-<a name="l00674"></a>00674 
-<a name="l00683"></a><a class="code" href="classUDispatcher.html#a61351471c043710217fed44a0ab09394">00683</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> del(<a class="code" href="classUEvent__Base.html">UEvent_Base</a>* e)
-<a name="l00684"></a>00684                 {
-<a name="l00685"></a>00685                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::del(%p)&quot;</span>, e)
-<a name="l00686"></a>00686 
-<a name="l00687"></a>00687                 U_INTERNAL_ASSERT_POINTER(e)
+<a name="l00678"></a><a class="code" href="classUDispatcher.html#a61351471c043710217fed44a0ab09394">00678</a>         <span class="keyword">static</span> <span class="keywordtype">bool</span> del(<a class="code" href="classUEvent__Base.html">UEvent_Base</a>* e)
+<a name="l00679"></a>00679                 {
+<a name="l00680"></a>00680                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::del(%p)&quot;</span>, e)
+<a name="l00681"></a>00681 
+<a name="l00682"></a>00682                 U_INTERNAL_ASSERT_POINTER(e)
+<a name="l00683"></a>00683 
+<a name="l00684"></a>00684                 <span class="keywordflow">if</span> (U_SYSCALL(event_del, <span class="stringliteral">&quot;%p&quot;</span>, e)) U_RETURN(<span class="keyword">false</span>);
+<a name="l00685"></a>00685 
+<a name="l00686"></a>00686                 U_RETURN(<span class="keyword">true</span>);
+<a name="l00687"></a>00687                 }
 <a name="l00688"></a>00688 
-<a name="l00689"></a>00689                 <span class="keywordflow">if</span> (U_SYSCALL(event_del, <span class="stringliteral">&quot;%p&quot;</span>, e)) U_RETURN(<span class="keyword">false</span>);
-<a name="l00690"></a>00690 
-<a name="l00691"></a>00691                 U_RETURN(<span class="keyword">true</span>);
-<a name="l00692"></a>00692                 }
-<a name="l00693"></a>00693 
-<a name="l00716"></a><a class="code" href="classUDispatcher.html#a9b97576a964b7506fb6fddbdc58a0e84">00716</a>         <span class="keyword">static</span> <span class="keywordtype">int</span> dispatch(<span class="keywordtype">int</span> flags = 0)
-<a name="l00717"></a>00717                 {
-<a name="l00718"></a>00718                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::dispatch(%d)&quot;</span>, flags)
+<a name="l00711"></a><a class="code" href="classUDispatcher.html#a9b97576a964b7506fb6fddbdc58a0e84">00711</a>         <span class="keyword">static</span> <span class="keywordtype">int</span> dispatch(<span class="keywordtype">int</span> flags = 0)
+<a name="l00712"></a>00712                 {
+<a name="l00713"></a>00713                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::dispatch(%d)&quot;</span>, flags)
+<a name="l00714"></a>00714 
+<a name="l00715"></a>00715                 <span class="keywordtype">int</span> ret = U_SYSCALL(event_base_loop, <span class="stringliteral">&quot;%p,%d&quot;</span>, u_ev_base, flags);
+<a name="l00716"></a>00716 
+<a name="l00717"></a>00717                 U_RETURN(ret);
+<a name="l00718"></a>00718                 }
 <a name="l00719"></a>00719 
-<a name="l00720"></a>00720                 <span class="keywordtype">int</span> ret = U_SYSCALL(event_base_loop, <span class="stringliteral">&quot;%p,%d&quot;</span>, u_ev_base, flags);
-<a name="l00721"></a>00721 
-<a name="l00722"></a>00722                 U_RETURN(ret);
-<a name="l00723"></a>00723                 }
-<a name="l00724"></a>00724 
-<a name="l00734"></a><a class="code" href="classUDispatcher.html#a4a371522201144a5adfa8d87a048220a">00734</a>         <span class="keyword">static</span> <span class="keywordtype">int</span> exit(<span class="keyword">const</span> <a class="code" href="classUTimeVal.html">UTimeVal</a>* to = 0)
-<a name="l00735"></a>00735                 {
-<a name="l00736"></a>00736                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::exit(%p)&quot;</span>, to)
+<a name="l00729"></a><a class="code" href="classUDispatcher.html#a4a371522201144a5adfa8d87a048220a">00729</a>         <span class="keyword">static</span> <span class="keywordtype">int</span> exit(<span class="keyword">const</span> <a class="code" href="classUTimeVal.html">UTimeVal</a>* to = 0)
+<a name="l00730"></a>00730                 {
+<a name="l00731"></a>00731                 U_TRACE(1, <span class="stringliteral">&quot;UDispatcher::exit(%p)&quot;</span>, to)
+<a name="l00732"></a>00732 
+<a name="l00733"></a>00733                 <span class="keywordtype">int</span> ret = U_SYSCALL(event_base_loopexit, <span class="stringliteral">&quot;%p,%p&quot;</span>, u_ev_base, (timeval*)to);
+<a name="l00734"></a>00734 
+<a name="l00735"></a>00735                 U_RETURN(ret);
+<a name="l00736"></a>00736                 }
 <a name="l00737"></a>00737 
-<a name="l00738"></a>00738                 <span class="keywordtype">int</span> ret = U_SYSCALL(event_base_loopexit, <span class="stringliteral">&quot;%p,%p&quot;</span>, u_ev_base, (timeval*)to);
-<a name="l00739"></a>00739 
-<a name="l00740"></a>00740                 U_RETURN(ret);
-<a name="l00741"></a>00741                 }
+<a name="l00738"></a>00738 <span class="keyword">protected</span>:
+<a name="l00739"></a>00739         <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">static</span> <span class="keywordtype">void</span> wrapper(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev, <span class="keywordtype">void</span>* h)
+<a name="l00740"></a>00740                 {
+<a name="l00741"></a>00741                 U_TRACE(0, <span class="stringliteral">&quot;UDispatcher::wrapper(%d,%hd,%p)&quot;</span>, fd, ev, h)
 <a name="l00742"></a>00742 
-<a name="l00743"></a>00743 <span class="keyword">protected</span>:
-<a name="l00744"></a>00744         <span class="keyword">template</span> &lt;<span class="keyword">typename</span> F&gt; <span class="keyword">static</span> <span class="keywordtype">void</span> wrapper(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> ev, <span class="keywordtype">void</span>* h)
-<a name="l00745"></a>00745                 {
-<a name="l00746"></a>00746                 U_TRACE(0, <span class="stringliteral">&quot;UDispatcher::wrapper(%d,%hd,%p)&quot;</span>, fd, ev, h)
+<a name="l00743"></a>00743                 F&amp; handler = *(F*)h;
+<a name="l00744"></a>00744 
+<a name="l00745"></a>00745                 handler(fd, ev);
+<a name="l00746"></a>00746                 }
 <a name="l00747"></a>00747 
-<a name="l00748"></a>00748                 F&amp; handler = *(F*)h;
-<a name="l00749"></a>00749 
-<a name="l00750"></a>00750                 handler(fd, ev);
-<a name="l00751"></a>00751                 }
+<a name="l00748"></a>00748 private:
+<a name="l00749"></a>00749         <a class="code" href="classUDispatcher.html">UDispatcher</a>(const <a class="code" href="classUDispatcher.html">UDispatcher</a>&amp;)                          {}
+<a name="l00750"></a>00750         <a class="code" href="classUDispatcher.html">UDispatcher</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUDispatcher.html">UDispatcher</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00751"></a>00751 };
 <a name="l00752"></a>00752 
-<a name="l00753"></a>00753 private:
-<a name="l00754"></a>00754         <a class="code" href="classUDispatcher.html">UDispatcher</a>(const <a class="code" href="classUDispatcher.html">UDispatcher</a>&amp;)                          {}
-<a name="l00755"></a>00755         <a class="code" href="classUDispatcher.html">UDispatcher</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUDispatcher.html">UDispatcher</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00756"></a>00756 };
-<a name="l00757"></a>00757 
-<a name="l00758"></a>00758 <span class="preprocessor">#endif</span>
+<a name="l00753"></a>00753 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Mon Feb 8 17:39:26 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Feb 19 12:37:27 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

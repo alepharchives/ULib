@@ -106,9 +106,9 @@ public:
 
       if (UApplication::isOptions())
          {
-         cfg_str = (*opt)['t'];
+         cfg_str = opt['t'];
 
-         if ((*opt)['x'].empty() == false) converter.excluded = true;
+         if (opt['x'].empty() == false) converter.excluded = true;
          }
 
       if (cfg_str.empty()) converter.active = true;

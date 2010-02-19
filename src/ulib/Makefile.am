@@ -129,7 +129,7 @@ endif
 
 if SSL
 SRC_C   += base/ssl/des3.c base/ssl/dgst.c
-SRC_CPP += ssl/certificate.cpp ssl/signature.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
+SRC_CPP += ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
 		     ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp ssl/net/client/ssl_ftp.cpp
 if SSL_TS
 SRC_CPP += ssl/timestamp.cpp
@@ -154,8 +154,7 @@ SRC_CPP += xml/expat/attribute.cpp xml/expat/element.cpp xml/expat/xml_parser.cp
 endif
 
 if LIBXML2
-SRC_CPP += xml/libxml2/node.cpp xml/libxml2/document.cpp xml/libxml2/schema.cpp \
-			  xml/libxml2/transform.cpp xml/libxml2/context.cpp xml/libxml2/xpath.cpp
+SRC_CPP += xml/libxml2/node.cpp xml/libxml2/document.cpp xml/libxml2/schema.cpp
 endif
 
 if MAGIC

@@ -114,9 +114,4 @@ USING(std) // Common C++
 
 extern U_EXPORT void ULib_init(); // Init library
 
-#ifdef HAVE_LIBEVENT
-struct event_base;
-extern U_EXPORT struct event_base* u_ev_base;
-#endif
-
 #endif

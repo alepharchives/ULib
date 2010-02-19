@@ -75,7 +75,7 @@ int UProxyPlugIn::handlerRequest()
       esito = false;
 
       U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
-      U_INTERNAL_ASSERT_EQUALS( UClientImage_Base::socket->isSSL(), true)
+      U_ASSERT(UClientImage_Base::socket->isSSL())
 
       // NB: OpenSSL already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...
 

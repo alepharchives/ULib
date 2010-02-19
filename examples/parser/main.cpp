@@ -45,7 +45,7 @@ public:
 
       if (parser.parse())
          {
-         UString directory = (*opt)['d'];
+         UString directory = opt['d'];
 
          if (directory.empty() == true)
             {

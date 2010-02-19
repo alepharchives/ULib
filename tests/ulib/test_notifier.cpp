@@ -1,7 +1,7 @@
 // test_notifier.cpp
 
-#include <ulib/timer.h>
 #include <ulib/notifier.h>
+#include <ulib/timer.h>
 
 #include <fcntl.h>
 #include <iostream>
@@ -82,7 +82,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, handlerOutput, "", 0)
 
       fd      = STDOUT_FILENO;
-      op_mask = W_OK;
+      op_mask = U_WRITE_OUT;
       }
 
    ~handlerOutput()
@@ -127,7 +127,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, handlerInput, "", 0)
 
       fd      = U_SYSCALL(open, "%S,%d", "inp/notifier.input", O_RDONLY); // STDIN_FILENO;
-      op_mask = R_OK;
+      op_mask = U_READ_IN;
       }
 
    ~handlerInput()
@@ -219,9 +219,9 @@ int U_EXPORT main(int argc, char* argv[])
       {
       timeout.setMicroSecond(100L * 1000L);
 
-      UNotifier::waitForEvent(&timeout);
+      (void) UNotifier::waitForEvent(&timeout);
 
-      UNotifier::waitForRead(fd[0], 500);
+      (void) UNotifier::waitForRead(fd[0], 500);
 
       (void) UTimer::insert(U_NEW(MyAlarm1(1L, 0L)));
 
@@ -250,7 +250,7 @@ int U_EXPORT main(int argc, char* argv[])
    if (argc > 2) UNotifier::printInfo(cout);
 #endif
 
-#ifdef __unix__
+#if defined(__unix__) && !defined(HAVE_EPOLL_WAIT)
    U_ASSERT(UNotifier::waitForRead(  STDIN_FILENO, 1 * 1000) <= 0)
 #endif
    U_ASSERT(UNotifier::waitForWrite(STDOUT_FILENO, 1 * 1000) == 1)

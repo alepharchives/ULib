@@ -66,7 +66,7 @@ public:
       {
       U_TRACE(0, "UClient_Base::isHttps()")
 
-      U_INTERNAL_ASSERT_POINTER(Url::str_https)
+      if (Url::str_https == 0) Url::str_allocate();
 
       bool result = (UClient_Base::service == *Url::str_https);
 

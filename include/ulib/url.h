@@ -106,8 +106,6 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, Url, "", 0)
 
-      if (str_ftp == 0) str_allocate();
-
       service_end = user_begin = user_end = host_begin = host_end = path_begin = path_end = query = -1;
       }
 
@@ -122,8 +120,6 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, Url, "%.*S", U_STRING_TO_TRACE(x))
 
-      if (str_ftp == 0) str_allocate();
-
       findpos();
       }
 
@@ -137,8 +133,6 @@ public:
    Url(const char* t, uint32_t tlen) : url(t, tlen)
       {
       U_TRACE_REGISTER_OBJECT(0, Url, "%S,%u", t, tlen)
-
-      if (str_ftp == 0) str_allocate();
 
       findpos();
       }
@@ -183,14 +177,7 @@ public:
       return *this;
       }
 
-   void set(const UString& x)
-      {
-      U_TRACE(0, "Url::set(%.*S)", U_STRING_TO_TRACE(x))
-
-      url = x;
-
-      findpos();
-      }
+   void set(const UString& x);
 
    UString   get() const { return url; }
    bool    empty() const { return url.empty(); }

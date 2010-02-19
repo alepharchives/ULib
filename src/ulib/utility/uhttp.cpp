@@ -23,7 +23,7 @@
 #include <ulib/utility/socket_ext.h>
 #include <ulib/utility/string_ext.h>
 
-char              UHTTP::cgi_dir[PATH_MAX];
+char              UHTTP::cgi_dir[U_PATH_MAX];
 UFile*            UHTTP::file;
 UString*          UHTTP::tmpdir;
 UString*          UHTTP::qcontent;
@@ -1882,6 +1882,10 @@ bool UHTTP::isCGIRequest()
 {
    U_TRACE(0, "UHTTP::isCGIRequest()")
 
+   U_INTERNAL_ASSERT(isHTTPRequest())
+
+   if (cgi_dir[0]) U_RETURN(true);
+
    uint32_t sz     = http_info.uri_len - 1;
    const char* ptr = U_HTTP_URI + sz;
 
@@ -1905,7 +1909,7 @@ bool UHTTP::isCGIRequest()
 
    if (U_SYSCALL(memcmp, "%S,%S,%u", ptr - szCGI + 2, "/cgi-bin/", szCGI) == 0)
       {
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", cgi_dir, U_HTTP_URI + 1, sz);
+      (void) U_SYSCALL(memcpy, "%p,%S,%u", cgi_dir, U_HTTP_URI + 1, sz);
 
       cgi_dir[sz] = '\0';
 
@@ -2063,7 +2067,7 @@ void UHTTP::setCGIEnvironment(UString& environment, bool sh_script)
                    "HTTP_COOKIE=%.*s\n"
                    "HTTP_REFERER=%.*s\n"
                    "PATH=/usr/local/bin:/usr/bin:/bin\n"
-                   "PWD=%w%s\n"
+                   "PWD=%w/%s\n"
                    "SCRIPT_FILENAME=%w%.*s\n",
                    UClientImage_Base::body->size(),
                    U_HTTP_QUERY_TO_TRACE,

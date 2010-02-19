@@ -243,10 +243,10 @@ void ULog::close()
 {
    U_TRACE(0, "ULog::close()")
 
-   U_INTERNAL_DUMP("pthis = %p", pthis)
-
    if (pthis)
       {
+      U_INTERNAL_DUMP("pthis = %p", pthis)
+
       if (bsyslog == false) lock->lock();
 
       if (fmt) log(fmt, "SHUTDOWN");

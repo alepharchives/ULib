@@ -24,10 +24,20 @@ $SLEEP
 DIR_CMD="../../examples/XAdES"
 
 #VALGRIND="valgrind -v --leak-check=full"
-start_prg sign -c XAdES.cfg -k inp/XAdES/AlicePrivRSASign_epk.pem -p password -X inp/XAdES/AliceRSASignByCarl.pem.cer \
-					inp/XAdES/xmldsig-input.txt inp/XAdES/text
 
-mv err/userver_tcp.err err/TSA.err
+# -C CA/CApath
+# -X CA/CApath/matteo_cert.pem
+
+# -k inp/XAdES/AlicePrivRSASign_epk.pem -p password 
+# -X inp/XAdES/AliceRSASignByCarl.pem.cer
+
+start_prg sign -c XAdES.cfg \
+					-C ../ulib/CA/CApath \
+					-X ../ulib/CA/server.crt \
+					-k ../ulib/CA/server.key -p caciucco \
+					inp/XAdES/text inp/XAdES/xmldsig-input.txt
+
+mv err/userver_tcp.err err/XAdES.err
 
 $SLEEP
 kill_prg userver_tcp TERM

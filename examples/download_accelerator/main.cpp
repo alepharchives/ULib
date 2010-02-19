@@ -155,7 +155,7 @@ public:
       U_INTERNAL_ASSERT(percentage <= 100)
 
       if (percentage < 100) sprintf(p, "%2u%% ", percentage);
-      else                  memcpy(p, "100%", 4);
+      else                  (void) U_MEMCPY(p, "100%");
 
       p += 4;
 

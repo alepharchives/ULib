@@ -45,6 +45,17 @@ void Url::str_allocate()
    U_NEW_ULIB_OBJECT(str_https, U_STRING_FROM_STRINGREP_STORAGE(4));
 }
 
+// gcc: call is unlikely and code size would grow
+
+void Url::set(const UString& x)
+{
+   U_TRACE(0, "Url::set(%.*S)", U_STRING_TO_TRACE(x))
+
+   url = x;
+
+   findpos();
+}
+
 UString Url::getService()
 {
    U_TRACE(0, "Url::getService()")
@@ -189,6 +200,8 @@ int Url::getPort()
    if (service_end > 0)
       {
       UString tmp = url.substr(0U, (uint32_t)service_end);
+
+      if (str_ftp == 0) str_allocate();
 
       if (tmp.equal(*str_http))  U_RETURN(80);
       if (tmp.equal(*str_https)) U_RETURN(443);

@@ -1040,7 +1040,7 @@ bool u_pathfind(char* result, const char* path, uint32_t path_len, const char* f
 {
    char* colon_unit;
    uint32_t p_index = 0;
-   char zPath[PATH_MAX + 1];
+   char zPath[U_PATH_MAX + 1];
 
    U_INTERNAL_TRACE("u_pathfind(%p,%.*s,%u,%s,%d)", result, path_len, path, path_len, filename, mode)
 

@@ -1,4 +1,5 @@
 <map id="G" name="G">
-<area shape="rect" id="node3" href="$classUEventTime.html" title="UEventTime" alt="" coords="17,83,108,111"/>
+<area shape="rect" id="node3" href="$classUEventTime.html" title="UEventTime" alt="" coords="92,83,183,111"/>
 <area shape="rect" id="node5" href="$classUModNoCatPeer.html" title="UModNoCatPeer" alt="" coords="5,161,120,189"/>
+<area shape="rect" id="node7" href="$classUTimeoutConnection.html" title="UTimeoutConnection" alt="" coords="144,161,280,189"/>
 </map>

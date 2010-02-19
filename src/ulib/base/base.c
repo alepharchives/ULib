@@ -1264,7 +1264,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                ret += len;
                }
 
-            (void) memcpy(bp, " - ", l);
+            (void) U_MEMCPY(bp, " - ");
 
             bp  += l;
             ret += l;
@@ -1284,7 +1284,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                bp  += len;
                ret += len;
 
-               (void) memcpy(bp, " - ", l);
+               (void) U_MEMCPY(bp, " - ");
 
                bp  += l;
                ret += l;
@@ -1386,7 +1386,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             if (width == 0) /* default */
                {
-               (void) memcpy(bp, " GMT", 4);
+               (void) U_MEMCPY(bp, " GMT");
 
                bp  += 4;
                ret += 4;
@@ -1430,14 +1430,14 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             if (n)
                {
-               (void) memcpy(bp, "true", 4);
+               (void) U_MEMCPY(bp, "true");
 
                bp  += 4;
                ret += 4;
                }
             else
                {
-               (void) memcpy(bp, "false", 5);
+               (void) U_MEMCPY(bp, "false");
 
                bp  += 5;
                ret += 5;
@@ -1479,13 +1479,13 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
          case 'O': /* print formatted temporary string + plus free(string) */
             {
             char* base = bp;
-            uint32_t maxlen, h, remaining;
+            int32_t maxlen, h, remaining;
 
             cp = VA_ARG(char*);
 
             if (!cp)
                {
-               (void) memcpy(bp, "(null)", 6);
+               (void) U_MEMCPY(bp, "(null)");
 
                bp  += 6;
                ret += 6;
@@ -1505,7 +1505,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             if (maxlen > remaining) maxlen = remaining;
 
-            for (n = 0; n < (int)maxlen; ++n)
+            for (n = 0; n < maxlen; ++n)
                {
                if (cp[n] == '\0' && ((flags & ALT) == 0)) break;
 
@@ -1520,9 +1520,9 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             *bp++ = '"';
 
             if (cp[n] &&
-                n == (int)maxlen)
+                n == maxlen)
                {
-               (void) memcpy(bp, "...", 3);
+               (void) U_MEMCPY(bp, "...");
 
                bp += 3;
                }
@@ -1572,7 +1572,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                   }
                else
                   {
-                  (void) memcpy(bp, "00000000", 8);
+                  (void) U_MEMCPY(bp, "00000000");
 
                   bp += 8;
                   }
@@ -1888,35 +1888,23 @@ void u_printf(const char* format, ...)
 
 /* AT EXIT */
 
-static vPF fns[32];
-static int fns_index;
-
-void u_exit(void)
-{
-   int i;
-
-   U_INTERNAL_TRACE("u_exit()", 0)
-
-   U_INTERNAL_PRINT("fns_index = %d", fns_index)
-
-   for (i = fns_index - 1; i >= 0; --i)
-      {
-      if (fns[i])
-         {
-         U_INTERNAL_PRINT("fns[%d] = %p", i, fns[i])
-
-         fns[i]();
-         }
-      }
-}
+vPF u_fns[32];
+int u_fns_index;
 
 void u_atexit(vPF function)
 {
+   int i;
+
    U_INTERNAL_TRACE("u_atexit(%p)", function)
 
    U_INTERNAL_ASSERT_POINTER(function)
 
-   fns[fns_index++] = function;
+   for (i = u_fns_index - 1; i >= 0; --i)
+      {
+      if (u_fns[i] == function) return;
+      }
+
+   u_fns[u_fns_index++] = function;
 }
 
 void u_unatexit(vPF function)
@@ -1927,13 +1915,32 @@ void u_unatexit(vPF function)
 
    U_INTERNAL_ASSERT_POINTER(function)
 
-   for (i = fns_index - 1; i >= 0; --i)
+   for (i = u_fns_index - 1; i >= 0; --i)
       {
-      if (fns[i] == function)
+      if (u_fns[i] == function)
          {
-         fns[i] = 0;
+         u_fns[i] = 0;
 
          break;
+         }
+      }
+}
+
+void u_exit(void)
+{
+   int i;
+
+   U_INTERNAL_TRACE("u_exit()", 0)
+
+   U_INTERNAL_PRINT("u_fns_index = %d", u_fns_index)
+
+   for (i = u_fns_index - 1; i >= 0; --i)
+      {
+      if (u_fns[i])
+         {
+         U_INTERNAL_PRINT("u_fns[%d] = %p", i, u_fns[i])
+
+         u_fns[i]();
          }
       }
 }

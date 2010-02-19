@@ -206,7 +206,7 @@ protected:
    bool checkAuthMessage(UModNoCatPeer* peer);
    bool checkSignedData(const char* ptr, uint32_t len);
    void addPeerInfo(UModNoCatPeer* peer, time_t logout);
-   void setRedirectLocation(UModNoCatPeer* peer, const UString& url);
+   void setRedirectLocation(UModNoCatPeer* peer, const UString& redirect, const Url& auth);
 
    static UModNoCatPeer* getPeer(uint32_t i);
           UModNoCatPeer* creatNewPeer(const char* peer_ip);

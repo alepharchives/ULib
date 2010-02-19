@@ -506,7 +506,7 @@ loop:
 
       U_DUMP("status = %.*S", 512, status(ssl, pcNewConnection->ret, false, 0, 0))
 
-      if (USocket::req_timeout == 0 &&
+      if (USocket::isBlocking() == false &&
           (pcNewConnection->ret == SSL_ERROR_WANT_READ  ||
            pcNewConnection->ret == SSL_ERROR_WANT_WRITE ||
            pcNewConnection->ret == SSL_ERROR_WANT_ACCEPT)) goto loop;
@@ -544,12 +544,7 @@ USocket* USSLSocket::acceptClient(USocket* pcNewConnection)
 
    if (UTCPSocket::accept(pcNewConnection) && active)
       {
-      if (USocket::req_timeout)
-         {
-         U_INTERNAL_ASSERT_EQUALS(UTCPSocket::accept4_flags, 0)
-
-         (void) pcNewConnection->setTimeoutRCV(req_timeout * 1000);
-         }
+      if (USocket::isBlocking()) (void) pcNewConnection->setTimeoutRCV(req_timeout * 1000);
 
       (void) accept((USSLSocket*)pcNewConnection);
       }

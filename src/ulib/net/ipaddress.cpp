@@ -76,6 +76,34 @@
 #  endif
 #endif
 
+// gcc: call is unlikely and code size would grow
+
+void UIPAddress::setAddress(void* address, bool bIPv6)
+{
+   U_TRACE(1, "UIPAddress::setAddress(%p,%b)", address, bIPv6)
+
+   U_CHECK_MEMORY
+
+#ifdef HAVE_IPV6
+   if (bIPv6)
+      {
+      iAddressType   = AF_INET6;
+      iAddressLength = sizeof(in6_addr);
+      }
+   else
+#endif
+      {
+      iAddressType   = AF_INET;
+      iAddressLength = sizeof(in_addr);
+      }
+
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", pcAddress.p, address, iAddressLength);
+
+   bHostNameUnresolved = bStrAddressUnresolved = true;
+
+   U_INTERNAL_DUMP("addr = %u", getInAddr())
+}
+
 void UIPAddress::setLocalHost(bool bIPv6)
 {
    U_TRACE(0, "UIPAddress::setLocalHost(%b)", bIPv6)

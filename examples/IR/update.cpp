@@ -44,9 +44,9 @@ public:
 
       if (UApplication::isOptions())
          {
-         opt_file_to_add = (*opt)['a'];
-         opt_file_to_sub = (*opt)['s'];
-         opt_file_to_del = (*opt)['d'];
+         opt_file_to_add = opt['a'];
+         opt_file_to_sub = opt['s'];
+         opt_file_to_del = opt['d'];
          }
 
       if (IR::openCDB(true))

@@ -166,6 +166,22 @@ bool UFile::creat(const UString& path, int flags, mode_t mode)
    return creat(flags, mode);
 }
 
+bool UFile::creat(int flags, mode_t mode)
+{
+   U_TRACE(0, "UFile::creat(%d,%d)", flags, mode)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT_EQUALS(fd, -1)
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
+
+   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   fd = UFile::open(path_relativ, flags | O_CREAT, mode);
+
+   U_RETURN(fd != -1);
+}
+
 bool UFile::chdir(const char* path, bool flag_save)
 {
    U_TRACE(1, "UFile::chdir(%S,%b)", path, flag_save)
@@ -850,7 +866,7 @@ bool UFile::mkdirs(const char* path, mode_t mode)
 
       if (ptr)
          {
-         char buffer[PATH_MAX];
+         char buffer[U_PATH_MAX];
 
          uint32_t len = ptr - path;
 
@@ -922,7 +938,7 @@ bool UFile::rmdirs(const char* path, bool remove_all)
 
       if (ptr)
          {
-         char newpath[PATH_MAX];
+         char newpath[U_PATH_MAX];
 
          while (ptr > path && *ptr == '/') --ptr; /* Remove any trailing slashes from the result. */
 

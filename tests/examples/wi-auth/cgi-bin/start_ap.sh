@@ -4,8 +4,6 @@
 
 . ./.env
 
-set_ENV $0
-
 if [ "$REQUEST_METHOD" = "GET" -a $# -eq 1 ]; then
 
 	info_start_ap "$1"

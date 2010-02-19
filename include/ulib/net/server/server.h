@@ -16,14 +16,14 @@
 
 #include <ulib/log.h>
 #include <ulib/process.h>
+#include <ulib/notifier.h>
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/socket_ext.h>
 #include <ulib/net/server/client_image.h>
 
 #ifdef HAVE_LIBEVENT
+class TimeHandler;
 #  include <ulib/libevent/event.h>
-#else
-#  include <ulib/notifier.h>
 #endif
 
 #ifdef HAVE_MODULES
@@ -87,6 +87,7 @@ virtual void newClientImage() { (void) new client_class(); } }
 class UHTTP;
 class UCommand;
 class UFileConfig;
+class UTimeoutConnection;
 
 class U_EXPORT UServer_Base : public UEventFd {
 public:
@@ -245,6 +246,7 @@ public:
 
    static ULock* lock;
    static shared_data* ptr;
+   static bool block_on_accept;
    static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves
 
    static bool isPreForked()
@@ -278,6 +280,8 @@ public:
       U_INTERNAL_ASSERT_EQUALS(proc,0)
 
       proc = U_NEW(UProcess);
+
+      U_INTERNAL_ASSERT_POINTER(proc)
 
       proc->setProcessGroup();
       }
@@ -346,30 +350,9 @@ public:
    static UString getNetworkAddress(const char* device)       { return USocketExt::getNetworkAddress(socket->getFd(), device); }
    static UString getNetworkDevice( const char* exclude)      { return USocketExt::getNetworkDevice(exclude); }
 
-#ifndef HAVE_LIBEVENT
-   static UEventTime* ptime;
-#else
-   static UEvent<UServer_Base>* pevent;
-
+#ifdef HAVE_LIBEVENT
    void operator()(int fd, short event);
 #endif
-
-   // notify for request of connection...
-
-   static void notifyForEventRequestConnection()
-      {
-      U_TRACE(0, "UServer_Base::notifyForEventRequestConnection()")
-
-      U_INTERNAL_ASSERT_POINTER(pthis)
-
-#  ifndef HAVE_LIBEVENT
-      UNotifier::insert(pthis);
-#  else
-      pevent = U_NEW(UEvent<UServer_Base>(pthis->UEventFd::fd, EV_READ | EV_PERSIST, *pthis));
-
-      UDispatcher::add(*pevent);
-#  endif
-      }
 
    // DEBUG
 
@@ -400,11 +383,23 @@ protected:
    static UString* host;
    static UProcess* proc;
    static USocket* socket;
+   static UEventTime* ptime;
    static UString* htpasswd;
    static UString* htdigest;
    static UServer_Base* pthis;
    static UVector<UIPAllow*>* vallow_IP;
-   static bool flag_loop, flag_use_tcp_optimization, block_on_accept;
+   static bool flag_loop, flag_use_tcp_optimization;
+
+#ifdef HAVE_LIBEVENT
+// static SigHandler* pSigHandler;
+// static USignal<SigHandler>* psigterm;
+
+   static TimeHandler* pTimeHandler;
+   static UEvent<UServer_Base>* pevent;
+   static UTimerEv<TimeHandler>* ptimehandler;
+#endif
+
+   // COSTRUTTORI
 
             UServer_Base(UFileConfig* cfg);
    virtual ~UServer_Base();
@@ -412,8 +407,9 @@ protected:
    static const char* getNumConnection();
 
    static void handlerNewConnection();
+   static void handlerIdleConnection();
    static void handlerCloseConnection();
-   static bool handlerTimeoutConnection(void* value);
+   static bool handlerTimeoutConnection(void* cimg);
 
 #ifdef HAVE_MODULES
    static UVector<UServerPlugIn*>* vplugin;
@@ -449,7 +445,9 @@ protected:
 
 private:
    friend class UHTTP;
+   friend class TimeHandler;
    friend class UClientImage_Base;
+   friend class UTimeoutConnection;
 
    UServer_Base(const UServer_Base&) : UEventFd() {}
    UServer_Base& operator=(const UServer_Base&)   { return *this; }

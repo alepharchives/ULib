@@ -137,7 +137,7 @@ public:
 
       UString cfg_index;
 
-      if (UApplication::isOptions()) cfg_index = (*opt)['c'];
+      if (UApplication::isOptions()) cfg_index = opt['c'];
 
       // manage arg operation
 

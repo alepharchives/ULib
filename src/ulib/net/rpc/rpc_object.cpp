@@ -58,6 +58,24 @@ void URPCObject::str_allocate()
    if (UServer_Base::str_METHOD_NAME == 0) UServer_Base::str_allocate();
 }
 
+// gcc: call is unlikely and code size would grow
+
+void URPCObject::loadGenericMethod(UFileConfig* file_method)
+{
+   U_TRACE(0, "URPCObject::loadGenericMethod(%p)", file_method)
+
+   U_INTERNAL_ASSERT_EQUALS(dispatcher,0)
+   U_INTERNAL_ASSERT_EQUALS(URPCMethod::encoder,0)
+
+    URPCFault::str_allocate();
+   URPCMethod::str_allocate();
+
+   dispatcher          = U_NEW(URPCObject);
+   URPCMethod::encoder = U_NEW(URPCEncoder);
+
+   if (file_method) readGenericMethod(*file_method);
+}
+
 void URPCObject::readFileMethod(UFileConfig& file_method)
 {
    U_TRACE(0, "URPCObject::readFileMethod(%p)", &file_method)

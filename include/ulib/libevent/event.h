@@ -19,6 +19,8 @@
 
 #include <event.h>
 
+extern U_EXPORT struct event_base* u_ev_base;
+
 /*
  * libevent is a popular API that provides a mechanism to execute a callback
  * function when a specific event occurs on a file descriptor or after a
@@ -32,8 +34,7 @@
  * All events derive from this class, so it's useful for use in containers
  */
 
-class U_EXPORT UEvent_Base : public event
-{
+class U_EXPORT UEvent_Base : public event {
 public:
 
    // NB: l'oggetto puo' essere usato come (struct event) in quanto UMemoryError viene allocato dopo...
@@ -127,8 +128,7 @@ private:
 
 typedef void (*ccallback_type)(int, short, void*); // C function used as callback in the C API
 
-template <typename F> class U_EXPORT UEvent : public UEvent_Base
-{
+template <typename F> class U_EXPORT UEvent : public UEvent_Base {
 public:
 
    /**
@@ -178,8 +178,7 @@ private:
  * @see UEvent 
  */
 
-template <> class U_EXPORT UEvent<ccallback_type> : public UEvent_Base
-{
+template <> class U_EXPORT UEvent<ccallback_type> : public UEvent_Base {
 public:
 
    /**
@@ -230,8 +229,9 @@ private:
  * @see timer< ccallback_type >
  */
 
-template <typename F> class U_EXPORT UTimerEv : public UEvent<F>
-{
+template <typename F> class U_EXPORT UTimerEv : public UEvent<F> {
+public:
+
    /**
     * Creates a new timer event.
     *
@@ -271,8 +271,7 @@ private:
  * @see UTimerEv
  */
 
-template <> class U_EXPORT UTimerEv<ccallback_type> : public UEvent<ccallback_type>
-{
+template <> class U_EXPORT UTimerEv<ccallback_type> : public UEvent<ccallback_type> {
 public:
 
    /**
@@ -321,8 +320,7 @@ private:
  * @see signal< ccallback_type >
  */
 
-template <typename F> class U_EXPORT USignal : public UEvent<F>
-{
+template <typename F> class U_EXPORT USignal : public UEvent<F> {
 public:
 
    /**
@@ -373,8 +371,7 @@ private:
  * @see USignal
  */
 
-template <> class U_EXPORT USignal<ccallback_type> : public UEvent<ccallback_type>
-{
+template <> class U_EXPORT USignal<ccallback_type> : public UEvent<ccallback_type> {
 public:
 
    /**
@@ -430,8 +427,7 @@ typedef UTimerEv<ccallback_type> ctimer;  // Shortcut to C-style timer.
  * context.
  */
 
-template <typename O, typename M> class U_EXPORT UMemCb
-{
+template <typename O, typename M> class U_EXPORT UMemCb {
 public:
 
    /**
@@ -470,8 +466,7 @@ protected:
  * exiting the loop @endlink).
  */
 
-class U_EXPORT UDispatcher
-{
+class U_EXPORT UDispatcher {
 public:
 
    // Miscellaneous constants

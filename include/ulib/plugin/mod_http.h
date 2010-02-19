@@ -49,6 +49,7 @@ class U_EXPORT UHttpPlugIn : public UServerPlugIn {
 public:
 
    static UString* str_URI_PROTECTED_MASK;
+   static UString* str_URI_REQUEST_CERT_MASK;
    static UString* str_URI_PROTECTED_ALLOWED_IP;
 
    static void str_allocate();
@@ -93,7 +94,7 @@ public:
 protected:
    uint32_t index_alias;
    UVector<UString> valias;
-   UString alias, environment, uri_protected_mask, uri_protected_allowed_ip;
+   UString alias, environment, uri_protected_mask, uri_protected_allowed_ip, uri_request_cert_mask;
 
    static bool virtual_host;
    static UVector<UIPAllow*>* vallow_IP;

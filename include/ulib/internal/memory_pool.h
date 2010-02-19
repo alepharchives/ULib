@@ -23,14 +23,13 @@
 
 /* NO DEBUG (64 bit)
 -------------------------
-   1 sizeof(UApplication)
    1 sizeof(UMagic)
 
    8 sizeof(UCGI)
-   8 sizeof(UCertificate)
    8 sizeof(UCrl)
    8 sizeof(UPKCS10)
-   8 sizeof(UString) 
+   8 sizeof(UString) <==
+   8 sizeof(UCertificate)
 -------------------------
    U_STACK_TYPE_0
 
@@ -38,146 +37,127 @@
   16 sizeof(UDate)
 
   16 sizeof(ULock)
-  16 sizeof(UNotifier)
+  16 sizeof(UTimer)
   16 sizeof(UPKCS7)
-  16 sizeof(USemaphore)
   16 sizeof(UTimeVal)
-  16 sizeof(UVector<UString>)
+  16 sizeof(UNotifier)
+  16 sizeof(USemaphore)
   16 sizeof(UXMLParser)
+  16 sizeof(UVector<UString>)
 
+  24 sizeof(UStringRep) <==
   24 sizeof(USOAPObject)
-  24 sizeof(UStringRep)
 -------------------------
    U_STACK_TYPE_1
 
   32 sizeof(UCache)
-  32 sizeof(UHashMapNode)                                                      
   32 sizeof(ULDAPEntry)
   32 sizeof(UQueryNode)
   32 sizeof(USOAPFault)
-  32 sizeof(UTimer)
   32 sizeof(UTokenizer)
-  32 sizeof(UTree<UString>)
+  32 sizeof(UHashMapNode)                                                      
   32 sizeof(UXMLAttribute)
+  32 sizeof(UTree<UString>)
+  32 sizeof(UClientImage<UTCPSocket>) <==
 -------------------------
    U_STACK_TYPE_2
 
-  40 sizeof(UHashMap<UString>)
-  40 sizeof(ULDAP)
-  40 sizeof(USOAPGenericMethod)
   40 sizeof(Url)
--------------------------
-   U_STACK_TYPE_3
-
+  40 sizeof(ULDAP)
+  40 sizeof(UHashMap<UString>)
+  40 sizeof(USOAPGenericMethod)
   48 sizeof(UCURL)
   48 sizeof(UDialog)
   48 sizeof(UMimeHeader)
-  48 sizeof(UPlugIn<void*>)
   48 sizeof(UQueryParser)
   48 sizeof(USOAPEncoder)
   48 sizeof(UXMLElement)
-  56 sizeof(UMimeEntity)
   56 sizeof(UOptions)
-  64 sizeof(UClientImage<UTCPSocket>)
-  64 sizeof(USignature)
+  56 sizeof(UMimeEntity)
+  64 sizeof(UCommand)
+  64 sizeof(UApplication)
+  64 sizeof(UPlugIn<void*>)
+  80 sizeof(UZIP)
+  80 sizeof(UCommand)
+  80 sizeof(UMimePKCS7)
+  88 sizeof(UPCRE)
+  88 sizeof(UIPAddress) <==
+  88 sizeof(UMimeMultipartMsg)
+-------------------------
+   U_STACK_TYPE_3
+
+ 112 sizeof(UMimeMessage)
+ 112 sizeof(UServer<UTCPSocket>)
+ 120 sizeof(URDBServer)
+ 128 sizeof(USOAPParser)
 -------------------------
    U_STACK_TYPE_4
 
-  80 sizeof(UZIP)
-  80 sizeof(UCommand)
-  80 sizeof(UIPAddress)
-  80 sizeof(UMimePKCS7)
-  88 sizeof(UMimeMultipartMsg)
-  88 sizeof(UPCRE)
-  96 sizeof(UServer<UTCPSocket>)
+ 136 sizeof(UMimeMultipart)
+ 168 sizeof(URDBClient<UTCPSocket>)
+ 184 sizeof(ULog)
+ 184 sizeof(UFile)
+ 208 sizeof(USocket)
+ 208 sizeof(UTCPSocket)
+ 208 sizeof(UUDPSocket)
+ 216 sizeof(UBison)
+ 216 sizeof(UFlexer)
+ 232 sizeof(UHttpClient<UTCPSocket>)
+ 232 sizeof(USSLSocket)
+ 256 sizeof(UFileConfig)
 -------------------------
    U_STACK_TYPE_5
 
- 104 sizeof(URDBServer)
- 112 sizeof(UMimeMessage)
- 128 sizeof(USOAPParser)
+ 264 sizeof(USSHSocket)
+ 272 sizeof(USmtpClient)
+ 280 sizeof(USOAPClient<UTCPSocket>)
+ 296 sizeof(UCDB)
+ 448 sizeof(UFtpClient)
+ 448 sizeof(USSLFtpClient)
+ 512 sizeof(URDB)
 -------------------------
    U_STACK_TYPE_6
 
- 136 sizeof(UMimeMultipart)
- 168 sizeof(URDBClient<UTCPSocket>)
- 184 sizeof(UFile)
- 184 sizeof(ULog)
+ 1024
 -------------------------
    U_STACK_TYPE_7
 
- 192 sizeof(USocket)
- 192 sizeof(UTCPSocket)
- 192 sizeof(UUDPSocket)
+ 2048
 -------------------------
    U_STACK_TYPE_8
 
- 216 sizeof(UBison)
- 216 sizeof(UFlexer)
- 216 sizeof(UHttpClient<UTCPSocket>)
- 216 sizeof(USSLSocket)
- 256 sizeof(UFileConfig)
- 256 sizeof(USSHSocket)
- 256 sizeof(USmtpClient)
--------------------------
-   U_STACK_TYPE_9
-
- 264 sizeof(UCDB)
- 264 sizeof(USOAPClient<UTCPSocket>)
- 416 sizeof(UFtpClient)
- 416 sizeof(USSLFtpClient)
- 480 sizeof(URDB)
- 512
--------------------------
-   U_STACK_TYPE_10
-
- 1024
--------------------------
-   U_STACK_TYPE_11
-
- 2048
--------------------------
-   U_STACK_TYPE_12
-
  4096
 -------------------------
-   U_STACK_TYPE_13
+   U_STACK_TYPE_9
 */
 
 #define U_STACK_TYPE_0     8U
 #define U_STACK_TYPE_1    24U
 #define U_STACK_TYPE_2    32U
-#define U_STACK_TYPE_3    40U
-#define U_STACK_TYPE_4    64U
-#define U_STACK_TYPE_5    96U
-#define U_STACK_TYPE_6   128U
-#define U_STACK_TYPE_7   184U
-#define U_STACK_TYPE_8   192U
-#define U_STACK_TYPE_9   256U
-#define U_STACK_TYPE_10  512U
-#define U_STACK_TYPE_11 1024U
-#define U_STACK_TYPE_12 2048U
-#define U_STACK_TYPE_13 U_MAX_SIZE_PREALLOCATE
+#define U_STACK_TYPE_3    88U
+#define U_STACK_TYPE_4   128U
+#define U_STACK_TYPE_5   256U
+#define U_STACK_TYPE_6   512U
+#define U_STACK_TYPE_7  1024U
+#define U_STACK_TYPE_8  2048U
+#define U_STACK_TYPE_9  U_MAX_SIZE_PREALLOCATE
 
 // U_NUM_STACK_TYPE: numero 'tipi' stack per cui la richiesta viene gestita tramite preallocazione
 
-#define U_NUM_STACK_TYPE 14
+#define U_NUM_STACK_TYPE 10
 
 /* Implements a simple stack allocator */
 
-#define U_SIZE_TO_STACK_INDEX(sz)  ((sz) <= U_STACK_TYPE_0  ?  0 : \
-                                    (sz) <= U_STACK_TYPE_1  ?  1 : \
-                                    (sz) <= U_STACK_TYPE_2  ?  2 : \
-                                    (sz) <= U_STACK_TYPE_3  ?  3 : \
-                                    (sz) <= U_STACK_TYPE_4  ?  4 : \
-                                    (sz) <= U_STACK_TYPE_5  ?  5 : \
-                                    (sz) <= U_STACK_TYPE_6  ?  6 : \
-                                    (sz) <= U_STACK_TYPE_7  ?  7 : \
-                                    (sz) <= U_STACK_TYPE_8  ?  8 : \
-                                    (sz) <= U_STACK_TYPE_9  ?  9 : \
-                                    (sz) <= U_STACK_TYPE_10 ? 10 : \
-                                    (sz) <= U_STACK_TYPE_11 ? 11 : \
-                                    (sz) <= U_STACK_TYPE_12 ? 12 : 13)
+#define U_SIZE_TO_STACK_INDEX(sz)  ((sz) <= U_STACK_TYPE_0 ? 0 : \
+                                    (sz) <= U_STACK_TYPE_1 ? 1 : \
+                                    (sz) <= U_STACK_TYPE_2 ? 2 : \
+                                    (sz) <= U_STACK_TYPE_3 ? 3 : \
+                                    (sz) <= U_STACK_TYPE_4 ? 4 : \
+                                    (sz) <= U_STACK_TYPE_5 ? 5 : \
+                                    (sz) <= U_STACK_TYPE_6 ? 6 : \
+                                    (sz) <= U_STACK_TYPE_7 ? 7 : \
+                                    (sz) <= U_STACK_TYPE_8 ? 8 : \
+                                    (sz) <= U_STACK_TYPE_9 ? 9 : 10)
 
 #define U_SIZEOF_TO_STACK_INDEX(type) U_SIZE_TO_STACK_INDEX(sizeof(type))
 

@@ -59,6 +59,7 @@ DIR_CMD="../../examples/userver"
 
 # set -x
 
+#STRACE=$TRUSS
 start_prg_background userver_ssl -c tsa_https.cfg
 $SLEEP
 
@@ -79,6 +80,7 @@ $LCMD <TSA/request/http.req >TSA/response/response 2>>err/tsa_https.err
 
 tail -c +140 TSA/response/response > TSA/response/response.tsr
 
+$SLEEP
 kill_prg userver_ssl TERM
 
 mv err/userver_ssl.err err/tsa_https.err

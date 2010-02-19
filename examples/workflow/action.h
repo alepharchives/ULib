@@ -43,7 +43,7 @@ public:
 
       UString cfg_str;
 
-      if (UApplication::isOptions()) cfg_str = (*opt)['c'];
+      if (UApplication::isOptions()) cfg_str = opt['c'];
 
       // manage arg operation
 

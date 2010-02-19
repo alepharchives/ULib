@@ -45,9 +45,9 @@ public:
 
       if (UApplication::isOptions())
          {
-         cfg_str =  (*opt)['c'];
-         upload  =  (*opt)['u'];
-         include = ((*opt)['i'] == U_STRING_FROM_CONSTANT("1"));
+         cfg_str =  opt['c'];
+         upload  =  opt['u'];
+         include = (opt['i'] == U_STRING_FROM_CONSTANT("1"));
          }
 
       // manage arg operation

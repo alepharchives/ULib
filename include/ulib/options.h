@@ -52,7 +52,7 @@ public:
 
    // COSTRUTTORI
 
-   UOptions(uint32_t n = 10)
+   UOptions(uint32_t n)
       {
       U_TRACE_REGISTER_OBJECT(0, UOptions, "%u", n)
 
@@ -146,12 +146,16 @@ protected:
    option_item* item;
    uint32_t length, capacity;
 
-   void printHelp(struct option* long_options, vPF func);
+   static struct option long_options[128];
+
+   void printHelp(vPF func);
 
 private:
    UOptions(const UOptions&)            {}
    UOptions& operator=(const UOptions&) { return *this; }
 
+   friend class Application;
+   friend class UApplication;
    friend class UXApplicazione;
 };
 

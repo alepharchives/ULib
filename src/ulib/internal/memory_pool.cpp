@@ -29,11 +29,7 @@
                           U_STACK_TYPE_6  * U_NUM_ENTRY_MEM_BLOCK + \
                           U_STACK_TYPE_7  * U_NUM_ENTRY_MEM_BLOCK + \
                           U_STACK_TYPE_8  * U_NUM_ENTRY_MEM_BLOCK + \
-                          U_STACK_TYPE_9  * U_NUM_ENTRY_MEM_BLOCK + \
-                          U_STACK_TYPE_10 * U_NUM_ENTRY_MEM_BLOCK + \
-                          U_STACK_TYPE_11 * U_NUM_ENTRY_MEM_BLOCK + \
-                          U_STACK_TYPE_12 * U_NUM_ENTRY_MEM_BLOCK + \
-                          U_STACK_TYPE_13 * U_NUM_ENTRY_MEM_BLOCK)
+                          U_STACK_TYPE_9  * U_NUM_ENTRY_MEM_BLOCK)
 // --------------------------------------------------------------------------------------
 
 #ifdef DEBUG
@@ -47,12 +43,13 @@ uint32_t UMemoryPool::findStackIndex(uint32_t sz)
    U_INTERNAL_ASSERT_RANGE(1,sz,U_MAX_SIZE_PREALLOCATE)
 
    static const uint32_t stack_type[U_NUM_STACK_TYPE] =
-      { U_STACK_TYPE_0,  U_STACK_TYPE_1, U_STACK_TYPE_2, U_STACK_TYPE_3, U_STACK_TYPE_4,  U_STACK_TYPE_5,
-        U_STACK_TYPE_6,  U_STACK_TYPE_7, U_STACK_TYPE_8, U_STACK_TYPE_9, U_STACK_TYPE_10, U_STACK_TYPE_11,
-        U_STACK_TYPE_12, U_STACK_TYPE_13 };
+      { U_STACK_TYPE_0,  U_STACK_TYPE_1, U_STACK_TYPE_2,
+        U_STACK_TYPE_3,  U_STACK_TYPE_4, U_STACK_TYPE_5,
+        U_STACK_TYPE_6,  U_STACK_TYPE_7, U_STACK_TYPE_8,
+        U_STACK_TYPE_9 };
 
    uint32_t key;
-   int32_t probe, low = -1, high = U_NUM_STACK_TYPE;
+    int32_t probe, low = -1, high = U_NUM_STACK_TYPE;
 
    while ((high - low) > 1)
       {
@@ -83,35 +80,35 @@ void* UMemoryPool::_malloc_str(size_t sz, uint32_t& capacity)
       {
       int stack_index;
 
-      if (sz <= U_STACK_TYPE_6) // 128
+      if (sz <= U_STACK_TYPE_4) // 128
+         {
+         capacity    = U_STACK_TYPE_4;
+         stack_index = 4;
+         }
+      else if (sz <= U_STACK_TYPE_5) // 256
+         {
+         capacity    = U_STACK_TYPE_5;
+         stack_index = 5;
+         }
+      else if (sz <= U_STACK_TYPE_6) // 512
          {
          capacity    = U_STACK_TYPE_6;
          stack_index = 6;
          }
-      else if (sz <= U_STACK_TYPE_9) // 256
+      else if (sz <= U_STACK_TYPE_7) // 1024
+         {
+         capacity    = U_STACK_TYPE_7;
+         stack_index = 7;
+         }
+      else if (sz <= U_STACK_TYPE_8) // 2048
+         {
+         capacity    = U_STACK_TYPE_8;
+         stack_index = 8;
+         }
+      else // if (sz <= U_STACK_TYPE_9) // 4096
          {
          capacity    = U_STACK_TYPE_9;
          stack_index = 9;
-         }
-      else if (sz <= U_STACK_TYPE_10) // 512
-         {
-         capacity    = U_STACK_TYPE_10;
-         stack_index = 10;
-         }
-      else if (sz <= U_STACK_TYPE_11) // 1024
-         {
-         capacity    = U_STACK_TYPE_11;
-         stack_index = 11;
-         }
-      else if (sz <= U_STACK_TYPE_12) // 2048
-         {
-         capacity    = U_STACK_TYPE_12;
-         stack_index = 12;
-         }
-      else // if (sz <= U_STACK_TYPE_13) // 4096
-         {
-         capacity    = U_STACK_TYPE_13;
-         stack_index = 13;
          }
 
       U_INTERNAL_DUMP("capacity = %u", capacity)
@@ -136,12 +133,12 @@ void UMemoryPool::_free_str(void* ptr, size_t sz)
 
       switch (sz)
          {
-         case U_STACK_TYPE_6:  stack_index =  6; break; //  128
-         case U_STACK_TYPE_9:  stack_index =  9; break; //  256
-         case U_STACK_TYPE_10: stack_index = 10; break; //  512
-         case U_STACK_TYPE_11: stack_index = 11; break; // 1024
-         case U_STACK_TYPE_12: stack_index = 12; break; // 2048
-         default:              stack_index = 13; break; // 4096
+         case U_STACK_TYPE_4: stack_index = 4; break; //  128
+         case U_STACK_TYPE_5: stack_index = 5; break; //  256
+         case U_STACK_TYPE_6: stack_index = 6; break; //  512
+         case U_STACK_TYPE_7: stack_index = 7; break; // 1024
+         case U_STACK_TYPE_8: stack_index = 8; break; // 2048
+         default:             stack_index = 9; break; // 4096
          }
 
       U_INTERNAL_DUMP("stack_index = %u", stack_index)
@@ -162,21 +159,21 @@ typedef struct ustackmemorypool {
 } ustackmemorypool;
 
 /*
-           --   --        --   --   --        --   --   --
-  10      |xx| |  |  --  |  | |  | |  |      |  | |  | |  | -> space
-   9      |xx| |  | |xx| |xx| |  | |xx|  --  |  | |xx| |  |
-   8  --  |xx| |  | |xx| |xx| |xx| |xx| |  | |xx| |xx| |  |
-   7 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| -> len
-   6 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
-   5 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
-   4 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
-   3 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
-   2 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
-   1 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
-      --   --   --   --   --   --   --   --   --   --   -- 
-        4    8   16   32   64  128  256  512 1024 2048 4096 -> type
-        0    1    2    3    4    5    6    7    8    9   10 -> index
-                                 5    6    7    8    9   10 -> index_stack_mem_block
+           --   --        --   --   --        --   -- 
+  10      |xx| |  |  --  |  | |  | |  |      |  | |  | -> space
+   9      |xx| |  | |xx| |xx| |  | |xx|  --  |  | |xx|
+   8  --  |xx| |  | |xx| |xx| |xx| |xx| |  | |xx| |xx|
+   7 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| -> len
+   6 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
+   5 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
+   4 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
+   3 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
+   2 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
+   1 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
+      --   --   --   --   --   --   --   --   --   -- 
+        8   24   32   88  128  256  512 1024 2048 4096 -> type
+        0    1    2    3    4    5    6    7    8    9 -> index
+        0    1    2    3    4    5    6    7    8    9 -> index_stack_mem_block
 */
 
 class U_NO_EXPORT UStackMemoryPool {
@@ -377,7 +374,7 @@ public:
          }
 
       printf("       --   --   --   --   --   --   --   --   --   --\n"
-             "         8   16   32   64  128  256  512 1024 2048 4096\n");
+             "         8   24   32   88  128  256  512 1024 2048 4096\n");
       }
 
 #endif
@@ -605,68 +602,6 @@ void* UStackMemoryPool::mem_pointer_block[U_NUM_STACK_TYPE * U_NUM_ENTRY_MEM_BLO
                              U_STACK_TYPE_7 * U_NUM_ENTRY_MEM_BLOCK + \
                              U_STACK_TYPE_8 * U_NUM_ENTRY_MEM_BLOCK)
 #include "./memory_pool.dat"
-#undef  U_TYPE
-#define U_TYPE U_STACK_TYPE_10
-#undef  U_SPACE
-#define U_SPACE (mem_block + U_STACK_TYPE_0 * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_1 * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_2 * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_3 * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_4 * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_5 * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_6 * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_7 * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_8 * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_9 * U_NUM_ENTRY_MEM_BLOCK)
-#include "./memory_pool.dat"
-#undef  U_TYPE
-#define U_TYPE U_STACK_TYPE_11
-#undef  U_SPACE
-#define U_SPACE (mem_block + U_STACK_TYPE_0  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_1  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_2  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_3  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_4  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_5  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_6  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_7  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_8  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_9  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_10 * U_NUM_ENTRY_MEM_BLOCK)
-#include "./memory_pool.dat"
-#undef  U_TYPE
-#define U_TYPE U_STACK_TYPE_12
-#undef  U_SPACE
-#define U_SPACE (mem_block + U_STACK_TYPE_0  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_1  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_2  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_3  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_4  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_5  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_6  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_7  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_8  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_9  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_10 * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_11 * U_NUM_ENTRY_MEM_BLOCK)
-#include "./memory_pool.dat"
-#undef  U_TYPE
-#define U_TYPE U_STACK_TYPE_13
-#undef  U_SPACE
-#define U_SPACE (mem_block + U_STACK_TYPE_0  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_1  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_2  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_3  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_4  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_5  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_6  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_7  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_8  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_9  * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_10 * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_11 * U_NUM_ENTRY_MEM_BLOCK + \
-                             U_STACK_TYPE_12 * U_NUM_ENTRY_MEM_BLOCK)
-#include "./memory_pool.dat"
 };
 
 // struttura e classe che encapsula lo stack dinamico di puntatori a blocchi preallocati per un 'type' dimensione definito
@@ -743,29 +678,5 @@ ustackmemorypool UStackMemoryPool::mem_stack[U_NUM_STACK_TYPE] = { {
 #endif
    mem_pointer_block + 9 * U_NUM_ENTRY_MEM_BLOCK * 2,
    U_STACK_TYPE_9, U_NUM_ENTRY_MEM_BLOCK, U_NUM_ENTRY_MEM_BLOCK * 2,
-   9, U_INDEX_STACK_MEM_BLOCK(U_STACK_TYPE_9) }, {
-#ifdef DEBUG
-   &mem_stack[10],
-#endif
-   mem_pointer_block + 10 * U_NUM_ENTRY_MEM_BLOCK * 2,
-   U_STACK_TYPE_10, U_NUM_ENTRY_MEM_BLOCK, U_NUM_ENTRY_MEM_BLOCK * 2,
-   10, U_INDEX_STACK_MEM_BLOCK(U_STACK_TYPE_10) }, {
-#ifdef DEBUG
-   &mem_stack[11],
-#endif
-   mem_pointer_block + 11 * U_NUM_ENTRY_MEM_BLOCK * 2,
-   U_STACK_TYPE_11, U_NUM_ENTRY_MEM_BLOCK, U_NUM_ENTRY_MEM_BLOCK * 2,
-   11, U_INDEX_STACK_MEM_BLOCK(U_STACK_TYPE_11) }, {
-#ifdef DEBUG
-   &mem_stack[12],
-#endif
-   mem_pointer_block + 12 * U_NUM_ENTRY_MEM_BLOCK * 2,
-   U_STACK_TYPE_12, U_NUM_ENTRY_MEM_BLOCK, U_NUM_ENTRY_MEM_BLOCK * 2,
-   12, U_INDEX_STACK_MEM_BLOCK(U_STACK_TYPE_12) }, {
-#ifdef DEBUG
-   &mem_stack[13],
-#endif
-   mem_pointer_block + 13 * U_NUM_ENTRY_MEM_BLOCK * 2,
-   U_STACK_TYPE_13, U_NUM_ENTRY_MEM_BLOCK, U_NUM_ENTRY_MEM_BLOCK * 2,
-   13, U_INDEX_STACK_MEM_BLOCK(U_STACK_TYPE_13) }
+   9, U_INDEX_STACK_MEM_BLOCK(U_STACK_TYPE_9) }
 };

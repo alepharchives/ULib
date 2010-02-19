@@ -13,6 +13,8 @@ $WINELOADER ./crypto_des3$SUFFIX   -d password > out/engine.out
 
 # openssl des3 -in inp/engine.inp -out out/engine.out -pass pass:password -e
 
+# ./crypto_base64 -d < tmp/ticket | ./crypto_des3 -d 200912281747
+
 RESULT=$?
 export RESULT
 

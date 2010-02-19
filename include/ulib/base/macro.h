@@ -116,6 +116,7 @@
 #define U_STREQ(a,b)  (strcmp( (const char*)(a),b) == 0)
 #define U_STRNEQ(a,b) (U_STRNCMP(a,b)              == 0)
 
+#define U_MEMCPY(a,b) memcpy((      char*)(a),b,U_CONSTANT_SIZE(b))
 #define U_MEMCMP(a,b) memcmp((const char*)(a),b,U_CONSTANT_SIZE(b))
 
 /* Note that IS_ABSOLUTE_PATH accepts d:foo as well, although it is only semi-absolute. This is because the users of IS_ABSOLUTE_PATH
@@ -151,8 +152,8 @@
 #  define O_BINARY 0 /* unix is binary by default */
 #endif
 
-#ifndef   PATH_MAX
-#  define PATH_MAX 1024U
+#ifndef   U_PATH_MAX
+#  define U_PATH_MAX 1024U
 #endif
 
 #ifndef   MAX_FILENAME_LEN

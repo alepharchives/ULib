@@ -400,7 +400,7 @@ public:
       // option b (box)
 
        gds = new UString;
-      *gds = (*opt)['b'];
+      *gds = pthis->opt['b'];
 
       if (gds->empty()) U_ERROR("parameter box is mandatory...", 0);
 

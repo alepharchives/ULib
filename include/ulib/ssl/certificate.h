@@ -19,6 +19,7 @@
 
 #include <openssl/x509.h>
 
+template <class T> class UVector;
 template <class T> class UHashMap;
 
 /**
@@ -93,7 +94,9 @@ public:
       U_RETURN(x509 != 0);
       }
 
-   bool isSelfSigned() const;
+   bool isSelfSigned() const { return isIssued(*this); }
+
+   bool isSameIssuerAndSubject() const;
 
    void set(X509* px509)
       {
@@ -391,10 +394,29 @@ public:
    * Returns bool value to indicate the correctness of this certificate
    */
 
+   bool verify(EVP_PKEY* publicKey) const
+      {
+      U_TRACE(0, "UCertificate::verify(%p)", publicKey)
+
+      U_INTERNAL_ASSERT_POINTER(x509)
+
+      if (U_SYSCALL(X509_verify, "%p,%p", x509, publicKey) <= 0) U_RETURN(false);
+
+      U_RETURN(true);
+      }
+
    static X509_STORE_CTX* csc;
 
-   bool verify(EVP_PKEY* publicKey) const;
    bool verify(STACK_OF(X509)* chain = 0, time_t certsVerificationTime = 0) const;
+
+   /**
+    * Retrieves the signer's certificates from this certificate,
+    * it does check their validity and whether any signatures are valid.
+    */
+
+   static bool verify_result;
+
+   unsigned getSignerCertificates(UVector<UCertificate*>& vec, STACK_OF(X509)* chain, time_t certsVerificationTime) const;
 
    /**
    * Returns either the DER or PEM or BASE64 encoding of the certificate depending on the value of format
@@ -467,6 +489,10 @@ public:
 
 protected:
    X509* x509;
+
+   static UVector<UCertificate*>* vcert;
+
+   static int verifyCallback(int ok, X509_STORE_CTX* ctx);
 
 private:
    UCertificate(const UCertificate&)            {}

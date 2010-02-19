@@ -1,6 +1,7 @@
 // test_event.cpp
 
 #include <ulib/file.h>
+#include <ulib/notifier.h>
 #include <ulib/libevent/event.h>
 
 #include <map>
@@ -190,7 +191,7 @@ typedef void (cb_t)(int, short);
 
 static UEvent<cb_t>* evw;
 
-void write_cb(int fd, short event)
+static void write_cb(int fd, short event)
 {
    U_TRACE(5, "write_cb(%d,%hd)", fd, event)
 
@@ -241,7 +242,7 @@ static void check_test_weof()
 
 static ctimer* evt[NEVENT];
 
-void time_cb(int fd, short event, void *arg)
+static void time_cb(int fd, short event, void *arg)
 {
    U_TRACE(5, "time_cb(%d,%hd,%p)", fd,  event, arg)
 
@@ -291,6 +292,8 @@ U_EXPORT main (int argc, char* argv[])
    U_ULIB_INIT(argv);
 
    U_TRACE(5,"main(%d)", argc)
+
+   UNotifier::init();
 
    check_mixed_way();
    check_prio_test();

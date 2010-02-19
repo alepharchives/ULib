@@ -671,10 +671,10 @@ public:
          {
          UString tmp = U_STRING_FROM_CONSTANT("1");
 
-         inner_p7 = ((*opt)['p'] == tmp);
-         treeview = ((*opt)['X'] == tmp);
-         htmlview = ((*opt)['H'] == tmp);
-         tmp      =  (*opt)['e'];
+         inner_p7 = (opt['p'] == tmp);
+         treeview = (opt['X'] == tmp);
+         htmlview = (opt['H'] == tmp);
+         tmp      =  opt['e'];
 
          if (tmp.empty() == false) extract = U_NEW(UString(tmp));
          }

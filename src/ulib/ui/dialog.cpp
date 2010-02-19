@@ -28,14 +28,14 @@ void UDialog::initialize()
 
    U_INTERNAL_ASSERT_EQUALS(path_dialog,0)
 
-   static char path[PATH_MAX];
+   static char path[U_PATH_MAX];
 
    if ((xdialog = true,  u_pathfind(path, 0, 0, "Xdialog", R_OK | X_OK)) ||
        (xdialog = false, u_pathfind(path, 0, 0,  "dialog", R_OK | X_OK)))
       {
       path_dialog = path;
 
-      U_INTERNAL_ASSERT_MINOR(strlen(path_dialog),PATH_MAX)
+      U_INTERNAL_ASSERT_MINOR(strlen(path_dialog),U_PATH_MAX)
       }
 }
 

@@ -2,7 +2,8 @@
 
 #include <ulib/file_config.h>
 #include <ulib/xml/libxml2/schema.h>
-#include <ulib/xml/libxml2/context.h>
+
+#include "context.h"
 
 #ifdef HAVE_SSL_TS
 #  include <ulib/ssl/timestamp.h>
@@ -61,7 +62,7 @@ public:
 
       if (UApplication::isOptions())
          {
-         cfg_str = (*opt)['c'];
+         cfg_str = opt['c'];
          }
 
       // manage file configuration

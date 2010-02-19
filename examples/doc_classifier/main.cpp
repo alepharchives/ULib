@@ -26,8 +26,8 @@ public:
 
       UApplication::run(argc, argv, env);
 
-      UString str_time   = (*opt)['t'],
-              str_CApath = (*opt)['c'];
+      UString str_time   = opt['t'],
+              str_CApath = opt['c'];
 
       if (str_time.empty() == false)
          {

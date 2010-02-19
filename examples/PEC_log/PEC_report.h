@@ -108,6 +108,7 @@ public:
    static vPF end_func;
    static vPF start_func;
    static vPF change_file;
+   static UApplication* pthis;
 
    static char cnt[2];
    static uint64_t bytes;
@@ -177,6 +178,8 @@ public:
    PEC_report()
       {
       U_TRACE(5, "PEC_report::PEC_report()")
+
+      pthis = this;
       }
 
    ~PEC_report();

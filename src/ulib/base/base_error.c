@@ -858,7 +858,7 @@ void u_execOnExit(void)
       // value: /utility/stack_dump.sh
       // -------------------------------------------------------------------------
 
-      char command[PATH_MAX];
+      char command[U_PATH_MAX];
 
       (void) u_snprintf(command, 256, "%s %s %P %N", cmd_on_exit, u_progpath);
 

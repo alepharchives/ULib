@@ -95,21 +95,7 @@ public:
 
    static URPCObject* dispatcher;
 
-   static void loadGenericMethod(UFileConfig* file_method)
-      {
-      U_TRACE(0, "URPCObject::loadGenericMethod(%p)", file_method)
-
-      U_INTERNAL_ASSERT_EQUALS(dispatcher,0)
-      U_INTERNAL_ASSERT_EQUALS(URPCMethod::encoder,0)
-
-       URPCFault::str_allocate();
-      URPCMethod::str_allocate();
-
-      dispatcher          = U_NEW(URPCObject);
-      URPCMethod::encoder = U_NEW(URPCEncoder);
-
-      if (file_method) readGenericMethod(*file_method);
-      }
+   static void loadGenericMethod(UFileConfig* file_method);
 
    // SERVICES
 

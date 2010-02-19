@@ -1,12 +1,7 @@
 <map id="G" name="G">
-<area shape="rect" id="node1" href="$classUEventFd.html" title="UEventFd" alt="" coords="7,81,81,109"/>
-<area shape="rect" id="node3" href="$classUClientImage__Base.html" title="UClientImage_Base" alt="" coords="132,55,260,83"/>
-<area shape="rect" id="node13" href="$classUServer__Base.html" title="UServer_Base" alt="" coords="147,106,245,134"/>
-<area shape="rect" id="node5" href="$classUClientImage.html" title="Handles accepted connections from UServer&#39;s client." alt="" coords="327,5,481,33"/>
-<area shape="rect" id="node9" href="$classUClientImage.html" title="UClientImage\&lt; UTCPSocket \&gt;" alt="" coords="309,55,499,83"/>
-<area shape="rect" id="node7" href="$classUSkeletonClientImage.html" title="Handles accepted connections from UServer client." alt="" coords="548,5,748,33"/>
-<area shape="rect" id="node11" href="$classURDBClientImage.html" title="Handles accepted TCP/IP connections from URDBServer." alt="" coords="587,55,709,83"/>
-<area shape="rect" id="node15" href="$classUServer.html" title="Handles incoming connections." alt="" coords="343,106,465,134"/>
-<area shape="rect" id="node17" href="$classUServer.html" title="UServer\&lt; UTCPSocket \&gt;" alt="" coords="325,157,483,185"/>
-<area shape="rect" id="node19" href="$classURDBServer.html" title="Handles incoming TCP/IP connections from URDBClient." alt="" coords="601,157,695,185"/>
+<area shape="rect" id="node1" href="$classUFile.html" title="UFile" alt="" coords="7,55,57,83"/>
+<area shape="rect" id="node3" href="$classUCDB.html" title="UCDB is a fast, reliable, simple class for creating and reading constant databases..." alt="" coords="123,5,181,33"/>
+<area shape="rect" id="node7" href="$classUFileConfig.html" title="UFileConfig" alt="" coords="108,55,196,83"/>
+<area shape="rect" id="node9" href="$classULog.html" title="ULog" alt="" coords="127,106,177,134"/>
+<area shape="rect" id="node5" href="$classURDB.html" title="URDB is a fast, Reliable, simple class for creating and reading DataBases." alt="" coords="245,5,304,33"/>
 </map>

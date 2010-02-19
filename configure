@@ -1677,7 +1677,7 @@ Optional Features:
   --enable-zip            enable build of ZIP support - require option --with-zlib [default=no]
   --enable-coverage       enable coverage [default=no]
   --enable-final          build size optimized apps (experimental - needs lots of memory) [default=no]
-  --enable-new-ldflags    enable the new linker flags (enable-new-dtags and as-needed) [default=no]
+  --enable-new-ldflags    enable the new linker flags (enable-new-dtags,as-needed,...) [default=yes]
   --enable-overload-new-delete  enable use of our versions of the C++ memory operators [default=no]
 
 Optional Packages:
@@ -21794,7 +21794,7 @@ if test "${enable_new_ldflags+set}" = set; then :
 fi
 
 	if test -z "$enable_new_ldflags" ; then
-		enable_new_ldflags="no"
+		enable_new_ldflags="yes"
 	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${enable_new_ldflags}" >&5
 $as_echo "${enable_new_ldflags}" >&6; }
@@ -24418,8 +24418,8 @@ $as_echo "#define CLOSEDIR_VOID 1" >>confdefs.h
 fi
 
 # Check for functions in one big call, to reduce the size of configure
-for ac_func in accept4 daemon fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem mremap \
-					 pread sendfile64 strndup mkdtemp strptime strtof strtoull strtold gmtime_r timegm strerror strsignal
+for ac_func in accept4 daemon epoll_create1 epoll_wait fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem \
+					 mremap pread sendfile64 strndup mkdtemp strptime strtof strtoull strtold gmtime_r timegm strerror strsignal
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_cxx_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -25012,7 +25012,7 @@ fi
 	# Also to turn various gcc/glibc-specific preprocessor checks
 	MAYBE_FLAGS="$MAYBE_FLAGS -finline -flto \
 		-findirect-inlining -ftree-switch-conversion -floop-interchange -floop-strip-mine -floop-block \
-		-Wstrict-aliasing=2 -Wp,-D_FORTIFY_SOURCE=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op \
+		-Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op \
 		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wno-format -Wno-format-extra-args"
 
 	case "${gcc_version_raw}" in
@@ -25039,7 +25039,7 @@ fi
 #  -Wno-missing-field-initializers -Wno-attributes -Wno-long-long
 
 	if test "$enable_debug" = "yes"; then
-		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations"
+		MAYBE_FLAGS="$MAYBE_FLAGS -Wp,-D_FORTIFY_SOURCE=2 -Wunsafe-loop-optimizations"
 		if test "$HAVE_SSL" = "yes"; then
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-parameter"
 		fi
@@ -25226,7 +25226,7 @@ if test "$with_gnu_ld" = "yes"; then
 		*)
 		LDFLAGS="${LDFLAGS} -Wl,-z,now"
 		if test "$enable_new_ldflags" = "yes"; then
-			LDFLAGS="${LDFLAGS} -Wl,--enable-new-dtags -Wl,--as-needed"
+			LDFLAGS="${LDFLAGS} -Wl,-z,now,--as-needed,--enable-new-dtags,-O1,--hash-style=gnu,--sort-common"
 		fi
 		;;
 	esac

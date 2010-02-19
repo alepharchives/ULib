@@ -122,6 +122,8 @@ public:
 
       server = new UServerExample(&config_file);
 
+      UServer_Base::block_on_accept = true;
+
       server->go();
       }
 

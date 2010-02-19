@@ -311,7 +311,7 @@ uint32_t UCDB::makeFinish(bool reset)
          uint32_t index;
       } cdb_tmp;
 
-      cdb_tmp*  tmp = new cdb_tmp[nrecord];
+      cdb_tmp*  tmp = U_MALLOC_N(nrecord, cdb_tmp);
       cdb_tmp* ptmp = tmp;
 
       cdb_hash_table_slot* pslot;
@@ -355,9 +355,9 @@ uint32_t UCDB::makeFinish(bool reset)
          pos += hp[i].slots * sizeof(cdb_hash_table_slot);
 
          /*
-#     ifdef DEBUG
+   #     ifdef DEBUG
          if (hp[i].slots) U_INTERNAL_DUMP("hp[%3d] = { %u, %u }", i, hp[i].pos, hp[i].slots)
-#     endif
+   #     endif
          */
 
          U_INTERNAL_ASSERT(pos <= (uint32_t)st_size)
@@ -402,7 +402,7 @@ uint32_t UCDB::makeFinish(bool reset)
          */
          }
 
-      delete[] tmp;
+      U_FREE_N(tmp, nrecord, cdb_tmp);
 
       U_ASSERT_EQUALS(invariant(),true)
       }

@@ -59,9 +59,9 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 
 	AC_MSG_CHECKING(for use of the new linker flags)
 	AC_ARG_ENABLE(new-ldflags,
-				[  --enable-new-ldflags    enable the new linker flags (enable-new-dtags and as-needed) [[default=no]]])
+				[  --enable-new-ldflags    enable the new linker flags (enable-new-dtags,as-needed,...) [[default=yes]]])
 	if test -z "$enable_new_ldflags" ; then
-		enable_new_ldflags="no"
+		enable_new_ldflags="yes"
 	fi
 	AC_MSG_RESULT([${enable_new_ldflags}])
 

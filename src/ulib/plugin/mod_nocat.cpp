@@ -417,21 +417,21 @@ void UNoCatPlugIn::permit(UModNoCatPeer* peer, time_t timeout)
       }
 }
 
-void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& url)
+void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& redirect, const Url& auth)
 {
-   U_TRACE(0, "UNoCatPlugIn::setRedirectLocation(%p,%.*S)", peer, U_STRING_TO_TRACE(url))
+   U_TRACE(0, "UNoCatPlugIn::setRedirectLocation(%p,%.*S,%.*S)", peer, U_STRING_TO_TRACE(redirect), U_URL_TO_TRACE(auth))
 
    UString value_encoded(U_CAPACITY);
 
    Url::encode(peer->mac, value_encoded);
 
-   location.snprintf("%.*s?mac=%.*s&ip=", U_URL_TO_TRACE(auth_service_url), U_STRING_TO_TRACE(value_encoded));
+   location.snprintf("%.*s?mac=%.*s&ip=", U_URL_TO_TRACE(auth), U_STRING_TO_TRACE(value_encoded));
 
    Url::encode(peer->ip, value_encoded);
 
    location.snprintf_add("%.*s&redirect=", U_STRING_TO_TRACE(value_encoded));
 
-   Url::encode(url, value_encoded);
+   Url::encode(redirect, value_encoded);
 
    location.snprintf_add("%.*s&gateway=", U_STRING_TO_TRACE(value_encoded));
 
@@ -450,7 +450,7 @@ void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& url)
       // ---------------------------------------------------------------------------------------------------------------------
 
       time_t expire = u_now.tv_sec + (30 * 60);
-      peer->token   = UServices::generateToken(peer->ip, expire);
+      peer->token   = UServices::generateToken(peer->mac, expire);
       }
 
    Url::encode(peer->token, value_encoded);
@@ -497,7 +497,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
    bool result = true;
    UHashMap<UString> args;
    UVector<UString> name_value;
-   UString token, action, peer_ip;
+   UString token, action, peer_mac;
 
    args.allocate();
 
@@ -517,17 +517,17 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    // check crypto token (valid for 30 minutes)...
 
-   token   = args[*str_Token];
-   peer_ip = UServices::getTokenData(token.data());
+   token    = args[*str_Token];
+   peer_mac = UServices::getTokenData(token.data());
 
-   U_INTERNAL_DUMP("token   = %.*S", U_STRING_TO_TRACE(token))
-   U_INTERNAL_DUMP("peer    = %.*S", U_STRING_TO_TRACE(peer->token))
-   U_INTERNAL_DUMP("peer_ip = %.*S", U_STRING_TO_TRACE(peer_ip))
+   U_INTERNAL_DUMP("token    = %.*S", U_STRING_TO_TRACE(token))
+   U_INTERNAL_DUMP("peer     = %.*S", U_STRING_TO_TRACE(peer->token))
+   U_INTERNAL_DUMP("peer_mac = %.*S", U_STRING_TO_TRACE(peer_mac))
 
    if (peer->token != token ||
-       peer->ip    != peer_ip)
+       peer->mac   != peer_mac)
       {
-      U_SRV_LOG_VAR("Tampered token from peer %.*s", U_STRING_TO_TRACE(peer_ip));
+      U_SRV_LOG_VAR("Tampered token from peer %.*s: MAC %.*s", U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer_mac));
 
       goto error;
       }
@@ -536,7 +536,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    if (peer->mac != args[*str_Mac])
       {
-      U_SRV_LOG_VAR("Different MAC %.*S in ticket from peer %.*s", U_STRING_TO_TRACE(peer->mac), U_STRING_TO_TRACE(peer_ip));
+      U_SRV_LOG_VAR("Different MAC %.*S in ticket from peer %.*s", U_STRING_TO_TRACE(peer->mac), U_STRING_TO_TRACE(peer->ip));
 
       goto error;
       }
@@ -549,7 +549,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
    else if (action == *str_Deny)     deny(peer, false, false);
    else
       {
-      U_SRV_LOG_VAR("Can't make sense of action %.*S in ticket from peer %.*s", U_STRING_TO_TRACE(action), U_STRING_TO_TRACE(peer_ip));
+      U_SRV_LOG_VAR("Can't make sense of action %.*S in ticket from peer %.*s", U_STRING_TO_TRACE(action), U_STRING_TO_TRACE(peer->ip));
 
       goto error;
       }
@@ -560,7 +560,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    if (destination.getQuery(name_value) == 0)
       {
-      U_SRV_LOG_VAR("Can't make sense of Redirect %.*S in ticket from peer %.*s", U_URL_TO_TRACE(destination), U_STRING_TO_TRACE(peer_ip));
+      U_SRV_LOG_VAR("Can't make sense of Redirect %.*S in ticket from peer %.*s", U_URL_TO_TRACE(destination), U_STRING_TO_TRACE(peer->ip));
 
       goto error;
       }
@@ -569,7 +569,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    if (destination.setQuery(name_value) == false)
       {
-      U_SRV_LOG_VAR("Error on setting Redirect in ticket from peer %.*s", U_STRING_TO_TRACE(peer_ip));
+      U_SRV_LOG_VAR("Error on setting Redirect in ticket from peer %.*s", U_STRING_TO_TRACE(peer->ip));
 
       goto error;
       }
@@ -902,20 +902,18 @@ const char* UNoCatPlugIn::getIPAddress(const char* ptr, uint32_t len)
    U_TRACE(0, "UNoCatPlugIn::getIPAddress(%.*S,%u)", len, ptr, len)
 
    char c;
+   uint32_t i;
 
-   for (uint32_t i = 0; i < len; ++i)
+   for (i = 0; i < len; ++i)
       {
       c = ptr[i];
 
-      if (u_isdigit(c) == 0 && c != '.' && c != ':')
-         {
-         pcStrAddress[i] = '\0';
-
-         break;
-         }
+      if (u_isdigit(c) == 0 && c != '.' && c != ':') break;
 
       pcStrAddress[i] = c;
       }
+
+   pcStrAddress[i] = '\0';
 
    U_RETURN(pcStrAddress);
 }
@@ -1263,6 +1261,7 @@ int UNoCatPlugIn::handlerRequest()
       }
 
    UModNoCatPeer* peer = 0;
+   Url url = auth_service_url;
    UString host(U_HTTP_HOST_TO_PARAM), buffer(U_CAPACITY);
    const char* peer_ip = UClientImage_Base::getRemoteInfo(0);
 
@@ -1336,7 +1335,7 @@ int UNoCatPlugIn::handlerRequest()
             {
             U_SRV_LOG_MSG("Tampered request of logout user");
 
-            goto set_location;
+            goto set_redirection_url;
             }
 
          uint32_t len    = output.size() - 3; // 3 => "ip=..."
@@ -1401,7 +1400,7 @@ int UNoCatPlugIn::handlerRequest()
             {
             U_SRV_LOG_VAR("Invalid ticket from peer %s", peer_ip);
 
-            goto set_location;
+            goto set_redirection_url;
             }
 
          if (UServer_Base::isLog())
@@ -1418,7 +1417,7 @@ int UNoCatPlugIn::handlerRequest()
             {
             U_SRV_LOG_VAR("Tampered ticket from peer %s", peer_ip);
 
-            goto set_location;
+            goto set_redirection_url;
             }
 
          U_INTERNAL_DUMP("mode = %.*S", U_STRING_TO_TRACE(mode))
@@ -1432,23 +1431,32 @@ int UNoCatPlugIn::handlerRequest()
          {
          (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
 
-         goto set_redirect;
+         goto set_redirect_to_AUTH;
+         }
+
+      if (U_HTTP_URI_STREQ("/cpe"))
+         {
+         (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
+
+         url.setPath(U_CONSTANT_TO_PARAM("/cpe"));
+
+         goto set_redirect_to_AUTH;
          }
 
       U_SRV_LOG_VAR("Missing ticket from peer %s", peer_ip);
       }
 
-set_location: // set location to AUTH
+set_redirection_url:
 
    buffer.snprintf("http://%.*s%.*s", U_STRING_TO_TRACE(host), U_HTTP_URI_TO_TRACE);
 
-set_redirect: // set redirect to location
+set_redirect_to_AUTH:
 
    if (peer == 0) peer = creatNewPeer(peer_ip);
 
-   setRedirectLocation(peer, buffer);
+   setRedirectLocation(peer, buffer, url);
 
-redirect: // redirect to location
+redirect: // redirect to AUTH
 
    *UClientImage_Base::wbuffer = UHTTP::getHTTPRedirectResponse(UString::getStringNull(), U_STRING_TO_PARAM(location));
 

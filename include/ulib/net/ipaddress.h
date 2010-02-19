@@ -145,31 +145,7 @@ public:
    // structure of the form in_addr or in6_addr. This pointer is cast to (void*).
    // A boolean value is used to indicate if this points to an IPv6 or IPv4 address.
 
-   void setAddress(void* address, bool bIPv6 = false)
-      {
-      U_TRACE(1, "UIPAddress::setAddress(%p,%b)", address, bIPv6)
-
-      U_CHECK_MEMORY
-
-#  ifdef HAVE_IPV6
-      if (bIPv6)
-         {
-         iAddressType   = AF_INET6;
-         iAddressLength = sizeof(in6_addr);
-         }
-      else
-#  endif
-         {
-         iAddressType   = AF_INET;
-         iAddressLength = sizeof(in_addr);
-         }
-
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", pcAddress.p, address, iAddressLength);
-
-      bHostNameUnresolved = bStrAddressUnresolved = true;
-
-      U_INTERNAL_DUMP("addr = %u", getInAddr())
-      }
+   void setAddress(void* address, bool bIPv6 = false);
 
 protected:
 

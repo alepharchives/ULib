@@ -11,7 +11,6 @@
 //
 // ============================================================================
  
-#include <ulib/internal/common.h>
 #include <ulib/utility/interrupt.h>
 
 #ifdef DEBUG
@@ -31,11 +30,6 @@
 #ifdef HAVE_LIBXML2
 #  include <libxml/parser.h>
 #  include <libxml/xmlversion.h>
-#endif
-
-#ifdef HAVE_LIBEVENT
-#  include <event.h>
-struct event_base* u_ev_base;
 #endif
 
 void ULib_init()
@@ -62,12 +56,6 @@ void ULib_init()
 
 #ifdef HAVE_MAGIC
    (void) UMagic::init();
-#endif
-
-#ifdef HAVE_LIBEVENT
-   u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
-
-   U_INTERNAL_ASSERT_POINTER(u_ev_base)
 #endif
 
 #ifdef __MINGW32__

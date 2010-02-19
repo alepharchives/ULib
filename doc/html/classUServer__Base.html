@@ -121,8 +121,6 @@ static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="m
 static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>getNetworkAddress</b> (const char *device)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afa65af7e0268043396d5a830a54034b8"></a><!-- doxytag: member="UServer_Base::getNetworkDevice" ref="afa65af7e0268043396d5a830a54034b8" args="(const char *exclude)" -->
 static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>getNetworkDevice</b> (const char *exclude)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1b9bc7f16185763e8109928b231bdfce"></a><!-- doxytag: member="UServer_Base::notifyForEventRequestConnection" ref="a1b9bc7f16185763e8109928b231bdfce" args="()" -->
-static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>notifyForEventRequestConnection</b> ()</td></tr>
 <tr><td colspan="2"><h2>Public Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a602d5695344b00733166d537bbe41207"></a><!-- doxytag: member="UServer_Base::document_root" ref="a602d5695344b00733166d537bbe41207" args="" -->
 <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>document_root</b></td></tr>
@@ -209,12 +207,12 @@ static char&nbsp;</td><td class="memItemRight" valign="bottom"><b>mod_name</b> [
 static <a class="el" href="classULock.html">ULock</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>lock</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4b72a5e5d2b3a7a0849f67daaf0918df"></a><!-- doxytag: member="UServer_Base::ptr" ref="a4b72a5e5d2b3a7a0849f67daaf0918df" args="" -->
 static <a class="el" href="structUServer__Base_1_1shared__data.html">shared_data</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>ptr</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aabf75c881990c5ddfcaa2b5c7c5cae19"></a><!-- doxytag: member="UServer_Base::block_on_accept" ref="aabf75c881990c5ddfcaa2b5c7c5cae19" args="" -->
+static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>block_on_accept</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5e764755cd4dae16598a6d9235911945"></a><!-- doxytag: member="UServer_Base::preforked_num_kids" ref="a5e764755cd4dae16598a6d9235911945" args="" -->
 static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>preforked_num_kids</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae91c7a6175bcf2cdd285266d72f171e9"></a><!-- doxytag: member="UServer_Base::log" ref="ae91c7a6175bcf2cdd285266d72f171e9" args="" -->
 static <a class="el" href="classULog.html">ULog</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>log</b></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aea0ed245d9737a57031897423be66240"></a><!-- doxytag: member="UServer_Base::ptime" ref="aea0ed245d9737a57031897423be66240" args="" -->
-static <a class="el" href="classUEventTime.html">UEventTime</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>ptime</b></td></tr>
 <tr><td colspan="2"><h2>Protected Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8b690b2dfd83cb858f09559839152dd6"></a><!-- doxytag: member="UServer_Base::UServer_Base" ref="a8b690b2dfd83cb858f09559839152dd6" args="(UFileConfig *cfg)" -->
 &nbsp;</td><td class="memItemRight" valign="bottom"><b>UServer_Base</b> (<a class="el" href="classUFileConfig.html">UFileConfig</a> *cfg)</td></tr>
@@ -229,10 +227,12 @@ virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><b>newClientImag
 static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getNumConnection</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3868610f993913f4e67b1d15006f7212"></a><!-- doxytag: member="UServer_Base::handlerNewConnection" ref="a3868610f993913f4e67b1d15006f7212" args="()" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerNewConnection</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ace592c12d6b903aca868a8ed76f21977"></a><!-- doxytag: member="UServer_Base::handlerIdleConnection" ref="ace592c12d6b903aca868a8ed76f21977" args="()" -->
+static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerIdleConnection</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afed1ad4733dc868d56d663ab73a5ae14"></a><!-- doxytag: member="UServer_Base::handlerCloseConnection" ref="afed1ad4733dc868d56d663ab73a5ae14" args="()" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerCloseConnection</b> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8a221b7a71a1e4f3d023bd8a99c9e198"></a><!-- doxytag: member="UServer_Base::handlerTimeoutConnection" ref="a8a221b7a71a1e4f3d023bd8a99c9e198" args="(void *value)" -->
-static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerTimeoutConnection</b> (void *value)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a347c90d40ffd58a1e11ad71a18ac0732"></a><!-- doxytag: member="UServer_Base::handlerTimeoutConnection" ref="a347c90d40ffd58a1e11ad71a18ac0732" args="(void *cimg)" -->
+static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerTimeoutConnection</b> (void *cimg)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a81ef7931106b6b99e2023c484914186d"></a><!-- doxytag: member="UServer_Base::plugins_handlerInit" ref="a81ef7931106b6b99e2023c484914186d" args="()" -->
 static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>plugins_handlerInit</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a55583658c1a4b3c9a15fb4c9a80fe56f"></a><!-- doxytag: member="UServer_Base::plugins_handlerRead" ref="a55583658c1a4b3c9a15fb4c9a80fe56f" args="()" -->
@@ -287,6 +287,8 @@ static <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class=
 static <a class="el" href="classUProcess.html">UProcess</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>proc</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a966538b9ec53f93bce1d85beaa106d97"></a><!-- doxytag: member="UServer_Base::socket" ref="a966538b9ec53f93bce1d85beaa106d97" args="" -->
 static <a class="el" href="classUSocket.html">USocket</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>socket</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aea0ed245d9737a57031897423be66240"></a><!-- doxytag: member="UServer_Base::ptime" ref="aea0ed245d9737a57031897423be66240" args="" -->
+static <a class="el" href="classUEventTime.html">UEventTime</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>ptime</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2e0e84944d52d0430d8fc73f923413ad"></a><!-- doxytag: member="UServer_Base::htpasswd" ref="a2e0e84944d52d0430d8fc73f923413ad" args="" -->
 static <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>htpasswd</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aace273c69f43c761c4e34742088ad174"></a><!-- doxytag: member="UServer_Base::htdigest" ref="aace273c69f43c761c4e34742088ad174" args="" -->
@@ -299,15 +301,17 @@ static UVector&lt; <a class="el" href="classUIPAllow.html">UIPAllow</a> * &gt; *
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>flag_loop</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3422bacb68825ea63cdcaeb96dbeec48"></a><!-- doxytag: member="UServer_Base::flag_use_tcp_optimization" ref="a3422bacb68825ea63cdcaeb96dbeec48" args="" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>flag_use_tcp_optimization</b></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aabf75c881990c5ddfcaa2b5c7c5cae19"></a><!-- doxytag: member="UServer_Base::block_on_accept" ref="aabf75c881990c5ddfcaa2b5c7c5cae19" args="" -->
-static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>block_on_accept</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a054b80c7428fd9f39632bb6577277522"></a><!-- doxytag: member="UServer_Base::vplugin" ref="a054b80c7428fd9f39632bb6577277522" args="" -->
 static UVector&lt; <a class="el" href="classUServerPlugIn.html">UServerPlugIn</a> * &gt; *&nbsp;</td><td class="memItemRight" valign="bottom"><b>vplugin</b></td></tr>
 <tr><td colspan="2"><h2>Friends</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afc8f8ec13025462fd85066a7ced375b1"></a><!-- doxytag: member="UServer_Base::UHTTP" ref="afc8f8ec13025462fd85066a7ced375b1" args="" -->
 class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUServer__Base.html#afc8f8ec13025462fd85066a7ced375b1">UHTTP</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a30ebe68f154718c628366fbd82bd71c5"></a><!-- doxytag: member="UServer_Base::TimeHandler" ref="a30ebe68f154718c628366fbd82bd71c5" args="" -->
+class&nbsp;</td><td class="memItemRight" valign="bottom"><b>TimeHandler</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a519b46131851a8bbd5008ac562f037a8"></a><!-- doxytag: member="UServer_Base::UClientImage_Base" ref="a519b46131851a8bbd5008ac562f037a8" args="" -->
 class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUServer__Base.html#a519b46131851a8bbd5008ac562f037a8">UClientImage_Base</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acf9302ba5395fd06f286f5f8d4ba0fe2"></a><!-- doxytag: member="UServer_Base::UTimeoutConnection" ref="acf9302ba5395fd06f286f5f8d4ba0fe2" args="" -->
+class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUServer__Base.html#acf9302ba5395fd06f286f5f8d4ba0fe2">UTimeoutConnection</a></td></tr>
 </table>
 <hr/><h2>Member Function Documentation</h2>
 <a class="anchor" id="a0e0182a4d0ca7cc2bb38b89083179fb8"></a><!-- doxytag: member="UServer_Base::run" ref="a0e0182a4d0ca7cc2bb38b89083179fb8" args="()" -->
@@ -335,7 +339,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/net/server/server.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Mon Feb 8 17:39:31 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Feb 19 12:37:32 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

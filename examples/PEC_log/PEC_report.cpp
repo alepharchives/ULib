@@ -8,6 +8,7 @@ vPF                PEC_report::parse;
 vPF                PEC_report::end_func;
 vPF                PEC_report::start_func;
 vPF                PEC_report::change_file;
+UApplication*      PEC_report::pthis;
 
 time_t             PEC_report::nseconds;
 uint64_t           PEC_report::bytes;
@@ -1194,18 +1195,18 @@ void PEC_report::manageOptions()
    title     = new UString;
    directory = new UString;
 
-   *directory  = (*opt)['d'];
-   cfg_config  = (*opt)['c'];
-   cfg_suffix  = (*opt)['e'];
-   cfg_from    = (*opt)['f'];
-   cfg_to      = (*opt)['t'];
+   *directory  = opt['d'];
+   cfg_config  = opt['c'];
+   cfg_suffix  = opt['e'];
+   cfg_from    = opt['f'];
+   cfg_to      = opt['t'];
 
    if (checklink == false)
       {
-      *title = (*opt)['T'];
-      cfg_id = (*opt)['i'];
+      *title = opt['T'];
+      cfg_id = opt['i'];
 
-      if (rejected == false) cfg_domain = (*opt)['n'];
+      if (rejected == false) cfg_domain = opt['n'];
       }
 
    if (cfg_config.empty() == false)
@@ -1247,7 +1248,7 @@ void PEC_report::manageOptions()
 
    if (directory->empty()) U_ERROR("parameter directory is mandatory...", 0);
 
-   optimization = ((*opt)['o'] == U_STRING_FROM_CONSTANT("1"));
+   optimization = (opt['o'] == U_STRING_FROM_CONSTANT("1"));
 
    if (checklink == false)
       {

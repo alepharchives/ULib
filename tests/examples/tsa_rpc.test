@@ -38,6 +38,7 @@ rm -f TSA/response/rpc*
 $LCMD <TSA/request/rpc.req.b64 >TSA/response/rpc.res 2>>err/tsa_rpc.err
 tail -c +13 TSA/response/rpc.res > TSA/response/rpc.tsr
 
+$SLEEP
 kill_prg userver_ssl TERM
 
 mv err/userver_ssl.err err/tsa_rpc.err

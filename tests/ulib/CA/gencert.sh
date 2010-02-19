@@ -17,7 +17,7 @@ openssl_req="openssl req -config openssl.cnf -days 4000"
 $openssl_req -x509 -newkey rsa:1024 -keyout private/cakey.pem -out cacert.pem
 
 # Generate server key/cert
-$openssl_req -new -nodes -keyout server.key -out server.csr
+$openssl_req -newkey rsa:1024 -keyout server.key -out server.csr
 
 # Generate user key/cert
 $openssl_req -newkey rsa:1024 -keyout username.key -out username.csr

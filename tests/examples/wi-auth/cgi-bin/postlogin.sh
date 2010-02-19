@@ -4,8 +4,6 @@
 
 . ./.env
 
-set_ENV $0
-
 if [ "$REQUEST_METHOD" = "GET" ]; then
 
 	if [ $# -eq 8 ]; then

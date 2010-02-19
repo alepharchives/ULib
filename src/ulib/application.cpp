@@ -19,22 +19,13 @@
 #  include <libxml/xmlmemory.h>
 #endif
 
-int       UApplication::exit_value;
-UString*  UApplication::str;
-UOptions* UApplication::opt;
-uint32_t  UApplication::num_args;
+int      UApplication::exit_value;
+bool     UApplication::is_options;
+uint32_t UApplication::num_args;
 
 UApplication::~UApplication()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UApplication)
-
-   if (opt)
-      {
-      delete opt;
-             opt = 0;
-      delete str;
-             str = 0;
-      }
 
 #ifdef HAVE_SSL
    if (UServices::CApath) delete UServices::CApath;
@@ -43,6 +34,14 @@ UApplication::~UApplication()
 #ifdef HAVE_LIBXML2 // Shutdown libxml
    U_SYSCALL_VOID_NO_PARAM(xmlCleanupParser);
    U_SYSCALL_VOID_NO_PARAM(xmlMemoryDump);
+#endif
+
+#ifdef DEBUG
+   // AT EXIT
+
+   U_INTERNAL_DUMP("u_fns_index = %d", u_fns_index)
+
+   for (uint32_t i = 0; i < u_fns_index; ++i) { U_INTERNAL_DUMP("u_fns[%2u] = %p", i, u_fns[i]) }
 #endif
 }
 
@@ -53,10 +52,11 @@ UApplication::~UApplication()
 
 const char* UApplication::dump(bool reset) const
 {
-   *UObjectIO::os << "num_args                       " << num_args   << '\n'
-                  << "exit_value                     " << exit_value << '\n'
-                  << "str (UString                   " << (void*)str << ")\n"
-                  << "opt (UOptions                  " << (void*)opt << ')';
+   *UObjectIO::os << "num_args                       " << num_args    << '\n'
+                  << "exit_value                     " << exit_value  << '\n'
+                  << "is_options                     " << is_options  << '\n'
+                  << "str (UString                   " << (void*)&str << ")\n"
+                  << "opt (UOptions                  " << (void*)&opt << ')';
 
    if (reset)
       {

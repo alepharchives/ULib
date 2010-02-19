@@ -74,7 +74,7 @@ public:
       char* argv_exec[128];
       const char* exit_status;
       uint32_t exit_status_len;
-      char path[PATH_MAX + 1];
+      char path[U_PATH_MAX + 1];
       int status, exit_value, n;
 
       UString id_key      = U_STRING_FROM_CONSTANT("ID"), id,
@@ -229,7 +229,7 @@ public:
 
       flag_log = false;
 
-      UString log_file = (*opt)['l'];
+      UString log_file = opt['l'];
 
       if (log_file.empty() == false && ulog.open(log_file))
          {

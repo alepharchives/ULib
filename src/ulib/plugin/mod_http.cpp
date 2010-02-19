@@ -23,6 +23,7 @@ U_CREAT_FUNC(UHttpPlugIn)
 
 bool                 UHttpPlugIn::virtual_host;
 UString*             UHttpPlugIn::str_URI_PROTECTED_MASK;
+UString*             UHttpPlugIn::str_URI_REQUEST_CERT_MASK;
 UString*             UHttpPlugIn::str_URI_PROTECTED_ALLOWED_IP;
 UVector<UIPAllow*>*  UHttpPlugIn::vallow_IP;
 
@@ -31,15 +32,18 @@ void UHttpPlugIn::str_allocate()
    U_TRACE(0, "UHttpPlugIn::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_URI_PROTECTED_MASK,0)
+   U_INTERNAL_ASSERT_EQUALS(str_URI_REQUEST_CERT_MASK,0)
    U_INTERNAL_ASSERT_EQUALS(str_URI_PROTECTED_ALLOWED_IP,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("URI_PROTECTED_MASK") },
+      { U_STRINGREP_FROM_CONSTANT("URI_REQUEST_CERT_MASK") },
       { U_STRINGREP_FROM_CONSTANT("URI_PROTECTED_ALLOWED_IP") }
    };
 
    U_NEW_ULIB_OBJECT(str_URI_PROTECTED_MASK,       U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP, U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_URI_REQUEST_CERT_MASK,    U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP, U_STRING_FROM_STRINGREP_STORAGE(2));
 }
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -71,7 +75,7 @@ UString* UHttpPlugIn::getCGIEnvironment()
       {
       U_ASSERT(UStringExt::endsWith(alias, valias[index_alias+1]))
 
-      environment.snprintf_add("REQUEST_URI=%.*s", U_STRING_TO_TRACE(valias[index_alias]));
+      environment.snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(valias[index_alias]));
       }
 
    UString* result = (environment.empty() ? 0 : &environment);
@@ -94,6 +98,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    //
    // URI_PROTECTED_MASK            mask (DOS regexp) of URI protected from prying eyes
    // URI_PROTECTED_ALLOWED_IP      list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
+   //
+   // URI_REQUEST_CERT_MASK         mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
    // ------------------------------------------------------------------------------------------------------------------------------------------------
 
    (void) cfg.loadVector(valias);
@@ -105,6 +111,10 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       uri_protected_mask                  = cfg[*str_URI_PROTECTED_MASK];
       uri_protected_allowed_ip            = cfg[*str_URI_PROTECTED_ALLOWED_IP];
+
+#  ifdef HAVE_SSL
+      uri_request_cert_mask               = cfg[*str_URI_REQUEST_CERT_MASK];
+#  endif
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -165,6 +175,8 @@ int UHttpPlugIn::handlerRead()
 {
    U_TRACE(0, "UHttpPlugIn::handlerRead()")
 
+   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
+
    bool is_http_req = UHTTP::readHTTPRequest();
 
    // check if close connection... (read() == 0)
@@ -174,6 +186,7 @@ int UHttpPlugIn::handlerRead()
 
    if (UServer_Base::isLog()) UClientImage_Base::logRequest();
 
+   bool esito;
    uint32_t n, host_end;
    const char* content_type = 0;
    int nResponseCode = HTTP_NOT_IMPLEMENTED;
@@ -282,6 +295,39 @@ int UHttpPlugIn::handlerRead()
             goto send_response;
             }
          }
+
+#  ifdef HAVE_SSL
+      if (uri_request_cert_mask.empty() == false &&
+          u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(uri_request_cert_mask), 0))
+         {
+         U_ASSERT(UClientImage_Base::socket->isSSL())
+
+         esito = false;
+
+         // NB: OpenSSL already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...
+
+         if (((USSLSocket*)UClientImage_Base::socket)->getPeerCertificate() == 0)
+            {
+            U_SRV_LOG_MSG_WITH_ADDR("ask for a client certificate to");
+
+            if (((USSLSocket*)UClientImage_Base::socket)->askForClientCertificate())
+               {
+               esito = true;
+
+               ((UClientImage<USSLSocket>*)UClientImage_Base::pClientImage)->logCertificate();
+               }
+            }
+
+         if (esito == false)
+            {
+            U_SRV_LOG_VAR("URI_REQUEST_CERT: request '%.*s' denied by mandatory certificate from client", U_HTTP_URI_TO_TRACE);
+
+            UHTTP::setHTTPForbidden();
+
+            goto send_response;
+            }
+         }
+#  endif
 
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }

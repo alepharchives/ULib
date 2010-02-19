@@ -31,7 +31,7 @@ void UPlugIn<void*>::_create(const char* n, uint32_t len)
    name     = strndup(n, len);
    name_len = len;
 
-   char libname[PATH_MAX];
+   char libname[U_PATH_MAX];
    (void) sprintf(libname, "%s/%.*s" U_EXT, U_PATH_CONV(plugin_dir), len, n);
 
    creator = (pvPF) (UDynamic::load(libname) ? operator[]("u_creat") : 0);

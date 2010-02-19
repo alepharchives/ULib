@@ -4,8 +4,6 @@
 
 . ./.env
 
-set_ENV $0
-
 if [ "$REQUEST_METHOD" = "GET" ]; then
 
 	if [ "$REQUEST_URI" = "/logout" ]; then

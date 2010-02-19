@@ -187,6 +187,8 @@ bool UClient_Base::setUrl(const UString& location)
 
    // Check we've been passed a absolute URL
 
+   if (Url::str_http == 0) Url::str_allocate();
+
    if (location.find(*Url::str_http) == U_NOT_FOUND)
       {
       char* p;

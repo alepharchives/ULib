@@ -90,7 +90,6 @@
 
 #ifdef HAVE_SSL
 #  include "ssl/certificate.cpp"
-#  include "ssl/signature.cpp"
 #  include "ssl/pkcs7.cpp"
 #  include "ssl/crl.cpp"
 #  include "ssl/pkcs10.cpp"
@@ -121,11 +120,8 @@
 
 #ifdef HAVE_LIBXML2
 #  include "xml/libxml2/node.cpp"
-#  include "xml/libxml2/xpath.cpp"
 #  include "xml/libxml2/schema.cpp"
-#  include "xml/libxml2/context.cpp"
 #  include "xml/libxml2/document.cpp"
-#  include "xml/libxml2/transform.cpp"
 #endif
 
 #ifdef HAVE_LDAP

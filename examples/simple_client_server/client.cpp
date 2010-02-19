@@ -128,7 +128,7 @@ public:
 
       // manage port number
 
-      UString port = (*opt)['p'];
+      UString port = opt['p'];
 
       if (pcClientSocket->connectServer(address, port.empty() ? 10001 : port.strtol()) == false)
          {
@@ -140,7 +140,7 @@ public:
       ulog = new ULog;
 
       flag_log = false;
-      UString log_file = (*opt)['l'];
+      UString log_file = opt['l'];
 
       if (log_file.empty() == false &&
           ulog->open(log_file))
@@ -154,7 +154,7 @@ public:
          {
          // manage max string length for log request and response
 
-         UString maxlength = (*opt)['m'];
+         UString maxlength = opt['m'];
 
          if (maxlength.empty() == false) u_printf_string_max_length = maxlength.strtol();
          }

@@ -71,7 +71,8 @@ PROGRAMS = $(noinst_PROGRAMS)
 am_sign_OBJECTS = sign.$(OBJEXT)
 sign_OBJECTS = $(am_sign_OBJECTS)
 sign_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
-am_verify_OBJECTS = verify.$(OBJEXT)
+am_verify_OBJECTS = context.$(OBJEXT) transform.$(OBJEXT) \
+	xpath.$(OBJEXT) verify.$(OBJEXT)
 verify_OBJECTS = $(am_verify_OBJECTS)
 verify_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
@@ -340,7 +341,7 @@ sign_LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la
 sign_SOURCES = sign.cpp
 sign_LDFLAGS = $(PRG_LDFLAGS)
 verify_LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la
-verify_SOURCES = verify.cpp
+verify_SOURCES = context.cpp transform.cpp xpath.cpp verify.cpp
 verify_LDFLAGS = $(PRG_LDFLAGS)
 all: all-am
 
@@ -395,8 +396,11 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/context.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sign.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/transform.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/verify.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xpath.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \

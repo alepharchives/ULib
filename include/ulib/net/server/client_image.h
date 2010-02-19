@@ -44,6 +44,7 @@
 
 class UHTTP;
 class UServer_Base;
+class UTimeoutConnection;
 
 class U_EXPORT UClientImage_Base : public UEventFd {
 public:
@@ -141,7 +142,6 @@ public:
 #ifdef HAVE_LIBEVENT
    UEvent<UClientImage_Base>* pevent;
 
-   void delEvent();
    void operator()(int fd, short event);
 #endif
 
@@ -223,6 +223,7 @@ private:
 
    friend class UHTTP;
    friend class UServer_Base;
+   friend class UTimeoutConnection;
 };
 
 template <class Socket> class U_EXPORT UClientImage : public UClientImage_Base {

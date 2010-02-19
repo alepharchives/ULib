@@ -12,7 +12,6 @@
 // ============================================================================
 
 #include <ulib/ssl/pkcs10.h>
-#include <ulib/ssl/signature.h>
 #include <ulib/utility/base64.h>
 #include <ulib/utility/string_ext.h>
 
@@ -92,27 +91,6 @@ UString UPKCS10::getSignable(X509_REQ* request)
    signable.size_adjust(len);
 
    U_RETURN_STRING(signable);
-}
-
-bool UPKCS10::verify(EVP_PKEY* publicKey) const
-{
-   U_TRACE(0, "UPKCS10::verify(%p)", publicKey)
-
-   const char* alg = getSignatureAlgorithm().c_str();
-
-   USignature sig(alg);
-
-   sig.initVerify(publicKey);
-
-   UString signable = getSignable();
-
-   sig.update(signable);
-
-   UString signature = getSignature();
-
-   bool result = sig.verify(signature);
-
-   U_RETURN(result);
 }
 
 UString UPKCS10::getEncoded(const char* format) const

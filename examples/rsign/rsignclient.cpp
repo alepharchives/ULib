@@ -108,8 +108,8 @@ public:
 
       if (UApplication::isOptions())
          {
-         cfg_str = (*opt)['c'];
-         cfg_key = (*opt)['k'];
+         cfg_str = opt['c'];
+         cfg_key = opt['k'];
          }
 
       // manage file configuration

@@ -23,7 +23,7 @@ SERVER_KEY="CA/server.key"
 SERVER_CERT="CA/server.crt"
 #fi
 
-LCMD="$OPENSSL s_server -quiet -accept 4333 -no_dhe -cert $SERVER_CERT -key $SERVER_KEY"
+LCMD="$OPENSSL s_server -quiet -accept 4333 -no_dhe -cert $SERVER_CERT -key $SERVER_KEY -pass pass:caciucco"
 
 start_cmd_background "$LCMD <inp/http/response.chunked >out/request.https"
 $SLEEP

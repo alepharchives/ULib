@@ -4,9 +4,7 @@
 
 . ./.env
 
-set_ENV $0
-
-if [ "$REQUEST_METHOD" = "GET" ]; then
+if [ "$REQUEST_METHOD" = "GET" -a "$REQUEST_URI" = "/" -a $# -eq 7 ]; then
 
 	user_welcome "$@"
 

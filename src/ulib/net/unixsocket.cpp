@@ -129,7 +129,7 @@ loop:
       {
       pcNewConnection->iState = CONNECT;
 
-      if (USocket::req_timeout) (void) pcNewConnection->setTimeoutRCV(USocket::req_timeout * 1000);
+      if (USocket::isBlocking()) (void) pcNewConnection->setTimeoutRCV(USocket::req_timeout * 1000);
       }
    else
       {

@@ -86,7 +86,7 @@
 <a name="l00076"></a>00076                 {
 <a name="l00077"></a>00077                 U_INTERNAL_TRACE(<span class="stringliteral">&quot;UObjectDumpable_Adapter::UObjectDumpable_Adapter(%u,%s,%p)&quot;</span>, level, name_class, <span class="keywordtype">object</span>)
 <a name="l00078"></a>00078 
-<a name="l00079"></a>00079                 UObjectDumpable::size_object = <span class="keyword">sizeof</span>(Concrete) - <span class="keyword">sizeof</span>(<span class="keywordtype">void</span>*); <span class="comment">// - U_MEMORY_TEST...</span>
+<a name="l00079"></a>00079                 UObjectDumpable::size_object = (<span class="keyword">sizeof</span>(Concrete) &gt; <span class="keyword">sizeof</span>(<span class="keywordtype">void</span>*) ? <span class="keyword">sizeof</span>(Concrete) - <span class="keyword">sizeof</span>(<span class="keywordtype">void</span>*) : 1); <span class="comment">// - U_MEMORY_TEST...</span>
 <a name="l00080"></a>00080 
 <a name="l00081"></a>00081                 U_INTERNAL_PRINT(<span class="stringliteral">&quot;this = %p&quot;</span>, <span class="keyword">this</span>)
 <a name="l00082"></a>00082                 }
@@ -142,7 +142,7 @@
 <a name="l00137"></a>00137 
 <a name="l00138"></a>00138 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Mon Feb 8 17:39:26 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Feb 19 12:37:27 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

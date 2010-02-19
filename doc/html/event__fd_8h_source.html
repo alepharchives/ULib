@@ -41,34 +41,37 @@
 <a name="l00018"></a>00018 <span class="preprocessor"></span><span class="preprocessor">#define U_NOTIFIER_DELETE -1</span>
 <a name="l00019"></a>00019 <span class="preprocessor"></span><span class="preprocessor">#define U_NOTIFIER_UPDATE -2</span>
 <a name="l00020"></a>00020 <span class="preprocessor"></span>
-<a name="l00021"></a><a class="code" href="classUEventFd.html">00021</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUEventFd.html">UEventFd</a> {
-<a name="l00022"></a>00022 <span class="keyword">public</span>:
-<a name="l00023"></a>00023 
-<a name="l00024"></a>00024         <span class="comment">// Check for memory error</span>
-<a name="l00025"></a>00025         U_MEMORY_TEST
+<a name="l00021"></a>00021 <span class="preprocessor">#define U_READ_IN               0x001 // NB: same as EPOLLIN</span>
+<a name="l00022"></a>00022 <span class="preprocessor"></span><span class="preprocessor">#define U_WRITE_OUT     0x004 // NB: same as EPOLLOUT</span>
+<a name="l00023"></a>00023 <span class="preprocessor"></span>
+<a name="l00024"></a><a class="code" href="classUEventFd.html">00024</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUEventFd.html">UEventFd</a> {
+<a name="l00025"></a>00025 <span class="keyword">public</span>:
 <a name="l00026"></a>00026 
-<a name="l00027"></a>00027         <span class="comment">// Allocator e Deallocator</span>
-<a name="l00028"></a>00028         U_MEMORY_ALLOCATOR
-<a name="l00029"></a>00029         U_MEMORY_DEALLOCATOR
-<a name="l00030"></a>00030 
-<a name="l00031"></a>00031         <span class="keywordtype">int</span> fd, op_mask; <span class="comment">// R_OK, W_OK -- NB: W_OK == 2, R_OK == 4...</span>
-<a name="l00032"></a>00032 
-<a name="l00033"></a>00033                                 <a class="code" href="classUEventFd.html">UEventFd</a>() {}
-<a name="l00034"></a>00034         <span class="keyword">virtual</span> ~<a class="code" href="classUEventFd.html">UEventFd</a>() {}
+<a name="l00027"></a>00027         <span class="comment">// Check for memory error</span>
+<a name="l00028"></a>00028         U_MEMORY_TEST
+<a name="l00029"></a>00029 
+<a name="l00030"></a>00030         <span class="comment">// Allocator e Deallocator</span>
+<a name="l00031"></a>00031         U_MEMORY_ALLOCATOR
+<a name="l00032"></a>00032         U_MEMORY_DEALLOCATOR
+<a name="l00033"></a>00033 
+<a name="l00034"></a>00034         <span class="keywordtype">int</span> fd, op_mask; <span class="comment">// U_READ_IN | U_WRITE_OUT</span>
 <a name="l00035"></a>00035 
-<a name="l00036"></a>00036         <span class="comment">// method VIRTUAL to define</span>
-<a name="l00037"></a>00037 
-<a name="l00038"></a>00038         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRead()  { <span class="keywordflow">return</span> U_NOTIFIER_DELETE; }
-<a name="l00039"></a>00039         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerWrite() { <span class="keywordflow">return</span> U_NOTIFIER_DELETE; }
+<a name="l00036"></a>00036                                 <a class="code" href="classUEventFd.html">UEventFd</a>() {}
+<a name="l00037"></a>00037         <span class="keyword">virtual</span> ~<a class="code" href="classUEventFd.html">UEventFd</a>() {}
+<a name="l00038"></a>00038 
+<a name="l00039"></a>00039         <span class="comment">// method VIRTUAL to define</span>
 <a name="l00040"></a>00040 
-<a name="l00041"></a>00041 <span class="keyword">private</span>:
-<a name="l00042"></a>00042         <a class="code" href="classUEventFd.html">UEventFd</a>(<span class="keyword">const</span> <a class="code" href="classUEventFd.html">UEventFd</a>&amp;)            {}
-<a name="l00043"></a>00043         <a class="code" href="classUEventFd.html">UEventFd</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUEventFd.html">UEventFd</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00044"></a>00044 };
-<a name="l00045"></a>00045 
-<a name="l00046"></a>00046 <span class="preprocessor">#endif</span>
+<a name="l00041"></a>00041         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRead()  { <span class="keywordflow">return</span> U_NOTIFIER_DELETE; }
+<a name="l00042"></a>00042         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerWrite() { <span class="keywordflow">return</span> U_NOTIFIER_DELETE; }
+<a name="l00043"></a>00043 
+<a name="l00044"></a>00044 <span class="keyword">private</span>:
+<a name="l00045"></a>00045         <a class="code" href="classUEventFd.html">UEventFd</a>(<span class="keyword">const</span> <a class="code" href="classUEventFd.html">UEventFd</a>&amp;)            {}
+<a name="l00046"></a>00046         <a class="code" href="classUEventFd.html">UEventFd</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUEventFd.html">UEventFd</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00047"></a>00047 };
+<a name="l00048"></a>00048 
+<a name="l00049"></a>00049 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Mon Feb 8 17:39:26 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Feb 19 12:37:27 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

@@ -41,6 +41,8 @@ U_MEMORY_DEALLOCATOR&nbsp;</td><td class="memItemRight" valign="bottom"><a class
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isValid</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae9b672c7b2799519967a446a14e38d2e"></a><!-- doxytag: member="UCertificate::isSelfSigned" ref="ae9b672c7b2799519967a446a14e38d2e" args="() const " -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isSelfSigned</b> () const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa6d18098b0d79da528011278f8fb64ce"></a><!-- doxytag: member="UCertificate::isSameIssuerAndSubject" ref="aa6d18098b0d79da528011278f8fb64ce" args="() const " -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isSameIssuerAndSubject</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a979d1906a5e057c071e3eccadaf4ecca"></a><!-- doxytag: member="UCertificate::set" ref="a979d1906a5e057c071e3eccadaf4ecca" args="(X509 *px509)" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><b>set</b> (X509 *px509)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a5c019044046c74e7c60430d2eb2301e9">duplicate</a> ()</td></tr>
@@ -75,10 +77,11 @@ EVP_PKEY *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getSubjectPubli
 <tr><td class="memItemLeft" align="right" valign="top">const char *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#ab66b1958039a14baef88cf4d66dd85c4">getNotAfter</a> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a8408f26c839ad20e5fb5da39d377ab95">checkValidity</a> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#ad232b26302dd8e908ab0ec743a8d45cc">checkValidity</a> (time_t time) const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4c026cc72eaa954f8e4458849b9bca01"></a><!-- doxytag: member="UCertificate::verify" ref="a4c026cc72eaa954f8e4458849b9bca01" args="(EVP_PKEY *publicKey) const " -->
-bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>verify</b> (EVP_PKEY *publicKey) const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a4c026cc72eaa954f8e4458849b9bca01">verify</a> (EVP_PKEY *publicKey) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4cda60b10cf96dd06803b0ddf9b60de1"></a><!-- doxytag: member="UCertificate::verify" ref="a4cda60b10cf96dd06803b0ddf9b60de1" args="(STACK_OF(X509)*chain=0, time_t certsVerificationTime=0) const " -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>verify</b> (STACK_OF(X509)*chain=0, time_t certsVerificationTime=0) const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaf3c15333fde5b7988f0041128e2c60f"></a><!-- doxytag: member="UCertificate::getSignerCertificates" ref="aaf3c15333fde5b7988f0041128e2c60f" args="(UVector&lt; UCertificate * &gt; &amp;vec, STACK_OF(X509)*chain, time_t certsVerificationTime) const " -->
+unsigned&nbsp;</td><td class="memItemRight" valign="bottom"><b>getSignerCertificates</b> (UVector&lt; <a class="el" href="classUCertificate.html">UCertificate</a> * &gt; &amp;vec, STACK_OF(X509)*chain, time_t certsVerificationTime) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a27eacf2185a7fefe6b30cc13372b3eeb">getEncoded</a> (const char *format=&quot;PEM&quot;, int max_columns=0) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#ada939e39e944c137bb141d1738e2c6f7">getModulus</a> (int max_columns=0) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#abe6dd3812e957eae7e79d01351924a73">getExponent</a> (int max_columns=0) const </td></tr>
@@ -119,10 +122,17 @@ static&nbsp;</td><td class="memItemRight" valign="bottom"><b>STACK_OF</b> (X509)
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a41b94dd795f85eb940815f8e00824d0a"></a><!-- doxytag: member="UCertificate::isEqual" ref="a41b94dd795f85eb940815f8e00824d0a" args="(X509 *a, X509 *b)" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isEqual</b> (X509 *a, X509 *b)</td></tr>
 <tr><td colspan="2"><h2>Static Public Attributes</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">static X509_STORE_CTX *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a4fd146de277a5a9ebb7a634a12fa6fd2">csc</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4fd146de277a5a9ebb7a634a12fa6fd2"></a><!-- doxytag: member="UCertificate::csc" ref="a4fd146de277a5a9ebb7a634a12fa6fd2" args="" -->
+static X509_STORE_CTX *&nbsp;</td><td class="memItemRight" valign="bottom"><b>csc</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a1fac62f66ade191af532ec6bae15de02">verify_result</a></td></tr>
+<tr><td colspan="2"><h2>Static Protected Member Functions</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">static int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a6302960bd008c6066c54dc8565636c94">verifyCallback</a> (int ok, X509_STORE_CTX *ctx)</td></tr>
 <tr><td colspan="2"><h2>Protected Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7c115399f0f6cbdd2bec20d968109214"></a><!-- doxytag: member="UCertificate::x509" ref="a7c115399f0f6cbdd2bec20d968109214" args="" -->
 X509 *&nbsp;</td><td class="memItemRight" valign="bottom"><b>x509</b></td></tr>
+<tr><td colspan="2"><h2>Static Protected Attributes</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5d58b743c635c5102b8e177d50f95759"></a><!-- doxytag: member="UCertificate::vcert" ref="a5d58b743c635c5102b8e177d50f95759" args="" -->
+static UVector&lt; <a class="el" href="classUCertificate.html">UCertificate</a> * &gt; *&nbsp;</td><td class="memItemRight" valign="bottom"><b>vcert</b></td></tr>
 <tr><td colspan="2"><h2>Friends</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a784ac91eb50e3be8115dbe8a955db0a1"></a><!-- doxytag: member="UCertificate::operator&lt;&lt;" ref="a784ac91eb50e3be8115dbe8a955db0a1" args="(ostream &amp;os, const UCertificate &amp;c)" -->
 U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (ostream &amp;os, const <a class="el" href="classUCertificate.html">UCertificate</a> &amp;c)</td></tr>
@@ -662,13 +672,17 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 
 </div>
 </div>
-<hr/><h2>Member Data Documentation</h2>
-<a class="anchor" id="a4fd146de277a5a9ebb7a634a12fa6fd2"></a><!-- doxytag: member="UCertificate::csc" ref="a4fd146de277a5a9ebb7a634a12fa6fd2" args="" -->
+<a class="anchor" id="a4c026cc72eaa954f8e4458849b9bca01"></a><!-- doxytag: member="UCertificate::verify" ref="a4c026cc72eaa954f8e4458849b9bca01" args="(EVP_PKEY *publicKey) const " -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">X509_STORE_CTX * <a class="el" href="classUCertificate.html#a4fd146de277a5a9ebb7a634a12fa6fd2">UCertificate::csc</a><code> [static]</code></td>
+          <td class="memname">bool UCertificate::verify </td>
+          <td>(</td>
+          <td class="paramtype">EVP_PKEY *&nbsp;</td>
+          <td class="paramname"> <em>publicKey</em></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td> const<code> [inline]</code></td>
         </tr>
       </table>
 </div>
@@ -677,12 +691,55 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 
 </div>
 </div>
+<a class="anchor" id="a6302960bd008c6066c54dc8565636c94"></a><!-- doxytag: member="UCertificate::verifyCallback" ref="a6302960bd008c6066c54dc8565636c94" args="(int ok, X509_STORE_CTX *ctx)" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int UCertificate::verifyCallback </td>
+          <td>(</td>
+          <td class="paramtype">int&nbsp;</td>
+          <td class="paramname"> <em>ok</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">X509_STORE_CTX *&nbsp;</td>
+          <td class="paramname"> <em>ctx</em></td><td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td><td><code> [static, protected]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Retrieves the signer's certificates from this certificate, it does check their validity and whether any signatures are valid. </p>
+
+</div>
+</div>
+<hr/><h2>Member Data Documentation</h2>
+<a class="anchor" id="a1fac62f66ade191af532ec6bae15de02"></a><!-- doxytag: member="UCertificate::verify_result" ref="a1fac62f66ade191af532ec6bae15de02" args="" -->
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="classUCertificate.html#a1fac62f66ade191af532ec6bae15de02">UCertificate::verify_result</a><code> [static]</code></td>
+        </tr>
+      </table>
+</div>
+<div class="memdoc">
+<p>Retrieves the signer's certificates from this certificate, it does check their validity and whether any signatures are valid. </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>include/ulib/ssl/<a class="el" href="certificate_8h_source.html">certificate.h</a></li>
 <li>src/ulib/ssl/certificate.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Mon Feb 8 17:39:28 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Feb 19 12:37:29 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

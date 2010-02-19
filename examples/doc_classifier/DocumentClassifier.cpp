@@ -33,8 +33,6 @@ void DocumentClassifier::addCertificate(UCertificate* cert)
 
    if (ca == 0)
       {
-      U_ASSERT_EQUALS(cert->isSelfSigned(),true)
-
       UCertificate* ca_root;
       unsigned num_tree = vtcert->size();
 
@@ -52,8 +50,7 @@ void DocumentClassifier::addCertificate(UCertificate* cert)
       }
    else
       {
-      U_ASSERT_EQUALS(cert->isIssued(*ca),true)
-      U_ASSERT_EQUALS(cert->isSelfSigned(),false)
+      U_ASSERT(cert->isIssued(*ca))
 
       UCertificate* ca_node;
       TreeCertificate* pnode;
@@ -87,7 +84,7 @@ int DocumentClassifier::verifyCallback(int ok, X509_STORE_CTX* ctx) // callback
 
    if (flag_ricorsione || verify_result == false) U_RETURN(ok);
 
-   if (ok == false) U_RETURN(true);
+   if (ok == false) U_RETURN(1);
 
    flag_ricorsione = true;
 

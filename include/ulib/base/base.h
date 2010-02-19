@@ -59,6 +59,10 @@ extern U_EXPORT uint32_t u_progname_len;
 extern U_EXPORT void u_init(char** argv);
 
 /* AT EXIT */
+
+extern U_EXPORT vPF u_fns[32];
+extern U_EXPORT int u_fns_index;
+
 extern U_EXPORT void u_exit(void);
 extern U_EXPORT void u_atexit(vPF function);
 extern U_EXPORT void u_unatexit(vPF function);

@@ -206,10 +206,10 @@ int fallocate(int fd, int mode, off_t offset, off_t len);
 #  include <openssl/opensslv.h>
 #  if   (OPENSSL_VERSION_NUMBER < 0x00905100L)
 #     error "Must use OpenSSL 0.9.6 or later, Aborting..."
-#  elif (OPENSSL_VERSION_NUMBER > 0x00907000L)
-#     define HAVE_OPENSSL_97 1
 #  elif (OPENSSL_VERSION_NUMBER > 0x00908000L)
 #     define HAVE_OPENSSL_98 1
+#  elif (OPENSSL_VERSION_NUMBER > 0x00907000L)
+#     define HAVE_OPENSSL_97 1
 #  endif
 #endif
 

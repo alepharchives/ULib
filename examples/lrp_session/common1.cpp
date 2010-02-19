@@ -25,7 +25,7 @@ static const char* device_attr_name[] = { DEVICE_ATTR_IPHOST_STRING, DEVICE_ATTR
    int LDAP_port = 0;
    UString LDAP_host, LDAP_binddn, LDAP_password, username, DN_filter, value, directory, LDAP_binddn_device;
 
-   value = (UApplication::isOptions() ? (*opt)['c'] : U_STRING_FROM_CONSTANT("lrp.cfg"));
+   value = (UApplication::isOptions() ? opt['c'] : U_STRING_FROM_CONSTANT("lrp.cfg"));
 
    UFileConfig cfg;
 
@@ -54,22 +54,22 @@ static const char* device_attr_name[] = { DEVICE_ATTR_IPHOST_STRING, DEVICE_ATTR
 
    if (UApplication::isOptions())
       {
-      int port = (*opt)['p'].strtol();
+      int port = opt['p'].strtol();
       if (port) LDAP_port = port;
 
-      value = (*opt)['H'];
+      value = opt['H'];
       if (value.empty() == false) LDAP_host = value;
 
-      value = (*opt)['D'];
+      value = opt['D'];
       if (value.empty() == false) LDAP_binddn = value;
 
-      value = (*opt)['w'];
+      value = opt['w'];
       if (value.empty() == false) LDAP_password = value;
 
-      value = (*opt)['u'];
+      value = opt['u'];
       if (value.empty() == false) username = value;
 
-      value = (*opt)['B'];
+      value = opt['B'];
       if (value.empty() == false) LDAP_binddn_device = value;
       }
 

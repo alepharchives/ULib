@@ -241,6 +241,8 @@ public:
       {
       U_TRACE(0, "UHTTP::resetHTTPInfo()")
 
+      cgi_dir[0] = '\0';
+
       (void) U_SYSCALL(memset, "%p,%d,%u", &http_info, 0, sizeof(uhttpheader));
       }
 
@@ -387,7 +389,7 @@ public:
 
    // CGI
 
-   static char cgi_dir[PATH_MAX];
+   static char cgi_dir[U_PATH_MAX];
 
    static bool isCGIRequest();
    static bool processCGIOutput();

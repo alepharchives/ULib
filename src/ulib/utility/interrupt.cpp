@@ -115,6 +115,47 @@ void UInterrupt::erase(int signo)
    (void) U_SYSCALL(sigaction, "%d,%p,%p", signo, old + signo, 0);
 }
 
+RETSIGTYPE UInterrupt::handlerSignal(int signo)
+{
+   U_TRACE(0, "[SIGNAL] UInterrupt::handlerSignal(%d)", signo)
+
+   flag_wait_for_signal = false;
+}
+
+RETSIGTYPE UInterrupt::handlerInterrupt(int signo)
+{
+   U_TRACE(0, "UInterrupt::handlerInterrupt(%d)", signo)
+
+   U_MESSAGE("program interrupt - %Y", signo);
+
+   U_EXIT(-1);
+}
+
+RETSIGTYPE UInterrupt::handlerEventSignal(int signo)
+{
+   U_TRACE(0, "[SIGNAL] UInterrupt::handlerEventSignal(%d)", signo)
+
+   ++event_signal[signo];
+
+   event_signal_pending = (event_signal_pending ? NSIG : signo);
+}
+
+void UInterrupt::waitForSignal(int signo)
+{
+   U_TRACE(1, "UInterrupt::waitForSignal(%d)", signo)
+
+   static sigset_t mask_wait_for_signal;
+
+   flag_wait_for_signal = true;
+
+   setHandlerForSignal(signo, (sighandler_t)handlerSignal);
+
+   while (flag_wait_for_signal == true)
+      {
+      (void) U_SYSCALL(sigsuspend, "%p", &mask_wait_for_signal);
+      }
+}
+
 void UInterrupt::callHandlerSignal()
 {
    U_TRACE(0, "UInterrupt::callHandlerSignal()")

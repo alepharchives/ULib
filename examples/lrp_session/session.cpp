@@ -69,7 +69,7 @@ public:
 
       if (UApplication::isOptions())
          {
-         value = (*opt)['b'];
+         value = opt['b'];
 
          if (value.empty() == false) DN_filter = value;
          }

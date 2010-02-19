@@ -37,19 +37,7 @@ public:
 
    // COSTRUTTORI
 
-   URPCParser(UVector<UString>* arg = 0)
-      {
-      U_TRACE_REGISTER_OBJECT(0, URPCParser, "%p", arg)
-
-      if (arg == 0)
-         {
-         URPC::allocate();
-
-         arg = URPC::rpc_info;
-         }
-
-      envelope.arg = arg;
-      }
+    URPCParser(UVector<UString>* arg = 0);
 
    ~URPCParser()
       {

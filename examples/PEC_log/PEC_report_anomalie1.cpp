@@ -317,8 +317,8 @@ public:
 
       // option -s (max size table) and -r (TTL range)...
 
-      UString cfg_range_ttl      = (*opt)['r'],
-              cfg_max_size_table = (*opt)['s'];
+      UString cfg_range_ttl      = pthis->opt['r'],
+              cfg_max_size_table = pthis->opt['s'];
 
       max_size_table       = (cfg_max_size_table.empty() ? MAX_NUM_MSG
                                                          : cfg_max_size_table.strtol());

@@ -12,9 +12,9 @@
 // ============================================================================
 
 #include <ulib/file.h>
-#include <ulib/ssl/signature.h>
 #include <ulib/utility/base64.h>
 #include <ulib/ssl/certificate.h>
+#include <ulib/container/vector.h>
 #include <ulib/utility/services.h>
 #include <ulib/utility/string_ext.h>
 #include <ulib/container/hash_map.h>
@@ -22,7 +22,9 @@
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 
-X509_STORE_CTX* UCertificate::csc;
+bool                    UCertificate::verify_result;
+X509_STORE_CTX*         UCertificate::csc;
+UVector<UCertificate*>* UCertificate::vcert;
 
 X509* UCertificate::readX509(const UString& x, const char* format)
 {
@@ -152,16 +154,16 @@ bool UCertificate::isIssued(const UCertificate& ca) const
    U_RETURN(false);
 }
 
-bool UCertificate::isSelfSigned() const
+bool UCertificate::isSameIssuerAndSubject() const
 {
-   U_TRACE(1, "UCertificate::isSelfSigned()")
+   U_TRACE(1, "UCertificate::isSameIssuerAndSubject()")
 
    U_INTERNAL_ASSERT_POINTER(x509)
 
    X509_NAME* issuer  = (X509_NAME*) U_SYSCALL(X509_get_issuer_name,  "%p", x509);
    X509_NAME* subject = (X509_NAME*) U_SYSCALL(X509_get_subject_name, "%p", x509);
 
-   if (U_SYSCALL(X509_NAME_cmp, "%p,%p", issuer, subject) == 0 && isIssued(*this)) U_RETURN(true);
+   if (U_SYSCALL(X509_NAME_cmp, "%p,%p", issuer, subject) == 0) U_RETURN(true);
 
    U_RETURN(false);
 }
@@ -212,30 +214,11 @@ UString UCertificate::checkForSerialNumber(long number)
    U_RETURN_STRING(serial);
 }
 
-bool UCertificate::verify(EVP_PKEY* publicKey) const
-{
-   U_TRACE(0, "UCertificate::verify(%p)", publicKey)
-
-   const char* alg = getSignatureAlgorithm().c_str();
-
-   USignature sig(alg);
-
-   sig.initVerify(publicKey);
-
-   UString signable = getSignable();
-
-   sig.update(signable);
-
-   UString signature = getSignature();
-
-   bool result = sig.verify(signature);
-
-   U_RETURN(result);
-}
-
 bool UCertificate::verify(STACK_OF(X509)* chain, time_t certsVerificationTime) const
 {
    U_TRACE(1, "UCertificate::verify(%p,%ld)", chain, certsVerificationTime)
+
+   U_INTERNAL_ASSERT_POINTER(UServices::store)
 
    if (csc == 0) csc = (X509_STORE_CTX*) U_SYSCALL_NO_PARAM(X509_STORE_CTX_new); // create an X509 store context
 
@@ -258,8 +241,8 @@ bool UCertificate::verify(STACK_OF(X509)* chain, time_t certsVerificationTime) c
 
    /*
    certsVerificationTime: the time to use for X509 certificates verification ("not valid before" and
-   "not valid after" checks); if certsVerificationTime is equal to 0 (default) then we verify certificates
-   against the system's clock "now"
+                          "not valid after" checks); if certsVerificationTime is equal to 0 (default)
+                          then we verify certificates against the system's clock "now"
    */
 
    if (certsVerificationTime > 0) U_SYSCALL_VOID(X509_STORE_CTX_set_time, "%p,%ld,%ld", csc, 0, certsVerificationTime);
@@ -269,6 +252,59 @@ bool UCertificate::verify(STACK_OF(X509)* chain, time_t certsVerificationTime) c
    if (certsVerificationTime > 0) U_SYSCALL_VOID(X509_STORE_CTX_cleanup, "%p", csc);
 
    U_RETURN(rc == 1);
+}
+
+/**
+ * Retrieves the signer's certificates from this certificate,
+ * it does check their validity and whether any signatures are valid.
+ */
+
+int UCertificate::verifyCallback(int ok, X509_STORE_CTX* ctx)
+{
+   U_TRACE(0, "UCertificate::verifyCallback(%d,%p)", ok, ctx)
+
+   U_INTERNAL_ASSERT_POINTER(vcert)
+
+   (void) UServices::X509Callback(ok, ctx);
+
+   if (ok == 0) verify_result = false;
+   else
+      {
+      U_INTERNAL_DUMP("UServices::verify_depth = %d", UServices::verify_depth)
+
+      if (UServices::verify_depth > 0)
+         {
+         UCertificate* cert = U_NEW(UCertificate(UServices::verify_current_cert));
+
+         cert->duplicate();
+
+         vcert->push_back(cert);
+         }
+      }
+
+   U_RETURN(ok);
+}
+
+unsigned UCertificate::getSignerCertificates(UVector<UCertificate*>& vec, STACK_OF(X509)* chain, time_t certsVerificationTime) const
+{
+   U_TRACE(0, "UCertificate::getSignerCertificates(%p,%p,%ld)", &vec, chain, certsVerificationTime)
+
+   U_INTERNAL_ASSERT_POINTER(x509)
+
+   verify_result = true;
+
+   UServices::verify_depth = 20;
+   UServices::setVerifyCallback(UCertificate::verifyCallback);
+
+   vcert = &vec;
+
+   unsigned l = vec.size();
+
+   (void) verify(chain, certsVerificationTime);
+
+   unsigned result = vec.size() - l;
+
+   U_RETURN(result);
 }
 
 /*

@@ -14,6 +14,12 @@
 #ifndef ULIB_NOTIFIER_H
 #define ULIB_NOTIFIER_H
 
+#include <ulib/internal/common.h>
+
+#ifdef HAVE_EPOLL_WAIT
+#undef HAVE_EPOLL_WAIT
+#endif
+
 #include <ulib/event/event_time.h>
 #include <ulib/event/event_fd.h>
 
@@ -21,6 +27,10 @@
 
 #ifndef __MINGW32__
 #  include <sys/select.h>
+#  ifdef HAVE_EPOLL_WAIT
+#     include <sys/epoll.h>
+#     define MAX_EVENTS 32
+#  endif
 #endif
 
 #ifdef HAVE_WORKING_SOCKET_OPTION_SO_RCVTIMEO
@@ -33,17 +43,17 @@
 // #  define __FDS_BITS(fd_set) ((fd_set)->fds_bits)
 // #endif
 
-class UString;
-class UServer_Base;
-class UClientImage_Base;
+#ifdef HAVE_LIBEVENT
+struct event_base;
+extern U_EXPORT struct event_base* u_ev_base;
+#endif
 
-// interface to select()
+class UServer_Base;
+
+// interface to select() or epoll()
 
 class U_EXPORT UNotifier {
 public:
-
-   static fd_set fd_set_read, fd_set_write;
-   static int result, fd_set_max, fd_read_cnt, fd_write_cnt;
 
    // Check for memory error
    U_MEMORY_TEST
@@ -75,10 +85,11 @@ public:
       U_RETURN(esito);
       }
 
+   static void init();
    static void clear();
 
-   static void  erase(UEventFd* handler_event, bool flag_reuse);
    static void insert(UEventFd* handler_event);
+   static void  erase(UEventFd* handler_event, bool flag_reuse);
 
    static bool isHandler(UEventFd* handler_event)
       {
@@ -92,17 +103,9 @@ public:
       U_RETURN(false);
       }
 
-   // rimuove i descrittori di file diventati invalidi (possibile con EPIPE)
-
-   static void removeBadFd();
-
    // return false if there are no more events registered
 
    static bool waitForEvent(UEventTime* timeout);
-
-#ifdef USE_POLL
-   static void waitForEvent(struct pollfd* ufds, int timeoutMS = -1);
-#endif
 
    // READ - WRITE
 
@@ -133,22 +136,42 @@ protected:
    UNotifier* next;
    UEventFd* handler_event_fd;
 
+   static int result;
    static UNotifier* pool;
    static UNotifier* first;
    static bool exit_loop_wait_event_for_signal;
+
+#ifdef USE_POLL
+   static void waitForEvent(struct pollfd* ufds, int timeoutMS = -1);
+#endif
+
+   static void preallocate(uint32_t n);
+   static void waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
+
+#ifdef HAVE_EPOLL_WAIT
+   static int epollfd;
+   static struct epoll_event events[MAX_EVENTS];
+#else
+   static fd_set fd_set_read, fd_set_write;
+   static int fd_set_max, fd_read_cnt, fd_write_cnt;
 
    // nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
 
    static int  getNFDS();
    static void setNFDS(int fd);
 
-   static void preallocate(uint32_t n);
-   static void waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
+   // rimuove i descrittori di file diventati invalidi (possibile con EPIPE)
+
+   static void removeBadFd();
+#endif
 
 private:
    void outputEntry(ostream& os) const U_NO_EXPORT;
 
+#ifndef HAVE_EPOLL_WAIT
    static void eraseHandler(UEventFd* handler_event) U_NO_EXPORT;
+#endif
+
    static void eraseItem(UNotifier* item, bool flag_reuse) U_NO_EXPORT;
 
    static bool handlerResult(int& n, UNotifier*  i,
@@ -156,11 +179,10 @@ private:
                                      UEventFd* handler_event,
                                      bool bread, bool bwrite, bool flag_handler_call) U_NO_EXPORT; 
 
-   friend class      UServer_Base;
-   friend class UClientImage_Base;
-
    UNotifier(const UNotifier&)            {}
    UNotifier& operator=(const UNotifier&) { return *this; }
+
+   friend class UServer_Base;
 };
 
 #endif

@@ -55,7 +55,7 @@ void UCommand::setCommand()
    freeCommand();
 
    char* argv[U_MAX_ARGS];
-   char buffer[PATH_MAX+1];
+   char buffer[U_PATH_MAX+1];
 
    ncmd = u_splitCommand(U_STRING_TO_PARAM(command), argv, buffer, sizeof(buffer));
 

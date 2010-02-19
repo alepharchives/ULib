@@ -18,12 +18,8 @@
 
 #ifdef HAVE_SSL
 #  include <openssl/pem.h>
-#  ifdef HAVE_OPENSSL_97
-#     define U_STORE_FLAGS (X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL)
-#  else
-#     define U_STORE_FLAGS 0 
-#  endif
 typedef int (*verify_cb)(int,X509_STORE_CTX*); /* error callback */
+#  define U_STORE_FLAGS (X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL)
 #endif
 
 #ifdef HAVE_LIBUUID
@@ -168,13 +164,17 @@ struct U_EXPORT UServices {
    static UString* CApath;
    static X509_STORE* store;
 
+   static void setCApath(const char* _CApath);
+
    /* When something goes wrong, this is why */
 
    static int verify_error;
    static int verify_depth;            /* how far to go looking up certs */
    static X509* verify_current_cert;   /* current certificate */
 
-   static void setCApath(const char* _CApath);
+   static const char* verify_status(long result);
+
+   static const char* verify_status() { return verify_status(verify_error); }
 
    static void setVerifyCallback(verify_cb func)
       {
@@ -213,7 +213,6 @@ struct U_EXPORT UServices {
       buffer.size_adjust(size);
       }
 
-   static const char* verify_status(long result);
    static int X509Callback(int ok, X509_STORE_CTX* ctx);
    static char* getOpenSSLError(char* buffer = 0, uint32_t buffer_size = 0, uint32_t* psize = 0);
    static bool setupOpenSSLStore(const char* CAfile = 0, const char* CApath = 0, int store_flags = U_STORE_FLAGS);

@@ -4,7 +4,7 @@
 
 start_msg SIENA
 
-DOC_ROOT=/srv/wifi-portal/www
+DOC_ROOT=/srv/wifi-portal-siena/www
 
 rm -f SIENA.log err/SIENA.err \
       out/userver_tcp.out err/userver_tcp.err \

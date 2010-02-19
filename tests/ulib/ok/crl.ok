@@ -1,23 +1,23 @@
 { Certificate Revocation List (CRL):
         Version 1 (0x0)
         Signature Algorithm: md5WithRSAEncryption
-        Issuer: /C=IT/ST=Some-State/O=Unirel spa/CN=stefano
-        Last Update: Jun 14 16:10:15 2007 GMT
-        Next Update: May 27 16:10:15 2018 GMT
+        Issuer: /C=IT/ST=FIRENZE/L=FIRENZE/O=Unirel spa/OU=ULIB/CN=CA test/emailAddress=stefano.casazza@gmail.com
+        Last Update: Feb 12 12:22:46 2010 GMT
+        Next Update: Jan 25 12:22:46 2021 GMT
 No Revoked Certificates.
     Signature Algorithm: md5WithRSAEncryption
-        38:d2:d6:e6:12:2b:a4:98:90:bd:9e:70:d2:4e:88:11:ba:b3:
-        fe:06:89:45:67:a9:52:8b:0b:81:1a:6a:ee:ba:da:54:58:9f:
-        c9:9c:81:f5:5a:da:f7:d9:ab:88:2b:96:61:fc:00:4e:aa:c7:
-        2b:c3:d0:e2:bb:a5:26:99:a7:97:24:12:9c:ab:2a:ac:93:15:
-        fa:d9:53:dc:f0:21:95:10:e3:f5:e4:f6:47:88:22:aa:d1:09:
-        02:19:67:6e:1c:d1:25:cb:1a:02:b3:6a:78:9b:a3:5f:ce:af:
-        47:b7:17:9a:87:99:9c:64:a0:b6:b5:7d:f8:c7:ca:09:d7:63:
-        d7:34
+        e2:92:c1:05:60:db:f7:cb:91:b8:3f:b4:b9:79:ff:ef:5e:0e:
+        0d:63:60:cc:d7:2b:f3:21:6b:ad:e6:f2:6e:f7:e0:fb:e9:0d:
+        e4:c0:7f:47:a3:e2:8f:73:40:90:f0:61:96:00:8d:cf:90:90:
+        22:29:62:09:6a:69:f0:e0:91:a8:7e:cd:81:dd:9c:64:d3:ee:
+        09:5f:c0:40:3a:f6:91:4c:17:54:ca:55:9a:80:7e:76:7e:d9:
+        80:97:ab:26:d6:17:ec:5d:cb:fc:61:16:63:0f:7c:51:ef:74:
+        6e:1a:95:49:ba:4e:1e:3c:c7:32:39:ff:41:8f:41:92:2f:f1:
+        f9:b3
  }
 1
-/C=IT/ST=Some-State/O=Unirel spa/CN=stefano
+/C=IT/ST=FIRENZE/L=FIRENZE/O=Unirel spa/OU=ULIB/CN=CA test/emailAddress=stefano.casazza@gmail.com
 1
 0
-070614161015Z
-180527161015Z
+100212122246Z
+210125122246Z

@@ -30,9 +30,9 @@ public:
 
       if (UApplication::isOptions() == false) U_ERROR("parameters <from> and <to> are mandatory...", 0);
 
-      UString cfg_from = (*opt)['f'],
-              cfg_to   = (*opt)['t'],
-              cfg_day  = (*opt)['d'];
+      UString cfg_from = opt['f'],
+              cfg_to   = opt['t'],
+              cfg_day  = opt['d'];
 
       if (cfg_from.empty() ||
             cfg_to.empty()) U_ERROR("parameters <from> and <to> are mandatory...", 0);

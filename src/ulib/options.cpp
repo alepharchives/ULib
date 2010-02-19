@@ -75,9 +75,18 @@
 #  define LIBXML2_ENABLE     "no"
 #endif
 
+struct option UOptions::long_options[128] = {
+{ "help",    0, 0, 'h' },
+{ "version", 0, 0, 'V' } };
+
 UOptions::~UOptions()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UOptions)
+
+       package.clear();
+       version.clear();
+       purpose.clear();
+   report_bugs.clear();
 
    for (uint32_t i = 0; i < length; ++i)
       {
@@ -200,7 +209,7 @@ void UOptions::load(const UString& str)
 
    U_CHECK_MEMORY
 
-   UVector<UString> vec(128);
+   UVector<UString> vec(126);
 
    char* idx;
    uint32_t n = vec.split(str);
@@ -209,76 +218,78 @@ void UOptions::load(const UString& str)
       {
       idx = (char*) memchr("orpv", vec[i].at(0), 4);
 
-      if (idx)
+      if (idx == 0) continue;
+
+      switch (*idx)
          {
-         switch (*idx)
+         case 'p':
             {
-            case 'o':
+            if (vec[i].at(1) == 'a') // [package <PACKNAME>]
                {
-               U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("option"))
+               U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("package"))
 
-               // option <SHORT> <LONG> <HAS_ARG> <DESC> <DEFAULT>
+               package = vec[++i];
+               }
+            else                    // [purpose <PURPOSE>]
+               {
+               U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("purpose"))
 
-               char short_opt = vec[i+1].at(0);
+               purpose = vec[++i];
+               }
+            }
+         break;
 
-               if (short_opt == '-')
-                  {
-                  short_opt = '\0';
-                  }
+         case 'v':
+            {
+            // [version <VERSION>]
+
+            U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("version"))
+
+            version = vec[++i];
+            }
+         break;
+
+         case 'r':
+            {
+            // [report_bugs <REPORT_BUGS>]
+
+            U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("report_bugs"))
+
+            report_bugs = vec[++i];
+            }
+         break;
+
+         case 'o':
+            {
+            // option <SHORT> <LONG> <HAS_ARG> <DESC> <DEFAULT>
+
+            U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("option"))
+
+            char short_opt = vec[i+1].at(0);
+
+            if (short_opt == '-') short_opt = '\0';
 
             // must be null terminated... after: (row 412) ptr_long_options->name = item[i].long_opt->data();
 
             UString long_opt(100U);
+
             long_opt.assign(vec[i+2]);
+
             *(long_opt.c_pointer(long_opt.size())) = '\0';
 
-            //         desc, long_opt, default_value,           has_arg, short_opt
-               add(vec[i+4], long_opt,      vec[i+5], vec[i+3].strtol(), short_opt);
+         //         desc, long_opt, default_value,           has_arg, short_opt
+            add(vec[i+4], long_opt,      vec[i+5], vec[i+3].strtol(), short_opt);
 
-               i += 5;
-               }
-            break;
-
-            case 'p':
-               {
-               if (vec[i].at(1) == 'a')
-                  {
-                  U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("package"))
-
-                  package = vec[++i];
-                  }
-               else
-                  {
-                  U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("purpose"))
-
-                  purpose = vec[++i];
-                  }
-               }
-            break;
-
-            case 'v':
-               {
-               U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("version"))
-
-               version = vec[++i];
-               }
-            break;
-
-            case 'r':
-               {
-               U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("report_bugs"))
-
-               report_bugs = vec[++i];
-               }
-            break;
+            i += 5;
             }
+         break;
          }
       }
 }
 
-void UOptions::printHelp(struct option* long_options, vPF func)
+void UOptions::printHelp(vPF func)
 {
-   U_TRACE(0, "UOptions::printHelp(%p,%p)", long_options, func)
+   U_TRACE(0, "UOptions::printHelp(%p)", func)
 
    U_CHECK_MEMORY
 
@@ -290,7 +301,7 @@ void UOptions::printHelp(struct option* long_options, vPF func)
 
    (void) ::printf("Usage: %.*s [OPTIONS] %.*s...\n", u_progname_len, u_progname, U_STRING_TO_TRACE(args));
 
-   // (void) U_SYSCALL(fflush, "%p", stdout);
+// (void) U_SYSCALL(fflush, "%p", stdout);
 
    struct option* ptr_long_options = long_options + 2;
 
@@ -348,7 +359,7 @@ void UOptions::printHelp(struct option* long_options, vPF func)
             *ptr++ = '[';
             }
 
-         (void) memcpy(ptr, "=VALUE", 6);
+         (void) U_MEMCPY(ptr, "=VALUE");
 
          ptr += 6;
 
@@ -377,7 +388,7 @@ void UOptions::printHelp(struct option* long_options, vPF func)
 
          if (item[j].value->size())
             {
-            (void) memcpy(ptr, U_CONSTANT_TO_PARAM(" (default="));
+            (void) U_MEMCPY(ptr, " (default=");
 
             ptr += 10;
 
@@ -428,10 +439,6 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
    U_CHECK_MEMORY
 
-   static struct option long_options[128] = {
-      { "help",    0, 0, 'h' },
-      { "version", 0, 0, 'V' } };
-
    char optstring[128] = { 'h', 'V' };
 
    uint32_t i;
@@ -462,8 +469,8 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
    (void) U_SYSCALL(memset, "%p,%d,%u", ptr_long_options, 0, sizeof(struct option));
 
-   U_INTERNAL_ASSERT_MINOR((ptr_optstring - optstring),128)
-   U_INTERNAL_ASSERT_MINOR((ptr_long_options - long_options),128)
+   U_INTERNAL_ASSERT_MINOR(ptr_optstring    - optstring,    128)
+   U_INTERNAL_ASSERT_MINOR(ptr_long_options - long_options, 128)
 
 // optarg = 0;    // if there is text in the current argv-element, it is returned in optarg, otherwise optarg is set to zero
    optind = 0;    // optind is the index in argv of the first argv-element that is not an option
@@ -599,7 +606,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
          // Print help and exit
 
-         case 'h': printHelp(long_options, 0); break;
+         case 'h': printHelp(0); break;
 
          default: // option
             {

@@ -41,7 +41,6 @@
 #  include <ulib/ssl/crl.h>
 #  include <ulib/ssl/pkcs10.h>
 #  include <ulib/ssl/digest.h>
-#  include <ulib/ssl/signature.h>
 #  include <ulib/ssl/certificate.h>
 #  include <ulib/ssl/mime/mime_pkcs7.h>
 #  include <ulib/ssl/net/client/ssl_ftp.h>
@@ -75,9 +74,7 @@
 #endif
 
 #ifdef HAVE_LIBXML2
-#  include "ulib/xml/libxml2/xpath.h"
 #  include "ulib/xml/libxml2/schema.h"
-#  include "ulib/xml/libxml2/context.h"
 #endif
 
 #ifdef HAVE_EXPAT

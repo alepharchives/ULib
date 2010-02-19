@@ -78,7 +78,6 @@ static void print_size()
    U_PRINT_SIZEOF(USSLSocket)
    U_PRINT_SIZEOF(USemaphore)
    U_PRINT_SIZEOF(UServer<UTCPSocket>)
-   U_PRINT_SIZEOF(USignature)
    U_PRINT_SIZEOF(USmtpClient)
    U_PRINT_SIZEOF(USocket)
    U_PRINT_SIZEOF(UString)
@@ -101,129 +100,6 @@ static void print_size()
    U_PRINT_SIZEOF(Url)
 }
 #endif
-
-/* NO DEBUG (64 bit)
-------------------------------
-   1 sizeof(UApplication)
-   1 sizeof(UMagic)
-
-   8 sizeof(UCGI)
-   8 sizeof(UCertificate)
-   8 sizeof(UCrl)
-   8 sizeof(UPKCS10)
-   8 sizeof(UString) 
--------------------------
-   U_STACK_TYPE_0
-
-  12 sizeof(UProcess)
-  16 sizeof(UDate)
-
-  16 sizeof(ULock)
-  16 sizeof(UNotifier)
-  16 sizeof(UPKCS7)
-  16 sizeof(USemaphore)
-  16 sizeof(UTimeVal)
-  16 sizeof(UVector<UString>)
-  16 sizeof(UXMLParser)
-
-  24 sizeof(USOAPObject)
-  24 sizeof(UStringRep)
--------------------------
-   U_STACK_TYPE_1
-
-  32 sizeof(UCache)
-  32 sizeof(UHashMapNode)                                                      
-  32 sizeof(ULDAPEntry)
-  32 sizeof(UQueryNode)
-  32 sizeof(USOAPFault)
-  32 sizeof(UTimer)
-  32 sizeof(UTokenizer)
-  32 sizeof(UTree<UString>)
-  32 sizeof(UXMLAttribute)
--------------------------
-   U_STACK_TYPE_2
-
-  40 sizeof(UHashMap<UString>)
-  40 sizeof(ULDAP)
-  40 sizeof(USOAPGenericMethod)
-  40 sizeof(Url)
--------------------------
-   U_STACK_TYPE_3
-
-  48 sizeof(UCURL)
-  48 sizeof(UDialog)
-  48 sizeof(UMimeHeader)
-  48 sizeof(UPlugIn<void*>)
-  48 sizeof(UQueryParser)
-  48 sizeof(USOAPEncoder)
-  48 sizeof(UXMLElement)
-  56 sizeof(UMimeEntity)
-  56 sizeof(UOptions)
-  64 sizeof(UClientImage<UTCPSocket>)
-  64 sizeof(USignature)
--------------------------
-   U_STACK_TYPE_4
-
-  80 sizeof(UZIP)
-  80 sizeof(UCommand)
-  80 sizeof(UIPAddress)
-  80 sizeof(UMimePKCS7)
-  88 sizeof(UPCRE)
-  88 sizeof(UMimeMultipartMsg)
-  96 sizeof(UServer<UTCPSocket>)
--------------------------
-   U_STACK_TYPE_5
-
- 104 sizeof(URDBServer)
- 112 sizeof(UMimeMessage)
- 128 sizeof(USOAPParser)
--------------------------
-   U_STACK_TYPE_6
-
- 136 sizeof(UMimeMultipart)
- 168 sizeof(URDBClient<UTCPSocket>)
- 184 sizeof(UFile)
- 184 sizeof(ULog)
--------------------------
-   U_STACK_TYPE_7
-
- 192 sizeof(USocket)
- 192 sizeof(UTCPSocket)
- 192 sizeof(UUDPSocket)
--------------------------
-   U_STACK_TYPE_8
-
- 216 sizeof(UBison)
- 216 sizeof(UFlexer)
- 216 sizeof(UHttpClient<UTCPSocket>)
- 216 sizeof(USSLSocket)
- 256 sizeof(UFileConfig)
- 256 sizeof(USSHSocket)
- 256 sizeof(USmtpClient)
--------------------------
-   U_STACK_TYPE_9
-
- 264 sizeof(UCDB)
- 264 sizeof(USOAPClient<UTCPSocket>)
- 416 sizeof(UFtpClient)
- 416 sizeof(USSLFtpClient)
- 480 sizeof(URDB)
- 512
--------------------------
-   U_STACK_TYPE_10
-
- 1024
--------------------------
-   U_STACK_TYPE_11
-
- 2048
--------------------------
-   U_STACK_TYPE_12
-
- 4096
--------------------------
-   U_STACK_TYPE_13
-*/
 
 static void check_size()
 {
@@ -278,22 +154,6 @@ static void check_size()
 
    U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_9 - 1) ==  9 )
    U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_9 - 0) ==  9 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_9 + 1) ==  10 )
-
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_10 - 1) ==  10 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_10 - 0) ==  10 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_10 + 1) ==  11 )
-
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_11 - 1) ==  11 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_11 - 0) ==  11 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_11 + 1) ==  12 )
-
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_12 - 1) ==  12 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_12 - 0) ==  12 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_12 + 1) ==  13 )
-
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_13 - 1) ==  13 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_13 - 0) ==  13 )
 }
 
 static struct itimerval timeval = { { 0, 2000 }, { 0, 2000 } };

@@ -30,18 +30,18 @@ public:
 
       U_ASSERT( num_args == 2 )
 
-      U_ASSERT( (*opt)[(uint32_t)0U] == U_STRING_FROM_CONSTANT("1") )
-      U_ASSERT( (*opt)[(uint32_t)1U] == U_STRING_FROM_CONSTANT("pippo") )
-      U_ASSERT( (*opt)[(uint32_t)2U] == U_STRING_FROM_CONSTANT("Hello") )
-      U_ASSERT( (*opt)[(uint32_t)3U] == U_STRING_FROM_CONSTANT("1") )
-      U_ASSERT( (*opt)[(uint32_t)4U] == U_STRING_FROM_CONSTANT("Bucaiolo_a_te") )
+      U_ASSERT( opt[(uint32_t)0U] == U_STRING_FROM_CONSTANT("1") )
+      U_ASSERT( opt[(uint32_t)1U] == U_STRING_FROM_CONSTANT("pippo") )
+      U_ASSERT( opt[(uint32_t)2U] == U_STRING_FROM_CONSTANT("Hello") )
+      U_ASSERT( opt[(uint32_t)3U] == U_STRING_FROM_CONSTANT("1") )
+      U_ASSERT( opt[(uint32_t)4U] == U_STRING_FROM_CONSTANT("Bucaiolo_a_te") )
 
-      U_ASSERT( (*opt)['a'] == U_STRING_FROM_CONSTANT("1") )
-      U_ASSERT( (*opt)['b'] == U_STRING_FROM_CONSTANT("pippo") )
-      U_ASSERT( (*opt)['c'] == U_STRING_FROM_CONSTANT("Hello") )
+      U_ASSERT( opt['a'] == U_STRING_FROM_CONSTANT("1") )
+      U_ASSERT( opt['b'] == U_STRING_FROM_CONSTANT("pippo") )
+      U_ASSERT( opt['c'] == U_STRING_FROM_CONSTANT("Hello") )
 
-      U_ASSERT( (*opt)[U_STRING_FROM_CONSTANT("option_with_no_short_1")] == U_STRING_FROM_CONSTANT("1") )
-      U_ASSERT( (*opt)[U_STRING_FROM_CONSTANT("option_with_no_short_2")] == U_STRING_FROM_CONSTANT("Bucaiolo_a_te") )
+      U_ASSERT( opt[U_STRING_FROM_CONSTANT("option_with_no_short_1")] == U_STRING_FROM_CONSTANT("1") )
+      U_ASSERT( opt[U_STRING_FROM_CONSTANT("option_with_no_short_2")] == U_STRING_FROM_CONSTANT("Bucaiolo_a_te") )
 
       U_ASSERT( strcmp(argv[optind], "argument_1") == 0 )
       ++optind;

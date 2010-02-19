@@ -1,5 +1,6 @@
 <map id="G" name="G">
-<area shape="rect" id="node2" href="$classUString.html" title="UString" alt="" coords="5,131,69,159"/>
-<area shape="rect" id="node5" href="$classUStringRep.html" title="UStringRep" alt="" coords="119,6,204,34"/>
-<area shape="rect" id="node8" href="$structUOptions_1_1option__item.html" title="UOptions::option_item" alt="" coords="175,131,319,159"/>
+<area shape="rect" id="node2" href="$structoption.html" title="option" alt="" coords="5,131,61,159"/>
+<area shape="rect" id="node4" href="$classUString.html" title="UString" alt="" coords="93,131,157,159"/>
+<area shape="rect" id="node7" href="$classUStringRep.html" title="UStringRep" alt="" coords="207,6,292,34"/>
+<area shape="rect" id="node10" href="$structUOptions_1_1option__item.html" title="UOptions::option_item" alt="" coords="263,131,407,159"/>
 </map>

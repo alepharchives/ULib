@@ -305,7 +305,7 @@ int UServices::X509Callback(int ok, X509_STORE_CTX* ctx)
 
    U_DUMP("verify_error = %d verify_depth = %d status = %.*S", verify_error, verify_depth, 512, verify_status(verify_error))
 
-#  ifdef DEBUG
+#ifdef DEBUG
    if (verify_current_cert)
       {
       UString fname_cert   = UCertificate::getFileName(verify_current_cert),
@@ -316,7 +316,7 @@ int UServices::X509Callback(int ok, X509_STORE_CTX* ctx)
       U_INTERNAL_DUMP("issuer_cert  = %.*S", U_STRING_TO_TRACE(issuer_cert))
       U_INTERNAL_DUMP("subject_cert = %.*S", U_STRING_TO_TRACE(subject_cert))
       }
-#  endif
+#endif
 
    /*
    if (ok == 0)
@@ -389,9 +389,7 @@ bool UServices::setupOpenSSLStore(const char* CAfile, const char* _CApath, int s
       U_RETURN(false);
       }
 
-#ifdef HAVE_OPENSSL_97
-   U_SYSCALL_VOID(X509_STORE_set_flags, "%p,%d", store, store_flags); // X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL
-#endif
+   if (store_flags) U_SYSCALL_VOID(X509_STORE_set_flags, "%p,%d", store, store_flags); // X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL
 
 #ifdef DEBUG
    setVerifyCallback(UServices::X509Callback);

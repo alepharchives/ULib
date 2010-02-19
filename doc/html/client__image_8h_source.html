@@ -61,104 +61,104 @@
 <a name="l00038"></a>00038 <span class="preprocessor"></span>
 <a name="l00045"></a>00045 <span class="keyword">class </span><a class="code" href="classUHTTP.html">UHTTP</a>;
 <a name="l00046"></a>00046 <span class="keyword">class </span><a class="code" href="classUServer__Base.html">UServer_Base</a>;
-<a name="l00047"></a>00047 
-<a name="l00048"></a><a class="code" href="classUClientImage__Base.html">00048</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a> : <span class="keyword">public</span> <a class="code" href="classUEventFd.html">UEventFd</a> {
-<a name="l00049"></a>00049 <span class="keyword">public</span>:
-<a name="l00050"></a>00050 
-<a name="l00051"></a>00051         <span class="comment">// NB: these are public for plugin access...</span>
-<a name="l00052"></a>00052 
-<a name="l00053"></a>00053         <a class="code" href="classUString.html">UString</a>* logbuf;
-<a name="l00054"></a>00054         <a class="code" href="classUIPAddress.html">UIPAddress</a>* clientAddress;
-<a name="l00055"></a>00055 
-<a name="l00056"></a>00056         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* body;
-<a name="l00057"></a>00057         <span class="keyword">static</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* socket;
-<a name="l00058"></a>00058         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* rbuffer;
-<a name="l00059"></a>00059         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* wbuffer;
-<a name="l00060"></a>00060         <span class="keyword">static</span> <span class="keywordtype">bool</span> bIPv6, write_off;   <span class="comment">// NB: we not send response because we can have used sendfile() etc...</span>
-<a name="l00061"></a>00061         <span class="keyword">static</span> <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>* pClientImage;
-<a name="l00062"></a>00062 
-<a name="l00063"></a>00063         <span class="comment">// NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...</span>
-<a name="l00064"></a>00064 
-<a name="l00065"></a>00065         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* _value;
-<a name="l00066"></a>00066         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* _buffer;
-<a name="l00067"></a>00067         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* _encoded;
-<a name="l00068"></a>00068 
-<a name="l00069"></a>00069         <span class="comment">// SERVICES</span>
-<a name="l00070"></a>00070 
-<a name="l00071"></a>00071         <span class="keyword">static</span> <span class="keywordtype">void</span> clear();
-<a name="l00072"></a>00072         <span class="keyword">static</span> <span class="keywordtype">void</span> run();
-<a name="l00073"></a>00073         <span class="keyword">static</span> <span class="keywordtype">void</span> resetBuffer();
-<a name="l00074"></a>00074         <span class="keyword">static</span> <span class="keywordtype">void</span> genericReset();
-<a name="l00075"></a>00075         <span class="keyword">static</span> <span class="keywordtype">void</span> init(<a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* p);
-<a name="l00076"></a>00076 
-<a name="l00077"></a>00077         <span class="comment">// check if data read already available... (pipelining)</span>
-<a name="l00078"></a>00078 
-<a name="l00079"></a>00079         <span class="keyword">static</span> <span class="keywordtype">bool</span> isPipeline(uint32_t size)
-<a name="l00080"></a>00080                 {
-<a name="l00081"></a>00081                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage_Base::isPipeline(%u)&quot;</span>, size)
-<a name="l00082"></a>00082 
-<a name="l00083"></a>00083                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;size_message = %u pcount = %d pbuffer = %p&quot;</span>, USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
-<a name="l00084"></a>00084 
-<a name="l00085"></a>00085                 <span class="keywordflow">if</span> ((int32_t)USocketExt::size_message  &gt; 0 &amp;&amp; size      &amp;&amp;
-<a name="l00086"></a>00086                          (USocketExt::pcount                                       &gt; 0 || size &gt; USocketExt::size_message))
-<a name="l00087"></a>00087                         {
-<a name="l00088"></a>00088                         U_RETURN(<span class="keyword">true</span>);
-<a name="l00089"></a>00089                         }
-<a name="l00090"></a>00090 
-<a name="l00091"></a>00091                 U_RETURN(<span class="keyword">false</span>);
-<a name="l00092"></a>00092                 }
-<a name="l00093"></a>00093 
-<a name="l00094"></a>00094         <span class="comment">// log</span>
-<a name="l00095"></a>00095 
-<a name="l00096"></a>00096         <span class="keyword">static</span> <span class="keywordtype">void</span> logRequest( <span class="keyword">const</span> <span class="keywordtype">char</span>* filereq = FILETEST_REQ);
-<a name="l00097"></a>00097         <span class="keyword">static</span> <span class="keywordtype">void</span> logResponse(<span class="keyword">const</span> <span class="keywordtype">char</span>* fileres = FILETEST_RES);
-<a name="l00098"></a>00098 
-<a name="l00099"></a>00099         <span class="keyword">static</span> <span class="keywordtype">void</span> logCertificate(<span class="keywordtype">void</span>* x509); <span class="comment">// aggiungo nel log il certificato Peer del client (&quot;issuer&quot;,&quot;serial&quot;)</span>
-<a name="l00100"></a>00100 
-<a name="l00101"></a>00101         <span class="comment">// get remote ip address</span>
-<a name="l00102"></a>00102 
-<a name="l00103"></a>00103         <span class="keyword">static</span> <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; remoteIPAddress()
-<a name="l00104"></a>00104                 {
-<a name="l00105"></a>00105                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage_Base::remoteIPAddress()&quot;</span>)
-<a name="l00106"></a>00106 
-<a name="l00107"></a>00107                 U_INTERNAL_ASSERT_POINTER(socket)
-<a name="l00108"></a>00108                 U_INTERNAL_ASSERT_POINTER(pClientImage)
-<a name="l00109"></a>00109 
-<a name="l00110"></a>00110                 <span class="keywordflow">if</span> (pClientImage-&gt;logbuf) <span class="keywordflow">return</span> *pClientImage-&gt;clientAddress;
-<a name="l00111"></a>00111 
-<a name="l00112"></a>00112                 socket-&gt;setRemote();
-<a name="l00113"></a>00113 
-<a name="l00114"></a>00114                 <span class="keywordflow">return</span> socket-&gt;remoteIPAddress();
-<a name="l00115"></a>00115                 }
-<a name="l00116"></a>00116 
-<a name="l00117"></a>00117         <span class="comment">// check for X-Forwarded-For: client1, proxy1, proxy2</span>
-<a name="l00118"></a>00118 
-<a name="l00119"></a>00119         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getRemoteInfo(uint32_t* plen);
-<a name="l00120"></a>00120 
-<a name="l00121"></a>00121         <span class="comment">// welcome message</span>
-<a name="l00122"></a>00122 
-<a name="l00123"></a>00123         <span class="keyword">static</span> <span class="keywordtype">void</span> setMsgWelcome(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; msg);
-<a name="l00124"></a>00124 
-<a name="l00125"></a>00125         <span class="comment">// define method VIRTUAL to redefine</span>
-<a name="l00126"></a>00126 
-<a name="l00127"></a>00127         <span class="keyword">virtual</span> <span class="keywordtype">void</span> reset()
-<a name="l00128"></a>00128                 {
-<a name="l00129"></a>00129                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage_Base::reset()&quot;</span>)
-<a name="l00130"></a>00130 
-<a name="l00131"></a>00131                 reuse(); <span class="comment">// NB: we need this because we reuse the same object USocket...</span>
-<a name="l00132"></a>00132 
-<a name="l00133"></a>00133                 genericReset();
-<a name="l00134"></a>00134                 }
-<a name="l00135"></a>00135 
-<a name="l00136"></a>00136         <span class="comment">// define method VIRTUAL of class UEventFd</span>
-<a name="l00137"></a>00137 
-<a name="l00138"></a>00138         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRead();
-<a name="l00139"></a>00139         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerWrite();
-<a name="l00140"></a>00140 
-<a name="l00141"></a>00141 <span class="preprocessor">#ifdef HAVE_LIBEVENT</span>
-<a name="l00142"></a>00142 <span class="preprocessor"></span>        <a class="code" href="classUEvent.html">UEvent&lt;UClientImage_Base&gt;</a>* pevent;
-<a name="l00143"></a>00143 
-<a name="l00144"></a>00144         <span class="keywordtype">void</span> delEvent();
+<a name="l00047"></a>00047 <span class="keyword">class </span><a class="code" href="classUTimeoutConnection.html">UTimeoutConnection</a>;
+<a name="l00048"></a>00048 
+<a name="l00049"></a><a class="code" href="classUClientImage__Base.html">00049</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a> : <span class="keyword">public</span> <a class="code" href="classUEventFd.html">UEventFd</a> {
+<a name="l00050"></a>00050 <span class="keyword">public</span>:
+<a name="l00051"></a>00051 
+<a name="l00052"></a>00052         <span class="comment">// NB: these are public for plugin access...</span>
+<a name="l00053"></a>00053 
+<a name="l00054"></a>00054         <a class="code" href="classUString.html">UString</a>* logbuf;
+<a name="l00055"></a>00055         <a class="code" href="classUIPAddress.html">UIPAddress</a>* clientAddress;
+<a name="l00056"></a>00056 
+<a name="l00057"></a>00057         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* body;
+<a name="l00058"></a>00058         <span class="keyword">static</span> <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* socket;
+<a name="l00059"></a>00059         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* rbuffer;
+<a name="l00060"></a>00060         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* wbuffer;
+<a name="l00061"></a>00061         <span class="keyword">static</span> <span class="keywordtype">bool</span> bIPv6, write_off;   <span class="comment">// NB: we not send response because we can have used sendfile() etc...</span>
+<a name="l00062"></a>00062         <span class="keyword">static</span> <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>* pClientImage;
+<a name="l00063"></a>00063 
+<a name="l00064"></a>00064         <span class="comment">// NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...</span>
+<a name="l00065"></a>00065 
+<a name="l00066"></a>00066         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* _value;
+<a name="l00067"></a>00067         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* _buffer;
+<a name="l00068"></a>00068         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* _encoded;
+<a name="l00069"></a>00069 
+<a name="l00070"></a>00070         <span class="comment">// SERVICES</span>
+<a name="l00071"></a>00071 
+<a name="l00072"></a>00072         <span class="keyword">static</span> <span class="keywordtype">void</span> clear();
+<a name="l00073"></a>00073         <span class="keyword">static</span> <span class="keywordtype">void</span> run();
+<a name="l00074"></a>00074         <span class="keyword">static</span> <span class="keywordtype">void</span> resetBuffer();
+<a name="l00075"></a>00075         <span class="keyword">static</span> <span class="keywordtype">void</span> genericReset();
+<a name="l00076"></a>00076         <span class="keyword">static</span> <span class="keywordtype">void</span> init(<a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* p);
+<a name="l00077"></a>00077 
+<a name="l00078"></a>00078         <span class="comment">// check if data read already available... (pipelining)</span>
+<a name="l00079"></a>00079 
+<a name="l00080"></a>00080         <span class="keyword">static</span> <span class="keywordtype">bool</span> isPipeline(uint32_t size)
+<a name="l00081"></a>00081                 {
+<a name="l00082"></a>00082                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage_Base::isPipeline(%u)&quot;</span>, size)
+<a name="l00083"></a>00083 
+<a name="l00084"></a>00084                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;size_message = %u pcount = %d pbuffer = %p&quot;</span>, USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
+<a name="l00085"></a>00085 
+<a name="l00086"></a>00086                 <span class="keywordflow">if</span> ((int32_t)USocketExt::size_message  &gt; 0 &amp;&amp; size      &amp;&amp;
+<a name="l00087"></a>00087                          (USocketExt::pcount                                       &gt; 0 || size &gt; USocketExt::size_message))
+<a name="l00088"></a>00088                         {
+<a name="l00089"></a>00089                         U_RETURN(<span class="keyword">true</span>);
+<a name="l00090"></a>00090                         }
+<a name="l00091"></a>00091 
+<a name="l00092"></a>00092                 U_RETURN(<span class="keyword">false</span>);
+<a name="l00093"></a>00093                 }
+<a name="l00094"></a>00094 
+<a name="l00095"></a>00095         <span class="comment">// log</span>
+<a name="l00096"></a>00096 
+<a name="l00097"></a>00097         <span class="keyword">static</span> <span class="keywordtype">void</span> logRequest( <span class="keyword">const</span> <span class="keywordtype">char</span>* filereq = FILETEST_REQ);
+<a name="l00098"></a>00098         <span class="keyword">static</span> <span class="keywordtype">void</span> logResponse(<span class="keyword">const</span> <span class="keywordtype">char</span>* fileres = FILETEST_RES);
+<a name="l00099"></a>00099 
+<a name="l00100"></a>00100         <span class="keyword">static</span> <span class="keywordtype">void</span> logCertificate(<span class="keywordtype">void</span>* x509); <span class="comment">// aggiungo nel log il certificato Peer del client (&quot;issuer&quot;,&quot;serial&quot;)</span>
+<a name="l00101"></a>00101 
+<a name="l00102"></a>00102         <span class="comment">// get remote ip address</span>
+<a name="l00103"></a>00103 
+<a name="l00104"></a>00104         <span class="keyword">static</span> <a class="code" href="classUIPAddress.html">UIPAddress</a>&amp; remoteIPAddress()
+<a name="l00105"></a>00105                 {
+<a name="l00106"></a>00106                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage_Base::remoteIPAddress()&quot;</span>)
+<a name="l00107"></a>00107 
+<a name="l00108"></a>00108                 U_INTERNAL_ASSERT_POINTER(socket)
+<a name="l00109"></a>00109                 U_INTERNAL_ASSERT_POINTER(pClientImage)
+<a name="l00110"></a>00110 
+<a name="l00111"></a>00111                 <span class="keywordflow">if</span> (pClientImage-&gt;logbuf) <span class="keywordflow">return</span> *pClientImage-&gt;clientAddress;
+<a name="l00112"></a>00112 
+<a name="l00113"></a>00113                 socket-&gt;setRemote();
+<a name="l00114"></a>00114 
+<a name="l00115"></a>00115                 <span class="keywordflow">return</span> socket-&gt;remoteIPAddress();
+<a name="l00116"></a>00116                 }
+<a name="l00117"></a>00117 
+<a name="l00118"></a>00118         <span class="comment">// check for X-Forwarded-For: client1, proxy1, proxy2</span>
+<a name="l00119"></a>00119 
+<a name="l00120"></a>00120         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getRemoteInfo(uint32_t* plen);
+<a name="l00121"></a>00121 
+<a name="l00122"></a>00122         <span class="comment">// welcome message</span>
+<a name="l00123"></a>00123 
+<a name="l00124"></a>00124         <span class="keyword">static</span> <span class="keywordtype">void</span> setMsgWelcome(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; msg);
+<a name="l00125"></a>00125 
+<a name="l00126"></a>00126         <span class="comment">// define method VIRTUAL to redefine</span>
+<a name="l00127"></a>00127 
+<a name="l00128"></a>00128         <span class="keyword">virtual</span> <span class="keywordtype">void</span> reset()
+<a name="l00129"></a>00129                 {
+<a name="l00130"></a>00130                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage_Base::reset()&quot;</span>)
+<a name="l00131"></a>00131 
+<a name="l00132"></a>00132                 reuse(); <span class="comment">// NB: we need this because we reuse the same object USocket...</span>
+<a name="l00133"></a>00133 
+<a name="l00134"></a>00134                 genericReset();
+<a name="l00135"></a>00135                 }
+<a name="l00136"></a>00136 
+<a name="l00137"></a>00137         <span class="comment">// define method VIRTUAL of class UEventFd</span>
+<a name="l00138"></a>00138 
+<a name="l00139"></a>00139         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRead();
+<a name="l00140"></a>00140         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerWrite();
+<a name="l00141"></a>00141 
+<a name="l00142"></a>00142 <span class="preprocessor">#ifdef HAVE_LIBEVENT</span>
+<a name="l00143"></a>00143 <span class="preprocessor"></span>        <a class="code" href="classUEvent.html">UEvent&lt;UClientImage_Base&gt;</a>* pevent;
+<a name="l00144"></a>00144 
 <a name="l00145"></a>00145         <span class="keywordtype">void</span> operator()(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> event);
 <a name="l00146"></a>00146 <span class="preprocessor">#endif</span>
 <a name="l00147"></a>00147 <span class="preprocessor"></span>
@@ -240,119 +240,120 @@
 <a name="l00223"></a>00223 
 <a name="l00224"></a>00224         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUHTTP.html">UHTTP</a>;
 <a name="l00225"></a>00225         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUServer__Base.html">UServer_Base</a>;
-<a name="l00226"></a>00226 };
-<a name="l00227"></a>00227 
-<a name="l00228"></a><a class="code" href="classUClientImage.html">00228</a> <span class="keyword">template</span> &lt;<span class="keyword">class</span> Socket&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a> : <span class="keyword">public</span> <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a> {
-<a name="l00229"></a>00229 <span class="keyword">public</span>:
-<a name="l00230"></a>00230 
-<a name="l00231"></a>00231         <span class="comment">// COSTRUTTORI</span>
-<a name="l00232"></a>00232 
-<a name="l00233"></a>00233         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>() : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>()
-<a name="l00234"></a>00234                 {
-<a name="l00235"></a>00235                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>, <span class="stringliteral">&quot;&quot;</span>, 0)
-<a name="l00236"></a>00236                 }
-<a name="l00237"></a>00237 
-<a name="l00238"></a>00238         <span class="keyword">virtual</span> ~<a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>()
-<a name="l00239"></a>00239                 {
-<a name="l00240"></a>00240                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>)
-<a name="l00241"></a>00241                 }
-<a name="l00242"></a>00242 
-<a name="l00243"></a>00243         <span class="keyword">static</span> Socket* getSocket() { <span class="keywordflow">return</span> (Socket*) socket; }
-<a name="l00244"></a>00244 
-<a name="l00245"></a>00245         <span class="comment">// DEBUG</span>
-<a name="l00246"></a>00246 
-<a name="l00247"></a>00247 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00248"></a>00248 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UClientImage_Base::dump(reset); }
-<a name="l00249"></a>00249 <span class="preprocessor">#endif</span>
-<a name="l00250"></a>00250 <span class="preprocessor"></span>
-<a name="l00251"></a>00251 <span class="keyword">private</span>:
-<a name="l00252"></a>00252         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>&amp;) : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>() {}
-<a name="l00253"></a>00253         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>&amp;)            { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00254"></a>00254 };
-<a name="l00255"></a>00255 
-<a name="l00256"></a>00256 <span class="preprocessor">#ifdef HAVE_SSL // specializzazione con USSLSocket</span>
-<a name="l00257"></a>00257 <span class="preprocessor"></span>
-<a name="l00258"></a>00258 <span class="keyword">template</span> &lt;&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>&lt;<a class="code" href="classUSSLSocket.html">USSLSocket</a>&gt; : <span class="keyword">public</span> <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a> {
-<a name="l00259"></a>00259 <span class="keyword">public</span>:
-<a name="l00260"></a>00260 
-<a name="l00261"></a>00261         SSL* ssl;
-<a name="l00262"></a>00262 
-<a name="l00263"></a>00263         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>() : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>()
-<a name="l00264"></a>00264                 {
-<a name="l00265"></a>00265                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>, <span class="stringliteral">&quot;&quot;</span>, 0)
-<a name="l00266"></a>00266 
-<a name="l00267"></a>00267                 <span class="comment">// NB: we need this because we reuse the same object USocket...</span>
-<a name="l00268"></a>00268 
-<a name="l00269"></a>00269                 ssl = getSocket()-&gt;ssl;
-<a name="l00270"></a>00270 
-<a name="l00271"></a>00271                 if (logbuf) logCertificate();
-<a name="l00272"></a>00272                 }
-<a name="l00273"></a>00273 
-<a name="l00274"></a>00274         virtual ~<a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>()
-<a name="l00275"></a>00275                 {
-<a name="l00276"></a>00276                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>)
-<a name="l00277"></a>00277 
-<a name="l00278"></a>00278                 U_INTERNAL_ASSERT_POINTER(socket)
-<a name="l00279"></a>00279                 U_INTERNAL_ASSERT_EQUALS(socket-&gt;isSSL(), true)
-<a name="l00280"></a>00280 
-<a name="l00281"></a>00281                 if (socket-&gt;isOpen())
-<a name="l00282"></a>00282                         {
-<a name="l00283"></a>00283                         U_INTERNAL_DUMP(<span class="stringliteral">&quot;ssl = %p ssl_fd = %d fd = %d sock_fd = %d&quot;</span>, ssl, SSL_get_fd(ssl), UEventFd::fd, socket-&gt;getFd())
-<a name="l00284"></a>00284 
-<a name="l00285"></a>00285                         U_INTERNAL_ASSERT_EQUALS(SSL_get_fd(ssl), UEventFd::fd)
-<a name="l00286"></a>00286 
-<a name="l00287"></a>00287                         <span class="comment">// NB: we need this because we reuse the same object USocket...</span>
-<a name="l00288"></a>00288 
-<a name="l00289"></a>00289                         getSocket()-&gt;ssl = ssl;
-<a name="l00290"></a>00290                         }
-<a name="l00291"></a>00291                 }
-<a name="l00292"></a>00292 
-<a name="l00293"></a>00293         <span class="comment">// SERVICES</span>
-<a name="l00294"></a>00294 
-<a name="l00295"></a>00295         <span class="keyword">static</span> <a class="code" href="classUSSLSocket.html">USSLSocket</a>* getSocket() { <span class="keywordflow">return</span> (<a class="code" href="classUSSLSocket.html">USSLSocket</a>*)socket; }
-<a name="l00296"></a>00296 
-<a name="l00297"></a>00297         <span class="comment">// aggiungo nel log il certificato Peer del client (&quot;issuer&quot;,&quot;serial&quot;)</span>
-<a name="l00298"></a>00298 
-<a name="l00299"></a>00299         <span class="keywordtype">void</span> logCertificate()
-<a name="l00300"></a>00300                 {
-<a name="l00301"></a>00301                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage&lt;USSLSocket&gt;::logCertificate()&quot;</span>)
-<a name="l00302"></a>00302 
-<a name="l00303"></a>00303                 <span class="comment">// NB: OpenSSL already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...</span>
-<a name="l00304"></a>00304 
-<a name="l00305"></a>00305                 <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>::logCertificate(getSocket()-&gt;getPeerCertificate());
-<a name="l00306"></a>00306                 }
-<a name="l00307"></a>00307 
-<a name="l00308"></a>00308         <span class="comment">// define method VIRTUAL of class UClientImage_Base</span>
-<a name="l00309"></a>00309 
-<a name="l00310"></a>00310         virtual <span class="keywordtype">void</span> reset()
-<a name="l00311"></a>00311                 {
-<a name="l00312"></a>00312                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage&lt;USSLSocket&gt;::reset()&quot;</span>)
-<a name="l00313"></a>00313 
-<a name="l00314"></a>00314                 U_INTERNAL_DUMP(&quot;ssl = %p ssl_fd = %d fd = %d&quot;, ssl, SSL_get_fd(ssl), <a class="code" href="classUEventFd.html">UEventFd</a>::fd)
-<a name="l00315"></a>00315 
-<a name="l00316"></a>00316                 U_INTERNAL_ASSERT(<a class="code" href="classUEventFd.html">UEventFd</a>::fd == SSL_get_fd(ssl))
-<a name="l00317"></a>00317 
-<a name="l00318"></a>00318                 getSocket()-&gt;ssl = ssl; <span class="comment">// NB: we need this because we reuse the same object USocket...</span>
-<a name="l00319"></a>00319 
-<a name="l00320"></a>00320                 <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>::reset();
-<a name="l00321"></a>00321                 }
-<a name="l00322"></a>00322 
-<a name="l00323"></a>00323         <span class="comment">// DEBUG</span>
-<a name="l00324"></a>00324 
-<a name="l00325"></a>00325 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00326"></a>00326 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00327"></a>00327 <span class="preprocessor">#endif</span>
-<a name="l00328"></a>00328 <span class="preprocessor"></span>
-<a name="l00329"></a>00329 <span class="keyword">private</span>:
-<a name="l00330"></a>00330         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp;) : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>() {}
-<a name="l00331"></a>00331         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp;)                              { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00332"></a>00332 };
-<a name="l00333"></a>00333 
-<a name="l00334"></a>00334 <span class="preprocessor">#endif</span>
-<a name="l00335"></a>00335 <span class="preprocessor"></span>
-<a name="l00336"></a>00336 <span class="preprocessor">#endif</span>
+<a name="l00226"></a>00226         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUTimeoutConnection.html">UTimeoutConnection</a>;
+<a name="l00227"></a>00227 };
+<a name="l00228"></a>00228 
+<a name="l00229"></a><a class="code" href="classUClientImage.html">00229</a> <span class="keyword">template</span> &lt;<span class="keyword">class</span> Socket&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a> : <span class="keyword">public</span> <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a> {
+<a name="l00230"></a>00230 <span class="keyword">public</span>:
+<a name="l00231"></a>00231 
+<a name="l00232"></a>00232         <span class="comment">// COSTRUTTORI</span>
+<a name="l00233"></a>00233 
+<a name="l00234"></a>00234         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>() : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>()
+<a name="l00235"></a>00235                 {
+<a name="l00236"></a>00236                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>, <span class="stringliteral">&quot;&quot;</span>, 0)
+<a name="l00237"></a>00237                 }
+<a name="l00238"></a>00238 
+<a name="l00239"></a>00239         <span class="keyword">virtual</span> ~<a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>()
+<a name="l00240"></a>00240                 {
+<a name="l00241"></a>00241                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>)
+<a name="l00242"></a>00242                 }
+<a name="l00243"></a>00243 
+<a name="l00244"></a>00244         <span class="keyword">static</span> Socket* getSocket() { <span class="keywordflow">return</span> (Socket*) socket; }
+<a name="l00245"></a>00245 
+<a name="l00246"></a>00246         <span class="comment">// DEBUG</span>
+<a name="l00247"></a>00247 
+<a name="l00248"></a>00248 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00249"></a>00249 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UClientImage_Base::dump(reset); }
+<a name="l00250"></a>00250 <span class="preprocessor">#endif</span>
+<a name="l00251"></a>00251 <span class="preprocessor"></span>
+<a name="l00252"></a>00252 <span class="keyword">private</span>:
+<a name="l00253"></a>00253         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>&amp;) : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>() {}
+<a name="l00254"></a>00254         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>&amp;)            { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00255"></a>00255 };
+<a name="l00256"></a>00256 
+<a name="l00257"></a>00257 <span class="preprocessor">#ifdef HAVE_SSL // specializzazione con USSLSocket</span>
+<a name="l00258"></a>00258 <span class="preprocessor"></span>
+<a name="l00259"></a>00259 <span class="keyword">template</span> &lt;&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>&lt;<a class="code" href="classUSSLSocket.html">USSLSocket</a>&gt; : <span class="keyword">public</span> <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a> {
+<a name="l00260"></a>00260 <span class="keyword">public</span>:
+<a name="l00261"></a>00261 
+<a name="l00262"></a>00262         SSL* ssl;
+<a name="l00263"></a>00263 
+<a name="l00264"></a>00264         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>() : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>()
+<a name="l00265"></a>00265                 {
+<a name="l00266"></a>00266                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>, <span class="stringliteral">&quot;&quot;</span>, 0)
+<a name="l00267"></a>00267 
+<a name="l00268"></a>00268                 <span class="comment">// NB: we need this because we reuse the same object USocket...</span>
+<a name="l00269"></a>00269 
+<a name="l00270"></a>00270                 ssl = getSocket()-&gt;ssl;
+<a name="l00271"></a>00271 
+<a name="l00272"></a>00272                 if (logbuf) logCertificate();
+<a name="l00273"></a>00273                 }
+<a name="l00274"></a>00274 
+<a name="l00275"></a>00275         virtual ~<a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>()
+<a name="l00276"></a>00276                 {
+<a name="l00277"></a>00277                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>)
+<a name="l00278"></a>00278 
+<a name="l00279"></a>00279                 U_INTERNAL_ASSERT_POINTER(socket)
+<a name="l00280"></a>00280                 U_INTERNAL_ASSERT_EQUALS(socket-&gt;isSSL(), true)
+<a name="l00281"></a>00281 
+<a name="l00282"></a>00282                 if (socket-&gt;isOpen())
+<a name="l00283"></a>00283                         {
+<a name="l00284"></a>00284                         U_INTERNAL_DUMP(<span class="stringliteral">&quot;ssl = %p ssl_fd = %d fd = %d sock_fd = %d&quot;</span>, ssl, SSL_get_fd(ssl), UEventFd::fd, socket-&gt;getFd())
+<a name="l00285"></a>00285 
+<a name="l00286"></a>00286                         U_INTERNAL_ASSERT_EQUALS(SSL_get_fd(ssl), UEventFd::fd)
+<a name="l00287"></a>00287 
+<a name="l00288"></a>00288                         <span class="comment">// NB: we need this because we reuse the same object USocket...</span>
+<a name="l00289"></a>00289 
+<a name="l00290"></a>00290                         getSocket()-&gt;ssl = ssl;
+<a name="l00291"></a>00291                         }
+<a name="l00292"></a>00292                 }
+<a name="l00293"></a>00293 
+<a name="l00294"></a>00294         <span class="comment">// SERVICES</span>
+<a name="l00295"></a>00295 
+<a name="l00296"></a>00296         <span class="keyword">static</span> <a class="code" href="classUSSLSocket.html">USSLSocket</a>* getSocket() { <span class="keywordflow">return</span> (<a class="code" href="classUSSLSocket.html">USSLSocket</a>*)socket; }
+<a name="l00297"></a>00297 
+<a name="l00298"></a>00298         <span class="comment">// aggiungo nel log il certificato Peer del client (&quot;issuer&quot;,&quot;serial&quot;)</span>
+<a name="l00299"></a>00299 
+<a name="l00300"></a>00300         <span class="keywordtype">void</span> logCertificate()
+<a name="l00301"></a>00301                 {
+<a name="l00302"></a>00302                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage&lt;USSLSocket&gt;::logCertificate()&quot;</span>)
+<a name="l00303"></a>00303 
+<a name="l00304"></a>00304                 <span class="comment">// NB: OpenSSL already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...</span>
+<a name="l00305"></a>00305 
+<a name="l00306"></a>00306                 <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>::logCertificate(getSocket()-&gt;getPeerCertificate());
+<a name="l00307"></a>00307                 }
+<a name="l00308"></a>00308 
+<a name="l00309"></a>00309         <span class="comment">// define method VIRTUAL of class UClientImage_Base</span>
+<a name="l00310"></a>00310 
+<a name="l00311"></a>00311         virtual <span class="keywordtype">void</span> reset()
+<a name="l00312"></a>00312                 {
+<a name="l00313"></a>00313                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage&lt;USSLSocket&gt;::reset()&quot;</span>)
+<a name="l00314"></a>00314 
+<a name="l00315"></a>00315                 U_INTERNAL_DUMP(&quot;ssl = %p ssl_fd = %d fd = %d&quot;, ssl, SSL_get_fd(ssl), <a class="code" href="classUEventFd.html">UEventFd</a>::fd)
+<a name="l00316"></a>00316 
+<a name="l00317"></a>00317                 U_INTERNAL_ASSERT(<a class="code" href="classUEventFd.html">UEventFd</a>::fd == SSL_get_fd(ssl))
+<a name="l00318"></a>00318 
+<a name="l00319"></a>00319                 getSocket()-&gt;ssl = ssl; <span class="comment">// NB: we need this because we reuse the same object USocket...</span>
+<a name="l00320"></a>00320 
+<a name="l00321"></a>00321                 <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>::reset();
+<a name="l00322"></a>00322                 }
+<a name="l00323"></a>00323 
+<a name="l00324"></a>00324         <span class="comment">// DEBUG</span>
+<a name="l00325"></a>00325 
+<a name="l00326"></a>00326 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00327"></a>00327 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00328"></a>00328 <span class="preprocessor">#endif</span>
+<a name="l00329"></a>00329 <span class="preprocessor"></span>
+<a name="l00330"></a>00330 <span class="keyword">private</span>:
+<a name="l00331"></a>00331         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp;) : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>() {}
+<a name="l00332"></a>00332         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp;)                              { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00333"></a>00333 };
+<a name="l00334"></a>00334 
+<a name="l00335"></a>00335 <span class="preprocessor">#endif</span>
+<a name="l00336"></a>00336 <span class="preprocessor"></span>
+<a name="l00337"></a>00337 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Mon Feb 8 17:39:27 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Feb 19 12:37:28 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

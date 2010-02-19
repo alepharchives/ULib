@@ -166,7 +166,7 @@ UClientImage_Base::UClientImage_Base()
 
    pClientImage      = this;
    UEventFd::fd      = socket->iSockDesc;
-   UEventFd::op_mask = R_OK; // NB: W_OK == 2, R_OK == 4...
+   UEventFd::op_mask = U_READ_IN;
 
    if (UServer_Base::isLog() == false) logbuf = 0;
    else
@@ -190,6 +190,16 @@ void UClientImage_Base::destroy()
    U_INTERNAL_ASSERT_POINTER(pClientImage)
 
    UServer_Base::handlerCloseConnection();
+
+#ifdef HAVE_LIBEVENT
+   if (pClientImage->pevent)
+      {
+      UNotifier::erase(pClientImage, false);
+
+      (void) UDispatcher::del(pClientImage->pevent);
+                       delete pClientImage->pevent;
+      }
+#endif
 
 #ifdef DEBUG
    if (pClientImage->logbuf)
@@ -371,11 +381,9 @@ void UClientImage_Base::run()
 
    if (pClientImage->handlerRead() != U_NOTIFIER_DELETE)
       {
-#  ifndef HAVE_LIBEVENT
       UNotifier::insert(pClientImage); // NB: this new object (pClientImage) is deleted by UNotifier (when response U_NOTIFIER_DELETE from handlerRead()...)
-#  else
-      pClientImage->delEvent();
 
+#  ifdef HAVE_LIBEVENT
       pClientImage->pevent = U_NEW(UEvent<UClientImage_Base>(pClientImage->UEventFd::fd, EV_READ | EV_PERSIST, *pClientImage));
 
       UDispatcher::add(*(pClientImage->pevent));
@@ -493,33 +501,13 @@ int UClientImage_Base::handlerWrite()
 }
 
 #ifdef HAVE_LIBEVENT
-void UClientImage_Base::delEvent()
-{
-   U_TRACE(0, "UClientImage_Base::delEvent()")
-
-   if (pevent)
-      {
-      UDispatcher::del(pevent);
-
-      delete pevent;
-             pevent = 0;
-      }
-}
-
 void UClientImage_Base::operator()(int fd, short event)
 {
    U_TRACE(0, "UClientImage_Base::operator()(%d,%hd)", fd, event)
 
    U_INTERNAL_ASSERT_EQUALS(event, EV_READ)
 
-   if (handlerRead() == U_NOTIFIER_DELETE)
-      {
-      delEvent();
-
-      // same as UNotifier do...
-
-      delete this;
-      }
+   if (handlerRead() == U_NOTIFIER_DELETE) delete this; // same as UNotifier do...
 }
 #endif
 

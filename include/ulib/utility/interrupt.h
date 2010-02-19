@@ -34,14 +34,7 @@ struct U_EXPORT UInterrupt {
    static void init();
    static void setMaskInterrupt(sigset_t* mask, int signo);
 
-   static RETSIGTYPE handlerInterrupt(int signo)
-      {
-      U_TRACE(0, "UInterrupt::handlerInterrupt(%d)", signo)
-
-      U_MESSAGE("program interrupt - %Y", signo);
-
-      U_EXIT(-1);
-      }
+   static RETSIGTYPE handlerInterrupt(int signo);
 
 #ifdef HAVE_SIGINFO_T
    static RETSIGTYPE handlerInterruptWithInfo(int signo, siginfo_t* info, void*);
@@ -83,12 +76,7 @@ struct U_EXPORT UInterrupt {
 
    static sig_atomic_t flag_wait_for_signal;
 
-   static RETSIGTYPE handlerSignal(int signo)
-      {
-      U_TRACE(0, "[SIGNAL] UInterrupt::handlerSignal(%d)", signo)
-
-      flag_wait_for_signal = false;
-      }
+   static RETSIGTYPE handlerSignal(int signo);
 
    static void setHandlerForSignal(int signo, sighandler_t function)
       {
@@ -99,21 +87,7 @@ struct U_EXPORT UInterrupt {
       (void) U_SYSCALL(sigaction, "%d,%p,%p", signo, &act, 0);
       }
 
-   static void waitForSignal(int signo)
-      {
-      U_TRACE(1, "UInterrupt::waitForSignal(%d)", signo)
-
-      static sigset_t mask_wait_for_signal;
-
-      flag_wait_for_signal = true;
-
-      setHandlerForSignal(signo, (sighandler_t)handlerSignal);
-
-      while (flag_wait_for_signal == true)
-         {
-         (void) U_SYSCALL(sigsuspend, "%p", &mask_wait_for_signal);
-         }
-      }
+   static void waitForSignal(int signo);
 
    static bool sendSignal(int signo, pid_t pid)
       {
@@ -135,14 +109,7 @@ struct U_EXPORT UInterrupt {
    static void  erase(int signo);
    static void insert(int signo, sighandler_t handler);
 
-   static RETSIGTYPE handlerEventSignal(int signo)
-      {
-      U_TRACE(0, "[SIGNAL] UInterrupt::handlerEventSignal(%d)", signo)
-
-      ++event_signal[signo];
-
-      event_signal_pending = (event_signal_pending ? NSIG : signo);
-      }
+   static RETSIGTYPE handlerEventSignal(int signo);
 
    static void callHandlerSignal();
    static bool checkForEventSignalPending();

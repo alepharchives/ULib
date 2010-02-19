@@ -14,13 +14,7 @@
 #ifndef ULIB_APPLICATION_H
 #define ULIB_APPLICATION_H 1
 
-#include <ulib/internal/common.h>
-
-#ifdef U_STD_STRING
-class UOptions;
-#else
-#  include <ulib/options.h>
-#endif
+#include <ulib/options.h>
 
 #ifdef DEBUG
 #define U_MAIN_END(value) return value
@@ -63,35 +57,19 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static UString* str;
-   static UOptions* opt;
    static int exit_value;
    static uint32_t num_args;
 
    // COSTRUTTORI
 
-   UApplication()
+   UString str; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+   UOptions opt;
+
+   UApplication() : opt(126)
       {
       U_TRACE_REGISTER_OBJECT(0, UApplication, "", 0)
-      }
-
-   ~UApplication();
-
-   // SERVICES
-
-   static void run(int argc, char* argv[], char* env[])
-      {
-      U_TRACE(0+256, "UApplication::run(%d,%p,%p)", argc, argv, env)
-
-      U_DUMP_EXEC(argv, env);
 
 #  ifdef U_OPTIONS
-      if (argc > 1) // se esistono opzioni, queste vengono processate...
-         {
-         U_INTERNAL_ASSERT_EQUALS_MSG(opt, 0, "you can't allocate more than ONE INSTANCE of UOptions for class UApplication")
-
-         U_NEW_ULIB_OBJECT(opt, UOptions(argc));
-
 #     ifndef U_OPTIONS_1
 #     define U_OPTIONS_1 ""
 #     endif
@@ -102,23 +80,46 @@ public:
 #     define U_OPTIONS_3 ""
 #     endif
 
-         U_NEW_ULIB_OBJECT(str, UString(U_CONSTANT_TO_PARAM(U_OPTIONS U_OPTIONS_1 U_OPTIONS_2 U_OPTIONS_3)));
+      str = UString(U_CONSTANT_TO_PARAM(U_OPTIONS U_OPTIONS_1 U_OPTIONS_2 U_OPTIONS_3));
 
-         opt->load(*str);
-
-         num_args = opt->getopt(argc, argv, &optind);
-         }
+      opt.load(str);
 #  endif
       }
 
-   static bool isOptions() { return (opt != 0); }
+   ~UApplication();
+
+   // SERVICES
+
+   void run(int argc, char* argv[], char* env[])
+      {
+      U_TRACE(0+256, "UApplication::run(%d,%p,%p)", argc, argv, env)
+
+      U_DUMP_EXEC(argv, env);
+
+      // se esistono opzioni, queste vengono processate...
+
+      is_options = (argc > 1);
+      num_args   = opt.getopt(argc, argv, &optind);
+      }
+
+   static bool isOptions()
+      {
+      U_TRACE(0, "UApplication::isOptions()")
+
+      U_RETURN(is_options);
+      }
 
 #ifdef DEBUG
    const char* dump(bool reset) const;
 #endif
 
+protected:
+   static bool is_options;
+
+   void usage() { opt.printHelp(0); }
+
 private:
-   UApplication(const UApplication&)            {}
+   UApplication(const UApplication&) : opt(0)   {}
    UApplication& operator=(const UApplication&) { return *this; }
 };
 

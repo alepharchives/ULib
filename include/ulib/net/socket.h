@@ -676,6 +676,19 @@ protected:
    bool bind(SocketAddress& cLocal);
    bool setServer(SocketAddress& cLocal, int iBackLog);
 
+   static bool isBlocking()
+      {
+      U_TRACE(0, "USocket::isBlocking()")
+
+      if (req_timeout &&
+          accept4_flags == 0)
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
    /**
    This protected method is called by inherited classes when the local socket address is valid.
    It sets the bLocalSet flag, obtains details of the local address and stores them in the internal member variables

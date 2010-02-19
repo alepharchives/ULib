@@ -1,6 +1,3 @@
 <map id="G" name="G">
-<area shape="rect" id="node1" href="$classUIPAddress.html" title="UIPAddress" alt="" coords="136,5,221,33"/>
-<area shape="rect" id="node3" href="$classUModNoCatPeer.html" title="UModNoCatPeer" alt="" coords="272,30,387,58"/>
-<area shape="rect" id="node4" href="$classUTimeVal.html" title="UTimeVal" alt="" coords="7,55,84,83"/>
-<area shape="rect" id="node6" href="$classUEventTime.html" title="UEventTime" alt="" coords="133,55,224,83"/>
+<area shape="rect" id="node1" href="$unionuusockaddr.html" title="uusockaddr" alt="" coords="5,5,88,33"/>
 </map>

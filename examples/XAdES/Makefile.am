@@ -2,12 +2,12 @@
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
-sign_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la
-sign_SOURCES = sign.cpp
-sign_LDFLAGS = $(PRG_LDFLAGS)
+sign_LDADD     = $(top_builddir)/src/ulib/lib@ULIB@.la
+sign_SOURCES   = sign.cpp
+sign_LDFLAGS   = $(PRG_LDFLAGS)
 
 verify_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la
-verify_SOURCES = verify.cpp
+verify_SOURCES = context.cpp transform.cpp xpath.cpp verify.cpp
 verify_LDFLAGS = $(PRG_LDFLAGS)
 
 noinst_PROGRAMS = sign verify
