@@ -39,53 +39,81 @@
 <a name="l00016"></a>00016 <span class="preprocessor"></span>
 <a name="l00017"></a>00017 <span class="preprocessor">#include &lt;ulib/timeval.h&gt;</span>
 <a name="l00018"></a>00018 
-<a name="l00019"></a><a class="code" href="classUEventTime.html">00019</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUEventTime.html">UEventTime</a> : <span class="keyword">public</span> <a class="code" href="classUTimeVal.html">UTimeVal</a> {
-<a name="l00020"></a>00020 <span class="keyword">public</span>:
-<a name="l00021"></a>00021 
-<a name="l00022"></a>00022         <span class="keyword">struct </span>timeval ctime;
-<a name="l00023"></a>00023 
-<a name="l00024"></a>00024         <span class="keywordtype">void</span> reset() { ctime.tv_sec = ctime.tv_usec = 0L; }
-<a name="l00025"></a>00025 
-<a name="l00026"></a>00026         <a class="code" href="classUEventTime.html">UEventTime</a>(<span class="keywordtype">long</span> sec = 0L, <span class="keywordtype">long</span> usec = 0L) : <a class="code" href="classUTimeVal.html">UTimeVal</a>(sec, usec)
-<a name="l00027"></a>00027                 {
-<a name="l00028"></a>00028                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUEventTime.html">UEventTime</a>, <span class="stringliteral">&quot;%ld,%ld&quot;</span>, sec, usec)
-<a name="l00029"></a>00029 
-<a name="l00030"></a>00030                 reset();
-<a name="l00031"></a>00031                 }
-<a name="l00032"></a>00032 
-<a name="l00033"></a>00033         <span class="keyword">virtual</span> ~<a class="code" href="classUEventTime.html">UEventTime</a>()
-<a name="l00034"></a>00034                 {
-<a name="l00035"></a>00035                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUEventTime.html">UEventTime</a>)
-<a name="l00036"></a>00036                 }
-<a name="l00037"></a>00037 
-<a name="l00038"></a>00038         <span class="keywordtype">bool</span> operator&lt;(<span class="keyword">const</span> <a class="code" href="classUEventTime.html">UEventTime</a>&amp; t) <span class="keyword">const</span>;
+<a name="l00019"></a>00019 <span class="preprocessor">#ifdef HAVE_LIBEVENT</span>
+<a name="l00020"></a>00020 <span class="preprocessor"></span><span class="preprocessor">#       include &lt;ulib/libevent/event.h&gt;</span>
+<a name="l00021"></a>00021 <span class="keyword">extern</span> U_EXPORT <span class="keyword">struct </span>event_base* u_ev_base;
+<a name="l00022"></a>00022 <span class="preprocessor">#endif</span>
+<a name="l00023"></a>00023 <span class="preprocessor"></span>
+<a name="l00024"></a><a class="code" href="classUEventTime.html">00024</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUEventTime.html">UEventTime</a> : <span class="keyword">public</span> <a class="code" href="classUTimeVal.html">UTimeVal</a> {
+<a name="l00025"></a>00025 <span class="keyword">public</span>:
+<a name="l00026"></a>00026 
+<a name="l00027"></a>00027         <span class="keyword">struct </span>timeval ctime;
+<a name="l00028"></a>00028 
+<a name="l00029"></a>00029         <span class="keywordtype">void</span> reset() { ctime.tv_sec = ctime.tv_usec = 0L; }
+<a name="l00030"></a>00030 
+<a name="l00031"></a>00031         <a class="code" href="classUEventTime.html">UEventTime</a>(<span class="keywordtype">long</span> sec = 0L, <span class="keywordtype">long</span> usec = 0L) : <a class="code" href="classUTimeVal.html">UTimeVal</a>(sec, usec)
+<a name="l00032"></a>00032                 {
+<a name="l00033"></a>00033                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUEventTime.html">UEventTime</a>, <span class="stringliteral">&quot;%ld,%ld&quot;</span>, sec, usec)
+<a name="l00034"></a>00034 
+<a name="l00035"></a>00035                 reset();
+<a name="l00036"></a>00036 
+<a name="l00037"></a>00037 <span class="preprocessor">#       ifdef HAVE_LIBEVENT</span>
+<a name="l00038"></a>00038 <span class="preprocessor"></span>                U_INTERNAL_ASSERT_POINTER(u_ev_base)
 <a name="l00039"></a>00039 
-<a name="l00040"></a>00040         <span class="comment">// SERVICES</span>
+<a name="l00040"></a>00040                 pevent = U_NEW(<a class="code" href="classUTimerEv.html">UTimerEv&lt;UEventTime&gt;</a>(*<span class="keyword">this</span>));
 <a name="l00041"></a>00041 
-<a name="l00042"></a>00042         <span class="keywordtype">bool</span> isOld() <span class="keyword">const</span>;
-<a name="l00043"></a>00043         <span class="keywordtype">void</span> setCurrentTime();
-<a name="l00044"></a>00044         <span class="keywordtype">void</span> setTimerVal(<span class="keyword">struct</span> timeval* it_value);
+<a name="l00042"></a>00042                 (void) <a class="code" href="classUDispatcher.html#abeab4e364c2697273e482c8cdc334f51">UDispatcher::add</a>(*pevent, *(<a class="code" href="classUTimeVal.html">UTimeVal</a>*)<span class="keyword">this</span>);
+<a name="l00043"></a>00043 <span class="preprocessor">#       endif</span>
+<a name="l00044"></a>00044 <span class="preprocessor"></span>                }
 <a name="l00045"></a>00045 
-<a name="l00046"></a>00046         time_t expire() { <span class="keywordflow">return</span> (ctime.tv_sec + tv_sec); }
-<a name="l00047"></a>00047 
-<a name="l00048"></a>00048         <span class="comment">// -------------------------------------------</span>
-<a name="l00049"></a>00049         <span class="comment">// method VIRTUAL to define</span>
-<a name="l00050"></a>00050         <span class="comment">// -------------------------------------------</span>
-<a name="l00051"></a>00051         <span class="comment">// return value: -1 -&gt; normal, 0 -&gt; monitoring</span>
-<a name="l00052"></a>00052         <span class="comment">// -------------------------------------------</span>
-<a name="l00053"></a>00053 
-<a name="l00054"></a>00054         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerTime() { <span class="keywordflow">return</span> -1; }
+<a name="l00046"></a>00046         <span class="keyword">virtual</span> ~<a class="code" href="classUEventTime.html">UEventTime</a>()
+<a name="l00047"></a>00047                 {
+<a name="l00048"></a>00048                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUEventTime.html">UEventTime</a>)
+<a name="l00049"></a>00049 
+<a name="l00050"></a>00050 <span class="preprocessor">#       ifdef HAVE_LIBEVENT</span>
+<a name="l00051"></a>00051 <span class="preprocessor"></span>                <a class="code" href="classUDispatcher.html#a61351471c043710217fed44a0ab09394">UDispatcher::del</a>(pevent);
+<a name="l00052"></a>00052                                          <span class="keyword">delete</span> pevent;
+<a name="l00053"></a>00053 <span class="preprocessor">#       endif</span>
+<a name="l00054"></a>00054 <span class="preprocessor"></span>                }
 <a name="l00055"></a>00055 
-<a name="l00056"></a>00056         <span class="keyword">friend</span> U_EXPORT ostream&amp; operator&lt;&lt;(ostream&amp; os, <span class="keyword">const</span> <a class="code" href="classUEventTime.html">UEventTime</a>&amp; t);
-<a name="l00057"></a>00057         
-<a name="l00058"></a>00058 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00059"></a>00059 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00060"></a>00060 <span class="preprocessor">#endif</span>
-<a name="l00061"></a>00061 <span class="preprocessor"></span>};
-<a name="l00062"></a>00062 
-<a name="l00063"></a>00063 <span class="preprocessor">#endif</span>
+<a name="l00056"></a>00056         <span class="keywordtype">bool</span> operator&lt;(<span class="keyword">const</span> <a class="code" href="classUEventTime.html">UEventTime</a>&amp; t) <span class="keyword">const</span>;
+<a name="l00057"></a>00057 
+<a name="l00058"></a>00058         <span class="comment">// SERVICES</span>
+<a name="l00059"></a>00059 
+<a name="l00060"></a>00060         <span class="keywordtype">bool</span> isOld() <span class="keyword">const</span>;
+<a name="l00061"></a>00061         <span class="keywordtype">void</span> setCurrentTime();
+<a name="l00062"></a>00062         <span class="keywordtype">void</span> setTimerVal(<span class="keyword">struct</span> timeval* it_value);
+<a name="l00063"></a>00063 
+<a name="l00064"></a>00064         time_t expire() { <span class="keywordflow">return</span> (ctime.tv_sec + tv_sec); }
+<a name="l00065"></a>00065 
+<a name="l00066"></a>00066         <span class="comment">// -------------------------------------------</span>
+<a name="l00067"></a>00067         <span class="comment">// method VIRTUAL to define</span>
+<a name="l00068"></a>00068         <span class="comment">// -------------------------------------------</span>
+<a name="l00069"></a>00069         <span class="comment">// return value: -1 -&gt; normal, 0 -&gt; monitoring</span>
+<a name="l00070"></a>00070         <span class="comment">// -------------------------------------------</span>
+<a name="l00071"></a>00071 
+<a name="l00072"></a>00072         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerTime() { <span class="keywordflow">return</span> -1; }
+<a name="l00073"></a>00073 
+<a name="l00074"></a>00074 <span class="preprocessor">#ifdef HAVE_LIBEVENT</span>
+<a name="l00075"></a>00075 <span class="preprocessor"></span>        <a class="code" href="classUTimerEv.html">UTimerEv&lt;UEventTime&gt;</a>* pevent;
+<a name="l00076"></a>00076 
+<a name="l00077"></a>00077         <span class="keywordtype">void</span> operator()(<span class="keywordtype">int</span> fd, <span class="keywordtype">short</span> event);
+<a name="l00078"></a>00078 <span class="preprocessor">#endif</span>
+<a name="l00079"></a>00079 <span class="preprocessor"></span>
+<a name="l00080"></a>00080         <span class="keyword">friend</span> U_EXPORT ostream&amp; operator&lt;&lt;(ostream&amp; os, <span class="keyword">const</span> <a class="code" href="classUEventTime.html">UEventTime</a>&amp; t);
+<a name="l00081"></a>00081 
+<a name="l00082"></a>00082 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00083"></a>00083 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00084"></a>00084 <span class="preprocessor">#endif</span>
+<a name="l00085"></a>00085 <span class="preprocessor"></span>
+<a name="l00086"></a>00086 <span class="keyword">private</span>:
+<a name="l00087"></a>00087         <a class="code" href="classUEventTime.html">UEventTime</a>(<span class="keyword">const</span> <a class="code" href="classUEventTime.html">UEventTime</a>&amp;) : <a class="code" href="classUTimeVal.html">UTimeVal</a>() {}
+<a name="l00088"></a>00088         <a class="code" href="classUEventTime.html">UEventTime</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUEventTime.html">UEventTime</a>&amp;)         { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00089"></a>00089 };
+<a name="l00090"></a>00090 
+<a name="l00091"></a>00091 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Feb 19 12:37:27 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Mar 3 15:38:06 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

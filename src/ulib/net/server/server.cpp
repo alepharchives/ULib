@@ -11,7 +11,6 @@
 //
 // ============================================================================
 
-#include <ulib/timeval.h>
 #include <ulib/command.h>
 #include <ulib/file_config.h>
 #include <ulib/net/udpsocket.h>
@@ -51,15 +50,6 @@ UServer_Base::shared_data* UServer_Base::ptr;
 
 #ifdef HAVE_MODULES
 UVector<UServerPlugIn*>*   UServer_Base::vplugin;
-#endif
-
-#ifdef HAVE_LIBEVENT
-// SigHandler*             UServer_Base::pSigHandler;
-// USignal<SigHandler>*    UServer_Base::psigterm;
-
-TimeHandler*               UServer_Base::pTimeHandler;
-UEvent<UServer_Base>*      UServer_Base::pevent;
-UTimerEv<TimeHandler>*     UServer_Base::ptimehandler;
 #endif
 
 const UString* UServer_Base::str_USE_IPV6;
@@ -102,145 +92,6 @@ UString*       UServer_Base::htpasswd;
 UString*       UServer_Base::htdigest;
 const UString* UServer_Base::str_htpasswd;
 const UString* UServer_Base::str_htdigest;
-
-#ifdef HAVE_LIBEVENT
-class U_NO_EXPORT TimeHandler {
-public:
-
-   // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
-
-   // COSTRUTTORI
-
-   TimeHandler()
-      {
-      U_TRACE_REGISTER_OBJECT(0, TimeHandler, "", 0)
-      }
-
-   ~TimeHandler()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, TimeHandler)
-      }
-
-   void operator()(int fd, short event)
-      {
-      U_TRACE(0, "TimeHandler::operator()(%d,%hd)", fd, event)
-
-      U_INTERNAL_ASSERT_POINTER(UServer_Base::ptime)
-      U_INTERNAL_ASSERT_POINTER(UServer_Base::ptimehandler)
-
-      // idle connection... (timeout)
-
-      UServer_Base::handlerIdleConnection();
-
-      (void) UDispatcher::add(*UServer_Base::ptimehandler, *(UTimeVal*)UServer_Base::ptime);
-      }
-
-#ifdef DEBUG
-   const char* dump(bool reset) const { return "..."; }
-#endif
-
-private:
-   TimeHandler(const TimeHandler&)            {}
-   TimeHandler& operator=(const TimeHandler&) { return *this; }
-};
-
-/*
-class U_NO_EXPORT SigHandler {
-public:
-
-   // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
-
-   // COSTRUTTORI
-
-   SigHandler()
-      {
-      U_TRACE_REGISTER_OBJECT(0, SigHandler, "", 0)
-      }
-
-   ~SigHandler()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, SigHandler)
-      }
-
-   void operator()(int signum, short event)
-      {
-      U_TRACE(0, "SigHandler::operator()(%d,%hd)", signum, event)
-
-      if (signum == SIGTERM) (void) UDispatcher::exit(0);
-
-      UServer_Base::handlerForSigTERM(SIGTERM);
-      }
-
-#ifdef DEBUG
-   const char* dump(bool reset) const { return "..."; }
-#endif
-
-private:
-   SigHandler(const SigHandler&)            {}
-   SigHandler& operator=(const SigHandler&) { return *this; }
-};
-*/
-
-void UServer_Base::operator()(int fd, short event)
-{
-   U_TRACE(0, "UServer_Base::operator()(%d,%hd)", fd, event)
-
-   U_INTERNAL_ASSERT_EQUALS(event, EV_READ)
-
-   if (handlerRead() == U_NOTIFIER_DELETE) delete this; // as UNotifier do...
-}
-#endif
-
-class U_NO_EXPORT UTimeoutConnection : public UEventTime {
-public:
-
-   // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
-
-   // COSTRUTTORI
-
-   UTimeoutConnection(long sec, long usec) : UEventTime(sec, usec)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UTimeoutConnection, "%ld,%ld", sec, usec)
-      }
-
-   virtual ~UTimeoutConnection()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UTimeoutConnection)
-      }
-
-   // define method VIRTUAL of class UEventTime
-
-   virtual int handlerTime()
-      {
-      U_TRACE(0, "UTimeoutConnection::handlerTime()")
-
-      // idle connection... (timeout)
-
-      UServer_Base::handlerIdleConnection();
-
-      // return value:
-      // ---------------
-      // -1 - normal
-      //  0 - monitoring
-      // ---------------
-
-      U_RETURN(0);
-      }
-
-#ifdef DEBUG
-   const char* dump(bool reset) const { return UEventTime::dump(reset); }
-#endif
-
-private:
-   UTimeoutConnection(const UTimeoutConnection&) : UEventTime() {}
-   UTimeoutConnection& operator=(const UTimeoutConnection&)     { return *this; }
-};
 
 void UServer_Base::str_allocate()
 {
@@ -387,27 +238,7 @@ UServer_Base::~UServer_Base()
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
-   delete socket;
-
-#ifdef HAVE_LIBEVENT
-   if (pevent)
-      {
-      UDispatcher::del(pevent);
-
-      delete pevent;
-//    delete psigterm;
-//    delete pSigHandler;
-
-      if (USocket::req_timeout)
-         {
-         delete pTimeHandler;
-         delete ptimehandler;
-         }
-      }
-#endif
-
    UNotifier::erase(this, false); // NB: to avoid to delete himself...
-
    UNotifier::clear();
 
 #ifdef HAVE_MODULES
@@ -428,6 +259,8 @@ UServer_Base::~UServer_Base()
    if (htpasswd)   delete htpasswd;
    if (htdigest)   delete htdigest;
    if (vallow_IP)  delete vallow_IP;
+
+   delete socket;
 
    UClientImage_Base::clear();
 }
@@ -866,7 +699,15 @@ void UServer_Base::init()
          }
       }
 
-   UNotifier::init();
+   // NB: if serialize (0 and >1) we ask to notify for request of connection,
+   //     in this way only in the classic model the forked child don't accept new client...
+
+   if (preforked_num_kids == 0)
+      {
+      UNotifier::init(pthis);
+
+      if (USocket::req_timeout) ptime = U_NEW(UTimeoutConnection(USocket::req_timeout, 0L));
+      }
 }
 
 RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
@@ -906,10 +747,6 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
    flag_loop = false;
 
-#ifdef HAVE_LIBEVENT
-   (void) UDispatcher::exit(0);
-#endif
-
    if (proc->parent())
       {
       // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
@@ -917,6 +754,9 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
       sendSigTERM();
       }
+#ifdef HAVE_LIBEVENT
+   else (void) UDispatcher::exit(0);
+#endif
 }
 
 int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
@@ -982,6 +822,8 @@ void UServer_Base::handlerCloseConnection()
 
    U_INTERNAL_DUMP("num_connection = %d", num_connection)
 
+   U_ASSERT_EQUALS(UNotifier::isHandler(UClientImage_Base::pClientImage), false)
+
    if (isLog())
       {
       if (isPreForked())
@@ -991,7 +833,7 @@ void UServer_Base::handlerCloseConnection()
          U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
          }
 
-      log->log("client closed connection from %.*s, %s clients still connected\n",
+      ULog::log("client closed connection from %.*s, %s clients still connected\n",
                   U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
       }
 }
@@ -1048,7 +890,13 @@ void UServer_Base::handlerNewConnection()
 
          const char* msg_error = UClientImage_Base::socket->getMsgError(buffer, sizeof(buffer));
 
-         U_SRV_LOG_VAR("accept new client failed %S", msg_error);
+         uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
+
+         u_printf_string_max_length = strlen(msg_error);
+
+         ULog::log("%saccept new client failed %.*S\n", mod_name, u_printf_string_max_length, msg_error);
+
+         u_printf_string_max_length = u_printf_string_max_length_save;
          }
 
       return;
@@ -1103,9 +951,7 @@ void UServer_Base::handlerNewConnection()
 
       if (proc->child())
          {
-#     ifdef HAVE_LIBEVENT
-         (void) U_SYSCALL(event_reinit, "%p", u_ev_base); // Reinitialized the event base after a fork
-#     endif
+         UNotifier::init(0);
 
          if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
          }
@@ -1121,7 +967,7 @@ void UServer_Base::handlerNewConnection()
       {
       U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage->logbuf)
 
-      log->log("new client connected from %.*s, %s clients currently connected\n",
+      ULog::log("new client connected from %.*s, %s clients currently connected\n",
                         U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
       }
 
@@ -1140,37 +986,14 @@ void UServer_Base::run()
 
    UInterrupt::syscall_restart = false;
 
-   if (isPreForked()) UNotifier::preallocate(max_Keep_Alive / preforked_num_kids);
-
-   if (USocket::req_timeout) ptime = U_NEW(UTimeoutConnection(USocket::req_timeout, 0L));
-
-#ifdef HAVE_LIBEVENT
-   UInterrupt::setHandlerForSignal( SIGHUP, (sighandler_t)UServer_Base::handlerForSigTERM); // sync signal
-   UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // sync signal
-
-// pSigHandler = U_NEW(SigHandler);
-// psigterm    = U_NEW(USignal<SigHandler>(SIGTERM, *pSigHandler));
-   pevent      = U_NEW(UEvent<UServer_Base>(pthis->UEventFd::fd, EV_READ | EV_PERSIST, *pthis));
-
-   (void) UDispatcher::add(*pevent);
-
-   if (USocket::req_timeout)
-      {
-      pTimeHandler = U_NEW(TimeHandler);
-      ptimehandler = U_NEW(UTimerEv<TimeHandler>(*pTimeHandler));
-
-      (void) UDispatcher::add(*ptimehandler, *(UTimeVal*)ptime);
-      }
-#else
-   UInterrupt::insert( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  // async signal
-   UInterrupt::insert(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
-
    UNotifier::exit_loop_wait_event_for_signal = true;
 
-   // NB: if serialize (0 and >1) we ask to notify for request of connection,
-   //     in this way only in the classic model the forked child don't accept new client...
-
-   if (isSerialize()) UNotifier::insert(pthis);
+#ifdef HAVE_LIBEVENT
+   UInterrupt::setHandlerForSignal( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  //  sync signal
+   UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); //  sync signal
+#else
+   UInterrupt::insert(              SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  // async signal
+   UInterrupt::insert(             SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
 #endif
 
    // --------------------------------------------------------------------------------------------------------------------------
@@ -1191,6 +1014,8 @@ void UServer_Base::run()
       int pid, status, nkids = 0;
       UTimeVal to_sleep(0L, 500 * 1000L);
 
+      UNotifier::preallocate(max_Keep_Alive / preforked_num_kids);
+
       while (flag_loop)
          {
          while (nkids < preforked_num_kids)
@@ -1207,16 +1032,14 @@ void UServer_Base::run()
 
             if (proc->child())
                {
+               UNotifier::init(pthis);
+
+               if (USocket::req_timeout) ptime = U_NEW(UTimeoutConnection(USocket::req_timeout, 0L));
+
                if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
 
                // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
                UInterrupt::setHandlerForSignal(SIGHUP, (sighandler_t)SIG_IGN);
-
-#           ifdef HAVE_LIBEVENT
-               (void) U_SYSCALL(event_reinit, "%p", u_ev_base); // Reinitialized the event base after a fork
-
-            // (void) UDispatcher::add(*psigterm);
-#           endif
 
                goto preforked_child;
                }
@@ -1257,7 +1080,6 @@ preforked_child:
       if (block_on_accept &&
           isClientConnect() == false)
          {
-wait:
          U_SRV_LOG_MSG("waiting for connection");
 
          if (UInterrupt::event_signal_pending)
@@ -1276,18 +1098,12 @@ wait:
          continue; // may be interrupt...
          }
 
-#  ifdef HAVE_LIBEVENT
-      if (UDispatcher::dispatch(UDispatcher::ONCE)) break; // no more events registered...
-#  else
-      if (UNotifier::waitForEvent(ptime) == false)  break; // no more events registered...
-#  endif
+      if (UNotifier::waitForEvent(ptime) == false) break; // no more events registered...
       }
 
-   if (flag_loop && isPreForked()) goto wait; // if we are preforked don't go away...
-
-end:
    if (isPreForked())
       {
+end:
       if (proc->parent()) (void) proc->waitAll();
       else
          {

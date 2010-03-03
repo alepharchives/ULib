@@ -98,8 +98,9 @@ public:
       CLOSE   = 0,
       TIMEOUT = 1,
       BROKEN  = 2,
-      CONNECT = 3,
-      LOGIN   = 4
+      RESET   = 3,
+      CONNECT = 4,
+      LOGIN   = 5
    };
 
    USocket(bool bSocketIsIPv6 = false)
@@ -129,29 +130,19 @@ public:
 
    int  getFd() const       { return  iSockDesc; }
    bool isOpen() const      { return (iSockDesc != -1); }
-   bool isClosed() const    { return (iSockDesc == -1); }
-   bool isConnected() const { return (iState >= CONNECT); }
+   bool isReset() const     { return (iState == RESET); }
    bool isLogin() const     { return (iState == LOGIN); }
-   bool isTimeout() const   { return (iState == TIMEOUT); }
+   bool isClosed() const    { return (iSockDesc == -1); }
    bool isBroken() const    { return (iState == BROKEN); }
+   bool isTimeout() const   { return (iState == TIMEOUT); }
    bool isSysError() const  { return (iState  < CLOSE); }
+   bool isConnected() const { return (iState >= CONNECT); }
 
    /**
    This method is called after read block of data of remote connection
    */
 
-   void checkErrno(int value)
-      {
-      U_TRACE(0, "USocket::checkErrno(%d)", value)
-
-      U_INTERNAL_ASSERT(value < 0)
-
-      U_INTERNAL_DUMP("errno = %d", errno)
-
-      iState = (errno == EAGAIN ? TIMEOUT : (closesocket(), BROKEN));
-
-      U_INTERNAL_DUMP("state = %d", iState)
-      }
+   void checkErrno(int value);
 
    /**
    This method is called after send block of data to remote connection

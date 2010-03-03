@@ -1,9 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node3" href="$classUTranformBase64.html" title="UTranformBase64" alt="" coords="176,5,296,33"/>
-<area shape="rect" id="node5" href="$classUTranformInclC14N.html" title="UTranformInclC14N" alt="" coords="169,55,303,83"/>
-<area shape="rect" id="node7" href="$classUTranformInputURI.html" title="UTranformInputURI" alt="" coords="169,106,303,134"/>
-<area shape="rect" id="node9" href="$classUTranformRsaMd5.html" title="UTranformRsaMd5" alt="" coords="173,157,299,185"/>
-<area shape="rect" id="node11" href="$classUTranformRsaSha1.html" title="UTranformRsaSha1" alt="" coords="172,207,300,235"/>
-<area shape="rect" id="node13" href="$classUTranformSha1.html" title="UTranformSha1" alt="" coords="181,258,291,286"/>
-<area shape="rect" id="node15" href="$classUTranformXPointer.html" title="UTranformXPointer" alt="" coords="171,309,301,337"/>
-</map>

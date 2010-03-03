@@ -426,6 +426,25 @@ bool USocket::setTimeoutSND(uint32_t timeoutMS)
    U_RETURN(result);
 }
 
+void USocket::checkErrno(int value)
+{
+   U_TRACE(0, "USocket::checkErrno(%d)", value)
+
+   U_INTERNAL_ASSERT(value < 0)
+
+   U_INTERNAL_DUMP("errno = %d", errno)
+
+   if (errno == EAGAIN) iState = TIMEOUT;
+   else
+      {
+      iState = (errno == ECONNRESET ? RESET : BROKEN);
+
+      closesocket();
+      }
+
+   U_INTERNAL_DUMP("state = %d", iState)
+}
+
 // VIRTUAL METHOD
 
 void USocket::closesocket()
@@ -456,12 +475,13 @@ void USocket::closesocket()
       /* At this point, the socket layer has to wait until the receiver has
        * acknowledged the FIN packet by receiving a ACK packet. This is done by
        * using the recv() command in a loop until 0 or less value is returned.
-       * Once recv() returns 0 (or less),  1/2 of the socket is closed
+       * Once recv() returns 0 (or less), 1/2 of the socket is closed
        */
 
       char buf[8*1024];
+      uint32_t count = 0;
 
-      do { errno = 0; } while (recv(iSockDesc, buf, sizeof(buf)) > 0 || errno == EAGAIN);
+      do { if (count++ > 10) break; errno = 0; } while (recv(iSockDesc, buf, sizeof(buf)) > 0 || errno == EAGAIN);
       }
 
    // Then you can close the second half of the socket by calling closesocket()

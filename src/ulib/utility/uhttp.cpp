@@ -18,6 +18,7 @@
 #include <ulib/mime/entity.h>
 #include <ulib/utility/uhttp.h>
 #include <ulib/utility/base64.h>
+#include <ulib/base/coder/url.h>
 #include <ulib/utility/services.h>
 #include <ulib/net/server/server.h>
 #include <ulib/utility/socket_ext.h>
@@ -799,23 +800,6 @@ const char* UHTTP::getAcceptLanguage()
    U_INTERNAL_DUMP("accept_language = %.2S", ptr)
 
    U_RETURN_POINTER(accept_language,const char);
-}
-
-const char* UHTTP::getBrowserMSIE()
-{
-   U_TRACE(0, "UHTTP::getBrowserMSIE()")
-
-   const char* browserMSIE = "";
-
-   // check User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
-
-   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_user_agent);
-
-   if (ptr && (u_find(ptr, 30, U_CONSTANT_TO_PARAM("MSIE")) != 0)) browserMSIE = "1";
-
-   U_INTERNAL_DUMP("browserMSIE = %S", browserMSIE)
-
-   U_RETURN_POINTER(browserMSIE,const char);
 }
 
 // check for "Accept-Encoding: deflate" in header request...
@@ -1822,23 +1806,13 @@ bool UHTTP::processHTTPAuthorization(bool digest, const UString& request_uri)
    U_RETURN(result);
 }
 
-bool UHTTP::checkHTTPRequest()
+bool UHTTP::checkPath(UString& pathname)
 {
-   U_TRACE(0, "UHTTP::checkHTTPRequest()")
-
-   U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
-
-   U_INTERNAL_ASSERT(isHTTPRequest())
-
-   // ...process the HTTP message
-
-   UString pathname(U_CAPACITY);
-
-   pathname.snprintf("%w%.*s", U_HTTP_URI_TO_TRACE);
+   U_TRACE(0, "UHTTP::checkPath(%.*S)", U_STRING_TO_TRACE(pathname))
 
    u_canonicalize_pathname(pathname.data());
 
-   pathname.size_adjust();
+   pathname.size_adjust_force(); // NB: can be referenced by file...
 
    if (UServer_Base::isFileInsideDocumentRoot(pathname) == false) // like chroot()...
       {
@@ -1861,6 +1835,33 @@ bool UHTTP::checkHTTPRequest()
       }
 
    U_RETURN(true);
+}
+
+bool UHTTP::checkHTTPRequest()
+{
+   U_TRACE(0, "UHTTP::checkHTTPRequest()")
+
+   U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
+
+   U_INTERNAL_ASSERT(isHTTPRequest())
+
+   // ...process the HTTP message
+
+   UString pathname(U_CAPACITY);
+
+   pathname.snprintf("%w%.*s", U_HTTP_URI_TO_TRACE);
+
+   if (checkPath(pathname)) U_RETURN(true);
+
+   // can be URL encoded...
+
+   pathname.snprintf("%w", 0);
+
+   (void) u_url_decode(U_HTTP_URI_TO_PARAM, (unsigned char*)pathname.end(), true);
+
+   if (checkPath(pathname)) U_RETURN(true);
+
+   U_RETURN(false);
 }
 
 // manage CGI
@@ -1925,6 +1926,8 @@ void UHTTP::setCGIEnvironment(UString& environment, bool sh_script)
 {
    U_TRACE(0, "UHTTP::setCGIEnvironment(%.*S,%b)", U_STRING_TO_TRACE(environment), sh_script)
 
+   char c = u_line_terminator[0];
+
    // Referer: http://www.cgi101.com/class/ch3/text.html
 
    uint32_t    referer_len = 0;
@@ -1932,10 +1935,28 @@ void UHTTP::setCGIEnvironment(UString& environment, bool sh_script)
 
    if (referer_ptr)
       {
-      for (char c = u_line_terminator[0]; referer_ptr[referer_len] != c; ++referer_len) {}
+      while (referer_ptr[referer_len] != c) ++referer_len;
 
       U_INTERNAL_DUMP("referer = %.*S", referer_len, referer_ptr)
       }
+
+   // check User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
+
+   uint32_t    user_agent_len = 0;
+   const char* user_agent_ptr = getHTTPHeaderValuePtr(*USocket::str_user_agent);
+
+   if (user_agent_ptr)
+      {
+      while (user_agent_ptr[user_agent_len] != c) ++user_agent_len;
+
+      U_INTERNAL_DUMP("user_agent = %.*S", user_agent_len, user_agent_ptr)
+      }
+
+   // check for MSIE in "User-Agent: ...." in header request...
+
+   const char* browserMSIE = (user_agent_ptr && (u_find(user_agent_ptr, user_agent_len, U_CONSTANT_TO_PARAM("MSIE")) != 0) ? "1" : "");
+
+   U_INTERNAL_DUMP("browserMSIE = %S", browserMSIE)
 
    // Cookie: _saml_idp=dXJuOm1hY2U6dGVzdC5zXRo; _redirect_user_idp=urn%3Amace%3Atest.shib%3Afederation%3Alocalhost;
 
@@ -2064,8 +2085,9 @@ void UHTTP::setCGIEnvironment(UString& environment, bool sh_script)
                    "SERVER_ADDR=%.*s\n"
                    "BROWSER_MSIE=%s\n"
                    "HTTP_ACCEPT_LANGUAGE=%.2s\n"
-                   "HTTP_COOKIE=%.*s\n"
                    "HTTP_REFERER=%.*s\n"
+                   "\"HTTP_COOKIE=%.*s\"\n"
+                   "\"HTTP_USER_AGENT=%.*s\"\n"
                    "PATH=/usr/local/bin:/usr/bin:/bin\n"
                    "PWD=%w/%s\n"
                    "SCRIPT_FILENAME=%w%.*s\n",
@@ -2079,10 +2101,11 @@ void UHTTP::setCGIEnvironment(UString& environment, bool sh_script)
                    http_info.version + '0',
                    // ext
                    U_STRING_TO_TRACE(ip_server),
-                   (sh_script ? UHTTP::getBrowserMSIE() : ""),
+                   browserMSIE,
                    UHTTP::getAcceptLanguage(),
-                   U_STRING_TO_TRACE(cookie),
                    referer_len, referer_ptr,
+                   U_STRING_TO_TRACE(cookie),
+                   user_agent_len, user_agent_ptr,
                    cgi_dir,
                    U_HTTP_URI_TO_TRACE);
 
@@ -2814,6 +2837,21 @@ bool UHTTP::processHTTPGetRequest()
          {
          (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
          }
+      }
+   else if (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".crt")) ||
+            u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".cer")) ||
+            u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".der")))
+      {
+      /* The certificate being downloaded represents a Certificate Authority.
+       * When it is downloaded the user will be shown a sequence of dialogs that
+       * will guide them through the process of accepting the Certificate Authority
+       * and deciding if they wish to trust sites certified by the CA. If a certificate
+       * chain is being imported then the first certificate in the chain must be the CA
+       * certificate, and any subsequent certificates will be added as untrusted CA
+       * certificates to the local database.
+       */
+
+      content_type = "application/x-x509-ca-cert";
       }
    else
       {

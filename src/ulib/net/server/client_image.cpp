@@ -15,6 +15,10 @@
 #include <ulib/utility/escape.h>
 #include <ulib/net/server/server.h>
 
+#ifndef EPOLLET
+#define EPOLLET 0
+#endif
+
 bool               UClientImage_Base::bIPv6;
 bool               UClientImage_Base::write_off;  // NB: we not send response because we can have used sendfile() etc...
 USocket*           UClientImage_Base::socket;
@@ -61,8 +65,8 @@ void UClientImage_Base::logRequest(const char* filereq)
          }
       }
 
-   UServer_Base::log->log("%sreceived request (%u bytes) %#.*S from %.*s\n", UServer_Base::mod_name, rbuffer->size(),
-                                                                             U_STRING_TO_TRACE(*rbuffer), U_STRING_TO_TRACE(*(pClientImage->logbuf)));
+   UServer_Base::log->log("%sreceived request (%u bytes) %.*S from %.*s\n", UServer_Base::mod_name, rbuffer->size(),
+                                                                            U_STRING_TO_TRACE(*rbuffer), U_STRING_TO_TRACE(*(pClientImage->logbuf)));
 
    u_printf_string_max_length = u_printf_string_max_length_save;
 
@@ -95,8 +99,8 @@ void UClientImage_Base::logResponse(const char* fileres)
          }
       }
 
-   UServer_Base::log->log("%ssent response (%u bytes) %#.*S to %.*s\n", UServer_Base::mod_name, wbuffer->size(),
-                                                                        U_STRING_TO_TRACE(*wbuffer), U_STRING_TO_TRACE(*(pClientImage->logbuf)));
+   UServer_Base::log->log("%ssent response (%u bytes) %.*S to %.*s\n", UServer_Base::mod_name, wbuffer->size(),
+                                                                       U_STRING_TO_TRACE(*wbuffer), U_STRING_TO_TRACE(*(pClientImage->logbuf)));
 
    u_printf_string_max_length = u_printf_string_max_length_save;
 
@@ -166,7 +170,7 @@ UClientImage_Base::UClientImage_Base()
 
    pClientImage      = this;
    UEventFd::fd      = socket->iSockDesc;
-   UEventFd::op_mask = U_READ_IN;
+   UEventFd::op_mask = U_READ_IN | EPOLLET;
 
    if (UServer_Base::isLog() == false) logbuf = 0;
    else
@@ -176,10 +180,6 @@ UClientImage_Base::UClientImage_Base()
 
       socket->getRemoteInfo(*logbuf);
       }
-
-#ifdef HAVE_LIBEVENT
-   pevent = 0;
-#endif
 }
 
 void UClientImage_Base::destroy()
@@ -190,16 +190,6 @@ void UClientImage_Base::destroy()
    U_INTERNAL_ASSERT_POINTER(pClientImage)
 
    UServer_Base::handlerCloseConnection();
-
-#ifdef HAVE_LIBEVENT
-   if (pClientImage->pevent)
-      {
-      UNotifier::erase(pClientImage, false);
-
-      (void) UDispatcher::del(pClientImage->pevent);
-                       delete pClientImage->pevent;
-      }
-#endif
 
 #ifdef DEBUG
    if (pClientImage->logbuf)
@@ -381,13 +371,9 @@ void UClientImage_Base::run()
 
    if (pClientImage->handlerRead() != U_NOTIFIER_DELETE)
       {
-      UNotifier::insert(pClientImage); // NB: this new object (pClientImage) is deleted by UNotifier (when response U_NOTIFIER_DELETE from handlerRead()...)
+      // NB: this new object (pClientImage) is deleted by UNotifier (when response U_NOTIFIER_DELETE from handlerRead()...)
 
-#  ifdef HAVE_LIBEVENT
-      pClientImage->pevent = U_NEW(UEvent<UClientImage_Base>(pClientImage->UEventFd::fd, EV_READ | EV_PERSIST, *pClientImage));
-
-      UDispatcher::add(*(pClientImage->pevent));
-#  endif
+      UNotifier::insert(pClientImage, true);
 
       return;
       }
@@ -500,17 +486,6 @@ int UClientImage_Base::handlerWrite()
    U_RETURN(result);
 }
 
-#ifdef HAVE_LIBEVENT
-void UClientImage_Base::operator()(int fd, short event)
-{
-   U_TRACE(0, "UClientImage_Base::operator()(%d,%hd)", fd, event)
-
-   U_INTERNAL_ASSERT_EQUALS(event, EV_READ)
-
-   if (handlerRead() == U_NOTIFIER_DELETE) delete this; // same as UNotifier do...
-}
-#endif
-
 // DEBUG
 
 #ifdef DEBUG
@@ -540,7 +515,6 @@ const char* UClientImage_Base::dump(bool reset) const
 }
 
 #ifdef HAVE_SSL
-
 const char* UClientImage<USSLSocket>::dump(bool reset) const
 {
    UClientImage_Base::dump(false);
@@ -557,6 +531,5 @@ const char* UClientImage<USSLSocket>::dump(bool reset) const
 
    return 0;
 }
-
 #endif
 #endif

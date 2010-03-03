@@ -42,7 +42,7 @@
   <tr bgcolor="#f0f0f0"><td><b>BROKEN</b> enum value (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>bytes_to_read</b> (defined in <a class="el" href="classUFtpClient.html">UFtpClient</a>)</td><td><a class="el" href="classUFtpClient.html">UFtpClient</a></td><td><code> [protected]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUFtpClient.html#aed443841d29f64605dd04aadb637dbc3">changeWorkingDirectory</a>(const UString &amp;path)</td><td><a class="el" href="classUFtpClient.html">UFtpClient</a></td><td></td></tr>
-  <tr class="memlist"><td><a class="el" href="classUSocket.html#a2c487b569842c6524738fc03080c4dd0">checkErrno</a>(int value)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
+  <tr class="memlist"><td><a class="el" href="classUSocket.html#a2c487b569842c6524738fc03080c4dd0">checkErrno</a>(int value)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#aeeedd9dd467a3cc2e8641142808bdefa">checkIO</a>(int iBytesTransferred, int iMaxBytesTransfer)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>cLocalAddress</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>CLOSE</b> enum value (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
@@ -82,6 +82,7 @@
   <tr bgcolor="#f0f0f0"><td><b>isLogin</b>() const  (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>iSockDesc</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>isOpen</b>() const  (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>isReset</b>() const  (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>isSSL</b>() const  (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline, virtual]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>isSysError</b>() const  (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>iState</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [protected]</code></td></tr>
@@ -103,6 +104,7 @@
   <tr bgcolor="#f0f0f0"><td><b>remoteIPAddress</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUSocket.html#a3f4f19c9fede9968e6977d96d97bd033">remotePortNumber</a>()</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>req_timeout</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [protected, static]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>RESET</b> enum value (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>response</b> (defined in <a class="el" href="classUFtpClient.html">UFtpClient</a>)</td><td><a class="el" href="classUFtpClient.html">UFtpClient</a></td><td><code> [protected]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUFtpClient.html#a43f9957db9398830ed33dad344c5456d">restart</a>(off_t offset)</td><td><a class="el" href="classUFtpClient.html">UFtpClient</a></td><td><code> [protected]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUFtpClient.html#a6a762f2686e5cc6aaa7dbbcb81c113ea">retrieveFile</a>(const UString &amp;path, off_t offset=0)</td><td><a class="el" href="classUFtpClient.html">UFtpClient</a></td><td></td></tr>
@@ -166,7 +168,7 @@
   <tr bgcolor="#f0f0f0"><td><b>~USocket</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline, virtual]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>~UTCPSocket</b>() (defined in <a class="el" href="classUTCPSocket.html">UTCPSocket</a>)</td><td><a class="el" href="classUTCPSocket.html">UTCPSocket</a></td><td><code> [inline, virtual]</code></td></tr>
 </table></div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Feb 19 12:37:30 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Mar 3 15:38:10 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

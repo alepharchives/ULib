@@ -4,7 +4,7 @@
 
 . ./.env
 
-if [ "$REQUEST_METHOD" = "GET" -a $# -eq 0 -a "$REMOTE_ADDR" = "127.0.0.1" ]; then
+if [ "$REQUEST_METHOD" = "GET" -a $# -eq 0 -a "$REMOTE_ADDR" = "$PORTAL_IP_ADDRESS" ]; then
 
 	get_users_info
 

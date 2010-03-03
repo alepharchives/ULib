@@ -52,9 +52,10 @@ Collaboration diagram for USocket:</div>
 &nbsp;&nbsp;<b>CLOSE</b> =  0, 
 <b>TIMEOUT</b> =  1, 
 <b>BROKEN</b> =  2, 
-<b>CONNECT</b> =  3, 
+<b>RESET</b> =  3, 
 <br/>
-&nbsp;&nbsp;<b>LOGIN</b> =  4
+&nbsp;&nbsp;<b>CONNECT</b> =  4, 
+<b>LOGIN</b> =  5
 <br/>
  }</td></tr>
 <tr><td colspan="2"><h2>Public Member Functions</h2></td></tr>
@@ -64,18 +65,20 @@ Collaboration diagram for USocket:</div>
 int&nbsp;</td><td class="memItemRight" valign="bottom"><b>getFd</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a70c8aa518fe10a74e22f4c9eacb16c05"></a><!-- doxytag: member="USocket::isOpen" ref="a70c8aa518fe10a74e22f4c9eacb16c05" args="() const " -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isOpen</b> () const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a17f09a186e7e53fb266e9e4c7a532d3f"></a><!-- doxytag: member="USocket::isClosed" ref="a17f09a186e7e53fb266e9e4c7a532d3f" args="() const " -->
-bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isClosed</b> () const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adc755c8443e13591269a82f9752dddb1"></a><!-- doxytag: member="USocket::isConnected" ref="adc755c8443e13591269a82f9752dddb1" args="() const " -->
-bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isConnected</b> () const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af46ba79941080b9dcd1160dc7b0b3cfb"></a><!-- doxytag: member="USocket::isReset" ref="af46ba79941080b9dcd1160dc7b0b3cfb" args="() const " -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isReset</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a754c449f7b9d8223af341d8ff7e8cb1b"></a><!-- doxytag: member="USocket::isLogin" ref="a754c449f7b9d8223af341d8ff7e8cb1b" args="() const " -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isLogin</b> () const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa9e830817d4f70614fc092cd64cb9d83"></a><!-- doxytag: member="USocket::isTimeout" ref="aa9e830817d4f70614fc092cd64cb9d83" args="() const " -->
-bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isTimeout</b> () const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a17f09a186e7e53fb266e9e4c7a532d3f"></a><!-- doxytag: member="USocket::isClosed" ref="a17f09a186e7e53fb266e9e4c7a532d3f" args="() const " -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isClosed</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad510d85eb1a85adb6a3690236885de81"></a><!-- doxytag: member="USocket::isBroken" ref="ad510d85eb1a85adb6a3690236885de81" args="() const " -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isBroken</b> () const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa9e830817d4f70614fc092cd64cb9d83"></a><!-- doxytag: member="USocket::isTimeout" ref="aa9e830817d4f70614fc092cd64cb9d83" args="() const " -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isTimeout</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae1217c27839be6efad9e3d2715b95d68"></a><!-- doxytag: member="USocket::isSysError" ref="ae1217c27839be6efad9e3d2715b95d68" args="() const " -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isSysError</b> () const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adc755c8443e13591269a82f9752dddb1"></a><!-- doxytag: member="USocket::isConnected" ref="adc755c8443e13591269a82f9752dddb1" args="() const " -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isConnected</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSocket.html#a2c487b569842c6524738fc03080c4dd0">checkErrno</a> (int value)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSocket.html#aeeedd9dd467a3cc2e8641142808bdefa">checkIO</a> (int iBytesTransferred, int iMaxBytesTransfer)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7b4283cdd26371dcdcb8f512eb28a372"></a><!-- doxytag: member="USocket::socket" ref="a7b4283cdd26371dcdcb8f512eb28a372" args="(int iSocketType, int protocol=0)" -->
@@ -328,7 +331,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
           <td class="paramtype">int&nbsp;</td>
           <td class="paramname"> <em>value</em></td>
           <td>&nbsp;)&nbsp;</td>
-          <td><code> [inline]</code></td>
+          <td></td>
         </tr>
       </table>
 </div>
@@ -1002,7 +1005,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/net/socket.cpp</li>
 </ul>
 </div>
-<hr size="1"/><address style="text-align: right;"><small>Generated on Fri Feb 19 12:37:33 2010 for ULib C++ Library by&nbsp;
+<hr size="1"/><address style="text-align: right;"><small>Generated on Wed Mar 3 15:38:18 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.1 </small></address>
 </body>

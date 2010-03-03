@@ -186,7 +186,6 @@ int UHttpPlugIn::handlerRead()
 
    if (UServer_Base::isLog()) UClientImage_Base::logRequest();
 
-   bool esito;
    uint32_t n, host_end;
    const char* content_type = 0;
    int nResponseCode = HTTP_NOT_IMPLEMENTED;
@@ -302,23 +301,23 @@ int UHttpPlugIn::handlerRead()
          {
          U_ASSERT(UClientImage_Base::socket->isSSL())
 
-         esito = false;
-
          // NB: OpenSSL already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...
 
-         if (((USSLSocket*)UClientImage_Base::socket)->getPeerCertificate() == 0)
+         bool is_cert = (((USSLSocket*)UClientImage_Base::socket)->getPeerCertificate() != 0);
+
+         if (is_cert == false)
             {
             U_SRV_LOG_MSG_WITH_ADDR("ask for a client certificate to");
 
             if (((USSLSocket*)UClientImage_Base::socket)->askForClientCertificate())
                {
-               esito = true;
+               is_cert = true;
 
                ((UClientImage<USSLSocket>*)UClientImage_Base::pClientImage)->logCertificate();
                }
             }
 
-         if (esito == false)
+         if (is_cert == false)
             {
             U_SRV_LOG_VAR("URI_REQUEST_CERT: request '%.*s' denied by mandatory certificate from client", U_HTTP_URI_TO_TRACE);
 

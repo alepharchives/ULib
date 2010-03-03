@@ -356,6 +356,7 @@ public:
    static void getTimeIfNeeded();
    static bool checkHTTPRequest();
    static bool processHTTPGetRequest();
+   static bool checkPath(UString& pathname);
    static bool processHTTPAuthorization(bool digest, const UString& request_uri);
 
    static UString     getHTMLDirectoryList();
@@ -407,10 +408,6 @@ public:
    // check for "Accept-Encoding: deflate" in header request...
 
    static bool isHTTPAcceptEncodingDeflate(uint32_t content_length);
-
-   // check for MSIE in "User-Agent: ...." in header request...
-
-   static const char* getBrowserMSIE();
 
    // check for "Connection: close" in headers...
 

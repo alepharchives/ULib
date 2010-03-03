@@ -13,6 +13,25 @@
 
 #include <ulib/event/event_time.h>
 
+#ifdef HAVE_LIBEVENT
+struct event_base* u_ev_base;
+
+void UEventTime::operator()(int fd, short event)
+{
+   U_TRACE(0, "UEventTime::operator()(%d,%hd)", fd, event)
+
+   int result = handlerTime();
+
+   // return value:
+   // ---------------
+   // -1 - normal
+   //  0 - monitoring
+   // ---------------
+
+   if (result == 0) (void) UDispatcher::add(*pevent, *(UTimeVal*)this);
+}
+#endif
+
 void UEventTime::setCurrentTime()
 {
    U_TRACE(1, "UEventTime::setCurrentTime()")

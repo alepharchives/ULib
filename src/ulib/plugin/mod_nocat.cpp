@@ -1387,6 +1387,16 @@ int UNoCatPlugIn::handlerRequest()
 
    U_INTERNAL_DUMP("peer = %p", peer)
 
+   if (U_HTTP_URI_STREQ("/cpe"))
+      {
+      (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
+
+      url.setPath(U_CONSTANT_TO_PARAM("/cpe"));
+      url.setService(U_CONSTANT_TO_PARAM("https"));
+
+      goto set_redirect_to_AUTH;
+      }
+
    if (host == gateway)
       {
       if (U_STRNCMP(U_HTTP_QUERY, "ticket=") == 0)
@@ -1430,15 +1440,6 @@ int UNoCatPlugIn::handlerRequest()
       if (U_HTTP_URI_STREQ("/test"))
          {
          (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
-
-         goto set_redirect_to_AUTH;
-         }
-
-      if (U_HTTP_URI_STREQ("/cpe"))
-         {
-         (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
-
-         url.setPath(U_CONSTANT_TO_PARAM("/cpe"));
 
          goto set_redirect_to_AUTH;
          }

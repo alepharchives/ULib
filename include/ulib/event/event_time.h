@@ -16,6 +16,11 @@
 
 #include <ulib/timeval.h>
 
+#ifdef HAVE_LIBEVENT
+#  include <ulib/libevent/event.h>
+extern U_EXPORT struct event_base* u_ev_base;
+#endif
+
 class U_EXPORT UEventTime : public UTimeVal {
 public:
 
@@ -28,11 +33,24 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UEventTime, "%ld,%ld", sec, usec)
 
       reset();
+
+#  ifdef HAVE_LIBEVENT
+      U_INTERNAL_ASSERT_POINTER(u_ev_base)
+
+      pevent = U_NEW(UTimerEv<UEventTime>(*this));
+
+      (void) UDispatcher::add(*pevent, *(UTimeVal*)this);
+#  endif
       }
 
    virtual ~UEventTime()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UEventTime)
+
+#  ifdef HAVE_LIBEVENT
+      UDispatcher::del(pevent);
+                delete pevent;
+#  endif
       }
 
    bool operator<(const UEventTime& t) const;
@@ -53,11 +71,21 @@ public:
 
    virtual int handlerTime() { return -1; }
 
+#ifdef HAVE_LIBEVENT
+   UTimerEv<UEventTime>* pevent;
+
+   void operator()(int fd, short event);
+#endif
+
    friend U_EXPORT ostream& operator<<(ostream& os, const UEventTime& t);
-   
+
 #ifdef DEBUG
    const char* dump(bool reset) const;
 #endif
+
+private:
+   UEventTime(const UEventTime&) : UTimeVal() {}
+   UEventTime& operator=(const UEventTime&)   { return *this; }
 };
 
 #endif

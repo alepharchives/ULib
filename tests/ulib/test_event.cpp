@@ -293,7 +293,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)", argc)
 
-   UNotifier::init();
+   UNotifier::init(0);
 
    check_mixed_way();
    check_prio_test();

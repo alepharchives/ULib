@@ -1,7 +1,8 @@
 // test_notifier.cpp
 
-#include <ulib/notifier.h>
+#include <ulib/file.h>
 #include <ulib/timer.h>
+#include <ulib/notifier.h>
 
 #include <fcntl.h>
 #include <iostream>
@@ -73,6 +74,7 @@ public:
 };
 
 static char message[4096];
+static int i, fd_input, fd_output;
 
 class handlerOutput : public UEventFd {
 public:
@@ -81,7 +83,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, handlerOutput, "", 0)
 
-      fd      = STDOUT_FILENO;
+      fd      = fd_output;
       op_mask = U_WRITE_OUT;
       }
 
@@ -117,8 +119,6 @@ public:
 #endif
 };
 
-static int i;
-
 class handlerInput : public UEventFd {
 public:
 
@@ -126,7 +126,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, handlerInput, "", 0)
 
-      fd      = U_SYSCALL(open, "%S,%d", "inp/notifier.input", O_RDONLY); // STDIN_FILENO;
+      fd      = fd_input;
       op_mask = U_READ_IN;
       }
 
@@ -145,7 +145,7 @@ public:
          {
          if (i & 1)
             {
-            if (UNotifier::waitForWrite(STDOUT_FILENO) > 0)
+            if (UNotifier::waitForWrite(fd_output) > 0)
                {
                static handlerOutput* handler_output;
 
@@ -153,7 +153,7 @@ public:
                   {
                   handler_output = U_NEW(handlerOutput);
 
-                  UNotifier::insert(handler_output);
+                  UNotifier::insert(handler_output, true);
                   }
                }
             }
@@ -186,6 +186,30 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
+   int fds[2], n = (argc > 1 ? atoi(argv[1]) : 5);
+
+   pipe(fds);
+
+// fd_input  = U_SYSCALL(open, "%S,%d",    "inp/notifier.input",  O_RDONLY);                       // STDIN_FILENO
+// fd_output = U_SYSCALL(open, "%S,%d,%d", "tmp/notifier.output", O_WRONLY | O_CREAT, PERM_FILE);  // STDOUT_FILENO
+
+   // fds[0] is for READING, fds[1] is for WRITING
+
+   fd_input  = fds[0];
+   fd_output = fds[1];
+
+   handlerInput* c = U_NEW(handlerInput);
+   handlerInput* d = U_NEW(handlerInput);
+
+   UNotifier::init(c);
+   UNotifier::erase(c, true);
+   UNotifier::insert(d, true);
+
+#ifdef __unix__
+   U_ASSERT(UNotifier::waitForRead( fds[0], 500) <= 0)
+#endif
+   U_ASSERT(UNotifier::waitForWrite(fds[1], 500) == 1)
+
    MyAlarm1* a = U_NEW(MyAlarm1(1L, 0L));
    MyAlarm2* b = U_NEW(MyAlarm2(1L, 0L));
 
@@ -197,39 +221,25 @@ int U_EXPORT main(int argc, char* argv[])
    if (argc > 2) UTimer::printInfo(cout);
 #endif
 
-   handlerInput* c = U_NEW(handlerInput);
-   handlerInput* d = U_NEW(handlerInput);
-
-   UNotifier::insert(c);
-   UNotifier::erase(c, true);
-   UNotifier::insert(d);
-
-   int fd[2], n = (argc > 1 ? atoi(argv[1]) : 5);
-
-   pipe(fd);
-
-#ifdef __unix__
-   U_ASSERT(UNotifier::waitForRead( fd[0], 500) <= 0)
-#endif
-   U_ASSERT(UNotifier::waitForWrite(fd[1], 500) == 1)
-
    UEventTime timeout;
 
    for (i = 0; i < n; ++i)
       {
       timeout.setMicroSecond(100L * 1000L);
 
+      (void) U_SYSCALL(write, "%d,%p,%u", fd_output, U_CONSTANT_TO_PARAM("hello, world"));
+
       (void) UNotifier::waitForEvent(&timeout);
 
-      (void) UNotifier::waitForRead(fd[0], 500);
+      (void) UNotifier::waitForRead(fds[0], 500);
 
       (void) UTimer::insert(U_NEW(MyAlarm1(1L, 0L)));
 
       timeout.nanosleep();
 
-#ifdef DEBUG
+#  ifdef DEBUG
       if (argc > 2) UTimer::printInfo(cout);
-#endif
+#  endif
       }
 
    UTimer::stop();
@@ -250,8 +260,8 @@ int U_EXPORT main(int argc, char* argv[])
    if (argc > 2) UNotifier::printInfo(cout);
 #endif
 
-#if defined(__unix__) && !defined(HAVE_EPOLL_WAIT)
-   U_ASSERT(UNotifier::waitForRead(  STDIN_FILENO, 1 * 1000) <= 0)
+#ifdef __unix__
+   U_ASSERT(UNotifier::waitForRead( fd_input,  1 * 1000) <= 0)
 #endif
-   U_ASSERT(UNotifier::waitForWrite(STDOUT_FILENO, 1 * 1000) == 1)
+   U_ASSERT(UNotifier::waitForWrite(fd_output, 1 * 1000) == 1)
 }

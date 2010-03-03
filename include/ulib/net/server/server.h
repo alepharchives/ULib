@@ -21,11 +21,6 @@
 #include <ulib/utility/socket_ext.h>
 #include <ulib/net/server/client_image.h>
 
-#ifdef HAVE_LIBEVENT
-class TimeHandler;
-#  include <ulib/libevent/event.h>
-#endif
-
 #ifdef HAVE_MODULES
 #  include <ulib/net/server/server_plugin.h>
 #endif
@@ -87,6 +82,7 @@ virtual void newClientImage() { (void) new client_class(); } }
 class UHTTP;
 class UCommand;
 class UFileConfig;
+class TimeHandler;
 class UTimeoutConnection;
 
 class U_EXPORT UServer_Base : public UEventFd {
@@ -350,10 +346,6 @@ public:
    static UString getNetworkAddress(const char* device)       { return USocketExt::getNetworkAddress(socket->getFd(), device); }
    static UString getNetworkDevice( const char* exclude)      { return USocketExt::getNetworkDevice(exclude); }
 
-#ifdef HAVE_LIBEVENT
-   void operator()(int fd, short event);
-#endif
-
    // DEBUG
 
 #ifdef DEBUG
@@ -389,15 +381,6 @@ protected:
    static UServer_Base* pthis;
    static UVector<UIPAllow*>* vallow_IP;
    static bool flag_loop, flag_use_tcp_optimization;
-
-#ifdef HAVE_LIBEVENT
-// static SigHandler* pSigHandler;
-// static USignal<SigHandler>* psigterm;
-
-   static TimeHandler* pTimeHandler;
-   static UEvent<UServer_Base>* pevent;
-   static UTimerEv<TimeHandler>* ptimehandler;
-#endif
 
    // COSTRUTTORI
 
@@ -600,5 +583,52 @@ private:
 };
 
 #endif
+
+class U_NO_EXPORT UTimeoutConnection : public UEventTime {
+public:
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   // COSTRUTTORI
+
+   UTimeoutConnection(long sec, long usec) : UEventTime(sec, usec)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UTimeoutConnection, "%ld,%ld", sec, usec)
+      }
+
+   virtual ~UTimeoutConnection()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UTimeoutConnection)
+      }
+
+   // define method VIRTUAL of class UEventTime
+
+   virtual int handlerTime()
+      {
+      U_TRACE(0, "UTimeoutConnection::handlerTime()")
+
+      // idle connection... (timeout)
+
+      UServer_Base::handlerIdleConnection();
+
+      // return value:
+      // ---------------
+      // -1 - normal
+      //  0 - monitoring
+      // ---------------
+
+      U_RETURN(0);
+      }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UEventTime::dump(reset); }
+#endif
+
+private:
+   UTimeoutConnection(const UTimeoutConnection&) : UEventTime() {}
+   UTimeoutConnection& operator=(const UTimeoutConnection&)     { return *this; }
+};
 
 #endif

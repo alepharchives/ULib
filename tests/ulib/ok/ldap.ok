@@ -54,3 +54,11 @@ dn:   ou=shared_addressbook,o=mail
 cn:   
 mail: 
 
+dn:   uid=daniele.pelliccioni,o=mail
+cn:   Daniele Pelliccioni
+mail: daniele.pelliccioni@unirel.com
+
+dn:   uid=valentino.ditoma,o=mail
+cn:   Valentino Ditoma
+mail: valentino.ditoma@unirel.com
+

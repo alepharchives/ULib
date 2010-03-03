@@ -12,6 +12,7 @@ start_msg notifier
 #VALGRIND=valgrind
  export UTRACE UOBJDUMP USIMERR
 
+#STRACE=$TRUSS
 start_prg notifier 7 # true
 
 # Test against expected output

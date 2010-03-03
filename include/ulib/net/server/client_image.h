@@ -22,10 +22,6 @@
 #  include <ulib/ssl/net/sslsocket.h>
 #endif
 
-#ifdef HAVE_LIBEVENT
-#  include <ulib/libevent/event.h>
-#endif
-
 // #define FILETEST 1
 
 #ifdef U_FILETEST
@@ -138,12 +134,6 @@ public:
 
    virtual int handlerRead();
    virtual int handlerWrite();
-
-#ifdef HAVE_LIBEVENT
-   UEvent<UClientImage_Base>* pevent;
-
-   void operator()(int fd, short event);
-#endif
 
    // DEBUG
 

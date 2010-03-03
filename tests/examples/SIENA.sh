@@ -6,7 +6,7 @@ start_msg SIENA
 
 DOC_ROOT=/srv/wifi-portal-siena/www
 
-rm -f SIENA.log err/SIENA.err \
+rm -f SIENA*.log err/SIENA*.err \
       out/userver_tcp.out err/userver_tcp.err \
       out/userver_ssl.out err/userver_ssl.err \
 		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* \
@@ -26,14 +26,14 @@ DIR_CMD="../../examples/userver"
 #ip route add 192.168.220.0/24 via 192.168.220.254  2>/dev/null
 
 #STRACE=$TRUSS
-#start_prg_background userver_tcp -c SIENA.cfg
- start_prg_background userver_ssl -c SIENA.cfg
+ start_prg_background userver_tcp -c SIENA_tcp.cfg
+ start_prg_background userver_ssl -c SIENA_ssl.cfg
 
 #$SLEEP
 #kill_prg userver_tcp TERM
 
-#mv err/userver_tcp.err err/SIENA.err
- mv err/userver_ssl.err err/SIENA.err
+mv err/userver_tcp.err err/SIENA_tcp.err
+mv err/userver_ssl.err err/SIENA_ssl.err
 
 #ip route del 192.168.220.0/24 via 192.168.220.254  2>/dev/null
 #ifconfig eth0:220 192.168.220.102 down				 2>/dev/null

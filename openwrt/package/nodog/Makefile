@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nodog
 PKG_VERSION:=1.0.5
-PKG_RELEASE:=10
+PKG_RELEASE:=11
 
 PKG_SOURCE:=ULib-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unirel.com/ULib
