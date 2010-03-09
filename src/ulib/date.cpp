@@ -21,8 +21,6 @@ int UDate::getMonth(const char* buf)
 {
    U_TRACE(0, "UDate::getMonth(%S)", buf)
 
-// U_INTERNAL_ASSERT(strlen(buf) >= 3)
-
    const char* ptr;
 
    for (int i = 0; i < 12; ++i)

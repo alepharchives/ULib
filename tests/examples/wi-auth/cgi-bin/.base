@@ -38,6 +38,8 @@ DIR_REQ=../request
 DIR_CTX=../login
 DIR_CNT=../counter
 DIR_POLICY=../policy
+DIR_REG=../registration
+DIR_STAT=../stat
 # ---------------------------------------------------------------------
 
 TIMEOUT=0
@@ -49,13 +51,23 @@ MSG_ANOMALIA="Problema in autenticazione (anomalia %s). Si prega di riprovare, s
 LDAP_USER_PARAM="-x -D $WIAUTH_USER_LDAP_BINDDN -w $WIAUTH_USER_LDAP_PWD -h $WIAUTH_USER_LDAP_SERVER -p $WIAUTH_USER_LDAP_PORT"
 LDAP_CARD_PARAM="-x -D $WIAUTH_CARD_LDAP_BINDDN -w $WIAUTH_CARD_LDAP_PWD -h $WIAUTH_CARD_LDAP_SERVER -p $WIAUTH_CARD_LDAP_PORT"
 
+# ---------------------------------------------------------------------
+# ????????????
+# ---------------------------------------------------------------------
+if [ "$HTTP_HEADER_HOST" = "i-auth/cgi-b" ]; then
+	env >> /tmp/ERROR_HTTP_HEADER_HOST
+
+	unset HTTP_HEADER_HOST
+fi
+# ---------------------------------------------------------------------
+
 if [ -n "$HTTP_HEADER_HOST" ]; then
 	SERVER=$HTTP_HEADER_HOST
 else
 	SERVER=$SERVER_ADDR
 fi
 
-export OUTPUT BASE_NAME FORM_FILE_DIR OP DIR_REQ DIR_CTX DIR_CNT DIR_POLICY FILE_CTX TRAFFIC \
+export OUTPUT BASE_NAME FORM_FILE_DIR OP DIR_REQ DIR_CTX DIR_CNT DIR_POLICY DIR_REG DIR_STAT FILE_CTX TRAFFIC \
 		 TIMEOUT MAC IP GATEWAY AP TMP_FORM_FILE UUID SET_COOKIE SESSION_ID CALLER_ID \
 		 USER SIGNED_DATA BACK_TAG PROT SERVER UUID_TO_APPEND LDAP_USER_PARAM \
 		 LDAP_CARD_PARAM EXIT_VALUE CONNECTION_CLOSE TELEFONO POLICY WA_UID
@@ -376,9 +388,7 @@ load_policy() {
 
 	source $DIR_POLICY/$POLICY
 
-	DIR_CNT=$DIR_CNT/$POLICY
-
-	mkdir -p $DIR_CNT
+ 	mkdir -p $DIR_CNT/$POLICY
 
 #	set +x
 }
@@ -599,6 +609,7 @@ user_welcome() {
 
 	print_page https://$SERVER/login \
 				  $CA_CERT_URL \
+				  $SERVER $SERVER \
 				  $REGISTRATI $REGISTRATI \
 				  $LOGIN		  $LOGIN \
 				  $LOGOUT	  $LOGOUT \
@@ -785,7 +796,7 @@ send_ticket() {
 	write_FILE "$WA_UID $POLICY $MAX_TIME $MAX_TRAFFIC" $FILE_UID
 	# --------------------------------------------------------------------
 
-	FILE_CNT=$DIR_CNT/$8
+	FILE_CNT=$DIR_CNT/$POLICY/$8
 	# --------------------------------------------------------------------
 	# TIME POLICY
 	# --------------------------------------------------------------------
@@ -1048,11 +1059,64 @@ request_to_logout_from_user() {
 
 	if [ -n "$UUID" -a -s $DIR_CTX/$UUID.ctx ]; then
 
+		# --------------------------------------------------------------------
+		# GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
+		# --------------------------------------------------------------------
+		FILE_UID=$DIR_REQ/$UUID.uid
+
+		read UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC < $FILE_UID
+
+		load_policy
+		# --------------------------------------------------------------------
+
 		ask_nodog_to_logout_user
+
+		PARAM=""
 
 		BASE_NAME=ringraziamenti
 
-		print_page
+		if [ -s $DIR_CNT/$POLICY/$UUID.timeout -o \
+			  -s $DIR_CNT/$POLICY/$UUID.traffic ]; then
+
+			PARAM="<table class=\"centered\" border=\"1\">
+					<tr>
+						<th class=\"header\" colspan=\"2\" align=\"left\">Utente&nbsp;&nbsp;&nbsp;$UUID</th>
+					</tr>"
+
+			if [ -s $DIR_CNT/$POLICY/$UUID.timeout ]; then
+
+				REMAINING_TIME=`cat $DIR_CNT/$POLICY/$UUID.timeout`
+
+				# expressing the time in minutes
+				REMAINING_TIME_MIN=`expr $REMAINING_TIME / 60`
+
+				PARAM="$PARAM
+					<tr>
+						<td class=\"header\">Tempo residuo (min.)</td>
+						<td class=\"data_italic\">$REMAINING_TIME_MIN</td>
+					</tr>"
+			fi
+
+			if [ -s $DIR_CNT/$POLICY/$UUID.traffic ]; then
+
+				REMAINING_TRAFFIC=`cat $DIR_CNT/$POLICY/$UUID.traffic`
+
+				# expressing the traffic in MB 1024*1024=1048576
+				REMAINING_TRAFFIC_MB=`expr $REMAINING_TRAFFIC / 1048576`
+
+				PARAM="$PARAM
+					<tr>
+						<td class=\"header\">Traffico residuo (MB)</td>
+						<td class=\"data_italic\">$REMAINING_TRAFFIC_MB</td>
+					</tr>"
+			fi
+
+			PARAM="$PARAM
+					</table>"
+
+		fi
+
+		print_page "$PARAM"
 
 	else
 		message_page "Utente non connesso" "Utente non connesso"
@@ -1117,7 +1181,7 @@ info_notified_from_nodog() {
 	load_policy
 	# --------------------------------------------------------------------
 
-	FILE_CNT=$DIR_CNT/$5
+	FILE_CNT=$DIR_CNT/$POLICY/$5
 	# --------------------------------------------------------------------
 	# TRAFFIC POLICY
 	# --------------------------------------------------------------------
@@ -1371,6 +1435,65 @@ upload_log_ap() {
 	OUTPUT="<html><body>OK</body></html>"
 
 # 	set +x
+}
+
+load_value_session() {
+
+#	set -x
+
+	if [ -s $TMP_FORM_FILE ]; then
+
+		i=1
+		while read LINE
+		do
+			eval v$i=\"$LINE\"
+
+			let "i = i + 1"
+		done < $TMP_FORM_FILE
+
+	fi
+
+#	set +x
+}
+
+get_user_nome_cognome() {
+
+#	set -x
+
+	TMP_FORM_FILE=$DIR_REG/$UUID.reg
+
+	load_value_session
+
+	if [ -n "$v1$v2" ]; then
+		USER="$v1 $v2"
+	else
+		USER=$UUID
+	fi
+
+#	set +x
+}
+
+get_stato_utente() {
+
+#	set -x
+
+	get_user_context_connection
+
+	if [ -z "$GATEWAY" ]; then
+		message_page "Utente non connesso" "Utente non connesso"
+	else
+
+		get_user_nome_cognome
+
+		ask_nodog_status_user
+
+		printf "`cat $FORM_FILE_DIR/${BASE_NAME}.tmpl 2>/dev/null`" "`date`" $AP "$USER" "$OUTPUT" "$BACK_TAG" > $DIR_STAT/$UUID.html 2>/dev/null
+
+		echo -e "Location: /wi-auth/stat/$UUID.html\r\n\r"
+
+	fi
+
+	exit 0
 }
 
 # more environment...

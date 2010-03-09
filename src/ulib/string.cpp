@@ -82,7 +82,7 @@ UStringRep::UStringRep(const char* t)
 
    U_INTERNAL_ASSERT_POINTER(t)
 
-   set(strlen(t), 0, t);
+   set(u_strlen(t), 0, t);
 }
 
 UStringRep::UStringRep(const char* t, uint32_t tlen)
@@ -441,7 +441,7 @@ UString::UString(const char* t)
 {
    U_TRACE_REGISTER_OBJECT(0, UString, "%S", t)
 
-   uint32_t len = (t ? strlen(t) : 0);
+   uint32_t len = (t ? u_strlen(t) : 0);
 
    if (len) rep = UStringRep::create(t, len, 0U);
    else      copy(UStringRep::string_rep_null);
@@ -475,11 +475,11 @@ UString UString::substr(const char* t, uint32_t tlen) const
    U_RETURN_STRING(result);
 }
 
-UString& UString::assign(const char* s)                  { return assign(s, strlen(s)); }
-UString& UString::append(const char* s)                  { return append(s, strlen(s)); }
+UString& UString::assign(const char* s)                  { return assign(s, u_strlen(s)); }
+UString& UString::append(const char* s)                  { return append(s, u_strlen(s)); }
 
 bool     UString::equal(UStringRep* _rep) const          { return same(_rep) || rep->equal(_rep); }
-bool     UString::equal(const char* s) const             { return rep->equal(s, strlen(s)); }
+bool     UString::equal(const char* s) const             { return rep->equal(s, u_strlen(s)); }
 bool     UString::equal(const char* s, uint32_t n) const { return rep->equal(s, n); }
 
 UString  UString::substr(uint32_t pos, uint32_t n) const { return substr(rep->str + pos, rep->fold(pos, n)); }
@@ -521,7 +521,7 @@ void UStringRep::size_adjust(uint32_t value)
       }
 #endif
 
-   _length = (value == U_NOT_FOUND ? strlen(str) : value);
+   _length = (value == U_NOT_FOUND ? u_strlen(str) : value);
 
    U_INTERNAL_ASSERT_EQUALS(invariant(),true)
 }
@@ -842,7 +842,7 @@ void UString::setNullTerminated() const
          }
       }
 
-   U_INTERNAL_ASSERT_EQUALS(strlen(rep->str),rep->_length)
+   U_INTERNAL_ASSERT_EQUALS(u_strlen(rep->str),rep->_length)
 }
 
 void UString::resize(uint32_t n, char c)
@@ -1634,7 +1634,7 @@ U_EXPORT UString operator+(const UString& lhs, const UString& rhs)
 
 U_EXPORT UString operator+(const char* lhs, const UString& rhs)
 {
-   uint32_t len = strlen(lhs);
+   uint32_t len = u_strlen(lhs);
    UString str(len + rhs.size());
 
    str.append(lhs, len);
@@ -1654,7 +1654,7 @@ U_EXPORT UString operator+(char lhs, const UString& rhs)
 }
 
 U_EXPORT UString operator+(const UString& lhs, const char* rhs)
-{ UString str(lhs); str.append(rhs, strlen(rhs)); return str; }
+{ UString str(lhs); str.append(rhs, u_strlen(rhs)); return str; }
 
 U_EXPORT UString operator+(const UString& lhs, char rhs)
 { UString str(lhs); str.append(uint32_t(1), rhs); return str; }

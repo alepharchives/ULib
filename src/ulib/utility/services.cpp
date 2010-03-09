@@ -221,7 +221,7 @@ char* UServices::getOpenSSLError(char* buffer, uint32_t buffer_size, uint32_t* p
 
       (void) ERR_error_string_n(i, buf, sizeof(buf));
 
-      U_INTERNAL_DUMP("buf = %.*S", strlen(buf), buf)
+      U_INTERNAL_DUMP("buf = %.*S", u_strlen(buf), buf)
 
       ptr  += size;
       size += u_snprintf(ptr, buffer_size - (ptr - buffer), "(%ld, %s)", i, buf);

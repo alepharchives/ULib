@@ -19,7 +19,8 @@ rm -f nocat.log uclient.log /tmp/firewall.err \
 DIR_CMD="../../examples/uclient"
 
 #STRACE=$TRUSS
-start_prg uclient -i -c uclient.cfg "http://10.30.1.131/start_ap?ap=`uname -n`"
+ start_prg uclient -i -c uclient.cfg "http://10.30.1.131/start_ap?ap=`uname -n`"
+#start_prg uclient -i -c uclient.cfg "https://10.30.1.131/start_ap?ap=`uname -n`"
 
 DIR_CMD="../../examples/userver"
 

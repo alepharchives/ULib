@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/base/hash.h>
+#include <ulib/base/utility.h>
 
 #include <ulib/debug/objectDB.h>
 
@@ -448,7 +449,7 @@ void UObjectDB::dumpObject(const UObjectDumpable* dumper)
 
    U_INTERNAL_ASSERT(dumper->level >= level_active)
 
-   iov[0].iov_len  =    strlen(dumper->name_class);
+   iov[0].iov_len  =  u_strlen(dumper->name_class);
    iov[0].iov_base = (caddr_t) dumper->name_class;
 
    (void) sprintf(buffer1, " %p size %d level %d", // cnt %09d",
@@ -456,14 +457,14 @@ void UObjectDB::dumpObject(const UObjectDumpable* dumper)
 
    (void) ::sprintf(buffer2, "\n%s(%d)\n", dumper->name_file, dumper->num_line);
 
-   iov[1].iov_len = strlen(buffer1);
-   iov[2].iov_len = strlen(buffer2);
+   iov[1].iov_len = u_strlen(buffer1);
+   iov[2].iov_len = u_strlen(buffer2);
 
-   iov[3].iov_len  = strlen(dumper->name_function);
+   iov[3].iov_len  = u_strlen(dumper->name_function);
    iov[3].iov_base = (caddr_t) dumper->name_function;
 
    iov[5].iov_base = (caddr_t) dumper->dump();
-   iov[5].iov_len  = strlen((const char*)iov[5].iov_base);
+   iov[5].iov_len  = u_strlen((const char*)iov[5].iov_base);
 }
 
 // dump single object...

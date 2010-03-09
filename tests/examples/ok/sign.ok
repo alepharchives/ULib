@@ -3,25 +3,25 @@
   <ds:SignedInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
     <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
     <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></ds:SignatureMethod>
-    <ds:Reference URI="#ObjID_1">
+    <ds:Reference xmlns:ds="http://www.w3.org/2000/09/xmldsig#" URI="#ObjID_1">
       <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
       <ds:DigestValue>cDvPet4hrhM6dPg3F6ZCLXxMdPo=</ds:DigestValue>
     </ds:Reference>
-    <ds:Reference URI="#ObjID_2">
+    <ds:Reference xmlns:ds="http://www.w3.org/2000/09/xmldsig#" URI="#ObjID_2">
       <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
       <ds:DigestValue>YjsS9WGCc10y4c9Oi1xgM1Bkn1I=</ds:DigestValue>
     </ds:Reference>
-    <ds:Reference URI="#SigID-SignedProperties" Type="http://uri.etsi.org/01903#SignedProperties">
+    <ds:Reference xmlns:ds="http://www.w3.org/2000/09/xmldsig#" URI="#SigID-SignedProperties" Type="http://uri.etsi.org/01903#SignedProperties">
       <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-      <ds:DigestValue>BLsdjCYf28O4EJ+Ht6nfZuzx8n0=</ds:DigestValue>
+      <ds:DigestValue>BczKvxI7Elc0YWFloKa6frR1NXk=</ds:DigestValue>
     </ds:Reference>
   </ds:SignedInfo>
   <ds:SignatureValue xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
-hGt4VOtjc0aNewWOYGWkF39gnMZxdTaH8S2daIm9cUIANf/OPAxaguZQcBKRAEc1
-rCwGNQzL3ymO04jHTs+46Ih3kzmVCWBgrNR5NuDOgVpyvp3u4kqwAT2huw4Tupka
-3427CHFYhtxnO22ZGsfAPF5UJwX5BJvAUN3mAsOOwvA=
+i4LNp9ChtxDJYgzHQlc4tuwEx7gsRsRXn2+nyMy+yV0s2zDNWvTvYPWE7+fmdexV
+8MyZnAkJi8dIyWVIqXKAADqLqeN3lX0GJ6z+TQq+4IbCZnGaxcxELwIdMJVLV7Pm
+h+zd06EM6AgJyqq5oCiVqsACGA1+/+CS10wnQlWVSaY=
   </ds:SignatureValue>
-  <ds:KeyInfo>
+  <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
     <ds:KeyValue>
       <ds:RSAKeyValue>
         <ds:Modulus>
@@ -73,7 +73,7 @@ m8yhWPbEfqYMAHZTzFvDxCV8Kfu7gb3UVS0ecALL0g==
     <xades:QualifyingProperties Target="#SigID">
       <xades:SignedProperties xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="SigID-SignedProperties">
         <xades:SignedSignatureProperties>
-          <xades:SigningTime>2010-02-13T17:05:23Z</xades:SigningTime>
+          <xades:SigningTime>2010-03-09T14:00:41Z</xades:SigningTime>
           <xades:SigningCertificate>
             <xades:Cert>
               <xades:CertDigest>
@@ -118,11 +118,11 @@ m8yhWPbEfqYMAHZTzFvDxCV8Kfu7gb3UVS0ecALL0g==
       </xades:SignedProperties>
       <xades:UnsignedProperties>
         <xades:UnsignedSignatureProperties>
-          <xades:CompleteCertificateRefs>
+          <xades:CompleteCertificateRefs xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
             <xades:Cert>
               <xades:CertDigest>
                 <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
-                <ds:DigestValue>hwWUEdTDEvUK5O6K9K4Yhc4VABo=Kk2mxxANqftNpLlcAPgFQyD/MA0=</ds:DigestValue>
+                <ds:DigestValue>Kk2mxxANqftNpLlcAPgFQyD/MA0=</ds:DigestValue>
               </xades:CertDigest>
               <xades:IssuerSerial>
                 <ds:X509IssuerName>
@@ -132,7 +132,7 @@ m8yhWPbEfqYMAHZTzFvDxCV8Kfu7gb3UVS0ecALL0g==
               </xades:IssuerSerial>
             </xades:Cert>
           </xades:CompleteCertificateRefs>
-          <xades:CertificateValues>
+          <xades:CertificateValues xmlns:xades="http://uri.etsi.org/01903/v1.4.1#">
             <xades:EncapsulatedX509Certificate>
 MIIDnDCCAwWgAwIBAgIJAONXs7qD0L1vMA0GCSqGSIb3DQEBBQUAMIGRMQswCQYD
 VQQGEwJJVDEQMA4GA1UECBMHRklSRU5aRTEQMA4GA1UEBxMHRklSRU5aRTETMBEG
@@ -156,10 +156,37 @@ W1/tOxVvoR6p1JD3oDCNkTDv+jwr6HH2j4uEbzGX6S1wWLYG1h2h1fEaSd/7D/37
 VonB0ViFwewzzgTI1dSb8g==
             </xades:EncapsulatedX509Certificate>
           </xades:CertificateValues>
-          <xades:CompleteRevocationRefs>
+          <xades:CompleteRevocationRefs xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+            <xades:CRLRefs>
+              <xades:CRLRef>
+                <xades:DigestAlgAndValue>
+                  <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+                  <ds:DigestValue>uNt2wzrTLLG5PSYxP7fZh9xQu1A=</ds:DigestValue>
+                </xades:DigestAlgAndValue>
+                <xades:CRLIdentifier>
+			          <xades:Issuer>
+                    C=IT, ST=FIRENZE, L=FIRENZE, O=Unirel spa, OU=ULIB, CN=CA test/emailAddress=stefano.casazza@gmail.com
+			          </xades:Issuer>
+			          <xades:IssueTime>2010-02-12T12:45:50Z</xades:IssueTime>
+			          <xades:Number>0</xades:Number>
+                </xades:CRLIdentifier>
+              </xades:CRLRef>
+            </xades:CRLRefs>
           </xades:CompleteRevocationRefs>
-          <xades:RevocationValues>
+          <xades:RevocationValues xmlns:xades="http://uri.etsi.org/01903/v1.4.1#">
+            <xades:EncapsulatedCRLValue>
+MIIBVzCBwTANBgkqhkiG9w0BAQQFADCBkTELMAkGA1UEBhMCSVQxEDAOBgNVBAgT
+B0ZJUkVOWkUxEDAOBgNVBAcTB0ZJUkVOWkUxEzARBgNVBAoTClVuaXJlbCBzcGEx
+DTALBgNVBAsTBFVMSUIxEDAOBgNVBAMTB0NBIHRlc3QxKDAmBgkqhkiG9w0BCQEW
+GXN0ZWZhbm8uY2FzYXp6YUBnbWFpbC5jb20XDTEwMDIxMjEyNDU1MFoXDTIxMDEy
+NTEyNDU1MFowDQYJKoZIhvcNAQEEBQADgYEAYjLPsWGMIPPpHTS/5AqcFnpWaZ8Q
+KWVR8TQrS0jc3y1MPZUZTlrh3F7V2488QCkd++J4SUewCbHTCycAD8zHEYluETWM
+mVT00roSSLUvb6T13b51nYCepq09uZW8BDNb6QVscaOBWlCq/8SulIeQykn+PIWW
+GpzkLW4uWpeQNd0=
+            </xades:EncapsulatedCRLValue>
           </xades:RevocationValues>
+          <xadesv141:ArchiveTimeStamp xmlns:xadesv141="http://uri.etsi.org/01903/v1.4.1#">
+          </xadesv141:ArchiveTimeStamp>
           <xades:SignatureTimeStamp>
           </xades:SignatureTimeStamp>
         </xades:UnsignedSignatureProperties>

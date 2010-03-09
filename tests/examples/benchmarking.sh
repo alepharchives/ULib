@@ -10,7 +10,7 @@ rm -f benchmarking.log* err/benchmarking.err \
 		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* \
 		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]*
 
- UTRACE="0 30M 0"
+#UTRACE="0 30M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR

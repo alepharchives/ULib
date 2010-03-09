@@ -27,11 +27,10 @@
 
 #if defined(__MINGW32__)
 #  define WIN32_WINNT 0x0501
-#  define HAVE_NANOSLEEP 1
 #  undef  HAVE_GETOPT_LONG /* with WINE don't work */
 #  define HAVE_WORKING_SOCKET_OPTION_SO_RCVTIMEO 1
 #  define sighandler_t __p_sig_fn_t
-#  define STRNCASECMP(x,y) strncasecmp(x,y,sizeof(y)-1)
+#  define STRNCASECMP(x,y) strncasecmp((x),y,sizeof(y)-1)
 #  include <ulib/base/win32/system.h>
 #elif defined(__linux__)
 #  define HAVE_WORKING_SOCKET_OPTION_SO_RCVTIMEO 1

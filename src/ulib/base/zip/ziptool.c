@@ -4,7 +4,7 @@
 #define DEBUG_DEBUG
 */
 
-#include <ulib/base/base.h>
+#include <ulib/base/utility.h>
 
 #include <zlib.h>
 #include <errno.h>
@@ -15,7 +15,7 @@
 #  ifdef DIRENT_HAVE_D_NAMLEN
 #     define NAMLEN(dirent) (dirent)->d_namlen
 #  else
-#     define NAMLEN(dirent) strlen((dirent)->d_name)
+#     define NAMLEN(dirent) u_strlen((dirent)->d_name)
 #  endif
 #else
 #  define dirent direct
@@ -180,7 +180,7 @@ static int create_central_header(int fd)
    for (ze = ziptail; ze != NULL; ze = ze->next_entry)
       {
       total_in  += ze->usize;
-      total_out += ze->csize + 76 + strlen(ze->filename) * 2;
+      total_out += ze->csize + 76 + u_strlen(ze->filename) * 2;
 
       if (ze->compressed)
          {
@@ -196,11 +196,11 @@ static int create_central_header(int fd)
       PACK_UB4(header, CEN_CRC,     ze->crc);
       PACK_UB4(header, CEN_CSIZE,   ze->csize);
       PACK_UB4(header, CEN_USIZE,   ze->usize);
-      PACK_UB2(header, CEN_FNLEN,   strlen(ze->filename));
+      PACK_UB2(header, CEN_FNLEN,   u_strlen(ze->filename));
       PACK_UB4(header, CEN_OFFSET,  ze->offset);
 
       write(fd, header,       46);
-      write(fd, ze->filename, strlen(ze->filename));
+      write(fd, ze->filename, u_strlen(ze->filename));
       }
 
    dir_size = lseek(fd, 0, SEEK_CUR) - start_offset;
@@ -266,7 +266,7 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
    unsigned short file_name_length;
 
    mod_time         = unix2dostime(&(statbuf->st_mtime));
-   file_name_length = strlen(fname);
+   file_name_length = u_strlen(fname);
 
    /* data descriptor */
    PACK_UB2(file_header, LOC_EXTRA, 0);
@@ -331,7 +331,7 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
    PACK_UB4(data_descriptor, 12, ze->usize);
 
    /* we need to seek back and fill the header */
-   offset = (ze->csize + strlen(ze->filename) + 16);
+   offset = (ze->csize + u_strlen(ze->filename) + 16);
 
    if (lseek(jfd, -offset, SEEK_CUR) == (off_t)-1)
       {
@@ -400,7 +400,7 @@ static int add_to_zip(int fd, const char* file)
          return 1;
          }
 
-      nlen = strlen(file) + 256;
+      nlen = u_strlen(file) + 256;
 
       fullname = (char*) calloc(1, nlen);
 
@@ -413,7 +413,7 @@ static int add_to_zip(int fd, const char* file)
 
       strcpy(fullname, file);
 
-      nlen = strlen(file);
+      nlen = u_strlen(file);
 
       if (fullname[nlen - 1] != '/')
          {
@@ -911,13 +911,13 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
          /* only a directory */
 
-         if (strlen((const char *)start) == 0) dir = 1;
+         if (u_strlen((const char *)start) == 0) dir = 1;
 
-         U_INTERNAL_TRACE("Leftovers are \"%s\" (%d)", start, strlen((const char*)start))
+         U_INTERNAL_TRACE("Leftovers are \"%s\" (%d)", start, u_strlen((const char*)start))
 
          /* If the entry was just a directory, don't write to file, etc */
 
-         if (strlen((const char *)start) == 0) f_fd = -1;
+         if (u_strlen((const char *)start) == 0) f_fd = -1;
 
          free(tmp_buff);
          }

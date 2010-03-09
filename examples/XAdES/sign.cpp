@@ -2,6 +2,7 @@
 
 #include <ulib/url.h>
 #include <ulib/date.h>
+#include <ulib/ssl/crl.h>
 #include <ulib/file_config.h>
 #include <ulib/base/ssl/dgst.h>
 #include <ulib/utility/base64.h>
@@ -33,7 +34,7 @@
 //#define XMLDSIG_ONLY
 
 #define U_XMLDSIG_REFERENCE_TEMPLATE \
-"    <ds:Reference URI=\"#ObjID_%u\">\r\n" \
+"    <ds:Reference xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" URI=\"#ObjID_%u\">\r\n" \
 "      <ds:DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#%.*s\"></ds:DigestMethod>\r\n" \
 "      <ds:DigestValue>%.*s</ds:DigestValue>\r\n" \
 "    </ds:Reference>\r\n"
@@ -54,12 +55,8 @@
 #define U_XMLDSIG_OBJECT_TEMPLATE \
 "  <ds:Object xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" Id=\"ObjID_%u\">%.*s</ds:Object>\r\n"
 
-#define U_XMLDSIG_TEMPLATE \
-"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n" \
-"<ds:Signature xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" Id=\"SigID\">\r\n" \
-"%.*s" \
-"%.*s" \
-"  <ds:KeyInfo>\r\n" \
+#define U_XMLDSIG_KEYINFO_TEMPLATE \
+"  <ds:KeyInfo xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\r\n" \
 "    <ds:KeyValue>\r\n" \
 "      <ds:RSAKeyValue>\r\n" \
 "        <ds:Modulus>\r\n" \
@@ -82,13 +79,20 @@
 "%.*s" \
 "      </ds:X509Certificate>\r\n" \
 "    </ds:X509Data>\r\n" \
-"  </ds:KeyInfo>\r\n" \
+"  </ds:KeyInfo>\r\n"
+
+#define U_XMLDSIG_TEMPLATE \
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n" \
+"<ds:Signature xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" Id=\"SigID\">\r\n" \
+"%.*s" \
+"%.*s" \
+"%.*s" \
 "%.*s" \
 "%.*s" \
 "</ds:Signature>\r\n"
 
 #define U_XADES_REFERENCE_TEMPLATE \
-"    <ds:Reference URI=\"#SigID-SignedProperties\" Type=\"http://uri.etsi.org/01903#SignedProperties\">\r\n" \
+"    <ds:Reference xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" URI=\"#SigID-SignedProperties\" Type=\"http://uri.etsi.org/01903#SignedProperties\">\r\n" \
 "      <ds:DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#%.*s\"></ds:DigestMethod>\r\n" \
 "      <ds:DigestValue>%.*s</ds:DigestValue>\r\n" \
 "    </ds:Reference>\r\n"
@@ -130,24 +134,19 @@
 "            </xades:Cert>\r\n"
 
 #define U_XADES_CRL_TEMPLATE \
-"            <xades:CRLRefs>\r\n" \
-"              <xades:CRLRef">\r\n" \
+"              <xades:CRLRef>\r\n" \
 "                <xades:DigestAlgAndValue>\r\n" \
 "                  <ds:DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#%.*s\"></ds:DigestMethod>\r\n" \
-"                  <ds:DigestValue>%.*s</ds:DigestValue>\r\n"
-
-                  /*
-                  <OCSPIdentifier URI="#N0">
-                    <ResponderID>/C=EE/O=ESTEID/OU=OCSP/CN=ESTEID-SK OCSP RESPONDER/emailAddress=pki@sk.ee</ResponderID>
-                    <ProducedAt>2003.04.22T10:32:46Z</ProducedAt>
-                  </OCSPIdentifier>
-                  <DigestAlgAndValue>
-                    <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod>
-                    <DigestValue>UoUfe+XSnc7kUKKkdQvpBV4+pBA=</DigestValue>
-                  </DigestAlgAndValue>
-                </OCSPRef>
-              </OCSPRefs>
-               */
+"                  <ds:DigestValue>%.*s</ds:DigestValue>\r\n" \
+"                </xades:DigestAlgAndValue>\r\n" \
+"                <xades:CRLIdentifier>\r\n" \
+"                  <xades:Issuer>\r\n" \
+"                    %.*s\r\n" \
+"                  </xades:Issuer>\r\n" \
+"                  <xades:IssueTime>%.*s</xades:IssueTime>\r\n" \
+"                  <xades:Number>%ld</xades:Number>\r\n" \
+"                </xades:CRLIdentifier>\r\n" \
+"              </xades:CRLRef>\r\n"
 
 #define U_XADES_ENCAPSULATED_X509_CERTIFICATE_TEMPLATE \
 "            <xades:EncapsulatedX509Certificate>\r\n" \
@@ -155,9 +154,9 @@
 "            </xades:EncapsulatedX509Certificate>\r\n"
 
 #define U_XADES_ENCAPSULATED_CRL_VALUE_TEMPLATE \
-"            <xades:EncapsulatedCRLValue">\r\n" \
+"            <xades:EncapsulatedCRLValue>\r\n" \
 "%.*s" \
-"            </xades:EncapsulatedCRLValue">\r\n"
+"            </xades:EncapsulatedCRLValue>\r\n"
 
 #define U_XADES_SIGNED_PROPERTIES_TEMPLATE \
 "      <xades:SignedProperties xmlns:xades=\"http://uri.etsi.org/01903/v1.4.1#\" xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" Id=\"SigID-SignedProperties\">\r\n" \
@@ -183,6 +182,35 @@
 "        </xades:SignedDataObjectProperties>\r\n" \
 "      </xades:SignedProperties>\r\n"
 
+#define U_XADES_COMPLETE_CERTIFICATE_REFS_TEMPLATE \
+"          <xades:CompleteCertificateRefs xmlns:xades=\"http://uri.etsi.org/01903/v1.4.1#\" xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\r\n" \
+"%.*s" \
+"          </xades:CompleteCertificateRefs>\r\n"
+
+#define U_XADES_COMPLETE_REVOCATION_REFS_TEMPLATE \
+"          <xades:CompleteRevocationRefs xmlns:xades=\"http://uri.etsi.org/01903/v1.4.1#\" xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\r\n" \
+"            <xades:CRLRefs>\r\n" \
+"%.*s" \
+"            </xades:CRLRefs>\r\n" \
+"          </xades:CompleteRevocationRefs>\r\n"
+
+#define U_XADES_CERTIFICATE_VALUES_TEMPLATE \
+"          <xades:CertificateValues xmlns:xades=\"http://uri.etsi.org/01903/v1.4.1#\">\r\n" \
+"%.*s" \
+"          </xades:CertificateValues>\r\n"
+
+#define U_XADES_REVOCATION_VALUES_TEMPLATE \
+"          <xades:RevocationValues xmlns:xades=\"http://uri.etsi.org/01903/v1.4.1#\">\r\n" \
+"%.*s" \
+"          </xades:RevocationValues>\r\n"
+
+// ArchiveTimeStamp
+
+#define U_XADES_ARCHIVE_TIMESTAMP_TEMPLATE \
+"          <xadesv141:ArchiveTimeStamp xmlns:xadesv141=\"http://uri.etsi.org/01903/v1.4.1#\">\r\n" \
+"%.*s" \
+"          </xadesv141:ArchiveTimeStamp>\r\n"
+
 #define U_XADES_SIGNATURE_TIMESTAMP_TEMPLATE \
 "          <xades:SignatureTimeStamp>\r\n" \
 "%.*s" \
@@ -204,33 +232,6 @@
 "%.*s" \
 "          </xades:SigAndRefsTimeStamp>\r\n"
 
-// ArchiveTimeStamp
-
-#define U_XADES_ARCHIVE_TIMESTAMP_TEMPLATE \
-"          <xadesv141:ArchiveTimeStamp>\r\n" \
-"%.*s" \
-"          </xadesv141:ArchiveTimeStamp>\r\n"
-
-#define U_XADES_COMPLETE_CERTIFICATE_REFS_TEMPLATE \
-"          <xades:CompleteCertificateRefs>\r\n" \
-"%.*s" \
-"          </xades:CompleteCertificateRefs>\r\n"
-
-#define U_XADES_COMPLETE_REVOCATION_REFS_TEMPLATE \
-"          <xades:CompleteRevocationRefs>\r\n" \
-"%.*s" \
-"          </xades:CompleteRevocationRefs>\r\n"
-
-#define U_XADES_CERTIFICATE_VALUES_TEMPLATE \
-"          <xades:CertificateValues>\r\n" \
-"%.*s" \
-"          </xades:CertificateValues>\r\n"
-
-#define U_XADES_REVOCATION_VALUES_TEMPLATE \
-"          <xades:RevocationValues>\r\n" \
-"%.*s" \
-"          </xades:RevocationValues>\r\n"
-
 #define U_XADES_UNSIGNED_SIGNATURE_PROPERTIES_TEMPLATE \
 "%.*s" \
 "%.*s" \
@@ -243,6 +244,7 @@
 "%.*s" \
 "      <xades:UnsignedProperties>\r\n" \
 "        <xades:UnsignedSignatureProperties>\r\n" \
+"%.*s" \
 "%.*s" \
 "%.*s" \
 "        </xades:UnsignedSignatureProperties>\r\n" \
@@ -315,9 +317,9 @@ public:
       U_RETURN_STRING(token);
       }
 
-   void setXAdES()
+   void setXAdESReference()
       {
-      U_TRACE(5, "Application::setXAdES()")
+      U_TRACE(5, "Application::setXAdESReference()")
 
       // SIGNED PROPERTIES
 
@@ -325,17 +327,13 @@ public:
 
       // Compute the digest of the signer certificate
 
-      X509CertificateValue.reserve(X509Certificate.size() * 4);
+      UString DigestValue(U_CAPACITY);
 
-      UBase64::encode(X509Certificate, X509CertificateValue, U_BASE64_MAX_COLUMN);
-
-      UString X509CertificateDigestValue(U_CAPACITY);
-
-      UServices::generateDigest(alg, 0, X509Certificate, X509CertificateDigestValue, true, 0);
+      UServices::generateDigest(alg, 0, X509Certificate, DigestValue, true, 0);
 
       signingCertificate.snprintf(U_XADES_CERTIFICATE_TEMPLATE,
                                   U_STRING_TO_TRACE(digest_algorithm),
-                                  U_STRING_TO_TRACE(X509CertificateDigestValue),
+                                  U_STRING_TO_TRACE(DigestValue),
                                   U_STRING_TO_TRACE(X509IssuerName),
                                   X509SerialNumber);
 
@@ -375,7 +373,7 @@ public:
                                 U_STRING_TO_TRACE(DataObjectFormat),
                                 U_STRING_TO_TRACE(allDataObjectTimestamp));
 
-      to_digest = UXML2Document(signedProperties).xmlC14N();
+      to_digest = UXML2Document::xmlC14N(signedProperties);
 
       UString signedPropertiesDigestValue(200U);
 
@@ -386,15 +384,22 @@ public:
       XAdESReference.snprintf(U_XADES_REFERENCE_TEMPLATE,
                               U_STRING_TO_TRACE(digest_algorithm),
                               U_STRING_TO_TRACE(signedPropertiesDigestValue));
+      }
+
+   void setXAdESUnsignedSignatureProperties()
+      {
+      U_TRACE(5, "Application::setXAdESUnsignedSignatureProperties()")
 
       // UNSIGNED SIGNATURE PROPERTIES
+
+      // <CompleteCertificateRefs>...</CompleteCertificateRefs>
 
       UString completeCertificateRef(U_CAPACITY), completeCertificateRefs(U_CAPACITY);
 
       uint32_t i, n;
       long CASerialNumber;
       UVector<UString> vec_CACertificateValue;
-      UString item(U_CAPACITY), CACertificateValue(U_CAPACITY), CAIssuerName, CACertificate;
+      UString item(U_CAPACITY), CACertificateValue(U_CAPACITY), CAIssuerName, CACertificate, DigestValue(U_CAPACITY);
 
       UCertificate* ca;
 
@@ -410,11 +415,13 @@ public:
 
          vec_CACertificateValue.push_back(CACertificateValue);
 
-         UServices::generateDigest(alg, 0, CACertificate, X509CertificateDigestValue, true, 0);
+         DigestValue.setEmpty();
+
+         UServices::generateDigest(alg, 0, CACertificate, DigestValue, true, 0);
 
          item.snprintf(U_XADES_CERTIFICATE_TEMPLATE,
                        U_STRING_TO_TRACE(digest_algorithm),
-                       U_STRING_TO_TRACE(X509CertificateDigestValue),
+                       U_STRING_TO_TRACE(DigestValue),
                        U_STRING_TO_TRACE(CAIssuerName),
                        CASerialNumber);
 
@@ -422,6 +429,10 @@ public:
          }
 
       completeCertificateRefs.snprintf(U_XADES_COMPLETE_CERTIFICATE_REFS_TEMPLATE, U_STRING_TO_TRACE(completeCertificateRef));
+
+      unsignedSignaturePropertiesC14N += UXML2Document::xmlC14N(completeCertificateRefs);
+
+      // <CertificateValues>....</CertificateValues>
 
       UString certificateValue(U_CAPACITY), certificateValues(U_CAPACITY);
 
@@ -437,14 +448,72 @@ public:
 
       certificateValues.snprintf(U_XADES_CERTIFICATE_VALUES_TEMPLATE, U_STRING_TO_TRACE(certificateValue));
 
-      UString completeRevocationRefs(U_CAPACITY);
+      unsignedSignaturePropertiesC14N += UXML2Document::xmlC14N(certificateValues);
 
-      completeRevocationRefs.snprintf(U_XADES_COMPLETE_REVOCATION_REFS_TEMPLATE, U_STRING_TO_TRACE(completeRevocationRefs));
+      // <CompleteRevocationRefs>...</CompleteRevocationRefs>
 
+      UString completeRevocationRef(U_CAPACITY), completeRevocationRefs(U_CAPACITY);
 
-      UString revocationValues(U_CAPACITY);
+      long CRLNumber;
+      bool crl_exist;
+      UString crlpath;
+      UVector<UString> vec_CRLValue;
+      UString CRLValue(U_CAPACITY), CRLIssuerName, CRL, CRLIssueTime;
 
-      revocationValues.snprintf(U_XADES_REVOCATION_VALUES_TEMPLATE, U_STRING_TO_TRACE(revocationValues));
+      for (i = 0; i < num_ca; ++i)
+         {
+         ca      = vec_ca[i];
+         crlpath = UCertificate::getFileName(ca->hashCode(), true,  &crl_exist);
+
+         if (crl_exist)
+            {
+            UCrl crl(UFile::contentOf(crlpath));
+
+            CRL             = crl.getEncoded("DER");
+            CRLNumber       = crl.getNumber();
+            CRLIssuerName   = crl.getIssuerForLDAP();
+            CRLIssueTime    = UDate::strftime("%Y-%m-%dT%H:%M:%SZ", crl.getIssueTime());
+
+            UBase64::encode(CRL, CRLValue, U_BASE64_MAX_COLUMN);
+
+            vec_CRLValue.push_back(CRLValue);
+
+            DigestValue.setEmpty();
+
+            UServices::generateDigest(alg, 0, CRL, DigestValue, true, 0);
+
+            item.snprintf(U_XADES_CRL_TEMPLATE,
+                          U_STRING_TO_TRACE(digest_algorithm),
+                          U_STRING_TO_TRACE(DigestValue),
+                          U_STRING_TO_TRACE(CRLIssuerName),
+                          U_STRING_TO_TRACE(CRLIssueTime),
+                          CRLNumber);
+
+            (void) completeRevocationRef.append(item);
+            }
+         }
+
+      completeRevocationRefs.snprintf(U_XADES_COMPLETE_REVOCATION_REFS_TEMPLATE, U_STRING_TO_TRACE(completeRevocationRef));
+
+      unsignedSignaturePropertiesC14N += UXML2Document::xmlC14N(completeRevocationRefs);
+
+      // <RevocationValues>...</RevocationValues>
+
+      UString revocationValue(U_CAPACITY), revocationValues(U_CAPACITY);
+
+      for (i = 0, n = vec_CRLValue.size(); i < n; ++i)
+         {
+         CRLValue = vec_CRLValue[i];
+
+         item.snprintf(U_XADES_ENCAPSULATED_CRL_VALUE_TEMPLATE,
+                       U_STRING_TO_TRACE(CRLValue));
+
+         (void) revocationValue.append(item);
+         }
+
+      revocationValues.snprintf(U_XADES_REVOCATION_VALUES_TEMPLATE, U_STRING_TO_TRACE(revocationValue));
+
+      unsignedSignaturePropertiesC14N += UXML2Document::xmlC14N(revocationValues);
 
       unsignedSignatureProperties.reserve(U_CONSTANT_SIZE(U_XADES_UNSIGNED_SIGNATURE_PROPERTIES_TEMPLATE) +
                                           completeCertificateRefs.size() +
@@ -538,6 +607,7 @@ public:
       //                               are not exchanged in a restricted context) to enable the presentation to the verifier or
       //                               use by the verifier (text, sound or video) in exactly the same way as intended by the signer
       //
+      // ARCHIVE_TIMESTAMP             the time-stamp token within this property covers the archive validation data
       // SIGNATURE_TIMESTAMP           the time-stamp token within this property covers the digital signature value element
       // ALL_DATA_OBJECT_TIMESTAMP     the time-stamp token within this property covers all the signed data object
       // ----------------------------------------------------------------------------------------------------------------------------------
@@ -548,6 +618,7 @@ public:
 
       claimed_role                        = cfg[U_STRING_FROM_CONSTANT("CLAIMED_ROLE")];
       digest_algorithm                    = cfg[U_STRING_FROM_CONSTANT("DIGEST_ALGORITHM")];
+      archive_timestamp                   = cfg[U_STRING_FROM_CONSTANT("ARCHIVE_TIMESTAMP")];
       signature_timestamp                 = cfg[U_STRING_FROM_CONSTANT("SIGNATURE_TIMESTAMP")];
       all_data_object_timestamp           = cfg[U_STRING_FROM_CONSTANT("ALL_DATA_OBJECT_TIMESTAMP")];
       data_object_format_mimetype         = cfg[U_STRING_FROM_CONSTANT("DATA_OBJECT_FORMAT_MIMETYPE")];
@@ -572,11 +643,24 @@ public:
               X509Certificate  = cert.getEncoded("DER");
               X509SerialNumber = cert.getSerialNumber();
 
+      UString X509CertificateValue(U_CAPACITY), KeyInfo(U_CAPACITY);
+
+      UBase64::encode(X509Certificate, X509CertificateValue, U_BASE64_MAX_COLUMN);
+
+      KeyInfo.snprintf(U_XMLDSIG_KEYINFO_TEMPLATE,
+                       U_STRING_TO_TRACE(modulus),
+                       U_STRING_TO_TRACE(exponent),
+                       U_STRING_TO_TRACE(X509SubjectName),
+                       U_STRING_TO_TRACE(X509IssuerName),
+                       X509SerialNumber,
+                       U_STRING_TO_TRACE(X509CertificateValue));
+
       // manage arg operation
 
       const char* file;
       UString XMLDSIGObject(U_CAPACITY), Object(U_CAPACITY), ObjectDigestValue(200U),
-              document_to_add, Reference(U_CAPACITY), dataObjectFormat(U_CAPACITY), XMLDSIGReference(U_CAPACITY);
+              document_to_add, Reference(U_CAPACITY), dataObjectFormat(U_CAPACITY),
+              XMLDSIGReference(U_CAPACITY), XMLDSIGReferenceC14N(U_CAPACITY);
 
       for (uint32_t i = 1; (file = argv[optind]); ++i, ++optind)
          {
@@ -584,10 +668,10 @@ public:
 
          if (document.empty() || document.isBinary()) U_ERROR("I can't sign this document: %s", file);
 
-         if (u_endsWith(file, strlen(file), U_CONSTANT_TO_PARAM(".xml")) == false) document_to_add = document;
+         if (u_endsWith(file, u_strlen(file), U_CONSTANT_TO_PARAM(".xml")) == false) document_to_add = document;
          else
             {
-            document_to_add = UXML2Document(document).xmlC14N();
+            document_to_add = UXML2Document::xmlC14N(document);
 
             UString tmp(document.size() * 4);
 
@@ -610,7 +694,7 @@ public:
 
          XMLDSIGObject += Object;
 
-         to_digest = UXML2Document(Object).xmlC14N();
+         to_digest = UXML2Document::xmlC14N(Object);
          // ---------------------------------------------------------------------------------------------------------------
 
          // ---------------------------------------------------------------------------------------------------------------
@@ -622,10 +706,11 @@ public:
          // ---------------------------------------------------------------------------------------------------------------
 
          Reference.snprintf(U_XMLDSIG_REFERENCE_TEMPLATE, i,
-                              U_STRING_TO_TRACE(digest_algorithm),
-                              U_STRING_TO_TRACE(ObjectDigestValue));
+                            U_STRING_TO_TRACE(digest_algorithm),
+                            U_STRING_TO_TRACE(ObjectDigestValue));
 
-         XMLDSIGReference += Reference;
+         XMLDSIGReference     +=                        Reference;
+         XMLDSIGReferenceC14N += UXML2Document::xmlC14N(Reference);
 
          if (data_object_format_mimetype.empty() == false)
             {
@@ -635,7 +720,7 @@ public:
             }
          }
 
-      setXAdES(); // XAdES management
+      setXAdESReference(); // XAdES management
 
       // ---------------------------------------------------------------------------------------------------------------
       // 3. Encapsulate the message digest in an XML <SignedInfo> element, SI, in canonicalized form.
@@ -651,13 +736,13 @@ public:
                           U_STRING_TO_TRACE(XMLDSIGReference),
                           U_STRING_TO_TRACE(XAdESReference));
 
-      UString to_sign = UXML2Document(SignedInfo).xmlC14N();
+      UString to_sign = UXML2Document::xmlC14N(SignedInfo);
       // ---------------------------------------------------------------------------------------------------------------
 
       // ---------------------------------------------------------------------------------------------------------------
       // 4. Compute the RSA signatureValue of the canonicalized <SignedInfo> element, SV = RsaSign(Ks, SI).
       // ---------------------------------------------------------------------------------------------------------------
-      UString SignatureValue(U_CAPACITY), signatureTimestamp(U_CAPACITY);
+      UString SignatureValue(U_CAPACITY), signatureTimestamp(U_CAPACITY), archiveTimestamp(U_CAPACITY);
 
       UString sign = UServices::getSignatureValue(alg, to_sign, UString::getStringNull(), UString::getStringNull(), true, U_BASE64_MAX_COLUMN);
 
@@ -665,21 +750,40 @@ public:
 
       if (signature_timestamp.empty() == false)
          {
-         to_digest = UXML2Document(SignatureValue).xmlC14N();
+         to_digest = UXML2Document::xmlC14N(SignatureValue);
 
          UString token = getTimeStampToken(to_digest, signature_timestamp);
 
          signatureTimestamp.snprintf(U_XADES_SIGNATURE_TIMESTAMP_TEMPLATE, U_STRING_TO_TRACE(token));
          }
 
+      setXAdESUnsignedSignatureProperties(); // XAdES management
+
+      if (archive_timestamp.empty() == false)
+         {
+         to_digest = XMLDSIGReferenceC14N +
+                     UXML2Document::xmlC14N(XAdESReference) +
+                     to_sign +
+                     UXML2Document::xmlC14N(SignatureValue) +
+                     UXML2Document::xmlC14N(KeyInfo) +
+                     unsignedSignaturePropertiesC14N +
+                     XMLDSIGObject;
+
+         UString token = getTimeStampToken(to_digest, archive_timestamp);
+
+         archiveTimestamp.snprintf(U_XADES_ARCHIVE_TIMESTAMP_TEMPLATE, U_STRING_TO_TRACE(token));
+         }
+
       XAdESObject.reserve(U_CONSTANT_SIZE(U_XADES_TEMPLATE) +
                           signedProperties.size() +
                           unsignedSignatureProperties.size() +
+                          archiveTimestamp.size() +
                           signatureTimestamp.size());
 
       XAdESObject.snprintf(U_XADES_TEMPLATE,
                            U_STRING_TO_TRACE(signedProperties),
                            U_STRING_TO_TRACE(unsignedSignatureProperties),
+                           U_STRING_TO_TRACE(archiveTimestamp),
                            U_STRING_TO_TRACE(signatureTimestamp));
       // ---------------------------------------------------------------------------------------------------------------
 
@@ -696,12 +800,7 @@ public:
       output.snprintf(U_XMLDSIG_TEMPLATE,
                         U_STRING_TO_TRACE(SignedInfo),
                         U_STRING_TO_TRACE(SignatureValue),
-                        U_STRING_TO_TRACE(modulus),
-                        U_STRING_TO_TRACE(exponent),
-                        U_STRING_TO_TRACE(X509SubjectName),
-                        U_STRING_TO_TRACE(X509IssuerName),
-                        X509SerialNumber,
-                        U_STRING_TO_TRACE(X509CertificateValue),
+                        U_STRING_TO_TRACE(KeyInfo),
                         U_STRING_TO_TRACE(XMLDSIGObject),
                         U_STRING_TO_TRACE(XAdESObject));
       // ---------------------------------------------------------------------------------------------------------------
@@ -720,8 +819,8 @@ private:
            production_place_city, production_place_state_or_province, production_place_postal_code,
            production_place_country_name, data_object_format_mimetype, signature_algorithm, document,
            passwd, to_digest, DataObjectFormat, XAdESObject, XAdESReference, X509IssuerName, X509SubjectName,
-           X509Certificate, X509CertificateValue, signedProperties, all_data_object, all_data_object_timestamp,
-           signature_timestamp, str_CApath, unsignedSignatureProperties;
+           X509Certificate, signedProperties, all_data_object, all_data_object_timestamp, signature_timestamp,
+           archive_timestamp, str_CApath, unsignedSignatureProperties, unsignedSignaturePropertiesC14N;
 };
 
 U_MAIN(Application)

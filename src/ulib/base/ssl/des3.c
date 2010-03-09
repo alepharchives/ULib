@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/base/utility.h>
 #include <ulib/base/ssl/des3.h>
 
 #include <openssl/evp.h>
@@ -141,7 +142,7 @@ long u_des3_encode(const unsigned char* inp, long len, unsigned char* out)
 
    U_INTERNAL_PRINT("cipher = %p, md = %p", cipher, md)
 
-   (void) EVP_BytesToKey(cipher, md, salt, (unsigned char*)password, strlen(password), 1, xkey, iv);
+   (void) EVP_BytesToKey(cipher, md, salt, (unsigned char*)password, u_strlen(password), 1, xkey, iv);
 
    wbio = BIO_new(BIO_s_mem());
    benc = BIO_new(BIO_f_cipher());
@@ -204,7 +205,7 @@ long u_des3_decode(const unsigned char* inp, long len, unsigned char* out)
 
    BIO_read(rbio, (unsigned char*)salt, sizeof(salt));
 
-   (void) EVP_BytesToKey(cipher, md, salt, (unsigned char*)password, strlen(password), 1, xkey, iv);
+   (void) EVP_BytesToKey(cipher, md, salt, (unsigned char*)password, u_strlen(password), 1, xkey, iv);
 
    BIO_set_cipher(benc, cipher, xkey, iv, U_DECRYPT);
 

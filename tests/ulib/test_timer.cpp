@@ -108,17 +108,13 @@ int U_EXPORT main (int argc, char* argv[])
 
    for (int i = 0; i < n; ++i)
       {
-#  ifdef HAVE_NANOSLEEP
       s.nanosleep();
-#  else
-      for (int t = 0; t < 1000 * 1024; ++t) {}
-#  endif
 
       (void) UTimer::insert(U_NEW(MyAlarm1(0L, 50L * 1000L)));
 
-#ifdef DEBUG
+#  ifdef DEBUG
       if (argc > 2) UTimer::printInfo(cout);
-#endif
+#  endif
       }
 
    s.nanosleep();

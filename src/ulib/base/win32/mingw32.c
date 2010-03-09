@@ -1,4 +1,4 @@
-/* win32.c - This code is designed to be built with the mingw compiler */
+/* mingw32.c - This code is designed to be built with the mingw compiler */
 
 /*
 #define DEBUG_DEBUG
@@ -271,42 +271,10 @@ int unlink_w32(const char* path)
    return ret;
 }
 
-/* Pause execution for a number of nanoseconds */
-
-#define MILLISEC_PER_SEC         1000
-#define NANOSEC_PER_MILLISEC  1000000
-
-int nanosleep(const struct timespec* requested_time, struct timespec* remaining)
-{
-   int ret = 0;
-
-   U_INTERNAL_TRACE("nanosleep(%p,%p)", requested_time, remaining)
-
-   if (requested_time->tv_nsec < 0 ||
-       requested_time->tv_nsec > NANOSEC_PER_MILLISEC)
-      {
-      ret   = -1;
-      errno = EINVAL;
-      }
-   else
-      {
-      DWORD milliseconds = requested_time->tv_sec * MILLISEC_PER_SEC + (requested_time->tv_nsec) / NANOSEC_PER_MILLISEC;
-
-      Sleep(milliseconds);
-
-      remaining->tv_sec = 0;
-      remaining->tv_nsec = 0;
-      }
-
-   U_INTERNAL_PRINT("ret = %d", ret)
-
-   return ret;
-}
-
 int mkstemp(char* tmplate)
 {
    char* pChr;
-   int ret, iRnd, iLen = strlen(tmplate);
+   int ret, iRnd, iLen = u_strlen(tmplate);
 
    U_INTERNAL_TRACE("mkstemp(%s)", tmplate)
 
@@ -1700,7 +1668,7 @@ const char* getSysError_w32(unsigned* len)
    if (ret == 0) lenMsg = 0;
    else
       {
-      lenMsg = strlen(pBuffer);
+      lenMsg = u_strlen(pBuffer);
 
       U_INTERNAL_ASSERT_MINOR(lenMsg, sizeof(buffer))
 
@@ -1721,7 +1689,7 @@ const char* getSysError_w32(unsigned* len)
 
    LocalFree(pBuffer);
 
-   *len = strlen(buffer);
+   *len = u_strlen(buffer);
 
    U_INTERNAL_PRINT("ret = %s", buffer)
 

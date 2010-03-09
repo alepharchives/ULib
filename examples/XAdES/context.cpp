@@ -101,7 +101,7 @@ UBaseTransform* UTransformCtx::findByHref(const char* href)
 
    /* check with enabled transforms list */
 
-   uint32_t i = enabledTransforms->find(href, strlen(href));
+   uint32_t i = enabledTransforms->find(href, u_strlen(href));
 
    if (i == U_NOT_FOUND) U_RETURN_POINTER(0, UBaseTransform);
 
@@ -644,7 +644,7 @@ bool UTransformCtx::verifyNodeContent(UBaseTransform* transform, xmlNodePtr node
 
    const char* content = (const char*) UXML2Node::getContent(node);
 
-   uint32_t size = strlen(content);
+   uint32_t size = u_strlen(content);
 
    transform->inBuf.reserve(size);
 

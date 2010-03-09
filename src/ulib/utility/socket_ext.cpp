@@ -472,7 +472,7 @@ UString USocketExt::getMacAddress(int fd, const char* device_or_ip)
    UString result(100U);
 
 #ifndef __MINGW32__
-   if (u_isIPv4Addr(device_or_ip, strlen(device_or_ip)))
+   if (u_isIPv4Addr(device_or_ip, u_strlen(device_or_ip)))
       {
       FILE* arp = (FILE*) U_SYSCALL(fopen, "%S,%S", "/proc/net/arp", "r");
 

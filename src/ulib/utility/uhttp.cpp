@@ -681,6 +681,12 @@ bool UHTTP::readHTTPRequest()
       U_RETURN(false);
       }
 
+   // NB: we need to read before the body a cause of possible resize buffer...
+
+   if ((http_info.method_type == 0 ||
+        http_info.method_type == HTTP_POST) &&
+       readHTTPBody(UClientImage_Base::socket, *UClientImage_Base::rbuffer, *UClientImage_Base::body) == false) U_RETURN(false);
+
    if (http_info.method_type)
       {
       // --------------------------------
@@ -752,13 +758,8 @@ bool UHTTP::readHTTPRequest()
 
          pos1 = pos2 + 1;
          }
-
-      if (http_info.method_type != HTTP_POST) goto end;
       }
 
-   if (readHTTPBody(UClientImage_Base::socket, *UClientImage_Base::rbuffer, *UClientImage_Base::body) == false) U_RETURN(false);
-
-end:
    // manage buffered read (pipelining)
 
    USocketExt::size_message = http_info.endHeader + http_info.clength;

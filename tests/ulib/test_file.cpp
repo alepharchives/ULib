@@ -104,7 +104,6 @@ U_EXPORT main (int argc, char* argv[])
    buffer.append(".bash_profile");
    x.setPath(U_STRING_FROM_CONSTANT("~root/.bash_profile"));
    U_ASSERT( x.getPath() == buffer )
-#endif
 
    buffer.assign(argv[3]);
    x.setPath(U_STRING_FROM_CONSTANT("$PWD"));
@@ -117,6 +116,7 @@ U_EXPORT main (int argc, char* argv[])
    buffer.append("test_file.cpp");
    x.setPath(U_STRING_FROM_CONSTANT("$PWD/test_file.cpp"));
    U_ASSERT( x.getPath() == buffer )
+#endif
 
    MyFile y;
    UString name;

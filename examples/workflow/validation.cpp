@@ -57,7 +57,7 @@ public:
 
       // query to Search Engine
 
-      UString body(10U + strlen(uid));
+      UString body(10U + u_strlen(uid));
 
       body.snprintf("query=%s", uid);
 

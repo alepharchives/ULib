@@ -286,7 +286,6 @@ extern __declspec(dllexport) ssize_t        writev(int fd, const struct iovec* v
 extern __declspec(dllexport) int            sigprocmask(int how, const sigset_t* set, sigset_t* oldset);
 extern __declspec(dllexport) void*          mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset);
 extern __declspec(dllexport) int            sigaction(int signum, const struct sigaction* act, struct sigaction* oldact);
-extern __declspec(dllexport) int            nanosleep(const struct timespec* requested_time, struct timespec* remaining);
 extern __declspec(dllexport) int            setitimer(int which, const struct itimerval* value, struct itimerval* ovalue);
 
 /* implemented in MINGW Runtime (3.10)

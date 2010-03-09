@@ -16,6 +16,12 @@
 
 #include <ulib/container/vector.h>
 
+#ifdef __MINGW32__
+#  include <libxml/xmlversion.h>
+#  undef  XMLPUBVAR
+#  define XMLPUBVAR __declspec(dllimport) extern
+#endif
+
 #include <libxml/tree.h>
 #include <libxml/xpathInternals.h>
 

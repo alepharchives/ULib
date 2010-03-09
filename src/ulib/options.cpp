@@ -342,7 +342,7 @@ void UOptions::printHelp(vPF func)
 
       ptr += 4;
 
-      name_len = strlen(ptr_long_options->name);
+      name_len = u_strlen(ptr_long_options->name);
 
       (void) memcpy(ptr, ptr_long_options->name, name_len); 
 
@@ -376,7 +376,7 @@ void UOptions::printHelp(vPF func)
          (void) strcpy(ptr, (i ? "Show version information"
                                : "Show help about options"));
 
-         ptr += strlen(ptr);
+         ptr += u_strlen(ptr);
          }
       else
          {
@@ -638,7 +638,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
             if (optarg)
                {
-               UStringRep::assign(item[longindex - 2].value, optarg, strlen(optarg));
+               UStringRep::assign(item[longindex - 2].value, optarg, u_strlen(optarg));
                }
             else
                {

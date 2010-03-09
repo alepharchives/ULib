@@ -17,7 +17,7 @@ rm -f tsa_http.log TSA/log \
 
 DIR_CMD="../../examples/userver"
 
-#STRACE=$TRUSS
+#STRACE=$LTRUSS
 start_prg_background userver_tcp -c tsa_http.cfg
 
 $SLEEP
@@ -31,6 +31,7 @@ DIR_CMD="../../examples/XAdES"
 # -k inp/XAdES/AlicePrivRSASign_epk.pem -p password 
 # -X inp/XAdES/AliceRSASignByCarl.pem.cer
 
+#STRACE=$LTRUSS
 start_prg sign -c XAdES.cfg \
 					-C ../ulib/CA/CApath \
 					-X ../ulib/CA/server.crt \

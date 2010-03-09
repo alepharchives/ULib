@@ -181,7 +181,7 @@ public:
                               &formPost, &formLast,
                               CURLFORM_COPYNAME, key,
                               CURLFORM_COPYCONTENTS, value,
-                              CURLFORM_CONTENTSLENGTH, strlen(value),
+                              CURLFORM_CONTENTSLENGTH, u_strlen(value),
                               CURLFORM_END);
 
       U_INTERNAL_ASSERT_EQUALS(res,CURL_FORMADD_OK)

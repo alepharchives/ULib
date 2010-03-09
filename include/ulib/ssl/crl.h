@@ -18,6 +18,7 @@
 #include <ulib/string.h>
 
 #include <openssl/x509.h>
+#include <openssl/asn1.h>
 
 class UCertificate;
 
@@ -111,6 +112,9 @@ public:
       U_RETURN(hash);
       }
 
+   static long getNumber(X509_CRL* crl);
+          long getNumber() const          { return getNumber(crl); }
+
    /**
    * Returns the file name from CApath
    */
@@ -165,6 +169,9 @@ public:
       U_RETURN((const char*)utctime->data);
       }
 
+   static time_t getIssueTime(X509_CRL* crl);
+          time_t getIssueTime() const           { return getIssueTime(crl); }
+
    /**
    * Returns the next update for this CRL
    */
@@ -199,10 +206,10 @@ public:
    bool isIssued(UCertificate& ca) const;
 
    /**
-   * Returns either the DER or PEM encoding of the crl depending on the value of format
+   * Returns either the DER or PEM or BASE64 encoding of the crl depending on the value of format
    */
 
-   UString getEncoded(const char* format = "PEM") const;
+   UString getEncoded(const char* format = "PEM", int max_columns = 0) const;
 
    static bool isEqual(X509_CRL* a, X509_CRL* b)
       {

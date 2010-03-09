@@ -231,7 +231,7 @@ bool UFile::chdir(const char* path, bool flag_save)
       else
          {
          u_cwd     = path;
-         u_cwd_len = strlen(path);
+         u_cwd_len = u_strlen(path);
 
          if (IS_DIR_SEPARATOR(u_cwd[0]) == false) u_getcwd();
          }
@@ -970,7 +970,7 @@ bool UFile::rename(const char* newpath)
    if (result)
       {
       path_relativ     = newpath;
-      path_relativ_len = strlen(newpath);
+      path_relativ_len = u_strlen(newpath);
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 

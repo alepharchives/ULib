@@ -23,6 +23,13 @@ U_EXPORT main (int argc, char* argv[])
    UString plugin_list(argv[2]);
    UVector<UString> vname(plugin_list);
 
+   if (argv[3])
+      {
+      UString plugin(argv[3]);
+
+      vname.push(plugin);
+      }
+
    server.loadPlugins(plugin_dir, vname, 0);
 
    server.go();

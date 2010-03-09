@@ -215,7 +215,7 @@ UString UStringExt::expandPath(const char* path_data, uint32_t path_size)
 
       if (ptr != (path_data + len))
          {
-         uint32_t tmp = strlen(path_data);
+         uint32_t tmp = u_strlen(path_data);
 
          *ptr = '/';
 
@@ -233,15 +233,17 @@ UString UStringExt::expandPath(const char* path_data, uint32_t path_size)
 
       *ptr = '\0';
 
-      pathname = U_SYSCALL(getenv, "%S", path_data);
+      char* envvar = U_SYSCALL(getenv, "%S", path_data);
+
+      if (envvar) (void) pathname.assign(envvar);
 
       if (ptr != (path_data + len))
          {
-         uint32_t tmp = strlen(path_data);
+         uint32_t tmp = u_strlen(path_data);
 
          *ptr = '/';
 
-         pathname.append(ptr, len - tmp);
+         (void) pathname.append(ptr, len - tmp);
          }
       }
    else

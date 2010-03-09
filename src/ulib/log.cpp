@@ -380,12 +380,12 @@ const char* ULog::dump(bool reset) const
 
    char buffer[1024];
 
-   if (fmt) UObjectIO::os->write(buffer, u_snprintf(buffer, 1024, "%.*s", strlen(fmt), fmt));
+   if (fmt) UObjectIO::os->write(buffer, u_snprintf(buffer, 1024, "%.*s", u_strlen(fmt), fmt));
 
    *UObjectIO::os << "\"\n"
                   << "prefix                    ";
 
-   if (prefix) UObjectIO::os->write(buffer, u_snprintf(buffer, 1024, "%.*S", strlen(prefix), prefix));
+   if (prefix) UObjectIO::os->write(buffer, u_snprintf(buffer, 1024, "%.*S", u_strlen(prefix), prefix));
 
    *UObjectIO::os << '\n'
                   << "bsyslog                   " << bsyslog                    << '\n'

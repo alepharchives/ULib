@@ -289,7 +289,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
    if (argv[1])
       {
       bool flag;
-      int len = strlen(pathname);
+      int len = u_strlen(pathname);
 
       index   = len;
       w32_cmd = buffer1;
@@ -300,7 +300,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
          {
          w32_cmd[index++] = ' ';
 
-         len = strlen(argv[i]);
+         len = u_strlen(argv[i]);
 
          U_INTERNAL_ASSERT_MINOR(index + len + 3,4096)
 
@@ -334,7 +334,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
 
       for (int len, i = 0; envp[i]; ++i, ++index)
          {
-         len = strlen(envp[i]);
+         len = u_strlen(envp[i]);
 
          U_INTERNAL_ASSERT_MINOR(index + len + 1,32000)
 

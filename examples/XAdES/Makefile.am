@@ -6,9 +6,14 @@ sign_LDADD     = $(top_builddir)/src/ulib/lib@ULIB@.la
 sign_SOURCES   = sign.cpp
 sign_LDFLAGS   = $(PRG_LDFLAGS)
 
-verify_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la
-verify_SOURCES = context.cpp transform.cpp xpath.cpp verify.cpp
+verify_LDADD   = libverify.la $(top_builddir)/src/ulib/lib@ULIB@.la
+verify_SOURCES = verify.cpp
 verify_LDFLAGS = $(PRG_LDFLAGS)
+
+libverify_la_SOURCES  = context.cpp transform.cpp xpath.cpp
+
+## for convenience library
+noinst_LTLIBRARIES = libverify.la
 
 noinst_PROGRAMS = sign verify
 

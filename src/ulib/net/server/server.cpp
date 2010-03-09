@@ -473,8 +473,8 @@ void UServer_Base::init()
 #ifndef __MINGW32__
    if (name_sock.empty() == false)
       {
-      USocket::accept4_flags        = 0;
-      UServer_Base::block_on_accept = true;
+      block_on_accept        = true;
+      USocket::accept4_flags = 0;
 
       UUnixSocket::setPath(name_sock.data()); // unix socket...
       }
@@ -585,6 +585,8 @@ void UServer_Base::init()
       }
 
    // manage block on accept...
+
+   if (isLog() || preforked_num_kids == 0) block_on_accept = true;
 
    if (block_on_accept == false)
       {
@@ -892,7 +894,7 @@ void UServer_Base::handlerNewConnection()
 
          uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
 
-         u_printf_string_max_length = strlen(msg_error);
+         u_printf_string_max_length = u_strlen(msg_error);
 
          ULog::log("%saccept new client failed %.*S\n", mod_name, u_printf_string_max_length, msg_error);
 

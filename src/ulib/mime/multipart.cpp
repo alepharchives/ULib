@@ -174,35 +174,6 @@ UString UMimeMultipartMsg::section(const UString& content,
 #  endif
       }
 
-   /*
-   if (*name)
-      {
-      static char buffer[70];
-
-      char* q = buffer;
-
-      for (const char* cp = name; *cp; ++cp)
-         {
-         if (RFC2231DOENCODE(*cp))
-            {
-            *q++ = '%';
-            *q++ = u_hex_upper[ ((unsigned char)*cp / 16) & 15];
-            *q++ = u_hex_upper[                 *cp       & 15];
-            }
-         else
-            {
-            *q++= *cp;
-            }
-         }
-
-      *q = 0;
-
-      name = buffer;
-
-      U_INTERNAL_ASSERT_MINOR(strlen(name),70)
-      }
-   */
-
    uint32_t length = content.size();
 
    U_INTERNAL_ASSERT_MAJOR(length,0)

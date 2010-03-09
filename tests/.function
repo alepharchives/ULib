@@ -141,11 +141,21 @@ test_prg() {
 		PRG=test_$1
 		CMD="./$PRG$SUFFIX"
 
+		if [ -n "$STRACE" -a "$STRACE" = "$LTRUSS" ]; then
+			CMD=".libs/$CMD"
+			export LD_LIBRARY_PATH=../../src/ulib/.libs
+		fi
+
 	elif [ -x "$DIR_CMD/$1$SUFFIX" ]; then
 		# examples
 
 		PRG=$1
 		CMD="$DIR_CMD/$PRG$SUFFIX"
+
+		if [ -n "$STRACE" -a "$STRACE" = "$LTRUSS" ]; then
+			CMD="$DIR_CMD/.libs/$PRG$SUFFIX"
+			export LD_LIBRARY_PATH=../../src/ulib/.libs
+		fi
 
 	elif [ -x "../src/$1$SUFFIX" ]; then
 		# application
@@ -171,11 +181,6 @@ start_prg() {
 
 	test_prg "$@"
 
-	if [ -n "$STRACE" -a "$STRACE" = "$LTRUSS" ]; then
-		CMD=".libs/$CMD"
-		export LD_LIBRARY_PATH=../../src/ulib/.libs
-	fi
-
 	eval $VALGRIND $WINELOADER $STRACE $CMD >>out/$1.out 2>>err/$1.err
 
 	RESULT=$?
@@ -185,11 +190,6 @@ start_prg() {
 start_prg_background() {
 
 	test_prg "$@"
-
-	if [ -n "$STRACE" -a "$STRACE" = "$LTRUSS" ]; then
-		CMD=".libs/$CMD"
-		export LD_LIBRARY_PATH=../../src/ulib/.libs
-	fi
 
 	PID=`( eval "$VALGRIND $WINELOADER $STRACE $CMD >>out/$1.out 2>>err/$1.err &"; echo $! )`
 

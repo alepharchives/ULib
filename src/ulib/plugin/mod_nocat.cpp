@@ -614,8 +614,8 @@ UModNoCatPeer* UNoCatPlugIn::creatNewPeer(const char* peer_ip)
 
    *((UIPAddress*)peer) = UClientImage_Base::remoteIPAddress();
 
-   if (peer->mac.empty() && strncmp(peer_ip, gateway.data(), strlen(peer_ip)) == 0) peer->mac = UServer_Base::getMacAddress(vfwopt[5].data()); // extdev
-   if (peer->mac.empty())                                                           peer->mac = U_STRING_FROM_CONSTANT("00:00:00:00:00:00");
+   if (peer->mac.empty() && strncmp(peer_ip, gateway.data(), u_strlen(peer_ip)) == 0) peer->mac = UServer_Base::getMacAddress(vfwopt[5].data()); // extdev
+   if (peer->mac.empty())                                                             peer->mac = U_STRING_FROM_CONSTANT("00:00:00:00:00:00");
 
    peer->rulenum = total_connections + 1; // iptables FORWARD
 

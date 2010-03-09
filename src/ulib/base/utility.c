@@ -31,7 +31,7 @@
 #  ifdef _DIRENT_HAVE_D_NAMLEN
 #     define NAMLEN(dirent) (dirent)->d_namlen
 #  else
-#     define NAMLEN(dirent) strlen((dirent)->d_name)
+#     define NAMLEN(dirent) u_strlen((dirent)->d_name)
 #  endif
 #else
 #  define dirent direct
@@ -221,7 +221,7 @@ bool u_ranAsUser(const char* user, bool change_dir)
 
    /* change user name */
 
-   (void) strncpy(u_user_name, user, (u_user_name_len = strlen(user)));
+   (void) strncpy(u_user_name, user, (u_user_name_len = u_strlen(user)));
 
    if (change_dir &&
        pw->pw_dir &&
@@ -982,7 +982,7 @@ static inline void make_absolute(char* result, const char* dot_path, const char*
       {
       strcpy(result, dot_path);
 
-      result_len = strlen(result);
+      result_len = u_strlen(result);
 
       if (result[result_len - 1] != PATH_SEPARATOR)
          {
@@ -1016,7 +1016,7 @@ static const char* u_check_for_suffix_exe(const char* program)
 {
    static char program_w32[MAX_FILENAME_LEN + 1];
 
-   int len = strlen(program);
+   int len = u_strlen(program);
 
    U_INTERNAL_TRACE("u_check_for_suffix_exe(%s)", program)
 
@@ -1048,7 +1048,7 @@ bool u_pathfind(char* result, const char* path, uint32_t path_len, const char* f
       {
       path = getenv("PATH");
 
-      if (path) path_len = strlen(path);
+      if (path) path_len = u_strlen(path);
       else
          {
          path     = U_PATH_DEFAULT;
@@ -1149,7 +1149,7 @@ void u_canonicalize_pathname(char* path)
 
    /* Remove trailing slashes */
 
-   p = lpath + strlen(lpath) - 1;
+   p = lpath + u_strlen(lpath) - 1;
 
    while (p > lpath && *p == '/') *p-- = '\0';
 
@@ -1170,7 +1170,7 @@ void u_canonicalize_pathname(char* path)
 
    /* Remove trailing "/" or "/." */
 
-   len = strlen(lpath);
+   len = u_strlen(lpath);
 
    if (len < 2) return;
 
@@ -1301,7 +1301,7 @@ int u_splitCommand(char* s, uint32_t n, char* argv[], char* pathbuf, uint32_t pa
 
       if (u_pathfind(pathbuf, 0, 0, argv[1], R_OK | X_OK) == false) return -1;
 
-      U_INTERNAL_ASSERT_MINOR(strlen(pathbuf), pathbuf_size)
+      U_INTERNAL_ASSERT_MINOR(u_strlen(pathbuf), pathbuf_size)
       }
 
    return result;
@@ -1570,7 +1570,7 @@ int u_passwd_cb(char* buf, int size, int rwflag, void* password)
 
    buf[size-1] = '\0';
 
-   size = strlen(buf);
+   size = u_strlen(buf);
 
    U_INTERNAL_PRINT("buf(%d) = %.*s", size, U_min(size,u_printf_string_max_length), buf)
 

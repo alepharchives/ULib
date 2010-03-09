@@ -116,7 +116,7 @@ UString UCertificate::getName(X509_NAME* n, bool ldap)
 
       (void) U_SYSCALL(X509_NAME_oneline, "%p,%p,%d", n, ptr, name.capacity());
 
-      len = strlen(ptr);
+      len = u_strlen(ptr);
 
       name.size_adjust(len);
 
@@ -182,7 +182,7 @@ UString UCertificate::getSignable(X509* x509)
 
    (void) U_SYSCALL(i2d_X509_CINF, "%p,%p", x509->cert_info, &data);
 
-// len = strlen(data);
+// len = u_strlen(data);
 
    signable.size_adjust(len);
 

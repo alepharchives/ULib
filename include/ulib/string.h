@@ -394,7 +394,7 @@ public:
       {
       U_TRACE(0, "UStringRep::size_adjust_force(%u)", value)
 
-      _length = (value == U_NOT_FOUND ? strlen(str) : value);
+      _length = (value == U_NOT_FOUND ? u_strlen(str) : value);
 
       U_INTERNAL_ASSERT_EQUALS(invariant(),true)
       }
@@ -642,7 +642,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(t)
 
-      uint32_t tlen = strlen((char*)t);
+      uint32_t tlen = u_strlen((char*)t);
 
       rep = UStringRep::create(tlen, tlen, (const char*)t);
       }
@@ -712,10 +712,10 @@ public:
       }
 
    UString& replace(char c)                                       { return replace(0, size(),          1, c); }
-   UString& replace(const char* s)                                { return replace(0, size(),          s, strlen(s)); }
+   UString& replace(const char* s)                                { return replace(0, size(),          s, u_strlen(s)); }
    UString& replace(const UString& str)                           { return replace(0, size(), str.data(), str.size()); }
    UString& replace(const char* s, uint32_t n)                    { return replace(0, size(),          s, n); }
-   UString& replace(uint32_t pos, uint32_t n, const char* s)      { return replace(pos,    n,          s, strlen(s)); }
+   UString& replace(uint32_t pos, uint32_t n, const char* s)      { return replace(pos,    n,          s, u_strlen(s)); }
    UString& replace(uint32_t pos, uint32_t n, const UString& str) { return replace(pos,    n, str.data(), str.size()); }
 
    // Assignement
@@ -832,7 +832,7 @@ public:
    UString& append(const UString& str)       { return append(str.data(), str.size()); }
 
    UString& operator+=(char c)               { return append(uint32_t(1), c); }
-   UString& operator+=(const char* s)        { return append(s, strlen(s)); }
+   UString& operator+=(const char* s)        { return append(s, u_strlen(s)); }
    UString& operator+=(const UString& str);
 
    // operator +
@@ -855,7 +855,7 @@ public:
       return replace(pos1, 0, str.data() + pos2, str.rep->fold(pos2, n));
       }
 
-   UString& insert(uint32_t pos, const char* s)             { return replace(pos, 0, s, strlen(s)); }
+   UString& insert(uint32_t pos, const char* s)             { return replace(pos, 0, s, u_strlen(s)); }
    UString& insert(uint32_t pos, const char* s, uint32_t n) { return replace(pos, 0, s, n); }
    UString& insert(uint32_t pos, uint32_t n, char c)        { return replace(pos, 0, n, c); }
 
@@ -895,7 +895,7 @@ public:
       { return find(str.data(), pos, str.size(), how_much); }
 
    uint32_t find(char c,        uint32_t pos = 0) const;
-   uint32_t find(const char* s, uint32_t pos = 0) const { return find(s, pos, strlen(s), U_NOT_FOUND); }
+   uint32_t find(const char* s, uint32_t pos = 0) const { return find(s, pos, u_strlen(s), U_NOT_FOUND); }
 
    // The `rfind' function searches from end to beginning string for a specified string (possibly a single
    // character) and returns its starting position. You can supply the parameter pos to specify the position
@@ -903,7 +903,7 @@ public:
 
    uint32_t rfind(const char* s,      uint32_t pos, uint32_t n) const;
    uint32_t rfind(char c,             uint32_t pos = U_NOT_FOUND) const;
-   uint32_t rfind(const char* s,      uint32_t pos = U_NOT_FOUND) const { return rfind(s, pos, strlen(s)); }
+   uint32_t rfind(const char* s,      uint32_t pos = U_NOT_FOUND) const { return rfind(s, pos, u_strlen(s)); }
    uint32_t rfind(const UString& str, uint32_t pos = U_NOT_FOUND) const { return rfind(str.data(), pos, str.size()); }
 
    // The `find_first_of' function searches string for the first match of any character stored in s and returns its position
@@ -911,12 +911,12 @@ public:
 
    uint32_t find_first_of(const char* s,      uint32_t pos, uint32_t n) const;
    uint32_t find_first_of(char c,             uint32_t pos = 0) const { return find(c, pos); }
-   uint32_t find_first_of(const char* s,      uint32_t pos = 0) const { return find_first_of(s, pos, strlen(s)); }
+   uint32_t find_first_of(const char* s,      uint32_t pos = 0) const { return find_first_of(s, pos, u_strlen(s)); }
    uint32_t find_first_of(const UString& str, uint32_t pos = 0) const { return find_first_of(str.data(), pos, str.size()); }
 
    uint32_t find_last_of(const char* s,       uint32_t pos, uint32_t n) const;
    uint32_t find_last_of(char c,              uint32_t pos = U_NOT_FOUND) const { return rfind(c, pos); }
-   uint32_t find_last_of(const char* s,       uint32_t pos = U_NOT_FOUND) const { return find_last_of(s, pos, strlen(s)); }
+   uint32_t find_last_of(const char* s,       uint32_t pos = U_NOT_FOUND) const { return find_last_of(s, pos, u_strlen(s)); }
    uint32_t find_last_of(const UString& str,  uint32_t pos = U_NOT_FOUND) const { return find_last_of(str.data(), pos, str.size()); }
 
    // The `find_first_not_of' function searches the first element of string that doesn't match any character stored in s
@@ -926,12 +926,12 @@ public:
 
    uint32_t find_first_not_of(const char* s,      uint32_t pos, uint32_t n) const;
    uint32_t find_first_not_of(char c,             uint32_t pos = 0) const;
-   uint32_t find_first_not_of(const char* s,      uint32_t pos = 0) const { return find_first_not_of(s, pos, strlen(s)); }
+   uint32_t find_first_not_of(const char* s,      uint32_t pos = 0) const { return find_first_not_of(s, pos, u_strlen(s)); }
    uint32_t find_first_not_of(const UString& str, uint32_t pos = 0) const { return find_first_not_of(str.data(), pos, str.size()); }
 
    uint32_t find_last_not_of(const char* s,      uint32_t pos, uint32_t n) const;
    uint32_t find_last_not_of(char c,             uint32_t pos = U_NOT_FOUND) const;
-   uint32_t find_last_not_of(const char* s,      uint32_t pos = U_NOT_FOUND) const { return find_last_not_of(s, pos, strlen(s)); }
+   uint32_t find_last_not_of(const char* s,      uint32_t pos = U_NOT_FOUND) const { return find_last_not_of(s, pos, u_strlen(s)); }
    uint32_t find_last_not_of(const UString& str, uint32_t pos = U_NOT_FOUND) const { return find_last_not_of(str.data(), pos, str.size()); }
 
    // Find with ignore case
@@ -941,7 +941,7 @@ public:
    uint32_t findnocase(const UString& str, uint32_t pos = 0, uint32_t how_much = U_NOT_FOUND) const
       { return findnocase(str.data(), pos, str.size(), how_much); }
 
-   uint32_t findnocase(const char* s, uint32_t pos = 0) const { return findnocase(s, pos, strlen(s), U_NOT_FOUND); }
+   uint32_t findnocase(const char* s, uint32_t pos = 0) const { return findnocase(s, pos, u_strlen(s), U_NOT_FOUND); }
 
    // Compare
 
@@ -950,12 +950,12 @@ public:
    int compare(const UString& str) const        { return rep->compare(str.rep); }
 
    int compare(uint32_t pos, uint32_t n1, const char* s, uint32_t n2) const
-      { return rep->compare(pos, U_min(size() - pos, n1), s, U_min(strlen(s), n2)); }
+      { return rep->compare(pos, U_min(size() - pos, n1), s, U_min(u_strlen(s), n2)); }
 
-   int compare(const char* s) const { return rep->compare(s, strlen(s)); }
+   int compare(const char* s) const { return rep->compare(s, u_strlen(s)); }
 
    int compare(uint32_t pos, uint32_t n, const char* s) const
-      { return rep->compare(pos, U_min(size() - pos, n), s, strlen(s)); }
+      { return rep->compare(pos, U_min(size() - pos, n), s, u_strlen(s)); }
 
    int compare(uint32_t pos, uint32_t n, const UString& str) const
       { return rep->compare(pos, U_min(size() - pos, n), str.data(), str.size()); }
@@ -967,7 +967,7 @@ public:
    // Compare with ignore case
 
    int comparenocase(const char* s, uint32_t n) const     { return rep->comparenocase(s, n); }
-   int comparenocase(const char* s) const                 { return rep->comparenocase(s, strlen(s)); }
+   int comparenocase(const char* s) const                 { return rep->comparenocase(s, u_strlen(s)); }
 
    int comparenocase(UStringRep* _rep) const              { return rep->comparenocase(_rep); }
    int comparenocase(const UString& str) const            { return rep->comparenocase(str.rep); }
@@ -988,7 +988,7 @@ public:
    // Equal with ignore case
 
    bool equalnocase(const char* s, uint32_t n) const      { return rep->equalnocase(s, n); }
-   bool equalnocase(const char* s) const                  { return rep->equalnocase(s, strlen(s)); }
+   bool equalnocase(const char* s) const                  { return rep->equalnocase(s, u_strlen(s)); }
 
    bool equalnocase(UStringRep* _rep) const               { return same(_rep) || rep->equalnocase(_rep); }
    bool equalnocase(const UString& str) const             { return equalnocase(str.rep); }
@@ -1141,7 +1141,7 @@ public:
 
       U_INTERNAL_ASSERT(isNull() == false)
       U_INTERNAL_ASSERT_MAJOR((int32_t)rep->_capacity,0) // writeable()
-      U_INTERNAL_ASSERT_MAJOR(rep->_capacity,strlen(format))
+      U_INTERNAL_ASSERT_MAJOR(rep->_capacity,u_strlen(format))
 
       rep->_length = u_vsnprintf(rep->data(), rep->capacity(), format, argp); 
 

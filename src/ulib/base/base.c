@@ -185,7 +185,7 @@ void u_init(char** argv)
 
    U_INTERNAL_ASSERT_POINTER(u_progname)
 
-   u_progname_len = strlen(u_progname);
+   u_progname_len = u_strlen(u_progname);
 
    u_is_stderr_tty = isatty(STDERR_FILENO);
 
@@ -200,7 +200,7 @@ void u_init(char** argv)
 
    pw = getpwuid(getuid());
 
-   if (pw) u_user_name_len = strlen(pw->pw_name);
+   if (pw) u_user_name_len = u_strlen(pw->pw_name);
 
    if (u_user_name_len) (void) memcpy(u_user_name, pw->pw_name,  u_user_name_len);
    else                 (void) memcpy(u_user_name,      "root", (u_user_name_len = 4));
@@ -935,7 +935,7 @@ minus:
             U_INTERNAL_ASSERT_POINTER_MSG(cp, "CHECK THE PARAMETERS OF printf()...")
 
             sign = '\0';
-            size = (prec >= 0 ? prec : (int) strlen((const char*)cp));
+            size = (prec >= 0 ? prec : (int) u_strlen((const char*)cp));
 
             /* if a width from format is specified, the 0 flag for padding will be ignored... */
 
@@ -1256,7 +1256,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             if (cp)
                {
-               len = strlen((const char*)cp);
+               len = u_strlen((const char*)cp);
 
                (void) memcpy(bp, (const char*)cp, len);
 

@@ -206,7 +206,7 @@ public:
    // print date with format
 
           UString strftime(const char* fmt);
-   static UString strftime(const char* fmt, time_t);
+   static UString strftime(const char* fmt, time_t t);
 
    static time_t getSecondFromJulian(int julian)
       {

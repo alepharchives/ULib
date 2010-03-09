@@ -193,7 +193,7 @@ public:
 
       (void) sprintf(p, " %-13s", size_legible);
 
-      p += strlen(p);
+      p += u_strlen(p);
 
    // U_INTERNAL_DUMP("p - buffer = %u", p - buffer)
 
@@ -207,7 +207,7 @@ public:
 
          (void) sprintf(p, " %7.2f%s", dlspeed, u_short_units[units]);
 
-         p += strlen(p);
+         p += u_strlen(p);
 
       // U_INTERNAL_DUMP("p - buffer = %u", p - buffer)
 
@@ -246,7 +246,7 @@ public:
             (void) sprintf(p, " ETA %d:%02d:%02d", eta_hrs, eta_min, eta_sec);
             }
 
-         p += strlen(p);
+         p += u_strlen(p);
          }
       else
          {
@@ -962,7 +962,7 @@ public:
 
       if (argv[optind] == NULL) U_ERROR("arg <url> not specified...", 0);
 
-      Url url(argv[optind], strlen(argv[optind]));
+      Url url(argv[optind], u_strlen(argv[optind]));
 
       // create file dest
 

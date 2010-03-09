@@ -1,6 +1,3 @@
 <map id="G" name="G">
-<area shape="rect" id="node1" href="$classUMimeEntity.html" title="UMimeEntity" alt="" coords="5,55,101,83"/>
-<area shape="rect" id="node3" href="$classUMimeMessage.html" title="UMimeMessage" alt="" coords="152,5,261,33"/>
-<area shape="rect" id="node5" href="$classUMimeMultipart.html" title="UMimeMultipart" alt="" coords="151,55,263,83"/>
-<area shape="rect" id="node7" href="$classUMimePKCS7.html" title="UMimePKCS7" alt="" coords="156,106,257,134"/>
+<area shape="rect" id="node1" href="$structUMemoryPool.html" title="UMemoryPool" alt="" coords="5,5,107,33"/>
 </map>

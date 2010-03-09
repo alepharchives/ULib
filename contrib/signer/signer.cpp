@@ -30,7 +30,7 @@ public:
 
       // manage options
 
-      if (UApplication::isOptions()) cfg_str = (*opt)['c'];
+      if (UApplication::isOptions()) cfg_str = opt['c'];
 
       // manage arg operation
 

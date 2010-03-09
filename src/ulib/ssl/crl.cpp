@@ -150,13 +150,14 @@ UString UCrl::getFileName(X509_CRL* crl)
    U_RETURN_STRING(name);
 }
 
-UString UCrl::getEncoded(const char* format) const
+UString UCrl::getEncoded(const char* format, int max_columns) const
 {
-   U_TRACE(0, "UCrl::getEncoded(%S)", format)
+   U_TRACE(0, "UCrl::getEncoded(%S,%d)", format, max_columns)
 
    U_INTERNAL_ASSERT_POINTER(crl)
 
-   if (U_STRNCMP(format, "DER") == 0)
+   if (U_STRNCMP(format, "DER")    == 0 ||
+       U_STRNCMP(format, "BASE64") == 0)
       {
       unsigned len = U_SYSCALL(i2d_X509_CRL, "%p,%p", crl, 0);
 
@@ -167,6 +168,15 @@ UString UCrl::getEncoded(const char* format) const
       (void) U_SYSCALL(i2d_X509_CRL, "%p,%p", crl, &temp);
 
       encoding.size_adjust(len);
+
+      if (U_STRNCMP(format, "BASE64") == 0)
+         {
+         UString x(len * 3 + 32U);
+
+         UBase64::encode(encoding, x, max_columns);
+
+         U_RETURN_STRING(x);
+         }
 
       U_RETURN_STRING(encoding);
       }
@@ -184,11 +194,46 @@ UString UCrl::getEncoded(const char* format) const
    U_RETURN_STRING(UString::getStringNull());
 }
 
+long UCrl::getNumber(X509_CRL* crl)
+{
+   U_TRACE(1, "UCrl::getNumber(%p)", crl)
+
+   U_INTERNAL_ASSERT_POINTER(crl)
+
+   ASN1_INTEGER* crlnum = (ASN1_INTEGER*) U_SYSCALL(X509_CRL_get_ext_d2i, "%p,%d,%p,%p", crl, NID_crl_number, 0, 0);
+
+   long result = 0;
+
+   if (crlnum)
+      {
+      result = ASN1_INTEGER_get(crlnum);
+
+      ASN1_INTEGER_free(crlnum);
+      }
+
+   U_RETURN(result);
+}
+
+time_t UCrl::getIssueTime(X509_CRL* crl)
+{
+   U_TRACE(0, "UCrl::getIssueTime(%p)", crl)
+
+   U_INTERNAL_ASSERT_POINTER(crl)
+
+   ASN1_UTCTIME* utctime = X509_CRL_get_lastUpdate(crl);
+
+   time_t result = UDate::getSecondFromTime((const char*)utctime->data, true, "%2u%2u%2u%2u%2u%2uZ"); // 100212124550Z
+
+   U_RETURN(result);
+}
+
 // STREAMS
 
 UString UCrl::print() const
 {
    U_TRACE(1, "UCrl::print()")
+
+   U_INTERNAL_ASSERT_POINTER(crl)
 
    BIO* bio = (BIO*) U_SYSCALL(BIO_new, "%p", BIO_s_mem());
 

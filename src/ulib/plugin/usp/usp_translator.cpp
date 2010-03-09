@@ -145,7 +145,7 @@ public:
 
 		result.snprintf(U_DYNAMIC_PAGE_TEMPLATE, U_STRING_TO_TRACE(declaration), U_STRING_TO_TRACE(output));
 
-		buffer.snprintf("%.*s.cpp", strlen(filename) - 4, filename);
+		buffer.snprintf("%.*s.cpp", u_strlen(filename) - 4, filename);
 
 		(void) UFile::writeTo(buffer, result);
 		}

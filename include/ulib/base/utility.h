@@ -39,6 +39,17 @@ extern U_EXPORT bool        u_rmatch(const char* haystack, uint32_t haystack_len
 extern U_EXPORT void* memmem(const void* haystack, size_t haystacklen, const void* needle, size_t needlelen);
 #endif
 
+/* check if string have length */
+
+static inline size_t u_strlen(const char* s)
+{
+   U_INTERNAL_TRACE("u_strlen(%s)", s)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+
+   return strlen(s);
+}
+
 static inline int u_equal(const void* s1, const void* s2, uint32_t n, bool ignore_case) /* Equal with ignore case */
 {
    U_INTERNAL_TRACE("u_equal(%p,%p,%u)", s1, s2, n)

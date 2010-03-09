@@ -292,7 +292,7 @@ const char* UClientImage_Base::getRemoteInfo(uint32_t* plen)
       ptr = socket->cRemoteAddress.getAddressString();
       }
 
-   if (plen) *plen = strlen(ptr);
+   if (plen) *plen = u_strlen(ptr);
 
 end:
    U_RETURN_POINTER(ptr, const char);
