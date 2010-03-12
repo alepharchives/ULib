@@ -56,7 +56,7 @@ public:
 
    // COSTRUTTORI
 
-   UHttpPlugIn() : alias(U_CAPACITY), environment(U_CAPACITY)
+   UHttpPlugIn() : alias(U_CAPACITY)
       {
       U_TRACE_REGISTER_OBJECT(0, UHttpPlugIn, "", 0)
 
@@ -94,12 +94,12 @@ public:
 protected:
    uint32_t index_alias;
    UVector<UString> valias;
-   UString alias, environment, uri_protected_mask, uri_protected_allowed_ip, uri_request_cert_mask;
+   UString alias, uri_protected_mask, uri_protected_allowed_ip, uri_request_cert_mask;
 
-   static bool virtual_host;
    static UVector<UIPAllow*>* vallow_IP;
+   static bool virtual_host, uri_protected_to_check;
 
-   UString* getCGIEnvironment();
+   bool checkUriProtected(bool ctx_read);
 
 private:
    UHttpPlugIn(const UHttpPlugIn&) : UServerPlugIn() {}

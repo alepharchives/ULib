@@ -53,7 +53,7 @@ bool UCDB::open(bool brdonly)
 
       U_INTERNAL_DUMP("nrecord = %u", nrecord)
 
-   // U_ASSERT_EQUALS(invariant(),true)
+   // U_ASSERT(invariant())
 
       U_RETURN(true);
       }
@@ -404,7 +404,7 @@ uint32_t UCDB::makeFinish(bool reset)
 
       U_FREE_N(tmp, nrecord, cdb_tmp);
 
-      U_ASSERT_EQUALS(invariant(),true)
+      U_ASSERT(invariant())
       }
 
    U_RETURN(pos);

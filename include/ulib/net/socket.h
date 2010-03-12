@@ -90,6 +90,7 @@ public:
    static UString* str_if_modified_since;
    static UString* str_if_unmodified_since;
    static UString* str_referer;
+   static UString* str_X_Real_IP;
    static UString* str_X_Forwarded_For;
 
    static void str_allocate();
@@ -263,13 +264,6 @@ public:
       }
 
    /**
-   Accept a pending connection, the USocket pointed to by the provided parameter is modified to
-   refer to the newly connected socket. The remote IP Address and port number are also returned
-   */
-
-   bool accept(USocket* pcConnection);
-
-   /**
    Get details of the IP address and port number bound to the local socket
    */
 
@@ -308,6 +302,12 @@ public:
       U_RETURN(address);
       }
 
+   /**
+   This method is called when the local socket address is valid.
+   It sets the bLocalSet flag, obtains details of the local address and stores them in the internal member variables
+   */
+
+   void setLocal();
    void setLocal(const UIPAddress& addr)
       {
       U_TRACE(0, "USocket::setLocal(%p)", &addr)
@@ -608,15 +608,12 @@ public:
    virtual bool setServer(const UString& cLocalAddr, int port, int iBackLog);
 
    /**
-   This method is called to accept a new connection on the server socket.
-   Further communications on the newly connected socket are made via the newly
-   created USocket instance of which a pointer is returned when the connection is accepted.
-   We create a USocket instance and pass this to the base class accept() method to accept
-   the pending connection on this USocket instance
+   This method is called to accept a new pending connection on the server socket.
+   The USocket pointed to by the provided parameter is modified to refer to the
+   newly connected socket. The remote IP Address and port number are also set.
    */
 
-   virtual USocket* acceptClient()                         { return this; }
-   virtual USocket* acceptClient(USocket* pcNewConnection) { return pcNewConnection; }
+   virtual bool acceptClient(USocket* pcConnection);
 
    /**
    This method is called to receive a block of data on the connected socket.
@@ -659,8 +656,8 @@ protected:
    UIPAddress cLocalAddress, cRemoteAddress;
    bool bIPv6Socket, bLocalSet;
 
-   static int req_timeout,    // the time-out value in seconds for client send request
-              accept4_flags;  // If flags is 0, then accept4() is the same as accept()
+   static int req_timeout,   // the time-out value in seconds for client send request
+              accept4_flags; // If flags is 0, then accept4() is the same as accept()
 
    bool connect();
    void setRemote();
@@ -679,13 +676,6 @@ protected:
 
       U_RETURN(false);
       }
-
-   /**
-   This protected method is called by inherited classes when the local socket address is valid.
-   It sets the bLocalSet flag, obtains details of the local address and stores them in the internal member variables
-   */
-
-   void setLocal();
 
 private:
    USocket(const USocket&)            {}

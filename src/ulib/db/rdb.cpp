@@ -382,7 +382,7 @@ bool URDB::reorganize()
 
          result = cdb.ftruncate(pos);
 
-         U_INTERNAL_ASSERT_EQUALS(result,true)
+         U_INTERNAL_ASSERT(result)
 
          if (result)
             {
@@ -396,7 +396,7 @@ bool URDB::reorganize()
             result = cdb.rename(UFile::path_relativ);
             }
 
-         U_INTERNAL_ASSERT_EQUALS(result,true)
+         U_INTERNAL_ASSERT(result)
 
          if (result)
             {

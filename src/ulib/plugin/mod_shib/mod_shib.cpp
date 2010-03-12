@@ -630,13 +630,14 @@ int UShibPlugIn::handlerRequest()
       UShibTarget::port = atoi(host.c_pointer(pos+1));
       }
 
+   UString ip_client = UClientImage_Base::getRemoteIP();
+
 // UShibTarget::protocol    = "http";
    UShibTarget::hostname    = strndup(host.data(), pos);
    UShibTarget::uri         = strndup(U_HTTP_URI_TO_PARAM);
    UShibTarget::method      = strndup(U_HTTP_METHOD_TO_PARAM);
-
-   UShibTarget::remote_addr = UClientImage_Base::getRemoteInfo(0);
    UShibTarget::cookies     = (cookies.empty() ? "" : cookies.c_str());
+   UShibTarget::remote_addr = ip_client->c_strdup();
 
    int mode              = 0;
    UShibTarget::location = 0;
@@ -673,7 +674,7 @@ int UShibPlugIn::handlerRequest()
 #  ifdef DEBUG
       const char* ptr = UHTTP::getHTTPHeaderValuePtr(*USocket::str_content_type);
 
-      U_INTERNAL_ASSERT_EQUALS(U_STRNEQ(ptr,"application/x-www-form-urlencoded"), true)
+      U_INTERNAL_ASSERT(U_STRNEQ(ptr,"application/x-www-form-urlencoded"))
 #  endif
 
       UShibTarget::content_type = "application/x-www-form-urlencoded";
@@ -731,6 +732,7 @@ int UShibPlugIn::handlerReset()
       U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::uri);
       U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::method);
       U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::hostname);
+      U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::remote_addr);
 
       UShibTarget::hostname = UShibTarget::uri = UShibTarget::method = 0;
       }

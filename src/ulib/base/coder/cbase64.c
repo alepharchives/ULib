@@ -168,7 +168,7 @@ uint32_t u_base64_decode(const char* input, uint32_t len, unsigned char* result)
 
       if (!member[(int)c]) continue;
 
-      U_INTERNAL_ASSERT_EQUALS(u_isbase64(c),true)
+      U_INTERNAL_ASSERT(u_isbase64(c))
 
       bits += decoder[(int)c];
 

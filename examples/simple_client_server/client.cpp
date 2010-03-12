@@ -6,6 +6,7 @@
 #include <ulib/file_config.h>
 #include <ulib/net/tcpsocket.h>
 #include <ulib/container/vector.h>
+#include <ulib/net/server/client_image.h>
 
 #undef  PACKAGE
 #define PACKAGE "simple client"

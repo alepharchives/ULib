@@ -1,4 +1,4 @@
-## Makefile.am for plugin userver
+## Makefile.am for plugin userver for shibboleth
 
 MAINTAINERCLEANFILES = Makefile.in
 

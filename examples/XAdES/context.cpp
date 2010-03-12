@@ -213,9 +213,8 @@ bool UTransformCtx::nodesListRead(xmlNodePtr node, int usage)
 
    xmlNodePtr cur = UXML2Node::getNextSibling(node->children);
 
-   if (cur &&
-       UXML2Node(cur).checkNodeName((const xmlChar*)"Transforms",
-                                    (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
+   if (UXML2Node::checkNodeName(cur, (const xmlChar*)"Transforms",
+                                     (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
       {
       UBaseTransform* id = nodeRead(cur, usage);
 
@@ -330,9 +329,8 @@ bool UDSIGContext::processManifestNode(xmlNodePtr node)
 
    xmlNodePtr cur = UXML2Node::getNextSibling(node->children);
 
-   while (          cur &&
-          UXML2Node(cur).checkNodeName((const xmlChar*)"Reference",
-                                       (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
+   while (UXML2Node::checkNodeName(cur, (const xmlChar*)"Reference",
+                                        (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
       {
       /* create reference */
 
@@ -394,9 +392,8 @@ bool UDSIGContext::processObjectNode(xmlNodePtr node)
 
    xmlNodePtr cur = UXML2Node::getNextSibling(node->children);
 
-   while (          cur &&
-          UXML2Node(cur).checkNodeName((const xmlChar*)"Manifest",
-                                       (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
+   while (UXML2Node::checkNodeName(cur, (const xmlChar*)"Manifest",
+                                        (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
       {
       if (processManifestNode(cur) == false) goto end;
 
@@ -526,25 +523,22 @@ bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
 
    signedInfoNode = UXML2Node::getNextSibling(signature->children);
 
-   if (          signedInfoNode == 0 ||
-       UXML2Node(signedInfoNode).checkNodeName((const xmlChar*)"SignedInfo",
-                                               (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) goto end;
+   if (UXML2Node::checkNodeName(signedInfoNode, (const xmlChar*)"SignedInfo",
+                                                (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) goto end;
 
    // next node is required SignatureValue
 
    signValueNode = UXML2Node::getNextSibling(signedInfoNode->next);
 
-   if (          signValueNode == 0 ||
-       UXML2Node(signValueNode).checkNodeName((const xmlChar*)"SignatureValue",
-                                              (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) goto end;
+   if (UXML2Node::checkNodeName(signValueNode, (const xmlChar*)"SignatureValue",
+                                               (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) goto end;
 
    // next node is optional KeyInfo
 
    keyInfoNode = UXML2Node::getNextSibling(signValueNode->next);
 
-   if (          keyInfoNode &&
-       UXML2Node(keyInfoNode).checkNodeName((const xmlChar*)"KeyInfo",
-                                            (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
+   if (UXML2Node::checkNodeName(keyInfoNode, (const xmlChar*)"KeyInfo",
+                                             (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
       {
       cur = UXML2Node::getNextSibling(keyInfoNode->next);
       }
@@ -555,9 +549,8 @@ bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
 
    // next nodes are optional Object nodes
 
-   while (          cur &&
-          UXML2Node(cur).checkNodeName((const xmlChar*)"Object",
-                                       (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
+   while (UXML2Node::checkNodeName(cur, (const xmlChar*)"Object",
+                                        (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
       {
       /* read manifests from objects */
 
@@ -819,9 +812,8 @@ bool UReferenceCtx::processNode(xmlNodePtr node)
 
    cur = UXML2Node::getNextSibling(node->children);
 
-   if (          cur &&
-       UXML2Node(cur).checkNodeName((const xmlChar*)"Transforms",
-                                    (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
+   if (UXML2Node::checkNodeName(cur, (const xmlChar*)"Transforms",
+                                     (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
       {
       // Reads transforms from the <dsig:Transform/> children of the @node and 
       // appends them to the current transforms chain in @ctx object.
@@ -833,9 +825,8 @@ bool UReferenceCtx::processNode(xmlNodePtr node)
 
    // next node is required DigestMethod
 
-   if (          cur &&
-       UXML2Node(cur).checkNodeName((const xmlChar*)"DigestMethod",
-                                    (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
+   if (UXML2Node::checkNodeName(cur, (const xmlChar*)"DigestMethod",
+                                     (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
       {
       digestMethod = UTransformCtx::nodeRead(cur, UBaseTransform::DIGEST);
 
@@ -848,9 +839,8 @@ bool UReferenceCtx::processNode(xmlNodePtr node)
 
    // last node is required DigestValue
 
-   if (          cur &&
-       UXML2Node(cur).checkNodeName((const xmlChar*)"DigestValue",
-                                    (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
+   if (UXML2Node::checkNodeName(cur, (const xmlChar*)"DigestValue",
+                                     (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
       {
       digestValueNode = cur;
 
@@ -960,9 +950,8 @@ bool UDSIGContext::processSignedInfoNode()
 
    xmlNodePtr cur = UXML2Node::getNextSibling(signedInfoNode->children);
 
-   if (          cur == 0 ||
-       UXML2Node(cur).checkNodeName((const xmlChar*)"CanonicalizationMethod",
-                                    (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) goto end;
+   if (UXML2Node::checkNodeName(cur, (const xmlChar*)"CanonicalizationMethod",
+                                     (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) goto end;
 
    c14nMethod = UTransformCtx::nodeRead(cur, UBaseTransform::C14N);
 
@@ -974,9 +963,8 @@ bool UDSIGContext::processSignedInfoNode()
 
    cur = UXML2Node::getNextSibling(cur->next);
 
-   if (          cur == 0 ||
-       UXML2Node(cur).checkNodeName((const xmlChar*)"SignatureMethod",
-                                    (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) goto end;
+   if (UXML2Node::checkNodeName(cur, (const xmlChar*)"SignatureMethod",
+                                     (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) goto end;
 
    signMethod = UTransformCtx::nodeRead(cur, UBaseTransform::SIGNATURE);
 
@@ -992,9 +980,8 @@ bool UDSIGContext::processSignedInfoNode()
 
    cur = UXML2Node::getNextSibling(cur->next);
 
-   while (          cur &&
-          UXML2Node(cur).checkNodeName((const xmlChar*)"Reference",
-                                       (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
+   while (UXML2Node::checkNodeName(cur, (const xmlChar*)"Reference",
+                                        (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
       {
       /* create reference */
 

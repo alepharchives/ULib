@@ -22,6 +22,7 @@ UString*           PEC_report::title;
 UString*           PEC_report::domain;
 UString*           PEC_report::content;
 UString*           PEC_report::directory;
+UString*           PEC_report::filter;
 UString*           PEC_report::filter_ext;
 UTokenizer*        PEC_report::t;
 UHashMap<UString>* PEC_report::tfile;
@@ -108,6 +109,7 @@ PEC_report::~PEC_report()
    if (to)         delete to;
    if (vid)        delete vid;
    if (from)       delete from;
+   if (filter)     delete filter;
    if (filter_ext) delete filter_ext;
 
    if (tfile)
@@ -202,6 +204,7 @@ static const char* ptr2;
 #define U_PARSE_ERROR_MESSAGE_TAG_EMPTY               "missing value of tag <%.*s...> - id = <%.*s>"
 #define U_PARSE_ERROR_MESSAGE_ID_NOT_VALID            "not valid message id <%.*s> - first 50 character of record <%.*s>"
 #define U_PARSE_ERROR_MESSAGE_REC_NOT_VALID           "not valid record - size inferior to 50 character <%.*s>"
+#define U_PARSE_ERROR_MESSAGE_FILTER_MATCH            "record skip for matching filter <%.*s> - id = <%.*s>"
 #define U_PARSE_ERROR_MESSAGE_TAG_NOT_FOUND           "not found expected tag <%s...> - id = <%.*s>"
 #define U_PARSE_ERROR_MESSAGE_TYPE_NOT_VALID          "unexpected record type <%.*s>  - id = <%.*s>"
 #define U_PARSE_ERROR_MESSAGE_INCORRECT_SYNTAX        "incorrect syntax <consegna=%.*s> - id = <%.*s>"
@@ -553,6 +556,7 @@ Feb 24 19:42:21 PEC_Milter root [1542]: Feb 24 19:42:35 PEC_Milter root [1546]: 
       }
 }
 
+/*
 #define U_ACCETTAZIONE              "accettazione"                // 0
 #define U_NON_ACCETTAZIONE          "non-accettazione"            // 1
 #define U_AVVENUTA_CONSEGNA         "avvenuta-consegna"           // 2
@@ -561,6 +565,17 @@ Feb 24 19:42:21 PEC_Milter root [1542]: Feb 24 19:42:35 PEC_Milter root [1546]: 
 #define U_ERRORE_CONSEGNA           "errore-consegna"             // 5
 #define U_PRESA_IN_CARICO           "presa-in-carico"             // 6
 #define U_PREAVVISO_ERRORE_CONSEGNA "preavviso-errore-consegna"   // 7
+*/
+
+#define U_ACCETTAZIONE              "Accettazione"                // 0 (Accettazione) 
+#define U_NON_ACCETTAZIONE          "NonAccettazione"             // 1 (NonAccettazione) (NonAccettazioneVirus)
+#define U_AVVENUTA_CONSEGNA         "Consegna"                    // 2 (Consegna)
+#define U_RILEVAZIONE_VIRUS         "RilevazioneVirus"            // 3 (RilevazioneVirus)
+#define U_POSTA_CERTIFICATA         "BustaTrasporto"              // 4 (BustaTrasporto)
+#define U_ERRORE_CONSEGNA           "MancataConsegna"             // 5 (MancataConsegna) (MancataConsegnaVirus)
+#define U_PRESA_IN_CARICO           "PresaInCarico"               // 6 (PresaInCarico)
+#define U_PREAVVISO_ERRORE_CONSEGNA "MancataConsegna"             // 7 (MancataConsegna12h) (MancataConsegna24h)
+#define U_BUSTA_ANOMALIA            "BustaAnomalia"               // 8 (BustaAnomalia)
 
 bool PEC_report::setLineTipology()
 {
@@ -587,37 +602,45 @@ bool PEC_report::setLineTipology()
 
    ptr1 += U_CONSTANT_SIZE(U_TIPO);
 
-   U_INTERNAL_DUMP("ptr1 = %.*S", U_CONSTANT_SIZE(U_PREAVVISO_ERRORE_CONSEGNA), ptr1)
+   U_INTERNAL_DUMP("ptr1 = %.*S", 30, ptr1)
 
    ptr2 = next(ptr1, ':');
 
    field_missing_throw_exception = true;
 
-   if (*ptr1 == ' ')
-      {
-      tipology[U_busta_anomalia] = true;
+   const char* ptipo = next(ptr1, '(') + 1;
 
-      U_INTERNAL_DUMP("tipology[U_busta_anomalia] = %b", tipology[U_busta_anomalia])
-      }
-   else if (U_STRNCMP(ptr1, U_ACCETTAZIONE) == 0)
+   if (U_STRNEQ(ptipo, U_ACCETTAZIONE))
       {
       tipology[U_accettazione] = true;
 
       U_INTERNAL_DUMP("tipology[U_accettazione] = %b", tipology[U_accettazione])
       }
-   else if (U_STRNCMP(ptr1, U_NON_ACCETTAZIONE) == 0)
-      {
-      tipology[U_non_accettazione] = true;
-
-      U_INTERNAL_DUMP("tipology[U_non_accettazione] = %b", tipology[U_non_accettazione])
-      }
-   else if (U_STRNCMP(ptr1, U_AVVENUTA_CONSEGNA) == 0)
+   else if (U_STRNEQ(ptipo, U_AVVENUTA_CONSEGNA))
       {
       tipology[U_avvenuta_consegna] = true;
 
       U_INTERNAL_DUMP("tipology[U_avvenuta_consegna] = %b", tipology[U_avvenuta_consegna])
       }
-   else if (U_STRNCMP(ptr1, U_RILEVAZIONE_VIRUS) == 0)
+   else if (U_STRNEQ(ptipo, U_POSTA_CERTIFICATA))
+      {
+      tipology[U_posta_certificata] = true;
+
+      U_INTERNAL_DUMP("tipology[U_posta_certificata] = %b", tipology[U_posta_certificata])
+      }
+   else if (U_STRNEQ(ptipo, U_PRESA_IN_CARICO))
+      {
+      tipology[U_presa_in_carico] = true;
+
+      U_INTERNAL_DUMP("tipology[U_presa_in_carico] = %b", tipology[U_presa_in_carico])
+      }
+   else if (U_STRNEQ(ptipo, U_NON_ACCETTAZIONE))
+      {
+      tipology[U_non_accettazione] = true;
+
+      U_INTERNAL_DUMP("tipology[U_non_accettazione] = %b", tipology[U_non_accettazione])
+      }
+   else if (U_STRNEQ(ptipo, U_RILEVAZIONE_VIRUS))
       {
       tipology[U_rilevazione_virus] = true;
 
@@ -627,33 +650,37 @@ bool PEC_report::setLineTipology()
 
       field_missing_throw_exception = false;
       }
-   else if (U_STRNCMP(ptr1, U_POSTA_CERTIFICATA) == 0)
+   else if (U_STRNEQ(ptipo, U_ERRORE_CONSEGNA))
       {
-      tipology[U_posta_certificata] = true;
+      ptipo += U_CONSTANT_SIZE(U_ERRORE_CONSEGNA);
 
-      U_INTERNAL_DUMP("tipology[U_posta_certificata] = %b", tipology[U_posta_certificata])
+      U_INTERNAL_DUMP("ptipo[0] = %C", ptipo[0])
+
+      if (ptipo[0] == ')' ||  // (MancataConsegna)
+          ptipo[0] == 'V')    // (MancataConsegnaVirus)
+         {
+         tipology[U_errore_consegna] = true;
+
+         U_INTERNAL_DUMP("tipology[U_errore_consegna] = %b", tipology[U_errore_consegna])
+         }
+      else // (MancataConsegna12h) (MancataConsegna24h)
+         {
+         U_INTERNAL_ASSERT(ptipo[0] == '1' || ptipo[0] == '2')
+
+         tipology[U_preavviso_errore_consegna] = true;
+
+         U_INTERNAL_DUMP("tipology[U_preavviso_errore_consegna] = %b", tipology[U_preavviso_errore_consegna])
+         }
       }
-   else if (U_STRNCMP(ptr1, U_ERRORE_CONSEGNA) == 0)
+   else if (U_STRNEQ(ptipo, U_BUSTA_ANOMALIA))
       {
-      tipology[U_errore_consegna] = true;
+      tipology[U_busta_anomalia] = true;
 
-      U_INTERNAL_DUMP("tipology[U_errore_consegna] = %b", tipology[U_errore_consegna])
-      }
-   else if (U_STRNCMP(ptr1, U_PRESA_IN_CARICO) == 0)
-      {
-      tipology[U_presa_in_carico] = true;
-
-      U_INTERNAL_DUMP("tipology[U_presa_in_carico] = %b", tipology[U_presa_in_carico])
-      }
-   else if (U_STRNCMP(ptr1, U_PREAVVISO_ERRORE_CONSEGNA) == 0)
-      {
-      tipology[U_preavviso_errore_consegna] = true;
-
-      U_INTERNAL_DUMP("tipology[U_preavviso_errore_consegna] = %b", tipology[U_preavviso_errore_consegna])
+      U_INTERNAL_DUMP("tipology[U_busta_anomalia] = %b", tipology[U_busta_anomalia])
       }
    else
       {
-      U_WARNING(U_PARSE_ERROR_MESSAGE_TYPE_NOT_VALID, U_CONSTANT_SIZE(U_PREAVVISO_ERRORE_CONSEGNA), ptr1, U_STRING_TO_TRACE(*identifier));
+      U_WARNING(U_PARSE_ERROR_MESSAGE_TYPE_NOT_VALID, 30, ptr1, U_STRING_TO_TRACE(*identifier));
 
       U_RETURN(false);
       }
@@ -679,6 +706,14 @@ bool PEC_report::setLineMittente()
    ptr2 += U_CONSTANT_SIZE(U_MITTENTE);
 
    ptr1 = ptr2;
+
+   if (filter->empty() == false &&
+       line->find(*filter, line->distance(ptr1)) != U_NOT_FOUND)
+      {
+      U_WARNING(U_PARSE_ERROR_MESSAGE_FILTER_MATCH, U_STRING_TO_TRACE(*filter), U_STRING_TO_TRACE(*identifier));
+
+      U_RETURN(false);
+      }
 
 loop:
    ptr1 = next(ptr1);
@@ -919,7 +954,7 @@ bool PEC_report::readContent()
 
          date->set(day, mese1, year);
 
-         U_ASSERT_EQUALS(date->isValid(), true)
+         U_ASSERT(date->isValid())
 
          if (rejected == false)
             {
@@ -1029,8 +1064,8 @@ void PEC_report::processFiles()
    ++nfiles;
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer[0],'.')
+   U_INTERNAL_ASSERT(IS_DIR_SEPARATOR(u_buffer[1]))
    U_INTERNAL_ASSERT_EQUALS(u_ftw_ctx.is_directory,false)
-   U_INTERNAL_ASSERT_EQUALS(IS_DIR_SEPARATOR(u_buffer[1]),true)
 
    // NB: need duplicate string because depends on buffer content of filename...
 
@@ -1193,6 +1228,7 @@ void PEC_report::manageOptions()
    U_TRACE(5, "PEC_report::manageOptions()")
 
    title     = new UString;
+   filter    = new UString;
    directory = new UString;
 
    *directory  = opt['d'];
@@ -1200,6 +1236,7 @@ void PEC_report::manageOptions()
    cfg_suffix  = opt['e'];
    cfg_from    = opt['f'];
    cfg_to      = opt['t'];
+   *filter     = opt['F'];
 
    if (checklink == false)
       {
@@ -1234,6 +1271,7 @@ void PEC_report::manageOptions()
       // INSTALLATION_ID_LIST  list of installation ID to be used as filter separate by comma - OPTIONAL
       // STARTING_DATE         processing log entry from this date (dd/mm/yyyy) - OPTIONAL
       // ENDING_DATE           processing log entry to this date (dd/mm/yyyy) - OPTIONAL
+      // FILTER                string for filter records that match this
       // -----------------------------------------------------------------------------------------------
 
       *title      = cfg[U_STRING_FROM_CONSTANT("REPORT_TITLE")];
@@ -1242,6 +1280,7 @@ void PEC_report::manageOptions()
       cfg_id      = cfg[U_STRING_FROM_CONSTANT("INSTALLATION_ID_LIST")];
       cfg_from    = cfg[U_STRING_FROM_CONSTANT("STARTING_DATE")];
       cfg_to      = cfg[U_STRING_FROM_CONSTANT("ENDING_DATE")];
+      *filter     = cfg[U_STRING_FROM_CONSTANT("FILTER")];
 
       if (rejected == false) cfg_domain = cfg[U_STRING_FROM_CONSTANT("DOMAINS_LIST_FILE")]; 
       }

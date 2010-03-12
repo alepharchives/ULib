@@ -55,7 +55,7 @@ Collaboration diagram for USSLFtpClient:</div>
 <hr/><a name="_details"></a><h2>Detailed Description</h2>
 <p>Creates and manages a secure client connection with a remote FTP server. </p>
 <p>Establishing a protected session:</p>
-<p>Client Server control data data control ==================================================================== <a class="el" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">socket()</a> <a class="el" href="classUSocket.html#abb900b23d64b5fb858d9ac190c917e78">bind()</a> <a class="el" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">socket()</a> connect() ----------------------------------------------&gt; <a class="el" href="classUSocket.html#afe635340565fa7eba1e7139955d63532">accept()</a> &lt;---------------------------------------------- 220 AUTH TLS ----------------------------------------------&gt; &lt;---------------------------------------------- 234 TLSneg() &lt;----------------------------------------------&gt; TLSneg() PBSZ 0 ----------------------------------------------&gt; &lt;---------------------------------------------- 200 PROT P ----------------------------------------------&gt; &lt;---------------------------------------------- 200 USER fred ----------------------------------------------&gt; &lt;---------------------------------------------- 331 PASS pass ----------------------------------------------&gt; &lt;---------------------------------------------- 230 </p>
+<p>Client Server control data data control ==================================================================== <a class="el" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">socket()</a> <a class="el" href="classUSocket.html#abb900b23d64b5fb858d9ac190c917e78">bind()</a> <a class="el" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">socket()</a> connect() ----------------------------------------------&gt; accept() &lt;---------------------------------------------- 220 AUTH TLS ----------------------------------------------&gt; &lt;---------------------------------------------- 234 TLSneg() &lt;----------------------------------------------&gt; TLSneg() PBSZ 0 ----------------------------------------------&gt; &lt;---------------------------------------------- 200 PROT P ----------------------------------------------&gt; &lt;---------------------------------------------- 200 USER fred ----------------------------------------------&gt; &lt;---------------------------------------------- 331 PASS pass ----------------------------------------------&gt; &lt;---------------------------------------------- 230 </p>
 <hr/><h2>Constructor &amp; Destructor Documentation</h2>
 <a class="anchor" id="ace1345007539e372fefbf71f448bb0b1"></a><!-- doxytag: member="USSLFtpClient::USSLFtpClient" ref="ace1345007539e372fefbf71f448bb0b1" args="(bool bSocketIsIPv6=false)" -->
 <div class="memitem">
@@ -128,7 +128,7 @@ Collaboration diagram for USSLFtpClient:</div>
 <li>src/ulib/ssl/net/client/ssl_ftp.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 9 14:06:50 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:56 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

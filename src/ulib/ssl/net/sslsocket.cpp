@@ -440,31 +440,9 @@ bool USSLSocket::askForClientCertificate()
    U_RETURN(true);
 }
 
-// VIRTUAL METHOD
-
-void USSLSocket::closesocket()
+bool USSLSocket::acceptSSL(USSLSocket* pcNewConnection)
 {
-   U_TRACE(1, "USSLSocket::closesocket()")
-
-   if (ssl)
-      {
-      ret = U_SYSCALL(SSL_shutdown, "%p", ssl); // Send SSL shutdown signal to peer
-
-      U_DUMP("status = %.*S", 512, status(true))
-
-      U_SYSCALL_VOID(SSL_set_shutdown, "%p,%d", ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
-
-      U_SYSCALL_VOID(SSL_free, "%p", ssl);
-
-      ssl = 0;                
-      }
-
-   USocket::closesocket();
-}
-
-USocket* USSLSocket::accept(USSLSocket* pcNewConnection)
-{
-   U_TRACE(1, "USSLSocket::accept(%p)", pcNewConnection)
+   U_TRACE(1, "USSLSocket::acceptSSL(%p)", pcNewConnection)
 
    bool reuse = (ssl != 0);
 
@@ -497,7 +475,7 @@ loop:
 
          ssl = 0;
 
-         goto end;
+         U_RETURN(true);
          }
 
       U_INTERNAL_DUMP("errno = %d", errno)
@@ -534,35 +512,29 @@ loop:
       U_INTERNAL_DUMP("pcNewConnection->ret = %d", pcNewConnection->ret)
       }
 
-end:
-   U_RETURN_POINTER(pcNewConnection, USocket);
+   U_RETURN(false);
 }
 
-USocket* USSLSocket::acceptClient(USocket* pcNewConnection)
+// VIRTUAL METHOD
+
+void USSLSocket::closesocket()
 {
-   U_TRACE(0, "USSLSocket::acceptClient(%p)", pcNewConnection)
+   U_TRACE(1, "USSLSocket::closesocket()")
 
-   if (UTCPSocket::accept(pcNewConnection) && active)
+   if (ssl)
       {
-      if (USocket::isBlocking()) (void) pcNewConnection->setTimeoutRCV(req_timeout * 1000);
+      ret = U_SYSCALL(SSL_shutdown, "%p", ssl); // Send SSL shutdown signal to peer
 
-      (void) accept((USSLSocket*)pcNewConnection);
+      U_DUMP("status = %.*S", 512, status(true))
+
+      U_SYSCALL_VOID(SSL_set_shutdown, "%p,%d", ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
+
+      U_SYSCALL_VOID(SSL_free, "%p", ssl);
+
+      ssl = 0;                
       }
 
-   U_RETURN_POINTER(pcNewConnection, USocket);
-}
-
-USocket* USSLSocket::acceptClient()
-{
-   U_TRACE(0, "USSLSocket::acceptClient()")
-
-   USSLSocket* pcNewConnection = U_NEW(USSLSocket(bIPv6Socket, ctx));
-
-   pcNewConnection->active = active;
-
-   if (UTCPSocket::accept(pcNewConnection) && active) (void) accept(pcNewConnection);
-
-   U_RETURN_POINTER(pcNewConnection, USocket);
+   USocket::closesocket();
 }
 
 int USSLSocket::recv(void* pBuffer, int iBufferLen)

@@ -86,32 +86,6 @@
           <NumMsgVirusInOut-Recipients>user4@test.cert.cnipa.it</NumMsgVirusInOut-Recipients>
         </NumMsgVirusInOut-Input>
       </NumMsgVirusInOut-Entry>
-      <NumMsgVirusInOut-Entry>
-        <NumMsgVirusInOut-Output>
-          <NumMsgVirusInOut-Identifier>20081106115118.626165@postacertificata.notariato.it</NumMsgVirusInOut-Identifier>
-          <NumMsgVirusInOut-Date>Nov  6 11:51:18 2008</NumMsgVirusInOut-Date>
-          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
-          <NumMsgVirusInOut-Sender>test_interop@test.cert.cnipa.it</NumMsgVirusInOut-Sender>
-          <NumMsgVirusInOut-Recipients>istipec@isti.cnr.it</NumMsgVirusInOut-Recipients>
-          <NumMsgVirusInOut-Recipients>user4@test.cert.cnipa.it</NumMsgVirusInOut-Recipients>
-          <NumMsgVirusInOut-Recipients>istipec@gmail.com</NumMsgVirusInOut-Recipients>
-          <NumMsgVirusInOut-Recipients>user5@test.cert.cnipa.it</NumMsgVirusInOut-Recipients>
-          <NumMsgVirusInOut-Recipients>posta-certificata@postacertificata.notariato.it</NumMsgVirusInOut-Recipients>
-        </NumMsgVirusInOut-Output>
-      </NumMsgVirusInOut-Entry>
-      <NumMsgVirusInOut-Entry>
-        <NumMsgVirusInOut-Output>
-          <NumMsgVirusInOut-Identifier>20081106115118.321294@postacertificata.notariato.it</NumMsgVirusInOut-Identifier>
-          <NumMsgVirusInOut-Date>Nov  6 11:51:19 2008</NumMsgVirusInOut-Date>
-          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
-          <NumMsgVirusInOut-Sender>test_interop@test.cert.cnipa.it</NumMsgVirusInOut-Sender>
-          <NumMsgVirusInOut-Recipients>istipec@isti.cnr.it</NumMsgVirusInOut-Recipients>
-          <NumMsgVirusInOut-Recipients>user4@test.cert.cnipa.it</NumMsgVirusInOut-Recipients>
-          <NumMsgVirusInOut-Recipients>istipec@gmail.com</NumMsgVirusInOut-Recipients>
-          <NumMsgVirusInOut-Recipients>user5@test.cert.cnipa.it</NumMsgVirusInOut-Recipients>
-          <NumMsgVirusInOut-Recipients>posta-certificata@postacertificata.notariato.it</NumMsgVirusInOut-Recipients>
-        </NumMsgVirusInOut-Output>
-      </NumMsgVirusInOut-Entry>
     </NumMsgVirusInOut>
   </RESULTS>
 </REPORT>

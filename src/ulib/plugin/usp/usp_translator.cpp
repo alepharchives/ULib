@@ -111,7 +111,7 @@ public:
 
 			if (t.next(token, &bgroup) == false) break;
 
-			U_ASSERT_EQUALS(bgroup,true)
+			U_INTERNAL_ASSERT(bgroup)
 
 			switch (token.first_char())
 				{

@@ -22,7 +22,7 @@
 #  include <sys/un.h>
 #endif
 
-/*
+/**
  * Unix domain sockets are used for stream based connected sessions between processes on the same machine
  * --------------------------------------------------------------------------------------------------------------------------------------------------
  * - UNIX domain sockets use the file system as the address name space. This means you can use UNIX file permissions to control access to communicate
@@ -96,32 +96,6 @@ public:
     */
 
    virtual bool connectServer(const UString& pathname, int iServPort);
-
-   /**
-    * This method is called to accept a new connection on the server socket.
-    * Further communications on the newly connected socket are made via the newly
-    * created USocket instance of which a pointer is returned when the connection is accepted.
-    * We create a USocket instance and pass this to the base class accept() method to accept
-    * the pending connection on this USocket instance
-    */
-
-   virtual USocket* acceptClient(USocket* pcNewConnection);
-
-   virtual USocket* acceptClient() { return acceptClient(U_NEW(UUnixSocket(false))); }
-
-   /**
-    * This method is called to receive a block of data on the connected socket.
-    * The parameters signify the payload receiving buffer and its size.
-    */
-
-   virtual int recv(void* pBuffer, int iBufLength);
-
-   /**
-    * This method is called to send a block of data to the remote connection.
-    * The parameters signify the Data Payload and its size.
-    */
-
-   virtual int send(const void* pPayload, int iPayloadLength);
 
    // DEBUG
 

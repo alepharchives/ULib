@@ -264,7 +264,7 @@ AM_CONDITIONAL(MS_LIB_AVAILABLE, test x$ms_librarian = xyes)
 AC_PROG_LIBTOOL
 
 AC_SUBST(LIBRARY_LIBTOOL_OPTIONS)
-AC_SUBST(MODULE_LIBTOOL_OPTIONS)
+AC_SUBST( MODULE_LIBTOOL_OPTIONS)
 
 # C++ stuff must done after library and header (some C++ define require some header)
 
@@ -351,6 +351,10 @@ AC_CHECK_LIB(nsl,inet_ntop)
 AC_CHECK_LIB(pthread,sem_init)
 AC_CHECK_LIB(posix4,nanosleep)
 AC_CHECK_LIB(socket,socketpair)
+
+LIBS_SAVE=${LIBS}
+AC_CHECK_LIB(GeoIP,GeoIP_id_by_ipnum)
+LIBS=${LIBS_SAVE}
 
 #AC_CHECK_LIB(fcgi, FCGX_Accept, FCGI_LIBS="-lfcgi++ -lfcgi", AC_MSG_ERROR([FastCGI libraries not found]))
 #AC_SUBST(FCGI_LIBS)
@@ -524,22 +528,23 @@ AC_FUNC_CLOSEDIR_VOID
 AC_CHECK_FUNCS([accept4 daemon epoll_create1 epoll_wait fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem \
 					 mremap pread sendfile64 strndup mkdtemp strptime strtof strtoull strtold gmtime_r timegm strerror strsignal])
 
-AM_CONDITIONAL(PREAD,		 test "$ac_cv_func_pread"				= "yes")
-AM_CONDITIONAL(DAEMON,		 test "$ac_cv_func_daemon"				= "yes")
-AM_CONDITIONAL(TIMEGM,		 test "$ac_cv_func_timegm"				= "yes")
-AM_CONDITIONAL(MREMAP,      test "$ac_cv_func_mremap"				= "yes")
-AM_CONDITIONAL(MEMRCHR,     test "$ac_cv_func_memrchr"		   = "yes")
-AM_CONDITIONAL(STRNDUP,     test "$ac_cv_func_strndup"		   = "yes")
-AM_CONDITIONAL(MKDTEMP,     test "$ac_cv_func_mkdtemp"		   = "yes")
-AM_CONDITIONAL(FNMATCH,		 test "$ac_cv_func_fnmatch"		   = "yes")
-AM_CONDITIONAL(STRPTIME,    test "$ac_cv_func_strptime"		   = "yes")
-AM_CONDITIONAL(GMTIME_R,	 test "$ac_cv_func_gmtime_r"		   = "yes")
-AM_CONDITIONAL(SENDFILE,    test "$ac_cv_func_sendfile64"	   = "yes")
-AM_CONDITIONAL(FALLOCATE,	 test "$ac_cv_func_fallocate"			= "yes")
-AM_CONDITIONAL(FALLOCATE64, test "$ac_cv_func_fallocate64"		= "yes")
-AM_CONDITIONAL(NANOSLEEP,   test "$ac_cv_func_nanosleep"			= "yes")
-AM_CONDITIONAL(SEMAPHORE,   test "$ac_cv_lib_pthread_sem_init" = "yes")
-AM_CONDITIONAL(GETOPT_LONG, test "$ac_cv_func_getopt_long"	   = "yes")
+AM_CONDITIONAL(GEOIP,		 test "$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" = "yes")
+AM_CONDITIONAL(PREAD,		 test "$ac_cv_func_pread"						 = "yes")
+AM_CONDITIONAL(DAEMON,		 test "$ac_cv_func_daemon"						 = "yes")
+AM_CONDITIONAL(TIMEGM,		 test "$ac_cv_func_timegm"						 = "yes")
+AM_CONDITIONAL(MREMAP,      test "$ac_cv_func_mremap"						 = "yes")
+AM_CONDITIONAL(MEMRCHR,     test "$ac_cv_func_memrchr"					 = "yes")
+AM_CONDITIONAL(STRNDUP,     test "$ac_cv_func_strndup"					 = "yes")
+AM_CONDITIONAL(MKDTEMP,     test "$ac_cv_func_mkdtemp"					 = "yes")
+AM_CONDITIONAL(FNMATCH,		 test "$ac_cv_func_fnmatch"					 = "yes")
+AM_CONDITIONAL(STRPTIME,    test "$ac_cv_func_strptime"					 = "yes")
+AM_CONDITIONAL(GMTIME_R,	 test "$ac_cv_func_gmtime_r"					 = "yes")
+AM_CONDITIONAL(SENDFILE,    test "$ac_cv_func_sendfile64"				 = "yes")
+AM_CONDITIONAL(FALLOCATE,	 test "$ac_cv_func_fallocate"					 = "yes")
+AM_CONDITIONAL(FALLOCATE64, test "$ac_cv_func_fallocate64"				 = "yes")
+AM_CONDITIONAL(NANOSLEEP,   test "$ac_cv_func_nanosleep"					 = "yes")
+AM_CONDITIONAL(SEMAPHORE,   test "$ac_cv_lib_pthread_sem_init"			 = "yes")
+AM_CONDITIONAL(GETOPT_LONG, test "$ac_cv_func_getopt_long"				 = "yes")
 
 # SECTION 11: checks for function characteristics
 
@@ -909,6 +914,7 @@ AC_OUTPUT(Makefile \
 			 src/ulib/plugin/Makefile \
 			 src/ulib/plugin/usp/Makefile \
 			 src/ulib/plugin/mod_shib/Makefile \
+			 src/ulib/plugin/mod_geoip/Makefile \
 			 include/ulib/Makefile \
 			 contrib/HCSP/Makefile \
 			 contrib/RSIGN/Makefile \

@@ -353,10 +353,10 @@ public:
    static UFile* file;
 
    static bool isPHPRequest();
-   static void getTimeIfNeeded();
    static bool checkHTTPRequest();
    static bool processHTTPGetRequest();
    static bool checkPath(UString& pathname);
+   static void getTimeIfNeeded(bool all_http_version);
    static bool processHTTPAuthorization(bool digest, const UString& request_uri);
 
    static UString     getHTMLDirectoryList();
@@ -385,19 +385,20 @@ public:
    // ----------------------------------------------------------------------------------------------------------------------------
    // RET: Set-Cookie: ulib_sid=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
 
-   static UString getHTTPCookie(bool sh_script);
+   static UString getHTTPCookie(bool ulib_only);
    static UString setHTTPCookie(const UString& param);
 
    // CGI
 
+   static UString* penvironment;
    static char cgi_dir[U_PATH_MAX];
 
-   static bool isCGIRequest();
-   static bool processCGIOutput();
-   static void setCGIShellScript(UString& command);
-   static void setCGIEnvironment(UString& environment, bool sh_script);
-   static bool processCGIRequest(UCommand* pcmd, UString* penvironment);
-   static void setHTTPCgiResponse(int nResponseCode, uint32_t content_length, bool header_content_length);
+   static bool    isCGIRequest();
+   static bool    processCGIOutput();
+   static UString getCGIEnvironment(bool sh_script);
+   static void    setCGIShellScript(UString& command);
+   static bool    processCGIRequest(UCommand* pcmd, UString* penvironment);
+   static void    setHTTPCgiResponse(int nResponseCode, uint32_t content_length, bool header_content_length);
 
    // Accept-Language: en-us,en;q=0.5
    // ----------------------------------------------------

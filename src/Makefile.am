@@ -7,6 +7,9 @@ SUBDIRS = ulib
 
 if PLUGIN
 SUBDIRS += ulib/plugin ulib/plugin/usp
+if GEOIP
+SUBDIRS += 				  ulib/plugin/mod_geoip
+endif
 if SSL
 if PCRE
 if MOD_SHIB

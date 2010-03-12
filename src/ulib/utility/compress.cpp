@@ -54,7 +54,7 @@ uint32_t UCompress::compress(const char* src, uint32_t src_len, char* dst)
 
    init();
 
-   U_INTERNAL_ASSERT_EQUALS(flag_init,true)
+   U_INTERNAL_ASSERT(flag_init)
 
    // Step 2: compress from `src' to `dst' with LZO1X-1
 
@@ -82,7 +82,7 @@ uint32_t UCompress::decompress(const char* src, uint32_t src_len, char* dst)
 
    init();
 
-   U_INTERNAL_ASSERT_EQUALS(flag_init,true)
+   U_INTERNAL_ASSERT(flag_init)
 
    // Step 2: decompress from `src' to `dst' with LZO1X-1
 

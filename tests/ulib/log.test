@@ -13,6 +13,8 @@ rm -f test_log.log*
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR 
 
+export DIR_LOG_GZ=tmp
+
 start_prg_background log 15
 wait_prg
 #start_prg 				log 15

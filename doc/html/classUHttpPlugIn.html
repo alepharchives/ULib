@@ -64,8 +64,8 @@ static <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class=
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2ed5cef25f759869806281ff64c1a412"></a><!-- doxytag: member="UHttpPlugIn::str_URI_PROTECTED_ALLOWED_IP" ref="a2ed5cef25f759869806281ff64c1a412" args="" -->
 static <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_URI_PROTECTED_ALLOWED_IP</b></td></tr>
 <tr><td colspan="2"><h2>Protected Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3723bb560c7bfca7b6888085b74375eb"></a><!-- doxytag: member="UHttpPlugIn::getCGIEnvironment" ref="a3723bb560c7bfca7b6888085b74375eb" args="()" -->
-<a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getCGIEnvironment</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5173c0dcd05c36e24df996967b92339b"></a><!-- doxytag: member="UHttpPlugIn::checkUriProtected" ref="a5173c0dcd05c36e24df996967b92339b" args="(bool ctx_read)" -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>checkUriProtected</b> (bool ctx_read)</td></tr>
 <tr><td colspan="2"><h2>Protected Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7e1a25a83d3ad5c087074dfc315d2963"></a><!-- doxytag: member="UHttpPlugIn::index_alias" ref="a7e1a25a83d3ad5c087074dfc315d2963" args="" -->
 uint32_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>index_alias</b></td></tr>
@@ -73,8 +73,6 @@ uint32_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>index_alias</b></
 UVector&lt; <a class="el" href="classUString.html">UString</a> &gt;&nbsp;</td><td class="memItemRight" valign="bottom"><b>valias</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3f0b97eb52e60d97a3b71948d45a43a2"></a><!-- doxytag: member="UHttpPlugIn::alias" ref="a3f0b97eb52e60d97a3b71948d45a43a2" args="" -->
 <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>alias</b></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2ae0e82fe1102415c0f5c1119f534fe6"></a><!-- doxytag: member="UHttpPlugIn::environment" ref="a2ae0e82fe1102415c0f5c1119f534fe6" args="" -->
-<a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>environment</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad34572d664284d67a608ba2f0e313919"></a><!-- doxytag: member="UHttpPlugIn::uri_protected_mask" ref="ad34572d664284d67a608ba2f0e313919" args="" -->
 <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>uri_protected_mask</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0c1d4d4f2fb90b9a6cebbee51ece34dc"></a><!-- doxytag: member="UHttpPlugIn::uri_protected_allowed_ip" ref="a0c1d4d4f2fb90b9a6cebbee51ece34dc" args="" -->
@@ -82,17 +80,19 @@ UVector&lt; <a class="el" href="classUString.html">UString</a> &gt;&nbsp;</td><t
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a23096c8f8ebdf9dda6d3b10b14caca8f"></a><!-- doxytag: member="UHttpPlugIn::uri_request_cert_mask" ref="a23096c8f8ebdf9dda6d3b10b14caca8f" args="" -->
 <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>uri_request_cert_mask</b></td></tr>
 <tr><td colspan="2"><h2>Static Protected Attributes</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a25c99d8b6366e025074df68b1d0e7afb"></a><!-- doxytag: member="UHttpPlugIn::virtual_host" ref="a25c99d8b6366e025074df68b1d0e7afb" args="" -->
-static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>virtual_host</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa2cfd3fb216d5d48b7a836603f7ab978"></a><!-- doxytag: member="UHttpPlugIn::vallow_IP" ref="aa2cfd3fb216d5d48b7a836603f7ab978" args="" -->
 static UVector&lt; <a class="el" href="classUIPAllow.html">UIPAllow</a> * &gt; *&nbsp;</td><td class="memItemRight" valign="bottom"><b>vallow_IP</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a25c99d8b6366e025074df68b1d0e7afb"></a><!-- doxytag: member="UHttpPlugIn::virtual_host" ref="a25c99d8b6366e025074df68b1d0e7afb" args="" -->
+static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>virtual_host</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afbbb45eea527414c5e6b2fcced1a7f08"></a><!-- doxytag: member="UHttpPlugIn::uri_protected_to_check" ref="afbbb45eea527414c5e6b2fcced1a7f08" args="" -->
+static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>uri_protected_to_check</b></td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>include/ulib/plugin/<a class="el" href="mod__http_8h_source.html">mod_http.h</a></li>
 <li>src/ulib/plugin/mod_http.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 9 14:06:47 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:55 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

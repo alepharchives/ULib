@@ -40,7 +40,6 @@
 
 class UHTTP;
 class UServer_Base;
-class UTimeoutConnection;
 
 class U_EXPORT UClientImage_Base : public UEventFd {
 public:
@@ -54,6 +53,7 @@ public:
    static USocket* socket;
    static UString* rbuffer;
    static UString* wbuffer;
+   static UString* real_ip;      // NB: check for HTTP Header X-Forwarded-For: client, proxy1, proxy2 and X-Real-IP: client...
    static bool bIPv6, write_off; // NB: we not send response because we can have used sendfile() etc...
    static UClientImage_Base* pClientImage;
 
@@ -65,8 +65,8 @@ public:
 
    // SERVICES
 
-   static void clear();
    static void run();
+   static void clear();
    static void resetBuffer();
    static void genericReset();
    static void init(USocket* p);
@@ -111,9 +111,18 @@ public:
       return socket->remoteIPAddress();
       }
 
-   // check for X-Forwarded-For: client1, proxy1, proxy2
+   static bool setRealIP(); // check for X-Forwarded-For: client, proxy1, proxy2 and X-Real-IP: client...
 
-   static const char* getRemoteInfo(uint32_t* plen);
+   static UString getRemoteIP()
+      {
+      U_TRACE(0, "UClientImage_Base::getRemoteIP()")
+
+      if (real_ip->empty() && setRealIP() == false) (void) real_ip->replace(remoteIPAddress().getAddressString());
+
+      U_INTERNAL_ASSERT(real_ip->isNullTerminated())
+
+      U_RETURN_STRING(*real_ip);
+      }
 
    // welcome message
 
@@ -213,7 +222,6 @@ private:
 
    friend class UHTTP;
    friend class UServer_Base;
-   friend class UTimeoutConnection;
 };
 
 template <class Socket> class U_EXPORT UClientImage : public UClientImage_Base {
@@ -267,7 +275,7 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UClientImage<USSLSocket>)
 
       U_INTERNAL_ASSERT_POINTER(socket)
-      U_INTERNAL_ASSERT_EQUALS(socket->isSSL(), true)
+      U_INTERNAL_ASSERT(socket->isSSL())
 
       if (socket->isOpen())
          {

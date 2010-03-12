@@ -64,6 +64,10 @@ static inline int u_equal(const void* s1, const void* s2, uint32_t n, bool ignor
 
 extern U_EXPORT void* u_find(const char* s, uint32_t n, const char* a, uint32_t n1);
 
+/* check if string a start with string b */
+
+extern U_EXPORT bool u_startsWith(const char* a, uint32_t n1, const char* b, uint32_t n2);
+
 /* check if string a terminate with string b */
 
 extern U_EXPORT bool u_endsWith(const char* a, uint32_t n1, const char* b, uint32_t n2);

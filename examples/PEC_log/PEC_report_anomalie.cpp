@@ -158,7 +158,7 @@ bool Messaggio::setRicezione(const UString& elem)
          }
       else
          {
-         U_INTERNAL_ASSERT_EQUALS(PEC_report::tipology[U_rilevazione_virus], true)
+         U_INTERNAL_ASSERT(PEC_report::tipology[U_rilevazione_virus])
 
          msg->flag[U_RILEVAZIONE_VIRUS] = '1';
          }
@@ -169,7 +169,7 @@ bool Messaggio::setRicezione(const UString& elem)
       }
    else
       {
-      U_INTERNAL_ASSERT_EQUALS(PEC_report::tipology[U_rilevazione_virus], true)
+      U_INTERNAL_ASSERT(PEC_report::tipology[U_rilevazione_virus])
 
       msg->vdestinatari_rilevazione_virus[i] += 1;
       }
@@ -196,7 +196,7 @@ bool Messaggio::setConsegna(const UString& elem)
          }
       else
          {
-         U_INTERNAL_ASSERT_EQUALS(PEC_report::tipology[U_rilevazione_virus], true)
+         U_INTERNAL_ASSERT(PEC_report::tipology[U_rilevazione_virus])
 
          msg->flag[U_RILEVAZIONE_VIRUS] = '1';
          }
@@ -217,7 +217,7 @@ bool Messaggio::setConsegna(const UString& elem)
       }
    else
       {
-      U_INTERNAL_ASSERT_EQUALS(PEC_report::tipology[U_rilevazione_virus], true)
+      U_INTERNAL_ASSERT(PEC_report::tipology[U_rilevazione_virus])
 
       msg->vdestinatari_rilevazione_virus[i] += 1;
       }

@@ -96,7 +96,7 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
 
    if (len) (void) x.append(s + start, len);
 
-   U_INTERNAL_ASSERT_EQUALS(x.invariant(),true)
+   U_INTERNAL_ASSERT(x.invariant())
 
    U_RETURN_STRING(x);
 }
@@ -138,7 +138,7 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 
    if (len) (void) x.append(s + start, len);
 
-   U_INTERNAL_ASSERT_EQUALS(x.invariant(),true)
+   U_INTERNAL_ASSERT(x.invariant())
 
    U_RETURN_STRING(x);
 }
@@ -251,7 +251,7 @@ UString UStringExt::expandPath(const char* path_data, uint32_t path_size)
       pathname = path;
       }
 
-   U_INTERNAL_ASSERT_EQUALS(pathname.invariant(),true)
+   U_INTERNAL_ASSERT(pathname.invariant())
 
    U_RETURN_STRING(pathname);
 }
@@ -313,7 +313,7 @@ UString UStringExt::expandEnvVar(const char* s, uint32_t n)
 
    if (n) (void) x.append(s, n);
 
-   U_INTERNAL_ASSERT_EQUALS(x.invariant(),true)
+   U_INTERNAL_ASSERT(x.invariant())
 
    U_RETURN_STRING(x);
 }
@@ -557,7 +557,7 @@ UString UStringExt::dirname(const UString& s)
       result = s.substr(0U, (uint32_t)(last_slash - path));
       }
 
-   U_INTERNAL_ASSERT_EQUALS(result.invariant(),true)
+   U_INTERNAL_ASSERT(result.invariant())
 
    U_RETURN_STRING(result);
 }
@@ -570,7 +570,7 @@ UString UStringExt::basename(const UString& s)
 
    UString result = (pos == U_NOT_FOUND ? s : s.substr(pos+1));
 
-   U_INTERNAL_ASSERT_EQUALS(result.invariant(),true)
+   U_INTERNAL_ASSERT(result.invariant())
 
    U_RETURN_STRING(result);
 }
@@ -585,7 +585,7 @@ UString UStringExt::suffix(const UString& s, char sep)
 
    UString result = s.substr(pos+1);
 
-   U_INTERNAL_ASSERT_EQUALS(result.invariant(),true)
+   U_INTERNAL_ASSERT(result.invariant())
 
    U_RETURN_STRING(result);
 }
@@ -689,8 +689,8 @@ UString UStringExt::compress(const UString& s)
 
    r.rep->_length = U_CONSTANT_SIZE(U_LZOP_COMPRESS) + sizeof(uint32_t) + UCompress::compress(s.rep->str, sz, ptr);
 
-   U_INTERNAL_ASSERT_EQUALS(r.invariant(),true)
-   U_INTERNAL_ASSERT_EQUALS(UStringExt::isCompress(r),true)
+   U_INTERNAL_ASSERT(r.invariant())
+   U_INTERNAL_ASSERT(UStringExt::isCompress(r))
 
    U_RETURN_STRING(r);
 }
@@ -701,7 +701,7 @@ UString UStringExt::decompress(const UString& s)
 
    // check magic byte
 
-   U_INTERNAL_ASSERT_EQUALS(UStringExt::isCompress(s),true)
+   U_INTERNAL_ASSERT(UStringExt::isCompress(s))
 
    // read original size
 
@@ -716,7 +716,7 @@ UString UStringExt::decompress(const UString& s)
 
    r.rep->_length = UCompress::decompress(ptr, s.size() - U_CONSTANT_SIZE(U_LZOP_COMPRESS) - sizeof(uint32_t), r.rep->data());
 
-   U_INTERNAL_ASSERT_EQUALS(r.invariant(),true)
+   U_INTERNAL_ASSERT(r.invariant())
 
    U_RETURN_STRING(r);
 }
@@ -735,7 +735,7 @@ UString UStringExt::deflate(const UString& s) // .gz compress
    U_INTERNAL_DUMP("u_gz_deflate() = %d", r.rep->_length)
 #endif
 
-   U_INTERNAL_ASSERT_EQUALS(r.invariant(),true)
+   U_INTERNAL_ASSERT(r.invariant())
 
    U_RETURN_STRING(r);
 }
@@ -768,7 +768,7 @@ UString UStringExt::gunzip(const UString& s, uint32_t sz) // .gz uncompress
    U_INTERNAL_DUMP("u_gz_inflate() = %d", r.rep->_length)
 #endif
 
-   U_INTERNAL_ASSERT_EQUALS(r.invariant(),true)
+   U_INTERNAL_ASSERT(r.invariant())
 
    U_RETURN_STRING(r);
 }
@@ -792,7 +792,7 @@ UString UStringExt::tolower(const UString& x)
 
    while (s < end) *ptr++ = u_tolower(*s++);
 
-   U_INTERNAL_ASSERT_EQUALS(r.invariant(),true)
+   U_INTERNAL_ASSERT(r.invariant())
 
    U_RETURN_STRING(r);
 }
@@ -814,7 +814,7 @@ UString UStringExt::toupper(const UString& x)
 
    while (s < end) *ptr++ = u_toupper(*s++);
 
-   U_INTERNAL_ASSERT_EQUALS(r.invariant(),true)
+   U_INTERNAL_ASSERT(r.invariant())
 
    U_RETURN_STRING(r);
 }

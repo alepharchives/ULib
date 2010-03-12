@@ -136,13 +136,13 @@ public:
          }
       else if (errore_virus)
          {
-         U_INTERNAL_ASSERT_EQUALS(tipology[U_non_accettazione], true)
+         U_INTERNAL_ASSERT(tipology[U_non_accettazione])
 
       // input = true;
          }
       else
          {
-         U_INTERNAL_ASSERT_EQUALS(tipology[U_non_accettazione], true)
+         U_INTERNAL_ASSERT(tipology[U_non_accettazione])
 
          return;
          }

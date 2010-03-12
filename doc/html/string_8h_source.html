@@ -419,7 +419,7 @@
 <a name="l00396"></a>00396 
 <a name="l00397"></a>00397                 _length = (value == U_NOT_FOUND ? u_strlen(str) : value);
 <a name="l00398"></a>00398 
-<a name="l00399"></a>00399                 U_INTERNAL_ASSERT_EQUALS(invariant(),<span class="keyword">true</span>)
+<a name="l00399"></a>00399                 U_INTERNAL_ASSERT(invariant())
 <a name="l00400"></a>00400                 }
 <a name="l00401"></a>00401 
 <a name="l00402"></a>00402 <span class="preprocessor">#ifdef DEBUG</span>
@@ -750,7 +750,7 @@
 <a name="l00727"></a>00727 
 <a name="l00728"></a>00728                 UStringRep::assign(rep, s, n);
 <a name="l00729"></a>00729 
-<a name="l00730"></a>00730                 U_INTERNAL_ASSERT_EQUALS(invariant(),<span class="keyword">true</span>)
+<a name="l00730"></a>00730                 U_INTERNAL_ASSERT(invariant())
 <a name="l00731"></a>00731 
 <a name="l00732"></a>00732                 <span class="keywordflow">return</span> *<span class="keyword">this</span>;
 <a name="l00733"></a>00733                 }
@@ -1118,7 +1118,7 @@
 <a name="l01095"></a>01095 
 <a name="l01096"></a>01096                 <span class="keyword">set</span>(UStringRep::create(map, len, U_NOT_FOUND));
 <a name="l01097"></a>01097 
-<a name="l01098"></a>01098                 U_INTERNAL_ASSERT_EQUALS(invariant(),<span class="keyword">true</span>)
+<a name="l01098"></a>01098                 U_INTERNAL_ASSERT(invariant())
 <a name="l01099"></a>01099                 }
 <a name="l01100"></a>01100 
 <a name="l01101"></a>01101         <span class="comment">// (manage UString as buffer...)</span>
@@ -1147,7 +1147,7 @@
 <a name="l01124"></a>01124 
 <a name="l01125"></a>01125                 (void) U_SYSCALL(memmove, <span class="stringliteral">&quot;%p,%p,%u&quot;</span>, (<span class="keywordtype">void</span>*)rep-&gt;str, rep-&gt;str + n, rep-&gt;_length);
 <a name="l01126"></a>01126 
-<a name="l01127"></a>01127                 U_INTERNAL_ASSERT_EQUALS(invariant(),<span class="keyword">true</span>)
+<a name="l01127"></a>01127                 U_INTERNAL_ASSERT(invariant())
 <a name="l01128"></a>01128                 }
 <a name="l01129"></a>01129 
 <a name="l01130"></a>01130 <span class="preprocessor">#ifdef __MINGW32__</span>
@@ -1168,7 +1168,7 @@
 <a name="l01145"></a>01145 
 <a name="l01146"></a>01146                 rep-&gt;_length = u_vsnprintf(rep-&gt;data(), rep-&gt;capacity(), format, argp); 
 <a name="l01147"></a>01147 
-<a name="l01148"></a>01148                 U_INTERNAL_ASSERT_EQUALS(invariant(),<span class="keyword">true</span>)
+<a name="l01148"></a>01148                 U_INTERNAL_ASSERT(invariant())
 <a name="l01149"></a>01149                 }
 <a name="l01150"></a>01150 
 <a name="l01151"></a>01151         <span class="keywordtype">void</span> vsnprintf_add(<span class="keyword">const</span> <span class="keywordtype">char</span>* format, va_list argp)
@@ -1180,7 +1180,7 @@
 <a name="l01157"></a>01157 
 <a name="l01158"></a>01158                 rep-&gt;_length += u_vsnprintf(c_pointer(rep-&gt;_length), rep-&gt;space(), format, argp); 
 <a name="l01159"></a>01159 
-<a name="l01160"></a>01160                 U_INTERNAL_ASSERT_EQUALS(invariant(),<span class="keyword">true</span>)
+<a name="l01160"></a>01160                 U_INTERNAL_ASSERT(invariant())
 <a name="l01161"></a>01161                 }
 <a name="l01162"></a>01162 
 <a name="l01163"></a>01163 <span class="preprocessor">#ifdef HAVE_STRTOF</span>
@@ -1264,7 +1264,7 @@
 <a name="l01241"></a>01241 
 <a name="l01242"></a>01242 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 9 14:06:45 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:54 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

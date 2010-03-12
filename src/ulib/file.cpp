@@ -244,12 +244,12 @@ bool UFile::chdir(const char* path, bool flag_save)
 
 uint32_t UFile::setPathFromFile(const UFile& file, char* buffer_path, const char* suffix, uint32_t len)
 {
-   U_TRACE(0, "UFile::setPathFromFile(%p,%p,%.*S,%u)", &file, buffer_path, len, suffix, len)
+   U_TRACE(1, "UFile::setPathFromFile(%p,%p,%.*S,%u)", &file, buffer_path, len, suffix, len)
 
    U_INTERNAL_DUMP("file.path_relativ(%u) = %.*S", file.path_relativ_len, file.path_relativ_len, file.path_relativ)
 
-   (void) memcpy(buffer_path,                         file.path_relativ, file.path_relativ_len);
-   (void) memcpy(buffer_path + file.path_relativ_len,            suffix,                   len);
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", buffer_path,                         file.path_relativ, file.path_relativ_len);
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", buffer_path + file.path_relativ_len,            suffix,                   len);
 
    uint32_t new_path_relativ_len = file.path_relativ_len + len;
 
@@ -492,7 +492,7 @@ end:
 
 bool UFile::write(const UString& data, bool append)
 {
-   U_TRACE(0, "UFile::write(%.*S,%b)", U_STRING_TO_TRACE(data), append)
+   U_TRACE(1, "UFile::write(%.*S,%b)", U_STRING_TO_TRACE(data), append)
 
    U_INTERNAL_ASSERT_POINTER(path_relativ)
 
@@ -852,7 +852,7 @@ bool UFile::mkdtemp(UString& _template)
 
 bool UFile::mkdirs(const char* path, mode_t mode)
 {
-   U_TRACE(0, "UFile::mkdirs(%S,%d)", path, mode)
+   U_TRACE(1, "UFile::mkdirs(%S,%d)", path, mode)
 
    if (mkdir(path, mode)) U_RETURN(true);
 
@@ -870,7 +870,7 @@ bool UFile::mkdirs(const char* path, mode_t mode)
 
          uint32_t len = ptr - path;
 
-         (void) memcpy(buffer, path, len);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", buffer, path, len);
 
          buffer[len] = '\0';
 

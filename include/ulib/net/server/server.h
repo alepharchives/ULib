@@ -82,8 +82,8 @@ virtual void newClientImage() { (void) new client_class(); } }
 class UHTTP;
 class UCommand;
 class UFileConfig;
-class TimeHandler;
-class UTimeoutConnection;
+class UHttpPlugIn;
+class UProxyPlugIn;
 
 class U_EXPORT UServer_Base : public UEventFd {
 public:
@@ -387,6 +387,64 @@ protected:
             UServer_Base(UFileConfig* cfg);
    virtual ~UServer_Base();
 
+   // VARIE
+
+   class U_NO_EXPORT UTimeoutConnection : public UEventTime {
+   public:
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   // COSTRUTTORI
+
+   UTimeoutConnection(long sec, long usec) : UEventTime(sec, usec)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UTimeoutConnection, "%ld,%ld", sec, usec)
+      }
+
+   virtual ~UTimeoutConnection()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UTimeoutConnection)
+      }
+
+   // define method VIRTUAL of class UEventTime
+
+   virtual int handlerTime()
+      {
+      U_TRACE(0, "UTimeoutConnection::handlerTime()")
+
+      // idle connection... (timeout)
+
+      UServer_Base::handlerIdleConnection();
+
+      // return value:
+      // ---------------
+      // -1 - normal
+      //  0 - monitoring
+      // ---------------
+
+      U_RETURN(0);
+      }
+
+#  ifdef DEBUG
+   const char* dump(bool reset) const { return UEventTime::dump(reset); }
+#  endif
+
+   private:
+   UTimeoutConnection(const UTimeoutConnection&) : UEventTime() {}
+   UTimeoutConnection& operator=(const UTimeoutConnection&)     { return *this; }
+   };
+
+   static void acceptNewClient()
+      {
+      U_TRACE(0, "UServer_Base::acceptNewClient()")
+
+      UNotifier::init(pthis);
+
+      if (USocket::req_timeout) ptime = U_NEW(UTimeoutConnection(USocket::req_timeout, 0L));
+      }
+
    static const char* getNumConnection();
 
    static void handlerNewConnection();
@@ -428,9 +486,9 @@ protected:
 
 private:
    friend class UHTTP;
-   friend class TimeHandler;
+   friend class UHttpPlugIn;
+   friend class UProxyPlugIn;
    friend class UClientImage_Base;
-   friend class UTimeoutConnection;
 
    UServer_Base(const UServer_Base&) : UEventFd() {}
    UServer_Base& operator=(const UServer_Base&)   { return *this; }
@@ -522,6 +580,31 @@ public:
 
    static USSLSocket* getSocket() { return (USSLSocket*) pthis->socket; }
 
+   static bool askForClientCertificate()
+      {
+      U_TRACE(0, "UServer<USSLSocket>::askForClientCertificate()")
+
+      USSLSocket* sslsocket = (USSLSocket*)UClientImage_Base::socket;
+
+      U_INTERNAL_ASSERT(sslsocket->isSSL())
+
+      bool has_cert = (sslsocket->getPeerCertificate() != 0);
+
+      if (has_cert == false)
+         {
+         U_SRV_LOG_MSG_WITH_ADDR("ask for a client certificate to");
+
+         if (sslsocket->askForClientCertificate())
+            {
+            has_cert = true;
+
+            UClientImage_Base::logCertificate(sslsocket->getPeerCertificate());
+            }
+         }
+
+      U_RETURN(has_cert);
+      }
+
    // MANAGE ALL...
 
    void go()
@@ -530,7 +613,7 @@ public:
 
       USSLSocket* sslsocket = getSocket();
 
-      U_INTERNAL_ASSERT_EQUALS(sslsocket->isSSL(), true)
+      U_INTERNAL_ASSERT(sslsocket->isSSL())
       
       // These are the 1024 bit DH parameters from "Assigned Number for SKIP Protocols"
       // (http://www.skip-vpn.org/spec/numbers.html).
@@ -583,52 +666,4 @@ private:
 };
 
 #endif
-
-class U_NO_EXPORT UTimeoutConnection : public UEventTime {
-public:
-
-   // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
-
-   // COSTRUTTORI
-
-   UTimeoutConnection(long sec, long usec) : UEventTime(sec, usec)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UTimeoutConnection, "%ld,%ld", sec, usec)
-      }
-
-   virtual ~UTimeoutConnection()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UTimeoutConnection)
-      }
-
-   // define method VIRTUAL of class UEventTime
-
-   virtual int handlerTime()
-      {
-      U_TRACE(0, "UTimeoutConnection::handlerTime()")
-
-      // idle connection... (timeout)
-
-      UServer_Base::handlerIdleConnection();
-
-      // return value:
-      // ---------------
-      // -1 - normal
-      //  0 - monitoring
-      // ---------------
-
-      U_RETURN(0);
-      }
-
-#ifdef DEBUG
-   const char* dump(bool reset) const { return UEventTime::dump(reset); }
-#endif
-
-private:
-   UTimeoutConnection(const UTimeoutConnection&) : UEventTime() {}
-   UTimeoutConnection& operator=(const UTimeoutConnection&)     { return *this; }
-};
-
 #endif

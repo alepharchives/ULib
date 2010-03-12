@@ -64,7 +64,7 @@ public:
 
    // COSTRUTTORI
 
-            UModNoCatPeer(const char* ip);
+            UModNoCatPeer(const UString& peer_ip);
    virtual ~UModNoCatPeer()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UModNoCatPeer)
@@ -209,8 +209,8 @@ protected:
    void setRedirectLocation(UModNoCatPeer* peer, const UString& redirect, const Url& auth);
 
    static UModNoCatPeer* getPeer(uint32_t i);
-          UModNoCatPeer* creatNewPeer(const char* peer_ip);
           UModNoCatPeer* getPeerFromMAC(const UString& mac);
+          UModNoCatPeer* creatNewPeer(const UString& peer_ip);
 
    static void notifyAuthOfUsersInfo();
    static void getPeerStatus(UStringRep* key, void* value);

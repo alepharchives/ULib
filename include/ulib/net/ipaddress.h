@@ -92,7 +92,22 @@ public:
       U_RETURN(result);
       }
 
-   static bool isAllowed(in_addr_t client, UVector<UIPAllow*>& vipallow);
+   bool isAllowed(const UString& ip_client)
+      {
+      U_TRACE(0, "UIPAllow::isAllowed(%.*S)", U_STRING_TO_TRACE(ip_client))
+
+      U_INTERNAL_ASSERT(ip_client.isNullTerminated())
+      U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(ip_client)))
+
+      struct in_addr ia;
+
+      bool result = (inet_aton(ip_client.data(), &ia) && isAllowed(ia.s_addr));
+
+      U_RETURN(result);
+      }
+
+   static bool isAllowed(in_addr_t         client, UVector<UIPAllow*>& vipallow);
+   static bool isAllowed(const UString& ip_client, UVector<UIPAllow*>& vipallow);
 
    // DEBUG
 

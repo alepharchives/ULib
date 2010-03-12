@@ -4,6 +4,7 @@ EXTRA_DIST = base/* cgi/* container/* db/* debug/* dynamic/* flex/* internal/* l
 			 	 replace/* ssl/* ssh/* ui/* utility/* xml/expat/* xml/libxml2/* zip/* \
 				 plugin/*.cpp plugin/Makefile.* \
 				 plugin/mod_shib/*.cpp plugin/mod_shib/Makefile.* \
+				 plugin/mod_geoip/*.cpp plugin/mod_geoip/Makefile.* \
 				 *.cpp all_c.c ULib.pc.in ULib.rc.in
 
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include

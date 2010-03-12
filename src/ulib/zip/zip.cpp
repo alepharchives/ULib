@@ -70,8 +70,8 @@ U_NO_EXPORT void UZIP::assignFilenames()
 {
    U_TRACE(0, "UZIP::assignFilenames()")
 
+   U_INTERNAL_ASSERT(valid)
    U_INTERNAL_ASSERT_MAJOR(npart,0)
-   U_INTERNAL_ASSERT_EQUALS(valid,true)
    U_INTERNAL_ASSERT_EQUALS(zippartname,0)
    U_INTERNAL_ASSERT_POINTER(filenames)
    U_INTERNAL_ASSERT_POINTER(filenames_len)
@@ -85,9 +85,9 @@ bool UZIP::extract(const UString* _tmpdir)
 {
    U_TRACE(0, "UZIP::extract(%p)", _tmpdir)
 
-   U_INTERNAL_ASSERT_EQUALS(valid,true)
-   U_ASSERT(tmpdir.empty()  == true)
-   U_ASSERT(content.empty() == false)
+   U_INTERNAL_ASSERT(valid)
+   U_ASSERT(tmpdir.empty())
+   U_ASSERT_EQUALS(content.empty(),false)
 
    if (_tmpdir) tmpdir = *_tmpdir;
    else
@@ -135,9 +135,9 @@ bool UZIP::readContent()
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT_EQUALS(valid,true)
+   U_INTERNAL_ASSERT(valid)
    U_INTERNAL_ASSERT_EQUALS(zippartname,0)
-   U_ASSERT(content.empty() == false)
+   U_ASSERT_EQUALS(content.empty(),false)
 
    npart = zip_get_content(U_STRING_TO_PARAM(content), &filenames, &filenames_len, &filecontents, &filecontents_len);
 

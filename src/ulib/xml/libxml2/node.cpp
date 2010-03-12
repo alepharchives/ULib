@@ -168,6 +168,15 @@ ctx:
    U_RETURN(vec.size() - n);
 }
 
+bool UXML2Node::checkNodeName(xmlNodePtr node, const xmlChar* name, const xmlChar* ns)
+{
+   U_TRACE(0, "UXML2Node::checkNodeName(%p,%S,%S)", node, name, ns)
+
+   bool result = (node ? UXML2Node(node).checkNodeName(name, ns) : false);
+
+   U_RETURN(result);
+}
+
 // DEBUG
 
 #ifdef DEBUG

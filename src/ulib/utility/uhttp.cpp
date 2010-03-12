@@ -28,6 +28,7 @@ char              UHTTP::cgi_dir[U_PATH_MAX];
 UFile*            UHTTP::file;
 UString*          UHTTP::tmpdir;
 UString*          UHTTP::qcontent;
+UString*          UHTTP::penvironment;
 uhttpheader       UHTTP::http_info;
 const char*       UHTTP::ptrC;
 const char*       UHTTP::ptrH;
@@ -985,9 +986,9 @@ UString UHTTP::setHTTPCookie(const UString& param)
    U_RETURN_STRING(set_cookie);
 }
 
-UString UHTTP::getHTTPCookie(bool sh_script)
+UString UHTTP::getHTTPCookie(bool ulib_only)
 {
-   U_TRACE(1, "UHTTP::getHTTPCookie(%b)", sh_script)
+   U_TRACE(1, "UHTTP::getHTTPCookie(%b)", ulib_only)
 
    const char* cookie_ptr = getHTTPHeaderValuePtr(*USocket::str_cookie);
 
@@ -1008,7 +1009,7 @@ UString UHTTP::getHTTPCookie(bool sh_script)
          U_RETURN_STRING(data);
          }
 
-      if (sh_script) U_RETURN_STRING(UString::getStringNull());
+      if (ulib_only) U_RETURN_STRING(UString::getStringNull());
 
       UString result(cookie_ptr, cookie_len);
 
@@ -1092,14 +1093,16 @@ const char* UHTTP::getHTTPStatus()
    U_RETURN(buffer);
 }
 
-void UHTTP::getTimeIfNeeded()
+void UHTTP::getTimeIfNeeded(bool all_http_version)
 {
-   U_TRACE(0, "UHTTP::getTimeIfNeeded()")
+   U_TRACE(0, "UHTTP::getTimeIfNeeded(%b)", all_http_version)
 
-   if (http_info.version == 0 &&
-       (UServer_Base::isLog() == false || ULog::isSysLog()))
+   if (ULog::isSysLog() ||
+       UServer_Base::isLog() == false)
       {
-      (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
+      // HTTP 1.1 want header "Date: ..."
+
+      if (UHTTP::http_info.version == 1 || all_http_version) (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
       }
 }
 
@@ -1923,9 +1926,9 @@ bool UHTTP::isCGIRequest()
    U_RETURN(false);
 }
 
-void UHTTP::setCGIEnvironment(UString& environment, bool sh_script)
+UString UHTTP::getCGIEnvironment(bool sh_script)
 {
-   U_TRACE(0, "UHTTP::setCGIEnvironment(%.*S,%b)", U_STRING_TO_TRACE(environment), sh_script)
+   U_TRACE(0, "UHTTP::getCGIEnvironment(%b)", sh_script)
 
    char c = u_line_terminator[0];
 
@@ -2067,12 +2070,10 @@ void UHTTP::setCGIEnvironment(UString& environment, bool sh_script)
    http://$SERVER_NAME:$SERVER_PORT$SCRIPT_NAME$PATH_INFO will always be an accessible URL that points to the current script...
    */
 
-   uint32_t ip_client_len;
-   const char* ip_client = UClientImage_Base::getRemoteInfo(&ip_client_len);
-   UString buffer(U_CAPACITY), name = UServer_Base::getNodeName(), ip_server = UServer_Base::getIPAddress();
+   UString buffer(U_CAPACITY), name = UServer_Base::getNodeName(),
+           ip_server = UServer_Base::getIPAddress(), ip_client = UClientImage_Base::getRemoteIP();
 
-   buffer.snprintf("\n"
-                   "CONTENT_LENGTH=%u\n"
+   buffer.snprintf("CONTENT_LENGTH=%u\n"
                    "GATEWAY_INTERFACE=CGI/1.1\n"
                    "QUERY_STRING=%.*s\n"
                    "REMOTE_ADDR=%.*s\n"
@@ -2094,7 +2095,7 @@ void UHTTP::setCGIEnvironment(UString& environment, bool sh_script)
                    "SCRIPT_FILENAME=%w%.*s\n",
                    UClientImage_Base::body->size(),
                    U_HTTP_QUERY_TO_TRACE,
-                   ip_client_len, ip_client,
+                   U_STRING_TO_TRACE(ip_client),
                    U_HTTP_METHOD_TO_TRACE,
                    U_HTTP_URI_TO_TRACE,
                    U_STRING_TO_TRACE(name),
@@ -2132,7 +2133,7 @@ void UHTTP::setCGIEnvironment(UString& environment, bool sh_script)
       }
 #endif
 
-   (void) environment.append(buffer);
+   U_RETURN_STRING(buffer);
 }
 
 void UHTTP::setCGIShellScript(UString& command)
@@ -2437,9 +2438,9 @@ send_cgi_response:
    U_RETURN(false);
 }
 
-bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penvironment)
+bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
 {
-   U_TRACE(0, "UHTTP::processCGIRequest(%p,%p)", pcmd, penvironment)
+   U_TRACE(0, "UHTTP::processCGIRequest(%p,%p)", pcmd, penv)
 
    U_ASSERT(isPHPRequest() || isCGIRequest())
 
@@ -2463,7 +2464,7 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penvironment)
 
       (void) command.assign(file->getPath()); // NB: we can't use relativ path because after we call chdir()...
 
-      if (penvironment) environment = *penvironment;
+      if (penv) environment = *penv;
 
       sh_script = UStringExt::endsWith(command, U_CONSTANT_TO_PARAM(".sh"));
 
@@ -2529,16 +2530,16 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penvironment)
 
    if (sh_script) setCGIShellScript(command);
 
-   setCGIEnvironment(environment, sh_script);
+   (void) environment.append(getCGIEnvironment(sh_script));
 
    pcmd->set(command, &environment);
+
+   bool result = false;
 
    /* When a url ends by "/cgi-bin/" it is assumed to be a cgi script.
     * The server changes directory to the location of the script and
     * executes it after setting QUERY_STRING and other environment variables.
     */
-
-   bool result = false;
 
    if (UFile::chdir(cgi_dir, true))
       {
@@ -2552,6 +2553,8 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penvironment)
       }
 
    resetForm();
+
+   penvironment->setEmpty();
 
    // process the HTTP CGI output
 

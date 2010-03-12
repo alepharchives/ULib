@@ -167,7 +167,7 @@ void USOAPParser::startElement(const XML_Char* name, const XML_Char** attrs)
 
    if (flag_state == 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(u_rmatch(U_STRING_TO_PARAM(str), U_CONSTANT_TO_PARAM(":Envelope")),true)
+      U_INTERNAL_ASSERT(u_rmatch(U_STRING_TO_PARAM(str), U_CONSTANT_TO_PARAM(":Envelope")))
 
       flag_state = 1;
       }

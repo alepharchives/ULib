@@ -495,8 +495,7 @@ static void execute_query(UClientImage_Base* client_image)
       {
       static uint32_t counter;
 
-      uint32_t ip_len;
-      const char* ip = client_image->getRemoteInfo(&ip_len);
+      UString ip_client = UClientImage_Base::getRemoteIP();
 
       // REQ: [ data expire path domain secure HttpOnly ]
       // ----------------------------------------------------------------------------------------------------------------------------
@@ -510,7 +509,7 @@ static void execute_query(UClientImage_Base* client_image)
       // RET: Set-Cookie: ulib_sid=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
 
           cookie->setBuffer(100U);
-          cookie->snprintf("%.*s_%P_%u", ip_len, ip, counter++);                         // session key...
+          cookie->snprintf("%.*s_%P_%u", U_STRING_TO_TRACE(ip_client), counter++);       // session key...
       set_cookie->snprintf("Set-Cookie: TODO[ %.*s 24 ]\n", U_STRING_TO_TRACE(*cookie)); // like as shell script...
       }
 

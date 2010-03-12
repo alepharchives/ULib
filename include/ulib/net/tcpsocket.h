@@ -51,38 +51,6 @@ public:
    virtual bool setServer(const UString& cLocalAddr, int port, int iBackLog)
       { return (USocket::socket(SOCK_STREAM) && USocket::setServer(cLocalAddr, port, iBackLog)); }
 
-   /**
-    * This method is called to accept a new connection on the server socket.
-    * Further communications on the newly connected socket are made via the newly
-    * created UTCPSocket instance of which a pointer is returned when the connection is accepted.
-    * We create a UTCPSocket instance and pass this to the base class accept() method to accept
-    * the pending connection on this UTCPSocket instance.
-   */
-
-   virtual USocket* acceptClient(USocket* pcNewConnection)
-      {
-      U_TRACE(0, "UTCPSocket::acceptClient(%p)", pcNewConnection)
-
-      (void) USocket::accept(pcNewConnection);
-      
-      U_RETURN_POINTER(pcNewConnection,USocket);
-      }
-
-   virtual USocket* acceptClient()
-      {
-      U_TRACE(0, "UTCPSocket::acceptClient()")
-
-      USocket* pcNewConnection = U_NEW(UTCPSocket(bIPv6Socket));
-
-      (void) USocket::accept(pcNewConnection);
-
-      pcNewConnection->bLocalSet     = true;
-      pcNewConnection->iLocalPort    = iLocalPort;
-      pcNewConnection->cLocalAddress = cLocalAddress;
-
-      U_RETURN_POINTER(pcNewConnection,USocket);
-      }
-
    // DEBUG
 
 #ifdef DEBUG

@@ -53,6 +53,7 @@ UString* USocket::str_if_none_match;
 UString* USocket::str_if_modified_since;
 UString* USocket::str_if_unmodified_since;
 UString* USocket::str_referer;
+UString* USocket::str_X_Real_IP;
 UString* USocket::str_X_Forwarded_For;
 
 void USocket::str_allocate()
@@ -79,6 +80,7 @@ void USocket::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_if_modified_since,0)
    U_INTERNAL_ASSERT_EQUALS(str_if_unmodified_since,0)
    U_INTERNAL_ASSERT_EQUALS(str_referer,0)
+   U_INTERNAL_ASSERT_EQUALS(str_X_Real_IP,0)
    U_INTERNAL_ASSERT_EQUALS(str_X_Forwarded_For,0)
 
    static ustringrep stringrep_storage[] = {
@@ -102,6 +104,7 @@ void USocket::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("If-Modified-Since") },
       { U_STRINGREP_FROM_CONSTANT("If-Unmodified-Since") },
       { U_STRINGREP_FROM_CONSTANT("Referer") },
+      { U_STRINGREP_FROM_CONSTANT("X-Real-IP") },
       { U_STRINGREP_FROM_CONSTANT("X-Forwarded-For") }
    };
 
@@ -125,7 +128,8 @@ void USocket::str_allocate()
    U_NEW_ULIB_OBJECT(str_if_modified_since,     U_STRING_FROM_STRINGREP_STORAGE(17));
    U_NEW_ULIB_OBJECT(str_if_unmodified_since,   U_STRING_FROM_STRINGREP_STORAGE(18));
    U_NEW_ULIB_OBJECT(str_referer,               U_STRING_FROM_STRINGREP_STORAGE(19));
-   U_NEW_ULIB_OBJECT(str_X_Forwarded_For,       U_STRING_FROM_STRINGREP_STORAGE(20));
+   U_NEW_ULIB_OBJECT(str_X_Real_IP,             U_STRING_FROM_STRINGREP_STORAGE(20));
+   U_NEW_ULIB_OBJECT(str_X_Forwarded_For,       U_STRING_FROM_STRINGREP_STORAGE(21));
 }
 
 bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)
@@ -605,9 +609,9 @@ bool USocket::setServer(const UString& cLocalAddr, int port, int iBackLog)
    return setServer(cLocal, iBackLog);
 }
 
-bool USocket::accept(USocket* pcNewConnection)
+bool USocket::acceptClient(USocket* pcNewConnection)
 {
-   U_TRACE(1, "USocket::accept(%p)", pcNewConnection)
+   U_TRACE(1, "USocket::acceptClient(%p)", pcNewConnection)
 
    U_CHECK_MEMORY
 
@@ -635,9 +639,13 @@ loop:
 
       U_INTERNAL_ASSERT_EQUALS(pcNewConnection->bIPv6Socket, (cRemoteAddress.getAddressFamily() == AF_INET6))
 
-#  ifndef HAVE_ACCEPT4
-      if (accept4_flags) (void) U_SYSCALL(fcntl, "%d,%d,%d", pcNewConnection->iSockDesc, F_SETFL, O_RDWR | O_NONBLOCK | O_CLOEXEC);
-#  endif
+      if (accept4_flags)
+         {
+#     ifndef HAVE_ACCEPT4
+         (void) U_SYSCALL(fcntl, "%d,%d,%d", pcNewConnection->iSockDesc, F_SETFL, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+#     endif
+         }
+      else if (req_timeout) (void) pcNewConnection->setTimeoutRCV(req_timeout * 1000);
 
       U_RETURN(true);
       }

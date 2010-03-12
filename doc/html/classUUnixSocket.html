@@ -49,56 +49,11 @@ Collaboration diagram for UUnixSocket:</div>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a005d84e5c3d9fcbd2986c935e359915a"></a><!-- doxytag: member="UUnixSocket::setServer" ref="a005d84e5c3d9fcbd2986c935e359915a" args="(const UString &amp;cLocalAddr, int port, int iBackLog)" -->
 virtual bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>setServer</b> (const <a class="el" href="classUString.html">UString</a> &amp;cLocalAddr, int port, int iBackLog)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">virtual bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUUnixSocket.html#a838f30157d3d2310183925eec4cad101">connectServer</a> (const <a class="el" href="classUString.html">UString</a> &amp;pathname, int iServPort)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="classUSocket.html">USocket</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUUnixSocket.html#a690e0551d1db13a0f60b7c38a7e66e29">acceptClient</a> (<a class="el" href="classUSocket.html">USocket</a> *pcNewConnection)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="classUSocket.html">USocket</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUUnixSocket.html#a1f2637568afbe1514e74d3e5357877f0">acceptClient</a> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">virtual int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUUnixSocket.html#a1a2148ab0f589576d4f06d64281a7a5d">recv</a> (void *pBuffer, int iBufLength)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">virtual int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUUnixSocket.html#aef0e816a44155a85a2b9d31fbb61e99e">send</a> (const void *pPayload, int iPayloadLength)</td></tr>
 <tr><td colspan="2"><h2>Static Public Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5ad6357e6097c20ed03266bd0f0c4580"></a><!-- doxytag: member="UUnixSocket::setPath" ref="a5ad6357e6097c20ed03266bd0f0c4580" args="(const char *pathname)" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setPath</b> (const char *pathname)</td></tr>
 </table>
 <hr/><h2>Member Function Documentation</h2>
-<a class="anchor" id="a1f2637568afbe1514e74d3e5357877f0"></a><!-- doxytag: member="UUnixSocket::acceptClient" ref="a1f2637568afbe1514e74d3e5357877f0" args="()" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual <a class="el" href="classUSocket.html">USocket</a>* UUnixSocket::acceptClient </td>
-          <td>(</td>
-          <td class="paramname"></td>
-          <td>&nbsp;)&nbsp;</td>
-          <td><code> [inline, virtual]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-<p>This method is called to accept a new connection on the server socket. Further communications on the newly connected socket are made via the newly created <a class="el" href="classUSocket.html" title="basic IP socket functionality">USocket</a> instance of which a pointer is returned when the connection is accepted. We create a <a class="el" href="classUSocket.html" title="basic IP socket functionality">USocket</a> instance and pass this to the base class <a class="el" href="classUSocket.html#afe635340565fa7eba1e7139955d63532">accept()</a> method to accept the pending connection on this <a class="el" href="classUSocket.html" title="basic IP socket functionality">USocket</a> instance </p>
-
-<p>Reimplemented from <a class="el" href="classUSocket.html#ab2db1524c94b038a4eeace5e272d1e15">USocket</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a690e0551d1db13a0f60b7c38a7e66e29"></a><!-- doxytag: member="UUnixSocket::acceptClient" ref="a690e0551d1db13a0f60b7c38a7e66e29" args="(USocket *pcNewConnection)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classUSocket.html">USocket</a> * UUnixSocket::acceptClient </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="classUSocket.html">USocket</a> *&nbsp;</td>
-          <td class="paramname"> <em>pcNewConnection</em></td>
-          <td>&nbsp;)&nbsp;</td>
-          <td><code> [virtual]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-<p>This method is called to accept a new connection on the server socket. Further communications on the newly connected socket are made via the newly created <a class="el" href="classUSocket.html" title="basic IP socket functionality">USocket</a> instance of which a pointer is returned when the connection is accepted. We create a <a class="el" href="classUSocket.html" title="basic IP socket functionality">USocket</a> instance and pass this to the base class <a class="el" href="classUSocket.html#afe635340565fa7eba1e7139955d63532">accept()</a> method to accept the pending connection on this <a class="el" href="classUSocket.html" title="basic IP socket functionality">USocket</a> instance </p>
-
-<p>Reimplemented from <a class="el" href="classUSocket.html">USocket</a>.</p>
-
-</div>
-</div>
 <a class="anchor" id="a838f30157d3d2310183925eec4cad101"></a><!-- doxytag: member="UUnixSocket::connectServer" ref="a838f30157d3d2310183925eec4cad101" args="(const UString &amp;pathname, int iServPort)" -->
 <div class="memitem">
 <div class="memproto">
@@ -126,66 +81,6 @@ static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setPath</b> (c
 <p>connecting to a Unix domain socket </p>
 
 <p>Reimplemented from <a class="el" href="classUSocket.html#ab998bf35a2ab65e85c13c99a933c58f1">USocket</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a1a2148ab0f589576d4f06d64281a7a5d"></a><!-- doxytag: member="UUnixSocket::recv" ref="a1a2148ab0f589576d4f06d64281a7a5d" args="(void *pBuffer, int iBufLength)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int UUnixSocket::recv </td>
-          <td>(</td>
-          <td class="paramtype">void *&nbsp;</td>
-          <td class="paramname"> <em>pBuffer</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&nbsp;</td>
-          <td class="paramname"> <em>iBufLength</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td><code> [virtual]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-<p>This method is called to receive a block of data on the connected socket. The parameters signify the payload receiving buffer and its size. </p>
-
-<p>Reimplemented from <a class="el" href="classUSocket.html#a8822b76fde425ed0472e3f6faaa8e40c">USocket</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="aef0e816a44155a85a2b9d31fbb61e99e"></a><!-- doxytag: member="UUnixSocket::send" ref="aef0e816a44155a85a2b9d31fbb61e99e" args="(const void *pPayload, int iPayloadLength)" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int UUnixSocket::send </td>
-          <td>(</td>
-          <td class="paramtype">const void *&nbsp;</td>
-          <td class="paramname"> <em>pPayload</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&nbsp;</td>
-          <td class="paramname"> <em>iPayloadLength</em></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td><code> [virtual]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-<p>This method is called to send a block of data to the remote connection. The parameters signify the Data Payload and its size. </p>
-
-<p>Reimplemented from <a class="el" href="classUSocket.html#af0b6a659f6f9caaccf0b0694bd33002b">USocket</a>.</p>
 
 </div>
 </div>
@@ -224,7 +119,7 @@ static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setPath</b> (c
 <li>src/ulib/net/unixsocket.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 9 14:06:50 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:57 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

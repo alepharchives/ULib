@@ -396,7 +396,7 @@ public:
 
       _length = (value == U_NOT_FOUND ? u_strlen(str) : value);
 
-      U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+      U_INTERNAL_ASSERT(invariant())
       }
 
 #ifdef DEBUG
@@ -727,7 +727,7 @@ public:
 
       UStringRep::assign(rep, s, n);
 
-      U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+      U_INTERNAL_ASSERT(invariant())
 
       return *this;
       }
@@ -1095,7 +1095,7 @@ public:
 
       set(UStringRep::create(map, len, U_NOT_FOUND));
 
-      U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+      U_INTERNAL_ASSERT(invariant())
       }
 
    // (manage UString as buffer...)
@@ -1124,7 +1124,7 @@ public:
 
       (void) U_SYSCALL(memmove, "%p,%p,%u", (void*)rep->str, rep->str + n, rep->_length);
 
-      U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+      U_INTERNAL_ASSERT(invariant())
       }
 
 #ifdef __MINGW32__
@@ -1145,7 +1145,7 @@ public:
 
       rep->_length = u_vsnprintf(rep->data(), rep->capacity(), format, argp); 
 
-      U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+      U_INTERNAL_ASSERT(invariant())
       }
 
    void vsnprintf_add(const char* format, va_list argp)
@@ -1157,7 +1157,7 @@ public:
 
       rep->_length += u_vsnprintf(c_pointer(rep->_length), rep->space(), format, argp); 
 
-      U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+      U_INTERNAL_ASSERT(invariant())
       }
 
 #ifdef HAVE_STRTOF

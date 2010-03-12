@@ -1,9 +1,9 @@
 <map id="G" name="G">
-<area shape="rect" id="node2" href="$classUClientImage.html" title="Handles accepted connections from UServer&#39;s client." alt="" coords="95,718,249,746"/>
-<area shape="rect" id="node4" href="$classUClientImage__Base.html" title="UClientImage_Base" alt="" coords="108,638,236,666"/>
-<area shape="rect" id="node6" href="$classUEventFd.html" title="UEventFd" alt="" coords="5,545,80,573"/>
+<area shape="rect" id="node2" href="$classUClientImage.html" title="Handles accepted connections from UServer&#39;s client." alt="" coords="95,734,249,762"/>
+<area shape="rect" id="node4" href="$classUClientImage__Base.html" title="UClientImage_Base" alt="" coords="108,654,236,682"/>
+<area shape="rect" id="node6" href="$classUEventFd.html" title="UEventFd" alt="" coords="5,561,80,589"/>
 <area shape="rect" id="node8" href="$classUIPAddress.html" title="UIPAddress" alt="" coords="107,266,192,294"/>
-<area shape="rect" id="node19" href="$classUSocket.html" title="basic IP socket functionality" alt="" coords="225,545,292,573"/>
+<area shape="rect" id="node19" href="$classUSocket.html" title="basic IP socket functionality" alt="" coords="225,561,292,589"/>
 <area shape="rect" id="node10" href="$classUString.html" title="UString" alt="" coords="251,99,315,127"/>
 <area shape="rect" id="node13" href="$classUStringRep.html" title="UStringRep" alt="" coords="240,6,325,34"/>
 <area shape="rect" id="node16" href="$unionuupcAddress.html" title="uupcAddress" alt="" coords="60,99,151,127"/>

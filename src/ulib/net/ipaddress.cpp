@@ -416,7 +416,7 @@ bool UIPAllow::parseMask(const UString& spec)
 
    U_INTERNAL_DUMP("addr_str = %.*S result = %d", (addr_len == U_NOT_FOUND ? spec.size() : addr_len), addr_str, result)
 
-   U_INTERNAL_ASSERT_EQUALS(u_isIPv4Addr(addr_str, (addr_len == U_NOT_FOUND ? spec.size() : addr_len)), true)
+   U_INTERNAL_ASSERT(u_isIPv4Addr(addr_str, (addr_len == U_NOT_FOUND ? spec.size() : addr_len)))
 
    if (addr_len != U_NOT_FOUND) U_SYSCALL_VOID(free, "%p", (void*)addr_str);
 
@@ -487,6 +487,18 @@ bool UIPAllow::isAllowed(in_addr_t client, UVector<UIPAllow*>& vipallow)
    for (uint32_t i = 0, vlen = vipallow.size(); i < vlen; ++i)
       {
       if (vipallow[i]->isAllowed(client)) U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+bool UIPAllow::isAllowed(const UString& ip_client, UVector<UIPAllow*>& vipallow)
+{
+   U_TRACE(0, "UIPAllow::isAllowed(%.*S,%p)", U_STRING_TO_TRACE(ip_client), &vipallow)
+
+   for (uint32_t i = 0, vlen = vipallow.size(); i < vlen; ++i)
+      {
+      if (vipallow[i]->isAllowed(ip_client)) U_RETURN(true);
       }
 
    U_RETURN(false);

@@ -127,17 +127,19 @@ static void TCPEchoServer(int iPortNumber, bool bIPv6)
       printf("Waiting for Connection...\n");
 
       fflush(stdout);
-      pcClientSocket = (UTCPSocket*) cServerSocket.acceptClient();
+      pcClientSocket = new UTCPSocket();
+      cServerSocket.acceptClient(pcClientSocket);
+      pcClientSocket->setLocal();
 
       printf("Connection Made...\n\n");
 
       PrintIPAddress("Listening Server Socket - Socket Details", cServerSocket.localIPAddress());
-      printf(" - Port    : %d\n\n", cServerSocket.localPortNumber());
+      printf(        " - Port    : %d\n\n",                      cServerSocket.localPortNumber());
 
       PrintIPAddress("Client Communication Socket on", pcClientSocket->localIPAddress());
-      printf(" - Port    : %d\n\n", pcClientSocket->localPortNumber());
-      PrintIPAddress("Is Connected to", pcClientSocket->remoteIPAddress());
-      printf(" - Port    : %d\n\n", pcClientSocket->remotePortNumber());
+      printf(        " - Port    : %d\n\n",            pcClientSocket->localPortNumber());
+      PrintIPAddress("Is Connected to",                pcClientSocket->remoteIPAddress());
+      printf(        " - Port    : %d\n\n",            pcClientSocket->remotePortNumber());
 
       cout << "Host name       = " << cServerSocket.localIPAddress().getHostName()      << '\n'
            << "Host address    = " << cServerSocket.localIPAddress().getAddressString() << '\n'

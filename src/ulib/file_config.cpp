@@ -127,7 +127,7 @@ loop:
 
    _start += (len ? len : 1);
 
-   U_INTERNAL_ASSERT_EQUALS(u_isspace(_start[0]),true)
+   U_INTERNAL_ASSERT(u_isspace(_start[0]))
 
    if (len)
       {

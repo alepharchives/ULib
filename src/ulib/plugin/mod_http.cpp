@@ -22,6 +22,7 @@
 U_CREAT_FUNC(UHttpPlugIn)
 
 bool                 UHttpPlugIn::virtual_host;
+bool                 UHttpPlugIn::uri_protected_to_check;
 UString*             UHttpPlugIn::str_URI_PROTECTED_MASK;
 UString*             UHttpPlugIn::str_URI_REQUEST_CERT_MASK;
 UString*             UHttpPlugIn::str_URI_PROTECTED_ALLOWED_IP;
@@ -46,6 +47,52 @@ void UHttpPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP, U_STRING_FROM_STRINGREP_STORAGE(2));
 }
 
+bool UHttpPlugIn::checkUriProtected(bool ctx_read)
+{
+   U_TRACE(0, "UHttpPlugIn::checkUriProtected(%b)", ctx_read)
+
+   if (vallow_IP)
+      {
+      bool ok = (ctx_read ? UIPAllow::isAllowed(UClientImage_Base::socket->remoteIPAddress().getInAddr(), *vallow_IP)
+                          : UIPAllow::isAllowed(UClientImage_Base::getRemoteIP(),                         *vallow_IP));
+
+      if (ok == false)
+         {
+         U_SRV_LOG_VAR("URI_PROTECTED: request %.*S denied by access list", U_HTTP_URI_TO_TRACE);
+
+         UHTTP::setHTTPForbidden();
+
+         U_RETURN(false);
+         }
+      }
+
+   // check if it's OK via authentication (digest|basic)
+
+   UString request_uri(U_HTTP_URI_QUERY_TO_PARAM);
+
+   if (index_alias   != U_NOT_FOUND &&
+       alias.empty() == false)
+      {
+      request_uri = valias[index_alias];
+
+      if (UHTTP::http_info.query_len)
+         {
+         request_uri.push_back('?');
+
+         (void) request_uri.append(U_HTTP_QUERY_TO_PARAM);
+         }
+      }
+
+   if (UHTTP::processHTTPAuthorization(UServer_Base::digest_authentication, request_uri) == false)
+      {
+      UHTTP::setHTTPUnAuthorized(UServer_Base::digest_authentication);
+
+      U_RETURN(false);
+      }
+
+   U_RETURN(true);
+}
+
 UHttpPlugIn::~UHttpPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UHttpPlugIn)
@@ -56,31 +103,11 @@ UHttpPlugIn::~UHttpPlugIn()
       delete UHTTP::tmpdir;
       delete UHTTP::qcontent;
       delete UHTTP::formMulti;
+      delete UHTTP::penvironment;
       delete UHTTP::form_name_value;
       }
 
    if (vallow_IP) delete vallow_IP;
-}
-
-UString* UHttpPlugIn::getCGIEnvironment()
-{
-   U_TRACE(0, "UHttpPlugIn::getCGIEnvironment()")
-
-   environment.setEmpty();
-
-   if (UHTTP::UHTTP::http_info.host_len) environment.snprintf("HTTP_HEADER_HOST=%.*s\n", U_HTTP_HOST_TO_TRACE);
-
-   if (index_alias   != U_NOT_FOUND &&
-       alias.empty() == false)
-      {
-      U_ASSERT(UStringExt::endsWith(alias, valias[index_alias+1]))
-
-      environment.snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(valias[index_alias]));
-      }
-
-   UString* result = (environment.empty() ? 0 : &environment);
-
-   U_RETURN_POINTER(result, UString);
 }
 
 // Server-wide hooks
@@ -131,6 +158,10 @@ int UHttpPlugIn::handlerInit()
    U_INTERNAL_ASSERT_EQUALS(UHTTP::file,0)
 
    UHTTP::file = U_NEW(UFile);
+
+   U_INTERNAL_ASSERT_EQUALS(UHTTP::penvironment,0)
+
+   UHTTP::penvironment = U_NEW(UString(U_CAPACITY));
 
    U_INTERNAL_ASSERT_POINTER(USocket::str_host)
    U_INTERNAL_ASSERT_POINTER(USocket::str_connection)
@@ -192,20 +223,16 @@ int UHttpPlugIn::handlerRead()
 
    if (is_http_req)
       {
-      if (UHTTP::http_info.version == 1)
+      UHTTP::getTimeIfNeeded(false);
+
+      // HTTP 1.1 want header "Host: ..."
+
+      if (UHTTP::http_info.version  == 1 &&
+          UHTTP::http_info.host_len == 0)
          {
-         // HTTP 1.1 want header "Date: ..."
+         UHTTP::setHTTPBadRequest();
 
-         if (UServer_Base::isLog() == false || ULog::isSysLog()) (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
-
-         // HTTP 1.1 want header "Host: ..."
-
-         if (UHTTP::UHTTP::http_info.host_len == 0)
-            {
-            UHTTP::setHTTPBadRequest();
-
-            goto send_response;
-            }
+         goto send_response;
          }
 
       U_INTERNAL_DUMP("UHTTP::http_info.version = %d alias = %.*S index_alias = %u", UHTTP::http_info.version, U_STRING_TO_TRACE(alias), index_alias)
@@ -258,68 +285,13 @@ int UHttpPlugIn::handlerRead()
          U_SRV_LOG_VAR("ALIAS: URI request changed to: %.*s", U_STRING_TO_TRACE(alias));
          }
 
-      if (uri_protected_mask.empty() == false &&
-          u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(uri_protected_mask), 0))
-         {
-         if (vallow_IP && UIPAllow::isAllowed(UClientImage_Base::socket->remoteIPAddress().getInAddr(), *vallow_IP) == false)
-            {
-            U_SRV_LOG_VAR("URI_PROTECTED: request '%.*s' denied by access list", U_HTTP_URI_TO_TRACE);
-
-            UHTTP::setHTTPForbidden();
-
-            goto send_response;
-            }
-
-         // check if it's OK via authentication (digest|basic)
-
-         UString request_uri(U_HTTP_URI_QUERY_TO_PARAM);
-
-         if (index_alias   != U_NOT_FOUND &&
-             alias.empty() == false)
-            {
-            request_uri = valias[index_alias];
-
-            if (UHTTP::http_info.query_len)
-               {
-               request_uri.push_back('?');
-
-               (void) request_uri.append(U_HTTP_QUERY_TO_PARAM);
-               }
-            }
-
-         if (UHTTP::processHTTPAuthorization(UServer_Base::digest_authentication, request_uri) == false)
-            {
-            UHTTP::setHTTPUnAuthorized(UServer_Base::digest_authentication);
-
-            goto send_response;
-            }
-         }
-
 #  ifdef HAVE_SSL
       if (uri_request_cert_mask.empty() == false &&
           u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(uri_request_cert_mask), 0))
          {
-         U_ASSERT(UClientImage_Base::socket->isSSL())
-
-         // NB: OpenSSL already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...
-
-         bool is_cert = (((USSLSocket*)UClientImage_Base::socket)->getPeerCertificate() != 0);
-
-         if (is_cert == false)
+         if (((UServer<USSLSocket>*)UServer_Base::pthis)->askForClientCertificate() == false)
             {
-            U_SRV_LOG_MSG_WITH_ADDR("ask for a client certificate to");
-
-            if (((USSLSocket*)UClientImage_Base::socket)->askForClientCertificate())
-               {
-               is_cert = true;
-
-               ((UClientImage<USSLSocket>*)UClientImage_Base::pClientImage)->logCertificate();
-               }
-            }
-
-         if (is_cert == false)
-            {
-            U_SRV_LOG_VAR("URI_REQUEST_CERT: request '%.*s' denied by mandatory certificate from client", U_HTTP_URI_TO_TRACE);
+            U_SRV_LOG_VAR("URI_REQUEST_CERT: request %.*S denied by mandatory certificate from client", U_HTTP_URI_TO_TRACE);
 
             UHTTP::setHTTPForbidden();
 
@@ -327,6 +299,14 @@ int UHttpPlugIn::handlerRead()
             }
          }
 #  endif
+
+      uri_protected_to_check = (uri_protected_mask.empty() == false &&
+                                u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(uri_protected_mask), 0));
+
+      U_INTERNAL_DUMP("uri_protected_to_check = %b", uri_protected_to_check)
+
+      if (uri_protected_to_check &&
+          checkUriProtected(true) == false) goto send_response;
 
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
@@ -371,7 +351,10 @@ int UHttpPlugIn::handlerRequest()
 {
    U_TRACE(0, "UHttpPlugIn::handlerRequest()")
 
-   U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
+   U_INTERNAL_DUMP("method = %.*S uri = %.*S uri_protected_to_check = %b", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE, uri_protected_to_check)
+
+   if (uri_protected_to_check &&
+       checkUriProtected(false) == false) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 
    // process the HTTP request
 
@@ -380,7 +363,17 @@ int UHttpPlugIn::handlerRequest()
       if (UHTTP::isPHPRequest() ||
           UHTTP::isCGIRequest())
          {
-         (void) UHTTP::processCGIRequest((UCommand*)0, getCGIEnvironment());
+         if (UHTTP::UHTTP::http_info.host_len) UHTTP::penvironment->snprintf_add("HTTP_HEADER_HOST=%.*s\n", U_HTTP_HOST_TO_TRACE);
+
+         if (index_alias   != U_NOT_FOUND &&
+             alias.empty() == false)
+            {
+            U_ASSERT(UStringExt::endsWith(alias, valias[index_alias+1]))
+
+            UHTTP::penvironment->snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(valias[index_alias]));
+            }
+
+         (void) UHTTP::processCGIRequest((UCommand*)0, UHTTP::penvironment);
          }
       else
          {
@@ -406,8 +399,8 @@ const char* UHttpPlugIn::dump(bool reset) const
 {
    *UObjectIO::os << "index_alias                                " << index_alias                        << '\n'
                   << "virtual_host                               " << virtual_host                       << '\n'
+                  << "uri_protected_to_check                     " << uri_protected_to_check             << '\n'
                   << "alias                    (UString          " << (void*)&alias                      << ")\n"
-                  << "environment              (UString          " << (void*)&environment                << ")\n"
                   << "uri_protected_mask       (UString          " << (void*)&uri_protected_mask         << ")\n"
                   << "uri_protected_allowed_ip (UString          " << (void*)&uri_protected_allowed_ip   << ")\n"
                   << "valias                   (UVector<UString> " << (void*)&valias                     << ')';

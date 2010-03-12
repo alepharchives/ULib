@@ -328,7 +328,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
       {
       // WWW-Authenticate: Digest realm="Autenticazione su LDAP/SSL", nonce="86c557d75991c7b3fa362e7f881abb93", algorithm=MD5, qop="auth"
 
-      U_ASSERT_EQUALS(scheme.equal(U_CONSTANT_TO_PARAM("Digest")),true)
+      U_ASSERT(scheme.equal(U_CONSTANT_TO_PARAM("Digest")))
 
       uint32_t i = 1;
       UString name, value, realm, nonce, algorithm, qop; // "Quality of Protection" (qop)
@@ -346,7 +346,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
                {
                if (name.equal(U_CONSTANT_TO_PARAM("qop")))
                   {
-                  U_ASSERT_EQUALS(qop.empty(),true)
+                  U_ASSERT(qop.empty())
 
                   qop = value;
                   }
@@ -357,7 +357,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
                {
                if (name.equal(U_CONSTANT_TO_PARAM("realm")))
                   {
-                  U_ASSERT_EQUALS(realm.empty(),true)
+                  U_ASSERT(realm.empty())
 
                   realm = value;
                   }
@@ -368,7 +368,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
                {
                if (name.equal(U_CONSTANT_TO_PARAM("nonce")))
                   {
-                  U_ASSERT_EQUALS(nonce.empty(),true)
+                  U_ASSERT(nonce.empty())
 
                   nonce = value;
                   }

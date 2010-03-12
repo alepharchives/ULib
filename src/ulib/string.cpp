@@ -224,7 +224,7 @@ UStringRep* UStringRep::substr(const char* t, uint32_t tlen)
          {
          p = p->parent;
 
-         U_INTERNAL_ASSERT_EQUALS(p->invariant(),true)
+         U_INTERNAL_ASSERT(p->invariant())
          }
 
       r->parent = p;
@@ -492,7 +492,7 @@ void UString::clear()
 
    assign(UStringRep::string_rep_null);
 
-   U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+   U_INTERNAL_ASSERT(invariant())
 }
 
 UString UString::copy()
@@ -523,7 +523,7 @@ void UStringRep::size_adjust(uint32_t value)
 
    _length = (value == U_NOT_FOUND ? u_strlen(str) : value);
 
-   U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+   U_INTERNAL_ASSERT(invariant())
 }
 // ----------------------------------------------
 
@@ -569,7 +569,7 @@ void UString::reserve(uint32_t n)
 
          U_INTERNAL_DUMP("str = %.*S", size(), data())
 
-         U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+         U_INTERNAL_ASSERT(invariant())
 
          return;  
          }
@@ -580,7 +580,7 @@ void UString::reserve(uint32_t n)
 
       set(r);
 
-      U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+      U_INTERNAL_ASSERT(invariant())
       }
 }
 
@@ -602,7 +602,7 @@ void UString::setBuffer(uint32_t n)
       size_adjust(0);
       }
 
-   U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+   U_INTERNAL_ASSERT(invariant())
 }
 
 UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
@@ -654,7 +654,7 @@ UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
 
    (void) U_SYSCALL(memcpy, "%p,%p,%u", str + pos, s, n2);
 
-   U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+   U_INTERNAL_ASSERT(invariant())
 
    return *this;
 }
@@ -708,7 +708,7 @@ UString& UString::replace(uint32_t pos, uint32_t n1, uint32_t n2, char c)
 
    (void) U_SYSCALL(memset, "%p,%C,%u", str + pos, c, n2);
 
-   U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+   U_INTERNAL_ASSERT(invariant())
 
    return *this;
 }
@@ -743,7 +743,7 @@ UString& UString::append(const char* s, uint32_t n)
    (void) U_SYSCALL(memcpy, "%p,%p,%u", str + sz, s, n);
 
 end:
-   U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+   U_INTERNAL_ASSERT(invariant())
 
    return *this;
 }
@@ -778,7 +778,7 @@ UString& UString::append(uint32_t n, char c)
    (void) U_SYSCALL(memset, "%p,%C,%u", str + sz, c, n);
 
 end:
-   U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+   U_INTERNAL_ASSERT(invariant())
 
    return *this;
 }
@@ -797,7 +797,7 @@ void UString::duplicate(uint32_t space) const
 
    ((UString*)this)->set(r);
 
-   U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+   U_INTERNAL_ASSERT(invariant())
 }
 
 void UString::setNullTerminated() const
@@ -857,7 +857,7 @@ void UString::resize(uint32_t n, char c)
    else if (n < sz) erase(n);
    else             size_adjust(n);
 
-   U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+   U_INTERNAL_ASSERT(invariant())
 }
 
 // The `find' function searches string for a specified string (possibly a single character) and returns
@@ -1322,7 +1322,7 @@ UStringRep* UStringRep::fromUTF8(const unsigned char* s, uint32_t n)
 
    r->_length = p - r->data();
 
-   U_INTERNAL_ASSERT_EQUALS(r->invariant(),true)
+   U_INTERNAL_ASSERT(r->invariant())
 
    U_RETURN_POINTER(r, UStringRep);
 }
@@ -1358,7 +1358,7 @@ UStringRep* UStringRep::toUTF8(const unsigned char* s, uint32_t n)
 
    r->_length = p - r->data();
 
-   U_INTERNAL_ASSERT_EQUALS(r->invariant(),true)
+   U_INTERNAL_ASSERT(r->invariant())
 
    U_RETURN_POINTER(r, UStringRep);
 }
@@ -1492,7 +1492,7 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
 
    if (extracted == 0) in.setstate(ios::failbit);
 
-   U_INTERNAL_ASSERT_EQUALS(str.invariant(),true)
+   U_INTERNAL_ASSERT(str.invariant())
 
    return in;
 }
@@ -1575,7 +1575,7 @@ istream& UString::getline(istream& in, char delim)
       in.setstate(ios::failbit);
       }
 
-   U_INTERNAL_ASSERT_EQUALS(invariant(),true)
+   U_INTERNAL_ASSERT(invariant())
 
    return in;
 }

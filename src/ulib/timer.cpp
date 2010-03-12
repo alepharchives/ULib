@@ -296,7 +296,7 @@ bool UTimer::invariant()
       for (UTimer* item = first; item->next; item = item->next)
          {
 #     if defined(__unix__) && !defined(__CYGWIN__)
-         U_INTERNAL_ASSERT_EQUALS((*item < *item->next),true)
+         U_INTERNAL_ASSERT((*item < *item->next))
 #     endif
          }
       }

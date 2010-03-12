@@ -81,6 +81,7 @@ public:
       }
 
    bool secureConnection(int fd);
+   bool acceptSSL(USSLSocket* pcConnection);
 
    /**
    Load Diffie-Hellman parameters from file. These are used to generate a DH key exchange.
@@ -213,15 +214,24 @@ public:
       }
 
    /**
-   This method is called to accept a new connection on the server socket. Further communications on the newly
-   connected socket are made via the newly created USSLSocket instance of which a pointer is returned when the
-   connection is accepted. We create a USSLSocket instance and pass this to the base class accept() method to
-   accept the pending connection on this USSLSocket instance
+   This method is called to accept a new pending connection on the server socket.
+   The USocket pointed to by the provided parameter is modified to refer to the
+   newly connected socket. The remote IP Address and port number are also set.
    */
 
-   virtual USocket* acceptClient();
-           USocket* accept(USSLSocket* pcNewConnection);
-   virtual USocket* acceptClient(USocket* pcNewConnection);
+   virtual bool acceptClient(USocket* pcNewConnection)
+      {
+      U_TRACE(0, "USSLSocket::acceptClient(%p)", pcNewConnection)
+
+      if (USocket::acceptClient(pcNewConnection) &&
+          active                                 &&
+          acceptSSL((USSLSocket*)pcNewConnection))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
 #ifdef DEBUG
    const char* dump(bool reset) const;

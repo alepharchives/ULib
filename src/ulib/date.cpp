@@ -185,7 +185,7 @@ void UDate::fromJulian(int j)
    U_INTERNAL_ASSERT_RANGE(1,     _month,  12)
    U_INTERNAL_ASSERT_RANGE(1752, _year, 8000)
 
-   U_INTERNAL_ASSERT_EQUALS(isValid(),true)
+   U_INTERNAL_ASSERT(isValid())
 }
 
 void UDate::fromTime(time_t tm)

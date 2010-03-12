@@ -17,7 +17,8 @@
 "option e ends_with        1 \"proces only filenames that ends with this string\" \"\"\n" \
 "option f from             1 \"processing log entry from this date (dd/mm/yyyy)\" \"\"\n" \
 "option t to               1 \"processing log entry to this date (dd/mm/yyyy)\" \"\"\n" \
-"option o optimization     0 \"processing files considering the date contained in the name: (PECx-yyyy-mm-dd)\" \"\"\n"
+"option o optimization     0 \"processing files considering the date contained in the name: (PECx-yyyy-mm-dd)\" \"\"\n" \
+"option F filter           1 \"filter records of log entry that match this string\" \"\"\n"
 #define U_OPTIONS_GEN2 \
 "option T title            1 \"title of the report\" \"\"\n" \
 "option n domain           1 \"file containing list of own domain name\" \"\"\n" \

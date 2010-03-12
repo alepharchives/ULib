@@ -26,10 +26,8 @@
 </div>
 <div class="contents">
 <h1>UImapClient Member List</h1>This is the complete list of members for <a class="el" href="classUImapClient.html">UImapClient</a>, including all inherited members.<table>
-  <tr class="memlist"><td><a class="el" href="classUSocket.html#afe635340565fa7eba1e7139955d63532">accept</a>(USocket *pcConnection)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>accept4_flags</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [protected, static]</code></td></tr>
-  <tr class="memlist"><td><a class="el" href="classUTCPSocket.html#aa295f33b935a3a7b02db63f066d9ac0e">acceptClient</a>(USocket *pcNewConnection)</td><td><a class="el" href="classUTCPSocket.html">UTCPSocket</a></td><td><code> [inline, virtual]</code></td></tr>
-  <tr class="memlist"><td><a class="el" href="classUTCPSocket.html#a2f62fc69e757b38b1dad2d13eb38d9fb">acceptClient</a>()</td><td><a class="el" href="classUTCPSocket.html">UTCPSocket</a></td><td><code> [inline, virtual]</code></td></tr>
+  <tr class="memlist"><td><a class="el" href="classUSocket.html#a8c58795ae0d115507a284f358584c176">acceptClient</a>(USocket *pcConnection)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [virtual]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>ADD</b> enum value (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>ANSWERED</b> enum value (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
   <tr class="memlist"><td><a class="el" href="classUImapClient.html#ab873dc040bfce91aa6830e7031811e53">appendMessage</a>(const UString &amp;mailboxName, const UString &amp;messageData, int flags=0, const char *date=&quot;&quot;)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
@@ -144,8 +142,8 @@
   <tr bgcolor="#f0f0f0"><td><b>setBufferRCV</b>(uint32_t size) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setBufferSND</b>(uint32_t size) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setFlags</b>(int start, int end, int style, int flags, bool usingUID=false) (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
+  <tr class="memlist"><td><a class="el" href="classUSocket.html#a055cfb3cd29fbf42fa16a45518d6b0eb">setLocal</a>()</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setLocal</b>(const UIPAddress &amp;addr) (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline]</code></td></tr>
-  <tr class="memlist"><td><a class="el" href="classUSocket.html#a055cfb3cd29fbf42fa16a45518d6b0eb">setLocal</a>()</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setRemote</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [protected]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUTCPSocket.html#a19737363f7b9bd4b1a6cbc1dcc3070b1">setServer</a>(int port, int iBackLog)</td><td><a class="el" href="classUTCPSocket.html">UTCPSocket</a></td><td><code> [inline, virtual]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setServer</b>(const UString &amp;cLocalAddr, int port, int iBackLog) (defined in <a class="el" href="classUTCPSocket.html">UTCPSocket</a>)</td><td><a class="el" href="classUTCPSocket.html">UTCPSocket</a></td><td><code> [inline, virtual]</code></td></tr>
@@ -215,6 +213,7 @@
   <tr bgcolor="#f0f0f0"><td><b>str_unseen</b> (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>str_user_agent</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>str_X_Forwarded_For</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [static]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>str_X_Real_IP</b> (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [static]</code></td></tr>
   <tr class="memlist"><td><a class="el" href="classUImapClient.html#af109639c0c9cc776350189b7ddc5ef4f">subscribeMailbox</a>(const UString &amp;name)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>TIMEOUT</b> enum value (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>UID_VALIDITY</b> enum value (defined in <a class="el" href="classUImapClient.html">UImapClient</a>)</td><td><a class="el" href="classUImapClient.html">UImapClient</a></td><td></td></tr>
@@ -227,7 +226,7 @@
   <tr bgcolor="#f0f0f0"><td><b>~USocket</b>() (defined in <a class="el" href="classUSocket.html">USocket</a>)</td><td><a class="el" href="classUSocket.html">USocket</a></td><td><code> [inline, virtual]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>~UTCPSocket</b>() (defined in <a class="el" href="classUTCPSocket.html">UTCPSocket</a>)</td><td><a class="el" href="classUTCPSocket.html">UTCPSocket</a></td><td><code> [inline, virtual]</code></td></tr>
 </table></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 9 14:06:47 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:55 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

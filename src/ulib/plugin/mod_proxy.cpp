@@ -70,33 +70,14 @@ int UProxyPlugIn::handlerRequest()
    is_connect = false;
 
 #ifdef HAVE_SSL
-   if (service->isRequestCertificate()) // check if certificate is required...
+   // check if certificate is required...
+
+   if (service->isRequestCertificate() &&
+       ((UServer<USSLSocket>*)UServer_Base::pthis)->askForClientCertificate() == false)
       {
-      esito = false;
+      err = UModProxyService::BAD_REQUEST;
 
-      U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
-      U_ASSERT(UClientImage_Base::socket->isSSL())
-
-      // NB: OpenSSL already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...
-
-      if (((USSLSocket*)UClientImage_Base::socket)->getPeerCertificate() == 0)
-         {
-         U_SRV_LOG_MSG_WITH_ADDR("ask for a client certificate to");
-
-         if (((USSLSocket*)UClientImage_Base::socket)->askForClientCertificate())
-            {
-            esito = true;
-
-            ((UClientImage<USSLSocket>*)UClientImage_Base::pClientImage)->logCertificate();
-            }
-         }
-
-      if (esito == false)
-         {
-         err = UModProxyService::BAD_REQUEST;
-
-         goto error;
-         }
+      goto error;
       }
 #endif
 

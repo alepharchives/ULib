@@ -79,7 +79,7 @@
 <a name="l00056"></a>00056 
 <a name="l00057"></a>00057         <span class="comment">// COSTRUTTORI</span>
 <a name="l00058"></a>00058 
-<a name="l00059"></a>00059         <a class="code" href="classUHttpPlugIn.html">UHttpPlugIn</a>() : alias(U_CAPACITY), environment(U_CAPACITY)
+<a name="l00059"></a>00059         <a class="code" href="classUHttpPlugIn.html">UHttpPlugIn</a>() : alias(U_CAPACITY)
 <a name="l00060"></a>00060                 {
 <a name="l00061"></a>00061                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUHttpPlugIn.html">UHttpPlugIn</a>, <span class="stringliteral">&quot;&quot;</span>, 0)
 <a name="l00062"></a>00062 
@@ -117,12 +117,12 @@
 <a name="l00094"></a>00094 <span class="keyword">protected</span>:
 <a name="l00095"></a>00095         uint32_t index_alias;
 <a name="l00096"></a>00096         <a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a> valias;
-<a name="l00097"></a>00097         <a class="code" href="classUString.html">UString</a> alias, environment, uri_protected_mask, uri_protected_allowed_ip, uri_request_cert_mask;
+<a name="l00097"></a>00097         <a class="code" href="classUString.html">UString</a> alias, uri_protected_mask, uri_protected_allowed_ip, uri_request_cert_mask;
 <a name="l00098"></a>00098 
-<a name="l00099"></a>00099         <span class="keyword">static</span> <span class="keywordtype">bool</span> virtual_host;
-<a name="l00100"></a>00100         <span class="keyword">static</span> UVector&lt;UIPAllow*&gt;*      vallow_IP;
+<a name="l00099"></a>00099         <span class="keyword">static</span> UVector&lt;UIPAllow*&gt;*      vallow_IP;
+<a name="l00100"></a>00100         <span class="keyword">static</span> <span class="keywordtype">bool</span> virtual_host, uri_protected_to_check;
 <a name="l00101"></a>00101 
-<a name="l00102"></a>00102         <a class="code" href="classUString.html">UString</a>* getCGIEnvironment();
+<a name="l00102"></a>00102         <span class="keywordtype">bool</span> checkUriProtected(<span class="keywordtype">bool</span> ctx_read);
 <a name="l00103"></a>00103 
 <a name="l00104"></a>00104 <span class="keyword">private</span>:
 <a name="l00105"></a>00105         <a class="code" href="classUHttpPlugIn.html">UHttpPlugIn</a>(<span class="keyword">const</span> <a class="code" href="classUHttpPlugIn.html">UHttpPlugIn</a>&amp;) : <a class="code" href="classUServerPlugIn.html">UServerPlugIn</a>() {}
@@ -131,7 +131,7 @@
 <a name="l00108"></a>00108 
 <a name="l00109"></a>00109 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 9 14:06:44 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:54 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

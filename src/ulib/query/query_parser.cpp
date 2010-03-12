@@ -145,7 +145,7 @@ bool UQueryParser::parse(const UString& query)
 
       tree = UQueryNode::getDisjunctiveNormalForm(tree);
 
-      U_ASSERT_EQUALS(tree->isDisjunctiveNormalForm(),true)
+      U_ASSERT(tree->isDisjunctiveNormalForm())
 
       U_RETURN(true);
       }

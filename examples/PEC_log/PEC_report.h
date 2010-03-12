@@ -90,7 +90,6 @@ set 20 19:48:03 PEC_Milter root [2504]: 20060920194803.492346@pec.internal.domai
 #define U_errore_consegna           5
 #define U_presa_in_carico           6
 #define U_preavviso_errore_consegna 7
-
 #define U_busta_anomalia            8
 // -----------------------------------------------------
 // id
@@ -137,6 +136,7 @@ public:
    static UString* scan_form;
    static UString* consegna;
    static UString* directory;
+   static UString* filter;
    static UString* filter_ext;
    static UHashMap<UString>* tfile;
 

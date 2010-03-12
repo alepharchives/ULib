@@ -568,16 +568,25 @@ void UServer_Base::init()
 
    if (UFile::chdir(document_root.data(), false) == false)
       {
-      U_ERROR("chdir to working directory (DOCUMENT_ROOT) '%s' FAILED. Going down...", document_root.data());
+      U_ERROR("chdir to working directory (DOCUMENT_ROOT) %S FAILED. Going down...", document_root.data());
       }
 
-   U_SRV_LOG_VAR("working directory (DOCUMENT_ROOT) changed to '%s'", document_root.data());
+   U_SRV_LOG_VAR("working directory (DOCUMENT_ROOT) changed to %S", document_root.data());
 
-   // manage shared data...
+   // NB: if serialize (0 and >1) we ask to notify for request of connection,
+   //     in this way only in the classic model the forked child don't accept new client...
 
-   if (isPreForked())
+   if (preforked_num_kids == 0)
+      {
+      acceptNewClient();
+
+      block_on_accept = true;
+      }
+   else if (isPreForked())
       {
       U_INTERNAL_ASSERT_EQUALS(ptr,0)
+
+      // manage shared data...
 
       ptr = (shared_data*) UFile::mmap(sizeof(shared_data) + sizeof(sem_t));
 
@@ -585,8 +594,6 @@ void UServer_Base::init()
       }
 
    // manage block on accept...
-
-   if (isLog() || preforked_num_kids == 0) block_on_accept = true;
 
    if (block_on_accept == false)
       {
@@ -646,7 +653,7 @@ void UServer_Base::init()
 
    if (flag_use_tcp_optimization)
       {
-      U_ASSERT_EQUALS(name_sock.empty(), true) // no unix socket...
+      U_ASSERT(name_sock.empty()) // no unix socket...
 
       socket->setBufferRCV(65536);
       socket->setBufferSND(65536);
@@ -693,22 +700,12 @@ void UServer_Base::init()
 
       if (u_ranAsUser(user, false))
          {
-         U_SRV_LOG_VAR("server run with user '%s' permission", user);
+         U_SRV_LOG_VAR("server run with user %S permission", user);
          }
       else
          {
-         U_ERROR("set user '%s' context failed...", user);
+         U_ERROR("set user %S context failed...", user);
          }
-      }
-
-   // NB: if serialize (0 and >1) we ask to notify for request of connection,
-   //     in this way only in the classic model the forked child don't accept new client...
-
-   if (preforked_num_kids == 0)
-      {
-      UNotifier::init(pthis);
-
-      if (USocket::req_timeout) ptime = U_NEW(UTimeoutConnection(USocket::req_timeout, 0L));
       }
 }
 
@@ -745,7 +742,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
    U_SRV_LOG_MSG("--- SIGTERM (Interrupt) ---");
 
-   U_INTERNAL_ASSERT_EQUALS(flag_loop, true)
+   U_INTERNAL_ASSERT(flag_loop)
 
    flag_loop = false;
 
@@ -795,10 +792,50 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
          }
       }
 
-   (void) socket->acceptClient(UClientImage_Base::socket);
+   if (socket->acceptClient(UClientImage_Base::socket))
+      {
+      U_INTERNAL_ASSERT(UClientImage_Base::socket->isConnected())
 
-   UServer_Base::handlerNewConnection();
+      // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be supplied optionally after
+      // a trailing slash, e.g. 192.168.0.0/24, in which case addresses that match in the most significant MASK bits will be allowed.
+      // If no options are specified, all clients are allowed. Unauthorized connections are rejected by closing the TCP connection
+      // immediately. A warning is logged on the server but nothing is sent to the client.
 
+      if (vallow_IP &&
+          UIPAllow::isAllowed(UClientImage_Base::socket->remoteIPAddress().getInAddr(), *vallow_IP) == false)
+         {
+         U_SRV_LOG_VAR("new client connected from %S, connection denied by access list", UClientImage_Base::socket->getRemoteInfo());
+
+         UClientImage_Base::socket->close();
+
+         goto end;
+         }
+
+      handlerNewConnection();
+
+      goto end;
+      }
+
+   U_INTERNAL_DUMP("flag_loop = %b", flag_loop)
+
+   if (isLog()   &&
+       flag_loop && // check for SIGTERM event...
+       (block_on_accept || UClientImage_Base::socket->iState != -EAGAIN)) // NB: for avoid to log spurious EAGAIN on accept() with epoll()
+      {
+      char buffer[4096];
+
+      const char* msg_error = UClientImage_Base::socket->getMsgError(buffer, sizeof(buffer));
+
+      uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
+
+      u_printf_string_max_length = u_strlen(msg_error);
+
+      ULog::log("%saccept new client failed %.*S\n", mod_name, u_printf_string_max_length, msg_error);
+
+      u_printf_string_max_length = u_printf_string_max_length_save;
+      }
+
+end:
    U_RETURN(U_NOTIFIER_OK);
 }
 
@@ -808,8 +845,8 @@ const char* UServer_Base::getNumConnection()
 
    static char buffer[32];
 
-   if (isPreForked() && isLog()) (void) u_snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
-   else                          (void) u_snprintf(buffer, sizeof(buffer), "%d",      num_connection);
+   if (isPreForked()) (void) u_snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
+   else               (void) u_snprintf(buffer, sizeof(buffer), "%d",      num_connection);
 
    U_RETURN(buffer);
 }
@@ -842,7 +879,7 @@ void UServer_Base::handlerCloseConnection()
 
 bool UServer_Base::handlerTimeoutConnection(void* cimg)
 {
-   U_TRACE(0, "UServer_Base::::handlerTimeoutConnection(%p)", cimg)
+   U_TRACE(0, "UServer_Base::handlerTimeoutConnection(%p)", cimg)
 
    U_INTERNAL_ASSERT_POINTER(cimg)
    U_INTERNAL_ASSERT_POINTER(pthis)
@@ -862,7 +899,7 @@ void UServer_Base::handlerIdleConnection()
 {
    U_TRACE(0, "UServer_Base::handlerIdleConnection()")
 
-   if (UServer_Base::isSerialize())
+   if (isSerialize())
       {
       UNotifier::callForAllEntry(handlerTimeoutConnection);
       }
@@ -880,43 +917,6 @@ void UServer_Base::handlerNewConnection()
 
    U_INTERNAL_ASSERT_POINTER(pthis)
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
-
-   U_INTERNAL_DUMP("flag_loop = %b", flag_loop)
-
-   if (UClientImage_Base::socket->isConnected() == false)
-      {
-      if (isLog() &&
-          flag_loop) // check for SIGTERM event...
-         {
-         char buffer[4096];
-
-         const char* msg_error = UClientImage_Base::socket->getMsgError(buffer, sizeof(buffer));
-
-         uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
-
-         u_printf_string_max_length = u_strlen(msg_error);
-
-         ULog::log("%saccept new client failed %.*S\n", mod_name, u_printf_string_max_length, msg_error);
-
-         u_printf_string_max_length = u_printf_string_max_length_save;
-         }
-
-      return;
-      }
-
-   // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be supplied optionally after
-   // a trailing slash, e.g. 192.168.0.0/24, in which case addresses that match in the most significant MASK bits will be allowed.
-   // If no options are specified, all clients are allowed. Unauthorized connections are rejected by closing the TCP connection
-   // immediately. A warning is logged on the server but nothing is sent to the client.
-
-   if (vallow_IP && UIPAllow::isAllowed(UClientImage_Base::socket->remoteIPAddress().getInAddr(), *vallow_IP) == false)
-      {
-      U_SRV_LOG_VAR("new client connected from '%s', connection denied by access list", UClientImage_Base::socket->getRemoteInfo());
-
-      UClientImage_Base::socket->close();
-
-      return;
-      }
 
    ++num_connection;
 
@@ -1034,9 +1034,7 @@ void UServer_Base::run()
 
             if (proc->child())
                {
-               UNotifier::init(pthis);
-
-               if (USocket::req_timeout) ptime = U_NEW(UTimeoutConnection(USocket::req_timeout, 0L));
+               acceptNewClient();
 
                if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
 
@@ -1125,13 +1123,13 @@ UCommand* UServer_Base::loadConfigCommand(UFileConfig& cfg, bool bset)
    U_ASSERT_EQUALS(cfg.empty(), false)
 
    UCommand* cmd   = 0;
-   UString command = cfg[*UServer_Base::str_COMMAND];
+   UString command = cfg[*str_COMMAND];
 
    if (command.empty() == false)
       {
       if (U_ENDS_WITH(command, ".sh")) (void) command.insert(0, U_PATH_SHELL);
 
-      UString environment = cfg[*UServer_Base::str_ENVIRONMENT];
+      UString environment = cfg[*str_ENVIRONMENT];
 
       cmd = U_NEW(UCommand);
 

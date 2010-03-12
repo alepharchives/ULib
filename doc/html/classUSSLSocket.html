@@ -49,6 +49,8 @@ Collaboration diagram for USSLSocket:</div>
 void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setActive</b> (bool flag)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4c65a49c008ef2c19638ea5b3d901f73"></a><!-- doxytag: member="USSLSocket::secureConnection" ref="a4c65a49c008ef2c19638ea5b3d901f73" args="(int fd)" -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>secureConnection</b> (int fd)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4905fff64c8d66dfa916032090132ef6"></a><!-- doxytag: member="USSLSocket::acceptSSL" ref="a4905fff64c8d66dfa916032090132ef6" args="(USSLSocket *pcConnection)" -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>acceptSSL</b> (<a class="el" href="classUSSLSocket.html">USSLSocket</a> *pcConnection)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a33ce67f6abd2cd5f16133b9880ff3212">useDHFile</a> (const char *dh_file=0)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#abe397cea9afdffa6dbcde5c7b64b0d44">setContext</a> (const char *cert_file, const char *private_key_file, const char *<a class="el" href="structpasswd.html">passwd</a>, const char *CAfile, const char *CApath, int mode=SSL_VERIFY_PEER_STRICT|SSL_VERIFY_CLIENT_ONCE)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">void&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a7c4e740a7eda5dbed1e7c9389354d3f0">setVerifyDepth</a> (int depth=1)</td></tr>
@@ -65,10 +67,7 @@ virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><b>closesocket</
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aef8a9abee65057b84d9a550104ebbb1c"></a><!-- doxytag: member="USSLSocket::getMsgError" ref="aef8a9abee65057b84d9a550104ebbb1c" args="(char *buffer, uint32_t buffer_size)" -->
 virtual const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getMsgError</b> (char *buffer, uint32_t buffer_size)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">virtual bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a1b5266042cfe25954c792612f46b7d80">connectServer</a> (const <a class="el" href="classUString.html">UString</a> &amp;server, int iServPort)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="classUSocket.html">USocket</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#ab6601bf1976add465a5a5f012cf9781e">acceptClient</a> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad193ec26179fee25a85e4648cdd4a3e3"></a><!-- doxytag: member="USSLSocket::accept" ref="ad193ec26179fee25a85e4648cdd4a3e3" args="(USSLSocket *pcNewConnection)" -->
-<a class="el" href="classUSocket.html">USocket</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>accept</b> (<a class="el" href="classUSSLSocket.html">USSLSocket</a> *pcNewConnection)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="classUSocket.html">USocket</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a2ee5990b6b2038ff1475142004117cac">acceptClient</a> (<a class="el" href="classUSocket.html">USocket</a> *pcNewConnection)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top">virtual bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a7a556fb004d91b7d605973f4bd3bda45">acceptClient</a> (<a class="el" href="classUSocket.html">USocket</a> *pcNewConnection)</td></tr>
 <tr><td colspan="2"><h2>Static Public Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae0994a70c5b2a37a6ad9d4a432d9a932"></a><!-- doxytag: member="USSLSocket::method" ref="ae0994a70c5b2a37a6ad9d4a432d9a932" args="" -->
 static SSL_METHOD *&nbsp;</td><td class="memItemRight" valign="bottom"><b>method</b></td></tr>
@@ -98,44 +97,24 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUSSLSocket.html#a9942209984963ab5a1ac8736ad0ae468">UClientImage</a></td></tr>
 </table>
 <hr/><h2>Member Function Documentation</h2>
-<a class="anchor" id="a2ee5990b6b2038ff1475142004117cac"></a><!-- doxytag: member="USSLSocket::acceptClient" ref="a2ee5990b6b2038ff1475142004117cac" args="(USocket *pcNewConnection)" -->
+<a class="anchor" id="a7a556fb004d91b7d605973f4bd3bda45"></a><!-- doxytag: member="USSLSocket::acceptClient" ref="a7a556fb004d91b7d605973f4bd3bda45" args="(USocket *pcNewConnection)" -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="classUSocket.html">USocket</a> * USSLSocket::acceptClient </td>
+          <td class="memname">virtual bool USSLSocket::acceptClient </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="classUSocket.html">USocket</a> *&nbsp;</td>
           <td class="paramname"> <em>pcNewConnection</em></td>
           <td>&nbsp;)&nbsp;</td>
-          <td><code> [virtual]</code></td>
+          <td><code> [inline, virtual]</code></td>
         </tr>
       </table>
 </div>
 <div class="memdoc">
-<p>This method is called to accept a new connection on the server socket. Further communications on the newly connected socket are made via the newly created <a class="el" href="classUTCPSocket.html">UTCPSocket</a> instance of which a pointer is returned when the connection is accepted. We create a <a class="el" href="classUTCPSocket.html">UTCPSocket</a> instance and pass this to the base class accept() method to accept the pending connection on this <a class="el" href="classUTCPSocket.html">UTCPSocket</a> instance. </p>
+<p>This method is called to accept a new pending connection on the server socket. The <a class="el" href="classUSocket.html" title="basic IP socket functionality">USocket</a> pointed to by the provided parameter is modified to refer to the newly connected socket. The remote IP Address and port number are also set. </p>
 
-<p>Reimplemented from <a class="el" href="classUTCPSocket.html#aa295f33b935a3a7b02db63f066d9ac0e">UTCPSocket</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="ab6601bf1976add465a5a5f012cf9781e"></a><!-- doxytag: member="USSLSocket::acceptClient" ref="ab6601bf1976add465a5a5f012cf9781e" args="()" -->
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname"><a class="el" href="classUSocket.html">USocket</a> * USSLSocket::acceptClient </td>
-          <td>(</td>
-          <td class="paramname"></td>
-          <td>&nbsp;)&nbsp;</td>
-          <td><code> [virtual]</code></td>
-        </tr>
-      </table>
-</div>
-<div class="memdoc">
-<p>This method is called to accept a new connection on the server socket. Further communications on the newly connected socket are made via the newly created <a class="el" href="classUSSLSocket.html">USSLSocket</a> instance of which a pointer is returned when the connection is accepted. We create a <a class="el" href="classUSSLSocket.html">USSLSocket</a> instance and pass this to the base class accept() method to accept the pending connection on this <a class="el" href="classUSSLSocket.html">USSLSocket</a> instance </p>
-
-<p>Reimplemented from <a class="el" href="classUTCPSocket.html#a2f62fc69e757b38b1dad2d13eb38d9fb">UTCPSocket</a>.</p>
+<p>Reimplemented from <a class="el" href="classUSocket.html#a8c58795ae0d115507a284f358584c176">USocket</a>.</p>
 
 </div>
 </div>
@@ -406,7 +385,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/ssl/net/sslsocket.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 9 14:06:50 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:56 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

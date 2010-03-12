@@ -204,6 +204,8 @@ public:
       U_RETURN(result);
       }
 
+   static bool checkNodeName(xmlNodePtr node, const xmlChar* name, const xmlChar* ns);
+
    /** Discover at what line number this node occurs in the XML file.
    *
    * @returns The line number.

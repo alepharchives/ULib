@@ -533,7 +533,7 @@ UString USocketExt::getNetworkInterfaceName(const UString& ip)
 {
    U_TRACE(1, "USocketExt::getNetworkInterfaceName(%.*S)", U_STRING_TO_TRACE(ip))
 
-   U_INTERNAL_ASSERT_EQUALS(u_isIPv4Addr(U_STRING_TO_PARAM(ip)),true)
+   U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(ip)))
 
    UString result(100U);
 

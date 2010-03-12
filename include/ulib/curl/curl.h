@@ -260,7 +260,7 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_EQUALS(added,true)
+      U_INTERNAL_ASSERT(added)
       U_INTERNAL_ASSERT_POINTER(easyHandle)
       U_INTERNAL_ASSERT_POINTER(multiHandle)
 

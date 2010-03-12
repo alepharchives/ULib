@@ -25,6 +25,7 @@ USocket*           UClientImage_Base::socket;
 UString*           UClientImage_Base::body;
 UString*           UClientImage_Base::rbuffer;
 UString*           UClientImage_Base::wbuffer;
+UString*           UClientImage_Base::real_ip;
 UString*           UClientImage_Base::msg_welcome;
 UClientImage_Base* UClientImage_Base::pClientImage;
 
@@ -114,18 +115,19 @@ void UClientImage_Base::init(USocket* p)
 {
    U_TRACE(0, "UClientImage_Base::init(%p)", p)
 
-   U_INTERNAL_ASSERT_EQUALS(body, 0);
-   U_INTERNAL_ASSERT_EQUALS(socket, 0);
-   U_INTERNAL_ASSERT_EQUALS(rbuffer, 0);
-   U_INTERNAL_ASSERT_EQUALS(wbuffer, 0);
-   U_INTERNAL_ASSERT_EQUALS(_value, 0);
-   U_INTERNAL_ASSERT_EQUALS(_buffer, 0);
+   U_INTERNAL_ASSERT_EQUALS(body,     0);
+   U_INTERNAL_ASSERT_EQUALS(socket,   0);
+   U_INTERNAL_ASSERT_EQUALS(rbuffer,  0);
+   U_INTERNAL_ASSERT_EQUALS(wbuffer,  0);
+   U_INTERNAL_ASSERT_EQUALS(_value,   0);
+   U_INTERNAL_ASSERT_EQUALS(_buffer,  0);
    U_INTERNAL_ASSERT_EQUALS(_encoded, 0);
 
    socket  = p;
    body    = U_NEW(UString);
    rbuffer = U_NEW(UString(U_CAPACITY));
    wbuffer = U_NEW(UString(U_CAPACITY));
+   real_ip = U_NEW(UString(20U));
 
    // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
 
@@ -151,6 +153,7 @@ void UClientImage_Base::clear()
    delete body;
    delete wbuffer;
    delete rbuffer;
+   delete real_ip;
 
           socket->iSockDesc = -1;
    delete socket;
@@ -247,55 +250,42 @@ void UClientImage_Base::logCertificate(void* x509)
 #endif
 }
 
-const char* UClientImage_Base::getRemoteInfo(uint32_t* plen)
+bool UClientImage_Base::setRealIP()
 {
-   U_TRACE(0, "UClientImage_Base::getRemoteInfo(%p)", plen)
+   U_TRACE(0, "UClientImage_Base::setRealIP()")
 
-   U_INTERNAL_ASSERT_POINTER(socket)
-   U_INTERNAL_ASSERT_POINTER(pClientImage)
+   U_ASSERT_DIFFERS(rbuffer->empty(), true)
 
-   const char* ptr;
+   // check for X-Forwarded-For: client, proxy1, proxy2 and X-Real-IP: ...
 
-   if (plen)
+   uint32_t    ip_client_len = 0;
+   const char* ip_client     = UHTTP::getHTTPHeaderValuePtr(*USocket::str_X_Forwarded_For);
+
+   if (ip_client)
       {
-      // check for X-Forwarded-For: client1, proxy1, proxy2
-
-      ptr = UHTTP::getHTTPHeaderValuePtr(*USocket::str_X_Forwarded_For);
-
-      if (ptr)
+      char c;
+len:
+      while (true)
          {
-         char c;
-         uint32_t len = 0;
+         c = ip_client[ip_client_len];
 
-         while (true)
-            {
-            c = ptr[len];
+         if (u_isspace(c) || c == ',') break;
 
-            if (u_isspace(c) || c == ',') break;
-
-            ++len;
-            }
-
-         U_INTERNAL_DUMP("X-Forwarded-For = %.*S", len, ptr)
-
-         *plen = len;
-
-         goto end;
+         ++ip_client_len;
          }
+
+      U_INTERNAL_DUMP("ip_client = %.*S", ip_client_len, ip_client)
+
+      (void) real_ip->replace(ip_client, ip_client_len);
+
+      U_RETURN(true);
       }
 
-   if (pClientImage->logbuf) ptr = pClientImage->clientAddress->getAddressString();
-   else
-      {
-      socket->setRemote();
+   ip_client = UHTTP::getHTTPHeaderValuePtr(*USocket::str_X_Real_IP);
 
-      ptr = socket->cRemoteAddress.getAddressString();
-      }
+   if (ip_client) goto len;
 
-   if (plen) *plen = u_strlen(ptr);
-
-end:
-   U_RETURN_POINTER(ptr, const char);
+   U_RETURN(false);
 }
 
 void UClientImage_Base::resetBuffer()
@@ -309,11 +299,10 @@ void UClientImage_Base::resetBuffer()
    if      (wbuffer->same(*rbuffer)) wbuffer->clear();
    else if (wbuffer->uniq())         wbuffer->setEmpty();
 
-   if (body->isNull() == false) body->clear();
+   if (body->isNull()   == false) body->clear();
+   if (real_ip->empty() == false) real_ip->setEmpty();
 
-   // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
-
-   rbuffer->setEmptyForce();
+   rbuffer->setEmptyForce(); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more than one)...
 }
 
 // check if read data already available... (pipelining)

@@ -312,6 +312,19 @@ void ULog::backup()
 
    bool locked = lock->isLocked();
    char buffer_path[MAX_FILENAME_LEN], suffix[32];
+   char* path = buffer_path;
+
+   static const char* dir_log_gz = (const char*) U_SYSCALL(getenv, "%S", "DIR_LOG_GZ");
+
+   if (dir_log_gz)
+      {
+      uint32_t len = strlen(dir_log_gz);
+
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", path, dir_log_gz, len);
+
+       path  += len;
+      *path++ = '/';
+      }
 
    if (file_limit &&
        locked == false)
@@ -319,7 +332,7 @@ void ULog::backup()
       lock->lock();
       }
 
-   (void) UFile::setPathFromFile(*pthis, buffer_path, suffix, u_snprintf(suffix, sizeof(suffix), ".%6D.gz", 0));
+   (void) UFile::setPathFromFile(*pthis, path, suffix, u_snprintf(suffix, sizeof(suffix), ".%6D.gz", 0));
 
    U_ASSERT_EQUALS(UFile::access(buffer_path, R_OK | W_OK), false)
 

@@ -291,6 +291,9 @@ typedef unsigned long long uint64;
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
 
+/* Define to 1 if you have the `GeoIP' library (-lGeoIP). */
+#undef HAVE_LIBGEOIP
+
 /* Define to 1 if you have the `malloc' library (-lmalloc). */
 #undef HAVE_LIBMALLOC
 

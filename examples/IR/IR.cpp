@@ -146,8 +146,8 @@ void IR::processFile()
    U_INTERNAL_DUMP("u_buffer(%u) = %.*S", u_buffer_len, u_buffer_len, u_buffer)
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer[0],'.')
+   U_INTERNAL_ASSERT(IS_DIR_SEPARATOR(u_buffer[1]))
    U_INTERNAL_ASSERT_EQUALS(u_ftw_ctx.is_directory,false)
-   U_INTERNAL_ASSERT_EQUALS(IS_DIR_SEPARATOR(u_buffer[1]),true)
 
    UPosting::filename->replace(u_buffer+2, u_buffer_len-2);
 

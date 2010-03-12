@@ -444,6 +444,23 @@ done:
    return 0;
 }
 
+/* check if string a start with string b */
+
+bool u_startsWith(const char* a, uint32_t n1, const char* b, uint32_t n2)
+{
+   int32_t diff = n1 - n2;
+
+   U_INTERNAL_TRACE("u_startsWith(%.*s,%u,%.*s,%u)", U_min(n1,u_printf_string_max_length), a, n1, U_min(n2,u_printf_string_max_length), b, n2)
+
+   if (diff >= 0 &&
+       (strncmp(a, b, n2) == 0))
+      {
+      return true;
+      }
+
+   return false;
+}
+
 /* check if string a terminate with string b */
 
 bool u_endsWith(const char* a, uint32_t n1, const char* b, uint32_t n2)

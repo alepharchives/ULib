@@ -40,7 +40,7 @@ public:
 
       bool ok = UServices::setupOpenSSLStore(0, str_CApath.c_str());
 
-      U_INTERNAL_ASSERT_EQUALS(ok, true)
+      U_INTERNAL_ASSERT(ok)
 
       // NORMAL
 

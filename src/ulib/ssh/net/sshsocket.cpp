@@ -249,7 +249,7 @@ int USSHSocket::recv(void* pBuffer, int iBufferLen)
    U_TRACE(1, "USSHSocket::recv(%p,%d)", pBuffer, iBufferLen)
 
    U_INTERNAL_ASSERT_POINTER(channel)
-   U_INTERNAL_ASSERT_EQUALS(USocket::isConnected(),true)
+   U_INTERNAL_ASSERT(USocket::isConnected())
 
    if (buffer == 0) buffer = (ssh_buffer) U_SYSCALL_NO_PARAM(buffer_new);
 
@@ -270,7 +270,7 @@ int USSHSocket::send(const void* pData, int iDataLen)
    U_TRACE(1, "USSHSocket::send(%p,%d)", pData, iDataLen)
 
    U_INTERNAL_ASSERT_POINTER(channel)
-   U_INTERNAL_ASSERT_EQUALS(USocket::isConnected(),true)
+   U_INTERNAL_ASSERT(USocket::isConnected())
 
    int iBytesWrite = U_SYSCALL(channel_write, "%p,%p,%d", channel, (void*)pData, iDataLen);
 
