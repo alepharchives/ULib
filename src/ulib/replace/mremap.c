@@ -1,6 +1,6 @@
 /* mremap.c */
 
-#if !defined(U_ALL_C)
+#ifndef U_ALL_C
 #  include <ulib/base/top.h>
 #  ifdef HAVE_CONFIG_H
 #     include <ulib/internal/config.h>
@@ -21,14 +21,14 @@
 #define MREMAP_MAYMOVE 1
 #endif
 
-/* 
+/*
  * Expand (or shrink) an existing mapping, potentially moving it at the 
  * same time (controlled by the MREMAP_MAYMOVE flag and available VM space) 
  */ 
 
-extern U_EXPORT void* mremap(void* addr, size_t old_len , size_t new_len, unsigned long flags);
+extern U_EXPORT void* mremap(void* addr, size_t old_len, size_t new_len, int flags);
 
-U_EXPORT void* mremap(void* addr, size_t old_len , size_t new_len, unsigned long flags)
+U_EXPORT void* mremap(void* addr, size_t old_len, size_t new_len, int flags)
 {
    if (((unsigned long)addr & (~PAGE_MASK)))
       {
@@ -53,7 +53,7 @@ U_EXPORT void* mremap(void* addr, size_t old_len , size_t new_len, unsigned long
 
    if (old_len > new_len)
       {
-      munmap(addr+new_len, old_len - new_len); 
+      munmap(addr+new_len, old_len - new_len);
 
       return addr;
       }

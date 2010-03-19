@@ -375,9 +375,9 @@ UString UCertificate::getRevocationURL(const char* ext_id) const
    U_RETURN_STRING(crl);
 }
 
-UString UCertificate::getEncoded(const char* format, int max_columns) const
+UString UCertificate::getEncoded(const char* format) const
 {
-   U_TRACE(1, "UCertificate::getEncoded(%S,%d)", format, max_columns)
+   U_TRACE(1, "UCertificate::getEncoded(%S)", format)
 
    U_INTERNAL_ASSERT_POINTER(x509)
 
@@ -398,7 +398,7 @@ UString UCertificate::getEncoded(const char* format, int max_columns) const
          {
          UString x(len * 3 + 32U);
 
-         UBase64::encode(encoding, x, max_columns);
+         UBase64::encode(encoding, x);
 
          U_RETURN_STRING(x);
          }
@@ -419,9 +419,9 @@ UString UCertificate::getEncoded(const char* format, int max_columns) const
    U_RETURN_STRING(UString::getStringNull());
 }
 
-UString UCertificate::getModulus(int max_columns) const
+UString UCertificate::getModulus() const
 {
-   U_TRACE(1, "UCertificate::getModulus(%d)", max_columns)
+   U_TRACE(1, "UCertificate::getModulus()")
 
    U_INTERNAL_ASSERT_POINTER(x509)
 
@@ -436,16 +436,16 @@ UString UCertificate::getModulus(int max_columns) const
 
    UString x(len * 3 + 32U);
 
-   UBase64::encode(buffer, len, x, max_columns);
+   UBase64::encode(buffer, len, x);
 
    U_SYSCALL_VOID(EVP_PKEY_free, "%p", pkey);
 
    U_RETURN_STRING(x);
 }
 
-UString UCertificate::getExponent(int max_columns) const
+UString UCertificate::getExponent() const
 {
-   U_TRACE(1, "UCertificate::getExponent(%d)", max_columns)
+   U_TRACE(1, "UCertificate::getExponent()")
 
    U_INTERNAL_ASSERT_POINTER(x509)
 
@@ -460,7 +460,7 @@ UString UCertificate::getExponent(int max_columns) const
 
    UString x(len * 3 + 32U);
 
-   UBase64::encode(buffer, len, x, max_columns);
+   UBase64::encode(buffer, len, x);
 
    U_SYSCALL_VOID(EVP_PKEY_free, "%p", pkey);
 

@@ -26,8 +26,6 @@ static char bytes[] = { 'p', 'i', 'p', 'p', 'o', '\xff',
                         'p', 'i', 'p', 'p', 'o', '\xff' };
 #endif
 
-static bool no_exit(void) { return true; }
-
 static int display_char(char* output, int what)
 {
    switch (what)
@@ -188,19 +186,17 @@ main (int argc, char* argv[])
    errno = E2BIG;
    U_WARNING_SYSCALL("U_WARNING_SYSCALL() errno = E2BIG...");
 
-   u_at_exit = no_exit; /* for continue... */
-
    errno = EFAULT;
    U_ERROR_SYSCALL("U_ERROR_SYSCALL()   errno = EFAULT..");
-
-   errno = EACCES;
-   U_ABORT_SYSCALL("U_ABORT_SYSCALL() errno = EACCES...");
 
    {
    int esito = 0;
 
    U_INTERNAL_ASSERT(esito == 1)
    }
+
+   errno = EACCES;
+   U_ABORT_SYSCALL("U_ABORT_SYSCALL() errno = EACCES...");
 
    return 0;
 

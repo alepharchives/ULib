@@ -376,9 +376,14 @@ public:
 
          elem.count.BusteAnomalia = 1;
 
-         (void) callForAllEntryField(U_destinatari, Application::casellaUpdate);
+         if (*ptipo == ' ')
+            {
+            (void) callForAllEntryField(U_destinatari, Application::casellaUpdate);
 
-         return;
+            return;
+            }
+
+         key = *gds;
          }
 
       // update...

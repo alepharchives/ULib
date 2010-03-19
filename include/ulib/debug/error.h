@@ -18,9 +18,7 @@
 
 struct U_EXPORT UError {
 
-#ifdef HAVE_EXECINFO_H
    static void stackDump();
-#endif
 };
 
 #endif

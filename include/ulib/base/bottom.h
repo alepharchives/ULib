@@ -75,7 +75,7 @@ ssize_t sendfile(int out_fd, int in_fd, off_t* poffset, size_t count);
 #  ifdef __cplusplus
 extern "C" {
 #  endif
-void* mremap(void* old_address, size_t old_size , size_t new_size, unsigned long flags);
+void* mremap(void* old_address, size_t old_size , size_t new_size, int flags);
 #  ifdef __cplusplus
 }
 #  endif

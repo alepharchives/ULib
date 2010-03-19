@@ -33,7 +33,7 @@ static void do_cipher(char* pw, int operation)
             }
          }
 
-      if (operation == U_ENCRYPT) ebuflen = u_base64_encode(buf, readlen, ebuf, 0);
+      if (operation == U_ENCRYPT) ebuflen = u_base64_encode(buf, readlen, ebuf);
       else                        ebuflen = u_base64_decode(buf, readlen, ebuf);
 
       write(STDOUT_FILENO, ebuf, ebuflen);

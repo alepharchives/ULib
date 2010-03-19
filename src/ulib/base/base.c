@@ -19,6 +19,10 @@
 #include <ulib/base/utility.h>
 #include <ulib/base/coder/escape.h>
 
+#ifdef DEBUG
+#  include <ulib/debug/common.h>
+#endif
+
 #include <time.h>
 #include <ctype.h>
 #include <errno.h>
@@ -40,10 +44,10 @@
 
 /* For TIOCGWINSZ and friends: */
 #ifdef HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
+#  include <sys/ioctl.h>
 #endif
 #ifdef HAVE_TERMIOS_H
-# include <termios.h>
+#  include <termios.h>
 #endif
 
 /* Startup */
@@ -81,15 +85,14 @@ uint32_t    u_line_terminator_len = 1;
 
 /* Services */
 int                 u_errno;
-bPF                 u_at_exit;
 int                 u_flag_exit;
 int                 u_flag_test;
 bool                u_recursion;
 bool                u_exec_failed;
 char                u_hostname[255];
 char                u_user_name[32];
+ int32_t            u_printf_string_max_length;
 uint32_t            u_hostname_len, u_user_name_len;
- int32_t            u_printf_string_max_length = 128;
 const char*         u_tmpdir;
 const unsigned char u_alphabet[64]  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const unsigned char u_hex_upper[16] = "0123456789ABCDEF";
@@ -1479,7 +1482,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
          case 'O': /* print formatted temporary string + plus free(string) */
             {
             char* base = bp;
-            int32_t maxlen, h, remaining;
+            int32_t h, maxlen, remaining;
 
             cp = VA_ARG(char*);
 
@@ -1495,17 +1498,19 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             U_INTERNAL_ASSERT_POINTER_MSG(cp, "CHECK THE PARAMETERS OF printf()...")
 
+            U_INTERNAL_PRINT("prec = %d u_printf_string_max_length = %d", prec, u_printf_string_max_length)
+
+            maxlen = (u_printf_string_max_length > 0 ? u_printf_string_max_length : 128);
+
+            if (prec == -1) prec = maxlen; /* NB: no size... */
+
+            if (prec > maxlen && ((flags & ALT) == 0)) prec = maxlen; /* NB: # -> force print of all size (compatible with buffer)... */
+
             *bp++ = '"';
-
-            maxlen = (prec >= 0 ? prec : 128);
-
-            if (maxlen > u_printf_string_max_length) maxlen = (u_printf_string_max_length < 0 ? 128 : u_printf_string_max_length);
 
             remaining = (buffer_size - ret - 100);
 
-            if (maxlen > remaining) maxlen = remaining;
-
-            for (n = 0; n < maxlen; ++n)
+            for (n = 0; n < prec; ++n)
                {
                if (cp[n] == '\0' && ((flags & ALT) == 0)) break;
 
@@ -1514,13 +1519,13 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                bp        += h;
                remaining -= h;
 
-               if ((int32_t)remaining <= 0) break;
+               if (remaining <= 0) break;
                }
 
             *bp++ = '"';
 
             if (cp[n] &&
-                n == maxlen)
+                n == prec)
                {
                (void) U_MEMCPY(bp, "...");
 
@@ -1867,10 +1872,9 @@ void u_printf(const char* format, ...)
 
          u_flag_exit = -1;
          }
-   // else if (u_askForContinue() == true) return;
-#  endif
 
-      if (u_at_exit && u_at_exit()) return;
+      u_debug_at_exit(); /* manage for U_ERROR(), U_ABORT(), etc... */
+#  endif
 
 #  ifdef HAVE_SSL
       ERR_print_errors_fp(stderr);

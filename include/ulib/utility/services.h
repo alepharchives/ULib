@@ -138,9 +138,9 @@ struct U_EXPORT UServices {
    static void generateDigest(int alg, unsigned char* data, uint32_t size);
 #endif
 
-   static void generateDigest(int alg, uint32_t keylen, unsigned char* data, uint32_t size, UString& output, bool base64, int max_columns = 0);
-   static void generateDigest(int alg, uint32_t keylen, const UString& data,                UString& output, bool base64, int max_columns = 0)
-      { generateDigest(alg, keylen, (unsigned char*)U_STRING_TO_PARAM(data), output, base64, max_columns); }
+   static void generateDigest(int alg, uint32_t keylen, unsigned char* data, uint32_t size, UString& output, bool base64);
+   static void generateDigest(int alg, uint32_t keylen, const UString& data,                UString& output, bool base64)
+      { generateDigest(alg, keylen, (unsigned char*)U_STRING_TO_PARAM(data), output, base64); }
 
    static bool    checkHMAC(int alg, unsigned char* data, uint32_t size, const UString& hmac);
    static void generateHMAC(int alg, unsigned char* data, uint32_t size,       UString& output)
@@ -224,7 +224,7 @@ struct U_EXPORT UServices {
     * passwd is the corresponsding password for the private key
     */
 
-   static UString getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, bool base64, int max_columns = 0);
+   static UString getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, bool base64);
 #endif
 };
 

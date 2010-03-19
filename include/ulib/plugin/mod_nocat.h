@@ -94,10 +94,9 @@ public:
 #endif
 
 protected:
-   uint32_t rulenum;
-   int status, ifindex;
-   uint32_t traffic, ctraffic, ltraffic;
+   int status;
    time_t connected, expire, logout, ctime;
+   uint32_t ifindex, traffic, ctraffic, ltraffic, rulenum;
    UString ip, mac, token, command, user, ifname;
    UCommand cmd;
 

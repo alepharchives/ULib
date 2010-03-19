@@ -267,7 +267,7 @@ public:
 
       ssl = getSocket()->ssl;
 
-      if (logbuf) logCertificate();
+      if (logbuf) UClientImage_Base::logCertificate(getSocket()->getPeerCertificate());
       }
 
    virtual ~UClientImage()
@@ -292,17 +292,6 @@ public:
    // SERVICES
 
    static USSLSocket* getSocket() { return (USSLSocket*)socket; }
-
-   // aggiungo nel log il certificato Peer del client ("issuer","serial")
-
-   void logCertificate()
-      {
-      U_TRACE(0, "UClientImage<USSLSocket>::logCertificate()")
-
-      // NB: OpenSSL already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...
-
-      UClientImage_Base::logCertificate(getSocket()->getPeerCertificate());
-      }
 
    // define method VIRTUAL of class UClientImage_Base
 

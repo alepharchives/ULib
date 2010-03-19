@@ -398,7 +398,7 @@ public:
    static UString getCGIEnvironment(bool sh_script);
    static void    setCGIShellScript(UString& command);
    static bool    processCGIRequest(UCommand* pcmd, UString* penvironment);
-   static void    setHTTPCgiResponse(int nResponseCode, uint32_t content_length, bool header_content_length);
+   static void    setHTTPCgiResponse(int nResponseCode, uint32_t content_length, bool header_content_length, bool header_content_type);
 
    // Accept-Language: en-us,en;q=0.5
    // ----------------------------------------------------

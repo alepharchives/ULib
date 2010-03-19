@@ -20,11 +20,14 @@
 extern "C" {
 #endif
 
+#define U_OPENSSL_BASE64_MAX_COLUMN 64
+
 extern U_EXPORT int u_base64_errors;
+extern U_EXPORT int u_base64_max_columns;
 
 /* Encode-Decode base64 into a buffer */
 
-extern U_EXPORT uint32_t u_base64_encode(const unsigned char* s, uint32_t n, unsigned char* result, int max_columns);
+extern U_EXPORT uint32_t u_base64_encode(const unsigned char* s, uint32_t n, unsigned char* result);
 extern U_EXPORT uint32_t u_base64_decode(const          char* s, uint32_t n, unsigned char* result);
 
 #ifdef __cplusplus

@@ -17,7 +17,7 @@ rm -f server.log client.log
 DIR_CMD="../../examples/simple_client_server"
 
 start_prg_background server											  inp/server.cf
-start_prg 				client --log client.log --max_length 512 inp/client.cf
+start_prg 				client --log client.log --max_length 256 inp/client.cf
 $SLEEP
 kill_prg server TERM
 $SLEEP

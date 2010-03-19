@@ -82,9 +82,9 @@ EVP_PKEY *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getSubjectPubli
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>verify</b> (STACK_OF(X509)*chain=0, time_t certsVerificationTime=0) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aaf3c15333fde5b7988f0041128e2c60f"></a><!-- doxytag: member="UCertificate::getSignerCertificates" ref="aaf3c15333fde5b7988f0041128e2c60f" args="(UVector&lt; UCertificate * &gt; &amp;vec, STACK_OF(X509)*chain, time_t certsVerificationTime) const " -->
 unsigned&nbsp;</td><td class="memItemRight" valign="bottom"><b>getSignerCertificates</b> (UVector&lt; <a class="el" href="classUCertificate.html">UCertificate</a> * &gt; &amp;vec, STACK_OF(X509)*chain, time_t certsVerificationTime) const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a27eacf2185a7fefe6b30cc13372b3eeb">getEncoded</a> (const char *format=&quot;PEM&quot;, int max_columns=0) const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#ada939e39e944c137bb141d1738e2c6f7">getModulus</a> (int max_columns=0) const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#abe6dd3812e957eae7e79d01351924a73">getExponent</a> (int max_columns=0) const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#ad706ec638638802d93e9724add149cc3">getEncoded</a> (const char *format=&quot;PEM&quot;) const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a38d175cd859fe210a07f632bef81669e">getModulus</a> () const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a064c48f5947d7ed9b33f0057304f1c7a">getExponent</a> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">int&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#a5e22b2909066c90e941149a81f06389f">getExtensions</a> (UHashMap&lt; <a class="el" href="classUString.html">UString</a> &gt; &amp;table) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUCertificate.html#ae1ba744f926eb57a6f10e86e6e2fce8d">getRevocationURL</a> (const char *ext_id=LN_crl_distribution_points) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a136707ad79ca9fc73676538b1148ae18"></a><!-- doxytag: member="UCertificate::setForLog" ref="a136707ad79ca9fc73676538b1148ae18" args="(UString &amp;buffer, const char *fmt=&quot; (\&quot;%.*s\&quot;,\&quot;%ld\&quot;)&quot;) const " -->
@@ -233,7 +233,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 
 </div>
 </div>
-<a class="anchor" id="a27eacf2185a7fefe6b30cc13372b3eeb"></a><!-- doxytag: member="UCertificate::getEncoded" ref="a27eacf2185a7fefe6b30cc13372b3eeb" args="(const char *format=&quot;PEM&quot;, int max_columns=0) const " -->
+<a class="anchor" id="ad706ec638638802d93e9724add149cc3"></a><!-- doxytag: member="UCertificate::getEncoded" ref="ad706ec638638802d93e9724add149cc3" args="(const char *format=&quot;PEM&quot;) const " -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -241,18 +241,9 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
           <td class="memname"><a class="el" href="classUString.html">UString</a> UCertificate::getEncoded </td>
           <td>(</td>
           <td class="paramtype">const char *&nbsp;</td>
-          <td class="paramname"> <em>format</em> = <code>&quot;PEM&quot;</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&nbsp;</td>
-          <td class="paramname"> <em>max_columns</em> = <code>0</code></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td> const</td>
+          <td class="paramname"> <em>format</em> = <code>&quot;PEM&quot;</code></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td> const</td>
         </tr>
       </table>
 </div>
@@ -261,15 +252,14 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 
 </div>
 </div>
-<a class="anchor" id="abe6dd3812e957eae7e79d01351924a73"></a><!-- doxytag: member="UCertificate::getExponent" ref="abe6dd3812e957eae7e79d01351924a73" args="(int max_columns=0) const " -->
+<a class="anchor" id="a064c48f5947d7ed9b33f0057304f1c7a"></a><!-- doxytag: member="UCertificate::getExponent" ref="a064c48f5947d7ed9b33f0057304f1c7a" args="() const " -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classUString.html">UString</a> UCertificate::getExponent </td>
           <td>(</td>
-          <td class="paramtype">int&nbsp;</td>
-          <td class="paramname"> <em>max_columns</em> = <code>0</code></td>
+          <td class="paramname"></td>
           <td>&nbsp;)&nbsp;</td>
           <td> const</td>
         </tr>
@@ -333,15 +323,14 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 
 </div>
 </div>
-<a class="anchor" id="ada939e39e944c137bb141d1738e2c6f7"></a><!-- doxytag: member="UCertificate::getModulus" ref="ada939e39e944c137bb141d1738e2c6f7" args="(int max_columns=0) const " -->
+<a class="anchor" id="a38d175cd859fe210a07f632bef81669e"></a><!-- doxytag: member="UCertificate::getModulus" ref="a38d175cd859fe210a07f632bef81669e" args="() const " -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="classUString.html">UString</a> UCertificate::getModulus </td>
           <td>(</td>
-          <td class="paramtype">int&nbsp;</td>
-          <td class="paramname"> <em>max_columns</em> = <code>0</code></td>
+          <td class="paramname"></td>
           <td>&nbsp;)&nbsp;</td>
           <td> const</td>
         </tr>
@@ -739,7 +728,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 <li>src/ulib/ssl/certificate.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:55 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 19 16:23:02 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

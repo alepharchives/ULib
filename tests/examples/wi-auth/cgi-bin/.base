@@ -45,7 +45,7 @@ DIR_STAT=../stat
 TIMEOUT=0
 TRAFFIC=0
 EXIT_VALUE=0
-TELEFONO="SIENA DIGITALE"
+LOGIN_LOGOUT_TIME=0
 BACK_TAG="<a class=\"back\" href=\"#\" onclick=\"history.go(-1);return false;\">INDIETRO</a>"
 MSG_ANOMALIA="Problema in autenticazione (anomalia %s). Si prega di riprovare, se il problema persiste contattare: $TELEFONO"
 LDAP_USER_PARAM="-x -D $WIAUTH_USER_LDAP_BINDDN -w $WIAUTH_USER_LDAP_PWD -h $WIAUTH_USER_LDAP_SERVER -p $WIAUTH_USER_LDAP_PORT"
@@ -70,7 +70,7 @@ fi
 export OUTPUT BASE_NAME FORM_FILE_DIR OP DIR_REQ DIR_CTX DIR_CNT DIR_POLICY DIR_REG DIR_STAT FILE_CTX TRAFFIC \
 		 TIMEOUT MAC IP GATEWAY AP TMP_FORM_FILE UUID SET_COOKIE SESSION_ID CALLER_ID \
 		 USER SIGNED_DATA BACK_TAG PROT SERVER UUID_TO_APPEND LDAP_USER_PARAM \
-		 LDAP_CARD_PARAM EXIT_VALUE CONNECTION_CLOSE TELEFONO POLICY WA_UID
+		 LDAP_CARD_PARAM EXIT_VALUE CONNECTION_CLOSE POLICY WA_UID LOGIN_LOGOUT_TIME
 
 write_OUTPUT() {
 
@@ -93,7 +93,7 @@ write_OUTPUT() {
 			# ----------------------------------------------------------------------------------------------------------------------------
 			# RET: Set-Cookie: ulib_sid=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
 
-			echo "Set-Cookie: TODO[ $SET_COOKIE 4320 ]" # 180 days
+			echo -e "Set-Cookie: TODO[ $SET_COOKIE 4320 ]\r" # 180 days
 
 		fi
 
@@ -607,9 +607,19 @@ user_welcome() {
 		esac
 	fi
 
+	# post
+	# certficato CA
+	# logout_page
+	# registrazione
+	# bottone 1
+	# bottone 2
+	# bottone 3
+	# bottone 4
+
 	print_page https://$SERVER/login \
 				  $CA_CERT_URL \
 				  $SERVER $SERVER \
+				  https://$SERVER/registrazione \
 				  $REGISTRATI $REGISTRATI \
 				  $LOGIN		  $LOGIN \
 				  $LOGOUT	  $LOGOUT \
@@ -796,7 +806,7 @@ send_ticket() {
 	write_FILE "$WA_UID $POLICY $MAX_TIME $MAX_TRAFFIC" $FILE_UID
 	# --------------------------------------------------------------------
 
-	FILE_CNT=$DIR_CNT/$POLICY/$8
+	FILE_CNT=$DIR_CNT/$POLICY/$WA_UID
 	# --------------------------------------------------------------------
 	# TIME POLICY
 	# --------------------------------------------------------------------
@@ -1075,17 +1085,17 @@ request_to_logout_from_user() {
 
 		BASE_NAME=ringraziamenti
 
-		if [ -s $DIR_CNT/$POLICY/$UUID.timeout -o \
-			  -s $DIR_CNT/$POLICY/$UUID.traffic ]; then
+		if [ -s $DIR_CNT/$POLICY/$UUID_TO_LOG.timeout -o \
+			  -s $DIR_CNT/$POLICY/$UUID_TO_LOG.traffic ]; then
 
 			PARAM="<table class=\"centered\" border=\"1\">
 					<tr>
 						<th class=\"header\" colspan=\"2\" align=\"left\">Utente&nbsp;&nbsp;&nbsp;$UUID</th>
 					</tr>"
 
-			if [ -s $DIR_CNT/$POLICY/$UUID.timeout ]; then
+			if [ -s $DIR_CNT/$POLICY/$UUID_TO_LOG.timeout ]; then
 
-				REMAINING_TIME=`cat $DIR_CNT/$POLICY/$UUID.timeout`
+				REMAINING_TIME=`cat $DIR_CNT/$POLICY/$UUID_TO_LOG.timeout`
 
 				# expressing the time in minutes
 				REMAINING_TIME_MIN=`expr $REMAINING_TIME / 60`
@@ -1097,9 +1107,9 @@ request_to_logout_from_user() {
 					</tr>"
 			fi
 
-			if [ -s $DIR_CNT/$POLICY/$UUID.traffic ]; then
+			if [ -s $DIR_CNT/$POLICY/$UUID_TO_LOG.traffic ]; then
 
-				REMAINING_TRAFFIC=`cat $DIR_CNT/$POLICY/$UUID.traffic`
+				REMAINING_TRAFFIC=`cat $DIR_CNT/$POLICY/$UUID_TO_LOG.traffic`
 
 				# expressing the traffic in MB 1024*1024=1048576
 				REMAINING_TRAFFIC_MB=`expr $REMAINING_TRAFFIC / 1048576`
@@ -1168,7 +1178,6 @@ info_notified_from_nodog() {
 
 		# we remove the connection context data saved on file and NoDog data saved on file
 		rm -f $FILE_CTX $DIR_REQ/$2.req
-
 	fi
 
 	# --------------------------------------------------------------------
@@ -1181,7 +1190,7 @@ info_notified_from_nodog() {
 	load_policy
 	# --------------------------------------------------------------------
 
-	FILE_CNT=$DIR_CNT/$POLICY/$5
+	FILE_CNT=$DIR_CNT/$POLICY/$UUID_TO_LOG
 	# --------------------------------------------------------------------
 	# TRAFFIC POLICY
 	# --------------------------------------------------------------------
@@ -1233,7 +1242,7 @@ info_notified_from_nodog() {
 		# --------------------------------------------------------------------
 		TIMEOUT=0
 
-		if [ -s $FILE_CNT.timeout ]; then
+		if [ -s $FILE_CNT.timeout -a $7 -gt $LOGIN_LOGOUT_TIME ]; then # 15 sec: login - logout to know time remain...
 			read TIMEOUT < $FILE_CNT.timeout
 
 			let "TIMEOUT = TIMEOUT - $7"

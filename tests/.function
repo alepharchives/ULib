@@ -120,7 +120,7 @@ start_msg() {
 
 	rm -f trace.*$PARAM*.[0-9]* \
 		   object.*$PARAM*.[0-9]* \
-		   stack_dump.*$PARAM*.[0-9]* \
+		   stack.*$PARAM*.[0-9]* \
 		   dmalloc.$PARAM.[0-9]* \
 			out/$PARAM.out* \
 			err/$PARAM.err*

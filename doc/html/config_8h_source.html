@@ -147,7 +147,7 @@
 <a name="l00124"></a>00124 <span class="comment">/* #undef COMMON_AIX_FIXES */</span>
 <a name="l00125"></a>00125 
 <a name="l00126"></a>00126 <span class="comment">/* Preprocessor Flags */</span>
-<a name="l00127"></a>00127 <span class="preprocessor">#define CPPFLAGS_VAR &quot; -DDEBUG -DHAVE_LIBZ -DHAVE_MAGIC -DHAVE_PCRE -DHAVE_EXPAT -DHAVE_SSL -DHAVE_SSH -DHAVE_CURL -DHAVE_LDAP -DHAVE_MYSQL -DHAVE_LIBUUID -DHAVE_LIBXML2 -I/usr/include/libxml2 -D_FILE_OFFSET_BITS=64 -pipe -D_GNU_SOURCE -fomit-frame-pointer  -finline -findirect-inlining -ftree-switch-conversion -floop-interchange -floop-strip-mine -floop-block -Wstrict-aliasing=2 -Wp,-D_FORTIFY_SOURCE=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wno-format -Wno-format-extra-args -Wunsafe-loop-optimizations -Wno-unused-parameter&quot;</span>
+<a name="l00127"></a>00127 <span class="preprocessor">#define CPPFLAGS_VAR &quot; -DDEBUG -DHAVE_SSL -DHAVE_LIBZ -DHAVE_PCRE -DHAVE_LIBUUID -DHAVE_MAGIC -DHAVE_EXPAT -DHAVE_SSH -DHAVE_CURL -DHAVE_LDAP -DHAVE_MYSQL -DHAVE_LIBXML2 -I/usr/include/libxml2 -D_FILE_OFFSET_BITS=64 -pipe -D_GNU_SOURCE -fomit-frame-pointer  -finline -findirect-inlining -ftree-switch-conversion -floop-interchange -floop-strip-mine -floop-block -Wstrict-aliasing=2 -Wp,-D_FORTIFY_SOURCE=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wno-format -Wno-format-extra-args -Wunsafe-loop-optimizations -Wno-unused-parameter&quot;</span>
 <a name="l00128"></a>00128 <span class="preprocessor"></span>
 <a name="l00129"></a>00129 <span class="comment">/* C++ Flags */</span>
 <a name="l00130"></a>00130 <span class="preprocessor">#define CXXFLAGS_VAR &quot;-g -O2 -fvisibility=hidden -fvisibility-inlines-hidden  -fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated&quot;</span>
@@ -729,7 +729,7 @@
 <a name="l00706"></a>00706 <span class="preprocessor">#define LIBC_VERSION &quot;GNU C Library stable release version 2.11, by Roland McGrath et al.&quot;</span>
 <a name="l00707"></a>00707 <span class="preprocessor"></span>
 <a name="l00708"></a>00708 <span class="comment">/* Libraries */</span>
-<a name="l00709"></a>00709 <span class="preprocessor">#define LIBS_VAR &quot;-lxml2 -luuid -lmysqlclient -lldap -llber -lcurl -lssh -lssl -lcrypto -lexpat -lpcre -lmagic -lz -lpthread -lnsl -ldl &quot;</span>
+<a name="l00709"></a>00709 <span class="preprocessor">#define LIBS_VAR &quot;-lxml2 -lmysqlclient -lldap -llber -lcurl -lssh -lexpat -lmagic -luuid -lpcre -lz -lssl -lcrypto -lpthread -lnsl -ldl &quot;</span>
 <a name="l00710"></a>00710 <span class="preprocessor"></span>
 <a name="l00711"></a>00711 <span class="comment">/* Define to the sub-directory in which libtool stores uninstalled libraries.</span>
 <a name="l00712"></a>00712 <span class="comment">   */</span>
@@ -744,7 +744,7 @@
 <a name="l00721"></a>00721 <span class="comment">/* #undef MAJOR_IN_SYSMACROS */</span>
 <a name="l00722"></a>00722 
 <a name="l00723"></a>00723 <span class="comment">/* Operating System */</span>
-<a name="l00724"></a>00724 <span class="preprocessor">#define OS &quot;Linux 2.6.33&quot;</span>
+<a name="l00724"></a>00724 <span class="preprocessor">#define OS &quot;Linux 2.6.34-rc1&quot;</span>
 <a name="l00725"></a>00725 <span class="preprocessor"></span>
 <a name="l00726"></a>00726 <span class="comment">/* Name of package */</span>
 <a name="l00727"></a>00727 <span class="preprocessor">#define PACKAGE &quot;ULib&quot;</span>
@@ -866,7 +866,7 @@
 <a name="l00843"></a>00843 <span class="preprocessor">#define _BISON_VERSION &quot;bison (GNU Bison) 2.4.1&quot;</span>
 <a name="l00844"></a>00844 <span class="preprocessor"></span>
 <a name="l00845"></a>00845 <span class="comment">/* libcURL - multiprotocol file transfer library version */</span>
-<a name="l00846"></a>00846 <span class="preprocessor">#define _CURL_VERSION &quot;7.19.7&quot;</span>
+<a name="l00846"></a>00846 <span class="preprocessor">#define _CURL_VERSION &quot;7.20.0&quot;</span>
 <a name="l00847"></a>00847 <span class="preprocessor"></span>
 <a name="l00848"></a>00848 <span class="comment">/* Expat version */</span>
 <a name="l00849"></a>00849 <span class="preprocessor">#define _EXPAT_VERSION &quot;2.0.1&quot;</span>
@@ -887,10 +887,10 @@
 <a name="l00864"></a>00864 <span class="preprocessor">#define _LIBUUID_VERSION &quot;1.41.10&quot;</span>
 <a name="l00865"></a>00865 <span class="preprocessor"></span>
 <a name="l00866"></a>00866 <span class="comment">/* libxml2 - Version 2 of the library to manipulate XML files */</span>
-<a name="l00867"></a>00867 <span class="preprocessor">#define _LIBXML2_VERSION &quot;2.7.6&quot;</span>
+<a name="l00867"></a>00867 <span class="preprocessor">#define _LIBXML2_VERSION &quot;2.7.7&quot;</span>
 <a name="l00868"></a>00868 <span class="preprocessor"></span>
 <a name="l00869"></a>00869 <span class="comment">/* libz - general purpose compression library version */</span>
-<a name="l00870"></a>00870 <span class="preprocessor">#define _LIBZ_VERSION &quot;1.2.3&quot;</span>
+<a name="l00870"></a>00870 <span class="preprocessor">#define _LIBZ_VERSION &quot;1.2.4&quot;</span>
 <a name="l00871"></a>00871 <span class="preprocessor"></span>
 <a name="l00872"></a>00872 <span class="comment">/* libmagic - magic number recognition library version */</span>
 <a name="l00873"></a>00873 <span class="preprocessor">#define _MAGIC_VERSION &quot;5.04&quot;</span>
@@ -905,7 +905,7 @@
 <a name="l00882"></a>00882 <span class="preprocessor">#define _OPENSSL_VERSION &quot;0.9.8m&quot;</span>
 <a name="l00883"></a>00883 <span class="preprocessor"></span>
 <a name="l00884"></a>00884 <span class="comment">/* Operating System version */</span>
-<a name="l00885"></a>00885 <span class="preprocessor">#define _OS_VERSION &quot;Linux stefano 2.6.33 #1 SMP Sat Feb 27 17:43:10 CET 2010 x86_64 Intel(R) Pentium(R) 4 CPU 2.80GHz GenuineIntel GNU/Linux&quot;</span>
+<a name="l00885"></a>00885 <span class="preprocessor">#define _OS_VERSION &quot;Linux stefano 2.6.34-rc1 #1 SMP Sun Mar 14 18:29:23 CET 2010 x86_64 Intel(R) Pentium(R) 4 CPU 2.80GHz GenuineIntel GNU/Linux&quot;</span>
 <a name="l00886"></a>00886 <span class="preprocessor"></span>
 <a name="l00887"></a>00887 <span class="comment">/* PCRE - Perl compatible regular expressions version */</span>
 <a name="l00888"></a>00888 <span class="preprocessor">#define _PCRE_VERSION &quot;8.00&quot;</span>
@@ -1374,7 +1374,7 @@
 <a name="l01351"></a>01351 <span class="preprocessor"></span>
 <a name="l01352"></a>01352         
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:54 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 19 16:23:01 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

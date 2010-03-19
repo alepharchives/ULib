@@ -209,7 +209,7 @@ public:
    * Returns either the DER or PEM or BASE64 encoding of the crl depending on the value of format
    */
 
-   UString getEncoded(const char* format = "PEM", int max_columns = 0) const;
+   UString getEncoded(const char* format = "PEM") const;
 
    static bool isEqual(X509_CRL* a, X509_CRL* b)
       {

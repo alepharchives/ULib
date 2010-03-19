@@ -33,6 +33,7 @@ EOF
 start_prg misc "$ARG1" "$ARG2" $ARG3 $ARG4 < tmp/c
 
 # Test against expected output
+RESULT=0
 if [ -n "$WINELOADER" ]
 then
 	N1=`grep expect out/misc.out`

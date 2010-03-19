@@ -58,18 +58,17 @@ static unsigned char decoder[256] = {
 
 #define PAD '='
 
-// #define MAX_COLUMNS 72
-
 int u_base64_errors;
+int u_base64_max_columns;
 
-uint32_t u_base64_encode(const unsigned char* input, uint32_t len, unsigned char* result, int max_columns)
+uint32_t u_base64_encode(const unsigned char* input, uint32_t len, unsigned char* result)
 {
    uint32_t i;
    bool columns = false;
    unsigned char* r = result;
    int char_count = 0, bits = 0, cols = 0;
 
-   U_INTERNAL_TRACE("u_base64_encode(%.*s,%u,%p,%d)", len, input, len, result, max_columns)
+   U_INTERNAL_TRACE("u_base64_encode(%.*s,%u,%p)", len, input, len, result)
 
    U_INTERNAL_ASSERT_POINTER(input)
 
@@ -86,11 +85,11 @@ uint32_t u_base64_encode(const unsigned char* input, uint32_t len, unsigned char
          *r++ = u_alphabet[(bits >>  6) & 0x3f];
          *r++ = u_alphabet[ bits        & 0x3f];
 
-         if (max_columns)
+         if (u_base64_max_columns)
             {
             cols += 4;
 
-            if (cols == max_columns)
+            if (cols == u_base64_max_columns)
                {
                cols    = 0;
                columns = true;

@@ -623,11 +623,11 @@
 <a name="l00600"></a>00600         <span class="comment">// mremap expands (or shrinks) an existing memory  mapping, potentially moving it at the same time</span>
 <a name="l00601"></a>00601         <span class="comment">// (controlled by the flags argument and the available virtual address space)</span>
 <a name="l00602"></a>00602 
-<a name="l00603"></a>00603         <span class="keyword">static</span> <span class="keywordtype">void</span>* mremap(<span class="keywordtype">void</span>* old_address, <span class="keywordtype">size_t</span> old_size, <span class="keywordtype">size_t</span> new_size, <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> flags = 0) <span class="comment">// MREMAP_MAYMOVE == 1</span>
+<a name="l00603"></a>00603         <span class="keyword">static</span> <span class="keywordtype">void</span>* mremap(<span class="keywordtype">void</span>* old_address, <span class="keywordtype">size_t</span> old_size, <span class="keywordtype">size_t</span> new_size, <span class="keywordtype">int</span> flags = 0) <span class="comment">// MREMAP_MAYMOVE == 1</span>
 <a name="l00604"></a>00604                 {
-<a name="l00605"></a>00605                 U_TRACE(1, <span class="stringliteral">&quot;UFile::mremap(%p,%lu,%lu,%lu)&quot;</span>, old_address, old_size, new_size, flags)
+<a name="l00605"></a>00605                 U_TRACE(1, <span class="stringliteral">&quot;UFile::mremap(%p,%lu,%lu,%d)&quot;</span>, old_address, old_size, new_size, flags)
 <a name="l00606"></a>00606 
-<a name="l00607"></a>00607                 <span class="keywordtype">void</span>* result = U_SYSCALL(mremap, <span class="stringliteral">&quot;%p,%lu,%lu,%lu&quot;</span>, old_address, old_size, new_size, flags);
+<a name="l00607"></a>00607                 <span class="keywordtype">void</span>* result = U_SYSCALL(mremap, <span class="stringliteral">&quot;%p,%lu,%lu,%d&quot;</span>, old_address, old_size, new_size, flags);
 <a name="l00608"></a>00608 
 <a name="l00609"></a>00609                 U_RETURN(result);
 <a name="l00610"></a>00610                 }
@@ -907,7 +907,7 @@
 <a name="l00884"></a>00884 
 <a name="l00885"></a>00885 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:53 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 19 16:23:01 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

@@ -15,11 +15,8 @@ if [ "$REQUEST_METHOD" = "POST" -a $# -eq 2 ]; then
 	# ----------------------------------------------------------------------------------------------------------------------------
 	# RET: Set-Cookie: ulib_sid=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
  
-	cat <<END
-Set-Cookie: TODO[ "$1" 24 ]
-Location: http://localhost:4433/cgi-bin/postlogin.sh?user=$1
-
-END
+	echo -e "Connection: close\r"
+	echo -e "Set-Cookie: TODO[ \"$1\" 24 ]\r\n\r"
 
 	exit 0
 fi

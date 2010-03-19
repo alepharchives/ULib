@@ -463,7 +463,7 @@ int UClientImage_Base::handlerWrite()
    U_INTERNAL_ASSERT_POINTER(wbuffer)
    U_INTERNAL_ASSERT(socket->isOpen())
 
-   U_INTERNAL_DUMP("wbuffer(%u) = %#.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer));
+   U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer));
 
    U_ASSERT_DIFFERS(wbuffer->empty(), true)
 

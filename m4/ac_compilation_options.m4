@@ -49,9 +49,9 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 
 	AC_MSG_CHECKING(if you want to enable mode final for build of ulib library)
 	AC_ARG_ENABLE(final,
-				[  --enable-final          build size optimized apps (experimental - needs lots of memory) [[default=no]]])
+				[  --enable-final          build size optimized apps (needs more amounts of memory) [[default=yes]]])
 	if test -z "$enable_final" ; then
-		enable_final="no"
+		enable_final="yes"
 	fi
 	AC_MSG_RESULT([$enable_final])
 

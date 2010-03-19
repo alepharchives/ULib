@@ -41,7 +41,7 @@ UApplication::~UApplication()
 
    U_INTERNAL_DUMP("u_fns_index = %d", u_fns_index)
 
-   for (uint32_t i = 0; i < u_fns_index; ++i) { U_INTERNAL_DUMP("u_fns[%2u] = %p", i, u_fns[i]) }
+   for (int i = 0; i < u_fns_index; ++i) { U_INTERNAL_DUMP("u_fns[%2u] = %p", i, u_fns[i]) }
 #endif
 }
 

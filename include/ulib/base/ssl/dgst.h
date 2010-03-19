@@ -98,7 +98,7 @@ static inline void u_dgst_hash(unsigned char* data, uint32_t length)
  * @returns    The number of bytes copied into the hash buffer
  */
 
-extern U_EXPORT uint32_t u_dgst_finish(unsigned char* hash, int base64, int max_columns); /* Finish and get hash */
+extern U_EXPORT uint32_t u_dgst_finish(unsigned char* hash, int base64); /* Finish and get hash */
 
 extern U_EXPORT void u_dgst_reset(void); /* Reset the hash */
 
@@ -122,7 +122,7 @@ static inline void u_dgst_verify_hash(unsigned char* data, uint32_t length)
    (void) EVP_SignUpdate(&u_mdctx, data, length);
 }
 
-uint32_t u_dgst_sign_finish(unsigned char* sig, int base64, int max_columns); /* Finish and get signature */
+uint32_t u_dgst_sign_finish(unsigned char* sig, int base64); /* Finish and get signature */
 int      u_dgst_verify_finish(unsigned char* sigbuf, uint32_t siglen);
 
 #ifdef __cplusplus

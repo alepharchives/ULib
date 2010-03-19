@@ -141,7 +141,7 @@ public:
     * Returns either the DER or PEM or BASE64 encoding of the pkcs7 depending on the value of format
     */
 
-   UString getEncoded(const char* format = "PEM", int max_columns = 0) const;
+   UString getEncoded(const char* format = "PEM") const;
 
    /**
    * Returns bool value to indicate the correctness of the signed data.

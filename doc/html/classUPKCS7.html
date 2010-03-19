@@ -50,7 +50,7 @@ bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isDetached</b> () con
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isMessageEncrypted</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a84d1691a454533bd61ebe35d6b9bc533"></a><!-- doxytag: member="UPKCS7::isMessageSignedAndEncrypted" ref="a84d1691a454533bd61ebe35d6b9bc533" args="() const " -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isMessageSignedAndEncrypted</b> () const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUPKCS7.html#abd2f59efa41d6f00dac39e003e23b1d5">getEncoded</a> (const char *format=&quot;PEM&quot;, int max_columns=0) const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUPKCS7.html#a5bde1f21d5361129d36ef1975a6be385">getEncoded</a> (const char *format=&quot;PEM&quot;) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUPKCS7.html#af3f1ab017e2a6da56e29edf54b8ef8d4">verify</a> (int flags=PKCS7_NOVERIFY) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">unsigned&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUPKCS7.html#a736a34d906b1ca89f71ee36130fdda52">getSignerCertificates</a> (UVector&lt; <a class="el" href="classUCertificate.html">UCertificate</a> * &gt; &amp;vec, int flags=0) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUPKCS7.html#a8a18e312330da4658b075949c67f592a">getContent</a> (bool *valid_content=0) const </td></tr>
@@ -134,7 +134,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 
 </div>
 </div>
-<a class="anchor" id="abd2f59efa41d6f00dac39e003e23b1d5"></a><!-- doxytag: member="UPKCS7::getEncoded" ref="abd2f59efa41d6f00dac39e003e23b1d5" args="(const char *format=&quot;PEM&quot;, int max_columns=0) const " -->
+<a class="anchor" id="a5bde1f21d5361129d36ef1975a6be385"></a><!-- doxytag: member="UPKCS7::getEncoded" ref="a5bde1f21d5361129d36ef1975a6be385" args="(const char *format=&quot;PEM&quot;) const " -->
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -142,18 +142,9 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
           <td class="memname"><a class="el" href="classUString.html">UString</a> UPKCS7::getEncoded </td>
           <td>(</td>
           <td class="paramtype">const char *&nbsp;</td>
-          <td class="paramname"> <em>format</em> = <code>&quot;PEM&quot;</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int&nbsp;</td>
-          <td class="paramname"> <em>max_columns</em> = <code>0</code></td><td>&nbsp;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td><td> const</td>
+          <td class="paramname"> <em>format</em> = <code>&quot;PEM&quot;</code></td>
+          <td>&nbsp;)&nbsp;</td>
+          <td> const</td>
         </tr>
       </table>
 </div>
@@ -337,7 +328,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/ssl/pkcs7.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:56 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 19 16:23:02 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

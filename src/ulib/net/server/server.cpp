@@ -331,7 +331,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    log_file_sz                = cfg.readLong(*str_LOG_FILE_SZ);
    max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE);
    USocket::req_timeout       = cfg.readLong(*str_REQ_TIMEOUT);
-   u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE, 128);
+   u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE);
 
    if (cgi_timeout) UCommand::setTimeout(cgi_timeout);
 
@@ -826,13 +826,7 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 
       const char* msg_error = UClientImage_Base::socket->getMsgError(buffer, sizeof(buffer));
 
-      uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
-
-      u_printf_string_max_length = u_strlen(msg_error);
-
-      ULog::log("%saccept new client failed %.*S\n", mod_name, u_printf_string_max_length, msg_error);
-
-      u_printf_string_max_length = u_printf_string_max_length_save;
+      ULog::log("%saccept new client failed %#.*S\n", mod_name, u_strlen(msg_error), msg_error);
       }
 
 end:

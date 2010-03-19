@@ -3,9 +3,63 @@ dnl Macros that add compilation options to a `configure' script.
 dnl AC_CHECK_PACKAGE
 
 AC_DEFUN([AC_CHECK_PACKAGE],[
-	AC_MSG_CHECKING(if LIBZ library is wanted)
-	AC_ARG_WITH(libz, [  --with-libz             use system     LIBZ library - [[will check /usr /usr/local]]],
+	AC_MSG_CHECKING(if SSL library is wanted)
+	wanted=1;
+	if test -z "$with_ssl" ; then
+		wanted=0;
+		with_ssl="/usr";
+	fi
+	AC_ARG_WITH(ssl, [  --with-ssl              use system      SSL library - [[will check /usr /usr/local]] [[default=yes]]],
 	[if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval /usr /usr/local; do
+			ssldir="$dir";
+			if test -f "$dir/include/openssl/ssl.h"; then
+				found_ssl="yes";
+				break;
+			fi
+		done
+		if test x_$found_ssl != x_yes; then
+			msg="Cannot find SSL library";
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
+		else
+			printf "OpenSSL found in $ssldir\n";
+			HAVE_SSL=yes
+			CPPFLAGS="$CPPFLAGS -DHAVE_SSL";
+			if test -f "$ssldir/include/openssl/ts.h"; then
+				HAVE_SSL_TS="yes";
+				CPPFLAGS="$CPPFLAGS -DHAVE_SSL_TS";
+			fi
+			openssl_version=$(openssl version | cut -d' ' -f2)
+			if test -z "${openssl_version}"; then
+				openssl_version="Unknown"
+			fi
+			LIBS="-lssl -lcrypto $LIBS";
+			if test $ssldir != "/usr"; then
+				CPPFLAGS="$CPPFLAGS -I$ssldir/include";
+				LDFLAGS="$LDFLAGS -L$ssldir/lib -Wl,-R$ssldir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$ssldir/lib";
+			fi
+		fi
+	fi
+	AC_SUBST(HAVE_SSL)
+	AC_SUBST(HAVE_SSL_TS)],
+	[AC_MSG_RESULT(no)])
+
+	AC_MSG_CHECKING(if LIBZ library is wanted)
+	wanted=1;
+	if test -z "$with_libz" ; then
+		wanted=0;
+		with_libz="/usr";
+	fi
+	AC_ARG_WITH(libz, [  --with-libz             use system     LIBZ library - [[will check /usr /usr/local]] [[default=yes]]], [
+	if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
@@ -17,7 +71,12 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			fi
 		done
 		if test x_$found_libz != x_yes; then
-			AC_MSG_ERROR(Cannot find LIBZ library)
+			msg="Cannot find LIBZ library";
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
 		else
 			printf "LIBZ found in $libzdir\n";
 			HAVE_LIBZ=yes
@@ -37,6 +96,96 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	AC_SUBST(HAVE_LIBZ)],
 	[AC_MSG_RESULT(no)])
 
+	AC_MSG_CHECKING(if PCRE library is wanted)
+	wanted=1;
+	if test -z "$with_pcre" ; then
+		wanted=0;
+		with_pcre="/usr";
+	fi
+	AC_ARG_WITH(pcre, [  --with-pcre             use system     PCRE library - [[will check /usr /usr/local]] [[default=yes]]],
+	[if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval /usr /usr/local/; do
+			pcredir="$dir"
+			if test -f "$dir/include/pcre.h"; then
+				found_pcre="yes";
+				break;
+			fi
+		done
+		if test x_$found_pcre != x_yes; then
+			msg="Cannot find PCRE library";
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
+		else
+			printf "PCRE found in $pcredir\n";
+			HAVE_PCRE=yes
+			CPPFLAGS="$CPPFLAGS -DHAVE_PCRE"
+			pcre_version=$(pcre-config --version)
+			if test -z "${pcre_version}"; then
+				pcre_version="Unknown"
+			fi
+			LIBS="-lpcre $LIBS";
+			if test $pcredir != "/usr"; then
+				CPPFLAGS="$CPPFLAGS -I$pcredir/include"
+				LDFLAGS="$LDFLAGS -L$pcredir/lib -Wl,-R$pcredir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$pcredir/lib";
+			fi
+		fi
+	fi
+	AC_SUBST(HAVE_PCRE)],
+	[AC_MSG_RESULT(no)])
+
+	AC_MSG_CHECKING(if libuuid library is wanted)
+	wanted=1;
+	if test -z "$with_libuuid" ; then
+		wanted=0;
+		with_libuuid="/usr";
+	fi
+	AC_ARG_WITH(libuuid, [  --with-libuuid          use system  libuuid library - [[will check /usr /usr/local]] [[default=yes]]],
+	[if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval /usr /usr/local; do
+			libuuiddir="$dir";
+			if test -f "$dir/include/uuid/uuid.h"; then
+				found_libuuid="yes";
+				break;
+			fi
+		done
+		if test x_$found_libuuid != x_yes; then
+			msg="Cannot find LIBUUID library";
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
+		else
+			printf "libuuid found in $libuuiddir\n";
+			HAVE_LIBUUID=yes
+			CPPFLAGS="$CPPFLAGS -DHAVE_LIBUUID";
+			libuuid_version=$(pkg-config --modversion ext2fs)
+			if test -z "${libuuid_version}"; then
+				libuuid_version="Unknown"
+			fi
+			LIBS="-luuid $LIBS";
+			if test $libuuiddir != "/usr"; then
+				CPPFLAGS="$CPPFLAGS -I$libuuiddir/include";
+				LDFLAGS="$LDFLAGS -L$libuuiddir/lib -Wl,-R$libuuiddir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$libuuiddir/lib";
+			fi
+		fi
+	fi
+	AC_SUBST(HAVE_LIBUUID)],
+	[AC_MSG_RESULT(no)])
+
+	dnl Check if --with-expat[=PREFIX] is specified and
+	dnl Expat >= 1.95.0 is installed in the system.
 	AC_MSG_CHECKING(if MAGIC library is wanted)
 	AC_ARG_WITH(magic, [  --with-magic            use system libmagic library - [[will check /usr /usr/local]]],
 	[if test "$withval" = "no"; then
@@ -71,42 +220,6 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	AC_SUBST(HAVE_MAGIC)],
 	[AC_MSG_RESULT(no)])
 
-	AC_MSG_CHECKING(if PCRE library is wanted)
-	AC_ARG_WITH(pcre, [  --with-pcre             use system     PCRE library - [[will check /usr /usr/local]]],
-	[if test "$withval" = "no"; then
-		AC_MSG_RESULT(no)
-	else
-		AC_MSG_RESULT(yes)
-		for dir in $withval /usr /usr/local/; do
-			pcredir="$dir"
-			if test -f "$dir/include/pcre.h"; then
-				found_pcre="yes";
-				break;
-			fi
-		done
-		if test x_$found_pcre != x_yes; then
-			AC_MSG_ERROR(Cannot find PCRE library)
-		else
-			printf "PCRE found in $pcredir\n";
-			HAVE_PCRE=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_PCRE"
-			pcre_version=$(pcre-config --version)
-			if test -z "${pcre_version}"; then
-				pcre_version="Unknown"
-			fi
-			LIBS="-lpcre $LIBS";
-			if test $pcredir != "/usr"; then
-				CPPFLAGS="$CPPFLAGS -I$pcredir/include"
-				LDFLAGS="$LDFLAGS -L$pcredir/lib -Wl,-R$pcredir/lib";
-				PRG_LDFLAGS="$PRG_LDFLAGS -L$pcredir/lib";
-			fi
-		fi
-	fi
-	AC_SUBST(HAVE_PCRE)],
-	[AC_MSG_RESULT(no)])
-
-	dnl Check if --with-expat[=PREFIX] is specified and
-	dnl Expat >= 1.95.0 is installed in the system.
 	dnl If yes, substitute EXPAT_CFLAGS, EXPAT_LIBS with regard to
 	dnl the specified PREFIX and set with_expat to PREFIX, or 'yes' if PREFIX
 	dnl has not been specified. Also HAVE_LIBEXPAT, HAVE_EXPAT_H are defined.
@@ -146,45 +259,6 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 		fi
 	fi
 	AC_SUBST(HAVE_EXPAT)],
-	[AC_MSG_RESULT(no)])
-
-	AC_MSG_CHECKING(if SSL library is wanted)
-	AC_ARG_WITH(ssl, [  --with-ssl              use system      SSL library - [[will check /usr /usr/local]]],
-	[if test "$withval" = "no"; then
-		AC_MSG_RESULT(no)
-	else
-		AC_MSG_RESULT(yes)
-		for dir in $withval /usr /usr/local; do
-			ssldir="$dir";
-			if test -f "$dir/include/openssl/ssl.h"; then
-				found_ssl="yes";
-				break;
-			fi
-		done
-		if test x_$found_ssl != x_yes; then
-			AC_MSG_ERROR(Cannot find SSL libraries)
-		else
-			printf "OpenSSL found in $ssldir\n";
-			HAVE_SSL=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_SSL";
-			if test -f "$ssldir/include/openssl/ts.h"; then
-				HAVE_SSL_TS="yes";
-				CPPFLAGS="$CPPFLAGS -DHAVE_SSL_TS";
-			fi
-			openssl_version=$(openssl version | cut -d' ' -f2)
-			if test -z "${openssl_version}"; then
-				openssl_version="Unknown"
-			fi
-			LIBS="-lssl -lcrypto $LIBS";
-			if test $ssldir != "/usr"; then
-				CPPFLAGS="$CPPFLAGS -I$ssldir/include";
-				LDFLAGS="$LDFLAGS -L$ssldir/lib -Wl,-R$ssldir/lib";
-				PRG_LDFLAGS="$PRG_LDFLAGS -L$ssldir/lib";
-			fi
-		fi
-	fi
-	AC_SUBST(HAVE_SSL)
-	AC_SUBST(HAVE_SSL_TS)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if SSH library is wanted)
@@ -371,40 +445,6 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 		fi
 	fi
 	AC_SUBST(HAVE_LIBEVENT)],
-	[AC_MSG_RESULT(no)])
-
-	AC_MSG_CHECKING(if libuuid library is wanted)
-	AC_ARG_WITH(libuuid, [  --with-libuuid          use system  libuuid library - [[will check /usr /usr/local]]],
-	[if test "$withval" = "no"; then
-		AC_MSG_RESULT(no)
-	else
-		AC_MSG_RESULT(yes)
-		for dir in $withval /usr /usr/local; do
-			libuuiddir="$dir";
-			if test -f "$dir/include/uuid/uuid.h"; then
-				found_libuuid="yes";
-				break;
-			fi
-		done
-		if test x_$found_libuuid != x_yes; then
-			AC_MSG_ERROR(Cannot find LIBUUID library)
-		else
-			printf "libuuid found in $libuuiddir\n";
-			HAVE_LIBUUID=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_LIBUUID";
-			libuuid_version=$(pkg-config --modversion ext2fs)
-			if test -z "${libuuid_version}"; then
-				libuuid_version="Unknown"
-			fi
-			LIBS="-luuid $LIBS";
-			if test $libuuiddir != "/usr"; then
-				CPPFLAGS="$CPPFLAGS -I$libuuiddir/include";
-				LDFLAGS="$LDFLAGS -L$libuuiddir/lib -Wl,-R$libuuiddir/lib";
-				PRG_LDFLAGS="$PRG_LDFLAGS -L$libuuiddir/lib";
-			fi
-		fi
-	fi
-	AC_SUBST(HAVE_LIBUUID)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if libxml2 library is wanted)

@@ -34,7 +34,7 @@
 
 static const char* uid = "@(#) " PACKAGE " " VERSION " " OS " (" __DATE__ ")";
 
-static bool u_debug_at_exit(void)
+extern "C" void U_EXPORT u_debug_at_exit(void)
 {
    U_INTERNAL_TRACE("u_debug_at_exit()", 0)
 
@@ -44,16 +44,12 @@ static bool u_debug_at_exit(void)
       {
       u_recursion = true;
 
-#  ifdef HAVE_EXECINFO_H
-   // UError::stackDump();
-#  endif
+      UError::stackDump();
 
       UObjectDB::close();
 
       u_trace_close();
       }
-
-   return false; // goto exit
 }
 
 void U_EXPORT u_debug_init(void)
@@ -64,8 +60,6 @@ void U_EXPORT u_debug_init(void)
 
    USimulationError::init();
           UObjectDB::init(true, true);
-
-   u_at_exit = u_debug_at_exit; // set to manage for U_ERROR(), U_ABORT(), etc...
 
    // controllo se sono avvenute precedenti creazioni di oggetti globali
    // che possono avere forzato l'inizializzazione del file di trace...

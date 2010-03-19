@@ -137,6 +137,8 @@ void UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
 
    UModNoCatPeer* peer = (UModNoCatPeer*) value;
 
+   U_INTERNAL_ASSERT(peer->mac.isNullTerminated())
+
    char c;
    const char* color;
    const char* status;
@@ -226,6 +228,8 @@ void UNoCatPlugIn::setStatusContent(UModNoCatPeer* peer)
 
       UString buffer(800U + sizeof(U_NOCAT_STATUS) + status_content->size());
 
+      U_INTERNAL_ASSERT(access_point.isNullTerminated())
+
       const char* name = access_point.data();
 
       buffer.snprintf(U_NOCAT_STATUS, name, name, u_now.tv_sec + u_now_adjust, u_start_time,
@@ -248,11 +252,23 @@ UModNoCatPeer::UModNoCatPeer(const UString& peer_ip) : ip(peer_ip), command(100U
 
    ip.duplicate();
 
+   ifname = USocketExt::getNetworkInterfaceName(ip);
+
+   U_INTERNAL_DUMP("ifname = %.*S", U_STRING_TO_TRACE(ifname))
+
+   ifindex = (ifname.empty() ? 0 : UNoCatPlugIn::pthis->vInternalDevice.find(ifname));
+
+   U_INTERNAL_DUMP("ifindex = %u", ifindex)
+
+   U_INTERNAL_ASSERT(ifindex <= UNoCatPlugIn::num_radio)
+
    status = UModNoCatPeer::PEER_DENY;
 
    // set MAC address
 
-   mac = UServer_Base::getMacAddress(ip.c_str());
+   U_INTERNAL_ASSERT(ip.isNullTerminated())
+
+   mac = UServer_Base::getMacAddress(ip.data());
 
    // user name
 
@@ -457,7 +473,8 @@ void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& redir
 
    Url::encode(peer->token, value_encoded);
 
-   location.snprintf_add("%.*s&ap=%.*s", U_STRING_TO_TRACE(value_encoded), U_STRING_TO_TRACE(access_point));
+   location.snprintf_add("%.*s&ap=%.*s",    U_STRING_TO_TRACE(value_encoded), U_STRING_TO_TRACE(access_point));
+// location.snprintf_add("%.*s&ap=%.*s:%u", U_STRING_TO_TRACE(value_encoded), U_STRING_TO_TRACE(access_point), peer->ifindex);
 }
 
 bool UNoCatPlugIn::checkSignedData(const char* ptr, uint32_t len)
@@ -640,6 +657,8 @@ void UNoCatPlugIn::getTraffic()
 
    for (uint32_t i = 0, n = vLocalNetwork.size(); i < n; ++i)
       {
+      U_INTERNAL_ASSERT(vLocalNetwork[i].isNullTerminated())
+
       table = vLocalNetwork[i].data();
 
       if (ipt->readEntries(table, false))
@@ -731,11 +750,11 @@ void UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
          return;
          }
 
-      peer->ifname = USocketExt::getNetworkInterfaceName(peer->ip);
+      UString ifname = USocketExt::getNetworkInterfaceName(peer->ip);
 
-      U_INTERNAL_DUMP("ifname = %.*S", U_STRING_TO_TRACE(peer->ifname))
+      U_INTERNAL_DUMP("ifname = %.*S peer->ifname = %.*S", U_STRING_TO_TRACE(ifname), U_STRING_TO_TRACE(peer->ifname))
 
-      if (peer->ifname.empty())
+      if (ifname.empty())
          {
          U_SRV_LOG_VAR("Peer %.*s not present in ARP cache, I assume he is disconnected...", U_STRING_TO_TRACE(peer->ip));
 
@@ -744,17 +763,17 @@ void UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
          return;
          }
 
-      peer->ifindex = pthis->vInternalDevice.find(peer->ifname);
+      uint32_t ifindex = pthis->vInternalDevice.find(ifname);
 
-      U_INTERNAL_DUMP("ifindex = %u", peer->ifindex)
+      U_INTERNAL_DUMP("ifindex = %u peer->ifindex = %u", ifindex, peer->ifindex)
 
-      U_INTERNAL_ASSERT_RANGE(0, peer->ifindex, (int)num_radio)
+      U_INTERNAL_ASSERT(ifindex <= num_radio)
 
-      if (peer->ifindex != U_NOT_FOUND)
+      if (ifindex != U_NOT_FOUND)
          {
          ++nfds;
 
-         vaddr[peer->ifindex]->push(peer);
+         vaddr[ifindex]->push(peer);
          }
       }
 }
@@ -1230,7 +1249,10 @@ int UNoCatPlugIn::handlerInit()
       if (arping)
          {
          sockp[i]->setLocal(UServer_Base::getSocket()->localIPAddress());
+
 #     ifdef HAVE_NETPACKET_PACKET_H
+         U_INTERNAL_ASSERT(vInternalDevice[i].isNullTerminated())
+
          sockp[i]->initArpPing(vInternalDevice[i].data());
 #     endif
          }
@@ -1268,7 +1290,8 @@ int UNoCatPlugIn::handlerRequest()
    UString host(U_HTTP_HOST_TO_PARAM), buffer(U_CAPACITY), ip_client = UClientImage_Base::getRemoteIP();
 
    U_INTERNAL_DUMP("host = %.*S gateway = %.*S access_point = %.*S ip_client = %.*S auth_ip = %.*S",
-                     U_STRING_TO_TRACE(host), U_STRING_TO_TRACE(gateway), U_STRING_TO_TRACE(access_point), U_STRING_TO_TRACE(ip_client), U_STRING_TO_TRACE(auth_ip))
+                     U_STRING_TO_TRACE(host), U_STRING_TO_TRACE(gateway),
+                     U_STRING_TO_TRACE(access_point), U_STRING_TO_TRACE(ip_client), U_STRING_TO_TRACE(auth_ip))
 
    UHTTP::getTimeIfNeeded(true);
 
@@ -1322,7 +1345,7 @@ int UNoCatPlugIn::handlerRequest()
 
          uint32_t len = (peer ? 2 : 47); // NB: 47 => sizeof("Content-Type: text/html; charset=iso-8859-1\r\n\r\n")
 
-         UHTTP::setHTTPCgiResponse(HTTP_OK, status_content->size() - len, false);
+         UHTTP::setHTTPCgiResponse(HTTP_OK, status_content->size() - len, false, true);
 
          goto end;
          }

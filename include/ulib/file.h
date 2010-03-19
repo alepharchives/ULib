@@ -600,11 +600,11 @@ public:
    // mremap expands (or shrinks) an existing memory  mapping, potentially moving it at the same time
    // (controlled by the flags argument and the available virtual address space)
 
-   static void* mremap(void* old_address, size_t old_size, size_t new_size, unsigned long flags = 0) // MREMAP_MAYMOVE == 1
+   static void* mremap(void* old_address, size_t old_size, size_t new_size, int flags = 0) // MREMAP_MAYMOVE == 1
       {
-      U_TRACE(1, "UFile::mremap(%p,%lu,%lu,%lu)", old_address, old_size, new_size, flags)
+      U_TRACE(1, "UFile::mremap(%p,%lu,%lu,%d)", old_address, old_size, new_size, flags)
 
-      void* result = U_SYSCALL(mremap, "%p,%lu,%lu,%lu", old_address, old_size, new_size, flags);
+      void* result = U_SYSCALL(mremap, "%p,%lu,%lu,%d", old_address, old_size, new_size, flags);
 
       U_RETURN(result);
       }

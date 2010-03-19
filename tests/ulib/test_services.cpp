@@ -19,9 +19,10 @@ U_EXPORT main (int argc, char* argv[])
 
    UString buffer(2000);
 
-   UBase64::encode((const unsigned char*)U_CONSTANT_TO_PARAM(TESTOA), buffer, 72);
+   u_base64_max_columns = 72;
 
-   u_printf_string_max_length = buffer.size() + 1;
+   UBase64::encode((const unsigned char*)U_CONSTANT_TO_PARAM(TESTOA), buffer);
+
    U_INTERNAL_DUMP("buffer = %#.*S", U_STRING_TO_TRACE(buffer))
 
    U_ASSERT( buffer == U_STRING_FROM_CONSTANT(TESTOB) )

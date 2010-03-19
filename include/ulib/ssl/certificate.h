@@ -422,19 +422,19 @@ public:
    * Returns either the DER or PEM or BASE64 encoding of the certificate depending on the value of format
    */
 
-   UString getEncoded(const char* format = "PEM", int max_columns = 0) const;
+   UString getEncoded(const char* format = "PEM") const;
 
    /**
    * Returns the Modulus base64 of the certificate public key
    */
 
-   UString getModulus(int max_columns = 0) const;
+   UString getModulus() const;
 
    /**
    * Returns the Exponent base64 of the certificate public key
    */
 
-   UString getExponent(int max_columns = 0) const;
+   UString getExponent() const;
 
    /**
    * Gets X509v3 extensions as array of X509Ext objects

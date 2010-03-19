@@ -47,7 +47,6 @@ int U_EXPORT main(int argc, char* argv[])
    UDES3::setPassword(argv[1]);
 
    /*
-   u_printf_string_max_length = 256;
    U_INTERNAL_DUMP("inp1_sched = %#.*S", DES_SCHEDULE_SZ, &UDES3::d.inp1_sched)
    U_INTERNAL_DUMP("inp2_sched = %#.*S", DES_SCHEDULE_SZ, &UDES3::d.inp2_sched)
    U_INTERNAL_DUMP("inp3_sched = %#.*S", DES_SCHEDULE_SZ, &UDES3::d.inp3_sched)

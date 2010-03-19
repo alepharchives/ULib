@@ -858,7 +858,7 @@ uint32_t UNotifier::read(int fd, char* buffer, int count, int timeoutMS)
          break;
          }
 
-      U_INTERNAL_DUMP("bytes read : %#.*S", value, buffer + bytes_read)
+      U_INTERNAL_DUMP("BytesRead(%d) = %#.*S", value, value, buffer + bytes_read)
 
       bytes_read += value;
 
@@ -908,7 +908,7 @@ uint32_t UNotifier::write(int fd, const char* str, int count, int timeoutMS)
          break;
          }
 
-      U_INTERNAL_DUMP("byte written : %#.*S", value, str + byte_written)
+      U_INTERNAL_DUMP("BytesWritten(%d) = %#.*S", value, value, str + byte_written)
 
       byte_written += value;
       }

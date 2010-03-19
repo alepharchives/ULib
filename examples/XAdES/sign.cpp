@@ -268,11 +268,7 @@ certificates and references to the full set of revocation data that have been us
 of the attribute certificates present in the signature, respectively. Storing the references allows
 the values of the certification path and revocation data to be stored elsewhere, reducing the size
 of a stored electronic signature format. 
-*/
 
-#define U_BASE64_MAX_COLUMN 64
-
-/*
 XMLDSIG of simple text string.
 -------------------------------------------------------------------------------------------------------------------
 INPUT: T    text-to-be-signed, a byte string
@@ -311,7 +307,7 @@ public:
 
       UTimeStamp ts(request, TSA);
 
-      if (ts.UPKCS7::isValid()) token = ts.UPKCS7::getEncoded("BASE64", U_BASE64_MAX_COLUMN);
+      if (ts.UPKCS7::isValid()) token = ts.UPKCS7::getEncoded("BASE64", );
 #  endif
 
       U_RETURN_STRING(token);
@@ -329,7 +325,7 @@ public:
 
       UString DigestValue(U_CAPACITY);
 
-      UServices::generateDigest(alg, 0, X509Certificate, DigestValue, true, 0);
+      UServices::generateDigest(alg, 0, X509Certificate, DigestValue, true);
 
       signingCertificate.snprintf(U_XADES_CERTIFICATE_TEMPLATE,
                                   U_STRING_TO_TRACE(digest_algorithm),
@@ -377,7 +373,7 @@ public:
 
       UString signedPropertiesDigestValue(200U);
 
-      UServices::generateDigest(alg, 0, to_digest, signedPropertiesDigestValue, true, 0);
+      UServices::generateDigest(alg, 0, to_digest, signedPropertiesDigestValue, true);
 
       XAdESReference.reserve(U_CONSTANT_SIZE(U_XADES_REFERENCE_TEMPLATE) + signedPropertiesDigestValue.size());
 
@@ -411,13 +407,9 @@ public:
          CACertificate  = ca->getEncoded("DER");
          CASerialNumber = ca->getSerialNumber();
 
-         UBase64::encode(CACertificate, CACertificateValue, U_BASE64_MAX_COLUMN);
-
-         vec_CACertificateValue.push_back(CACertificateValue);
-
          DigestValue.setEmpty();
 
-         UServices::generateDigest(alg, 0, CACertificate, DigestValue, true, 0);
+         UServices::generateDigest(alg, 0, CACertificate, DigestValue, true);
 
          item.snprintf(U_XADES_CERTIFICATE_TEMPLATE,
                        U_STRING_TO_TRACE(digest_algorithm),
@@ -426,6 +418,14 @@ public:
                        CASerialNumber);
 
          (void) completeCertificateRef.append(item);
+
+         u_base64_max_columns = U_OPENSSL_BASE64_MAX_COLUMN;
+
+         UBase64::encode(CACertificate, CACertificateValue);
+
+         u_base64_max_columns = 0;
+
+         vec_CACertificateValue.push_back(CACertificateValue);
          }
 
       completeCertificateRefs.snprintf(U_XADES_COMPLETE_CERTIFICATE_REFS_TEMPLATE, U_STRING_TO_TRACE(completeCertificateRef));
@@ -474,13 +474,9 @@ public:
             CRLIssuerName   = crl.getIssuerForLDAP();
             CRLIssueTime    = UDate::strftime("%Y-%m-%dT%H:%M:%SZ", crl.getIssueTime());
 
-            UBase64::encode(CRL, CRLValue, U_BASE64_MAX_COLUMN);
-
-            vec_CRLValue.push_back(CRLValue);
-
             DigestValue.setEmpty();
 
-            UServices::generateDigest(alg, 0, CRL, DigestValue, true, 0);
+            UServices::generateDigest(alg, 0, CRL, DigestValue, true);
 
             item.snprintf(U_XADES_CRL_TEMPLATE,
                           U_STRING_TO_TRACE(digest_algorithm),
@@ -490,6 +486,14 @@ public:
                           CRLNumber);
 
             (void) completeRevocationRef.append(item);
+
+            u_base64_max_columns = U_OPENSSL_BASE64_MAX_COLUMN;
+
+            UBase64::encode(CRL, CRLValue);
+
+            u_base64_max_columns = 0;
+
+            vec_CRLValue.push_back(CRLValue);
             }
          }
 
@@ -635,9 +639,10 @@ public:
       if (alg == -1) U_ERROR("I can't find the digest algorithm for: %s", digest_algorithm.data());
 
       u_line_terminator_len = 2;
+      u_base64_max_columns  = U_OPENSSL_BASE64_MAX_COLUMN;
 
-      UString modulus          = cert.getModulus(U_BASE64_MAX_COLUMN),
-              exponent         = cert.getExponent(U_BASE64_MAX_COLUMN);
+      UString modulus          = cert.getModulus(),
+              exponent         = cert.getExponent();
               X509IssuerName   = cert.getIssuerForLDAP(),
               X509SubjectName  = cert.getSubjectForLDAP(),
               X509Certificate  = cert.getEncoded("DER");
@@ -645,7 +650,9 @@ public:
 
       UString X509CertificateValue(U_CAPACITY), KeyInfo(U_CAPACITY);
 
-      UBase64::encode(X509Certificate, X509CertificateValue, U_BASE64_MAX_COLUMN);
+      UBase64::encode(X509Certificate, X509CertificateValue);
+
+      u_base64_max_columns = 0;
 
       KeyInfo.snprintf(U_XMLDSIG_KEYINFO_TEMPLATE,
                        U_STRING_TO_TRACE(modulus),
@@ -702,7 +709,7 @@ public:
          // ---------------------------------------------------------------------------------------------------------------
          ObjectDigestValue.setEmpty();
 
-         UServices::generateDigest(alg, 0, to_digest, ObjectDigestValue, true, 0);
+         UServices::generateDigest(alg, 0, to_digest, ObjectDigestValue, true);
          // ---------------------------------------------------------------------------------------------------------------
 
          Reference.snprintf(U_XMLDSIG_REFERENCE_TEMPLATE, i,
@@ -744,7 +751,11 @@ public:
       // ---------------------------------------------------------------------------------------------------------------
       UString SignatureValue(U_CAPACITY), signatureTimestamp(U_CAPACITY), archiveTimestamp(U_CAPACITY);
 
-      UString sign = UServices::getSignatureValue(alg, to_sign, UString::getStringNull(), UString::getStringNull(), true, U_BASE64_MAX_COLUMN);
+      u_base64_max_columns = U_OPENSSL_BASE64_MAX_COLUMN;
+
+      UString sign = UServices::getSignatureValue(alg, to_sign, UString::getStringNull(), UString::getStringNull(), true);
+
+      u_base64_max_columns = 0;
 
       SignatureValue.snprintf(U_XMLDSIG_SIGNATURE_VALUE_TEMPLATE, U_STRING_TO_TRACE(sign));
 

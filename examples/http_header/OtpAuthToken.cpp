@@ -245,7 +245,7 @@ void OtpAuthToken::stringify(UString& field)
 #  ifdef HAVE_SSL
    pos = u_des3_encode((const unsigned char*)tmp1.data(), (long)tmp1.size(), ptr);
 #  endif
-   pos = u_base64_encode(ptr, pos, (unsigned char*)buffer.data(), 0);
+   pos = u_base64_encode(ptr, pos, (unsigned char*)buffer.data());
 #endif
 
    U_STR_SIZE_ADJUST_FORCE(buffer, pos);

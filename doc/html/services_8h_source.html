@@ -155,9 +155,9 @@
 <a name="l00138"></a>00138         <span class="keyword">static</span> <span class="keywordtype">void</span> generateDigest(<span class="keywordtype">int</span> alg, <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* data, uint32_t size);
 <a name="l00139"></a>00139 <span class="preprocessor">#endif</span>
 <a name="l00140"></a>00140 <span class="preprocessor"></span>
-<a name="l00141"></a>00141         <span class="keyword">static</span> <span class="keywordtype">void</span>     generateDigest(<span class="keywordtype">int</span> alg, uint32_t keylen, <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* data, uint32_t size, <a class="code" href="classUString.html">UString</a>&amp; output, <span class="keywordtype">bool</span> base64, <span class="keywordtype">int</span> max_columns = 0);
-<a name="l00142"></a>00142         <span class="keyword">static</span> <span class="keywordtype">void</span>     generateDigest(<span class="keywordtype">int</span> alg, uint32_t keylen, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; data,                                     <a class="code" href="classUString.html">UString</a>&amp; output, <span class="keywordtype">bool</span> base64, <span class="keywordtype">int</span> max_columns = 0)
-<a name="l00143"></a>00143                 { generateDigest(alg, keylen, (<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>*)U_STRING_TO_PARAM(data), output, base64, max_columns); }
+<a name="l00141"></a>00141         <span class="keyword">static</span> <span class="keywordtype">void</span>     generateDigest(<span class="keywordtype">int</span> alg, uint32_t keylen, <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* data, uint32_t size, <a class="code" href="classUString.html">UString</a>&amp; output, <span class="keywordtype">bool</span> base64);
+<a name="l00142"></a>00142         <span class="keyword">static</span> <span class="keywordtype">void</span>     generateDigest(<span class="keywordtype">int</span> alg, uint32_t keylen, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; data,                                     <a class="code" href="classUString.html">UString</a>&amp; output, <span class="keywordtype">bool</span> base64)
+<a name="l00143"></a>00143                 { generateDigest(alg, keylen, (<span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>*)U_STRING_TO_PARAM(data), output, base64); }
 <a name="l00144"></a>00144 
 <a name="l00145"></a>00145         <span class="keyword">static</span> <span class="keywordtype">bool</span>             checkHMAC(<span class="keywordtype">int</span> alg, <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* data, uint32_t size, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; hmac);
 <a name="l00146"></a>00146         <span class="keyword">static</span> <span class="keywordtype">void</span>     generateHMAC(<span class="keywordtype">int</span> alg, <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* data, uint32_t size,                <a class="code" href="classUString.html">UString</a>&amp; output)
@@ -241,13 +241,13 @@
 <a name="l00224"></a>00224 <span class="comment">         * passwd is the corresponsding password for the private key</span>
 <a name="l00225"></a>00225 <span class="comment">         */</span>
 <a name="l00226"></a>00226 
-<a name="l00227"></a>00227         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getSignatureValue(<span class="keywordtype">int</span> alg, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; data, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; pkey, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; <a class="code" href="structpasswd.html">passwd</a>, <span class="keywordtype">bool</span> base64, <span class="keywordtype">int</span> max_columns = 0);
+<a name="l00227"></a>00227         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getSignatureValue(<span class="keywordtype">int</span> alg, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; data, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; pkey, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; <a class="code" href="structpasswd.html">passwd</a>, <span class="keywordtype">bool</span> base64);
 <a name="l00228"></a>00228 <span class="preprocessor">#endif</span>
 <a name="l00229"></a>00229 <span class="preprocessor"></span>};
 <a name="l00230"></a>00230 
 <a name="l00231"></a>00231 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:54 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 19 16:23:01 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

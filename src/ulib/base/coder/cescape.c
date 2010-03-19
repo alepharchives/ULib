@@ -122,7 +122,7 @@ uint32_t u_escape_encode(const unsigned char* inptr, uint32_t len, char* out, ui
                   char* outptr = out;
                   char* outend = out + (max_output - 4);
 
-   U_INTERNAL_TRACE("u_escape_encode(%.*s,%u,%p,%u)", U_min(len,u_printf_string_max_length), inptr, len, out, max_output)
+   U_INTERNAL_TRACE("u_escape_encode(%.*s,%u,%p,%u)", U_min(len,128), inptr, len, out, max_output)
 
    U_INTERNAL_ASSERT_POINTER(out)
    U_INTERNAL_ASSERT_POINTER(inptr)
@@ -212,7 +212,7 @@ uint32_t u_escape_decode(const char* inptr, uint32_t len, unsigned char* out)
    unsigned char* outptr = out;
    const    char* inend  = inptr + len;
 
-   U_INTERNAL_TRACE("u_escape_decode(%.*s,%u,%p)", U_min(len,u_printf_string_max_length), inptr, len, out)
+   U_INTERNAL_TRACE("u_escape_decode(%.*s,%u,%p)", U_min(len,128), inptr, len, out)
 
    U_INTERNAL_ASSERT_POINTER(out)
    U_INTERNAL_ASSERT_POINTER(inptr)

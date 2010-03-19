@@ -47,6 +47,7 @@ UString*           PEC_report::identifier;
 UString*           PEC_report::mittente;
 UString*           PEC_report::vtipos;
 UString*           PEC_report::vfields;
+const char*        PEC_report::ptipo;
 UVector<UString>*  PEC_report::vid;
 UVector<UString>*  PEC_report::vtipo;
 UVector<UString>*  PEC_report::vfield;
@@ -601,46 +602,47 @@ bool PEC_report::setLineTipology()
       }
 
    ptr1 += U_CONSTANT_SIZE(U_TIPO);
-
-   U_INTERNAL_DUMP("ptr1 = %.*S", 30, ptr1)
-
-   ptr2 = next(ptr1, ':');
+   ptr2  = next(ptr1, ':');
 
    field_missing_throw_exception = true;
 
-   const char* ptipo = next(ptr1, '(') + 1;
+   ptipo = ptr1;
 
-   if (U_STRNEQ(ptipo, U_ACCETTAZIONE))
+   U_INTERNAL_DUMP("ptipo = %.*S", 30, ptipo)
+
+   const char* ntipo = next(ptipo, '(') + 1;
+
+   if (U_STRNEQ(ntipo, U_ACCETTAZIONE))
       {
       tipology[U_accettazione] = true;
 
       U_INTERNAL_DUMP("tipology[U_accettazione] = %b", tipology[U_accettazione])
       }
-   else if (U_STRNEQ(ptipo, U_AVVENUTA_CONSEGNA))
+   else if (U_STRNEQ(ntipo, U_AVVENUTA_CONSEGNA))
       {
       tipology[U_avvenuta_consegna] = true;
 
       U_INTERNAL_DUMP("tipology[U_avvenuta_consegna] = %b", tipology[U_avvenuta_consegna])
       }
-   else if (U_STRNEQ(ptipo, U_POSTA_CERTIFICATA))
+   else if (U_STRNEQ(ntipo, U_POSTA_CERTIFICATA))
       {
       tipology[U_posta_certificata] = true;
 
       U_INTERNAL_DUMP("tipology[U_posta_certificata] = %b", tipology[U_posta_certificata])
       }
-   else if (U_STRNEQ(ptipo, U_PRESA_IN_CARICO))
+   else if (U_STRNEQ(ntipo, U_PRESA_IN_CARICO))
       {
       tipology[U_presa_in_carico] = true;
 
       U_INTERNAL_DUMP("tipology[U_presa_in_carico] = %b", tipology[U_presa_in_carico])
       }
-   else if (U_STRNEQ(ptipo, U_NON_ACCETTAZIONE))
+   else if (U_STRNEQ(ntipo, U_NON_ACCETTAZIONE))
       {
       tipology[U_non_accettazione] = true;
 
       U_INTERNAL_DUMP("tipology[U_non_accettazione] = %b", tipology[U_non_accettazione])
       }
-   else if (U_STRNEQ(ptipo, U_RILEVAZIONE_VIRUS))
+   else if (U_STRNEQ(ntipo, U_RILEVAZIONE_VIRUS))
       {
       tipology[U_rilevazione_virus] = true;
 
@@ -650,14 +652,14 @@ bool PEC_report::setLineTipology()
 
       field_missing_throw_exception = false;
       }
-   else if (U_STRNEQ(ptipo, U_ERRORE_CONSEGNA))
+   else if (U_STRNEQ(ntipo, U_ERRORE_CONSEGNA))
       {
-      ptipo += U_CONSTANT_SIZE(U_ERRORE_CONSEGNA);
+      ntipo += U_CONSTANT_SIZE(U_ERRORE_CONSEGNA);
 
-      U_INTERNAL_DUMP("ptipo[0] = %C", ptipo[0])
+      U_INTERNAL_DUMP("ntipo[0] = %C", ntipo[0])
 
-      if (ptipo[0] == ')' ||  // (MancataConsegna)
-          ptipo[0] == 'V')    // (MancataConsegnaVirus)
+      if (ntipo[0] == ')' ||  // (MancataConsegna)
+          ntipo[0] == 'V')    // (MancataConsegnaVirus)
          {
          tipology[U_errore_consegna] = true;
 
@@ -665,14 +667,14 @@ bool PEC_report::setLineTipology()
          }
       else // (MancataConsegna12h) (MancataConsegna24h)
          {
-         U_INTERNAL_ASSERT(ptipo[0] == '1' || ptipo[0] == '2')
+         U_INTERNAL_ASSERT(ntipo[0] == '1' || ntipo[0] == '2')
 
          tipology[U_preavviso_errore_consegna] = true;
 
          U_INTERNAL_DUMP("tipology[U_preavviso_errore_consegna] = %b", tipology[U_preavviso_errore_consegna])
          }
       }
-   else if (U_STRNEQ(ptipo, U_BUSTA_ANOMALIA))
+   else if (U_STRNEQ(ntipo, U_BUSTA_ANOMALIA))
       {
       tipology[U_busta_anomalia] = true;
 
@@ -680,7 +682,7 @@ bool PEC_report::setLineTipology()
       }
    else
       {
-      U_WARNING(U_PARSE_ERROR_MESSAGE_TYPE_NOT_VALID, 30, ptr1, U_STRING_TO_TRACE(*identifier));
+      U_WARNING(U_PARSE_ERROR_MESSAGE_TYPE_NOT_VALID, 30, ntipo, U_STRING_TO_TRACE(*identifier));
 
       U_RETURN(false);
       }

@@ -114,9 +114,9 @@ UString UPKCS7::getContent(bool* valid_content) const
    U_RETURN_STRING(UString::getStringNull());
 }
 
-UString UPKCS7::getEncoded(const char* format, int max_columns) const
+UString UPKCS7::getEncoded(const char* format) const
 {
-   U_TRACE(1, "UPKCS7::getEncoded(%S,%d)", format, max_columns)
+   U_TRACE(1, "UPKCS7::getEncoded(%S)", format)
 
    U_INTERNAL_ASSERT_POINTER(pkcs7)
 
@@ -137,7 +137,7 @@ UString UPKCS7::getEncoded(const char* format, int max_columns) const
          {
          UString x(len * 3 + 32U);
 
-         UBase64::encode(encoding, x, max_columns);
+         UBase64::encode(encoding, x);
 
          U_RETURN_STRING(x);
          }

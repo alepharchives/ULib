@@ -200,8 +200,18 @@ UString UMimeMultipartMsg::section(const UString& content,
 
       const unsigned char* ptr = (const unsigned char*)content.data();
 
-      if (encoding == BASE64)          UBase64::encode(ptr, length, tmp, 64);
-      else                    UQuotedPrintable::encode(ptr, length, tmp);
+      if (encoding == BASE64)
+         {
+         u_base64_max_columns = U_OPENSSL_BASE64_MAX_COLUMN;
+
+         UBase64::encode(ptr, length, tmp);
+
+         u_base64_max_columns = 0;
+         }
+      else
+         {
+         UQuotedPrintable::encode(ptr, length, tmp);
+         }
 
       buffer += tmp;
       }

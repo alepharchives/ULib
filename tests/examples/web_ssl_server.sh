@@ -6,7 +6,7 @@ start_msg web_ssl_server
 
 rm -f web_ssl_server.log \
       out/userver_ssl.out err/userver_ssl.err \
-		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]*
+		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]*
 
  UTRACE="0 10M 0"
  UOBJDUMP="0 100k 10"

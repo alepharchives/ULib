@@ -458,10 +458,9 @@ pkey   is the corresponsding private key
 passwd is the corresponsding password for the private key
 */
 
-UString UServices::getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, bool base64, int max_columns)
+UString UServices::getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, bool base64)
 {
-   U_TRACE(0, "UServices::getSignatureValue(%d,%.*S,%.*S,%.*S,%b,%d)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(pkey),
-                                                                            U_STRING_TO_TRACE(passwd), base64, max_columns)
+   U_TRACE(0, "UServices::getSignatureValue(%d,%.*S,%.*S,%.*S,%b)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(pkey), U_STRING_TO_TRACE(passwd), base64)
 
    u_dgst_sign_init(alg, 0);
 
@@ -473,7 +472,7 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
 
    if (bkey) u_pkey = loadKey(pkey, 0, true, passwd.c_str(), 0);
 
-   uint32_t bytes_written = u_dgst_sign_finish((unsigned char*)output.data(), base64, max_columns);
+   uint32_t bytes_written = u_dgst_sign_finish((unsigned char*)output.data(), base64);
 
    output.size_adjust(bytes_written);
 
@@ -495,7 +494,7 @@ void UServices::generateDigest(int alg, unsigned char* data, uint32_t size)
 
    u_dgst_hash(data, size);
 
-   (void) u_dgst_finish(0, 0, 0);
+   (void) u_dgst_finish(0, 0);
 
    U_INTERNAL_DUMP("u_mdLen = %u", u_mdLen)
 }
@@ -515,16 +514,16 @@ void UServices::generateKey()
 #endif
 }
 
-void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, uint32_t size, UString& output, bool base64, int max_columns)
+void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, uint32_t size, UString& output, bool base64)
 {
-   U_TRACE(0, "UServices::generateDigest(%d,%u,%.*S,%u,%.*S,%b,%d)", alg, keylen, size, data, size, U_STRING_TO_TRACE(output), base64, max_columns)
+   U_TRACE(0, "UServices::generateDigest(%d,%u,%.*S,%u,%.*S,%b)", alg, keylen, size, data, size, U_STRING_TO_TRACE(output), base64)
 
 #ifdef HAVE_SSL
    u_dgst_init(alg, (const char*)key, keylen);
 
    u_dgst_hash(data, size);
 
-   uint32_t bytes_written = u_dgst_finish((unsigned char*)output.end(), base64, max_columns);
+   uint32_t bytes_written = u_dgst_finish((unsigned char*)output.end(), base64);
 
    output.size_adjust(output.size() + bytes_written);
 

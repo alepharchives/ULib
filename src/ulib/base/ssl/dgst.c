@@ -155,11 +155,11 @@ void u_dgst_reset(void) /* Reset the hash */
       }
 }
 
-uint32_t u_dgst_finish(unsigned char* hash, int base64, int max_columns) /* Finish and get hash */
+uint32_t u_dgst_finish(unsigned char* hash, int base64) /* Finish and get hash */
 {
    uint32_t len;
 
-   U_INTERNAL_TRACE("u_dgst_finish(%p,%d,%d)", hash, base64, max_columns)
+   U_INTERNAL_TRACE("u_dgst_finish(%p,%d)", hash, base64)
 
    /* Finish up and copy out hash, returning the length */
 
@@ -176,7 +176,7 @@ uint32_t u_dgst_finish(unsigned char* hash, int base64, int max_columns) /* Fini
 
    if (hash == NULL) return u_mdLen;
 
-   if (base64) len = u_base64_encode(u_mdValue, u_mdLen, hash, max_columns);
+   if (base64) len = u_base64_encode(u_mdValue, u_mdLen, hash);
    else
       {
       len = u_mdLen * 2;
@@ -191,7 +191,7 @@ uint32_t u_dgst_finish(unsigned char* hash, int base64, int max_columns) /* Fini
 
 void u_dgst_sign_init(int alg, ENGINE* impl)
 {
-   U_INTERNAL_TRACE("u_dgst_sign_init(%d,%.*s,%u)", alg, impl)
+   U_INTERNAL_TRACE("u_dgst_sign_init(%d,%p)", alg, impl)
 
    u_dgst_algoritm(alg);
 
@@ -207,7 +207,7 @@ void u_dgst_sign_init(int alg, ENGINE* impl)
 
 void u_dgst_verify_init(int alg, ENGINE* impl)
 {
-   U_INTERNAL_TRACE("u_dgst_verify_init(%d,%.*s,%u)", alg, impl)
+   U_INTERNAL_TRACE("u_dgst_verify_init(%d,%p)", alg, impl)
 
    u_dgst_algoritm(alg);
 
@@ -221,11 +221,11 @@ void u_dgst_verify_init(int alg, ENGINE* impl)
    (void) EVP_VerifyInit_ex(&u_mdctx, u_md, impl);
 }
 
-uint32_t u_dgst_sign_finish(unsigned char* sig, int base64, int max_columns) /* Finish and get signature */
+uint32_t u_dgst_sign_finish(unsigned char* sig, int base64) /* Finish and get signature */
 {
    uint32_t len;
 
-   U_INTERNAL_TRACE("u_dgst_sign_finish(%p,%d,%d)", sig, base64, max_columns)
+   U_INTERNAL_TRACE("u_dgst_sign_finish(%p,%d)", sig, base64)
 
    U_INTERNAL_ASSERT_POINTER(u_pkey)
 
@@ -235,7 +235,7 @@ uint32_t u_dgst_sign_finish(unsigned char* sig, int base64, int max_columns) /* 
 
    if (sig == NULL) return u_mdLen;
 
-   if (base64) len = u_base64_encode(u_mdValue, u_mdLen, sig, max_columns);
+   if (base64) len = u_base64_encode(u_mdValue, u_mdLen, sig);
    else
       {
       len = u_mdLen * 2;

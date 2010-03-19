@@ -117,155 +117,154 @@
 <a name="l00094"></a>00094 <span class="preprocessor">#endif</span>
 <a name="l00095"></a>00095 <span class="preprocessor"></span>
 <a name="l00096"></a>00096 <span class="keyword">protected</span>:
-<a name="l00097"></a>00097         uint32_t rulenum;
-<a name="l00098"></a>00098         <span class="keywordtype">int</span> status, ifindex;
-<a name="l00099"></a>00099         uint32_t traffic, ctraffic, ltraffic;
-<a name="l00100"></a>00100         time_t connected, expire, logout, ctime;
-<a name="l00101"></a>00101         <a class="code" href="classUString.html">UString</a> ip, mac, token, command, user, ifname;
-<a name="l00102"></a>00102         <a class="code" href="classUCommand.html">UCommand</a> cmd;
-<a name="l00103"></a>00103 
-<a name="l00104"></a>00104 <span class="keyword">private</span>:
-<a name="l00105"></a>00105         <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>(<span class="keyword">const</span> <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>&amp;) : <a class="code" href="classUIPAddress.html">UIPAddress</a>(), <a class="code" href="classUEventTime.html">UEventTime</a>() {}
-<a name="l00106"></a>00106         <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>&amp;)                   { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00107"></a>00107 
-<a name="l00108"></a>00108         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>;
-<a name="l00109"></a>00109 };
-<a name="l00110"></a>00110 
-<a name="l00111"></a>00111 <span class="comment">// override the default...</span>
-<a name="l00112"></a>00112 <span class="keyword">template</span> &lt;&gt; <span class="keyword">inline</span> <span class="keywordtype">void</span> u_destroy(<a class="code" href="classUIPAddress.html">UIPAddress</a>** ptr, uint32_t n) { U_TRACE(0,<span class="stringliteral">&quot;u_destroy&lt;UIPAddress*&gt;(%p,%u)&quot;</span>, ptr, n) }
-<a name="l00113"></a>00113 
-<a name="l00114"></a><a class="code" href="classUNoCatPlugIn.html">00114</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a> : <span class="keyword">public</span> <a class="code" href="classUServerPlugIn.html">UServerPlugIn</a> {
-<a name="l00115"></a>00115 <span class="keyword">public</span>:
-<a name="l00116"></a>00116 
-<a name="l00117"></a>00117         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_AUTH_SERVICE_URL;
-<a name="l00118"></a>00118         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_AUTH_SERVICE_IP;
-<a name="l00119"></a>00119         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_LOGOUT_URL;
-<a name="l00120"></a>00120         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_LOGIN_TIMEOUT;
-<a name="l00121"></a>00121         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_INIT_CMD;
-<a name="l00122"></a>00122         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_ACCESS_CMD;
-<a name="l00123"></a>00123         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_RESET_CMD;
-<a name="l00124"></a>00124         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_DECRYPT_CMD;
-<a name="l00125"></a>00125         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_DECRYPT_KEY;
-<a name="l00126"></a>00126         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_CHECK_BY_ARPING;
-<a name="l00127"></a>00127         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Action;
-<a name="l00128"></a>00128         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Permit;
-<a name="l00129"></a>00129         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Deny;
-<a name="l00130"></a>00130         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Mode;
-<a name="l00131"></a>00131         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Redirect;
-<a name="l00132"></a>00132         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_renew;
-<a name="l00133"></a>00133         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Mac;
-<a name="l00134"></a>00134         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Timeout;
-<a name="l00135"></a>00135         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Token;
-<a name="l00136"></a>00136         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_User;
-<a name="l00137"></a>00137         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_anonymous;
-<a name="l00138"></a>00138         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Traffic;
-<a name="l00139"></a>00139 
-<a name="l00140"></a>00140         <span class="keyword">static</span> <span class="keywordtype">void</span> str_allocate();
-<a name="l00141"></a>00141 
-<a name="l00142"></a>00142         <span class="comment">// COSTRUTTORI</span>
-<a name="l00143"></a>00143 
-<a name="l00144"></a>00144                                 <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>();
-<a name="l00145"></a>00145         <span class="keyword">virtual</span> ~<a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>();
-<a name="l00146"></a>00146 
-<a name="l00147"></a>00147         <span class="comment">// define method VIRTUAL of class UServerPlugIn</span>
-<a name="l00148"></a>00148 
-<a name="l00149"></a>00149         <span class="comment">// Server-wide hooks</span>
-<a name="l00150"></a>00150 
-<a name="l00151"></a>00151         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerConfig(<a class="code" href="classUFileConfig.html">UFileConfig</a>&amp; cfg);
-<a name="l00152"></a>00152         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerInit();
-<a name="l00153"></a>00153 
-<a name="l00154"></a>00154         <span class="comment">// Connection-wide hooks</span>
-<a name="l00155"></a>00155 
-<a name="l00156"></a>00156         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRead()
-<a name="l00157"></a>00157                 {
-<a name="l00158"></a>00158                 U_TRACE(0, <span class="stringliteral">&quot;UNoCatPlugIn::handlerRead()&quot;</span>)
-<a name="l00159"></a>00159 
-<a name="l00160"></a>00160                 U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-<a name="l00161"></a>00161                 }
-<a name="l00162"></a>00162 
-<a name="l00163"></a>00163         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRequest();
-<a name="l00164"></a>00164         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerReset()
-<a name="l00165"></a>00165                 {
-<a name="l00166"></a>00166                 U_TRACE(0, <span class="stringliteral">&quot;UNoCatPlugIn::handlerReset()&quot;</span>)
-<a name="l00167"></a>00167 
-<a name="l00168"></a>00168                 U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-<a name="l00169"></a>00169                 }
-<a name="l00170"></a>00170 
-<a name="l00171"></a>00171         <span class="comment">// DEBUG</span>
-<a name="l00172"></a>00172 
-<a name="l00173"></a>00173 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00174"></a>00174 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00175"></a>00175 <span class="preprocessor">#endif</span>
-<a name="l00176"></a>00176 <span class="preprocessor"></span>
-<a name="l00177"></a>00177 <span class="keyword">protected</span>:
-<a name="l00178"></a>00178         <a class="code" href="classUCommand.html">UCommand</a> cmd, pgp;
-<a name="l00179"></a>00179         <a class="code" href="classUrl.html">Url</a> auth_service_url, logout_url; <span class="comment">// NB: we need *_url before vfwopt to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...</span>
-<a name="l00180"></a>00180         <a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a> vfwopt, vInternalDevice, vLocalNetwork;
-<a name="l00181"></a>00181         <a class="code" href="classUString.html">UString</a> input, output, location, init_cmd, reset_cmd, access_cmd, decrypt_cmd,
-<a name="l00182"></a>00182                           decrypt_key, mode, gateway, access_point, auth_ip, auth_ip_mask;
-<a name="l00183"></a>00183 
-<a name="l00184"></a>00184         <span class="keyword">static</span> <a class="code" href="classUrl.html">Url</a>* info;
-<a name="l00185"></a>00185         <span class="keyword">static</span> <span class="keywordtype">bool</span> arping;
-<a name="l00186"></a>00186         <span class="keyword">static</span> vPF unatexit;
-<a name="l00187"></a>00187         <span class="keyword">static</span> <span class="keywordtype">int</span> fd_stderr;
-<a name="l00188"></a>00188         <span class="keyword">static</span> <a class="code" href="classUPing.html">UPing</a>** sockp;
-<a name="l00189"></a>00189         <span class="keyword">static</span> fd_set* addrmask;
-<a name="l00190"></a>00190         <span class="keyword">static</span> <a class="code" href="classUIptAccount.html">UIptAccount</a>* ipt;
-<a name="l00191"></a>00191         <span class="keyword">static</span> <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>* pthis;
-<a name="l00192"></a>00192         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* status_content;
-<a name="l00193"></a>00193         <span class="keyword">static</span> time_t last_request_check;
-<a name="l00194"></a>00194    <span class="keyword">static</span> UVector&lt;UIPAllow*&gt;* vauth_ip;
-<a name="l00195"></a>00195         <span class="keyword">static</span> UVector&lt;UIPAddress*&gt;** vaddr;
-<a name="l00196"></a>00196         <span class="keyword">static</span> UHashMap&lt;UModNoCatPeer*&gt;* peers;
-<a name="l00197"></a>00197 
-<a name="l00198"></a>00198         <span class="keyword">static</span> <span class="keywordtype">char</span> pcStrAddress[INET6_ADDRSTRLEN];
-<a name="l00199"></a>00199         <span class="keyword">static</span> uint32_t total_connections, login_timeout, nfds, num_radio;
-<a name="l00200"></a>00200 
-<a name="l00201"></a>00201         <span class="comment">// VARIE</span>
-<a name="l00202"></a>00202 
-<a name="l00203"></a>00203         <span class="keywordtype">void</span> getTraffic();
-<a name="l00204"></a>00204         <span class="keywordtype">void</span> checkPeersForInfo();
-<a name="l00205"></a>00205         <span class="keywordtype">void</span> setStatusContent(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer);
-<a name="l00206"></a>00206         <span class="keywordtype">bool</span> checkAuthMessage(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer);
-<a name="l00207"></a>00207         <span class="keywordtype">bool</span> checkSignedData(<span class="keyword">const</span> <span class="keywordtype">char</span>* ptr, uint32_t len);
-<a name="l00208"></a>00208         <span class="keywordtype">void</span> addPeerInfo(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer, time_t logout);
-<a name="l00209"></a>00209         <span class="keywordtype">void</span> setRedirectLocation(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; redirect, <span class="keyword">const</span> <a class="code" href="classUrl.html">Url</a>&amp; auth);
-<a name="l00210"></a>00210 
-<a name="l00211"></a>00211         <span class="keyword">static</span> <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* getPeer(uint32_t i);
-<a name="l00212"></a>00212                          <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* getPeerFromMAC(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; mac);
-<a name="l00213"></a>00213                          <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* creatNewPeer(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; peer_ip);
-<a name="l00214"></a>00214 
-<a name="l00215"></a>00215         <span class="keyword">static</span> <span class="keywordtype">void</span> notifyAuthOfUsersInfo();
-<a name="l00216"></a>00216         <span class="keyword">static</span> <span class="keywordtype">void</span> getPeerStatus(<a class="code" href="classUStringRep.html">UStringRep</a>* key, <span class="keywordtype">void</span>* value);
-<a name="l00217"></a>00217         <span class="keyword">static</span> <span class="keywordtype">void</span> checkPeerInfo(<a class="code" href="classUStringRep.html">UStringRep</a>* key, <span class="keywordtype">void</span>* value);
-<a name="l00218"></a>00218         <span class="keyword">static</span> <span class="keywordtype">void</span> executeCommand(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer, <span class="keywordtype">int</span> type);
-<a name="l00219"></a>00219 
-<a name="l00220"></a>00220         <span class="keyword">static</span> <span class="keywordtype">void</span> permit(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer, time_t timeout);
-<a name="l00221"></a>00221         <span class="keyword">static</span> <span class="keywordtype">void</span>   deny(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer, <span class="keywordtype">bool</span> alarm, <span class="keywordtype">bool</span> disconnected);
-<a name="l00222"></a>00222 
-<a name="l00223"></a>00223         <span class="keyword">static</span> <span class="keywordtype">bool</span> isPingAsyncPending()
-<a name="l00224"></a>00224                 {
-<a name="l00225"></a>00225                 U_TRACE(0, <span class="stringliteral">&quot;UNoCatPlugIn::isPingAsyncPending()&quot;</span>)
-<a name="l00226"></a>00226 
-<a name="l00227"></a>00227                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;nfds = %u addrmask = %p&quot;</span>, nfds, addrmask)
-<a name="l00228"></a>00228 
-<a name="l00229"></a>00229                 <span class="keywordtype">bool</span> result = (nfds &amp;&amp; addrmask == 0);
-<a name="l00230"></a>00230 
-<a name="l00231"></a>00231                 U_RETURN(result);
-<a name="l00232"></a>00232                 }
-<a name="l00233"></a>00233 
-<a name="l00234"></a>00234         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getIPAddress(<span class="keyword">const</span> <span class="keywordtype">char</span>* ptr, uint32_t len);
-<a name="l00235"></a>00235 
-<a name="l00236"></a>00236 <span class="keyword">private</span>:
-<a name="l00237"></a>00237         <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>(<span class="keyword">const</span> <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>&amp;) : <a class="code" href="classUServerPlugIn.html">UServerPlugIn</a>() {}
-<a name="l00238"></a>00238         <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>&amp;)        { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00239"></a>00239 
-<a name="l00240"></a>00240         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>;
-<a name="l00241"></a>00241 };
-<a name="l00242"></a>00242 
-<a name="l00243"></a>00243 <span class="preprocessor">#endif</span>
+<a name="l00097"></a>00097         <span class="keywordtype">int</span> status;
+<a name="l00098"></a>00098         time_t connected, expire, logout, ctime;
+<a name="l00099"></a>00099         uint32_t ifindex, traffic, ctraffic, ltraffic, rulenum;
+<a name="l00100"></a>00100         <a class="code" href="classUString.html">UString</a> ip, mac, token, command, user, ifname;
+<a name="l00101"></a>00101         <a class="code" href="classUCommand.html">UCommand</a> cmd;
+<a name="l00102"></a>00102 
+<a name="l00103"></a>00103 <span class="keyword">private</span>:
+<a name="l00104"></a>00104         <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>(<span class="keyword">const</span> <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>&amp;) : <a class="code" href="classUIPAddress.html">UIPAddress</a>(), <a class="code" href="classUEventTime.html">UEventTime</a>() {}
+<a name="l00105"></a>00105         <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>&amp;)                   { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00106"></a>00106 
+<a name="l00107"></a>00107         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>;
+<a name="l00108"></a>00108 };
+<a name="l00109"></a>00109 
+<a name="l00110"></a>00110 <span class="comment">// override the default...</span>
+<a name="l00111"></a>00111 <span class="keyword">template</span> &lt;&gt; <span class="keyword">inline</span> <span class="keywordtype">void</span> u_destroy(<a class="code" href="classUIPAddress.html">UIPAddress</a>** ptr, uint32_t n) { U_TRACE(0,<span class="stringliteral">&quot;u_destroy&lt;UIPAddress*&gt;(%p,%u)&quot;</span>, ptr, n) }
+<a name="l00112"></a>00112 
+<a name="l00113"></a><a class="code" href="classUNoCatPlugIn.html">00113</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a> : <span class="keyword">public</span> <a class="code" href="classUServerPlugIn.html">UServerPlugIn</a> {
+<a name="l00114"></a>00114 <span class="keyword">public</span>:
+<a name="l00115"></a>00115 
+<a name="l00116"></a>00116         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_AUTH_SERVICE_URL;
+<a name="l00117"></a>00117         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_AUTH_SERVICE_IP;
+<a name="l00118"></a>00118         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_LOGOUT_URL;
+<a name="l00119"></a>00119         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_LOGIN_TIMEOUT;
+<a name="l00120"></a>00120         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_INIT_CMD;
+<a name="l00121"></a>00121         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_ACCESS_CMD;
+<a name="l00122"></a>00122         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_RESET_CMD;
+<a name="l00123"></a>00123         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_DECRYPT_CMD;
+<a name="l00124"></a>00124         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_DECRYPT_KEY;
+<a name="l00125"></a>00125         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_CHECK_BY_ARPING;
+<a name="l00126"></a>00126         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Action;
+<a name="l00127"></a>00127         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Permit;
+<a name="l00128"></a>00128         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Deny;
+<a name="l00129"></a>00129         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Mode;
+<a name="l00130"></a>00130         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Redirect;
+<a name="l00131"></a>00131         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_renew;
+<a name="l00132"></a>00132         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Mac;
+<a name="l00133"></a>00133         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Timeout;
+<a name="l00134"></a>00134         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Token;
+<a name="l00135"></a>00135         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_User;
+<a name="l00136"></a>00136         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_anonymous;
+<a name="l00137"></a>00137         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* str_Traffic;
+<a name="l00138"></a>00138 
+<a name="l00139"></a>00139         <span class="keyword">static</span> <span class="keywordtype">void</span> str_allocate();
+<a name="l00140"></a>00140 
+<a name="l00141"></a>00141         <span class="comment">// COSTRUTTORI</span>
+<a name="l00142"></a>00142 
+<a name="l00143"></a>00143                                 <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>();
+<a name="l00144"></a>00144         <span class="keyword">virtual</span> ~<a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>();
+<a name="l00145"></a>00145 
+<a name="l00146"></a>00146         <span class="comment">// define method VIRTUAL of class UServerPlugIn</span>
+<a name="l00147"></a>00147 
+<a name="l00148"></a>00148         <span class="comment">// Server-wide hooks</span>
+<a name="l00149"></a>00149 
+<a name="l00150"></a>00150         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerConfig(<a class="code" href="classUFileConfig.html">UFileConfig</a>&amp; cfg);
+<a name="l00151"></a>00151         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerInit();
+<a name="l00152"></a>00152 
+<a name="l00153"></a>00153         <span class="comment">// Connection-wide hooks</span>
+<a name="l00154"></a>00154 
+<a name="l00155"></a>00155         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRead()
+<a name="l00156"></a>00156                 {
+<a name="l00157"></a>00157                 U_TRACE(0, <span class="stringliteral">&quot;UNoCatPlugIn::handlerRead()&quot;</span>)
+<a name="l00158"></a>00158 
+<a name="l00159"></a>00159                 U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+<a name="l00160"></a>00160                 }
+<a name="l00161"></a>00161 
+<a name="l00162"></a>00162         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRequest();
+<a name="l00163"></a>00163         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerReset()
+<a name="l00164"></a>00164                 {
+<a name="l00165"></a>00165                 U_TRACE(0, <span class="stringliteral">&quot;UNoCatPlugIn::handlerReset()&quot;</span>)
+<a name="l00166"></a>00166 
+<a name="l00167"></a>00167                 U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+<a name="l00168"></a>00168                 }
+<a name="l00169"></a>00169 
+<a name="l00170"></a>00170         <span class="comment">// DEBUG</span>
+<a name="l00171"></a>00171 
+<a name="l00172"></a>00172 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00173"></a>00173 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00174"></a>00174 <span class="preprocessor">#endif</span>
+<a name="l00175"></a>00175 <span class="preprocessor"></span>
+<a name="l00176"></a>00176 <span class="keyword">protected</span>:
+<a name="l00177"></a>00177         <a class="code" href="classUCommand.html">UCommand</a> cmd, pgp;
+<a name="l00178"></a>00178         <a class="code" href="classUrl.html">Url</a> auth_service_url, logout_url; <span class="comment">// NB: we need *_url before vfwopt to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...</span>
+<a name="l00179"></a>00179         <a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a> vfwopt, vInternalDevice, vLocalNetwork;
+<a name="l00180"></a>00180         <a class="code" href="classUString.html">UString</a> input, output, location, init_cmd, reset_cmd, access_cmd, decrypt_cmd,
+<a name="l00181"></a>00181                           decrypt_key, mode, gateway, access_point, auth_ip, auth_ip_mask;
+<a name="l00182"></a>00182 
+<a name="l00183"></a>00183         <span class="keyword">static</span> <a class="code" href="classUrl.html">Url</a>* info;
+<a name="l00184"></a>00184         <span class="keyword">static</span> <span class="keywordtype">bool</span> arping;
+<a name="l00185"></a>00185         <span class="keyword">static</span> vPF unatexit;
+<a name="l00186"></a>00186         <span class="keyword">static</span> <span class="keywordtype">int</span> fd_stderr;
+<a name="l00187"></a>00187         <span class="keyword">static</span> <a class="code" href="classUPing.html">UPing</a>** sockp;
+<a name="l00188"></a>00188         <span class="keyword">static</span> fd_set* addrmask;
+<a name="l00189"></a>00189         <span class="keyword">static</span> <a class="code" href="classUIptAccount.html">UIptAccount</a>* ipt;
+<a name="l00190"></a>00190         <span class="keyword">static</span> <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>* pthis;
+<a name="l00191"></a>00191         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* status_content;
+<a name="l00192"></a>00192         <span class="keyword">static</span> time_t last_request_check;
+<a name="l00193"></a>00193    <span class="keyword">static</span> UVector&lt;UIPAllow*&gt;* vauth_ip;
+<a name="l00194"></a>00194         <span class="keyword">static</span> UVector&lt;UIPAddress*&gt;** vaddr;
+<a name="l00195"></a>00195         <span class="keyword">static</span> UHashMap&lt;UModNoCatPeer*&gt;* peers;
+<a name="l00196"></a>00196 
+<a name="l00197"></a>00197         <span class="keyword">static</span> <span class="keywordtype">char</span> pcStrAddress[INET6_ADDRSTRLEN];
+<a name="l00198"></a>00198         <span class="keyword">static</span> uint32_t total_connections, login_timeout, nfds, num_radio;
+<a name="l00199"></a>00199 
+<a name="l00200"></a>00200         <span class="comment">// VARIE</span>
+<a name="l00201"></a>00201 
+<a name="l00202"></a>00202         <span class="keywordtype">void</span> getTraffic();
+<a name="l00203"></a>00203         <span class="keywordtype">void</span> checkPeersForInfo();
+<a name="l00204"></a>00204         <span class="keywordtype">void</span> setStatusContent(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer);
+<a name="l00205"></a>00205         <span class="keywordtype">bool</span> checkAuthMessage(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer);
+<a name="l00206"></a>00206         <span class="keywordtype">bool</span> checkSignedData(<span class="keyword">const</span> <span class="keywordtype">char</span>* ptr, uint32_t len);
+<a name="l00207"></a>00207         <span class="keywordtype">void</span> addPeerInfo(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer, time_t logout);
+<a name="l00208"></a>00208         <span class="keywordtype">void</span> setRedirectLocation(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; redirect, <span class="keyword">const</span> <a class="code" href="classUrl.html">Url</a>&amp; auth);
+<a name="l00209"></a>00209 
+<a name="l00210"></a>00210         <span class="keyword">static</span> <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* getPeer(uint32_t i);
+<a name="l00211"></a>00211                          <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* getPeerFromMAC(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; mac);
+<a name="l00212"></a>00212                          <a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* creatNewPeer(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; peer_ip);
+<a name="l00213"></a>00213 
+<a name="l00214"></a>00214         <span class="keyword">static</span> <span class="keywordtype">void</span> notifyAuthOfUsersInfo();
+<a name="l00215"></a>00215         <span class="keyword">static</span> <span class="keywordtype">void</span> getPeerStatus(<a class="code" href="classUStringRep.html">UStringRep</a>* key, <span class="keywordtype">void</span>* value);
+<a name="l00216"></a>00216         <span class="keyword">static</span> <span class="keywordtype">void</span> checkPeerInfo(<a class="code" href="classUStringRep.html">UStringRep</a>* key, <span class="keywordtype">void</span>* value);
+<a name="l00217"></a>00217         <span class="keyword">static</span> <span class="keywordtype">void</span> executeCommand(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer, <span class="keywordtype">int</span> type);
+<a name="l00218"></a>00218 
+<a name="l00219"></a>00219         <span class="keyword">static</span> <span class="keywordtype">void</span> permit(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer, time_t timeout);
+<a name="l00220"></a>00220         <span class="keyword">static</span> <span class="keywordtype">void</span>   deny(<a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>* peer, <span class="keywordtype">bool</span> alarm, <span class="keywordtype">bool</span> disconnected);
+<a name="l00221"></a>00221 
+<a name="l00222"></a>00222         <span class="keyword">static</span> <span class="keywordtype">bool</span> isPingAsyncPending()
+<a name="l00223"></a>00223                 {
+<a name="l00224"></a>00224                 U_TRACE(0, <span class="stringliteral">&quot;UNoCatPlugIn::isPingAsyncPending()&quot;</span>)
+<a name="l00225"></a>00225 
+<a name="l00226"></a>00226                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;nfds = %u addrmask = %p&quot;</span>, nfds, addrmask)
+<a name="l00227"></a>00227 
+<a name="l00228"></a>00228                 <span class="keywordtype">bool</span> result = (nfds &amp;&amp; addrmask == 0);
+<a name="l00229"></a>00229 
+<a name="l00230"></a>00230                 U_RETURN(result);
+<a name="l00231"></a>00231                 }
+<a name="l00232"></a>00232 
+<a name="l00233"></a>00233         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getIPAddress(<span class="keyword">const</span> <span class="keywordtype">char</span>* ptr, uint32_t len);
+<a name="l00234"></a>00234 
+<a name="l00235"></a>00235 <span class="keyword">private</span>:
+<a name="l00236"></a>00236         <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>(<span class="keyword">const</span> <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>&amp;) : <a class="code" href="classUServerPlugIn.html">UServerPlugIn</a>() {}
+<a name="l00237"></a>00237         <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUNoCatPlugIn.html">UNoCatPlugIn</a>&amp;)        { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00238"></a>00238 
+<a name="l00239"></a>00239         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUModNoCatPeer.html">UModNoCatPeer</a>;
+<a name="l00240"></a>00240 };
+<a name="l00241"></a>00241 
+<a name="l00242"></a>00242 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:54 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 19 16:23:01 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

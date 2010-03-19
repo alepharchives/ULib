@@ -38,10 +38,10 @@
 #define U_STRING_TO_PARAM(str)              (str).data(),(str).size()
 #define U_STRING_TO_TRACEX(str,start,count) count,(str).data()+start
 
-#ifndef DEBUG_DEBUG
-#define U_STRING_TO_TRACE(str)              (str).size(),(str).data()
+#ifdef DEBUG_DEBUG
+#define U_STRING_TO_TRACE(str)  U_min(128,(str).size()),(str).data()
 #else
-#define U_STRING_TO_TRACE(str)              U_min((str).size(),u_printf_string_max_length),(str).data()
+#define U_STRING_TO_TRACE(str)            (str).size(), (str).data()
 #endif
 
 // UStringRep: string representation

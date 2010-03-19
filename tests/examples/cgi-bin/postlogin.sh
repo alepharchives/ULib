@@ -4,20 +4,19 @@
 
 if [ "$REQUEST_METHOD" = "GET" -a $# -eq 1 ]; then
 
-	# $1 -> uid
-
-	if [ -n "$HTTP_COOKIE" ]; then
-
-		cat <<END
-Content-Type: text/plain; charset=iso-8859-1
+	cat <<END
+Status: 200
+Connection: close
+Content-Length: 100
+X-Real-IP: 127.0.0.1
+Set-Cookie: TODO[ "$1" 24 ]
+Content-Type: text/html; charset=iso-8859-1
 
 UID         = $1
 HTTP_COOKIE = $HTTP_COOKIE
 END
 
-		exit 0
-
-	fi
+	exit 0
 
 fi
 

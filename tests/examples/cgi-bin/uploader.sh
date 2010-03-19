@@ -5,8 +5,6 @@
 if [ "$REQUEST_METHOD" = "GET" ]; then
 
 	cat <<END
-Content-Type: text/html; charset=iso-8859-1
-
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html>
 <head>
@@ -40,8 +38,6 @@ elif [ "$REQUEST_METHOD" = "POST" ]; then
 	FILE=/$DIR/`basename $1`
 
 	cat <<END
-Content-Type: text/html; charset=iso-8859-1
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>

@@ -157,10 +157,10 @@ public:
    // ---------------------------------
    // line tipology
    // ---------------------------------
-   static UString* tipo;
    static uint32_t index;
    static bool tipology[9];
    static UString* vtipos;
+   static const char* ptipo;
    static UVector<UString>* vtipo;
    // ---------------------------------
    // line fields

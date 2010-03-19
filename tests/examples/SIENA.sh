@@ -9,10 +9,10 @@ DOC_ROOT=/srv/wifi-portal-siena/www
 rm -f SIENA*.log err/SIENA*.err \
       out/userver_tcp.out err/userver_tcp.err \
       out/userver_ssl.out err/userver_ssl.err \
-		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* \
-		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* \
-		$DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* \
-		$DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* \
+		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]* \
+		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* \
+		$DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* $DOC_ROOT/stack.*userver_ssl*.[0-9]* \
+		$DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]* \
 		/tmp/processCGIRequest.err
 
 #UTRACE="0 10M 0"

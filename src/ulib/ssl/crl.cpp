@@ -150,9 +150,9 @@ UString UCrl::getFileName(X509_CRL* crl)
    U_RETURN_STRING(name);
 }
 
-UString UCrl::getEncoded(const char* format, int max_columns) const
+UString UCrl::getEncoded(const char* format) const
 {
-   U_TRACE(0, "UCrl::getEncoded(%S,%d)", format, max_columns)
+   U_TRACE(0, "UCrl::getEncoded(%S)", format)
 
    U_INTERNAL_ASSERT_POINTER(crl)
 
@@ -173,7 +173,7 @@ UString UCrl::getEncoded(const char* format, int max_columns) const
          {
          UString x(len * 3 + 32U);
 
-         UBase64::encode(encoding, x, max_columns);
+         UBase64::encode(encoding, x);
 
          U_RETURN_STRING(x);
          }

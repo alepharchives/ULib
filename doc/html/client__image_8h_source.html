@@ -284,7 +284,7 @@
 <a name="l00267"></a>00267 
 <a name="l00268"></a>00268                 ssl = getSocket()-&gt;ssl;
 <a name="l00269"></a>00269 
-<a name="l00270"></a>00270                 if (logbuf) logCertificate();
+<a name="l00270"></a>00270                 if (logbuf) <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>::logCertificate(getSocket()-&gt;getPeerCertificate());
 <a name="l00271"></a>00271                 }
 <a name="l00272"></a>00272 
 <a name="l00273"></a>00273         virtual ~<a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage</a>()
@@ -310,48 +310,37 @@
 <a name="l00293"></a>00293 
 <a name="l00294"></a>00294         <span class="keyword">static</span> <a class="code" href="classUSSLSocket.html">USSLSocket</a>* getSocket() { <span class="keywordflow">return</span> (<a class="code" href="classUSSLSocket.html">USSLSocket</a>*)socket; }
 <a name="l00295"></a>00295 
-<a name="l00296"></a>00296         <span class="comment">// aggiungo nel log il certificato Peer del client (&quot;issuer&quot;,&quot;serial&quot;)</span>
+<a name="l00296"></a>00296         <span class="comment">// define method VIRTUAL of class UClientImage_Base</span>
 <a name="l00297"></a>00297 
-<a name="l00298"></a>00298         <span class="keywordtype">void</span> logCertificate()
+<a name="l00298"></a>00298         <span class="keyword">virtual</span> <span class="keywordtype">void</span> reset()
 <a name="l00299"></a>00299                 {
-<a name="l00300"></a>00300                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage&lt;USSLSocket&gt;::logCertificate()&quot;</span>)
+<a name="l00300"></a>00300                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage&lt;USSLSocket&gt;::reset()&quot;</span>)
 <a name="l00301"></a>00301 
-<a name="l00302"></a>00302                 <span class="comment">// NB: OpenSSL already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...</span>
+<a name="l00302"></a>00302                 U_INTERNAL_DUMP(&quot;ssl = %p ssl_fd = %d fd = %d&quot;, ssl, SSL_get_fd(ssl), <a class="code" href="classUEventFd.html">UEventFd</a>::fd)
 <a name="l00303"></a>00303 
-<a name="l00304"></a>00304                 <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>::logCertificate(getSocket()-&gt;getPeerCertificate());
-<a name="l00305"></a>00305                 }
-<a name="l00306"></a>00306 
-<a name="l00307"></a>00307         <span class="comment">// define method VIRTUAL of class UClientImage_Base</span>
-<a name="l00308"></a>00308 
-<a name="l00309"></a>00309         virtual <span class="keywordtype">void</span> reset()
-<a name="l00310"></a>00310                 {
-<a name="l00311"></a>00311                 U_TRACE(0, <span class="stringliteral">&quot;UClientImage&lt;USSLSocket&gt;::reset()&quot;</span>)
+<a name="l00304"></a>00304                 U_INTERNAL_ASSERT(<a class="code" href="classUEventFd.html">UEventFd</a>::fd == SSL_get_fd(ssl))
+<a name="l00305"></a>00305 
+<a name="l00306"></a>00306                 getSocket()-&gt;ssl = ssl; <span class="comment">// NB: we need this because we reuse the same object USocket...</span>
+<a name="l00307"></a>00307 
+<a name="l00308"></a>00308                 <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>::reset();
+<a name="l00309"></a>00309                 }
+<a name="l00310"></a>00310 
+<a name="l00311"></a>00311         <span class="comment">// DEBUG</span>
 <a name="l00312"></a>00312 
-<a name="l00313"></a>00313                 U_INTERNAL_DUMP(&quot;ssl = %p ssl_fd = %d fd = %d&quot;, ssl, SSL_get_fd(ssl), <a class="code" href="classUEventFd.html">UEventFd</a>::fd)
-<a name="l00314"></a>00314 
-<a name="l00315"></a>00315                 U_INTERNAL_ASSERT(<a class="code" href="classUEventFd.html">UEventFd</a>::fd == SSL_get_fd(ssl))
-<a name="l00316"></a>00316 
-<a name="l00317"></a>00317                 getSocket()-&gt;ssl = ssl; <span class="comment">// NB: we need this because we reuse the same object USocket...</span>
-<a name="l00318"></a>00318 
-<a name="l00319"></a>00319                 <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>::reset();
-<a name="l00320"></a>00320                 }
+<a name="l00313"></a>00313 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00314"></a>00314 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00315"></a>00315 <span class="preprocessor">#endif</span>
+<a name="l00316"></a>00316 <span class="preprocessor"></span>
+<a name="l00317"></a>00317 <span class="keyword">private</span>:
+<a name="l00318"></a>00318         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp;) : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>() {}
+<a name="l00319"></a>00319         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp;)                              { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00320"></a>00320 };
 <a name="l00321"></a>00321 
-<a name="l00322"></a>00322         <span class="comment">// DEBUG</span>
-<a name="l00323"></a>00323 
-<a name="l00324"></a>00324 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00325"></a>00325 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00326"></a>00326 <span class="preprocessor">#endif</span>
-<a name="l00327"></a>00327 <span class="preprocessor"></span>
-<a name="l00328"></a>00328 <span class="keyword">private</span>:
-<a name="l00329"></a>00329         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp;) : <a class="code" href="classUClientImage__Base.html">UClientImage_Base</a>() {}
-<a name="l00330"></a>00330         <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClientImage.html" title="Handles accepted connections from UServer&amp;#39;s client.">UClientImage&lt;USSLSocket&gt;</a>&amp;)                              { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00331"></a>00331 };
-<a name="l00332"></a>00332 
-<a name="l00333"></a>00333 <span class="preprocessor">#endif</span>
-<a name="l00334"></a>00334 <span class="preprocessor"></span>
-<a name="l00335"></a>00335 <span class="preprocessor">#endif</span>
+<a name="l00322"></a>00322 <span class="preprocessor">#endif</span>
+<a name="l00323"></a>00323 <span class="preprocessor"></span>
+<a name="l00324"></a>00324 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:54 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 19 16:23:01 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

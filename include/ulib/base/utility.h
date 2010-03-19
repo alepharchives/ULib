@@ -264,7 +264,7 @@ extern U_EXPORT const unsigned char u_text_chars[256];
 
 static inline bool u_istext(int c) { return (u_text_chars[c] != 0); }
 
-extern U_EXPORT bool u_isText( const unsigned char* s, uint32_t n);
+extern U_EXPORT bool u_isText(  const unsigned char* s, uint32_t n);
 extern U_EXPORT bool u_isUTF8(  const unsigned char* s, uint32_t n);
 extern U_EXPORT int  u_isUTF16( const unsigned char* s, uint32_t n);
 static inline   bool u_isBinary(const unsigned char* s, uint32_t n) { return ((u_isText(s,n) || u_isUTF8(s,n) || u_isUTF16(s,n)) == false); }

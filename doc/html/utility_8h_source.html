@@ -257,7 +257,7 @@
 <a name="l00264"></a>00264 
 <a name="l00265"></a>00265 <span class="keyword">static</span> <span class="keyword">inline</span> <span class="keywordtype">bool</span> u_istext(<span class="keywordtype">int</span> c) { <span class="keywordflow">return</span> (u_text_chars[c] != 0); }
 <a name="l00266"></a>00266 
-<a name="l00267"></a>00267 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">bool</span> u_isText( <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* s, uint32_t n);
+<a name="l00267"></a>00267 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">bool</span> u_isText(  <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* s, uint32_t n);
 <a name="l00268"></a>00268 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">bool</span> u_isUTF8(  <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* s, uint32_t n);
 <a name="l00269"></a>00269 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">int</span>  u_isUTF16( <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* s, uint32_t n);
 <a name="l00270"></a>00270 <span class="keyword">static</span> <span class="keyword">inline</span>   <span class="keywordtype">bool</span> u_isBinary(<span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* s, uint32_t n) { <span class="keywordflow">return</span> ((u_isText(s,n) || u_isUTF8(s,n) || u_isUTF16(s,n)) == <span class="keyword">false</span>); }
@@ -297,7 +297,7 @@
 <a name="l00304"></a>00304 <span class="preprocessor"></span>
 <a name="l00305"></a>00305 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 12 19:11:53 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 19 16:23:00 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

@@ -44,7 +44,7 @@ define Package/nodog/conffiles
 /usr/lib/nodog/bin/upload-logs.sh
 endef
 
-NODOG_OPTIONS:= --disable-static --disable-new-ldflags --enable-final --with-ssl --with-libz --with-libuuid $(if $(CONFIG_NODOG_DEBUG),--enable-debug)
+NODOG_OPTIONS:= --disable-static --disable-new-ldflags --with-ssl --with-libz --without-pcre $(if $(CONFIG_NODOG_DEBUG),--enable-debug)
 
 define Build/Configure
 	$(call Build/Configure/Default, \

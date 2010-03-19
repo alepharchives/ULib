@@ -82,7 +82,7 @@ void UObjectIO::output()
 
    buffer_output[buffer_output_len] = '\0';
 
-   U_INTERNAL_PRINT("buffer_output = %.*s", U_min(buffer_output_len,u_printf_string_max_length), buffer_output)
+   U_INTERNAL_PRINT("buffer_output = %.*s", U_min(buffer_output_len,128), buffer_output)
 
 #ifdef DEBUG_DEBUG
    off_t pos = os->rdbuf()->pubseekpos(0, U_openmode);

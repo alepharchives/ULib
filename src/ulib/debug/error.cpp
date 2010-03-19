@@ -13,56 +13,85 @@
 
 #include <ulib/debug/error.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #ifdef HAVE_EXECINFO_H
 #  include <execinfo.h>
+#ifndef __GXX_ABI_VERSION
+#define __GXX_ABI_VERSION 100
+#endif
+#  include <cxxabi.h>
+#endif
 
 void UError::stackDump()
 {
    U_INTERNAL_TRACE("UError::stackDump()", 0)
 
-   void* ba[20];
+#ifdef HAVE_EXECINFO_H
+   char name[128];
+   void* array[256];
 
-   // Store up to SIZE return address of the current program state in
-   // ARRAY and return the exact number of values stored.
+   (void) memset(array, 0, sizeof(array));
 
-   int n = backtrace(ba, sizeof(ba)/ sizeof(ba[0]));
+   /* use -rdynamic flag when compiling */
 
-   if (n != 0)
+   int size       = backtrace(array, 256);
+   char** strings = backtrace_symbols(array, size);
+
+   (void) u_snprintf(name, sizeof(name), "stack.%N.%P", 0);
+
+   int fd = open(name, O_CREAT | O_WRONLY | O_APPEND | O_BINARY, 0666);
+
+   // This function is similar to backtrace_symbols() but it writes the result
+   // immediately to a file and can therefore also be used in situations where
+   // malloc() is not usable anymore.
+
+   backtrace_symbols_fd(array, size, fd);
+
+#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+   int i, status;
+   char* realname;
+   char* lastparen;
+   char* firstparen;
+
+   FILE* f = fdopen(fd, "a");
+
+   (void) fwrite(U_CONSTANT_TO_PARAM("=== STACK TRACE ===\n"), 1, f);
+
+   /* we start from 3 to avoid
+    * ------------------------
+    * UError::stackDump()
+    * u_debug_at_exit()
+    * u_printf()
+    * ------------------------
+    */
+
+   for (i = 3; i < size; ++i)
       {
-      // Return names of functions from the backtrace list in ARRAY in a newly malloc()ed memory block.
+      /* extract the identifier from strings[i]. It's inside of parens. */
 
-      /*
-      char** names = backtrace_symbols(ba, n);
+      firstparen = strchr(strings[i], '(');
+      lastparen  = strchr(strings[i], '+');
 
-      if (names)
+      if (firstparen &&
+          lastparen  &&
+          firstparen < lastparen)
          {
-         printf("called from %s\n", names[0]);
+         *lastparen = '\0';
 
-         for (int i = 1; i < n; ++i)
+         realname = abi::__cxa_demangle(firstparen + 1, 0, 0, &status);
+
+         if (realname)
             {
-            printf("            %s\n", names[i]);
+            (void) fprintf(f, "%s\n", realname);
+
+            free(realname);
             }
-
-         free(names);
          }
-      */
-
-      char name[128];
-
-      (void) u_snprintf(name, 128, "stack.%N.%P", 0);
-
-      int fd = open(name, O_CREAT | O_WRONLY | O_APPEND | O_BINARY, 0666);
-
-      // This function is similar to backtrace_symbols() but it writes the result
-      // immediately to a file and can therefore also be used in situations where
-      // malloc() is not usable anymore.
-
-      backtrace_symbols_fd(ba, n, fd);
-
-      (void) close(fd);
       }
-}
 
+   (void) fclose(f);
+#  endif
 #endif
+}

@@ -14,7 +14,6 @@ static void check(const UString& dati, const UString& file)
    Url::encode(dati,    buffer1);
    Url::decode(buffer1, buffer2);
 
-   u_printf_string_max_length = 2000;
    U_INTERNAL_DUMP("buffer1 = %#.*S", U_STRING_TO_TRACE(buffer1))
    U_INTERNAL_DUMP("dati    = %#.*S", U_STRING_TO_TRACE(dati))
    U_INTERNAL_DUMP("buffer2 = %#.*S", U_STRING_TO_TRACE(buffer2))

@@ -155,7 +155,7 @@ uint32_t u_findEndHeader(const char* str, uint32_t n)
 
    uint32_t endHeader = U_NOT_FOUND;
 
-   U_INTERNAL_TRACE("u_findEndHeader(%.*s,%u)", U_min(n,u_printf_string_max_length), str, n)
+   U_INTERNAL_TRACE("u_findEndHeader(%.*s,%u)", U_min(n,128), str, n)
 
    U_INTERNAL_ASSERT_POINTER(str)
 
@@ -310,8 +310,8 @@ void u_printSize(char* buffer, uint64_t bytes)
 
 bool u_rmatch(const char* haystack, uint32_t haystack_len, const char* needle, uint32_t needle_len)
 {
-   U_INTERNAL_TRACE("u_rmatch(%.*s,%u,%.*s,%u)", U_min(haystack_len,u_printf_string_max_length), haystack, haystack_len,
-                                                 U_min(  needle_len,u_printf_string_max_length),   needle,   needle_len)
+   U_INTERNAL_TRACE("u_rmatch(%.*s,%u,%.*s,%u)", U_min(haystack_len,128), haystack, haystack_len,
+                                                 U_min(  needle_len,128),  needle,   needle_len)
 
    U_INTERNAL_ASSERT_POINTER(needle)
    U_INTERNAL_ASSERT_POINTER(haystack)
@@ -343,7 +343,7 @@ void* u_find(const char* s, uint32_t n, const char* a, uint32_t n1)
    uint32_t pos = 0;
 #endif
 
-   U_INTERNAL_TRACE("u_find(%.*s,%u,%.*s,%u)", U_min(n,u_printf_string_max_length), s, n, U_min(n1,u_printf_string_max_length), a, n1)
+   U_INTERNAL_TRACE("u_find(%.*s,%u,%.*s,%u)", U_min(n,128), s, n, U_min(n1,128), a, n1)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(a)
@@ -374,7 +374,7 @@ const char* u_strpbrk(const char* s, uint32_t slen, const char* accept)
    const char* c;
    const char* end = s + slen;
 
-   U_INTERNAL_TRACE("u_strpbrk(%.*s,%u,%s)", U_min(slen,u_printf_string_max_length), s, slen, accept)
+   U_INTERNAL_TRACE("u_strpbrk(%.*s,%u,%s)", U_min(slen,128), s, slen, accept)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_MAJOR(slen,0)
@@ -402,7 +402,7 @@ const char* u_strpend(const char* s, uint32_t slen, const char* group_delimitor,
    const char* end = s + slen;
    uint32_t i, n = group_delimitor_len / 2;
 
-   U_INTERNAL_TRACE("u_strpend(%.*s,%u,%s,%u,%c)", U_min(slen,u_printf_string_max_length), s, slen, group_delimitor, group_delimitor_len, skip_line)
+   U_INTERNAL_TRACE("u_strpend(%.*s,%u,%s,%u,%c)", U_min(slen,128), s, slen, group_delimitor, group_delimitor_len, skip_line)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_MAJOR(slen,0)
@@ -450,7 +450,7 @@ bool u_startsWith(const char* a, uint32_t n1, const char* b, uint32_t n2)
 {
    int32_t diff = n1 - n2;
 
-   U_INTERNAL_TRACE("u_startsWith(%.*s,%u,%.*s,%u)", U_min(n1,u_printf_string_max_length), a, n1, U_min(n2,u_printf_string_max_length), b, n2)
+   U_INTERNAL_TRACE("u_startsWith(%.*s,%u,%.*s,%u)", U_min(n1,128), a, n1, U_min(n2,128), b, n2)
 
    if (diff >= 0 &&
        (strncmp(a, b, n2) == 0))
@@ -467,7 +467,7 @@ bool u_endsWith(const char* a, uint32_t n1, const char* b, uint32_t n2)
 {
    int32_t diff = n1 - n2;
 
-   U_INTERNAL_TRACE("u_endsWith(%.*s,%u,%.*s,%u)", U_min(n1,u_printf_string_max_length), a, n1, U_min(n2,u_printf_string_max_length), b, n2)
+   U_INTERNAL_TRACE("u_endsWith(%.*s,%u,%.*s,%u)", U_min(n1,128), a, n1, U_min(n2,128), b, n2)
 
    if (diff >= 0 &&
        (strncmp(a+diff, b, n2) == 0))
@@ -483,7 +483,7 @@ bool u_isNumber(const char* s, uint32_t n)
    int vdigit[]    = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 };
    const char* end = s + n;
 
-   U_INTERNAL_TRACE("u_isNumber(%.*s,%u)", U_min(n,u_printf_string_max_length), s, n)
+   U_INTERNAL_TRACE("u_isNumber(%.*s,%u)", U_min(n,128), s, n)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_MAJOR(n,0)
@@ -517,7 +517,7 @@ bool u_dosmatch(const char* s, uint32_t n1, const char* mask, uint32_t n2, int i
    const char* end_s    =    s + n1;
    const char* end_mask = mask + n2;
 
-   U_INTERNAL_TRACE("u_dosmatch(%.*s,%u,%.*s,%u,%d)", U_min(n1,u_printf_string_max_length), s, n1, n2, mask, n2, ignorecase)
+   U_INTERNAL_TRACE("u_dosmatch(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, ignorecase)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(mask)
@@ -646,7 +646,7 @@ bool u_dosmatch_with_OR(const char* s, uint32_t n1, const char* mask, uint32_t n
 {
    const char* or;
 
-   U_INTERNAL_TRACE("u_dosmatch_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,u_printf_string_max_length), s, n1, n2, mask, n2, ignorecase)
+   U_INTERNAL_TRACE("u_dosmatch_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, ignorecase)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(mask)
@@ -671,7 +671,7 @@ bool u_isMacAddr(const char* p, uint32_t len)
 {
    uint32_t c;
 
-   U_INTERNAL_TRACE("u_isMacAddr(%.*s,%u)", U_min(len,u_printf_string_max_length), p, len)
+   U_INTERNAL_TRACE("u_isMacAddr(%.*s,%u)", U_min(len,128), p, len)
 
    /* cisco-style: 0123.4567.89ab */
 
@@ -728,7 +728,7 @@ bool u_validate_email_address(const char* address, uint32_t address_len)
    const char* end;
    const char* domain;
 
-   U_INTERNAL_TRACE("u_validate_email_address(%.*s,%u)", U_min(address_len,u_printf_string_max_length), address, address_len)
+   U_INTERNAL_TRACE("u_validate_email_address(%.*s,%u)", U_min(address_len,128), address, address_len)
 
    if (address_len < 3) return false;
 
@@ -894,7 +894,7 @@ uint32_t u_split(char* s, uint32_t n, char* argv[], const char* delim)
    char* end  = s + n;
    char** ptr = argv;
 
-   U_INTERNAL_TRACE("u_split(%.*s,%u,%p,%s)", U_min(n,u_printf_string_max_length), s, n, argv, delim)
+   U_INTERNAL_TRACE("u_split(%.*s,%u,%p,%s)", U_min(n,128), s, n, argv, delim)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_MAJOR(n,0)
@@ -1283,7 +1283,7 @@ int u_splitCommand(char* s, uint32_t n, char* argv[], char* pathbuf, uint32_t pa
    bool bpath = false;
    int result = u_split(s, n, argv+1, 0);
 
-   U_INTERNAL_TRACE("u_splitCommand(%.*s,%u,%p,%p,%u)", U_min(n,u_printf_string_max_length), s, n, argv, pathbuf, pathbuf_size)
+   U_INTERNAL_TRACE("u_splitCommand(%.*s,%u,%p,%p,%u)", U_min(n,128), s, n, argv, pathbuf, pathbuf_size)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_MAJOR(n,0)
@@ -1589,7 +1589,7 @@ int u_passwd_cb(char* buf, int size, int rwflag, void* password)
 
    size = u_strlen(buf);
 
-   U_INTERNAL_PRINT("buf(%d) = %.*s", size, U_min(size,u_printf_string_max_length), buf)
+   U_INTERNAL_PRINT("buf(%d) = %.*s", size, U_min(size,128), buf)
 
    return size;
 }
@@ -1822,7 +1822,7 @@ norm:
 
 bool u_fnmatch(const char* string, uint32_t n1, const char* pattern, uint32_t n2, int flags)
 {
-   U_INTERNAL_TRACE("u_fnmatch(%.*s,%u,%.*s,%u,%d)", U_min(n1,u_printf_string_max_length), string, n1, n2, pattern, n2, flags)
+   U_INTERNAL_TRACE("u_fnmatch(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), string, n1, n2, pattern, n2, flags)
 
    U_INTERNAL_ASSERT_MAJOR(n1,0)
    U_INTERNAL_ASSERT_MAJOR(n2,0)
@@ -1864,7 +1864,7 @@ bool u_isBase64(const char* s, uint32_t n)
 {
    U_LOOP_STRING( if (u_isbase64(c) == false) return false )
 
-   U_INTERNAL_TRACE("u_isBase64(%.*s,%u)", U_min(n,u_printf_string_max_length), s, n)
+   U_INTERNAL_TRACE("u_isBase64(%.*s,%u)", U_min(n,128), s, n)
 
    return true;
 }
@@ -1873,7 +1873,7 @@ bool u_isWhiteSpace(const char* s, uint32_t n)
 {
    U_LOOP_STRING( if (u_isspace(c) == false) return false )
 
-   U_INTERNAL_TRACE("u_isWhiteSpace(%.*s,%u)", U_min(n,u_printf_string_max_length), s, n)
+   U_INTERNAL_TRACE("u_isWhiteSpace(%.*s,%u)", U_min(n,128), s, n)
 
    return true;
 }
@@ -1882,7 +1882,7 @@ bool u_isText(const unsigned char* s, uint32_t n)
 {
    U_LOOP_STRING( if (u_istext(c) == false) return false )
 
-   U_INTERNAL_TRACE("u_isText(%.*s,%u)", U_min(n,u_printf_string_max_length), s, n)
+   U_INTERNAL_TRACE("u_isText(%.*s,%u)", U_min(n,128), s, n)
 
    return true;
 }
@@ -1966,7 +1966,7 @@ bool u_isUTF8(const unsigned char* buf, uint32_t len)
    uint32_t j, following;
    const unsigned char* end = buf + len;
 
-   U_INTERNAL_TRACE("u_isUTF8(%.*s,%u)", U_min(n,u_printf_string_max_length), s, n)
+   U_INTERNAL_TRACE("u_isUTF8(%.*s,%u)", U_min(n,128), s, n)
 
    U_INTERNAL_ASSERT_POINTER(buf)
 
@@ -2029,7 +2029,7 @@ int u_isUTF16(const unsigned char* buf, uint32_t len)
 {
    uint32_t be, i, c;
 
-   U_INTERNAL_TRACE("u_isUTF16(%.*s,%u)", U_min(n,u_printf_string_max_length), s, n)
+   U_INTERNAL_TRACE("u_isUTF16(%.*s,%u)", U_min(n,128), s, n)
 
    if (len < 2) return 0;
 

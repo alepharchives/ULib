@@ -39,7 +39,7 @@ static void u_do_cipher(int alg, const char* key, uint32_t keylen)
       u_dgst_hash(buf, readlen);
       }
 
-   write(STDOUT_FILENO, buf, u_dgst_finish(buf, 0, 0));
+   write(STDOUT_FILENO, buf, u_dgst_finish(buf, 0));
 }
 
 int main(int argc, char** argv)
