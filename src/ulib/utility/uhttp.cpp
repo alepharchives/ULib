@@ -644,7 +644,12 @@ start:
             break;
             }
 
-         while (*inp++ != '\n') {} // discard the rest of the line
+         // discard the rest of the line
+
+         // inp = memchr(inp, '\n', http_info.clength);
+         // if (inp == 0) U_RETURN(false);
+
+         while (*inp++ != '\n') {}
 
          (void) U_SYSCALL(memcpy, "%p,%p,%u", out, inp, chunkSize);
 
@@ -2285,10 +2290,11 @@ rescan:
 
    U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len, 2)
 
-   clength = 0;
-   nResponseCode = HTTP_OK;
+   endptr           = UClientImage_Base::wbuffer->c_pointer(endHeader);
+   clength          = 0;
+   nResponseCode    = HTTP_OK;
+   content_length   = sz - endHeader;
    connection_close = header_content_type = false;
-   endptr = UClientImage_Base::wbuffer->c_pointer(endHeader);
 
 loop:
    U_INTERNAL_DUMP("ptr = %.20S", ptr)
@@ -2361,6 +2367,7 @@ loop:
                {
                uint32_t diff = location - ptr + 1; // NB: we cut also \n...
 
+               U_INTERNAL_ASSERT_MINOR(diff,512)
                U_INTERNAL_ASSERT_MINOR(diff, endHeader)
 
                sz        -= diff;
@@ -2368,11 +2375,9 @@ loop:
 
                U_INTERNAL_DUMP("diff = %u sz = %u endHeader = %u", diff, sz, endHeader)
 
-               U_INTERNAL_ASSERT_MINOR(diff,512)
+               UClientImage_Base::wbuffer->erase(0, diff);
 
-               UClientImage_Base::wbuffer->erase(0, location - ptr + 1); // NB: we cut also \n...
-
-               U_INTERNAL_DUMP("wbuffer(%u) = %.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer));
+               U_INTERNAL_DUMP("wbuffer(%u) = %.*S", sz, U_STRING_TO_TRACE(*UClientImage_Base::wbuffer));
 
                U_ASSERT_EQUALS(sz, UClientImage_Base::wbuffer->size())
 
@@ -2385,7 +2390,7 @@ loop:
             goto error;
             }
 
-         // ULIB facility: check for request TODO stateless session cookies...
+         // ULIB facility: check for request TODO timed session cookies...
 
          U_INTERNAL_DUMP("check 'Set-Cookie: TODO['", 0)
 
@@ -2481,11 +2486,27 @@ loop:
                }
             else if (U_STRNCMP(ptr, "Length: ") == 0)
                {
+               char* nptr;
+
                ptr += U_CONSTANT_SIZE("Length: ");
 
-               clength = (uint32_t) strtoul(ptr, (char**)&ptr, 0);
+               clength = (uint32_t) strtoul(ptr, &nptr, 0);
 
-               U_INTERNAL_DUMP("Content-Length = %u", clength)
+               U_INTERNAL_DUMP("clength = %u content_length = %u", clength, content_length);
+
+               if (clength != content_length) // NB: with drupal happens...!!!
+                  {
+                  char bp[12];
+                  uint32_t pos = UClientImage_Base::wbuffer->distance(ptr);
+
+                  (void) UClientImage_Base::wbuffer->replace(pos, (nptr - ptr), bp, u_snprintf(bp, sizeof(bp), "%u", content_length));
+
+                  sz     = UClientImage_Base::wbuffer->size();
+                  ptr    = UClientImage_Base::wbuffer->data();
+                  endptr = UClientImage_Base::wbuffer->c_pointer(endHeader);
+
+                  U_INTERNAL_DUMP("wbuffer(%u) = %#.*S", sz, U_STRING_TO_TRACE(*UClientImage_Base::wbuffer));
+                  }
                }
             }
          }
@@ -2511,30 +2532,6 @@ loop:
 
 end:
    U_INTERNAL_ASSERT_MAJOR(endHeader, 0)
-
-   // NB: with drupal happens...!!!
-
-   content_length = sz - endHeader;
-
-   U_INTERNAL_DUMP("clength = %u content_length = %u", clength, content_length);
-
-   if (clength &&
-       clength != content_length)
-      {
-      char bp[12];
-      uint32_t pos = UClientImage_Base::wbuffer->find(*USocket::str_content_length, 0, endHeader);
-
-      U_INTERNAL_ASSERT_DIFFERS(pos, U_NOT_FOUND)
-
-      pos += USocket::str_content_length->size() + 2;
-
-      const char* nptr   = UClientImage_Base::wbuffer->c_pointer(pos);
-                  endptr = (const char*) memchr(nptr, '\r', 10);
-
-      (void) UClientImage_Base::wbuffer->replace(pos, (endptr - nptr), bp, u_snprintf(bp, sizeof(bp), "%u", content_length));
-
-      U_INTERNAL_DUMP("wbuffer(%u) = %#.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer));
-      }
 
    setHTTPCgiResponse(nResponseCode, content_length, (clength != 0), header_content_type);
 
@@ -2808,9 +2805,9 @@ bool UHTTP::processHTTPGetRequest()
          goto send_header;
          }
 
+      content_type             = U_CTYPE_HTML;
       *UClientImage_Base::body = getHTMLDirectoryList();
       size                     = UClientImage_Base::body->size();
-      content_type             = U_CTYPE_HTML;
       }
    else
       {
@@ -2930,9 +2927,31 @@ bool UHTTP::processHTTPGetRequest()
       goto next;
       }
 
-   if (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".css")))
+   ptr = file->getSuffix();
+
+   if (ptr == 0) goto next;
+
+   U_INTERNAL_DUMP("suffix = %.*S", 4, ptr)
+
+   U_INTERNAL_ASSERT_EQUALS(ptr[0], '.')
+
+   content_type = UFile::getMimeType(++ptr);
+
+   if (content_type == 0)
       {
-      content_type = "text/css";
+#  ifdef HAVE_MAGIC
+      content_type = file->getMimeType();
+#  else
+      content_type = "application/octet-stream";
+#  endif
+
+      goto next;
+      }
+
+   if (UFile::mime_index == U_css)
+      {
+      U_INTERNAL_ASSERT(U_STRNEQ(content_type, "text/css"))
+      U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".css")))
 
       (void) ext.append("Content-Style-Type: text/css\r\n");
 
@@ -2941,9 +2960,10 @@ bool UHTTP::processHTTPGetRequest()
          (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
          }
       }
-   else if (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".js")))
+   else if (UFile::mime_index == U_js)
       {
-      content_type = "text/javascript";
+      U_INTERNAL_ASSERT(U_STRNEQ(content_type, "text/javascript"))
+      U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".js")))
 
       (void) ext.append("Content-Script-Type: text/javascript\r\n");
 
@@ -2952,27 +2972,11 @@ bool UHTTP::processHTTPGetRequest()
          (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
          }
       }
-   else if (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".crt")) ||
-            u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".cer")) ||
-            u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".der")))
-      {
-      /* The certificate being downloaded represents a Certificate Authority.
-       * When it is downloaded the user will be shown a sequence of dialogs that
-       * will guide them through the process of accepting the Certificate Authority
-       * and deciding if they wish to trust sites certified by the CA. If a certificate
-       * chain is being imported then the first certificate in the chain must be the CA
-       * certificate, and any subsequent certificates will be added as untrusted CA
-       * certificates to the local database.
-       */
-
-      content_type = "application/x-x509-ca-cert";
-      }
-   else
-      {
-      content_type = file->getMimeType();
-      }
 
 next:
+   U_INTERNAL_DUMP("content_type = %S", content_type)
+
+   U_INTERNAL_ASSERT_POINTER(content_type)
 
    ext.snprintf_add("Content-Type: %s\r\n"
                     "Content-Length: %u\r\n"

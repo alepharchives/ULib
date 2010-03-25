@@ -303,12 +303,14 @@ const char* USSLSocket::status(SSL* ssl, int ret, bool flag, char* buffer, uint3
             }
          break;
 
+#     if defined(HAVE_OPENSSL_97) || defined(HAVE_OPENSSL_98)
          case SSL_ERROR_WANT_ACCEPT:
             {
             descr  = "SSL_ERROR_WANT_ACCEPT";
             errstr = "SSL Accept operation didn't complete, the same function should be called again later";
             }
          break;
+#     endif
          }
       }
 

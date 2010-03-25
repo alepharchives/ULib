@@ -18,7 +18,15 @@
 
 #ifdef HAVE_SSL
 #  include <openssl/pem.h>
+#  include <openssl/engine.h>
+#  include <openssl/x509_vfy.h>
 typedef int (*verify_cb)(int,X509_STORE_CTX*); /* error callback */
+#  ifndef X509_V_FLAG_CRL_CHECK
+#  define X509_V_FLAG_CRL_CHECK     0x4
+#  endif
+#  ifndef X509_V_FLAG_CRL_CHECK_ALL
+#  define X509_V_FLAG_CRL_CHECK_ALL 0x8
+#  endif
 #  define U_STORE_FLAGS (X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL)
 #endif
 

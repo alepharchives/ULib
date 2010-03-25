@@ -150,7 +150,7 @@ public:
             break;
 
             case -3:
-               U_ERROR("there is not enough (virtual) memory available on writing journal of database file <%.*s>...", U_STRING_TO_TRACE(*rdbname));
+               U_ERROR("there is not enough (virtual) memory available on writing journal of database file %.*S...", U_STRING_TO_TRACE(*rdbname));
             break;
             }
 
@@ -206,10 +206,7 @@ public:
 #  ifdef U_DB_MANAGE
       if (rdbname->empty())
          {
-         const char* path = PEC_report::file->getPathRelativ();
-         uint32_t len     = PEC_report::file->getBaseNameLen();
-
-         UString tmp = UStringExt::basename(UString(path, len));
+         UString tmp = UStringExt::basename(PEC_report::file->getPath());
 
          rdbname->snprintf("%s/%.*s", u_tmpdir, U_STRING_TO_TRACE(tmp));
 
@@ -220,10 +217,7 @@ public:
       if (table->size() >= max_size_table)
          {
 #     ifdef U_DB_MANAGE
-         const char* path = PEC_report::file->getPathRelativ();
-         uint32_t len     = PEC_report::file->getBaseNameLen();
-
-         UString tmp = UStringExt::basename(UString(path, len));
+         UString tmp = UStringExt::basename(PEC_report::file->getPath());
 
          rdbname->snprintf_add("#%.*s.cdb", U_STRING_TO_TRACE(tmp));
 
@@ -233,7 +227,7 @@ public:
 
          lrdb->push(rdb);
 
-         U_MESSAGE("start session <%d>: write table on database <%.*s>...", lrdb->size(), U_STRING_TO_TRACE(*rdbname));
+         U_MESSAGE("start session <%d>: write table on database %.*S...", lrdb->size(), U_STRING_TO_TRACE(*rdbname));
 
          table->setSpace(table->size() * U_DIMENSIONE_MEDIA_RECORD_LOG * 2);
 
@@ -261,7 +255,7 @@ public:
 
             if (rdb->writeTo(table, (pvPFpvpb)func) == false)
                {
-               U_ERROR("write to database file <%.*s> failed...", U_STRING_TO_TRACE(*rdbname));
+               U_ERROR("write to database file %.*S failed...", U_STRING_TO_TRACE(*rdbname));
                }
             }
          else
@@ -270,7 +264,7 @@ public:
              // rdb->open(table->space() + MARGINE) == false)
                 rdb->open(1024 * 1024 * 1024) == false)
                {
-               U_ERROR("open database file <%.*s> failed...", U_STRING_TO_TRACE(*rdbname));
+               U_ERROR("open database file %.*S failed...", U_STRING_TO_TRACE(*rdbname));
                }
 
             table->callWithDeleteForAllEntry(Application::checkForOldMessage);

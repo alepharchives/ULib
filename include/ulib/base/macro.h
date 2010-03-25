@@ -114,7 +114,7 @@
 #define U_STRNCASECMP(a,b)  strncasecmp((const char*)(a),b,U_CONSTANT_SIZE(b))
 
 #define U_STREQ(a,b)  (strcmp( (const char*)(a),b) == 0)
-#define U_STRNEQ(a,b) (U_STRNCMP(a,b)              == 0)
+#define U_STRNEQ(a,b) (U_STRNCMP((a),b)            == 0)
 
 #define U_MEMCPY(a,b) memcpy((      char*)(a),b,U_CONSTANT_SIZE(b))
 #define U_MEMCMP(a,b) memcmp((const char*)(a),b,U_CONSTANT_SIZE(b))

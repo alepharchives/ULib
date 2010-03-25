@@ -132,7 +132,7 @@ public:
 
          if (getValueField(U_consegna).empty() == false) U_field = U_consegna;
 
-         input = isDomain(U_field);
+         input = isDomainField(U_field);
          }
       else if (errore_virus)
          {

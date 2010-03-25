@@ -95,7 +95,7 @@ void u_dgst_algoritm(int alg)
       case U_HASH_SHA384:    u_md = EVP_sha384();     break;
       case U_HASH_SHA512:    u_md = EVP_sha512();     break;
 #  endif
-#  ifndef OPENSSL_NO_MDC2
+#  if !defined(OPENSSL_NO_MDC2) && !defined(NO_MDC2)
       case U_HASH_MDC2:      u_md = EVP_mdc2();       break;
 #  endif
 #  ifndef OPENSSL_NO_RMD160
@@ -126,7 +126,7 @@ void u_dgst_init(int alg, const char* key, uint32_t keylen)
       }
    else
       {
-      (void) EVP_MD_CTX_cleanup(&u_mdctx);
+             EVP_MD_CTX_cleanup(&u_mdctx);
       (void) EVP_DigestInit(&u_mdctx, u_md);
       }
 }
@@ -149,8 +149,7 @@ void u_dgst_reset(void) /* Reset the hash */
       }
    else
       {
-      (void) EVP_MD_CTX_cleanup(&u_mdctx);
-
+             EVP_MD_CTX_cleanup(&u_mdctx);
       (void) EVP_DigestInit(&u_mdctx, u_md);
       }
 }
@@ -195,14 +194,14 @@ void u_dgst_sign_init(int alg, ENGINE* impl)
 
    u_dgst_algoritm(alg);
 
-   (void) EVP_MD_CTX_cleanup(&u_mdctx);
+   EVP_MD_CTX_cleanup(&u_mdctx);
 
    EVP_MD_CTX_init(&u_mdctx);
 
    /* sets up signing context ctx to use digest type from ENGINE impl.
     * u_mdctx must be initialized with EVP_MD_CTX_init() before calling this function. */
 
-   (void) EVP_SignInit_ex(&u_mdctx, u_md, impl);
+   EVP_SignInit_ex(&u_mdctx, u_md, impl);
 }
 
 void u_dgst_verify_init(int alg, ENGINE* impl)
@@ -211,14 +210,14 @@ void u_dgst_verify_init(int alg, ENGINE* impl)
 
    u_dgst_algoritm(alg);
 
-   (void) EVP_MD_CTX_cleanup(&u_mdctx);
+   EVP_MD_CTX_cleanup(&u_mdctx);
 
    EVP_MD_CTX_init(&u_mdctx);
 
    /* sets up signing context ctx to use digest type from ENGINE impl.
     * u_mdctx must be initialized with EVP_MD_CTX_init() before calling this function. */
 
-   (void) EVP_VerifyInit_ex(&u_mdctx, u_md, impl);
+   EVP_VerifyInit_ex(&u_mdctx, u_md, impl);
 }
 
 uint32_t u_dgst_sign_finish(unsigned char* sig, int base64) /* Finish and get signature */
@@ -233,7 +232,7 @@ uint32_t u_dgst_sign_finish(unsigned char* sig, int base64) /* Finish and get si
 
    U_INTERNAL_ASSERT_MINOR(u_mdLen,U_MAX_HASH_SIZE)
 
-   if (sig == NULL) return u_mdLen;
+   if (sig == 0) return u_mdLen;
 
    if (base64) len = u_base64_encode(u_mdValue, u_mdLen, sig);
    else

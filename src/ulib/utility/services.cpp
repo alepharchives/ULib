@@ -193,6 +193,14 @@ UString UServices::getUUID()
 #     include <ulib/ssl/certificate.h>
 #  endif
 
+#  if !defined(HAVE_OPENSSL_97) && !defined(HAVE_OPENSSL_98)
+#     warning "WARNING: I must to disable some function with this version of openssl... be aware"
+
+#     define X509_STORE_set_flags(a,b)        0
+#     define ENGINE_load_public_key(a,b,c,d)  0
+#     define ENGINE_load_private_key(a,b,c,d) 0
+#  endif
+
 int         UServices::verify_depth;
 int         UServices::verify_error;
 X509*       UServices::verify_current_cert;

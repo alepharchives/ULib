@@ -19,45 +19,87 @@
 
 #ifdef HAVE_MAGIC
 #  include <ulib/magic/magic.h>
-#else
+#endif
+
+int         UFile::mime_index;
+uint32_t    UFile::cwd_len_save;
+const char* UFile::cwd_save;
+
+#ifdef DEBUG
+int  UFile::num_file_object;
+
+void UFile::inc_num_file_object() { ++num_file_object; }
+void UFile::dec_num_file_object() { --num_file_object; }
+void UFile::chk_num_file_object() { if (num_file_object) U_WARNING("UFile::chdir() with num file object = %d", num_file_object); }
+#endif
+
 typedef struct mimeentry {
    const char* name;
    uint32_t name_len;
    const char* type;
 } mimeentry;
+
 #define ENTRY(name,type) { name, U_CONSTANT_SIZE(name), type }
+
 static struct mimeentry mimetab[] = {
-   ENTRY( "htm",     "text/html" ),
    ENTRY( "html",    "text/html" ),
-   ENTRY( "dtd",     "application/xml" ),
-   ENTRY( "xml",     "application/xml" ),
+   ENTRY( "htm",     "text/html" ),
+
+   // NB: need to stay here...
+   // -----------------------------------
+   ENTRY( "css",     "text/css" ),           // 2 U_css
+   ENTRY( "js",      "text/javascript" ),    // 3 U_js
+   // -----------------------------------
+
    ENTRY( "ico",     "image/x-icon" ),
+
+   // The certificate being downloaded represents a Certificate Authority.
+   // When it is downloaded the user will be shown a sequence of dialogs that
+   // will guide them through the process of accepting the Certificate Authority
+   // and deciding if they wish to trust sites certified by the CA. If a certificate
+   // chain is being imported then the first certificate in the chain must be the CA
+   // certificate, and any subsequent certificates will be added as untrusted CA
+   // certificates to the local database.
+   // -------------------------------------------------------------------------------
+   ENTRY( "crt",     "application/x-x509-ca-cert" ),
+   ENTRY( "cer",     "application/x-x509-ca-cert" ),
+   ENTRY( "der",     "application/x-x509-ca-cert" ),
+   // -------------------------------------------------------------------------------
+
+   ENTRY( "xml",     "application/xml" ),
+   ENTRY( "dtd",     "application/xml" ),
+
    ENTRY( "txt",     "text/plain" ),
+   ENTRY( "text",    "text/plain" ),
+   ENTRY( "md5",     "text/plain" ),
+
    ENTRY( "ps",      "application/postscript" ),
    ENTRY( "pdf",     "application/pdf" ),
+
    ENTRY( "gif",     "image/gif" ),
    ENTRY( "png",     "image/png" ),
-   ENTRY( "jpeg",    "image/jpeg" ),
    ENTRY( "jpg",     "image/jpeg" ),
-   ENTRY( "mpeg",    "video/mpeg" ),
-   ENTRY( "mpg",     "video/mpeg" ),
+   ENTRY( "jpeg",    "image/jpeg" ),
+   ENTRY( "xpm",     "image/x-xpixmap" ),
+   ENTRY( "xbm",     "image/x-xbitmap" ),
+
    ENTRY( "mp3",     "audio/mpeg" ),
+   ENTRY( "wav",     "audio/x-wav" ),
+
+   ENTRY( "mpg",     "video/mpeg" ),
    ENTRY( "mp4",     "video/mp4" ),
-   ENTRY( "md5",     "text/plain" ),
    ENTRY( "m4a",     "audio/mp4" ),
+   ENTRY( "mpeg",    "video/mpeg" ),
    ENTRY( "ogg",     "application/ogg" ),
    ENTRY( "swf",     "application/x-shockwave-flash" ),
-   ENTRY( "wav",     "audio/x-wav" ),
    ENTRY( "wmv",     "video/x-ms-wmv" ),
    ENTRY( "avi",     "video/x-msvideo" ),
    ENTRY( "mov",     "video/quicktime" ),
-   ENTRY( "tar",     "application/x-tar" ),
+
    ENTRY( "zip",     "application/zip" ),
+   ENTRY( "tar",     "application/x-tar" ),
    ENTRY( "rar",     "application/x-rar-compressed" ),
-   ENTRY( "xbm",     "image/x-xbitmap" ),
-   ENTRY( "xpm",     "image/x-xpixmap" ),
-   ENTRY( "text",    "text/plain" ),
-   ENTRY( "txt",     "text/plain" ),
+
 // ENTRY( "dvi",     "application/x-dvi" ),
 // ENTRY( "bild",    "image/jpeg" ),
 // ENTRY( "qt",      "video/quicktime" ),
@@ -70,22 +112,8 @@ static struct mimeentry mimetab[] = {
 // ENTRY( "xwd",     "image/x-xwindowdump" ),
 // ENTRY( "m3u",     "audio/x-mpegurl" ),
 // ENTRY( "nzb",     "application/x-nzb" ),
-// ENTRY( "css",     "text/css" ),
-// ENTRY( "js",      "application/x-javascript" ),
    { 0, 0, 0 }
 };
-#endif
-
-#ifdef DEBUG
-int  UFile::num_file_object;
-void UFile::inc_num_file_object() { ++num_file_object; }
-void UFile::dec_num_file_object() { --num_file_object; }
-void UFile::chk_num_file_object()
-{ if (num_file_object) U_WARNING("UFile::chdir() with num file object = %d", num_file_object); }
-#endif
-
-const char* UFile::cwd_save;
-uint32_t    UFile::cwd_len_save;
 
 #ifndef MAP_POPULATE // (since Linux 2.5.46)
 #define MAP_POPULATE 0
@@ -460,33 +488,49 @@ const char* UFile::getMimeType()
 {
    U_TRACE(0, "UFile::getMimeType()")
 
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-
-   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
    const char* content_type = 0;
 
+#ifdef HAVE_MAGIC
    if (map               == MAP_FAILED &&
        memmap(PROT_READ) == false)
       {
       goto end;
       }
 
-#ifdef HAVE_MAGIC
    content_type = UMagic::getType(map, map_size).data();
 #else
-   for (int i = 0; mimetab[i].name; ++i)
-      {
-      if (u_endsWith(U_FILE_TO_PARAM(*this), mimetab[i].name, mimetab[i].name_len))
-         {
-         content_type = mimetab[i].type;
+   const char* ptr = getSuffix();
 
-         break;
-         }
+   if (ptr)
+      {
+      U_INTERNAL_ASSERT_EQUALS(ptr[0], '.')
+
+      content_type = getMimeType(ptr+1);
       }
 #endif
 
 end:
+   U_RETURN(content_type);
+}
+
+const char* UFile::getMimeType(const char* suffix)
+{
+   U_TRACE(0, "UFile::getMimeType(%S)", suffix)
+
+   U_INTERNAL_ASSERT_POINTER(suffix)
+
+   const char* content_type = 0;
+
+   for (mime_index = 0; mimetab[mime_index].name; ++mime_index)
+      {
+      if (u_endsWith(suffix, mimetab[mime_index].name_len, mimetab[mime_index].name, mimetab[mime_index].name_len))
+         {
+         content_type = mimetab[mime_index].type;
+
+         break;
+         }
+      }
+
    U_RETURN(content_type);
 }
 

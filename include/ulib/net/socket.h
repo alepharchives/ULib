@@ -587,6 +587,10 @@ public:
       U_RETURN(false);
       }
 
+#ifdef closesocket
+#undef closesocket
+#endif
+
    virtual void closesocket();
 
    virtual const char* getMsgError(char* buffer, uint32_t buffer_size);

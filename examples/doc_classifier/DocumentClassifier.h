@@ -151,13 +151,13 @@ protected:
    UString manageDescription(UMimeEntity* uMimeEntity, uint32_t i = 0);
 
    void up()       { ptree = ptree->parent(); }
-   void classify() { ptree = &tree; tree.callForAllEntry(DocumentClassifier::classify); }
+   void classify() { ptree = &tree; tree.callForAllEntry(DocumentClassifier::classifyEntry); }
 
    void addElement(Element::Type t)                         { ptree = ptree->push_back(current = new Element(t)); }
    void addElement(Element::Type t, UString& d)             { ptree = ptree->push_back(current = new Element(t,d)); }
    void addElement(Element::Type t, UString& d, UString& c) { ptree = ptree->push_back(current = new Element(t,d,c));}
 
-   static void classify(void* e, void* pnode);
+   static void classifyEntry(void* e, void* pnode);
 
    // EXTENSION
 

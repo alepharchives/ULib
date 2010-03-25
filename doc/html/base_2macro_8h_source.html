@@ -125,7 +125,7 @@
 <a name="l00114"></a>00114 <span class="preprocessor"></span><span class="preprocessor">#define U_STRNCASECMP(a,b)  strncasecmp((const char*)(a),b,U_CONSTANT_SIZE(b))</span>
 <a name="l00115"></a>00115 <span class="preprocessor"></span>
 <a name="l00116"></a>00116 <span class="preprocessor">#define U_STREQ(a,b)  (strcmp( (const char*)(a),b)      == 0)</span>
-<a name="l00117"></a>00117 <span class="preprocessor"></span><span class="preprocessor">#define U_STRNEQ(a,b) (U_STRNCMP(a,b)                                   == 0)</span>
+<a name="l00117"></a>00117 <span class="preprocessor"></span><span class="preprocessor">#define U_STRNEQ(a,b) (U_STRNCMP((a),b)                         == 0)</span>
 <a name="l00118"></a>00118 <span class="preprocessor"></span>
 <a name="l00119"></a>00119 <span class="preprocessor">#define U_MEMCPY(a,b) memcpy((      char*)(a),b,U_CONSTANT_SIZE(b))</span>
 <a name="l00120"></a>00120 <span class="preprocessor"></span><span class="preprocessor">#define U_MEMCMP(a,b) memcmp((const char*)(a),b,U_CONSTANT_SIZE(b))</span>
@@ -502,7 +502,7 @@
 <a name="l00515"></a>00515 <span class="preprocessor"></span>
 <a name="l00516"></a>00516 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 19 16:23:00 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 24 16:51:38 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

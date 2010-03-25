@@ -57,8 +57,8 @@ const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getPathRelati
 int32_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>getPathRelativLen</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a92e7a2471e7fe10fba67b258ff1741c8"></a><!-- doxytag: member="UFile::isPathRelativ" ref="a92e7a2471e7fe10fba67b258ff1741c8" args="(const UString &amp;name) const " -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isPathRelativ</b> (const <a class="el" href="classUString.html">UString</a> &amp;name) const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0c6f59e12dc045e8b785f7503b725f0d"></a><!-- doxytag: member="UFile::getBaseNameLen" ref="a0c6f59e12dc045e8b785f7503b725f0d" args="() const " -->
-uint32_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>getBaseNameLen</b> () const </td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a60f7a92c6674cfd8e7cb19df7075e921"></a><!-- doxytag: member="UFile::getSuffix" ref="a60f7a92c6674cfd8e7cb19df7075e921" args="() const " -->
+const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getSuffix</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5c652826f508710bba6bc49cd50fcbfb"></a><!-- doxytag: member="UFile::open" ref="a5c652826f508710bba6bc49cd50fcbfb" args="(int flags=O_RDONLY)" -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>open</b> (int flags=O_RDONLY)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afa85c65affbcd6b035a59c5bf891ac6c"></a><!-- doxytag: member="UFile::open" ref="afa85c65affbcd6b035a59c5bf891ac6c" args="(const char *pathname, int flags=O_RDONLY)" -->
@@ -178,6 +178,8 @@ static void *&nbsp;</td><td class="memItemRight" valign="bottom"><b>mremap</b> (
 static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>contentOf</b> (const char *pathname, int flags=O_RDONLY, bool bstat=false, bool bmap=true)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1a07bb15265a881a01aa6b436db409c9"></a><!-- doxytag: member="UFile::contentOf" ref="a1a07bb15265a881a01aa6b436db409c9" args="(const UString &amp;pathname, int flags=O_RDONLY, bool bstat=false, bool bmap=true)" -->
 static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>contentOf</b> (const <a class="el" href="classUString.html">UString</a> &amp;pathname, int flags=O_RDONLY, bool bstat=false, bool bmap=true)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afcd3146d13662f97df5ff00c4aa83840"></a><!-- doxytag: member="UFile::getMimeType" ref="afcd3146d13662f97df5ff00c4aa83840" args="(const char *suffix)" -->
+static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getMimeType</b> (const char *suffix)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a99aa990cb98f8993bda848868a9efd48"></a><!-- doxytag: member="UFile::pread" ref="a99aa990cb98f8993bda848868a9efd48" args="(int fd, void *buf, size_t count, off_t offset)" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>pread</b> (int fd, void *buf, size_t count, off_t offset)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a72c770ce078e0d60d4b0416f4e7dc759"></a><!-- doxytag: member="UFile::pwrite" ref="a72c770ce078e0d60d4b0416f4e7dc759" args="(int fd, const void *buf, size_t count, off_t offset)" -->
@@ -225,6 +227,8 @@ static uint32_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>buildFilen
 static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>cwd_save</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aca3d0f6072344f3b06841c679c582c43"></a><!-- doxytag: member="UFile::cwd_len_save" ref="aca3d0f6072344f3b06841c679c582c43" args="" -->
 static uint32_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>cwd_len_save</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a19a839d559beb0bf42054fc53203574f"></a><!-- doxytag: member="UFile::mime_index" ref="a19a839d559beb0bf42054fc53203574f" args="" -->
+static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>mime_index</b></td></tr>
 <tr><td colspan="2"><h2>Protected Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a76fa110ec611757fd64c3792e7b11389"></a><!-- doxytag: member="UFile::setPathRelativ" ref="a76fa110ec611757fd64c3792e7b11389" args="()" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><b>setPathRelativ</b> ()</td></tr>
@@ -254,7 +258,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/file.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Mar 19 16:23:02 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 24 16:51:40 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

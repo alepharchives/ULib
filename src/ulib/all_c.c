@@ -97,6 +97,11 @@
 #  include "base/base_trace.c"
 #endif
 
+#ifdef HAVE_SSL
+#  include "base/ssl/des3.c"
+#  include "base/ssl/dgst.c"
+#endif
+
 #ifdef HAVE_ZIP
 #  include "base/zip/dostime.c"
 #  include "base/zip/inflate.c"
@@ -106,9 +111,4 @@
 
 #ifdef HAVE_LIBZ
 #  include "base/coder/cgzio.c"
-#endif
-
-#ifdef HAVE_SSL
-#  include "base/ssl/des3.c"
-#  include "base/ssl/dgst.c"
 #endif

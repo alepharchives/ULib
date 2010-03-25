@@ -74,6 +74,9 @@
 #define U_FILE_TO_PARAM(file) (file).getPathRelativ(),(file).getPathRelativLen()
 #define U_FILE_TO_TRACE(file) (file).getPathRelativLen(),(file).getPathRelativ()
 
+#define U_css 2 // text/css
+#define U_js  3 // text/javascript
+
 class URDB;
 
 template <class T> class UTree;
@@ -174,15 +177,15 @@ public:
       U_RETURN(result);
       }
 
-   uint32_t getBaseNameLen() const
+   const char* getSuffix() const
       {
-      U_TRACE(0, "UFile::getBaseNameLen()")
+      U_TRACE(0, "UFile::getSuffix()")
 
       U_INTERNAL_ASSERT_POINTER(path_relativ)
 
-      const char* ptr = (const char*) memchr(path_relativ, '.', path_relativ_len);
+      const char* ptr = (const char*) memrchr(path_relativ, '.', path_relativ_len);
 
-      U_RETURN(ptr ? (ptr - path_relativ) : path_relativ_len);
+      U_RETURN(ptr);
       }
 
    static uint32_t setPathFromFile(const UFile& file, char* buffer_path, const char* suffix, uint32_t len);
@@ -630,7 +633,12 @@ public:
    static UString contentOf(const char*    pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
    static UString contentOf(const UString& pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
 
-   const char* getMimeType();
+   // MIME TYPE
+
+   static int mime_index;
+
+          const char* getMimeType();
+   static const char* getMimeType(const char* suffix);
 
    // PREAD - PWRITE
 

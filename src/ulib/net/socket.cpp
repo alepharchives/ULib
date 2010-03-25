@@ -451,6 +451,10 @@ void USocket::checkErrno(int value)
 
 // VIRTUAL METHOD
 
+#ifdef closesocket
+#undef closesocket
+#endif
+
 void USocket::closesocket()
 {
    U_TRACE(1, "USocket::closesocket()")

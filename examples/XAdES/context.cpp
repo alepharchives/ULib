@@ -499,7 +499,6 @@ end:
  *  <!ATTLIST Signature  
  *      xmlns   CDATA   #FIXED 'http://www.w3.org/2000/09/xmldsig#'
  *      Id      ID  #IMPLIED >
- *
  */
 
 bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
@@ -510,8 +509,8 @@ bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
    U_INTERNAL_ASSERT_EQUALS(signMethod, 0)
    U_INTERNAL_ASSERT_EQUALS(c14nMethod, 0)
    U_INTERNAL_ASSERT_EQUALS(signValueNode, 0)
+   U_INTERNAL_ASSERT(operation == UBaseTransform::VERIFY)
    U_INTERNAL_ASSERT_EQUALS(status, UReferenceCtx::UNKNOWN)
-   U_INTERNAL_ASSERT(operation == UBaseTransform::VERIFY || operation == UBaseTransform::SIGN)
 
    xmlNodePtr cur;
 
@@ -622,7 +621,7 @@ end:
  * @transform: the pointer to transform.
  * @node:      the pointer to node.
  *
- * Gets the @node content, base64 decodes it and calls #xmlSecTransformVerify
+ * Gets the @node content, base64 decodes it and calls transform->verify()
  * function to verify binary results.
  *
  * Returns: true on success or false if an error occurs.
@@ -646,7 +645,7 @@ bool UTransformCtx::verifyNodeContent(UBaseTransform* transform, xmlNodePtr node
    /*
     * Verifies the data with transform's processing results
     * (for digest, HMAC and signature transforms). The verification 
-    * result is stored in the #status member of #xmlSecTransform object.
+    * result is stored in the #status member of #UBaseTransform object.
     */
 
    if (transform->verify() == false) goto end;
@@ -933,7 +932,6 @@ end:
  *    
  *  <!ELEMENT SignedInfo (CanonicalizationMethod, SignatureMethod,  Reference+) >
  *  <!ATTLIST SignedInfo  Id   ID      #IMPLIED>
- * 
  */
 
 bool UDSIGContext::processSignedInfoNode()

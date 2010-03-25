@@ -232,16 +232,16 @@ public:
 
    // check se tra i vari indirizzi c'e' un dominio APPARTENENTE ai domini specificati...
 
-   static bool isDomain(int field)
+   static bool isDomainField(int field)
       {
-      U_TRACE(5, "PEC_report::isDomain(%d)", field)
+      U_TRACE(5, "PEC_report::isDomainField(%d)", field)
 
-      if (callForAllEntryField(field, PEC_report::isDomain)) U_RETURN(true);
+      if (callForAllEntryField(field, PEC_report::isDomainAddress)) U_RETURN(true);
 
       U_RETURN(false);
       }
 
-   static bool isDomain(const UString& address); // only one e-mail address...
+   static bool isDomainAddress(const UString& address); // only one e-mail address...
 
    // dipendenze da content...
 

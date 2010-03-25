@@ -18,6 +18,21 @@
 
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/engine.h>
+
+#if !defined(HAVE_OPENSSL_97) && !defined(HAVE_OPENSSL_98)
+#warning "WARNING: I must to disable some function with this version of openssl... be aware"
+
+#  define HMAC_CTX_init(ctx)
+#  define HMAC_Init_ex(ctx,key,len,md,impl)
+
+#  define EVP_MD_CTX_init(ctx)
+#  define EVP_SignInit_ex(a,b,c)
+#  define EVP_MD_CTX_cleanup(ctx)
+#  define EVP_VerifyInit_ex(a,b,c)
+
+#  define HMAC_CTX_cleanup(ctx)           HMAC_cleanup(ctx)
+#endif
 
 #define U_MAX_HASH_SIZE       256 /* Max size of any expected hash algorithms (oversized) */
 #define U_MAX_HASH_BLOCK_SIZE  64 /* Max size of blocks used - MD5 and SHA1 are both 64 bytes */

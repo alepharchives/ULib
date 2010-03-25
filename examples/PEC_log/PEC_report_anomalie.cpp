@@ -104,7 +104,7 @@ Messaggio::Messaggio() : id(*PEC_report::id), mittente(*PEC_report::mittente), i
          continue;
          }
 
-      vdestdomini[vdestinatari.size()] = (PEC_report::isDomain(elem) ? '1' : '0');
+      vdestdomini[vdestinatari.size()] = (PEC_report::isDomainAddress(elem) ? '1' : '0');
 
       vdestinatari.push_back(elem);
       }
@@ -295,7 +295,7 @@ void PEC_report_anomalie::processLine(bool bnew)
 
       // check if messaggio incoerente
 
-      if (PEC_report::isDomain(Messaggio::msg->mittente)) Messaggio::msg->flag[U_OUTPUT] = '1';
+      if (PEC_report::isDomainAddress(Messaggio::msg->mittente)) Messaggio::msg->flag[U_OUTPUT] = '1';
 
       U_INTERNAL_DUMP("flag[U_OUTPUT] = %C", Messaggio::msg->flag[U_OUTPUT])
 
@@ -353,7 +353,7 @@ bool Messaggio::isAnomalia()
 
    if (flag[U_BUSTA_TRASPORTO] == '0')
       {
-      if (PEC_report::isDomain(mittente)) flag[U_OUTPUT] = '1';
+      if (PEC_report::isDomainAddress(mittente)) flag[U_OUTPUT] = '1';
 
       U_INTERNAL_DUMP("flag[U_OUTPUT] = %C", flag[U_OUTPUT])
       }

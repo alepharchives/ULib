@@ -767,9 +767,9 @@ bool PEC_report::callForAllEntryField(int field, bPFstr function)
 
 // check se l'indirizzo ha un dominio APPARTENENTE ai domini specificati...
 
-bool PEC_report::isDomain(const UString& address)
+bool PEC_report::isDomainAddress(const UString& address)
 {
-   U_TRACE(5, "PEC_report::isDomain(%.*S)", U_STRING_TO_TRACE(address))
+   U_TRACE(5, "PEC_report::isDomainAddress(%.*S)", U_STRING_TO_TRACE(address))
 
    uint32_t n = address.find('@');
 

@@ -320,9 +320,9 @@ Element::~Element()
       }
 }
 
-void DocumentClassifier::classify(void* e, void* pnode)
+void DocumentClassifier::classifyEntry(void* e, void* pnode)
 {
-   U_TRACE(5, "DocumentClassifier::classify(%p,%p)", e, pnode)
+   U_TRACE(5, "DocumentClassifier::classifyEntry(%p,%p)", e, pnode)
 
    Element::Type type    = ((Element*)e)->type;
    UTree<Element*>* node = (UTree<Element*>*)pnode;

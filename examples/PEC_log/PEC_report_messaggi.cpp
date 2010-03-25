@@ -235,7 +235,7 @@ public:
       U_ASSERT(key.empty() == false)
 
       if (key.equalnocase(gds->rep) ||
-          isDomain(key))
+          isDomainAddress(key))
          {
          VCasellaIdCounter* vc;
 
@@ -275,7 +275,7 @@ public:
 
       // INPUT: Se il campo mittente contiene domini specificati
 
-      if (isDomain(key)) inp = 1;
+      if (isDomainAddress(key)) inp = 1;
 
       // OUTPUT: Se il campo ricezione (o consegna from version > 2.0 nel caso di rilevazione virus) contiene domini specificati
 
@@ -287,7 +287,7 @@ public:
          U_field = U_consegna;
          }
 
-      if (isDomain(U_field)) out = 1;
+      if (isDomainField(U_field)) out = 1;
 
       U_INTERNAL_DUMP("inp = %u out = %u", inp, out)
 

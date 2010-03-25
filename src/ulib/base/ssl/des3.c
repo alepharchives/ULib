@@ -24,8 +24,8 @@
 
 static const char* password;
 
-static DES_cblock key;
 static const EVP_MD* md;
+static unsigned char key[8];
 static const EVP_CIPHER* cipher;
 static unsigned char salt[PKCS5_SALT_LEN];
 static unsigned char iv[EVP_MAX_IV_LENGTH];
