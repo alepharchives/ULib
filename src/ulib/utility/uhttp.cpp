@@ -361,8 +361,7 @@ end:
 
    U_INTERNAL_DUMP("startHeader = %u", http_info.startHeader)
 
-   U_INTERNAL_ASSERT(U_STRNCMP(ptr, U_LF)   == 0 ||
-                     U_STRNCMP(ptr, U_CRLF) == 0)
+   U_INTERNAL_ASSERT(U_STRNEQ(ptr, U_LF) || U_STRNEQ(ptr, U_CRLF))
 
    U_RETURN(true);
 }
@@ -450,8 +449,8 @@ start:
       --------------------------------------------------------------------------------------------------------
       */
 
-      U_INTERNAL_ASSERT(U_STRNCMP(rbuffer.c_pointer(http_info.startHeader), U_LF2)   == 0 ||
-                        U_STRNCMP(rbuffer.c_pointer(http_info.startHeader), U_CRLF2) == 0)
+      U_INTERNAL_ASSERT(U_STRNEQ(rbuffer.c_pointer(http_info.startHeader), U_LF2) ||
+                        U_STRNEQ(rbuffer.c_pointer(http_info.startHeader), U_CRLF2))
 
       http_info.startHeader += u_line_terminator_len * 2;
       http_info.endHeader    = http_info.startHeader;
@@ -2327,7 +2326,7 @@ loop:
          {
          U_INTERNAL_DUMP("check 'Location: ...'", 0)
 
-         if (U_STRNCMP(ptr+1, "ocation: ") == 0)
+         if (U_STRNEQ(ptr+1, "ocation: "))
             {
             location = ptr + U_CONSTANT_SIZE("Location: ");
 
@@ -2353,7 +2352,7 @@ loop:
 
          U_INTERNAL_DUMP("check 'Status: ...'", 0)
 
-         if (U_STRNCMP(ptr+1, "tatus: ") == 0)
+         if (U_STRNEQ(ptr+1, "tatus: "))
             {
             location = ptr + U_CONSTANT_SIZE("Status: ");
 
@@ -2394,7 +2393,7 @@ loop:
 
          U_INTERNAL_DUMP("check 'Set-Cookie: TODO['", 0)
 
-         if (U_STRNCMP(ptr+1, "et-Cookie: TODO[") == 0)
+         if (U_STRNEQ(ptr+1, "et-Cookie: TODO["))
             {
             uint32_t pos1,
                      pos2 = U_CONSTANT_SIZE("Set-Cookie: "),
@@ -2463,7 +2462,7 @@ loop:
 
          U_INTERNAL_DUMP("check 'Connection: close'", 0)
 
-         if (U_STRNCMP(ptr+1, "onnection: close") == 0)
+         if (U_STRNEQ(ptr+1, "onnection: close"))
             {
             connection_close = true;
 
@@ -2474,17 +2473,17 @@ loop:
 
          U_INTERNAL_DUMP("check 'Content-...: ...'",  0)
 
-         if (U_STRNCMP(ptr+1, "ontent-") == 0)
+         if (U_STRNEQ(ptr+1, "ontent-"))
             {
             ptr += U_CONSTANT_SIZE("Content-");
 
-            if (U_STRNCMP(ptr, "Type: ") == 0)
+            if (U_STRNEQ(ptr, "Type: "))
                {
                header_content_type = true;
 
                U_INTERNAL_DUMP("header_content_type = %b", header_content_type)
                }
-            else if (U_STRNCMP(ptr, "Length: ") == 0)
+            else if (U_STRNEQ(ptr, "Length: "))
                {
                char* nptr;
 
@@ -2822,8 +2821,7 @@ bool UHTTP::processHTTPGetRequest()
 
       ptr = getHTTPHeaderValuePtr(*USocket::str_range);
 
-      if (ptr &&
-          U_STRNCMP(ptr, "bytes=") == 0)
+      if (ptr && U_STRNEQ(ptr, "bytes="))
          {
          ptr += U_CONSTANT_SIZE("bytes=");
 

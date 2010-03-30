@@ -148,9 +148,9 @@
 <a name="l00125"></a>00125 <span class="preprocessor"></span>
 <a name="l00126"></a>00126 <span class="comment">// HTTP Compare</span>
 <a name="l00127"></a>00127 
-<a name="l00128"></a>00128 <span class="preprocessor">#define U_HTTP_URI_STREQ(str)           (strncmp(U_HTTP_URI,                              str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.uri_len))    == 0)</span>
-<a name="l00129"></a>00129 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_HOST_STREQ(str)  (strncmp(UHTTP::http_info.host, str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.host_len))  == 0)</span>
-<a name="l00130"></a>00130 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_QUERY_STREQ(str) (strncmp(U_HTTP_QUERY,                    str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.query_len)) == 0)</span>
+<a name="l00128"></a>00128 <span class="preprocessor">#define U_HTTP_URI_STRNEQ(str)  (strncmp(U_HTTP_URI,                              str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.uri_len))    == 0)</span>
+<a name="l00129"></a>00129 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_HOST_STRNEQ(str) (strncmp(UHTTP::http_info.host, str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.host_len))  == 0)</span>
+<a name="l00130"></a>00130 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_QUERY_STRNEQ(str)        (strncmp(U_HTTP_QUERY,                    str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.query_len)) == 0)</span>
 <a name="l00131"></a>00131 <span class="preprocessor"></span>
 <a name="l00132"></a>00132 <span class="comment">// HTTP Access Authentication</span>
 <a name="l00133"></a>00133 
@@ -206,21 +206,21 @@
 <a name="l00183"></a>00183                         http_info.method_type = HTTP_GET;
 <a name="l00184"></a>00184 
 <a name="l00185"></a>00185                         U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 3)
-<a name="l00186"></a>00186                         U_INTERNAL_ASSERT_EQUALS(U_STRNCMP(http_info.method, <span class="stringliteral">&quot;GET&quot;</span>), 0)
+<a name="l00186"></a>00186                         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, <span class="stringliteral">&quot;GET&quot;</span>))
 <a name="l00187"></a>00187                         }
 <a name="l00188"></a>00188                 <span class="keywordflow">else</span> <span class="keywordflow">if</span> (c == <span class="charliteral">&#39;P&#39;</span>) <span class="comment">// POST</span>
 <a name="l00189"></a>00189                         {
 <a name="l00190"></a>00190                         http_info.method_type = HTTP_POST;
 <a name="l00191"></a>00191 
 <a name="l00192"></a>00192                         U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 4)
-<a name="l00193"></a>00193                         U_INTERNAL_ASSERT_EQUALS(U_STRNCMP(http_info.method, <span class="stringliteral">&quot;POST&quot;</span>), 0)
+<a name="l00193"></a>00193                         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, <span class="stringliteral">&quot;POST&quot;</span>))
 <a name="l00194"></a>00194                         }
 <a name="l00195"></a>00195                 <span class="keywordflow">else</span> <span class="comment">// HEAD</span>
 <a name="l00196"></a>00196                         {
 <a name="l00197"></a>00197                         http_info.method_type = HTTP_HEAD;
 <a name="l00198"></a>00198 
 <a name="l00199"></a>00199                         U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 4)
-<a name="l00200"></a>00200                         U_INTERNAL_ASSERT_EQUALS(U_STRNCMP(http_info.method, <span class="stringliteral">&quot;HEAD&quot;</span>), 0)
+<a name="l00200"></a>00200                         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, <span class="stringliteral">&quot;HEAD&quot;</span>))
 <a name="l00201"></a>00201                         }
 <a name="l00202"></a>00202 
 <a name="l00203"></a>00203                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;method_type = %u&quot;</span>, http_info.method_type)
@@ -332,7 +332,7 @@
 <a name="l00309"></a>00309 
 <a name="l00310"></a>00310                 U_ASSERT(isHttpPOST())
 <a name="l00311"></a>00311 
-<a name="l00312"></a>00312                 <span class="keywordtype">bool</span> result = U_HTTP_URI_STREQ(<span class="stringliteral">&quot;/soap&quot;</span>);
+<a name="l00312"></a>00312                 <span class="keywordtype">bool</span> result = U_HTTP_URI_STRNEQ(<span class="stringliteral">&quot;/soap&quot;</span>);
 <a name="l00313"></a>00313 
 <a name="l00314"></a>00314                 U_RETURN(result);
 <a name="l00315"></a>00315                 }
@@ -343,7 +343,7 @@
 <a name="l00320"></a>00320 
 <a name="l00321"></a>00321                 U_ASSERT(isHttpPOST())
 <a name="l00322"></a>00322 
-<a name="l00323"></a>00323                 <span class="keywordtype">bool</span> result = U_HTTP_URI_STREQ(<span class="stringliteral">&quot;/tsa&quot;</span>);
+<a name="l00323"></a>00323                 <span class="keywordtype">bool</span> result = U_HTTP_URI_STRNEQ(<span class="stringliteral">&quot;/tsa&quot;</span>);
 <a name="l00324"></a>00324 
 <a name="l00325"></a>00325                 U_RETURN(result);
 <a name="l00326"></a>00326                 }
@@ -365,7 +365,7 @@
 <a name="l00342"></a>00342 
 <a name="l00343"></a>00343                 U_INTERNAL_ASSERT(isHTTPRequest())
 <a name="l00344"></a>00344 
-<a name="l00345"></a>00345                 <span class="keywordtype">bool</span> result = (U_STRNCMP(U_HTTP_URI, <span class="stringliteral">&quot;/usp/&quot;</span>) == 0 &amp;&amp;
+<a name="l00345"></a>00345                 <span class="keywordtype">bool</span> result = (U_STRNEQ(U_HTTP_URI, <span class="stringliteral">&quot;/usp/&quot;</span>) &amp;&amp;
 <a name="l00346"></a>00346                                                         u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(<span class="stringliteral">&quot;.usp&quot;</span>)));
 <a name="l00347"></a>00347 
 <a name="l00348"></a>00348                 U_RETURN(result);
@@ -462,7 +462,7 @@
 <a name="l00439"></a>00439 
 <a name="l00440"></a>00440 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 24 16:51:39 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 30 16:31:44 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

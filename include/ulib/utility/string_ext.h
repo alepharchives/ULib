@@ -34,7 +34,7 @@ struct U_EXPORT UStringExt {
    static UString   compress(const UString& s);
    static UString decompress(const UString& s);
 
-   static bool isCompress(const UString& s) { return (U_STRNCMP(s.data(), U_LZOP_COMPRESS) == 0); }
+   static bool isCompress(const UString& s) { return U_STRNEQ(s.data(), U_LZOP_COMPRESS); }
 
    // Convert integer to string
 
@@ -118,7 +118,7 @@ struct U_EXPORT UStringExt {
 
    static void putenv(const char* name, uint32_t value)
       {
-      U_TRACE(1, "UProcess::putenv(%S,%u)", name, value)
+      U_TRACE(1, "UStringExt::putenv(%S,%u)", name, value)
 
       UString buffer(U_CAPACITY);
 
@@ -131,7 +131,7 @@ struct U_EXPORT UStringExt {
 
    static void putenv(const char* name, const char* value)
       {
-      U_TRACE(1, "UProcess::putenv(%S,%S)", name, value)
+      U_TRACE(1, "UStringExt::putenv(%S,%S)", name, value)
 
       UString buffer(U_CAPACITY);
 
@@ -144,7 +144,7 @@ struct U_EXPORT UStringExt {
 
    static void putenv(const char* name, const UString& value)
       {
-      U_TRACE(1, "UProcess::putenv(%S,%.*S)", name, U_STRING_TO_TRACE(value))
+      U_TRACE(1, "UStringExt::putenv(%S,%.*S)", name, U_STRING_TO_TRACE(value))
 
       UString buffer(U_CAPACITY);
 
@@ -182,13 +182,13 @@ struct U_EXPORT UStringExt {
       return (ptr ? insertEscape(str, sz, delimiter) : s);
       }
 
-   // Returns a string that has whitespace removed from the start and the end
+   // Returns a string that has whitespace removed from the start and the end (leading and trailing)
 
-   static UString stripWhiteSpace(const char* s, uint32_t n);
-   static UString stripWhiteSpace(const UString& s) { return stripWhiteSpace(U_STRING_TO_PARAM(s)); }
+   static UString trim(const char* s, uint32_t n);
+   static UString trim(const UString& s) { return trim(U_STRING_TO_PARAM(s)); }
 
-   // returns a string that has whitespace removed from the start and the end, and which has each sequence of internal
-   // whitespace replaced with a single space
+   // returns a string that has whitespace removed from the start and the end, and
+   // which has each sequence of internal whitespace replaced with a single space
 
    static UString simplifyWhiteSpace(const char* s, uint32_t n);
    static UString simplifyWhiteSpace(const UString& s) { return simplifyWhiteSpace(U_STRING_TO_PARAM(s)); }

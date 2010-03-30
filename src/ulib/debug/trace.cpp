@@ -119,10 +119,10 @@ void UTrace::trace_syscall(const char* format, ...)
 
    if (active)
       {
-      flag_syscall_read_or_write = (U_STRNCMP(format, "::read(")  == 0 ||
-                                    U_STRNCMP(format, "::write(") == 0 ||
-                                    U_STRNCMP(format, "::send(")  == 0 ||
-                                    U_STRNCMP(format, "::recv(")  == 0);
+      flag_syscall_read_or_write = (U_STRNEQ(format, "::read(")  ||
+                                    U_STRNEQ(format, "::write(") ||
+                                    U_STRNEQ(format, "::send(")  ||
+                                    U_STRNEQ(format, "::recv("));
 
       if (flag_syscall_read_or_write)
          {

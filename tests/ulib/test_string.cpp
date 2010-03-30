@@ -1590,7 +1590,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( y == "lots of white space" )
 
-   y = UStringExt::stripWhiteSpace(U_CONSTANT_TO_PARAM("   lots of white space  "));
+   y = UStringExt::trim(U_CONSTANT_TO_PARAM("   lots of white space  "));
 
    U_ASSERT( y == "lots of white space" )
 

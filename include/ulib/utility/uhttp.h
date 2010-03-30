@@ -125,9 +125,9 @@ enum HTTPMethodType { HTTP_POST = 1, HTTP_GET = 2, HTTP_HEAD = 3 };
 
 // HTTP Compare
 
-#define U_HTTP_URI_STREQ(str)    (strncmp(U_HTTP_URI,            str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.uri_len))   == 0)
-#define U_HTTP_HOST_STREQ(str)   (strncmp(UHTTP::http_info.host, str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.host_len))  == 0)
-#define U_HTTP_QUERY_STREQ(str)  (strncmp(U_HTTP_QUERY,          str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.query_len)) == 0)
+#define U_HTTP_URI_STRNEQ(str)   (strncmp(U_HTTP_URI,            str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.uri_len))   == 0)
+#define U_HTTP_HOST_STRNEQ(str)  (strncmp(UHTTP::http_info.host, str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.host_len))  == 0)
+#define U_HTTP_QUERY_STRNEQ(str) (strncmp(U_HTTP_QUERY,          str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.query_len)) == 0)
 
 // HTTP Access Authentication
 
@@ -183,21 +183,21 @@ public:
          http_info.method_type = HTTP_GET;
 
          U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 3)
-         U_INTERNAL_ASSERT_EQUALS(U_STRNCMP(http_info.method, "GET"), 0)
+         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, "GET"))
          }
       else if (c == 'P') // POST
          {
          http_info.method_type = HTTP_POST;
 
          U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 4)
-         U_INTERNAL_ASSERT_EQUALS(U_STRNCMP(http_info.method, "POST"), 0)
+         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, "POST"))
          }
       else // HEAD
          {
          http_info.method_type = HTTP_HEAD;
 
          U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 4)
-         U_INTERNAL_ASSERT_EQUALS(U_STRNCMP(http_info.method, "HEAD"), 0)
+         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, "HEAD"))
          }
 
       U_INTERNAL_DUMP("method_type = %u", http_info.method_type)
@@ -309,7 +309,7 @@ public:
 
       U_ASSERT(isHttpPOST())
 
-      bool result = U_HTTP_URI_STREQ("/soap");
+      bool result = U_HTTP_URI_STRNEQ("/soap");
 
       U_RETURN(result);
       }
@@ -320,7 +320,7 @@ public:
 
       U_ASSERT(isHttpPOST())
 
-      bool result = U_HTTP_URI_STREQ("/tsa");
+      bool result = U_HTTP_URI_STRNEQ("/tsa");
 
       U_RETURN(result);
       }
@@ -342,7 +342,7 @@ public:
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
-      bool result = (U_STRNCMP(U_HTTP_URI, "/usp/") == 0 &&
+      bool result = (U_STRNEQ(U_HTTP_URI, "/usp/") &&
                      u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".usp")));
 
       U_RETURN(result);

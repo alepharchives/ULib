@@ -27,7 +27,7 @@ X509_REQ* UPKCS10::readPKCS10(const UString& x, const char* format)
 
    if (format == 0) format = (x.isBinary() ? "DER" : "PEM");
 
-   if (U_STRNCMP(format, "PEM") == 0 &&
+   if (U_STREQ(format, "PEM") &&
        U_STRNCMP(x.data(), "-----BEGIN CERTIFICATE REQUEST-----"))
       {
       unsigned length = x.size();
@@ -43,8 +43,8 @@ X509_REQ* UPKCS10::readPKCS10(const UString& x, const char* format)
 next:
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
-   request = (X509_REQ*) ((U_STRNCMP(format, "PEM") == 0) ? U_SYSCALL(PEM_read_bio_X509_REQ, "%p,%p,%p,%p", in, 0, 0, 0)
-                                                          : U_SYSCALL(d2i_X509_REQ_bio,      "%p,%p",       in, 0));
+   request = (X509_REQ*) (U_STREQ(format, "PEM") ? U_SYSCALL(PEM_read_bio_X509_REQ, "%p,%p,%p,%p", in, 0, 0, 0)
+                                                 : U_SYSCALL(d2i_X509_REQ_bio,      "%p,%p",       in, 0));
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
@@ -99,7 +99,7 @@ UString UPKCS10::getEncoded(const char* format) const
 
    U_INTERNAL_ASSERT_POINTER(request)
 
-   if (U_STRNCMP(format, "DER") == 0)
+   if (U_STREQ(format, "DER"))
       {
       unsigned len = U_SYSCALL(i2d_X509_REQ, "%p,%p", request, 0);
 
@@ -113,7 +113,7 @@ UString UPKCS10::getEncoded(const char* format) const
 
       U_RETURN_STRING(encoding);
       }
-   else if (U_STRNCMP(format, "PEM") == 0)
+   else if (U_STREQ(format, "PEM"))
       {
       BIO* bio = (BIO*) U_SYSCALL(BIO_new, "%p", BIO_s_mem());
 

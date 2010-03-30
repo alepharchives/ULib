@@ -140,10 +140,10 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	base/zip/dostime.c base/zip/pushback.c base/zip/ziptool.c \
 	base/coder/cgzio.c base/ssl/des3.c base/ssl/dgst.c \
 	base/win32/mingw32.c internal/common.cpp internal/objectIO.cpp \
-	ui/dialog.cpp db/cdb.cpp db/rdb.cpp cgi/cgi.cpp \
-	cgi/cgi_input.cpp mime/header.cpp mime/entity.cpp \
-	mime/multipart.cpp container/vector.cpp container/hash_map.cpp \
-	container/tree.cpp utility/interrupt.cpp utility/compress.cpp \
+	ui/dialog.cpp db/cdb.cpp db/rdb.cpp mime/header.cpp \
+	mime/entity.cpp mime/multipart.cpp container/vector.cpp \
+	container/hash_map.cpp container/tree.cpp \
+	utility/interrupt.cpp utility/compress.cpp \
 	utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
 	utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp \
 	utility/uhttp.cpp net/ipaddress.cpp net/socket.cpp \
@@ -229,15 +229,15 @@ am__objects_21 = base.lo base_error.lo hash.lo utility.lo minilzo.lo \
 @MYSQL_TRUE@am__objects_36 = mysql.lo
 @LIBEVENT_TRUE@am__objects_37 = event.lo
 @MINGW_FALSE@am__objects_38 = unixsocket.lo
-am__objects_39 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo cgi.lo \
-	cgi_input.lo header.lo entity.lo multipart.lo vector.lo \
-	hash_map.lo tree.lo interrupt.lo compress.lo services.lo \
-	semaphore.lo base64.lo lock.lo string_ext.lo socket_ext.lo \
-	uhttp.lo ipaddress.lo socket.lo ping.lo rpc.lo rpc_envelope.lo \
-	rpc_fault.lo rpc_method.lo rpc_encoder.lo rpc_object.lo \
-	rpc_gen_method.lo rpc_parser.lo smtp.lo ftp.lo pop3.lo imap.lo \
-	http.lo client.lo ipt_ACCOUNT.lo query_parser.lo event_time.lo \
-	timeval.lo timer.lo notifier.lo string.lo file.lo process.lo \
+am__objects_39 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo \
+	header.lo entity.lo multipart.lo vector.lo hash_map.lo tree.lo \
+	interrupt.lo compress.lo services.lo semaphore.lo base64.lo \
+	lock.lo string_ext.lo socket_ext.lo uhttp.lo ipaddress.lo \
+	socket.lo ping.lo rpc.lo rpc_envelope.lo rpc_fault.lo \
+	rpc_method.lo rpc_encoder.lo rpc_object.lo rpc_gen_method.lo \
+	rpc_parser.lo smtp.lo ftp.lo pop3.lo imap.lo http.lo client.lo \
+	ipt_ACCOUNT.lo query_parser.lo event_time.lo timeval.lo \
+	timer.lo notifier.lo string.lo file.lo process.lo \
 	file_config.lo log.lo options.lo application.lo cache.lo \
 	date.lo url.lo tokenizer.lo command.lo $(am__objects_22) \
 	$(am__objects_23) $(am__objects_24) $(am__objects_25) \
@@ -523,7 +523,7 @@ target_cpu = @target_cpu@
 target_os = @target_os@
 target_vendor = @target_vendor@
 thrprefix = @thrprefix@
-EXTRA_DIST = base/* cgi/* container/* db/* debug/* dynamic/* flex/* internal/* ldap/* mime/* net/* pcre/* \
+EXTRA_DIST = base/* container/* db/* debug/* dynamic/* flex/* internal/* ldap/* mime/* net/* pcre/* \
 			 	 replace/* ssl/* ssh/* ui/* utility/* xml/expat/* xml/libxml2/* zip/* \
 				 plugin/*.cpp plugin/Makefile.* \
 				 plugin/mod_shib/*.cpp plugin/mod_shib/Makefile.* \
@@ -545,10 +545,9 @@ SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c \
 	$(am__append_20) $(am__append_22) $(am__append_25) \
 	$(am__append_36)
 SRC_CPP = internal/common.cpp internal/objectIO.cpp ui/dialog.cpp \
-	db/cdb.cpp db/rdb.cpp cgi/cgi.cpp cgi/cgi_input.cpp \
-	mime/header.cpp mime/entity.cpp mime/multipart.cpp \
-	container/vector.cpp container/hash_map.cpp container/tree.cpp \
-	utility/interrupt.cpp utility/compress.cpp \
+	db/cdb.cpp db/rdb.cpp mime/header.cpp mime/entity.cpp \
+	mime/multipart.cpp container/vector.cpp container/hash_map.cpp \
+	container/tree.cpp utility/interrupt.cpp utility/compress.cpp \
 	utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
 	utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp \
 	utility/uhttp.cpp net/ipaddress.cpp net/socket.cpp \
@@ -661,8 +660,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cdb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/certificate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cescape.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cgi.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cgi_input.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cgzio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client_image.Plo@am__quote@
@@ -1098,20 +1095,6 @@ rdb.lo: db/rdb.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='db/rdb.cpp' object='rdb.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o rdb.lo `test -f 'db/rdb.cpp' || echo '$(srcdir)/'`db/rdb.cpp
-
-cgi.lo: cgi/cgi.cpp
-@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT cgi.lo -MD -MP -MF "$(DEPDIR)/cgi.Tpo" -c -o cgi.lo `test -f 'cgi/cgi.cpp' || echo '$(srcdir)/'`cgi/cgi.cpp; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/cgi.Tpo" "$(DEPDIR)/cgi.Plo"; else rm -f "$(DEPDIR)/cgi.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='cgi/cgi.cpp' object='cgi.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o cgi.lo `test -f 'cgi/cgi.cpp' || echo '$(srcdir)/'`cgi/cgi.cpp
-
-cgi_input.lo: cgi/cgi_input.cpp
-@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT cgi_input.lo -MD -MP -MF "$(DEPDIR)/cgi_input.Tpo" -c -o cgi_input.lo `test -f 'cgi/cgi_input.cpp' || echo '$(srcdir)/'`cgi/cgi_input.cpp; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/cgi_input.Tpo" "$(DEPDIR)/cgi_input.Plo"; else rm -f "$(DEPDIR)/cgi_input.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='cgi/cgi_input.cpp' object='cgi_input.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o cgi_input.lo `test -f 'cgi/cgi_input.cpp' || echo '$(srcdir)/'`cgi/cgi_input.cpp
 
 header.lo: mime/header.cpp
 @am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT header.lo -MD -MP -MF "$(DEPDIR)/header.Tpo" -c -o header.lo `test -f 'mime/header.cpp' || echo '$(srcdir)/'`mime/header.cpp; \
@@ -1735,7 +1718,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
-	$(mkdir_p) $(distdir)/base $(distdir)/cgi $(distdir)/container $(distdir)/db $(distdir)/debug $(distdir)/dynamic $(distdir)/flex $(distdir)/internal $(distdir)/ldap $(distdir)/mime $(distdir)/net $(distdir)/pcre $(distdir)/plugin $(distdir)/plugin/mod_geoip $(distdir)/plugin/mod_shib $(distdir)/replace $(distdir)/ssh $(distdir)/ssl $(distdir)/ui $(distdir)/utility $(distdir)/xml/expat $(distdir)/xml/libxml2 $(distdir)/zip
+	$(mkdir_p) $(distdir)/base $(distdir)/container $(distdir)/db $(distdir)/debug $(distdir)/dynamic $(distdir)/flex $(distdir)/internal $(distdir)/ldap $(distdir)/mime $(distdir)/net $(distdir)/pcre $(distdir)/plugin $(distdir)/plugin/mod_geoip $(distdir)/plugin/mod_shib $(distdir)/replace $(distdir)/ssh $(distdir)/ssl $(distdir)/ui $(distdir)/utility $(distdir)/xml/expat $(distdir)/xml/libxml2 $(distdir)/zip
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

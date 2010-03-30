@@ -36,7 +36,7 @@ X509* UCertificate::readX509(const UString& x, const char* format)
 
    if (format == 0) format = (x.isBinary() ? "DER" : "PEM");
 
-   if (U_STRNCMP(format, "PEM") == 0 &&
+   if (U_STREQ(format, "PEM") &&
        U_STRNCMP(x.data(), "-----BEGIN CERTIFICATE-----"))
       {
       unsigned length = x.size();
@@ -52,8 +52,8 @@ X509* UCertificate::readX509(const UString& x, const char* format)
 next:
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
-   x509 = (X509*) ((U_STRNCMP(format, "PEM") == 0) ? U_SYSCALL(PEM_read_bio_X509, "%p,%p,%p,%p", in, 0, 0, 0)
-                                                   : U_SYSCALL(d2i_X509_bio,      "%p,%p",       in, 0));
+   x509 = (X509*) (U_STREQ(format, "PEM") ? U_SYSCALL(PEM_read_bio_X509, "%p,%p,%p,%p", in, 0, 0, 0)
+                                          : U_SYSCALL(d2i_X509_bio,      "%p,%p",       in, 0));
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
@@ -381,8 +381,8 @@ UString UCertificate::getEncoded(const char* format) const
 
    U_INTERNAL_ASSERT_POINTER(x509)
 
-   if (U_STRNCMP(format, "DER")    == 0 ||
-       U_STRNCMP(format, "BASE64") == 0)
+   if (U_STREQ(format, "DER") ||
+       U_STREQ(format, "BASE64"))
       {
       unsigned len = U_SYSCALL(i2d_X509, "%p,%p", x509, 0);
 
@@ -394,7 +394,7 @@ UString UCertificate::getEncoded(const char* format) const
 
       encoding.size_adjust(len);
 
-      if (U_STRNCMP(format, "BASE64") == 0)
+      if (U_STREQ(format, "BASE64"))
          {
          UString x(len * 3 + 32U);
 
@@ -405,7 +405,7 @@ UString UCertificate::getEncoded(const char* format) const
 
       U_RETURN_STRING(encoding);
       }
-   else if (U_STRNCMP(format, "PEM") == 0)
+   else if (U_STREQ(format, "PEM"))
       {
       BIO* bio = (BIO*) U_SYSCALL(BIO_new, "%p", BIO_s_mem());
 

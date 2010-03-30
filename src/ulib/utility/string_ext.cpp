@@ -419,20 +419,18 @@ UString UStringExt::removeEscape(const char* s, uint32_t n)
 
 // Returns a string that has whitespace removed from the start and the end.
 
-UString UStringExt::stripWhiteSpace(const char* s, uint32_t n)
+UString UStringExt::trim(const char* s, uint32_t n)
 {
-   U_TRACE(0, "UStringExt::stripWhiteSpace(%.*S,%u)", n, s, n)
+   U_TRACE(0, "UStringExt::trim(%.*S,%u)", n, s, n)
 
-   U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+// U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
    int start, end;
    UString result(n);
 
    // skip white space from start
 
-   // gcc - cannot optimize possibly infinite loops ???
-
-   for (start = 0, end = n - 1; start <= end; ++start)
+   for (start = 0, end = n - 1; start <= end; ++start) // gcc - cannot optimize possibly infinite loops ???
       {
       if (u_isspace(s[start]) == false) break;
       }
@@ -461,7 +459,7 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
 {
    U_TRACE(0, "UStringExt::simplifyWhiteSpace(%.*S,%u)", n, s, n)
 
-   U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+// U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
    UString result(n);
    uint32_t sz1, sz = 0;

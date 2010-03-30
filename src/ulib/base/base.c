@@ -91,7 +91,8 @@ bool                u_recursion;
 bool                u_exec_failed;
 char                u_hostname[255];
 char                u_user_name[32];
- int32_t            u_printf_string_max_length;
+int                 u_printf_fileno = STDERR_FILENO;
+int32_t             u_printf_string_max_length;
 uint32_t            u_hostname_len, u_user_name_len;
 const char*         u_tmpdir;
 const unsigned char u_alphabet[64]  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -1843,7 +1844,7 @@ void u_printf(const char* format, ...)
 
    if (u_flag_exit == -1) u_printError();
 
-   (void) write(STDERR_FILENO, buffer, bytes_written);
+   (void) write(u_printf_fileno, buffer, bytes_written);
 
    if (u_flag_exit)
       {

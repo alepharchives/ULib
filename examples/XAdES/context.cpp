@@ -543,7 +543,8 @@ bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
       }
    else
       {
-      cur = keyInfoNode;
+      cur         = keyInfoNode;
+      keyInfoNode = 0;
       }
 
    // next nodes are optional Object nodes

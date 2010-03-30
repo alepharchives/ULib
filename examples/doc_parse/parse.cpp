@@ -157,11 +157,11 @@ public:
          {
          const char* type = stype->data();
 
-         if      (U_STRNCMP(type, "image/")                      == 0) icon = "/icons/img.gif";
-         else if (U_STRNCMP(type, "application/x-")              == 0) icon = "/icons/x.gif";
-         else if (U_STRNCMP(type, "application/pdf")             == 0) icon = "/icons/pdf.gif";
-         else if (U_STRNCMP(type, "application/timestamp-reply") == 0) icon = "/icons/timestamp.gif";
-         else if (U_STRNCMP(type, "text/xml")                    == 0)
+         if      (U_STRNEQ(type, "image/"))                       icon = "/icons/img.gif";
+         else if (U_STRNEQ(type, "application/x-"))               icon = "/icons/x.gif";
+         else if (U_STRNEQ(type, "application/pdf"))              icon = "/icons/pdf.gif";
+         else if (U_STRNEQ(type, "application/timestamp-reply"))  icon = "/icons/timestamp.gif";
+         else if (U_STRNEQ(type, "text/xml"))
             {
             icon = "/icons/xml.gif";
 

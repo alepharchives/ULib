@@ -921,7 +921,6 @@ AC_OUTPUT(Makefile \
 			 contrib/signer/Makefile \
 			 examples/Makefile \
 			 examples/IR/Makefile \
-			 examples/cgi/Makefile \
 			 examples/csp/Makefile \
 			 examples/lcsp/Makefile \
 			 examples/rsign/Makefile \

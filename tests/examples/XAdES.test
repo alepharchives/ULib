@@ -6,13 +6,18 @@ start_msg XAdES
 
 rm -f tsa_http.log TSA/log \
 		out/sign.out err/sign.err \
-		trace.*sign*.[0-9]* object.*sign*.[0-9]* \
+		out/archive.out err/archive.err \
+		out/verify.out err/verify.err \
+		trace.*sign*.[0-9]* object.*sign*.[0-9]* stack.*sign*.[0-9]* \
+		trace.*archive*.[0-9]* object.*archive*.[0-9]* stack.*archive*.[0-9]* \
+		trace.*verify*.[0-9]* object.*verify*.[0-9]* stack.*verify*.[0-9]* \
 		out/userver_tcp.out err/userver_tcp.err \
-      trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]*
+      trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
 
 #UTRACE="0 10M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
+#VALGRIND="valgrind -v --leak-check=full"
  export UTRACE UOBJDUMP USIMERR
 
 DIR_CMD="../../examples/userver"
@@ -23,25 +28,50 @@ start_prg_background userver_tcp -c tsa_http.cfg
 $SLEEP
 DIR_CMD="../../examples/XAdES"
 
-#VALGRIND="valgrind -v --leak-check=full"
-
-# -C CA/CApath
-# -X CA/CApath/matteo_cert.pem
-
-# -k inp/XAdES/AlicePrivRSASign_epk.pem -p password 
-# -X inp/XAdES/AliceRSASignByCarl.pem.cer
+DATA_URI=inp/XAdES/xmldsig-input.txt
+X509=`cat ../ulib/CA/server.crt`
+KEY_HANDLE=../ulib/CA/server.key
+DIGEST_ALGORITHM=sha1
+SIGNING_TIME=0
+CLAIMED_ROLE="Amministratore UNIREL"
+PRODUCTION_PLACE_CITY="sesto fiorentino"
+PRODUCTION_PLACE_STATE_OR_PROVINCE=SI
+PRODUCTION_PLACE_POSTAL_CODE=11111
+PRODUCTION_PLACE_COUNTRY_NAME=Italy
+CA_STORE=../ulib/CA/CApath
+SIGNATURE_TIMESTAMP="http://localhost/tsa"
 
 #STRACE=$LTRUSS
-start_prg sign -c XAdES.cfg \
-					-C ../ulib/CA/CApath \
-					-X ../ulib/CA/server.crt \
-					-k ../ulib/CA/server.key -p caciucco \
-					inp/XAdES/text inp/XAdES/xmldsig-input.txt
+start_prg sign -c XAdES.ini -- \
+									 $DATA_URI \
+									 '"$X509"' \
+									 $KEY_HANDLE \
+									 $DIGEST_ALGORITHM \
+									 $SIGNING_TIME \
+									 '"$CLAIMED_ROLE"' \
+									 '"$PRODUCTION_PLACE_CITY"' \
+									 $PRODUCTION_PLACE_STATE_OR_PROVINCE \
+									 $PRODUCTION_PLACE_POSTAL_CODE \
+									 $PRODUCTION_PLACE_COUNTRY_NAME \
+									 $CA_STORE \
+									 $SIGNATURE_TIMESTAMP < inp/XAdES/input.b64
+
+
+$OPENSSL base64 -e -in out/sign.out -out /tmp/sign.b64
+
+ARCHIVE_TIMESTAMP="http://localhost/tsa"
+
+#STRACE=$LTRUSS
+start_prg archive -c XAdES.ini -- \
+									 $ARCHIVE_TIMESTAMP < /tmp/sign.b64
 
 mv err/userver_tcp.err err/XAdES.err
 
 $SLEEP
 kill_prg userver_tcp TERM
 
+#STRACE=$LTRUSS
+#start_prg verify -c XAdES.ini out/archive.out # /usr/portage/sys-boot/gnu-efi/metadata.xml /usr/portage/lxde-base/metadata.xml
+
 # Test against expected output
-test_output_wc w sign
+test_output_wc w archive

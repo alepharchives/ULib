@@ -853,7 +853,7 @@ void UString::resize(uint32_t n, char c)
 
    uint32_t sz = size();
 
-   if      (n > sz) append(n - sz, c);
+   if      (n > sz) (void) append(n - sz, c);
    else if (n < sz) erase(n);
    else             size_adjust(n);
 
@@ -1418,19 +1418,10 @@ void UStringRep::write(ostream& os) const
       }
 }
 
-static inline void my_append(UString& str, char* buffer, int size, char*& ptr, int c)
-{
-   U_TRACE(0, "::my_append(%.*S,%.*S,%d,%p,%C)", U_STRING_TO_TRACE(str), ptr - buffer, buffer, size, ptr, c)
+// OPTMIZE APPEND (BUFFERED)
 
-   if ((ptr - buffer) == size)
-      {
-      str.append(buffer, size);
-
-      ptr = buffer;
-      }
-
-   *ptr++ = c;
-}
+char  UString::appbuf[1024];
+char* UString::ptrbuf = appbuf;
 
 U_EXPORT istream& operator>>(istream& in, UString& str)
 {
@@ -1457,9 +1448,6 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
          {
          if (str.empty() == false) str.erase();
 
-         char buffer[1024];
-         char* ptr = buffer;
-
          streamsize w = in.width();
 
          uint32_t n = (w > 0 ? (uint32_t)w
@@ -1468,7 +1456,7 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
          while (extracted < n &&
                 u_isspace(c) == false)
             {
-            my_append(str, buffer, sizeof(buffer), ptr, c); // str.append(c);
+            str.append(c);
 
             ++extracted;
 
@@ -1479,7 +1467,7 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
             if (c == EOF) break;
             }
 
-         if (ptr > buffer) str.append(buffer, ptr - buffer);
+         str.append();
          }
 
       if (c == EOF) in.setstate(ios::eofbit);
@@ -1508,9 +1496,6 @@ istream& UString::getline(istream& in, char delim)
       {
       erase();
 
-      char buffer[1024];
-      char* ptr = buffer;
-
       streambuf* sb = in.rdbuf();
 
       while (true)
@@ -1527,11 +1512,12 @@ istream& UString::getline(istream& in, char delim)
 
             if (c == delim)
                {
-               my_append(*this, buffer, sizeof(buffer), ptr, delim); // append(delim);
+               append(delim);
 
                continue;
                }
-            else if (c == '\n')
+
+            if (c == '\n')
                {
                // comprime serie di white-space in un singolo spazio...
 
@@ -1546,7 +1532,7 @@ istream& UString::getline(istream& in, char delim)
                }
             else
                {
-               my_append(*this, buffer, sizeof(buffer), ptr, '\\'); // append('\\');
+               append('\\');
                }
             }
 
@@ -1559,10 +1545,10 @@ istream& UString::getline(istream& in, char delim)
 
          if (c == delim) break;
 
-         my_append(*this, buffer, sizeof(buffer), ptr, c); // append(c);
+         append(c);
          }
 
-      if (ptr > buffer) append(buffer, ptr - buffer);
+      append();
 
       U_INTERNAL_DUMP("size = %u, str = %.*S", size(), size(), data())
 
@@ -1637,8 +1623,8 @@ U_EXPORT UString operator+(const char* lhs, const UString& rhs)
    uint32_t len = u_strlen(lhs);
    UString str(len + rhs.size());
 
-   str.append(lhs, len);
-   str.append(rhs);
+   (void) str.append(lhs, len);
+   (void) str.append(rhs);
 
    return str;
 }
@@ -1647,17 +1633,17 @@ U_EXPORT UString operator+(char lhs, const UString& rhs)
 {
    UString str(1 + rhs.size());
 
-   str.append(uint32_t(1), lhs);
-   str.append(rhs);
+   (void) str.append(uint32_t(1), lhs);
+   (void) str.append(rhs);
 
    return str;
 }
 
 U_EXPORT UString operator+(const UString& lhs, const char* rhs)
-{ UString str(lhs); str.append(rhs, u_strlen(rhs)); return str; }
+{ UString str(lhs); (void) str.append(rhs, u_strlen(rhs)); return str; }
 
 U_EXPORT UString operator+(const UString& lhs, char rhs)
-{ UString str(lhs); str.append(uint32_t(1), rhs); return str; }
+{ UString str(lhs); (void) str.append(uint32_t(1), rhs); return str; }
 
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>

@@ -74,6 +74,8 @@
   <tr bgcolor="#f0f0f0"><td><b>listContentOf</b>(UVector&lt; UString &gt; &amp;vec, const UString *dir=0, const UString *filter=0) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>listRecursiveContentOf</b>(UTree&lt; UString &gt; &amp;tree, const UString *dir=0, const UString *filter=0) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>load</b>(const char *section=0, uint32_t len=0) (defined in <a class="el" href="classUFileConfig.html">UFileConfig</a>)</td><td><a class="el" href="classUFileConfig.html">UFileConfig</a></td><td></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>loadINI</b>() (defined in <a class="el" href="classUFileConfig.html">UFileConfig</a>)</td><td><a class="el" href="classUFileConfig.html">UFileConfig</a></td><td></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>loadProperties</b>() (defined in <a class="el" href="classUFileConfig.html">UFileConfig</a>)</td><td><a class="el" href="classUFileConfig.html">UFileConfig</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>loadTable</b>(UHashMap&lt; UString &gt; &amp;table) (defined in <a class="el" href="classUFileConfig.html">UFileConfig</a>)</td><td><a class="el" href="classUFileConfig.html">UFileConfig</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>loadTable</b>() (defined in <a class="el" href="classUFileConfig.html">UFileConfig</a>)</td><td><a class="el" href="classUFileConfig.html">UFileConfig</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>loadVector</b>(UVector&lt; UString &gt; &amp;vec) (defined in <a class="el" href="classUFileConfig.html">UFileConfig</a>)</td><td><a class="el" href="classUFileConfig.html">UFileConfig</a></td><td></td></tr>
@@ -129,7 +131,7 @@
   <tr bgcolor="#f0f0f0"><td><b>setPathFromFile</b>(const UFile &amp;file, char *buffer_path, const char *suffix, uint32_t len) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>setPathRelativ</b>() (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>size</b>(bool bstat=false) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td></td></tr>
-  <tr bgcolor="#f0f0f0"><td><b>skip</b>() (defined in <a class="el" href="classUFileConfig.html">UFileConfig</a>)</td><td><a class="el" href="classUFileConfig.html">UFileConfig</a></td><td></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>skip</b>(char c= '#') (defined in <a class="el" href="classUFileConfig.html">UFileConfig</a>)</td><td><a class="el" href="classUFileConfig.html">UFileConfig</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>socket</b>() const  (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>stat</b>() (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>stat</b>(const char *path, struct stat *buf) (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline, static]</code></td></tr>
@@ -156,7 +158,7 @@
   <tr bgcolor="#f0f0f0"><td><b>~UFile</b>() (defined in <a class="el" href="classUFile.html">UFile</a>)</td><td><a class="el" href="classUFile.html">UFile</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>~UFileConfig</b>() (defined in <a class="el" href="classUFileConfig.html">UFileConfig</a>)</td><td><a class="el" href="classUFileConfig.html">UFileConfig</a></td><td><code> [inline]</code></td></tr>
 </table></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 24 16:51:40 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 30 16:31:48 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

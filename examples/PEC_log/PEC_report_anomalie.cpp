@@ -99,7 +99,7 @@ Messaggio::Messaggio() : id(*PEC_report::id), mittente(*PEC_report::mittente), i
 
       if (elem.c_char(0) == '(')
          {
-         if (U_STRNCMP(elem.data(), "(certificato") == 0) vdestcert[vdestinatari.size()-1] = '1';
+         if (U_STRNEQ(elem.data(), "(certificato")) vdestcert[vdestinatari.size()-1] = '1';
 
          continue;
          }

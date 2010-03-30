@@ -13,7 +13,6 @@ TO_INC = ulib/README \
 			ulib/base/coder/*.h \
 			ulib/base/win32/*.h \
 			ulib/base/replace/*.h \
-			ulib/cgi/*.h \
 			ulib/container/*.h \
 			ulib/curl/*.h \
 			ulib/db/*.h \

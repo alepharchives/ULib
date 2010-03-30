@@ -89,7 +89,7 @@ bool UPop3Client::connectServer(const UString& server, int port, uint32_t timeou
       (void) USocket::setTimeoutRCV(timeoutMS);
 
       if (USocketExt::readLineReply(this, buffer) > 0 &&
-          U_STRNCMP(buffer.data(), U_POP3_OK) == 0)
+          U_STRNEQ(buffer.data(), U_POP3_OK))
          {
          state    = AUTHORIZATION;
          response = OK;
@@ -218,7 +218,8 @@ U_NO_EXPORT bool UPop3Client::syncCommandML(const UString& req, int* vpos, int* 
          if (buffer.size() < (end + U_CONSTANT_SIZE(U_POP3_OK))) break;
 
       // end = U_STRING_FIND(buffer, end, U_POP3_OK);
-         U_INTERNAL_ASSERT_EQUALS(U_STRNCMP(buffer.c_pointer(end), U_POP3_OK),0)
+
+         U_INTERNAL_ASSERT(U_STRNEQ(buffer.c_pointer(end), U_POP3_OK))
 
          if (vpos)
             {

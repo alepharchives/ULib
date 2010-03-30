@@ -6,14 +6,14 @@
 
 start_msg log
 
-rm -f test_log.log*
+export DIR_LOG_GZ=tmp
+
+rm -f $DIR_LOG_GZ/test_log.log*
 
 #UTRACE="0 5M 0"
 #UOBJDUMP="-1 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR 
-
-export DIR_LOG_GZ=tmp
 
 start_prg_background log 15
 wait_prg

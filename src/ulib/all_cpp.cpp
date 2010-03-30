@@ -37,8 +37,6 @@
 #include "ui/dialog.cpp"
 #include "db/cdb.cpp"
 #include "db/rdb.cpp"
-#include "cgi/cgi.cpp"
-#include "cgi/cgi_input.cpp"
 #include "query/query_parser.cpp"
 #include "mime/header.cpp"
 #include "mime/entity.cpp"

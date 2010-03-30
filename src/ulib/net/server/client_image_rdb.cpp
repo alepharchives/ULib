@@ -60,7 +60,7 @@ int URDBClientImage::handlerRead()
       const char* ptr = rbuffer->data();
       const char* res = 0;
 
-      if (U_STRNCMP(ptr, "FIND") == 0) // FIND
+      if (U_STRNEQ(ptr, "FIND")) // FIND
          {
          if (rdb->find((*URPC::rpc_info)[0]))
             {
@@ -81,7 +81,7 @@ int URDBClientImage::handlerRead()
             UStringExt::buildTokenInt(res = STR_400, 0, *wbuffer);
             }
          }
-      else if (U_STRNCMP(ptr, "STR") == 0) // STORE
+      else if (U_STRNEQ(ptr, "STR")) // STORE
          {
          // ------------------------------------------------------
          // Write a key/value pair to a reliable database
@@ -107,7 +107,7 @@ int URDBClientImage::handlerRead()
 
          UStringExt::buildTokenInt(res, 0, *wbuffer);
          }
-      else if (U_STRNCMP(ptr, "REMV") == 0) // REMOVE
+      else if (U_STRNEQ(ptr, "REMV")) // REMOVE
          {
          // ---------------------------------------------------------
          // Mark a key/value as deleted
@@ -132,7 +132,7 @@ int URDBClientImage::handlerRead()
 
          UStringExt::buildTokenInt(res, 0, *wbuffer);
          }
-      else if (U_STRNCMP(ptr, "SUB") == 0) // SUBSTITUTE
+      else if (U_STRNEQ(ptr, "SUB")) // SUBSTITUTE
          {
          // ----------------------------------------------------------
          // Substitute a key/value with a new key/value (remove+store)
@@ -162,7 +162,7 @@ int URDBClientImage::handlerRead()
 
          UStringExt::buildTokenInt(res, 0, *wbuffer);
          }
-      else if (U_STRNCMP(ptr, "PRT") == 0)   // PRINT
+      else if (U_STRNEQ(ptr, "PRT"))   // PRINT
          {
          // Build the response: 200
 
@@ -172,25 +172,25 @@ int URDBClientImage::handlerRead()
 
          wbuffer->append(tmp);
          }
-      else if (U_STRNCMP(ptr, "RORG") == 0) // REORGANIZE
+      else if (U_STRNEQ(ptr, "RORG")) // REORGANIZE
          {
          res = (rdb->reorganize() ? STR_200 : STR_500);
 
          UStringExt::buildTokenInt(res, 0, *wbuffer);
          }
-      else if (U_STRNCMP(ptr, "BTRN") == 0) // beginTransaction
+      else if (U_STRNEQ(ptr, "BTRN")) // beginTransaction
          {
          res = (rdb->beginTransaction() ? STR_200 : STR_500);
 
          UStringExt::buildTokenInt(res, 0, *wbuffer);
          }
-      else if (U_STRNCMP(ptr, "ATRN") == 0) // abortTransaction
+      else if (U_STRNEQ(ptr, "ATRN")) // abortTransaction
          {
          rdb->abortTransaction();
 
          UStringExt::buildTokenInt(res = STR_200, 0, *wbuffer);
          }
-      else if (U_STRNCMP(ptr, "CTRN") == 0) // commitTransaction
+      else if (U_STRNEQ(ptr, "CTRN")) // commitTransaction
          {
          rdb->commitTransaction();
 

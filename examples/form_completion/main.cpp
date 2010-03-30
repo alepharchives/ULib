@@ -1,6 +1,5 @@
 // main.cpp
 
-#include <ulib/cgi/cgi.h>
 #include <ulib/ldap/ldap.h>
 #include <ulib/file_config.h>
 #include <ulib/utility/base64.h>
@@ -72,8 +71,8 @@ public:
       // scanf
 
       char buf[256];
-      UString value = cgi.getenv(var_env_name.c_str());
-      int n = U_SYSCALL(sscanf, "%S,%S,%p,%p,%p,%p", value.c_str(), scan_form.c_str(), &buf[0]);
+      const char* value = (const char*) U_SYSCALL(getenv, "%S", var_env_name.c_str());
+      int n = U_SYSCALL(sscanf, "%S,%S,%p,%p,%p,%p", value, scan_form.c_str(), &buf[0]);
 
       if (n != 1) U_ERROR("scanf error on var env <%s>...", var_env_name.c_str());
 
@@ -109,32 +108,12 @@ public:
       const char* sname     = entry.getCStr(0);
       const char* spassword = entry.getCStr(1);
 
-      /*
-      // manage password base64 encode
-
-      password = entry.getString(1);
-
-      if (password.isBase64())
-         {
-         UString tmp(100U);
-
-         if (UBase64::decode(password, tmp)) password = tmp;
-         }
-
-      // read stdin (NB: per ora si usano i template...)
-
-      data = cgi.getPostData();
-
-      if (data.empty()) U_ERROR("cannot read data from <stdin>...", 0);
-      */
-
       // write to stdout
 
       (void) U_SYSCALL(printf, "%S,%S,%S", UFile::contentOf(form_template, O_RDONLY, false, false).data(), sname, spassword); // NB: force read()...
       }
 
 private:
-   UCGI cgi;
    UFileConfig cfg;
    UString data, cfg_str;
 };

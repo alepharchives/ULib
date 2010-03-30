@@ -18,7 +18,8 @@ DIR_CMD="../../examples/userver"
 ( cd ../../src/ulib/plugin/.libs; ln -sf ../mod_geoip/.libs/mod_geoip.so; ln -sf ../mod_shib/.libs/mod_shib.so )
 
 #STRACE=$TRUSS
-start_prg_background userver_tcp -c web_server.cfg
+start_prg_background userver_tcp -c   web_server.cfg
+												# deployment.properties
 
 #$SLEEP
 #kill_prg userver_tcp TERM

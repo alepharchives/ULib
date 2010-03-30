@@ -252,7 +252,7 @@ void Query::run(const char* ptr)
 {
    U_TRACE(5, "Query::run(%S)", ptr)
 
-   *UPosting::word = UStringExt::removeEscape(UStringExt::stripWhiteSpace(ptr, u_strlen(ptr)));
+   *UPosting::word = UStringExt::removeEscape(UStringExt::trim(ptr, u_strlen(ptr)));
 
    U_INTERNAL_DUMP("UPosting::word = %.*S", U_STRING_TO_TRACE(*UPosting::word))
 
@@ -261,13 +261,13 @@ void Query::run(const char* ptr)
    bool is_or  = (   strstr(ptr, " or ")  != 0),
         is_and = (   strstr(ptr, " and ") != 0),
         is_not = (   strstr(ptr, " not ") != 0),
-        isnot  = (U_STRNCMP(ptr, "not ")  == 0);
+        isnot  = (U_STRNEQ(ptr, "not "));
 
    if ((is_or || is_and || is_not || isnot) ||
        (   strstr(ptr, " OR ")  != 0) ||
        (   strstr(ptr, " AND ") != 0) ||
        (   strstr(ptr, " NOT ") != 0) ||
-       (U_STRNCMP(ptr, "NOT ")  == 0))
+         U_STRNEQ(ptr, "NOT "))
       {
       if (is_or)  *UPosting::word = UStringExt::substitute(*UPosting::word, U_CONSTANT_TO_PARAM(" or "),
                                                                             U_CONSTANT_TO_PARAM(" OR "));

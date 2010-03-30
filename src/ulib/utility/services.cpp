@@ -432,7 +432,7 @@ EVP_PKEY* UServices::loadKey(const UString& x, const char* format, bool _private
 
    if (format == 0) format = (x.isBinary() ? "DER" : "PEM");
 
-   if (U_STRNCMP(format, "PEM") == 0 &&
+   if (U_STREQ(format, "PEM") &&
        U_STRNCMP(x.data(), "-----BEGIN RSA PRIVATE KEY-----"))
       {
       unsigned length = x.size();
@@ -448,11 +448,11 @@ EVP_PKEY* UServices::loadKey(const UString& x, const char* format, bool _private
 next:
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
-   pkey = (EVP_PKEY*) ((U_STRNCMP(format, "PEM") == 0)
-                              ? (_private ? U_SYSCALL(PEM_read_bio_PrivateKey, "%p,%p,%p,%p", in, 0, u_passwd_cb, (void*)password)
-                                          : U_SYSCALL(PEM_read_bio_PUBKEY,     "%p,%p,%p,%p", in, 0, u_passwd_cb, (void*)password))
-                              : (_private ? U_SYSCALL(d2i_PrivateKey_bio,      "%p,%p",       in, 0)
-                                          : U_SYSCALL(d2i_PUBKEY_bio,          "%p,%p",       in, 0)));
+   pkey = (EVP_PKEY*) (U_STREQ(format, "PEM")
+                        ? (_private ? U_SYSCALL(PEM_read_bio_PrivateKey, "%p,%p,%p,%p", in, 0, (password ? u_passwd_cb : 0), (void*)password)
+                                    : U_SYSCALL(PEM_read_bio_PUBKEY,     "%p,%p,%p,%p", in, 0, (password ? u_passwd_cb : 0), (void*)password))
+                        : (_private ? U_SYSCALL(d2i_PrivateKey_bio,      "%p,%p",       in, 0)
+                                    : U_SYSCALL(d2i_PUBKEY_bio,          "%p,%p",       in, 0)));
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 

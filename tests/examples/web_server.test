@@ -46,7 +46,10 @@ $SLEEP
 
 # test upload
 
-mkdir -p uploads
+mkdir -p		  uploads
+chown apache: uploads
+chmod 777     uploads
+
 $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" http://127.0.0.1:80/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
 $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" http://127.0.0.1:80/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
 

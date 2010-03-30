@@ -206,7 +206,7 @@ bool UImapClient::connectServer(const UString& server, int port, uint32_t timeou
       (void) USocket::setTimeoutRCV(timeoutMS);
 
       if (USocketExt::readLineReply(this, buffer) > 0 &&
-          U_STRNCMP(buffer.data(), U_IMAP_OK) == 0)
+          U_STRNEQ(buffer.data(), U_IMAP_OK))
          {
          response = IMAP_SESSION_OK;
 
@@ -685,7 +685,7 @@ U_NO_EXPORT void UImapClient::setMailBox(MailboxInfo& retval)
 
          ptr1 = line.c_pointer(++n);
 
-         if (U_STRNCMP(ptr1, "PERMANENTFLAGS") == 0)
+         if (U_STRNEQ(ptr1, "PERMANENTFLAGS"))
             {
             n += sizeof("PERMANENTFLAGS");
 
@@ -798,7 +798,7 @@ U_NO_EXPORT void UImapClient::setMailBox(MailboxInfo& retval)
 
    while (*ptr1 != '[') ++ptr1;
 
-   if (U_STRNCMP(++ptr1, "READ-WRITE") == 0) retval.readWriteAvailable = retval.readWrite = true;
+   if (U_STRNEQ(++ptr1, "READ-WRITE")) retval.readWriteAvailable = retval.readWrite = true;
 }
 
 bool UImapClient::selectMailbox(const UString& name, MailboxInfo& retval)

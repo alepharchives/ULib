@@ -19,22 +19,35 @@
 #undef  PACKAGE
 #define PACKAGE "sign"
 
-#define ARGS "[file1 file2 file3...]"
+#define ARGS "DATA_URI X509 KEY_HANDLE DIGEST_ALGORITHM" \
+             " SIGNING_TIME CLAIMED_ROLE" \
+             " PRODUCTION_PLACE_CITY" \
+             " PRODUCTION_PLACE_STATE_OR_PROVINCE" \
+             " PRODUCTION_PLACE_POSTAL_CODE" \
+             " PRODUCTION_PLACE_COUNTRY_NAME" \
+             " [ CA_STORE SIGNATURE_TIMESTAMP ]"
 
 #define U_OPTIONS \
-"purpose \"simple XAdES signature...\"\n" \
-"option c config      1 \"path of configuration file\" \"\"\n" \
-"option C CApath      1 \"path for certificates verification\" \"./CApath\"\n" \
-"option k key         1 \"encrypted pkcs-8 private key file\" \"\"\n" \
-"option p password    1 \"password for encrypted pkcs-8 private key file\" \"\"\n" \
-"option X certificate 1 \"signer's X.509 certificate file that matches the private key\" \"\"\n"
+"purpose \"XAdES signature (BES and C)\"\n" \
+"option c config 1 \"path of configuration file\" \"\"\n"
 
 #include <ulib/application.h>
 
-//#define XMLDSIG_ONLY
+#define U_DATA_URI                           (const char*)(argv[optind+0])
+#define U_X509                               (const char*)(argv[optind+1])
+#define U_KEY_HANDLE                         (const char*)(argv[optind+2])
+#define U_DIGEST_ALGORITHM                   (const char*)(argv[optind+3])
+#define U_SIGNING_TIME                       (const char*)(argv[optind+4])
+#define U_CLAIMED_ROLE                       (const char*)(argv[optind+5])
+#define U_PRODUCTION_PLACE_CITY              (const char*)(argv[optind+6])
+#define U_PRODUCTION_PLACE_STATE_OR_PROVINCE (const char*)(argv[optind+7])
+#define U_PRODUCTION_PLACE_POSTAL_CODE       (const char*)(argv[optind+8])
+#define U_PRODUCTION_PLACE_COUNTRY_NAME      (const char*)(argv[optind+9])
+#define U_CA_STORE                           (const char*)(argv[optind+10])
+#define U_SIGNATURE_TIMESTAMP                (const char*)(argv[optind+11])
 
 #define U_XMLDSIG_REFERENCE_TEMPLATE \
-"    <ds:Reference xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" URI=\"#ObjID_%u\">\r\n" \
+"    <ds:Reference xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" URI=\"%s\">\r\n" \
 "      <ds:DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#%.*s\"></ds:DigestMethod>\r\n" \
 "      <ds:DigestValue>%.*s</ds:DigestValue>\r\n" \
 "    </ds:Reference>\r\n"
@@ -51,9 +64,6 @@
 "  <ds:SignatureValue xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\r\n" \
 "%.*s" \
 "  </ds:SignatureValue>\r\n" \
-
-#define U_XMLDSIG_OBJECT_TEMPLATE \
-"  <ds:Object xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" Id=\"ObjID_%u\">%.*s</ds:Object>\r\n"
 
 #define U_XMLDSIG_KEYINFO_TEMPLATE \
 "  <ds:KeyInfo xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\r\n" \
@@ -108,7 +118,7 @@
 "          </xades:SignerRole>\r\n"
 
 #define U_XADES_DATA_OBJECT_FORMAT_TEMPLATE \
-"         <xades:DataObjectFormat ObjectReference=\"#ObjID_%u\">\r\n" \
+"         <xades:DataObjectFormat ObjectReference=\"%s\">\r\n" \
 "           <xades:MimeType>%.*s</xades:MimeType>\r\n" \
 "         </xades:DataObjectFormat>\r\n"
 
@@ -212,7 +222,7 @@
 "          </xadesv141:ArchiveTimeStamp>\r\n"
 
 #define U_XADES_SIGNATURE_TIMESTAMP_TEMPLATE \
-"          <xades:SignatureTimeStamp>\r\n" \
+"          <xades:SignatureTimeStamp xmlns:xades=\"http://uri.etsi.org/01903/v1.4.1#\">\r\n" \
 "%.*s" \
 "          </xades:SignatureTimeStamp>\r\n"
 
@@ -307,7 +317,7 @@ public:
 
       UTimeStamp ts(request, TSA);
 
-      if (ts.UPKCS7::isValid()) token = ts.UPKCS7::getEncoded("BASE64", );
+      if (ts.UPKCS7::isValid()) token = ts.UPKCS7::getEncoded("BASE64");
 #  endif
 
       U_RETURN_STRING(token);
@@ -346,17 +356,10 @@ public:
 
       if (claimed_role.empty() == false) roleTemplate.snprintf(U_XADES_SIGNER_ROLE_TEMPLATE, U_STRING_TO_TRACE(claimed_role));
 
-      UString allDataObjectTimestamp(U_CAPACITY);
-
-      if (all_data_object_timestamp.empty() == false)
-         {
-         UString token = getTimeStampToken(all_data_object, all_data_object_timestamp);
-
-         allDataObjectTimestamp.snprintf(U_XADES_ALL_DATA_OBJECTS_TIMESTAMP_TEMPLATE, U_STRING_TO_TRACE(token));
-         }
+      UString allDataObjectTimeStamp(U_CAPACITY);
 
       signedProperties.reserve(U_CONSTANT_SIZE(U_XADES_SIGNED_PROPERTIES_TEMPLATE) + 8192U +
-                               signingTime.size() + allDataObjectTimestamp.size());
+                               signingTime.size() + allDataObjectTimeStamp.size());
 
       signedProperties.snprintf(U_XADES_SIGNED_PROPERTIES_TEMPLATE,
                                 U_STRING_TO_TRACE(signingTime),
@@ -367,7 +370,7 @@ public:
                                 U_STRING_TO_TRACE(production_place_country_name),
                                 U_STRING_TO_TRACE(roleTemplate),
                                 U_STRING_TO_TRACE(DataObjectFormat),
-                                U_STRING_TO_TRACE(allDataObjectTimestamp));
+                                U_STRING_TO_TRACE(allDataObjectTimeStamp));
 
       to_digest = UXML2Document::xmlC14N(signedProperties);
 
@@ -540,103 +543,140 @@ public:
 
       // manage options
 
-      if (UApplication::isOptions())
-         {
-         passwd     = opt['p'];
-         cfg_str    = opt['c'];
-         key_str    = opt['k'];
-         crt_str    = opt['X'];
-         str_CApath = opt['C'];
-         }
+      if (UApplication::isOptions()) cfg_str = opt['c'];
 
-      if (key_str.empty() ||
-          crt_str.empty() ||
-          str_CApath.empty())
-         {
-         usage();
-         }
+      // manage file configuration
 
-      UString x = UFile::contentOf(key_str);
+      if (cfg_str.empty()) cfg_str = U_STRING_FROM_CONSTANT("XAdES.ini");
+
+      // ----------------------------------------------------------------------------------------------------------------------------------
+      // XAdES signature - configuration parameters
+      // ----------------------------------------------------------------------------------------------------------------------------------
+      // DigestAlgorithm   md2 | md5 | sha | sha1 | sha224 | sha256 | sha384 | sha512 | mdc2 | ripmed160
+      //
+      // SigningTime this property contains the time at which the signer claims to have performed the signing process (yes/no)
+      // ClaimedRole this property contains claimed or certified roles assumed by the signer in creating the signature
+      //
+      // this property contains the indication of the purported place where the signer claims to have produced the signature
+      // -------------------------------------------------------------------------------------------------------------------
+      // ProductionPlaceCity
+      // ProductionPlaceStateOrProvince
+      // ProductionPlacePostalCode
+      // ProductionPlaceCountryName
+      // -------------------------------------------------------------------------------------------------------------------
+      //
+      // DataObjectFormatMimeType   this property identifies the format of a signed data object (when electronic signatures
+      //                            are not exchanged in a restricted context) to enable the presentation to the verifier or
+      //                            use by the verifier (text, sound or video) in exactly the same way as intended by the signer
+      //
+      // CAStore
+      //
+      // ArchiveTimeStamp           the time-stamp token within this property covers the archive validation data
+      // SignatureTimeStamp         the time-stamp token within this property covers the digital signature value element
+      // ----------------------------------------------------------------------------------------------------------------------------------
+
+      (void) cfg.open(cfg_str);
+
+      UString x(U_CAPACITY), document(U_CAPACITY);
+
+      (void) UServices::read(STDIN_FILENO, x);
+
+      if (x.empty()) U_ERROR("cannot read data from <stdin>...", 0);
+
+      if (UBase64::decode(x, document) == false) U_ERROR("decoding data read failed...", 0);
+
+      // manage arguments...
+
+      U_INTERNAL_ASSERT_POINTER(U_DATA_URI)
+
+      if (*U_DATA_URI == '\0') U_ERROR("DATA_URI is mandatory...", 0);
+
+      U_INTERNAL_ASSERT_POINTER(U_X509)
+
+      if (*U_X509 == '\0') U_ERROR("X509 is mandatory...", 0);
+
+      UCertificate cert(UString(U_X509));
+
+      if (cert.isValid() == false) U_ERROR("certificate not valid", 0);
+
+      U_INTERNAL_ASSERT_POINTER(U_KEY_HANDLE)
+
+      if (*U_KEY_HANDLE == '\0') U_ERROR("KEY_HANDLE is mandatory...", 0);
+
+      x = UFile::contentOf(U_KEY_HANDLE);
 
       if (x.empty() ||
-          (u_pkey = UServices::loadKey(x, 0, true, passwd.c_str(), 0)) == 0)
+          (u_pkey = UServices::loadKey(x, 0, true, 0, 0)) == 0)
          {
-         U_ERROR("I can't load the private key: %.*s", U_STRING_TO_TRACE(key_str));
+         U_ERROR("I can't load the private key: %S", U_KEY_HANDLE);
          }
-
-      x = UFile::contentOf(crt_str);
-
-      if (x.empty()) U_ERROR("I can't load the certificate: %.*s", U_STRING_TO_TRACE(crt_str));
-
-      UCertificate cert(x);
 
 #  ifdef HAVE_OPENSSL_98
       if (cert.matchPrivateKey(u_pkey) == false) U_ERROR("the private key doesn't matches the public key of the certificate", 0);
 #  endif
 
+      U_INTERNAL_ASSERT_POINTER(U_DIGEST_ALGORITHM)
+
+      digest_algorithm = (*U_DIGEST_ALGORITHM == '\0' ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.DigestAlgorithm")] : UString(U_DIGEST_ALGORITHM));
+
+      alg = u_dgst_get_algoritm(digest_algorithm.c_str());
+
+      if (alg == -1) U_ERROR("I can't find the digest algorithm for: %s", digest_algorithm.data());
+
+      U_INTERNAL_ASSERT_POINTER(U_SIGNING_TIME)
+
+      signing_time = (*U_SIGNING_TIME == '\0' ? cfg.readBoolean(U_STRING_FROM_CONSTANT("XAdES-BES.SigningTime")) : atoi(U_SIGNING_TIME));
+
+      U_INTERNAL_ASSERT_POINTER(U_CLAIMED_ROLE)
+
+      claimed_role = (*U_CLAIMED_ROLE == '\0' ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.ClaimedRole")] : UString(U_CLAIMED_ROLE));
+
+      U_INTERNAL_ASSERT_POINTER(U_PRODUCTION_PLACE_CITY)
+
+      production_place_city = (*U_PRODUCTION_PLACE_CITY == '\0' ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.ProductionPlaceCity")]
+                                                                : UString(U_PRODUCTION_PLACE_CITY));
+
+      U_INTERNAL_ASSERT_POINTER(U_PRODUCTION_PLACE_STATE_OR_PROVINCE)
+
+      production_place_state_or_province = (*U_PRODUCTION_PLACE_STATE_OR_PROVINCE == '\0'
+                        ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.ProductionPlaceStateOrProvince")]
+                        : UString(U_PRODUCTION_PLACE_STATE_OR_PROVINCE));
+
+      U_INTERNAL_ASSERT_POINTER(U_PRODUCTION_PLACE_POSTAL_CODE)
+
+      production_place_postal_code = (*U_PRODUCTION_PLACE_POSTAL_CODE == '\0'
+                        ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.ProductionPlacePostalCode")]
+                        : UString(U_PRODUCTION_PLACE_POSTAL_CODE));
+
+      U_INTERNAL_ASSERT_POINTER(U_PRODUCTION_PLACE_COUNTRY_NAME)
+
+      production_place_country_name = (*U_PRODUCTION_PLACE_COUNTRY_NAME == '\0'
+                        ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.ProductionPlaceCountryName")]
+                        : UString(U_PRODUCTION_PLACE_COUNTRY_NAME));
+
+      data_object_format_mimetype = cfg[U_STRING_FROM_CONSTANT("XAdES-BES.DataObjectFormatMimeType")];
+
+      // XAdES-C
+      // -------------------------------------------------------------------------------------------------------------  
+      if (U_CA_STORE) str_CApath = (*U_CA_STORE == '\0' ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.CAStore")] : UString(U_CA_STORE));
+
       if (str_CApath.empty() ||
           UServices::setupOpenSSLStore(0, str_CApath.c_str()) == false)
          {
-         U_ERROR("error on setting CApath: %S", str_CApath.data());
+         U_ERROR("error on setting CA Store: %S", str_CApath.data());
          }
 
       num_ca = cert.getSignerCertificates(vec_ca, 0, 0);
 
       if (UCertificate::verify_result == false)
          {
-         U_ERROR("error on verifying the certificate: %.*s - %s", U_STRING_TO_TRACE(crt_str), UServices::verify_status());
+         U_ERROR("error on verifying the certificate: %s", UServices::verify_status());
          }
 
-      // manage file configuration
-
-      if (cfg_str.empty()) cfg_str = U_STRING_FROM_CONSTANT("sign.cfg");
-
-      // ----------------------------------------------------------------------------------------------------------------------------------
-      // XAdES signature - configuration parameters
-      // ----------------------------------------------------------------------------------------------------------------------------------
-      // DIGEST_ALGORITHM  md2 | md5 | sha | sha1 | sha224 | sha256 | sha384 | sha512 | mdc2 | ripmed160
-      //
-      // SIGNING_TIME   this property contains the time at which the signer claims to have performed the signing process (yes/no)
-      // CLAIMED_ROLE   This property contains claimed or certified roles assumed by the signer in creating the signature
-      //
-      // this property contains the indication of the purported place where the signer claims to have produced the signature
-      // -------------------------------------------------------------------------------------------------------------------
-      // PRODUCTION_PLACE_CITY
-      // PRODUCTION_PLACE_STATE_OR_PROVINCE
-      // PRODUCTION_PLACE_POSTAL_CODE
-      // PRODUCTION_PLACE_COUNTRY_NAME
-      // -------------------------------------------------------------------------------------------------------------------
-      //
-      // DATA_OBJECT_FORMAT_MIMETYPE   this property identifies the format of a signed data object (when electronic signatures
-      //                               are not exchanged in a restricted context) to enable the presentation to the verifier or
-      //                               use by the verifier (text, sound or video) in exactly the same way as intended by the signer
-      //
-      // ARCHIVE_TIMESTAMP             the time-stamp token within this property covers the archive validation data
-      // SIGNATURE_TIMESTAMP           the time-stamp token within this property covers the digital signature value element
-      // ALL_DATA_OBJECT_TIMESTAMP     the time-stamp token within this property covers all the signed data object
-      // ----------------------------------------------------------------------------------------------------------------------------------
-
-      (void) cfg.open(cfg_str);
-
-      signing_time                        = cfg.readBoolean(U_STRING_FROM_CONSTANT("SIGNING_TIME"));
-
-      claimed_role                        = cfg[U_STRING_FROM_CONSTANT("CLAIMED_ROLE")];
-      digest_algorithm                    = cfg[U_STRING_FROM_CONSTANT("DIGEST_ALGORITHM")];
-      archive_timestamp                   = cfg[U_STRING_FROM_CONSTANT("ARCHIVE_TIMESTAMP")];
-      signature_timestamp                 = cfg[U_STRING_FROM_CONSTANT("SIGNATURE_TIMESTAMP")];
-      all_data_object_timestamp           = cfg[U_STRING_FROM_CONSTANT("ALL_DATA_OBJECT_TIMESTAMP")];
-      data_object_format_mimetype         = cfg[U_STRING_FROM_CONSTANT("DATA_OBJECT_FORMAT_MIMETYPE")];
-
-      production_place_city               = cfg[U_STRING_FROM_CONSTANT("PRODUCTION_PLACE_CITY")];
-      production_place_state_or_province  = cfg[U_STRING_FROM_CONSTANT("PRODUCTION_PLACE_STATE_OR_PROVINCE")];
-      production_place_postal_code        = cfg[U_STRING_FROM_CONSTANT("PRODUCTION_PLACE_POSTAL_CODE")];
-      production_place_country_name       = cfg[U_STRING_FROM_CONSTANT("PRODUCTION_PLACE_COUNTRY_NAME")];
-
-      if (digest_algorithm.empty()) digest_algorithm = U_STRING_FROM_CONSTANT("sha1");
-
-      alg = u_dgst_get_algoritm(digest_algorithm.c_str());
-
-      if (alg == -1) U_ERROR("I can't find the digest algorithm for: %s", digest_algorithm.data());
+      if (U_SIGNATURE_TIMESTAMP) signature_timestamp = (*U_SIGNATURE_TIMESTAMP == '\0'
+                                    ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.SignatureTimeStamp")]
+                                    : UString(U_SIGNATURE_TIMESTAMP));
+      // -------------------------------------------------------------------------------------------------------------  
 
       u_line_terminator_len = 2;
       u_base64_max_columns  = U_OPENSSL_BASE64_MAX_COLUMN;
@@ -662,69 +702,37 @@ public:
                        X509SerialNumber,
                        U_STRING_TO_TRACE(X509CertificateValue));
 
-      // manage arg operation
-
-      const char* file;
       UString XMLDSIGObject(U_CAPACITY), Object(U_CAPACITY), ObjectDigestValue(200U),
-              document_to_add, Reference(U_CAPACITY), dataObjectFormat(U_CAPACITY),
+              Reference(U_CAPACITY), dataObjectFormat(U_CAPACITY),
               XMLDSIGReference(U_CAPACITY), XMLDSIGReferenceC14N(U_CAPACITY);
 
-      for (uint32_t i = 1; (file = argv[optind]); ++i, ++optind)
+      // ---------------------------------------------------------------------------------------------------------------
+      // 1. Canonicalize (strictly, what we are doing here is encapsulating the text string T inside an <Object> element,
+      //    then canonicalizing that element) the text-to-be-signed, C = C14n(T).
+      // ---------------------------------------------------------------------------------------------------------------
+      to_digest = document;
+      // ---------------------------------------------------------------------------------------------------------------
+
+      // ---------------------------------------------------------------------------------------------------------------
+      // 2. Compute the message digest of the canonicalized text, m = Hash(C).
+      // ---------------------------------------------------------------------------------------------------------------
+      ObjectDigestValue.setEmpty();
+
+      UServices::generateDigest(alg, 0, to_digest, ObjectDigestValue, true);
+      // ---------------------------------------------------------------------------------------------------------------
+
+      Reference.snprintf(U_XMLDSIG_REFERENCE_TEMPLATE, U_DATA_URI,
+                         U_STRING_TO_TRACE(digest_algorithm),
+                         U_STRING_TO_TRACE(ObjectDigestValue));
+
+      XMLDSIGReference     +=                        Reference;
+      XMLDSIGReferenceC14N += UXML2Document::xmlC14N(Reference);
+
+      if (data_object_format_mimetype.empty() == false)
          {
-         document = UFile::contentOf(file);
+         dataObjectFormat.snprintf(U_XADES_DATA_OBJECT_FORMAT_TEMPLATE, U_DATA_URI, U_STRING_TO_TRACE(data_object_format_mimetype));
 
-         if (document.empty() || document.isBinary()) U_ERROR("I can't sign this document: %s", file);
-
-         if (u_endsWith(file, u_strlen(file), U_CONSTANT_TO_PARAM(".xml")) == false) document_to_add = document;
-         else
-            {
-            document_to_add = UXML2Document::xmlC14N(document);
-
-            UString tmp(document.size() * 4);
-
-            UXMLEscape::encode(document, tmp);
-
-            document = tmp;
-            }
-
-         all_data_object += document_to_add;
-
-         document = UStringExt::dos2unix(document, true);
-
-         // ---------------------------------------------------------------------------------------------------------------
-         // 1. Canonicalize (strictly, what we are doing here is encapsulating the text string T inside an <Object> element,
-         //    then canonicalizing that element) the text-to-be-signed, C = C14n(T).
-         // ---------------------------------------------------------------------------------------------------------------
-         Object.reserve(U_CONSTANT_SIZE(U_XMLDSIG_OBJECT_TEMPLATE) + document.size());
-
-         Object.snprintf(U_XMLDSIG_OBJECT_TEMPLATE, i, U_STRING_TO_TRACE(document));
-
-         XMLDSIGObject += Object;
-
-         to_digest = UXML2Document::xmlC14N(Object);
-         // ---------------------------------------------------------------------------------------------------------------
-
-         // ---------------------------------------------------------------------------------------------------------------
-         // 2. Compute the message digest of the canonicalized text, m = Hash(C).
-         // ---------------------------------------------------------------------------------------------------------------
-         ObjectDigestValue.setEmpty();
-
-         UServices::generateDigest(alg, 0, to_digest, ObjectDigestValue, true);
-         // ---------------------------------------------------------------------------------------------------------------
-
-         Reference.snprintf(U_XMLDSIG_REFERENCE_TEMPLATE, i,
-                            U_STRING_TO_TRACE(digest_algorithm),
-                            U_STRING_TO_TRACE(ObjectDigestValue));
-
-         XMLDSIGReference     +=                        Reference;
-         XMLDSIGReferenceC14N += UXML2Document::xmlC14N(Reference);
-
-         if (data_object_format_mimetype.empty() == false)
-            {
-            dataObjectFormat.snprintf(U_XADES_DATA_OBJECT_FORMAT_TEMPLATE, i, U_STRING_TO_TRACE(data_object_format_mimetype));
-
-            DataObjectFormat += dataObjectFormat;
-            }
+         DataObjectFormat += dataObjectFormat;
          }
 
       setXAdESReference(); // XAdES management
@@ -733,10 +741,6 @@ public:
       // 3. Encapsulate the message digest in an XML <SignedInfo> element, SI, in canonicalized form.
       // ---------------------------------------------------------------------------------------------------------------
       UString SignedInfo(U_CONSTANT_SIZE(U_XMLDSIG_SIGNED_INFO_TEMPLATE) + XMLDSIGReference.size() + XAdESReference.size());
-
-#  ifdef XMLDSIG_ONLY
-      XAdESReference.clear();
-#  endif
 
       SignedInfo.snprintf(U_XMLDSIG_SIGNED_INFO_TEMPLATE,
                           U_STRING_TO_TRACE(digest_algorithm),
@@ -749,7 +753,7 @@ public:
       // ---------------------------------------------------------------------------------------------------------------
       // 4. Compute the RSA signatureValue of the canonicalized <SignedInfo> element, SV = RsaSign(Ks, SI).
       // ---------------------------------------------------------------------------------------------------------------
-      UString SignatureValue(U_CAPACITY), signatureTimestamp(U_CAPACITY), archiveTimestamp(U_CAPACITY);
+      UString SignatureValue(U_CAPACITY), signatureTimeStamp(U_CAPACITY), archiveTimeStamp(U_CAPACITY);
 
       u_base64_max_columns = U_OPENSSL_BASE64_MAX_COLUMN;
 
@@ -765,37 +769,22 @@ public:
 
          UString token = getTimeStampToken(to_digest, signature_timestamp);
 
-         signatureTimestamp.snprintf(U_XADES_SIGNATURE_TIMESTAMP_TEMPLATE, U_STRING_TO_TRACE(token));
+         signatureTimeStamp.snprintf(U_XADES_SIGNATURE_TIMESTAMP_TEMPLATE, U_STRING_TO_TRACE(token));
          }
 
       setXAdESUnsignedSignatureProperties(); // XAdES management
 
-      if (archive_timestamp.empty() == false)
-         {
-         to_digest = XMLDSIGReferenceC14N +
-                     UXML2Document::xmlC14N(XAdESReference) +
-                     to_sign +
-                     UXML2Document::xmlC14N(SignatureValue) +
-                     UXML2Document::xmlC14N(KeyInfo) +
-                     unsignedSignaturePropertiesC14N +
-                     XMLDSIGObject;
-
-         UString token = getTimeStampToken(to_digest, archive_timestamp);
-
-         archiveTimestamp.snprintf(U_XADES_ARCHIVE_TIMESTAMP_TEMPLATE, U_STRING_TO_TRACE(token));
-         }
-
       XAdESObject.reserve(U_CONSTANT_SIZE(U_XADES_TEMPLATE) +
                           signedProperties.size() +
                           unsignedSignatureProperties.size() +
-                          archiveTimestamp.size() +
-                          signatureTimestamp.size());
+                          archiveTimeStamp.size() +
+                          signatureTimeStamp.size());
 
       XAdESObject.snprintf(U_XADES_TEMPLATE,
                            U_STRING_TO_TRACE(signedProperties),
                            U_STRING_TO_TRACE(unsignedSignatureProperties),
-                           U_STRING_TO_TRACE(archiveTimestamp),
-                           U_STRING_TO_TRACE(signatureTimestamp));
+                           U_STRING_TO_TRACE(archiveTimeStamp),
+                           U_STRING_TO_TRACE(signatureTimeStamp));
       // ---------------------------------------------------------------------------------------------------------------
 
       // ---------------------------------------------------------------------------------------------------------------
@@ -803,10 +792,6 @@ public:
       // ---------------------------------------------------------------------------------------------------------------
       UString output(U_CONSTANT_SIZE(U_XMLDSIG_TEMPLATE) + 8192U + 
                      SignedInfo.size() + SignatureValue.size() + XMLDSIGObject.size() + XAdESObject.size());
-
-#  ifdef XMLDSIG_ONLY
-      XAdESObject.clear();
-#  endif
 
       output.snprintf(U_XMLDSIG_TEMPLATE,
                         U_STRING_TO_TRACE(SignedInfo),
@@ -826,12 +811,11 @@ private:
    bool signing_time;
    long X509SerialNumber;
    UVector<UCertificate*> vec_ca;
-   UString cfg_str, key_str, crt_str, digest_algorithm, canonicalization_algorithm, claimed_role,
+   UString cfg_str, str_CApath, digest_algorithm, canonicalization_algorithm, claimed_role,
            production_place_city, production_place_state_or_province, production_place_postal_code,
-           production_place_country_name, data_object_format_mimetype, signature_algorithm, document,
-           passwd, to_digest, DataObjectFormat, XAdESObject, XAdESReference, X509IssuerName, X509SubjectName,
-           X509Certificate, signedProperties, all_data_object, all_data_object_timestamp, signature_timestamp,
-           archive_timestamp, str_CApath, unsignedSignatureProperties, unsignedSignaturePropertiesC14N;
+           production_place_country_name, data_object_format_mimetype, signature_algorithm, to_digest,
+           DataObjectFormat, XAdESObject, XAdESReference, X509IssuerName, X509SubjectName, X509Certificate,
+           signedProperties, signature_timestamp, unsignedSignatureProperties, unsignedSignaturePropertiesC14N;
 };
 
 U_MAIN(Application)

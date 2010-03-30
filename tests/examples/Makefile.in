@@ -44,8 +44,7 @@ target_triplet = @target@
 @SSL_TRUE@am__append_6 = http_header.test
 @LIBZ_TRUE@@SSL_TRUE@am__append_7 = PEC_report_rejected.test PEC_report_messaggi.test PEC_report_virus.test PEC_report_anomalie.test PEC_check_namefile.test
 @LIBZ_TRUE@@SSL_TRUE@@ZIP_TRUE@am__append_8 = doc_parse.test doc_classifier.test
-@LIBXML2_TRUE@@SSL_TRUE@am__append_9 = XAdES.test
-@EXPAT_TRUE@am__append_10 = xml2txt.test
+@EXPAT_TRUE@am__append_9 = xml2txt.test
 check_PROGRAMS = $(am__EXEEXT_1)
 subdir = tests/examples
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
@@ -350,14 +349,13 @@ target_vendor = @target_vendor@
 thrprefix = @thrprefix@
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/examples/http_header/include
-EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN nocat wi-auth WAGSM RA icons IR/WEB IR/benchmark IR/doc_dir *.cfg *.test *.sh \
+EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN nocat wi-auth WAGSM RA icons IR/WEB IR/benchmark IR/doc_dir *.cfg *.ini *.properties *.test *.sh \
 				 index.html 100*.html .htpasswd .htdigest cgi-bin www.sito?.com error_msg workflow doc_parse favicon.ico
 
 TESTS = client_server.test test_manager.test IR.test $(am__append_1) \
 	$(am__append_2) $(am__append_3) $(am__append_4) \
 	$(am__append_5) $(am__append_6) $(am__append_7) \
-	$(am__append_8) $(am__append_9) $(am__append_10) \
-	../reset.color
+	$(am__append_8) $(am__append_9) ../reset.color
 @SSL_TRUE@PRG = test_http_header
 @SSL_TRUE@test_http_header_SOURCES = test_http_header.cpp
 @SSL_TRUE@HTTP_LIB = $(top_builddir)/examples/http_header/libhttp.la

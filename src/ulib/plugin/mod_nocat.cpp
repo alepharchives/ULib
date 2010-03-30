@@ -1279,8 +1279,8 @@ int UNoCatPlugIn::handlerRequest()
 
    if (UHTTP::isHttpHEAD()         ||
        UHTTP::isCGIRequest()       ||
-       U_HTTP_URI_STREQ(U_FAVICON) ||
-       U_HTTP_URI_STREQ(U_NOCAT_IMAGE))
+       U_HTTP_URI_STRNEQ(U_FAVICON) ||
+       U_HTTP_URI_STRNEQ(U_NOCAT_IMAGE))
       {
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
@@ -1303,7 +1303,7 @@ int UNoCatPlugIn::handlerRequest()
       {
       U_SRV_LOG_VAR("request from AUTH: %.*s", U_HTTP_URI_TO_TRACE);
 
-      if (U_HTTP_URI_STREQ("/check"))
+      if (U_HTTP_URI_STRNEQ("/check"))
          {
          // NB: request from AUTH to check and notify logout e/o disconnected users and info...
 
@@ -1312,9 +1312,9 @@ int UNoCatPlugIn::handlerRequest()
          goto end;
          }
 
-      if (U_HTTP_URI_STREQ("/status"))
+      if (U_HTTP_URI_STRNEQ("/status"))
          {
-         if (U_STRNCMP(U_HTTP_QUERY, "ip=") == 0)
+         if (U_STRNEQ(U_HTTP_QUERY, "ip="))
             {
             // NB: request from AUTH to get status user
 
@@ -1350,7 +1350,7 @@ int UNoCatPlugIn::handlerRequest()
          goto end;
          }
 
-      if (U_HTTP_URI_STREQ("/logout") &&
+      if (U_HTTP_URI_STRNEQ("/logout") &&
           UHTTP::http_info.query_len)
          {
          // NB: request from AUTH to logout user (ip=192.168.301.223&mac=00:e0:4c:d4:63:f5)
@@ -1379,7 +1379,7 @@ int UNoCatPlugIn::handlerRequest()
             uint32_t pos = output.find_first_of('&', 3);
 
             if (pos != U_NOT_FOUND &&
-                U_STRNCMP(output.c_pointer(pos+1), "mac=") == 0)
+                U_STRNEQ(output.c_pointer(pos+1), "mac="))
                {
                UString mac = output.substr(pos + 5, U_CONSTANT_SIZE("00:00:00:00:00:00"));
 
@@ -1411,7 +1411,7 @@ int UNoCatPlugIn::handlerRequest()
 
    U_INTERNAL_DUMP("peer = %p", peer)
 
-   if (U_HTTP_URI_STREQ("/cpe"))
+   if (U_HTTP_URI_STRNEQ("/cpe"))
       {
       (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
 
@@ -1423,7 +1423,7 @@ int UNoCatPlugIn::handlerRequest()
 
    if (host == gateway)
       {
-      if (U_STRNCMP(U_HTTP_QUERY, "ticket=") == 0)
+      if (U_STRNEQ(U_HTTP_QUERY, "ticket="))
          {
          // user with a ticket
 
@@ -1461,7 +1461,7 @@ int UNoCatPlugIn::handlerRequest()
          goto redirect;
          }
 
-      if (U_HTTP_URI_STREQ("/test"))
+      if (U_HTTP_URI_STRNEQ("/test"))
          {
          (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
 

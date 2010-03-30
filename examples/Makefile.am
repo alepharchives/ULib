@@ -5,7 +5,6 @@ AUTOMAKE_OPTIONS = no-dependencies
 EXTRA_DIST = README \
 				 XAdES/*.h XAdES/*.cpp XAdES/Makefile.* \
 				 IR/*.h IR/*.cpp IR/Makefile.* \
-				 cgi/*.cpp cgi/Makefile.* \
 				 userver/*.cpp userver/Makefile.* \
 				 simple_client_server/*.cpp simple_client_server/Makefile.* \
 				 csp/*.cpp csp/Makefile.* csp/usage.txt \
@@ -25,7 +24,7 @@ EXTRA_DIST = README \
 
 MAINTAINERCLEANFILES = Makefile.in
 
-SUBDIRS = test_manager cgi IR simple_client_server workflow
+SUBDIRS = test_manager IR simple_client_server workflow
 
 if PLUGIN
 SUBDIRS += userver

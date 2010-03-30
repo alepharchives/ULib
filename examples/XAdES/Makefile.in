@@ -38,7 +38,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-noinst_PROGRAMS = sign$(EXEEXT) verify$(EXEEXT)
+noinst_PROGRAMS = sign$(EXEEXT) archive$(EXEEXT) verify$(EXEEXT)
 subdir = examples/XAdES
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -73,6 +73,9 @@ libverify_la_LIBADD =
 am_libverify_la_OBJECTS = context.lo transform.lo xpath.lo
 libverify_la_OBJECTS = $(am_libverify_la_OBJECTS)
 PROGRAMS = $(noinst_PROGRAMS)
+am_archive_OBJECTS = archive.$(OBJEXT)
+archive_OBJECTS = $(am_archive_OBJECTS)
+archive_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 am_sign_OBJECTS = sign.$(OBJEXT)
 sign_OBJECTS = $(am_sign_OBJECTS)
 sign_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
@@ -90,9 +93,10 @@ LTCXXCOMPILE = $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) \
 CXXLD = $(CXX)
 CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libverify_la_SOURCES) $(sign_SOURCES) $(verify_SOURCES)
-DIST_SOURCES = $(libverify_la_SOURCES) $(sign_SOURCES) \
+SOURCES = $(libverify_la_SOURCES) $(archive_SOURCES) $(sign_SOURCES) \
 	$(verify_SOURCES)
+DIST_SOURCES = $(libverify_la_SOURCES) $(archive_SOURCES) \
+	$(sign_SOURCES) $(verify_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -348,6 +352,9 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 sign_LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la
 sign_SOURCES = sign.cpp
 sign_LDFLAGS = $(PRG_LDFLAGS)
+archive_LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la
+archive_SOURCES = archive.cpp
+archive_LDFLAGS = $(PRG_LDFLAGS)
 verify_LDADD = libverify.la $(top_builddir)/src/ulib/lib@ULIB@.la
 verify_SOURCES = verify.cpp
 verify_LDFLAGS = $(PRG_LDFLAGS)
@@ -404,6 +411,9 @@ clean-noinstPROGRAMS:
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
+archive$(EXEEXT): $(archive_OBJECTS) $(archive_DEPENDENCIES) 
+	@rm -f archive$(EXEEXT)
+	$(CXXLINK) $(archive_LDFLAGS) $(archive_OBJECTS) $(archive_LDADD) $(LIBS)
 sign$(EXEEXT): $(sign_OBJECTS) $(sign_DEPENDENCIES) 
 	@rm -f sign$(EXEEXT)
 	$(CXXLINK) $(sign_LDFLAGS) $(sign_OBJECTS) $(sign_LDADD) $(LIBS)
@@ -417,6 +427,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/context.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sign.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/transform.Plo@am__quote@

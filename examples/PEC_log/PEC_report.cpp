@@ -349,7 +349,7 @@ UString PEC_report::getValueField(int field)
       {
       case U_destinatari:
          {
-         U_INTERNAL_ASSERT_EQUALS(U_STRNCMP(ptr1 - U_CONSTANT_SIZE(U_DESTINATARI), U_DESTINATARI), 0)
+         U_INTERNAL_ASSERT(U_STRNEQ(ptr1 - U_CONSTANT_SIZE(U_DESTINATARI), U_DESTINATARI))
 
          ptr2 = ptr1;
 
@@ -413,8 +413,8 @@ loop3:
 
          if (p1 == ptr1) goto end;
 
-         errore_virus  = (                       U_STRNCMP(p1 - U_CONSTANT_SIZE(U_VIRUS)         + 1, U_VIRUS)         == 0);
-         errore_esteso = (errore_virus ? false : U_STRNCMP(p1 - U_CONSTANT_SIZE(U_ERRORE_ESTESO) + 1, U_ERRORE_ESTESO) == 0);
+         errore_virus  =                         U_STRNEQ(p1 - U_CONSTANT_SIZE(U_VIRUS)         + 1, U_VIRUS);
+         errore_esteso = (errore_virus ? false : U_STRNEQ(p1 - U_CONSTANT_SIZE(U_ERRORE_ESTESO) + 1, U_ERRORE_ESTESO));
 
          if (errore_virus  == false &&
              errore_esteso == false)
@@ -588,7 +588,7 @@ bool PEC_report::setLineTipology()
 
    ptr1 += sizeof(": ")-1;
 
-   bool queueid = (U_STRNCMP(ptr1, "queueid=") == 0);
+   bool queueid = U_STRNEQ(ptr1, "queueid=");
 
    U_INTERNAL_DUMP("queueid = %b", queueid)
 

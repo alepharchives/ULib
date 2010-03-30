@@ -86,9 +86,9 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = test_manager cgi IR simple_client_server workflow \
-	userver lcsp http_header uclient PEC_log doc_parse \
-	doc_classifier rsign csp XAdES xml2txt form_completion
+DIST_SUBDIRS = test_manager IR simple_client_server workflow userver \
+	lcsp http_header uclient PEC_log doc_parse doc_classifier \
+	rsign csp XAdES xml2txt form_completion
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -342,7 +342,6 @@ AUTOMAKE_OPTIONS = no-dependencies
 EXTRA_DIST = README \
 				 XAdES/*.h XAdES/*.cpp XAdES/Makefile.* \
 				 IR/*.h IR/*.cpp IR/Makefile.* \
-				 cgi/*.cpp cgi/Makefile.* \
 				 userver/*.cpp userver/Makefile.* \
 				 simple_client_server/*.cpp simple_client_server/Makefile.* \
 				 csp/*.cpp csp/Makefile.* csp/usage.txt \
@@ -361,7 +360,7 @@ EXTRA_DIST = README \
 				 workflow/*.h workflow/*.cpp workflow/Makefile.*
 
 MAINTAINERCLEANFILES = Makefile.in
-SUBDIRS = test_manager cgi IR simple_client_server workflow \
+SUBDIRS = test_manager IR simple_client_server workflow \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4) $(am__append_5) $(am__append_6) \
 	$(am__append_7) $(am__append_8) $(am__append_9)
@@ -541,7 +540,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
-	$(mkdir_p) $(distdir)/IR $(distdir)/PEC_log $(distdir)/XAdES $(distdir)/cgi $(distdir)/csp $(distdir)/doc_classifier $(distdir)/doc_parse $(distdir)/download_accelerator $(distdir)/form_completion $(distdir)/http_header $(distdir)/lcsp $(distdir)/lrp_session $(distdir)/parser $(distdir)/rsign $(distdir)/simple_client_server $(distdir)/test_manager $(distdir)/userver $(distdir)/workflow $(distdir)/xml2txt
+	$(mkdir_p) $(distdir)/IR $(distdir)/PEC_log $(distdir)/XAdES $(distdir)/csp $(distdir)/doc_classifier $(distdir)/doc_parse $(distdir)/download_accelerator $(distdir)/form_completion $(distdir)/http_header $(distdir)/lcsp $(distdir)/lrp_session $(distdir)/parser $(distdir)/rsign $(distdir)/simple_client_server $(distdir)/test_manager $(distdir)/userver $(distdir)/workflow $(distdir)/xml2txt
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

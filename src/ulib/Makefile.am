@@ -1,6 +1,6 @@
 ## Makefile.am -- Process this file with automake to produce Makefile.in
 
-EXTRA_DIST = base/* cgi/* container/* db/* debug/* dynamic/* flex/* internal/* ldap/* mime/* net/* pcre/* \
+EXTRA_DIST = base/* container/* db/* debug/* dynamic/* flex/* internal/* ldap/* mime/* net/* pcre/* \
 			 	 replace/* ssl/* ssh/* ui/* utility/* xml/expat/* xml/libxml2/* zip/* \
 				 plugin/*.cpp plugin/Makefile.* \
 				 plugin/mod_shib/*.cpp plugin/mod_shib/Makefile.* \
@@ -20,7 +20,7 @@ SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c \
 		  base/coder/cbase64.c base/coder/cquoted_printable.c base/coder/curl_coder.c base/coder/cxml_coder.c base/coder/cescape.c
 
 SRC_CPP = internal/common.cpp internal/objectIO.cpp \
-			 ui/dialog.cpp db/cdb.cpp db/rdb.cpp cgi/cgi.cpp cgi/cgi_input.cpp \
+			 ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
 			 mime/header.cpp mime/entity.cpp mime/multipart.cpp \
 			 container/vector.cpp container/hash_map.cpp container/tree.cpp \
 			 utility/interrupt.cpp utility/compress.cpp utility/services.cpp utility/semaphore.cpp utility/base64.cpp \

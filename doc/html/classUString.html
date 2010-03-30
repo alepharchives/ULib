@@ -156,6 +156,10 @@ void&nbsp;</td><td class="memItemRight" valign="bottom"><b>push_back</b> (char c
 <a class="el" href="classUString.html">UString</a> &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>operator+=</b> (const char *s)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8c89f16bf5cd0e080c2df02d0104673c"></a><!-- doxytag: member="UString::operator+=" ref="a8c89f16bf5cd0e080c2df02d0104673c" args="(const UString &amp;str)" -->
 <a class="el" href="classUString.html">UString</a> &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>operator+=</b> (const <a class="el" href="classUString.html">UString</a> &amp;str)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad823394184a457d19a5bd234baee513b"></a><!-- doxytag: member="UString::append" ref="ad823394184a457d19a5bd234baee513b" args="(unsigned char c)" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><b>append</b> (unsigned char c)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abf57b7fd51b4f79ccb01051f2a5ed84b"></a><!-- doxytag: member="UString::append" ref="abf57b7fd51b4f79ccb01051f2a5ed84b" args="()" -->
+void&nbsp;</td><td class="memItemRight" valign="bottom"><b>append</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6492a220c2d8a46093207bcc63ed18fc"></a><!-- doxytag: member="UString::insert" ref="a6492a220c2d8a46093207bcc63ed18fc" args="(uint32_t pos, const UString &amp;str)" -->
 <a class="el" href="classUString.html">UString</a> &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>insert</b> (uint32_t pos, const <a class="el" href="classUString.html">UString</a> &amp;str)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa2e1526c096a468c34cbaa773bee587a"></a><!-- doxytag: member="UString::insert" ref="aa2e1526c096a468c34cbaa773bee587a" args="(uint32_t pos1, const UString &amp;str, uint32_t pos2, uint32_t n=U_NOT_FOUND)" -->
@@ -380,6 +384,11 @@ static <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="m
 <tr><td colspan="2"><h2>Public Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3e451319595567e2d1e1c11e629316f9"></a><!-- doxytag: member="UString::rep" ref="a3e451319595567e2d1e1c11e629316f9" args="" -->
 <a class="el" href="classUStringRep.html">UStringRep</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>rep</b></td></tr>
+<tr><td colspan="2"><h2>Static Public Attributes</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2a2878034646067eaa915ac866bfff4c"></a><!-- doxytag: member="UString::ptrbuf" ref="a2a2878034646067eaa915ac866bfff4c" args="" -->
+static char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>ptrbuf</b> = appbuf</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab8d2dce0d0301f19ce7503272044cbe6"></a><!-- doxytag: member="UString::appbuf" ref="ab8d2dce0d0301f19ce7503272044cbe6" args="[1024]" -->
+static char&nbsp;</td><td class="memItemRight" valign="bottom"><b>appbuf</b> [1024]</td></tr>
 <tr><td colspan="2"><h2>Protected Member Functions</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0b7f111ee2110f5e22bd91ec6d0ed7fd"></a><!-- doxytag: member="UString::set" ref="a0b7f111ee2110f5e22bd91ec6d0ed7fd" args="(UStringRep *r)" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><b>set</b> (<a class="el" href="classUStringRep.html">UStringRep</a> *r)</td></tr>
@@ -411,7 +420,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 <li>src/ulib/string.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 24 16:51:43 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 30 16:32:02 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

@@ -80,7 +80,13 @@ public:
       U_SYSCALL_VOID(xmlFreeDoc, "%p", impl_);
       }
 
-   /** @return The encoding used in the source from which the document has been loaded.
+   // SERVICES
+
+   static uint32_t getElement(const UString& data, UVector<UString>& velement, const char* tag, uint32_t tag_len);
+
+   /** getEncoding()
+    *
+    * @return The encoding used in the source from which the document has been loaded.
     */
 
    const char* getEncoding() const { return (const char*)impl_->encoding; }

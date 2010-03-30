@@ -61,7 +61,8 @@ public:
 
    // section management
 
-   bool skip();                        // skip space and line comment...
+   bool skip(char c = '#'); // skip space and line comment...
+
    char peek() { return _start[0]; }
 
    void reset()
@@ -118,6 +119,40 @@ public:
 
       return UFileConfig::open();
       }
+
+   // EXT
+
+   // This implementation of a Configuration reads properties
+   // from a legacy Windows initialization (.ini) file.
+   //
+   // The file syntax is implemented as follows.
+   //   - a line starting with a semicolon is treated as a comment and ignored
+   //   - a line starting with a square bracket denotes a section key [<key>]
+   //   - every other line denotes a property assignment in the form
+   //     <value key> = <value>
+   //
+   // The name of a property is composed of the section key and the value key,
+   // separated by a period (<section key>.<value key>).
+   //
+   // Property names are not case sensitive. Leading and trailing whitespace is
+   // removed from both keys and values.
+
+   bool loadINI();
+
+   // This implementation of a Configuration reads properties
+   // from a Java-style properties file.
+   //
+   // The file syntax is implemented as follows.
+   //   - a line starting with a hash '#' or exclamation mark '!' is treated as a comment and ignored
+   //   - every other line denotes a property assignment in the form
+   //     <key> = <value> or
+   //     <key> : <value>
+   //
+   // Property names are case sensitive. Leading and trailing whitespace is
+   // removed from both keys and values. A property name can neither contain
+   // a colon ':' nor an equal sign '=' character.
+
+   bool loadProperties();
 
 #ifdef DEBUG
    const char* dump(bool reset) const;

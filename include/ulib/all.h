@@ -8,7 +8,6 @@
 #include <ulib/notifier.h>
 #include <ulib/file_config.h>
 #include <ulib/application.h>
-#include <ulib/cgi/cgi.h>
 #include <ulib/ui/dialog.h>
 #include <ulib/query/parser.h>
 #include <ulib/net/udpsocket.h>

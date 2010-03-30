@@ -1,3 +1,14 @@
 <map id="G" name="G">
-<area shape="rect" id="node1" href="$classUSemaphore.html" title="USemaphore" alt="" coords="5,5,96,33"/>
+<area shape="rect" id="node1" href="$classUServerPlugIn.html" title="UServerPlugIn" alt="" coords="5,258,107,286"/>
+<area shape="rect" id="node3" href="$classUEchoPlugIn.html" title="UEchoPlugIn" alt="" coords="165,5,259,33"/>
+<area shape="rect" id="node5" href="$classUGeoIPPlugIn.html" title="UGeoIPPlugIn" alt="" coords="163,55,261,83"/>
+<area shape="rect" id="node7" href="$classUHttpPlugIn.html" title="UHttpPlugIn" alt="" coords="167,106,257,134"/>
+<area shape="rect" id="node9" href="$classUNoCatPlugIn.html" title="UNoCatPlugIn" alt="" coords="161,157,263,185"/>
+<area shape="rect" id="node11" href="$classUProxyPlugIn.html" title="UProxyPlugIn" alt="" coords="163,207,261,235"/>
+<area shape="rect" id="node13" href="$classURpcPlugIn.html" title="URpcPlugIn" alt="" coords="168,258,256,286"/>
+<area shape="rect" id="node15" href="$classUShibPlugIn.html" title="UShibPlugIn" alt="" coords="167,309,257,337"/>
+<area shape="rect" id="node17" href="$classUSkeletonPlugIn.html" title="USkeletonPlugIn" alt="" coords="156,359,268,387"/>
+<area shape="rect" id="node19" href="$classUSoapPlugIn.html" title="USoapPlugIn" alt="" coords="165,410,259,438"/>
+<area shape="rect" id="node21" href="$classUTsaPlugIn.html" title="UTsaPlugIn" alt="" coords="169,461,255,489"/>
+<area shape="rect" id="node23" href="$classUUspPlugIn.html" title="UUspPlugIn" alt="" coords="168,511,256,539"/>
 </map>

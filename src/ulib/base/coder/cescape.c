@@ -152,7 +152,7 @@ uint32_t u_escape_encode(const unsigned char* inptr, uint32_t len, char* out, ui
 
 /* the s pointer is advanced past the escape sequence */
 
-static inline unsigned char u_escape_decode_ptr(const char** s)
+unsigned char u_escape_decode_ptr(const char** s)
 {
    const char* t = *s;
    int c         = *t++;

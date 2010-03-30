@@ -84,82 +84,117 @@
 <a name="l00061"></a>00061 
 <a name="l00062"></a>00062         <span class="comment">// section management</span>
 <a name="l00063"></a>00063 
-<a name="l00064"></a>00064         <span class="keywordtype">bool</span> skip();                                                            <span class="comment">// skip space and line comment...</span>
-<a name="l00065"></a>00065         <span class="keywordtype">char</span> peek() { <span class="keywordflow">return</span> _start[0]; }
-<a name="l00066"></a>00066 
-<a name="l00067"></a>00067         <span class="keywordtype">void</span> reset()
-<a name="l00068"></a>00068                 {
-<a name="l00069"></a>00069                 U_TRACE(0, <span class="stringliteral">&quot;UFileConfig::reset()&quot;</span>)
-<a name="l00070"></a>00070 
-<a name="l00071"></a>00071                 _end    = data.end();
-<a name="l00072"></a>00072                 _size = (_end - _start);
-<a name="l00073"></a>00073                 }
-<a name="l00074"></a>00074 
-<a name="l00075"></a>00075         <span class="keywordtype">bool</span> searchForObjectStream(<span class="keyword">const</span> <span class="keywordtype">char</span>* section = 0, uint32_t len = 0);
-<a name="l00076"></a>00076 
-<a name="l00077"></a>00077         <span class="comment">// Wrapper for table</span>
-<a name="l00078"></a>00078 
-<a name="l00079"></a>00079         <a class="code" href="classUHashMap_3_01UString_01_4.html">UHashMap&lt;UString&gt;</a> table;
-<a name="l00080"></a>00080 
-<a name="l00081"></a>00081         <span class="keywordtype">void</span> clear()       {        table.clear(); }
-<a name="l00082"></a>00082         <span class="keywordtype">void</span> deallocate()  {        table.deallocate(); }
-<a name="l00083"></a>00083         <span class="keywordtype">bool</span> empty()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> table.empty(); }
-<a name="l00084"></a>00084 
-<a name="l00085"></a>00085         <a class="code" href="classUString.html">UString</a>      erase(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; key) { <span class="keywordflow">return</span> table.erase(key); }
-<a name="l00086"></a>00086         <a class="code" href="classUString.html">UString</a> operator[](<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; key) { <span class="keywordflow">return</span> table[key]; }
-<a name="l00087"></a>00087 
-<a name="l00088"></a>00088         <span class="comment">// Facilities</span>
-<a name="l00089"></a>00089 
-<a name="l00090"></a>00090         <span class="keywordtype">long</span> readLong(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; key, <span class="keywordtype">long</span> default_value = 0)
-<a name="l00091"></a>00091                 {
-<a name="l00092"></a>00092                 U_TRACE(0, <span class="stringliteral">&quot;UFileConfig::readLong(%.*S,%ld)&quot;</span>, U_STRING_TO_TRACE(key), default_value)
-<a name="l00093"></a>00093 
-<a name="l00094"></a>00094                 <a class="code" href="classUString.html">UString</a> value = table[key];
-<a name="l00095"></a>00095 
-<a name="l00096"></a>00096                 <span class="keywordflow">if</span> (value.empty() == <span class="keyword">false</span>) default_value = value.strtol();
-<a name="l00097"></a>00097 
-<a name="l00098"></a>00098                 U_RETURN(default_value);
-<a name="l00099"></a>00099                 }
-<a name="l00100"></a>00100 
-<a name="l00101"></a>00101         <span class="keywordtype">bool</span> readBoolean(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; key)
-<a name="l00102"></a>00102                 {
-<a name="l00103"></a>00103                 U_TRACE(0, <span class="stringliteral">&quot;UFileConfig::readBoolean(%.*S)&quot;</span>, U_STRING_TO_TRACE(key))
-<a name="l00104"></a>00104 
-<a name="l00105"></a>00105                 <span class="keywordtype">bool</span> result = (table[key] == *str_yes);
-<a name="l00106"></a>00106 
-<a name="l00107"></a>00107                 U_RETURN(result);
-<a name="l00108"></a>00108                 }
-<a name="l00109"></a>00109 
-<a name="l00110"></a>00110         <span class="comment">// Open a configuration file</span>
-<a name="l00111"></a>00111 
-<a name="l00112"></a>00112         <span class="keywordtype">bool</span> open();
-<a name="l00113"></a>00113         <span class="keywordtype">bool</span> open(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; path)
-<a name="l00114"></a>00114                 {
-<a name="l00115"></a>00115                 U_TRACE(0, <span class="stringliteral">&quot;UFileConfig::open(%.*S)&quot;</span>, U_STRING_TO_TRACE(path))
-<a name="l00116"></a>00116 
-<a name="l00117"></a>00117                 UFile::setPath(path);
-<a name="l00118"></a>00118 
-<a name="l00119"></a>00119                 <span class="keywordflow">return</span> UFileConfig::open();
-<a name="l00120"></a>00120                 }
-<a name="l00121"></a>00121 
-<a name="l00122"></a>00122 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00123"></a>00123 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00124"></a>00124 <span class="preprocessor">#endif</span>
-<a name="l00125"></a>00125 <span class="preprocessor"></span>
-<a name="l00126"></a>00126 <span class="keyword">protected</span>:
-<a name="l00127"></a>00127         <a class="code" href="classUString.html">UString</a> data;
-<a name="l00128"></a>00128         <span class="keyword">const</span> <span class="keywordtype">char</span>* _end;
-<a name="l00129"></a>00129         <span class="keyword">const</span> <span class="keywordtype">char</span>* _start;
-<a name="l00130"></a>00130         uint32_t _size;
-<a name="l00131"></a>00131 
-<a name="l00132"></a>00132 <span class="keyword">private</span>:
-<a name="l00133"></a>00133         <a class="code" href="classUFileConfig.html">UFileConfig</a>(<span class="keyword">const</span> <a class="code" href="classUFileConfig.html">UFileConfig</a>&amp;) : <a class="code" href="classUFile.html">UFile</a>()  {}
-<a name="l00134"></a>00134         <a class="code" href="classUFileConfig.html">UFileConfig</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUFileConfig.html">UFileConfig</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00135"></a>00135 };
-<a name="l00136"></a>00136 
-<a name="l00137"></a>00137 <span class="preprocessor">#endif</span>
+<a name="l00064"></a>00064         <span class="keywordtype">bool</span> skip(<span class="keywordtype">char</span> c = <span class="charliteral">&#39;#&#39;</span>); <span class="comment">// skip space and line comment...</span>
+<a name="l00065"></a>00065 
+<a name="l00066"></a>00066         <span class="keywordtype">char</span> peek() { <span class="keywordflow">return</span> _start[0]; }
+<a name="l00067"></a>00067 
+<a name="l00068"></a>00068         <span class="keywordtype">void</span> reset()
+<a name="l00069"></a>00069                 {
+<a name="l00070"></a>00070                 U_TRACE(0, <span class="stringliteral">&quot;UFileConfig::reset()&quot;</span>)
+<a name="l00071"></a>00071 
+<a name="l00072"></a>00072                 _end    = data.end();
+<a name="l00073"></a>00073                 _size = (_end - _start);
+<a name="l00074"></a>00074                 }
+<a name="l00075"></a>00075 
+<a name="l00076"></a>00076         <span class="keywordtype">bool</span> searchForObjectStream(<span class="keyword">const</span> <span class="keywordtype">char</span>* section = 0, uint32_t len = 0);
+<a name="l00077"></a>00077 
+<a name="l00078"></a>00078         <span class="comment">// Wrapper for table</span>
+<a name="l00079"></a>00079 
+<a name="l00080"></a>00080         <a class="code" href="classUHashMap_3_01UString_01_4.html">UHashMap&lt;UString&gt;</a> table;
+<a name="l00081"></a>00081 
+<a name="l00082"></a>00082         <span class="keywordtype">void</span> clear()       {        table.clear(); }
+<a name="l00083"></a>00083         <span class="keywordtype">void</span> deallocate()  {        table.deallocate(); }
+<a name="l00084"></a>00084         <span class="keywordtype">bool</span> empty()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> table.empty(); }
+<a name="l00085"></a>00085 
+<a name="l00086"></a>00086         <a class="code" href="classUString.html">UString</a>      erase(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; key) { <span class="keywordflow">return</span> table.erase(key); }
+<a name="l00087"></a>00087         <a class="code" href="classUString.html">UString</a> operator[](<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; key) { <span class="keywordflow">return</span> table[key]; }
+<a name="l00088"></a>00088 
+<a name="l00089"></a>00089         <span class="comment">// Facilities</span>
+<a name="l00090"></a>00090 
+<a name="l00091"></a>00091         <span class="keywordtype">long</span> readLong(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; key, <span class="keywordtype">long</span> default_value = 0)
+<a name="l00092"></a>00092                 {
+<a name="l00093"></a>00093                 U_TRACE(0, <span class="stringliteral">&quot;UFileConfig::readLong(%.*S,%ld)&quot;</span>, U_STRING_TO_TRACE(key), default_value)
+<a name="l00094"></a>00094 
+<a name="l00095"></a>00095                 <a class="code" href="classUString.html">UString</a> value = table[key];
+<a name="l00096"></a>00096 
+<a name="l00097"></a>00097                 <span class="keywordflow">if</span> (value.empty() == <span class="keyword">false</span>) default_value = value.strtol();
+<a name="l00098"></a>00098 
+<a name="l00099"></a>00099                 U_RETURN(default_value);
+<a name="l00100"></a>00100                 }
+<a name="l00101"></a>00101 
+<a name="l00102"></a>00102         <span class="keywordtype">bool</span> readBoolean(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; key)
+<a name="l00103"></a>00103                 {
+<a name="l00104"></a>00104                 U_TRACE(0, <span class="stringliteral">&quot;UFileConfig::readBoolean(%.*S)&quot;</span>, U_STRING_TO_TRACE(key))
+<a name="l00105"></a>00105 
+<a name="l00106"></a>00106                 <span class="keywordtype">bool</span> result = (table[key] == *str_yes);
+<a name="l00107"></a>00107 
+<a name="l00108"></a>00108                 U_RETURN(result);
+<a name="l00109"></a>00109                 }
+<a name="l00110"></a>00110 
+<a name="l00111"></a>00111         <span class="comment">// Open a configuration file</span>
+<a name="l00112"></a>00112 
+<a name="l00113"></a>00113         <span class="keywordtype">bool</span> open();
+<a name="l00114"></a>00114         <span class="keywordtype">bool</span> open(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; path)
+<a name="l00115"></a>00115                 {
+<a name="l00116"></a>00116                 U_TRACE(0, <span class="stringliteral">&quot;UFileConfig::open(%.*S)&quot;</span>, U_STRING_TO_TRACE(path))
+<a name="l00117"></a>00117 
+<a name="l00118"></a>00118                 UFile::setPath(path);
+<a name="l00119"></a>00119 
+<a name="l00120"></a>00120                 <span class="keywordflow">return</span> UFileConfig::open();
+<a name="l00121"></a>00121                 }
+<a name="l00122"></a>00122 
+<a name="l00123"></a>00123         <span class="comment">// EXT</span>
+<a name="l00124"></a>00124 
+<a name="l00125"></a>00125         <span class="comment">// This implementation of a Configuration reads properties</span>
+<a name="l00126"></a>00126         <span class="comment">// from a legacy Windows initialization (.ini) file.</span>
+<a name="l00127"></a>00127         <span class="comment">//</span>
+<a name="l00128"></a>00128         <span class="comment">// The file syntax is implemented as follows.</span>
+<a name="l00129"></a>00129         <span class="comment">//   - a line starting with a semicolon is treated as a comment and ignored</span>
+<a name="l00130"></a>00130         <span class="comment">//   - a line starting with a square bracket denotes a section key [&lt;key&gt;]</span>
+<a name="l00131"></a>00131         <span class="comment">//   - every other line denotes a property assignment in the form</span>
+<a name="l00132"></a>00132         <span class="comment">//     &lt;value key&gt; = &lt;value&gt;</span>
+<a name="l00133"></a>00133         <span class="comment">//</span>
+<a name="l00134"></a>00134         <span class="comment">// The name of a property is composed of the section key and the value key,</span>
+<a name="l00135"></a>00135         <span class="comment">// separated by a period (&lt;section key&gt;.&lt;value key&gt;).</span>
+<a name="l00136"></a>00136         <span class="comment">//</span>
+<a name="l00137"></a>00137         <span class="comment">// Property names are not case sensitive. Leading and trailing whitespace is</span>
+<a name="l00138"></a>00138         <span class="comment">// removed from both keys and values.</span>
+<a name="l00139"></a>00139 
+<a name="l00140"></a>00140         <span class="keywordtype">bool</span> loadINI();
+<a name="l00141"></a>00141 
+<a name="l00142"></a>00142         <span class="comment">// This implementation of a Configuration reads properties</span>
+<a name="l00143"></a>00143         <span class="comment">// from a Java-style properties file.</span>
+<a name="l00144"></a>00144         <span class="comment">//</span>
+<a name="l00145"></a>00145         <span class="comment">// The file syntax is implemented as follows.</span>
+<a name="l00146"></a>00146         <span class="comment">//   - a line starting with a hash &#39;#&#39; or exclamation mark &#39;!&#39; is treated as a comment and ignored</span>
+<a name="l00147"></a>00147         <span class="comment">//   - every other line denotes a property assignment in the form</span>
+<a name="l00148"></a>00148         <span class="comment">//     &lt;key&gt; = &lt;value&gt; or</span>
+<a name="l00149"></a>00149         <span class="comment">//     &lt;key&gt; : &lt;value&gt;</span>
+<a name="l00150"></a>00150         <span class="comment">//</span>
+<a name="l00151"></a>00151         <span class="comment">// Property names are case sensitive. Leading and trailing whitespace is</span>
+<a name="l00152"></a>00152         <span class="comment">// removed from both keys and values. A property name can neither contain</span>
+<a name="l00153"></a>00153         <span class="comment">// a colon &#39;:&#39; nor an equal sign &#39;=&#39; character.</span>
+<a name="l00154"></a>00154 
+<a name="l00155"></a>00155         <span class="keywordtype">bool</span> loadProperties();
+<a name="l00156"></a>00156 
+<a name="l00157"></a>00157 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00158"></a>00158 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00159"></a>00159 <span class="preprocessor">#endif</span>
+<a name="l00160"></a>00160 <span class="preprocessor"></span>
+<a name="l00161"></a>00161 <span class="keyword">protected</span>:
+<a name="l00162"></a>00162         <a class="code" href="classUString.html">UString</a> data;
+<a name="l00163"></a>00163         <span class="keyword">const</span> <span class="keywordtype">char</span>* _end;
+<a name="l00164"></a>00164         <span class="keyword">const</span> <span class="keywordtype">char</span>* _start;
+<a name="l00165"></a>00165         uint32_t _size;
+<a name="l00166"></a>00166 
+<a name="l00167"></a>00167 <span class="keyword">private</span>:
+<a name="l00168"></a>00168         <a class="code" href="classUFileConfig.html">UFileConfig</a>(<span class="keyword">const</span> <a class="code" href="classUFileConfig.html">UFileConfig</a>&amp;) : <a class="code" href="classUFile.html">UFile</a>()  {}
+<a name="l00169"></a>00169         <a class="code" href="classUFileConfig.html">UFileConfig</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUFileConfig.html">UFileConfig</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00170"></a>00170 };
+<a name="l00171"></a>00171 
+<a name="l00172"></a>00172 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed Mar 24 16:51:39 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 30 16:31:43 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

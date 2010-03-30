@@ -117,13 +117,13 @@ public:
 				{
 				case '!': // <%! ... %>
 					{
-					declaration = UStringExt::stripWhiteSpace(token.c_pointer(1), token.size()-1);
+					declaration = UStringExt::trim(token.c_pointer(1), token.size()-1);
 					}
 				break;
 
 				case '=': // <%= ... %>
 					{
-					token = UStringExt::stripWhiteSpace(token.c_pointer(1), token.size()-1);
+					token = UStringExt::trim(token.c_pointer(1), token.size()-1);
 
 					buffer.snprintf("UClientImage_Base::_buffer->snprintf(\"%%.*s\", %.*s);\n"
 										 "(void) UClientImage_Base::wbuffer->append(*UClientImage_Base::_buffer);\n", U_STRING_TO_TRACE(token));
@@ -134,7 +134,7 @@ public:
 
 				default: // plain code block <% ... %>
 					{
-					(void) output.append(UStringExt::stripWhiteSpace(token));
+					(void) output.append(UStringExt::trim(token));
 					(void) output.push_back('\n');
 					}
 				break;

@@ -20,6 +20,8 @@
 
 #include <ulib/application.h>
 
+#define U_SCHEMA (const char*)(argv[optind+1])
+
 class Application : public UApplication {
 public:
 
@@ -67,17 +69,46 @@ public:
 
       // manage file configuration
 
-      if (cfg_str.empty()) cfg_str = U_STRING_FROM_CONSTANT("verify.cfg");
+      if (cfg_str.empty()) cfg_str = U_STRING_FROM_CONSTANT("XAdES.ini");
 
       // ----------------------------------------------------------------------------------------------------------------------------------
-      // XAdES verify - configuration parameters
+      // XAdES - configuration parameters
       // ----------------------------------------------------------------------------------------------------------------------------------
-      // SCHEMA
+      // DigestAlgorithm   md2 | md5 | sha | sha1 | sha224 | sha256 | sha384 | sha512 | mdc2 | ripmed160
+      //
+      // SigningTime this property contains the time at which the signer claims to have performed the signing process (yes/no)
+      // ClaimedRole this property contains claimed or certified roles assumed by the signer in creating the signature
+      //
+      // this property contains the indication of the purported place where the signer claims to have produced the signature
+      // -------------------------------------------------------------------------------------------------------------------
+      // ProductionPlaceCity
+      // ProductionPlaceStateOrProvince
+      // ProductionPlacePostalCode
+      // ProductionPlaceCountryName
+      // -------------------------------------------------------------------------------------------------------------------
+      //
+      // DataObjectFormatMimeType   this property identifies the format of a signed data object (when electronic signatures
+      //                            are not exchanged in a restricted context) to enable the presentation to the verifier or
+      //                            use by the verifier (text, sound or video) in exactly the same way as intended by the signer
+      //
+      // CAStore
+      //
+      // ArchiveTimeStamp           the time-stamp token within this property covers the archive validation data
+      // SignatureTimeStamp         the time-stamp token within this property covers the digital signature value element
+      //
+      // Schema                     the pathname XML Schema of XAdES
       // ----------------------------------------------------------------------------------------------------------------------------------
 
       (void) cfg.open(cfg_str);
 
-      UXML2Schema schema(UFile::contentOf(cfg[U_STRING_FROM_CONSTANT("SCHEMA")]));
+      schema = ( U_SCHEMA == 0 ||
+                *U_SCHEMA == '\0'
+                  ? cfg[U_STRING_FROM_CONSTANT("XAdES-Verify.Schema")]
+                  : UString(U_SCHEMA));
+
+      if (schema.empty()) U_ERROR("error on XAdES schema: empty", 0);
+
+      UXML2Schema XAdES_schema(UFile::contentOf(schema));
 
       // manage arg operation
 
@@ -105,7 +136,7 @@ public:
 
          UXML2Document document(content);
 
-         if (schema.validate(document) == false ||
+         if (XAdES_schema.validate(document) == false ||
              dsigCtx.verify( document) == false)
             {
             continue;
@@ -120,7 +151,7 @@ public:
 private:
    int alg;
    UFileConfig cfg;
-   UString cfg_str;
+   UString cfg_str, schema;
 };
 
 U_MAIN(Application)

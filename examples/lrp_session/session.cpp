@@ -166,7 +166,7 @@ public:
 
          // check if to skip xml header...
 
-         if (U_STRNCMP(ptr, "<?xml") == 0)
+         if (U_STRNEQ(ptr, "<?xml"))
             {
             ptr += 5;
 

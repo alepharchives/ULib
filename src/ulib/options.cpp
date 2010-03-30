@@ -295,13 +295,15 @@ void UOptions::printHelp(vPF func)
 
    // Print help and exit
 
-   (void) ::printf("%.*s: %.*s\n", U_STRING_TO_TRACE(package), U_STRING_TO_TRACE(version));
+   u_printf_fileno = STDOUT_FILENO;
 
-   if (purpose.size()) (void) ::printf("Purpose: %.*s\n", U_STRING_TO_TRACE(purpose));
+   u_printf("%W%.*s%W: %.*s", BRIGHTWHITE, U_STRING_TO_TRACE(package), RESET, U_STRING_TO_TRACE(version));
 
-   (void) ::printf("Usage: %.*s [OPTIONS] %.*s...\n", u_progname_len, u_progname, U_STRING_TO_TRACE(args));
+   if (purpose.size()) u_printf("%WPurpose:%W %.*s", BRIGHTWHITE, RESET, U_STRING_TO_TRACE(purpose));
 
-// (void) U_SYSCALL(fflush, "%p", stdout);
+   u_printf("%WUsage:\n  %W%.*s%W [ %WOPTIONS%W ] %W%.*s\n%WOptions:%W",
+               BRIGHTWHITE, BRIGHTCYAN, u_progname_len, u_progname, RESET, BRIGHTGREEN, RESET,
+               BRIGHTGREEN, U_STRING_TO_TRACE(args), BRIGHTWHITE, RESET);
 
    struct option* ptr_long_options = long_options + 2;
 
@@ -400,20 +402,14 @@ void UOptions::printHelp(vPF func)
             }
          }
 
-      *ptr++ = '\n';
-      *ptr   = '\0';
+      *ptr = '\0';
 
-      (void) ::printf(buffer, 0);
+      u_printf("%W%s%W", BRIGHTCYAN, buffer, RESET);
       }
 
-   if (func)
-      {
-   // (void) U_SYSCALL(fflush, "%p", stdout);
+   if (func) func();
 
-      func();
-      }
-
-   if (report_bugs.size()) (void) ::printf("%.*s\n", U_STRING_TO_TRACE(report_bugs));
+   if (report_bugs.size()) u_printf("%W%.*s%W", BRIGHTYELLOW, U_STRING_TO_TRACE(report_bugs), RESET);
 
    U_EXIT(EXIT_SUCCESS);
 }
@@ -518,87 +514,128 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
          case 'V': // Print version and exit
             {
-            ::printf("%.*s (%.*s): %.*s\n\n"
-               "Developed with ULib (C++ application development framework)\n\n"
-               "Building Environment: (" __DATE__ ")\n"
-               " Operating System.....: " _OS_VERSION "\n"
-               " C++ Compiler.........: " GCC_VERSION "\n"
-               " C   Flags............: " CFLAGS_VAR "\n"
-               " C++ Flags............: " CXXFLAGS_VAR "\n"
-               " Preprocessor Flags...: " CPPFLAGS_VAR "\n"
-               " Linker Flags.........: " LDFLAGS_VAR "\n"
-               " Linker...............: " LD_VERSION "\n"
-               " Libraries............: " LIBS_VAR "\n"
-               " Standard C   library.: " LIBC_VERSION "\n"
-               " Standard C++ library.: " STDGPP_VERSION "\n"
-               " Lexical analyzer.....: " _FLEX_VERSION "\n"
-               " Parser generator.....: " _BISON_VERSION "\n"
-               " LIBZ  library........: " _LIBZ_VERSION "\n"
-               " PCRE  library........: " _PCRE_VERSION "\n"
-               " SSL   library........: " _OPENSSL_VERSION "\n"
-               " SSH   library........: " _LIBSSH_VERSION "\n"
-               " cURL  library........: " _CURL_VERSION "\n"
-               " LDAP  library........: " _LDAP_VERSION "\n"
-               " Expat library........: " _EXPAT_VERSION "\n"
-               " MAGIC library........: " _MAGIC_VERSION "\n"
-               " MySQL library........: " _MYSQL_VERSION "\n"
-               " libuuid library......: " _LIBUUID_VERSION "\n"
-               " libevent library.....: " _LIBEVENT_VERSION "\n"
-               " libxml2 library......: " _LIBXML2_VERSION "\n"
-               " ZIP support..........: " ZIP_ENABLE "\n"
-               " LFS support..........: " LFS_ENABLE "\n"
-               " ipv6 support.........: " IPV6_ENABLE "\n"
-               " MAGIC support........: " MAGIC_ENABLE "\n"
-               " MySQL support........: " MYSQL_ENABLE "\n"
-               " libuuid support......: " LIBUUID_ENABLE "\n"
-               " libevent support.....: " LIBEVENT_ENABLE "\n"
-               " libxml2 support......: " LIBXML2_ENABLE "\n"
-               " memory pool support..: " MEMORY_POOL_ENABLE "\n",
-               U_STRING_TO_TRACE(package), U_STRING_TO_TRACE(version), U_STRING_TO_TRACE(purpose));
+            u_printf_fileno = STDOUT_FILENO;
+
+            u_printf("%W%.*s%W (%W%.*s%W): %.*s\n\n"
+               "%WDeveloped with ULib (C++ application development framework)%W\n\n"
+               "%WBuilding Environment: (" __DATE__ ")%W\n"
+               "%W Operating System.....:%W " _OS_VERSION "\n"
+               "%W C++ Compiler.........:%W " GCC_VERSION "\n"
+               "%W C   Flags............:%W " CFLAGS_VAR "\n"
+               "%W C++ Flags............:%W " CXXFLAGS_VAR "\n"
+               "%W Preprocessor Flags...:%W " CPPFLAGS_VAR "\n"
+               "%W Linker Flags.........:%W " LDFLAGS_VAR "\n"
+               "%W Linker...............:%W " LD_VERSION "\n"
+               "%W Libraries............:%W " LIBS_VAR "\n"
+               "%W Standard C   library.:%W " LIBC_VERSION "\n"
+               "%W Standard C++ library.:%W " STDGPP_VERSION "\n"
+               "%W Lexical analyzer.....:%W " _FLEX_VERSION "\n"
+               "%W Parser generator.....:%W " _BISON_VERSION "\n"
+               "%W LIBZ  library........:%W " _LIBZ_VERSION "\n"
+               "%W PCRE  library........:%W " _PCRE_VERSION "\n"
+               "%W SSL   library........:%W " _OPENSSL_VERSION "\n"
+               "%W SSH   library........:%W " _LIBSSH_VERSION "\n"
+               "%W cURL  library........:%W " _CURL_VERSION "\n"
+               "%W LDAP  library........:%W " _LDAP_VERSION "\n"
+               "%W Expat library........:%W " _EXPAT_VERSION "\n"
+               "%W MAGIC library........:%W " _MAGIC_VERSION "\n"
+               "%W MySQL library........:%W " _MYSQL_VERSION "\n"
+               "%W libuuid library......:%W " _LIBUUID_VERSION "\n"
+               "%W libevent library.....:%W " _LIBEVENT_VERSION "\n"
+               "%W libxml2 library......:%W " _LIBXML2_VERSION "\n"
+               "%W ZIP support..........:%W " ZIP_ENABLE "\n"
+               "%W LFS support..........:%W " LFS_ENABLE "\n"
+               "%W ipv6 support.........:%W " IPV6_ENABLE "\n"
+               "%W MAGIC support........:%W " MAGIC_ENABLE "\n"
+               "%W MySQL support........:%W " MYSQL_ENABLE "\n"
+               "%W libuuid support......:%W " LIBUUID_ENABLE "\n"
+               "%W libevent support.....:%W " LIBEVENT_ENABLE "\n"
+               "%W libxml2 support......:%W " LIBXML2_ENABLE "\n"
+               "%W memory pool support..:%W " MEMORY_POOL_ENABLE "\n",
+               BRIGHTCYAN,  U_STRING_TO_TRACE(package), RESET,
+               BRIGHTGREEN, U_STRING_TO_TRACE(version), RESET,
+               U_STRING_TO_TRACE(purpose), BRIGHTWHITE, RESET,
+               BRIGHTCYAN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET,
+               BRIGHTGREEN, RESET);
 
             // Asking the system what it has
 
-            ::printf("\nRequest:\n");
+            u_printf("%WRequest:%W", BRIGHTWHITE, BRIGHTGREEN);
 #        ifdef _POSIX_SOURCE
-            ::printf("\t_POSIX_SOURCE defined\n");
-            ::printf("\t_POSIX_C_SOURCE = %ld\n", _POSIX_C_SOURCE);
+            u_printf("\t_POSIX_SOURCE defined");
+            u_printf("\t_POSIX_C_SOURCE = %ld", _POSIX_C_SOURCE);
 #        else
-            ::printf("\t_POSIX_SOURCE undefined\n");
+            u_printf("%W\t_POSIX_SOURCE undefined%W", BRIGHTRED, BRIGHTGREEN);
 #        endif
 
 #     ifdef _XOPEN_SOURCE
 #        if _XOPEN_SOURCE == 0
-            ::printf("\t_XOPEN_SOURCE defined (0 or no value)\n");
+            u_printf("\t_XOPEN_SOURCE defined (0 or no value)");
 #        else
-            ::printf("\t_XOPEN_SOURCE = %d\n", _XOPEN_SOURCE);
+            u_printf("\t_XOPEN_SOURCE = %d", _XOPEN_SOURCE);
 #        endif
 #     else
-            ::printf("\t_XOPEN_SOURCE undefined\n");
+            u_printf("%W\t_XOPEN_SOURCE undefined%W", BRIGHTRED, BRIGHTGREEN);
 #     endif
 
 #        ifdef _XOPEN_SOURCE_EXTENDED
-            ::printf("\t_XOPEN_SOURCE_EXTENDED defined\n");
+            u_printf("\t_XOPEN_SOURCE_EXTENDED defined");
 #        else
-            ::printf("\t_XOPEN_SOURCE_EXTENDED undefined\n");
+            u_printf("%W\t_XOPEN_SOURCE_EXTENDED undefined", BRIGHTRED);
 #        endif
 
-            ::printf("Claims:\n");
+            u_printf("%WClaims:%W", BRIGHTWHITE, BRIGHTYELLOW);
 #        ifdef _POSIX_VERSION
-            ::printf("\t_POSIX_VERSION = %ld\n", _POSIX_VERSION);
+            u_printf("\t_POSIX_VERSION = %ld", _POSIX_VERSION);
 #        else
-            ::printf("\tNot POSIX\n");
+            u_printf("%W\tNot POSIX%W", BRIGHTRED, BRIGHTYELLOW);
 #        endif
 
 #     ifdef _XOPEN_UNIX
-            ::printf("\tX/Open\n");
+            u_printf("\tX/Open");
 #        ifdef _XOPEN_VERSION
-            ::printf("\t_XOPEN_VERSION = %d\n", _XOPEN_VERSION);
+            u_printf("\t_XOPEN_VERSION = %d", _XOPEN_VERSION);
 #        else
-            ::printf("\tError: _XOPEN_UNIX defined, but not _XOPEN_VERSION\n");
+            u_printf("\tError: _XOPEN_UNIX defined, but not _XOPEN_VERSION");
 #        endif
 #     else
-            ::printf("\tNot X/Open\n");
+            u_printf("%W\tNot X/Open%W", BRIGHTRED, BRIGHTYELLOW);
 #     endif
+
+            u_printf("%W", RESET);
 
             U_EXIT(EXIT_SUCCESS);
             }

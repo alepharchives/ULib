@@ -516,7 +516,6 @@ public:
    U_MEMORY_TEST
 
    // Allocator e Deallocator
-
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
@@ -835,6 +834,39 @@ public:
    UString& operator+=(const char* s)        { return append(s, u_strlen(s)); }
    UString& operator+=(const UString& str);
 
+   // OPTMIZE APPEND (BUFFERED)
+
+   static char* ptrbuf;
+   static char  appbuf[1024];
+
+   void append(unsigned char c)
+      {
+      U_TRACE(0, "UString::append(%C)", c)
+
+      U_INTERNAL_ASSERT_RANGE(appbuf,ptrbuf,appbuf+sizeof(appbuf))
+
+      if ((ptrbuf - appbuf) == sizeof(appbuf))
+         {
+         (void) append(appbuf, sizeof(appbuf));
+
+         ptrbuf = appbuf;
+         }
+
+      *ptrbuf++ = c;
+      }
+
+   void append()
+      {
+      U_TRACE(0, "UString::append()")
+
+      if (ptrbuf > appbuf)
+         {
+         (void) append(appbuf, ptrbuf - appbuf);
+
+         ptrbuf = appbuf;
+         }
+      }
+
    // operator +
 
    friend UString operator+(const UString& lhs, char rhs);
@@ -1013,7 +1045,7 @@ public:
 
       if (is.peek() == '"')
          {
-         is.get(); // skip '"'
+         (void) is.get(); // skip '"'
 
          (void) getline(is, '"');
          }

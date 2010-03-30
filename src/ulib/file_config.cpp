@@ -79,7 +79,28 @@ bool UFileConfig::open()
          _start = data.data();
          _size  = data.size();
 
-         result = load(0, 0);
+         if (table.capacity() == 0) table.allocate();
+
+         // Loads configuration information from the file.
+         // The file type is determined by the file extension.
+         // The following extensions are supported:
+         // -------------------------------------------------------------
+         // .properties - properties file (JAVA Properties)
+         // .ini        - initialization file (Windows INI)
+
+         const char* suffix = UFile::getSuffix();
+
+         if (suffix == 0) result = load(0, 0);
+         else
+            {
+            U_INTERNAL_ASSERT_EQUALS(suffix[0], '.')
+
+            ++suffix;
+
+                 if (U_STRNEQ(suffix, "ini"))        result = loadINI();
+            else if (U_STRNEQ(suffix, "properties")) result = loadProperties();
+            else                                     result = load(0, 0);
+            }
          }
       }
 
@@ -164,22 +185,25 @@ done:
 
 // skip space and line comment...
 
-bool UFileConfig::skip()
+bool UFileConfig::skip(char c)
 {
-   U_TRACE(0, "UFileConfig::skip()")
+   U_TRACE(0, "UFileConfig::skip(%C)", c)
 
    U_INTERNAL_DUMP("_size = %u", _size)
 
+   if (_size)
+      {
 loop:
-   U_SKIP(_start,_end,loop,done)
+      U_SKIP(_start,_end,loop,done)
 
-   if (_start[0] == '#') U_SKIP_LINE_COMMENT(_start,_end,loop)
+      if (_start[0] == c) U_SKIP_LINE_COMMENT(_start,_end,loop)
 
-   U_INTERNAL_ASSERT_EQUALS(u_isspace(_start[0]),false)
+      U_INTERNAL_ASSERT_EQUALS(u_isspace(_start[0]),false)
 
-   U_INTERNAL_DUMP("_start = %.*S", 10, _start)
+      U_INTERNAL_DUMP("_start = %.*S", 10, _start)
 
-   U_RETURN(true);
+      U_RETURN(true);
+      }
 
 done:
    U_RETURN(false);
@@ -221,7 +245,7 @@ bool UFileConfig::loadVector(UVector<UString>& vec)
 
    U_CHECK_MEMORY
 
-   if (_size && skip() &&
+   if (skip('#') &&
        (_start[0] == '[' ||
         _start[0] == '('))
       {
@@ -290,6 +314,197 @@ bool UFileConfig::load(const char* section, uint32_t len)
    U_INTERNAL_ASSERT_MAJOR(_size,0)
 
    bool result = searchForObjectStream(section, len) && (table.clear(), loadTable(table));
+
+   U_RETURN(result);
+}
+
+bool UFileConfig::loadINI()
+{
+   U_TRACE(0, "UFileConfig::loadINI()")
+
+   U_CHECK_MEMORY
+
+   if (_size == 0) U_RETURN(false);
+
+   U_INTERNAL_DUMP("_size = %u _start = %.*S", _size, 10, _start)
+
+   char c;
+   const char* ptr;
+   UString sectionKey, fullKey(80U), key, value;
+
+loop:
+   U_SKIP(_start,_end,loop,done)
+
+   // a line starting with a semicolon is treated as a comment and ignored
+
+   c = *_start;
+
+   if (c == ';') U_SKIP_LINE_COMMENT(_start,_end,loop)
+
+   U_INTERNAL_ASSERT_EQUALS(u_isspace(_start[0]),false)
+
+   U_INTERNAL_DUMP("_start = %.*S", 10, _start)
+
+   if (c == '[') // a line starting with a square bracket denotes a section key [<key>]
+      {
+      ++_start;
+
+      ptr = u_strpbrk(_start, _end - _start, "]\n");
+
+      if (ptr == 0)
+         {
+         _start = _end;
+
+         goto done;
+         }
+
+      sectionKey = UStringExt::trim(_start, ptr - _start);
+
+      _start = ptr;
+      }
+   else // every other line denotes a property assignment in the form <value key> = <value>
+      {
+      ptr = u_strpbrk(_start, _end - _start, "=\n");
+
+      if (ptr == 0)
+         {
+         _start = _end;
+
+         goto done;
+         }
+
+      key = UStringExt::trim(_start, ptr - _start);
+
+      _start = ptr;
+
+      if (*_start == '=')
+         {
+         ++_start;
+
+         ptr = (const char*) memchr(_start, '\n', _end - _start);
+
+         if (ptr == 0)
+            {
+            _start = _end;
+
+            goto done;
+            }
+
+         value = UStringExt::trim(_start, ptr - _start);
+
+         _start = ptr;
+         }
+
+      // The name of a property is composed of the section key and the value key,
+      // separated by a period (<section key>.<value key>).
+
+      fullKey.setBuffer(fullKey.size());
+
+      if (sectionKey.empty()) fullKey.snprintf(     "%.*s",                                U_STRING_TO_TRACE(key));
+      else                    fullKey.snprintf("%.*s.%.*s", U_STRING_TO_TRACE(sectionKey), U_STRING_TO_TRACE(key));
+
+      table.insert(fullKey, value);
+      }
+
+   if (_start < _end)
+      {
+      ++_start;
+
+      goto loop;
+      }
+
+done:
+   _size = (_end - _start);
+
+   U_INTERNAL_DUMP("_size = %u", _size)
+
+   bool result = (table.empty() == false);
+
+   U_RETURN(result);
+}
+
+bool UFileConfig::loadProperties()
+{
+   U_TRACE(0, "UFileConfig::loadProperties()")
+
+   U_CHECK_MEMORY
+
+   if (_size == 0) U_RETURN(false);
+
+   U_INTERNAL_DUMP("_size = %u _start = %.*S", _size, 10, _start)
+
+   char c;
+   const char* ptr;
+   UString key, value;
+
+loop:
+   U_SKIP(_start,_end,loop,done)
+
+   // a line starting with a hash '#' or exclamation mark '!' is treated as a comment and ignored
+
+   c = *_start;
+
+   if (c == '#' ||
+       c == '!')
+      {
+      U_SKIP_LINE_COMMENT(_start,_end,loop)
+      }
+
+   U_INTERNAL_ASSERT_EQUALS(u_isspace(_start[0]),false)
+
+   U_INTERNAL_DUMP("_start = %.*S", 10, _start)
+
+   // every other line denotes a property assignment in the form <key> = <value>
+
+   ptr = u_strpbrk(_start, _end - _start, "=:\r\n");
+
+   if (ptr == 0)
+      {
+      _start = _end;
+
+      goto done;
+      }
+
+   key = UStringExt::trim(_start, ptr - _start);
+
+   _start = ptr;
+
+   c = *_start;
+
+   if (c == '=' ||
+       c == ':')
+      {
+      ++_start;
+
+      ptr = (const char*) memchr(_start, '\n', _end - _start);
+
+      if (ptr == 0)
+         {
+         _start = _end;
+
+         goto done;
+         }
+
+      value = UStringExt::trim(_start, ptr - _start);
+
+      _start = ptr;
+      }
+
+   table.insert(key, value);
+
+   if (_start < _end)
+      {
+      ++_start;
+
+      goto loop;
+      }
+
+done:
+   _size = (_end - _start);
+
+   U_INTERNAL_DUMP("_size = %u", _size)
+
+   bool result = (table.empty() == false);
 
    U_RETURN(result);
 }

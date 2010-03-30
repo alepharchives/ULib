@@ -91,6 +91,41 @@ UXML2Document::UXML2Document(const UString& data)
    if (getRootNode() == NULL) U_ERROR("empty xml document", 0);
 }
 
+uint32_t UXML2Document::getElement(const UString& data, UVector<UString>& velement, const char* tag, uint32_t tag_len)
+{
+   U_TRACE(0, "UXML2Document::getElement(%.*S,%p,%.*S,%u)", U_STRING_TO_TRACE(data), &velement, tag_len, tag, tag_len)
+
+   U_INTERNAL_ASSERT_POINTER(tag)
+
+   uint32_t n = velement.size(), start, end = 0U;
+
+   while (true)
+      {
+      start = data.find(tag, end, tag_len);
+
+      if (start == U_NOT_FOUND ||
+          data.c_char(start-1) != '<')
+         {
+         break;
+         }
+
+      end = data.find(tag, start + tag_len, tag_len);
+
+      if (end == U_NOT_FOUND        ||
+          data.c_char(end-1) != '/' ||
+          data.c_char(end-2) != '<')
+         {
+         break;
+         }
+
+      velement.push(data.substr(start - 1, end + tag_len - start + 2));
+
+      end += tag_len;
+      }
+
+   U_RETURN(velement.size() - n);
+}
+
 xmlNodePtr UXML2Document::findNode(const xmlNodePtr parent, const xmlChar* name, const xmlChar* ns)
 {
    U_TRACE(0, "UXML2Document::findNode(%p,%S,%S)", parent, name, ns)
@@ -261,7 +296,7 @@ UString UXML2Document::xmlC14N(int mode, int with_comments, unsigned char** incl
 
 UString UXML2Document::xmlC14N(const UString& data, int mode, int with_comments, unsigned char** inclusive_namespaces)
 {
-   U_TRACE(1, "UXML2Document::xmlC14N(%.*S,%d,%d,%d,%p)", U_STRING_TO_TRACE(data), mode, with_comments, inclusive_namespaces)
+   U_TRACE(0, "UXML2Document::xmlC14N(%.*S,%d,%d,%d,%p)", U_STRING_TO_TRACE(data), mode, with_comments, inclusive_namespaces)
 
    UString output;
    UXML2Document tmp(data);

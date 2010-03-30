@@ -184,10 +184,13 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	AC_SUBST(HAVE_LIBUUID)],
 	[AC_MSG_RESULT(no)])
 
-	dnl Check if --with-expat[=PREFIX] is specified and
-	dnl Expat >= 1.95.0 is installed in the system.
 	AC_MSG_CHECKING(if MAGIC library is wanted)
-	AC_ARG_WITH(magic, [  --with-magic            use system libmagic library - [[will check /usr /usr/local]]],
+	wanted=1;
+	if test -z "$with_magic" ; then
+		wanted=0;
+		with_magic="/usr";
+	fi
+	AC_ARG_WITH(magic, [  --with-magic            use system libmagic library - [[will check /usr /usr/local]] [[default=yes]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
@@ -200,9 +203,14 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			fi
 		done
 		if test x_$found_magic != x_yes; then
-			AC_MSG_ERROR(Cannot find MAGIC library)
+			msg="Cannot find MAGIC library"
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
 		else
-			printf "MAGIC found in $magicdir\n";
+			printf "libmagic found in $magicdir\n";
 			HAVE_MAGIC=yes
 			CPPFLAGS="$CPPFLAGS -DHAVE_MAGIC";
 			libmagic_version=$(file --version 2>&1 | head -n 1 | cut -d'-' -f2)
