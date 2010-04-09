@@ -78,22 +78,20 @@
 <a name="l00055"></a>00055         <span class="comment">// define method VIRTUAL of class UServerPlugIn</span>
 <a name="l00056"></a>00056 
 <a name="l00057"></a>00057         <span class="comment">// Server-wide hooks</span>
-<a name="l00058"></a>00058         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerConfig(<a class="code" href="classUFileConfig.html">UFileConfig</a>&amp; cfg);
-<a name="l00059"></a>00059         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerInit();
+<a name="l00058"></a>00058 
+<a name="l00059"></a>00059         <span class="comment">// Connection-wide hooks</span>
 <a name="l00060"></a>00060 
-<a name="l00061"></a>00061         <span class="comment">// Connection-wide hooks</span>
-<a name="l00062"></a>00062         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRead();
-<a name="l00063"></a>00063         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRequest();
-<a name="l00064"></a>00064         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerReset();
-<a name="l00065"></a>00065 
-<a name="l00066"></a>00066 <span class="keyword">private</span>:
-<a name="l00067"></a>00067         <a class="code" href="classUEchoPlugIn.html">UEchoPlugIn</a>(<span class="keyword">const</span> <a class="code" href="classUEchoPlugIn.html">UEchoPlugIn</a>&amp;) : <a class="code" href="classUServerPlugIn.html">UServerPlugIn</a>() {}
-<a name="l00068"></a>00068         <a class="code" href="classUEchoPlugIn.html">UEchoPlugIn</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUEchoPlugIn.html">UEchoPlugIn</a>&amp;)                { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00069"></a>00069 };
-<a name="l00070"></a>00070 
-<a name="l00071"></a>00071 <span class="preprocessor">#endif</span>
+<a name="l00061"></a>00061         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRead();
+<a name="l00062"></a>00062         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRequest();
+<a name="l00063"></a>00063 
+<a name="l00064"></a>00064 <span class="keyword">private</span>:
+<a name="l00065"></a>00065         <a class="code" href="classUEchoPlugIn.html">UEchoPlugIn</a>(<span class="keyword">const</span> <a class="code" href="classUEchoPlugIn.html">UEchoPlugIn</a>&amp;) : <a class="code" href="classUServerPlugIn.html">UServerPlugIn</a>() {}
+<a name="l00066"></a>00066         <a class="code" href="classUEchoPlugIn.html">UEchoPlugIn</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUEchoPlugIn.html">UEchoPlugIn</a>&amp;)                { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00067"></a>00067 };
+<a name="l00068"></a>00068 
+<a name="l00069"></a>00069 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 30 16:31:44 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 9 13:00:54 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

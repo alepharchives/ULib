@@ -1074,11 +1074,9 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
                    vauth_ip = 0;
             }
          }
-
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 int UNoCatPlugIn::handlerInit()

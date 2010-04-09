@@ -105,10 +105,10 @@
 <a name="l00094"></a>00094 <span class="preprocessor"></span>
 <a name="l00095"></a>00095 <span class="comment">/* Manage message info */</span>
 <a name="l00096"></a>00096 
-<a name="l00097"></a>00097 <span class="preprocessor">#  define U_ERROR(  format,args...) u_printf(&quot;%W%N%W: %Q%WERROR: &quot;format&quot;%W&quot;,GREEN,YELLOW, 1,RED,args,RESET)</span>
-<a name="l00098"></a>00098 <span class="preprocessor"></span><span class="preprocessor">#  define U_ABORT(  format,args...) u_printf(&quot;%W%N%W: %Q%WABORT: &quot;format&quot;%W&quot;,GREEN,YELLOW,-1,RED,args,RESET)</span>
-<a name="l00099"></a>00099 <span class="preprocessor"></span><span class="preprocessor">#  define U_WARNING(format,args...) u_printf(&quot;%W%N%W: WARNING: &quot;  format&quot;%W&quot;,GREEN,YELLOW,       args,RESET)</span>
-<a name="l00100"></a>00100 <span class="preprocessor"></span><span class="preprocessor">#  define U_MESSAGE(format,args...) u_printf(&quot;%N: &quot;                                     format,                        args)</span>
+<a name="l00097"></a>00097 <span class="preprocessor">#  define U_ERROR(  format,args...) u_printf(&quot;%W%N%W: %Q%WERROR: &quot;format&quot;%W&quot;,BRIGHTCYAN,YELLOW, 1,RED,args,RESET)</span>
+<a name="l00098"></a>00098 <span class="preprocessor"></span><span class="preprocessor">#  define U_ABORT(  format,args...) u_printf(&quot;%W%N%W: %Q%WABORT: &quot;format&quot;%W&quot;,BRIGHTCYAN,YELLOW,-1,RED,args,RESET)</span>
+<a name="l00099"></a>00099 <span class="preprocessor"></span><span class="preprocessor">#  define U_WARNING(format,args...) u_printf(&quot;%W%N%W: WARNING: &quot;  format&quot;%W&quot;,BRIGHTCYAN,YELLOW,       args,RESET)</span>
+<a name="l00100"></a>00100 <span class="preprocessor"></span><span class="preprocessor">#  define U_MESSAGE(format,args...) u_printf(&quot;%W%N%W: &quot;                         format,    BRIGHTCYAN,RESET,        args)</span>
 <a name="l00101"></a>00101 <span class="preprocessor"></span>
 <a name="l00102"></a>00102 <span class="preprocessor">#  define   U_ERROR_SYSCALL(msg)      U_ERROR(&quot;%R&quot;,msg)</span>
 <a name="l00103"></a>00103 <span class="preprocessor"></span><span class="preprocessor">#  define   U_ABORT_SYSCALL(msg)      U_ABORT(&quot;%R&quot;,msg)</span>
@@ -502,7 +502,7 @@
 <a name="l00515"></a>00515 <span class="preprocessor"></span>
 <a name="l00516"></a>00516 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 30 16:31:42 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 9 13:00:53 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

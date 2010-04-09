@@ -29,13 +29,16 @@
 #endif
 
 char              UHTTP::cgi_dir[U_PATH_MAX];
+uint32_t          UHTTP::content_type_len;
 UFile*            UHTTP::file;
 UString*          UHTTP::tmpdir;
 UString*          UHTTP::qcontent;
 UString*          UHTTP::penvironment;
 uhttpheader       UHTTP::http_info;
-const char*       UHTTP::ptrC;
 const char*       UHTTP::ptrH;
+const char*       UHTTP::ptrC;
+const char*       UHTTP::ptrT;
+const char*       UHTTP::content_type_ptr;
 UMimeMultipart*   UHTTP::formMulti;
 UVector<UString>* UHTTP::form_name_value;
 
@@ -703,6 +706,7 @@ bool UHTTP::readHTTPRequest()
       // --------------------------------
       // "Host: ..."
       // "Connection: ..."
+      // "Content-Type: ..."
       // --------------------------------
 
       const char* p;
@@ -721,7 +725,7 @@ bool UHTTP::readHTTPRequest()
          c = ptr[pos1];
 
          if (c == 'H' || // "Host: ..."
-             c == 'C')   // "Connection: ..."
+             c == 'C')   // "Connection: ..." or "Content-Type: ..."
             {
             pos = UClientImage_Base::rbuffer->find(':', ++pos1);
 
@@ -733,7 +737,7 @@ bool UHTTP::readHTTPRequest()
             do { ++pos; } while (pos < http_info.endHeader && u_isspace(ptr[pos]));
 
             if (c == 'H' &&
-                l == 3   &&
+                l == 3   && // sizeof("ost")
                 U_SYSCALL(memcmp, "%S,%S,%u", p, ptrH, l) == 0)
                {
                http_info.host     = ptr  + pos;
@@ -741,7 +745,7 @@ bool UHTTP::readHTTPRequest()
 
                U_INTERNAL_DUMP("http_info.host = %.*S", U_HTTP_HOST_TO_TRACE)
                }
-            else if (l == 9 &&
+            else if (l == 9 && // sizeof("onnection")
                      U_SYSCALL(memcmp, "%S,%S,%u", p, ptrC, l) == 0)
                {
                U_INTERNAL_DUMP("Connection: = %.*S", pos2 - pos - 1, UClientImage_Base::rbuffer->c_pointer(pos))
@@ -762,6 +766,16 @@ bool UHTTP::readHTTPRequest()
 
                   U_INTERNAL_DUMP("http_info.keep_alive = %d", http_info.keep_alive);
                   }
+               }
+            else if (l == 11 && // sizeof("ontent-Type")
+                     U_SYSCALL(memcmp, "%S,%S,%u", p, ptrT, l) == 0)
+               {
+               U_INTERNAL_ASSERT_EQUALS(c, 'C')
+
+               content_type_ptr = ptr  + pos;
+               content_type_len = pos2 - pos - 1;
+
+               U_INTERNAL_DUMP("Content-Type: = %.*S", content_type_len, content_type_ptr)
                }
             }
 
@@ -1197,6 +1211,9 @@ void UHTTP::resetForm()
 
       tmpdir->setEmpty();
       }
+
+   content_type_ptr = 0;
+   content_type_len = 0;
 }
 
 // retrieve information on specific HTML form elements
@@ -1241,11 +1258,8 @@ uint32_t UHTTP::processHTTPForm()
 
    U_ASSERT(isHttpPOST())
 
-   ptr = getHTTPHeaderValuePtr(*USocket::str_content_type);
-
-   if (ptr == 0) U_RETURN(0);
-
-   if (U_STRNEQ(ptr, "application/x-www-form-urlencoded"))
+   if (content_type_len == 0 ||
+       U_STRNEQ(content_type_ptr, "application/x-www-form-urlencoded"))
       {
       *qcontent = *UClientImage_Base::body;
 
@@ -1254,7 +1268,7 @@ uint32_t UHTTP::processHTTPForm()
 
    // multipart/form-data (FILE UPLOAD)
 
-   U_INTERNAL_ASSERT(U_STRNEQ(ptr, "multipart/form-data"))
+   U_INTERNAL_ASSERT(U_STRNEQ(content_type_ptr, "multipart/form-data"))
 
    {
    UString boundary;
@@ -1873,11 +1887,13 @@ bool UHTTP::checkHTTPRequest()
 
    // can be URL encoded...
 
-   pathname.snprintf("%w", 0);
+   UString tmp(U_CAPACITY);
 
-   (void) u_url_decode(U_HTTP_URI_TO_PARAM, (unsigned char*)pathname.end(), true);
+   tmp.snprintf("%w", 0);
 
-   if (checkPath(pathname)) U_RETURN(true);
+   (void) u_url_decode(U_HTTP_URI_TO_PARAM, (unsigned char*)tmp.end(), true);
+
+   if (tmp != pathname && checkPath(tmp)) U_RETURN(true);
 
    U_RETURN(false);
 }
@@ -2089,14 +2105,18 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
 
    buffer.snprintf("CONTENT_LENGTH=%u\n"
                    "GATEWAY_INTERFACE=CGI/1.1\n"
-                   "QUERY_STRING=%.*s\n"
                    "REMOTE_ADDR=%.*s\n"
-                   "REQUEST_METHOD=%.*s\n"
                    "SCRIPT_NAME=%.*s\n"
                    "SERVER_NAME=%.*s\n"
                    "SERVER_PORT=%d\n"
                    "SERVER_PROTOCOL=HTTP/1.%c\n"
                    "SERVER_SOFTWARE=" PACKAGE "/" VERSION "\n"
+                   // PHP
+                   "SCRIPT_FILENAME=%w%.*s\n" // is used by PHP for determining the name of script to execute
+                   "QUERY_STRING=%.*s\n"      // contains the parameters of the request
+                   "REQUEST_METHOD=%.*s\n"    // dealing with POST requests
+                   "\"CONTENT_TYPE=%.*s\"\n"
+                   "REDIRECT_STATUS=200\n"
                    // ext
                    "SERVER_ADDR=%.*s\n"
                    "BROWSER_MSIE=%s\n"
@@ -2105,16 +2125,18 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
                    "\"HTTP_COOKIE=%.*s\"\n"
                    "\"HTTP_USER_AGENT=%.*s\"\n"
                    "PATH=/usr/local/bin:/usr/bin:/bin\n"
-                   "PWD=%w/%s\n"
-                   "SCRIPT_FILENAME=%w%.*s\n",
+                   "PWD=%w/%s\n",
                    UClientImage_Base::body->size(),
-                   U_HTTP_QUERY_TO_TRACE,
                    U_STRING_TO_TRACE(ip_client),
-                   U_HTTP_METHOD_TO_TRACE,
                    U_HTTP_URI_TO_TRACE,
                    U_STRING_TO_TRACE(name),
                    UServer_Base::port,
                    http_info.version + '0',
+                   // PHP
+                   U_HTTP_URI_TO_TRACE,
+                   U_HTTP_QUERY_TO_TRACE,
+                   U_HTTP_METHOD_TO_TRACE,
+                   content_type_len, content_type_ptr,
                    // ext
                    U_STRING_TO_TRACE(ip_server),
                    browserMSIE,
@@ -2122,8 +2144,7 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
                    referer_len, referer_ptr,
                    U_STRING_TO_TRACE(cookie),
                    user_agent_len, user_agent_ptr,
-                   cgi_dir,
-                   U_HTTP_URI_TO_TRACE);
+                   cgi_dir);
 
 #ifdef HAVE_SSL
    if (UClientImage_Base::socket->isSSL())

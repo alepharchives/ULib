@@ -30,30 +30,6 @@ public:
       U_TRACE(5, "Application::~Application()")
       }
 
-   UString loadURI(const char* uri)
-      {
-      U_TRACE(5, "Application::loadURI(%S)", uri)
-
-      UString content;
-
-      U_RETURN_STRING(content);
-
-      /*
-      if (xmlNoNetExists(uri))
-         {
-         xmlCurrentExternalEntityLoader(URL, ID, ctxt));
-         }
-      else
-         {
-         char* canonicFilename = (char*) xmlCanonicPath((const xmlChar*)uri);
-
-         ret = xmlCurrentExternalEntityLoader(canonicFilename, ID, ctxt);
-
-         xmlFree(canonicFilename);
-         }
-      */
-      }
-
    void run(int argc, char* argv[], char* env[])
       {
       U_TRACE(5, "Application::run(%d,%p,%p)", argc, argv, env)
@@ -92,10 +68,9 @@ public:
       //                            use by the verifier (text, sound or video) in exactly the same way as intended by the signer
       //
       // CAStore
-      //
       // ArchiveTimeStamp           the time-stamp token within this property covers the archive validation data
-      // SignatureTimeStamp         the time-stamp token within this property covers the digital signature value element
       //
+      // SignatureTimeStamp         the time-stamp token within this property covers the digital signature value element
       // Schema                     the pathname XML Schema of XAdES
       // ----------------------------------------------------------------------------------------------------------------------------------
 
@@ -103,7 +78,7 @@ public:
 
       schema = ( U_SCHEMA == 0 ||
                 *U_SCHEMA == '\0'
-                  ? cfg[U_STRING_FROM_CONSTANT("XAdES-Verify.Schema")]
+                  ? cfg[U_STRING_FROM_CONSTANT("XAdES-L.Schema")]
                   : UString(U_SCHEMA));
 
       if (schema.empty()) U_ERROR("error on XAdES schema: empty", 0);

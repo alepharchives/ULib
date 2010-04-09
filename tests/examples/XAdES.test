@@ -65,6 +65,7 @@ ARCHIVE_TIMESTAMP="http://localhost/tsa"
 start_prg archive -c XAdES.ini -- \
 									 $ARCHIVE_TIMESTAMP < /tmp/sign.b64
 
+rm -f /tmp/sign.b64
 mv err/userver_tcp.err err/XAdES.err
 
 $SLEEP

@@ -94,10 +94,10 @@
 
 /* Manage message info */
 
-#  define U_ERROR(  format,args...) u_printf("%W%N%W: %Q%WERROR: "format"%W",GREEN,YELLOW, 1,RED,args,RESET)
-#  define U_ABORT(  format,args...) u_printf("%W%N%W: %Q%WABORT: "format"%W",GREEN,YELLOW,-1,RED,args,RESET)
-#  define U_WARNING(format,args...) u_printf("%W%N%W: WARNING: "  format"%W",GREEN,YELLOW,       args,RESET)
-#  define U_MESSAGE(format,args...) u_printf("%N: "               format,                        args)
+#  define U_ERROR(  format,args...) u_printf("%W%N%W: %Q%WERROR: "format"%W",BRIGHTCYAN,YELLOW, 1,RED,args,RESET)
+#  define U_ABORT(  format,args...) u_printf("%W%N%W: %Q%WABORT: "format"%W",BRIGHTCYAN,YELLOW,-1,RED,args,RESET)
+#  define U_WARNING(format,args...) u_printf("%W%N%W: WARNING: "  format"%W",BRIGHTCYAN,YELLOW,       args,RESET)
+#  define U_MESSAGE(format,args...) u_printf("%W%N%W: "           format,    BRIGHTCYAN,RESET,        args)
 
 #  define   U_ERROR_SYSCALL(msg)      U_ERROR("%R",msg)
 #  define   U_ABORT_SYSCALL(msg)      U_ABORT("%R",msg)

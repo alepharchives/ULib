@@ -74,8 +74,8 @@
 #define U_FILE_TO_PARAM(file) (file).getPathRelativ(),(file).getPathRelativLen()
 #define U_FILE_TO_TRACE(file) (file).getPathRelativLen(),(file).getPathRelativ()
 
-#define U_css 2 // text/css
-#define U_js  3 // text/javascript
+#define U_css 0 // text/css
+#define U_js  1 // text/javascript
 
 class URDB;
 

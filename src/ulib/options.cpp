@@ -301,7 +301,7 @@ void UOptions::printHelp(vPF func)
 
    if (purpose.size()) u_printf("%WPurpose:%W %.*s", BRIGHTWHITE, RESET, U_STRING_TO_TRACE(purpose));
 
-   u_printf("%WUsage:\n  %W%.*s%W [ %WOPTIONS%W ] %W%.*s\n%WOptions:%W",
+   u_printf("%WUsage:\n  %W%.*s%W [ %WOptions%W ] %W%.*s\n%WOptions:%W",
                BRIGHTWHITE, BRIGHTCYAN, u_progname_len, u_progname, RESET, BRIGHTGREEN, RESET,
                BRIGHTGREEN, U_STRING_TO_TRACE(args), BRIGHTWHITE, RESET);
 

@@ -303,6 +303,25 @@ public:
       U_TRACE(5, "Application::~Application()")
       }
 
+   UString getOptionValue(const char* param, const char* tag)
+      {
+      U_TRACE(5, "Application::getOptionValue(%S,%S)", param, tag)
+
+      UString result;
+
+      if (param && *param) result = param;
+      else
+         {
+         UString tmp(100U);
+
+         tmp.snprintf("XAdES-%s.%s", (xades_c ? "C" : "BES"), tag);
+
+         result = cfg[tmp];
+         }
+
+      U_RETURN_STRING(result);
+      }
+
    UString getTimeStampToken(const UString& data, const UString& url)
       {
       U_TRACE(5, "Application::getTimeStampToken(%.*S,%.*S)", U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(url))
@@ -385,6 +404,9 @@ public:
                               U_STRING_TO_TRACE(signedPropertiesDigestValue));
       }
 
+   // -------------------------------------------------------------------------------------------------------------  
+   // XAdES-C
+   // -------------------------------------------------------------------------------------------------------------  
    void setXAdESUnsignedSignatureProperties()
       {
       U_TRACE(5, "Application::setXAdESUnsignedSignatureProperties()")
@@ -534,6 +556,7 @@ public:
                                            U_STRING_TO_TRACE(completeRevocationRefs),
                                            U_STRING_TO_TRACE(revocationValues));
       }
+   // -------------------------------------------------------------------------------------------------------------  
 
    void run(int argc, char* argv[], char* env[])
       {
@@ -615,68 +638,43 @@ public:
       if (cert.matchPrivateKey(u_pkey) == false) U_ERROR("the private key doesn't matches the public key of the certificate", 0);
 #  endif
 
-      U_INTERNAL_ASSERT_POINTER(U_DIGEST_ALGORITHM)
+      xades_c = (U_CA_STORE != 0);
 
-      digest_algorithm = (*U_DIGEST_ALGORITHM == '\0' ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.DigestAlgorithm")] : UString(U_DIGEST_ALGORITHM));
+      digest_algorithm                   = getOptionValue(U_DIGEST_ALGORITHM,                   "DigestAlgorithm");
+      signing_time                       = getOptionValue(U_SIGNING_TIME,                       "SigningTime").strtol();
+      claimed_role                       = getOptionValue(U_CLAIMED_ROLE,                       "ClaimedRole");
+      production_place_city              = getOptionValue(U_PRODUCTION_PLACE_CITY,              "ProductionPlaceCity");
+      production_place_state_or_province = getOptionValue(U_PRODUCTION_PLACE_STATE_OR_PROVINCE, "ProductionPlaceStateOrProvince");
+      production_place_postal_code       = getOptionValue(U_PRODUCTION_PLACE_POSTAL_CODE,       "ProductionPlacePostalCode");
+      production_place_country_name      = getOptionValue(U_PRODUCTION_PLACE_COUNTRY_NAME,      "ProductionPlaceCountryName");
+      data_object_format_mimetype        = getOptionValue("",                                   "DataObjectFormatMimeType");
 
       alg = u_dgst_get_algoritm(digest_algorithm.c_str());
 
       if (alg == -1) U_ERROR("I can't find the digest algorithm for: %s", digest_algorithm.data());
 
-      U_INTERNAL_ASSERT_POINTER(U_SIGNING_TIME)
-
-      signing_time = (*U_SIGNING_TIME == '\0' ? cfg.readBoolean(U_STRING_FROM_CONSTANT("XAdES-BES.SigningTime")) : atoi(U_SIGNING_TIME));
-
-      U_INTERNAL_ASSERT_POINTER(U_CLAIMED_ROLE)
-
-      claimed_role = (*U_CLAIMED_ROLE == '\0' ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.ClaimedRole")] : UString(U_CLAIMED_ROLE));
-
-      U_INTERNAL_ASSERT_POINTER(U_PRODUCTION_PLACE_CITY)
-
-      production_place_city = (*U_PRODUCTION_PLACE_CITY == '\0' ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.ProductionPlaceCity")]
-                                                                : UString(U_PRODUCTION_PLACE_CITY));
-
-      U_INTERNAL_ASSERT_POINTER(U_PRODUCTION_PLACE_STATE_OR_PROVINCE)
-
-      production_place_state_or_province = (*U_PRODUCTION_PLACE_STATE_OR_PROVINCE == '\0'
-                        ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.ProductionPlaceStateOrProvince")]
-                        : UString(U_PRODUCTION_PLACE_STATE_OR_PROVINCE));
-
-      U_INTERNAL_ASSERT_POINTER(U_PRODUCTION_PLACE_POSTAL_CODE)
-
-      production_place_postal_code = (*U_PRODUCTION_PLACE_POSTAL_CODE == '\0'
-                        ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.ProductionPlacePostalCode")]
-                        : UString(U_PRODUCTION_PLACE_POSTAL_CODE));
-
-      U_INTERNAL_ASSERT_POINTER(U_PRODUCTION_PLACE_COUNTRY_NAME)
-
-      production_place_country_name = (*U_PRODUCTION_PLACE_COUNTRY_NAME == '\0'
-                        ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.ProductionPlaceCountryName")]
-                        : UString(U_PRODUCTION_PLACE_COUNTRY_NAME));
-
-      data_object_format_mimetype = cfg[U_STRING_FROM_CONSTANT("XAdES-BES.DataObjectFormatMimeType")];
-
-      // XAdES-C
-      // -------------------------------------------------------------------------------------------------------------  
-      if (U_CA_STORE) str_CApath = (*U_CA_STORE == '\0' ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.CAStore")] : UString(U_CA_STORE));
-
-      if (str_CApath.empty() ||
-          UServices::setupOpenSSLStore(0, str_CApath.c_str()) == false)
+      if (xades_c == false) num_ca = 0;
+      else
          {
-         U_ERROR("error on setting CA Store: %S", str_CApath.data());
+         // XAdES-C
+         // -------------------------------------------------------------------------------------------------------------  
+         str_CApath          = getOptionValue(U_CA_STORE,            "CAStore");
+         signature_timestamp = getOptionValue(U_SIGNATURE_TIMESTAMP, "SignatureTimeStamp");
+
+         if (str_CApath.empty() ||
+             UServices::setupOpenSSLStore(0, str_CApath.c_str()) == false)
+            {
+            U_ERROR("error on setting CA Store: %S", str_CApath.data());
+            }
+
+         num_ca = cert.getSignerCertificates(vec_ca, 0, 0);
+
+         if (UCertificate::verify_result == false)
+            {
+            U_ERROR("error on verifying the certificate: %s", UServices::verify_status());
+            }
+         // -------------------------------------------------------------------------------------------------------------  
          }
-
-      num_ca = cert.getSignerCertificates(vec_ca, 0, 0);
-
-      if (UCertificate::verify_result == false)
-         {
-         U_ERROR("error on verifying the certificate: %s", UServices::verify_status());
-         }
-
-      if (U_SIGNATURE_TIMESTAMP) signature_timestamp = (*U_SIGNATURE_TIMESTAMP == '\0'
-                                    ? cfg[U_STRING_FROM_CONSTANT("XAdES-BES.SignatureTimeStamp")]
-                                    : UString(U_SIGNATURE_TIMESTAMP));
-      // -------------------------------------------------------------------------------------------------------------  
 
       u_line_terminator_len = 2;
       u_base64_max_columns  = U_OPENSSL_BASE64_MAX_COLUMN;
@@ -772,7 +770,10 @@ public:
          signatureTimeStamp.snprintf(U_XADES_SIGNATURE_TIMESTAMP_TEMPLATE, U_STRING_TO_TRACE(token));
          }
 
-      setXAdESUnsignedSignatureProperties(); // XAdES management
+      // XAdES-C
+      // -------------------------------------------------------------------------------------------------------------  
+      if (xades_c) setXAdESUnsignedSignatureProperties();
+      // -------------------------------------------------------------------------------------------------------------  
 
       XAdESObject.reserve(U_CONSTANT_SIZE(U_XADES_TEMPLATE) +
                           signedProperties.size() +
@@ -808,14 +809,14 @@ private:
    int alg;
    uint32_t num_ca;
    UFileConfig cfg;
-   bool signing_time;
-   long X509SerialNumber;
    UVector<UCertificate*> vec_ca;
+   long X509SerialNumber, signing_time;
    UString cfg_str, str_CApath, digest_algorithm, canonicalization_algorithm, claimed_role,
            production_place_city, production_place_state_or_province, production_place_postal_code,
            production_place_country_name, data_object_format_mimetype, signature_algorithm, to_digest,
            DataObjectFormat, XAdESObject, XAdESReference, X509IssuerName, X509SubjectName, X509Certificate,
            signedProperties, signature_timestamp, unsignedSignatureProperties, unsignedSignaturePropertiesC14N;
+   bool xades_c;
 };
 
 U_MAIN(Application)

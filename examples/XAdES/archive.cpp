@@ -99,10 +99,9 @@ public:
       //                            use by the verifier (text, sound or video) in exactly the same way as intended by the signer
       //
       // CAStore
-      //
       // ArchiveTimeStamp           the time-stamp token within this property covers the archive validation data
-      // SignatureTimeStamp         the time-stamp token within this property covers the digital signature value element
       //
+      // SignatureTimeStamp         the time-stamp token within this property covers the digital signature value element
       // Schema                     the pathname XML Schema of XAdES
       // ----------------------------------------------------------------------------------------------------------------------------------
 
@@ -125,7 +124,7 @@ public:
 
       schema = ( U_SCHEMA == 0 ||
                 *U_SCHEMA == '\0'
-                  ? cfg[U_STRING_FROM_CONSTANT("XAdES-Verify.Schema")]
+                  ? cfg[U_STRING_FROM_CONSTANT("XAdES-L.Schema")]
                   : UString(U_SCHEMA));
 
       if (schema.empty()) U_ERROR("error on XAdES schema: empty", 0);
@@ -291,7 +290,9 @@ public:
 
       archiveTimeStamp.snprintf(U_XADES_ARCHIVE_TIMESTAMP_TEMPLATE, U_STRING_TO_TRACE(token));
 
-      output = UStringExt::substitute(content, U_STRING_FROM_CONSTANT("        </xades:UnsignedSignatureProperties>"), archiveTimeStamp);
+      output = UStringExt::substitute(content,
+                                      U_CONSTANT_TO_PARAM("        </xades:UnsignedSignatureProperties>"),
+                                      U_STRING_TO_PARAM(archiveTimeStamp));
 
       cout.write(U_STRING_TO_PARAM(output));
       }

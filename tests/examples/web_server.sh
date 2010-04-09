@@ -18,7 +18,8 @@ DIR_CMD="../../examples/userver"
 ( cd ../../src/ulib/plugin/.libs; ln -sf ../mod_geoip/.libs/mod_geoip.so; ln -sf ../mod_shib/.libs/mod_shib.so )
 
 #STRACE=$TRUSS
-start_prg_background userver_tcp -c   web_server.cfg
+start_prg_background userver_tcp -c   RA/RA.cfg
+												# web_server.cfg
 												# deployment.properties
 
 #$SLEEP
@@ -26,6 +27,6 @@ start_prg_background userver_tcp -c   web_server.cfg
 
 mv err/userver_tcp.err err/web_server.err
 
-$NC -w 2 127.0.0.1 80 <inp/http/get_geoip.req >>out/web_server.out
+# $NC -w 2 127.0.0.1 80 <inp/http/get_geoip.req >>out/web_server.out
 
 #openssl s_client -debug -cert ../ulib/CA/username.crt -key ../ulib/CA/username.key -pass pass:caciucco -CApath ../ulib/CA/CApath -verify 0 -connect localhost:80

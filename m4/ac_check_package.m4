@@ -228,15 +228,13 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	AC_SUBST(HAVE_MAGIC)],
 	[AC_MSG_RESULT(no)])
 
-	dnl If yes, substitute EXPAT_CFLAGS, EXPAT_LIBS with regard to
-	dnl the specified PREFIX and set with_expat to PREFIX, or 'yes' if PREFIX
-	dnl has not been specified. Also HAVE_LIBEXPAT, HAVE_EXPAT_H are defined.
-	dnl If --with-expat has not been specified, set with_expat to 'no'.
-	dnl In addition, an Automake conditional EXPAT_INSTALLED is set accordingly.
-	dnl This is necessary to adapt a whole lot of packages that have expat
-	dnl bundled as a static library.
 	AC_MSG_CHECKING(if EXPAT library for XML parsing is wanted)
-	AC_ARG_WITH(expat, [  --with-expat            use system    EXPAT library - [[will check /usr /usr/local]]],
+	wanted=1;
+	if test -z "$with_expat" ; then
+		wanted=0;
+		with_expat="/usr";
+	fi
+	AC_ARG_WITH(expat, [  --with-expat            use system    EXPAT library - [[will check /usr /usr/local]] [[default=yes]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
@@ -249,7 +247,12 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			fi
 		done
 		if test x_$found_expat != x_yes; then
-			AC_MSG_ERROR(Cannot find EXPAT library)
+			msg="Cannot find EXPAT library"
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
 		else
 			printf "EXPAT found in $expatdir\n";
 			HAVE_EXPAT=yes

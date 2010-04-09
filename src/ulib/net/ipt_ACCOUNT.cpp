@@ -230,7 +230,7 @@ const char* UIptAccount::getNextName()
    const char* rtn;
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
-   if (((char*)data)[pos] == '\0') U_RETURN_POINTER(0, const char);
+   if (((char*)data)[pos] == '\0') U_RETURN((const char*)0);
 
    rtn = (const char*)data + pos;
 

@@ -61,14 +61,42 @@ public:
 
    // Server-wide hooks
 
-   virtual int handlerConfig(UFileConfig& cfg) = 0;
-   virtual int handlerInit()                   = 0;
+   virtual int handlerConfig(UFileConfig& cfg)
+      {
+      U_TRACE(0, "UServerPlugIn::handlerConfig(%p)", &cfg)
+
+      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+      }
+
+   virtual int handlerInit()
+      {
+      U_TRACE(0, "UServerPlugIn::handlerInit()")
+
+      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+      }
 
    // Connection-wide hooks
 
-   virtual int handlerRead()    = 0;
-   virtual int handlerRequest() = 0;
-   virtual int handlerReset()   = 0;
+   virtual int handlerRead()
+      {
+      U_TRACE(0, "UServerPlugIn::handlerRead()")
+
+      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+      }
+
+   virtual int handlerRequest()
+      {
+      U_TRACE(0, "UServerPlugIn::handlerRequest()")
+
+      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+      }
+
+   virtual int handlerReset()
+      {
+      U_TRACE(0, "UServerPlugIn::handlerReset()")
+
+      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+      }
 
 private:
    UServerPlugIn(const UServerPlugIn&)            {}

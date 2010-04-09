@@ -27,11 +27,12 @@ public:
 
    // COSTRUTTORI
 
-   URPCGenericMethod(const UString& n, UCommand* cmd, int rtype) : response_type(rtype), method_name(n), response(U_CAPACITY)
+   URPCGenericMethod(const UString& n, UCommand* cmd, int rtype) : response_type(rtype), response(U_CAPACITY)
       {
       U_TRACE_REGISTER_OBJECT(0, URPCGenericMethod, "%.*S,%p,%d", U_STRING_TO_TRACE(n), cmd, rtype) 
 
-      command = cmd;
+      command                 = cmd;
+      URPCMethod::method_name = n;
 
       if (str_command_fault == 0) str_allocate();
       }
@@ -44,10 +45,6 @@ public:
       }
 
    // VIRTUAL METHOD
-
-   // Used to get the name of the method. This is matched up using the URPCObject dispatcher to respond to a call
-
-   virtual UString getMethodName() const { return method_name; }
 
    // Transforms the method into something that servers and clients can send. The encoder holds the actual
    // data while the client hands data to be entered in. This makes a whole lot more sense in the samples that
@@ -77,7 +74,7 @@ public:
 protected:
    UCommand* command;
    int response_type;
-   UString method_name, response;
+   UString response;
 
 private:
    URPCGenericMethod(const URPCGenericMethod& g) : URPCMethod() {}

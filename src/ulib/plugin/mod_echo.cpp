@@ -21,24 +21,6 @@ U_CREAT_FUNC(UEchoPlugIn)
 
 // Server-wide hooks
 
-int UEchoPlugIn::handlerConfig(UFileConfig& cfg)
-{
-   U_TRACE(0, "UEchoPlugIn::handlerConfig(%p)", &cfg)
-
-   int result = U_PLUGIN_HANDLER_GO_ON;
-
-   U_RETURN(result);
-}
-
-int UEchoPlugIn::handlerInit()
-{
-   U_TRACE(0, "UEchoPlugIn::handlerInit()")
-
-   int result = U_PLUGIN_HANDLER_GO_ON;
-
-   U_RETURN(result);
-}
-
 // Connection-wide hooks
 
 int UEchoPlugIn::handlerRead()
@@ -75,13 +57,4 @@ int UEchoPlugIn::handlerRequest()
    *UClientImage_Base::wbuffer = UClientImage_Base::rbuffer->substr(0U, USocketExt::size_message);
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-}
-
-int UEchoPlugIn::handlerReset()
-{
-   U_TRACE(0, "UEchoPlugIn::handlerReset()")
-
-   int result = U_PLUGIN_HANDLER_GO_ON;
-
-   U_RETURN(result);
 }

@@ -55,13 +55,11 @@ public:
    // define method VIRTUAL of class UServerPlugIn
 
    // Server-wide hooks
-   virtual int handlerConfig(UFileConfig& cfg);
-   virtual int handlerInit();
 
    // Connection-wide hooks
+
    virtual int handlerRead();
    virtual int handlerRequest();
-   virtual int handlerReset();
 
 private:
    UEchoPlugIn(const UEchoPlugIn&) : UServerPlugIn() {}

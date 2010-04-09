@@ -1,7 +1,7 @@
 <map id="G" name="G">
-<area shape="rect" id="node2" href="$classURPCEncoder.html" title="URPCEncoder" alt="" coords="68,306,167,334"/>
+<area shape="rect" id="node2" href="$classURPCEncoder.html" title="URPCEncoder" alt="" coords="68,314,167,342"/>
 <area shape="rect" id="node4" href="$classUString.html" title="UString" alt="" coords="183,99,247,127"/>
-<area shape="rect" id="node13" href="$classURPCFault.html" title="URPCFault" alt="" coords="284,306,367,334"/>
+<area shape="rect" id="node13" href="$classURPCFault.html" title="URPCFault" alt="" coords="315,314,397,342"/>
 <area shape="rect" id="node7" href="$classUStringRep.html" title="UStringRep" alt="" coords="172,6,257,34"/>
 <area shape="rect" id="node10" href="$classUVector_3_01UString_01_4.html" title="UVector\&lt; UString \&gt;" alt="" coords="5,99,136,127"/>
 </map>

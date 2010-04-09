@@ -27,14 +27,19 @@ int UProxyPlugIn::handlerConfig(UFileConfig& cfg)
 
    UModProxyService::loadConfig(cfg, vservice, &vmsg_error);
 
-   if (vservice.empty()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
-
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 int UProxyPlugIn::handlerInit()
 {
    U_TRACE(0, "UProxyPlugIn::handlerInit()")
+
+   if (vservice.empty())
+      {
+      U_SRV_LOG_MSG("initialization of plugin FAILED");
+
+      U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      }
 
    if (UServer_Base::preforked_num_kids == 0) client_http.setHostForbidden(UServer_Base::getHost());
 

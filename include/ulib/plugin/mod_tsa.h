@@ -54,6 +54,8 @@ public:
    UTsaPlugIn()
       {
       U_TRACE_REGISTER_OBJECT(0, UTsaPlugIn, "", 0)
+
+      command = 0;
       }
 
    virtual ~UTsaPlugIn();
@@ -63,30 +65,11 @@ public:
    // Server-wide hooks
 
    virtual int handlerConfig(UFileConfig& cfg);
-
-   virtual int handlerInit()
-      {
-      U_TRACE(0, "UTsaPlugIn::init()")
-
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-      }
+   virtual int handlerInit();
 
    // Connection-wide hooks
 
-   virtual int handlerRead()
-      {
-      U_TRACE(0, "UTsaPlugIn::handlerRead()")
-
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-      }
-
    virtual int handlerRequest();
-   virtual int handlerReset()
-      {
-      U_TRACE(0, "UTsaPlugIn::handlerReset()")
-
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-      }
 
    // DEBUG
 

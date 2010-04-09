@@ -67,20 +67,7 @@ public:
 
    // Connection-wide hooks
 
-   virtual int handlerRead()
-      {
-      U_TRACE(0, "USoapPlugIn::handlerRead()")
-
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-      }
-
    virtual int handlerRequest();
-   virtual int handlerReset()
-      {
-      U_TRACE(0, "USoapPlugIn::handlerReset()")
-
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-      }
 
    // DEBUG
 

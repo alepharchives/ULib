@@ -101,37 +101,31 @@
 <a name="l00078"></a>00078 
 <a name="l00079"></a>00079         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRead();
 <a name="l00080"></a>00080         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerRequest();
-<a name="l00081"></a>00081         <span class="keyword">virtual</span> <span class="keywordtype">int</span> handlerReset()
-<a name="l00082"></a>00082                 {
-<a name="l00083"></a>00083                 U_TRACE(0, <span class="stringliteral">&quot;UHttpPlugIn::handlerReset()&quot;</span>)
-<a name="l00084"></a>00084 
-<a name="l00085"></a>00085                 U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-<a name="l00086"></a>00086                 }
-<a name="l00087"></a>00087 
-<a name="l00088"></a>00088         <span class="comment">// DEBUG</span>
-<a name="l00089"></a>00089 
-<a name="l00090"></a>00090 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00091"></a>00091 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00092"></a>00092 <span class="preprocessor">#endif</span>
-<a name="l00093"></a>00093 <span class="preprocessor"></span>
-<a name="l00094"></a>00094 <span class="keyword">protected</span>:
-<a name="l00095"></a>00095         uint32_t index_alias;
-<a name="l00096"></a>00096         <a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a> valias;
-<a name="l00097"></a>00097         <a class="code" href="classUString.html">UString</a> alias, uri_protected_mask, uri_protected_allowed_ip, uri_request_cert_mask;
-<a name="l00098"></a>00098 
-<a name="l00099"></a>00099         <span class="keyword">static</span> UVector&lt;UIPAllow*&gt;*      vallow_IP;
-<a name="l00100"></a>00100         <span class="keyword">static</span> <span class="keywordtype">bool</span> virtual_host, uri_protected_to_check;
-<a name="l00101"></a>00101 
-<a name="l00102"></a>00102         <span class="keywordtype">bool</span> checkUriProtected(<span class="keywordtype">bool</span> ctx_read);
-<a name="l00103"></a>00103 
-<a name="l00104"></a>00104 <span class="keyword">private</span>:
-<a name="l00105"></a>00105         <a class="code" href="classUHttpPlugIn.html">UHttpPlugIn</a>(<span class="keyword">const</span> <a class="code" href="classUHttpPlugIn.html">UHttpPlugIn</a>&amp;) : <a class="code" href="classUServerPlugIn.html">UServerPlugIn</a>() {}
-<a name="l00106"></a>00106         <a class="code" href="classUHttpPlugIn.html">UHttpPlugIn</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUHttpPlugIn.html">UHttpPlugIn</a>&amp;)                { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00107"></a>00107 };
-<a name="l00108"></a>00108 
-<a name="l00109"></a>00109 <span class="preprocessor">#endif</span>
+<a name="l00081"></a>00081 
+<a name="l00082"></a>00082         <span class="comment">// DEBUG</span>
+<a name="l00083"></a>00083 
+<a name="l00084"></a>00084 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00085"></a>00085 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00086"></a>00086 <span class="preprocessor">#endif</span>
+<a name="l00087"></a>00087 <span class="preprocessor"></span>
+<a name="l00088"></a>00088 <span class="keyword">protected</span>:
+<a name="l00089"></a>00089         uint32_t index_alias;
+<a name="l00090"></a>00090         <a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a> valias;
+<a name="l00091"></a>00091         <a class="code" href="classUString.html">UString</a> alias, uri_protected_mask, uri_protected_allowed_ip, uri_request_cert_mask;
+<a name="l00092"></a>00092 
+<a name="l00093"></a>00093         <span class="keyword">static</span> UVector&lt;UIPAllow*&gt;*      vallow_IP;
+<a name="l00094"></a>00094         <span class="keyword">static</span> <span class="keywordtype">bool</span> virtual_host, uri_protected_to_check;
+<a name="l00095"></a>00095 
+<a name="l00096"></a>00096         <span class="keywordtype">bool</span> checkUriProtected(<span class="keywordtype">bool</span> ctx_read);
+<a name="l00097"></a>00097 
+<a name="l00098"></a>00098 <span class="keyword">private</span>:
+<a name="l00099"></a>00099         <a class="code" href="classUHttpPlugIn.html">UHttpPlugIn</a>(<span class="keyword">const</span> <a class="code" href="classUHttpPlugIn.html">UHttpPlugIn</a>&amp;) : <a class="code" href="classUServerPlugIn.html">UServerPlugIn</a>() {}
+<a name="l00100"></a>00100         <a class="code" href="classUHttpPlugIn.html">UHttpPlugIn</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUHttpPlugIn.html">UHttpPlugIn</a>&amp;)                { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00101"></a>00101 };
+<a name="l00102"></a>00102 
+<a name="l00103"></a>00103 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Mar 30 16:31:44 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 9 13:00:54 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

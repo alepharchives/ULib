@@ -70,13 +70,6 @@ public:
    virtual int handlerRead();
    virtual int handlerRequest();
 
-   virtual int handlerReset()
-      {
-      U_TRACE(0, "URpcPlugIn::handlerReset()")
-
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-      }
-
    // DEBUG
 
 #ifdef DEBUG

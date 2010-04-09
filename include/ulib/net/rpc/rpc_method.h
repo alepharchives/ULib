@@ -83,7 +83,7 @@ public:
 
    // Used to get the name of the method. This is matched up using the URPCObject dispatcher to respond to a call
 
-   virtual UString getMethodName() const { return UString::getStringNull(); }
+   virtual UString getMethodName() const { return method_name; }
 
    // Transforms the method into something that servers and clients can send. The encoder holds the
    // actual data while the client hands data to be entered in. This makes a whole lot more sense in the
@@ -117,6 +117,9 @@ public:
 #ifdef DEBUG
    const char* dump(bool reset) const;
 #endif
+
+protected:
+   UString method_name;
 
 private:
    URPCMethod(const URPCMethod&)            {}

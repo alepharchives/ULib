@@ -543,7 +543,7 @@ int UShibPlugIn::handlerConfig(UFileConfig& cfg)
 
    UModProxyService::loadConfig(cfg, vservice, 0);
 
-   U_RETURN(vservice.empty() ? U_PLUGIN_HANDLER_ERROR : U_PLUGIN_HANDLER_GO_ON);
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 /*
@@ -564,35 +564,38 @@ int UShibPlugIn::handlerInit()
 
    U_INTERNAL_ASSERT_EQUALS(conf,0)
 
-   // initialize the shib-target library
-
-   conf = &(ShibTargetConfig::getConfig());
-
-   conf->setFeatures(
-      ShibTargetConfig::Listener |
-      ShibTargetConfig::Metadata |
-      ShibTargetConfig::AAP |
-      ShibTargetConfig::RequestMapper |
-      ShibTargetConfig::LocalExtensions |
-      ShibTargetConfig::Logging
-   );
-
-   // SHIB_SCHEMAS -> Path to Shibboleth XML schema directory
-   // SHIB_CONFIG  -> Path to shibboleth.xml config file
-
-   if (conf->init(SHIB_SCHEMAS))
+   if (vservice.empty() == false)
       {
-      m_plugMgr = &(SAMLConfig::getConfig().getPlugMgr());
+      // initialize the shib-target library
 
-      m_plugMgr->regFactory(shibtarget::XML::htAccessControlType,  &UAccessFactory);
-      m_plugMgr->regFactory(shibtarget::XML::NativeRequestMapType, &URequestMapFactory);
-      m_plugMgr->regFactory(shibtarget::XML::LegacyRequestMapType, &URequestMapFactory);
+      conf = &(ShibTargetConfig::getConfig());
 
-      if (conf->load(SHIB_CONFIG))
+      conf->setFeatures(
+         ShibTargetConfig::Listener |
+         ShibTargetConfig::Metadata |
+         ShibTargetConfig::AAP |
+         ShibTargetConfig::RequestMapper |
+         ShibTargetConfig::LocalExtensions |
+         ShibTargetConfig::Logging
+      );
+
+      // SHIB_SCHEMAS -> Path to Shibboleth XML schema directory
+      // SHIB_CONFIG  -> Path to shibboleth.xml config file
+
+      if (conf->init(SHIB_SCHEMAS))
          {
-         U_SRV_LOG_MSG("initialization of plugin success");
+         m_plugMgr = &(SAMLConfig::getConfig().getPlugMgr());
 
-         U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+         m_plugMgr->regFactory(shibtarget::XML::htAccessControlType,  &UAccessFactory);
+         m_plugMgr->regFactory(shibtarget::XML::NativeRequestMapType, &URequestMapFactory);
+         m_plugMgr->regFactory(shibtarget::XML::LegacyRequestMapType, &URequestMapFactory);
+
+         if (conf->load(SHIB_CONFIG))
+            {
+            U_SRV_LOG_MSG("initialization of plugin success");
+
+            U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+            }
          }
       }
 

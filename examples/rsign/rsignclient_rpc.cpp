@@ -37,14 +37,14 @@ public:
       RSIGN_SIGN()
          {
          U_TRACE_REGISTER_OBJECT(5, RSIGN_SIGN, "", 0)
+
+         URPCMethod::method_name = U_STRING_FROM_CONSTANT("SIG1");
          }
 
       virtual ~RSIGN_SIGN()
          {
          U_TRACE_UNREGISTER_OBJECT(5, RSIGN_SIGN)
          }
-
-      virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("SIG1"); }
 
       // Transforms the method into something that RPC servers and clients can send.
       // The encoder holds the actual data while the client hands data to be entered in

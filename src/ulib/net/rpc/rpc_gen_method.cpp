@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/file.h>
 #include <ulib/net/rpc/rpc_object.h>
 #include <ulib/net/rpc/rpc_envelope.h>
 
@@ -75,7 +76,13 @@ bool URPCGenericMethod::execute(URPCEnvelope& theCall)
 
    for (; i < num_arguments; ++i) command->addArgument(theCall.getArgumentCStr(i));
 
-   bool result = command->execute(pinput, poutput);
+#ifdef DEBUG
+   static int fd_stderr = UFile::creat("/tmp/URPCGenericMethod.err", O_WRONLY | O_APPEND, PERM_FILE);
+#else
+   static int fd_stderr = UServices::getDevNull();
+#endif
+
+   bool result = command->execute(pinput, poutput, -1, fd_stderr);
 
    command->setNumArgument(old_ncmd, true); // we need to free strndup() malloc...
 
@@ -109,8 +116,7 @@ const char* URPCGenericMethod::dump(bool reset) const
    *UObjectIO::os << '\n'
                   << "response_type            " << (void*)response_type << '\n'
                   << "command     (UCommand    " << (void*)command       << ")\n"
-                  << "response    (UString     " << (void*)&response     << ")\n"
-                  << "method_name (UString     " << (void*)&method_name  << ')';
+                  << "response    (UString     " << (void*)&response     << ')';
 
    if (reset)
       {

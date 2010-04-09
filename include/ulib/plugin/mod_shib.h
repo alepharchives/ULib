@@ -286,13 +286,6 @@ public:
 
    // Connection-wide hooks
 
-   virtual int handlerRead()
-      {
-      U_TRACE(0, "UShibPlugIn::handlerRead()")
-
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-      }
-
    virtual int handlerRequest();
    virtual int handlerReset();
 

@@ -166,8 +166,9 @@ int UHttpPlugIn::handlerInit()
    U_INTERNAL_ASSERT_POINTER(USocket::str_host)
    U_INTERNAL_ASSERT_POINTER(USocket::str_connection)
 
-   UHTTP::ptrH = USocket::str_host->c_pointer(1);
-   UHTTP::ptrC = USocket::str_connection->c_pointer(1);
+   UHTTP::ptrH = USocket::str_host->c_pointer(1);           // "Host"
+   UHTTP::ptrC = USocket::str_connection->c_pointer(1);     // "Connection"
+   UHTTP::ptrT = USocket::str_content_type->c_pointer(1);   // "Content-Type"
 
    // init form processing var...
 

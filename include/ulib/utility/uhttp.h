@@ -160,8 +160,9 @@ public:
 
    // HTTP header representation
 
-   static const char* ptrC;
-   static const char* ptrH;
+   static const char* ptrH; // "Host"
+   static const char* ptrC; // "Connection"
+   static const char* ptrT; // "Content-Type"
    static uhttpheader http_info;
 
    static void setHTTPMethod(const char* method, uint32_t method_len)
@@ -392,6 +393,8 @@ public:
 
    static UString* penvironment;
    static char cgi_dir[U_PATH_MAX];
+   static uint32_t content_type_len;
+   static const char* content_type_ptr;
 
    static bool    isCGIRequest();
    static bool    processCGIOutput();

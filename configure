@@ -1700,7 +1700,7 @@ Optional Packages:
   --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=yes]
   --with-libuuid          use system  libuuid library - [will check /usr /usr/local] [default=yes]
   --with-magic            use system libmagic library - [will check /usr /usr/local] [default=yes]
-  --with-expat            use system    EXPAT library - [will check /usr /usr/local]
+  --with-expat            use system    EXPAT library - [will check /usr /usr/local] [default=yes]
   --with-ssh              use system      SSH library - [will check /usr /usr/local]
   --with-curl             use system     cURL library - [will check /usr /usr/local]
   --with-ldap             use system openLDAP library - [will check /usr /usr/local]
@@ -22758,8 +22758,13 @@ $as_echo "no" >&6; }
 fi
 
 
-								{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if EXPAT library for XML parsing is wanted" >&5
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if EXPAT library for XML parsing is wanted" >&5
 $as_echo_n "checking if EXPAT library for XML parsing is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_expat" ; then
+		wanted=0;
+		with_expat="/usr";
+	fi
 
 # Check whether --with-expat was given.
 if test "${with_expat+set}" = set; then :
@@ -22777,7 +22782,13 @@ $as_echo "yes" >&6; }
 			fi
 		done
 		if test x_$found_expat != x_yes; then
-			as_fn_error "Cannot find EXPAT library" "$LINENO" 5
+			msg="Cannot find EXPAT library"
+			if test $wanted = 1; then
+				as_fn_error "$msg" "$LINENO" 5
+			else
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $msg" >&5
+$as_echo "$msg" >&6; }
+			fi
 		else
 			printf "EXPAT found in $expatdir\n";
 			HAVE_EXPAT=yes
@@ -25129,7 +25140,7 @@ fi
 	MAYBE_FLAGS="$MAYBE_FLAGS -finline -flto \
 		-findirect-inlining -ftree-switch-conversion -floop-interchange -floop-strip-mine -floop-block \
 		-Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op \
-		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wno-format -Wno-format-extra-args"
+		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wno-format -Wno-format-extra-args -Wenum-compare"
 
 	case "${gcc_version_raw}" in
 		2.*)
@@ -25168,7 +25179,7 @@ fi
 	fi
 
 	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
-		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition"
+		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wcast-qual"
 
 	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti \
 		-Wno-deprecated"

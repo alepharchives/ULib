@@ -39,8 +39,9 @@ void URPCMethod::str_allocate()
 
 const char* URPCMethod::dump(bool reset) const
 {
-   *UObjectIO::os << "pFault      (URPCFault   " << (void*)pFault  << ")\n"
-                  << "encoder     (URPCEncoder " << (void*)encoder << ')';
+   *UObjectIO::os << "pFault      (URPCFault   " << (void*)pFault        << ")\n"
+                  << "encoder     (URPCEncoder " << (void*)encoder       << ")\n"
+                  << "method_name (UString     " << (void*)&method_name  << ')';
 
    if (reset)
       {

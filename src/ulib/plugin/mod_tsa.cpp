@@ -39,14 +39,23 @@ int UTsaPlugIn::handlerConfig(UFileConfig& cfg)
    // ENVIRONMENT  environment for command to execute
    // -----------------------------------------------
 
-   if (cfg.loadTable())
-      {
-      // check for the command to execute...
+   if (cfg.loadTable()) command = UServer_Base::loadConfigCommand(cfg, true);
 
-      command = UServer_Base::loadConfigCommand(cfg, true);
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+}
+
+int UTsaPlugIn::handlerInit()
+{
+   U_TRACE(0, "UTsaPlugIn::handlerInit()")
+
+   if (command)
+      {
+      U_SRV_LOG_MSG("initialization of plugin success");
 
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
+
+   U_SRV_LOG_MSG("initialization of plugin FAILED");
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }

@@ -36,14 +36,14 @@ public:
       CSP_CA()
          {
          U_TRACE_REGISTER_OBJECT(5, CSP_CA, "", 0)
+
+         URPCMethod::method_name = U_STRING_FROM_CONSTANT("CREA");
          }
 
       virtual ~CSP_CA()
          {
          U_TRACE_UNREGISTER_OBJECT(5, CSP_CA)
          }
-
-      virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("CREA"); }
 
       // Transforms the method into something that SOAP servers and client can send.
       // The encoder holds the actual data while the client hands data to be entered in
@@ -66,14 +66,14 @@ public:
       CSP_LIST_CA()
          {
          U_TRACE_REGISTER_OBJECT(5, CSP_LIST_CA, "", 0)
+
+         URPCMethod::method_name = U_STRING_FROM_CONSTANT("LST1");
          }
 
       virtual ~CSP_LIST_CA()
          {
          U_TRACE_UNREGISTER_OBJECT(5, CSP_LIST_CA)
          }
-
-      virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("LST1"); }
 
       virtual void encode()
          {
@@ -90,14 +90,14 @@ public:
       CSP_SIGN_P10()
          {
          U_TRACE_REGISTER_OBJECT(5, CSP_SIGN_P10, "", 0)
+
+         URPCMethod::method_name = U_STRING_FROM_CONSTANT("SIGP");
          }
 
       virtual ~CSP_SIGN_P10()
          {
          U_TRACE_UNREGISTER_OBJECT(5, CSP_SIGN_P10)
          }
-
-      virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("SIGP"); }
 
       // Transforms the method into something that SOAP servers and client can send.
       // The encoder holds the actual data while the client hands data to be entered in
@@ -121,14 +121,14 @@ public:
       CSP_SIGN_SPKAC()
          {
          U_TRACE_REGISTER_OBJECT(5, CSP_SIGN_SPKAC, "", 0)
+
+         URPCMethod::method_name = U_STRING_FROM_CONSTANT("SIGK");
          }
 
       virtual ~CSP_SIGN_SPKAC()
          {
          U_TRACE_UNREGISTER_OBJECT(5, CSP_SIGN_SPKAC)
          }
-
-      virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("SIGK"); }
 
       // Transforms the method into something that SOAP servers and client can send.
       // The encoder holds the actual data while the client hands data to be entered in
@@ -153,14 +153,14 @@ public:
       CSP_LIST_CERTS()
          {
          U_TRACE_REGISTER_OBJECT(5, CSP_LIST_CERTS, "", 0)
+
+         URPCMethod::method_name = U_STRING_FROM_CONSTANT("LST2");
          }
 
       virtual ~CSP_LIST_CERTS()
          {
          U_TRACE_UNREGISTER_OBJECT(5, CSP_LIST_CERTS)
          }
-
-      virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("LST2"); }
 
       // Transforms the method into something that SOAP servers and client can send.
       // The encoder holds the actual data while the client hands data to be entered in
@@ -183,14 +183,14 @@ public:
       CSP_REMOVE_CERT()
          {
          U_TRACE_REGISTER_OBJECT(5, CSP_REMOVE_CERT, "", 0)
+
+         URPCMethod::method_name = U_STRING_FROM_CONSTANT("DELC");
          }
 
       virtual ~CSP_REMOVE_CERT()
          {
          U_TRACE_UNREGISTER_OBJECT(5, CSP_REMOVE_CERT)
          }
-
-      virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("DELC"); }
 
       // Transforms the method into something that SOAP servers and client can send.
       // The encoder holds the actual data while the client hands data to be entered in
@@ -213,14 +213,14 @@ public:
       CSP_ZERO_CERTS()
          {
          U_TRACE_REGISTER_OBJECT(5, CSP_ZERO_CERTS, "", 0)
+
+         URPCMethod::method_name = U_STRING_FROM_CONSTANT("ZERO");
          }
 
       virtual ~CSP_ZERO_CERTS()
          {
          U_TRACE_UNREGISTER_OBJECT(5, CSP_ZERO_CERTS)
          }
-
-      virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("ZERO"); }
 
       // Transforms the method into something that SOAP servers and client can send.
       // The encoder holds the actual data while the client hands data to be entered in
@@ -242,14 +242,14 @@ public:
       CSP_EMIT_CRL()
          {
          U_TRACE_REGISTER_OBJECT(5, CSP_EMIT_CRL, "", 0)
+
+         URPCMethod::method_name = U_STRING_FROM_CONSTANT("EMIT");
          }
 
       virtual ~CSP_EMIT_CRL()
          {
          U_TRACE_UNREGISTER_OBJECT(5, CSP_EMIT_CRL)
          }
-
-      virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("EMIT"); }
 
       // Transforms the method into something that SOAP servers and client can send.
       // The encoder holds the actual data while the client hands data to be entered in
@@ -271,14 +271,14 @@ public:
       CSP_GET_CRL()
          {
          U_TRACE_REGISTER_OBJECT(5, CSP_GET_CRL, "", 0)
+
+         URPCMethod::method_name = U_STRING_FROM_CONSTANT("GETL");
          }
 
       virtual ~CSP_GET_CRL()
          {
          U_TRACE_UNREGISTER_OBJECT(5, CSP_GET_CRL)
          }
-
-      virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("GETL"); }
 
       // Transforms the method into something that SOAP servers and client can send.
       // The encoder holds the actual data while the client hands data to be entered in
@@ -300,14 +300,14 @@ public:
       CSP_GET_CA()
          {
          U_TRACE_REGISTER_OBJECT(5, CSP_GET_CA, "", 0)
+
+         URPCMethod::method_name = U_STRING_FROM_CONSTANT("GETC");
          }
 
       virtual ~CSP_GET_CA()
          {
          U_TRACE_UNREGISTER_OBJECT(5, CSP_GET_CA)
          }
-
-      virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("GETC"); }
 
       // Transforms the method into something that SOAP servers and client can send.
       // The encoder holds the actual data while the client hands data to be entered in
@@ -329,14 +329,14 @@ public:
       CSP_REVOKE_CERT()
          {
          U_TRACE_REGISTER_OBJECT(5, CSP_REVOKE_CERT, "", 0)
+
+         URPCMethod::method_name = U_STRING_FROM_CONSTANT("REVK");
          }
 
       virtual ~CSP_REVOKE_CERT()
          {
          U_TRACE_UNREGISTER_OBJECT(5, CSP_REVOKE_CERT)
          }
-
-      virtual UString getMethodName() const { return U_STRING_FROM_CONSTANT("REVK"); }
 
       // Transforms the method into something that SOAP servers and client can send.
       // The encoder holds the actual data while the client hands data to be entered in

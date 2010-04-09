@@ -14,6 +14,7 @@
 
 @SET_MAKE@
 
+
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 VPATH = @srcdir@
@@ -37,14 +38,14 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-noinst_PROGRAMS = userver_tcp$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2)
+bin_PROGRAMS = userver_tcp$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2)
 @SSL_TRUE@am__append_1 = userver_ssl
 @MINGW_FALSE@am__append_2 = userver_ipc
 subdir = examples/userver
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(srcdir)/cspserver.spec.in $(srcdir)/rsignserver.spec.in \
-	$(srcdir)/tsaserver.spec.in $(srcdir)/wagsmserver.spec.in \
-	$(srcdir)/web_server.spec.in
+DIST_COMMON = $(dist_sysconf_DATA) $(srcdir)/Makefile.am \
+	$(srcdir)/Makefile.in $(srcdir)/cspserver.spec.in \
+	$(srcdir)/rsignserver.spec.in $(srcdir)/tsaserver.spec.in \
+	$(srcdir)/wagsmserver.spec.in $(srcdir)/web_server.spec.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
 	$(top_srcdir)/m4/ac_compilation_environment.m4 \
@@ -75,7 +76,9 @@ CONFIG_CLEAN_FILES = web_server.spec wagsmserver.spec tsaserver.spec \
 	cspserver.spec rsignserver.spec
 @SSL_TRUE@am__EXEEXT_1 = userver_ssl$(EXEEXT)
 @MINGW_FALSE@am__EXEEXT_2 = userver_ipc$(EXEEXT)
-PROGRAMS = $(noinst_PROGRAMS)
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sysconfdir)"
+binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
+PROGRAMS = $(bin_PROGRAMS)
 am__userver_ipc_SOURCES_DIST = userver.cpp
 @MINGW_FALSE@am_userver_ipc_OBJECTS = userver_ipc-userver.$(OBJEXT)
 userver_ipc_OBJECTS = $(am_userver_ipc_OBJECTS)
@@ -103,6 +106,14 @@ SOURCES = $(userver_ipc_SOURCES) $(userver_ssl_SOURCES) \
 	$(userver_tcp_SOURCES)
 DIST_SOURCES = $(am__userver_ipc_SOURCES_DIST) \
 	$(am__userver_ssl_SOURCES_DIST) $(userver_tcp_SOURCES)
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
+dist_sysconfDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(dist_sysconf_DATA)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -355,7 +366,9 @@ target_os = @target_os@
 target_vendor = @target_vendor@
 thrprefix = @thrprefix@
 EXTRA_DIST = *.spec* *.start
+dist_sysconf_DATA = userver.cfg.default
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
+DEFAULT_CONFIG_FILE = $(sysconfdir)/userver.cfg
 userver_tcp_LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la
 userver_tcp_SOURCES = userver.cpp
 userver_tcp_LDFLAGS = $(PRG_LDFLAGS)
@@ -411,9 +424,30 @@ cspserver.spec: $(top_builddir)/config.status $(srcdir)/cspserver.spec.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 rsignserver.spec: $(top_builddir)/config.status $(srcdir)/rsignserver.spec.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+install-binPROGRAMS: $(bin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  if test -f $$p \
+	     || test -f $$p1 \
+	  ; then \
+	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
+	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
+	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
+	  else :; fi; \
+	done
 
-clean-noinstPROGRAMS:
-	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
+uninstall-binPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
+	  echo " rm -f '$(DESTDIR)$(bindir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(bindir)/$$f"; \
+	done
+
+clean-binPROGRAMS:
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
 	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
@@ -510,6 +544,23 @@ clean-libtool:
 distclean-libtool:
 	-rm -f libtool
 uninstall-info-am:
+install-dist_sysconfDATA: $(dist_sysconf_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(sysconfdir)" || $(mkdir_p) "$(DESTDIR)$(sysconfdir)"
+	@list='$(dist_sysconf_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(dist_sysconfDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(sysconfdir)/$$f'"; \
+	  $(dist_sysconfDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(sysconfdir)/$$f"; \
+	done
+
+uninstall-dist_sysconfDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_sysconf_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(sysconfdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(sysconfdir)/$$f"; \
+	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -588,8 +639,11 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS)
+all-am: Makefile $(PROGRAMS) $(DATA)
 installdirs:
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sysconfdir)"; do \
+	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
+	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -616,7 +670,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-local clean-noinstPROGRAMS \
+clean-am: clean-binPROGRAMS clean-generic clean-libtool clean-local \
 	mostlyclean-am
 
 distclean: distclean-am
@@ -637,7 +691,9 @@ info-am:
 
 install-data-am:
 
-install-exec-am:
+install-exec-am: install-binPROGRAMS install-dist_sysconfDATA
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 
 install-info: install-info-am
 
@@ -663,20 +719,38 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-info-am
+uninstall-am: uninstall-binPROGRAMS uninstall-dist_sysconfDATA \
+	uninstall-info-am
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
 
-.PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-libtool clean-local clean-noinstPROGRAMS ctags distclean \
+.PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
+	clean-generic clean-libtool clean-local ctags distclean \
 	distclean-compile distclean-generic distclean-libtool \
 	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am install-exec \
-	install-exec-am install-info install-info-am install-man \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-info-am
+	install install-am install-binPROGRAMS install-data \
+	install-data-am install-dist_sysconfDATA install-exec \
+	install-exec-am install-exec-hook install-info install-info-am \
+	install-man install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-binPROGRAMS uninstall-dist_sysconfDATA \
+	uninstall-hook uninstall-info-am
 
+
+install-exec-hook:
+	@if test -f "$(DESTDIR)$(DEFAULT_CONFIG_FILE)" ; then \
+   	echo "$@ will not overwrite existing $(DESTDIR)$(DEFAULT_CONFIG_FILE)" ; \
+   else \
+   	echo "$(INSTALL_DATA) userver.cfg.default $(DESTDIR)$(DEFAULT_CONFIG_FILE)"; \
+   	$(INSTALL_DATA) "$(srcdir)/userver.cfg.default" "$(DESTDIR)$(DEFAULT_CONFIG_FILE)"; \
+   fi
+
+uninstall-hook:
+	@if test -f "$(DESTDIR)$(DEFAULT_CONFIG_FILE)" ; then \
+   	rm "$(DESTDIR)$(DEFAULT_CONFIG_FILE)"; \
+	fi
 
 clean-local:
 	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out
