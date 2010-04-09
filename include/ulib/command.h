@@ -21,6 +21,7 @@
 class UFile;
 class UDialog;
 class UServer_Base;
+class UProxyPlugIn;
 
 #define U_ADD_ARGS  100 
 #define U_MAX_ARGS 8192 
@@ -43,6 +44,16 @@ public:
       pathcmd = 0;
       ncmd = nenv = nfile = 0;
       argv_exec = envp_exec = 0;
+      }
+
+   void reset()
+      {
+      U_TRACE(0, "UCommand::reset()")
+
+      freeCommand();
+      freeEnvironment();
+
+      zero();
       }
 
    UCommand()
@@ -74,8 +85,7 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UCommand)
 
-      freeCommand();
-      freeEnvironment();
+      reset();
       }
 
    // MANAGE GENERIC ENVIRONMENT
@@ -191,34 +201,6 @@ public:
       setEnvironment(penv);
       }
 
-   void freeCommand();
-   void freeEnvironment()
-      {
-      U_TRACE(0, "UCommand::freeEnvironment()")
-
-      if (envp_exec)
-         {
-         U_INTERNAL_ASSERT_MAJOR(nenv, 0)
-
-         // NB: considera null terminator...
-
-         U_FREE_VECTOR(envp_exec, nenv+1, char);
-         }
-      }
-
-   void reset(const UString& cmd, const UString& env)
-      {
-      U_TRACE(0, "UCommand::reset(%.*S,%.*S)", U_STRING_TO_TRACE(cmd), U_STRING_TO_TRACE(env))
-
-      freeCommand();
-      freeEnvironment();
-
-      command     = cmd;
-      environment = env;
-
-      zero();
-      }
-
    bool isShellScript() const
       {
       U_TRACE(0, "UCommand::isShellScript()")
@@ -311,7 +293,18 @@ protected:
    int32_t ncmd, nenv, nfile;
    UString command, environment;
 
-          void setCommand();
+   void setCommand();
+   void freeCommand();
+   void freeEnvironment();
+
+   void reset(const UString& cmd, const UString& env)
+      {
+      U_TRACE(0, "UCommand::reset(%.*S,%.*S)", U_STRING_TO_TRACE(cmd), U_STRING_TO_TRACE(env))
+
+      command     = cmd;
+      environment = env;
+      }
+
    static void outputCommand(UString& cmd, char** envp, UString* output, int fd_stdin, int fd_stderr, bool dialog);
 
 private:
@@ -325,6 +318,7 @@ private:
 
    friend class UDialog;
    friend class UServer_Base;
+   friend class UProxyPlugIn;
 };
 
 #endif

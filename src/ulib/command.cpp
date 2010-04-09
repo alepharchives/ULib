@@ -41,6 +41,24 @@ void UCommand::freeCommand()
       // NB: considera che u_splitCommand parte da 1 e null terminator...
 
       U_FREE_VECTOR(argv_exec, 1+ncmd+1 + U_ADD_ARGS, char);
+
+      argv_exec = 0;
+      }
+}
+
+void UCommand::freeEnvironment()
+{
+   U_TRACE(0, "UCommand::freeEnvironment()")
+
+   if (envp_exec)
+      {
+      U_INTERNAL_ASSERT_MAJOR(nenv, 0)
+
+      // NB: considera null terminator...
+
+      U_FREE_VECTOR(envp_exec, nenv+1, char);
+
+      envp_exec = 0;
       }
 }
 

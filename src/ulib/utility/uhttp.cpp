@@ -1241,7 +1241,6 @@ uint32_t UHTTP::processHTTPForm()
    U_TRACE(0, "UHTTP::processHTTPForm()")
 
    uint32_t n = 0;
-   const char* ptr;
 
    if (isHttpGET())
       {
@@ -2575,7 +2574,6 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
 
    U_INTERNAL_DUMP("method = %.*S method_type = %u uri = %.*S", U_HTTP_METHOD_TO_TRACE, http_info.method_type, U_HTTP_URI_TO_TRACE)
 
-   UCommand cmd;
    bool sh_script;
    UString command(U_CAPACITY), environment(U_CAPACITY);
 
@@ -2587,7 +2585,11 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
       }
    else
       {
-      pcmd = &cmd;
+      static UCommand* lcmd;
+
+      if (lcmd == 0) U_NEW_ULIB_OBJECT(lcmd, UCommand);
+
+      pcmd = lcmd;
 
       (void) command.assign(file->getPath()); // NB: we can't use relativ path because after we call chdir()...
 
@@ -2595,21 +2597,16 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
 
       sh_script = UStringExt::endsWith(command, U_CONSTANT_TO_PARAM(".sh"));
 
-      if      (sh_script)                                                    (void) command.insert(0, U_PATH_SHELL);
-      else if (UHTTP::isPHPRequest())                                        (void) command.insert(0, U_CONSTANT_TO_PARAM("php-cgi "));
-   // else if (u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".pl")))  (void) command.insert(0, U_CONSTANT_TO_PARAM("perl "));
-   // else if (u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".py")))  (void) command.insert(0, U_CONSTANT_TO_PARAM("python "));
-   // else if (u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".rb")))  (void) command.insert(0, U_CONSTANT_TO_PARAM("ruby "));
-      }
+      if (sh_script)                                                            (void) command.insert(0, U_PATH_SHELL);
+      else
+         {
+              if (UHTTP::isPHPRequest())                                        (void) command.insert(0, U_CONSTANT_TO_PARAM("php-cgi "));
+         else if (u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".pl")))  (void) command.insert(0, U_CONSTANT_TO_PARAM("perl "));
+         else if (u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".py")))  (void) command.insert(0, U_CONSTANT_TO_PARAM("python "));
+         else if (u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".rb")))  (void) command.insert(0, U_CONSTANT_TO_PARAM("ruby "));
 
-   if (sh_script == false &&
-       (pcmd->setCommand(command), pcmd->checkForExecute()) == false)
-      {
-      // set forbidden error response...
-
-      setHTTPForbidden();
-
-      U_RETURN(false);
+         pcmd->setCommand(command);
+         }
       }
 
 #ifdef DEBUG
@@ -2655,11 +2652,25 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
 
    // ULIB facility: check if present form data and convert it in parameters for shell script...
 
-   if (sh_script) setCGIShellScript(command);
+   if (sh_script)
+      {
+      setCGIShellScript(command);
+
+      pcmd->setCommand(command);
+      }
+
+   if (pcmd->checkForExecute() == false)
+      {
+      // set forbidden error response...
+
+      setHTTPForbidden();
+
+      U_RETURN(false);
+      }
 
    (void) environment.append(getCGIEnvironment(sh_script));
 
-   pcmd->set(command, &environment);
+   pcmd->setEnvironment(&environment);
 
    bool result = false;
 
@@ -2668,7 +2679,8 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
     * executes it after setting QUERY_STRING and other environment variables.
     */
 
-   if (UFile::chdir(cgi_dir, true))
+   if (cgi_dir[0] == '\0' ||
+       UFile::chdir(cgi_dir, true))
       {
       // execute CGI script...
 
@@ -2676,7 +2688,7 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
 
       result = pcmd->execute(pinput, UClientImage_Base::wbuffer, -1, fd_stderr);
 
-      (void) UFile::chdir(0, true);
+      if (cgi_dir[0]) (void) UFile::chdir(0, true);
       }
 
    resetForm();
@@ -2686,6 +2698,8 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
    // process the HTTP CGI output
 
    if (result == false) UServer_Base::logCommandMsgError(pcmd->getCommand());
+
+   pcmd->reset();
 
    if (processCGIOutput() == false)
       {

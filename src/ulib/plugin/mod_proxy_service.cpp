@@ -89,7 +89,7 @@ void UModProxyService::loadConfig(UFileConfig& cfg, UVector<UModProxyService*>& 
       service->user             = cfg[*UServer_Base::str_USER];
       service->password         = cfg[*UServer_Base::str_PASSWORD];
 
-      service->command          = UServer_Base::loadConfigCommand(cfg, false);
+      service->command          = UServer_Base::loadConfigCommand(cfg);
 
       service->port             = cfg.readLong(*UServer_Base::str_PORT, 80);
       service->request_cert     = cfg.readBoolean(*str_CLIENT_CERTIFICATE);

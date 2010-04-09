@@ -39,7 +39,7 @@ int UTsaPlugIn::handlerConfig(UFileConfig& cfg)
    // ENVIRONMENT  environment for command to execute
    // -----------------------------------------------
 
-   if (cfg.loadTable()) command = UServer_Base::loadConfigCommand(cfg, true);
+   if (cfg.loadTable()) command = UServer_Base::loadConfigCommand(cfg);
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }

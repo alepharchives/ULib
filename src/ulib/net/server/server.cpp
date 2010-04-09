@@ -1110,9 +1110,9 @@ end:
       }
 }
 
-UCommand* UServer_Base::loadConfigCommand(UFileConfig& cfg, bool bset)
+UCommand* UServer_Base::loadConfigCommand(UFileConfig& cfg)
 {
-   U_TRACE(0, "UServer_Base::loadConfigCommand(%p,%b)", &cfg, bset)
+   U_TRACE(0, "UServer_Base::loadConfigCommand(%p)", &cfg)
 
    U_ASSERT_EQUALS(cfg.empty(), false)
 
@@ -1125,19 +1125,9 @@ UCommand* UServer_Base::loadConfigCommand(UFileConfig& cfg, bool bset)
 
       UString environment = cfg[*str_ENVIRONMENT];
 
-      cmd = U_NEW(UCommand);
+      const UString* penv = (environment.empty() ? 0 : &environment);
 
-      if (bset)
-         {
-         const UString* penv = (environment.empty() ? 0 : &environment);
-
-         cmd->set(command, penv);
-         }
-      else
-         {
-         cmd->command     = command;
-         cmd->environment = environment;
-         }
+      cmd = U_NEW(UCommand(command, penv));
       }
 
    U_RETURN_POINTER(cmd,UCommand);

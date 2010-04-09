@@ -306,7 +306,7 @@ public:
       }
 
    static void      logCommandMsgError(const char* cmd);
-   static UCommand* loadConfigCommand(UFileConfig& cfg, bool bset);
+   static UCommand* loadConfigCommand(UFileConfig& cfg);
 
    static bool isClientConnect()
       {

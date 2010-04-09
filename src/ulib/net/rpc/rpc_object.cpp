@@ -96,7 +96,7 @@ void URPCObject::readFileMethod(UFileConfig& file_method)
                 response_type == *str_response_type_4 ?       standard_output_binary :
                                                         stdin_standard_output_binary);
 
-      command = UServer_Base::loadConfigCommand(file_method, true);
+      command = UServer_Base::loadConfigCommand(file_method);
 
       // Adds an object method to the list of method the object can call. Take ownership of the memory
 
