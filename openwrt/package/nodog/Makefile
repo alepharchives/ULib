@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=nodog
 PKG_VERSION:=1.0.5
-PKG_RELEASE:=11
+PKG_RELEASE:=12
 
 PKG_SOURCE:=ULib-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.unirel.com/ULib
@@ -44,7 +44,8 @@ define Package/nodog/conffiles
 /usr/lib/nodog/bin/upload-logs.sh
 endef
 
-NODOG_OPTIONS:= --disable-static --disable-new-ldflags --with-ssl --with-libz --without-pcre $(if $(CONFIG_NODOG_DEBUG),--enable-debug)
+NODOG_OPTIONS:= --disable-static --disable-new-ldflags --with-ssl --with-libz --without-pcre --without-expat --without-magic \
+					 $(if $(CONFIG_NODOG_UUID),--with-libuuid,--without-libuuid) $(if $(CONFIG_NODOG_DEBUG),--enable-debug)
 
 define Build/Configure
 	$(call Build/Configure/Default, \

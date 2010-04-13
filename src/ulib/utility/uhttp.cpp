@@ -2339,6 +2339,8 @@ loop:
 
             U_RETURN(true);
             }
+
+         goto next;
          }
       break;
 
@@ -2354,13 +2356,22 @@ loop:
 
             if (ptr)
                {
-               *UClientImage_Base::wbuffer = getHTTPRedirectResponse(UString::getStringNull(), location, ptr - location);
+               UString header  = UClientImage_Base::wbuffer->substr(0U, endHeader),
+                       content = getHTTPRedirectResponse(header, location, ptr - location);
+
+#           ifdef DEBUG
+               header.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+#           endif
+
+               *UClientImage_Base::wbuffer = content;
 
                U_RETURN(true);
                }
 
             goto error;
             }
+
+         goto next;
          }
       break;
 
@@ -2473,6 +2484,8 @@ loop:
 
             goto error;
             }
+
+         goto next;
          }
       break;
 
@@ -2528,12 +2541,14 @@ loop:
                   }
                }
             }
+
+         goto next;
          }
-   // break;
+      break;
 
       default:
          {
-         // for next parsing...
+next:    // for next parsing...
 
          ptr = (const char*) memchr(ptr, '\n', sz);
 

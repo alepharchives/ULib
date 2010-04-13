@@ -96,7 +96,7 @@ public:
 protected:
    int status;
    time_t connected, expire, logout, ctime;
-   uint32_t ifindex, traffic, ctraffic, ltraffic, rulenum;
+   uint32_t ifindex, traffic, ctraffic, ltraffic, rulenum, index_AUTH;
    UString ip, mac, token, command, user, ifname;
    UCommand cmd;
 
@@ -114,7 +114,6 @@ class U_EXPORT UNoCatPlugIn : public UServerPlugIn {
 public:
 
    static UString* str_AUTH_SERVICE_URL;
-   static UString* str_AUTH_SERVICE_IP;
    static UString* str_LOGOUT_URL;
    static UString* str_LOGIN_TIMEOUT;
    static UString* str_INIT_CMD;
@@ -162,12 +161,11 @@ public:
 
 protected:
    UCommand cmd, pgp;
-   Url auth_service_url, logout_url; // NB: we need *_url before vfwopt to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-   UVector<UString> vfwopt, vInternalDevice, vLocalNetwork;
-   UString input, output, location, init_cmd, reset_cmd, access_cmd, decrypt_cmd,
-           decrypt_key, mode, gateway, access_point, auth_ip, auth_ip_mask;
+   UVector<UIPAllow*> vLocalNetworkMask;
+   UVector<Url*> vauth_service_url, vlogout_url, vinfo_url;
+   UVector<UString> vfwopt, vInternalDevice, vLocalNetwork, vauth_login, vauth_logout, vauth_ip;
+   UString input, output, location, init_cmd, reset_cmd, access_cmd, decrypt_cmd, decrypt_key, mode, gateway, access_point;
 
-   static Url* info;
    static bool arping;
    static vPF unatexit;
    static int fd_stderr;
@@ -177,12 +175,11 @@ protected:
    static UNoCatPlugIn* pthis;
    static UString* status_content;
    static time_t last_request_check;
-   static UVector<UIPAllow*>* vauth_ip;
    static UVector<UIPAddress*>** vaddr;
    static UHashMap<UModNoCatPeer*>* peers;
 
    static char pcStrAddress[INET6_ADDRSTRLEN];
-   static uint32_t total_connections, login_timeout, nfds, num_radio;
+   static uint32_t total_connections, login_timeout, nfds, num_radio, index_AUTH;
 
    // VARIE
 

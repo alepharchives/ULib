@@ -171,7 +171,7 @@ for iface in $InternalDevice; do
       # Allow web traffic to the specified hosts, and don't capture connections intended for them
       #
       if [ "$AuthServiceAddr" -o "$AllowedWebHosts" ]; then 
-         for host in "$AuthServiceAddr $AllowedWebHosts"; do
+         for host in $AuthServiceAddr $AllowedWebHosts; do
             for port in 80 443; do
                $nat      -s $net -d $host -p tcp --dport $port -j MASQUERADE
                $redirect -s $net -d $host -p tcp --dport $port -j RETURN
@@ -221,7 +221,7 @@ done
 
 for port in 80; do
    for mark in $nonauth; do
-      $redirect -m mark --mark $mark -p tcp --dport $port  -j REDIRECT --to-port $GatewayPort
+      $redirect -m mark --mark $mark -p tcp --dport $port -j REDIRECT --to-port $GatewayPort
    done
 done
 
@@ -272,11 +272,11 @@ fi
 
 # Disable access on the external to GatewayPort from anything but the AuthServiceAddr
 
-if [ "$AuthServiceAddr" ]; then
-   for ifaceout in $ExternalDevice; do
-      $fwd -i $ifaceout -s ! $AuthServiceAddr -p tcp --dport $GatewayPort -j DROP
-   done
-fi
+for src in $AuthServiceAddr; do
+	for ifaceout in $ExternalDevice; do
+		$fwd -i $ifaceout -s ! $src -p tcp --dport $GatewayPort -j DROP
+	done
+done
 
 # Filter policy
 $fwd -j DROP
@@ -347,8 +347,10 @@ for iface in $ExternalDevice; do
     $IPTABLES -t mangle -A POSTROUTING -o $iface -j AccountOu
 done
 
-$IPTABLES -t mangle -A AccountIn -s "$AuthServiceAddr" -j RETURN
-$IPTABLES -t mangle -A AccountOu -d "$AuthServiceAddr" -j RETURN
+for srv in $AuthServiceAddr; do
+	$IPTABLES -t mangle -A AccountIn -s "$srv" -j RETURN
+	$IPTABLES -t mangle -A AccountOu -d "$srv" -j RETURN
+done
 
 for net in $LocalNetwork; do
 	$IPTABLES -t mangle -A AccountIn -s "$net" -j RETURN

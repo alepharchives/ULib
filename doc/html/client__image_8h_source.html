@@ -136,7 +136,7 @@
 <a name="l00119"></a>00119 
 <a name="l00120"></a>00120                 <span class="keywordflow">if</span> (real_ip-&gt;empty() &amp;&amp; setRealIP() == <span class="keyword">false</span>) (<span class="keywordtype">void</span>) real_ip-&gt;replace(remoteIPAddress().getAddressString());
 <a name="l00121"></a>00121 
-<a name="l00122"></a>00122                 U_INTERNAL_ASSERT(real_ip-&gt;isNullTerminated())
+<a name="l00122"></a>00122                 <span class="keywordflow">if</span> (real_ip-&gt;isNullTerminated() == <span class="keyword">false</span>) real_ip-&gt;setNullTerminated();
 <a name="l00123"></a>00123 
 <a name="l00124"></a>00124                 U_RETURN_STRING(*real_ip);
 <a name="l00125"></a>00125                 }
@@ -340,7 +340,7 @@
 <a name="l00323"></a>00323 <span class="preprocessor"></span>
 <a name="l00324"></a>00324 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 9 19:02:02 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Apr 13 14:23:31 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

@@ -119,7 +119,7 @@ public:
 
       if (real_ip->empty() && setRealIP() == false) (void) real_ip->replace(remoteIPAddress().getAddressString());
 
-      U_INTERNAL_ASSERT(real_ip->isNullTerminated())
+      if (real_ip->isNullTerminated() == false) real_ip->setNullTerminated();
 
       U_RETURN_STRING(*real_ip);
       }

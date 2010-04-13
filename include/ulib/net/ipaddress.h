@@ -106,8 +106,11 @@ public:
       U_RETURN(result);
       }
 
-   static bool isAllowed(in_addr_t         client, UVector<UIPAllow*>& vipallow);
-   static bool isAllowed(const UString& ip_client, UVector<UIPAllow*>& vipallow);
+   static uint32_t contains(in_addr_t         client, UVector<UIPAllow*>& vipallow);
+   static uint32_t contains(const UString& ip_client, UVector<UIPAllow*>& vipallow);
+
+   static bool isAllowed(in_addr_t         client, UVector<UIPAllow*>& vipallow) { return (contains(   client, vipallow) != U_NOT_FOUND); }
+   static bool isAllowed(const UString& ip_client, UVector<UIPAllow*>& vipallow) { return (contains(ip_client, vipallow) != U_NOT_FOUND); }
 
    // DEBUG
 

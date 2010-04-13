@@ -464,7 +464,7 @@ uint32_t UIPAllow::parseMask(const UString& vspec, UVector<UIPAllow*>& vipallow)
    U_TRACE(0, "UIPAllow::parseMask(%.*S,%p)", U_STRING_TO_TRACE(vspec), &vipallow)
 
    UIPAllow* elem;
-   UVector<UString> vec(vspec, ',');
+   UVector<UString> vec(vspec, ", ");
    uint32_t result, n = vipallow.size();
 
    for (uint32_t i = 0, vlen = vec.size(); i < vlen; ++i)
@@ -480,28 +480,28 @@ uint32_t UIPAllow::parseMask(const UString& vspec, UVector<UIPAllow*>& vipallow)
    U_RETURN(result);
 }
 
-bool UIPAllow::isAllowed(in_addr_t client, UVector<UIPAllow*>& vipallow)
+uint32_t UIPAllow::contains(in_addr_t client, UVector<UIPAllow*>& vipallow)
 {
-   U_TRACE(0, "UIPAllow::isAllowed(%u,%p)", client, &vipallow)
+   U_TRACE(0, "UIPAllow::contains(%u,%p)", client, &vipallow)
 
    for (uint32_t i = 0, vlen = vipallow.size(); i < vlen; ++i)
       {
-      if (vipallow[i]->isAllowed(client)) U_RETURN(true);
+      if (vipallow[i]->isAllowed(client)) U_RETURN(i);
       }
 
-   U_RETURN(false);
+   U_RETURN(U_NOT_FOUND);
 }
 
-bool UIPAllow::isAllowed(const UString& ip_client, UVector<UIPAllow*>& vipallow)
+uint32_t UIPAllow::contains(const UString& ip_client, UVector<UIPAllow*>& vipallow)
 {
-   U_TRACE(0, "UIPAllow::isAllowed(%.*S,%p)", U_STRING_TO_TRACE(ip_client), &vipallow)
+   U_TRACE(0, "UIPAllow::contains(%.*S,%p)", U_STRING_TO_TRACE(ip_client), &vipallow)
 
    for (uint32_t i = 0, vlen = vipallow.size(); i < vlen; ++i)
       {
-      if (vipallow[i]->isAllowed(ip_client)) U_RETURN(true);
+      if (vipallow[i]->isAllowed(ip_client)) U_RETURN(i);
       }
 
-   U_RETURN(false);
+   U_RETURN(U_NOT_FOUND);
 }
 
 // DEBUG

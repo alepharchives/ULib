@@ -1,16 +1,15 @@
 <map id="G" name="G">
-<area shape="rect" id="node2" href="$classUServerPlugIn.html" title="UServerPlugIn" alt="" coords="5,802,107,830"/>
-<area shape="rect" id="node4" href="$classUPing.html" title="UPing" alt="" coords="245,802,301,830"/>
-<area shape="rect" id="node6" href="$classUSocket.html" title="basic IP socket functionality" alt="" coords="55,602,121,630"/>
-<area shape="rect" id="node32" href="$classUIptAccount.html" title="UIptAccount" alt="" coords="131,802,221,830"/>
-<area shape="rect" id="node8" href="$classUIPAddress.html" title="UIPAddress" alt="" coords="87,346,172,374"/>
-<area shape="rect" id="node10" href="$classUString.html" title="UString" alt="" coords="463,99,527,127"/>
-<area shape="rect" id="node29" href="$classUrl.html" title="Url" alt="" coords="476,474,513,502"/>
-<area shape="rect" id="node35" href="$classUCommand.html" title="UCommand" alt="" coords="591,738,676,766"/>
-<area shape="rect" id="node13" href="$classUStringRep.html" title="UStringRep" alt="" coords="452,6,537,34"/>
-<area shape="rect" id="node16" href="$unionuupcAddress.html" title="uupcAddress" alt="" coords="84,99,175,127"/>
-<area shape="rect" id="node19" href="$classUProcess.html" title="UProcess" alt="" coords="145,602,217,630"/>
-<area shape="rect" id="node21" href="$structUPing_1_1reqhdr.html" title="UPing::reqhdr" alt="" coords="241,602,337,630"/>
-<area shape="rect" id="node23" href="$structUPing_1_1rephdr.html" title="UPing::rephdr" alt="" coords="361,602,457,630"/>
-<area shape="rect" id="node27" href="$classUVector_3_01UString_01_4.html" title="UVector\&lt; UString \&gt;" alt="" coords="325,802,456,830"/>
+<area shape="rect" id="node2" href="$classUServerPlugIn.html" title="UServerPlugIn" alt="" coords="5,721,107,749"/>
+<area shape="rect" id="node4" href="$classUPing.html" title="UPing" alt="" coords="427,721,483,749"/>
+<area shape="rect" id="node6" href="$classUSocket.html" title="basic IP socket functionality" alt="" coords="357,538,424,566"/>
+<area shape="rect" id="node29" href="$classUIptAccount.html" title="UIptAccount" alt="" coords="309,721,400,749"/>
+<area shape="rect" id="node8" href="$classUIPAddress.html" title="UIPAddress" alt="" coords="409,282,495,310"/>
+<area shape="rect" id="node10" href="$classUString.html" title="UString" alt="" coords="204,99,268,127"/>
+<area shape="rect" id="node32" href="$classUCommand.html" title="UCommand" alt="" coords="88,410,173,438"/>
+<area shape="rect" id="node13" href="$classUStringRep.html" title="UStringRep" alt="" coords="193,6,279,34"/>
+<area shape="rect" id="node16" href="$unionuupcAddress.html" title="uupcAddress" alt="" coords="407,99,497,127"/>
+<area shape="rect" id="node19" href="$classUProcess.html" title="UProcess" alt="" coords="568,538,640,566"/>
+<area shape="rect" id="node21" href="$structUPing_1_1reqhdr.html" title="UPing::reqhdr" alt="" coords="664,538,760,566"/>
+<area shape="rect" id="node23" href="$structUPing_1_1rephdr.html" title="UPing::rephdr" alt="" coords="448,538,544,566"/>
+<area shape="rect" id="node27" href="$classUVector_3_01UString_01_4.html" title="UVector\&lt; UString \&gt;" alt="" coords="507,721,637,749"/>
 </map>
