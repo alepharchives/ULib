@@ -52,7 +52,7 @@ int UEchoPlugIn::handlerRequest()
 
    // manage buffered read (pipelining)
 
-   U_INTERNAL_ASSERT_MAJOR((int32_t)USocketExt::size_message,0)
+   U_INTERNAL_ASSERT_MAJOR(USocketExt::size_message,0U)
 
    *UClientImage_Base::wbuffer = UClientImage_Base::rbuffer->substr(0U, USocketExt::size_message);
 

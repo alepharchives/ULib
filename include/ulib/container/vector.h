@@ -920,15 +920,15 @@ public:
 
    // EXTENSION
 
-   uint32_t split(const UString& str, char delim);
+   uint32_t split(const UString& str,       char  delim);
    uint32_t split(const UString& str, const char* delim = 0, bool dup = false);
 
    UString join(const char* delim = "\n", uint32_t delim_len = 1);
 
-   bool contains(UVector<UString>& vec, bool ignore_case = false);
+   uint32_t contains(const UString& str,    bool ignore_case = false);
+   bool     contains(UVector<UString>& vec, bool ignore_case = false);
 
-   uint32_t contains(const UString& str, bool ignore_case = false);
-   bool  isContained(const UString& str, bool ignore_case = false);
+   bool isContained(const UString& str, bool ignore_case = false) { return (contains(str, ignore_case) != U_NOT_FOUND); }
 
    // Check equality with an existing vector object
 

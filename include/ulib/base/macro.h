@@ -57,7 +57,7 @@
 #  define U_INTERNAL_ASSERT_MAJOR(a,b)   { U_ASSERT_MACRO((a)>(b),"NOT GREATER","") }
 #  define U_INTERNAL_ASSERT_EQUALS(a,b)  { U_ASSERT_MACRO((a)==(b),"NOT EQUALS","") }
 #  define U_INTERNAL_ASSERT_DIFFERS(a,b) { U_ASSERT_MACRO((a)!=(b),"NOT DIFFERENT","") }
-#  define U_INTERNAL_ASSERT_POINTER(ptr) { U_ASSERT_MACRO((void*)ptr>(void*)0x0000ffff,"~NULL POINTER","") }
+#  define U_INTERNAL_ASSERT_POINTER(ptr) { U_ASSERT_MACRO((const void*)ptr>(const void*)0x0000ffff,"~NULL POINTER","") }
 #  define U_INTERNAL_ASSERT_RANGE(a,x,b) { U_ASSERT_MACRO((x)>=(a)&&(x)<=(b),"VALUE OUT OF RANGE","") }
 
 #  define U_INTERNAL_ASSERT_MSG(expr,info) \
@@ -71,7 +71,7 @@
 #  define U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info) \
           { U_ASSERT_MACRO((a)!=(b),"NOT DIFFERENT",info) }
 #  define U_INTERNAL_ASSERT_POINTER_MSG(ptr,info) \
-          { U_ASSERT_MACRO((void*)ptr>(void*)0x0000ffff,"~NULL POINTER",info) }
+          { U_ASSERT_MACRO((const void*)ptr>(const void*)0x0000ffff,"~NULL POINTER",info) }
 #  define U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info) \
           { U_ASSERT_MACRO((x)>=(a)&&(x)<=(b),"VALUE OUT OF RANGE",info) }
 #else
@@ -405,48 +405,48 @@ struct __una_u32 { uint32_t x __attribute__((packed)); };
 
 /* skip line comment */
 
-#define U_SKIP_LINE_COMMENT(s,end,loop)       \
-                                              \
-      {                                       \
-      s = (char*) memchr(s, '\n', end - s);   \
-                                              \
-      if (s == 0) s = end;                    \
-                                              \
-      goto loop;                              \
+#define U_SKIP_LINE_COMMENT(s,end,loop)            \
+                                                   \
+      {                                            \
+      s = (const char*) memchr(s, '\n', end - s);  \
+                                                   \
+      if (s == 0) s = end;                         \
+                                                   \
+      goto loop;                                   \
       }
 
 /* skip quoted string */
 
-#define U_SKIP_QUOTED_STRING(s,end,q)         \
-                                              \
-      {                                       \
-      while (true)                            \
-         {                                    \
-         s = (char*) memchr(s, q, end - s);   \
-                                              \
-         if (s == 0) s = end;                 \
-         else                                 \
-            {                                 \
-            if (*(s-1) == '\\')               \
-               {                              \
-               ++s;                           \
-                                              \
-               continue;                      \
-               }                              \
-            }                                 \
-                                              \
-         break;                               \
-         }                                    \
+#define U_SKIP_QUOTED_STRING(s,end,q)              \
+                                                   \
+      {                                            \
+      while (true)                                 \
+         {                                         \
+         s = (const char*) memchr(s, q, end - s);  \
+                                                   \
+         if (s == 0) s = end;                      \
+         else                                      \
+            {                                      \
+            if (*(s-1) == '\\')                    \
+               {                                   \
+               ++s;                                \
+                                                   \
+               continue;                           \
+               }                                   \
+            }                                      \
+                                                   \
+         break;                                    \
+         }                                         \
       }
 
 /* delimit token with char delimiter */
 
-#define U_DELIMIT_TOKEN_CHAR(s,end,p,c) \
-                                        \
-   p = s;                               \
-                                        \
-   s = (char*) memchr(s, c, end - s);   \
-                                        \
+#define U_DELIMIT_TOKEN_CHAR(s,end,p,c)      \
+                                             \
+   p = s;                                    \
+                                             \
+   s = (const char*) memchr(s, c, end - s);  \
+                                             \
    if (s == 0) s = end;
 
 /* delimit token with white space */
@@ -494,23 +494,23 @@ struct __una_u32 { uint32_t x __attribute__((packed)); };
 
 /* delimit token with string delimiter */
 
-#define U_DELIMIT_TOKEN_EXT(s,end,p,delim)      \
-                                                \
-   if (*s == '"')                               \
-      {                                         \
-      p = s++;                                  \
-                                                \
-      U_SKIP_QUOTED_STRING(s,end,'"')           \
-                                                \
-      if (s < end) ++s;                         \
-      }                                         \
-   else                                         \
-      {                                         \
-      p = s++;                                  \
-                                                \
-      s = (char*) u_strpbrk(s, end - s, delim); \
-                                                \
-      if (s == 0) s = end;                      \
+#define U_DELIMIT_TOKEN_EXT(s,end,p,delim)            \
+                                                      \
+   if (*s == '"')                                     \
+      {                                               \
+      p = s++;                                        \
+                                                      \
+      U_SKIP_QUOTED_STRING(s,end,'"')                 \
+                                                      \
+      if (s < end) ++s;                               \
+      }                                               \
+   else                                               \
+      {                                               \
+      p = s++;                                        \
+                                                      \
+      s = (const char*) u_strpbrk(s, end - s, delim); \
+                                                      \
+      if (s == 0) s = end;                            \
       }
 
 #endif

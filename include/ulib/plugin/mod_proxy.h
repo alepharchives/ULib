@@ -84,7 +84,6 @@ protected:
    UVector<UString> vmsg_error;
    UHttpClient<USocket> client_http;
    UVector<UModProxyService*> vservice;
-   bool is_connect;
 
 private:
    UProxyPlugIn(const UProxyPlugIn&) : UServerPlugIn(), client_http((UFileConfig*)0) {}

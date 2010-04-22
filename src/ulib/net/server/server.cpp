@@ -28,7 +28,6 @@
 
 int                        UServer_Base::port;
 int                        UServer_Base::cgi_timeout;
-int                        UServer_Base::log_file_sz;
 int                        UServer_Base::verify_mode;
 int                        UServer_Base::num_connection;
 int                        UServer_Base::max_Keep_Alive;
@@ -69,7 +68,7 @@ const UString* UServer_Base::str_CA_FILE;
 const UString* UServer_Base::str_CA_PATH;
 const UString* UServer_Base::str_VERIFY_MODE;
 const UString* UServer_Base::str_ALLOWED_IP;
-const UString* UServer_Base::str_NAME_SOCKET;
+const UString* UServer_Base::str_SOCKET_NAME;
 const UString* UServer_Base::str_DOCUMENT_ROOT;
 const UString* UServer_Base::str_PLUGIN;
 const UString* UServer_Base::str_PLUGIN_DIR;
@@ -114,7 +113,7 @@ void UServer_Base::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_CA_PATH,0)
    U_INTERNAL_ASSERT_EQUALS(str_VERIFY_MODE,0)
    U_INTERNAL_ASSERT_EQUALS(str_ALLOWED_IP,0)
-   U_INTERNAL_ASSERT_EQUALS(str_NAME_SOCKET,0)
+   U_INTERNAL_ASSERT_EQUALS(str_SOCKET_NAME,0)
    U_INTERNAL_ASSERT_EQUALS(str_DOCUMENT_ROOT,0)
    U_INTERNAL_ASSERT_EQUALS(str_PLUGIN,0)
    U_INTERNAL_ASSERT_EQUALS(str_PLUGIN_DIR,0)
@@ -194,7 +193,7 @@ void UServer_Base::str_allocate()
    U_NEW_ULIB_OBJECT(str_CA_PATH,               U_STRING_FROM_STRINGREP_STORAGE(14));
    U_NEW_ULIB_OBJECT(str_VERIFY_MODE,           U_STRING_FROM_STRINGREP_STORAGE(15));
    U_NEW_ULIB_OBJECT(str_ALLOWED_IP,            U_STRING_FROM_STRINGREP_STORAGE(16));
-   U_NEW_ULIB_OBJECT(str_NAME_SOCKET,           U_STRING_FROM_STRINGREP_STORAGE(17));
+   U_NEW_ULIB_OBJECT(str_SOCKET_NAME,           U_STRING_FROM_STRINGREP_STORAGE(17));
    U_NEW_ULIB_OBJECT(str_DOCUMENT_ROOT,         U_STRING_FROM_STRINGREP_STORAGE(18));
    U_NEW_ULIB_OBJECT(str_PLUGIN,                U_STRING_FROM_STRINGREP_STORAGE(19));
    U_NEW_ULIB_OBJECT(str_PLUGIN_DIR,            U_STRING_FROM_STRINGREP_STORAGE(20));
@@ -317,7 +316,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    as_user        = cfg[*str_RUN_AS_USER],
    log_file       = cfg[*str_LOG_FILE];
    allow_IP       = cfg[*str_ALLOWED_IP];
-   name_sock      = cfg[*str_NAME_SOCKET];
+   name_sock      = cfg[*str_SOCKET_NAME];
    IP_address     = cfg[*str_IP_ADDRESS];
    document_root  = cfg[*str_DOCUMENT_ROOT];
 
@@ -328,7 +327,6 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    port                       = cfg.readLong(*str_PORT, U_DEFAULT_PORT);
    cgi_timeout                = cfg.readLong(*str_CGI_TIMEOUT);
-   log_file_sz                = cfg.readLong(*str_LOG_FILE_SZ);
    max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE);
    USocket::req_timeout       = cfg.readLong(*str_REQ_TIMEOUT);
    u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE);
@@ -355,6 +353,10 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    UString pid_file = cfg[*str_PID_FILE];
 
    if (pid_file.empty() == false) (void) UFile::writeTo(pid_file, UString(u_pid_str, u_pid_str_len));
+
+   // open log
+
+   if (log_file.empty() == false) openLog(log_file, cfg.readLong(*str_LOG_FILE_SZ));
 
    // load plugin modules and call server-wide hooks handlerConfig()...
 
@@ -488,10 +490,6 @@ void UServer_Base::init()
       }
 
    UEventFd::fd = socket->getFd();
-
-   // open log
-
-   if (log_file.empty() ==  false) openLog(log_file, log_file_sz);
 
    // get name host
 
@@ -1208,7 +1206,6 @@ const char* UServer_Base::dump(bool reset) const
                   << "verify_mode               " << verify_mode                 << '\n'
                   << "cgi_timeout               " << cgi_timeout                 << '\n'
                   << "verify_mode               " << verify_mode                 << '\n'
-                  << "log_file_sz               " << log_file_sz                 << '\n'
                   << "num_connection            " << num_connection              << '\n'
                   << "block_on_accept           " << block_on_accept             << '\n'
                   << "preforked_num_kids        " << preforked_num_kids          << '\n'

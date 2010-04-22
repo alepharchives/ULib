@@ -9,7 +9,7 @@
 %*.*x:	`0012'
 %0*.*x:	`0012'
 bad format:	"%J"
-nil pointer (padded):	"     (nil)"
+nil pointer (padded):	"(nil)"
 decimal negative:	"-2345"
 octal negative:	"37777773327"
 hex negative:	"fffff6d7"

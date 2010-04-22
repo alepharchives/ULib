@@ -15,20 +15,36 @@
 #include <ulib/net/client/client.h>
 #include <ulib/net/server/server.h>
 
-int   UClient_Base::log_file_sz;
-ULog* UClient_Base::log;
+bool     UClient_Base::log_shared_with_server;
+ULog*    UClient_Base::log;
+UString* UClient_Base::str_RES_TIMEOUT;
+
+void UClient_Base::str_allocate()
+{
+   U_TRACE(0, "UClient_Base::str_allocate()")
+
+   U_INTERNAL_ASSERT_EQUALS(str_RES_TIMEOUT,0)
+
+   static ustringrep stringrep_storage[] = {
+      { U_STRINGREP_FROM_CONSTANT("RES_TIMEOUT") }
+   };
+
+   U_NEW_ULIB_OBJECT(str_RES_TIMEOUT, U_STRING_FROM_STRINGREP_STORAGE(0));
+}
 
 UClient_Base::UClient_Base(UFileConfig* cfg) : response(U_CAPACITY), buffer(U_CAPACITY), host_port(100U), logbuf(100U)
 {
    U_TRACE_REGISTER_OBJECT(0, UClient_Base, "%p", cfg)
 
-   timeoutMS = U_TIMEOUT;
+   if (str_RES_TIMEOUT == 0) str_allocate();
 
    if (cfg) loadConfigParam(*cfg);
    else
       {
       bIPv6 = false;
       port  = verify_mode = 0;
+
+      timeoutMS = U_TIMEOUT;
       }
 }
 
@@ -38,7 +54,11 @@ UClient_Base::~UClient_Base()
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
-   if (log) delete log;
+   if (log &&
+       log_shared_with_server == false)
+      {
+      delete log;
+      }
 
    delete socket;
 
@@ -76,7 +96,8 @@ bool UClient_Base::setHostPort(const UString& host, int _port)
       {
       host_port.replace(host);
 
-      if (_port != 80)
+      if (_port &&
+          _port != 80)
          {
          char tmp[6];
          int size = snprintf(tmp, sizeof(tmp), "%d", _port);
@@ -97,18 +118,25 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
 {
    U_TRACE(0, "UClient_Base::loadConfigParam(%p)", &cfg)
 
-   if (Url::str_ftp == 0) Url::str_allocate();
-                 UServer_Base::str_allocate();
-
    U_ASSERT_EQUALS(cfg.empty(), false)
+
+   if (         Url::str_ftp      == 0)          Url::str_allocate();
+   if (UServer_Base::str_LOG_FILE == 0) UServer_Base::str_allocate();
 
    // ----------------------------------------------------------------------------------------------------------------------
    // client - configuration parameters
    // ----------------------------------------------------------------------------------------------------------------------
-   // NAME_SOCKET   name file for the listening socket
+   // SOCKET_NAME   name file for the listening socket
+   //
    // USE_IPV6      flag to indicate use of ipv6
    // SERVER        host name or ip address for server
    // PORT          port number for the server
+   //
+   // RES_TIMEOUT   timeout for response from server
+   //
+   // LOG_FILE      locations   for file log
+   // LOG_FILE_SZ   memory size for file log
+   //
    // CERT_FILE     certificate of client
    // KEY_FILE      private key of client
    // PASSWORD      password for private key of client
@@ -116,9 +144,6 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
    // CA_PATH       locations of trusted CA certificates used in the verification
    // VERIFY_MODE   mode of verification (SSL_VERIFY_NONE=0, SSL_VERIFY_PEER=1,
    //                                     SSL_VERIFY_FAIL_IF_NO_PEER_CERT=2, SSL_VERIFY_CLIENT_ONCE=4)
-   //
-   // LOG_FILE      locations   for file log
-   // LOG_FILE_SZ   memory size for file log
    // ----------------------------------------------------------------------------------------------------------------------
 
    ca_file   = cfg[*UServer_Base::str_CA_FILE];
@@ -126,33 +151,42 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
    key_file  = cfg[*UServer_Base::str_KEY_FILE];
    password  = cfg[*UServer_Base::str_PASSWORD];
    cert_file = cfg[*UServer_Base::str_CERT_FILE];
-   name_sock = cfg[*UServer_Base::str_NAME_SOCKET];
 
-   log_file    = cfg[*UServer_Base::str_LOG_FILE];
-   log_file_sz = cfg.readLong(*UServer_Base::str_LOG_FILE_SZ);
+   log_file  = cfg[*UServer_Base::str_LOG_FILE];
 
    if (log_file.empty() == false)
       {
-      log = U_NEW(ULog(log_file, log_file_sz));
+      if (UServer_Base::isLog() &&
+          log_file == UServer_Base::pthis->log_file)
+         {
+         log                    = UServer_Base::log;
+         log_shared_with_server = true;
+         }
+      else
+         {
+         log = U_NEW(ULog(log_file, cfg.readLong(*UServer_Base::str_LOG_FILE_SZ)));
 
-      ULog::setServer(false);
+         ULog::setServer(false);
+         }
       }
 
 #ifdef HAVE_IPV6
    bIPv6       = cfg.readBoolean(*UServer_Base::str_USE_IPV6);
 #endif
+   timeoutMS   = cfg.readLong(*str_RES_TIMEOUT);
    verify_mode = cfg.readLong(*UServer_Base::str_VERIFY_MODE);
 
-   UString host = cfg[*UServer_Base::str_SERVER];
+   UString host      = cfg[*UServer_Base::str_SERVER],
+           name_sock = cfg[*UServer_Base::str_SOCKET_NAME];
 
-   if (host.empty()      == false ||
+   if (     host.empty() == false ||
        name_sock.empty() == false)
       {
-      (void) setHostPort(name_sock.empty() ? host : name_sock, cfg.readLong(*UServer_Base::str_PORT, 443));
+      (void) setHostPort(name_sock.empty() ? host : name_sock, cfg.readLong(*UServer_Base::str_PORT));
       }
 
-// cfg.clear();
-// cfg.deallocate();
+   // cfg.clear();
+   // cfg.deallocate();
 }
 
 bool UClient_Base::connect()
@@ -165,14 +199,18 @@ bool UClient_Base::connect()
       {
       (void) socket->setTimeoutRCV(timeoutMS);
 
-      if (log) socket->getRemoteInfo(logbuf);
+      if (log)
+         {
+              if (port)           socket->getRemoteInfo(logbuf);
+         else if (logbuf.empty()) logbuf = '"' + host_port + '"';
+         }
 
       U_RETURN(true);
       }
 
-   response.snprintf("Sorry, couldn't connect to server '%.*s:%d'%R", U_STRING_TO_TRACE(server), port, NULL);
+   response.snprintf("Sorry, couldn't connect to server %.*S%R", U_STRING_TO_TRACE(host_port), 0);
 
-   if (log) ULog::log("%.*s\n", U_STRING_TO_TRACE(response));
+   if (log && log_shared_with_server == false) ULog::log("%.*s\n", U_STRING_TO_TRACE(response));
 
    U_RETURN(false);
 }
@@ -187,7 +225,7 @@ bool UClient_Base::setUrl(const UString& location)
 
    // Check we've been passed a absolute URL
 
-   if (Url::str_http == 0) Url::str_allocate();
+   if (Url::str_ftp == 0) Url::str_allocate();
 
    if (location.find(*Url::str_http) == U_NOT_FOUND)
       {
@@ -300,11 +338,25 @@ bool UClient_Base::sendRequest()
 {
    U_TRACE(0, "UClient_Base::sendRequest()")
 
-   U_INTERNAL_ASSERT(socket->isOpen())
+   bool result = false;
 
-   bool result = USocketExt::write(socket, request);
+   for (int counter = 0; counter < 2; ++counter)
+      {
+      if (isConnected() ||
+          UClient_Base::connect())
+         {
+         result = USocketExt::write(socket, request);
 
-   if (log) ULog::log("send request (%u bytes) %#.*S to %.*s\n", request.size(), U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(logbuf));
+         if (isConnected()) break;
+         }
+      }
+
+   if (log)
+      {
+      ULog::log("%ssend request (%u bytes) %#.*S to %.*s\n",
+                  log_shared_with_server ? UServer_Base::mod_name : "",
+                  request.size(), U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(logbuf));
+      }
 
    U_RETURN(result);
 }
@@ -315,16 +367,36 @@ void UClient_Base::logResponse(const UString& data)
 
    U_INTERNAL_ASSERT_POINTER(log)
 
-   ULog::log("received response (%u bytes) %#.*S from %.*s\n", data.size(), U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(logbuf));
+   ULog::log("%sreceived response (%u bytes) %#.*S from %.*s\n",
+                  log_shared_with_server ? UServer_Base::mod_name : "",
+                  data.size(), U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(logbuf));
 }
 
-bool UClient_Base::readResponse()
-{
-   U_TRACE(0, "UClient_Base::readResponse()")
+// read data response
 
-   clearData();
+bool UClient_Base::readResponse(int count)
+{
+   U_TRACE(0, "UClient_Base::readResponse(%d)", count)
+
+   if (count == U_SINGLE_READ) response.setBuffer(U_CAPACITY);
+
+   if (USocketExt::read(socket, response, count, timeoutMS))
+      {
+      if (log) logResponse(response);
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+bool UClient_Base::readHTTPResponse()
+{
+   U_TRACE(0, "UClient_Base::readHTTPResponse()")
 
    // read HTTP message data
+
+   clearData();
 
    if (UHTTP::readHTTPHeader(socket, buffer) &&
        UHTTP::readHTTPBody(  socket, buffer, response))
@@ -344,27 +416,26 @@ bool UClient_Base::readResponse()
 
 const char* UClient_Base::dump(bool reset) const
 {
-   *UObjectIO::os << "bIPv6                               " << bIPv6             << '\n'
-                  << "port                                " << port              << '\n'
-                  << "timeoutMS                           " << timeoutMS         << '\n'
-                  << "verify_mode                         " << verify_mode       << '\n'
-                  << "log_file_sz                         " << log_file_sz       << '\n'
-                  << "log            (ULog                " << (void*)log        << ")\n"
-                  << "server         (UString             " << (void*)&server    << ")\n"
-                  << "ca_file        (UString             " << (void*)&ca_file   << ")\n"
-                  << "ca_path        (UString             " << (void*)&ca_path   << ")\n"
-                  << "logbuf         (UString             " << (void*)&logbuf    << ")\n"
-                  << "key_file       (UString             " << (void*)&key_file  << ")\n"
-                  << "password       (UString             " << (void*)&password  << ")\n"
-                  << "log_file       (UString             " << (void*)&log_file  << ")\n"
-                  << "cert_file      (UString             " << (void*)&cert_file << ")\n"
-                  << "name_sock      (UString             " << (void*)&name_sock << ")\n"
-                  << "buffer         (UString             " << (void*)&buffer    << ")\n"
-                  << "request        (UString             " << (void*)&request   << ")\n"
-                  << "service        (UString             " << (void*)&service   << ")\n"
-                  << "response       (UString             " << (void*)&response  << ")\n"
-                  << "host_port      (UString             " << (void*)&host_port << ")\n"
-                  << "socket         (USocket             " << (void*)socket     << ')';
+   *UObjectIO::os << "bIPv6                               " << bIPv6                   << '\n'
+                  << "port                                " << port                    << '\n'
+                  << "timeoutMS                           " << timeoutMS               << '\n'
+                  << "verify_mode                         " << verify_mode             << '\n'
+                  << "log_shared_with_server              " << log_shared_with_server  << '\n'
+                  << "log            (ULog                " << (void*)log              << ")\n"
+                  << "server         (UString             " << (void*)&server          << ")\n"
+                  << "ca_file        (UString             " << (void*)&ca_file         << ")\n"
+                  << "ca_path        (UString             " << (void*)&ca_path         << ")\n"
+                  << "logbuf         (UString             " << (void*)&logbuf          << ")\n"
+                  << "key_file       (UString             " << (void*)&key_file        << ")\n"
+                  << "password       (UString             " << (void*)&password        << ")\n"
+                  << "log_file       (UString             " << (void*)&log_file        << ")\n"
+                  << "cert_file      (UString             " << (void*)&cert_file       << ")\n"
+                  << "buffer         (UString             " << (void*)&buffer          << ")\n"
+                  << "request        (UString             " << (void*)&request         << ")\n"
+                  << "service        (UString             " << (void*)&service         << ")\n"
+                  << "response       (UString             " << (void*)&response        << ")\n"
+                  << "host_port      (UString             " << (void*)&host_port       << ")\n"
+                  << "socket         (USocket             " << (void*)socket           << ')';
 
    if (reset)
       {

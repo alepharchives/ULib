@@ -1083,7 +1083,7 @@ int UNoCatPlugIn::handlerInit()
 {
    U_TRACE(0, "UNoCatPlugIn::handlerInit()")
 
-   uint32_t i, n;
+   uint32_t i;
    UIPAddress addr;
    int port = UServer_Base::getPort();
    UString extdev, intdev, localnet, opt, sport = UStringExt::numberToString(port);
@@ -1164,23 +1164,24 @@ int UNoCatPlugIn::handlerInit()
       U_SRV_LOG_VAR("Autodetected LocalNetwork %S", localnet.data());
       }
 
-   if (i <  6) vfwopt.push(extdev);
-   if (i <  7) vfwopt.push(intdev);
-   if (i <  8) vfwopt.push(localnet);
-   if (i <  9) vfwopt.push(sport);
-   if (i < 10)
+   if (i < 6) vfwopt.push(extdev);
+   if (i < 7) vfwopt.push(intdev);
+   if (i < 8) vfwopt.push(localnet);
+   if (i < 9) vfwopt.push(sport);
+
+   Url* url;
+   UString auth_ip;
+   bool bgetIP = (i < 10); // get IP address of AUTH hosts...
+   uint32_t n = vauth_login.size();
+
+   for (i = 0, n = vauth_login.size(); i < n; ++i)
       {
-      // get IP address of AUTH hosts...
+      url = U_NEW(Url(vauth_login[i]));
 
-      Url* url;
-      UString auth_ip;
+      vauth_service_url.push(url);
 
-      for (i = 0, n = vauth_login.size(); i < n; ++i)
+      if (bgetIP)
          {
-         url = U_NEW(Url(vauth_login[i]));
-
-         vauth_service_url.push(url);
-
          auth_ip = url->getHost();
 
          if (addr.setHostName(auth_ip, UClientImage_Base::bIPv6) == false)
@@ -1195,19 +1196,28 @@ int UNoCatPlugIn::handlerInit()
 
             vauth_ip.push(auth_ip);
             }
-
-         url = U_NEW(Url(vauth_logout[i]));
-
-         vlogout_url.push(url);
-
-         url = U_NEW(Url(vauth_logout[i]));
-
-         vinfo_url.push(url);
          }
 
+      url = U_NEW(Url(vauth_logout[i]));
+
+      vlogout_url.push(url);
+
+      url = U_NEW(Url(vauth_logout[i]));
+
+      vinfo_url.push(url);
+      }
+
+   if (bgetIP)
+      {
       opt = vauth_ip.join(U_CONSTANT_TO_PARAM(" "));
 
       vfwopt.push(opt);
+      }
+   else
+      {
+      (void) vauth_ip.split(vfwopt[9]);
+
+      U_INTERNAL_ASSERT_EQUALS(vauth_ip.size(), vauth_login.size())
       }
 
    opt = vfwopt.join();

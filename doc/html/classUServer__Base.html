@@ -150,8 +150,8 @@ static const <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td 
 static const <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_VERIFY_MODE</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab9f7fb11bf437ef7f161373439d1502e"></a><!-- doxytag: member="UServer_Base::str_ALLOWED_IP" ref="ab9f7fb11bf437ef7f161373439d1502e" args="" -->
 static const <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_ALLOWED_IP</b></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1349fd6c69e8ed18eca2147a9fe7f708"></a><!-- doxytag: member="UServer_Base::str_NAME_SOCKET" ref="a1349fd6c69e8ed18eca2147a9fe7f708" args="" -->
-static const <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_NAME_SOCKET</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6e3fe5ac9f6614e56c057e7de28d936a"></a><!-- doxytag: member="UServer_Base::str_SOCKET_NAME" ref="a6e3fe5ac9f6614e56c057e7de28d936a" args="" -->
+static const <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_SOCKET_NAME</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8a807a2b77a3e1eaa17624a0278ba579"></a><!-- doxytag: member="UServer_Base::str_DOCUMENT_ROOT" ref="a8a807a2b77a3e1eaa17624a0278ba579" args="" -->
 static const <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_DOCUMENT_ROOT</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adfb5d3dff91085ecd12d2502bd68c179"></a><!-- doxytag: member="UServer_Base::str_PLUGIN" ref="adfb5d3dff91085ecd12d2502bd68c179" args="" -->
@@ -258,8 +258,6 @@ static RETSIGTYPE&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerF
 static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>port</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae899cbfdf2579b8c591dd5b11e6acc07"></a><!-- doxytag: member="UServer_Base::cgi_timeout" ref="ae899cbfdf2579b8c591dd5b11e6acc07" args="" -->
 static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>cgi_timeout</b></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad9633981bed270acb459921e3f599c12"></a><!-- doxytag: member="UServer_Base::log_file_sz" ref="ad9633981bed270acb459921e3f599c12" args="" -->
-static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>log_file_sz</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a284e59b2e55f2d2fe1f031bbf0b60f37"></a><!-- doxytag: member="UServer_Base::verify_mode" ref="a284e59b2e55f2d2fe1f031bbf0b60f37" args="" -->
 static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>verify_mode</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a85a2625ee6085a5b793d5da00914af53"></a><!-- doxytag: member="UServer_Base::max_Keep_Alive" ref="a85a2625ee6085a5b793d5da00914af53" args="" -->
@@ -291,8 +289,12 @@ static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>flag_use_tcp_o
 class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUServer__Base.html#afc8f8ec13025462fd85066a7ced375b1">UHTTP</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a051cb0aa505229d4eb841e7a3472fe09"></a><!-- doxytag: member="UServer_Base::UHttpPlugIn" ref="a051cb0aa505229d4eb841e7a3472fe09" args="" -->
 class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUServer__Base.html#a051cb0aa505229d4eb841e7a3472fe09">UHttpPlugIn</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a092c335cf13b5500db7d6eef9f64efa0"></a><!-- doxytag: member="UServer_Base::UFCGIPlugIn" ref="a092c335cf13b5500db7d6eef9f64efa0" args="" -->
+class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUServer__Base.html#a092c335cf13b5500db7d6eef9f64efa0">UFCGIPlugIn</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a667b3515ef95032c9798274b8842639e"></a><!-- doxytag: member="UServer_Base::UProxyPlugIn" ref="a667b3515ef95032c9798274b8842639e" args="" -->
 class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUServer__Base.html#a667b3515ef95032c9798274b8842639e">UProxyPlugIn</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4b4b8a54fa3fa25a13ab65026faa8c89"></a><!-- doxytag: member="UServer_Base::UClient_Base" ref="a4b4b8a54fa3fa25a13ab65026faa8c89" args="" -->
+class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUServer__Base.html#a4b4b8a54fa3fa25a13ab65026faa8c89">UClient_Base</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a519b46131851a8bbd5008ac562f037a8"></a><!-- doxytag: member="UServer_Base::UClientImage_Base" ref="a519b46131851a8bbd5008ac562f037a8" args="" -->
 class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUServer__Base.html#a519b46131851a8bbd5008ac562f037a8">UClientImage_Base</a></td></tr>
 </table>
@@ -322,7 +324,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/net/server/server.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Apr 13 14:23:36 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu Apr 22 19:09:48 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

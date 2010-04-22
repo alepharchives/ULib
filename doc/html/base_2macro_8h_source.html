@@ -68,7 +68,7 @@
 <a name="l00057"></a>00057 <span class="preprocessor"></span><span class="preprocessor">#  define U_INTERNAL_ASSERT_MAJOR(a,b)   { U_ASSERT_MACRO((a)&gt;(b),&quot;NOT GREATER&quot;,&quot;&quot;) }</span>
 <a name="l00058"></a>00058 <span class="preprocessor"></span><span class="preprocessor">#  define U_INTERNAL_ASSERT_EQUALS(a,b)  { U_ASSERT_MACRO((a)==(b),&quot;NOT EQUALS&quot;,&quot;&quot;) }</span>
 <a name="l00059"></a>00059 <span class="preprocessor"></span><span class="preprocessor">#  define U_INTERNAL_ASSERT_DIFFERS(a,b) { U_ASSERT_MACRO((a)!=(b),&quot;NOT DIFFERENT&quot;,&quot;&quot;) }</span>
-<a name="l00060"></a>00060 <span class="preprocessor"></span><span class="preprocessor">#  define U_INTERNAL_ASSERT_POINTER(ptr) { U_ASSERT_MACRO((void*)ptr&gt;(void*)0x0000ffff,&quot;~NULL POINTER&quot;,&quot;&quot;) }</span>
+<a name="l00060"></a>00060 <span class="preprocessor"></span><span class="preprocessor">#  define U_INTERNAL_ASSERT_POINTER(ptr) { U_ASSERT_MACRO((const void*)ptr&gt;(const void*)0x0000ffff,&quot;~NULL POINTER&quot;,&quot;&quot;) }</span>
 <a name="l00061"></a>00061 <span class="preprocessor"></span><span class="preprocessor">#  define U_INTERNAL_ASSERT_RANGE(a,x,b) { U_ASSERT_MACRO((x)&gt;=(a)&amp;&amp;(x)&lt;=(b),&quot;VALUE OUT OF RANGE&quot;,&quot;&quot;) }</span>
 <a name="l00062"></a>00062 <span class="preprocessor"></span>
 <a name="l00063"></a>00063 <span class="preprocessor">#  define U_INTERNAL_ASSERT_MSG(expr,info) \</span>
@@ -82,7 +82,7 @@
 <a name="l00071"></a>00071 <span class="preprocessor"></span><span class="preprocessor">#  define U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info) \</span>
 <a name="l00072"></a>00072 <span class="preprocessor">          { U_ASSERT_MACRO((a)!=(b),&quot;NOT DIFFERENT&quot;,info) }</span>
 <a name="l00073"></a>00073 <span class="preprocessor"></span><span class="preprocessor">#  define U_INTERNAL_ASSERT_POINTER_MSG(ptr,info) \</span>
-<a name="l00074"></a>00074 <span class="preprocessor">          { U_ASSERT_MACRO((void*)ptr&gt;(void*)0x0000ffff,&quot;~NULL POINTER&quot;,info) }</span>
+<a name="l00074"></a>00074 <span class="preprocessor">          { U_ASSERT_MACRO((const void*)ptr&gt;(const void*)0x0000ffff,&quot;~NULL POINTER&quot;,info) }</span>
 <a name="l00075"></a>00075 <span class="preprocessor"></span><span class="preprocessor">#  define U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info) \</span>
 <a name="l00076"></a>00076 <span class="preprocessor">          { U_ASSERT_MACRO((x)&gt;=(a)&amp;&amp;(x)&lt;=(b),&quot;VALUE OUT OF RANGE&quot;,info) }</span>
 <a name="l00077"></a>00077 <span class="preprocessor"></span><span class="preprocessor">#else</span>
@@ -392,48 +392,48 @@
 <a name="l00405"></a>00405 <span class="preprocessor"></span>
 <a name="l00406"></a>00406 <span class="comment">/* skip line comment */</span>
 <a name="l00407"></a>00407 
-<a name="l00408"></a>00408 <span class="preprocessor">#define U_SKIP_LINE_COMMENT(s,end,loop)       \</span>
-<a name="l00409"></a>00409 <span class="preprocessor">                                              \</span>
-<a name="l00410"></a>00410 <span class="preprocessor">      {                                       \</span>
-<a name="l00411"></a>00411 <span class="preprocessor">      s = (char*) memchr(s, &#39;\n&#39;, end - s);   \</span>
-<a name="l00412"></a>00412 <span class="preprocessor">                                              \</span>
-<a name="l00413"></a>00413 <span class="preprocessor">      if (s == 0) s = end;                    \</span>
-<a name="l00414"></a>00414 <span class="preprocessor">                                              \</span>
-<a name="l00415"></a>00415 <span class="preprocessor">      goto loop;                              \</span>
+<a name="l00408"></a>00408 <span class="preprocessor">#define U_SKIP_LINE_COMMENT(s,end,loop)                         \</span>
+<a name="l00409"></a>00409 <span class="preprocessor">                                                                                                                                        \</span>
+<a name="l00410"></a>00410 <span class="preprocessor">      {                                                                                                                 \</span>
+<a name="l00411"></a>00411 <span class="preprocessor">      s = (const char*) memchr(s, &#39;\n&#39;, end - s);  \</span>
+<a name="l00412"></a>00412 <span class="preprocessor">                                                                                                                                        \</span>
+<a name="l00413"></a>00413 <span class="preprocessor">      if (s == 0) s = end;                                                                      \</span>
+<a name="l00414"></a>00414 <span class="preprocessor">                                                                                                                                        \</span>
+<a name="l00415"></a>00415 <span class="preprocessor">      goto loop;                                                                                                \</span>
 <a name="l00416"></a>00416 <span class="preprocessor">      }</span>
 <a name="l00417"></a>00417 <span class="preprocessor"></span>
 <a name="l00418"></a>00418 <span class="comment">/* skip quoted string */</span>
 <a name="l00419"></a>00419 
-<a name="l00420"></a>00420 <span class="preprocessor">#define U_SKIP_QUOTED_STRING(s,end,q)         \</span>
-<a name="l00421"></a>00421 <span class="preprocessor">                                              \</span>
-<a name="l00422"></a>00422 <span class="preprocessor">      {                                       \</span>
-<a name="l00423"></a>00423 <span class="preprocessor">      while (true)                            \</span>
-<a name="l00424"></a>00424 <span class="preprocessor">         {                                    \</span>
-<a name="l00425"></a>00425 <span class="preprocessor">         s = (char*) memchr(s, q, end - s);   \</span>
-<a name="l00426"></a>00426 <span class="preprocessor">                                              \</span>
-<a name="l00427"></a>00427 <span class="preprocessor">         if (s == 0) s = end;                 \</span>
-<a name="l00428"></a>00428 <span class="preprocessor">         else                                 \</span>
-<a name="l00429"></a>00429 <span class="preprocessor">            {                                 \</span>
-<a name="l00430"></a>00430 <span class="preprocessor">            if (*(s-1) == &#39;\\&#39;)               \</span>
-<a name="l00431"></a>00431 <span class="preprocessor">               {                              \</span>
-<a name="l00432"></a>00432 <span class="preprocessor">               ++s;                           \</span>
-<a name="l00433"></a>00433 <span class="preprocessor">                                              \</span>
-<a name="l00434"></a>00434 <span class="preprocessor">               continue;                      \</span>
-<a name="l00435"></a>00435 <span class="preprocessor">               }                              \</span>
-<a name="l00436"></a>00436 <span class="preprocessor">            }                                 \</span>
-<a name="l00437"></a>00437 <span class="preprocessor">                                              \</span>
-<a name="l00438"></a>00438 <span class="preprocessor">         break;                               \</span>
-<a name="l00439"></a>00439 <span class="preprocessor">         }                                    \</span>
+<a name="l00420"></a>00420 <span class="preprocessor">#define U_SKIP_QUOTED_STRING(s,end,q)                                   \</span>
+<a name="l00421"></a>00421 <span class="preprocessor">                                                                                                                                        \</span>
+<a name="l00422"></a>00422 <span class="preprocessor">      {                                                                                                                 \</span>
+<a name="l00423"></a>00423 <span class="preprocessor">      while (true)                                                                                      \</span>
+<a name="l00424"></a>00424 <span class="preprocessor">         {                                                                                                              \</span>
+<a name="l00425"></a>00425 <span class="preprocessor">         s = (const char*) memchr(s, q, end - s);  \</span>
+<a name="l00426"></a>00426 <span class="preprocessor">                                                                                                                                        \</span>
+<a name="l00427"></a>00427 <span class="preprocessor">         if (s == 0) s = end;                                                           \</span>
+<a name="l00428"></a>00428 <span class="preprocessor">         else                                                                                                   \</span>
+<a name="l00429"></a>00429 <span class="preprocessor">            {                                                                                                   \</span>
+<a name="l00430"></a>00430 <span class="preprocessor">            if (*(s-1) == &#39;\\&#39;)                                                 \</span>
+<a name="l00431"></a>00431 <span class="preprocessor">               {                                                                                                \</span>
+<a name="l00432"></a>00432 <span class="preprocessor">               ++s;                                                                                     \</span>
+<a name="l00433"></a>00433 <span class="preprocessor">                                                                                                                                        \</span>
+<a name="l00434"></a>00434 <span class="preprocessor">               continue;                                                                        \</span>
+<a name="l00435"></a>00435 <span class="preprocessor">               }                                                                                                \</span>
+<a name="l00436"></a>00436 <span class="preprocessor">            }                                                                                                   \</span>
+<a name="l00437"></a>00437 <span class="preprocessor">                                                                                                                                        \</span>
+<a name="l00438"></a>00438 <span class="preprocessor">         break;                                                                                         \</span>
+<a name="l00439"></a>00439 <span class="preprocessor">         }                                                                                                              \</span>
 <a name="l00440"></a>00440 <span class="preprocessor">      }</span>
 <a name="l00441"></a>00441 <span class="preprocessor"></span>
 <a name="l00442"></a>00442 <span class="comment">/* delimit token with char delimiter */</span>
 <a name="l00443"></a>00443 
-<a name="l00444"></a>00444 <span class="preprocessor">#define U_DELIMIT_TOKEN_CHAR(s,end,p,c) \</span>
-<a name="l00445"></a>00445 <span class="preprocessor">                                        \</span>
-<a name="l00446"></a>00446 <span class="preprocessor">   p = s;                               \</span>
-<a name="l00447"></a>00447 <span class="preprocessor">                                        \</span>
-<a name="l00448"></a>00448 <span class="preprocessor">   s = (char*) memchr(s, c, end - s);   \</span>
-<a name="l00449"></a>00449 <span class="preprocessor">                                        \</span>
+<a name="l00444"></a>00444 <span class="preprocessor">#define U_DELIMIT_TOKEN_CHAR(s,end,p,c)         \</span>
+<a name="l00445"></a>00445 <span class="preprocessor">                                                                                                                        \</span>
+<a name="l00446"></a>00446 <span class="preprocessor">   p = s;                                                                                               \</span>
+<a name="l00447"></a>00447 <span class="preprocessor">                                                                                                                        \</span>
+<a name="l00448"></a>00448 <span class="preprocessor">   s = (const char*) memchr(s, c, end - s);  \</span>
+<a name="l00449"></a>00449 <span class="preprocessor">                                                                                                                        \</span>
 <a name="l00450"></a>00450 <span class="preprocessor">   if (s == 0) s = end;</span>
 <a name="l00451"></a>00451 <span class="preprocessor"></span>
 <a name="l00452"></a>00452 <span class="comment">/* delimit token with white space */</span>
@@ -481,28 +481,28 @@
 <a name="l00494"></a>00494 <span class="preprocessor"></span>
 <a name="l00495"></a>00495 <span class="comment">/* delimit token with string delimiter */</span>
 <a name="l00496"></a>00496 
-<a name="l00497"></a>00497 <span class="preprocessor">#define U_DELIMIT_TOKEN_EXT(s,end,p,delim)              \</span>
-<a name="l00498"></a>00498 <span class="preprocessor">                                                                                                                                \</span>
-<a name="l00499"></a>00499 <span class="preprocessor">   if (*s == &#39;&quot;&#39;)                                                                                       \</span>
-<a name="l00500"></a>00500 <span class="preprocessor">      {                                                                                                         \</span>
-<a name="l00501"></a>00501 <span class="preprocessor">      p = s++;                                                                                          \</span>
-<a name="l00502"></a>00502 <span class="preprocessor">                                                                                                                                \</span>
-<a name="l00503"></a>00503 <span class="preprocessor">      U_SKIP_QUOTED_STRING(s,end,&#39;&quot;&#39;)                           \</span>
-<a name="l00504"></a>00504 <span class="preprocessor">                                                                                                                                \</span>
-<a name="l00505"></a>00505 <span class="preprocessor">      if (s &lt; end) ++s;                                                                 \</span>
-<a name="l00506"></a>00506 <span class="preprocessor">      }                                                                                                         \</span>
-<a name="l00507"></a>00507 <span class="preprocessor">   else                                                                                                         \</span>
-<a name="l00508"></a>00508 <span class="preprocessor">      {                                                                                                         \</span>
-<a name="l00509"></a>00509 <span class="preprocessor">      p = s++;                                                                                          \</span>
-<a name="l00510"></a>00510 <span class="preprocessor">                                                                                                                                \</span>
-<a name="l00511"></a>00511 <span class="preprocessor">      s = (char*) u_strpbrk(s, end - s, delim); \</span>
-<a name="l00512"></a>00512 <span class="preprocessor">                                                                                                                                \</span>
-<a name="l00513"></a>00513 <span class="preprocessor">      if (s == 0) s = end;                                                              \</span>
+<a name="l00497"></a>00497 <span class="preprocessor">#define U_DELIMIT_TOKEN_EXT(s,end,p,delim)                              \</span>
+<a name="l00498"></a>00498 <span class="preprocessor">                                                                                                                                                \</span>
+<a name="l00499"></a>00499 <span class="preprocessor">   if (*s == &#39;&quot;&#39;)                                                                                                       \</span>
+<a name="l00500"></a>00500 <span class="preprocessor">      {                                                                                                                         \</span>
+<a name="l00501"></a>00501 <span class="preprocessor">      p = s++;                                                                                                          \</span>
+<a name="l00502"></a>00502 <span class="preprocessor">                                                                                                                                                \</span>
+<a name="l00503"></a>00503 <span class="preprocessor">      U_SKIP_QUOTED_STRING(s,end,&#39;&quot;&#39;)                                           \</span>
+<a name="l00504"></a>00504 <span class="preprocessor">                                                                                                                                                \</span>
+<a name="l00505"></a>00505 <span class="preprocessor">      if (s &lt; end) ++s;                                                                                 \</span>
+<a name="l00506"></a>00506 <span class="preprocessor">      }                                                                                                                         \</span>
+<a name="l00507"></a>00507 <span class="preprocessor">   else                                                                                                                         \</span>
+<a name="l00508"></a>00508 <span class="preprocessor">      {                                                                                                                         \</span>
+<a name="l00509"></a>00509 <span class="preprocessor">      p = s++;                                                                                                          \</span>
+<a name="l00510"></a>00510 <span class="preprocessor">                                                                                                                                                \</span>
+<a name="l00511"></a>00511 <span class="preprocessor">      s = (const char*) u_strpbrk(s, end - s, delim); \</span>
+<a name="l00512"></a>00512 <span class="preprocessor">                                                                                                                                                \</span>
+<a name="l00513"></a>00513 <span class="preprocessor">      if (s == 0) s = end;                                                                              \</span>
 <a name="l00514"></a>00514 <span class="preprocessor">      }</span>
 <a name="l00515"></a>00515 <span class="preprocessor"></span>
 <a name="l00516"></a>00516 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Apr 13 14:23:29 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu Apr 22 19:09:40 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

@@ -376,4 +376,11 @@ done
 #
 # End
 #
+
+## Maximum Segment Size
+#
+#for iface in $ExternalDevice; do
+#	$IPTABLES -t mangle -A POSTROUTING -p tcp --tcp-flags SYN,RST SYN -o $iface -j TCPMSS --clamp-mss-to-pmtu
+#done
+
 exit 0

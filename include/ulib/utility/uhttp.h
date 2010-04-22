@@ -358,7 +358,6 @@ public:
    static bool processHTTPGetRequest();
    static bool checkPath(UString& pathname);
    static void getTimeIfNeeded(bool all_http_version);
-   static bool processHTTPAuthorization(bool digest, const UString& request_uri);
 
    static UString     getHTMLDirectoryList();
    static const char* getHTTPHeaderValuePtr(const UString& name);
@@ -402,6 +401,16 @@ public:
    static void    setCGIShellScript(UString& command);
    static bool    processCGIRequest(UCommand* pcmd, UString* penvironment);
    static void    setHTTPCgiResponse(int nResponseCode, uint32_t content_length, bool header_content_length, bool header_content_type);
+
+   // URI PROTECTED
+
+   static UString* alias;
+   static bool virtual_host;
+   static UString* request_uri;
+   static UVector<UIPAllow*>* vallow_IP;
+
+   static bool checkUriProtected();
+   static bool processHTTPAuthorization(bool digest);
 
    // Accept-Language: en-us,en;q=0.5
    // ----------------------------------------------------

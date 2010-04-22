@@ -13,6 +13,30 @@
 
 #include <ulib/zip/zip.h>
 
+UZIP::UZIP() : tmpdir(U_CAPACITY)
+{
+   U_TRACE_REGISTER_OBJECT(0, UZIP, "", 0)
+
+   npart         = 0;
+   file          = 0;
+   valid         = false;
+   filenames     = filecontents = 0;
+   zippartname   = zippartcontent = 0;
+   filenames_len = filecontents_len = 0;
+}
+
+UZIP::UZIP(const UString& _content) : content(_content), tmpdir(U_CAPACITY)
+{
+   U_TRACE_REGISTER_OBJECT(0, UZIP, "%.*S", U_STRING_TO_TRACE(_content))
+
+   npart         = 0;
+   file          = 0;
+   valid         = U_STRNEQ(_content.data(), U_ZIP_ARCHIVE);
+   filenames     = filecontents = 0;
+   zippartname   = zippartcontent = 0;
+   filenames_len = filecontents_len = 0;
+}
+
 void UZIP::clear()
 {
    U_TRACE(0, "UZIP::clear()")
@@ -42,7 +66,7 @@ void UZIP::clear()
       U_SYSCALL_VOID(free, "%p", filenames);
       U_SYSCALL_VOID(free, "%p", filenames_len);
 
-      filenames = 0;
+      filenames     = 0;
       filenames_len = 0;
       }
 
@@ -61,7 +85,7 @@ void UZIP::clear()
       U_SYSCALL_VOID(free, "%p", filecontents);
       U_SYSCALL_VOID(free, "%p", filecontents_len);
 
-      filecontents = 0;
+      filecontents     = 0;
       filecontents_len = 0;
       }
 }
@@ -70,7 +94,6 @@ U_NO_EXPORT void UZIP::assignFilenames()
 {
    U_TRACE(0, "UZIP::assignFilenames()")
 
-   U_INTERNAL_ASSERT(valid)
    U_INTERNAL_ASSERT_MAJOR(npart,0)
    U_INTERNAL_ASSERT_EQUALS(zippartname,0)
    U_INTERNAL_ASSERT_POINTER(filenames)
@@ -83,9 +106,10 @@ U_NO_EXPORT void UZIP::assignFilenames()
 
 bool UZIP::extract(const UString* _tmpdir)
 {
-   U_TRACE(0, "UZIP::extract(%p)", _tmpdir)
+   U_TRACE(1, "UZIP::extract(%p)", _tmpdir)
 
-   U_INTERNAL_ASSERT(valid)
+   U_CHECK_MEMORY
+
    U_ASSERT(tmpdir.empty())
    U_ASSERT_EQUALS(content.empty(),false)
 
@@ -102,7 +126,7 @@ bool UZIP::extract(const UString* _tmpdir)
    if (UFile::mkdirs(dir) &&
        UFile::chdir(dir, true))
       {
-      file = U_NEW(UFile);
+      if (file == 0) file = U_NEW(UFile);
 
       file->setPath(U_STRING_FROM_CONSTANT("tmp.zip"));
 
@@ -111,7 +135,7 @@ bool UZIP::extract(const UString* _tmpdir)
          {
          file->close();
 
-         npart = zip_extract("tmp.zip", 0, &filenames, &filenames_len);
+         npart = U_SYSCALL(zip_extract, "%S,%p,%p,%p", "tmp.zip", 0, &filenames, &filenames_len);
          }
 
       (void) UFile::chdir(0, true);
@@ -129,17 +153,74 @@ bool UZIP::extract(const UString* _tmpdir)
    U_RETURN(false);
 }
 
+bool UZIP::extract(const UString& data, const UString* tmpdir)
+{
+   U_TRACE(0, "UZIP::extract(%.*S,%p)", U_STRING_TO_TRACE(data), tmpdir)
+
+   U_INTERNAL_ASSERT_EQUALS(valid,false)
+
+   if (U_STRNEQ(data.data(), U_ZIP_ARCHIVE))
+      {
+      content = data;
+      valid   = extract(tmpdir);
+      }
+
+   U_RETURN(valid);
+}
+
+UString UZIP::archive(const char** add_to_filenames)
+{
+   U_TRACE(1, "UZIP::archive(%p)", add_to_filenames)
+
+   U_INTERNAL_ASSERT_MAJOR(npart,0)
+   U_ASSERT_EQUALS(tmpdir.empty(),false)
+   U_ASSERT_EQUALS(content.empty(),false)
+   U_INTERNAL_ASSERT_POINTER(add_to_filenames)
+
+   UString result;
+   const char* dir = tmpdir.c_str();
+
+   if (UFile::chdir(dir, true))
+      {
+      uint32_t i, j;
+      const char* names[1024];
+
+      for (i = 0; i < npart; ++i)
+         {
+         names[i] = (const char*) filenames[i];
+
+         U_INTERNAL_DUMP("name[%d] = %S", i, names[i])
+
+         U_INTERNAL_ASSERT_POINTER(names[i])
+         U_INTERNAL_ASSERT(names[i][0])
+         }
+
+      for (j = 0; (names[i] = add_to_filenames[j]); ++i,++j)
+         {
+         U_INTERNAL_DUMP("name[%d] = %S", i, names[i])
+
+         U_INTERNAL_ASSERT_POINTER(names[i])
+         U_INTERNAL_ASSERT(names[i][0])
+         }
+
+      if (U_SYSCALL(zip_archive, "%S,%p", "tmp.zip", names) == 0) result = UFile::contentOf("tmp.zip");
+
+      (void) UFile::chdir(0, true);
+      }
+
+   U_RETURN_STRING(result);
+}
+
 bool UZIP::readContent()
 {
-   U_TRACE(0, "UZIP::readContent()")
+   U_TRACE(1, "UZIP::readContent()")
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT(valid)
    U_INTERNAL_ASSERT_EQUALS(zippartname,0)
    U_ASSERT_EQUALS(content.empty(),false)
 
-   npart = zip_get_content(U_STRING_TO_PARAM(content), &filenames, &filenames_len, &filecontents, &filecontents_len);
+   npart = U_SYSCALL(zip_get_content, "%p,%u,%p,%p,%p,%p", U_STRING_TO_PARAM(content), &filenames, &filenames_len, &filecontents, &filecontents_len);
 
    if (npart > 0)
       {

@@ -215,7 +215,7 @@ void u_trace_init(bool force, bool info, bool offset)
 
          u_trace_fd = open(name, O_CREAT | O_RDWR | O_BINARY | (offset ? O_APPEND : 0), 0666);
 
-         if (u_trace_fd == -1) U_WARNING("error on create file <%s>", name);
+         if (u_trace_fd == -1) U_WARNING("error on create file %S", name);
          else
             {
             /* gestione dimensione massima... */

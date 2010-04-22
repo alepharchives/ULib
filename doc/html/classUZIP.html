@@ -36,26 +36,33 @@ Collaboration diagram for UZIP:</div>
 <p><a href="classUZIP-members.html">List of all members.</a></p>
 <table border="0" cellpadding="0" cellspacing="0">
 <tr><td colspan="2"><h2>Public Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab328cbedd47962b303d4fc1e273ce9e9"></a><!-- doxytag: member="UZIP::UZIP" ref="ab328cbedd47962b303d4fc1e273ce9e9" args="(const UString &amp;_content)" -->
-U_MEMORY_TEST <br class="typebreak"/>
-U_MEMORY_ALLOCATOR <br class="typebreak"/>
-U_MEMORY_DEALLOCATOR&nbsp;</td><td class="memItemRight" valign="bottom"><b>UZIP</b> (const <a class="el" href="classUString.html">UString</a> &amp;_content)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a108863fc8dc2925e75d23d085062c6a4"></a><!-- doxytag: member="UZIP::UZIP" ref="a108863fc8dc2925e75d23d085062c6a4" args="(const UString &amp;content)" -->
+&nbsp;</td><td class="memItemRight" valign="bottom"><b>UZIP</b> (const <a class="el" href="classUString.html">UString</a> &amp;content)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUZIP.html#a94adf73b6074a81da997a6e1cad62c8f">~UZIP</a> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top">bool&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUZIP.html#af58cab6c993d14129edbcf8ca6e25adc">isValid</a> () const </td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7c69b8780d90b5d2127478d239d5bac5"></a><!-- doxytag: member="UZIP::readContent" ref="a7c69b8780d90b5d2127478d239d5bac5" args="()" -->
-bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>readContent</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab69bd5395f0fa78992153b820529e659"></a><!-- doxytag: member="UZIP::extract" ref="ab69bd5395f0fa78992153b820529e659" args="(const UString *tmpdir=0)" -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>extract</b> (const <a class="el" href="classUString.html">UString</a> *tmpdir=0)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abc7d605fb729eaad47326e799b0dbb0c"></a><!-- doxytag: member="UZIP::extract" ref="abc7d605fb729eaad47326e799b0dbb0c" args="(const UString &amp;data, const UString *tmpdir=0)" -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>extract</b> (const <a class="el" href="classUString.html">UString</a> &amp;data, const <a class="el" href="classUString.html">UString</a> *tmpdir=0)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa6db00d04cc14e0112963b97f4ef8a5e"></a><!-- doxytag: member="UZIP::clear" ref="aa6db00d04cc14e0112963b97f4ef8a5e" args="()" -->
 void&nbsp;</td><td class="memItemRight" valign="bottom"><b>clear</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7c69b8780d90b5d2127478d239d5bac5"></a><!-- doxytag: member="UZIP::readContent" ref="a7c69b8780d90b5d2127478d239d5bac5" args="()" -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>readContent</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae2ec46f86c206e49f17a429ee4080ac1"></a><!-- doxytag: member="UZIP::getFilenames" ref="ae2ec46f86c206e49f17a429ee4080ac1" args="() const " -->
+char **&nbsp;</td><td class="memItemRight" valign="bottom"><b>getFilenames</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a06f822b2c79e80b6c78be4527ab2daab"></a><!-- doxytag: member="UZIP::getFilesCount" ref="a06f822b2c79e80b6c78be4527ab2daab" args="() const " -->
 uint32_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>getFilesCount</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a69cf32a9a1ef9f7adae43681db2bb929"></a><!-- doxytag: member="UZIP::getFilenameAt" ref="a69cf32a9a1ef9f7adae43681db2bb929" args="(int index) const " -->
 <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>getFilenameAt</b> (int index) const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a665141dfdd8f7ade02a3323c762347d4"></a><!-- doxytag: member="UZIP::getFileContentAt" ref="a665141dfdd8f7ade02a3323c762347d4" args="(int index)" -->
 <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>getFileContentAt</b> (int index)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5d09546db5037e761d34307cf6429be4"></a><!-- doxytag: member="UZIP::archive" ref="a5d09546db5037e761d34307cf6429be4" args="(const char **add_to_filenames)" -->
+<a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>archive</b> (const char **add_to_filenames)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1deca1b1f227c315575c63682afc3fbd"></a><!-- doxytag: member="UZIP::operator[]" ref="a1deca1b1f227c315575c63682afc3fbd" args="(uint32_t pos) const " -->
 <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>operator[]</b> (uint32_t pos) const </td></tr>
+<tr><td colspan="2"><h2>Static Public Member Functions</h2></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa20bd8915120012c0b56b5ee13cf3848"></a><!-- doxytag: member="UZIP::archive" ref="aa20bd8915120012c0b56b5ee13cf3848" args="(const char *zipfile, const char **filenames)" -->
+static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>archive</b> (const char *zipfile, const char **filenames)</td></tr>
 <tr><td colspan="2"><h2>Protected Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab892319de2561fc3b87af5cf18ff63c9"></a><!-- doxytag: member="UZIP::file" ref="ab892319de2561fc3b87af5cf18ff63c9" args="" -->
 <a class="el" href="classUFile.html">UFile</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>file</b></td></tr>
@@ -123,7 +130,7 @@ bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>valid</b></td></tr>
 <li>src/ulib/zip/zip.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Apr 13 14:23:37 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu Apr 22 19:09:50 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

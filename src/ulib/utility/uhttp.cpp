@@ -28,27 +28,31 @@
 #  include <ulib/magic/magic.h>
 #endif
 
-char              UHTTP::cgi_dir[U_PATH_MAX];
-uint32_t          UHTTP::content_type_len;
-UFile*            UHTTP::file;
-UString*          UHTTP::tmpdir;
-UString*          UHTTP::qcontent;
-UString*          UHTTP::penvironment;
-uhttpheader       UHTTP::http_info;
-const char*       UHTTP::ptrH;
-const char*       UHTTP::ptrC;
-const char*       UHTTP::ptrT;
-const char*       UHTTP::content_type_ptr;
-UMimeMultipart*   UHTTP::formMulti;
-UVector<UString>* UHTTP::form_name_value;
+char                 UHTTP::cgi_dir[U_PATH_MAX];
+bool                 UHTTP::virtual_host;
+uint32_t             UHTTP::content_type_len;
+UFile*               UHTTP::file;
+UString*             UHTTP::alias;
+UString*             UHTTP::tmpdir;
+UString*             UHTTP::qcontent;
+UString*             UHTTP::request_uri;
+UString*             UHTTP::penvironment;
+uhttpheader          UHTTP::http_info;
+const char*          UHTTP::ptrH;
+const char*          UHTTP::ptrC;
+const char*          UHTTP::ptrT;
+const char*          UHTTP::content_type_ptr;
+UMimeMultipart*      UHTTP::formMulti;
+UVector<UString>*    UHTTP::form_name_value;
+UVector<UIPAllow*>*  UHTTP::vallow_IP;
 
-const UString*    UHTTP::str_frm_response;
-const UString*    UHTTP::str_frm_forbidden;
-const UString*    UHTTP::str_frm_not_found;
-const UString*    UHTTP::str_frm_moved_temp;
-const UString*    UHTTP::str_frm_bad_request;
-const UString*    UHTTP::str_frm_internal_error;
-const UString*    UHTTP::str_frm_service_unavailable;
+const UString*       UHTTP::str_frm_response;
+const UString*       UHTTP::str_frm_forbidden;
+const UString*       UHTTP::str_frm_not_found;
+const UString*       UHTTP::str_frm_moved_temp;
+const UString*       UHTTP::str_frm_bad_request;
+const UString*       UHTTP::str_frm_internal_error;
+const UString*       UHTTP::str_frm_service_unavailable;
 
 void UHTTP::str_allocate()
 {
@@ -1641,9 +1645,9 @@ U_NO_EXPORT bool UHTTP::openFile()
    U_RETURN(result);
 }
 
-bool UHTTP::processHTTPAuthorization(bool digest, const UString& request_uri)
+bool UHTTP::processHTTPAuthorization(bool digest)
 {
-   U_TRACE(0, "UHTTP::processHTTPAuthorization(%b,%.*S)", digest, U_STRING_TO_TRACE(request_uri))
+   U_TRACE(0, "UHTTP::processHTTPAuthorization(%b)", digest)
 
    bool result = false;
 
@@ -1704,9 +1708,28 @@ bool UHTTP::processHTTPAuthorization(bool digest, const UString& request_uri)
                   {
                   U_ASSERT(uri.empty())
 
-                  // NB: may be a ALIAS...
+                  // NB: there may be an ALIAS...
 
-                  if (value != request_uri) U_RETURN(false);
+                  UString tmp(U_CAPACITY);
+
+                  if (request_uri == 0 ||
+                      request_uri->empty())
+                     {
+                     (void) tmp.assign(U_HTTP_URI_QUERY_TO_PARAM);
+                     }
+                  else
+                     {
+                     tmp = *request_uri;
+
+                     if (http_info.query_len)
+                        {
+                        tmp.push_back('?');
+
+                        (void) tmp.append(U_HTTP_QUERY_TO_PARAM);
+                        }
+                     }
+
+                  if (value != tmp) U_RETURN(false);
 
                   uri = value;
                   }
@@ -1868,6 +1891,42 @@ bool UHTTP::checkPath(UString& pathname)
    U_RETURN(true);
 }
 
+bool UHTTP::checkUriProtected()
+{
+   U_TRACE(0, "UHTTP::checkUriProtected()")
+
+   if (vallow_IP)
+      {
+      bool ok = UIPAllow::isAllowed(UClientImage_Base::socket->remoteIPAddress().getInAddr(), *vallow_IP);
+
+      if (ok &&
+          UClientImage_Base::setRealIP())
+         {
+         ok = UIPAllow::isAllowed(UClientImage_Base::getRemoteIP(), *vallow_IP);
+         }
+
+      if (ok == false)
+         {
+         U_SRV_LOG_VAR("URI_PROTECTED: request %.*S denied by access list", U_HTTP_URI_TO_TRACE);
+
+         UHTTP::setHTTPForbidden();
+
+         U_RETURN(false);
+         }
+      }
+
+   // check if it's OK via authentication (digest|basic)
+
+   if (UHTTP::processHTTPAuthorization(UServer_Base::digest_authentication) == false)
+      {
+      UHTTP::setHTTPUnAuthorized(UServer_Base::digest_authentication);
+
+      U_RETURN(false);
+      }
+
+   U_RETURN(true);
+}
+
 bool UHTTP::checkHTTPRequest()
 {
    U_TRACE(0, "UHTTP::checkHTTPRequest()")
@@ -1961,6 +2020,18 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
 
    char c = u_line_terminator[0];
 
+   // Accept-Language: en-us,en;q=0.5
+
+   uint32_t    accept_language_len = 0;
+   const char* accept_language_ptr = getHTTPHeaderValuePtr(*USocket::str_accept_language);
+
+   if (accept_language_ptr)
+      {
+      while (accept_language_ptr[accept_language_len] != c) ++accept_language_len;
+
+      U_INTERNAL_DUMP("accept_language = %.*S", accept_language_len, accept_language_ptr)
+      }
+
    // Referer: http://www.cgi101.com/class/ch3/text.html
 
    uint32_t    referer_len = 0;
@@ -1973,7 +2044,7 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
       U_INTERNAL_DUMP("referer = %.*S", referer_len, referer_ptr)
       }
 
-   // check User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
+   // User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
 
    uint32_t    user_agent_len = 0;
    const char* user_agent_ptr = getHTTPHeaderValuePtr(*USocket::str_user_agent);
@@ -1984,18 +2055,6 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
 
       U_INTERNAL_DUMP("user_agent = %.*S", user_agent_len, user_agent_ptr)
       }
-
-   // check for MSIE in "User-Agent: ...." in header request...
-
-   const char* browserMSIE = (user_agent_ptr && (u_find(user_agent_ptr, user_agent_len, U_CONSTANT_TO_PARAM("MSIE")) != 0) ? "1" : "");
-
-   U_INTERNAL_DUMP("browserMSIE = %S", browserMSIE)
-
-   // Cookie: _saml_idp=dXJuOm1hY2U6dGVzdC5zXRo; _redirect_user_idp=urn%3Amace%3Atest.shib%3Afederation%3Alocalhost;
-
-   UString cookie = getHTTPCookie(sh_script);
-
-   U_INTERNAL_DUMP("cookie = %.*S", U_STRING_TO_TRACE(cookie))
 
    /*
    Set up CGI environment variables.
@@ -2102,54 +2161,68 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
    UString buffer(U_CAPACITY), name = UServer_Base::getNodeName(),
            ip_server = UServer_Base::getIPAddress(), ip_client = UClientImage_Base::getRemoteIP();
 
-   buffer.snprintf("CONTENT_LENGTH=%u\n"
-                   "GATEWAY_INTERFACE=CGI/1.1\n"
+   buffer.snprintf("GATEWAY_INTERFACE=CGI/1.1\n"
                    "REMOTE_ADDR=%.*s\n"
                    "SCRIPT_NAME=%.*s\n"
                    "SERVER_NAME=%.*s\n"
                    "SERVER_PORT=%d\n"
                    "SERVER_PROTOCOL=HTTP/1.%c\n"
                    "SERVER_SOFTWARE=" PACKAGE "/" VERSION "\n"
-                   // PHP
-                   "SCRIPT_FILENAME=%w%.*s\n" // is used by PHP for determining the name of script to execute
-                   "QUERY_STRING=%.*s\n"      // contains the parameters of the request
-                   "REQUEST_METHOD=%.*s\n"    // dealing with POST requests
-                   "\"CONTENT_TYPE=%.*s\"\n"
-                   "REDIRECT_STATUS=200\n"
+                   "CONTENT_LENGTH=%u\n"
                    // ext
                    "SERVER_ADDR=%.*s\n"
-                   "BROWSER_MSIE=%s\n"
-                   "HTTP_ACCEPT_LANGUAGE=%.2s\n"
-                   "HTTP_REFERER=%.*s\n"
-                   "\"HTTP_COOKIE=%.*s\"\n"
-                   "\"HTTP_USER_AGENT=%.*s\"\n"
+                   "PWD=%w/%s\n"
+                   "SCRIPT_FILENAME=%w%.*s\n"   // is used by PHP for determining the name of script to execute
                    "PATH=/usr/local/bin:/usr/bin:/bin\n"
-                   "PWD=%w/%s\n",
-                   UClientImage_Base::body->size(),
+                   // PHP
+                   "REDIRECT_STATUS=200\n"
+                   "REQUEST_METHOD=%.*s\n",     // dealing with POST requests
                    U_STRING_TO_TRACE(ip_client),
                    U_HTTP_URI_TO_TRACE,
                    U_STRING_TO_TRACE(name),
                    UServer_Base::port,
                    http_info.version + '0',
-                   // PHP
-                   U_HTTP_URI_TO_TRACE,
-                   U_HTTP_QUERY_TO_TRACE,
-                   U_HTTP_METHOD_TO_TRACE,
-                   content_type_len, content_type_ptr,
+                   UClientImage_Base::body->size(),
                    // ext
                    U_STRING_TO_TRACE(ip_server),
-                   browserMSIE,
-                   UHTTP::getAcceptLanguage(),
-                   referer_len, referer_ptr,
-                   U_STRING_TO_TRACE(cookie),
-                   user_agent_len, user_agent_ptr,
-                   cgi_dir);
+                   cgi_dir,
+                   U_HTTP_URI_TO_TRACE,
+                   // PHP
+                   U_HTTP_METHOD_TO_TRACE);
+
+   if (referer_len)         buffer.snprintf_add("HTTP_REFERER=%.*s\n", referer_len, referer_ptr);
+   if (user_agent_len)      buffer.snprintf_add("\"HTTP_USER_AGENT=%.*s\"\n", user_agent_len, user_agent_ptr);
+   if (content_type_len)    buffer.snprintf_add("\"CONTENT_TYPE=%.*s\"\n", content_type_len, content_type_ptr);
+   if (http_info.host_len)  buffer.snprintf_add("HTTP_HEADER_HOST=%.*s\n", U_HTTP_HOST_TO_TRACE);
+   if (http_info.query_len) buffer.snprintf_add("QUERY_STRING=%.*s\n", U_HTTP_QUERY_TO_TRACE); // contains the parameters of the request
+
+   if (request_uri &&
+       request_uri->empty() == false)
+      {
+      buffer.snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(*request_uri));
+      }
+
+   if (sh_script)
+      {
+      // ULIB facility: some env var for shell script...
+
+      if (user_agent_len)
+         {
+         // check for MSIE in "User-Agent: ...." in header request...
+
+         if (u_find(user_agent_ptr, user_agent_len, U_CONSTANT_TO_PARAM("MSIE"))) (void) buffer.append(U_CONSTANT_TO_PARAM("BROWSER_MSIE=1\n"));
+         }
+
+      buffer.snprintf_add("HTTP_ACCEPT_LANGUAGE=%.2s\n", (accept_language_len ? accept_language_ptr : "en"));
+      }
+   else
+      {
+      if (accept_language_len) buffer.snprintf_add("\"HTTP_ACCEPT_LANGUAGE=%.*s\"\n", accept_language_len, accept_language_ptr);
+      }
 
 #ifdef HAVE_SSL
    if (UClientImage_Base::socket->isSSL())
       {
-      (void) buffer.append(U_CONSTANT_TO_PARAM("HTTPS=1\n"));
-
       X509* x509 = ((USSLSocket*)UClientImage_Base::socket)->getPeerCertificate();
 
       if (x509)
@@ -2164,8 +2237,23 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
                              U_STRING_TO_TRACE(subject),
                              UCertificate::getSerialNumber(x509));
          }
+
+      (void) buffer.append(U_CONSTANT_TO_PARAM("HTTPS=1\n"));
       }
 #endif
+
+   // Cookie: _saml_idp=dXJuOm1hY2U6dGVzdC5zXRo; _redirect_user_idp=urn%3Amace%3Atest.shib%3Afederation%3Alocalhost;
+
+   UString cookie = getHTTPCookie(sh_script);
+
+   U_INTERNAL_DUMP("cookie = %.*S", U_STRING_TO_TRACE(cookie))
+
+   if (cookie.empty() == false)
+      {
+      (void) buffer.append(U_CONSTANT_TO_PARAM("\"HTTP_COOKIE="));
+      (void) buffer.append(cookie);
+      (void) buffer.append(U_CONSTANT_TO_PARAM("\"\n"));
+      }
 
    U_RETURN_STRING(buffer);
 }
@@ -2716,14 +2804,9 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
 
    pcmd->reset();
 
-   if (processCGIOutput() == false)
-      {
-      setHTTPInternalError(); // set internal error response...
+   if (processCGIOutput()) U_RETURN(true);
 
-      U_RETURN(false);
-      }
-
-   U_RETURN(true);
+   U_RETURN(false);
 }
 
 #define U_NO_ETAG // for me it's enough Last-Modified: ...
@@ -2845,7 +2928,7 @@ bool UHTTP::processHTTPGetRequest()
 
       // check if it's OK to do directory listing via authentication (digest|basic)
 
-      if (processHTTPAuthorization(UServer_Base::digest_authentication, UString(U_HTTP_URI_TO_PARAM)) == false)
+      if (processHTTPAuthorization(UServer_Base::digest_authentication) == false)
          {
          setHTTPUnAuthorized(UServer_Base::digest_authentication);
 

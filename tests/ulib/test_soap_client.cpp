@@ -143,7 +143,7 @@ U_EXPORT main (int argc, char* argv[])
 
    UTestSOAPClient<USocket> testSOAP;
 
-   testSOAP.setHostPort(U_STRING_FROM_CONSTANT("localhost"), 0);
+   testSOAP.setHostPort(U_STRING_FROM_CONSTANT("localhost"), 80);
 
    if (strcmp(argv[1], "add") == 0)
       {

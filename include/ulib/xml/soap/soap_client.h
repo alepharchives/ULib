@@ -57,7 +57,7 @@ public:
       {
       U_TRACE(0, "USOAPClient::readResponse()")
 
-      bool result = UClient_Base::readResponse();
+      bool result = UClient_Base::readHTTPResponse();
 
       U_RETURN(result);
       }

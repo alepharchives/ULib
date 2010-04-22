@@ -5,7 +5,7 @@ LOG_DIR=/tmp
 AP_NAME=`uname -n`
 
 upload_to_authserver() {
-   for url in `grep AUTH_SERVICE_URL /etc/nodog.conf | tr -d \"` ; do
+   for url in `grep '^[ \t]*AUTH_SERVICE_URL[ \t]' /etc/nodog.conf | tr -d \"` ; do
       test $url = AUTH_SERVICE_URL && continue
       /usr/sbin/uclient -c /etc/uclient.conf -u $1 "${url}wi-auth/cgi-bin/uploader.sh"
    done

@@ -21,12 +21,9 @@
 
 U_CREAT_FUNC(UHttpPlugIn)
 
-bool                 UHttpPlugIn::virtual_host;
-bool                 UHttpPlugIn::uri_protected_to_check;
-UString*             UHttpPlugIn::str_URI_PROTECTED_MASK;
-UString*             UHttpPlugIn::str_URI_REQUEST_CERT_MASK;
-UString*             UHttpPlugIn::str_URI_PROTECTED_ALLOWED_IP;
-UVector<UIPAllow*>*  UHttpPlugIn::vallow_IP;
+UString* UHttpPlugIn::str_URI_PROTECTED_MASK;
+UString* UHttpPlugIn::str_URI_REQUEST_CERT_MASK;
+UString* UHttpPlugIn::str_URI_PROTECTED_ALLOWED_IP;
 
 void UHttpPlugIn::str_allocate()
 {
@@ -47,52 +44,6 @@ void UHttpPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP, U_STRING_FROM_STRINGREP_STORAGE(2));
 }
 
-bool UHttpPlugIn::checkUriProtected(bool ctx_read)
-{
-   U_TRACE(0, "UHttpPlugIn::checkUriProtected(%b)", ctx_read)
-
-   if (vallow_IP)
-      {
-      bool ok = (ctx_read ? UIPAllow::isAllowed(UClientImage_Base::socket->remoteIPAddress().getInAddr(), *vallow_IP)
-                          : UIPAllow::isAllowed(UClientImage_Base::getRemoteIP(),                         *vallow_IP));
-
-      if (ok == false)
-         {
-         U_SRV_LOG_VAR("URI_PROTECTED: request %.*S denied by access list", U_HTTP_URI_TO_TRACE);
-
-         UHTTP::setHTTPForbidden();
-
-         U_RETURN(false);
-         }
-      }
-
-   // check if it's OK via authentication (digest|basic)
-
-   UString request_uri(U_HTTP_URI_QUERY_TO_PARAM);
-
-   if (index_alias   != U_NOT_FOUND &&
-       alias.empty() == false)
-      {
-      request_uri = valias[index_alias];
-
-      if (UHTTP::http_info.query_len)
-         {
-         request_uri.push_back('?');
-
-         (void) request_uri.append(U_HTTP_QUERY_TO_PARAM);
-         }
-      }
-
-   if (UHTTP::processHTTPAuthorization(UServer_Base::digest_authentication, request_uri) == false)
-      {
-      UHTTP::setHTTPUnAuthorized(UServer_Base::digest_authentication);
-
-      U_RETURN(false);
-      }
-
-   U_RETURN(true);
-}
-
 UHttpPlugIn::~UHttpPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UHttpPlugIn)
@@ -100,6 +51,7 @@ UHttpPlugIn::~UHttpPlugIn()
    if (UHTTP::file)
       {
       delete UHTTP::file;
+      delete UHTTP::alias;
       delete UHTTP::tmpdir;
       delete UHTTP::qcontent;
       delete UHTTP::formMulti;
@@ -107,7 +59,8 @@ UHttpPlugIn::~UHttpPlugIn()
       delete UHTTP::form_name_value;
       }
 
-   if (vallow_IP) delete vallow_IP;
+   if (UHTTP::vallow_IP)   delete UHTTP::vallow_IP;
+   if (UHTTP::request_uri) delete UHTTP::request_uri;
 }
 
 // Server-wide hooks
@@ -133,7 +86,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
    if (cfg.loadTable())
       {
-      virtual_host                        = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
+      UHTTP::virtual_host                 = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
       UServer_Base::digest_authentication = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
 
       uri_protected_mask                  = cfg[*str_URI_PROTECTED_MASK];
@@ -161,6 +114,7 @@ int UHttpPlugIn::handlerInit()
 
    U_INTERNAL_ASSERT_EQUALS(UHTTP::penvironment,0)
 
+   UHTTP::alias        = U_NEW(UString(U_CAPACITY));
    UHTTP::penvironment = U_NEW(UString(U_CAPACITY));
 
    U_INTERNAL_ASSERT_POINTER(USocket::str_host)
@@ -187,14 +141,16 @@ int UHttpPlugIn::handlerInit()
 
    if (uri_protected_allowed_ip.empty() == false)
       {
-      vallow_IP = U_NEW(UVector<UIPAllow*>);
+      UHTTP::vallow_IP = U_NEW(UVector<UIPAllow*>);
 
-      if (UIPAllow::parseMask(uri_protected_allowed_ip, *vallow_IP) == 0)
+      if (UIPAllow::parseMask(uri_protected_allowed_ip, *UHTTP::vallow_IP) == 0)
          {
-         delete vallow_IP;
-                vallow_IP = 0;
+         delete UHTTP::vallow_IP;
+                UHTTP::vallow_IP = 0;
          }
       }
+
+   if (valias.empty() == false) UHTTP::request_uri = U_NEW(UString);
 
    U_SRV_LOG_MSG("initialization of plugin success");
 
@@ -218,7 +174,7 @@ int UHttpPlugIn::handlerRead()
 
    if (UServer_Base::isLog()) UClientImage_Base::logRequest();
 
-   uint32_t n, host_end;
+   uint32_t host_end;
    const char* content_type = 0;
    int nResponseCode = HTTP_NOT_IMPLEMENTED;
 
@@ -236,9 +192,9 @@ int UHttpPlugIn::handlerRead()
          goto send_response;
          }
 
-      U_INTERNAL_DUMP("UHTTP::http_info.version = %d alias = %.*S index_alias = %u", UHTTP::http_info.version, U_STRING_TO_TRACE(alias), index_alias)
+      U_INTERNAL_DUMP("UHTTP::http_info.version = %d", UHTTP::http_info.version)
 
-      if (virtual_host)
+      if (UHTTP::virtual_host)
          {
          // manage virtual host
 
@@ -252,38 +208,41 @@ int UHttpPlugIn::handlerRead()
 
          U_INTERNAL_DUMP("host = %.*S", U_STRING_TO_TRACE(host))
 
-         alias.snprintf("/%.*s%.*s", U_STRING_TO_TRACE(host), U_HTTP_URI_TO_TRACE);
+         UHTTP::alias->snprintf("/%.*s%.*s", U_STRING_TO_TRACE(host), U_HTTP_URI_TO_TRACE);
          }
 
       if (valias.empty() == false)
          {
+         U_INTERNAL_DUMP("alias = %.*S", U_STRING_TO_TRACE(*UHTTP::alias))
+
          // NB: check if needed to reset prev alias uri
 
-         if (virtual_host == false) alias.size_adjust(0);
+         if (UHTTP::virtual_host == false) UHTTP::alias->setEmpty();
 
          // manage alias uri
 
-         n = valias.size();
-         UString uri(U_HTTP_URI_TO_PARAM);
+         (void) UHTTP::request_uri->assign(U_HTTP_URI_TO_PARAM);
 
          // gcc - warning: cannot optimize loop, the loop counter may overflow... ???
 
-         for (index_alias = 0; index_alias < n; index_alias += 2)
+         for (uint32_t i = 0, n = valias.size(); i < n; i += 2)
             {
-            if (uri == valias[index_alias])
+            if (*UHTTP::request_uri == valias[i])
                {
-               (void) alias.append(valias[index_alias+1]);
+               (void) UHTTP::alias->append(valias[i+1]);
 
-               break;
+               goto next;
                }
             }
+
+         UHTTP::request_uri->clear();
          }
-
-      if (alias.empty() == false)
+next:
+      if (UHTTP::alias->empty() == false)
          {
-         UHTTP::setHTTPUri(alias.data(), alias.size());
+         UHTTP::setHTTPUri(UHTTP::alias->data(), UHTTP::alias->size());
 
-         U_SRV_LOG_VAR("ALIAS: URI request changed to: %.*s", U_STRING_TO_TRACE(alias));
+         U_SRV_LOG_VAR("ALIAS: URI request changed to: %.*s", U_STRING_TO_TRACE(*UHTTP::alias));
          }
 
 #  ifdef HAVE_SSL
@@ -301,13 +260,12 @@ int UHttpPlugIn::handlerRead()
          }
 #  endif
 
-      uri_protected_to_check = (uri_protected_mask.empty() == false &&
-                                u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(uri_protected_mask), 0));
-
-      U_INTERNAL_DUMP("uri_protected_to_check = %b", uri_protected_to_check)
-
-      if (uri_protected_to_check &&
-          checkUriProtected(true) == false) goto send_response;
+      if (uri_protected_mask.empty() == false                                               &&
+          u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(uri_protected_mask), 0) &&
+          UHTTP::checkUriProtected() == false)
+         {
+         goto send_response;
+         }
 
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
@@ -352,11 +310,6 @@ int UHttpPlugIn::handlerRequest()
 {
    U_TRACE(0, "UHttpPlugIn::handlerRequest()")
 
-   U_INTERNAL_DUMP("method = %.*S uri = %.*S uri_protected_to_check = %b", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE, uri_protected_to_check)
-
-   if (uri_protected_to_check &&
-       checkUriProtected(false) == false) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-
    // process the HTTP request
 
    if (UHTTP::checkHTTPRequest())
@@ -364,16 +317,6 @@ int UHttpPlugIn::handlerRequest()
       if (UHTTP::isPHPRequest() ||
           UHTTP::isCGIRequest())
          {
-         if (UHTTP::UHTTP::http_info.host_len) UHTTP::penvironment->snprintf_add("HTTP_HEADER_HOST=%.*s\n", U_HTTP_HOST_TO_TRACE);
-
-         if (index_alias   != U_NOT_FOUND &&
-             alias.empty() == false)
-            {
-            U_ASSERT(UStringExt::endsWith(alias, valias[index_alias+1]))
-
-            UHTTP::penvironment->snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(valias[index_alias]));
-            }
-
          (void) UHTTP::processCGIRequest((UCommand*)0, UHTTP::penvironment);
          }
       else
@@ -398,11 +341,8 @@ int UHttpPlugIn::handlerRequest()
 
 const char* UHttpPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "index_alias                                " << index_alias                        << '\n'
-                  << "virtual_host                               " << virtual_host                       << '\n'
-                  << "uri_protected_to_check                     " << uri_protected_to_check             << '\n'
-                  << "alias                    (UString          " << (void*)&alias                      << ")\n"
-                  << "uri_protected_mask       (UString          " << (void*)&uri_protected_mask         << ")\n"
+   *UObjectIO::os << "uri_protected_mask       (UString          " << (void*)&uri_protected_mask         << ")\n"
+                  << "uri_request_cert_mask    (UString          " << (void*)&uri_request_cert_mask      << ")\n"
                   << "uri_protected_allowed_ip (UString          " << (void*)&uri_protected_allowed_ip   << ")\n"
                   << "valias                   (UVector<UString> " << (void*)&valias                     << ')';
 

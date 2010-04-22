@@ -323,6 +323,8 @@ FALLOCATE64_FALSE = @FALLOCATE64_FALSE@
 FALLOCATE64_TRUE = @FALLOCATE64_TRUE@
 FALLOCATE_FALSE = @FALLOCATE_FALSE@
 FALLOCATE_TRUE = @FALLOCATE_TRUE@
+FCGI_FALSE = @FCGI_FALSE@
+FCGI_TRUE = @FCGI_TRUE@
 FGREP = @FGREP@
 FINAL_FALSE = @FINAL_FALSE@
 FINAL_TRUE = @FINAL_TRUE@
@@ -527,6 +529,7 @@ EXTRA_DIST = base/* container/* db/* debug/* dynamic/* flex/* internal/* ldap/* 
 			 	 replace/* ssl/* ssh/* ui/* utility/* xml/expat/* xml/libxml2/* zip/* \
 				 plugin/*.cpp plugin/Makefile.* \
 				 plugin/mod_shib/*.cpp plugin/mod_shib/Makefile.* \
+				 plugin/mod_fcgi/*.cpp plugin/mod_fcgi/Makefile.* \
 				 plugin/mod_geoip/*.cpp plugin/mod_geoip/Makefile.* \
 				 *.cpp all_c.c ULib.pc.in ULib.rc.in
 
@@ -1718,7 +1721,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
-	$(mkdir_p) $(distdir)/base $(distdir)/container $(distdir)/db $(distdir)/debug $(distdir)/dynamic $(distdir)/flex $(distdir)/internal $(distdir)/ldap $(distdir)/mime $(distdir)/net $(distdir)/pcre $(distdir)/plugin $(distdir)/plugin/mod_geoip $(distdir)/plugin/mod_shib $(distdir)/replace $(distdir)/ssh $(distdir)/ssl $(distdir)/ui $(distdir)/utility $(distdir)/xml/expat $(distdir)/xml/libxml2 $(distdir)/zip
+	$(mkdir_p) $(distdir)/base $(distdir)/container $(distdir)/db $(distdir)/debug $(distdir)/dynamic $(distdir)/flex $(distdir)/internal $(distdir)/ldap $(distdir)/mime $(distdir)/net $(distdir)/pcre $(distdir)/plugin $(distdir)/plugin/mod_fcgi $(distdir)/plugin/mod_geoip $(distdir)/plugin/mod_shib $(distdir)/replace $(distdir)/ssh $(distdir)/ssl $(distdir)/ui $(distdir)/utility $(distdir)/xml/expat $(distdir)/xml/libxml2 $(distdir)/zip
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

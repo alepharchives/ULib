@@ -51,13 +51,13 @@
 #endif
 
 /* Startup */
-bool     u_is_stderr_tty;
-pid_t    u_pid;
-char*    u_pid_str;
-uint32_t u_pid_str_len;
-char*    u_progpath;
-char*    u_progname;
-uint32_t u_progname_len;
+bool        u_is_stderr_tty;
+pid_t       u_pid;
+char*       u_pid_str;
+uint32_t    u_pid_str_len;
+uint32_t    u_progname_len;
+const char* u_progpath;
+const char* u_progname;
 
 /* Current working directory */
 char        u_cwd_buffer[256];
@@ -168,7 +168,7 @@ void u_init(char** argv)
    const char* pwd;
    struct passwd* pw;
 
-   u_progname = (char*) u_basename(u_progpath = argv[0]);
+   u_progname = u_basename(u_progpath = argv[0]);
 
    u_setPid();
 
@@ -934,12 +934,12 @@ minus:
             {
             cp = VA_ARG(char*);
 
-            if (!cp) cp = (char*) "(null)";
+            if (!cp) cp = "(null)";
 
             U_INTERNAL_ASSERT_POINTER_MSG(cp, "CHECK THE PARAMETERS OF printf()...")
 
             sign = '\0';
-            size = (prec >= 0 ? prec : (int) u_strlen((const char*)cp));
+            size = (prec >= 0 ? prec : (int) u_strlen(cp));
 
             /* if a width from format is specified, the 0 flag for padding will be ignored... */
 
@@ -977,11 +977,13 @@ minus:
                goto nosign;
                }
 
-            cp   = (char*) "(nil)";
-            sign = '\0';
-            size = 5;
+            (void) U_MEMCPY(bp, "(nil)");
+
+            bp  += 5;
+            ret += 5;
+
+            continue;
             }
-         break;
 
          case 'd':
          case 'i':
@@ -1252,17 +1254,16 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'R': /* print msg - u_getSysError() */
             {
-            uint32_t l = sizeof(" - ")-1;
+            uint32_t l      = U_CONSTANT_SIZE(" - ");
+            const char* ccp = VA_ARG(const char*);
 
-            cp = VA_ARG(char*);
+            U_INTERNAL_PRINT("ccp = %s", ccp)
 
-            U_INTERNAL_PRINT("cp = %s", cp)
-
-            if (cp)
+            if (ccp)
                {
-               len = u_strlen((const char*)cp);
+               len = u_strlen(ccp);
 
-               (void) memcpy(bp, (const char*)cp, len);
+               (void) memcpy(bp, ccp, len);
 
                bp  += len;
                ret += len;
@@ -1281,9 +1282,9 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                {
                errno = - errno;
 
-               cp = (char*) getSysError_w32(&len);
+               ccp = getSysError_w32(&len);
 
-               (void) memcpy(bp, (const char*)cp, len);
+               (void) memcpy(bp, ccp, len);
 
                bp  += len;
                ret += len;
@@ -1297,9 +1298,9 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                }
 #        endif
 
-            cp = (char*) u_getSysError(&len);
+            ccp = u_getSysError(&len);
 
-            (void) memcpy(bp, (const char*)cp, len);
+            (void) memcpy(bp, ccp, len);
 
             bp  += len;
             ret += len;

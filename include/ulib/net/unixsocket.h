@@ -97,6 +97,8 @@ public:
 
    virtual bool connectServer(const UString& pathname, int iServPort);
 
+   virtual void closesocket();
+
    // DEBUG
 
 #ifdef DEBUG

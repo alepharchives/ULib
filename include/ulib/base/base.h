@@ -48,13 +48,13 @@ typedef bool  (*bPFpcpv) (const char*, const void*);
 typedef int   (*qcompare)(const void*, const void*);
 
 /* Startup */
-extern U_EXPORT bool     u_is_stderr_tty;
-extern U_EXPORT pid_t    u_pid;
-extern U_EXPORT char*    u_pid_str;
-extern U_EXPORT uint32_t u_pid_str_len;
-extern U_EXPORT char*    u_progpath;
-extern U_EXPORT char*    u_progname;
-extern U_EXPORT uint32_t u_progname_len;
+extern U_EXPORT bool        u_is_stderr_tty;
+extern U_EXPORT pid_t       u_pid;
+extern U_EXPORT char*       u_pid_str;
+extern U_EXPORT uint32_t    u_pid_str_len;
+extern U_EXPORT uint32_t    u_progname_len;
+extern U_EXPORT const char* u_progpath;
+extern U_EXPORT const char* u_progname;
 
 extern U_EXPORT void u_init(char** argv);
 

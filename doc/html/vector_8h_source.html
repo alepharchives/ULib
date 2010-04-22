@@ -939,15 +939,15 @@
 <a name="l00920"></a>00920 
 <a name="l00921"></a>00921         <span class="comment">// EXTENSION</span>
 <a name="l00922"></a>00922 
-<a name="l00923"></a>00923         uint32_t split(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; str, <span class="keywordtype">char</span> delim);
+<a name="l00923"></a>00923         uint32_t split(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; str,                <span class="keywordtype">char</span>  delim);
 <a name="l00924"></a>00924         uint32_t split(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; str, <span class="keyword">const</span> <span class="keywordtype">char</span>* delim = 0, <span class="keywordtype">bool</span> dup = <span class="keyword">false</span>);
 <a name="l00925"></a>00925 
 <a name="l00926"></a>00926         <a class="code" href="classUString.html">UString</a> join(<span class="keyword">const</span> <span class="keywordtype">char</span>* delim = <span class="stringliteral">&quot;\n&quot;</span>, uint32_t delim_len = 1);
 <a name="l00927"></a>00927 
-<a name="l00928"></a>00928         <span class="keywordtype">bool</span> contains(<a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a>&amp; vec, <span class="keywordtype">bool</span> ignore_case = <span class="keyword">false</span>);
-<a name="l00929"></a>00929 
-<a name="l00930"></a>00930         uint32_t contains(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; str, <span class="keywordtype">bool</span> ignore_case = <span class="keyword">false</span>);
-<a name="l00931"></a>00931         <span class="keywordtype">bool</span>  isContained(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; str, <span class="keywordtype">bool</span> ignore_case = <span class="keyword">false</span>);
+<a name="l00928"></a>00928         uint32_t contains(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; str,     <span class="keywordtype">bool</span> ignore_case = <span class="keyword">false</span>);
+<a name="l00929"></a>00929         <span class="keywordtype">bool</span>            contains(<a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a>&amp; vec, <span class="keywordtype">bool</span> ignore_case = <span class="keyword">false</span>);
+<a name="l00930"></a>00930 
+<a name="l00931"></a>00931         <span class="keywordtype">bool</span> isContained(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; str, <span class="keywordtype">bool</span> ignore_case = <span class="keyword">false</span>) { <span class="keywordflow">return</span> (contains(str, ignore_case) != U_NOT_FOUND); }
 <a name="l00932"></a>00932 
 <a name="l00933"></a>00933         <span class="comment">// Check equality with an existing vector object</span>
 <a name="l00934"></a>00934 
@@ -1057,7 +1057,7 @@
 <a name="l01038"></a>01038 
 <a name="l01039"></a>01039 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Tue Apr 13 14:23:29 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu Apr 22 19:09:40 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

@@ -72,8 +72,6 @@ int UProxyPlugIn::handlerRequest()
         output_to_client  = false, // send output as response to client...
         output_to_server  = false; // send output as request  to server...
 
-   is_connect = false;
-
 #ifdef HAVE_SSL
    // check if certificate is required...
 
@@ -150,34 +148,19 @@ int UProxyPlugIn::handlerRequest()
 
       if (client_http.setHostPort(server, port)) client_http.UClient_Base::close();
 
-      is_connect = client_http.isConnected();
+      // send request to server and get response
 
-      for (int counter = 0; counter < 2; ++counter)
-         {
-         if (is_connect ||
-             client_http.UClient_Base::connect())
-            {
-            // send request to server and get response
+      if (output_to_server == false) *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer;
 
-            if (output_to_server == false) *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer;
+      (void) client_http.sendRequest(*UClientImage_Base::wbuffer);
 
-            (void) client_http.sendRequest(*UClientImage_Base::wbuffer);
+      // reset reference to rbuffer...
 
-            // reset reference to rbuffer...
-
-            *UClientImage_Base::wbuffer = client_http.getResponse();
-
-            // check if server have not closed the connection (timeout of Keep-Alive, ...)
-
-            is_connect = client_http.isConnected();
-
-            if (is_connect) break;
-            }
-         }
+      *UClientImage_Base::wbuffer = client_http.getResponse();
 
       client_http.UClient_Base::reset();
 
-      if (is_connect == false)
+      if (client_http.isConnected() == false)
          {
          U_SRV_LOG_MSG(client_http.getResponseData());
 
@@ -211,7 +194,7 @@ int UProxyPlugIn::handlerReset()
 {
    U_TRACE(0, "UProxyPlugIn::handlerReset()")
 
-   if (is_connect) UClientImage_Base::wbuffer->clear(); // NB: reset reference to client_http.response...
+   if (client_http.isConnected()) UClientImage_Base::wbuffer->clear(); // NB: reset reference to client_http.response...
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
@@ -223,8 +206,7 @@ int UProxyPlugIn::handlerReset()
 
 const char* UProxyPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "is_connect                              " << is_connect          << ")\n"
-                  << "vmsg_error  (UVector<UString>           " << (void*)&vmsg_error  << ")\n"
+   *UObjectIO::os << "vmsg_error  (UVector<UString>           " << (void*)&vmsg_error  << ")\n"
                   << "client_http (UHttpClient<USocket>       " << (void*)&client_http << ")\n"
                   << "vservice    (UVector<UModProxyService*> " << (void*)&vservice    << ')';
 

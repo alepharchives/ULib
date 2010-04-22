@@ -354,10 +354,8 @@ AC_CHECK_LIB(socket,socketpair)
 
 LIBS_SAVE=${LIBS}
 AC_CHECK_LIB(GeoIP,GeoIP_id_by_ipnum)
+AC_CHECK_LIB(fcgi, FCGX_Accept)
 LIBS=${LIBS_SAVE}
-
-#AC_CHECK_LIB(fcgi, FCGX_Accept, FCGI_LIBS="-lfcgi++ -lfcgi", AC_MSG_ERROR([FastCGI libraries not found]))
-#AC_SUBST(FCGI_LIBS)
 
 libz_version="None"
 pcre_version="None"
@@ -406,8 +404,11 @@ AC_DEFINE_UNQUOTED(_LIBXML2_VERSION, "${libxml2_version}",  [libxml2 - Version 2
 LIBS_SAVE=${LIBS}
 
 if test "$HAVE_LIBZ" = "yes"; then
-	AC_CHECK_LIB(z,crc32)
 	ulib_libz_msg="enabled"
+	AC_CHECK_LIB(z,zlib_deflate_workspacesize)
+	if test "$ac_cv_lib_z_zlib_deflate_workspacesize" = "yes"; then
+		AC_DEFINE(U_ZLIB_DEFLATE_WORKSPACESIZE, 1, [Define if we have zlib with this function])
+	fi
 fi
 
 if test "$HAVE_PCRE" = "yes"; then
@@ -529,6 +530,7 @@ AC_CHECK_FUNCS([accept4 daemon epoll_create1 epoll_wait fallocate fallocate64 fn
 					 mremap pread sendfile64 strndup mkdtemp strptime strtof strtoull strtold gmtime_r timegm strerror strsignal])
 
 AM_CONDITIONAL(GEOIP,		 test "$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" = "yes")
+AM_CONDITIONAL(FCGI,			 test "$ac_cv_lib_fcgi_FCGX_Accept"			 = "yes")
 AM_CONDITIONAL(PREAD,		 test "$ac_cv_func_pread"						 = "yes")
 AM_CONDITIONAL(DAEMON,		 test "$ac_cv_func_daemon"						 = "yes")
 AM_CONDITIONAL(TIMEGM,		 test "$ac_cv_func_timegm"						 = "yes")
@@ -914,6 +916,7 @@ AC_OUTPUT(Makefile \
 			 src/ulib/plugin/Makefile \
 			 src/ulib/plugin/usp/Makefile \
 			 src/ulib/plugin/mod_shib/Makefile \
+			 src/ulib/plugin/mod_fcgi/Makefile \
 			 src/ulib/plugin/mod_geoip/Makefile \
 			 include/ulib/Makefile \
 			 contrib/HCSP/Makefile \

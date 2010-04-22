@@ -1158,17 +1158,17 @@ unsigned zip_get_content(const char* zipdata, unsigned datalen, char*** filename
 
       for (j = 0; j < n; ++j)
          {
-         vec1[j] = names[j];
-         vec2[j] = contents[j];
-         vec3[j] = names_len[j];
+         vec1[j] =        names[j];
+         vec2[j] =     contents[j];
+         vec3[j] =    names_len[j];
          vec4[j] = contents_len[j];
          }
       }
    else
       {
-      *filenames = 0;
-      *filecontents = 0;
-      *filenames_len = 0;
+      *filenames        = 0;
+      *filecontents     = 0;
+      *filenames_len    = 0;
       *filecontents_len = 0;
       }
 

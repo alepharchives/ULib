@@ -76,6 +76,7 @@ userver {
 # PLUGIN   "( mod_tsa   mod_http )"
 # PLUGIN   "( mod_rpc   mod_http )"
 # PLUGIN   "( mod_soap  mod_http )"
+# PLUGIN   "( mod_fcgi  mod_http )"
 # PLUGIN   "( mod_proxy mod_http )"
 # PLUGIN   "( mod_geoip mod_http )"
 
@@ -129,6 +130,36 @@ mod_http {
 # URI_REQUEST_CERT_MASK     /wi-auth/cgi-bin/cpe.sh
 }
 
+# -----------------------------------------------------------------------------------------------
+# mod_fcgi - plugin parameters
+# -----------------------------------------------------------------------------------------------
+# FCGI_URI_MASK mask (DOS regexp) of uri type that send request via FCGI (*.php)
+#
+# SOCKET_NAME   name file for the listening socket
+#
+# USE_IPV6      flag to indicate use of ipv6
+# SERVER        host name or ip address for server
+# PORT          port number for the server
+#
+# RES_TIMEOUT   timeout for response from FCGI
+#
+# LOG_FILE      locations for file log (use server log if same value)
+# -----------------------------------------------------------------------------------------------
+#
+# mod_fcgi {
+#
+# FCGI_URI_MASK *.php
+#
+# SOCKET_NAME   tmp/fcgi.socket
+#
+# SERVER        127.0.0.1
+# PORT          8080
+#
+# RES_TIMEOUT   20
+#
+# LOG_FILE      /var/log/userver.log
+# }
+#
 # -----------------------------------------------------------------------------------------------
 # mod_tsa - plugin parameters
 # -----------------------------------------------------------------------------------------------

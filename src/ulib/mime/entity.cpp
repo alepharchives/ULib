@@ -543,13 +543,13 @@ const char* UMimeMultipart::dump(bool reset) const
     UMimeEntity::dump(false);
 
    *UObjectIO::os << '\n'
-                  << "isFinal                    " << isFinal          << '\n'
-                  << "boundaryEnd                " << boundaryEnd      << '\n'
-                  << "boundaryStart              " << boundaryStart    << '\n'
-                  << "preamble     (UString      " << (void*)&preamble << ")\n"
-                  << "epilogue     (UString      " << (void*)&epilogue << ")\n"
-                  << "boundary     (UString      " << (void*)&boundary << ")\n"
-                  << "bodypart     (UVector      " << (void*)&bodypart << ')';
+                  << "isFinal                   " << isFinal          << '\n'
+                  << "boundaryEnd               " << boundaryEnd      << '\n'
+                  << "boundaryStart             " << boundaryStart    << '\n'
+                  << "preamble     (UString     " << (void*)&preamble << ")\n"
+                  << "epilogue     (UString     " << (void*)&epilogue << ")\n"
+                  << "boundary     (UString     " << (void*)&boundary << ")\n"
+                  << "bodypart     (UVector     " << (void*)&bodypart << ')';
 
    if (reset)
       {

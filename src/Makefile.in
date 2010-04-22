@@ -37,8 +37,9 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @PLUGIN_TRUE@am__append_1 = ulib/plugin ulib/plugin/usp
-@GEOIP_TRUE@@PLUGIN_TRUE@am__append_2 = ulib/plugin/mod_geoip
-@MOD_SHIB_TRUE@@PCRE_TRUE@@PLUGIN_TRUE@@SSL_TRUE@am__append_3 = ulib/plugin/mod_shib
+@FCGI_TRUE@@PLUGIN_TRUE@am__append_2 = ulib/plugin/mod_fcgi
+@GEOIP_TRUE@@PLUGIN_TRUE@am__append_3 = ulib/plugin/mod_geoip
+@MOD_SHIB_TRUE@@PCRE_TRUE@@PLUGIN_TRUE@@SSL_TRUE@am__append_4 = ulib/plugin/mod_shib
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -80,8 +81,8 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	uninstall-recursive
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = ulib ulib/plugin ulib/plugin/usp ulib/plugin/mod_geoip \
-	ulib/plugin/mod_shib
+DIST_SUBDIRS = ulib ulib/plugin ulib/plugin/usp ulib/plugin/mod_fcgi \
+	ulib/plugin/mod_geoip ulib/plugin/mod_shib
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
@@ -131,6 +132,8 @@ FALLOCATE64_FALSE = @FALLOCATE64_FALSE@
 FALLOCATE64_TRUE = @FALLOCATE64_TRUE@
 FALLOCATE_FALSE = @FALLOCATE_FALSE@
 FALLOCATE_TRUE = @FALLOCATE_TRUE@
+FCGI_FALSE = @FCGI_FALSE@
+FCGI_TRUE = @FCGI_TRUE@
 FGREP = @FGREP@
 FINAL_FALSE = @FINAL_FALSE@
 FINAL_TRUE = @FINAL_TRUE@
@@ -333,7 +336,8 @@ target_vendor = @target_vendor@
 thrprefix = @thrprefix@
 AUTOMAKE_OPTIONS = no-dependencies
 MAINTAINERCLEANFILES = Makefile.in
-SUBDIRS = ulib $(am__append_1) $(am__append_2) $(am__append_3)
+SUBDIRS = ulib $(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_4)
 all: all-recursive
 
 .SUFFIXES:

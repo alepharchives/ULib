@@ -291,6 +291,9 @@ typedef unsigned long long uint64;
 /* Define to 1 if you have the `dl' library (-ldl). */
 #undef HAVE_LIBDL
 
+/* Define to 1 if you have the `fcgi' library (-lfcgi). */
+#undef HAVE_LIBFCGI
+
 /* Define to 1 if you have the `GeoIP' library (-lGeoIP). */
 #undef HAVE_LIBGEOIP
 
@@ -827,6 +830,9 @@ typedef unsigned long long uint64;
 
 /* enable use of our versions of the memory operators */
 #undef U_OVERLOAD_NEW_DELETE
+
+/* Define if we have zlib with this function */
+#undef U_ZLIB_DEFLATE_WORKSPACESIZE
 
 /* Version number of package */
 #undef VERSION

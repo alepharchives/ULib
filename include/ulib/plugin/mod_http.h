@@ -56,11 +56,9 @@ public:
 
    // COSTRUTTORI
 
-   UHttpPlugIn() : alias(U_CAPACITY)
+   UHttpPlugIn()
       {
       U_TRACE_REGISTER_OBJECT(0, UHttpPlugIn, "", 0)
-
-      index_alias = U_NOT_FOUND;
 
       if (str_URI_PROTECTED_MASK == 0) str_allocate();
       }
@@ -86,14 +84,8 @@ public:
 #endif
 
 protected:
-   uint32_t index_alias;
    UVector<UString> valias;
-   UString alias, uri_protected_mask, uri_protected_allowed_ip, uri_request_cert_mask;
-
-   static UVector<UIPAllow*>* vallow_IP;
-   static bool virtual_host, uri_protected_to_check;
-
-   bool checkUriProtected(bool ctx_read);
+   UString uri_protected_mask, uri_protected_allowed_ip, uri_request_cert_mask;
 
 private:
    UHttpPlugIn(const UHttpPlugIn&) : UServerPlugIn() {}

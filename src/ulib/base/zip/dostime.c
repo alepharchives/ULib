@@ -47,7 +47,7 @@ time_t dos2unixtime(unsigned long dostime)
 unsigned long unix2dostime(time_t* time)
 {
    struct tm* ltime = localtime(time);
-   int year = ltime->tm_year - 80;
+   int year         = ltime->tm_year - 80;
 
    if (year < 0) year = 0;
 

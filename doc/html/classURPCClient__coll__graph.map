@@ -3,12 +3,12 @@
 <area shape="rect" id="node4" href="$classUClient__Base.html" title="UClient_Base" alt="" coords="259,686,355,714"/>
 <area shape="rect" id="node6" href="$classULog.html" title="ULog" alt="" coords="153,593,204,621"/>
 <area shape="rect" id="node8" href="$classUFile.html" title="UFile" alt="" coords="216,266,267,294"/>
-<area shape="rect" id="node10" href="$classUString.html" title="UString" alt="" coords="315,99,379,127"/>
-<area shape="rect" id="node24" href="$classUSocket.html" title="basic IP socket functionality" alt="" coords="353,593,420,621"/>
-<area shape="rect" id="node26" href="$classUIPAddress.html" title="UIPAddress" alt="" coords="529,266,615,294"/>
-<area shape="rect" id="node13" href="$classUStringRep.html" title="UStringRep" alt="" coords="304,6,389,34"/>
+<area shape="rect" id="node10" href="$classUString.html" title="UString" alt="" coords="309,99,373,127"/>
+<area shape="rect" id="node23" href="$classUSocket.html" title="basic IP socket functionality" alt="" coords="344,593,411,621"/>
+<area shape="rect" id="node25" href="$classUIPAddress.html" title="UIPAddress" alt="" coords="520,266,605,294"/>
+<area shape="rect" id="node13" href="$classUStringRep.html" title="UStringRep" alt="" coords="299,6,384,34"/>
 <area shape="rect" id="node17" href="$structULog_1_1log__data.html" title="ULog::log_data" alt="" coords="5,266,109,294"/>
 <area shape="rect" id="node19" href="$classULock.html" title="ULock" alt="" coords="133,266,192,294"/>
 <area shape="rect" id="node21" href="$classUSemaphore.html" title="USemaphore" alt="" coords="117,99,208,127"/>
-<area shape="rect" id="node29" href="$unionuupcAddress.html" title="uupcAddress" alt="" coords="527,99,617,127"/>
+<area shape="rect" id="node28" href="$unionuupcAddress.html" title="uupcAddress" alt="" coords="517,99,608,127"/>
 </map>

@@ -14,8 +14,8 @@ rm -f tsa_http.log TSA/log \
 		out/userver_tcp.out err/userver_tcp.err \
       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
 
-#UTRACE="0 10M 0"
-#UOBJDUMP="0 100k 10"
+ UTRACE="0 10M 0"
+ UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --leak-check=full"
  export UTRACE UOBJDUMP USIMERR
@@ -23,12 +23,13 @@ rm -f tsa_http.log TSA/log \
 DIR_CMD="../../examples/userver"
 
 #STRACE=$LTRUSS
-start_prg_background userver_tcp -c tsa_http.cfg
+# start_prg_background userver_tcp -c tsa_http.cfg
 
 $SLEEP
 DIR_CMD="../../examples/XAdES"
 
-DATA_URI=inp/XAdES/xmldsig-input.txt
+#DATA_URI=inp/XAdES/xmldsig-input.txt
+ DATA_URI=/mnt/home/stefano/XAdES/PROVE/prima1.odt.b64
 X509=`cat ../ulib/CA/server.crt`
 KEY_HANDLE=../ulib/CA/server.key
 DIGEST_ALGORITHM=sha1
@@ -41,7 +42,7 @@ PRODUCTION_PLACE_COUNTRY_NAME=Italy
 CA_STORE=../ulib/CA/CApath
 SIGNATURE_TIMESTAMP="http://localhost/tsa"
 
-#STRACE=$LTRUSS
+#STRACE=$TRUSS
 start_prg sign -c XAdES.ini -- \
 									 $DATA_URI \
 									 '"$X509"' \
@@ -54,8 +55,16 @@ start_prg sign -c XAdES.ini -- \
 									 $PRODUCTION_PLACE_POSTAL_CODE \
 									 $PRODUCTION_PLACE_COUNTRY_NAME \
 									 $CA_STORE \
-									 $SIGNATURE_TIMESTAMP < inp/XAdES/input.b64
+									 $SIGNATURE_TIMESTAMP <   /mnt/home/stefano/XAdES/PROVE/prima1.odt.b64
+																	# inp/XAdES/input.b64
 
+exit 0
+
+# ------------------------------------------------------------
+# sha1 check:
+# ------------------------------------------------------------
+# openssl dgst -sha1 -binary < content.xml | openssl base64 -e
+# ------------------------------------------------------------
 
 $OPENSSL base64 -e -in out/sign.out -out /tmp/sign.b64
 

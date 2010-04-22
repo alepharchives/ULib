@@ -8,10 +8,25 @@ rm -f web_server.log \
       out/userver_tcp.out err/userver_tcp.err \
 		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
 
-#UTRACE="0 10M 0"
-#UOBJDUMP="0 100k 10"
+ UTRACE="0 10M 0"
+ UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
+
+start_test() {
+
+	CMD=test_fcgi
+	SOCK=tmp/fcgi.socket-1
+
+	PIDS=`ps x | grep $CMD | grep -v grep | awk '{ print $1 }'`
+
+	if [ -z "$PIDS" ]; then
+#		rm -f										   $SOCK
+		../../src/ulib/plugin/mod_fcgi/$CMD $SOCK 2>/tmp/$CMD.err &
+	fi
+}
+
+start_test
 
 DIR_CMD="../../examples/userver"
 
@@ -22,6 +37,8 @@ start_prg_background userver_tcp -c  web_server.cfg
 												# RA/RA.cfg
 												# web_server.cfg
 												# deployment.properties
+
+chmod 777 $SOCK
 
 #$SLEEP
 #kill_prg userver_tcp TERM

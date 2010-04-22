@@ -4,7 +4,7 @@
 //    ulib - c++ library
 //
 // = FILENAME
-//    zip.h - interface to the ziplib library
+//    zip.h - interface to the zip compression format
 //
 // = AUTHOR
 //    Stefano Casazza
@@ -31,17 +31,8 @@ public:
 
    // COSTRUTTORI
 
-   UZIP(const UString& _content) : content(_content), tmpdir(U_CAPACITY)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UZIP, "%.*S", U_STRING_TO_TRACE(_content))
-
-      npart         = 0;
-      file          = 0;
-      valid         = (memcmp(_content.data(), U_CONSTANT_TO_PARAM(U_ZIP_ARCHIVE)) == 0);
-      filenames     = filecontents = 0;
-      zippartname   = zippartcontent = 0;
-      filenames_len = filecontents_len = 0;
-      }
+   UZIP();
+   UZIP(const UString& content);
 
    /**
    * Deletes this object.
@@ -65,16 +56,31 @@ public:
       U_RETURN(valid);
       }
 
-   bool readContent();
-   bool extract(const UString* tmpdir = 0);
+   bool extract(                     const UString* tmpdir = 0);
+   bool extract(const UString& data, const UString* tmpdir = 0);
 
    // VARIE
 
-   void clear();
+   void   clear();
+   bool   readContent();
+   char** getFilenames() const { return filenames; }
 
    uint32_t getFilesCount() const          { return zippartname->size(); }
    UString  getFilenameAt(int index) const { return zippartname->at(index); }
    UString  getFileContentAt(int index);
+
+   // STORE
+
+   UString archive(const char** add_to_filenames);
+
+   static bool archive(const char* zipfile, const char** filenames)
+      {
+      U_TRACE(1, "UZIP::archive(%S,%p)", zipfile, filenames)
+
+      bool result = (U_SYSCALL(zip_archive, "%S,%p", zipfile, filenames) == 0);
+
+      U_RETURN(result);
+      }
 
    // OPERATOR
 

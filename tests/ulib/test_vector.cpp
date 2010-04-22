@@ -213,7 +213,7 @@ static void check_contains()
    U_ASSERT( a.contains(b)       == false )
    U_ASSERT( a.contains(b, true) == true )
 
-   U_ASSERT( b.isContained(U_STRING_FROM_CONSTANT("rilevazione-virus"), true) == true )
+   U_ASSERT( b.isContained(U_STRING_FROM_CONSTANT("virus"), true) == true )
 }
 
 static void check_equal()

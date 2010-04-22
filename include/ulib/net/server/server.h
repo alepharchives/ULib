@@ -83,6 +83,8 @@ class UHTTP;
 class UCommand;
 class UFileConfig;
 class UHttpPlugIn;
+class UFCGIPlugIn;
+class UClient_Base;
 class UProxyPlugIn;
 
 class U_EXPORT UServer_Base : public UEventFd {
@@ -147,7 +149,7 @@ public:
    static const UString* str_CA_PATH;
    static const UString* str_VERIFY_MODE;
    static const UString* str_ALLOWED_IP;
-   static const UString* str_NAME_SOCKET;
+   static const UString* str_SOCKET_NAME;
    static const UString* str_DOCUMENT_ROOT;
    static const UString* str_PLUGIN;
    static const UString* str_PLUGIN_DIR;
@@ -367,7 +369,6 @@ protected:
 
    static int port,           // the port number to bind to
               cgi_timeout,    // the time-out value in seconds for read output cgi process
-              log_file_sz,    // memory size for file log
               verify_mode,    // mode of verification ssl connection
               max_Keep_Alive, // Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session
               num_connection;
@@ -487,7 +488,9 @@ protected:
 private:
    friend class UHTTP;
    friend class UHttpPlugIn;
+   friend class UFCGIPlugIn;
    friend class UProxyPlugIn;
+   friend class UClient_Base;
    friend class UClientImage_Base;
 
    UServer_Base(const UServer_Base&) : UEventFd() {}

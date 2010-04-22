@@ -252,30 +252,6 @@ bool UVector<UString>::contains(UVector<UString>& vec, bool ignore_case)
    U_RETURN(false);
 }
 
-bool UVector<UString>::isContained(const UString& str, bool ignore_case)
-{
-   U_TRACE(0, "UVector<UString>::isContained(%.*S,%b)", U_STRING_TO_TRACE(str), ignore_case)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_DUMP("_length = %u", _length)
-
-   U_INTERNAL_ASSERT(_length <= _capacity)
-
-   UString elem;
-   uint32_t i, n;
-
-   for (i = 0; i < _length; ++i)
-      {
-      elem = at(i);
-      n    = (ignore_case ? str.findnocase(elem) : str.find(elem));
-
-      if (n != U_NOT_FOUND) U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
 // Check equality with an existing vector object
 
 bool UVector<UString>::_isEqual(UVector<UString>& vec, bool ignore_case)

@@ -35,7 +35,7 @@ void UUnixSocket::setPath(const char* pathname)
 
    addr.psaUnixAddr.sun_family = AF_UNIX;
 
-   (void) memcpy(addr.psaUnixAddr.sun_path, pathname, slen);
+   (void) U_SYSCALL(memcpy, "%p,%s,%u", addr.psaUnixAddr.sun_path, pathname, slen);
 
 #ifdef __SUN_LEN
    addr.psaUnixAddr.sun_len = len = sizeof(addr.psaUnixAddr.sun_len) + slen + sizeof(addr.psaUnixAddr.sun_family) + 1;
@@ -89,13 +89,14 @@ bool UUnixSocket::connectServer(const UString& server, int iServPort)
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT(isClosed())
-
    int result;
 
-   setPath(server.c_str());
+   if (isClosed())
+      {
+      if (path == 0) setPath(server.c_str());
 
-   iSockDesc = U_SYSCALL(socket, "%d,%d,%d", AF_UNIX, SOCK_STREAM, 0); 
+      iSockDesc = U_SYSCALL(socket, "%d,%d,%d", AF_UNIX, SOCK_STREAM, 0); 
+      }
 
 loop:
    result = U_SYSCALL(connect, "%d,%p,%d", iSockDesc, &addr.psaGeneric, len);
@@ -111,6 +112,19 @@ loop:
       }
 
    U_RETURN(false);
+}
+
+void UUnixSocket::closesocket()
+{
+   U_TRACE(1, "UUnixSocket::closesocket()")
+
+#if defined(DEBUG)
+   if (U_SYSCALL(close, "%d", iSockDesc)) U_ERROR_SYSCALL("closesocket");
+#else
+   (void) U_SYSCALL(close, "%d", iSockDesc);
+#endif
+
+   iSockDesc = -1;
 }
 
 // DEBUG

@@ -33,13 +33,7 @@ int init_compression(void)
 {
    U_INTERNAL_TRACE("init_compression()", 0)
 
-   memset(&zs, 0, sizeof(z_stream));
-
-#ifdef HAVE_LIBZ
-   zs.zalloc = Z_NULL;
-   zs.zfree  = Z_NULL;
-   zs.opaque = Z_NULL;
-#endif
+   (void) memset(&zs, 0, sizeof(z_stream));
 
    /* Why -MAX_WBITS?  zlib has an undocumented feature, where if the windowbits
    parameter is negative, it omits the zlib header, which seems to kill
@@ -207,15 +201,9 @@ int init_inflation(void)
 {
    U_INTERNAL_TRACE("init_inflation()", 0)
 
-   memset(&zs, 0, sizeof(z_stream));
+   (void) memset(&zs, 0, sizeof(z_stream));
 
-#ifdef HAVE_LIBZ
-   zs.zalloc = Z_NULL;
-   zs.zfree  = Z_NULL;
-   zs.opaque = Z_NULL;
-#endif
-
-   if (zlib_inflateInit2(&zs, -15) != Z_OK)
+   if (zlib_inflateInit2(&zs, -MAX_WBITS) != Z_OK)
       {
       U_INTERNAL_TRACE("Error initializing deflation!", 0);
 

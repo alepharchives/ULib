@@ -495,8 +495,8 @@ bool u_isNumber(const char* s, uint32_t n)
       }
 
    while (s < end &&
-          ((*(unsigned char*)s) >> 4) == 0x03 &&
-          vdigit[(*(unsigned char*)s)  & 0x0f])
+          ((*(const unsigned char*)s) >> 4) == 0x03 &&
+          vdigit[(*(const unsigned char*)s)  & 0x0f])
       {
       U_INTERNAL_PRINT("*s = %c, *s >> 4 = %c ", *s, (*(char*)s) >> 4)
 
@@ -1661,7 +1661,7 @@ static inline int rangematch(const char* pattern, char test, int flags, char** n
       }
    while ((c = *pattern++) != ']');
 
-   *newp = (char*)pattern;
+   *newp = (char*) pattern;
 
    return (ok == negate ? 0 : 1);
 }

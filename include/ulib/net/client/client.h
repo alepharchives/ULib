@@ -31,6 +31,7 @@
 
 class ULog;
 class UFileConfig;
+class UFCGIPlugIn;
 
 class U_EXPORT UClient_Base {
 public:
@@ -43,6 +44,10 @@ public:
    U_MEMORY_DEALLOCATOR
 
    // SERVICES
+
+   static UString* str_RES_TIMEOUT;
+
+   static void str_allocate();
 
    bool isClosed() const
       {
@@ -109,8 +114,12 @@ public:
 
    bool connect();
    void clearData();
+   bool readHTTPResponse();
+   bool readResponse(int count = U_SINGLE_READ);
+
    bool sendRequest();
-   bool readResponse();
+   bool sendRequest(const UString& data)            { request =         data;       return sendRequest(); }
+   bool sendRequest(const char* data, uint32_t len) { request = UString(data, len); return sendRequest(); }
 
    // -----------------------------------------------------------------------------------------------------------------------
    // Very simple RPC-like layer
@@ -198,7 +207,6 @@ protected:
            password,    // password  for private key of client
            ca_file,     // locations of trusted CA certificates used in the verification
            ca_path,     // locations of trusted CA certificates used in the verification
-           name_sock,   // name file for the listening socket
            log_file,    // locations for file log
            request,
            response,
@@ -210,7 +218,7 @@ protected:
    bool bIPv6;
 
    static ULog* log;
-   static int log_file_sz; // memory size for file log
+   static bool log_shared_with_server;
 
    bool setUrl(const UString& newLocation);
 
@@ -222,6 +230,8 @@ protected:
 private:
    UClient_Base(const UClient_Base&)            {}
    UClient_Base& operator=(const UClient_Base&) { return *this; }
+
+   friend class UFCGIPlugIn;
 };
 
 template <class Socket> class U_EXPORT UClient : virtual public UClient_Base {
