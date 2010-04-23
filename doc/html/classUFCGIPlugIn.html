@@ -37,7 +37,7 @@ Collaboration diagram for UFCGIPlugIn:</div>
 <div class="dynsection">
 <div class="center"><img src="classUFCGIPlugIn__coll__graph.png" border="0" usemap="#UFCGIPlugIn_coll__map" alt="Collaboration graph"/></div>
 <map name="UFCGIPlugIn_coll__map" id="UFCGIPlugIn_coll__map">
-<area shape="rect" id="node2" href="classUServerPlugIn.html" title="UServerPlugIn" alt="" coords="331,689,432,717"/><area shape="rect" id="node4" href="classUClient__Base.html" title="UClient_Base" alt="" coords="456,689,552,717"/><area shape="rect" id="node6" href="classULog.html" title="ULog" alt="" coords="168,594,219,622"/><area shape="rect" id="node8" href="classUFile.html" title="UFile" alt="" coords="216,266,267,294"/><area shape="rect" id="node10" href="classUString.html" title="UString" alt="" coords="401,99,465,127"/><area shape="rect" id="node23" href="classUSocket.html" title="basic IP socket functionality" alt="" coords="400,594,467,622"/><area shape="rect" id="node25" href="classUIPAddress.html" title="UIPAddress" alt="" coords="291,266,376,294"/><area shape="rect" id="node13" href="classUStringRep.html" title="UStringRep" alt="" coords="391,6,476,34"/><area shape="rect" id="node17" href="structULog_1_1log__data.html" title="ULog::log_data" alt="" coords="5,266,109,294"/><area shape="rect" id="node19" href="classULock.html" title="ULock" alt="" coords="133,266,192,294"/><area shape="rect" id="node21" href="classUSemaphore.html" title="USemaphore" alt="" coords="13,99,104,127"/><area shape="rect" id="node28" href="unionuupcAddress.html" title="uupcAddress" alt="" coords="128,99,219,127"/></map>
+<area shape="rect" id="node2" href="classUServerPlugIn.html" title="UServerPlugIn" alt="" coords="331,705,432,733"/><area shape="rect" id="node4" href="classUClient__Base.html" title="UClient_Base" alt="" coords="456,705,552,733"/><area shape="rect" id="node6" href="classULog.html" title="ULog" alt="" coords="168,602,219,630"/><area shape="rect" id="node8" href="classUFile.html" title="UFile" alt="" coords="216,266,267,294"/><area shape="rect" id="node10" href="classUString.html" title="UString" alt="" coords="401,99,465,127"/><area shape="rect" id="node23" href="classUSocket.html" title="basic IP socket functionality" alt="" coords="400,602,467,630"/><area shape="rect" id="node25" href="classUIPAddress.html" title="UIPAddress" alt="" coords="291,266,376,294"/><area shape="rect" id="node13" href="classUStringRep.html" title="UStringRep" alt="" coords="391,6,476,34"/><area shape="rect" id="node17" href="structULog_1_1log__data.html" title="ULog::log_data" alt="" coords="5,266,109,294"/><area shape="rect" id="node19" href="classULock.html" title="ULock" alt="" coords="133,266,192,294"/><area shape="rect" id="node21" href="classUSemaphore.html" title="USemaphore" alt="" coords="13,99,104,127"/><area shape="rect" id="node28" href="unionuupcAddress.html" title="uupcAddress" alt="" coords="128,99,219,127"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 
 <p><a href="classUFCGIPlugIn-members.html">List of all members.</a></p>
@@ -55,18 +55,22 @@ static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_allocate</
 <tr><td colspan="2"><h2>Static Public Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a677abe29253bba87fcfbeb22d4d9474e"></a><!-- doxytag: member="UFCGIPlugIn::str_FCGI_URI_MASK" ref="a677abe29253bba87fcfbeb22d4d9474e" args="" -->
 static <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_FCGI_URI_MASK</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3e827807b439b27166238d812ca9ad06"></a><!-- doxytag: member="UFCGIPlugIn::str_FCGI_KEEP_CONN" ref="a3e827807b439b27166238d812ca9ad06" args="" -->
+static <a class="el" href="classUString.html">UString</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>str_FCGI_KEEP_CONN</b></td></tr>
 <tr><td colspan="2"><h2>Protected Attributes</h2></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab59b72aafbefee9c7abce5e64524779e"></a><!-- doxytag: member="UFCGIPlugIn::fcgi_uri_mask" ref="ab59b72aafbefee9c7abce5e64524779e" args="" -->
 <a class="el" href="classUString.html">UString</a>&nbsp;</td><td class="memItemRight" valign="bottom"><b>fcgi_uri_mask</b></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a041d7ab687323970ba33bac196b8150c"></a><!-- doxytag: member="UFCGIPlugIn::connection" ref="a041d7ab687323970ba33bac196b8150c" args="" -->
 <a class="el" href="classUClient__Base.html">UClient_Base</a> *&nbsp;</td><td class="memItemRight" valign="bottom"><b>connection</b></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8c33ea075b984abe513223d00cce83e0"></a><!-- doxytag: member="UFCGIPlugIn::fcgi_keep_conn" ref="a8c33ea075b984abe513223d00cce83e0" args="" -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>fcgi_keep_conn</b></td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li>include/ulib/plugin/<a class="el" href="mod__fcgi_8h_source.html">mod_fcgi.h</a></li>
 <li>src/ulib/plugin/mod_fcgi.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu Apr 22 19:09:44 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 23 19:13:50 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

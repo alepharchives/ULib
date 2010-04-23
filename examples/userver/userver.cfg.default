@@ -133,17 +133,20 @@ mod_http {
 # -----------------------------------------------------------------------------------------------
 # mod_fcgi - plugin parameters
 # -----------------------------------------------------------------------------------------------
-# FCGI_URI_MASK mask (DOS regexp) of uri type that send request via FCGI (*.php)
+# FCGI_URI_MASK  mask (DOS regexp) of uri type that send request via FCGI (*.php)
 #
-# SOCKET_NAME   name file for the listening socket
+# SOCKET_NAME    name file for the listening socket
 #
-# USE_IPV6      flag to indicate use of ipv6
-# SERVER        host name or ip address for server
-# PORT          port number for the server
+# USE_IPV6       flag to indicate use of ipv6
+# SERVER         host name or ip address for server
+# PORT           port number for the server
 #
-# RES_TIMEOUT   timeout for response from FCGI
+# RES_TIMEOUT    timeout for response from server FCGI
+# FCGI_KEEP_CONN If not zero, the server FCGI does not close the connection after
+#                responding to request; the plugin retains responsibility for the connection
 #
-# LOG_FILE      locations for file log (use server log if same value)
+#
+# LOG_FILE       location for file log (use server log if same value)
 # -----------------------------------------------------------------------------------------------
 #
 # mod_fcgi {
@@ -155,7 +158,8 @@ mod_http {
 # SERVER        127.0.0.1
 # PORT          8080
 #
-# RES_TIMEOUT   20
+# RES_TIMEOUT    20
+# FCGI_KEEP_CONN yes
 #
 # LOG_FILE      /var/log/userver.log
 # }

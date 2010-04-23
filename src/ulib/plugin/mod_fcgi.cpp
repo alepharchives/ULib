@@ -125,18 +125,22 @@ static void fill_begin_request(void* buf, u_int role, u_char flags)
 U_CREAT_FUNC(UFCGIPlugIn)
 
 UString* UFCGIPlugIn::str_FCGI_URI_MASK;
+UString* UFCGIPlugIn::str_FCGI_KEEP_CONN;
 
 void UFCGIPlugIn::str_allocate()
 {
    U_TRACE(0, "UFCGIPlugIn::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_FCGI_URI_MASK,0)
+   U_INTERNAL_ASSERT_EQUALS(str_FCGI_KEEP_CONN,0)
 
    static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("FCGI_URI_MASK") }
+      { U_STRINGREP_FROM_CONSTANT("FCGI_URI_MASK") },
+      { U_STRINGREP_FROM_CONSTANT("FCGI_KEEP_CONN") }
    };
 
-   U_NEW_ULIB_OBJECT(str_FCGI_URI_MASK, U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_FCGI_URI_MASK,  U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_FCGI_KEEP_CONN, U_STRING_FROM_STRINGREP_STORAGE(1));
 }
 
 UFCGIPlugIn::~UFCGIPlugIn()
@@ -153,22 +157,25 @@ int UFCGIPlugIn::handlerConfig(UFileConfig& cfg)
    U_TRACE(0, "UFCGIPlugIn::handlerConfig(%p)", &cfg)
 
    // ------------------------------------------------------------------------------------------
-   // FCGI_URI_MASK mask (DOS regexp) of uri type that send request via FCGI (*.php)
+   // FCGI_URI_MASK  mask (DOS regexp) of uri type that send request via FCGI (*.php)
    //
-   // NAME_SOCKET   file name for the fcgi socket
+   // NAME_SOCKET    file name for the fcgi socket
    //
-   // USE_IPV6      flag to indicate use of ipv6
-   // SERVER        host name or ip address for the fcgi host
-   // PORT          port number             for the fcgi host
+   // USE_IPV6       flag to indicate use of ipv6
+   // SERVER         host name or ip address for the fcgi host
+   // PORT           port number             for the fcgi host
    //
-   // RES_TIMEOUT   timeout for response from FCGI
+   // RES_TIMEOUT    timeout for response from server FCGI
+   // FCGI_KEEP_CONN If not zero, the server FCGI does not close the connection after
+   //                responding to request; the plugin retains responsibility for the connection.
    //
-   // LOG_FILE      locations for file log (use server log if exist)
+   // LOG_FILE       location for file log (use server log if exist)
    // ------------------------------------------------------------------------------------------
 
    if (cfg.loadTable())
       {
-      fcgi_uri_mask = cfg[*str_FCGI_URI_MASK];
+      fcgi_uri_mask  = cfg[*str_FCGI_URI_MASK];
+      fcgi_keep_conn = cfg.readBoolean(*str_FCGI_KEEP_CONN);
 
       connection = U_NEW(UClient_Base(&cfg));
       }
@@ -193,8 +200,6 @@ int UFCGIPlugIn::handlerInit()
 
          U_RETURN(U_PLUGIN_HANDLER_GO_ON);
          }
-
-      U_SRV_LOG_MSG(connection->getResponseData());
       }
 
    U_SRV_LOG_MSG("initialization of plugin FAILED");
@@ -233,7 +238,7 @@ int UFCGIPlugIn::handlerRequest()
 
    static FCGI_BeginRequestRecord beginRecord;
 
-   fill_begin_request(&beginRecord, FCGI_RESPONDER, FCGI_KEEP_CONN);
+   fill_begin_request(&beginRecord, FCGI_RESPONDER, fcgi_keep_conn);
 
    (void) request.replace((const char*)&beginRecord, sizeof(FCGI_BeginRequestRecord));
 
@@ -300,6 +305,16 @@ int UFCGIPlugIn::handlerRequest()
 
    if (connection->sendRequest(request) == false) goto error;
 
+   if (fcgi_keep_conn == false)
+      {
+      /* The shutdown() tells the receiver the server is done sending data. No
+       * more data is going to be send. More importantly, it doesn't close the
+       * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
+       */
+
+      if (connection->shutdown() == false) goto error;
+      }
+
    // Read fast cgi header+record
 
    pos          = 0;
@@ -350,8 +365,10 @@ loop:
          case FCGI_END_REQUEST:
             {
             (void) UHTTP::processCGIOutput();
+
+            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
             }
-         goto end;
+         break;
 
          // not  implemented
          case FCGI_UNKNOWN_TYPE:
@@ -370,7 +387,6 @@ loop:
 error:
    UHTTP::setHTTPInternalError(); // set internal error response...
 
-end:
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
 
@@ -381,7 +397,8 @@ end:
 
 const char* UFCGIPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "fcgi_uri_mask (UString      " << (void*)&fcgi_uri_mask  << ")\n"
+   *UObjectIO::os << "fcgi_keep_conn              " << fcgi_keep_conn         << '\n'
+                  << "fcgi_uri_mask (UString      " << (void*)&fcgi_uri_mask  << ")\n"
                   << "connection    (UClient_Base " << (void*)connection      << ')';
 
    if (reset)

@@ -1126,7 +1126,7 @@ void UHTTP::getTimeIfNeeded(bool all_http_version)
       {
       // HTTP 1.1 want header "Date: ..."
 
-      if (UHTTP::http_info.version == 1 || all_http_version) (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
+      if (UHTTP::http_info.version == 1 || all_http_version) u_check_now_adjust();
       }
 }
 

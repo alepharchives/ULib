@@ -51,6 +51,7 @@ class U_EXPORT UFCGIPlugIn : public UServerPlugIn {
 public:
 
    static UString* str_FCGI_URI_MASK;
+   static UString* str_FCGI_KEEP_CONN;
 
    static void str_allocate();
 
@@ -87,6 +88,7 @@ public:
 protected:
    UString fcgi_uri_mask;
    UClient_Base* connection;
+   bool fcgi_keep_conn;
 
 private:
    UFCGIPlugIn(const UFCGIPlugIn&) : UServerPlugIn() {}

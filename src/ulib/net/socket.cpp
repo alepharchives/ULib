@@ -384,6 +384,8 @@ bool USocket::setTimeoutRCV(uint32_t timeoutMS)
 {
    U_TRACE(1, "USocket::setTimeoutRCV(%u)", timeoutMS)
 
+   U_INTERNAL_ASSERT_MAJOR(timeoutMS, 500) // settare un timeout a meno di mezzo secondo e' molto sospetto...
+
 #if !defined(SO_RCVTIMEO)
    U_RETURN(false);
 #endif
@@ -410,6 +412,8 @@ bool USocket::setTimeoutRCV(uint32_t timeoutMS)
 bool USocket::setTimeoutSND(uint32_t timeoutMS)
 {
    U_TRACE(1, "USocket::setTimeoutSND(%u)", timeoutMS)
+
+   U_INTERNAL_ASSERT_MAJOR(timeoutMS, 500) // settare un timeout a meno di mezzo secondo e' molto sospetto...
 
 #ifndef SO_SNDTIMEO 
    U_RETURN(false);
@@ -478,18 +482,19 @@ void USocket::closesocket()
        * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
        */
 
-      (void) U_SYSCALL(shutdown, "%d,%d", iSockDesc, SHUT_WR);
+      if (shutdown())
+         {
+         /* At this point, the socket layer has to wait until the receiver has
+          * acknowledged the FIN packet by receiving a ACK packet. This is done by
+          * using the recv() command in a loop until 0 or less value is returned.
+          * Once recv() returns 0 (or less), 1/2 of the socket is closed
+          */
 
-      /* At this point, the socket layer has to wait until the receiver has
-       * acknowledged the FIN packet by receiving a ACK packet. This is done by
-       * using the recv() command in a loop until 0 or less value is returned.
-       * Once recv() returns 0 (or less), 1/2 of the socket is closed
-       */
+         char buf[8*1024];
+         uint32_t count = 0;
 
-      char buf[8*1024];
-      uint32_t count = 0;
-
-      do { if (count++ > 10) break; errno = 0; } while (recv(iSockDesc, buf, sizeof(buf)) > 0 || errno == EAGAIN);
+         do { if (count++ > 10) break; errno = 0; } while (recv(iSockDesc, buf, sizeof(buf)) > 0 || errno == EAGAIN);
+         }
       }
 
    // Then you can close the second half of the socket by calling closesocket()
@@ -515,7 +520,7 @@ const char* USocket::getMsgError(char* buffer, uint32_t buffer_size)
       {
       errno = -iState;
 
-      (void) u_snprintf(buffer, buffer_size, "%R", NULL);
+      (void) u_snprintf(buffer, buffer_size, "%R", 0);
 
       buffer += 3;
 

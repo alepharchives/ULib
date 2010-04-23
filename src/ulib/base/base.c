@@ -160,13 +160,61 @@ void u_getcwd(void) /* get current working directory */
    U_INTERNAL_ASSERT_MAJOR(u_cwd_len,0)
 }
 
+void u_check_now_adjust(void)
+{
+   time_t lnow;
+
+   U_INTERNAL_TRACE("u_check_now_adjust()", 0)
+
+   /* calculate number of seconds between UTC to current time zone
+    *
+    *         time() returns the time since the Epoch (00:00:00 UTC, January 1, 1970), measured in seconds.
+    * gettimeofday() gives the number of seconds and microseconds since the Epoch (see time(2)). The tz argument is a struct timezone:
+    *
+    * struct timezone {
+    *    int tz_minuteswest;  // minutes west of Greenwich
+    *    int tz_dsttime;      // type of DST correction
+    * };
+    */
+
+   (void) gettimeofday(&u_now, 0);
+
+   if (u_start_time == 0)
+      {
+      /* The localtime() function converts the calendar time to broken-time representation, expressed relative
+       * to the user's specified timezone. The function acts as if it called tzset(3) and sets the external
+       * variables tzname with information about the current timezone, timezone with the difference between
+       * Coordinated Universal Time (UTC) and local standard time in seconds, and daylight to a non-zero value
+       * if daylight savings time rules apply during some part of the year. The return value points to a
+       * statically allocated struct which might be overwritten by subsequent calls to any of the date and time
+       * functions. The localtime_r() function does the same, but stores the data in a user-supplied struct. It
+       * need not set tzname, timezone, and daylight
+       */
+
+      (void) localtime_r(&u_now.tv_sec, &u_strftime_tm);
+
+      /* The timegm() function converts the broken-down time representation, expressed in Coordinated Universal
+       * Time (UTC) to calendar time
+       */
+
+      lnow = timegm(&u_strftime_tm);
+
+      u_now_adjust = (lnow - u_now.tv_sec);
+      u_start_time = u_now.tv_sec + u_now_adjust;
+
+      /* NB: check if current date is OK - Fri Apr 23 17:26:25 CEST 2010 */
+
+      if (u_start_time < 1272036378) u_start_time = 0;
+      }
+}
+
 void u_init(char** argv)
 {
-   U_INTERNAL_TRACE("u_init()", 0)
-
    time_t lnow;
    const char* pwd;
    struct passwd* pw;
+
+   U_INTERNAL_TRACE("u_init()", 0)
 
    u_progname = u_basename(u_progpath = argv[0]);
 
@@ -181,7 +229,8 @@ void u_init(char** argv)
 #ifndef __MINGW32__
    /* check for bash setting... */
 
-   if ((pwd = getenv("PWD")) && strncmp(u_cwd, pwd, u_cwd_len))
+   if ((pwd = getenv("PWD")) &&
+       strncmp(u_cwd, pwd, u_cwd_len))
       {
       U_WARNING("current working directory from environment (PWD): %s differ from sytem getcwd(): %.*s", pwd, u_cwd_len, u_cwd);
       }
@@ -217,34 +266,7 @@ void u_init(char** argv)
 
    tzset();
 
-   /* calculate number of seconds between UTC to current time zone
-    *
-    *         time() returns the time since the Epoch (00:00:00 UTC, January 1, 1970), measured in seconds.
-    * gettimeofday() gives the number of seconds and microseconds since the Epoch (see time(2)). The tz argument is a struct timezone:
-    *
-    * struct timezone {
-    *    int tz_minuteswest;  // minutes west of Greenwich
-    *    int tz_dsttime;      // type of DST correction
-    * };
-    */
-
-   (void) gettimeofday(&u_now, 0);
-
-   /* The localtime() function converts the calendar time to broken-time representation, expressed relative to the user's specified timezone. The function
-    * acts as if it called tzset(3) and sets the external variables tzname with information about the current timezone, timezone with the difference between
-    * Coordinated Universal Time (UTC) and local standard time in seconds, and daylight to a non-zero value if daylight savings time rules apply during some
-    * part of the year. The return value points to a statically allocated struct which might be overwritten by subsequent calls to any of the date and time
-    * functions. The localtime_r() function does the same, but stores the data in a user-supplied struct. It need not set tzname, timezone, and daylight
-   */
-
-   (void) localtime_r(&u_now.tv_sec, &u_strftime_tm);
-
-   /* The timegm() function converts the broken-down time representation, expressed in Coordinated Universal Time (UTC) to calendar time */
-
-   lnow = timegm(&u_strftime_tm);
-
-   u_now_adjust = (lnow - u_now.tv_sec);
-   u_start_time = u_now.tv_sec + u_now_adjust;
+   u_check_now_adjust();
 }
 
 uint32_t u_snprintf(char* buffer, uint32_t buffer_size, const char* format, ...)
@@ -296,7 +318,7 @@ uint32_t u_strftime(char* s, uint32_t maxsize, const char* format, time_t t)
       {
       if (t == 0)
          {
-         (void) gettimeofday(&u_now, 0);
+         u_check_now_adjust();
 
          t = u_now.tv_sec + u_now_adjust;
          }

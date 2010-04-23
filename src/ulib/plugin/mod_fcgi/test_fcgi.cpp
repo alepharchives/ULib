@@ -30,6 +30,8 @@ int main(int argc, char** argv)
 
       if (err) { syslog (LOG_INFO, "FCGX_Accept_r stopped: %d", err); break; }
 
+      if (cgi.keepConnection) FCGX_Detach(&cgi);
+
       char** envp;
       int size = 200;
 

@@ -41,9 +41,8 @@ UClient_Base::UClient_Base(UFileConfig* cfg) : response(U_CAPACITY), buffer(U_CA
    if (cfg) loadConfigParam(*cfg);
    else
       {
-      bIPv6 = false;
-      port  = verify_mode = 0;
-
+      bIPv6     = false;
+      port      = verify_mode = 0;
       timeoutMS = U_TIMEOUT;
       }
 }
@@ -173,7 +172,7 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
 #ifdef HAVE_IPV6
    bIPv6       = cfg.readBoolean(*UServer_Base::str_USE_IPV6);
 #endif
-   timeoutMS   = cfg.readLong(*str_RES_TIMEOUT);
+   timeoutMS   = cfg.readLong(*str_RES_TIMEOUT) * 1000;
    verify_mode = cfg.readLong(*UServer_Base::str_VERIFY_MODE);
 
    UString host      = cfg[*UServer_Base::str_SERVER],
@@ -197,7 +196,7 @@ bool UClient_Base::connect()
 
    if (socket->connectServer(server, port))
       {
-      (void) socket->setTimeoutRCV(timeoutMS);
+      if (timeoutMS) (void) socket->setTimeoutRCV(timeoutMS);
 
       if (log)
          {
@@ -210,7 +209,12 @@ bool UClient_Base::connect()
 
    response.snprintf("Sorry, couldn't connect to server %.*S%R", U_STRING_TO_TRACE(host_port), 0);
 
-   if (log && log_shared_with_server == false) ULog::log("%.*s\n", U_STRING_TO_TRACE(response));
+   if (log)
+      {
+      ULog::log("%s%.*s\n",
+                  log_shared_with_server ? UServer_Base::mod_name : "",
+                  U_STRING_TO_TRACE(response));
+      }
 
    U_RETURN(false);
 }
@@ -348,6 +352,13 @@ bool UClient_Base::sendRequest()
          result = USocketExt::write(socket, request);
 
          if (isConnected()) break;
+
+         if (log)
+            {
+            ULog::log("%sConnection to %.*s reset by peer%R\n",
+                     log_shared_with_server ? UServer_Base::mod_name : "",
+                     U_STRING_TO_TRACE(logbuf), 0);
+            }
          }
       }
 

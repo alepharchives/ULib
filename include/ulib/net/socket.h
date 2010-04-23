@@ -406,6 +406,24 @@ public:
       U_RETURN(result);
       }
 
+   /* The shutdown() tells the receiver the server is done sending data. No
+    * more data is going to be send. More importantly, it doesn't close the
+    * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
+    */
+
+   bool shutdown(int how = SHUT_WR)
+      {
+      U_TRACE(1, "USocket::shutdown(%d)", how)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT(isOpen())
+
+      bool result = (U_SYSCALL(shutdown, "%d,%d", iSockDesc, how) == 0);
+
+      U_RETURN(result);
+      }
+
    /**
     * Stick a TCP cork in the socket. It's not clear that this will help performance, but it might.
     *

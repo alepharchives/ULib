@@ -94,6 +94,17 @@ public:
       socket->close();
       }
 
+   bool shutdown(int how = SHUT_WR)
+      {
+      U_TRACE(0, "UClient_Base::shutdown(%d)", how)
+
+      U_INTERNAL_ASSERT_POINTER(socket)
+
+      bool result = socket->shutdown(how);
+
+      U_RETURN(result);
+      }
+
    int         getPort() const         { return port; }
    UString     getServer() const       { return server; }
    UString     getBuffer() const       { return buffer; }
