@@ -136,7 +136,7 @@ U_EXPORT istream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>operator&lt;&lt;</b> (ostream &amp;os, const <a class="el" href="classUrl.html">Url</a> &amp;u)</td></tr>
 </table>
 <hr/><a name="_details"></a><h2>Detailed Description</h2>
-<p>://[user[:password]@]hostname[:port]/[path]</p>
+<p>://[user[:password]@]hostname[:port]/[path]?[query]</p>
 <p>Represents a <em>Uniform Resource Locator</em> (URL). This class provides the capability to parse and manipulate URL strings.</p>
 <h4>The URL Format</h4>
 <p>A URL is a string representation of a resource that is available via the Internet. The format of URLs is formally defined in the IETF RFC 1738 which is available online at <a href="http://www.ietf.org/rfc/rfc1738.txt">http://www.ietf.org/rfc/rfc1738.txt</a> (which is itself a URL!) The URL syntax is dependent upon the scheme. In general, absolute URL are written as follows: <code></code> &lt;scheme&gt;:&lt;scheme-specific-part&gt; A URL contains the name of the scheme being used (&lt;scheme&gt;) followed by a colon and then a string (the &lt;scheme-specific-part&gt;) whose interpretation depends on the scheme. The URL syntax does not require that the scheme-specific-part is common among all URL, however, many forms of URL do share a common syntax for representing hierarchical relationships. This "generic URL" syntax consists of a sequence of four main components: <code></code> &lt;scheme&gt;://&lt;authority&gt;&lt;path&gt;?&lt;query&gt; The <b>scheme</b> is often the name of a network protocol which can be used to retrieve the resource from the Internet. The words <em>protocol</em> and <em>scheme</em> are used interchangeably within this document. The <b>authority</b> is comprised of three sub-components: <code>&lt;userInfo&gt;</code> &lt;host&gt;&lt;:port&gt; The <b>path</b> is comprised of everything following the authority up to the query part. In contrast to the description in RFC 1738, this class includes the "/" separator between the authority part and the path as part of the path. The following examples are supported:</p>
@@ -985,7 +985,7 @@ U_EXPORT ostream &amp;&nbsp;</td><td class="memItemRight" valign="bottom"><b>ope
 <li>src/ulib/url.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 23 19:13:52 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:42 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

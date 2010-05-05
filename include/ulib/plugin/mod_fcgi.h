@@ -78,6 +78,7 @@ public:
    // Connection-wide hooks
 
    virtual int handlerRequest();
+   virtual int handlerReset();
 
    // DEBUG
 

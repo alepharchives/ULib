@@ -61,7 +61,7 @@ int nanosleep(const struct timespec* req, struct timespec* rem);
 #  endif
 #endif
 
-#ifndef HAVE_SENDFILE
+#ifndef HAVE_SENDFILE64
 #  ifdef __cplusplus
 extern "C" {
 #  endif

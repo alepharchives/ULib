@@ -170,7 +170,7 @@ void ULog::write(const struct iovec* iov, int n)
    if (bsyslog)
       {
 #  ifndef __MINGW32__
-      for (int i = 0; i < n; ++i) U_SYSCALL_VOID(syslog, "%d,%S,%d,%p", LOG_INFO, "%.*s", iov[i].iov_len, iov[i].iov_base);
+      for (int i = 0; i < n; ++i) U_SYSCALL_VOID(syslog, "%d,%S,%d,%p", LOG_INFO, "%.*s", (int)iov[i].iov_len, iov[i].iov_base);
 #  endif
 
       return;

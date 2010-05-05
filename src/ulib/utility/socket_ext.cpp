@@ -40,24 +40,26 @@ bool USocketExt::read(USocket* socket, UString& buffer, int count, int timeoutMS
    U_INTERNAL_ASSERT_DIFFERS(count,0)
    U_INTERNAL_ASSERT(socket->isConnected())
 
+   char* ptr;
    ssize_t value;
    uint32_t start;
    bool single_read;
    int diff, byte_read;
-   char* ptr = buffer.data();
 
-loop:
+   // NB: THINK REALLY VERY MUCH BEFORE CHANGE CODE HERE...
+
+restart:
+   start       = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua
    byte_read   = 0;
-   start       = buffer.size();           // il buffer di lettura potrebbe iniziare con una parte residua
    single_read = (count == U_SINGLE_READ);
-
-   U_INTERNAL_DUMP("byte_read = %d single_read = %b pcount = %d pbuffer = %p buffer = %p", byte_read, single_read, pcount, pbuffer, ptr)
 
    // manage buffered read
 
    if (pcount > 0) // NB: va bene cosi'.... (la size di un argomento di RPC puo' essere anche di un byte...)
       {
-      U_INTERNAL_ASSERT_EQUALS(ptr, pbuffer)
+      U_INTERNAL_DUMP("pcount = %d pbuffer = %p buffer = %p", pcount, pbuffer, buffer.data())
+
+      U_INTERNAL_ASSERT_EQUALS(buffer.data(), pbuffer)
 
       if (single_read) count = pcount;
 
@@ -67,35 +69,39 @@ loop:
 
       if (diff >= 0)
          {
+         // NB: NO read()...!!!
+
          pcount -= (byte_read = count);
 
-         goto done; // no read()...!!!
+         U_INTERNAL_DUMP("pcount = %d", pcount)
+
+         goto done;
          }
 
       // diff < 0
 
-      count -= (byte_read = pcount);
+      buffer.size_adjust_force(start + pcount); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
+
+      count -= pcount;
       pcount = 0;
 
-      if (count < (int)U_CAPACITY) count = U_SINGLE_READ;
+      if (count < (int)U_CAPACITY) count = U_SINGLE_READ; // NB: may be we can read more bytes then required...
 
-      // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
+      U_INTERNAL_DUMP("count = %d", count)
 
-      buffer.size_adjust_force(start + byte_read);
-
-      goto loop;
+      goto restart;
       }
 
    if (count < (int)U_CAPACITY) single_read = true;
 
-   buffer.reserve(start + (single_read ? U_CAPACITY : count));
+   (void) buffer.reserve(start + (single_read ? (int)U_CAPACITY : count));
 
    ptr = buffer.c_pointer(start);
 
-   U_INTERNAL_DUMP("single_read = %b", single_read)
+   U_INTERNAL_DUMP("start = %u single_read = %b count = %d", start, single_read, count)
 
 read:
-   value = socket->recv(ptr + byte_read, (single_read ? U_CAPACITY : count - byte_read));
+   value = socket->recv(ptr + byte_read, (single_read ? (int)U_CAPACITY : count - byte_read));
 
    if (value <= 0)
       {
@@ -119,38 +125,52 @@ read:
 
    byte_read += value;
 
-   // check if only one read()...
-
-   if (single_read &&
-       count != U_SINGLE_READ)
-      {
-      pcount = (byte_read - count); // NB: here pcount is always == 0...
-
-      if (pcount >= 0)
-         {
-         byte_read = count;
-#     ifdef DEBUG
-         pbuffer   = buffer.data();
-#     endif
-         }
-      }
-
-   U_INTERNAL_DUMP("byte_read = %d count = %d pcount = %d", byte_read, count, pcount)
+   U_INTERNAL_DUMP("byte_read = %d", byte_read)
 
    if (byte_read < count) goto read;
 
+   if (single_read)
+      {
+      // NB: may be there are available more bytes to read...
+
+      if (value == U_CAPACITY)
+         {
+         buffer.size_adjust_force(start + byte_read); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
+
+         if (buffer.reserve(start + byte_read + U_CAPACITY)) ptr = buffer.c_pointer(start);
+
+         goto read;
+         }
+
+      if (count != U_SINGLE_READ)
+         {
+         // NB: may be we have read more bytes then required...
+
+         pcount = (byte_read - count); // NB: here pcount is always == 0...
+
+         if (pcount >= 0)
+            {
+            byte_read = count;
+#        ifdef DEBUG
+            pbuffer   = buffer.data();
+#        endif
+            }
+
+         U_INTERNAL_DUMP("byte_read = %d count = %d pcount = %d", byte_read, count, pcount)
+         }
+      }
+
 done:
-   buffer.size_adjust_force(start + byte_read);
+   buffer.size_adjust_force(start + byte_read); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
 
-   U_INTERNAL_DUMP("byte_read = %u", byte_read)
+   if (count != U_SINGLE_READ)
+      {
+      size_message += count;
 
-   if (byte_read && count != U_SINGLE_READ) size_message += count;
+      U_INTERNAL_DUMP("size_message = %u", size_message)
+      }
 
-   U_INTERNAL_DUMP("size_message = %u", size_message)
-
-   if (single_read) U_RETURN(byte_read > 0);
-
-   U_RETURN(byte_read == count);
+   U_RETURN(true);
 }
 
 // read while not received token, return position of token in buffer
@@ -221,7 +241,7 @@ int USocketExt::vsyncCommand(USocket* s, char* buffer, uint32_t buffer_size, con
    buffer[buffer_len++] = '\n';
 
    int n        = s->send(buffer, buffer_len),
-       response = (s->checkIO(n, buffer_len) ? readLineReply(s, buffer, buffer_size) : USocket::BROKEN);
+       response = (s->checkIO(n, buffer_len) ? readLineReply(s, buffer, buffer_size) : (int)USocket::BROKEN);
 
    U_RETURN(response);
 }
@@ -240,7 +260,7 @@ int USocketExt::vsyncCommandML(USocket* s, char* buffer, uint32_t buffer_size, c
    buffer[buffer_len++] = '\n';
 
    int n        = s->send(buffer, buffer_len),
-       response = (s->checkIO(n, buffer_len) ? readMultilineReply(s, buffer, buffer_size) : USocket::BROKEN);
+       response = (s->checkIO(n, buffer_len) ? readMultilineReply(s, buffer, buffer_size) : (int)USocket::BROKEN);
 
    U_RETURN(response);
 }

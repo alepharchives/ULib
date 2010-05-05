@@ -72,6 +72,18 @@ extern U_EXPORT bool u_startsWith(const char* a, uint32_t n1, const char* b, uin
 
 extern U_EXPORT bool u_endsWith(const char* a, uint32_t n1, const char* b, uint32_t n2);
 
+/* find char not quoted */
+
+extern U_EXPORT const char* u_find_char(const char* s, const char* end, char c);
+
+/* skip string delimiter or white space and line comment */
+
+extern U_EXPORT const char* u_skip(const char* s, const char* end, const char* delim, char line_comment);
+
+/* delimit token */
+
+extern U_EXPORT const char* u_delimit_token(const char* s, const char** p, const char* end, const char* delim, char skip_line_comment);
+
 /* Search a string for any of a set of characters. Locates the first occurrence in the string s of any of the characters in the string accept */
 
 extern U_EXPORT const char* u_strpbrk(const char* s, uint32_t slen, const char* accept);

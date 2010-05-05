@@ -747,7 +747,7 @@ U_NO_EXPORT void UPosting::checkAllEntry(UStringRep* word_rep, UStringRep* value
 
    callForPostingAndSetFilename(0);
 
-   write(1, U_CONSTANT_TO_PARAM(".")); // CHECK_2
+   (void) write(1, U_CONSTANT_TO_PARAM(".")); // CHECK_2
 }
 
 void UPosting::checkAllEntry()

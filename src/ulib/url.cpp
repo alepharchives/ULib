@@ -247,7 +247,7 @@ UString Url::getPath()
       {
       uint32_t copy_size = path_end - path_begin;
 
-      path.reserve(copy_size);
+      (void) path.reserve(copy_size);
 
       decode(url.c_pointer(path_begin), copy_size, path);
       }
@@ -380,6 +380,8 @@ void Url::findpos()
 
    int temp;
 
+   // proto://[user[:password]@]hostname[:port]/[path]?[query]
+
    service_end = U_STRING_FIND(url, 0, "//");
 
    if (service_end < 0)
@@ -391,21 +393,26 @@ void Url::findpos()
       {
       user_begin = service_end + 2;
 
-      --service_end;
+      --service_end; // cut ':'
       }
 
    path_begin = url.find('/', user_begin);
 
    if (path_begin < 0)
       {
-      path_begin = url.size();
+      path_begin = url.find('?', user_begin);
+
+      if (path_begin < 0) path_begin = url.size();
       }
 
-   if (service_end == 0 && path_begin && (url.at(path_begin-1) == ':'))
+   if (service_end == 0 &&
+       path_begin       &&
+       (url.c_char(path_begin-1) == ':'))
       {
       temp = url.find('.');
 
-      if ((temp < 0) || (temp > path_begin))
+      if (temp < 0 ||
+          temp > path_begin)
          {
          service_end = path_begin - 1;
          user_begin  = service_end;
@@ -415,7 +422,8 @@ void Url::findpos()
 
    user_end = url.find('@', user_begin);
 
-   if ((user_end < 0) || (user_end > path_begin))
+   if (user_end < 0 ||
+       user_end > path_begin)
       {
       user_end   = user_begin;
       host_begin = user_end;
@@ -429,7 +437,8 @@ void Url::findpos()
 
    temp = url.find('[', host_begin);
 
-   if ((temp >= 0) && (temp < path_begin))
+   if (temp >= 0 &&
+       temp < path_begin)
       {
       host_end = url.find(']', temp);
 
@@ -440,7 +449,11 @@ void Url::findpos()
       {
       host_end = url.find(':', host_begin);
 
-      if ((host_end < 0) || (host_end > path_begin)) host_end = path_begin;
+      if (host_end < 0 ||
+          host_end > path_begin)
+         {
+         host_end = path_begin;
+         }
       }
 
    path_end = url.find('?', path_begin);
@@ -448,6 +461,9 @@ void Url::findpos()
    if (path_end < path_begin) path_end = url.size();
 
    query = path_end;
+
+   U_INTERNAL_DUMP("service_end = %d user_begin = %d user_end = %d host_begin = %d host_end = %d path_begin = %d path_end = %d query = %d",
+                    service_end,     user_begin,     user_end,     host_begin,     host_end,     path_begin,     path_end,     query)
 }
 
 U_NO_EXPORT bool Url::prepeareForQuery()
@@ -486,21 +502,22 @@ void Url::addQuery(const char* entry, uint32_t entry_len, const char* value, uin
       if (e_size < v_size) b_size = v_size;
 
       b_size *= 3;
-      char buffer[b_size];
 
-      uint32_t result = u_url_encode((const unsigned char*)entry, e_size, (unsigned char*)buffer, 0);
+      UString buffer(b_size);
+
+      encode(entry, e_size, buffer);
 
       if (*url.rbegin() != '?') url.push_back('&');
 
-      (void) url.append(buffer, result);
+      (void) url.append(buffer);
 
       if (value)
          {
          url.push_back('=');
 
-         result = u_url_encode((const unsigned char*)value, v_size, (unsigned char*)buffer, U_RFC2231);
+         encode(value, v_size, buffer, U_RFC2231);
 
-         (void) url.append(buffer, result);
+         (void) url.append(buffer);
          }
       }
 }

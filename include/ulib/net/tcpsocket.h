@@ -33,6 +33,8 @@ public:
 
    // VIRTUAL METHOD
 
+   virtual void closesocket();
+
    /**
     * This method is called to connect the socket to a server TCP socket that is specified
     * by the provided IP Address and port number. We call the connect() method to perform the connection.

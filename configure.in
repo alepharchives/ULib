@@ -347,10 +347,17 @@ AC_MSG_RESULT($use_distcc)
 # SECTION 4: checks for libraries
 
 AC_CHECK_LIB(dl,dlopen)
+AC_CHECK_LIB(rt,sem_init)
 AC_CHECK_LIB(nsl,inet_ntop)
-AC_CHECK_LIB(pthread,sem_init)
 AC_CHECK_LIB(posix4,nanosleep)
 AC_CHECK_LIB(socket,socketpair)
+
+if test "$ac_cv_lib_rt_sem_init" = "yes" ; then
+AM_CONDITIONAL(SEMAPHORE, test "$ac_cv_lib_rt_sem_init"		 = "yes")
+else
+AC_CHECK_LIB(pthread,sem_init)
+AM_CONDITIONAL(SEMAPHORE, test "$ac_cv_lib_pthread_sem_init" = "yes")
+fi
 
 LIBS_SAVE=${LIBS}
 AC_CHECK_LIB(GeoIP,GeoIP_id_by_ipnum)
@@ -545,7 +552,6 @@ AM_CONDITIONAL(SENDFILE,    test "$ac_cv_func_sendfile64"				 = "yes")
 AM_CONDITIONAL(FALLOCATE,	 test "$ac_cv_func_fallocate"					 = "yes")
 AM_CONDITIONAL(FALLOCATE64, test "$ac_cv_func_fallocate64"				 = "yes")
 AM_CONDITIONAL(NANOSLEEP,   test "$ac_cv_func_nanosleep"					 = "yes")
-AM_CONDITIONAL(SEMAPHORE,   test "$ac_cv_lib_pthread_sem_init"			 = "yes")
 AM_CONDITIONAL(GETOPT_LONG, test "$ac_cv_func_getopt_long"				 = "yes")
 
 # SECTION 11: checks for function characteristics
@@ -656,19 +662,7 @@ if test "$GCC" = "yes"; then
 		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wno-format -Wno-format-extra-args -Wenum-compare"
 
 	case "${gcc_version_raw}" in
-		2.*)
-		;;
-		3.*)
-		;;
-		4.0.*)
-		;;
-		4.1.*)
-		;;
-		4.2.*)
-		;;
-		4.3.*)
-		;;
-		4.4.*)
+		[2-4].[0-4].[0-6])
 		;;
 		*)
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result"
@@ -692,7 +686,7 @@ if test "$GCC" = "yes"; then
 	fi
 
 	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
-		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wcast-qual"
+		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition" # -Wcast-qual
 
 	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti \
 		-Wno-deprecated"

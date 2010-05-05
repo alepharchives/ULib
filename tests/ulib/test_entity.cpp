@@ -63,7 +63,7 @@ static void check_pkcs7(UMimePKCS7& item, const UString& file)
 
       bool ok = item.getPKCS7().verify();
 
-      U_ASSERT(ok == true)
+      U_ASSERT(ok)
       }
 }
 #endif
@@ -75,7 +75,7 @@ static void parse(const UString& dati, const UString& file)
    UMimeEntity tmp(dati);
    const char* type = "entity";
 
-   U_ASSERT(tmp.isMime()     == true)
+   U_ASSERT(tmp.isMime())
    U_ASSERT(tmp.getCharSet() == "us-ascii")
 
    if (tmp.isMessage())

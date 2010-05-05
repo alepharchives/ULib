@@ -725,7 +725,7 @@ const char* u_getSysSignal(int signo, uint32_t* len)
          }
       }
 
-   *len = snprintf(buffer, 256, "%s (%d, %s)", name, signo, msg);
+   *len = snprintf(buffer, sizeof(buffer), "%s (%d, %s)", name, signo, msg);
 
    return buffer;
 }
@@ -860,7 +860,7 @@ void u_execOnExit(void)
 
       char command[U_PATH_MAX];
 
-      (void) u_snprintf(command, 256, "%s %s %P %N", cmd_on_exit, u_progpath);
+      (void) u_snprintf(command, sizeof(command), "%s %s %P %N", cmd_on_exit, u_progpath);
 
       U_INTERNAL_PRINT("command = %s", command)
 

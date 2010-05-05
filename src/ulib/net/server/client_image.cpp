@@ -319,11 +319,10 @@ bool UClientImage_Base::isPipeline()
       {
       // NB: for RPC message...
 
-      bool bsize = (size == USocketExt::size_message);
-
-      // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more than one)...
-
-      if (bsize) rbuffer->size_adjust_force(USocketExt::size_message + USocketExt::pcount);
+      if (size == USocketExt::size_message)
+         {
+         rbuffer->size_adjust_force(USocketExt::size_message + USocketExt::pcount); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more than one)...
+         }
 
       // NB: check for spurios white space (IE)...
 

@@ -1349,12 +1349,12 @@ int UNoCatPlugIn::handlerRequest()
 
       if (U_HTTP_URI_STRNEQ("/status"))
          {
-         if (U_STRNEQ(U_HTTP_QUERY, "ip="))
+         if (U_HTTP_QUERY_STRNEQ("ip="))
             {
             // NB: request from AUTH to get status user
 
-            uint32_t len    = UHTTP::http_info.query_len - 3; // 3 => "ip=..."
-            const char* ptr =               U_HTTP_QUERY + 3;
+            uint32_t len    = UHTTP::http_info.query_len - U_CONSTANT_SIZE("ip=");
+            const char* ptr = UHTTP::http_info.query     + U_CONSTANT_SIZE("ip=");
 
             const char* peer_ip = getIPAddress(ptr, len);
 
@@ -1374,13 +1374,13 @@ int UNoCatPlugIn::handlerRequest()
 
          // status
 
-         setStatusContent(peer);
+         setStatusContent(peer); // NB: peer == 0 -> request from AUTH to get status access point...
+
+         UHTTP::http_info.clength = status_content->size() - (peer ? 2 : 47); // NB: 47 => sizeof("Content-Type: text/html; charset=iso-8859-1\r\n\r\n")
 
          *UClientImage_Base::wbuffer = *status_content;
 
-         uint32_t len = (peer ? 2 : 47); // NB: 47 => sizeof("Content-Type: text/html; charset=iso-8859-1\r\n\r\n")
-
-         UHTTP::setHTTPCgiResponse(HTTP_OK, status_content->size() - len, false, true);
+         UHTTP::setHTTPCgiResponse(HTTP_OK, false, true, false);
 
          goto end;
          }
@@ -1397,8 +1397,8 @@ int UNoCatPlugIn::handlerRequest()
             goto set_redirection_url;
             }
 
-         uint32_t len    = output.size() - 3; // 3 => "ip=..."
-         const char* ptr = output.data() + 3;
+         uint32_t len    = output.size() - U_CONSTANT_SIZE("ip=");
+         const char* ptr = output.data() + U_CONSTANT_SIZE("ip=");
 
          const char* peer_ip = getIPAddress(ptr, len);
 
@@ -1467,14 +1467,21 @@ int UNoCatPlugIn::handlerRequest()
       goto set_redirect_to_AUTH;
       }
 
+   if (U_HTTP_URI_STRNEQ("/test"))
+      {
+      (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
+
+      goto set_redirect_to_AUTH;
+      }
+
    if (host == gateway)
       {
-      if (U_STRNEQ(U_HTTP_QUERY, "ticket="))
+      if (U_HTTP_QUERY_STRNEQ("ticket="))
          {
          // user with a ticket
 
-         uint32_t len    = UHTTP::http_info.query_len - 7; // 7 => "ticket=..."
-         const char* ptr =               U_HTTP_QUERY + 7;
+         uint32_t len    = UHTTP::http_info.query_len - U_CONSTANT_SIZE("ticket=");
+         const char* ptr = UHTTP::http_info.query     + U_CONSTANT_SIZE("ticket=");
 
          if (checkSignedData(ptr, len) == false)
             {
@@ -1505,13 +1512,6 @@ int UNoCatPlugIn::handlerRequest()
          // OK: go to the destination...
 
          goto redirect;
-         }
-
-      if (U_HTTP_URI_STRNEQ("/test"))
-         {
-         (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
-
-         goto set_redirect_to_AUTH;
          }
 
       U_SRV_LOG_VAR("Missing ticket from peer %.*S", U_STRING_TO_TRACE(ip_client));

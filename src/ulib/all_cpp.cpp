@@ -47,6 +47,7 @@
 #include "event/event_time.cpp"
 #include "net/ping.cpp"
 #include "net/socket.cpp"
+#include "net/tcpsocket.cpp"
 #include "net/ipaddress.cpp"
 #include "net/ipt_ACCOUNT.cpp"
 #include "net/client/client.cpp"

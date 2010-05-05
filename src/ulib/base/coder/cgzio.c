@@ -227,8 +227,8 @@ uint32_t u_gz_inflate(const char* input, uint32_t len, char* result)
          input += len;
          }
 
-      if ((flags & ORIG_NAME) != 0) while (*ptr++ != '\0'); /* Discard file name if any */
-      if ((flags & COMMENT)   != 0) while (*ptr++ != '\0'); /* Discard file comment if any */
+      if ((flags & ORIG_NAME) != 0) while (*ptr++ != '\0') {} /* Discard file name if any */
+      if ((flags & COMMENT)   != 0) while (*ptr++ != '\0') {} /* Discard file comment if any */
 
       header_size = (ptr - input);
 

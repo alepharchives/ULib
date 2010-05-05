@@ -489,11 +489,14 @@ public:
 
          vprint("MIME: multipart - %d parts", bodyPartCount);
 
+         content->hold(); // NB: si incrementa la reference della stringa...
+
          while (i < bodyPartCount)
             {
             uMimeEntity = tmp[i];
 
-            *content = (uMimeEntity->isMultipart() ? uMimeEntity->getData() : uMimeEntity->getContent());
+            *content = (uMimeEntity->isMultipart() ? uMimeEntity->getData()
+                                                   : uMimeEntity->getContent());
 
             manageDescription(uMimeEntity, ++i);
 
@@ -514,6 +517,8 @@ public:
 
             --num_tab;
             }
+
+      // content->release(); // NB: si decrementa la reference della stringa...
          }
       else
          {
@@ -710,7 +715,7 @@ public:
          stype = U_NEW(UString);
 
 #     ifdef DEBUG
-         UStringRep::check_dead_of_source_string_with_child_alive = false;
+      // UStringRep::check_dead_of_source_string_with_child_alive = false;
 #     endif
 
          parse();

@@ -89,45 +89,42 @@ typedef struct uhttpheader {
    const char* uri;
    const char* query;
    const char* host;
+   const char* content_type;
    uint32_t nResponseCode, version,
             startHeader, endHeader, szHeader,
-            method_len, uri_len, query_len, host_len,
+            method_len, uri_len, query_len, host_len, content_type_len,
             method_type, clength, keep_alive, is_connection_close, is_php;
 } uhttpheader;
 
 enum HTTPMethodType { HTTP_POST = 1, HTTP_GET = 2, HTTP_HEAD = 3 };
 
-#define U_HTTP_HEADER(str) str.substr(UHTTP::http_info.startHeader, UHTTP::http_info.szHeader)
+#define U_HTTP_HEADER(str)           str.substr(UHTTP::http_info.startHeader, UHTTP::http_info.szHeader)
 
-// NB: we check for pointer or offset...
+#define U_HTTP_METHOD_TO_PARAM       UHTTP::http_info.method, UHTTP::http_info.method_len
+#define U_HTTP_METHOD_TO_TRACE       UHTTP::http_info.method_len, UHTTP::http_info.method
 
-#define U_HTTP_URI   (UHTTP::http_info.uri   > (const char*)0x0fff ? UHTTP::http_info.uri \
-                                                    : UHTTP::http_info.method + (ptrdiff_t)UHTTP::http_info.uri)
-#define U_HTTP_QUERY (UHTTP::http_info.query > (const char*)0xffff ? UHTTP::http_info.query \
-                                                    : UHTTP::http_info.method + (ptrdiff_t)UHTTP::http_info.query)
+#define U_HTTP_URI_TO_TRACE          UHTTP::http_info.uri_len, UHTTP::http_info.uri
+#define U_HTTP_URI_TO_PARAM          UHTTP::http_info.uri, UHTTP::http_info.uri_len
+#define U_HTTP_URI_TO_PARAM_SHIFT(n) UHTTP::http_info.uri+U_min(n,UHTTP::http_info.uri_len), UHTTP::http_info.uri_len-U_min(n,UHTTP::http_info.uri_len)
 
-#define U_HTTP_METHOD_TO_PARAM      UHTTP::http_info.method, UHTTP::http_info.method_len
-#define U_HTTP_METHOD_TO_TRACE      UHTTP::http_info.method_len, UHTTP::http_info.method
+#define U_HTTP_QUERY_TO_PARAM        UHTTP::http_info.query, UHTTP::http_info.query_len
+#define U_HTTP_QUERY_TO_TRACE        UHTTP::http_info.query_len, UHTTP::http_info.query
 
-#define U_HTTP_URI_TO_PARAM         U_HTTP_URI, UHTTP::http_info.uri_len
-#define U_HTTP_URI_TO_TRACE         UHTTP::http_info.uri_len, U_HTTP_URI
+#define U_HTTP_URI_QUERY_TO_PARAM    UHTTP::http_info.uri, (UHTTP::http_info.uri_len + UHTTP::http_info.query_len + (UHTTP::http_info.query_len ? 1 : 0))
+#define U_HTTP_URI_QUERY_TO_TRACE    (UHTTP::http_info.uri_len + UHTTP::http_info.query_len + (UHTTP::http_info.query_len ? 1 : 0)), UHTTP::http_info.uri
 
-#define U_HTTP_QUERY_TO_PARAM       U_HTTP_QUERY, UHTTP::http_info.query_len
-#define U_HTTP_QUERY_TO_TRACE       UHTTP::http_info.query_len, U_HTTP_QUERY
+#define U_HTTP_HOST_TO_PARAM         UHTTP::http_info.host, UHTTP::http_info.host_len
+#define U_HTTP_HOST_TO_TRACE         UHTTP::http_info.host_len, UHTTP::http_info.host
 
-#define U_HTTP_URI_QUERY_TO_PARAM   U_HTTP_URI, (UHTTP::http_info.uri_len + UHTTP::http_info.query_len + (UHTTP::http_info.query_len ? 1 : 0))
-#define U_HTTP_URI_QUERY_TO_TRACE   (UHTTP::http_info.uri_len + UHTTP::http_info.query_len + (UHTTP::http_info.query_len ? 1 : 0)), U_HTTP_URI
-
-#define U_HTTP_HOST_TO_PARAM        UHTTP::http_info.host, UHTTP::http_info.host_len
-#define U_HTTP_HOST_TO_TRACE        UHTTP::http_info.host_len, UHTTP::http_info.host
-
-#define U_HTTP_URI_TO_PARAM_SHIFT(n) U_HTTP_URI+U_min(n,UHTTP::http_info.uri_len), UHTTP::http_info.uri_len-U_min(n,UHTTP::http_info.uri_len)
+#define U_HTTP_CTYPE_TO_PARAM        UHTTP::http_info.content_type, UHTTP::http_info.content_type_len
+#define U_HTTP_CTYPE_TO_TRACE        UHTTP::http_info.content_type_len, UHTTP::http_info.content_type
 
 // HTTP Compare
 
-#define U_HTTP_URI_STRNEQ(str)   (strncmp(U_HTTP_URI,            str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.uri_len))   == 0)
-#define U_HTTP_HOST_STRNEQ(str)  (strncmp(UHTTP::http_info.host, str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.host_len))  == 0)
-#define U_HTTP_QUERY_STRNEQ(str) (strncmp(U_HTTP_QUERY,          str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.query_len)) == 0)
+#define U_HTTP_URI_STRNEQ(str)                                        U_STRNEQ(UHTTP::http_info.uri,          str)
+#define U_HTTP_HOST_STRNEQ(str)  (UHTTP::http_info.host_len         ? U_STRNEQ(UHTTP::http_info.host,         str) : false)
+#define U_HTTP_QUERY_STRNEQ(str) (UHTTP::http_info.query_len        ? U_STRNEQ(UHTTP::http_info.query,        str) : false)
+#define U_HTTP_CTYPE_STRNEQ(str) (UHTTP::http_info.content_type_len ? U_STRNEQ(UHTTP::http_info.content_type, str) : false)
 
 // HTTP Access Authentication
 
@@ -160,10 +157,12 @@ public:
 
    // HTTP header representation
 
+   static uhttpheader http_info;
+
    static const char* ptrH; // "Host"
    static const char* ptrC; // "Connection"
    static const char* ptrT; // "Content-Type"
-   static uhttpheader http_info;
+   static const char* ptrL; // "Content-Lenght"
 
    static void setHTTPMethod(const char* method, uint32_t method_len)
       {
@@ -332,7 +331,7 @@ public:
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
-      bool result = (U_HTTP_URI[UHTTP::http_info.uri_len - 1] == '/');
+      bool result = (UHTTP::http_info.uri[UHTTP::http_info.uri_len - 1] == '/');
 
       U_RETURN(result);
       }
@@ -343,7 +342,7 @@ public:
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
-      bool result = (U_STRNEQ(U_HTTP_URI, "/usp/") &&
+      bool result = (U_STRNEQ(UHTTP::http_info.uri, "/usp/") &&
                      u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".usp")));
 
       U_RETURN(result);
@@ -392,15 +391,13 @@ public:
 
    static UString* penvironment;
    static char cgi_dir[U_PATH_MAX];
-   static uint32_t content_type_len;
-   static const char* content_type_ptr;
 
    static bool    isCGIRequest();
    static bool    processCGIOutput();
    static UString getCGIEnvironment(bool sh_script);
    static void    setCGIShellScript(UString& command);
    static bool    processCGIRequest(UCommand* pcmd, UString* penvironment);
-   static void    setHTTPCgiResponse(int nResponseCode, uint32_t content_length, bool header_content_length, bool header_content_type);
+   static void    setHTTPCgiResponse(int nResponseCode, bool header_content_length, bool header_content_type, bool content_encoding);
 
    // URI PROTECTED
 
@@ -420,7 +417,7 @@ public:
 
    // check for "Accept-Encoding: deflate" in header request...
 
-   static bool isHTTPAcceptEncodingDeflate(uint32_t content_length);
+   static bool isHTTPAcceptEncodingDeflate();
 
    // check for "Connection: close" in headers...
 

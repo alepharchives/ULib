@@ -346,43 +346,46 @@ int UPop3Client::getUIDL(UVector<UString>& vec)
 {
    U_TRACE(0, "UPop3Client::getUIDL(%p)", &vec)
 
-   if (state == TRANSACTION)
+   if (state != TRANSACTION)
       {
-      if (syncCommand(0, "UIDL"))
+      response = BAD_STATE;
+      }
+   else if (syncCommand(0, "UIDL"))
+      {
+      UString r;
+      const char* p;
+      uint32_t  n      = vec.size();
+      const char* s    = buffer.c_pointer(pos);
+      const char* _end = buffer.c_pointer(end);
+
+      while (s < _end)
          {
-         UString r;
-         const char* p;
-         const char* s = buffer.c_pointer(pos);
-         const char* e = buffer.c_pointer(end);
+         // skip white space
 
-loop:
-         U_SKIP(s,e,loop,done)
+         if (u_isspace(*s))
+            {
+            ++s;
 
-         U_DELIMIT_TOKEN(s,e,p) // n-esimo
+            continue;
+            }
 
-         ++s;
-
-         U_DELIMIT_TOKEN(s,e,p) // uidl
+         s = u_delimit_token(s, &p, _end, 0, 0); // n-esimo
+         s = u_delimit_token(s, &p, _end, 0, 0); // uidl
 
          r = UString((void*)p, s - p);
 
          vec.push(r);
 
          ++s;
-
-         goto loop;
-
-done:
-         uint32_t n = vec.size();
-
-         U_RETURN(n);
          }
 
-      response = UIDL_NOT_SUPPORTED;
+      n = vec.size() - n;
+
+      U_RETURN(n);
       }
    else
       {
-      response = BAD_STATE;
+      response = UIDL_NOT_SUPPORTED;
       }
 
    U_RETURN(-1);
@@ -450,7 +453,7 @@ UString UPop3Client::getMessage(uint32_t n)
 
    if (size_msg > 0)
       {
-      buffer.reserve(size_msg);
+      (void) buffer.reserve(size_msg);
 
       if (syncCommand(size_msg, "RETR %u", n))
          {
@@ -499,9 +502,9 @@ int UPop3Client::getAllHeader(UVector<UString>& vec)
                                 req.snprintf(    "TOP  1 0\r\n", 0);
       for (; i <= num_msg; ++i) req.snprintf_add("TOP %d 0\r\n", i);
 
-      buffer.reserve(size_msg);
+      (void) buffer.reserve(size_msg);
 
-      int vpos[num_msg], vend[num_msg];
+      int vpos[8192], vend[8192];
 
       if (syncCommandML(req, vpos, vend))
          {
@@ -537,9 +540,9 @@ int UPop3Client::getAllMessage(UVector<UString>& vec)
                                 req.snprintf(    "RETR  1\r\n", 0);
       for (; i <= num_msg; ++i) req.snprintf_add("RETR %d\r\n", i);
 
-      buffer.reserve(size_msg + (num_msg * (sizeof(U_POP3_OK) + sizeof("Message follows") + sizeof(U_POP3_EODML))));
+      (void) buffer.reserve(size_msg + (num_msg * (sizeof(U_POP3_OK) + sizeof("Message follows") + sizeof(U_POP3_EODML))));
 
-      int vpos[num_msg], vend[num_msg];
+      int vpos[8192], vend[8192];
 
       if (syncCommandML(req, vpos, vend))
          {
@@ -576,7 +579,7 @@ bool UPop3Client::deleteAllMessage()
                                 req.snprintf(    "DELE  1\r\n", 0);
       for (; i <= num_msg; ++i) req.snprintf_add("DELE %d\r\n", i);
 
-      buffer.reserve(size);
+      (void) buffer.reserve(size);
 
       if (syncCommandML(req, 0, 0)) U_RETURN(true);
       }

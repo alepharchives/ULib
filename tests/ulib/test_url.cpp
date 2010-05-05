@@ -45,6 +45,7 @@ int U_EXPORT main(int argc, char* argv[])
        Url(U_STRING_FROM_CONSTANT("http://www.cs.wustl.edu/form?var=foo")),
        Url(U_STRING_FROM_CONSTANT("http://www.notexist.com:8080/index.html")),
        Url(U_STRING_FROM_CONSTANT("http://www.notexist.com:80/index.html")),
+       Url(U_STRING_FROM_CONSTANT("http://www.notexist.com:80?var=foo")),
        Url(U_STRING_FROM_CONSTANT("ftp://foo")),
        Url(U_STRING_FROM_CONSTANT("http://www/?kkk//")),
        Url(U_STRING_FROM_CONSTANT("ftp://www.cs.wustl.edu/")),

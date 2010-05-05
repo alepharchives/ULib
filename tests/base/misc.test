@@ -6,6 +6,8 @@
 
 start_msg misc
 
+rm -f /var/spool/mail/trace.*test_misc*.[0-9]* /var/spool/mail/object.*test_misc*.[0-9]* /var/spool/mail/stack.*test_misc*.[0-9]*
+
 type whoami >/dev/null 2>&1
 RESULT=$?
 

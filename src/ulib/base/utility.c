@@ -410,37 +410,43 @@ const char* u_strpend(const char* s, uint32_t slen, const char* group_delimitor,
    U_INTERNAL_ASSERT_EQUALS(s[0], group_delimitor[n-1])
    U_INTERNAL_ASSERT_EQUALS(group_delimitor_len & 1, 0)
 
-loop:
-   c = *++s;
-
-   if (s >= end) goto done;
-
-   if (u_isspace(c)) goto loop;
-
-   if (c == skip_line) U_SKIP_LINE_COMMENT(s,end,loop)
-
-   else if (c == group_delimitor[0] && *(s-1) != '\\')
+   while (true)
       {
-      U_INTERNAL_PRINT("c = %c level = %d s = %.*s", c, level, 10, s)
+      c = *++s;
 
-      for (i = 1; i < n; ++i) if (s[i] != group_delimitor[i]) goto loop;
+      if (s >= end) break;
 
-      ++level;
+      if (u_isspace(c)) continue;
+
+      if (c == skip_line)
+         {
+         /* skip line comment */
+
+         s = (const char*) memchr(s, '\n', end - s);
+
+         if (s == 0) break;
+         }
+
+      else if (c == group_delimitor[0] && *(s-1) != '\\')
+         {
+         U_INTERNAL_PRINT("c = %c level = %d s = %.*s", c, level, 10, s)
+
+         for (i = 1; i < n; ++i) if (s[i] != group_delimitor[i]) continue;
+
+         ++level;
+         }
+      else if (c == group_delimitor[n] && *(s-1) != '\\')
+         {
+         U_INTERNAL_PRINT("c = %c level = %d s = %.*s", c, level, 10, s)
+
+         for (i = 1; i < n; ++i) if (s[i] != group_delimitor[n+i]) continue;
+
+         if (--level == 0) return s;
+         }
+
+      U_INTERNAL_PRINT("level = %d s = %.*s", level, 10, s)
       }
-   else if (c == group_delimitor[n] && *(s-1) != '\\')
-      {
-      U_INTERNAL_PRINT("c = %c level = %d s = %.*s", c, level, 10, s)
 
-      for (i = 1; i < n; ++i) if (s[i] != group_delimitor[n+i]) goto loop;
-
-      if (--level == 0) return s;
-      }
-
-   U_INTERNAL_PRINT("level = %d s = %.*s", level, 10, s)
-
-   goto loop;
-
-done:
    return 0;
 }
 
@@ -506,13 +512,145 @@ bool u_isNumber(const char* s, uint32_t n)
    return (s == end);
 }
 
+/* find char not quoted */
+
+const char* u_find_char(const char* s, const char* end, char c)
+{
+   U_INTERNAL_TRACE("u_find_char(%.*s,%p,%C)", U_min(end-s,128), s, end, c)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_POINTER(end)
+   U_INTERNAL_ASSERT_EQUALS(s[-1],c)
+
+   while (true)
+      {
+      s = (const char*) memchr(s, c, end - s);
+
+      if (s == 0) s = end;
+      else
+         {
+         if (*(s-1) == '\\')
+            {
+            ++s;
+
+            continue;
+            }
+         }
+
+      break;
+      }
+
+   return s;
+}
+
+/* skip string delimiter or white space and line comment */
+
+const char* u_skip(const char* s, const char* end, const char* delim, char line_comment)
+{
+   U_INTERNAL_TRACE("u_skip(%.*s,%p,%s,%C)", U_min(end-s,128), s, end, delim, line_comment)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_POINTER(end)
+
+   if (delim)
+      {
+      // skip string delimiter
+
+      while (s < end &&
+             strchr(delim, *s))
+         {
+         ++s;
+         }
+      }
+   else
+      {
+skipws:
+      while (s < end &&
+             u_isspace(*s))
+         {
+         ++s;
+         }
+
+      if (line_comment)
+         {
+         if (*s == line_comment)
+            {
+            // skip line comment
+
+            s = (const char*) memchr(s, '\n', end - s);
+
+            if (s) goto skipws;
+
+            return end;
+            }
+         }
+      }
+
+   return s;
+}
+
+/* delimit token */
+
+const char* u_delimit_token(const char* s, const char** p, const char* end, const char* delim, char skip_line_comment)
+{
+   char c;
+
+   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_POINTER(p)
+   U_INTERNAL_ASSERT_POINTER(end)
+
+   U_INTERNAL_TRACE("u_delimit_token(%.*s,%p,%p,%s,%C)", U_min(end-s,128), s, p, end, delim, skip_line_comment)
+
+   s = u_skip(s, end, delim, skip_line_comment);
+
+   U_INTERNAL_PRINT("s = %p end = %p", s, end)
+
+   if (s == end) return ++end;
+
+   *p = s++;
+    c = **p;
+
+   if (c == '"'  ||
+       c == '\'')
+      {
+      s = u_find_char(s, end, c);
+
+      if (delim)
+         {
+         if (s < end) ++s;
+         }
+      else
+         {
+         ++(*p);
+         }
+      }
+   else if (delim)
+      {
+      s = (const char*) u_strpbrk(s, end - s, delim);
+
+      if (s == 0) return end;
+      }
+   else
+      {
+      // find next white space
+
+      while (s < end &&
+             u_isspace(*s) == false)
+         {
+         ++s;
+         }
+      }
+
+   return s;
+}
+
 /* Match STRING against the filename pattern MASK, returning true if it matches, false if not */
 
 bool u_dosmatch(const char* s, uint32_t n1, const char* mask, uint32_t n2, int ignorecase)
 {
    const char* cp = 0;
    const char* mp = 0;
-   unsigned char c1, c2;
+   unsigned char c1 = 0, c2 = 0;
 
    const char* end_s    =    s + n1;
    const char* end_mask = mask + n2;
@@ -644,7 +782,7 @@ bool u_dosmatch(const char* s, uint32_t n1, const char* mask, uint32_t n2, int i
 
 bool u_dosmatch_with_OR(const char* s, uint32_t n1, const char* mask, uint32_t n2, int ignorecase)
 {
-   const char* or;
+   const char* p_or;
 
    U_INTERNAL_TRACE("u_dosmatch_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, ignorecase)
 
@@ -655,15 +793,15 @@ bool u_dosmatch_with_OR(const char* s, uint32_t n1, const char* mask, uint32_t n
 
    while (true)
       {
-      or = (const char*) memchr(mask, '|', n2);
+      p_or = (const char*) memchr(mask, '|', n2);
 
-      if (or == NULL) return u_dosmatch(s, n1, mask, n2, ignorecase);
+      if (p_or == NULL) return u_dosmatch(s, n1, mask, n2, ignorecase);
 
-      n2 = or - mask;
+      n2 = p_or - mask;
 
       if (u_dosmatch(s, n1, mask, n2, ignorecase)) return true;
 
-      mask = or + 1;
+      mask = p_or + 1;
       }
 }
 
@@ -859,7 +997,6 @@ int u_strnatcmp(char const* a, char const* b)
             }
 
 done_number:
-
          if (bias) return bias;
          }
 
@@ -889,8 +1026,7 @@ done_number:
 
 uint32_t u_split(char* s, uint32_t n, char* argv[], const char* delim)
 {
-   char c;
-   char* p;
+   const char* p;
    char* end  = s + n;
    char** ptr = argv;
 
@@ -901,34 +1037,22 @@ uint32_t u_split(char* s, uint32_t n, char* argv[], const char* delim)
    U_INTERNAL_ASSERT_POINTER(argv)
    U_INTERNAL_ASSERT_EQUALS(u_isBinary((const unsigned char*)s,n),false)
 
-loop:
-   if (delim)
+   while (s < end)
       {
-      U_SKIP_EXT(s,end,loop,done,delim)
+      s = (char*) u_delimit_token(s, &p, end, delim, 0);
 
-      U_DELIMIT_TOKEN_EXT(s,end,p,delim)
-      }
-   else
-      {
-      U_SKIP(s,end,loop,done)
+      U_INTERNAL_PRINT("s = %.*s", 20, s)
 
-      U_DELIMIT_TOKENC(c,s,end,p)
-      }
+      if (s <= end)
+         {
+         *argv++ = (char*) p;
 
-   U_INTERNAL_PRINT("s = %.*s", 20, s)
+         *s++ = '\0';
 
-   if (s <= end)
-      {
-      *argv++ = p;
-
-      *s++ = '\0';
-
-      U_INTERNAL_PRINT("u_split() = %s", p)
-
-      goto loop;
+         U_INTERNAL_PRINT("u_split() = %s", p)
+         }
       }
 
-done:
    *argv = 0;
 
    n = (argv - ptr);
@@ -1140,7 +1264,7 @@ void u_canonicalize_pathname(char* path)
          {
          s = p + 1;
 
-         while (*(++s) == '/');
+         while (*(++s) == '/') {}
 
          (void) strcpy(p + 1, s);
          }
@@ -1771,7 +1895,7 @@ static inline int kfnmatch(const char* pattern, const char* string, int flags, i
                {
                case -1: goto norm;
                case  1: pattern = newp; break;
-               case  0: return (1);
+               case  0: return 1;
                }
 
             ++string;
@@ -1962,11 +2086,11 @@ const unsigned char u_text_chars[256] = {
 bool u_isUTF8(const unsigned char* buf, uint32_t len)
 {
    unsigned char c;
-   bool gotone = false;
+   bool result = false;
    uint32_t j, following;
    const unsigned char* end = buf + len;
 
-   U_INTERNAL_TRACE("u_isUTF8(%.*s,%u)", U_min(n,128), s, n)
+   U_INTERNAL_TRACE("u_isUTF8(%.*s,%u)", U_min(len,128), buf, len)
 
    U_INTERNAL_ASSERT_POINTER(buf)
 
@@ -2007,7 +2131,7 @@ bool u_isUTF8(const unsigned char* buf, uint32_t len)
 
          for (j = 0; j < following; j++)
             {
-            if (buf >= end) return gotone;
+            if (buf >= end) return result;
 
             c = *buf++;
 
@@ -2018,18 +2142,18 @@ bool u_isUTF8(const unsigned char* buf, uint32_t len)
                }
             }
 
-         gotone = true;
+         result = true;
          }
       }
 
-   return gotone;
+   return result;
 }
 
 int u_isUTF16(const unsigned char* buf, uint32_t len)
 {
    uint32_t be, i, c;
 
-   U_INTERNAL_TRACE("u_isUTF16(%.*s,%u)", U_min(n,128), s, n)
+   U_INTERNAL_TRACE("u_isUTF16(%.*s,%u)", U_min(len,128), buf, len)
 
    if (len < 2) return 0;
 

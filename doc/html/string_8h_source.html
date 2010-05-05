@@ -97,7 +97,7 @@
 <a name="l00074"></a>00074 <span class="preprocessor">#define U_STRING_FROM_STRINGREP_STORAGE(n) UString(&amp;(stringrep_storage[n]))</span>
 <a name="l00075"></a>00075 <span class="preprocessor"></span>
 <a name="l00076"></a>00076 <span class="keyword">class </span><a class="code" href="classUString.html">UString</a>;
-<a name="l00077"></a>00077 <span class="keyword">class </span><a class="code" href="structUStringExt.html">UStringExt</a>;
+<a name="l00077"></a>00077 <span class="keyword">class </span><a class="code" href="classUStringExt.html">UStringExt</a>;
 <a name="l00078"></a>00078 <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt; <span class="keyword">class </span>UHashMap;
 <a name="l00079"></a>00079 
 <a name="l00080"></a><a class="code" href="classUStringRep.html">00080</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUStringRep.html">UStringRep</a> {
@@ -528,7 +528,7 @@
 <a name="l00505"></a>00505 <span class="preprocessor"></span>        <span class="keyword">inline</span> <span class="keywordtype">void</span> <span class="keyword">set</span>(uint32_t length, uint32_t capacity, <span class="keyword">const</span> <span class="keywordtype">char</span>* ptr) U_NO_EXPORT;
 <a name="l00506"></a>00506 
 <a name="l00507"></a>00507                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUString.html">UString</a>;
-<a name="l00508"></a>00508                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="structUStringExt.html">UStringExt</a>;
+<a name="l00508"></a>00508                                                          <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUStringExt.html">UStringExt</a>;
 <a name="l00509"></a>00509         <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt; <span class="keyword">friend</span> <span class="keyword">class </span>UHashMap;
 <a name="l00510"></a>00510 };
 <a name="l00511"></a>00511 
@@ -548,7 +548,7 @@
 <a name="l00525"></a>00525 <span class="keyword">protected</span>:
 <a name="l00526"></a>00526         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* string_null;
 <a name="l00527"></a>00527 
-<a name="l00528"></a>00528         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="structUStringExt.html">UStringExt</a>;
+<a name="l00528"></a>00528         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUStringExt.html">UStringExt</a>;
 <a name="l00529"></a>00529 
 <a name="l00530"></a>00530 <span class="keyword">public</span>:
 <a name="l00531"></a>00531         <span class="comment">// mutable</span>
@@ -786,7 +786,7 @@
 <a name="l00763"></a>00763 
 <a name="l00764"></a>00764         <span class="comment">// Make room for a total of n element</span>
 <a name="l00765"></a>00765 
-<a name="l00766"></a>00766         <span class="keywordtype">void</span> reserve(uint32_t n);
+<a name="l00766"></a>00766         <span class="keywordtype">bool</span> reserve(uint32_t n); <span class="comment">// NB: return true if changed rep...</span>
 <a name="l00767"></a>00767 
 <a name="l00768"></a>00768         <span class="comment">// Element access</span>
 <a name="l00769"></a>00769 
@@ -1296,7 +1296,7 @@
 <a name="l01273"></a>01273 
 <a name="l01274"></a>01274 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 23 19:13:49 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:39 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

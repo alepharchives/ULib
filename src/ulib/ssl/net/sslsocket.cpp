@@ -519,6 +519,10 @@ loop:
 
 // VIRTUAL METHOD
 
+#ifdef closesocket
+#undef closesocket
+#endif
+
 void USSLSocket::closesocket()
 {
    U_TRACE(1, "USSLSocket::closesocket()")
@@ -536,7 +540,7 @@ void USSLSocket::closesocket()
       ssl = 0;                
       }
 
-   USocket::closesocket();
+   UTCPSocket::closesocket();
 }
 
 int USSLSocket::recv(void* pBuffer, int iBufferLen)

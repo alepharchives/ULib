@@ -56,29 +56,31 @@
 <a name="l00033"></a>00033 
 <a name="l00034"></a>00034         <span class="comment">// VIRTUAL METHOD</span>
 <a name="l00035"></a>00035 
-<a name="l00041"></a><a class="code" href="classUTCPSocket.html#ad7c0417f01fb02c2bc3ff72f156302f5">00041</a>         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> <a class="code" href="classUSocket.html#a71bc5eac4f1b8237ffce461020d4c5f8">connectServer</a>(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; server, <span class="keywordtype">int</span> iServPort)
-<a name="l00042"></a>00042                 { <span class="keywordflow">return</span> (<a class="code" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">USocket::socket</a>(SOCK_STREAM) &amp;&amp; <a class="code" href="classUSocket.html#a71bc5eac4f1b8237ffce461020d4c5f8">USocket::connectServer</a>(server, iServPort)); }
-<a name="l00043"></a>00043 
-<a name="l00048"></a><a class="code" href="classUTCPSocket.html#a19737363f7b9bd4b1a6cbc1dcc3070b1">00048</a>         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> <a class="code" href="classUSocket.html#a222bc630111a7fcf21a3ae519c51ff90">setServer</a>(<span class="keywordtype">int</span> port, <span class="keywordtype">int</span> iBackLog)
-<a name="l00049"></a>00049                 { <span class="keywordflow">return</span> (<a class="code" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">USocket::socket</a>(SOCK_STREAM) &amp;&amp; <a class="code" href="classUSocket.html#a222bc630111a7fcf21a3ae519c51ff90">USocket::setServer</a>(port, iBackLog)); }
-<a name="l00050"></a>00050 
-<a name="l00051"></a>00051         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> <a class="code" href="classUSocket.html#a222bc630111a7fcf21a3ae519c51ff90">setServer</a>(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; cLocalAddr, <span class="keywordtype">int</span> port, <span class="keywordtype">int</span> iBackLog)
-<a name="l00052"></a>00052                 { <span class="keywordflow">return</span> (<a class="code" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">USocket::socket</a>(SOCK_STREAM) &amp;&amp; <a class="code" href="classUSocket.html#a222bc630111a7fcf21a3ae519c51ff90">USocket::setServer</a>(cLocalAddr, port, iBackLog)); }
-<a name="l00053"></a>00053 
-<a name="l00054"></a>00054         <span class="comment">// DEBUG</span>
+<a name="l00036"></a>00036         <span class="keyword">virtual</span> <span class="keywordtype">void</span> closesocket();
+<a name="l00037"></a>00037 
+<a name="l00043"></a><a class="code" href="classUTCPSocket.html#ad7c0417f01fb02c2bc3ff72f156302f5">00043</a>         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> <a class="code" href="classUSocket.html#a71bc5eac4f1b8237ffce461020d4c5f8">connectServer</a>(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; server, <span class="keywordtype">int</span> iServPort)
+<a name="l00044"></a>00044                 { <span class="keywordflow">return</span> (<a class="code" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">USocket::socket</a>(SOCK_STREAM) &amp;&amp; <a class="code" href="classUSocket.html#a71bc5eac4f1b8237ffce461020d4c5f8">USocket::connectServer</a>(server, iServPort)); }
+<a name="l00045"></a>00045 
+<a name="l00050"></a><a class="code" href="classUTCPSocket.html#a19737363f7b9bd4b1a6cbc1dcc3070b1">00050</a>         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> <a class="code" href="classUSocket.html#a222bc630111a7fcf21a3ae519c51ff90">setServer</a>(<span class="keywordtype">int</span> port, <span class="keywordtype">int</span> iBackLog)
+<a name="l00051"></a>00051                 { <span class="keywordflow">return</span> (<a class="code" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">USocket::socket</a>(SOCK_STREAM) &amp;&amp; <a class="code" href="classUSocket.html#a222bc630111a7fcf21a3ae519c51ff90">USocket::setServer</a>(port, iBackLog)); }
+<a name="l00052"></a>00052 
+<a name="l00053"></a>00053         <span class="keyword">virtual</span> <span class="keywordtype">bool</span> <a class="code" href="classUSocket.html#a222bc630111a7fcf21a3ae519c51ff90">setServer</a>(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; cLocalAddr, <span class="keywordtype">int</span> port, <span class="keywordtype">int</span> iBackLog)
+<a name="l00054"></a>00054                 { <span class="keywordflow">return</span> (<a class="code" href="classUSocket.html#acb5a12d0fcf3901ee70fed2077399fbc">USocket::socket</a>(SOCK_STREAM) &amp;&amp; <a class="code" href="classUSocket.html#a222bc630111a7fcf21a3ae519c51ff90">USocket::setServer</a>(cLocalAddr, port, iBackLog)); }
 <a name="l00055"></a>00055 
-<a name="l00056"></a>00056 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00057"></a>00057 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> USocket::dump(reset); }
-<a name="l00058"></a>00058 <span class="preprocessor">#endif</span>
-<a name="l00059"></a>00059 <span class="preprocessor"></span>
-<a name="l00060"></a>00060 <span class="keyword">private</span>:
-<a name="l00061"></a>00061         <a class="code" href="classUTCPSocket.html">UTCPSocket</a>(<span class="keyword">const</span> <a class="code" href="classUTCPSocket.html">UTCPSocket</a>&amp;) : <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>(false) {}
-<a name="l00062"></a>00062         <a class="code" href="classUTCPSocket.html">UTCPSocket</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUTCPSocket.html">UTCPSocket</a>&amp;)                  { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00063"></a>00063 };
-<a name="l00064"></a>00064 
-<a name="l00065"></a>00065 <span class="preprocessor">#endif</span>
+<a name="l00056"></a>00056         <span class="comment">// DEBUG</span>
+<a name="l00057"></a>00057 
+<a name="l00058"></a>00058 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00059"></a>00059 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> USocket::dump(reset); }
+<a name="l00060"></a>00060 <span class="preprocessor">#endif</span>
+<a name="l00061"></a>00061 <span class="preprocessor"></span>
+<a name="l00062"></a>00062 <span class="keyword">private</span>:
+<a name="l00063"></a>00063         <a class="code" href="classUTCPSocket.html">UTCPSocket</a>(<span class="keyword">const</span> <a class="code" href="classUTCPSocket.html">UTCPSocket</a>&amp;) : <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>(false) {}
+<a name="l00064"></a>00064         <a class="code" href="classUTCPSocket.html">UTCPSocket</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUTCPSocket.html">UTCPSocket</a>&amp;)                  { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00065"></a>00065 };
+<a name="l00066"></a>00066 
+<a name="l00067"></a>00067 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 23 19:13:49 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:38 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

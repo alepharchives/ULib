@@ -97,8 +97,8 @@
 <a name="l00074"></a>00074 <span class="preprocessor">#define U_FILE_TO_PARAM(file) (file).getPathRelativ(),(file).getPathRelativLen()</span>
 <a name="l00075"></a>00075 <span class="preprocessor"></span><span class="preprocessor">#define U_FILE_TO_TRACE(file) (file).getPathRelativLen(),(file).getPathRelativ()</span>
 <a name="l00076"></a>00076 <span class="preprocessor"></span>
-<a name="l00077"></a>00077 <span class="preprocessor">#define U_css 0 // text/css</span>
-<a name="l00078"></a>00078 <span class="preprocessor"></span><span class="preprocessor">#define U_js  1 // text/javascript</span>
+<a name="l00077"></a>00077 <span class="preprocessor">#define U_css &#39;c&#39; // text/css</span>
+<a name="l00078"></a>00078 <span class="preprocessor"></span><span class="preprocessor">#define U_js  &#39;j&#39; // text/javascript</span>
 <a name="l00079"></a>00079 <span class="preprocessor"></span>
 <a name="l00080"></a>00080 <span class="keyword">class </span><a class="code" href="classURDB.html" title="URDB is a fast, Reliable, simple class for creating and reading DataBases.">URDB</a>;
 <a name="l00081"></a>00081 
@@ -647,7 +647,7 @@
 <a name="l00624"></a>00624 
 <a name="l00625"></a>00625                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;st_size = %I map_size = %u&quot;</span>, st_size, map_size)
 <a name="l00626"></a>00626 
-<a name="l00627"></a>00627                 <span class="keywordtype">char</span>* result = map + (st_size ? st_size : map_size);
+<a name="l00627"></a>00627                 <span class="keywordtype">char</span>* result = map + (st_size ? (size_t)st_size : map_size);
 <a name="l00628"></a>00628 
 <a name="l00629"></a>00629                 U_RETURN(result);
 <a name="l00630"></a>00630                 }
@@ -915,7 +915,7 @@
 <a name="l00892"></a>00892 
 <a name="l00893"></a>00893 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 23 19:13:48 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:37 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

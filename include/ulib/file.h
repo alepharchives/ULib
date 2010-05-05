@@ -74,8 +74,8 @@
 #define U_FILE_TO_PARAM(file) (file).getPathRelativ(),(file).getPathRelativLen()
 #define U_FILE_TO_TRACE(file) (file).getPathRelativLen(),(file).getPathRelativ()
 
-#define U_css 0 // text/css
-#define U_js  1 // text/javascript
+#define U_css 'c' // text/css
+#define U_js  'j' // text/javascript
 
 class URDB;
 
@@ -624,7 +624,7 @@ public:
 
       U_INTERNAL_DUMP("st_size = %I map_size = %u", st_size, map_size)
 
-      char* result = map + (st_size ? st_size : map_size);
+      char* result = map + (st_size ? (size_t)st_size : map_size);
 
       U_RETURN(result);
       }

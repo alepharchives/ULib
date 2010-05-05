@@ -167,7 +167,7 @@ void UNotifier::insert(UEventFd* handler_event, bool bfirst)
          {
          UNotifier* last;
 
-         for (last = first; last->next; last = last->next);
+         for (last = first; last->next; last = last->next) {}
 
          U_INTERNAL_ASSERT_EQUALS(last->next, 0)
 
@@ -847,7 +847,7 @@ uint32_t UNotifier::read(int fd, char* buffer, int count, int timeoutMS)
       (void) U_SYSCALL(ReadFile, "%p,%p,%lu,%p,%p", (HANDLE)_get_osfhandle(fd), buffer + bytes_read, (single_read ? U_CAPACITY : count - bytes_read),
                                                     (DWORD*)&value, 0);
 #  else
-      value = U_SYSCALL(read, "%d,%p,%u", fd, buffer + bytes_read, (single_read ? U_CAPACITY : count - bytes_read));
+      value = U_SYSCALL(read, "%d,%p,%u", fd, buffer + bytes_read, (single_read ? (int)U_CAPACITY : count - bytes_read));
 #  endif
 
       if      (value ==  0) break; // EOF

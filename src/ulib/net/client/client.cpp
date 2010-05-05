@@ -32,6 +32,15 @@ void UClient_Base::str_allocate()
    U_NEW_ULIB_OBJECT(str_RES_TIMEOUT, U_STRING_FROM_STRINGREP_STORAGE(0));
 }
 
+UClient_Base::UClient_Base() : response(U_CAPACITY), buffer(U_CAPACITY), host_port(100U), logbuf(100U)
+{
+   U_TRACE_REGISTER_OBJECT(0, UClient_Base, "", 0)
+
+   bIPv6     = false;
+   port      = verify_mode = 0;
+   timeoutMS = U_TIMEOUT;
+}
+
 UClient_Base::UClient_Base(UFileConfig* cfg) : response(U_CAPACITY), buffer(U_CAPACITY), host_port(100U), logbuf(100U)
 {
    U_TRACE_REGISTER_OBJECT(0, UClient_Base, "%p", cfg)
@@ -155,9 +164,10 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
 
    if (log_file.empty() == false)
       {
-      if (UServer_Base::isLog() &&
-          log_file == UServer_Base::pthis->log_file)
+      if (UServer_Base::isLog())
          {
+         U_ASSERT_EQUALS(log_file, UServer_Base::pthis->log_file)
+
          log                    = UServer_Base::log;
          log_shared_with_server = true;
          }
@@ -196,8 +206,6 @@ bool UClient_Base::connect()
 
    if (socket->connectServer(server, port))
       {
-      if (timeoutMS) (void) socket->setTimeoutRCV(timeoutMS);
-
       if (log)
          {
               if (port)           socket->getRemoteInfo(logbuf);
@@ -338,13 +346,17 @@ void UClient_Base::wrapRequestWithHTTP(const char* extension, const char* conten
    request = tmp;
 }
 
-bool UClient_Base::sendRequest()
+bool UClient_Base::sendRequest(bool bread_response)
 {
-   U_TRACE(0, "UClient_Base::sendRequest()")
+   U_TRACE(0, "UClient_Base::sendRequest(%b)", bread_response)
 
-   bool result = false;
+   bool result;
+   int counter = 0;
 
-   for (int counter = 0; counter < 2; ++counter)
+send:
+   result = false;
+
+   for (; counter < 2; ++counter)
       {
       if (isConnected() ||
           UClient_Base::connect())
@@ -362,25 +374,44 @@ bool UClient_Base::sendRequest()
          }
       }
 
-   if (log)
+   if (result)
       {
-      ULog::log("%ssend request (%u bytes) %#.*S to %.*s\n",
-                  log_shared_with_server ? UServer_Base::mod_name : "",
-                  request.size(), U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(logbuf));
+      if (bread_response                                                        &&
+          USocketExt::read(socket, response, U_SINGLE_READ, timeoutMS) == false &&
+          isConnected()                                                == false)
+         {
+         if (log)
+            {
+            ULog::log("%sConnection to %.*s reset by peer%R\n",
+                     log_shared_with_server ? UServer_Base::mod_name : "",
+                     U_STRING_TO_TRACE(logbuf), 0);
+            }
+
+         if (++counter < 2 &&
+             (log_shared_with_server == false || // check for SIGTERM event...
+              UServer_Base::flag_loop))
+            {
+            if (log) errno = 0;
+
+            goto send;
+            }
+
+         U_RETURN(false);
+         }
+
+      if (log)
+         {
+         ULog::log("%ssend request (%u bytes) %.*S to %.*s\n",
+                     log_shared_with_server ? UServer_Base::mod_name : "",
+                     request.size(), U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(logbuf));
+
+         if (bread_response) logResponse(response);
+         }
+
+      U_RETURN(true);
       }
 
-   U_RETURN(result);
-}
-
-void UClient_Base::logResponse(const UString& data)
-{
-   U_TRACE(0, "UClient_Base::logResponse(%.*S)", U_STRING_TO_TRACE(data))
-
-   U_INTERNAL_ASSERT_POINTER(log)
-
-   ULog::log("%sreceived response (%u bytes) %#.*S from %.*s\n",
-                  log_shared_with_server ? UServer_Base::mod_name : "",
-                  data.size(), U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(logbuf));
+   U_RETURN(false);
 }
 
 // read data response
@@ -388,8 +419,6 @@ void UClient_Base::logResponse(const UString& data)
 bool UClient_Base::readResponse(int count)
 {
    U_TRACE(0, "UClient_Base::readResponse(%d)", count)
-
-   if (count == U_SINGLE_READ) response.setBuffer(U_CAPACITY);
 
    if (USocketExt::read(socket, response, count, timeoutMS))
       {
@@ -401,6 +430,17 @@ bool UClient_Base::readResponse(int count)
    U_RETURN(false);
 }
 
+void UClient_Base::logResponse(const UString& data)
+{
+   U_TRACE(0, "UClient_Base::logResponse(%.*S)", U_STRING_TO_TRACE(data))
+
+   U_INTERNAL_ASSERT_POINTER(log)
+
+   ULog::log("%sreceived response (%u bytes) %.*S from %.*s\n",
+                  log_shared_with_server ? UServer_Base::mod_name : "",
+                  data.size(), U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(logbuf));
+}
+
 bool UClient_Base::readHTTPResponse()
 {
    U_TRACE(0, "UClient_Base::readHTTPResponse()")
@@ -409,12 +449,21 @@ bool UClient_Base::readHTTPResponse()
 
    clearData();
 
-   if (UHTTP::readHTTPHeader(socket, buffer) &&
-       UHTTP::readHTTPBody(  socket, buffer, response))
+   if (UHTTP::readHTTPHeader(socket, buffer))
       {
-      if (log) logResponse(buffer);
+      uint32_t pos = buffer.find(*USocket::str_content_length, UHTTP::http_info.startHeader, UHTTP::http_info.szHeader);
 
-      U_RETURN(true);
+      if (pos != U_NOT_FOUND)
+         {
+         UHTTP::http_info.clength = (uint32_t) strtoul(buffer.c_pointer(pos + USocket::str_content_length->size() + 2), 0, 0);
+
+         if (UHTTP::readHTTPBody(socket, buffer, response))
+            {
+            if (log) logResponse(buffer);
+
+            U_RETURN(true);
+            }
+         }
       }
 
    U_RETURN(false);

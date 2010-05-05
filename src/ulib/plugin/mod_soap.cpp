@@ -42,7 +42,7 @@ int USoapPlugIn::handlerConfig(UFileConfig& cfg)
 
    soap_parser = U_NEW(USOAPParser);
 
-   if (cfg.skip()) USOAPObject::loadGenericMethod(&cfg);
+   USOAPObject::loadGenericMethod(&cfg);
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }

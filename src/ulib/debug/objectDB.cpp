@@ -519,9 +519,14 @@ U_NO_EXPORT bool UObjectDB::addObjLive(const UObjectDumpable* dumper)
 {
    U_INTERNAL_TRACE("UObjectDB::addObjLive(%p)", dumper)
 
-   vec_obj_live[n++] = dumper;
+   if (n < 8192)
+      {
+      vec_obj_live[n++] = dumper;
 
-   return true;
+      return true;
+      }
+
+   return false;
 }
 
 U_NO_EXPORT int UObjectDB::compareDumper(const void* dumper1, const void* dumper2)
@@ -538,21 +543,21 @@ void UObjectDB::dumpObjects()
 {
    U_INTERNAL_TRACE("UObjectDB::dumpObjects()", 0)
 
-   const UObjectDumpable* obj_live[UHashMapObjectDumpable::num];
+   const UObjectDumpable* obj_live[8192];
 
    vec_obj_live = &obj_live[n = 0];
 
    UHashMapObjectDumpable::callForAllEntry(UObjectDB::addObjLive);
 
-   U_INTERNAL_ASSERT_EQUALS(n,UHashMapObjectDumpable::num)
+   U_INTERNAL_ASSERT(n <= UHashMapObjectDumpable::num)
 
-   qsort(obj_live, UHashMapObjectDumpable::num, sizeof(const UObjectDumpable*), compareDumper);
+   qsort(obj_live, n, sizeof(const UObjectDumpable*), compareDumper);
 
    const UObjectDumpable* dumper;
 
-   for (n = 0; n < UHashMapObjectDumpable::num; ++n)
+   for (uint32_t i = 0; i < n; ++i)
       {
-      dumper = obj_live[n];
+      dumper = obj_live[i];
 
       if (dumper->level >= level_active)
          {

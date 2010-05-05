@@ -61,8 +61,6 @@ public:
 
    // section management
 
-   bool skip(char c = '#'); // skip space and line comment...
-
    char peek() { return _start[0]; }
 
    void reset()

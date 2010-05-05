@@ -763,7 +763,7 @@ public:
 
    // Make room for a total of n element
 
-   void reserve(uint32_t n);
+   bool reserve(uint32_t n); // NB: return true if changed rep...
 
    // Element access
 

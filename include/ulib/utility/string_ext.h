@@ -20,7 +20,8 @@
 #  include <openssl/pem.h>
 #endif
 
-struct U_EXPORT UStringExt {
+class U_EXPORT UStringExt {
+public:
 
 #ifdef HAVE_SSL
    static UString BIOtoString(BIO* bio);

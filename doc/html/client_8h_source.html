@@ -145,9 +145,9 @@
 <a name="l00128"></a>00128         <span class="keywordtype">bool</span> readHTTPResponse();
 <a name="l00129"></a>00129         <span class="keywordtype">bool</span> readResponse(<span class="keywordtype">int</span> count = U_SINGLE_READ);
 <a name="l00130"></a>00130 
-<a name="l00131"></a>00131         <span class="keywordtype">bool</span> sendRequest();
-<a name="l00132"></a>00132         <span class="keywordtype">bool</span> sendRequest(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; data)                            { request =                    data;                   <span class="keywordflow">return</span> sendRequest(); }
-<a name="l00133"></a>00133         <span class="keywordtype">bool</span> sendRequest(<span class="keyword">const</span> <span class="keywordtype">char</span>* data, uint32_t len) { request = <a class="code" href="classUString.html">UString</a>(data, len); <span class="keywordflow">return</span> sendRequest(); }
+<a name="l00131"></a>00131         <span class="keywordtype">bool</span> sendRequest(                                                                                        <span class="keywordtype">bool</span> bread_response = <span class="keyword">false</span>);
+<a name="l00132"></a>00132         <span class="keywordtype">bool</span> sendRequest(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; data,                            <span class="keywordtype">bool</span> bread_response = <span class="keyword">false</span>)    { request =                    data;                   <span class="keywordflow">return</span> sendRequest(bread_response); }
+<a name="l00133"></a>00133         <span class="keywordtype">bool</span> sendRequest(<span class="keyword">const</span> <span class="keywordtype">char</span>* data, uint32_t len, <span class="keywordtype">bool</span> bread_response = <span class="keyword">false</span>)  { request = <a class="code" href="classUString.html">UString</a>(data, len); <span class="keywordflow">return</span> sendRequest(bread_response); }
 <a name="l00134"></a>00134 
 <a name="l00135"></a>00135         <span class="comment">// -----------------------------------------------------------------------------------------------------------------------</span>
 <a name="l00136"></a>00136         <span class="comment">// Very simple RPC-like layer</span>
@@ -252,97 +252,98 @@
 <a name="l00235"></a>00235 
 <a name="l00236"></a>00236         <span class="comment">// COSTRUTTORI</span>
 <a name="l00237"></a>00237 
-<a name="l00238"></a>00238          <a class="code" href="classUClient__Base.html">UClient_Base</a>(<a class="code" href="classUFileConfig.html">UFileConfig</a>* cfg);
-<a name="l00239"></a>00239         ~<a class="code" href="classUClient__Base.html">UClient_Base</a>();
-<a name="l00240"></a>00240 
-<a name="l00241"></a>00241 <span class="keyword">private</span>:
-<a name="l00242"></a>00242         <a class="code" href="classUClient__Base.html">UClient_Base</a>(<span class="keyword">const</span> <a class="code" href="classUClient__Base.html">UClient_Base</a>&amp;)                               {}
-<a name="l00243"></a>00243         <a class="code" href="classUClient__Base.html">UClient_Base</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClient__Base.html">UClient_Base</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00244"></a>00244 
-<a name="l00245"></a>00245         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUFCGIPlugIn.html">UFCGIPlugIn</a>;
-<a name="l00246"></a>00246 };
-<a name="l00247"></a>00247 
-<a name="l00248"></a><a class="code" href="classUClient.html">00248</a> <span class="keyword">template</span> &lt;<span class="keyword">class</span> Socket&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a> : <span class="keyword">virtual</span> <span class="keyword">public</span> <a class="code" href="classUClient__Base.html">UClient_Base</a> {
-<a name="l00249"></a>00249 <span class="keyword">public</span>:
-<a name="l00250"></a>00250 
-<a name="l00251"></a>00251         <span class="comment">// COSTRUTTORI</span>
-<a name="l00252"></a>00252 
-<a name="l00253"></a>00253         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>(<a class="code" href="classUFileConfig.html">UFileConfig</a>* cfg) : <a class="code" href="classUClient__Base.html">UClient_Base</a>(cfg)
-<a name="l00254"></a>00254                 {
-<a name="l00255"></a>00255                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>, <span class="stringliteral">&quot;%p&quot;</span>, cfg)
-<a name="l00256"></a>00256 
-<a name="l00257"></a>00257                 socket = U_NEW(Socket(bIPv6));
-<a name="l00258"></a>00258                 }
-<a name="l00259"></a>00259 
-<a name="l00260"></a>00260         ~<a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>()
-<a name="l00261"></a>00261                 {
-<a name="l00262"></a>00262                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>)
-<a name="l00263"></a>00263                 }
-<a name="l00264"></a>00264 
-<a name="l00265"></a>00265         Socket* getSocket() { <span class="keywordflow">return</span> (Socket*) socket; }
-<a name="l00266"></a>00266 
-<a name="l00267"></a>00267         <span class="comment">// DEBUG</span>
-<a name="l00268"></a>00268 
-<a name="l00269"></a>00269 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00270"></a>00270 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UClient_Base::dump(reset); }
-<a name="l00271"></a>00271 <span class="preprocessor">#endif</span>
-<a name="l00272"></a>00272 <span class="preprocessor"></span>
-<a name="l00273"></a>00273 <span class="keyword">private</span>:
-<a name="l00274"></a>00274         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>(<span class="keyword">const</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>&amp;) : <a class="code" href="classUClient__Base.html">UClient_Base</a>(0) {}
-<a name="l00275"></a>00275         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>&amp;)        { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00276"></a>00276 };
-<a name="l00277"></a>00277 
-<a name="l00278"></a>00278 <span class="preprocessor">#ifdef HAVE_SSL // specializzazione con USSLSocket</span>
-<a name="l00279"></a>00279 <span class="preprocessor"></span>
-<a name="l00280"></a>00280 <span class="keyword">template</span> &lt;&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>&lt;<a class="code" href="classUSSLSocket.html">USSLSocket</a>&gt; : <span class="keyword">virtual</span> <span class="keyword">public</span> <a class="code" href="classUClient__Base.html">UClient_Base</a> {
-<a name="l00281"></a>00281 <span class="keyword">public</span>:
-<a name="l00282"></a>00282 
-<a name="l00283"></a>00283         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>(<a class="code" href="classUFileConfig.html">UFileConfig</a>* cfg) : <a class="code" href="classUClient__Base.html">UClient_Base</a>(cfg)
-<a name="l00284"></a>00284                 {
-<a name="l00285"></a>00285                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>, <span class="stringliteral">&quot;%p&quot;</span>, cfg)
-<a name="l00286"></a>00286 
-<a name="l00287"></a>00287                 <a class="code" href="classUSSLSocket.html">USSLSocket</a>::method = (SSL_METHOD*) SSLv3_client_method();
-<a name="l00288"></a>00288 
-<a name="l00289"></a>00289                 socket = U_NEW(<a class="code" href="classUSSLSocket.html">USSLSocket</a>(bIPv6));
-<a name="l00290"></a>00290 
-<a name="l00291"></a>00291                 <span class="comment">// These are the 1024 bit DH parameters from &quot;Assigned Number for SKIP Protocols&quot;</span>
-<a name="l00292"></a>00292                 <span class="comment">// (http://www.skip-vpn.org/spec/numbers.html).</span>
-<a name="l00293"></a>00293                 <span class="comment">// See there for how they were generated.</span>
-<a name="l00294"></a>00294 
-<a name="l00295"></a>00295                 getSocket()-&gt;useDHFile();
-<a name="l00296"></a>00296 
-<a name="l00297"></a>00297                 <span class="comment">// Load our certificate</span>
-<a name="l00298"></a>00298 
-<a name="l00299"></a>00299                 if (getSocket()-&gt;setContext(cert_file.c_str(), key_file.c_str(), password.c_str(),
-<a name="l00300"></a>00300                                                                                                 ca_file.c_str(),  ca_path.c_str(), verify_mode) == false)
-<a name="l00301"></a>00301                         {
-<a name="l00302"></a>00302                         U_ERROR(<span class="stringliteral">&quot;SSL setContext() failed...&quot;</span>, 0);
-<a name="l00303"></a>00303                         }
-<a name="l00304"></a>00304                 }
-<a name="l00305"></a>00305 
-<a name="l00306"></a>00306         ~<a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>()
-<a name="l00307"></a>00307                 {
-<a name="l00308"></a>00308                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>)
-<a name="l00309"></a>00309                 }
-<a name="l00310"></a>00310 
-<a name="l00311"></a>00311         <a class="code" href="classUSSLSocket.html">USSLSocket</a>* getSocket() { <span class="keywordflow">return</span> (<a class="code" href="classUSSLSocket.html">USSLSocket</a>*) socket; }
-<a name="l00312"></a>00312 
-<a name="l00313"></a>00313         <span class="comment">// DEBUG</span>
-<a name="l00314"></a>00314 
-<a name="l00315"></a>00315 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00316"></a>00316 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UClient_Base::dump(reset); }
-<a name="l00317"></a>00317 <span class="preprocessor">#endif</span>
-<a name="l00318"></a>00318 <span class="preprocessor"></span>
-<a name="l00319"></a>00319 <span class="keyword">private</span>:
-<a name="l00320"></a>00320         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>&amp;) : <a class="code" href="classUClient__Base.html">UClient_Base</a>(0) {}
-<a name="l00321"></a>00321         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>&amp;)                      { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00322"></a>00322 };
-<a name="l00323"></a>00323 
-<a name="l00324"></a>00324 <span class="preprocessor">#endif</span>
-<a name="l00325"></a>00325 <span class="preprocessor"></span>
-<a name="l00326"></a>00326 <span class="preprocessor">#endif</span>
+<a name="l00238"></a>00238          <a class="code" href="classUClient__Base.html">UClient_Base</a>();
+<a name="l00239"></a>00239          <a class="code" href="classUClient__Base.html">UClient_Base</a>(<a class="code" href="classUFileConfig.html">UFileConfig</a>* cfg);
+<a name="l00240"></a>00240         ~<a class="code" href="classUClient__Base.html">UClient_Base</a>();
+<a name="l00241"></a>00241 
+<a name="l00242"></a>00242 <span class="keyword">private</span>:
+<a name="l00243"></a>00243         <a class="code" href="classUClient__Base.html">UClient_Base</a>(<span class="keyword">const</span> <a class="code" href="classUClient__Base.html">UClient_Base</a>&amp;)                               {}
+<a name="l00244"></a>00244         <a class="code" href="classUClient__Base.html">UClient_Base</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClient__Base.html">UClient_Base</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00245"></a>00245 
+<a name="l00246"></a>00246         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUFCGIPlugIn.html">UFCGIPlugIn</a>;
+<a name="l00247"></a>00247 };
+<a name="l00248"></a>00248 
+<a name="l00249"></a><a class="code" href="classUClient.html">00249</a> <span class="keyword">template</span> &lt;<span class="keyword">class</span> Socket&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a> : <span class="keyword">virtual</span> <span class="keyword">public</span> <a class="code" href="classUClient__Base.html">UClient_Base</a> {
+<a name="l00250"></a>00250 <span class="keyword">public</span>:
+<a name="l00251"></a>00251 
+<a name="l00252"></a>00252         <span class="comment">// COSTRUTTORI</span>
+<a name="l00253"></a>00253 
+<a name="l00254"></a>00254         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>(<a class="code" href="classUFileConfig.html">UFileConfig</a>* cfg) : <a class="code" href="classUClient__Base.html">UClient_Base</a>(cfg)
+<a name="l00255"></a>00255                 {
+<a name="l00256"></a>00256                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>, <span class="stringliteral">&quot;%p&quot;</span>, cfg)
+<a name="l00257"></a>00257 
+<a name="l00258"></a>00258                 socket = U_NEW(Socket(bIPv6));
+<a name="l00259"></a>00259                 }
+<a name="l00260"></a>00260 
+<a name="l00261"></a>00261         ~<a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>()
+<a name="l00262"></a>00262                 {
+<a name="l00263"></a>00263                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>)
+<a name="l00264"></a>00264                 }
+<a name="l00265"></a>00265 
+<a name="l00266"></a>00266         Socket* getSocket() { <span class="keywordflow">return</span> (Socket*) socket; }
+<a name="l00267"></a>00267 
+<a name="l00268"></a>00268         <span class="comment">// DEBUG</span>
+<a name="l00269"></a>00269 
+<a name="l00270"></a>00270 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00271"></a>00271 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UClient_Base::dump(reset); }
+<a name="l00272"></a>00272 <span class="preprocessor">#endif</span>
+<a name="l00273"></a>00273 <span class="preprocessor"></span>
+<a name="l00274"></a>00274 <span class="keyword">private</span>:
+<a name="l00275"></a>00275         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>(<span class="keyword">const</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>&amp;) : <a class="code" href="classUClient__Base.html">UClient_Base</a>(0) {}
+<a name="l00276"></a>00276         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>&amp;)        { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00277"></a>00277 };
+<a name="l00278"></a>00278 
+<a name="l00279"></a>00279 <span class="preprocessor">#ifdef HAVE_SSL // specializzazione con USSLSocket</span>
+<a name="l00280"></a>00280 <span class="preprocessor"></span>
+<a name="l00281"></a>00281 <span class="keyword">template</span> &lt;&gt; <span class="keyword">class </span>U_EXPORT <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>&lt;<a class="code" href="classUSSLSocket.html">USSLSocket</a>&gt; : <span class="keyword">virtual</span> <span class="keyword">public</span> <a class="code" href="classUClient__Base.html">UClient_Base</a> {
+<a name="l00282"></a>00282 <span class="keyword">public</span>:
+<a name="l00283"></a>00283 
+<a name="l00284"></a>00284         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>(<a class="code" href="classUFileConfig.html">UFileConfig</a>* cfg) : <a class="code" href="classUClient__Base.html">UClient_Base</a>(cfg)
+<a name="l00285"></a>00285                 {
+<a name="l00286"></a>00286                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>, <span class="stringliteral">&quot;%p&quot;</span>, cfg)
+<a name="l00287"></a>00287 
+<a name="l00288"></a>00288                 <a class="code" href="classUSSLSocket.html">USSLSocket</a>::method = (SSL_METHOD*) SSLv3_client_method();
+<a name="l00289"></a>00289 
+<a name="l00290"></a>00290                 socket = U_NEW(<a class="code" href="classUSSLSocket.html">USSLSocket</a>(bIPv6));
+<a name="l00291"></a>00291 
+<a name="l00292"></a>00292                 <span class="comment">// These are the 1024 bit DH parameters from &quot;Assigned Number for SKIP Protocols&quot;</span>
+<a name="l00293"></a>00293                 <span class="comment">// (http://www.skip-vpn.org/spec/numbers.html).</span>
+<a name="l00294"></a>00294                 <span class="comment">// See there for how they were generated.</span>
+<a name="l00295"></a>00295 
+<a name="l00296"></a>00296                 getSocket()-&gt;useDHFile();
+<a name="l00297"></a>00297 
+<a name="l00298"></a>00298                 <span class="comment">// Load our certificate</span>
+<a name="l00299"></a>00299 
+<a name="l00300"></a>00300                 if (getSocket()-&gt;setContext(cert_file.c_str(), key_file.c_str(), password.c_str(),
+<a name="l00301"></a>00301                                                                                                 ca_file.c_str(),  ca_path.c_str(), verify_mode) == false)
+<a name="l00302"></a>00302                         {
+<a name="l00303"></a>00303                         U_ERROR(<span class="stringliteral">&quot;SSL setContext() failed...&quot;</span>, 0);
+<a name="l00304"></a>00304                         }
+<a name="l00305"></a>00305                 }
+<a name="l00306"></a>00306 
+<a name="l00307"></a>00307         ~<a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>()
+<a name="l00308"></a>00308                 {
+<a name="l00309"></a>00309                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>)
+<a name="l00310"></a>00310                 }
+<a name="l00311"></a>00311 
+<a name="l00312"></a>00312         <a class="code" href="classUSSLSocket.html">USSLSocket</a>* getSocket() { <span class="keywordflow">return</span> (<a class="code" href="classUSSLSocket.html">USSLSocket</a>*) socket; }
+<a name="l00313"></a>00313 
+<a name="l00314"></a>00314         <span class="comment">// DEBUG</span>
+<a name="l00315"></a>00315 
+<a name="l00316"></a>00316 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00317"></a>00317 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UClient_Base::dump(reset); }
+<a name="l00318"></a>00318 <span class="preprocessor">#endif</span>
+<a name="l00319"></a>00319 <span class="preprocessor"></span>
+<a name="l00320"></a>00320 <span class="keyword">private</span>:
+<a name="l00321"></a>00321         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>&amp;) : <a class="code" href="classUClient__Base.html">UClient_Base</a>(0) {}
+<a name="l00322"></a>00322         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>&amp;)                      { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00323"></a>00323 };
+<a name="l00324"></a>00324 
+<a name="l00325"></a>00325 <span class="preprocessor">#endif</span>
+<a name="l00326"></a>00326 <span class="preprocessor"></span>
+<a name="l00327"></a>00327 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 23 19:13:49 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:37 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

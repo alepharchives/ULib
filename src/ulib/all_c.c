@@ -57,7 +57,7 @@
 #  include "replace/mremap.c"
 #endif
 
-#ifndef HAVE_SENDFILE
+#ifndef HAVE_SENDFILE64
 #  include "replace/sendfile.c"
 #endif
 

@@ -112,369 +112,366 @@
 <a name="l00089"></a>00089         <span class="keyword">const</span> <span class="keywordtype">char</span>* uri;
 <a name="l00090"></a>00090         <span class="keyword">const</span> <span class="keywordtype">char</span>*     query;
 <a name="l00091"></a>00091         <span class="keyword">const</span> <span class="keywordtype">char</span>*     host;
-<a name="l00092"></a>00092         uint32_t nResponseCode, version,
-<a name="l00093"></a>00093                                 startHeader, endHeader, szHeader,
-<a name="l00094"></a>00094                                 method_len, uri_len, query_len, host_len,
-<a name="l00095"></a>00095                                 method_type, clength, keep_alive, is_connection_close, is_php;
-<a name="l00096"></a>00096 } <a class="code" href="structuhttpheader.html">uhttpheader</a>;
-<a name="l00097"></a>00097 
-<a name="l00098"></a>00098 <span class="keyword">enum</span> HTTPMethodType { HTTP_POST = 1, HTTP_GET = 2, HTTP_HEAD = 3 };
-<a name="l00099"></a>00099 
-<a name="l00100"></a>00100 <span class="preprocessor">#define U_HTTP_HEADER(str)      str.substr(UHTTP::http_info.startHeader, UHTTP::http_info.szHeader)</span>
-<a name="l00101"></a>00101 <span class="preprocessor"></span>
-<a name="l00102"></a>00102 <span class="comment">// NB: we check for pointer or offset...</span>
-<a name="l00103"></a>00103 
-<a name="l00104"></a>00104 <span class="preprocessor">#define U_HTTP_URI      (UHTTP::http_info.uri   &gt; (const char*)0x0fff ? UHTTP::http_info.uri \</span>
-<a name="l00105"></a>00105 <span class="preprocessor">                                                                                                                                         : UHTTP::http_info.method + (ptrdiff_t)UHTTP::http_info.uri)</span>
-<a name="l00106"></a>00106 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_QUERY    (UHTTP::http_info.query &gt; (const char*)0xffff ? UHTTP::http_info.query \</span>
-<a name="l00107"></a>00107 <span class="preprocessor">                                                                                                                                         : UHTTP::http_info.method + (ptrdiff_t)UHTTP::http_info.query)</span>
-<a name="l00108"></a>00108 <span class="preprocessor"></span>
-<a name="l00109"></a>00109 <span class="preprocessor">#define U_HTTP_METHOD_TO_PARAM          UHTTP::http_info.method, UHTTP::http_info.method_len</span>
-<a name="l00110"></a>00110 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_METHOD_TO_TRACE          UHTTP::http_info.method_len, UHTTP::http_info.method</span>
-<a name="l00111"></a>00111 <span class="preprocessor"></span>
-<a name="l00112"></a>00112 <span class="preprocessor">#define U_HTTP_URI_TO_PARAM                     U_HTTP_URI, UHTTP::http_info.uri_len</span>
-<a name="l00113"></a>00113 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_URI_TO_TRACE                     UHTTP::http_info.uri_len, U_HTTP_URI</span>
-<a name="l00114"></a>00114 <span class="preprocessor"></span>
-<a name="l00115"></a>00115 <span class="preprocessor">#define U_HTTP_QUERY_TO_PARAM                   U_HTTP_QUERY, UHTTP::http_info.query_len</span>
-<a name="l00116"></a>00116 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_QUERY_TO_TRACE                   UHTTP::http_info.query_len, U_HTTP_QUERY</span>
-<a name="l00117"></a>00117 <span class="preprocessor"></span>
-<a name="l00118"></a>00118 <span class="preprocessor">#define U_HTTP_URI_QUERY_TO_PARAM       U_HTTP_URI, (UHTTP::http_info.uri_len + UHTTP::http_info.query_len + (UHTTP::http_info.query_len ? 1 : 0))</span>
-<a name="l00119"></a>00119 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_URI_QUERY_TO_TRACE       (UHTTP::http_info.uri_len + UHTTP::http_info.query_len + (UHTTP::http_info.query_len ? 1 : 0)), U_HTTP_URI</span>
-<a name="l00120"></a>00120 <span class="preprocessor"></span>
-<a name="l00121"></a>00121 <span class="preprocessor">#define U_HTTP_HOST_TO_PARAM                    UHTTP::http_info.host, UHTTP::http_info.host_len</span>
-<a name="l00122"></a>00122 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_HOST_TO_TRACE                    UHTTP::http_info.host_len, UHTTP::http_info.host</span>
-<a name="l00123"></a>00123 <span class="preprocessor"></span>
-<a name="l00124"></a>00124 <span class="preprocessor">#define U_HTTP_URI_TO_PARAM_SHIFT(n) U_HTTP_URI+U_min(n,UHTTP::http_info.uri_len), UHTTP::http_info.uri_len-U_min(n,UHTTP::http_info.uri_len)</span>
-<a name="l00125"></a>00125 <span class="preprocessor"></span>
-<a name="l00126"></a>00126 <span class="comment">// HTTP Compare</span>
-<a name="l00127"></a>00127 
-<a name="l00128"></a>00128 <span class="preprocessor">#define U_HTTP_URI_STRNEQ(str)  (strncmp(U_HTTP_URI,                              str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.uri_len))    == 0)</span>
-<a name="l00129"></a>00129 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_HOST_STRNEQ(str) (strncmp(UHTTP::http_info.host, str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.host_len))  == 0)</span>
-<a name="l00130"></a>00130 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_QUERY_STRNEQ(str)        (strncmp(U_HTTP_QUERY,                    str, U_max(U_CONSTANT_SIZE(str), UHTTP::http_info.query_len)) == 0)</span>
-<a name="l00131"></a>00131 <span class="preprocessor"></span>
-<a name="l00132"></a>00132 <span class="comment">// HTTP Access Authentication</span>
-<a name="l00133"></a>00133 
-<a name="l00134"></a>00134 <span class="preprocessor">#define U_HTTP_REALM &quot;Protected Area&quot;</span>
-<a name="l00135"></a>00135 <span class="preprocessor"></span>
-<a name="l00136"></a>00136 <span class="comment">// Default content type</span>
-<a name="l00137"></a>00137 
-<a name="l00138"></a>00138 <span class="preprocessor">#define U_CTYPE_HTML &quot;text/html; charset=iso-8859-1&quot;</span>
-<a name="l00139"></a>00139 <span class="preprocessor"></span>
-<a name="l00140"></a>00140 <span class="keyword">class </span><a class="code" href="classUFile.html">UFile</a>;
-<a name="l00141"></a>00141 <span class="keyword">class </span><a class="code" href="classUCommand.html">UCommand</a>;
-<a name="l00142"></a>00142 <span class="keyword">class </span><a class="code" href="classUMimeMultipart.html">UMimeMultipart</a>;
-<a name="l00143"></a>00143 
-<a name="l00144"></a>00144 <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt; <span class="keyword">class </span>UVector;
+<a name="l00092"></a>00092         <span class="keyword">const</span> <span class="keywordtype">char</span>* content_type;
+<a name="l00093"></a>00093         uint32_t nResponseCode, version,
+<a name="l00094"></a>00094                                 startHeader, endHeader, szHeader,
+<a name="l00095"></a>00095                                 method_len, uri_len, query_len, host_len, content_type_len,
+<a name="l00096"></a>00096                                 method_type, clength, keep_alive, is_connection_close, is_php;
+<a name="l00097"></a>00097 } <a class="code" href="structuhttpheader.html">uhttpheader</a>;
+<a name="l00098"></a>00098 
+<a name="l00099"></a>00099 <span class="keyword">enum</span> HTTPMethodType { HTTP_POST = 1, HTTP_GET = 2, HTTP_HEAD = 3 };
+<a name="l00100"></a>00100 
+<a name="l00101"></a>00101 <span class="preprocessor">#define U_HTTP_HEADER(str)                               str.substr(UHTTP::http_info.startHeader, UHTTP::http_info.szHeader)</span>
+<a name="l00102"></a>00102 <span class="preprocessor"></span>
+<a name="l00103"></a>00103 <span class="preprocessor">#define U_HTTP_METHOD_TO_PARAM           UHTTP::http_info.method, UHTTP::http_info.method_len</span>
+<a name="l00104"></a>00104 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_METHOD_TO_TRACE           UHTTP::http_info.method_len, UHTTP::http_info.method</span>
+<a name="l00105"></a>00105 <span class="preprocessor"></span>
+<a name="l00106"></a>00106 <span class="preprocessor">#define U_HTTP_URI_TO_TRACE                      UHTTP::http_info.uri_len, UHTTP::http_info.uri</span>
+<a name="l00107"></a>00107 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_URI_TO_PARAM                      UHTTP::http_info.uri, UHTTP::http_info.uri_len</span>
+<a name="l00108"></a>00108 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_URI_TO_PARAM_SHIFT(n) UHTTP::http_info.uri+U_min(n,UHTTP::http_info.uri_len), UHTTP::http_info.uri_len-U_min(n,UHTTP::http_info.uri_len)</span>
+<a name="l00109"></a>00109 <span class="preprocessor"></span>
+<a name="l00110"></a>00110 <span class="preprocessor">#define U_HTTP_QUERY_TO_PARAM                    UHTTP::http_info.query, UHTTP::http_info.query_len</span>
+<a name="l00111"></a>00111 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_QUERY_TO_TRACE                    UHTTP::http_info.query_len, UHTTP::http_info.query</span>
+<a name="l00112"></a>00112 <span class="preprocessor"></span>
+<a name="l00113"></a>00113 <span class="preprocessor">#define U_HTTP_URI_QUERY_TO_PARAM        UHTTP::http_info.uri, (UHTTP::http_info.uri_len + UHTTP::http_info.query_len + (UHTTP::http_info.query_len ? 1 : 0))</span>
+<a name="l00114"></a>00114 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_URI_QUERY_TO_TRACE        (UHTTP::http_info.uri_len + UHTTP::http_info.query_len + (UHTTP::http_info.query_len ? 1 : 0)), UHTTP::http_info.uri</span>
+<a name="l00115"></a>00115 <span class="preprocessor"></span>
+<a name="l00116"></a>00116 <span class="preprocessor">#define U_HTTP_HOST_TO_PARAM                     UHTTP::http_info.host, UHTTP::http_info.host_len</span>
+<a name="l00117"></a>00117 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_HOST_TO_TRACE                     UHTTP::http_info.host_len, UHTTP::http_info.host</span>
+<a name="l00118"></a>00118 <span class="preprocessor"></span>
+<a name="l00119"></a>00119 <span class="preprocessor">#define U_HTTP_CTYPE_TO_PARAM                    UHTTP::http_info.content_type, UHTTP::http_info.content_type_len</span>
+<a name="l00120"></a>00120 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_CTYPE_TO_TRACE                    UHTTP::http_info.content_type_len, UHTTP::http_info.content_type</span>
+<a name="l00121"></a>00121 <span class="preprocessor"></span>
+<a name="l00122"></a>00122 <span class="comment">// HTTP Compare</span>
+<a name="l00123"></a>00123 
+<a name="l00124"></a>00124 <span class="preprocessor">#define U_HTTP_URI_STRNEQ(str)                                                                                                   U_STRNEQ(UHTTP::http_info.uri,                   str)</span>
+<a name="l00125"></a>00125 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_HOST_STRNEQ(str) (UHTTP::http_info.host_len                        ? U_STRNEQ(UHTTP::http_info.host,                       str) : false)</span>
+<a name="l00126"></a>00126 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_QUERY_STRNEQ(str)        (UHTTP::http_info.query_len               ? U_STRNEQ(UHTTP::http_info.query,              str) : false)</span>
+<a name="l00127"></a>00127 <span class="preprocessor"></span><span class="preprocessor">#define U_HTTP_CTYPE_STRNEQ(str)        (UHTTP::http_info.content_type_len ? U_STRNEQ(UHTTP::http_info.content_type, str) : false)</span>
+<a name="l00128"></a>00128 <span class="preprocessor"></span>
+<a name="l00129"></a>00129 <span class="comment">// HTTP Access Authentication</span>
+<a name="l00130"></a>00130 
+<a name="l00131"></a>00131 <span class="preprocessor">#define U_HTTP_REALM &quot;Protected Area&quot;</span>
+<a name="l00132"></a>00132 <span class="preprocessor"></span>
+<a name="l00133"></a>00133 <span class="comment">// Default content type</span>
+<a name="l00134"></a>00134 
+<a name="l00135"></a>00135 <span class="preprocessor">#define U_CTYPE_HTML &quot;text/html; charset=iso-8859-1&quot;</span>
+<a name="l00136"></a>00136 <span class="preprocessor"></span>
+<a name="l00137"></a>00137 <span class="keyword">class </span><a class="code" href="classUFile.html">UFile</a>;
+<a name="l00138"></a>00138 <span class="keyword">class </span><a class="code" href="classUCommand.html">UCommand</a>;
+<a name="l00139"></a>00139 <span class="keyword">class </span><a class="code" href="classUMimeMultipart.html">UMimeMultipart</a>;
+<a name="l00140"></a>00140 
+<a name="l00141"></a>00141 <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt; <span class="keyword">class </span>UVector;
+<a name="l00142"></a>00142 
+<a name="l00143"></a><a class="code" href="classUHTTP.html">00143</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUHTTP.html">UHTTP</a> {
+<a name="l00144"></a>00144 <span class="keyword">public</span>:
 <a name="l00145"></a>00145 
-<a name="l00146"></a><a class="code" href="classUHTTP.html">00146</a> <span class="keyword">class </span>U_EXPORT <a class="code" href="classUHTTP.html">UHTTP</a> {
-<a name="l00147"></a>00147 <span class="keyword">public</span>:
-<a name="l00148"></a>00148 
-<a name="l00149"></a>00149         <span class="comment">// HTTP main error message</span>
-<a name="l00150"></a>00150 
-<a name="l00151"></a>00151         <span class="keyword">static</span> <span class="keywordtype">void</span> str_allocate();
-<a name="l00152"></a>00152 
-<a name="l00153"></a>00153         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_response;
-<a name="l00154"></a>00154         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_forbidden;
-<a name="l00155"></a>00155         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_not_found;
-<a name="l00156"></a>00156         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_moved_temp;
-<a name="l00157"></a>00157         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_bad_request;
-<a name="l00158"></a>00158         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_internal_error;
-<a name="l00159"></a>00159         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_service_unavailable;
-<a name="l00160"></a>00160 
-<a name="l00161"></a>00161         <span class="comment">// HTTP header representation</span>
-<a name="l00162"></a>00162 
-<a name="l00163"></a>00163         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* ptrH; <span class="comment">// &quot;Host&quot;</span>
-<a name="l00164"></a>00164         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* ptrC; <span class="comment">// &quot;Connection&quot;</span>
-<a name="l00165"></a>00165         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* ptrT; <span class="comment">// &quot;Content-Type&quot;</span>
-<a name="l00166"></a>00166         <span class="keyword">static</span> <a class="code" href="structuhttpheader.html">uhttpheader</a> http_info;
-<a name="l00167"></a>00167 
-<a name="l00168"></a>00168         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPMethod(<span class="keyword">const</span> <span class="keywordtype">char</span>* method, uint32_t method_len)
-<a name="l00169"></a>00169                 {
-<a name="l00170"></a>00170                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::setHTTPMethod(%.*S,%u)&quot;</span>, method_len, method, method_len)
-<a name="l00171"></a>00171 
-<a name="l00172"></a>00172                 http_info.method                = method;
-<a name="l00173"></a>00173                 http_info.method_len = method_len;
-<a name="l00174"></a>00174 
-<a name="l00175"></a>00175                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;method = %.*S&quot;</span>, U_HTTP_METHOD_TO_TRACE)
-<a name="l00176"></a>00176                 }
-<a name="l00177"></a>00177 
-<a name="l00178"></a>00178         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPMethodType(<span class="keywordtype">char</span> c)
-<a name="l00179"></a>00179                 {
-<a name="l00180"></a>00180                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::setHTTPMethodType(%C)&quot;</span>, c)
-<a name="l00181"></a>00181 
-<a name="l00182"></a>00182                 <span class="keywordflow">if</span>      (c == <span class="charliteral">&#39;G&#39;</span>) <span class="comment">// GET</span>
-<a name="l00183"></a>00183                         {
-<a name="l00184"></a>00184                         http_info.method_type = HTTP_GET;
-<a name="l00185"></a>00185 
-<a name="l00186"></a>00186                         U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 3)
-<a name="l00187"></a>00187                         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, <span class="stringliteral">&quot;GET&quot;</span>))
-<a name="l00188"></a>00188                         }
-<a name="l00189"></a>00189                 <span class="keywordflow">else</span> <span class="keywordflow">if</span> (c == <span class="charliteral">&#39;P&#39;</span>) <span class="comment">// POST</span>
-<a name="l00190"></a>00190                         {
-<a name="l00191"></a>00191                         http_info.method_type = HTTP_POST;
-<a name="l00192"></a>00192 
-<a name="l00193"></a>00193                         U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 4)
-<a name="l00194"></a>00194                         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, <span class="stringliteral">&quot;POST&quot;</span>))
-<a name="l00195"></a>00195                         }
-<a name="l00196"></a>00196                 <span class="keywordflow">else</span> <span class="comment">// HEAD</span>
-<a name="l00197"></a>00197                         {
-<a name="l00198"></a>00198                         http_info.method_type = HTTP_HEAD;
-<a name="l00199"></a>00199 
-<a name="l00200"></a>00200                         U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 4)
-<a name="l00201"></a>00201                         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, <span class="stringliteral">&quot;HEAD&quot;</span>))
-<a name="l00202"></a>00202                         }
-<a name="l00203"></a>00203 
-<a name="l00204"></a>00204                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;method_type = %u&quot;</span>, http_info.method_type)
-<a name="l00205"></a>00205                 }
-<a name="l00206"></a>00206 
-<a name="l00207"></a>00207         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPMethod()
-<a name="l00208"></a>00208                 {
-<a name="l00209"></a>00209                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::getHTTPMethod()&quot;</span>)
-<a name="l00210"></a>00210 
-<a name="l00211"></a>00211                 <span class="keywordflow">if</span> (http_info.method_len)
-<a name="l00212"></a>00212                         {
-<a name="l00213"></a>00213                         <a class="code" href="classUString.html">UString</a> method((<span class="keywordtype">void</span>*)http_info.method, http_info.method_len);
-<a name="l00214"></a>00214 
-<a name="l00215"></a>00215                         U_RETURN_STRING(method);
-<a name="l00216"></a>00216                         }
-<a name="l00217"></a>00217 
-<a name="l00218"></a>00218                 U_RETURN_STRING(UString::getStringNull());
-<a name="l00219"></a>00219                 }
-<a name="l00220"></a>00220 
-<a name="l00221"></a>00221         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPUri(<span class="keyword">const</span> <span class="keywordtype">char</span>* uri, uint32_t uri_len)
-<a name="l00222"></a>00222                 {
-<a name="l00223"></a>00223                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::setHTTPUri(%.*S,%u)&quot;</span>, uri_len, uri, uri_len)
-<a name="l00224"></a>00224 
-<a name="l00225"></a>00225                 http_info.uri           = uri;
-<a name="l00226"></a>00226                 http_info.uri_len       = uri_len;
-<a name="l00227"></a>00227 
-<a name="l00228"></a>00228                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;uri = %.*S&quot;</span>, U_HTTP_URI_TO_TRACE)
-<a name="l00229"></a>00229                 }
-<a name="l00230"></a>00230 
-<a name="l00231"></a>00231         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPQuery(<span class="keyword">const</span> <span class="keywordtype">char</span>* query, uint32_t query_len)
-<a name="l00232"></a>00232                 {
-<a name="l00233"></a>00233                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::setHTTPQuery(%.*S,%u)&quot;</span>, query_len, query, query_len)
-<a name="l00234"></a>00234 
-<a name="l00235"></a>00235                 http_info.query   = query;
-<a name="l00236"></a>00236                 http_info.query_len = query_len;
-<a name="l00237"></a>00237 
-<a name="l00238"></a>00238                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;query = %.*S&quot;</span>, U_HTTP_QUERY_TO_TRACE)
-<a name="l00239"></a>00239                 }
-<a name="l00240"></a>00240 
-<a name="l00241"></a>00241         <span class="keyword">static</span> <span class="keywordtype">void</span> resetHTTPInfo()
-<a name="l00242"></a>00242                 {
-<a name="l00243"></a>00243                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::resetHTTPInfo()&quot;</span>)
-<a name="l00244"></a>00244 
-<a name="l00245"></a>00245                 cgi_dir[0] = <span class="charliteral">&#39;\0&#39;</span>;
-<a name="l00246"></a>00246 
-<a name="l00247"></a>00247                 (void) U_SYSCALL(memset, <span class="stringliteral">&quot;%p,%d,%u&quot;</span>, &amp;http_info, 0, <span class="keyword">sizeof</span>(<a class="code" href="structuhttpheader.html">uhttpheader</a>));
-<a name="l00248"></a>00248                 }
-<a name="l00249"></a>00249 
-<a name="l00250"></a>00250         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPInfo(<span class="keyword">const</span> <span class="keywordtype">char</span>* method, uint32_t method_len, <span class="keyword">const</span> <span class="keywordtype">char</span>* uri, uint32_t uri_len)
-<a name="l00251"></a>00251                 {
-<a name="l00252"></a>00252                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::setHTTPInfo(%.*S,%u,%.*S,%u)&quot;</span>, method_len, method, method_len, uri_len, uri, uri_len)
-<a name="l00253"></a>00253 
-<a name="l00254"></a>00254                 resetHTTPInfo();
-<a name="l00255"></a>00255 
-<a name="l00256"></a>00256                 setHTTPMethod(           method, method_len);
-<a name="l00257"></a>00257                 setHTTPMethodType(*method);
-<a name="l00258"></a>00258                 setHTTPUri(                              uri,           uri_len);
-<a name="l00259"></a>00259                 setHTTPQuery(                           0,                              0);
-<a name="l00260"></a>00260                 }
-<a name="l00261"></a>00261 
-<a name="l00262"></a>00262         <span class="keyword">static</span> <span class="keywordtype">void</span> getHTTPInfo(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; request, <a class="code" href="classUString.html">UString</a>&amp; method,                  <a class="code" href="classUString.html">UString</a>&amp; uri);
-<a name="l00263"></a>00263         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPInfo(                                                <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; method, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; uri)
-<a name="l00264"></a>00264                 { setHTTPInfo(U_STRING_TO_PARAM(method), U_STRING_TO_PARAM(uri)); }
-<a name="l00265"></a>00265 
-<a name="l00266"></a>00266         <span class="keyword">static</span> <span class="keywordtype">bool</span>    isHTTPRequest(<span class="keyword">const</span> <span class="keywordtype">char</span>* ptr);
-<a name="l00267"></a>00267         <span class="keyword">static</span> <span class="keywordtype">bool</span> scanfHTTPHeader( <span class="keyword">const</span> <span class="keywordtype">char</span>* ptr);
-<a name="l00268"></a>00268 
-<a name="l00269"></a>00269         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getHTTPStatus();
-<a name="l00270"></a>00270         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getHTTPStatusDescription();
-<a name="l00271"></a>00271 
-<a name="l00272"></a>00272         <span class="keyword">static</span> <span class="keywordtype">bool</span> readHTTPRequest();
-<a name="l00273"></a>00273         <span class="keyword">static</span> <span class="keywordtype">bool</span> readHTTPHeader(<a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* socket, <a class="code" href="classUString.html">UString</a>&amp; rbuffer);
-<a name="l00274"></a>00274         <span class="keyword">static</span> <span class="keywordtype">bool</span> readHTTPBody(       <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* socket, <a class="code" href="classUString.html">UString</a>&amp; rbuffer, <a class="code" href="classUString.html">UString</a>&amp; body);
-<a name="l00275"></a>00275 
-<a name="l00276"></a>00276         <span class="comment">// TYPE</span>
-<a name="l00277"></a>00277 
-<a name="l00278"></a>00278         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHTTPRequest() { <span class="keywordflow">return</span> (http_info.method_type &amp;&amp; http_info.szHeader); }
-<a name="l00279"></a>00279 
-<a name="l00280"></a>00280         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHttpGET()
-<a name="l00281"></a>00281                 {
-<a name="l00282"></a>00282                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isHttpGET()&quot;</span>)
-<a name="l00283"></a>00283 
-<a name="l00284"></a>00284                 <span class="keywordtype">bool</span> result = (http_info.method_type &gt;= HTTP_GET);
-<a name="l00285"></a>00285 
-<a name="l00286"></a>00286                 U_RETURN(result);
-<a name="l00287"></a>00287                 }
-<a name="l00288"></a>00288 
-<a name="l00289"></a>00289         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHttpHEAD()
-<a name="l00290"></a>00290                 {
-<a name="l00291"></a>00291                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isHttpHEAD()&quot;</span>)
-<a name="l00292"></a>00292 
-<a name="l00293"></a>00293                 <span class="keywordtype">bool</span> result = (http_info.method_type == HTTP_HEAD);
-<a name="l00294"></a>00294 
-<a name="l00295"></a>00295                 U_RETURN(result);
-<a name="l00296"></a>00296                 }
-<a name="l00297"></a>00297 
-<a name="l00298"></a>00298         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHttpPOST()
-<a name="l00299"></a>00299                 {
-<a name="l00300"></a>00300                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isHttpPOST()&quot;</span>)
-<a name="l00301"></a>00301 
-<a name="l00302"></a>00302                 <span class="keywordtype">bool</span> result = (http_info.method_type == HTTP_POST);
-<a name="l00303"></a>00303 
-<a name="l00304"></a>00304                 U_RETURN(result);
-<a name="l00305"></a>00305                 }
-<a name="l00306"></a>00306 
-<a name="l00307"></a>00307         <span class="keyword">static</span> <span class="keywordtype">bool</span> isSOAPRequest()
-<a name="l00308"></a>00308                 {
-<a name="l00309"></a>00309                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isSOAPRequest()&quot;</span>)
-<a name="l00310"></a>00310 
-<a name="l00311"></a>00311                 U_ASSERT(isHttpPOST())
-<a name="l00312"></a>00312 
-<a name="l00313"></a>00313                 <span class="keywordtype">bool</span> result = U_HTTP_URI_STRNEQ(<span class="stringliteral">&quot;/soap&quot;</span>);
-<a name="l00314"></a>00314 
-<a name="l00315"></a>00315                 U_RETURN(result);
-<a name="l00316"></a>00316                 }
-<a name="l00317"></a>00317 
-<a name="l00318"></a>00318         <span class="keyword">static</span> <span class="keywordtype">bool</span> isTSARequest()
-<a name="l00319"></a>00319                 {
-<a name="l00320"></a>00320                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isTSARequest()&quot;</span>)
-<a name="l00321"></a>00321 
-<a name="l00322"></a>00322                 U_ASSERT(isHttpPOST())
-<a name="l00323"></a>00323 
-<a name="l00324"></a>00324                 <span class="keywordtype">bool</span> result = U_HTTP_URI_STRNEQ(<span class="stringliteral">&quot;/tsa&quot;</span>);
-<a name="l00325"></a>00325 
-<a name="l00326"></a>00326                 U_RETURN(result);
-<a name="l00327"></a>00327                 }
-<a name="l00328"></a>00328 
-<a name="l00329"></a>00329         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHTTPDirectoryRequest()
-<a name="l00330"></a>00330                 {
-<a name="l00331"></a>00331                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isHTTPDirectoryRequest()&quot;</span>)
-<a name="l00332"></a>00332 
-<a name="l00333"></a>00333                 U_INTERNAL_ASSERT(isHTTPRequest())
-<a name="l00334"></a>00334 
-<a name="l00335"></a>00335                 <span class="keywordtype">bool</span> result = (U_HTTP_URI[UHTTP::http_info.uri_len - 1] == <span class="charliteral">&#39;/&#39;</span>);
-<a name="l00336"></a>00336 
-<a name="l00337"></a>00337                 U_RETURN(result);
-<a name="l00338"></a>00338                 }
-<a name="l00339"></a>00339 
-<a name="l00340"></a>00340         <span class="keyword">static</span> <span class="keywordtype">bool</span> isUSPRequest()
-<a name="l00341"></a>00341                 {
-<a name="l00342"></a>00342                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isUSPRequest()&quot;</span>)
-<a name="l00343"></a>00343 
-<a name="l00344"></a>00344                 U_INTERNAL_ASSERT(isHTTPRequest())
-<a name="l00345"></a>00345 
-<a name="l00346"></a>00346                 <span class="keywordtype">bool</span> result = (U_STRNEQ(U_HTTP_URI, <span class="stringliteral">&quot;/usp/&quot;</span>) &amp;&amp;
-<a name="l00347"></a>00347                                                         u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(<span class="stringliteral">&quot;.usp&quot;</span>)));
-<a name="l00348"></a>00348 
-<a name="l00349"></a>00349                 U_RETURN(result);
-<a name="l00350"></a>00350                 }
-<a name="l00351"></a>00351 
-<a name="l00352"></a>00352         <span class="comment">// SERVICES</span>
-<a name="l00353"></a>00353 
-<a name="l00354"></a>00354         <span class="keyword">static</span> <a class="code" href="classUFile.html">UFile</a>* file;
-<a name="l00355"></a>00355 
-<a name="l00356"></a>00356         <span class="keyword">static</span> <span class="keywordtype">bool</span> isPHPRequest();
-<a name="l00357"></a>00357         <span class="keyword">static</span> <span class="keywordtype">bool</span> checkHTTPRequest();
-<a name="l00358"></a>00358         <span class="keyword">static</span> <span class="keywordtype">bool</span>     processHTTPGetRequest();
-<a name="l00359"></a>00359         <span class="keyword">static</span> <span class="keywordtype">bool</span> checkPath(<a class="code" href="classUString.html">UString</a>&amp; pathname);
-<a name="l00360"></a>00360         <span class="keyword">static</span> <span class="keywordtype">void</span> getTimeIfNeeded(<span class="keywordtype">bool</span> all_http_version);
-<a name="l00361"></a>00361 
-<a name="l00362"></a>00362         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>           getHTMLDirectoryList();
-<a name="l00363"></a>00363         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getHTTPHeaderValuePtr(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; name);
-<a name="l00364"></a>00364 
-<a name="l00365"></a>00365         <span class="comment">// retrieve information on specific HTML form elements</span>
-<a name="l00366"></a>00366         <span class="comment">// (such as checkboxes, radio buttons, and text fields), or uploaded files</span>
-<a name="l00367"></a>00367 
-<a name="l00368"></a>00368         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* tmpdir;
-<a name="l00369"></a>00369         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* qcontent;
-<a name="l00370"></a>00370         <span class="keyword">static</span> <a class="code" href="classUMimeMultipart.html">UMimeMultipart</a>* formMulti;
-<a name="l00371"></a>00371         <span class="keyword">static</span> <a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a>* form_name_value;
-<a name="l00372"></a>00372 
-<a name="l00373"></a>00373         <span class="keyword">static</span> <span class="keywordtype">void</span>              resetForm();
-<a name="l00374"></a>00374         <span class="keyword">static</span> uint32_t processHTTPForm();
-<a name="l00375"></a>00375         <span class="keyword">static</span> <span class="keywordtype">void</span>              getFormValue(<a class="code" href="classUString.html">UString</a>&amp; buffer, uint32_t n);
-<a name="l00376"></a>00376 
-<a name="l00377"></a>00377         <span class="comment">// param: &quot;[ data expire path domain secure HttpOnly ]&quot;</span>
-<a name="l00378"></a>00378         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------------</span>
-<a name="l00379"></a>00379         <span class="comment">// string -- Data to put into the cookie                        -- must</span>
-<a name="l00380"></a>00380         <span class="comment">// int   -- Lifetime of the cookie in HOURS             -- must (0 -&gt; valid until browser exit)</span>
-<a name="l00381"></a>00381         <span class="comment">// string -- Path where the cookie can be used  --  opt</span>
-<a name="l00382"></a>00382         <span class="comment">// string -- Domain which can read the cookie   --  opt</span>
-<a name="l00383"></a>00383         <span class="comment">// bool  -- Secure mode                                                         --  opt</span>
-<a name="l00384"></a>00384         <span class="comment">// bool  -- Only allow HTTP usage                                       --  opt</span>
-<a name="l00385"></a>00385         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------------</span>
-<a name="l00386"></a>00386         <span class="comment">// RET: Set-Cookie: ulib_sid=data&amp;expire&amp;HMAC-MD5(data&amp;expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly</span>
-<a name="l00387"></a>00387 
-<a name="l00388"></a>00388         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPCookie(<span class="keywordtype">bool</span> ulib_only);
-<a name="l00389"></a>00389         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> setHTTPCookie(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; param);
-<a name="l00390"></a>00390 
-<a name="l00391"></a>00391         <span class="comment">// CGI</span>
-<a name="l00392"></a>00392 
-<a name="l00393"></a>00393         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* penvironment;
-<a name="l00394"></a>00394         <span class="keyword">static</span> <span class="keywordtype">char</span> cgi_dir[U_PATH_MAX];
-<a name="l00395"></a>00395         <span class="keyword">static</span> uint32_t content_type_len;
-<a name="l00396"></a>00396         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* content_type_ptr;
-<a name="l00397"></a>00397 
-<a name="l00398"></a>00398         <span class="keyword">static</span> <span class="keywordtype">bool</span>             isCGIRequest();
-<a name="l00399"></a>00399         <span class="keyword">static</span> <span class="keywordtype">bool</span>             processCGIOutput();
-<a name="l00400"></a>00400         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getCGIEnvironment(<span class="keywordtype">bool</span> sh_script);
-<a name="l00401"></a>00401         <span class="keyword">static</span> <span class="keywordtype">void</span>             setCGIShellScript(<a class="code" href="classUString.html">UString</a>&amp; command);
-<a name="l00402"></a>00402         <span class="keyword">static</span> <span class="keywordtype">bool</span>             processCGIRequest(<a class="code" href="classUCommand.html">UCommand</a>* pcmd, <a class="code" href="classUString.html">UString</a>* penvironment);
-<a name="l00403"></a>00403         <span class="keyword">static</span> <span class="keywordtype">void</span>             setHTTPCgiResponse(<span class="keywordtype">int</span> nResponseCode, uint32_t content_length, <span class="keywordtype">bool</span> header_content_length, <span class="keywordtype">bool</span> header_content_type);
-<a name="l00404"></a>00404 
-<a name="l00405"></a>00405         <span class="comment">// URI PROTECTED</span>
-<a name="l00406"></a>00406 
-<a name="l00407"></a>00407         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* alias;
-<a name="l00408"></a>00408         <span class="keyword">static</span> <span class="keywordtype">bool</span> virtual_host;
-<a name="l00409"></a>00409         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* request_uri;
-<a name="l00410"></a>00410         <span class="keyword">static</span> UVector&lt;UIPAllow*&gt;*      vallow_IP;
+<a name="l00146"></a>00146         <span class="comment">// HTTP main error message</span>
+<a name="l00147"></a>00147 
+<a name="l00148"></a>00148         <span class="keyword">static</span> <span class="keywordtype">void</span> str_allocate();
+<a name="l00149"></a>00149 
+<a name="l00150"></a>00150         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_response;
+<a name="l00151"></a>00151         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_forbidden;
+<a name="l00152"></a>00152         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_not_found;
+<a name="l00153"></a>00153         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_moved_temp;
+<a name="l00154"></a>00154         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_bad_request;
+<a name="l00155"></a>00155         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_internal_error;
+<a name="l00156"></a>00156         <span class="keyword">static</span> <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>* str_frm_service_unavailable;
+<a name="l00157"></a>00157 
+<a name="l00158"></a>00158         <span class="comment">// HTTP header representation</span>
+<a name="l00159"></a>00159 
+<a name="l00160"></a>00160         <span class="keyword">static</span> <a class="code" href="structuhttpheader.html">uhttpheader</a> http_info;
+<a name="l00161"></a>00161 
+<a name="l00162"></a>00162         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* ptrH; <span class="comment">// &quot;Host&quot;</span>
+<a name="l00163"></a>00163         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* ptrC; <span class="comment">// &quot;Connection&quot;</span>
+<a name="l00164"></a>00164         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* ptrT; <span class="comment">// &quot;Content-Type&quot;</span>
+<a name="l00165"></a>00165         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* ptrL; <span class="comment">// &quot;Content-Lenght&quot;</span>
+<a name="l00166"></a>00166 
+<a name="l00167"></a>00167         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPMethod(<span class="keyword">const</span> <span class="keywordtype">char</span>* method, uint32_t method_len)
+<a name="l00168"></a>00168                 {
+<a name="l00169"></a>00169                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::setHTTPMethod(%.*S,%u)&quot;</span>, method_len, method, method_len)
+<a name="l00170"></a>00170 
+<a name="l00171"></a>00171                 http_info.method                = method;
+<a name="l00172"></a>00172                 http_info.method_len = method_len;
+<a name="l00173"></a>00173 
+<a name="l00174"></a>00174                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;method = %.*S&quot;</span>, U_HTTP_METHOD_TO_TRACE)
+<a name="l00175"></a>00175                 }
+<a name="l00176"></a>00176 
+<a name="l00177"></a>00177         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPMethodType(<span class="keywordtype">char</span> c)
+<a name="l00178"></a>00178                 {
+<a name="l00179"></a>00179                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::setHTTPMethodType(%C)&quot;</span>, c)
+<a name="l00180"></a>00180 
+<a name="l00181"></a>00181                 <span class="keywordflow">if</span>      (c == <span class="charliteral">&#39;G&#39;</span>) <span class="comment">// GET</span>
+<a name="l00182"></a>00182                         {
+<a name="l00183"></a>00183                         http_info.method_type = HTTP_GET;
+<a name="l00184"></a>00184 
+<a name="l00185"></a>00185                         U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 3)
+<a name="l00186"></a>00186                         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, <span class="stringliteral">&quot;GET&quot;</span>))
+<a name="l00187"></a>00187                         }
+<a name="l00188"></a>00188                 <span class="keywordflow">else</span> <span class="keywordflow">if</span> (c == <span class="charliteral">&#39;P&#39;</span>) <span class="comment">// POST</span>
+<a name="l00189"></a>00189                         {
+<a name="l00190"></a>00190                         http_info.method_type = HTTP_POST;
+<a name="l00191"></a>00191 
+<a name="l00192"></a>00192                         U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 4)
+<a name="l00193"></a>00193                         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, <span class="stringliteral">&quot;POST&quot;</span>))
+<a name="l00194"></a>00194                         }
+<a name="l00195"></a>00195                 <span class="keywordflow">else</span> <span class="comment">// HEAD</span>
+<a name="l00196"></a>00196                         {
+<a name="l00197"></a>00197                         http_info.method_type = HTTP_HEAD;
+<a name="l00198"></a>00198 
+<a name="l00199"></a>00199                         U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 4)
+<a name="l00200"></a>00200                         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, <span class="stringliteral">&quot;HEAD&quot;</span>))
+<a name="l00201"></a>00201                         }
+<a name="l00202"></a>00202 
+<a name="l00203"></a>00203                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;method_type = %u&quot;</span>, http_info.method_type)
+<a name="l00204"></a>00204                 }
+<a name="l00205"></a>00205 
+<a name="l00206"></a>00206         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPMethod()
+<a name="l00207"></a>00207                 {
+<a name="l00208"></a>00208                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::getHTTPMethod()&quot;</span>)
+<a name="l00209"></a>00209 
+<a name="l00210"></a>00210                 <span class="keywordflow">if</span> (http_info.method_len)
+<a name="l00211"></a>00211                         {
+<a name="l00212"></a>00212                         <a class="code" href="classUString.html">UString</a> method((<span class="keywordtype">void</span>*)http_info.method, http_info.method_len);
+<a name="l00213"></a>00213 
+<a name="l00214"></a>00214                         U_RETURN_STRING(method);
+<a name="l00215"></a>00215                         }
+<a name="l00216"></a>00216 
+<a name="l00217"></a>00217                 U_RETURN_STRING(UString::getStringNull());
+<a name="l00218"></a>00218                 }
+<a name="l00219"></a>00219 
+<a name="l00220"></a>00220         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPUri(<span class="keyword">const</span> <span class="keywordtype">char</span>* uri, uint32_t uri_len)
+<a name="l00221"></a>00221                 {
+<a name="l00222"></a>00222                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::setHTTPUri(%.*S,%u)&quot;</span>, uri_len, uri, uri_len)
+<a name="l00223"></a>00223 
+<a name="l00224"></a>00224                 http_info.uri           = uri;
+<a name="l00225"></a>00225                 http_info.uri_len       = uri_len;
+<a name="l00226"></a>00226 
+<a name="l00227"></a>00227                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;uri = %.*S&quot;</span>, U_HTTP_URI_TO_TRACE)
+<a name="l00228"></a>00228                 }
+<a name="l00229"></a>00229 
+<a name="l00230"></a>00230         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPQuery(<span class="keyword">const</span> <span class="keywordtype">char</span>* query, uint32_t query_len)
+<a name="l00231"></a>00231                 {
+<a name="l00232"></a>00232                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::setHTTPQuery(%.*S,%u)&quot;</span>, query_len, query, query_len)
+<a name="l00233"></a>00233 
+<a name="l00234"></a>00234                 http_info.query   = query;
+<a name="l00235"></a>00235                 http_info.query_len = query_len;
+<a name="l00236"></a>00236 
+<a name="l00237"></a>00237                 U_INTERNAL_DUMP(<span class="stringliteral">&quot;query = %.*S&quot;</span>, U_HTTP_QUERY_TO_TRACE)
+<a name="l00238"></a>00238                 }
+<a name="l00239"></a>00239 
+<a name="l00240"></a>00240         <span class="keyword">static</span> <span class="keywordtype">void</span> resetHTTPInfo()
+<a name="l00241"></a>00241                 {
+<a name="l00242"></a>00242                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::resetHTTPInfo()&quot;</span>)
+<a name="l00243"></a>00243 
+<a name="l00244"></a>00244                 cgi_dir[0] = <span class="charliteral">&#39;\0&#39;</span>;
+<a name="l00245"></a>00245 
+<a name="l00246"></a>00246                 (void) U_SYSCALL(memset, <span class="stringliteral">&quot;%p,%d,%u&quot;</span>, &amp;http_info, 0, <span class="keyword">sizeof</span>(<a class="code" href="structuhttpheader.html">uhttpheader</a>));
+<a name="l00247"></a>00247                 }
+<a name="l00248"></a>00248 
+<a name="l00249"></a>00249         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPInfo(<span class="keyword">const</span> <span class="keywordtype">char</span>* method, uint32_t method_len, <span class="keyword">const</span> <span class="keywordtype">char</span>* uri, uint32_t uri_len)
+<a name="l00250"></a>00250                 {
+<a name="l00251"></a>00251                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::setHTTPInfo(%.*S,%u,%.*S,%u)&quot;</span>, method_len, method, method_len, uri_len, uri, uri_len)
+<a name="l00252"></a>00252 
+<a name="l00253"></a>00253                 resetHTTPInfo();
+<a name="l00254"></a>00254 
+<a name="l00255"></a>00255                 setHTTPMethod(           method, method_len);
+<a name="l00256"></a>00256                 setHTTPMethodType(*method);
+<a name="l00257"></a>00257                 setHTTPUri(                              uri,           uri_len);
+<a name="l00258"></a>00258                 setHTTPQuery(                           0,                              0);
+<a name="l00259"></a>00259                 }
+<a name="l00260"></a>00260 
+<a name="l00261"></a>00261         <span class="keyword">static</span> <span class="keywordtype">void</span> getHTTPInfo(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; request, <a class="code" href="classUString.html">UString</a>&amp; method,                  <a class="code" href="classUString.html">UString</a>&amp; uri);
+<a name="l00262"></a>00262         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPInfo(                                                <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; method, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; uri)
+<a name="l00263"></a>00263                 { setHTTPInfo(U_STRING_TO_PARAM(method), U_STRING_TO_PARAM(uri)); }
+<a name="l00264"></a>00264 
+<a name="l00265"></a>00265         <span class="keyword">static</span> <span class="keywordtype">bool</span>    isHTTPRequest(<span class="keyword">const</span> <span class="keywordtype">char</span>* ptr);
+<a name="l00266"></a>00266         <span class="keyword">static</span> <span class="keywordtype">bool</span> scanfHTTPHeader( <span class="keyword">const</span> <span class="keywordtype">char</span>* ptr);
+<a name="l00267"></a>00267 
+<a name="l00268"></a>00268         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getHTTPStatus();
+<a name="l00269"></a>00269         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getHTTPStatusDescription();
+<a name="l00270"></a>00270 
+<a name="l00271"></a>00271         <span class="keyword">static</span> <span class="keywordtype">bool</span> readHTTPRequest();
+<a name="l00272"></a>00272         <span class="keyword">static</span> <span class="keywordtype">bool</span> readHTTPHeader(<a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* socket, <a class="code" href="classUString.html">UString</a>&amp; rbuffer);
+<a name="l00273"></a>00273         <span class="keyword">static</span> <span class="keywordtype">bool</span> readHTTPBody(       <a class="code" href="classUSocket.html" title="basic IP socket functionality">USocket</a>* socket, <a class="code" href="classUString.html">UString</a>&amp; rbuffer, <a class="code" href="classUString.html">UString</a>&amp; body);
+<a name="l00274"></a>00274 
+<a name="l00275"></a>00275         <span class="comment">// TYPE</span>
+<a name="l00276"></a>00276 
+<a name="l00277"></a>00277         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHTTPRequest() { <span class="keywordflow">return</span> (http_info.method_type &amp;&amp; http_info.szHeader); }
+<a name="l00278"></a>00278 
+<a name="l00279"></a>00279         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHttpGET()
+<a name="l00280"></a>00280                 {
+<a name="l00281"></a>00281                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isHttpGET()&quot;</span>)
+<a name="l00282"></a>00282 
+<a name="l00283"></a>00283                 <span class="keywordtype">bool</span> result = (http_info.method_type &gt;= HTTP_GET);
+<a name="l00284"></a>00284 
+<a name="l00285"></a>00285                 U_RETURN(result);
+<a name="l00286"></a>00286                 }
+<a name="l00287"></a>00287 
+<a name="l00288"></a>00288         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHttpHEAD()
+<a name="l00289"></a>00289                 {
+<a name="l00290"></a>00290                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isHttpHEAD()&quot;</span>)
+<a name="l00291"></a>00291 
+<a name="l00292"></a>00292                 <span class="keywordtype">bool</span> result = (http_info.method_type == HTTP_HEAD);
+<a name="l00293"></a>00293 
+<a name="l00294"></a>00294                 U_RETURN(result);
+<a name="l00295"></a>00295                 }
+<a name="l00296"></a>00296 
+<a name="l00297"></a>00297         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHttpPOST()
+<a name="l00298"></a>00298                 {
+<a name="l00299"></a>00299                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isHttpPOST()&quot;</span>)
+<a name="l00300"></a>00300 
+<a name="l00301"></a>00301                 <span class="keywordtype">bool</span> result = (http_info.method_type == HTTP_POST);
+<a name="l00302"></a>00302 
+<a name="l00303"></a>00303                 U_RETURN(result);
+<a name="l00304"></a>00304                 }
+<a name="l00305"></a>00305 
+<a name="l00306"></a>00306         <span class="keyword">static</span> <span class="keywordtype">bool</span> isSOAPRequest()
+<a name="l00307"></a>00307                 {
+<a name="l00308"></a>00308                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isSOAPRequest()&quot;</span>)
+<a name="l00309"></a>00309 
+<a name="l00310"></a>00310                 U_ASSERT(isHttpPOST())
+<a name="l00311"></a>00311 
+<a name="l00312"></a>00312                 <span class="keywordtype">bool</span> result = U_HTTP_URI_STRNEQ(<span class="stringliteral">&quot;/soap&quot;</span>);
+<a name="l00313"></a>00313 
+<a name="l00314"></a>00314                 U_RETURN(result);
+<a name="l00315"></a>00315                 }
+<a name="l00316"></a>00316 
+<a name="l00317"></a>00317         <span class="keyword">static</span> <span class="keywordtype">bool</span> isTSARequest()
+<a name="l00318"></a>00318                 {
+<a name="l00319"></a>00319                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isTSARequest()&quot;</span>)
+<a name="l00320"></a>00320 
+<a name="l00321"></a>00321                 U_ASSERT(isHttpPOST())
+<a name="l00322"></a>00322 
+<a name="l00323"></a>00323                 <span class="keywordtype">bool</span> result = U_HTTP_URI_STRNEQ(<span class="stringliteral">&quot;/tsa&quot;</span>);
+<a name="l00324"></a>00324 
+<a name="l00325"></a>00325                 U_RETURN(result);
+<a name="l00326"></a>00326                 }
+<a name="l00327"></a>00327 
+<a name="l00328"></a>00328         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHTTPDirectoryRequest()
+<a name="l00329"></a>00329                 {
+<a name="l00330"></a>00330                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isHTTPDirectoryRequest()&quot;</span>)
+<a name="l00331"></a>00331 
+<a name="l00332"></a>00332                 U_INTERNAL_ASSERT(isHTTPRequest())
+<a name="l00333"></a>00333 
+<a name="l00334"></a>00334                 <span class="keywordtype">bool</span> result = (UHTTP::http_info.uri[UHTTP::http_info.uri_len - 1] == <span class="charliteral">&#39;/&#39;</span>);
+<a name="l00335"></a>00335 
+<a name="l00336"></a>00336                 U_RETURN(result);
+<a name="l00337"></a>00337                 }
+<a name="l00338"></a>00338 
+<a name="l00339"></a>00339         <span class="keyword">static</span> <span class="keywordtype">bool</span> isUSPRequest()
+<a name="l00340"></a>00340                 {
+<a name="l00341"></a>00341                 U_TRACE(0, <span class="stringliteral">&quot;UHTTP::isUSPRequest()&quot;</span>)
+<a name="l00342"></a>00342 
+<a name="l00343"></a>00343                 U_INTERNAL_ASSERT(isHTTPRequest())
+<a name="l00344"></a>00344 
+<a name="l00345"></a>00345                 <span class="keywordtype">bool</span> result = (U_STRNEQ(UHTTP::http_info.uri, <span class="stringliteral">&quot;/usp/&quot;</span>) &amp;&amp;
+<a name="l00346"></a>00346                                                         u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(<span class="stringliteral">&quot;.usp&quot;</span>)));
+<a name="l00347"></a>00347 
+<a name="l00348"></a>00348                 U_RETURN(result);
+<a name="l00349"></a>00349                 }
+<a name="l00350"></a>00350 
+<a name="l00351"></a>00351         <span class="comment">// SERVICES</span>
+<a name="l00352"></a>00352 
+<a name="l00353"></a>00353         <span class="keyword">static</span> <a class="code" href="classUFile.html">UFile</a>* file;
+<a name="l00354"></a>00354 
+<a name="l00355"></a>00355         <span class="keyword">static</span> <span class="keywordtype">bool</span> isPHPRequest();
+<a name="l00356"></a>00356         <span class="keyword">static</span> <span class="keywordtype">bool</span> checkHTTPRequest();
+<a name="l00357"></a>00357         <span class="keyword">static</span> <span class="keywordtype">bool</span>     processHTTPGetRequest();
+<a name="l00358"></a>00358         <span class="keyword">static</span> <span class="keywordtype">bool</span> checkPath(<a class="code" href="classUString.html">UString</a>&amp; pathname);
+<a name="l00359"></a>00359         <span class="keyword">static</span> <span class="keywordtype">void</span> getTimeIfNeeded(<span class="keywordtype">bool</span> all_http_version);
+<a name="l00360"></a>00360 
+<a name="l00361"></a>00361         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>           getHTMLDirectoryList();
+<a name="l00362"></a>00362         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getHTTPHeaderValuePtr(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; name);
+<a name="l00363"></a>00363 
+<a name="l00364"></a>00364         <span class="comment">// retrieve information on specific HTML form elements</span>
+<a name="l00365"></a>00365         <span class="comment">// (such as checkboxes, radio buttons, and text fields), or uploaded files</span>
+<a name="l00366"></a>00366 
+<a name="l00367"></a>00367         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* tmpdir;
+<a name="l00368"></a>00368         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* qcontent;
+<a name="l00369"></a>00369         <span class="keyword">static</span> <a class="code" href="classUMimeMultipart.html">UMimeMultipart</a>* formMulti;
+<a name="l00370"></a>00370         <span class="keyword">static</span> <a class="code" href="classUVector_3_01UString_01_4.html">UVector&lt;UString&gt;</a>* form_name_value;
+<a name="l00371"></a>00371 
+<a name="l00372"></a>00372         <span class="keyword">static</span> <span class="keywordtype">void</span>              resetForm();
+<a name="l00373"></a>00373         <span class="keyword">static</span> uint32_t processHTTPForm();
+<a name="l00374"></a>00374         <span class="keyword">static</span> <span class="keywordtype">void</span>              getFormValue(<a class="code" href="classUString.html">UString</a>&amp; buffer, uint32_t n);
+<a name="l00375"></a>00375 
+<a name="l00376"></a>00376         <span class="comment">// param: &quot;[ data expire path domain secure HttpOnly ]&quot;</span>
+<a name="l00377"></a>00377         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------------</span>
+<a name="l00378"></a>00378         <span class="comment">// string -- Data to put into the cookie                        -- must</span>
+<a name="l00379"></a>00379         <span class="comment">// int   -- Lifetime of the cookie in HOURS             -- must (0 -&gt; valid until browser exit)</span>
+<a name="l00380"></a>00380         <span class="comment">// string -- Path where the cookie can be used  --  opt</span>
+<a name="l00381"></a>00381         <span class="comment">// string -- Domain which can read the cookie   --  opt</span>
+<a name="l00382"></a>00382         <span class="comment">// bool  -- Secure mode                                                         --  opt</span>
+<a name="l00383"></a>00383         <span class="comment">// bool  -- Only allow HTTP usage                                       --  opt</span>
+<a name="l00384"></a>00384         <span class="comment">// ----------------------------------------------------------------------------------------------------------------------------</span>
+<a name="l00385"></a>00385         <span class="comment">// RET: Set-Cookie: ulib_sid=data&amp;expire&amp;HMAC-MD5(data&amp;expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly</span>
+<a name="l00386"></a>00386 
+<a name="l00387"></a>00387         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPCookie(<span class="keywordtype">bool</span> ulib_only);
+<a name="l00388"></a>00388         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> setHTTPCookie(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; param);
+<a name="l00389"></a>00389 
+<a name="l00390"></a>00390         <span class="comment">// CGI</span>
+<a name="l00391"></a>00391 
+<a name="l00392"></a>00392         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* penvironment;
+<a name="l00393"></a>00393         <span class="keyword">static</span> <span class="keywordtype">char</span> cgi_dir[U_PATH_MAX];
+<a name="l00394"></a>00394 
+<a name="l00395"></a>00395         <span class="keyword">static</span> <span class="keywordtype">bool</span>             isCGIRequest();
+<a name="l00396"></a>00396         <span class="keyword">static</span> <span class="keywordtype">bool</span>             processCGIOutput();
+<a name="l00397"></a>00397         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getCGIEnvironment(<span class="keywordtype">bool</span> sh_script);
+<a name="l00398"></a>00398         <span class="keyword">static</span> <span class="keywordtype">void</span>             setCGIShellScript(<a class="code" href="classUString.html">UString</a>&amp; command);
+<a name="l00399"></a>00399         <span class="keyword">static</span> <span class="keywordtype">bool</span>             processCGIRequest(<a class="code" href="classUCommand.html">UCommand</a>* pcmd, <a class="code" href="classUString.html">UString</a>* penvironment);
+<a name="l00400"></a>00400         <span class="keyword">static</span> <span class="keywordtype">void</span>             setHTTPCgiResponse(<span class="keywordtype">int</span> nResponseCode, <span class="keywordtype">bool</span> header_content_length, <span class="keywordtype">bool</span> header_content_type, <span class="keywordtype">bool</span> content_encoding);
+<a name="l00401"></a>00401 
+<a name="l00402"></a>00402         <span class="comment">// URI PROTECTED</span>
+<a name="l00403"></a>00403 
+<a name="l00404"></a>00404         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* alias;
+<a name="l00405"></a>00405         <span class="keyword">static</span> <span class="keywordtype">bool</span> virtual_host;
+<a name="l00406"></a>00406         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>* request_uri;
+<a name="l00407"></a>00407         <span class="keyword">static</span> UVector&lt;UIPAllow*&gt;*      vallow_IP;
+<a name="l00408"></a>00408 
+<a name="l00409"></a>00409         <span class="keyword">static</span> <span class="keywordtype">bool</span> checkUriProtected();
+<a name="l00410"></a>00410         <span class="keyword">static</span> <span class="keywordtype">bool</span> processHTTPAuthorization(<span class="keywordtype">bool</span> digest);
 <a name="l00411"></a>00411 
-<a name="l00412"></a>00412         <span class="keyword">static</span> <span class="keywordtype">bool</span> checkUriProtected();
-<a name="l00413"></a>00413         <span class="keyword">static</span> <span class="keywordtype">bool</span> processHTTPAuthorization(<span class="keywordtype">bool</span> digest);
-<a name="l00414"></a>00414 
-<a name="l00415"></a>00415         <span class="comment">//      Accept-Language: en-us,en;q=0.5</span>
-<a name="l00416"></a>00416         <span class="comment">// ----------------------------------------------------</span>
-<a name="l00417"></a>00417         <span class="comment">// take only the first 2 character (it, en, de fr, ...)</span>
-<a name="l00418"></a>00418 
-<a name="l00419"></a>00419         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getAcceptLanguage();
-<a name="l00420"></a>00420 
-<a name="l00421"></a>00421         <span class="comment">// check for &quot;Accept-Encoding: deflate&quot; in header request...</span>
-<a name="l00422"></a>00422 
-<a name="l00423"></a>00423         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHTTPAcceptEncodingDeflate(uint32_t content_length);
-<a name="l00424"></a>00424 
-<a name="l00425"></a>00425         <span class="comment">// check for &quot;Connection: close&quot; in headers...</span>
-<a name="l00426"></a>00426 
-<a name="l00427"></a>00427         <span class="keyword">static</span> <span class="keywordtype">int</span> checkForHTTPConnectionClose();
-<a name="l00428"></a>00428 
-<a name="l00429"></a>00429         <span class="comment">// set HTTP main error message</span>
-<a name="l00430"></a>00430 
-<a name="l00431"></a>00431         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPNotFound();
-<a name="l00432"></a>00432         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPForbidden();
-<a name="l00433"></a>00433         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPBadRequest();
-<a name="l00434"></a>00434         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPInternalError();
-<a name="l00435"></a>00435         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPServiceUnavailable();
-<a name="l00436"></a>00436         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPUnAuthorized(<span class="keywordtype">bool</span> digest);
-<a name="l00437"></a>00437 
-<a name="l00438"></a>00438         <span class="comment">// get HTTP response message</span>
+<a name="l00412"></a>00412         <span class="comment">//      Accept-Language: en-us,en;q=0.5</span>
+<a name="l00413"></a>00413         <span class="comment">// ----------------------------------------------------</span>
+<a name="l00414"></a>00414         <span class="comment">// take only the first 2 character (it, en, de fr, ...)</span>
+<a name="l00415"></a>00415 
+<a name="l00416"></a>00416         <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* getAcceptLanguage();
+<a name="l00417"></a>00417 
+<a name="l00418"></a>00418         <span class="comment">// check for &quot;Accept-Encoding: deflate&quot; in header request...</span>
+<a name="l00419"></a>00419 
+<a name="l00420"></a>00420         <span class="keyword">static</span> <span class="keywordtype">bool</span> isHTTPAcceptEncodingDeflate();
+<a name="l00421"></a>00421 
+<a name="l00422"></a>00422         <span class="comment">// check for &quot;Connection: close&quot; in headers...</span>
+<a name="l00423"></a>00423 
+<a name="l00424"></a>00424         <span class="keyword">static</span> <span class="keywordtype">int</span> checkForHTTPConnectionClose();
+<a name="l00425"></a>00425 
+<a name="l00426"></a>00426         <span class="comment">// set HTTP main error message</span>
+<a name="l00427"></a>00427 
+<a name="l00428"></a>00428         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPNotFound();
+<a name="l00429"></a>00429         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPForbidden();
+<a name="l00430"></a>00430         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPBadRequest();
+<a name="l00431"></a>00431         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPInternalError();
+<a name="l00432"></a>00432         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPServiceUnavailable();
+<a name="l00433"></a>00433         <span class="keyword">static</span> <span class="keywordtype">void</span> setHTTPUnAuthorized(<span class="keywordtype">bool</span> digest);
+<a name="l00434"></a>00434 
+<a name="l00435"></a>00435         <span class="comment">// get HTTP response message</span>
+<a name="l00436"></a>00436 
+<a name="l00437"></a>00437         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPHeaderForResponse(<span class="keywordtype">int</span> nResponseCode, <span class="keyword">const</span> <span class="keywordtype">char</span>* content_type, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; body);
+<a name="l00438"></a>00438         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPRedirectResponse(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; ext, <span class="keyword">const</span> <span class="keywordtype">char</span>* ptr_location, uint32_t len_location);
 <a name="l00439"></a>00439 
-<a name="l00440"></a>00440         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPHeaderForResponse(<span class="keywordtype">int</span> nResponseCode, <span class="keyword">const</span> <span class="keywordtype">char</span>* content_type, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; body);
-<a name="l00441"></a>00441         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> getHTTPRedirectResponse(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; ext, <span class="keyword">const</span> <span class="keywordtype">char</span>* ptr_location, uint32_t len_location);
-<a name="l00442"></a>00442 
-<a name="l00443"></a>00443 <span class="keyword">private</span>:
-<a name="l00444"></a>00444         <span class="keyword">static</span> <span class="keywordtype">bool</span>              openFile() U_NO_EXPORT;
-<a name="l00445"></a>00445         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>  getHTTPHeaderForResponse() U_NO_EXPORT;
-<a name="l00446"></a>00446         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>  getHTTPHeaderForResponse(<span class="keywordtype">int</span> nResponseCode, <a class="code" href="classUString.html">UString</a>&amp; content) U_NO_EXPORT;
-<a name="l00447"></a>00447 
-<a name="l00448"></a>00448         <a class="code" href="classUHTTP.html">UHTTP</a>(<span class="keyword">const</span> <a class="code" href="classUHTTP.html">UHTTP</a>&amp;)            {}
-<a name="l00449"></a>00449         <a class="code" href="classUHTTP.html">UHTTP</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUHTTP.html">UHTTP</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00450"></a>00450 };
-<a name="l00451"></a>00451 
-<a name="l00452"></a>00452 <span class="preprocessor">#endif</span>
+<a name="l00440"></a>00440 <span class="keyword">private</span>:
+<a name="l00441"></a>00441         <span class="keyword">static</span> <span class="keywordtype">bool</span>              openFile() U_NO_EXPORT;
+<a name="l00442"></a>00442         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>  getHTTPHeaderForResponse() U_NO_EXPORT;
+<a name="l00443"></a>00443         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>  getHTTPHeaderForResponse(<span class="keywordtype">int</span> nResponseCode, <a class="code" href="classUString.html">UString</a>&amp; content) U_NO_EXPORT;
+<a name="l00444"></a>00444 
+<a name="l00445"></a>00445         <a class="code" href="classUHTTP.html">UHTTP</a>(<span class="keyword">const</span> <a class="code" href="classUHTTP.html">UHTTP</a>&amp;)            {}
+<a name="l00446"></a>00446         <a class="code" href="classUHTTP.html">UHTTP</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUHTTP.html">UHTTP</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00447"></a>00447 };
+<a name="l00448"></a>00448 
+<a name="l00449"></a>00449 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 23 19:13:49 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:39 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

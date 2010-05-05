@@ -41,8 +41,8 @@ target_triplet = @target@
 @SSL_TRUE@am__append_3 = http_header uclient
 @LIBZ_TRUE@@SSL_TRUE@am__append_4 = PEC_log
 @LIBZ_TRUE@@SSL_TRUE@@ZIP_TRUE@am__append_5 = doc_parse doc_classifier
-@PLUGIN_TRUE@@SSL_TRUE@am__append_6 = rsign csp
-@LIBXML2_TRUE@@SSL_TRUE@am__append_7 = XAdES
+@LIBXML2_TRUE@@LIBZ_TRUE@@SSL_TRUE@@ZIP_TRUE@am__append_6 = XAdES
+@PLUGIN_TRUE@@SSL_TRUE@am__append_7 = rsign csp
 @EXPAT_TRUE@am__append_8 = xml2txt
 @LDAP_TRUE@am__append_9 = form_completion
 subdir = examples
@@ -88,7 +88,7 @@ ETAGS = etags
 CTAGS = ctags
 DIST_SUBDIRS = test_manager IR simple_client_server workflow userver \
 	lcsp http_header uclient PEC_log doc_parse doc_classifier \
-	rsign csp XAdES xml2txt form_completion
+	XAdES rsign csp xml2txt form_completion
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@

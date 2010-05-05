@@ -40,13 +40,13 @@ if LIBZ
 SUBDIRS += PEC_log
 if ZIP
 SUBDIRS += doc_parse doc_classifier
+if LIBXML2
+SUBDIRS += XAdES
+endif
 endif
 endif
 if PLUGIN
 SUBDIRS += rsign csp
-endif
-if LIBXML2
-SUBDIRS += XAdES
 endif
 endif
 

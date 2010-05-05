@@ -42,7 +42,7 @@ int URpcPlugIn::handlerConfig(UFileConfig& cfg)
 
    rpc_parser = U_NEW(URPCParser);
 
-   if (cfg.skip()) URPCObject::loadGenericMethod(&cfg);
+   URPCObject::loadGenericMethod(&cfg);
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }

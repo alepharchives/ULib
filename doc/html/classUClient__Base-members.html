@@ -61,9 +61,9 @@
   <tr bgcolor="#f0f0f0"><td><b>request</b> (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>reset</b>() (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>response</b> (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [protected]</code></td></tr>
-  <tr bgcolor="#f0f0f0"><td><b>sendRequest</b>() (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td></td></tr>
-  <tr bgcolor="#f0f0f0"><td><b>sendRequest</b>(const UString &amp;data) (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [inline]</code></td></tr>
-  <tr bgcolor="#f0f0f0"><td><b>sendRequest</b>(const char *data, uint32_t len) (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [inline]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>sendRequest</b>(bool bread_response=false) (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>sendRequest</b>(const UString &amp;data, bool bread_response=false) (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [inline]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>sendRequest</b>(const char *data, uint32_t len, bool bread_response=false) (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>sendTokenInt</b>(const char *token, uint32_t value) (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>sendTokenString</b>(const char *token, const UString &amp;data) (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [inline]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>sendTokenVector</b>(const char *token, UVector&lt; UString &gt; &amp;vec) (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [inline]</code></td></tr>
@@ -77,13 +77,14 @@
   <tr bgcolor="#f0f0f0"><td><b>str_allocate</b>() (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>str_RES_TIMEOUT</b> (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [static]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>timeoutMS</b> (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [protected]</code></td></tr>
+  <tr bgcolor="#f0f0f0"><td><b>UClient_Base</b>() (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>UClient_Base</b>(UFileConfig *cfg) (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>UFCGIPlugIn</b> (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [friend]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>verify_mode</b> (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [protected]</code></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>wrapRequestWithHTTP</b>(const char *extension, const char *content_type=0) (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td></td></tr>
   <tr bgcolor="#f0f0f0"><td><b>~UClient_Base</b>() (defined in <a class="el" href="classUClient__Base.html">UClient_Base</a>)</td><td><a class="el" href="classUClient__Base.html">UClient_Base</a></td><td><code> [protected]</code></td></tr>
 </table></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 23 19:13:50 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:40 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

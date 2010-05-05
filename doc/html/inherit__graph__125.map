@@ -1,3 +1,15 @@
 <map id="G" name="G">
-<area shape="rect" id="node1" href="$classUStackMemoryPool.html" title="UStackMemoryPool" alt="" coords="5,5,136,33"/>
+<area shape="rect" id="node1" href="$classUSocket.html" title="basic IP socket functionality" alt="" coords="5,131,72,159"/>
+<area shape="rect" id="node3" href="$classUIptAccount.html" title="UIptAccount" alt="" coords="121,30,212,58"/>
+<area shape="rect" id="node5" href="$classUPing.html" title="UPing" alt="" coords="139,81,195,109"/>
+<area shape="rect" id="node7" href="$classUTCPSocket.html" title="UTCPSocket" alt="" coords="121,131,212,159"/>
+<area shape="rect" id="node23" href="$classUUDPSocket.html" title="UUDPSocket" alt="" coords="120,182,213,210"/>
+<area shape="rect" id="node25" href="$classUUnixSocket.html" title="UUnixSocket" alt="" coords="120,233,213,261"/>
+<area shape="rect" id="node9" href="$classUFtpClient.html" title="Creates and manages a client connection with a remote FTP server." alt="" coords="268,5,348,33"/>
+<area shape="rect" id="node13" href="$classUImapClient.html" title="Creates and manages a client connection with a remote IMAP server." alt="" coords="263,55,353,83"/>
+<area shape="rect" id="node15" href="$classUPop3Client.html" title="Creates and manages a client connection with a remote POP3 server." alt="" coords="263,106,353,134"/>
+<area shape="rect" id="node17" href="$classUSmtpClient.html" title="Creates and manages a client connection with a remote SMTP server." alt="" coords="263,157,353,185"/>
+<area shape="rect" id="node19" href="$classUSSHSocket.html" title="USSHSocket" alt="" coords="263,207,353,235"/>
+<area shape="rect" id="node21" href="$classUSSLSocket.html" title="USSLSocket" alt="" coords="263,258,353,286"/>
+<area shape="rect" id="node11" href="$classUSSLFtpClient.html" title="Creates and manages a secure client connection with a remote FTP server." alt="" coords="403,5,507,33"/>
 </map>

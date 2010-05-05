@@ -152,11 +152,14 @@ UVector<UString>::UVector(const UString& x, const char* delim) : UVector<UString
       istrstream is(s, x.size());
 
       is >> *this;
-
-      return;
+      }
+   else
+      {
+      (void) split(x, delim);
       }
 
-   (void) split(x, delim);
+
+   if (_length) reserve(_length);
 }
 
 UVector<UString>::~UVector()
@@ -350,34 +353,23 @@ uint32_t UVector<UString>::split(const UString& str, const char* delim, bool dup
       end -= 1;
       }
 
-loop:
-   if (delim)
+   while (s < end)
       {
-      U_SKIP_EXT(s,end,loop,done,delim)
+      s = u_delimit_token(s, &p, end, delim, '#');
 
-      U_DELIMIT_TOKEN_EXT(s,end,p,delim)
+      U_INTERNAL_DUMP("s = %p end = %p", s, end)
+
+      if (s <= end)
+         {
+         len = s++ - p;
+
+         r = (dup ? UStringRep::create(len, len, p)
+                  : str.rep->substr(p, len));
+
+         UVector<void*>::push(r);
+         }
       }
-   else
-      {
-      U_SKIP(s,end,loop,done)
 
-      if (*s == '#') U_SKIP_LINE_COMMENT(s,end,loop)
-
-      U_DELIMIT_TOKEN(s,end,p)
-      }
-
-   len = s - p;
-
-   r = (dup ? UStringRep::create(len, len, p)
-            : str.rep->substr(p, len));
-
-   UVector<void*>::push(r);
-
-   ++s;
-
-   goto loop;
-
-done:
    U_RETURN(_length - n);
 }
 
@@ -405,20 +397,31 @@ uint32_t UVector<UString>::split(const UString& str, char delim)
       end -= 1;
       }
 
-loop:
-   U_SKIP_CHAR(s,end,loop,done,delim)
+   while (s < end)
+      {
+      // skip char delimiter
 
-   U_DELIMIT_TOKEN_CHAR(s,end,p,delim)
+      if (*s == delim)
+         {
+         ++s;
 
-   r = str.rep->substr(p, s - p);
+         continue;
+         }
 
-   UVector<void*>::push(r);
+      // delimit token with char delimiter
 
-   ++s;
+      p = s;
+      s = (const char*) memchr(s, delim, end - s);
 
-   goto loop;
+      if (s == 0) s = end;
 
-done:
+      r = str.rep->substr(p, s - p);
+
+      UVector<void*>::push(r);
+
+      ++s;
+      }
+
    U_RETURN(_length - n);
 }
 

@@ -1,3 +1,10 @@
 <map id="G" name="G">
-<area shape="rect" id="node1" href="$structUCompress.html" title="UCompress" alt="" coords="7,5,89,33"/>
+<area shape="rect" id="node1" href="$classUClient__Base.html" title="UClient_Base" alt="" coords="5,55,101,83"/>
+<area shape="rect" id="node3" href="$classUClient.html" title="Handles a connections with a server." alt="" coords="152,55,272,83"/>
+<area shape="rect" id="node13" href="$classUHttpClient__Base.html" title="UHttpClient_Base" alt="" coords="152,5,272,33"/>
+<area shape="rect" id="node16" href="$classURDBClient__Base.html" title="Creates and manages a client connection with a RDB server." alt="" coords="151,106,273,134"/>
+<area shape="rect" id="node5" href="$classUHttpClient.html" title="Creates and manages a client connection with a HTTP server." alt="" coords="325,5,469,33"/>
+<area shape="rect" id="node7" href="$classURDBClient.html" title="URDBClient\&lt; Socket \&gt;" alt="" coords="323,106,472,134"/>
+<area shape="rect" id="node9" href="$classURPCClient.html" title="URPCClient\&lt; Socket \&gt;" alt="" coords="324,55,471,83"/>
+<area shape="rect" id="node11" href="$classUSOAPClient.html" title="USOAPClient\&lt; Socket \&gt;" alt="" coords="521,55,676,83"/>
 </map>

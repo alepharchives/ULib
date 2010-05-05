@@ -106,7 +106,7 @@ void u_dgst_algoritm(int alg)
 
    if (u_md == 0) U_ERROR("loading digest algorithm '%d' failed", alg);
 
-   u_hashType = alg;
+   u_hashType = (UHashType)alg;
 }
 
 void u_dgst_init(int alg, const char* key, uint32_t keylen)

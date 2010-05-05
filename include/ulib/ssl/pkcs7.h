@@ -110,9 +110,9 @@ public:
 
    bool isDetached() const
       {
-      U_TRACE(0, "UPKCS7::isDetached()")
+      U_TRACE(1, "UPKCS7::isDetached()")
 
-      bool result = (PKCS7_get_detached(pkcs7) != 0);
+      bool result = (U_SYSCALL(PKCS7_ctrl, "%p,%d,%ld,%s", pkcs7, PKCS7_OP_GET_DETACHED_SIGNATURE, 0, 0) != 0);
 
       U_RETURN(result);
       }

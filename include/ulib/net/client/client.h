@@ -128,9 +128,9 @@ public:
    bool readHTTPResponse();
    bool readResponse(int count = U_SINGLE_READ);
 
-   bool sendRequest();
-   bool sendRequest(const UString& data)            { request =         data;       return sendRequest(); }
-   bool sendRequest(const char* data, uint32_t len) { request = UString(data, len); return sendRequest(); }
+   bool sendRequest(                                bool bread_response = false);
+   bool sendRequest(const UString& data,            bool bread_response = false)  { request =         data;       return sendRequest(bread_response); }
+   bool sendRequest(const char* data, uint32_t len, bool bread_response = false)  { request = UString(data, len); return sendRequest(bread_response); }
 
    // -----------------------------------------------------------------------------------------------------------------------
    // Very simple RPC-like layer
@@ -235,6 +235,7 @@ protected:
 
    // COSTRUTTORI
 
+    UClient_Base();
     UClient_Base(UFileConfig* cfg);
    ~UClient_Base();
 

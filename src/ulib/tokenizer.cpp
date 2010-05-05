@@ -26,18 +26,31 @@ bool UTokenizer::next(UString& token, char c)
 
    const char* p;
 
-loop:
-   U_SKIP_CHAR(s,end,loop,done,c)
+   while (s < end)
+      {  
+      // skip char delimiter
 
-   U_DELIMIT_TOKEN_CHAR(s,end,p,c)
+      if (*s == c)
+         {
+         ++s;
 
-   token = str.substr(p, s - p);
+         continue;
+         }
 
-   ++s;
+      // delimit token with char delimiter
 
-   U_RETURN(true);
+      p = s;
+      s = (const char*) memchr(s, c, end - s);
 
-done:
+      if (s == 0) s = end;
+
+      token = str.substr(p, s - p);
+
+      ++s;
+
+      U_RETURN(true);
+      }
+
    U_RETURN(false);
 }
 
@@ -49,20 +62,31 @@ bool UTokenizer::extend(UString& token, char c)
 
    const char* p;
 
-loop:
-   U_SKIP_CHAR(s,end,loop,done,c)
+   while (s < end)
+      {  
+      // skip char delimiter
 
-   U_DELIMIT_TOKEN_CHAR(s,end,p,c)
+      if (*s == c)
+         {
+         ++s;
 
-   p = token.data();
+         continue;
+         }
 
-   token = str.substr(p, s - p);
+      // delimit token with char delimiter
 
-   ++s;
+      p = token.data();
+      s = (const char*) memchr(s, c, end - s);
 
-   U_RETURN(true);
+      if (s == 0) s = end;
 
-done:
+      token = str.substr(p, s - p);
+
+      ++s;
+
+      U_RETURN(true);
+      }
+
    U_RETURN(false);
 }
 
@@ -75,78 +99,79 @@ bool UTokenizer::next(UString& token, bool* bgroup)
 
    if (bgroup) *bgroup = false;
 
-loop:
-   if (delim)
+   while (s < end)
       {
-      U_SKIP_EXT(s,end,loop,done,delim)
-
-      U_DELIMIT_TOKEN_EXT(s,end,p,delim)
-
-      goto tok;
-      }
-
-   U_SKIP(s,end,loop,done)
-
-   if (group)
-      {
-      if (U_SYSCALL(memcmp, "%S,%S,%u", s, group, group_len_div_2) == 0)
+      if (delim)
          {
-         p = s + group_len_div_2 - 1;
-         s = u_strpend(p, end - p, group, group_len, '\0');
-
-         ++p;
-
-         if (s == 0) s = end;
-
-         if (group_skip)
-            {
-            s += group_len_div_2;
-
-            goto loop;
-            }
-
-         if (bgroup) *bgroup = true;
-
-         shift = group_len_div_2;
+         s = u_delimit_token(s, &p, end, delim, 0);
 
          goto tok;
          }
-      else if (group_skip)
+
+      s = u_skip(s, end, 0, 0);
+
+      if (s == end) break;
+
+      if (group)
          {
-         // -------------------------------------------------------------------
-         // examples:
-         // -------------------------------------------------------------------
-         // <date>03/11/2005 10:17:46</date>
-         // <description>description_556adfbc-0107-5000-ede4-d208</description>
-         // -------------------------------------------------------------------
-
-         U_DELIMIT_TOKEN(s,end,p)
-
-         if (s < end)
+         if (U_SYSCALL(memcmp, "%S,%S,%u", s, group, group_len_div_2) == 0)
             {
-            const char* x = (char*) memchr(p, group[0], s - p);
+            p = s + group_len_div_2 - 1;
+            s = u_strpend(p, end - p, group, group_len, '\0');
 
-            if (x && (U_SYSCALL(memcmp, "%S,%S,%u", x, group, group_len_div_2) == 0))
+            ++p;
+
+            if (s == 0) s = end;
+
+            if (group_skip)
                {
-               s     = x;
-               shift = 0;
+               s += group_len_div_2;
+
+               continue;
                }
+
+            if (bgroup) *bgroup = true;
+
+            shift = group_len_div_2;
+
+            goto tok;
             }
+         else if (group_skip)
+            {
+            // -------------------------------------------------------------------
+            // examples:
+            // -------------------------------------------------------------------
+            // <date>03/11/2005 10:17:46</date>
+            // <description>description_556adfbc-0107-5000-ede4-d208</description>
+            // -------------------------------------------------------------------
 
-         goto tok;
+            s = u_delimit_token(s, &p, end, 0, 0);
+
+            if (s < end)
+               {
+               const char* x = (char*) memchr(p, group[0], s - p);
+
+               if (x && (U_SYSCALL(memcmp, "%S,%S,%u", x, group, group_len_div_2) == 0))
+                  {
+                  s     = x;
+                  shift = 0;
+                  }
+               }
+
+            goto tok;
+            }
          }
-      }
 
-   U_DELIMIT_TOKEN(s,end,p)
+      s = u_delimit_token(s, &p, end, 0, 0);
 
 tok:
-   token = str.substr(p, s - p);
+      token = str.substr(p, s - p);
 
-   s += shift;
+      s += shift;
 
-   U_RETURN(true);
+      U_RETURN(true);
+      }
 
-done:
    U_RETURN(false);
 }
 

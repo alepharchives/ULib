@@ -277,7 +277,7 @@ bool UFile::memmap(int prot, UString* str, off_t offset, size_t length)
    U_INTERNAL_ASSERT((off_t)length <= st_size)     // Don't allow mappings beyond EOF since Windows can't handle that POSIX like
 #endif
 
-   map_size = (length ? length : (st_size - offset));
+   map_size = (length ? length : (size_t)(st_size - offset));
 
 #ifndef HAVE_ARCH64
    U_INTERNAL_ASSERT_RANGE(1UL,map_size,3UL*1024UL*1024UL*1024UL) // limit of linux system
@@ -1130,7 +1130,7 @@ static struct mimeentry mimetab_c[] = {
    // certificate, and any subsequent certificates will be added as untrusted CA
    // certificates to the local database.
    // -------------------------------------------------------------------------------
-   MIME_ENTRY( "css", "text/css" ),                   // 0 U_css
+   MIME_ENTRY( "css", "text/css" ),                   // U_css
    MIME_ENTRY( "crt", "application/x-x509-ca-cert" ),
    MIME_ENTRY( "cer", "application/x-x509-ca-cert" ),
 
@@ -1189,8 +1189,8 @@ static struct mimeentry mimetab_i[] = {
 };
 
 static struct mimeentry mimetab_j[] = {
+   MIME_ENTRY( "js",    "text/javascript" ), // U_js
    MIME_ENTRY( "jpg",   "image/jpeg" ),
-   MIME_ENTRY( "js",    "text/javascript" ), // 1 U_js
    MIME_ENTRY( "jpeg",  "image/jpeg" ),
    { 0, 0, 0 }
 };
@@ -1354,11 +1354,11 @@ loop:
             }
          }
 
-      // 0 (U_css) - 1 (U_js)
+      // NB: first entry: 'c' (U_css) - 'j' (U_js)
 
-      mime_index = (c == 'c' || c == 'j' ? (ptr - mimetab) : -1);
+      mime_index = (ptr == mimetab && (c == 'c' || c == 'j') ? c : -1);
 
-      U_INTERNAL_DUMP("mime_index = %d", mime_index)
+      U_INTERNAL_DUMP("mime_index = %C", mime_index)
 
       U_RETURN(ptr->type);
       }

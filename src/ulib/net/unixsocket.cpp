@@ -114,19 +114,6 @@ loop:
    U_RETURN(false);
 }
 
-void UUnixSocket::closesocket()
-{
-   U_TRACE(1, "UUnixSocket::closesocket()")
-
-#if defined(DEBUG)
-   if (U_SYSCALL(close, "%d", iSockDesc)) U_ERROR_SYSCALL("closesocket");
-#else
-   (void) U_SYSCALL(close, "%d", iSockDesc);
-#endif
-
-   iSockDesc = -1;
-}
-
 // DEBUG
 
 #ifdef DEBUG

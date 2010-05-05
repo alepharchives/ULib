@@ -71,14 +71,14 @@ userver {
   LOG_FILE_SZ    1M
   LOG_MSG_SIZE   -1
 
-  PLUGIN   "(           mod_http )"
-# PLUGIN   "( mod_usp   mod_http )"
-# PLUGIN   "( mod_tsa   mod_http )"
-# PLUGIN   "( mod_rpc   mod_http )"
-# PLUGIN   "( mod_soap  mod_http )"
-# PLUGIN   "( mod_fcgi  mod_http )"
-# PLUGIN   "( mod_proxy mod_http )"
-# PLUGIN   "( mod_geoip mod_http )"
+  PLUGIN                    mod_http
+# PLUGIN         "mod_usp   mod_http"
+# PLUGIN         "mod_tsa   mod_http"
+# PLUGIN         "mod_rpc   mod_http"
+# PLUGIN         "mod_soap  mod_http"
+# PLUGIN         "mod_fcgi  mod_http"
+# PLUGIN         "mod_proxy mod_http"
+# PLUGIN         "mod_geoip mod_http"
 
 # PLUGIN_DIR     /usr/local/libexec/ulib
 
@@ -324,8 +324,38 @@ mod_http {
    # ---------------------------------------------------------------------------
    # ERROR MESSAGE: Allows you to tell clients about what type of error occurred
    # ---------------------------------------------------------------------------
-#  #include mod_proxy_err_msg.cfg
-
+#[ ##include mod_proxy_err_msg.cfg
+### ERROR_PARSE_REQUEST
+#STRING   "HTTP/1.1 400 Bad Request\r\n\
+#Date: %D\r\n\
+#Server: ULib/1.0\r\n\
+#Connection: close\r\n\
+#Content-Type: text/html; charset=iso-8859-1\r\n\
+#Content-Length: 238\r\n\
+#\r\n\
+#<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n\
+#<html><head>\r\n\
+#<title>Accesso negato</title>\r\n\
+#</head><body>\r\n\
+#<h1>Bad Request</h1>\r\n\
+#<p>Errore parsing header<br />\r\n\
+#</p>\r\n\
+#<hr>\r\n\
+#<address>ULib Server (mod_proxy)</address>\r\n\
+#</body></html>\r\n"
+#
+### ERROR_A_BAD_HEADER
+#
+### ERROR_A_X509_MISSING_CRT
+#
+### ERROR_A_X509_REJECTED
+#FILE  error_msg/X509_REJECTED
+#
+### ERROR_A_X509_TAMPERED
+#
+### ERROR_A_X509_NOBASICAUTH
+#]
+#
 #  Service_WAYF {
 
    # URI         ^/(WAYF/?|SWITCHaai/images/.*\.gif$)

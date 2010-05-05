@@ -68,7 +68,7 @@ int URDBClientImage::handlerRead()
 
             uint32_t size = rdb->data.dsize;
 
-            wbuffer->reserve(U_TOKEN_LN + size);
+            (void) wbuffer->reserve(U_TOKEN_LN + size);
 
             UStringExt::buildTokenInt(res = STR_200, size, *wbuffer);
 

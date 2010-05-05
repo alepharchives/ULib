@@ -123,6 +123,7 @@ int UHttpPlugIn::handlerInit()
    UHTTP::ptrH = USocket::str_host->c_pointer(1);           // "Host"
    UHTTP::ptrC = USocket::str_connection->c_pointer(1);     // "Connection"
    UHTTP::ptrT = USocket::str_content_type->c_pointer(1);   // "Content-Type"
+   UHTTP::ptrL = USocket::str_content_length->c_pointer(1); // "Content-Length"
 
    // init form processing var...
 

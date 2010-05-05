@@ -123,4 +123,6 @@ void ULib_init()
    // (when running 32 bit applications))
    asm("ta 6");
 #endif
+
+   U_INTERNAL_ASSERT_EQUALS(UStringRep::max_size(U_MAX_SIZE_PREALLOCATE), U_CAPACITY)
 }

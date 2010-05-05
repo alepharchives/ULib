@@ -110,9 +110,9 @@
 <a name="l00110"></a>00110 
 <a name="l00111"></a>00111         <span class="keywordtype">bool</span> isDetached()<span class="keyword"> const</span>
 <a name="l00112"></a>00112 <span class="keyword">                </span>{
-<a name="l00113"></a>00113                 U_TRACE(0, <span class="stringliteral">&quot;UPKCS7::isDetached()&quot;</span>)
+<a name="l00113"></a>00113                 U_TRACE(1, <span class="stringliteral">&quot;UPKCS7::isDetached()&quot;</span>)
 <a name="l00114"></a>00114 
-<a name="l00115"></a>00115                 bool result = (PKCS7_get_detached(pkcs7) != 0);
+<a name="l00115"></a>00115                 bool result = (U_SYSCALL(PKCS7_ctrl, &quot;%p,%d,%ld,%s&quot;, pkcs7, PKCS7_OP_GET_DETACHED_SIGNATURE, 0, 0) != 0);
 <a name="l00116"></a>00116 
 <a name="l00117"></a>00117                 U_RETURN(result);
 <a name="l00118"></a>00118                 }
@@ -172,7 +172,7 @@
 <a name="l00209"></a>00209 
 <a name="l00210"></a>00210 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Fri Apr 23 19:13:49 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:39 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

@@ -168,8 +168,8 @@ public:
 #endif
 
 private:
-   URDBClient(const URDBClient&)            {}
-   URDBClient& operator=(const URDBClient&) { return *this; }
+   URDBClient(const URDBClient&) : URDBClient_Base(0) {}
+   URDBClient& operator=(const URDBClient&)           { return *this; }
 };
 
 #endif

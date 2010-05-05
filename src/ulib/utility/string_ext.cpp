@@ -71,7 +71,7 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
          {
          len = end - start;
 
-         x.reserve(x.size() + len + tab);
+         (void) x.reserve(x.size() + len + tab);
 
          if (len)
             {
@@ -118,7 +118,7 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 
       U_INTERNAL_DUMP("start = %u end = %u len = %u", start, end, len)
 
-      x.reserve(x.size() + len + n2);
+      (void) x.reserve(x.size() + len + n2);
 
       if (len)
          {
@@ -289,7 +289,7 @@ UString UStringExt::expandEnvVar(const char* s, uint32_t n)
 
       // check for space
 
-      if (n1 > end) x.reserve(x.size() + (n1 - end));
+      if (n1 > end) (void) x.reserve(x.size() + (n1 - end));
 
       ptr = x.rep->end();
 
@@ -459,7 +459,7 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
 {
    U_TRACE(0, "UStringExt::simplifyWhiteSpace(%.*S,%u)", n, s, n)
 
-// U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+   // U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
    UString result(n);
    uint32_t sz1, sz = 0;
@@ -468,28 +468,34 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
    const char* p;
    const char* end = s + n;
 
-loop:
-   U_SKIP(s,end,loop,done) // skip white space from start
-
-   p = s++;
-
-   while (s < end &&
-          u_isspace(*s) == false)
+   while (s < end)
       {
-      ++s;
+      // skip white space from start
+
+      if (u_isspace(*s))
+         {
+         ++s;
+
+         continue;
+         }
+
+      p = s++;
+
+      while (s < end &&
+             u_isspace(*s) == false)
+         {
+         ++s;
+         }
+
+      sz1 = (s - p);
+
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", str + sz, p, sz1); // result.append(p, sz1);
+
+      sz += sz1;
+
+      if (++s < end) str[sz++] = ' ';
       }
 
-   sz1 = (s - p);
-
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", str + sz, p, sz1); // result.append(p, sz1);
-
-   sz += sz1;
-
-   if (++s < end) str[sz++] = ' ';
-
-   goto loop;
-
-done:
    if (sz > 0 && str[sz-1] == ' ') --sz;
 
    result.size_adjust(sz);
@@ -868,17 +874,14 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 
       oldPos = ++pos;
 
-      if (form)
-         {
-         pos = content.find_first_of('&', oldPos);
-         }
+      if (form) pos = content.find_first_of('&', oldPos);
       else
          {
+         // check if string is quoted...
+
          if (content.c_char(pos) == '"')
             {
-            ptr = content.c_pointer(++pos);
-
-            U_SKIP_QUOTED_STRING(ptr,end,'"')
+            ptr = u_find_char(content.c_pointer(++pos), end, '"');
 
             pos = content.distance(ptr);
             }
@@ -909,10 +912,7 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 
       // Update parse position
 
-      if (form)
-         {
-         oldPos = ++pos;
-         }
+      if (form) oldPos = ++pos;
       else
          {
          ptr = content.c_pointer(pos);

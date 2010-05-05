@@ -19,7 +19,7 @@
 
 // gcc - call is unlikely and code size would grow
 
-UMimeEntity::UMimeEntity() : body(U_CAPACITY)
+UMimeEntity::UMimeEntity() : content(U_CAPACITY)
 {
    U_TRACE_REGISTER_OBJECT(0, UMimeEntity, "", 0)
 
@@ -34,7 +34,7 @@ UMimeEntity::UMimeEntity(const UString& _data, uint32_t _startHeader) : data(_da
    header      = U_NEW(UMimeHeader);
    startHeader = _startHeader;
 
-   if (parse() && body.empty() == false) decodeBody();
+   if (parse()) decodeBody();
 }
 
 bool UMimeEntity::isXML() const                { return UMimeHeader::isXML(content_type); }
@@ -42,18 +42,26 @@ bool UMimeEntity::isText() const               { return UMimeHeader::isText(cont
 bool UMimeEntity::isPKCS7() const              { return UMimeHeader::isPKCS7(content_type); }
 bool UMimeEntity::isRFC822() const             { return UMimeHeader::isRFC822(content_type); }
 bool UMimeEntity::isMessage() const            { return UMimeHeader::isMessage(content_type); }
-bool UMimeEntity::isMultipart() const          { return UMimeHeader::isMultipart(content_type); }
 bool UMimeEntity::isURLEncoded() const         { return UMimeHeader::isURLEncoded(content_type); }
 bool UMimeEntity::isApplication() const        { return UMimeHeader::isApplication(content_type); }
 bool UMimeEntity::isMultipartFormData() const  { return UMimeHeader::isMultipartFormData(content_type); }
+
+bool UMimeEntity::isMultipart() const
+{
+   U_TRACE(0, "UMimeEntity::isMultipart()")
+
+   bool result = UMimeHeader::isContentType(content_type, U_CONSTANT_TO_PARAM("multipart"), true); // NB: ignore case - kmail use "Multipart"
+
+   U_RETURN(result);
+}
 
 bool UMimeEntity::parse()
 {
    U_TRACE(0, "UMimeEntity::parse()")
 
-   U_ASSERT(data.empty()    == false)
-   U_ASSERT(body.empty()    == true)
-   U_ASSERT(header->empty() == true)
+   U_ASSERT(header->empty())
+   U_ASSERT(content.empty())
+   U_ASSERT(data.empty() == false)
 
    /*
    uint32_t skip,
@@ -99,8 +107,6 @@ bool UMimeEntity::parse()
 
    U_INTERNAL_DUMP("endHeader = %u", endHeader)
 
-   body = data.substr(endHeader);
-
    U_RETURN(parse_result);
 }
 
@@ -108,12 +114,9 @@ void UMimeEntity::decodeBody()
 {
    U_TRACE(0, "UMimeEntity::decodeBody()")
 
-   U_ASSERT(body.empty()    == false)
-   U_ASSERT(content.empty() == true)
+   if (content.empty()) content = getBody();
 
-   content = body;
-
-   uint32_t length = body.size();
+   uint32_t length = content.size();
 
    // Content transfer encoding: [ "base64", "quoted-printable", "7bit", "8bit", "binary" ]
 
@@ -155,7 +158,7 @@ bool UMimeEntity::readHeader(USocket* socket)
 {
    U_TRACE(0, "UMimeEntity::readHeader(%p)", socket)
 
-   U_ASSERT(header->empty() == true)
+   U_ASSERT(header->empty())
 
    if (header->readHeader(socket, data))
       {
@@ -172,17 +175,33 @@ bool UMimeEntity::readBody(USocket* socket)
 {
    U_TRACE(0, "UMimeEntity::readBody(%p)", socket)
 
-   U_ASSERT(body.empty() == true)
-   U_INTERNAL_ASSERT_DIFFERS(endHeader,U_NOT_FOUND)
+   U_ASSERT(content.empty())
+   U_INTERNAL_ASSERT_DIFFERS(endHeader, U_NOT_FOUND)
    U_INTERNAL_ASSERT_EQUALS(endHeader, UHTTP::http_info.endHeader)
 
    UHTTP::http_info.clength = header->getHeader(*USocket::str_content_length).strtol();
 
-   bool result = UHTTP::readHTTPBody(socket, data, body);
+   if (UHTTP::readHTTPBody(socket, data, content) &&
+       checkContentType())
+      {
+      decodeBody();
 
-   if (result && checkContentType()) decodeBody();
+      U_RETURN(true);
+      }
 
-   U_RETURN(result);
+   U_RETURN(false);
+}
+
+void UMimeEntity::setEmpty()
+{
+   U_TRACE(0, "UMimeEntity::setEmpty()")
+
+   data.setEmpty();
+
+        content.clear();
+   content_type.clear();
+
+   if (header) header->clear();
 }
 
 // checks whether [current,end[ matches -*[\r\t ]*(\n|$)
@@ -435,8 +454,6 @@ bool UMimeMultipart::parse()
             }
 
          (void) item->header->setHeaderIfAbsent(*USocket::str_content_type, item->content_type);
-
-         item->content = item->body;
          }
 
       bodypart.push(item);
@@ -453,7 +470,7 @@ bool UMimeMultipart::parse()
 
 void UMimeMultipart::clear()
 {
-   U_TRACE(0, "UMimeMultipart::::clear()")
+   U_TRACE(0, "UMimeMultipart::clear()")
 
    boundary.clear();
    preamble.clear();
@@ -506,7 +523,6 @@ const char* UMimeEntity::dump(bool reset) const
                   << "startHeader               " << startHeader           << '\n'
                   << "parse_result              " << parse_result          << '\n'
                   << "data         (UString     " << (void*)&data          << ")\n"
-                  << "body         (UString     " << (void*)&body          << ")\n"
                   << "header       (UMimeHeader " << (void*)header         << ")\n"
                   << "content      (UString     " << (void*)&content       << ")\n"
                   << "content_type (UString     " << (void*)&content_type  << ')';

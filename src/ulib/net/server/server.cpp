@@ -853,7 +853,7 @@ void UServer_Base::handlerCloseConnection()
 
    U_INTERNAL_DUMP("num_connection = %d", num_connection)
 
-   U_ASSERT_EQUALS(UNotifier::isHandler(UClientImage_Base::pClientImage), false)
+// U_ASSERT_EQUALS(UNotifier::isHandler(UClientImage_Base::pClientImage), false)
 
    if (isLog())
       {

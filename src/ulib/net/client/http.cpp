@@ -660,24 +660,27 @@ bool UHttpClient_Base::sendRequest(UString& data)
                      ? checkResponse(redirectCount)
                      : -1);
 
-      if (result == 2) break; // no redirection, read body...
+      if (result ==  2) break;    // no redirection, read body...
 
-      if (result == -1) U_RETURN(false); // same error...
+      if (result == -1) goto end; // same error...
 
       if (result ==  1) continue; // redirection, use the same socket connection...
 
       UClient_Base::socket->close();
 
-      if (UClient_Base::connect() == false) U_RETURN(false);
+      if (UClient_Base::connect() == false) goto end;
       }
 
    U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", UHTTP::http_info.nResponseCode);
 
    body.clear();
 
-   bool ok = UHTTP::readHTTPBody(socket, UClient_Base::response, body);
+   UHTTP::http_info.clength = responseHeader->getHeader(*USocket::str_content_length).strtol();
 
-   U_RETURN(ok);
+   if (UHTTP::readHTTPBody(socket, UClient_Base::response, body)) U_RETURN(true);
+
+end:
+   U_RETURN(false);
 }
 
 #define U_HTTP_POST_REQUEST \

@@ -67,7 +67,7 @@ void u_trace_writev(const struct iovec* iov, int n)
 
    U_INTERNAL_ASSERT_MINOR(u_trace_num_tab,sizeof(u_trace_tab))
 
-   if (file_size == 0) writev(u_trace_fd, iov, n);
+   if (file_size == 0) (void) writev(u_trace_fd, iov, n);
    else
       {
       int i = 0;
@@ -162,10 +162,6 @@ void u_trace_init(bool force, bool info, bool offset)
    char* env = getenv("UTRACE");
 
    U_INTERNAL_TRACE("u_trace_init(%d,%d,%d)", force, info, offset)
-
-   U_INTERNAL_ASSERT_RANGE(0,info,1)
-   U_INTERNAL_ASSERT_RANGE(0,force,1)
-   U_INTERNAL_ASSERT_RANGE(0,offset,1)
 
    flag_init = true;
 
@@ -345,8 +341,6 @@ void u_trace_check_init(void)
 
    // controllo se sono avvenute precedenti creazioni di oggetti globali
    // che possono avere forzato l'inizializzazione del file di trace...
-
-   U_INTERNAL_ASSERT_RANGE(0,flag_init,1)
 
    if (flag_init         &&
        level_active >= 0 &&

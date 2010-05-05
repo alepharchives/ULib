@@ -393,7 +393,7 @@ bool USmtpClient::sendMessage(bool secure)
 #endif
             s = this;
 
-   response = (USocketExt::write(s, msg) ? USocketExt::readMultilineReply(s) : USocket::BROKEN);
+   response = (USocketExt::write(s, msg) ? USocketExt::readMultilineReply(s) : (int)USocket::BROKEN);
 
    setStateFromResponse();
 

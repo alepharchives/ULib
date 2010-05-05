@@ -96,7 +96,6 @@ extern U_EXPORT const char* u_line_terminator;
 extern U_EXPORT uint32_t    u_line_terminator_len;
 
 /* Services */
-extern U_EXPORT int                 u_errno;
 extern U_EXPORT int                 u_flag_exit;
 extern U_EXPORT int                 u_flag_test;
 extern U_EXPORT bool                u_recursion;
@@ -105,9 +104,9 @@ extern U_EXPORT char                u_hostname[255];
 extern U_EXPORT char                u_user_name[32];
 extern U_EXPORT uint32_t            u_hostname_len, u_user_name_len;
 extern U_EXPORT const char*         u_tmpdir;
-extern U_EXPORT const unsigned char u_alphabet[64];  /* "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" */
-extern U_EXPORT const unsigned char u_hex_upper[16]; /* "0123456789ABCDEF" */
-extern U_EXPORT const unsigned char u_hex_lower[16]; /* "0123456789abcdef" */
+extern U_EXPORT const unsigned char u_alphabet[];  /* "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" */
+extern U_EXPORT const unsigned char u_hex_upper[]; /* "0123456789ABCDEF" */
+extern U_EXPORT const unsigned char u_hex_lower[]; /* "0123456789abcdef" */
 
 extern U_EXPORT void        u_setPid(void);
 extern U_EXPORT const char* u_basename(const char* path);

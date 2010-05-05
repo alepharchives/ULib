@@ -4,12 +4,16 @@
 
 start_msg web_server
 
+DOC_ROOT=/mnt/home/stefano/sito/ridwhan
+
 rm -f web_server.log \
       out/userver_tcp.out err/userver_tcp.err \
-		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
+					 trace.*userver_tcp*.[0-9]*			  object.*userver_tcp*.[0-9]*				 stack.*userver_tcp*.[0-9]* \
+      $DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* $DOC_ROOT/stack.*userver_ssl*.[0-9]* \
+      $DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]*
 
- UTRACE="0 10M 0"
- UOBJDUMP="0 100k 10"
+#UTRACE="0 10M 0"
+#UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
@@ -26,7 +30,7 @@ start_test() {
 	fi
 }
 
-start_test
+#start_test
 
 DIR_CMD="../../examples/userver"
 

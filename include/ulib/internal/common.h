@@ -32,7 +32,7 @@
 
 // Manage memory pool
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #ifdef U_MEMORY_POOL
 #  include <ulib/internal/memory_pool.h>

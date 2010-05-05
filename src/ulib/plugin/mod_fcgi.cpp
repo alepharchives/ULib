@@ -13,6 +13,7 @@
 
 #include <ulib/file_config.h>
 #include <ulib/utility/uhttp.h>
+#include <ulib/net/tcpsocket.h>
 #include <ulib/net/unixsocket.h>
 #include <ulib/plugin/mod_fcgi.h>
 #include <ulib/net/client/client.h>
@@ -21,16 +22,6 @@
 // ---------------------------------------------------------------------------------------------------------------
 // START Fast CGI stuff
 // ---------------------------------------------------------------------------------------------------------------
-
-typedef struct {
-   u_char  version;
-   u_char  type;
-   u_short request_id;
-   u_short content_length;
-   u_char  padding_length;
-   u_char  reserved;
-} FCGI_Header;
-
 /*
  * Number of bytes in a FCGI_Header. Future versions of the protocol
  * will not reduce this number.
@@ -64,15 +55,13 @@ typedef struct {
 #define FCGI_NULL_REQUEST_ID     0
 
 typedef struct {
-   u_short role;
-   u_char  flags;
-   u_char  reserved[5];
-} FCGI_BeginRequestBody;
-
-typedef struct {
-   FCGI_Header           header;
-   FCGI_BeginRequestBody body;
-} FCGI_BeginRequestRecord;
+   u_char  version;
+   u_char  type;
+   u_short request_id;
+   u_short content_length;
+   u_char  padding_length;
+   u_char  reserved;
+} FCGI_Header;
 
 /*
  * Mask for flags component of FCGI_BeginRequestBody
@@ -86,38 +75,49 @@ typedef struct {
 #define FCGI_AUTHORIZER 2
 #define FCGI_FILTER     3
 
+typedef struct {
+   u_short role;
+   u_char  flags;
+   u_char  reserved[5];
+} FCGI_BeginRequestBody;
+
+/*
+ * Values for protocolStatus component of FCGI_EndRequestBody
+ */
+#define FCGI_REQUEST_COMPLETE 0
+#define FCGI_CANT_MPX_CONN    1
+#define FCGI_OVERLOADED       2
+#define FCGI_UNKNOWN_ROLE     3
+
+typedef struct {
+   u_int  app_status;
+   u_char protocol_status;
+   u_char reserved[3];
+} FCGI_EndRequestBody;
+
+typedef struct {
+   FCGI_Header           header;
+   FCGI_BeginRequestBody body;
+} FCGI_BeginRequestRecord;
+
+typedef struct {
+   FCGI_Header         header;
+   FCGI_EndRequestBody body;
+} FCGI_EndRequestRecord;
+
 // Initialize a fast CGI header record
 
-static void* fill_header(void* buf, u_char type, u_short content_length, u_char padding_length)
+static void fill_header(FCGI_Header& h, u_char type, u_short content_length)
 {
-   U_TRACE(0, "UFCGIPlugIn::fill_header(%p,%C,%d,%C)", buf, type, content_length, padding_length)
+   U_TRACE(0, "UFCGIPlugIn::fill_header(%p,%C,%d)", &h, type, content_length)
 
-   U_INTERNAL_ASSERT_POINTER(buf)
-
-   FCGI_Header* h = (FCGI_Header*)buf;
-
-   h->version        = FCGI_VERSION_1;
-   h->type           = type;
-   h->request_id     = htons(u_pid);
-   h->content_length = htons(content_length);
-   h->padding_length = padding_length;
-// h->reserved       = 0;
-
-   return ((char*)buf) + FCGI_HEADER_LEN;
+// h.version        = FCGI_VERSION_1;
+   h.type           = type;
+// h.request_id     = htons((uint16_t)u_pid);
+   h.content_length = htons(content_length);
+// h.padding_length = padding_length;
+// h.reserved       = 0;
 }
-
-static void fill_begin_request(void* buf, u_int role, u_char flags)
-{
-   U_TRACE(0, "UFCGIPlugIn::fill_begin_request(%p,%u,%C)", buf, role, flags)
-
-   FCGI_BeginRequestBody* body = (FCGI_BeginRequestBody*) fill_header(buf, FCGI_BEGIN_REQUEST, sizeof(FCGI_BeginRequestBody), 0);
-
-   body->role  = htons(role);
-   body->flags = flags;
-
-// (void) U_SYSCALL(memset, "%p,%d,%u", body->reserved,  0, sizeof(body->reserved));
-}
-
 // ---------------------------------------------------------------------------------------------------------------
 // END Fast CGI stuff
 // ---------------------------------------------------------------------------------------------------------------
@@ -228,21 +228,33 @@ int UFCGIPlugIn::handlerRequest()
    FCGI_Header* h;
    char* equalPtr;
    char* envp[128];
-   uint32_t clength, pos;
+   uint32_t clength, pos, size;
    unsigned char  headerBuff[8];
    unsigned char* headerBuffPtr;
    int nameLen, valueLen, headerLen, byte_to_read, i, n;
    UString request(U_CAPACITY), environment(U_CAPACITY), params(U_CAPACITY), response;
 
-   // Send FCGI_BEGIN_REQUEST
+   // Set FCGI_BEGIN_REQUEST
 
+   static bool init_fcgi_begin_request;
    static FCGI_BeginRequestRecord beginRecord;
 
-   fill_begin_request(&beginRecord, FCGI_RESPONDER, fcgi_keep_conn);
+   if (init_fcgi_begin_request == false)
+      {
+      init_fcgi_begin_request         = true;
 
-   (void) request.replace((const char*)&beginRecord, sizeof(FCGI_BeginRequestRecord));
+      beginRecord.header.version      = FCGI_VERSION_1;
+      beginRecord.header.request_id   = htons((uint16_t)u_pid);
 
-   // Send environment to the FCGI application server
+      beginRecord.body.role           = htons(FCGI_RESPONDER);
+      beginRecord.body.flags          = fcgi_keep_conn;
+      }
+
+   fill_header(beginRecord.header, FCGI_BEGIN_REQUEST, sizeof(FCGI_BeginRequestBody));
+
+   (void) request.append((const char*)&beginRecord, sizeof(FCGI_BeginRequestRecord));
+
+   // Set environment for the FCGI application server
 
    environment = *UHTTP::penvironment + UHTTP::getCGIEnvironment(false);
 
@@ -293,17 +305,36 @@ int UFCGIPlugIn::handlerRequest()
       (void) params.append(equalPtr, valueLen);
       }
 
-   (void) fill_header(&beginRecord, FCGI_PARAMS, params.size(), 0);
+   fill_header(beginRecord.header, FCGI_PARAMS, params.size());
 
    (void) request.append((const char*)&beginRecord, FCGI_HEADER_LEN);
    (void) request.append(params);
 
-   (void) fill_header(&beginRecord, FCGI_STDIN, UClientImage_Base::body->size(), 0);
+   size = UClientImage_Base::body->size();
+
+   if (size)
+      {
+      fill_header(beginRecord.header, FCGI_PARAMS, 0);
+
+      (void) request.append((const char*)&beginRecord, FCGI_HEADER_LEN);
+      }
+
+   fill_header(beginRecord.header, FCGI_STDIN, size);
 
    (void) request.append((const char*)&beginRecord, FCGI_HEADER_LEN);
-   (void) request.append(*UClientImage_Base::body);
 
-   if (connection->sendRequest(request) == false) goto error;
+   if (size)
+      {
+      (void) request.append(*UClientImage_Base::body);
+
+      fill_header(beginRecord.header, FCGI_STDIN, 0);
+
+      (void) request.append((const char*)&beginRecord, FCGI_HEADER_LEN);
+      }
+
+   // Send request and read fast cgi header+record
+
+   if (connection->sendRequest(request, true) == false) goto error;
 
    if (fcgi_keep_conn == false)
       {
@@ -315,38 +346,40 @@ int UFCGIPlugIn::handlerRequest()
       if (connection->shutdown() == false) goto error;
       }
 
-   // Read fast cgi header+record
-
-   pos          = 0;
-   byte_to_read = U_SINGLE_READ;
+   pos      = 0;
+   response = connection->getResponse();
 
    while (true)
       {
-      if (connection->readResponse(byte_to_read) == false) goto error;
+      U_INTERNAL_DUMP("response.c_pointer(%u) = %#.*S", pos, 16, response.c_pointer(pos))
 
-      response = connection->getResponse();
-
-loop:
-      U_INTERNAL_ASSERT_MAJOR(response.size() - pos, FCGI_HEADER_LEN)
+      U_INTERNAL_ASSERT((response.size() - pos) >= FCGI_HEADER_LEN)
 
       h = (FCGI_Header*) response.c_pointer(pos);
 
-      U_INTERNAL_ASSERT_EQUALS(h->version, FCGI_VERSION_1)
+      U_INTERNAL_DUMP("version = %C request_id = %u", h->version, ntohs(h->request_id))
 
-   // h->request_id     = ntohs(h->request_id);
+      U_INTERNAL_ASSERT_EQUALS(h->version,    FCGI_VERSION_1)
+      U_INTERNAL_ASSERT_EQUALS(h->request_id, htons((uint16_t)u_pid))
+
       h->content_length = ntohs(h->content_length);
 
       clength      = h->content_length + h->padding_length;
-      byte_to_read = clength - response.size() - pos - FCGI_HEADER_LEN;
+      byte_to_read = pos + FCGI_HEADER_LEN + clength - response.size();
 
-      U_INTERNAL_DUMP("clength = %u pos = %u response.size() = %u byte_to_read = %d", clength, pos, response.size(), byte_to_read)
+      U_INTERNAL_DUMP("pos = %u clength = %u response.size() = %u byte_to_read = %d", pos, clength, response.size(), byte_to_read)
 
-      if (byte_to_read > 0) continue;
+      if (byte_to_read > 0 &&
+          connection->readResponse(byte_to_read) == false)
+         {
+         break;
+         }
 
       // Record fully read
-      // Process this fcgi record
 
       pos += FCGI_HEADER_LEN;
+
+      // Process this fcgi record
 
       U_INTERNAL_DUMP("h->type = %C", h->type)
 
@@ -364,11 +397,20 @@ loop:
 
          case FCGI_END_REQUEST:
             {
-            (void) UHTTP::processCGIOutput();
+            FCGI_EndRequestBody* body = (FCGI_EndRequestBody*) response.c_pointer(pos);
 
-            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+            U_INTERNAL_DUMP("protocol_status = %C app_status = %u", body->protocol_status, ntohl(body->app_status))
+
+            if (body->protocol_status == FCGI_REQUEST_COMPLETE)
+               {
+               U_INTERNAL_ASSERT_EQUALS(pos + clength, response.size())
+
+               (void) UHTTP::processCGIOutput();
+
+               U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+               }
             }
-         break;
+      // break; NB: intenzionale...
 
          // not  implemented
          case FCGI_UNKNOWN_TYPE:
@@ -379,15 +421,34 @@ loop:
 
       pos += clength;
 
-      if ((response.size() - pos) >= FCGI_HEADER_LEN) goto loop;
+      U_INTERNAL_DUMP("pos = %u response.size() = %u", pos, response.size())
 
-      byte_to_read = U_SINGLE_READ;
+      if ((response.size() - pos) < FCGI_HEADER_LEN &&
+          connection->readResponse() == false)
+         {
+         break;
+         }
       }
 
 error:
    UHTTP::setHTTPInternalError(); // set internal error response...
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+}
+
+int UFCGIPlugIn::handlerReset()
+{
+   U_TRACE(0, "UFCGIPlugIn::handlerReset()")
+
+   connection->clearData();
+
+   if (fcgi_keep_conn == false &&
+       connection->isConnected())
+      {
+      connection->close();
+      }
+
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 // DEBUG

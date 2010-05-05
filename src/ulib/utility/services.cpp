@@ -17,8 +17,6 @@
 #include <ulib/utility/base64.h>
 #include <ulib/utility/services.h>
 
-#include <errno.h>
-
 unsigned char UServices::key[16];
 
 int UServices::getDevNull() /* return open(/dev/null) */
@@ -132,34 +130,30 @@ uint32_t UServices::read(int fd, UString& buffer, int timeoutMS)
 {
    U_TRACE(0, "UServices::read(%d,%.*S,%d)", fd, U_STRING_TO_TRACE(buffer), timeoutMS)
 
-   U_INTERNAL_ASSERT_EQUALS(UStringRep::max_size(U_MAX_SIZE_PREALLOCATE),U_CAPACITY)
+   uint32_t value, byte_read = 0,
+            start = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua...
 
-   uint32_t value, count, byte_read = 0, start = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua...
+   (void) buffer.reserve(start + U_CAPACITY);
 
-   while (true)
+   char* ptr = buffer.c_pointer(start);
+
+read:
+   value = UNotifier::read(fd, ptr + byte_read, U_SINGLE_READ, timeoutMS);
+
+   if (value)
       {
-      buffer.reserve(start + U_CAPACITY);
-
-      count = buffer.capacity() - start;
-
-      U_INTERNAL_DUMP("start = %u count = %u", start, count)
-
-      errno = 0;
-      value = UNotifier::read(fd, buffer.data() + start, count, timeoutMS);
-
-      if (value == 0) break;
-
-      start     += value;
       byte_read += value;
 
-      buffer.size_adjust(start);
+      U_INTERNAL_DUMP("byte_read = %d", byte_read)
 
-      if (value < count) break;
+      buffer.size_adjust(start + byte_read);
 
-      timeoutMS = -1;
+      if (buffer.reserve(start + byte_read + U_CAPACITY)) ptr = buffer.c_pointer(start);
+
+   // timeoutMS = -1;
+
+      goto read;
       }
-
-   U_INTERNAL_DUMP("errno = %d", errno)
 
    U_RETURN(byte_read);
 }

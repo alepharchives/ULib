@@ -153,7 +153,7 @@ void IR::processFile()
 
    IR::parse();
 
-   if (operation == 3) write(1, U_CONSTANT_TO_PARAM(".")); // check
+   if (operation == 3) (void) write(1, U_CONSTANT_TO_PARAM(".")); // check
 
    // adjust virtual position if context 'directory as document'...
 
@@ -172,7 +172,7 @@ void IR::loadFiles()
 {
    U_TRACE(5, "IR::loadFiles()")
 
-   if (operation == 3) write(1, U_CONSTANT_TO_PARAM("CHECK_1")); // check
+   if (operation == 3) (void) write(1, U_CONSTANT_TO_PARAM("CHECK_1")); // check
 
    (void) UServices::setFtw(0);
 
@@ -190,7 +190,7 @@ void IR::loadFiles()
 
    (void) UFile::chdir(0, true);
 
-   if (operation == 3) write(1, U_CONSTANT_TO_PARAM("OK")); // check
+   if (operation == 3) (void) write(1, U_CONSTANT_TO_PARAM("OK")); // check
 }
 
 void IR::loadFilters()

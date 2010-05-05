@@ -147,17 +147,17 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
 	utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp \
 	utility/uhttp.cpp net/ipaddress.cpp net/socket.cpp \
-	net/ping.cpp net/rpc/rpc.cpp net/rpc/rpc_envelope.cpp \
-	net/rpc/rpc_fault.cpp net/rpc/rpc_method.cpp \
-	net/rpc/rpc_encoder.cpp net/rpc/rpc_object.cpp \
-	net/rpc/rpc_gen_method.cpp net/rpc/rpc_parser.cpp \
-	net/client/smtp.cpp net/client/ftp.cpp net/client/pop3.cpp \
-	net/client/imap.cpp net/client/http.cpp net/client/client.cpp \
-	net/ipt_ACCOUNT.cpp query/query_parser.cpp \
-	event/event_time.cpp timeval.cpp timer.cpp notifier.cpp \
-	string.cpp file.cpp process.cpp file_config.cpp log.cpp \
-	options.cpp application.cpp cache.cpp date.cpp url.cpp \
-	tokenizer.cpp command.cpp debug/trace.cpp \
+	net/ping.cpp net/tcpsocket.cpp net/rpc/rpc.cpp \
+	net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp \
+	net/rpc/rpc_method.cpp net/rpc/rpc_encoder.cpp \
+	net/rpc/rpc_object.cpp net/rpc/rpc_gen_method.cpp \
+	net/rpc/rpc_parser.cpp net/client/smtp.cpp net/client/ftp.cpp \
+	net/client/pop3.cpp net/client/imap.cpp net/client/http.cpp \
+	net/client/client.cpp net/ipt_ACCOUNT.cpp \
+	query/query_parser.cpp event/event_time.cpp timeval.cpp \
+	timer.cpp notifier.cpp string.cpp file.cpp process.cpp \
+	file_config.cpp log.cpp options.cpp application.cpp cache.cpp \
+	date.cpp url.cpp tokenizer.cpp command.cpp debug/trace.cpp \
 	debug/debug_common.cpp debug/error.cpp debug/error_memory.cpp \
 	debug/error_simulation.cpp debug/objectDB.cpp \
 	internal/memory_pool.cpp dynamic/dynamic.cpp \
@@ -233,11 +233,11 @@ am__objects_39 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo \
 	header.lo entity.lo multipart.lo vector.lo hash_map.lo tree.lo \
 	interrupt.lo compress.lo services.lo semaphore.lo base64.lo \
 	lock.lo string_ext.lo socket_ext.lo uhttp.lo ipaddress.lo \
-	socket.lo ping.lo rpc.lo rpc_envelope.lo rpc_fault.lo \
-	rpc_method.lo rpc_encoder.lo rpc_object.lo rpc_gen_method.lo \
-	rpc_parser.lo smtp.lo ftp.lo pop3.lo imap.lo http.lo client.lo \
-	ipt_ACCOUNT.lo query_parser.lo event_time.lo timeval.lo \
-	timer.lo notifier.lo string.lo file.lo process.lo \
+	socket.lo ping.lo tcpsocket.lo rpc.lo rpc_envelope.lo \
+	rpc_fault.lo rpc_method.lo rpc_encoder.lo rpc_object.lo \
+	rpc_gen_method.lo rpc_parser.lo smtp.lo ftp.lo pop3.lo imap.lo \
+	http.lo client.lo ipt_ACCOUNT.lo query_parser.lo event_time.lo \
+	timeval.lo timer.lo notifier.lo string.lo file.lo process.lo \
 	file_config.lo log.lo options.lo application.lo cache.lo \
 	date.lo url.lo tokenizer.lo command.lo $(am__objects_22) \
 	$(am__objects_23) $(am__objects_24) $(am__objects_25) \
@@ -554,22 +554,23 @@ SRC_CPP = internal/common.cpp internal/objectIO.cpp ui/dialog.cpp \
 	utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
 	utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp \
 	utility/uhttp.cpp net/ipaddress.cpp net/socket.cpp \
-	net/ping.cpp net/rpc/rpc.cpp net/rpc/rpc_envelope.cpp \
-	net/rpc/rpc_fault.cpp net/rpc/rpc_method.cpp \
-	net/rpc/rpc_encoder.cpp net/rpc/rpc_object.cpp \
-	net/rpc/rpc_gen_method.cpp net/rpc/rpc_parser.cpp \
-	net/client/smtp.cpp net/client/ftp.cpp net/client/pop3.cpp \
-	net/client/imap.cpp net/client/http.cpp net/client/client.cpp \
-	net/ipt_ACCOUNT.cpp query/query_parser.cpp \
-	event/event_time.cpp timeval.cpp timer.cpp notifier.cpp \
-	string.cpp file.cpp process.cpp file_config.cpp log.cpp \
-	options.cpp application.cpp cache.cpp date.cpp url.cpp \
-	tokenizer.cpp command.cpp $(am__append_2) $(am__append_18) \
-	$(am__append_19) $(am__append_21) $(am__append_23) \
-	$(am__append_24) $(am__append_26) $(am__append_27) \
-	$(am__append_28) $(am__append_29) $(am__append_30) \
-	$(am__append_31) $(am__append_32) $(am__append_33) \
-	$(am__append_34) $(am__append_35) $(am__append_37)
+	net/ping.cpp net/tcpsocket.cpp net/rpc/rpc.cpp \
+	net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp \
+	net/rpc/rpc_method.cpp net/rpc/rpc_encoder.cpp \
+	net/rpc/rpc_object.cpp net/rpc/rpc_gen_method.cpp \
+	net/rpc/rpc_parser.cpp net/client/smtp.cpp net/client/ftp.cpp \
+	net/client/pop3.cpp net/client/imap.cpp net/client/http.cpp \
+	net/client/client.cpp net/ipt_ACCOUNT.cpp \
+	query/query_parser.cpp event/event_time.cpp timeval.cpp \
+	timer.cpp notifier.cpp string.cpp file.cpp process.cpp \
+	file_config.cpp log.cpp options.cpp application.cpp cache.cpp \
+	date.cpp url.cpp tokenizer.cpp command.cpp $(am__append_2) \
+	$(am__append_18) $(am__append_19) $(am__append_21) \
+	$(am__append_23) $(am__append_24) $(am__append_26) \
+	$(am__append_27) $(am__append_28) $(am__append_29) \
+	$(am__append_30) $(am__append_31) $(am__append_32) \
+	$(am__append_33) $(am__append_34) $(am__append_35) \
+	$(am__append_37)
 @FINAL_FALSE@lib@ULIB@_la_SOURCES = $(SRC_C) $(SRC_CPP)
 @FINAL_TRUE@lib@ULIB@_la_SOURCES = all_c.c all_cpp.cpp
 lib@ULIB@_la_LDFLAGS = $(LIBRARY_LIBTOOL_OPTIONS) $(am__append_38)
@@ -768,6 +769,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/string_ext.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strndup.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strptime.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcpsocket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timegm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timestamp.Plo@am__quote@
@@ -1224,6 +1226,13 @@ ping.lo: net/ping.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='net/ping.cpp' object='ping.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ping.lo `test -f 'net/ping.cpp' || echo '$(srcdir)/'`net/ping.cpp
+
+tcpsocket.lo: net/tcpsocket.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tcpsocket.lo -MD -MP -MF "$(DEPDIR)/tcpsocket.Tpo" -c -o tcpsocket.lo `test -f 'net/tcpsocket.cpp' || echo '$(srcdir)/'`net/tcpsocket.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/tcpsocket.Tpo" "$(DEPDIR)/tcpsocket.Plo"; else rm -f "$(DEPDIR)/tcpsocket.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='net/tcpsocket.cpp' object='tcpsocket.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tcpsocket.lo `test -f 'net/tcpsocket.cpp' || echo '$(srcdir)/'`net/tcpsocket.cpp
 
 rpc.lo: net/rpc/rpc.cpp
 @am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT rpc.lo -MD -MP -MF "$(DEPDIR)/rpc.Tpo" -c -o rpc.lo `test -f 'net/rpc/rpc.cpp' || echo '$(srcdir)/'`net/rpc/rpc.cpp; \

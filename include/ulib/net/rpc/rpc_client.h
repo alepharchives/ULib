@@ -22,7 +22,7 @@ public:
 
    // Costruttori
 
-   URPCClient(UFileConfig* cfg) : UClient_Base(cfg), UClient<Socket>(cfg)
+   URPCClient(UFileConfig* cfg) : UClient<Socket>(cfg)
       {
       U_TRACE_REGISTER_OBJECT(0, URPCClient, "%p", cfg)
 

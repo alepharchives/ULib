@@ -531,57 +531,58 @@ void UStringRep::size_adjust(uint32_t value)
 
 #define U_SIZE_TO_CHUNK(sz) ((sz <= U_CAPACITY ? U_CAPACITY : (sz * 2) + (10 * 1024))) // how much space we preallocate in reserve() and append()...
 
-void UString::reserve(uint32_t n)
+bool UString::reserve(uint32_t n)
 {
    U_TRACE(0, "UString::reserve(%u)", n)
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT(n <= max_size())
 
-   if (rep->capacity() < n)
+   if (rep->_capacity >= n) U_RETURN(false);
+
+   n = U_SIZE_TO_CHUNK(n);
+
+   // Make room for a total of n element
+
+   UStringRep* r;
+
+#if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
+
+   // I can't change the address of the object (parent) because is possible that it has some childs (substrings)...
+
+   U_INTERNAL_ASSERT(rep->_capacity == 0 ||
+                     rep->_capacity >= U_CAPACITY) // it must start with U_CAPACITY...
+
+   if (rep->_capacity)
       {
-      n = U_SIZE_TO_CHUNK(n);
+      U_INTERNAL_DUMP("str = %.*S", size(), data())
 
-      // Make room for a total of n element
+      const char* ptr1 = rep->str;
+            char* ptr2 = (char*) U_SYSCALL(malloc, "%u", n);
 
-      UStringRep* r;
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr2, ptr1, rep->_length);
 
-#  if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
+      rep->checkIfMReserve();
 
-      // I can't change the address of the object (parent) because is possible that it has some childs (substrings)...
+      rep->str       = ptr2;
+      rep->_capacity = n;
 
-      U_INTERNAL_ASSERT(rep->_capacity == 0 ||
-                        rep->_capacity >= U_CAPACITY) // it must start with U_CAPACITY...
-
-      if (rep->_capacity)
-         {
-         U_INTERNAL_DUMP("str = %.*S", size(), data())
-
-         const char* ptr1 = rep->str;
-               char* ptr2 = (char*) U_SYSCALL(malloc, "%u", n);
-
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr2, ptr1, rep->_length);
-
-         rep->checkIfMReserve();
-
-         rep->str       = ptr2;
-         rep->_capacity = n;
-
-         U_INTERNAL_DUMP("str = %.*S", size(), data())
-
-         U_INTERNAL_ASSERT(invariant())
-
-         return;  
-         }
-
-#  endif
-
-      r = UStringRep::create(rep->_length, n, rep->data());
-
-      set(r);
+      U_INTERNAL_DUMP("str = %.*S", size(), data())
 
       U_INTERNAL_ASSERT(invariant())
+
+      U_RETURN(true);
       }
+
+#endif
+
+   r = UStringRep::create(rep->_length, n, rep->data());
+
+   set(r);
+
+   U_INTERNAL_ASSERT(invariant())
+
+   U_RETURN(true);
 }
 
 void UString::setBuffer(uint32_t n)

@@ -39,7 +39,7 @@
 // URN does not resolve to a unique, physical location. URNs serve as persistent resource identifiers.
 
 /**
-   @class Url - proto://[user[:password]@]hostname[:port]/[path]
+   @class Url - proto://[user[:password]@]hostname[:port]/[path]?[query]
 
    Represents a <em>Uniform Resource Locator</em> (URL). This class provides the capability to parse
    and manipulate URL strings.

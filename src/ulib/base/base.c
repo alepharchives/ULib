@@ -84,7 +84,6 @@ const char* u_line_terminator     = U_LF;
 uint32_t    u_line_terminator_len = 1;
 
 /* Services */
-int                 u_errno;
 int                 u_flag_exit;
 int                 u_flag_test;
 bool                u_recursion;
@@ -95,9 +94,9 @@ int                 u_printf_fileno = STDERR_FILENO;
 int32_t             u_printf_string_max_length;
 uint32_t            u_hostname_len, u_user_name_len;
 const char*         u_tmpdir;
-const unsigned char u_alphabet[64]  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-const unsigned char u_hex_upper[16] = "0123456789ABCDEF";
-const unsigned char u_hex_lower[16] = "0123456789abcdef";
+const unsigned char u_alphabet[]  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const unsigned char u_hex_upper[] = "0123456789ABCDEF";
+const unsigned char u_hex_lower[] = "0123456789abcdef";
 
 const char* u_basename(const char* name)
 {
@@ -162,8 +161,6 @@ void u_getcwd(void) /* get current working directory */
 
 void u_check_now_adjust(void)
 {
-   time_t lnow;
-
    U_INTERNAL_TRACE("u_check_now_adjust()", 0)
 
    /* calculate number of seconds between UTC to current time zone
@@ -181,6 +178,8 @@ void u_check_now_adjust(void)
 
    if (u_start_time == 0)
       {
+      time_t lnow;
+
       /* The localtime() function converts the calendar time to broken-time representation, expressed relative
        * to the user's specified timezone. The function acts as if it called tzset(3) and sets the external
        * variables tzname with information about the current timezone, timezone with the difference between
@@ -210,15 +209,18 @@ void u_check_now_adjust(void)
 
 void u_init(char** argv)
 {
-   time_t lnow;
    const char* pwd;
    struct passwd* pw;
 
    U_INTERNAL_TRACE("u_init()", 0)
 
+   u_setPid();
+
    u_progname = u_basename(u_progpath = argv[0]);
 
-   u_setPid();
+   U_INTERNAL_ASSERT_POINTER(u_progname)
+
+   u_progname_len = u_strlen(u_progname);
 
 #ifdef __MINGW32__
    u_init_mingw();
@@ -232,13 +234,9 @@ void u_init(char** argv)
    if ((pwd = getenv("PWD")) &&
        strncmp(u_cwd, pwd, u_cwd_len))
       {
-      U_WARNING("current working directory from environment (PWD): %s differ from sytem getcwd(): %.*s", pwd, u_cwd_len, u_cwd);
+      U_WARNING("current working directory from environment (PWD): %s differ from system getcwd(): %.*s", pwd, u_cwd_len, u_cwd);
       }
 #endif
-
-   U_INTERNAL_ASSERT_POINTER(u_progname)
-
-   u_progname_len = u_strlen(u_progname);
 
    u_is_stderr_tty = isatty(STDERR_FILENO);
 
@@ -956,7 +954,7 @@ minus:
             {
             cp = VA_ARG(char*);
 
-            if (!cp) cp = "(null)";
+            if (!cp) cp = (char*)"(null)";
 
             U_INTERNAL_ASSERT_POINTER_MSG(cp, "CHECK THE PARAMETERS OF printf()...")
 
@@ -1276,6 +1274,8 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'R': /* print msg - u_getSysError() */
             {
+            static int errno_old;
+
             uint32_t l      = U_CONSTANT_SIZE(" - ");
             const char* ccp = VA_ARG(const char*);
 
@@ -1296,8 +1296,8 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             bp  += l;
             ret += l;
 
-            if (errno) u_errno =   errno;
-            else         errno = u_errno;
+            if (errno) errno_old = errno;
+            else       errno     = errno_old;
 
 #        ifdef __MINGW32__
             if (errno < 0)
@@ -1424,7 +1424,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                   {
                   char tmp[16];
 
-                  (void) sprintf(tmp, " +%u days", t / U_ONE_DAY_IN_SECOND);
+                  (void) sprintf(tmp, " +%ld days", t / U_ONE_DAY_IN_SECOND);
 
                   len = strlen(tmp);
 

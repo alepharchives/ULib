@@ -765,8 +765,6 @@ DEBUG_FALSE
 DEBUG_TRUE
 GETOPT_LONG_FALSE
 GETOPT_LONG_TRUE
-SEMAPHORE_FALSE
-SEMAPHORE_TRUE
 NANOSLEEP_FALSE
 NANOSLEEP_TRUE
 FALLOCATE64_FALSE
@@ -838,6 +836,8 @@ HAVE_PCRE
 HAVE_LIBZ
 HAVE_SSL_TS
 HAVE_SSL
+SEMAPHORE_FALSE
+SEMAPHORE_TRUE
 USE_PARSER_FALSE
 USE_PARSER_TRUE
 XLEX
@@ -22238,6 +22238,51 @@ _ACEOF
 
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sem_init in -lrt" >&5
+$as_echo_n "checking for sem_init in -lrt... " >&6; }
+if test "${ac_cv_lib_rt_sem_init+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lrt  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sem_init ();
+int
+main ()
+{
+return sem_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_rt_sem_init=yes
+else
+  ac_cv_lib_rt_sem_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_rt_sem_init" >&5
+$as_echo "$ac_cv_lib_rt_sem_init" >&6; }
+if test "x$ac_cv_lib_rt_sem_init" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBRT 1
+_ACEOF
+
+  LIBS="-lrt $LIBS"
+
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for inet_ntop in -lnsl" >&5
 $as_echo_n "checking for inet_ntop in -lnsl... " >&6; }
 if test "${ac_cv_lib_nsl_inet_ntop+set}" = set; then :
@@ -22280,51 +22325,6 @@ if test "x$ac_cv_lib_nsl_inet_ntop" = x""yes; then :
 _ACEOF
 
   LIBS="-lnsl $LIBS"
-
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sem_init in -lpthread" >&5
-$as_echo_n "checking for sem_init in -lpthread... " >&6; }
-if test "${ac_cv_lib_pthread_sem_init+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpthread  $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char sem_init ();
-int
-main ()
-{
-return sem_init ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_link "$LINENO"; then :
-  ac_cv_lib_pthread_sem_init=yes
-else
-  ac_cv_lib_pthread_sem_init=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pthread_sem_init" >&5
-$as_echo "$ac_cv_lib_pthread_sem_init" >&6; }
-if test "x$ac_cv_lib_pthread_sem_init" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBPTHREAD 1
-_ACEOF
-
-  LIBS="-lpthread $LIBS"
 
 fi
 
@@ -22418,6 +22418,75 @@ _ACEOF
 
 fi
 
+
+if test "$ac_cv_lib_rt_sem_init" = "yes" ; then
+
+
+if test "$ac_cv_lib_rt_sem_init"		 = "yes"; then
+  SEMAPHORE_TRUE=
+  SEMAPHORE_FALSE='#'
+else
+  SEMAPHORE_TRUE='#'
+  SEMAPHORE_FALSE=
+fi
+
+else
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sem_init in -lpthread" >&5
+$as_echo_n "checking for sem_init in -lpthread... " >&6; }
+if test "${ac_cv_lib_pthread_sem_init+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpthread  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char sem_init ();
+int
+main ()
+{
+return sem_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_pthread_sem_init=yes
+else
+  ac_cv_lib_pthread_sem_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pthread_sem_init" >&5
+$as_echo "$ac_cv_lib_pthread_sem_init" >&6; }
+if test "x$ac_cv_lib_pthread_sem_init" = x""yes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBPTHREAD 1
+_ACEOF
+
+  LIBS="-lpthread $LIBS"
+
+fi
+
+
+
+if test "$ac_cv_lib_pthread_sem_init" = "yes"; then
+  SEMAPHORE_TRUE=
+  SEMAPHORE_FALSE='#'
+else
+  SEMAPHORE_TRUE='#'
+  SEMAPHORE_FALSE=
+fi
+
+fi
 
 LIBS_SAVE=${LIBS}
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for GeoIP_id_by_ipnum in -lGeoIP" >&5
@@ -24761,16 +24830,6 @@ fi
 
 
 
-if test "$ac_cv_lib_pthread_sem_init"			 = "yes"; then
-  SEMAPHORE_TRUE=
-  SEMAPHORE_FALSE='#'
-else
-  SEMAPHORE_TRUE='#'
-  SEMAPHORE_FALSE=
-fi
-
-
-
 if test "$ac_cv_func_getopt_long"				 = "yes"; then
   GETOPT_LONG_TRUE=
   GETOPT_LONG_FALSE='#'
@@ -25202,19 +25261,7 @@ fi
 		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wno-format -Wno-format-extra-args -Wenum-compare"
 
 	case "${gcc_version_raw}" in
-		2.*)
-		;;
-		3.*)
-		;;
-		4.0.*)
-		;;
-		4.1.*)
-		;;
-		4.2.*)
-		;;
-		4.3.*)
-		;;
-		4.4.*)
+		2-4.0-4.0-6)
 		;;
 		*)
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result"
@@ -25238,7 +25285,7 @@ fi
 	fi
 
 	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
-		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wcast-qual"
+		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition" # -Wcast-qual
 
 	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti \
 		-Wno-deprecated"
@@ -25940,6 +25987,14 @@ if test -z "${USE_PARSER_TRUE}" && test -z "${USE_PARSER_FALSE}"; then
   as_fn_error "conditional \"USE_PARSER\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${SEMAPHORE_TRUE}" && test -z "${SEMAPHORE_FALSE}"; then
+  as_fn_error "conditional \"SEMAPHORE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${SEMAPHORE_TRUE}" && test -z "${SEMAPHORE_FALSE}"; then
+  as_fn_error "conditional \"SEMAPHORE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${SSL_TRUE}" && test -z "${SSL_FALSE}"; then
   as_fn_error "conditional \"SSL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -26050,10 +26105,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${NANOSLEEP_TRUE}" && test -z "${NANOSLEEP_FALSE}"; then
   as_fn_error "conditional \"NANOSLEEP\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${SEMAPHORE_TRUE}" && test -z "${SEMAPHORE_FALSE}"; then
-  as_fn_error "conditional \"SEMAPHORE\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${GETOPT_LONG_TRUE}" && test -z "${GETOPT_LONG_FALSE}"; then

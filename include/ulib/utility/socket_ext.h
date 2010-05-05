@@ -17,7 +17,8 @@
 #include <ulib/string.h>
 #include <ulib/net/socket.h>
 
-struct U_EXPORT USocketExt {
+class U_EXPORT USocketExt {
+public:
 
    // SERVICES
 

@@ -100,7 +100,7 @@ public:
 
 				UEscape::encode(token, tmp);
 
-				buffer.reserve(tmp.size() + 100U);
+				(void) buffer.reserve(tmp.size() + 100U);
 
 				buffer.snprintf("(void) UClientImage_Base::wbuffer->append(%.*s);\n", U_STRING_TO_TRACE(tmp));
 

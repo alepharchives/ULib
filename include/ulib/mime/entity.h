@@ -50,7 +50,7 @@ public:
    UMimeEntity();
    UMimeEntity(const UString& _data, uint32_t startHeader = 0);
 
-   UMimeEntity(UMimeEntity& item) : data(item.data), body(item.body), content_type(item.content_type), content(item.content)
+   UMimeEntity(UMimeEntity& item) : data(item.data), content_type(item.content_type), content(item.content)
       {
       U_TRACE_REGISTER_OBJECT(0, UMimeEntity, "%p", &item)
 
@@ -85,20 +85,7 @@ public:
       U_RETURN(result);
       }
 
-   void setEmpty()
-      {
-      U_TRACE(0, "UMimeEntity::setEmpty()")
-
-      U_INTERNAL_ASSERT_POINTER(header)
-
-      data.setEmpty();
-
-              body.clear();
-           content.clear();
-      content_type.clear();
-
-      header->clear();
-      }
+   void setEmpty();
 
    bool parse();
    bool parse(const UString& _data)
@@ -124,7 +111,7 @@ public:
       }
 
    UString getData() const        { return data; }
-   UString getBody() const        { return body; }
+   UString getBody() const        { return data.substr(endHeader); }
    UString getContent() const     { return content; }
    UString getContentType() const { return content_type; }
    UString getMimeVersion() const { return header->getMimeVersion(); }
@@ -221,7 +208,7 @@ public:
 
       os << *(e.header);
 
-      os.write(e.body.data(), e.body.size());
+      os.write(e.content.data(), e.content.size());
 
       return os;
       }
@@ -235,7 +222,7 @@ public:
 protected:
    UMimeHeader* header;
    uint32_t startHeader, endHeader;
-   UString data, body, content_type, content;
+   UString data, content_type, content;
    bool parse_result;
 
    void clear()
