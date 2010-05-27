@@ -63,13 +63,13 @@
 <a name="l00052"></a>00052 <span class="preprocessor"></span><span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> {
 <a name="l00053"></a>00053 <span class="preprocessor">#endif</span>
 <a name="l00054"></a>00054 <span class="preprocessor"></span>
-<a name="l00055"></a>00055 <span class="keyword">extern</span> U_EXPORT uint32_t u_random(uint32_t a);                                      <span class="comment">/* quick 4byte hashing function */</span>
+<a name="l00055"></a>00055 <span class="keyword">extern</span> U_EXPORT uint32_t u_random(uint32_t a); <span class="comment">/* quick 4byte hashing function */</span>
 <a name="l00056"></a>00056 <span class="preprocessor">#ifdef HAVE_ARCH64</span>
 <a name="l00057"></a>00057 <span class="preprocessor"></span><span class="keyword">extern</span> U_EXPORT uint32_t u_random64(uint64_t ptr);
 <a name="l00058"></a>00058 <span class="preprocessor">#endif</span>
-<a name="l00059"></a>00059 <span class="preprocessor"></span><span class="keyword">extern</span> U_EXPORT uint32_t u_hash(  <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* t, uint32_t tlen, <span class="keywordtype">bool</span> ignore_case); <span class="comment">/* hash variable-length key into 32-bit value */</span>
+<a name="l00059"></a>00059 <span class="preprocessor"></span><span class="keyword">extern</span> U_EXPORT uint32_t u_hash(  <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* restrict t, uint32_t tlen, <span class="keywordtype">bool</span> ignore_case); <span class="comment">/* hash variable-length key into 32-bit value */</span>
 <a name="l00060"></a>00060 <span class="comment">/*</span>
-<a name="l00061"></a>00061 <span class="comment">extern U_EXPORT uint64_t u_hash64(unsigned char* t, uint32_t tlen);</span>
+<a name="l00061"></a>00061 <span class="comment">extern U_EXPORT uint64_t u_hash64(unsigned char* restrict t, uint32_t tlen);</span>
 <a name="l00062"></a>00062 <span class="comment">*/</span>
 <a name="l00063"></a>00063 
 <a name="l00064"></a>00064 <span class="preprocessor">#ifdef __cplusplus</span>
@@ -78,7 +78,7 @@
 <a name="l00067"></a>00067 <span class="preprocessor"></span>
 <a name="l00068"></a>00068 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:37 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu May 27 19:03:56 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

@@ -27,8 +27,8 @@ extern U_EXPORT int u_base64_max_columns;
 
 /* Encode-Decode base64 into a buffer */
 
-extern U_EXPORT uint32_t u_base64_encode(const unsigned char* s, uint32_t n, unsigned char* result);
-extern U_EXPORT uint32_t u_base64_decode(const          char* s, uint32_t n, unsigned char* result);
+extern U_EXPORT uint32_t u_base64_encode(const unsigned char* restrict s, uint32_t n, unsigned char* restrict result);
+extern U_EXPORT uint32_t u_base64_decode(const          char* restrict s, uint32_t n, unsigned char* restrict result);
 
 #ifdef __cplusplus
 }

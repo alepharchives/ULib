@@ -116,8 +116,8 @@ public:
    // services for EXEC
 
    static void nice(int inc);
-   static void setProcessGroup();
    static void kill(pid_t pid, int sig);
+   static void setProcessGroup(pid_t pid = 0, pid_t pgid = 0);
 
    // exec with internal vfork() with management of file descriptors for child I/O redirection...
 

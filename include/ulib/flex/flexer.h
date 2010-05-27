@@ -20,6 +20,14 @@
 
 #include <ulib/string.h>
 
+#ifdef __clang__
+#  undef ios
+#  undef istream
+#  undef ostream
+#  undef streambuf
+#  undef streamsize
+#endif
+
 #ifndef yyFlexLexerOnce
 #  include <FlexLexer.h>
 #endif

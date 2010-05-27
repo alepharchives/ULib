@@ -35,7 +35,7 @@ int UTsaPlugIn::handlerConfig(UFileConfig& cfg)
    // -----------------------------------------------
    // Perform registration of userver method
    // -----------------------------------------------
-   // COMMAND      command to execute
+   // COMMAND                      command to execute
    // ENVIRONMENT  environment for command to execute
    // -----------------------------------------------
 

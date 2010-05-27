@@ -299,13 +299,14 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
                    UProcess::filedes[1] = 0;
       }
 
-   bool kill_command = false;
+   exit_value = 0;
 
-   if (output)
+   if (output &&
+       output != (void*)-1) // special value...
       {
       output->setBuffer(U_CAPACITY); // to avoid reserve()...
 
-      kill_command = (UServices::read(UProcess::filedes[2], *output, timeoutMS) == 0 && errno == EAGAIN);
+      bool kill_command = (UServices::read(UProcess::filedes[2], *output, timeoutMS) == 0 && errno == EAGAIN);
 
       UFile::close(UProcess::filedes[2]);
                    UProcess::filedes[2] = 0;
@@ -320,13 +321,31 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
 
          UProcess::kill(pid, SIGKILL);
          }
+
+      bool result = wait();
+
+      if (kill_command)
+         {
+         exit_value = -EAGAIN;
+
+         U_RETURN(false);
+         }
+
+      U_RETURN(result);
       }
+
+   U_RETURN(true);
+}
+
+U_NO_EXPORT bool UCommand::wait()
+{
+   U_TRACE(0, "UCommand::wait()")
 
    int status;
 
    UProcess::waitpid(pid, &status, 0);
 
-   exit_value = (kill_command ? -EAGAIN : UProcess::exitValue(status));
+   exit_value = UProcess::exitValue(status);
 
    U_RETURN(exit_value == 0);
 }
@@ -343,43 +362,23 @@ void UCommand::setMsgError(const char* cmd)
 
    if (isStarted() == false)
       {
-      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "command '%s' didn't start %R",  cmd, NULL);
+      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "command %S didn't start %R",  cmd, NULL);
       }
    else if (isTimeout())
       {
-      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "command '%s' excedeed time (%d secs) for execution", cmd, timeoutMS / 1000);
+      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "command %S excedeed time (%d secs) for execution", cmd, timeoutMS / 1000);
+      }
+   else if (exit_value)
+      {
+      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "command %S exit with value %d", cmd, exit_value);
       }
    else
       {
-      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "command '%s' exit with value %d", cmd, exit_value);
+      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "command %S started", cmd);
       }
 }
 
 // public method...
-
-bool UCommand::execute(UString* input, UString* output, int fd_stdin, int fd_stderr)
-{
-   U_TRACE(0, "UCommand::execute(%p,%p,%d,%d)", input, output, fd_stdin, fd_stderr)
-
-   if (flag_expand != U_NOT_FOUND)
-      {
-      UString env = UStringExt::expandEnvVar(environment);
-
-      setEnvironment(env);
-      }
-
-   bool flag_stdin  = (input ? true : fd_stdin != -1),
-        flag_stdout = (output != 0),
-        flag_stderr = (fd_stderr != -1);
-
-   setStdInOutErr(fd_stdin, flag_stdin, flag_stdout, fd_stderr);
-
-   execute(flag_stdin, flag_stdout, flag_stderr);
-
-   bool result = postCommand(input, output);
-
-   U_RETURN(result);
-}
 
 bool UCommand::executeWithFileArgument(UString* output, UFile* file)
 {
@@ -401,6 +400,39 @@ bool UCommand::executeWithFileArgument(UString* output, UFile* file)
    if (result == false) printMsgError();
 
    if (file->isOpen()) file->close();
+
+   U_RETURN(result);
+}
+
+bool UCommand::executeAndWait(UString* input, int fd_stdin, int fd_stderr)
+{
+   U_TRACE(0, "UCommand::executeAndWait(%p,%d,%d)", input, fd_stdin, fd_stderr)
+
+   bool result = execute(input, 0, fd_stdin, fd_stderr) && wait();
+
+   U_RETURN(result);
+}
+
+bool UCommand::execute(UString* input, UString* output, int fd_stdin, int fd_stderr)
+{
+   U_TRACE(0, "UCommand::execute(%p,%p,%d,%d)", input, output, fd_stdin, fd_stderr)
+
+   if (flag_expand != U_NOT_FOUND)
+      {
+      UString env = UStringExt::expandEnvVar(environment);
+
+      setEnvironment(env);
+      }
+
+   bool flag_stdin  = (input ? true : fd_stdin != -1),
+        flag_stdout = (output != 0),
+        flag_stderr = (fd_stderr != -1);
+
+   setStdInOutErr(fd_stdin, flag_stdin, flag_stdout, fd_stderr);
+
+   execute(flag_stdin, flag_stdout, flag_stderr);
+
+   bool result = postCommand(input, output);
 
    U_RETURN(result);
 }

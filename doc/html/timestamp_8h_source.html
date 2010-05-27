@@ -93,25 +93,26 @@
 <a name="l00080"></a>00080         static <span class="keywordtype">bool</span> isTimeStampToken(PKCS7* p7);
 <a name="l00081"></a>00081         static <span class="keywordtype">bool</span> isTimeStampResponse(const <a class="code" href="classUString.html">UString</a>&amp; content);
 <a name="l00082"></a>00082 
-<a name="l00083"></a>00083         static <a class="code" href="classUString.html">UString</a> createQuery(<span class="keywordtype">int</span> alg, const <a class="code" href="classUString.html">UString</a>&amp; data, const <span class="keywordtype">char</span>* policy, <span class="keywordtype">bool</span> bnonce, <span class="keywordtype">bool</span> bcert);
-<a name="l00084"></a>00084 
-<a name="l00085"></a>00085         <span class="comment">// DEBUG</span>
-<a name="l00086"></a>00086 
-<a name="l00087"></a>00087 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00088"></a>00088 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00089"></a>00089 <span class="preprocessor">#endif</span>
-<a name="l00090"></a>00090 <span class="preprocessor"></span>
-<a name="l00091"></a>00091 <span class="keyword">protected</span>:
-<a name="l00092"></a>00092         TS_RESP* response;
-<a name="l00093"></a>00093 
-<a name="l00094"></a>00094 <span class="keyword">private</span>:
-<a name="l00095"></a>00095         <a class="code" href="classUTimeStamp.html">UTimeStamp</a>(<span class="keyword">const</span> <a class="code" href="classUTimeStamp.html">UTimeStamp</a>&amp;) : <a class="code" href="classUPKCS7.html">UPKCS7</a>(0,0) {}
-<a name="l00096"></a>00096         <a class="code" href="classUTimeStamp.html">UTimeStamp</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUTimeStamp.html">UTimeStamp</a>&amp;)          { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00097"></a>00097 };
-<a name="l00098"></a>00098 
-<a name="l00099"></a>00099 <span class="preprocessor">#endif</span>
+<a name="l00083"></a>00083         static <a class="code" href="classUString.html">UString</a> getTimeStampToken(<span class="keywordtype">int</span> alg, const <a class="code" href="classUString.html">UString</a>&amp; data, const <a class="code" href="classUString.html">UString</a>&amp; url);
+<a name="l00084"></a>00084         static <a class="code" href="classUString.html">UString</a> createQuery(<span class="keywordtype">int</span> alg, const <a class="code" href="classUString.html">UString</a>&amp; data, const <span class="keywordtype">char</span>* policy, <span class="keywordtype">bool</span> bnonce, <span class="keywordtype">bool</span> bcert);
+<a name="l00085"></a>00085 
+<a name="l00086"></a>00086         <span class="comment">// DEBUG</span>
+<a name="l00087"></a>00087 
+<a name="l00088"></a>00088 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00089"></a>00089 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00090"></a>00090 <span class="preprocessor">#endif</span>
+<a name="l00091"></a>00091 <span class="preprocessor"></span>
+<a name="l00092"></a>00092 <span class="keyword">protected</span>:
+<a name="l00093"></a>00093         TS_RESP* response;
+<a name="l00094"></a>00094 
+<a name="l00095"></a>00095 <span class="keyword">private</span>:
+<a name="l00096"></a>00096         <a class="code" href="classUTimeStamp.html">UTimeStamp</a>(<span class="keyword">const</span> <a class="code" href="classUTimeStamp.html">UTimeStamp</a>&amp;) : <a class="code" href="classUPKCS7.html">UPKCS7</a>(0,0) {}
+<a name="l00097"></a>00097         <a class="code" href="classUTimeStamp.html">UTimeStamp</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUTimeStamp.html">UTimeStamp</a>&amp;)          { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00098"></a>00098 };
+<a name="l00099"></a>00099 
+<a name="l00100"></a>00100 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:39 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu May 27 19:03:58 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

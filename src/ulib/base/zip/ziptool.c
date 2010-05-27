@@ -52,12 +52,13 @@ static void init_headers(void)
    U_INTERNAL_TRACE("init_headers()", 0)
 
    /* packing file header */
+
    /* magic number */
    file_header[0] = 0x50;
    file_header[1] = 0x4b;
    file_header[2] = 0x03;
    file_header[3] = 0x04;
-   /* version number (Unix 1.0)*/
+   /* version number */
    file_header[4] = 10;
    file_header[5] = 0;
    /* bit flag (normal deflation)*/
@@ -102,8 +103,6 @@ static void init_headers(void)
 
 static int create_central_header(int fd)
 {
-   U_INTERNAL_TRACE("create_central_header(%d)", fd)
-
    zipentry* ze;
    int dir_size;
    int start_offset;
@@ -111,13 +110,15 @@ static int create_central_header(int fd)
    ub1 end_header[22];
    int total_in = 0, total_out = 22;
 
+   U_INTERNAL_TRACE("create_central_header(%d)", fd)
+
    /* magic number */
    header[0] = 'P';
    header[1] = 'K';
    header[2] = 1;
    header[3] = 2;
    /* version made by */
-   header[4] = 10;
+   header[4] = 20;
    header[5] = 0;
    /* version needed to extract */
    header[6] = 10;
@@ -177,7 +178,7 @@ static int create_central_header(int fd)
 
    start_offset = lseek(fd, 0, SEEK_CUR);
 
-   for (ze = ziptail; ze != NULL; ze = ze->next_entry)
+   for (ze = ziptail; ze != 0; ze = ze->next_entry)
       {
       total_in  += ze->usize;
       total_out += ze->csize + 76 + u_strlen(ze->filename) * 2;
@@ -199,13 +200,13 @@ static int create_central_header(int fd)
       PACK_UB2(header, CEN_FNLEN,   u_strlen(ze->filename));
       PACK_UB4(header, CEN_OFFSET,  ze->offset);
 
-      write(fd, header,       46);
-      write(fd, ze->filename, u_strlen(ze->filename));
+      (void) write(fd, header,       46);
+      (void) write(fd, ze->filename, u_strlen(ze->filename));
       }
 
    dir_size = lseek(fd, 0, SEEK_CUR) - start_offset;
 
-   /* magic number */
+   /* signature for ZIP end of central directory record */
    end_header[0] = 0x50;
    end_header[1] = 0x4b;
    end_header[2] = 0x05;
@@ -228,7 +229,7 @@ static int create_central_header(int fd)
    end_header[20] = 0;
    end_header[21] = 0;
 
-   write(fd, end_header, 22);
+   (void) write(fd, end_header, 22);
 
    U_INTERNAL_TRACE("Total:\n------\n(in = %d) (out = %d) (%s %d%%)",
                         total_in, total_out, "deflated", (int)((1 - (total_out / (float)total_in)) * 100))
@@ -240,7 +241,7 @@ static inline void add_entry(struct zipentry* ze)
 {
    U_INTERNAL_TRACE("add_entry(%p)", ze)
 
-   if (ziplist == NULL)
+   if (ziplist == 0)
       {
       ziplist = ze;
       ziptail = ziplist;
@@ -256,8 +257,6 @@ static inline void add_entry(struct zipentry* ze)
 
 static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* statbuf)
 {
-   U_INTERNAL_TRACE("add_file_to_zip(%d,%d,%s,%p)", jfd, ffd, fname, statbuf)
-
    int rdamt;
    off_t offset = 0;
    ub1 rd_buff[RDSZ];
@@ -265,21 +264,14 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
    unsigned long mod_time;
    unsigned short file_name_length;
 
+   U_INTERNAL_TRACE("add_file_to_zip(%d,%d,%s,%p)", jfd, ffd, fname, statbuf)
+
    mod_time         = unix2dostime(&(statbuf->st_mtime));
    file_name_length = u_strlen(fname);
 
-   /* data descriptor */
-   PACK_UB2(file_header, LOC_EXTRA, 0);
-   PACK_UB2(file_header, LOC_COMP, 8);
-
-   PACK_UB4(file_header, LOC_MODTIME, mod_time);
-   PACK_UB2(file_header, LOC_FNLEN, file_name_length);
-
-   memset((file_header + LOC_CRC), '\0', 12); /* clear crc/usize/csize */
-
    ze = (zipentry*) calloc(1, sizeof(zipentry)); /* clear all the fields */
 
-   if (ze == NULL)
+   if (ze == 0)
       {
       perror("malloc");
 
@@ -288,23 +280,45 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
 
    ze->filename = (char*) malloc((file_name_length + 1) * sizeof(char));
 
-   strcpy(ze->filename, fname);
+   (void) strcpy(ze->filename, fname);
 
+   ze->csize    = statbuf->st_size;
+   ze->usize    = ze->csize;
+   ze->offset   = lseek(jfd, 0, SEEK_CUR);
    ze->mod_time = (ub2) (mod_time & 0x0000ffff);
    ze->mod_date = (ub2)((mod_time & 0xffff0000) >> 16);
 
-   ze->csize      = statbuf->st_size;
-   ze->usize      = ze->csize;
-   ze->offset     = lseek(jfd, 0, SEEK_CUR);
-   ze->compressed = 1;
+   /* If a MIME type for a document that makes use of packages is existing, then the package should
+    * contain a stream called "mimetype". This stream should be first stream of the package's zip file, it
+    * shall not be compressed, and it shall not use an 'extra field' in its header.
+    * The purpose is to allow packaged files to be identified through 'magic number' mechanisms, such
+    * as Unix's file/magic utility. If a ZIP file contains a stream at the beginning of the file that is
+    * uncompressed, and has no extra data in the header, then the stream name and the stream
+    * content can be found at fixed positions. More specifically, one will find:
+    *
+    *  - a string 'PK' at position 0 of all zip files
+    *  - a string 'mimetype' at position 30 of all such package files
+    *  - the mimetype itself at position 38 of such a package
+    */
+
+   ze->compressed = (strcmp(fname, "mimetype") != 0);
 
    add_entry(ze);
 
+   /* data descriptor */
+   PACK_UB2(file_header, LOC_EXTRA, 0);
+   PACK_UB2(file_header, LOC_COMP,  (ze->compressed ? 8 : 0));
+
+   PACK_UB4(file_header, LOC_MODTIME, mod_time);
+   PACK_UB2(file_header, LOC_FNLEN, file_name_length);
+
+   (void) memset((file_header + LOC_CRC), '\0', 12); /* clear crc/usize/csize */
+
    /* Write the local header */
-   write(jfd, file_header, 30);
+   (void) write(jfd, file_header, 30);
 
    /* write the file name to the zip file */
-   write(jfd, fname, file_name_length);
+   (void) write(jfd, fname, file_name_length);
 
    U_INTERNAL_TRACE("adding: %s", fname)
 
@@ -323,7 +337,7 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
          }
       }
 
-   close(ffd);
+   (void) close(ffd);
 
    /* write out data descriptor */
    PACK_UB4(data_descriptor,  4, ze->crc);
@@ -364,14 +378,14 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
 
 static int add_to_zip(int fd, const char* file)
 {
-   U_INTERNAL_TRACE("add_to_zip(%d,%s)", fd, file)
-
    DIR* dir;
    zipentry* ze;
    int stat_return;
    unsigned d_namlen;
    struct dirent* de;
    struct stat statbuf;
+
+   U_INTERNAL_TRACE("add_to_zip(%d,%s)", fd, file)
 
    while (*file == '.' && *(file+1) == '/') file += 2;
 
@@ -393,7 +407,7 @@ static int add_to_zip(int fd, const char* file)
 
       dir = opendir(file);
 
-      if (dir == NULL)
+      if (dir == 0)
          {
          perror("opendir");
 
@@ -404,14 +418,14 @@ static int add_to_zip(int fd, const char* file)
 
       fullname = (char*) calloc(1, nlen);
 
-      if (fullname == NULL)
+      if (fullname == 0)
          {
          U_INTERNAL_TRACE("Filename is NULL!", 0)
 
          return 1;
          }
 
-      strcpy(fullname, file);
+      (void) strcpy(fullname, file);
 
       nlen = u_strlen(file);
 
@@ -426,22 +440,22 @@ static int add_to_zip(int fd, const char* file)
          t_ptr = (fullname + nlen);
          }
 
-      memset((file_header + 12), '\0', 16); /* clear mod time, crc, size fields */
+      (void) memset((file_header + 12), '\0', 16); /* clear mod time, crc, size fields */
 
       nlen = (t_ptr - fullname);
 
       mod_time = unix2dostime(&statbuf.st_mtime);
 
-      PACK_UB2(file_header, LOC_EXTRA,    0);
-      PACK_UB2(file_header, LOC_COMP,     0);
-      PACK_UB2(file_header, LOC_FNLEN,    nlen);
-      PACK_UB4(file_header, LOC_MODTIME,  mod_time);
+      PACK_UB2(file_header, LOC_EXTRA,   0);
+      PACK_UB2(file_header, LOC_COMP,    0);
+      PACK_UB2(file_header, LOC_FNLEN,   nlen);
+      PACK_UB4(file_header, LOC_MODTIME, mod_time);
 
       U_INTERNAL_TRACE("adding: %s (in=%d) (out=%d) (stored 0%%)", fullname, 0, 0)
 
       ze = (zipentry*) calloc(1, sizeof(zipentry)); /* clear all the fields */
 
-      if (ze == NULL)
+      if (ze == 0)
          {
          perror("malloc");
 
@@ -449,7 +463,7 @@ static int add_to_zip(int fd, const char* file)
          }
 
       ze->filename = (char*) malloc((nlen + 1) * sizeof(char) + 1);
-      strcpy(ze->filename, fullname);
+      (void) strcpy(ze->filename, fullname);
       ze->filename[nlen] = '\0';
 
       ze->offset     = lseek(fd, 0, SEEK_CUR);
@@ -459,10 +473,10 @@ static int add_to_zip(int fd, const char* file)
 
       add_entry(ze);
 
-      write(fd, file_header, 30);
-      write(fd, fullname,    nlen);
+      (void) write(fd, file_header, 30);
+      (void) write(fd, fullname,    nlen);
 
-      while ((de = readdir(dir)) != NULL)
+      while ((de = readdir(dir)) != 0)
          {
          if (U_ISDOTS(de->d_name)) continue;
 
@@ -482,7 +496,7 @@ static int add_to_zip(int fd, const char* file)
 
       free(fullname);
 
-      closedir(dir);
+      (void) closedir(dir);
       }
    else if (S_ISREG(statbuf.st_mode))
       {
@@ -518,11 +532,11 @@ static void zip_close(void)
 {
    U_INTERNAL_TRACE("zip_close()", 0)
 
-   if (filename != NULL)
+   if (filename != 0)
       {
       free(filename);
 
-      filename     = NULL;
+      filename     = 0;
       filename_len = 0;
       }
 
@@ -536,11 +550,11 @@ static void zip_close(void)
 
 int zip_archive(const char* zipfile, const char* files[])
 {
-   U_INTERNAL_TRACE("zip_archive(%s,%p)", zipfile, files)
-
    int i;
 
-   ziplist = NULL;
+   U_INTERNAL_TRACE("zip_archive(%s,%p)", zipfile, files)
+
+   ziplist = 0;
    number_of_entries = 0;
 
    /* create the zipfile */
@@ -560,7 +574,7 @@ int zip_archive(const char* zipfile, const char* files[])
 
    if (init_compression()) return 1;
 
-   for (i = 0; files[i] != NULL; ++i)
+   for (i = 0; files[i] != 0; ++i)
       {
       if (strcmp(files[i], zipfile) == 0)
          {
@@ -592,9 +606,9 @@ static pb_file pbf;
 
 static void consume(int amt)
 {
-   U_INTERNAL_TRACE("consume(%d)", amt)
-
    ub1 buff[RDSZ];
+
+   U_INTERNAL_TRACE("consume(%d)", amt)
 
    if (amt <= (int)pbf.buff_amt)
       {
@@ -732,7 +746,7 @@ static int zip_read_entry(void)
 
    if (filename_len < (fnlen + 1))
       {
-      if (filename != NULL) free(filename);
+      if (filename != 0) free(filename);
 
       filename = (ub1*) malloc(sizeof(ub1) * (fnlen + 1));
 
@@ -750,13 +764,13 @@ static int zip_read_entry(void)
 
 int zip_match(const char* zipfile, const char* files[])
 {
-   U_INTERNAL_TRACE("zip_match(%s,%p)", zipfile, files)
-
    int i, j, match, file_num = 0;
+
+   U_INTERNAL_TRACE("zip_match(%s,%p)", zipfile, files)
 
    if (zip_open(zipfile)) return 0;
 
-   while (files[file_num] != NULL) ++file_num;
+   while (files[file_num] != 0) ++file_num;
 
    for (i = 0; zip_read_entry() == 0; ++i)
       {
@@ -795,16 +809,16 @@ int zip_match(const char* zipfile, const char* files[])
 
 unsigned zip_extract(const char* zipfile, const char** files, char*** filenames, unsigned** filenames_len)
 {
-   U_INTERNAL_TRACE("zip_extract(%s,%p,%p,%p)", zipfile, files, filenames, filenames_len)
-
    unsigned n = 0;
    char* names[1024];
    unsigned names_len[1024];
    int j, f_fd, dir, handle, file_num = 0;
 
+   U_INTERNAL_TRACE("zip_extract(%s,%p,%p,%p)", zipfile, files, filenames, filenames_len)
+
    if (zip_open(zipfile)) return 0; /* open the zipfile */
 
-   if (files) while (files[file_num] != NULL) ++file_num;
+   if (files) while (files[file_num] != 0) ++file_num;
 
    for (;;)
       {
@@ -848,7 +862,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
       but ensure the directory(s) exist, and create them if they don't.
       What a pain! */
 
-      if (strchr((const char*)filename, '/') != NULL && handle)
+      if (strchr((const char*)filename, '/') != 0 && handle)
          {
          /* Loop through all the directories in the path, (everything w/ a '/') */
 
@@ -860,7 +874,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
             {
             const ub1* idx = (const unsigned char*)strchr((const char*)start, '/');
 
-            if (idx == NULL) break;
+            if (idx == 0) break;
 
             if (idx == start)
                {
@@ -871,7 +885,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
             start = idx + 1;
 
-            strncpy(tmp_buff, (const char *)filename, (idx - filename));
+            (void) strncpy(tmp_buff, (const char *)filename, (idx - filename));
 
             tmp_buff[(idx - filename)] = '\0';
 
@@ -922,7 +936,8 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
          free(tmp_buff);
          }
 
-      if (f_fd != -1 && handle)
+      if (handle &&
+          f_fd != -1)
          {
          f_fd = open((const char*)filename, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0644);
 
@@ -936,14 +951,16 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
             }
          }
 
-      if (method != 8 && (flags & 0x0008))
+      if (method != 8 &&
+          (flags & 0x0008))
          {
          U_INTERNAL_TRACE("Error: not compressed but data_descriptor", 0)
 
          return 0;
          }
 
-      if (method == 8 || (flags & 0x0008))
+      if (method == 8 ||
+          (flags & 0x0008))
          {
          if (eflen) consume(eflen);
 
@@ -959,7 +976,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
          out_a = 0;
           in_a = csize;
 
-         ze.crc = crc32(ze.crc, NULL, 0); /* initialize the crc */
+         ze.crc = crc32(ze.crc, 0, 0); /* initialize the crc */
 
          while (out_a < (int)csize)
             {
@@ -974,7 +991,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
             ze.crc = crc32(ze.crc, (Bytef*)rd_buff, rdamt);
 
-            if (f_fd >= 0) write(f_fd, rd_buff, rdamt);
+            (void) write(f_fd, rd_buff, rdamt);
 
             out_a += rdamt;
             in_a  -= rdamt;
@@ -1015,7 +1032,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
          return 0;
          }
 
-      close(f_fd);
+      (void) close(f_fd);
 
       ++n;
       }
@@ -1047,13 +1064,13 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 unsigned zip_get_content(const char* zipdata, unsigned datalen, char*** filenames,    unsigned** filenames_len,
                                                                 char*** filecontents, unsigned** filecontents_len)
 {
-   U_INTERNAL_TRACE("zip_get_content(%p,%u,%p,%p,%p,%p)", zipdata, datalen, filenames, filenames_len, filecontents, filecontents_len)
-
    unsigned n = 0;
    char* names[1024];
    char* contents[1024];
    unsigned names_len[1024];
    unsigned contents_len[1024];
+
+   U_INTERNAL_TRACE("zip_get_content(%p,%u,%p,%p,%p,%p)", zipdata, datalen, filenames, filenames_len, filecontents, filecontents_len)
 
    if (init_inflation()) return 0;
 
@@ -1075,7 +1092,8 @@ unsigned zip_get_content(const char* zipdata, unsigned datalen, char*** filename
       contents[n]     = 0;
       contents_len[n] = 0;
 
-      if (method != 8 && (flags & 0x0008))
+      if (method != 8 &&
+          (flags & 0x0008))
          {
          U_INTERNAL_TRACE("Error: not compressed but data_descriptor", 0)
 
@@ -1084,7 +1102,8 @@ unsigned zip_get_content(const char* zipdata, unsigned datalen, char*** filename
 
       if (eflen) consume(eflen);
 
-      if (method == 8 || (flags & 0x0008))
+      if (method == 8 ||
+          (flags & 0x0008))
          {
          contents[n] = (usize ? (char*)malloc(usize) : 0);
 
@@ -1105,10 +1124,10 @@ unsigned zip_get_content(const char* zipdata, unsigned datalen, char*** filename
          contents[n]     = (char*) malloc(csize);
          contents_len[n] = csize;
 
-         ze.crc = crc32(ze.crc, NULL, 0);                   /* initialize the crc */
+         ze.crc = crc32(ze.crc, 0, 0);                   /* initialize the crc */
          ze.crc = crc32(ze.crc, (Bytef*)pbf.next, csize);
 
-         memcpy(contents[n], pbf.next, csize);
+         (void) memcpy(contents[n], pbf.next, csize);
 
          consume(csize);
          }

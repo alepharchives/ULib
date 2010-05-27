@@ -214,10 +214,8 @@ virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerSignal
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5dc9b87f9320cfffa692d780472e7fa3"></a><!-- doxytag: member="UServer_Base::newClientImage" ref="a5dc9b87f9320cfffa692d780472e7fa3" args="()=0" -->
 virtual void&nbsp;</td><td class="memItemRight" valign="bottom"><b>newClientImage</b> ()=0</td></tr>
 <tr><td colspan="2"><h2>Static Protected Member Functions</h2></td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a92fb8378bacd7d869c5edc88a59c7bcf"></a><!-- doxytag: member="UServer_Base::acceptNewClient" ref="a92fb8378bacd7d869c5edc88a59c7bcf" args="()" -->
-static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>acceptNewClient</b> ()</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a20cd9ce018413f0ee1518c3f3a4fff54"></a><!-- doxytag: member="UServer_Base::getNumConnection" ref="a20cd9ce018413f0ee1518c3f3a4fff54" args="()" -->
-static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getNumConnection</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a99ebf33e82f23628d695ed4cd96029a6"></a><!-- doxytag: member="UServer_Base::acceptNewClient" ref="a99ebf33e82f23628d695ed4cd96029a6" args="(UEventFd *handler_event)" -->
+static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>acceptNewClient</b> (<a class="el" href="classUEventFd.html">UEventFd</a> *handler_event)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3868610f993913f4e67b1d15006f7212"></a><!-- doxytag: member="UServer_Base::handlerNewConnection" ref="a3868610f993913f4e67b1d15006f7212" args="()" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerNewConnection</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ace592c12d6b903aca868a8ed76f21977"></a><!-- doxytag: member="UServer_Base::handlerIdleConnection" ref="ace592c12d6b903aca868a8ed76f21977" args="()" -->
@@ -226,6 +224,10 @@ static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerIdleCon
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerCloseConnection</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a347c90d40ffd58a1e11ad71a18ac0732"></a><!-- doxytag: member="UServer_Base::handlerTimeoutConnection" ref="a347c90d40ffd58a1e11ad71a18ac0732" args="(void *cimg)" -->
 static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerTimeoutConnection</b> (void *cimg)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1fef92048ed9104095a0f6f0314811fd"></a><!-- doxytag: member="UServer_Base::runAsUser" ref="a1fef92048ed9104095a0f6f0314811fd" args="()" -->
+static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>runAsUser</b> ()</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a20cd9ce018413f0ee1518c3f3a4fff54"></a><!-- doxytag: member="UServer_Base::getNumConnection" ref="a20cd9ce018413f0ee1518c3f3a4fff54" args="()" -->
+static const char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getNumConnection</b> ()</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac00e3f0d24d0eee793879f39748cadcd"></a><!-- doxytag: member="UServer_Base::handlerForSigHUP" ref="ac00e3f0d24d0eee793879f39748cadcd" args="(int signo)" -->
 static RETSIGTYPE&nbsp;</td><td class="memItemRight" valign="bottom"><b>handlerForSigHUP</b> (int signo)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a009d269ebd29f7ab0ee3b04bb9ad1d97"></a><!-- doxytag: member="UServer_Base::handlerForSigTERM" ref="a009d269ebd29f7ab0ee3b04bb9ad1d97" args="(int signo)" -->
@@ -295,6 +297,8 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUServer__Base.html#a667b3515ef95032c9798274b8842639e">UProxyPlugIn</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4b4b8a54fa3fa25a13ab65026faa8c89"></a><!-- doxytag: member="UServer_Base::UClient_Base" ref="a4b4b8a54fa3fa25a13ab65026faa8c89" args="" -->
 class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUServer__Base.html#a4b4b8a54fa3fa25a13ab65026faa8c89">UClient_Base</a></td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a61bc1db5cbea1ebadb088d06b2315207"></a><!-- doxytag: member="UServer_Base::UStreamPlugIn" ref="a61bc1db5cbea1ebadb088d06b2315207" args="" -->
+class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUServer__Base.html#a61bc1db5cbea1ebadb088d06b2315207">UStreamPlugIn</a></td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a519b46131851a8bbd5008ac562f037a8"></a><!-- doxytag: member="UServer_Base::UClientImage_Base" ref="a519b46131851a8bbd5008ac562f037a8" args="" -->
 class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="classUServer__Base.html#a519b46131851a8bbd5008ac562f037a8">UClientImage_Base</a></td></tr>
 </table>
@@ -324,7 +328,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/net/server/server.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:43 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu May 27 19:04:03 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

@@ -47,12 +47,12 @@ lines will be broken when the message is encoded and joined again by decoding.
 Quoted-printable text was designed to be (mostly) readable by people with non-MIME mail programs. 
 */
 
-uint32_t u_quoted_printable_encode(const unsigned char* inptr, uint32_t len, unsigned char* out)
+uint32_t u_quoted_printable_encode(const unsigned char* restrict inptr, uint32_t len, unsigned char* restrict out)
 {
          int n = 0;
          unsigned char ch, ws  = '\0';
-         unsigned char* outptr = out;
-   const unsigned char* inend  = inptr + len;
+         unsigned char* restrict outptr = out;
+   const unsigned char* restrict inend  = inptr + len;
 
    U_INTERNAL_TRACE("u_quoted_printable_encode(%.*s,%u,%p)", len, inptr, len, out)
 
@@ -149,11 +149,11 @@ uint32_t u_quoted_printable_encode(const unsigned char* inptr, uint32_t len, uns
 
 /* this decodes rfc2047's version of quoted-printable */
 
-uint32_t u_quoted_printable_decode(const char* inptr, uint32_t len, unsigned char* out)
+uint32_t u_quoted_printable_decode(const char* restrict inptr, uint32_t len, unsigned char* restrict out)
 {
          char c0, c1, v;
-   const    char* inend  = inptr + len;
-   unsigned char* outptr = out;
+   const    char* restrict inend  = inptr + len;
+   unsigned char* restrict outptr = out;
 
    U_INTERNAL_TRACE("u_quoted_printable_decode(%.*s,%u,%p)", len, inptr, len, out)
 

@@ -32,11 +32,11 @@ Synopsis: Performs URL escaping on a string. This works as follows: all characte
 // -------------------------------------------------------------------------------------------------------------------
 // RFC2231 encoding (which in HTTP is mostly used for giving UTF8-encoded filenames in the Content-Disposition header)
 
-uint32_t u_url_encode(const unsigned char* input, uint32_t len, unsigned char* result, const char* extra_enc_chars)
+uint32_t u_url_encode(const unsigned char* restrict input, uint32_t len, unsigned char* restrict result, const char* restrict extra_enc_chars)
 {
    uint32_t i;
    unsigned char ch;
-   unsigned char* r = result;
+   unsigned char* restrict r = result;
 
    U_INTERNAL_TRACE("u_url_encode(%.*s,%u,%p,%s)", len, input, len, result, extra_enc_chars)
 
@@ -73,10 +73,10 @@ uint32_t u_url_encode(const unsigned char* input, uint32_t len, unsigned char* r
    return (r - result);
 }
 
-uint32_t u_url_decode(const char* input, uint32_t len, unsigned char* result, bool no_line_break)
+uint32_t u_url_decode(const char* restrict input, uint32_t len, unsigned char* restrict result, bool no_line_break)
 {
    uint32_t i;
-   unsigned char* r = result;
+   unsigned char* restrict r = result;
    char ch, hex[3]  = { '\0', '\0', '\0' };
 
    U_INTERNAL_TRACE("u_url_decode(%.*s,%u,%p,%lu,%d)", len, input, len, result, no_line_break)
@@ -121,7 +121,7 @@ uint32_t u_url_decode(const char* input, uint32_t len, unsigned char* result, bo
                hex[0] = hex[1] = 0;
                }
 
-            *r++ = (unsigned char) u_hex2int((const char*)hex, 2);
+            *r++ = (unsigned char) u_hex2int((const char* restrict)hex, 2);
          // *r++ = (unsigned char) strtol((const char*)hex, NULL, 16);
             }
          break;

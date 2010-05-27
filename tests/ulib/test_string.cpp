@@ -1287,7 +1287,7 @@ static void test_stream_01()
    U_ASSERT( str10 == str04 ); // sentry picks out the white spaces. . 
 
 #if __GNUC__ >= 3
-   std::istrstream istrs02(U_STRING_TO_PARAM(str05)); // empty
+   istrstream istrs02(U_STRING_TO_PARAM(str05)); // empty
    istrs02 >> str10;
    // U_ASSERT( str10 == str04 );
 #endif
@@ -1333,7 +1333,7 @@ static void test_stream_01()
 
    // ostream& operator<<(ostream&, const UString&)
    char buffer[1024];
-   std::ostrstream ostrs01(buffer, sizeof(buffer));
+   ostrstream ostrs01(buffer, sizeof(buffer));
    ostrs01 << str01 << '\0';
    U_ASSERT( str01 == ostrs01.str() );
 }
@@ -1347,7 +1347,7 @@ static void test_stream_04(unsigned size)
    UString str(size, 's');
    unsigned expected_size = (2 * (size + sizeof(char)));
    char buffer[expected_size+1];
-   std::ostrstream oss(buffer, sizeof(buffer));
+   ostrstream oss(buffer, sizeof(buffer));
 
    // sanity checks
    U_ASSERT( str.size() == size );
@@ -1428,7 +1428,7 @@ static void test_stream_06()
    U_ASSERT( i01 - 1 == i03 );
 // U_ASSERT( i02 >= i04 );
 
-   std::istrstream is(U_STRING_TO_PARAM(str01));
+   istrstream is(U_STRING_TO_PARAM(str01));
    UString str02;
    is >> str02;
    unsigned i05 = str02.size();
@@ -1445,13 +1445,13 @@ static void test_stream_07()
    U_TRACE(5, "test_stream_07()")
 
    const UString name("z6.cc");
-   std::istrstream iss(U_STRING_TO_PARAM(name));
+   istrstream iss(U_STRING_TO_PARAM(name));
    int i = 0;
    UString s;
    while (iss >> s) ++i;
 
    U_ASSERT( i < 3 );
-   U_ASSERT( static_cast<bool>(iss.rdstate() & std::ios::failbit) );
+   U_ASSERT( static_cast<bool>(iss.rdstate() & ios::failbit) );
 }
 
 static void test_stream_08()
@@ -1479,11 +1479,11 @@ static void test_stream_09()
    foo += "& love";
 
    char buffer[1024];
-   std::ostrstream oss1(buffer, sizeof(buffer));
+   ostrstream oss1(buffer, sizeof(buffer));
    oss1 << foo << '\0';
    U_ASSERT( foo == oss1.str() );
 
-   std::ostrstream oss2(buffer, sizeof(buffer));
+   ostrstream oss2(buffer, sizeof(buffer));
    oss2.width(20);
    oss2 << foo;
    oss2.put('\0');

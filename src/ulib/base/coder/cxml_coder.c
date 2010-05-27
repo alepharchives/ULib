@@ -26,7 +26,7 @@
        '>'          "&gt;"                     greater than
 */
 
-static inline unsigned char* u_set_quot(unsigned char* r)
+static inline unsigned char* u_set_quot(unsigned char* restrict r)
 {
    *r++ = '&';
    *r++ = 'q';
@@ -38,7 +38,7 @@ static inline unsigned char* u_set_quot(unsigned char* r)
    return r;
 }
 
-static inline unsigned char* u_set_amp(unsigned char* r)
+static inline unsigned char* u_set_amp(unsigned char* restrict r)
 {
    *r++ = '&';
    *r++ = 'a';
@@ -49,7 +49,7 @@ static inline unsigned char* u_set_amp(unsigned char* r)
    return r;
 }
 
-static inline unsigned char* u_set_apos(unsigned char* r)
+static inline unsigned char* u_set_apos(unsigned char* restrict r)
 {
    *r++ = '&';
    *r++ = 'a';
@@ -61,7 +61,7 @@ static inline unsigned char* u_set_apos(unsigned char* r)
    return r;
 }
 
-static inline unsigned char* u_set_lt(unsigned char* r)
+static inline unsigned char* u_set_lt(unsigned char* restrict r)
 {
    *r++ = '&';
    *r++ = 'l';
@@ -71,7 +71,7 @@ static inline unsigned char* u_set_lt(unsigned char* r)
    return r;
 }
 
-static inline unsigned char* u_set_gt(unsigned char* r)
+static inline unsigned char* u_set_gt(unsigned char* restrict r)
 {
    *r++ = '&';
    *r++ = 'g';
@@ -81,11 +81,11 @@ static inline unsigned char* u_set_gt(unsigned char* r)
    return r;
 }
 
-uint32_t u_xml_encode(const unsigned char* input, uint32_t len, unsigned char* result)
+uint32_t u_xml_encode(const unsigned char* restrict input, uint32_t len, unsigned char* restrict result)
 {
          unsigned char ch;
-         unsigned char* r   = result;
-   const unsigned char* end = input + len;
+         unsigned char* restrict r   = result;
+   const unsigned char* restrict end = input + len;
 
    U_INTERNAL_TRACE("u_xml_encode(%.*s,%u,%p)", len, input, len, result)
 
@@ -140,11 +140,11 @@ uint32_t u_xml_encode(const unsigned char* input, uint32_t len, unsigned char* r
    return (r - result);
 }
 
-uint32_t u_xml_decode(const char* input, uint32_t len, unsigned char* result)
+uint32_t u_xml_decode(const char* restrict input, uint32_t len, unsigned char* restrict result)
 {
                   char ch;
-         unsigned char* r   = result;
-   const          char* end = input + len;
+         unsigned char* restrict r   = result;
+   const          char* restrict end = input + len;
 
    U_INTERNAL_TRACE("u_xml_decode(%.*s,%u,%p,%lu)", len, input, len, result)
 

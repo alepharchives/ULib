@@ -31,7 +31,7 @@
  * ---------------------------------------------------------------------------
  */
 
-uint32_t u_sprintc(char* buffer, unsigned char c)
+uint32_t u_sprintc(char* restrict buffer, unsigned char c)
 {
    U_INTERNAL_TRACE("u_sprintc(%d)", c)
 
@@ -90,7 +90,7 @@ uint32_t u_sprintc(char* buffer, unsigned char c)
          if ((c <  32) ||
              (c > 126))
             {
-            char* cp = buffer + 4;
+            char* restrict cp = buffer + 4;
 
             *buffer = '\\';
 
@@ -115,12 +115,12 @@ uint32_t u_sprintc(char* buffer, unsigned char c)
       }
 }
 
-uint32_t u_escape_encode(const unsigned char* inptr, uint32_t len, char* out, uint32_t max_output)
+uint32_t u_escape_encode(const unsigned char* restrict inptr, uint32_t len, char* restrict out, uint32_t max_output)
 {
          unsigned char c;
-   const unsigned char* inend  = inptr + len;
-                  char* outptr = out;
-                  char* outend = out + (max_output - 4);
+   const unsigned char* restrict inend  = inptr + len;
+                  char* restrict outptr = out;
+                  char* restrict outend = out + (max_output - 4);
 
    U_INTERNAL_TRACE("u_escape_encode(%.*s,%u,%p,%u)", U_min(len,128), inptr, len, out, max_output)
 
@@ -152,10 +152,10 @@ uint32_t u_escape_encode(const unsigned char* inptr, uint32_t len, char* out, ui
 
 /* the s pointer is advanced past the escape sequence */
 
-unsigned char u_escape_decode_ptr(const char** s)
+unsigned char u_escape_decode_ptr(const char** restrict s)
 {
-   const char* t = *s;
-   int c         = *t++;
+   const char* restrict t = *s;
+   int c                  = *t++;
 
    U_INTERNAL_TRACE("u_escape_decode_ptr(%s)", *s)
 
@@ -206,11 +206,11 @@ unsigned char u_escape_decode_ptr(const char** s)
    return (unsigned char)c;
 }
 
-uint32_t u_escape_decode(const char* inptr, uint32_t len, unsigned char* out)
+uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char* restrict out)
 {
    char* p;
-   unsigned char* outptr = out;
-   const    char* inend  = inptr + len;
+   unsigned char* restrict outptr = out;
+   const    char* restrict inend  = inptr + len;
 
    U_INTERNAL_TRACE("u_escape_decode(%.*s,%u,%p)", U_min(len,128), inptr, len, out)
 
@@ -219,7 +219,7 @@ uint32_t u_escape_decode(const char* inptr, uint32_t len, unsigned char* out)
 
    while (inptr < inend)
       {
-      p = (char*) memchr(inptr, '\\', inend - inptr);
+      p = (char* restrict) memchr(inptr, '\\', inend - inptr);
 
       if (p)
          {
@@ -230,7 +230,7 @@ uint32_t u_escape_decode(const char* inptr, uint32_t len, unsigned char* out)
          inptr   = p + 1;
          outptr += len;
 
-         *outptr++ = u_escape_decode_ptr(&inptr); 
+         *outptr++ = u_escape_decode_ptr((const char** restrict)&inptr); 
          }
       else
          {

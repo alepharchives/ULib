@@ -139,8 +139,8 @@
 <a name="l00116"></a>00116         <span class="comment">// services for EXEC</span>
 <a name="l00117"></a>00117 
 <a name="l00118"></a>00118         <span class="keyword">static</span> <span class="keywordtype">void</span> nice(<span class="keywordtype">int</span> inc);
-<a name="l00119"></a>00119         <span class="keyword">static</span> <span class="keywordtype">void</span> setProcessGroup();
-<a name="l00120"></a>00120         <span class="keyword">static</span> <span class="keywordtype">void</span> kill(pid_t pid, <span class="keywordtype">int</span> sig);
+<a name="l00119"></a>00119         <span class="keyword">static</span> <span class="keywordtype">void</span> kill(pid_t pid, <span class="keywordtype">int</span> sig);
+<a name="l00120"></a>00120         <span class="keyword">static</span> <span class="keywordtype">void</span> setProcessGroup(pid_t pid = 0, pid_t pgid = 0);
 <a name="l00121"></a>00121 
 <a name="l00122"></a>00122         <span class="comment">// exec with internal vfork() with management of file descriptors for child I/O redirection...</span>
 <a name="l00123"></a>00123 
@@ -164,7 +164,7 @@
 <a name="l00141"></a>00141 
 <a name="l00142"></a>00142 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:38 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu May 27 19:03:58 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

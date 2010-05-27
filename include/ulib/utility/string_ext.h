@@ -27,15 +27,15 @@ public:
    static UString BIOtoString(BIO* bio);
 #endif
 
-   static UString deflate(const UString& s);                       // .gz   compress
-   static UString gunzip( const UString& s, uint32_t sz_orig = 0); // .gz uncompress
-
    // LZO method
 
    static UString   compress(const UString& s);
    static UString decompress(const UString& s);
 
    static bool isCompress(const UString& s) { return U_STRNEQ(s.data(), U_LZOP_COMPRESS); }
+
+   static UString deflate(const UString& s);                       // .gz   compress
+   static UString gunzip( const UString& s, uint32_t sz_orig = 0); // .gz uncompress
 
    // Convert integer to string
 

@@ -302,48 +302,54 @@
 <a name="l00285"></a>00285                 {
 <a name="l00286"></a>00286                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>, <span class="stringliteral">&quot;%p&quot;</span>, cfg)
 <a name="l00287"></a>00287 
-<a name="l00288"></a>00288                 <a class="code" href="classUSSLSocket.html">USSLSocket</a>::method = (SSL_METHOD*) SSLv3_client_method();
-<a name="l00289"></a>00289 
-<a name="l00290"></a>00290                 socket = U_NEW(<a class="code" href="classUSSLSocket.html">USSLSocket</a>(bIPv6));
-<a name="l00291"></a>00291 
-<a name="l00292"></a>00292                 <span class="comment">// These are the 1024 bit DH parameters from &quot;Assigned Number for SKIP Protocols&quot;</span>
-<a name="l00293"></a>00293                 <span class="comment">// (http://www.skip-vpn.org/spec/numbers.html).</span>
-<a name="l00294"></a>00294                 <span class="comment">// See there for how they were generated.</span>
+<a name="l00288"></a>00288                 U_INTERNAL_ASSERT(ca_file.isNullTerminated())
+<a name="l00289"></a>00289                 U_INTERNAL_ASSERT(ca_path.isNullTerminated())
+<a name="l00290"></a>00290                 U_INTERNAL_ASSERT(key_file.isNullTerminated())
+<a name="l00291"></a>00291                 U_INTERNAL_ASSERT(password.isNullTerminated())
+<a name="l00292"></a>00292                 U_INTERNAL_ASSERT(cert_file.isNullTerminated())
+<a name="l00293"></a>00293 
+<a name="l00294"></a>00294                 <a class="code" href="classUSSLSocket.html">USSLSocket</a>::method = (SSL_METHOD*) SSLv3_client_method();
 <a name="l00295"></a>00295 
-<a name="l00296"></a>00296                 getSocket()-&gt;useDHFile();
+<a name="l00296"></a>00296                 socket = U_NEW(<a class="code" href="classUSSLSocket.html">USSLSocket</a>(bIPv6));
 <a name="l00297"></a>00297 
-<a name="l00298"></a>00298                 <span class="comment">// Load our certificate</span>
-<a name="l00299"></a>00299 
-<a name="l00300"></a>00300                 if (getSocket()-&gt;setContext(cert_file.c_str(), key_file.c_str(), password.c_str(),
-<a name="l00301"></a>00301                                                                                                 ca_file.c_str(),  ca_path.c_str(), verify_mode) == false)
-<a name="l00302"></a>00302                         {
-<a name="l00303"></a>00303                         U_ERROR(<span class="stringliteral">&quot;SSL setContext() failed...&quot;</span>, 0);
-<a name="l00304"></a>00304                         }
-<a name="l00305"></a>00305                 }
-<a name="l00306"></a>00306 
-<a name="l00307"></a>00307         ~<a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>()
-<a name="l00308"></a>00308                 {
-<a name="l00309"></a>00309                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>)
-<a name="l00310"></a>00310                 }
-<a name="l00311"></a>00311 
-<a name="l00312"></a>00312         <a class="code" href="classUSSLSocket.html">USSLSocket</a>* getSocket() { <span class="keywordflow">return</span> (<a class="code" href="classUSSLSocket.html">USSLSocket</a>*) socket; }
-<a name="l00313"></a>00313 
-<a name="l00314"></a>00314         <span class="comment">// DEBUG</span>
-<a name="l00315"></a>00315 
-<a name="l00316"></a>00316 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00317"></a>00317 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UClient_Base::dump(reset); }
-<a name="l00318"></a>00318 <span class="preprocessor">#endif</span>
-<a name="l00319"></a>00319 <span class="preprocessor"></span>
-<a name="l00320"></a>00320 <span class="keyword">private</span>:
-<a name="l00321"></a>00321         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>&amp;) : <a class="code" href="classUClient__Base.html">UClient_Base</a>(0) {}
-<a name="l00322"></a>00322         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>&amp;)                      { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00323"></a>00323 };
-<a name="l00324"></a>00324 
-<a name="l00325"></a>00325 <span class="preprocessor">#endif</span>
-<a name="l00326"></a>00326 <span class="preprocessor"></span>
-<a name="l00327"></a>00327 <span class="preprocessor">#endif</span>
+<a name="l00298"></a>00298                 <span class="comment">// These are the 1024 bit DH parameters from &quot;Assigned Number for SKIP Protocols&quot;</span>
+<a name="l00299"></a>00299                 <span class="comment">// (http://www.skip-vpn.org/spec/numbers.html).</span>
+<a name="l00300"></a>00300                 <span class="comment">// See there for how they were generated.</span>
+<a name="l00301"></a>00301 
+<a name="l00302"></a>00302                 getSocket()-&gt;useDHFile();
+<a name="l00303"></a>00303 
+<a name="l00304"></a>00304                 <span class="comment">// Load our certificate</span>
+<a name="l00305"></a>00305 
+<a name="l00306"></a>00306                 if (getSocket()-&gt;setContext(cert_file.data(), key_file.data(), password.data(),
+<a name="l00307"></a>00307                                                                                                 ca_file.data(),  ca_path.data(), verify_mode) == false)
+<a name="l00308"></a>00308                         {
+<a name="l00309"></a>00309                         U_ERROR(<span class="stringliteral">&quot;SSL setContext() failed...&quot;</span>, 0);
+<a name="l00310"></a>00310                         }
+<a name="l00311"></a>00311                 }
+<a name="l00312"></a>00312 
+<a name="l00313"></a>00313         ~<a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient</a>()
+<a name="l00314"></a>00314                 {
+<a name="l00315"></a>00315                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>)
+<a name="l00316"></a>00316                 }
+<a name="l00317"></a>00317 
+<a name="l00318"></a>00318         <a class="code" href="classUSSLSocket.html">USSLSocket</a>* getSocket() { <span class="keywordflow">return</span> (<a class="code" href="classUSSLSocket.html">USSLSocket</a>*) socket; }
+<a name="l00319"></a>00319 
+<a name="l00320"></a>00320         <span class="comment">// DEBUG</span>
+<a name="l00321"></a>00321 
+<a name="l00322"></a>00322 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00323"></a>00323 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> UClient_Base::dump(reset); }
+<a name="l00324"></a>00324 <span class="preprocessor">#endif</span>
+<a name="l00325"></a>00325 <span class="preprocessor"></span>
+<a name="l00326"></a>00326 <span class="keyword">private</span>:
+<a name="l00327"></a>00327         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>(<span class="keyword">const</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>&amp;) : <a class="code" href="classUClient__Base.html">UClient_Base</a>(0) {}
+<a name="l00328"></a>00328         <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;USSLSocket&gt;</a>&amp;)                      { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00329"></a>00329 };
+<a name="l00330"></a>00330 
+<a name="l00331"></a>00331 <span class="preprocessor">#endif</span>
+<a name="l00332"></a>00332 <span class="preprocessor"></span>
+<a name="l00333"></a>00333 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:37 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu May 27 19:03:57 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

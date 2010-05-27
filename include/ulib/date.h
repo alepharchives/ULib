@@ -18,12 +18,9 @@
 
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
-#else
-#  include <iostream>
 #endif
 
 #include <time.h>
-#include <iostream>
 
 /**
  * The UDate class uses a julian date representation of the current year, month, and day.

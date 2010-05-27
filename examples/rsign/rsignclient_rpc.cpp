@@ -25,8 +25,8 @@ public:
 
    // COSTRUTTORE
 
-            UClientRSIGN(UFileConfig* cfg) : UClient_Base(cfg), URPCClient<T>(cfg) {}
-   virtual ~UClientRSIGN()                                                         {}
+            UClientRSIGN(UFileConfig* cfg) : URPCClient<T>(cfg) {}
+   virtual ~UClientRSIGN()                                      {}
 
    // OBJECT FOR METHOD REQUEST
 

@@ -49,7 +49,7 @@ Maps errno number to an error message string, the contents of which are implemen
 The returned string is only guaranteed to be valid only until the next call to function.
 */
 
-const char* u_getSysError(uint32_t* len)
+const char* u_getSysError(uint32_t* restrict len)
 {
    /*
    Translation table for errno values. See intro(2) in most UNIX systems Programmers Reference Manuals.
@@ -61,10 +61,10 @@ const char* u_getSysError(uint32_t* len)
 
    struct error_info
       {
-      int         value;   /* The numeric value from <errno.h> */
-      const char* name;    /* The equivalent symbolic value */
+      int                  value;   /* The numeric value from <errno.h> */
+      const char* restrict name;    /* The equivalent symbolic value */
 #  ifndef HAVE_STRERROR
-      const char* msg;     /* Short message about this value */
+      const char* restrict msg;     /* Short message about this value */
 #  endif
       };
 
@@ -456,7 +456,7 @@ const char* u_getSysError(uint32_t* len)
 #if defined(EPROCLIM)
    ENTRY(EPROCLIM, "EPROCLIM", "Too many processes"),
 #endif
-   ENTRY(0, NULL, NULL)
+   ENTRY(0, 0, 0)
 };
 
    static int  nerr = sizeof(error_table) / sizeof(error_table[0]);
@@ -467,8 +467,8 @@ const char* u_getSysError(uint32_t* len)
    if (errno == EVMSERR) return "EVMSERR (32767, VMS-specific error)";
 #endif
 
-   const char* msg  = "Unknown error";
-   const char* name = "???";
+   const char* restrict msg  = "Unknown error";
+   const char* restrict name = "???";
 
    U_INTERNAL_TRACE("u_getSysError(%p)", len)
 
@@ -515,7 +515,7 @@ Maps an signal number to an signal message string, the contents of which are imp
 The returned string is only guaranteed to be valid only until the next call to strsignal.
 */
 
-const char* u_getSysSignal(int signo, uint32_t* len)
+const char* u_getSysSignal(int signo, uint32_t* restrict len)
 {
    /*
    Translation table for signal values.  Note that this table is generally only accessed when
@@ -525,10 +525,10 @@ const char* u_getSysSignal(int signo, uint32_t* len)
    */
 
    struct signal_info {
-      int         value;   /* The numeric value from <signal.h> */
-      const char* name;    /* The equivalent symbolic value */
+      int                  value;   /* The numeric value from <signal.h> */
+      const char* restrict name;    /* The equivalent symbolic value */
 #  ifndef HAVE_STRSIGNAL
-      const char* msg;     /* Short message about this value */
+      const char* restrict msg;     /* Short message about this value */
 #  endif
    };
 
@@ -681,14 +681,14 @@ const char* u_getSysSignal(int signo, uint32_t* len)
 #if defined(SIGSAK)
    ENTRY(SIGSAK, "SIGSAK", "Secure attention"),
 #endif
-   ENTRY(0, NULL, NULL)
+   ENTRY(0, 0, 0)
 };
 
    static int  nsig = sizeof(signal_table) / sizeof(signal_table[0]);
    static char buffer[256];
 
-   const char* msg = "Unknown signal";
-   const char* name = "???";
+   const char* restrict msg = "Unknown signal";
+   const char* restrict name = "???";
 
    U_INTERNAL_TRACE("u_getSysSignal(%d,%p)", signo, len)
 
@@ -733,14 +733,14 @@ const char* u_getSysSignal(int signo, uint32_t* len)
 #undef  ENTRY
 #define ENTRY(value,name,msg) {value,name,msg}
 
-const char* u_getExitStatus(int exitno, uint32_t* len)
+const char* u_getExitStatus(int exitno, uint32_t* restrict len)
 {
    /* Translation table for exit status codes for system programs */
 
    struct exit_value_info {
-      int value;        /* The numeric value from <sysexits.h> */
-      const char* name; /* The equivalent symbolic value */
-      const char* msg;  /* Short message about this value */
+      int                  value; /* The numeric value from <sysexits.h> */
+      const char* restrict name;  /* The equivalent symbolic value */
+      const char* restrict msg;   /* Short message about this value */
    };
 
    static const struct exit_value_info exit_value_table[] = {
@@ -789,14 +789,14 @@ const char* u_getExitStatus(int exitno, uint32_t* len)
 #if defined(EX_CONFIG)
    ENTRY(EX_CONFIG, "EX_CONFIG", "configuration error"),
 #endif
-   ENTRY(0, NULL, NULL)
+   ENTRY(0, 0, 0)
 };
 
    static int  nval = sizeof(exit_value_table) / sizeof(exit_value_table[0]);
    static char buffer[256];
 
-   const char* msg;
-   const char* name;
+   const char* restrict msg;
+   const char* restrict name;
 
    U_INTERNAL_TRACE("u_getExitStatus(%d,%p)", exitno, len)
 

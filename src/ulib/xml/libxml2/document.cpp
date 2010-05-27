@@ -306,6 +306,47 @@ UString UXML2Document::xmlC14N(const UString& data, int mode, int with_comments,
    U_RETURN_STRING(output);
 }
 
+/* helper function for converting a passed string in one character set to another
+
+char* UXML2Document::convString(const char* string, const char* in_charset, const char* out_charset)
+{
+   U_TRACE(0, "UXML2Document::convString(%.*S,%S,%S)", U_STRING_TO_TRACE(string), in_charset, out_charset)
+
+   U_INTERNAL_ASSERT_POINTER( in_charset)
+   U_INTERNAL_ASSERT_POINTER(out_charset)
+
+   char* ret = 0;
+
+   xmlCharEncodingHandlerPtr in  = U_SYSCALL(xmlFindCharEncodingHandler, "%S",  in_charset);
+   xmlCharEncodingHandlerPtr out = U_SYSCALL(xmlFindCharEncodingHandler, "%S", out_charset);
+
+   if (in && out)
+      {
+      xmlBufferPtr orig = xmlBufferCreate();
+      xmlBufferPtr utf8 = xmlBufferCreate();
+      xmlBufferPtr conv = xmlBufferCreate();
+
+      xmlBufferCCat(orig, string);
+
+      if (xmlCharEncInFunc(in, utf8, orig) > 0)
+         {
+         xmlCharEncOutFunc(out, conv, NULL);
+
+         if (xmlCharEncOutFunc(out, conv, utf8) >= 0) ret = strdup((const char*)xmlBufferContent(conv));
+         }
+
+      xmlBufferFree(orig);
+      xmlBufferFree(utf8);
+      xmlBufferFree(conv);
+      }
+
+   xmlCharEncCloseFunc(in);
+   xmlCharEncCloseFunc(out);
+
+   return ret;
+}
+*/
+
 // DEBUG
 
 #ifdef DEBUG

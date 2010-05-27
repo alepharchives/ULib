@@ -14,12 +14,10 @@
 #ifndef ULIB_TIMEVAL_H
 #define ULIB_TIMEVAL_H
 
-#include <ulib/internal/common.h>
+#include <ulib/string.h>
 
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
-#else
-#  include <iostream>
 #endif
 
 #include <time.h>

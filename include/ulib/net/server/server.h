@@ -86,6 +86,7 @@ class UHttpPlugIn;
 class UFCGIPlugIn;
 class UClient_Base;
 class UProxyPlugIn;
+class UStreamPlugIn;
 
 class U_EXPORT UServer_Base : public UEventFd {
 public:
@@ -437,21 +438,22 @@ protected:
    UTimeoutConnection& operator=(const UTimeoutConnection&)     { return *this; }
    };
 
-   static void acceptNewClient()
+   static void acceptNewClient(UEventFd* handler_event)
       {
-      U_TRACE(0, "UServer_Base::acceptNewClient()")
+      U_TRACE(0, "UServer_Base::acceptNewClient(%p)", handler_event)
 
-      UNotifier::init(pthis);
+      UNotifier::init(handler_event);
 
       if (USocket::req_timeout) ptime = U_NEW(UTimeoutConnection(USocket::req_timeout, 0L));
       }
-
-   static const char* getNumConnection();
 
    static void handlerNewConnection();
    static void handlerIdleConnection();
    static void handlerCloseConnection();
    static bool handlerTimeoutConnection(void* cimg);
+
+   static void        runAsUser();
+   static const char* getNumConnection();
 
 #ifdef HAVE_MODULES
    static UVector<UServerPlugIn*>* vplugin;
@@ -491,6 +493,7 @@ private:
    friend class UFCGIPlugIn;
    friend class UProxyPlugIn;
    friend class UClient_Base;
+   friend class UStreamPlugIn;
    friend class UClientImage_Base;
 
    UServer_Base(const UServer_Base&) : UEventFd() {}
@@ -617,7 +620,12 @@ public:
       USSLSocket* sslsocket = getSocket();
 
       U_INTERNAL_ASSERT(sslsocket->isSSL())
-      
+      U_INTERNAL_ASSERT(ca_file.isNullTerminated())
+      U_INTERNAL_ASSERT(ca_path.isNullTerminated())
+      U_INTERNAL_ASSERT(key_file.isNullTerminated())
+      U_INTERNAL_ASSERT(password.isNullTerminated())
+      U_INTERNAL_ASSERT(cert_file.isNullTerminated())
+
       // These are the 1024 bit DH parameters from "Assigned Number for SKIP Protocols"
       // (http://www.skip-vpn.org/spec/numbers.html).
       // See there for how they were generated.
@@ -626,8 +634,8 @@ public:
 
       // Load our certificate
 
-      if (sslsocket->setContext(cert_file.c_str(), key_file.c_str(), password.c_str(),
-                                  ca_file.c_str(),  ca_path.c_str(), verify_mode) == false)
+      if (sslsocket->setContext(cert_file.data(), key_file.data(), password.data(),
+                                  ca_file.data(),  ca_path.data(), verify_mode) == false)
          {
          U_ERROR("SSL setContext() failed...", 0);
          }

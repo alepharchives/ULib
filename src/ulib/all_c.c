@@ -12,8 +12,11 @@
 /*
 #  include "base/win32/strtoull.c"
 */
-#elif !defined(HAVE_DAEMON)
-#  include "replace/daemon.c"
+#else
+#  include <ulib/base/base.h>
+#  ifndef HAVE_DAEMON
+#     include "replace/daemon.c"
+#  endif
 #endif
 
 #ifndef HAVE_GETOPT_LONG

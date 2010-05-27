@@ -51,23 +51,23 @@
 #endif
 
 /* Startup */
-bool        u_is_stderr_tty;
-pid_t       u_pid;
-char*       u_pid_str;
-uint32_t    u_pid_str_len;
-uint32_t    u_progname_len;
-const char* u_progpath;
-const char* u_progname;
+bool                 u_is_stderr_tty;
+pid_t                u_pid;
+uint32_t             u_pid_str_len;
+uint32_t             u_progname_len;
+      char* restrict u_pid_str;
+const char* restrict u_progpath;
+const char* restrict u_progname;
 
 /* Current working directory */
-char        u_cwd_buffer[256];
-uint32_t    u_cwd_len;
-const char* u_cwd;
+char                 u_cwd_buffer[256];
+uint32_t             u_cwd_len;
+const char* restrict u_cwd;
 
 /* Location info */
-uint32_t    u_num_line;
-const char* u_name_file;
-const char* u_name_function;
+uint32_t             u_num_line;
+const char* restrict u_name_file;
+const char* restrict u_name_function;
 
 /* Temporary buffer: for example is used by u_ftw */
 char     u_buffer[4096];
@@ -80,27 +80,27 @@ struct timeval u_now;
 struct tm u_strftime_tm;
 
 /* Scan services */
-const char* u_line_terminator     = U_LF;
-uint32_t    u_line_terminator_len = 1;
+const char* restrict u_line_terminator     = U_LF;
+uint32_t             u_line_terminator_len = 1;
 
 /* Services */
-int                 u_flag_exit;
-int                 u_flag_test;
-bool                u_recursion;
-bool                u_exec_failed;
-char                u_hostname[255];
-char                u_user_name[32];
-int                 u_printf_fileno = STDERR_FILENO;
-int32_t             u_printf_string_max_length;
-uint32_t            u_hostname_len, u_user_name_len;
-const char*         u_tmpdir;
-const unsigned char u_alphabet[]  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-const unsigned char u_hex_upper[] = "0123456789ABCDEF";
-const unsigned char u_hex_lower[] = "0123456789abcdef";
+int                  u_flag_exit;
+int                  u_flag_test;
+bool                 u_recursion;
+bool                 u_exec_failed;
+char                 u_hostname[255];
+char                 u_user_name[32];
+int                  u_printf_fileno = STDERR_FILENO;
+int32_t              u_printf_string_max_length;
+uint32_t             u_hostname_len, u_user_name_len;
+const char* restrict u_tmpdir;
+const unsigned char  u_alphabet[]  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const unsigned char  u_hex_upper[] = "0123456789ABCDEF";
+const unsigned char  u_hex_lower[] = "0123456789abcdef";
 
-const char* u_basename(const char* name)
+const char* u_basename(const char* restrict name)
 {
-   const char* base;
+   const char* restrict base;
 
    U_INTERNAL_TRACE("u_basename(%s)", name)
 
@@ -146,7 +146,7 @@ void u_getcwd(void) /* get current working directory */
 {
    U_INTERNAL_TRACE("u_getcwd()", 0)
 
-   u_cwd = (const char*) getcwd(u_cwd_buffer, 256);
+   u_cwd = (const char* restrict) getcwd(u_cwd_buffer, 256);
 
    U_INTERNAL_ASSERT_POINTER(u_cwd)
 
@@ -207,10 +207,10 @@ void u_check_now_adjust(void)
       }
 }
 
-void u_init(char** argv)
+void u_init(char** restrict argv)
 {
-   const char* pwd;
-   struct passwd* pw;
+   const char* restrict pwd;
+   struct passwd* restrict pw;
 
    U_INTERNAL_TRACE("u_init()", 0)
 
@@ -242,7 +242,7 @@ void u_init(char** argv)
 
    if (gethostname(u_hostname, 255))
       {
-      char* tmp = getenv("HOSTNAME"); /* bash setting... */
+      char* restrict tmp = getenv("HOSTNAME"); /* bash setting... */
 
       if (tmp && *tmp) strcpy(u_hostname, tmp);
       }
@@ -267,7 +267,7 @@ void u_init(char** argv)
    u_check_now_adjust();
 }
 
-uint32_t u_snprintf(char* buffer, uint32_t buffer_size, const char* format, ...)
+uint32_t u_snprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...)
 {
    va_list argp;
    uint32_t bytes_written;
@@ -292,18 +292,19 @@ uint32_t u_snprintf(char* buffer, uint32_t buffer_size, const char* format, ...)
  * the array indeterminate.
  */
 
-uint32_t u_strftime(char* s, uint32_t maxsize, const char* format, time_t t)
+uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict format, time_t t)
 {
    static const char* dname[7]  = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
    static const char* mname[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September",
                                     "October", "November", "December" };
+
    static const int dname_len[7]  = { 6, 6, 7, 9, 8, 6, 8 };
    static const int mname_len[12] = { 7, 8, 5, 5, 3, 4, 4, 6, 9, 7, 8, 8 };
 
-   char ch;             /* character from format */
-   int i, n;            /* handy integer (short term usage) */
-   const char* fmark;   /* for remembering a place in format */
-   uint32_t count = 0;  /* return value accumulator */
+   char ch;                      /* character from format */
+   int i, n;                     /* handy integer (short term usage) */
+   uint32_t count = 0;           /* return value accumulator */
+   const char* restrict fmark;   /* for remembering a place in format */
 
    static time_t old_now;
 
@@ -686,7 +687,7 @@ with flag '7' => format: %a, %d %b %Y %H:%M:%S     (HTTP header)
 ----------------------------------------------------------------------------
 */
 
-uint32_t u_vsnprintf(char* buffer, uint32_t buffer_size, const char* format, va_list argp)
+uint32_t u_vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp)
 {
    int pads;     /* extra padding size */
    int dpad;     /* extra 0 padding needed for integers */
@@ -697,10 +698,10 @@ uint32_t u_vsnprintf(char* buffer, uint32_t buffer_size, const char* format, va_
    int dprec;    /* a copy of prec if [diouxX], 0 otherwise */
    int fieldsz;  /* field size expanded by sign, dpad etc */
 
-   char sign;           /* sign prefix (' ', '+', '-', or \0) */
-   char* cp = 0;        /* handy char pointer (short term usage) */
-   const char* fmark;   /* for remembering a place in format */
-   char buf_number[32]; /* space for %[diouxX] */
+   char sign;                    /* sign prefix (' ', '+', '-', or \0) */
+   char buf_number[32];          /* space for %[diouxX] */
+   char* restrict cp = 0;        /* handy char pointer (short term usage) */
+   const char* restrict fmark;   /* for remembering a place in format */
 
    uint64_t argument = 0;        /* integer arguments %[diIouxX] */
    enum { OCT, DEC, HEX } base;  /* base for [diIouxX] conversion */
@@ -736,8 +737,8 @@ uint32_t u_vsnprintf(char* buffer, uint32_t buffer_size, const char* format, va_
 
    int n;                  /* handy integer (short term usage) */
    char ch;                /* character from format */
-   char* bp = buffer;
    uint32_t len, ret = 0;  /* return value accumulator */
+   char* restrict bp = buffer;
 
    U_INTERNAL_TRACE("u_vsnprintf(%s)", format)
 
@@ -954,7 +955,7 @@ minus:
             {
             cp = VA_ARG(char*);
 
-            if (!cp) cp = (char*)"(null)";
+            if (!cp) cp = (char* restrict)"(null)";
 
             U_INTERNAL_ASSERT_POINTER_MSG(cp, "CHECK THE PARAMETERS OF printf()...")
 
@@ -1069,7 +1070,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             if ((argument != 0LL) ||
                 (prec     != 0))
                {
-               const unsigned char* xdigs; /* digits for [xX] conversion */
+               const unsigned char* restrict xdigs; /* digits for [xX] conversion */
 
                /* uint32_t mod is hard, and uint32_t mod by a constant is easier than that by a variable; hence this switch */
 
@@ -1161,13 +1162,13 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                {
                long double ldbl = VA_ARG(long double);
 
-               (void) sprintf(bp, (const char*)fmt_float, width, prec, ldbl);
+               (void) sprintf(bp, (const char* restrict)fmt_float, width, prec, ldbl);
                }
             else
                {
                double dbl = VA_ARG(double);
 
-               (void) sprintf(bp, (const char*)fmt_float, width, prec, dbl);
+               (void) sprintf(bp, (const char* restrict)fmt_float, width, prec, dbl);
                }
 
             len = strlen(bp);
@@ -1276,8 +1277,8 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             static int errno_old;
 
-            uint32_t l      = U_CONSTANT_SIZE(" - ");
-            const char* ccp = VA_ARG(const char*);
+            uint32_t l               = U_CONSTANT_SIZE(" - ");
+            const char* restrict ccp = VA_ARG(const char* restrict);
 
             U_INTERNAL_PRINT("ccp = %s", ccp)
 
@@ -1342,7 +1343,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'Y': /* print u_getSysSignal(signo) */
             {
-            const char* str;
+            const char* restrict str;
 
             n   = VA_ARG(int);
             str = u_getSysSignal(n, &len);
@@ -1357,7 +1358,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'r': /* print u_getExitStatus(exit_value) */
             {
-            const char* str;
+            const char* restrict str;
 
             n   = VA_ARG(int);
             str = u_getExitStatus(n, &len);
@@ -1372,7 +1373,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'D': /* print date and time in various format */
             {
-            const char* fmtdate;
+            const char* restrict fmtdate;
 
             /* flag '#' => var-argument */
 
@@ -1477,7 +1478,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             unsigned char c = VA_ARG(int);
 
-            char* base = bp;
+            char* restrict base = bp;
 
             *bp++ = '\'';
 
@@ -1505,10 +1506,10 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
          case 'S': /* print formatted           string */
          case 'O': /* print formatted temporary string + plus free(string) */
             {
-            char* base = bp;
+            char* restrict base = bp;
             int32_t h, maxlen, remaining;
 
-            cp = VA_ARG(char*);
+            cp = VA_ARG(char* restrict);
 
             if (!cp)
                {
@@ -1538,7 +1539,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                {
                if (cp[n] == '\0' && ((flags & ALT) == 0)) break;
 
-               h = u_sprintc(bp, ((unsigned char*)cp)[n]);
+               h = u_sprintc(bp, ((unsigned char* restrict)cp)[n]);
 
                bp        += h;
                remaining -= h;
@@ -1572,7 +1573,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             int i = sizeof(int), j;
 
             n  = VA_ARG(int);
-            cp = (char*)&n;
+            cp = (char* restrict)&n;
 
 #        if __BYTE_ORDER == __BIG_ENDIAN
             cp += sizeof(int);
@@ -1622,10 +1623,10 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             char text[16];
             unsigned char c;
-            char* start_buffer = bp;
+            char* restrict start_buffer = bp;
             int i, j, line, remain, remain_flag = 16;
 
-            cp     = VA_ARG(char*);
+            cp     = VA_ARG(char* restrict);
             n      = VA_ARG(int);
             line   = n / 16;
             remain = n % 16;
@@ -1633,7 +1634,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             for (i = 0; i < line; ++i)
                {
 iteration:
-               (void) sprintf(bp, "%016X ", (long)cp);
+               (void) sprintf(bp, "%016X ", ptr2int(cp));
 
                bp += 17;
 

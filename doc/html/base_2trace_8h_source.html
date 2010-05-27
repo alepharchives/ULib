@@ -52,16 +52,16 @@
 <a name="l00029"></a>00029 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">void</span> u_trace_check_init(<span class="keywordtype">void</span>);
 <a name="l00030"></a>00030 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">bool</span> u_trace_isActive(<span class="keywordtype">int</span> level);
 <a name="l00031"></a>00031 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">void</span> u_trace_check_if_interrupt(<span class="keywordtype">void</span>); <span class="comment">/* check for context manage signal event - interrupt */</span>
-<a name="l00032"></a>00032 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">void</span> u_trace_dump(<span class="keyword">const</span> <span class="keywordtype">char</span>* format, ...);
-<a name="l00033"></a>00033 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">void</span> u_trace_write(<span class="keyword">const</span> <span class="keywordtype">char</span>* t, uint32_t tlen);
-<a name="l00034"></a>00034 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">void</span> u_trace_writev(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code" href="structiovec.html">iovec</a>* iov, <span class="keywordtype">int</span> n);
+<a name="l00032"></a>00032 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">void</span> u_trace_dump(<span class="keyword">const</span> <span class="keywordtype">char</span>* restrict format, ...);
+<a name="l00033"></a>00033 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">void</span> u_trace_write(<span class="keyword">const</span> <span class="keywordtype">char</span>* restrict t, uint32_t tlen);
+<a name="l00034"></a>00034 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">void</span> u_trace_writev(<span class="keyword">const</span> <span class="keyword">struct</span> <a class="code" href="structiovec.html">iovec</a>* restrict iov, <span class="keywordtype">int</span> n);
 <a name="l00035"></a>00035 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">void</span> u_trace_init(<span class="keywordtype">bool</span> force, <span class="keywordtype">bool</span> info, <span class="keywordtype">bool</span> offset);
 <a name="l00036"></a>00036 
 <a name="l00037"></a>00037 <span class="comment">/* E&#39; possibile mascherare il trace per metodi eccessivamente complessi</span>
 <a name="l00038"></a>00038 <span class="comment">  (Es: ricorsivi) tramite il byte alto del parametro &#39;level&#39; */</span>
 <a name="l00039"></a>00039 
-<a name="l00040"></a>00040 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">void</span> u_trace_dtor(<span class="keywordtype">int</span> active, <span class="keywordtype">void</span>* hook);
-<a name="l00041"></a>00041 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">bool</span> u_trace_check_if_active(<span class="keywordtype">int</span> level, <span class="keywordtype">void</span>* hook);
+<a name="l00040"></a>00040 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">void</span> u_trace_dtor(<span class="keywordtype">int</span> active, <span class="keywordtype">void</span>* restrict hook);
+<a name="l00041"></a>00041 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">bool</span> u_trace_check_if_active(<span class="keywordtype">int</span> level, <span class="keywordtype">void</span>* restrict hook);
 <a name="l00042"></a>00042 
 <a name="l00043"></a>00043 <span class="comment">/* Attivazione-disattivazione temporanea */</span>
 <a name="l00044"></a>00044 
@@ -73,7 +73,7 @@
 <a name="l00050"></a>00050 <span class="preprocessor"></span>
 <a name="l00051"></a>00051 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:37 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu May 27 19:03:56 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

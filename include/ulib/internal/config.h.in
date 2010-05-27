@@ -911,23 +911,22 @@ typedef unsigned long long uint64;
 /* Define to `long' if <sys/types.h> does not define. */
 #undef ptrdiff_t
 
+/* Define to the equivalent of the C99 'restrict' keyword, or to
+   nothing if this is not supported.  Do not define if restrict is
+   supported directly.  */
+#undef restrict
+/* Work around a bug in Sun C++: it does not support _Restrict or
+   __restrict__, even though the corresponding Sun C compiler ends up with
+   "#define restrict _Restrict" or "#define restrict __restrict__" in the
+   previous line.  Perhaps some future version of Sun C++ will work with
+   restrict; if so, hopefully it defines __RESTRICT like Sun C does.  */
+#if defined __SUNPRO_CC && !defined __RESTRICT
+# define _Restrict
+# define __restrict__
+#endif
+
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t
-
-
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#else
-#ifdef HAVE_SYS_POLL_H
-#include <sys/poll.h>
-#endif
-#endif
-
-#if defined(HAVE_POLL) && defined(POLLRDNORM)
-#define	USE_POLL
-#endif
-
-	
 
 
 
@@ -1058,125 +1057,6 @@ typedef enum { true=1, false=0 } bool;
 #ifdef  __KCC
 #define KAI_NONSTD_IOSTREAM 1
 #endif
-	
-
-
-
-#ifndef HAVE_FCNTL_H
-#ifdef HAVE_SYS_FCNTL_H
-#include <sys/fcntl.h>
-#endif
-#else
-#include <fcntl.h>
-#ifndef O_NDELAY
-#ifdef HAVE_SYS_FCNTL_H
-#include <sys/fcntl.h>
-#endif
-#endif
-#endif
-	
-
-
-#if defined(HAVE_ENDIAN_H)
- #include <endian.h>
-#elif defined(HAVE_SYS_ISA_DEFS_H)
- #include <sys/isa_defs.h>
- #ifdef	_LITTLE_ENDIAN
-  #define	__BYTE_ORDER 1234
- #else
-  #define	__BYTE_ORDER 4321
- #endif
- #if _ALIGNMENT_REQUIRED > 0
-  #define	__BYTE_ALIGNMENT _MAX_ALIGNMENT
- #else
-  #define	__BYTE_ALIGNMENT 1
- #endif
-#endif
-
-#ifndef	__LITTLE_ENDIAN
-#define __LITTLE_ENDIAN 1234
-#define __BIG_ENDIAN 4321
-#endif
-
-#ifndef	__BYTE_ORDER
-#define	__BYTE_ORDER 1234
-#endif
-
-#ifndef	__BYTE_ALIGNMENT
-#if defined(SPARC) || defined(sparc)
-#if defined(__arch64__) || defined(__sparcv9)
-#define	__BYTE_ALIGNMENT 8
-#else
-#define	__BYTE_ALIGNMENT 4
-#endif
-#endif
-#endif
-
-#ifndef	__BYTE_ALIGNMENT
-#define	__BYTE_ALIGNMENT 1
-#endif
-
-	
-
-
-#ifdef HAVE_SIGACTION
-#ifdef HAVE_BSD_SIGNAL_H
-#undef HAVE_BSD_SIGNAL_H
-#endif
-#endif
-
-/* Cause problem with Solaris... and perhaps Digital Unix?
-  However, the autoconf test in ost_signal defines _POSIX_PTHREAD_SEMANTICS 
- when trying to compile sigwait2. */
-
-#ifdef  HAVE_SIGWAIT2
-#ifndef	_POSIX_PTHREAD_SEMANTICS
-#define _POSIX_PTHREAD_SEMANTICS
-#endif
-#endif
-
-#ifdef HAVE_BSD_SIGNAL_H
-#include <bsd/signal.h>
-#else
-#include <signal.h>
-#endif
-#ifndef SA_ONESHOT
-#define SA_ONESHOT SA_RESETHAND
-#endif
-
-	
-
-
-#include <string.h>
-#ifdef HAVE_STRINGS_H
-#ifndef	_AIX
-#include <strings.h>
-#endif
-#endif
-
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
-#ifndef HAVE_SNPRINTF
-#ifdef  WIN32
-#define snprintf        _snprintf
-#define vsnprintf       _vsnprintf
-#endif
-#endif
-
-#ifdef HAVE_STRCASECMP
-#ifndef stricmp
-#define stricmp(x,y) strcasecmp(x,y)
-#endif
-#ifndef strnicmp
-#define strnicmp(x,y,n) strncasecmp(x,y,n)
-#endif
-#ifndef	stristr
-#define	stristr(x, y) strcasestr(x,y)
-#endif
-#endif
-
 	
 
 
@@ -1348,6 +1228,125 @@ enum
 
 
 
+#ifndef HAVE_FCNTL_H
+#ifdef HAVE_SYS_FCNTL_H
+#include <sys/fcntl.h>
+#endif
+#else
+#include <fcntl.h>
+#ifndef O_NDELAY
+#ifdef HAVE_SYS_FCNTL_H
+#include <sys/fcntl.h>
+#endif
+#endif
+#endif
+	
+
+
+#if defined(HAVE_ENDIAN_H)
+ #include <endian.h>
+#elif defined(HAVE_SYS_ISA_DEFS_H)
+ #include <sys/isa_defs.h>
+ #ifdef	_LITTLE_ENDIAN
+  #define	__BYTE_ORDER 1234
+ #else
+  #define	__BYTE_ORDER 4321
+ #endif
+ #if _ALIGNMENT_REQUIRED > 0
+  #define	__BYTE_ALIGNMENT _MAX_ALIGNMENT
+ #else
+  #define	__BYTE_ALIGNMENT 1
+ #endif
+#endif
+
+#ifndef	__LITTLE_ENDIAN
+#define __LITTLE_ENDIAN 1234
+#define __BIG_ENDIAN 4321
+#endif
+
+#ifndef	__BYTE_ORDER
+#define	__BYTE_ORDER 1234
+#endif
+
+#ifndef	__BYTE_ALIGNMENT
+#if defined(SPARC) || defined(sparc)
+#if defined(__arch64__) || defined(__sparcv9)
+#define	__BYTE_ALIGNMENT 8
+#else
+#define	__BYTE_ALIGNMENT 4
+#endif
+#endif
+#endif
+
+#ifndef	__BYTE_ALIGNMENT
+#define	__BYTE_ALIGNMENT 1
+#endif
+
+	
+
+
+#ifdef HAVE_SIGACTION
+#ifdef HAVE_BSD_SIGNAL_H
+#undef HAVE_BSD_SIGNAL_H
+#endif
+#endif
+
+/* Cause problem with Solaris... and perhaps Digital Unix?
+  However, the autoconf test in ost_signal defines _POSIX_PTHREAD_SEMANTICS 
+ when trying to compile sigwait2. */
+
+#ifdef  HAVE_SIGWAIT2
+#ifndef	_POSIX_PTHREAD_SEMANTICS
+#define _POSIX_PTHREAD_SEMANTICS
+#endif
+#endif
+
+#ifdef HAVE_BSD_SIGNAL_H
+#include <bsd/signal.h>
+#else
+#include <signal.h>
+#endif
+#ifndef SA_ONESHOT
+#define SA_ONESHOT SA_RESETHAND
+#endif
+
+	
+
+
+#include <string.h>
+#ifdef HAVE_STRINGS_H
+#ifndef	_AIX
+#include <strings.h>
+#endif
+#endif
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+
+#ifndef HAVE_SNPRINTF
+#ifdef  WIN32
+#define snprintf        _snprintf
+#define vsnprintf       _vsnprintf
+#endif
+#endif
+
+#ifdef HAVE_STRCASECMP
+#ifndef stricmp
+#define stricmp(x,y) strcasecmp(x,y)
+#endif
+#ifndef strnicmp
+#define strnicmp(x,y,n) strncasecmp(x,y,n)
+#endif
+#ifndef	stristr
+#define	stristr(x, y) strcasestr(x,y)
+#endif
+#endif
+
+	
+
+
+
 #ifndef HAVE_STRERROR_R
 #define strerror_r(e, b, l) b = ::strerror(e)
 #endif
@@ -1355,6 +1354,21 @@ enum
 #ifndef	HAVE_GETPWUID_R
 #define	getpwuid_r(uid, rec, buf, size, ptr) ptr = ::getpwuid(uid)
 #define	getpwnam_r(name, rec, buf, size, ptr) ptr = ::getpwnam(name)
+#endif
+
+	
+
+
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#else
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
+#endif
+
+#if defined(HAVE_POLL) && defined(POLLRDNORM)
+#define	USE_POLL
 #endif
 
 	

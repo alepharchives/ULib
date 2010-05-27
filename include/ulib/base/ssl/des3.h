@@ -22,15 +22,15 @@ extern "C" {
 
 extern U_EXPORT void u_des_init(void);
 extern U_EXPORT void u_des_reset(void);
-extern U_EXPORT void u_des_key(const char* str);
-extern U_EXPORT long u_des_encode(const unsigned char* inp, long len, unsigned char* out);
-extern U_EXPORT long u_des_decode(const unsigned char* inp, long len, unsigned char* out);
+extern U_EXPORT void u_des_key(const char* restrict str);
+extern U_EXPORT long u_des_encode(const unsigned char* restrict inp, long len, unsigned char* restrict out);
+extern U_EXPORT long u_des_decode(const unsigned char* restrict inp, long len, unsigned char* restrict out);
 
 extern U_EXPORT void u_des3_init(void);
 extern U_EXPORT void u_des3_reset(void);
-extern U_EXPORT void u_des3_key(const char* str);
-extern U_EXPORT long u_des3_encode(const unsigned char* inp, long len, unsigned char* out);
-extern U_EXPORT long u_des3_decode(const unsigned char* inp, long len, unsigned char* out);
+extern U_EXPORT void u_des3_key(const char* restrict str);
+extern U_EXPORT long u_des3_encode(const unsigned char* restrict inp, long len, unsigned char* restrict out);
+extern U_EXPORT long u_des3_decode(const unsigned char* restrict inp, long len, unsigned char* restrict out);
 
 #ifdef __cplusplus
 }

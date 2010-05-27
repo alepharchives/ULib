@@ -91,7 +91,7 @@ bPFpcupcud u_pfn_match = u_dosmatch;
 
 const char* u_short_units[4] = { "B/s", "K/s", "M/s", "G/s" };
 
-const char* u_getPathRelativ(const char* path, uint32_t* ptr_path_len)
+const char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_path_len)
 {
    uint32_t path_len = *ptr_path_len;
 
@@ -147,11 +147,11 @@ const char* u_getPathRelativ(const char* path, uint32_t* ptr_path_len)
 
 /* find sequence of U_LF2 or U_CRLF2 */
 
-uint32_t u_findEndHeader(const char* str, uint32_t n)
+uint32_t u_findEndHeader(const char* restrict str, uint32_t n)
 {
-   const char* p;
-   const char* end = str + n;
-   const char* ptr = str;
+   const char* restrict p;
+   const char* restrict end = str + n;
+   const char* restrict ptr = str;
 
    uint32_t endHeader = U_NOT_FOUND;
 
@@ -161,9 +161,9 @@ uint32_t u_findEndHeader(const char* str, uint32_t n)
 
    while (ptr < end)
       {
-      p = (const char*) memchr(ptr, '\n', end - ptr);
+      p = (const char* restrict) memchr(ptr, '\n', end - ptr);
 
-      if (p == NULL) break;
+      if (p == 0) break;
 
       // \n\n
 
@@ -201,12 +201,12 @@ uint32_t u_findEndHeader(const char* str, uint32_t n)
 
 /* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */
 
-bool u_ranAsUser(const char* user, bool change_dir)
+bool u_ranAsUser(const char* restrict user, bool change_dir)
 {
 #ifdef __MINGW32__
    return false;
 #else
-   struct passwd* pw;
+   struct passwd* restrict pw;
 
    U_INTERNAL_TRACE("u_ranAsUser(%s,%d)", user, change_dir)
 
@@ -268,7 +268,7 @@ if rate is greater than 1K/s, kilobytes are used, and if rate is greater than 1M
 UNITS is zero for B/s, one for KB/s, two for MB/s, and three for GB/s
 */
 
-double u_calcRate(uint64_t bytes, uint32_t msecs, int* units)
+double u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units)
 {
    double dlrate = (double)1000. * bytes / (double)msecs;
 
@@ -288,7 +288,7 @@ double u_calcRate(uint64_t bytes, uint32_t msecs, int* units)
    return dlrate;
 }
 
-void u_printSize(char* buffer, uint64_t bytes)
+void u_printSize(char* restrict buffer, uint64_t bytes)
 {
    int units;
    double size;
@@ -308,7 +308,7 @@ void u_printSize(char* buffer, uint64_t bytes)
    else       (void) sprintf(buffer, "%7.0f Bytes", size);
 }
 
-bool u_rmatch(const char* haystack, uint32_t haystack_len, const char* needle, uint32_t needle_len)
+bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len)
 {
    U_INTERNAL_TRACE("u_rmatch(%.*s,%u,%.*s,%u)", U_min(haystack_len,128), haystack, haystack_len,
                                                  U_min(  needle_len,128),  needle,   needle_len)
@@ -321,8 +321,8 @@ bool u_rmatch(const char* haystack, uint32_t haystack_len, const char* needle, u
       {
       // see if substring characters match at end
 
-      const char* nn  = needle   + needle_len   - 1;
-      const char* hh  = haystack + haystack_len - 1;
+      const char* restrict nn = needle   + needle_len   - 1;
+      const char* restrict hh = haystack + haystack_len - 1;
 
       while (*nn-- == *hh--)
          {
@@ -335,10 +335,10 @@ bool u_rmatch(const char* haystack, uint32_t haystack_len, const char* needle, u
    return false;
 }
 
-void* u_find(const char* s, uint32_t n, const char* a, uint32_t n1)
+void* u_find(const char* restrict s, uint32_t n, const char* restrict a, uint32_t n1)
 {
 #ifdef HAVE_MEMMEM
-   void* p;
+   void* restrict p;
 #else
    uint32_t pos = 0;
 #endif
@@ -369,10 +369,10 @@ void* u_find(const char* s, uint32_t n, const char* a, uint32_t n1)
  * Locates the first occurrence in the string s of any of the characters in the string accept
  */
  
-const char* u_strpbrk(const char* s, uint32_t slen, const char* accept)
+const char* u_strpbrk(const char* restrict s, uint32_t slen, const char* restrict accept)
 {
-   const char* c;
-   const char* end = s + slen;
+   const char* restrict c;
+   const char* restrict end = s + slen;
 
    U_INTERNAL_TRACE("u_strpbrk(%.*s,%u,%s)", U_min(slen,128), s, slen, accept)
 
@@ -395,14 +395,14 @@ const char* u_strpbrk(const char* s, uint32_t slen, const char* accept)
 
 /* Search a string for a terminator of a group of delimitator {} [] () <%%>...*/
 
-const char* u_strpend(const char* s, uint32_t slen, const char* group_delimitor, uint32_t group_delimitor_len, char skip_line)
+const char* u_strpend(const char* restrict s, uint32_t slen, const char* restrict group_delimitor, uint32_t group_delimitor_len, char skip_line_comment)
 {
    char c;
    int level = 1;
-   const char* end = s + slen;
+   const char* restrict end = s + slen;
    uint32_t i, n = group_delimitor_len / 2;
 
-   U_INTERNAL_TRACE("u_strpend(%.*s,%u,%s,%u,%c)", U_min(slen,128), s, slen, group_delimitor, group_delimitor_len, skip_line)
+   U_INTERNAL_TRACE("u_strpend(%.*s,%u,%s,%u,%d)", U_min(slen,128), s, slen, group_delimitor, group_delimitor_len, skip_line_comment)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_MAJOR(slen,0)
@@ -410,28 +410,31 @@ const char* u_strpend(const char* s, uint32_t slen, const char* group_delimitor,
    U_INTERNAL_ASSERT_EQUALS(s[0], group_delimitor[n-1])
    U_INTERNAL_ASSERT_EQUALS(group_delimitor_len & 1, 0)
 
-   while (true)
+   while (s < end)
       {
+loop:
       c = *++s;
-
-      if (s >= end) break;
 
       if (u_isspace(c)) continue;
 
-      if (c == skip_line)
+      if (c == skip_line_comment)
          {
          /* skip line comment */
 
-         s = (const char*) memchr(s, '\n', end - s);
+         s = (const char* restrict) memchr(s, '\n', end - s);
 
          if (s == 0) break;
          }
-
       else if (c == group_delimitor[0] && *(s-1) != '\\')
          {
          U_INTERNAL_PRINT("c = %c level = %d s = %.*s", c, level, 10, s)
 
-         for (i = 1; i < n; ++i) if (s[i] != group_delimitor[i]) continue;
+         for (i = 1; i < n; ++i)
+            {
+            U_INTERNAL_PRINT("s[%d] = %c group_delimitor[%d] = %c", i, s[i], i, group_delimitor[i])
+
+            if (s[i] != group_delimitor[i]) goto loop;
+            }
 
          ++level;
          }
@@ -439,7 +442,12 @@ const char* u_strpend(const char* s, uint32_t slen, const char* group_delimitor,
          {
          U_INTERNAL_PRINT("c = %c level = %d s = %.*s", c, level, 10, s)
 
-         for (i = 1; i < n; ++i) if (s[i] != group_delimitor[n+i]) continue;
+         for (i = 1; i < n; ++i)
+            {
+            U_INTERNAL_PRINT("s[%d] = %c group_delimitor[%d] = %c", i, s[i], n+i, group_delimitor[n+i])
+
+            if (s[i] != group_delimitor[n+i]) goto loop;
+            }
 
          if (--level == 0) return s;
          }
@@ -452,7 +460,7 @@ const char* u_strpend(const char* s, uint32_t slen, const char* group_delimitor,
 
 /* check if string a start with string b */
 
-bool u_startsWith(const char* a, uint32_t n1, const char* b, uint32_t n2)
+bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2)
 {
    int32_t diff = n1 - n2;
 
@@ -469,7 +477,7 @@ bool u_startsWith(const char* a, uint32_t n1, const char* b, uint32_t n2)
 
 /* check if string a terminate with string b */
 
-bool u_endsWith(const char* a, uint32_t n1, const char* b, uint32_t n2)
+bool u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2)
 {
    int32_t diff = n1 - n2;
 
@@ -484,10 +492,10 @@ bool u_endsWith(const char* a, uint32_t n1, const char* b, uint32_t n2)
    return false;
 }
 
-bool u_isNumber(const char* s, uint32_t n)
+bool u_isNumber(const char* restrict s, uint32_t n)
 {
-   int vdigit[]    = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 };
-   const char* end = s + n;
+   int vdigit[]             = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 };
+   const char* restrict end = s + n;
 
    U_INTERNAL_TRACE("u_isNumber(%.*s,%u)", U_min(n,128), s, n)
 
@@ -501,10 +509,10 @@ bool u_isNumber(const char* s, uint32_t n)
       }
 
    while (s < end &&
-          ((*(const unsigned char*)s) >> 4) == 0x03 &&
-          vdigit[(*(const unsigned char*)s)  & 0x0f])
+          ((*(const unsigned char* restrict)s) >> 4) == 0x03 &&
+          vdigit[(*(const unsigned char* restrict)s)  & 0x0f])
       {
-      U_INTERNAL_PRINT("*s = %c, *s >> 4 = %c ", *s, (*(char*)s) >> 4)
+      U_INTERNAL_PRINT("*s = %c, *s >> 4 = %c ", *s, (*(char* restrict)s) >> 4)
 
       ++s;
       }
@@ -514,9 +522,9 @@ bool u_isNumber(const char* s, uint32_t n)
 
 /* find char not quoted */
 
-const char* u_find_char(const char* s, const char* end, char c)
+const char* u_find_char(const char* restrict s, const char* restrict end, char c)
 {
-   U_INTERNAL_TRACE("u_find_char(%.*s,%p,%C)", U_min(end-s,128), s, end, c)
+   U_INTERNAL_TRACE("u_find_char(%.*s,%p,%d)", U_min(end-s,128), s, end, c)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(end)
@@ -524,7 +532,7 @@ const char* u_find_char(const char* s, const char* end, char c)
 
    while (true)
       {
-      s = (const char*) memchr(s, c, end - s);
+      s = (const char* restrict) memchr(s, c, end - s);
 
       if (s == 0) s = end;
       else
@@ -545,9 +553,9 @@ const char* u_find_char(const char* s, const char* end, char c)
 
 /* skip string delimiter or white space and line comment */
 
-const char* u_skip(const char* s, const char* end, const char* delim, char line_comment)
+const char* u_skip(const char* restrict s, const char* restrict end, const char* restrict delim, char line_comment)
 {
-   U_INTERNAL_TRACE("u_skip(%.*s,%p,%s,%C)", U_min(end-s,128), s, end, delim, line_comment)
+   U_INTERNAL_TRACE("u_skip(%.*s,%p,%s,%d)", U_min(end-s,128), s, end, delim, line_comment)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(end)
@@ -577,7 +585,7 @@ skipws:
             {
             // skip line comment
 
-            s = (const char*) memchr(s, '\n', end - s);
+            s = (const char* restrict) memchr(s, '\n', end - s);
 
             if (s) goto skipws;
 
@@ -591,7 +599,7 @@ skipws:
 
 /* delimit token */
 
-const char* u_delimit_token(const char* s, const char** p, const char* end, const char* delim, char skip_line_comment)
+const char* u_delimit_token(const char* restrict s, const char** restrict p, const char* restrict end, const char* restrict delim, char skip_line_comment)
 {
    char c;
 
@@ -599,7 +607,7 @@ const char* u_delimit_token(const char* s, const char** p, const char* end, cons
    U_INTERNAL_ASSERT_POINTER(p)
    U_INTERNAL_ASSERT_POINTER(end)
 
-   U_INTERNAL_TRACE("u_delimit_token(%.*s,%p,%p,%s,%C)", U_min(end-s,128), s, p, end, delim, skip_line_comment)
+   U_INTERNAL_TRACE("u_delimit_token(%.*s,%p,%p,%s,%d)", U_min(end-s,128), s, p, end, delim, skip_line_comment)
 
    s = u_skip(s, end, delim, skip_line_comment);
 
@@ -626,7 +634,7 @@ const char* u_delimit_token(const char* s, const char** p, const char* end, cons
       }
    else if (delim)
       {
-      s = (const char*) u_strpbrk(s, end - s, delim);
+      s = (const char* restrict) u_strpbrk(s, end - s, delim);
 
       if (s == 0) return end;
       }
@@ -646,14 +654,14 @@ const char* u_delimit_token(const char* s, const char** p, const char* end, cons
 
 /* Match STRING against the filename pattern MASK, returning true if it matches, false if not */
 
-bool u_dosmatch(const char* s, uint32_t n1, const char* mask, uint32_t n2, int ignorecase)
+bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int ignorecase)
 {
-   const char* cp = 0;
-   const char* mp = 0;
+   const char* restrict cp = 0;
+   const char* restrict mp = 0;
    unsigned char c1 = 0, c2 = 0;
 
-   const char* end_s    =    s + n1;
-   const char* end_mask = mask + n2;
+   const char* restrict end_s    =    s + n1;
+   const char* restrict end_mask = mask + n2;
 
    U_INTERNAL_TRACE("u_dosmatch(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, ignorecase)
 
@@ -780,7 +788,7 @@ bool u_dosmatch(const char* s, uint32_t n1, const char* mask, uint32_t n2, int i
 
 /* Match STRING against the filename pattern MASK and multiple patterns separated by '|', returning true if it matches, false if not */
 
-bool u_dosmatch_with_OR(const char* s, uint32_t n1, const char* mask, uint32_t n2, int ignorecase)
+bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int ignorecase)
 {
    const char* p_or;
 
@@ -793,9 +801,9 @@ bool u_dosmatch_with_OR(const char* s, uint32_t n1, const char* mask, uint32_t n
 
    while (true)
       {
-      p_or = (const char*) memchr(mask, '|', n2);
+      p_or = (const char* restrict) memchr(mask, '|', n2);
 
-      if (p_or == NULL) return u_dosmatch(s, n1, mask, n2, ignorecase);
+      if (p_or == 0) return u_dosmatch(s, n1, mask, n2, ignorecase);
 
       n2 = p_or - mask;
 
@@ -805,7 +813,7 @@ bool u_dosmatch_with_OR(const char* s, uint32_t n1, const char* mask, uint32_t n
       }
 }
 
-bool u_isMacAddr(const char* p, uint32_t len)
+bool u_isMacAddr(const char* restrict p, uint32_t len)
 {
    uint32_t c;
 
@@ -859,12 +867,12 @@ bool u_isMacAddr(const char* p, uint32_t len)
 
 #define RFC822_SPECIALS "()<>@,;:\\\"[]"
 
-bool u_validate_email_address(const char* address, uint32_t address_len)
+bool u_validate_email_address(const char* restrict address, uint32_t address_len)
 {
    int count;
-   const char* c;
-   const char* end;
-   const char* domain;
+   const char* restrict c;
+   const char* restrict end;
+   const char* restrict domain;
 
    U_INTERNAL_TRACE("u_validate_email_address(%.*s,%u)", U_min(address_len,128), address, address_len)
 
@@ -939,7 +947,7 @@ bool u_validate_email_address(const char* address, uint32_t address_len)
 
 /* Perform 'natural order' comparisons of strings. */
 
-int u_strnatcmp(char const* a, char const* b)
+int u_strnatcmp(char const* restrict a, char const* restrict b)
 {
    char ca, cb;
    int ai = 0, bi = 0;
@@ -1024,11 +1032,11 @@ done_number:
       }
 }
 
-uint32_t u_split(char* s, uint32_t n, char* argv[], const char* delim)
+uint32_t u_split(char* restrict s, uint32_t n, char** restrict argv, const char* restrict delim)
 {
-   const char* p;
-   char* end  = s + n;
-   char** ptr = argv;
+   const char* restrict p;
+   char* restrict end  = s + n;
+   char** restrict ptr = argv;
 
    U_INTERNAL_TRACE("u_split(%.*s,%u,%p,%s)", U_min(n,128), s, n, argv, delim)
 
@@ -1039,13 +1047,13 @@ uint32_t u_split(char* s, uint32_t n, char* argv[], const char* delim)
 
    while (s < end)
       {
-      s = (char*) u_delimit_token(s, &p, end, delim, 0);
+      s = (char* restrict) u_delimit_token(s, (const char** restrict)&p, end, delim, 0);
 
       U_INTERNAL_PRINT("s = %.*s", 20, s)
 
       if (s <= end)
          {
-         *argv++ = (char*) p;
+         *argv++ = (char* restrict) p;
 
          *s++ = '\0';
 
@@ -1070,14 +1078,14 @@ uint32_t u_split(char* s, uint32_t n, char* argv[], const char* delim)
  * Advance (P_INDEX) to the character after the colon
  */
 
-static inline char* extract_colon_unit(char* pzDir, const char* string, uint32_t string_len, uint32_t* p_index)
+static inline char* extract_colon_unit(char* restrict pzDir, const char* restrict string, uint32_t string_len, uint32_t* restrict p_index)
 {
-         char* pzDest = pzDir;
-   const char* pzSrc  = string + *p_index;
+         char* restrict pzDest = pzDir;
+   const char* restrict pzSrc  = string + *p_index;
 
    U_INTERNAL_TRACE("extract_colon_unit(%s,%.*s,%u,%p)", pzDir, string_len, string, string_len, p_index)
 
-   if ((string == NULL) ||
+   if ((string == 0) ||
        (*p_index >= string_len))
       {
       return 0;
@@ -1111,7 +1119,7 @@ static inline char* extract_colon_unit(char* pzDir, const char* string, uint32_t
 
 /* Turn STRING (a pathname) into an absolute pathname, assuming that DOT_PATH contains the symbolic location of '.' */
 
-static inline void make_absolute(char* result, const char* dot_path, const char* string)
+static inline void make_absolute(char* restrict result, const char* restrict dot_path, const char* restrict string)
 {
    int result_len;
 
@@ -1153,7 +1161,7 @@ static inline void make_absolute(char* result, const char* dot_path, const char*
 #ifdef __MINGW32__
 #  define U_PATH_DEFAULT "C:\\msys\\1.0\\bin;C:\\MinGW\\bin;C:\\windows;C:\\windows\\system;C:\\windows\\system32"
 
-static const char* u_check_for_suffix_exe(const char* program)
+static const char* u_check_for_suffix_exe(const char* restrict program)
 {
    static char program_w32[MAX_FILENAME_LEN + 1];
 
@@ -1177,10 +1185,10 @@ static const char* u_check_for_suffix_exe(const char* program)
 #  define U_PATH_DEFAULT "/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin"
 #endif
 
-bool u_pathfind(char* result, const char* path, uint32_t path_len, const char* filename, int mode)
+bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_len, const char* restrict filename, int mode)
 {
-   char* colon_unit;
    uint32_t p_index = 0;
+   char* restrict colon_unit;
    char zPath[U_PATH_MAX + 1];
 
    U_INTERNAL_TRACE("u_pathfind(%p,%.*s,%u,%s,%d)", result, path_len, path, path_len, filename, mode)
@@ -1213,7 +1221,7 @@ bool u_pathfind(char* result, const char* path, uint32_t path_len, const char* f
 
       /* IF no more entries, THEN quit */
 
-      if (colon_unit == NULL) break;
+      if (colon_unit == 0) break;
 
       make_absolute(result, colon_unit, filename);
 
@@ -1242,12 +1250,12 @@ bool u_pathfind(char* result, const char* path, uint32_t path_len, const char* f
 // Non-leading '../' and trailing '..' are handled by removing portions of the path
 // ---------------------------------------------------------------------------------- */
 
-void u_canonicalize_pathname(char* path)
+void u_canonicalize_pathname(char* restrict path)
 {
    int len;
-   char* p;
-   char* s;
-   char* lpath = path;
+   char* restrict p;
+   char* restrict s;
+   char* restrict lpath = path;
 
    U_INTERNAL_TRACE("u_canonicalize_pathname(%s)", path)
 
@@ -1400,7 +1408,7 @@ void u_canonicalize_pathname(char* path)
 
 /* Prepare command for call to exec() */
 
-int u_splitCommand(char* s, uint32_t n, char* argv[], char* pathbuf, uint32_t pathbuf_size)
+int u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* restrict pathbuf, uint32_t pathbuf_size)
 {
    char c;
    uint32_t i = 0;
@@ -1428,7 +1436,7 @@ int u_splitCommand(char* s, uint32_t n, char* argv[], char* pathbuf, uint32_t pa
    if (bpath)
       {
       argv[0] = argv[1];
-      argv[1] = (char*) u_basename(argv[0]);
+      argv[1] = (char* restrict) u_basename(argv[0]);
 
       pathbuf[0] = '\0';
       }
@@ -1437,7 +1445,7 @@ int u_splitCommand(char* s, uint32_t n, char* argv[], char* pathbuf, uint32_t pa
       argv[0] = pathbuf;
 
 #  ifdef __MINGW32__
-      argv[1] = (char*)u_check_for_suffix_exe(argv[1]);
+      argv[1] = (char* restrict) u_check_for_suffix_exe(argv[1]);
 #  endif
 
       if (u_pathfind(pathbuf, 0, 0, argv[1], R_OK | X_OK) == false) return -1;
@@ -1482,7 +1490,7 @@ struct u_dirent_s {
 };
 
 struct u_dir_s {
-   char* free;
+   char* restrict free;
    struct u_dirent_s* dp;
    uint32_t num, max, pfree, nfree, szfree;
 };
@@ -1492,21 +1500,21 @@ struct u_ftw_ctx_s u_ftw_ctx;
 #define U_DIRENT_ALLOCATE   (128U * 1024U)
 #define U_FILENAME_ALLOCATE ( 32U * U_DIRENT_ALLOCATE)
 
-static inline void u_ftw_allocate(struct u_dir_s* u_dir)
+static inline void u_ftw_allocate(struct u_dir_s* restrict u_dir)
 {
    U_INTERNAL_TRACE("u_ftw_allocate(%p)", u_dir)
 
    if (u_ftw_ctx.sort_by)
       {
-      u_dir->free  = (char*) malloc((u_dir->nfree = u_dir->szfree = U_FILENAME_ALLOCATE));
-      u_dir->dp    = (struct u_dirent_s*) malloc((u_dir->max = U_DIRENT_ALLOCATE) * sizeof(struct u_dirent_s));
+      u_dir->free  = (char* restrict)     malloc((u_dir->nfree = u_dir->szfree = U_FILENAME_ALLOCATE));
+      u_dir->dp    = (struct u_dirent_s*) malloc((u_dir->max                   = U_DIRENT_ALLOCATE) * sizeof(struct u_dirent_s));
       u_dir->pfree = 0U;
       }
 
    u_dir->num = 0U;
 }
 
-static inline void u_ftw_deallocate(struct u_dir_s* u_dir)
+static inline void u_ftw_deallocate(struct u_dir_s* restrict u_dir)
 {
    U_INTERNAL_TRACE("u_ftw_deallocate(%p)", u_dir)
 
@@ -1517,7 +1525,7 @@ static inline void u_ftw_deallocate(struct u_dir_s* u_dir)
       }
 }
 
-static inline void u_ftw_reallocate(struct u_dir_s* u_dir, uint32_t d_namlen)
+static inline void u_ftw_reallocate(struct u_dir_s* restrict u_dir, uint32_t d_namlen)
 {
    U_INTERNAL_TRACE("u_ftw_reallocate(%p,%u)", u_dir, d_namlen)
 
@@ -1529,7 +1537,7 @@ static inline void u_ftw_reallocate(struct u_dir_s* u_dir, uint32_t d_namlen)
 
       U_INTERNAL_PRINT("Reallocating u_dir->dp to size %u", u_dir->max)
 
-      u_dir->dp = (struct u_dirent_s*) realloc(u_dir->dp, u_dir->max * sizeof(struct u_dirent_s));
+      u_dir->dp = (struct u_dirent_s* restrict) realloc(u_dir->dp, u_dir->max * sizeof(struct u_dirent_s));
 
       U_INTERNAL_ASSERT_POINTER(u_dir->dp)
       }
@@ -1541,13 +1549,13 @@ static inline void u_ftw_reallocate(struct u_dir_s* u_dir, uint32_t d_namlen)
 
       U_INTERNAL_PRINT("Reallocating u_dir->free to size %u", u_dir->szfree)
 
-      u_dir->free = (char*) realloc(u_dir->free, u_dir->szfree);
+      u_dir->free = (char* restrict) realloc(u_dir->free, u_dir->szfree);
 
       U_INTERNAL_ASSERT_POINTER(u_dir->free)
       }
 }
 
-static void u_ftw_call(char* d_name, uint32_t d_namlen, unsigned char d_type)
+static void u_ftw_call(char* restrict d_name, uint32_t d_namlen, unsigned char d_type)
 {
    U_INTERNAL_TRACE("u_ftw_call(%.*s,%u,%d)", d_namlen, d_name, d_namlen, d_type)
 
@@ -1581,14 +1589,15 @@ end:
    u_buffer_len -= d_namlen;
 }
 
-int u_ftw_ino_cmp(const void* a, const void* b) { return (((const struct u_dirent_s*)a)->d_ino - ((const struct u_dirent_s*)b)->d_ino); }
+int u_ftw_ino_cmp(const void* restrict a, const void* restrict b)
+{ return (((const struct u_dirent_s* restrict)a)->d_ino - ((const struct u_dirent_s* restrict)b)->d_ino); }
 
-static void u_ftw_readdir(DIR* dirp)
+static void u_ftw_readdir(DIR* restrict dirp)
 {
-   struct dirent* dp;
    uint32_t i, d_namlen;
    struct u_dir_s u_dir;
-   struct u_dirent_s* ds;
+   struct dirent* restrict dp;
+   struct u_dirent_s* restrict ds;
 
    U_INTERNAL_TRACE("u_ftw_readdir(%p)", dirp)
 
@@ -1602,7 +1611,7 @@ static void u_ftw_readdir(DIR* dirp)
     * -----------------------------------------
     */
 
-   while ((dp = (struct dirent*) readdir(dirp)))
+   while ((dp = (struct dirent* restrict) readdir(dirp)))
       {
       d_namlen = NAMLEN(dp);
 
@@ -1657,7 +1666,7 @@ static void u_ftw_readdir(DIR* dirp)
 
 void u_ftw(void)
 {
-   DIR* dirp;
+   DIR* restrict dirp;
 
    U_INTERNAL_TRACE("u_ftw()", 0)
 
@@ -1669,7 +1678,7 @@ void u_ftw(void)
     * dirp = (DIR*) (u_ftw_ctx.filetype && strchr(u_buffer+1, u_ftw_ctx.filetype) ? 0 : opendir(u_buffer));
     */
 
-   u_ftw_ctx.is_directory = ((dirp = (DIR*) opendir(u_buffer)) != 0);
+   u_ftw_ctx.is_directory = ((dirp = (DIR* restrict) opendir(u_buffer)) != 0);
 
    if (u_ftw_ctx.is_directory == false ||
        u_ftw_ctx.call_if_directory)
@@ -1703,11 +1712,11 @@ int u_get_num_random(int range)
 }
 
 #ifdef HAVE_SSL
-int u_passwd_cb(char* buf, int size, int rwflag, void* password)
+int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict password)
 {
    U_INTERNAL_TRACE("u_passwd_cb(%p,%d,%d,%p)", buf, size, rwflag, password)
 
-   (void) memcpy(buf, (char*)password, size);
+   (void) memcpy(buf, (char* restrict)password, size);
 
    buf[size-1] = '\0';
 
@@ -1724,10 +1733,10 @@ int u_passwd_cb(char* buf, int size, int rwflag, void* password)
  * Compares a filename or pathname to a pattern.
  */
 
-static const char* end_p;
-static const char* end_s;
+static const char* restrict end_p;
+static const char* restrict end_s;
 
-static inline int rangematch(const char* pattern, char test, int flags, char** newp)
+static inline int rangematch(const char* restrict pattern, char test, int flags, char** restrict newp)
 {
    char c, c2;
    int negate, ok;
@@ -1785,16 +1794,16 @@ static inline int rangematch(const char* pattern, char test, int flags, char** n
       }
    while ((c = *pattern++) != ']');
 
-   *newp = (char*) pattern;
+   *newp = (char* restrict) pattern;
 
    return (ok == negate ? 0 : 1);
 }
 
-static inline int kfnmatch(const char* pattern, const char* string, int flags, int nesting)
+static inline int kfnmatch(const char* restrict pattern, const char* restrict string, int flags, int nesting)
 {
-   char* newp;
    char c, test;
-   const char* stringstart;
+   char* restrict newp;
+   const char* restrict stringstart;
 
    U_INTERNAL_TRACE("kfnmatch(%.*s,%.*s,%d,%d)", end_p - pattern, pattern, end_s - string, string, flags, nesting)
 
@@ -1849,7 +1858,7 @@ static inline int kfnmatch(const char* pattern, const char* string, int flags, i
                {
                if (flags & FNM_PATHNAME)
                   {
-                  return ((flags & FNM_LEADING_DIR) || memchr(string, '/', end_s - string) == NULL ? 0 : 1);
+                  return ((flags & FNM_LEADING_DIR) || memchr(string, '/', end_s - string) == 0 ? 0 : 1);
                   }
                else
                   {
@@ -1858,7 +1867,7 @@ static inline int kfnmatch(const char* pattern, const char* string, int flags, i
                }
             else if (c == '/' && flags & FNM_PATHNAME)
                {
-               if ((string = (const char*)memchr(string, '/', end_s - string)) == NULL) return (1);
+               if ((string = (const char* restrict)memchr(string, '/', end_s - string)) == 0) return (1);
 
                break;
                }
@@ -1891,7 +1900,7 @@ static inline int kfnmatch(const char* pattern, const char* string, int flags, i
                return (1);
                }
 
-            switch (rangematch(pattern, *string,  flags, &newp))
+            switch (rangematch(pattern, (char)*string,  flags, (char** restrict)&newp))
                {
                case -1: goto norm;
                case  1: pattern = newp; break;
@@ -1944,7 +1953,7 @@ norm:
 
 #define __FNM_FLAGS (FNM_PATHNAME | FNM_NOESCAPE | FNM_PERIOD | FNM_LEADING_DIR | FNM_CASEFOLD)
 
-bool u_fnmatch(const char* string, uint32_t n1, const char* pattern, uint32_t n2, int flags)
+bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
 {
    U_INTERNAL_TRACE("u_fnmatch(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), string, n1, n2, pattern, n2, flags)
 
@@ -1984,7 +1993,7 @@ bool u_fnmatch(const char* string, uint32_t n1, const char* pattern, uint32_t n2
          } while (--U_LOOP_CNT); } }
 #endif
 
-bool u_isBase64(const char* s, uint32_t n)
+bool u_isBase64(const char* restrict s, uint32_t n)
 {
    U_LOOP_STRING( if (u_isbase64(c) == false) return false )
 
@@ -1993,7 +2002,7 @@ bool u_isBase64(const char* s, uint32_t n)
    return true;
 }
 
-bool u_isWhiteSpace(const char* s, uint32_t n)
+bool u_isWhiteSpace(const char* restrict s, uint32_t n)
 {
    U_LOOP_STRING( if (u_isspace(c) == false) return false )
 
@@ -2002,7 +2011,7 @@ bool u_isWhiteSpace(const char* s, uint32_t n)
    return true;
 }
 
-bool u_isText(const unsigned char* s, uint32_t n)
+bool u_isText(const unsigned char* restrict s, uint32_t n)
 {
    U_LOOP_STRING( if (u_istext(c) == false) return false )
 
@@ -2083,12 +2092,12 @@ const unsigned char u_text_chars[256] = {
  * 0000 0800-0000 FFFF   1110xxxx 10xxxxxx 10xxxxxx                     *
  ************************************************************************/
 
-bool u_isUTF8(const unsigned char* buf, uint32_t len)
+bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
 {
    unsigned char c;
    bool result = false;
    uint32_t j, following;
-   const unsigned char* end = buf + len;
+   const unsigned char* restrict end = buf + len;
 
    U_INTERNAL_TRACE("u_isUTF8(%.*s,%u)", U_min(len,128), buf, len)
 
@@ -2149,7 +2158,7 @@ bool u_isUTF8(const unsigned char* buf, uint32_t len)
    return result;
 }
 
-int u_isUTF16(const unsigned char* buf, uint32_t len)
+int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 {
    uint32_t be, i, c;
 
@@ -2217,7 +2226,7 @@ static const unsigned char ctype_tab[] = {
    L,  L,  L,  L,  L,  L,  L,  P,  L,  L,  L,  L,  L,  L,  L,  L
 };
 
-const unsigned char* u__ct_tab = ctype_tab + 1;
+const unsigned char* restrict u__ct_tab = ctype_tab + 1;
 
 #undef C
 #undef D
@@ -2277,7 +2286,7 @@ static const unsigned char lower_tab[] = {
    0xf8,   0xf9,   0xfa,   0xfb,   0xfc,   0xfd,   0xfe,   0xff
 };
 
-const unsigned char* u__ct_tol = lower_tab + 1;
+const unsigned char* restrict u__ct_tol = lower_tab + 1;
 
 /* Table for converting to upper-case */
 
@@ -2320,4 +2329,4 @@ static const unsigned char upper_tab[] = {
    0xd8,   0xd9,   0xda,   0xdb,   0xdc,   0xdd,   0xde,   0xff
 };
 
-const unsigned char* u__ct_tou = upper_tab + 1;
+const unsigned char* restrict u__ct_tou = upper_tab + 1;

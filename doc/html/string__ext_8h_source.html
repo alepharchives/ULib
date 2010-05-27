@@ -50,15 +50,15 @@
 <a name="l00027"></a>00027 <span class="preprocessor"></span>        <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> BIOtoString(BIO* bio);
 <a name="l00028"></a>00028 <span class="preprocessor">#endif</span>
 <a name="l00029"></a>00029 <span class="preprocessor"></span>
-<a name="l00030"></a>00030         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> deflate(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; s);                       <span class="comment">// .gz   compress</span>
-<a name="l00031"></a>00031         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> gunzip( <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; s, uint32_t sz_orig = 0); <span class="comment">// .gz uncompress</span>
-<a name="l00032"></a>00032 
-<a name="l00033"></a>00033         <span class="comment">// LZO method</span>
+<a name="l00030"></a>00030         <span class="comment">// LZO method</span>
+<a name="l00031"></a>00031 
+<a name="l00032"></a>00032         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>   compress(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; s);
+<a name="l00033"></a>00033         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> decompress(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; s);
 <a name="l00034"></a>00034 
-<a name="l00035"></a>00035         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a>   compress(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; s);
-<a name="l00036"></a>00036         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> decompress(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; s);
-<a name="l00037"></a>00037 
-<a name="l00038"></a>00038         <span class="keyword">static</span> <span class="keywordtype">bool</span> isCompress(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; s) { <span class="keywordflow">return</span> U_STRNEQ(s.data(), U_LZOP_COMPRESS); }
+<a name="l00035"></a>00035         <span class="keyword">static</span> <span class="keywordtype">bool</span> isCompress(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; s) { <span class="keywordflow">return</span> U_STRNEQ(s.data(), U_LZOP_COMPRESS); }
+<a name="l00036"></a>00036 
+<a name="l00037"></a>00037         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> deflate(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; s);                       <span class="comment">// .gz   compress</span>
+<a name="l00038"></a>00038         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> gunzip( <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; s, uint32_t sz_orig = 0); <span class="comment">// .gz uncompress</span>
 <a name="l00039"></a>00039 
 <a name="l00040"></a>00040         <span class="comment">// Convert integer to string</span>
 <a name="l00041"></a>00041 
@@ -286,7 +286,7 @@
 <a name="l00263"></a>00263 
 <a name="l00264"></a>00264 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:39 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu May 27 19:03:59 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

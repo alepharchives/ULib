@@ -147,7 +147,7 @@ bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)
          {
          int flags = -1;
 
-         U_ASSERT(UFile::isBlocking(iSockDesc, flags))
+         U_ASSERT_EQUALS(UFile::isBlocking(iSockDesc, flags), false)
          }
 #  endif
 

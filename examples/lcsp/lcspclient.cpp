@@ -23,8 +23,8 @@ public:
 
    // COSTRUTTORE
 
-            UClientLCSP(UFileConfig* cfg) : UClient_Base(cfg), USOAPClient<T>(cfg) {}
-   virtual ~UClientLCSP()                                                          {}
+            UClientLCSP(UFileConfig* cfg) : USOAPClient<T>(cfg) {}
+   virtual ~UClientLCSP()                                       {}
 
    // OBJECT FOR METHOD REQUEST
 

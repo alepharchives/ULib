@@ -10,7 +10,7 @@ static const char* test[] = {
    "abcdefghijklmnopqrstuvwxyz",
    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
    "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
-   NULL,
+   0,
 };
 
 static const char* ret[] = {

@@ -49,8 +49,8 @@ public:
 
       u_atexit(reset);
 
-      (void) ::printf("AutoSending SIGTERM...\n", 0);
-
+      (void) write(STDOUT_FILENO, U_CONSTANT_TO_PARAM("AutoSending SIGTERM...\n"));
+      
 #  ifndef DEBUG
       UInterrupt::act.sa_flags   = 0;
       UInterrupt::act.sa_handler = UInterrupt::handlerInterrupt;

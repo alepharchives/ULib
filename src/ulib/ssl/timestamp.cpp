@@ -176,6 +176,22 @@ UString UTimeStamp::createQuery(int alg, const UString& content, const char* pol
    U_RETURN_STRING(UString::getStringNull());
 }
 
+UString UTimeStamp::getTimeStampToken(int alg, const UString& data, const UString& url)
+{
+   U_TRACE(0, "UTimeStamp::getTimeStampToken(%d,%.*S,%.*S)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(url))
+
+   U_ASSERT(url.empty() == false)
+
+   Url TSA(url);
+   UString token, request = createQuery(alg, data, 0, false, false);
+
+   UTimeStamp ts(request, TSA);
+
+   if (ts.UPKCS7::isValid()) token = ts.UPKCS7::getEncoded("BASE64");
+
+   U_RETURN_STRING(token);
+}
+
 // DEBUG
 
 #ifdef DEBUG

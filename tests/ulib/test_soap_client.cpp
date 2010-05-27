@@ -14,8 +14,8 @@ public:
 
    // COSTRUTTORE
 
-    UTestSOAPClient() : UClient_Base(0), USOAPClient<T>(0) {}
-   ~UTestSOAPClient()                                      {}
+    UTestSOAPClient() : USOAPClient<T>(0) {}
+   ~UTestSOAPClient()                     {}
 
    // redefine method VIRTUAL class USOAPClient
 

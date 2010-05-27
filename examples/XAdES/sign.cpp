@@ -17,6 +17,8 @@
 #  include <ulib/ssl/timestamp.h>
 #endif
 
+#include "utility.h"
+
 #undef  PACKAGE
 #define PACKAGE "sign"
 
@@ -327,17 +329,10 @@ public:
       {
       U_TRACE(5, "Application::getTimeStampToken(%.*S,%.*S)", U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(url))
 
-      U_ASSERT(url.empty() == false)
-
-      Url TSA(url);
       UString token;
 
 #  ifdef HAVE_SSL_TS
-      UString request = UTimeStamp::createQuery(alg, data, 0, false, false);
-
-      UTimeStamp ts(request, TSA);
-
-      if (ts.UPKCS7::isValid()) token = ts.UPKCS7::getEncoded("BASE64");
+      token = UTimeStamp::getTimeStampToken(alg, data, url);
 #  endif
 
       U_RETURN_STRING(token);
@@ -378,7 +373,7 @@ public:
 
       UString allDataObjectTimeStamp(U_CAPACITY);
 
-      signedProperties.reserve(U_CONSTANT_SIZE(U_XADES_SIGNED_PROPERTIES_TEMPLATE) + 8192U +
+      (void) signedProperties.reserve(U_CONSTANT_SIZE(U_XADES_SIGNED_PROPERTIES_TEMPLATE) + 8192U +
                                signingTime.size() + allDataObjectTimeStamp.size());
 
       signedProperties.snprintf(U_XADES_SIGNED_PROPERTIES_TEMPLATE,
@@ -398,7 +393,7 @@ public:
 
       UServices::generateDigest(alg, 0, to_digest, signedPropertiesDigestValue, true);
 
-      XAdESReference.reserve(U_CONSTANT_SIZE(U_XADES_REFERENCE_TEMPLATE) + signedPropertiesDigestValue.size());
+      (void) XAdESReference.reserve(U_CONSTANT_SIZE(U_XADES_REFERENCE_TEMPLATE) + signedPropertiesDigestValue.size());
 
       XAdESReference.snprintf(U_XADES_REFERENCE_TEMPLATE,
                               U_STRING_TO_TRACE(digest_algorithm),
@@ -545,7 +540,7 @@ public:
 
       unsignedSignaturePropertiesC14N += UXML2Document::xmlC14N(revocationValues);
 
-      unsignedSignatureProperties.reserve(U_CONSTANT_SIZE(U_XADES_UNSIGNED_SIGNATURE_PROPERTIES_TEMPLATE) +
+      (void) unsignedSignatureProperties.reserve(U_CONSTANT_SIZE(U_XADES_UNSIGNED_SIGNATURE_PROPERTIES_TEMPLATE) +
                                           completeCertificateRefs.size() +
                                           completeRevocationRefs.size() +
                                           certificateValues.size() +
@@ -607,7 +602,7 @@ public:
 
       if (x.empty()) U_ERROR("cannot read data from <stdin>...", 0);
 
-      document.reserve(x.size());
+      (void) document.reserve(x.size());
 
       if (UBase64::decode(x, document) == false) U_ERROR("decoding data read failed...", 0);
 
@@ -703,7 +698,6 @@ public:
                        X509SerialNumber,
                        U_STRING_TO_TRACE(X509CertificateValue));
 
-      uint32_t i, n;
       UString XMLDSIGObject(U_CAPACITY), Object(U_CAPACITY), ObjectDigestValue(200U),
               Reference(U_CAPACITY), dataObjectFormat(U_CAPACITY),
               XMLDSIGReference(U_CAPACITY), XMLDSIGReferenceC14N(U_CAPACITY);
@@ -711,99 +705,15 @@ public:
       // ---------------------------------------------------------------------------------------------------------------
       // check for OOffice or MS-Word document...
       // ---------------------------------------------------------------------------------------------------------------
-      UZIP zip;
-      UString tmpdir(100U);
+      utility.handlerConfig(cfg);
 
-      (void)   MSToBeSigned.split(cfg[U_STRING_FROM_CONSTANT(    "MS-WORD.ToBeSigned")]);
-      (void) MSZipStructure.split(cfg[U_STRING_FROM_CONSTANT(    "MS-WORD.ZipStructure")]);
-      (void)   OOToBeSigned.split(cfg[U_STRING_FROM_CONSTANT("OPEN-OFFICE.ToBeSigned")]);
-      (void) OOZipStructure.split(cfg[U_STRING_FROM_CONSTANT("OPEN-OFFICE.ZipStructure")]);
-
-      msword = ooffice = false;
-
-      tmpdir.snprintf("%s/%s", u_tmpdir, u_basename(U_DATA_URI));
-
-      if (zip.extract(document, &tmpdir))
-         {
-         uint32_t index;
-         UString namefile;
-
-         for (i = 0, n = zip.getFilesCount(); i < n; ++i)
-            {
-            namefile = zip.getFilenameAt(i);
-
-            ZipStructure.push(namefile);
-              ZipContent.push(zip.getFileContentAt(i));
-
-            U_INTERNAL_DUMP("Part %d: Filename=%.*S", i+1, U_STRING_TO_TRACE(namefile));
-            }
-
-         U_INTERNAL_DUMP("ZIP: %d parts", n)
-
-         msword = true;
-
-         for (i = 0, n = MSZipStructure.size(); i < n; ++i)
-            {
-            namefile = MSZipStructure[i];
-
-            if (MSZipStructure.isContained(namefile)) continue;
-
-            msword  = false;
-            ooffice = true;
-
-            for (i = 0, n = OOZipStructure.size(); i < n; ++i)
-               {
-               namefile = OOZipStructure[i];
-
-               if (OOZipStructure.isContained(namefile)) continue;
-
-               ooffice = false;
-
-               break;
-               }
-
-            break;
-            }
-
-         if (msword)
-            {
-            for (i = 0, n = MSToBeSigned.size(); i < n; ++i)
-               {
-               namefile = MSToBeSigned[i];
-               index    = ZipStructure.contains(namefile);
-
-                    vuri.push(namefile);
-               vdocument.push(ZipContent[index]);
-               }
-
-            goto next;
-            }
-
-         if (ooffice)
-            {
-            for (i = 0, n = OOToBeSigned.size(); i < n; ++i)
-               {
-               namefile = OOToBeSigned[i];
-               index    = ZipStructure.contains(namefile);
-
-                    vuri.push(namefile);
-               vdocument.push(ZipContent[index]);
-               }
-
-            goto next;
-            }
-         }
-
-      vdocument.push(document);
-           vuri.push(UString(U_DATA_URI));
+      (void) utility.checkDocument(document, U_DATA_URI);
       // ---------------------------------------------------------------------------------------------------------------
-next:
-      U_INTERNAL_ASSERT_EQUALS(vuri.size(), vdocument.size())
 
-      for (i = 0, n = vdocument.size(); i < n; ++i)
+      for (uint32_t i = 0, n = utility.vdocument.size(); i < n; ++i)
          {
-         uri       =      vuri[i];
-         to_digest = vdocument[i];
+         uri       = utility.vuri[i];
+         to_digest = utility.vdocument[i];
 
          // ---------------------------------------------------------------------------------------------------------------
          // 2. Compute the message digest of the text, m = Hash(C).
@@ -870,7 +780,7 @@ next:
       if (xades_c) setXAdESUnsignedSignatureProperties();
       // -------------------------------------------------------------------------------------------------------------  
 
-      XAdESObject.reserve(U_CONSTANT_SIZE(U_XADES_TEMPLATE) +
+      (void) XAdESObject.reserve(U_CONSTANT_SIZE(U_XADES_TEMPLATE) +
                           signedProperties.size() +
                           unsignedSignatureProperties.size() +
                           archiveTimeStamp.size() +
@@ -900,30 +810,7 @@ next:
       // ---------------------------------------------------------------------------------------------------------------
       // check for OOffice or MS-Word document...
       // ---------------------------------------------------------------------------------------------------------------
-      if (msword)
-         {
-         UString docout(100U), name = cfg[U_STRING_FROM_CONSTANT("MS-WORD.SignatureContent")];
-
-         docout.snprintf("%.*s/%.*s", U_STRING_TO_TRACE(tmpdir), U_STRING_TO_TRACE(name));
-
-         (void) UFile::writeTo(docout, output);
-
-         const char* add_to_filenames[] = { name.c_str(), 0 };
-
-         output = zip.archive(add_to_filenames);
-         }
-      else if (ooffice)
-         {
-         UString docout(100U), name = cfg[U_STRING_FROM_CONSTANT("OPEN-OFFICE.SignatureContent")];
-
-         docout.snprintf("%.*s/%.*s", U_STRING_TO_TRACE(tmpdir), U_STRING_TO_TRACE(name));
-
-         (void) UFile::writeTo(docout, output);
-
-         const char* add_to_filenames[] = { name.c_str(), 0 };
-
-         output = zip.archive(add_to_filenames);
-         }
+      output = utility.outputDocument(output);
       // ---------------------------------------------------------------------------------------------------------------
 
       cout.write(U_STRING_TO_PARAM(output));
@@ -931,17 +818,17 @@ next:
 
 private:
    int alg;
+   bool xades_c;
    uint32_t num_ca;
    UFileConfig cfg;
+   UXAdESUtility utility;
    UVector<UCertificate*> vec_ca;
    long X509SerialNumber, signing_time;
-   UVector<UString> vuri, vdocument, OOZipStructure, MSZipStructure, ZipStructure, ZipContent, OOToBeSigned, MSToBeSigned;
    UString cfg_str, str_CApath, digest_algorithm, canonicalization_algorithm, claimed_role, document, production_place_city,
            production_place_state_or_province, production_place_postal_code, production_place_country_name, uri,
            data_object_format_mimetype, signature_algorithm, to_digest, DataObjectFormat, XAdESObject, XAdESReference,
            X509IssuerName, X509SubjectName, X509Certificate, signedProperties, signature_timestamp, unsignedSignatureProperties,
            unsignedSignaturePropertiesC14N;
-   bool xades_c, ooffice, msword;
 };
 
 U_MAIN(Application)

@@ -37,11 +37,11 @@ extern "C" {
  * ---------------------------------------------------------------------------
  */
 
-extern U_EXPORT uint32_t      u_sprintc(char* buffer, unsigned char c);
-extern U_EXPORT unsigned char u_escape_decode_ptr(const char** s);
+extern U_EXPORT uint32_t      u_sprintc(char* restrict buffer, unsigned char c);
+extern U_EXPORT unsigned char u_escape_decode_ptr(const char** restrict s);
 
-extern U_EXPORT uint32_t u_escape_encode(const unsigned char* s, uint32_t n,          char* result, uint32_t max_length);
-extern U_EXPORT uint32_t u_escape_decode(const          char* s, uint32_t n, unsigned char* result);
+extern U_EXPORT uint32_t u_escape_encode(const unsigned char* restrict s, uint32_t n,          char* restrict result, uint32_t max_length);
+extern U_EXPORT uint32_t u_escape_decode(const          char* restrict s, uint32_t n, unsigned char* restrict result);
 
 #ifdef __cplusplus
 }

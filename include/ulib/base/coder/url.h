@@ -32,8 +32,8 @@ Synopsis: Performs HTTP escaping on a string. This works as follows: all charact
 
 #define U_RFC2231 " *'%()<>@,;:\\\"/[]?="
 
-extern U_EXPORT uint32_t u_url_encode(const unsigned char* s, uint32_t n, unsigned char* result, const char* extra_enc_chars);
-extern U_EXPORT uint32_t u_url_decode(const          char* s, uint32_t n, unsigned char* result, bool no_line_break);
+extern U_EXPORT uint32_t u_url_encode(const unsigned char* restrict s, uint32_t n, unsigned char* restrict result, const char* restrict extra_enc_chars);
+extern U_EXPORT uint32_t u_url_decode(const          char* restrict s, uint32_t n, unsigned char* restrict result, bool no_line_break);
 
 #ifdef __cplusplus
 }

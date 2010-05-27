@@ -42,11 +42,11 @@ void UProcess::nice(int inc)
    (void) U_SYSCALL(nice, "%d", inc);
 }
 
-void UProcess::setProcessGroup()
+void UProcess::setProcessGroup(pid_t pid, pid_t pgid)
 {
-   U_TRACE(1, "UProcess::setProcessGroup()")
+   U_TRACE(1, "UProcess::setProcessGroup(%ld,%ld)", pid, pgid)
 
-   (void) U_SYSCALL(setpgid, "%d,%d", 0, 0);
+   (void) U_SYSCALL(setpgid, "%ld,%ld", pid, pgid);
 }
 
 bool UProcess::fork()

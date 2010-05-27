@@ -109,15 +109,15 @@
 #define U_CONSTANT_TO_PARAM(str) str,U_CONSTANT_SIZE(str)
 #define U_CONSTANT_TO_TRACE(str)     U_CONSTANT_SIZE(str),str
 
-#define U_STRNCPY(a,b)    (void)strncpy((const char*)(a),b,U_CONSTANT_SIZE(b))
-#define U_STRNCMP(a,b)          strncmp((const char*)(a),b,U_CONSTANT_SIZE(b))
-#define U_STRNCASECMP(a,b)  strncasecmp((const char*)(a),b,U_CONSTANT_SIZE(b))
+#define U_STRNCPY(a,b)    (void)strncpy((const char* restrict)(a),b,U_CONSTANT_SIZE(b))
+#define U_STRNCMP(a,b)          strncmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b))
+#define U_STRNCASECMP(a,b)  strncasecmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b))
 
-#define U_STREQ(a,b)  (strcmp( (const char*)(a),b) == 0)
-#define U_STRNEQ(a,b) (U_STRNCMP((a),b)            == 0)
+#define U_STREQ(a,b)  (strcmp( (const char* restrict)(a),b) == 0)
+#define U_STRNEQ(a,b) (U_STRNCMP((a),b)                     == 0)
 
-#define U_MEMCPY(a,b) memcpy((      char*)(a),b,U_CONSTANT_SIZE(b))
-#define U_MEMCMP(a,b) memcmp((const char*)(a),b,U_CONSTANT_SIZE(b))
+#define U_MEMCPY(a,b) memcpy((      char* restrict)(a),b,U_CONSTANT_SIZE(b))
+#define U_MEMCMP(a,b) memcmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b))
 
 /* Note that IS_ABSOLUTE_PATH accepts d:foo as well, although it is only semi-absolute. This is because the users of IS_ABSOLUTE_PATH
  * want to know whether to prepend the current working directory to a file name, which should not be done with a name like d:foo

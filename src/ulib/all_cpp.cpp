@@ -78,6 +78,7 @@
 #include "utility/semaphore.cpp"
 #include "utility/string_ext.cpp"
 #include "utility/socket_ext.cpp"
+#include "utility/ring_buffer.cpp"
 
 #ifndef __MINGW32__
 #  include "net/unixsocket.cpp"

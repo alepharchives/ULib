@@ -312,13 +312,13 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    //                                                                    >1 - pool of serialized processes plus monitoring process)
    // --------------------------------------------------------------------------------------------------------------------------------------
 
-   server         = cfg[*str_SERVER];
-   as_user        = cfg[*str_RUN_AS_USER],
-   log_file       = cfg[*str_LOG_FILE];
-   allow_IP       = cfg[*str_ALLOWED_IP];
-   name_sock      = cfg[*str_SOCKET_NAME];
-   IP_address     = cfg[*str_IP_ADDRESS];
-   document_root  = cfg[*str_DOCUMENT_ROOT];
+   server        = cfg[*str_SERVER];
+   as_user       = cfg[*str_RUN_AS_USER],
+   log_file      = cfg[*str_LOG_FILE];
+   allow_IP      = cfg[*str_ALLOWED_IP];
+   name_sock     = cfg[*str_SOCKET_NAME];
+   IP_address    = cfg[*str_IP_ADDRESS];
+   document_root = cfg[*str_DOCUMENT_ROOT];
 
 #ifdef HAVE_IPV6
    UClientImage_Base::bIPv6   = cfg.readBoolean(*str_USE_IPV6);
@@ -386,13 +386,15 @@ int UServer_Base::loadPlugins(const UString& plugin_dir, UVector<UString>& plugi
 {
    U_TRACE(0, "UServer_Base::loadPlugins(%.*S,%p,%p)", U_STRING_TO_TRACE(plugin_dir), &plugin_list, cfg)
 
+   U_INTERNAL_ASSERT(plugin_dir.isNullTerminated())
+
    UString name;
    UServerPlugIn* plugin;
    int result = U_PLUGIN_HANDLER_GO_ON;
 
    vplugin = U_NEW(UVector<UServerPlugIn*>(10U));
 
-   if (plugin_dir.empty() == false) UPlugIn<void*>::setPluginDirectory(plugin_dir.c_str());
+   if (plugin_dir.empty() == false) UPlugIn<void*>::setPluginDirectory(plugin_dir.data());
 
    for (uint32_t i = 0, length = plugin_list.size(); i < length; ++i)
       {
@@ -465,6 +467,29 @@ U_PLUGIN_HANDLER(Read)
 U_PLUGIN_HANDLER(Request)
 U_PLUGIN_HANDLER(Reset)
 #endif
+
+void UServer_Base::runAsUser()
+{
+   U_TRACE(0, "UServer_Base::runAsUser()")
+
+   U_INTERNAL_ASSERT(pthis->as_user.isNullTerminated())
+
+   if (pthis->as_user.empty() == false)
+      {
+      const char* user = pthis->as_user.data();
+
+      if (u_ranAsUser(user, false))
+         {
+         U_SRV_LOG_VAR("server run with user %S permission", user);
+         }
+      else
+         {
+         U_ERROR("set user %S context failed...", user);
+         }
+
+      pthis->as_user.clear();
+      }
+}
 
 void UServer_Base::init()
 {
@@ -557,7 +582,9 @@ void UServer_Base::init()
       }
    else
       {
-      u_canonicalize_pathname((char*)document_root.c_str());
+      U_INTERNAL_ASSERT(document_root.isNullTerminated())
+
+      u_canonicalize_pathname(document_root.data());
 
       U_INTERNAL_DUMP("document_root = %S", document_root.data())
       }
@@ -576,19 +603,21 @@ void UServer_Base::init()
 
    if (preforked_num_kids == 0)
       {
-      acceptNewClient();
+      acceptNewClient(pthis);
 
       block_on_accept = true;
       }
-   else if (isPreForked())
+   else
       {
-      U_INTERNAL_ASSERT_EQUALS(ptr,0)
-
       // manage shared data...
+
+      U_INTERNAL_ASSERT_EQUALS(ptr,0)
 
       ptr = (shared_data*) UFile::mmap(sizeof(shared_data) + sizeof(sem_t));
 
       U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
+
+      if (isClassic()) block_on_accept = true;
       }
 
    // manage block on accept...
@@ -643,12 +672,6 @@ void UServer_Base::init()
    UServices::generateKey();
 #endif
 
-   // init plugin modules...
-
-#ifdef HAVE_MODULES
-   if (pluginsHandlerInit() != U_PLUGIN_HANDLER_GO_ON) U_ERROR("initialization of plugins FAILED. Going down...", 0);
-#endif
-
    if (flag_use_tcp_optimization)
       {
       U_ASSERT(name_sock.empty()) // no unix socket...
@@ -692,19 +715,17 @@ void UServer_Base::init()
       socket->setTcpQuickAck(0U);
       }
 
-   if (as_user.empty() == false)
-      {
-      const char* user = as_user.data();
+   // init plugin modules...
 
-      if (u_ranAsUser(user, false))
-         {
-         U_SRV_LOG_VAR("server run with user %S permission", user);
-         }
-      else
-         {
-         U_ERROR("set user %S context failed...", user);
-         }
-      }
+   flag_loop = true;
+
+   setProcessManager();
+
+#ifdef HAVE_MODULES
+   if (pluginsHandlerInit() != U_PLUGIN_HANDLER_GO_ON) U_ERROR("initialization of plugins FAILED. Going down...", 0);
+#endif
+
+   runAsUser();
 }
 
 RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
@@ -771,9 +792,11 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 
    if (lock)
       {
-      bool block = (num_connection == 0);
+      U_ASSERT(isPreForked())
 
-      U_INTERNAL_DUMP("block = %b num_connection = %d", block, num_connection)
+      bool block = (U_TOT_CONNECTION == 0);
+
+      U_INTERNAL_DUMP("block = %b tot_connection = %d", block, U_TOT_CONNECTION)
 
       if (block != UFile::isBlocking(UEventFd::fd, U_SOCKET_FLAGS))
          {
@@ -838,7 +861,7 @@ const char* UServer_Base::getNumConnection()
    static char buffer[32];
 
    if (isPreForked()) (void) u_snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
-   else               (void) u_snprintf(buffer, sizeof(buffer), "%d",      num_connection);
+   else               (void) u_snprintf(buffer, sizeof(buffer), "%d",      (isClassic() ? U_TOT_CONNECTION : num_connection));
 
    U_RETURN(buffer);
 }
@@ -848,25 +871,21 @@ void UServer_Base::handlerCloseConnection()
    U_TRACE(0, "UServer_Base::handlerCloseConnection()")
 
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
+// U_ASSERT_EQUALS(UNotifier::isHandler(UClientImage_Base::pClientImage), false)
 
    --num_connection;
 
    U_INTERNAL_DUMP("num_connection = %d", num_connection)
 
-// U_ASSERT_EQUALS(UNotifier::isHandler(UClientImage_Base::pClientImage), false)
-
-   if (isLog())
+   if (preforked_num_kids)
       {
-      if (isPreForked())
-         {
-         U_TOT_CONNECTION--;
+      U_TOT_CONNECTION--;
 
-         U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
-         }
-
-      ULog::log("client closed connection from %.*s, %s clients still connected\n",
-                  U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
+      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
       }
+
+   U_SRV_LOG_VAR("client closed connection from %.*s, %s clients still connected",
+                     U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
 }
 
 bool UServer_Base::handlerTimeoutConnection(void* cimg)
@@ -900,6 +919,10 @@ void UServer_Base::handlerIdleConnection()
       U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
 
       U_SRV_LOG_TIMEOUT(UClientImage_Base::pClientImage);
+
+      UClientImage_Base::pClientImage->resetSocket(USocket::BROKEN);
+
+      UNotifier::erase(UClientImage_Base::pClientImage, true);
       }
 }
 
@@ -914,56 +937,58 @@ void UServer_Base::handlerNewConnection()
 
    U_INTERNAL_DUMP("num_connection = %d", num_connection)
 
-   // --------------------------------------------------------------------------------------------------------------------------
-   // PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
-   //                                                                     1 - classic, forking after accept client
-   //                                                                    >1 - pool of process serialize plus monitoring process)
-   // --------------------------------------------------------------------------------------------------------------------------
-
-   if (isPreForked())
+   if (preforked_num_kids)
       {
-      if (isLog())
-         {
-         U_TOT_CONNECTION++;
+      // --------------------------------------------------------------------------------------------------------------------------
+      // PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
+      //                                                                     1 - classic, forking after accept client
+      //                                                                    >1 - pool of process serialize plus monitoring process)
+      // --------------------------------------------------------------------------------------------------------------------------
 
-         U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+      if (isClassic())
+         {
+         U_INTERNAL_ASSERT_POINTER(proc)
+
+         if (max_Keep_Alive &&
+             max_Keep_Alive <= U_TOT_CONNECTION)
+            {
+            --num_connection;
+
+            U_SRV_LOG_VAR("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%d)",
+                              UClientImage_Base::socket->getRemoteInfo(), max_Keep_Alive);
+
+            return;
+            }
+
+         if (proc->fork() &&
+             proc->parent())
+            {
+            UClientImage_Base::socket->close();
+
+            (void) UProcess::waitpid(); // per evitare piu' di 1 zombie...
+
+            return;
+            }
+
+         if (proc->child())
+            {
+            acceptNewClient(0);
+
+            if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
+            }
          }
+
+      U_TOT_CONNECTION++;
+
+      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
       }
-   else if (isClassic())
-      {
-      U_INTERNAL_ASSERT_POINTER(proc)
-
-      if (proc->fork() &&
-          proc->parent())
-         {
-         UClientImage_Base::socket->close();
-
-         (void) UProcess::waitpid(); // per evitare piu' di 1 zombie...
-
-         return;
-         }
-
-      if (proc->child())
-         {
-         UNotifier::init(0);
-
-         if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
-         }
-      }
-
-   U_INTERNAL_DUMP("u_buffer_len = %u", u_buffer_len)
 
    pthis->newClientImage();
 
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
 
-   if (isLog())
-      {
-      U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage->logbuf)
-
-      ULog::log("new client connected from %.*s, %s clients currently connected\n",
-                        U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
-      }
+   U_SRV_LOG_VAR("new client connected from %.*s, %s clients currently connected",
+                     U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
 
    UClientImage_Base::run();
 }
@@ -975,8 +1000,6 @@ void UServer_Base::run()
    U_INTERNAL_ASSERT_POINTER(pthis)
 
    pthis->init();
-
-   flag_loop = true;
 
    UInterrupt::syscall_restart = false;
 
@@ -995,8 +1018,6 @@ void UServer_Base::run()
    //                                                                     1 - classic, forking after accept client
    //                                                                    >1 - pool of process serialize plus monitoring process)
    // --------------------------------------------------------------------------------------------------------------------------
-
-   setProcessManager();
 
    /**
    * Main loop for the parent process with the new preforked implementation.
@@ -1026,7 +1047,7 @@ void UServer_Base::run()
 
             if (proc->child())
                {
-               acceptNewClient();
+               acceptNewClient(pthis);
 
                if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
 
@@ -1063,6 +1084,8 @@ void UServer_Base::run()
       goto end;
       }
 
+   if (isLog() && isClassic()) ULog::log("waiting for connection\n", 0);
+
 preforked_child:
 
    while (flag_loop)
@@ -1072,7 +1095,7 @@ preforked_child:
       if (block_on_accept &&
           isClientConnect() == false)
          {
-         U_SRV_LOG_MSG("waiting for connection");
+         if (isLog() && isClassic() == false) ULog::log("waiting for connection\n", 0);
 
          if (UInterrupt::event_signal_pending)
             {
@@ -1093,7 +1116,7 @@ preforked_child:
       if (UNotifier::waitForEvent(ptime) == false) break; // no more events registered...
       }
 
-   if (isPreForked())
+   if (preforked_num_kids)
       {
 end:
       if (proc->parent()) (void) proc->waitAll();

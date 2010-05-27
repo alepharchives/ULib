@@ -123,6 +123,8 @@ bool UTokenizer::next(UString& token, bool* bgroup)
 
             if (s == 0) s = end;
 
+            U_INTERNAL_DUMP("p = %.*S s = %.*S", s - p, p, end - s, s)
+
             if (group_skip)
                {
                s += group_len_div_2;

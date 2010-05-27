@@ -28,20 +28,20 @@ extern U_EXPORT const char* u_short_units[4]; /* { "B/s", "K/s", "M/s", "G/s" } 
 
 extern U_EXPORT int         u_getScreenWidth(void);                /* Determine the width of the terminal we're running on */
 extern U_EXPORT int         u_get_num_random(int range);
-extern U_EXPORT bool        u_isNumber(const char* s, uint32_t n);
-extern U_EXPORT void        u_printSize(char* buffer, uint64_t bytes); /* print size using u_calcRate() */
-extern U_EXPORT uint32_t    u_findEndHeader(const char* s, uint32_t n); /* find sequence of U_LF2 or U_CRLF2 */
-extern U_EXPORT const char* u_getPathRelativ(const char* path, uint32_t* path_len);
-extern U_EXPORT double      u_calcRate(uint64_t bytes, uint32_t msecs, int* units); /* Calculate the transfert rate */
-extern U_EXPORT bool        u_rmatch(const char* haystack, uint32_t haystack_len, const char* needle, uint32_t needle_len);
+extern U_EXPORT bool        u_isNumber(const char* restrict s, uint32_t n);
+extern U_EXPORT void        u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
+extern U_EXPORT uint32_t    u_findEndHeader(const char* restrict s, uint32_t n); /* find sequence of U_LF2 or U_CRLF2 */
+extern U_EXPORT const char* u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
+extern U_EXPORT double      u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
+extern U_EXPORT bool        u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len);
 
 #if defined(HAVE_MEMMEM) && !defined(__USE_GNU)
-extern U_EXPORT void* memmem(const void* haystack, size_t haystacklen, const void* needle, size_t needlelen);
+extern U_EXPORT void* memmem(const void* restrict haystack, size_t haystacklen, const void* restrict needle, size_t needlelen);
 #endif
 
 /* check if string have length */
 
-static inline size_t u_strlen(const char* s)
+static inline size_t u_strlen(const char* restrict s)
 {
    U_INTERNAL_TRACE("u_strlen(%s)", s)
 
@@ -50,7 +50,7 @@ static inline size_t u_strlen(const char* s)
    return strlen(s);
 }
 
-static inline int u_equal(const void* s1, const void* s2, uint32_t n, bool ignore_case) /* Equal with ignore case */
+static inline int u_equal(const void* restrict s1, const void* restrict s2, uint32_t n, bool ignore_case) /* Equal with ignore case */
 {
    U_INTERNAL_TRACE("u_equal(%p,%p,%u)", s1, s2, n)
 
@@ -62,35 +62,35 @@ static inline int u_equal(const void* s1, const void* s2, uint32_t n, bool ignor
                        :      memcmp(             s1,              s2, n));
 }
 
-extern U_EXPORT void* u_find(const char* s, uint32_t n, const char* a, uint32_t n1);
+extern U_EXPORT void* u_find(const char* restrict s, uint32_t n, const char* restrict a, uint32_t n1);
 
 /* check if string a start with string b */
 
-extern U_EXPORT bool u_startsWith(const char* a, uint32_t n1, const char* b, uint32_t n2);
+extern U_EXPORT bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2);
 
 /* check if string a terminate with string b */
 
-extern U_EXPORT bool u_endsWith(const char* a, uint32_t n1, const char* b, uint32_t n2);
+extern U_EXPORT bool u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2);
 
 /* find char not quoted */
 
-extern U_EXPORT const char* u_find_char(const char* s, const char* end, char c);
+extern U_EXPORT const char* u_find_char(const char* restrict s, const char* restrict end, char c);
 
 /* skip string delimiter or white space and line comment */
 
-extern U_EXPORT const char* u_skip(const char* s, const char* end, const char* delim, char line_comment);
+extern U_EXPORT const char* u_skip(const char* restrict s, const char* restrict end, const char* restrict delim, char line_comment);
 
 /* delimit token */
 
-extern U_EXPORT const char* u_delimit_token(const char* s, const char** p, const char* end, const char* delim, char skip_line_comment);
+extern U_EXPORT const char* u_delimit_token(const char* restrict s, const char** restrict p, const char* restrict end, const char* restrict delim, char skip_line_comment);
 
 /* Search a string for any of a set of characters. Locates the first occurrence in the string s of any of the characters in the string accept */
 
-extern U_EXPORT const char* u_strpbrk(const char* s, uint32_t slen, const char* accept);
+extern U_EXPORT const char* u_strpbrk(const char* restrict s, uint32_t slen, const char* restrict accept);
 
 /* Search a string for a terminator of a group of delimitator {} [] () <%%>...*/
 
-extern U_EXPORT const char* u_strpend(const char* s, uint32_t slen, const char* group_delimitor, uint32_t group_delimitor_len, char skip_line);
+extern U_EXPORT const char* u_strpend(const char* restrict s, uint32_t slen, const char* restrict group_delimitor, uint32_t group_delimitor_len, char skip_line_comment);
 
 /* WILDCARD PATTERN - The rules are as follows (POSIX.2, 3.13).
 
@@ -142,9 +142,9 @@ typedef bool (*bPFpcupcud)(const char*, uint32_t, const char*, uint32_t, int);
 extern U_EXPORT int        u_pfn_flags;
 extern U_EXPORT bPFpcupcud u_pfn_match;
 
-extern U_EXPORT bool u_fnmatch(         const char* s, uint32_t n1, const char* pattern, uint32_t n2, int flags);
-extern U_EXPORT bool u_dosmatch(        const char* s, uint32_t n1, const char* pattern, uint32_t n2, int ignorecase);
-extern U_EXPORT bool u_dosmatch_with_OR(const char* s, uint32_t n1, const char* pattern, uint32_t n2, int ignorecase); /* multiple patterns separated by '|' */ 
+extern U_EXPORT bool u_fnmatch(         const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
+extern U_EXPORT bool u_dosmatch(        const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int ignorecase);
+extern U_EXPORT bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int ignorecase); /* multiple patterns separated by '|' */ 
 
 enum MatchType { U_FNMATCH = 0, U_DOSMATCH = 1, U_DOSMATCH_WITH_OR = 2 };
 
@@ -157,19 +157,19 @@ static inline void u_setPfnMatch(int match_type, int flags)
                   match_type == U_DOSMATCH ? u_dosmatch : u_dosmatch_with_OR);
 }
 
-extern U_EXPORT bool u_isMacAddr(const char* p, uint32_t len);
+extern U_EXPORT bool u_isMacAddr(const char* restrict p, uint32_t len);
 
 /* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */
 
-extern U_EXPORT bool u_ranAsUser(const char* user, bool change_dir);
+extern U_EXPORT bool u_ranAsUser(const char* restrict user, bool change_dir);
 
 /* Verifies that the passed string is actually an e-mail address */
 
-extern U_EXPORT bool u_validate_email_address(const char* address, uint32_t address_len);
+extern U_EXPORT bool u_validate_email_address(const char* restrict address, uint32_t address_len);
 
 /* Perform 'natural order' comparisons of strings. */
 
-extern U_EXPORT int u_strnatcmp(char const* a, char const* b);
+extern U_EXPORT int u_strnatcmp(char const* restrict a, char const* restrict b);
 
 /** -------------------------------------------------------------------------------
 // Canonicalize PATH, and build a new path. The new path differs from PATH in that:
@@ -181,7 +181,7 @@ extern U_EXPORT int u_strnatcmp(char const* a, char const* b);
 // Non-leading '../' and trailing '..' are handled by removing portions of the path
 // -------------------------------------------------------------------------------- */
 
-extern U_EXPORT void u_canonicalize_pathname(char* path);
+extern U_EXPORT void u_canonicalize_pathname(char* restrict path);
 
 /** --------------------------------------------------------------
 // find a FILE MODE along PATH
@@ -191,12 +191,12 @@ extern U_EXPORT void u_canonicalize_pathname(char* path);
 // string, or NULL if not found.
 // -------------------------------------------------------------- */
 
-extern U_EXPORT bool u_pathfind(char* result, const char* path, uint32_t path_len, const char* filename, int mode); /* R_OK | X_OK */
+extern U_EXPORT bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_len, const char* restrict filename, int mode); /* R_OK | X_OK */
 
 /* Prepare command for call to exec() */
 
-extern U_EXPORT uint32_t u_split(       char* s, uint32_t n, char* argv[], const char* delim);
-extern U_EXPORT int      u_splitCommand(char* s, uint32_t n, char* argv[], char* pathbuf, uint32_t pathbuf_size);
+extern U_EXPORT uint32_t u_split(       char* restrict s, uint32_t n, char** restrict argv, const char* restrict delim);
+extern U_EXPORT int      u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* restrict pathbuf, uint32_t pathbuf_size);
 
 /* FTW - walks through the directory tree starting from the indicated directory dir. For each found entry in
  *       the tree, it calls fn() with the full pathname of the entry, his length and if it is a directory
@@ -204,9 +204,9 @@ extern U_EXPORT int      u_splitCommand(char* s, uint32_t n, char* argv[], char*
 
 struct u_ftw_ctx_s {
    qcompare sort_by;
-   const char* filter;
    vPF call, call_if_up;
    uint32_t filter_len;
+   const char* restrict filter;
    bool depth, is_directory, call_if_directory;
 
    /* NB: we use u_buffer...
@@ -219,7 +219,7 @@ struct u_ftw_ctx_s {
 
 extern U_EXPORT   void u_ftw(void);
 extern U_EXPORT struct u_ftw_ctx_s u_ftw_ctx;
-extern U_EXPORT    int u_ftw_ino_cmp(const void* a, const void* b);
+extern U_EXPORT    int u_ftw_ino_cmp(const void* restrict a, const void* restrict b);
 
 /* From RFC 3986 */
 
@@ -233,9 +233,9 @@ extern U_EXPORT const unsigned char u_uri_encoded_char[256];
 
 /* character type identification - Assumed an ISO-1 character set */
 
-extern U_EXPORT const unsigned char* u__ct_tab;
-extern U_EXPORT const unsigned char* u__ct_tol;
-extern U_EXPORT const unsigned char* u__ct_tou;
+extern U_EXPORT const unsigned char* restrict u__ct_tab;
+extern U_EXPORT const unsigned char* restrict u__ct_tol;
+extern U_EXPORT const unsigned char* restrict u__ct_tou;
 
 static inline bool u_iscntrl(int c)  { return (u__ct_tab[c] & 0x01) != 0; } // __C } /* Control character. */
 static inline bool u_isdigit(int c)  { return (u__ct_tab[c] & 0x02) != 0; } // __D } /* Digit. */
@@ -261,8 +261,8 @@ static inline bool u_isbase64(int c) { return (u_isalnum(c) || (c == '+') || (c 
 
 /* buffer type identification */
 
-extern U_EXPORT bool u_isBase64(    const char* s, uint32_t n);
-extern U_EXPORT bool u_isWhiteSpace(const char* s, uint32_t n);
+extern U_EXPORT bool u_isBase64(    const char* restrict s, uint32_t n);
+extern U_EXPORT bool u_isWhiteSpace(const char* restrict s, uint32_t n);
 
 enum TextType {
    U_TYPE_TEXT_ASCII, /* X3.4, ISO-8859, non-ISO ext. ASCII */
@@ -276,28 +276,28 @@ extern U_EXPORT const unsigned char u_text_chars[256];
 
 static inline bool u_istext(int c) { return (u_text_chars[c] != 0); }
 
-extern U_EXPORT bool u_isText(  const unsigned char* s, uint32_t n);
-extern U_EXPORT bool u_isUTF8(  const unsigned char* s, uint32_t n);
-extern U_EXPORT int  u_isUTF16( const unsigned char* s, uint32_t n);
-static inline   bool u_isBinary(const unsigned char* s, uint32_t n) { return ((u_isText(s,n) || u_isUTF8(s,n) || u_isUTF16(s,n)) == false); }
+extern U_EXPORT bool u_isText(  const unsigned char* restrict s, uint32_t n);
+extern U_EXPORT bool u_isUTF8(  const unsigned char* restrict s, uint32_t n);
+extern U_EXPORT int  u_isUTF16( const unsigned char* restrict s, uint32_t n);
+static inline   bool u_isBinary(const unsigned char* restrict s, uint32_t n) { return ((u_isText(s,n) || u_isUTF8(s,n) || u_isUTF16(s,n)) == false); }
 
 /* ip address type identification */
 
-static inline bool u_isIPv4Addr(const char* p, uint32_t n)
+static inline bool u_isIPv4Addr(const char* restrict p, uint32_t n)
    { char c; uint32_t i = 0; for (; i < n; ++i) { c = p[i]; if (u_isdigit(c)  == 0 && c != '.')             return false; } return true; } 
 
-static inline bool u_isIPv6Addr(const char* p, uint32_t n)
+static inline bool u_isIPv6Addr(const char* restrict p, uint32_t n)
    { char c; uint32_t i = 0; for (; i < n; ++i) { c = p[i]; if (u_isxdigit(c) == 0 && c != '.' && c != ':') return false; } return true; } 
 
-static inline bool u_isIPAddr(bool IPv6, const char* p, uint32_t n) { return (IPv6 ? u_isIPv6Addr(p, n) : u_isIPv4Addr(p, n)); } 
+static inline bool u_isIPAddr(bool IPv6, const char* restrict p, uint32_t n) { return (IPv6 ? u_isIPv6Addr(p, n) : u_isIPv4Addr(p, n)); } 
 
 /* Quick and dirty int->hex. The only standard way is to call snprintf (?),
  * which is undesirably slow for such a frequently-called function... */
 
-static inline void u_int2hex(char* p, uint32_t n)
+static inline void u_int2hex(char* restrict p, uint32_t n)
    { int s; for (s = 28; s >= 0; s -= 4, ++p) *p = u_hex_upper[(n >> s) & 0xf]; }
 
-static inline uint32_t u_hex2int(const char* p, uint32_t len)
+static inline uint32_t u_hex2int(const char* restrict p, uint32_t len)
    { uint32_t n = 0; const char* eos = p + len; while (p < eos) n = (n << 4) | u_hexc2int(*p++); return n; }
 
 #ifdef HAVE_SSL
@@ -307,7 +307,7 @@ The actual length of the password must be returned to the calling function. rwfl
 callback is used for reading/decryption (rwflag=0) or writing/encryption (rwflag=1).
 See man SSL_CTX_set_default_passwd_cb(3) for more information
 */
-extern U_EXPORT int u_passwd_cb(char* buf, int size, int rwflag, void* password);
+extern U_EXPORT int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict password);
 #endif
 
 #ifdef __cplusplus

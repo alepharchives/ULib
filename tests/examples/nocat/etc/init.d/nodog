@@ -17,39 +17,52 @@ cmdline='/usr/sbin/userver_tcp -c /etc/nodog.conf'
 errfile=/tmp/nodog.err
 
 send_info_to_authserver() {
-	for url in `grep '^[ \t]*AUTH_SERVICE_URL[ \t]' /etc/nodog.conf | tr -d \"` ; do
-		test $url = AUTH_SERVICE_URL && continue
-		/usr/sbin/uclient -c /etc/uclient.conf "${url}start_ap?ap=`uname -n`"
-	done
+#	eval authserver=`awk '
+#		/^[ 	]*AUTH_SERVICE_URL[ 	]/ { print $2 }' /etc/nodog.conf`
+#
+#	/usr/sbin/uclient -c /etc/uclient.conf "${authserver}start_ap?ap=`uname -n`"
+
+   for url in `grep '^[ \t]*AUTH_SERVICE_URL[ \t]' /etc/nodog.conf | tr -d \"` ; do
+      test $url = AUTH_SERVICE_URL && continue
+      /usr/sbin/uclient -c /etc/uclient.conf "${url}start_ap?ap=`uname -n`"
+   done
 }
 
 _pgrep() {
 	test "$1" || return
 	local pids=`ps | grep "$1" | grep -v grep | awk '{ print $1 }'`
+# echo $0 [$$] `date`: _pgrep\(\): "`ps`"  >> /root/nodog.log
 	test "$pids" && echo $pids ; }
-	
+
 _pkill() {
 	local pids=`_pgrep "$2"`
+# echo $0 [$$] `date`: _pkill\(\): pids=$pids  >> /root/nodog.log
 	test "$pids" && kill -$1 $pids ; }
 
 start() {
 	_pgrep "$cmdline" > /dev/null && {
 		echo "$descr is ALREADY running." ; return ; }
-	
+
 	echo "starting $descr"
-	
+
 	send_info_to_authserver
 	rm -f /tmp/firewall.err
 	$cmdline 2>> $errfile &
 }
 
 stop() {
+# echo $0 [$$] `date`: stopping >> /root/nodog.log
 	_pgrep "$cmdline" > /dev/null &&
-		echo "stopping $descr" ||
-		echo "$descr is NOT running."
+		echo "stopping $descr" || {
+		echo "$descr is NOT running." ; return ; }
 
+# echo $0 [$$] `date`: signaling >> /root/nodog.log
 	_pkill USR1 "$cmdline" # backup log
+# echo $0 [$$] `date`: after signaling, `ls /tmp/*.gz` >> /root/nodog.log
 	sleep 2
+# echo $0 [$$] `date`: after sleep, `ls /tmp/*.gz` >> /root/nodog.log
+# echo $0 [$$] `date`: uploading >> /root/nodog.log
 	/usr/lib/nodog/bin/upload-logs.sh # send log
+# echo $0 [$$] `date`: killing >> /root/nodog.log
 	_pkill TERM "$cmdline"
 }

@@ -96,6 +96,16 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	AC_SUBST(HAVE_LIBZ)],
 	[AC_MSG_RESULT(no)])
 
+	AC_MSG_CHECKING(if you want to enable build of ZIP support)
+	AC_ARG_ENABLE(zip,
+				[  --enable-zip            enable build of ZIP support - require libz [[default: depend from libz]]])
+	if test "$enable_zip" != "no" && test x_$found_libz = x_yes; then
+		enable_zip="yes"
+	else
+		enable_zip="no"
+	fi
+	AC_MSG_RESULT([$enable_zip])
+
 	AC_MSG_CHECKING(if PCRE library is wanted)
 	wanted=1;
 	if test -z "$with_pcre" ; then

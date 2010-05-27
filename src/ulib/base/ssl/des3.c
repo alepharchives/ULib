@@ -92,7 +92,7 @@ void u_des3_reset(void)
    u_des3_init();
 }
 
-void u_des_key(const char* str)
+void u_des_key(const char* restrict str)
 {
    U_INTERNAL_TRACE("u_des_key(%s)", str)
 
@@ -104,7 +104,7 @@ void u_des_key(const char* str)
    u_des3_init();
 }
 
-void u_des3_key(const char* str)
+void u_des3_key(const char* restrict str)
 {
    U_INTERNAL_TRACE("u_des3_key(%s)", str)
 
@@ -113,7 +113,7 @@ void u_des3_key(const char* str)
    u_des3_init();
 }
 
-long u_des_encode(const unsigned char* inp, long len, unsigned char* out)
+long u_des_encode(const unsigned char* restrict inp, long len, unsigned char* restrict out)
 {
    U_INTERNAL_TRACE("u_des_encode(%.*s,%ld,%p)", len, inp, len, out)
 
@@ -130,7 +130,7 @@ long u_des_encode(const unsigned char* inp, long len, unsigned char* out)
    return len;
 }
 
-long u_des3_encode(const unsigned char* inp, long len, unsigned char* out)
+long u_des3_encode(const unsigned char* restrict inp, long len, unsigned char* restrict out)
 {
    BIO* wbio;
    BIO* benc;
@@ -165,7 +165,7 @@ long u_des3_encode(const unsigned char* inp, long len, unsigned char* out)
    return len;
 }
 
-long u_des_decode(const unsigned char* inp, long len, unsigned char* out)
+long u_des_decode(const unsigned char* restrict inp, long len, unsigned char* restrict out)
 {
    U_INTERNAL_TRACE("u_des_decode(%.*s,%ld,%p)", len, inp, len, out)
 
@@ -182,7 +182,7 @@ long u_des_decode(const unsigned char* inp, long len, unsigned char* out)
    return len;
 }
 
-long u_des3_decode(const unsigned char* inp, long len, unsigned char* out)
+long u_des3_decode(const unsigned char* restrict inp, long len, unsigned char* restrict out)
 {
    BIO* rbio;
    BIO* wbio;

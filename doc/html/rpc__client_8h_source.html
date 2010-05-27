@@ -49,47 +49,49 @@
 <a name="l00026"></a>00026                 {
 <a name="l00027"></a>00027                 U_TRACE_REGISTER_OBJECT(0, <a class="code" href="classURPCClient.html">URPCClient</a>, <span class="stringliteral">&quot;%p&quot;</span>, cfg)
 <a name="l00028"></a>00028 
-<a name="l00029"></a>00029                 URPCMethod::encoder = U_NEW(<a class="code" href="classURPCEncoder.html">URPCEncoder</a>);
-<a name="l00030"></a>00030                 }
-<a name="l00031"></a>00031 
-<a name="l00032"></a>00032         ~<a class="code" href="classURPCClient.html">URPCClient</a>()
-<a name="l00033"></a>00033                 {
-<a name="l00034"></a>00034                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classURPCClient.html">URPCClient</a>)
-<a name="l00035"></a>00035 
-<a name="l00036"></a>00036                 U_INTERNAL_ASSERT_POINTER(URPCMethod::encoder)
+<a name="l00029"></a>00029                 <span class="keywordflow">if</span> (cfg &amp;&amp; UClient_Base::getServer().empty()) UClient_Base::loadConfigParam(*cfg);
+<a name="l00030"></a>00030 
+<a name="l00031"></a>00031                 URPCMethod::encoder = U_NEW(<a class="code" href="classURPCEncoder.html">URPCEncoder</a>);
+<a name="l00032"></a>00032                 }
+<a name="l00033"></a>00033 
+<a name="l00034"></a>00034         ~<a class="code" href="classURPCClient.html">URPCClient</a>()
+<a name="l00035"></a>00035                 {
+<a name="l00036"></a>00036                 U_TRACE_UNREGISTER_OBJECT(0, <a class="code" href="classURPCClient.html">URPCClient</a>)
 <a name="l00037"></a>00037 
-<a name="l00038"></a>00038                 <span class="keyword">delete</span> URPCMethod::encoder;
-<a name="l00039"></a>00039                 }
-<a name="l00040"></a>00040 
-<a name="l00041"></a>00041         <span class="comment">// SERVICES</span>
+<a name="l00038"></a>00038                 U_INTERNAL_ASSERT_POINTER(URPCMethod::encoder)
+<a name="l00039"></a>00039 
+<a name="l00040"></a>00040                 <span class="keyword">delete</span> URPCMethod::encoder;
+<a name="l00041"></a>00041                 }
 <a name="l00042"></a>00042 
-<a name="l00043"></a>00043         <span class="keywordtype">bool</span> processRequest(<a class="code" href="classURPCMethod.html">URPCMethod</a>&amp; method)
-<a name="l00044"></a>00044                 {
-<a name="l00045"></a>00045                 U_TRACE(0, <span class="stringliteral">&quot;URPCClient::processRequest(%p)&quot;</span>, &amp;method)
-<a name="l00046"></a>00046 
-<a name="l00047"></a>00047                 U_INTERNAL_ASSERT_POINTER(URPCMethod::encoder)
+<a name="l00043"></a>00043         <span class="comment">// SERVICES</span>
+<a name="l00044"></a>00044 
+<a name="l00045"></a>00045         <span class="keywordtype">bool</span> processRequest(<a class="code" href="classURPCMethod.html">URPCMethod</a>&amp; method)
+<a name="l00046"></a>00046                 {
+<a name="l00047"></a>00047                 U_TRACE(0, <span class="stringliteral">&quot;URPCClient::processRequest(%p)&quot;</span>, &amp;method)
 <a name="l00048"></a>00048 
-<a name="l00049"></a>00049                 this-&gt;UClient_Base::request = URPCMethod::encoder-&gt;encodeMethodCall(method, UString::getStringNull());
+<a name="l00049"></a>00049                 U_INTERNAL_ASSERT_POINTER(URPCMethod::encoder)
 <a name="l00050"></a>00050 
-<a name="l00051"></a>00051                 <span class="keywordtype">bool</span> result = (this-&gt;UClient_Base::sendRequest() &amp;&amp;
-<a name="l00052"></a>00052                                                         this-&gt;UClient_Base::readRPCResponse() &amp;&amp;
-<a name="l00053"></a>00053                                                         this-&gt;UClient_Base::buffer == *URPCMethod::str_done); 
-<a name="l00054"></a>00054 
-<a name="l00055"></a>00055                 U_RETURN(result);
-<a name="l00056"></a>00056                 }
-<a name="l00057"></a>00057 
-<a name="l00058"></a>00058 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00059"></a>00059 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;Socket&gt;::dump</a>(reset); }
-<a name="l00060"></a>00060 <span class="preprocessor">#endif</span>
-<a name="l00061"></a>00061 <span class="preprocessor"></span>
-<a name="l00062"></a>00062 <span class="keyword">private</span>:
-<a name="l00063"></a>00063         <a class="code" href="classURPCClient.html">URPCClient</a>(<span class="keyword">const</span> <a class="code" href="classURPCClient.html">URPCClient</a>&amp;)            {}
-<a name="l00064"></a>00064         <a class="code" href="classURPCClient.html">URPCClient</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classURPCClient.html">URPCClient</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00065"></a>00065 };
-<a name="l00066"></a>00066 
-<a name="l00067"></a>00067 <span class="preprocessor">#endif</span>
+<a name="l00051"></a>00051                 this-&gt;UClient_Base::request = URPCMethod::encoder-&gt;encodeMethodCall(method, UString::getStringNull());
+<a name="l00052"></a>00052 
+<a name="l00053"></a>00053                 <span class="keywordtype">bool</span> result = (this-&gt;UClient_Base::sendRequest() &amp;&amp;
+<a name="l00054"></a>00054                                                         this-&gt;UClient_Base::readRPCResponse() &amp;&amp;
+<a name="l00055"></a>00055                                                         this-&gt;UClient_Base::buffer == *URPCMethod::str_done); 
+<a name="l00056"></a>00056 
+<a name="l00057"></a>00057                 U_RETURN(result);
+<a name="l00058"></a>00058                 }
+<a name="l00059"></a>00059 
+<a name="l00060"></a>00060 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00061"></a>00061 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset)<span class="keyword"> const </span>{ <span class="keywordflow">return</span> <a class="code" href="classUClient.html" title="Handles a connections with a server.">UClient&lt;Socket&gt;::dump</a>(reset); }
+<a name="l00062"></a>00062 <span class="preprocessor">#endif</span>
+<a name="l00063"></a>00063 <span class="preprocessor"></span>
+<a name="l00064"></a>00064 <span class="keyword">private</span>:
+<a name="l00065"></a>00065         <a class="code" href="classURPCClient.html">URPCClient</a>(<span class="keyword">const</span> <a class="code" href="classURPCClient.html">URPCClient</a>&amp;)            {}
+<a name="l00066"></a>00066         <a class="code" href="classURPCClient.html">URPCClient</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classURPCClient.html">URPCClient</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00067"></a>00067 };
+<a name="l00068"></a>00068 
+<a name="l00069"></a>00069 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:38 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu May 27 19:03:58 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

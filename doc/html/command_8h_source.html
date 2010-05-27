@@ -250,103 +250,109 @@
 <a name="l00227"></a>00227         <span class="keyword">static</span> <span class="keywordtype">int</span> timeoutMS; <span class="comment">// specified the timeout value, in milliseconds for read output. A negative value indicates no timeout, i.e. an infinite wait.</span>
 <a name="l00228"></a>00228         <span class="keyword">static</span> <span class="keywordtype">int</span> exit_value;
 <a name="l00229"></a>00229 
-<a name="l00230"></a>00230         <span class="keywordtype">bool</span> executeWithFileArgument(<a class="code" href="classUString.html">UString</a>* output, <a class="code" href="classUFile.html">UFile</a>* file);
-<a name="l00231"></a>00231         <span class="keywordtype">bool</span> execute(<a class="code" href="classUString.html">UString</a>* input, <a class="code" href="classUString.html">UString</a>* output, <span class="keywordtype">int</span> fd_stdin = -1, <span class="keywordtype">int</span> fd_stderr = -1);
-<a name="l00232"></a>00232 
-<a name="l00233"></a>00233         <span class="keyword">static</span> <span class="keywordtype">void</span>     setTimeout(<span class="keywordtype">int</span> seconds) { timeoutMS = (seconds * 1000); }
-<a name="l00234"></a>00234 
-<a name="l00235"></a>00235         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> outputCommand(<a class="code" href="classUString.html">UString</a>&amp; cmd, <span class="keywordtype">char</span>** envp = 0, <span class="keywordtype">int</span> fd_stdin = -1, <span class="keywordtype">int</span> fd_stderr = -1);
-<a name="l00236"></a>00236 
-<a name="l00237"></a>00237         <span class="keywordtype">bool</span> checkForExecute(<span class="keywordtype">int</span> mode = R_OK | X_OK)
-<a name="l00238"></a>00238                 {
-<a name="l00239"></a>00239                 U_TRACE(1, <span class="stringliteral">&quot;UCommand::checkForExecute(%d)&quot;</span>, mode)
+<a name="l00230"></a>00230         <span class="keyword">static</span> <span class="keywordtype">void</span>     setTimeout(<span class="keywordtype">int</span> seconds) { timeoutMS = (seconds * 1000); }
+<a name="l00231"></a>00231 
+<a name="l00232"></a>00232         <span class="comment">// run command</span>
+<a name="l00233"></a>00233 
+<a name="l00234"></a>00234                          <span class="keywordtype">bool</span>           executeWithFileArgument(<a class="code" href="classUString.html">UString</a>* output, <a class="code" href="classUFile.html">UFile</a>* file);
+<a name="l00235"></a>00235 
+<a name="l00236"></a>00236                          <span class="keywordtype">bool</span>           executeAndWait(<a class="code" href="classUString.html">UString</a>* input = 0,                                                        <span class="keywordtype">int</span> fd_stdin = -1, <span class="keywordtype">int</span> fd_stderr = -1);
+<a name="l00237"></a>00237                          <span class="keywordtype">bool</span>           execute(                        <a class="code" href="classUString.html">UString</a>* input = 0, <a class="code" href="classUString.html">UString</a>* output = 0, <span class="keywordtype">int</span> fd_stdin = -1, <span class="keywordtype">int</span> fd_stderr = -1);
+<a name="l00238"></a>00238 
+<a name="l00239"></a>00239         <span class="keyword">static</span> <a class="code" href="classUString.html">UString</a> outputCommand(<a class="code" href="classUString.html">UString</a>&amp; cmd, <span class="keywordtype">char</span>** envp = 0,                               <span class="keywordtype">int</span> fd_stdin = -1, <span class="keywordtype">int</span> fd_stderr = -1);
 <a name="l00240"></a>00240 
-<a name="l00241"></a>00241                 U_INTERNAL_ASSERT_POINTER(argv_exec)
-<a name="l00242"></a>00242 
-<a name="l00243"></a>00243                 <span class="keywordtype">bool</span> result = (U_SYSCALL(access, <span class="stringliteral">&quot;%S,%d&quot;</span>, argv_exec[0], mode) == 0);
+<a name="l00241"></a>00241         <span class="keywordtype">bool</span> checkForExecute(<span class="keywordtype">int</span> mode = R_OK | X_OK)
+<a name="l00242"></a>00242                 {
+<a name="l00243"></a>00243                 U_TRACE(1, <span class="stringliteral">&quot;UCommand::checkForExecute(%d)&quot;</span>, mode)
 <a name="l00244"></a>00244 
-<a name="l00245"></a>00245                 U_RETURN(result);
-<a name="l00246"></a>00246                 }
-<a name="l00247"></a>00247 
-<a name="l00248"></a>00248         <span class="comment">// MANAGE MESSAGE ERROR</span>
-<a name="l00249"></a>00249 
-<a name="l00250"></a>00250         <span class="keyword">static</span> <span class="keywordtype">bool</span> isStarted()
-<a name="l00251"></a>00251                 {
-<a name="l00252"></a>00252                 U_TRACE(0, <span class="stringliteral">&quot;UCommand::isStarted()&quot;</span>)
+<a name="l00245"></a>00245                 U_INTERNAL_ASSERT_POINTER(argv_exec)
+<a name="l00246"></a>00246 
+<a name="l00247"></a>00247                 <span class="keywordtype">bool</span> result = (U_SYSCALL(access, <span class="stringliteral">&quot;%S,%d&quot;</span>, argv_exec[0], mode) == 0);
+<a name="l00248"></a>00248 
+<a name="l00249"></a>00249                 U_RETURN(result);
+<a name="l00250"></a>00250                 }
+<a name="l00251"></a>00251 
+<a name="l00252"></a>00252         <span class="comment">// MANAGE MESSAGE ERROR</span>
 <a name="l00253"></a>00253 
-<a name="l00254"></a>00254                 <span class="keywordtype">bool</span> result = (pid &gt; 0);
-<a name="l00255"></a>00255 
-<a name="l00256"></a>00256                 U_RETURN(result);
-<a name="l00257"></a>00257                 }
-<a name="l00258"></a>00258 
-<a name="l00259"></a>00259         <span class="keyword">static</span> <span class="keywordtype">bool</span> isTimeout()
-<a name="l00260"></a>00260                 {
-<a name="l00261"></a>00261                 U_TRACE(0, <span class="stringliteral">&quot;UCommand::isTimeout()&quot;</span>)
+<a name="l00254"></a>00254         <span class="keyword">static</span> <span class="keywordtype">bool</span> isStarted()
+<a name="l00255"></a>00255                 {
+<a name="l00256"></a>00256                 U_TRACE(0, <span class="stringliteral">&quot;UCommand::isStarted()&quot;</span>)
+<a name="l00257"></a>00257 
+<a name="l00258"></a>00258                 <span class="keywordtype">bool</span> result = (pid &gt; 0);
+<a name="l00259"></a>00259 
+<a name="l00260"></a>00260                 U_RETURN(result);
+<a name="l00261"></a>00261                 }
 <a name="l00262"></a>00262 
-<a name="l00263"></a>00263                 <span class="keywordtype">bool</span> result = (exit_value == -EAGAIN);
-<a name="l00264"></a>00264 
-<a name="l00265"></a>00265                 U_RETURN(result);
-<a name="l00266"></a>00266                 }
-<a name="l00267"></a>00267 
-<a name="l00268"></a>00268         <span class="keyword">static</span> <span class="keywordtype">void</span> printMsgError()
-<a name="l00269"></a>00269                 {
-<a name="l00270"></a>00270                 U_TRACE(0, <span class="stringliteral">&quot;UCommand::printMsgError()&quot;</span>)
+<a name="l00263"></a>00263         <span class="keyword">static</span> <span class="keywordtype">bool</span> isTimeout()
+<a name="l00264"></a>00264                 {
+<a name="l00265"></a>00265                 U_TRACE(0, <span class="stringliteral">&quot;UCommand::isTimeout()&quot;</span>)
+<a name="l00266"></a>00266 
+<a name="l00267"></a>00267                 <span class="keywordtype">bool</span> result = (exit_value == -EAGAIN);
+<a name="l00268"></a>00268 
+<a name="l00269"></a>00269                 U_RETURN(result);
+<a name="l00270"></a>00270                 }
 <a name="l00271"></a>00271 
-<a name="l00272"></a>00272                 U_INTERNAL_ASSERT_MAJOR(u_buffer_len, 0)
-<a name="l00273"></a>00273 
-<a name="l00274"></a>00274                 U_WARNING(<span class="stringliteral">&quot;%.*s&quot;</span>, u_buffer_len, u_buffer);
+<a name="l00272"></a>00272         <span class="keyword">static</span> <span class="keywordtype">void</span> printMsgError()
+<a name="l00273"></a>00273                 {
+<a name="l00274"></a>00274                 U_TRACE(0, <span class="stringliteral">&quot;UCommand::printMsgError()&quot;</span>)
 <a name="l00275"></a>00275 
-<a name="l00276"></a>00276                 u_buffer_len = 0;
-<a name="l00277"></a>00277                 }
-<a name="l00278"></a>00278 
-<a name="l00279"></a>00279         <span class="keyword">static</span> <span class="keywordtype">void</span> setMsgError(<span class="keyword">const</span> <span class="keywordtype">char</span>* cmd);
-<a name="l00280"></a>00280 
-<a name="l00281"></a>00281         <span class="comment">// DEBUG</span>
+<a name="l00276"></a>00276                 U_INTERNAL_ASSERT_MAJOR(u_buffer_len, 0)
+<a name="l00277"></a>00277 
+<a name="l00278"></a>00278                 U_WARNING(<span class="stringliteral">&quot;%.*s&quot;</span>, u_buffer_len, u_buffer);
+<a name="l00279"></a>00279 
+<a name="l00280"></a>00280                 u_buffer_len = 0;
+<a name="l00281"></a>00281                 }
 <a name="l00282"></a>00282 
-<a name="l00283"></a>00283 <span class="preprocessor">#ifdef DEBUG</span>
-<a name="l00284"></a>00284 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
-<a name="l00285"></a>00285 <span class="preprocessor">#endif</span>
-<a name="l00286"></a>00286 <span class="preprocessor"></span>
-<a name="l00287"></a>00287 <span class="keyword">protected</span>:
-<a name="l00288"></a>00288         <span class="keywordtype">char</span>** envp;
-<a name="l00289"></a>00289         <span class="keywordtype">char</span>* pathcmd;
-<a name="l00290"></a>00290         <span class="keywordtype">char</span>** argv_exec;
-<a name="l00291"></a>00291         <span class="keywordtype">char</span>** envp_exec;
-<a name="l00292"></a>00292         uint32_t flag_expand;
-<a name="l00293"></a>00293         int32_t ncmd, nenv, nfile;
-<a name="l00294"></a>00294         <a class="code" href="classUString.html">UString</a> command, environment;
-<a name="l00295"></a>00295 
-<a name="l00296"></a>00296         <span class="keywordtype">void</span> setCommand();
-<a name="l00297"></a>00297         <span class="keywordtype">void</span> freeCommand();
-<a name="l00298"></a>00298         <span class="keywordtype">void</span> freeEnvironment();
+<a name="l00283"></a>00283         <span class="keyword">static</span> <span class="keywordtype">void</span> setMsgError(<span class="keyword">const</span> <span class="keywordtype">char</span>* cmd);
+<a name="l00284"></a>00284 
+<a name="l00285"></a>00285         <span class="comment">// DEBUG</span>
+<a name="l00286"></a>00286 
+<a name="l00287"></a>00287 <span class="preprocessor">#ifdef DEBUG</span>
+<a name="l00288"></a>00288 <span class="preprocessor"></span>        <span class="keyword">const</span> <span class="keywordtype">char</span>* dump(<span class="keywordtype">bool</span> reset) <span class="keyword">const</span>;
+<a name="l00289"></a>00289 <span class="preprocessor">#endif</span>
+<a name="l00290"></a>00290 <span class="preprocessor"></span>
+<a name="l00291"></a>00291 <span class="keyword">protected</span>:
+<a name="l00292"></a>00292         <span class="keywordtype">char</span>** envp;
+<a name="l00293"></a>00293         <span class="keywordtype">char</span>* pathcmd;
+<a name="l00294"></a>00294         <span class="keywordtype">char</span>** argv_exec;
+<a name="l00295"></a>00295         <span class="keywordtype">char</span>** envp_exec;
+<a name="l00296"></a>00296         uint32_t flag_expand;
+<a name="l00297"></a>00297         int32_t ncmd, nenv, nfile;
+<a name="l00298"></a>00298         <a class="code" href="classUString.html">UString</a> command, environment;
 <a name="l00299"></a>00299 
-<a name="l00300"></a>00300         <span class="keywordtype">void</span> reset(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; cmd, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; env)
-<a name="l00301"></a>00301                 {
-<a name="l00302"></a>00302                 U_TRACE(0, <span class="stringliteral">&quot;UCommand::reset(%.*S,%.*S)&quot;</span>, U_STRING_TO_TRACE(cmd), U_STRING_TO_TRACE(env))
+<a name="l00300"></a>00300         <span class="keywordtype">void</span> setCommand();
+<a name="l00301"></a>00301         <span class="keywordtype">void</span> freeCommand();
+<a name="l00302"></a>00302         <span class="keywordtype">void</span> freeEnvironment();
 <a name="l00303"></a>00303 
-<a name="l00304"></a>00304                 command     = cmd;
-<a name="l00305"></a>00305                 environment = env;
-<a name="l00306"></a>00306                 }
+<a name="l00304"></a>00304         <span class="keywordtype">void</span> reset(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; cmd, <span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; env)
+<a name="l00305"></a>00305                 {
+<a name="l00306"></a>00306                 U_TRACE(0, <span class="stringliteral">&quot;UCommand::reset(%.*S,%.*S)&quot;</span>, U_STRING_TO_TRACE(cmd), U_STRING_TO_TRACE(env))
 <a name="l00307"></a>00307 
-<a name="l00308"></a>00308         <span class="keyword">static</span> <span class="keywordtype">void</span>     outputCommand(<a class="code" href="classUString.html">UString</a>&amp; cmd, <span class="keywordtype">char</span>** envp, <a class="code" href="classUString.html">UString</a>* output, <span class="keywordtype">int</span> fd_stdin, <span class="keywordtype">int</span> fd_stderr, <span class="keywordtype">bool</span> dialog);
-<a name="l00309"></a>00309 
-<a name="l00310"></a>00310 <span class="keyword">private</span>:
-<a name="l00311"></a>00311                                           <span class="keywordtype">void</span> setEnvironment(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; env) U_NO_EXPORT;
-<a name="l00312"></a>00312                          <span class="keyword">inline</span> <span class="keywordtype">void</span> execute(<span class="keywordtype">bool</span> flag_stdin, <span class="keywordtype">bool</span> flag_stdout, <span class="keywordtype">bool</span> flag_stderr) U_NO_EXPORT;
-<a name="l00313"></a>00313         <span class="keyword">static</span>            <span class="keywordtype">bool</span> postCommand(<a class="code" href="classUString.html">UString</a>* input, <a class="code" href="classUString.html">UString</a>* output) U_NO_EXPORT;
-<a name="l00314"></a>00314         <span class="keyword">static</span>            <span class="keywordtype">void</span> setStdInOutErr(<span class="keywordtype">int</span> fd_stdin, <span class="keywordtype">bool</span> flag_stdin, <span class="keywordtype">bool</span> flag_stdout, <span class="keywordtype">int</span> fd_stderr) U_NO_EXPORT;
-<a name="l00315"></a>00315 
-<a name="l00316"></a>00316         <a class="code" href="classUCommand.html">UCommand</a>(<span class="keyword">const</span> <a class="code" href="classUCommand.html">UCommand</a>&amp;)            {}
-<a name="l00317"></a>00317         <a class="code" href="classUCommand.html">UCommand</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUCommand.html">UCommand</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
-<a name="l00318"></a>00318 
-<a name="l00319"></a>00319         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUDialog.html" title="UDialog is a simple interface to the Unix dialog program by Savio Lam and Stuart...">UDialog</a>;
-<a name="l00320"></a>00320         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUServer__Base.html">UServer_Base</a>;
-<a name="l00321"></a>00321         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUProxyPlugIn.html">UProxyPlugIn</a>;
-<a name="l00322"></a>00322 };
-<a name="l00323"></a>00323 
-<a name="l00324"></a>00324 <span class="preprocessor">#endif</span>
+<a name="l00308"></a>00308                 command     = cmd;
+<a name="l00309"></a>00309                 environment = env;
+<a name="l00310"></a>00310                 }
+<a name="l00311"></a>00311 
+<a name="l00312"></a>00312         <span class="keyword">static</span> <span class="keywordtype">void</span>     outputCommand(<a class="code" href="classUString.html">UString</a>&amp; cmd, <span class="keywordtype">char</span>** envp, <a class="code" href="classUString.html">UString</a>* output, <span class="keywordtype">int</span> fd_stdin, <span class="keywordtype">int</span> fd_stderr, <span class="keywordtype">bool</span> dialog);
+<a name="l00313"></a>00313 
+<a name="l00314"></a>00314 <span class="keyword">private</span>:
+<a name="l00315"></a>00315                                           <span class="keywordtype">void</span> setEnvironment(<span class="keyword">const</span> <a class="code" href="classUString.html">UString</a>&amp; env) U_NO_EXPORT;
+<a name="l00316"></a>00316                          <span class="keyword">inline</span> <span class="keywordtype">void</span> execute(<span class="keywordtype">bool</span> flag_stdin, <span class="keywordtype">bool</span> flag_stdout, <span class="keywordtype">bool</span> flag_stderr) U_NO_EXPORT;
+<a name="l00317"></a>00317 
+<a name="l00318"></a>00318         <span class="keyword">static</span>            <span class="keywordtype">bool</span> wait() U_NO_EXPORT;
+<a name="l00319"></a>00319         <span class="keyword">static</span>            <span class="keywordtype">bool</span> postCommand(<a class="code" href="classUString.html">UString</a>* input, <a class="code" href="classUString.html">UString</a>* output) U_NO_EXPORT;
+<a name="l00320"></a>00320         <span class="keyword">static</span>            <span class="keywordtype">void</span> setStdInOutErr(<span class="keywordtype">int</span> fd_stdin, <span class="keywordtype">bool</span> flag_stdin, <span class="keywordtype">bool</span> flag_stdout, <span class="keywordtype">int</span> fd_stderr) U_NO_EXPORT;
+<a name="l00321"></a>00321 
+<a name="l00322"></a>00322         <a class="code" href="classUCommand.html">UCommand</a>(<span class="keyword">const</span> <a class="code" href="classUCommand.html">UCommand</a>&amp;)            {}
+<a name="l00323"></a>00323         <a class="code" href="classUCommand.html">UCommand</a>&amp; operator=(<span class="keyword">const</span> <a class="code" href="classUCommand.html">UCommand</a>&amp;) { <span class="keywordflow">return</span> *<span class="keyword">this</span>; }
+<a name="l00324"></a>00324 
+<a name="l00325"></a>00325         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUDialog.html" title="UDialog is a simple interface to the Unix dialog program by Savio Lam and Stuart...">UDialog</a>;
+<a name="l00326"></a>00326         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUServer__Base.html">UServer_Base</a>;
+<a name="l00327"></a>00327         <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classUProxyPlugIn.html">UProxyPlugIn</a>;
+<a name="l00328"></a>00328 };
+<a name="l00329"></a>00329 
+<a name="l00330"></a>00330 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:37 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu May 27 19:03:56 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

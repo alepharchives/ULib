@@ -22,7 +22,7 @@
 
 struct U_EXPORT UMemoryError {
 
-   const UMemoryError* _this;
+   const UMemoryError* restrict _this;
 
    // CONSTRUCTOR
 
@@ -31,7 +31,7 @@ struct U_EXPORT UMemoryError {
 
    // ASSIGNMENT
 
-   UMemoryError& operator=(const UMemoryError& o)
+   UMemoryError& operator=(const UMemoryError& restrict o)
       {
       U_CHECK_MEMORY_CLASS(*this)
       U_CHECK_MEMORY_CLASS(o)
@@ -43,11 +43,11 @@ struct U_EXPORT UMemoryError {
 
    // TEST FOR MEMORY CORRUPTION
 
-   bool invariant() const { return (this == _this); }
+   bool invariant() const restrict { return (this == _this); }
 
    static char buffer[64];
 
-   const char* getErrorType() const
+   const char* getErrorType() const restrict
       {
       // Array Beyond Write | Free Memory Read...
 

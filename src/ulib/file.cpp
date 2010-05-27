@@ -812,7 +812,9 @@ bool UFile::rmdir(const char* path, bool remove_all)
 
          for (uint32_t i = 0; i < n; ++i)
             {
-            file = vec[i].c_str();
+            U_INTERNAL_ASSERT(vec[i].isNullTerminated())
+
+            file = vec[i].data();
 
             if (UFile::unlink(file) == false &&
                 (errno == EISDIR || errno == EPERM))
@@ -1074,13 +1076,13 @@ const char* UFile::getMimeType()
 {
    U_TRACE(0, "UFile::getMimeType()")
 
-   const char* content_type = 0;
+   const char* content_type;
 
 #ifdef HAVE_MAGIC
    if (map               == MAP_FAILED &&
        memmap(PROT_READ) == false)
       {
-      goto end;
+      U_RETURN((const char*)0);
       }
 
    content_type = UMagic::getType(map, map_size).data();
@@ -1095,7 +1097,6 @@ const char* UFile::getMimeType()
       }
 #endif
 
-end:
    U_RETURN(content_type);
 }
 

@@ -33,9 +33,9 @@
 <a name="l00022"></a>00022 <span class="preprocessor"></span>
 <a name="l00023"></a>00023 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">void</span> u_printError(<span class="keywordtype">void</span>);
 <a name="l00024"></a>00024 
-<a name="l00025"></a>00025 <span class="keyword">extern</span> U_EXPORT <span class="keyword">const</span> <span class="keywordtype">char</span>* u_getSysError(                  uint32_t* len); <span class="comment">/* map errno number to an error message string */</span>
-<a name="l00026"></a>00026 <span class="keyword">extern</span> U_EXPORT <span class="keyword">const</span> <span class="keywordtype">char</span>* u_getSysSignal(<span class="keywordtype">int</span> signo,       uint32_t* len); <span class="comment">/* map signal number to an message string */</span>
-<a name="l00027"></a>00027 <span class="keyword">extern</span> U_EXPORT <span class="keyword">const</span> <span class="keywordtype">char</span>* u_getExitStatus(<span class="keywordtype">int</span> exit_value, uint32_t* len); <span class="comment">/* map exit status codes to an message string */</span>
+<a name="l00025"></a>00025 <span class="keyword">extern</span> U_EXPORT <span class="keyword">const</span> <span class="keywordtype">char</span>* u_getSysError(                  uint32_t* restrict len); <span class="comment">/* map errno number to an error message string */</span>
+<a name="l00026"></a>00026 <span class="keyword">extern</span> U_EXPORT <span class="keyword">const</span> <span class="keywordtype">char</span>* u_getSysSignal(<span class="keywordtype">int</span> signo,       uint32_t* restrict len); <span class="comment">/* map signal number to an message string */</span>
+<a name="l00027"></a>00027 <span class="keyword">extern</span> U_EXPORT <span class="keyword">const</span> <span class="keywordtype">char</span>* u_getExitStatus(<span class="keywordtype">int</span> exit_value, uint32_t* restrict len); <span class="comment">/* map exit status codes to an message string */</span>
 <a name="l00028"></a>00028 
 <a name="l00029"></a>00029 <span class="keyword">extern</span> U_EXPORT <span class="keywordtype">void</span> u_execOnExit(<span class="keywordtype">void</span>); <span class="comment">/* launch program on exit - ex. script to run gdb on process running */</span>
 <a name="l00030"></a>00030 
@@ -45,7 +45,7 @@
 <a name="l00034"></a>00034 <span class="preprocessor"></span>
 <a name="l00035"></a>00035 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:37 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu May 27 19:03:56 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

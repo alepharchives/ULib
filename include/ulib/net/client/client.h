@@ -285,6 +285,12 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UClient<USSLSocket>, "%p", cfg)
 
+      U_INTERNAL_ASSERT(ca_file.isNullTerminated())
+      U_INTERNAL_ASSERT(ca_path.isNullTerminated())
+      U_INTERNAL_ASSERT(key_file.isNullTerminated())
+      U_INTERNAL_ASSERT(password.isNullTerminated())
+      U_INTERNAL_ASSERT(cert_file.isNullTerminated())
+
       USSLSocket::method = (SSL_METHOD*) SSLv3_client_method();
 
       socket = U_NEW(USSLSocket(bIPv6));
@@ -297,8 +303,8 @@ public:
 
       // Load our certificate
 
-      if (getSocket()->setContext(cert_file.c_str(), key_file.c_str(), password.c_str(),
-                                    ca_file.c_str(),  ca_path.c_str(), verify_mode) == false)
+      if (getSocket()->setContext(cert_file.data(), key_file.data(), password.data(),
+                                    ca_file.data(),  ca_path.data(), verify_mode) == false)
          {
          U_ERROR("SSL setContext() failed...", 0);
          }

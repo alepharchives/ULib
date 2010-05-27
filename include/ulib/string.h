@@ -18,6 +18,14 @@
 
 #include <iostream>
 
+#ifdef __clang__
+#  define ios        std::ios
+#  define istream    std::istream
+#  define ostream    std::ostream
+#  define streambuf  std::streambuf
+#  define streamsize std::streamsize
+#endif
+
 #ifndef __MINGW32__
 #  include <sys/mman.h>
 #endif

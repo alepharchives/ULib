@@ -51,26 +51,26 @@ int init_compression(void)
 
 int compress_file(int in_fd, int out_fd, struct zipentry* ze)
 {
-   U_INTERNAL_TRACE("compress_file()", 0)
+   int rtval = 0;
+   unsigned wramt;
+   Bytef  in_buff[RDSZ],
+         out_buff[RDSZ];
 
-   int rtval;
-   Bytef in_buff[RDSZ];
-   Bytef out_buff[RDSZ];
-   unsigned long tr = 0;
-   unsigned rdamt = 0, wramt;
+   U_INTERNAL_TRACE("compress_file()", 0)
 
    zs.avail_in  = 0;
    zs.next_in   = in_buff;
    zs.next_out  = out_buff;
    zs.avail_out = (uInt)RDSZ;
 
-   ze->crc = crc32(0L, Z_NULL, 0); 
+   ze->crc = crc32(0L, 0, 0);
 
    while (1)
       {
       /* If deflate is out of input, fill the input buffer for it */
 
-      if (zs.avail_in == 0 && zs.avail_out > 0)
+      if (zs.avail_in == 0 &&
+          zs.avail_out > 0)
          {
          if ((rtval = read(in_fd, in_buff, RDSZ)) == 0) break;
 
@@ -81,30 +81,34 @@ int compress_file(int in_fd, int out_fd, struct zipentry* ze)
             return 1;
             }
 
-         rdamt = rtval;
-
          /* compute the CRC while we're at it */
-         ze->crc = crc32(ze->crc, in_buff, rdamt); 
-
-         /* update the total amount read sofar */
-         tr += rdamt;
-
-         zs.next_in  = in_buff;
-         zs.avail_in = rdamt;
+         ze->crc = crc32(ze->crc, in_buff, rtval);
          }
 
-      /* deflate the data */
-      if (zlib_deflate(&zs, 0) != Z_OK)
+      if (ze->compressed)
          {
-         U_INTERNAL_TRACE("Error deflating! %s:%d", __FILE__, __LINE__)
+         zs.avail_in = rtval;
 
-         return 1;
+         /* deflate the data */
+         if (zlib_deflate(&zs, 0) != Z_OK)
+            {
+            U_INTERNAL_TRACE("Error deflating! %s:%d", __FILE__, __LINE__)
+
+            return 1;
+            }
+
+         zs.next_in = in_buff;
+         }
+      else
+         {
+         zs.avail_in   = 0;
+         zs.avail_out -= rtval;
          }
 
       /* If the output buffer is full, dump it to disk */
       if (zs.avail_out == 0)
          {
-         if (write(out_fd, out_buff, RDSZ) != RDSZ)
+         if (write(out_fd, (ze->compressed ? out_buff : in_buff), RDSZ) != RDSZ)
             {
             perror("write");
 
@@ -122,7 +126,7 @@ int compress_file(int in_fd, int out_fd, struct zipentry* ze)
       {
       wramt = RDSZ - zs.avail_out;
 
-      if (write(out_fd, out_buff, wramt) != (int)wramt)
+      if (write(out_fd, (ze->compressed ? out_buff : in_buff), wramt) != (int)wramt)
          {
          perror("write");
 
@@ -130,12 +134,13 @@ int compress_file(int in_fd, int out_fd, struct zipentry* ze)
          }
 
       /* clear the output buffer */
-      zs.next_out = out_buff;
+      zs.next_out  = out_buff;
       zs.avail_out = (uInt)RDSZ;
       }
 
-   /* finish deflation.  This purges zlib's internal data buffers */
-   while (zlib_deflate(&zs, Z_FINISH) == Z_OK)
+   /* finish deflation. This purges zlib's internal data buffers */
+   while (ze->compressed &&
+          zlib_deflate(&zs, Z_FINISH) == Z_OK)
       {
       wramt = RDSZ - zs.avail_out;
 
@@ -164,8 +169,11 @@ int compress_file(int in_fd, int out_fd, struct zipentry* ze)
       }
 
    /* update fastzip's entry information */
-   ze->usize = (ub4)zs.total_in;
-   ze->csize = (ub4)zs.total_out;
+   if (ze->compressed)
+      {
+      ze->usize = (ub4)zs.total_in;
+      ze->csize = (ub4)zs.total_out;
+      }
 
    /* Reset the deflation for the next time around */
    if (zlib_deflateReset(&zs) != Z_OK)
@@ -180,9 +188,9 @@ int compress_file(int in_fd, int out_fd, struct zipentry* ze)
 
 int end_compression(void)
 {
-   U_INTERNAL_TRACE("end_compression()", 0)
-
    int rtval;
+
+   U_INTERNAL_TRACE("end_compression()", 0)
 
    /* Oddly enough, zlib always returns Z_DATA_ERROR if you specify no zlib header. Go fig. */
 
@@ -215,17 +223,17 @@ int init_inflation(void)
 
 int inflate_file(pb_file* pbf, int out_fd, struct zipentry* ze)
 {
-   U_INTERNAL_TRACE("inflate_file(%p,%d,%p)", pbf, out_fd, ze)
-
    int rtval;
    ub4 crc = 0;
    unsigned int rdamt;
    Bytef  in_buff[RDSZ];
    Bytef out_buff[RDSZ];
 
+   U_INTERNAL_TRACE("inflate_file(%p,%d,%p)", pbf, out_fd, ze)
+
    zs.avail_in = 0;
 
-   crc = crc32(crc, NULL, 0); /* initialize crc */
+   crc = crc32(crc, 0, 0); /* initialize crc */
 
    for (;;) /* loop until we've consumed all the compressed data */
       {
@@ -312,11 +320,11 @@ int inflate_file(pb_file* pbf, int out_fd, struct zipentry* ze)
 
 int inflate_buffer(pb_file* pbf, unsigned* inlen, char** out_buff, unsigned* outlen, struct zipentry* ze)
 {
-   U_INTERNAL_TRACE("inflate_buffer(%p,%u,%p,%u,%p)", pbf, *inlen, out_buff, *outlen, ze)
-
    Bytef* ptr;
    int rtval, flag;
    unsigned size, nsize;
+
+   U_INTERNAL_TRACE("inflate_buffer(%p,%u,%p,%u,%p)", pbf, *inlen, out_buff, *outlen, ze)
 
    zs.next_in = pbf->next;
 
@@ -381,7 +389,7 @@ int inflate_buffer(pb_file* pbf, unsigned* inlen, char** out_buff, unsigned* out
 
    U_INTERNAL_TRACE("zs.total_in = %u zs.total_out = %u", zs.total_in, zs.total_out)
 
-   ze->crc = crc32(ze->crc, NULL, 0);                    /* initialize crc */
+   ze->crc = crc32(ze->crc, 0, 0);                    /* initialize crc */
    ze->crc = crc32(ze->crc, ptr, zs.total_out);
 
    U_INTERNAL_TRACE("done inflating - %d bytes left over, CRC is %x", zs.avail_in, ze->crc)

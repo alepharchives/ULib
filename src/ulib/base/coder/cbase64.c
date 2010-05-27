@@ -61,11 +61,11 @@ static unsigned char decoder[256] = {
 int u_base64_errors;
 int u_base64_max_columns;
 
-uint32_t u_base64_encode(const unsigned char* input, uint32_t len, unsigned char* result)
+uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsigned char* restrict result)
 {
    uint32_t i;
    bool columns = false;
-   unsigned char* r = result;
+   unsigned char* restrict r = result;
    int char_count = 0, bits = 0, cols = 0;
 
    U_INTERNAL_TRACE("u_base64_encode(%.*s,%u,%p)", len, input, len, result)
@@ -138,14 +138,14 @@ uint32_t u_base64_encode(const unsigned char* input, uint32_t len, unsigned char
    return (r - result);
 }
 
-uint32_t u_base64_decode(const char* input, uint32_t len, unsigned char* result)
+uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char* restrict result)
 {
    char c;
    uint32_t input_len, i = 0;
-   unsigned char* r = result;
    int char_count = 0, bits = 0;
-   const char* ptr = input;
-   const char* end = input + len;
+   const    char* restrict ptr = input;
+   unsigned char* restrict r   = result;
+   const    char* restrict end = input + len;
 
    U_INTERNAL_TRACE("u_base64_decode(%.*s,%u,%p)", len, input, len, result)
 

@@ -40,15 +40,16 @@ bool URPCGenericMethod::execute(URPCEnvelope& theCall)
 
    U_ASSERT(theCall.getMethodName() == getMethodName())
 
+   bool result;
    UString input;
    UString* pinput;
-   UString* poutput;
    int32_t old_ncmd = command->getNumArgument();
    uint32_t i = 0, num_arguments = theCall.getNumArgument();
 
    U_INTERNAL_DUMP("old_ncmd = %u num_arguments = %u", old_ncmd, num_arguments)
 
-   if (URPCObject::isStdInput(response_type))
+   if (URPCObject::isStdInput(response_type) == false) pinput = 0;
+   else
       {
       U_INTERNAL_ASSERT_MAJOR(num_arguments, 0)
 
@@ -57,21 +58,6 @@ bool URPCGenericMethod::execute(URPCEnvelope& theCall)
       U_ASSERT(input.empty() == false)
 
       pinput = &input;
-      }
-   else
-      {
-      pinput = 0;
-      }
-
-   if (URPCObject::isSuccessOrFailure(response_type))
-      {
-      poutput = 0;
-      }
-   else
-      {
-      response.setEmpty();
-
-      poutput = &response;
       }
 
    for (; i < num_arguments; ++i) command->addArgument(theCall.getArgumentCStr(i));
@@ -82,7 +68,16 @@ bool URPCGenericMethod::execute(URPCEnvelope& theCall)
    static int fd_stderr = UServices::getDevNull();
 #endif
 
-   bool result = command->execute(pinput, poutput, -1, fd_stderr);
+   if (URPCObject::isSuccessOrFailure(response_type))
+      {
+      result = command->executeAndWait(pinput, -1, fd_stderr);
+      }
+   else
+      {
+      response.setEmpty();
+
+      result = command->execute(pinput, &response, -1, fd_stderr);
+      }
 
    command->setNumArgument(old_ncmd, true); // we need to free strndup() malloc...
 

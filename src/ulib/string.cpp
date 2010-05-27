@@ -1480,6 +1480,12 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
       }
 
    if (extracted == 0) in.setstate(ios::failbit);
+   else
+      {
+      U_ASSERT(str.writeable())
+
+      str.setNullTerminated();
+      }
 
    U_INTERNAL_ASSERT(str.invariant())
 
@@ -1554,6 +1560,13 @@ istream& UString::getline(istream& in, char delim)
       U_INTERNAL_DUMP("size = %u, str = %.*S", size(), size(), data())
 
       extracted = (empty() == false);
+
+      if (extracted)
+         {
+         U_ASSERT(rep->writeable())
+
+         setNullTerminated();
+         }
       }
 
    if (c         != delim &&

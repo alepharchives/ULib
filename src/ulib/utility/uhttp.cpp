@@ -1475,11 +1475,14 @@ UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, const char* content_t
 
    if (content_type)
       {
-      U_ASSERT_EQUALS(body.empty(),false)
+      if (body.empty() == false)
+         {
+         tmp.snprintf("Content-Length: %u\r\n", body.size());
+         }
 
-      tmp.snprintf("Content-Length: %u\r\n"
-                   "Content-Type: %s\r\n"
-                   "\r\n", body.size(), content_type);
+      tmp.snprintf_add("Content-Type: %s\r\n"
+                       "\r\n",
+                       content_type);
       }
 
    tmp = getHTTPHeaderForResponse(nResponseCode, tmp);

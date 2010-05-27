@@ -62,9 +62,8 @@ public:
 
    // write while sending data
 
-   static bool write(USocket* s, const char* ptr, uint32_t count);
-
-   static bool write(USocket* s, const UString& buffer) { return write(s, U_STRING_TO_PARAM(buffer)); }
+   static bool write(USocket* s, const char* ptr, uint32_t count, int timeoutMS = -1);
+   static bool write(USocket* s, const UString& buffer,           int timeoutMS = -1) { return write(s, U_STRING_TO_PARAM(buffer), timeoutMS); }
 
    // Send a command to a server and wait for a response (single line)
 

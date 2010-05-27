@@ -34,6 +34,13 @@
 
 #include <stddef.h>
 
+/*
+#ifdef  restrict
+#undef  restrict
+#endif
+#define restrict
+*/
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -48,15 +55,15 @@ typedef bool  (*bPFpcpv) (const char*, const void*);
 typedef int   (*qcompare)(const void*, const void*);
 
 /* Startup */
-extern U_EXPORT bool        u_is_stderr_tty;
-extern U_EXPORT pid_t       u_pid;
-extern U_EXPORT char*       u_pid_str;
-extern U_EXPORT uint32_t    u_pid_str_len;
-extern U_EXPORT uint32_t    u_progname_len;
-extern U_EXPORT const char* u_progpath;
-extern U_EXPORT const char* u_progname;
+extern U_EXPORT bool                 u_is_stderr_tty;
+extern U_EXPORT pid_t                u_pid;
+extern U_EXPORT uint32_t             u_pid_str_len;
+extern U_EXPORT uint32_t             u_progname_len;
+extern U_EXPORT       char* restrict u_pid_str;
+extern U_EXPORT const char* restrict u_progpath;
+extern U_EXPORT const char* restrict u_progname;
 
-extern U_EXPORT void u_init(char** argv);
+extern U_EXPORT void u_init(char** restrict argv);
 
 /* AT EXIT */
 
@@ -68,16 +75,16 @@ extern U_EXPORT void u_atexit(vPF function);
 extern U_EXPORT void u_unatexit(vPF function);
 
 /* Current working directory */
-extern U_EXPORT char        u_cwd_buffer[256];
-extern U_EXPORT uint32_t    u_cwd_len;
-extern U_EXPORT const char* u_cwd;
+extern U_EXPORT char                 u_cwd_buffer[256];
+extern U_EXPORT uint32_t             u_cwd_len;
+extern U_EXPORT const char* restrict u_cwd;
 
 extern U_EXPORT void u_getcwd(void);
 
 /* Location info */
-extern U_EXPORT uint32_t    u_num_line;
-extern U_EXPORT const char* u_name_file;
-extern U_EXPORT const char* u_name_function;
+extern U_EXPORT uint32_t             u_num_line;
+extern U_EXPORT const char* restrict u_name_file;
+extern U_EXPORT const char* restrict u_name_function;
 
 /* Temporary buffer: for example is used by u_ftw */
 extern U_EXPORT char     u_buffer[4096];
@@ -92,25 +99,25 @@ extern U_EXPORT struct tm u_strftime_tm;
 extern U_EXPORT void u_check_now_adjust(void); /* calculate number of seconds between UTC to current time zone */
 
 /* Scan services */
-extern U_EXPORT const char* u_line_terminator;
-extern U_EXPORT uint32_t    u_line_terminator_len;
+extern U_EXPORT uint32_t             u_line_terminator_len;
+extern U_EXPORT const char* restrict u_line_terminator;
 
 /* Services */
-extern U_EXPORT int                 u_flag_exit;
-extern U_EXPORT int                 u_flag_test;
-extern U_EXPORT bool                u_recursion;
-extern U_EXPORT bool                u_exec_failed;
-extern U_EXPORT char                u_hostname[255];
-extern U_EXPORT char                u_user_name[32];
-extern U_EXPORT uint32_t            u_hostname_len, u_user_name_len;
-extern U_EXPORT const char*         u_tmpdir;
-extern U_EXPORT const unsigned char u_alphabet[];  /* "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" */
-extern U_EXPORT const unsigned char u_hex_upper[]; /* "0123456789ABCDEF" */
-extern U_EXPORT const unsigned char u_hex_lower[]; /* "0123456789abcdef" */
+extern U_EXPORT int                   u_flag_exit;
+extern U_EXPORT int                   u_flag_test;
+extern U_EXPORT bool                  u_recursion;
+extern U_EXPORT bool                  u_exec_failed;
+extern U_EXPORT char                  u_hostname[255];
+extern U_EXPORT char                  u_user_name[32];
+extern U_EXPORT uint32_t              u_hostname_len, u_user_name_len;
+extern U_EXPORT const unsigned char   u_alphabet[];  /* "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" */
+extern U_EXPORT const unsigned char   u_hex_upper[]; /* "0123456789ABCDEF" */
+extern U_EXPORT const unsigned char   u_hex_lower[]; /* "0123456789abcdef" */
+extern U_EXPORT const char* restrict  u_tmpdir;
 
 extern U_EXPORT void        u_setPid(void);
-extern U_EXPORT const char* u_basename(const char* path);
-extern U_EXPORT uint32_t    u_strftime(char* buffer, uint32_t buffer_size, const char* fmt, time_t now);
+extern U_EXPORT const char* u_basename(const char* restrict path);
+extern U_EXPORT uint32_t    u_strftime(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, time_t now);
 
 /* Print with format extension: bBCDHMNOPQrRSUYwW
 ---------------------------------------------------------------------------------
@@ -148,9 +155,9 @@ with flag '7' => format: %a, %d %b %Y %H:%M:%S     (HTTP header)
 extern U_EXPORT int     u_printf_fileno;
 extern U_EXPORT int32_t u_printf_string_max_length;
 
-extern U_EXPORT void        u_printf(                                    const char* format, ...);
-extern U_EXPORT uint32_t  u_snprintf(char* buffer, uint32_t buffer_size, const char* format, ...);
-extern U_EXPORT uint32_t u_vsnprintf(char* buffer, uint32_t buffer_size, const char* format, va_list argp);
+extern U_EXPORT void        u_printf(                                             const char* restrict format, ...);
+extern U_EXPORT uint32_t  u_snprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
+extern U_EXPORT uint32_t u_vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp);
 
 #ifdef __cplusplus
 }

@@ -227,12 +227,16 @@ public:
    static int timeoutMS; // specified the timeout value, in milliseconds for read output. A negative value indicates no timeout, i.e. an infinite wait.
    static int exit_value;
 
-   bool executeWithFileArgument(UString* output, UFile* file);
-   bool execute(UString* input, UString* output, int fd_stdin = -1, int fd_stderr = -1);
-
    static void setTimeout(int seconds) { timeoutMS = (seconds * 1000); }
 
-   static UString outputCommand(UString& cmd, char** envp = 0, int fd_stdin = -1, int fd_stderr = -1);
+   // run command
+
+          bool    executeWithFileArgument(UString* output, UFile* file);
+
+          bool    executeAndWait(UString* input = 0,                      int fd_stdin = -1, int fd_stderr = -1);
+          bool    execute(       UString* input = 0, UString* output = 0, int fd_stdin = -1, int fd_stderr = -1);
+
+   static UString outputCommand(UString& cmd, char** envp = 0,            int fd_stdin = -1, int fd_stderr = -1);
 
    bool checkForExecute(int mode = R_OK | X_OK)
       {
@@ -310,6 +314,8 @@ protected:
 private:
                  void setEnvironment(const UString& env) U_NO_EXPORT;
           inline void execute(bool flag_stdin, bool flag_stdout, bool flag_stderr) U_NO_EXPORT;
+
+   static        bool wait() U_NO_EXPORT;
    static        bool postCommand(UString* input, UString* output) U_NO_EXPORT;
    static        void setStdInOutErr(int fd_stdin, bool flag_stdin, bool flag_stdout, int fd_stderr) U_NO_EXPORT;
 

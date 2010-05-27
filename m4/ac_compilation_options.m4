@@ -29,14 +29,6 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([$enable_pch])
 
-	AC_MSG_CHECKING(if you want to enable build of ZIP support)
-	AC_ARG_ENABLE(zip,
-				[  --enable-zip            enable build of ZIP support - require option --with-zlib [[default=no]]])
-	if test -z "$enable_zip" ; then
-		enable_zip="no"
-	fi
-	AC_MSG_RESULT([$enable_zip])
-
 	AC_MSG_CHECKING(if you want to enable use of coverage)
 	AC_ARG_ENABLE(coverage,
   				[  --enable-coverage       enable coverage [[default=no]]])
@@ -87,4 +79,10 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	rm -f conftest*
 	])
+
+  dnl Check if compiler understands the C99 feature of restricted pointers,
+  dnl (TWO UNRELATED TYPES CAN'T POINT TO THE SAME MEMORY, ONLY CHAR* HAS THIS PRIVILEGE)
+  dnl specified with the __restrict__, or __restrict  type qualifier
+
+  AC_C_RESTRICT
 ])

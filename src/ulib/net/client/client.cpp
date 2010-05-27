@@ -45,8 +45,6 @@ UClient_Base::UClient_Base(UFileConfig* cfg) : response(U_CAPACITY), buffer(U_CA
 {
    U_TRACE_REGISTER_OBJECT(0, UClient_Base, "%p", cfg)
 
-   if (str_RES_TIMEOUT == 0) str_allocate();
-
    if (cfg) loadConfigParam(*cfg);
    else
       {
@@ -128,8 +126,9 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
 
    U_ASSERT_EQUALS(cfg.empty(), false)
 
-   if (         Url::str_ftp      == 0)          Url::str_allocate();
-   if (UServer_Base::str_LOG_FILE == 0) UServer_Base::str_allocate();
+   if (         Url::str_ftp         == 0)          Url::str_allocate();
+   if (UServer_Base::str_LOG_FILE    == 0) UServer_Base::str_allocate();
+   if (              str_RES_TIMEOUT == 0)               str_allocate();
 
    // ----------------------------------------------------------------------------------------------------------------------
    // client - configuration parameters

@@ -122,13 +122,28 @@ RETSIGTYPE UInterrupt::handlerSignal(int signo)
    flag_wait_for_signal = false;
 }
 
+// Send ourselves the signal: see http://www.cons.org/cracauer/sigint.html
+
+void UInterrupt::sendOurselves(int signo)
+{
+   U_TRACE(0, "UInterrupt::sendOurselves(%d)", signo)
+
+   setHandlerForSignal(signo, (sighandler_t)SIG_DFL);
+
+   u_exit();
+
+   (void) U_SYSCALL(kill, "%ld,%d", u_pid, signo);
+}
+
 RETSIGTYPE UInterrupt::handlerInterrupt(int signo)
 {
-   U_TRACE(0, "UInterrupt::handlerInterrupt(%d)", signo)
+   U_TRACE(1, "UInterrupt::handlerInterrupt(%d)", signo)
 
    U_MESSAGE("program interrupt - %Y", signo);
 
-   U_EXIT(-1);
+   // U_EXIT(-1);
+
+   UInterrupt::sendOurselves(signo);
 }
 
 RETSIGTYPE UInterrupt::handlerEventSignal(int signo)

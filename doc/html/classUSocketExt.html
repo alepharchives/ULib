@@ -49,10 +49,10 @@ static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>read</b> (<a c
 static uint32_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>read</b> (<a class="el" href="classUSocket.html">USocket</a> *s, <a class="el" href="classUString.html">UString</a> &amp;buffer, const char *token, uint32_t token_len)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af3fee72fc85540849483457fd8460596"></a><!-- doxytag: member="USocketExt::readEOF" ref="af3fee72fc85540849483457fd8460596" args="(USocket *s, UString &amp;buffer)" -->
 static void&nbsp;</td><td class="memItemRight" valign="bottom"><b>readEOF</b> (<a class="el" href="classUSocket.html">USocket</a> *s, <a class="el" href="classUString.html">UString</a> &amp;buffer)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a05f8e8bd9a3e2e3af3848416d3b7a212"></a><!-- doxytag: member="USocketExt::write" ref="a05f8e8bd9a3e2e3af3848416d3b7a212" args="(USocket *s, const char *ptr, uint32_t count)" -->
-static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>write</b> (<a class="el" href="classUSocket.html">USocket</a> *s, const char *ptr, uint32_t count)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4de9a3958af4484d67f99718eedf3d47"></a><!-- doxytag: member="USocketExt::write" ref="a4de9a3958af4484d67f99718eedf3d47" args="(USocket *s, const UString &amp;buffer)" -->
-static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>write</b> (<a class="el" href="classUSocket.html">USocket</a> *s, const <a class="el" href="classUString.html">UString</a> &amp;buffer)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a104939bb4db32628dbdfa5fb195a2611"></a><!-- doxytag: member="USocketExt::write" ref="a104939bb4db32628dbdfa5fb195a2611" args="(USocket *s, const char *ptr, uint32_t count, int timeoutMS=&#45;1)" -->
+static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>write</b> (<a class="el" href="classUSocket.html">USocket</a> *s, const char *ptr, uint32_t count, int timeoutMS=-1)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa49fba3cce8417182beac1b49d46866c"></a><!-- doxytag: member="USocketExt::write" ref="aa49fba3cce8417182beac1b49d46866c" args="(USocket *s, const UString &amp;buffer, int timeoutMS=&#45;1)" -->
+static bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>write</b> (<a class="el" href="classUSocket.html">USocket</a> *s, const <a class="el" href="classUString.html">UString</a> &amp;buffer, int timeoutMS=-1)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4384673fcdddc7b5c3d44b078d7d7eec"></a><!-- doxytag: member="USocketExt::vsyncCommand" ref="a4384673fcdddc7b5c3d44b078d7d7eec" args="(USocket *s, char *buffer, uint32_t buffer_size, const char *format, va_list argp)" -->
 static int&nbsp;</td><td class="memItemRight" valign="bottom"><b>vsyncCommand</b> (<a class="el" href="classUSocket.html">USocket</a> *s, char *buffer, uint32_t buffer_size, const char *format, va_list argp)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae0d62deb74c763e990fb7398227abc3f"></a><!-- doxytag: member="USocketExt::vsyncCommand" ref="ae0d62deb74c763e990fb7398227abc3f" args="(USocket *s, const char *format, va_list argp)" -->
@@ -84,7 +84,7 @@ static uint32_t&nbsp;</td><td class="memItemRight" valign="bottom"><b>size_messa
 <li>src/ulib/utility/socket_ext.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:43 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu May 27 19:04:04 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

@@ -80,6 +80,7 @@ public:
    static bool isTimeStampToken(PKCS7* p7);
    static bool isTimeStampResponse(const UString& content);
 
+   static UString getTimeStampToken(int alg, const UString& data, const UString& url);
    static UString createQuery(int alg, const UString& data, const char* policy, bool bnonce, bool bcert);
 
    // DEBUG

@@ -14,18 +14,18 @@
 #include <ulib/base/ssl/dgst.h>
 #include <ulib/base/coder/base64.h>
 
-UHashType      u_hashType;                   /* What type of hash is this? */
-EVP_PKEY*      u_pkey;                       /* private key to sign the digest */
-EVP_MD_CTX     u_mdctx;                      /* Context for digest */
-const EVP_MD*  u_md;                         /* Digest instance */
-unsigned char  u_mdValue[U_MAX_HASH_SIZE];   /* Final output */
-uint32_t       u_mdLen;                      /* Length of digest */
+UHashType              u_hashType;                 /* What type of hash is this? */
+EVP_PKEY* restrict     u_pkey;                     /* private key to sign the digest */
+EVP_MD_CTX             u_mdctx;                    /* Context for digest */
+const EVP_MD* restrict u_md;                       /* Digest instance */
+unsigned char          u_mdValue[U_MAX_HASH_SIZE]; /* Final output */
+uint32_t               u_mdLen;                    /* Length of digest */
 
-HMAC_CTX       u_hctx;                       /* Context for HMAC */
-const char*    u_hmac_key;                   /* The loaded key */
-uint32_t       u_hmac_keylen;                /* The loaded key length */
+HMAC_CTX             u_hctx;                       /* Context for HMAC */
+const char* restrict u_hmac_key;                   /* The loaded key */
+uint32_t             u_hmac_keylen;                /* The loaded key length */
 
-void u_dgst_hexdump(unsigned char* buf)
+void u_dgst_hexdump(unsigned char* restrict buf)
 {
    uint32_t i;
    unsigned char c;
@@ -45,7 +45,7 @@ void u_dgst_hexdump(unsigned char* buf)
       }
 }
 
-int u_dgst_get_algoritm(const char* alg)
+int u_dgst_get_algoritm(const char* restrict alg)
 {
    int result = -1;
 
@@ -109,7 +109,7 @@ void u_dgst_algoritm(int alg)
    u_hashType = (UHashType)alg;
 }
 
-void u_dgst_init(int alg, const char* key, uint32_t keylen)
+void u_dgst_init(int alg, const char* restrict key, uint32_t keylen)
 {
    U_INTERNAL_TRACE("u_dgst_init(%d,%.*s,%u)", alg, keylen, key, keylen)
 
@@ -122,7 +122,7 @@ void u_dgst_init(int alg, const char* key, uint32_t keylen)
 
       HMAC_CTX_cleanup(&u_hctx);
       HMAC_CTX_init(&u_hctx);
-      HMAC_Init_ex(&u_hctx, key, keylen, u_md, NULL);
+      HMAC_Init_ex(&u_hctx, key, keylen, u_md, 0);
       }
    else
       {
@@ -145,7 +145,7 @@ void u_dgst_reset(void) /* Reset the hash */
 
       HMAC_CTX_init(&u_hctx);
 
-      HMAC_Init_ex(&u_hctx, u_hmac_key, u_hmac_keylen, u_md, NULL);
+      HMAC_Init_ex(&u_hctx, u_hmac_key, u_hmac_keylen, u_md, 0);
       }
    else
       {
@@ -154,7 +154,7 @@ void u_dgst_reset(void) /* Reset the hash */
       }
 }
 
-uint32_t u_dgst_finish(unsigned char* hash, int base64) /* Finish and get hash */
+uint32_t u_dgst_finish(unsigned char* restrict hash, int base64) /* Finish and get hash */
 {
    uint32_t len;
 
@@ -173,7 +173,7 @@ uint32_t u_dgst_finish(unsigned char* hash, int base64) /* Finish and get hash *
 
    U_INTERNAL_ASSERT_MINOR(u_mdLen,U_MAX_HASH_SIZE)
 
-   if (hash == NULL) return u_mdLen;
+   if (hash == 0) return u_mdLen;
 
    if (base64) len = u_base64_encode(u_mdValue, u_mdLen, hash);
    else
@@ -204,7 +204,7 @@ void u_dgst_sign_init(int alg, ENGINE* impl)
    EVP_SignInit_ex(&u_mdctx, u_md, impl);
 }
 
-void u_dgst_verify_init(int alg, ENGINE* impl)
+void u_dgst_verify_init(int alg, ENGINE* restrict impl)
 {
    U_INTERNAL_TRACE("u_dgst_verify_init(%d,%p)", alg, impl)
 
@@ -220,7 +220,7 @@ void u_dgst_verify_init(int alg, ENGINE* impl)
    EVP_VerifyInit_ex(&u_mdctx, u_md, impl);
 }
 
-uint32_t u_dgst_sign_finish(unsigned char* sig, int base64) /* Finish and get signature */
+uint32_t u_dgst_sign_finish(unsigned char* restrict sig, int base64) /* Finish and get signature */
 {
    uint32_t len;
 
@@ -245,7 +245,7 @@ uint32_t u_dgst_sign_finish(unsigned char* sig, int base64) /* Finish and get si
    return len;
 }
 
-int u_dgst_verify_finish(unsigned char* sigbuf, uint32_t siglen)
+int u_dgst_verify_finish(unsigned char* restrict sigbuf, uint32_t siglen)
 {
    int ret;
 

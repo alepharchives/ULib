@@ -88,8 +88,8 @@ struct U_EXPORT UInterrupt {
       }
 
    static void waitForSignal(int signo);
-
-   static bool sendSignal(int signo, pid_t pid)
+   static void sendOurselves(int signo);
+   static bool sendSignal(   int signo, pid_t pid)
       {
       U_TRACE(1, "UInterrupt::sendSignal(%d,%ld)", signo, pid)
 

@@ -57,7 +57,7 @@ uint32_t u_random(uint32_t a)
 
    int i = 0;
    union uuintchar u = { 0U };
-   unsigned char* c = (unsigned char*) &a;
+   unsigned char* restrict c = (unsigned char* restrict) &a;
 
    U_INTERNAL_TRACE("u_random(%u)", a)
 
@@ -68,7 +68,7 @@ uint32_t u_random(uint32_t a)
       u.d[1] = rseq[c[2]] + rseq[c[3] + 1];
       u.d[0] = rseq[c[3]];
 
-      a = *(uint32_t*) &(u.i); // &u.d[0];
+      a = u.i;
       }
 
    return a;
@@ -325,10 +325,10 @@ uint32_t u_hash(unsigned char* t, uint32_t tlen, bool ignore_case)
 #define FNV_32_PRIME ((uint32_t)0x01000193)
 #define FNV_64_PRIME ((uint64_t)0x100000001b3ULL)
 
-uint32_t u_hash(unsigned char* bp, uint32_t len, bool ignore_case)
+uint32_t u_hash(unsigned char* restrict bp, uint32_t len, bool ignore_case)
 {
-   uint32_t hval     = FNV_32_INIT;
-   unsigned char* be = bp + len; /* beyond end of buffer */
+   uint32_t hval              = FNV_32_INIT;
+   unsigned char* restrict be = bp + len; /* beyond end of buffer */
 
    U_INTERNAL_TRACE("u_hash(%.*S,%u)", len, bp, len)
 

@@ -26,6 +26,8 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, URPCClient, "%p", cfg)
 
+      if (cfg && UClient_Base::getServer().empty()) UClient_Base::loadConfigParam(*cfg);
+
       URPCMethod::encoder = U_NEW(URPCEncoder);
       }
 

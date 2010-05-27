@@ -633,6 +633,13 @@ public:
    static UString contentOf(const char*    pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
    static UString contentOf(const UString& pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
 
+   static void mkSharedMemory(UString& buffer, size_t size)
+      {
+      U_TRACE(0, "UFile::mkSharedMemory(%.*S,%lu)", U_STRING_TO_TRACE(buffer), size)
+
+      buffer.mmap(mmap(size), size);
+      }  
+
    // MIME TYPE
 
    static int mime_index;

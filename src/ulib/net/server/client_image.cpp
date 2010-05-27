@@ -202,13 +202,13 @@ void UClientImage_Base::destroy()
       delete pClientImage->logbuf;
       delete pClientImage->clientAddress;
       }
-#else
-   if (UServer_Base::isClassic()) ::exit(0);
 #endif
 
    // socket->~USocket();
 
    if (socket->isOpen()) socket->closesocket();
+
+   if (UServer_Base::isClassic()) U_EXIT(0);
 }
 
 void UClientImage_Base::setMsgWelcome(const UString& msg)
@@ -468,8 +468,8 @@ int UClientImage_Base::handlerWrite()
 
    if (UServer_Base::isLog()) logResponse();
 
-   int result = (USocketExt::write(socket, *wbuffer) ? U_NOTIFIER_OK
-                                                     : U_NOTIFIER_DELETE);
+   int result = (USocketExt::write(socket, *wbuffer, 3 * 1000) ? U_NOTIFIER_OK
+                                                               : U_NOTIFIER_DELETE);
 
    U_RETURN(result);
 }

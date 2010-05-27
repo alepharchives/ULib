@@ -34,11 +34,11 @@ public:
 
          if (UPosting::dir_content_as_doc == false)
             {
-            write(1, U_CONSTANT_TO_PARAM("\nCHECK_2"));
+            (void) write(1, U_CONSTANT_TO_PARAM("\nCHECK_2"));
 
             UPosting::checkAllEntry();
 
-            write(1, U_CONSTANT_TO_PARAM("OK\n"));
+            (void) write(1, U_CONSTANT_TO_PARAM("OK\n"));
             }
 
          UApplication::exit_value = 0;

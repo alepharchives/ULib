@@ -45,9 +45,9 @@ static void printInfo(void)
       }
 }
 
-static char* file_mem;
-static char* file_ptr;
-static char* file_limit;
+static char* restrict file_mem;
+static char* restrict file_ptr;
+static char* restrict file_limit;
 
 void u_trace_check_if_interrupt(void) /* check for context manage signal event - interrupt */
 {
@@ -61,7 +61,7 @@ void u_trace_check_if_interrupt(void) /* check for context manage signal event -
       }
 }
 
-void u_trace_writev(const struct iovec* iov, int n)
+void u_trace_writev(const struct iovec* restrict iov, int n)
 {
    U_INTERNAL_TRACE("u_trace_writev(%p,%d)", iov, n)
 
@@ -88,7 +88,7 @@ void u_trace_writev(const struct iovec* iov, int n)
       }
 }
 
-void u_trace_write(const char* t, uint32_t tlen)
+void u_trace_write(const char* restrict t, uint32_t tlen)
 {
    struct iovec iov[3] = { { (caddr_t)u_trace_tab, u_trace_num_tab },
                            { (caddr_t)t, tlen },
@@ -132,7 +132,7 @@ void u_trace_close(void)
 /* E' possibile mascheratura del trace per metodi eccessivamente complessi
 (Es: ricorsivi) tramite il byte alto del parametro 'level' */
 
-static void* flag_mask_level;
+static void* restrict flag_mask_level;
 
 /* attivazione-disattivazione trace */
  
@@ -230,7 +230,7 @@ void u_trace_init(bool force, bool info, bool offset)
                   {
                   /* NB: PROT_READ evita strani SIGSEGV... */
 
-                  file_mem = (char*) mmap(0, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, u_trace_fd, 0);
+                  file_mem = (char* restrict) mmap(0, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, u_trace_fd, 0);
 
                   if (file_mem == MAP_FAILED)
                      {
@@ -304,7 +304,7 @@ bool u_trace_isActive(int level)
    return result;
 }
 
-bool u_trace_check_if_active(int level, void* hook)
+bool u_trace_check_if_active(int level, void* restrict hook)
 {
    bool active;
 
@@ -360,7 +360,7 @@ void u_trace_check_init(void)
    printInfo();
 }
 
-void u_trace_dtor(int active, void* hook)
+void u_trace_dtor(int active, void* restrict hook)
 {
    U_INTERNAL_TRACE("u_trace_dtor(%d,%p)", active, hook)
 
@@ -380,8 +380,8 @@ void u_trace_suspend(int resume)
    if (u_flag_test ==  0 &&
        u_flag_exit != -1)
       {
-      static int   cnt_suspend;           /* disabilita eventuale ricorsione... */
-      static void* flag_mask_level_save;
+      static int            cnt_suspend;           /* disabilita eventuale ricorsione... */
+      static void* restrict flag_mask_level_save;
 
       if (resume)
          {
@@ -407,7 +407,7 @@ void u_trace_suspend(int resume)
       }
 }
 
-void u_trace_dump(const char* format, ...)
+void u_trace_dump(const char* restrict format, ...)
 {
    va_list argp;
    char buffer[4096];

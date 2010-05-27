@@ -84,8 +84,10 @@ bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>isShellScript</b> () 
 char *&nbsp;</td><td class="memItemRight" valign="bottom"><b>getCommand</b> () const </td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1ffbd4f6b44f6b7693f84a0a802b0b2f"></a><!-- doxytag: member="UCommand::executeWithFileArgument" ref="a1ffbd4f6b44f6b7693f84a0a802b0b2f" args="(UString *output, UFile *file)" -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>executeWithFileArgument</b> (<a class="el" href="classUString.html">UString</a> *output, <a class="el" href="classUFile.html">UFile</a> *file)</td></tr>
-<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2c09a4e35392d75ec8059deb5deca441"></a><!-- doxytag: member="UCommand::execute" ref="a2c09a4e35392d75ec8059deb5deca441" args="(UString *input, UString *output, int fd_stdin=&#45;1, int fd_stderr=&#45;1)" -->
-bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>execute</b> (<a class="el" href="classUString.html">UString</a> *input, <a class="el" href="classUString.html">UString</a> *output, int fd_stdin=-1, int fd_stderr=-1)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af967f111a8d8841197e3552591c43c5f"></a><!-- doxytag: member="UCommand::executeAndWait" ref="af967f111a8d8841197e3552591c43c5f" args="(UString *input=0, int fd_stdin=&#45;1, int fd_stderr=&#45;1)" -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>executeAndWait</b> (<a class="el" href="classUString.html">UString</a> *input=0, int fd_stdin=-1, int fd_stderr=-1)</td></tr>
+<tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a32473f62b424c4897ead7d7a52662013"></a><!-- doxytag: member="UCommand::execute" ref="a32473f62b424c4897ead7d7a52662013" args="(UString *input=0, UString *output=0, int fd_stdin=&#45;1, int fd_stderr=&#45;1)" -->
+bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>execute</b> (<a class="el" href="classUString.html">UString</a> *input=0, <a class="el" href="classUString.html">UString</a> *output=0, int fd_stdin=-1, int fd_stderr=-1)</td></tr>
 <tr><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1e2a23d5edba99201da1cdbee76653fd"></a><!-- doxytag: member="UCommand::checkForExecute" ref="a1e2a23d5edba99201da1cdbee76653fd" args="(int mode=R_OK|X_OK)" -->
 bool&nbsp;</td><td class="memItemRight" valign="bottom"><b>checkForExecute</b> (int mode=R_OK|X_OK)</td></tr>
 <tr><td colspan="2"><h2>Static Public Member Functions</h2></td></tr>
@@ -154,7 +156,7 @@ class&nbsp;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <li>src/ulib/command.cpp</li>
 </ul>
 </div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:40 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu May 27 19:04:00 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

@@ -350,11 +350,14 @@ void UNoCatPlugIn::executeCommand(UModNoCatPeer* peer, int type)
 
    peer->cmd.setArgument(2, (type == UModNoCatPeer::PEER_ACCEPT ? "permit" : "deny"));
 
-   (void) peer->cmd.execute(0, 0, -1, fd_stderr);
+   if (peer->cmd.execute(0, 0, -1, fd_stderr))
+      {
+      peer->status = type;
+
+      (void) UProcess::waitpid(); // per evitare piu' di 1 zombie...
+      }
 
    UServer_Base::logCommandMsgError(peer->cmd.getCommand());
-
-   peer->status = type;
 }
 
 void UNoCatPlugIn::deny(UModNoCatPeer* peer, bool alarm, bool disconnected)
@@ -1237,7 +1240,9 @@ int UNoCatPlugIn::handlerInit()
                                      cmd.set(   init_cmd, (char**)0);
    if (decrypt_cmd.empty() == false) pgp.set(decrypt_cmd, (char**)0);
 
-   if (decrypt_key.empty() == false) UDES3::setPassword(decrypt_key.c_str());
+   U_INTERNAL_ASSERT(decrypt_key.isNullTerminated())
+
+   if (decrypt_key.empty() == false) UDES3::setPassword(decrypt_key.data());
 
 #ifdef DEBUG
    fd_stderr = UFile::creat("/tmp/firewall.err", O_WRONLY | O_APPEND, PERM_FILE);
@@ -1245,7 +1250,7 @@ int UNoCatPlugIn::handlerInit()
    fd_stderr = UServices::getDevNull();
 #endif
 
-   (void) cmd.execute(0, 0, -1, fd_stderr); // initialize the firewall: direct all traffic to us...
+   (void) cmd.executeAndWait(0, -1, fd_stderr); // initialize the firewall: direct all port 80 traffic to us...
 
    UServer_Base::logCommandMsgError(cmd.getCommand());
 

@@ -120,15 +120,15 @@
 <a name="l00109"></a>00109 <span class="preprocessor"></span><span class="preprocessor">#define U_CONSTANT_TO_PARAM(str) str,U_CONSTANT_SIZE(str)</span>
 <a name="l00110"></a>00110 <span class="preprocessor"></span><span class="preprocessor">#define U_CONSTANT_TO_TRACE(str)     U_CONSTANT_SIZE(str),str</span>
 <a name="l00111"></a>00111 <span class="preprocessor"></span>
-<a name="l00112"></a>00112 <span class="preprocessor">#define U_STRNCPY(a,b)    (void)strncpy((const char*)(a),b,U_CONSTANT_SIZE(b))</span>
-<a name="l00113"></a>00113 <span class="preprocessor"></span><span class="preprocessor">#define U_STRNCMP(a,b)          strncmp((const char*)(a),b,U_CONSTANT_SIZE(b))</span>
-<a name="l00114"></a>00114 <span class="preprocessor"></span><span class="preprocessor">#define U_STRNCASECMP(a,b)  strncasecmp((const char*)(a),b,U_CONSTANT_SIZE(b))</span>
+<a name="l00112"></a>00112 <span class="preprocessor">#define U_STRNCPY(a,b)    (void)strncpy((const char* restrict)(a),b,U_CONSTANT_SIZE(b))</span>
+<a name="l00113"></a>00113 <span class="preprocessor"></span><span class="preprocessor">#define U_STRNCMP(a,b)          strncmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b))</span>
+<a name="l00114"></a>00114 <span class="preprocessor"></span><span class="preprocessor">#define U_STRNCASECMP(a,b)  strncasecmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b))</span>
 <a name="l00115"></a>00115 <span class="preprocessor"></span>
-<a name="l00116"></a>00116 <span class="preprocessor">#define U_STREQ(a,b)  (strcmp( (const char*)(a),b)      == 0)</span>
-<a name="l00117"></a>00117 <span class="preprocessor"></span><span class="preprocessor">#define U_STRNEQ(a,b) (U_STRNCMP((a),b)                         == 0)</span>
+<a name="l00116"></a>00116 <span class="preprocessor">#define U_STREQ(a,b)  (strcmp( (const char* restrict)(a),b)     == 0)</span>
+<a name="l00117"></a>00117 <span class="preprocessor"></span><span class="preprocessor">#define U_STRNEQ(a,b) (U_STRNCMP((a),b)                                                 == 0)</span>
 <a name="l00118"></a>00118 <span class="preprocessor"></span>
-<a name="l00119"></a>00119 <span class="preprocessor">#define U_MEMCPY(a,b) memcpy((      char*)(a),b,U_CONSTANT_SIZE(b))</span>
-<a name="l00120"></a>00120 <span class="preprocessor"></span><span class="preprocessor">#define U_MEMCMP(a,b) memcmp((const char*)(a),b,U_CONSTANT_SIZE(b))</span>
+<a name="l00119"></a>00119 <span class="preprocessor">#define U_MEMCPY(a,b) memcpy((      char* restrict)(a),b,U_CONSTANT_SIZE(b))</span>
+<a name="l00120"></a>00120 <span class="preprocessor"></span><span class="preprocessor">#define U_MEMCMP(a,b) memcmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b))</span>
 <a name="l00121"></a>00121 <span class="preprocessor"></span>
 <a name="l00122"></a>00122 <span class="comment">/* Note that IS_ABSOLUTE_PATH accepts d:foo as well, although it is only semi-absolute. This is because the users of IS_ABSOLUTE_PATH</span>
 <a name="l00123"></a>00123 <span class="comment"> * want to know whether to prepend the current working directory to a file name, which should not be done with a name like d:foo</span>
@@ -344,7 +344,7 @@
 <a name="l00357"></a>00357 <span class="preprocessor"></span>
 <a name="l00358"></a>00358 <span class="preprocessor">#endif</span>
 </pre></div></div>
-<hr class="footer"/><address style="text-align: right;"><small>Generated on Wed May 5 14:39:37 2010 for ULib C++ Library by&nbsp;
+<hr class="footer"/><address style="text-align: right;"><small>Generated on Thu May 27 19:03:56 2010 for ULib C++ Library by&nbsp;
 <a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.6.3 </small></address>
 </body>

@@ -14,12 +14,10 @@
 #ifndef ULIB_NOTIFIER_H
 #define ULIB_NOTIFIER_H
 
-#include <ulib/internal/common.h>
+#include <ulib/string.h>
 
 #include <ulib/event/event_fd.h>
 #include <ulib/event/event_time.h>
-
-#include <iostream>
 
 /* NB: to force use of select()
 #ifdef HAVE_EPOLL_WAIT

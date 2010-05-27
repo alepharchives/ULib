@@ -140,7 +140,7 @@ OST_CC_ENDIAN
 OST_CC_SIGNAL
 OST_CC_STRING
 OST_CC_DYNAMIC
-OST_LIB_PTHREAD
+#OST_LIB_PTHREAD
 OST_LIB_REENTRANT
 OST_LIB_POLL
 OST_SYS_SOCKET
@@ -353,10 +353,13 @@ AC_CHECK_LIB(posix4,nanosleep)
 AC_CHECK_LIB(socket,socketpair)
 
 if test "$ac_cv_lib_rt_sem_init" = "yes" ; then
-AM_CONDITIONAL(SEMAPHORE, test "$ac_cv_lib_rt_sem_init"		 = "yes")
+	AM_CONDITIONAL(SEMAPHORE, test "$ac_cv_lib_rt_sem_init"		 = "yes")
 else
-AC_CHECK_LIB(pthread,sem_init)
-AM_CONDITIONAL(SEMAPHORE, test "$ac_cv_lib_pthread_sem_init" = "yes")
+	AC_CHECK_LIB(pthread,sem_init)
+	if test "$ac_cv_lib_pthread_sem_init" = "yes" ; then
+		OST_LIB_PTHREAD
+		AM_CONDITIONAL(SEMAPHORE, true)
+	fi
 fi
 
 LIBS_SAVE=${LIBS}
@@ -656,21 +659,30 @@ if test "$GCC" = "yes"; then
 	AM_CONDITIONAL(MOD_SHIB, test "$enable_debug" = "yes" && test "$gcc_version_raw" = "4.2.2")
 
 	# Also to turn various gcc/glibc-specific preprocessor checks
-	MAYBE_FLAGS="$MAYBE_FLAGS -finline -flto \
+	MAYBE_FLAGS="$MAYBE_FLAGS -finline -fstrict-aliasing \
 		-findirect-inlining -ftree-switch-conversion -floop-interchange -floop-strip-mine -floop-block \
 		-Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op \
 		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wno-format -Wno-format-extra-args -Wenum-compare"
 
-	case "${gcc_version_raw}" in
-		[2-4].[0-4].[0-6])
-		;;
-		*)
-			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result"
-		;;
-	esac
+	if test "x$gcc_version_raw" != "x"; then
+		case "${gcc_version_raw}" in
+			[2-4].[0-4].[0-6])
+			;;
+			*)
+				MAYBE_FLAGS="$MAYBE_FLAGS -flto -Wno-unused-result"
+			;;
+		esac
+	fi
 
 #	-fno-common
 #  -Wno-missing-field-initializers -Wno-attributes -Wno-long-long
+# -------------------------------------------------------------------------------------
+#	-fwhole-program
+# -------------------------------------------------------------------------------------
+# Assume that the current compilation unit represents the whole program being compiled.
+# All public functions and variables with the exception of main and those merged by attribute
+# externally_visible become static functions
+# -------------------------------------------------------------------------------------
 
 	if test "$enable_debug" = "yes"; then
 		MAYBE_FLAGS="$MAYBE_FLAGS -Wp,-D_FORTIFY_SOURCE=2 -Wunsafe-loop-optimizations"

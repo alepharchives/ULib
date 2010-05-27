@@ -12,6 +12,8 @@
 #  include <ulib/ssl/timestamp.h>
 #endif
 
+#include "utility.h"
+
 #undef  PACKAGE
 #define PACKAGE "archive"
 
@@ -48,17 +50,10 @@ public:
       {
       U_TRACE(5, "Application::getTimeStampToken(%.*S,%.*S)", U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(url))
 
-      U_ASSERT(url.empty() == false)
-
-      Url TSA(url);
       UString token;
 
 #  ifdef HAVE_SSL_TS
-      UString request = UTimeStamp::createQuery(U_HASH_SHA1, data, 0, false, false);
-
-      UTimeStamp ts(request, TSA);
-
-      if (ts.UPKCS7::isValid()) token = ts.UPKCS7::getEncoded("BASE64");
+      token = UTimeStamp::getTimeStampToken(U_HASH_SHA1, data, url);
 #  endif
 
       U_RETURN_STRING(token);
@@ -115,6 +110,8 @@ public:
 
       if (UBase64::decode(x, content) == false) U_ERROR("decoding data read failed...", 0);
 
+      // manage arguments...
+
       archive_timestamp = ( U_ARCHIVE_TIMESTAMP == 0 ||
                            *U_ARCHIVE_TIMESTAMP == '\0'
                               ? cfg[U_STRING_FROM_CONSTANT("XAdES-L.ArchiveTimeStamp")]
@@ -130,6 +127,14 @@ public:
       if (schema.empty()) U_ERROR("error on XAdES schema: empty", 0);
 
       UXML2Schema XAdES_schema(UFile::contentOf(schema));
+
+      // ---------------------------------------------------------------------------------------------------------------
+      // check for OOffice or MS-Word document...
+      // ---------------------------------------------------------------------------------------------------------------
+      utility.handlerConfig(cfg);
+
+      if (utility.checkDocument(content, "XAdES-C")) content = utility.getSigned();
+      // ---------------------------------------------------------------------------------------------------------------
 
       UXML2Document document(content);
 
@@ -294,12 +299,19 @@ public:
                                       U_CONSTANT_TO_PARAM("        </xades:UnsignedSignatureProperties>"),
                                       U_STRING_TO_PARAM(archiveTimeStamp));
 
+      // ---------------------------------------------------------------------------------------------------------------
+      // check for OOffice or MS-Word document...
+      // ---------------------------------------------------------------------------------------------------------------
+      output = utility.outputDocument(output);
+      // ---------------------------------------------------------------------------------------------------------------
+
       cout.write(U_STRING_TO_PARAM(output));
       }
 
 private:
    UFileConfig cfg;
    UVector<UString> vec;
+   UXAdESUtility utility;
    UString cfg_str, content, to_digest, x, archive_timestamp, schema, output;
 };
 

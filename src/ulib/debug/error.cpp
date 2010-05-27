@@ -36,8 +36,8 @@ void UError::stackDump()
 
    /* use -rdynamic flag when compiling */
 
-   int size       = backtrace(array, 256);
-   char** strings = backtrace_symbols(array, size);
+   int size                    = backtrace(array, 256);
+   char** __restrict__ strings = backtrace_symbols(array, size);
 
    (void) u_snprintf(name, sizeof(name), "stack.%N.%P", 0);
 
@@ -51,11 +51,11 @@ void UError::stackDump()
 
 #  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
    int i, status;
-   char* realname;
-   char* lastparen;
-   char* firstparen;
+   char* __restrict__ realname;
+   char* __restrict__ lastparen;
+   char* __restrict__ firstparen;
 
-   FILE* f = fdopen(fd, "a");
+   FILE* __restrict__ f = fdopen(fd, "a");
 
    (void) fwrite(U_CONSTANT_TO_PARAM("=== STACK TRACE ===\n"), 1, f);
 

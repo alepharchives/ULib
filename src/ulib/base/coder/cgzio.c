@@ -55,13 +55,21 @@ static const char* get_error_string(int err)
 static int workspacesize = zlib_deflate_workspacesize();
 static char workspace[workspacesize];
 #else
-#define zlib_inflate(a,b)  inflate(a,b)
-#define zlib_deflate(a,b)  deflate(a,b)
-#define zlib_inflateEnd(a) inflateEnd(a)
-#define zlib_deflateEnd(a) deflateEnd(a)
+#  ifndef zlib_inflate
+#  define zlib_inflate(a,b)   inflate(a,b)
+#  endif
+#  ifndef zlib_deflate
+#  define zlib_deflate(a,b)   deflate(a,b)
+#  endif
+#  ifndef zlib_inflateEnd
+#  define zlib_inflateEnd(a)  inflateEnd(a)
+#  endif
+#  ifndef zlib_deflateEnd
+#  define zlib_deflateEnd(a)  deflateEnd(a)
+#  endif
 #endif
 
-uint32_t u_gz_deflate(const char* input, uint32_t len, char* result)
+uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict result)
 {
    int err;
    z_stream stream;
@@ -144,7 +152,7 @@ uint32_t u_gz_deflate(const char* input, uint32_t len, char* result)
 #define ENCRYPTED    0x20 /* bit 5 set: file is encrypted */
 #define RESERVED     0xC0 /* bit 6,7:   reserved */
 
-uint32_t u_gz_inflate(const char* input, uint32_t len, char* result)
+uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict result)
 {
    int err;
    z_stream stream;
@@ -179,7 +187,7 @@ uint32_t u_gz_inflate(const char* input, uint32_t len, char* result)
    if (memcmp(input, U_CONSTANT_TO_PARAM(GZIP_MAGIC)) == 0)
       {
       int header_size;
-      const char* ptr = input + U_CONSTANT_SIZE(GZIP_MAGIC);
+      const char* restrict ptr = input + U_CONSTANT_SIZE(GZIP_MAGIC);
       char flags, method = *ptr++; /* method */
 
       if (method != Z_DEFLATED) /* 8 */

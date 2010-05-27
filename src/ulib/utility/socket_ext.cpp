@@ -199,9 +199,9 @@ uint32_t USocketExt::read(USocket* s, UString& buffer, const char* token, uint32
 
 // write while sending data
 
-bool USocketExt::write(USocket* s, const char* ptr, uint32_t count)
+bool USocketExt::write(USocket* s, const char* ptr, uint32_t count, int timeoutMS)
 {
-   U_TRACE(0, "USocketExt::write(%p,%.*S,%u)", s, count, ptr, count)
+   U_TRACE(0, "USocketExt::write(%p,%.*S,%u,%d)", s, count, ptr, count, timeoutMS)
 
    U_INTERNAL_ASSERT(s->isOpen())
 
@@ -213,7 +213,19 @@ bool USocketExt::write(USocket* s, const char* ptr, uint32_t count)
 
       value = s->send(ptr, count);
 
-      if (s->checkIO(value, count) == false) U_RETURN(false);
+      if (s->checkIO(value, count) == false)
+         {
+         if (timeoutMS != -1 &&
+             s->isTimeout()  &&
+             UNotifier::waitForWrite(s->getFd(), timeoutMS) == 1)
+            {
+            s->iState = USocket::CONNECT;
+
+            continue;
+            }
+
+         U_RETURN(false);
+         }
 
       write_again = (value != (ssize_t)count);
 
@@ -381,7 +393,11 @@ int USocketExt::readLineReply(USocket* s, char* buffer, uint32_t buffer_size) //
 
       i = s->recv(buffer + r, count);
 
-      if (s->checkIO(i, count) == false) U_RETURN(USocket::BROKEN);
+      if (i == 0 ||
+          s->checkIO(i, count) == false)
+         {
+         U_RETURN(USocket::BROKEN);
+         }
 
       r += i;
       }

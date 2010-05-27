@@ -57,14 +57,15 @@ void UNotifier::init(UEventFd* handler_event)
 
    U_INTERNAL_ASSERT_POINTER(u_ev_base)
 #elif defined(HAVE_EPOLL_WAIT)
+   if (epollfd) (void) U_SYSCALL(close, "%d", epollfd);
 #  ifdef HAVE_EPOLL_CREATE1
-   UNotifier::epollfd = U_SYSCALL(epoll_create1, "%d", EPOLL_CLOEXEC);
+   epollfd = U_SYSCALL(epoll_create1, "%d", EPOLL_CLOEXEC);
 #  else
-   UNotifier::epollfd = U_SYSCALL(epoll_create,  "%d", 1024);
+   epollfd = U_SYSCALL(epoll_create,  "%d", 1024);
 #  endif
 
+   U_INTERNAL_ASSERT_MAJOR(epollfd,0)
    U_INTERNAL_ASSERT_EQUALS(U_READ_IN,EPOLLIN)
-   U_INTERNAL_ASSERT_MAJOR(UNotifier::epollfd,0)
    U_INTERNAL_ASSERT_EQUALS(U_WRITE_OUT,EPOLLOUT)
 #endif
 
@@ -720,7 +721,7 @@ void UNotifier::clear()
       }
 
 #if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
-   (void) U_SYSCALL(close, "%d", UNotifier::epollfd);
+   (void) U_SYSCALL(close, "%d", epollfd);
 #endif
 }
 

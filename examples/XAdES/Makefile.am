@@ -2,11 +2,11 @@
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
-sign_LDADD      = $(top_builddir)/src/ulib/lib@ULIB@.la
+sign_LDADD      = libutility.la $(top_builddir)/src/ulib/lib@ULIB@.la
 sign_SOURCES    = sign.cpp
 sign_LDFLAGS    = $(PRG_LDFLAGS)
 
-archive_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la
+archive_LDADD   = libutility.la $(top_builddir)/src/ulib/lib@ULIB@.la
 archive_SOURCES = archive.cpp
 archive_LDFLAGS = $(PRG_LDFLAGS)
 
@@ -19,9 +19,10 @@ verify_SOURCES  = verify.cpp
 verify_LDFLAGS  = $(PRG_LDFLAGS)
 
 libverify_la_SOURCES  = context.cpp transform.cpp xpath.cpp
+libutility_la_SOURCES = utility.cpp
 
 ## for convenience library
-noinst_LTLIBRARIES = libverify.la
+noinst_LTLIBRARIES = libutility.la libverify.la
 
 noinst_PROGRAMS = sign archive client verify
 

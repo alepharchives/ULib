@@ -29,16 +29,16 @@ extern U_EXPORT void u_trace_initFork(void);
 extern U_EXPORT void u_trace_check_init(void);
 extern U_EXPORT bool u_trace_isActive(int level);
 extern U_EXPORT void u_trace_check_if_interrupt(void); /* check for context manage signal event - interrupt */
-extern U_EXPORT void u_trace_dump(const char* format, ...);
-extern U_EXPORT void u_trace_write(const char* t, uint32_t tlen);
-extern U_EXPORT void u_trace_writev(const struct iovec* iov, int n);
+extern U_EXPORT void u_trace_dump(const char* restrict format, ...);
+extern U_EXPORT void u_trace_write(const char* restrict t, uint32_t tlen);
+extern U_EXPORT void u_trace_writev(const struct iovec* restrict iov, int n);
 extern U_EXPORT void u_trace_init(bool force, bool info, bool offset);
 
 /* E' possibile mascherare il trace per metodi eccessivamente complessi
   (Es: ricorsivi) tramite il byte alto del parametro 'level' */
 
-extern U_EXPORT void u_trace_dtor(int active, void* hook);
-extern U_EXPORT bool u_trace_check_if_active(int level, void* hook);
+extern U_EXPORT void u_trace_dtor(int active, void* restrict hook);
+extern U_EXPORT bool u_trace_check_if_active(int level, void* restrict hook);
 
 /* Attivazione-disattivazione temporanea */
 
