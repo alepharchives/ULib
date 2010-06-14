@@ -1,5 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node1" href="$classURPCParser.html" title="URPCParser is a parser RPC." alt="" coords="8,5,96,33"/>
-<area shape="rect" id="node3" href="$classUSOAPParser.html" title="USOAPParser is a parser SOAP based on Expat (Expat is a stream&#45;oriented parser)." alt="" coords="147,30,245,58"/>
-<area shape="rect" id="node4" href="$classUXMLParser.html" title="UXMLParser is a parser XML based on Expat (Expat is a stream&#45;oriented parser)." alt="" coords="5,55,99,83"/>
-</map>

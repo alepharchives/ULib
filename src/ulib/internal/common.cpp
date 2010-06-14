@@ -11,6 +11,7 @@
 //
 // ============================================================================
  
+#include <ulib/utility/services.h>
 #include <ulib/utility/interrupt.h>
 
 #ifdef DEBUG
@@ -46,7 +47,9 @@ void ULib_init()
    // variable and use its value to denote the scratch area for temporary files instead of the common default of /tmp.
    // Other forms sometimes accepted are TEMP, TEMPDIR, and TMP but these are used more commonly by non-POSIX Operating systems.
 
-   u_tmpdir = (const char*) U_SYSCALL(getenv, "%S", "TMPDIR");
+   // if defined and we aren't setuid/setgid, otherwise it will be created in /tmp
+
+   if (UServices::isSetuidRoot() == false) u_tmpdir = (const char*) U_SYSCALL(getenv, "%S", "TMPDIR");
 
    if (u_tmpdir == 0) u_tmpdir = "/tmp";
 

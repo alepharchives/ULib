@@ -5077,7 +5077,8 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
 # Check for the compiler support
-if test "${GCC}" = "yes" ; then
+
+if test "${ac_cv_c_compiler_gnu}" = "yes" ; then
 	# We don't want gcc 2.7
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for a supported version of gcc" >&5
 $as_echo_n "checking for a supported version of gcc... " >&6; }
@@ -6654,8 +6655,8 @@ esac
 
 
 
-macro_version='2.2.7b'
-macro_revision='1.3166'
+macro_version='2.2.10'
+macro_revision='1.3175'
 
 
 
@@ -25211,7 +25212,7 @@ fi
 
 # if gcc compiler add values to *FLAGS...
 
-if test "$GCC" = "yes"; then
+if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC supports " >&5
 $as_echo_n "checking whether $CC supports ... " >&6; }
 
@@ -25259,7 +25260,7 @@ fi
 
 	if test "x$gcc_version_raw" != "x"; then
 		case "${gcc_version_raw}" in
-			2-4.0-4.0-6)
+			2-4.0-4)
 			;;
 			*)
 				MAYBE_FLAGS="$MAYBE_FLAGS -flto -Wno-unused-result"

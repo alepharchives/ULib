@@ -32,6 +32,7 @@ SRC_CPP = internal/common.cpp internal/objectIO.cpp \
 			 net/client/smtp.cpp net/client/ftp.cpp net/client/pop3.cpp net/client/imap.cpp \
 			 net/client/http.cpp net/client/client.cpp \
 			 net/ipt_ACCOUNT.cpp \
+			 json/value.cpp \
 			 query/query_parser.cpp  event/event_time.cpp \
 			 timeval.cpp timer.cpp notifier.cpp string.cpp file.cpp process.cpp file_config.cpp log.cpp \
 			 options.cpp application.cpp cache.cpp date.cpp url.cpp tokenizer.cpp command.cpp

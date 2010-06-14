@@ -222,7 +222,7 @@ int URingBuffer::readFromFdAndWrite(int fd)
 
    U_INTERNAL_ASSERT_POINTER(ptr)
 
-   int todo, split, nread = 0;
+   int todo, split, nread = -1;
 
    lock.lock();
 
@@ -341,11 +341,11 @@ int URingBuffer::readAndWriteToFd(int readd, int fd)
 
    // NB: check write size and number of bytes free...
 
-   todo = avail(readd);
+   todo  = avail(readd);
+   errno = 0;
 
    if (todo == 0) goto end;
 
-   errno = 0;
    split = ((ptr->pread[readd] + todo) > size ? size - ptr->pread[readd] : 0);
 
    U_INTERNAL_DUMP("split = %d", split)

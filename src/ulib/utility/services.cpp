@@ -87,7 +87,7 @@ bool UServices::isSetuidRoot()
 
    bool i_am_root = ((uid_t) U_SYSCALL_NO_PARAM(getuid) == 0);
 
-   if (!i_am_root &&
+   if (i_am_root == false &&
        ((uid_t) U_SYSCALL_NO_PARAM(geteuid) == 0 ||
         (uid_t) U_SYSCALL_NO_PARAM(getegid) == 0))
       {

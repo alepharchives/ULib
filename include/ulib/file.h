@@ -794,18 +794,7 @@ public:
    // The last six characters of template must be XXXXXX and these are replaced with a string that makes the filename unique
    // ----------------------------------------------------------------------------------------------------------------------
 
-   static int mkstemp(char* _template)
-      {
-      U_TRACE(1, "UFile::mkstemp(%S)", _template)
-
-      errno = 0; // mkstemp may not set it on error
-
-      int fd = U_SYSCALL(mkstemp, "%S", U_PATH_CONV(_template));
-
-      U_INTERNAL_DUMP("_template = %S", _template)
-
-      U_RETURN(fd);
-      }
+   static int mkstemp(char* _template);
 
    // ----------------------------------------------------------------------------------------------------------------------
    // mkdtemp - create a unique temporary directory

@@ -1,8 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node2" href="$classUFile.html" title="UFile" alt="" coords="23,193,73,221"/>
-<area shape="rect" id="node4" href="$classUString.html" title="UString" alt="" coords="16,99,80,127"/>
-<area shape="rect" id="node7" href="$classUStringRep.html" title="UStringRep" alt="" coords="5,6,91,34"/>
-<area shape="rect" id="node11" href="$structULog_1_1log__data.html" title="ULog::log_data" alt="" coords="97,193,201,221"/>
-<area shape="rect" id="node13" href="$classULock.html" title="ULock" alt="" coords="225,193,284,221"/>
-<area shape="rect" id="node15" href="$classUSemaphore.html" title="USemaphore" alt="" coords="209,99,300,127"/>
-</map>

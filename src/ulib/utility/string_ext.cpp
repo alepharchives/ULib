@@ -15,6 +15,10 @@
 #include <ulib/utility/compress.h>
 #include <ulib/utility/string_ext.h>
 
+#ifdef HAVE_PCRE
+#  include <ulib/pcre/pcre.h>
+#endif
+
 #ifdef HAVE_LIBZ
 #  include <ulib/base/coder/gzio.h>
 #endif
@@ -26,7 +30,6 @@
 #include <errno.h>
 
 #ifdef HAVE_SSL
-
 UString UStringExt::BIOtoString(BIO* bio)
 {
    U_TRACE(0, "UStringExt::BIOtoString(%p)", bio)
@@ -51,7 +54,24 @@ UString UStringExt::BIOtoString(BIO* bio)
 
    U_RETURN_STRING(UString::getStringNull());
 }
+#endif
 
+#ifdef HAVE_PCRE
+// Searches subject for matches to pattern and replaces them with replacement
+
+UString UStringExt::pregReplace(const UString& pattern, const UString& replacement, const UString& subject)
+{
+   U_TRACE(0, "UStringExt::pregReplace(%.*S,%.*S,%.*S)", U_STRING_TO_TRACE(pattern), U_STRING_TO_TRACE(replacement), U_STRING_TO_TRACE(subject))
+
+   // Replace parts of a string using regular expressions. This method is the counterpart of the perl s// operator.
+   // It replaces the substrings which matched the given regular expression (given to the constructor) with the supplied string
+
+   UPCRE pcre(pattern);
+
+   UString result = pcre.replace(subject, replacement);
+
+   U_RETURN_STRING(result);
+}
 #endif
 
 UString UStringExt::expandTab(const char* s, uint32_t n, int tab)

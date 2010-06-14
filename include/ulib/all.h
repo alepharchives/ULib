@@ -20,6 +20,7 @@
 #include <ulib/net/rpc/rpc_object.h>
 #include <ulib/net/client/client_rdb.h>
 #include <ulib/net/server/server_rdb.h>
+#include <ulib/json/value.h>
 #include <ulib/utility/lock.h>
 #include <ulib/utility/base64.h>
 #include <ulib/utility/compress.h>

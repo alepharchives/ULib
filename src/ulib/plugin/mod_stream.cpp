@@ -22,6 +22,7 @@ U_CREAT_FUNC(UStreamPlugIn)
 pid_t    UStreamPlugIn::pid = (pid_t)-1;
 
 UString* UStreamPlugIn::str_URI_PATH;
+UString* UStreamPlugIn::str_METADATA;
 UString* UStreamPlugIn::str_CONTENT_TYPE;
 
 void UStreamPlugIn::str_allocate()
@@ -29,15 +30,18 @@ void UStreamPlugIn::str_allocate()
    U_TRACE(0, "UStreamPlugIn::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_URI_PATH,0)
+   U_INTERNAL_ASSERT_EQUALS(str_METADATA,0)
    U_INTERNAL_ASSERT_EQUALS(str_CONTENT_TYPE,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("URI_PATH") },
+      { U_STRINGREP_FROM_CONSTANT("METADATA") },
       { U_STRINGREP_FROM_CONSTANT("CONTENT_TYPE") }
    };
 
    U_NEW_ULIB_OBJECT(str_URI_PATH,     U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_CONTENT_TYPE, U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_METADATA,     U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_CONTENT_TYPE, U_STRING_FROM_STRINGREP_STORAGE(2));
 }
 
 RETSIGTYPE UStreamPlugIn::handlerForSigTERM(int signo)
@@ -55,7 +59,8 @@ UStreamPlugIn::~UStreamPlugIn()
 
    if (command)
       {
-      delete command;
+                     delete command;
+      if (fmetadata) delete fmetadata;
 
       if (pid != -1) UProcess::kill(pid, SIGTERM);
       }
@@ -70,7 +75,8 @@ int UStreamPlugIn::handlerConfig(UFileConfig& cfg)
    // ------------------------------------------------------------------------------------------------------------------------
    // mod_stream - plugin parameters
    // ------------------------------------------------------------------------------------------------------------------------
-   // URI_PATH     specifies the local part of the URL path at which you would like the content to appear (Ex. /my/video.ogv)
+   // URI_PATH     specifies the local part of the URL path at which you would like the content to appear (Ex. /my/video.mjpeg)
+   // METADATA     specifies the needs to have setup headers prepended for each codec stream (Ex. /my/audio.ogg)
    // CONTENT_TYPE specifies the Internet media type of the stream, which will appear in the Content-Type HTTP response header
    //
    // COMMAND                      command to execute
@@ -82,6 +88,7 @@ int UStreamPlugIn::handlerConfig(UFileConfig& cfg)
       command = UServer_Base::loadConfigCommand(cfg);
 
       uri_path     = cfg[*str_URI_PATH];
+      metadata     = cfg[*str_METADATA];
       content_type = cfg[*str_CONTENT_TYPE];
       }
 
@@ -109,6 +116,13 @@ int UStreamPlugIn::handlerInit()
       UServer_Base::logCommandMsgError(command->getCommand());
 
       rbuf.init(2 * 1024 * 1024); // 2M size ring buffer
+
+      if (metadata.empty() == false)
+         {
+         fmetadata = U_NEW(UFile(metadata));
+
+         if (fmetadata->open()) fmetadata->readSize();
+         }
 
       // NB: feeding by a child of this...
 
@@ -142,11 +156,14 @@ int UStreamPlugIn::handlerInit()
 
          UInterrupt::insert(SIGTERM, (sighandler_t)UStreamPlugIn::handlerForSigTERM); // async signal
 
+         int nread;
+
          while (UNotifier::waitForRead(UProcess::filedes[2]) == 1)
             {
-            if (rbuf.readFromFdAndWrite(UProcess::filedes[2]) > 0) continue;
+            nread = rbuf.readFromFdAndWrite(UProcess::filedes[2]);
 
-            to_sleep.nanosleep();
+            if (nread == 0) break;                // EOF
+            if (nread  < 0) to_sleep.nanosleep(); // EAGAIN
             }
 
          handlerForSigTERM(SIGTERM);
@@ -179,6 +196,8 @@ int UStreamPlugIn::handlerRequest()
 
       *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, content_type.data(), UString::getStringNull());
 
+      if (UServer_Base::useTcpOptimization()) UClientImage_Base::socket->setTcpCork(1U);
+
       if (UClientImage_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
          {
          UClientImage_Base::write_off = true;
@@ -189,6 +208,11 @@ int UStreamPlugIn::handlerRequest()
 
          if (readd != -1)
             {
+            off_t offset = 0;
+
+            if (fmetadata &&
+                fmetadata->sendfile(UClientImage_Base::socket->getFd(), &offset) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+
             UTimeVal to_sleep(0L, 10 * 1000L);
 
             while (UServer_Base::flag_loop)
@@ -217,7 +241,9 @@ int UStreamPlugIn::handlerRequest()
 const char* UStreamPlugIn::dump(bool reset) const
 {
    *UObjectIO::os << "pid                       " << pid                  << '\n'
+                  << "fmetadata    (UFile       " << (void*)fmetadata     << ")\n"
                   << "uri_path     (UString     " << (void*)&uri_path     << ")\n"
+                  << "metadata     (UString     " << (void*)&metadata     << ")\n"
                   << "content_type (UString     " << (void*)&content_type << ")\n"
                   << "command      (UCommand    " << (void*)command       << ")\n"
                   << "rbuf         (URingBuffer " << (void*)&rbuf         << ')';

@@ -69,6 +69,7 @@
 #include "net/client/client_rdb.cpp"
 #include "net/server/client_image.cpp"
 #include "net/server/client_image_rdb.cpp"
+#include "json/value.cpp"
 #include "utility/lock.cpp"
 #include "utility/uhttp.cpp"
 #include "utility/base64.cpp"

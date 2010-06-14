@@ -31,6 +31,7 @@ TO_INC = ulib/README \
 			ulib/net/client/*.h \
 			ulib/net/server/*.h \
 			ulib/pcre/*.h \
+			ulib/json/*.h \
 			ulib/plugin/*.h \
 			ulib/query/*.h \
 			ulib/replace/*.h \

@@ -81,6 +81,7 @@
 
 #define U_STRING_FROM_STRINGREP_STORAGE(n) UString(&(stringrep_storage[n]))
 
+class UValue;
 class UString;
 class UStringExt;
 template <class T> class UHashMap;
@@ -533,6 +534,7 @@ public:
 protected:
    static UString* string_null;
 
+   friend class UValue;
    friend class UStringExt;
 
 public:
@@ -656,7 +658,7 @@ public:
 
    explicit UString(void* t, uint32_t tlen)
       {
-      U_TRACE_REGISTER_OBJECT(0, UString, "%S,%u", (char*)t, tlen)
+      U_TRACE_REGISTER_OBJECT(0, UString, "%.*S,%u", tlen, (char*)t, tlen)
 
       U_INTERNAL_ASSERT_POINTER(t)
 

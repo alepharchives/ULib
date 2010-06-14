@@ -51,6 +51,7 @@ class U_EXPORT UStreamPlugIn : public UServerPlugIn {
 public:
 
    static UString* str_URI_PATH;
+   static UString* str_METADATA;
    static UString* str_CONTENT_TYPE;
 
    static void str_allocate();
@@ -61,7 +62,8 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UStreamPlugIn, "", 0)
 
-      command = 0;
+      command   = 0;
+      fmetadata = 0;
 
       if (str_URI_PATH == 0) str_allocate();
       }
@@ -87,8 +89,9 @@ public:
 
 protected:
    URingBuffer rbuf;
+   UFile* fmetadata;
    UCommand* command;
-   UString uri_path, content_type;
+   UString uri_path, metadata, content_type;
 
    static pid_t pid;
 

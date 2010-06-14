@@ -1,3 +1,3 @@
 #!/bin/sh
 
-exec cat /tmp/a
+exec cat /tmp/a.eml

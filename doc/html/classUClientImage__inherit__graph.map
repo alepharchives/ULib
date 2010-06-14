@@ -1,7 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node7" href="$classUSkeletonClientImage.html" title="Handles accepted connections from UServer client." alt="" coords="5,259,205,287"/>
-<area shape="rect" id="node9" href="$classUClientImage.html" title="UClientImage\&lt; UTCPSocket \&gt;" alt="" coords="229,259,419,287"/>
-<area shape="rect" id="node2" href="$classUClientImage__Base.html" title="UClientImage_Base" alt="" coords="63,86,191,114"/>
-<area shape="rect" id="node4" href="$classUEventFd.html" title="UEventFd" alt="" coords="89,6,164,34"/>
-<area shape="rect" id="node11" href="$classURDBClientImage.html" title="Handles accepted TCP/IP connections from URDBServer." alt="" coords="263,339,385,367"/>
-</map>

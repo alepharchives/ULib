@@ -700,6 +700,30 @@ UString UFile::getRealPath(const char* path)
    U_RETURN_STRING(UString::getStringNull());
 }
 
+// ----------------------------------------------------------------------------------------------------------------------
+// create a unique temporary file
+// ----------------------------------------------------------------------------------------------------------------------
+// char pathname[] = "/tmp/dataXXXXXX"
+// The last six characters of template must be XXXXXX and these are replaced with a string that makes the filename unique
+// ----------------------------------------------------------------------------------------------------------------------
+
+int UFile::mkstemp(char* _template)
+{
+   U_TRACE(1, "UFile::mkstemp(%S)", _template)
+
+   errno = 0; // mkstemp may not set it on error
+
+   mode_t old_mode = U_SYSCALL(umask, "%d", 077);  // Create file with restrictive permissions
+
+   int fd = U_SYSCALL(mkstemp, "%S", U_PATH_CONV(_template));
+
+   U_INTERNAL_DUMP("_template = %S", _template)
+
+   (void) U_SYSCALL(umask, "%d", old_mode);
+
+   U_RETURN(fd);
+}
+
 // temporary file for locking...
 
 bool UFile::mkTemp(const char* name)

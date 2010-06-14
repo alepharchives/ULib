@@ -1776,6 +1776,30 @@ U_EXPORT main (int argc, char* argv[])
    U_INTERNAL_ASSERT( U_STRING_FROM_CONSTANT("           \n\t\r").isWhiteSpace() )
    U_INTERNAL_ASSERT( U_STRING_FROM_CONSTANT("gXWUj7VekBdkycg3Z9kXuglV9plUl2cs4XkNLSDhe5VHRgE03e63VypMChCWDGI=").isBase64() )
 
+#ifdef HAVE_PCRE
+   // date (YYYY/MM/DD) --> (DD/MM/YYYY)
+
+   z = UStringExt::pregReplace(U_STRING_FROM_CONSTANT("([0-9]{4})\\/([0-9]{2})\\/([0-9]{2})"),
+                               U_STRING_FROM_CONSTANT("$3/$2/$1"),
+                               U_STRING_FROM_CONSTANT("2003/04/15"));
+
+   U_ASSERT( z == U_STRING_FROM_CONSTANT("15/04/2003") )
+
+   // date (YYYY/MM/DD) <-- (DD/MM/YYYY)
+
+   z = UStringExt::pregReplace(U_STRING_FROM_CONSTANT("([0-9]{2})\\/([0-9]{2})\\/([0-9]{4})"),
+                               U_STRING_FROM_CONSTANT("$3/$2/$1"),
+                               U_STRING_FROM_CONSTANT("15/04/2003"));
+
+   U_ASSERT( z == U_STRING_FROM_CONSTANT("2003/04/15") )
+
+   z = UStringExt::pregReplace(U_STRING_FROM_CONSTANT("(\\w+) (\\d+), (\\d+)"),
+                               U_STRING_FROM_CONSTANT("${1}1,$3"),
+                               U_STRING_FROM_CONSTANT("April 15, 2003"));
+
+   U_ASSERT( z == U_STRING_FROM_CONSTANT("April1,2003") )
+#endif
+
    crono.stop();
 
    printf("Time Consumed for (%d) iteration = %ld ms\n", n, crono.getTimeElapsed());

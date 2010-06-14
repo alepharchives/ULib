@@ -1,5 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node2" href="$classURDBClient__Base.html" title="Creates and manages a client connection with a RDB server." alt="" coords="5,83,128,111"/>
-<area shape="rect" id="node4" href="$classUClient__Base.html" title="UClient_Base" alt="" coords="91,6,187,34"/>
-<area shape="rect" id="node6" href="$classUClient.html" title="Handles a connections with a server." alt="" coords="152,83,272,111"/>
-</map>

@@ -307,13 +307,13 @@ bool UInterrupt::checkForEventSignalPending()
 {
    U_TRACE(0, "UInterrupt::checkForEventSignalPending()")
 
-   U_INTERNAL_DUMP("errno = %d event_signal_pending = %d", errno, event_signal_pending)
+   U_INTERNAL_DUMP("errno = %d event_signal_pending = %d syscall_restart = %b", errno, event_signal_pending, syscall_restart)
 
    if (event_signal_pending) callHandlerSignal();
 
    // NB: notify to make certain system calls restartable across signals...
 
-   U_RETURN(syscall_restart && errno == EINTR);
+   U_RETURN(syscall_restart && errno == EINTR); // EINTR(4) Interrupted system call
 }
 
 #ifdef HAVE_SIGINFO_T

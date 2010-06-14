@@ -65,7 +65,8 @@ AC_PROG_CXX
 AC_PROG_CXXCPP
 
 # Check for the compiler support
-if test "${GCC}" = "yes" ; then
+
+if test "${ac_cv_c_compiler_gnu}" = "yes" ; then
 	# We don't want gcc 2.7
 	AC_MSG_CHECKING([for a supported version of gcc])
 	gcc_version=`${CC} --version | head -n1`
@@ -651,7 +652,7 @@ fi
 
 # if gcc compiler add values to *FLAGS...
 
-if test "$GCC" = "yes"; then
+if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 	AC_CC_TRY_FLAG
 
 	gcc_version_raw=`echo ${gcc_version} | cut -d' ' -f3`
@@ -666,7 +667,7 @@ if test "$GCC" = "yes"; then
 
 	if test "x$gcc_version_raw" != "x"; then
 		case "${gcc_version_raw}" in
-			[2-4].[0-4].[0-6])
+			[2-4].[0-4])
 			;;
 			*)
 				MAYBE_FLAGS="$MAYBE_FLAGS -flto -Wno-unused-result"

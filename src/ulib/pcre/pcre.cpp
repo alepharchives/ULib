@@ -28,6 +28,27 @@ UPCRE::UPCRE(const UString& expression, int flags) : _expression(expression)
    compile();
 }
 
+UPCRE::~UPCRE()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UPCRE)
+
+   /* avoid deleting of uninitialized pointers */
+
+   if (p_pcre)       pcre_free(p_pcre);
+   if (p_pcre_extra) pcre_free(p_pcre_extra);
+
+   if (sub_vec) U_FREE_N(sub_vec, sub_len, int);
+
+   if (stringlist)
+      {
+      pcre_free_substring_list(stringlist);
+
+      U_INTERNAL_ASSERT_POINTER(resultset)
+
+      delete resultset;
+      }
+}
+
 U_NO_EXPORT const char* UPCRE::status(int num)
 {
    U_TRACE(0, "UPCRE::status(%d)", num)
@@ -63,12 +84,14 @@ void UPCRE::compile()
 
    char* ptr = (char*) _expression.c_str();
 
-   p_pcre = pcre_compile(ptr ? ptr : "", _flags, (const char**)(&err_str), &erroffset, tables);
+   U_INTERNAL_ASSERT_POINTER(ptr)
+
+   p_pcre = pcre_compile(ptr, _flags, (const char**)(&err_str), &erroffset, tables);
 
 #ifdef DEBUG
    if (p_pcre == NULL) /* umh, that's odd, the parser should not fail at all */
       {
-      U_INTERNAL_DUMP("pcre_compile(..) failed: %S at: %S", err_str, ptr + erroffset);
+      U_INTERNAL_DUMP("pcre_compile(%S,%d,%p,%p,%S) failed: %S at: %S", ptr, _flags, &err_str, &erroffset, tables, err_str, ptr + erroffset)
       }
 #endif
 
@@ -83,7 +106,7 @@ void UPCRE::compile()
 #endif
    pcre_fullinfo(p_pcre, p_pcre_extra, PCRE_INFO_CAPTURECOUNT, &where);
 
-   U_DUMP("status() = %S", status(info));
+   U_DUMP("status() = %S", status(info))
 
    U_INTERNAL_ASSERT_EQUALS(info,0)
 
@@ -92,6 +115,18 @@ void UPCRE::compile()
    U_INTERNAL_DUMP("sub_len = %d", sub_len)
 
    reset();
+}
+
+UString UPCRE::getMatch(int pos)
+{
+   U_TRACE(0, "UPCRE::getMatch(%d)", pos)
+
+   U_INTERNAL_ASSERT_POINTER(resultset)
+   U_INTERNAL_ASSERT_RANGE(0,pos,num_matches)
+
+   UString result = resultset->at(pos);
+
+   U_RETURN_STRING(result);
 }
 
 bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int options)
@@ -109,7 +144,7 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
 
    int num = pcre_exec(p_pcre, p_pcre_extra, stuff, stuff_len, offset, options, sub_vec, sub_len);
 
-   U_INTERNAL_DUMP("pcre_exec(...) = %d", num)
+   U_INTERNAL_DUMP("pcre_exec(%p,%p,%.*S,%u,%d,%d,%p,%d) = %d", p_pcre, p_pcre_extra, stuff_len, stuff, stuff_len, offset, options, sub_vec, sub_len, num)
 
    if (num <= 0) /*  <0 no match at all;
                     ==0 vector too small, there were too many substrings in stuff */
@@ -147,7 +182,7 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
 #  endif
       pcre_get_substring_list(stuff, sub_vec, num, &stringlist);
 
-      U_DUMP("status() = %S", status(res));
+      U_DUMP("status() = %S", status(res))
 
       U_INTERNAL_ASSERT_EQUALS(res,0)
 
@@ -208,19 +243,17 @@ uint32_t UPCRE::split(UVector<UString>& vec, const UString& piece, int limit, in
       }
    else /* use the regex way */
       {
-      if (_expression[0]                        != '(' &&
-          _expression[_expression.length() - 1] != ')')
+      if (_expression.first_char() != '(' ||
+          _expression.last_char()  != ')' ||
+          u_strpend(U_STRING_TO_PARAM(_expression), U_CONSTANT_TO_PARAM("()"), 0) != _expression.c_pointer(_expression.size()-1))
          {
          /* oh, oh - the pre-compiled expression does not contain brackets */
 
          pcre_free(p_pcre);
          pcre_free(p_pcre_extra);
 
-         pcre*       _p = 0;
-         pcre_extra* _e = 0;
-
-         p_pcre       = _p;
-         p_pcre_extra = _e;
+         p_pcre       = 0;
+         p_pcre_extra = 0;
 
          _expression = "(" + _expression + ")";
 
@@ -290,11 +323,6 @@ UString UPCRE::replace(const UString& piece, const UString& with)
 {
    U_TRACE(0, "UPCRE::replace(%.*S,%.*S)", U_STRING_TO_TRACE(piece), U_STRING_TO_TRACE(with))
 
-   UString replaced(piece);
-
-   bool bReplaced = false;
-   int  iReplaced = -1;
-
    /*
    certainly we need an anchor, we want to check if the whole arg is in brackets
 
@@ -305,21 +333,27 @@ UString UPCRE::replace(const UString& piece, const UString& with)
    It's more comfortable, cause we wants to start with $1 at all, also if we set the whole arg in brackets!
    */
 
-   /* recreate the p_pcre* objects to avoid memory leaks */
+   if (_expression.first_char() != '(' ||
+       _expression.last_char()  != ')' ||
+       u_strpend(U_STRING_TO_PARAM(_expression), U_CONSTANT_TO_PARAM("()"), 0) != _expression.c_pointer(_expression.size()-1))
+      {
+      /* oh, oh - the pre-compiled expression does not contain brackets */
+      /* recreate the p_pcre* objects to avoid memory leaks */
 
-   pcre_free(p_pcre);
-   pcre_free(p_pcre_extra);
+      pcre_free(p_pcre);
+      pcre_free(p_pcre_extra);
 
-   pcre*       _p = 0;
-   pcre_extra* _e = 0;
+      p_pcre       = 0;
+      p_pcre_extra = 0;
 
-   p_pcre       = _p;
-   p_pcre_extra = _e;
+      _expression = "(" + _expression + ")";
 
-   if (_expression[0]                    != '(') _expression = "(" + _expression;
-   if (_expression[_expression.size()-1] != ')') _expression =       _expression + ")"; 
+      compile();
+      }
 
-   compile();
+   bool bReplaced = false;
+   int  iReplaced = -1;
+   UString replaced(piece);
 
    if (search(piece, 0, 0))
       {
@@ -336,7 +370,8 @@ UString UPCRE::replace(const UString& piece, const UString& with)
 
          use_with = _replace_vars(with);
 
-         if (matched() && matches() >= 1)
+         if (matched() &&
+             matches() >= 1)
             {
             int len = getMatchEnd() - getMatchStart() + 1;
 
@@ -353,12 +388,9 @@ UString UPCRE::replace(const UString& piece, const UString& with)
          // in global replace we just need to remember our position
          // so let's initialize it first
 
-         int match_pos = 0;
+         int len, match_pos;
 
-         while (search(replaced, match_pos, 0))
-            {
-            int len = 0;
-                                   
+         do {
             // here we need to resolve the vars certainly for every hit.
             // could be different content sometimes!
 
@@ -375,6 +407,7 @@ UString UPCRE::replace(const UString& piece, const UString& with)
               bReplaced = true;
             ++iReplaced;
             }
+         while (search(replaced, match_pos, 0));
          }
       }
 
@@ -389,37 +422,41 @@ U_NO_EXPORT UString UPCRE::_replace_vars(const UString& piece)
    U_TRACE(0, "UPCRE::_replace_vars(%.*S)", U_STRING_TO_TRACE(piece))
 
    static UPCRE* dollar;
-   static UString* cstr;
 
-   if (dollar == 0)
-      {
-      U_NEW_ULIB_OBJECT(cstr,         U_STRING_FROM_CONSTANT("\\$"));
-      U_NEW_ULIB_OBJECT(dollar, UPCRE(U_STRING_FROM_CONSTANT("\\$([0-9]+)"), 0));
-      }
+   if (dollar == 0) U_NEW_ULIB_OBJECT(dollar, UPCRE(U_STRING_FROM_CONSTANT("\\${?([0-9]+)}?"), 0));
 
-   UString with = piece;
+   UPCRE subsplit;
+   int iBracketIndex;
+   uint32_t size, pos;
+   UVector<UString> splitted;
+   UString cstr(U_CAPACITY), first, replaced, sBracketContent, with = piece;
 
    while (dollar->search(with, 0, 0))
       {
       // let's do some conversion first
 
-      int iBracketIndex = atoi( dollar->getMatch(0).data() );
+      first = dollar->getMatch(0);
 
-      UString sBracketContent = getMatch(iBracketIndex);
+      iBracketIndex = first.strtol();
+
+      sBracketContent = getMatch(iBracketIndex);
+
+      U_INTERNAL_DUMP("sBracket[%d] = %.*S", iBracketIndex, U_STRING_TO_TRACE(sBracketContent))
 
       // now we can split the stuff
 
-      UString sSubSplit = *cstr + dollar->getMatch(0);
+      cstr.snprintf("\\${?%.*s}?", U_STRING_TO_TRACE(first));
 
-      UPCRE subsplit(sSubSplit, 0);
+      subsplit.set(cstr);
 
-      // normally 2 (or more) parts, the one in front of and the other one after "$1"
+      // normally 2 (or more) parts, the one in front of and the other one after "$..."
 
-      UString replaced;
-      UVector<UString> splitted;
-      uint32_t size = subsplit.split(splitted, with);
+      replaced.clear();
+      splitted.clear();
 
-      for (uint32_t pos = 0; pos < size; ++pos)
+      size = subsplit.split(splitted, with);
+
+      for (pos = 0; pos < size; ++pos)
          {
          if (pos == (size - 1)) replaced += splitted[pos];
          else                   replaced += splitted[pos] + sBracketContent;

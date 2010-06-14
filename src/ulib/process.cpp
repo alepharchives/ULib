@@ -479,7 +479,7 @@ int UProcess::waitAll()
    int result = (status ? U_FAILED_ALL    // (status != 0) -> failed
                         : U_FAILED_NONE); // (status == 0) -> success
 
-   while (waitpid(-1, &status, 0) > 0)
+   while (UProcess::waitpid(-1, &status, 0) > 0)
       {
       if ((status == 0 && result == U_FAILED_ALL) || // (status == 0) -> success
           (status != 0 && result == U_FAILED_NONE))  // (status != 0) -> failed

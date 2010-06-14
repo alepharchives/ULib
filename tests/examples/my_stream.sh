@@ -4,7 +4,7 @@
 # URI_PATH      /my/stream
 # CONTENT_TYPE  text/plain
 # -------------------------------------
-# while `true`; do date; sleep 1; done
+while `true`; do date; sleep 1; done
 # -------------------------------------
 
 # Turn a sequence of images into video:
@@ -31,7 +31,7 @@ done
 #printf "Date: Wed, 19 May 2010 17:16:24 GMT\r\n"
 #printf "Content-Type: multipart/x-mixed-replace; boundary=%s\r\n\r\n" ${BOUNDARY}
 
-#while true; do
+while true; do
 	n=0
 	while [ $n -lt $count ]; do
 		printf "\r\n--%s\r\n" ${BOUNDARY}
@@ -40,6 +40,7 @@ done
 		cat ${FILE[$n]}
 		((n++))
 	done
-#done
+done
+
 #printf "\r\n\r\n--%s--\r\n" ${BOUNDARY}
 # -------------------------------------

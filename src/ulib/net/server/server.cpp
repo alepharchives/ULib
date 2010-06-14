@@ -775,6 +775,8 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 #ifdef HAVE_LIBEVENT
    else (void) UDispatcher::exit(0);
 #endif
+
+   UInterrupt::erase(SIGTERM); // async signal
 }
 
 int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket

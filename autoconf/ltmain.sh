@@ -1,6 +1,6 @@
 # Generated from ltmain.m4sh.
 
-# libtool (GNU libtool) 2.2.7b
+# libtool (GNU libtool) 2.2.10
 # Written by Gordon Matzigkeit <gord@gnu.ai.mit.edu>, 1996
 
 # Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2005, 2006,
@@ -70,7 +70,7 @@
 #         compiler:		$LTCC
 #         compiler flags:		$LTCFLAGS
 #         linker:		$LD (gnu? $with_gnu_ld)
-#         $progname:	(GNU libtool) 2.2.7b
+#         $progname:	(GNU libtool) 2.2.10
 #         automake:	$automake_version
 #         autoconf:	$autoconf_version
 #
@@ -78,9 +78,9 @@
 
 PROGRAM=libtool
 PACKAGE=libtool
-VERSION=2.2.7b
+VERSION=2.2.10
 TIMESTAMP=""
-package_revision=1.3166
+package_revision=1.3175
 
 # Be Bourne compatible
 if test -n "${ZSH_VERSION+set}" && (emulate sh) >/dev/null 2>&1; then
@@ -122,11 +122,6 @@ LANGUAGE=C
 export LANGUAGE LC_ALL
 
 $lt_unset CDPATH
-
-
-
-
-
 
 
 # Work around backward compatibility issue on IRIX 6.5. On IRIX 6.4+, sh
@@ -656,9 +651,6 @@ func_show_eval_locale ()
 }
 
 
-
-
-
 # func_version
 # Echo version message to standard output and exit.
 func_version ()
@@ -667,7 +659,7 @@ func_version ()
 	:more
 	/\./!{
 	  N
-	  s/\n# //
+	  s/\n# / /
 	  b more
 	}
 	:go
@@ -684,7 +676,7 @@ func_version ()
 # Echo short help message to standard output and exit.
 func_usage ()
 {
-    $SED -n '/^# Usage:/,/^#  *-h/ {
+    $SED -n '/^# Usage:/,/^#  *.*--help/ {
         s/^# //
 	s/^# *$//
 	s/\$progname/'$progname'/
@@ -725,7 +717,7 @@ func_help ()
 # exit_cmd.
 func_missing_arg ()
 {
-    func_error "missing argument for $1"
+    func_error "missing argument for $1."
     exit_cmd=exit
 }
 

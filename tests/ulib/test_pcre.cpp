@@ -114,7 +114,7 @@ static void replace() // Sample of replace() usage
 
    UString n = p.replace(orig, U_STRING_FROM_CONSTANT(" zweiundzwanzig($1) ")); // replace the 1st occurence of [0-9]+ with "zweiundzwanzig"
 
-   U_DUMP("n = %.*S", U_STRING_TO_TRACE(n))
+   U_INTERNAL_DUMP("n = %.*S", U_STRING_TO_TRACE(n))
 
    U_ASSERT(n == U_STRING_FROM_CONSTANT("Hans ist zweiundzwanzig(22) Jahre alt. Er ist 8 Jahre älter als Fred."))
 }
@@ -129,7 +129,7 @@ static void normalize() // another sample to check if normalizing using replace(
 
    UString n = reg.replace(orig, U_STRING_FROM_CONSTANT(" ")); // do the normalizing process
 
-   U_DUMP("n = %.*S", U_STRING_TO_TRACE(n))
+   U_INTERNAL_DUMP("n = %.*S", U_STRING_TO_TRACE(n))
 
    U_ASSERT(n == U_STRING_FROM_CONSTANT("Heute ist ein schoener Tag gell?"))
 }
@@ -172,7 +172,7 @@ static void replace_multi() // Sample of replace() usage with multiple substring
    // remove $2 (":") * re-use $1 ("08") and $3 ("23") in the replace string
    UString n = reg.replace(orig, U_STRING_FROM_CONSTANT("$1 Stunden und $3 Minuten"));
 
-   U_DUMP("n = %.*S", U_STRING_TO_TRACE(n))
+   U_INTERNAL_DUMP("n = %.*S", U_STRING_TO_TRACE(n))
 
    U_ASSERT(n == U_STRING_FROM_CONSTANT("08 Stunden und 23 Minuten"))
 }

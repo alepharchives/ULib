@@ -1,6 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node2" href="$classUServer.html" title="UServer\&lt; UTCPSocket \&gt;" alt="" coords="5,259,163,287"/>
-<area shape="rect" id="node4" href="$classUServer__Base.html" title="UServer_Base" alt="" coords="16,86,115,114"/>
-<area shape="rect" id="node8" href="$classUServer.html" title="Handles incoming connections." alt="" coords="87,166,209,194"/>
-<area shape="rect" id="node6" href="$classUEventFd.html" title="UEventFd" alt="" coords="28,6,103,34"/>
-</map>

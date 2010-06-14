@@ -157,26 +157,7 @@ public:
    The destructor will automatically invoked if the object is no more used. It frees all the memory allocated by pcre.
    */
 
-   ~UPCRE()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UPCRE)
-
-      /* avoid deleting of uninitialized pointers */
-
-      if (p_pcre)       pcre_free(p_pcre);
-      if (p_pcre_extra) pcre_free(p_pcre_extra);
-
-      if (sub_vec) U_FREE_N(sub_vec, sub_len, int);
-
-      if (stringlist)
-         {
-         pcre_free_substring_list(stringlist);
-
-         U_INTERNAL_ASSERT_POINTER(resultset)
-
-         delete resultset;
-         }
-      }
+   ~UPCRE();
 
    /**
    reset the object and re-intialize it
@@ -298,15 +279,7 @@ public:
    Get the first substring that matched the expression in the "regex" object
    */
 
-   UString getMatch(int pos)
-      {
-      U_TRACE(0, "UPCRE::getMatch(%d)", pos)
-
-      U_INTERNAL_ASSERT_POINTER(resultset)
-      U_INTERNAL_ASSERT_RANGE(0,pos,num_matches)
-
-      return resultset->at(pos);
-      }
+   UString getMatch(int pos);
 
    /**
    Get the length of a substring at a known position

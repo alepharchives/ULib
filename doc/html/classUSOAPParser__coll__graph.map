@@ -1,9 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node2" href="$classUXMLParser.html" title="UXMLParser is a parser XML based on Expat (Expat is a stream&#45;oriented parser)." alt="" coords="5,414,99,442"/>
-<area shape="rect" id="node4" href="$classURPCParser.html" title="URPCParser is a parser RPC." alt="" coords="123,414,211,442"/>
-<area shape="rect" id="node6" href="$classURPCEnvelope.html" title="URPCEnvelope" alt="" coords="103,241,209,269"/>
-<area shape="rect" id="node8" href="$classUString.html" title="UString" alt="" coords="216,99,280,127"/>
-<area shape="rect" id="node16" href="$classUXMLElement.html" title="UXMLElement" alt="" coords="363,327,467,355"/>
-<area shape="rect" id="node11" href="$classUStringRep.html" title="UStringRep" alt="" coords="205,6,291,34"/>
-<area shape="rect" id="node14" href="$classUVector_3_01UString_01_4.html" title="UVector\&lt; UString \&gt;" alt="" coords="43,99,173,127"/>
-</map>
