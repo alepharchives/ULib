@@ -239,6 +239,71 @@ bool USocketExt::write(USocket* s, const char* ptr, uint32_t count, int timeoutM
    U_RETURN(true);
 }
 
+bool USocketExt::write(USocket* s, const UString& header, const UString& body, int timeoutMS)
+{
+   U_TRACE(0, "USocketExt::write(%p,%.*S,%.*S,%d)", s, U_STRING_TO_TRACE(header), U_STRING_TO_TRACE(body), timeoutMS)
+
+   U_INTERNAL_ASSERT(s->isOpen())
+
+   int sz1 = header.size(),
+       sz2 =   body.size();
+
+   ssize_t value, count = sz1 + sz2;
+
+   struct iovec iov[2] = { { (caddr_t)header.data(), sz1 },
+                           { (caddr_t)  body.data(), sz2 } };
+
+   while (true)
+      {
+      U_INTERNAL_DUMP("count = %u", count)
+
+      value = s->writev(iov, 2);
+
+      if (s->checkIO(value, count) == false)
+         {
+         if (timeoutMS != -1 &&
+             s->isTimeout()  &&
+             UNotifier::waitForWrite(s->getFd(), timeoutMS) == 1)
+            {
+            s->iState = USocket::CONNECT;
+
+            continue;
+            }
+
+         U_RETURN(false);
+         }
+
+      if (value == count) break;
+
+      if (sz1)
+         {
+         if (sz1 >= value)
+            {
+            sz1             -= value;
+            iov[0].iov_base  = (char*)iov[0].iov_base + value;
+
+            value = 0;
+            }
+         else
+            {
+            value -= sz1;
+                     sz1 = 0;
+            }
+
+         iov[0].iov_len = sz1;
+         }
+
+      iov[1].iov_len  -= value;
+      iov[1].iov_base  = (char*)iov[1].iov_base + value;
+
+      count = sz1 + iov[1].iov_len;
+
+      U_INTERNAL_ASSERT_MAJOR(count,0)
+      }
+
+   U_RETURN(true);
+}
+
 // Send a command to a server and wait for a response (single line)
 
 int USocketExt::vsyncCommand(USocket* s, char* buffer, uint32_t buffer_size, const char* format, va_list argp)
@@ -281,7 +346,7 @@ int USocketExt::vsyncCommandML(USocket* s, char* buffer, uint32_t buffer_size, c
 
 int USocketExt::vsyncCommandToken(USocket* s, UString& buffer, const char* format, va_list argp)
 {
-   U_TRACE(0, "USocketExt::vsyncCommandToken(%p,%.*S,%S)", s, U_STRING_TO_TRACE(buffer), format)
+   U_TRACE(1, "USocketExt::vsyncCommandToken(%p,%.*S,%S)", s, U_STRING_TO_TRACE(buffer), format)
 
    U_INTERNAL_ASSERT(s->isOpen())
    U_ASSERT(buffer.empty() == true)

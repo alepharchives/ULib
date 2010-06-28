@@ -18,7 +18,7 @@ if [ "$REQUEST_METHOD" = "GET" ]; then
 
 elif [ "$REQUEST_METHOD" = "POST" ]; then
 
-	if [ $# -eq 25 ]; then
+	if [ $# -eq 31 ]; then
 
 		visualizza_contratto "$@"
 

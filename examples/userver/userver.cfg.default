@@ -8,7 +8,7 @@
 # IP_ADDRESS    public ip address of host for the interface connected to the Internet (autodetected if not specified)
 # ALLOWED_IP    client address IP-based access control (IPADDR[/MASK])
 #
-# USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (NODELAY/CORK, DEFER_ACCEPT, QUICKACK)
+# USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (NODELAY, DEFER_ACCEPT, QUICKACK)
 #
 # PID_FILE      write pid on file indicated
 # WELCOME_MSG   message of welcome to send initially to client
@@ -103,6 +103,8 @@ userver {
 # ------------------------------------------------------------------------------------------------------------------------------------------
 # ALIAS                      vector of URI redirection (request -> alias)
 #
+# CACHE_FILE_MASK            mask (DOS regexp) of pathfile that be cached in memory
+#
 # VIRTUAL_HOST               flag to activate practice of maintaining more than one server on one machine,
 #                            as differentiated by their apparent hostname 
 # DIGEST_AUTHENTICATION      flag authentication method (yes = digest, no = basic)
@@ -122,6 +124,8 @@ mod_http {
 #  /admin  /RA/admin/cgi-bin/card-generation.sh
    ]
 
+# CACHE_FILE_MASK            favicon.ico|css/*.css|js/*.js/icons/*.gif
+#
 # VIRTUAL_HOST          yes
 # DIGEST_AUTHENTICATION yes
 #

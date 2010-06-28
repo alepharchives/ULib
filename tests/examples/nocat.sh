@@ -4,7 +4,8 @@
 
 start_msg nocat
 
-DOC_ROOT=/srv/wifi-portal/www
+#DOC_ROOT=/srv/wifi-portal-siena/www
+#DOC_ROOT=/srv/wifi-portal-firenze/www
 
 rm -f nocat.log uclient.log /tmp/firewall.err \
 		out/uclient.out err/uclient.err out/userver_tcp.out err/userver_tcp.err \

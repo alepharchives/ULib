@@ -790,7 +790,8 @@ bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, 
 
 bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int ignorecase)
 {
-   const char* p_or;
+   const char* restrict p_or;
+   const char* restrict end = mask + n2;
 
    U_INTERNAL_TRACE("u_dosmatch_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, ignorecase)
 
@@ -805,11 +806,10 @@ bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restric
 
       if (p_or == 0) return u_dosmatch(s, n1, mask, n2, ignorecase);
 
-      n2 = p_or - mask;
-
-      if (u_dosmatch(s, n1, mask, n2, ignorecase)) return true;
+      if (u_dosmatch(s, n1, mask, (p_or - mask), ignorecase)) return true;
 
       mask = p_or + 1;
+      n2   = end - mask;
       }
 }
 

@@ -33,6 +33,22 @@ public:
    static UString pregReplace(const UString& pattern, const UString& replacement, const UString& subject);
 #endif
 
+   static bool isDelimited(const UString& s, const char* delimiter = "()")
+      {
+      U_TRACE(0, "UStringExt::isDelimited(%.*S,%S)", U_STRING_TO_TRACE(s), delimiter)
+
+      U_INTERNAL_ASSERT_EQUALS(u_strlen(delimiter), 2)
+
+      if (s.first_char() != delimiter[0] ||
+          s.last_char()  != delimiter[1] ||
+          u_strpend(U_STRING_TO_PARAM(s), delimiter, 2, 0) != s.c_pointer(s.size()-1))
+         {
+         U_RETURN(false);
+         }
+
+      U_RETURN(true);
+      }
+
    // LZO method
 
    static UString   compress(const UString& s);
@@ -260,10 +276,7 @@ public:
 
       buildTokenInt(token, argc, buffer);
 
-      for (uint32_t i = 0; i < argc; ++i)
-         {
-         buildTokenString("ARGV", vec[i], buffer);
-         }
+      for (uint32_t i = 0; i < argc; ++i) buildTokenString("ARGV", vec[i], buffer);
       }
 };
 

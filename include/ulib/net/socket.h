@@ -370,9 +370,9 @@ public:
       {
       U_TRACE(1, "USocket::getBufferRCV()")
 
-      uint32_t size, tmp = sizeof(uint32_t);
+      uint32_t size = U_NOT_FOUND, tmp = sizeof(uint32_t);
 
-      getSockOpt(SOL_SOCKET, SO_RCVBUF, (void*)&size, tmp);
+      (void) getSockOpt(SOL_SOCKET, SO_RCVBUF, (void*)&size, tmp);
 
       U_RETURN(size);
       }
@@ -381,9 +381,9 @@ public:
       {
       U_TRACE(1, "USocket::getBufferSND()")
 
-      uint32_t size, tmp = sizeof(uint32_t);
+      uint32_t size = U_NOT_FOUND, tmp = sizeof(uint32_t);
 
-      getSockOpt(SOL_SOCKET, SO_SNDBUF, (void*)&size, tmp);
+      (void) getSockOpt(SOL_SOCKET, SO_SNDBUF, (void*)&size, tmp);
 
       U_RETURN(size);
       }
@@ -665,6 +665,10 @@ public:
    */
 
    virtual int send(const void* pPayload, int iPayloadLength);
+
+   // write data into multiple buffers
+
+   virtual ssize_t writev(const struct iovec* iov, int iovcnt);
    // -----------------------------------------------------------------------------------------------------------
 
    // DEBUG

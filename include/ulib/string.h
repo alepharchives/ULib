@@ -158,6 +158,13 @@ public:
                                         //        0 -> const
       }
 
+   bool mmap() const
+      {
+      U_TRACE(0, "UStringRep::mmap()")
+
+      U_RETURN(_capacity == U_NOT_FOUND); 
+      }
+
    uint32_t space() const
       {
       U_TRACE(0, "UStringRep::space()")
@@ -1079,6 +1086,7 @@ public:
    // -----------------------------------------------------------------------------------------------------------------------
 
    bool isNull() const                       { return (rep == UStringRep::string_rep_null); }
+   bool isMmap() const                       { return rep->mmap(); }
    bool isNullTerminated() const             { return (rep->str[rep->_length] == '\0'); }
    bool isText(uint32_t pos = 0) const       { return rep->isText(pos); }
    bool isUTF8(uint32_t pos = 0) const       { return rep->isUTF8(pos); }

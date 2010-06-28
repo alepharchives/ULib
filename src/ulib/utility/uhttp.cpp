@@ -23,35 +23,38 @@
 #include <ulib/net/server/server.h>
 #include <ulib/utility/socket_ext.h>
 #include <ulib/utility/string_ext.h>
+#include <ulib/container/hash_map.h>
 
 #ifdef HAVE_MAGIC
 #  include <ulib/magic/magic.h>
 #endif
 
-char                 UHTTP::cgi_dir[U_PATH_MAX];
-bool                 UHTTP::virtual_host;
-UFile*               UHTTP::file;
-UString*             UHTTP::alias;
-UString*             UHTTP::tmpdir;
-UString*             UHTTP::qcontent;
-UString*             UHTTP::request_uri;
-UString*             UHTTP::penvironment;
-uhttpheader          UHTTP::http_info;
-const char*          UHTTP::ptrH;
-const char*          UHTTP::ptrC;
-const char*          UHTTP::ptrT;
-const char*          UHTTP::ptrL;
-UMimeMultipart*      UHTTP::formMulti;
-UVector<UString>*    UHTTP::form_name_value;
-UVector<UIPAllow*>*  UHTTP::vallow_IP;
+char                              UHTTP::cgi_dir[U_PATH_MAX];
+bool                              UHTTP::virtual_host;
+UFile*                            UHTTP::file;
+UString*                          UHTTP::alias;
+UString*                          UHTTP::tmpdir;
+UString*                          UHTTP::qcontent;
+UString*                          UHTTP::request_uri;
+UString*                          UHTTP::penvironment;
+UString*                          UHTTP::cache_file_mask;
+uhttpheader                       UHTTP::http_info;
+const char*                       UHTTP::ptrH;
+const char*                       UHTTP::ptrC;
+const char*                       UHTTP::ptrT;
+const char*                       UHTTP::ptrL;
+UMimeMultipart*                   UHTTP::formMulti;
+UVector<UString>*                 UHTTP::form_name_value;
+UVector<UIPAllow*>*               UHTTP::vallow_IP;
+UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
 
-const UString*       UHTTP::str_frm_response;
-const UString*       UHTTP::str_frm_forbidden;
-const UString*       UHTTP::str_frm_not_found;
-const UString*       UHTTP::str_frm_moved_temp;
-const UString*       UHTTP::str_frm_bad_request;
-const UString*       UHTTP::str_frm_internal_error;
-const UString*       UHTTP::str_frm_service_unavailable;
+const UString* UHTTP::str_frm_response;
+const UString* UHTTP::str_frm_forbidden;
+const UString* UHTTP::str_frm_not_found;
+const UString* UHTTP::str_frm_moved_temp;
+const UString* UHTTP::str_frm_bad_request;
+const UString* UHTTP::str_frm_internal_error;
+const UString* UHTTP::str_frm_service_unavailable;
 
 void UHTTP::str_allocate()
 {
@@ -1066,11 +1069,12 @@ UString UHTTP::getHTTPCookie(bool ulib_only)
          U_RETURN_STRING(data);
          }
 
-      if (ulib_only) U_RETURN_STRING(UString::getStringNull());
+      if (ulib_only == false)
+         {
+         UString result(cookie_ptr, cookie_len);
 
-      UString result(cookie_ptr, cookie_len);
-
-      U_RETURN_STRING(result);
+         U_RETURN_STRING(result);
+         }
       }
 
    U_RETURN_STRING(UString::getStringNull());
@@ -1434,25 +1438,39 @@ U_NO_EXPORT UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, UString& 
 
    U_INTERNAL_ASSERT_MAJOR(nResponseCode,0)
 
-   if ((http_info.nResponseCode = nResponseCode) == HTTP_NOT_IMPLEMENTED)
+   // NB: All 1xx (informational), 204 (no content), and 304 (not modified) responses MUST not include a body...
+
+#ifdef DEBUG
+   if ((nResponseCode >= 100  &&
+        nResponseCode <  200) ||
+        nResponseCode == 204  ||
+        nResponseCode == 304)
       {
       U_ASSERT(content.empty())
-
-      (void) content.assign(U_CONSTANT_TO_PARAM("Allow: GET, HEAD, POST\r\nContent-Length: 0\r\n\r\n"));
       }
+#endif
 
-   // check for empty content....
+   uint32_t sz;
+   const char* ptr;
 
-   uint32_t sz     = content.size();
-   const char* ptr = content.data();
-
-   if (sz == 0)
+   if ((http_info.nResponseCode = nResponseCode) == HTTP_NOT_IMPLEMENTED)
       {
-      ptr =                 "Content-Length: 0\r\n\r\n";
-      sz  = U_CONSTANT_SIZE("Content-Length: 0\r\n\r\n");
+      ptr =                 "Allow: GET, HEAD, POST\r\nContent-Length: 0\r\n\r\n";
+      sz  = U_CONSTANT_SIZE("Allow: GET, HEAD, POST\r\nContent-Length: 0\r\n\r\n");
+      }
+   else
+      {
+      // ...all other responses must include an entity body or a Content-Length header field defined with a value of zero (0)
+
+      if ((sz = content.size())) ptr = content.data();
+      else
+         {
+         ptr =                 "Content-Length: 0\r\n\r\n";
+         sz  = U_CONSTANT_SIZE("Content-Length: 0\r\n\r\n");
+         }
       }
 
-   UString tmp(300U + content.size()), connection = getHTTPHeaderForResponse();
+   UString tmp(300U + sz), connection = getHTTPHeaderForResponse();
 
    tmp.snprintf(str_frm_response->data(),
                 http_info.version + '0',
@@ -1465,9 +1483,9 @@ U_NO_EXPORT UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, UString& 
    U_RETURN_STRING(tmp);
 }
 
-UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, const char* content_type, const UString& body)
+UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, const char* content_type, const UString* body)
 {
-   U_TRACE(0, "UHTTP::getHTTPHeaderForResponse(%d,%S,%.*S)", nResponseCode, content_type, U_STRING_TO_TRACE(body))
+   U_TRACE(0, "UHTTP::getHTTPHeaderForResponse(%d,%S,%p)", nResponseCode, content_type, body)
 
    U_INTERNAL_ASSERT_MAJOR(nResponseCode,0)
 
@@ -1475,19 +1493,14 @@ UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, const char* content_t
 
    if (content_type)
       {
-      if (body.empty() == false)
-         {
-         tmp.snprintf("Content-Length: %u\r\n", body.size());
-         }
-
-      tmp.snprintf_add("Content-Type: %s\r\n"
-                       "\r\n",
-                       content_type);
+      if (body) tmp.snprintf(    "Content-Length: %u\r\n", body->size());
+                tmp.snprintf_add("Content-Type: %s\r\n"
+                                 "\r\n", content_type);
       }
 
    tmp = getHTTPHeaderForResponse(nResponseCode, tmp);
 
-   if (content_type) (void) tmp.append(body);
+   if (body) (void) tmp.append(*body);
 
    U_INTERNAL_DUMP("tmp(%u) = %.*S", tmp.size(), U_STRING_TO_TRACE(tmp));
 
@@ -1525,6 +1538,8 @@ void UHTTP::setHTTPForbidden()
 
    UClientImage_Base::wbuffer->setBuffer(300U + str_frm_forbidden->size() + http_info.uri_len);
    UClientImage_Base::wbuffer->snprintf(str_frm_forbidden->data(), http_info.version + '0', 254 + http_info.uri_len, U_HTTP_URI_TO_TRACE);
+
+   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 }
 
 void UHTTP::setHTTPNotFound()
@@ -1535,6 +1550,8 @@ void UHTTP::setHTTPNotFound()
 
    UClientImage_Base::wbuffer->setBuffer(300U + str_frm_not_found->size() + http_info.uri_len);
    UClientImage_Base::wbuffer->snprintf(str_frm_not_found->data(), http_info.version + '0', 250 + http_info.uri_len, U_HTTP_URI_TO_TRACE);
+
+   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 }
 
 void UHTTP::setHTTPUnAuthorized(bool digest)
@@ -1557,6 +1574,8 @@ void UHTTP::setHTTPUnAuthorized(bool digest)
    (void) buffer.append(U_CONSTANT_TO_PARAM(" realm=\"" U_HTTP_REALM "\"\r\n\r\n"));
 
    *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_UNAUTHORIZED, buffer);
+
+   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 #endif
 }
 
@@ -1566,7 +1585,9 @@ void UHTTP::setHTTPBadRequest()
 
    http_info.is_connection_close = U_YES;
 
-   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_BAD_REQUEST, U_CTYPE_HTML, *str_frm_bad_request);
+   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_BAD_REQUEST, U_CTYPE_HTML, str_frm_bad_request);
+
+   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 }
 
 void UHTTP::setHTTPInternalError()
@@ -1575,7 +1596,9 @@ void UHTTP::setHTTPInternalError()
 
    http_info.is_connection_close = U_YES;
 
-   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_INTERNAL_ERROR, U_CTYPE_HTML, *str_frm_internal_error);
+   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_INTERNAL_ERROR, U_CTYPE_HTML, str_frm_internal_error);
+
+   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 }
 
 void UHTTP::setHTTPServiceUnavailable()
@@ -1584,7 +1607,9 @@ void UHTTP::setHTTPServiceUnavailable()
 
    http_info.is_connection_close = U_YES;
 
-   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_UNAVAILABLE, U_CTYPE_HTML, *str_frm_service_unavailable);
+   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_UNAVAILABLE, U_CTYPE_HTML, str_frm_service_unavailable);
+
+   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 }
 
 void UHTTP::setHTTPCgiResponse(int nResponseCode, bool header_content_length, bool header_content_type, bool content_encoding)
@@ -1632,7 +1657,8 @@ void UHTTP::setHTTPCgiResponse(int nResponseCode, bool header_content_length, bo
          }
       }
 
-   (void) UClientImage_Base::wbuffer->insert(0, getHTTPHeaderForResponse(nResponseCode, tmp));
+   *UClientImage_Base::body    = *UClientImage_Base::wbuffer;
+   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(nResponseCode, tmp);
 }
 
 // --------------------------------------------------------------------------------------------------------------------------------------
@@ -1895,7 +1921,125 @@ bool UHTTP::processHTTPAuthorization(bool digest)
    U_RETURN(result);
 }
 
-bool UHTTP::checkPath(UString& pathname)
+void UHTTP::getFileMimeType(const char* suffix, const char* content_type, UString& ext, off_t size)
+{
+   U_TRACE(0, "UHTTP::getFileMimeType(%S,%S,%.*S,%I)", suffix, content_type, U_STRING_TO_TRACE(ext), size)
+
+   U_INTERNAL_ASSERT_POINTER(file)
+
+   if (suffix == 0) goto end;
+
+   U_INTERNAL_DUMP("suffix = %.*S", 4, suffix)
+
+   U_INTERNAL_ASSERT_EQUALS(suffix[0], '.')
+
+   content_type = UFile::getMimeType(++suffix);
+
+   if (content_type == 0)
+      {
+#  ifdef HAVE_MAGIC
+      content_type = file->getMimeType();
+#  endif
+
+      goto end;
+      }
+
+   if (UFile::mime_index == U_css)
+      {
+      U_INTERNAL_ASSERT(U_STRNEQ(content_type, "text/css"))
+      U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".css")))
+
+      (void) ext.append("Content-Style-Type: text/css\r\n");
+
+      if (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".compressed.css")))
+         {
+         (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
+         }
+      }
+   else if (UFile::mime_index == U_js)
+      {
+      U_INTERNAL_ASSERT(U_STRNEQ(content_type, "text/javascript"))
+      U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".js")))
+
+      (void) ext.append("Content-Script-Type: text/javascript\r\n");
+
+      if (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".compressed.js")))
+         {
+         (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
+         }
+      }
+
+end:
+   if (size ||
+       content_type)
+      {
+      if (content_type == 0) content_type = "application/octet-stream";
+
+      ext.snprintf_add("Content-Type: %s\r\n", content_type);
+      }
+
+   ext.snprintf_add("Content-Length: %I\r\n"
+                    "Last-Modified: %#7D GMT\r\n"
+                    "\r\n",
+                    size,
+                    file->st_mtime);
+}
+
+void UHTTP::checkFileForCache()
+{
+   U_TRACE(0, "UHTTP::checkFileForCache()")
+
+   U_INTERNAL_DUMP("u_buffer(%u) = %.*S", u_buffer_len, u_buffer_len, u_buffer)
+
+   U_INTERNAL_ASSERT_EQUALS(u_buffer[0],'.')
+   U_INTERNAL_ASSERT(IS_DIR_SEPARATOR(u_buffer[1]))
+   U_INTERNAL_ASSERT_EQUALS(u_ftw_ctx.is_directory,false)
+
+   if (u_dosmatch_with_OR(u_buffer+2, u_buffer_len-2, U_STRING_TO_PARAM(*cache_file_mask), 0))
+      {
+      UString ext(300U), pathname((void*)(u_buffer+2), u_buffer_len-2);
+
+      file->setPath(pathname);
+
+      UFileCacheData* file_data = U_NEW(UFileCacheData);
+
+      file_data->array.push_back(file->getContent(true, true)); // NB: we need to do fstat() for Last-Modified: ...
+
+      file_data->size  = file->getSize();
+      file_data->mtime = file->st_mtime;
+
+      getFileMimeType(file->getSuffix(), 0, ext, file_data->size);
+
+      file_data->array.push_back(ext);
+
+      cache_file->insert(pathname, file_data);
+
+      U_SRV_LOG_VAR("file cached: %S - %I bytes", pathname.data(), file_data->size);
+      }
+}
+
+void UHTTP::searchFileForCache()
+{
+   U_TRACE(0, "UHTTP::searchFileForCache()")
+
+   U_INTERNAL_ASSERT_POINTER(file)
+   U_INTERNAL_ASSERT_EQUALS(cache_file,0)
+
+   cache_file = U_NEW(UHashMap<UFileCacheData*>);
+
+   cache_file->allocate();
+
+   (void) UServices::setFtw(0);
+
+   u_ftw_ctx.call              = UHTTP::checkFileForCache;
+   u_ftw_ctx.call_if_directory = false;
+
+   u_ftw();
+
+   u_buffer_len = 0;
+}
+
+int UHTTP::checkPath(UString& pathname)
 {
    U_TRACE(0, "UHTTP::checkPath(%.*S)", U_STRING_TO_TRACE(pathname))
 
@@ -1905,25 +2049,57 @@ bool UHTTP::checkPath(UString& pathname)
 
    if (UServer_Base::isFileInsideDocumentRoot(pathname) == false) // like chroot()...
       {
-      // set forbidden error response...
+      setHTTPForbidden(); // set forbidden error response...
 
-      setHTTPForbidden();
-
-      U_RETURN(false);
+      U_RETURN(0);
       }
 
    file->setPath(pathname);
 
-   if (file->stat() == false)
+   if (cache_file &&
+       isHttpPOST() == false)
       {
-      // set not found error response...
+      UString key(U_FILE_TO_PARAM(*file));
 
-      setHTTPNotFound();
+      UFileCacheData* file_data = (*cache_file)[key];
 
-      U_RETURN(false);
+      if (file_data)
+         {
+         if (checkHTTPGetRequestIfModified(file_data->mtime))
+            {
+            int nResponseCode = HTTP_OK;
+
+            UString ext = file_data->array[1];
+
+            // The Range: header is used with a GET request.
+            // For example assume that will return only a portion (let's say the first 32 bytes) of the requested resource...
+            //
+            // Range: bytes=0-31
+
+            off_t start = 0, size = file_data->size;
+
+            int range = checkHTTPGetRequestForRange(start, size, ext, UString::getStringNull());
+
+            if (range == 0) goto skip; 
+            if (range == 1) nResponseCode = HTTP_PARTIAL;
+
+                                       *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(nResponseCode, ext);
+            if (isHttpHEAD() == false) *UClientImage_Base::body    = file_data->array[0].substr(start, size);
+            }
+
+skip:
+         U_RETURN(2); // skip
+         }
       }
 
-   U_RETURN(true);
+   if (file->stat() == false)
+      {
+      setHTTPNotFound(); // set not found error response...
+
+      U_RETURN(0);
+      }
+
+   U_RETURN(1);
 }
 
 bool UHTTP::checkUriProtected()
@@ -1976,19 +2152,26 @@ bool UHTTP::checkHTTPRequest()
 
    pathname.snprintf("%w%.*s", U_HTTP_URI_TO_TRACE);
 
-   if (checkPath(pathname)) U_RETURN(true);
+   int result = checkPath(pathname);
 
-   // can be URL encoded...
+   if (result == 0)
+      {
+      // uri request can be URL encoded...
 
-   UString tmp(U_CAPACITY);
+      UString tmp(U_CAPACITY);
 
-   tmp.snprintf("%w", 0);
+      tmp.snprintf("%w", 0);
 
-   (void) u_url_decode(U_HTTP_URI_TO_PARAM, (unsigned char*)tmp.end(), true);
+      uint32_t sz = tmp.size();
 
-   if (tmp != pathname && checkPath(tmp)) U_RETURN(true);
+      sz += u_url_decode(U_HTTP_URI_TO_PARAM, (unsigned char*)tmp.end(), true);
 
-   U_RETURN(false);
+      tmp.size_adjust(sz);
+
+      if (tmp != pathname) result = checkPath(tmp);
+      }
+
+   U_RETURN(result == 1);
 }
 
 // manage CGI
@@ -2431,10 +2614,9 @@ rescan:
 
    if (u_line_terminator_len == 1)
       {
-      *UClientImage_Base::body = UStringExt::dos2unix(UClientImage_Base::wbuffer->substr(0U, endHeader), true) +
-                                                      UClientImage_Base::wbuffer->substr(    endHeader);
-
-      *UClientImage_Base::wbuffer = *UClientImage_Base::body; 
+      UString tmp                 = UStringExt::dos2unix(UClientImage_Base::wbuffer->substr(0U, endHeader), true) +
+                                                         UClientImage_Base::wbuffer->substr(    endHeader);
+      *UClientImage_Base::wbuffer = tmp;
 
       sz  = UClientImage_Base::wbuffer->size();
       ptr = UClientImage_Base::wbuffer->data();
@@ -2493,9 +2675,9 @@ rescan:
                   UString header  = UClientImage_Base::wbuffer->substr(0U, endHeader),
                           content = getHTTPRedirectResponse(header, location, ptr - location);
 
-   #           ifdef DEBUG
+#              ifdef DEBUG
                   header.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-   #           endif
+#              endif
 
                   *UClientImage_Base::wbuffer = content;
 
@@ -2872,19 +3054,100 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
    U_RETURN(false);
 }
 
-#define U_NO_ETAG // for me it's enough Last-Modified: ...
-
-bool UHTTP::processHTTPGetRequest()
+int UHTTP::checkHTTPGetRequestForRange(off_t& start, off_t& size, UString& ext, const UString& etag)
 {
-   U_TRACE(0, "UHTTP::processHTTPGetRequest()")
+   U_TRACE(0, "UHTTP::checkHTTPGetRequestForRange(%I,%I,%.*S,%.*S)", start, size, U_STRING_TO_TRACE(ext), U_STRING_TO_TRACE(etag))
 
-   U_ASSERT(UClientImage_Base::body->empty())
+   // The Range: header is used with a GET request.
+   // For example assume that will return only a portion (let's say the first 32 bytes) of the requested resource...
+   //
+   // Range: bytes=0-31
 
-   UString ext(300U), etag;
-   const char* content_type;
-   int nResponseCode = HTTP_OK;
-   off_t start = 0, size = 0, end = 0;
-   bool bdir = false, range = false, result = true, isSSL = false;
+   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_range);
+
+   if (ptr &&
+       U_STRNEQ(ptr, "bytes="))
+      {
+      ptr += U_CONSTANT_SIZE("bytes=");
+
+      /* Only support %d- and %d-%d, not %d-%d,%d-%d or -%d
+       *
+       * NB: we have problem with use of sscanf()... (format -> "bytes=%ld-%ld")
+       */
+
+      start = (u_isdigit(*ptr) ? u_strtooff(ptr, &ptr, 0) : 0);
+
+      U_INTERNAL_DUMP("ptr = %.*S", 10, ptr)
+
+      off_t end = (*ptr == '-' && u_isdigit(*++ptr) ? u_strtooff(ptr, &ptr, 0) : 0);
+
+      U_INTERNAL_DUMP("ptr = %.*S", 10, ptr)
+
+      bool range = (*ptr != ',' && start < end && start < size);
+
+      U_INTERNAL_DUMP("start = %I end = %I range = %b", start, end, range)
+
+      if (range == false) U_RETURN(0);
+
+      // The If-Range: header allows a client to "short-circuit" the request (conditional GET). Informally, its meaning is
+      // `if the entity is unchanged, send me the part(s) that I am missing; otherwise, send me the entire new entity'.
+      //
+      // If-Range: ( entity-tag | HTTP-date )
+      //
+      // If the client has no entity tag for an entity, but does have a Last-Modified date, it MAY use that date in an If-Range header.
+      // (The server can distinguish between a valid HTTP-date and any form of entity-tag by examining no more than two characters.)
+      // The If-Range header SHOULD only be used together with a Range header, and MUST be ignored if the request does not include a
+      // Range header, or if the server does not support the sub-range operation. 
+
+      ptr = getHTTPHeaderValuePtr(*USocket::str_if_range);
+
+      if (ptr)
+         {
+         if (*ptr == '"') range = (etag.equal(ptr, etag.size())); // entity-tag
+         else                                                     // HTTP-date
+            {
+            time_t since = UDate::getSecondFromTime(ptr, true);
+
+            U_INTERNAL_DUMP("since          = %u", since)
+            U_INTERNAL_DUMP("file->st_mtime = %u", file->st_mtime)
+
+            range = (file->st_mtime <= since);
+            }
+         }
+
+      if (range == false)
+         {
+         http_info.is_connection_close = U_YES;
+
+         *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_REQ_RANGE_NOT_OK, 0, 0);
+
+         U_RETURN(0);
+         }
+
+      if (end >= size) end = size - 1;
+
+      U_INTERNAL_ASSERT_RANGE(0,start,end-1)
+      U_INTERNAL_ASSERT_RANGE(start+1,end,size-1)
+
+      UString tmp(100U);
+
+      tmp.snprintf("Content-Range: bytes %I-%I/%I\r\n", start, end, size);
+
+      ext  = tmp + ext;
+      size = end - start + 1;
+
+      U_RETURN(1);
+      }
+
+   U_RETURN(2);
+}
+
+#define U_NO_Etag                // for me it's enough Last-Modified: ...
+#define U_NO_If_Unmodified_Since // I think it's not very much used...
+
+bool UHTTP::checkHTTPGetRequestIfModified(time_t mtime)
+{
+   U_TRACE(0, "UHTTP::checkHTTPGetRequestIfModified(%u)", mtime)
 
    /*
    The If-Modified-Since: header is used with a GET request. If the requested resource has been modified since the given date,
@@ -2902,29 +3165,28 @@ bool UHTTP::processHTTPGetRequest()
       {
       time_t since = UDate::getSecondFromTime(ptr, true);
 
-      U_INTERNAL_DUMP("since          = %u", since)
-      U_INTERNAL_DUMP("file->st_mtime = %u", file->st_mtime)
+      U_INTERNAL_DUMP("since = %u", since)
+      U_INTERNAL_DUMP("mtime = %u", mtime)
 
-      if (file->st_mtime <= since)
+      if (mtime <= since)
          {
-         /* All 1xx (informational), 204 (no content), and 304 (not modified) responses must not include a body. All other responses must include an
-          * entity body or a Content-Length header field defined with a value of zero (0)
-          */
+         *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_NOT_MODIFIED, 0, 0);
 
-         *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_NOT_MODIFIED, 0, UString::getStringNull());
-
-         goto send_header;
+         U_RETURN(false);
          }
       }
-   /* I think it's not very much used...
+#ifndef U_NO_If_Unmodified_Since
    else
       {
+      /*
       The If-Unmodified-Since: header is similar, but can be used with any method. If the requested resource has not been modified
       since the given date, ignore the header and return the resource as you normally would. Otherwise, return a "412 Precondition Failed"
       response, like
 
       HTTP/1.1 412 Precondition Failed
+      Date: Fri, 31 Dec 1999 23:59:59 GMT
       [blank line here]
+      */
 
       ptr = getHTTPHeaderValuePtr(*USocket::str_if_unmodified_since);
 
@@ -2932,30 +3194,39 @@ bool UHTTP::processHTTPGetRequest()
          {
          time_t since = UDate::getSecondFromTime(ptr, true);
 
-         U_INTERNAL_DUMP("since          = %u", since)
-         U_INTERNAL_DUMP("file->st_mtime = %u", file->st_mtime)
+         U_INTERNAL_DUMP("since = %u", since)
+         U_INTERNAL_DUMP("mtime = %u", st_mtime)
 
-         if (file->st_mtime > since)
+         if (mtime > since)
             {
             http_info.is_connection_close = U_YES;
 
-            *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_PRECON_FAILED, 0, *UClientImage_Base::body);
+            *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_PRECON_FAILED, 0, 0);
 
-            result = false;
-
-            goto send_header;
+            U_RETURN(false);
             }
          }
       }
-   */
+#endif
 
-#ifndef U_NO_ETAG
-   // If-None-Match: Later, if the browser has to validate a component, it uses the If-None-Match header to pass the ETag back to
+   U_RETURN(true);
+}
+
+void UHTTP::processHTTPGetRequest()
+{
+   U_TRACE(0, "UHTTP::processHTTPGetRequest()")
+
+   U_ASSERT(UClientImage_Base::body->empty())
+
+   // If the browser has to validate a component, it uses the If-None-Match header to pass the ETag back to
    // the origin server. If the ETags match, a 304 status code is returned reducing the response...
 
+   UString etag;
+
+#ifndef U_NO_Etag
    etag = file->etag();
 
-   ptr = getHTTPHeaderValuePtr(*USocket::str_if_none_match);
+   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_if_none_match);
 
    if (ptr)
       {
@@ -2963,273 +3234,162 @@ bool UHTTP::processHTTPGetRequest()
 
       if (etag.equal(ptr, etag.size()))
          {
-         /* All 1xx (informational), 204 (no content), and 304 (not modified) responses must not include a body. All other responses must include an
-          * entity body or a Content-Length header field defined with a value of zero (0)
-          */
+         *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_NOT_MODIFIED, 0, 0);
 
-         *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_NOT_MODIFIED, 0, UString::getStringNull());
-
-         goto send_header;
+         return;
          }
       }
+
+   ext.snprintf("Etag: %.*s\r\n", U_STRING_TO_TRACE(etag));
 #endif
+
+   if (checkHTTPGetRequestIfModified(file->st_mtime) == false) return;
+
+   const char* suffix = 0;
+   UString ext(300U), mmap;
+   bool bdir, isSSL = false;
+   off_t start = 0, size = 0;
+   int nResponseCode = HTTP_OK;
+   const char* content_type = 0;
 
    if (openFile() == false)
       {
-      // set forbidden error response...
+      setHTTPForbidden(); // set forbidden error response...
 
-      setHTTPForbidden();
-
-      result = false;
-
-      goto send_header;
+      goto end;
       }
 
    if (file->dir())
       {
-      bdir = true;
-
       // check if it's OK to do directory listing via authentication (digest|basic)
 
       if (processHTTPAuthorization(UServer_Base::digest_authentication) == false)
          {
          setHTTPUnAuthorized(UServer_Base::digest_authentication);
 
-         result = false;
-
-         goto send_header;
+         return;
          }
 
-      content_type             = U_CTYPE_HTML;
-      *UClientImage_Base::body = getHTMLDirectoryList();
-      size                     = UClientImage_Base::body->size();
+      bdir         = true;
+      content_type = U_CTYPE_HTML;
+
+      if (isHttpHEAD()) size = getHTMLDirectoryList().size();
+      else
+         {
+         *UClientImage_Base::body = getHTMLDirectoryList();
+         http_info.clength        = UClientImage_Base::body->size();
+
+         if (isHTTPAcceptEncodingDeflate())
+            {
+            (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+
+            *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
+            }
+
+         size = UClientImage_Base::body->size();
+         }
       }
    else
       {
-      size         = file->getSize();
-      end          = size - 1;
-      content_type = "application/octet-stream";
+      bdir = false;
 
       // The Range: header is used with a GET request.
       // For example assume that will return only a portion (let's say the first 32 bytes) of the requested resource...
       //
       // Range: bytes=0-31
 
-      ptr = getHTTPHeaderValuePtr(*USocket::str_range);
+      size = file->getSize();
 
-      if (ptr && U_STRNEQ(ptr, "bytes="))
-         {
-         ptr += U_CONSTANT_SIZE("bytes=");
+      int range = checkHTTPGetRequestForRange(start, size, ext, etag);
 
-         /* Only support %d- and %d-%d, not %d-%d,%d-%d or -%d
-          *
-          * NB: we have problem with use of sscanf()... (format -> "bytes=%ld-%ld")
-          */
+      if (range == 0) goto end;
+      if (range == 1) nResponseCode = HTTP_PARTIAL;
 
-         start = (u_isdigit(*ptr) ? u_strtooff(ptr, &ptr, 0) : 0);
-
-         U_INTERNAL_DUMP("ptr = %.*S", 10, ptr)
-
-         end = (*ptr == '-' && u_isdigit(*++ptr) ? u_strtooff(ptr, &ptr, 0) : 0);
-
-         U_INTERNAL_DUMP("ptr = %.*S", 10, ptr)
-
-         range = (*ptr != ',' && start < end && start < size);
-
-         U_INTERNAL_DUMP("start = %I end = %I range = %b", start, end, range)
-
-         if (range == false)
-            {
-            http_info.is_connection_close = U_YES;
-
-            *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_REQ_RANGE_NOT_OK, 0, *UClientImage_Base::body);
-
-            result = false;
-
-            goto send_header;
-            }
-
-         // The If-Range: header allows a client to "short-circuit" the request (conditional GET). Informally, its meaning is
-         // `if the entity is unchanged, send me the part(s) that I am missing; otherwise, send me the entire new entity'.
-         //
-         // If-Range: ( entity-tag | HTTP-date )
-         //
-         // If the client has no entity tag for an entity, but does have a Last-Modified date, it MAY use that date in an If-Range header.
-         // (The server can distinguish between a valid HTTP-date and any form of entity-tag by examining no more than two characters.)
-         // The If-Range header SHOULD only be used together with a Range header, and MUST be ignored if the request does not include a
-         // Range header, or if the server does not support the sub-range operation. 
-
-         ptr = getHTTPHeaderValuePtr(*USocket::str_if_range);
-
-         if (ptr)
-            {
-#        ifndef U_NO_ETAG
-            if (*ptr == '"') range = (etag.equal(ptr, etag.size())); // entity-tag
-            else // HTTP-date
-#        endif
-               {
-               time_t since = UDate::getSecondFromTime(ptr, true);
-
-               U_INTERNAL_DUMP("since          = %u", since)
-               U_INTERNAL_DUMP("file->st_mtime = %u", file->st_mtime)
-
-               range = (file->st_mtime <= since);
-               }
-            }
-         }
+      if (size && file->memmap(PROT_READ, UClientImage_Base::body)) suffix = file->getSuffix();
       }
 
-   U_INTERNAL_DUMP("range = %b", range)
+   getFileMimeType(suffix, content_type, ext, size);
 
    // build response...
 
-#ifndef U_NO_ETAG
-   ext.snprintf("Etag: %.*s\r\n", U_STRING_TO_TRACE(etag));
-#endif
-
-   ext.snprintf_add("Last-Modified: %#7D GMT\r\n", file->st_mtime);
-
-   if (bdir)
-      {
-      http_info.clength = size;
-
-      if (isHTTPAcceptEncodingDeflate())
-         {
-         *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
-         size                     = UClientImage_Base::body->size();
-
-         (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
-         }
-
-      goto next;
-      }
-
-   if (range)
-      {
-      if (end >= size) end = size - 1;
-
-      U_INTERNAL_ASSERT_RANGE(0,start,end-1)
-      U_INTERNAL_ASSERT_RANGE(start+1,end,size-1)
-
-      ext.snprintf_add("Content-Range: bytes %I-%I/%I\r\n", start, end, size);
-
-      size          = end - start + 1;
-      nResponseCode = HTTP_PARTIAL;
-      }
-
-   if (size                                                == 0 ||
-       file->memmap(PROT_READ, UClientImage_Base::wbuffer) == false)
-      {
-      goto next;
-      }
-
-   ptr = file->getSuffix();
-
-   if (ptr == 0) goto next;
-
-   U_INTERNAL_DUMP("suffix = %.*S", 4, ptr)
-
-   U_INTERNAL_ASSERT_EQUALS(ptr[0], '.')
-
-   content_type = UFile::getMimeType(++ptr);
-
-   if (content_type == 0)
-      {
-#  ifdef HAVE_MAGIC
-      content_type = file->getMimeType();
-#  else
-      content_type = "application/octet-stream";
-#  endif
-
-      goto next;
-      }
-
-   if (UFile::mime_index == U_css)
-      {
-      U_INTERNAL_ASSERT(U_STRNEQ(content_type, "text/css"))
-      U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".css")))
-
-      (void) ext.append("Content-Style-Type: text/css\r\n");
-
-      if (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".compressed.css")))
-         {
-         (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
-         }
-      }
-   else if (UFile::mime_index == U_js)
-      {
-      U_INTERNAL_ASSERT(U_STRNEQ(content_type, "text/javascript"))
-      U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".js")))
-
-      (void) ext.append("Content-Script-Type: text/javascript\r\n");
-
-      if (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".compressed.js")))
-         {
-         (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
-         }
-      }
-
-next:
-   U_INTERNAL_DUMP("content_type = %S", content_type)
-
-   U_INTERNAL_ASSERT_POINTER(content_type)
-
-   ext.snprintf_add("Content-Type: %s\r\n"
-                    "Content-Length: %u\r\n"
-                    "\r\n",
-                    content_type, size);
+   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(nResponseCode, ext);
 
 #ifdef HAVE_SSL
-   if (UClientImage_Base::socket->isSSL())
-      {
-      isSSL = true;
-
-      if (bdir == false) *UClientImage_Base::body = *UClientImage_Base::wbuffer;
-      }
+   if (UClientImage_Base::socket->isSSL()) isSSL = true;
 #endif
 
-   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(nResponseCode, ext); // NB: this assignment make also the unmmap() of file...
+   // NB: check if we need to send the body with writev()...
 
-   /* On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
-    * ------------------------------------------------------------------------------------------------------
-    * if we set the TCP_CORK option on the socket, our header packet will be padded with the bulk data
-    * and all the data will be transferred automatically in the packets according to size. When finished
-    * with the bulk data transfer, it is advisable to uncork the connection by unsetting the TCP_CORK option
-    * so that any partial frames that are left can go out. This is equally important to corking. To sum it up,
-    * we recommend setting the TCP_CORK option when you're sure that you will be sending multiple data sets
-    * together (such as header and a body of HTTP response), with no delays between them. This can greatly
-    * benefit the performance of WWW, FTP, and file servers, as well as simplifying your life
-    * ------------------------------------------------------------------------------------------------------
-    */
-
-   if (UServer_Base::useTcpOptimization()) UClientImage_Base::socket->setTcpCork(1U);
-
-send_header:
-
-   if (UClientImage_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK &&
-       result                                                           &&
-       size                                                             &&
-       isHttpHEAD() == false)
+   if (bdir        ||
+       isSSL       ||
+       size < 4096 ||
+       isHttpHEAD())
       {
-      // send body...
-
-      if (isSSL || bdir)
+      if (nResponseCode == HTTP_PARTIAL)
          {
-         if (USocketExt::write(UClientImage_Base::socket, UClientImage_Base::body->c_pointer(start), size) == false) result = false;
-
-         UClientImage_Base::body->clear(); // NB: this make also the unmmap() of file...
+         mmap                     = *UClientImage_Base::body;
+         *UClientImage_Base::body =  mmap.substr(start, size);
          }
-      else
-         {
-         if (file->sendfile(UClientImage_Base::socket->getFd(), &start, size) == false) result = false;
-         }
+      }
+   else
+      {
+      // NB: we use sendfile()...
 
-      if (UServer_Base::useTcpOptimization()) UClientImage_Base::socket->setTcpCork(0U);
+      UClientImage_Base::body->clear(); // NB: this make also the unmmap() of file...
+
+      /* On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
+       * ------------------------------------------------------------------------------------------------------
+       * if we set the TCP_CORK option on the socket, our header packet will be padded with the bulk data
+       * and all the data will be transferred automatically in the packets according to size. When finished
+       * with the bulk data transfer, it is advisable to uncork the connection by unsetting the TCP_CORK option
+       * so that any partial frames that are left can go out. This is equally important to corking. To sum it up,
+       * we recommend setting the TCP_CORK option when you're sure that you will be sending multiple data sets
+       * together (such as header and a body of HTTP response), with no delays between them. This can greatly
+       * benefit the performance of WWW, FTP, and file servers, as well as simplifying your life
+       * ------------------------------------------------------------------------------------------------------
+       */
+
+      UClientImage_Base::socket->setTcpCork(1U);
       }
 
+   (void) UClientImage_Base::pClientImage->handlerWrite();
+          UClientImage_Base::write_off = true;
+
+   if (UClientImage_Base::body->empty())
+      {
+      if (size == 0 || isHttpHEAD()) goto end;
+
+      (void) file->sendfile(UClientImage_Base::socket->getFd(), &start, size);
+
+      UClientImage_Base::socket->setTcpCork(0U);
+      }
+#ifdef DEBUG
+   else if (nResponseCode == HTTP_PARTIAL) UClientImage_Base::body->clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+#endif
+
+end:
    if (file->isOpen()) file->close();
-
-   UClientImage_Base::write_off = true;
-
-   U_RETURN(result);
 }
+
+// DEBUG
+
+#ifdef DEBUG
+#  include <ulib/internal/objectIO.h>
+
+const char* UHTTP::UFileCacheData::dump(bool reset) const
+{
+   *UObjectIO::os << "size                    " << (void*)size   << '\n'
+                  << "mtime                   " << (void*)mtime  << '\n'
+                  << "array (UVector<UString> " << (void*)&array << ')';
+
+   if (reset)
+      {
+      UObjectIO::output();
+
+      return UObjectIO::buffer_output;
+      }
+
+   return 0;
+}
+
+#endif

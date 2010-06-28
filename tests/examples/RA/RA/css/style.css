@@ -535,8 +535,8 @@ span.void {
 }
 
 .table_header {
-	 height: 12px;
-	 font-size: 7pt;
+	 height: 10px;
+	 font-size: 6pt;
 	 font-family:"URW Bookman L, Times New Roman";
 	 font-weight:bold;
 	 background: #b3b3b3;
@@ -551,22 +551,29 @@ span.void {
 }
 
 .table_data_content {
-	 height: 14px;
-	 font-size: 8pt;
+	 height: 10px;
+	 font-size: 7pt;
 	 font-family:"URW Bookman L, Times New Roman";
 	 font-weight:bold;
 }
 
+.table_data_content_small {
+	 height: 10px;
+	 font-size: 6pt;
+	 font-family:"URW Bookman L, Times New Roman";
+	 font-style:italic;
+}
+
 .table_data_content_bigger {
 	 height: 14px;
-	 font-size: 9pt;
+	 font-size: 7pt;
 	 font-family:"URW Bookman L, Times New Roman";
 	 font-weight:bold;
 }
 
 .table_data_content_normal {
 	 height: 14px;
-	 font-size: 8pt;
+	 font-size: 6pt;
 	 font-family:"URW Bookman L, Times New Roman";
 }
 

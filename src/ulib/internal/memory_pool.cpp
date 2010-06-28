@@ -42,6 +42,7 @@ uint32_t UMemoryPool::findStackIndex(uint32_t sz)
 
    U_INTERNAL_ASSERT_RANGE(1,sz,U_MAX_SIZE_PREALLOCATE)
 
+   /*
    static const uint32_t stack_type[U_NUM_STACK_TYPE] =
       { U_STACK_TYPE_0,  U_STACK_TYPE_1, U_STACK_TYPE_2,
         U_STACK_TYPE_3,  U_STACK_TYPE_4, U_STACK_TYPE_5,
@@ -67,6 +68,47 @@ uint32_t UMemoryPool::findStackIndex(uint32_t sz)
    U_INTERNAL_ASSERT(sz <= stack_type[low])
 
    U_RETURN(low);
+   */
+
+   if (sz <= U_STACK_TYPE_0) U_RETURN(0);
+   if (sz <= U_STACK_TYPE_1) U_RETURN(1);
+   if (sz <= U_STACK_TYPE_2) U_RETURN(2);
+   if (sz <= U_STACK_TYPE_3) U_RETURN(3);
+   if (sz <= U_STACK_TYPE_4) U_RETURN(4);
+   if (sz <= U_STACK_TYPE_5) U_RETURN(5);
+   if (sz <= U_STACK_TYPE_6) U_RETURN(6);
+   if (sz <= U_STACK_TYPE_7) U_RETURN(7);
+   if (sz <= U_STACK_TYPE_8) U_RETURN(8);
+                             U_RETURN(9);
+   /*
+   static uint32_t last_sz, last_stack_type;
+
+   if (sz != last_sz)
+      {
+      if (sz <= U_STACK_TYPE_0) { last_stack_type = 0; goto end; }
+      if (sz <= U_STACK_TYPE_1) { last_stack_type = 1; goto end; }
+      if (sz <= U_STACK_TYPE_2) { last_stack_type = 2; goto end; }
+      if (sz <= U_STACK_TYPE_3) { last_stack_type = 3; goto end; }
+      if (sz <= U_STACK_TYPE_4) { last_stack_type = 4; goto end; }
+      if (sz <= U_STACK_TYPE_5) { last_stack_type = 5; goto end; }
+      if (sz <= U_STACK_TYPE_6) { last_stack_type = 6; goto end; }
+      if (sz <= U_STACK_TYPE_7) { last_stack_type = 7; goto end; }
+      if (sz <= U_STACK_TYPE_8) { last_stack_type = 8; goto end; }
+                                  last_stack_type = 9;
+      }
+
+#ifdef DEBUG
+   static uint32_t num_call, cache_miss;
+
+                      ++num_call;
+   if (sz != last_sz) ++cache_miss;
+
+   U_INTERNAL_DUMP("num_call = %u cache_miss = %u", num_call, cache_miss)
+#endif
+
+end:
+   U_RETURN(last_stack_type);
+   */
 }
 
 void* UMemoryPool::_malloc_str(size_t sz, uint32_t& capacity)

@@ -110,9 +110,9 @@ static void replace() // Sample of replace() usage
 
    UString orig = U_STRING_FROM_CONSTANT("Hans ist 22 Jahre alt. Er ist 8 Jahre älter als Fred.");
 
-   UPCRE p(U_STRING_FROM_CONSTANT(" ([0-9]+) "), 0); // define a regex for digits (character class)
+   UPCRE p(U_STRING_FROM_CONSTANT("([0-9]+)"), 0); // define a regex for digits (character class)
 
-   UString n = p.replace(orig, U_STRING_FROM_CONSTANT(" zweiundzwanzig($1) ")); // replace the 1st occurence of [0-9]+ with "zweiundzwanzig"
+   UString n = p.replace(orig, U_STRING_FROM_CONSTANT("zweiundzwanzig($1)")); // replace the 1st occurence of [0-9]+ with "zweiundzwanzig"
 
    U_INTERNAL_DUMP("n = %.*S", U_STRING_TO_TRACE(n))
 

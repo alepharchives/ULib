@@ -17,6 +17,11 @@ Host: localhost
 Connection: Keep-Alive
 Range: bytes=32-63
 
+GET /inp/http/data/file1 HTTP/1.1
+Host: localhost
+Connection: Keep-Alive
+Range: bytes=32-63
+
 GET /vuoto.txt HTTP/1.1
 Connection: Keep-Alive
 Host: localhost

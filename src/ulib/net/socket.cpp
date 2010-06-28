@@ -626,6 +626,25 @@ loop:
          }
       else if (req_timeout) (void) pcNewConnection->setTimeoutRCV(req_timeout * 1000);
 
+   /*
+#  ifdef DEBUG
+      uint32_t value = U_NOT_FOUND, tmp = sizeof(uint32_t);
+#     ifdef TCP_CORK
+      (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_CORK, (void*)&value, tmp);
+      U_INTERNAL_DUMP("TCP_CORK = %d", value)
+#     endif
+#     ifdef TCP_QUICKACK
+      (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_QUICKACK, (void*)&value, tmp);
+      U_INTERNAL_DUMP("TCP_QUICKACK = %d", value)
+#     endif
+#     ifdef TCP_NODELAY
+      (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_NODELAY, (void*)&value, tmp);
+      U_INTERNAL_DUMP("TCP_NODELAY = %d", value)
+#     endif
+      U_DUMP("getBufferRCV() = %u getBufferSND() = %u", pcNewConnection->getBufferRCV(), pcNewConnection->getBufferSND())
+#  endif
+   */
+
       U_RETURN(true);
       }
 
@@ -650,6 +669,29 @@ loop:
    if (iBytesWrite == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
 #ifdef DEBUG
    if (iBytesWrite  >  0) U_INTERNAL_DUMP("BytesWrite(%d) = %#.*S", iBytesWrite, iBytesWrite, CAST(pPayload))
+#endif
+
+   U_RETURN(iBytesWrite);
+}
+
+// write data into multiple buffers
+
+ssize_t USocket::writev(const struct iovec* iov, int iovcnt)
+{
+   U_TRACE(1, "USocket::writev(%p,%d)", iov, iovcnt)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+
+   ssize_t iBytesWrite;
+
+loop:
+   iBytesWrite = U_SYSCALL(writev, "%d,%p,%d", iSockDesc, iov, iovcnt);
+
+   if (iBytesWrite == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
+#ifdef DEBUG
+   if (iBytesWrite  >  0) U_INTERNAL_DUMP("BytesWrite(%d) = %.*S", iBytesWrite, iov[0].iov_len, iov[0].iov_base)
 #endif
 
    U_RETURN(iBytesWrite);

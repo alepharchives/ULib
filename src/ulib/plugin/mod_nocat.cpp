@@ -73,7 +73,7 @@ UVector<UIPAddress*>**    UNoCatPlugIn::vaddr;
 UHashMap<UModNoCatPeer*>* UNoCatPlugIn::peers;
 
 #define U_FAVICON            "/favicon.ico"
-#define U_NOCAT_IMAGE        "/nocat/images/auth_logo.gif"
+#define U_NOCAT_IMAGE        "/images/auth_logo.gif"
 
 #define U_NO_MORE_TIME       10
 #define U_NOCAT_MAX_TIMEOUT (30 * U_ONE_DAY_IN_SECOND)
@@ -909,12 +909,12 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo()
 
    if (isPingAsyncPending())
       {
-      *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_NO_CONTENT, 0, UString::getStringNull());
+      *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_NO_CONTENT, 0, 0);
 
       return;
       }
 
-   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_NOT_MODIFIED, 0, UString::getStringNull());
+   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_NOT_MODIFIED, 0, 0);
 }
 
 UModNoCatPeer* UNoCatPlugIn::getPeerFromMAC(const UString& mac)

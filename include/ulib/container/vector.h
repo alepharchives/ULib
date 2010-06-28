@@ -346,7 +346,7 @@ public:
 
    // Costruttori e distruttore
 
-   UVector(uint32_t n = 64) : UVector<void*>(n)
+   UVector(uint32_t n = 64U) : UVector<void*>(n)
       {
       U_TRACE_REGISTER_OBJECT(0, UVector<T*>, "%u", n)
       }
@@ -767,7 +767,7 @@ public:
 
    // Costruttori e distruttore
 
-   UVector(uint32_t n = 64);
+   UVector(uint32_t n = 64U);
 
    UVector(const UString& str, char delim)
       {

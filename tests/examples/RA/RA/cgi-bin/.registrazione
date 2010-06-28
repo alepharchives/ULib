@@ -8,7 +8,11 @@ view_form_input() {
 
 	TMP_FORM_FILE=/tmp/$BASE_NAME.prev
 
-	load_value_session
+	if [ -f $TMP_FORM_FILE ]; then
+		load_value_session $TMP_FORM_FILE
+	elif [ -f $HOME_DIR/etc/${BASE_NAME}.default ]; then
+		load_value_session $HOME_DIR/etc/${BASE_NAME}.default
+	fi
 
 	if [ "$BASE_NAME" = "registrazione-business" ]; then
 
@@ -30,27 +34,25 @@ view_form_input() {
 		# "dati_utente_sesso					= $v5"
 		# "dati_utente_tipo_di_documento = $v11"
 		# --------------------------------------
+		# v22 -> note
+		# v24 -> cpe_email_address
 
 		printf -v OUTPUT "`cat $FORM_FILE_DIR/$BASE_NAME.tmpl`" \
 							  "$v2" "$v1" "$v3" "$v4"    "$v6" "$v7" "$v8" "$v9" "${v10}"    "${v12}" \
-							  "${v13}" "${v14}" "${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v24}"
+							  "${v13}" "${v14}" "${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v23}" "${v24}" "${v25}" "${v26}" "${v27}" "${v28}" "${v30}"
 
 	fi
 }
 
 load_value_session() {
 
-	if [ -f $TMP_FORM_FILE ]; then
+	i=0
+	while read LINE
+	do
+		eval v$i=\"$LINE\"
 
-		i=0
-		while read LINE
-		do
-			eval v$i=\"$LINE\"
-
-			let "i = i + 1"
-		done < $TMP_FORM_FILE
-
-	fi
+		let "i = i + 1"
+	done < $1
 }
 
 save_value_session() {
@@ -83,6 +85,13 @@ ${24}
 ${25}
 ${26}
 ${27}
+${28}
+${29}
+${30}
+${31}
+${32}
+${33}
+${34}
 END
 }
 
@@ -124,7 +133,9 @@ visualizza_contratto() {
 
 		elif [ $# -eq 0 ]; then
 
-			load_value_session
+			if [ -f $TMP_FORM_FILE ]; then
+				load_value_session $TMP_FORM_FILE
+			fi
 
 			printf -v OUTPUT "$FORM_FILE" "$FORM_STAMPA" \
 								  "$v1" "$v2" "$v3" "$v4" "$v5" "$v6" "$v7" "$v8" "$v9" "${v10}" \
@@ -132,22 +143,24 @@ visualizza_contratto() {
 								  "$FORM_1" "$FORM_2" "$FORM_BOTTONI"
 		fi
 	else
-		if [ $# -eq 25 ]; then
+		if [ $# -eq 31 ]; then
 
 			printf -v OUTPUT "$FORM_FILE" "$FORM_STAMPA" \
 								  "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" \
-								  "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}" "${20}" "${21}" "${22}" \
+								  "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}" "${20}" "${21}" "${22}" "${23}" "${24}" "${25}" "${26}" "${27}" "${28}" \
 								  "$FORM_1" "$FORM_2" "$FORM_BOTTONI"
 
 			save_value_session "" "$@" "" ""
 
 		elif [ $# -eq 0 ]; then
 
-			load_value_session
+			if [ -f $TMP_FORM_FILE ]; then
+				load_value_session $TMP_FORM_FILE
+			fi
 
 			printf -v OUTPUT "$FORM_FILE" "$FORM_STAMPA" \
 								  "$v1" "$v2" "$v3" "$v4" "$v5" "$v6" "$v7" "$v8" "$v9" "${v10}" "${v11}" "${v12}" \
-								  "${v13}" "${v14}" "${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" \
+								  "${v13}" "${v14}" "${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v23}" "${v24}" "${v25}" "${v26}" "${v27}" "${v28}" \
 								  "$FORM_1" "$FORM_2" "$FORM_BOTTONI"
 		fi
 	fi
@@ -161,7 +174,9 @@ visualizza_rid() {
 
 	TMP_FORM_FILE=$DIR_SCAN/$BASE_NAME.curr
 
-	load_value_session
+	if [ -f $TMP_FORM_FILE ]; then
+		load_value_session $TMP_FORM_FILE
+	fi
 
 	CODICE_FISCALE=$(eval "echo \$$(echo v${1})")
 
@@ -277,10 +292,12 @@ rascan_image() {
 	else
 		TMP_FORM_FILE=$DIR_SCAN/$BASE_NAME.curr
 
-		load_value_session
+		if [ -f $TMP_FORM_FILE ]; then
+			load_value_session $TMP_FORM_FILE
+		fi
 		save_value_session $NUM_DOC \
 								 "$v1" "$v2" "$v3" "$v4" "$v5" "$v6" "$v7" "$v8" "$v9" "${v10}" "${v11}" "${v12}" "${v13}" "${v14}" "${v15}" \
-								 "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v23}" "${v24}" "${v25}"
+								 "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v23}" "${v24}" "${v25}" "${v26}" "${v27}" "${v28}" "${v29}" "${v30}" "${v31}"
 
 		FOR_PAGE=1
 
@@ -309,7 +326,9 @@ view_page_prepare() {
 
 	TMP_FORM_FILE=$DIR_SCAN/$BASE_NAME.curr
 
-	load_value_session
+	if [ -f $TMP_FORM_FILE ]; then
+		load_value_session $TMP_FORM_FILE
+	fi
 
 	FOR_PAGE=1
 	NUM_DOC=$v0
@@ -341,14 +360,16 @@ registrazione_contratto() {
 
 	TMP_FORM_FILE=$DIR_SCAN/$BASE_NAME.curr
 
-	load_value_session
+	if [ -f $TMP_FORM_FILE ]; then
+		load_value_session $TMP_FORM_FILE
+	fi
 
 	# create PDF...
 
 	tiffcp -a $DIR_SCAN/page[0-9]*.tiff $DIR_SCAN/out.tiff >/dev/null 2>&1
 
 	tiff2pdf -p A4 -q 100 -j $DIR_SCAN/out.tiff >$DIR_SCAN/out.pdf		2>/dev/null  # Creating PDF file...
-	PDF=`openssl base64							  -in $DIR_SCAN/out.pdf -e 2>/dev/null` # ...and convert in base64
+	PDF=`openssl base64 -in $DIR_SCAN/out.pdf -e 2>/dev/null` # ...and convert in base64
 
 	# directory to put mail to send...
 
@@ -358,21 +379,22 @@ registrazione_contratto() {
 
 	mkdir -p $DIR_SESSION
 
-	NAME=$DIR_SESSION/send_to_$$.eml
+	NAME=$DIR_SESSION/send_to_$$
 
 	if [ "$BASE_NAME" = "registrazione-business" ]; then
 
 		printf "`cat mail-business.tmpl`" "$WORKFLOW_SUBJECT" "$WORKFLOW_FROM_ADDRESS" "$WORKFLOW_TO_ADDRESS" \
 													 "$v1" "$v2" "$v3" "$v4" "$v5" "$v6" "$v7" "$v8" "$v9" "${v10}" "${v11}" "${v12}" "${v13}" "${v14}" \
 													 "${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v23}" "${v24}" ${NETWORK} \
-													 "$PDF" > $NAME
+													 "$PDF" > $NAME.eml
 
 	else
 
 		printf "`cat mail-cpe.tmpl`" "$WORKFLOW_SUBJECT" "$WORKFLOW_FROM_ADDRESS" "$WORKFLOW_TO_ADDRESS" \
 													"$v1" "$v2" "$v3" "$v4" "$v5" "$v6" "$v7" "$v8" "$v9" "${v10}" "${v11}" "${v12}" "${v13}" "${v14}" \
-													"${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v24}" "${NETWORK}" \
-													"$PDF" > $NAME
+													"${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v23}" "${v24}" "${v25}" "${v26}" "${v27}" "${v28}" "${v30}" "${NETWORK}" \
+													"$PDF" > $NAME.eml
+													# OLD: "${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v24}" "${NETWORK}" \
 
 	fi
 

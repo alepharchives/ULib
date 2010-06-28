@@ -617,6 +617,58 @@ loop:
    U_RETURN(iBytesWrite);
 }
 
+// write data into multiple buffers
+
+ssize_t USSLSocket::writev(const struct iovec* iov, int iovcnt)
+{
+   U_TRACE(1, "USSLSocket::writev(%p,%d)", iov, iovcnt)
+
+   U_INTERNAL_ASSERT(USocket::isOpen())
+
+   ssize_t iBytesWrite;
+
+   if (active == false) iBytesWrite = USocket::writev(iov, iovcnt);
+   else
+      {
+      U_INTERNAL_ASSERT_POINTER(ssl)
+
+      ssize_t iBytes;
+
+      iBytesWrite = 0;
+
+      for (int i = 0; i < iovcnt; ++i)
+         {
+         if (iov[i].iov_len == 0) continue;
+loop:
+         errno  = 0;
+         iBytes = U_SYSCALL(SSL_write, "%p,%p,%d", ssl, iov[i].iov_base, iov[i].iov_len);
+
+         if (iBytes <= 0)
+            {
+            if (errno) iState = -errno;
+            else
+               {
+               ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
+
+               U_DUMP("status = %.*S", 512, status(false))
+
+               if (ret == SSL_ERROR_WANT_WRITE) goto loop;
+               }
+
+            break;
+            }
+
+         iBytesWrite += iBytes;
+         }
+      }
+
+#ifdef DEBUG
+   if (iBytesWrite > 0) U_INTERNAL_DUMP("BytesWrite(%d) = %.*S", iBytesWrite, iov[0].iov_len, iov[0].iov_base)
+#endif
+
+   U_RETURN(iBytesWrite);
+}
+
 // DEBUG
 
 #ifdef DEBUG

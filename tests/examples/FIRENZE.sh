@@ -32,8 +32,8 @@ DIR_CMD="../../examples/userver"
 #$SLEEP
 #kill_prg userver_tcp TERM
 
-mv err/userver_tcp.err err/FIRENZE_tcp.err
-mv err/userver_ssl.err err/FIRENZE_ssl.err
+ mv err/userver_tcp.err err/FIRENZE_tcp.err
+ mv err/userver_ssl.err err/FIRENZE_ssl.err
 
 #ip route del 192.168.220.0/24 via 192.168.220.254  2>/dev/null
 #ifconfig eth0:220 192.168.220.102 down				 2>/dev/null

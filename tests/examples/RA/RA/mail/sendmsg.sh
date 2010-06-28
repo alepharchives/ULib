@@ -12,9 +12,9 @@ fi
 if [ ! -f $NAME.p7m ]; then
 	openssl smime -in $NAME.eml -sign -signer $RA_OPERATOR_CERTIFICATE -inkey $RA_OPERATOR_KEY -nodetach -binary -outform SMIME >$NAME.p7m 2>/dev/null
 
-	# if [ $? -eq 0 ]; then
-		# rm -f $NAME.eml
-	# fi
+	if [ $? -eq 0 ]; then
+		rm -f $NAME.eml
+	fi
 
 	# command for extract mail
 	# openssl smime -verify -noverify -in $NAME.p7m > $NAME.eml
@@ -33,7 +33,7 @@ msmtp --tls=on --tls-certcheck=off --tls-min-dh-prime-bits=512 --host="${SMTP_HO
 
 if [ $? -eq 0 ]; then
 	cp $NAME.p7m /tmp/$NAME.p7m.$$
-	# rm -f $NAME.p7m
+	rm -f $NAME.p7m
 	exit 0
 #else
 #	sleep 60

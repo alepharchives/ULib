@@ -303,7 +303,7 @@ void UStringRep::destroy()
 #  endif
 #endif
 
-   if (_capacity == U_NOT_FOUND)
+   if (mmap())
       {
       _capacity = 0;
 
@@ -810,7 +810,7 @@ void UString::setNullTerminated() const
 
    // check if mmap
 
-   if (rep->capacity() == U_NOT_FOUND)
+   if (isMmap())
       {
       // A file is mapped in multiples of the page size. For a file that is not a multiple of the page size, the
       // remaining memory is zeroed when mapped, and writes to that region are not written out to the file.

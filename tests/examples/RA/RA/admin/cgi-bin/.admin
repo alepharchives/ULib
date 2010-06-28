@@ -25,9 +25,9 @@ send_mail() {
 
 	mkdir -p $DIR_SESSION
 
-	NAME=$DIR_SESSION/send_to_$$.eml
+	NAME=$DIR_SESSION/send_to_$$
 
-	printf "`cat $BASE_NAME.tmpl`" "$WORKFLOW_SUBJECT" "$WORKFLOW_FROM_ADDRESS" "$WORKFLOW_TO_ADDRESS" "$1" "$2" > $NAME
+	printf "`cat $BASE_NAME.tmpl`" "$WORKFLOW_SUBJECT" "$WORKFLOW_FROM_ADDRESS" "$WORKFLOW_TO_ADDRESS" "$1" "$2" > $NAME.eml
 
 	./sendmsg.sh $NAME >/dev/null 2>&1 &
 

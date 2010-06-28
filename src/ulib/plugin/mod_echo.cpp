@@ -56,5 +56,7 @@ int UEchoPlugIn::handlerRequest()
 
    *UClientImage_Base::wbuffer = UClientImage_Base::rbuffer->substr(0U, USocketExt::size_message);
 
+    UClientImage_Base::body->clear();
+
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }

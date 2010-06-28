@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/pcre/pcre.h>
+#include <ulib/utility/string_ext.h>
 
 UPCRE::UPCRE(const UString& expression, int flags) : _expression(expression)
 {
@@ -34,14 +35,14 @@ UPCRE::~UPCRE()
 
    /* avoid deleting of uninitialized pointers */
 
-   if (p_pcre)       pcre_free(p_pcre);
-   if (p_pcre_extra) pcre_free(p_pcre_extra);
+   if (p_pcre)       U_SYSCALL_VOID(pcre_free, "%p", p_pcre);
+   if (p_pcre_extra) U_SYSCALL_VOID(pcre_free, "%p", p_pcre_extra);
 
    if (sub_vec) U_FREE_N(sub_vec, sub_len, int);
 
    if (stringlist)
       {
-      pcre_free_substring_list(stringlist);
+      U_SYSCALL_VOID(pcre_free_substring_list, "%p", stringlist);
 
       U_INTERNAL_ASSERT_POINTER(resultset)
 
@@ -80,31 +81,23 @@ U_NO_EXPORT const char* UPCRE::status(int num)
 
 void UPCRE::compile()
 {
-   U_TRACE(0, "UPCRE::compile()")
+   U_TRACE(1, "UPCRE::compile()")
 
    char* ptr = (char*) _expression.c_str();
 
    U_INTERNAL_ASSERT_POINTER(ptr)
 
-   p_pcre = pcre_compile(ptr, _flags, (const char**)(&err_str), &erroffset, tables);
+   p_pcre = (pcre*) U_SYSCALL(pcre_compile, "%S,%d,%p,%p,%S", ptr, _flags, &err_str, &erroffset, tables);
 
 #ifdef DEBUG
-   if (p_pcre == NULL) /* umh, that's odd, the parser should not fail at all */
-      {
-      U_INTERNAL_DUMP("pcre_compile(%S,%d,%p,%p,%S) failed: %S at: %S", ptr, _flags, &err_str, &erroffset, tables, err_str, ptr + erroffset)
-      }
+   if (p_pcre == 0) U_INTERNAL_DUMP("pcre_compile() failed: %S at: %S", err_str, ptr + erroffset)
 #endif
 
    U_INTERNAL_ASSERT_POINTER(p_pcre)
 
    /* calculate the number of substrings we are willing to catch */
 
-   int where;
-
-#ifdef DEBUG
-   int info =
-#endif
-   pcre_fullinfo(p_pcre, p_pcre_extra, PCRE_INFO_CAPTURECOUNT, &where);
+   int where, info = U_SYSCALL(pcre_fullinfo, "%p,%p,%d,%p", p_pcre, p_pcre_extra, PCRE_INFO_CAPTURECOUNT, &where);
 
    U_DUMP("status() = %S", status(info))
 
@@ -117,21 +110,25 @@ void UPCRE::compile()
    reset();
 }
 
-UString UPCRE::getMatch(int pos)
+UString UPCRE::getMatch(int pos, bool check)
 {
-   U_TRACE(0, "UPCRE::getMatch(%d)", pos)
+   U_TRACE(0, "UPCRE::getMatch(%d,%b)", pos, check)
 
    U_INTERNAL_ASSERT_POINTER(resultset)
    U_INTERNAL_ASSERT_RANGE(0,pos,num_matches)
 
-   UString result = resultset->at(pos);
+   UString result;
+
+   if (check && pos == (int)resultset->size()) pos = (int)resultset->size() - 1;
+
+   result = resultset->at(pos);
 
    U_RETURN_STRING(result);
 }
 
 bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int options)
 {
-   U_TRACE(0, "UPCRE::search(%.*S,%u,%d,%d)", stuff_len, stuff, stuff_len, offset, options)
+   U_TRACE(1, "UPCRE::search(%.*S,%u,%d,%d)", stuff_len, stuff, stuff_len, offset, options)
 
    U_INTERNAL_ASSERT_POINTER(p_pcre)
 
@@ -142,23 +139,17 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
 
    if (stuff_len == 0) stuff_len = u_strlen(stuff);
 
-   int num = pcre_exec(p_pcre, p_pcre_extra, stuff, stuff_len, offset, options, sub_vec, sub_len);
+   int num = U_SYSCALL(pcre_exec, "%p,%p,%S,%u,%d,%d,%p,%d", p_pcre, p_pcre_extra, stuff, stuff_len, offset, options, sub_vec, sub_len);
 
-   U_INTERNAL_DUMP("pcre_exec(%p,%p,%.*S,%u,%d,%d,%p,%d) = %d", p_pcre, p_pcre_extra, stuff_len, stuff, stuff_len, offset, options, sub_vec, sub_len, num)
+   /* <  0 no match at all;
+      == 0 vector too small, there were too many substrings in stuff */
 
-   if (num <= 0) /*  <0 no match at all;
-                    ==0 vector too small, there were too many substrings in stuff */
-      {
-      U_RETURN(false);
-      }
+   if (num <= 0) U_RETURN(false);
 
    did_match = true;
 
-   if (num == 1) /* we had a match, but without substrings */
-      {
-      num_matches = 0;
-      }
-   else if (num > 1) /* we had matching substrings */
+        if (num == 1) num_matches = 0; /* we had a match, but without substrings */
+   else if (num >  1)                  /* we had matching substrings */
       {
       num_matches = num - 1;
 
@@ -168,7 +159,7 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
 
          resultset->clear();
 
-         pcre_free_substring_list(stringlist);
+         U_SYSCALL_VOID(pcre_free_substring_list, "%p", stringlist);
          }
       else
          {
@@ -177,10 +168,7 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
          resultset = U_NEW(UVector<UString>);
          }
 
-#  ifdef DEBUG
-      int res =
-#  endif
-      pcre_get_substring_list(stuff, sub_vec, num, &stringlist);
+      int res = U_SYSCALL(pcre_get_substring_list, "%S,%p,%d,%p", stuff, sub_vec, num, &stringlist);
 
       U_DUMP("status() = %S", status(res))
 
@@ -203,30 +191,29 @@ uint32_t UPCRE::split(UVector<UString>& vec, const UString& piece, int limit, in
 
    uint32_t n = vec.size();
 
-   if (_expression.length() == 1) /* _expression will be used as delimiter */
+   if (_expression.size() == 1) /* _expression will be used as delimiter */
       {
       /* use the plain c++ way, ignore the pre-compiled p_pcre */
 
       char z;
-      uint32_t pos;
-      uint32_t length = piece.length();
+      uint32_t pos, length = piece.size();
       UString buffer(100U), _delimiter, _piece;
 
       if (case_t)
          {
-         z = u_toupper(_expression[0]);
+         z = u_toupper(_expression.first_char());
 
-         for (pos = 0; pos < length; ++pos) _piece.push_back((char)u_toupper(piece[pos]));
+         for (pos = 0; pos < length; ++pos) _piece.push_back(u_toupper(piece.c_char(pos)));
          }
       else
          {
-         z      = _expression[0];
+         z      = _expression.first_char();
          _piece = piece;
          }
 
       for (pos = 0; pos < length; ++pos)
          {
-         if (_piece[pos] == z)
+         if (_piece.c_char(pos) == z)
             {
             vec.push_back(buffer);
 
@@ -235,7 +222,7 @@ uint32_t UPCRE::split(UVector<UString>& vec, const UString& piece, int limit, in
             }
          else
             {
-            buffer.push_back(piece[pos]);
+            buffer.push_back(piece.c_char(pos));
             }
          }
 
@@ -243,26 +230,11 @@ uint32_t UPCRE::split(UVector<UString>& vec, const UString& piece, int limit, in
       }
    else /* use the regex way */
       {
-      if (_expression.first_char() != '(' ||
-          _expression.last_char()  != ')' ||
-          u_strpend(U_STRING_TO_PARAM(_expression), U_CONSTANT_TO_PARAM("()"), 0) != _expression.c_pointer(_expression.size()-1))
-         {
-         /* oh, oh - the pre-compiled expression does not contain brackets */
-
-         pcre_free(p_pcre);
-         pcre_free(p_pcre_extra);
-
-         p_pcre       = 0;
-         p_pcre_extra = 0;
-
-         _expression = "(" + _expression + ")";
-
-         compile();
-         }
+      checkBrackets();
 
       int num_pieces = 0, pos = 0, piece_end = 0, piece_start = 0;
 
-      for (;;)
+      while (true)
          {
          if (search(piece, pos, 0))
             {
@@ -294,7 +266,7 @@ uint32_t UPCRE::split(UVector<UString>& vec, const UString& piece, int limit, in
 
             ++num_pieces;
 
-            UString junk(piece, pos, (piece.length() - pos));
+            UString junk(piece, pos, (piece.size() - pos));
 
             if ((limit != 0 && num_pieces < limit) || limit == 0)
                {
@@ -319,9 +291,9 @@ uint32_t UPCRE::split(UVector<UString>& vec, const UString& piece, int limit, in
 
 /* replace method */
 
-UString UPCRE::replace(const UString& piece, const UString& with)
+U_NO_EXPORT void UPCRE::checkBrackets()
 {
-   U_TRACE(0, "UPCRE::replace(%.*S,%.*S)", U_STRING_TO_TRACE(piece), U_STRING_TO_TRACE(with))
+   U_TRACE(1, "UPCRE::checkBrackets()")
 
    /*
    certainly we need an anchor, we want to check if the whole arg is in brackets
@@ -333,26 +305,29 @@ UString UPCRE::replace(const UString& piece, const UString& with)
    It's more comfortable, cause we wants to start with $1 at all, also if we set the whole arg in brackets!
    */
 
-   if (_expression.first_char() != '(' ||
-       _expression.last_char()  != ')' ||
-       u_strpend(U_STRING_TO_PARAM(_expression), U_CONSTANT_TO_PARAM("()"), 0) != _expression.c_pointer(_expression.size()-1))
+   if (UStringExt::isDelimited(_expression, "()") == false)
       {
-      /* oh, oh - the pre-compiled expression does not contain brackets */
       /* recreate the p_pcre* objects to avoid memory leaks */
 
-      pcre_free(p_pcre);
-      pcre_free(p_pcre_extra);
+      U_SYSCALL_VOID(pcre_free, "%p", p_pcre);
+      U_SYSCALL_VOID(pcre_free, "%p", p_pcre_extra);
 
       p_pcre       = 0;
       p_pcre_extra = 0;
-
-      _expression = "(" + _expression + ")";
+      _expression  = '(' + _expression + ')';
 
       compile();
       }
+}
 
-   bool bReplaced = false;
+UString UPCRE::replace(const UString& piece, const UString& with)
+{
+   U_TRACE(0, "UPCRE::replace(%.*S,%.*S)", U_STRING_TO_TRACE(piece), U_STRING_TO_TRACE(with))
+
+   checkBrackets();
+
    int  iReplaced = -1;
+   bool bReplaced = false;
    UString replaced(piece);
 
    if (search(piece, 0, 0))
@@ -439,13 +414,13 @@ U_NO_EXPORT UString UPCRE::_replace_vars(const UString& piece)
 
       iBracketIndex = first.strtol();
 
-      sBracketContent = getMatch(iBracketIndex);
+      sBracketContent = getMatch(iBracketIndex, true);
 
       U_INTERNAL_DUMP("sBracket[%d] = %.*S", iBracketIndex, U_STRING_TO_TRACE(sBracketContent))
 
       // now we can split the stuff
 
-      cstr.snprintf("\\${?%.*s}?", U_STRING_TO_TRACE(first));
+      cstr.snprintf("(\\${?%.*s}?)", U_STRING_TO_TRACE(first));
 
       subsplit.set(cstr);
 
@@ -553,7 +528,7 @@ uint32_t UPCRE::getTag(UVector<UString>& vec, const UString& xml, const char* at
       U_NEW_ULIB_OBJECT(cstr,     UString(U_CAPACITY));
       U_NEW_ULIB_OBJECT(xml_mask, UPCRE());
 
-      cstr->snprintf("/<(%s)[^>]*%s\\s*=\\s*([\\'\\\"])%s\\\\2[^>]*>(.*?)<\\/\\\\1>/", tag, attr, value);
+      cstr->snprintf("(<(%s)[^>]*%s\\s*=\\s*([\\'\\\"])%s\\\\2[^>]*>(.*?)<\\/\\\\1>)", tag, attr, value);
 
       xml_mask->set(*cstr);
       xml_mask->study();

@@ -237,6 +237,8 @@ UServer_Base::~UServer_Base()
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
+   UClientImage_Base::resetBuffer();
+
    UNotifier::erase(this, false); // NB: to avoid to delete himself...
    UNotifier::clear();
 
@@ -670,14 +672,18 @@ void UServer_Base::init()
    // For ULIB facility request TODO stateless session cookies... 
 
    UServices::generateKey();
+
+   // For SSL skip tcp optimization
+
+   if (UClientImage_Base::socket->isSSL()) goto next;
 #endif
 
    if (flag_use_tcp_optimization)
       {
       U_ASSERT(name_sock.empty()) // no unix socket...
 
-      socket->setBufferRCV(65536);
-      socket->setBufferSND(65536);
+   // socket->setBufferRCV(128 * 1024);
+   // socket->setBufferSND(128 * 1024);
 
       /* Let's say an application just issued a request to send a small block of data. Now, we could
        * either send the data immediately or wait for more data. Some interactive and client-server
@@ -717,6 +723,7 @@ void UServer_Base::init()
 
    // init plugin modules...
 
+next:
    flag_loop = true;
 
    setProcessManager();

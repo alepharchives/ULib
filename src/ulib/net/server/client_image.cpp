@@ -94,13 +94,13 @@ void UClientImage_Base::logResponse(const char* fileres)
       {
       if (UHTTP::isHTTPRequest()) // NB: only HTTP header...
          {
-         u_printf_string_max_length = u_findEndHeader(U_STRING_TO_PARAM(*wbuffer));
+         u_printf_string_max_length = (body->empty() ? u_findEndHeader(U_STRING_TO_PARAM(*wbuffer)) : wbuffer->size()); 
 
          U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
          }
       }
 
-   UServer_Base::log->log("%ssent response (%u bytes) %.*S to %.*s\n", UServer_Base::mod_name, wbuffer->size(),
+   UServer_Base::log->log("%ssent response (%u bytes) %.*S to %.*s\n", UServer_Base::mod_name, wbuffer->size() + body->size(),
                                                                        U_STRING_TO_TRACE(*wbuffer), U_STRING_TO_TRACE(*(pClientImage->logbuf)));
 
    u_printf_string_max_length = u_printf_string_max_length_save;
@@ -463,13 +463,14 @@ int UClientImage_Base::handlerWrite()
    U_INTERNAL_ASSERT(socket->isOpen())
 
    U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer));
+   U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body));
 
    U_ASSERT_DIFFERS(wbuffer->empty(), true)
 
    if (UServer_Base::isLog()) logResponse();
 
-   int result = (USocketExt::write(socket, *wbuffer, 3 * 1000) ? U_NOTIFIER_OK
-                                                               : U_NOTIFIER_DELETE);
+   int result = (USocketExt::write(socket, *wbuffer, *body, 3 * 1000) ? U_NOTIFIER_OK
+                                                                      : U_NOTIFIER_DELETE);
 
    U_RETURN(result);
 }

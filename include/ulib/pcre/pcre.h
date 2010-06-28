@@ -214,15 +214,12 @@ public:
 
    void study(int options = 0)
       {
-      U_TRACE(0, "UPCRE::study(%d)", options)
+      U_TRACE(1, "UPCRE::study(%d)", options)
 
-      p_pcre_extra = pcre_study(p_pcre, options, (const char**)(&err_str));
+      p_pcre_extra = (pcre_extra*) U_SYSCALL(pcre_study, "%p,%d,%p", p_pcre, options, &err_str);
 
 #  ifdef DEBUG
-      if (err_str)
-         {
-         U_INTERNAL_DUMP("pcre_study(..) failed: %S", err_str);
-         }
+      if (err_str) U_INTERNAL_DUMP("pcre_study() failed: %S", err_str);
 #  endif
       }
 
@@ -279,7 +276,7 @@ public:
    Get the first substring that matched the expression in the "regex" object
    */
 
-   UString getMatch(int pos);
+   UString getMatch(int pos, bool check = false);
 
    /**
    Get the length of a substring at a known position
@@ -476,7 +473,7 @@ protected:
    UVector<UString>* resultset; /* store substrings, if any */
 
    int* sub_vec;
-   char* err_str;
+   const char* err_str;
    const char** stringlist;
 
    UString _expression;         /* the given regular expression */
@@ -489,6 +486,7 @@ protected:
    void compile();              /* compile the pattern */
 
 private:
+   void checkBrackets() U_NO_EXPORT;
    const char* status(int num) U_NO_EXPORT;
 
    /* replace $1 .. $n with the corresponding substring, used by replace() */

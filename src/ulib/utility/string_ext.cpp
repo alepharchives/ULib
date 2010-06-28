@@ -32,7 +32,7 @@
 #ifdef HAVE_SSL
 UString UStringExt::BIOtoString(BIO* bio)
 {
-   U_TRACE(0, "UStringExt::BIOtoString(%p)", bio)
+   U_TRACE(1, "UStringExt::BIOtoString(%p)", bio)
 
    char* buffer = 0;
    long len     = BIO_get_mem_data(bio, &buffer);
@@ -66,7 +66,10 @@ UString UStringExt::pregReplace(const UString& pattern, const UString& replaceme
    // Replace parts of a string using regular expressions. This method is the counterpart of the perl s// operator.
    // It replaces the substrings which matched the given regular expression (given to the constructor) with the supplied string
 
-   UPCRE pcre(pattern);
+   UString lpattern = (isDelimited(pattern, "()") ?       pattern
+                                                  : '(' + pattern + ')');
+
+   UPCRE pcre(lpattern);
 
    UString result = pcre.replace(subject, replacement);
 
@@ -76,7 +79,7 @@ UString UStringExt::pregReplace(const UString& pattern, const UString& replaceme
 
 UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
 {
-   U_TRACE(0, "UStringExt::expandTab(%.*S,%u,%d)", n, s, n, tab)
+   U_TRACE(1, "UStringExt::expandTab(%.*S,%u,%d)", n, s, n, tab)
 
    void* p;
    char* r;
@@ -123,7 +126,7 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
 
 UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_t n1, const char* b, uint32_t n2)
 {
-   U_TRACE(0, "UStringExt::substitute(%.*S,%u,%.*S,%u,%.*S,%u)", n, s, n, n1, a, n1, n2, b, n2)
+   U_TRACE(1, "UStringExt::substitute(%.*S,%u,%.*S,%u,%.*S,%u)", n, s, n, n1, a, n1, n2, b, n2)
 
    U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
@@ -200,7 +203,7 @@ UString UStringExt::dos2unix(const UString& s, bool unix2dos)
 
 UString UStringExt::expandPath(const char* path_data, uint32_t path_size)
 {
-   U_TRACE(0, "UStringExt::expandPath(%.*S,%u)", path_size, path_data, path_size)
+   U_TRACE(1, "UStringExt::expandPath(%.*S,%u)", path_size, path_data, path_size)
 
    UString pathname, path(U_CAPACITY);
 
@@ -280,7 +283,7 @@ UString UStringExt::expandPath(const char* path_data, uint32_t path_size)
 
 UString UStringExt::expandEnvVar(const char* s, uint32_t n)
 {
-   U_TRACE(0, "UStringExt::expandEnvVar(%.*S,%u)", n, s, n)
+   U_TRACE(1, "UStringExt::expandEnvVar(%.*S,%u)", n, s, n)
 
    U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
@@ -342,7 +345,7 @@ UString UStringExt::expandEnvVar(const char* s, uint32_t n)
 
 UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
 {
-   U_TRACE(0, "UStringExt::insertEscape(%.*S,%u,%C)", n, s, n, delimiter)
+   U_TRACE(1, "UStringExt::insertEscape(%.*S,%u,%C)", n, s, n, delimiter)
 
    U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
@@ -393,7 +396,7 @@ UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
 
 UString UStringExt::removeEscape(const char* s, uint32_t n)
 {
-   U_TRACE(0, "UStringExt::removeEscape(%.*S,%u,%C)", n, s, n)
+   U_TRACE(1, "UStringExt::removeEscape(%.*S,%u,%C)", n, s, n)
 
    U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
@@ -441,7 +444,7 @@ UString UStringExt::removeEscape(const char* s, uint32_t n)
 
 UString UStringExt::trim(const char* s, uint32_t n)
 {
-   U_TRACE(0, "UStringExt::trim(%.*S,%u)", n, s, n)
+   U_TRACE(1, "UStringExt::trim(%.*S,%u)", n, s, n)
 
 // U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
@@ -477,7 +480,7 @@ UString UStringExt::trim(const char* s, uint32_t n)
 
 UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
 {
-   U_TRACE(0, "UStringExt::simplifyWhiteSpace(%.*S,%u)", n, s, n)
+   U_TRACE(1, "UStringExt::simplifyWhiteSpace(%.*S,%u)", n, s, n)
 
    // U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
@@ -691,7 +694,7 @@ int UStringExt::compareversion(const char* a, uint32_t alen, const char* b, uint
 
 UString UStringExt::compress(const UString& s)
 {
-   U_TRACE(0, "UStringExt::compress(%.*S)", U_STRING_TO_TRACE(s))
+   U_TRACE(1, "UStringExt::compress(%.*S)", U_STRING_TO_TRACE(s))
 
    uint32_t sz = s.size();
    UString r(U_CONSTANT_SIZE(U_LZOP_COMPRESS) + sizeof(uint32_t) + UCompress::space(sz));
@@ -954,7 +957,7 @@ end:
 
 void UStringExt::buildTokenInt(const char* token, uint32_t value, UString& buffer)
 {
-   U_TRACE(0, "UStringExt::buildTokenInt(%S,%u,%.*S)", token, value, U_STRING_TO_TRACE(buffer))
+   U_TRACE(1, "UStringExt::buildTokenInt(%S,%u,%.*S)", token, value, U_STRING_TO_TRACE(buffer))
 
    U_INTERNAL_ASSERT_POINTER(token)
    U_INTERNAL_ASSERT(strlen(token) == U_TOKEN_NM)

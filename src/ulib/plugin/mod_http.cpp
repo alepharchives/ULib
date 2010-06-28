@@ -17,10 +17,12 @@
 #include <ulib/utility/uhttp.h>
 #include <ulib/plugin/mod_http.h>
 #include <ulib/net/server/server.h>
+#include <ulib/container/hash_map.h>
 #include <ulib/utility/string_ext.h>
 
 U_CREAT_FUNC(UHttpPlugIn)
 
+UString* UHttpPlugIn::str_CACHE_FILE_MASK;
 UString* UHttpPlugIn::str_URI_PROTECTED_MASK;
 UString* UHttpPlugIn::str_URI_REQUEST_CERT_MASK;
 UString* UHttpPlugIn::str_URI_PROTECTED_ALLOWED_IP;
@@ -34,14 +36,16 @@ void UHttpPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_URI_PROTECTED_ALLOWED_IP,0)
 
    static ustringrep stringrep_storage[] = {
+      { U_STRINGREP_FROM_CONSTANT("CACHE_FILE_MASK") },
       { U_STRINGREP_FROM_CONSTANT("URI_PROTECTED_MASK") },
       { U_STRINGREP_FROM_CONSTANT("URI_REQUEST_CERT_MASK") },
       { U_STRINGREP_FROM_CONSTANT("URI_PROTECTED_ALLOWED_IP") }
    };
 
-   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_MASK,       U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_URI_REQUEST_CERT_MASK,    U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP, U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,          U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_MASK,       U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_URI_REQUEST_CERT_MASK,    U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP, U_STRING_FROM_STRINGREP_STORAGE(3));
 }
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -61,6 +65,18 @@ UHttpPlugIn::~UHttpPlugIn()
 
    if (UHTTP::vallow_IP)   delete UHTTP::vallow_IP;
    if (UHTTP::request_uri) delete UHTTP::request_uri;
+
+   if (UHTTP::cache_file_mask)
+      {
+      delete UHTTP::cache_file_mask;
+
+      if (UHTTP::cache_file)
+         {
+                UHTTP::cache_file->clear();
+                UHTTP::cache_file->deallocate();
+         delete UHTTP::cache_file;
+         }
+      }
 }
 
 // Server-wide hooks
@@ -71,6 +87,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
    // ------------------------------------------------------------------------------------------------------------------------------------------------
    // ALIAS                         vector of URI redirection (request -> alias)
+   //
+   // CACHE_FILE_MASK               mask (DOS regexp) of pathfile that be cached in memory
    //
    // VIRTUAL_HOST                  flag to activate practice of maintaining more than one server on one machine,
    //                               as differentiated by their apparent hostname
@@ -86,15 +104,16 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
    if (cfg.loadTable())
       {
-      UHTTP::virtual_host                 = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
-      UServer_Base::digest_authentication = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
-
-      uri_protected_mask                  = cfg[*str_URI_PROTECTED_MASK];
-      uri_protected_allowed_ip            = cfg[*str_URI_PROTECTED_ALLOWED_IP];
+      uri_protected_mask       = cfg[*str_URI_PROTECTED_MASK];
+      uri_protected_allowed_ip = cfg[*str_URI_PROTECTED_ALLOWED_IP];
 
 #  ifdef HAVE_SSL
-      uri_request_cert_mask               = cfg[*str_URI_REQUEST_CERT_MASK];
+      uri_request_cert_mask    = cfg[*str_URI_REQUEST_CERT_MASK];
 #  endif
+
+      UHTTP::virtual_host                 = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
+      UHTTP::cache_file_mask              = U_NEW(UString(cfg[*str_CACHE_FILE_MASK]));
+      UServer_Base::digest_authentication = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -153,6 +172,11 @@ int UHttpPlugIn::handlerInit()
 
    if (valias.empty() == false) UHTTP::request_uri = U_NEW(UString);
 
+   // CACHE FILE
+
+   if (UHTTP::cache_file_mask &&
+       UHTTP::cache_file_mask->empty() == false) UHTTP::searchFileForCache();
+
    U_SRV_LOG_MSG("initialization of plugin success");
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -175,9 +199,10 @@ int UHttpPlugIn::handlerRead()
 
    if (UServer_Base::isLog()) UClientImage_Base::logRequest();
 
+   int nResponseCode;
    uint32_t host_end;
-   const char* content_type = 0;
-   int nResponseCode = HTTP_NOT_IMPLEMENTED;
+   const UString* body;
+   const char* content_type;
 
    if (is_http_req)
       {
@@ -271,32 +296,30 @@ next:
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
+   body          = 0;
+   content_type  = 0;
+   nResponseCode = HTTP_NOT_IMPLEMENTED;
+
    // HTTP/1.1 compliance: Sends 411 for missing Content-Length on POST requests
    //                      Sends 400 for broken Request-Line
    //                      Sends 501 for request-method != (GET|POST|HEAD)
-   //                      Sends 505 for protocol != HTTP/1.0 or HTTP/1.1
+   //                      Sends 505 for protocol != HTTP/1.[0-1]
 
    if (UHTTP::http_info.method_type)
       {
       if (UHTTP::http_info.uri_len == 0)
          {
-         nResponseCode            = HTTP_BAD_REQUEST;
-         content_type             = U_CTYPE_HTML;
-         *UClientImage_Base::body = *UHTTP::str_frm_bad_request;
+         body          = UHTTP::str_frm_bad_request;
+         content_type  = U_CTYPE_HTML;
+         nResponseCode = HTTP_BAD_REQUEST;
          }
-      else if (UHTTP::http_info.szHeader == 0)
-         {
-         nResponseCode = HTTP_VERSION;
-         }
-      else if (UHTTP::isHttpPOST())
-         {
-         nResponseCode = HTTP_LENGTH_REQUIRED;
-         }
+      else if (UHTTP::isHttpPOST())            nResponseCode = HTTP_LENGTH_REQUIRED;
+      else if (UHTTP::http_info.szHeader == 0) nResponseCode = HTTP_VERSION;
       }
 
    UHTTP::http_info.is_connection_close = U_YES;
 
-   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(nResponseCode, content_type, *UClientImage_Base::body);
+   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(nResponseCode, content_type, body);
 
 send_response:
 
@@ -326,7 +349,7 @@ int UHttpPlugIn::handlerRequest()
 
          if (UHTTP::isHttpPOST()) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 
-         (void) UHTTP::processHTTPGetRequest(); // GET,HEAD
+         UHTTP::processHTTPGetRequest(); // GET,HEAD
          }
       }
 

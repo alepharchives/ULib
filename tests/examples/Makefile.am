@@ -32,7 +32,7 @@ if SSL
 PRG = test_http_header
 test_http_header_SOURCES = test_http_header.cpp
 HTTP_LIB = $(top_builddir)/examples/http_header/libhttp.la
-TESTS += http_header.test
+TESTS += http_header.test web_server_ssl.test
 if LIBZ
 TESTS += PEC_report_rejected.test PEC_report_messaggi.test PEC_report_virus.test PEC_report_anomalie.test PEC_check_namefile.test
 if ZIP

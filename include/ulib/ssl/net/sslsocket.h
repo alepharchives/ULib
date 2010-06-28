@@ -193,6 +193,8 @@ public:
    virtual int send(const void* pData,   int iDataLen);
    virtual int recv(      void* pBuffer, int iBufferLen);
 
+   virtual ssize_t writev(const struct iovec* iov, int iovcnt);
+
    virtual const char* getMsgError(char* buffer, uint32_t buffer_size);
 
    /**

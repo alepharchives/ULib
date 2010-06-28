@@ -16,6 +16,7 @@
 
 #include <ulib/string.h>
 #include <ulib/net/socket.h>
+#include <ulib/container/vector.h>
 
 /* -----------------------------------------------------------------------------------------------------------------------------
 //  _     _   _
@@ -138,7 +139,7 @@ class UFile;
 class UCommand;
 class UMimeMultipart;
 
-template <class T> class UVector;
+template <class T> class UHashMap;
 
 class U_EXPORT UHTTP {
 public:
@@ -354,9 +355,12 @@ public:
 
    static bool isPHPRequest();
    static bool checkHTTPRequest();
-   static bool processHTTPGetRequest();
-   static bool checkPath(UString& pathname);
+   static void processHTTPGetRequest();
+   static int  checkPath(UString& pathname);
    static void getTimeIfNeeded(bool all_http_version);
+   static bool checkHTTPGetRequestIfModified(time_t mtime);
+   static void getFileMimeType(const char* suffix, const char* content_type, UString& ext, off_t size);
+   static int  checkHTTPGetRequestForRange(off_t& start, off_t& size, UString& ext, const UString& tag);
 
    static UString     getHTMLDirectoryList();
    static const char* getHTTPHeaderValuePtr(const UString& name);
@@ -409,6 +413,49 @@ public:
    static bool checkUriProtected();
    static bool processHTTPAuthorization(bool digest);
 
+   // FILE CACHE
+
+   class UFileCacheData {
+   public:
+
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   // COSTRUTTORI
+
+   off_t size;             // size content
+   time_t mtime;           // time of last modification
+   UVector<UString> array; // content + header
+
+   UFileCacheData() : array(2U)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UFileCacheData, "", 0)
+      }
+
+   ~UFileCacheData()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UFileCacheData)
+      }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const;
+#endif
+
+   private:
+   UFileCacheData(const UFileCacheData&)            {}
+   UFileCacheData& operator=(const UFileCacheData&) { return *this; }
+   };
+
+   static UString* cache_file_mask;
+   static UHashMap<UFileCacheData*>* cache_file;
+
+   static void checkFileForCache();
+   static void searchFileForCache();
+
    // Accept-Language: en-us,en;q=0.5
    // ----------------------------------------------------
    // take only the first 2 character (it, en, de fr, ...)
@@ -434,7 +481,7 @@ public:
 
    // get HTTP response message
 
-   static UString getHTTPHeaderForResponse(int nResponseCode, const char* content_type, const UString& body);
+   static UString getHTTPHeaderForResponse(int nResponseCode, const char* content_type, const UString* body);
    static UString getHTTPRedirectResponse(const UString& ext, const char* ptr_location, uint32_t len_location);
 
 private:

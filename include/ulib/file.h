@@ -815,24 +815,7 @@ public:
    the kernel, sendfile() does not need to spend time transferring data to and from user space.
    */
 
-   bool sendfile(int out_fd, off_t* poffset = 0, size_t count = 0)
-      {
-      U_TRACE(1, "UFile::sendfile(%d,%p,%lu)", out_fd, poffset, count)
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_DIFFERS(fd, -1)
-      U_INTERNAL_ASSERT_MAJOR(st_size, 0)
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
-      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
-      if (count == 0) count = st_size;
-
-      bool result = (U_SYSCALL(sendfile, "%d,%d,%p,%lu", out_fd, fd, poffset, count) == (ssize_t)count);
-
-      U_RETURN(result);
-      }
+   bool sendfile(int out_fd, off_t* poffset = 0, size_t count = 0);
 
    // DIR OP
 

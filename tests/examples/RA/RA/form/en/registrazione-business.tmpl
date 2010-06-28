@@ -12,6 +12,11 @@
         document.form.cn.value=document.form.rappresentante_legale.value;
      }
   </script>
+  <script type="text/javascript">
+ function compose_destinazione() {
+        document.form.spedizione_destinazione.value=document.form.ragione_sociale.value + " " + document.form.rappresentante_legale.value;
+     }
+  </script>
 </head>
 
 <body>
@@ -32,9 +37,8 @@
 
         <h2 class="center">T-UNWIRED FLAT</h2>
       </td>
-      <td><img src="/RA/images/dx-logo.png"></td>
 
-      </td>
+      <td><img src="/RA/images/dx-logo.png"></td>
     </tr>
   </table><br>
 
@@ -65,7 +69,7 @@
       <tr>
         <td class="racss_label">Ragione sociale:</td>
 
-        <td class="racss_field"><input type="text" id="ragione_sociale" name="ragione_sociale" value="%s" onkeyup="destinazione.value=this.value">
+        <td class="racss_field"><input type="text" id="ragione_sociale" name="ragione_sociale" value="%s">
         <strong class="Stile3">*</strong></td>
       </tr>
 
@@ -79,29 +83,28 @@
       <tr>
         <td class="racss_label">Indirizzo:</td>
 
-        <td class="racss_field"><input type="text" id="dati_utente_indirizzo" name="dati_utente_indirizzo" value="%s" onkeyup=
-        "spedizione_indirizzo.value=this.value"> <strong class="Stile3">*</strong></td>
+        <td class="racss_field"><input type="text" id="dati_utente_indirizzo" name="dati_utente_indirizzo" value="%s"> <strong class=
+        "Stile3">*</strong></td>
       </tr>
 
       <tr>
         <td class="racss_label">Comune:</td>
 
-        <td class="racss_field"><input type="text" id="dati_utente_comune" name="dati_utente_comune" value="%s" onkeyup=
-        "spedizione_comune.value=this.value" onfocus="if(this.value== this.defaultValue) this.value=''"> <strong class="Stile3">*</strong></td>
+        <td class="racss_field"><input type="text" id="dati_utente_comune" name="dati_utente_comune" value="%s"> <strong class=
+        "Stile3">*</strong></td>
       </tr>
 
       <tr>
         <td class="racss_label">Provincia:</td>
 
-        <td class="racss_field"><input type="text" id="dati_utente_provincia" name="dati_utente_provincia" value="%s" onkeyup=
-        "spedizione_provincia.value=this.value" onfocus="if(this.value == this.defaultValue) this.value='FR'"> <strong class="Stile3">*</strong></td>
+        <td class="racss_field"><input type="text" id="dati_utente_provincia" name="dati_utente_provincia" value="%s"> <strong class=
+        "Stile3">*</strong></td>
       </tr>
 
       <tr>
         <td class="racss_label">Cap:</td>
 
-        <td class="racss_field"><input type="text" id="dati_utente_cap" name="dati_utente_cap" value="%s" onkeyup="spedizione_cap.value=this.value"
-        onfocus="if(this.value == this.defaultValue) this.value=''"> <strong class="Stile3">*</strong></td>
+        <td class="racss_field"><input type="text" id="dati_utente_cap" name="dati_utente_cap" value="%s"> <strong class="Stile3">*</strong></td>
       </tr>
 
       <tr>
@@ -113,8 +116,8 @@
       <tr>
         <td class="racss_label">Telefono:</td>
 
-        <td class="racss_field"><input type="text" id="dati_utente_telefono_fisso" name="dati_utente_telefono_fisso" value="%s" onfocus=
-        "if(this.value == this.defaultValue) this.value='055'"> <strong class="Stile3">*</strong></td>
+        <td class="racss_field"><input type="text" id="dati_utente_telefono_fisso" name="dati_utente_telefono_fisso" value="%s"> <strong class=
+        "Stile3">*</strong></td>
       </tr>
 
       <tr>
@@ -149,7 +152,7 @@
       <tr>
         <td class="racss_label">Email (di un altro provider):</td>
 
-        <td class="racss_field"><input type="text" id="email_altro" name="email_altro" value="%s" onkeyup="emailAddress.value=this.value">
+        <td class="racss_field"><input type="text" id="email_altro" name="email_altro" value="%s">
         <strong class="Stile3">*</strong></td>
       </tr>
     </table><br>
@@ -167,28 +170,28 @@
         <td class="racss_label">Indirizzo:</td>
 
         <td class="racss_field"><input type="text" id="installazione_indirizzo" name="installazione_indirizzo" value="%s" onfocus=
-        "if(this.value == this.defaultValue) this.value=dati_utente_indirizzo.value"> <strong class="Stile3">*</strong></td>
+        "if(this.value=='') this.value=dati_utente_indirizzo.value"> <strong class="Stile3">*</strong></td>
       </tr>
 
       <tr>
         <td class="racss_label">Comune:</td>
 
         <td class="racss_field"><input type="text" id="installazione_comune" name="installazione_comune" value="%s" onfocus=
-        "if(this.value == this.defaultValue) this.value=dati_utente_comune.value"> <strong class="Stile3">*</strong></td>
+        "if(this.value=='') this.value=dati_utente_comune.value"> <strong class="Stile3">*</strong></td>
       </tr>
 
       <tr>
         <td class="racss_label">Provincia:</td>
 
         <td class="racss_field"><input type="text" id="installazione_provincia" name="installazione_provincia" value="%s" onfocus=
-        "if(this.value == this.defaultValue) this.value=dati_utente_provincia.value"> <strong class="Stile3">*</strong></td>
+        "if(this.value=='') this.value=dati_utente_provincia.value"> <strong class="Stile3">*</strong></td>
       </tr>
 
       <tr>
         <td class="racss_label">Cap:</td>
 
         <td class="racss_field"><input type="text" id="installazione_cap" name="installazione_cap" value="%s" onfocus=
-        "if(this.value == this.defaultValue) this.value=dati_utente_cap.value"> <strong class="Stile3">*</strong></td>
+        "if(this.value=='') this.value=dati_utente_cap.value"> <strong class="Stile3">*</strong></td>
       </tr>
     </table><br>
 
@@ -205,40 +208,43 @@
       <tr>
         <td class="racss_label">Destinazione:</td>
 
-        <td class="racss_field"><input type="text" id="destinazione" name="destinazione" value="%s"> <strong class="Stile3">*</strong></td>
+        <td class="racss_field"><input type="text" id="spedizione_destinazione" name="spedizione_destinazione" value="%s" onfocus=
+        "if(this.value=='') compose_destinazione()"> <strong class="Stile3">*</strong></td>
       </tr>
 
       <tr>
         <td class="racss_label">Indirizzo:</td>
 
-        <td class="racss_field"><input type="text" id="spedizione_indirizzo" name="spedizione_indirizzo" value="%s"> <strong class=
-        "Stile3">*</strong></td>
+        <td class="racss_field"><input type="text" id="spedizione_indirizzo" name="spedizione_indirizzo" value="%s" onfocus=
+        "if(this.value=='') this.value=dati_utente_indirizzo.value"> <strong class="Stile3">*</strong></td>
       </tr>
 
       <tr>
         <td class="racss_label">Comune:</td>
 
-        <td class="racss_field"><input type="text" id="spedizione_comune" name="spedizioneinstallazione_comune" value="%s"> <strong class=
-        "Stile3">*</strong></td>
+        <td class="racss_field"><input type="text" id="spedizione_comune" name="spedizione_comune" value="%s" onfocus=
+        "if(this.value=='') this.value=dati_utente_comune.value"> <strong class="Stile3">*</strong></td>
       </tr>
 
       <tr>
         <td class="racss_label">Provincia:</td>
 
-        <td class="racss_field"><input type="text" id="spedizione_provincia" name="spedizione_provincia" value="%s"> <strong class=
-        "Stile3">*</strong></td>
+        <td class="racss_field"><input type="text" id="spedizione_provincia" name="spedizione_provincia" value="%s" onfocus=
+        "if(this.value=='') this.value=dati_utente_provincia.value"> <strong class="Stile3">*</strong></td>
       </tr>
 
       <tr>
         <td class="racss_label">Cap:</td>
 
-        <td class="racss_field"><input type="text" id="spedizione_cap" name="spedizione_cap" value="%s"> <strong class="Stile3">*</strong></td>
+        <td class="racss_field"><input type="text" id="spedizione_cap" name="spedizione_cap" value="%s" onfocus=
+        "if(this.value=='') this.value=dati_utente_cap.value"> <strong class="Stile3">*</strong></td>
       </tr>
 
       <tr>
         <td class="racss_label">Email:</td>
 
-        <td class="racss_field"><input type="text" id="emailAddress" name="emailAddress" value="%s"> <strong class="Stile3">*</strong></td>
+        <td class="racss_field"><input type="text" id="emailAddress" name="emailAddress" value="%s" onfocus=
+        "if(this.value=='') this.value=email_altro.value"> <strong class="Stile3">*</strong></td>
       </tr>
     </table><br>
 
@@ -335,7 +341,7 @@ var valComm = new LiveValidation( 'ragione_sociale', {onlyOnSubmit: true, validM
   var valComm = new LiveValidation( 'installazione_cap', {onlyOnSubmit: true, validMessage: "OK" } );
   valComm.add( Validate.Presence, {failureMessage: "Devi inserire il cap installazione"} );
   valComm.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "cap installazione non valido"} );
-  var valComm = new LiveValidation( 'destinazione', {onlyOnSubmit: true, validMessage: "OK" } );
+  var valComm = new LiveValidation( 'spedizione_destinazione', {onlyOnSubmit: true, validMessage: "OK" } );
   valComm.add( Validate.Presence, {failureMessage: "Devi inserire destinazione"} );
   var valComm = new LiveValidation( 'spedizione_indirizzo', {onlyOnSubmit: true, validMessage: "OK" } );
   valComm.add( Validate.Presence, {failureMessage: "Devi inserire indirizzo spedizione"} );

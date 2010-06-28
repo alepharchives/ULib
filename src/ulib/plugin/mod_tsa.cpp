@@ -81,7 +81,7 @@ int UTsaPlugIn::handlerRequest()
       goto end;
       }
 
-   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, "application/timestamp-reply", *UClientImage_Base::wbuffer);
+   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, "application/timestamp-reply", UClientImage_Base::wbuffer);
 
 end:
 
