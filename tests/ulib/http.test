@@ -11,9 +11,9 @@ start_msg http
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
- NC_CMD1="$NC -l -w 2 -p 9080"
+ NC_CMD1="$NC -l -w 6 -p 9080"
 #NC_CMD1="$NC -l -w 6 localhost 9080" # fedora
- NC_CMD2="$NC -l -w 2 -p 9081"
+ NC_CMD2="$NC -l -w 6 -p 9081"
 #NC_CMD2="$NC -l -w 6 localhost 9081" # fedora
 
 $NC_CMD1 < inp/http/response.chunked > out/request.http &

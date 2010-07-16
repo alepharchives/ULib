@@ -143,7 +143,10 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
    U_INTERNAL_TRACE("UTrace::trace_sysreturn(%d,%s)", error, format)
 
 #ifdef __MINGW32__
-   if (error == false && active && format && format[1] == 'd') // int (BOOL for mingw)
+   if (error == false &&
+       active         &&
+       format         &&
+       format[1] == 'd') // int (BOOL for mingw)
       {
       va_list argp;
       va_start(argp, format);
@@ -153,7 +156,9 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
       va_end(argp);
       }
 
-   if (error && errno == 0 && strstr(buffer_syscall, "::getenv") == 0)
+   if (error      &&
+       errno == 0 &&
+       strstr(buffer_syscall, "::getenv") == 0)
       {
       errno = - GetLastError();
 
@@ -161,7 +166,8 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
       }
 #endif
 
-   if (error || active)
+   if (error ||
+       active)
       {
       if (format) // check for system call with return void (Es: free())
          {

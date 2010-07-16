@@ -8,7 +8,7 @@ ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 
 moduledir = $(libexecdir)/ulib
 
-module_LTLIBRARIES = mod_rpc.la mod_http.la mod_tsa.la mod_usp.la mod_nocat.la mod_echo.la mod_fcgi.la mod_stream.la
+module_LTLIBRARIES = mod_rpc.la mod_http.la mod_tsa.la mod_nocat.la mod_echo.la mod_fcgi.la mod_stream.la
 
 mod_rpc_la_SOURCES   = mod_rpc.cpp
 mod_rpc_la_LIBADD    = $(ulib_la)
@@ -21,10 +21,6 @@ mod_http_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
 mod_tsa_la_SOURCES   = mod_tsa.cpp
 mod_tsa_la_LIBADD    = $(ulib_la)
 mod_tsa_la_LDFLAGS   = -module $(MODULE_LIBTOOL_OPTIONS)
-
-mod_usp_la_SOURCES 	= mod_usp.cpp
-mod_usp_la_LIBADD  	= $(ulib_la)
-mod_usp_la_LDFLAGS 	= -module $(MODULE_LIBTOOL_OPTIONS)
 
 mod_nocat_la_SOURCES = mod_nocat.cpp
 mod_nocat_la_LIBADD  = $(ulib_la)

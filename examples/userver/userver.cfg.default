@@ -72,7 +72,6 @@ userver {
   LOG_MSG_SIZE   -1
 
   PLUGIN                     mod_http
-# PLUGIN         "mod_usp    mod_http"
 # PLUGIN         "mod_tsa    mod_http"
 # PLUGIN         "mod_rpc    mod_http"
 # PLUGIN         "mod_soap   mod_http"
@@ -104,6 +103,8 @@ userver {
 # ALIAS                      vector of URI redirection (request -> alias)
 #
 # CACHE_FILE_MASK            mask (DOS regexp) of pathfile that be cached in memory
+# CACHE_FILE_COMPRESS_MASK   mask (DOS regexp) of suffix files that be cached in memory also compressed
+#
 #
 # VIRTUAL_HOST               flag to activate practice of maintaining more than one server on one machine,
 #                            as differentiated by their apparent hostname 
@@ -124,7 +125,8 @@ mod_http {
 #  /admin  /RA/admin/cgi-bin/card-generation.sh
    ]
 
-# CACHE_FILE_MASK            favicon.ico|css/*.css|js/*.js/icons/*.gif
+# CACHE_FILE_MASK            *.html|favicon.ico|css/*.css|js/*.js/icons/*.gif
+# CACHE_FILE_COMPRESS_MASK   .html|.ico|.css|.js
 #
 # VIRTUAL_HOST          yes
 # DIGEST_AUTHENTICATION yes

@@ -54,7 +54,7 @@ uint32_t u_quoted_printable_encode(const unsigned char* restrict inptr, uint32_t
          unsigned char* restrict outptr = out;
    const unsigned char* restrict inend  = inptr + len;
 
-   U_INTERNAL_TRACE("u_quoted_printable_encode(%.*s,%u,%p)", len, inptr, len, out)
+   U_INTERNAL_TRACE("u_quoted_printable_encode(%.*s,%u,%p)", U_min(len,128), inptr, len, out)
 
    U_INTERNAL_ASSERT_POINTER(inptr)
 
@@ -155,7 +155,7 @@ uint32_t u_quoted_printable_decode(const char* restrict inptr, uint32_t len, uns
    const    char* restrict inend  = inptr + len;
    unsigned char* restrict outptr = out;
 
-   U_INTERNAL_TRACE("u_quoted_printable_decode(%.*s,%u,%p)", len, inptr, len, out)
+   U_INTERNAL_TRACE("u_quoted_printable_decode(%.*s,%u,%p)", U_min(len,128), inptr, len, out)
 
    U_INTERNAL_ASSERT_POINTER(inptr)
 

@@ -25,6 +25,10 @@ static void u_do_cipher(char* pw, int operation)
 
    u_des3_key((const char*)pw);
 
+#  ifdef __MINGW32__
+   (void) setmode(1, O_BINARY);
+#  endif
+
    while (true)
       {
       int readlen = read(STDIN_FILENO, buf, sizeof(buf));

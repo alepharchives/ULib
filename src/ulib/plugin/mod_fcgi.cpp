@@ -14,10 +14,13 @@
 #include <ulib/file_config.h>
 #include <ulib/utility/uhttp.h>
 #include <ulib/net/tcpsocket.h>
-#include <ulib/net/unixsocket.h>
 #include <ulib/plugin/mod_fcgi.h>
 #include <ulib/net/client/client.h>
 #include <ulib/net/server/server.h>
+
+#ifndef __MINGW32__
+#  include <ulib/net/unixsocket.h>
+#endif
 
 // ---------------------------------------------------------------------------------------------------------------
 // START Fast CGI stuff
@@ -189,8 +192,14 @@ int UFCGIPlugIn::handlerInit()
 
    if (connection)
       {
+#  ifdef __MINGW32__
+      U_INTERNAL_ASSERT_DIFFERS(connection->port, 0)
+
+      connection->socket = (USocket*)U_NEW(UTCPSocket(connection->bIPv6));
+#  else
       connection->socket = connection->port ? (USocket*)U_NEW(UTCPSocket(connection->bIPv6))
                                             : (USocket*)U_NEW(UUnixSocket);
+#  endif
 
       if (connection->connect())
          {

@@ -20,16 +20,17 @@ Take a look at:
 
     $ ./configure --help
 * ......
-* --with-libz             use system     LIBZ library - [will check /usr /usr/local]
-* --with-magic            use system libmagic library - [will check /usr /usr/local]
-* --with-pcre             use system     PCRE library - [will check /usr /usr/local]
-* --with-expat            use system    EXPAT library - [will check /usr /usr/local]
-* --with-ssl              use system      SSL library - [will check /usr /usr/local]
+* --with-ssl              use system      SSL library - [will check /usr /usr/local] [default=yes]
+* --with-libz             use system     LIBZ library - [will check /usr /usr/local] [default=yes]
+* --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=yes]
+* --with-libuuid          use system  libuuid library - [will check /usr /usr/local] [default=yes]
+* --with-magic            use system libmagic library - [will check /usr /usr/local] [default=yes]
+* --with-expat            use system    EXPAT library - [will check /usr /usr/local] [default=yes]
 * --with-ssh              use system      SSH library - [will check /usr /usr/local]
 * --with-curl             use system     cURL library - [will check /usr /usr/local]
 * --with-ldap             use system openLDAP library - [will check /usr /usr/local]
+* --with-mysql            use system    MySQL library - [will check /usr /usr/local]
 * --with-libevent         use system libevent library - [will check /usr /usr/local]
-* --with-libuuid          use system  libuuid library - [will check /usr /usr/local]
 * --with-libxml2          use system  libxml2 library - [will check /usr /usr/local]
 
 if you desire wrapping of some system library installed.

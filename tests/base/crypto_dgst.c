@@ -39,6 +39,10 @@ static void u_do_cipher(int alg, const char* key, uint32_t keylen)
       u_dgst_hash(buf, readlen);
       }
 
+#  ifdef __MINGW32__
+   (void) setmode(1, O_BINARY);
+#  endif
+
    write(STDOUT_FILENO, buf, u_dgst_finish(buf, 0));
 }
 

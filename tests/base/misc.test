@@ -12,15 +12,29 @@ type whoami >/dev/null 2>&1
 RESULT=$?
 
 if [ $RESULT -eq 0 ]; then
-	ARG1=`whoami`
+   ARG1=`whoami`
 else
-# 	ARG1="Administrator" # WIN2000AS
-#	ARG1='"stefano casazza"' # WINXP
+#  ARG1="Administrator" # WIN2000AS
+#  ARG1='"stefano casazza"' # WINXP
 #  ARG1='"admin"' # laptop
    ARG1='"stefano"' # ridwhan
 fi
 
-ARG2=`hostname`
+type hostname >/dev/null 2>&1
+RESULT=$?
+
+if [ $RESULT -eq 0 ]; then
+   ARG2=`hostname`
+else
+   ARG2='"david"'
+fi
+
+if [ "$TERM" = "msys"   ] || \
+   [ "$TERM" = "cygwin" ]
+then
+   ARG2='""'
+fi
+
 ARG3=`date +'%d/%m/%y %H:%M:%S'`
 ARG4=/var/spool/mail
 

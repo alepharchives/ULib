@@ -188,6 +188,17 @@ public:
       U_RETURN(ptr);
       }
 
+   uint32_t getSuffixLen(const char* ptr) const
+      {
+      U_TRACE(0, "UFile::getSuffixLen(%S)", ptr)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
+
+      uint32_t len = (path_relativ  + path_relativ_len) - ptr;
+
+      U_RETURN(len);
+      }
+
    static uint32_t setPathFromFile(const UFile& file, char* buffer_path, const char* suffix, uint32_t len);
 
    // OPEN - CLOSE
@@ -198,6 +209,8 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(pathname)
       U_INTERNAL_ASSERT_MAJOR(strlen(pathname), 0)
+
+      // NB: we centralize here O_BINARY...
 
       int fd = U_SYSCALL(open, "%S,%d,%d", U_PATH_CONV(pathname), flags | O_CLOEXEC | O_BINARY, mode);
 
@@ -217,11 +230,7 @@ public:
 
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
-#  ifdef __MINGW32__
-      (void) U_SYSCALL(_close, "%d", fd);
-#  else
-      (void) U_SYSCALL( close, "%d", fd);
-#  endif
+      (void) U_SYSCALL(close, "%d", fd);
       }
 
    bool open(                      int flags = O_RDONLY);
@@ -505,6 +514,12 @@ public:
 #undef rename
 #endif
 
+   // mkdir
+
+   static bool mkdir(const char* path, mode_t mode);
+
+   // unlink
+
    static bool unlink(const char* pathname)
       {
       U_TRACE(1, "UFile::unlink(%S)", pathname)
@@ -528,6 +543,22 @@ public:
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
       bool result = UFile::unlink(path_relativ);
+
+      U_RETURN(result);
+      }
+
+   // rename
+
+          bool rename(                     const char* newpath);
+   static bool rename(const char* oldpath, const char* newpath)
+      {
+      U_TRACE(1, "UFile::rename(%S,%S)", oldpath, newpath)
+
+#  ifdef __MINGW32__
+      bool result = (U_SYSCALL(rename_w32, "%S,%S", oldpath, newpath) != -1);
+#  else
+      bool result = (U_SYSCALL(rename,     "%S,%S", oldpath, newpath) != -1);
+#  endif
 
       U_RETURN(result);
       }
@@ -724,25 +755,9 @@ public:
       U_RETURN(result);
       }
 
-          bool write(                        const UString& data, bool append = false);
-   static bool writeTo(const UString& path,  const UString& data, bool append = false);
-   static bool writeToTmpl(const char* tmpl, const UString& data, bool append = false);
-
-   // rename
-
-          bool rename(                     const char* newpath);
-   static bool rename(const char* oldpath, const char* newpath)
-      {
-      U_TRACE(1, "UFile::rename(%S,%S)", oldpath, newpath)
-
-#  ifdef __MINGW32__
-      bool result = (U_SYSCALL(rename_w32, "%S,%S", oldpath, newpath) != -1);
-#  else
-      bool result = (U_SYSCALL(rename,     "%S,%S", oldpath, newpath) != -1);
-#  endif
-
-      U_RETURN(result);
-      }
+          bool write(                        const UString& data, bool append = false, bool bmkdirs = false);
+   static bool writeTo(const UString& path,  const UString& data, bool append = false, bool bmkdirs = false);
+   static bool writeToTmpl(const char* tmpl, const UString& data, bool append = false, bool bmkdirs = false);
 
    // symlink
 
@@ -818,8 +833,6 @@ public:
    bool sendfile(int out_fd, off_t* poffset = 0, size_t count = 0);
 
    // DIR OP
-
-   static bool mkdir(const char* path, mode_t mode);
 
    static bool rmdir(const char* path, bool remove_all = false);
 

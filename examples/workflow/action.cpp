@@ -148,7 +148,7 @@ bool Action::sendEmail()
          msg.add(UMimeMultipartMsg::section(data,   "", UMimeMultipartMsg::AUTO,
                                                     "", "", "Content-Disposition: attachment; filename=\"workflow-message.xml\""));
 
-         buffer = msg.message();
+         (void) msg.message(buffer);
          }
 
       emailClient.setMessageBody(buffer);

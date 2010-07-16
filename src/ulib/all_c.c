@@ -106,6 +106,14 @@
 #endif
 
 #ifdef HAVE_ZIP
+/*
+#undef  U_INTERNAL_TRACE
+#define U_INTERNAL_TRACE(format,args...) \
+{ char u_internal_buf[8192]; (void) sprintf(u_internal_buf, format"\n", args); \
+(void) write(STDERR_FILENO, u_internal_buf, strlen(u_internal_buf)); }
+#undef  U_INTERNAL_PRINT
+#define U_INTERNAL_PRINT(format,args...) U_INTERNAL_TRACE(format,args)
+*/
 #  include "base/zip/dostime.c"
 #  include "base/zip/inflate.c"
 #  include "base/zip/pushback.c"

@@ -94,7 +94,16 @@ void UClientImage_Base::logResponse(const char* fileres)
       {
       if (UHTTP::isHTTPRequest()) // NB: only HTTP header...
          {
-         u_printf_string_max_length = (body->empty() ? u_findEndHeader(U_STRING_TO_PARAM(*wbuffer)) : wbuffer->size()); 
+         U_ASSERT_DIFFERS(wbuffer->empty(), true)
+
+         u_printf_string_max_length = u_findEndHeader(U_STRING_TO_PARAM(*wbuffer)); 
+
+         if (u_printf_string_max_length == -1)
+            {
+            U_ASSERT_DIFFERS(body->empty(), true)
+
+            u_printf_string_max_length = wbuffer->size();
+            }
 
          U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
          }
@@ -330,7 +339,7 @@ bool UClientImage_Base::isPipeline()
          {
          rbuffer->moveToBeginDataInBuffer(USocketExt::size_message);
 
-         U_INTERNAL_DUMP("rbuffer = %.*S", U_STRING_TO_TRACE(*rbuffer));
+         U_INTERNAL_DUMP("rbuffer = %.*S", U_STRING_TO_TRACE(*rbuffer))
 
          resetBuffer();
 
@@ -462,8 +471,8 @@ int UClientImage_Base::handlerWrite()
    U_INTERNAL_ASSERT_POINTER(wbuffer)
    U_INTERNAL_ASSERT(socket->isOpen())
 
-   U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer));
-   U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body));
+   U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer))
+   U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body))
 
    U_ASSERT_DIFFERS(wbuffer->empty(), true)
 

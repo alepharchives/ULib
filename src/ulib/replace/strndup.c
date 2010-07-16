@@ -38,7 +38,7 @@ extern U_EXPORT size_t strnlen(const char* string, size_t maxlen);
 
 U_EXPORT size_t strnlen(const char* string, size_t maxlen)
 {
-   const char* end = memchr(string, '\0', maxlen);
+   const char* end = (const char*) memchr(string, '\0', maxlen);
 
    return (end ? (size_t)(end - string) : maxlen);
 }
@@ -46,11 +46,11 @@ U_EXPORT size_t strnlen(const char* string, size_t maxlen)
 U_EXPORT char* strndup(const char* s, size_t n)
 {
    size_t len = strnlen(s, n);
-   char*  new = malloc(len + 1);
+   char*  res = (char*) malloc(len + 1);
 
-   if (new == NULL) return NULL;
+   if (res == 0) return 0;
 
-   new[len] = '\0';
+   res[len] = '\0';
 
-   return (char*) memcpy(new, s, len);
+   return (char*) memcpy(res, s, len);
 }

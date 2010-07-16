@@ -6,38 +6,38 @@
 
 /* Very simple-minded mkdtemp() replacement */
 
-extern U_EXPORT char* mkdtemp(char* rtemplate);
+extern U_EXPORT char* mkdtemp(char* rltemplate);
 
-U_EXPORT char* mkdtemp(char* rtemplate)
+U_EXPORT char* mkdtemp(char* rltemplate)
 {
-   char* template;
+   char* ltemplate;
    int i, oerrno, error;
 
-   if (!(template = malloc(strlen(rtemplate) + 1))) return(NULL);
+   if (!(ltemplate = (char*) malloc(strlen(rltemplate) + 1))) return(NULL);
 
    for (error = 0, i = 0; i < 1000; ++i)
       {
-      (void) strcpy(template, rtemplate);
+      (void) strcpy(ltemplate, rltemplate);
 
-      if (mktemp(template) == NULL)
+      if (mktemp(ltemplate) == NULL)
          {
          error = 1;
 
          break;
          }
 
-      error = mkdir(template, 0700);
+      error = mkdir(ltemplate, 0700);
 
       if (!error || errno != EEXIST) break;
       }
 
    oerrno = errno;
 
-   if (*template) (void) strcpy(rtemplate, template);
+   if (*ltemplate) (void) strcpy(rltemplate, ltemplate);
 
-   free(template);
+   free(ltemplate);
 
    errno = oerrno;
 
-   return (error ? NULL : rtemplate);
+   return (error ? NULL : rltemplate);
 }

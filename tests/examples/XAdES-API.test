@@ -74,7 +74,7 @@ start_prg client -c XAdESclient.cfg -- 2 \
 									 $SIGNATURE_TIMESTAMP
 
 ARCHIVE_TIMESTAMP="http://localhost/tsa"
-SCHEMA=/mnt/home/stefano/XAdES/XAdESv141.xsd
+SCHEMA=/mnt/storage/stefano/XAdES/XAdESv141.xsd
 
 start_prg client -c XAdESclient.cfg -- 3 \
 									 out/client.out \

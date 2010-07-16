@@ -48,44 +48,53 @@ inline char* UMimeMultipartMsg::mkboundary()
    U_RETURN(ptr);
 }
 
-UMimeMultipartMsg::UMimeMultipartMsg(const char* type, Encoding encoding, const char* header)
+UMimeMultipartMsg::UMimeMultipartMsg(const char* type, Encoding encoding, const char* header, bool bRFC2045MIMEMSG)
 {
-   U_TRACE_REGISTER_OBJECT(0, UMimeMultipartMsg, "%S,%d,%S", type, encoding, header)
+   U_TRACE_REGISTER_OBJECT(0, UMimeMultipartMsg, "%S,%d,%S,%b", type, encoding, header, bRFC2045MIMEMSG)
 
    U_INTERNAL_ASSERT_POINTER(type)
    U_INTERNAL_ASSERT_POINTER(header)
 
-   UString buffer(U_CAPACITY);
-
    char* ptr = mkboundary();
 
-   buffer.snprintf("%s%s"
+   UString buffer(U_CAPACITY);
+
+   buffer.snprintf("%s%s"                                            // MIME-Version: 1.0
                    "Content-Type: multipart/%s; boundary=\"%s\"%s"
-                   "Content-Transfer-Encoding: %s%s%s"
-                   RFC2045MIMEMSG,
-                   header, (*header ? u_line_terminator : ""),
+                   "%s%s%s"                                          // Content-Transfer-Encoding: ...
+                   "%s"                                              // \r\n
+                   "%s",                                             // RFC2045MIMEMSG
+                   (*header ? header            : ""),
+                   (*header ? u_line_terminator : ""),
                    type, ptr, u_line_terminator,
-                   str_encoding[encoding - 1], u_line_terminator, u_line_terminator);
+                   (encoding == NONE ? "" : "Content-Transfer-Encoding: "),
+                   (encoding == NONE ? "" : str_encoding[encoding - 1]),
+                   (encoding == NONE ? "" : u_line_terminator),
+                   u_line_terminator,
+                   (bRFC2045MIMEMSG ? RFC2045MIMEMSG : ""));
 
    vec_part.push(buffer);
 }
 
-UString UMimeMultipartMsg::message()
+uint32_t UMimeMultipartMsg::message(UString& body)
 {
-   U_TRACE(0, "UMimeMultipartMsg::message()")
+   U_TRACE(0, "UMimeMultipartMsg::message(%.*S)", U_STRING_TO_TRACE(body))
 
    U_ASSERT_MAJOR(vec_part.size(),1)
 
    char buf[64];
-   uint32_t len = u_snprintf(buf, sizeof(buf), "%s%s", boundary, u_line_terminator);
+   uint32_t content_length = vec_part[0].size(),
+            len = u_snprintf(buf, sizeof(buf), "%s%s", boundary, u_line_terminator);
 
-   UString msg = vec_part.join(buf, len);
+   body = vec_part.join(buf, len);
 
    len = u_snprintf(buf, sizeof(buf), "%s--%s", boundary, u_line_terminator);
 
-   msg.append(buf, len);
+   (void) body.append(buf, len);
 
-   U_RETURN_STRING(msg);
+   content_length = body.size() - content_length;
+
+   U_RETURN(content_length);
 }
 
 // Determine encoding as follows:
@@ -188,10 +197,14 @@ UString UMimeMultipartMsg::section(const UString& content,
    if (*charset) buffer.snprintf_add("; charset=\"%s\"", charset);
    if (*name)    buffer.snprintf_add("; name=\"%s\"", name);
 
-   buffer.snprintf_add("%s"
-                       "Content-Transfer-Encoding: %s%s%s",
+   buffer.snprintf_add("%s"      // \r\n
+                       "%s%s%s"  // Content-Transfer-Encoding: ...
+                       "%s",     // \r\n
                        u_line_terminator,
-                       str_encoding[encoding - 1], u_line_terminator, u_line_terminator);
+                       (encoding == NONE ? "" : "Content-Transfer-Encoding: "),
+                       (encoding == NONE ? "" : str_encoding[encoding - 1]),
+                       (encoding == NONE ? "" : u_line_terminator),
+                       u_line_terminator);
 
    if (encoding == BASE64 ||
        encoding == QUOTED_PRINTABLE)

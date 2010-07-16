@@ -621,52 +621,31 @@ loop:
 
 ssize_t USSLSocket::writev(const struct iovec* iov, int iovcnt)
 {
-   U_TRACE(1, "USSLSocket::writev(%p,%d)", iov, iovcnt)
+   U_TRACE(0, "USSLSocket::writev(%p,%d)", iov, iovcnt)
 
-   U_INTERNAL_ASSERT(USocket::isOpen())
+   // Determine the total length of all the buffers in <iov>
 
-   ssize_t iBytesWrite;
+   int i;
+   char* buf;
+   char* ptr;
+   size_t length = 0;
 
-   if (active == false) iBytesWrite = USocket::writev(iov, iovcnt);
-   else
+   for (i = 0; i < iovcnt; ++i) length += iov[i].iov_len;
+
+   ptr = buf = (char*) UMemoryPool::_malloc(length);
+
+   for (i = 0; i < iovcnt; ++i)
       {
-      U_INTERNAL_ASSERT_POINTER(ssl)
+      (void) memcpy(ptr, iov[i].iov_base, iov[i].iov_len);
 
-      ssize_t iBytes;
-
-      iBytesWrite = 0;
-
-      for (int i = 0; i < iovcnt; ++i)
-         {
-         if (iov[i].iov_len == 0) continue;
-loop:
-         errno  = 0;
-         iBytes = U_SYSCALL(SSL_write, "%p,%p,%d", ssl, iov[i].iov_base, iov[i].iov_len);
-
-         if (iBytes <= 0)
-            {
-            if (errno) iState = -errno;
-            else
-               {
-               ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
-
-               U_DUMP("status = %.*S", 512, status(false))
-
-               if (ret == SSL_ERROR_WANT_WRITE) goto loop;
-               }
-
-            break;
-            }
-
-         iBytesWrite += iBytes;
-         }
+      ptr += iov[i].iov_len;
       }
 
-#ifdef DEBUG
-   if (iBytesWrite > 0) U_INTERNAL_DUMP("BytesWrite(%d) = %.*S", iBytesWrite, iov[0].iov_len, iov[0].iov_base)
-#endif
+   ssize_t result = USSLSocket::send(buf, length);
 
-   U_RETURN(iBytesWrite);
+   UMemoryPool::_free(buf, length);
+
+   U_RETURN(result);
 }
 
 // DEBUG

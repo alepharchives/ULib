@@ -61,11 +61,12 @@ public:
    U_MEMORY_DEALLOCATOR
 
    enum Encoding {
-      AUTO              = 0,
-      BIT7              = 1,
-      BIT8              = 2,
-      QUOTED_PRINTABLE  = 3,
-      BASE64            = 4
+      NONE              = -1,
+      AUTO              =  0,
+      BIT7              =  1,
+      BIT8              =  2,
+      QUOTED_PRINTABLE  =  3,
+      BASE64            =  4
    };
 
    // Creating a multipart MIME collection
@@ -76,7 +77,8 @@ public:
 
    UMimeMultipartMsg(const char* type = "mixed",
                      Encoding encoding = BIT8,
-                     const char* header = "MIME-Version: 1.0");
+                     const char* header = "MIME-Version: 1.0",
+                     bool bRFC2045MIMEMSG = true);
 
    ~UMimeMultipartMsg()
       {
@@ -85,7 +87,7 @@ public:
 
    // VARIE
 
-   UString message();
+   uint32_t message(UString& body);
 
    // manage parts
 
@@ -127,7 +129,11 @@ public:
       {
       U_TRACE(0+256, "UMimeMultipartMsg::operator<<(%p,%p)", &os, &m)
 
-      os << m.message();
+      UString body;
+
+      (void) m.message(body);
+
+      os << body;
 
       return os;
       }

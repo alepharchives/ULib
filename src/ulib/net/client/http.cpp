@@ -275,7 +275,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
 
    if (authResponse.empty())
       {
-      U_DUMP("%.*S header missing from HTTP response: %d", U_STRING_TO_TRACE(sHeader), UHTTP::http_info.nResponseCode);
+      U_DUMP("%.*S header missing from HTTP response: %d", U_STRING_TO_TRACE(sHeader), UHTTP::http_info.nResponseCode)
 
       U_RETURN(false);
       }
@@ -671,7 +671,7 @@ bool UHttpClient_Base::sendRequest(UString& data)
       if (UClient_Base::connect() == false) goto end;
       }
 
-   U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", UHTTP::http_info.nResponseCode);
+   U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", UHTTP::http_info.nResponseCode)
 
    body.clear();
 

@@ -11,18 +11,19 @@ struct U_EXPORT UXAdESUtility {
    UZIP zip;
    bool ooffice, msword;
    UString MSname, OOname, tmpdir, docout;
-   UVector<UString> vuri, vdocument, OOZipStructure, MSZipStructure, ZipStructure, ZipContent, OOToBeSigned, MSToBeSigned;
+   UVector<UString> vuri, vdocument, OOZipStructure, MSZipStructure, ZipStructure, ZipContent, OOToBeSigned, MSToBeSigned, MSSignatureStructure;
 
+   void clean();
    void handlerConfig(UFileConfig& cfg);
 
    // ---------------------------------------------------------------------------------------------------------------
    // check for OOffice or MS-Word document...
    // ---------------------------------------------------------------------------------------------------------------
 
-   bool checkDocument(const UString& document, const char* data_uri);
+   bool checkDocument(const UString& document, const char* data_uri, bool adjust);
 
    UString getSigned();
-   UString outputDocument(const UString& firma);
+   void    outputDocument(const UString& firma);
 };
 
 #endif

@@ -176,7 +176,7 @@ inline bool UFtpClient::readPortToConnect()
 
    port = addr[4] * (1 << 8) + addr[5];
 
-   U_INTERNAL_DUMP("address = %d.%d.%d.%d:%d", addr[0], addr[1], addr[2], addr[3], port);
+   U_INTERNAL_DUMP("address = %d.%d.%d.%d:%d", addr[0], addr[1], addr[2], addr[3], port)
 
    U_RETURN(true);
 }
@@ -224,7 +224,7 @@ inline void UFtpClient::readNumberOfByte()
       ++p;
       }
 
-   U_INTERNAL_DUMP("bytes_to_read = %lu", bytes_to_read);
+   U_INTERNAL_DUMP("bytes_to_read = %lu", bytes_to_read)
 }
 
 bool UFtpClient::createPassiveDataConnection()
@@ -273,7 +273,7 @@ int UFtpClient::retrieveFile(const UString& path, off_t offset)
             pasv.close();
             }
 
-         U_INTERNAL_DUMP("bytes_to_read = %lu", bytes_to_read);
+         U_INTERNAL_DUMP("bytes_to_read = %lu", bytes_to_read)
          }
       }
 

@@ -137,6 +137,13 @@
 #  define FILENAME_CMP(s1, s2)  strcmp(s1, s2)
 #  define U_PATH_CONV(s)        (s)
 #  define U_PATH_SHELL          U_CONSTANT_TO_PARAM("/bin/sh ")
+/* unix is binary by default */
+#ifndef   O_BINARY
+#  define O_BINARY 0
+#endif
+#ifndef   O_TEXT
+#  define O_TEXT 0
+#endif
 #endif
 
 /* Defs */
@@ -146,10 +153,6 @@
 #endif
 #ifndef U_max
 #  define U_max(x,y) ((x) >= (y) ? (x) : (y))
-#endif
-
-#ifndef   O_BINARY
-#  define O_BINARY 0 /* unix is binary by default */
 #endif
 
 #ifndef   U_PATH_MAX

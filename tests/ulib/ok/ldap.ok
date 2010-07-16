@@ -62,3 +62,7 @@ dn:   uid=valentino.ditoma,o=mail
 cn:   Valentino Ditoma
 mail: valentino.ditoma@unirel.com
 
+dn:   uid=tickets,o=mail
+cn:   tickets
+mail: tickets@unirel.com
+

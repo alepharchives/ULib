@@ -14,7 +14,7 @@ client_LDADD    = $(top_builddir)/src/ulib/lib@ULIB@.la
 client_SOURCES  = client.cpp
 client_LDFLAGS  = $(PRG_LDFLAGS)
 
-verify_LDADD    = libverify.la $(top_builddir)/src/ulib/lib@ULIB@.la
+verify_LDADD    = libverify.la libutility.la $(top_builddir)/src/ulib/lib@ULIB@.la
 verify_SOURCES  = verify.cpp
 verify_LDFLAGS  = $(PRG_LDFLAGS)
 
@@ -24,7 +24,7 @@ libutility_la_SOURCES = utility.cpp
 ## for convenience library
 noinst_LTLIBRARIES = libutility.la libverify.la
 
-noinst_PROGRAMS = sign archive client verify
+bin_PROGRAMS = sign archive client verify
 
 clean-local:
 	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out

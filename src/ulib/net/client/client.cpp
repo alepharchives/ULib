@@ -112,7 +112,7 @@ bool UClient_Base::setHostPort(const UString& host, int _port)
          host_port.append(tmp, size);
          }
 
-      U_INTERNAL_DUMP("host_port = %.*S", U_STRING_TO_TRACE(host_port));
+      U_INTERNAL_DUMP("host_port = %.*S", U_STRING_TO_TRACE(host_port))
 
       U_RETURN(true);
       }

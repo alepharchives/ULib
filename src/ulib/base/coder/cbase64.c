@@ -68,7 +68,7 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
    unsigned char* restrict r = result;
    int char_count = 0, bits = 0, cols = 0;
 
-   U_INTERNAL_TRACE("u_base64_encode(%.*s,%u,%p)", len, input, len, result)
+   U_INTERNAL_TRACE("u_base64_encode(%.*s,%u,%p)", U_min(len,128), input, len, result)
 
    U_INTERNAL_ASSERT_POINTER(input)
 
@@ -147,7 +147,7 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
    unsigned char* restrict r   = result;
    const    char* restrict end = input + len;
 
-   U_INTERNAL_TRACE("u_base64_decode(%.*s,%u,%p)", len, input, len, result)
+   U_INTERNAL_TRACE("u_base64_decode(%.*s,%u,%p)", U_min(len,128), input, len, result)
 
    U_INTERNAL_ASSERT_POINTER(input)
 

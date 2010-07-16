@@ -342,19 +342,16 @@ bool UDSIGContext::processManifestNode(xmlNodePtr node)
 
       /* process */
 
-      if (ref->processNode(cur) == false) goto end;
+      if (ref->processNode(cur) == false) U_RETURN(false);
 
       cur = UXML2Node::getNextSibling(cur->next);
       }
 
    // if there is something left than it's an error
 
-   if (cur) goto end;
+   if (cur) U_RETURN(false);
 
    U_RETURN(true);
-
-end:
-   U_RETURN(false);
 }
 
 /**
@@ -395,62 +392,19 @@ bool UDSIGContext::processObjectNode(xmlNodePtr node)
    while (UXML2Node::checkNodeName(cur, (const xmlChar*)"Manifest",
                                         (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
       {
-      if (processManifestNode(cur) == false) goto end;
+      if (processManifestNode(cur) == false) U_RETURN(false);
 
       cur = UXML2Node::getNextSibling(cur->next);
       }
 
    U_RETURN(true);
-
-end:
-   U_RETURN(false);
 }
 
 bool UDSIGContext::processKeyInfoNode()
 {
    U_TRACE(0, "UDSIGContext::processKeyInfoNode()")
 
-   U_INTERNAL_ASSERT_POINTER(signMethod)
-
-   /* set key requirements
-
-   ret = xmlSecTransformSetKeyReq(dsigCtx->signMethod, &(dsigCtx->keyInfoReadCtx.keyReq));
-
-   // ignore <dsig:KeyInfo /> if there is the key is already set
-   // TODO: throw an error if key is set and node != NULL?
-
-   if ((dsigCtx->signKey == NULL) &&
-       (dsigCtx->keyInfoReadCtx.keysMngr != NULL) &&
-       (dsigCtx->keyInfoReadCtx.keysMngr->getKey != NULL))
-      {  
-      dsigCtx->signKey = (dsigCtx->keyInfoReadCtx.keysMngr->getKey)(node, &(dsigCtx->keyInfoReadCtx));
-      }
-
-   // check that we have exactly what we want
-
-   if ((dsigCtx->signKey == NULL) ||
-       (!xmlSecKeyMatch(dsigCtx->signKey, NULL, &(dsigCtx->keyInfoReadCtx.keyReq))))
-      {
-      goto end;
-      }
-
-   // set the key to the transform
-
-   ret = xmlSecTransformSetKey(dsigCtx->signMethod, dsigCtx->signKey);
-
-   // if we are signing document, update <dsig:KeyInfo/> node
-
-   if (node &&
-       operation == UBaseTransform::SIGN)
-      {  
-      ret = xmlSecKeyInfoNodeWrite(node, dsigCtx->signKey, &(dsigCtx->keyInfoWriteCtx));
-      }
-   */
-
    U_RETURN(true);
-
-end:
-   U_RETURN(false);
 }
 
 /**
@@ -492,11 +446,11 @@ end:
  *     <element ref="ds:Object" minOccurs="0" maxOccurs="unbounded"/> 
  *     </sequence> <attribute name="Id" type="ID" use="optional"/>
  *  </complexType>
- *    
+ *
  * DTD:
- *    
+ *
  *  <!ELEMENT Signature (SignedInfo, SignatureValue, KeyInfo?, Object*)  >
- *  <!ATTLIST Signature  
+ *  <!ATTLIST Signature
  *      xmlns   CDATA   #FIXED 'http://www.w3.org/2000/09/xmldsig#'
  *      Id      ID  #IMPLIED >
  */
@@ -506,8 +460,6 @@ bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
    U_TRACE(0, "UDSIGContext::processSignatureNode(%p)", signature)
 
    U_INTERNAL_ASSERT_POINTER(signature)
-   U_INTERNAL_ASSERT_EQUALS(signMethod, 0)
-   U_INTERNAL_ASSERT_EQUALS(c14nMethod, 0)
    U_INTERNAL_ASSERT_EQUALS(signValueNode, 0)
    U_INTERNAL_ASSERT(operation == UBaseTransform::VERIFY)
    U_INTERNAL_ASSERT_EQUALS(status, UReferenceCtx::UNKNOWN)
@@ -523,14 +475,14 @@ bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
    signedInfoNode = UXML2Node::getNextSibling(signature->children);
 
    if (UXML2Node::checkNodeName(signedInfoNode, (const xmlChar*)"SignedInfo",
-                                                (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) goto end;
+                                                (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) U_RETURN(false);
 
    // next node is required SignatureValue
 
    signValueNode = UXML2Node::getNextSibling(signedInfoNode->next);
 
    if (UXML2Node::checkNodeName(signValueNode, (const xmlChar*)"SignatureValue",
-                                               (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) goto end;
+                                               (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) U_RETURN(false);
 
    // next node is optional KeyInfo
 
@@ -554,18 +506,18 @@ bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
       {
       /* read manifests from objects */
 
-      if (processObjectNode(cur) == false) goto end;
+      if (processObjectNode(cur) == false) U_RETURN(false);
 
       cur = UXML2Node::getNextSibling(cur->next);
       }
 
    // if there is something left than it's an error
 
-   if (cur) goto end;
+   if (cur) U_RETURN(false);
 
    // now validated all the references and prepare transform
 
-   if (processSignedInfoNode() == false) goto end;
+   if (processSignedInfoNode() == false) U_RETURN(false);
 
    /* references processing might change the status */
 
@@ -576,51 +528,13 @@ bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
    U_INTERNAL_ASSERT_POINTER(c14nMethod)
    U_INTERNAL_ASSERT_POINTER(signMethod)
 
-   if (processKeyInfoNode() == false) goto end;
-
-   /*
-   // as the result, we should have a key
-
-   U_INTERNAL_ASSERT_POINTER(signKey)
-
-   // if we need to write result to xml node then we need base64 encode result
-
-   if (operation == UBaseTransform::SIGN)
-      {  
-      xmlSecTransformPtr base64Encode;
-
-      // we need to add base64 encode transform
-
-      base64Encode = xmlSecTransformCtxCreateAndAppend(&(dsigCtx->transformCtx), xmlSecTransformBase64Id);
-
-      base64Encode->operation = xmlSecTransformOperationEncode;
-      }
-
-   int firstType = xmlSecTransformGetDataType(dsigCtx->transformCtx.first, xmlSecTransformModePush, &(dsigCtx->transformCtx));
-
-   if ((firstType & UTransformCtx::XML) != 0)
-      {
-      U_INTERNAL_ASSERT_POINTER(signedInfoNode)
-
-      xmlSecNodeSetPtr nodeset = xmlSecNodeSetGetChildren(signedInfoNode->doc, signedInfoNode, 1, 0);
-
-      // calculate the signature
-
-      ret = xmlSecTransformCtxXmlExecute(&(dsigCtx->transformCtx), nodeset);
-
-      xmlSecNodeSetDestroy(nodeset);
-      }
-   */
+   if (processKeyInfoNode() == false) U_RETURN(false);
 
    U_RETURN(true);
-
-end:
-   U_RETURN(false);
 }
 
 /**
- * @transform: the pointer to transform.
- * @node:      the pointer to node.
+ * @node: the pointer to node.
  *
  * Gets the @node content, base64 decodes it and calls transform->verify()
  * function to verify binary results.
@@ -628,33 +542,29 @@ end:
  * Returns: true on success or false if an error occurs.
  */
 
-bool UTransformCtx::verifyNodeContent(UBaseTransform* transform, xmlNodePtr node)
+bool UTransformCtx::verifyNodeContent(xmlNodePtr node)
 {
-   U_TRACE(0, "UTransformCtx::verifyNodeContent(%p,%p)", transform, node)
+   U_TRACE(0, "UTransformCtx::verifyNodeContent(%p)", node)
 
    U_INTERNAL_ASSERT_POINTER(node)
-   U_INTERNAL_ASSERT_POINTER(transform)
 
+   /*
    const char* content = (const char*) UXML2Node::getContent(node);
 
    uint32_t size = u_strlen(content);
 
    transform->inBuf.reserve(size);
 
-   if (UBase64::decode(content, size, transform->inBuf) == false) goto end;
+   if (UBase64::decode(content, size, transform->inBuf) == false) U_RETURN(false);
 
-   /*
     * Verifies the data with transform's processing results
     * (for digest, HMAC and signature transforms). The verification 
     * result is stored in the #status member of #UBaseTransform object.
-    */
 
-   if (transform->verify() == false) goto end;
+   if (transform->verify() == false) U_RETURN(false);
+   */
 
    U_RETURN(true);
-
-end:
-   U_RETURN(false);
 }
 
 /**
@@ -663,65 +573,24 @@ end:
  * Returns: true on success or false otherwise.
  */
 
-bool UTransformCtx::execute()
+bool UTransformCtx::execute(UString& data)
 {
-   U_TRACE(0, "UTransformCtx::execute()")
+   U_TRACE(0, "UTransformCtx::execute(%.*S)", U_STRING_TO_TRACE(data))
 
    U_INTERNAL_ASSERT_EQUALS(status, 0)
 
-   if (       uri &&
-       strlen(uri))
+   U_INTERNAL_DUMP("uri = %S xptrExpr = %S status = %d enabledUris = %d chain.size() = %u", uri, xptrExpr, status, enabledUris, chain.size())
+
+   UBaseTransform* elem;
+
+   for (uint32_t i = 0, n = chain.size(); i < n; ++i)
       {
-      UBaseTransform* uriTransform = U_NEW(UTranformInputURI(uri));
+      elem = chain[i];
 
-      chain.insert(0, uriTransform);
-
-      // Process binary data from the URI using transforms chain in ctx
-
-      /* 
-      // we do not need to do something special for this transform
-
-      ret = xmlSecTransformCtxPrepare(ctx, xmlSecTransformDataTypeUnknown);
-
-      // Now we have a choice: we either can push from first transform or pop 
-      // from last. Our C14N transforms prefers push, so push data!
-
-      ret = xmlSecTransformPump(uriTransform, uriTransform->next, ctx);     
-
-      status = xmlSecTransformStatusFinished;
-      */
-      }
-   else
-      {
-      /*
-      xmlSecNodeSetPtr nodes;
-
-      if (       xptrExpr &&
-          strlen(xptrExpr))
-         {
-         // our xpointer transform takes care of providing correct nodes set
-
-         nodes = xmlSecNodeSetCreate(doc, NULL, xmlSecNodeSetNormal);
-         }
-      else
-         {
-         // we do not want to have comments for empty URI
-
-         nodes = xmlSecNodeSetGetChildren(doc, NULL, 0, 0);
-         }
-
-      ret = xmlSecTransformCtxXmlExecute(ctx, nodes);
-
-      // TODO: don't destroy nodes here
-
-      xmlSecNodeSetDestroy(nodes);
-      */
+      if (elem->execute(data) == false) U_RETURN(false);
       }
 
    U_RETURN(true);
-
-end:
-   U_RETURN(false);
 }
 
 /**
@@ -736,7 +605,8 @@ bool UDSIGContext::verify(UXML2Document& document)
 {
    U_TRACE(0, "UDSIGContext::verify(%p)", &document)
 
-   operation = UBaseTransform::VERIFY;
+   operation                   = UBaseTransform::VERIFY;
+   UTranformXPointer::document = &document;
 
    // find signature node (the Signature element is the root element of an XML Signature)
 
@@ -747,10 +617,7 @@ bool UDSIGContext::verify(UXML2Document& document)
    /* read signature info */
 
    if (signature == 0 ||
-       processSignatureNode(signature) == false) goto end;
-
-   U_INTERNAL_ASSERT_POINTER(signMethod)
-   U_INTERNAL_ASSERT_POINTER(signValueNode)
+       processSignatureNode(signature) == false) U_RETURN(false);
 
    /* references processing might change the status */
 
@@ -758,16 +625,13 @@ bool UDSIGContext::verify(UXML2Document& document)
 
    /* verify SignatureValue node content */
 
-   if (transformCtx.verifyNodeContent(signMethod, signValueNode) == false) goto end;
+   if (transformCtx.verifyNodeContent(signValueNode) == false) U_RETURN(false);
 
    /* set status and we are done */
 
    status = (signMethod->status == UBaseTransform::OK ? UReferenceCtx::SUCCEEDED : UReferenceCtx::INVALID);
 
    U_RETURN(true);
-
-end:
-   U_RETURN(false);
 }
 
 /**
@@ -794,9 +658,6 @@ bool UReferenceCtx::processNode(xmlNodePtr node)
    U_TRACE(0, "UReferenceCtx::processNode(%p)", node)
 
    U_INTERNAL_ASSERT_POINTER(node)
-   U_INTERNAL_ASSERT_EQUALS(digestMethod, 0)
-
-   xmlNodePtr cur, digestValueNode;
 
    // read attributes first
 
@@ -806,11 +667,11 @@ bool UReferenceCtx::processNode(xmlNodePtr node)
 
    /* set start URI (and check that it is enabled!) */
 
-   if (transformCtx.setURI(uri, node) == false) goto end;
+   if (transformCtx.setURI(uri, node) == false) U_RETURN(false);
 
    // first is optional Transforms node
 
-   cur = UXML2Node::getNextSibling(node->children);
+   xmlNodePtr cur = UXML2Node::getNextSibling(node->children);
 
    if (UXML2Node::checkNodeName(cur, (const xmlChar*)"Transforms",
                                      (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
@@ -818,7 +679,7 @@ bool UReferenceCtx::processNode(xmlNodePtr node)
       // Reads transforms from the <dsig:Transform/> children of the @node and 
       // appends them to the current transforms chain in @ctx object.
 
-      if (transformCtx.nodesListRead(cur, UBaseTransform::DSIG) == false) goto end;
+      if (transformCtx.nodesListRead(cur, UBaseTransform::DSIG) == false) U_RETURN(false);
 
       cur = UXML2Node::getNextSibling(cur->next);
       }
@@ -828,16 +689,18 @@ bool UReferenceCtx::processNode(xmlNodePtr node)
    if (UXML2Node::checkNodeName(cur, (const xmlChar*)"DigestMethod",
                                      (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
       {
-      digestMethod = UTransformCtx::nodeRead(cur, UBaseTransform::DIGEST);
+      UBaseTransform* digestMethod = UTransformCtx::nodeRead(cur, UBaseTransform::DIGEST);
+
+      if (digestMethod == 0) U_RETURN(false);
+
+      transformCtx.chain.push(digestMethod);
 
       cur = UXML2Node::getNextSibling(cur->next);
       }
 
-   if (digestMethod == 0) goto end;
-
-   digestMethod->operation = UDSIGContext::pthis->operation;
-
    // last node is required DigestValue
+
+   xmlNodePtr digestValueNode = 0;
 
    if (UXML2Node::checkNodeName(cur, (const xmlChar*)"DigestValue",
                                      (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#"))
@@ -849,58 +712,22 @@ bool UReferenceCtx::processNode(xmlNodePtr node)
 
    // if there is something left than it's an error
 
-   if (cur) goto end;
+   if (cur) U_RETURN(false);
 
-   // if we need to write result to xml node then we need base64 encode result
+   if (digestValueNode == 0) U_RETURN(false);
 
-   if (UDSIGContext::pthis->operation == UBaseTransform::SIGN)
-      {
-      /* we need to add base64 encode transform
+   // verify Reference node content
 
-      xmlSecTransformPtr base64Encode = xmlSecTransformCtxCreateAndAppend(transformCtx, xmlSecTransformBase64Id);
+   UString data;
+   const char* content = (const char*) UXML2Node::getContent(digestValueNode);
 
-      base64Encode->operation = xmlSecTransformOperationEncode;
-      */
-      }
+   if (transformCtx.execute(data) == false || data != content) U_RETURN(false);
 
-   // finally get transforms results
-
-   if (transformCtx.execute() == 0) goto end;
-
-   /*
-   dsigRefCtx->result = transformCtx->result;
-
-   if (UDSIGContext::pthis->operation == UBaseTransform::SIGN)
-      {
-      if (digest_result.empty() ||
-          xmlSecBufferGetData(digest_result) == false) goto end;
-
-      // write signed data to xml
-
-      xmlNodeSetContentLen(digestValueNode, xmlSecBufferGetData(dsigRefCtx->result), xmlSecBufferGetSize(dsigRefCtx->result));
-
-      // set success status and we are done
-
-      status = SUCCEEDED;
-      }
-   else
-      {
-      // verify SignatureValue node content
-
-      ret = xmlSecTransformVerifyNodeContent(dsigRefCtx->digestMethod, digestValueNode, transformCtx);
-
-      // set status and we are done
-
-      status = (digestMethod->status == UBaseTransform::OK ? SUCCEEDED : INVALID);
-      }
-   */
+   // set status and we are done
 
    status = SUCCEEDED;
 
    U_RETURN(true);
-
-end:
-   U_RETURN(false);
 }
 
 /** 
@@ -939,22 +766,20 @@ bool UDSIGContext::processSignedInfoNode()
 {
    U_TRACE(0, "UDSIGContext::processSignedInfoNode()")
 
-   U_INTERNAL_ASSERT_EQUALS(signMethod, 0)
-   U_INTERNAL_ASSERT_EQUALS(c14nMethod, 0)
+   U_INTERNAL_ASSERT(operation == UBaseTransform::VERIFY)
    U_ASSERT_EQUALS(pthis->signedInfoReferences.size(), 0)
    U_INTERNAL_ASSERT_EQUALS(status, UReferenceCtx::UNKNOWN)
-   U_INTERNAL_ASSERT(operation == UBaseTransform::VERIFY || operation == UBaseTransform::SIGN)
 
    // first node is required CanonicalizationMethod
 
    xmlNodePtr cur = UXML2Node::getNextSibling(signedInfoNode->children);
 
    if (UXML2Node::checkNodeName(cur, (const xmlChar*)"CanonicalizationMethod",
-                                     (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) goto end;
+                                     (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) U_RETURN(false);
 
    c14nMethod = UTransformCtx::nodeRead(cur, UBaseTransform::C14N);
 
-   if (c14nMethod == 0) goto end;
+   if (c14nMethod == 0) U_RETURN(false);
 
    transformCtx.chain.push(c14nMethod);
 
@@ -963,11 +788,11 @@ bool UDSIGContext::processSignedInfoNode()
    cur = UXML2Node::getNextSibling(cur->next);
 
    if (UXML2Node::checkNodeName(cur, (const xmlChar*)"SignatureMethod",
-                                     (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) goto end;
+                                     (const xmlChar*)"http://www.w3.org/2000/09/xmldsig#") == false) U_RETURN(false);
 
    signMethod = UTransformCtx::nodeRead(cur, UBaseTransform::SIGNATURE);
 
-   if (signMethod == 0) goto end;
+   if (signMethod == 0) U_RETURN(false);
 
    transformCtx.chain.push(signMethod);
 
@@ -992,7 +817,7 @@ bool UDSIGContext::processSignedInfoNode()
 
       /* process */
 
-      if (ref->processNode(cur) == false) goto end;
+      if (ref->processNode(cur) == false) U_RETURN(false);
 
       /* bail out if next Reference processing failed */
 
@@ -1000,7 +825,7 @@ bool UDSIGContext::processSignedInfoNode()
          {
          status = UReferenceCtx::INVALID;
 
-         goto end;
+         U_RETURN(false);
          }
 
       cur = UXML2Node::getNextSibling(cur->next);
@@ -1008,16 +833,13 @@ bool UDSIGContext::processSignedInfoNode()
 
    /* check that we have at least one Reference */
 
-   if (signedInfoReferences.empty()) goto end;
+   if (signedInfoReferences.empty()) U_RETURN(false);
 
    // if there is something left than it's an error
 
-   if (cur) goto end;
+   if (cur) U_RETURN(false);
 
    U_RETURN(true);
-
-end:
-   U_RETURN(false);
 }
 
 /* Parses uri and adds xpointer transforms if required.
@@ -1091,7 +913,14 @@ bool UTransformCtx::setURI(const char* uri, xmlNodePtr node)
 
    const char* xptr = strchr(uri, '#');
 
-   if (xptr == NULL) U_RETURN(true);
+   if (xptr == NULL)
+      {
+      UBaseTransform* uriTransform = U_NEW(UTranformInputURI(uri));
+
+      chain.insert(0, uriTransform);
+
+      U_RETURN(true);
+      }
 
    if (U_MEMCMP(uri, "#xpointer(/)") == 0)
       {
@@ -1133,6 +962,15 @@ bool UTransformCtx::setURI(const char* uri, xmlNodePtr node)
 
    if (transform->setExpr(xptr, nodeSetType, node))
       {
+      // check for XADES
+
+      if (u_find(xptr, u_strlen(xptr), U_CONSTANT_TO_PARAM("SigID-SignedProperties")))
+         {
+         transform->tag = U_STRING_FROM_CONSTANT("xades:SignedProperties");
+
+         chain.insert(0, U_NEW(UTranformInclC14N()));
+         }
+
       chain.insert(0, transform);
 
       U_RETURN(true);
@@ -1148,8 +986,11 @@ bool UTransformCtx::setURI(const char* uri, xmlNodePtr node)
 
 const char* UTransformCtx::dump(bool reset) const
 {
-   *UObjectIO::os << "status      " << status << '\n'
-                  << "enabledUris " << enabledUris;
+   *UObjectIO::os << "uri                             " << (     uri ?      uri : "") << '\n'
+                  << "status                          " << status                     << '\n'
+                  << "xptrExpr                        " << (xptrExpr ? xptrExpr : "") << '\n'
+                  << "enabledUris                     " << enabledUris                << '\n'
+                  << "chain (UVector<UBaseTransform*> " << &chain                     << ')';
 
    if (reset)
       {

@@ -102,6 +102,8 @@ public:
 
       (void) cfg.open(cfg_str);
 
+      UString x(U_CAPACITY);
+
       (void) UServices::read(STDIN_FILENO, x);
 
       if (x.empty()) U_ERROR("cannot read data from <stdin>...", 0);
@@ -133,7 +135,7 @@ public:
       // ---------------------------------------------------------------------------------------------------------------
       utility.handlerConfig(cfg);
 
-      if (utility.checkDocument(content, "XAdES-C")) content = utility.getSigned();
+      if (utility.checkDocument(content, "XAdES-C", false)) content = utility.getSigned();
       // ---------------------------------------------------------------------------------------------------------------
 
       UXML2Document document(content);
@@ -159,7 +161,7 @@ public:
          - Concatenate the resulting octets to the final octet stream.
       */
 
-      uint32_t i, n = UXML2Document::getElement(content, vec, U_CONSTANT_TO_PARAM("ds:Reference"));
+      uint32_t i, n = document.getElement(vec, U_CONSTANT_TO_PARAM("ds:Reference"));
 
       for (i = 0; i < n; ++i)
          {
@@ -179,7 +181,7 @@ public:
          - The ds:KeyInfo element, if present.
       */
 
-      if (UXML2Document::getElement(content, vec, U_CONSTANT_TO_PARAM("ds:SignedInfo")))
+      if (document.getElement(vec, U_CONSTANT_TO_PARAM("ds:SignedInfo")))
          {
          x = vec[0];
 
@@ -188,7 +190,7 @@ public:
 
       vec.clear();
 
-      if (UXML2Document::getElement(content, vec, U_CONSTANT_TO_PARAM("ds:SignatureValue")))
+      if (document.getElement(vec, U_CONSTANT_TO_PARAM("ds:SignatureValue")))
          {
          x = vec[0];
 
@@ -197,7 +199,7 @@ public:
 
       vec.clear();
 
-      if (UXML2Document::getElement(content, vec, U_CONSTANT_TO_PARAM("ds:KeyInfo")))
+      if (document.getElement(vec, U_CONSTANT_TO_PARAM("ds:KeyInfo")))
          {
          x = vec[0];
 
@@ -228,7 +230,7 @@ public:
            its validation do not appear in RevocationValues. Its content will satisfy with the rules specified in clause 7.6.4.
       */
 
-      if (UXML2Document::getElement(content, vec, U_CONSTANT_TO_PARAM("xades:CompleteCertificateRefs")))
+      if (document.getElement(vec, U_CONSTANT_TO_PARAM("xades:CompleteCertificateRefs")))
          {
          x = vec[0];
 
@@ -237,7 +239,7 @@ public:
 
       vec.clear();
 
-      if (UXML2Document::getElement(content, vec, U_CONSTANT_TO_PARAM("xades:CertificateValues")))
+      if (document.getElement(vec, U_CONSTANT_TO_PARAM("xades:CertificateValues")))
          {
          x = vec[0];
 
@@ -246,7 +248,7 @@ public:
 
       vec.clear();
 
-      if (UXML2Document::getElement(content, vec, U_CONSTANT_TO_PARAM("xades:CompleteRevocationRefs")))
+      if (document.getElement(vec, U_CONSTANT_TO_PARAM("xades:CompleteRevocationRefs")))
          {
          x = vec[0];
 
@@ -255,7 +257,7 @@ public:
 
       vec.clear();
 
-      if (UXML2Document::getElement(content, vec, U_CONSTANT_TO_PARAM("xades:RevocationValues")))
+      if (document.getElement(vec, U_CONSTANT_TO_PARAM("xades:RevocationValues")))
          {
          x = vec[0];
 
@@ -264,7 +266,7 @@ public:
 
       vec.clear();
 
-      if (UXML2Document::getElement(content, vec, U_CONSTANT_TO_PARAM("xades:SignatureTimeStamp")))
+      if (document.getElement(vec, U_CONSTANT_TO_PARAM("xades:SignatureTimeStamp")))
          {
          x = vec[0];
 
@@ -279,7 +281,7 @@ public:
          indicated by this element is used. If not, the standard canonicalization method specified by XMLDSIG is used.
       */
 
-      n = UXML2Document::getElement(content, vec, U_CONSTANT_TO_PARAM("ds:Object"));
+      n = document.getElement(vec, U_CONSTANT_TO_PARAM("ds:Object"));
 
       for (i = 0; i < n; ++i)
          {
@@ -295,24 +297,22 @@ public:
 
       archiveTimeStamp.snprintf(U_XADES_ARCHIVE_TIMESTAMP_TEMPLATE, U_STRING_TO_TRACE(token));
 
-      output = UStringExt::substitute(content,
-                                      U_CONSTANT_TO_PARAM("        </xades:UnsignedSignatureProperties>"),
-                                      U_STRING_TO_PARAM(archiveTimeStamp));
+      UString output = UStringExt::substitute(content,
+                             U_CONSTANT_TO_PARAM("        </xades:UnsignedSignatureProperties>"),
+                             U_STRING_TO_PARAM(archiveTimeStamp));
 
       // ---------------------------------------------------------------------------------------------------------------
       // check for OOffice or MS-Word document...
       // ---------------------------------------------------------------------------------------------------------------
-      output = utility.outputDocument(output);
+      utility.outputDocument(output);
       // ---------------------------------------------------------------------------------------------------------------
-
-      cout.write(U_STRING_TO_PARAM(output));
       }
 
 private:
    UFileConfig cfg;
    UVector<UString> vec;
    UXAdESUtility utility;
-   UString cfg_str, content, to_digest, x, archive_timestamp, schema, output;
+   UString cfg_str, content, to_digest, archive_timestamp, schema, output;
 };
 
 U_MAIN(Application)

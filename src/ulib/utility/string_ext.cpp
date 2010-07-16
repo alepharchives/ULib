@@ -754,17 +754,19 @@ UString UStringExt::deflate(const UString& s) // .gz compress
 
    // compress with zlib
 
+#ifdef HAVE_LIBZ
    UString r(s.rep->_length * 2);
 
-#ifdef HAVE_LIBZ
    r.rep->_length = u_gz_deflate(s.rep->str, s.rep->_length, r.rep->data());
 
    U_INTERNAL_DUMP("u_gz_deflate() = %d", r.rep->_length)
-#endif
 
    U_INTERNAL_ASSERT(r.invariant())
 
    U_RETURN_STRING(r);
+#else
+   U_RETURN_STRING(s);
+#endif
 }
 
 UString UStringExt::gunzip(const UString& s, uint32_t sz) // .gz uncompress

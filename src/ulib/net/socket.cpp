@@ -543,9 +543,18 @@ bool USocket::setServer(SocketAddress& cLocal, int iBackLog)
           * coda. Grosse code di ascolto aiutano anche ad evitare attacchi di tipo Denial of Service (DoS).
           */
 
-#     if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
-         (void) UFile::writeToTmpl("/proc/sys/net/core/somaxconn", UStringExt::numberToString(iBackLog * 2));
-#     endif
+         UFile somaxconn(U_STRING_FROM_CONSTANT("/proc/sys/net/core/somaxconn"));
+
+         if (somaxconn.open(O_RDWR))
+            {
+            char buffer[32];
+
+            buffer[U_SYSCALL(read, "%d,%p,%lu", somaxconn.getFd(), buffer, sizeof(buffer)-1)] = '\0';
+
+            if (atoi(buffer) < (iBackLog * 2)) (void) somaxconn.write(UStringExt::numberToString(iBackLog * 2));
+
+            somaxconn.close();
+            }
 
          listen(iBackLog);
          }

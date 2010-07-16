@@ -22,6 +22,27 @@ Host: localhost
 Connection: Keep-Alive
 Range: bytes=32-63
 
+GET /inp/http/data/file1 HTTP/1.1
+Host: localhost
+Connection: Keep-Alive
+Range: bytes=0-0,-1
+
+GET /inp/http/data/file1 HTTP/1.1
+Host: localhost
+Connection: Keep-Alive
+Range: bytes=50-70,60-79
+
+GET /inp/http/data/file1 HTTP/1.1
+Host: localhost
+Connection: Keep-Alive
+Range: bytes=10-19,50-59
+
+GET /inp/http/data/file1 HTTP/1.1
+Host: localhost
+Connection: Keep-Alive
+If-Range: Tue, 15 Sep 2020 16:22:19 GMT
+Range: bytes=10-19,50-59
+
 GET /vuoto.txt HTTP/1.1
 Connection: Keep-Alive
 Host: localhost
@@ -34,12 +55,12 @@ Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x
 
 get  /tmp   HTTP/1.1
 Host: localhost
-Accept-Encoding: gzip,deflate
 Connection: Keep-Alive
 Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x
 
 get  /tmp   HTTP/1.1
 Host: localhost
+Accept-Encoding: gzip,deflate
 If-Modified-Since: Tue, 15 Sep 2020 16:22:19 GMT
 Connection: Keep-Alive
 Authorization: Digest username="s.casazza", realm="Protected Area", nonce="1235411342", uri="/tmp", algorithm=MD5, response="409f91ad888cc96aea0cec4491677075",qop=auth, nc=00000001, cnonce="00603edc385b7a70"

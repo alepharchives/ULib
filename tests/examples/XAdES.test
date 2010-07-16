@@ -20,18 +20,29 @@ rm -f tsa_http.log TSA/log \
 #VALGRIND="valgrind -v --leak-check=full"
  export UTRACE UOBJDUMP USIMERR
 
-DIR_CMD="../../examples/userver"
-
-#STRACE=$LTRUSS
-start_prg_background userver_tcp -c tsa_http.cfg
-
-$SLEEP
 DIR_CMD="../../examples/XAdES"
 
-#DATA_URI=inp/XAdES/xmldsig-input.txt
- DATA_URI=/mnt/home/stefano/XAdES/PROVE/prima1.odt.b64
-X509=`cat ../ulib/CA/server.crt`
-KEY_HANDLE=../ulib/CA/server.key
+if [ "$TERM" = "cygwin" ]; then
+   export TMPDIR="C:/tmp"
+	INPUT=/c/tmp/sign.b64
+	SCHEMA=/c/msys/1.0/etc/XAdES/XAdESv141.xsd
+	DOCUMENT=/c/msys/1.0/etc/XAdES/PROVE/TESTOPROVA.docx.b64
+else
+	INPUT=/tmp/sign.b64
+	SCHEMA=/mnt/storage/stefano/XAdES/XAdESv141.xsd
+	DOCUMENT=/mnt/storage/stefano/XAdES/PROVE/TESTOPROVA.docx.b64 # /mnt/storage/stefano/XAdES/PROVE/prima1.odt.b64 inp/XAdES/xmldsig-input.txt
+fi
+
+#STRACE=$TRUSS
+#start_prg verify -c XAdES.ini -- $SCHEMA < $INPUT
+#exit 0
+
+ DIR_CA=../ulib/CA
+#DIR_CA=/mnt/storage/stefano/MinGW/etc/CA
+DATA_URI=$DOCUMENT
+X509=`cat $DIR_CA/server.crt`
+ KEY_HANDLE=$DIR_CA/server.key
+#KEY_HANDLE=$DIR_CA/server_nopass.key
 DIGEST_ALGORITHM=sha1
 SIGNING_TIME=0
 CLAIMED_ROLE="Amministratore UNIREL"
@@ -39,7 +50,7 @@ PRODUCTION_PLACE_CITY="sesto fiorentino"
 PRODUCTION_PLACE_STATE_OR_PROVINCE=SI
 PRODUCTION_PLACE_POSTAL_CODE=11111
 PRODUCTION_PLACE_COUNTRY_NAME=Italy
-CA_STORE=../ulib/CA/CApath
+CA_STORE=$DIR_CA/CApath
 SIGNATURE_TIMESTAMP="http://localhost/tsa"
 
 #STRACE=$TRUSS
@@ -55,31 +66,41 @@ start_prg sign -c XAdES.ini -- \
 									 $PRODUCTION_PLACE_POSTAL_CODE \
 									 $PRODUCTION_PLACE_COUNTRY_NAME \
 									 $CA_STORE \
-									 $SIGNATURE_TIMESTAMP <   /mnt/home/stefano/XAdES/PROVE/prima1.odt.b64
-																	# inp/XAdES/input.b64
+									 $SIGNATURE_TIMESTAMP < $DOCUMENT
+
+#exit 0
+
+DIR_CMD="../../examples/userver"
+
+#STRACE=$LTRUSS
+start_prg_background userver_tcp -c tsa_http.cfg
 
 # ------------------------------------------------------------
 # sha1 check:
 # ------------------------------------------------------------
 # openssl dgst -sha1 -binary < content.xml | openssl base64 -e
 # ------------------------------------------------------------
+$OPENSSL base64 -e -in out/sign.out -out $INPUT
 
-$OPENSSL base64 -e -in out/sign.out -out /tmp/sign.b64
+DIR_CMD="../../examples/XAdES"
 
 ARCHIVE_TIMESTAMP="http://localhost/tsa"
 
 #STRACE=$LTRUSS
 start_prg archive -c XAdES.ini -- \
-									 $ARCHIVE_TIMESTAMP < /tmp/sign.b64
+		 $ARCHIVE_TIMESTAMP < $INPUT
 
-rm -f /tmp/sign.b64
+rm -f $INPUT
 mv err/userver_tcp.err err/XAdES.err
 
 $SLEEP
 kill_prg userver_tcp TERM
 
+$OPENSSL base64 -e -in out/archive.out -out $INPUT
+
 #STRACE=$LTRUSS
-#start_prg verify -c XAdES.ini out/archive.out # /usr/portage/sys-boot/gnu-efi/metadata.xml /usr/portage/lxde-base/metadata.xml
+start_prg verify -c XAdES.ini -- \
+		 $SCHEMA < $INPUT
 
 # Test against expected output
 test_output_wc w archive

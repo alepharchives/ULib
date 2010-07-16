@@ -94,7 +94,7 @@ public:
       {
       U_TRACE(0+256, "UApplication::run(%d,%p,%p)", argc, argv, env)
 
-      U_DUMP_EXEC(argv, env);
+      U_DUMP_EXEC(argv, env)
 
       // se esistono opzioni, queste vengono processate...
 

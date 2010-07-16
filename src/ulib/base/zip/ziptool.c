@@ -231,8 +231,8 @@ static int create_central_header(int fd)
 
    (void) write(fd, end_header, 22);
 
-   U_INTERNAL_TRACE("Total:\n------\n(in = %d) (out = %d) (%s %d%%)",
-                        total_in, total_out, "deflated", (int)((1 - (total_out / (float)total_in)) * 100))
+   U_INTERNAL_TRACE("Total:\n------\n(in = %d) (out = %d) (%s %d%%)", total_in, total_out,
+                    "deflated", (int)(total_in ? ((1 - (total_out / (float)total_in)) * 100) : 0))
 
    return 0;
 }
@@ -301,7 +301,7 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
     *  - the mimetype itself at position 38 of such a package
     */
 
-   ze->compressed = (strcmp(fname, "mimetype") != 0);
+   ze->compressed = (strcmp(fname, "mimetype") != 0 && statbuf->st_size > 0);
 
    add_entry(ze);
 
@@ -370,8 +370,8 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
       return 1;
       }
 
-   U_INTERNAL_TRACE("(in=%d) (out=%d) (%s %d%%)",
-                     (int)ze->usize, (int)ze->csize, "deflated", ((int)((1 - ze->csize/(float)ze->usize) * 100)))
+   U_INTERNAL_TRACE("(in=%d) (out=%d) (%s %d%%)", (int)ze->usize, (int)ze->csize,
+                    "deflated", (int)(ze->usize ? ((1 - ze->csize/(float)ze->usize) * 100) : 0))
 
    return 0;
 }
@@ -417,13 +417,6 @@ static int add_to_zip(int fd, const char* file)
       nlen = u_strlen(file) + 256;
 
       fullname = (char*) calloc(1, nlen);
-
-      if (fullname == 0)
-         {
-         U_INTERNAL_TRACE("Filename is NULL!", 0)
-
-         return 1;
-         }
 
       (void) strcpy(fullname, file);
 
@@ -540,7 +533,8 @@ static void zip_close(void)
       filename_len = 0;
       }
 
-   if (zipfd == -1 || close(zipfd) != 0)
+   if (zipfd == -1 ||
+       close(zipfd) != 0)
       {
       U_INTERNAL_TRACE("Error closing zip archive", 0)
       }
@@ -770,6 +764,9 @@ int zip_match(const char* zipfile, const char* files[])
 
    if (zip_open(zipfile)) return 0;
 
+   eflen = 0;
+   csize = 0;
+
    while (files[file_num] != 0) ++file_num;
 
    for (i = 0; zip_read_entry() == 0; ++i)
@@ -788,19 +785,21 @@ int zip_match(const char* zipfile, const char* files[])
                }
             }
 
-         if (!match) return 0;
+         if (match == 0) break;
          }
 
       if (eflen) consume(eflen);
       if (csize) consume(csize);
+      /* the header is at the end. In a ZIP file, this means that the data
+       * happens to be compressed. We have no choice but to inflate the data
       else
          {
-         /* the header is at the end. In a ZIP file, this means that the data
-            happens to be compressed. We have no choice but to inflate the data */
-
          inflate_file(&pbf, -1, &ze);
          }
+      */
       }
+
+   zip_close();
 
    return (i == file_num);
 }
@@ -913,7 +912,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
                return 0;
                }
 
-            U_INTERNAL_TRACE("Making directory..", 0)
+            U_INTERNAL_TRACE("Making directory...", 0)
 
             if (mkdir(tmp_buff, 0755) < 0)
                {
@@ -971,7 +970,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
          int out_a, in_a;
          ub4 rd_buff[RDSZ];
 
-         U_INTERNAL_TRACE("writing stored data.. (%d bytes)", csize)
+         U_INTERNAL_TRACE("writing stored data... (%d bytes)", csize)
 
          out_a = 0;
           in_a = csize;

@@ -73,11 +73,8 @@ int U_EXPORT main(int argc, char* argv[])
 {
    u_init(argv);
 
-   putenv("UTRACE=5 1M");
-
-   // test for simulation error
-
-   if (argc >= 2) putenv("USIMERR=error.sim");
+                  putenv("UTRACE=1 5M");       // for test trace
+   if (argc >= 2) putenv("USIMERR=error.sim"); // for test simulation error
 
    u_debug_init();
 

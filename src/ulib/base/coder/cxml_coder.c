@@ -87,7 +87,7 @@ uint32_t u_xml_encode(const unsigned char* restrict input, uint32_t len, unsigne
          unsigned char* restrict r   = result;
    const unsigned char* restrict end = input + len;
 
-   U_INTERNAL_TRACE("u_xml_encode(%.*s,%u,%p)", len, input, len, result)
+   U_INTERNAL_TRACE("u_xml_encode(%.*s,%u,%p)", U_min(len,128), input, len, result)
 
    U_INTERNAL_ASSERT_POINTER(input)
 
@@ -146,7 +146,7 @@ uint32_t u_xml_decode(const char* restrict input, uint32_t len, unsigned char* r
          unsigned char* restrict r   = result;
    const          char* restrict end = input + len;
 
-   U_INTERNAL_TRACE("u_xml_decode(%.*s,%u,%p,%lu)", len, input, len, result)
+   U_INTERNAL_TRACE("u_xml_decode(%.*s,%u,%p,%lu)", U_min(len,128), input, len, result)
 
    U_INTERNAL_ASSERT_POINTER(input)
 

@@ -38,7 +38,7 @@ uint32_t u_url_encode(const unsigned char* restrict input, uint32_t len, unsigne
    unsigned char ch;
    unsigned char* restrict r = result;
 
-   U_INTERNAL_TRACE("u_url_encode(%.*s,%u,%p,%s)", len, input, len, result, extra_enc_chars)
+   U_INTERNAL_TRACE("u_url_encode(%.*s,%u,%p,%s)", U_min(len,128), input, len, result, extra_enc_chars)
 
    U_INTERNAL_ASSERT_POINTER(input)
 
@@ -79,7 +79,7 @@ uint32_t u_url_decode(const char* restrict input, uint32_t len, unsigned char* r
    unsigned char* restrict r = result;
    char ch, hex[3]  = { '\0', '\0', '\0' };
 
-   U_INTERNAL_TRACE("u_url_decode(%.*s,%u,%p,%lu,%d)", len, input, len, result, no_line_break)
+   U_INTERNAL_TRACE("u_url_decode(%.*s,%u,%p,%lu,%d)", U_min(len,128), input, len, result, no_line_break)
 
    U_INTERNAL_ASSERT_POINTER(input)
 

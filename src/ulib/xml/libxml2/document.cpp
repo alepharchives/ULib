@@ -43,13 +43,13 @@ void UXML2Document::init()
    xmlLoadExtDtdDefaultValue = 0;
 }
 
-UXML2Document::UXML2Document(const UString& data)
+UXML2Document::UXML2Document(const UString& _data) : data(_data)
 {
-   U_TRACE_REGISTER_OBJECT(0, UXML2Document, "%.*S", U_STRING_TO_TRACE(data))
+   U_TRACE_REGISTER_OBJECT(0, UXML2Document, "%.*S", U_STRING_TO_TRACE(_data))
 
    if (binit == false) init();
 
-// impl_ = (xmlDocPtr) U_SYSCALL(xmlParseMemory, "%p,%d", U_STRING_TO_PARAM(data));
+// impl_ = (xmlDocPtr) U_SYSCALL(xmlParseMemory, "%p,%d", U_STRING_TO_PARAM(_data));
 
    /*
    Enum xmlParserOption {
@@ -77,7 +77,7 @@ UXML2Document::UXML2Document(const UString& data)
    }
    */
 
-   impl_ = (xmlDocPtr) U_SYSCALL(xmlReadMemory, "%p,%d,%S,%S,%d", U_STRING_TO_PARAM(data), 0, 0, XML_PARSE_COMPACT);
+   impl_ = (xmlDocPtr) U_SYSCALL(xmlReadMemory, "%p,%d,%S,%S,%d", U_STRING_TO_PARAM(_data), 0, 0, XML_PARSE_COMPACT);
 
    if (impl_ == NULL)
       {
@@ -91,39 +91,57 @@ UXML2Document::UXML2Document(const UString& data)
    if (getRootNode() == NULL) U_ERROR("empty xml document", 0);
 }
 
-uint32_t UXML2Document::getElement(const UString& data, UVector<UString>& velement, const char* tag, uint32_t tag_len)
+uint32_t UXML2Document::getElement(UString& element, uint32_t pos, const char* tag, uint32_t tag_len)
+{
+   U_TRACE(0, "UXML2Document::getElement(%.*S,%u,%.*S,%u)", U_STRING_TO_TRACE(element), pos, tag_len, tag, tag_len)
+
+   U_INTERNAL_ASSERT_POINTER(tag)
+
+   uint32_t start = data.find(tag, pos, tag_len);
+
+   if (start == U_NOT_FOUND ||
+       data.c_char(start-1) != '<')
+      {
+      U_RETURN(U_NOT_FOUND);
+      }
+
+   uint32_t end = data.find(tag, start + tag_len, tag_len);
+
+   if (end == U_NOT_FOUND        ||
+       data.c_char(end-1) != '/' ||
+       data.c_char(end-2) != '<')
+      {
+      U_RETURN(U_NOT_FOUND);
+      }
+
+   element = data.substr(start - 1, end + tag_len - start + 2);
+
+   end += tag_len;
+
+   U_RETURN(end);
+}
+
+uint32_t UXML2Document::getElement(UVector<UString>& velement, const char* tag, uint32_t tag_len)
 {
    U_TRACE(0, "UXML2Document::getElement(%.*S,%p,%.*S,%u)", U_STRING_TO_TRACE(data), &velement, tag_len, tag, tag_len)
 
    U_INTERNAL_ASSERT_POINTER(tag)
 
-   uint32_t n = velement.size(), start, end = 0U;
+   UString element;
+   uint32_t n = velement.size(), pos = 0;
 
    while (true)
       {
-      start = data.find(tag, end, tag_len);
+      pos = getElement(element, pos, tag, tag_len);
 
-      if (start == U_NOT_FOUND ||
-          data.c_char(start-1) != '<')
-         {
-         break;
-         }
+      if (pos == U_NOT_FOUND) break;
 
-      end = data.find(tag, start + tag_len, tag_len);
-
-      if (end == U_NOT_FOUND        ||
-          data.c_char(end-1) != '/' ||
-          data.c_char(end-2) != '<')
-         {
-         break;
-         }
-
-      velement.push(data.substr(start - 1, end + tag_len - start + 2));
-
-      end += tag_len;
+      velement.push(element);
       }
 
-   U_RETURN(velement.size() - n);
+   uint32_t result = velement.size() - n;
+
+   U_RETURN(result);
 }
 
 xmlNodePtr UXML2Document::findNode(const xmlNodePtr parent, const xmlChar* name, const xmlChar* ns)

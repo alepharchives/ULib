@@ -960,14 +960,8 @@ public:
 
       U_INTERNAL_ASSERT_RANGE(2,_length,_capacity)
 
-      if (ignore_case)
-         {
-         U_SYSCALL_VOID(qsort, "%p,%d,%d,%p", (void*)vec, (size_t)_length, sizeof(void*), UVector<UString>::qscomp);
-         }
-      else
-         {
-         mksort((UStringRep**)vec, _length, 0);
-         }
+      if (ignore_case) UVector<void*>::sort(UVector<UString>::qscomp);
+      else             mksort((UStringRep**)vec, _length, 0);
       }
 
    uint32_t find(const UString& str, bool ignore_case = false)

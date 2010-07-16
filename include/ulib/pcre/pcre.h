@@ -219,7 +219,7 @@ public:
       p_pcre_extra = (pcre_extra*) U_SYSCALL(pcre_study, "%p,%d,%p", p_pcre, options, &err_str);
 
 #  ifdef DEBUG
-      if (err_str) U_INTERNAL_DUMP("pcre_study() failed: %S", err_str);
+      if (err_str) U_INTERNAL_DUMP("pcre_study() failed: %S", err_str)
 #  endif
       }
 

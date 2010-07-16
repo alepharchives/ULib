@@ -30,6 +30,10 @@ static void do_cipher(char* pw, int operation)
 
    U_INTERNAL_TRACE("do_cipher(%s,%p)", pw, operation)
 
+#ifdef __MINGW32__
+  (void) setmode(1, O_BINARY);
+#endif
+
    while (1)
       {
       int readlen = read(STDIN_FILENO, buf, sizeof(buf));

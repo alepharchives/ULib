@@ -146,9 +146,10 @@ const char* UNodeSet::dump(bool reset) const
 
 const char* UXPathData::dump(bool reset) const
 {
-   *UObjectIO::os << "ctx         " << (void*)ctx  << '\n'
-                  << "type        " << type        << '\n'
-                  << "nodeSetOp   " << nodeSetOp   << '\n'
+   *UObjectIO::os << "ctx         " << (void*)ctx         << '\n'
+                  << "type        " << type               << '\n'
+                  << "expr        " << (expr ? expr : "") << '\n'
+                  << "nodeSetOp   " << nodeSetOp          << '\n'
                   << "nodeSetType " << nodeSetType;
 
    if (reset)

@@ -87,117 +87,25 @@ public:
 
    // COSTRUTTORI
 
-   UBaseTransform()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UBaseTransform, "", 0)
-
-      status    = 0;
-      operation = 0;
-      }
-
-   virtual ~UBaseTransform()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UBaseTransform)
-      }
+            UBaseTransform();
+   virtual ~UBaseTransform();
 
    // method VIRTUAL to define
 
-   virtual int         usage() = 0; // the allowed transforms usages
-   virtual const char* name()  = 0; // the transform's name
-   virtual const char* href()  = 0; // the transform's identification string (href)
+   virtual int         usage() { return 0; } // the allowed transforms usages
+   virtual const char* name()  { return 0; } // the transform's name
+   virtual const char* href()  { return 0; } // the transform's identification string (href)
+
+   virtual bool readNode(xmlNodePtr node) { return true; } // the XML node read method
 
    /**
-    * @mode the data mode (push or pop).
-    *
-    * Gets transform input (@mode is "push") or output (@mode is "pop") data 
-    * type (binary or XML) by analyzing available pushBin/popBin/pushXml/popXml
-    * methods.
-    *
-    * Returns: the transform's data type for the @mode operation.
-    */
-
-   virtual int getDataType(int mode)
-      {
-      U_TRACE(0, "UBaseTransform::getDataType(%d)", mode)
-
-      int type = 0;
-
-      /* we'll try to guess the data type based on the handlers we have
-
-      switch (mode)
-         {
-         case PUSH:
-            {
-            if (pushBin(-1) != NULL) type |= BINARY;
-            if (pushXml(-1) != NULL) type |= XML;
-            }
-         break;
-
-         case POP:
-            {
-            if (popBin(-1) != NULL) type |= BINARY;
-            if (popXml(-1) != NULL) type |= XML;
-            }
-         break;
-         }
-      */
-
-      U_RETURN(type);
-      }
-
-   /**
-    * @data    the input binary data
-    * @final   the flag: if set to true then it's the last data chunk.
-    *
     * Process binary @data by calling transform's execute method and pushes 
     * results to next transform.
     *
     * Returns: true on success or a false value if an error occurs.
     */
 
-   virtual bool pushBin(const UString& data, bool final);
-
-   /**
-    * @data    the buffer to store result data.
-    * 
-    * Pops data from previous transform in the chain, processes data by calling
-    * transform's execute method and returns result in the @data buffer.
-    * 
-    * Returns: true on success or a false value if an error occurs.
-    */
-
-   virtual bool popBin(UString& data);
-
-   /**
-    * @nodes   the input nodes.
-    *
-    * Processes @nodes by calling transform's execute method and pushes 
-    * result to the next transform in the chain.
-    *
-    * Returns: true on success or a false value if an error occurs.
-    */
-
-   virtual bool pushXml(xmlNodePtr nodes);
-
-   /**
-    * @nodes   the pointer to store pointer to result nodes.
-    *
-    * Pops data from previous transform in the chain, processes the data 
-    * by calling transform's execute method and returns result in @nodes.
-    * 
-    * Returns: true on success or a false value if an error occurs.
-    */
-
-   virtual bool popXml(xmlNodePtr* nodes);
-
-   virtual bool verify()                     { return true; } // the verify method (for digest and signature transforms)
-   virtual bool setKey(xmlNodePtr node)      { return true; } // the set key method
-   virtual bool setKeyReq(xmlNodePtr node)   { return true; } // the set key requirements method
-
-   virtual bool readNode(xmlNodePtr node)    { return true; } // the XML node read method
-   virtual bool writeNode(xmlNodePtr node)   { return true; } // the XML node write method
-
-   virtual bool execute(xmlNodePtr node)     { return true; } // the low level data processing method used by default pushBin,popBin,pushXml and popXml
+   virtual bool execute(UString& data) { return false; }
 
 #ifdef DEBUG
    const char* dump(bool reset) const;
@@ -206,10 +114,6 @@ public:
 protected:
    int status;          // the current status
    int operation;       // the transform's operation
-   UString inBuf;       // the input binary data buffer
-   UString outBuf;      // the output binary data buffer
-   xmlNodePtr inNodes;  // the input XML nodes
-   xmlNodePtr outNodes; // the output XML nodes
    xmlNodePtr hereNode; // the pointer to transform's <dsig:Transform /> node
 
 private:
@@ -251,6 +155,8 @@ public:
    virtual const char* name()  { return _name;  } // the transform's name
    virtual const char* href()  { return _href;  } // the transform's identification string (href)
 
+   virtual bool execute(UString& data);
+
 #ifdef DEBUG
    const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
 #endif
@@ -289,14 +195,11 @@ public:
 
    // define method VIRTUAL of class UBaseTransform
 
-   virtual int         usage() { return _usage; } // the allowed transforms usages
-   virtual const char* name()  { return _name;  } // the transform's name
-   virtual const char* href()  { return _href;  } // the transform's identification string (href)
+   virtual int         usage() { return _usage; }  // the allowed transforms usages
+   virtual const char* name()  { return _name;  }  // the transform's name
+   virtual const char* href()  { return _href;  }  // the transform's identification string (href)
 
-   virtual int getDataType(int mode)         { return 0; }     // the input/output data type query method
-
-// virtual bool popBin(UString& data);
-// virtual bool pushXml(xmlNodePtr nodes);
+   virtual bool execute(UString& data);
 
 #ifdef DEBUG
    const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
@@ -310,54 +213,6 @@ protected:
 private:
    UTranformInclC14N(const UTranformInclC14N&) : UBaseTransform() {}
    UTranformInclC14N& operator=(const UTranformInclC14N&)         { return *this; }
-
-   friend class UDSIGContext;
-   friend class UTransformCtx;
-   friend class UReferenceCtx;
-};
-
-class UTranformXPointer : public UBaseTransform {
-public:
-
-   // COSTRUTTORI
-
-   UTranformXPointer()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UTranformXPointer, "", 0)
-      }
-
-   virtual ~UTranformXPointer();
-
-   // define method VIRTUAL of class UBaseTransform
-
-   virtual int         usage() { return _usage; } // the allowed transforms usages
-   virtual const char* name()  { return _name;  } // the transform's name
-   virtual const char* href()  { return _href;  } // the transform's identification string (href)
-
-   virtual int getDataType(int mode)         { return 0; }     // the input/output data type query method
-
-// virtual bool pushXml(xmlNodePtr nodes);
-// virtual bool popXml(xmlNodePtr* nodes);
-
-   virtual bool execute(xmlNodePtr node)     { return false; } // the low level data processing method used by default pushBin,popBin,pushXml and popXml
-   virtual bool readNode(xmlNodePtr node)    { return false; } // the XML node read method
-
-#ifdef DEBUG
-   const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
-#endif
-
-protected:
-   static int _usage;        // the allowed transforms usages
-   static const char* _name; // the transform's name
-   static const char* _href; // the transform's identification string (href)
-
-   UVector<UXPathData*> dataList;
-
-   bool setExpr(const char* expr, int nodeSetType, xmlNodePtr node);
-
-private:
-   UTranformXPointer(const UTranformXPointer&) : UBaseTransform() {}
-   UTranformXPointer& operator=(const UTranformXPointer&)         { return *this; }
 
    friend class UDSIGContext;
    friend class UTransformCtx;
@@ -385,13 +240,7 @@ public:
    virtual const char* name()  { return _name;  } // the transform's name
    virtual const char* href()  { return _href;  } // the transform's identification string (href)
 
-   virtual int getDataType(int mode)         { return 0; }     // the input/output data type query method
-
-   virtual bool verify()                     { return false; } // the verify method (for digest and signature transforms)
-   virtual bool execute(xmlNodePtr node)     { return false; } // the low level data processing method used by default pushBin,popBin,pushXml and popXml
-
-// virtual bool popBin(       UString& data);
-// virtual bool pushBin(const UString& data, bool final);
+   virtual bool execute(UString& data);
 
 #ifdef DEBUG
    const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
@@ -432,15 +281,7 @@ public:
    virtual const char* name()  { return _name;  } // the transform's name
    virtual const char* href()  { return _href;  } // the transform's identification string (href)
 
-   virtual int getDataType(int mode)         { return 0; }     // the input/output data type query method
-
-// virtual bool popBin(       UString& data);
-// virtual bool pushBin(const UString& data, bool final);
-
-   virtual bool verify()                     { return false; } // the verify method (for digest and signature transforms)
-   virtual bool execute(xmlNodePtr node)     { return false; } // the low level data processing method used by default pushBin,popBin,pushXml and popXml
-   virtual bool setKey(xmlNodePtr node)      { return false; } // the set key method
-   virtual bool setKeyReq(xmlNodePtr node)   { return false; } // the set key requirements method
+   virtual bool execute(UString& data);
 
 #ifdef DEBUG
    const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
@@ -481,15 +322,7 @@ public:
    virtual const char* name()  { return _name;  } // the transform's name
    virtual const char* href()  { return _href;  } // the transform's identification string (href)
 
-   virtual int getDataType(int mode)         { return 0; }     // the input/output data type query method
-
-// virtual bool popBin(       UString& data);
-// virtual bool pushBin(const UString& data, bool final);
-
-   virtual bool verify()                     { return false; } // the verify method (for digest and signature transforms)
-   virtual bool setKey(xmlNodePtr node)      { return false; } // the set key method
-   virtual bool execute(xmlNodePtr node)     { return false; } // the low level data processing method used by default pushBin,popBin,pushXml and popXml
-   virtual bool setKeyReq(xmlNodePtr node)   { return false; } // the set key requirements method
+   virtual bool execute(UString& data);
 
 #ifdef DEBUG
    const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
@@ -503,6 +336,51 @@ protected:
 private:
    UTranformRsaSha1(const UTranformRsaSha1&) : UBaseTransform() {}
    UTranformRsaSha1& operator=(const UTranformRsaSha1&)         { return *this; }
+
+   friend class UDSIGContext;
+   friend class UTransformCtx;
+   friend class UReferenceCtx;
+};
+
+class UTranformXPointer : public UBaseTransform {
+public:
+
+   // COSTRUTTORI
+
+   UTranformXPointer() : dataList(5)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UTranformXPointer, "", 0)
+      }
+
+   virtual ~UTranformXPointer();
+
+   // define method VIRTUAL of class UBaseTransform
+
+   virtual int         usage() { return _usage; }  // the allowed transforms usages
+   virtual const char* name()  { return _name;  }  // the transform's name
+   virtual const char* href()  { return _href;  }  // the transform's identification string (href)
+
+   virtual bool execute(UString& data);
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
+#endif
+
+protected:
+   static int _usage;        // the allowed transforms usages
+   static const char* _name; // the transform's name
+   static const char* _href; // the transform's identification string (href)
+
+   static UXML2Document* document;
+
+   UString tag;
+   UVector<UXPathData*> dataList;
+
+   bool setExpr(const char* expr, int nodeSetType, xmlNodePtr node);
+
+private:
+   UTranformXPointer(const UTranformXPointer&) : UBaseTransform() {}
+   UTranformXPointer& operator=(const UTranformXPointer&)         { return *this; }
 
    friend class UDSIGContext;
    friend class UTransformCtx;
@@ -529,13 +407,11 @@ public:
 
    // define method VIRTUAL of class UBaseTransform
 
-   virtual int         usage() { return _usage; } // the allowed transforms usages
-   virtual const char* name()  { return _name;  } // the transform's name
-   virtual const char* href()  { return _href;  } // the transform's identification string (href)
+   virtual int         usage()  { return _usage; } // the allowed transforms usages
+   virtual const char* name()   { return _name;  } // the transform's name
+   virtual const char* href()   { return _href;  } // the transform's identification string (href)
 
-   virtual int getDataType(int mode)         { return 0; }     // the input/output data type query method
-
-// virtual bool popBin(UString& data);
+   virtual bool execute(UString& data);
 
 #ifdef DEBUG
    const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
@@ -587,10 +463,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UIOCallback, "%p,%p,%p,%p", matchFunc, openFunc, readFunc, closeFunc)
 
-
       matchcallback = matchFunc;
       opencallback  = openFunc;
-      readcallback  = readFunc; 
+      readcallback  = readFunc;
       closecallback = closeFunc;
       }
 

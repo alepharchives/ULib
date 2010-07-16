@@ -23,7 +23,9 @@ fi
 
 DIR_CMD="../../examples/userver"
 
-( cd ../../src/ulib/plugin/.libs; ln -sf ../mod_geoip/.libs/mod_geoip.so; ln -sf ../mod_shib/.libs/mod_shib.so )
+if [ "$TERM" != "cygwin" ]; then
+	( cd ../../src/ulib/plugin/usp/; make benchmarking.la >/dev/null 2>&1 || exit 1; cd ../.libs; ln -sf ../mod_geoip/.libs/mod_geoip.so; ln -sf ../mod_shib/.libs/mod_shib.so )
+fi
 
 #STRACE=$TRUSS
  start_prg_background userver_tcp -c web_server.cfg
@@ -58,10 +60,10 @@ $SLEEP
 
 # test upload
 
-rm    -rf     uploads
-mkdir -p		  uploads
-chown apache: uploads
-chmod 777     uploads
+rm    -rf      uploads
+mkdir -p		   uploads
+$CHOWN apache: uploads
+chmod 777      uploads
 
  $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" http://127.0.0.1:80/cgi-bin/uploader.sh      >>out/web_server.out 2>>err/web_server.err
 #$CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" -k https://127.0.0.1:443/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server_ssl.err

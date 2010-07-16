@@ -91,10 +91,12 @@ typedef struct uhttpheader {
    const char* query;
    const char* host;
    const char* content_type;
+   const char* range;
+   time_t if_modified_since;
    uint32_t nResponseCode, version,
             startHeader, endHeader, szHeader,
-            method_len, uri_len, query_len, host_len, content_type_len,
-            method_type, clength, keep_alive, is_connection_close, is_php;
+            method_len, uri_len, query_len, host_len, content_type_len, range_len,
+            method_type, clength, keep_alive, is_connection_close, is_php, is_accept_deflate;
 } uhttpheader;
 
 enum HTTPMethodType { HTTP_POST = 1, HTTP_GET = 2, HTTP_HEAD = 3 };
@@ -120,6 +122,9 @@ enum HTTPMethodType { HTTP_POST = 1, HTTP_GET = 2, HTTP_HEAD = 3 };
 #define U_HTTP_CTYPE_TO_PARAM        UHTTP::http_info.content_type, UHTTP::http_info.content_type_len
 #define U_HTTP_CTYPE_TO_TRACE        UHTTP::http_info.content_type_len, UHTTP::http_info.content_type
 
+#define U_HTTP_RANGE_TO_PARAM        UHTTP::http_info.range, UHTTP::http_info.range_len
+#define U_HTTP_RANGE_TO_TRACE        UHTTP::http_info.range_len, UHTTP::http_info.range
+
 // HTTP Compare
 
 #define U_HTTP_URI_STRNEQ(str)                                        U_STRNEQ(UHTTP::http_info.uri,          str)
@@ -136,6 +141,7 @@ enum HTTPMethodType { HTTP_POST = 1, HTTP_GET = 2, HTTP_HEAD = 3 };
 #define U_CTYPE_HTML "text/html; charset=iso-8859-1"
 
 class UFile;
+class UDynamic;
 class UCommand;
 class UMimeMultipart;
 
@@ -161,9 +167,12 @@ public:
    static uhttpheader http_info;
 
    static const char* ptrH; // "Host"
+   static const char* ptrR; // "Range"
    static const char* ptrC; // "Connection"
    static const char* ptrT; // "Content-Type"
    static const char* ptrL; // "Content-Lenght"
+   static const char* ptrA; // "Accept-Encoding"
+   static const char* ptrI; // "If-Modified-Since"
 
    static void setHTTPMethod(const char* method, uint32_t method_len)
       {
@@ -332,7 +341,7 @@ public:
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
-      bool result = (UHTTP::http_info.uri[UHTTP::http_info.uri_len - 1] == '/');
+      bool result = (http_info.uri[UHTTP::http_info.uri_len - 1] == '/');
 
       U_RETURN(result);
       }
@@ -343,7 +352,7 @@ public:
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
-      bool result = (U_STRNEQ(UHTTP::http_info.uri, "/usp/") &&
+      bool result = (U_STRNEQ(http_info.uri, "/usp/") &&
                      u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".usp")));
 
       U_RETURN(result);
@@ -359,8 +368,10 @@ public:
    static int  checkPath(UString& pathname);
    static void getTimeIfNeeded(bool all_http_version);
    static bool checkHTTPGetRequestIfModified(time_t mtime);
+   static bool checkHTTPGetRequestIfRange(time_t mtime, const UString& etag);
+   static bool checkHTTPContentLength(const char* ptr, uint32_t length, UString& ext);
    static void getFileMimeType(const char* suffix, const char* content_type, UString& ext, off_t size);
-   static int  checkHTTPGetRequestForRange(off_t& start, off_t& size, UString& ext, const UString& tag);
+   static bool checkHTTPGetRequestForRange(off_t& start, off_t& size, UString& ext, const UString& data);
 
    static UString     getHTMLDirectoryList();
    static const char* getHTTPHeaderValuePtr(const UString& name);
@@ -429,9 +440,9 @@ public:
 
    off_t size;             // size content
    time_t mtime;           // time of last modification
-   UVector<UString> array; // content + header
+   UVector<UString> array; // content + header + deflate_header + deflate_content
 
-   UFileCacheData() : array(2U)
+   UFileCacheData() : array(4U)
       {
       U_TRACE_REGISTER_OBJECT(0, UFileCacheData, "", 0)
       }
@@ -450,9 +461,13 @@ public:
    UFileCacheData& operator=(const UFileCacheData&) { return *this; }
    };
 
+   static UString* last_file;
    static UString* cache_file_mask;
+   static UFileCacheData* file_data;
+   static UString* cache_file_compress_mask;
    static UHashMap<UFileCacheData*>* cache_file;
 
+   static bool manageFileCache();
    static void checkFileForCache();
    static void searchFileForCache();
 
@@ -461,10 +476,6 @@ public:
    // take only the first 2 character (it, en, de fr, ...)
 
    static const char* getAcceptLanguage();
-
-   // check for "Accept-Encoding: deflate" in header request...
-
-   static bool isHTTPAcceptEncodingDeflate();
 
    // check for "Connection: close" in headers...
 

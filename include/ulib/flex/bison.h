@@ -64,7 +64,7 @@ public:
       extern int yyparse(void*);
       bool ok = (yyparse(obj) == 0);
 
-      U_INTERNAL_DUMP("yyparse() = %b, parsed_chars = %d, size() = %u", ok, parsed_chars, data.size());
+      U_INTERNAL_DUMP("yyparse() = %b, parsed_chars = %d, size() = %u", ok, parsed_chars, data.size())
 
       U_RETURN(ok);
       }

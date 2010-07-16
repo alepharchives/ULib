@@ -139,6 +139,8 @@ bool UFile::chdir(const char* path, bool flag_save)
 
    if (path)
       {
+      if (strncmp(path, u_cwd, u_cwd_len) == 0) U_RETURN(true);
+
       if (flag_save)
          {
          if (IS_DIR_SEPARATOR(u_cwd[0]) == false) u_getcwd();
@@ -403,9 +405,9 @@ UString UFile::contentOf(const UString& pathname, int flags, bool bstat, bool bm
    return UFile(pathname).getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat, bmap);
 }
 
-bool UFile::write(const UString& data, bool append)
+bool UFile::write(const UString& data, bool append, bool bmkdirs)
 {
-   U_TRACE(1, "UFile::write(%.*S,%b)", U_STRING_TO_TRACE(data), append)
+   U_TRACE(1, "UFile::write(%.*S,%b,%b)", U_STRING_TO_TRACE(data), append, bmkdirs)
 
    U_INTERNAL_ASSERT_POINTER(path_relativ)
 
@@ -418,6 +420,28 @@ bool UFile::write(const UString& data, bool append)
       int flags = O_RDWR | (append ? O_APPEND : O_TRUNC);
 
       esito = creat(flags, PERM_FILE);
+
+      if (esito == false && bmkdirs)
+         {
+         // Make any missing parent directories for each directory argument
+
+         char* ptr = (char*) strrchr(path_relativ, '/');
+
+         U_INTERNAL_DUMP("ptr = %S", ptr)
+
+         if (ptr)
+            {
+            char buffer[U_PATH_MAX];
+
+            uint32_t len = ptr - path_relativ;
+
+            (void) U_SYSCALL(memcpy, "%p,%p,%u", buffer, path_relativ, len);
+
+            buffer[len] = '\0';
+
+            if (mkdirs(buffer)) esito = creat(flags, PERM_FILE);
+            }
+         }
       }
 
    if (esito)
@@ -461,22 +485,22 @@ bool UFile::write(const UString& data, bool append)
    U_RETURN(esito);
 }
 
-bool UFile::writeTo(const UString& path, const UString& data, bool append)
+bool UFile::writeTo(const UString& path, const UString& data, bool append, bool bmkdirs)
 {
-   U_TRACE(0, "UFile::writeTo(%.*S,%.*S,%b)", U_STRING_TO_TRACE(path), U_STRING_TO_TRACE(data), append)
+   U_TRACE(0, "UFile::writeTo(%.*S,%.*S,%b,%b)", U_STRING_TO_TRACE(path), U_STRING_TO_TRACE(data), append, bmkdirs)
 
    UFile tmp(path);
 
-   bool result = tmp.write(data, append);
+   bool result = tmp.write(data, append, bmkdirs);
 
    if (tmp.isOpen()) tmp.close();
 
    U_RETURN(result);
 }
 
-bool UFile::writeToTmpl(const char* tmpl, const UString& data, bool append)
+bool UFile::writeToTmpl(const char* tmpl, const UString& data, bool append, bool bmkdirs)
 {
-   U_TRACE(0+256, "UFile::writeToTmpl(%S,%.*S,%b)", tmpl, U_STRING_TO_TRACE(data), append)
+   U_TRACE(0+256, "UFile::writeToTmpl(%S,%.*S,%b,%b)", tmpl, U_STRING_TO_TRACE(data), append, bmkdirs)
 
    bool result = false;
 
@@ -486,7 +510,7 @@ bool UFile::writeToTmpl(const char* tmpl, const UString& data, bool append)
 
       path.snprintf(tmpl, 0);
 
-      result = UFile::writeTo(path, data, append);
+      result = UFile::writeTo(path, data, append, bmkdirs);
       }
 
    U_RETURN(result);
@@ -883,7 +907,11 @@ bool UFile::rmdir(const char* path, bool remove_all)
    if (U_SYSCALL(rmdir, "%S", U_PATH_CONV(path)) == -1)
       {
       if (remove_all &&
-          errno == ENOTEMPTY)
+#  ifdef __MINGW32__
+          (errno == ENOTEMPTY || errno == EACCES))
+#  else
+          (errno == ENOTEMPTY))
+#  endif
          {
          const char* file;
          UString tmp(path);
@@ -897,7 +925,11 @@ bool UFile::rmdir(const char* path, bool remove_all)
             file = vec[i].data();
 
             if (UFile::unlink(file) == false &&
+#        ifdef __MINGW32__
+                (errno == EISDIR || errno == EPERM || errno == EACCES))
+#        else
                 (errno == EISDIR || errno == EPERM))
+#        endif
                {
                if (UFile::rmdir(file, true) == false) U_RETURN(false);
                }

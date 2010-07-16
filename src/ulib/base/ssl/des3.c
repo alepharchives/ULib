@@ -115,7 +115,7 @@ void u_des3_key(const char* restrict str)
 
 long u_des_encode(const unsigned char* restrict inp, long len, unsigned char* restrict out)
 {
-   U_INTERNAL_TRACE("u_des_encode(%.*s,%ld,%p)", len, inp, len, out)
+   U_INTERNAL_TRACE("u_des_encode(%.*s,%ld,%p)", U_min(len,128), inp, len, out)
 
    U_INTERNAL_PRINT("inp_num = %d", inp_num)
 
@@ -135,7 +135,7 @@ long u_des3_encode(const unsigned char* restrict inp, long len, unsigned char* r
    BIO* wbio;
    BIO* benc;
 
-   U_INTERNAL_TRACE("u_des3_encode(%.*s,%ld,%p)", len, inp, len, out)
+   U_INTERNAL_TRACE("u_des3_encode(%.*s,%ld,%p)", U_min(len,128), inp, len, out)
 
    RAND_pseudo_bytes(salt, sizeof(salt));
 
@@ -167,7 +167,7 @@ long u_des3_encode(const unsigned char* restrict inp, long len, unsigned char* r
 
 long u_des_decode(const unsigned char* restrict inp, long len, unsigned char* restrict out)
 {
-   U_INTERNAL_TRACE("u_des_decode(%.*s,%ld,%p)", len, inp, len, out)
+   U_INTERNAL_TRACE("u_des_decode(%.*s,%ld,%p)", U_min(len,128), inp, len, out)
 
    U_INTERNAL_PRINT("out_num = %d", out_num)
 
@@ -190,7 +190,7 @@ long u_des3_decode(const unsigned char* restrict inp, long len, unsigned char* r
    char mbuf[sizeof(U_STR_MAGIC)-1];
    unsigned int magic_len = sizeof(U_STR_MAGIC)-1;
 
-   U_INTERNAL_TRACE("u_des3_decode(%.*s,%ld,%p)", len, inp, len, out)
+   U_INTERNAL_TRACE("u_des3_decode(%.*s,%ld,%p)", U_min(len,128), inp, len, out)
 
    rbio = BIO_new(BIO_s_mem());
    wbio = BIO_new(BIO_s_mem());

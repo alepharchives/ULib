@@ -186,8 +186,6 @@ void u_trace_init(bool force, bool info, bool offset)
       (void) sscanf(env, "%d%d%c%d", &level_active, &file_size, &suffix, &u_flag_test);
 
       if (file_size) U_NUMBER_SUFFIX(file_size, suffix);
-
-      if (u_flag_test) u_printf_string_max_length = 512;
       }
    else
       {

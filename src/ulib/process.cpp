@@ -378,7 +378,9 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
                                                                      aProcessInformation.hProcess,
                                                                      aProcessInformation.hThread)
 
-      pid = (pid_t) aProcessInformation.hProcess;
+      u_hProcess = aProcessInformation.hProcess;
+
+      pid = (pid_t) aProcessInformation.dwProcessId;
 
       (void) U_SYSCALL(CloseHandle, "%p", aProcessInformation.hThread);
       }
@@ -487,7 +489,7 @@ int UProcess::waitAll()
          result = U_FAILED_SOME;
          }
 
-      U_DUMP("result = %b status = %d, %S", result, status, exitInfo());
+      U_DUMP("result = %b status = %d, %S", result, status, exitInfo())
       }
 
    U_RETURN(result);

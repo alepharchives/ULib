@@ -43,11 +43,7 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UFileConfig)
 
-      if (table.capacity())
-         {
-         table.clear();
-         table.deallocate();
-         }
+      destroy();
       }
 
    // SERVICES
@@ -58,6 +54,19 @@ public:
    bool loadTable() { return loadTable(table); }
 
    bool load(const char* section = 0, uint32_t len = 0);
+
+   void destroy()
+      {
+      U_TRACE(0, "UFileConfig::destroy()")
+
+      if (table.capacity())
+         {
+         table.clear();
+         table.deallocate();
+         }
+
+      data.clear();
+      }
 
    // section management
 

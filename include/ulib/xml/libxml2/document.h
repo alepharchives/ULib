@@ -52,6 +52,8 @@ struct _xmlDoc {
 };
 */
 
+class UDSIGContext;
+
 class U_EXPORT UXML2Document {
 public:
 
@@ -82,7 +84,8 @@ public:
 
    // SERVICES
 
-   static uint32_t getElement(const UString& data, UVector<UString>& velement, const char* tag, uint32_t tag_len);
+   uint32_t getElement(UVector<UString>& velement,     const char* tag, uint32_t tag_len);
+   uint32_t getElement(UString& element, uint32_t pos, const char* tag, uint32_t tag_len);
 
    /** getEncoding()
     *
@@ -304,6 +307,7 @@ public:
 #endif
 
 protected:
+   UString data;
    xmlDocPtr impl_;
 
    static bool binit;
@@ -338,6 +342,8 @@ protected:
 private:
    UXML2Document(const UXML2Document&)            {}
    UXML2Document& operator=(const UXML2Document&) { return *this; }
+
+   friend class UDSIGContext;
 };
 
 #endif

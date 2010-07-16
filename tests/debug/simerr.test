@@ -6,11 +6,12 @@
 
 start_msg simerr trace
 
- UTRACE="0 1k 1"
+#UTRACE="0 1k 1"
 #UOBJDUMP="-1 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
+#STRACE=$LTRUSS
 start_prg trace with_simulation_error
 
 # Test against expected output

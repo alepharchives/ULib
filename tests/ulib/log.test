@@ -21,7 +21,7 @@ wait_prg
 $SLEEP
 
 if [ "$TERM" != "msys" ]; then
-	sync
+	$SYNC
 fi
 
 # Test against expected output

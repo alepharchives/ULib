@@ -486,7 +486,9 @@ void UServer_Base::runAsUser()
          }
       else
          {
+#     ifndef __MINGW32__
          U_ERROR("set user %S context failed...", user);
+#     endif
          }
 
       pthis->as_user.clear();

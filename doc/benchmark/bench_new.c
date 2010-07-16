@@ -278,9 +278,9 @@ int main(int argc, char *argv[])
 
    for(i=FROM; i<=TO; i+=STEP)
    {
-       sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 -k " // KEEP-ALIVES
-//     sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 "    // NO Keep-Alives
-                    "-H \"Accept-Encoding: gzip\" "      // HTTP compression
+       sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 -k "		 // KEEP-ALIVES
+//     sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 "			 // NO Keep-Alives
+                    "-H \"Accept-Encoding: gzip,deflate\" "  // HTTP compression
                     "\"http://%s" ":%d" "%s" "\"" " > ab.txt", i?i:1, IP, PORT, URL);
 
       for(max_rps=0, ave_rps=0, min_rps=0xffff0, j=0; j<ITER; j++)
@@ -444,7 +444,7 @@ static int http_req(const char* request)
       len = sprintf(buf, "GET %s HTTP/1.1\r\n"
                     "Host: %s" ":%d" "\r\n"
                     "User-Agent: a.c\r\n"
-                    "Accept-Encoding: gzip\r\n"
+                    "Accept-Encoding: gzip,deflate\r\n"
                     "Connection: close\r\n\r\n", 
                     request, IP, PORT);
     

@@ -842,6 +842,7 @@ dist-hook:
 		$(distdir)/examples/*/*.spec \
 		$(distdir)/tests/ulib/tmp/* \
 		$(distdir)/tests/ulib/CApath/*.*0 \
+		$(distdir)/tests/ulib/ok/timer.ok \
 		$(distdir)/tests/ulib/ok/interrupt.ok \
 		$(distdir)/tests/ulib/ok/memory_pool.ok \
 		$(distdir)/tests/examples/csp.log \

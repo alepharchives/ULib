@@ -374,7 +374,7 @@ public:
       UString allDataObjectTimeStamp(U_CAPACITY);
 
       (void) signedProperties.reserve(U_CONSTANT_SIZE(U_XADES_SIGNED_PROPERTIES_TEMPLATE) + 8192U +
-                               signingTime.size() + allDataObjectTimeStamp.size());
+                                      signingTime.size() + allDataObjectTimeStamp.size());
 
       signedProperties.snprintf(U_XADES_SIGNED_PROPERTIES_TEMPLATE,
                                 U_STRING_TO_TRACE(signingTime),
@@ -589,9 +589,10 @@ public:
       //                            use by the verifier (text, sound or video) in exactly the same way as intended by the signer
       //
       // CAStore
-      //
       // ArchiveTimeStamp           the time-stamp token within this property covers the archive validation data
+      //
       // SignatureTimeStamp         the time-stamp token within this property covers the digital signature value element
+      // Schema                     the pathname XML Schema of XAdES
       // ----------------------------------------------------------------------------------------------------------------------------------
 
       (void) cfg.open(cfg_str);
@@ -707,7 +708,7 @@ public:
       // ---------------------------------------------------------------------------------------------------------------
       utility.handlerConfig(cfg);
 
-      (void) utility.checkDocument(document, U_DATA_URI);
+      (void) utility.checkDocument(document, U_DATA_URI, true);
       // ---------------------------------------------------------------------------------------------------------------
 
       for (uint32_t i = 0, n = utility.vdocument.size(); i < n; ++i)
@@ -810,10 +811,8 @@ public:
       // ---------------------------------------------------------------------------------------------------------------
       // check for OOffice or MS-Word document...
       // ---------------------------------------------------------------------------------------------------------------
-      output = utility.outputDocument(output);
+      utility.outputDocument(output);
       // ---------------------------------------------------------------------------------------------------------------
-
-      cout.write(U_STRING_TO_PARAM(output));
       }
 
 private:

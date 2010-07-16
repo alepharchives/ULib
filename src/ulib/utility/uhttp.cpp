@@ -17,6 +17,7 @@
 #include <ulib/tokenizer.h>
 #include <ulib/mime/entity.h>
 #include <ulib/utility/uhttp.h>
+#include <ulib/mime/multipart.h>
 #include <ulib/utility/base64.h>
 #include <ulib/base/coder/url.h>
 #include <ulib/utility/services.h>
@@ -38,14 +39,20 @@ UString*                          UHTTP::qcontent;
 UString*                          UHTTP::request_uri;
 UString*                          UHTTP::penvironment;
 UString*                          UHTTP::cache_file_mask;
+UString*                          UHTTP::cache_file_compress_mask;
+UString*                          UHTTP::last_file;
 uhttpheader                       UHTTP::http_info;
 const char*                       UHTTP::ptrH;
 const char*                       UHTTP::ptrC;
 const char*                       UHTTP::ptrT;
 const char*                       UHTTP::ptrL;
+const char*                       UHTTP::ptrR;
+const char*                       UHTTP::ptrI;
+const char*                       UHTTP::ptrA;
 UMimeMultipart*                   UHTTP::formMulti;
 UVector<UString>*                 UHTTP::form_name_value;
 UVector<UIPAllow*>*               UHTTP::vallow_IP;
+UHTTP::UFileCacheData*            UHTTP::file_data;
 UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
 
 const UString* UHTTP::str_frm_response;
@@ -679,10 +686,21 @@ bool UHTTP::readHTTPRequest()
    // check in header request for:
    // --------------------------------
    // "Host: ..."
+   // "Range: ..."
    // "Connection: ..."
    // "Content-Type: ..."
    // "Content-Length: ..."
+   // "Accept-Encoding: ..."
+   // "If-Modified-Since: ..."
    // --------------------------------
+
+   U_INTERNAL_ASSERT_DIFFERS(UHTTP::ptrH, 0)
+   U_INTERNAL_ASSERT_DIFFERS(UHTTP::ptrR, 0)
+   U_INTERNAL_ASSERT_DIFFERS(UHTTP::ptrC, 0)
+   U_INTERNAL_ASSERT_DIFFERS(UHTTP::ptrT, 0)
+   U_INTERNAL_ASSERT_DIFFERS(UHTTP::ptrL, 0)
+   U_INTERNAL_ASSERT_DIFFERS(UHTTP::ptrA, 0)
+   U_INTERNAL_ASSERT_DIFFERS(UHTTP::ptrI, 0)
 
    const char* p;
    unsigned char c;
@@ -701,7 +719,10 @@ bool UHTTP::readHTTPRequest()
       c = ptr[pos1];
 
       if (c == 'H' || // "Host: ..."
-          c == 'C')   // "Connection: ..." or "Content-Type: ..." or "Content-Length: ..."
+          c == 'A' || // "Accept-Encoding: ..."
+          c == 'C' || // "Connection: ..." or "Content-Type: ..." or "Content-Length: ..."
+          c == 'I' || // "If-Modified-Since: ..."
+          c == 'R')   // "Range: ..."
          {
          pos = UClientImage_Base::rbuffer->find(':', ++pos1);
 
@@ -714,55 +735,87 @@ bool UHTTP::readHTTPRequest()
 
          if (c == 'H' &&
              l == 3   && // sizeof("ost")
-             U_SYSCALL(memcmp, "%S,%S,%u", p, ptrH, l) == 0)
+             U_SYSCALL(memcmp, "%S,%S,%u", ptrH, p, l) == 0)
             {
             http_info.host     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos;
             http_info.host_len = pos2 - pos -1;
 
             U_INTERNAL_DUMP("host = %.*S", http_info.host_len, start + (ptrdiff_t)http_info.host)
             }
-         else if (l == 9 && // sizeof("onnection")
-                  U_SYSCALL(memcmp, "%S,%S,%u", p, ptrC, l) == 0)
+         else if (c == 'A' &&
+                  l == 14  && // sizeof("ccept-Encoding")
+                  U_SYSCALL(memcmp, "%S,%S,%u", ptrA, p, l) == 0 &&
+                  u_find(ptr + pos, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)
             {
-            U_INTERNAL_DUMP("Connection: = %.*S", pos2 - pos - 1, UClientImage_Base::rbuffer->c_pointer(pos))
+#        ifdef HAVE_LIBZ
+            http_info.is_accept_deflate = 1;
+#        endif
 
-            U_INTERNAL_ASSERT_EQUALS(c, 'C')
-
-            p = ptr + pos;
-
-            if (U_MEMCMP(p, "close") == 0)
+            U_INTERNAL_DUMP("http_info.is_accept_deflate = %u", http_info.is_accept_deflate)
+            }
+         else if (c == 'C')
+            {
+            if (l == 9 && // sizeof("onnection")
+                U_SYSCALL(memcmp, "%S,%S,%u", ptrC, p, l) == 0)
                {
-               http_info.is_connection_close = U_YES;
+               U_INTERNAL_DUMP("Connection: = %.*S", pos2 - pos - 1, UClientImage_Base::rbuffer->c_pointer(pos))
 
-               U_INTERNAL_DUMP("http_info.is_connection_close = %d", http_info.is_connection_close);
+               U_INTERNAL_ASSERT_EQUALS(c, 'C')
+
+               p = ptr + pos;
+
+               if (U_MEMCMP(p, "close") == 0)
+                  {
+                  http_info.is_connection_close = U_YES;
+
+                  U_INTERNAL_DUMP("http_info.is_connection_close = %d", http_info.is_connection_close)
+                  }
+               else if (U_STRNCASECMP(p, "keep-alive") == 0)
+                  {
+                  http_info.keep_alive = 1;
+
+                  U_INTERNAL_DUMP("http_info.keep_alive = %d", http_info.keep_alive)
+                  }
                }
-            else if (U_STRNCASECMP(p, "keep-alive") == 0)
+            else if (l == 11                                            && // 11 -> sizeof("ontent-Type")
+                     U_SYSCALL(memcmp, "%S,%S,%u", ptrT,   p,   7) == 0 && //  7 -> sizeof("ontent-")
+                     u_toupper(p[7]) == 'T'                             &&
+                     U_SYSCALL(memcmp, "%S,%S,%u", ptrT+8, p+8, 3) == 0)   //  3 -> sizeof(        "ype")
                {
-               http_info.keep_alive = 1;
+               U_INTERNAL_ASSERT_EQUALS(c, 'C')
 
-               U_INTERNAL_DUMP("http_info.keep_alive = %d", http_info.keep_alive);
+               http_info.content_type     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos;
+               http_info.content_type_len = pos2 - pos - 1;
+
+               U_INTERNAL_DUMP("Content-Type: = %.*S", http_info.content_type_len, start + (ptrdiff_t)http_info.content_type)
+               }
+            else if (l == 13 && // 13 -> sizeof("ontent-Length")
+                     U_SYSCALL(memcmp, "%S,%S,%u", ptrL, p, l) == 0)
+               {
+               U_INTERNAL_ASSERT_EQUALS(c, 'C')
+
+               http_info.clength = (uint32_t) strtoul(ptr + pos, 0, 0);
+
+               U_INTERNAL_DUMP("Content-Length: = %.*S http_info.clength = %u", 10, ptr + pos, http_info.clength)
                }
             }
-         else if (l == 11                                            && // 11 -> sizeof("ontent-Type")
-                  U_SYSCALL(memcmp, "%S,%S,%u", p,   ptrT,   7) == 0 && //  7 -> sizeof("ontent-")
-                  u_toupper(p[7]) == 'T'                             &&
-                  U_SYSCALL(memcmp, "%S,%S,%u", p+8, ptrT+8, 3) == 0)   //  3 -> sizeof(        "ype")
+         else if (c == 'I' &&
+                  l == 16  && // sizeof("f-Modified-Since")
+                  U_SYSCALL(memcmp, "%S,%S,%u", ptrI, p, l) == 0)
             {
-            U_INTERNAL_ASSERT_EQUALS(c, 'C')
+            http_info.if_modified_since = UDate::getSecondFromTime(ptr + pos, true);
 
-            http_info.content_type     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos;
-            http_info.content_type_len = pos2 - pos - 1;
-
-            U_INTERNAL_DUMP("Content-Type: = %.*S", http_info.content_type_len, start + (ptrdiff_t)http_info.content_type)
+            U_INTERNAL_DUMP("If-Modified-Since = %u", http_info.if_modified_since)
             }
-         else if (l == 13 && // 13 -> sizeof("ontent-Length")
-                  U_SYSCALL(memcmp, "%S,%S,%u", p, ptrL, l) == 0)
+         else if (c == 'R' &&
+                  l == 4   && // sizeof("ange")
+                  U_SYSCALL(memcmp, "%S,%S,%u", ptrR, p, l) == 0 &&
+                  U_STRNEQ(ptr + pos, "bytes="))
             {
-            U_INTERNAL_ASSERT_EQUALS(c, 'C')
+            http_info.range     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos + U_CONSTANT_SIZE("bytes=");
+            http_info.range_len = pos2 - pos - 1                            - U_CONSTANT_SIZE("bytes=");
 
-            http_info.clength = (uint32_t) strtoul(ptr + pos, 0, 0);
-
-            U_INTERNAL_DUMP("Content-Length: = %.*S http_info.clength = %u", 10, ptr + pos, http_info.clength)
+            U_INTERNAL_DUMP("Range = %.*S", http_info.range_len, start + (ptrdiff_t)http_info.range)
             }
          }
 
@@ -821,6 +874,13 @@ bool UHTTP::readHTTPRequest()
       U_INTERNAL_DUMP("Content-Type: = %.*S", U_HTTP_CTYPE_TO_TRACE)
       }
 
+   if (http_info.range_len)
+      {
+      http_info.range += (ptrdiff_t)start;
+
+      U_INTERNAL_DUMP("Range: = %.*S", U_HTTP_RANGE_TO_TRACE)
+      }
+
    // manage buffered read (pipelining)
 
    USocketExt::size_message = http_info.endHeader + http_info.clength;
@@ -864,26 +924,6 @@ const char* UHTTP::getAcceptLanguage()
    U_RETURN_POINTER(accept_language,const char);
 }
 
-// check for "Accept-Encoding: deflate" in header request...
-
-bool UHTTP::isHTTPAcceptEncodingDeflate()
-{
-   U_TRACE(0, "UHTTP::isHTTPAcceptEncodingDeflate()")
-
-#ifdef HAVE_LIBZ
-   U_INTERNAL_DUMP("http_info.clength = %u", http_info.clength)
-
-   if (http_info.clength > 1400) // SIZE THRESHOLD FOR DEFLATE...
-      {
-      const char* ptr = getHTTPHeaderValuePtr(*USocket::str_accept_encoding);
-
-      if (ptr && (u_find(ptr, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)) U_RETURN(true);
-      }
-#endif
-
-   U_RETURN(false);
-}
-
 // check for "Connection: close" in headers...
 
 int UHTTP::checkForHTTPConnectionClose()
@@ -892,7 +932,7 @@ int UHTTP::checkForHTTPConnectionClose()
 
    U_INTERNAL_ASSERT(isHTTPRequest())
 
-   U_INTERNAL_DUMP("http_info.is_connection_close = %d", http_info.is_connection_close);
+   U_INTERNAL_DUMP("http_info.is_connection_close = %d", http_info.is_connection_close)
 
 // U_INTERNAL_ASSERT_DIFFERS(http_info.is_connection_close, U_MAYBE)
 
@@ -1226,7 +1266,7 @@ UString UHTTP::getHTMLDirectoryList()
       (void) buffer.append(U_CONSTANT_TO_PARAM("</table><hr><address>ULib Server</address>\r\n</body></html>"));
       }
 
-   U_INTERNAL_DUMP("buffer(%u) = %.*S", buffer.size(), U_STRING_TO_TRACE(buffer));
+   U_INTERNAL_DUMP("buffer(%u) = %.*S", buffer.size(), U_STRING_TO_TRACE(buffer))
 
    U_RETURN_STRING(buffer);
 }
@@ -1478,7 +1518,7 @@ U_NO_EXPORT UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, UString& 
                 U_STRING_TO_TRACE(connection),
                 sz, ptr);
 
-   U_INTERNAL_DUMP("tmp(%u) = %.*S", tmp.size(), U_STRING_TO_TRACE(tmp));
+   U_INTERNAL_DUMP("tmp(%u) = %.*S", tmp.size(), U_STRING_TO_TRACE(tmp))
 
    U_RETURN_STRING(tmp);
 }
@@ -1502,7 +1542,7 @@ UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, const char* content_t
 
    if (body) (void) tmp.append(*body);
 
-   U_INTERNAL_DUMP("tmp(%u) = %.*S", tmp.size(), U_STRING_TO_TRACE(tmp));
+   U_INTERNAL_DUMP("tmp(%u) = %.*S", tmp.size(), U_STRING_TO_TRACE(tmp))
 
    U_RETURN_STRING(tmp);
 }
@@ -1525,7 +1565,7 @@ UString UHTTP::getHTTPRedirectResponse(const UString& ext, const char* ptr_locat
                 237 + len_location,
                 len_location, ptr_location);
 
-   U_INTERNAL_DUMP("tmp(%u) = %.*S", tmp.size(), U_STRING_TO_TRACE(tmp));
+   U_INTERNAL_DUMP("tmp(%u) = %.*S", tmp.size(), U_STRING_TO_TRACE(tmp))
 
    U_RETURN_STRING(tmp);
 }
@@ -1625,8 +1665,9 @@ void UHTTP::setHTTPCgiResponse(int nResponseCode, bool header_content_length, bo
    if (http_info.clength &&
        header_content_length == false)
       {
-      if (content_encoding ||
-          isHTTPAcceptEncodingDeflate() == false)
+      if (content_encoding        ||
+          http_info.clength < 100 ||
+          http_info.is_accept_deflate == 0)
          {
          tmp.snprintf("%s"
                       "Content-Length: %u\r\n",
@@ -1997,24 +2038,56 @@ void UHTTP::checkFileForCache()
 
    if (u_dosmatch_with_OR(u_buffer+2, u_buffer_len-2, U_STRING_TO_PARAM(*cache_file_mask), 0))
       {
-      UString ext(300U), pathname((void*)(u_buffer+2), u_buffer_len-2);
+      UString ext(300U), content, pathname((void*)(u_buffer+2), u_buffer_len-2);
 
       file->setPath(pathname);
 
+      const char* suffix = file->getSuffix();
+
       UFileCacheData* file_data = U_NEW(UFileCacheData);
 
-      file_data->array.push_back(file->getContent(true, true)); // NB: we need to do fstat() for Last-Modified: ...
+      content = file->getContent(true, true); // NB: we need to do fstat() for Last-Modified: ...
+
+      file_data->array.push_back(content);
 
       file_data->size  = file->getSize();
       file_data->mtime = file->st_mtime;
 
-      getFileMimeType(file->getSuffix(), 0, ext, file_data->size);
+      U_INTERNAL_ASSERT_MAJOR(file_data->size, 0)
+
+      getFileMimeType(suffix, 0, ext, file_data->size);
+
+      U_INTERNAL_DUMP("ext = %.*S", U_STRING_TO_TRACE(ext))
 
       file_data->array.push_back(ext);
 
+      int ratio = 100;
+
+#  ifdef HAVE_LIBZ
+      if (suffix                                     &&
+          cache_file_compress_mask->empty() == false &&
+          u_dosmatch_with_OR(suffix, file->getSuffixLen(suffix), U_STRING_TO_PARAM(*cache_file_compress_mask), 0))
+         {
+         ext.setBuffer(300U);
+
+         (void) ext.assign(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+         
+         UString deflate = UStringExt::deflate(content);
+
+         off_t size = deflate.size();
+
+         ratio = (size * 100 / file_data->size);
+
+         getFileMimeType(suffix, 0, ext, size);
+
+         file_data->array.push_back(ext);
+         file_data->array.push_back(deflate);
+         }
+#  endif
+
       cache_file->insert(pathname, file_data);
 
-      U_SRV_LOG_VAR("file cached: %S - %I bytes", pathname.data(), file_data->size);
+      U_SRV_LOG_VAR("file cached: %S - %I bytes - (%d%%) compressed ratio", pathname.data(), file_data->size, 100 - ratio);
       }
 }
 
@@ -2024,7 +2097,10 @@ void UHTTP::searchFileForCache()
 
    U_INTERNAL_ASSERT_POINTER(file)
    U_INTERNAL_ASSERT_EQUALS(cache_file,0)
+   U_INTERNAL_ASSERT_POINTER(cache_file_mask)
+   U_INTERNAL_ASSERT_POINTER(cache_file_compress_mask)
 
+    last_file = U_NEW(UString(100U));
    cache_file = U_NEW(UHashMap<UFileCacheData*>);
 
    cache_file->allocate();
@@ -2037,6 +2113,61 @@ void UHTTP::searchFileForCache()
    u_ftw();
 
    u_buffer_len = 0;
+}
+
+bool UHTTP::manageFileCache()
+{
+   U_TRACE(0, "UHTTP::manageFileCache()")
+
+   U_ASSERT_EQUALS(isHttpPOST(), false)
+   U_INTERNAL_ASSERT_POINTER(cache_file)
+
+   if (last_file->equal(U_FILE_TO_PARAM(*file)) == false)
+      {
+      (void) last_file->replace(U_FILE_TO_PARAM(*file));
+
+      file_data = (*cache_file)[*last_file];
+      }
+
+   U_INTERNAL_DUMP("file_data = %p", file_data)
+
+   if (file_data == 0) U_RETURN(false);
+
+   if (checkHTTPGetRequestIfModified(file_data->mtime))
+      {
+      int nResponseCode = HTTP_OK;
+      UString ext = file_data->array[1];
+      off_t start = 0, size = file_data->size;
+
+      U_INTERNAL_DUMP("ext = %.*S", U_STRING_TO_TRACE(ext))
+
+      // The Range: header is used with a GET request.
+      // For example assume that will return only a portion (let's say the first 32 bytes) of the requested resource...
+      //
+      // Range: bytes=0-31
+
+      if (http_info.range_len &&
+          checkHTTPGetRequestIfRange(file_data->mtime, UString::getStringNull()))
+         {
+         if (checkHTTPGetRequestForRange(start, size, ext, file_data->array[0]) == false) U_RETURN(true);
+
+         nResponseCode = HTTP_PARTIAL;
+         }
+      else if (http_info.is_accept_deflate &&
+               file_data->array.size() > 2)
+         {
+         ext = file_data->array[2];
+
+         if (isHttpHEAD() == false) *UClientImage_Base::body = file_data->array[3];
+
+         goto next;
+         }
+
+      if (isHttpHEAD() == false) *UClientImage_Base::body    = file_data->array[0].substr(start, size);
+next:                            *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(nResponseCode, ext);
+      }
+
+   U_RETURN(true);
 }
 
 int UHTTP::checkPath(UString& pathname)
@@ -2057,39 +2188,10 @@ int UHTTP::checkPath(UString& pathname)
    file->setPath(pathname);
 
    if (cache_file &&
-       isHttpPOST() == false)
+       isHttpPOST() == false &&
+       manageFileCache())
       {
-      UString key(U_FILE_TO_PARAM(*file));
-
-      UFileCacheData* file_data = (*cache_file)[key];
-
-      if (file_data)
-         {
-         if (checkHTTPGetRequestIfModified(file_data->mtime))
-            {
-            int nResponseCode = HTTP_OK;
-
-            UString ext = file_data->array[1];
-
-            // The Range: header is used with a GET request.
-            // For example assume that will return only a portion (let's say the first 32 bytes) of the requested resource...
-            //
-            // Range: bytes=0-31
-
-            off_t start = 0, size = file_data->size;
-
-            int range = checkHTTPGetRequestForRange(start, size, ext, UString::getStringNull());
-
-            if (range == 0) goto skip; 
-            if (range == 1) nResponseCode = HTTP_PARTIAL;
-
-                                       *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(nResponseCode, ext);
-            if (isHttpHEAD() == false) *UClientImage_Base::body    = file_data->array[0].substr(start, size);
-            }
-
-skip:
-         U_RETURN(2); // skip
-         }
+      U_RETURN(2); // skip
       }
 
    if (file->stat() == false)
@@ -2570,8 +2672,8 @@ bool UHTTP::processCGIOutput()
    int nResponseCode;
    const char* endptr;
    const char* location;
-   bool connection_close, header_content_type, content_encoding;
-   uint32_t endHeader, clength, sz = UClientImage_Base::wbuffer->size();
+   uint32_t endHeader, sz = UClientImage_Base::wbuffer->size();
+   bool connection_close, header_content_length, header_content_type, content_encoding;
 
    if (sz == 0)
       {
@@ -2608,7 +2710,7 @@ rescan:
 
    // NB: endHeader comprende anche la blank line...
 
-   U_INTERNAL_DUMP("endHeader = %u u_line_terminator_len = %d", endHeader, u_line_terminator_len);
+   U_INTERNAL_DUMP("endHeader = %u u_line_terminator_len = %d", endHeader, u_line_terminator_len)
 
    if (endHeader == U_NOT_FOUND) goto error;
 
@@ -2627,9 +2729,8 @@ rescan:
    U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len, 2)
 
    endptr            = UClientImage_Base::wbuffer->c_pointer(endHeader);
-   clength           = 0;
    nResponseCode     = HTTP_OK;
-   connection_close  = header_content_type = content_encoding = false;
+   connection_close  = header_content_length = header_content_type = content_encoding = false;
    http_info.clength = sz - endHeader;
 
    while (ptr < endptr)
@@ -2642,15 +2743,15 @@ rescan:
             {
             if (scanfHTTPHeader(ptr)) // check for script's responsibility to return a valid HTTP response to the client...
                {
-               U_INTERNAL_DUMP("wbuffer(%u) = %.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer));
+               U_INTERNAL_DUMP("wbuffer(%u) = %.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
 
-               U_INTERNAL_DUMP("http_info.is_connection_close = %d", http_info.is_connection_close);
+               U_INTERNAL_DUMP("http_info.is_connection_close = %d", http_info.is_connection_close)
 
                if (http_info.is_connection_close == U_MAYBE)
                   {
                   http_info.is_connection_close = (u_find(ptr + 15, endHeader, U_CONSTANT_TO_PARAM("Connection: close")) ? U_YES : U_NOT);
 
-                  U_INTERNAL_DUMP("http_info.is_connection_close = %d", http_info.is_connection_close);
+                  U_INTERNAL_DUMP("http_info.is_connection_close = %d", http_info.is_connection_close)
                   }
 
                U_RETURN(true);
@@ -2723,7 +2824,7 @@ rescan:
 
                   UClientImage_Base::wbuffer->erase(0, diff);
 
-                  U_INTERNAL_DUMP("wbuffer(%u) = %.*S", sz, U_STRING_TO_TRACE(*UClientImage_Base::wbuffer));
+                  U_INTERNAL_DUMP("wbuffer(%u) = %.*S", sz, U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
 
                   U_ASSERT_EQUALS(sz, UClientImage_Base::wbuffer->size())
 
@@ -2786,7 +2887,7 @@ rescan:
 
                   (void) UClientImage_Base::wbuffer->replace(pos1, n1, set_cookie, pos2, n2);
 
-                  U_INTERNAL_DUMP("wbuffer(%u) = %#.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer));
+                  U_INTERNAL_DUMP("wbuffer(%u) = %#.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
 
                   U_ASSERT_EQUALS(sz, UClientImage_Base::wbuffer->size())
 
@@ -2846,24 +2947,17 @@ rescan:
                   {
                   ptr += U_CONSTANT_SIZE("ength: ");
 
-                  char* nptr;
+                  header_content_length = true;
 
-                  clength = (uint32_t) strtoul(ptr, &nptr, 0);
+                  U_INTERNAL_DUMP("header_content_length = %b", header_content_length)
 
-                  U_INTERNAL_DUMP("clength = %u http_info.clength = %u", clength, http_info.clength);
+                  uint32_t pos = UClientImage_Base::wbuffer->distance(ptr);
 
-                  if (clength != http_info.clength) // NB: with drupal can happens...!!!
+                  if (checkHTTPContentLength(ptr, http_info.clength, *UClientImage_Base::wbuffer)) // NB: with drupal can happens...!!!
                      {
-                     char bp[12];
-                     uint32_t pos = UClientImage_Base::wbuffer->distance(ptr);
-
-                     (void) UClientImage_Base::wbuffer->replace(pos, (nptr - ptr), bp, u_snprintf(bp, sizeof(bp), "%u", http_info.clength));
-
                      sz     = UClientImage_Base::wbuffer->size();
-                     ptr    = UClientImage_Base::wbuffer->data();
+                     ptr    = UClientImage_Base::wbuffer->c_pointer(pos);
                      endptr = UClientImage_Base::wbuffer->c_pointer(endHeader);
-
-                     U_INTERNAL_DUMP("wbuffer(%u) = %#.*S", sz, U_STRING_TO_TRACE(*UClientImage_Base::wbuffer));
                      }
                   }
                else if (c == 'E' &&
@@ -2900,7 +2994,7 @@ next:       // for next parsing...
 
    U_INTERNAL_ASSERT_MAJOR(endHeader, 0)
 
-   setHTTPCgiResponse(nResponseCode, (clength != 0), header_content_type, content_encoding);
+   setHTTPCgiResponse(nResponseCode, header_content_length, header_content_type, content_encoding);
 
    if (connection_close) http_info.is_connection_close = U_YES;
 
@@ -3054,92 +3148,294 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
    U_RETURN(false);
 }
 
-int UHTTP::checkHTTPGetRequestForRange(off_t& start, off_t& size, UString& ext, const UString& etag)
+bool UHTTP::checkHTTPContentLength(const char* ptr, uint32_t length, UString& ext)
 {
-   U_TRACE(0, "UHTTP::checkHTTPGetRequestForRange(%I,%I,%.*S,%.*S)", start, size, U_STRING_TO_TRACE(ext), U_STRING_TO_TRACE(etag))
+   U_TRACE(0, "UHTTP::checkHTTPContentLength(%p,%u,%.*S)", ptr, length, U_STRING_TO_TRACE(ext))
 
-   // The Range: header is used with a GET request.
-   // For example assume that will return only a portion (let's say the first 32 bytes) of the requested resource...
-   //
-   // Range: bytes=0-31
+   char* nptr;
+   uint32_t clength = (uint32_t) strtoul(ptr, &nptr, 0);
 
-   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_range);
+   U_INTERNAL_DUMP("clength = %u", clength)
 
-   if (ptr &&
-       U_STRNEQ(ptr, "bytes="))
+   if (clength != length)
       {
-      ptr += U_CONSTANT_SIZE("bytes=");
+      char bp[12];
+      uint32_t pos = ext.distance(ptr);
 
-      /* Only support %d- and %d-%d, not %d-%d,%d-%d or -%d
-       *
-       * NB: we have problem with use of sscanf()... (format -> "bytes=%ld-%ld")
-       */
+      (void) ext.replace(pos, (nptr - ptr), bp, u_snprintf(bp, sizeof(bp), "%u", length));
 
-      start = (u_isdigit(*ptr) ? u_strtooff(ptr, &ptr, 0) : 0);
+      U_INTERNAL_DUMP("ext(%u) = %#.*S", ext.size(), U_STRING_TO_TRACE(ext))
 
-      U_INTERNAL_DUMP("ptr = %.*S", 10, ptr)
+      U_RETURN(true);
+      }
 
-      off_t end = (*ptr == '-' && u_isdigit(*++ptr) ? u_strtooff(ptr, &ptr, 0) : 0);
+   U_RETURN(false);
+}
 
-      U_INTERNAL_DUMP("ptr = %.*S", 10, ptr)
+typedef struct { off_t start, end; } HTTPRange;
 
-      bool range = (*ptr != ',' && start < end && start < size);
+/**
+ * The Range: header is used with a GET request.
+ *
+ * For example assume that will return only a portion (let's say the first 32 bytes) of the requested resource...
+ * Range: bytes=0-31
+ *
+ * If @end is non-negative, then @start and @end represent the bounds
+ * of the range, counting from %0. (Eg, the first 500 bytes would be
+ * represented as @start = %0 and @end = %499.)
+ *
+ * If @end is %-1 and @start is non-negative, then this represents a
+ * range starting at @start and ending with the last byte of the
+ * requested resource body. (Eg, all but the first 500 bytes would be
+ * @start = %500, and @end = %-1.)
+ *
+ * If @end is %-1 and @start is negative, then it represents a "suffix
+ * range", referring to the last -@start bytes of the resource body.
+ * (Eg, the last 500 bytes would be @start = %-500 and @end = %-1.)
+ *
+ * The If-Range: header allows a client to "short-circuit" the request (conditional GET).
+ * Informally, its meaning is `if the entity is unchanged, send me the part(s) that I am
+ * missing; otherwise, send me the entire new entity'.
+ *
+ * If-Range: ( entity-tag | HTTP-date )
+ *
+ * If the client has no entity tag for an entity, but does have a Last-Modified date, it
+ * MAY use that date in an If-Range header. (The server can distinguish between a valid
+ * HTTP-date and any form of entity-tag by examining no more than two characters.) The If-Range
+ * header SHOULD only be used together with a Range header, and MUST be ignored if the request
+ * does not include a Range header, or if the server does not support the sub-range operation. 
+ *
+ */
 
-      U_INTERNAL_DUMP("start = %I end = %I range = %b", start, end, range)
+bool UHTTP::checkHTTPGetRequestIfRange(time_t mtime, const UString& etag)
+{
+   U_TRACE(0, "UHTTP::checkHTTPGetRequestIfRange(%u,%.*S)", mtime, U_STRING_TO_TRACE(etag))
 
-      if (range == false) U_RETURN(0);
+   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_if_range);
 
-      // The If-Range: header allows a client to "short-circuit" the request (conditional GET). Informally, its meaning is
-      // `if the entity is unchanged, send me the part(s) that I am missing; otherwise, send me the entire new entity'.
-      //
-      // If-Range: ( entity-tag | HTTP-date )
-      //
-      // If the client has no entity tag for an entity, but does have a Last-Modified date, it MAY use that date in an If-Range header.
-      // (The server can distinguish between a valid HTTP-date and any form of entity-tag by examining no more than two characters.)
-      // The If-Range header SHOULD only be used together with a Range header, and MUST be ignored if the request does not include a
-      // Range header, or if the server does not support the sub-range operation. 
-
-      ptr = getHTTPHeaderValuePtr(*USocket::str_if_range);
-
-      if (ptr)
+   if (ptr)
+      {
+      if (*ptr == '"') // entity-tag
          {
-         if (*ptr == '"') range = (etag.equal(ptr, etag.size())); // entity-tag
-         else                                                     // HTTP-date
+         if (etag.equal(ptr, etag.size()) == false) U_RETURN(false);
+         }
+      else // HTTP-date
+         {
+         time_t since = UDate::getSecondFromTime(ptr, true);
+
+         U_INTERNAL_DUMP("since = %u", since)
+         U_INTERNAL_DUMP("mtime = %u", mtime)
+
+         if (mtime > since) U_RETURN(false);
+         }
+      }
+
+   U_RETURN(true);
+}
+
+static int sortHTTPRange(const void* a, const void* b)
+{
+   U_TRACE(0, "::sortHTTPRange(%p,%p)", a, b)
+
+   HTTPRange* ra = *(HTTPRange**)a;
+   HTTPRange* rb = *(HTTPRange**)b;
+
+   U_INTERNAL_DUMP("ra->start = %I ra->end = %I", ra->start, ra->end)
+   U_INTERNAL_DUMP("rb->start = %I rb->end = %I", rb->start, rb->end)
+
+   off_t diff = ra->start - rb->start;
+
+   U_INTERNAL_DUMP("diff = %I", diff)
+
+   U_RETURN(diff);
+}
+
+bool UHTTP::checkHTTPGetRequestForRange(off_t& start, off_t& size, UString& ext, const UString& data)
+{
+   U_TRACE(0, "UHTTP::checkHTTPGetRequestForRange(%I,%I,%.*S,%.*S)", start, size, U_STRING_TO_TRACE(ext), U_STRING_TO_TRACE(data))
+
+   U_INTERNAL_ASSERT_MAJOR(http_info.range_len, 0)
+
+   off_t end;
+   char* pend;
+   uint32_t i, n;
+   HTTPRange* cur;
+   HTTPRange* prev;
+   const char* spec;
+   UVector<HTTPRange*> array;
+   UString range(http_info.range, http_info.range_len), tmp(100U);
+
+   UVector<UString> range_list(range, ',');
+
+   for (i = 0, n = range_list.size(); i < n; ++i)
+      {
+      cur  = new HTTPRange;
+      spec = range_list[i].data();
+
+      U_INTERNAL_DUMP("spec = %.*S", 10, spec)
+
+      if (*spec == '-')
+         {
+         cur->start = u_strtooff(spec, &pend, 0) + size;
+         cur->end   = size - 1;
+         }
+      else
+         {
+         cur->start = u_strtooff(spec, &pend, 0);
+
+         if (*pend == '-') ++pend;
+
+         cur->end = (*pend ? u_strtooff(pend, &pend, 0) : size - 1);
+         }
+
+      U_INTERNAL_DUMP("cur->start = %I cur->end = %I", cur->start, cur->end)
+
+      array.push(cur);
+      }
+
+   n = array.size();
+
+   if (n > 1)
+      {
+      array.sort(sortHTTPRange);
+
+      for (i = 1, n = array.size(); i < n; ++i)
+         {
+         cur  = array[i];
+         prev = array[i-1];
+
+         U_INTERNAL_DUMP("prev->start = %I prev->end = %I", prev->start, prev->end)
+         U_INTERNAL_DUMP(" cur->start = %I  cur->end = %I",  cur->start,  cur->end)
+
+         if (cur->start <= prev->end)
             {
-            time_t since = UDate::getSecondFromTime(ptr, true);
+            prev->end = U_max(prev->end, cur->end);
 
-            U_INTERNAL_DUMP("since          = %u", since)
-            U_INTERNAL_DUMP("file->st_mtime = %u", file->st_mtime)
-
-            range = (file->st_mtime <= since);
+            array.erase(i);
             }
          }
 
-      if (range == false)
-         {
-         http_info.is_connection_close = U_YES;
+      n = array.size();
+      }
 
-         *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_REQ_RANGE_NOT_OK, 0, 0);
+   if (n == 0)
+      {
+      http_info.is_connection_close = U_YES;
 
-         U_RETURN(0);
-         }
+      *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_REQ_RANGE_NOT_OK, 0, 0);
+
+      U_RETURN(false);
+      }
+
+   if (n == 1)
+      {
+      // Single range
+
+      cur   = array[0];
+      end   = cur->end;
+      start = cur->start;
 
       if (end >= size) end = size - 1;
 
-      U_INTERNAL_ASSERT_RANGE(0,start,end-1)
-      U_INTERNAL_ASSERT_RANGE(start+1,end,size-1)
+      U_INTERNAL_DUMP("start = %I end = %I", start, end)
 
-      UString tmp(100U);
+      U_INTERNAL_ASSERT_RANGE(0,start,end)
+      U_INTERNAL_ASSERT_RANGE(start,end,size-1)
 
       tmp.snprintf("Content-Range: bytes %I-%I/%I\r\n", start, end, size);
 
-      ext  = tmp + ext;
       size = end - start + 1;
 
-      U_RETURN(1);
+      if (ext.empty() == false)
+         {
+         uint32_t pos = ext.find(*USocket::str_content_length);
+
+         U_INTERNAL_ASSERT_DIFFERS(pos, U_NOT_FOUND)
+
+         U_INTERNAL_DUMP("pos = %.*S", 20, ext.c_pointer(pos))
+
+         const char* ptr = ext.c_pointer(pos + USocket::str_content_length->size() + 2);
+
+         (void) checkHTTPContentLength(ptr, size, ext);
+         }
+
+      ext = tmp + ext;
+
+      U_INTERNAL_DUMP("ext = %.*S", U_STRING_TO_TRACE(ext))
+
+      U_RETURN(true);
       }
 
-   U_RETURN(2);
+   /* Multiple ranges, so build a multipart/byteranges response
+   --------------------------
+   GET /index.html HTTP/1.1
+   Host: www.unirel.com
+   User-Agent: curl/7.21.0 (x86_64-pc-linux-gnu) libcurl/7.21.0 GnuTLS/2.10.0 zlib/1.2.5
+   Range: bytes=100-199,500-599
+
+   --------------------------
+   HTTP/1.1 206 Partial Content
+   Date: Fri, 09 Jul 2010 10:27:52 GMT
+   Server: Apache/2.0.49 (Linux/SuSE)
+   Last-Modified: Fri, 06 Nov 2009 17:59:33 GMT
+   Accept-Ranges: bytes
+   Content-Length: 431
+   Content-Type: multipart/byteranges; boundary=48af1db00244c25fa
+
+
+   --48af1db00244c25fa
+   Content-type: text/html; charset=ISO-8859-1
+   Content-range: bytes 100-199/598
+
+   ............
+   --48af1db00244c25fa
+   Content-type: text/html; charset=ISO-8859-1
+   Content-range: bytes 500-597/598
+
+   ............
+   --48af1db00244c25fa--
+   --------------------------
+   */
+
+   const char* ptr = tmp.data();
+
+   tmp.snprintf("Content-Length: %I", size);
+
+   UMimeMultipartMsg response("byteranges", UMimeMultipartMsg::NONE, ptr, false);
+
+   for (i = 0; i < n; ++i)
+      {
+      cur   = array[i];
+      end   = cur->end;
+      start = cur->start;
+
+      U_INTERNAL_ASSERT_RANGE(0,start,end)
+      U_INTERNAL_ASSERT_RANGE(start,end,size-1)
+
+      tmp.snprintf("Content-Range: bytes %I-%I/%I", start, end, size);
+
+      response.add(UMimeMultipartMsg::section(data.substr(start, end - start + 1), U_CTYPE_HTML, UMimeMultipartMsg::NONE, "", "", ptr));
+      }
+
+   UString msg;
+   uint32_t content_length     = response.message(msg),
+            content_length_pos = msg.find(*USocket::str_content_length);
+
+   U_INTERNAL_ASSERT_DIFFERS(content_length_pos, U_NOT_FOUND)
+
+   U_INTERNAL_DUMP("content_length_pos = %.*S", 20, msg.c_pointer(content_length_pos))
+
+   const char* content_length_ptr = msg.c_pointer(content_length_pos + USocket::str_content_length->size() + 2);
+
+   (void) checkHTTPContentLength(content_length_ptr, content_length, msg);
+
+#ifdef DEBUG
+   (void) UFile::writeToTmpl("/tmp/byteranges", msg);
+#endif
+
+   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_PARTIAL, msg);
+
+   U_RETURN(false);
 }
 
 #define U_NO_Etag                // for me it's enough Last-Modified: ...
@@ -3159,16 +3455,12 @@ bool UHTTP::checkHTTPGetRequestIfModified(time_t mtime)
    [blank line here]
    */
 
-   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_if_modified_since);
-
-   if (ptr)
+   if (http_info.if_modified_since)
       {
-      time_t since = UDate::getSecondFromTime(ptr, true);
-
-      U_INTERNAL_DUMP("since = %u", since)
+      U_INTERNAL_DUMP("since = %u", http_info.if_modified_since)
       U_INTERNAL_DUMP("mtime = %u", mtime)
 
-      if (mtime <= since)
+      if (mtime <= http_info.if_modified_since)
          {
          *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_NOT_MODIFIED, 0, 0);
 
@@ -3188,7 +3480,7 @@ bool UHTTP::checkHTTPGetRequestIfModified(time_t mtime)
       [blank line here]
       */
 
-      ptr = getHTTPHeaderValuePtr(*USocket::str_if_unmodified_since);
+      const char* ptr = getHTTPHeaderValuePtr(*USocket::str_if_unmodified_since);
 
       if (ptr)
          {
@@ -3277,9 +3569,8 @@ void UHTTP::processHTTPGetRequest()
       else
          {
          *UClientImage_Base::body = getHTMLDirectoryList();
-         http_info.clength        = UClientImage_Base::body->size();
 
-         if (isHTTPAcceptEncodingDeflate())
+         if (http_info.is_accept_deflate)
             {
             (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
 
@@ -3292,20 +3583,26 @@ void UHTTP::processHTTPGetRequest()
    else
       {
       bdir = false;
-
-      // The Range: header is used with a GET request.
-      // For example assume that will return only a portion (let's say the first 32 bytes) of the requested resource...
-      //
-      // Range: bytes=0-31
-
       size = file->getSize();
 
-      int range = checkHTTPGetRequestForRange(start, size, ext, etag);
+      if (size &&
+          file->memmap(PROT_READ, UClientImage_Base::body))
+         {
+         suffix = file->getSuffix();
 
-      if (range == 0) goto end;
-      if (range == 1) nResponseCode = HTTP_PARTIAL;
+         if (http_info.range_len &&
+             checkHTTPGetRequestIfRange(file->st_mtime, etag))
+            {
+            // The Range: header is used with a GET request.
+            // For example assume that will return only a portion (let's say the first 32 bytes) of the requested resource...
+            //
+            // Range: bytes=0-31
 
-      if (size && file->memmap(PROT_READ, UClientImage_Base::body)) suffix = file->getSuffix();
+            if (checkHTTPGetRequestForRange(start, size, ext, *UClientImage_Base::body) == false) goto end;
+
+            nResponseCode = HTTP_PARTIAL;
+            }
+         }
       }
 
    getFileMimeType(suffix, content_type, ext, size);

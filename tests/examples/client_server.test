@@ -21,6 +21,7 @@ start_prg 				client --log client.log --max_length 256 inp/client.cf
 $SLEEP
 kill_prg server TERM
 $SLEEP
+$SYNC
 cat client.log server.log > out/client_server.out
 
 # Test against expected output

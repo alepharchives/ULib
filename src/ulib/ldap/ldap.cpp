@@ -352,7 +352,7 @@ bool ULDAP::init(const char* url)
          break;
          }
 
-      U_INTERNAL_DUMP("ldap_url_parse() failed - %s", buffer);
+      U_INTERNAL_DUMP("ldap_url_parse() failed - %s", buffer)
 #  endif
 
       U_RETURN(false);

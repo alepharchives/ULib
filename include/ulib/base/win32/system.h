@@ -271,7 +271,6 @@ extern __declspec(dllexport) int            pipe(int filedes[2]);
 extern __declspec(dllexport) int            kill(pid_t pid, int sig);
 extern __declspec(dllexport) int            sigpending(sigset_t* set);
 extern __declspec(dllexport) struct passwd* getpwnam(const char* name);
-extern __declspec(dllexport) int            fcntl(int fd, int cmd, ...);
 extern __declspec(dllexport) unsigned int   alarm(unsigned int seconds);
 extern __declspec(dllexport) int            setpgid(pid_t pid, pid_t pgid);
 extern __declspec(dllexport) int            sigsuspend(const sigset_t* mask);
@@ -294,6 +293,7 @@ extern __declspec(dllexport) int            gettimeofday(struct timeval* tv, voi
 
 extern __declspec(dllexport) int            raise_w32(int nsig);
 extern __declspec(dllexport) int            unlink_w32(const char* path);
+extern __declspec(dllexport) int            fcntl_w32(int fd, int cmd, void* arg);
 extern __declspec(dllexport) sighandler_t   signal_w32(int nsig, sighandler_t handler);
 extern __declspec(dllexport) int            rename_w32(const char* oldpath, const char* newpath);
 extern __declspec(dllexport) int            select_w32(int nfds, fd_set* rd, fd_set* wr, fd_set* ex, struct timeval* timeout);
@@ -305,17 +305,19 @@ extern __declspec(dllexport) const char*    getSysError_w32(unsigned* len);
 extern __declspec(dllexport) int            w32_open_osfhandle(long osfhandle, int flags);
 extern __declspec(dllexport) char*          u_slashify(const char* src, char slash_from, char slash_to);
 
+extern __declspec(dllexport) HANDLE u_hProcess;
 extern __declspec(dllexport) SECURITY_ATTRIBUTES sec_none;
 extern __declspec(dllexport) SECURITY_DESCRIPTOR sec_descr;
 #ifdef __cplusplus
 }
 #endif
 
-#define raise  raise_w32
-#define unlink unlink_w32
-#define signal signal_w32
-#define rename rename_w32
-#define select select_w32
+#define raise(a)           raise_w32(a)
+#define unlink(a)          unlink_w32(a)
+#define signal(a,b)        signal_w32(a,b)
+#define rename(a,b)        rename_w32(a,b)
+#define fcntl(a,b,c)       fcntl_w32(a,b,(void*)(c))
+#define select(a,b,c,d,e)  select_w32(a,b,c,d,e)
 
 /* Perform a mapping of Win32 error numbers into POSIX errno's */
 

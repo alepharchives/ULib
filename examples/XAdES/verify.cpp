@@ -1,26 +1,29 @@
 // verify.cpp
 
 #include <ulib/file_config.h>
+#include <ulib/utility/base64.h>
+#include <ulib/utility/services.h>
 #include <ulib/xml/libxml2/schema.h>
-
-#include "context.h"
 
 #ifdef HAVE_SSL_TS
 #  include <ulib/ssl/timestamp.h>
 #endif
 
+#include "utility.h"
+#include "context.h"
+
 #undef  PACKAGE
 #define PACKAGE "verify"
 
-#define ARGS "[file1 file2 file3...]"
+#define ARGS "[ SCHEMA ]"
 
 #define U_OPTIONS \
-"purpose \"simple XAdES verify...\"\n" \
+"purpose \"XAdES verify\"\n" \
 "option c config 1 \"path of configuration file\" \"\"\n"
 
 #include <ulib/application.h>
 
-#define U_SCHEMA (const char*)(argv[optind+1])
+#define U_SCHEMA (const char*)(argv[optind+0])
 
 class Application : public UApplication {
 public:
@@ -38,10 +41,7 @@ public:
 
       // manage options
 
-      if (UApplication::isOptions())
-         {
-         cfg_str = opt['c'];
-         }
+      if (UApplication::isOptions()) cfg_str = opt['c'];
 
       // manage file configuration
 
@@ -76,6 +76,18 @@ public:
 
       (void) cfg.open(cfg_str);
 
+      UString x(U_CAPACITY);
+
+      (void) UServices::read(STDIN_FILENO, x);
+
+      if (x.empty()) U_ERROR("cannot read data from <stdin>...", 0);
+
+      (void) content.reserve(x.size());
+
+      if (UBase64::decode(x, content) == false) U_ERROR("decoding data read failed...", 0);
+
+      // manage arguments...
+
       schema = ( U_SCHEMA == 0 ||
                 *U_SCHEMA == '\0'
                   ? cfg[U_STRING_FROM_CONSTANT("XAdES-L.Schema")]
@@ -85,48 +97,32 @@ public:
 
       UXML2Schema XAdES_schema(UFile::contentOf(schema));
 
-      // manage arg operation
+      // ---------------------------------------------------------------------------------------------------------------
+      // check for OOffice or MS-Word document...
+      // ---------------------------------------------------------------------------------------------------------------
+      utility.handlerConfig(cfg);
 
-      UFile doc;
-      const char* file;
-      UDSIGContext dsigCtx;
-      UString content, pathfile;
+      if (utility.checkDocument(content, "XAdES", false)) content = utility.getSigned();
+      // ---------------------------------------------------------------------------------------------------------------
 
       UApplication::exit_value = 1;
 
-      for (uint32_t i = 1; (file = argv[optind]); ++i, ++optind)
-         {
-         (void) pathfile.assign(file);
+      UXML2Document document(content);
 
-         doc.setPath(pathfile);
+      if (XAdES_schema.validate(document) == false) U_ERROR("error on input data: not XAdES", 0);
 
-         content = doc.getContent();
+      UDSIGContext dsigCtx;
 
-         if (U_MEMCMP(doc.getMimeType(), "application/xml") != 0)
-            {
-            U_WARNING("I can't verify this kind of document: %.*S", U_FILE_TO_TRACE(doc));
+      if (dsigCtx.verify(document)) UApplication::exit_value = 0;
 
-            continue;
-            }
-
-         UXML2Document document(content);
-
-         if (XAdES_schema.validate(document) == false ||
-             dsigCtx.verify( document) == false)
-            {
-            continue;
-            }
-
-         UApplication::exit_value = 0;
-
-         break;
-         }
+      utility.clean();
       }
 
 private:
    int alg;
    UFileConfig cfg;
-   UString cfg_str, schema;
+   UXAdESUtility utility;
+   UString cfg_str, content, schema;
 };
 
 U_MAIN(Application)

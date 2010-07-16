@@ -139,10 +139,10 @@ if [ $? -eq 1 ]; then
 	run_CMD "${OPENSSL} req
 				${ENGINE}
 				-config ${CANAME}/openssl.cnf
+				-days ${CACERT_DAYS}
 				-batch
 				-x509
 				-set_serial 0
-				-days ${CACERT_DAYS}
 				-key ${CANAME}/private/cakey.pem
 				-in ${CANAME}/cacert.req
 				-extensions ${CA_EXT}
@@ -151,15 +151,15 @@ else
 	run_CMD "${OPENSSL} ca
 				${ENGINE}
 				-config ${CANAME}/openssl.cnf
+				-days ${CACERT_DAYS}
 				-batch
 				-selfsign
 				-create_serial
 				-name CA_${CANAME}
 				-keyfile ${CANAME}/private/cakey.pem
-				-infiles ${CANAME}/cacert.req
-				-days ${CACERT_DAYS}
 				-extensions ${CA_EXT}
-				-out ${CANAME}/cacert.pem"
+				-out ${CANAME}/cacert.pem
+				-infiles ${CANAME}/cacert.req"
 fi
 
 unset EXIT_CMD

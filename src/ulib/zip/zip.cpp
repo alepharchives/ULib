@@ -104,9 +104,9 @@ U_NO_EXPORT void UZIP::assignFilenames()
    for (uint32_t i = 0; i < npart; ++i) zippartname->push_back(UString(filenames[i], filenames_len[i]));
 }
 
-bool UZIP::extract(const UString* _tmpdir)
+bool UZIP::extract(const UString* _tmpdir, bool bdir)
 {
-   U_TRACE(1, "UZIP::extract(%p)", _tmpdir)
+   U_TRACE(1, "UZIP::extract(%p,%b)", _tmpdir, bdir)
 
    U_CHECK_MEMORY
 
@@ -133,12 +133,13 @@ bool UZIP::extract(const UString* _tmpdir)
       if (file->creat() &&
           file->write(content))
          {
+         file->fsync();
          file->close();
 
          npart = U_SYSCALL(zip_extract, "%S,%p,%p,%p", "tmp.zip", 0, &filenames, &filenames_len);
          }
 
-      (void) UFile::chdir(0, true);
+      if (bdir) (void) UFile::chdir(0, true);
       }
 
    if (npart > 0)
@@ -153,16 +154,16 @@ bool UZIP::extract(const UString* _tmpdir)
    U_RETURN(false);
 }
 
-bool UZIP::extract(const UString& data, const UString* tmpdir)
+bool UZIP::extract(const UString& data, const UString* tmpdir, bool bdir)
 {
-   U_TRACE(0, "UZIP::extract(%.*S,%p)", U_STRING_TO_TRACE(data), tmpdir)
+   U_TRACE(0, "UZIP::extract(%.*S,%p,%b)", U_STRING_TO_TRACE(data), tmpdir, bdir)
 
    U_INTERNAL_ASSERT_EQUALS(valid,false)
 
    if (U_STRNEQ(data.data(), U_ZIP_ARCHIVE))
       {
       content = data;
-      valid   = extract(tmpdir);
+      valid   = extract(tmpdir, bdir);
       }
 
    U_RETURN(valid);
@@ -203,7 +204,12 @@ UString UZIP::archive(const char** add_to_filenames)
          U_INTERNAL_ASSERT(names[i][0])
          }
 
-      if (U_SYSCALL(zip_archive, "%S,%p", "tmp.zip", names) == 0) result = UFile::contentOf("tmp.zip");
+      if (U_SYSCALL(zip_archive, "%S,%p", "tmp.zip", names) == 0)
+         {
+         U_INTERNAL_ASSERT_EQUALS(zip_match("tmp.zip", names), 1)
+
+         result = UFile::contentOf("tmp.zip");
+         }
 
       (void) UFile::chdir(0, true);
       }

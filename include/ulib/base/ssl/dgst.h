@@ -90,7 +90,7 @@ extern U_EXPORT void u_dgst_init(int alg, const char* restrict key, uint32_t key
 
 static inline void u_dgst_hash(unsigned char* restrict data, uint32_t length)
 {
-   U_INTERNAL_TRACE("u_dgst_hash(%.*s,%u)", length, data, length)
+   U_INTERNAL_TRACE("u_dgst_hash(%.*s,%u)", U_min(length,128), data, length)
 
    if (u_hmac_keylen)
       {
@@ -125,14 +125,14 @@ extern U_EXPORT void u_dgst_verify_init(int alg, ENGINE* restrict impl);
 
 static inline void u_dgst_sign_hash(unsigned char* restrict data, uint32_t length)
 {
-   U_INTERNAL_TRACE("u_dgst_sign_hash(%.*s,%u)", length, data, length)
+   U_INTERNAL_TRACE("u_dgst_sign_hash(%.*s,%u)", U_min(length,128), data, length)
 
    (void) EVP_SignUpdate(&u_mdctx, data, length);
 }
 
 static inline void u_dgst_verify_hash(unsigned char* restrict data, uint32_t length)
 {
-   U_INTERNAL_TRACE("u_dgst_verify_hash(%.*s,%u)", length, data, length)
+   U_INTERNAL_TRACE("u_dgst_verify_hash(%.*s,%u)", U_min(length,128), data, length)
 
    (void) EVP_SignUpdate(&u_mdctx, data, length);
 }

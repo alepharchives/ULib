@@ -11,35 +11,30 @@ mkdir -p out err tmp
 #EXEC_ON_EXIT="/utility/stack_dump.sh"
 #WINELOADER=wine
 #VALGRIND=valgrind
-TRUSS="strace -t -f -s 100"
-LTRUSS="ltrace -f -S --demangle -n 3"
-#STRACE="$LTRUSS"
-export UTRACE UOBJDUMP USIMERR EXEC_ON_EXIT VALGRIND WINELOADER TRUSS LTRUSS STRACE PID RESULT
+export UTRACE UOBJDUMP USIMERR EXEC_ON_EXIT VALGRIND WINELOADER PID RESULT
 
 # context
 
 if [ "$TERM" = "cygwin" ]; then
-	NC=nc
-	SYNC=sync
-	CURL=curl
-	SLEEP="sleep 3"
-	OPENSSL=openssl
-elif [ "$TERM" = "msys" ]; then
-	SUFFIX=".exe"
-	SLEEP="sleep 3"
 	NC=/c/cygwin/bin/nc.exe
 	SYNC=/c/cygwin/bin/sync.exe
 	CURL=/c/cygwin/bin/curl.exe
-	OPENSSL=/c/cygwin/bin/openssl.exe
-	if [ -x /mingw/bin/openssl.exe ]
-	then
-		OPENSSL=/mingw/bin/openssl.exe
-	else
-		OPENSSL=/c/cygwin/bin/openssl.exe
-	fi
+	CHOWN=/c/cygwin/bin/chown.exe
+	TRUSS="/c/cygwin/bin/strace.exe -t -f"
+	SLEEP="sleep 3"
+elif [ "$TERM" = "msys" ]; then
+	NC=/c/cygwin/bin/nc.exe
+	SYNC=/c/cygwin/bin/sync.exe
+	CURL=/c/cygwin/bin/curl.exe
+	CHOWN=/c/cygwin/bin/chown.exe
+	TRUSS="/c/cygwin/bin/strace.exe -t -f"
+	SLEEP="sleep 3"
+	SUFFIX=".exe"
 else
 	SYNC=sync
 	CURL=curl
+	CHOWN=chown
+	TRUSS="strace -t -f -s 100"
 	SLEEP="sleep 1"
 	OPENSSL=openssl
 
@@ -68,6 +63,19 @@ else
 	fi
 fi
 
+LTRUSS="ltrace -f -S --demangle -n 3"
+#STRACE="$LTRUSS"
+
+export TRUSS LTRUSS STRACE
+
+if [ -z "$OPENSSL" ]; then
+	if [ -x /mingw/bin/openssl.exe ]; then
+		OPENSSL=/mingw/bin/openssl.exe
+	else
+		OPENSSL=/c/cygwin/bin/openssl.exe
+	fi
+fi
+
 if [ -z "$WINELOADER" ]; then
 	export WINE_OPENSSL="$OPENSSL"
 else
@@ -75,7 +83,7 @@ else
 	export WINE_OPENSSL="wine /usr/i686-pc-mingw32/sys-root/mingw/bin/openssl.exe"
 fi
 
-export NC SYNC CURL OPENSSL SLEEP SUFFIX
+export NC SYNC CURL OPENSSL SLEEP SUFFIX CHOWN
 
 # function : CApath_rehash
 CApath_rehash() {
@@ -141,7 +149,7 @@ test_prg() {
 		PRG=test_$1
 		CMD="./$PRG$SUFFIX"
 
-		if [ -n "$STRACE" -a "$STRACE" = "$LTRUSS" ]; then
+		if [ -n "$STRACE" ]; then
 			CMD=".libs/$CMD"
 			export LD_LIBRARY_PATH=../../src/ulib/.libs
 		fi
@@ -152,7 +160,7 @@ test_prg() {
 		PRG=$1
 		CMD="$DIR_CMD/$PRG$SUFFIX"
 
-		if [ -n "$STRACE" -a "$STRACE" = "$LTRUSS" ]; then
+		if [ -n "$STRACE" ]; then
 			CMD="$DIR_CMD/.libs/$PRG$SUFFIX"
 			export LD_LIBRARY_PATH=../../src/ulib/.libs
 		fi

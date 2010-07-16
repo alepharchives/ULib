@@ -24,6 +24,7 @@
 
 /* void* _alloca(size_t size); */
 
+HANDLE u_hProcess;
 SECURITY_ATTRIBUTES sec_none;
 SECURITY_DESCRIPTOR sec_descr;
 
@@ -44,6 +45,8 @@ struct passwd {
 
 static char passwd_any_name[256];
 static struct passwd passwd_any = { passwd_any_name, (char*)"", 0, 0, (char*)"", (char*)"/root", (char*)"" };
+
+/* Just pretend that everyone is a superuser. NT will let us know if we don't really have permission to do something */
 
 uid_t getuid(void)      { return 0; }
 uid_t geteuid(void)     { return 0; }
@@ -690,13 +693,19 @@ int sigpending(sigset_t* set)
 
 static int handle_kill_result(HANDLE h)
 {
+   BOOL bclose;
+
    U_INTERNAL_TRACE("handle_kill_result(%d)", h)
 
    if      (GetLastError() == ERROR_ACCESS_DENIED) errno = EPERM;
    else if (GetLastError() == ERROR_NO_MORE_FILES) errno = ESRCH;
    else                                            errno = EINVAL;
 
-   CloseHandle(h);
+   bclose = CloseHandle(h);
+
+   U_INTERNAL_PRINT("bclose = %b", bclose)
+
+   U_INTERNAL_ASSERT(bclose)
 
    return -1;
 }
@@ -709,6 +718,7 @@ If pid is < -1, send sig to all processes in process group - pid.
 
 int kill(pid_t pid, int sig)
 {
+   BOOL bclose;
    DWORD thread_id;
    HANDLE h, h_thread;
    PROCESSENTRY32 pe32;
@@ -744,10 +754,8 @@ int kill(pid_t pid, int sig)
 
    h = OpenProcess(sig == 0 ? PROCESS_QUERY_INFORMATION|PROCESS_VM_READ : PROCESS_ALL_ACCESS, FALSE, (DWORD)pid);
 
-   if (!h)
+   if (h == 0)
       {
-      CloseHandle(h);
-
       errno = ESRCH;
 
       return -1;
@@ -781,7 +789,11 @@ int kill(pid_t pid, int sig)
       break;
       }
 
-   CloseHandle(h);
+   bclose = CloseHandle(h);
+
+   U_INTERNAL_PRINT("bclose = %b", bclose)
+
+   U_INTERNAL_ASSERT(bclose)
 
    return 0;
 }
@@ -792,6 +804,7 @@ WINBASEAPI BOOL WINAPI GetFileSizeEx(HANDLE,PLARGE_INTEGER);
 
 int truncate(const char* fname, off_t length)
 {
+   BOOL bclose;
    HANDLE hFile;
    LARGE_INTEGER fileSize;
 
@@ -817,7 +830,11 @@ int truncate(const char* fname, off_t length)
 
    if (GetFileSizeEx(hFile, &fileSize) == 0)
       {
-      CloseHandle(hFile);
+      bclose = CloseHandle(hFile);
+
+      U_INTERNAL_PRINT("bclose = %b", bclose)
+
+      U_INTERNAL_ASSERT(bclose)
 
       errno = EACCES;
 
@@ -826,7 +843,11 @@ int truncate(const char* fname, off_t length)
 
    if (fileSize.QuadPart < length)
       {
-      CloseHandle(hFile);
+      bclose = CloseHandle(hFile);
+
+      U_INTERNAL_PRINT("bclose = %b", bclose)
+
+      U_INTERNAL_ASSERT(bclose)
 
       errno = EINVAL;
 
@@ -837,14 +858,22 @@ int truncate(const char* fname, off_t length)
 
    if (SetFilePointerEx(hFile, fileSize, 0, FILE_BEGIN) == 0 || SetEndOfFile(hFile) == 0)
       {
-      CloseHandle(hFile);
+      bclose = CloseHandle(hFile);
+
+      U_INTERNAL_PRINT("bclose = %b", bclose)
+
+      U_INTERNAL_ASSERT(bclose)
 
       errno = EACCES;
 
       return -1;
       }
 
-   CloseHandle(hFile);
+   bclose = CloseHandle(hFile);
+
+   U_INTERNAL_PRINT("bclose = %b", bclose)
+
+   U_INTERNAL_ASSERT(bclose)
 
    return 0;
 }
@@ -868,13 +897,15 @@ int fsync(int fd)
 }
 */
 
-/*
-Map addresses starting near ADDR and extending for LEN bytes. From OFFSET into the file FD describes according to PROT
-and FLAGS. If ADDR is nonzero, it is the desired mapping address. If the MAP_FIXED bit is set in FLAGS, the mapping will
-be at ADDR exactly (which must be page-aligned); otherwise the system chooses a convenient nearby address. The return
-value is the actual mapping address chosen or MAP_FAILED for errors (in which case `errno' is set). A successful `mmap'
-call deallocates any previous mapping for the affected region.
-*/
+/* Map addresses starting near ADDR and extending for LEN bytes.
+ * From OFFSET into the file FD describes according to PROT and FLAGS.
+ * If ADDR is nonzero, it is the desired mapping address. If the MAP_FIXED
+ * bit is set in FLAGS, the mapping will be at ADDR exactly (which must be
+ * page-aligned); otherwise the system chooses a convenient nearby address.
+ * The return value is the actual mapping address chosen or MAP_FAILED for
+ * errors (in which case `errno' is set). A successful `mmap' call deallocates
+ * any previous mapping for the affected region.
+ */
 
 #ifndef SECTION_MAP_EXECUTE_EXPLICIT
 /* not defined in the February 2003 version of the Platform SDK */
@@ -885,22 +916,6 @@ call deallocates any previous mapping for the affected region.
 /* not defined in the February 2003 version of the Platform SDK */ 
 #define FILE_MAP_EXECUTE SECTION_MAP_EXECUTE_EXPLICIT
 #endif
-
-#define USE_MALLOC_LOCK  1
-#define MUNMAP_FAILURE (-1)
-#define NEW_MMAP_STRUCT_CNT 10
-
-struct mmapInfos {
-   HANDLE hFile; /* the duplicated fd */
-   HANDLE hMap;  /* handle returned by CreateFileMapping */
-   void* start;  /* ptr returned by MapViewOfFile */
-};
-
-/*
-static CRITICAL_SECTION cs;
-static struct mmapInfos* g_mmapInfos = NULL;
-static int g_curMMapInfos = 0, g_maxMMapInfos = -1;
-*/
 
 static inline int mapProtFlags(int flags, DWORD* dwAccess)
 {
@@ -948,25 +963,30 @@ static inline int mapProtFlags(int flags, DWORD* dwAccess)
    return 0;   
 }
 
+struct mmapInfos {
+   void* start; /* ptr returned by MapViewOfFile */
+   HANDLE hMap; /* handle returned by CreateFileMapping */
+
+   /* the duplicated handle fd
+   HANDLE hdupFile;
+   */
+};
+
+static CRITICAL_SECTION cs;
+static struct mmapInfos* g_mmapInfos;
+static int g_curMMapInfos, g_maxMMapInfos;
+
 void* mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset)
 {
-   int mmlen;
-   HANDLE hfd;
+   BOOL bclose;
+   HANDLE hFile;
+   int i, mmlen;
    caddr_t gran_addr;
-   struct mmapInfos mmi;
+   struct mmapInfos* mmi;
    DWORD dwAccess, flProtect;
    off_t gran_offset, filelen;
 
    U_INTERNAL_TRACE("mmap(%p,%ld,%d,%d,%d,%ld)", start, length, prot, flags, fd, offset)
-
-   /*
-   if (g_maxMMapInfos == -1)
-      {
-      g_maxMMapInfos = 0;
-
-      InitializeCriticalSection(&cs);
-      }
-   */
 
    flProtect = mapProtFlags(prot, &dwAccess);
 
@@ -977,10 +997,36 @@ void* mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset
       return MAP_FAILED;
       }
 
+   if (g_maxMMapInfos == 0)
+      {
+      InitializeCriticalSection(&cs);
+
+      g_mmapInfos = (struct mmapInfos*) calloc((g_maxMMapInfos = 10), sizeof(struct mmapInfos));
+      }
+
+   EnterCriticalSection(&cs);
+
+   for (g_curMMapInfos = 0; g_curMMapInfos < g_maxMMapInfos; ++g_curMMapInfos) if (g_mmapInfos[g_curMMapInfos].start == 0) break;
+
+   U_INTERNAL_PRINT("g_curMMapInfos = %d g_maxMMapInfos = %d", g_curMMapInfos, g_maxMMapInfos)
+
+   if (g_curMMapInfos == g_maxMMapInfos)
+      {
+      g_maxMMapInfos += 10;
+      g_mmapInfos     = (struct mmapInfos*) realloc(g_mmapInfos, g_maxMMapInfos * sizeof(struct mmapInfos));
+
+      for (i = g_maxMMapInfos; i < g_maxMMapInfos; ++i) g_mmapInfos[i].start = 0;
+      }
+
+   mmi           = &(g_mmapInfos[g_curMMapInfos]);
+/* mmi->hdupFile = INVALID_HANDLE_VALUE; */
+
+   LeaveCriticalSection(&cs);
+
    if (flags & MAP_PRIVATE)
       {
-      if (isWindow9x()) flProtect = PAGE_WRITECOPY;
                         dwAccess  = FILE_MAP_COPY;
+      if (isWindow9x()) flProtect = PAGE_WRITECOPY;
       }
 
    U_INTERNAL_PRINT("Addr   before: %p",  start)
@@ -1000,12 +1046,12 @@ void* mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset
    U_INTERNAL_PRINT("Addr    after: %p",  gran_addr)
    U_INTERNAL_PRINT("Offset  after: %ld", gran_offset)
 
-   hfd = mmi.hFile = INVALID_HANDLE_VALUE;
-
    if (fd == -1)
       {
       U_INTERNAL_ASSERT_EQUALS(offset,0)
       U_INTERNAL_ASSERT(flags & MAP_ANONYMOUS)
+
+      hFile = INVALID_HANDLE_VALUE;
 
       /* Map always in multipliers of `granularity'-sized chunks */
 
@@ -1013,11 +1059,17 @@ void* mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset
       }
    else
       {
-      hfd = (HANDLE) _get_osfhandle(fd);
+      hFile = (HANDLE) _get_osfhandle(fd);
 
-      if (hfd == INVALID_HANDLE_VALUE) return MAP_FAILED;
+      U_INTERNAL_PRINT("hFile = %p", hFile)
 
-   /* if (!DuplicateHandle(GetCurrentProcess(), hfd, GetCurrentProcess(), &mmi.hFile, 0, FALSE, DUPLICATE_SAME_ACCESS)) return MAP_FAILED; */
+      if (hFile == INVALID_HANDLE_VALUE) return MAP_FAILED;
+
+      /*
+      if (!DuplicateHandle(GetCurrentProcess(), hFile, GetCurrentProcess(), &mmi->hdupFile, 0, FALSE, DUPLICATE_SAME_ACCESS)) return MAP_FAILED;
+
+      U_INTERNAL_PRINT("mmi->hdupFile = %p", mmi->hdupFile)
+      */
 
       filelen = _filelength(fd);
 
@@ -1026,78 +1078,71 @@ void* mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset
       mmlen = (filelen < gran_offset + length ? filelen - gran_offset : length);
       }
 
-   U_INTERNAL_PRINT("hfd = %p mmlen = %d", hfd, mmlen)
+   U_INTERNAL_PRINT("mmlen = %d", mmlen)
 
-   mmi.hMap = CreateFileMapping(hfd, &sec_none, flProtect, 0, mmlen, NULL);
+   mmi->hMap = CreateFileMapping(hFile, &sec_none, flProtect, 0, mmlen, NULL);
 
-   U_INTERNAL_PRINT("mmi.hMap = %p", mmi.hMap)
+   U_INTERNAL_PRINT("mmi->hMap = %p", mmi->hMap)
 
-   if (mmi.hMap == 0)
+   if (mmi->hMap == 0)
       {
-      CloseHandle(mmi.hFile);
+      /*
+      bclose = CloseHandle(mmi->hdupFile);
+
+      U_INTERNAL_PRINT("bclose = %b", bclose)
+
+      U_INTERNAL_ASSERT(bclose)
+      */
 
       errno = EACCES;
 
       return MAP_FAILED;
       }
 
-   mmi.start = MapViewOfFileEx(mmi.hMap, dwAccess,
+   mmi->start = MapViewOfFileEx(mmi->hMap, dwAccess,
                               /* HIDWORD(gran_offset), */ 0,
                               /* LODWORD(gran_offset), */ gran_offset,
                               (SIZE_T)mmlen, (LPVOID)gran_addr);
 
-   U_INTERNAL_PRINT("mmi.start = %p", mmi.start)
+   U_INTERNAL_PRINT("mmi->start = %p", mmi->start)
 
-   if (mmi.start == 0 && (flags & MAP_FIXED))
+   if (mmi->start == 0 &&
+       (flags & MAP_FIXED))
       {
       U_INTERNAL_PRINT("Starting address: %p", (LPVOID) gran_addr)
 
-      mmi.start = MapViewOfFileEx(mmi.hMap, dwAccess,
+      mmi->start = MapViewOfFileEx(mmi->hMap, dwAccess,
                                  /* HIDWORD(gran_offset), */ 0,
                                  /* LODWORD(gran_offset), */ gran_offset,
                                  (SIZE_T)mmlen, (LPVOID)NULL);
 
-      U_INTERNAL_PRINT("mmi.start = %p", mmi.start)
+      U_INTERNAL_PRINT("mmi->start = %p", mmi->start)
       }
 
-   if (mmi.start == 0)
+   if (mmi->start == 0)
       {
       DWORD dwLastErr = GetLastError();
 
-      CloseHandle(mmi.hMap);
-      CloseHandle(mmi.hFile);
+      bclose = CloseHandle(mmi->hMap);
+
+      U_INTERNAL_ASSERT(bclose)
+
+      U_INTERNAL_PRINT("bclose = %b", bclose)
+
+      /*
+      bclose = CloseHandle(mmi->hdupFile);
+
+      U_INTERNAL_PRINT("bclose = %b", bclose)
+
+      U_INTERNAL_ASSERT(bclose)
+      */
 
       errno = (dwLastErr == ERROR_MAPPED_ALIGNMENT ? EINVAL : EACCES);
 
       return MAP_FAILED;
       }
 
-   CloseHandle(mmi.hMap);
-               mmi.hMap = INVALID_HANDLE_VALUE;
-
-   /*
-   EnterCriticalSection(&cs);
-
-   if (g_mmapInfos == NULL)
-      {
-      g_maxMMapInfos = NEW_MMAP_STRUCT_CNT;
-      g_mmapInfos    = (struct mmapInfos*)calloc(g_maxMMapInfos, sizeof(struct mmapInfos));
-      }
-
-   if (g_curMMapInfos == g_maxMMapInfos)
-      {
-      g_maxMMapInfos += NEW_MMAP_STRUCT_CNT;
-      g_mmapInfos     = (struct mmapInfos*)realloc(g_mmapInfos, g_maxMMapInfos * sizeof(struct mmapInfos));
-      }
-
-   (void) memcpy(&g_mmapInfos[g_curMMapInfos], &mmi, sizeof(struct mmapInfos));
-
-   ++g_curMMapInfos;
-
-   LeaveCriticalSection(&cs);
-   */
-
-   return mmi.start;
+   return mmi->start;
 }
 
 /*
@@ -1107,39 +1152,63 @@ Returns 0 if successful, -1 for errors (and sets errno).
 
 int munmap(void* start, size_t length)
 {
-   int i, j;
+   BOOL bclose;
 
    U_INTERNAL_TRACE("munmap(%p,%ld)", start, length)
 
+   U_INTERNAL_ASSERT_POINTER(g_mmapInfos)
+
+   U_INTERNAL_PRINT("g_curMMapInfos = %d g_maxMMapInfos = %d g_mmapInfos[g_curMMapInfos].start = %p",
+                     g_curMMapInfos,     g_maxMMapInfos,     g_mmapInfos[g_curMMapInfos].start)
+
+   if (g_mmapInfos[g_curMMapInfos].start != start)
+      {
+      for (g_curMMapInfos = 0; g_curMMapInfos < g_maxMMapInfos; ++g_curMMapInfos)
+         {
+         U_INTERNAL_PRINT("g_mmapInfos[%d].start = %p", g_curMMapInfos, g_mmapInfos[g_curMMapInfos].start)
+
+         if (g_mmapInfos[g_curMMapInfos].start == start) break;
+         }
+
+      if (g_curMMapInfos == g_maxMMapInfos)
+         {
+         errno = EINVAL;
+
+         return -1;
+         }
+      }
+
+   U_INTERNAL_ASSERT_EQUALS(g_mmapInfos[g_curMMapInfos].start, start)
+
    UnmapViewOfFile(start);
 
+   U_INTERNAL_PRINT("g_mmapInfos[%d].hMap     = %p", g_curMMapInfos, g_mmapInfos[g_curMMapInfos].hMap)
+   U_INTERNAL_PRINT("g_mmapInfos[%d].hdupFile = %p", g_curMMapInfos, g_mmapInfos[g_curMMapInfos].hdupFile)
+
+   bclose = CloseHandle(g_mmapInfos[g_curMMapInfos].hMap);
+
+   U_INTERNAL_PRINT("bclose = %b", bclose)
+
+   U_INTERNAL_ASSERT(bclose)
+
    /*
-   for (i = 0; i < g_curMMapInfos; ++i) if (g_mmapInfos[i].start == start) break;
+   bclose = CloseHandle(g_mmapInfos[g_curMMapInfos].hdupFile);
 
-   if (i == g_curMMapInfos)
-      {
-      errno = EINVAL;
+   U_INTERNAL_PRINT("bclose = %b", bclose)
 
-      return -1;
-      }
-
-   CloseHandle(g_mmapInfos[i].hMap);
-   CloseHandle(g_mmapInfos[i].hFile);
-
-   EnterCriticalSection(&cs);
-
-   for (j = i+1; j < g_curMMapInfos; ++j) (void) memcpy(&g_mmapInfos[j-1], &g_mmapInfos[j], sizeof(struct mmapInfos));
-
-   if (--g_curMMapInfos == 0)
-      {
-      free(g_mmapInfos);
-
-      g_mmapInfos    = NULL;
-      g_maxMMapInfos = 0;
-      }
-
-   LeaveCriticalSection(&cs);
+   U_INTERNAL_ASSERT(bclose)
    */
+
+/* EnterCriticalSection(&cs); */
+
+   g_mmapInfos[g_curMMapInfos].hMap     = 0;
+   g_mmapInfos[g_curMMapInfos].start    = 0;
+/* g_mmapInfos[g_curMMapInfos].hdupFile = 0; */
+
+/* LeaveCriticalSection(&cs); */
+
+end:
+   SetLastError(0);
 
    return 0;
 }
@@ -1202,11 +1271,31 @@ ssize_t writev(int fd, const struct iovec* iov, int count)
       ptr += iov[i].iov_len;
       }
 
-   result = write(fd, buf, length);
+   if (is_socket(fd) == TRUE)
+      {
+      result = send(fd, buf, length, 0);
+      }
+   else
+      {
+      HANDLE h;
 
+      result = write(fd, buf, length);
+
+      if (result > 0) goto next;
+
+      h = (HANDLE) _get_osfhandle(fd);
+
+      U_INTERNAL_PRINT("h = %p", h)
+
+      if (h == INVALID_HANDLE_VALUE) goto next;
+
+      if (WriteFile(h, buf, length, (DWORD*)&result, 0) == FALSE) result = -1; 
+      }
+
+next:
    free(buf);
 
-   U_INTERNAL_PRINT("ret = %d", result)
+   U_INTERNAL_PRINT("result = %d", result)
 
    return result;
 }
@@ -1241,6 +1330,7 @@ If successful, return PID and store the dead child's status in STAT_LOC. Return 
 pid_t waitpid(pid_t pid, int* stat_loc, int options)
 {
    BOOL ok;
+   BOOL bclose;
    DWORD status;
    HANDLE hProcess;
 
@@ -1261,8 +1351,19 @@ pid_t waitpid(pid_t pid, int* stat_loc, int options)
       return (pid_t) -1;
       }
 
-   ok       = FALSE;
-   hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, (DWORD)pid);
+   ok = FALSE;
+
+   if (u_hProcess)
+      {
+      U_INTERNAL_PRINT("u_hProcess = %ld", u_hProcess)
+
+      hProcess = u_hProcess;
+                 u_hProcess = 0;
+      }
+   else
+      {
+      hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, (DWORD)pid);
+      }
 
    if (hProcess)
       {
@@ -1279,7 +1380,11 @@ pid_t waitpid(pid_t pid, int* stat_loc, int options)
          if (stat_loc) *stat_loc = status;
          }
 
-      CloseHandle(hProcess);
+      bclose = CloseHandle(hProcess);
+
+      U_INTERNAL_PRINT("bclose = %b", bclose)
+
+      U_INTERNAL_ASSERT(bclose)
       }
 
    return (ok ? pid : (pid_t) -1);
@@ -1288,7 +1393,7 @@ pid_t waitpid(pid_t pid, int* stat_loc, int options)
 int is_socket(SOCKET fd)
 {
    static int result;
-   static int last_fd;
+   static int last_fd = -1;
 
    U_INTERNAL_TRACE("is_socket(%d)", fd)
 
@@ -1310,7 +1415,8 @@ int is_socket(SOCKET fd)
          U_INTERNAL_PRINT("iRet = %d", iRet)
 
          if (iRet == WSAENOTSOCK ||
-             iRet == WSAEBADF)
+             iRet == WSAEBADF    ||
+             iRet == WSANOTINITIALISED)
             {
             result = FALSE;
             }
@@ -1730,23 +1836,50 @@ EXTERN_C _CRTIMP ioinfo* __pioinfo[];
 #define FDEV         0x40  /* file handle refers to device */
 #define FTEXT        0x80  /* file handle is in text mode */
 
-int fcntl(int fd, int cmd, ...)
+int fcntl_w32(int fd, int cmd, void* arg)
 {
-   int res   = -1;
-   void* arg = NULL;
+   int res = -1;
 
-   va_list args;
-   va_start(args, cmd);
-   arg = va_arg(args, void*);
-   va_end(args);
-
-   U_INTERNAL_TRACE("fcntl(%d,%d)", fd, cmd)
+   U_INTERNAL_TRACE("fcntl_w32(%d,%d,%p)", fd, cmd, arg)
 
    if (is_socket(fd) == TRUE)
       {
       unsigned long mode = (unsigned long) arg;
 
-      res = WSAIoctl(fd, cmd, &mode, sizeof(unsigned long), NULL, 0, NULL, NULL, NULL);
+      if (cmd == F_SETFL)
+         {
+         /* Set the socket I/O mode: In this case FIONBIO enables or disables
+          * the blocking mode for the socket based on the numerical value of iMode.
+          *
+          * If iMode  = 0,     blocking mode is enabled
+          * If iMode != 0, non-blocking mode is enabled.
+          */
+
+         u_long iMode = (mode & O_NONBLOCK ? 1 : 0);
+
+         res = ioctlsocket(fd, FIONBIO, &iMode);
+         }  
+      else
+         {
+         char outBuffer[32];
+         DWORD cbBytesReturned;
+
+         /*
+         int WSAIoctl(
+         in  SOCKET s,                                               // A descriptor identifying a socket
+         in  DWORD dwIoControlCode,                                  // The control code of operation to perform
+         in  LPVOID lpvInBuffer,                                     // A pointer to the input buffer
+         in  DWORD cbInBuffer,                                       // The size, in bytes, of the input buffer
+         out LPVOID lpvOutBuffer,                                    // A pointer to the output buffer
+         in  DWORD cbOutBuffer,                                      // The size, in bytes, of the output buffer
+         out LPDWORD lpcbBytesReturned,                              // A pointer to actual number of bytes of output
+         in  LPWSAOVERLAPPED lpOverlapped,                           // A pointer to a WSAOVERLAPPED structure (ignored for non-overlapped sockets)
+         in  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) // A pointer to the completion routine called when
+                                                                     // the operation has been completed (ignored for non-overlapped sockets)
+         */
+
+         res = WSAIoctl(fd, cmd, &mode, sizeof(unsigned long), outBuffer, sizeof(outBuffer), &cbBytesReturned, 0, 0);
+         }
       }
    else
       {
@@ -1758,8 +1891,7 @@ int fcntl(int fd, int cmd, ...)
          /* Get file descriptor flags */
          case F_GETFD: res = (_osfile(fd) & FNOINHERIT ? FD_CLOEXEC : 0); break;
 
-         /* Set file descriptor flags */
-         case F_SETFD:
+         case F_SETFD: /* Set file descriptor flags */
             {
             int newflags = (int) arg;
 
@@ -1775,8 +1907,7 @@ int fcntl(int fd, int cmd, ...)
             }
          break;
 
-         /* Get file status flags and file access modes */
-         case F_GETFL:
+         case F_GETFL: /* Get file status flags and file access modes */
             {
             int osflags;
 
@@ -1790,13 +1921,12 @@ int fcntl(int fd, int cmd, ...)
             }
          break;
 
-         /* Set file status flags */
-         case F_SETFL:
+         case F_SETFL: /* Set file status flags */
             {
             int osflags = 0;
 
-            if       ((int)arg & O_APPEND) osflags |= FAPPEND;
-            else if  ((int)arg & O_TEXT)   osflags |= FTEXT;
+            if       ((int) arg & O_APPEND) osflags |= FAPPEND;
+            else if  ((int) arg & O_TEXT)   osflags |= FTEXT;
 
             _osfile(fd) = osflags;
 
@@ -1808,9 +1938,12 @@ int fcntl(int fd, int cmd, ...)
          case F_SETLKW: /* Set record locking information; wait if blocked */
             {
             BOOL result;
-            struct flock* l = (struct flock*)arg;
-            HANDLE h = (HANDLE) _get_osfhandle(fd);
+            struct flock* l = (struct flock*) arg;
             off_t l_len = (l->l_len ? l->l_len : ULONG_MAX);
+
+            HANDLE h = (HANDLE) _get_osfhandle(fd);
+
+            if (h == INVALID_HANDLE_VALUE) return -1;
 
             if (isWindowNT())
                {
@@ -1845,7 +1978,7 @@ int fcntl(int fd, int cmd, ...)
          }
       }
 
-   U_INTERNAL_PRINT("ret = %d", res)
+   U_INTERNAL_PRINT("res = %d", res)
 
    return res;
 }
@@ -1857,6 +1990,7 @@ int w32_open_osfhandle(long osfhandle, int flags)
 {
    int fh;
    HANDLE hF;
+   BOOL bclose;
    char fileflags; /* _osfile flags */
 
    U_INTERNAL_TRACE("w32_open_osfhandle(%ld,%d)", osfhandle, flags)
@@ -1875,7 +2009,11 @@ int w32_open_osfhandle(long osfhandle, int flags)
 
    fh = _open_osfhandle((long)hF, 0);
 
-   CloseHandle(hF);
+   bclose = CloseHandle(hF);
+
+   U_INTERNAL_PRINT("bclose = %b", bclose)
+
+   U_INTERNAL_ASSERT(bclose)
 
    /* the file is open. now, set the info in _osfhnd array */
 

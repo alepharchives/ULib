@@ -44,7 +44,7 @@ public:
 
    // COSTRUTTORI
 
-    UTransformCtx()
+   UTransformCtx() : chain(5)
       {
       U_TRACE_REGISTER_OBJECT(0, UTransformCtx, "", 0)
 
@@ -58,7 +58,7 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UTransformCtx)
 
-      if (uri) 
+      if (uri)
          {
          U_SYSCALL_VOID(free, "%p", (void*)uri);
          U_SYSCALL_VOID(free, "%p", (void*)xptrExpr);
@@ -81,10 +81,10 @@ protected:
 
    // SERVICES
 
-   bool execute();
+   bool execute(UString& data);
+   bool verifyNodeContent(xmlNodePtr node);
    bool setURI(const char* uri, xmlNodePtr node);
    bool nodesListRead(xmlNodePtr node, int usage);
-   bool verifyNodeContent(UBaseTransform* transform, xmlNodePtr node);
 
    static void            registerDefault();
    static UBaseTransform* findByHref(const char* href);
@@ -122,17 +122,6 @@ public:
 #endif
 
 protected:
-// xmlSecKeyInfoCtx     keyInfoReadCtx;             // the reading key context
-// xmlSecKeyInfoCtx     keyInfoWriteCtx;            // the writing key context (not used for signature verification).
-// xmlSecPtrListPtr     enabledReferenceTransforms; // the list of transforms allowed in <dsig:Reference/> node.
-// xmlSecTransformId    defSignMethodId;            // the default signing method klass.
-// xmlSecTransformId    defC14NMethodId;            // the default c14n method klass.
-// xmlSecTransformId    defDigestMethodId;          // the default digest method klass.
-     
-// xmlSecKeyPtr         signKey;             // the signature key; application may set before calling #xmlSecDSigCtxSign or #xmlSecDSigCtxVerify functions.
-// xmlSecBufferPtr      result;              // the pointer to signature (not valid for signature verification).
-// xmlSecTransformPtr   preSignMemBufMethod; // the pointer to binary buffer right before signature (valid only if FLAGS_STORE_SIGNATURE flag is set).
-
    int                     status;               // the <dsig:Signature/> processing status.
    int                     operation;            // the operation: sign or verify.
    int                     enabledReferenceUris; // the URI types allowed for <dsig:Reference/> node.
@@ -205,19 +194,16 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UReferenceCtx, "%d", org)
 
-      id           = 0;
-      uri          = 0;
-      type         = 0;
-      status       = UNKNOWN;
-      origin       = org;
-      digestMethod = 0;
+      id     = 0;
+      uri    = 0;
+      type   = 0;
+      status = UNKNOWN;
+      origin = org;
       }
 
    ~UReferenceCtx()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UReferenceCtx)
-
-      if (digestMethod) delete digestMethod; // the pointer to digest transform
       }
 
 #ifdef DEBUG
@@ -225,14 +211,12 @@ public:
 #endif
 
 protected:
-   int status;                   // the reference processing status
-   int origin;                   // the reference processing transforms context
-   const char* id;               // the <dsig:Reference/> node ID attribute
-   const char* uri;              // the <dsig:Reference/> node URI attribute
-   const char* type;             // the <dsig:Reference/> node Type attribute
-   UString  digest_result;       // the pointer to digest result
-   UTransformCtx transformCtx;   // the reference processing transforms context
-   UBaseTransform* digestMethod; // the pointer to digest transform
+   int status;                 // the reference processing status
+   int origin;                 // the reference processing transforms context
+   const char* id;             // the <dsig:Reference/> node ID attribute
+   const char* uri;            // the <dsig:Reference/> node URI attribute
+   const char* type;           // the <dsig:Reference/> node Type attribute
+   UTransformCtx transformCtx; // the reference processing transforms context
 
    // SERVICES
 
