@@ -69,7 +69,7 @@ bool URPC::readTokenVector(USocket* s, const char* token, UString& buffer, UVect
 {
    U_TRACE(0, "URPC::readTokenVector(%p,%S,%p,%p)", s, token, &buffer, &vec)
 
-   U_ASSERT(buffer.empty() == true)
+   U_ASSERT(buffer.empty())
 
    uint32_t i    = 0,
             argc = readTokenInt(s, token, buffer);
@@ -85,12 +85,14 @@ bool URPC::readTokenVector(USocket* s, const char* token, UString& buffer, UVect
          vec.push(data);
          }
 
+      U_INTERNAL_DUMP("buffer.size() = %u USocketExt::pcount = %d", buffer.size(), USocketExt::pcount)
+
       U_RETURN(i == argc);
       }
 
    // check if method without argument...
 
-   U_INTERNAL_DUMP("buffer.size() = %u", buffer.size())
+   U_INTERNAL_DUMP("buffer.size() = %u USocketExt::pcount = %d", buffer.size(), USocketExt::pcount)
 
    bool result = (buffer.size() == U_TOKEN_LN);
 

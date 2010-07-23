@@ -55,6 +55,12 @@ public:
 
       bool is_rpc_msg = readTokenVector(socket, 0, rbuffer, *rpc_info);
 
+      // manage buffered read (pipelining)
+
+      USocketExt::size_message = rbuffer.size();
+
+      U_INTERNAL_DUMP("size_message = %u", USocketExt::size_message)
+
       U_RETURN(is_rpc_msg);
       }
 

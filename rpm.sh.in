@@ -36,7 +36,7 @@ cd ULib-$VERSION
 # mv rpmpkgreq.lst.suse rpmpkgreq.lst
 #------------------------------------
 
-./configure -C --enable-static --enable-shared --enable-final --with-ssl --with-expat --with-magic --with-pcre --with-libuuid --with-libz --enable-zip
+./configure -C --enable-static --enable-shared
 
 cd ..
 tar czf ULib-$VERSION.tar.gz ULib-$VERSION

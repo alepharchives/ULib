@@ -159,6 +159,7 @@ public:
    static const UString* str_frm_not_found;
    static const UString* str_frm_moved_temp;
    static const UString* str_frm_bad_request;
+   static const UString* str_frm_unauthorized;
    static const UString* str_frm_internal_error;
    static const UString* str_frm_service_unavailable;
 

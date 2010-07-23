@@ -71,23 +71,6 @@ public:
    static void genericReset();
    static void init(USocket* p);
 
-   // check if data read already available... (pipelining)
-
-   static bool isPipeline(uint32_t size)
-      {
-      U_TRACE(0, "UClientImage_Base::isPipeline(%u)", size)
-
-      U_INTERNAL_DUMP("size_message = %u pcount = %d pbuffer = %p", USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
-
-      if ((int32_t)USocketExt::size_message  > 0 && size &&
-          (USocketExt::pcount                > 0 || size > USocketExt::size_message))
-         {
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
-
    // log
 
    static void logRequest( const char* filereq = FILETEST_REQ);
@@ -144,6 +127,33 @@ public:
    virtual int handlerRead();
    virtual int handlerWrite();
 
+   // check if data read already available... (pipelining)
+
+   static void checkForPipeline()
+      {
+      U_TRACE(0, "UClientImage_Base::checkForPipeline()")
+
+      U_INTERNAL_ASSERT_POINTER(rbuffer)
+
+      U_INTERNAL_DUMP("rbuffer->size() = %u size_message = %u pcount = %d pbuffer = %p",
+                       rbuffer->size(), USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
+
+      if (USocketExt::size_message)
+         {
+         uint32_t size = rbuffer->size();
+
+         if (size > USocketExt::size_message)
+            {
+            USocketExt::pcount  = size - USocketExt::size_message;
+#        ifdef DEBUG
+            USocketExt::pbuffer = rbuffer->data();
+#        endif
+
+            U_INTERNAL_DUMP("pcount = %d pbuffer = %p", USocketExt::pcount, USocketExt::pbuffer)
+            }
+         }
+      }
+
    // DEBUG
 
 #ifdef DEBUG
@@ -188,32 +198,21 @@ protected:
 
    static void destroy();
 
-   // check if data read already available... (pipelining)
-
    static bool isPipeline();
-
-   static void checkForPipeline()
+   static bool isPipeline(uint32_t size)
       {
-      U_TRACE(0, "UClientImage_Base::checkForPipeline()")
+      U_TRACE(0, "UClientImage_Base::isPipeline(%u)", size)
 
-      U_INTERNAL_ASSERT_POINTER(rbuffer)
+      U_INTERNAL_DUMP("size_message = %u pcount = %d pbuffer = %p", USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
 
-      uint32_t size = rbuffer->size();
-
-      U_INTERNAL_DUMP("rbuffer->size() = %u size_message = %u pcount = %d pbuffer = %p",
-                       size, USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
-
-      U_INTERNAL_ASSERT_MAJOR((int32_t)USocketExt::size_message,0)
-
-      if (size > USocketExt::size_message)
+      if (size                     &&
+          USocketExt::size_message &&
+          (USocketExt::pcount > 0 || size > USocketExt::size_message))
          {
-         USocketExt::pcount  = size - USocketExt::size_message;
-#     ifdef DEBUG
-         USocketExt::pbuffer = rbuffer->data();
-#     endif
-
-         U_INTERNAL_DUMP("pcount = %d pbuffer = %p", USocketExt::pcount, USocketExt::pbuffer)
+         U_RETURN(true);
          }
+
+      U_RETURN(false);
       }
 
 private:

@@ -1,3 +1,13 @@
+POST / HTTP/1.1
+
+GET /xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx HTTP/1.0
+
+GET /../../../linux HTTP/1.0
+
+GET /cgi-bin/internal-error.sh HTTP/1.0
+
+GET /ok HTTP/1.0
+
 GET /inp/http/data HTTP/1.1
 Host: localhost
 Connection: Keep-Alive
@@ -40,7 +50,7 @@ Range: bytes=10-19,50-59
 GET /inp/http/data/file1 HTTP/1.1
 Host: localhost
 Connection: Keep-Alive
-If-Range: Tue, 15 Sep 2020 16:22:19 GMT
+If-Range: Sat, 29 Oct 1994 19:43:31 GMT
 Range: bytes=10-19,50-59
 
 GET /vuoto.txt HTTP/1.1

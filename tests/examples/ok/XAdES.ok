@@ -1,0 +1,19 @@
+Archive:  out/archive.out
+  Length      Date    Time    Name
+---------  ---------- -----   ----
+     1554  07-16-2010 17:07   [Content_Types].xml
+      745  07-16-2010 17:07   _rels/.rels
+      817  07-16-2010 17:07   word/_rels/document.xml.rels
+     1227  07-16-2010 17:07   word/document.xml
+     6994  07-16-2010 17:07   word/theme/theme1.xml
+     1650  07-16-2010 17:07   word/settings.xml
+     1031  07-16-2010 17:07   word/fontTable.xml
+      260  07-16-2010 17:07   word/webSettings.xml
+      708  07-16-2010 17:07   docProps/app.xml
+      767  07-16-2010 17:07   docProps/core.xml
+    14853  07-16-2010 17:07   word/styles.xml
+    15687  07-16-2010 17:07   _xmlsignatures/sig1.xml
+      296  07-16-2010 17:07   _xmlsignatures/_rels/origin.sigs.rels
+        0  07-16-2010 17:07   _xmlsignatures/origin.sigs
+---------                     -------
+    46589                     14 files

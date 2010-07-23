@@ -29,34 +29,27 @@ fi
 
 #STRACE=$TRUSS
  start_prg_background userver_tcp -c web_server.cfg
-#start_prg_background userver_ssl -c web_server_ssl.cfg
 $SLEEP
 
-CAPATH="../ulib/CA/CApath"
-CACERT="../ulib/CA/username.crt"
-USER_KEY="../ulib/CA/username.key"
-LCMD="$OPENSSL s_client -no_ssl2 -quiet -cert $CACERT -key $USER_KEY -pass pass:caciucco -CApath $CAPATH -verify 0 -connect localhost:443"
-
-#$NC -w 1 127.0.0.1 80 <inp/http/close/06 >>out/web_server.out
+#mkdir -p /tmp/web_server
+#LS=`ls inp/http/and`
+#for i in $LS
+#do
+#  $NC 127.0.0.1 80 <inp/http/and/$i >/tmp/web_server/$i
+#done
+#kill_prg userver_tcp TERM
+#exit 0
 
 LS=`ls inp/http/close`
-
 for i in $LS
 do
-   $NC -w 2 127.0.0.1 80 <inp/http/close/$i >>out/web_server.out
-#  $LCMD						 <inp/http/close/$i >>out/web_server_ssl.out
-
-   $SLEEP
+ $NC 127.0.0.1 80 <inp/http/close/$i >>out/web_server.out
 done
 
 touch vuoto.txt
 
-   $NC -w 5 127.0.0.1 80 <inp/http/all.inp  >>out/web_server.out
-#	$LCMD						 <inp/http/all.inp  >>out/web_server_ssl.out
-$SLEEP
-   $NC -w 5 127.0.0.1 80 <inp/http/post.inp >>out/web_server.out
-# 	$LCMD						 <inp/http/post.inp >>out/web_server_ssl.out
-$SLEEP
+ $NC 127.0.0.1 80 <inp/http/all.inp  >>out/web_server.out
+ $NC 127.0.0.1 80 <inp/http/post.inp >>out/web_server.out
 
 # test upload
 

@@ -221,6 +221,7 @@ struct U_EXPORT UServices {
       buffer.size_adjust(size);
       }
 
+   static ENGINE* loadEngine(const char* id);
    static int X509Callback(int ok, X509_STORE_CTX* ctx);
    static char* getOpenSSLError(char* buffer = 0, uint32_t buffer_size = 0, uint32_t* psize = 0);
    static bool setupOpenSSLStore(const char* CAfile = 0, const char* CApath = 0, int store_flags = U_STORE_FLAGS);

@@ -725,9 +725,6 @@ typedef unsigned long long uint64;
    <sysmacros.h>. */
 #undef MAJOR_IN_SYSMACROS
 
-/* Operating System */
-#undef OS
-
 /* Name of package */
 #undef PACKAGE
 
@@ -748,6 +745,9 @@ typedef unsigned long long uint64;
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* Platform */
+#undef PLATFORM_VAR
 
 /* mutex type */
 #undef PTHREAD_MUTEXTYPE_RECURSIVE

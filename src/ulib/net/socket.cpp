@@ -651,6 +651,12 @@ loop:
       U_INTERNAL_DUMP("TCP_NODELAY = %d", value)
 #     endif
       U_DUMP("getBufferRCV() = %u getBufferSND() = %u", pcNewConnection->getBufferRCV(), pcNewConnection->getBufferSND())
+#     ifdef TCP_CONGESTION
+      char buffer[32];
+      uint32_t tmp1 = sizeof(buffer);
+      (void) pcNewConnection->getSockOpt(IPPROTO_TCP, TCP_CONGESTION, (void*)buffer, tmp1);
+      U_INTERNAL_DUMP("TCP_CONGESTION = %S", buffer)
+#     endif
 #  endif
    */
 

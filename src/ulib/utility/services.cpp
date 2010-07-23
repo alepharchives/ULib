@@ -400,6 +400,40 @@ bool UServices::setupOpenSSLStore(const char* CAfile, const char* _CApath, int s
    U_RETURN(true);
 }
 
+ENGINE* UServices::loadEngine(const char* id)
+{
+   U_TRACE(1, "UServices::loadEngine(%S)", id)
+
+   U_SYSCALL_VOID_NO_PARAM(ENGINE_load_dynamic);
+
+   ENGINE* e = (ENGINE*) U_SYSCALL(ENGINE_by_id, "%S", id);
+
+   while (e)
+      {
+      if (U_SYSCALL(ENGINE_init, "%p", e) == 0)
+         {
+         (void) U_SYSCALL(ENGINE_free, "%p", e);
+
+         e = 0;
+
+         break;
+         }
+
+      if (!ENGINE_set_default(e, ENGINE_METHOD_ALL))
+         {
+         (void) U_SYSCALL(ENGINE_free, "%p", e);
+
+         e = 0;
+
+         break;
+         }
+
+      break;
+      }
+
+   U_RETURN_POINTER(e,ENGINE);
+}
+
 EVP_PKEY* UServices::loadKey(const UString& x, const char* format, bool _private, const char* password, ENGINE* e)
 {
    U_TRACE(0, "UServices::loadKey(%.*S,%S,%b,%S,%p)", U_STRING_TO_TRACE(x), format, _private, password, e)

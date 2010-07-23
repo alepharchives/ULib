@@ -625,7 +625,15 @@ public:
 
       if (*U_KEY_HANDLE == '\0') U_ERROR("KEY_HANDLE is mandatory...", 0);
 
+      ENGINE* e;
+
+#  ifndef __MINGW32__
+      e = UServices::loadEngine("HCSP");
+      x = U_KEY_HANDLE;
+#  else
+      e = 0;
       x = UFile::contentOf(U_KEY_HANDLE);
+#  endif
 
       if (x.empty() ||
           (u_pkey = UServices::loadKey(x, 0, true, 0, 0)) == 0)

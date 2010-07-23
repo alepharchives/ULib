@@ -36,23 +36,18 @@ USER_KEY="../ulib/CA/username.key"
 LCMD="$OPENSSL s_client -no_ssl2 -quiet -cert $CACERT -key $USER_KEY -pass pass:caciucco -CApath $CAPATH -verify 0 -connect localhost:443"
 
 LS=`ls inp/http/close`
-
 for i in $LS
 do
-#  $NC -w 2 127.0.0.1 80 <inp/http/close/$i >>out/web_server.out
-	$LCMD						 <inp/http/close/$i >>out/web_server_ssl.out 2>>err/web_server_ssl.err
-
-   $SLEEP
+# $NC 127.0.0.1 80 <inp/http/close/$i >>out/web_server.out
+  $LCMD				 <inp/http/close/$i >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 done
 
 touch vuoto.txt
 
-#  $NC -w 5 127.0.0.1 80 <inp/http/all.inp  >>out/web_server.out
-	$LCMD						 <inp/http/all.inp  >>out/web_server_ssl.out 2>>err/web_server_ssl.err
-$SLEEP
-#  $NC -w 5 127.0.0.1 80 <inp/http/post.inp >>out/web_server.out
- 	$LCMD						 <inp/http/post.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
-$SLEEP
+#  $NC 127.0.0.1 80 <inp/http/all.inp  >>out/web_server.out
+	$LCMD				  <inp/http/all.inp  >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+#  $NC 127.0.0.1 80 <inp/http/post.inp >>out/web_server.out
+ 	$LCMD				  <inp/http/post.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 
 # test upload
 

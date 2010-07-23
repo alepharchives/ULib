@@ -9,7 +9,6 @@ typedef unsigned int UINT,*PUINT,*LPUINT;
 typedef int WINBOOL,*PWINBOOL,*LPWINBOOL;
 typedef WINBOOL BOOL;
 typedef char CHAR;
-typedef wchar_t WCHAR;
 typedef CHAR *PCHAR,*LPCH,*PCH,*NPSTR,*LPSTR,*LPCSTR,*PSTR;
 typedef void *HANDLE;
 typedef UINT ALG_ID;
@@ -18,7 +17,6 @@ typedef ULONG HCRYPTPROV;
 typedef ULONG HCRYPTKEY;
 typedef ULONG HCRYPTHASH;
 typedef void* HCERTSTORE;
-typedef WCHAR * PWCHAR, * LPWCH, * PWCH, * NWPSTR, * LPWSTR, * PWSTR;
 typedef struct _CERT_CONTEXT {
     DWORD                   dwCertEncodingType;
     BYTE                    *pbCertEncoded;
@@ -39,6 +37,12 @@ typedef struct _RSAPUBKEY {
         DWORD   pubexp;                 // public exponent
                                         // Modulus data follows
 } RSAPUBKEY;
+
+/*
+typedef wchar_t WCHAR;
+typedef WCHAR * PWCHAR, * LPWCH, * PWCH, * NWPSTR, * LPWSTR, * PWSTR;
+*/
+
 #define IN
 #define OUT
 #define OPTIONAL

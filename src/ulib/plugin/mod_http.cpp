@@ -318,6 +318,10 @@ int UHttpPlugIn::handlerRead()
 
    if (UServer_Base::isLog()) UClientImage_Base::logRequest();
 
+   // manage buffered read (pipelining)
+
+   UClientImage_Base::checkForPipeline();
+
    int nResponseCode;
    uint32_t host_end;
    const UString* body;
@@ -428,11 +432,12 @@ next:
       {
       if (UHTTP::http_info.uri_len == 0)
          {
-         body          = UHTTP::str_frm_bad_request;
-         content_type  = U_CTYPE_HTML;
-         nResponseCode = HTTP_BAD_REQUEST;
+         UHTTP::setHTTPBadRequest();
+
+         goto send_response;
          }
-      else if (UHTTP::isHttpPOST())            nResponseCode = HTTP_LENGTH_REQUIRED;
+
+           if (UHTTP::isHttpPOST())            nResponseCode = HTTP_LENGTH_REQUIRED;
       else if (UHTTP::http_info.szHeader == 0) nResponseCode = HTTP_VERSION;
       }
 

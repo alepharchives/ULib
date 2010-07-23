@@ -312,6 +312,12 @@ void UClientImage_Base::resetBuffer()
    if (real_ip->empty() == false) real_ip->setEmpty();
 
    rbuffer->setEmptyForce(); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more than one)...
+
+   // manage buffered read (pipelining)
+
+   USocketExt::size_message = 0;
+
+   U_INTERNAL_DUMP("USocketExt::size_message = %u", USocketExt::size_message)
 }
 
 // check if read data already available... (pipelining)
@@ -330,7 +336,9 @@ bool UClientImage_Base::isPipeline()
 
       if (size == USocketExt::size_message)
          {
-         rbuffer->size_adjust_force(USocketExt::size_message + USocketExt::pcount); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more than one)...
+         // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more than one)...
+
+         rbuffer->size_adjust_force(USocketExt::size_message + USocketExt::pcount);
          }
 
       // NB: check for spurios white space (IE)...
@@ -396,10 +404,6 @@ void UClientImage_Base::genericReset()
 
    resetBuffer();
 
-   // manage buffered read (pipelining)
-
-   USocketExt::size_message = 0;
-
    // NB: we need this because we reuse the same object UClientImage_Base...
 
    U_INTERNAL_ASSERT_POINTER(pClientImage)
@@ -440,7 +444,8 @@ int UClientImage_Base::handlerRead()
       if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
 #  endif
 
-      if (result == U_PLUGIN_HANDLER_ERROR)
+      if (result == U_PLUGIN_HANDLER_ERROR &&
+          isPipeline(rbuffer->size()) == false)
          {
          USocketExt::pcount = 0; // reset read data available...
 

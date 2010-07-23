@@ -163,13 +163,6 @@ read:
 done:
    buffer.size_adjust_force(start + byte_read); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
 
-   if (count != U_SINGLE_READ)
-      {
-      size_message += count;
-
-      U_INTERNAL_DUMP("size_message = %u", size_message)
-      }
-
    U_RETURN(true);
 }
 
@@ -715,20 +708,18 @@ UString USocketExt::getIPAddress(int fd, const char* device)
 
    (void) strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
 
-   (void) U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFHWADDR, &ifr);
-
    /* Get the IP address of the interface */
 
+   (void) U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFADDR, &ifr);
+
    union uusockaddr {
-      struct sockaddr*     psaGeneric;
-      struct sockaddr_in*  psaIP4Addr;
+      struct sockaddr*    psaGeneric;
+      struct sockaddr_in* psaIP4Addr;
    };
 
    union uusockaddr psaGeneric = { &(ifr.ifr_addr) };
 
-   psaGeneric.psaIP4Addr->sin_family = AF_INET;
-
-   (void) U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFADDR, &ifr);
+   U_INTERNAL_ASSERT_EQUALS(psaGeneric.psaIP4Addr->sin_family, AF_INET)
 
    (void) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", AF_INET, &(psaGeneric.psaIP4Addr->sin_addr), result.data(), INET_ADDRSTRLEN);
 

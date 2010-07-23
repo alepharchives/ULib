@@ -20,8 +20,6 @@ rm -f tsa_http.log TSA/log \
 #VALGRIND="valgrind -v --leak-check=full"
  export UTRACE UOBJDUMP USIMERR
 
-DIR_CMD="../../examples/XAdES"
-
 if [ "$TERM" = "cygwin" ]; then
    export TMPDIR="C:/tmp"
 	INPUT=/c/tmp/sign.b64
@@ -36,6 +34,11 @@ fi
 #STRACE=$TRUSS
 #start_prg verify -c XAdES.ini -- $SCHEMA < $INPUT
 #exit 0
+
+DIR_CMD="../../examples/userver"
+
+#STRACE=$LTRUSS
+#start_prg_background userver_tcp -c tsa_http.cfg
 
  DIR_CA=../ulib/CA
 #DIR_CA=/mnt/storage/stefano/MinGW/etc/CA
@@ -53,7 +56,9 @@ PRODUCTION_PLACE_COUNTRY_NAME=Italy
 CA_STORE=$DIR_CA/CApath
 SIGNATURE_TIMESTAMP="http://localhost/tsa"
 
-#STRACE=$TRUSS
+DIR_CMD="../../examples/XAdES"
+
+ STRACE=$LTRUSS
 start_prg sign -c XAdES.ini -- \
 									 $DATA_URI \
 									 '"$X509"' \
@@ -68,12 +73,7 @@ start_prg sign -c XAdES.ini -- \
 									 $CA_STORE \
 									 $SIGNATURE_TIMESTAMP < $DOCUMENT
 
-#exit 0
-
-DIR_CMD="../../examples/userver"
-
-#STRACE=$LTRUSS
-start_prg_background userver_tcp -c tsa_http.cfg
+ exit 0
 
 # ------------------------------------------------------------
 # sha1 check:
@@ -102,5 +102,7 @@ $OPENSSL base64 -e -in out/archive.out -out $INPUT
 start_prg verify -c XAdES.ini -- \
 		 $SCHEMA < $INPUT
 
+unzip -l	out/archive.out > out/XAdES.out
+
 # Test against expected output
-test_output_wc w archive
+test_output_wc w XAdES

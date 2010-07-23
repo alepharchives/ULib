@@ -60,6 +60,7 @@ const UString* UHTTP::str_frm_forbidden;
 const UString* UHTTP::str_frm_not_found;
 const UString* UHTTP::str_frm_moved_temp;
 const UString* UHTTP::str_frm_bad_request;
+const UString* UHTTP::str_frm_unauthorized;
 const UString* UHTTP::str_frm_internal_error;
 const UString* UHTTP::str_frm_service_unavailable;
 
@@ -72,6 +73,7 @@ void UHTTP::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_frm_not_found,0)
    U_INTERNAL_ASSERT_EQUALS(str_frm_moved_temp,0)
    U_INTERNAL_ASSERT_EQUALS(str_frm_bad_request,0)
+   U_INTERNAL_ASSERT_EQUALS(str_frm_unauthorized,0)
    U_INTERNAL_ASSERT_EQUALS(str_frm_internal_error,0)
    U_INTERNAL_ASSERT_EQUALS(str_frm_service_unavailable,0)
 
@@ -115,6 +117,7 @@ void UHTTP::str_allocate()
                                "<address>ULib Server</address>\r\n"
                                "</body></html>\r\n") },
    { U_STRINGREP_FROM_CONSTANT("HTTP/1.%c 302 Found\r\n"
+                               "Date: %D\r\n"
                                "Server: ULib/1.0\r\n"
                                "%.*s"
                                "Location: %.*s\r\n"
@@ -131,7 +134,14 @@ void UHTTP::str_allocate()
                                "<hr>\r\n"
                                "<address>ULib Server</address>\r\n"
                                "</body></html>\r\n") },
-   { U_STRINGREP_FROM_CONSTANT("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
+   { U_STRINGREP_FROM_CONSTANT("HTTP/1.%c 400 Bad Request\r\n"
+                               "Date: %D\r\n"
+                               "Server: ULib/1.0\r\n"
+                               "Connection: close\r\n"
+                               "Content-Length: 272\r\n"
+                               "Content-Type: " U_CTYPE_HTML "\r\n"
+                               "\r\n"
+                               "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
                                "<html><head>\r\n"
                                "<title>400 Bad Request</title>\r\n"
                                "</head><body>\r\n"
@@ -141,27 +151,57 @@ void UHTTP::str_allocate()
                                "<hr>\r\n"
                                "<address>ULib Server</address>\r\n"
                                "</body></html>\r\n") },
-   { U_STRINGREP_FROM_CONSTANT("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
+   { U_STRINGREP_FROM_CONSTANT("HTTP/1.%c 401 Authorization Required\r\n"
+                               "Date: %D\r\n"
+                               "Server: ULib/1.0\r\n"
+                               "Content-Length: 307\r\n"
+                               "Content-Type: " U_CTYPE_HTML "\r\n"
+                               "WWW-Authenticate: %s realm=\"" U_HTTP_REALM "\"\r\n"
+                               "\r\n"
+                               "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
+                               "<html><head>\r\n"
+                               "<title>401 Authorization Required</title>\r\n"
+                               "</head><body>\r\n"
+                               "<h1>Sorry, Password Required</h1>\r\n"
+                               "<p>An account (with a password) is required to view the page that you requested.<br />\r\n"
+                               "</p>\r\n"
+                               "<hr>\r\n"
+                               "<address>ULib Server</address>\r\n"
+                               "</body></html>\r\n") },
+   { U_STRINGREP_FROM_CONSTANT("HTTP/1.%c 500 Internal Server Error\r\n"
+                               "Date: %D\r\n"
+                               "Server: ULib/1.0\r\n"
+                               "Connection: close\r\n"
+                               "Content-Length: 549\r\n"
+                               "Content-Type: " U_CTYPE_HTML "\r\n"
+                               "\r\n"
+                               "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
                                "<html><head>\r\n"
                                "<title>500 Internal Server Error</title>\r\n"
                                "</head><body>\r\n"
                                "<h1>Internal Server Error</h1>\r\n"
-                               "<p>The server encountered an internal error or misconfiguration and was unable "
-                               "to complete your request.</p>\r\n"
-                               "<p>Please contact the server administrator, and inform them of the time the error "
-                               "occurred, and anything you might have done that may have caused the error.</p>\r\n"
-                               "<p>More information about this error may be available in the server error log.</p>\r\n"
+                               "<p>The server encountered an internal error or misconfiguration "
+                               "and was unable to complete your request. Please contact the server "
+                               "administrator, and inform them of the time the error occurred, and "
+                               "anything you might have done that may have caused the error. More "
+                               "information about this error may be available in the server error log.</p>\r\n"
                                "<hr>\r\n"
                                "<address>ULib Server</address>\r\n"
                                "</body></html>\r\n") },
-   { U_STRINGREP_FROM_CONSTANT("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
+   { U_STRINGREP_FROM_CONSTANT("HTTP/1.%c 503 Service Unavailable\r\n"
+                               "Date: %D\r\n"
+                               "Server: ULib/1.0\r\n"
+                               "Connection: close\r\n"
+                               "Content-Length: 353\r\n"
+                               "Content-Type: " U_CTYPE_HTML "\r\n"
+                               "\r\n"
+                               "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
                                "<html><head>\r\n"
                                "<title>503 Service Unavailable</title>\r\n"
                                "</head><body>\r\n"
                                "<h1>Service Unavailable</h1>\r\n"
                                "<p>Sorry, the service you requested is not available at this moment. "
-                               "Please contact the server administrator and inform them about this.<br />\r\n"
-                               "</p>\r\n"
+                               "Please contact the server administrator and inform them about this.<br /></p>\r\n"
                                "<hr>\r\n"
                                "<address>ULib Server</address>\r\n"
                                "</body></html>\r\n") }
@@ -172,8 +212,9 @@ void UHTTP::str_allocate()
    U_NEW_ULIB_OBJECT(str_frm_not_found,            U_STRING_FROM_STRINGREP_STORAGE(2));
    U_NEW_ULIB_OBJECT(str_frm_moved_temp,           U_STRING_FROM_STRINGREP_STORAGE(3));
    U_NEW_ULIB_OBJECT(str_frm_bad_request,          U_STRING_FROM_STRINGREP_STORAGE(4));
-   U_NEW_ULIB_OBJECT(str_frm_internal_error,       U_STRING_FROM_STRINGREP_STORAGE(5));
-   U_NEW_ULIB_OBJECT(str_frm_service_unavailable,  U_STRING_FROM_STRINGREP_STORAGE(6));
+   U_NEW_ULIB_OBJECT(str_frm_unauthorized,         U_STRING_FROM_STRINGREP_STORAGE(5));
+   U_NEW_ULIB_OBJECT(str_frm_internal_error,       U_STRING_FROM_STRINGREP_STORAGE(6));
+   U_NEW_ULIB_OBJECT(str_frm_service_unavailable,  U_STRING_FROM_STRINGREP_STORAGE(7));
 }
 
 /* read HTTP message
@@ -668,19 +709,13 @@ bool UHTTP::readHTTPRequest()
 
    if (http_info.method) resetHTTPInfo();
 
-   if (readHTTPHeader(UClientImage_Base::socket, *UClientImage_Base::rbuffer) == false)
-      {
-      // manage buffered read (pipelining)
+   if (readHTTPHeader(UClientImage_Base::socket, *UClientImage_Base::rbuffer) == false) U_RETURN(false);
 
-      USocketExt::pcount  = UClientImage_Base::rbuffer->size();
-#  ifdef DEBUG
-      USocketExt::pbuffer = UClientImage_Base::rbuffer->data();
-#  endif
+   // manage buffered read (pipelining)
 
-      U_INTERNAL_DUMP("size_message = %u pcount = %d pbuffer = %p", USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
+   USocketExt::size_message = http_info.endHeader;
 
-      U_RETURN(false);
-      }
+   U_INTERNAL_DUMP("size_message = %u", USocketExt::size_message)
 
    // --------------------------------
    // check in header request for:
@@ -726,96 +761,99 @@ bool UHTTP::readHTTPRequest()
          {
          pos = UClientImage_Base::rbuffer->find(':', ++pos1);
 
-         U_INTERNAL_ASSERT_MINOR(pos,pos2)
-
-         p = ptr + pos1;
-         l = pos - pos1;
-
-         do { ++pos; } while (pos < http_info.endHeader && u_isspace(ptr[pos]));
-
-         if (c == 'H' &&
-             l == 3   && // sizeof("ost")
-             U_SYSCALL(memcmp, "%S,%S,%u", ptrH, p, l) == 0)
+         if (pos != U_NOT_FOUND)
             {
-            http_info.host     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos;
-            http_info.host_len = pos2 - pos -1;
+            U_INTERNAL_ASSERT_MINOR(pos,pos2)
 
-            U_INTERNAL_DUMP("host = %.*S", http_info.host_len, start + (ptrdiff_t)http_info.host)
-            }
-         else if (c == 'A' &&
-                  l == 14  && // sizeof("ccept-Encoding")
-                  U_SYSCALL(memcmp, "%S,%S,%u", ptrA, p, l) == 0 &&
-                  u_find(ptr + pos, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)
-            {
-#        ifdef HAVE_LIBZ
-            http_info.is_accept_deflate = 1;
-#        endif
+            p = ptr + pos1;
+            l = pos - pos1;
 
-            U_INTERNAL_DUMP("http_info.is_accept_deflate = %u", http_info.is_accept_deflate)
-            }
-         else if (c == 'C')
-            {
-            if (l == 9 && // sizeof("onnection")
-                U_SYSCALL(memcmp, "%S,%S,%u", ptrC, p, l) == 0)
+            do { ++pos; } while (pos < http_info.endHeader && u_isspace(ptr[pos]));
+
+            if (c == 'H' &&
+                l == 3   && // sizeof("ost")
+                U_SYSCALL(memcmp, "%S,%S,%u", ptrH, p, l) == 0)
                {
-               U_INTERNAL_DUMP("Connection: = %.*S", pos2 - pos - 1, UClientImage_Base::rbuffer->c_pointer(pos))
+               http_info.host     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos;
+               http_info.host_len = pos2 - pos -1;
 
-               U_INTERNAL_ASSERT_EQUALS(c, 'C')
+               U_INTERNAL_DUMP("host = %.*S", http_info.host_len, start + (ptrdiff_t)http_info.host)
+               }
+            else if (c == 'A' &&
+                     l == 14  && // sizeof("ccept-Encoding")
+                     U_SYSCALL(memcmp, "%S,%S,%u", ptrA, p, l) == 0 &&
+                     u_find(ptr + pos, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)
+               {
+#           ifdef HAVE_LIBZ
+               http_info.is_accept_deflate = 1;
+#           endif
 
-               p = ptr + pos;
-
-               if (U_MEMCMP(p, "close") == 0)
+               U_INTERNAL_DUMP("http_info.is_accept_deflate = %u", http_info.is_accept_deflate)
+               }
+            else if (c == 'C')
+               {
+               if (l == 9 && // sizeof("onnection")
+                   U_SYSCALL(memcmp, "%S,%S,%u", ptrC, p, l) == 0)
                   {
-                  http_info.is_connection_close = U_YES;
+                  U_INTERNAL_DUMP("Connection: = %.*S", pos2 - pos - 1, UClientImage_Base::rbuffer->c_pointer(pos))
 
-                  U_INTERNAL_DUMP("http_info.is_connection_close = %d", http_info.is_connection_close)
+                  U_INTERNAL_ASSERT_EQUALS(c, 'C')
+
+                  p = ptr + pos;
+
+                  if (U_MEMCMP(p, "close") == 0)
+                     {
+                     http_info.is_connection_close = U_YES;
+
+                     U_INTERNAL_DUMP("http_info.is_connection_close = %d", http_info.is_connection_close)
+                     }
+                  else if (U_STRNCASECMP(p, "keep-alive") == 0)
+                     {
+                     http_info.keep_alive = 1;
+
+                     U_INTERNAL_DUMP("http_info.keep_alive = %d", http_info.keep_alive)
+                     }
                   }
-               else if (U_STRNCASECMP(p, "keep-alive") == 0)
+               else if (l == 11                                            && // 11 -> sizeof("ontent-Type")
+                        U_SYSCALL(memcmp, "%S,%S,%u", ptrT,   p,   7) == 0 && //  7 -> sizeof("ontent-")
+                        u_toupper(p[7]) == 'T'                             &&
+                        U_SYSCALL(memcmp, "%S,%S,%u", ptrT+8, p+8, 3) == 0)   //  3 -> sizeof(        "ype")
                   {
-                  http_info.keep_alive = 1;
+                  U_INTERNAL_ASSERT_EQUALS(c, 'C')
 
-                  U_INTERNAL_DUMP("http_info.keep_alive = %d", http_info.keep_alive)
+                  http_info.content_type     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos;
+                  http_info.content_type_len = pos2 - pos - 1;
+
+                  U_INTERNAL_DUMP("Content-Type: = %.*S", http_info.content_type_len, start + (ptrdiff_t)http_info.content_type)
+                  }
+               else if (l == 13 && // 13 -> sizeof("ontent-Length")
+                        U_SYSCALL(memcmp, "%S,%S,%u", ptrL, p, l) == 0)
+                  {
+                  U_INTERNAL_ASSERT_EQUALS(c, 'C')
+
+                  http_info.clength = (uint32_t) strtoul(ptr + pos, 0, 0);
+
+                  U_INTERNAL_DUMP("Content-Length: = %.*S http_info.clength = %u", 10, ptr + pos, http_info.clength)
                   }
                }
-            else if (l == 11                                            && // 11 -> sizeof("ontent-Type")
-                     U_SYSCALL(memcmp, "%S,%S,%u", ptrT,   p,   7) == 0 && //  7 -> sizeof("ontent-")
-                     u_toupper(p[7]) == 'T'                             &&
-                     U_SYSCALL(memcmp, "%S,%S,%u", ptrT+8, p+8, 3) == 0)   //  3 -> sizeof(        "ype")
+            else if (c == 'I' &&
+                     l == 16  && // sizeof("f-Modified-Since")
+                     U_SYSCALL(memcmp, "%S,%S,%u", ptrI, p, l) == 0)
                {
-               U_INTERNAL_ASSERT_EQUALS(c, 'C')
+               http_info.if_modified_since = UDate::getSecondFromTime(ptr + pos, true);
 
-               http_info.content_type     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos;
-               http_info.content_type_len = pos2 - pos - 1;
-
-               U_INTERNAL_DUMP("Content-Type: = %.*S", http_info.content_type_len, start + (ptrdiff_t)http_info.content_type)
+               U_INTERNAL_DUMP("If-Modified-Since = %u", http_info.if_modified_since)
                }
-            else if (l == 13 && // 13 -> sizeof("ontent-Length")
-                     U_SYSCALL(memcmp, "%S,%S,%u", ptrL, p, l) == 0)
+            else if (c == 'R' &&
+                     l == 4   && // sizeof("ange")
+                     U_SYSCALL(memcmp, "%S,%S,%u", ptrR, p, l) == 0 &&
+                     U_STRNEQ(ptr + pos, "bytes="))
                {
-               U_INTERNAL_ASSERT_EQUALS(c, 'C')
+               http_info.range     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos + U_CONSTANT_SIZE("bytes=");
+               http_info.range_len = pos2 - pos - 1                            - U_CONSTANT_SIZE("bytes=");
 
-               http_info.clength = (uint32_t) strtoul(ptr + pos, 0, 0);
-
-               U_INTERNAL_DUMP("Content-Length: = %.*S http_info.clength = %u", 10, ptr + pos, http_info.clength)
+               U_INTERNAL_DUMP("Range = %.*S", http_info.range_len, start + (ptrdiff_t)http_info.range)
                }
-            }
-         else if (c == 'I' &&
-                  l == 16  && // sizeof("f-Modified-Since")
-                  U_SYSCALL(memcmp, "%S,%S,%u", ptrI, p, l) == 0)
-            {
-            http_info.if_modified_since = UDate::getSecondFromTime(ptr + pos, true);
-
-            U_INTERNAL_DUMP("If-Modified-Since = %u", http_info.if_modified_since)
-            }
-         else if (c == 'R' &&
-                  l == 4   && // sizeof("ange")
-                  U_SYSCALL(memcmp, "%S,%S,%u", ptrR, p, l) == 0 &&
-                  U_STRNEQ(ptr + pos, "bytes="))
-            {
-            http_info.range     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos + U_CONSTANT_SIZE("bytes=");
-            http_info.range_len = pos2 - pos - 1                            - U_CONSTANT_SIZE("bytes=");
-
-            U_INTERNAL_DUMP("Range = %.*S", http_info.range_len, start + (ptrdiff_t)http_info.range)
             }
          }
 
@@ -883,9 +921,9 @@ bool UHTTP::readHTTPRequest()
 
    // manage buffered read (pipelining)
 
-   USocketExt::size_message = http_info.endHeader + http_info.clength;
+   USocketExt::size_message += http_info.clength;
 
-   UClientImage_Base::checkForPipeline();
+   U_INTERNAL_DUMP("size_message = %u", USocketExt::size_message)
 
    U_RETURN(true);
 }
@@ -1151,7 +1189,7 @@ const char* UHTTP::getHTTPStatusDescription()
 
       // 4xx indicates an error on the client's part
       case HTTP_BAD_REQUEST:        descr = "Bad Request";                     break;
-      case HTTP_UNAUTHORIZED:       descr = "Unauthorized";                    break;
+      case HTTP_UNAUTHORIZED:       descr = "Authorization Required";          break;
       case HTTP_PAYMENT_REQUIRED:   descr = "Payment Required";                break;
       case HTTP_FORBIDDEN:          descr = "Forbidden";                       break;
       case HTTP_NOT_FOUND:          descr = "Not Found";                       break;
@@ -1570,62 +1608,14 @@ UString UHTTP::getHTTPRedirectResponse(const UString& ext, const char* ptr_locat
    U_RETURN_STRING(tmp);
 }
 
-void UHTTP::setHTTPForbidden()
-{
-   U_TRACE(0, "UHTTP::setHTTPForbidden()")
-
-   http_info.is_connection_close = U_YES;
-
-   UClientImage_Base::wbuffer->setBuffer(300U + str_frm_forbidden->size() + http_info.uri_len);
-   UClientImage_Base::wbuffer->snprintf(str_frm_forbidden->data(), http_info.version + '0', 254 + http_info.uri_len, U_HTTP_URI_TO_TRACE);
-
-   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
-}
-
 void UHTTP::setHTTPNotFound()
 {
    U_TRACE(0, "UHTTP::setHTTPNotFound()")
 
    http_info.is_connection_close = U_YES;
 
-   UClientImage_Base::wbuffer->setBuffer(300U + str_frm_not_found->size() + http_info.uri_len);
-   UClientImage_Base::wbuffer->snprintf(str_frm_not_found->data(), http_info.version + '0', 250 + http_info.uri_len, U_HTTP_URI_TO_TRACE);
-
-   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
-}
-
-void UHTTP::setHTTPUnAuthorized(bool digest)
-{
-   U_TRACE(0, "UHTTP::setHTTPUnAuthorized(%b)", digest)
-
-#ifndef HAVE_SSL
-   setHTTPForbidden();
-#else
-   UString buffer(100U);
-   http_info.is_connection_close = U_YES;
-
-                        (void) buffer.assign(U_CONSTANT_TO_PARAM("WWW-Authenticate: "));
-   if (digest == false) (void) buffer.append(U_CONSTANT_TO_PARAM("Basic"));
-   else
-      {
-      buffer.snprintf_add("Digest qop=\"auth\", nonce=\"%ld\", algorithm=MD5,", u_now.tv_sec);
-      }
-
-   (void) buffer.append(U_CONSTANT_TO_PARAM(" realm=\"" U_HTTP_REALM "\"\r\n\r\n"));
-
-   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_UNAUTHORIZED, buffer);
-
-   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
-#endif
-}
-
-void UHTTP::setHTTPBadRequest()
-{
-   U_TRACE(0, "UHTTP::setHTTPBadRequest()")
-
-   http_info.is_connection_close = U_YES;
-
-   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_BAD_REQUEST, U_CTYPE_HTML, str_frm_bad_request);
+   UClientImage_Base::wbuffer->setBuffer(str_frm_not_found->size() + http_info.uri_len + 300U);
+   UClientImage_Base::wbuffer->snprintf( str_frm_not_found->data(), http_info.version + '0', 250 + http_info.uri_len, U_HTTP_URI_TO_TRACE);
 
    UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 }
@@ -1636,7 +1626,8 @@ void UHTTP::setHTTPInternalError()
 
    http_info.is_connection_close = U_YES;
 
-   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_INTERNAL_ERROR, U_CTYPE_HTML, str_frm_internal_error);
+   UClientImage_Base::wbuffer->setBuffer(str_frm_internal_error->size() + 100U);
+   UClientImage_Base::wbuffer->snprintf( str_frm_internal_error->data(), http_info.version + '0');
 
    UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 }
@@ -1647,9 +1638,53 @@ void UHTTP::setHTTPServiceUnavailable()
 
    http_info.is_connection_close = U_YES;
 
-   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_UNAVAILABLE, U_CTYPE_HTML, str_frm_service_unavailable);
+   UClientImage_Base::wbuffer->setBuffer(str_frm_service_unavailable->size() + 100);
+   UClientImage_Base::wbuffer->snprintf( str_frm_service_unavailable->data(), http_info.version + '0');
 
    UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+}
+
+void UHTTP::setHTTPBadRequest()
+{
+   U_TRACE(0, "UHTTP::setHTTPBadRequest()")
+
+   http_info.is_connection_close = U_YES;
+
+   UClientImage_Base::wbuffer->setBuffer(str_frm_bad_request->size() + 100);
+   UClientImage_Base::wbuffer->snprintf( str_frm_bad_request->data(), http_info.version + '0');
+
+   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+}
+
+void UHTTP::setHTTPForbidden()
+{
+   U_TRACE(0, "UHTTP::setHTTPForbidden()")
+
+   http_info.is_connection_close = U_YES;
+
+   UClientImage_Base::wbuffer->setBuffer(str_frm_forbidden->size() + http_info.uri_len + 300U);
+   UClientImage_Base::wbuffer->snprintf( str_frm_forbidden->data(), http_info.version + '0', 254 + http_info.uri_len, U_HTTP_URI_TO_TRACE);
+
+   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+}
+
+void UHTTP::setHTTPUnAuthorized(bool digest)
+{
+   U_TRACE(0, "UHTTP::setHTTPUnAuthorized(%b)", digest)
+
+#ifdef HAVE_SSL
+   UString buffer(100U);
+
+   if (digest) buffer.snprintf("Digest qop=\"auth\", nonce=\"%ld\", algorithm=MD5,", u_now.tv_sec);
+   else        (void) buffer.assign(U_CONSTANT_TO_PARAM("Basic"));
+
+   UClientImage_Base::wbuffer->setBuffer(str_frm_unauthorized->size() + 300U);
+   UClientImage_Base::wbuffer->snprintf( str_frm_unauthorized->data(), http_info.version + '0', buffer.data());
+
+   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+#else
+   setHTTPForbidden();
+#endif
 }
 
 void UHTTP::setHTTPCgiResponse(int nResponseCode, bool header_content_length, bool header_content_type, bool content_encoding)
@@ -2020,6 +2055,7 @@ end:
       }
 
    ext.snprintf_add("Content-Length: %I\r\n"
+                    "Accept-Ranges: bytes\r\n"
                     "Last-Modified: %#7D GMT\r\n"
                     "\r\n",
                     size,

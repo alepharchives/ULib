@@ -9,12 +9,8 @@ Connection: close
 Allow: GET, HEAD, POST
 Content-Length: 0
 
-HTTP/1.0 411 Length Required
-Server: ULib/1.0
-Connection: close
-Content-Length: 0
-
 HTTP/1.0 400 Bad Request
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Server: ULib/1.0
 Connection: close
 Content-Length: 272
@@ -30,8 +26,14 @@ Content-Type: text/html; charset=iso-8859-1
 <hr>
 <address>ULib Server</address>
 </body></html>
+HTTP/1.1 411 Length Required
+Server: ULib/1.0
+Date: Fri, 23 Jul 2010 13:57:29 GMT
+Connection: close
+Content-Length: 0
+
 HTTP/1.0 404 Not Found
-Date: Fri, 16 Jul 2010 12:23:54 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Server: ULib/1.0
 Connection: close
 Content-Type: text/html; charset=iso-8859-1
@@ -48,7 +50,7 @@ Content-Length: 364
 <address>ULib Server</address>
 </body></html>
 HTTP/1.0 403 Forbidden
-Date: Fri, 16 Jul 2010 12:23:55 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Server: ULib/1.0
 Connection: close
 Content-Type: text/html; charset=iso-8859-1
@@ -65,9 +67,10 @@ Content-Length: 269
 <address>ULib Server</address>
 </body></html>
 HTTP/1.0 500 Internal Server Error
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Server: ULib/1.0
 Connection: close
-Content-Length: 565
+Content-Length: 549
 Content-Type: text/html; charset=iso-8859-1
 
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
@@ -75,31 +78,43 @@ Content-Type: text/html; charset=iso-8859-1
 <title>500 Internal Server Error</title>
 </head><body>
 <h1>Internal Server Error</h1>
-<p>The server encountered an internal error or misconfiguration and was unable to complete your request.</p>
-<p>Please contact the server administrator, and inform them of the time the error occurred, and anything you might have done that may have caused the error.</p>
-<p>More information about this error may be available in the server error log.</p>
+<p>The server encountered an internal error or misconfiguration and was unable to complete your request. Please contact the server administrator, and inform them of the time the error occurred, and anything you might have done that may have caused the error. More information about this error may be available in the server error log.</p>
 <hr>
 <address>ULib Server</address>
 </body></html>
-HTTP/1.0 401 Unauthorized
+HTTP/1.0 401 Authorization Required
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Server: ULib/1.0
-Connection: close
+Content-Length: 307
+Content-Type: text/html; charset=iso-8859-1
 WWW-Authenticate: Basic realm="Protected Area"
 
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>401 Authorization Required</title>
+</head><body>
+<h1>Sorry, Password Required</h1>
+<p>An account (with a password) is required to view the page that you requested.<br />
+</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Content-Type: text/html
 Content-Length: 63
+Accept-Ranges: bytes
 Last-Modified: Fri, 20 Feb 2009 14:50:49 GMT
 
 this is the web_server testsuite inp/http/data/index.html file
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Content-Range: bytes 0-63/64
 Content-Type: application/octet-stream
 Content-Length: 64
+Accept-Ranges: bytes
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 
 123456781234567
@@ -108,129 +123,129 @@ Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Content-Range: bytes 0-31/64
 Content-Type: application/octet-stream
 Content-Length: 32
+Accept-Ranges: bytes
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 
 123456781234567
 345678903456789
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Content-Range: bytes 32-63/64
 Content-Type: application/octet-stream
 Content-Length: 32
+Accept-Ranges: bytes
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 
 234567892345678
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Content-Range: bytes 32-63/64
 Content-Type: application/octet-stream
 Content-Length: 32
+Accept-Ranges: bytes
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 
 234567892345678
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
-Content-Length: 254
-Content-Type: multipart/byteranges; boundary="=_1_160710_142358_642_7394"
+Date: Fri, 23 Jul 2010 13:57:29 GMT
+Content-Length: 257
+Content-Type: multipart/byteranges; boundary="=_1_230710_155729_343_12036"
 
 
---=_1_160710_142358_642_7394
+--=_1_230710_155729_343_12036
 Content-Range: bytes 0-0/64
 Content-Type: text/html; charset=iso-8859-1
 
 1
---=_1_160710_142358_642_7394
+--=_1_230710_155729_343_12036
 Content-Range: bytes 63-63/64
 Content-Type: text/html; charset=iso-8859-1
 
 
 
---=_1_160710_142358_642_7394--
+--=_1_230710_155729_343_12036--
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Content-Range: bytes 50-63/64
 Content-Type: application/octet-stream
 Content-Length: 14
+Accept-Ranges: bytes
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 
 2345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
-Content-Length: 274
-Content-Type: multipart/byteranges; boundary="=_2_160710_142358_644_7394"
+Date: Fri, 23 Jul 2010 13:57:29 GMT
+Content-Length: 277
+Content-Type: multipart/byteranges; boundary="=_2_230710_155729_344_12036"
 
 
---=_2_160710_142358_644_7394
+--=_2_230710_155729_344_12036
 Content-Range: bytes 10-19/64
 Content-Type: text/html; charset=iso-8859-1
 
 34567
 3456
---=_2_160710_142358_644_7394
+--=_2_230710_155729_344_12036
 Content-Range: bytes 50-59/64
 Content-Type: text/html; charset=iso-8859-1
 
 2345670123
---=_2_160710_142358_644_7394--
-HTTP/1.1 206 Partial Content
-Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
-Content-Length: 274
-Content-Type: multipart/byteranges; boundary="=_3_160710_142358_645_7394"
-
-
---=_3_160710_142358_645_7394
-Content-Range: bytes 10-19/64
-Content-Type: text/html; charset=iso-8859-1
-
-34567
-3456
---=_3_160710_142358_645_7394
-Content-Range: bytes 50-59/64
-Content-Type: text/html; charset=iso-8859-1
-
-2345670123
---=_3_160710_142358_645_7394--
+--=_2_230710_155729_344_12036--
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
+Content-Type: application/octet-stream
+Content-Length: 64
+Accept-Ranges: bytes
+Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
+
+123456781234567
+345678903456789
+234567892345678
+012345670123456
+HTTP/1.1 200 OK
+Server: ULib/1.0
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Content-Length: 0
-Last-Modified: Fri, 16 Jul 2010 12:23:58 GMT
+Accept-Ranges: bytes
+Last-Modified: Fri, 23 Jul 2010 13:57:29 GMT
 
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Content-Type: text/html; charset=iso-8859-1
 Content-Length: 474
-Last-Modified: Fri, 16 Jul 2010 10:38:07 GMT
+Accept-Ranges: bytes
+Last-Modified: Fri, 23 Jul 2010 11:45:56 GMT
 
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Content-Type: text/html; charset=iso-8859-1
 Content-Length: 474
-Last-Modified: Fri, 16 Jul 2010 10:38:07 GMT
+Accept-Ranges: bytes
+Last-Modified: Fri, 23 Jul 2010 11:45:56 GMT
 
-<html><head><title></title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/.."><img align="absbottom" border="0" src="/icons/menu.gif"> Up one level</a></td><td></td><td></td></tr><tr><td><a href="/tmp/c"><img align="absbottom" border="0" src="/icons/gopher-unknown.gif"> c</a></td><td align="right" valign="bottom">0 KB</td><td align="right" valign="bottom">16/07/10 10:38:58</td></tr></table><hr><address>ULib Server</address>
+<html><head><title></title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/.."><img align="absbottom" border="0" src="/icons/menu.gif"> Up one level</a></td><td></td><td></td></tr><tr><td><a href="/tmp/c"><img align="absbottom" border="0" src="/icons/gopher-unknown.gif"> c</a></td><td align="right" valign="bottom">0 KB</td><td align="right" valign="bottom">23/07/10 11:47:13</td></tr></table><hr><address>ULib Server</address>
 </body></html>HTTP/1.1 304 Not Modified
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Content-Length: 0
 
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Content-Type: text/html; charset=iso-8859-1
 Content-Length: 1333
 
@@ -267,24 +282,24 @@ Content-Length: 1333
 </html>
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:58 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Content-Length: 0
 
 Connection: close
 Content-Length: 43
 X-Real-IP: 127.0.0.1
-Set-Cookie: ulib_sid=Steve Johnson&1279369438&c206b436568857ce0839683d0d533566; expires=Sat, 17 Jul 2010 12:23:58 GMT
+Set-Cookie: ulib_sid=Steve Johnson&1279979849&073bd457eb123b66d656a5b9dba4725a; expires=Sat, 24 Jul 2010 13:57:29 GMT
 Content-Type: text/html; charset=iso-8859-1
 
 UID         = Steve Johnson
 HTTP_COOKIE = 
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Fri, 16 Jul 2010 12:23:59 GMT
+Date: Fri, 23 Jul 2010 13:57:29 GMT
 Content-Length: 0
 
 Connection: close
-Set-Cookie: ulib_sid=Steve Johnson&1279369439&a081c2b78c397f12f0ff63ee4f5d2519; expires=Sat, 17 Jul 2010 12:23:59 GMT
+Set-Cookie: ulib_sid=Steve Johnson&1279979849&073bd457eb123b66d656a5b9dba4725a; expires=Sat, 24 Jul 2010 13:57:29 GMT
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>

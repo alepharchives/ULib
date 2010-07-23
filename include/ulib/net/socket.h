@@ -477,6 +477,15 @@ public:
 #  endif
       }
 
+   void setTcpCongestion(const char* value)
+      {
+      U_TRACE(0, "USocket::setTcpCongestion(%S)", value)
+
+#  ifdef TCP_CONGESTION
+      (void) setSockOpt(IPPROTO_TCP, TCP_CONGESTION, (const void*)&value, u_strlen(value) + 1);
+#  endif
+      }
+
    /**
    Enables/disables the @c SO_TIMEOUT pseudo option
 

@@ -28,6 +28,24 @@
 
 AC_INIT(include/ulib/internal/common.h)
 
+# define a msg macro...
+define(TWOCAN_CONF_MSG,[dnl
+AC_MSG_RESULT()
+AC_MSG_RESULT(${T_MD}$1:${T_ME})
+])dnl
+
+# Scary shtool stuff... borowed from pth-1.0
+if test ".`echo dummy $@ | grep help`" = .; then
+    ac_shtool="$srcdir/shtool"
+    PLATFORM=`$ac_shtool platform`
+    T_MD="`$ac_shtool echo -n -e %B 2>/dev/null`"
+    T_ME="`$ac_shtool echo -n -e %b 2>/dev/null`"
+    echo "Platform: ${T_MD}${PLATFORM}${T_ME}"
+    echo "Configuring ${T_MD}ULib${T_ME} (Library)"
+fi
+
+TWOCAN_CONF_MSG(Initial phase)
+
 # Versioning
 VERSION="1.0.5"
 #shared library versioning
@@ -59,6 +77,8 @@ AM_INIT_AUTOMAKE(ULib, [$VERSION])
 AM_CONFIG_HEADER(include/ulib/internal/config.h)
 
 # SECTION 2: checks for programs
+
+TWOCAN_CONF_MSG(Checking for programs)
 
 AC_PROG_CPP
 AC_PROG_CXX
@@ -127,6 +147,8 @@ fi
 AC_LIBTOOL_WIN32_DLL
 AM_DISABLE_STATIC
 
+TWOCAN_CONF_MSG(Common C++ checks)
+
 # Common C++
 OST_PROG_CC_POSIX
 OST_PROG_COMMON
@@ -155,13 +177,15 @@ dnl ********************************************************
 LIBRARY_LIBTOOL_OPTIONS="$LT_ULIB_VERSION"
 MODULE_LIBTOOL_OPTIONS="-export-dynamic -avoid-version"
 
-# define OS - Operating System
-OS=`uname -sr`
+# check for cross compiling
 if test "$cross_compiling" = "yes"; then
-#  AM_CONDITIONAL(CROSS_COMPILED, true)
-	OS="Build on <${OS}> for Target <${target}>"
+	CROSS_ENVIRONMENT=$STAGING_DIR
+#  AM_CONDITIONAL(CROSS_COMPILING, true)
+	PKG_CONFIG_PATH=${CROSS_ENVIRONMENT}/usr/lib/pkgconfig
+	TWOCAN_CONF_MSG(Build for Target <${target}> with Environment <${CROSS_ENVIRONMENT}>)
+else
+	PKG_CONFIG_PATH=`pkg-config --variable pc_path pkg-config`
 fi
-AC_DEFINE_UNQUOTED(OS, "$OS", [Operating System])
 
 os_version=`uname -a`
 AC_DEFINE_UNQUOTED(_OS_VERSION, "${os_version}", [Operating System version])
@@ -269,6 +293,8 @@ AC_SUBST( MODULE_LIBTOOL_OPTIONS)
 
 # C++ stuff must done after library and header (some C++ define require some header)
 
+TWOCAN_CONF_MSG(C++ stuff)
+
 # NB: for define macro USING for namespace...
 OST_CXX_NAMESPACE
 OST_CXX_NEW_INIT
@@ -346,6 +372,8 @@ AC_ARG_WITH(distcc,
 AC_MSG_RESULT($use_distcc)
 
 # SECTION 4: checks for libraries
+
+TWOCAN_CONF_MSG(Checking for libraries to link against)
 
 AC_CHECK_LIB(dl,dlopen)
 AC_CHECK_LIB(rt,sem_init)
@@ -480,6 +508,8 @@ LIBS=${LIBS_SAVE}
 
 # SECTION 5: checks for header files
 
+TWOCAN_CONF_MSG(Checking for headers)
+
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_HEADER_MAJOR
@@ -498,12 +528,22 @@ fi
 
 AC_TYPE_SIGNAL
 
-# SECTION 7: checks for structures.
+# SECTION 7: checks for structures
+
+TWOCAN_CONF_MSG(Checking for structures)
 
 AC_STRUCT_TM
 AC_HEADER_STAT
 AC_MEMBER_SI_ADDR
 AC_STRUCT_ST_BLOCKS
+AC_CHECK_TYPE([struct iphdr],[AC_DEFINE(HAVE_IPHDR, 1, [struct iphdr needed for IPv6 support])],[],
+[#include <netinet/ip.h>])
+AC_CHECK_MEMBER(struct dirent.d_reclen,AC_DEFINE(DIRENT_HAVE_D_RECLEN,1,[define if you have d_reclen in struct dirent]),,
+[ #include <dirent.h> ])
+AC_CHECK_MEMBER(struct dirent.d_namlen,AC_DEFINE(DIRENT_HAVE_D_NAMLEN,1,[define if you have d_namlen in struct dirent]),,
+[ #include <dirent.h> ])
+
+TWOCAN_CONF_MSG(Checking for types, and defing if needed)
 
 # for miniLZO
 AC_C_CONST
@@ -520,19 +560,13 @@ AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(ptrdiff_t)
 AC_CHECK_FUNCS([memcmp memcpy memmove memset memrchr])
 
-AC_CHECK_TYPE([struct iphdr],[AC_DEFINE(HAVE_IPHDR, 1, [struct iphdr needed for IPv6 support])],[],
-[#include <netinet/ip.h>])
-
-AC_CHECK_MEMBER(struct dirent.d_reclen,AC_DEFINE(DIRENT_HAVE_D_RECLEN,1,[define if you have d_reclen in struct dirent]),,
-[ #include <dirent.h> ])
-AC_CHECK_MEMBER(struct dirent.d_namlen,AC_DEFINE(DIRENT_HAVE_D_NAMLEN,1,[define if you have d_namlen in struct dirent]),,
-[ #include <dirent.h> ])
-
 # SECTION 8: checks for variables
 
 # SECTION 9: checks for compiler characteristics
 
 # SECTION 10: checks for library functions
+
+TWOCAN_CONF_MSG(Checking for functions)
 
 AC_FUNC_NANOSLEEP
 AC_FUNC_CLOSEDIR_VOID
@@ -653,6 +687,9 @@ fi
 # if gcc compiler add values to *FLAGS...
 
 if test "${ac_cv_c_compiler_gnu}" = "yes"; then
+
+	TWOCAN_CONF_MSG(Checking for gcc compiler flags)
+
 	AC_CC_TRY_FLAG
 
 	gcc_version_raw=`echo ${gcc_version} | cut -d' ' -f3`
@@ -786,13 +823,15 @@ if test "$with_gnu_ld" = "yes"; then
 	esac
 fi
 
-# manauale
+# manuale
 
 AC_PATH_PROG(DOXYGEN, doxygen, no)
 AM_CONDITIONAL(DOXY, test "$DOXYGEN" != "no")
 AC_SUBST(DOXYGEN)
 
 # sostituzioni
+
+TWOCAN_CONF_MSG(Output Substitution)
 
 ULIB_LIBS="${LIBS}"
 ULIB_CFLAGS="${CFLAGS}"
@@ -811,23 +850,12 @@ AC_DEFINE_UNQUOTED(CFLAGS_VAR,	"${CFLAGS}",	[C Flags])
 AC_DEFINE_UNQUOTED(LDFLAGS_VAR, 	"${LDFLAGS}", 	[Linker Flags])
 AC_DEFINE_UNQUOTED(CXXFLAGS_VAR, "${CXXFLAGS}", [C++ Flags])
 AC_DEFINE_UNQUOTED(CPPFLAGS_VAR, "${CPPFLAGS}", [Preprocessor Flags])
+AC_DEFINE_UNQUOTED(PLATFORM_VAR, "${PLATFORM}", [Platform])
 
 # rpm spec
-
 RPM_REQUIRE=rpmpkgreq.lst
 AC_SUBST_FILE([RPM_REQUIRE])
-
-# --enable-new-ldflags
-#
-# --with-parser    use parser generator bison/yacc
-# --with-ssh       use system      SSH library - [will check /usr /usr/local]
-# --with-curl      use system     cURL library - [will check /usr /usr/local]
-# --with-ldap      use system openLDAP library - [will check /usr /usr/local]
-# --with-mysql     use system    MySQL library - [will check /usr /usr/local]
-# --with-libevent  use system libevent library - [will check /usr /usr/local]
-# --with-libxml2   use system  libxml2 library - [will check /usr /usr/local]
-
-RPM_CONFIGURE="--enable-static --enable-shared --enable-final --with-ssl --with-expat --with-magic --with-pcre --with-libuuid --with-libz --enable-zip"
+RPM_CONFIGURE="--enable-static --enable-shared"
 AC_SUBST([RPM_CONFIGURE])
 
 # Collect building environment
@@ -994,5 +1022,5 @@ fi
 
 echo
 echo "You are now ready to build ULib"
-echo "Enter the following command: make && make install"
+echo "Enter the following command: ${T_MD}make && make install${T_ME}"
 echo "***"

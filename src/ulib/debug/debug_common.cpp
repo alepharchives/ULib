@@ -32,7 +32,7 @@
 
 #include <errno.h>
 
-static const char* __restrict__ uid = "@(#) " PACKAGE " " VERSION " " OS " (" __DATE__ ")";
+static const char* __restrict__ uid = "@(#) " PACKAGE " " VERSION " " PLATFORM_VAR " (" __DATE__ ")";
 
 extern "C" void U_EXPORT u_debug_at_exit(void)
 {

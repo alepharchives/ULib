@@ -12,8 +12,10 @@ HCSP_la_SOURCES  = HCSP.c
 HCSP_la_LIBADD   = -lcrypto
 HCSP_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
 
+if MINGW
 if SSL
 HCSP_la_LIBADD  += -lcrypt32
+endif
 endif
 
 ##if SSL

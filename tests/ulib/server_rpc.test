@@ -18,8 +18,8 @@ rm -rf err/server.err \
 start_prg_background server ../../src/ulib/plugin/.libs mod_rpc
 $SLEEP
 
-#$TRUSS $NC -w 2 127.0.0.1 80 <inp/rpc_request >out/server_rpc.out 2>trace.out
-        $NC -w 2 127.0.0.1 80 <inp/rpc_request >out/server_rpc.out
+#$TRUSS $NC -w 5 127.0.0.1 80 <inp/rpc_request >out/server_rpc.out 2>trace.out
+        $NC -w 5 127.0.0.1 80 <inp/rpc_request >out/server_rpc.out
 $SLEEP
 
 kill_prg test_server TERM

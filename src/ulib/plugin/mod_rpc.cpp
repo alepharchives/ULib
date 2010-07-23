@@ -80,6 +80,10 @@ int URpcPlugIn::handlerRead()
 
    if (UServer_Base::isLog()) UClientImage_Base::logRequest();
 
+   // manage buffered read (pipelining)
+
+   UClientImage_Base::checkForPipeline();
+
    U_RETURN(is_rpc_msg ? U_PLUGIN_HANDLER_FINISHED : U_PLUGIN_HANDLER_ERROR);
 }
 
