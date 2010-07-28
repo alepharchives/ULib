@@ -326,15 +326,11 @@ bool UClientImage_Base::isPipeline()
 {
    U_TRACE(0, "UClientImage_Base::isPipeline()")
 
-   U_INTERNAL_ASSERT_POINTER(rbuffer)
-
-   uint32_t size = rbuffer->size();
-
-   if (isPipeline(size))
+   if (checkForPipeline())
       {
       // NB: for RPC message...
 
-      if (size == USocketExt::size_message)
+      if (rbuffer->size() == USocketExt::size_message)
          {
          // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more than one)...
 
@@ -445,7 +441,7 @@ int UClientImage_Base::handlerRead()
 #  endif
 
       if (result == U_PLUGIN_HANDLER_ERROR &&
-          isPipeline(rbuffer->size()) == false)
+          checkForPipeline() == false)
          {
          USocketExt::pcount = 0; // reset read data available...
 

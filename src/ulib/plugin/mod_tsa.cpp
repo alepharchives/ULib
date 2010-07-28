@@ -72,6 +72,8 @@ int UTsaPlugIn::handlerRequest()
 
    U_INTERNAL_ASSERT_POINTER(command)
 
+   UString content_type = U_STRING_FROM_CONSTANT("application/timestamp-reply");
+
    if (command->execute(UClientImage_Base::body, UClientImage_Base::wbuffer) == false)
       {
       UServer_Base::logCommandMsgError(command->getCommand());
@@ -81,7 +83,7 @@ int UTsaPlugIn::handlerRequest()
       goto end;
       }
 
-   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, "application/timestamp-reply", UClientImage_Base::wbuffer);
+   UHTTP::setHTTPResponse(HTTP_OK, &content_type, UClientImage_Base::wbuffer);
 
 end:
 

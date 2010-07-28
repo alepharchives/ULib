@@ -194,7 +194,7 @@ int UStreamPlugIn::handlerRequest()
 
       UHTTP::http_info.is_connection_close = U_YES;
 
-      *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, content_type.data(), 0);
+      UHTTP::setHTTPResponse(HTTP_OK, &content_type, 0);
 
       UClientImage_Base::socket->setTcpCork(1U);
 

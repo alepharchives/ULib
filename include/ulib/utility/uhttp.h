@@ -99,7 +99,7 @@ typedef struct uhttpheader {
             method_type, clength, keep_alive, is_connection_close, is_php, is_accept_deflate;
 } uhttpheader;
 
-enum HTTPMethodType { HTTP_POST = 1, HTTP_GET = 2, HTTP_HEAD = 3 };
+enum HTTPMethodType { HTTP_POST = 1, HTTP_PUT = 2, HTTP_DELETE = 3, HTTP_GET = 4, HTTP_HEAD = 5 };
 
 #define U_HTTP_HEADER(str)           str.substr(UHTTP::http_info.startHeader, UHTTP::http_info.szHeader)
 
@@ -154,14 +154,9 @@ public:
 
    static void str_allocate();
 
-   static const UString* str_frm_response;
-   static const UString* str_frm_forbidden;
-   static const UString* str_frm_not_found;
-   static const UString* str_frm_moved_temp;
-   static const UString* str_frm_bad_request;
-   static const UString* str_frm_unauthorized;
-   static const UString* str_frm_internal_error;
-   static const UString* str_frm_service_unavailable;
+   static const UString* str_frm_body;
+   static const UString* str_frm_header;
+   static const UString* str_ctype_html;
 
    // HTTP header representation
 
@@ -277,7 +272,7 @@ public:
    static bool scanfHTTPHeader( const char* ptr);
 
    static const char* getHTTPStatus();
-   static const char* getHTTPStatusDescription();
+   static const char* getHTTPStatusDescription(uint32_t nResponseCode);
 
    static bool readHTTPRequest();
    static bool readHTTPHeader(USocket* socket, UString& rbuffer);
@@ -310,6 +305,24 @@ public:
       U_TRACE(0, "UHTTP::isHttpPOST()")
 
       bool result = (http_info.method_type == HTTP_POST);
+
+      U_RETURN(result);
+      }
+
+   static bool isHttpPUT()
+      {
+      U_TRACE(0, "UHTTP::isHttpPUT()")
+
+      bool result = (http_info.method_type == HTTP_PUT);
+
+      U_RETURN(result);
+      }
+
+   static bool isHttpDELETE()
+      {
+      U_TRACE(0, "UHTTP::isHttpDELETE()")
+
+      bool result = (http_info.method_type == HTTP_DELETE);
 
       U_RETURN(result);
       }
@@ -491,15 +504,14 @@ public:
    static void setHTTPServiceUnavailable();
    static void setHTTPUnAuthorized(bool digest);
 
-   // get HTTP response message
+   // set HTTP response message
 
-   static UString getHTTPHeaderForResponse(int nResponseCode, const char* content_type, const UString* body);
-   static UString getHTTPRedirectResponse(const UString& ext, const char* ptr_location, uint32_t len_location);
+   static void setHTTPResponse(int nResponseCode, const UString* content_type, const UString* body);
+   static void setHTTPRedirectResponse(const UString& ext, const char* ptr_location, uint32_t len_location);
 
 private:
-   static bool     openFile() U_NO_EXPORT;
-   static UString  getHTTPHeaderForResponse() U_NO_EXPORT;
-   static UString  getHTTPHeaderForResponse(int nResponseCode, UString& content) U_NO_EXPORT;
+   static bool    openFile() U_NO_EXPORT;
+   static UString getHTTPHeaderForResponse(int nResponseCode, UString& content) U_NO_EXPORT;
 
    UHTTP(const UHTTP&)            {}
    UHTTP& operator=(const UHTTP&) { return *this; }

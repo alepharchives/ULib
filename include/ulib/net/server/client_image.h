@@ -127,11 +127,11 @@ public:
    virtual int handlerRead();
    virtual int handlerWrite();
 
-   // check if data read already available... (pipelining)
+   // manage if data read already available... (pipelining)
 
-   static void checkForPipeline()
+   static void manageForPipeline()
       {
-      U_TRACE(0, "UClientImage_Base::checkForPipeline()")
+      U_TRACE(0, "UClientImage_Base::manageForPipeline()")
 
       U_INTERNAL_ASSERT_POINTER(rbuffer)
 
@@ -152,6 +152,27 @@ public:
             U_INTERNAL_DUMP("pcount = %d pbuffer = %p", USocketExt::pcount, USocketExt::pbuffer)
             }
          }
+      }
+
+   static bool checkForPipeline()
+      {
+      U_TRACE(0, "UClientImage_Base::checkForPipeline()")
+
+      U_INTERNAL_ASSERT_POINTER(rbuffer)
+
+      U_INTERNAL_DUMP("rbuffer->size() = %u size_message = %u pcount = %d pbuffer = %p",
+                       rbuffer->size(), USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
+
+      uint32_t size = rbuffer->size();
+
+      if (size                     &&
+          USocketExt::size_message &&
+          (USocketExt::pcount > 0 || size > USocketExt::size_message))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
       }
 
    // DEBUG
@@ -197,23 +218,7 @@ protected:
       }
 
    static void destroy();
-
    static bool isPipeline();
-   static bool isPipeline(uint32_t size)
-      {
-      U_TRACE(0, "UClientImage_Base::isPipeline(%u)", size)
-
-      U_INTERNAL_DUMP("size_message = %u pcount = %d pbuffer = %p", USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
-
-      if (size                     &&
-          USocketExt::size_message &&
-          (USocketExt::pcount > 0 || size > USocketExt::size_message))
-         {
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
 
 private:
    UClientImage_Base(const UClientImage_Base&) : UEventFd() {}

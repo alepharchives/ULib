@@ -171,7 +171,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       uri_request_cert_mask    = cfg[*str_URI_REQUEST_CERT_MASK];
 #  endif
 
-      UHTTP::virtual_host                 = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
+       UHTTP::virtual_host                = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
       *UHTTP::cache_file_mask             = cfg[*str_CACHE_FILE_MASK];
       *UHTTP::cache_file_compress_mask    = cfg[*str_CACHE_FILE_COMPRESS_MASK];
       UServer_Base::digest_authentication = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
@@ -299,7 +299,7 @@ int UHttpPlugIn::handlerInit()
    U_SRV_LOG_MSG("initialization of plugin success");
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-   }
+}
 
 // Connection-wide hooks
 
@@ -320,12 +320,10 @@ int UHttpPlugIn::handlerRead()
 
    // manage buffered read (pipelining)
 
-   UClientImage_Base::checkForPipeline();
+   UClientImage_Base::manageForPipeline();
 
    int nResponseCode;
    uint32_t host_end;
-   const UString* body;
-   const char* content_type;
 
    if (is_http_req)
       {
@@ -419,14 +417,12 @@ next:
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
-   body          = 0;
-   content_type  = 0;
-   nResponseCode = HTTP_NOT_IMPLEMENTED;
-
    // HTTP/1.1 compliance: Sends 411 for missing Content-Length on POST requests
    //                      Sends 400 for broken Request-Line
    //                      Sends 501 for request-method != (GET|POST|HEAD)
    //                      Sends 505 for protocol != HTTP/1.[0-1]
+
+   nResponseCode = HTTP_NOT_IMPLEMENTED;
 
    if (UHTTP::http_info.method_type)
       {
@@ -443,7 +439,7 @@ next:
 
    UHTTP::http_info.is_connection_close = U_YES;
 
-   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(nResponseCode, content_type, body);
+   UHTTP::setHTTPResponse(nResponseCode, 0, 0);
 
 send_response:
 

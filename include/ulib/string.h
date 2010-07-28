@@ -1196,6 +1196,7 @@ public:
       rep->_length = u_vsnprintf(rep->data(), rep->capacity(), format, argp); 
 
       U_INTERNAL_ASSERT(invariant())
+      U_ASSERT_MAJOR(rep->space(),5) // NB: may be truncated...
       }
 
    void vsnprintf_add(const char* format, va_list argp)
@@ -1204,10 +1205,12 @@ public:
 
       U_INTERNAL_ASSERT(isNull() == false)
       U_INTERNAL_ASSERT(rep->references == 0)
+      U_ASSERT_MAJOR(rep->space(),u_strlen(format))
 
       rep->_length += u_vsnprintf(c_pointer(rep->_length), rep->space(), format, argp); 
 
       U_INTERNAL_ASSERT(invariant())
+      U_ASSERT_MAJOR(rep->space(),5) // NB: may be truncated...
       }
 
 #ifdef HAVE_STRTOF

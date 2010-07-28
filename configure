@@ -22627,7 +22627,7 @@ $as_echo_n "checking if SSL library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_ssl" ; then
 		wanted=0;
-		with_ssl="/usr";
+		with_ssl="${CROSS_ENVIRONMENT}/usr";
 	fi
 
 # Check whether --with-ssl was given.
@@ -22638,7 +22638,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			ssldir="$dir";
 			if test -f "$dir/include/openssl/ssl.h"; then
 				found_ssl="yes";
@@ -22666,7 +22666,7 @@ $as_echo "$msg" >&6; }
 				openssl_version="Unknown"
 			fi
 			LIBS="-lssl -lcrypto $LIBS";
-			if test $ssldir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $ssldir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$ssldir/include";
 				LDFLAGS="$LDFLAGS -L$ssldir/lib -Wl,-R$ssldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$ssldir/lib";
@@ -22686,7 +22686,7 @@ $as_echo_n "checking if LIBZ library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_libz" ; then
 		wanted=0;
-		with_libz="/usr";
+		with_libz="${CROSS_ENVIRONMENT}/usr";
 	fi
 
 # Check whether --with-libz was given.
@@ -22698,7 +22698,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local/; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
 			libzdir="$dir"
 			if test -f "$dir/include/zlib.h"; then
 				found_libz="yes";
@@ -22722,7 +22722,7 @@ $as_echo "$msg" >&6; }
 				libz_version="Unknown"
 			fi
 			LIBS="-lz $LIBS";
-			if test $libzdir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $libzdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$libzdir/include"
 				LDFLAGS="$LDFLAGS -L$libzdir/lib -Wl,-R$libzdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libzdir/lib";
@@ -22756,7 +22756,7 @@ $as_echo_n "checking if PCRE library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_pcre" ; then
 		wanted=0;
-		with_pcre="/usr";
+		with_pcre="${CROSS_ENVIRONMENT}/usr";
 	fi
 
 # Check whether --with-pcre was given.
@@ -22767,7 +22767,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local/; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
 			pcredir="$dir"
 			if test -f "$dir/include/pcre.h"; then
 				found_pcre="yes";
@@ -22791,7 +22791,7 @@ $as_echo "$msg" >&6; }
 				pcre_version="Unknown"
 			fi
 			LIBS="-lpcre $LIBS";
-			if test $pcredir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $pcredir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$pcredir/include"
 				LDFLAGS="$LDFLAGS -L$pcredir/lib -Wl,-R$pcredir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$pcredir/lib";
@@ -22810,7 +22810,7 @@ $as_echo_n "checking if libuuid library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_libuuid" ; then
 		wanted=0;
-		with_libuuid="/usr";
+		with_libuuid="${CROSS_ENVIRONMENT}/usr";
 	fi
 
 # Check whether --with-libuuid was given.
@@ -22821,7 +22821,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libuuiddir="$dir";
 			if test -f "$dir/include/uuid/uuid.h"; then
 				found_libuuid="yes";
@@ -22845,7 +22845,7 @@ $as_echo "$msg" >&6; }
 				libuuid_version="Unknown"
 			fi
 			LIBS="-luuid $LIBS";
-			if test $libuuiddir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $libuuiddir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$libuuiddir/include";
 				LDFLAGS="$LDFLAGS -L$libuuiddir/lib -Wl,-R$libuuiddir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libuuiddir/lib";
@@ -22864,7 +22864,7 @@ $as_echo_n "checking if MAGIC library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_magic" ; then
 		wanted=0;
-		with_magic="/usr";
+		with_magic="${CROSS_ENVIRONMENT}/usr";
 	fi
 
 # Check whether --with-magic was given.
@@ -22875,7 +22875,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			magicdir="$dir";
 			if test -f "$dir/include/magic.h"; then
 				found_magic="yes";
@@ -22899,7 +22899,7 @@ $as_echo "$msg" >&6; }
 				libmagic_version="Unknown"
 			fi
 			LIBS="-lmagic $LIBS";
-			if test $magicdir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $magicdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$magicdir/include";
 				LDFLAGS="$LDFLAGS -L$magicdir/lib -Wl,-R$magicdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$magicdir/lib";
@@ -22918,7 +22918,7 @@ $as_echo_n "checking if EXPAT library for XML parsing is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_expat" ; then
 		wanted=0;
-		with_expat="/usr";
+		with_expat="${CROSS_ENVIRONMENT}/usr";
 	fi
 
 # Check whether --with-expat was given.
@@ -22929,7 +22929,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local/; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
 			expatdir="$dir"
 			if test -f "$dir/include/expat.h"; then
 				found_expat="yes";
@@ -22953,7 +22953,7 @@ $as_echo "$msg" >&6; }
 				expat_version="Unknown"
 			fi
 			LIBS="-lexpat $LIBS";
-			if test $expatdir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $expatdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$expatdir/include"
 				LDFLAGS="$LDFLAGS -L$expatdir/lib -Wl,-R$expatdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$expatdir/lib";
@@ -22978,7 +22978,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			sshdir="$dir";
 			if test -f "$dir/include/libssh/libssh.h"; then
 				found_ssh="yes";
@@ -22996,7 +22996,7 @@ $as_echo "yes" >&6; }
 				libssh_version="Unknown"
 			fi
 			LIBS="-lssh $LIBS";
-			if test $sshdir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$sshdir/include";
 				LDFLAGS="$LDFLAGS -L$sshdir/lib -Wl,-R$sshdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$sshdir/lib";
@@ -23021,7 +23021,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			curldir="$dir";
 			if test -f "$dir/include/curl/curl.h"; then
 				found_curl="yes";
@@ -23039,7 +23039,7 @@ $as_echo "yes" >&6; }
 				libcurl_version="Unknown"
 			fi
 			LIBS="-lcurl $LIBS";
-			if test $curldir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $curldir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$curldir/include";
 				LDFLAGS="$LDFLAGS -L$curldir/lib -Wl,-R$curldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$curldir/lib";
@@ -23064,7 +23064,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			ldapdir="$dir"
 			if test -f "$dir/include/ldap.h"; then
 				found_ldap="yes"
@@ -23095,7 +23095,7 @@ $as_echo "yes" >&6; }
 				ldap_version="Unknown"
 			fi
 			LIBS="$LDAP_LIBS $LIBS"
-			if test $ldapdir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $ldapdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$LDAP_INCS"
 				LDFLAGS="$LDFLAGS -L$LDAP_LDFLAGS -Wl,-R$LDAP_LDFLAGS"
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$ldapdir/lib";
@@ -23120,7 +23120,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			mysqldir="$dir";
 			if test -f "$dir/include/mysql/mysql.h"; then
 				found_mysql="yes";
@@ -23138,7 +23138,7 @@ $as_echo "yes" >&6; }
 				libmysql_version="Unknown"
 			fi
 			LIBS="-lmysqlclient $LIBS";
-			if test $mysqldir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $mysqldir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$mysqldir/include";
 				LDFLAGS="$LDFLAGS -L$mysqldir/lib -Wl,-R$mysqldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$mysqldir/lib";
@@ -23163,7 +23163,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libeventdir="$dir";
 			if test -f "$dir/include/event.h"; then
 				found_libevent="yes";
@@ -23181,7 +23181,7 @@ $as_echo "yes" >&6; }
 				libevent_version="Unknown"
 			fi
 			LIBS="-levent $LIBS";
-			if test $libeventdir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $libeventdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$libeventdir/include";
 				LDFLAGS="$LDFLAGS -L$libeventdir/lib -Wl,-R$libeventdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libeventdir/lib";
@@ -23206,7 +23206,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libxml2dir="$dir";
 			if test -f "$dir/include/libxml2/libxml/valid.h"; then
 				found_libxml2="yes";
@@ -23225,7 +23225,7 @@ $as_echo "yes" >&6; }
 			fi
 			LIBS="-lxml2 $LIBS";
 			CPPFLAGS="$CPPFLAGS -I$libxml2dir/include/libxml2";
-			if test $libxml2dir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $libxml2dir != "${CROSS_ENVIRONMENT}/usr"; then
 				LDFLAGS="$LDFLAGS -L$libxml2dir/lib -Wl,-R$libxml2dir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libxml2dir/lib";
 			fi

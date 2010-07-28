@@ -1,10 +1,17 @@
+HEAD /Z/x,validate HTTP/1.1
+Host: x
+
 POST / HTTP/1.1
+Host: x
 
 GET /xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx HTTP/1.0
 
 GET /../../../linux HTTP/1.0
 
 GET /cgi-bin/internal-error.sh HTTP/1.0
+
+GET /cgi-bin/redirect.sh HTTP/1.1
+Host: localhost
 
 GET /ok HTTP/1.0
 

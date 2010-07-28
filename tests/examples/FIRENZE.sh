@@ -11,6 +11,7 @@ rm -f FIRENZE*.log err/FIRENZE*.err \
       out/userver_ssl.out err/userver_ssl.err \
 		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]* \
 		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* \
+		$DOC_ROOT/FIRENZE*.log* \
 		$DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* $DOC_ROOT/stack.*userver_ssl*.[0-9]* \
 		$DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]* \
 		/tmp/processCGIRequest.err

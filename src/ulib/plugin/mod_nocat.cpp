@@ -898,7 +898,7 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo()
 
    if (info_url->isQuery())
       {
-      *UClientImage_Base::wbuffer = UHTTP::getHTTPRedirectResponse(UString::getStringNull(), U_URL_TO_PARAM(*info_url));
+      UHTTP::setHTTPRedirectResponse(UString::getStringNull(), U_URL_TO_PARAM(*info_url));
 
       *info_url = *(pthis->vlogout_url[index_AUTH]);
 
@@ -909,12 +909,12 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo()
 
    if (isPingAsyncPending())
       {
-      *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_NO_CONTENT, 0, 0);
+      UHTTP::setHTTPResponse(HTTP_NO_CONTENT, 0, 0);
 
       return;
       }
 
-   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_NOT_MODIFIED, 0, 0);
+   UHTTP::setHTTPResponse(HTTP_NOT_MODIFIED, 0, 0);
 }
 
 UModNoCatPeer* UNoCatPlugIn::getPeerFromMAC(const UString& mac)
@@ -1534,7 +1534,7 @@ set_redirect_to_AUTH:
 
 redirect: // redirect to AUTH
 
-   *UClientImage_Base::wbuffer = UHTTP::getHTTPRedirectResponse(UString::getStringNull(), U_STRING_TO_PARAM(location));
+   UHTTP::setHTTPRedirectResponse(UString::getStringNull(), U_STRING_TO_PARAM(location));
 
 end:
    int result = UHTTP::checkForHTTPConnectionClose(); // check for "Connection: close" in headers...

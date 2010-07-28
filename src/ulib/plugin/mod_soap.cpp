@@ -83,7 +83,9 @@ int USoapPlugIn::handlerRequest()
 
    U_SRV_LOG_VAR_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
 
-   *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, "application/soap+xml; charset=\"utf-8\"", UClientImage_Base::body);
+   UString content_type = U_STRING_FROM_CONSTANT("application/soap+xml; charset=\"utf-8\"");
+
+   UHTTP::setHTTPResponse(HTTP_OK, &content_type, UClientImage_Base::body);
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#define FULL_DEBUG
 /*
 #define FILE_CONFIG
 #define OPENSSL_NO_ERR

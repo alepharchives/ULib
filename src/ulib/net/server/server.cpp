@@ -805,9 +805,9 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
       {
       U_ASSERT(isPreForked())
 
-      bool block = (U_TOT_CONNECTION == 0);
+      bool block = (num_connection == 0);
 
-      U_INTERNAL_DUMP("block = %b tot_connection = %d", block, U_TOT_CONNECTION)
+      U_INTERNAL_DUMP("block = %b num_connection = %d tot_connection = %d", block, num_connection, U_TOT_CONNECTION)
 
       if (block != UFile::isBlocking(UEventFd::fd, U_SOCKET_FLAGS))
          {
@@ -848,7 +848,7 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
       goto end;
       }
 
-   U_INTERNAL_DUMP("flag_loop = %b", flag_loop)
+   U_INTERNAL_DUMP("flag_loop = %b block_on_accept = %b", flag_loop, block_on_accept)
 
    if (isLog()   &&
        flag_loop && // check for SIGTERM event...
@@ -1054,10 +1054,14 @@ void UServer_Base::run()
                U_INTERNAL_DUMP("up to %u children", nkids)
 
                U_SRV_LOG_VAR("started new child (pid %ld), up to %u children", proc->pid(), nkids);
+
+               U_INTERNAL_DUMP("block_on_accept = %b tot_connection = %d", block_on_accept, U_TOT_CONNECTION)
                }
 
             if (proc->child())
                {
+               U_INTERNAL_DUMP("block_on_accept = %b tot_connection = %d", block_on_accept, U_TOT_CONNECTION)
+
                acceptNewClient(pthis);
 
                if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
@@ -1077,13 +1081,16 @@ void UServer_Base::run()
 
          pid = UProcess::waitpid(-1, &status, 0);
 
-         if (pid > 0 && flag_loop) // check for SIGTERM event...
+         if (pid > 0 &&
+             flag_loop) // check for SIGTERM event...
             {
             --nkids;
 
             U_INTERNAL_DUMP("down to %u children", nkids)
 
             U_SRV_LOG_VAR("child (pid %d) exited with value %d (%s), down to %u children", pid, status, UProcess::exitInfo(status), nkids);
+
+            U_INTERNAL_DUMP("block_on_accept = %b tot_connection = %d", block_on_accept, U_TOT_CONNECTION)
             }
 
          /* Another little safety brake here: since children should not exit

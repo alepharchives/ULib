@@ -7,14 +7,14 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	wanted=1;
 	if test -z "$with_ssl" ; then
 		wanted=0;
-		with_ssl="/usr";
+		with_ssl="${CROSS_ENVIRONMENT}/usr";
 	fi
 	AC_ARG_WITH(ssl, [  --with-ssl              use system      SSL library - [[will check /usr /usr/local]] [[default=yes]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			ssldir="$dir";
 			if test -f "$dir/include/openssl/ssl.h"; then
 				found_ssl="yes";
@@ -43,7 +43,7 @@ dnl		openssl_version=$($ssldir/bin/openssl version | cut -d' ' -f2)
 				openssl_version="Unknown"
 			fi
 			LIBS="-lssl -lcrypto $LIBS";
-			if test $ssldir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $ssldir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$ssldir/include";
 				LDFLAGS="$LDFLAGS -L$ssldir/lib -Wl,-R$ssldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$ssldir/lib";
@@ -58,14 +58,14 @@ dnl		openssl_version=$($ssldir/bin/openssl version | cut -d' ' -f2)
 	wanted=1;
 	if test -z "$with_libz" ; then
 		wanted=0;
-		with_libz="/usr";
+		with_libz="${CROSS_ENVIRONMENT}/usr";
 	fi
 	AC_ARG_WITH(libz, [  --with-libz             use system     LIBZ library - [[will check /usr /usr/local]] [[default=yes]]], [
 	if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local/; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
 			libzdir="$dir"
 			if test -f "$dir/include/zlib.h"; then
 				found_libz="yes";
@@ -89,7 +89,7 @@ dnl		printf "LIBZ found in $libzdir\n";
 				libz_version="Unknown"
 			fi
 			LIBS="-lz $LIBS";
-			if test $libzdir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $libzdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$libzdir/include"
 				LDFLAGS="$LDFLAGS -L$libzdir/lib -Wl,-R$libzdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libzdir/lib";
@@ -113,14 +113,14 @@ dnl		printf "LIBZ found in $libzdir\n";
 	wanted=1;
 	if test -z "$with_pcre" ; then
 		wanted=0;
-		with_pcre="/usr";
+		with_pcre="${CROSS_ENVIRONMENT}/usr";
 	fi
 	AC_ARG_WITH(pcre, [  --with-pcre             use system     PCRE library - [[will check /usr /usr/local]] [[default=yes]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local/; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
 			pcredir="$dir"
 			if test -f "$dir/include/pcre.h"; then
 				found_pcre="yes";
@@ -144,7 +144,7 @@ dnl		printf "PCRE found in $pcredir\n";
 				pcre_version="Unknown"
 			fi
 			LIBS="-lpcre $LIBS";
-			if test $pcredir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $pcredir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$pcredir/include"
 				LDFLAGS="$LDFLAGS -L$pcredir/lib -Wl,-R$pcredir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$pcredir/lib";
@@ -158,14 +158,14 @@ dnl		printf "PCRE found in $pcredir\n";
 	wanted=1;
 	if test -z "$with_libuuid" ; then
 		wanted=0;
-		with_libuuid="/usr";
+		with_libuuid="${CROSS_ENVIRONMENT}/usr";
 	fi
 	AC_ARG_WITH(libuuid, [  --with-libuuid          use system  libuuid library - [[will check /usr /usr/local]] [[default=yes]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libuuiddir="$dir";
 			if test -f "$dir/include/uuid/uuid.h"; then
 				found_libuuid="yes";
@@ -189,7 +189,7 @@ dnl		printf "libuuid found in $libuuiddir\n";
 				libuuid_version="Unknown"
 			fi
 			LIBS="-luuid $LIBS";
-			if test $libuuiddir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $libuuiddir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$libuuiddir/include";
 				LDFLAGS="$LDFLAGS -L$libuuiddir/lib -Wl,-R$libuuiddir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libuuiddir/lib";
@@ -203,14 +203,14 @@ dnl		printf "libuuid found in $libuuiddir\n";
 	wanted=1;
 	if test -z "$with_magic" ; then
 		wanted=0;
-		with_magic="/usr";
+		with_magic="${CROSS_ENVIRONMENT}/usr";
 	fi
 	AC_ARG_WITH(magic, [  --with-magic            use system libmagic library - [[will check /usr /usr/local]] [[default=yes]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			magicdir="$dir";
 			if test -f "$dir/include/magic.h"; then
 				found_magic="yes";
@@ -234,7 +234,7 @@ dnl		printf "libmagic found in $magicdir\n";
 				libmagic_version="Unknown"
 			fi
 			LIBS="-lmagic $LIBS";
-			if test $magicdir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $magicdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$magicdir/include";
 				LDFLAGS="$LDFLAGS -L$magicdir/lib -Wl,-R$magicdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$magicdir/lib";
@@ -248,14 +248,14 @@ dnl		printf "libmagic found in $magicdir\n";
 	wanted=1;
 	if test -z "$with_expat" ; then
 		wanted=0;
-		with_expat="/usr";
+		with_expat="${CROSS_ENVIRONMENT}/usr";
 	fi
 	AC_ARG_WITH(expat, [  --with-expat            use system    EXPAT library - [[will check /usr /usr/local]] [[default=yes]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local/; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
 			expatdir="$dir"
 			if test -f "$dir/include/expat.h"; then
 				found_expat="yes";
@@ -279,7 +279,7 @@ dnl		printf "EXPAT found in $expatdir\n";
 				expat_version="Unknown"
 			fi
 			LIBS="-lexpat $LIBS";
-			if test $expatdir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $expatdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$expatdir/include"
 				LDFLAGS="$LDFLAGS -L$expatdir/lib -Wl,-R$expatdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$expatdir/lib";
@@ -295,7 +295,7 @@ dnl		printf "EXPAT found in $expatdir\n";
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			sshdir="$dir";
 			if test -f "$dir/include/libssh/libssh.h"; then
 				found_ssh="yes";
@@ -315,7 +315,7 @@ dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -
 				libssh_version="Unknown"
 			fi
 			LIBS="-lssh $LIBS";
-			if test $sshdir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$sshdir/include";
 				LDFLAGS="$LDFLAGS -L$sshdir/lib -Wl,-R$sshdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$sshdir/lib";
@@ -331,7 +331,7 @@ dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			curldir="$dir";
 			if test -f "$dir/include/curl/curl.h"; then
 				found_curl="yes";
@@ -350,7 +350,7 @@ dnl		printf "cURL found in $curldir\n";
 				libcurl_version="Unknown"
 			fi
 			LIBS="-lcurl $LIBS";
-			if test $curldir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $curldir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$curldir/include";
 				LDFLAGS="$LDFLAGS -L$curldir/lib -Wl,-R$curldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$curldir/lib";
@@ -366,7 +366,7 @@ dnl		printf "cURL found in $curldir\n";
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			ldapdir="$dir"
 			if test -f "$dir/include/ldap.h"; then
 				found_ldap="yes"
@@ -400,7 +400,7 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 				ldap_version="Unknown"
 			fi
 			LIBS="$LDAP_LIBS $LIBS"
-			if test $ldapdir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $ldapdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$LDAP_INCS"
 				LDFLAGS="$LDFLAGS -L$LDAP_LDFLAGS -Wl,-R$LDAP_LDFLAGS"
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$ldapdir/lib";
@@ -416,7 +416,7 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			mysqldir="$dir";
 			if test -f "$dir/include/mysql/mysql.h"; then
 				found_mysql="yes";
@@ -435,7 +435,7 @@ dnl		printf "MySQL found in $mysqldir\n";
 				libmysql_version="Unknown"
 			fi
 			LIBS="-lmysqlclient $LIBS";
-			if test $mysqldir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $mysqldir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$mysqldir/include";
 				LDFLAGS="$LDFLAGS -L$mysqldir/lib -Wl,-R$mysqldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$mysqldir/lib";
@@ -451,7 +451,7 @@ dnl		printf "MySQL found in $mysqldir\n";
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libeventdir="$dir";
 			if test -f "$dir/include/event.h"; then
 				found_libevent="yes";
@@ -470,7 +470,7 @@ dnl		printf "libevent found in $libeventdir\n";
 				libevent_version="Unknown"
 			fi
 			LIBS="-levent $LIBS";
-			if test $libeventdir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $libeventdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$libeventdir/include";
 				LDFLAGS="$LDFLAGS -L$libeventdir/lib -Wl,-R$libeventdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libeventdir/lib";
@@ -486,7 +486,7 @@ dnl		printf "libevent found in $libeventdir\n";
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval $CROSS_ENVIRONMENT/usr $CROSS_ENVIRONMENT/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libxml2dir="$dir";
 			if test -f "$dir/include/libxml2/libxml/valid.h"; then
 				found_libxml2="yes";
@@ -506,7 +506,7 @@ dnl		printf "libxml2 found in $libxml2dir\n";
 			fi
 			LIBS="-lxml2 $LIBS";
 			CPPFLAGS="$CPPFLAGS -I$libxml2dir/include/libxml2";
-			if test $libxml2dir != "$CROSS_ENVIRONMENT/usr"; then
+			if test $libxml2dir != "${CROSS_ENVIRONMENT}/usr"; then
 				LDFLAGS="$LDFLAGS -L$libxml2dir/lib -Wl,-R$libxml2dir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libxml2dir/lib";
 			fi

@@ -6,7 +6,7 @@
 
 start_msg web_server
 
-rm -f web_server.log uploads/* \
+rm -f web_server.log* uploads/* \
       out/userver_ssl.out err/userver_ssl.err web_server.err \
       out/userver_tcp.out err/userver_tcp.err web_server.err \
       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* \
@@ -31,8 +31,9 @@ fi
  start_prg_background userver_tcp -c web_server.cfg
 $SLEEP
 
-#mkdir -p /tmp/web_server
+#LS=tst_1
 #LS=`ls inp/http/and`
+#mkdir -p /tmp/web_server
 #for i in $LS
 #do
 #  $NC 127.0.0.1 80 <inp/http/and/$i >/tmp/web_server/$i

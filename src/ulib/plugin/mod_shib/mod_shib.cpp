@@ -719,7 +719,7 @@ int UShibPlugIn::handlerRequest()
             UShibTarget::setcookie = 0;
             }
 
-         *UClientImage_Base::wbuffer = UHTTP::getHTTPRedirectResponse(ext, UShibTarget::location, u_strlen(UShibTarget::location));
+         UHTTP::setHTTPRedirectResponse(ext, UShibTarget::location, u_strlen(UShibTarget::location));
          }
       }
 
