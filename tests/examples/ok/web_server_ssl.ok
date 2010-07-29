@@ -26,7 +26,7 @@ Content-Type: text/html; charset=iso-8859-1
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Length: 254
 Content-Type: text/html; charset=iso-8859-1
 
@@ -41,7 +41,7 @@ Content-Type: text/html; charset=iso-8859-1
 </body></html>
 HTTP/1.1 411 Length Required
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Length: 0
 
 HTTP/1.0 404 Not Found
@@ -86,10 +86,10 @@ Content-Type: text/html; charset=iso-8859-1
 <hr>
 <address>ULib Server</address>
 </body></html>
-HTTP/1.1 302 Moved Temporarily
+HTTP/1.1 307 Temporary Redirect
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
-Content-Length: 365
+Date: Thu, 29 Jul 2010 13:02:30 GMT
+Content-Length: 367
 Content-Type: text/html; charset=iso-8859-1
 Location: http://10.30.1.131/?ticket=U2FsdGVkX1+/AYaicDGB1EReb1+EErzD/ar1Wrv8wrXpYEj9RoN3RlzFWK5ykUyRMg4AicmBMNQsUQDWZENgiQ
 X-Powered-By: PHP/5.2.6-pl7-gentoo
@@ -97,9 +97,9 @@ X-Powered-By: PHP/5.2.6-pl7-gentoo
 
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
-<title>302 Moved Temporarily</title>
+<title>307 Temporary Redirect</title>
 </head><body>
-<h1>Moved Temporarily</h1>
+<h1>Temporary Redirect</h1>
 <p>The document has moved <a href="http://10.30.1.131/?ticket=U2FsdGVkX1+/AYaicDGB1EReb1+EErzD/ar1Wrv8wrXpYEj9RoN3RlzFWK5ykUyRMg4AicmBMNQsUQDWZENgiQ">here</a></p>
 <hr>
 <address>ULib Server</address>
@@ -121,7 +121,7 @@ WWW-Authenticate: Basic realm="Protected Area"
 </body></html>
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Type: text/html
 Content-Length: 63
 Accept-Ranges: bytes
@@ -130,7 +130,7 @@ Last-Modified: Fri, 20 Feb 2009 14:50:49 GMT
 this is the web_server testsuite inp/http/data/index.html file
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Range: bytes 0-63/64
 Content-Type: application/octet-stream
 Content-Length: 64
@@ -143,7 +143,7 @@ Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Range: bytes 0-31/64
 Content-Type: application/octet-stream
 Content-Length: 32
@@ -154,7 +154,7 @@ Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 345678903456789
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Range: bytes 32-63/64
 Content-Type: application/octet-stream
 Content-Length: 32
@@ -165,7 +165,7 @@ Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Range: bytes 32-63/64
 Content-Type: application/octet-stream
 Content-Length: 32
@@ -176,26 +176,26 @@ Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Length: 257
-Content-Type: multipart/byteranges; boundary="=_1_280710_135215_038_28947"
+Content-Type: multipart/byteranges; boundary="=_1_290710_150230_045_31840"
 
 
---=_1_280710_135215_038_28947
+--=_1_290710_150230_045_31840
 Content-Range: bytes 0-0/64
 Content-Type: text/html; charset=iso-8859-1
 
 1
---=_1_280710_135215_038_28947
+--=_1_290710_150230_045_31840
 Content-Range: bytes 63-63/64
 Content-Type: text/html; charset=iso-8859-1
 
 
 
---=_1_280710_135215_038_28947--
+--=_1_290710_150230_045_31840--
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Range: bytes 50-63/64
 Content-Type: application/octet-stream
 Content-Length: 14
@@ -205,26 +205,26 @@ Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 2345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Length: 277
-Content-Type: multipart/byteranges; boundary="=_2_280710_135215_038_28947"
+Content-Type: multipart/byteranges; boundary="=_2_290710_150230_045_31840"
 
 
---=_2_280710_135215_038_28947
+--=_2_290710_150230_045_31840
 Content-Range: bytes 10-19/64
 Content-Type: text/html; charset=iso-8859-1
 
 34567
 3456
---=_2_280710_135215_038_28947
+--=_2_290710_150230_045_31840
 Content-Range: bytes 50-59/64
 Content-Type: text/html; charset=iso-8859-1
 
 2345670123
---=_2_280710_135215_038_28947--
+--=_2_290710_150230_045_31840--
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Type: application/octet-stream
 Content-Length: 64
 Accept-Ranges: bytes
@@ -236,36 +236,36 @@ Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 012345670123456
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Length: 0
 Accept-Ranges: bytes
-Last-Modified: Wed, 28 Jul 2010 11:52:15 GMT
+Last-Modified: Thu, 29 Jul 2010 13:02:29 GMT
 
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Type: text/html; charset=iso-8859-1
 Content-Length: 474
 Accept-Ranges: bytes
-Last-Modified: Wed, 28 Jul 2010 11:24:14 GMT
+Last-Modified: Wed, 28 Jul 2010 12:41:09 GMT
 
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Type: text/html; charset=iso-8859-1
 Content-Length: 474
 Accept-Ranges: bytes
-Last-Modified: Wed, 28 Jul 2010 11:24:14 GMT
+Last-Modified: Wed, 28 Jul 2010 12:41:09 GMT
 
-<html><head><title></title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/.."><img align="absbottom" border="0" src="/icons/menu.gif"> Up one level</a></td><td></td><td></td></tr><tr><td><a href="/tmp/c"><img align="absbottom" border="0" src="/icons/gopher-unknown.gif"> c</a></td><td align="right" valign="bottom">0 KB</td><td align="right" valign="bottom">28/07/10 11:24:51</td></tr></table><hr><address>ULib Server</address>
+<html><head><title></title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/.."><img align="absbottom" border="0" src="/icons/menu.gif"> Up one level</a></td><td></td><td></td></tr><tr><td><a href="/tmp/c"><img align="absbottom" border="0" src="/icons/gopher-unknown.gif"> c</a></td><td align="right" valign="bottom">0 KB</td><td align="right" valign="bottom">28/07/10 12:41:39</td></tr></table><hr><address>ULib Server</address>
 </body></html>HTTP/1.1 304 Not Modified
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Length: 0
 
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Type: text/html; charset=iso-8859-1
 Content-Length: 1333
 
@@ -302,24 +302,24 @@ Content-Length: 1333
 </html>
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Length: 0
 
 Connection: close
 Content-Length: 43
 X-Real-IP: 127.0.0.1
-Set-Cookie: ulib_sid=Steve Johnson&1280404335&1abb29820c141c2c2a04abf6f7826887; expires=Thu, 29 Jul 2010 11:52:15 GMT
+Set-Cookie: ulib_sid=Steve Johnson&1280494950&8296f3477fc4777f29b74f81af7e0942; expires=Fri, 30 Jul 2010 13:02:30 GMT
 Content-Type: text/html; charset=iso-8859-1
 
 UID         = Steve Johnson
 HTTP_COOKIE = 
 HTTP/1.1 200 OK
 Server: ULib/1.0
-Date: Wed, 28 Jul 2010 11:52:15 GMT
+Date: Thu, 29 Jul 2010 13:02:30 GMT
 Content-Length: 0
 
 Connection: close
-Set-Cookie: ulib_sid=Steve Johnson&1280404335&1abb29820c141c2c2a04abf6f7826887; expires=Thu, 29 Jul 2010 11:52:15 GMT
+Set-Cookie: ulib_sid=Steve Johnson&1280494950&8296f3477fc4777f29b74f81af7e0942; expires=Fri, 30 Jul 2010 13:02:30 GMT
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>

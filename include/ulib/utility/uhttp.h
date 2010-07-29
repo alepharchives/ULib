@@ -49,9 +49,11 @@
 #define HTTP_MULT_CHOICE         300
 #define HTTP_MOVED_PERM          301
 #define HTTP_MOVED_TEMP          302
+#define HTTP_FOUND               302
 #define HTTP_SEE_OTHER           303
 #define HTTP_NOT_MODIFIED        304
 #define HTTP_USE_PROXY           305
+#define HTTP_TEMP_REDIR          307
 
 // 4xx indicates an error on the client's part
 #define HTTP_BAD_REQUEST         400

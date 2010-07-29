@@ -179,9 +179,14 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
     * See http://ietf.org/rfc/rfc2616.txt for further information about HTTP request methods
     **/
 
+   const char* start;
+   unsigned char c = ptr[0];
+
+   if (c == 'G') goto bypass;
+
    while (u_isspace(*ptr)) ++ptr; // RFC 2616 4.1 "servers SHOULD ignore any empty line(s) received where a Request-Line is expected."
 
-   unsigned char c = u_toupper(ptr[0]);
+   c = u_toupper(ptr[0]);
 
    if (c != 'G' && // GET
        c != 'P' && // POST/PUT
@@ -191,9 +196,10 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
       U_RETURN(false);
       }
 
+bypass:
    // try to parse the request line: GET / HTTP/1.n
 
-   const char* start = http_info.method = ptr;
+   start = http_info.method = ptr;
 
    if (c == 'G') // GET
       {
@@ -1068,6 +1074,7 @@ const char* UHTTP::getHTTPStatusDescription(uint32_t nResponseCode)
       // 1xx indicates an informational message only
       case HTTP_CONTINUE:           descr = "Continue";                        break;
       case HTTP_SWITCH_PROT:        descr = "Switching Protocols";             break;
+   // case 102:                     descr = "HTTP Processing";                 break;
 
       // 2xx indicates success of some kind
       case HTTP_OK:                 descr = "OK";                              break;
@@ -1077,14 +1084,17 @@ const char* UHTTP::getHTTPStatusDescription(uint32_t nResponseCode)
       case HTTP_NO_CONTENT:         descr = "No Content";                      break;
       case HTTP_RESET:              descr = "Reset Content";                   break;
       case HTTP_PARTIAL:            descr = "Partial Content";                 break;
+   // case 207:                     descr = "Webdav Multi-status";             break;
 
-      // 3xx redirects the client to another URL
+      // 3xx Redirection - Further action must be taken in order to complete the request
       case HTTP_MULT_CHOICE:        descr = "Multiple Choices";                break;
       case HTTP_MOVED_PERM:         descr = "Moved Permanently";               break;
       case HTTP_MOVED_TEMP:         descr = "Moved Temporarily";               break;
+   // case HTTP_FOUND:              descr = "Found [Elsewhere]";               break;
       case HTTP_SEE_OTHER:          descr = "See Other";                       break;
       case HTTP_NOT_MODIFIED:       descr = "Not Modified";                    break;
       case HTTP_USE_PROXY:          descr = "Use Proxy";                       break;
+      case HTTP_TEMP_REDIR:         descr = "Temporary Redirect";              break;
 
       // 4xx indicates an error on the client's part
       case HTTP_BAD_REQUEST:        descr = "Bad Request";                     break;
@@ -1095,7 +1105,7 @@ const char* UHTTP::getHTTPStatusDescription(uint32_t nResponseCode)
       case HTTP_BAD_METHOD:         descr = "Method Not Allowed";              break;
       case HTTP_NOT_ACCEPTABLE:     descr = "Not Acceptable";                  break;
       case HTTP_PROXY_AUTH:         descr = "Proxy Authentication Required";   break;
-      case HTTP_CLIENT_TIMEOUT:     descr = "Request Timeout";                 break;
+      case HTTP_CLIENT_TIMEOUT:     descr = "Request Time-out";                break;
       case HTTP_CONFLICT:           descr = "Conflict";                        break;
       case HTTP_GONE:               descr = "Gone";                            break;
       case HTTP_LENGTH_REQUIRED:    descr = "Length Required";                 break;
@@ -1105,14 +1115,23 @@ const char* UHTTP::getHTTPStatusDescription(uint32_t nResponseCode)
       case HTTP_UNSUPPORTED_TYPE:   descr = "Unsupported Media Type";          break;
       case HTTP_REQ_RANGE_NOT_OK:   descr = "Requested Range not satisfiable"; break;
       case HTTP_EXPECTATION_FAILED: descr = "Expectation Failed";              break;
+   // case 422:                     descr = "Unprocessable Entity";            break;
+   // case 423:                     descr = "Locked";                          break;
+   // case 424:                     descr = "Failed Dependency";               break;
+   // case 425:                     descr = "No Matching Vhost";               break;
+   // case 426:                     descr = "Upgrade Required";                break;
+   // case 449:                     descr = "Retry With Appropriate Action";   break;
 
       // 5xx indicates an error on the server's part
       case HTTP_INTERNAL_ERROR:     descr = "Internal Server Error";           break;
       case HTTP_NOT_IMPLEMENTED:    descr = "Not Implemented";                 break;
       case HTTP_BAD_GATEWAY:        descr = "Bad Gateway";                     break;
       case HTTP_UNAVAILABLE:        descr = "Service Unavailable";             break;
-      case HTTP_GATEWAY_TIMEOUT:    descr = "Gateway Timeout";                 break;
+      case HTTP_GATEWAY_TIMEOUT:    descr = "Gateway Time-out";                break;
       case HTTP_VERSION:            descr = "HTTP Version Not Supported";      break;
+   // case 506:                     descr = "Variant also varies";             break;
+   // case 507:                     descr = "Insufficient Storage";            break;
+   // case 510:                     descr = "Not Extended";                    break;
 
       default:                      descr = "Code unknown";                    break;
       }
@@ -1523,11 +1542,44 @@ void UHTTP::setHTTPNotFound()
    setHTTPResponse(HTTP_NOT_FOUND, str_ctype_html, &body);
 }
 
+/* see: http://sebastians-pamphlets.com/the-anatomy-of-http-redirects-301-302-307/
+ * ------------------------------------------------------------------------------------------------------------------
+ * HTTP/1.0
+ * ------------------------------------------------------------------------------------------------------------------
+ * 302 Moved Temporarily
+ *
+ * The requested resource resides temporarily under a different URL. Since the redirection may be altered on occasion,
+ * the client should continue to use the Request-URI for future requests. The URL must be given by the Location field
+ * in the response. Unless it was a HEAD request, the Entity-Body of the response should contain a short note with a
+ * hyperlink to the new URI(s).
+ * ------------------------------------------------------------------------------------------------------------------
+ * HTTP/1.1
+ * ------------------------------------------------------------------------------------------------------------------
+ * 302 Found [Elsewhere]
+ *
+ * The requested resource resides temporarily under a different URI. Since the redirection might be altered on occasion,
+ * the client SHOULD continue to use the Request-URI for future requests. This response is only cacheable if indicated
+ * by a Cache-Control or Expires header field. The temporary URI SHOULD be given by the Location field in the response.
+ * Unless the request method was HEAD, the entity of the response SHOULD contain a short hypertext note with a hyperlink
+ * to the new URI(s).
+ *
+ * 307 Temporary Redirect
+ *
+ * The requested resource resides temporarily under a different URI. Since the redirection MAY be altered on occasion,
+ * the client SHOULD continue to use the Request-URI for future requests. This response is only cacheable if indicated by
+ * a Cache-Control or Expires header field.  The temporary URI SHOULD be given by the Location field in the response. Unless
+ * the request method was HEAD, the entity of the response SHOULD contain a short hypertext note with a hyperlink to the new
+ * URI(s), since many pre-HTTP/1.1 user agents do not understand the 307 status. Therefore, the note SHOULD contain the
+ * information necessary for a user to repeat the original request on the new URI.
+ */
+
 void UHTTP::setHTTPRedirectResponse(const UString& ext, const char* ptr_location, uint32_t len_location)
 {
    U_TRACE(0, "UHTTP::setHTTPRedirectResponse(%.*S,%.*S,%u)", U_STRING_TO_TRACE(ext), len_location, ptr_location, len_location)
 
    U_ASSERT_EQUALS(u_find(ptr_location,len_location,"\n",1),0)
+
+   int nResponseCode = (http_info.version ? HTTP_TEMP_REDIR : HTTP_MOVED_TEMP);
 
    if (http_info.is_connection_close == U_MAYBE) http_info.is_connection_close = U_YES;
 
@@ -1535,10 +1587,10 @@ void UHTTP::setHTTPRedirectResponse(const UString& ext, const char* ptr_location
 
    msg.snprintf("The document has moved <a href=\"%.*s\">here</a>", len_location, ptr_location);
 
-   const char* status = getHTTPStatusDescription(HTTP_MOVED_TEMP);
+   const char* status = getHTTPStatusDescription(nResponseCode);
 
    body.snprintf(str_frm_body->data(),
-                  HTTP_MOVED_TEMP, status,
+                  nResponseCode, status,
                   status,
                   U_STRING_TO_TRACE(msg));
 
@@ -1551,7 +1603,7 @@ void UHTTP::setHTTPRedirectResponse(const UString& ext, const char* ptr_location
       (void) tmp.append(UStringExt::trim(ext));
       }
 
-   setHTTPResponse(HTTP_MOVED_TEMP, &tmp, &body);
+   setHTTPResponse(nResponseCode, &tmp, &body);
 }
 
 void UHTTP::setHTTPBadRequest()

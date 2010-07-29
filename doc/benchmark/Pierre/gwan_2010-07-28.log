@@ -1,0 +1,22 @@
+[Wed Jul 28 17:19:40 2010] ----------------------------------------
+[Wed Jul 28 17:19:40 2010] G-WAN 1.0.9 (Jun  9 2010 16:12:49)
+[Wed Jul 28 17:19:40 2010] ----------------------------------------
+[Wed Jul 28 17:19:40 2010] RAM : 1.77 GB free / 1.10 GB total
+[Wed Jul 28 17:19:40 2010] DISK: 0 free / 0 total
+[Wed Jul 28 17:19:40 2010] 1 Dual-Core AMD Opteron(tm) Processor 2210 HE (2 logical CPUs)
+[Wed Jul 28 17:19:40 2010] 32-bit little-endian (least significant byte first)
+[Wed Jul 28 17:19:40 2010] Linux v#1 SMP Tue Jul 6 22:32:17 UTC 2010 built 2.6.33.6-147.fc13.x86_64
+[Wed Jul 28 17:19:40 2010] user: root (uid:0), group: root (uid:0), members: root
+[Wed Jul 28 17:19:40 2010] fd max: 1,024
+[Wed Jul 28 17:19:40 2010] Set openfiles limit to: 128,000
+[Wed Jul 28 17:19:40 2010] Listener /0.0.0.0_8080/#0.0.0.0:
+[Wed Jul 28 17:19:40 2010] loaded hello.c
+[Wed Jul 28 17:19:40 2010] loaded loan.c
+[Wed Jul 28 17:19:40 2010] loaded contact.c
+[Wed Jul 28 17:19:40 2010] loaded fractal.c
+[Wed Jul 28 17:19:40 2010] loaded crash.c
+[Wed Jul 28 17:19:40 2010] loaded func.c
+[Wed Jul 28 17:19:40 2010] loaded hellox.c
+[Wed Jul 28 17:19:40 2010] loaded setheaders.c
+[Wed Jul 28 17:19:40 2010] server started
+[Wed Jul 28 17:19:40 2010] CPU time, user: 0.000022 sec, kernel: 0.000001 sec

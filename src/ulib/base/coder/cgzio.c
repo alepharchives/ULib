@@ -303,7 +303,8 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
             return 0;
             }
          }
-   } while (stream.avail_out == 0);
+      }
+   while (stream.avail_out == 0);
 
    return 0;
 }

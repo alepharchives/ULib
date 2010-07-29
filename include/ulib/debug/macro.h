@@ -63,7 +63,7 @@
                                                  name(args); utr.trace_sysreturn(false,0);}
 
 #  define U_SYSCALL_VOID_NO_PARAM(name)         {utr.trace_syscall("::"#name"()",0); \
-                                                 ::name(); utr.trace_sysreturn(false,0);}
+                                                 name(); utr.trace_sysreturn(false,0);}
 
 #  define U_RETURN(r)                  return (utr.trace_return_type((r)))
 #  define U_RETURN_STRING(str)         return (utr.trace_return("%.*S",U_STRING_TO_TRACE((str))),(str))

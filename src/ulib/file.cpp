@@ -1221,14 +1221,23 @@ typedef struct mimeentry {
 #define MIME_ENTRY(name,type) { type, name+1, U_CONSTANT_SIZE(name)-1 }
 
 static struct mimeentry mimetab_a[] = {
-   MIME_ENTRY( "avi", "video/x-msvideo" ),
+   MIME_ENTRY( "ai",   "application/postscript" ),
+   MIME_ENTRY( "arj",  "application/x-arj-compressed" ),
+   MIME_ENTRY( "asx",  "video/x-ms-asf" ),
+   MIME_ENTRY( "atom", "application/atom+xml" ),
+   MIME_ENTRY( "avi",  "video/x-msvideo" ),
    { 0, 0, 0 }
 };
 
 static struct mimeentry mimetab_b[] = {
    MIME_ENTRY( "bat",  "application/x-msdos-program" ),
+   MIME_ENTRY( "bmp",  "image/x-ms-bmp" ),
    MIME_ENTRY( "bild", "image/jpeg" ),
    MIME_ENTRY( "boz",  "application/x-bzip2" ),
+
+   /*
+   MIME_ENTRY( "bin",  "application/octet-stream" ),
+   */
 
    { 0, 0, 0 }
 };
@@ -1280,19 +1289,41 @@ static struct mimeentry mimetab_d[] = {
 
    /*
    MIME_ENTRY( "deb", "application/x-debian-package" ),
+   MIME_ENTRY( "dll", "application/octet-stream" ),
    MIME_ENTRY( "dvi", "application/x-dvi" ),
    */
 
    { 0, 0, 0 }
 };
 
+static struct mimeentry mimetab_e[] = {
+   MIME_ENTRY( "eps", "application/postscript" ),
+
+   /*
+   MIME_ENTRY( "exe", "application/octet-stream" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_f[] = {
+   MIME_ENTRY( "flv", "video/x-flv" ),
+   { 0, 0, 0 }
+};
+
 static struct mimeentry mimetab_g[] = {
    MIME_ENTRY( "gif", "image/gif" ),
+   MIME_ENTRY( "gz",  "application/x-gunzip" ),
    { 0, 0, 0 }
 };
 
 static struct mimeentry mimetab_h[] = {
-   MIME_ENTRY( "htm", "text/html" ),
+   MIME_ENTRY( "htm",  "text/html" ),
+
+   /*
+   MIME_ENTRY( "html", "text/html" ),
+   */
+
    { 0, 0, 0 }
 };
 
@@ -1302,23 +1333,25 @@ static struct mimeentry mimetab_i[] = {
 };
 
 static struct mimeentry mimetab_j[] = {
-   MIME_ENTRY( "js",    "text/javascript" ), // U_js
-   MIME_ENTRY( "jpg",   "image/jpeg" ),
-   MIME_ENTRY( "jpeg",  "image/jpeg" ),
+   MIME_ENTRY( "js",   "text/javascript" ),  // U_js
+   MIME_ENTRY( "jpg",  "image/jpeg" ),
+   MIME_ENTRY( "jpeg", "image/jpeg" ),
+   MIME_ENTRY( "json", "application/json" ),
    { 0, 0, 0 }
 };
 
 static struct mimeentry mimetab_m[] = {
-   MIME_ENTRY( "mp3",   "audio/mpeg" ),
-   MIME_ENTRY( "mpg",   "video/mpeg" ),
-   MIME_ENTRY( "mp4",   "video/mp4" ),
-   MIME_ENTRY( "m4a",   "audio/mp4" ),
-   MIME_ENTRY( "mpeg",  "video/mpeg" ),
-   MIME_ENTRY( "md5",   "text/plain" ),
-   MIME_ENTRY( "mov",   "video/quicktime" ),
+   MIME_ENTRY( "mng",  "video/x-mng" ),
+   MIME_ENTRY( "mp3",  "audio/mpeg" ),
+   MIME_ENTRY( "mpg",  "video/mpeg" ),
+   MIME_ENTRY( "mp4",  "video/mp4" ),
+   MIME_ENTRY( "m4a",  "audio/mp4" ),
+   MIME_ENTRY( "mpeg", "video/mpeg" ),
+   MIME_ENTRY( "md5",  "text/plain" ),
+   MIME_ENTRY( "mov",  "video/quicktime" ),
 
    /*
-   MIME_ENTRY( "m3u",   "audio/x-mpegurl" ),
+   MIME_ENTRY( "m3u", "audio/x-mpegurl" ),
    */
 
    { 0, 0, 0 }
@@ -1330,6 +1363,8 @@ static struct mimeentry mimetab_o[] = {
 };
 
 static struct mimeentry mimetab_p[] = {
+   MIME_ENTRY( "pem", "application/x-x509-ca-cert" ),
+   MIME_ENTRY( "php", "application/x-httpd-php" ),
    MIME_ENTRY( "png", "image/png" ),
    MIME_ENTRY( "pdf", "application/pdf" ),
    MIME_ENTRY( "ps",  "application/postscript" ),
@@ -1352,27 +1387,31 @@ static struct mimeentry mimetab_q[] = {
 
 static struct mimeentry mimetab_r[] = {
    MIME_ENTRY( "rar", "application/x-rar-compressed" ),
-
-   /*
+   MIME_ENTRY( "rtf", "text/richtext" ),
    MIME_ENTRY( "rss", "application/rss+xml" ),
-   */
 
    { 0, 0, 0 }
 };
 
 static struct mimeentry mimetab_s[] = {
-   MIME_ENTRY( "swf", "application/x-shockwave-flash" ),
+   MIME_ENTRY( "shtm", "text/html" ),
+   MIME_ENTRY( "svg",  "image/svg+xml" ),
+   MIME_ENTRY( "swf",  "application/x-shockwave-flash" ),
 
    /*
-   MIME_ENTRY( "sig", "application/pgp-signature" ),
+   MIME_ENTRY( "sig",   "application/pgp-signature" ),
+   MIME_ENTRY( "shtml", "text/html" ),
    */
+
    { 0, 0, 0 }
 };
 
 static struct mimeentry mimetab_t[] = {
-   MIME_ENTRY( "txt",  "text/plain" ),
-   MIME_ENTRY( "text", "text/plain" ),
    MIME_ENTRY( "tar",  "application/x-tar" ),
+   MIME_ENTRY( "tif",  "image/tiff" ),
+   MIME_ENTRY( "text", "text/plain" ),
+   MIME_ENTRY( "txt",  "text/plain" ),
+   MIME_ENTRY( "tgz",  "application/x-tar-gz" ),
 
    /*
    MIME_ENTRY( "torrent",  "application/x-bittorrent" ),
@@ -1388,6 +1427,7 @@ static struct mimeentry mimetab_w[] = {
 };
 
 static struct mimeentry mimetab_x[] = {
+   MIME_ENTRY( "xls", "application/excel" ),
    MIME_ENTRY( "xml", "application/xml" ),
    MIME_ENTRY( "xpm", "image/x-xpixmap" ),
    MIME_ENTRY( "xbm", "image/x-xbitmap" ),
@@ -1424,8 +1464,8 @@ const char* UFile::getMimeType(const char* suffix)
       case 'b': mimetab = mimetab_b; break;
       case 'c': mimetab = mimetab_c; break;
       case 'd': mimetab = mimetab_d; break;
-   // case 'e': mimetab = mimetab_null; break;
-   // case 'f': mimetab = mimetab_null; break;
+      case 'e': mimetab = mimetab_e; break;
+      case 'f': mimetab = mimetab_f; break;
       case 'g': mimetab = mimetab_g; break;
       case 'h': mimetab = mimetab_h; break;
       case 'i': mimetab = mimetab_i; break;
@@ -1433,7 +1473,7 @@ const char* UFile::getMimeType(const char* suffix)
    // case 'k': mimetab = mimetab_null; break;
    // case 'l': mimetab = mimetab_null; break;
       case 'm': mimetab = mimetab_m; break;
-      case 'n': mimetab = mimetab_null; break;
+   // case 'n': mimetab = mimetab_null; break;
       case 'o': mimetab = mimetab_o; break;
       case 'p': mimetab = mimetab_p; break;
       case 'q': mimetab = mimetab_q; break;
