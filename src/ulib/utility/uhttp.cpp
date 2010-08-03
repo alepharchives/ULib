@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/url.h>
 #include <ulib/date.h>
 #include <ulib/file.h>
 #include <ulib/command.h>
@@ -57,7 +58,9 @@ UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
 
 const UString* UHTTP::str_frm_body;
 const UString* UHTTP::str_frm_header;
+const UString* UHTTP::str_ctype_tsa;
 const UString* UHTTP::str_ctype_html;
+const UString* UHTTP::str_ctype_soap;
 
 void UHTTP::str_allocate()
 {
@@ -65,10 +68,14 @@ void UHTTP::str_allocate()
 
    U_INTERNAL_ASSERT_EQUALS(str_frm_body,0)
    U_INTERNAL_ASSERT_EQUALS(str_frm_header,0)
+   U_INTERNAL_ASSERT_EQUALS(str_ctype_tsa,0)
    U_INTERNAL_ASSERT_EQUALS(str_ctype_html,0)
+   U_INTERNAL_ASSERT_EQUALS(str_ctype_soap,0)
 
    static ustringrep stringrep_storage[] = {
+   { U_STRINGREP_FROM_CONSTANT("application/timestamp-reply") },
    { U_STRINGREP_FROM_CONSTANT(U_CTYPE_HTML) },
+   { U_STRINGREP_FROM_CONSTANT("application/soap+xml; charset=\"utf-8\"") },
    { U_STRINGREP_FROM_CONSTANT("HTTP/1.%c %d %s\r\n"
                                "Server: ULib/1.0\r\n"
                                "%.*s"
@@ -84,9 +91,80 @@ void UHTTP::str_allocate()
                                "</body></html>\r\n") }
    };
 
-   U_NEW_ULIB_OBJECT(str_ctype_html, U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_frm_header, U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_frm_body,   U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_ctype_tsa,  U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_ctype_html, U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_ctype_soap, U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_frm_header, U_STRING_FROM_STRINGREP_STORAGE(3));
+   U_NEW_ULIB_OBJECT(str_frm_body,   U_STRING_FROM_STRINGREP_STORAGE(4));
+}
+
+void UHTTP::ctor()
+{
+   U_TRACE(0, "UHTTP::ctor()")
+
+   str_allocate();
+
+   if (        Url::str_ftp  == 0)         Url::str_allocate();
+   if (UMimeHeader::str_name == 0) UMimeHeader::str_allocate();
+
+   U_INTERNAL_ASSERT_EQUALS(file,0)
+   U_INTERNAL_ASSERT_EQUALS(alias,0)
+   U_INTERNAL_ASSERT_EQUALS(tmpdir,0)
+   U_INTERNAL_ASSERT_EQUALS(qcontent,0)
+   U_INTERNAL_ASSERT_EQUALS(formMulti,0)
+   U_INTERNAL_ASSERT_EQUALS(penvironment,0)
+   U_INTERNAL_ASSERT_EQUALS(form_name_value,0)
+
+   file            = U_NEW(UFile);
+   alias           = U_NEW(UString(U_CAPACITY));
+   tmpdir          = U_NEW(UString(100U));
+   qcontent        = U_NEW(UString);
+   formMulti       = U_NEW(UMimeMultipart);
+   penvironment    = U_NEW(UString(U_CAPACITY));
+   form_name_value = U_NEW(UVector<UString>);
+
+   U_INTERNAL_ASSERT_POINTER(USocket::str_host)
+   U_INTERNAL_ASSERT_POINTER(USocket::str_range)
+   U_INTERNAL_ASSERT_POINTER(USocket::str_connection)
+   U_INTERNAL_ASSERT_POINTER(USocket::str_content_type)
+   U_INTERNAL_ASSERT_POINTER(USocket::str_content_length)
+   U_INTERNAL_ASSERT_POINTER(USocket::str_accept_encoding)
+   U_INTERNAL_ASSERT_POINTER(USocket::str_if_modified_since)
+
+   ptrH = USocket::str_host->c_pointer(1);              // "Host"
+   ptrR = USocket::str_range->c_pointer(1);             // "Range"
+   ptrC = USocket::str_connection->c_pointer(1);        // "Connection"
+   ptrT = USocket::str_content_type->c_pointer(1);      // "Content-Type"
+   ptrL = USocket::str_content_length->c_pointer(1);    // "Content-Length"
+   ptrA = USocket::str_accept_encoding->c_pointer(1);   // "Accept-Encoding"
+   ptrI = USocket::str_if_modified_since->c_pointer(1); // "If-Modified-Since"
+}
+
+void UHTTP::dtor()
+{
+   U_TRACE(0, "UHTTP::dtor()")
+
+   if (file)
+      {
+      delete file;
+      delete alias;
+      delete tmpdir;
+      delete qcontent;
+      delete formMulti;
+      delete penvironment;
+      delete form_name_value;
+
+      if (vallow_IP)   delete vallow_IP;
+      if (request_uri) delete request_uri;
+
+      if (cache_file)
+         {
+                cache_file->clear();
+                cache_file->deallocate();
+         delete cache_file;
+         delete last_file;
+         }
+      }
 }
 
 /* read HTTP message
@@ -1493,13 +1571,13 @@ void UHTTP::setHTTPResponse(int nResponseCode, const UString* content_type, cons
 
    tmp = getHTTPHeaderForResponse(nResponseCode, tmp);
 
-   if (body) (void) tmp.append(*body);
-
-   U_INTERNAL_DUMP("tmp(%u) = %.*S", tmp.size(), U_STRING_TO_TRACE(tmp))
-
    *UClientImage_Base::wbuffer = tmp;
 
-   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+   if (body) *UClientImage_Base::body = *body;
+   else       UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+
+   U_INTERNAL_DUMP("UClientImage_Base::wbuffer(%u) = %.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
+   U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %.*S", UClientImage_Base::body->size(), U_STRING_TO_TRACE(*UClientImage_Base::body))
 }
 
 void UHTTP::setHTTPForbidden()

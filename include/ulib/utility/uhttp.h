@@ -158,7 +158,9 @@ public:
 
    static const UString* str_frm_body;
    static const UString* str_frm_header;
+   static const UString* str_ctype_tsa;
    static const UString* str_ctype_html;
+   static const UString* str_ctype_soap;
 
    // HTTP header representation
 
@@ -171,6 +173,11 @@ public:
    static const char* ptrL; // "Content-Lenght"
    static const char* ptrA; // "Accept-Encoding"
    static const char* ptrI; // "If-Modified-Since"
+
+   // COSTRUTTORE e DISTRUTTORE
+
+   static void ctor();
+   static void dtor();
 
    static void setHTTPMethod(const char* method, uint32_t method_len)
       {

@@ -610,7 +610,7 @@ public:
 
       U_INTERNAL_ASSERT(numhosts > 0)
 
-      if (u_is_stderr_tty) (void) UFile::write(STDOUT_FILENO, U_CONSTANT_TO_PARAM("Select hosts for download file "));
+      if (u_is_tty) (void) UFile::write(STDOUT_FILENO, U_CONSTANT_TO_PARAM("Select hosts for download file "));
 
       int rcvsock_fd, sndsock_fd;
 
@@ -725,7 +725,7 @@ public:
 
          (void) gettimeofday(&now, 0);
 
-         if (u_is_stderr_tty) (void) UFile::write(STDOUT_FILENO, U_CONSTANT_TO_PARAM(".")); 
+         if (u_is_tty) (void) UFile::write(STDOUT_FILENO, U_CONSTANT_TO_PARAM(".")); 
 
          switch (code)
             {
@@ -981,11 +981,12 @@ public:
 
       // ask for mirror file at filesearching.com
 
-      bIPv6 = false;
+      bIPv6    = false;
+      u_is_tty = isatty(STDOUT_FILENO);
 
       UHttpClient<UTCPSocket> http(0);
 
-      if (u_is_stderr_tty) (void) UFile::write(STDOUT_FILENO, U_CONSTANT_TO_PARAM("Query to filesearching.com searcher for file to download\n"));
+      if (u_is_tty) (void) UFile::write(STDOUT_FILENO, U_CONSTANT_TO_PARAM("Query to filesearching.com searcher for file to download\n"));
 
       numproc  = 4;
       UIPAddress ip_addr;
@@ -1098,7 +1099,7 @@ public:
 
       count -= offset;
 
-      if (u_is_stderr_tty)
+      if (u_is_tty)
          {
          pinfo = new ProgressBar(1L, 0L);
 
@@ -1209,13 +1210,13 @@ public:
 
       host = from[i];
 
-      if (u_is_stderr_tty) pinfo->start();
+      if (u_is_tty) pinfo->start();
 
       download();
 
       (void) proc.waitAll();
 
-      if (u_is_stderr_tty)
+      if (u_is_tty)
          {
          UTimer::erase(pinfo, true);
 
@@ -1225,7 +1226,7 @@ public:
       file.munmap();
 
 #  ifdef DEBUG
-      if (u_is_stderr_tty) delete pinfo;
+      if (u_is_tty) delete pinfo;
 
       file.close();
 

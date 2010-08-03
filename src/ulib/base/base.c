@@ -51,7 +51,7 @@
 #endif
 
 /* Startup */
-bool                 u_is_stderr_tty;
+bool                 u_is_tty;
 pid_t                u_pid;
 uint32_t             u_pid_str_len;
 uint32_t             u_progname_len;
@@ -238,7 +238,7 @@ void u_init(char** restrict argv)
       }
 #endif
 
-   u_is_stderr_tty = isatty(STDERR_FILENO);
+   u_is_tty = isatty(STDERR_FILENO);
 
    if (gethostname(u_hostname, 255))
       {
@@ -1209,7 +1209,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             n = VA_ARG(int);
 
-            if (u_is_stderr_tty)
+            if (u_is_tty)
                {
                U_INTERNAL_ASSERT(n <= BRIGHTWHITE)
 
@@ -1828,7 +1828,7 @@ static bool u_askForContinue(void)
 
    U_INTERNAL_TRACE("u_askForContinue()", 0)
 
-   if ((u_is_stderr_tty ) && isatty(STDIN_FILENO))
+   if (isatty(STDIN_FILENO))
       {
       char ch[2];
 

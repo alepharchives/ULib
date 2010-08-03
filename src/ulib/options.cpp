@@ -295,6 +295,7 @@ void UOptions::printHelp(vPF func)
 
    // Print help and exit
 
+   u_is_tty        = isatty(STDOUT_FILENO);
    u_printf_fileno = STDOUT_FILENO;
 
    u_printf("%W%.*s%W: %.*s", BRIGHTWHITE, U_STRING_TO_TRACE(package), RESET, U_STRING_TO_TRACE(version));
@@ -514,6 +515,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
          case 'V': // Print version and exit
             {
+            u_is_tty        = isatty(STDOUT_FILENO);
             u_printf_fileno = STDOUT_FILENO;
 
             u_printf("%W%.*s%W (%W%.*s%W): %.*s\n\n"

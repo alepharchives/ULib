@@ -55,7 +55,7 @@ typedef bool  (*bPFpcpv) (const char*, const void*);
 typedef int   (*qcompare)(const void*, const void*);
 
 /* Startup */
-extern U_EXPORT bool                 u_is_stderr_tty;
+extern U_EXPORT bool                 u_is_tty;
 extern U_EXPORT pid_t                u_pid;
 extern U_EXPORT uint32_t             u_pid_str_len;
 extern U_EXPORT uint32_t             u_progname_len;

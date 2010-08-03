@@ -11,9 +11,7 @@
 //
 // ============================================================================
 
-#include <ulib/url.h>
 #include <ulib/file_config.h>
-#include <ulib/mime/entity.h>
 #include <ulib/utility/uhttp.h>
 #include <ulib/plugin/mod_http.h>
 #include <ulib/net/server/server.h>
@@ -115,27 +113,9 @@ UHttpPlugIn::~UHttpPlugIn()
       delete pages;
       }
 
-   if (UHTTP::file)
-      {
-      delete UHTTP::file;
-      delete UHTTP::alias;
-      delete UHTTP::tmpdir;
-      delete UHTTP::qcontent;
-      delete UHTTP::formMulti;
-      delete UHTTP::penvironment;
-      delete UHTTP::form_name_value;
+   // delete global HTTP var...
 
-      if (UHTTP::vallow_IP)   delete UHTTP::vallow_IP;
-      if (UHTTP::request_uri) delete UHTTP::request_uri;
-
-      if (UHTTP::cache_file)
-         {
-                UHTTP::cache_file->clear();
-                UHTTP::cache_file->deallocate();
-         delete UHTTP::cache_file;
-         delete UHTTP::last_file;
-         }
-      }
+   UHTTP::dtor();
 }
 
 // Server-wide hooks
@@ -240,44 +220,11 @@ int UHttpPlugIn::handlerInit()
          }
       }
 
-   // init global var...
+   // init global HTTP var...
 
-   UHTTP::str_allocate();
+   UHTTP::ctor();
 
-   U_INTERNAL_ASSERT_EQUALS(UHTTP::file,0)
-
-   UHTTP::file = U_NEW(UFile);
-
-   U_INTERNAL_ASSERT_EQUALS(UHTTP::penvironment,0)
-
-   UHTTP::alias        = U_NEW(UString(U_CAPACITY));
-   UHTTP::penvironment = U_NEW(UString(U_CAPACITY));
-
-   U_INTERNAL_ASSERT_POINTER(USocket::str_host)
-   U_INTERNAL_ASSERT_POINTER(USocket::str_connection)
-
-   UHTTP::ptrH = USocket::str_host->c_pointer(1);              // "Host"
-   UHTTP::ptrR = USocket::str_range->c_pointer(1);             // "Range"
-   UHTTP::ptrC = USocket::str_connection->c_pointer(1);        // "Connection"
-   UHTTP::ptrT = USocket::str_content_type->c_pointer(1);      // "Content-Type"
-   UHTTP::ptrL = USocket::str_content_length->c_pointer(1);    // "Content-Length"
-   UHTTP::ptrA = USocket::str_accept_encoding->c_pointer(1);   // "Accept-Encoding"
-   UHTTP::ptrI = USocket::str_if_modified_since->c_pointer(1); // "If-Modified-Since"
-
-   // init form processing var...
-
-   U_INTERNAL_ASSERT_EQUALS(UHTTP::tmpdir,0)
-   U_INTERNAL_ASSERT_EQUALS(UHTTP::qcontent,0)
-   U_INTERNAL_ASSERT_EQUALS(UHTTP::formMulti,0)
-   U_INTERNAL_ASSERT_EQUALS(UHTTP::form_name_value,0)
-
-   UHTTP::tmpdir          = U_NEW(UString(100U));
-   UHTTP::qcontent        = U_NEW(UString);
-   UHTTP::formMulti       = U_NEW(UMimeMultipart);
-   UHTTP::form_name_value = U_NEW(UVector<UString>);
-
-   if (        Url::str_ftp  == 0)         Url::str_allocate();
-   if (UMimeHeader::str_name == 0) UMimeHeader::str_allocate();
+   // URI PROTECTED and ALIAS
 
    if (uri_protected_allowed_ip.empty() == false)
       {
@@ -499,7 +446,7 @@ int UHttpPlugIn::handlerRequest()
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
 
-      goto next;
+      goto end;
       }
 
    // process the HTTP request
@@ -521,7 +468,7 @@ int UHttpPlugIn::handlerRequest()
          }
       }
 
-next:
+end:
    int result = UHTTP::checkForHTTPConnectionClose(); // check for "Connection: close" in headers...
 
    U_RETURN(result);

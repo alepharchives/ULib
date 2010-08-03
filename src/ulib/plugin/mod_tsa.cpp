@@ -72,9 +72,9 @@ int UTsaPlugIn::handlerRequest()
 
    U_INTERNAL_ASSERT_POINTER(command)
 
-   UString content_type = U_STRING_FROM_CONSTANT("application/timestamp-reply");
+   UString body;
 
-   if (command->execute(UClientImage_Base::body, UClientImage_Base::wbuffer) == false)
+   if (command->execute(UClientImage_Base::body, &body) == false)
       {
       UServer_Base::logCommandMsgError(command->getCommand());
 
@@ -83,10 +83,9 @@ int UTsaPlugIn::handlerRequest()
       goto end;
       }
 
-   UHTTP::setHTTPResponse(HTTP_OK, &content_type, UClientImage_Base::wbuffer);
+   UHTTP::setHTTPResponse(HTTP_OK, UHTTP::str_ctype_tsa, &body);
 
 end:
-
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
 

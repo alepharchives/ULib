@@ -13,7 +13,7 @@ static void writeData(void* data, unsigned size, const char* name)
 
 static void printInfo(void)
 {
-#ifdef WIN32
+#ifdef __MINGW32__
 
 	DWORD dwDataLen = 256;
 
@@ -51,7 +51,7 @@ static void printInfo(void)
 
 static void enumKeyContainers(void)
 {
-#ifdef WIN32
+#ifdef __MINGW32__
 
 	BYTE pbData[1000];
 	DWORD i, dwDataLen, dwFlags;
@@ -107,7 +107,7 @@ static void enumKeyContainers(void)
 
 static void enumAlgorithms(void)
 {
-#ifdef WIN32
+#ifdef __MINGW32__
 
 	ALG_ID aiAlgid;
 	BYTE* ptr = NULL;
@@ -204,17 +204,9 @@ static void enumAlgorithms(void)
 #endif
 }
 
-/*
-#ifdef __MINGW32__
-static PCCERT_CONTEXT WINAPI
-(*CertEnumCertificatesInStore)(HCERTSTORE hCertStore,
-                               PCCERT_CONTEXT pPrevCertContext) = NULL; // to be loaded from crypt32.dll
-#endif
-*/
-
 static void printCertificate(PCCERT_CONTEXT ctx)
 {
-#ifdef WIN32
+#ifdef __MINGW32__
 
 	char buf[128];
 
@@ -238,7 +230,7 @@ static void printCertificate(PCCERT_CONTEXT ctx)
 
 static void enumCertificate(void)
 {
-#ifdef WIN32
+#ifdef __MINGW32__
 
 	PCCERT_CONTEXT ctx = NULL;
 

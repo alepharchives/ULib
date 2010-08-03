@@ -48,6 +48,20 @@ CERTIFICATE_STORE = My
 CERTIFICATE_NAME  = Stefano Casazza
 */
 
+/*
+szSubsystemProtocol [in]
+
+A string that names a system store. If the system store name provided in
+this parameter is not the name of an existing system store, a new system
+store will be created and used. CertEnumSystemStore can be used to list
+the names of existing system stores. Some example system stores:
+
+CA		Certification authority certificates.
+MY		A certificate store that holds certificates with associated private keys.
+ROOT	Root certificates.
+SPC	Software Publisher Certificate.
+*/
+
 static void readFileConfig()
 {
 	FILE* fd = fopen(file_config, "r");

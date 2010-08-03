@@ -75,17 +75,14 @@ int USoapPlugIn::handlerRequest()
 
    U_INTERNAL_ASSERT_POINTER(soap_parser)
 
-   UString method;
    bool bSendingFault;
 
-   *UClientImage_Base::body = soap_parser->processMessage(*UClientImage_Base::body, *URPCObject::dispatcher, bSendingFault);
-   method                   = soap_parser->getMethodName();
+   UString body   = soap_parser->processMessage(*UClientImage_Base::body, *URPCObject::dispatcher, bSendingFault),
+           method = soap_parser->getMethodName();
 
    U_SRV_LOG_VAR_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
 
-   UString content_type = U_STRING_FROM_CONSTANT("application/soap+xml; charset=\"utf-8\"");
-
-   UHTTP::setHTTPResponse(HTTP_OK, &content_type, UClientImage_Base::body);
+   UHTTP::setHTTPResponse(HTTP_OK, UHTTP::str_ctype_soap, &body);
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }

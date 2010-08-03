@@ -4,8 +4,8 @@
 #include <string.h>
 
 #define FULL_DEBUG
-/*
 #define FILE_CONFIG
+/*
 #define OPENSSL_NO_ERR
 */
 #define ENGINE_DYNAMIC_SUPPORT
@@ -288,15 +288,12 @@ static int HCSP_destroy(ENGINE* e)
 
 /*
  * MinGW does not yet include all the needed definitions for CryptoAPI, so define here whatever extra is needed
-*/
+ */
 
 #ifdef __MINGW32__
-
 /*
-static BOOL WINAPI
-(*CryptAcquireCertificatePrivateKey)(PCCERT_CONTEXT pCert, DWORD dwFlags,
-                                     void* pvReserved, HCRYPTPROV* phCryptProv,
-                                     DWORD* pdwKeySpec, BOOL* pfCallerFreeProv) = NULL; // to be loaded from crypt32.dll
+static WINCRYPT32API BOOL WINAPI
+(*CertEnumSystemStoreLocation)(DWORD dwFlags, void *pvArg, PFN_CERT_ENUM_SYSTEM_STORE_LOCATION pfnEnum) = NULL; // to be loaded from crypt32.dll
 
 static int mingw_load_crypto_func(void)
 {
@@ -307,7 +304,7 @@ static int mingw_load_crypto_func(void)
    BIO_printf(err, "Call mingw_load_crypto_func()\n");
 #endif
 
-   if (CryptAcquireCertificatePrivateKey) return 0;
+   if (CertEnumSystemStoreLocation) return 0;
 
    // MinGW does not yet have full CryptoAPI support, so load the needed function here
 
@@ -322,9 +319,9 @@ static int mingw_load_crypto_func(void)
       goto error;
       }
 
-   CryptAcquireCertificatePrivateKey = GetProcAddress(dll, "CryptAcquireCertificatePrivateKey");
+   CertEnumSystemStoreLocation = GetProcAddress(dll, "CertEnumSystemStoreLocation");
 
-   if (CryptAcquireCertificatePrivateKey == NULL)
+   if (CertEnumSystemStoreLocation == NULL)
       {
 #ifdef DEBUG
       routine = "GetProcAddress";
@@ -446,6 +443,11 @@ static int HCSP_setContext(void)
    BIO_printf(err, "pFindPara: \"%s\"\n", pFindPara);
 #endif
 
+   /*
+    * Set hCryptProvider to NULL to use the default CSP. If hCryptProvider is not NULL,
+    * it must be a CSP handle created by using the CryptAcquireContext function.
+    */
+
    if (!(hCertStore = CertOpenSystemStore(hCryptProvider, c)))
       {
 #  ifdef DEBUG
@@ -454,6 +456,10 @@ static int HCSP_setContext(void)
 
       goto error;
       }
+
+#ifdef DEBUG
+   enumCertificate();
+#endif
 
    /*
    wchar_t PWC[1024];
@@ -496,7 +502,6 @@ static int HCSP_setContext(void)
    printInfo();
    enumKeyContainers();
    enumAlgorithms();
-   enumCertificate();
 
    printCertificate(pCertContext);
 #endif

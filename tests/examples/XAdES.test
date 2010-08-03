@@ -58,7 +58,7 @@ SIGNATURE_TIMESTAMP="http://localhost/tsa"
 
 DIR_CMD="../../examples/XAdES"
 
- STRACE=$LTRUSS
+#STRACE=$LTRUSS
 start_prg sign -c XAdES.ini -- \
 									 $DATA_URI \
 									 '"$X509"' \

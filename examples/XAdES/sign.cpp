@@ -636,7 +636,7 @@ public:
 #  endif
 
       if (x.empty() ||
-          (u_pkey = UServices::loadKey(x, 0, true, 0, 0)) == 0)
+          (u_pkey = UServices::loadKey(x, 0, true, 0, e)) == 0)
          {
          U_ERROR("I can't load the private key: %S", U_KEY_HANDLE);
          }

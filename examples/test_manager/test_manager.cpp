@@ -240,8 +240,6 @@ public:
 
       if (flag_log)
          {
-      // ULib::is_stderr_tty = false;
-
          flag_stdout = flag_stderr = true;
 
          iov[0].iov_base = (caddr_t)buffer;

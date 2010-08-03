@@ -39,9 +39,9 @@ void u_printError(void)
 {
    U_INTERNAL_TRACE("u_printError()", 0)
 
-   if (u_is_stderr_tty) (void) write(STDERR_FILENO, U_CONSTANT_TO_PARAM(U_RED_STR));
-                        (void) write(STDERR_FILENO, U_CONSTANT_TO_PARAM(U_STR_ERROR));
-   if (u_is_stderr_tty) (void) write(STDERR_FILENO, U_CONSTANT_TO_PARAM(U_RESET_STR));
+   if (u_is_tty) (void) write(STDERR_FILENO, U_CONSTANT_TO_PARAM(U_RED_STR));
+                 (void) write(STDERR_FILENO, U_CONSTANT_TO_PARAM(U_STR_ERROR));
+   if (u_is_tty) (void) write(STDERR_FILENO, U_CONSTANT_TO_PARAM(U_RESET_STR));
 }
 
 /*
@@ -864,7 +864,7 @@ void u_execOnExit(void)
 
       U_INTERNAL_PRINT("command = %s", command)
 
-      if (u_is_stderr_tty) U_WARNING("EXEC_ON_EXIT<%Won%W>: COMMAND=%W%S%W\n", GREEN, YELLOW, CYAN, YELLOW, command);
+      if (u_is_tty) U_WARNING("EXEC_ON_EXIT<%Won%W>: COMMAND=%W%S%W\n", GREEN, YELLOW, CYAN, YELLOW, command);
 
       (void) system(command);
       }
