@@ -625,29 +625,12 @@ public:
 
       if (*U_KEY_HANDLE == '\0') U_ERROR("KEY_HANDLE is mandatory...", 0);
 
-      ENGINE* e;
+      digest_algorithm = getOptionValue(U_DIGEST_ALGORITHM, "DigestAlgorithm");
 
-#  ifndef __MINGW32__
-      e = UServices::loadEngine("HCSP");
-      x = U_KEY_HANDLE;
-#  else
-      e = 0;
-      x = UFile::contentOf(U_KEY_HANDLE);
-#  endif
+      alg = u_dgst_get_algoritm(digest_algorithm.c_str());
 
-      if (x.empty() ||
-          (u_pkey = UServices::loadKey(x, 0, true, 0, e)) == 0)
-         {
-         U_ERROR("I can't load the private key: %S", U_KEY_HANDLE);
-         }
+      if (alg == -1) U_ERROR("I can't find the digest algorithm for: %s", digest_algorithm.data());
 
-#  ifdef HAVE_OPENSSL_98
-      if (cert.matchPrivateKey(u_pkey) == false) U_ERROR("the private key doesn't matches the public key of the certificate", 0);
-#  endif
-
-      xades_c = (U_CA_STORE != 0);
-
-      digest_algorithm                   = getOptionValue(U_DIGEST_ALGORITHM,                   "DigestAlgorithm");
       signing_time                       = getOptionValue(U_SIGNING_TIME,                       "SigningTime").strtol();
       claimed_role                       = getOptionValue(U_CLAIMED_ROLE,                       "ClaimedRole");
       production_place_city              = getOptionValue(U_PRODUCTION_PLACE_CITY,              "ProductionPlaceCity");
@@ -656,9 +639,7 @@ public:
       production_place_country_name      = getOptionValue(U_PRODUCTION_PLACE_COUNTRY_NAME,      "ProductionPlaceCountryName");
       data_object_format_mimetype        = getOptionValue("",                                   "DataObjectFormatMimeType");
 
-      alg = u_dgst_get_algoritm(digest_algorithm.c_str());
-
-      if (alg == -1) U_ERROR("I can't find the digest algorithm for: %s", digest_algorithm.data());
+      xades_c = (U_CA_STORE != 0);
 
       if (xades_c == false) num_ca = 0;
       else
@@ -769,7 +750,29 @@ public:
 
       u_base64_max_columns = U_OPENSSL_BASE64_MAX_COLUMN;
 
-      UString sign = UServices::getSignatureValue(alg, to_sign, UString::getStringNull(), UString::getStringNull(), true);
+      ENGINE* e;
+
+#  ifdef __MINGW32__
+      e = UServices::loadEngine("HCSP", ENGINE_METHOD_RSA);
+      x = U_KEY_HANDLE;
+#  else
+      e = 0;
+      x = UFile::contentOf(U_KEY_HANDLE);
+
+      if (x.empty() ||
+          (u_pkey = UServices::loadKey(x, 0, true, 0, e)) == 0)
+         {
+         U_ERROR("I can't load the private key: %S", U_KEY_HANDLE);
+         }
+
+#     ifdef HAVE_OPENSSL_98
+      if (cert.matchPrivateKey(u_pkey) == false) U_ERROR("the private key doesn't matches the public key of the certificate", 0);
+#     endif
+
+      x.clear();
+#  endif
+
+      UString sign = UServices::getSignatureValue(alg, to_sign, x, UString::getStringNull(), true, e);
 
       u_base64_max_columns = 0;
 

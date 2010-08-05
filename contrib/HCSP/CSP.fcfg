@@ -35,8 +35,6 @@ static const ENGINE_CMD_DEFN HCSP_cmd_defns[] = {
   ENGINE_CMD_FLAG_STRING },
 { 0, NULL, NULL, 0 } };
 
-static LPSTR file_config = "HCSP.cfg";
-
 /*
 # ---------------------------
 # 		file config example
@@ -66,20 +64,37 @@ static void readFileConfig()
 {
 	FILE* fd = fopen(file_config, "r");
 
-	fscanf(fd,
-			  "CRYPT_PROVIDER%*[ =\t]%[^\n]\n" 	 	/* CRYPT_PROVIDER  = ... */
-			  "PROVIDER_TYPE%*[ =\t]%ld\n"   	 	/* PROVIDER_TYPE   = ... */
-			  "CRYPT_CONTAINER%*[ =\t]%[^\n]\n"  	/* CRYPT_CONTAINER = ... */
-			  "CERTIFICATE_STORE%*[ =\t]%[^\n]\n"  /* CERTIFICATE_STORE = ... */
-			  "CERTIFICATE_NAME%*[ =\t]%[^\n]\n",  /* CERTIFICATE_NAME = ... */
-				&pCryptProvider[0],
-				&dwProviderType,
-				&pCryptContainer[0],
-				&pSubsystemProtocol[0],
-				&pFindPara[0]
-				);
+#ifdef DEBUG
+	BIO_printf(err, "Call readFileConfig(\"%s\")\n", file_config);
+#endif
 
-	fclose(fd);
+	if (fd)
+		{
+		fscanf(fd,
+				  "CRYPT_PROVIDER%*[ =\t]%[^\n]\n" 	 	/* CRYPT_PROVIDER  = ... */
+				  "PROVIDER_TYPE%*[ =\t]%ld\n"   	 	/* PROVIDER_TYPE   = ... */
+				  "CRYPT_CONTAINER%*[ =\t]%[^\n]\n"  	/* CRYPT_CONTAINER = ... */
+				  "CERTIFICATE_STORE%*[ =\t]%[^\n]\n"  /* CERTIFICATE_STORE = ... */
+				  "CERTIFICATE_NAME%*[ =\t]%[^\n]\n",  /* CERTIFICATE_NAME = ... */
+					&pCryptProvider[0],
+					&dwProviderType,
+					&pCryptContainer[0],
+					&pSubsystemProtocol[0],
+					&pFindPara[0]
+					);
+
+		fclose(fd);
+		}
+
+#ifdef DEBUG
+   BIO_printf(err, "pCryptProvider: \"%s\"\n", pCryptProvider);
+   BIO_printf(err, "dwProviderType: %d\n", dwProviderType);
+   BIO_printf(err, "pCryptContainer: \"%s\"\n", pCryptContainer);
+   BIO_printf(err, "pSubsystemProtocol: \"%s\"\n", pSubsystemProtocol);
+   BIO_printf(err, "pFindPara: \"%s\"\n", pFindPara);
+
+   BIO_printf(err, "Return readFileConfig()\n", 0);
+#endif
 }
 
 static void writeFileConfig()

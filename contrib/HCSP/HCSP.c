@@ -10,7 +10,7 @@
 */
 #define ENGINE_DYNAMIC_SUPPORT
 
-#ifdef WIN32
+#ifdef __MINGW32__
 #define WIN32_LEAN_AND_MEAN /* Exclude rarely-used stuff from Windows headers */
 #  include <windows.h>
 #  ifdef _WIN32
@@ -67,9 +67,11 @@ static int HCSP_finish(ENGINE* e);
 
 /* static variables */
 
-#if defined(FILE_CONFIG) || (defined(WIN32) && defined(DEBUG))
 static CHAR pCryptProvider[256];
 static CHAR pCryptContainer[256];
+
+#ifdef FILE_CONFIG
+static LPSTR file_config = "C:/usr/i686-pc-mingw32/sys-root/mingw/lib/openssl/engines/HCSP.cfg";
 #endif
 
 static DWORD dwProviderType = PROV_RSA_FULL;
@@ -87,6 +89,17 @@ static HCRYPTPROV       hCryptProvider;
 static HCERTSTORE       hCertStore;
 static PCCERT_CONTEXT   pCertContext;
 
+/*
+# ---------------------------
+#     file config example
+# ---------------------------
+CRYPT_PROVIDER    = Microsoft Strong Cryptographic Provider
+PROVIDER_TYPE     = 1
+CRYPT_CONTAINER   = stefano
+CERTIFICATE_STORE = My
+CERTIFICATE_NAME  = Stefano Casazza
+*/
+
 #ifdef FILE_CONFIG
 #  include "CSP.fcfg"
 #endif
@@ -101,7 +114,7 @@ static int HCSP_rsa_sign(int type, const unsigned char* m, unsigned int len,
                          unsigned char* sigret, unsigned int* siglen, const RSA* rsa);
 
 static int HCSP_rsa_verify(int dtype, const unsigned char* m, unsigned int len,
-                           unsigned char* sigbuf, unsigned int siglen, const RSA* rsa);
+                           unsigned char* sigbuf, unsigned int siglen, RSA* rsa);
 
 /* utility functions */
 
@@ -258,10 +271,37 @@ static int HCSP_finish(ENGINE* e)
    return 1;
 }
 
+#ifndef __MINGW32__
+#  include "./CSP.func"
+#endif
+
+#ifdef DEBUG
+#  include "./CSP.dbg"
+#endif
+
+static void HCSP_end(void)
+{
+   // Release crypto handles.
+
+   if (hKey)            CryptDestroyKey(hKey);
+   if (hHash)           CryptDestroyHash(hHash);
+   if (pCertContext)    CertFreeCertificateContext(pCertContext);
+   if (hCertStore)      CertCloseStore(hCertStore, 0);
+   if (hCryptProvider)  CryptReleaseContext(hCryptProvider, 0);
+
+   bInitialized = FALSE;  /* set initialization flag */
+
+#ifdef DEBUG
+   ERR_print_errors(err);
+#endif
+}
+
 /* Destructor (complements the "ENGINE_ncipher()" constructor) */
 
 static int HCSP_destroy(ENGINE* e)
 {
+   HCSP_end();
+
 #ifdef FULL_DEBUG
    BIO_printf(err, "Call HCSP_destroy(%p)\n", e);
    ERR_print_errors(err);
@@ -277,88 +317,6 @@ static int HCSP_destroy(ENGINE* e)
 /*******************************************************************************
  * Information function
  *******************************************************************************/
-
-#ifndef WIN32
-#  include "./CSP.func"
-#endif
-
-#ifdef DEBUG
-#  include "./CSP.dbg"
-#endif
-
-/*
- * MinGW does not yet include all the needed definitions for CryptoAPI, so define here whatever extra is needed
- */
-
-#ifdef __MINGW32__
-/*
-static WINCRYPT32API BOOL WINAPI
-(*CertEnumSystemStoreLocation)(DWORD dwFlags, void *pvArg, PFN_CERT_ENUM_SYSTEM_STORE_LOCATION pfnEnum) = NULL; // to be loaded from crypt32.dll
-
-static int mingw_load_crypto_func(void)
-{
-   HINSTANCE dll;
-   int result = TRUE;
-
-#ifdef DEBUG
-   BIO_printf(err, "Call mingw_load_crypto_func()\n");
-#endif
-
-   if (CertEnumSystemStoreLocation) return 0;
-
-   // MinGW does not yet have full CryptoAPI support, so load the needed function here
-
-   dll = LoadLibrary("crypt32");
-
-   if (dll == NULL)
-      {
-#ifdef DEBUG
-      routine = "LoadLibrary";
-#endif
-
-      goto error;
-      }
-
-   CertEnumSystemStoreLocation = GetProcAddress(dll, "CertEnumSystemStoreLocation");
-
-   if (CertEnumSystemStoreLocation == NULL)
-      {
-#ifdef DEBUG
-      routine = "GetProcAddress";
-#endif
-
-      goto error;
-      }
-
-#ifdef DEBUG
-   CertEnumCertificatesInStore = (void*) GetProcAddress(dll, "CertEnumCertificatesInStore");
-
-   if (CertEnumCertificatesInStore == NULL)
-      {
-#ifdef DEBUG
-      routine = "GetProcAddress";
-#endif
-
-      goto error;
-      }
-#endif
-
-   goto end;
-
-error:
-
-   result = FALSE;
-
-end:
-
-#ifdef DEBUG
-   BIO_printf(err, "Return mingw_load_crypto_func(%d)\n", result);
-#endif
-
-   return result;
-}
-*/
-#endif
 
 static ALG_ID HCSP_getAlgid(int type)
 {
@@ -388,21 +346,6 @@ static ALG_ID HCSP_getAlgid(int type)
    return Algid;
 }
 
-static void HCSP_end(void)
-{
-   // Release crypto handles.
-
-   if (hKey)            CryptDestroyKey(hKey);
-   if (hHash)           CryptDestroyHash(hHash);
-   if (pCertContext)    CertFreeCertificateContext(pCertContext);
-   if (hCertStore)      CertCloseStore(hCertStore, 0);
-   if (hCryptProvider)  CryptReleaseContext(hCryptProvider, 0);
-
-#ifdef DEBUG
-   ERR_print_errors(err);
-#endif
-}
-
 static int HCSP_setContext(void)
 {
    int result = TRUE;
@@ -411,17 +354,8 @@ static int HCSP_setContext(void)
    LPSTR b = NULL;
    LPSTR c = "My";
 
-#ifdef __MINGW32__
-   /*
-   if (!mingw_load_crypto_func())
-      {
-#  ifdef DEBUG
-      routine = "mingw_load_crypto_func";
-#  endif
-
-      goto error;
-      }
-   */
+#ifdef DEBUG
+   BIO_printf(err, "Call HCSP_setContext()\n");
 #endif
 
 #ifdef FILE_CONFIG
@@ -460,13 +394,6 @@ static int HCSP_setContext(void)
 #ifdef DEBUG
    enumCertificate();
 #endif
-
-   /*
-   wchar_t PWC[1024];
-   MultiByteToWideChar(CP_ACP, 0, pFindPara, -1, PWC, sizeof(PWC));
-   CERT_FIND_SUBJECT_STR,
-   PWC,
-   */
 
    if (!(pCertContext = CertFindCertificateInStore(
         hCertStore,
@@ -535,9 +462,9 @@ static int HCSP_setHashContext(void)
 
    if (!CryptCreateHash(hCryptProvider, Algid, 0, 0, &hHash))
       {
-#ifdef DEBUG
+#  ifdef DEBUG
       routine = "CryptCreateHash";
-#endif
+#  endif
 
       goto error;
       }
@@ -546,9 +473,9 @@ static int HCSP_setHashContext(void)
 
    if (!CryptSetHashParam(hHash, HP_HASHVAL, pbBuffer, 0))
       {
-#ifdef DEBUG
+#  ifdef DEBUG
       routine = "CryptSetHashParam";
-#endif
+#  endif
 
       goto error;
       }
@@ -597,9 +524,9 @@ static int HCSP_getKeyHandle(void)
       {
       if (!CryptGetUserKey(hCryptProvider, dwKeySpec, &hKey))
          {
-#ifdef DEBUG
+#     ifdef DEBUG
          routine = "CryptGetUserKey";
-#endif
+#     endif
 
          goto error;
          }
@@ -631,15 +558,12 @@ static int HCSP_rsa_sign(int type,
                          unsigned int* siglen,
                          const RSA* rsa)
 {
+   BYTE tmp[1000];        
+   dwSignatureLen = 0L;
+   pbBuffer = (BYTE*) m;
+   int i, j, result = TRUE;
    BYTE* pbSignature = (BYTE*) sigret;
    DWORD dwFlags = 0L, dwLastError = 0L;  /* set last error flag to success value */
-
-   BYTE tmp[1000];        
-   int i, j, result = TRUE;
-
-   pbBuffer = (BYTE*) m;
-   dwSignatureLen = 0L;
-
 
 #ifdef DEBUG
    BIO_printf(err, "Call HCSP_rsa_sign(%d)\n", type);
@@ -707,8 +631,6 @@ error:
 
 end:
 
-   HCSP_end();
-
 #ifdef DEBUG
    BIO_printf(err, "Return HCSP_rsa_sign(%d)\n", result);
 #endif
@@ -716,85 +638,24 @@ end:
    return result;
 }
 
+/* Get handle to signature key */
+
 static int HCSP_rsa_verify(int type,
                            const unsigned char* m,
                            unsigned int len,
                            unsigned char* sigbuf,
                            unsigned int siglen,
-                           const RSA* rsa)
+                           RSA* rsa)
 {
-   DWORD dwLastError = 0L;
-   BYTE* pbSignature = (BYTE*) sigbuf;
-
-   BYTE tmp[1000];        
-   int i, j, result = TRUE;
-
-   pbBuffer       = (PBYTE) m;
-   dwSignatureLen = 0;
+   int result;
 
 #ifdef DEBUG
-   BIO_printf(err, "Call HCSP_rsa_verify(%d)\n", type);
+   BIO_printf(err, "Call HCSP_rsa_verify(%d,%p,%u,%p,%u,%p)\n", type, m, len, sigbuf, siglen, rsa);
 #endif
 
-   if (!bInitialized &&
-       !HCSP_setContext())
-      {
-      goto error;
-      }
+   if (rsa) rsa->flags = RSA_METHOD_FLAG_NO_CHECK;
 
-   Algid = HCSP_getAlgid(type);
-
-   if (!HCSP_setHashContext())
-      {
-      goto error;
-      }
-
-#ifdef DEBUG
-   BIO_printf(err, "size of signature %d - siglen %d \n", dwSignatureLen, siglen);
-#endif
-
-   /* Get handle to signature key */
-
-   if (!HCSP_getKeyHandle())
-      {
-      goto error;
-      }
-
-   /* little-endian... */
-
-   for (i = 0, j = dwSignatureLen - 1; i <= j; ++i)
-      {
-      tmp[i] = pbSignature[j - i];
-      }
-
-   memcpy(pbSignature, tmp, dwSignatureLen);
-
-   /* Verify signature. */
-
-   if (!CryptVerifySignature(hHash, pbSignature, dwSignatureLen, hKey, NULL, 0))
-      {
-#ifdef DEBUG
-      routine = "CryptVerifySignature";
-#endif
-
-      goto error;
-      }
-
-   goto end;
-
-error:
-
-   result = FALSE;
-
-#ifndef OPENSSL_NO_ERR
-   dwLastError = GetLastError();
-
-   HCSP_err(HCSP_F_RSA_VERIFY, dwLastError);
-#endif
-
-end:
-
-   HCSP_end();
+   result = RSA_verify(type, m, len, sigbuf, siglen, rsa);
 
 #ifdef DEBUG
    BIO_printf(err, "Return HCSP_rsa_verify(%d)\n", result);
@@ -828,7 +689,7 @@ static EVP_PKEY* HCSP_load_key(ENGINE* e, const char* key_id, UI_METHOD* ui_meth
 #endif
 
 #ifndef FILE_CONFIG
-   strcpy(pFindPara, key_id);
+   (void) strcpy(pFindPara, key_id);
 #endif
 
    if (!HCSP_setContext())
@@ -845,19 +706,19 @@ static EVP_PKEY* HCSP_load_key(ENGINE* e, const char* key_id, UI_METHOD* ui_meth
 
    if (!CryptExportKey(hKey, 0, PUBLICKEYBLOB, 0, pbKeyBlob, &dwBlobLen))
       {
-#ifdef DEBUG
+#  ifdef DEBUG
       routine = "CryptExportKey";
-#endif
+#  endif
 
       goto error;
       }
 
-   /* little-endian...
 #ifdef DEBUG
+   /* little-endian...
+   writeData(pkblob->modulus,pkblob->rsapubkey.bitlen/8, "modulus");
    writeData((unsigned char*)pkblob->rsapubkey.pubexp, sizeof(DWORD), "pubexp");
-   writeData(pkblob->modulus, pkblob->rsapubkey.bitlen/8, "modulus");
+   */
 #endif
-    */
 
    for (i = 0, j = sizeof(DWORD) - 1; i <= j; ++i)
       {

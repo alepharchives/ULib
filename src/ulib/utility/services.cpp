@@ -401,38 +401,42 @@ bool UServices::setupOpenSSLStore(const char* CAfile, const char* _CApath, int s
    U_RETURN(true);
 }
 
-ENGINE* UServices::loadEngine(const char* id)
+ENGINE* UServices::loadEngine(const char* id, unsigned int flags)
 {
-   U_TRACE(1, "UServices::loadEngine(%S)", id)
+   U_TRACE(1, "UServices::loadEngine(%S,%u)", id, flags)
 
    U_SYSCALL_VOID_NO_PARAM(ENGINE_load_dynamic);
 
    ENGINE* e = (ENGINE*) U_SYSCALL(ENGINE_by_id, "%S", id);
 
-   while (e)
+   if (e &&
+       (U_SYSCALL(ENGINE_init, "%p", e)                  == 0 ||
+        U_SYSCALL(ENGINE_set_default, "%p,%u", e, flags) == 0))
       {
-      if (U_SYSCALL(ENGINE_init, "%p", e) == 0)
-         {
-         (void) U_SYSCALL(ENGINE_free, "%p", e);
+      (void) U_SYSCALL(ENGINE_free, "%p", e);
 
-         e = 0;
-
-         break;
-         }
-
-      if (!ENGINE_set_default(e, ENGINE_METHOD_ALL))
-         {
-         (void) U_SYSCALL(ENGINE_free, "%p", e);
-
-         e = 0;
-
-         break;
-         }
-
-      break;
+      e = 0;
       }
 
    U_RETURN_POINTER(e,ENGINE);
+}
+
+void UServices::releaseEngine(ENGINE* e, bool bkey)
+{
+   U_TRACE(1, "UServices::releaseEngine(%p,%b)", e, bkey)
+
+   U_INTERNAL_ASSERT_POINTER(e)
+
+   (void) U_SYSCALL(ENGINE_finish, "%p", e);
+   (void) U_SYSCALL(ENGINE_free,   "%p", e);
+
+   if (bkey &&
+       u_pkey)
+      {
+      U_SYSCALL_VOID(EVP_PKEY_free, "%p", u_pkey);
+
+      u_pkey = 0;
+      }
 }
 
 EVP_PKEY* UServices::loadKey(const UString& x, const char* format, bool _private, const char* password, ENGINE* e)
@@ -445,16 +449,11 @@ EVP_PKEY* UServices::loadKey(const UString& x, const char* format, bool _private
 
    if (e)
       {
-      /*
-      PW_CB_DATA cb_data;
-
-      cb_data.password    = password;
-      cb_data.prompt_info = filename;
-      */
       const char* filename = x.c_str();
+   // PW_CB_DATA cb_data   = { password, filename };
 
-      pkey = (_private ? ENGINE_load_private_key(e, filename, 0, 0)   // &cb_data
-                       : ENGINE_load_public_key( e, filename, 0, 0)); // &cb_data
+      pkey = (EVP_PKEY*) (_private ? U_SYSCALL(ENGINE_load_private_key, "%p,%S,%p,%p", e, filename, 0, 0)   // &cb_data
+                                   : U_SYSCALL(ENGINE_load_public_key,  "%p,%S,%p,%p", e, filename, 0, 0)); // &cb_data
 
       goto done;
       }
@@ -495,9 +494,10 @@ pkey   is the corresponsding private key
 passwd is the corresponsding password for the private key
 */
 
-UString UServices::getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, bool base64)
+UString UServices::getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, bool base64, ENGINE* e)
 {
-   U_TRACE(0, "UServices::getSignatureValue(%d,%.*S,%.*S,%.*S,%b)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(pkey), U_STRING_TO_TRACE(passwd), base64)
+   U_TRACE(0, "UServices::getSignatureValue(%d,%.*S,%.*S,%.*S,%b,%p)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(pkey),
+                                                                       U_STRING_TO_TRACE(passwd), base64, e)
 
    u_dgst_sign_init(alg, 0);
 
@@ -507,13 +507,19 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
 
    bool bkey = (pkey.empty() == false);
 
-   if (bkey) u_pkey = loadKey(pkey, 0, true, passwd.c_str(), 0);
+   if (bkey)
+      {
+      u_pkey = loadKey(pkey, 0, true, passwd.c_str(), e);
+
+      U_INTERNAL_ASSERT_POINTER(u_pkey)
+      }
 
    uint32_t bytes_written = u_dgst_sign_finish((unsigned char*)output.data(), base64);
 
    output.size_adjust(bytes_written);
 
-   if (bkey)
+   if (bkey &&
+       u_pkey)
       {
       U_SYSCALL_VOID(EVP_PKEY_free, "%p", u_pkey);
 

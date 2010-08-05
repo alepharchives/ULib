@@ -221,8 +221,9 @@ struct U_EXPORT UServices {
       buffer.size_adjust(size);
       }
 
-   static ENGINE* loadEngine(const char* id);
+   static void releaseEngine(ENGINE* e, bool bkey);
    static int X509Callback(int ok, X509_STORE_CTX* ctx);
+   static ENGINE* loadEngine(const char* id, unsigned int flags);
    static char* getOpenSSLError(char* buffer = 0, uint32_t buffer_size = 0, uint32_t* psize = 0);
    static bool setupOpenSSLStore(const char* CAfile = 0, const char* CApath = 0, int store_flags = U_STORE_FLAGS);
    static EVP_PKEY* loadKey(const UString& x, const char* format, bool _private = true, const char* password = 0, ENGINE* e = 0);
@@ -233,7 +234,7 @@ struct U_EXPORT UServices {
     * passwd is the corresponsding password for the private key
     */
 
-   static UString getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, bool base64);
+   static UString getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, bool base64, ENGINE* e = 0);
 #endif
 };
 

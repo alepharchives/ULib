@@ -83,7 +83,7 @@ Gli scogli da superare sono stati molti ma alla fine abbiamo realizzato un modul
 HCSP.dll compilato con compilatore microsoft da utilizzare con l'eseguibile openssl
 per firmare:
 
-openssl smime -engine HCSP.dll -sign -signer "Stefano Casazza.pem" -keyform engine
+openssl smime -engine HCSP -sign -signer "Stefano Casazza.pem" -keyform engine
               -inkey "Stefano Casazza" -nodetach -out signed_con_engine -in pippo.txt
 
 Come si puo' vedere dalla riga di comando le informazioni necessarie sono il nome del

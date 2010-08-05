@@ -2,7 +2,7 @@
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
-EXTRA_DIST = CSP.dbg CSP.fcfg CSP.func CSP.h HCSP.err WinCrypt.h doc
+EXTRA_DIST = CSP.fld CSP.dbg CSP.fcfg CSP.func CSP.h HCSP.err WinCrypt.h doc
 
 moduledir = $(libexecdir)/ulib
 

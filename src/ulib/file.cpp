@@ -139,7 +139,7 @@ bool UFile::chdir(const char* path, bool flag_save)
 
    if (path)
       {
-      if (strncmp(path, u_cwd, u_cwd_len) == 0) U_RETURN(true);
+      if (strcmp(path, u_cwd) == 0) U_RETURN(true);
 
       if (flag_save)
          {

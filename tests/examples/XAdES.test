@@ -40,7 +40,7 @@ DIR_CMD="../../examples/userver"
 #STRACE=$LTRUSS
 #start_prg_background userver_tcp -c tsa_http.cfg
 
- DIR_CA=../ulib/CA
+ DIR_CA=/usr/src/ULib-1.0.5/tests/ulib/CA
 #DIR_CA=/mnt/storage/stefano/MinGW/etc/CA
 DATA_URI=$DOCUMENT
 X509=`cat $DIR_CA/server.crt`
