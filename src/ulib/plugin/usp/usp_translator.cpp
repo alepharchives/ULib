@@ -98,7 +98,7 @@ public:
 
 				UString tmp(token.size() * 4);
 
-				UEscape::encode(token, tmp);
+				UEscape::encode(token, tmp, false);
 
 				(void) buffer.reserve(tmp.size() + 100U);
 

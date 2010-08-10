@@ -295,7 +295,7 @@ static inline bool u_isIPAddr(bool IPv6, const char* restrict p, uint32_t n) { r
  * which is undesirably slow for such a frequently-called function... */
 
 static inline void u_int2hex(char* restrict p, uint32_t n)
-   { int s; for (s = 28; s >= 0; s -= 4, ++p) *p = u_hex_upper[(n >> s) & 0xf]; }
+   { int s; for (s = 28; s >= 0; s -= 4, ++p) *p = u_hex_upper[((n >> s) & 0x0F)]; }
 
 static inline uint32_t u_hex2int(const char* restrict p, uint32_t len)
    { uint32_t n = 0; const char* eos = p + len; while (p < eos) n = (n << 4) | u_hexc2int(*p++); return n; }

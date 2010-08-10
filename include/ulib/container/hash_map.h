@@ -21,6 +21,7 @@ typedef void     (*vPFprpv)(UStringRep* key, void* elem);
 typedef bool     (*bPFprpv)(UStringRep* key, void* elem);
 
                    class UCDB;
+                   class UValue;
 template <class T> class UVector;
 
 class U_NO_EXPORT UHashMapNode {
@@ -264,6 +265,7 @@ private:
    UHashMap<void*>& operator=(const UHashMap<void*>&) { return *this; }
 
    friend class UCDB;
+   friend class UValue;
 };
 
 template <class T> class U_EXPORT UHashMap<T*> : public UHashMap<void*> {

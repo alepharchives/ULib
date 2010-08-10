@@ -26,23 +26,13 @@
  * - unsigned integer
  * - double
  * - UTF-8 string
- * - an ordered list of Value
+ * - an ordered list of UValue
  * - collection of name/value pairs (javascript object)
  *
  * The type of the held value is represented by a #ValueType and can be obtained using type().
- *
- * values of an #OBJECT_VALUE or #ARRAY_VALUE can be accessed using operator[]() methods.
- *
- * Non const methods will automatically create the a #nullValue element if it does not exist.
- *
- * The sequence of an #ARRAY_VALUE will be automatically resize and initialized
- * with #NULL_VALUE. resize() can be used to enlarge or truncate an #ARRAY_VALUE.
- *
- * The get() methods can be used to obtain default value in the case the required element
- * does not exist.
- *
- * It is possible to iterate over the list of a #OBJECT_VALUE values using
- * the getMemberNames() method.
+ * Values of an #OBJECT_VALUE or #ARRAY_VALUE can be accessed using operator[]() methods.
+ * The sequence of an #ARRAY_VALUE will be automatically resize and initialized with #NULL_VALUE.
+ * It is possible to iterate over the list of a #OBJECT_VALUE values using the getMemberNames() method.
  */
 
 union uuvalue {
@@ -54,6 +44,7 @@ union uuvalue {
 };
 
 template <class T> class UVector;
+                   class UTokenizer;
 
 class U_EXPORT UValue {
 public:
@@ -105,6 +96,8 @@ public:
       value.int_ = value_;
       }
 
+   UValue(ValueType type);
+
    UValue(unsigned int value_)
       {
       U_TRACE_REGISTER_OBJECT(0, UValue, "%u", value_)
@@ -137,9 +130,16 @@ public:
       value.ptr_ = U_NEW(UString(value_, len));
       }
 
-   UValue(ValueType type);
+   // Distruttore
 
-   ~UValue();
+   void clear(); // erase all element
+
+   ~UValue()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UValue)
+
+      clear();
+      }
 
    // SERVICES
 
@@ -252,7 +252,12 @@ public:
 
    bool isConvertibleTo(UValue::ValueType other) const;
 
-   // MEMBERS
+   // manage values in array or object
+
+   uint32_t size() const;
+
+   UValue& operator[](uint32_t pos);
+   UValue& operator[](const UString& key);
 
    // \brief Return a list of the member names.
    //
@@ -262,7 +267,38 @@ public:
 
    uint32_t getMemberNames(UVector<UString>& members) const;
 
+   /** \brief Read a UValue from a <a HREF="http://www.json.org">JSON</a> document.
+    *
+    * \param document UTF-8 encoded string containing the document to read.
+    *
+    * \return \c true if the document was successfully parsed, \c false if an error occurred.
+    */
+
+   bool parse(const UString& document);
+
+   /** \brief Outputs a UValue in <a HREF="http://www.json.org">JSON</a> format without formatting (not human friendly).
+    *
+    * The JSON document is written in a single line. It is not intended for 'human' consumption,
+    * but may be usefull to support feature such as RPC where bandwith is limited.
+    */
+
+   UString output()
+      {
+      U_TRACE(0, "UValue::output()")
+
+      U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
+
+      UString result(U_CAPACITY);
+
+      output(result, *this);
+
+      U_RETURN_STRING(result);
+      }
+
    // STREAM
+
+   friend U_EXPORT istream& operator>>(istream& is, UValue& v);
+   friend U_EXPORT ostream& operator<<(ostream& os, UValue& v);
 
 #ifdef DEBUG
    const char* dump(bool reset) const;
@@ -271,6 +307,9 @@ public:
 protected:
    int type_;
    union uuvalue value;
+
+   static void output(UString& result, UValue& value) U_NO_EXPORT;
+   static bool readValue(UTokenizer& tok, UValue* value) U_NO_EXPORT;
 
 private:
    UValue(const UValue&)            {}

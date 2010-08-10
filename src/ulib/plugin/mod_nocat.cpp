@@ -1499,7 +1499,7 @@ int UNoCatPlugIn::handlerRequest()
             {
             UString printable(output.size() * 4);
 
-            UEscape::encode(output, printable);
+            UEscape::encode(output, printable, false);
 
             UServer_Base::log->log("%sauth message: %.*s\n", UServer_Base::mod_name, U_STRING_TO_TRACE(printable));
             }

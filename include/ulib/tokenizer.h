@@ -89,7 +89,7 @@ public:
       {
       U_TRACE(0, "UTokenizer::setPointer(%S)", ptr)
 
-      U_INTERNAL_ASSERT_MINOR(ptr,end)
+      U_INTERNAL_ASSERT(ptr <= end)
 
       s = ptr;
       }
@@ -99,6 +99,13 @@ public:
       U_TRACE(0, "UTokenizer::getPointer()")
 
       U_RETURN(s);
+      }
+
+   const char* getEnd() const
+      {
+      U_TRACE(0, "UTokenizer::getEnd()")
+
+      U_RETURN(end);
       }
 
    void setDistance(uint32_t pos)
@@ -117,6 +124,39 @@ public:
       U_RETURN(pos);
       }
 
+   // get current char
+
+   char current()
+      {
+      U_TRACE(0, "UTokenizer::current()")
+
+      if (s >= end) U_RETURN('\0');
+
+      U_RETURN(*s);
+      }
+
+   // go prev char
+
+   void back()
+      {
+      U_TRACE(0, "UTokenizer::back()")
+
+      U_INTERNAL_ASSERT_MAJOR(s,str.data())
+
+      --s;
+      }
+
+   // get next char
+
+   char next()
+      {
+      U_TRACE(0, "UTokenizer::next()")
+
+      if (s >= end) U_RETURN('\0');
+
+      U_RETURN(*s++);
+      }
+
    // get next token
 
    bool   next(UString& tok, char c);
@@ -125,9 +165,11 @@ public:
 
    // EXT
 
-   bool tokenSeen(UString* x);
-
+   bool    tokenSeen(UString* x);
    UString getTokenQueryParser();
+
+   bool skipNumber(bool& isReal);
+   bool skipToken(const char* token, uint32_t sz);
 
    static bool group_skip;
    static const char* group;

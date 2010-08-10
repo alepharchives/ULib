@@ -24,14 +24,6 @@ struct U_EXPORT UQuotedPrintable {
       {
       U_TRACE(0, "UQuotedPrintable::encode(%.*S,%u,%.*S)", n, s, n, U_STRING_TO_TRACE(buffer))
 
-#  ifdef DEBUG
-      uint32_t length = ((n * 3) + 4);
-
-      U_INTERNAL_DUMP("buffer.capacity() = %u length = %u", buffer.capacity(), length)
-
-      U_ASSERT(buffer.capacity() >= length + 1)
-#  endif
-
       uint32_t pos = u_quoted_printable_encode(s, n, (unsigned char*)buffer.data());
 
       buffer.size_adjust(pos);

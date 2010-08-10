@@ -1524,7 +1524,8 @@ istream& UString::getline(istream& in, char delim)
                continue;
                }
 
-            if (c == '\n')
+            if (c != '\n') append('\\');
+            else
                {
                // comprime serie di white-space in un singolo spazio...
 
@@ -1536,10 +1537,6 @@ istream& UString::getline(istream& in, char delim)
 
                   c = ' ';
                   }
-               }
-            else
-               {
-               append('\\');
                }
             }
 

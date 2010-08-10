@@ -1493,7 +1493,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                }
             else
                {
-               bp += u_sprintc(bp, c);
+               bp += u_sprintc(bp, c, false);
                }
 
             *bp++ = '\'';
@@ -1539,7 +1539,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                {
                if (cp[n] == '\0' && ((flags & ALT) == 0)) break;
 
-               h = u_sprintc(bp, ((unsigned char* restrict)cp)[n]);
+               h = u_sprintc(bp, ((unsigned char* restrict)cp)[n], false);
 
                bp        += h;
                remaining -= h;
@@ -1645,7 +1645,7 @@ iteration:
                      c = *cp++;
 
                      *bp++ = u_hex_upper[((c >> 4) & 0x0F)];
-                     *bp++ = u_hex_upper[ (c       & 0x0F)];
+                     *bp++ = u_hex_upper[( c       & 0x0F)];
 
                      text[j] = (isprint(c) ? c : '.');
                      }

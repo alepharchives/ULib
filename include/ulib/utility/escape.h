@@ -21,14 +21,16 @@
 /* Encode-Decode escape sequences into a buffer, the following are recognized:
  * ---------------------------------------------------------------------------
  * \0  NUL
- * \b  BS  backspace          (\010  8  8)
- * \t  HT  horizontal tab     (\011  9  9)
- * \n  LF  newline            (\012 10  A)
- * \v  VT  vertical tab       (\013 11  B)
- * \f  FF  formfeed           (\014 12  C)
  * \r  CR  carriage return    (\015 13  D)
+ * \n  LF  newline            (\012 10  A)
+ * \t  HT  horizontal tab     (\011  9  9)
+ * \b  BS  backspace          (\010  8  8)
+ * \f  FF  formfeed           (\014 12  C)
+ * \v  VT  vertical tab       (\013 11  B)
+ * \a  BEL                    (\007  7  7)
  * \e  ESC character          (\033 27 1B)
  *
+ * \u    four-hex-digits (unicode char)
  * \^C   C = any letter (Control code)
  * \xDD  number formed of 1-2 hex   digits
  * \DDD  number formed of 1-3 octal digits
@@ -37,25 +39,18 @@
 
 struct U_EXPORT UEscape {
 
-   static void encode(const unsigned char* s, uint32_t n, UString& buffer)
+   static void encode(const unsigned char* s, uint32_t n, UString& buffer, bool json)
       {
-      U_TRACE(0, "UEscape::encode(%.*S,%u,%.*S)", n, s, n, U_STRING_TO_TRACE(buffer))
+      U_TRACE(0, "UEscape::encode(%.*S,%u,%.*S,%b)", n, s, n, U_STRING_TO_TRACE(buffer), json)
 
-#  ifdef DEBUG
-      uint32_t length = ((n * 3) + 4);
+      uint32_t sz  = buffer.size(),
+               pos = u_escape_encode(s, n, buffer.c_pointer(sz), buffer.space(), json);
 
-      U_INTERNAL_DUMP("buffer.capacity() = %u length = %u", buffer.capacity(), length)
-
-      U_ASSERT(buffer.capacity() >= length + 1)
-#  endif
-
-      uint32_t pos = u_escape_encode(s, n, buffer.data(), buffer.capacity());
-
-      buffer.size_adjust(pos);
+      buffer.size_adjust(sz + pos);
       }
 
-   static void encode(const UString& s, UString& buffer)
-      { encode((const unsigned char*)U_STRING_TO_PARAM(s), buffer); }
+   static void encode(const UString& s, UString& buffer, bool json)
+      { encode((const unsigned char*)U_STRING_TO_PARAM(s), buffer, json); }
 
    static bool decode(const char* s, uint32_t n, UString& buffer)
       {

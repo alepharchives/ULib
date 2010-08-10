@@ -537,7 +537,8 @@ const char* u_find_char(const char* restrict s, const char* restrict end, char c
       if (s == 0) s = end;
       else
          {
-         if (*(s-1) == '\\')
+         if (*(s-1) == '\\' &&
+             *(s-2) != '\\')
             {
             ++s;
 

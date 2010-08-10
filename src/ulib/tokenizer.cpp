@@ -200,6 +200,49 @@ bool UTokenizer::tokenSeen(UString* x)
    U_RETURN(false);
 }
 
+bool UTokenizer::skipToken(const char* token, uint32_t sz)
+{
+   U_TRACE(0, "UTokenizer::skipToken(%.*S,%u)", sz, token, sz)
+
+   if (str.distance(s) >= sz &&
+       memcmp(s, token, sz) == 0)
+      {
+      s += sz;
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+bool UTokenizer::skipNumber(bool& isReal)
+{
+   U_TRACE(0, "UTokenizer::skipNumber(%p)", &isReal)
+
+   isReal = false;
+
+   for (char c; s < end; ++s)
+      {
+      c = s[0];
+
+      if (u_isdigit(c) || c == '-') continue;
+
+      if (c == '.' ||
+          c == 'e' ||
+          c == 'E' ||
+          c == '+')
+         {
+         isReal = true;
+
+         continue;
+         }
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
 UString UTokenizer::getTokenQueryParser()
 {
    U_TRACE(0, "UTokenizer::getTokenQueryParser()")

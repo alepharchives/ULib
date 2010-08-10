@@ -29,14 +29,14 @@ PRG = test_timeval test_timer test_notifier test_string \
 		test_vector test_options test_application test_tree test_compress test_cache test_date \
 		test_services test_base64 test_url test_header test_entity \
 		test_ipaddress test_socket test_smtp test_pop3 test_imap test_ftp test_http test_rdb_client \
-		test_tokenizer test_query_parser test_multipart test_command test_dialog test_rdb_server
+		test_tokenizer test_query_parser test_multipart test_command test_dialog test_rdb_server test_json
 
 TST = timeval.test timer.test notifier.test string.test \
 		file.test cdb.test rdb.test file_config.test log.test \
 		vector.test options.test application.test tree.test compress.test cache.test date.test \
 		services.test base64.test url.test header.test entity.test \
 		ipaddress.test socket.test smtp.test pop3.test imap.test ftp.test http.test \
-		tokenizer.test query_parser.test multipart.test command.test rdb_client_server.test
+		tokenizer.test query_parser.test multipart.test command.test rdb_client_server.test json.test
 ## 	dialog.test
 
 test_ipaddress_SOURCES = test_ipaddress.cpp
@@ -74,6 +74,7 @@ test_multipart_SOURCES = test_multipart.cpp
 test_command_SOURCES = test_command.cpp
 test_dialog_SOURCES = test_dialog.cpp
 test_rdb_server_SOURCES = test_rdb_server.cpp
+test_json_SOURCES = test_json.cpp
 
 if ZIP
 PRG += test_zip
