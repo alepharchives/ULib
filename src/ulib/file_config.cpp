@@ -138,8 +138,8 @@ bool UFileConfig::searchForObjectStream(const char* section, uint32_t len)
 
       U_INTERNAL_DUMP("_start = %.*S", 10, _start)
 
-      if (_start[0] != section[0]                                      ||
-          (len && U_SYSCALL(memcmp, "%S,%S,%u", _start, section, len)) ||
+      if (_start[0] != section[0]               ||
+          (len && memcmp(_start, section, len)) ||
           (u_isspace(_start[(len ? len : 1)]) == false)) // check for partial match of the name section...
          {
          while (u_isspace(*_start) == false) ++_start;

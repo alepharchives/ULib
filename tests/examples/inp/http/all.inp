@@ -91,3 +91,15 @@ Host: localhost
 Connection: Keep-Alive
 Cookie: ulib_sid=stefano&1221930499&07e0d88c2f5b6a385827adcee28ebdad
 
+GET /cgi-bin/index.sh HTTP/1.1
+Host: localhost
+Accept-Encoding: gzip,deflate
+
+POST /usp/jsonrequest.usp HTTP/1.1
+Host: json.penzance.org
+Accept: application/jsonrequest
+Content-Encoding: identity
+Content-Type: application/jsonrequest
+Content-Length: 72
+
+{"user":"doctoravatar@penzance.com","forecast":7,"t":"vlIj","zip":94089}

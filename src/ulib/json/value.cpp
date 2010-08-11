@@ -55,9 +55,9 @@ void UValue::clear() // erase all element
          {
          U_INTERNAL_ASSERT_POINTER(value.ptr_)
 
-         U_INTERNAL_DUMP("value.ptr_ = %.*S", U_STRING_TO_TRACE(*(UString*)value.ptr_))
+         U_INTERNAL_DUMP("value.ptr_ = %.*S", U_STRING_TO_TRACE(*getString()))
 
-         delete (UString*)value.ptr_;
+         delete getString();
          }
       break;
 
@@ -65,7 +65,7 @@ void UValue::clear() // erase all element
          {
          U_INTERNAL_ASSERT_POINTER(value.ptr_)
 
-         delete (UVector<UValue*>*)value.ptr_;
+         delete getArray();
          }
       break;
 
@@ -73,10 +73,10 @@ void UValue::clear() // erase all element
          {
          U_INTERNAL_ASSERT_POINTER(value.ptr_)
 
-         ((UHashMap<UValue*>*)value.ptr_)->clear();
-         ((UHashMap<UValue*>*)value.ptr_)->deallocate();
+         getObject()->clear();
+         getObject()->deallocate();
 
-         delete (UHashMap<UValue*>*)value.ptr_;
+         delete getObject();
          }
       break;
       }
@@ -103,9 +103,9 @@ bool UValue::asBool() const
       case    REAL_VALUE: if (value.real_ != 0.0) result = true;            break;
       case BOOLEAN_VALUE:                         result = value.bool_;     break;
 
-      case  STRING_VALUE: result = ((          UString*)value.ptr_)->empty(); break;
-      case   ARRAY_VALUE: result = (( UVector<UValue*>*)value.ptr_)->empty(); break;
-      case  OBJECT_VALUE: result = ((UHashMap<UValue*>*)value.ptr_)->empty(); break;
+      case  STRING_VALUE: result = getString()->empty(); break;
+      case   ARRAY_VALUE: result =  getArray()->empty(); break;
+      case  OBJECT_VALUE: result = getObject()->empty(); break;
       }
 
    U_RETURN(result);
@@ -212,9 +212,11 @@ UString UValue::asString() const
 
    switch (type_)
       {
-      case    NULL_VALUE:                                                                                            break;
-      case  STRING_VALUE: result = *(UString*)value.ptr_;                                                            break;
-      case BOOLEAN_VALUE: result = (value.bool_ ? U_STRING_FROM_CONSTANT("true") : U_STRING_FROM_CONSTANT("false")); break;
+      case    NULL_VALUE:                        break;
+      case  STRING_VALUE: result = *getString(); break;
+
+      case BOOLEAN_VALUE: result = (value.bool_ ? U_STRING_FROM_CONSTANT("true")
+                                                : U_STRING_FROM_CONSTANT("false")); break;
 
       case     INT_VALUE:
       case    UINT_VALUE:
@@ -259,13 +261,13 @@ bool UValue::isConvertibleTo(UValue::ValueType other) const
                                     other == REAL_VALUE                                                       ||
                                     other == BOOLEAN_VALUE;
       break;
-      case  STRING_VALUE: result = (other == NULL_VALUE && ((UString*)value.ptr_)->empty()) ||
+      case  STRING_VALUE: result = (other == NULL_VALUE && getString()->empty()) ||
                                     other == STRING_VALUE;
       break;
-      case   ARRAY_VALUE: result = (other == NULL_VALUE && ((UVector<UValue*>*)value.ptr_)->empty()) ||
+      case   ARRAY_VALUE: result = (other == NULL_VALUE &&  getArray()->empty()) ||
                                     other == ARRAY_VALUE;
       break;
-      case  OBJECT_VALUE: result = (other == NULL_VALUE && ((UHashMap<UValue*>*)value.ptr_)->empty()) ||
+      case  OBJECT_VALUE: result = (other == NULL_VALUE && getObject()->empty()) ||
                                     other == OBJECT_VALUE;
       break;
       }
@@ -284,7 +286,7 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
 
    if (type_ != NULL_VALUE)
       {
-      ((UHashMap<UValue*>*)value.ptr_)->getKeys(members);
+      getObject()->getKeys(members);
 
       size = members.size() - n;
       }
@@ -298,8 +300,9 @@ uint32_t UValue::size() const
 
    uint32_t result = 0;
 
-        if (type_ ==  ARRAY_VALUE) result = (( UVector<UValue*>*)value.ptr_)->size();
-   else if (type_ == OBJECT_VALUE) result = ((UHashMap<UValue*>*)value.ptr_)->size();
+        if (type_ == STRING_VALUE) result = getString()->size();
+   else if (type_ ==  ARRAY_VALUE) result =  getArray()->size();
+   else if (type_ == OBJECT_VALUE) result = getObject()->size();
 
    U_RETURN(result);
 }
@@ -308,7 +311,7 @@ UValue& UValue::operator[](uint32_t pos)
 {
    U_TRACE(0, "UValue::operator[](%u)", pos)
 
-   UValue* result = (type_ == ARRAY_VALUE ? ((UVector<UValue*>*)value.ptr_)->at(pos) : this);
+   UValue* result = (type_ == ARRAY_VALUE ? getArray()->at(pos) : this);
 
    return *result;
 }
@@ -317,12 +320,12 @@ UValue& UValue::operator[](const UString& key)
 {
    U_TRACE(0, "UValue::operator[](%.*S)", U_STRING_TO_TRACE(key))
 
-   UValue* result = (type_ == OBJECT_VALUE ? (*(UHashMap<UValue*>*)value.ptr_)[key] : this);
+   UValue* result = (type_ == OBJECT_VALUE ? getObject()->operator[](key) : this);
 
    return *result;
 }
 
-U_NO_EXPORT void UValue::output(UString& result, UValue& value)
+void UValue::output(UString& result, UValue& value)
 {
    U_TRACE(0, "UValue::output(%.*S,%p)", U_STRING_TO_TRACE(result), &value)
 
@@ -378,11 +381,9 @@ end:
 
       case STRING_VALUE:
          {
-         UString* ptr = (UString*)value.value.ptr_;
+         (void) result.reserve(result.size() + value.getString()->size() * 6);
 
-         (void) result.reserve(result.size() + ptr->size() * 6);
-
-         UEscape::encode(*ptr, result, true);
+         UEscape::encode(*(value.getString()), result, true);
          }
       break;
 
@@ -533,7 +534,7 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* value)
             {
             value->value.ptr_ = U_NEW(UString(sz));
 
-            result = UEscape::decode(ptr, sz, *(UString*)value->value.ptr_);
+            result = UEscape::decode(ptr, sz, *(value->getString()));
             }
          else
             {
@@ -544,7 +545,7 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* value)
 
          if (last < end) tok.setPointer(last+1);
 
-         U_INTERNAL_DUMP("value.ptr_ = %.*S", U_STRING_TO_TRACE(*(UString*)value->value.ptr_))
+         U_INTERNAL_DUMP("value.ptr_ = %.*S", U_STRING_TO_TRACE(*(value->getString())))
          }
       break;
 
@@ -575,16 +576,16 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* value)
                U_RETURN(false);
                }
 
-            ((UVector<UValue*>*)value->value.ptr_)->push(item);
+            value->getArray()->push(item);
             }
 
          result = true;
 
-         uint32_t sz = ((UVector<UValue*>*)value->value.ptr_)->size();
+         uint32_t sz = value->getArray()->size();
 
          U_INTERNAL_DUMP("sz = %u", sz)
 
-         if (sz) ((UVector<UValue*>*)value->value.ptr_)->reserve(sz);
+         if (sz) value->getArray()->reserve(sz);
          }
       break;
 
@@ -593,7 +594,7 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* value)
          value->type_      = OBJECT_VALUE;
          value->value.ptr_ = U_NEW(UHashMap<UValue*>);
 
-         ((UHashMap<UValue*>*)value->value.ptr_)->allocate();
+         value->getObject()->allocate();
 
          UValue  name;
          UValue* item;
@@ -628,14 +629,14 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* value)
                U_RETURN(false);
                }
 
-            ((UHashMap<UValue*>*)value->value.ptr_)->insert(*(UString*)name.value.ptr_, item);
+            value->getObject()->insert(*(name.getString()), item);
 
             name.clear();
             }
 
          result = true;
 
-         U_DUMP("hash map size = %u", ((UHashMap<UValue*>*)value->value.ptr_)->size())
+         U_DUMP("hash map size = %u", value->getObject()->size())
          }
       break;
 

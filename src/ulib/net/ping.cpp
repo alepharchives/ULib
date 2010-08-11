@@ -485,8 +485,8 @@ loop:
 
       // NB: don't check tHaddr: Linux doesn't return proper target's hardware address (fixed in 2.6.24?)
 
-      if (U_SYSCALL(memcmp, "%p,%p,%u", reply.tInaddr, arp.sInaddr, 4) ||
-          U_SYSCALL(memcmp, "%p,%p,%u", reply.tHaddr,  arp.sHaddr,  6))
+      if (memcmp(reply.tInaddr, arp.sInaddr, 4) ||
+          memcmp(reply.tHaddr,  arp.sHaddr,  6))
          {
          goto loop;
          }

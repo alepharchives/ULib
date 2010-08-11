@@ -44,6 +44,7 @@ union uuvalue {
 };
 
 template <class T> class UVector;
+template <class T> class UHashMap;
                    class UTokenizer;
 
 class U_EXPORT UValue {
@@ -259,6 +260,10 @@ public:
    UValue& operator[](uint32_t pos);
    UValue& operator[](const UString& key);
 
+             UString* getString() const { return (          UString*)value.ptr_; }
+    UVector<UValue*>* getArray()  const { return ( UVector<UValue*>*)value.ptr_; }
+   UHashMap<UValue*>* getObject() const { return (UHashMap<UValue*>*)value.ptr_; }
+
    // \brief Return a list of the member names.
    //
    // If null, return an empty list.
@@ -308,7 +313,7 @@ protected:
    int type_;
    union uuvalue value;
 
-   static void output(UString& result, UValue& value) U_NO_EXPORT;
+   static void output(UString& result, UValue& value);
    static bool readValue(UTokenizer& tok, UValue* value) U_NO_EXPORT;
 
 private:

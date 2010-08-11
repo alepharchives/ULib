@@ -143,6 +143,7 @@ enum HTTPMethodType { HTTP_POST = 1, HTTP_PUT = 2, HTTP_DELETE = 3, HTTP_GET = 4
 #define U_CTYPE_HTML "text/html; charset=iso-8859-1"
 
 class UFile;
+class UValue;
 class UDynamic;
 class UCommand;
 class UMimeMultipart;
@@ -399,9 +400,14 @@ public:
    static UString     getHTMLDirectoryList();
    static const char* getHTTPHeaderValuePtr(const UString& name);
 
+   // -----------------------------------------------------------------------
+   // FORM
+   // -----------------------------------------------------------------------
    // retrieve information on specific HTML form elements
    // (such as checkboxes, radio buttons, and text fields), or uploaded files
+   // -----------------------------------------------------------------------
 
+   static UValue* json;
    static UString* tmpdir;
    static UString* qcontent;
    static UMimeMultipart* formMulti;

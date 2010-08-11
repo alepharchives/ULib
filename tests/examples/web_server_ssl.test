@@ -22,7 +22,13 @@ fi
 DIR_CMD="../../examples/userver"
 
 if [ "$TERM" != "cygwin" ]; then
-   ( cd ../../src/ulib/plugin/usp/; make benchmarking.la >/dev/null 2>&1 || exit 1; cd ../.libs; ln -sf ../mod_geoip/.libs/mod_geoip.so; ln -sf ../mod_shib/.libs/mod_shib.so )
+	( cd usp; ln -sf ../../../src/ulib/plugin/usp/.libs/jsonrequest.so
+     cd ../../../src/ulib/plugin/usp/; 
+     make jsonrequest.la  >/dev/null 2>&1 || exit 1;
+     make benchmarking.la >/dev/null 2>&1 || exit 1;
+     cd ../.libs; 
+     ln -sf ../mod_shib/.libs/mod_shib.so;
+     ln -sf ../mod_geoip/.libs/mod_geoip.so )
 fi
 
 #STRACE=$TRUSS

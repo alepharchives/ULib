@@ -277,7 +277,7 @@ public:
 
       bool result = (iAddressType   == cOtherAddr.iAddressType) &&
                     (iAddressLength == cOtherAddr.iAddressLength) &&
-                    (U_SYSCALL(memcmp, "%p,%p,%u", pcAddress.p, cOtherAddr.pcAddress.p, iAddressLength) == 0);
+                    (memcmp(pcAddress.p, cOtherAddr.pcAddress.p, iAddressLength) == 0);
 
       U_RETURN(result);
       }

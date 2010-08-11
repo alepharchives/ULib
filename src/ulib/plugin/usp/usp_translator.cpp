@@ -1,15 +1,15 @@
-// ============================================================================================
+// =======================================================================================
 //
 // = LIBRARY
 //    ulib - c++ library
 //
 // = FILENAME
-//		usp_translator.cpp - the translator .usp => .cpp for plugin dynamic html page for UServer
+//		usp_translator.cpp - the translator .usp => .cpp for plugin dynamic page for UServer
 //
 // = AUTHOR
 //    Stefano Casazza
 //
-// ============================================================================================
+// =======================================================================================
 
 #include <ulib/file.h>
 #include <ulib/tokenizer.h>
@@ -29,7 +29,9 @@
 #define U_DYNAMIC_PAGE_TEMPLATE \
 "#include <ulib/all.h>\n" \
 "\n" \
-"#define U_DYNAMIC_PAGE_OUTPUT(fmt,args...)         (UClientImage_Base::_buffer->snprintf(fmt,args),UClientImage_Base::wbuffer->append(*UClientImage_Base::_buffer))\n" \
+"#define U_DYNAMIC_PAGE_APPEND(string)              (void)UClientImage_Base::wbuffer->append(string)\n" \
+"\n" \
+"#define U_DYNAMIC_PAGE_OUTPUT(fmt,args...)			 (UClientImage_Base::_buffer->snprintf(fmt,args),UClientImage_Base::wbuffer->append(*UClientImage_Base::_buffer))\n" \
 "\n" \
 "#define U_DYNAMIC_PAGE_OUTPUT_ENCODED(fmt,args...) (UClientImage_Base::_buffer->snprintf(fmt,args),UXMLEscape::encode(*UClientImage_Base::_buffer,*UClientImage_Base::_encoded),UClientImage_Base::wbuffer->append(*UClientImage_Base::_encoded))\n" \
 "\n" \
@@ -54,8 +56,6 @@
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_encoded)\n" \
 "  U_INTERNAL_ASSERT_EQUALS( UClientImage_Base::pClientImage, client_image)\n" \
 "\n" \
-"  UClientImage_Base::wbuffer->snprintf(\"Content-Type: \" U_CTYPE_HTML \"\\r\\n\\r\\n\", 0);\n" \
-"\n" \
 "%.*s} }\n"
 
 class Application : public UApplication {
@@ -74,6 +74,18 @@ public:
 		UString usp = UFile::contentOf(filename);
 
 		if (usp.empty()) U_ERROR("filename not valid...", 0);
+
+		uint32_t endHeader = u_findEndHeader(U_STRING_TO_PARAM(usp));
+
+		U_INTERNAL_DUMP("endHeader = %u u_line_terminator_len = %d", endHeader, u_line_terminator_len)
+
+		// NB: we cannot have both HTTP Header and NO Content-Type...
+
+		if (endHeader													  != U_NOT_FOUND &&
+			 U_STRING_FIND_EXT(usp, 0, "Content-Type: ", 256) == U_NOT_FOUND)
+			{
+			usp = UStringExt::simplifyWhiteSpace(usp);
+			}
 
 		UTokenizer t(usp);
 		t.setGroup(U_CONSTANT_TO_PARAM("<%%>"));
@@ -102,7 +114,7 @@ public:
 
 				(void) buffer.reserve(tmp.size() + 100U);
 
-				buffer.snprintf("(void) UClientImage_Base::wbuffer->append(%.*s);\n", U_STRING_TO_TRACE(tmp));
+				buffer.snprintf("(void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(%.*s));\n", U_STRING_TO_TRACE(tmp));
 
 				(void) output.append(buffer);
 

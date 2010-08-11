@@ -961,7 +961,7 @@ uint32_t UString::rfind(const char* s, uint32_t pos, uint32_t n) const
       const char* str = rep->str;
 
       do {
-         if (U_SYSCALL(memcmp, "%p,%p,%u", str + pos, s, n) == 0) U_RETURN(pos);
+         if (memcmp(str + pos, s, n) == 0) U_RETURN(pos);
          }
       while (pos-- > 0);
       }

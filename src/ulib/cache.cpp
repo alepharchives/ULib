@@ -249,7 +249,7 @@ UString UCache::operator[](const UString& _key)
 
          p = x + pos + sizeof(UCache::cache_hash_table_entry);
 
-         if (U_SYSCALL(memcmp, "%p,%p,%u", p, key, keylen) == 0)
+         if (memcmp(p, key, keylen) == 0)
             {
             if (time_expire != U_NO_TTL &&
                 getTime() >= time_expire)

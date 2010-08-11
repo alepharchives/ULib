@@ -79,8 +79,6 @@ UHashMap<UModNoCatPeer*>* UNoCatPlugIn::peers;
 #define U_NOCAT_MAX_TIMEOUT (30 * U_ONE_DAY_IN_SECOND)
 
 #define U_NOCAT_STATUS \
-"Content-Type: " U_CTYPE_HTML "\r\n" \
-"\r\n" \
 "<html>\n" \
 "<head><title>Access Point: %s</title></head>\n" \
 "<body bgcolor=\"#FFFFFF\" text=\"#000000\">\n" \
@@ -214,12 +212,7 @@ void UNoCatPlugIn::setStatusContent(UModNoCatPeer* peer)
 
    status_content->setEmpty();
 
-   if (peer)
-      {
-      (void) status_content->assign(U_CONSTANT_TO_PARAM("\r\n"));
-
-      getPeerStatus(peer->ip.rep, peer);
-      }
+   if (peer) getPeerStatus(peer->ip.rep, peer);
    else
       {
       peers->callForAllEntry(getPeerStatus);
@@ -1381,11 +1374,10 @@ int UNoCatPlugIn::handlerRequest()
 
          setStatusContent(peer); // NB: peer == 0 -> request from AUTH to get status access point...
 
-         UHTTP::http_info.clength = status_content->size() - (peer ? 2 : 47); // NB: 47 => sizeof("Content-Type: text/html; charset=iso-8859-1\r\n\r\n")
-
+         UHTTP::http_info.clength    =  status_content->size();
          *UClientImage_Base::wbuffer = *status_content;
 
-         UHTTP::setHTTPCgiResponse(HTTP_OK, false, true, false);
+         UHTTP::setHTTPCgiResponse(HTTP_OK, false, false, false);
 
          goto end;
          }

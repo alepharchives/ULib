@@ -114,7 +114,7 @@ bool UTokenizer::next(UString& token, bool* bgroup)
 
       if (group)
          {
-         if (U_SYSCALL(memcmp, "%S,%S,%u", s, group, group_len_div_2) == 0)
+         if (memcmp(s, group, group_len_div_2) == 0)
             {
             p = s + group_len_div_2 - 1;
             s = u_strpend(p, end - p, group, group_len, '\0');
@@ -153,7 +153,7 @@ bool UTokenizer::next(UString& token, bool* bgroup)
                {
                const char* x = (char*) memchr(p, group[0], s - p);
 
-               if (x && (U_SYSCALL(memcmp, "%S,%S,%u", x, group, group_len_div_2) == 0))
+               if (x && (memcmp(x, group, group_len_div_2) == 0))
                   {
                   s     = x;
                   shift = 0;

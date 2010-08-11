@@ -16,6 +16,7 @@
 #include <ulib/file.h>
 #include <ulib/command.h>
 #include <ulib/tokenizer.h>
+#include <ulib/json/value.h>
 #include <ulib/mime/entity.h>
 #include <ulib/utility/uhttp.h>
 #include <ulib/mime/multipart.h>
@@ -34,6 +35,7 @@
 char                              UHTTP::cgi_dir[U_PATH_MAX];
 bool                              UHTTP::virtual_host;
 UFile*                            UHTTP::file;
+UValue*                           UHTTP::json;
 UString*                          UHTTP::alias;
 UString*                          UHTTP::tmpdir;
 UString*                          UHTTP::qcontent;
@@ -755,7 +757,7 @@ bool UHTTP::readHTTPRequest()
 
             if (c == 'H' &&
                 l == 3   && // sizeof("ost")
-                U_SYSCALL(memcmp, "%S,%S,%u", ptrH, p, l) == 0)
+                memcmp(ptrH, p, l) == 0)
                {
                http_info.host     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos;
                http_info.host_len = pos2 - pos - char_r;
@@ -764,7 +766,7 @@ bool UHTTP::readHTTPRequest()
                }
             else if (c == 'A' &&
                      l == 14  && // sizeof("ccept-Encoding")
-                     U_SYSCALL(memcmp, "%S,%S,%u", ptrA, p, l) == 0 &&
+                     memcmp(ptrA, p, l) == 0 &&
                      u_find(ptr + pos, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)
                {
 #           ifdef HAVE_LIBZ
@@ -776,7 +778,7 @@ bool UHTTP::readHTTPRequest()
             else if (c == 'C')
                {
                if (l == 9 && // sizeof("onnection")
-                   U_SYSCALL(memcmp, "%S,%S,%u", ptrC, p, l) == 0)
+                   memcmp(ptrC, p, l) == 0)
                   {
                   U_INTERNAL_DUMP("Connection: = %.*S", pos2 - pos - 1, UClientImage_Base::rbuffer->c_pointer(pos))
 
@@ -797,10 +799,10 @@ bool UHTTP::readHTTPRequest()
                      U_INTERNAL_DUMP("http_info.keep_alive = %d", http_info.keep_alive)
                      }
                   }
-               else if (l == 11                                            && // 11 -> sizeof("ontent-Type")
-                        U_SYSCALL(memcmp, "%S,%S,%u", ptrT,   p,   7) == 0 && //  7 -> sizeof("ontent-")
-                        u_toupper(p[7]) == 'T'                             &&
-                        U_SYSCALL(memcmp, "%S,%S,%u", ptrT+8, p+8, 3) == 0)   //  3 -> sizeof(        "ype")
+               else if (l == 11                     && // 11 -> sizeof("ontent-Type")
+                        memcmp(ptrT,   p,   7) == 0 && //  7 -> sizeof("ontent-")
+                        u_toupper(p[7]) == 'T'      &&
+                        memcmp(ptrT+8, p+8, 3) == 0)   //  3 -> sizeof(        "ype")
                   {
                   U_INTERNAL_ASSERT_EQUALS(c, 'C')
 
@@ -810,7 +812,7 @@ bool UHTTP::readHTTPRequest()
                   U_INTERNAL_DUMP("Content-Type: = %.*S", http_info.content_type_len, start + (ptrdiff_t)http_info.content_type)
                   }
                else if (l == 13 && // 13 -> sizeof("ontent-Length")
-                        U_SYSCALL(memcmp, "%S,%S,%u", ptrL, p, l) == 0)
+                        memcmp(ptrL, p, l) == 0)
                   {
                   U_INTERNAL_ASSERT_EQUALS(c, 'C')
 
@@ -821,7 +823,7 @@ bool UHTTP::readHTTPRequest()
                }
             else if (c == 'I' &&
                      l == 16  && // sizeof("f-Modified-Since")
-                     U_SYSCALL(memcmp, "%S,%S,%u", ptrI, p, l) == 0)
+                     memcmp(ptrI, p, l) == 0)
                {
                http_info.if_modified_since = UDate::getSecondFromTime(ptr + pos, true);
 
@@ -829,7 +831,7 @@ bool UHTTP::readHTTPRequest()
                }
             else if (c == 'R' &&
                      l == 4   && // sizeof("ange")
-                     U_SYSCALL(memcmp, "%S,%S,%u", ptrR, p, l) == 0 &&
+                     memcmp(ptrR, p, l) == 0 &&
                      U_STRNEQ(ptr + pos, "bytes="))
                {
                http_info.range     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos + U_CONSTANT_SIZE("bytes=");
@@ -1313,19 +1315,27 @@ void UHTTP::resetForm()
    U_INTERNAL_ASSERT_POINTER(formMulti)
    U_INTERNAL_ASSERT_POINTER(form_name_value)
 
-   if (formMulti->isEmpty() == false) formMulti->clear();
+   if (qcontent->empty() == false) qcontent->clear();
+   else
+      {
+      if (formMulti->isEmpty() == false) formMulti->clear();
+
+      // clean temporary directory, if any...
+
+      if (tmpdir->empty() == false)
+         {
+         (void) UFile::rmdir(tmpdir->data(), true);
+
+         tmpdir->setEmpty();
+         }
+      else if (json)
+         {
+         delete json;
+                json = 0;
+         }
+      }
 
    form_name_value->clear();
-          qcontent->clear();
-
-   // clean temporary directory, if any...
-
-   if (tmpdir->empty() == false)
-      {
-      (void) UFile::rmdir(tmpdir->data(), true);
-
-      tmpdir->setEmpty();
-      }
 }
 
 // retrieve information on specific HTML form elements
@@ -1374,6 +1384,15 @@ uint32_t UHTTP::processHTTPForm()
       *qcontent = *UClientImage_Base::body;
 
       goto get_name_value;
+      }
+
+   if (U_HTTP_CTYPE_STRNEQ("application/jsonrequest"))
+      {
+      json = U_NEW(UValue);
+
+      (void) json->parse(*UClientImage_Base::body);
+
+      U_RETURN(1);
       }
 
    // multipart/form-data (FILE UPLOAD)
@@ -1657,7 +1676,10 @@ void UHTTP::setHTTPRedirectResponse(const UString& ext, const char* ptr_location
 
    U_ASSERT_EQUALS(u_find(ptr_location,len_location,"\n",1),0)
 
-   int nResponseCode = (http_info.version ? HTTP_TEMP_REDIR : HTTP_MOVED_TEMP);
+   // NB: firefox chiede conferma all'utente con 307
+
+   int nResponseCode =                                        HTTP_MOVED_TEMP;
+// int nResponseCode = (http_info.version ? HTTP_TEMP_REDIR : HTTP_MOVED_TEMP);
 
    if (http_info.is_connection_close == U_MAYBE) http_info.is_connection_close = U_YES;
 
@@ -1783,25 +1805,51 @@ void UHTTP::setHTTPCgiResponse(int nResponseCode, bool header_content_length, bo
 
    U_INTERNAL_DUMP("http_info.clength = %u", http_info.clength)
 
-   if (http_info.clength &&
-       header_content_length == false)
+   if (http_info.clength == 0)
       {
-      if (content_encoding        ||
-          http_info.clength < 100 ||
+      // NB: no body...it's ok Content-Length: 0...
+      }
+   else if (header_content_length)
+      {
+      // NB: there is body...it's KO Content-Length: 0...
+
+      (void) tmp.assign(U_CONSTANT_TO_PARAM("X-Powered-By: ULib/1.0\r\n"));
+      }
+   else
+      {
+      if (content_encoding                   ||
+          http_info.clength           <= 100 ||
           http_info.is_accept_deflate == 0)
          {
-         tmp.snprintf("%s"
-                      "Content-Length: %u\r\n",
-                      (header_content_type ? "" : "Content-Type: " U_CTYPE_HTML "\r\n"),
-                      http_info.clength);
+         tmp.snprintf("Content-Length: %u\r\n"
+                      "%s",
+                      http_info.clength,
+                      (header_content_type ? "" : "Content-Type: " U_CTYPE_HTML "\r\n\r\n"));
          }
       else
          {
-         uint32_t endHeader = UClientImage_Base::wbuffer->size() - http_info.clength;
-         UString content    = UClientImage_Base::wbuffer->substr(endHeader),
-                 compress   = UStringExt::deflate(content);
+         const char* ptr;
+         uint32_t sz, endHeader = UClientImage_Base::wbuffer->size() - http_info.clength;
+
+         U_INTERNAL_DUMP("endHeader = %u", endHeader)
+
+         UString content  = UClientImage_Base::wbuffer->substr(endHeader),
+                 compress = UStringExt::deflate(content);
 
          http_info.clength = compress.size();
+
+         if (endHeader)
+            {
+            // NB: endHeader comprende anche la blank line...
+         
+            ptr = UClientImage_Base::wbuffer->data();
+            sz  = endHeader;
+            }
+         else
+            {
+            ptr =                 U_CRLF;
+            sz  = U_CONSTANT_SIZE(U_CRLF);
+            }
 
          tmp.snprintf("%s"
                       "Content-Length: %u\r\n"
@@ -1809,7 +1857,7 @@ void UHTTP::setHTTPCgiResponse(int nResponseCode, bool header_content_length, bo
                       "%.*s",
                       (header_content_type ? "" : "Content-Type: " U_CTYPE_HTML "\r\n"),
                       http_info.clength,
-                      endHeader, UClientImage_Base::wbuffer->data());
+                      sz, ptr);
 
 #     ifdef DEBUG
          content.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
@@ -2442,7 +2490,7 @@ bool UHTTP::isCGIRequest()
 
    uint32_t szCGI = U_CONSTANT_SIZE("/cgi-bin/");
 
-   if (U_SYSCALL(memcmp, "%S,%S,%u", ptr - szCGI + 2, "/cgi-bin/", szCGI) == 0)
+   if (memcmp(ptr - szCGI + 2, "/cgi-bin/", szCGI) == 0)
       {
       (void) U_SYSCALL(memcpy, "%p,%S,%u", cgi_dir, http_info.uri + 1, sz);
 
@@ -2804,27 +2852,16 @@ bool UHTTP::processCGIOutput()
       goto error;
       }
 
-   // NB: check if html without HTTP headers...
-
    ptr = UClientImage_Base::wbuffer->data();
 
    U_INTERNAL_DUMP("ptr = %.20S", ptr)
 
-   if (ptr[0] == '<' &&
-       (U_STRNCASECMP(ptr+1, "!DOCTYPE HTML ") == 0 ||
-        U_STRNCASECMP(ptr+1, "HTML>")          == 0))
+   // NB: we check for <h(1|tml)> (HTML without HTTP headers..)
+
+   if (          ptr[0]  == '<' &&
+       u_toupper(ptr[1]) == 'H')
       {
-#  ifdef HAVE_MAGIC
-      U_ASSERT(U_STRNEQ(UMagic::getType(*UClientImage_Base::wbuffer).data(), "text/html"))
-#  endif
-
-      (void) UClientImage_Base::wbuffer->insert(0, U_CONSTANT_TO_PARAM(U_CRLF));
-
-      http_info.clength = sz;
-
-      setHTTPCgiResponse(HTTP_OK, false, false, false);
-
-      U_RETURN(true);
+      goto no_headers;
       }
 
 rescan:
@@ -2834,7 +2871,20 @@ rescan:
 
    U_INTERNAL_DUMP("endHeader = %u u_line_terminator_len = %d", endHeader, u_line_terminator_len)
 
-   if (endHeader == U_NOT_FOUND) goto error;
+   if (endHeader == U_NOT_FOUND)
+      {
+no_headers: // NB: we assume to have HTML without HTTP headers...
+
+#  ifdef HAVE_MAGIC
+      U_ASSERT(U_STRNEQ(UMagic::getType(ptr, sz).data(), "text"))
+#  endif
+
+      http_info.clength = sz;
+
+      setHTTPCgiResponse(HTTP_OK, false, false, false);
+
+      U_RETURN(true);
+      }
 
    if (u_line_terminator_len == 1)
       {
@@ -2854,6 +2904,8 @@ rescan:
    nResponseCode     = HTTP_OK;
    connection_close  = header_content_length = header_content_type = content_encoding = false;
    http_info.clength = sz - endHeader;
+
+   U_INTERNAL_DUMP("http_info.clength = %u", http_info.clength)
 
    while (ptr < endptr)
       {

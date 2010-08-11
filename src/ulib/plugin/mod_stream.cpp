@@ -188,7 +188,7 @@ int UStreamPlugIn::handlerRequest()
    const char* ptr = uri_path.data();
 
    if (UHTTP::http_info.uri_len == size &&
-       U_SYSCALL(memcmp, "%p,%p,%u", UHTTP::http_info.uri, ptr, size) == 0)
+       memcmp(UHTTP::http_info.uri, ptr, size) == 0)
       {
       U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
 

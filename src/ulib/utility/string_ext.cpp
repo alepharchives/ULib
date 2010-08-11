@@ -519,7 +519,7 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
       if (++s < end) str[sz++] = ' ';
       }
 
-   if (sz > 0 && str[sz-1] == ' ') --sz;
+   if (sz && u_isspace(str[sz-1])) --sz;
 
    result.size_adjust(sz);
 
@@ -678,7 +678,7 @@ int UStringExt::compareversion(const char* a, uint32_t alen, const char* b, uint
       uint32_t n1 = apos2-apos1,
                n2 = bpos2-bpos1;
 
-      cval = U_SYSCALL(memcmp, "%p,%p,%u", a+apos1, b+bpos1, U_min(n1, n2));
+      cval = memcmp(a+apos1, b+bpos1, U_min(n1, n2));
 
       if (cval) U_RETURN(cval < 1 ? -1 : 1);
       }

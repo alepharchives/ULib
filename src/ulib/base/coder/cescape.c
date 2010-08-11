@@ -97,6 +97,7 @@ uint32_t u_sprintc(char* restrict buffer, unsigned char c, bool json)
 
       default:
          {
+         /*
          if (json &&
              c == '/')
             {
@@ -105,6 +106,7 @@ uint32_t u_sprintc(char* restrict buffer, unsigned char c, bool json)
 
             return 2;
             }
+         */
 
          if ((c <  32) ||
              (c > 126))

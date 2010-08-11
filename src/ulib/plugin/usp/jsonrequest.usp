@@ -1,0 +1,6 @@
+Content-Type: application/jsonrequest
+
+<%
+if (UHTTP::json) U_DYNAMIC_PAGE_APPEND(UHTTP::json->output());
+else				  U_DYNAMIC_PAGE_OUTPUT("{}", 0);
+%>
