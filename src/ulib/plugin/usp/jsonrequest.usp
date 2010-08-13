@@ -2,5 +2,5 @@ Content-Type: application/jsonrequest
 
 <%
 if (UHTTP::json) U_DYNAMIC_PAGE_APPEND(UHTTP::json->output());
-else				  U_DYNAMIC_PAGE_OUTPUT("{}", 0);
+else             U_DYNAMIC_PAGE_APPEND(U_CONSTANT_TO_PARAM("{}"));
 %>

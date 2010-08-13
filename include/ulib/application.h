@@ -82,7 +82,7 @@ public:
 
       str = UString(U_CONSTANT_TO_PARAM(U_OPTIONS U_OPTIONS_1 U_OPTIONS_2 U_OPTIONS_3));
 
-      opt.load(str);
+      if (str.empty() == false) opt.load(str);
 #  endif
       }
 

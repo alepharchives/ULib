@@ -55,6 +55,7 @@
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::wbuffer)\n" \
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_encoded)\n" \
 "  U_INTERNAL_ASSERT_EQUALS( UClientImage_Base::pClientImage, client_image)\n" \
+"%s" \
 "\n" \
 "%.*s} }\n"
 
@@ -75,16 +76,25 @@ public:
 
 		if (usp.empty()) U_ERROR("filename not valid...", 0);
 
+		bool bcontent_type = true;
 		uint32_t endHeader = u_findEndHeader(U_STRING_TO_PARAM(usp));
 
 		U_INTERNAL_DUMP("endHeader = %u u_line_terminator_len = %d", endHeader, u_line_terminator_len)
 
-		// NB: we cannot have both HTTP Header and NO Content-Type...
+		// NB: we check for HTTP Header and Content-Type...
 
-		if (endHeader													  != U_NOT_FOUND &&
-			 U_STRING_FIND_EXT(usp, 0, "Content-Type: ", 256) == U_NOT_FOUND)
+		if (endHeader															  == U_NOT_FOUND ||
+			 U_STRING_FIND_EXT(usp, 0, "Content-Type: ", endHeader) == U_NOT_FOUND)
 			{
-			usp = UStringExt::simplifyWhiteSpace(usp);
+			const char* ptr = usp.data();
+
+			// NB: we check for <h(1|tml)> (HTML without HTTP headers..)
+
+			if (			 ptr[0]  != '<' ||
+				u_toupper(ptr[1]) != 'H')
+				{
+				bcontent_type = false;
+				}
 			}
 
 		UTokenizer t(usp);
@@ -101,24 +111,34 @@ public:
 
 			if (pos)
 				{
-				if (pos == U_NOT_FOUND) pos = usp.size();
+				if (pos != U_NOT_FOUND) t.setDistance(pos);
+				else
+					{
+					pos = usp.size();
 
-				size  = pos - distance;
-				token = usp.substr(distance, size);
+					t.setDistance(pos);
 
-				// plain html block
+					while (usp.c_char(pos-1) == '\n') --pos; // no trailing \n...
+					}
 
-				UString tmp(token.size() * 4);
+				size = pos - distance;
 
-				UEscape::encode(token, tmp, false);
+				if (size)
+					{
+					token = usp.substr(distance, size);
+			
+					// plain html block
 
-				(void) buffer.reserve(tmp.size() + 100U);
+					UString tmp(token.size() * 4);
 
-				buffer.snprintf("(void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(%.*s));\n", U_STRING_TO_TRACE(tmp));
+					UEscape::encode(token, tmp, false);
 
-				(void) output.append(buffer);
+					(void) buffer.reserve(tmp.size() + 100U);
 
-				t.setDistance(pos);
+					buffer.snprintf("(void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(%.*s));\n", U_STRING_TO_TRACE(tmp));
+
+					(void) output.append(buffer);
+					}
 				}
 
 			if (t.next(token, &bgroup) == false) break;
@@ -155,7 +175,11 @@ public:
 
 		UString result(100U + sizeof(U_DYNAMIC_PAGE_TEMPLATE) + declaration.size() + output.size());
 
-		result.snprintf(U_DYNAMIC_PAGE_TEMPLATE, U_STRING_TO_TRACE(declaration), U_STRING_TO_TRACE(output));
+		result.snprintf(U_DYNAMIC_PAGE_TEMPLATE,
+							 U_STRING_TO_TRACE(declaration),
+							 (bcontent_type ? "" : "\nUClientImage_Base::wbuffer->snprintf(\"Content-Type: \" U_CTYPE_HTML \"\\r\\n\\r\\n\", 0);\n"),
+							 U_STRING_TO_TRACE(output));
+
 
 		buffer.snprintf("%.*s.cpp", u_strlen(filename) - 4, filename);
 

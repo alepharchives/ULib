@@ -389,7 +389,6 @@ public:
    static bool isPHPRequest();
    static bool checkHTTPRequest();
    static void processHTTPGetRequest();
-   static int  checkPath(UString& pathname);
    static void getTimeIfNeeded(bool all_http_version);
    static bool checkHTTPGetRequestIfModified(time_t mtime);
    static bool checkHTTPGetRequestIfRange(time_t mtime, const UString& etag);
@@ -526,6 +525,7 @@ public:
 
 private:
    static bool    openFile() U_NO_EXPORT;
+   static int     checkPath(UString& pathname) U_NO_EXPORT;
    static UString getHTTPHeaderForResponse(int nResponseCode, UString& content) U_NO_EXPORT;
 
    UHTTP(const UHTTP&)            {}

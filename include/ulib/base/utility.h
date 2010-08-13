@@ -233,9 +233,9 @@ extern U_EXPORT const unsigned char u_uri_encoded_char[256];
 
 /* character type identification - Assumed an ISO-1 character set */
 
-extern U_EXPORT const unsigned char* restrict u__ct_tab;
-extern U_EXPORT const unsigned char* restrict u__ct_tol;
-extern U_EXPORT const unsigned char* restrict u__ct_tou;
+extern U_EXPORT const unsigned char u__ct_tab[256];
+extern U_EXPORT const unsigned char u__ct_tol[256];
+extern U_EXPORT const unsigned char u__ct_tou[256];
 
 static inline bool u_iscntrl(int c)  { return (u__ct_tab[c] & 0x01) != 0; } // __C } /* Control character. */
 static inline bool u_isdigit(int c)  { return (u__ct_tab[c] & 0x02) != 0; } // __D } /* Digit. */

@@ -714,6 +714,25 @@ bool UHTTP::readHTTPRequest()
    // "If-Modified-Since: ..."
    // --------------------------------
 
+   static const char header_req[] = {
+      0,   0,   0,   0,   0,   0,   0,   0,
+      0,   0,   0,   0,   0,   0,   0,   0,
+      0,   0,   0,   0,   0,   0,   0,   0,
+      0,   0,   0,   0,   0,   0,   0,   0,
+      0,   0,   0,   0,   0,   0,   0,   0, // ' ',    '!',    '\"',   '#',    '$',    '%',    '&',    '\'',
+      0,   0,   0,   0,   0,   0,   0,   0, // '(',    ')',    '*',    '+',    ',',    '-',    '.',    '/',
+      0,   0,   0,   0,   0,   0,   0,   0, // '0',    '1',    '2',    '3',    '4',    '5',    '6',    '7',
+      0,   0,   0,   0,   0,   0,   0,   0, // '8',    '9',    ':',    ';',    '<',    '=',    '>',    '?',
+      0, 'A',   0, 'C',   0,   0,   0,   0, // '@',    'A',    'B',    'C',    'D',    'E',    'F',    'G',
+    'H', 'I',   0,   0,   0,   0,   0,   0, // 'H',    'I',    'J',    'K',    'L',    'M',    'N',    'O',
+      0,   0, 'R',   0,   0,   0,   0,   0, // 'P',    'Q',    'R',    'S',    'T',    'U',    'V',    'W',
+      0,   0,   0,   0,   0,   0,   0,   0, // 'X',    'Y',    'Z',    '[',    '\\',   ']',    '^',    '_',
+      0, 'A',   0, 'C',   0,   0,   0,   0, // '`',    'a',    'b',    'c',    'd',    'e',    'f',    'g',
+    'H',   0,   0,   0,   0,   0,   0,   0, // 'h',    'i',    'j',    'k',    'l',    'm',    'n',    'o',
+      0,   0, 'R',   0,   0,   0,   0,   0, // 'p',    'q',    'r',    's',    't',    'u',    'v',    'w',
+      0,   0,   0,   0,   0,   0,   0,   0  // 'x',    'y',    'z',    '{',    '|',    '}',    '~',    '\177'
+   };
+
    U_INTERNAL_ASSERT_DIFFERS(UHTTP::ptrH, 0)
    U_INTERNAL_ASSERT_DIFFERS(UHTTP::ptrR, 0)
    U_INTERNAL_ASSERT_DIFFERS(UHTTP::ptrC, 0)
@@ -722,8 +741,8 @@ bool UHTTP::readHTTPRequest()
    U_INTERNAL_ASSERT_DIFFERS(UHTTP::ptrA, 0)
    U_INTERNAL_ASSERT_DIFFERS(UHTTP::ptrI, 0)
 
+   char c;
    const char* p;
-   unsigned char c;
    const char* ptr    = UClientImage_Base::rbuffer->data();
    const char* start  = ptr;
    uint32_t pos, pos1 = http_info.startHeader, pos2, l, char_r = (u_line_terminator_len == 2);
@@ -736,13 +755,7 @@ bool UHTTP::readHTTPRequest()
 
       if (pos2 == U_NOT_FOUND) pos2 = http_info.endHeader;
 
-      c = ptr[pos1];
-
-      if (c == 'H' || // "Host: ..."
-          c == 'A' || // "Accept-Encoding: ..."
-          c == 'C' || // "Connection: ..." or "Content-Type: ..." or "Content-Length: ..."
-          c == 'I' || // "If-Modified-Since: ..."
-          c == 'R')   // "Range: ..."
+      if ((c = header_req[(uint32_t)ptr[pos1]]))
          {
          pos = UClientImage_Base::rbuffer->find(':', ++pos1);
 
@@ -764,9 +777,11 @@ bool UHTTP::readHTTPRequest()
 
                U_INTERNAL_DUMP("host = %.*S", http_info.host_len, start + (ptrdiff_t)http_info.host)
                }
-            else if (c == 'A' &&
-                     l == 14  && // sizeof("ccept-Encoding")
-                     memcmp(ptrA, p, l) == 0 &&
+            else if (c == 'A'                    &&
+                     l == 14                     && // sizeof("ccept-Encoding")
+                     memcmp(ptrA,   p,   6) == 0 && // 6 -> sizeof("ccept-")
+                     u_toupper(p[6]) == 'E'      &&
+                     memcmp(ptrA+7, p+7, 7) == 0 && // 7 -> sizeof(       "ncoding")
                      u_find(ptr + pos, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)
                {
 #           ifdef HAVE_LIBZ
@@ -811,8 +826,10 @@ bool UHTTP::readHTTPRequest()
 
                   U_INTERNAL_DUMP("Content-Type: = %.*S", http_info.content_type_len, start + (ptrdiff_t)http_info.content_type)
                   }
-               else if (l == 13 && // 13 -> sizeof("ontent-Length")
-                        memcmp(ptrL, p, l) == 0)
+               else if (l == 13                     && // 13 -> sizeof("ontent-Length")
+                        memcmp(ptrL,   p,   7) == 0 && //  7 -> sizeof("ontent-")
+                        u_toupper(p[7]) == 'L'      &&
+                        memcmp(ptrL+8, p+8, 5) == 0)   //  5 -> sizeof(        "ength")
                   {
                   U_INTERNAL_ASSERT_EQUALS(c, 'C')
 
@@ -2340,7 +2357,7 @@ next:                            *UClientImage_Base::wbuffer = getHTTPHeaderForR
    U_RETURN(true);
 }
 
-int UHTTP::checkPath(UString& pathname)
+U_NO_EXPORT int UHTTP::checkPath(UString& pathname)
 {
    U_TRACE(0, "UHTTP::checkPath(%.*S)", U_STRING_TO_TRACE(pathname))
 
@@ -2350,9 +2367,9 @@ int UHTTP::checkPath(UString& pathname)
 
    if (UServer_Base::isFileInsideDocumentRoot(pathname) == false) // like chroot()...
       {
-      setHTTPForbidden(); // set forbidden error response...
+      // set forbidden error response...
 
-      U_RETURN(0);
+      U_RETURN(-1);
       }
 
    file->setPath(pathname);
@@ -2366,7 +2383,7 @@ int UHTTP::checkPath(UString& pathname)
 
    if (file->stat() == false)
       {
-      setHTTPNotFound(); // set not found error response...
+      // set not found error response...
 
       U_RETURN(0);
       }
@@ -2426,7 +2443,7 @@ bool UHTTP::checkHTTPRequest()
 
    int result = checkPath(pathname);
 
-   if (result == 0)
+   if (result <= 0)
       {
       // uri request can be URL encoded...
 
@@ -2443,7 +2460,12 @@ bool UHTTP::checkHTTPRequest()
       if (tmp != pathname) result = checkPath(tmp);
       }
 
-   U_RETURN(result == 1);
+   if      (result ==  1) U_RETURN(true);
+
+   if      (result == -1) setHTTPForbidden(); // set forbidden error response...
+   else if (result ==  0) setHTTPNotFound();  // set not found error response...
+
+   U_RETURN(false);
 }
 
 // manage CGI

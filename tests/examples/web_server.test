@@ -37,7 +37,7 @@ fi
  start_prg_background userver_tcp -c web_server.cfg
 $SLEEP
 
-#LS=tst_1
+#LS=tst_90
 #LS=`ls inp/http/and`
 #mkdir -p /tmp/web_server
 #for i in $LS

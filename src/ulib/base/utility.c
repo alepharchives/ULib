@@ -2204,8 +2204,7 @@ int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define SB  (S | B)
 #define CSB (C | S | B)
 
-static const unsigned char ctype_tab[] = {
-   0,
+const unsigned char u__ct_tab[256] = {
    C,  C,  C,  C,  C,  C,  C,  C,  C,  CSB,CS, CS, CS, CS, C,  C,
    C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,
    SB, P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,
@@ -2227,8 +2226,6 @@ static const unsigned char ctype_tab[] = {
    L,  L,  L,  L,  L,  L,  L,  P,  L,  L,  L,  L,  L,  L,  L,  L
 };
 
-const unsigned char* restrict u__ct_tab = ctype_tab + 1;
-
 #undef C
 #undef D
 #undef L
@@ -2248,8 +2245,7 @@ const unsigned char* restrict u__ct_tab = ctype_tab + 1;
 
 /* Table for converting to lower-case */
 
-static const unsigned char lower_tab[] = {
-   0,
+const unsigned char u__ct_tol[256] = {
    '\0',   '\01',  '\02',  '\03',  '\04',  '\05',  '\06',  '\07',
    '\010', '\011', '\012', '\013', '\014', '\015', '\016', '\017',
    '\020', '\021', '\022', '\023', '\024', '\025', '\026', '\027',
@@ -2287,12 +2283,9 @@ static const unsigned char lower_tab[] = {
    0xf8,   0xf9,   0xfa,   0xfb,   0xfc,   0xfd,   0xfe,   0xff
 };
 
-const unsigned char* restrict u__ct_tol = lower_tab + 1;
-
 /* Table for converting to upper-case */
 
-static const unsigned char upper_tab[] = {
-   0,
+const unsigned char u__ct_tou[256] = {
    '\0',   '\01',  '\02',  '\03',  '\04',  '\05',  '\06',  '\07',
    '\010', '\011', '\012', '\013', '\014', '\015', '\016', '\017',
    '\020', '\021', '\022', '\023', '\024', '\025', '\026', '\027',
@@ -2329,5 +2322,3 @@ static const unsigned char upper_tab[] = {
    0xd0,   0xd1,   0xd2,   0xd3,   0xd4,   0xd5,   0xd6,   0xf7,
    0xd8,   0xd9,   0xda,   0xdb,   0xdc,   0xdd,   0xde,   0xff
 };
-
-const unsigned char* restrict u__ct_tou = upper_tab + 1;
