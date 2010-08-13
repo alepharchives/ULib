@@ -49,6 +49,7 @@ The current version offers the following features :
     * Support for basic/digest authentication.
     * Support for uri protection.
     * Support for aliases/redirection.
+    * Support for JSONRequest (http://json.org/JSONRequest.html).
     * Support for Windows (without preforking).
     * Requests cut in phases for modular architecture (Apache-like).
     * Built-in modules :
