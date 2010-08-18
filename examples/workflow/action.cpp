@@ -39,7 +39,7 @@ void Action::processInputData(int expected)
 
    // read stdin
 
-   (void) UServices::read(STDIN_FILENO, data);
+   UServices::readEOF(STDIN_FILENO, data);
 
    if (data.empty()) U_ERROR("cannot read data from stdin...", 0);
 

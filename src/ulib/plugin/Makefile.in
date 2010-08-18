@@ -103,6 +103,9 @@ am__mod_soap_la_SOURCES_DIST = mod_soap.cpp
 @EXPAT_TRUE@am_mod_soap_la_OBJECTS = mod_soap.lo
 mod_soap_la_OBJECTS = $(am_mod_soap_la_OBJECTS)
 @EXPAT_TRUE@am_mod_soap_la_rpath = -rpath $(moduledir)
+mod_socket_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_mod_socket_la_OBJECTS = mod_socket.lo
+mod_socket_la_OBJECTS = $(am_mod_socket_la_OBJECTS)
 mod_stream_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_mod_stream_la_OBJECTS = mod_stream.lo
 mod_stream_la_OBJECTS = $(am_mod_stream_la_OBJECTS)
@@ -122,13 +125,13 @@ CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 SOURCES = $(mod_echo_la_SOURCES) $(mod_fcgi_la_SOURCES) \
 	$(mod_http_la_SOURCES) $(mod_nocat_la_SOURCES) \
 	$(mod_proxy_la_SOURCES) $(mod_rpc_la_SOURCES) \
-	$(mod_soap_la_SOURCES) $(mod_stream_la_SOURCES) \
-	$(mod_tsa_la_SOURCES)
+	$(mod_soap_la_SOURCES) $(mod_socket_la_SOURCES) \
+	$(mod_stream_la_SOURCES) $(mod_tsa_la_SOURCES)
 DIST_SOURCES = $(mod_echo_la_SOURCES) $(mod_fcgi_la_SOURCES) \
 	$(mod_http_la_SOURCES) $(mod_nocat_la_SOURCES) \
 	$(am__mod_proxy_la_SOURCES_DIST) $(mod_rpc_la_SOURCES) \
-	$(am__mod_soap_la_SOURCES_DIST) $(mod_stream_la_SOURCES) \
-	$(mod_tsa_la_SOURCES)
+	$(am__mod_soap_la_SOURCES_DIST) $(mod_socket_la_SOURCES) \
+	$(mod_stream_la_SOURCES) $(mod_tsa_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -386,8 +389,8 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 moduledir = $(libexecdir)/ulib
 module_LTLIBRARIES = mod_rpc.la mod_http.la mod_tsa.la mod_nocat.la \
-	mod_echo.la mod_fcgi.la mod_stream.la $(am__append_1) \
-	$(am__append_2)
+	mod_echo.la mod_fcgi.la mod_stream.la mod_socket.la \
+	$(am__append_1) $(am__append_2)
 mod_rpc_la_SOURCES = mod_rpc.cpp
 mod_rpc_la_LIBADD = $(ulib_la)
 mod_rpc_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
@@ -409,6 +412,9 @@ mod_fcgi_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
 mod_stream_la_SOURCES = mod_stream.cpp
 mod_stream_la_LIBADD = $(ulib_la)
 mod_stream_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+mod_socket_la_SOURCES = mod_socket.cpp
+mod_socket_la_LIBADD = $(ulib_la)
+mod_socket_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
 @EXPAT_TRUE@mod_soap_la_SOURCES = mod_soap.cpp
 @EXPAT_TRUE@mod_soap_la_LIBADD = $(ulib_la)
 @EXPAT_TRUE@mod_soap_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
@@ -489,6 +495,8 @@ mod_rpc.la: $(mod_rpc_la_OBJECTS) $(mod_rpc_la_DEPENDENCIES)
 	$(CXXLINK) -rpath $(moduledir) $(mod_rpc_la_LDFLAGS) $(mod_rpc_la_OBJECTS) $(mod_rpc_la_LIBADD) $(LIBS)
 mod_soap.la: $(mod_soap_la_OBJECTS) $(mod_soap_la_DEPENDENCIES) 
 	$(CXXLINK) $(am_mod_soap_la_rpath) $(mod_soap_la_LDFLAGS) $(mod_soap_la_OBJECTS) $(mod_soap_la_LIBADD) $(LIBS)
+mod_socket.la: $(mod_socket_la_OBJECTS) $(mod_socket_la_DEPENDENCIES) 
+	$(CXXLINK) -rpath $(moduledir) $(mod_socket_la_LDFLAGS) $(mod_socket_la_OBJECTS) $(mod_socket_la_LIBADD) $(LIBS)
 mod_stream.la: $(mod_stream_la_OBJECTS) $(mod_stream_la_DEPENDENCIES) 
 	$(CXXLINK) -rpath $(moduledir) $(mod_stream_la_LDFLAGS) $(mod_stream_la_OBJECTS) $(mod_stream_la_LIBADD) $(LIBS)
 mod_tsa.la: $(mod_tsa_la_OBJECTS) $(mod_tsa_la_DEPENDENCIES) 
@@ -508,6 +516,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_proxy_service.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_rpc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_soap.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_socket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_stream.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_tsa.Plo@am__quote@
 

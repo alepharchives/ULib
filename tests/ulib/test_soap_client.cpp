@@ -34,7 +34,7 @@ public:
       {
       U_TRACE(0, "UTestSOAPClient::readResponse()")
 
-      bool result = (UServices::read(STDIN_FILENO, this->response, 1 * 1000) > 0);
+      bool result = (UServices::read(STDIN_FILENO, this->response, U_SINGLE_READ, 1 * 1000) > 0);
 
       U_RETURN(result);
       }

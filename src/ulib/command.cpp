@@ -289,7 +289,8 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
       U_RETURN(false);
       }
 
-   if (input)
+   if (input &&
+       input != (void*)-1) // special value...
       {
       U_ASSERT(input->empty() == false)
 
@@ -306,7 +307,9 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
       {
       output->setBuffer(U_CAPACITY); // to avoid reserve()...
 
-      bool kill_command = (UServices::read(UProcess::filedes[2], *output, timeoutMS) == 0 && errno == EAGAIN);
+      bool kill_command = (UNotifier::waitForRead(UProcess::filedes[2]) != 1);
+
+      if (kill_command == false) UServices::readEOF(UProcess::filedes[2], *output);
 
       UFile::close(UProcess::filedes[2]);
                    UProcess::filedes[2] = 0;

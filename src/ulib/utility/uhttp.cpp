@@ -58,21 +58,33 @@ UVector<UIPAllow*>*               UHTTP::vallow_IP;
 UHTTP::UFileCacheData*            UHTTP::file_data;
 UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
 
+const UString* UHTTP::str_origin;
 const UString* UHTTP::str_frm_body;
-const UString* UHTTP::str_frm_header;
+const UString* UHTTP::str_websocket;
 const UString* UHTTP::str_ctype_tsa;
+const UString* UHTTP::str_frm_header;
 const UString* UHTTP::str_ctype_html;
 const UString* UHTTP::str_ctype_soap;
+const UString* UHTTP::str_frm_websocket;
+const UString* UHTTP::str_websocket_key1;
+const UString* UHTTP::str_websocket_key2;
+const UString* UHTTP::str_websocket_prot;
 
 void UHTTP::str_allocate()
 {
    U_TRACE(0, "UHTTP::str_allocate()")
 
+   U_INTERNAL_ASSERT_EQUALS(str_origin,0)
    U_INTERNAL_ASSERT_EQUALS(str_frm_body,0)
-   U_INTERNAL_ASSERT_EQUALS(str_frm_header,0)
+   U_INTERNAL_ASSERT_EQUALS(str_websocket,0)
    U_INTERNAL_ASSERT_EQUALS(str_ctype_tsa,0)
+   U_INTERNAL_ASSERT_EQUALS(str_frm_header,0)
    U_INTERNAL_ASSERT_EQUALS(str_ctype_html,0)
    U_INTERNAL_ASSERT_EQUALS(str_ctype_soap,0)
+   U_INTERNAL_ASSERT_EQUALS(str_frm_websocket,0)
+   U_INTERNAL_ASSERT_EQUALS(str_websocket_key1,0)
+   U_INTERNAL_ASSERT_EQUALS(str_websocket_key2,0)
+   U_INTERNAL_ASSERT_EQUALS(str_websocket_prot,0)
 
    static ustringrep stringrep_storage[] = {
    { U_STRINGREP_FROM_CONSTANT("application/timestamp-reply") },
@@ -90,14 +102,32 @@ void UHTTP::str_allocate()
                                "<p>%.*s</p>\r\n"
                                "<hr>\r\n"
                                "<address>ULib Server</address>\r\n"
-                               "</body></html>\r\n") }
+                               "</body></html>\r\n") },
+   { U_STRINGREP_FROM_CONSTANT("Origin") },
+   { U_STRINGREP_FROM_CONSTANT("Upgrade: WebSocket") },
+   { U_STRINGREP_FROM_CONSTANT("Sec-WebSocket-Key1") },
+   { U_STRINGREP_FROM_CONSTANT("Sec-WebSocket-Key2") },
+   { U_STRINGREP_FROM_CONSTANT("Sec-WebSocket-Protocol") },
+   { U_STRINGREP_FROM_CONSTANT("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
+                               "Upgrade: WebSocket\r\n"
+                               "Connection: Upgrade\r\n"
+                               "WebSocket-Origin: %.*s\r\n"
+                               "WebSocket-Location: ws://%.*s%.*s\r\n"
+                               "%.*s"
+                               "\r\n") }
    };
 
-   U_NEW_ULIB_OBJECT(str_ctype_tsa,  U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_ctype_html, U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_ctype_soap, U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_frm_header, U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_frm_body,   U_STRING_FROM_STRINGREP_STORAGE(4));
+   U_NEW_ULIB_OBJECT(str_ctype_tsa,      U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_ctype_html,     U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_ctype_soap,     U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_frm_header,     U_STRING_FROM_STRINGREP_STORAGE(3));
+   U_NEW_ULIB_OBJECT(str_frm_body,       U_STRING_FROM_STRINGREP_STORAGE(4));
+   U_NEW_ULIB_OBJECT(str_origin,         U_STRING_FROM_STRINGREP_STORAGE(5));
+   U_NEW_ULIB_OBJECT(str_websocket,      U_STRING_FROM_STRINGREP_STORAGE(6));
+   U_NEW_ULIB_OBJECT(str_websocket_key1, U_STRING_FROM_STRINGREP_STORAGE(7));
+   U_NEW_ULIB_OBJECT(str_websocket_key2, U_STRING_FROM_STRINGREP_STORAGE(8));
+   U_NEW_ULIB_OBJECT(str_websocket_prot, U_STRING_FROM_STRINGREP_STORAGE(9));
+   U_NEW_ULIB_OBJECT(str_frm_websocket,  U_STRING_FROM_STRINGREP_STORAGE(10));
 }
 
 void UHTTP::ctor()
@@ -813,6 +843,14 @@ bool UHTTP::readHTTPRequest()
 
                      U_INTERNAL_DUMP("http_info.keep_alive = %d", http_info.keep_alive)
                      }
+                  else if (U_MEMCMP(p, "Upgrade") == 0)
+                     {
+                     http_info.upgrade = 1;
+
+                     U_INTERNAL_DUMP("http_info.upgrade = %d", http_info.upgrade)
+
+                     if (getHTTPHeaderValuePtr(*str_websocket)) http_info.clength = 8; // web socket
+                     }
                   }
                else if (l == 11                     && // 11 -> sizeof("ontent-Type")
                         memcmp(ptrT,   p,   7) == 0 && //  7 -> sizeof("ontent-")
@@ -867,7 +905,8 @@ bool UHTTP::readHTTPRequest()
    bool rbuffer_resize = false;
    uint32_t method_pos, uri_pos, query_pos;
 
-   if (http_info.method_type == HTTP_POST)
+   if (http_info.clength ||
+       http_info.method_type == HTTP_POST)
       {
       method_pos = (http_info.method - start);
          uri_pos = (http_info.uri    - start);
@@ -1170,7 +1209,7 @@ const char* UHTTP::getHTTPStatusDescription(uint32_t nResponseCode)
       {
       // 1xx indicates an informational message only
       case HTTP_CONTINUE:           descr = "Continue";                        break;
-      case HTTP_SWITCH_PROT:        descr = "Switching Protocols";             break;
+      case HTTP_SWITCH_PROT:        descr = "Switching Protocol";              break;
    // case 102:                     descr = "HTTP Processing";                 break;
 
       // 2xx indicates success of some kind
@@ -2670,6 +2709,7 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
    http://$SERVER_NAME:$SERVER_PORT$SCRIPT_NAME$PATH_INFO will always be an accessible URL that points to the current script...
    */
 
+   uint32_t len = UClientImage_Base::body->size();
    UString buffer(U_CAPACITY), name = UServer_Base::getNodeName(),
            ip_server = UServer_Base::getIPAddress(), ip_client = UClientImage_Base::getRemoteIP();
 
@@ -2677,7 +2717,6 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
                    "SERVER_NAME=%.*s\n"
                    "SERVER_PORT=%d\n"
                    "SERVER_PROTOCOL=HTTP/1.%c\n"
-                   "CONTENT_LENGTH=%u\n"
                    "SCRIPT_NAME=%.*s\n"
                    // ext
                    "SCRIPT_FILENAME=%w%.*s\n"   // is used by PHP for determining the name of script to execute
@@ -2688,7 +2727,6 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
                    U_STRING_TO_TRACE(name),
                    UServer_Base::port,
                    http_info.version + '0',
-                   UClientImage_Base::body->size(),
                    U_HTTP_URI_TO_TRACE,
                    // ext
                    U_HTTP_URI_TO_TRACE,
@@ -2696,6 +2734,7 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
                    // PHP
                    U_HTTP_METHOD_TO_TRACE);
 
+   if (len)                        buffer.snprintf_add("\"CONTENT_LENGTH=%u\"\n", len);
    if (referer_len)                buffer.snprintf_add("HTTP_REFERER=%.*s\n", referer_len, referer_ptr);
    if (user_agent_len)             buffer.snprintf_add("\"HTTP_USER_AGENT=%.*s\"\n", user_agent_len, user_agent_ptr);
    if (http_info.query_len)        buffer.snprintf_add("QUERY_STRING=%.*s\n", U_HTTP_QUERY_TO_TRACE); // contains the parameters of the request

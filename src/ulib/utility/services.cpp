@@ -122,40 +122,60 @@ void UServices::closeStdInputOutput()
    UFile::close(fd);
 }
 
-// Read data from fd - while !(EOF|error)
+// Read data from fd
+
 // timeoutMS specified the timeout value, in milliseconds.
 // A negative value indicates no timeout, i.e. an infinite wait.
 
-uint32_t UServices::read(int fd, UString& buffer, int timeoutMS)
+bool UServices::read(int fd, UString& buffer, int count, int timeoutMS) // read while not received count data
 {
-   U_TRACE(0, "UServices::read(%d,%.*S,%d)", fd, U_STRING_TO_TRACE(buffer), timeoutMS)
+   U_TRACE(0, "UServices::read(%d,%.*S,%d,%d)", fd, U_STRING_TO_TRACE(buffer), count, timeoutMS)
 
-   uint32_t value, byte_read = 0,
-            start = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua...
+   U_INTERNAL_ASSERT_DIFFERS(count,0)
 
-   (void) buffer.reserve(start + U_CAPACITY);
+   int byte_read = 0;
+   uint32_t value, start = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua...
+   bool single_read = (count == U_SINGLE_READ);
+
+   if (count < (int)U_CAPACITY) single_read = true;
+
+   (void) buffer.reserve(start + (single_read ? (int)U_CAPACITY : count));
 
    char* ptr = buffer.c_pointer(start);
 
+   U_INTERNAL_DUMP("start = %u single_read = %b count = %d", start, single_read, count)
+
 read:
-   value = UNotifier::read(fd, ptr + byte_read, U_SINGLE_READ, timeoutMS);
+   value = UNotifier::read(fd, ptr + byte_read, (single_read ? (int)U_CAPACITY : count - byte_read), timeoutMS);
 
-   if (value)
+   if (value <= 0)
       {
-      byte_read += value;
-
-      U_INTERNAL_DUMP("byte_read = %d", byte_read)
-
-      buffer.size_adjust(start + byte_read);
-
-      if (buffer.reserve(start + byte_read + U_CAPACITY)) ptr = buffer.c_pointer(start);
-
-   // timeoutMS = -1;
-
-      goto read;
+      U_RETURN(false);
       }
 
-   U_RETURN(byte_read);
+   byte_read += value;
+
+   U_INTERNAL_DUMP("byte_read = %d", byte_read)
+
+   if (byte_read < count) goto read;
+
+   if (single_read)
+      {
+      // NB: may be there are available more bytes to read...
+
+      if (value == U_CAPACITY)
+         {
+         buffer.size_adjust_force(start + byte_read); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
+
+         if (buffer.reserve(start + byte_read + U_CAPACITY)) ptr = buffer.c_pointer(start);
+
+         goto read;
+         }
+      }
+
+   buffer.size_adjust_force(start + byte_read); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
+
+   U_RETURN(true);
 }
 
 #ifdef HAVE_LIBUUID
@@ -494,10 +514,9 @@ pkey   is the corresponsding private key
 passwd is the corresponsding password for the private key
 */
 
-UString UServices::getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, bool base64, ENGINE* e)
+UString UServices::getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, int base64, ENGINE* e)
 {
-   U_TRACE(0, "UServices::getSignatureValue(%d,%.*S,%.*S,%.*S,%b,%p)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(pkey),
-                                                                       U_STRING_TO_TRACE(passwd), base64, e)
+   U_TRACE(0, "UServices::getSignatureValue(%d,%.*S,%.*S,%.*S,%d,%p)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(pkey), U_STRING_TO_TRACE(passwd), base64, e)
 
    u_dgst_sign_init(alg, 0);
 
@@ -557,9 +576,9 @@ void UServices::generateKey()
 #endif
 }
 
-void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, uint32_t size, UString& output, bool base64)
+void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, uint32_t size, UString& output, int base64)
 {
-   U_TRACE(0, "UServices::generateDigest(%d,%u,%.*S,%u,%.*S,%b)", alg, keylen, size, data, size, U_STRING_TO_TRACE(output), base64)
+   U_TRACE(0, "UServices::generateDigest(%d,%u,%.*S,%u,%.*S,%d)", alg, keylen, size, data, size, U_STRING_TO_TRACE(output), base64)
 
 #ifdef HAVE_SSL
    u_dgst_init(alg, (const char*)key, keylen);

@@ -12,6 +12,53 @@ C++ library and other similar class frameworks. It include as application exampl
 server (plugin oriented) which results, out of John Fremlin accurate investigations (http://john.freml.in/ulib-fast-io-framework), to be one of the faster
 web application frameworks for serving small dynamic webpages (and also make easier the usage of shell scripts for CGI application)
 
+userver_(tcp|ssl|ipc) multi purpose server (plugin oriented)
+------------------------------------------------------------
+
+The current version offers the following features :
+
+    * HTTP/1.0 and 1.1 protocols supported.
+    * Persistent connections for HTTP/1.1 and Keep-Alive support for HTTP/1.0.
+    * Browser cache management (headers: If-Modified-Since/Last-modified).
+    * Chunk-encoding transfers support.
+    * Memory caching for static pages with optional compression.
+    * Support for pipelining.
+    * Support for virtual hosts.
+    * Support for basic/digest authentication.
+    * Support for uri protection.
+    * Support for aliases/redirection.
+    * Support for JSONRequest (http://json.org/JSONRequest.html).
+    * Web Socket support (experimental).
+    * Support for Windows (without preforking).
+    * Requests cut in phases for modular architecture (Apache-like).
+    * Built-in modules :
+          o mod_rpc : generic Remote Procedure Call.
+          o mod_http : core features, static file handler and dynamic page (ULib Servlet Page).
+          o mod_fcgi : third-party applications support thru FastCGI interface.
+          o mod_tsa : server side time stamp support.
+          o mod_echo : echo features.
+          o mod_soap : generic SOAP server services support.
+          o mod_nocat : captive portal implementation.
+          o mod_shib : web single sign-on support (experimental).
+          o mod_proxy : proxy support (experimental).
+          o mod_geoip : geolocation support (experimental).
+          o mod_stream : simple streaming support (experimental).
+          o mod_socket : web sockets application framework (experimental).
+    * Configuration file with dedicated section.
+    * CGI support for shell script processes (with automatic management of form and cookie).
+    * General CGI support (run any CGI script) with automatic output compression (using deflate method).
+
+Benchmarking
+------------
+
+    $ ./configure && make
+    $ cd tests/examples
+    $ ./benchmarking.sh (or hello_world.sh)
+
+Use apachebench
+
+	$ ab -n 100000 -c10 http://127.0.0.1/usp/benchmarking.usp?name=stefano (or)
+	$ ab -n 100000 -c10 http://127.0.0.1/usp/hello_world.usp
 
 Quickstart
 ----------
@@ -34,48 +81,6 @@ Take a look at:
 * --with-libxml2          use system  libxml2 library - [will check /usr /usr/local]
 
 if you desire wrapping of some system library installed.
-
-userver_(tcp|ssl|ipc) multi purpose server (plugin oriented)
-------------------------------------------------------------
-
-The current version offers the following features :
-
-    * HTTP/1.0 and 1.1 protocols supported.
-    * Persistent connections for HTTP/1.1 and Keep-Alive support for HTTP/1.0.
-    * Browser cache management (headers: If-Modified-Since/Last-modified).
-    * Chunk-encoding transfers support.
-    * Memory caching for static pages with optional compression.
-    * Support for virtual hosts.
-    * Support for basic/digest authentication.
-    * Support for uri protection.
-    * Support for aliases/redirection.
-    * Support for JSONRequest (http://json.org/JSONRequest.html).
-    * Support for Windows (without preforking).
-    * Requests cut in phases for modular architecture (Apache-like).
-    * Built-in modules :
-          o mod_http : core features, static file handler and dynamic page (ULib Servlet Page).
-          o mod_fcgi : third-party applications support thru FastCGI interface.
-          o mod_stream : simple streaming support (experimental).
-          o mod_soap : generic SOAP server pages support.
-          o mod_tsa : server side time stamp support.
-          o mod_nocat : captive portal implementation.
-          o mod_proxy : proxy support (experimental).
-          o mod_rpc : generic Remote Procedure Call.
-    * Configuration file with dedicated section.
-    * CGI support for shell script processes (with automatic management of form and cookie).
-    * General CGI support (run any CGI script) with automatic output compression (using deflate method).
-
-Benchmarking
-------------
-
-    $ ./configure && make
-    $ cd tests/examples
-    $ ./benchmarking.sh (or hello_world.sh)
-
-Use apachebench
-
-	$ ab -n 100000 -c10 http://127.0.0.1/usp/benchmarking.usp?name=stefano (or)
-	$ ab -n 100000 -c10 http://127.0.0.1/usp/hello_world.usp
 
 More info
 ---------

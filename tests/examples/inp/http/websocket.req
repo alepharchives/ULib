@@ -1,0 +1,10 @@
+GET /demo HTTP/1.1
+Host: example.com
+Connection: Upgrade
+Sec-WebSocket-Key2: 17  9 G`ZD9   2 2b 7X 3 /r90
+Sec-WebSocket-Protocol: sample
+Upgrade: WebSocket
+Sec-WebSocket-Key1: 3e6b263  4 17 80
+Origin: http://example.com
+
+WjN}|M(6messaggio_di_prova

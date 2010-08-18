@@ -8,7 +8,7 @@ ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 
 moduledir = $(libexecdir)/ulib
 
-module_LTLIBRARIES = mod_rpc.la mod_http.la mod_tsa.la mod_nocat.la mod_echo.la mod_fcgi.la mod_stream.la
+module_LTLIBRARIES = mod_rpc.la mod_http.la mod_tsa.la mod_nocat.la mod_echo.la mod_fcgi.la mod_stream.la mod_socket.la
 
 mod_rpc_la_SOURCES   = mod_rpc.cpp
 mod_rpc_la_LIBADD    = $(ulib_la)
@@ -37,6 +37,10 @@ mod_fcgi_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
 mod_stream_la_SOURCES  = mod_stream.cpp
 mod_stream_la_LIBADD   = $(ulib_la)
 mod_stream_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
+
+mod_socket_la_SOURCES  = mod_socket.cpp
+mod_socket_la_LIBADD   = $(ulib_la)
+mod_socket_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
 
 if EXPAT
 module_LTLIBRARIES  += mod_soap.la

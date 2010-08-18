@@ -175,12 +175,16 @@ uint32_t u_dgst_finish(unsigned char* restrict hash, int base64) /* Finish and g
 
    if (hash == 0) return u_mdLen;
 
-   if (base64) len = u_base64_encode(u_mdValue, u_mdLen, hash);
-   else
+        if (base64 ==  1) len = u_base64_encode(u_mdValue, u_mdLen, hash);
+   else if (base64 ==  0)
       {
       len = u_mdLen * 2;
 
       u_dgst_hexdump(hash);
+      }
+   else
+      {
+      (void) memcpy(hash, u_mdValue, (len = u_mdLen));
       }
 
    return len;

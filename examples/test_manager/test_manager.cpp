@@ -153,7 +153,9 @@ public:
                   {
                   if (output.empty() == false) output.setEmpty();
 
-                  output_len = UServices::read(UProcess::filedes[2], output, 0);
+                  UServices::readEOF(UProcess::filedes[2], output);
+
+                  output_len = output.size();
 
                   if (output_len)
                      {

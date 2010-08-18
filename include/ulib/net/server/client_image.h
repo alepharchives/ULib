@@ -129,6 +129,7 @@ public:
 
    // manage if data read already available... (pipelining)
 
+   static bool isPipeline();
    static void manageForPipeline()
       {
       U_TRACE(0, "UClientImage_Base::manageForPipeline()")
@@ -218,7 +219,6 @@ protected:
       }
 
    static void destroy();
-   static bool isPipeline();
 
 private:
    UClientImage_Base(const UClientImage_Base&) : UEventFd() {}

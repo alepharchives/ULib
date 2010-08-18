@@ -104,7 +104,7 @@ public:
 
       UString x(U_CAPACITY);
 
-      (void) UServices::read(STDIN_FILENO, x);
+      UServices::readEOF(STDIN_FILENO, x);
 
       if (x.empty()) U_ERROR("cannot read data from <stdin>...", 0);
 

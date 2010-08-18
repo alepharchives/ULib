@@ -98,7 +98,7 @@ typedef struct uhttpheader {
    uint32_t nResponseCode, version,
             startHeader, endHeader, szHeader,
             method_len, uri_len, query_len, host_len, content_type_len, range_len,
-            method_type, clength, keep_alive, is_connection_close, is_php, is_accept_deflate;
+            method_type, clength, keep_alive, is_connection_close, is_php, is_accept_deflate, upgrade;
 } uhttpheader;
 
 enum HTTPMethodType { HTTP_POST = 1, HTTP_PUT = 2, HTTP_DELETE = 3, HTTP_GET = 4, HTTP_HEAD = 5 };
@@ -153,15 +153,21 @@ template <class T> class UHashMap;
 class U_EXPORT UHTTP {
 public:
 
-   // HTTP main error message
+   // HTTP strings 
 
    static void str_allocate();
 
+   static const UString* str_origin;
    static const UString* str_frm_body;
-   static const UString* str_frm_header;
+   static const UString* str_websocket;
    static const UString* str_ctype_tsa;
+   static const UString* str_frm_header;
    static const UString* str_ctype_html;
    static const UString* str_ctype_soap;
+   static const UString* str_frm_websocket;
+   static const UString* str_websocket_key1;
+   static const UString* str_websocket_key2;
+   static const UString* str_websocket_prot;
 
    // HTTP header representation
 

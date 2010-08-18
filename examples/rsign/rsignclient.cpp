@@ -144,7 +144,9 @@ public:
          UString result, data(U_CAPACITY),
                  key = UFile::contentOf(cfg_key);
 
-         if (UServices::read(STDIN_FILENO, data)) result = client->signData(data, key);
+         UServices::readEOF(STDIN_FILENO, data);
+         
+         result = client->signData(data, key);
 
          if (result.empty() == false)
             {

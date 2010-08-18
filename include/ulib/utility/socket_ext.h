@@ -31,11 +31,12 @@ public:
    static UString getNetworkAddress(int fd, const char* device);        // eth0
    static UString getNetworkDevice(         const char* exclude);       // eth0
 
-   // -----------------------------------------------------------------------------------------------------------------------------
-   // Socket I/O
-   // -----------------------------------------------------------------------------------------------------------------------------
-
-   // manage buffered read
+   /**
+    * Read data from socket
+    *
+    * @param timeoutMS specified the timeout value, in milliseconds.
+    *        A negative value indicates no timeout, i.e. an infinite wait.
+    */
 
    static int pcount;
    static uint32_t size_message;
@@ -57,7 +58,7 @@ public:
       {
       U_TRACE(0, "USocketExt::readEOF(%p,%.*S)", s, U_STRING_TO_TRACE(buffer))
 
-      while (USocketExt::read(s, buffer, U_SINGLE_READ)) {}
+      while (USocketExt::read(s, buffer)) {}
       }
 
    // write while sending data

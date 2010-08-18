@@ -53,12 +53,24 @@ struct U_EXPORT UServices {
    static void closeStdInputOutput();  /* move stdin and stdout to /dev/null */
 
    /**
-    * Read data from fd - while !(EOF|ERROR|TIMEOUT)
+    * Read data from fd
     *
     * @param timeoutMS specified the timeout value, in milliseconds.
     *        A negative value indicates no timeout, i.e. an infinite wait.
     */
-   static uint32_t read(int fd, UString& buffer, int timeoutMS = -1);
+
+   // read while not received count data
+
+   static bool read(int fd, UString& buffer, int count = U_SINGLE_READ, int timeoutMS = -1);
+
+   // read while received data
+
+   static void readEOF(int fd, UString& buffer)
+      {
+      U_TRACE(0, "UServices::readEOF(%d,%.*S)", fd, U_STRING_TO_TRACE(buffer))
+
+      while (UServices::read(fd, buffer)) {}
+      }
 
    // generic MatchType { U_FNMATCH = 0, U_DOSMATCH = 1, U_DOSMATCH_WITH_OR = 2 };
 
@@ -141,13 +153,13 @@ struct U_EXPORT UServices {
    static UString getTokenData(const char* token);
    static UString generateToken(UString& data, time_t expire);
 
-#ifdef HAVE_SSL
+   #ifdef HAVE_SSL
    static void generateDigest(int alg, const UString& data) { generateDigest(alg, (unsigned char*)U_STRING_TO_PARAM(data)); }
    static void generateDigest(int alg, unsigned char* data, uint32_t size);
-#endif
+   #endif
 
-   static void generateDigest(int alg, uint32_t keylen, unsigned char* data, uint32_t size, UString& output, bool base64);
-   static void generateDigest(int alg, uint32_t keylen, const UString& data,                UString& output, bool base64)
+   static void generateDigest(int alg, uint32_t keylen, unsigned char* data, uint32_t size, UString& output, int base64 = 0);
+   static void generateDigest(int alg, uint32_t keylen, const UString& data,                UString& output, int base64 = 0)
       { generateDigest(alg, keylen, (unsigned char*)U_STRING_TO_PARAM(data), output, base64); }
 
    static bool    checkHMAC(int alg, unsigned char* data, uint32_t size, const UString& hmac);
@@ -234,7 +246,7 @@ struct U_EXPORT UServices {
     * passwd is the corresponsding password for the private key
     */
 
-   static UString getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, bool base64, ENGINE* e = 0);
+   static UString getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, int base64, ENGINE* e = 0);
 #endif
 };
 
