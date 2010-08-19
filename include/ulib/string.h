@@ -1135,7 +1135,18 @@ public:
    bool uniq() const      { return rep->uniq(); }
    bool writeable() const { return rep->writeable(); }
 
-   // (manage UString as memory mapped area...)
+   // manage UString as constant string...
+
+   void setConstant(const char* t, uint32_t tlen)
+      {
+      U_TRACE(0, "UString::setConstant(%.*S,%u)", tlen, t, tlen)
+
+      set(UStringRep::create(t, tlen, 0U));
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
+   // manage UString as memory mapped area...
 
    void mmap(char* map, uint32_t len)
       {
@@ -1148,7 +1159,7 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   // (manage UString as buffer...)
+   // manage UString as buffer...
 
    void size_adjust(      uint32_t value = U_NOT_FOUND) { rep->size_adjust(value); }
    void size_adjust_force(uint32_t value = U_NOT_FOUND) { rep->size_adjust_force(value); }

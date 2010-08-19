@@ -167,6 +167,9 @@ typedef unsigned long long uint64;
 /* Define to 1 if you have the <bsd/signal.h> header file. */
 #undef HAVE_BSD_SIGNAL_H
 
+/* Define to 1 if you have the <byteswap.h> header file. */
+#undef HAVE_BYTESWAP_H
+
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 

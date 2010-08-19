@@ -49,6 +49,10 @@ class UCommand;
 class U_EXPORT UWebSocketPlugIn : public UServerPlugIn {
 public:
 
+   static UString* str_USE_SIZE_PREAMBLE;
+
+   static void str_allocate();
+
    // COSTRUTTORI
 
    UWebSocketPlugIn()
@@ -56,6 +60,8 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UWebSocketPlugIn, "", 0)
 
       command = 0;
+
+      if (str_USE_SIZE_PREAMBLE == 0) str_allocate();
       }
 
    virtual ~UWebSocketPlugIn();
@@ -80,7 +86,11 @@ public:
 protected:
    UCommand* command;
 
-   static void dataFraming();
+   static bool bUseSizePreamble;
+
+   static RETSIGTYPE handlerForSigTERM(int signo);
+
+   static bool handleDataFraming();
    static void getPart(const char* key, unsigned char* part);
 
 private:

@@ -1142,9 +1142,7 @@ end:
          {
          // NB: needed because only the parent process must close the log...
 
-         U_INTERNAL_ASSERT(proc->child())
-
-         if (isLog()) log = 0;
+         if (proc->child() && isLog()) log = 0;
          }
       }
 }

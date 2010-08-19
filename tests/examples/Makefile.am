@@ -5,14 +5,14 @@ MAINTAINERCLEANFILES	= Makefile.in
 DEFAULT_INCLUDES =  -I. -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/examples/http_header/include
 
 EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN nocat wi-auth WAGSM RA icons IR/WEB IR/benchmark IR/doc_dir *.cfg *.ini *.properties *.test *.sh \
-				 index.html 100*.html .htpasswd .htdigest cgi-bin www.sito?.com error_msg workflow doc_parse favicon.ico
+				 index.html 100*.html .htpasswd .htdigest cgi-bin www.sito?.com error_msg workflow doc_parse favicon.ico chat.html js/prototype.js
 
 DEFS  = -DU_TEST @DEFS@
 
 TESTS = client_server.test test_manager.test IR.test ## workflow.test
 
 if PLUGIN
-TESTS += web_server.test web_server_multiclient.test
+TESTS += web_server.test web_server_multiclient.test web_socket.test
 if SSL
 TESTS += tsa_http.test tsa_https.test csp_rpc.test rsign_rpc.test tsa_rpc.test uclient.test
 if EXPAT

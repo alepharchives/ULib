@@ -1,0 +1,8 @@
+HTTP/1.1 101 Web Socket Protocol Handshake
+Upgrade: WebSocket
+Connection: Upgrade
+WebSocket-Origin: http://example.com
+WebSocket-Location: ws://example.com/demo
+Sec-WebSocket-Protocol: sample
+
+n`9eBk9z$R8pOtVb

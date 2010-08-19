@@ -154,10 +154,33 @@ void u_dgst_reset(void) /* Reset the hash */
       }
 }
 
-uint32_t u_dgst_finish(unsigned char* restrict hash, int base64) /* Finish and get hash */
+static uint32_t u_finish(unsigned char* restrict ptr, int base64)
 {
    uint32_t len;
 
+   U_INTERNAL_TRACE("u_finish(%p,%d)", ptr, base64)
+
+   U_INTERNAL_ASSERT_MINOR(u_mdLen,U_MAX_HASH_SIZE)
+
+   if (ptr == 0) return u_mdLen;
+
+        if (base64 == 1) len = u_base64_encode(u_mdValue, u_mdLen, ptr);
+   else if (base64 == 0)
+      {
+      len = u_mdLen * 2;
+
+      u_dgst_hexdump(ptr);
+      }
+   else
+      {
+      return u_mdLen;
+      }
+
+   return len;
+}
+
+uint32_t u_dgst_finish(unsigned char* restrict hash, int base64) /* Finish and get hash */
+{
    U_INTERNAL_TRACE("u_dgst_finish(%p,%d)", hash, base64)
 
    /* Finish up and copy out hash, returning the length */
@@ -171,23 +194,7 @@ uint32_t u_dgst_finish(unsigned char* restrict hash, int base64) /* Finish and g
       (void) EVP_DigestFinal(&u_mdctx, u_mdValue, &u_mdLen);
       }
 
-   U_INTERNAL_ASSERT_MINOR(u_mdLen,U_MAX_HASH_SIZE)
-
-   if (hash == 0) return u_mdLen;
-
-        if (base64 ==  1) len = u_base64_encode(u_mdValue, u_mdLen, hash);
-   else if (base64 ==  0)
-      {
-      len = u_mdLen * 2;
-
-      u_dgst_hexdump(hash);
-      }
-   else
-      {
-      (void) memcpy(hash, u_mdValue, (len = u_mdLen));
-      }
-
-   return len;
+   return u_finish(hash, base64);
 }
 
 /* The EVP signature routines are a high level interface to digital signatures */
@@ -226,27 +233,13 @@ void u_dgst_verify_init(int alg, ENGINE* restrict impl)
 
 uint32_t u_dgst_sign_finish(unsigned char* restrict sig, int base64) /* Finish and get signature */
 {
-   uint32_t len;
-
    U_INTERNAL_TRACE("u_dgst_sign_finish(%p,%d)", sig, base64)
 
    U_INTERNAL_ASSERT_POINTER(u_pkey)
 
    (void) EVP_SignFinal(&u_mdctx, u_mdValue, &u_mdLen, u_pkey);
 
-   U_INTERNAL_ASSERT_MINOR(u_mdLen,U_MAX_HASH_SIZE)
-
-   if (sig == 0) return u_mdLen;
-
-   if (base64) len = u_base64_encode(u_mdValue, u_mdLen, sig);
-   else
-      {
-      len = u_mdLen * 2;
-
-      u_dgst_hexdump(sig);
-      }
-
-   return len;
+   return u_finish(sig, base64);
 }
 
 int u_dgst_verify_finish(unsigned char* restrict sigbuf, uint32_t siglen)

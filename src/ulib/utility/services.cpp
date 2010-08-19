@@ -516,13 +516,12 @@ passwd is the corresponsding password for the private key
 
 UString UServices::getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, int base64, ENGINE* e)
 {
-   U_TRACE(0, "UServices::getSignatureValue(%d,%.*S,%.*S,%.*S,%d,%p)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(pkey), U_STRING_TO_TRACE(passwd), base64, e)
+   U_TRACE(0, "UServices::getSignatureValue(%d,%.*S,%.*S,%.*S,%d,%p)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(pkey),
+                                                                       U_STRING_TO_TRACE(passwd), base64, e)
 
    u_dgst_sign_init(alg, 0);
 
    u_dgst_sign_hash((unsigned char*)U_STRING_TO_PARAM(data));
-
-   UString output(U_CAPACITY);
 
    bool bkey = (pkey.empty() == false);
 
@@ -533,9 +532,9 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
       U_INTERNAL_ASSERT_POINTER(u_pkey)
       }
 
-   uint32_t bytes_written = u_dgst_sign_finish((unsigned char*)output.data(), base64);
+   UString output(U_CAPACITY);
 
-   output.size_adjust(bytes_written);
+   uint32_t bytes_written = u_dgst_sign_finish((unsigned char*)output.data(), base64);
 
    if (bkey &&
        u_pkey)
@@ -544,6 +543,9 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
 
       u_pkey = 0;
       }
+
+   if (base64 == -1) output.setConstant((const char*)u_mdValue, u_mdLen);
+   else              output.size_adjust(bytes_written);
 
    U_RETURN_STRING(output);
 }
@@ -587,7 +589,8 @@ void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, ui
 
    uint32_t bytes_written = u_dgst_finish((unsigned char*)output.end(), base64);
 
-   output.size_adjust(output.size() + bytes_written);
+   if (base64 == -1) output.setConstant((const char*)u_mdValue, u_mdLen);
+   else              output.size_adjust(output.size() + bytes_written);
 
    U_INTERNAL_DUMP("output = %.*S", U_STRING_TO_TRACE(output))
 #endif

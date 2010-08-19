@@ -126,7 +126,10 @@ bool UFileConfig::searchForObjectStream(const char* section, uint32_t len)
 
    if (len == 0) section = "{";
 
+   bool bretry            = len && (_start != data.data());
    const char* save_start = _start;
+
+retry:
 
    while (_start < _end)
       {
@@ -175,6 +178,14 @@ bool UFileConfig::searchForObjectStream(const char* section, uint32_t len)
       // FOUND
 
       U_RETURN(true);
+      }
+
+   if (bretry)
+      {
+      bretry = false;
+      _start = data.data();
+
+      goto retry;
       }
 
    _start = save_start;

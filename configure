@@ -23951,7 +23951,7 @@ $as_echo "#define HAVE_SYS_WAIT_H 1" >>confdefs.h
 
 fi
 
-for ac_header in assert.h endian.h execinfo.h ndir.h semaphore.h string.h netpacket/packet.h sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h \
+for ac_header in assert.h byteswap.h endian.h execinfo.h ndir.h semaphore.h string.h netpacket/packet.h sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h \
 						sysexits.h termios.h streambuf.h linux/netfilter_ipv4/ipt_ACCOUNT.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`

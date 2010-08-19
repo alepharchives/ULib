@@ -45,10 +45,6 @@ $SLEEP
 #  $NC 127.0.0.1 80 <inp/http/and/$i >/tmp/web_server/$i
 #done
 
-#$NC 127.0.0.1 80 <inp/http/websocket.req >out/web_server.out
-#kill_prg userver_tcp TERM
-#exit 0
-
 LS=`ls inp/http/close`
 for i in $LS
 do

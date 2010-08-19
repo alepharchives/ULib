@@ -17,7 +17,32 @@
 #include <ulib/plugin/mod_socket.h>
 #include <ulib/net/server/server.h>
 
+#ifdef HAVE_BYTESWAP_H
+#  include <byteswap.h>
+#else
+#  define rotr32(x,n) (((x) >> n) | ((x) << (32 - n)))
+#  define bswap_32(x) (rotr32((x), 24) & 0x00ff00ff | rotr32((x), 8) & 0xff00ff00)
+#  define bswap_64(x) (((uint64_t)(bswap_32((uint32_t)(x)))) << 32 | bswap_32((uint32_t)((x) >> 32)))
+#endif
+
 U_CREAT_FUNC(UWebSocketPlugIn)
+
+bool UWebSocketPlugIn::bUseSizePreamble;
+
+UString* UWebSocketPlugIn::str_USE_SIZE_PREAMBLE;
+
+void UWebSocketPlugIn::str_allocate()
+{
+   U_TRACE(0, "UWebSocketPlugIn::str_allocate()")
+
+   U_INTERNAL_ASSERT_EQUALS(str_USE_SIZE_PREAMBLE,0)
+
+   static ustringrep stringrep_storage[] = {
+      { U_STRINGREP_FROM_CONSTANT("USE_SIZE_PREAMBLE") }
+   };
+
+   U_NEW_ULIB_OBJECT(str_USE_SIZE_PREAMBLE, U_STRING_FROM_STRINGREP_STORAGE(0));
+}
 
 UWebSocketPlugIn::~UWebSocketPlugIn()
 {
@@ -55,20 +80,23 @@ void UWebSocketPlugIn::getPart(const char* key, unsigned char* part)
    division = htonl(division);
 
    (void) U_SYSCALL(memcpy, "%p,%p,%u", part, &division, sizeof(uint32_t));
-
-   /*
-   part[0] = (char)( division        >> 24);
-   part[1] = (char)((division <<  8) >> 24);
-   part[2] = (char)((division << 16) >> 24);
-   part[3] = (char)((division << 24) >> 24);
-   */
 }
 
-void UWebSocketPlugIn::dataFraming()
+RETSIGTYPE UWebSocketPlugIn::handlerForSigTERM(int signo)
 {
-   U_TRACE(0, "UWebSocketPlugIn::dataFraming()")
+   U_TRACE(0, "[SIGTERM] UWebSocketPlugIn::handlerForSigTERM(%d)", signo)
 
-   UString buffer(U_CAPACITY);
+   UInterrupt::sendOurselves(SIGTERM);
+}
+
+bool UWebSocketPlugIn::handleDataFraming()
+{
+   U_TRACE(0, "UWebSocketPlugIn::handleDataFraming()")
+
+   uint32_t sz;
+   UString frame;
+   unsigned char type;
+   uint64_t frame_length;
    fd_set fd_set_read, read_set;
    int n, sock = UClientImage_Base::socket->getFd(), fdmax = U_max(sock, UProcess::filedes[2]) + 1;
 
@@ -76,12 +104,7 @@ void UWebSocketPlugIn::dataFraming()
    FD_SET(sock,                 &fd_set_read);
    FD_SET(UProcess::filedes[2], &fd_set_read);
 
-   if (UClientImage_Base::isPipeline())
-      {
-      (void) buffer.append(UClientImage_Base::rbuffer->data(), USocketExt::pcount);
-
-      goto start;
-      }
+   if (UClientImage_Base::isPipeline()) goto read_from_client;
 
 loop:
    read_set = fd_set_read;
@@ -92,23 +115,96 @@ loop:
       {
       if (FD_ISSET(sock, &read_set))
          {
-         buffer.setEmpty();
+         UClientImage_Base::rbuffer->setEmpty();
 
-         if (UServices::read(sock, buffer))
+read_from_client:
+
+         if (USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer))
             {
-start:      if (UNotifier::write(UProcess::filedes[1], U_STRING_TO_PARAM(buffer))) goto loop;
+            sz   =                 UClientImage_Base::rbuffer->size();
+            type = (unsigned char) UClientImage_Base::rbuffer->first_char();
+
+            if (bUseSizePreamble)
+               {
+               // big-endian 64 bit unsigned integer
+
+               frame_length = *((uint64_t*)UClientImage_Base::rbuffer->c_pointer(1));
+
+#           if __BYTE_ORDER == __LITTLE_ENDIAN
+               frame_length = bswap_64(frame_length);
+#           endif
+
+               if (frame_length == 0)
+                  {
+                  if (type == 0x00) goto end;
+
+                  goto loop;
+                  }
+
+               U_INTERNAL_ASSERT_EQUALS(type,0xff)
+
+               sz -= 1 + sizeof(uint64_t);
+
+               if (frame_length > sz)
+                  {
+                  // wait max 3 sec for other data...
+
+                  if (USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer, frame_length - sz, 3 * 1000) == false) goto end;
+                  }
+
+               frame = UClientImage_Base::rbuffer->substr(1 + sizeof(uint64_t), frame_length);
+               }
+            else
+               {
+               U_INTERNAL_ASSERT_EQUALS(type,0x00)
+               U_ASSERT_EQUALS((unsigned char)UClientImage_Base::rbuffer->last_char(),0xff)
+
+               frame = UClientImage_Base::rbuffer->substr(1,       // skip 0x00
+                                                          sz - 2); // skip 0xff
+               }
+
+            U_SRV_LOG_VAR_WITH_ADDR("received message (%u bytes) %.*S from", frame.size(), U_STRING_TO_TRACE(frame))
+
+            if (UNotifier::write(UProcess::filedes[1], U_STRING_TO_PARAM(frame))) goto loop;
+
+            U_RETURN(true);
             }
          }
       else if (FD_ISSET(UProcess::filedes[2], &read_set))
          {
-         buffer.setEmpty();
+         UClientImage_Base::wbuffer->setEmpty();
 
-         if (UServices::read(UProcess::filedes[2], buffer))
+         if (UServices::read(UProcess::filedes[2], *UClientImage_Base::wbuffer))
             {
-            if (UNotifier::write(sock, U_STRING_TO_PARAM(buffer))) goto loop;
+            if (bUseSizePreamble)
+               {
+               (void) frame.assign(1, '\0');
+
+               // big-endian 64 bit unsigned integer
+
+               frame_length = UClientImage_Base::wbuffer->size();
+
+#           if __BYTE_ORDER == __LITTLE_ENDIAN
+               frame_length = bswap_64(frame_length);
+#           endif
+
+               (void) frame.append((const char*)&frame_length, sizeof(uint64_t));
+               (void) frame.append(*UClientImage_Base::wbuffer);
+               }
+            else
+               {
+               frame = '\0' + *UClientImage_Base::wbuffer + '\377';
+               }
+
+            U_SRV_LOG_VAR_WITH_ADDR("sent message (%u bytes) %.*S to", frame.size(), U_STRING_TO_TRACE(frame))
+
+            if (USocketExt::write(UClientImage_Base::socket, U_STRING_TO_PARAM(frame))) goto loop;
             }
          }
       }
+
+end:
+   U_RETURN(false);
 }
 
 // Server-wide hooks
@@ -117,14 +213,20 @@ int UWebSocketPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UWebSocketPlugIn::handlerConfig(%p)", &cfg)
 
-   // -----------------------------------------------
-   // Perform registration of userver method
-   // -----------------------------------------------
-   // COMMAND                      command to execute
-   // ENVIRONMENT  environment for command to execute
-   // -----------------------------------------------
+   // ---------------------------------------------------------------------------------------------
+   // Perform registration of web socket method
+   // ---------------------------------------------------------------------------------------------
+   // COMMAND                            command to execute
+   // ENVIRONMENT        environment for command to execute
+   //
+   // USE_SIZE_PREAMBLE  use last specification (http://www.whatwg.org/specs/web-socket-protocol/)
+   // ---------------------------------------------------------------------------------------------
 
-   if (cfg.loadTable()) command = UServer_Base::loadConfigCommand(cfg);
+   if (cfg.loadTable())
+      {
+      command          = UServer_Base::loadConfigCommand(cfg);
+      bUseSizePreamble = cfg.readBoolean(*str_USE_SIZE_PREAMBLE);
+      }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
@@ -161,86 +263,98 @@ int UWebSocketPlugIn::handlerRequest()
    const char* key2   = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_key2);
    const char* origin = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_origin);
 
-   if (key1   == 0 ||
-       key2   == 0 ||
-       origin == 0)
+   if (key1 &&
+       key2 &&
+       origin)
       {
-      U_RETURN(U_PLUGIN_HANDLER_ERROR);
-      }
+      char c;
+      uint32_t origin_len = 0;
 
-   char c;
-   uint32_t origin_len = 0;
+      for (c = u_line_terminator[0]; origin[origin_len] != c; ++origin_len) {}
 
-   for (c = u_line_terminator[0]; origin[origin_len] != c; ++origin_len) {}
+      U_INTERNAL_DUMP("origin = %.*S", origin_len, origin)
 
-   U_INTERNAL_DUMP("origin = %.*S", origin_len, origin)
+      // big-endian 128 bit string
 
-   // big-endian 128 bit string
+      unsigned char challenge[16];
 
-   unsigned char challenge[16];
+                             getPart(key1, challenge);
+                             getPart(key2, challenge+4);
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", challenge+8, U_STRING_TO_PARAM(*UClientImage_Base::body));
 
-                          getPart(key1, challenge);
-                          getPart(key2, challenge+4);
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", challenge+8, U_STRING_TO_PARAM(*UClientImage_Base::body));
-
-   // MD5(challenge)
-
-   UClientImage_Base::body->setBuffer(U_CAPACITY);
-
-   UServices::generateDigest(U_HASH_MD5, 0, challenge, sizeof(challenge), *UClientImage_Base::body, -1);
-
-   UString tmp(100U);
-   uint32_t protocol_len = 0;
-   const char* protocol  = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_prot);
-
-   if (protocol)
-      {
-      for (c = u_line_terminator[0]; protocol[protocol_len] != c; ++protocol_len) {}
-
-      U_INTERNAL_DUMP("protocol = %.*S", protocol_len, protocol)
-
-      tmp.snprintf("%.*s: %.*s\r\n", U_STRING_TO_TRACE(*UHTTP::str_websocket_prot), protocol_len, protocol); 
-      }
-
-   UClientImage_Base::wbuffer->setBuffer(100U + origin_len + tmp.size() +
-                                         UHTTP::http_info.uri_len +
-                                         UHTTP::http_info.host_len +
-                                         UHTTP::str_frm_websocket->size());
-
-   UClientImage_Base::wbuffer->snprintf(UHTTP::str_frm_websocket->data(),
-                                        origin_len, origin,
-                                        U_HTTP_HOST_TO_TRACE, U_HTTP_URI_TO_TRACE,
-                                        U_STRING_TO_TRACE(tmp));
-
-   if (UClientImage_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
-      {
-      UClientImage_Base::write_off = true;
-
-#  ifdef DEBUG
-      int fd_stderr = UFile::creat("/tmp/UWebSocketPlugIn.err", O_WRONLY | O_APPEND, PERM_FILE);
-#  else
-      int fd_stderr = UServices::getDevNull();
-#  endif
-
-      U_INTERNAL_ASSERT_POINTER(command)
-
-      // Set environment for the command application server
+      // MD5(challenge)
 
       UClientImage_Base::body->setBuffer(U_CAPACITY);
 
-      UString environment = command->getStringEnvironment() + *UHTTP::penvironment + UHTTP::getCGIEnvironment(command->isShellScript());
+      UServices::generateDigest(U_HASH_MD5, 0, challenge, sizeof(challenge), *UClientImage_Base::body, -1);
 
-      command->setEnvironment(&environment);
+      UString tmp(100U);
+      uint32_t protocol_len = 0;
+      const char* protocol  = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_prot);
 
-      UHTTP::penvironment->setEmpty();
-
-      if (command->execute((UString*)-1, (UString*)-1, -1, fd_stderr))
+      if (protocol)
          {
-         UServer_Base::logCommandMsgError(command->getCommand());
+         for (c = u_line_terminator[0]; protocol[protocol_len] != c; ++protocol_len) {}
 
-         dataFraming();
+         U_INTERNAL_DUMP("protocol = %.*S", protocol_len, protocol)
 
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         tmp.snprintf("%.*s: %.*s\r\n", U_STRING_TO_TRACE(*UHTTP::str_websocket_prot), protocol_len, protocol); 
+         }
+
+      UClientImage_Base::wbuffer->setBuffer(100U + origin_len + tmp.size() +
+                                            UHTTP::http_info.uri_len +
+                                            UHTTP::http_info.host_len +
+                                            UHTTP::str_frm_websocket->size());
+
+      UClientImage_Base::wbuffer->snprintf(UHTTP::str_frm_websocket->data(),
+                                           origin_len, origin,
+                                           U_HTTP_HOST_TO_TRACE, U_HTTP_URI_TO_TRACE,
+                                           U_STRING_TO_TRACE(tmp));
+
+      if (UClientImage_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
+         {
+         UClientImage_Base::write_off = true;
+
+#     ifdef DEBUG
+         int fd_stderr = UFile::creat("/tmp/UWebSocketPlugIn.err", O_WRONLY | O_APPEND, PERM_FILE);
+#     else
+         int fd_stderr = UServices::getDevNull();
+#     endif
+
+         U_INTERNAL_ASSERT_POINTER(command)
+
+         // Set environment for the command application server
+
+         UClientImage_Base::body->setBuffer(U_CAPACITY);
+
+         UString environment = command->getStringEnvironment() + *UHTTP::penvironment + UHTTP::getCGIEnvironment(command->isShellScript());
+
+         command->setEnvironment(&environment);
+
+         UHTTP::penvironment->setEmpty();
+
+         if (command->execute((UString*)-1, (UString*)-1, -1, fd_stderr))
+            {
+            UServer_Base::logCommandMsgError(command->getCommand());
+
+            UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UWebSocketPlugIn::handlerForSigTERM); // sync signal
+
+            if (handleDataFraming())
+               {
+               // Send nine 0x00 bytes to the client to indicate the start of the closing handshake
+
+               char closing[9] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
+
+               if (USocketExt::write(UClientImage_Base::socket, closing, sizeof(closing)))
+                  {
+                  UClientImage_Base::wbuffer->setEmpty();
+
+                  // client terminated: receive nine 0x00 bytes
+
+                  (void) USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer, closing, sizeof(closing));
+                  }
+               }
+            }
          }
       }
 
@@ -254,7 +368,8 @@ int UWebSocketPlugIn::handlerRequest()
 
 const char* UWebSocketPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "command (UCommand " << (void*)command << ')';
+   *UObjectIO::os << "bUseSizePreamble  " << bUseSizePreamble  << '\n'
+                  << "command (UCommand " << (void*)command    << ')';
 
    if (reset)
       {

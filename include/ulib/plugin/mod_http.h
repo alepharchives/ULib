@@ -47,6 +47,7 @@ RETURNS:
 
 class U_EXPORT UHttpPlugIn : public UServerPlugIn {
 public:
+
    static UString* str_CACHE_FILE_MASK;
    static UString* str_URI_PROTECTED_MASK;
    static UString* str_URI_REQUEST_CERT_MASK;

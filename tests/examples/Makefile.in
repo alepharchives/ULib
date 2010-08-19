@@ -36,7 +36,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@PLUGIN_TRUE@am__append_1 = web_server.test web_server_multiclient.test
+@PLUGIN_TRUE@am__append_1 = web_server.test web_server_multiclient.test web_socket.test
 @PLUGIN_TRUE@@SSL_TRUE@am__append_2 = tsa_http.test tsa_https.test csp_rpc.test rsign_rpc.test tsa_rpc.test uclient.test
 @EXPAT_TRUE@@PLUGIN_TRUE@@SSL_TRUE@am__append_3 = csp.test tsa_ssoap.test rsign.test
 @MINGW_FALSE@@PLUGIN_TRUE@@SSL_TRUE@am__append_4 = lcsp_rpc.test
@@ -351,7 +351,7 @@ thrprefix = @thrprefix@
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/examples/http_header/include
 EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN nocat wi-auth WAGSM RA icons IR/WEB IR/benchmark IR/doc_dir *.cfg *.ini *.properties *.test *.sh \
-				 index.html 100*.html .htpasswd .htdigest cgi-bin www.sito?.com error_msg workflow doc_parse favicon.ico
+				 index.html 100*.html .htpasswd .htdigest cgi-bin www.sito?.com error_msg workflow doc_parse favicon.ico chat.html js/prototype.js
 
 TESTS = client_server.test test_manager.test IR.test $(am__append_1) \
 	$(am__append_2) $(am__append_3) $(am__append_4) \
@@ -566,7 +566,7 @@ check-TESTS: $(TESTS)
 	else :; fi
 
 distdir: $(DISTFILES)
-	$(mkdir_p) $(distdir)/IR
+	$(mkdir_p) $(distdir)/IR $(distdir)/js
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \
