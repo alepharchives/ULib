@@ -2,8 +2,6 @@
 
 . ../.function
 
-start_msg web_doc_parse
-
 rm -f web_doc_parse.log \
       out/userver_tcp.out err/userver_tcp.err \
 		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]*

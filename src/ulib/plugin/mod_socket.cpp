@@ -259,38 +259,19 @@ int UWebSocketPlugIn::handlerRequest()
 
    // process handshake
 
-   const char* key1   = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_key1);
-   const char* key2   = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_key2);
    const char* origin = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_origin);
 
-   if (key1 &&
-       key2 &&
-       origin)
+   if (origin)
       {
       char c;
-      uint32_t origin_len = 0;
+      UString tmp(100U);
+      uint32_t origin_len = 0, protocol_len = 0;
 
       for (c = u_line_terminator[0]; origin[origin_len] != c; ++origin_len) {}
 
       U_INTERNAL_DUMP("origin = %.*S", origin_len, origin)
 
-      // big-endian 128 bit string
-
-      unsigned char challenge[16];
-
-                             getPart(key1, challenge);
-                             getPart(key2, challenge+4);
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", challenge+8, U_STRING_TO_PARAM(*UClientImage_Base::body));
-
-      // MD5(challenge)
-
-      UClientImage_Base::body->setBuffer(U_CAPACITY);
-
-      UServices::generateDigest(U_HASH_MD5, 0, challenge, sizeof(challenge), *UClientImage_Base::body, -1);
-
-      UString tmp(100U);
-      uint32_t protocol_len = 0;
-      const char* protocol  = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_prot);
+      const char* protocol = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_prot);
 
       if (protocol)
          {
@@ -310,6 +291,27 @@ int UWebSocketPlugIn::handlerRequest()
                                            origin_len, origin,
                                            U_HTTP_HOST_TO_TRACE, U_HTTP_URI_TO_TRACE,
                                            U_STRING_TO_TRACE(tmp));
+
+      const char* key1 = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_key1);
+      const char* key2 = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_key2);
+
+      if (key1 &&
+          key2)
+         {
+         // big-endian 128 bit string
+
+         unsigned char challenge[16];
+
+                                getPart(key1, challenge);
+                                getPart(key2, challenge+4);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", challenge+8, U_STRING_TO_PARAM(*UClientImage_Base::body));
+
+         // MD5(challenge)
+
+         UClientImage_Base::body->setBuffer(U_CAPACITY);
+
+         UServices::generateDigest(U_HASH_MD5, 0, challenge, sizeof(challenge), *UClientImage_Base::body, -1);
+         }
 
       if (UClientImage_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
          {

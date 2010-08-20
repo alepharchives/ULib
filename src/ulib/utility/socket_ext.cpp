@@ -238,10 +238,17 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
 
    U_INTERNAL_ASSERT(s->isOpen())
 
-   int sz1 = header.size(),
+   int fd  = s->getFd(),
+       sz1 = header.size(),
        sz2 =   body.size();
 
    ssize_t value, count = sz1 + sz2;
+
+   if (count > (16 * 1024) &&
+       USocket::accept4_flags)
+      {
+      (void) U_SYSCALL(fcntl, "%d,%d,%d", fd, F_SETFL, O_RDWR | O_CLOEXEC);
+      }
 
    struct iovec iov[2] = { { (caddr_t)header.data(), sz1 },
                            { (caddr_t)  body.data(), sz2 } };
@@ -256,7 +263,7 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
          {
          if (timeoutMS != -1 &&
              s->isTimeout()  &&
-             UNotifier::waitForWrite(s->getFd(), timeoutMS) == 1)
+             UNotifier::waitForWrite(fd, timeoutMS) == 1)
             {
             s->iState = USocket::CONNECT;
 
@@ -292,6 +299,12 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
       count = sz1 + iov[1].iov_len;
 
       U_INTERNAL_ASSERT_MAJOR(count,0)
+      }
+
+   if (count > (16 * 1024) &&
+       USocket::accept4_flags)
+      {
+      (void) U_SYSCALL(fcntl, "%d,%d,%d", fd, F_SETFL, O_RDWR | O_CLOEXEC | O_NONBLOCK);
       }
 
    U_RETURN(true);

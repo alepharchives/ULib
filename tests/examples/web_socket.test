@@ -20,7 +20,7 @@ DIR_CMD="../../examples/userver"
 start_prg_background userver_tcp -c web_socket.cfg
 
 # handshake
-$NC -w 2 127.0.0.1 80 <inp/http/websocket.req >out/web_socket.out
+$NC -w 2 127.0.0.1 8787 <inp/http/websocket.req >out/web_socket.out
 
 $SLEEP
 kill_prg userver_tcp TERM

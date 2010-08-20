@@ -849,7 +849,15 @@ bool UHTTP::readHTTPRequest()
 
                      U_INTERNAL_DUMP("http_info.upgrade = %d", http_info.upgrade)
 
-                     if (getHTTPHeaderValuePtr(*str_websocket)) http_info.clength = 8; // web socket
+                     if (getHTTPHeaderValuePtr(*str_websocket)) // web socket
+                        {
+                        if (getHTTPHeaderValuePtr(*str_websocket_key1))
+                           {
+                           U_ASSERT_POINTER(getHTTPHeaderValuePtr(*str_websocket_key2))
+
+                           http_info.clength = 8;
+                           }
+                        }
                      }
                   }
                else if (l == 11                     && // 11 -> sizeof("ontent-Type")
@@ -2217,10 +2225,12 @@ void UHTTP::getFileMimeType(const char* suffix, const char* content_type, UStrin
 
       (void) ext.append("Content-Style-Type: text/css\r\n");
 
+      /*
       if (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".compressed.css")))
          {
          (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
          }
+      */
       }
    else if (UFile::mime_index == U_js)
       {
@@ -2229,10 +2239,12 @@ void UHTTP::getFileMimeType(const char* suffix, const char* content_type, UStrin
 
       (void) ext.append("Content-Script-Type: text/javascript\r\n");
 
+      /*
       if (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".compressed.js")))
          {
          (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
          }
+      */
       }
 
 end:
@@ -2264,22 +2276,25 @@ void UHTTP::checkFileForCache()
 
    if (u_dosmatch_with_OR(u_buffer+2, u_buffer_len-2, U_STRING_TO_PARAM(*cache_file_mask), 0))
       {
-      UString ext(300U), content, pathname((void*)(u_buffer+2), u_buffer_len-2);
+      UString pathname((void*)(u_buffer+2), u_buffer_len-2);
 
       file->setPath(pathname);
 
-      const char* suffix = file->getSuffix();
+      UString content = file->getContent(true, true); // NB: we need to do fstat() for Last-Modified: ...
+
+      if (content.empty()) return;
 
       UFileCacheData* file_data = U_NEW(UFileCacheData);
-
-      content = file->getContent(true, true); // NB: we need to do fstat() for Last-Modified: ...
-
-      file_data->array.push_back(content);
 
       file_data->size  = file->getSize();
       file_data->mtime = file->st_mtime;
 
+      file_data->array.push_back(content);
+
       U_INTERNAL_ASSERT_MAJOR(file_data->size, 0)
+
+      UString ext(300U);
+      const char* suffix = file->getSuffix();
 
       getFileMimeType(suffix, 0, ext, file_data->size);
 
@@ -2294,26 +2309,41 @@ void UHTTP::checkFileForCache()
           cache_file_compress_mask->empty() == false &&
           u_dosmatch_with_OR(suffix, file->getSuffixLen(suffix), U_STRING_TO_PARAM(*cache_file_compress_mask), 0))
          {
-         ext.setBuffer(300U);
+         content = UStringExt::deflate(content);
 
-         (void) ext.assign(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
-         
-         UString deflate = UStringExt::deflate(content);
+         off_t size = content.size();
 
-         off_t size = deflate.size();
+         ratio = ((uint32_t) size * 100U) / (uint32_t) file_data->size;
 
-         ratio = (size * 100 / file_data->size);
+         U_INTERNAL_DUMP("ratio = %d", ratio)
 
-         getFileMimeType(suffix, 0, ext, size);
+         if (ratio > 85) ratio = 100; // NB: almeno il 15%...
+         else
+            {
+            ext.setBuffer(300U);
 
-         file_data->array.push_back(ext);
-         file_data->array.push_back(deflate);
+            (void) ext.assign(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+
+            getFileMimeType(suffix, 0, ext, size);
+
+            file_data->array.push_back(ext);
+            file_data->array.push_back(content);
+            }
          }
 #  endif
 
-      cache_file->insert(pathname, file_data);
+      if (content.size() > (32 * 1024)) // for major size it is better to use sendfile()...
+         {
+         U_SRV_LOG_VAR("file not cached: %S - %I bytes - (%d%%) compressed ratio (size exceeded)", pathname.data(), file_data->size, 100 - ratio);
 
-      U_SRV_LOG_VAR("file cached: %S - %I bytes - (%d%%) compressed ratio", pathname.data(), file_data->size, 100 - ratio);
+         delete file_data;
+         }
+      else
+         {
+         cache_file->insert(pathname, file_data);
+
+         U_SRV_LOG_VAR("file cached: %S - %I bytes - (%d%%) compressed ratio", pathname.data(), file_data->size, 100 - ratio);
+         }
       }
 }
 
@@ -3877,6 +3907,14 @@ void UHTTP::processHTTPGetRequest()
       // NB: we use sendfile()...
 
       UClientImage_Base::body->clear(); // NB: this make also the unmmap() of file...
+      }
+
+   (void) UClientImage_Base::pClientImage->handlerWrite();
+          UClientImage_Base::write_off = true;
+
+   if (UClientImage_Base::body->empty())
+      {
+      if (size == 0 || isHttpHEAD()) goto end;
 
       /* On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
        * ------------------------------------------------------------------------------------------------------
@@ -3891,16 +3929,14 @@ void UHTTP::processHTTPGetRequest()
        */
 
       UClientImage_Base::socket->setTcpCork(1U);
-      }
 
-   (void) UClientImage_Base::pClientImage->handlerWrite();
-          UClientImage_Base::write_off = true;
+      int fd = UClientImage_Base::socket->getFd();
 
-   if (UClientImage_Base::body->empty())
-      {
-      if (size == 0 || isHttpHEAD()) goto end;
+      if (USocket::accept4_flags) (void) U_SYSCALL(fcntl, "%d,%d,%d", fd, F_SETFL, O_RDWR | O_CLOEXEC);
 
-      (void) file->sendfile(UClientImage_Base::socket->getFd(), &start, size);
+      (void) file->sendfile(fd, &start, size);
+
+      if (USocket::accept4_flags) (void) U_SYSCALL(fcntl, "%d,%d,%d", fd, F_SETFL, O_RDWR | O_CLOEXEC | O_NONBLOCK);
 
       UClientImage_Base::socket->setTcpCork(0U);
       }

@@ -2,8 +2,6 @@
 
 . ../.function
 
-start_msg FIRENZE
-
 DOC_ROOT=/srv/wifi-portal-firenze/www
 
 rm -f FIRENZE*.log err/FIRENZE*.err \

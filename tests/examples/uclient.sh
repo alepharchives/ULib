@@ -2,8 +2,6 @@
 
 . ../.function
 
-start_msg uclient
-
 rm -f uclient.log \
 		out/uclient.out err/uclient.err \
 		trace.*uclient*.[0-9]* object.*uclient*.[0-9]*

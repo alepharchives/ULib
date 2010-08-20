@@ -45,6 +45,7 @@
    they use class UIPAddress instances and port numbers rather than sockaddr structures
 */
 
+class UHTTP;
 class USocketExt;
 class USSHSocket;
 class USSLSocket;
@@ -716,6 +717,7 @@ private:
    USocket(const USocket&)            {}
    USocket& operator=(const USocket&) { return *this; }
 
+                      friend class UHTTP;
                       friend class USocketExt;
                       friend class USSHSocket;
                       friend class UTCPSocket;

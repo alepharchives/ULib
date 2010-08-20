@@ -79,6 +79,7 @@ userver {
 # PLUGIN         "mod_proxy  mod_http"
 # PLUGIN         "mod_geoip  mod_http"
 # PLUGIN         "mod_stream mod_http"
+# PLUGIN         "mod_socket mod_http"
 
 # PLUGIN_DIR     /usr/local/libexec/ulib
 
@@ -125,9 +126,9 @@ mod_http {
 #  /admin  /RA/admin/cgi-bin/card-generation.sh
    ]
 
-# CACHE_FILE_MASK            *.html|favicon.ico|css/*.css|js/*.js/icons/*.gif
-# CACHE_FILE_COMPRESS_MASK   .html|.ico|.css|.js
-#
+# CACHE_FILE_MASK          favicon.ico|*.css|*.js|*.gif|*.html
+# CACHE_FILE_COMPRESS_MASK .ico|.css|.js|.gif|.html
+
 # VIRTUAL_HOST          yes
 # DIGEST_AUTHENTICATION yes
 #

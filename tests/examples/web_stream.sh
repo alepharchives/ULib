@@ -2,8 +2,6 @@
 
 . ../.function
 
-start_msg web_stream
-
 rm -f web_stream.log \
       out/userver_tcp.out err/userver_tcp.err \
 		trace.*userver_tcp*.[0-9]*	object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*

@@ -2,8 +2,6 @@
 
 . ../.function
 
-start_msg web_server
-
 DOC_ROOT=/mnt/home/stefano/sito/ridwhan
 
 rm -f web_server.log \

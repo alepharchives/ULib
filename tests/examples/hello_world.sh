@@ -2,8 +2,6 @@
 
 . ../.function
 
-start_msg hello_world
-
 rm -f hello_world.log* err/hello_world.err \
       out/userver_tcp.out err/userver_tcp.err \
       out/userver_ssl.out err/userver_ssl.err \

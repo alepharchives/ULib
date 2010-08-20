@@ -2,8 +2,6 @@
 
 . ../.function
 
-start_msg benchmarking
-
 rm -f benchmarking.log* err/benchmarking.err \
       out/userver_tcp.out err/userver_tcp.err \
       out/userver_ssl.out err/userver_ssl.err \

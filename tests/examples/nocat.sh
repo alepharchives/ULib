@@ -2,8 +2,6 @@
 
 . ../.function
 
-start_msg nocat
-
 #DOC_ROOT=/srv/wifi-portal-siena/www
 #DOC_ROOT=/srv/wifi-portal-firenze/www
 

@@ -2,8 +2,6 @@
 
 . ../.function
 
-start_msg web_server_ssl
-
 rm -f web_server_ssl.log \
       out/userver_ssl.out err/userver_ssl.err \
 		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]*

@@ -2,8 +2,6 @@
 
 . ../.function
 
-start_msg SIENA
-
 DOC_ROOT=/srv/wifi-portal-siena/www
 
 rm -f SIENA*.log err/SIENA*.err \

@@ -2,8 +2,6 @@
 
 . ../.function
 
-start_msg WAGSM_server
-
 rm -f WAGSM_server.log WAGSM/log out/WAGSM_event.sh.out err/WAGSM_event.sh.err \
 		out/userver_tcp.out err/userver_tcp.err \
       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]*
