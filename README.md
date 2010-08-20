@@ -27,7 +27,7 @@ The current version offers the following features :
     * Support for basic/digest authentication.
     * Support for uri protection.
     * Support for aliases/redirection.
-	 * Support for HTTP multi-range request support.
+    * Support for HTTP multi-range request support.
     * Support for JSONRequest (http://json.org/JSONRequest.html).
     * Web Socket support (experimental).
     * Support for Windows (without preforking).
