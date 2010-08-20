@@ -21,12 +21,13 @@ The current version offers the following features :
     * Persistent connections for HTTP/1.1 and Keep-Alive support for HTTP/1.0.
     * Browser cache management (headers: If-Modified-Since/Last-modified).
     * Chunk-encoding transfers support.
-    * Memory caching for static pages with optional compression.
+    * Memory caching for small static pages with optional compression.
     * Support for pipelining.
     * Support for virtual hosts.
     * Support for basic/digest authentication.
     * Support for uri protection.
     * Support for aliases/redirection.
+	 * Support for HTTP multi-range request support.
     * Support for JSONRequest (http://json.org/JSONRequest.html).
     * Web Socket support (experimental).
     * Support for Windows (without preforking).
