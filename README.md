@@ -23,12 +23,16 @@ The current version offers the following features :
     * Chunk-encoding transfers support.
     * HTTP multi-range request support.
     * Memory caching for small static pages with smart compression.
+    * Accept HTTP uploads up to 4 GB without increasing memory usage.
     * Support for pipelining.
     * Support for virtual hosts.
     * Support for basic/digest authentication.
     * Support for uri protection.
     * Support for aliases/redirection.
     * Support for JSONRequest (http://json.org/JSONRequest.html).
+    * Configuration file with dedicated section.
+    * CGI support for shell script processes (with automatic management of form and cookie).
+    * General CGI support (run any CGI script) with automatic output compression (using deflate method).
     * Web Socket support (experimental).
     * Support for Windows (without preforking).
     * Requests cut in phases for modular architecture (Apache-like).
@@ -45,9 +49,6 @@ The current version offers the following features :
           o mod_geoip : geolocation support (experimental).
           o mod_stream : simple streaming support (experimental).
           o mod_socket : web sockets application framework (experimental).
-    * Configuration file with dedicated section.
-    * CGI support for shell script processes (with automatic management of form and cookie).
-    * General CGI support (run any CGI script) with automatic output compression (using deflate method).
 
 Benchmarking
 ------------

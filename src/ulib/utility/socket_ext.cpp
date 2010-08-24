@@ -117,6 +117,8 @@ read:
             {
             socket->iState = USocket::CONNECT;
 
+            UFile::setBlocking(socket->getFd(), socket->flags, true);
+
             goto read;
             }
          }
