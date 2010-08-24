@@ -46,6 +46,7 @@
 */
 
 class UHTTP;
+class UFile;
 class USocketExt;
 class USSHSocket;
 class USSLSocket;
@@ -109,6 +110,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, USocket, "%b", bSocketIsIPv6)
 
+      flags       = O_RDWR | O_CLOEXEC;
       iState      = CLOSE;
       iSockDesc   = -1;
       bLocalSet   = false;
@@ -688,7 +690,7 @@ public:
 #endif
 
 protected:
-   int iSockDesc, iState, iLocalPort, iRemotePort;
+   int iSockDesc, iState, iLocalPort, iRemotePort, flags;
    UIPAddress cLocalAddress, cRemoteAddress;
    bool bIPv6Socket, bLocalSet;
 
@@ -700,24 +702,12 @@ protected:
    bool bind(SocketAddress& cLocal);
    bool setServer(SocketAddress& cLocal, int iBackLog);
 
-   static bool isBlocking()
-      {
-      U_TRACE(0, "USocket::isBlocking()")
-
-      if (req_timeout &&
-          accept4_flags == 0)
-         {
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
-
 private:
    USocket(const USocket&)            {}
    USocket& operator=(const USocket&) { return *this; }
 
                       friend class UHTTP;
+                      friend class UFile;
                       friend class USocketExt;
                       friend class USSHSocket;
                       friend class UTCPSocket;

@@ -22,7 +22,7 @@ The current version offers the following features :
     * Browser cache management (headers: If-Modified-Since/Last-modified).
     * Chunk-encoding transfers support.
     * HTTP multi-range request support.
-    * Memory caching for small static pages with optional compression.
+    * Memory caching for small static pages with smart compression.
     * Support for pipelining.
     * Support for virtual hosts.
     * Support for basic/digest authentication.

@@ -203,15 +203,14 @@ void UClientImage_Base::destroy()
 
    UServer_Base::handlerCloseConnection();
 
-#ifdef DEBUG
-   if (pClientImage->logbuf)
+   if (pClientImage->logbuf &&
+       UServer_Base::isPreForked())
       {
       U_ASSERT_EQUALS(pClientImage->UEventFd::fd, pClientImage->logbuf->strtol())
 
       delete pClientImage->logbuf;
       delete pClientImage->clientAddress;
       }
-#endif
 
    // socket->~USocket();
 

@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/file.h>
 #include <ulib/notifier.h>
 #include <ulib/container/vector.h>
 #include <ulib/utility/socket_ext.h>
@@ -244,12 +245,6 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
 
    ssize_t value, count = sz1 + sz2;
 
-   if (count > (16 * 1024) &&
-       USocket::accept4_flags)
-      {
-      (void) U_SYSCALL(fcntl, "%d,%d,%d", fd, F_SETFL, O_RDWR | O_CLOEXEC);
-      }
-
    struct iovec iov[2] = { { (caddr_t)header.data(), sz1 },
                            { (caddr_t)  body.data(), sz2 } };
 
@@ -266,6 +261,8 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
              UNotifier::waitForWrite(fd, timeoutMS) == 1)
             {
             s->iState = USocket::CONNECT;
+
+            UFile::setBlocking(fd, s->flags, true);
 
             continue;
             }
@@ -299,12 +296,6 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
       count = sz1 + iov[1].iov_len;
 
       U_INTERNAL_ASSERT_MAJOR(count,0)
-      }
-
-   if (count > (16 * 1024) &&
-       USocket::accept4_flags)
-      {
-      (void) U_SYSCALL(fcntl, "%d,%d,%d", fd, F_SETFL, O_RDWR | O_CLOEXEC | O_NONBLOCK);
       }
 
    U_RETURN(true);

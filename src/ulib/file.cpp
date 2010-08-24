@@ -17,6 +17,7 @@
 #include <ulib/container/tree.h>
 #include <ulib/utility/services.h>
 #include <ulib/utility/string_ext.h>
+#include <ulib/net/server/client_image.h>
 
 #ifdef HAVE_MAGIC
 #  include <ulib/magic/magic.h>
@@ -550,9 +551,10 @@ bool UFile::sendfile(int out_fd, off_t* poffset, size_t count)
          {
          U_INTERNAL_DUMP("errno = %d", errno)
 
-         if (errno == EAGAIN)
+         if (errno == EAGAIN &&
+             UNotifier::waitForWrite(out_fd, 3 * 1000) == 1)
             {
-            (void) UNotifier::waitForWrite(out_fd, 3 * 1000);
+            setBlocking(out_fd, UClientImage_Base::socket->flags, true);
 
             continue;
             }

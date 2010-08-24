@@ -42,7 +42,6 @@ UString*                          UHTTP::qcontent;
 UString*                          UHTTP::request_uri;
 UString*                          UHTTP::penvironment;
 UString*                          UHTTP::cache_file_mask;
-UString*                          UHTTP::cache_file_compress_mask;
 UString*                          UHTTP::last_file;
 uhttpheader                       UHTTP::http_info;
 const char*                       UHTTP::ptrH;
@@ -2305,30 +2304,25 @@ void UHTTP::checkFileForCache()
       int ratio = 100;
 
 #  ifdef HAVE_LIBZ
-      if (suffix                                     &&
-          cache_file_compress_mask->empty() == false &&
-          u_dosmatch_with_OR(suffix, file->getSuffixLen(suffix), U_STRING_TO_PARAM(*cache_file_compress_mask), 0))
+      content = UStringExt::deflate(content);
+
+      off_t size = content.size();
+
+      ratio = ((uint32_t) size * 100U) / (uint32_t) file_data->size;
+
+      U_INTERNAL_DUMP("ratio = %d", ratio)
+
+      if (ratio > 85) ratio = 100; // NB: almeno il 15%...
+      else
          {
-         content = UStringExt::deflate(content);
+         ext.setBuffer(300U);
 
-         off_t size = content.size();
+         (void) ext.assign(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
 
-         ratio = ((uint32_t) size * 100U) / (uint32_t) file_data->size;
+         getFileMimeType(suffix, 0, ext, size);
 
-         U_INTERNAL_DUMP("ratio = %d", ratio)
-
-         if (ratio > 85) ratio = 100; // NB: almeno il 15%...
-         else
-            {
-            ext.setBuffer(300U);
-
-            (void) ext.assign(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
-
-            getFileMimeType(suffix, 0, ext, size);
-
-            file_data->array.push_back(ext);
-            file_data->array.push_back(content);
-            }
+         file_data->array.push_back(ext);
+         file_data->array.push_back(content);
          }
 #  endif
 
@@ -2354,7 +2348,6 @@ void UHTTP::searchFileForCache()
    U_INTERNAL_ASSERT_POINTER(file)
    U_INTERNAL_ASSERT_EQUALS(cache_file,0)
    U_INTERNAL_ASSERT_POINTER(cache_file_mask)
-   U_INTERNAL_ASSERT_POINTER(cache_file_compress_mask)
 
     last_file = U_NEW(UString(100U));
    cache_file = U_NEW(UHashMap<UFileCacheData*>);
@@ -3928,17 +3921,8 @@ void UHTTP::processHTTPGetRequest()
        * ------------------------------------------------------------------------------------------------------
        */
 
-      UClientImage_Base::socket->setTcpCork(1U);
-
-      int fd = UClientImage_Base::socket->getFd();
-
-      if (USocket::accept4_flags) (void) U_SYSCALL(fcntl, "%d,%d,%d", fd, F_SETFL, O_RDWR | O_CLOEXEC);
-
-      (void) file->sendfile(fd, &start, size);
-
-      if (USocket::accept4_flags) (void) U_SYSCALL(fcntl, "%d,%d,%d", fd, F_SETFL, O_RDWR | O_CLOEXEC | O_NONBLOCK);
-
-      UClientImage_Base::socket->setTcpCork(0U);
+                                                                            UClientImage_Base::socket->setTcpCork(1U);
+      if (file->sendfile(UClientImage_Base::socket->getFd(), &start, size)) UClientImage_Base::socket->setTcpCork(0U);
       }
 #ifdef DEBUG
    else if (nResponseCode == HTTP_PARTIAL) UClientImage_Base::body->clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...

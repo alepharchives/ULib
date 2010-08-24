@@ -29,7 +29,6 @@ UString* UHttpPlugIn::str_CACHE_FILE_MASK;
 UString* UHttpPlugIn::str_URI_PROTECTED_MASK;
 UString* UHttpPlugIn::str_URI_REQUEST_CERT_MASK;
 UString* UHttpPlugIn::str_URI_PROTECTED_ALLOWED_IP;
-UString* UHttpPlugIn::str_CACHE_FILE_COMPRESS_MASK;
 
 void UHttpPlugIn::str_allocate()
 {
@@ -44,14 +43,12 @@ void UHttpPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("URI_PROTECTED_MASK") },
       { U_STRINGREP_FROM_CONSTANT("URI_REQUEST_CERT_MASK") },
       { U_STRINGREP_FROM_CONSTANT("URI_PROTECTED_ALLOWED_IP") },
-      { U_STRINGREP_FROM_CONSTANT("CACHE_FILE_COMPRESS_MASK") }
    };
 
    U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,          U_STRING_FROM_STRINGREP_STORAGE(0));
    U_NEW_ULIB_OBJECT(str_URI_PROTECTED_MASK,       U_STRING_FROM_STRINGREP_STORAGE(1));
    U_NEW_ULIB_OBJECT(str_URI_REQUEST_CERT_MASK,    U_STRING_FROM_STRINGREP_STORAGE(2));
    U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP, U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_CACHE_FILE_COMPRESS_MASK, U_STRING_FROM_STRINGREP_STORAGE(4));
 }
 
 // USP (ULib Servlet Page)
@@ -83,8 +80,7 @@ UHttpPlugIn::UHttpPlugIn()
 
    if (str_URI_PROTECTED_MASK == 0) str_allocate();
 
-   UHTTP::cache_file_mask          = U_NEW(UString);
-   UHTTP::cache_file_compress_mask = U_NEW(UString);
+   UHTTP::cache_file_mask = U_NEW(UString);
 }
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -92,7 +88,6 @@ UHttpPlugIn::~UHttpPlugIn()
    U_TRACE_UNREGISTER_OBJECT(0, UHttpPlugIn)
 
    delete UHTTP::cache_file_mask;
-   delete UHTTP::cache_file_compress_mask;
 
    // USP (ULib Servlet Page)
 
@@ -128,7 +123,6 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // ALIAS                         vector of URI redirection (request -> alias)
    //
    // CACHE_FILE_MASK               mask (DOS regexp) of pathfile that be cached in memory
-   // CACHE_FILE_COMPRESS_MASK      mask (DOS regexp) of suffix files that be cached in memory also compressed
    //
    // VIRTUAL_HOST                  flag to activate practice of maintaining more than one server on one machine,
    //                               as differentiated by their apparent hostname
@@ -153,7 +147,6 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
        UHTTP::virtual_host                = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
       *UHTTP::cache_file_mask             = cfg[*str_CACHE_FILE_MASK];
-      *UHTTP::cache_file_compress_mask    = cfg[*str_CACHE_FILE_COMPRESS_MASK];
       UServer_Base::digest_authentication = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
       }
 

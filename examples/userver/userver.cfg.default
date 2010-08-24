@@ -104,8 +104,6 @@ userver {
 # ALIAS                      vector of URI redirection (request -> alias)
 #
 # CACHE_FILE_MASK            mask (DOS regexp) of pathfile that be cached in memory
-# CACHE_FILE_COMPRESS_MASK   mask (DOS regexp) of suffix files that be cached in memory also compressed
-#
 #
 # VIRTUAL_HOST               flag to activate practice of maintaining more than one server on one machine,
 #                            as differentiated by their apparent hostname 
@@ -126,8 +124,7 @@ mod_http {
 #  /admin  /RA/admin/cgi-bin/card-generation.sh
    ]
 
-# CACHE_FILE_MASK          favicon.ico|*.css|*.js|*.gif|*.html
-# CACHE_FILE_COMPRESS_MASK .ico|.css|.js|.gif|.html
+# CACHE_FILE_MASK       favicon.ico|*.css|*.js|*.gif|*.html
 
 # VIRTUAL_HOST          yes
 # DIGEST_AUTHENTICATION yes

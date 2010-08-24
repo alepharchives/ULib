@@ -498,7 +498,6 @@ public:
    static UString* last_file;
    static UString* cache_file_mask;
    static UFileCacheData* file_data;
-   static UString* cache_file_compress_mask;
    static UHashMap<UFileCacheData*>* cache_file;
 
    static bool manageFileCache();

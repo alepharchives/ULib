@@ -486,7 +486,7 @@ loop:
 
       U_DUMP("status = %.*S", 512, status(ssl, pcNewConnection->ret, false, 0, 0))
 
-      if (USocket::isBlocking() == false &&
+      if ((USocket::accept4_flags || USocket::req_timeout) &&
           (pcNewConnection->ret == SSL_ERROR_WANT_READ  ||
            pcNewConnection->ret == SSL_ERROR_WANT_WRITE ||
            pcNewConnection->ret == SSL_ERROR_WANT_ACCEPT)) goto loop;

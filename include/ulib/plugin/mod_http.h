@@ -52,7 +52,6 @@ public:
    static UString* str_URI_PROTECTED_MASK;
    static UString* str_URI_REQUEST_CERT_MASK;
    static UString* str_URI_PROTECTED_ALLOWED_IP;
-   static UString* str_CACHE_FILE_COMPRESS_MASK;
 
    static void str_allocate();
 

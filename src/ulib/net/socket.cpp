@@ -143,10 +143,9 @@ bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)
       checkErrno(iBytesTransferred);
 
 #  ifdef DEBUG
-      if (iState == TIMEOUT)
+      if (isOpen() &&
+          isTimeout())
          {
-         int flags = -1;
-
          U_ASSERT_EQUALS(UFile::isBlocking(iSockDesc, flags), false)
          }
 #  endif
@@ -629,6 +628,8 @@ loop:
 
       if (accept4_flags)
          {
+         pcNewConnection->flags |= O_NONBLOCK;
+
 #     ifndef HAVE_ACCEPT4
          (void) U_SYSCALL(fcntl, "%d,%d,%d", pcNewConnection->iSockDesc, F_SETFL, O_RDWR | O_NONBLOCK | O_CLOEXEC);
 #     endif
@@ -719,7 +720,8 @@ loop:
 
 const char* USocket::dump(bool reset) const
 {
-   *UObjectIO::os << "iState                        " << iState                 << '\n'
+   *UObjectIO::os << "flags                         " << flags                  << '\n'
+                  << "iState                        " << iState                 << '\n'
                   << "iSockDesc                     " << iSockDesc              << '\n'
                   << "bLocalSet                     " << bLocalSet              << '\n'
                   << "iLocalPort                    " << iLocalPort             << '\n'
