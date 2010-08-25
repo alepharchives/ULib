@@ -173,11 +173,19 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
 
       ++char_count;
 
+      /* Bit positions
+
+                     | byte 1 | byte 2 | byte 3 | byte 4 |
+      Encoded block  654321   654321   654321   654321  -> 4 bytes of 6 bits
+                     | byte 1 | byte 2 | byte 3 |
+      Decoded block  65432165 43216543 21654321         -> 3 bytes of 8 bits
+      */
+
       if (char_count == 4)
          {
-         *r++ =  bits >> 16;
-         *r++ = (bits >> 8) & 0xff;
-         *r++ =  bits       & 0xff;
+         *r++ =  bits >> 16;         /* Byte 1 */
+         *r++ = (bits >>  8) & 0xff; /* Byte 2 */
+         *r++ =  bits        & 0xff; /* Byte 3 */
 
          bits = char_count = 0;
          }

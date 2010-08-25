@@ -169,19 +169,21 @@ public:
 
    void erase(uint32_t pos) // remove element at pos
       {
-      U_TRACE(0, "UVector<void*>::erase(%u)", pos)
+      U_TRACE(1, "UVector<void*>::erase(%u)", pos)
 
       U_CHECK_MEMORY
 
       U_INTERNAL_ASSERT_MINOR(pos, _length)
       U_INTERNAL_ASSERT_RANGE(1,_length,_capacity)
 
-      (void) memmove(vec + pos, vec + pos + 1, (--_length - pos) * sizeof(void*));
+      --_length;
+
+      (void) U_SYSCALL(memmove, "%p,%p,%u", vec + pos, vec + pos + 1, (_length - pos) * sizeof(void*));
       }
 
    void erase(uint32_t first, uint32_t last) // erase [first,last[
       {
-      U_TRACE(0, "UVector<void*>::erase(%u,%u)",  first, last)
+      U_TRACE(1, "UVector<void*>::erase(%u,%u)",  first, last)
 
       U_CHECK_MEMORY
 
@@ -190,7 +192,7 @@ public:
       U_INTERNAL_ASSERT_MINOR(first, _length)
       U_INTERNAL_ASSERT_RANGE(1,_length,_capacity)
 
-      (void) memmove(vec + first, vec + last, (_length - last) * sizeof(void*));
+      (void) U_SYSCALL(memmove, "%p,%p,%u", vec + first, vec + last, (_length - last) * sizeof(void*));
 
       _length = (_length - (last - first));
       }

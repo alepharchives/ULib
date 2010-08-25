@@ -178,7 +178,7 @@ int UHttpPlugIn::handlerInit()
       for (uint32_t i = 0; i < n; ++i)
          {
          name      = vec[i];
-         ptr       = name.c_str();
+         ptr       = name.data();
          last_page = U_NEW(UDynamic);
 
          if (last_page->load(ptr) == false) delete last_page;
@@ -406,15 +406,15 @@ int UHttpPlugIn::handlerRequest()
          (void) last_key.replace(U_HTTP_URI_TO_PARAM_SHIFT(U_CONSTANT_SIZE("/usp/")));
 
          last_page = (*pages)[last_key];
+         }
 
-         if (last_page == 0)
-            {
-            U_SRV_LOG_VAR("USP request '%.*s' NOT available...", U_HTTP_URI_TO_TRACE);
+      if (last_page == 0)
+         {
+         U_SRV_LOG_VAR("USP request '%.*s' NOT available...", U_HTTP_URI_TO_TRACE);
 
-            UHTTP::setHTTPServiceUnavailable(); // set Service Unavailable error response...
+         UHTTP::setHTTPServiceUnavailable(); // set Service Unavailable error response...
 
-            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-            }
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
 
       runDynamicPage = (vPFpv)(*last_page)["runDynamicPage"];

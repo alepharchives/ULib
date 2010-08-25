@@ -11,6 +11,9 @@ rm -f benchmarking.log* err/benchmarking.err \
 #UTRACE="0 30M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
+#VALGRIND="valgrind -v --trace-children=yes"
+ export UTRACE UOBJDUMP USIMERR VALGRIND
+
  export UTRACE UOBJDUMP USIMERR
 
 DIR_CMD="../../examples/userver"

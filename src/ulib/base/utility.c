@@ -1315,7 +1315,12 @@ void u_canonicalize_pathname(char* restrict path)
          return;
          }
 
-      (void) strcpy(lpath, lpath + 2);
+      p   = lpath + 2;
+      len = u_strlen(p);
+
+      (void) memmove(lpath, p, len);
+
+      lpath[len] = 0;
       }
 
    /* Remove trailing "/" or "/." */
