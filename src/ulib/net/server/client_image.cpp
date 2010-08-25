@@ -203,20 +203,17 @@ void UClientImage_Base::destroy()
 
    UServer_Base::handlerCloseConnection();
 
-   if (pClientImage->logbuf &&
-       UServer_Base::isPreForked())
+   if (socket->isOpen()) socket->closesocket();
+
+   if (UServer_Base::isClassic()) U_EXIT(0);
+
+   if (pClientImage->logbuf)
       {
       U_ASSERT_EQUALS(pClientImage->UEventFd::fd, pClientImage->logbuf->strtol())
 
       delete pClientImage->logbuf;
       delete pClientImage->clientAddress;
       }
-
-   // socket->~USocket();
-
-   if (socket->isOpen()) socket->closesocket();
-
-   if (UServer_Base::isClassic()) U_EXIT(0);
 }
 
 void UClientImage_Base::setMsgWelcome(const UString& msg)
