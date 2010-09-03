@@ -14,12 +14,22 @@
 #ifndef U_POP3_CLIENT_H
 #define U_POP3_CLIENT_H 1
 
-#include <ulib/net/tcpsocket.h>
-#include <ulib/container/vector.h>
-
 #ifdef HAVE_SSL
 #  include <ulib/ssl/net/sslsocket.h>
+#  define Socket USSLSocket
+#  ifdef U_NO_SSL
+#  undef U_NO_SSL
+#  endif
+#else
+#  include <ulib/net/tcpsocket.h>
+#  define Socket UTCPSocket
+#  define Socket UTCPSocket
+#  ifndef U_NO_SSL
+#  define U_NO_SSL
+#  endif
 #endif
+
+#include <ulib/container/vector.h>
 
 /**
    @class UPop3Client
@@ -87,7 +97,7 @@
     AUTH
 */
 
-class U_EXPORT UPop3Client : public UTCPSocket {
+class U_EXPORT UPop3Client : public Socket {
 public:
 
    enum POP3ClientStatus {
@@ -112,18 +122,18 @@ public:
    Constructs a new UPop3Client with default values for all properties
    */
 
-   UPop3Client(bool bSocketIsIPv6 = false) : UTCPSocket(bSocketIsIPv6), buffer(U_CAPACITY)
+   UPop3Client(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6), buffer(U_CAPACITY)
       {
       U_TRACE_REGISTER_OBJECT(0, UPop3Client, "%b", bSocketIsIPv6)
 
       state   = INIT;
       num_msg = -1;
-#  ifdef HAVE_SSL
-      tls     = 0;
-#  endif
       }
 
-   virtual ~UPop3Client();
+   virtual ~UPop3Client()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UPop3Client)
+      }
 
    /**
    function called to established a socket connection with the POP3 network server
@@ -162,7 +172,7 @@ public:
 
    // Execute an pop3 session
 
-   UString getHeader(uint32_t n);
+   UString getHeader( uint32_t n);
    UString getMessage(uint32_t n);
 
    bool reset();
@@ -185,10 +195,6 @@ public:
 #endif
 
 protected:
-#ifdef HAVE_SSL
-   USSLSocket* tls;
-#endif
-
    UString buffer, capa;
    POP3ClientStatus state;
    int pos, end, response, num_msg;
@@ -198,8 +204,8 @@ private:
    bool syncCommand(int eod, const char* format, ...) U_NO_EXPORT;
    bool syncCommandML(const UString& req, int* vpos, int* vend) U_NO_EXPORT;
 
-   UPop3Client(const UPop3Client&) : UTCPSocket(false) {}
-   UPop3Client& operator=(const UPop3Client&)          { return *this; }
+   UPop3Client(const UPop3Client&) : Socket(false) {}
+   UPop3Client& operator=(const UPop3Client&)      { return *this; }
 };
 
 #endif

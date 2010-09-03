@@ -243,7 +243,7 @@ public:
 
       U_INTERNAL_ASSERT_MINOR(pos, _length)
 
-      return str[pos];
+      U_RETURN(str[pos]);
       }
 
    char first_char() const
@@ -252,7 +252,7 @@ public:
 
       U_INTERNAL_ASSERT_MAJOR(_length,0)
 
-      return str[0];
+      U_RETURN(str[0]);
       }
 
    char last_char() const
@@ -261,7 +261,7 @@ public:
 
       U_INTERNAL_ASSERT_MAJOR(_length,0)
 
-      return str[_length - 1];
+      U_RETURN(str[_length - 1]);
       }
 
    char operator[](uint32_t pos) const { return str[pos]; }

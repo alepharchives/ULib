@@ -910,11 +910,11 @@ uint32_t UString::find(char c, uint32_t pos) const
 
    if (pos < sz)
       {
-      size_t ext = (sz - pos);
+      size_t how_much = (sz - pos);
 
-      U_INTERNAL_DUMP("ext = %ld", ext)
+   // U_INTERNAL_DUMP("how_much = %ld", how_much)
 
-      void* p = (void*) memchr(str + pos, c, ext);
+      void* p = (void*) memchr(str + pos, c, how_much);
 
       if (p) ret = (const char*)p - str;
       }

@@ -27,15 +27,17 @@ The current version offers the following features :
     * Support for pipelining.
     * Support for virtual hosts.
     * Support for basic/digest authentication.
+    * Support for directory listings via basic/digest authentication.
     * Support for uri protection.
     * Support for aliases/redirection.
+    * Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache, some CMS (SilverStripe) require it.
     * Support for JSONRequest (http://json.org/JSONRequest.html).
     * Configuration file with dedicated section.
     * CGI support for shell script processes (with automatic management of form and cookie).
     * General CGI support (run any CGI script) with automatic output compression (using deflate method).
     * Web Socket support (experimental).
     * Support for Windows (without preforking).
-    * Requests cut in phases for modular architecture (Apache-like).
+    * Requests cut in phases for modular architecture (apache-like).
     * Built-in modules :
           o mod_rpc : generic Remote Procedure Call.
           o mod_http : core features, static file handler and dynamic page (ULib Servlet Page).

@@ -27,7 +27,7 @@ static void regex(const UString& expression, const UString& stuff)
 {
    U_TRACE(5, "regex(%.*S,%.*S)", U_STRING_TO_TRACE(expression), U_STRING_TO_TRACE(stuff))
 
-   UPCRE reg(expression); /* UPCRE object */
+   UPCRE reg(expression, 0); /* UPCRE object */
 
    bool result = reg.search(stuff);
 
@@ -349,7 +349,6 @@ U_EXPORT main (int argc, char* argv[])
    normalize();
    multisearch();
    replace_multi();
-
 
    if (read_data(argv[1]))
       {

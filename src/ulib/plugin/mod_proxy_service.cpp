@@ -26,7 +26,6 @@
 #  include <ulib/replace/strstream.h>
 #endif
 
-UString* UModProxyService::str_REPLACE_RESPONSE;
 UString* UModProxyService::str_FOLLOW_REDIRECTS;
 UString* UModProxyService::str_CLIENT_CERTIFICATE;
 
@@ -34,19 +33,16 @@ void UModProxyService::str_allocate()
 {
    U_TRACE(0, "UModProxyService::str_allocate()")
 
-   U_INTERNAL_ASSERT_EQUALS(str_REPLACE_RESPONSE,0)
    U_INTERNAL_ASSERT_EQUALS(str_FOLLOW_REDIRECTS,0)
    U_INTERNAL_ASSERT_EQUALS(str_CLIENT_CERTIFICATE,0)
 
    static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("REPLACE_RESPONSE") },
       { U_STRINGREP_FROM_CONSTANT("FOLLOW_REDIRECTS") },
       { U_STRINGREP_FROM_CONSTANT("CLIENT_CERTIFICATE") }
    };
 
-   U_NEW_ULIB_OBJECT(str_REPLACE_RESPONSE,   U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_FOLLOW_REDIRECTS,   U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_CLIENT_CERTIFICATE, U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_FOLLOW_REDIRECTS,   U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_CLIENT_CERTIFICATE, U_STRING_FROM_STRINGREP_STORAGE(1));
 }
 
 void UModProxyService::loadConfig(UFileConfig& cfg, UVector<UModProxyService*>& vservice, UVector<UString>* vmsg_error)
@@ -57,6 +53,8 @@ void UModProxyService::loadConfig(UFileConfig& cfg, UVector<UModProxyService*>& 
    // mod_proxy - plugin parameters
    // -----------------------------------------------------------------------------------------------------------------------------------
    // ERROR MESSAGE        Allows you to tell clients about what type of error
+   //
+   // REPLACE_RESPONSE     if NOT manage to follow redirects, maybe vector of substitution string
    //
    // URI                  uri mask trigger
    // HOST                 name host client
@@ -70,51 +68,41 @@ void UModProxyService::loadConfig(UFileConfig& cfg, UVector<UModProxyService*>& 
    // FOLLOW_REDIRECTS     if yes manage to automatically follow redirects from server
    // USER                 if     manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: user
    // PASSWORD             if     manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: password
-   // REPLACE_RESPONSE     if NOT manage to follow redirects, maybe vector of substitution string
    // -----------------------------------------------------------------------------------------------------------------------------------
 
+   UString uri;
    UModProxyService* service;
 
-   if (vmsg_error) (void) cfg.loadVector(*vmsg_error);
+   if (vmsg_error) (void) cfg.loadVector(*vmsg_error, "ERROR MESSAGE");
 
-   while (cfg.load())
+   while (cfg.searchForObjectStream())
       {
       service = U_NEW(UModProxyService);
 
-      service->uri_mask.set(cfg[*UServer_Base::str_URI]);
+      (void) cfg.loadVector(service->vreplace_response, "REPLACE_RESPONSE");
 
-      service->host_mask        = cfg[*UServer_Base::str_HOST];
-      service->method_mask      = cfg[*UServer_Base::str_METHOD_NAME];
-      service->server           = cfg[*UServer_Base::str_SERVER];
-      service->user             = cfg[*UServer_Base::str_USER];
-      service->password         = cfg[*UServer_Base::str_PASSWORD];
-
-      service->command          = UServer_Base::loadConfigCommand(cfg);
-
-      service->port             = cfg.readLong(*UServer_Base::str_PORT, 80);
-      service->request_cert     = cfg.readBoolean(*str_CLIENT_CERTIFICATE);
-      service->response_client  = cfg.readBoolean(*UServer_Base::str_RESPONSE_TYPE);
-      service->follow_redirects = cfg.readBoolean(*str_FOLLOW_REDIRECTS);
-
-      if (service->follow_redirects == false)
+      if (cfg.loadTable())
          {
-         // check if present vector replace response
+         uri                       = cfg[*UServer_Base::str_URI];
+         service->host_mask        = cfg[*UServer_Base::str_HOST];
+         service->method_mask      = cfg[*UServer_Base::str_METHOD_NAME];
+         service->server           = cfg[*UServer_Base::str_SERVER];
+         service->user             = cfg[*UServer_Base::str_USER];
+         service->password         = cfg[*UServer_Base::str_PASSWORD];
 
-         UString value = cfg[*str_REPLACE_RESPONSE];
+         service->command          = UServer_Base::loadConfigCommand(cfg);
 
-         if (value.empty() == false       &&
-             ((value.first_char() == '[') ||
-              (value.first_char() == '(')))
-            {
-            istrstream is(value.data(), value.size());
+         service->port             = cfg.readLong(*UServer_Base::str_PORT, 80);
+         service->request_cert     = cfg.readBoolean(*str_CLIENT_CERTIFICATE);
+         service->response_client  = cfg.readBoolean(*UServer_Base::str_RESPONSE_TYPE);
+         service->follow_redirects = cfg.readBoolean(*str_FOLLOW_REDIRECTS);
 
-            is >> service->vreplace_response;
-            }
+         if (uri.empty() == false) service->uri_mask.set(uri, 0);
+
+         vservice.push_back(service);
+
+         cfg.clear();
          }
-
-      vservice.push_back(service);
-
-      cfg.clear();
       }
 }
 
@@ -153,7 +141,9 @@ UString UModProxyService::replaceResponse(const UString& msg)
 
    for (uint32_t i = 0, n = vreplace_response.size(); i < n; i += 2)
       {
-      result = UStringExt::substitute(result, vreplace_response[i], vreplace_response[i+1]);
+      // Searches subject for matches to pattern and replaces them with replacement
+
+      result = UStringExt::pregReplace(vreplace_response[i], vreplace_response[i+1], result);
       }
 
    U_RETURN_STRING(result);

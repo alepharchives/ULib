@@ -6,9 +6,10 @@
 
 start_msg pcre
 
-#UTRACE="0 15M 0"
+#UTRACE="0 25M 0"
 #UOBJDUMP="-1 100k 10"
 #USIMERR="error.sim"
+#VALGRIND='valgrind'
  export UTRACE UOBJDUMP USIMERR
 
 start_prg pcre inp/pcre.input

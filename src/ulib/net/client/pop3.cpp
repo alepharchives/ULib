@@ -27,23 +27,6 @@
 #  include <ulib/file.h>
 #endif
 
-UPop3Client::~UPop3Client()
-{
-   U_TRACE_UNREGISTER_OBJECT(0, UPop3Client)
-
-#ifdef HAVE_SSL
-   if (tls)
-      {
-      // NB: we use secureConnection()...
-
-      tls->USocket::iState    = CLOSE;
-      tls->USocket::iSockDesc = -1;
-
-      delete tls;
-      }
-#endif
-}
-
 U_NO_EXPORT const char* UPop3Client::status()
 {
    U_TRACE(0, "UPop3Client::status()")
@@ -53,11 +36,11 @@ U_NO_EXPORT const char* UPop3Client::status()
 
    switch (state)
       {
-      case INIT:           descr1 = "INIT";           break;
-      case AUTHORIZATION:  descr1 = "AUTHORIZATION";  break;
-      case TRANSACTION:    descr1 = "TRANSACTION";    break;
-      case UPDATE:         descr1 = "UPDATE";         break;
-      default:             descr1 = "???";            break;
+      case INIT:                 descr1 = "INIT";           break;
+      case AUTHORIZATION:        descr1 = "AUTHORIZATION";  break;
+      case TRANSACTION:          descr1 = "TRANSACTION";    break;
+      case UPDATE:               descr1 = "UPDATE";         break;
+      default:                   descr1 = "???";            break;
       }
 
    switch (response)
@@ -84,7 +67,12 @@ bool UPop3Client::connectServer(const UString& server, int port, uint32_t timeou
 {
    U_TRACE(0, "UPop3Client::connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
 
-   if (UTCPSocket::connectServer(server, port))
+#ifdef HAVE_SSL
+   U_INTERNAL_ASSERT(Socket::isSSL())
+   ((USSLSocket*)this)->setActive(false);
+#endif
+
+   if (Socket::connectServer(server, port))
       {
       (void) USocket::setTimeoutRCV(timeoutMS);
 
@@ -114,11 +102,7 @@ U_NO_EXPORT bool UPop3Client::syncCommand(int eod, const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-#ifdef HAVE_SSL
-   if (tls) end = USocketExt::vsyncCommand(tls, buffer.data(), buffer.capacity(), format, argp);
-   else
-#endif
-            end = USocketExt::vsyncCommand(this, buffer.data(), buffer.capacity(), format, argp);
+   end = USocketExt::vsyncCommand(this, buffer.data(), buffer.capacity(), format, argp);
 
    va_end(argp);
 
@@ -140,11 +124,7 @@ U_NO_EXPORT bool UPop3Client::syncCommand(int eod, const char* format, ...)
 
          if (eod > 0)
             {
-#        ifdef HAVE_SSL
-            if (tls) esito = USocketExt::read(tls, buffer, eod);
-            else
-#        endif
-                     esito = USocketExt::read(this, buffer, eod);
+            esito = USocketExt::read(this, buffer, eod);
 
             if (esito == false) U_RETURN(false);
             }
@@ -157,11 +137,7 @@ U_NO_EXPORT bool UPop3Client::syncCommand(int eod, const char* format, ...)
 
          if (end == (int)U_NOT_FOUND)
             {
-#        ifdef HAVE_SSL
-            if (tls) end = USocketExt::read(tls, buffer, U_CONSTANT_TO_PARAM(U_POP3_EOD));
-            else
-#        endif
-                     end = USocketExt::read(this, buffer, U_CONSTANT_TO_PARAM(U_POP3_EOD));
+            end = USocketExt::read(this, buffer, U_CONSTANT_TO_PARAM(U_POP3_EOD));
 
             if (end == (int)U_NOT_FOUND) U_RETURN(false);
             }
@@ -183,11 +159,7 @@ U_NO_EXPORT bool UPop3Client::syncCommandML(const UString& req, int* vpos, int* 
 
    uint32_t sz = req.size();
 
-#ifdef HAVE_SSL
-   if (tls) end = tls->send(req.data(), sz);
-   else
-#endif
-            end = USocket::send(req.data(), sz);
+   end = Socket::send(req.data(), sz);
 
    if (USocket::checkIO(end, sz) == false) U_RETURN(false);
 
@@ -204,11 +176,7 @@ U_NO_EXPORT bool UPop3Client::syncCommandML(const UString& req, int* vpos, int* 
       }
 
    do {
-#  ifdef HAVE_SSL
-      if (tls) ok = USocketExt::read(tls, buffer);
-      else
-#  endif
-               ok = USocketExt::read(this, buffer);
+      ok = USocketExt::read(this, buffer);
 
       if (ok == false) U_RETURN(false);
 
@@ -277,22 +245,22 @@ bool UPop3Client::startTLS()
    U_TRACE(0, "UPop3Client::startTLS()")
 
 #ifdef HAVE_SSL
-   U_INTERNAL_ASSERT_EQUALS(tls,0)
+   U_INTERNAL_ASSERT(Socket::isSSL())
 
-   if (state == AUTHORIZATION)
+        if (state != AUTHORIZATION) response = BAD_STATE;
+   else if (syncCommand(-1, "STLS"))
       {
-      if (syncCommand(-1, "STLS"))
+          ((USSLSocket*)this)->setActive(true);
+      if (((USSLSocket*)this)->secureConnection(USocket::getFd())) U_RETURN(true);
+          ((USSLSocket*)this)->setActive(false);
+
+      if (USocketExt::readLineReply(this, buffer) > 0 &&
+          U_STRNEQ(buffer.data(), U_POP3_ERR))
          {
-         tls = U_NEW(USSLSocket(USocket::bIPv6Socket, 0, true));
+         response = STLS_NOT_SUPPORTED;
 
-         if (tls->secureConnection(USocket::getFd())) U_RETURN(true);
+         U_DUMP("status() = %S", status())
          }
-
-      response = STLS_NOT_SUPPORTED;
-      }
-   else
-      {
-      response = BAD_STATE;
       }
 #endif
 
@@ -303,7 +271,8 @@ bool UPop3Client::login(const char* user, const char* passwd)
 {
    U_TRACE(0, "UPop3Client::login(%S,%S)", user, passwd)
 
-   if (state == AUTHORIZATION)
+   if (state != AUTHORIZATION) response = BAD_STATE;
+   else
       {
       if (syncCommand(-1, "USER %s", user) &&
           syncCommand(-1, "PASS %s", passwd))
@@ -315,10 +284,6 @@ bool UPop3Client::login(const char* user, const char* passwd)
          }
 
       response = UNAUTHORIZED;
-      }
-   else
-      {
-      response = BAD_STATE;
       }
 
    U_RETURN(false);
@@ -620,7 +585,7 @@ bool UPop3Client::quit()
 
 const char* UPop3Client::dump(bool reset) const
 {
-   UTCPSocket::dump(false);
+   Socket::dump(false);
 
    *UObjectIO::os << '\n'
                   << "pos                           " << pos             << '\n'
@@ -628,9 +593,6 @@ const char* UPop3Client::dump(bool reset) const
                   << "state                         " << state           << '\n'
                   << "num_msg                       " << num_msg         << '\n'
                   << "response                      " << response        << '\n'
-#              ifdef HAVE_SSL
-                  << "tls             (USSLSocket   " << (void*)tls      << ")\n"
-#              endif
                   << "capa            (UString      " << (void*)&capa    << ")\n"
                   << "buffer          (UString      " << (void*)&buffer  << ')';
 

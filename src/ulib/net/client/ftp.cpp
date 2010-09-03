@@ -14,10 +14,6 @@
 #include <ulib/net/client/ftp.h>
 #include <ulib/utility/socket_ext.h>
 
-#ifdef HAVE_SSL
-#  include <ulib/ssl/net/sslsocket.h>
-#endif
-
 const char* UFtpClient::status()
 {
    U_TRACE(0, "UFtpClient::status()")
@@ -83,7 +79,9 @@ bool UFtpClient::waitReady(uint32_t timeoutMS)
 
    readCommandResponse();
 
-   U_RETURN(response == FTP_READY_FOR_NEW_USER);
+   bool result = (response == FTP_READY_FOR_NEW_USER);
+
+   U_RETURN(result);
 }
 
 // Send a command to the FTP server and wait for a response
@@ -95,28 +93,60 @@ bool UFtpClient::syncCommand(const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-#ifdef HAVE_SSL
-   if (tlsctrl) response = USocketExt::vsyncCommandML(tlsctrl, format, argp);
-   else
-#endif
-                response = USocketExt::vsyncCommandML(this, format, argp);
+   response = USocketExt::vsyncCommandML(this, format, argp);
 
    va_end(argp);
 
-   U_RETURN(response != USocket::BROKEN);
+   bool result = (response != USocket::BROKEN);
+
+   U_RETURN(result);
 }
 
 void UFtpClient::readCommandResponse()
 {
    U_TRACE(0, "UFtpClient::readCommandResponse()")
 
-#ifdef HAVE_SSL
-   if (tlsctrl) response = USocketExt::readMultilineReply(tlsctrl);
-   else
-#endif
-                response = USocketExt::readMultilineReply(this);
+   response = USocketExt::readMultilineReply(this);
 
    U_DUMP("status() = %S", status())
+}
+
+bool UFtpClient::negotiateEncryption()
+{
+   U_TRACE(0, "UFtpClient::negotiateEncryption()")
+
+#ifdef HAVE_SSL
+   U_INTERNAL_ASSERT(Socket::isSSL())
+
+   if (syncCommand("AUTH TLS") &&
+       response == 234)
+      {
+          ((USSLSocket*)this)->setActive(true);
+      if (((USSLSocket*)this)->secureConnection(USocket::getFd())) U_RETURN(true);
+          ((USSLSocket*)this)->setActive(false);
+      }
+#endif
+
+   U_RETURN(false);
+}
+
+bool UFtpClient::setDataEncryption(bool secure)
+{
+   U_TRACE(0, "UFtpClient::setDataEncryption(%b)", secure)
+
+#ifdef HAVE_SSL
+   U_INTERNAL_ASSERT(Socket::isSSL())
+
+   if (syncCommand("PBSZ 0")                        && response == FTP_COMMAND_OK &&
+       syncCommand("PROT %c", (secure ? 'P' : 'C')) && response == FTP_COMMAND_OK)
+      {
+      ((USSLSocket*)&pasv)->setActive(true);
+
+      U_RETURN(true);
+      }
+#endif
+
+   U_RETURN(false);
 }
 
 bool UFtpClient::login(const char* user, const char* passwd)
@@ -233,7 +263,8 @@ bool UFtpClient::createPassiveDataConnection()
 
    (void) syncCommand("PASV"); // Enter Passive mode
 
-   if (response == FTP_ENTERING_PASSIVE_MODE && readPortToConnect())
+   if (response == FTP_ENTERING_PASSIVE_MODE &&
+       readPortToConnect())
       {
       // we have decoded the message, so now connect to the designated IP address/Port.
 
@@ -284,7 +315,12 @@ bool UFtpClient::setTransferType(TransferType type)
 {
    U_TRACE(0, "UFtpClient::setTransferType(%d)", type)
 
-   if (syncCommand("TYPE %c", (type == Binary ? 'I' : 'A'))) U_RETURN(response == FTP_COMMAND_OK);
+   if (syncCommand("TYPE %c", (type == Binary ? 'I' : 'A')))
+      {
+      bool result = (response == FTP_COMMAND_OK);
+
+      U_RETURN(result);
+      }
 
    U_RETURN(false);
 }
@@ -299,8 +335,10 @@ bool UFtpClient::changeWorkingDirectory(const UString& path)
       // But also states that it should respond with the same codes as
       // CWD (250 - file_action_ok). We accept both for both.
 
-      U_RETURN(response == FTP_COMMAND_OK ||
-               response == FTP_FILE_ACTION_OK);
+      bool result = (response == FTP_COMMAND_OK ||
+                     response == FTP_FILE_ACTION_OK);
+
+      U_RETURN(result);
       }
 
    U_RETURN(false);
@@ -327,7 +365,12 @@ bool UFtpClient::restart(off_t offset)
 {
    U_TRACE(0, "UFtpClient::restart(%I)", offset)
 
-   if (syncCommand("REST %I", offset)) U_RETURN(response == FTP_FILE_ACTION_PENDING);
+   if (syncCommand("REST %I", offset))
+      {
+      bool result = (response == FTP_FILE_ACTION_PENDING);
+
+      U_RETURN(result);
+      }
 
    U_RETURN(false);
 }
@@ -392,15 +435,13 @@ int UFtpClient::download(const UString& path, off_t offset)
 
 const char* UFtpClient::dump(bool reset) const
 {
-   UTCPSocket::dump(false);
+   Socket::dump(false);
 
    *UObjectIO::os << '\n'
                   << "port                           " << port            << '\n'
                   << "response                       " << response        << '\n'
                   << "bytes_to_read                  " << bytes_to_read   << '\n'
-                  << "pasv              (USocket     " << (void*)&pasv    << ")\n"
-                  << "tlsctrl           (USSLSocket  " << (void*)tlsctrl  << ")\n"
-                  << "tlsdata           (USSLSocket  " << (void*)tlsdata  << ')';
+                  << "pasv              (Socket      " << (void*)&pasv    << ')';
 
    if (reset)
       {

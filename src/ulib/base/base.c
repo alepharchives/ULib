@@ -1828,7 +1828,8 @@ static bool u_askForContinue(void)
 
    U_INTERNAL_TRACE("u_askForContinue()", 0)
 
-   if (isatty(STDIN_FILENO))
+   if (u_is_tty &&
+       isatty(STDIN_FILENO))
       {
       char ch[2];
 

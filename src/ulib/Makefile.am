@@ -133,7 +133,7 @@ endif
 if SSL
 SRC_C   += base/ssl/des3.c base/ssl/dgst.c
 SRC_CPP += ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
-		     ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp ssl/net/client/ssl_ftp.cpp
+		     ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp
 if SSL_TS
 SRC_CPP += ssl/timestamp.cpp
 endif

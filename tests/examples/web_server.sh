@@ -15,10 +15,11 @@ rm -f web_server.log \
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
+SOCK=tmp/fcgi.socket-1
+
 start_test() {
 
 	CMD=test_fcgi
-	SOCK=tmp/fcgi.socket-1
 
 	PIDS=`ps x | grep $CMD | grep -v grep | awk '{ print $1 }'`
 

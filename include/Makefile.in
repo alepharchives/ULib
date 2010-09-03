@@ -377,7 +377,6 @@ TO_INC = ulib/README \
 			ulib/ssl/*.h \
 			ulib/ssl/mime/*.h \
 			ulib/ssl/net/*.h \
-			ulib/ssl/net/client/*.h \
 			ulib/ui/*.h \
 			ulib/utility/*.h \
 			ulib/xml/soap/*.h \
@@ -407,7 +406,7 @@ TO_INC = ulib/README \
 #endif
 
 #if SSL
-#TO_INC += ulib/base/ssl/*.h ulib/ssl/*.h ulib/ssl/mime/*.h ulib/ssl/net/*.h ulib/ssl/net/client/*.h
+#TO_INC += ulib/base/ssl/*.h ulib/ssl/*.h ulib/ssl/mime/*.h ulib/ssl/net/*.h
 #endif
 
 #if LDAP
@@ -633,7 +632,7 @@ distclean-tags:
 	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
 
 distdir: $(DISTFILES)
-	$(mkdir_p) $(distdir)/ulib $(distdir)/ulib/base $(distdir)/ulib/base/coder $(distdir)/ulib/base/lzo $(distdir)/ulib/base/replace $(distdir)/ulib/base/ssl $(distdir)/ulib/base/win32 $(distdir)/ulib/base/zip $(distdir)/ulib/container $(distdir)/ulib/curl $(distdir)/ulib/db $(distdir)/ulib/debug $(distdir)/ulib/dynamic $(distdir)/ulib/event $(distdir)/ulib/flex $(distdir)/ulib/internal $(distdir)/ulib/json $(distdir)/ulib/ldap $(distdir)/ulib/libevent $(distdir)/ulib/magic $(distdir)/ulib/mime $(distdir)/ulib/mysql $(distdir)/ulib/net $(distdir)/ulib/net/client $(distdir)/ulib/net/rpc $(distdir)/ulib/net/server $(distdir)/ulib/pcre $(distdir)/ulib/plugin $(distdir)/ulib/query $(distdir)/ulib/replace $(distdir)/ulib/ssh/net $(distdir)/ulib/ssl $(distdir)/ulib/ssl/mime $(distdir)/ulib/ssl/net $(distdir)/ulib/ssl/net/client $(distdir)/ulib/ui $(distdir)/ulib/utility $(distdir)/ulib/xml/expat $(distdir)/ulib/xml/libxml2 $(distdir)/ulib/xml/soap $(distdir)/ulib/zip
+	$(mkdir_p) $(distdir)/ulib $(distdir)/ulib/base $(distdir)/ulib/base/coder $(distdir)/ulib/base/lzo $(distdir)/ulib/base/replace $(distdir)/ulib/base/ssl $(distdir)/ulib/base/win32 $(distdir)/ulib/base/zip $(distdir)/ulib/container $(distdir)/ulib/curl $(distdir)/ulib/db $(distdir)/ulib/debug $(distdir)/ulib/dynamic $(distdir)/ulib/event $(distdir)/ulib/flex $(distdir)/ulib/internal $(distdir)/ulib/json $(distdir)/ulib/ldap $(distdir)/ulib/libevent $(distdir)/ulib/magic $(distdir)/ulib/mime $(distdir)/ulib/mysql $(distdir)/ulib/net $(distdir)/ulib/net/client $(distdir)/ulib/net/rpc $(distdir)/ulib/net/server $(distdir)/ulib/pcre $(distdir)/ulib/plugin $(distdir)/ulib/query $(distdir)/ulib/replace $(distdir)/ulib/ssh/net $(distdir)/ulib/ssl $(distdir)/ulib/ssl/mime $(distdir)/ulib/ssl/net $(distdir)/ulib/ui $(distdir)/ulib/utility $(distdir)/ulib/xml/expat $(distdir)/ulib/xml/libxml2 $(distdir)/ulib/xml/soap $(distdir)/ulib/zip
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

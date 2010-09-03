@@ -57,7 +57,13 @@ public:
 
    // COSTRUTTORI
 
-            UHttpPlugIn();
+   UHttpPlugIn()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UHttpPlugIn, "", 0)
+
+      if (str_URI_PROTECTED_MASK == 0) str_allocate();
+      }
+
    virtual ~UHttpPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
@@ -81,16 +87,7 @@ public:
 
 protected:
    UVector<UString> valias;
-   UString uri_protected_mask, uri_protected_allowed_ip, uri_request_cert_mask, last_key;
-
-   // USP (ULib Servlet Page)
-
-   static void* argument;
-   static UDynamic* last_page;
-   static vPFpv runDynamicPage;
-   static UHashMap<UDynamic*>* pages;
-
-   static void callRunDynamicPage(UStringRep* key, void* value);
+   UString uri_protected_mask, uri_protected_allowed_ip, uri_request_cert_mask;
 
 private:
    UHttpPlugIn(const UHttpPlugIn&) : UServerPlugIn() {}

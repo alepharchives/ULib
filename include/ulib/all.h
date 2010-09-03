@@ -43,7 +43,6 @@
 #  include <ulib/ssl/digest.h>
 #  include <ulib/ssl/certificate.h>
 #  include <ulib/ssl/mime/mime_pkcs7.h>
-#  include <ulib/ssl/net/client/ssl_ftp.h>
 #  ifdef HAVE_SSL_TS
 #     include <ulib/ssl/timestamp.h>
 #  endif

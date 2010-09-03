@@ -14,10 +14,19 @@
 #ifndef U_SMTP_CLIENT_H
 #define U_SMTP_CLIENT_H 1
 
-#include <ulib/net/tcpsocket.h>
-
 #ifdef HAVE_SSL
 #  include <ulib/ssl/net/sslsocket.h>
+#  define Socket USSLSocket
+#  ifdef U_NO_SSL
+#  undef U_NO_SSL
+#  endif
+#else
+#  include <ulib/net/tcpsocket.h>
+#  define Socket UTCPSocket
+#  define Socket UTCPSocket
+#  ifndef U_NO_SSL
+#  define U_NO_SSL
+#  endif
 #endif
 
 /**
@@ -44,7 +53,7 @@
 
 class UFileConfig;
 
-class U_EXPORT USmtpClient : public UTCPSocket {
+class U_EXPORT USmtpClient : public Socket {
 public:
 
    enum SMTPClientStatus {
@@ -94,20 +103,20 @@ public:
    Constructs a new USmtpClient with default values for all properties
    */
 
-   USmtpClient(bool bSocketIsIPv6 = false) : UTCPSocket(bSocketIsIPv6)
+   USmtpClient(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6)
       {
       U_TRACE_REGISTER_OBJECT(0, USmtpClient, "%b", bSocketIsIPv6)
 
       state    = INIT;
       response = NONE;
-#  ifdef HAVE_SSL
-      tls      = 0;
-#  endif
 
       if (str_empty == 0) str_allocate();
       }
 
-   virtual ~USmtpClient();
+   virtual ~USmtpClient()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, USmtpClient)
+      }
 
    /**
    function called to established a socket connection with the SMTP network server
@@ -142,10 +151,6 @@ public:
 #endif
 
 protected:
-#ifdef HAVE_SSL
-   USSLSocket* tls;
-#endif
-
    UString domainName, senderAddress, rcptoAddress, messageSubject, messageBody, messageHeader;
    SMTPClientStatus state;
    int response;
@@ -156,8 +161,8 @@ private:
    void setStateFromResponse() U_NO_EXPORT;
    bool syncCommand(const char* format, ...) U_NO_EXPORT; // Send a command to the SMTP server and wait for a response
 
-   USmtpClient(const USmtpClient&) : UTCPSocket(false) {}
-   USmtpClient& operator=(const USmtpClient&)          { return *this; }
+   USmtpClient(const USmtpClient&) : Socket(false) {}
+   USmtpClient& operator=(const USmtpClient&)      { return *this; }
 };
 
 #endif

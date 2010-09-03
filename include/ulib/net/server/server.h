@@ -221,13 +221,13 @@ public:
 #ifdef HAVE_MODULES
    static int loadPlugins(const UString& plugin_dir, UVector<UString>& plugin_list, UFileConfig* cfg);
 
-   static int pluginsHandlerInit()     { return (vplugin ? plugins_handlerInit()    : U_PLUGIN_HANDLER_GO_ON); }
+   static int pluginsHandlerInit()     { return (vplugin ? plugins_handlerInit()    : U_PLUGIN_HANDLER_FINISHED); }
 
    // Connection-wide hooks
 
-   static int pluginsHandlerRead()     { return (vplugin ? plugins_handlerRead()    : U_PLUGIN_HANDLER_ERROR); }
-   static int pluginsHandlerRequest()  { return (vplugin ? plugins_handlerRequest() : U_PLUGIN_HANDLER_ERROR); }
-   static int pluginsHandlerReset()    { return (vplugin ? plugins_handlerReset()   : U_PLUGIN_HANDLER_ERROR); }
+   static int pluginsHandlerRead()     { return (vplugin ? plugins_handlerRead()    : U_PLUGIN_HANDLER_FINISHED); }
+   static int pluginsHandlerRequest()  { return (vplugin ? plugins_handlerRequest() : U_PLUGIN_HANDLER_FINISHED); }
+   static int pluginsHandlerReset()    { return (vplugin ? plugins_handlerReset()   : U_PLUGIN_HANDLER_FINISHED); }
 #endif
 
    // -----------------------------------------------------------------------------------------------------------------------------

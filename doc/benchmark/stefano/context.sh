@@ -7,8 +7,8 @@ cat << END
 
 [1;37mDeveloped with ULib (C++ application development framework)[0;0m
 
-Building Environment.:[1;36m Fedora Core 13 (AMD64) (Aug 17 2010)[0;0m
-Operating System.....:[1;32m Linux giallo 2.6.33.6-147.fc13.x86_64 #1 SMP Tue Jul 6 22:32:17 UTC 2010 x86_64 x86_64 x86_64 GNU/Linux[0;0m
+Building Environment.:[1;36m Fedora Core 13 (AMD64) (Aug 31 2010)[0;0m
+Operating System.....:[1;32m Linux giallo 2.6.33.8-149.fc13.x86_64 #1 SMP Tue Aug 17 22:53:15 UTC 2010 x86_64 x86_64 x86_64 GNU/Linux[0;0m
 C++ Compiler.........:[1;32m gcc (GCC) 4.4.4 20100630 (Red Hat 4.4.4-10)[0;0m
 C   Flags............:[1;32m -g -O2  -Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition[0;0m
 C++ Flags............:[1;32m -g -O2 -fvisibility=hidden -fvisibility-inlines-hidden  -fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated[0;0m

@@ -11,6 +11,7 @@ start_msg pop3
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
+#STRACE=$TRUSS
 start_prg pop3 mail.unirel.com stefano.casazza caciucco
 
 # Test against expected output

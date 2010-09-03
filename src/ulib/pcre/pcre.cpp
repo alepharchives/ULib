@@ -14,19 +14,127 @@
 #include <ulib/pcre/pcre.h>
 #include <ulib/utility/string_ext.h>
 
-UPCRE::UPCRE(const UString& expression, int flags) : _expression(expression)
+UPCRE* UPCRE::dollar;
+UPCRE* UPCRE::xml_mask;
+UPCRE* UPCRE::url_mask;
+UPCRE* UPCRE::username_mask;
+
+U_NO_EXPORT bool UPCRE::checkBrackets()
 {
-   U_TRACE_REGISTER_OBJECT(0, UPCRE, "%.*S,%u", U_STRING_TO_TRACE(expression), flags)
+   U_TRACE(1, "UPCRE::checkBrackets()")
 
-     case_t = ((flags & PCRE_CASELESS) != 0);
-   global_t = ((flags & PCRE_GLOBAL)   != 0);
+   /*
+   certainly we need an anchor, we want to check if the whole arg is in brackets
 
-   if (global_t) flags -= PCRE_GLOBAL; /* remove internal flag before feeding _flags to pcre */
+      braces("^[^\\\\]\\(.*[^\\\\]\\)$");
+      perlish: [^\\]\(.*[^\\]\)
+
+   There's no reason, not to add brackets in general.
+   It's more comfortable, cause we wants to start with $1 at all, also if we set the whole arg in brackets!
+   */
+
+   if (UStringExt::isDelimited(_expression, "()") == false)
+      {
+      _expression = '(' + _expression + ')';
+
+      /* recreate the p_pcre* objects to avoid memory leaks */
+
+      if (p_pcre)
+         {
+         U_SYSCALL_VOID(pcre_free, "%p", p_pcre);
+
+         p_pcre = 0;
+         }
+
+      if (p_pcre_extra)
+         {
+         U_SYSCALL_VOID(pcre_free, "%p", p_pcre_extra);
+
+         p_pcre_extra = 0;
+         }
+
+      compile(0);
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+U_NO_EXPORT void UPCRE::zero(int flags)
+{
+   U_TRACE(0, "UPCRE::zero(%d)", flags)
+
+   p_pcre       = 0;
+   sub_vec      = 0;
+   resultset    = 0;
+   stringlist   = 0;
+   p_pcre_extra = 0;
+
+   if (flags)
+      {
+       global_t = ((flags & PCRE_GLOBAL)      != 0);
+      replace_t = ((flags & PCRE_FOR_REPLACE) != 0);
+
+      /* remove internal flag before feeding _flags to pcre */
+
+      if ( global_t) flags -= PCRE_GLOBAL;
+      if (replace_t) flags -= PCRE_FOR_REPLACE;
+      }
+   else
+      {
+      replace_t = global_t = false;
+      }
 
    _flags = flags;
+}
 
-      zero();
-   compile();
+UPCRE::UPCRE()
+{
+   U_TRACE_REGISTER_OBJECT(0, UPCRE, "", 0)
+
+   zero(0);
+}
+
+void UPCRE::set(const UString& expression, int flags)
+{
+   U_TRACE(0, "UPCRE::set(%.*S,%d)", U_STRING_TO_TRACE(expression), flags)
+
+   U_ASSERT_EQUALS(expression.empty(), false)
+
+   _expression = expression;
+
+   zero(flags);
+
+   bool compiled = (replace_t && checkBrackets());
+
+   if (compiled == false) compile(0);
+}
+
+void UPCRE::set(const UString& expression, const char* flags)
+{
+   U_TRACE(0, "UPCRE::set(%.*S,%S)", U_STRING_TO_TRACE(expression), flags)
+
+   U_ASSERT_EQUALS(expression.empty(), false)
+
+   _expression = expression;
+
+   zero(0);
+
+   for (int i = 0; flags[i] != '\0'; ++i)
+      {
+      switch (flags[i])
+         {
+         case 'i':   _flags |= PCRE_CASELESS;  break;
+         case 'm':   _flags |= PCRE_MULTILINE; break;
+         case 's':   _flags |= PCRE_DOTALL;    break;
+         case 'x':   _flags |= PCRE_EXTENDED;  break;
+         case 'g':  global_t = true;           break;
+         case 'r': replace_t = true;           break;
+         }
+      }
+
+   compile(0);
 }
 
 UPCRE::~UPCRE()
@@ -79,10 +187,12 @@ U_NO_EXPORT const char* UPCRE::status(int num)
 
 /* compile the expression */
 
-void UPCRE::compile()
+void UPCRE::compile(const unsigned char* tables) /* locale tables */
 {
-   U_TRACE(1, "UPCRE::compile()")
+   U_TRACE(1, "UPCRE::compile(%p)", tables)
 
+   int erroffset;
+   const char* err_str;
    char* ptr = (char*) _expression.c_str();
 
    U_INTERNAL_ASSERT_POINTER(ptr)
@@ -110,25 +220,22 @@ void UPCRE::compile()
    reset();
 }
 
-UString UPCRE::getMatch(int pos, bool check)
+void UPCRE::study(int options)
 {
-   U_TRACE(0, "UPCRE::getMatch(%d,%b)", pos, check)
+   U_TRACE(1, "UPCRE::study(%d)", options)
 
-   U_INTERNAL_ASSERT_POINTER(resultset)
-   U_INTERNAL_ASSERT_RANGE(0,pos,num_matches)
+   const char* err_str;
 
-   UString result;
+   p_pcre_extra = (pcre_extra*) U_SYSCALL(pcre_study, "%p,%d,%p", p_pcre, options, &err_str);
 
-   if (check && pos == (int)resultset->size()) pos = (int)resultset->size() - 1;
-
-   result = resultset->at(pos);
-
-   U_RETURN_STRING(result);
+#ifdef DEBUG
+   if (p_pcre_extra == 0 && err_str) U_INTERNAL_DUMP("pcre_study() failed: %S", err_str)
+#endif
 }
 
-bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int options)
+bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int options, bool bresultset)
 {
-   U_TRACE(1, "UPCRE::search(%.*S,%u,%d,%d)", stuff_len, stuff, stuff_len, offset, options)
+   U_TRACE(1, "UPCRE::search(%.*S,%u,%d,%d,%b)", stuff_len, stuff, stuff_len, offset, options, bresultset)
 
    U_INTERNAL_ASSERT_POINTER(p_pcre)
 
@@ -151,36 +258,52 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
         if (num == 1) num_matches = 0; /* we had a match, but without substrings */
    else if (num >  1)                  /* we had matching substrings */
       {
+      int i, res;
+
       num_matches = num - 1;
 
       if (stringlist)
          {
+         U_SYSCALL_VOID(pcre_free_substring_list, "%p", stringlist);
+                                                        stringlist = 0;
+
          U_INTERNAL_ASSERT_POINTER(resultset)
 
-         resultset->clear();
-
-         U_SYSCALL_VOID(pcre_free_substring_list, "%p", stringlist);
-         }
-      else
-         {
-         U_INTERNAL_ASSERT_EQUALS(resultset,0)
-
-         resultset = U_NEW(UVector<UString>);
+         delete resultset;
+                resultset = 0;
          }
 
-      int res = U_SYSCALL(pcre_get_substring_list, "%S,%p,%d,%p", stuff, sub_vec, num, &stringlist);
+      if (bresultset == false) goto end;
+
+      res = U_SYSCALL(pcre_get_substring_list, "%S,%p,%d,%p", stuff, sub_vec, num, &stringlist);
 
       U_DUMP("status() = %S", status(res))
 
       U_INTERNAL_ASSERT_EQUALS(res,0)
 
-      for (int i = 1; i < num; ++i)
+      U_DUMP("getMatchStart() = %u getMatchEnd() = %u", getMatchStart(), getMatchEnd())
+
+      U_INTERNAL_ASSERT_EQUALS(resultset,0)
+
+      resultset = U_NEW(UVector<UString>);
+
+      for (i = 1; i < num; ++i)
          {
          UString str(stringlist[i]);
 
          resultset->push_back(str);
+
+         U_INTERNAL_DUMP("resultset[%d] = (%u) %.*S", i-1, str.size(), U_STRING_TO_TRACE(str))
+
+         U_DUMP("getMatchStart(%d) = %u getMatchEnd(%d) = %u getMatchLength(%d) = %u",
+                  i-1, getMatchStart(i-1), i-1, getMatchEnd(i-1), i-1, getMatchLength(i-1))
+
+         U_ASSERT_EQUALS(str.size(), getMatchLength(i-1))
          }
       }
+
+end:
+   U_INTERNAL_DUMP("num_matches = %d", num_matches)
 
    U_RETURN(true);
 }
@@ -189,17 +312,17 @@ uint32_t UPCRE::split(UVector<UString>& vec, const UString& piece, int limit, in
 {
    U_TRACE(0, "UPCRE::split(%p,%.*S,%d,%d,%d)", &vec, U_STRING_TO_TRACE(piece), limit, start_offset, end_offset)
 
-   uint32_t n = vec.size();
+   int num_pieces, piece_start, piece_end;
+   uint32_t r, pos, sz, n = vec.size(), length = piece.size();
 
    if (_expression.size() == 1) /* _expression will be used as delimiter */
       {
       /* use the plain c++ way, ignore the pre-compiled p_pcre */
 
       char z;
-      uint32_t pos, length = piece.size();
       UString buffer(100U), _delimiter, _piece;
 
-      if (case_t)
+      if (_flags & PCRE_CASELESS)
          {
          z = u_toupper(_expression.first_char());
 
@@ -227,194 +350,158 @@ uint32_t UPCRE::split(UVector<UString>& vec, const UString& piece, int limit, in
          }
 
       if (buffer.empty() == false) vec.push_back(buffer);
+
+      goto end;
       }
-   else /* use the regex way */
+
+   /* use the regex way */
+
+   if (replace_t == false) (void) checkBrackets();
+
+   pos        = 0;
+   num_pieces = 0;
+
+   while (search(piece, pos, 0, false) &&
+          matches() > 0) /* we had matching substrings */
       {
-      checkBrackets();
+      ++num_pieces;
 
-      int num_pieces = 0, pos = 0, piece_end = 0, piece_start = 0;
+      piece_start = pos;
+      piece_end   = getMatchStart(0);
+      sz          = piece_end - piece_start;
 
-      while (true)
+      // NB: it's ok a null string... (see split in replaceVars())
+
+      U_INTERNAL_DUMP("num_pieces = %d piece_start = %d piece_end = %d sz = %d", num_pieces, piece_start, piece_end, sz)
+
+      if ((       limit == 0 || num_pieces <         limit) &&
+          (start_offset == 0 || num_pieces >= start_offset) &&
+          (  end_offset == 0 || num_pieces <=   end_offset))
          {
-         if (search(piece, pos, 0))
-            {
-            if (num_matches > 0)
-               {
-               piece_end   = getMatchStart(0) - 1;
-               piece_start = pos;
-               pos         = piece_end + 1 + getMatchLength(0);
+         /* we are within the allowed range, so just add the grab */
 
-               ++num_pieces;
+         UString junk(piece, piece_start, sz);
 
-               UString junk(piece, piece_start, (piece_end - piece_start)+1);
-
-               if ((limit != 0 && num_pieces < limit) || limit == 0)
-                  {
-                  if ((start_offset != 0 && num_pieces >= start_offset) || start_offset == 0)
-                     {
-                     if ((end_offset != 0 && num_pieces <= end_offset) || end_offset == 0)
-                        {
-                        vec.push_back(junk); /* we are within the allowed range, so just add the grab */
-                        }
-                     }
-                  }
-               }
-            }
-         else
-            {
-            /* the rest of the UString, there are no more delimiters */
-
-            ++num_pieces;
-
-            UString junk(piece, pos, (piece.size() - pos));
-
-            if ((limit != 0 && num_pieces < limit) || limit == 0)
-               {
-               if ((start_offset != 0 && num_pieces >= start_offset) || start_offset == 0)
-                  {
-                  if ((end_offset != 0 && num_pieces <= end_offset) || end_offset == 0)
-                     {
-                     vec.push_back(junk); /* we are within the allowed range, so just add the grab */
-                     }
-                  }
-               }
-
-            break;
-            }
+         vec.push_back(junk);
          }
+
+      pos = piece_end + getMatchLength(0);
+
+      U_INTERNAL_DUMP("pos = %u", pos)
       }
 
-   uint32_t r = vec.size() - n;
+   /* the rest of the string, there are no more delimiters */
+
+   ++num_pieces;
+
+   if ((       limit == 0 || num_pieces <         limit) &&
+       (start_offset == 0 || num_pieces >= start_offset) &&
+       (  end_offset == 0 || num_pieces <=   end_offset))
+      {
+      /* we are within the allowed range, so just add the grab */
+
+      UString junk(piece, pos, length - pos);
+
+      vec.push_back(junk);
+      }
+
+end:
+   r = vec.size() - n;
 
    U_RETURN(r);
 }
 
 /* replace method */
 
-U_NO_EXPORT void UPCRE::checkBrackets()
-{
-   U_TRACE(1, "UPCRE::checkBrackets()")
-
-   /*
-   certainly we need an anchor, we want to check if the whole arg is in brackets
-
-      braces("^[^\\\\]\\(.*[^\\\\]\\)$");
-      perlish: [^\\]\(.*[^\\]\)
-
-   There's no reason, not to add brackets in general.
-   It's more comfortable, cause we wants to start with $1 at all, also if we set the whole arg in brackets!
-   */
-
-   if (UStringExt::isDelimited(_expression, "()") == false)
-      {
-      /* recreate the p_pcre* objects to avoid memory leaks */
-
-      U_SYSCALL_VOID(pcre_free, "%p", p_pcre);
-      U_SYSCALL_VOID(pcre_free, "%p", p_pcre_extra);
-
-      p_pcre       = 0;
-      p_pcre_extra = 0;
-      _expression  = '(' + _expression + ')';
-
-      compile();
-      }
-}
-
 UString UPCRE::replace(const UString& piece, const UString& with)
 {
    U_TRACE(0, "UPCRE::replace(%.*S,%.*S)", U_STRING_TO_TRACE(piece), U_STRING_TO_TRACE(with))
 
-   checkBrackets();
-
-   int  iReplaced = -1;
    bool bReplaced = false;
-   UString replaced(piece);
+   UString replaced(piece), use_with;
+   int iReplaced = -1, len, match_pos;
 
-   if (search(piece, 0, 0))
+   if (replace_t == false) (void) checkBrackets();
+
+   if (search(piece, 0, 0, true) == false) goto end;
+
+   /* we found at least one match */
+
+   U_INTERNAL_DUMP("global_t = %b", global_t)
+
+   if (global_t)
       {
-      /* we found at least one match */
+      do {
+         // here we need to resolve the vars certainly for every hit.
+         // could be different content sometimes!
 
-      // sure we must resolve $1 for ever piece we found especially for "g"
-      // so let's just create that var, we resolve it when we needed!
+         use_with = replaceVars(with);
+                                
+         len = getMatchEnd() - getMatchStart() + 1;
 
-      UString use_with;
+         replaced.replace(getMatchStart(0), len, use_with);
+                                
+         // Next run should begin after the last char of the stuff we put in the text
 
-      if (global_t == false)
-         {
-         // here we can resolve vars if option g is not set
+         match_pos = (use_with.length() - len) + getMatchEnd() + 1;
 
-         use_with = _replace_vars(with);
-
-         if (matched() &&
-             matches() >= 1)
-            {
-            int len = getMatchEnd() - getMatchStart() + 1;
-
-            replaced.replace(getMatchStart(0), len, use_with);
-
-            bReplaced = true;
-            iReplaced = 0;
-            }
+           bReplaced = true;
+         ++iReplaced;
          }
-      else
-         {
-         /* global replace */
+      while (search(replaced, match_pos, 0, true));
 
-         // in global replace we just need to remember our position
-         // so let's initialize it first
-
-         int len, match_pos;
-
-         do {
-            // here we need to resolve the vars certainly for every hit.
-            // could be different content sometimes!
-
-            use_with = _replace_vars(with);
-                                   
-            len = getMatchEnd() - getMatchStart() + 1;
-
-            replaced.replace(getMatchStart(0), len, use_with);
-                                   
-            // Next run should begin after the last char of the stuff we put in the text
-
-            match_pos = ( use_with.length() - len ) + getMatchEnd() + 1;
-
-              bReplaced = true;
-            ++iReplaced;
-            }
-         while (search(replaced, match_pos, 0));
-         }
+      goto end;
       }
 
+   // here we can resolve vars if option g is not set
+
+   use_with = replaceVars(with);
+
+   if (matched() &&
+       matches() >= 1)
+      {
+      len = getMatchEnd() - getMatchStart() + 1;
+
+      replaced.replace(getMatchStart(0), len, use_with);
+
+      bReplaced = true;
+      iReplaced = 0;
+      }
+
+end:
    did_match   = bReplaced;
    num_matches = iReplaced;
 
    U_RETURN_STRING(replaced);
 }
 
-U_NO_EXPORT UString UPCRE::_replace_vars(const UString& piece)
+U_NO_EXPORT UString UPCRE::replaceVars(const UString& piece)
 {
-   U_TRACE(0, "UPCRE::_replace_vars(%.*S)", U_STRING_TO_TRACE(piece))
+   U_TRACE(0, "UPCRE::replaceVars(%.*S)", U_STRING_TO_TRACE(piece))
 
-   static UPCRE* dollar;
+   if (dollar == 0)
+      {
+      U_NEW_ULIB_OBJECT(dollar, UPCRE(U_STRING_FROM_CONSTANT("\\${?([0-9]+)}?"), 0));
 
-   if (dollar == 0) U_NEW_ULIB_OBJECT(dollar, UPCRE(U_STRING_FROM_CONSTANT("\\${?([0-9]+)}?"), 0));
+      dollar->study();
+      }
 
    UPCRE subsplit;
-   int iBracketIndex;
-   uint32_t size, pos;
    UVector<UString> splitted;
+   uint32_t size, pos, iBracketIndex, last = resultset->size();
    UString cstr(U_CAPACITY), first, replaced, sBracketContent, with = piece;
 
-   while (dollar->search(with, 0, 0))
+   while (dollar->search(with, 0, 0, true))
       {
       // let's do some conversion first
 
-      first = dollar->getMatch(0);
+      first = dollar->resultset->at(0);
 
       iBracketIndex = first.strtol();
 
-      sBracketContent = getMatch(iBracketIndex, true);
+      // NB: we need this check...
+
+      sBracketContent = resultset->at(iBracketIndex < last ? iBracketIndex : last-1);
 
       U_INTERNAL_DUMP("sBracket[%d] = %.*S", iBracketIndex, U_STRING_TO_TRACE(sBracketContent))
 
@@ -422,7 +509,7 @@ U_NO_EXPORT UString UPCRE::_replace_vars(const UString& piece)
 
       cstr.snprintf("(\\${?%.*s}?)", U_STRING_TO_TRACE(first));
 
-      subsplit.set(cstr);
+      subsplit.set(cstr, PCRE_FOR_REPLACE);
 
       // normally 2 (or more) parts, the one in front of and the other one after "$..."
 
@@ -444,70 +531,21 @@ U_NO_EXPORT UString UPCRE::_replace_vars(const UString& piece)
 }
 
 // regular expressions that I have found the most useful for day-to-day web programming tasks...
-//
+// ---------------------------------------------------------------------------------------------
 // http://immike.net/blog/2007/04/06/5-regular-expressions-every-web-programmer-should-know/
-
-/*
-#define U_REGEX_URL "{" \
-"\\b" \
-"(" \
-"(https?)://[-\\w]+(\\.\\w[-\\w]*)+" \
-"|" \
- "(?i:[a-z0-9](?:[-a-z0-9]*[a-z0-9])?\\.)+" \
- "(?-i:com\\b" \
-    "|edu\\b" \
-    "|biz\\b" \
-    "|gov\\b" \
-    "|in(?:t|fo)\\b" \
-    "|mil\\b" \
-    "|net\\b" \
-    "|org\\b" \
-    "|[a-z][a-z]\\.[a-z][a-z]\\b" \
- ")" \
-")" \
-"(:\\d+)?" \
-"(" \
- "/" \
- "[^.!,?;\"\'<>()\\[\\]\\{\\}\\s\\x7F-\\xFF]*" \
-   "(" \
-     "[.!,?]+[^.!,?;\"\'<>()\\[\\]\\{\\}\\s\\x7F-\\xFF]+" \
-   ")*" \
- ")?" \
-"}ix"
-
-bool UPCRE::isValidURL(const UString& url)
-{
-   U_TRACE(0, "UPCRE::isValidURL(%.*S)", U_STRING_TO_TRACE(url))
-
-   static UPCRE* url_mask;
-
-   if (url_mask == 0)
-      {
-      U_NEW_ULIB_OBJECT(url_mask, UPCRE(U_STRING_FROM_CONSTANT(U_REGEX_URL), 0));
-
-      url_mask->study();
-      }
-
-   bool result = url_mask->search(url, 0, 0);
-
-   U_RETURN(result);
-}
-*/
 
 bool UPCRE::validateUsername(const UString& username)
 {
    U_TRACE(0, "UPCRE::validateUsername(%.*S)", U_STRING_TO_TRACE(username))
 
-   static UPCRE* username_mask;
-
    if (username_mask == 0)
       {
-      U_NEW_ULIB_OBJECT(username_mask, UPCRE(U_STRING_FROM_CONSTANT("/^[a-zA-Z0-9_]{3,16}$/"), 0));
+      U_NEW_ULIB_OBJECT(username_mask, UPCRE(U_STRING_FROM_CONSTANT("(/^[a-zA-Z0-9_]{3,16}$/)"), PCRE_FOR_REPLACE));
 
       username_mask->study();
       }
 
-   bool result = username_mask->search(username, 0, 0);
+   bool result = username_mask->search(username, 0, 0, false);
 
    U_RETURN(result);
 }
@@ -520,21 +558,52 @@ uint32_t UPCRE::getTag(UVector<UString>& vec, const UString& xml, const char* at
 {
    U_TRACE(0, "UPCRE::getTag(%p,%.*S,%S,%S,%S)", &vec, U_STRING_TO_TRACE(xml), attr, value, tag)
 
-   static UString* cstr;
-   static UPCRE* xml_mask;
-
    if (xml_mask == 0)
       {
-      U_NEW_ULIB_OBJECT(cstr,     UString(U_CAPACITY));
-      U_NEW_ULIB_OBJECT(xml_mask, UPCRE());
+      UString cstr(U_CAPACITY);
 
-      cstr->snprintf("(<(%s)[^>]*%s\\s*=\\s*([\\'\\\"])%s\\\\2[^>]*>(.*?)<\\/\\\\1>)", tag, attr, value);
+      cstr.snprintf("(<(%s)[^>]*%s\\s*=\\s*([\\'\\\"])%s\\\\2[^>]*>(.*?)<\\/\\\\1>)", tag, attr, value);
 
-      xml_mask->set(*cstr);
+      U_NEW_ULIB_OBJECT(xml_mask, UPCRE(cstr, PCRE_FOR_REPLACE));
+
       xml_mask->study();
       }
 
    uint32_t result = xml_mask->split(vec, xml, 0, 0, 0);
+
+   U_RETURN(result);
+}
+
+/*
+RFC 2396 gives the following regular expression for parsing URLs:
+
+^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?
+ 12            3  4          5       6  7        8 9
+
+scheme    = $2
+authority = $4
+path      = $5
+query     = $7
+fragment  = $9
+
+query and fragment can be considered optional,
+scheme and authority could also be optional in the presence of a base url.
+*/
+
+#define U_REGEX_URL "(^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?)"
+
+bool UPCRE::isValidURL(const UString& url)
+{
+   U_TRACE(0, "UPCRE::isValidURL(%.*S)", U_STRING_TO_TRACE(url))
+
+   if (url_mask == 0)
+      {
+      U_NEW_ULIB_OBJECT(url_mask, UPCRE(U_STRING_FROM_CONSTANT(U_REGEX_URL), PCRE_FOR_REPLACE));
+
+      url_mask->study();
+      }
+
+   bool result = url_mask->search(url, 0, 0, false);
 
    U_RETURN(result);
 }
@@ -546,13 +615,10 @@ const char* UPCRE::dump(bool reset) const
 {
    *UObjectIO::os << "p_pcre                        " << (void*)p_pcre       << '\n'
                   << "_flags                        " << _flags              << '\n'
-                  << "tables                        " << (void*)tables       << '\n'
-                  << "case_t                        " << case_t              << '\n'
                   << "sub_len                       " << sub_len             << '\n'
                   << "sub_vec                       " << (void*)sub_vec      << '\n'
-                  << "err_str                       " << (void*)err_str      << '\n'
                   << "global_t                      " << global_t            << '\n'
-                  << "erroffset                     " << erroffset           << '\n'
+                  << "replace_t                     " << replace_t           << '\n'
                   << "did_match                     " << did_match           << '\n'
                   << "stringlist                    " << (void*)stringlist   << '\n'
                   << "num_matches                   " << num_matches         << '\n'

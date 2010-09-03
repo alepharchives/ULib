@@ -29,7 +29,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static UString* str_REPLACE_RESPONSE;
    static UString* str_FOLLOW_REDIRECTS;
    static UString* str_CLIENT_CERTIFICATE;
 

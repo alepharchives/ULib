@@ -14,7 +14,20 @@
 #ifndef U_FTP_CLIENT_H
 #define U_FTP_CLIENT_H 1
 
-#include <ulib/net/tcpsocket.h>
+#ifdef HAVE_SSL
+#  include <ulib/ssl/net/sslsocket.h>
+#  define Socket USSLSocket
+#  ifdef U_NO_SSL
+#  undef U_NO_SSL
+#  endif
+#else
+#  include <ulib/net/tcpsocket.h>
+#  define Socket UTCPSocket
+#  define Socket UTCPSocket
+#  ifndef U_NO_SSL
+#  define U_NO_SSL
+#  endif
+#endif
 
 /**
    @class UFtpClient
@@ -95,13 +108,33 @@
  *         (where a,b,c,d are ip address and p1,p2 are port)
  *      send "RETR"...
  *      wait for connection from ftp server
- */
+
+   How to establishing a protected session:
+
+           Client                                 Server
+  control          data                   data               control
+====================================================================
+                                                             socket()
+                                                             bind()
+  socket()
+  connect()  ----------------------------------------------> accept()
+            <----------------------------------------------  220
+  AUTH TLS   ---------------------------------------------->
+            <----------------------------------------------  234
+  TLSneg()  <----------------------------------------------> TLSneg()
+  PBSZ 0     ---------------------------------------------->
+            <----------------------------------------------  200
+  PROT P     ---------------------------------------------->
+            <----------------------------------------------  200
+  USER fred  ---------------------------------------------->
+            <----------------------------------------------  331
+  PASS pass  ---------------------------------------------->
+            <----------------------------------------------  230
+*/
 
 // MARK: send QUIT after receiving failed status instead of just closing connection (nicer)
 
-class USSLSocket;
-
-class U_EXPORT UFtpClient : public UTCPSocket {
+class U_EXPORT UFtpClient : public Socket {
 public:
 
    enum TransferType { Binary, /*!< Treats files an an opaque stream of bytes */
@@ -114,11 +147,9 @@ public:
    Constructs a new UFtpClient with default values for all properties
    */
 
-   UFtpClient(bool bSocketIsIPv6 = false) : UTCPSocket(bSocketIsIPv6)
+   UFtpClient(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6)
       {
       U_TRACE_REGISTER_OBJECT(0, UFtpClient, "%b", bSocketIsIPv6)
-
-      tlsctrl = tlsdata = 0;
       }
 
    virtual ~UFtpClient()
@@ -145,10 +176,26 @@ public:
       {
       U_TRACE(0, "UFtpClient::connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
 
-      bool result = UTCPSocket::connectServer(server, port) && waitReady(timeoutMS);
+#  ifdef HAVE_SSL
+      U_INTERNAL_ASSERT(Socket::isSSL())
+      ((USSLSocket*)this)->setActive(false);
+#  endif
+
+      bool result = Socket::connectServer(server, port) && waitReady(timeoutMS);
 
       U_RETURN(result);
       }
+
+   /**
+   This method is to be called after connectServer() and before login() to secure the ftp communication channel.
+
+   @returns @c true if successful and @c false if the ssl negotiation failed
+
+   Notes: The library uses an ssl/tls encryption approach defined in the draft-murray-auth-ftp-ssl
+          available at http://www.ford-hutchinson.com/~fh-1-pfh/ftps-ext.html.
+   */
+
+   bool negotiateEncryption();
 
    /**
    Sends a login request to the remote FTP server.
@@ -184,6 +231,16 @@ public:
    bool changeWorkingDirectory(const UString& path);
 
    /**
+   On an already secured ftp session, setDataEncryption() specifies if the data connection
+   channel will be secured for the next data transfer.
+
+   @param @secure flag either unencrypted (=false) or secure (=true)
+   @returns @c true if successful and @c false if the control connection isn't secure or on error
+   */
+
+   bool setDataEncryption(bool secure = true);
+
+   /**
    Tests whether the preceding data transfer request completed successfully.
 
    Asynchronous data transfer requests signal their completion by returning EndOfFile
@@ -199,7 +256,9 @@ public:
 
       readCommandResponse();
 
-      U_RETURN(response == FTP_CLOSING_DATA_CONNECTION);
+      bool result = (response == FTP_CLOSING_DATA_CONNECTION);
+
+      U_RETURN(result);
       }
 
    /**
@@ -263,11 +322,9 @@ public:
 #endif
 
 protected:
-   USSLSocket* tlsctrl;
-   USSLSocket* tlsdata;
    size_t bytes_to_read;
    int port, response;
-   USocket pasv;
+   Socket pasv;
 
    const char* status();
 
@@ -352,8 +409,8 @@ private:
    inline void readNumberOfByte() U_NO_EXPORT;
    inline bool readPortToConnect() U_NO_EXPORT;
 
-   UFtpClient(const UFtpClient&) : UTCPSocket(false) {}
-   UFtpClient& operator=(const UFtpClient&)          { return *this; }
+   UFtpClient(const UFtpClient&) : Socket(false) {}
+   UFtpClient& operator=(const UFtpClient&)      { return *this; }
 };
 
 #endif

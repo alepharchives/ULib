@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# disallow this kind of request
+# touch ./check ./status ./logout ./cpe ./test 
+
 # *** NOTE ***
 # If you want to have local firewall rules in addition to what NoCat provides, add them at the bottom of this file.
 # They will be recreated each time gateway is restarted

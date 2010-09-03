@@ -617,6 +617,13 @@ public:
       U_RETURN(false);
       }
 
+   virtual bool isIPC() const
+      {
+      U_TRACE(0, "USocket::isIPC()")
+
+      U_RETURN(false);
+      }
+
 #ifdef closesocket
 #undef closesocket
 #endif

@@ -82,6 +82,13 @@ public:
 
    // VIRTUAL METHOD
 
+   virtual bool isIPC() const
+      {
+      U_TRACE(0, "UUnixSocket::isIPC()")
+
+      U_RETURN(true);
+      }
+
    /**
     * A Unix domain "server" is created as a Unix domain socket that is bound
     * to a pathname and that has a backlog queue to listen for connection

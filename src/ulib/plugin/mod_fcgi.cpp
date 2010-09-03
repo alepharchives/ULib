@@ -160,7 +160,7 @@ int UFCGIPlugIn::handlerConfig(UFileConfig& cfg)
    U_TRACE(0, "UFCGIPlugIn::handlerConfig(%p)", &cfg)
 
    // ------------------------------------------------------------------------------------------
-   // FCGI_URI_MASK  mask (DOS regexp) of uri type that send request via FCGI (*.php)
+   // FCGI_URI_MASK  mask (DOS regexp) of uri type that send request to FCGI (*.php)
    //
    // NAME_SOCKET    file name for the fcgi socket
    //
@@ -190,7 +190,8 @@ int UFCGIPlugIn::handlerInit()
 {
    U_TRACE(1, "UFCGIPlugIn::handlerInit()")
 
-   if (connection)
+   if (connection &&
+       fcgi_uri_mask.empty() == false)
       {
 #  ifdef __MINGW32__
       U_INTERNAL_ASSERT_DIFFERS(connection->port, 0)
@@ -222,16 +223,11 @@ int UFCGIPlugIn::handlerRequest()
 {
    U_TRACE(0, "UFCGIPlugIn::handlerRequest()")
 
-   if (fcgi_uri_mask.empty() ||
+   if ((connection->socket->isIPC() && // NB: local file system...
+        UHTTP::checkHTTPRequest())  || // NB: 0 == not found...
        u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(fcgi_uri_mask), 0) == false)
       {
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-      }
-
-   if (connection->port == 0 &&
-       UHTTP::checkHTTPRequest() == false)
-      {
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
    FCGI_Header* h;

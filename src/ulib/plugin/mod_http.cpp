@@ -20,11 +20,6 @@
 
 U_CREAT_FUNC(UHttpPlugIn)
 
-void*                UHttpPlugIn::argument;
-vPFpv                UHttpPlugIn::runDynamicPage;
-UDynamic*            UHttpPlugIn::last_page;
-UHashMap<UDynamic*>* UHttpPlugIn::pages;
-
 UString* UHttpPlugIn::str_CACHE_FILE_MASK;
 UString* UHttpPlugIn::str_URI_PROTECTED_MASK;
 UString* UHttpPlugIn::str_URI_REQUEST_CERT_MASK;
@@ -51,62 +46,9 @@ void UHttpPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP, U_STRING_FROM_STRINGREP_STORAGE(3));
 }
 
-// USP (ULib Servlet Page)
-
-void UHttpPlugIn::callRunDynamicPage(UStringRep* key, void* value)
-{
-   U_TRACE(0, "UHttpPlugIn::callRunDynamicPage(%.*S,%p)", U_STRING_TO_TRACE(*key), value)
-
-   UDynamic* page = (UDynamic*)value;
-
-   U_INTERNAL_ASSERT_POINTER(page)
-
-   vPFpv _runDynamicPage = (vPFpv)(*page)["runDynamicPage"];
-
-   // ------------------
-   // argument value:
-   // ------------------
-   //  0 -> init
-   // -1 -> reset
-   // -2 -> destroy
-   // ------------------
-
-   _runDynamicPage(argument);
-}
-
-UHttpPlugIn::UHttpPlugIn()
-{
-   U_TRACE_REGISTER_OBJECT(0, UHttpPlugIn, "", 0)
-
-   if (str_URI_PROTECTED_MASK == 0) str_allocate();
-
-   UHTTP::cache_file_mask = U_NEW(UString);
-}
-
 UHttpPlugIn::~UHttpPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UHttpPlugIn)
-
-   delete UHTTP::cache_file_mask;
-
-   // USP (ULib Servlet Page)
-
-   if (pages)
-      {
-      if (pages->empty() == false)
-         {
-         // call end for all modules...
-
-         argument = (void*)-2;
-         pages->callForAllEntry(callRunDynamicPage);
-
-         pages->clear();
-         }
-
-      pages->deallocate();
-
-      delete pages;
-      }
 
    // delete global HTTP var...
 
@@ -121,6 +63,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
    // ------------------------------------------------------------------------------------------------------------------------------------------------
    // ALIAS                         vector of URI redirection (request -> alias)
+   // REWRITE_RULE_NF               vector of URI rewrite rule applied after checks that files do not exist (regex1 -> uri1 ...)
    //
    // CACHE_FILE_MASK               mask (DOS regexp) of pathfile that be cached in memory
    //
@@ -134,10 +77,34 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // URI_REQUEST_CERT_MASK         mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
    // ------------------------------------------------------------------------------------------------------------------------------------------------
 
-   (void) cfg.loadVector(valias);
+   (void) cfg.loadVector(valias, "ALIAS");
+
+   UVector<UString> tmp;
+
+   if (cfg.loadVector(tmp, "REWRITE_RULE_NF"))
+      {
+      uint32_t n = tmp.size();
+
+      U_INTERNAL_ASSERT_MAJOR(n, 0)
+
+      UHTTP::RewriteRule* rule;
+      UHTTP::vRewriteRule = U_NEW(UVector<UHTTP::RewriteRule*>(n));
+
+      for (uint32_t i = 0; i < n; i += 2)
+         {
+         rule = U_NEW(UHTTP::RewriteRule(tmp[i], tmp[i+1]));
+
+         UHTTP::vRewriteRule->push_back(rule);
+         }
+      }
 
    if (cfg.loadTable())
       {
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::cache_file_mask, 0)
+
+       UHTTP::cache_file_mask  = U_NEW(UString);
+      *UHTTP::cache_file_mask  = cfg[*str_CACHE_FILE_MASK];
+
       uri_protected_mask       = cfg[*str_URI_PROTECTED_MASK];
       uri_protected_allowed_ip = cfg[*str_URI_PROTECTED_ALLOWED_IP];
 
@@ -145,77 +112,30 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       uri_request_cert_mask    = cfg[*str_URI_REQUEST_CERT_MASK];
 #  endif
 
-       UHTTP::virtual_host                = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
-      *UHTTP::cache_file_mask             = cfg[*str_CACHE_FILE_MASK];
+      UHTTP::virtual_host                 = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
       UServer_Base::digest_authentication = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
-#ifdef __MINGW32__
-#define U_LEN_SUFFIX 4 // .dll
-#else
-#define U_LEN_SUFFIX 3 // .so
-#endif
-
 int UHttpPlugIn::handlerInit()
 {
    U_TRACE(0, "UHttpPlugIn::handlerInit()")
 
-   // USP (ULib Servlet Page)
-
-   if (UFile::chdir("usp", true))
-      {
-      UString name;
-      const char* ptr;
-      UVector<UString> vec;
-      pages = U_NEW(UHashMap<UDynamic*>);
-      uint32_t n = UFile::listContentOf(vec);
-
-      pages->allocate();
-
-      for (uint32_t i = 0; i < n; ++i)
-         {
-         name      = vec[i];
-         ptr       = name.data();
-         last_page = U_NEW(UDynamic);
-
-         if (last_page->load(ptr) == false) delete last_page;
-         else
-            {
-            last_key.setBuffer(100U);
-
-            last_key.snprintf("%.*s.usp", name.size() - U_LEN_SUFFIX, ptr);
-
-            u_canonicalize_pathname(last_key.data());
-
-            last_key.size_adjust();
-
-            pages->insert(last_key, last_page);
-
-            U_SRV_LOG_VAR("USP found: usp/%s, USP service registered (URI): /usp/%.*s", ptr+2, U_STRING_TO_TRACE(last_key));
-            }
-         }
-
-      (void) UFile::chdir(0, true);
-
-      // call init for all modules...
-
-   // argument = 0;
-      pages->callForAllEntry(callRunDynamicPage);
-
-      if (pages->empty())
-         {
-         U_SRV_LOG_MSG("initialization of plugin FAILED");
-
-         U_RETURN(U_PLUGIN_HANDLER_ERROR);
-         }
-      }
-
    // init global HTTP var...
 
    UHTTP::ctor();
+
+   // USP (ULib Servlet Page)
+
+   if (UHTTP::pages &&
+       UHTTP::pages->empty())
+      {
+      U_SRV_LOG_MSG("initialization of plugin FAILED");
+
+      U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      }
 
    // URI PROTECTED and ALIAS
 
@@ -234,7 +154,11 @@ int UHttpPlugIn::handlerInit()
 
    // CACHE FILE
 
-   if (UHTTP::cache_file_mask->empty() == false) UHTTP::searchFileForCache();
+   if (UHTTP::cache_file_mask &&
+       UHTTP::cache_file_mask->empty() == false)
+      {
+      UHTTP::searchFileForCache();
+      }
 
    U_SRV_LOG_MSG("initialization of plugin success");
 
@@ -298,10 +222,10 @@ int UHttpPlugIn::handlerRead()
          UHTTP::alias->snprintf("/%.*s%.*s", U_STRING_TO_TRACE(host), U_HTTP_URI_TO_TRACE);
          }
 
+      U_INTERNAL_DUMP("alias = %.*S", U_STRING_TO_TRACE(*UHTTP::alias))
+
       if (valias.empty() == false)
          {
-         U_INTERNAL_DUMP("alias = %.*S", U_STRING_TO_TRACE(*UHTTP::alias))
-
          // NB: check if needed to reset prev alias uri
 
          if (UHTTP::virtual_host == false) UHTTP::alias->setEmpty();
@@ -394,57 +318,9 @@ int UHttpPlugIn::handlerRequest()
 {
    U_TRACE(0, "UHttpPlugIn::handlerRequest()")
 
-   U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
-
-   // check if dynamic page (ULib Servlet Page)
-
-   if (pages &&
-       UHTTP::isUSPRequest())
-      {
-      if (last_key.equal(U_HTTP_URI_TO_PARAM_SHIFT(U_CONSTANT_SIZE("/usp/"))) == false)
-         {
-         (void) last_key.replace(U_HTTP_URI_TO_PARAM_SHIFT(U_CONSTANT_SIZE("/usp/")));
-
-         last_page = (*pages)[last_key];
-         }
-
-      if (last_page == 0)
-         {
-         U_SRV_LOG_VAR("USP request '%.*s' NOT available...", U_HTTP_URI_TO_TRACE);
-
-         UHTTP::setHTTPServiceUnavailable(); // set Service Unavailable error response...
-
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-         }
-
-      runDynamicPage = (vPFpv)(*last_page)["runDynamicPage"];
-
-      // retrieve information on specific HTML form elements
-      // (such as checkboxes, radio buttons, and text fields), or uploaded files
-
-      uint32_t n = UHTTP::processHTTPForm();
-
-      UClientImage_Base::wbuffer->setBuffer(U_CAPACITY);
-
-      runDynamicPage(UClientImage_Base::pClientImage);
-
-      if (n) UHTTP::resetForm();
-
-      if (UHTTP::processCGIOutput() == false)
-         {
-         U_SRV_LOG_MSG("runDynamicPage(): call UHTTP::processCGIOutput() return false...");
-
-         UHTTP::setHTTPInternalError(); // set internal error response...
-
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-         }
-
-      goto end;
-      }
-
    // process the HTTP request
 
-   if (UHTTP::checkHTTPRequest())
+   if (UHTTP::checkHTTPRequest() == 1)
       {
       if (UHTTP::isPHPRequest() ||
           UHTTP::isCGIRequest())
@@ -461,7 +337,6 @@ int UHttpPlugIn::handlerRequest()
          }
       }
 
-end:
    int result = UHTTP::checkForHTTPConnectionClose(); // check for "Connection: close" in headers...
 
    U_RETURN(result);
@@ -471,13 +346,15 @@ int UHttpPlugIn::handlerReset()
 {
    U_TRACE(0, "UUspPlugIn::handlerReset()")
 
-   if (runDynamicPage)
+   // check if dynamic page (ULib Servlet Page)
+
+   if (UHTTP::runDynamicPage)
       {
-      U_INTERNAL_ASSERT_POINTER(pages)
+      U_INTERNAL_ASSERT_POINTER(UHTTP::pages)
 
-      runDynamicPage((void*)-1); // call reset for module...
+      UHTTP::runDynamicPage((void*)-1); // call reset for module...
 
-      runDynamicPage = 0;
+      UHTTP::runDynamicPage = 0;
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -490,8 +367,7 @@ int UHttpPlugIn::handlerReset()
 
 const char* UHttpPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "last_key                 (UString          " << (void*)&last_key                   << ")\n"
-                  << "uri_protected_mask       (UString          " << (void*)&uri_protected_mask         << ")\n"
+   *UObjectIO::os << "uri_protected_mask       (UString          " << (void*)&uri_protected_mask         << ")\n"
                   << "uri_request_cert_mask    (UString          " << (void*)&uri_request_cert_mask      << ")\n"
                   << "uri_protected_allowed_ip (UString          " << (void*)&uri_protected_allowed_ip   << ")\n"
                   << "valias                   (UVector<UString> " << (void*)&valias                     << ')';

@@ -39,7 +39,6 @@ TO_INC = ulib/README \
 			ulib/ssl/*.h \
 			ulib/ssl/mime/*.h \
 			ulib/ssl/net/*.h \
-			ulib/ssl/net/client/*.h \
 			ulib/ui/*.h \
 			ulib/utility/*.h \
 			ulib/xml/soap/*.h \
@@ -68,7 +67,7 @@ TO_INC = ulib/README \
 #endif
 
 #if SSL
-#TO_INC += ulib/base/ssl/*.h ulib/ssl/*.h ulib/ssl/mime/*.h ulib/ssl/net/*.h ulib/ssl/net/client/*.h
+#TO_INC += ulib/base/ssl/*.h ulib/ssl/*.h ulib/ssl/mime/*.h ulib/ssl/net/*.h
 #endif
 
 #if LDAP

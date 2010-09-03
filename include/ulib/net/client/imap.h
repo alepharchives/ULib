@@ -14,12 +14,22 @@
 #ifndef U_IMAP_CLIENT_H
 #define U_IMAP_CLIENT_H 1
 
-#include <ulib/net/tcpsocket.h>
-#include <ulib/container/vector.h>
-
 #ifdef HAVE_SSL
 #  include <ulib/ssl/net/sslsocket.h>
+#  define Socket USSLSocket
+#  ifdef U_NO_SSL
+#  undef U_NO_SSL
+#  endif
+#else
+#  include <ulib/net/tcpsocket.h>
+#  define Socket UTCPSocket
+#  define Socket UTCPSocket
+#  ifndef U_NO_SSL
+#  define U_NO_SSL
+#  endif
 #endif
+
+#include <ulib/container/vector.h>
 
 /**
    @class UImapClient
@@ -39,7 +49,7 @@
    same account. Luckily, you usually only have to care about most of this if you want to.
 */
 
-class U_EXPORT UImapClient : public UTCPSocket {
+class U_EXPORT UImapClient : public Socket {
 public:
 
    enum IMAPClientStatus {
@@ -92,19 +102,19 @@ public:
    Constructs a new UImapClient with default values for all properties
    */
 
-   UImapClient(bool bSocketIsIPv6 = false) : UTCPSocket(bSocketIsIPv6), buffer(U_CAPACITY)
+   UImapClient(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6), buffer(U_CAPACITY)
       {
       U_TRACE_REGISTER_OBJECT(0, UImapClient, "%b", bSocketIsIPv6)
 
       state = NOT_AUTHENTICATED;
-#  ifdef HAVE_SSL
-      tls   = 0;
-#  endif
 
       if (str_list == 0) str_allocate();
       }
 
-   virtual ~UImapClient();
+   virtual ~UImapClient()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UImapClient)
+      }
 
    /**
    function called to established a socket connection with the IMAP network server
@@ -356,10 +366,6 @@ public:
 #endif
 
 protected:
-#ifdef HAVE_SSL
-   USSLSocket* tls;
-#endif
-
    UString buffer, capa, selected;
    int response, end;
    IMAPClientStatus state;
@@ -376,8 +382,8 @@ private:
    */
    bool syncCommand(const char* format, ...) U_NO_EXPORT;
 
-   UImapClient(const UImapClient&) : UTCPSocket(false) {}
-   UImapClient& operator=(const UImapClient&)          { return *this; }
+   UImapClient(const UImapClient&) : Socket(false) {}
+   UImapClient& operator=(const UImapClient&)      { return *this; }
 };
 
 #endif

@@ -32,8 +32,17 @@
 #  include <ulib/magic/magic.h>
 #endif
 
+#ifdef __MINGW32__
+#define U_LEN_SUFFIX 4 // .dll
+#else
+#define U_LEN_SUFFIX 3 // .so
+#endif
+
 char                              UHTTP::cgi_dir[U_PATH_MAX];
 bool                              UHTTP::virtual_host;
+int                               UHTTP::http_request_check;
+void*                             UHTTP::argument;
+vPFpv                             UHTTP::runDynamicPage;
 UFile*                            UHTTP::file;
 UValue*                           UHTTP::json;
 UString*                          UHTTP::alias;
@@ -42,7 +51,9 @@ UString*                          UHTTP::qcontent;
 UString*                          UHTTP::request_uri;
 UString*                          UHTTP::penvironment;
 UString*                          UHTTP::cache_file_mask;
+UString*                          UHTTP::last_key;
 UString*                          UHTTP::last_file;
+UDynamic*                         UHTTP::last_page;
 uhttpheader                       UHTTP::http_info;
 const char*                       UHTTP::ptrH;
 const char*                       UHTTP::ptrC;
@@ -54,6 +65,7 @@ const char*                       UHTTP::ptrA;
 UMimeMultipart*                   UHTTP::formMulti;
 UVector<UString>*                 UHTTP::form_name_value;
 UVector<UIPAllow*>*               UHTTP::vallow_IP;
+UHashMap<UDynamic*>*              UHTTP::pages;
 UHTTP::UFileCacheData*            UHTTP::file_data;
 UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
 
@@ -169,11 +181,59 @@ void UHTTP::ctor()
    ptrL = USocket::str_content_length->c_pointer(1);    // "Content-Length"
    ptrA = USocket::str_accept_encoding->c_pointer(1);   // "Accept-Encoding"
    ptrI = USocket::str_if_modified_since->c_pointer(1); // "If-Modified-Since"
+
+   // USP (ULib Servlet Page)
+
+   U_INTERNAL_ASSERT_EQUALS(last_key,0)
+
+   if (UFile::chdir("usp", true))
+      {
+      UString name;
+      const char* ptr;
+      UVector<UString> vec;
+      uint32_t n = UFile::listContentOf(vec);
+
+      last_key = U_NEW(UString);
+      pages    = U_NEW(UHashMap<UDynamic*>);
+
+      pages->allocate();
+
+      for (uint32_t i = 0; i < n; ++i)
+         {
+         name      = vec[i];
+         ptr       = name.data();
+         last_page = U_NEW(UDynamic);
+
+         if (last_page->load(ptr) == false) delete last_page;
+         else
+            {
+            last_key->setBuffer(100U);
+
+            last_key->snprintf("%.*s.usp", name.size() - U_LEN_SUFFIX, ptr);
+
+            u_canonicalize_pathname(last_key->data());
+
+            last_key->size_adjust();
+
+            pages->insert(*last_key, last_page);
+
+            U_SRV_LOG_VAR("USP found: usp/%s, USP service registered (URI): /usp/%.*s", ptr+2, U_STRING_TO_TRACE(*last_key));
+            }
+         }
+
+      (void) UFile::chdir(0, true);
+
+      // call init for all usp modules...
+
+      pages->callForAllEntry(callRunDynamicPage);
+      }
 }
 
 void UHTTP::dtor()
 {
    U_TRACE(0, "UHTTP::dtor()")
+
+   if (cache_file_mask) delete cache_file_mask;
 
    if (file)
       {
@@ -185,8 +245,9 @@ void UHTTP::dtor()
       delete penvironment;
       delete form_name_value;
 
-      if (vallow_IP)   delete vallow_IP;
-      if (request_uri) delete request_uri;
+      if (vallow_IP)    delete vallow_IP;
+      if (request_uri)  delete request_uri;
+      if (vRewriteRule) delete vRewriteRule;
 
       if (cache_file)
          {
@@ -194,6 +255,26 @@ void UHTTP::dtor()
                 cache_file->deallocate();
          delete cache_file;
          delete last_file;
+         }
+
+      // USP (ULib Servlet Page)
+
+      if (pages)
+         {
+         if (pages->empty() == false)
+            {
+            // call end for all usp modules...
+
+            argument = (void*)-2;
+            pages->callForAllEntry(callRunDynamicPage);
+
+            pages->clear();
+            }
+
+         pages->deallocate();
+
+         delete pages;
+         delete last_key;
          }
       }
 }
@@ -804,7 +885,7 @@ bool UHTTP::readHTTPRequest()
                http_info.host     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos;
                http_info.host_len = pos2 - pos - char_r;
 
-               U_INTERNAL_DUMP("host = %.*S", http_info.host_len, start + (ptrdiff_t)http_info.host)
+               U_INTERNAL_DUMP("http_info.host = %.*S", http_info.host_len, start + (ptrdiff_t)http_info.host)
                }
             else if (c == 'A'                    &&
                      l == 14                     && // sizeof("ccept-Encoding")
@@ -926,6 +1007,8 @@ bool UHTTP::readHTTPRequest()
       U_INTERNAL_DUMP("rbuffer_resize = %b", rbuffer_resize)
       }
 
+   http_request_check = -2;
+
    // NB: we can have a possible resize of read buffer string...
 
    if (rbuffer_resize)
@@ -946,26 +1029,9 @@ bool UHTTP::readHTTPRequest()
          }
       }
 
-   if (http_info.host_len)
-      {
-      http_info.host += (ptrdiff_t)start;
-
-      U_INTERNAL_DUMP("http_info.host = %.*S", U_HTTP_HOST_TO_TRACE)
-      }
-
-   if (http_info.content_type_len)
-      {
-      http_info.content_type += (ptrdiff_t)start;
-
-      U_INTERNAL_DUMP("Content-Type: = %.*S", U_HTTP_CTYPE_TO_TRACE)
-      }
-
-   if (http_info.range_len)
-      {
-      http_info.range += (ptrdiff_t)start;
-
-      U_INTERNAL_DUMP("Range: = %.*S", U_HTTP_RANGE_TO_TRACE)
-      }
+   if (http_info.host_len)          http_info.host          += (ptrdiff_t)start;
+   if (http_info.range_len)         http_info.range         += (ptrdiff_t)start;
+   if (http_info.content_type_len)  http_info.content_type  += (ptrdiff_t)start;
 
    // manage buffered read (pipelining)
 
@@ -1659,7 +1725,7 @@ void UHTTP::setHTTPResponse(int nResponseCode, const UString* content_type, cons
    else       UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 
    U_INTERNAL_DUMP("UClientImage_Base::wbuffer(%u) = %.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
-   U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %.*S", UClientImage_Base::body->size(), U_STRING_TO_TRACE(*UClientImage_Base::body))
+   U_INTERNAL_DUMP("UClientImage_Base::body(%u)    = %.*S", UClientImage_Base::body->size(),    U_STRING_TO_TRACE(*UClientImage_Base::body))
 }
 
 void UHTTP::setHTTPForbidden()
@@ -2270,6 +2336,7 @@ void UHTTP::checkFileForCache()
    U_INTERNAL_DUMP("u_buffer(%u) = %.*S", u_buffer_len, u_buffer_len, u_buffer)
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer[0],'.')
+   U_INTERNAL_ASSERT_POINTER(cache_file_mask)
    U_INTERNAL_ASSERT(IS_DIR_SEPARATOR(u_buffer[1]))
    U_INTERNAL_ASSERT_EQUALS(u_ftw_ctx.is_directory,false)
 
@@ -2326,7 +2393,8 @@ void UHTTP::checkFileForCache()
          }
 #  endif
 
-      if (content.size() > (32 * 1024)) // for major size it is better to use sendfile()...
+      if (content.size() > (32 * 1024) && // for major size it is better to use sendfile()...
+          ratio          > 50)
          {
          U_SRV_LOG_VAR("file not cached: %S - %I bytes - (%d%%) compressed ratio (size exceeded)", pathname.data(), file_data->size, 100 - ratio);
 
@@ -2436,7 +2504,7 @@ U_NO_EXPORT int UHTTP::checkPath(UString& pathname)
 
    file->setPath(pathname);
 
-   if (cache_file &&
+   if (cache_file            &&
        isHttpPOST() == false &&
        manageFileCache())
       {
@@ -2489,15 +2557,151 @@ bool UHTTP::checkUriProtected()
    U_RETURN(true);
 }
 
-bool UHTTP::checkHTTPRequest()
-{
-   U_TRACE(0, "UHTTP::checkHTTPRequest()")
+// REWRITE RULE
 
-   U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
+UVector<UHTTP::RewriteRule*>* UHTTP::vRewriteRule;
+
+bool UHTTP::processRewriteRule()
+{
+   U_TRACE(0, "UHTTP::processRewriteRule()")
+
+#ifdef HAVE_PCRE
+   uint32_t pos, len;
+   UHTTP::RewriteRule* rule;
+   UString uri(U_HTTP_URI_TO_PARAM), pathname(U_CAPACITY), result;
+
+   for (uint32_t i = 0, n = vRewriteRule->size(); i < n; ++i)
+      {
+      rule   = (*vRewriteRule)[i];
+      result = rule->key.replace(uri, rule->replacement);
+
+      if (rule->key.matched())
+         {
+         pos = result.find('?');
+         len = (pos == U_NOT_FOUND ? result.size() : pos);
+
+         pathname.snprintf("%w%.*s", len, result.data());
+
+         if (checkPath(pathname) == 1)
+            {
+            request_uri->setConstant(U_HTTP_URI_QUERY_TO_PARAM); // as Lighttpd...
+
+            (void) alias->assign(result);
+
+            UHTTP::setHTTPUri(alias->data(), len);
+
+            U_SRV_LOG_VAR("REWRITE_RULE_NF: URI request changed to: %.*s", U_HTTP_URI_TO_TRACE);
+
+            if (pos != U_NOT_FOUND)
+               {
+               const char* ptr = alias->c_pointer(len+1);
+
+               UHTTP::setHTTPQuery(ptr, alias->remain(ptr));
+               }
+
+            U_RETURN(true);
+            }
+
+         break;
+         }
+      }
+#else
+   U_SRV_LOG_MSG("REWRITE_RULE_NF: pcre support is missing, please install libpcre and the headers and recompile ULib...");
+#endif
+
+   U_RETURN(false);
+}
+
+// USP (ULib Servlet Page)
+
+void UHTTP::callRunDynamicPage(UStringRep* key, void* value)
+{
+   U_TRACE(0, "UHTTP::callRunDynamicPage(%.*S,%p)", U_STRING_TO_TRACE(*key), value)
+
+   UDynamic* page = (UDynamic*)value;
+
+   U_INTERNAL_ASSERT_POINTER(page)
+
+   vPFpv tmp = (vPFpv)(*page)["runDynamicPage"];
+
+   // ------------------------------
+   // argument value for usp mudule:
+   // ------------------------------
+   //  0 -> init
+   // -1 -> reset
+   // -2 -> destroy
+   // ------------------------------
+
+   tmp(argument);
+}
+
+int UHTTP::_checkHTTPRequest()
+{
+   U_TRACE(0, "UHTTP::_checkHTTPRequest()")
+
+   // ...process the HTTP message
+
+   U_INTERNAL_DUMP("http_request_check = %d method = %.*S uri = %.*S", http_request_check, U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
 
    U_INTERNAL_ASSERT(isHTTPRequest())
 
-   // ...process the HTTP message
+   if (http_request_check != -2) U_RETURN(http_request_check);
+
+   // special case: '/' alias '.'...
+
+   if (http_info.uri_len == 1)
+      {
+      U_INTERNAL_ASSERT_EQUALS(http_info.uri[0], '/')
+
+      file->setRoot();
+
+      U_RETURN(1);
+      }
+
+   // check if dynamic page (ULib Servlet Page)
+
+   if (isUSPRequest())
+      {
+      if (last_key->equal(U_HTTP_URI_TO_PARAM_SHIFT(U_CONSTANT_SIZE("/usp/"))) == false)
+         {
+         (void) last_key->replace(U_HTTP_URI_TO_PARAM_SHIFT(U_CONSTANT_SIZE("/usp/")));
+
+         last_page = (*pages)[*last_key];
+         }
+
+      if (last_page == 0)
+         {
+         U_SRV_LOG_VAR("USP request %.*S NOT available...", U_HTTP_URI_TO_TRACE);
+
+         setHTTPServiceUnavailable(); // set Service Unavailable error response...
+
+         U_RETURN(-1);
+         }
+
+      runDynamicPage = (vPFpv)(*last_page)["runDynamicPage"];
+
+      // retrieve information on specific HTML form elements
+      // (such as checkboxes, radio buttons, and text fields), or uploaded files
+
+      uint32_t n = processHTTPForm();
+
+      UClientImage_Base::wbuffer->setBuffer(U_CAPACITY);
+
+      runDynamicPage(UClientImage_Base::pClientImage);
+
+      if (n) resetForm();
+
+      if (processCGIOutput() == false)
+         {
+         U_SRV_LOG_MSG("runDynamicPage(): call UHTTP::processCGIOutput() return false...");
+
+         setHTTPInternalError(); // set internal error response...
+
+         U_RETURN(-1);
+         }
+
+      U_RETURN(2); // skip
+      }
 
    UString pathname(U_CAPACITY);
 
@@ -2522,12 +2726,14 @@ bool UHTTP::checkHTTPRequest()
       if (tmp != pathname) result = checkPath(tmp);
       }
 
-   if      (result ==  1) U_RETURN(true);
+   if (result == 1) U_RETURN(1);
+
+   if (vRewriteRule && processRewriteRule()) U_RETURN(1);
 
    if      (result == -1) setHTTPForbidden(); // set forbidden error response...
    else if (result ==  0) setHTTPNotFound();  // set not found error response...
 
-   U_RETURN(false);
+   U_RETURN(result);
 }
 
 // manage CGI
@@ -2736,44 +2942,46 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
    UString buffer(U_CAPACITY), name = UServer_Base::getNodeName(),
            ip_server = UServer_Base::getIPAddress(), ip_client = UClientImage_Base::getRemoteIP();
 
-   buffer.snprintf("REMOTE_ADDR=%.*s\n"
-                   "SERVER_NAME=%.*s\n"
-                   "SERVER_PORT=%d\n"
+   buffer.snprintf("REMOTE_ADDR=%.*s\n"  // The IP address of the visitor
+                // "REMOTE_HOST=%.*s\n"  // The hostname of the visitor (if your server has reverse-name-lookups on; otherwise this is the IP address again)
+                // "REMOTE_PORT=%.*s\n"  // The port the visitor is connected to on the web server
+                // "REMOTE_USER=%.*s\n"  // The visitor's username (for .htaccess-protected pages)
+                // "SERVER_ADMIN=%.*s\n" // The email address for your server's webmaster
+                   "SERVER_NAME=%.*s\n"  // Your server's fully qualified domain name (e.g. www.cgi101.com)
+                   "SERVER_ADDR=%.*s\n"
+                   "SERVER_PORT=%d\n"    // The port number your server is listening on
                    "SERVER_PROTOCOL=HTTP/1.%c\n"
-                   "SCRIPT_NAME=%.*s\n"
+                   "SCRIPT_NAME=%.*s\n" // The interpreted pathname of the current CGI (relative to the document root)
                    // ext
-                   "SCRIPT_FILENAME=%w%.*s\n"   // is used by PHP for determining the name of script to execute
                    "PWD=%w/%s\n"
+                   "DOCUMENT_ROOT=%w\n"         // The root directory of your server
+                   "SCRIPT_FILENAME=%w%.*s\n"   // The full pathname of the current CGI (is used by PHP for determining the name of script to execute)
                    // PHP
                    "REQUEST_METHOD=%.*s\n",     // dealing with POST requests
                    U_STRING_TO_TRACE(ip_client),
                    U_STRING_TO_TRACE(name),
+                   U_STRING_TO_TRACE(ip_server),
                    UServer_Base::port,
                    http_info.version + '0',
                    U_HTTP_URI_TO_TRACE,
                    // ext
-                   U_HTTP_URI_TO_TRACE,
                    cgi_dir,
+                   U_HTTP_URI_TO_TRACE,
                    // PHP
                    U_HTTP_METHOD_TO_TRACE);
 
+   // The hostname of your server from header's request
+
+   if (http_info.host_len)         buffer.snprintf_add("HTTP_HOST=%.*s\n", U_HTTP_HOST_TO_TRACE);
+   else                            buffer.snprintf_add("HTTP_HOST=%.*s\n", U_STRING_TO_TRACE(ip_server));
+
    if (len)                        buffer.snprintf_add("\"CONTENT_LENGTH=%u\"\n", len);
-   if (referer_len)                buffer.snprintf_add("HTTP_REFERER=%.*s\n", referer_len, referer_ptr);
-   if (user_agent_len)             buffer.snprintf_add("\"HTTP_USER_AGENT=%.*s\"\n", user_agent_len, user_agent_ptr);
+   if (referer_len)                buffer.snprintf_add("HTTP_REFERER=%.*s\n", referer_len, referer_ptr); // The URL of the page that called your script
+   if (user_agent_len)             buffer.snprintf_add("\"HTTP_USER_AGENT=%.*s\"\n", user_agent_len, user_agent_ptr); // The browser type of the visitor
    if (http_info.query_len)        buffer.snprintf_add("QUERY_STRING=%.*s\n", U_HTTP_QUERY_TO_TRACE); // contains the parameters of the request
    if (http_info.content_type_len) buffer.snprintf_add("\"CONTENT_TYPE=%.*s\"\n", U_HTTP_CTYPE_TO_TRACE);
 
-   if (http_info.host_len)
-      {
-      buffer.snprintf_add("SERVER_ADDR=%.*s\n"
-                          "HTTP_HEADER_HOST=%.*s\n",
-                          U_HTTP_HOST_TO_TRACE,
-                          U_HTTP_HOST_TO_TRACE);
-      }
-   else
-      {
-      buffer.snprintf_add("SERVER_ADDR=%.*s\n", U_STRING_TO_TRACE(ip_server));
-      }
+   // The interpreted pathname of the requested document or CGI (relative to the document root)
 
    if (request_uri &&
        request_uri->empty() == false)
@@ -2817,15 +3025,17 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
                              UCertificate::getSerialNumber(x509));
          }
 
-      (void) buffer.append(U_CONSTANT_TO_PARAM("HTTPS=1\n"));
+      (void) buffer.append(U_CONSTANT_TO_PARAM("HTTPS=on\n")); // "on" if the script is being called through a secure server
       }
 #endif
 
    (void) buffer.append(U_CONSTANT_TO_PARAM("GATEWAY_INTERFACE=CGI/1.1\n"
-                                            "SERVER_SOFTWARE=" PACKAGE "/" VERSION "\n"
-                                            "PATH=/usr/local/bin:/usr/bin:/bin\n"
+                                            "SERVER_SOFTWARE=" PACKAGE "/" VERSION "\n" // The server software you're using (such as Apache 1.3)
+                                            "PATH=/usr/local/bin:/usr/bin:/bin\n" // The system path your server is running under
                                             "REDIRECT_STATUS=200\n"));
 
+   // The visitor's cookie, if one is set
+   // -------------------------------------------------------------------------------------------------------------
    // Cookie: _saml_idp=dXJuOm1hY2U6dGVzdC5zXRo; _redirect_user_idp=urn%3Amace%3Atest.shib%3Afederation%3Alocalhost;
 
    UString cookie = getHTTPCookie(sh_script);
@@ -3936,6 +4146,21 @@ end:
 
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
+
+const char* UHTTP::RewriteRule::dump(bool reset) const
+{
+   *UObjectIO::os << "key         (UPCRE   " << (void*)&key         << ")\n"
+                  << "replacement (UString " << (void*)&replacement << ')';
+
+   if (reset)
+      {
+      UObjectIO::output();
+
+      return UObjectIO::buffer_output;
+      }
+
+   return 0;
+}
 
 const char* UHTTP::UFileCacheData::dump(bool reset) const
 {

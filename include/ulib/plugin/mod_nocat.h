@@ -95,8 +95,9 @@ public:
 
 protected:
    int status;
+   uint64_t traffic, ltraffic;
    time_t connected, expire, logout, ctime;
-   uint32_t ifindex, traffic, ctraffic, ltraffic, rulenum, index_AUTH;
+   uint32_t ifindex, ctraffic, rulenum, index_AUTH;
    UString ip, mac, token, command, user, ifname;
    UCommand cmd;
 
@@ -112,6 +113,15 @@ template <> inline void u_destroy(UIPAddress** ptr, uint32_t n) { U_TRACE(0,"u_d
 
 class U_EXPORT UNoCatPlugIn : public UServerPlugIn {
 public:
+
+   static UString* str_ROUTE_ONLY;
+   static UString* str_DNS_ADDR;
+   static UString* str_INCLUDE_PORTS;
+   static UString* str_EXCLUDE_PORTS;
+   static UString* str_ALLOWED_WEB_HOSTS;
+   static UString* str_EXTERNAL_DEVICE;
+   static UString* str_INTERNAL_DEVICE;
+   static UString* str_LOCAL_NETWORK;
 
    static UString* str_AUTH_SERVICE_URL;
    static UString* str_LOGOUT_URL;

@@ -16,7 +16,12 @@
 
 #include <ulib/string.h>
 #include <ulib/net/socket.h>
-#include <ulib/container/vector.h>
+
+#ifdef HAVE_PCRE
+#  include <ulib/pcre/pcre.h>
+#else
+#  include <ulib/container/vector.h>
+#endif
 
 /* -----------------------------------------------------------------------------------------------------------------------------
 //  _     _   _
@@ -129,10 +134,12 @@ enum HTTPMethodType { HTTP_POST = 1, HTTP_PUT = 2, HTTP_DELETE = 3, HTTP_GET = 4
 
 // HTTP Compare
 
-#define U_HTTP_URI_STRNEQ(str)                                        U_STRNEQ(UHTTP::http_info.uri,          str)
-#define U_HTTP_HOST_STRNEQ(str)  (UHTTP::http_info.host_len         ? U_STRNEQ(UHTTP::http_info.host,         str) : false)
-#define U_HTTP_QUERY_STRNEQ(str) (UHTTP::http_info.query_len        ? U_STRNEQ(UHTTP::http_info.query,        str) : false)
-#define U_HTTP_CTYPE_STRNEQ(str) (UHTTP::http_info.content_type_len ? U_STRNEQ(UHTTP::http_info.content_type, str) : false)
+#define U_HTTP_URI_STRNEQ(str)                                         U_STRNEQ(UHTTP::http_info.uri,          str)
+#define U_HTTP_HOST_STRNEQ(str)   (UHTTP::http_info.host_len         ? U_STRNEQ(UHTTP::http_info.host,         str) : false)
+#define U_HTTP_QUERY_STRNEQ(str)  (UHTTP::http_info.query_len        ? U_STRNEQ(UHTTP::http_info.query,        str) : false)
+#define U_HTTP_CTYPE_STRNEQ(str)  (UHTTP::http_info.content_type_len ? U_STRNEQ(UHTTP::http_info.content_type, str) : false)
+
+#define U_HTTP_URI_EQUAL(str)     (UHTTP::http_info.uri_len == str.size() && memcmp(UHTTP::http_info.uri, str.data(), str.size()) == 0)
 
 // HTTP Access Authentication
 
@@ -376,24 +383,11 @@ public:
       U_RETURN(result);
       }
 
-   static bool isUSPRequest()
-      {
-      U_TRACE(0, "UHTTP::isUSPRequest()")
-
-      U_INTERNAL_ASSERT(isHTTPRequest())
-
-      bool result = (U_STRNEQ(http_info.uri, "/usp/") &&
-                     u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".usp")));
-
-      U_RETURN(result);
-      }
-
    // SERVICES
 
    static UFile* file;
 
    static bool isPHPRequest();
-   static bool checkHTTPRequest();
    static void processHTTPGetRequest();
    static void getTimeIfNeeded(bool all_http_version);
    static bool checkHTTPGetRequestIfModified(time_t mtime);
@@ -404,6 +398,17 @@ public:
 
    static UString     getHTMLDirectoryList();
    static const char* getHTTPHeaderValuePtr(const UString& name);
+
+   static int http_request_check;
+
+   static int checkHTTPRequest()
+      {
+      U_TRACE(0, "UHTTP::checkHTTPRequest()")
+
+      http_request_check = _checkHTTPRequest();
+
+      U_RETURN(http_request_check);
+      }
 
    // -----------------------------------------------------------------------
    // FORM
@@ -457,6 +462,79 @@ public:
 
    static bool checkUriProtected();
    static bool processHTTPAuthorization(bool digest);
+
+   // USP (ULib Servlet Page)
+
+   static void* argument;
+   static UString* last_key;
+   static UDynamic* last_page;
+   static vPFpv runDynamicPage;
+   static UHashMap<UDynamic*>* pages;
+
+   static bool isUSPRequest()
+      {
+      U_TRACE(0, "UHTTP::isUSPRequest()")
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      bool result = (pages &&
+                     U_STRNEQ(http_info.uri, "/usp/") &&
+                     u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".usp")));
+
+      U_RETURN(result);
+      }
+
+   static void callRunDynamicPage(UStringRep* key, void* value);
+
+   // REWRITE RULE
+
+   class RewriteRule {
+   public:
+
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   // COSTRUTTORI
+
+#ifdef HAVE_PCRE
+   UPCRE key;
+#endif
+   UString replacement;
+
+   RewriteRule(const UString& _key, const UString& _replacement) :
+#  ifdef HAVE_PCRE
+       key(_key, PCRE_FOR_REPLACE),
+#  endif
+       replacement(_replacement)
+      {
+      U_TRACE_REGISTER_OBJECT(0, RewriteRule, "%.*S,%.*S", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(_replacement))
+
+#  ifdef HAVE_PCRE
+      key.study();
+#  endif
+      }
+
+   ~RewriteRule()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, RewriteRule)
+      }
+
+   #ifdef DEBUG
+   const char* dump(bool reset) const;
+   #endif
+
+   private:
+   RewriteRule(const RewriteRule&)            {}
+   RewriteRule& operator=(const RewriteRule&) { return *this; }
+   };
+
+   static UVector<RewriteRule*>* vRewriteRule;
+
+   static bool processRewriteRule();
 
    // FILE CACHE
 
@@ -529,6 +607,7 @@ public:
    static void setHTTPRedirectResponse(const UString& ext, const char* ptr_location, uint32_t len_location);
 
 private:
+   static int     _checkHTTPRequest();
    static bool    openFile() U_NO_EXPORT;
    static int     checkPath(UString& pathname) U_NO_EXPORT;
    static UString getHTTPHeaderForResponse(int nResponseCode, UString& content) U_NO_EXPORT;

@@ -155,6 +155,21 @@ public:
 
    // PATH
 
+   void setRoot()
+      {
+      U_TRACE(0, "UFile::setRoot()")
+
+      pathname.setConstant(U_CONSTANT_TO_PARAM("/")); 
+
+      path_relativ_len = 1;
+      path_relativ     = pathname.data();
+
+      U_INTERNAL_DUMP("u_cwd(%u)        = %.*S", u_cwd_len, u_cwd_len, u_cwd)
+      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      reset();
+      }
+
    void setPath(const UString& path);
 
    // NB: la stringa potrebbe non essere scrivibile e quindi path_relativ[path_relativ_len] potrebbe non essere '\0'...

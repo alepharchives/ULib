@@ -149,23 +149,6 @@ void UImapClient::str_allocate()
    U_NEW_ULIB_OBJECT(str_Forwarded,                        U_STRING_FROM_STRINGREP_STORAGE(27));
 }
 
-UImapClient::~UImapClient()
-{
-   U_TRACE_UNREGISTER_OBJECT(0, UImapClient)
-
-#ifdef HAVE_SSL
-   if (tls)
-      {
-      // NB: we use secureConnection()...
-
-      tls->USocket::iState    = CLOSE;
-      tls->USocket::iSockDesc = -1;
-
-      delete tls;
-      }
-#endif
-}
-
 U_NO_EXPORT const char* UImapClient::status()
 {
    U_TRACE(0, "UImapClient::status()")
@@ -175,11 +158,11 @@ U_NO_EXPORT const char* UImapClient::status()
 
    switch (state)
       {
-      case LOGOUT:            descr1 = "LOGOUT";            break;
-      case NOT_AUTHENTICATED: descr1 = "NOT_AUTHENTICATED"; break;
-      case AUTHENTICATED:     descr1 = "AUTHENTICATED";     break;
-      case SELECTED:          descr1 = "SELECTED";          break;
-      default:                descr1 = "???";               break;
+      case LOGOUT:                  descr1 = "LOGOUT";            break;
+      case NOT_AUTHENTICATED:       descr1 = "NOT_AUTHENTICATED"; break;
+      case AUTHENTICATED:           descr1 = "AUTHENTICATED";     break;
+      case SELECTED:                descr1 = "SELECTED";          break;
+      default:                      descr1 = "???";               break;
       }
 
    switch (response)
@@ -201,7 +184,12 @@ bool UImapClient::connectServer(const UString& server, int port, uint32_t timeou
 {
    U_TRACE(0, "UImapClient::connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
 
-   if (UTCPSocket::connectServer(server, port))
+#ifdef HAVE_SSL
+   U_INTERNAL_ASSERT(Socket::isSSL())
+   ((USSLSocket*)this)->setActive(false);
+#endif
+
+   if (Socket::connectServer(server, port))
       {
       (void) USocket::setTimeoutRCV(timeoutMS);
 
@@ -232,11 +220,7 @@ U_NO_EXPORT bool UImapClient::syncCommand(const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-#ifdef HAVE_SSL
-   if (tls) end = USocketExt::vsyncCommandToken(tls, buffer, format, argp);
-   else
-#endif
-            end = USocketExt::vsyncCommandToken(this, buffer, format, argp);
+   end = USocketExt::vsyncCommandToken(this, buffer, format, argp);
 
    va_end(argp);
 
@@ -254,15 +238,15 @@ bool UImapClient::startTLS()
    U_TRACE(0, "UImapClient::startTLS()")
 
 #ifdef HAVE_SSL
-   U_INTERNAL_ASSERT_EQUALS(tls,0)
+   U_INTERNAL_ASSERT(Socket::isSSL())
 
    if (state == NOT_AUTHENTICATED)
       {
       if (syncCommand("STARTTLS"))
          {
-         tls = U_NEW(USSLSocket(USocket::bIPv6Socket, 0, true));
-
-         if (tls->secureConnection(USocket::getFd())) U_RETURN(true);
+             ((USSLSocket*)this)->setActive(true);
+         if (((USSLSocket*)this)->secureConnection(USocket::getFd())) U_RETURN(true);
+             ((USSLSocket*)this)->setActive(false);
          }
       }
 
@@ -1210,9 +1194,6 @@ const char* UImapClient::dump(bool reset) const
                   << "end                           " << end              << '\n'
                   << "state                         " << state            << '\n'
                   << "response                      " << response         << '\n'
-#  ifdef HAVE_SSL
-                  << "tls             (USSLSocket   " << (void*)tls       << ")\n"
-#  endif
                   << "capa            (UString      " << (void*)&capa     << ")\n"
                   << "buffer          (UString      " << (void*)&buffer   << ")\n"
                   << "selected        (UString      " << (void*)&selected << ')';

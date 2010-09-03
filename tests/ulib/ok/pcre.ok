@@ -9,6 +9,9 @@
    0:   *** Failers
    0:   abcabcabc  
 
+/ /g
+   0:   abc
+
 /"([^\\"]+|\\.)*"/
    0:   the \"quick\" brown fox
    0:   \"the \\\"quick\\\" brown fox\" 
@@ -952,9 +955,6 @@
 
 /.{3,4}/
    1:   abbbbc
-
-//g
-   1:   abc
 
 /:/
    1:   Well, we need a colon: somewhere

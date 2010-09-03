@@ -57,19 +57,14 @@ UString UStringExt::BIOtoString(BIO* bio)
 #endif
 
 #ifdef HAVE_PCRE
-// Searches subject for matches to pattern and replaces them with replacement
+// Replace parts of a string using regular expressions. This method is the counterpart of the perl s// operator.
+// It replaces the substrings which matched the given regular expression with the supplied string
 
 UString UStringExt::pregReplace(const UString& pattern, const UString& replacement, const UString& subject)
 {
    U_TRACE(0, "UStringExt::pregReplace(%.*S,%.*S,%.*S)", U_STRING_TO_TRACE(pattern), U_STRING_TO_TRACE(replacement), U_STRING_TO_TRACE(subject))
 
-   // Replace parts of a string using regular expressions. This method is the counterpart of the perl s// operator.
-   // It replaces the substrings which matched the given regular expression (given to the constructor) with the supplied string
-
-   UString lpattern = (isDelimited(pattern, "()") ?       pattern
-                                                  : '(' + pattern + ')');
-
-   UPCRE pcre(lpattern);
+   UPCRE pcre(pattern, PCRE_FOR_REPLACE);
 
    UString result = pcre.replace(subject, replacement);
 

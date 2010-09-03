@@ -61,23 +61,6 @@ void USmtpClient::str_allocate()
    U_NEW_ULIB_OBJECT(str_REPLY_TO_ADDRESS, U_STRING_FROM_STRINGREP_STORAGE(7));
 }
 
-USmtpClient::~USmtpClient()
-{
-   U_TRACE_UNREGISTER_OBJECT(0, USmtpClient)
-
-#ifdef HAVE_SSL
-   if (tls)
-      {
-      // NB: we use secureConnection()...
-
-      tls->USocket::iState    = CLOSE;
-      tls->USocket::iSockDesc = -1;
-
-      delete tls;
-      }
-#endif
-}
-
 char* USmtpClient::status()
 {
    U_TRACE(0, "USmtpClient::status()")
@@ -113,7 +96,12 @@ bool USmtpClient::connectServer(const UString& server, int port, uint32_t timeou
 {
    U_TRACE(0, "USmtpClient::connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
 
-   if (UTCPSocket::connectServer(server, port) == false)
+#ifdef HAVE_SSL
+   U_INTERNAL_ASSERT(Socket::isSSL())
+   ((USSLSocket*)this)->setActive(false);
+#endif
+
+   if (Socket::connectServer(server, port) == false)
       {
       response = CONNREFUSED;
 
@@ -265,11 +253,7 @@ U_NO_EXPORT bool USmtpClient::syncCommand(const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-#ifdef HAVE_SSL
-   if (tls) response = USocketExt::vsyncCommandML(tls, format, argp);
-   else
-#endif
-            response = USocketExt::vsyncCommandML(this, format, argp);
+   response = USocketExt::vsyncCommandML(this, format, argp);
 
    va_end(argp);
 
@@ -283,14 +267,14 @@ bool USmtpClient::startTLS()
    U_TRACE(0, "USmtpClient::startTLS()")
 
 #ifdef HAVE_SSL
-   U_INTERNAL_ASSERT_EQUALS(tls,0)
+   U_INTERNAL_ASSERT(Socket::isSSL())
 
    if (syncCommand("STARTTLS") &&
        response == GREET)
       {
-      tls = U_NEW(USSLSocket(USocket::bIPv6Socket, 0, true));
-
-      if (tls->secureConnection(USocket::getFd())) U_RETURN(true);
+          ((USSLSocket*)this)->setActive(true);
+      if (((USSLSocket*)this)->secureConnection(USocket::getFd())) U_RETURN(true);
+          ((USSLSocket*)this)->setActive(false);
       }
 #endif
 
@@ -374,7 +358,6 @@ bool USmtpClient::sendMessage(bool secure)
       messageBody = UMimeMultipartMsg::section(messageBody, "", UMimeMultipartMsg::AUTO, "", "", "MIME-Version: 1.0");
       }
 
-   USocket* s;
    UString msg(rcptoAddress.size() + messageSubject.size() + messageHeader.size() + messageBody.size() + 32U);
 
    msg.snprintf("To: %.*s\r\n"
@@ -387,13 +370,7 @@ bool USmtpClient::sendMessage(bool secure)
                 U_STRING_TO_TRACE(messageHeader),
                 U_STRING_TO_TRACE(messageBody));
 
-#ifdef HAVE_SSL
-   if (tls) s = tls;
-   else
-#endif
-            s = this;
-
-   response = (USocketExt::write(s, msg) ? USocketExt::readMultilineReply(s) : (int)USocket::BROKEN);
+   response = (USocketExt::write(this, msg) ? USocketExt::readMultilineReply(this) : (int)USocket::BROKEN);
 
    setStateFromResponse();
 
@@ -420,9 +397,6 @@ const char* USmtpClient::dump(bool reset) const
    *UObjectIO::os << '\n'
                   << "state                         " << state                  << '\n'
                   << "response                      " << response               << '\n'
-#              ifdef HAVE_SSL
-                  << "tls             (USSLSocket   " << (void*)tls             << ")\n"
-#              endif
                   << "domainName      (UString      " << (void*)&domainName     << ")\n"
                   << "messageBody     (UString      " << (void*)&messageBody    << ")\n"
                   << "rcptoAddress    (UString      " << (void*)&rcptoAddress   << ")\n"

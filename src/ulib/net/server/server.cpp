@@ -390,9 +390,9 @@ int UServer_Base::loadPlugins(const UString& plugin_dir, UVector<UString>& plugi
 
    U_INTERNAL_ASSERT(plugin_dir.isNullTerminated())
 
+   int result;
    UString name;
    UServerPlugIn* plugin;
-   int result = U_PLUGIN_HANDLER_GO_ON;
 
    vplugin = U_NEW(UVector<UServerPlugIn*>(10U));
 
@@ -412,7 +412,8 @@ int UServer_Base::loadPlugins(const UString& plugin_dir, UVector<UString>& plugi
 
       vplugin->push_back(plugin);
 
-      if (cfg && cfg->searchForObjectStream(U_STRING_TO_PARAM(name)))
+      if (cfg &&
+          cfg->searchForObjectStream(U_STRING_TO_PARAM(name)))
          {
          cfg->clear();
 
@@ -422,10 +423,13 @@ int UServer_Base::loadPlugins(const UString& plugin_dir, UVector<UString>& plugi
 
          cfg->reset();
 
-         if (result != U_PLUGIN_HANDLER_GO_ON) break;
+         if (result != U_PLUGIN_HANDLER_GO_ON) goto end;
          }
       }
 
+   result = U_PLUGIN_HANDLER_FINISHED;
+
+end:
    mod_name[0] = '\0';
 
    U_RETURN(result);
@@ -441,9 +445,9 @@ int UServer_Base::plugins_handler##xxx()                                        
                                                                                              \
    U_INTERNAL_ASSERT_POINTER(vplugin)                                                        \
                                                                                              \
+   int result;                                                                               \
    UServerPlugIn* plugin;                                                                    \
    UPlugIn<void*>* wrapper;                                                                  \
-   int result = U_PLUGIN_HANDLER_ERROR;                                                      \
                                                                                              \
    for (uint32_t i = 0, length = vplugin->size(); i < length; ++i)                           \
       {                                                                                      \
@@ -456,9 +460,12 @@ int UServer_Base::plugins_handler##xxx()                                        
                                                                                              \
       result = plugin->handler##xxx();                                                       \
                                                                                              \
-      if (result != U_PLUGIN_HANDLER_GO_ON) break;                                           \
+      if (result != U_PLUGIN_HANDLER_GO_ON) goto end;                                        \
       }                                                                                      \
                                                                                              \
+   result = U_PLUGIN_HANDLER_FINISHED;                                                       \
+                                                                                             \
+end:                                                                                         \
    mod_name[0] = '\0';                                                                       \
                                                                                              \
    U_RETURN(result);                                                                         \
@@ -501,15 +508,17 @@ void UServer_Base::init()
 
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
 
-#ifndef __MINGW32__
    if (name_sock.empty() == false)
       {
       block_on_accept        = true;
       USocket::accept4_flags = 0;
 
+#  ifndef __MINGW32__
+      U_INTERNAL_ASSERT(socket->isIPC())
+
       UUnixSocket::setPath(name_sock.data()); // unix socket...
+#  endif
       }
-#endif
 
    if (socket->setServer(server, port, 1024) == false)
       {
@@ -731,7 +740,7 @@ next:
    setProcessManager();
 
 #ifdef HAVE_MODULES
-   if (pluginsHandlerInit() != U_PLUGIN_HANDLER_GO_ON) U_ERROR("initialization of plugins FAILED. Going down...", 0);
+   if (pluginsHandlerInit() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("initialization of plugins FAILED. Going down...", 0);
 #endif
 
    runAsUser();

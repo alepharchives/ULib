@@ -225,17 +225,39 @@ bool UFileConfig::loadTable(UHashMap<UString>& tbl)
    U_RETURN(false);
 }
 
-bool UFileConfig::loadVector(UVector<UString>& vec)
+bool UFileConfig::loadVector(UVector<UString>& vec, const char* name)
 {
-   U_TRACE(0, "UFileConfig::loadVector(%p)", &vec)
+   U_TRACE(0, "UFileConfig::loadVector(%p,%S)", &vec, name)
 
    U_CHECK_MEMORY
 
    _start = u_skip(_start, _end, 0, '#');
 
-   if ( _start < _end &&
-       (_start[0] == '[' ||
-        _start[0] == '('))
+   if (_start == _end) U_RETURN(false);
+
+   U_INTERNAL_ASSERT_EQUALS(u_isspace(_start[0]), false)
+
+   U_INTERNAL_DUMP("_start = %.*S", 10, _start)
+
+   uint32_t len = (name ? strlen(name) : 0);
+
+   if (len)
+      {
+      if (_start[0] != name[0] ||
+          memcmp(_start, name, len))
+         {
+         U_RETURN(false);
+         }
+
+      _start += len;
+
+      U_INTERNAL_ASSERT(u_isspace(_start[0]))
+
+      while (u_isspace(*_start)) ++_start;
+      }
+
+   if (_start[0] == '[' ||
+       _start[0] == '(')
       {
       UVector<UString> vtmp;
       istrstream is(_start, _size);

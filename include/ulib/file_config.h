@@ -48,8 +48,8 @@ public:
 
    // SERVICES
 
-   bool loadVector(UVector<UString>& vec);
    bool loadTable(UHashMap<UString>& table);
+   bool loadVector(UVector<UString>& vec, const char* name = 0);
 
    bool loadTable() { return loadTable(table); }
 
