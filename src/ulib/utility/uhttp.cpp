@@ -155,6 +155,7 @@ void UHTTP::ctor()
    U_INTERNAL_ASSERT_EQUALS(tmpdir,0)
    U_INTERNAL_ASSERT_EQUALS(qcontent,0)
    U_INTERNAL_ASSERT_EQUALS(formMulti,0)
+   U_INTERNAL_ASSERT_EQUALS(request_uri,0)
    U_INTERNAL_ASSERT_EQUALS(penvironment,0)
    U_INTERNAL_ASSERT_EQUALS(form_name_value,0)
 
@@ -163,6 +164,7 @@ void UHTTP::ctor()
    tmpdir          = U_NEW(UString(100U));
    qcontent        = U_NEW(UString);
    formMulti       = U_NEW(UMimeMultipart);
+   request_uri     = U_NEW(UString);
    penvironment    = U_NEW(UString(U_CAPACITY));
    form_name_value = U_NEW(UVector<UString>);
 
@@ -242,11 +244,11 @@ void UHTTP::dtor()
       delete tmpdir;
       delete qcontent;
       delete formMulti;
+      delete request_uri;
       delete penvironment;
       delete form_name_value;
 
       if (vallow_IP)    delete vallow_IP;
-      if (request_uri)  delete request_uri;
       if (vRewriteRule) delete vRewriteRule;
 
       if (cache_file)
@@ -1717,12 +1719,10 @@ void UHTTP::setHTTPResponse(int nResponseCode, const UString* content_type, cons
       (void) tmp.append(U_CONSTANT_TO_PARAM("\r\n\r\n"));
       }
 
-   tmp = getHTTPHeaderForResponse(nResponseCode, tmp);
-
-   *UClientImage_Base::wbuffer = tmp;
-
    if (body) *UClientImage_Base::body = *body;
    else       UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+
+   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(nResponseCode, tmp);
 
    U_INTERNAL_DUMP("UClientImage_Base::wbuffer(%u) = %.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
    U_INTERNAL_DUMP("UClientImage_Base::body(%u)    = %.*S", UClientImage_Base::body->size(),    U_STRING_TO_TRACE(*UClientImage_Base::body))
@@ -1799,7 +1799,7 @@ void UHTTP::setHTTPNotFound()
  * information necessary for a user to repeat the original request on the new URI.
  */
 
-void UHTTP::setHTTPRedirectResponse(const UString& ext, const char* ptr_location, uint32_t len_location)
+void UHTTP::setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint32_t len_location)
 {
    U_TRACE(0, "UHTTP::setHTTPRedirectResponse(%.*S,%.*S,%u)", U_STRING_TO_TRACE(ext), len_location, ptr_location, len_location)
 
@@ -1830,6 +1830,10 @@ void UHTTP::setHTTPRedirectResponse(const UString& ext, const char* ptr_location
       {
       (void) tmp.append(U_CONSTANT_TO_PARAM("\r\n"));
       (void) tmp.append(UStringExt::trim(ext));
+
+#  ifdef DEBUG
+      ext.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+#  endif
       }
 
    setHTTPResponse(nResponseCode, &tmp, &body);
@@ -2112,11 +2116,7 @@ bool UHTTP::processHTTPAuthorization(bool digest)
 
                   UString tmp(U_CAPACITY);
 
-                  if (request_uri == 0 ||
-                      request_uri->empty())
-                     {
-                     (void) tmp.assign(U_HTTP_URI_QUERY_TO_PARAM);
-                     }
+                  if (request_uri->empty()) (void) tmp.assign(U_HTTP_URI_QUERY_TO_PARAM);
                   else
                      {
                      tmp = *request_uri;
@@ -2430,6 +2430,14 @@ void UHTTP::searchFileForCache()
    u_ftw();
 
    u_buffer_len = 0;
+
+   uint32_t sz = cache_file->size();
+
+   U_INTERNAL_DUMP("cache size = %u", sz)
+
+   sz += (sz / 100) * 25;
+
+   cache_file->reserve(sz);
 }
 
 bool UHTTP::manageFileCache()
@@ -2584,7 +2592,7 @@ bool UHTTP::processRewriteRule()
 
          if (checkPath(pathname) == 1)
             {
-            request_uri->setConstant(U_HTTP_URI_QUERY_TO_PARAM); // as Lighttpd...
+            request_uri->clear();
 
             (void) alias->assign(result);
 
@@ -2726,12 +2734,20 @@ int UHTTP::_checkHTTPRequest()
       if (tmp != pathname) result = checkPath(tmp);
       }
 
-   if (result == 1) U_RETURN(1);
-
-   if (vRewriteRule && processRewriteRule()) U_RETURN(1);
-
+   if      (result ==  1) U_RETURN(1);
    if      (result == -1) setHTTPForbidden(); // set forbidden error response...
-   else if (result ==  0) setHTTPNotFound();  // set not found error response...
+   else if (result ==  0)
+      {
+      // NB: file do not exist: apply rewrite rule...
+
+      if (vRewriteRule &&
+          processRewriteRule())
+         {
+         U_RETURN(1);
+         }
+
+      setHTTPNotFound();  // set not found error response...
+      }
 
    U_RETURN(result);
 }
@@ -2983,11 +2999,8 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
 
    // The interpreted pathname of the requested document or CGI (relative to the document root)
 
-   if (request_uri &&
-       request_uri->empty() == false)
-      {
-      buffer.snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(*request_uri));
-      }
+   if (request_uri->empty()) buffer.snprintf_add("REQUEST_URI=%.*s\n", U_HTTP_URI_QUERY_TO_TRACE);
+   else                      buffer.snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(*request_uri));
 
    if (sh_script)
       {
@@ -3616,7 +3629,7 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
 
    // process the HTTP CGI output
 
-   if (result == false) UServer_Base::logCommandMsgError(pcmd->getCommand());
+   UServer_Base::logCommandMsgError(pcmd->getCommand());
 
    pcmd->reset();
 

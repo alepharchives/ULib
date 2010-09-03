@@ -76,8 +76,6 @@ int UTsaPlugIn::handlerRequest()
 
    if (command->execute(UClientImage_Base::body, &body) == false)
       {
-      UServer_Base::logCommandMsgError(command->getCommand());
-
       UHTTP::setHTTPInternalError(); // set internal error response...
 
       goto end;
@@ -86,6 +84,8 @@ int UTsaPlugIn::handlerRequest()
    UHTTP::setHTTPResponse(HTTP_OK, UHTTP::str_ctype_tsa, &body);
 
 end:
+   UServer_Base::logCommandMsgError(command->getCommand());
+
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
 

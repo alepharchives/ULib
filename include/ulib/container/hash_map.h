@@ -98,7 +98,7 @@ public:
 
    // allocate and deallocate methods
 
-   void allocate(uint32_t n = 64)
+   void allocate(uint32_t n = 53)
       {
       U_TRACE(0, "UHashMap<void*>::allocate(%u)", n)
 

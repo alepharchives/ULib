@@ -83,7 +83,7 @@ protected:
       U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
 
       hash  = hashcode(key);
-      index = hash & (_capacity - 1); // hash % _capacity;
+      index = hash % _capacity;
 
       U_INTERNAL_DUMP("index = %u", index)
 
@@ -327,7 +327,7 @@ public:
 
             do {
                next  = node->next;
-               index = node->hash & (_capacity - 1); // node->hash % _capacity;
+               index = node->hash % _capacity;
 
                U_INTERNAL_DUMP("i = %u index = %u", i, index)
 

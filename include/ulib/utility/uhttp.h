@@ -604,7 +604,7 @@ public:
    // set HTTP response message
 
    static void setHTTPResponse(int nResponseCode, const UString* content_type, const UString* body);
-   static void setHTTPRedirectResponse(const UString& ext, const char* ptr_location, uint32_t len_location);
+   static void setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint32_t len_location);
 
 private:
    static int     _checkHTTPRequest();

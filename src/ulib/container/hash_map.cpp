@@ -25,16 +25,11 @@ void UHashMap<void*>::lookup(UStringRep* keyr)
 
    U_INTERNAL_ASSERT_MAJOR(_capacity,0)
 
-   if (gperf)
-      {
-      index = gperf(U_STRING_TO_PARAM(*keyr));
-
-   // if (index >= _capacity) index &= (_capacity - 1); // index % _capacity;
-      }
+   if (gperf) index = gperf(U_STRING_TO_PARAM(*keyr));
    else
       {
       hash  = keyr->hash(ignore_case);
-      index = hash & (_capacity - 1); // hash % _capacity;
+      index = hash % _capacity;
       }
 
    U_INTERNAL_DUMP("index = %u", index)
@@ -156,7 +151,7 @@ void UHashMap<void*>::reserve(uint32_t n)
    UHashMapNode** old_table    = table;
    uint32_t       old_capacity = _capacity;
 
-   allocate(n);
+   allocate(U_GET_NEXT_PRIME_NUMBER(n));
 
    // inserisco i vecchi elementi
 
@@ -170,9 +165,9 @@ void UHashMap<void*>::reserve(uint32_t n)
 
          do {
             next  = node->next;
-            index = node->hash & (_capacity - 1); // node->hash % _capacity;
+            index = node->hash % _capacity;
 
-            U_INTERNAL_DUMP("i = %u index = %u", i, index)
+            U_INTERNAL_DUMP("i = %u index = %u hash = %u", i, index, node->hash)
 
             // antepongo l'elemento all'inizio della lista delle collisioni
 
