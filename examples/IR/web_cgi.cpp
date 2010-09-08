@@ -584,7 +584,7 @@ static void init()
       {
       tbl_session = U_NEW(UHashMap<DataSession*>);
 
-      tbl_session->allocate(SESSION_SIZE);
+      tbl_session->allocate(U_GET_NEXT_PRIME_NUMBER(SESSION_SIZE));
       }
    else
       {

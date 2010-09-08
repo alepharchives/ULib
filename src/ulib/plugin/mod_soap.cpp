@@ -69,22 +69,25 @@ int USoapPlugIn::handlerRequest()
 {
    U_TRACE(0, "USoapPlugIn::handlerRequest()")
 
-   if (UHTTP::isSOAPRequest() == false) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+   if (UHTTP::isSOAPRequest())
+      {
+      // process the SOAP message -- should be the contents of the message from "<SOAP:" to the end of the string
 
-   // process the SOAP message -- should be the contents of the message from "<SOAP:" to the end of the string
+      U_INTERNAL_ASSERT_POINTER(soap_parser)
 
-   U_INTERNAL_ASSERT_POINTER(soap_parser)
+      bool bSendingFault;
 
-   bool bSendingFault;
+      UString body   = soap_parser->processMessage(*UClientImage_Base::body, *URPCObject::dispatcher, bSendingFault),
+              method = soap_parser->getMethodName();
 
-   UString body   = soap_parser->processMessage(*UClientImage_Base::body, *URPCObject::dispatcher, bSendingFault),
-           method = soap_parser->getMethodName();
+      U_SRV_LOG_VAR_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
 
-   U_SRV_LOG_VAR_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
+      UHTTP::setHTTPResponse(HTTP_OK, UHTTP::str_ctype_soap, &body);
 
-   UHTTP::setHTTPResponse(HTTP_OK, UHTTP::str_ctype_soap, &body);
+      UHTTP::setHTTPRequestProcessed();
+      }
 
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 // DEBUG

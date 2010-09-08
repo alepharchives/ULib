@@ -109,8 +109,11 @@ UPosting::UPosting(uint32_t dimension, bool parsing, bool index)
       tbl_name  = U_NEW(UHashMap<UString>(false));
       tbl_words = U_NEW(UHashMap<UString>(ignore_case));
 
-      tbl_words->allocate(approximate_num_words);
-      tbl_name->allocate(dimension + dimension / 4);
+      tbl_words->allocate(U_GET_NEXT_PRIME_NUMBER(approximate_num_words));
+
+      dimension += dimension / 4;
+
+      tbl_name->allocate(U_GET_NEXT_PRIME_NUMBER(dimension));
       }
 
    if (parsing)
@@ -168,9 +171,9 @@ UPosting::~UPosting()
 
    if (tbl_name)
       {
-      tbl_name->clear();
+       tbl_name->clear();
       tbl_words->clear();
-      tbl_name->deallocate();
+       tbl_name->deallocate();
       tbl_words->deallocate();
 
       delete tbl_name;

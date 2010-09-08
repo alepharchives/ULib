@@ -620,10 +620,10 @@ public:
       USSLSocket* sslsocket = getSocket();
 
       U_INTERNAL_ASSERT(sslsocket->isSSL())
-      U_INTERNAL_ASSERT(ca_file.isNullTerminated())
-      U_INTERNAL_ASSERT(ca_path.isNullTerminated())
-      U_INTERNAL_ASSERT(key_file.isNullTerminated())
-      U_INTERNAL_ASSERT(password.isNullTerminated())
+      U_INTERNAL_ASSERT(  ca_file.isNullTerminated())
+      U_INTERNAL_ASSERT(  ca_path.isNullTerminated())
+      U_INTERNAL_ASSERT( key_file.isNullTerminated())
+      U_INTERNAL_ASSERT( password.isNullTerminated())
       U_INTERNAL_ASSERT(cert_file.isNullTerminated())
 
       // These are the 1024 bit DH parameters from "Assigned Number for SKIP Protocols"

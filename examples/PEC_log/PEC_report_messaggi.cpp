@@ -417,7 +417,7 @@ public:
 
       table = new UHashMap<VCasellaIdCounter*>(true); // ignore case
 
-      table->allocate(16 * 1024);
+      table->allocate(U_GET_NEXT_PRIME_NUMBER(16 * 1024));
 
       PEC_report::parse       = Application::parseLineForMessaggi;
       PEC_report::change_file = Application::reportNumCaselle;

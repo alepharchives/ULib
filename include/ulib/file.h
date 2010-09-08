@@ -36,10 +36,6 @@
 #  define MAP_ANONYMOUS MAP_ANON /* Don't use a file */
 #endif
 
-#ifndef O_CLOEXEC
-#define O_CLOEXEC 0
-#endif
-
 #ifdef HAVE_LFS
 #  define U_SEEK_BEGIN 0LL
 #else

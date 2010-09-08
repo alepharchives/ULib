@@ -81,7 +81,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
    UVector<UString> tmp;
 
-   if (cfg.loadVector(tmp, "REWRITE_RULE_NF"))
+   if (cfg.loadVector(tmp, "REWRITE_RULE_NF") &&
+       tmp.empty() == false)
       {
       uint32_t n = tmp.size();
 
@@ -150,8 +151,6 @@ int UHttpPlugIn::handlerInit()
          }
       }
 
-   if (valias.empty() == false) UHTTP::request_uri = U_NEW(UString);
-
    // CACHE FILE
 
    if (UHTTP::cache_file_mask &&
@@ -195,7 +194,7 @@ int UHttpPlugIn::handlerRead()
 
       // HTTP 1.1 want header "Host: ..."
 
-      if (UHTTP::http_info.version  == 1 &&
+      if (U_http_version            == 1 &&
           UHTTP::http_info.host_len == 0)
          {
          UHTTP::setHTTPBadRequest();
@@ -203,7 +202,7 @@ int UHttpPlugIn::handlerRead()
          goto send_response;
          }
 
-      U_INTERNAL_DUMP("UHTTP::http_info.version = %d", UHTTP::http_info.version)
+      U_INTERNAL_DUMP("U_http_version = %d", U_http_version)
 
       if (UHTTP::virtual_host)
          {
@@ -278,6 +277,8 @@ next:
          goto send_response;
          }
 
+      UHTTP::checkHTTPRequest();
+
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
@@ -288,7 +289,7 @@ next:
 
    nResponseCode = HTTP_NOT_IMPLEMENTED;
 
-   if (UHTTP::http_info.method_type)
+   if (U_http_method_type)
       {
       if (UHTTP::http_info.uri_len == 0)
          {
@@ -301,7 +302,7 @@ next:
       else if (UHTTP::http_info.szHeader == 0) nResponseCode = HTTP_VERSION;
       }
 
-   UHTTP::http_info.is_connection_close = U_YES;
+   U_http_is_connection_close = U_YES;
 
    UHTTP::setHTTPResponse(nResponseCode, 0, 0);
 
@@ -320,26 +321,35 @@ int UHttpPlugIn::handlerRequest()
 
    // process the HTTP request
 
-   if (UHTTP::checkHTTPRequest() == 1)
+   if (UHTTP::isHTTPRequestAlreadyProcessed()) goto end;
+
+   if (UHTTP::isHTTPRequestNeedProcessing())
       {
-      if (UHTTP::isPHPRequest() ||
-          UHTTP::isCGIRequest())
-         {
-         (void) UHTTP::processCGIRequest((UCommand*)0, UHTTP::penvironment);
-         }
+      if (UHTTP::isCGIRequest()) (void) UHTTP::processCGIRequest((UCommand*)0, UHTTP::penvironment);
       else
          {
-         // NB: we don't want to process the form here (other plugin, TSA or ...)
+         // NB: we don't want to process the form here (other plugin...)
 
          if (UHTTP::isHttpPOST()) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 
          UHTTP::processHTTPGetRequest(); // GET,HEAD
          }
       }
+   else if (UHTTP::isHTTPRequestNotFound())  UHTTP::setHTTPNotFound();  // set not found error response...
+   else if (UHTTP::isHTTPRequestForbidden()) UHTTP::setHTTPForbidden(); // set forbidden error response...
 
-   int result = UHTTP::checkForHTTPConnectionClose(); // check for "Connection: close" in headers...
+end: // check for "Connection: close" in headers...
 
-   U_RETURN(result);
+   U_INTERNAL_DUMP("U_http_is_connection_close = %d", U_http_is_connection_close)
+
+   if (U_http_is_connection_close == U_YES)
+      {
+      (void) UClientImage_Base::pClientImage->handlerWrite();
+
+      U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      }
+
+   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
 
 int UHttpPlugIn::handlerReset()

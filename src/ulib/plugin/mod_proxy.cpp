@@ -63,131 +63,131 @@ int UProxyPlugIn::handlerRequest()
 
    UModProxyService* service = UModProxyService::findService(host, method, vservice);
 
-   if (service == 0) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-
-   // process the HTTP request
-
-   int err = 0;
-   bool esito,
-        output_to_client  = false, // send output as response to client...
-        output_to_server  = false; // send output as request  to server...
-
-#ifdef HAVE_SSL
-   // check if certificate is required...
-
-   if (service->isRequestCertificate() &&
-       ((UServer<USSLSocket>*)UServer_Base::pthis)->askForClientCertificate() == false)
+   if (service)
       {
-      err = UModProxyService::BAD_REQUEST;
+      // process the HTTP request
 
-      goto error;
-      }
-#endif
+      int err = 0;
+      bool esito,
+           output_to_client  = false, // send output as response to client...
+           output_to_server  = false; // send output as request  to server...
 
-   // check if action required
+#  ifdef HAVE_SSL
+      // check if certificate is required...
 
-   if (service->command)
-      {
-      UCommand* pcmd = service->command;
-
-      UString     command = pcmd->getStringCommand(),
-              environment = pcmd->getStringEnvironment();
-
-      // NB: we need this because processCGIRequest() can split the string...
-
-          command.duplicate();
-      environment.duplicate();
-
-      esito = UHTTP::processCGIRequest(pcmd, 0);
-
-      pcmd->reset(command, environment);
-
-      if (esito == false) goto end; // skip error...
-
-      if (service->isResponseForClient()) output_to_client = true; // send output as response to client...
-      else                                output_to_server = true; // send output as request  to server...
-      }
-
-   U_INTERNAL_DUMP("output_to_server = %b output_to_client = %b", output_to_server, output_to_client)
-
-   if (output_to_server) // check if the request is HTTP...
-      {
-      U_ASSERT_EQUALS(UClientImage_Base::wbuffer->empty(), false)
-
-      const char* ptr = UClientImage_Base::wbuffer->data();
-
-      if (                        UHTTP::isHTTPRequest(  ptr)  == false ||
-         (UHTTP::resetHTTPInfo(), UHTTP::scanfHTTPHeader(ptr)) == false)
+      if (service->isRequestCertificate() &&
+          ((UServer<USSLSocket>*)UServer_Base::pthis)->askForClientCertificate() == false)
          {
-         err = UModProxyService::INTERNAL_ERROR;
+         err = UModProxyService::BAD_REQUEST;
 
-         goto error;
+         goto err;
+         }
+#  endif
+
+      // check if action required
+
+      if (service->command)
+         {
+         UCommand* pcmd = service->command;
+
+         UString     command = pcmd->getStringCommand(),
+                 environment = pcmd->getStringEnvironment();
+
+         // NB: we need this because processCGIRequest() can split the string...
+
+             command.duplicate();
+         environment.duplicate();
+
+         esito = UHTTP::processCGIRequest(pcmd, 0);
+
+         pcmd->reset(command, environment);
+
+         if (esito == false) goto end; // skip error...
+
+         if (service->isResponseForClient()) output_to_client = true; // send output as response to client...
+         else                                output_to_server = true; // send output as request  to server...
          }
 
-      U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
+      U_INTERNAL_DUMP("output_to_server = %b output_to_client = %b", output_to_server, output_to_client)
+
+      if (output_to_server) // check if the request is HTTP...
+         {
+         U_ASSERT_EQUALS(UClientImage_Base::wbuffer->empty(), false)
+
+         const char* ptr = UClientImage_Base::wbuffer->data();
+
+         if (                        UHTTP::isHTTPRequest(  ptr)  == false ||
+            (UHTTP::resetHTTPInfo(), UHTTP::scanfHTTPHeader(ptr)) == false)
+            {
+            err = UModProxyService::INTERNAL_ERROR;
+
+            goto err;
+            }
+
+         U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
+         }
+
+      if (output_to_client == false)
+         {
+         // connect to server...
+
+         int port       = service->getPort();
+         UString user   = service->getUser(),
+                 server = service->getServer(),
+                 passwd = service->getPassword();
+
+         if (  user.empty() == false &&
+             passwd.empty() == false)
+            {
+            client_http.setRequestPasswordAuthentication(user, passwd);
+            }
+
+         client_http.setFollowRedirects(service->isFollowRedirects());
+
+         // ...but before check if server and/or port to connect has changed...
+
+         if (client_http.setHostPort(server, port)) client_http.UClient_Base::close();
+
+         // send request to server and get response
+
+         if (output_to_server == false) *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer;
+
+         (void) client_http.sendRequest(*UClientImage_Base::wbuffer);
+
+         // reset reference to rbuffer...
+
+         *UClientImage_Base::wbuffer = client_http.getResponse();
+
+         client_http.UClient_Base::reset();
+
+         if (client_http.isConnected() == false)
+            {
+            U_SRV_LOG_MSG(client_http.getResponseData());
+
+            err = UModProxyService::INTERNAL_ERROR;
+
+            goto err;
+            }
+
+         // check if request replace response from server for this service...
+
+         if (service->isReplaceResponse()) *UClientImage_Base::wbuffer = service->replaceResponse(*UClientImage_Base::wbuffer); 
+
+         if (UClientImage_Base::wbuffer->empty())
+            {
+            err = UModProxyService::INTERNAL_ERROR;
+
+            goto err;
+            }
+         }
+
+      goto end; // skip error...
+
+err:  UModProxyService::setMsgError(err, vmsg_error);
+end:  UHTTP::setHTTPRequestProcessed();
       }
 
-   if (output_to_client == false)
-      {
-      // connect to server...
-
-      int port       = service->getPort();
-      UString user   = service->getUser(),
-              server = service->getServer(),
-              passwd = service->getPassword();
-
-      if (  user.empty() == false &&
-          passwd.empty() == false)
-         {
-         client_http.setRequestPasswordAuthentication(user, passwd);
-         }
-
-      client_http.setFollowRedirects(service->isFollowRedirects());
-
-      // ...but before check if server and/or port to connect has changed...
-
-      if (client_http.setHostPort(server, port)) client_http.UClient_Base::close();
-
-      // send request to server and get response
-
-      if (output_to_server == false) *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer;
-
-      (void) client_http.sendRequest(*UClientImage_Base::wbuffer);
-
-      // reset reference to rbuffer...
-
-      *UClientImage_Base::wbuffer = client_http.getResponse();
-
-      client_http.UClient_Base::reset();
-
-      if (client_http.isConnected() == false)
-         {
-         U_SRV_LOG_MSG(client_http.getResponseData());
-
-         err = UModProxyService::INTERNAL_ERROR;
-
-         goto error;
-         }
-
-      // check if request replace response from server for this service...
-
-      if (service->isReplaceResponse()) *UClientImage_Base::wbuffer = service->replaceResponse(*UClientImage_Base::wbuffer); 
-
-      if (UClientImage_Base::wbuffer->empty())
-         {
-         err = UModProxyService::INTERNAL_ERROR;
-
-         goto error;
-         }
-      }
-
-   goto end; // skip error...
-
-error:
-   UModProxyService::setMsgError(err, vmsg_error);
-
-end:
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 int UProxyPlugIn::handlerReset()

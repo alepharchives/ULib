@@ -310,10 +310,10 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(_capacity, 0)
 
-      UGenericHashMapNode** old_table    = table;
-      uint32_t       old_capacity = _capacity;
+      UGenericHashMapNode** old_table = table;
+      uint32_t           old_capacity = _capacity;
 
-      allocate(n);
+      allocate(U_GET_NEXT_PRIME_NUMBER(n));
 
       // inserisco i vecchi elementi
 

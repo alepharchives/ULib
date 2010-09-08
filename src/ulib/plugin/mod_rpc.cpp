@@ -84,7 +84,9 @@ int URpcPlugIn::handlerRead()
 
    UClientImage_Base::manageForPipeline();
 
-   U_RETURN(is_rpc_msg ? U_PLUGIN_HANDLER_FINISHED : U_PLUGIN_HANDLER_ERROR);
+   if (is_rpc_msg) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+
+   U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }
 
 int URpcPlugIn::handlerRequest()

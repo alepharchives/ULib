@@ -92,19 +92,28 @@
 // HTTP header representation
 // -----------------------------------------------------------------------------------------------------------------------------
 
-typedef struct uhttpheader {
+typedef struct uhttpinfo {
    const char* method;
    const char* uri;
    const char* query;
    const char* host;
    const char* content_type;
    const char* range;
-   time_t if_modified_since;
-   uint32_t nResponseCode, version,
-            startHeader, endHeader, szHeader,
-            method_len, uri_len, query_len, host_len, content_type_len, range_len,
-            method_type, clength, keep_alive, is_connection_close, is_php, is_accept_deflate, upgrade;
-} uhttpheader;
+   const char* interpreter;
+   time_t      if_modified_since;
+   uint32_t    nResponseCode, startHeader, endHeader, szHeader, clength,
+               method_len, uri_len, query_len, host_len, content_type_len, range_len;
+   char        flag[8];
+} uhttpinfo;
+
+#define U_http_upgrade             UHTTP::http_info.flag[0]
+#define U_http_version             UHTTP::http_info.flag[1]
+#define U_http_sh_script           UHTTP::http_info.flag[2]
+#define U_http_keep_alive          UHTTP::http_info.flag[3]
+#define U_http_method_type         UHTTP::http_info.flag[4]
+#define U_http_request_check       UHTTP::http_info.flag[5]
+#define U_http_is_accept_deflate   UHTTP::http_info.flag[6]
+#define U_http_is_connection_close UHTTP::http_info.flag[7]
 
 enum HTTPMethodType { HTTP_POST = 1, HTTP_PUT = 2, HTTP_DELETE = 3, HTTP_GET = 4, HTTP_HEAD = 5 };
 
@@ -178,7 +187,7 @@ public:
 
    // HTTP header representation
 
-   static uhttpheader http_info;
+   static uhttpinfo http_info;
 
    static const char* ptrH; // "Host"
    static const char* ptrR; // "Range"
@@ -209,27 +218,27 @@ public:
 
       if (c == 'G') // GET
          {
-         http_info.method_type = HTTP_GET;
+         U_http_method_type = HTTP_GET;
 
          U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 3)
          U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, "GET"))
          }
       else if (c == 'P') // POST
          {
-         http_info.method_type = HTTP_POST;
+         U_http_method_type = HTTP_POST;
 
          U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 4)
          U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, "POST"))
          }
       else // HEAD
          {
-         http_info.method_type = HTTP_HEAD;
+         U_http_method_type = HTTP_HEAD;
 
          U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 4)
          U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, "HEAD"))
          }
 
-      U_INTERNAL_DUMP("method_type = %u", http_info.method_type)
+      U_INTERNAL_DUMP("method_type = %u", U_http_method_type)
       }
 
    static UString getHTTPMethod()
@@ -270,9 +279,7 @@ public:
       {
       U_TRACE(0, "UHTTP::resetHTTPInfo()")
 
-      cgi_dir[0] = '\0';
-
-      (void) U_SYSCALL(memset, "%p,%d,%u", &http_info, 0, sizeof(uhttpheader));
+      (void) U_SYSCALL(memset, "%p,%d,%u", &http_info, 0, sizeof(uhttpinfo));
       }
 
    static void setHTTPInfo(const char* method, uint32_t method_len, const char* uri, uint32_t uri_len)
@@ -303,13 +310,13 @@ public:
 
    // TYPE
 
-   static bool isHTTPRequest() { return (http_info.method_type && http_info.szHeader); }
+   static bool isHTTPRequest() { return (U_http_method_type && http_info.szHeader); }
 
    static bool isHttpGET()
       {
       U_TRACE(0, "UHTTP::isHttpGET()")
 
-      bool result = (http_info.method_type >= HTTP_GET);
+      bool result = (U_http_method_type >= HTTP_GET);
 
       U_RETURN(result);
       }
@@ -318,7 +325,7 @@ public:
       {
       U_TRACE(0, "UHTTP::isHttpHEAD()")
 
-      bool result = (http_info.method_type == HTTP_HEAD);
+      bool result = (U_http_method_type == HTTP_HEAD);
 
       U_RETURN(result);
       }
@@ -327,7 +334,7 @@ public:
       {
       U_TRACE(0, "UHTTP::isHttpPOST()")
 
-      bool result = (http_info.method_type == HTTP_POST);
+      bool result = (U_http_method_type == HTTP_POST);
 
       U_RETURN(result);
       }
@@ -336,7 +343,7 @@ public:
       {
       U_TRACE(0, "UHTTP::isHttpPUT()")
 
-      bool result = (http_info.method_type == HTTP_PUT);
+      bool result = (U_http_method_type == HTTP_PUT);
 
       U_RETURN(result);
       }
@@ -345,7 +352,7 @@ public:
       {
       U_TRACE(0, "UHTTP::isHttpDELETE()")
 
-      bool result = (http_info.method_type == HTTP_DELETE);
+      bool result = (U_http_method_type == HTTP_DELETE);
 
       U_RETURN(result);
       }
@@ -387,7 +394,7 @@ public:
 
    static UFile* file;
 
-   static bool isPHPRequest();
+   static void checkHTTPRequest();
    static void processHTTPGetRequest();
    static void getTimeIfNeeded(bool all_http_version);
    static bool checkHTTPGetRequestIfModified(time_t mtime);
@@ -399,15 +406,67 @@ public:
    static UString     getHTMLDirectoryList();
    static const char* getHTTPHeaderValuePtr(const UString& name);
 
-   static int http_request_check;
-
-   static int checkHTTPRequest()
+   static void setHTTPRequestProcessed()
       {
-      U_TRACE(0, "UHTTP::checkHTTPRequest()")
+      U_TRACE(0, "UHTTP::setHTTPRequestProcessed()")
 
-      http_request_check = _checkHTTPRequest();
+      U_INTERNAL_ASSERT(isHTTPRequest())
 
-      U_RETURN(http_request_check);
+      U_INTERNAL_DUMP("U_http_request_check = %d", U_http_request_check)
+
+      U_http_request_check = 2;
+      }
+
+   static bool isHTTPRequestAlreadyProcessed()
+      {
+      U_TRACE(0, "UHTTP::isHTTPRequestNeedProcessing()")
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      U_INTERNAL_DUMP("U_http_request_check = %d", U_http_request_check)
+
+      bool result = (U_http_request_check == 2);
+
+      U_RETURN(result);
+      }
+
+   static bool isHTTPRequestNeedProcessing()
+      {
+      U_TRACE(0, "UHTTP::isHTTPRequestNeedProcessing()")
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      U_INTERNAL_DUMP("U_http_request_check = %d", U_http_request_check)
+
+      bool result = (U_http_request_check == 1);
+
+      U_RETURN(result);
+      }
+
+   static bool isHTTPRequestNotFound()
+      {
+      U_TRACE(0, "UHTTP::isHTTPRequestNotFound()")
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      U_INTERNAL_DUMP("U_http_request_check = %d", U_http_request_check)
+
+      bool result = (U_http_request_check == 0);
+
+      U_RETURN(result);
+      }
+
+   static bool isHTTPRequestForbidden()
+      {
+      U_TRACE(0, "UHTTP::isHTTPRequestForbidden()")
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      U_INTERNAL_DUMP("U_http_request_check = %d", U_http_request_check)
+
+      bool result = (U_http_request_check == -1);
+
+      U_RETURN(result);
       }
 
    // -----------------------------------------------------------------------
@@ -438,7 +497,7 @@ public:
    // ----------------------------------------------------------------------------------------------------------------------------
    // RET: Set-Cookie: ulib_sid=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
 
-   static UString getHTTPCookie(bool ulib_only);
+   static UString getHTTPCookie();
    static UString setHTTPCookie(const UString& param);
 
    // CGI
@@ -446,12 +505,24 @@ public:
    static UString* penvironment;
    static char cgi_dir[U_PATH_MAX];
 
-   static bool    isCGIRequest();
    static bool    processCGIOutput();
-   static UString getCGIEnvironment(bool sh_script);
+   static UString getCGIEnvironment();
    static void    setCGIShellScript(UString& command);
    static bool    processCGIRequest(UCommand* pcmd, UString* penvironment);
    static void    setHTTPCgiResponse(int nResponseCode, bool header_content_length, bool header_content_type, bool content_encoding);
+
+   static bool isCGIRequest()
+      {
+      U_TRACE(0, "UHTTP::isCGIRequest()")
+
+      U_ASSERT(isHTTPRequestNeedProcessing())
+
+      U_INTERNAL_DUMP("http_info.interpreter = %S cgi_dir = %S", http_info.interpreter, cgi_dir)
+
+      bool result = (http_info.interpreter || cgi_dir[0]);
+
+      U_RETURN(result);
+      }
 
    // URI PROTECTED
 
@@ -477,8 +548,8 @@ public:
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
-      bool result = (pages &&
-                     U_STRNEQ(http_info.uri, "/usp/") &&
+      bool result = (pages                      &&
+                     U_HTTP_URI_STRNEQ("/usp/") &&
                      u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".usp")));
 
       U_RETURN(result);
@@ -523,9 +594,9 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, RewriteRule)
       }
 
-   #ifdef DEBUG
-   const char* dump(bool reset) const;
-   #endif
+#ifdef DEBUG
+   const char* dump(bool reset) const U_EXPORT;
+#endif
 
    private:
    RewriteRule(const RewriteRule&)            {}
@@ -534,7 +605,7 @@ public:
 
    static UVector<RewriteRule*>* vRewriteRule;
 
-   static bool processRewriteRule();
+   static void processRewriteRule();
 
    // FILE CACHE
 
@@ -565,7 +636,7 @@ public:
       }
 
 #ifdef DEBUG
-   const char* dump(bool reset) const;
+   const char* dump(bool reset) const U_EXPORT;
 #endif
 
    private:
@@ -588,10 +659,6 @@ public:
 
    static const char* getAcceptLanguage();
 
-   // check for "Connection: close" in headers...
-
-   static int checkForHTTPConnectionClose();
-
    // set HTTP main error message
 
    static void setHTTPNotFound();
@@ -607,9 +674,8 @@ public:
    static void setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint32_t len_location);
 
 private:
-   static int     _checkHTTPRequest();
    static bool    openFile() U_NO_EXPORT;
-   static int     checkPath(UString& pathname) U_NO_EXPORT;
+   static void    checkPath(UString& pathname) U_NO_EXPORT;
    static UString getHTTPHeaderForResponse(int nResponseCode, UString& content) U_NO_EXPORT;
 
    UHTTP(const UHTTP&)            {}

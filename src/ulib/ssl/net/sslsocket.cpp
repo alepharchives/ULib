@@ -137,7 +137,8 @@ bool USSLSocket::setContext(const char* cert_file,
 
    // Load CERT PEM file
 
-   if (cert_file && *cert_file)
+   if ( cert_file &&
+       *cert_file)
       {
       result = U_SYSCALL(SSL_CTX_use_certificate_chain_file, "%p,%S", ctx, cert_file);
 
@@ -146,9 +147,11 @@ bool USSLSocket::setContext(const char* cert_file,
 
    // Load private key PEM file and give passwd callback if any
 
-   if (private_key_file && *private_key_file)
+   if ( private_key_file &&
+       *private_key_file)
       {
-      if (passwd && *passwd)
+      if ( passwd &&
+          *passwd)
          {
          U_SYSCALL_VOID(SSL_CTX_set_default_passwd_cb,          "%p,%p", ctx, u_passwd_cb);
          U_SYSCALL_VOID(SSL_CTX_set_default_passwd_cb_userdata, "%p,%S", ctx, (void*)passwd);

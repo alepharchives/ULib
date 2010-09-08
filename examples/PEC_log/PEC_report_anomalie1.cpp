@@ -325,17 +325,7 @@ public:
 
       table = new UHashMap<Messaggio*>(true); // ignore case
 
-      table->allocate(max_size_table + MARGINE);
-
-      /*
-      uint32_t capacity = (PEC_report::bytes / U_DIMENSIONE_MEDIA_RECORD_LOG);
-
-      if (capacity < 1024) capacity = 1024;
-
-      U_INTERNAL_DUMP("capacity = %u", capacity)
-
-      table->allocate(U_min(capacity, MAX_NUM_MSG + MARGINE));
-      */
+      table->allocate(U_GET_NEXT_PRIME_NUMBER(max_size_table + MARGINE));
 
       rdbname               = new UString(100U);
       Messaggio::id_max_ttl = new UString;

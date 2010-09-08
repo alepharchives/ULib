@@ -1167,7 +1167,14 @@ UCommand* UServer_Base::loadConfigCommand(UFileConfig& cfg)
 
    if (command.empty() == false)
       {
-      if (U_ENDS_WITH(command, ".sh")) (void) command.insert(0, U_PATH_SHELL);
+      if (U_ENDS_WITH(command, ".sh"))
+         {
+         UString buffer(U_CAPACITY);
+
+         buffer.snprintf("%s %.*s", U_PATH_SHELL, U_STRING_TO_TRACE(command));
+
+         command = buffer;
+         }
 
       UString environment = cfg[*str_ENVIRONMENT];
 

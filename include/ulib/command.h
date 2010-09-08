@@ -207,7 +207,7 @@ public:
 
       U_ASSERT(command.empty() == false)
 
-      bool result = (strncmp(command.data(), U_PATH_SHELL-1) == 0);
+      bool result = U_STRNEQ(command.data(), U_PATH_SHELL);
 
       U_RETURN(result);
       }

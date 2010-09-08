@@ -1353,7 +1353,7 @@ void PEC_report::manageOptions()
 
    tfile = new UHashMap<UString>;
 
-   tfile->allocate(1024);
+   tfile->allocate(U_GET_NEXT_PRIME_NUMBER(1024));
 
    if (rejected)
       {

@@ -96,8 +96,8 @@ typedef struct ustringrep {
    int32_t child;      // manage substring for capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
 #  endif
 #endif
-   int32_t references;
    uint32_t _length, _capacity;
+   int32_t references;
    const char* str;
 } ustringrep;
 

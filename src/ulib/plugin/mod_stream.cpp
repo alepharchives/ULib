@@ -184,46 +184,53 @@ int UStreamPlugIn::handlerRequest()
 
    U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
 
-   if (U_HTTP_URI_EQUAL(uri_path) == false) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-
-   UHTTP::http_info.is_connection_close = U_YES;
-
-   UHTTP::setHTTPResponse(HTTP_OK, &content_type, 0);
-
-   UClientImage_Base::socket->setTcpCork(1U);
-
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
-
-   if (UClientImage_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
+   if (U_HTTP_URI_EQUAL(uri_path))
       {
-      UClientImage_Base::write_off = true;
+      U_http_is_connection_close = U_YES;
 
-      if (UHTTP::isHttpHEAD()) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      UHTTP::setHTTPResponse(HTTP_OK, &content_type, 0);
 
-      int readd = rbuf.open();
+      UClientImage_Base::socket->setTcpCork(1U);
 
-      if (readd != -1)
+      U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
+
+      if (UClientImage_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
          {
-         off_t offset = 0;
+         int readd;
+         off_t offset;
 
-         if (fmetadata &&
-             fmetadata->sendfile(UClientImage_Base::socket->getFd(), &offset) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         UClientImage_Base::write_off = true;
 
-         UTimeVal to_sleep(0L, 10 * 1000L);
+         if (UHTTP::isHttpHEAD()) goto end;
 
-         while (UServer_Base::flag_loop)
+         readd = rbuf.open();
+
+         if (readd != -1)
             {
-            if (rbuf.isEmpty(readd) == false &&
-                (rbuf.readAndWriteToFd(readd, UClientImage_Base::socket->getFd()) <= 0 && errno != EAGAIN)) break;
+            offset = 0;
 
-            to_sleep.nanosleep();
+            if (fmetadata &&
+                fmetadata->sendfile(UClientImage_Base::socket->getFd(), &offset) == false) goto end;
+
+            UTimeVal to_sleep(0L, 10 * 1000L);
+
+            while (UServer_Base::flag_loop)
+               {
+               if (rbuf.isEmpty(readd) == false &&
+                   (rbuf.readAndWriteToFd(readd, UClientImage_Base::socket->getFd()) <= 0 && errno != EAGAIN)) break;
+
+               to_sleep.nanosleep();
+               }
+
+            rbuf.close(readd);
             }
-
-         rbuf.close(readd);
          }
+
+end:
+      UHTTP::setHTTPRequestProcessed();
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 // DEBUG

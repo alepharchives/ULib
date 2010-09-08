@@ -25,9 +25,9 @@ static ustringrep empty_string_rep_storage = {
    0,                                  // child - substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
 #  endif
 #endif
-   0,                                  // references
    0,                                  // _length
    0,                                  // _capacity
+   0,                                  // references
    (char*) &empty_string_rep_storage   // str
 };
 
@@ -70,9 +70,9 @@ void UStringRep::set(uint32_t length, uint32_t capacity, const char* ptr)
    child        = 0;
 #  endif
 #endif
-   references   = 0;
    _length      = length;
    _capacity    = capacity; // [0 const | -1 mmap]...
+   references   = 0;
    str          = ptr;
 }
 
@@ -263,7 +263,7 @@ void UStringRep::destroy()
 {
    U_TRACE(1, "UStringRep::destroy()")
 
-   U_INTERNAL_ASSERT_DIFFERS(this,string_rep_null)
+   U_INTERNAL_ASSERT_DIFFERS(this, string_rep_null)
 
    U_INTERNAL_DUMP("str(%u) = %.*S", _length, _length, str)
 
@@ -1663,9 +1663,9 @@ const char* UStringRep::dump(bool reset) const
 {
    *UObjectIO::os << "parent     " << (void*)parent << '\n'
                   << "child      " << child         << '\n'
-                  << "references " << references+1  << '\n'
                   << "length     " << _length       << '\n'
                   << "capacity   " << _capacity     << '\n'
+                  << "references " << references+1  << '\n'
                   << "str        " << (void*)str    << ' ';
 
    char buffer[1024];

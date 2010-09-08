@@ -24,7 +24,7 @@ fi
 DIR_CMD="../../examples/userver"
 
 if [ "$TERM" != "cygwin" ]; then
-	( cd usp; ln -sf ../../../src/ulib/plugin/usp/.libs/jsonrequest.so
+	( mkdir -p usp; cd usp; ln -sf ../../../src/ulib/plugin/usp/.libs/jsonrequest.so
 	  cd ../../../src/ulib/plugin/usp/;
 	  make jsonrequest.la  >/dev/null 2>&1 || exit 1;
 	  make benchmarking.la >/dev/null 2>&1 || exit 1;

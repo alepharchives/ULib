@@ -129,14 +129,14 @@
 #  define IS_ABSOLUTE_PATH(f)   (IS_DIR_SEPARATOR((f)[0]) || (((f)[0]) && ((f)[1] == ':')))
 #  define FILENAME_CMP(s1, s2)  strcasecmp(s1, s2)
 #  define U_PATH_CONV(s)        u_slashify(s, '/', '\\')
-#  define U_PATH_SHELL          U_CONSTANT_TO_PARAM("sh.exe ")
+#  define U_PATH_SHELL          "sh.exe"
 #else
 #  define PATH_SEPARATOR        '/'
 #  define IS_DIR_SEPARATOR(c)   ((c) == '/')
 #  define IS_ABSOLUTE_PATH(f)   (IS_DIR_SEPARATOR((f)[0]))
 #  define FILENAME_CMP(s1, s2)  strcmp(s1, s2)
 #  define U_PATH_CONV(s)        (s)
-#  define U_PATH_SHELL          U_CONSTANT_TO_PARAM("/bin/sh ")
+#  define U_PATH_SHELL          "/bin/sh"
 /* unix is binary by default */
 #ifndef   O_BINARY
 #  define O_BINARY 0
@@ -165,6 +165,10 @@
 
 #ifndef   PAGESIZE
 #  define PAGESIZE 4096U
+#endif
+
+#ifndef   O_CLOEXEC
+#  define O_CLOEXEC 0
 #endif
 
 #ifndef   U_ONE_DAY_IN_SECOND

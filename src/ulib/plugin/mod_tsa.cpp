@@ -66,27 +66,23 @@ int UTsaPlugIn::handlerRequest()
 {
    U_TRACE(0, "UTsaPlugIn::handlerRequest()")
 
-   if (UHTTP::isTSARequest() == false) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-
-   // process TSA request
-
-   U_INTERNAL_ASSERT_POINTER(command)
-
-   UString body;
-
-   if (command->execute(UClientImage_Base::body, &body) == false)
+   if (UHTTP::isTSARequest())
       {
-      UHTTP::setHTTPInternalError(); // set internal error response...
+      // process TSA request
 
-      goto end;
+      U_INTERNAL_ASSERT_POINTER(command)
+
+      UString body;
+
+      if (command->execute(UClientImage_Base::body, &body)) UHTTP::setHTTPResponse(HTTP_OK, UHTTP::str_ctype_tsa, &body);
+      else                                                  UHTTP::setHTTPInternalError();
+
+      UServer_Base::logCommandMsgError(command->getCommand());
+
+      UHTTP::setHTTPRequestProcessed();
       }
 
-   UHTTP::setHTTPResponse(HTTP_OK, UHTTP::str_ctype_tsa, &body);
-
-end:
-   UServer_Base::logCommandMsgError(command->getCommand());
-
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 // DEBUG

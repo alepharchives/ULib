@@ -905,7 +905,7 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo()
       return;
       }
 
-   UHTTP::http_info.is_connection_close = U_YES;
+   U_http_is_connection_close = U_YES;
 
    if (isPingAsyncPending())
       {
@@ -1346,169 +1346,167 @@ int UNoCatPlugIn::handlerRequest()
 {
    U_TRACE(0, "UNoCatPlugIn::handlerRequest()")
 
-   if ( UHTTP::isCGIRequest()     ||
-       (UHTTP::checkHTTPRequest() &&   // NB: 0 == not found...
-        UHTTP::http_info.uri_len > 1)) // NB: not '/'...
+   if (UHTTP::isHTTPRequestNotFound())
       {
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-      }
+      Url url;
+      UModNoCatPeer* peer = 0;
+      UString host(U_HTTP_HOST_TO_PARAM), buffer(U_CAPACITY), ip_client = UClientImage_Base::getRemoteIP();
 
-   Url url;
-   UModNoCatPeer* peer = 0;
-   UString host(U_HTTP_HOST_TO_PARAM), buffer(U_CAPACITY), ip_client = UClientImage_Base::getRemoteIP();
+      U_INTERNAL_DUMP("host = %.*S ip_client = %.*S", U_STRING_TO_TRACE(host), U_STRING_TO_TRACE(ip_client))
 
-   U_INTERNAL_DUMP("host = %.*S ip_client = %.*S", U_STRING_TO_TRACE(host), U_STRING_TO_TRACE(ip_client))
+      UHTTP::getTimeIfNeeded(true);
 
-   UHTTP::getTimeIfNeeded(true);
+      // NB: check for request from AUTHs
 
-   // NB: check for request from AUTHs
+      index_AUTH = vauth_ip.contains(ip_client);
 
-   index_AUTH = vauth_ip.contains(ip_client);
+      U_INTERNAL_DUMP("index_AUTH = %u", index_AUTH)
 
-   U_INTERNAL_DUMP("index_AUTH = %u", index_AUTH)
-
-   if (index_AUTH != U_NOT_FOUND)
-      {
-      U_SRV_LOG_VAR("request from AUTH: %.*s", U_HTTP_URI_TO_TRACE);
-
-      if (U_HTTP_URI_STRNEQ("/check"))
+      if (index_AUTH != U_NOT_FOUND)
          {
-         // NB: request from AUTH to check and notify logout e/o disconnected users and info...
+         U_SRV_LOG_VAR("request from AUTH: %.*s", U_HTTP_URI_TO_TRACE);
 
-         checkPeersForInfo();
-
-         goto end;
-         }
-
-      if (U_HTTP_URI_STRNEQ("/status"))
-         {
-         if (U_HTTP_QUERY_STRNEQ("ip="))
+         if (U_HTTP_URI_STRNEQ("/check"))
             {
-            // NB: request from AUTH to get status user
+            // NB: request from AUTH to check and notify logout e/o disconnected users and info...
 
-            uint32_t len    = UHTTP::http_info.query_len - U_CONSTANT_SIZE("ip=");
-            const char* ptr = UHTTP::http_info.query     + U_CONSTANT_SIZE("ip=");
+            checkPeersForInfo();
+
+            goto end;
+            }
+
+         if (U_HTTP_URI_STRNEQ("/status"))
+            {
+            if (U_HTTP_QUERY_STRNEQ("ip="))
+               {
+               // NB: request from AUTH to get status user
+
+               uint32_t len    = UHTTP::http_info.query_len - U_CONSTANT_SIZE("ip=");
+               const char* ptr = UHTTP::http_info.query     + U_CONSTANT_SIZE("ip=");
+
+               const char* peer_ip = getIPAddress(ptr, len);
+
+               U_SRV_LOG_VAR("request from AUTH to get status for user with ip address: %s", peer_ip);
+
+               peer = (*peers)[peer_ip];
+
+               U_INTERNAL_DUMP("peer = %p", peer)
+
+               if (peer == 0)
+                  {
+                  UHTTP::setHTTPBadRequest();
+
+                  goto end;
+                  }
+               }
+
+            // status
+
+            setStatusContent(peer); // NB: peer == 0 -> request from AUTH to get status access point...
+
+            UHTTP::http_info.clength    =  status_content->size();
+            *UClientImage_Base::wbuffer = *status_content;
+
+            UHTTP::setHTTPCgiResponse(HTTP_OK, false, false, false);
+
+            goto end;
+            }
+
+         if (U_HTTP_URI_STRNEQ("/logout") &&
+             UHTTP::http_info.query_len)
+            {
+            // NB: request from AUTH to logout user (ip=192.168.301.223&mac=00:e0:4c:d4:63:f5)
+
+            if (checkSignedData(U_HTTP_QUERY_TO_PARAM) == false)
+               {
+               U_SRV_LOG_MSG("Tampered request of logout user");
+
+               goto set_redirection_url;
+               }
+
+            uint32_t len    = output.size() - U_CONSTANT_SIZE("ip=");
+            const char* ptr = output.data() + U_CONSTANT_SIZE("ip=");
 
             const char* peer_ip = getIPAddress(ptr, len);
 
-            U_SRV_LOG_VAR("request from AUTH to get status for user with ip address: %s", peer_ip);
+            U_SRV_LOG_VAR("request from AUTH to logout user with ip address: %s", peer_ip);
 
             peer = (*peers)[peer_ip];
 
             U_INTERNAL_DUMP("peer = %p", peer)
 
-            if (peer == 0)
+            if (peer == 0 ||
+                peer->status != UModNoCatPeer::PEER_ACCEPT)
+               {
+               uint32_t pos = output.find_first_of('&', 3);
+
+               if (pos != U_NOT_FOUND &&
+                   U_STRNEQ(output.c_pointer(pos+1), "mac="))
+                  {
+                  UString mac = output.substr(pos + 5, U_CONSTANT_SIZE("00:00:00:00:00:00"));
+
+                  U_SRV_LOG_VAR("request from AUTH to logout user with MAC: %.*s", U_STRING_TO_TRACE(mac));
+
+                  peer = getPeerFromMAC(mac);
+                  }
+               }
+
+            U_INTERNAL_DUMP("peer = %p", peer)
+
+            if (peer == 0 ||
+                peer->status != UModNoCatPeer::PEER_ACCEPT)
                {
                UHTTP::setHTTPBadRequest();
-
-               goto end;
                }
-            }
-
-         // status
-
-         setStatusContent(peer); // NB: peer == 0 -> request from AUTH to get status access point...
-
-         UHTTP::http_info.clength    =  status_content->size();
-         *UClientImage_Base::wbuffer = *status_content;
-
-         UHTTP::setHTTPCgiResponse(HTTP_OK, false, false, false);
-
-         goto end;
-         }
-
-      if (U_HTTP_URI_STRNEQ("/logout") &&
-          UHTTP::http_info.query_len)
-         {
-         // NB: request from AUTH to logout user (ip=192.168.301.223&mac=00:e0:4c:d4:63:f5)
-
-         if (checkSignedData(U_HTTP_QUERY_TO_PARAM) == false)
-            {
-            U_SRV_LOG_MSG("Tampered request of logout user");
-
-            goto set_redirection_url;
-            }
-
-         uint32_t len    = output.size() - U_CONSTANT_SIZE("ip=");
-         const char* ptr = output.data() + U_CONSTANT_SIZE("ip=");
-
-         const char* peer_ip = getIPAddress(ptr, len);
-
-         U_SRV_LOG_VAR("request from AUTH to logout user with ip address: %s", peer_ip);
-
-         peer = (*peers)[peer_ip];
-
-         U_INTERNAL_DUMP("peer = %p", peer)
-
-         if (peer == 0 ||
-             peer->status != UModNoCatPeer::PEER_ACCEPT)
-            {
-            uint32_t pos = output.find_first_of('&', 3);
-
-            if (pos != U_NOT_FOUND &&
-                U_STRNEQ(output.c_pointer(pos+1), "mac="))
+            else
                {
-               UString mac = output.substr(pos + 5, U_CONSTANT_SIZE("00:00:00:00:00:00"));
+               deny(peer, false, false);
 
-               U_SRV_LOG_VAR("request from AUTH to logout user with MAC: %.*s", U_STRING_TO_TRACE(mac));
-
-               peer = getPeerFromMAC(mac);
+               notifyAuthOfUsersInfo();
                }
+
+            goto end;
             }
-
-         U_INTERNAL_DUMP("peer = %p", peer)
-
-         if (peer == 0 ||
-             peer->status != UModNoCatPeer::PEER_ACCEPT)
-            {
-            UHTTP::setHTTPBadRequest();
-            }
-         else
-            {
-            deny(peer, false, false);
-
-            notifyAuthOfUsersInfo();
-            }
-
-         goto end;
          }
-      }
 
-   index_AUTH = UIPAllow::contains(ip_client, vLocalNetworkMask);
+      index_AUTH = UIPAllow::contains(ip_client, vLocalNetworkMask);
 
-   U_INTERNAL_DUMP("index_AUTH = %u", index_AUTH)
+      U_INTERNAL_DUMP("index_AUTH = %u", index_AUTH)
 
-// U_INTERNAL_ASSERT_DIFFERS(index_AUTH, U_NOT_FOUND)
+      // U_INTERNAL_ASSERT_DIFFERS(index_AUTH, U_NOT_FOUND)
 
-   if (index_AUTH >= vauth_ip.size()) index_AUTH = 0;
+      if (index_AUTH >= vauth_ip.size()) index_AUTH = 0;
 
-   url  = *(vauth_service_url[index_AUTH]);
-   peer = (*peers)[ip_client];
+      url  = *(vauth_service_url[index_AUTH]);
+      peer = (*peers)[ip_client];
 
-   U_INTERNAL_DUMP("peer = %p", peer)
+      U_INTERNAL_DUMP("peer = %p", peer)
 
-   if (U_HTTP_URI_STRNEQ("/cpe"))
-      {
-      (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
+      if (U_HTTP_URI_STRNEQ("/cpe"))
+         {
+         (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
 
-      url.setPath(U_CONSTANT_TO_PARAM("/cpe"));
-      url.setService(U_CONSTANT_TO_PARAM("https"));
+         url.setPath(U_CONSTANT_TO_PARAM("/cpe"));
+         url.setService(U_CONSTANT_TO_PARAM("https"));
 
-      goto set_redirect_to_AUTH;
-      }
+         goto set_redirect_to_AUTH;
+         }
 
-   if (U_HTTP_URI_STRNEQ("/test"))
-      {
-      (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
+      if (U_HTTP_URI_STRNEQ("/test"))
+         {
+         (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
 
-      goto set_redirect_to_AUTH;
-      }
+         goto set_redirect_to_AUTH;
+         }
 
-   if (host == gateway)
-      {
-      if (U_HTTP_QUERY_STRNEQ("ticket="))
+      if (U_HTTP_URI_STRNEQ( "/ticket") &&
+          U_HTTP_QUERY_STRNEQ("ticket="))
          {
          // user with a ticket
+
+#     ifdef DEBUG
+         if (U_http_version == 1) U_INTERNAL_ASSERT_EQUALS(host, gateway)
+#     endif
 
          uint32_t len    = UHTTP::http_info.query_len - U_CONSTANT_SIZE("ticket=");
          const char* ptr = UHTTP::http_info.query     + U_CONSTANT_SIZE("ticket=");
@@ -1545,26 +1543,26 @@ int UNoCatPlugIn::handlerRequest()
          }
 
       U_SRV_LOG_VAR("Missing ticket from peer %.*S", U_STRING_TO_TRACE(ip_client));
-      }
 
 set_redirection_url:
 
-   buffer.snprintf("http://%.*s%.*s", U_STRING_TO_TRACE(host), U_HTTP_URI_TO_TRACE);
+      buffer.snprintf("http://%.*s%.*s", U_STRING_TO_TRACE(host), U_HTTP_URI_TO_TRACE);
 
 set_redirect_to_AUTH:
 
-   if (peer == 0) peer = creatNewPeer(ip_client);
+      if (peer == 0) peer = creatNewPeer(ip_client);
 
-   setRedirectLocation(peer, buffer, url);
+      setRedirectLocation(peer, buffer, url);
 
 redirect: // redirect to AUTH
 
-   UHTTP::setHTTPRedirectResponse(UString::getStringNull(), U_STRING_TO_PARAM(location));
+      UHTTP::setHTTPRedirectResponse(UString::getStringNull(), U_STRING_TO_PARAM(location));
 
 end:
-   int result = UHTTP::checkForHTTPConnectionClose(); // check for "Connection: close" in headers...
+      UHTTP::setHTTPRequestProcessed();
+      }
 
-   U_RETURN(result);
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 // DEBUG

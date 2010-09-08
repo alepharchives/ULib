@@ -255,112 +255,117 @@ int UWebSocketPlugIn::handlerRequest()
 
    U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
 
-   if (UHTTP::http_info.upgrade == 0) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-
-   // process handshake
-
-   const char* origin = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_origin);
-
-   if (origin)
+   if (U_http_upgrade)
       {
-      char c;
-      UString tmp(100U);
-      uint32_t origin_len = 0, protocol_len = 0;
+      // process handshake
 
-      for (c = u_line_terminator[0]; origin[origin_len] != c; ++origin_len) {}
+      const char* origin = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_origin);
 
-      U_INTERNAL_DUMP("origin = %.*S", origin_len, origin)
-
-      const char* protocol = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_prot);
-
-      if (protocol)
+      if (origin)
          {
-         for (c = u_line_terminator[0]; protocol[protocol_len] != c; ++protocol_len) {}
+         char c;
+         UString tmp(100U);
+         uint32_t origin_len = 0, protocol_len = 0;
 
-         U_INTERNAL_DUMP("protocol = %.*S", protocol_len, protocol)
+         for (c = u_line_terminator[0]; origin[origin_len] != c; ++origin_len) {}
 
-         tmp.snprintf("%.*s: %.*s\r\n", U_STRING_TO_TRACE(*UHTTP::str_websocket_prot), protocol_len, protocol); 
-         }
+         U_INTERNAL_DUMP("origin = %.*S", origin_len, origin)
 
-      UClientImage_Base::wbuffer->setBuffer(100U + origin_len + tmp.size() +
-                                            UHTTP::http_info.uri_len +
-                                            UHTTP::http_info.host_len +
-                                            UHTTP::str_frm_websocket->size());
+         const char* protocol = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_prot);
 
-      UClientImage_Base::wbuffer->snprintf(UHTTP::str_frm_websocket->data(),
-                                           origin_len, origin,
-                                           U_HTTP_HOST_TO_TRACE, U_HTTP_URI_TO_TRACE,
-                                           U_STRING_TO_TRACE(tmp));
-
-      const char* key1 = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_key1);
-      const char* key2 = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_key2);
-
-      if (key1 &&
-          key2)
-         {
-         // big-endian 128 bit string
-
-         unsigned char challenge[16];
-
-                                getPart(key1, challenge);
-                                getPart(key2, challenge+4);
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", challenge+8, U_STRING_TO_PARAM(*UClientImage_Base::body));
-
-         // MD5(challenge)
-
-         UClientImage_Base::body->setBuffer(U_CAPACITY);
-
-         UServices::generateDigest(U_HASH_MD5, 0, challenge, sizeof(challenge), *UClientImage_Base::body, -1);
-         }
-
-      if (UClientImage_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
-         {
-         UClientImage_Base::write_off = true;
-
-#     ifdef DEBUG
-         int fd_stderr = UFile::creat("/tmp/UWebSocketPlugIn.err", O_WRONLY | O_APPEND, PERM_FILE);
-#     else
-         int fd_stderr = UServices::getDevNull();
-#     endif
-
-         U_INTERNAL_ASSERT_POINTER(command)
-
-         // Set environment for the command application server
-
-         UClientImage_Base::body->setBuffer(U_CAPACITY);
-
-         UString environment = command->getStringEnvironment() + *UHTTP::penvironment + UHTTP::getCGIEnvironment(command->isShellScript());
-
-         command->setEnvironment(&environment);
-
-         UHTTP::penvironment->setEmpty();
-
-         if (command->execute((UString*)-1, (UString*)-1, -1, fd_stderr))
+         if (protocol)
             {
-            UServer_Base::logCommandMsgError(command->getCommand());
+            for (c = u_line_terminator[0]; protocol[protocol_len] != c; ++protocol_len) {}
 
-            UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UWebSocketPlugIn::handlerForSigTERM); // sync signal
+            U_INTERNAL_DUMP("protocol = %.*S", protocol_len, protocol)
 
-            if (handleDataFraming())
+            tmp.snprintf("%.*s: %.*s\r\n", U_STRING_TO_TRACE(*UHTTP::str_websocket_prot), protocol_len, protocol); 
+            }
+
+         UClientImage_Base::wbuffer->setBuffer(100U + origin_len + tmp.size() +
+                                               UHTTP::http_info.uri_len +
+                                               UHTTP::http_info.host_len +
+                                               UHTTP::str_frm_websocket->size());
+
+         UClientImage_Base::wbuffer->snprintf(UHTTP::str_frm_websocket->data(),
+                                              origin_len, origin,
+                                              U_HTTP_HOST_TO_TRACE, U_HTTP_URI_TO_TRACE,
+                                              U_STRING_TO_TRACE(tmp));
+
+         const char* key1 = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_key1);
+         const char* key2 = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_key2);
+
+         if (key1 &&
+             key2)
+            {
+            // big-endian 128 bit string
+
+            unsigned char challenge[16];
+
+                                   getPart(key1, challenge);
+                                   getPart(key2, challenge+4);
+            (void) U_SYSCALL(memcpy, "%p,%p,%u", challenge+8, U_STRING_TO_PARAM(*UClientImage_Base::body));
+
+            // MD5(challenge)
+
+            UClientImage_Base::body->setBuffer(U_CAPACITY);
+
+            UServices::generateDigest(U_HASH_MD5, 0, challenge, sizeof(challenge), *UClientImage_Base::body, -1);
+            }
+
+         if (UClientImage_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
+            {
+            UClientImage_Base::write_off = true;
+
+#        ifdef DEBUG
+            int fd_stderr = UFile::creat("/tmp/UWebSocketPlugIn.err", O_WRONLY | O_APPEND, PERM_FILE);
+#        else
+            int fd_stderr = UServices::getDevNull();
+#        endif
+
+            U_INTERNAL_ASSERT_POINTER(command)
+
+            // Set environment for the command application server
+
+            UClientImage_Base::body->setBuffer(U_CAPACITY);
+
+            U_http_sh_script = command->isShellScript();
+
+            UString environment = command->getStringEnvironment() + *UHTTP::penvironment + UHTTP::getCGIEnvironment();
+
+            command->setEnvironment(&environment);
+
+            UHTTP::penvironment->setEmpty();
+
+            if (command->execute((UString*)-1, (UString*)-1, -1, fd_stderr))
                {
-               // Send nine 0x00 bytes to the client to indicate the start of the closing handshake
+               UServer_Base::logCommandMsgError(command->getCommand());
 
-               char closing[9] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
+               UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UWebSocketPlugIn::handlerForSigTERM); // sync signal
 
-               if (USocketExt::write(UClientImage_Base::socket, closing, sizeof(closing)))
+               if (handleDataFraming())
                   {
-                  UClientImage_Base::wbuffer->setEmpty();
+                  // Send nine 0x00 bytes to the client to indicate the start of the closing handshake
 
-                  // client terminated: receive nine 0x00 bytes
+                  char closing[9] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
 
-                  (void) USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer, closing, sizeof(closing));
+                  if (USocketExt::write(UClientImage_Base::socket, closing, sizeof(closing)))
+                     {
+                     UClientImage_Base::wbuffer->setEmpty();
+
+                     // client terminated: receive nine 0x00 bytes
+
+                     (void) USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer, closing, sizeof(closing));
+                     }
                   }
                }
             }
+
+         UHTTP::setHTTPRequestProcessed();
          }
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 // DEBUG

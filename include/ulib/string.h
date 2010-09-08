@@ -72,11 +72,11 @@
 // NB: U_NOT_FOUND represents the maximum size that the allocator can hold
 
 #ifdef DEBUG
-#  define U_STRINGREP_FROM_CONSTANT(c_str) 0, 0, 0, 0, U_CONSTANT_SIZE(c_str), 0, c_str
+#  define U_STRINGREP_FROM_CONSTANT(c_str) 0, 0, 0, U_CONSTANT_SIZE(c_str), 0, 0, c_str
 #elif defined(U_SUBSTR_INC_REF)
-#  define U_STRINGREP_FROM_CONSTANT(c_str)    0,    0, U_CONSTANT_SIZE(c_str), 0, c_str
+#  define U_STRINGREP_FROM_CONSTANT(c_str)    0,    U_CONSTANT_SIZE(c_str), 0, 0, c_str
 #else
-#  define U_STRINGREP_FROM_CONSTANT(c_str)          0, U_CONSTANT_SIZE(c_str), 0, c_str
+#  define U_STRINGREP_FROM_CONSTANT(c_str)          U_CONSTANT_SIZE(c_str), 0, 0, c_str
 #endif
 
 #define U_STRING_FROM_STRINGREP_STORAGE(n) UString(&(stringrep_storage[n]))
@@ -108,7 +108,6 @@ public:
    //   0: one reference
    // n>0: n+1 references
    // --------------------------
-   int32_t references;
 
    bool uniq() const
       {
@@ -498,6 +497,9 @@ public:
 
 protected:
    uint32_t _length, _capacity;
+public:
+   int32_t references; // NB: must be here, see string_rep_null...
+protected:
    const char* str;
    // ----------------> maybe unnamed array of char...
 

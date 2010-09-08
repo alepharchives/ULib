@@ -464,7 +464,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 
    // check if you can use the same socket connection
 
-   if (responseHeader->isClose()) UHTTP::http_info.is_connection_close = U_YES;
+   if (responseHeader->isClose()) U_http_is_connection_close = U_YES;
 
    // General category of response:
    //
@@ -490,7 +490,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 
       // check if you can use the same socket connection
 
-      U_RETURN(UHTTP::http_info.is_connection_close == U_YES ? 0 : 1);
+      U_RETURN(U_http_is_connection_close == U_YES ? 0 : 1);
       }
    else if ((UHTTP::http_info.nResponseCode == HTTP_MOVED_PERM  || // 301
              UHTTP::http_info.nResponseCode == HTTP_MOVED_TEMP) && // 302
@@ -539,7 +539,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
       // Combine the new location with our URL
 
       if (UClient_Base::setUrl(newLocation) == false &&
-          UHTTP::http_info.is_connection_close != U_YES)
+          U_http_is_connection_close        != U_YES)
          {
          U_RETURN(1); // you can use the same socket connection for the redirect
          }
