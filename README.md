@@ -30,11 +30,13 @@ The current version offers the following features :
     * Support for directory listings via basic/digest authentication.
     * Support for uri protection.
     * Support for aliases/redirection.
-    * Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache, some CMS (SilverStripe) require it.
+    * Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache,
+      some CMS (SilverStripe) require it.
     * Support for JSONRequest (http://json.org/JSONRequest.html).
     * Configuration file with dedicated section.
     * CGI support for shell script processes (with automatic management of form and cookie).
     * General CGI support (run any CGI script) with automatic output compression (using deflate method).
+    * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
     * Web Socket support (experimental).
     * Support for Windows (without preforking).
     * Requests cut in phases for modular architecture (apache-like).

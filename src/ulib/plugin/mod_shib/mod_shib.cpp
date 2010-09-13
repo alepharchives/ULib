@@ -619,111 +619,111 @@ int UShibPlugIn::handlerRequest()
 
    UModProxyService* service = UModProxyService::findService(host, method, vservice);
 
-   if (service == 0) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-
-   cookies = UHTTP::getHTTPCookie(false);
-
-   U_INTERNAL_DUMP("cookies = %.*S", U_STRING_TO_TRACE(cookies))
-
-   uint32_t pos = host.find(':');
-
-   if (pos == U_NOT_FOUND) pos = host.size();
-   else
+   if (service)
       {
-      UShibTarget::port = atoi(host.c_pointer(pos+1));
-      }
+      cookies = UHTTP::getHTTPCookie(false);
 
-   UString ip_client = UClientImage_Base::getRemoteIP();
+      U_INTERNAL_DUMP("cookies = %.*S", U_STRING_TO_TRACE(cookies))
 
-// UShibTarget::protocol    = "http";
-   UShibTarget::hostname    = strndup(host.data(), pos);
-   UShibTarget::uri         = strndup(U_HTTP_URI_TO_PARAM);
-   UShibTarget::method      = strndup(U_HTTP_METHOD_TO_PARAM);
-   UShibTarget::cookies     = (cookies.empty() ? "" : cookies.c_str());
-   UShibTarget::remote_addr = ip_client->c_strdup();
+      uint32_t pos = host.find(':');
 
-   int mode              = 0;
-   UShibTarget::location = 0;
-   UShibTarget::sendpage = 0;
+      if (pos == U_NOT_FOUND) pos               = host.size();
+      else                    UShibTarget::port = atoi(host.c_pointer(pos+1));
 
-   if (UHTTP::isHttpGET())
-      {
-      if (shib_check_user()) mode = -1;
-      else
+      UString ip_client = UClientImage_Base::getRemoteIP();
+
+   // UShibTarget::protocol    = "http";
+      UShibTarget::hostname    = strndup(host.data(), pos);
+      UShibTarget::uri         = strndup(U_HTTP_URI_TO_PARAM);
+      UShibTarget::method      = strndup(U_HTTP_METHOD_TO_PARAM);
+      UShibTarget::cookies     = (cookies.empty() ? "" : cookies.c_str());
+      UShibTarget::remote_addr = ip_client->c_strdup();
+
+      int mode              = 0;
+      UShibTarget::location = 0;
+      UShibTarget::sendpage = 0;
+
+      if (UHTTP::isHttpGET())
          {
-         // maybe cookie _shibsession_* already set...
-
-         if (UShibTarget::sendpage)
-            {
-            if (UShibTarget::codepage == 500) mode = -1;
-            }
+         if (shib_check_user()) mode = -1;
          else
             {
-            if (UShibTarget::location == 0)
+            // maybe cookie _shibsession_* already set...
+
+            if (UShibTarget::sendpage)
                {
-               static char buf[1024];
+               if (UShibTarget::codepage == 500) mode = -1;
+               }
+            else
+               {
+               if (UShibTarget::location == 0)
+                  {
+                  static char buf[1024];
 
-               (void) snprintf(buf, sizeof(buf), "%s://%s%s/", UShibTarget::protocol, UShibTarget::hostname, UShibTarget::uri);
+                  (void) snprintf(buf, sizeof(buf), "%s://%s%s/", UShibTarget::protocol, UShibTarget::hostname, UShibTarget::uri);
 
-               UShibTarget::location = buf;
+                  UShibTarget::location = buf;
+                  }
                }
             }
          }
-      }
-   else
-      {
-      U_ASSERT(UHTTP::isHttpPOST())
-
-#  ifdef DEBUG
-      const char* ptr = UHTTP::getHTTPHeaderValuePtr(*USocket::str_content_type);
-
-      U_INTERNAL_ASSERT(U_STRNEQ(ptr,"application/x-www-form-urlencoded"))
-#  endif
-
-      UShibTarget::content_type = "application/x-www-form-urlencoded";
-      UShibTarget::postdata_ptr = UClientImage_Base::body->data();
-      UShibTarget::postdata_len = UClientImage_Base::body->size();
-
-      if (shib_handler()) mode = -1;
       else
          {
-         // check if have read post data
+         U_ASSERT(UHTTP::isHttpPOST())
 
-         if (UShibTarget::postdata_len) mode = -1;
-         }
-      }
+   #  ifdef DEBUG
+         const char* ptr = UHTTP::getHTTPHeaderValuePtr(*USocket::str_content_type);
 
-   // redirection...
+         U_INTERNAL_ASSERT(U_STRNEQ(ptr,"application/x-www-form-urlencoded"))
+   #  endif
 
-   if (mode == 0)
-      {
-      if (UShibTarget::location == 0) mode = -1;
-      else
-         {
-         UString ext(U_CAPACITY);
+         UShibTarget::content_type = "application/x-www-form-urlencoded";
+         UShibTarget::postdata_ptr = UClientImage_Base::body->data();
+         UShibTarget::postdata_len = UClientImage_Base::body->size();
 
-         if (UShibTarget::setcookie)
+         if (shib_handler()) mode = -1;
+         else
             {
-            UString name, value;
+            // check if have read post data
 
-            for (uint32_t i = 0, length = UShibTarget::setcookie->size(); i < length; i += 2)
+            if (UShibTarget::postdata_len) mode = -1;
+            }
+         }
+
+      // redirection...
+
+      if (mode == 0)
+         {
+         if (UShibTarget::location == 0) mode = -1;
+         else
+            {
+            UString ext(U_CAPACITY);
+
+            if (UShibTarget::setcookie)
                {
-               name  = UShibTarget::setcookie->at(i);
-               value = UShibTarget::setcookie->at(i+1);
+               UString name, value;
 
-               ext.snprintf_add("Set-Cookie: %.*s=%.*s\r\n", U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(value));
+               for (uint32_t i = 0, length = UShibTarget::setcookie->size(); i < length; i += 2)
+                  {
+                  name  = UShibTarget::setcookie->at(i);
+                  value = UShibTarget::setcookie->at(i+1);
+
+                  ext.snprintf_add("Set-Cookie: %.*s=%.*s\r\n", U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(value));
+                  }
+
+               delete UShibTarget::setcookie;
+
+               UShibTarget::setcookie = 0;
                }
 
-            delete UShibTarget::setcookie;
+            UHTTP::setHTTPRedirectResponse(ext, UShibTarget::location, u_strlen(UShibTarget::location));
 
-            UShibTarget::setcookie = 0;
+            UHTTP::setHTTPRequestProcessed();
             }
-
-         UHTTP::setHTTPRedirectResponse(ext, UShibTarget::location, u_strlen(UShibTarget::location));
          }
       }
 
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 int UShibPlugIn::handlerReset()

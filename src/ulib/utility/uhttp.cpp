@@ -521,7 +521,7 @@ bool UHTTP::readHTTPHeader(USocket* s, UString& rbuffer)
 {
    U_TRACE(0, "UHTTP::readHTTPHeader(%p,%.*S)", s, U_STRING_TO_TRACE(rbuffer))
 
-   U_ASSERT(rbuffer.empty())
+// U_ASSERT(rbuffer.empty())
    U_INTERNAL_ASSERT(s->isConnected())
    U_INTERNAL_ASSERT_EQUALS(http_info.szHeader,0)
    U_INTERNAL_ASSERT_EQUALS(http_info.endHeader,0)
@@ -2934,7 +2934,9 @@ UString UHTTP::getCGIEnvironment()
                    // PHP
                    U_HTTP_METHOD_TO_TRACE);
 
-   // The hostname of your server from header's request
+   // The hostname of your server from header's request.
+   // The difference between HTTP_HOST and SERVER_NAME is that
+   // HTTP_HOST can include the «:PORT» text, and SERVER_NAME only the name
 
    if (http_info.host_len)         buffer.snprintf_add("HTTP_HOST=%.*s\n", U_HTTP_HOST_TO_TRACE);
    else                            buffer.snprintf_add("HTTP_HOST=%.*s\n", U_STRING_TO_TRACE(ip_server));
@@ -3057,6 +3059,36 @@ void UHTTP::setCGIShellScript(UString& command)
 
       command.snprintf_add(" %c%.*s%c ", c, sz, ptr, c);
       }
+}
+
+U_NO_EXPORT bool UHTTP::splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext)
+{
+   U_TRACE(0, "UHTTP::splitCGIOutput(%p,%p,%u,%p)", ptr1, ptr2, endHeader, &ext)
+
+   uint32_t pos = UClientImage_Base::wbuffer->distance(ptr1);
+
+   if (pos) ext = UClientImage_Base::wbuffer->substr(0U, pos);
+
+   ptr1 = (const char*) memchr(ptr2, '\r', endHeader - pos);
+
+   if (ptr1)
+      {
+      pos = UClientImage_Base::wbuffer->distance(ptr1) + 2; // NB: we cut \r\n...
+
+      U_INTERNAL_ASSERT_MINOR(pos, endHeader)
+
+      uint32_t diff = endHeader - pos;
+
+      U_INTERNAL_DUMP("diff = %u pos = %u endHeader = %u", diff, pos, endHeader)
+
+      if (diff > 4) ext += UClientImage_Base::wbuffer->substr(pos, diff - 4); // NB: we cut \r\n\r\n...
+
+      U_INTERNAL_DUMP("value = %.*S ext = %.*S", ptr1 - ptr2, ptr2, U_STRING_TO_TRACE(ext))
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 bool UHTTP::processCGIOutput()
@@ -3197,29 +3229,106 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
                {
                UString ext;
 
-               uint32_t pos = UClientImage_Base::wbuffer->distance(ptr);
-
-               if (pos) ext = UClientImage_Base::wbuffer->substr(0U, pos);
-
                location = ptr + U_CONSTANT_SIZE("Location: ");
 
-               ptr = (const char*) memchr(location, '\r', sz);
-
-               if (ptr)
+               if (splitCGIOutput(ptr, location, endHeader, ext))
                   {
-                  pos = UClientImage_Base::wbuffer->distance(ptr) + 2; // NB: we cut \r\n...
-
-                  U_INTERNAL_ASSERT_MINOR(pos, endHeader)
-
-                  uint32_t diff = endHeader - pos;
-
-                  U_INTERNAL_DUMP("diff = %u pos = %u endHeader = %u", diff, pos, endHeader)
-
-                  if (diff > 4) ext += UClientImage_Base::wbuffer->substr(pos, diff - 4); // NB: we cut \r\n\r\n...
-
                   setHTTPRedirectResponse(ext, location, ptr - location);
 
                   U_RETURN(true);
+                  }
+
+               goto error;
+               }
+
+            goto next;
+            }
+         break;
+
+         case 'X':
+            {
+            U_INTERNAL_DUMP("check 'X-Sendfile: ...' or 'X-Accel-Redirect: ...'", 0)
+
+            /* X-Sendfile is a special, non-standard HTTP header. At first you might think it is no big deal, but think again.
+             * It can be enabled in any CGI, FastCGI or SCGI backend. Basically its job is to instruct the web server to ignore
+             * the content of the response and replace it by whatever is specified in the header. The main advantage of this is
+             * that it will be server the one serving the file, making use of all its optimizations. It is useful for processing
+             * script-output of e.g. php, perl, ruby or any cgi. This is particularly useful because it hands the load to server,
+             * all the response headers from the backend are forwarded, the whole application uses a lot less resources and performs
+             * several times faster not having to worry about a task best suited for a web server. You retain the ability to check for
+             * special privileges or dynamically deciding anything contemplated by your backend logic, you speed up things a lot while
+             * having more resources freed, and you can even specify the delivery of files outside of the web server's document root path.
+             * Of course, this is to be done solely in controlled environments. In short, it offers a huge performance gain at absolutely
+             * no cost. Note that the X-Sendfile feature also supports X-Accel-Redirect header, a similar feature offered by other web
+             * servers. This is to allow the migration of applications supporting it without having to make major code rewrites.
+             */
+
+            location = ptr+1;
+
+                 if (U_STRNEQ(location, "-Sendfile: "))       location += U_CONSTANT_SIZE("X-Sendfile:");
+            else if (U_STRNEQ(location, "-Accel-Redirect: ")) location += U_CONSTANT_SIZE("X-Accel-Redirect:");
+
+            if (location > (ptr+1))
+               {
+               UString ext;
+
+               if (splitCGIOutput(ptr, location, endHeader, ext))
+                  {
+                  UString pathname(U_CAPACITY);
+
+                  uint32_t len = ptr - location;
+
+                  if (location[0] == '/') pathname.snprintf(   "%.*s", len, location);
+                  else                    pathname.snprintf("%w/%.*s", len, location);
+
+                  u_canonicalize_pathname(pathname.data());
+
+                  pathname.size_adjust_force(); // NB: can be referenced by file...
+
+                  file->setPath(pathname);
+
+                  if (file->stat())
+                     {
+                     UString rbuffer_save;
+                     bool bext = (ext.empty() == false);
+
+                     U_SRV_LOG_VAR("header X-Sendfile found in CGI output: serving file %.*S", U_STRING_TO_TRACE(pathname));
+
+                     if (bext)
+                        {
+                        UString req(U_CAPACITY), name = UServer_Base::getNodeName();
+
+                        req.snprintf("GET %.*s HTTP/1.1\r\n" \
+                                     "Host: %.*s\r\n" \
+                                     "%.*s" \
+                                     "\r\n\r\n",
+                                     U_STRING_TO_TRACE(pathname),
+                                     U_STRING_TO_TRACE(name),
+                                     U_STRING_TO_TRACE(ext));
+
+                        UClientImage_Base::body->clear();
+                        UClientImage_Base::wbuffer->clear();
+
+                        // manage buffered read (pipelining)
+
+                        len = USocketExt::size_message;
+
+                        rbuffer_save                = *UClientImage_Base::rbuffer;
+                        *UClientImage_Base::rbuffer = req;
+                        
+                        (void) readHTTPRequest();
+                        }
+
+                     processHTTPGetRequest();
+
+                     if (bext)
+                        {
+                        USocketExt::size_message    = len;
+                        *UClientImage_Base::rbuffer = rbuffer_save;
+                        }
+
+                     U_RETURN(true);
+                     }
                   }
 
                goto error;

@@ -114,7 +114,8 @@ const char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_p
             path     = ".";
             path_len = 1;
             }
-         else
+         else if (u_cwd_len == 1 ||
+                  path[u_cwd_len] == '/')
             {
             uint32_t len = u_cwd_len + (u_cwd_len > 1);
 

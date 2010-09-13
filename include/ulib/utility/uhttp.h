@@ -677,6 +677,7 @@ private:
    static bool    openFile() U_NO_EXPORT;
    static void    checkPath(UString& pathname) U_NO_EXPORT;
    static UString getHTTPHeaderForResponse(int nResponseCode, UString& content) U_NO_EXPORT;
+   static bool    splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext) U_NO_EXPORT;
 
    UHTTP(const UHTTP&)            {}
    UHTTP& operator=(const UHTTP&) { return *this; }

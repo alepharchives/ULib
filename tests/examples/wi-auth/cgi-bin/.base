@@ -2,75 +2,14 @@
 
 # .base
 
-# global var
-BASE_NAME=$(basename $0 .sh)
+print_page() {
 
-if [ -z "$HTTP_ACCEPT_LANGUAGE" -o ! -d ../form/$HTTP_ACCEPT_LANGUAGE ]; then
-	HTTP_ACCEPT_LANGUAGE=en
-fi
+	OUTPUT=`cat $FORM_FILE_DIR/$BASE_NAME.tmpl 2>/dev/null`
 
-FORM_FILE_DIR=../form/$HTTP_ACCEPT_LANGUAGE
-
-# we can do services... ?
-if [ -x $WIFI_PORTAL_HOME/ANOMALIA ]; then
-	ANOMALIA_page
-fi
-
-# --------------------------------
-#  session cookie (no NAT)
-# --------------------------------
-SESSION_ID=$REMOTE_ADDR
-# --------------------------------
-#  session cookie (with NAT)
-# --------------------------------
-#	if [ -n "$HTTP_COOKIE" ]; then
-#		SESSION_ID=$HTTP_COOKIE
-#	else
-#     SET_COOKIE=SESS_$$
-#		SESSION_ID=$SET_COOKIE
-#	fi
-# --------------------------------
-
-# ---------------------------------------------------------------------
-# NB: se cambia qualcosa qui, bisogna cambiarlo anche nel .env di admin
-# ---------------------------------------------------------------------
-DIR_REQ=../request
-DIR_CTX=../login
-DIR_CNT=../counter
-DIR_POLICY=../policy
-DIR_REG=../registration
-DIR_STAT=../stat
-# ---------------------------------------------------------------------
-
-TIMEOUT=0
-TRAFFIC=0
-EXIT_VALUE=0
-LOGIN_LOGOUT_TIME=0
-BACK_TAG="<a class=\"back\" href=\"#\" onclick=\"history.go(-1);return false;\">INDIETRO</a>"
-MSG_ANOMALIA="Problema in autenticazione (anomalia %s). Si prega di riprovare, se il problema persiste contattare: $TELEFONO"
-LDAP_USER_PARAM="-x -D $WIAUTH_USER_LDAP_BINDDN -w $WIAUTH_USER_LDAP_PWD -h $WIAUTH_USER_LDAP_SERVER -p $WIAUTH_USER_LDAP_PORT"
-LDAP_CARD_PARAM="-x -D $WIAUTH_CARD_LDAP_BINDDN -w $WIAUTH_CARD_LDAP_PWD -h $WIAUTH_CARD_LDAP_SERVER -p $WIAUTH_CARD_LDAP_PORT"
-
-# ---------------------------------------------------------------------
-# ????????????
-# ---------------------------------------------------------------------
-if [ "$HTTP_HEADER_HOST" = "i-auth/cgi-b" ]; then
-	env >> /tmp/ERROR_HTTP_HEADER_HOST
-
-	unset HTTP_HEADER_HOST
-fi
-# ---------------------------------------------------------------------
-
-if [ -n "$HTTP_HEADER_HOST" ]; then
-	SERVER=$HTTP_HEADER_HOST
-else
-	SERVER=$SERVER_ADDR
-fi
-
-export OUTPUT BASE_NAME FORM_FILE_DIR OP DIR_REQ DIR_CTX DIR_CNT DIR_POLICY DIR_REG DIR_STAT FILE_CTX TRAFFIC \
-		 TIMEOUT MAC IP GATEWAY AP TMP_FORM_FILE UUID SET_COOKIE SESSION_ID CALLER_ID \
-		 USER SIGNED_DATA BACK_TAG PROT SERVER UUID_TO_APPEND LDAP_USER_PARAM \
-		 LDAP_CARD_PARAM EXIT_VALUE CONNECTION_CLOSE POLICY WA_UID LOGIN_LOGOUT_TIME
+	if [ $# -ne 0 ]; then
+		OUTPUT=`printf "$OUTPUT" "$@" 2>/dev/null`
+	fi
+}
 
 write_OUTPUT() {
 
@@ -123,6 +62,15 @@ write_OUTPUT() {
 	fi
 }
 
+ANOMALIA_page() {
+
+	BASE_NAME=ANOMALIA_page
+
+	print_page "$@"
+
+	write_OUTPUT "$OUTPUT"
+}
+
 anomalia() {
 
 	# ---------------------------------------------
@@ -134,7 +82,7 @@ anomalia() {
 	#  5 send_request_to_nodog (curl | uclient)
 	#  6 info_notified_from_nodog (missing ctx)
 	#  7 info_notified_from_nodog (RENEW)
-	#  8 ask_to_LDAP
+	#  8 check_LDAP
 	#  9 login_request (req without ctx)
 	# 10 load_policy (policy without file)
 	# ---------------------------------------------
@@ -270,9 +218,9 @@ send_request_to_nodog() {
 	# -----------------------------------------------------------------------------
 	# NB: we need PREFORK_CHILD > 2
 	# -----------------------------------------------------------------------------
-	#UTRACE="0 10M 0"
-	#UOBJDUMP="0 100k 10"
-	#USIMERR="error.sim"
+	# UTRACE="0 10M 0"
+	# UOBJDUMP="0 100k 10"
+	# USIMERR="error.sim"
 	export UTRACE UOBJDUMP USIMERR
 
 	OUTPUT=`$CLIENT_HTTP $3 "$1" 2>>/tmp/CLIENT_HTTP.err`
@@ -286,6 +234,25 @@ send_request_to_nodog() {
 		write_FILE "$OUTPUT" $2
 
 		unset OUTPUT
+
+	fi
+}
+
+check_LDAP() {
+
+	# $1 -> EXIT VALUE
+
+	if [ $1 -eq 0 ]; then
+
+		rm -f $TMPFILE
+
+	elif [ -s $TMPFILE ]; then
+
+		grep '(-1)' < $TMPFILE # Can't contact LDAP server (-1)
+
+		if [ $? -eq 0 ]; then
+			anomalia 8
+		fi
 
 	fi
 }
@@ -309,32 +276,26 @@ $3
 END
 	fi
 
-	EXIT_VALUE=$?
-
- 	if [ $EXIT_VALUE -eq 0 ]; then
-
- 		rm -f $TMPFILE
-
- 	elif [ -s $TMPFILE ]; then
-
- 		grep '(-1)' < $TMPFILE # Can't contact LDAP server (-1)
-
- 		if [ $? -eq 0 ]; then
-			anomalia 8
- 		fi
-
- 	fi
+	check_LDAP $?
 
 #	set +x
 }
 
-print_page() {
+LDAP_search() {
 
-	OUTPUT=`cat $FORM_FILE_DIR/$BASE_NAME.tmpl 2>/dev/null`
+#	set -x
 
-	if [ $# -ne 0 ]; then
-		OUTPUT=`printf "$OUTPUT" "$@" 2>/dev/null`
-	fi
+	# $1 -> param
+	# $2 -> option
+	# $3 -> filter_option
+
+	TMPFILE=/tmp/LDAP_search.$$
+
+	ldapsearch $1 "$2" $3 2>$TMPFILE
+
+	check_LDAP $?
+
+#	set +x
 }
 
 logout_page() {
@@ -359,15 +320,6 @@ message_page() {
 	BASE_NAME=message_page
 
 	print_page "$@" "$BACK_TAG"
-
-	write_OUTPUT "$OUTPUT"
-}
-
-ANOMALIA_page() {
-
-	BASE_NAME=ANOMALIA_page
-
-	print_page "$@"
 
 	write_OUTPUT "$OUTPUT"
 }
@@ -488,6 +440,8 @@ user_has_valid_MAC() {
 
 	if [ -s $FILE ]; then
 
+		load_policy
+
 		while read MAC
 		do
 
@@ -595,14 +549,14 @@ user_welcome() {
 		fi
 	fi
 
-	CA_CERT_URL="$SERVER/CA/ServerCA.cer"
+	CA_CERT_URL="$HTTP_HOST/CA/ServerCA.cer"
 
 	if [ -n "$BROWSER_MSIE" ]; then
-		CA_CERT_URL="$SERVER/CA/ServerCA.der"
+		CA_CERT_URL="$HTTP_HOST/CA/ServerCA.der"
 	else
 		case $HTTP_USER_AGENT in
 		*AppleWebKit*KHTML*)
-			CA_CERT_URL="$SERVER/wi-auth/form/$HTTP_ACCEPT_LANGUAGE/install_safari.tmpl"
+			CA_CERT_URL="$HTTP_HOST/wi-auth/form/$HTTP_ACCEPT_LANGUAGE/install_safari.tmpl"
 		;;
 		esac
 	fi
@@ -616,10 +570,10 @@ user_welcome() {
 	# bottone 3
 	# bottone 4
 
-	print_page https://$SERVER/login \
+	print_page https://$HTTP_HOST/login \
 				  $CA_CERT_URL \
-				  $SERVER $SERVER \
-				  https://$SERVER/registrazione \
+				  $HTTP_HOST $HTTP_HOST \
+				  https://$HTTP_HOST/registrazione \
 				  $REGISTRATI $REGISTRATI \
 				  $LOGIN		  $LOGIN \
 				  $LOGOUT	  $LOGOUT \
@@ -876,7 +830,7 @@ send_ticket() {
 	SIGNED_DATA="
 Action   Permit
 Mode	   Login
-Redirect	$PROT://$SERVER/postlogin?uid=$8&gateway=$4&redirect=$REDIRECT_DEFAULT&ap=$7&ip=$2&mac=$1&timeout=$TIMEOUT&traffic=$TRAFFIC
+Redirect	$PROT://$HTTP_HOST/postlogin?uid=$8&gateway=$4&redirect=$REDIRECT_DEFAULT&ap=$7&ip=$2&mac=$1&timeout=$TIMEOUT&traffic=$TRAFFIC
 Mac		$1
 Timeout	$TIMEOUT
 Traffic	$TRAFFIC
@@ -891,7 +845,7 @@ User		$8"
 		append_to_FILE " $8" $REQ_FILE # si aggiunge UUID alla request...
 	fi
 
-	echo -e "Location: http://$4/?ticket=$SIGNED_DATA\r\n\r"
+	echo -e "Location: http://$4/ticket?ticket=$SIGNED_DATA\r\n\r"
 
 	exit 0
 }
@@ -1498,12 +1452,70 @@ get_stato_utente() {
 
 		printf "`cat $FORM_FILE_DIR/${BASE_NAME}.tmpl 2>/dev/null`" "`date`" $AP "$USER" "$OUTPUT" "$BACK_TAG" > $DIR_STAT/$UUID.html 2>/dev/null
 
-		echo -e "Location: /wi-auth/stat/$UUID.html\r\n\r"
+		echo -e "X-Sendfile: wi-auth/stat/$UUID.html\r\n\r"
 
 	fi
 
 	exit 0
 }
+
+# set -x
+
+# global var
+BASE_NAME=$(basename $0 .sh)
+
+if [ -z "$HTTP_ACCEPT_LANGUAGE" -o ! -d ../form/$HTTP_ACCEPT_LANGUAGE ]; then
+	HTTP_ACCEPT_LANGUAGE=en
+fi
+
+FORM_FILE_DIR=../form/$HTTP_ACCEPT_LANGUAGE
+
+# we can do services... ?
+if [ -x $WIFI_PORTAL_HOME/ANOMALIA ]; then
+	ANOMALIA_page
+fi
+
+# set +x
+
+# --------------------------------
+#  session cookie (no NAT)
+# --------------------------------
+SESSION_ID=$REMOTE_ADDR
+# --------------------------------
+#  session cookie (with NAT)
+# --------------------------------
+#	if [ -n "$HTTP_COOKIE" ]; then
+#		SESSION_ID=$HTTP_COOKIE
+#	else
+#     SET_COOKIE=SESS_$$
+#		SESSION_ID=$SET_COOKIE
+#	fi
+# --------------------------------
+
+# ---------------------------------------------------------------------
+# NB: se cambia qualcosa qui, bisogna cambiarlo anche nel .env di admin
+# ---------------------------------------------------------------------
+DIR_REQ=../request
+DIR_CTX=../login
+DIR_CNT=../counter
+DIR_POLICY=../policy
+DIR_REG=../registration
+DIR_STAT=../stat
+# ---------------------------------------------------------------------
+
+TIMEOUT=0
+TRAFFIC=0
+EXIT_VALUE=0
+LOGIN_LOGOUT_TIME=0
+BACK_TAG="<a class=\"back\" href=\"#\" onclick=\"history.go(-1);return false;\">INDIETRO</a>"
+MSG_ANOMALIA="Problema in autenticazione (anomalia %s). Si prega di riprovare, se il problema persiste contattare: $TELEFONO"
+LDAP_USER_PARAM="-x -D $WIAUTH_USER_LDAP_BINDDN -w $WIAUTH_USER_LDAP_PWD -h $WIAUTH_USER_LDAP_SERVER -p $WIAUTH_USER_LDAP_PORT"
+LDAP_CARD_PARAM="-x -D $WIAUTH_CARD_LDAP_BINDDN -w $WIAUTH_CARD_LDAP_PWD -h $WIAUTH_CARD_LDAP_SERVER -p $WIAUTH_CARD_LDAP_PORT"
+
+export OUTPUT BASE_NAME FORM_FILE_DIR OP DIR_REQ DIR_CTX DIR_CNT DIR_POLICY DIR_REG DIR_STAT FILE_CTX TRAFFIC \
+		 TIMEOUT MAC IP GATEWAY AP TMP_FORM_FILE UUID SET_COOKIE SESSION_ID CALLER_ID \
+		 USER SIGNED_DATA BACK_TAG PROT UUID_TO_APPEND LDAP_USER_PARAM \
+		 LDAP_CARD_PARAM EXIT_VALUE CONNECTION_CLOSE POLICY WA_UID LOGIN_LOGOUT_TIME TMPFILE
 
 # more environment...
 if [ -n "$FILE_TO_SOURCE" ]; then

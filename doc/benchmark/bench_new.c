@@ -37,8 +37,8 @@
 #undef URL
 #undef PORT
 #undef FROM
-static const char* IP;  // = (argv[1]?	  argv[1] :"localhost");
-static const char* URL; // = (argv[2]?	  argv[2] :"/index.html");
+static const char* IP;  // = (argv[1]?	    argv[1] :"localhost");
+static const char* URL; // = (argv[2]?	    argv[2] :"/index.html");
 static int PORT;			// = (argv[3]?atoi(argv[3]):80);
 static int FROM;			// = (argv[4]?atoi(argv[4]):0);
 // -------------------------
@@ -105,7 +105,7 @@ static int FROM;			// = (argv[4]?atoi(argv[4]):0);
 //#endif
 #ifdef _WIN32
 # pragma comment(lib, "ws2_32.lib")
-# define read(sock, buf, len) recv(sock, buf, len, 0)
+# define  read(sock, buf, len) recv(sock, buf, len, 0)
 # define write(sock, buf, len) send(sock, buf, len, 0)
 # define close(sock) closesocket(sock)
 #endif
@@ -266,10 +266,10 @@ int main(int argc, char *argv[])
 #undef URL
 #undef PORT
 #undef FROM
-	const char* IP  = (argv[1]?	  argv[1] :"localhost");
-	const char* URL = (argv[2]?	  argv[2] :"/index.html");
-	int PORT			 = (argv[3]?atoi(argv[3]):80);
-	int FROM			 = (argv[4]?atoi(argv[4]):0);
+	IP   = (argv[1]?	   argv[1] :"localhost");
+	URL  = (argv[2]?	   argv[2] :"/index.html");
+	PORT = (argv[3]?atoi(argv[3]):80);
+	FROM = (argv[4]?atoi(argv[4]):0);
 	// -------------------------
 
    //fprintf(stderr, "URL=%s\n", URL);
@@ -278,8 +278,8 @@ int main(int argc, char *argv[])
 
    for(i=FROM; i<=TO; i+=STEP)
    {
-       sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 -k "		 // KEEP-ALIVES
-//     sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 "			 // NO Keep-Alives
+//     sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 -k "		 // KEEP-ALIVES
+       sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 "			 // NO Keep-Alives
                     "-H \"Accept-Encoding: gzip,deflate\" "  // HTTP compression
                     "\"http://%s" ":%d" "%s" "\"" " > ab.txt", i?i:1, IP, PORT, URL);
 

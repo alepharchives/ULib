@@ -13,6 +13,9 @@ GET /cgi-bin/internal-error.sh HTTP/1.0
 GET /cgi-bin/redirect.sh HTTP/1.1
 Host: localhost
 
+GET /cgi-bin/sendfile.sh HTTP/1.1
+Host: localhost
+
 GET /ok HTTP/1.0
 
 GET /inp/http/data HTTP/1.1
