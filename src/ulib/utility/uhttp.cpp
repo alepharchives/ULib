@@ -52,6 +52,7 @@ UString*                          UHTTP::penvironment;
 UString*                          UHTTP::cache_file_mask;
 UString*                          UHTTP::last_key;
 UString*                          UHTTP::last_file;
+UCommand*                         UHTTP::pcmd;
 UDynamic*                         UHTTP::last_page;
 uhttpinfo                         UHTTP::http_info;
 const char*                       UHTTP::ptrH;
@@ -159,6 +160,7 @@ void UHTTP::ctor()
    U_INTERNAL_ASSERT_EQUALS(form_name_value,0)
 
    file            = U_NEW(UFile);
+   pcmd            = U_NEW(UCommand);
    alias           = U_NEW(UString(U_CAPACITY));
    tmpdir          = U_NEW(UString(100U));
    qcontent        = U_NEW(UString);
@@ -239,6 +241,7 @@ void UHTTP::dtor()
    if (file)
       {
       delete file;
+      delete pcmd;
       delete alias;
       delete tmpdir;
       delete qcontent;
@@ -278,6 +281,28 @@ void UHTTP::dtor()
          delete last_key;
          }
       }
+}
+
+UString UHTTP::getDocumentName()
+{
+   U_TRACE(0, "UHTTP::getDocumentName()")
+
+   U_INTERNAL_ASSERT_POINTER(file)
+
+   UString document = UStringExt::basename(file->getPath());
+
+   U_RETURN_STRING(document);
+}
+
+UString UHTTP::getDirectoryURI()
+{
+   U_TRACE(0, "UHTTP::getDirectoryURI()")
+
+   U_INTERNAL_ASSERT_POINTER(file)
+
+   UString directory = UStringExt::dirname(file->getPath());
+
+   U_RETURN_STRING(directory);
 }
 
 /* read HTTP message
@@ -1174,7 +1199,7 @@ UString UHTTP::setHTTPCookie(const UString& param)
    UString set_cookie(100U);
    UVector<UString> vec(param);
 
-   if (vec.empty()) set_cookie.snprintf("Set-Cookie: ulib_sid=deleted; expires=%#7D GMT", u_now.tv_sec - U_ONE_DAY_IN_SECOND);
+   if (vec.empty()) set_cookie.snprintf("Set-Cookie: ulib_sid=deleted; expires=%#D", u_now.tv_sec - U_ONE_DAY_IN_SECOND);
    else
       {
       U_ASSERT_RANGE(2, vec.size(), 6)
@@ -1188,7 +1213,7 @@ UString UHTTP::setHTTPCookie(const UString& param)
 
       set_cookie.snprintf("Set-Cookie: ulib_sid=%.*s", U_STRING_TO_TRACE(token));
 
-      if (num_hours) set_cookie.snprintf_add("; expires=%#7D GMT", expire);
+      if (num_hours) set_cookie.snprintf_add("; expires=%#D", expire);
 
       UString item;
 
@@ -1367,7 +1392,7 @@ UString UHTTP::getHTMLDirectoryList()
       UFile item;
       bool is_dir;
       UVector<UString> vec;
-      UString entry(U_CAPACITY);
+      UString size, entry(U_CAPACITY), value_encoded(U_CAPACITY);
       uint32_t pos = buffer.size(), n = UFile::listContentOf(vec);
 
       if (n > 1) vec.sort();
@@ -1380,13 +1405,17 @@ UString UHTTP::getHTMLDirectoryList()
             {
             is_dir = item.dir();
 
+            Url::encode(U_FILE_TO_PARAM(item), value_encoded);
+
+            size = UStringExt::numberToString(item.getSize(), true);
+
             entry.snprintf("<tr>"
                               "<td><a href=\"/%.*s/%.*s\"><img align=\"absbottom\" border=\"0\" src=\"/icons/%s.gif\"> %.*s</a></td>"
-                              "<td align=\"right\" valign=\"bottom\">%u KB</td>"
+                              "<td align=\"right\" valign=\"bottom\">%.*s</td>"
                               "<td align=\"right\" valign=\"bottom\">%#4D</td>"
                             "</tr>",
-                            U_FILE_TO_TRACE(*file), U_FILE_TO_TRACE(item), (is_dir ? "menu" : "gopher-unknown"), U_FILE_TO_TRACE(item),
-                            item.getSize() / 1024,
+                            U_FILE_TO_TRACE(*file), U_STRING_TO_TRACE(value_encoded), (is_dir ? "menu" : "gopher-unknown"), U_FILE_TO_TRACE(item),
+                            U_STRING_TO_TRACE(size),
                             item.st_mtime);
 
             if (is_dir)
@@ -1469,7 +1498,7 @@ uint32_t UHTTP::processHTTPForm()
 
    uint32_t n = 0;
 
-   if (isHttpGET())
+   if (isHttpGETorHEAD())
       {
       *qcontent = UString(U_HTTP_QUERY_TO_PARAM);
 
@@ -1563,7 +1592,7 @@ get_name_value:
 // set HTTP main error message
 // --------------------------------------------------------------------------------------------------------------------------------------
 
-U_NO_EXPORT UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, UString& content)
+UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, UString& content)
 {
    U_TRACE(0, "UHTTP::getHTTPHeaderForResponse(%d,%.*S)", nResponseCode, U_STRING_TO_TRACE(content))
 
@@ -2297,7 +2326,7 @@ end:
 
    ext.snprintf_add("Content-Length: %I\r\n"
                     "Accept-Ranges: bytes\r\n"
-                    "Last-Modified: %#7D GMT\r\n"
+                    "Last-Modified: %#D\r\n"
                     "\r\n",
                     size,
                     file->st_mtime);
@@ -2414,11 +2443,10 @@ void UHTTP::searchFileForCache()
    cache_file->reserve(sz);
 }
 
-bool UHTTP::manageFileCache()
+bool UHTTP::checkCacheForFile()
 {
-   U_TRACE(0, "UHTTP::manageFileCache()")
+   U_TRACE(0, "UHTTP::checkCacheForFile()")
 
-   U_ASSERT_EQUALS(isHttpPOST(), false)
    U_INTERNAL_ASSERT_POINTER(cache_file)
 
    if (last_file->equal(U_FILE_TO_PARAM(*file)) == false)
@@ -2430,7 +2458,18 @@ bool UHTTP::manageFileCache()
 
    U_INTERNAL_DUMP("file_data = %p", file_data)
 
-   if (file_data == 0) U_RETURN(false);
+   if (file_data) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
+bool UHTTP::manageFileCache()
+{
+   U_TRACE(0, "UHTTP::manageFileCache()")
+
+   U_ASSERT_EQUALS(isHttpPOST(),false)
+
+   if (checkCacheForFile() == false) U_RETURN(false);
 
    if (checkHTTPGetRequestIfModified(file_data->mtime))
       {
@@ -2452,14 +2491,19 @@ bool UHTTP::manageFileCache()
 
          nResponseCode = HTTP_PARTIAL;
          }
-      else if (U_http_is_accept_deflate &&
-               file_data->array.size() > 2)
+      else if (U_http_is_accept_deflate)
          {
-         ext = file_data->array[2];
+         if (file_data->array.size() > 2)
+            {
+                                                            ext = file_data->array[2];
+            if (isHttpHEAD() == false) *UClientImage_Base::body = file_data->array[3];
 
-         if (isHttpHEAD() == false) *UClientImage_Base::body = file_data->array[3];
+            goto next;
+            }
 
-         goto next;
+         U_http_is_accept_deflate = 2;
+
+         U_INTERNAL_DUMP("U_http_is_accept_deflate = %u", U_http_is_accept_deflate)
          }
 
       if (isHttpHEAD() == false) *UClientImage_Base::body    = file_data->array[0].substr(start, size);
@@ -2587,6 +2631,63 @@ void UHTTP::processRewriteRule()
 #endif
 }
 
+bool UHTTP::checkForCGIRequest(const char* uri, uint32_t uri_len)
+{
+   U_TRACE(0, "UHTTP::checkForCGIRequest(%.*S,%u)", uri_len, uri, uri_len)
+
+   int lsz = uri_len - U_CONSTANT_SIZE(".sh");
+
+   if (lsz < 0) U_RETURN(false);
+
+   uint32_t sz      = uri_len - 1;
+   const char*  ptr = uri     +  sz;
+   const char* lptr = uri     + lsz;
+
+   U_INTERNAL_ASSERT_POINTER(ptr)
+
+   if (*ptr != '/') // NB: check if ends with '/'...
+      {
+      while (*ptr != '/')
+         {
+         --sz;
+         --ptr;
+         }
+
+      while (*ptr == '/')
+         {
+         --sz;
+         --ptr;
+         }
+
+      if (memcmp(ptr - U_CONSTANT_SIZE("/cgi-bin/") + 2, "/cgi-bin/", U_CONSTANT_SIZE("/cgi-bin/")) == 0)
+         {
+         lsz = uri_len - 1;
+
+         (void) U_SYSCALL(memcpy, "%p,%S,%u", cgi_dir, uri + 1, lsz);
+
+         cgi_dir[lsz] = '\0';
+         cgi_dir[ sz] = '\0';
+
+         U_INTERNAL_DUMP("cgi_dir = %S", cgi_dir)
+         U_INTERNAL_DUMP("cgi_doc = %S", cgi_dir + u_strlen(cgi_dir) + 1)
+         }
+      }
+
+   U_http_sh_script = U_STRNEQ(lptr, ".sh");
+
+        if (U_http_sh_script)         http_info.interpreter = U_PATH_SHELL;
+   else if (U_STRNEQ(lptr-1, ".php")) http_info.interpreter = "php-cgi";
+   else if (U_STRNEQ(lptr,   ".pl"))  http_info.interpreter = "perl";
+   else if (U_STRNEQ(lptr,   ".py"))  http_info.interpreter = "python";
+   else if (U_STRNEQ(lptr,   ".rb"))  http_info.interpreter = "ruby";
+
+   U_INTERNAL_DUMP("http_info.interpreter = %S", http_info.interpreter)
+
+   bool result = (http_info.interpreter || cgi_dir[0]);
+
+   U_RETURN(result);
+}
+
 void UHTTP::checkHTTPRequest()
 {
    U_TRACE(0, "UHTTP::checkHTTPRequest()")
@@ -2683,54 +2784,9 @@ void UHTTP::checkHTTPRequest()
 
    if (U_http_request_check <= 0 && vRewriteRule) processRewriteRule();
 
-   if (isHTTPRequestNeedProcessing())
-      {
-      // check if cgi request or if we need some interpreter...
+   // check if cgi request or if we need some interpreter...
 
-      int lsz = http_info.uri_len - U_CONSTANT_SIZE(".sh");
-
-      if (lsz < 0) return;
-
-      uint32_t sz      = http_info.uri_len - 1;
-      const char*  ptr = http_info.uri    +  sz;
-      const char* lptr = http_info.uri    + lsz;
-
-      U_INTERNAL_ASSERT_POINTER(ptr)
-
-      if (*ptr != '/') // NB: check if ends with '/'...
-         {
-         while (*ptr != '/')
-            {
-            --sz;
-            --ptr;
-            }
-
-         while (*ptr == '/')
-            {
-            --sz;
-            --ptr;
-            }
-
-         if (memcmp(ptr - U_CONSTANT_SIZE("/cgi-bin/") + 2, "/cgi-bin/", U_CONSTANT_SIZE("/cgi-bin/")) == 0)
-            {
-            (void) U_SYSCALL(memcpy, "%p,%S,%u", cgi_dir, http_info.uri + 1, sz);
-
-            cgi_dir[sz] = '\0';
-
-            U_INTERNAL_DUMP("cgi_dir = %S", cgi_dir)
-            }
-         }
-
-      U_http_sh_script = U_STRNEQ(lptr, ".sh");
-
-           if (U_http_sh_script)         http_info.interpreter = U_PATH_SHELL;
-      else if (U_STRNEQ(lptr-1, ".php")) http_info.interpreter = "php-cgi";
-      else if (U_STRNEQ(lptr,   ".pl"))  http_info.interpreter = "perl";
-      else if (U_STRNEQ(lptr,   ".py"))  http_info.interpreter = "python";
-      else if (U_STRNEQ(lptr,   ".rb"))  http_info.interpreter = "ruby";
-
-      U_INTERNAL_DUMP("http_info.interpreter = %S", http_info.interpreter)
-      }
+   if (isHTTPRequestNeedProcessing()) (void) checkForCGIRequest(http_info.uri, http_info.uri_len);
 }
 
 // USP (ULib Servlet Page)
@@ -2906,7 +2962,9 @@ UString UHTTP::getCGIEnvironment()
    UString buffer(U_CAPACITY), name = UServer_Base::getNodeName(),
            ip_server = UServer_Base::getIPAddress(), ip_client = UClientImage_Base::getRemoteIP();
 
-   buffer.snprintf("REMOTE_ADDR=%.*s\n"  // The IP address of the visitor
+   buffer.snprintf("CONTENT_LENGTH=%u\n" // The first header must have the name "CONTENT_LENGTH" and a value that is body length in decimal.
+                                         // The "CONTENT_LENGTH" header must always be present, even if its value is "0".
+                   "REMOTE_ADDR=%.*s\n"  // The IP address of the visitor
                 // "REMOTE_HOST=%.*s\n"  // The hostname of the visitor (if your server has reverse-name-lookups on; otherwise this is the IP address again)
                 // "REMOTE_PORT=%.*s\n"  // The port the visitor is connected to on the web server
                 // "REMOTE_USER=%.*s\n"  // The visitor's username (for .htaccess-protected pages)
@@ -2922,6 +2980,7 @@ UString UHTTP::getCGIEnvironment()
                    "SCRIPT_FILENAME=%w%.*s\n"   // The full pathname of the current CGI (is used by PHP for determining the name of script to execute)
                    // PHP
                    "REQUEST_METHOD=%.*s\n",     // dealing with POST requests
+                   len,
                    U_STRING_TO_TRACE(ip_client),
                    U_STRING_TO_TRACE(name),
                    U_STRING_TO_TRACE(ip_server),
@@ -2941,7 +3000,6 @@ UString UHTTP::getCGIEnvironment()
    if (http_info.host_len)         buffer.snprintf_add("HTTP_HOST=%.*s\n", U_HTTP_HOST_TO_TRACE);
    else                            buffer.snprintf_add("HTTP_HOST=%.*s\n", U_STRING_TO_TRACE(ip_server));
 
-   if (len)                        buffer.snprintf_add("\"CONTENT_LENGTH=%u\"\n", len);
    if (referer_len)                buffer.snprintf_add("HTTP_REFERER=%.*s\n", referer_len, referer_ptr); // The URL of the page that called your script
    if (user_agent_len)             buffer.snprintf_add("\"HTTP_USER_AGENT=%.*s\"\n", user_agent_len, user_agent_ptr); // The browser type of the visitor
    if (http_info.query_len)        buffer.snprintf_add("QUERY_STRING=%.*s\n", U_HTTP_QUERY_TO_TRACE); // contains the parameters of the request
@@ -2949,8 +3007,8 @@ UString UHTTP::getCGIEnvironment()
 
    // The interpreted pathname of the requested document or CGI (relative to the document root)
 
-   if (request_uri->empty()) buffer.snprintf_add("REQUEST_URI=%.*s\n", U_HTTP_URI_QUERY_TO_TRACE);
-   else                      buffer.snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(*request_uri));
+   if (request_uri->empty())       buffer.snprintf_add("REQUEST_URI=%.*s\n", U_HTTP_URI_QUERY_TO_TRACE);
+   else                            buffer.snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(*request_uri));
 
    if (U_http_sh_script)
       {
@@ -3554,9 +3612,9 @@ error:
    U_RETURN(false);
 }
 
-bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
+bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv)
 {
-   U_TRACE(0, "UHTTP::processCGIRequest(%p,%p)", pcmd, penv)
+   U_TRACE(0, "UHTTP::processCGIRequest(%p,%p)", cmd, penv)
 
    // process the CGI or script request
 
@@ -3564,37 +3622,26 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
 
    U_ASSERT(isCGIRequest())
 
-   UString command(U_CAPACITY), environment(U_CAPACITY);
-
-   if (pcmd)
-      {
-      command          = pcmd->getStringCommand();
-      environment      = pcmd->getStringEnvironment();
-      U_http_sh_script = pcmd->isShellScript();
-      }
+   if (cmd) U_http_sh_script = cmd->isShellScript();
    else
       {
-      static UCommand* lcmd;
+      // NB: we can't use relativ path because after we call chdir()...
 
-      if (lcmd == 0) U_NEW_ULIB_OBJECT(lcmd, UCommand);
+      UString command(U_CAPACITY), path(U_CAPACITY);
 
-      pcmd = lcmd;
-
-      UString path = file->getPath(); // NB: we can't use relativ path because after we call chdir()...
+      path.snprintf("%w/%s/%s", cgi_dir, cgi_dir + u_strlen(cgi_dir) + 1);
 
       if (http_info.interpreter)        command.snprintf("%s %.*s", http_info.interpreter, U_STRING_TO_TRACE(path));
       else                       (void) command.assign(path);                       
-
-      if (penv) environment = *penv;
 
       // ULIB facility: check if present form data and convert it in parameters for shell script...
 
       if (U_http_sh_script) setCGIShellScript(command);
 
-      pcmd->setCommand(command);
+      (cmd = pcmd)->setCommand(command);
       }
 
-   if (pcmd->checkForExecute() == false)
+   if (cmd->checkForExecute() == false)
       {
       // set forbidden error response...
 
@@ -3644,9 +3691,12 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
          }
       }
 
-   (void) environment.append(getCGIEnvironment());
+   UString environment;
 
-   pcmd->setEnvironment(&environment);
+   if (penv)                environment = *penv;
+   if (environment.empty()) environment = getCGIEnvironment();
+
+   cmd->setEnvironment(&environment);
 
    /* When a url ends by "/cgi-bin/" it is assumed to be a cgi script.
     * The server changes directory to the location of the script and
@@ -3659,7 +3709,7 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
 
    UString* pinput = (UClientImage_Base::body->empty() ? 0 : UClientImage_Base::body);
 
-   (void) pcmd->execute(pinput, UClientImage_Base::wbuffer, -1, fd_stderr);
+   (void) cmd->execute(pinput, UClientImage_Base::wbuffer, -1, fd_stderr);
 
    if (cgi_dir[0])
       {
@@ -3668,19 +3718,13 @@ bool UHTTP::processCGIRequest(UCommand* pcmd, UString* penv)
       cgi_dir[0] = '\0';
       }
 
-   UServer_Base::logCommandMsgError(pcmd->getCommand());
+   UServer_Base::logCommandMsgError(cmd->getCommand());
 
    resetForm();
 
-   pcmd->reset();
+   cmd->reset(penv);
 
-   penvironment->setEmpty();
-
-   // process the HTTP CGI output
-
-   if (processCGIOutput()) U_RETURN(true);
-
-   U_RETURN(false);
+   U_RETURN(true);
 }
 
 bool UHTTP::checkHTTPContentLength(const char* ptr, uint32_t length, UString& ext)

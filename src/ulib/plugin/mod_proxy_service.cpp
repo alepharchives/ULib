@@ -91,6 +91,7 @@ void UModProxyService::loadConfig(UFileConfig& cfg, UVector<UModProxyService*>& 
          service->password         = cfg[*UServer_Base::str_PASSWORD];
 
          service->command          = UServer_Base::loadConfigCommand(cfg);
+         service->environment      = service->command->getStringEnvironment();
 
          service->port             = cfg.readLong(*UServer_Base::str_PORT, 80);
          service->request_cert     = cfg.readBoolean(*str_CLIENT_CERTIFICATE);
@@ -197,6 +198,7 @@ const char* UModProxyService::dump(bool reset) const
                   << "server            (UString          " << (void*)&server             << ")\n"
                   << "host_mask         (UString          " << (void*)&host_mask          << ")\n"
                   << "password          (UString          " << (void*)&password           << ")\n"
+                  << "environment       (UString          " << (void*)&environment        << ")\n"
                   << "vreplace_response (UVector<UString> " << (void*)&vreplace_response  << ')';
 
    if (reset)

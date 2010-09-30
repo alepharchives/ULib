@@ -21,7 +21,7 @@ class U_EXPORT UFileConfig : public UFile {
 public:
 
    static UString* str_yes;
-   static UString* str_file;
+   static UString* str_FILE;
    static UString* str_string;
 
    static void str_allocate();

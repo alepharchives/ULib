@@ -205,7 +205,7 @@ public:
          {
          double dlspeed = u_calcRate(howmuch, dltime, &units);
 
-         (void) sprintf(p, " %7.2f%s", dlspeed, u_short_units[units]);
+         (void) sprintf(p, " %7.2f%s/s", dlspeed, u_short_units[units]);
 
          p += u_strlen(p);
 

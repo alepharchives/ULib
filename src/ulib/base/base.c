@@ -199,11 +199,14 @@ void u_check_now_adjust(void)
       lnow = timegm(&u_strftime_tm);
 
       u_now_adjust = (lnow - u_now.tv_sec);
-      u_start_time = u_now.tv_sec + u_now_adjust;
+
+      U_INTERNAL_PRINT("u_now_adjust = %ld timezone = %ld daylight = %d tzname[2] = { %s, %s }", u_now_adjust, timezone, daylight, tzname[0], tzname[1])
+
+      U_INTERNAL_ASSERT(u_now_adjust <= ((daylight ? 3600 : 0) - timezone))
 
       /* NB: check if current date is OK - Fri Apr 23 17:26:25 CEST 2010 */
 
-      if (u_start_time < 1272036378) u_start_time = 0;
+      if (u_now.tv_sec > 1272036378) u_start_time = u_now.tv_sec + u_now_adjust;
       }
 }
 
@@ -310,6 +313,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
    U_INTERNAL_TRACE("u_strftime(%u,%s,%ld)", maxsize, format, t)
 
+   U_INTERNAL_ASSERT_POINTER(format)
    U_INTERNAL_ASSERT_MAJOR(maxsize,0)
 
    if (t == -1) old_now = 0;
@@ -360,8 +364,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
    %T The time in 24-hour notation (%H:%M:%S). (SU)
    %y The last two digits of the year
    %Y The full year, formatted with four digits to include the century
-   %Z Defined by ANSI C as eliciting the time zone if available; it is not
-      available in this implementation (which accepts %Z but generates no output for it)
+   %Z Defined by ANSI C as eliciting the time zone if available
    %% A single character, %
    */
 
@@ -416,7 +419,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'c': /* %c A string representing the complete date and time, in the form Mon Apr 01 13:13:13 1992 */
             {
-            if (count >= (maxsize - 24)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-24)
+
+         // if (count >= (maxsize - 24)) return 0;
 
             for (i = 0; i < 3; ++i) s[count++] = dname[u_strftime_tm.tm_wday][i];
                                     s[count++] = ' ';
@@ -432,7 +437,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'd': /* %d The day of the month, formatted with two digits */
             {
-            if (count >= (maxsize - 2)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+
+         // if (count >= (maxsize - 2)) return 0;
 
             (void) sprintf(&s[count], "%2.2d", u_strftime_tm.tm_mday);
 
@@ -442,7 +449,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'e': /* %e Like %d, the day of the month as a decimal number, but a leading zero is replaced by a space */
             {
-            if (count >= (maxsize - 2)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+
+         // if (count >= (maxsize - 2)) return 0;
 
             (void) sprintf(&s[count], "%.2d", u_strftime_tm.tm_mday);
 
@@ -452,7 +461,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'H': /* %H The hour (on a 24-hour clock), formatted with two digits */
             {
-            if (count >= (maxsize - 2)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+
+         // if (count >= (maxsize - 2)) return 0;
 
             (void) sprintf(&s[count], "%2.2d", u_strftime_tm.tm_hour);
 
@@ -462,7 +473,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'I': /* %I The hour (on a 12-hour clock), formatted with two digits */
             {
-            if (count >= (maxsize - 2)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+
+         // if (count >= (maxsize - 2)) return 0;
 
             if (u_strftime_tm.tm_hour == 0 ||
                 u_strftime_tm.tm_hour == 12)
@@ -481,7 +494,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'j': /* %j The count of days in the year, formatted with three digits (from 1 to 366) */
             {
-            if (count >= (maxsize - 3)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-3)
+
+         // if (count >= (maxsize - 3)) return 0;
 
             (void) sprintf(&s[count], "%.3d", u_strftime_tm.tm_yday + 1);
 
@@ -491,7 +506,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'm': /* %m The month number, formatted with two digits */
             {
-            if (count >= (maxsize - 2)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+
+         // if (count >= (maxsize - 2)) return 0;
             
             (void) sprintf(&s[count], "%.2d", u_strftime_tm.tm_mon + 1);
 
@@ -501,7 +518,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'M': /* %M The minute, formatted with two digits */
             {
-            if (count >= (maxsize - 2)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+
+         // if (count >= (maxsize - 2)) return 0;
 
             (void) sprintf(&s[count], "%2.2d", u_strftime_tm.tm_min);
 
@@ -511,7 +530,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'p': /* %p Either AM or PM as appropriate */
             {
-            if (count >= (maxsize - 2)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+
+         // if (count >= (maxsize - 2)) return 0;
 
             s[count++] = ((u_strftime_tm.tm_hour < 12) ? 'A' : 'P');
             s[count++] = 'M';
@@ -520,7 +541,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'S': /* %S The second, formatted with two digits */
             {
-            if (count >= (maxsize - 2)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+
+         // if (count >= (maxsize - 2)) return 0;
 
             (void) sprintf(&s[count], "%2.2d", u_strftime_tm.tm_sec);
 
@@ -531,7 +554,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
          case 'U': /* %U The week number, formatted with two digits (from 0 to 53; week number 1
                       is taken as beginning with the first Sunday in a year). See also %W */
             {
-            if (count >= (maxsize - 2)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+
+         // if (count >= (maxsize - 2)) return 0;
 
             (void) sprintf(&s[count], "%2.2d", (u_strftime_tm.tm_yday + 7 - u_strftime_tm.tm_wday) / 7);
 
@@ -541,7 +566,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'w': /* %w A single digit representing the day of the week: Sunday is day 0 */
             {
-            if (count >= (maxsize - 1)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-1)
+
+         // if (count >= (maxsize - 1)) return 0;
 
             (void) sprintf(&s[count], "%1.1d", u_strftime_tm.tm_wday);
 
@@ -551,7 +578,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'W': /* %W Another version of the week number: like %U, but counting week 1 as beginning with the first Monday in a year */
             {
-            if (count >= (maxsize - 2)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+
+         // if (count >= (maxsize - 2)) return 0;
 
             (void) sprintf(&s[count], "%2.2d", (u_strftime_tm.tm_yday + ((8 - u_strftime_tm.tm_wday) % 7)) / 7);
 
@@ -561,7 +590,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'x': /* %x A string representing the complete date, in a format like Mon Apr 01 1992 */
             {
-            if (count >= (maxsize - 15)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-15)
+
+         // if (count >= (maxsize - 15)) return 0;
 
             for (i = 0; i < 3; i++) s[count++] = dname[u_strftime_tm.tm_wday][i];
                                     s[count++] = ' ';
@@ -576,7 +607,9 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
          case 'X': /* %X A string representing the full time of day (hours, minutes, and seconds), in a format like 13:13:13 */
          case 'T': /* %T The time in 24-hour notation (%H:%M:%S). (SU) */
             {
-            if (count >= (maxsize - 8)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-8)
+
+         // if (count >= (maxsize - 8)) return 0;
 
             (void) sprintf(&s[count], "%2.2d:%2.2d:%2.2d", u_strftime_tm.tm_hour, u_strftime_tm.tm_min, u_strftime_tm.tm_sec);
 
@@ -586,21 +619,25 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'y': /* %y The last two digits of the year */
             {
-            if (count >= (maxsize - 2)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+
+         // if (count >= (maxsize - 2)) return 0;
 
             /* The year could be greater than 100, so we need the value modulo 100.
              * The year could be negative, so we need to correct for a possible negative remainder.
              */
 
             (void) sprintf(&s[count], "%2.2d", (u_strftime_tm.tm_year % 100 + 100) % 100);
-            
+
             count += 2;
             }
          break;
 
          case 'Y': /* %Y The full year, formatted with four digits to include the century */
             {
-            if (count >= (maxsize - 4)) return 0;
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-4)
+
+         // if (count >= (maxsize - 4)) return 0;
 
             (void) sprintf(&s[count], "%.4d", 1900 + u_strftime_tm.tm_year);
 
@@ -608,8 +645,19 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
             }
          break;
 
-         case 'Z': /* %Z Defined by ANSI C as eliciting the time zone if available;
-                      it is not available in this implementation (which accepts %Z but generates no output for it) */
+         case 'Z': /* %Z Defined by ANSI C as eliciting the time zone if available */
+            {
+            i = (daylight != 0);
+            n = u_strlen(tzname[i]);
+
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-n)
+
+         // if (count >= (maxsize - n)) return 0;
+
+            (void) strncpy(&s[count], tzname[i], n);
+
+            count += n;
+            }
          break;
 
          case '%':
@@ -643,6 +691,20 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
    U_INTERNAL_PRINT("count = %u maxsize = %u", count, maxsize)
 
    U_INTERNAL_ASSERT_MINOR(count,maxsize)
+
+#ifdef DEBUG
+   {
+   char dbg[4096];
+
+   if (strftime(dbg, maxsize, format, &u_strftime_tm))
+      {
+      U_INTERNAL_PRINT("s   = %s", s)
+      U_INTERNAL_PRINT("dbg = %s", dbg)
+
+      U_INTERNAL_ASSERT_EQUALS(strcmp(s,dbg),0)
+      }
+   }
+#endif
 
    return count;
 }
@@ -681,8 +743,7 @@ with flag '3' => format:          %T (=> "%H:%M:%S) +n days
 with flag '4' => format: %d/%m/%y %T
 with flag '5' => format: %d/%m/%Y %T
 with flag '6' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
-with flag '7' => format: %a, %d %b %Y %H:%M:%S     (HTTP header)
-
+with flag '7' => format: %a, %d %b %Y %H:%M:%S %Z (LOCAL: use u_now + u_now_adjust)
          default format: %a, %d %b %Y %H:%M:%S GMT (HTTP header) (use u_now)
 ----------------------------------------------------------------------------
 */
@@ -1377,14 +1438,16 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             /* flag '#' => var-argument */
 
-            time_t t = (flags & ALT ? VA_ARG(time_t) :
-                        width       ? 0              : u_now.tv_sec);
+            time_t t = (flags & ALT ? VA_ARG(time_t)              :
+                        width == 0  ? u_now.tv_sec                :
+                        width == 7  ? u_now.tv_sec + u_now_adjust : 0);
 
-            if (t == 0 && (flags & ALT))
+            if (t == 0 &&
+                (flags & ALT))
                {
-               (void) memset(&u_strftime_tm, 0, sizeof(struct tm));
-
                t = -1;
+
+               (void) memset(&u_strftime_tm, 0, sizeof(struct tm));
                }
 
             /*
@@ -1394,32 +1457,25 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             with flag '4' => format: %d/%m/%y %T
             with flag '5' => format: %d/%m/%Y %T
             with flag '6' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
-            with flag '7' => format: %a, %d %b %Y %H:%M:%S     (HTTP header)
-
+            with flag '7' => format: %a, %d %b %Y %H:%M:%S %Z (LOCAL: use u_now + u_now_adjust)
                      default format: %a, %d %b %Y %H:%M:%S GMT (HTTP header) (use u_now)
             */
 
-            fmtdate = (width == 1 ? "%d/%m/%y"           :
-                       width == 2 ? "%T"                 :
-                       width == 3 ? "%T"                 :
-                       width == 4 ? "%d/%m/%y %H:%M:%S"  :
-                       width == 5 ? "%d/%m/%Y %H:%M:%S"  :
-                       width == 6 ? "%d%m%y_%H%M%S"      :
-                                    "%a, %d %b %Y %H:%M:%S");
+            fmtdate = (width == 0 ? "%a, %d %b %Y %H:%M:%S GMT" : /* default */
+                       width == 1 ? "%d/%m/%y"                  :
+                       width == 2 ? "%T"                        :
+                       width == 3 ? "%T"                        :
+                       width == 4 ? "%d/%m/%y %H:%M:%S"         :
+                       width == 5 ? "%d/%m/%Y %H:%M:%S"         :
+                       width == 6 ? "%d%m%y_%H%M%S"             :
+                                    "%a, %d %b %Y %H:%M:%S %Z");
 
-            len = u_strftime(bp, 32, fmtdate, t);
+            len = u_strftime(bp, 36, fmtdate, t);
 
             bp  += len;
             ret += len;
 
-            if (width == 0) /* default */
-               {
-               (void) U_MEMCPY(bp, " GMT");
-
-               bp  += 4;
-               ret += 4;
-               }
-            else if (width == 3) /* check for days */
+            if (width == 3) /* check for days */
                {
                if (t > U_ONE_DAY_IN_SECOND)
                   {

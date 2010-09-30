@@ -524,7 +524,7 @@ public:
    the recv() system call to receive the data, returning the number of bytes actually readden
    */
 
-   static ssize_t recv(int fd, void* buf, size_t len, int flags = 0);
+   static ssize_t recv(int fd, void* buf, size_t len, int recv_flags = 0);
 
    /**
    This method is called to read a 16-bit binary value from the remote connection.

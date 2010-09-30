@@ -325,12 +325,17 @@ int UHttpPlugIn::handlerRequest()
 
    if (UHTTP::isHTTPRequestNeedProcessing())
       {
-      if (UHTTP::isCGIRequest()) (void) UHTTP::processCGIRequest((UCommand*)0, UHTTP::penvironment);
+      if (UHTTP::isCGIRequest())
+         {
+         UString environment = UHTTP::getCGIEnvironment() + *UHTTP::penvironment;
+
+         if (UHTTP::processCGIRequest((UCommand*)0, &environment)) (void) UHTTP::processCGIOutput();
+         }
       else
          {
          // NB: we don't want to process the form here (other plugin...)
 
-         if (UHTTP::isHttpPOST()) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+         if (UHTTP::isHttpGETorHEAD() == false) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 
          UHTTP::processHTTPGetRequest(); // GET,HEAD
          }

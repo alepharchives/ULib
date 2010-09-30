@@ -89,6 +89,9 @@ Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x
 GET /cgi-bin/index.cgi HTTP/1.1
 Host: localhost
 
+GET /SSI/ssi1.shtml HTTP/1.1
+Host: localhost
+
 GET /cgi-bin/postlogin.sh?user=Steve+Johnson HTTP/1.1
 Host: localhost
 Connection: Keep-Alive

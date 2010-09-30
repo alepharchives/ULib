@@ -81,7 +81,7 @@ bool UDialog::run(const char* title, const char* format, ...)
    argument.clear();
      output.setEmpty();
 
-   UCommand::outputCommand(cmd, environ, &output, -1, -1, (xdialog == false));
+   UCommand::outputCommandWithDialog(cmd, environ, &output, -1, -1, (xdialog == false));
 
    if (UCommand::exit_value)
       {

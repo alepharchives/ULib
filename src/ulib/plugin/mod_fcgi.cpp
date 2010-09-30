@@ -257,7 +257,7 @@ int UFCGIPlugIn::handlerRequest()
 
       // Set environment for the FCGI application server
 
-      environment = *UHTTP::penvironment + UHTTP::getCGIEnvironment();
+      environment = UHTTP::getCGIEnvironment() + *UHTTP::penvironment;
 
       n = u_split(U_STRING_TO_PARAM(environment), envp, 0);
 

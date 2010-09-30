@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/file.h>
 #include <ulib/net/tcpsocket.h>
 
 // VIRTUAL METHOD
@@ -44,20 +45,23 @@ void UTCPSocket::closesocket()
 
       if (USocket::shutdown())
          {
+         char buf[8*1024];
+         uint32_t count = 0;
+
          /* At this point, the socket layer has to wait until the receiver has
           * acknowledged the FIN packet by receiving a ACK packet. This is done by
           * using the recv() command in a loop until 0 or less value is returned.
           * Once recv() returns 0 (or less), 1/2 of the socket is closed
           */
 
-         char buf[8*1024];
-         uint32_t count = 0;
+         UFile::setBlocking(iSockDesc, flags, true);
 
          do { if (count++ > 5) break; errno = 0; } while (USocket::recv(iSockDesc, buf, sizeof(buf)) > 0 || errno == EAGAIN);
          }
       }
 
-   // Then you can close the second half of the socket by calling closesocket()
+   // Now we know that our FIN is ACK-ed, then you can close the second half of the
+   // socket by calling closesocket()
 
    USocket::closesocket();
 }

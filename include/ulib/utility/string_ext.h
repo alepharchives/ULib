@@ -59,18 +59,9 @@ public:
    static UString deflate(const UString& s);                       // .gz   compress
    static UString gunzip( const UString& s, uint32_t sz_orig = 0); // .gz uncompress
 
-   // Convert integer to string
+   // Convert numeric to string
 
-   static UString numberToString(long i)
-      {
-      U_TRACE(0, "UStringExt::numberToString(%ld)", i)
-
-      UString x(32U);
-
-      x.snprintf("%ld", i);
-
-      U_RETURN_STRING(x);
-      }
+   static UString numberToString(off_t n, bool abbrev = false);
 
    // convert letter to upper or lower case
 

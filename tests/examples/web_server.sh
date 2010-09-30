@@ -10,12 +10,13 @@ rm -f web_server.log \
       $DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* $DOC_ROOT/stack.*userver_ssl*.[0-9]* \
       $DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]*
 
-#UTRACE="0 50M 0"
-#UOBJDUMP="0 100k 10"
+ UTRACE="0 50M 0"
+ UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
-SOCK=tmp/fcgi.socket-1
+SOCK1=tmp/fcgi.socket-1
+SOCK2=tmp/scgi.socket-1
 
 start_test() {
 
@@ -24,8 +25,8 @@ start_test() {
 	PIDS=`ps x | grep $CMD | grep -v grep | awk '{ print $1 }'`
 
 	if [ -z "$PIDS" ]; then
-#		rm -f										   $SOCK
-		../../src/ulib/plugin/mod_fcgi/$CMD $SOCK 2>/tmp/$CMD.err &
+#		rm -f										   $SOCK1
+		../../src/ulib/plugin/mod_fcgi/$CMD $SOCK1 2>/tmp/$CMD.err &
 	fi
 }
 
@@ -41,7 +42,7 @@ start_prg_background userver_tcp -c  web_server.cfg
 												# web_server.cfg
 												# deployment.properties
 
-chmod 777 $SOCK
+chmod 777 $SOCK1
 
 #$SLEEP
 #kill_prg userver_tcp TERM

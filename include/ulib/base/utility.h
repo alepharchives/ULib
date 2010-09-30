@@ -24,9 +24,9 @@ extern "C" {
 
 /* Services */
 
-extern U_EXPORT const char* u_short_units[4]; /* { "B/s", "K/s", "M/s", "G/s" } */
+extern U_EXPORT const char* u_short_units[]; /* { "B", "KB", "MB", "GB", "TB", 0 } */
 
-extern U_EXPORT int         u_getScreenWidth(void);                /* Determine the width of the terminal we're running on */
+extern U_EXPORT int         u_getScreenWidth(void); /* Determine the width of the terminal we're running on */
 extern U_EXPORT int         u_get_num_random(int range);
 extern U_EXPORT bool        u_isNumber(const char* restrict s, uint32_t n);
 extern U_EXPORT void        u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */

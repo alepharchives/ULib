@@ -4,7 +4,7 @@
 
 ## engine.test -- Test engine feature
 
-start_msg engine
+start_msg crypto_des3
 
 $WINELOADER ./crypto_des3$SUFFIX      password < inp/engine.inp | \
 $WINELOADER ./crypto_base64$SUFFIX    			  > err/engine.err

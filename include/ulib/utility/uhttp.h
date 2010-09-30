@@ -312,11 +312,20 @@ public:
 
    static bool isHTTPRequest() { return (U_http_method_type && http_info.szHeader); }
 
+   static bool isHttpGETorHEAD()
+      {
+      U_TRACE(0, "UHTTP::isHttpGETorHEAD()")
+
+      bool result = (U_http_method_type >= HTTP_GET);
+
+      U_RETURN(result);
+      }
+
    static bool isHttpGET()
       {
       U_TRACE(0, "UHTTP::isHttpGET()")
 
-      bool result = (U_http_method_type >= HTTP_GET);
+      bool result = (U_http_method_type == HTTP_GET);
 
       U_RETURN(result);
       }
@@ -403,6 +412,8 @@ public:
    static void getFileMimeType(const char* suffix, const char* content_type, UString& ext, off_t size);
    static bool checkHTTPGetRequestForRange(off_t& start, off_t& size, UString& ext, const UString& data);
 
+   static UString     getDocumentName();
+   static UString     getDirectoryURI();
    static UString     getHTMLDirectoryList();
    static const char* getHTTPHeaderValuePtr(const UString& name);
 
@@ -419,7 +430,7 @@ public:
 
    static bool isHTTPRequestAlreadyProcessed()
       {
-      U_TRACE(0, "UHTTP::isHTTPRequestNeedProcessing()")
+      U_TRACE(0, "UHTTP::isHTTPRequestAlreadyProcessed()")
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
@@ -502,20 +513,20 @@ public:
 
    // CGI
 
+   static UCommand* pcmd;
    static UString* penvironment;
    static char cgi_dir[U_PATH_MAX];
 
    static bool    processCGIOutput();
    static UString getCGIEnvironment();
    static void    setCGIShellScript(UString& command);
+   static bool    checkForCGIRequest(const char* uri, uint32_t uri_len);
    static bool    processCGIRequest(UCommand* pcmd, UString* penvironment);
    static void    setHTTPCgiResponse(int nResponseCode, bool header_content_length, bool header_content_type, bool content_encoding);
 
    static bool isCGIRequest()
       {
       U_TRACE(0, "UHTTP::isCGIRequest()")
-
-      U_ASSERT(isHTTPRequestNeedProcessing())
 
       U_INTERNAL_DUMP("http_info.interpreter = %S cgi_dir = %S", http_info.interpreter, cgi_dir)
 
@@ -650,6 +661,7 @@ public:
    static UHashMap<UFileCacheData*>* cache_file;
 
    static bool manageFileCache();
+   static bool checkCacheForFile();
    static void checkFileForCache();
    static void searchFileForCache();
 
@@ -670,13 +682,13 @@ public:
 
    // set HTTP response message
 
-   static void setHTTPResponse(int nResponseCode, const UString* content_type, const UString* body);
-   static void setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint32_t len_location);
+   static UString getHTTPHeaderForResponse(int nResponseCode, UString& content);
+   static void    setHTTPResponse(int nResponseCode, const UString* content_type, const UString* body);
+   static void    setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint32_t len_location);
 
 private:
    static bool    openFile() U_NO_EXPORT;
    static void    checkPath(UString& pathname) U_NO_EXPORT;
-   static UString getHTTPHeaderForResponse(int nResponseCode, UString& content) U_NO_EXPORT;
    static bool    splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext) U_NO_EXPORT;
 
    UHTTP(const UHTTP&)            {}

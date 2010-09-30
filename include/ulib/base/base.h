@@ -147,8 +147,7 @@ with flag '3' => format:          %T (=> "%H:%M:%S) +n days
 with flag '4' => format: %d/%m/%y %T
 with flag '5' => format: %d/%m/%Y %T
 with flag '6' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
-with flag '7' => format: %a, %d %b %Y %H:%M:%S     (HTTP header)
-
+with flag '7' => format: %a, %d %b %Y %H:%M:%S %Z (LOCAL: use u_now + u_now_adjust)
          default format: %a, %d %b %Y %H:%M:%S GMT (HTTP header) (use u_now)
 ---------------------------------------------------------------------------------
 */

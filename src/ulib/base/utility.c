@@ -89,12 +89,10 @@ bPFpcupcud u_pfn_match = u_dosmatch;
 
 /* Services */
 
-const char* u_short_units[4] = { "B/s", "K/s", "M/s", "G/s" };
+const char* u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 
 const char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_path_len)
 {
-   uint32_t path_len = *ptr_path_len;
-
    U_INTERNAL_TRACE("u_getPathRelativ(%s,%u)", path, *ptr_path_len)
 
    U_INTERNAL_ASSERT_POINTER(path)
@@ -104,6 +102,8 @@ const char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_p
 
    if (path[0] == u_cwd[0])
       {
+      uint32_t path_len = *ptr_path_len;
+
       while (path[path_len-1] == '/') --path_len;
 
       if (path_len >= u_cwd_len &&
@@ -114,34 +114,26 @@ const char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_p
             path     = ".";
             path_len = 1;
             }
-         else if (u_cwd_len == 1 ||
+         else if (     u_cwd_len  == 1 ||
                   path[u_cwd_len] == '/')
             {
             uint32_t len = u_cwd_len + (u_cwd_len > 1);
 
             path     += len;
             path_len -= len;
+
+            while (path[0] == '/')
+               {
+               ++path;
+               --path_len;
+               }
             }
          }
+
+      *ptr_path_len = path_len;
+
+      U_INTERNAL_PRINT("path(%u) = %.*s", path_len, path_len, path)
       }
-
-   if (path[0] == '.' &&
-       path[1] == '/')
-      {
-      path     += 2;
-      path_len -= 2;
-      }
-
-   while (path[0] == '/' &&
-          path[1] == '/')
-      {
-      ++path;
-      --path_len;
-      }
-
-   *ptr_path_len = path_len;
-
-   U_INTERNAL_PRINT("path(%u) = %.*s", path_len, path_len, path)
 
    return path;
 }
@@ -271,7 +263,8 @@ UNITS is zero for B/s, one for KB/s, two for MB/s, and three for GB/s
 
 double u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units)
 {
-   double dlrate = (double)1000. * bytes / (double)msecs;
+   int i;
+   double rate = (double)1000. * bytes / (double)msecs;
 
    U_INTERNAL_TRACE("u_calcRate(%u,%u,%p)", bytes, msecs, units)
 
@@ -279,14 +272,13 @@ double u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units)
    U_INTERNAL_ASSERT_MAJOR(bytes,0)
    U_INTERNAL_ASSERT_MAJOR(msecs,0)
 
-   if      (dlrate < 1024.0)                   *units = 0;
-   else if (dlrate < 1024.0 * 1024.0)          *units = 1, dlrate /=  1024.0;
-   else if (dlrate < 1024.0 * 1024.0 * 1024.0) *units = 2, dlrate /= (1024.0 * 1024.0);
-   else                                        *units = 3, dlrate /= (1024.0 * 1024.0 * 1024.0);
+   for (i = 0; rate > 1024. && u_short_units[i+1]; ++i) rate /= 1024.;
 
-   U_INTERNAL_PRINT("dlrate = %7.2f%s", dlrate, u_short_units[*units])
+   *units = i;
 
-   return dlrate;
+   U_INTERNAL_PRINT("rate = %7.2f%s", rate, u_short_units[i])
+
+   return rate;
 }
 
 void u_printSize(char* restrict buffer, uint64_t bytes)
@@ -305,7 +297,7 @@ void u_printSize(char* restrict buffer, uint64_t bytes)
 
    size = u_calcRate(bytes, 1000, &units);
 
-   if (units) (void) sprintf(buffer, "%5.2f %cBytes", size, u_short_units[units][0]);
+   if (units) (void) sprintf(buffer, "%5.2f %s",    size, u_short_units[units]);
    else       (void) sprintf(buffer, "%7.0f Bytes", size);
 }
 

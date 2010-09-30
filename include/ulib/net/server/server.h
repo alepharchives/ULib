@@ -199,6 +199,15 @@ public:
 
    UString document_root;  // The directory out of which you will serve your documents
 
+   static UString getDocumentRoot()
+      {
+      U_TRACE(0, "UServer_Base::getDocumentRoot()")
+
+      U_INTERNAL_ASSERT_POINTER(pthis)
+
+      U_RETURN_STRING(pthis->document_root);
+      }
+
    static bool isFileInsideDocumentRoot(const UString& path)
       {
       U_TRACE(0, "UServer_Base::isFileInsideDocumentRoot(%.*S)", U_STRING_TO_TRACE(path))

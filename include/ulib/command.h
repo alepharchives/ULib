@@ -46,15 +46,7 @@ public:
       argv_exec = envp_exec = 0;
       }
 
-   void reset()
-      {
-      U_TRACE(0, "UCommand::reset()")
-
-      freeCommand();
-      freeEnvironment();
-
-      zero();
-      }
+   void reset(const UString* penv);
 
    UCommand()
       {
@@ -85,7 +77,7 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UCommand)
 
-      reset();
+      reset(0);
       }
 
    // MANAGE GENERIC ENVIRONMENT
@@ -236,7 +228,7 @@ public:
           bool    executeAndWait(UString* input = 0,                      int fd_stdin = -1, int fd_stderr = -1);
           bool    execute(       UString* input = 0, UString* output = 0, int fd_stdin = -1, int fd_stderr = -1);
 
-   static UString outputCommand(UString& cmd, char** envp = 0,            int fd_stdin = -1, int fd_stderr = -1);
+   static UString outputCommand(const UString& cmd, char** envp = 0,      int fd_stdin = -1, int fd_stderr = -1);
 
    bool checkForExecute(int mode = R_OK | X_OK)
       {
@@ -301,15 +293,7 @@ protected:
    void freeCommand();
    void freeEnvironment();
 
-   void reset(const UString& cmd, const UString& env)
-      {
-      U_TRACE(0, "UCommand::reset(%.*S,%.*S)", U_STRING_TO_TRACE(cmd), U_STRING_TO_TRACE(env))
-
-      command     = cmd;
-      environment = env;
-      }
-
-   static void outputCommand(UString& cmd, char** envp, UString* output, int fd_stdin, int fd_stderr, bool dialog);
+   static void outputCommandWithDialog(const UString& cmd, char** envp, UString* output, int fd_stdin, int fd_stderr, bool dialog);
 
 private:
                  void setEnvironment(const UString& env) U_NO_EXPORT;

@@ -68,13 +68,10 @@ int UProxyPlugIn::handlerRequest()
       // process the HTTP request
 
       int err = 0;
-      bool esito,
-           output_to_client  = false, // send output as response to client...
+      bool output_to_client  = false, // send output as response to client...
            output_to_server  = false; // send output as request  to server...
 
-#  ifdef HAVE_SSL
-      // check if certificate is required...
-
+#  ifdef HAVE_SSL // check if certificate is required...
       if (service->isRequestCertificate() &&
           ((UServer<USSLSocket>*)UServer_Base::pthis)->askForClientCertificate() == false)
          {
@@ -88,21 +85,11 @@ int UProxyPlugIn::handlerRequest()
 
       if (service->command)
          {
-         UCommand* pcmd = service->command;
-
-         UString     command = pcmd->getStringCommand(),
-                 environment = pcmd->getStringEnvironment();
-
-         // NB: we need this because processCGIRequest() can split the string...
-
-             command.duplicate();
-         environment.duplicate();
-
-         esito = UHTTP::processCGIRequest(pcmd, 0);
-
-         pcmd->reset(command, environment);
-
-         if (esito == false) goto end; // skip error...
+         if (UHTTP::processCGIRequest(service->command, &(service->environment)) == false ||
+             UHTTP::processCGIOutput()                                           == false)
+            {
+            goto end; // skip error...
+            }
 
          if (service->isResponseForClient()) output_to_client = true; // send output as response to client...
          else                                output_to_server = true; // send output as request  to server...

@@ -4,21 +4,17 @@
 //    ulib - c++ library
 //
 // = FILENAME
-//    mod_geoip.h
+//    mod_ssi.h - Server Side Includes (SSI)
 //
 // = AUTHOR
 //    Stefano Casazza
 //
 // ============================================================================
 
-#ifndef U_MOD_GEOIP_H
-#define U_MOD_GEOIP_H 1
+#ifndef U_MOD_SSI_H
+#define U_MOD_SSI_H 1
 
-#include <ulib/string.h>
 #include <ulib/net/server/server_plugin.h>
-
-#include <GeoIP.h>
-#include <GeoIPCity.h>
 
 /*
 The plugin interface is an integral part of UServer which provides a flexible way to add specific functionality to UServer.
@@ -48,36 +44,55 @@ RETURNS:
   U_PLUGIN_HANDLER_ERROR    on error
 */
 
-class U_EXPORT UGeoIPPlugIn : public UServerPlugIn {
+class U_EXPORT USSIPlugIn : public UServerPlugIn {
 public:
 
-   static UString* str_COUNTRY_FORBIDDEN_MASK;
+   static UString* str_var;
+   static UString* str_cmd;
+   static UString* str_cgi;
+   static UString* str_file;
+   static UString* str_value;
+   static UString* str_bytes;
+   static UString* str_abbrev;
+   static UString* str_errmsg;
+   static UString* str_virtual;
+   static UString* str_timefmt;
+   static UString* str_sizefmt;
+   static UString* str_DATE_GMT;
+   static UString* str_USER_NAME;
+   static UString* str_DATE_LOCAL;
+   static UString* str_DOCUMENT_URI;
+   static UString* str_DOCUMENT_NAME;
+   static UString* str_LAST_MODIFIED;
+   static UString* str_SSI_EXT_MASK;
+   static UString* str_errmsg_default;
+   static UString* str_timefmt_default;
 
    static void str_allocate();
 
    // COSTRUTTORI
 
-   UGeoIPPlugIn()
+   USSIPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, UGeoIPPlugIn, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, USSIPlugIn, "", 0)
 
-      if (str_COUNTRY_FORBIDDEN_MASK == 0) str_allocate();
+      if (str_SSI_EXT_MASK == 0) str_allocate();
       }
 
-   virtual ~UGeoIPPlugIn();
+   virtual ~USSIPlugIn()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, USSIPlugIn)
+      }
 
    // define method VIRTUAL of class UServerPlugIn
 
    // Server-wide hooks
 
    virtual int handlerConfig(UFileConfig& cfg);
-   virtual int handlerInit();
 
    // Connection-wide hooks
 
-   virtual int handlerRead();
    virtual int handlerRequest();
-   virtual int handlerReset();
 
    // DEBUG
 
@@ -86,25 +101,16 @@ public:
 #endif
 
 protected:
-   uint32_t ipnum;
-   const char* org;
-   GeoIPRecord* gir;
-   char* domain_name;
-   GeoIPRegion* region;
-   GeoIP* gi[NUM_DB_TYPES];
-   const char* country_code;
-   const char* country_name;
-   int netspeed, country_id;
-   UString country_forbidden_mask;
-
-   static bool bGEOIP_CITY_EDITION_REV1;
-
-   bool checkCountryForbidden();
-   bool setCountryCode(const char* ipaddress);
+   time_t last_modified;
+   UString ssi_ext_mask, environment, docname, timefmt, errmsg;
+   bool use_size_abbrev;
 
 private:
-   UGeoIPPlugIn(const UGeoIPPlugIn&) : UServerPlugIn() {}
-   UGeoIPPlugIn& operator=(const UGeoIPPlugIn&)        { return *this; }
+   UString getInclude(       const UString& include, int include_level) U_NO_EXPORT;
+   UString processSSIRequest(const UString& content, int include_level) U_NO_EXPORT;
+
+   USSIPlugIn(const USSIPlugIn&) : UServerPlugIn() {}
+   USSIPlugIn& operator=(const USSIPlugIn&)        { return *this; }
 };
 
 #endif

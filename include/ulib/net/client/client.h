@@ -32,6 +32,7 @@
 class ULog;
 class UFileConfig;
 class UFCGIPlugIn;
+class USCGIPlugIn;
 
 class U_EXPORT UClient_Base {
 public:
@@ -244,6 +245,7 @@ private:
    UClient_Base& operator=(const UClient_Base&) { return *this; }
 
    friend class UFCGIPlugIn;
+   friend class USCGIPlugIn;
 };
 
 template <class Socket> class U_EXPORT UClient : virtual public UClient_Base {

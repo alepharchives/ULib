@@ -93,7 +93,7 @@ UHashMap<UModNoCatPeer*>* UNoCatPlugIn::peers;
 "<h1>Access Point: %s</h1>\n" \
 "<hr noshade=\"1\"/>\n" \
 "<table border=\"0\" cellpadding=\"5\" cellspacing=\"0\">\n" \
-   "<tr><td>Current Time</td><td>%#7D</td></tr>\n" \
+   "<tr><td>Current Time</td><td>%7D</td></tr>\n" \
    "<tr><td>Gateway Up Since</td><td>%#7D</td></tr>\n" \
    "<tr><td>GatewayVersion</td><td>" VERSION "</td></tr>\n" \
    "<tr><td>RouteOnly</td><td>%.*s</td></tr>\n" \
@@ -194,7 +194,7 @@ void UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
    buffer.snprintf("<tr>\n"
                      "<td>%.*s</td>\n"
                      "<td>%.*s</td>\n"
-                     "<td>%#7D</td>\n"
+                     "<td>%#D</td>\n"
                      "<td>%#3D</td>\n"
                      "<td>%#3D</td>\n"
                      "<td>%llu KBytes</td>\n"
@@ -231,7 +231,7 @@ void UNoCatPlugIn::setStatusContent(UModNoCatPeer* peer)
 
       const char* name = access_point.data();
 
-      buffer.snprintf(U_NOCAT_STATUS, name, name, u_now.tv_sec + u_now_adjust, u_start_time,
+      buffer.snprintf(U_NOCAT_STATUS, name, name, u_start_time + u_now_adjust,
                       U_STRING_TO_TRACE(vfwopt[0]), U_STRING_TO_TRACE(vfwopt[1]), U_STRING_TO_TRACE(vfwopt[2]),
                       U_STRING_TO_TRACE(vfwopt[3]), U_STRING_TO_TRACE(vfwopt[4]), U_STRING_TO_TRACE(vfwopt[5]),
                       U_STRING_TO_TRACE(vfwopt[6]), U_STRING_TO_TRACE(vfwopt[7]), U_STRING_TO_TRACE(vfwopt[8]),

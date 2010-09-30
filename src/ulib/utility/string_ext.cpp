@@ -72,6 +72,23 @@ UString UStringExt::pregReplace(const UString& pattern, const UString& replaceme
 }
 #endif
 
+UString UStringExt::numberToString(off_t n, bool abbrev)
+{
+   U_TRACE(0, "UStringExt::numberToString(%I,%b)", n, abbrev)
+
+   UString x(32U);
+
+   if (abbrev == false) x.snprintf("%I", n);
+   else
+      {
+      u_printSize(x.data(), n);
+
+      x.size_adjust();
+      }
+
+   U_RETURN_STRING(x);
+}
+
 UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
 {
    U_TRACE(1, "UStringExt::expandTab(%.*S,%u,%d)", n, s, n, tab)
@@ -849,6 +866,7 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 {
    U_TRACE(0, "UStringExt::getNameValueFromData(%.*S,%p,%.*S,%u)", U_STRING_TO_TRACE(content), &name_value, dlen, delim, dlen)
 
+   U_INTERNAL_ASSERT_POINTER(delim)
    U_ASSERT_EQUALS(content.empty(),false)
 
    // Parse the data in one fell swoop for efficiency

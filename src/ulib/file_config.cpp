@@ -25,7 +25,7 @@
 #endif
 
 UString* UFileConfig::str_yes;
-UString* UFileConfig::str_file;
+UString* UFileConfig::str_FILE;
 UString* UFileConfig::str_string;
 
 void UFileConfig::str_allocate()
@@ -33,7 +33,7 @@ void UFileConfig::str_allocate()
    U_TRACE(0, "UFileConfig::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_yes,0)
-   U_INTERNAL_ASSERT_EQUALS(str_file,0)
+   U_INTERNAL_ASSERT_EQUALS(str_FILE,0)
    U_INTERNAL_ASSERT_EQUALS(str_string,0)
 
    static ustringrep stringrep_storage[] = {
@@ -43,7 +43,7 @@ void UFileConfig::str_allocate()
    };
 
    U_NEW_ULIB_OBJECT(str_yes,    U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_file,   U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_FILE,   U_STRING_FROM_STRINGREP_STORAGE(1));
    U_NEW_ULIB_OBJECT(str_string, U_STRING_FROM_STRINGREP_STORAGE(2));
 }
 
@@ -280,7 +280,7 @@ bool UFileConfig::loadVector(UVector<UString>& vec, const char* name)
             {
             type = vtmp[i];
 
-            if (type == *str_file)
+            if (type == *str_FILE)
                {
                value = vtmp[++i];
 

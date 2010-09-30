@@ -62,13 +62,31 @@ void UCommand::freeEnvironment()
       }
 }
 
+void UCommand::reset(const UString* penv)
+{
+   U_TRACE(0, "UCommand::reset(%p)", penv)
+
+   freeEnvironment();
+
+   envp = 0;
+   nenv = 0;
+
+   if (penv) environment = *penv;
+   else
+      {
+      freeCommand();
+
+      ncmd = nfile = 0;
+      }
+}
+
 void UCommand::setCommand()
 {
    U_TRACE(0, "UCommand::setCommand()")
 
    U_ASSERT(command.empty() == false)
 
-   if (command.writeable() == false) command.duplicate();
+   command.duplicate();
 
    freeCommand();
 
@@ -128,15 +146,11 @@ void UCommand::setEnvironment(const UString* penv)
       }
    else
       {
-      flag_expand =  penv->find('$');
       environment = *penv;
 
-      if (flag_expand == U_NOT_FOUND)
-         {
-         if (environment.writeable() == false) environment.duplicate();
+      environment.duplicate();
 
-         setEnvironment(environment);
-         }
+      if ((flag_expand = penv->find('$')) == U_NOT_FOUND) setEnvironment(environment);
       }
 
    U_INTERNAL_DUMP("flag_expand = %u", flag_expand)
@@ -442,9 +456,9 @@ bool UCommand::execute(UString* input, UString* output, int fd_stdin, int fd_std
 
 // Return output of command
 
-void UCommand::outputCommand(UString& cmd, char** penv, UString* output, int fd_stdin, int fd_stderr, bool dialog)
+void UCommand::outputCommandWithDialog(const UString& cmd, char** penv, UString* output, int fd_stdin, int fd_stderr, bool dialog)
 {
-   U_TRACE(1, "UCommand::outputCommand(%.*S,%p,%p,%d,%d,%b)", U_STRING_TO_TRACE(cmd), penv, output, fd_stdin, fd_stderr, dialog)
+   U_TRACE(1, "UCommand::outputCommandWithDialog(%.*S,%p,%p,%d,%d,%b)", U_STRING_TO_TRACE(cmd), penv, output, fd_stdin, fd_stderr, dialog)
 
    U_INTERNAL_ASSERT_POINTER(output)
 
@@ -472,13 +486,13 @@ void UCommand::outputCommand(UString& cmd, char** penv, UString* output, int fd_
    if (postCommand(0, output) == false || exit_value) setMsgError(cmd.data());
 }
 
-UString UCommand::outputCommand(UString& cmd, char** penv, int fd_stdin, int fd_stderr)
+UString UCommand::outputCommand(const UString& cmd, char** penv, int fd_stdin, int fd_stderr)
 {
    U_TRACE(0, "UCommand::outputCommand(%.*S,%p,%d,%d)", U_STRING_TO_TRACE(cmd), penv, fd_stdin, fd_stderr)
 
    UString output(U_CAPACITY);
 
-   outputCommand(cmd, penv, &output, fd_stdin, fd_stderr, false);
+   outputCommandWithDialog(cmd, penv, &output, fd_stdin, fd_stderr, false);
 
    if (exit_value) printMsgError();
 

@@ -296,16 +296,16 @@ loop:
    U_RETURN(false);
 }
 
-ssize_t USocket::recv(int fd, void* buf, size_t len, int flags)
+ssize_t USocket::recv(int fd, void* buf, size_t len, int recv_flags)
 {
-   U_TRACE(1, "USocket::recv(%d,%p,%lu,%d)", fd, buf, len, flags)
+   U_TRACE(1, "USocket::recv(%d,%p,%lu,%d)", fd, buf, len, recv_flags)
 
    U_INTERNAL_ASSERT(fd != -1)
 
    ssize_t n;
 
 loop:
-   n = U_SYSCALL(recv, "%d,%p,%d,%d", fd, CAST(buf), len, flags);
+   n = U_SYSCALL(recv, "%d,%p,%d,%d", fd, CAST(buf), len, recv_flags);
 
    if (n == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
 #ifdef DEBUG

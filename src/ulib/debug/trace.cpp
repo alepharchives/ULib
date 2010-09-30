@@ -229,7 +229,7 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
                   int units;
                   double rate = u_calcRate(bytes_read_or_write, dltime, &units);
 
-                  iov[1].iov_len = sprintf(buffer_syscall, " (%7.2f%s)", rate, u_short_units[units]);
+                  iov[1].iov_len = sprintf(buffer_syscall, " (%7.2f%s/s)", rate, u_short_units[units]);
 
                   u_trace_writev(iov+1, 1);
                   }

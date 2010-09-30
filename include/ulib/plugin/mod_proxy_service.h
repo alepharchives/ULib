@@ -78,6 +78,7 @@ public:
    // SERVICES
 
    UCommand* command;
+   UString environment;
 
    static void              setMsgError(int err, UVector<UString>& vmsg_error);
    static UModProxyService* findService(const UString& host, const UString& method, UVector<UModProxyService*>& vservice);

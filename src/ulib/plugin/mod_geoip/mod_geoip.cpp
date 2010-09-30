@@ -259,6 +259,15 @@ int UGeoIPPlugIn::handlerRequest()
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
+int UGeoIPPlugIn::handlerReset()
+{
+   U_TRACE(0, "UGeoIPPlugIn::handlerReset()")
+
+   if (country_id || gir) UHTTP::penvironment->setEmpty();
+
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+}
+
 // DEBUG
 
 #ifdef DEBUG
