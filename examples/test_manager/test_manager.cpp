@@ -75,7 +75,7 @@ public:
       const char* exit_status;
       uint32_t exit_status_len;
       char path[U_PATH_MAX + 1];
-      int status, exit_value, n;
+      int status, _exit_value, n;
 
       UString id_key      = U_STRING_FROM_CONSTANT("ID"), id,
               env_key     = U_STRING_FROM_CONSTANT("ENVIRON"), env,
@@ -145,7 +145,7 @@ public:
                   print(0);
                   }
 
-               exit_value = EX_UNAVAILABLE;
+               _exit_value = EX_UNAVAILABLE;
                }
             else
                {
@@ -169,13 +169,13 @@ public:
 
                UProcess::waitpid(pid, &status, 0);
 
-               exit_value = UProcess::exitValue(status);
+               _exit_value = UProcess::exitValue(status);
                }
 
-            if (u_isNumber(U_STRING_TO_PARAM(result))) pass = (exit_value == result.strtol());
+            if (u_isNumber(U_STRING_TO_PARAM(result))) pass = (_exit_value == result.strtol());
             else
                {
-               exit_status = u_getExitStatus(exit_value, &exit_status_len);
+               exit_status = u_getExitStatus(_exit_value, &exit_status_len);
 
                pass = (memcmp(result.data(), exit_status, result.size()) == 0);
                }
@@ -196,7 +196,7 @@ public:
                                         "End   TestID <%W%s%W> - %WFAIL%W\n"
                                         "Expected exit code <%s>, returned <%d>\n\n",
                                         YELLOW, id.data(), RESET, RED, RESET,
-                                        result.c_str(), exit_value);
+                                        result.c_str(), _exit_value);
                }
 
             print(2);

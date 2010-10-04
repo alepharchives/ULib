@@ -877,24 +877,24 @@ bool UDSIGContext::processSignedInfoNode()
  * all descendents including namespaces and attributes -- but not comments.
  */
 
-bool UTransformCtx::setURI(const char* uri, xmlNodePtr node)
+bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
 {
-   U_TRACE(0, "UTransformCtx::setURI(%S,%p)", uri, node)
+   U_TRACE(0, "UTransformCtx::setURI(%S,%p)", _uri, node)
 
    /* check uri */
 
    int uriType = 0;
 
-   if (       uri  == 0 ||
-       strlen(uri) == 0)
+   if (       _uri  == 0 ||
+       strlen(_uri) == 0)
       {
       uriType = EMPTY;
       }
-   else if (uri[0] == '#')
+   else if (_uri[0] == '#')
       {
       uriType = SAME_DOCUMENT;
       }
-   else if (U_MEMCMP(uri, "file://") == 0)
+   else if (U_MEMCMP(_uri, "file://") == 0)
       {
       uriType = TYPE_LOCAL;
       }
@@ -911,26 +911,26 @@ bool UTransformCtx::setURI(const char* uri, xmlNodePtr node)
 
    /* do we have barename or full xpointer? */
 
-   const char* xptr = strchr(uri, '#');
+   const char* xptr = strchr(_uri, '#');
 
    if (xptr == NULL)
       {
-      UBaseTransform* uriTransform = U_NEW(UTranformInputURI(uri));
+      UBaseTransform* uriTransform = U_NEW(UTranformInputURI(_uri));
 
       chain.insert(0, uriTransform);
 
       U_RETURN(true);
       }
 
-   if (U_MEMCMP(uri, "#xpointer(/)") == 0)
+   if (U_MEMCMP(_uri, "#xpointer(/)") == 0)
       {
-      xptrExpr = uri;
+      xptrExpr = _uri;
 
       U_RETURN(true);
       }
 
    xptrExpr  = strdup(xptr);
-   this->uri = strndup(uri, xptr - uri);
+   this->uri = strndup(_uri, xptr - _uri);
 
    /* do we have barename or full xpointer? */
 

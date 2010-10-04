@@ -1534,7 +1534,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             unsigned char c = VA_ARG(int);
 
-            char* restrict base = bp;
+            char* restrict _base = bp;
 
             *bp++ = '\'';
 
@@ -1554,7 +1554,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             *bp++ = '\'';
 
-            ret += (bp - base);
+            ret += (bp - _base);
 
             continue;
             }
@@ -1562,7 +1562,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
          case 'S': /* print formatted           string */
          case 'O': /* print formatted temporary string + plus free(string) */
             {
-            char* restrict base = bp;
+            char* restrict _base = bp;
             int32_t h, maxlen, remaining;
 
             cp = VA_ARG(char* restrict);
@@ -1613,7 +1613,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                bp += 3;
                }
 
-            ret += (bp - base);
+            ret += (bp - _base);
 
 #        ifdef DEBUG
             if (ch == 'O') free(cp);

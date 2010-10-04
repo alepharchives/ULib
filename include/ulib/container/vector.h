@@ -734,23 +734,23 @@ public:
       return is;
       }
 
-   friend ostream& operator<<(ostream& os, const UVector<T*>& v)
+   friend ostream& operator<<(ostream& _os, const UVector<T*>& v)
       {
-      U_TRACE(0+256, "UVector<T*>::operator<<(%p,%p)", &os, &v)
+      U_TRACE(0+256, "UVector<T*>::operator<<(%p,%p)", &_os, &v)
 
-      os.put('(');
-      os.put(' ');
+      _os.put('(');
+      _os.put(' ');
 
       for (void** ptr = v.vec; ptr < (v.vec + v._length); ++ptr)
          {
-         os << *((T*)(*ptr));
+         _os << *((T*)(*ptr));
 
-         os.put(' ');
+         _os.put(' ');
          }
 
-      os.put(')');
+      _os.put(')');
 
-      return os;
+      return _os;
       }
 
 #ifdef DEBUG
@@ -934,17 +934,17 @@ public:
 
    // Check equality with an existing vector object
 
-   bool isEqual(UVector<UString>& vec, bool ignore_case = false)
+   bool isEqual(UVector<UString>& _vec, bool ignore_case = false)
       {
-      U_TRACE(0, "UVector<UString>::isEqual(%p,%b)", &vec, ignore_case)
+      U_TRACE(0, "UVector<UString>::isEqual(%p,%b)", &_vec, ignore_case)
 
       U_CHECK_MEMORY
 
       U_INTERNAL_DUMP("_length = %u", _length)
 
-      if (_length != vec.size()) U_RETURN(false);
+      if (_length != _vec.size()) U_RETURN(false);
 
-      return _isEqual(vec, ignore_case); 
+      return _isEqual(_vec, ignore_case); 
       }
 
    static int qscomp(const void* p, const void* q)

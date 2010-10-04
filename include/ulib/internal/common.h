@@ -41,8 +41,8 @@
    void* operator new(  size_t sz)  { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
    void* operator new[](size_t sz)  { return UMemoryPool::_malloc(sz); }
 #  define U_MEMORY_DEALLOCATOR \
-   void  operator delete(  void* ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push(ptr, U_SIZE_TO_STACK_INDEX(sz)); } \
-   void  operator delete[](void* ptr, size_t sz) { UMemoryPool::_free(ptr, sz); }
+   void  operator delete(  void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push(_ptr, U_SIZE_TO_STACK_INDEX(sz)); } \
+   void  operator delete[](void* _ptr, size_t sz) { UMemoryPool::_free(_ptr, sz); }
 
 #  define U_MALLOC(  sz)                     UMemoryPool::pop(      U_SIZE_TO_STACK_INDEX(sz))
 #  define U_FREE(ptr,sz)                     UMemoryPool::push(ptr, U_SIZE_TO_STACK_INDEX(sz))

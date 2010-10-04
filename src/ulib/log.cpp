@@ -47,9 +47,9 @@ ULog::~ULog()
    if (lock) delete lock;
 }
 
-bool ULog::open(uint32_t size, mode_t mode)
+bool ULog::open(uint32_t _size, mode_t mode)
 {
-   U_TRACE(0, "ULog::open(%u,%d)", size, mode)
+   U_TRACE(0, "ULog::open(%u,%d)", _size, mode)
 
    if (UFile::getPath() == U_STRING_FROM_CONSTANT("syslog"))
       {
@@ -67,11 +67,11 @@ bool ULog::open(uint32_t size, mode_t mode)
       {
       off_t file_size = 0;
 
-      if (size)
+      if (_size)
          {
          file_size = UFile::size();
 
-         if (UFile::ftruncate(size)                == false ||
+         if (UFile::ftruncate(_size)               == false ||
              UFile::memmap(PROT_READ | PROT_WRITE) == false)
             {
             goto end;
@@ -81,8 +81,8 @@ bool ULog::open(uint32_t size, mode_t mode)
       pthis = this;
       ptr  = U_MALLOC_TYPE(log_data);
 
-      LOG_ptr = LOG_page = (size ? (UFile::map + file_size)      : 0); // append mode...
-              file_limit = (size ? (UFile::map + UFile::st_size) : 0);
+      LOG_ptr = LOG_page = (_size ? (UFile::map + file_size)      : 0); // append mode...
+              file_limit = (_size ? (UFile::map + UFile::st_size) : 0);
 
       U_INTERNAL_ASSERT_EQUALS(lock,0)
 
@@ -384,7 +384,7 @@ void ULog::backup()
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* ULog::dump(bool reset) const
+const char* ULog::dump(bool _reset) const
 {
    UFile::dump(false);
 
@@ -411,7 +411,7 @@ const char* ULog::dump(bool reset) const
                   << "LOG_page                  " << ((void*)LOG_page)          << '\n'
                   */
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

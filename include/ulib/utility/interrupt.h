@@ -37,7 +37,7 @@ struct U_EXPORT UInterrupt {
    static RETSIGTYPE handlerInterrupt(int signo);
 
 #ifdef HAVE_SIGINFO_T
-   static RETSIGTYPE handlerInterruptWithInfo(int signo, siginfo_t* info, void*);
+   static RETSIGTYPE handlerInterruptWithInfo(int signo, siginfo_t* info, void*); // __attribute__ ((noreturn));
 #endif
 
    static sigset_t* mask_interrupt; // SIGALRM | SIGUSR[1|2] | SIGCHLD

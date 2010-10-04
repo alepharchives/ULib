@@ -91,14 +91,14 @@ public:
 
    // manage parts
 
-   void add(const UString& section)
+   void add(const UString& _section)
       {
-      U_TRACE(0, "UMimeMultipartMsg::add(%.*S)", U_STRING_TO_TRACE(section))
+      U_TRACE(0, "UMimeMultipartMsg::add(%.*S)", U_STRING_TO_TRACE(_section))
 
-   // U_ASSERT_EQUALS(section.find("MIME-Version: 1.0"),U_NOT_FOUND) /* con rfc822 si possono avere duplicazioni */
-      U_ASSERT_EQUALS(section.find(boundary+u_line_terminator_len),U_NOT_FOUND)
+   // U_ASSERT_EQUALS(_section.find("MIME-Version: 1.0"),U_NOT_FOUND) /* con rfc822 si possono avere duplicazioni */
+      U_ASSERT_EQUALS(_section.find(boundary+u_line_terminator_len),U_NOT_FOUND)
 
-      vec_part.push(section);
+      vec_part.push(_section);
       }
 
    uint32_t getNumPart() const            { return vec_part.size(); }

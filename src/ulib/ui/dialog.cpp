@@ -284,13 +284,16 @@ bool UDialog::inputsbox(int n, const char* text, const char* labels[], UVector<U
 {
    U_TRACE(0, "UDialog::inputsbox(%d,%S,%p,%p,%S)", n, text, labels, &init, title)
 
-   if (xdialog && n <=3)
+   int i;
+
+   if (xdialog &&
+       n <= 3)
       {
       if (argument.empty())
          {
          UString item(U_CAPACITY);
 
-         for (int i = 0; labels[i]; ++i)
+         for (i = 0; labels[i]; ++i)
             {
             item.snprintf(" \"%s\" \"%.*s\"", labels[i], U_STRING_TO_TRACE(init[i]));
 
@@ -302,7 +305,7 @@ bool UDialog::inputsbox(int n, const char* text, const char* labels[], UVector<U
          {
          UVector<UString> vec(output, '/');
 
-         for (uint32_t i = 0, n = vec.size(); i < n; ++i) init.replace(i, vec[i].copy());
+         for (i = 0, n = vec.size(); i < n; ++i) init.replace(i, vec[i].copy());
 
          U_RETURN(true);
          }
@@ -311,7 +314,7 @@ bool UDialog::inputsbox(int n, const char* text, const char* labels[], UVector<U
       {
       UString item;
 
-      for (uint32_t i = 0, n = init.size(); i < n; ++i)
+      for (i = 0, n = init.size(); i < n; ++i)
          {
          item = init[i];
 

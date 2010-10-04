@@ -139,7 +139,7 @@ UString UTimeStamp::createQuery(int alg, const UString& content, const char* pol
          {
          static unsigned char buffer[8]; // Length of the nonce of the request in bits (must be a multiple of 8)
 
-         ASN1_INTEGER* nonce = (ASN1_INTEGER*) U_SYSCALL_NO_PARAM(ASN1_INTEGER_new);
+         nonce = (ASN1_INTEGER*) U_SYSCALL_NO_PARAM(ASN1_INTEGER_new);
 
          nonce->data = buffer;
          }

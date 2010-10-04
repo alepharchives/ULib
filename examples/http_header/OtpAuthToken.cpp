@@ -119,13 +119,13 @@ OtpAuthToken::OtpAuthToken(CryptEngine* eng_, const UString& buf)
                   U_STRING_TO_TRACE(uid), U_STRING_TO_TRACE(sid), U_STRING_TO_TRACE(ts), U_STRING_TO_TRACE(cf), migrate, n, i)
 
 #  ifdef U_STD_STRING
-      char* ptr = (char*) ts.c_str();
+      char* _ptr = (char*) ts.c_str();
 #  else
-      char* ptr = ts.data();
+      char* _ptr = ts.data();
 #  endif
 
       static struct tm tm;
-      (void) U_SYSCALL(strptime, "%S,%S,%p", ptr, "%Y%m%d%H%M%S", &tm);
+      (void) U_SYSCALL(strptime, "%S,%S,%p", _ptr, "%Y%m%d%H%M%S", &tm);
       timestamp = U_SYSCALL(mktime, "%p", &tm);
       }
 }

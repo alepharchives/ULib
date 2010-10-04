@@ -248,7 +248,7 @@ public:
    // DEBUG
 
 #ifdef DEBUG
-   const char* dump(bool reset) const { return UClientImage_Base::dump(reset); }
+   const char* dump(bool _reset) const { return UClientImage_Base::dump(_reset); }
 #endif
 
 private:

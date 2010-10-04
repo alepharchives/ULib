@@ -1526,7 +1526,7 @@ loop:
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UFile::dump(bool reset) const
+const char* UFile::dump(bool _reset) const
 {
    *UObjectIO::os << "fd                        " << fd                  << '\n'
                   << "map                       " << (void*)map          << '\n'
@@ -1542,7 +1542,7 @@ const char* UFile::dump(bool reset) const
                   << "path_relativ_len          " << path_relativ_len     << '\n'
                   << "pathname (UString         " << (void*)&pathname     << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

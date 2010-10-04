@@ -72,9 +72,9 @@ public:
 
    // Initialization and termination methods
 
-   UObjectDumpable_Adapter(int level, const char* name_class, const Concrete* object) : UObjectDumpable(level, name_class, object)
+   UObjectDumpable_Adapter(int _level, const char* _name_class, const Concrete* object) : UObjectDumpable(_level, _name_class, object)
       {
-      U_INTERNAL_TRACE("UObjectDumpable_Adapter::UObjectDumpable_Adapter(%u,%s,%p)", level, name_class, object)
+      U_INTERNAL_TRACE("UObjectDumpable_Adapter::UObjectDumpable_Adapter(%u,%s,%p)", _level, _name_class, object)
 
       UObjectDumpable::size_object = (sizeof(Concrete) > sizeof(void*) ? sizeof(Concrete) - sizeof(void*) : 1); // - U_MEMORY_TEST...
 

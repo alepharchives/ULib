@@ -31,13 +31,13 @@ void UFlexer::test()
 
 #  include <ulib/internal/objectIO.h>
 
-const char* UFlexer::dump(bool reset) const
+const char* UFlexer::dump(bool _reset) const
 {
    *UObjectIO::os << "parsed_chars         " << parsed_chars   << '\n'
                   << "write_position       " << write_position << '\n'
                   << "data        (UString " << (void*)&data   << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

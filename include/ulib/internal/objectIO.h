@@ -79,11 +79,11 @@ template <class T> inline void* UObject2StringRep(T* object)
    return UObjectIO::create();
 }
 
-template <class T> inline uint32_t UObject2String(T& object, char* buffer, uint32_t buffer_size)
+template <class T> inline uint32_t UObject2String(T& object, char* _buffer, uint32_t buffer_size)
 {
-   U_INTERNAL_TRACE("UObject2String(%p,%p,%u)", &object, buffer, buffer_size)
+   U_INTERNAL_TRACE("UObject2String(%p,%p,%u)", &object, _buffer, buffer_size)
 
-   ostrstream _os(buffer, buffer_size);
+   ostrstream _os(_buffer, buffer_size);
 
    _os << object;
 

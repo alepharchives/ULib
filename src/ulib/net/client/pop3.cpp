@@ -56,11 +56,11 @@ U_NO_EXPORT const char* UPop3Client::status()
       default:                   descr2 = "???";                     break;
       }
 
-   static char buffer[128];
+   static char _buffer[128];
 
-   (void) sprintf(buffer, "%s - (%d, %s)", descr1, response, descr2);
+   (void) sprintf(_buffer, "%s - (%d, %s)", descr1, response, descr2);
 
-   U_RETURN(buffer);
+   U_RETURN(_buffer);
 }
 
 bool UPop3Client::connectServer(const UString& server, int port, uint32_t timeoutMS)
@@ -583,7 +583,7 @@ bool UPop3Client::quit()
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UPop3Client::dump(bool reset) const
+const char* UPop3Client::dump(bool _reset) const
 {
    Socket::dump(false);
 
@@ -596,7 +596,7 @@ const char* UPop3Client::dump(bool reset) const
                   << "capa            (UString      " << (void*)&capa    << ")\n"
                   << "buffer          (UString      " << (void*)&buffer  << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

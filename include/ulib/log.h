@@ -47,20 +47,20 @@ public:
       U_INTERNAL_ASSERT_EQUALS(ptr,0)
       }
 
-   ULog(const UString& path, uint32_t size = 1024 * 1024) : UFile(path)
+   ULog(const UString& path, uint32_t _size = 1024 * 1024) : UFile(path)
       {
-      U_TRACE_REGISTER_OBJECT(0, ULog, "%.*S,%u", U_STRING_TO_TRACE(path), size)
+      U_TRACE_REGISTER_OBJECT(0, ULog, "%.*S,%u", U_STRING_TO_TRACE(path), _size)
 
       U_INTERNAL_ASSERT_EQUALS(ptr,0)
 
-      (void) ULog::open(size);
+      (void) ULog::open(_size);
       }
 
    ~ULog();
 
    // VARIE
 
-   bool open(const UString& path, uint32_t size = 1024 * 1024, mode_t mode = 0664) { UFile::setPath(path); return ULog::open(size, mode); }
+   bool open(const UString& path, uint32_t _size = 1024 * 1024, mode_t mode = 0664) { UFile::setPath(path); return ULog::open(_size, mode); }
 
    static void init();
    static void close();

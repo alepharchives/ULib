@@ -283,9 +283,9 @@ void UCDB::makeAdd(char* src) // entry NON presenti nella cache...
    internal.ptr_cdb->nrecord++;
 }
 
-uint32_t UCDB::makeFinish(bool reset)
+uint32_t UCDB::makeFinish(bool _reset)
 {
-   U_TRACE(1+256, "UCDB::makeFinish(%b)", reset)
+   U_TRACE(1+256, "UCDB::makeFinish(%b)", _reset)
 
    U_INTERNAL_ASSERT_DIFFERS(UFile::map, MAP_FAILED)
 
@@ -355,9 +355,9 @@ uint32_t UCDB::makeFinish(bool reset)
          pos += hp[i].slots * sizeof(cdb_hash_table_slot);
 
          /*
-   #     ifdef DEBUG
+#     ifdef DEBUG
          if (hp[i].slots) U_INTERNAL_DUMP("hp[%3d] = { %u, %u }", i, hp[i].pos, hp[i].slots)
-   #     endif
+#     endif
          */
 
          U_INTERNAL_ASSERT(pos <= (uint32_t)st_size)
@@ -365,7 +365,7 @@ uint32_t UCDB::makeFinish(bool reset)
 
       U_INTERNAL_DUMP("nrecord = %u num_hash_slot = %u", nrecord, (pos - start_hash_table_slot) / sizeof(cdb_hash_table_slot))
 
-      if (reset) (void) U_SYSCALL(memset, "%p,%d,%u", eod, 0, pos - start_hash_table_slot);
+      if (_reset) (void) U_SYSCALL(memset, "%p,%d,%u", eod, 0, pos - start_hash_table_slot);
 
       for (i = 0; i < nrecord; ++i)
          {
@@ -421,14 +421,14 @@ void UCDB::callForAllEntry(vPFpc function)
    U_INTERNAL_ASSERT_MAJOR(UFile::st_size,0)
    U_INTERNAL_ASSERT_DIFFERS(UFile::map, MAP_FAILED)
 
-   char* ptr = start();
-   char* end = UCDB::end();
+   char* ptr  = start();
+   char* _end = UCDB::end();
 
-   U_INTERNAL_DUMP("ptr = %p end = %p", ptr, end)
+   U_INTERNAL_DUMP("ptr = %p end = %p", ptr, _end)
 
-   U_INTERNAL_ASSERT_MINOR(ptr,end)
+   U_INTERNAL_ASSERT_MINOR(ptr,_end)
 
-   while (ptr < end)
+   while (ptr < _end)
       {
       hr = (UCDB::cdb_record_header*) ptr;
 
@@ -451,12 +451,12 @@ void UCDB::callForAllEntryExt(vPFpc function)
    U_INTERNAL_ASSERT_DIFFERS(UFile::map, MAP_FAILED)
 
    char* ptr;
-   char* eof = UFile::eof();
-   slot      = (UCDB::cdb_hash_table_slot*) UCDB::end();
+   char* _eof = UFile::eof();
+   slot       = (UCDB::cdb_hash_table_slot*) UCDB::end();
 
    uint32_t pos;
 
-   while ((char*)slot < eof)
+   while ((char*)slot < _eof)
       {
       pos = u_get_unaligned(slot->pos);
 
@@ -488,16 +488,16 @@ void UCDB::getKeys(UVector<UString>& vec)
    U_INTERNAL_DUMP("nrecord = %u", nrecord)
 
    UStringRep* rep;
-   char* ptr = start();
-   char* end = UCDB::end();
+   char* ptr  = start();
+   char* _end = UCDB::end();
 
-   U_INTERNAL_DUMP("ptr = %p end = %p", ptr, end)
+   U_INTERNAL_DUMP("ptr = %p end = %p", ptr, _end)
 
-   U_INTERNAL_ASSERT_MINOR(ptr,end)
+   U_INTERNAL_ASSERT_MINOR(ptr,_end)
 
    uint32_t klen; // key length
 
-   while (ptr < end)
+   while (ptr < _end)
       {
       hr = (UCDB::cdb_record_header*) ptr;
 
@@ -686,9 +686,9 @@ fine:
 #define FNM_CASEFOLD 0x10 /* Case insensitive search. */
 #endif
 
-uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString& mask_key, uint32_t* size)
+uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString& mask_key, uint32_t* _size)
 {
-   U_TRACE(0, "UCDB::getValuesWithKeyNask(%p,%.*S,%p)", &vec_values, U_STRING_TO_TRACE(mask_key), size)
+   U_TRACE(0, "UCDB::getValuesWithKeyNask(%p,%.*S,%p)", &vec_values, U_STRING_TO_TRACE(mask_key), _size)
 
    U_INTERNAL_ASSERT_MAJOR(UFile::st_size,0)
    U_INTERNAL_ASSERT_DIFFERS(UFile::map, MAP_FAILED)
@@ -696,12 +696,12 @@ uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString&
    char* tmp;
    UStringRep* r;
 
-   char* ptr = start();
-   char* end = UCDB::end();
+   char* ptr  = start();
+   char* _end = UCDB::end();
 
-   U_INTERNAL_DUMP("ptr = %p end = %p", ptr, end)
+   U_INTERNAL_DUMP("ptr = %p end = %p", ptr, _end)
 
-   U_INTERNAL_ASSERT_MINOR(ptr,end)
+   U_INTERNAL_ASSERT_MINOR(ptr,_end)
 
    char* mask_data    = mask_key.data();
    uint32_t mask_size = mask_key.size(), n = vec_values.size();
@@ -711,7 +711,7 @@ uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString&
 
    if (ignore_case) u_pfn_flags |= FNM_CASEFOLD;
 
-   if (size) *size = 0;
+   if (_size) *_size = 0;
 
    while (true)
       {
@@ -728,17 +728,17 @@ uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString&
 
          r = UStringRep::create(tmp - dlen, dlen, 0U);
 
-         if (size) *size += dlen;
+         if (_size) *_size += dlen;
 
          vec_values.UVector<void*>::push(r);
          }
 
-      if (tmp >= end) break;
+      if (tmp >= _end) break;
 
       ptr = tmp;
       }
 
-   U_INTERNAL_ASSERT(tmp <= end)
+   U_INTERNAL_ASSERT(tmp <= _end)
 
    n = vec_values.size() - n;
 
@@ -1037,7 +1037,7 @@ bool UCDB::invariant()
 
 #  include <ulib/internal/objectIO.h>
 
-const char* UCDB::dump(bool reset) const
+const char* UCDB::dump(bool _reset) const
 {
    UFile::dump(false);
 
@@ -1059,7 +1059,7 @@ const char* UCDB::dump(bool reset) const
                   << "ignore_case               " << ignore_case    << '\n'
                   << "start_hash_table_slot     " << (void*)start_hash_table_slot;
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

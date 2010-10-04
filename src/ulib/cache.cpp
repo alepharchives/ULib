@@ -48,18 +48,18 @@ bool UCache::open(const UString& path, uint32_t size)
 
    U_CHECK_MEMORY
 
-   UFile x(path);
+   UFile _x(path);
    bool exist = false;
 
-   if (x.creat(O_RDWR))
+   if (_x.creat(O_RDWR))
       {
-      if (x.size()) exist = true;
-      else          (void) x.ftruncate(size);
+      if (_x.size()) exist = true;
+      else           (void) _x.ftruncate(size);
 
-      (void) x.memmap(PROT_READ | PROT_WRITE);
-             x.close();
+      (void) _x.memmap(PROT_READ | PROT_WRITE);
+             _x.close();
 
-      set(x.getMap());
+      set(_x.getMap());
 
       if (exist == false)
          {
@@ -383,7 +383,7 @@ U_EXPORT ostream& operator<<(ostream& os, const UCache& c)
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UCache::dump(bool reset) const
+const char* UCache::dump(bool _reset) const
 {
    *UObjectIO::os << "x      " << (void*)x       << '\n'
                   << "ttl    " << (void*)ttl     << '\n'
@@ -394,7 +394,7 @@ const char* UCache::dump(bool reset) const
                   << "oldest " << info->oldest   << '\n'
                   << "unused " << info->unused;
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

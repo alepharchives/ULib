@@ -115,7 +115,7 @@ U_NO_EXPORT int URingBuffer::min_pread()
 
    U_INTERNAL_ASSERT_POINTER(ptr)
 
-   int _avail, _readd_cnt = 0, min_pread = 0, min_avail = -1;
+   int _avail, _readd_cnt = 0, _min_pread = 0, min_avail = -1;
 
    for (int i = 0; i < FD_SETSIZE; ++i)
       {
@@ -125,15 +125,15 @@ U_NO_EXPORT int URingBuffer::min_pread()
 
          if (_avail > min_avail)
             {
-            min_avail = _avail;
-            min_pread = ptr->pread[i];
+             min_avail = _avail;
+            _min_pread = ptr->pread[i];
             }
 
          if (++_readd_cnt >= ptr->readd_cnt) break;
          }
       }
 
-   U_RETURN(min_pread);
+   U_RETURN(_min_pread);
 }
 
 #define U_RINGBUFFER_PKTHDRSIZE 2

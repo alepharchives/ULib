@@ -389,10 +389,8 @@ RETSIGTYPE UInterrupt::handlerInterruptWithInfo(int signo, siginfo_t* info, void
               CYAN, errlist[index], info->si_code, errlist[index+1], YELLOW);
 #  endif
       }
-   else
-      {
-      U_ABORT("program interrupt by kill(), sigsend() or raise() - %Y", signo);
-      }
+
+   U_ABORT("program interrupt by kill(), sigsend() or raise() - %Y", signo);
 }
 
 #endif

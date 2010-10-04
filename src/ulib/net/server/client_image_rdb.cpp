@@ -216,14 +216,14 @@ int URDBClientImage::handlerRead()
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* URDBClientImage::dump(bool reset) const
+const char* URDBClientImage::dump(bool _reset) const
 {
    UClientImage<UTCPSocket>::dump(false);
 
    *UObjectIO::os << '\n'
                   << "rdb             (URDB              " << (void*)rdb << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

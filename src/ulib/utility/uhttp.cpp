@@ -673,7 +673,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString& rbuffer, UString& body)
 
          // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
 
-         uint32_t count = 0;
+         count = 0;
 
          do { if (count++ > 5) U_RETURN(false); } while (USocketExt::read(s, rbuffer, U_SINGLE_READ, 3 * 1000)); // wait max 3 sec for other data...
 
@@ -2338,6 +2338,7 @@ void UHTTP::checkFileForCache()
 
    U_INTERNAL_DUMP("u_buffer(%u) = %.*S", u_buffer_len, u_buffer_len, u_buffer)
 
+   U_INTERNAL_ASSERT_POINTER(last_file)
    U_INTERNAL_ASSERT_EQUALS(u_buffer[0],'.')
    U_INTERNAL_ASSERT_POINTER(cache_file_mask)
    U_INTERNAL_ASSERT(IS_DIR_SEPARATOR(u_buffer[1]))
@@ -2345,15 +2346,20 @@ void UHTTP::checkFileForCache()
 
    if (u_dosmatch_with_OR(u_buffer+2, u_buffer_len-2, U_STRING_TO_PARAM(*cache_file_mask), 0))
       {
-      UString pathname((void*)(u_buffer+2), u_buffer_len-2);
+      (void) last_file->replace(u_buffer+2, u_buffer_len-2);
 
-      file->setPath(pathname);
+      file->setPath(*last_file);
 
       UString content = file->getContent(true, true); // NB: we need to do fstat() for Last-Modified: ...
 
-      if (content.empty()) return;
+      if (content.empty())
+         {
+         file_data = 0;
 
-      UFileCacheData* file_data = U_NEW(UFileCacheData);
+         return;
+         }
+
+      file_data = U_NEW(UFileCacheData);
 
       file_data->size  = file->getSize();
       file_data->mtime = file->st_mtime;
@@ -2399,15 +2405,16 @@ void UHTTP::checkFileForCache()
       if (content.size() > (32 * 1024) && // for major size it is better to use sendfile()...
           ratio          > 50)
          {
-         U_SRV_LOG_VAR("file not cached: %S - %I bytes - (%d%%) compressed ratio (size exceeded)", pathname.data(), file_data->size, 100 - ratio);
+         U_SRV_LOG_VAR("file not cached: %S - %I bytes - (%d%%) compressed ratio (size exceeded)", last_file->data(), file_data->size, 100 - ratio);
 
          delete file_data;
+                file_data = 0;
          }
       else
          {
-         cache_file->insert(pathname, file_data);
+         cache_file->insert(*last_file, file_data);
 
-         U_SRV_LOG_VAR("file cached: %S - %I bytes - (%d%%) compressed ratio", pathname.data(), file_data->size, 100 - ratio);
+         U_SRV_LOG_VAR("file cached: %S - %I bytes - (%d%%) compressed ratio", last_file->data(), file_data->size, 100 - ratio);
          }
       }
 }
@@ -2420,7 +2427,7 @@ void UHTTP::searchFileForCache()
    U_INTERNAL_ASSERT_EQUALS(cache_file,0)
    U_INTERNAL_ASSERT_POINTER(cache_file_mask)
 
-    last_file = U_NEW(UString(100U));
+    last_file = U_NEW(UString(U_CAPACITY));
    cache_file = U_NEW(UHashMap<UFileCacheData*>);
 
    cache_file->allocate();

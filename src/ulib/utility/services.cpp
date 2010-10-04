@@ -214,6 +214,10 @@ UString UServices::getUUID()
 #     define X509_STORE_set_flags(a,b)        0
 #     define ENGINE_load_public_key(a,b,c,d)  0
 #     define ENGINE_load_private_key(a,b,c,d) 0
+
+#     ifdef DEBUG
+#        define trace_sysreturn_type(a) trace_sysreturn_type(0)
+#     endif
 #  endif
 
 int         UServices::verify_depth;
@@ -656,3 +660,11 @@ bool UServices::checkHMAC(int alg, unsigned char* data, uint32_t size, const USt
 
    U_RETURN(result);
 }
+
+#ifdef HAVE_SSL
+#  if !defined(HAVE_OPENSSL_97) && !defined(HAVE_OPENSSL_98)
+#     ifdef DEBUG
+#        undef trace_sysreturn_type
+#     endif
+#  endif
+#endif

@@ -18,11 +18,11 @@
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UBison::dump(bool reset) const
+const char* UBison::dump(bool _reset) const
 {
    UFlexer::dump(false);
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

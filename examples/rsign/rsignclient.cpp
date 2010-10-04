@@ -77,9 +77,9 @@ public:
          {
          result = USOAPClient<T>::getResponse(); // Get the value of the element inside the response
 
-         UString buffer(result.size());
+         UString _buffer(result.size());
 
-         if (UBase64::decode(result, buffer)) U_RETURN_STRING(buffer);
+         if (UBase64::decode(result, _buffer)) U_RETURN_STRING(_buffer);
          }
 
       U_RETURN_STRING(result);

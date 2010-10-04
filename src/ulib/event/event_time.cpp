@@ -130,7 +130,7 @@ U_EXPORT ostream& operator<<(ostream& os, const UEventTime& t)
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UEventTime::dump(bool reset) const
+const char* UEventTime::dump(bool _reset) const
 {
    UTimeVal::dump(false);
 
@@ -139,7 +139,7 @@ const char* UEventTime::dump(bool reset) const
                                 << " "  << ctime.tv_usec
                                 << " }";
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

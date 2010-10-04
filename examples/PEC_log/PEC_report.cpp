@@ -1037,9 +1037,9 @@ void PEC_report::processFile(UStringRep* key, void* elem)
 {
    U_TRACE(5, "PEC_report::processFile(%.*S,%p)", U_STRING_TO_TRACE(*key), elem)
 
-   UString filename((UStringRep*)elem);
+   UString _filename((UStringRep*)elem);
 
-   file->setPath(filename);
+   file->setPath(_filename);
 
    U_MESSAGE("processing file <%s>...", file->getPathRelativ());
 
@@ -1071,15 +1071,15 @@ void PEC_report::processFiles()
 
    // NB: need duplicate string because depends on buffer content of filename...
 
-   UString filename((void*)(u_buffer+2), u_buffer_len-2);
+   UString _filename((void*)(u_buffer+2), u_buffer_len-2);
 
-   const char* ptr      = filename.c_str();
+   const char* ptr      = _filename.c_str();
    const char* basename = u_basename(ptr);
 
    // check for file name ends with...
 
    if (filter_ext &&
-       UStringExt::endsWith(filename, *filter_ext) == false)
+       UStringExt::endsWith(_filename, *filter_ext) == false)
       {
       U_WARNING("file <%s> skipped...", ptr);
 
@@ -1089,7 +1089,7 @@ void PEC_report::processFiles()
       }
 
    char buf[12];
-   UString key = filename;
+   UString key = _filename;
 
    if (rejected)
       {
@@ -1183,7 +1183,7 @@ void PEC_report::processFiles()
 
       (void) sprintf(buf, "%c%d", cnt[0], nfiles);
 
-      key = filename.substr(filename.distance(basename) + 5, 10) + buf;
+      key = _filename.substr(_filename.distance(basename) + 5, 10) + buf;
 
       U_INTERNAL_DUMP("key = %.*S", U_STRING_TO_TRACE(key))
       }
@@ -1192,9 +1192,9 @@ void PEC_report::processFiles()
       {
       bytes += file->st_size;
 
-   // processFile(filename.rep, filename.rep);
+   // processFile(_filename.rep, _filename.rep);
 
-      tfile->insert(key, filename);
+      tfile->insert(key, _filename);
       }
 }
 

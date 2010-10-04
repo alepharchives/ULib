@@ -161,27 +161,27 @@ public:
    function called to established a socket connection with the FTP network server
    */
 
-   bool connectServer(const UIPAddress& ip, int port = 21, uint32_t timeoutMS = U_TIMEOUT)
+   bool connectServer(const UIPAddress& ip, int _port = 21, uint32_t timeoutMS = U_TIMEOUT)
       {
-      U_TRACE(0, "UFtpClient::connectServer(%p,%d,%u)", &ip, port, timeoutMS)
+      U_TRACE(0, "UFtpClient::connectServer(%p,%d,%u)", &ip, _port, timeoutMS)
 
       if (USocket::isClosed()) USocket::socket(SOCK_STREAM);
 
-      bool result = USocket::connectServer(ip, port) && waitReady(timeoutMS);
+      bool result = USocket::connectServer(ip, _port) && waitReady(timeoutMS);
 
       U_RETURN(result);
       }
 
-   bool connectServer(const UString& server, int port = 21, uint32_t timeoutMS = U_TIMEOUT)
+   bool connectServer(const UString& server, int _port = 21, uint32_t timeoutMS = U_TIMEOUT)
       {
-      U_TRACE(0, "UFtpClient::connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
+      U_TRACE(0, "UFtpClient::connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), _port, timeoutMS)
 
 #  ifdef HAVE_SSL
       U_INTERNAL_ASSERT(Socket::isSSL())
       ((USSLSocket*)this)->setActive(false);
 #  endif
 
-      bool result = Socket::connectServer(server, port) && waitReady(timeoutMS);
+      bool result = Socket::connectServer(server, _port) && waitReady(timeoutMS);
 
       U_RETURN(result);
       }

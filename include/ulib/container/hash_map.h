@@ -173,38 +173,32 @@ public:
 
    // Ricerche
 
-   bool find(const UString& key)
+   bool find(const UString& _key)
       {
-      U_TRACE(0, "UHashMap<void*>::find(%.*S)", U_STRING_TO_TRACE(key))
+      U_TRACE(0, "UHashMap<void*>::find(%.*S)", U_STRING_TO_TRACE(_key))
 
-      lookup(key);
+      lookup(_key);
 
       U_RETURN(node != NULL);
       }
 
    // Set/get methods
 
-   void* operator[](const char* key)    { UStringRep keyr(key); return at(&keyr); }
-   void* operator[](const UString& key) {                       return at(key.rep); }
+   void* operator[](const char*    _key) { UStringRep keyr(_key); return at(&keyr); }
+   void* operator[](const UString& _key) {                        return at(_key.rep); }
 
    void*       elem() const { return node->elem; }
    UStringRep*  key() const { return node->key; }
 
    // dopo avere chiamato find() (non effettuano il lookup)
 
-   void  eraseAfterFind();
-   void insertAfterFind(const UString& key, void* elem);
-
-   void replaceAfterFind(void* elem)
+   void   eraseAfterFind();
+   void  insertAfterFind(const UString& key, void*  elem);
+   void replaceAfterFind(                    void* _elem)
       {
-      U_TRACE(0, "UHashMap<void*>::replaceAfterFind(%p)", elem)
+      U_TRACE(0, "UHashMap<void*>::replaceAfterFind(%p)", _elem)
 
-      // presuppone l'elemento da sostituire all'inizio della lista
-      // delle collisioni - lista self-organizing (move-to-front)...
-
-      U_INTERNAL_ASSERT_EQUALS(node, table[index])
-
-      node->elem = elem;
+      node->elem = _elem;
       }
 
    void* erase(const UString& key);
@@ -256,7 +250,7 @@ protected:
 
    void* at(UStringRep* keyr);
    void  lookup(UStringRep* keyr);
-   void  lookup(const UString& key) { return lookup(key.rep); }
+   void  lookup(const UString& _key) { return lookup(_key.rep); }
 
    void _callForAllEntrySorted(vPFprpv function);
 
@@ -285,13 +279,13 @@ public:
 
    // Inserimento e cancellazione elementi dalla tabella
 
-   T* erase(const UString& key)
-      { return (T*) UHashMap<void*>::erase(key); }
+   T* erase(const UString& _key)
+      { return (T*) UHashMap<void*>::erase(_key); }
 
    T* elem() const { return (T*) UHashMap<void*>::elem(); }
 
-   T* operator[](const char*    key) { return (T*) UHashMap<void*>::operator[](key); }
-   T* operator[](const UString& key) { return (T*) UHashMap<void*>::operator[](key); }
+   T* operator[](const char*    _key) { return (T*) UHashMap<void*>::operator[](_key); }
+   T* operator[](const UString& _key) { return (T*) UHashMap<void*>::operator[](_key); }
 
    void eraseAfterFind()
       {
@@ -304,45 +298,45 @@ public:
       UHashMap<void*>::eraseAfterFind();
       }
 
-   void insertAfterFind(const UString& key, void* elem)
+   void insertAfterFind(const UString& _key, void* _elem)
       {
-      U_TRACE(0, "UHashMap<T*>::insertAfterFind(%.*S,%p)", U_STRING_TO_TRACE(key), elem)
+      U_TRACE(0, "UHashMap<T*>::insertAfterFind(%.*S,%p)", U_STRING_TO_TRACE(_key), _elem)
 
-      u_construct<T>((T*)elem);
+      u_construct<T>((T*)_elem);
 
       if (node)
          {
          u_destroy<T>((T*)node->elem);
 
-         node->elem = elem;
+         node->elem = _elem;
          }
       else
          {
-         UHashMap<void*>::insertAfterFind(key, elem);
+         UHashMap<void*>::insertAfterFind(_key, _elem);
          }
       }
 
-   void replaceAfterFind(void* elem)
+   void replaceAfterFind(void* _elem)
       {
-      U_TRACE(0, "UHashMap<T*>::replaceAfterFind(%p)", elem)
+      U_TRACE(0, "UHashMap<T*>::replaceAfterFind(%p)", _elem)
 
       U_INTERNAL_ASSERT_POINTER(node)
 
-      u_construct<T>((T*)elem);
+      u_construct<T>((T*)_elem);
         u_destroy<T>((T*)node->elem);
 
-      UHashMap<void*>::replaceAfterFind(elem);
+      UHashMap<void*>::replaceAfterFind(_elem);
       }
 
    // Sets a field, overwriting any existing value
 
-   void insert(const UString& key, void* elem)
+   void insert(const UString& _key, void* _elem)
       {
-      U_TRACE(0, "UHashMap<T*>::insert(%.*S,%p)", U_STRING_TO_TRACE(key), elem)
+      U_TRACE(0, "UHashMap<T*>::insert(%.*S,%p)", U_STRING_TO_TRACE(_key), _elem)
 
-      UHashMap<void*>::lookup(key);
+      UHashMap<void*>::lookup(_key);
 
-      insertAfterFind(key, elem);
+      insertAfterFind(_key, _elem);
       }
 
    // Cancellazione tabella
@@ -357,8 +351,8 @@ public:
       int sum = 0, max = 0, min = 1024, width;
 #  endif
 
-      T* elem;
-      UHashMapNode* next;
+      T* _elem;
+      UHashMapNode* _next;
 
       for (index = 0; index < _capacity; ++index)
          {
@@ -376,14 +370,14 @@ public:
                ++width;
 #           endif
 
-               next =      node->next;
-               elem = (T*) node->elem;
+               _next  =     node->next;
+               _elem = (T*) node->elem;
 
-               u_destroy<T>(elem);
+               u_destroy<T>(_elem);
 
                delete node;
                }
-            while ((node = next));
+            while ((node = _next));
 
 #        ifdef DEBUG
             if (max < width) max = width;
@@ -405,7 +399,7 @@ public:
 
       U_INTERNAL_DUMP("_length = %u", _length)
 
-      T* elem;
+      T* _elem;
       UHashMapNode** ptr;
 
       for (index = 0; index < _capacity; ++index)
@@ -427,9 +421,9 @@ public:
                   {
                   *ptr = node->next; // lo si toglie dalla lista collisioni...
 
-                  elem = (T*) node->elem;
+                  _elem = (T*) node->elem;
 
-                  u_destroy<T>(elem);
+                  u_destroy<T>(_elem);
 
                   delete node;
 
@@ -458,22 +452,22 @@ public:
       clear();
       allocate(h._capacity);
 
-      T* elem;
+      T* _elem;
       UHashMapNode** ptr;
 
-      for (uint32_t index = 0; index < h._capacity; ++index)
+      for (uint32_t _index = 0; _index < h._capacity; ++_index)
          {
-         if (h.table[index])
+         if (h.table[_index])
             {
-            node = h.table[index];
-            ptr  = table + index;
+            node = h.table[_index];
+            ptr  = table + _index;
 
             do {
                *ptr = U_NEW(UHashMapNode(node, *ptr)); // lo si inserisce nella lista collisioni...
 
-               elem = (T*) (*ptr)->elem;
+               _elem = (T*) (*ptr)->elem;
 
-               u_construct<T>(elem);
+               u_construct<T>(_elem);
                }
             while ((node = node->next));
             }
@@ -519,21 +513,21 @@ public:
       UHashMap<UStringRep*>::replaceAfterFind(str.rep);
       }
 
-   void insert(const UString& key, const UString& str)
+   void insert(const UString& _key, const UString& str)
       {
-      U_TRACE(0, "UHashMap<UString>::insert(%.*S,%.*S)", U_STRING_TO_TRACE(key), U_STRING_TO_TRACE(str))
+      U_TRACE(0, "UHashMap<UString>::insert(%.*S,%.*S)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(str))
 
-      UHashMap<UStringRep*>::insert(key, str.rep);
+      UHashMap<UStringRep*>::insert(_key, str.rep);
 
-      _space += key.size() + str.size();
+      _space += _key.size() + str.size();
       }
 
    UString erase(const UString& key);
 
    // OPERATOR []
 
-   UString operator[](const char* key)    { UStringRep keyr(key); return at(&keyr); }
-   UString operator[](const UString& key) {                       return at(key.rep); }
+   UString operator[](const char*    _key) { UStringRep keyr(_key); return at(&keyr); }
+   UString operator[](const UString& _key) {                        return at(_key.rep); }
 
    // STREAMS
 

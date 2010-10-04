@@ -149,11 +149,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
    uint32_t i, n, distance, pos, size;
    UString token, name, value, pathname, include, directory, output(U_CAPACITY);
 
-#ifdef DEBUG // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
    (directory = UHTTP::getDirectoryURI()).duplicate();
-#else
-    directory = UHTTP::getDirectoryURI();
-#endif
 
    UTokenizer t(content);
    t.setGroup(U_CONSTANT_TO_PARAM("<!--->"));
@@ -441,11 +437,7 @@ int USSIPlugIn::handlerRequest()
       environment     = UHTTP::getCGIEnvironment() + *UHTTP::penvironment;
       use_size_abbrev = true;
 
-#  ifdef DEBUG // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
       (docname = UHTTP::getDocumentName()).duplicate();
-#  else
-       docname = UHTTP::getDocumentName();
-#  endif
 
       // read the SSI file
 

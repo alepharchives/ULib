@@ -19,13 +19,13 @@
 
 #include <limits.h>
 
-UValue::UValue(ValueType type)
+UValue::UValue(ValueType _type)
 {
-   U_TRACE_REGISTER_OBJECT(0, UValue, "%d", type)
+   U_TRACE_REGISTER_OBJECT(0, UValue, "%d", _type)
 
-   U_INTERNAL_ASSERT_RANGE(0,type,OBJECT_VALUE)
+   U_INTERNAL_ASSERT_RANGE(0,_type,OBJECT_VALUE)
 
-   switch ((type_ = type))
+   switch ((type_ = _type))
       {
       case BOOLEAN_VALUE: value.bool_ = false;                    break;
       case     INT_VALUE:
@@ -282,16 +282,16 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
    U_INTERNAL_ASSERT(type_ == OBJECT_VALUE || type_ == NULL_VALUE)
 
-   uint32_t n = members.size(), size = 0;
+   uint32_t n = members.size(), _size = 0;
 
    if (type_ != NULL_VALUE)
       {
       getObject()->getKeys(members);
 
-      size = members.size() - n;
+      _size = members.size() - n;
       }
 
-   U_RETURN(size);
+   U_RETURN(_size);
 }
 
 uint32_t UValue::size() const

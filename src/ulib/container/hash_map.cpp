@@ -42,8 +42,8 @@ void UHashMap<void*>::lookup(UStringRep* keyr)
       {
       if (node->key->equal(keyr, ignore_case))
          {
-         // lista self-organizing (move-to-front), antepongo
-         // l'elemento trovato all'inizio della lista delle collisioni...
+         /* lista self-organizing (move-to-front), antepongo l'elemento
+          * trovato all'inizio della lista delle collisioni...
 
          if (prev)
             {
@@ -53,6 +53,7 @@ void UHashMap<void*>::lookup(UStringRep* keyr)
             }
 
          U_INTERNAL_ASSERT_EQUALS(node,table[index])
+         */
 
          break;
          }
@@ -63,52 +64,52 @@ void UHashMap<void*>::lookup(UStringRep* keyr)
    U_INTERNAL_DUMP("node = %p", node)
 }
 
-void* UHashMap<void*>::erase(const UString& key)
+void* UHashMap<void*>::erase(const UString& _key)
 {
-   U_TRACE(0, "UHashMap<void*>::erase(%.*S)", U_STRING_TO_TRACE(key))
+   U_TRACE(0, "UHashMap<void*>::erase(%.*S)", U_STRING_TO_TRACE(_key))
 
-   lookup(key);
+   lookup(_key);
 
    if (node)
       {
-      void* elem = node->elem;
+      void* _elem = node->elem;
 
       eraseAfterFind();
 
-      U_RETURN(elem);
+      U_RETURN(_elem);
       }
 
    U_RETURN((void*)0);
 }
 
-void UHashMap<UString>::insertAfterFind(const UString& key, const UString& str)
+void UHashMap<UString>::insertAfterFind(const UString& _key, const UString& str)
 {
-   U_TRACE(0, "UHashMap<UString>::insertAfterFind(%.*S,%.*S)", U_STRING_TO_TRACE(key), U_STRING_TO_TRACE(str))
+   U_TRACE(0, "UHashMap<UString>::insertAfterFind(%.*S,%.*S)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(str))
 
-   UHashMap<UStringRep*>::insertAfterFind(key, str.rep);
+   UHashMap<UStringRep*>::insertAfterFind(_key, str.rep);
 }
 
 // OPERATOR []
 
-void* UHashMap<void*>::at(UStringRep* key)
+void* UHashMap<void*>::at(UStringRep* _key)
 {
-   U_TRACE(0, "UHashMap<void*>::at(%.*S)", U_STRING_TO_TRACE(*key))
+   U_TRACE(0, "UHashMap<void*>::at(%.*S)", U_STRING_TO_TRACE(*_key))
 
-   lookup(key);
+   lookup(_key);
 
    if (node)
       {
-      void* elem = node->elem;
+      void* _elem = node->elem;
 
-      U_RETURN(elem);
+      U_RETURN(_elem);
       }
 
    U_RETURN((void*)0);
 }
 
-void UHashMap<void*>::insertAfterFind(const UString& key, void* elem)
+void UHashMap<void*>::insertAfterFind(const UString& _key, void* _elem)
 {
-   U_TRACE(0, "UHashMap<void*>::insertAfterFind(%.*S,%p)", U_STRING_TO_TRACE(key), elem)
+   U_TRACE(0, "UHashMap<void*>::insertAfterFind(%.*S,%p)", U_STRING_TO_TRACE(_key), _elem)
 
    U_CHECK_MEMORY
 
@@ -116,7 +117,7 @@ void UHashMap<void*>::insertAfterFind(const UString& key, void* elem)
 
    // antepongo l'elemento all'inizio della lista delle collisioni
 
-   node = table[index] = U_NEW(UHashMapNode(key, elem, table[index], hash));
+   node = table[index] = U_NEW(UHashMapNode(_key, _elem, table[index], hash));
 
    ++_length;
 
@@ -127,8 +128,38 @@ void UHashMap<void*>::eraseAfterFind()
 {
    U_TRACE(0, "UHashMap<void*>::eraseAfterFind()")
 
-   // presuppone l'elemento da cancellare all'inizio della lista
-   // delle collisioni - lista self-organizing (move-to-front)...
+   U_INTERNAL_DUMP("node = %p", node)
+
+   UHashMapNode* prev = 0;
+
+   for (UHashMapNode* pnode = table[index]; pnode; pnode = pnode->next)
+      {
+      if (pnode == node)
+         {
+         /* lista self-organizing (move-to-front), antepongo l'elemento
+          * trovato all'inizio della lista delle collisioni...
+          */
+
+         if (prev)
+            {
+            prev->next   = pnode->next;
+            pnode->next  = table[index];
+            table[index] = pnode;
+            }
+
+         U_INTERNAL_ASSERT_EQUALS(node,table[index])
+
+         break;
+         }
+
+      prev = pnode;
+      }
+
+   U_INTERNAL_DUMP("prev = %p", prev)
+
+   /* presuppone l'elemento da cancellare all'inizio della lista
+    * delle collisioni - lista self-organizing (move-to-front)...
+    */
 
    U_INTERNAL_ASSERT_EQUALS(node,table[index])
 
@@ -155,7 +186,7 @@ void UHashMap<void*>::reserve(uint32_t n)
 
    // inserisco i vecchi elementi
 
-   UHashMapNode* next;
+   UHashMapNode* _next;
 
    for (uint32_t i = 0; i < old_capacity; ++i)
       {
@@ -164,8 +195,8 @@ void UHashMap<void*>::reserve(uint32_t n)
          node = old_table[i];
 
          do {
-            next  = node->next;
-            index = node->hash % _capacity;
+            _next  = node->next;
+            index  = node->hash % _capacity;
 
             U_INTERNAL_DUMP("i = %u index = %u hash = %u", i, index, node->hash)
 
@@ -174,7 +205,7 @@ void UHashMap<void*>::reserve(uint32_t n)
             node->next   = table[index];
             table[index] = node;
             }
-         while ((node = next));
+         while ((node = _next));
          }
       }
 
@@ -232,7 +263,7 @@ void UHashMap<void*>::callForAllEntry(vPFprpv function)
 #endif
 
    UHashMapNode* n;
-   UHashMapNode* next;
+   UHashMapNode* _next;
 
    for (uint32_t i = 0; i < _capacity; ++i)
       {
@@ -250,7 +281,7 @@ void UHashMap<void*>::callForAllEntry(vPFprpv function)
             ++width;
 #     endif
 
-            next = n->next; // NB: function can delete the node...
+            _next = n->next; // NB: function can delete the node...
 
             function(n->key, n->elem);
 
@@ -261,7 +292,7 @@ void UHashMap<void*>::callForAllEntry(vPFprpv function)
                return;
                }
             }
-         while ((n = next));
+         while ((n = _next));
 
 #     ifdef DEBUG
          if (max < width) max = width;
@@ -328,11 +359,11 @@ void UHashMap<void*>::_callForAllEntrySorted(vPFprpv function)
 
 // specializzazione stringa
 
-UString UHashMap<UString>::erase(const UString& key)
+UString UHashMap<UString>::erase(const UString& _key)
 {
-   U_TRACE(0, "UHashMap<UString>::erase(%.*S)", U_STRING_TO_TRACE(key))
+   U_TRACE(0, "UHashMap<UString>::erase(%.*S)", U_STRING_TO_TRACE(_key))
 
-   UHashMap<void*>::lookup(key);
+   UHashMap<void*>::lookup(_key);
 
    if (node)
       {
@@ -348,11 +379,11 @@ UString UHashMap<UString>::erase(const UString& key)
 
 // OPERATOR []
 
-UString UHashMap<UString>::at(UStringRep* key)
+UString UHashMap<UString>::at(UStringRep* _key)
 {
-   U_TRACE(0, "UHashMap<UString>::at(%.*S)", U_STRING_TO_TRACE(*key))
+   U_TRACE(0, "UHashMap<UString>::at(%.*S)", U_STRING_TO_TRACE(*_key))
 
-   UHashMap<void*>::lookup(key);
+   UHashMap<void*>::lookup(_key);
 
    if (node)
       {

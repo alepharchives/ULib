@@ -93,16 +93,16 @@ public:
 
    // OPERATION
 
-   void add(const UString& _key, const UString& _data, uint32_t ttl = 0)
+   void add(const UString& _key, const UString& _data, uint32_t _ttl = 0)
       {
-      U_TRACE(1, "UCache::add(%.*S,%.*S,%u)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(_data), ttl)
+      U_TRACE(1, "UCache::add(%.*S,%.*S,%u)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(_data), _ttl)
 
       const char*  key =  _key.data();
       const char* data = _data.data();
       uint32_t keylen  =  _key.size(),
                datalen = _data.size();
 
-      char* ptr = add(key, keylen, datalen, ttl);
+      char* ptr = add(key, keylen, datalen, _ttl);
 
       (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr,           key,  keylen);
       (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr + keylen, data, datalen);

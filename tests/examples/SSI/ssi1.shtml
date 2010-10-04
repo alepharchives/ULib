@@ -1,0 +1,8 @@
+<html><pre>
+ssi_begin
+This page last updated: <!--#echo var="LAST_MODIFIED" -->
+</pre>
+<!--#include file="ssi2.shtml" -->
+<pre>
+ssi_end
+</pre></html>

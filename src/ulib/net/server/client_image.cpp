@@ -486,7 +486,7 @@ int UClientImage_Base::handlerWrite()
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UClientImage_Base::dump(bool reset) const
+const char* UClientImage_Base::dump(bool _reset) const
 {
    *UObjectIO::os << "bIPv6                              " << bIPv6                 << '\n'
                   << "write_off                          " << write_off             << '\n'
@@ -499,7 +499,7 @@ const char* UClientImage_Base::dump(bool reset) const
                   << "clientAddress   (UIPAddress        " << (void*)clientAddress  << ")\n"
                   << "pClientImage    (UClientImage_Base " << (void*)pClientImage   << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 
@@ -510,14 +510,14 @@ const char* UClientImage_Base::dump(bool reset) const
 }
 
 #ifdef HAVE_SSL
-const char* UClientImage<USSLSocket>::dump(bool reset) const
+const char* UClientImage<USSLSocket>::dump(bool _reset) const
 {
    UClientImage_Base::dump(false);
 
    *UObjectIO::os << '\n'
                   << "ssl                                " << (void*)ssl;
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

@@ -154,16 +154,16 @@ bool UZIP::extract(const UString* _tmpdir, bool bdir)
    U_RETURN(false);
 }
 
-bool UZIP::extract(const UString& data, const UString* tmpdir, bool bdir)
+bool UZIP::extract(const UString& data, const UString* _tmpdir, bool bdir)
 {
-   U_TRACE(0, "UZIP::extract(%.*S,%p,%b)", U_STRING_TO_TRACE(data), tmpdir, bdir)
+   U_TRACE(0, "UZIP::extract(%.*S,%p,%b)", U_STRING_TO_TRACE(data), _tmpdir, bdir)
 
    U_INTERNAL_ASSERT_EQUALS(valid,false)
 
    if (U_STRNEQ(data.data(), U_ZIP_ARCHIVE))
       {
       content = data;
-      valid   = extract(tmpdir, bdir);
+      valid   = extract(_tmpdir, bdir);
       }
 
    U_RETURN(valid);

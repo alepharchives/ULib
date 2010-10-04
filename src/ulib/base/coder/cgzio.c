@@ -229,10 +229,10 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
 
       if ((flags & EXTRA_FIELD) != 0)
          {
-         unsigned len  =  (unsigned)*ptr++;
-                  len |= ((unsigned)*ptr++) << 8;
+         unsigned _len  =  (unsigned)*ptr++;
+                  _len |= ((unsigned)*ptr++) << 8;
 
-         input += len;
+         input += _len;
          }
 
       if ((flags & ORIG_NAME) != 0) while (*ptr++ != '\0') {} /* Discard file name if any */

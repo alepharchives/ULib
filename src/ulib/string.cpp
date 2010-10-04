@@ -56,9 +56,9 @@ union uustring {
 static uustring uustringnull  = { &empty_string_storage };
 UString* UString::string_null = uustringnull.p2;
 
-void UStringRep::set(uint32_t length, uint32_t capacity, const char* ptr)
+void UStringRep::set(uint32_t __length, uint32_t __capacity, const char* ptr)
 {
-   U_TRACE(0, "UStringRep::set(%u,%u,%p)", length, capacity, ptr)
+   U_TRACE(0, "UStringRep::set(%u,%u,%p)", __length, __capacity, ptr)
 
 #ifdef DEBUG
    U_SET_LOCATION_INFO; U_REGISTER_OBJECT_PTR(0, UStringRep, this)
@@ -70,8 +70,8 @@ void UStringRep::set(uint32_t length, uint32_t capacity, const char* ptr)
    child        = 0;
 #  endif
 #endif
-   _length      = length;
-   _capacity    = capacity; // [0 const | -1 mmap]...
+   _length      = __length;
+   _capacity    = __capacity; // [0 const | -1 mmap]...
    references   = 0;
    str          = ptr;
 }
@@ -784,16 +784,16 @@ end:
    return *this;
 }
 
-void UString::duplicate(uint32_t space) const
+void UString::duplicate(uint32_t _space) const
 {
-   U_TRACE(0, "UString::duplicate(%u)", space)
+   U_TRACE(0, "UString::duplicate(%u)", _space)
 
 // NB: it is not only for a substring...
 // U_INTERNAL_ASSERT(rep->_capacity == 0) // [0 const | -1 mmap]...
 
    uint32_t sz = size();
 
-   UStringRep* r = (sz > 0 ? UStringRep::create(sz, sz + space, rep->str)
+   UStringRep* r = (sz > 0 ? UStringRep::create(sz, sz + _space, rep->str)
                            : UStringRep::create(0U,       100U,        0));
 
    ((UString*)this)->set(r);
@@ -1214,12 +1214,7 @@ float UStringRep::strtof() const
 
    if (size())
       {
-      if (writeable())
-         {
-         char* str = data();
-
-         str[_length] = '\0';
-         }
+      if (writeable()) data()[_length] = '\0';
 
       float result = ::strtof(str, 0);
 
@@ -1239,12 +1234,7 @@ double UStringRep::strtod() const
 
    if (size())
       {
-      if (writeable())
-         {
-         char* str = data();
-
-         str[_length] = '\0';
-         }
+      if (writeable()) data()[_length] = '\0';
 
       double result = ::strtod(str, 0);
 
@@ -1266,12 +1256,7 @@ long double UStringRep::strtold() const
 
    if (size())
       {
-      if (writeable())
-         {
-         char* str = data();
-
-         str[_length] = '\0';
-         }
+      if (writeable()) data()[_length] = '\0';
 
       long double result = ::strtold(str, 0);
 
@@ -1370,29 +1355,29 @@ void UStringRep::write(ostream& os) const
 {
    U_TRACE(0, "UStringRep::write(%p)", &os)
 
-   char* s   = data();
-   char* end = s + _length;
+   char* s    = data();
+   char* _end = s + _length;
 
-   while (s < end)
+   while (s < _end)
       {
       if (strchr(" \"\\\n\r\t\b", *s)) break;
 
       ++s;
       }
 
-   if (s < end ||
+   if (s < _end ||
        _length == 0) // need quote
       {
       char* p;
 
       os.put('"');
 
-      s   = data();
-      end = s + _length;
+      s    = data();
+      _end = s + _length;
 
-      while (s < end)
+      while (s < _end)
          {
-         p = (char*) memchr(s, '"', end - s);
+         p = (char*) memchr(s, '"', _end - s);
 
          if (p)
             {
@@ -1405,7 +1390,7 @@ void UStringRep::write(ostream& os) const
             }
          else
             {
-            os.write(s, end - s);
+            os.write(s, _end - s);
 
             break;
             }

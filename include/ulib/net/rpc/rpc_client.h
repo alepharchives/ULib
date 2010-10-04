@@ -58,7 +58,7 @@ public:
       }
 
 #ifdef DEBUG
-   const char* dump(bool reset) const { return UClient<Socket>::dump(reset); }
+   const char* dump(bool _reset) const { return UClient<Socket>::dump(_reset); }
 #endif
 
 private:

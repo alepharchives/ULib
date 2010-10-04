@@ -439,7 +439,7 @@ protected:
       }
 
 #  ifdef DEBUG
-   const char* dump(bool reset) const { return UEventTime::dump(reset); }
+   const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
 #  endif
 
    private:

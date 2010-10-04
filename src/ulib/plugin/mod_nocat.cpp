@@ -30,7 +30,9 @@
 #  include <ulib/replace/strstream.h>
 #endif
 
-#include <limits.h>
+#ifndef   ULLONG_MAX
+#  define ULLONG_MAX 0xffffffffffffffffULL
+#endif
 
 U_CREAT_FUNC(UNoCatPlugIn)
 
@@ -194,7 +196,7 @@ void UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
    buffer.snprintf("<tr>\n"
                      "<td>%.*s</td>\n"
                      "<td>%.*s</td>\n"
-                     "<td>%#D</td>\n"
+                     "<td>%#7D</td>\n"
                      "<td>%#3D</td>\n"
                      "<td>%#3D</td>\n"
                      "<td>%llu KBytes</td>\n"
@@ -231,7 +233,7 @@ void UNoCatPlugIn::setStatusContent(UModNoCatPeer* peer)
 
       const char* name = access_point.data();
 
-      buffer.snprintf(U_NOCAT_STATUS, name, name, u_start_time + u_now_adjust,
+      buffer.snprintf(U_NOCAT_STATUS, name, name, u_start_time,
                       U_STRING_TO_TRACE(vfwopt[0]), U_STRING_TO_TRACE(vfwopt[1]), U_STRING_TO_TRACE(vfwopt[2]),
                       U_STRING_TO_TRACE(vfwopt[3]), U_STRING_TO_TRACE(vfwopt[4]), U_STRING_TO_TRACE(vfwopt[5]),
                       U_STRING_TO_TRACE(vfwopt[6]), U_STRING_TO_TRACE(vfwopt[7]), U_STRING_TO_TRACE(vfwopt[8]),
@@ -1570,7 +1572,7 @@ end:
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UModNoCatPeer::dump(bool reset) const
+const char* UModNoCatPeer::dump(bool _reset) const
 {
    *UObjectIO::os << "status                " << status         <<  '\n'
                   << "expire                " << expire         <<  '\n'
@@ -1587,7 +1589,7 @@ const char* UModNoCatPeer::dump(bool reset) const
                   << "ifname    (UString    " << (void*)&ifname << ")\n"
                   << "cmd       (UCommand   " << (void*)&cmd    << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 
@@ -1597,7 +1599,7 @@ const char* UModNoCatPeer::dump(bool reset) const
    return 0;
 }
 
-const char* UNoCatPlugIn::dump(bool reset) const
+const char* UNoCatPlugIn::dump(bool _reset) const
 {
    *UObjectIO::os << "nfds                                        " << nfds                      <<  '\n'
                   << "vaddr                                       " << (void*)vaddr              <<  '\n' 
@@ -1636,7 +1638,7 @@ const char* UNoCatPlugIn::dump(bool reset) const
                   << "vInternalDevice   (UVector<UString>         " << (void*)&vInternalDevice   << ")\n"
                   << "peers             (UHashMap<UModNoCatPeer*> " << (void*)peers              << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

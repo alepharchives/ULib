@@ -297,14 +297,14 @@ public:
 
       archiveTimeStamp.snprintf(U_XADES_ARCHIVE_TIMESTAMP_TEMPLATE, U_STRING_TO_TRACE(token));
 
-      UString output = UStringExt::substitute(content,
+      UString _output = UStringExt::substitute(content,
                              U_CONSTANT_TO_PARAM("        </xades:UnsignedSignatureProperties>"),
                              U_STRING_TO_PARAM(archiveTimeStamp));
 
       // ---------------------------------------------------------------------------------------------------------------
       // check for OOffice or MS-Word document...
       // ---------------------------------------------------------------------------------------------------------------
-      utility.outputDocument(output);
+      utility.outputDocument(_output);
       // ---------------------------------------------------------------------------------------------------------------
       }
 

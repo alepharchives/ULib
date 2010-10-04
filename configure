@@ -25289,7 +25289,7 @@ fi
 			2-4.0-4)
 			;;
 			*)
-				MAYBE_FLAGS="$MAYBE_FLAGS -flto -Wno-unused-result"
+			MAYBE_FLAGS="$MAYBE_FLAGS -Ofast -flto -Wno-unused-result -Wshadow -Wsuggest-attribute=const -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn"
 			;;
 		esac
 	fi

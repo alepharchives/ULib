@@ -92,11 +92,11 @@ public:
 
       U_INTERNAL_DUMP("pwrite = %d pread[%d] = %d", ptr->pwrite, readd, ptr->pread[readd])
 
-      int avail = ptr->pwrite - ptr->pread[readd];
+      int _avail = ptr->pwrite - ptr->pread[readd];
 
-      if (avail < 0) avail += size;
+      if (_avail < 0) _avail += size;
 
-      U_RETURN(avail);
+      U_RETURN(_avail);
       }
 
    /**

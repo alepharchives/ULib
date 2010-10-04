@@ -1415,9 +1415,9 @@ U_NO_EXPORT void UPosting::printDocName(UStringRep* doc_id, UStringRep* doc_name
 {
    U_TRACE(5, "UPosting::printDocName(%.*S,%.*S)", U_STRING_TO_TRACE(*doc_id), U_STRING_TO_TRACE(*doc_name))
 
-   char buffer[20];
+   char _buffer[20];
 
-   os->write(buffer, u_snprintf(buffer, sizeof(buffer), "%llX ", *((uint64_t*)(doc_id->data()))));
+   os->write(_buffer, u_snprintf(_buffer, sizeof(_buffer), "%llX ", *((uint64_t*)(doc_id->data()))));
 
    doc_name->write(*os);
 
@@ -1458,7 +1458,7 @@ void UPosting::printDB(ostream& s)
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UPosting::dump(bool reset) const
+const char* UPosting::dump(bool _reset) const
 {
    *UObjectIO::os << "pos                                     " << pos                          << '\n'
                   << "ptr                                     " << (void*)ptr                   << '\n'
@@ -1490,7 +1490,7 @@ const char* UPosting::dump(bool reset) const
                   << "str_cur_doc_id       (UString           " << (void*)str_cur_doc_id        << ")\n"
                   << "vec_sub_word_posting (UVector<UString>  " << (void*)vec_sub_word_posting  << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

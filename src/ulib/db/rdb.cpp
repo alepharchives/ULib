@@ -473,11 +473,11 @@ UString URDB::print()
 
    U_CHECK_MEMORY
 
-   uint32_t size = UFile::st_size + RDB_off;
+   uint32_t _size = UFile::st_size + RDB_off;
 
-   U_INTERNAL_DUMP("size = %u", size)
+   U_INTERNAL_DUMP("size = %u", _size)
 
-   if (size)
+   if (_size)
       {
       lock.lock();
 
@@ -485,7 +485,7 @@ UString URDB::print()
 
       UCDB::setCDB(0);
 
-      UString buffer(size);
+      UString buffer(_size);
 
       UCDB::pbuffer = &buffer;
 
@@ -656,13 +656,13 @@ UString URDB::printSorted()
 
    U_CHECK_MEMORY
 
-   uint32_t size = UFile::st_size + RDB_off;
+   uint32_t _size = UFile::st_size + RDB_off;
 
-   U_INTERNAL_DUMP("size = %u", size)
+   U_INTERNAL_DUMP("size = %u", _size)
 
-   if (size)
+   if (_size)
       {
-      UString buffer(size);
+      UString buffer(_size);
 
       U_INTERNAL_DUMP("UCDB::nrecord = %u RDB_lrecord = %u", UCDB::nrecord, RDB_lrecord)
 
@@ -687,9 +687,9 @@ UString URDB::printSorted()
 
          if (fetch())
             {
-            size = u_snprintf(tmp, sizeof(tmp), "+%u,%u:", key.dsize, data.dsize);
+            _size = u_snprintf(tmp, sizeof(tmp), "+%u,%u:", key.dsize, data.dsize);
 
-            buffer.append(tmp, size);
+            buffer.append(tmp, _size);
             buffer.append((const char*) key.dptr, key.dsize);
             buffer.append(U_CONSTANT_TO_PARAM("->"));
             buffer.append((const char*)data.dptr, data.dsize);
@@ -730,18 +730,18 @@ inline bool URDB::resizeJournal(char* ptr)
 
    U_CHECK_MEMORY
 
-   off_t     size = (journal.st_size / 2),
+   off_t    _size = (journal.st_size / 2),
          oversize = (ptr - RDB_eof);
 
-   if (oversize < size) oversize = size;
+   if (oversize < _size) oversize = _size;
 
    U_INTERNAL_DUMP("oversize = %ld", oversize)
 
 // msync();
 
-   uint32_t offset = (char*)pnode - journal.map;
+   uint32_t _offset = (char*)pnode - journal.map;
 
-   U_INTERNAL_DUMP("pnode = %p node = %u offset = %u", pnode, node, offset)
+   U_INTERNAL_DUMP("pnode = %p node = %u offset = %u", pnode, node, _offset)
 
 #if defined(__CYGWIN__) || defined(__MINGW32__)
    journal.munmap(); // for ftruncate()...
@@ -757,9 +757,9 @@ inline bool URDB::resizeJournal(char* ptr)
 
       U_INTERNAL_DUMP("RDB_size = %u", RDB_size)
 
-      pnode = (uint32_t*)(journal.map + offset);
+      pnode = (uint32_t*)(journal.map + _offset);
 
-      U_INTERNAL_DUMP("pnode = %p node = %u offset = %u", pnode, node, offset)
+      U_INTERNAL_DUMP("pnode = %p node = %u offset = %u", pnode, node, _offset)
 
       U_RETURN(true);
       }
@@ -788,13 +788,13 @@ inline bool URDB::resizeJournal(char* ptr)
    U_RETURN(false);
 }
 
-U_NO_EXPORT bool URDB::writev(const struct iovec* iov, int n, uint32_t size)
+U_NO_EXPORT bool URDB::writev(const struct iovec* iov, int n, uint32_t _size)
 {
-   U_TRACE(0, "URDB::writev(%p,%d,%u)", iov, n, size)
+   U_TRACE(0, "URDB::writev(%p,%d,%u)", iov, n, _size)
 
-   U_INTERNAL_ASSERT_MAJOR(size,0)
+   U_INTERNAL_ASSERT_MAJOR(_size,0)
 
-   char* ptr = RDB_ptr_off + size + (sizeof(URDB::cache_node) * 2);
+   char* ptr = RDB_ptr_off + _size + (sizeof(URDB::cache_node) * 2);
 
    if (ptr > RDB_eof &&
        resizeJournal(ptr) == false)
@@ -1195,7 +1195,7 @@ U_EXPORT ostream& operator<<(ostream& os, URDB& rdb)
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* URDB::dump(bool reset) const
+const char* URDB::dump(bool _reset) const
 {
    UCDB::dump(false);
 
@@ -1205,7 +1205,7 @@ const char* URDB::dump(bool reset) const
                   << "lock    (ULock            " << (void*)&lock    << ")\n"
                   << "journal (UFile            " << (void*)&journal << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

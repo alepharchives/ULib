@@ -23,12 +23,12 @@ public:
 
    // Costruttori e distruttore
 
-   UTree(void* elem = 0, void* parent = 0, uint32_t n = 0) : UVector<void*>(n)
+   UTree(void* __elem = 0, void* __parent = 0, uint32_t n = 0) : UVector<void*>(n)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTree<void*>, "%p,%p,%u", elem, parent, n)
+      U_TRACE_REGISTER_OBJECT(0, UTree<void*>, "%p,%p,%u", __elem, __parent, n)
 
-      _elem   = elem;
-      _parent = parent;
+      _elem   = __elem;
+      _parent = __parent;
       }
 
    ~UTree()
@@ -95,53 +95,53 @@ public:
 
    // OPERATIONS
 
-   void setRoot(void* elem)
+   void setRoot(void* __elem)
       {
-      U_TRACE(0, "UTree<void*>::setRoot(%p)", elem)
+      U_TRACE(0, "UTree<void*>::setRoot(%p)", __elem)
 
       U_CHECK_MEMORY
 
       U_INTERNAL_ASSERT_EQUALS(_parent, 0)
 
-      _elem = elem;
+      _elem = __elem;
       }
 
-   void setParent(void* parent)
+   void setParent(void* __parent)
       {
-      U_TRACE(0, "UTree<void*>::setParent(%p)", parent)
+      U_TRACE(0, "UTree<void*>::setParent(%p)", __parent)
 
       U_CHECK_MEMORY
 
-      _parent = parent;
+      _parent = __parent;
       }
 
    // STACK
 
-   UTree<void*>* push(void* elem) // add to end
+   UTree<void*>* push(void* __elem) // add to end
       {
-      U_TRACE(0, "UTree<void*>::push(%p)", elem)
+      U_TRACE(0, "UTree<void*>::push(%p)", __elem)
 
-      UTree<void*>* p = U_NEW(UTree<void*>(elem, this, (size_allocate ? : 64)));
+      UTree<void*>* p = U_NEW(UTree<void*>(__elem, this, (size_allocate ? : 64)));
 
       UVector<void*>::push(p);
 
       U_RETURN_POINTER(p,UTree<void*>);
       }
 
-   UTree<void*>* push_back(void* elem)
+   UTree<void*>* push_back(void* __elem)
       {
-      U_TRACE(0, "UTree<void*>::push_back(%p)", elem)
+      U_TRACE(0, "UTree<void*>::push_back(%p)", __elem)
 
       if (_parent == 0 &&
           _elem   == 0)
          {
-         _elem = elem;
+         _elem = __elem;
 
          return this;
          }
       else
          {
-         return push(elem);
+         return push(__elem);
          }
       }
 
@@ -161,11 +161,11 @@ public:
 
    // LIST
 
-   UTree<void*>* insert(uint32_t pos, void* elem) // add elem before pos
+   UTree<void*>* insert(uint32_t pos, void* __elem) // add elem before pos
       {
-      U_TRACE(0, "UTree<void*>::insert(%u,%p)", pos, elem)
+      U_TRACE(0, "UTree<void*>::insert(%u,%p)", pos, __elem)
 
-      UTree<void*>* p = U_NEW(UTree<void*>(elem, this));
+      UTree<void*>* p = U_NEW(UTree<void*>(__elem, this));
 
       UVector<void*>::insert(pos, p);
 
@@ -216,9 +216,9 @@ public:
 
       if (UVector<void*>::empty() == false)
          {
-         void** end = vec + _length;
+         void** _end = vec + _length;
 
-         for (void** ptr = vec; ptr < end; ++ptr) delete (UTree<T*>*)(*ptr);
+         for (void** ptr = vec; ptr < _end; ++ptr) delete (UTree<T*>*)(*ptr);
 
          _length = 0;
          }
@@ -226,9 +226,9 @@ public:
 
    // Costruttori e distruttore
 
-   UTree(T* elem = 0, T* parent = 0, uint32_t n = 0) : UTree<void*>(elem, parent, n)
+   UTree(T* __elem = 0, T* __parent = 0, uint32_t n = 0) : UTree<void*>(__elem, __parent, n)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTree<T*>, "%p,%p,%u", elem, parent, n)
+      U_TRACE_REGISTER_OBJECT(0, UTree<T*>, "%p,%p,%u", __elem, __parent, n)
       }
 
    ~UTree()
@@ -259,40 +259,40 @@ public:
 
    // OPERATIONS
 
-   void setRoot(T* elem)
+   void setRoot(T* __elem)
       {
-      U_TRACE(0, "UTree<T*>::setRoot(%p)", elem)
+      U_TRACE(0, "UTree<T*>::setRoot(%p)", __elem)
 
-      u_construct<T>(elem);
+      u_construct<T>(__elem);
 
-      UTree<void*>::setRoot(elem);
+      UTree<void*>::setRoot(__elem);
       }
 
    // STACK
 
-   UTree<T*>* push(T* elem) // add to end
+   UTree<T*>* push(T* __elem) // add to end
       {
-      U_TRACE(0, "UTree<T*>::push(%p)", elem)
+      U_TRACE(0, "UTree<T*>::push(%p)", __elem)
 
-      u_construct<T>(elem);
+      u_construct<T>(__elem);
 
-      return (UTree<T*>*) UTree<void*>::push(elem);
+      return (UTree<T*>*) UTree<void*>::push(__elem);
       }
 
-   UTree<T*>* push_back(T* elem)
+   UTree<T*>* push_back(T* __elem)
       {
-      U_TRACE(0, "UTree<T*>::push_back(%p)", elem)
+      U_TRACE(0, "UTree<T*>::push_back(%p)", __elem)
 
       if (_parent == 0 &&
           _elem   == 0)
          {
-         setRoot(elem);
+         setRoot(__elem);
 
          return this;
          }
       else
          {
-         return push(elem);
+         return push(__elem);
          }
       }
 
@@ -312,13 +312,13 @@ public:
 
    // LIST
 
-   UTree<T*>* insert(uint32_t pos, T* elem) // add elem before pos
+   UTree<T*>* insert(uint32_t pos, T* __elem) // add elem before pos
       {
-      U_TRACE(0, "UTree<T*>::insert(%u,%p)", pos, elem)
+      U_TRACE(0, "UTree<T*>::insert(%u,%p)", pos, __elem)
 
-      u_construct<T>(elem);
+      u_construct<T>(__elem);
 
-      return (UTree<T*>*) UTree<void*>::insert(pos, elem);
+      return (UTree<T*>*) UTree<void*>::insert(pos, __elem);
       }
 
    void erase(uint32_t pos) // remove element at pos

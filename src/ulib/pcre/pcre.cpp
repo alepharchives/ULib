@@ -611,7 +611,7 @@ bool UPCRE::isValidURL(const UString& url)
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UPCRE::dump(bool reset) const
+const char* UPCRE::dump(bool _reset) const
 {
    *UObjectIO::os << "p_pcre                        " << (void*)p_pcre       << '\n'
                   << "_flags                        " << _flags              << '\n'
@@ -626,7 +626,7 @@ const char* UPCRE::dump(bool reset) const
                   << "_expression (UString          " << (void*)&_expression << ")\n"
                   << "resultset   (UVector<UString> " << (void*)resultset    << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

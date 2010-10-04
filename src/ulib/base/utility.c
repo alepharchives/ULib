@@ -135,6 +135,15 @@ const char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_p
       U_INTERNAL_PRINT("path(%u) = %.*s", path_len, path_len, path)
       }
 
+   if (path[0] == '.' &&
+       path[1] == '/')
+      {
+      path          += 2;
+      *ptr_path_len -= 2;
+
+      U_INTERNAL_PRINT("path(%u) = %.*s", *ptr_path_len, *ptr_path_len, path)
+      }
+
    return path;
 }
 
@@ -362,20 +371,20 @@ void* u_find(const char* restrict s, uint32_t n, const char* restrict a, uint32_
  * Locates the first occurrence in the string s of any of the characters in the string accept
  */
  
-const char* u_strpbrk(const char* restrict s, uint32_t slen, const char* restrict accept)
+const char* u_strpbrk(const char* restrict s, uint32_t slen, const char* restrict _accept)
 {
    const char* restrict c;
    const char* restrict end = s + slen;
 
-   U_INTERNAL_TRACE("u_strpbrk(%.*s,%u,%s)", U_min(slen,128), s, slen, accept)
+   U_INTERNAL_TRACE("u_strpbrk(%.*s,%u,%s)", U_min(slen,128), s, slen, _accept)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_MAJOR(slen,0)
-   U_INTERNAL_ASSERT_POINTER(accept)
+   U_INTERNAL_ASSERT_POINTER(_accept)
 
    while (s < end)
       {
-      for (c = accept; *c; ++c)
+      for (c = _accept; *c; ++c)
          {
          if (*s == *c) return s;
          }
@@ -1509,6 +1518,10 @@ static inline void u_ftw_allocate(struct u_dir_s* restrict u_dir)
       u_dir->dp    = (struct u_dirent_s*) malloc((u_dir->max                   = U_DIRENT_ALLOCATE) * sizeof(struct u_dirent_s));
       u_dir->pfree = 0U;
       }
+   else
+      {
+      (void) memset(u_dir, 0, sizeof(struct u_dir_s));
+      }
 
    u_dir->num = 0U;
 }
@@ -1699,15 +1712,15 @@ void u_ftw(void)
 
 int u_get_num_random(int range)
 {
-   static int random = 1;
+   static int _random = 1;
 
    U_INTERNAL_TRACE("u_get_num_random(%d)", range)
 
    U_INTERNAL_ASSERT_MAJOR(range,0)
 
-   random = (random * 1103515245 + 12345) & 0x7fffffff;
+   _random = (_random * 1103515245 + 12345) & 0x7fffffff;
 
-   return ((random % range) + 1);
+   return ((_random % range) + 1);
 }
 
 #ifdef HAVE_SSL

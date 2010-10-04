@@ -753,7 +753,7 @@ bool UHttpClient_Base::upload(Url& location, UFile& file)
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UHttpClient_Base::dump(bool reset) const
+const char* UHttpClient_Base::dump(bool _reset) const
 {
    UClient_Base::dump(false);
 
@@ -768,7 +768,7 @@ const char* UHttpClient_Base::dump(bool reset) const
                   << "requestHeader  (UMimeHeader         " << (void*)requestHeader    << ")\n"
                   << "responseHeader (UMimeHeader         " << (void*)responseHeader   << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

@@ -473,7 +473,7 @@ bool UClient_Base::readHTTPResponse()
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UClient_Base::dump(bool reset) const
+const char* UClient_Base::dump(bool _reset) const
 {
    *UObjectIO::os << "bIPv6                               " << bIPv6                   << '\n'
                   << "port                                " << port                    << '\n'
@@ -496,7 +496,7 @@ const char* UClient_Base::dump(bool reset) const
                   << "host_port      (UString             " << (void*)&host_port       << ")\n"
                   << "socket         (USocket             " << (void*)socket           << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

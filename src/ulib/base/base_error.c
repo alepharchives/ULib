@@ -814,12 +814,12 @@ const char* u_getExitStatus(int exitno, uint32_t* restrict len)
    if ((exitno >= EX__BASE) &&
        (exitno <= EX__MAX)) // check if in range
       {
-      int index = exitno - EX__BASE;
+      int _index = exitno - EX__BASE;
 
-      if (exit_value_table[index].value == exitno)
+      if (exit_value_table[_index].value == exitno)
          {
-         msg  = exit_value_table[index].msg;
-         name = exit_value_table[index].name;
+         msg  = exit_value_table[_index].msg;
+         name = exit_value_table[_index].name;
          }
       else
          {

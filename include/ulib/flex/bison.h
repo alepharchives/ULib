@@ -69,11 +69,11 @@ public:
       U_RETURN(ok);
       }
 
-   bool parse(const UString& data, void* obj = 0)
+   bool parse(const UString& _data, void* obj = 0)
       {
-      U_TRACE(0, "UBison::parse(%.*S,%p)", U_STRING_TO_TRACE(data), obj)
+      U_TRACE(0, "UBison::parse(%.*S,%p)", U_STRING_TO_TRACE(_data), obj)
 
-      setData(data);
+      setData(_data);
 
       bool ok = parse(obj);
 

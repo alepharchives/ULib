@@ -19,17 +19,17 @@
 #  include <ulib/replace/strstream.h>
 #endif
 
-void UVector<void*>::allocate(uint32_t size)
+void UVector<void*>::allocate(uint32_t _size)
 {
-   U_TRACE(0, "UVector<void*>::allocate(%u)", size)
+   U_TRACE(0, "UVector<void*>::allocate(%u)", _size)
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT_MINOR(size, (0xfffffff / sizeof(void*)))
+   U_INTERNAL_ASSERT_MINOR(_size, (0xfffffff / sizeof(void*)))
 
-   _capacity = size;
+   _capacity = _size;
 
-   if (size) vec = U_MALLOC_VECTOR(size, void);
+   if (_size) vec = U_MALLOC_VECTOR(_size, void);
 }
 
 void UVector<void*>::push(void* elem) // add to end
@@ -237,17 +237,17 @@ uint32_t UVector<UString>::contains(const UString& str, bool ignore_case)
    U_RETURN(U_NOT_FOUND);
 }
 
-bool UVector<UString>::contains(UVector<UString>& vec, bool ignore_case)
+bool UVector<UString>::contains(UVector<UString>& _vec, bool ignore_case)
 {
-   U_TRACE(0, "UVector<UString>::contains(%p,%b)", &vec, ignore_case)
+   U_TRACE(0, "UVector<UString>::contains(%p,%b)", &_vec, ignore_case)
 
    U_CHECK_MEMORY
 
    UString elem;
 
-   for (uint32_t i = 0, n = vec.size(); i < n; ++i)
+   for (uint32_t i = 0, n = _vec.size(); i < n; ++i)
       {
-      elem = vec.at(i);
+      elem = _vec.at(i);
 
       if (contains(elem, ignore_case) != U_NOT_FOUND) U_RETURN(true);
       }
@@ -257,9 +257,9 @@ bool UVector<UString>::contains(UVector<UString>& vec, bool ignore_case)
 
 // Check equality with an existing vector object
 
-bool UVector<UString>::_isEqual(UVector<UString>& vec, bool ignore_case)
+bool UVector<UString>::_isEqual(UVector<UString>& _vec, bool ignore_case)
 {
-   U_TRACE(0, "UVector<UString>::_isEqual(%p,%b)", &vec, ignore_case)
+   U_TRACE(0, "UVector<UString>::_isEqual(%p,%b)", &_vec, ignore_case)
 
    U_INTERNAL_ASSERT(_length <= _capacity)
 
@@ -271,7 +271,7 @@ bool UVector<UString>::_isEqual(UVector<UString>& vec, bool ignore_case)
          {
          elem = at(i);
 
-         if (vec.find(elem, ignore_case) == U_NOT_FOUND) U_RETURN(false);
+         if (_vec.find(elem, ignore_case) == U_NOT_FOUND) U_RETURN(false);
          }
 
       U_RETURN(true);
@@ -342,24 +342,24 @@ uint32_t UVector<UString>::split(const UString& str, const char* delim, bool dup
    const char* p;
    UStringRep* r;
 
-   uint32_t len, n = _length;
-   const char* s   = str.data();
-   const char* end = s + str.size();
+   uint32_t len, n  = _length;
+   const char* s    = str.data();
+   const char* _end = s + str.size();
 
    if (*s == '"')
       {
       ++s;
 
-      end -= 1;
+      _end -= 1;
       }
 
-   while (s < end)
+   while (s < _end)
       {
-      s = u_delimit_token(s, &p, end, delim, '#');
+      s = u_delimit_token(s, &p, _end, delim, '#');
 
-      U_INTERNAL_DUMP("s = %p end = %p", s, end)
+      U_INTERNAL_DUMP("s = %p end = %p", s, _end)
 
-      if (s <= end)
+      if (s <= _end)
          {
          len = s++ - p;
 
@@ -386,18 +386,18 @@ uint32_t UVector<UString>::split(const UString& str, char delim)
    const char* p;
    UStringRep* r;
 
-   uint32_t n      = _length;
-   const char* s   = str.data();
-   const char* end = s + str.size();
+   uint32_t n       = _length;
+   const char* s    = str.data();
+   const char* _end = s + str.size();
 
    if (*s == '"')
       {
       ++s;
 
-      end -= 1;
+      _end -= 1;
       }
 
-   while (s < end)
+   while (s < _end)
       {
       // skip char delimiter
 
@@ -411,9 +411,9 @@ uint32_t UVector<UString>::split(const UString& str, char delim)
       // delimit token with char delimiter
 
       p = s;
-      s = (const char*) memchr(s, delim, end - s);
+      s = (const char*) memchr(s, delim, _end - s);
 
-      if (s == 0) s = end;
+      if (s == 0) s = _end;
 
       r = str.rep->substr(p, s - p);
 

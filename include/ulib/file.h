@@ -244,12 +244,12 @@ public:
       (void) U_SYSCALL(close, "%d", fd);
       }
 
-   bool open(                      int flags = O_RDONLY);
-   bool open(const char* pathname, int flags = O_RDONLY)
+   bool open(                       int flags = O_RDONLY);
+   bool open(const char* _pathname, int flags = O_RDONLY)
       {
-      U_TRACE(0, "UFile::open(%S,%d)", pathname, flags)
+      U_TRACE(0, "UFile::open(%S,%d)", _pathname, flags)
 
-      UString path(pathname);
+      UString path(_pathname);
 
       setPath(path);
 
@@ -468,13 +468,13 @@ public:
       U_INTERNAL_ASSERT_MAJOR(st_size, 0)
       U_INTERNAL_ASSERT_DIFFERS(st_ino, 0)
 
-      UString etag(100U);
+      UString _etag(100U);
 
       // NB: The only format constraints are that the string be quoted...
 
-      etag.snprintf("\"%x-%x-%x\"", st_ino, st_size, st_mtime);
+      _etag.snprintf("\"%x-%x-%x\"", st_ino, st_size, st_mtime);
 
-      U_RETURN_STRING(etag);
+      U_RETURN_STRING(_etag);
       }
 
    uint64_t inode()

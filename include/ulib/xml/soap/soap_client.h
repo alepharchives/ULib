@@ -103,14 +103,14 @@ public:
       }
 
 #ifdef DEBUG
-   const char* dump(bool reset) const
+   const char* dump(bool _reset) const
       {
       URPCClient<Socket>::dump(false);
 
       *UObjectIO::os << '\n'
                      << "parser         (USOAPParser         " << (void*)&parser << ')';
 
-      if (reset)
+      if (_reset)
          {
          UObjectIO::output();
 

@@ -502,7 +502,7 @@ UString UCommand::outputCommand(const UString& cmd, char** penv, int fd_stdin, i
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UCommand::dump(bool reset) const
+const char* UCommand::dump(bool _reset) const
 {
    *UObjectIO::os << "pid                     " << pid                  << '\n'
                   << "ncmd                    " << ncmd                 << '\n'
@@ -511,7 +511,7 @@ const char* UCommand::dump(bool reset) const
                   << "command     (UString    " << (void*)&command      << ")\n"
                   << "environment (UString    " << (void*)&environment  << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

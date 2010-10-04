@@ -173,11 +173,11 @@ U_NO_EXPORT const char* UImapClient::status()
       default:                      descr2 = "???";                  break;
       }
 
-   static char buffer[128];
+   static char _buffer[128];
 
-   (void) sprintf(buffer, "%s - (%d, %s)", descr1, response, descr2);
+   (void) sprintf(_buffer, "%s - (%d, %s)", descr1, response, descr2);
 
-   U_RETURN(buffer);
+   U_RETURN(_buffer);
 }
 
 bool UImapClient::connectServer(const UString& server, int port, uint32_t timeoutMS)
@@ -549,9 +549,9 @@ enum MailboxFlag {
 };
 */
 
-U_NO_EXPORT void UImapClient::setFlag(int& flags, UVector<UString>& vec)
+U_NO_EXPORT void UImapClient::setFlag(int& _flags, UVector<UString>& vec)
 {
-   U_TRACE(0, "UImapClient::setFlag(%B,%p)", flags, &vec)
+   U_TRACE(0, "UImapClient::setFlag(%B,%p)", _flags, &vec)
 
    for (uint32_t i = 0, length = vec.size(); i < length; ++i)
       {
@@ -559,60 +559,60 @@ U_NO_EXPORT void UImapClient::setFlag(int& flags, UVector<UString>& vec)
 
       U_INTERNAL_DUMP("vec[%d] = %.*S", i, U_STRING_TO_TRACE(vec[i]))
 
-      if (!(flags & ANSWERED) &&
+      if (!(_flags & ANSWERED) &&
           vec[i] == *str_answered)
          {
-         flags |= ANSWERED;
+         _flags |= ANSWERED;
          }
-      else if (!(flags & FLAGGED) &&
+      else if (!(_flags & FLAGGED) &&
                vec[i] == *str_flagged)
          {
-         flags |= FLAGGED;
+         _flags |= FLAGGED;
          }
-      else if (!(flags & DRAFT) &&
+      else if (!(_flags & DRAFT) &&
                vec[i] == *str_draft)
          {
-         flags |= DRAFT;
+         _flags |= DRAFT;
          }
-      else if (!(flags & DELETED) &&
+      else if (!(_flags & DELETED) &&
                vec[i] == *str_deleted)
          {
-         flags |= DELETED;
+         _flags |= DELETED;
          }
-      else if (!(flags & SEEN) &&
+      else if (!(_flags & SEEN) &&
                vec[i] == *str_seen)
          {
-         flags |= SEEN;
+         _flags |= SEEN;
          }
-      else if (!(flags & RECENT) &&
+      else if (!(_flags & RECENT) &&
                vec[i] == *str_recent1)
          {
-         flags |= RECENT;
+         _flags |= RECENT;
          }
-      else if (!(flags & ASTERISK) &&
+      else if (!(_flags & ASTERISK) &&
                vec[i] == *str_asterisk1)
          {
-         flags |= ASTERISK;
+         _flags |= ASTERISK;
          }
-      else if (!(flags & MDNSent) &&
+      else if (!(_flags & MDNSent) &&
                vec[i] == *str_message_disposition_notification)
          {
-         flags |= MDNSent;
+         _flags |= MDNSent;
          }
-      else if (!(flags & Junk) &&
+      else if (!(_flags & Junk) &&
                vec[i] == *str_junk)
          {
-         flags |= Junk;
+         _flags |= Junk;
          }
-      else if (!(flags & NonJunk) &&
+      else if (!(_flags & NonJunk) &&
                vec[i] == *str_no_junk)
          {
-         flags |= NonJunk;
+         _flags |= NonJunk;
          }
-      else if (!(flags & Forwarded) &&
+      else if (!(_flags & Forwarded) &&
                vec[i] == *str_Forwarded)
          {
-         flags |= Forwarded;
+         _flags |= Forwarded;
          }
       else
          {
@@ -620,7 +620,7 @@ U_NO_EXPORT void UImapClient::setFlag(int& flags, UVector<UString>& vec)
          }
       }
 
-   U_INTERNAL_DUMP("flags = %B", flags)
+   U_INTERNAL_DUMP("flags = %B", _flags)
 }
 
 U_NO_EXPORT void UImapClient::setMailBox(MailboxInfo& retval)
@@ -950,10 +950,10 @@ bool UImapClient::unsubscribeMailbox(const UString& name)
    U_RETURN(false);
 }
 
-bool UImapClient::appendMessage(const UString& mailboxName, const UString& messageData, int flags, const char* date)
+bool UImapClient::appendMessage(const UString& mailboxName, const UString& messageData, int _flags, const char* date)
 {
    U_TRACE(0, "UImapClient::appendMessage(%.*S,%.*S,%d,%S)",
-                        U_STRING_TO_TRACE(mailboxName), U_STRING_TO_TRACE(messageData), flags, date)
+                        U_STRING_TO_TRACE(mailboxName), U_STRING_TO_TRACE(messageData), _flags, date)
 
    U_INTERNAL_ASSERT_POINTER(date)
    U_ASSERT(mailboxName.empty() == false)
@@ -963,14 +963,14 @@ bool UImapClient::appendMessage(const UString& mailboxName, const UString& messa
       {
       if (syncCommand("APPEND %.*s %s%s%s%s%s%s%s%s %s\r\n%.*s",
                U_STRING_TO_TRACE(mailboxName),
-               (flags            ? "("           : ""),
-               (flags & SEEN     ? "\\Seen"      : ""),
-               (flags & ANSWERED ? " \\Answered" : ""),
-               (flags & FLAGGED  ? " \\Flagged"  : ""),
-               (flags & DELETED  ? " \\Deleted"  : ""),
-               (flags & DRAFT    ? " \\Draft"    : ""),
-               (flags & RECENT   ? " \\Recent"   : ""),
-               (flags            ? ")"           : ""),
+               (_flags            ? "("           : ""),
+               (_flags & SEEN     ? "\\Seen"      : ""),
+               (_flags & ANSWERED ? " \\Answered" : ""),
+               (_flags & FLAGGED  ? " \\Flagged"  : ""),
+               (_flags & DELETED  ? " \\Deleted"  : ""),
+               (_flags & DRAFT    ? " \\Draft"    : ""),
+               (_flags & RECENT   ? " \\Recent"   : ""),
+               (_flags            ? ")"           : ""),
                date,
                U_STRING_TO_TRACE(messageData)))
          {
@@ -983,15 +983,15 @@ bool UImapClient::appendMessage(const UString& mailboxName, const UString& messa
    U_RETURN(false);
 }
 
-bool UImapClient::expunge(int* ret)
+bool UImapClient::expunge(int* _ret)
 {
-   U_TRACE(0, "UImapClient::expunge(%p)", ret)
+   U_TRACE(0, "UImapClient::expunge(%p)", _ret)
 
    if (state == SELECTED)
       {
       if (syncCommand("EXPUNGE"))
          {
-         if (ret)
+         if (_ret)
             {
             setEnd();
 
@@ -1015,7 +1015,7 @@ bool UImapClient::expunge(int* ret)
                {
                U_ASSERT_EQUALS(line[0],'*')
 
-               *ret++ = strtol(line.c_pointer(2), 0, 0);
+               *_ret++ = strtol(line.c_pointer(2), 0, 0);
                }
             }
 
@@ -1028,11 +1028,11 @@ bool UImapClient::expunge(int* ret)
    U_RETURN(false);
 }
 
-bool UImapClient::search(int* ret, const UString& spec, const char* charSet, bool usingUID)
+bool UImapClient::search(int* _ret, const UString& spec, const char* charSet, bool usingUID)
 {
-   U_TRACE(0, "UImapClient::search(%p,%.*S,%S,%b)", ret, U_STRING_TO_TRACE(spec), charSet, usingUID)
+   U_TRACE(0, "UImapClient::search(%p,%.*S,%S,%b)", _ret, U_STRING_TO_TRACE(spec), charSet, usingUID)
 
-   U_INTERNAL_ASSERT_POINTER(ret)
+   U_INTERNAL_ASSERT_POINTER(_ret)
    U_ASSERT(spec.empty() == false)
    U_INTERNAL_ASSERT_POINTER(charSet)
 
@@ -1062,7 +1062,7 @@ bool UImapClient::search(int* ret, const UString& spec, const char* charSet, boo
 
          while (tok.next(word, ' '))
             {
-            *ret++ = strtol(word.data(), 0, 0);
+            *_ret++ = strtol(word.data(), 0, 0);
             }
 
          U_RETURN(true);
@@ -1074,9 +1074,9 @@ bool UImapClient::search(int* ret, const UString& spec, const char* charSet, boo
    U_RETURN(false);
 }
 
-bool UImapClient::fetch(UVector<UString>& vec, int start, int end, const UString& spec, bool usingUID)
+bool UImapClient::fetch(UVector<UString>& vec, int start, int _end, const UString& spec, bool usingUID)
 {
-   U_TRACE(0, "UImapClient::fetch(%p,%d,%d,%.*S,%b)", &vec, start, end, U_STRING_TO_TRACE(spec), usingUID)
+   U_TRACE(0, "UImapClient::fetch(%p,%d,%d,%.*S,%b)", &vec, start, _end, U_STRING_TO_TRACE(spec), usingUID)
 
    U_ASSERT(spec.empty() == false)
 
@@ -1084,7 +1084,7 @@ bool UImapClient::fetch(UVector<UString>& vec, int start, int end, const UString
       {
       if (syncCommand("%s FETCH %d:%d %.*s",
                (usingUID ? "UID" : ""),
-               start, end,
+               start, _end,
                U_STRING_TO_TRACE(spec)))
          {
          setEnd();
@@ -1106,7 +1106,7 @@ bool UImapClient::fetch(UVector<UString>& vec, int start, int end, const UString
          UString data;
          UTokenizer tok(buffer);
          const char* ptr1 = buffer.data();
-         const char* ptr2 = buffer.c_pointer(end);
+         const char* ptr2 = buffer.c_pointer(_end);
 
          tok.setGroup("()");
 
@@ -1134,23 +1134,23 @@ bool UImapClient::fetch(UVector<UString>& vec, int start, int end, const UString
    U_RETURN(false);
 }
 
-bool UImapClient::setFlags(int start, int end, int style, int flags, bool usingUID)
+bool UImapClient::setFlags(int start, int _end, int style, int _flags, bool usingUID)
 {
-   U_TRACE(0, "UImapClient::setFlags(%d,%d,%d,%B,%b)", start, end, style, flags, usingUID)
+   U_TRACE(0, "UImapClient::setFlags(%d,%d,%d,%B,%b)", start, _end, style, _flags, usingUID)
 
    if (state == SELECTED)
       {
       if (syncCommand("%s STORE %d:%d %sFLAGS.SILENT (%s%s%s%s%s%s)",
                (usingUID ? "UID" : ""),
-               start, end,
-               (style & ADD      ? "+" :
-                style & REMOVE   ? "-" : ""),
-               (flags & SEEN     ? "\\Seen"      : ""),
-               (flags & ANSWERED ? " \\Answered" : ""),
-               (flags & FLAGGED  ? " \\Flagged"  : ""),
-               (flags & DELETED  ? " \\Deleted"  : ""),
-               (flags & DRAFT    ? " \\Draft"    : ""),
-               (flags & RECENT   ? " \\Recent"   : "")))
+               start, _end,
+               (style & ADD       ? "+"           :
+                style & REMOVE    ? "-"           : ""),
+               (_flags & SEEN     ? "\\Seen"      : ""),
+               (_flags & ANSWERED ? " \\Answered" : ""),
+               (_flags & FLAGGED  ? " \\Flagged"  : ""),
+               (_flags & DELETED  ? " \\Deleted"  : ""),
+               (_flags & DRAFT    ? " \\Draft"    : ""),
+               (_flags & RECENT   ? " \\Recent"   : "")))
          {
          U_RETURN(true);
          }
@@ -1161,9 +1161,9 @@ bool UImapClient::setFlags(int start, int end, int style, int flags, bool usingU
    U_RETURN(false);
 }
 
-bool UImapClient::copy(int start, int end, const UString& to, bool usingUID)
+bool UImapClient::copy(int start, int _end, const UString& to, bool usingUID)
 {
-   U_TRACE(0, "UImapClient::copy(%d,%d,%.*S,%b)", start, end, U_STRING_TO_TRACE(to), usingUID)
+   U_TRACE(0, "UImapClient::copy(%d,%d,%.*S,%b)", start, _end, U_STRING_TO_TRACE(to), usingUID)
 
    U_ASSERT(to.empty() == false)
 
@@ -1171,7 +1171,7 @@ bool UImapClient::copy(int start, int end, const UString& to, bool usingUID)
       {
       if (syncCommand("%s COPY %d:%d %.*s",
                (usingUID ? "UID" : ""),
-               start, end,
+               start, _end,
                U_STRING_TO_TRACE(to)))
          {
          U_RETURN(true);

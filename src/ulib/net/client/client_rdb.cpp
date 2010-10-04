@@ -274,14 +274,14 @@ void URDBClient_Base::_callForAllEntry(vPFprpr function, bool sorted)
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* URDBClient_Base::dump(bool reset) const
+const char* URDBClient_Base::dump(bool _reset) const
 {
    UClient_Base::dump(false);
 
    *UObjectIO::os << '\n'
                   << "nResponseCode                       " << nResponseCode;
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

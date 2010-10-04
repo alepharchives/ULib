@@ -293,12 +293,12 @@ UString Url::getQuery()
 {
    U_TRACE(0, "Url::getQuery()")
 
-   UString query;
+   UString _query;
    int end = url.size() - 1;
 
-   if (path_end < end) query = url.substr(path_end + 1, end - path_end);
+   if (path_end < end) _query = url.substr(path_end + 1, end - path_end);
 
-   U_RETURN_STRING(query);
+   U_RETURN_STRING(_query);
 }
 
 uint32_t Url::getQuery(UVector<UString>& vec)
@@ -307,9 +307,9 @@ uint32_t Url::getQuery(UVector<UString>& vec)
 
    uint32_t n = vec.size();
 
-   UString query = getQuery();
+   UString _query = getQuery();
 
-   if (query.empty() == false) (void) UStringExt::getNameValueFromData(query, vec);
+   if (_query.empty() == false) (void) UStringExt::getNameValueFromData(_query, vec);
 
    uint32_t result = (vec.size() - n);
 
@@ -362,13 +362,13 @@ UString Url::getFile()
 {
    U_TRACE(0, "Url::getFile()")
 
-   UString file  = getPath(),
-           query = getQuery();
+   UString file   = getPath(),
+           _query = getQuery();
 
-   if (query.empty() == false)
+   if (_query.empty() == false)
       {
              file.push_back('?');
-      (void) file.append(query);
+      (void) file.append(_query);
       }
 
    U_RETURN_STRING(file);

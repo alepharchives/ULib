@@ -65,9 +65,9 @@ bool UFileConfig::open()
          {
          (void) UFile::lseek(U_SEEK_BEGIN, SEEK_SET);
 
-         UString command(200U), dir = UStringExt::dirname(pathname);
+         UString command(200U), _dir = UStringExt::dirname(pathname);
 
-         command.snprintf("cpp -undef -nostdinc -w -P -C -I%.*s -", U_STRING_TO_TRACE(dir));
+         command.snprintf("cpp -undef -nostdinc -w -P -C -I%.*s -", U_STRING_TO_TRACE(_dir));
 
          data = UCommand::outputCommand(command, 0, UFile::getFd(), UServices::getDevNull());
          }
@@ -528,7 +528,7 @@ bool UFileConfig::loadProperties()
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UFileConfig::dump(bool reset) const
+const char* UFileConfig::dump(bool _reset) const
 {
    UFile::dump(false);
 
@@ -539,7 +539,7 @@ const char* UFileConfig::dump(bool reset) const
                   << "data  (UString            " << (void*)&data  << ")\n"
                   << "table (UHashMap<UString>  " << (void*)&table << ')';
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

@@ -176,7 +176,7 @@ public:
    // DEBUG
 
 #ifdef DEBUG
-   const char* dump(bool reset) const { return UHttpClient_Base::dump(reset); }
+   const char* dump(bool _reset) const { return UHttpClient_Base::dump(_reset); }
 #endif
 
 private:
@@ -202,7 +202,7 @@ public:
    // DEBUG
 
 #ifdef DEBUG
-   const char* dump(bool reset) const { return UHttpClient_Base::dump(reset); }
+   const char* dump(bool _reset) const { return UHttpClient_Base::dump(_reset); }
 #endif
 
 protected:

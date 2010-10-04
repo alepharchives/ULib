@@ -340,14 +340,14 @@ void UObjectDB::init(bool flag, bool info)
       }
 }
 
-U_NO_EXPORT void UObjectDB::_write(const struct iovec* iov, int n)
+U_NO_EXPORT void UObjectDB::_write(const struct iovec* iov, int _n)
 {
-   U_INTERNAL_TRACE("UObjectDB::_write(%p,%d)", iov, n)
+   U_INTERNAL_TRACE("UObjectDB::_write(%p,%d)", iov, _n)
 
-   if (file_size == 0) (void) writev(fd, iov, n);
+   if (file_size == 0) (void) writev(fd, iov, _n);
    else
       {
-      for (int i = 0; i < n; ++i)
+      for (int i = 0; i < _n; ++i)
          {
          U_INTERNAL_ASSERT_RANGE(1,iov[i].iov_len,file_size)
 

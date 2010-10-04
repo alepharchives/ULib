@@ -148,7 +148,7 @@ protected:
 
    static struct option long_options[128];
 
-   void printHelp(vPF func);
+   void printHelp(vPF func) __attribute__ ((noreturn));
 
 private:
    UOptions(const UOptions&)            {}

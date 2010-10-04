@@ -13,15 +13,15 @@
 
 #include <ulib/ssl/mime/mime_pkcs7.h>
 
-UMimePKCS7::UMimePKCS7(const UString& data)
+UMimePKCS7::UMimePKCS7(const UString& _data)
 {
-   U_TRACE_REGISTER_OBJECT(0, UMimePKCS7, "%.*S", U_STRING_TO_TRACE(data))
+   U_TRACE_REGISTER_OBJECT(0, UMimePKCS7, "%.*S", U_STRING_TO_TRACE(_data))
 
    // OpenSSL_add_all_algorithms(); // called in ULib_init()
 
    BIO* indata; // indata is the signed data if the content is not present in pkcs7 (that is it is detached)
 
-   BIO* in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(data));
+   BIO* in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(_data));
 
    // SMIME reader: handle multipart/signed and opaque signing. In multipart case the content is placed
    // in a memory BIO pointed to by "indata". In opaque this is set to NULL
