@@ -83,7 +83,7 @@ int U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
-   UNotifier::init(0);
+   UNotifier::init();
 
    UTimeVal s(0L, 50L * 1000L);
    MyAlarm1* a = U_NEW(MyAlarm1(0L, 50L * 1000L));

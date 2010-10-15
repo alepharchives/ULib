@@ -129,7 +129,12 @@ public:
    The destructor will automatically invoked if the object is no more used. It frees all the memory allocated by pcre.
    */
 
-   ~UPCRE();
+   ~UPCRE()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UPCRE)
+
+      clear();
+      }
 
    /**
    reset the object and re-intialize it
@@ -441,6 +446,7 @@ protected:
    static UPCRE* url_mask;
    static UPCRE* username_mask;
 
+   void clear();                                  /*   clear the obj */
    void compile(const unsigned char* tables = 0); /* compile the pattern */
 
 private:

@@ -518,6 +518,22 @@ AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([assert.h byteswap.h endian.h execinfo.h ndir.h semaphore.h string.h netpacket/packet.h sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h \
 						sysexits.h termios.h streambuf.h linux/netfilter_ipv4/ipt_ACCOUNT.h])
 
+AC_CHECK_HEADERS([sys/inotify.h mcheck.h])
+AC_LANG_C
+AC_MSG_CHECKING([whether sys/inotify.h actually works])
+AC_COMPILE_IFELSE(
+  AC_LANG_PROGRAM([[#include <sys/inotify.h>]],
+                  [[return (-1 == inotify_init());]]
+  ),
+  [AC_MSG_RESULT([yup]); AC_DEFINE([SYS_INOTIFY_H_EXISTS_AND_WORKS],[1],[sys/inotify.h exists and works correctly])],
+  [AC_MSG_RESULT([nope, using own inotify headers])]
+)
+AC_LANG_CPLUSPLUS
+
+if test "$ac_cv_header_sys_inotify_h" = "yes"; then
+AC_CHECK_FUNCS([inotify_init1])
+fi
+
 # SECTION 6: Checks for typedefs
 
 if test "$target_os" = "cygwin"; then

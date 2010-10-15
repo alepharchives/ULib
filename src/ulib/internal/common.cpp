@@ -127,5 +127,5 @@ void ULib_init()
    asm("ta 6");
 #endif
 
-   U_INTERNAL_ASSERT_EQUALS(UStringRep::max_size(U_MAX_SIZE_PREALLOCATE), U_CAPACITY)
+   U_INTERNAL_DUMP("UStringRep::string_rep_null = %p", UStringRep::string_rep_null)
 }

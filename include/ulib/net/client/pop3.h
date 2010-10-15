@@ -122,7 +122,7 @@ public:
    Constructs a new UPop3Client with default values for all properties
    */
 
-   UPop3Client(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6), buffer(U_CAPACITY)
+   UPop3Client(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6), buffer(4000)
       {
       U_TRACE_REGISTER_OBJECT(0, UPop3Client, "%b", bSocketIsIPv6)
 

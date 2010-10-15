@@ -1730,6 +1730,7 @@ U_EXPORT main (int argc, char* argv[])
    z = UString((void*)"buffer occupato");
    y = z;
 
+   z.setBuffer(100);
    z.snprintf("%s", "pippo pluto paperino");
 
    U_ASSERT( U_STRING_FROM_CONSTANT("pippo pluto paperino") == z )

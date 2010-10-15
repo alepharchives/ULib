@@ -807,7 +807,12 @@ uint32_t u_vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* re
 
    while (true)
       {
-      if (ret >= buffer_size) break;
+      if (ret >= buffer_size)
+         {
+         U_INTERNAL_ASSERT_MSG(false, "BUFFER OVERFLOW at u_vsnprintf()...")
+
+         break;
+         }
 
       fmark = format;
 
@@ -1801,6 +1806,8 @@ iteration:
 
       if (ret >= buffer_size)
          {
+         U_INTERNAL_ASSERT_MSG(false, "BUFFER OVERFLOW at u_vsnprintf()...")
+
          ret -= (width > fieldsz ? width : fieldsz);
 
          break;

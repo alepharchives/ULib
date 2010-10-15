@@ -101,7 +101,7 @@ int DocumentClassifier::verifyCallback(int ok, X509_STORE_CTX* ctx) // callback
       {
       verify_result = false;
 
-      if (label_ko == 0) label_ko = U_NEW(UString(U_CAPACITY));
+      if (label_ko == 0) label_ko = U_NEW(UString(4000U));
 
       // TO DO
 
@@ -174,7 +174,7 @@ void DocumentClassifier::printLabel(UTree<UCertificate*>* pnode)
 
    bool crl_exist, cert_exist;
    long hash = cert->hashCode();
-   UString crl, inner(U_CAPACITY);
+   UString crl, inner(4000U);
 
    crl      = UCertificate::getFileName(hash, true,  &crl_exist);
    filename = UCertificate::getFileName(hash, false, &cert_exist);
@@ -250,7 +250,7 @@ DocumentClassifier::~DocumentClassifier()
 Element*         DocumentClassifier::current;
 UTree<Element*>* DocumentClassifier::ptree;
 
-DocumentClassifier::DocumentClassifier(const char* pathfile) : description(U_CAPACITY), buffer(U_CAPACITY)
+DocumentClassifier::DocumentClassifier(const char* pathfile) : description(4000U), buffer(4000U)
 {
    U_TRACE(5, "DocumentClassifier::DocumentClassifier(%S)", pathfile)
 

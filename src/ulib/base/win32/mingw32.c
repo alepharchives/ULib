@@ -141,7 +141,7 @@ char* realpath(const char* name, char* resolved_path)
 
       (void) strcpy(resolved_path, name);
 
-      u_canonicalize_pathname(resolved_path);
+      (void) u_canonicalize_pathname(resolved_path);
       }
 
    return resolved_path;

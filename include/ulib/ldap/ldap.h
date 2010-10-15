@@ -48,7 +48,7 @@ public:
 
    char* operator[](int pos) const
       {
-      U_TRACE(0, "ULDAPEntry::operator[](%d) const", pos)
+      U_TRACE(0, "ULDAPEntry::operator[](%d)", pos)
 
       U_INTERNAL_ASSERT_MINOR(pos, n_entry)
 

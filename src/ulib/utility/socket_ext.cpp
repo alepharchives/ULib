@@ -43,15 +43,16 @@ bool USocketExt::read(USocket* socket, UString& buffer, int count, int timeoutMS
 
    char* ptr;
    ssize_t value;
-   uint32_t start;
    bool single_read;
    int diff, byte_read;
+   uint32_t start, capacity;
 
    // NB: THINK REALLY VERY MUCH BEFORE CHANGE CODE HERE...
 
 restart:
    start       = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua
    byte_read   = 0;
+   capacity    = buffer.capacity() - start;
    single_read = (count == U_SINGLE_READ);
 
    // manage buffered read
@@ -86,23 +87,23 @@ restart:
       count -= pcount;
       pcount = 0;
 
-      if (count < (int)U_CAPACITY) count = U_SINGLE_READ; // NB: may be we can read more bytes then required...
+      if (count < (int)capacity) count = U_SINGLE_READ; // NB: may be we can read more bytes then required...
 
       U_INTERNAL_DUMP("count = %d", count)
 
       goto restart;
       }
 
-   if (count < (int)U_CAPACITY) single_read = true;
+   if (count < (int)capacity) single_read = true;
 
-   (void) buffer.reserve(start + (single_read ? (int)U_CAPACITY : count));
+   if (buffer.reserve(start + (single_read ? (int)capacity : count))) goto restart;
 
    ptr = buffer.c_pointer(start);
 
    U_INTERNAL_DUMP("start = %u single_read = %b count = %d", start, single_read, count)
 
 read:
-   value = socket->recv(ptr + byte_read, (single_read ? (int)U_CAPACITY : count - byte_read));
+   value = socket->recv(ptr + byte_read, (single_read ? (int)capacity : count - byte_read));
 
    if (value <= 0)
       {
@@ -136,11 +137,15 @@ read:
       {
       // NB: may be there are available more bytes to read...
 
-      if (value == U_CAPACITY)
+      if (value == capacity)
          {
          buffer.size_adjust_force(start + byte_read); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
 
-         if (buffer.reserve(start + byte_read + U_CAPACITY)) ptr = buffer.c_pointer(start);
+         if (buffer.reserve(start + byte_read + capacity))
+            {
+            ptr      = buffer.c_pointer(start);
+            capacity = buffer.capacity() - (start + byte_read);
+            }
 
          goto read;
          }

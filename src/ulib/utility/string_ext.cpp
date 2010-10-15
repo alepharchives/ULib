@@ -458,30 +458,32 @@ UString UStringExt::trim(const char* s, uint32_t n)
 {
    U_TRACE(1, "UStringExt::trim(%.*S,%u)", n, s, n)
 
-// U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+   // U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
-   int start, end;
+   int32_t i = 0;
    UString result(n);
 
    // skip white space from start
 
-   for (start = 0, end = n - 1; start <= end; ++start) // gcc - cannot optimize possibly infinite loops ???
+   while (i < (int32_t)n && u_isspace(s[i])) ++i;
+
+   U_INTERNAL_DUMP("i = %d", i)
+
+   if (i < (int32_t)n) // not only white space
       {
-      if (u_isspace(s[start]) == false) break;
-      }
+      while (u_isspace(s[--n])); // skip white space from end
 
-   if (start <= end) // not only white space
-      {
-      while (end && u_isspace(s[end])) --end; // skip white space from end
+      U_INTERNAL_DUMP("n = %u", n)
 
-      int sz = end - start + 1;
+      U_INTERNAL_ASSERT_MAJOR(n,0)
 
-      if (sz)
-         {
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", result.data(), &s[start], sz);
+      int32_t sz = n - i + 1;
 
-         result.size_adjust(sz);
-         }
+      U_INTERNAL_ASSERT_MAJOR(sz,0)
+
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", result.data(), s+i, sz);
+
+      result.size_adjust(sz);
       }
 
    U_RETURN_STRING(result);

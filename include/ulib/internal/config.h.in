@@ -267,6 +267,9 @@ typedef unsigned long long uint64;
 /* inet sockets */
 #undef HAVE_INET_SOCKETS
 
+/* Define to 1 if you have the `inotify_init1' function. */
+#undef HAVE_INOTIFY_INIT1
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -348,6 +351,9 @@ typedef unsigned long long uint64;
 
 /* Define to 1 if you have the <mach-o/dyld.h> header file. */
 #undef HAVE_MACH_O_DYLD_H
+
+/* Define to 1 if you have the <mcheck.h> header file. */
+#undef HAVE_MCHECK_H
 
 /* Define if struct siginfo have member <si_addr>. */
 #undef HAVE_MEMBER_SI_ADDR
@@ -620,6 +626,9 @@ typedef unsigned long long uint64;
 /* Define to 1 if you have the <sys/fcntl.h> header file. */
 #undef HAVE_SYS_FCNTL_H
 
+/* Define to 1 if you have the <sys/inotify.h> header file. */
+#undef HAVE_SYS_INOTIFY_H
+
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #undef HAVE_SYS_IOCTL_H
 
@@ -796,6 +805,9 @@ typedef unsigned long long uint64;
 
 /* Stardard GNU C++ Library version */
 #undef STDGPP_VERSION
+
+/* sys/inotify.h exists and works correctly */
+#undef SYS_INOTIFY_H_EXISTS_AND_WORKS
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME

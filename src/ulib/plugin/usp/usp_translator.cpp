@@ -101,7 +101,8 @@ public:
 		t.setGroup(U_CONSTANT_TO_PARAM("<%%>"));
 
 		bool bgroup;
-		uint32_t distance, pos, size;
+		const char* directive;
+		uint32_t n, distance, pos, size;
 		UString token, declaration, buffer(U_CAPACITY), output(U_CAPACITY);
 
 		while (true)
@@ -145,17 +146,24 @@ public:
 
 			U_INTERNAL_ASSERT(bgroup)
 
+			U_INTERNAL_DUMP("token = %.*S", U_STRING_TO_TRACE(token))
+
+			directive = token.c_pointer(1);
+			n			 = token.size() - 1;
+
+			U_INTERNAL_DUMP("directive = %10s", directive)
+
 			switch (token.first_char())
 				{
 				case '!': // <%! ... %>
 					{
-					declaration = UStringExt::trim(token.c_pointer(1), token.size()-1);
+					declaration = UStringExt::trim(directive, n);
 					}
 				break;
 
 				case '=': // <%= ... %>
 					{
-					token = UStringExt::trim(token.c_pointer(1), token.size()-1);
+					token = UStringExt::trim(directive, n);
 
 					buffer.snprintf("UClientImage_Base::_buffer->snprintf(\"%%.*s\", %.*s);\n"
 										 "(void) UClientImage_Base::wbuffer->append(*UClientImage_Base::_buffer);\n", U_STRING_TO_TRACE(token));

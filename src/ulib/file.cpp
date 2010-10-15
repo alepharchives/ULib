@@ -66,9 +66,14 @@ void UFile::setPathRelativ()
 
    U_INTERNAL_ASSERT_MAJOR(path_relativ_len,0)
 
-   /* NB: la stringa potrebbe non essere scrivibile...!!!!
+   // we don't need this... (I think)
 
-   path_relativ[path_relativ_len] = '\0';
+   /*
+   if (pathname.writeable() &&
+       pathname.size() != path_relativ_len)
+      {
+      path_relativ[path_relativ_len] = '\0';
+      }
    */
 
    U_INTERNAL_DUMP("u_cwd(%u)        = %.*S", u_cwd_len, u_cwd_len, u_cwd)
@@ -128,6 +133,21 @@ bool UFile::creat(int flags, mode_t mode)
    fd = UFile::open(path_relativ, flags | O_CREAT, mode);
 
    U_RETURN(fd != -1);
+}
+
+bool UFile::stat()
+{
+   U_TRACE(1, "UFile::stat()")
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
+
+   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   bool result = (U_SYSCALL(stat, "%S,%p", U_PATH_CONV(path_relativ), (struct stat*)this) == 0);
+
+   U_RETURN(result);
 }
 
 bool UFile::chdir(const char* path, bool flag_save)
@@ -356,7 +376,7 @@ UString UFile::getContent(bool brdonly, bool bstat, bool bmap)
    U_INTERNAL_DUMP("fd = %d map = %p map_size = %lu st_size = %I", fd, map, map_size, st_size)
 
    if (bmap ||
-       st_size > (off_t)U_CAPACITY)
+       st_size > (off_t)(16 * 1024))
       {
       int                   prot  = PROT_READ;
       if (brdonly == false) prot |= PROT_WRITE;
@@ -507,7 +527,7 @@ bool UFile::writeToTmpl(const char* tmpl, const UString& data, bool append, bool
 
    if (data.empty() == false)
       {
-      UString path(U_CAPACITY);
+      UString path(U_PATH_MAX);
 
       path.snprintf(tmpl, 0);
 
@@ -768,7 +788,7 @@ UString UFile::getRealPath(const char* path)
 {
    U_TRACE(1, "UFile::getRealPath(%S)", path)
 
-   UString buffer(U_CAPACITY);
+   UString buffer(U_PATH_MAX);
 
    char* result = U_SYSCALL(realpath, "%S,%p", path, buffer.data());
 
@@ -812,7 +832,7 @@ bool UFile::mkTemp(const char* name)
 {
    U_TRACE(0, "UFile::mkTemp(%S)", name)
 
-   UString path(U_CAPACITY);
+   UString path(U_PATH_MAX);
 
    path.snprintf("%s/%s", u_tmpdir, name);
 
@@ -997,7 +1017,7 @@ bool UFile::rename(const char* newpath)
 
    if (result)
       {
-      path_relativ     = newpath;
+      path_relativ     =  (char*) newpath;
       path_relativ_len = u_strlen(newpath);
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
@@ -1049,7 +1069,24 @@ static void ftw_vector_push()
 {
    U_TRACE(0, "ftw_vector_push()")
 
-   UString str((void*)u_buffer, u_buffer_len);
+   uint32_t len;
+   const char* ptr;
+
+   if (                 u_buffer[0] == '.' &&
+       IS_DIR_SEPARATOR(u_buffer[1]))
+      {
+      U_INTERNAL_ASSERT_MAJOR(u_buffer_len,2)
+
+      ptr = u_buffer    +2;
+      len = u_buffer_len-2;
+      }
+   else
+      {
+      ptr = u_buffer;
+      len = u_buffer_len;
+      }
+
+   UString str((void*)ptr, len);
 
    vector->push(str);
 }

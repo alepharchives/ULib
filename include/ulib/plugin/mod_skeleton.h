@@ -30,7 +30,7 @@ UServer has 5 hooks which are used in different states of the execution of the r
 
 * Connection-wide hooks:
 ````````````````````````
-3) handlerRead:
+3) handlerREAD:
 4) handlerRequest:
 5) handlerReset:
   called in `UClientImage_Base::handlerRead()`
@@ -59,7 +59,7 @@ public:
    virtual int handlerInit();
 
    // Connection-wide hooks
-   virtual int handlerRead();
+   virtual int handlerREAD();
    virtual int handlerRequest();
    virtual int handlerReset();
 

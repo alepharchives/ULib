@@ -102,7 +102,7 @@ public:
    Constructs a new UImapClient with default values for all properties
    */
 
-   UImapClient(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6), buffer(U_CAPACITY)
+   UImapClient(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6), buffer(4000)
       {
       U_TRACE_REGISTER_OBJECT(0, UImapClient, "%b", bSocketIsIPv6)
 

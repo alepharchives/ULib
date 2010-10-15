@@ -132,15 +132,9 @@ public:
 
    uint32_t parse(const UString& header);
 
+   void   removeHeader(const UString& key);
    bool containsHeader(const UString& key) { return table.find(key); }
    UString   getHeader(const UString& key) { return table[key]; }
-
-   void removeHeader(const UString& key)
-      {
-      U_TRACE(0, "UMimeHeader::removeHeader(%.*S)", U_STRING_TO_TRACE(key))
-
-      if (containsHeader(key)) table.eraseAfterFind();
-      }
 
    // Sets a header field, overwriting any existing value
 

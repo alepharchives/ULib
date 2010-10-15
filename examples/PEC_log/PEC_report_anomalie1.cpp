@@ -63,7 +63,7 @@ public:
       U_TRACE(5, "Application::MessageToString(%p,%p)", msg, bdelete)
 
       *bdelete        = true;
-      UStringRep* rep = (UStringRep*) UObject2StringRep<Messaggio>(msg);
+      UStringRep* rep = UObject2StringRep<Messaggio>(msg);
 
       U_RETURN_POINTER(rep,UStringRep);
       }

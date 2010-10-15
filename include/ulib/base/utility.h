@@ -26,14 +26,14 @@ extern "C" {
 
 extern U_EXPORT const char* u_short_units[]; /* { "B", "KB", "MB", "GB", "TB", 0 } */
 
-extern U_EXPORT int         u_getScreenWidth(void); /* Determine the width of the terminal we're running on */
-extern U_EXPORT int         u_get_num_random(int range);
-extern U_EXPORT bool        u_isNumber(const char* restrict s, uint32_t n);
-extern U_EXPORT void        u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
-extern U_EXPORT uint32_t    u_findEndHeader(const char* restrict s, uint32_t n); /* find sequence of U_LF2 or U_CRLF2 */
-extern U_EXPORT const char* u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
-extern U_EXPORT double      u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
-extern U_EXPORT bool        u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len);
+extern U_EXPORT int      u_getScreenWidth(void); /* Determine the width of the terminal we're running on */
+extern U_EXPORT int      u_get_num_random(int range);
+extern U_EXPORT bool     u_isNumber(const char* restrict s, uint32_t n);
+extern U_EXPORT void     u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
+extern U_EXPORT uint32_t u_findEndHeader(const char* restrict s, uint32_t n); /* find sequence of U_LF2 or U_CRLF2 */
+extern U_EXPORT char*    u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
+extern U_EXPORT double   u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
+extern U_EXPORT bool     u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len);
 
 #if defined(HAVE_MEMMEM) && !defined(__USE_GNU)
 extern U_EXPORT void* memmem(const void* restrict haystack, size_t haystacklen, const void* restrict needle, size_t needlelen);
@@ -181,7 +181,7 @@ extern U_EXPORT int u_strnatcmp(char const* restrict a, char const* restrict b);
 // Non-leading '../' and trailing '..' are handled by removing portions of the path
 // -------------------------------------------------------------------------------- */
 
-extern U_EXPORT void u_canonicalize_pathname(char* restrict path);
+extern U_EXPORT bool u_canonicalize_pathname(char* restrict path);
 
 /** --------------------------------------------------------------
 // find a FILE MODE along PATH

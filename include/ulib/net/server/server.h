@@ -187,17 +187,9 @@ public:
    static int  getCgiTimeout() { return cgi_timeout; }
    static int  getReqTimeout() { return USocket::req_timeout; }
 
-   // manage authorization data...
+   // The directory out of which you will serve your documents...
 
-   static const UString* str_htpasswd;
-   static const UString* str_htdigest;
-
-   static bool digest_authentication; // authentication method (digest|basic), for example directory listing...
-
-   static UString getUserHA1(      const UString& user, const UString& realm);
-   static bool    isUserAuthorized(const UString& user, const UString& password);
-
-   UString document_root;  // The directory out of which you will serve your documents
+   UString document_root;
 
    static UString getDocumentRoot()
       {
@@ -234,7 +226,7 @@ public:
 
    // Connection-wide hooks
 
-   static int pluginsHandlerRead()     { return (vplugin ? plugins_handlerRead()    : U_PLUGIN_HANDLER_FINISHED); }
+   static int pluginsHandlerREAD()     { return (vplugin ? plugins_handlerREAD()    : U_PLUGIN_HANDLER_FINISHED); }
    static int pluginsHandlerRequest()  { return (vplugin ? plugins_handlerRequest() : U_PLUGIN_HANDLER_FINISHED); }
    static int pluginsHandlerReset()    { return (vplugin ? plugins_handlerReset()   : U_PLUGIN_HANDLER_FINISHED); }
 #endif
@@ -278,8 +270,6 @@ public:
 
       U_RETURN(result);
       }
-
-   static bool isSerialize() { return (isClassic() == false); }
 
    static void setProcessManager()
       {
@@ -352,7 +342,6 @@ public:
 
    // NETWORK CTX
 
-   static UString getNodeName()                               { return USocketExt::getNodeName(); }
    static UString getIPAddress()                              { return pthis->IP_address; }
    static UString getMacAddress(    const char* device_or_ip) { return USocketExt::getMacAddress(socket->getFd(), device_or_ip); }
    static UString getNetworkAddress(const char* device)       { return USocketExt::getNetworkAddress(socket->getFd(), device); }
@@ -387,9 +376,8 @@ protected:
    static UProcess* proc;
    static USocket* socket;
    static UEventTime* ptime;
-   static UString* htpasswd;
-   static UString* htdigest;
    static UServer_Base* pthis;
+   static UEventFd* handler_event;
    static UVector<UIPAllow*>* vallow_IP;
    static bool flag_loop, flag_use_tcp_optimization;
 
@@ -425,9 +413,9 @@ protected:
       {
       U_TRACE(0, "UTimeoutConnection::handlerTime()")
 
-      // idle connection... (timeout)
+      // there are idle connection... (timeout)
 
-      UServer_Base::handlerIdleConnection();
+      UNotifier::callForAllEntry(handlerTimeoutConnection);
 
       // return value:
       // ---------------
@@ -435,7 +423,7 @@ protected:
       //  0 - monitoring
       // ---------------
 
-      U_RETURN(0);
+      U_RETURN(handler_event ? -1 : 0);
       }
 
 #  ifdef DEBUG
@@ -447,22 +435,13 @@ protected:
    UTimeoutConnection& operator=(const UTimeoutConnection&)     { return *this; }
    };
 
-   static void acceptNewClient(UEventFd* handler_event)
-      {
-      U_TRACE(0, "UServer_Base::acceptNewClient(%p)", handler_event)
-
-      UNotifier::init(handler_event);
-
-      if (USocket::req_timeout) ptime = U_NEW(UTimeoutConnection(USocket::req_timeout, 0L));
-      }
-
    static void handlerNewConnection();
-   static void handlerIdleConnection();
    static void handlerCloseConnection();
    static bool handlerTimeoutConnection(void* cimg);
 
    static void        runAsUser();
    static const char* getNumConnection();
+   static void        setNotifier(bool bfork);
 
 #ifdef HAVE_MODULES
    static UVector<UServerPlugIn*>* vplugin;
@@ -473,7 +452,7 @@ protected:
 
    // manage plugin modules for connection-wide hooks...
 
-   static int plugins_handlerRead();
+   static int plugins_handlerREAD();
    static int plugins_handlerRequest();
    static int plugins_handlerReset();
 #endif

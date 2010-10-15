@@ -138,9 +138,7 @@ UString UModProxyService::replaceResponse(const UString& msg)
 
    UString result = msg;
 
-   // gcc - cannot optimize loop, the loop counter may overflow ???
-
-   for (uint32_t i = 0, n = vreplace_response.size(); i < n; i += 2)
+   for (int32_t i = 0, n = vreplace_response.size(); i < n; i += 2)
       {
       // Searches subject for matches to pattern and replaces them with replacement
 

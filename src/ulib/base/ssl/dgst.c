@@ -109,20 +109,20 @@ void u_dgst_algoritm(int alg)
    u_hashType = (UHashType)alg;
 }
 
-void u_dgst_init(int alg, const char* restrict key, uint32_t keylen)
+void u_dgst_init(int alg, const char* restrict _key, uint32_t keylen)
 {
-   U_INTERNAL_TRACE("u_dgst_init(%d,%.*s,%u)", alg, keylen, key, keylen)
+   U_INTERNAL_TRACE("u_dgst_init(%d,%.*s,%u)", alg, keylen, _key, keylen)
 
    u_dgst_algoritm(alg);
 
    if (keylen)
       {
-      u_hmac_key    = key;
+      u_hmac_key    = _key;
       u_hmac_keylen = keylen;
 
       HMAC_CTX_cleanup(&u_hctx);
       HMAC_CTX_init(&u_hctx);
-      HMAC_Init_ex(&u_hctx, key, keylen, u_md, 0);
+      HMAC_Init_ex(&u_hctx, _key, keylen, u_md, 0);
       }
    else
       {

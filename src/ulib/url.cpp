@@ -344,7 +344,7 @@ bool Url::setQuery(UVector<UString>& vec)
       {
       UString name, value;
 
-      for (uint32_t i = 0, n  = vec.size(); i < n; ++i)
+      for (int32_t i = 0, n  = vec.size(); i < n; ++i)
          {
          name  = vec[i++];
          value = vec[i];

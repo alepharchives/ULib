@@ -161,6 +161,7 @@ enum HTTPMethodType { HTTP_POST = 1, HTTP_PUT = 2, HTTP_DELETE = 3, HTTP_GET = 4
 class UFile;
 class UValue;
 class UDynamic;
+class UEventFd;
 class UCommand;
 class UMimeMultipart;
 
@@ -174,7 +175,11 @@ public:
    static void str_allocate();
 
    static const UString* str_origin;
+   static const UString* str_favicon;
    static const UString* str_frm_body;
+   static const UString* str_htpasswd;
+   static const UString* str_htdigest;
+   static const UString* str_indexhtml;
    static const UString* str_websocket;
    static const UString* str_ctype_tsa;
    static const UString* str_frm_header;
@@ -199,7 +204,7 @@ public:
 
    // COSTRUTTORE e DISTRUTTORE
 
-   static void ctor();
+   static void ctor(UEventFd* handler_event);
    static void dtor();
 
    static void setHTTPMethod(const char* method, uint32_t method_len)
@@ -388,33 +393,23 @@ public:
       U_RETURN(result);
       }
 
-   static bool isHTTPDirectoryRequest()
-      {
-      U_TRACE(0, "UHTTP::isHTTPDirectoryRequest()")
-
-      U_INTERNAL_ASSERT(isHTTPRequest())
-
-      bool result = (http_info.uri[UHTTP::http_info.uri_len - 1] == '/');
-
-      U_RETURN(result);
-      }
-
    // SERVICES
 
    static UFile* file;
+   static UString* alias;
+   static bool virtual_host;
+   static UString* pathname;
+   static UString* request_uri;
 
    static void checkHTTPRequest();
    static void processHTTPGetRequest();
    static void getTimeIfNeeded(bool all_http_version);
-   static bool checkHTTPGetRequestIfModified(time_t mtime);
-   static bool checkHTTPGetRequestIfRange(time_t mtime, const UString& etag);
    static bool checkHTTPContentLength(const char* ptr, uint32_t length, UString& ext);
    static void getFileMimeType(const char* suffix, const char* content_type, UString& ext, off_t size);
-   static bool checkHTTPGetRequestForRange(off_t& start, off_t& size, UString& ext, const UString& data);
 
    static UString     getDocumentName();
    static UString     getDirectoryURI();
-   static UString     getHTMLDirectoryList();
+   static UString     getRequestURI(bool bquery);
    static const char* getHTTPHeaderValuePtr(const UString& name);
 
    static void setHTTPRequestProcessed()
@@ -425,12 +420,25 @@ public:
 
       U_INTERNAL_DUMP("U_http_request_check = %d", U_http_request_check)
 
-      U_http_request_check = 2;
+      U_http_request_check = 3;
       }
 
    static bool isHTTPRequestAlreadyProcessed()
       {
       U_TRACE(0, "UHTTP::isHTTPRequestAlreadyProcessed()")
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      U_INTERNAL_DUMP("U_http_request_check = %d", U_http_request_check)
+
+      bool result = (U_http_request_check == 3);
+
+      U_RETURN(result);
+      }
+
+   static bool isHTTPRequestInFileCache()
+      {
+      U_TRACE(0, "UHTTP::isHTTPRequestInFileCache()")
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
@@ -493,7 +501,6 @@ public:
    static UMimeMultipart* formMulti;
    static UVector<UString>* form_name_value;
 
-   static void     resetForm();
    static uint32_t processHTTPForm();
    static void     getFormValue(UString& buffer, uint32_t n);
 
@@ -517,12 +524,12 @@ public:
    static UString* penvironment;
    static char cgi_dir[U_PATH_MAX];
 
-   static bool    processCGIOutput();
+   static bool processCGIOutput();
+   static bool checkForCGIRequest();
+   static bool processCGIRequest(UCommand* pcmd, UString* penvironment, bool async);
+   static void setHTTPCgiResponse(int nResponseCode, bool header_content_length, bool header_content_type, bool content_encoding);
+
    static UString getCGIEnvironment();
-   static void    setCGIShellScript(UString& command);
-   static bool    checkForCGIRequest(const char* uri, uint32_t uri_len);
-   static bool    processCGIRequest(UCommand* pcmd, UString* penvironment);
-   static void    setHTTPCgiResponse(int nResponseCode, bool header_content_length, bool header_content_type, bool content_encoding);
 
    static bool isCGIRequest()
       {
@@ -537,13 +544,14 @@ public:
 
    // URI PROTECTED
 
-   static UString* alias;
-   static bool virtual_host;
-   static UString* request_uri;
+   static UString* htpasswd;
+   static UString* htdigest;
+   static bool digest_authentication; // authentication method (digest|basic), for example directory listing...
    static UVector<UIPAllow*>* vallow_IP;
 
-   static bool checkUriProtected();
-   static bool processHTTPAuthorization(bool digest);
+   static bool    checkUriProtected();
+   static UString getUserHA1(const UString& user, const UString& realm);
+   static bool    isUserAuthorized(const UString& user, const UString& password);
 
    // USP (ULib Servlet Page)
 
@@ -589,7 +597,7 @@ public:
 
    RewriteRule(const UString& _key, const UString& _replacement) :
 #  ifdef HAVE_PCRE
-       key(_key, PCRE_FOR_REPLACE),
+      key(_key, PCRE_FOR_REPLACE),
 #  endif
        replacement(_replacement)
       {
@@ -616,9 +624,7 @@ public:
 
    static UVector<RewriteRule*>* vRewriteRule;
 
-   static void processRewriteRule();
-
-   // FILE CACHE
+   // FILE SYSTEM CACHE
 
    class UFileCacheData {
    public:
@@ -630,23 +636,41 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
+   off_t size;              // size content
+   time_t mtime;            // time of last modification
+   mode_t mode;             // file type
+   int wd;                  // if directory a "watch list" associated with an inotify instance...
+   UVector<UString>* array; // content, header, deflate(content, header)
+
    // COSTRUTTORI
 
-   off_t size;             // size content
-   time_t mtime;           // time of last modification
-   UVector<UString> array; // content + header + deflate_header + deflate_content
+    UFileCacheData();
+   ~UFileCacheData();
 
-   UFileCacheData() : array(4U)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UFileCacheData, "", 0)
-      }
-
-   ~UFileCacheData()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UFileCacheData)
-      }
+   // STREAM
 
 #ifdef DEBUG
+   friend ostream& operator<<(ostream& os, const UFileCacheData& d)
+      {
+      U_TRACE(0, "UFileCacheData::operator<<(%p,%p)", &os, &d)
+
+      os.put('{');
+      os.put(' ');
+      os << d.wd;
+      os.put(' ');
+      os << d.size;
+      os.put(' ');
+      os << d.mode;
+      os.put(' ');
+      os << d.mtime;
+      os.put(' ');
+   // os << d.array;
+   // os.put(' ');
+      os.put('}');
+
+      return os;
+      }
+
    const char* dump(bool reset) const U_EXPORT;
 #endif
 
@@ -655,15 +679,44 @@ public:
    UFileCacheData& operator=(const UFileCacheData&) { return *this; }
    };
 
-   static UString* last_file;
+   static int inotify_wd;
+   static UStringRep* key_file;
    static UString* cache_file_mask;
    static UFileCacheData* file_data;
    static UHashMap<UFileCacheData*>* cache_file;
 
-   static bool manageFileCache();
-   static bool checkCacheForFile();
+   static void in_READ();
+   static bool isFileInCache();
    static void checkFileForCache();
-   static void searchFileForCache();
+
+   static bool isDataFromCache(bool deflate)
+      {
+      U_TRACE(0, "UHTTP::isDataFromCache(%b)", deflate)
+
+      U_INTERNAL_ASSERT_POINTER(file_data)
+
+      bool result = (file_data->array ? file_data->array->size() > (deflate * 2) : false);
+
+      U_RETURN(result);
+      }
+
+   static UString getDataFromCache(bool header, bool deflate)
+      {
+      U_TRACE(0, "UHTTP::getDataFromCache(%b,%b)", header, deflate)
+
+      U_INTERNAL_ASSERT_POINTER(file_data)
+
+      UString result;
+
+      if (file_data->array)
+         {
+         U_INTERNAL_DUMP("idx = %u", (deflate * 2) + header)
+
+         result = file_data->array->operator[]((deflate * 2) + header);
+         }
+
+      U_RETURN_STRING(result);
+      }
 
    // Accept-Language: en-us,en;q=0.5
    // ----------------------------------------------------
@@ -676,20 +729,34 @@ public:
    static void setHTTPNotFound();
    static void setHTTPForbidden();
    static void setHTTPBadRequest();
+   static void setHTTPUnAuthorized();
    static void setHTTPInternalError();
    static void setHTTPServiceUnavailable();
-   static void setHTTPUnAuthorized(bool digest);
 
    // set HTTP response message
 
-   static UString getHTTPHeaderForResponse(int nResponseCode, UString& content);
+   static UString getHTTPHeaderForResponse(int nResponseCode, const UString& content);
    static void    setHTTPResponse(int nResponseCode, const UString* content_type, const UString* body);
    static void    setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint32_t len_location);
 
 private:
-   static bool    openFile() U_NO_EXPORT;
-   static void    checkPath(UString& pathname) U_NO_EXPORT;
-   static bool    splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext) U_NO_EXPORT;
+   static UString getHTMLDirectoryList() U_NO_EXPORT;
+
+   static bool openFile() U_NO_EXPORT;
+   static void in_CREATE() U_NO_EXPORT;
+   static void in_DELETE() U_NO_EXPORT;
+   static void checkPath() U_NO_EXPORT;
+   static void processFileCache() U_NO_EXPORT;
+   static void processRewriteRule() U_NO_EXPORT;
+   static void resetForm(bool brmdir) U_NO_EXPORT;
+   static bool processHTTPAuthorization() U_NO_EXPORT;
+   static bool checkHTTPGetRequestIfModified() U_NO_EXPORT;
+   static bool setCGIShellScript(UString& command) U_NO_EXPORT;
+   static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;
+   static void getInotifyPathDirectory(UStringRep* key, void* value) U_NO_EXPORT;
+   static void checkInotifyForCache(int wd, char* name, uint32_t len) U_NO_EXPORT;
+   static bool splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext) U_NO_EXPORT;
+   static bool checkHTTPGetRequestForRange(off_t& start, off_t& size, UString& ext, const UString& data) U_NO_EXPORT;
 
    UHTTP(const UHTTP&)            {}
    UHTTP& operator=(const UHTTP&) { return *this; }

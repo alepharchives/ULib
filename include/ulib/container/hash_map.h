@@ -185,6 +185,7 @@ public:
    // Set/get methods
 
    void* operator[](const char*    _key) { UStringRep keyr(_key); return at(&keyr); }
+   void* operator[](UStringRep*    _key) {                        return at(_key); }
    void* operator[](const UString& _key) {                        return at(_key.rep); }
 
    void*       elem() const { return node->elem; }
@@ -201,7 +202,8 @@ public:
       node->elem = _elem;
       }
 
-   void* erase(const UString& key);
+   void* erase(UStringRep*    _key);
+   void* erase(const UString& _key) { return erase(_key.rep); }
 
    // Make room for a total of n element
 
@@ -279,12 +281,13 @@ public:
 
    // Inserimento e cancellazione elementi dalla tabella
 
-   T* erase(const UString& _key)
-      { return (T*) UHashMap<void*>::erase(_key); }
+   T* erase(UStringRep*    _key) { return (T*) UHashMap<void*>::erase(_key); }
+   T* erase(const UString& _key) { return (T*) UHashMap<void*>::erase(_key.rep); }
 
    T* elem() const { return (T*) UHashMap<void*>::elem(); }
 
    T* operator[](const char*    _key) { return (T*) UHashMap<void*>::operator[](_key); }
+   T* operator[](UStringRep*    _key) { return (T*) UHashMap<void*>::operator[](_key); }
    T* operator[](const UString& _key) { return (T*) UHashMap<void*>::operator[](_key); }
 
    void eraseAfterFind()
@@ -476,6 +479,44 @@ public:
       _length = h._length;
       }
 
+   // STREAMS
+
+   friend ostream& operator<<(ostream& _os, const UHashMap<T*>& t)
+      {
+      U_TRACE(0+256, "UHashMap<T*>::operator<<(%p,%p)", &_os, &t)
+
+      UHashMapNode* node;
+      UHashMapNode* next;
+
+      _os.put('{');
+      _os.put('\n');
+
+      for (UHashMapNode** ptr = t.table; ptr < (t.table + t._capacity); ++ptr)
+         {
+         if (*ptr)
+            {
+            node = *ptr;
+
+            do {
+               next = node->next;
+
+               node->key->write(_os);
+
+               _os.put('\t');
+
+               _os << *((T*)node->elem);
+
+               _os.put('\n');
+               }
+            while ((node = next));
+            }
+         }
+
+      _os.put('}');
+
+      return _os;
+      }
+
 #ifdef DEBUG
    const char* dump(bool reset) const { return UHashMap<void*>::dump(reset); }
 #endif
@@ -526,13 +567,14 @@ public:
 
    // OPERATOR []
 
-   UString operator[](const char*    _key) { UStringRep keyr(_key); return at(&keyr); }
+   UString operator[](const char*    _key) { UStringRep keyr(_key); return at(&keyr);    }
+   UString operator[](UStringRep*    _key) {                        return at(_key);     }
    UString operator[](const UString& _key) {                        return at(_key.rep); }
 
    // STREAMS
 
    friend U_EXPORT istream& operator>>(istream& is,       UHashMap<UString>& t);
-   friend U_EXPORT ostream& operator<<(ostream& os, const UHashMap<UString>& t);
+   friend U_EXPORT ostream& operator<<(ostream& os, const UHashMap<UString>& t) { return operator<<(os, (const UHashMap<UStringRep*>&)t); }
 
 protected:
    UString at(UStringRep* keyr);

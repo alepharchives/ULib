@@ -150,6 +150,15 @@ uint32_t UMimeHeader::parse(const UString& buffer)
    U_RETURN(table.size() - n);
 }
 
+// inlining failed in call to 'UMimeHeader::removeHeader(UString const&)': call is unlikely and code size would grow
+
+void UMimeHeader::removeHeader(const UString& key)
+{
+   U_TRACE(0, "UMimeHeader::removeHeader(%.*S)", U_STRING_TO_TRACE(key))
+
+   if (containsHeader(key)) table.eraseAfterFind();
+}
+
 uint32_t UMimeHeader::getAttributeFromKeyValue(const UString& key_value, UVector<UString>& name_value)
 {
    U_TRACE(0, "UMimeHeader::getAttributeFromKeyValue(%.*S,%p)", U_STRING_TO_TRACE(key_value), &name_value)
@@ -182,9 +191,7 @@ UString UMimeHeader::getValueAttributeFromKeyValue(const UString& name_attr, UVe
 
    UString value_name;
 
-   // gcc: cannot optimize loop, the loop counter may overflow ???
-
-   for (uint32_t i = 0, n = name_value.size(); i < n; ++i)
+   for (int32_t i = 0, n = name_value.size(); i < n; ++i)
       {
       if (name_value[i++].equal(name_attr, ignore_case))
          {
@@ -225,9 +232,7 @@ bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& 
 
    if (getAttributeFromKeyValue(cdisposition, name_value))
       {
-      // gcc: cannot optimize loop, the loop counter may overflow ???
-
-      for (uint32_t i = 0, n = name_value.size(); i < n; i += 2)
+      for (int32_t i = 0, n = name_value.size(); i < n; i += 2)
          {
          if (name_value[i].equal(*str_name, false))
             {

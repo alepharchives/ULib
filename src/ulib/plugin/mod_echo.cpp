@@ -23,9 +23,9 @@ U_CREAT_FUNC(UEchoPlugIn)
 
 // Connection-wide hooks
 
-int UEchoPlugIn::handlerRead()
+int UEchoPlugIn::handlerREAD()
 {
-   U_TRACE(0, "UEchoPlugIn::handlerRead()")
+   U_TRACE(0, "UEchoPlugIn::handlerREAD()")
 
    bool is_msg = USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer);
 

@@ -102,7 +102,7 @@ public:
 
    void*& at(uint32_t pos)
       {
-      U_TRACE(0, "UVector<void*>::at(%u) const", pos)
+      U_TRACE(0, "UVector<void*>::at(%u)", pos)
 
       U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
       U_INTERNAL_ASSERT_MINOR(pos, _length)
@@ -1019,10 +1019,8 @@ public:
 
    uint32_t readline(istream& is);
 
-   friend U_EXPORT istream& operator>>(istream& is, UVector<UString>& v);
-
-   friend ostream& operator<<(ostream& os, const UVector<UString>& v)
-      { return operator<<(os, (const UVector<UStringRep*>&)v); }
+   friend U_EXPORT istream& operator>>(istream& is,       UVector<UString>& v);
+   friend          ostream& operator<<(ostream& os, const UVector<UString>& v) { return operator<<(os, (const UVector<UStringRep*>&)v); }
 
 private:
    static void mksort(UStringRep** a, int n, int depth);

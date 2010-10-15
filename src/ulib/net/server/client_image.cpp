@@ -135,7 +135,7 @@ void UClientImage_Base::init(USocket* p)
    socket  = p;
    body    = U_NEW(UString);
    rbuffer = U_NEW(UString(U_CAPACITY));
-   wbuffer = U_NEW(UString(U_CAPACITY));
+   wbuffer = U_NEW(UString);
    real_ip = U_NEW(UString(20U));
 
    // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
@@ -187,7 +187,7 @@ UClientImage_Base::UClientImage_Base()
    if (UServer_Base::isLog() == false) logbuf = 0;
    else
       {
-      logbuf        = U_NEW(UString(U_CAPACITY));
+      logbuf        = U_NEW(UString(4000U));
       clientAddress = U_NEW(UIPAddress(socket->cRemoteAddress));
 
       socket->getRemoteInfo(*logbuf);
@@ -297,17 +297,19 @@ void UClientImage_Base::resetBuffer()
 {
    U_TRACE(0, "UClientImage_Base::resetBuffer()")
 
+   U_INTERNAL_ASSERT_POINTER(body);
    U_INTERNAL_ASSERT_POINTER(rbuffer)
    U_INTERNAL_ASSERT_POINTER(wbuffer)
+
+      body->clear();
+   wbuffer->clear();
+
    U_INTERNAL_ASSERT_EQUALS(rbuffer->isNull(), false);
-
-   if      (wbuffer->same(*rbuffer)) wbuffer->clear();
-   else if (wbuffer->uniq())         wbuffer->setEmpty();
-
-   if (body->isNull()   == false) body->clear();
-   if (real_ip->empty() == false) real_ip->setEmpty();
+   U_ASSERT(                rbuffer->writeable())
 
    rbuffer->setEmptyForce(); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more than one)...
+
+   if (real_ip->empty() == false) real_ip->setEmpty();
 
    // manage buffered read (pipelining)
 
@@ -370,15 +372,17 @@ void UClientImage_Base::run()
       {
       // NB: this new object (pClientImage) is deleted by UNotifier (when response U_NOTIFIER_DELETE from handlerRead()...)
 
-      UNotifier::insert(pClientImage, true);
+      UNotifier::insert(pClientImage);
 
       return;
       }
 
    // NB: if server with no prefork (ex: nodog) process the HTTP CGI request with fork....
 
-   if (UServer_Base::preforked_num_kids == 0     &&
-       UServer_Base::flag_loop          == false &&
+   U_INTERNAL_DUMP("UClientImage_Base::run() flag_loop = %b", UServer_Base::flag_loop)
+
+   if (UServer_Base::flag_loop          == false &&
+       UServer_Base::preforked_num_kids == 0     &&
        UServer_Base::proc->child())
       {
       U_EXIT(0);
@@ -418,7 +422,7 @@ int UClientImage_Base::handlerRead()
 
    do {
 #  ifdef HAVE_MODULES // Connection-wide hooks
-      result = UServer_Base::pluginsHandlerRead(); // read request...
+      result = UServer_Base::pluginsHandlerREAD(); // read request...
 
       if (result == U_PLUGIN_HANDLER_FINISHED)
          {
@@ -436,8 +440,12 @@ int UClientImage_Base::handlerRead()
       if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
 #  endif
 
-      if (result == U_PLUGIN_HANDLER_ERROR &&
-          checkForPipeline() == false)
+      U_INTERNAL_DUMP("flag_loop = %b", UServer_Base::flag_loop)
+
+      if (UServer_Base::flag_loop == false  ||
+          (result == U_PLUGIN_HANDLER_ERROR &&
+           (socket->isConnected() == false  ||
+            checkForPipeline()    == false)))
          {
          USocketExt::pcount = 0; // reset read data available...
 

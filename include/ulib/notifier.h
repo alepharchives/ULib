@@ -71,9 +71,9 @@ public:
       U_RETURN(esito);
       }
 
+   static void init();
    static void clear();
-   static void init(  UEventFd* handler_event);
-   static void insert(UEventFd* handler_event, bool bfirst);
+   static void insert(UEventFd* handler_event);
    static void erase( UEventFd* handler_event, bool flag_reuse);
 
    static bool isHandler(UEventFd* handler_event)
@@ -128,7 +128,7 @@ protected:
    static fd_set fd_set_read, fd_set_write;
    static bool exit_loop_wait_event_for_signal;
 
-   static void preallocate(uint32_t n);
+   static void preallocate(int n);
    static void waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
 
 #ifdef USE_POLL

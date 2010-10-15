@@ -67,6 +67,10 @@ GET /vuoto.txt HTTP/1.1
 Connection: Keep-Alive
 Host: localhost
 
+GET /vuoto%2Etxt HTTP/1.1
+Connection: Keep-Alive
+Host: localhost
+
 head  /tmp   HTTP/1.1
 Host: localhost
 Accept-Encoding: gzip,deflate

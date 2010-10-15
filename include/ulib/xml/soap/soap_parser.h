@@ -211,16 +211,7 @@ public:
       tree.clear();
       }
 
-   virtual ~USOAPParser()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, USOAPParser)
-
-      clearData();
-
-#  ifdef U_SOAP_NAMESPACE
-      XMLNStoURN.deallocate();
-#  endif
-      }
+   virtual ~USOAPParser();
 
    // SERVICES
 

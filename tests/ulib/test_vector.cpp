@@ -175,11 +175,10 @@ static void print(UVector<UString>& y)
 {
    U_TRACE(5, "print()")
 
-   UString buffer(U_CAPACITY);
-   unsigned size = 0, start = 0;
+   UString buffer(3000U);
 
-   char* ptr = buffer.data()     + start;
-   size      = buffer.capacity() - start;
+   char* ptr      = buffer.data();
+   unsigned size  = buffer.capacity();
 
    ostrstream os(ptr, size);
 
@@ -191,7 +190,7 @@ static void print(UVector<UString>& y)
 
    U_INTERNAL_ASSERT_MINOR(output_len,size)
 
-   buffer.size_adjust(start + output_len);
+   buffer.size_adjust(output_len);
 
    cout << buffer << endl;
 }
@@ -281,10 +280,10 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( n == 2 )
 
-   U_ASSERT( y[0] == U_STRING_FROM_CONSTANT("./cdb.test") ||
-             y[0] == U_STRING_FROM_CONSTANT("./rdb.test"))
-   U_ASSERT( y[1] == U_STRING_FROM_CONSTANT("./rdb.test") ||
-             y[1] == U_STRING_FROM_CONSTANT("./cdb.test"))
+   U_ASSERT( y[0] == U_STRING_FROM_CONSTANT("cdb.test") ||
+             y[0] == U_STRING_FROM_CONSTANT("rdb.test"))
+   U_ASSERT( y[1] == U_STRING_FROM_CONSTANT("rdb.test") ||
+             y[1] == U_STRING_FROM_CONSTANT("cdb.test"))
 
    y.clear();
    bool res = y.empty();

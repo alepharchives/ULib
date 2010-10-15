@@ -11,8 +11,6 @@
 19/03/10 13:49:35> HOST registered as: stefano:10001
 19/03/10 13:49:35> SERVER IP ADDRESS registered as: 10.30.1.131
 19/03/10 13:49:35> working directory (DOCUMENT_ROOT) changed to "/usr/src/ULib-1.0.5/tests/examples"
-19/03/10 13:49:35> file data users permission: '.htpasswd' loaded
-19/03/10 13:49:35> file data users permission: '.htdigest' loaded
 19/03/10 13:49:35> waiting for connection
 19/03/10 13:49:36> new client connected from  5 '127.0.0.1:47897', 1 clients currently connected
 19/03/10 13:49:36> sent welcome message to  5 '127.0.0.1:47897'

@@ -132,7 +132,7 @@ protected:
    int status;
    bool running;
 
-   static inline void setStdInOutErr(bool fd_stdin, bool fd_stdout, bool fd_stderr) U_NO_EXPORT;
+   static void setStdInOutErr(bool fd_stdin, bool fd_stdout, bool fd_stderr) U_NO_EXPORT;
 
 private:
    UProcess(const UProcess&)            {}

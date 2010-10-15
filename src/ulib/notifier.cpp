@@ -44,20 +44,24 @@ void UEventFd::operator()(int fd, short event)
 }
 #endif
 
-void UNotifier::init(UEventFd* handler_event)
+void UNotifier::init()
 {
-   U_TRACE(0, "UNotifier::init(%p)", handler_event)
+   U_TRACE(0, "UNotifier::init()")
 
 #ifdef HAVE_LIBEVENT
-   if (u_ev_base == 0) u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
-   else
-      {
-      (void) U_SYSCALL(event_reinit, "%p", u_ev_base); // Reinitialized the event base after a fork
-      }
+   if (u_ev_base) (void) U_SYSCALL(event_reinit, "%p", u_ev_base); // Reinitialized the event base after a fork
+   else           u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
 
    U_INTERNAL_ASSERT_POINTER(u_ev_base)
 #elif defined(HAVE_EPOLL_WAIT)
-   if (epollfd) (void) U_SYSCALL(close, "%d", epollfd);
+   if (epollfd)
+      {
+      // Reinitialized epoll after a fork
+
+      U_INTERNAL_ASSERT_EQUALS(first,0)
+
+      (void) U_SYSCALL(close, "%d", epollfd);
+      }
 #  ifdef HAVE_EPOLL_CREATE1
    epollfd = U_SYSCALL(epoll_create1, "%d", EPOLL_CLOEXEC);
 #  else
@@ -68,8 +72,6 @@ void UNotifier::init(UEventFd* handler_event)
    U_INTERNAL_ASSERT_EQUALS(U_READ_IN,EPOLLIN)
    U_INTERNAL_ASSERT_EQUALS(U_WRITE_OUT,EPOLLOUT)
 #endif
-
-   if (handler_event) insert(handler_event, true);
 }
 
 UNotifier::~UNotifier()
@@ -80,9 +82,9 @@ UNotifier::~UNotifier()
    if (handler_event_fd) delete handler_event_fd;
 }
 
-void UNotifier::insert(UEventFd* handler_event, bool bfirst)
+void UNotifier::insert(UEventFd* handler_event)
 {
-   U_TRACE(0, "UNotifier::insert(%p,%b)", handler_event, bfirst)
+   U_TRACE(0, "UNotifier::insert(%p)", handler_event)
 
    U_INTERNAL_DUMP("op_mask = %B", handler_event->op_mask)
 
@@ -100,6 +102,8 @@ void UNotifier::insert(UEventFd* handler_event, bool bfirst)
 
    (void) UDispatcher::add(*(handler_event->pevent));
 #elif defined(HAVE_EPOLL_WAIT)
+   U_INTERNAL_ASSERT_MAJOR(epollfd,0)
+
    events[0].events  = handler_event->op_mask;
    events[0].data.fd = handler_event->fd;
 
@@ -154,27 +158,8 @@ void UNotifier::insert(UEventFd* handler_event, bool bfirst)
 
    item->handler_event_fd = handler_event;
 
-   if (bfirst)
-      {
-      item->next = first;
-      first      = item;
-      }
-   else
-      {
-      item->next = 0;
-
-      if (first == 0) first = item;
-      else
-         {
-         UNotifier* last;
-
-         for (last = first; last->next; last = last->next) {}
-
-         U_INTERNAL_ASSERT_EQUALS(last->next, 0)
-
-         last->next = item;
-         }
-      }
+   item->next = first;
+   first      = item;
 }
 
 void UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout)
@@ -205,7 +190,7 @@ loop:
 
       U_INTERNAL_DUMP("timeout = { %ld %6ld }", tmp.tv_sec, tmp.tv_usec)
       }
-   
+
 #if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
    result = U_SYSCALL(epoll_wait, "%d,%p,%d,%p", epollfd, events, MAX_EVENTS, (ptmp ? ((tmp.tv_sec * 1000) + (tmp.tv_usec / 1000)) : -1));
 #else
@@ -555,13 +540,15 @@ void UNotifier::removeBadFd()
 }
 #endif
 
-void UNotifier::preallocate(uint32_t n)
+void UNotifier::preallocate(int n)
 {
    U_TRACE(0+256, "UNotifier::preallocate(%u)", n)
 
+   U_INTERNAL_ASSERT_MAJOR(n,0)
+
    UNotifier* item;
 
-   for (uint32_t i = 0; i < n; ++i)
+   for (int i = 0; i < n; ++i)
       {
       item = U_NEW(UNotifier);
 

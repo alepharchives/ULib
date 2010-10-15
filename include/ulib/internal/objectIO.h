@@ -25,7 +25,11 @@
 // gestione conversione oggetti in const char*...
 
 #ifndef U_BUFSZ_OBJ_IO
-#define U_BUFSZ_OBJ_IO (10 * 1024)
+#  ifdef DEBUG
+#     define U_BUFSZ_OBJ_IO (1024 * 1024)
+#  else
+#     define U_BUFSZ_OBJ_IO (  10 * 1024)
+#  endif
 #endif
 
 class UStringRep;
@@ -68,7 +72,7 @@ template <class T> inline char* UObject2String(T& object)
    return UObjectIO::buffer_output;
 }
 
-template <class T> inline void* UObject2StringRep(T* object)
+template <class T> inline UStringRep* UObject2StringRep(T* object)
 {
    U_INTERNAL_TRACE("UObject2StringRep(%p)", object)
 

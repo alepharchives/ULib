@@ -170,16 +170,7 @@ public:
    // -3: there is not enough (virtual) memory available on writing journal
    // ---------------------------------------------------------------------
 
-   int remove(const UString& _key)
-      {
-      U_TRACE(0, "URDB::remove(%.*S)", U_STRING_TO_TRACE(_key))
-
-      UCDB::setKey(_key);
-
-      int result = remove();
-
-      U_RETURN(result);
-      }
+   int remove(const UString& _key);
 
    // ----------------------------------------------------------------------
    // Substitute a key/value with a new key/value (remove+store)
@@ -193,19 +184,7 @@ public:
    // -4: flag was RDB_INSERT and the new key already existed
    // ----------------------------------------------------------------------
 
-   int substitute(const UString& _key, const UString& new_key, const UString& _data, int flag = RDB_INSERT)
-      {
-      U_TRACE(0, "URDB::substitute(%.*S,%.*S,%.*S,%d)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(new_key),
-                                                        U_STRING_TO_TRACE(_data), flag)
-
-      UCDB::setKey(_key);
-      UCDB::setData(_data);
-      UCDB::datum key2 = { (void*) new_key.data(), new_key.size() };
-
-      int result = substitute(&key2, flag);
-
-      U_RETURN(result);
-      }
+   int substitute(const UString& _key, const UString& new_key, const UString& _data, int flag = RDB_INSERT);
 
    // Ricerche
 
@@ -257,25 +236,9 @@ public:
       lock.init(0);
       }
 
-   bool beginTransaction()
-      {
-      U_TRACE(0, "URDB::beginTransaction()")
-
-      lock.lock();
-
-      return reorganize();
-      }
-
+   bool beginTransaction();
    void abortTransaction();
-   void commitTransaction()
-      {
-      U_TRACE(0, "URDB::commitTransaction()")
-
-      msync();
-      fsync();
-
-      lock.unlock();
-      }
+   void commitTransaction();
 
    // Call function for all entry
 
@@ -410,10 +373,10 @@ private:
    static inline void print2(char* src) U_NO_EXPORT;
    static inline void makeAdd2(char* src) U_NO_EXPORT;
    static inline void getKeys2(char* src) U_NO_EXPORT;
-   static inline void call1(uint32_t offset) U_NO_EXPORT;
-   static inline void print1(uint32_t offset) U_NO_EXPORT;
-   static inline void makeAdd1(uint32_t offset) U_NO_EXPORT;
-   static inline void getKeys1(uint32_t offset) U_NO_EXPORT;
+   static        void call1(uint32_t offset) U_NO_EXPORT;
+   static        void print1(uint32_t offset) U_NO_EXPORT;
+   static        void makeAdd1(uint32_t offset) U_NO_EXPORT;
+   static        void getKeys1(uint32_t offset) U_NO_EXPORT;
 
    URDB(const URDB& r) : UCDB(r) {}
    URDB& operator=(const URDB&)  { return *this; }

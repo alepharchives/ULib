@@ -64,9 +64,9 @@ void UHashMap<void*>::lookup(UStringRep* keyr)
    U_INTERNAL_DUMP("node = %p", node)
 }
 
-void* UHashMap<void*>::erase(const UString& _key)
+void* UHashMap<void*>::erase(UStringRep* _key)
 {
-   U_TRACE(0, "UHashMap<void*>::erase(%.*S)", U_STRING_TO_TRACE(_key))
+   U_TRACE(0, "UHashMap<void*>::erase(%.*S)", U_STRING_TO_TRACE(*_key))
 
    lookup(_key);
 
@@ -180,21 +180,34 @@ void UHashMap<void*>::reserve(uint32_t n)
    U_INTERNAL_ASSERT_MAJOR(_capacity,0)
 
    UHashMapNode** old_table    = table;
-   uint32_t       old_capacity = _capacity;
+   uint32_t       old_capacity = _capacity, i;
 
    allocate(U_GET_NEXT_PRIME_NUMBER(n));
+
+#ifdef DEBUG
+   int sum = 0, max = 0, min = 1024, width;
+#endif
 
    // inserisco i vecchi elementi
 
    UHashMapNode* _next;
 
-   for (uint32_t i = 0; i < old_capacity; ++i)
+   for (i = 0; i < old_capacity; ++i)
       {
       if (old_table[i])
          {
          node = old_table[i];
 
+#     ifdef DEBUG
+         ++sum;
+         width = -1;
+#     endif
+
          do {
+#        ifdef DEBUG
+            ++width;
+#        endif
+
             _next  = node->next;
             index  = node->hash % _capacity;
 
@@ -206,10 +219,44 @@ void UHashMap<void*>::reserve(uint32_t n)
             table[index] = node;
             }
          while ((node = _next));
+
+#     ifdef DEBUG
+         if (max < width) max = width;
+         if (min > width) min = width;
+#     endif
          }
       }
 
    U_FREE_VECTOR(old_table, old_capacity, UHashMapNode);
+
+   U_INTERNAL_DUMP("OLD: collision(min,max) = (%3d,%3d) - distribution = %3f", min, max, (double)_length / (double)sum)
+
+#ifdef DEBUG
+   sum = 0, max = 0, min = 1024;
+
+   UHashMapNode* _n;
+
+   for (i = 0; i < _capacity; ++i)
+      {
+      if (table[i])
+         {
+         _n = table[i];
+
+         ++sum;
+         width = -1;
+
+         do {
+            ++width;
+            }
+         while ((_n = _next));
+
+         if (max < width) max = width;
+         if (min > width) min = width;
+         }
+      }
+#endif
+
+   U_INTERNAL_DUMP("NEW: collision(min,max) = (%3d,%3d) - distribution = %3f", min, max, (double)_length / (double)sum)
 }
 
 bool UHashMap<void*>::first()
@@ -277,9 +324,9 @@ void UHashMap<void*>::callForAllEntry(vPFprpv function)
 #     endif
 
          do {
-#     ifdef DEBUG
+#        ifdef DEBUG
             ++width;
-#     endif
+#        endif
 
             _next = n->next; // NB: function can delete the node...
 
@@ -462,42 +509,6 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
 // if (t._length == 0) is.setstate(ios::failbit);
 
    return is;
-}
-
-U_EXPORT ostream& operator<<(ostream& os, const UHashMap<UString>& t)
-{
-   U_TRACE(0+256, "UHashMap<UString>::operator<<(%p,%p)", &os, &t)
-
-   UHashMapNode* node;
-   UHashMapNode* next;
-
-   os.put('{');
-   os.put('\n');
-
-   for (UHashMapNode** ptr = t.table; ptr < (t.table + t._capacity); ++ptr)
-      {
-      if (*ptr)
-         {
-         node = *ptr;
-
-         do {
-            next = node->next;
-
-            node->key->write(os);
-
-            os.put('\t');
-
-            ((UStringRep*)node->elem)->write(os);
-
-            os.put('\n');
-            }
-         while ((node = next));
-         }
-      }
-
-   os.put('}');
-
-   return os;
 }
 
 // DEBUG

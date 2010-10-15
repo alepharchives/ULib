@@ -172,7 +172,7 @@ loop:
    if (result == -1 &&
        errno  == EADDRINUSE)
       {
-      if (counter++ <= 1)
+      if (counter++ < 3)
          {
          UTimeVal(1L).nanosleep();
 

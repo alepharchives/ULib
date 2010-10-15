@@ -137,25 +137,42 @@ void UPCRE::set(const UString& expression, const char* flags)
    compile(0);
 }
 
-UPCRE::~UPCRE()
+void UPCRE::clear()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UPCRE)
+   U_TRACE(0, "UPCRE::clear()")
 
    /* avoid deleting of uninitialized pointers */
 
-   if (p_pcre)       U_SYSCALL_VOID(pcre_free, "%p", p_pcre);
-   if (p_pcre_extra) U_SYSCALL_VOID(pcre_free, "%p", p_pcre_extra);
+   if (p_pcre)
+      {
+      U_SYSCALL_VOID(pcre_free, "%p", p_pcre);
+                                      p_pcre = 0;
+      }
 
-   if (sub_vec) U_FREE_N(sub_vec, sub_len, int);
+   if (p_pcre_extra)
+      {
+      U_SYSCALL_VOID(pcre_free, "%p", p_pcre_extra);
+                                      p_pcre_extra = 0;
+      }
+
+   if (sub_vec)
+      {
+      U_FREE_N(sub_vec, sub_len, int);
+               sub_vec = 0;
+      }
 
    if (stringlist)
       {
       U_SYSCALL_VOID(pcre_free_substring_list, "%p", stringlist);
+                                                     stringlist = 0;
 
       U_INTERNAL_ASSERT_POINTER(resultset)
 
       delete resultset;
+             resultset = 0;
       }
+
+   _expression.clear();
 }
 
 U_NO_EXPORT const char* UPCRE::status(int num)
@@ -506,6 +523,8 @@ U_NO_EXPORT UString UPCRE::replaceVars(const UString& piece)
       U_INTERNAL_DUMP("sBracket[%d] = %.*S", iBracketIndex, U_STRING_TO_TRACE(sBracketContent))
 
       // now we can split the stuff
+
+      subsplit.clear();
 
       cstr.snprintf("(\\${?%.*s}?)", U_STRING_TO_TRACE(first));
 

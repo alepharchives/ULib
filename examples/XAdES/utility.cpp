@@ -219,9 +219,9 @@ void UXAdESUtility::outputDocument(const UString& firma)
          {
          UString namefile, pcontent, tpath(100U);
 
-         uint32_t j = 1, n = MSSignatureStructure.size();
+         int32_t j = 1, n = MSSignatureStructure.size();
 
-         for (uint32_t i = 0; i < n; i += 2)
+         for (int32_t i = 0; i < n; i += 2)
             {
             namefile = MSSignatureStructure[i];
 

@@ -143,10 +143,11 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
    int op;
    UString tmp; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+   int32_t i, n;
    bool bgroup, bfile;
    const char* directive;
    UVector<UString> name_value;
-   uint32_t i, n, distance, pos, size;
+   uint32_t distance, pos, size;
    UString token, name, value, pathname, include, directory, output(U_CAPACITY);
 
    (directory = UHTTP::getDirectoryURI()).duplicate();
@@ -344,14 +345,11 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                {
                UHTTP::file->setPath(pathname);
 
-               if (UHTTP::cache_file &&
-                   UHTTP::checkCacheForFile())
+               if (UHTTP::isFileInCache() &&
+                   UHTTP::isDataFromCache(false))
                   {
                   bfile   = true;
-                  include = UHTTP::file_data->array[0];
-
-                  UHTTP::file->st_size  = UHTTP::file_data->size;
-                  UHTTP::file->st_mtime = UHTTP::file_data->mtime;
+                  include = UHTTP::getDataFromCache(false, false);
                   }
                else if (UHTTP::file->open())
                   {
@@ -385,8 +383,10 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                     if (name == *str_cmd) (void) output.append(UCommand::outputCommand(name_value[1], 0, -1, UServices::getDevNull()));
                else if (name == *str_cgi)
                   {
-                  if (UHTTP::checkForCGIRequest(U_STRING_TO_PARAM(name_value[1])) &&
-                      UHTTP::processCGIRequest((UCommand*)0, &environment))
+                  UHTTP::pathname->snprintf("%w%.*s", U_STRING_TO_TRACE(name_value[1]));
+
+                  if (UHTTP::checkForCGIRequest() &&
+                      UHTTP::processCGIRequest((UCommand*)0, &environment, false))
                      {
                      (void) output.append(U_STRING_TO_PARAM(*UClientImage_Base::wbuffer));
                      }
@@ -441,21 +441,25 @@ int USSIPlugIn::handlerRequest()
 
       // read the SSI file
 
+      bool deflate = (U_http_is_accept_deflate == 1), bappend = deflate;
+
       if (UHTTP::isHTTPRequestAlreadyProcessed())
          {
-         body          = UHTTP::file_data->array[0];
-         header        = UHTTP::file_data->array[(U_http_is_accept_deflate == 1 ? 2 : 1)];
+         if (deflate) bappend = (UHTTP::isDataFromCache(true) == false);
+
+         body          = UHTTP::getDataFromCache(false, false);
+         header        = UHTTP::getDataFromCache(true, (bappend == false));
          last_modified = UHTTP::file_data->mtime;
          }
       else
          {
-         if (U_http_is_accept_deflate) (void) header.append(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
-
-         UHTTP::getFileMimeType(UHTTP::file->getSuffix(), 0, header, UHTTP::file->getSize());
-
          body          = UHTTP::file->getContent();
          last_modified = UHTTP::file->st_mtime;
          }
+
+      if (bappend) (void) header.append(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+
+      if (UHTTP::isHTTPRequestAlreadyProcessed() == false) UHTTP::getFileMimeType(UHTTP::file->getSuffix(), 0, header, UHTTP::file->getSize());
 
       header = UHTTP::getHTTPHeaderForResponse(HTTP_OK, header);
 
@@ -471,8 +475,8 @@ int USSIPlugIn::handlerRequest()
 
       // process SSI file
 
-                                         *UClientImage_Base::body = processSSIRequest(body, 0);
-      if (U_http_is_accept_deflate == 1) *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
+                   *UClientImage_Base::body = processSSIRequest(body, 0);
+      if (deflate) *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
 
       // NB: adjusting the size of response...
 

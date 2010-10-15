@@ -85,8 +85,8 @@ int UProxyPlugIn::handlerRequest()
 
       if (service->command)
          {
-         if (UHTTP::processCGIRequest(service->command, &(service->environment)) == false ||
-             UHTTP::processCGIOutput()                                           == false)
+         if (UHTTP::processCGIRequest(service->command, &(service->environment), false) == false ||
+             UHTTP::processCGIOutput()                                                  == false)
             {
             goto end; // skip error...
             }

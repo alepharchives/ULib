@@ -81,9 +81,11 @@
 
 #define U_STRING_FROM_STRINGREP_STORAGE(n) UString(&(stringrep_storage[n]))
 
+class UHTTP;
 class UValue;
 class UString;
 class UStringExt;
+class UHttpPlugIn;
 template <class T> class UHashMap;
 
 class U_EXPORT UStringRep {
@@ -153,9 +155,10 @@ public:
       {
       U_TRACE(0, "UStringRep::writeable()")
 
-      U_RETURN((int32_t)_capacity > 0); // mode: -1 -> mmap
-                                        //        0 -> const
+      U_RETURN(_capacity != 0); // mode: 0 -> const
       }
+
+   bool isNullTerminated() const { return (str[_length] == '\0'); }
 
    bool mmap() const
       {
@@ -168,7 +171,7 @@ public:
       {
       U_TRACE(0, "UStringRep::space()")
 
-      U_INTERNAL_ASSERT_MAJOR((int32_t)_capacity,0) // writeable()
+      U_INTERNAL_ASSERT_MAJOR((int32_t)_capacity,0)
 
       U_RETURN(_capacity - _length);
       }
@@ -238,7 +241,7 @@ public:
 
    char at(uint32_t pos) const
       {
-      U_TRACE(0, "UStringRep::at(%u) const", pos)
+      U_TRACE(0, "UStringRep::at(%u)", pos)
 
       U_INTERNAL_ASSERT_MINOR(pos, _length)
 
@@ -280,7 +283,7 @@ public:
       U_RETURN(r);
       }
 
-   int compare(const UStringRep* rep) const { return compare(rep->data(), rep->size()); }
+   int compare(const UStringRep* rep) const { return compare(rep->str, rep->_length); }
 
    int compare(const UStringRep* rep, uint32_t depth) const
       {
@@ -326,7 +329,7 @@ public:
       U_RETURN(r);
       }
 
-   int comparenocase(const UStringRep* rep) const { return comparenocase(rep->data(), rep->size()); }
+   int comparenocase(const UStringRep* rep) const { return comparenocase(rep->str, rep->_length); }
 
    // Equal
 
@@ -341,7 +344,7 @@ public:
       U_RETURN(r);
       }
 
-   bool equal(const UStringRep* rep) const { return equal(rep->data(), rep->size()); }
+   bool equal(const UStringRep* rep) const { return equal(rep->str, rep->_length); }
 
    // Equal with ignore case
 
@@ -356,14 +359,14 @@ public:
       U_RETURN(r);
       }
 
-   bool equalnocase(const UStringRep* rep) const { return equalnocase(rep->data(), rep->size()); }
+   bool equalnocase(const UStringRep* rep) const { return equalnocase(rep->str, rep->_length); }
 
    bool equal(const UStringRep* rep, bool ignore_case) const
       {
       U_TRACE(0, "UStringRep::equal(%p,%b)", rep, ignore_case)
 
-      uint32_t n    = rep->size();
-      const char* s = rep->data();
+      uint32_t n    = rep->_length;
+      const char* s = rep->str;
 
       if (_length == n)
          {
@@ -522,9 +525,12 @@ private:
 #endif
    inline void set(uint32_t length, uint32_t capacity, const char* ptr) U_NO_EXPORT;
 
+                      friend class UHTTP;
                       friend class UString;
                       friend class UStringExt;
+                      friend class UHttpPlugIn;
    template <class T> friend class UHashMap;
+                      friend void ULib_init();
 };
 
 class U_EXPORT UString {
@@ -649,7 +655,7 @@ public:
 
       rep = UStringRep::create(n, n, 0);
 
-      (void) U_SYSCALL(memset, "%p,%d,%u", rep->data(), c, n);
+      (void) U_SYSCALL(memset, "%p,%d,%u", (void*)rep->str, c, n);
       }
 
    // Copy from string
@@ -798,7 +804,7 @@ public:
       {
       U_TRACE(0, "UString::_begin()")
 
-      if (rep->uniq() == false) duplicate();
+      if (rep->references) duplicate();
 
       return rep->begin();
       }
@@ -807,7 +813,7 @@ public:
       {
       U_TRACE(0, "UString::_end()")
 
-      if (rep->uniq() == false) duplicate();
+      if (rep->references) duplicate();
 
       return rep->end();
       }
@@ -816,7 +822,7 @@ public:
       {
       U_TRACE(0, "UString::_rbegin()")
 
-      if (rep->uniq() == false) duplicate();
+      if (rep->references) duplicate();
 
       return rep->rbegin();
       }
@@ -825,7 +831,7 @@ public:
       {
       U_TRACE(0, "UString::_rend()")
 
-      if (rep->uniq() == false) duplicate();
+      if (rep->references) duplicate();
 
       return rep->rend();
       }
@@ -847,7 +853,7 @@ public:
       }
 
    UString& append(const char* s);
-   UString& append(const UString& str)       { return append(str.data(), str.size()); }
+   UString& append(const UString& str);
 
    UString& operator+=(char c)               { return append(uint32_t(1), c); }
    UString& operator+=(const char* s)        { return append(s, u_strlen(s)); }
@@ -925,12 +931,12 @@ public:
       U_TRACE(0, "UString::c_str()")
 
       if (isNullTerminated() == false) setNullTerminated();
-      
+
       U_RETURN(rep->str);
       }
 
-   char* c_strdup() const                                            { return strndup(rep->data(), rep->size()); }
-   char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const { return strndup(rep->data() + pos, rep->fold(pos, n)); }
+   char* c_strdup() const                                            { return strndup(rep->str, rep->_length); }
+   char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const { return strndup(rep->str + pos, rep->fold(pos, n)); }
 
    UString  copy();
    uint32_t copy(char* s, uint32_t n, uint32_t pos = 0) const { return rep->copy(s, n, pos); }
@@ -940,10 +946,8 @@ public:
    // The `find' function searches string for a specified string (possibly a single character) and returns
    // its starting position. You can supply the parameter pos to specify the position where search must begin
 
-   uint32_t find(const char* s, uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const;
-
-   uint32_t find(const UString& str, uint32_t pos = 0, uint32_t how_much = U_NOT_FOUND) const
-      { return find(str.data(), pos, str.size(), how_much); }
+   uint32_t find(const char* s,      uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const;
+   uint32_t find(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const;
 
    uint32_t find(char c,        uint32_t pos = 0) const;
    uint32_t find(const char* s, uint32_t pos = 0) const { return find(s, pos, u_strlen(s), U_NOT_FOUND); }
@@ -1089,7 +1093,7 @@ public:
 
    bool isNull() const                       { return (rep == UStringRep::string_rep_null); }
    bool isMmap() const                       { return rep->mmap(); }
-   bool isNullTerminated() const             { return (rep->str[rep->_length] == '\0'); }
+   bool isNullTerminated() const             { return rep->isNullTerminated(); }
    bool isText(uint32_t pos = 0) const       { return rep->isText(pos); }
    bool isUTF8(uint32_t pos = 0) const       { return rep->isUTF8(pos); }
    bool isUTF16(uint32_t pos = 0) const      { return rep->isUTF16(pos); }
@@ -1164,7 +1168,7 @@ public:
    // manage UString as buffer...
 
    void size_adjust(      uint32_t value = U_NOT_FOUND) { rep->size_adjust(value); }
-   void size_adjust_force(uint32_t value = U_NOT_FOUND) { rep->size_adjust_force(value); }
+   void size_adjust_force(uint32_t value = U_NOT_FOUND);
 
    void setEmpty()      { rep->size_adjust(0); }
    void setEmptyForce() { rep->size_adjust_force(0); }
@@ -1202,20 +1206,21 @@ public:
       {
       U_TRACE(0, "UString::vsnprintf(%S)", format)
 
+      U_ASSERT(writeable())
       U_INTERNAL_ASSERT(isNull() == false)
-      U_INTERNAL_ASSERT_MAJOR((int32_t)rep->_capacity,0) // writeable()
+      U_INTERNAL_ASSERT(rep->references == 0)
       U_INTERNAL_ASSERT_MAJOR(rep->_capacity,u_strlen(format))
 
-      rep->_length = u_vsnprintf(rep->data(), rep->capacity(), format, argp); 
+      rep->_length = u_vsnprintf(rep->data(), rep->_capacity, format, argp); 
 
       U_INTERNAL_ASSERT(invariant())
-      U_ASSERT_MAJOR(rep->space(),5) // NB: may be truncated...
       }
 
    void vsnprintf_add(const char* format, va_list argp)
       {
       U_TRACE(0, "UString::vsnprintf_add(%S)", format)
 
+      U_ASSERT(writeable())
       U_INTERNAL_ASSERT(isNull() == false)
       U_INTERNAL_ASSERT(rep->references == 0)
       U_ASSERT_MAJOR(rep->space(),u_strlen(format))
@@ -1223,7 +1228,6 @@ public:
       rep->_length += u_vsnprintf(c_pointer(rep->_length), rep->space(), format, argp); 
 
       U_INTERNAL_ASSERT(invariant())
-      U_ASSERT_MAJOR(rep->space(),5) // NB: may be truncated...
       }
 
 #ifdef HAVE_STRTOF
@@ -1261,6 +1265,10 @@ public:
    // -----------------------------------------------------------------------------------------------------------------------
    // END EXTENSION TO STDLIBC++
    // -----------------------------------------------------------------------------------------------------------------------
+
+private:
+   U_NO_EXPORT char* __append(uint32_t n);
+   U_NO_EXPORT char* __replace(uint32_t pos, uint32_t n1, uint32_t n2);
 };
 
 // operator ==

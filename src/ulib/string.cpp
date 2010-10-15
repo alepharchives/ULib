@@ -100,21 +100,18 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
 
    U_INTERNAL_ASSERT_MAJOR(capacity,0)
 
-   // NB: Need an array of char[capacity], plus a terminating null char element, plus enough for the UStringRep data structure.
-   // Whew. Seemingly so needy, yet so elemental
+   // NB: Need an array of char[capacity], plus a terminating null char element,
+   // plus enough for the UStringRep data structure. Whew. Seemingly so needy, yet so elemental...
 
    UStringRep* r = (UStringRep*) U_MALLOC_STR(sizeof(UStringRep) + capacity + 1, capacity);
 
    r->set(length, capacity - (sizeof(UStringRep) + 1), (const char*)(r + 1));
 
-   if (ptr)
-      {
-      char* str = (char*)r->str;
+   char* _ptr = (char*)r->str;
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", (void*)str, ptr, length);
+   if (ptr && length) (void) U_SYSCALL(memcpy, "%p,%p,%u", (void*)_ptr, ptr, length);
 
-      str[length] = '\0';
-      }
+   _ptr[length] = '\0';
 
    U_RETURN_POINTER(r, UStringRep);
 }
@@ -201,7 +198,7 @@ UStringRep* UStringRep::substr(const char* t, uint32_t tlen)
    U_TRACE(0, "UStringRep::substr(%.*S,%u)", tlen, t, tlen)
 
    U_INTERNAL_ASSERT(tlen <= _length)
-   U_INTERNAL_ASSERT_RANGE(data(),t,end())
+   U_INTERNAL_ASSERT_RANGE(str,t,end())
 
    UStringRep* r;
 
@@ -303,11 +300,11 @@ void UStringRep::destroy()
 #  endif
 #endif
 
-   if (mmap())
+   if (_capacity == U_NOT_FOUND)
       {
       _capacity = 0;
 
-      (void) U_SYSCALL(munmap, "%p,%u", data(), _length);
+      (void) U_SYSCALL(munmap, "%p,%u", (void*)str, _length);
       }
 
 #ifdef DEBUG
@@ -333,8 +330,8 @@ void UStringRep::assign(UStringRep*& rep, const char* s, uint32_t n)
 {
    U_TRACE(0, "UStringRep::assign(%p,%S,%u)", rep, s, n)
 
-   if (rep->uniq() == false ||
-       rep->capacity() < n)
+   if (rep->references ||
+       rep->_capacity < n)
       {
       rep->release();
 
@@ -342,9 +339,9 @@ void UStringRep::assign(UStringRep*& rep, const char* s, uint32_t n)
       }
    else
       {
-      char* ptr = rep->data();
+      char* ptr = (char*)rep->str;
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, rep->_length = n);
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, (rep->_length = n));
 
       ptr[n] = '\0';
       }
@@ -366,7 +363,7 @@ void UStringRep::release()
 
 bool UStringRep::isBase64(uint32_t pos) const
 {
-   U_TRACE(0, "UStringRep::isBase64(%u) const", pos)
+   U_TRACE(0, "UStringRep::isBase64(%u)", pos)
 
    U_INTERNAL_ASSERT_MINOR(pos,_length)
 
@@ -377,7 +374,7 @@ bool UStringRep::isBase64(uint32_t pos) const
 
 bool UStringRep::isWhiteSpace(uint32_t pos) const
 {
-   U_TRACE(0, "UStringRep::isWhiteSpace(%u) const", pos)
+   U_TRACE(0, "UStringRep::isWhiteSpace(%u)", pos)
 
    U_INTERNAL_ASSERT_MINOR(pos,_length)
 
@@ -388,7 +385,7 @@ bool UStringRep::isWhiteSpace(uint32_t pos) const
 
 bool UStringRep::isText(uint32_t pos) const
 {
-   U_TRACE(0, "UStringRep::isText(%u) const", pos)
+   U_TRACE(0, "UStringRep::isText(%u)", pos)
 
    U_INTERNAL_ASSERT_MINOR(pos,_length)
 
@@ -399,7 +396,7 @@ bool UStringRep::isText(uint32_t pos) const
 
 bool UStringRep::isBinary(uint32_t pos) const
 {
-   U_TRACE(0, "UStringRep::isBinary(%u) const", pos)
+   U_TRACE(0, "UStringRep::isBinary(%u)", pos)
 
    U_INTERNAL_ASSERT_MINOR(pos,_length)
 
@@ -410,7 +407,7 @@ bool UStringRep::isBinary(uint32_t pos) const
 
 bool UStringRep::isUTF8(uint32_t pos) const
 {
-   U_TRACE(0, "UStringRep::isUTF8(%u) const", pos)
+   U_TRACE(0, "UStringRep::isUTF8(%u)", pos)
 
    U_INTERNAL_ASSERT_MINOR(pos,_length)
 
@@ -421,7 +418,7 @@ bool UStringRep::isUTF8(uint32_t pos) const
 
 bool UStringRep::isUTF16(uint32_t pos) const
 {
-   U_TRACE(0, "UStringRep::isUTF16(%u) const", pos)
+   U_TRACE(0, "UStringRep::isUTF16(%u)", pos)
 
    U_INTERNAL_ASSERT_MINOR(pos,_length)
 
@@ -477,14 +474,19 @@ UString UString::substr(const char* t, uint32_t tlen) const
 
 UString& UString::assign(const char* s)                  { return assign(s, u_strlen(s)); }
 UString& UString::append(const char* s)                  { return append(s, u_strlen(s)); }
+UString& UString::append(const UString& str)             { return append(str.data(), str.size()); }
 
 bool     UString::equal(UStringRep* _rep) const          { return same(_rep) || rep->equal(_rep); }
 bool     UString::equal(const char* s) const             { return rep->equal(s, u_strlen(s)); }
 bool     UString::equal(const char* s, uint32_t n) const { return rep->equal(s, n); }
 
+void     UString::size_adjust_force(uint32_t value)      { rep->size_adjust_force(value); }
+
 UString  UString::substr(uint32_t pos, uint32_t n) const { return substr(rep->str + pos, rep->fold(pos, n)); }
 
 UString& UString::operator+=(const UString& str)         { return append(str.data(), str.size()); }
+
+uint32_t UString::find(const UString& str, uint32_t pos, uint32_t how_much) const { return find(str.data(), pos, str.size(), how_much); }
 
 void UString::clear()
 {
@@ -501,9 +503,9 @@ UString UString::copy()
 
    if (empty()) U_RETURN_STRING(getStringNull());
 
-   uint32_t sz = rep->size();
+   uint32_t sz = rep->_length;
 
-   UString copia((void*)rep->data(), sz);
+   UString copia((void*)rep->str, sz);
 
    U_RETURN_STRING(copia);
 }
@@ -576,7 +578,7 @@ bool UString::reserve(uint32_t n)
 
 #endif
 
-   r = UStringRep::create(rep->_length, n, rep->data());
+   r = UStringRep::create(rep->_length, n, rep->str);
 
    set(r);
 
@@ -591,8 +593,8 @@ void UString::setBuffer(uint32_t n)
 
    U_INTERNAL_ASSERT(n <= max_size())
 
-   if (rep->uniq() == false ||
-       rep->capacity() < n)
+   if (rep->references ||
+       rep->_capacity < n)
       {
       UStringRep* r = UStringRep::create(0U, (n ? n : 100U), 0);
 
@@ -606,9 +608,9 @@ void UString::setBuffer(uint32_t n)
    U_INTERNAL_ASSERT(invariant())
 }
 
-UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
+U_NO_EXPORT char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
 {
-   U_TRACE(0, "UString::replace(%u,%u,%S,%u)", pos, n1, s, n2)
+   U_TRACE(0, "UString::__replace(%u,%u,%u)", pos, n1, n2)
 
    uint32_t sz = size();
 
@@ -620,20 +622,22 @@ UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
 
    U_INTERNAL_DUMP("sz1 = %u, n = %u, how_much = %u", sz1, n, how_much)
 
-         char* str = rep->data();
+         char* str = (char*)rep->str;
    const char* src = str + pos + n1;
 
+   uint32_t __capacity = rep->_capacity;
+
    if (uniq() == false ||
-       (n > rep->capacity()))
+       n > __capacity)
       {
       UStringRep* r;
 
       if (n > 0)
          {
-         r = UStringRep::create(n, n, 0);
+         r = UStringRep::create(n, U_max(n,__capacity), 0);
 
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", r->data(),            str, pos);
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", r->data() + pos + n2, src, how_much);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", (void*)r->str,            str, pos);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", (char*)r->str + pos + n2, src, how_much);
 
          set(r);
          }
@@ -644,7 +648,7 @@ UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
          assign(r);
          }
 
-      str = r->data();
+      str = (char*)r->str;
       }
    else
       {
@@ -653,7 +657,16 @@ UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
       rep->_length = n;
       }
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", str + pos, s, n2);
+   return (char*)str + pos;
+}
+
+UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
+{
+   U_TRACE(0, "UString::replace(%u,%u,%S,%u)", pos, n1, s, n2)
+
+   char* ptr = __replace(pos, n1, n2);
+
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, n2);
 
    U_INTERNAL_ASSERT(invariant())
 
@@ -664,86 +677,53 @@ UString& UString::replace(uint32_t pos, uint32_t n1, uint32_t n2, char c)
 {
    U_TRACE(0, "UString::replace(%u,%u,%u,%C)", pos, n1, n2, c)
 
-   uint32_t sz = size();
+   char* ptr = __replace(pos, n1, n2);
 
-   U_INTERNAL_ASSERT(pos <= sz)
-
-   uint32_t sz1      = rep->fold(pos, n1),
-            n        = sz + n2 - sz1,
-            how_much = sz - pos - n1;
-
-   U_INTERNAL_DUMP("sz1 = %u, n = %u, how_much = %u", sz1, n, how_much)
-
-         char* str = rep->data();
-   const char* src = str + pos + n1;
-
-   if (uniq() == false ||
-       (n > rep->capacity()))
-      {
-      UStringRep* r;
-
-      if (n > 0)
-         {
-         r = UStringRep::create(n, n, 0);
-
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", r->data(),            str, pos);
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", r->data() + pos + n2, src, how_much);
-
-         set(r);
-         }
-      else
-         {
-         r = UStringRep::string_rep_null;
-
-         assign(r);
-         }
-
-      str = r->data();
-      }
-   else
-      {
-      if (how_much && (n1 != n2)) (void) U_SYSCALL(memmove, "%p,%p,%u", str + pos + n2, src, how_much);
-
-      rep->_length = n;
-      }
-
-   (void) U_SYSCALL(memset, "%p,%C,%u", str + pos, c, n2);
+   (void) U_SYSCALL(memset, "%p,%C,%u", ptr, c, n2);
 
    U_INTERNAL_ASSERT(invariant())
 
    return *this;
 }
 
-UString& UString::append(const char* s, uint32_t n)
+U_NO_EXPORT char* UString::__append(uint32_t n)
 {
-   U_TRACE(0, "UString::append(%.*S,%u)", n, s, n)
+   U_TRACE(0, "UString::__append(%u)", n)
 
    UStringRep* r;
-   char* str = rep->data();
+   char* str = (char*)rep->str;
    uint32_t sz = size(), sz1 = sz + n;
 
    if (uniq() == false ||
-       (sz1 > rep->capacity()))
+       (sz1 > rep->_capacity))
       {
       if (sz1 == 0)
          {
          assign(UStringRep::string_rep_null);
 
-         goto end;
+         return 0;
          }
 
       r = UStringRep::create(sz, U_SIZE_TO_CHUNK(sz1), str);
 
       set(r);
 
-      str = r->data();
+      str = (char*)r->str;
       }
 
    rep->_length = sz1;
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", str + sz, s, n);
+   return str + sz;
+}
 
-end:
+UString& UString::append(const char* s, uint32_t n)
+{
+   U_TRACE(0, "UString::append(%.*S,%u)", n, s, n)
+
+   char* ptr = __append(n);
+
+   if (ptr) (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, n);
+
    U_INTERNAL_ASSERT(invariant())
 
    return *this;
@@ -753,32 +733,10 @@ UString& UString::append(uint32_t n, char c)
 {
    U_TRACE(0, "UString::append(%u,%C)", n, c)
 
-   UStringRep* r;
-   char* str = rep->data();
-   uint32_t sz = size(), sz1 = sz + n;
+   char* ptr = __append(n);
 
-   if (uniq() == false ||
-       (sz1 > rep->capacity()))
-      {
-      if (sz1 == 0)
-         {
-         assign(UStringRep::string_rep_null);
+   if (ptr) (void) U_SYSCALL(memset, "%p,%C,%u", ptr, c, n);
 
-         goto end;
-         }
-
-      r = UStringRep::create(sz, U_SIZE_TO_CHUNK(sz1), str);
-
-      set(r);
-
-      str = r->data();
-      }
-
-   rep->_length = sz1;
-
-   (void) U_SYSCALL(memset, "%p,%C,%u", str + sz, c, n);
-
-end:
    U_INTERNAL_ASSERT(invariant())
 
    return *this;
@@ -788,8 +746,8 @@ void UString::duplicate(uint32_t _space) const
 {
    U_TRACE(0, "UString::duplicate(%u)", _space)
 
-// NB: it is not only for a substring...
-// U_INTERNAL_ASSERT(rep->_capacity == 0) // [0 const | -1 mmap]...
+   // NB: it is not only for a substring...
+   // U_INTERNAL_ASSERT(rep->_capacity == 0) // [0 const | -1 mmap]...
 
    uint32_t sz = size();
 
@@ -799,48 +757,24 @@ void UString::duplicate(uint32_t _space) const
    ((UString*)this)->set(r);
 
    U_INTERNAL_ASSERT(invariant())
+   U_INTERNAL_ASSERT(isNullTerminated())
 }
 
 void UString::setNullTerminated() const
 {
    U_TRACE(0, "UString::setNullTerminated()")
 
-   // check if empty
-   // if (rep->_length == 0) return "";
+   // A file is mapped in multiples of the page size. For a file that is not a multiple of the page size, the
+   // remaining memory is zeroed when mapped, and writes to that region are not written out to the file.
 
-   // check if mmap
-
-   if (isMmap())
+   if (writeable() == false ||
+       (isMmap() && (rep->_length % PAGESIZE) == 0))
       {
-      // A file is mapped in multiples of the page size. For a file that is not a multiple of the page size, the
-      // remaining memory is zeroed when mapped, and writes to that region are not written out to the file.
-
-      if ((rep->_length % PAGESIZE) == 0)
-         {
-         U_INTERNAL_ASSERT_MSG(false, "MAYBE WRONG OPERATION... ?")
-
-         duplicate();
-
-         char* str = rep->data();
-
-         str[rep->_length] = '\0';
-         }
+      duplicate();
       }
    else
       {
-      if (rep->str[rep->_length] != '\0')
-         {
-         if (rep->writeable() == false)
-            {
-            U_INTERNAL_ASSERT_MSG(rep->_length <= U_CAPACITY, "MAYBE WRONG OPERATION... ?")
-
-            duplicate();
-            }
-
-         char* str = rep->data();
-
-         str[rep->_length] = '\0';
-         }
+      ((char*)rep->str)[rep->_length] = '\0';
       }
 
    U_INTERNAL_ASSERT_EQUALS(u_strlen(rep->str),rep->_length)
@@ -887,14 +821,18 @@ uint32_t UString::findnocase(const char* s, uint32_t pos, uint32_t s_len, uint32
 
    U_INTERNAL_ASSERT_MAJOR(s_len,1)
 
-   uint32_t n      = rep->fold(pos, how_much);
-   const char* str = rep->str + pos;
+   uint32_t n     = rep->fold(pos, how_much);
+    int32_t __end = n - s_len + 1;
 
-   // gcc - cannot optimize possibly infinite loops ???
+   if (__end > 0)
+      {
+      const char* str = rep->str + pos;
 
-   uint32_t xpos = 0;
-
-   for (; (xpos + s_len) <= n; ++xpos) if (strncasecmp(str + xpos, s, s_len) == 0) U_RETURN(pos+xpos);
+      for (int32_t xpos = 0; xpos < __end; ++xpos)
+         {
+         if (strncasecmp(str + xpos, s, s_len) == 0) U_RETURN(pos+xpos);
+         }
+      }
 
    U_RETURN(U_NOT_FOUND);
 }
@@ -1148,11 +1086,11 @@ long UStringRep::strtol(int base) const
 {
    U_TRACE(0, "UStringRep::strtol(%d)", base)
 
-   if (size())
+   if (_length)
       {
-      char* eos = data() + _length;
+      char* eos = (char*)str + _length;
 
-      if (writeable()) *eos = '\0';
+      if (isNullTerminated() == false && writeable()) *eos = '\0';
 
       errno = 0;
 
@@ -1179,11 +1117,11 @@ int64_t UStringRep::strtoll(int base) const
 {
    U_TRACE(0, "UStringRep::strtoll(%d)", base)
 
-   if (size())
+   if (_length)
       {
-      char* eos = data() + _length;
+      char* eos = (char*)str + _length;
 
-      if (writeable()) *eos = '\0';
+      if (isNullTerminated() == false && writeable()) *eos = '\0';
 
       char* endptr;
       int64_t result = (int64_t) strtoull(str, &endptr, base);
@@ -1212,9 +1150,9 @@ float UStringRep::strtof() const
 {
    U_TRACE(0, "UStringRep::strtof()")
 
-   if (size())
+   if (_length)
       {
-      if (writeable()) data()[_length] = '\0';
+      if (isNullTerminated() == false && writeable()) ((char*)str)[_length] = '\0';
 
       float result = ::strtof(str, 0);
 
@@ -1232,9 +1170,9 @@ double UStringRep::strtod() const
 {
    U_TRACE(0, "UStringRep::strtod()")
 
-   if (size())
+   if (_length)
       {
-      if (writeable()) data()[_length] = '\0';
+      if (isNullTerminated() == false && writeable()) ((char*)str)[_length] = '\0';
 
       double result = ::strtod(str, 0);
 
@@ -1254,9 +1192,9 @@ long double UStringRep::strtold() const
 {
    U_TRACE(0, "UStringRep::strtold()")
 
-   if (size())
+   if (_length)
       {
-      if (writeable()) data()[_length] = '\0';
+      if (isNullTerminated() == false && writeable()) ((char*)str)[_length] = '\0';
 
       long double result = ::strtold(str, 0);
 
@@ -1283,7 +1221,7 @@ UStringRep* UStringRep::fromUTF8(const unsigned char* s, uint32_t n)
    int c, c1, c2;
    UStringRep* r = UStringRep::create(n, n, 0);
 
-   char* p                  = r->data();
+   char* p                  = (char*)r->str;
    const unsigned char* end = s + n;
 
    while (s < end)
@@ -1306,7 +1244,7 @@ UStringRep* UStringRep::fromUTF8(const unsigned char* s, uint32_t n)
       *p++ = (unsigned char)c;
       }
 
-   r->_length = p - r->data();
+   r->_length = p - r->str;
 
    U_INTERNAL_ASSERT(r->invariant())
 
@@ -1324,7 +1262,7 @@ UStringRep* UStringRep::toUTF8(const unsigned char* s, uint32_t n)
    int c;
    UStringRep* r = UStringRep::create(n, n * 2, 0);
 
-   char* p                  = r->data();
+   char* p                  = (char*)r->str;
    const unsigned char* end = s + n;
 
    while (s < end)
@@ -1342,7 +1280,7 @@ UStringRep* UStringRep::toUTF8(const unsigned char* s, uint32_t n)
       *p++ = (unsigned char)c;
       }
 
-   r->_length = p - r->data();
+   r->_length = p - r->str;
 
    U_INTERNAL_ASSERT(r->invariant())
 
@@ -1355,7 +1293,7 @@ void UStringRep::write(ostream& os) const
 {
    U_TRACE(0, "UStringRep::write(%p)", &os)
 
-   char* s    = data();
+   char* s    = (char*)str;
    char* _end = s + _length;
 
    while (s < _end)
@@ -1372,7 +1310,7 @@ void UStringRep::write(ostream& os) const
 
       os.put('"');
 
-      s    = data();
+      s    = (char*)str;
       _end = s + _length;
 
       while (s < _end)
@@ -1465,12 +1403,7 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
       }
 
    if (extracted == 0) in.setstate(ios::failbit);
-   else
-      {
-      U_ASSERT(str.writeable())
-
-      str.setNullTerminated();
-      }
+   else                str.setNullTerminated();
 
    U_INTERNAL_ASSERT(str.invariant())
 
@@ -1543,12 +1476,7 @@ istream& UString::getline(istream& in, char delim)
 
       extracted = (empty() == false);
 
-      if (extracted)
-         {
-         U_ASSERT(rep->writeable())
-
-         setNullTerminated();
-         }
+      if (extracted) setNullTerminated();
       }
 
    if (c         != delim &&

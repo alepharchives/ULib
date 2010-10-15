@@ -247,7 +247,7 @@ char* URDB::parseLine(const char* ptr, UCDB::datum* _key, UCDB::datum* _data)
 
 static URDB* ptr_rdb;
 
-inline void URDB::makeAdd1(uint32_t offset) // entry presenti nella cache...
+U_NO_EXPORT void URDB::makeAdd1(uint32_t offset) // entry presenti nella cache...
 {
    U_TRACE(0, "URDB::makeAdd1(%u)", offset)
 
@@ -272,7 +272,7 @@ inline void URDB::makeAdd1(uint32_t offset) // entry presenti nella cache...
 #endif
 }
 
-inline void URDB::makeAdd2(char* src)
+U_NO_EXPORT inline void URDB::makeAdd2(char* src)
 {
    U_TRACE(0, "URDB::makeAdd2(%p)", src)
 
@@ -283,7 +283,7 @@ inline void URDB::makeAdd2(char* src)
    if (ptr_rdb->htLookup() == false) UCDB::makeAdd(src);
 }
 
-inline void URDB::call(vPFu function1, vPFpc function2)
+U_NO_EXPORT inline void URDB::call(vPFu function1, vPFpc function2)
 {
    U_TRACE(0, "URDB::call(%p,%p)", function1, function2)
 
@@ -301,7 +301,7 @@ inline void URDB::call(vPFu function1, vPFpc function2)
    if (UFile::st_size) UCDB::callForAllEntryExt(function2);
 }
 
-inline void URDB::makeAdd()
+U_NO_EXPORT inline void URDB::makeAdd()
 {
    U_TRACE(0, "URDB::makeAdd()")
 
@@ -323,6 +323,25 @@ void URDB::reset()
    // Initialize the cache to contain no entries
 
    (void) U_SYSCALL(memset, "%p,%C,%d", RDB_hashtab, 0, sizeof(RDB_hashtab));
+}
+
+bool URDB::beginTransaction()
+{
+   U_TRACE(0, "URDB::beginTransaction()")
+
+   lock.lock();
+
+   return reorganize();
+}
+
+void URDB::commitTransaction()
+{
+   U_TRACE(0, "URDB::commitTransaction()")
+
+   msync();
+   fsync();
+
+   lock.unlock();
 }
 
 void URDB::abortTransaction()
@@ -429,7 +448,7 @@ bool URDB::reorganize()
 
 // PRINT DATABASE
 
-inline void URDB::print1(uint32_t offset) // entry presenti nella cache...
+U_NO_EXPORT void URDB::print1(uint32_t offset) // entry presenti nella cache...
 {
    U_TRACE(0, "URDB::print1(%u)", offset)
 
@@ -458,7 +477,7 @@ inline void URDB::print1(uint32_t offset) // entry presenti nella cache...
 #endif
 }
 
-inline void URDB::print2(char* src)
+U_NO_EXPORT inline void URDB::print2(char* src)
 {
    U_TRACE(0, "URDB::print2(%p)", src)
 
@@ -501,7 +520,7 @@ UString URDB::print()
 
 // Call function for all entry
 
-inline void URDB::call1(uint32_t offset) // entry presenti nella cache...
+U_NO_EXPORT void URDB::call1(uint32_t offset) // entry presenti nella cache...
 {
    U_TRACE(0, "URDB::call1(%u)", offset)
 
@@ -524,7 +543,7 @@ inline void URDB::call1(uint32_t offset) // entry presenti nella cache...
 #endif
 }
 
-inline void URDB::call2(char* src)
+U_NO_EXPORT inline void URDB::call2(char* src)
 {
    U_TRACE(0, "URDB::call2(%p)", src)
 
@@ -556,7 +575,7 @@ void URDB::callForAllEntry(vPFprpr function)
 
 static UVector<UString>* kvec;
 
-inline void URDB::getKeys1(uint32_t offset) // entry presenti nella cache...
+U_NO_EXPORT void URDB::getKeys1(uint32_t offset) // entry presenti nella cache...
 {
    U_TRACE(0, "URDB::getKeys1(%u)", offset)
 
@@ -579,7 +598,7 @@ inline void URDB::getKeys1(uint32_t offset) // entry presenti nella cache...
 #endif
 }
 
-inline void URDB::getKeys2(char* src)
+U_NO_EXPORT inline void URDB::getKeys2(char* src)
 {
    U_TRACE(0, "URDB::getKeys2(%p)", src)
 
@@ -724,7 +743,7 @@ void URDB::msync()
    lock.unlock();
 }
 
-inline bool URDB::resizeJournal(char* ptr)
+U_NO_EXPORT inline bool URDB::resizeJournal(char* ptr)
 {
    U_TRACE(0, "URDB::resizeJournal(%p)", ptr)
 
@@ -1074,6 +1093,19 @@ end:
    U_RETURN(result);
 }
 
+// inlining failed in call to 'URDB::remove(UString const&)': call is unlikely and code size would grow
+
+int URDB::remove(const UString& _key)
+{
+   U_TRACE(0, "URDB::remove(%.*S)", U_STRING_TO_TRACE(_key))
+
+   UCDB::setKey(_key);
+
+   int result = remove();
+
+   U_RETURN(result);
+}
+
 // ---------------------------------------------------------------------
 // Substitute a key/value with a new key/value (remove+store)
 // ---------------------------------------------------------------------
@@ -1171,6 +1203,22 @@ int URDB::substitute(UCDB::datum* key2, int flag)
 
 end:
    lock.unlock();
+
+   U_RETURN(result);
+}
+
+// inlining failed in call to 'URDB::substitute(UString const&, UString const&, UString const&, int)': call is unlikely and code size would grow
+
+int URDB::substitute(const UString& _key, const UString& new_key, const UString& _data, int flag)
+{
+   U_TRACE(0, "URDB::substitute(%.*S,%.*S,%.*S,%d)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(new_key),
+                                                     U_STRING_TO_TRACE(_data), flag)
+
+   UCDB::setKey(_key);
+   UCDB::setData(_data);
+   UCDB::datum key2 = { (void*) new_key.data(), new_key.size() };
+
+   int result = substitute(&key2, flag);
 
    U_RETURN(result);
 }

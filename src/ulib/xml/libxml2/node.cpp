@@ -78,7 +78,7 @@ uint32_t UXML2Node::find(UVector<xmlNodePtr>& vec, const xmlChar* xpath, UVector
 
    ctxt->node = impl_;
 
-   for (uint32_t i = 0, n = namespaces.size(); i < n; i += 2)
+   for (int32_t i = 0, n = namespaces.size(); i < n; i += 2)
       {
       U_SYSCALL_VOID(xmlXPathRegisterNs, "%p,%S,%S", ctxt, (const xmlChar*)namespaces[i].c_str(),
                                                            (const xmlChar*)namespaces[i+1].c_str());

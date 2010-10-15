@@ -60,6 +60,8 @@ int URDBClientImage::handlerRead()
       const char* ptr = rbuffer->data();
       const char* res = 0;
 
+      (void) wbuffer->reserve(U_TOKEN_LN);
+
       if (U_STRNEQ(ptr, "FIND")) // FIND
          {
          if (rdb->find((*URPC::rpc_info)[0]))

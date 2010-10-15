@@ -74,6 +74,7 @@
 #define U_js  'j' // text/javascript
 
 class URDB;
+class UHTTP;
 
 template <class T> class UTree;
 template <class T> class UVector;
@@ -327,20 +328,7 @@ public:
       U_RETURN(result);
       }
 
-   bool stat()
-      {
-      U_TRACE(1, "UFile::stat()")
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-
-      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
-      bool result = (U_SYSCALL(stat, "%S,%p", U_PATH_CONV(path_relativ), (struct stat*)this) == 0);
-
-      U_RETURN(result);
-      }
+   bool stat();
 
 #ifndef __MINGW32__
    void lstat()
@@ -891,6 +879,7 @@ private:
    UFile& operator=(const UFile&) { return *this; }
 
    friend class URDB;
+   friend class UHTTP;
 };
 
 #endif

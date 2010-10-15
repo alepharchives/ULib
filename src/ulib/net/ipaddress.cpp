@@ -89,17 +89,47 @@ void UIPAddress::setAddress(void* address, bool bIPv6)
       {
       iAddressType   = AF_INET6;
       iAddressLength = sizeof(in6_addr);
+
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", pcAddress.p, address, iAddressLength);
       }
    else
 #endif
       {
       iAddressType   = AF_INET;
+      pcAddress.i    = *(uint32_t*)address;
       iAddressLength = sizeof(in_addr);
       }
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", pcAddress.p, address, iAddressLength);
-
    bHostNameUnresolved = bStrAddressUnresolved = true;
+
+   U_INTERNAL_DUMP("addr = %u", getInAddr())
+}
+
+void UIPAddress::set(const UIPAddress& cOtherAddr)
+{
+   U_TRACE(1, "UIPAddress::set(%p)", &cOtherAddr)
+
+   iAddressType   = cOtherAddr.iAddressType;
+   iAddressLength = cOtherAddr.iAddressLength;
+
+#ifdef HAVE_IPV6
+   if (iAddressType == AF_INET6)
+      {
+      U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in6_addr))
+
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", pcAddress.p, cOtherAddr.pcAddress.p, sizeof(in6_addr));
+      }
+   else
+#endif
+      {
+      U_INTERNAL_ASSERT_EQUALS(iAddressType, AF_INET)
+      U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in_addr))
+
+      pcAddress.i = cOtherAddr.pcAddress.i;
+      }
+
+   if ((bHostNameUnresolved   = cOtherAddr.bHostNameUnresolved)   == false)               strHostName = cOtherAddr.strHostName;
+   if ((bStrAddressUnresolved = cOtherAddr.bStrAddressUnresolved) == false) (void) strcpy(pcStrAddress, cOtherAddr.pcStrAddress);
 
    U_INTERNAL_DUMP("addr = %u", getInAddr())
 }
@@ -394,6 +424,58 @@ void UIPAddress::resolveHostName()
       bHostNameUnresolved = false;
       }
 }
+
+/********************************************************************************/
+/* This method converts the IPAddress instance to the specified type - either   */
+/* AF_INET or AF_INET6. If the address family is already of the specified       */
+/* type, then no changes are made. The following steps are for converting to:   */
+/*                                                                              */
+/* IPv4: If the existing IPv6 address is not an IPv4 Mapped IPv6 address the    */
+/*       conversion cannot take place. Otherwise,                               */
+/*       the last 32 bits of the IPv6 address form the IPv4 address and we      */
+/*       call setAddress() to set the address to these four bytes.              */
+/*                                                                              */
+/* IPv6: The 32 bits of the IPv4 address are copied to the last 32 bits of      */
+/*       the 128-bit IPv address.  This is then prepended with 80 zero bits     */
+/*       and 16 one bits to form an IPv4 Mapped IPv6 address.                   */
+/*                                                                              */
+/* Finally, the new address family is set along with both lazy evaluation flags */
+/********************************************************************************/
+
+#ifdef HAVE_IPV6
+void UIPAddress::convertToAddressFamily(int iNewAddressFamily)
+{
+   U_TRACE(1, "UIPAddress::convertToAddressFamily(%d)", iNewAddressFamily)
+
+   U_CHECK_MEMORY
+
+   if (iAddressType != iNewAddressFamily)
+      {
+      switch (iNewAddressFamily)
+         {
+         case AF_INET:
+            {
+            if (IN6_IS_ADDR_V4MAPPED(&(pcAddress.s))) setAddress(pcAddress.p + 12, sizeof(in_addr));
+            }
+         break;
+
+         case AF_INET6:
+            {
+            iAddressLength = sizeof(in6_addr);
+
+            (void) memset(pcAddress.p,               0, 10);
+            (void) memset(pcAddress.p + 10,       0xff,  2);
+            (void) memcpy(pcAddress.p + 12, pcAddress.p, 4);
+            }
+         break;
+         }
+
+      iAddressType = iNewAddressFamily;
+
+      bHostNameUnresolved = bStrAddressUnresolved = true;
+      }
+}
+#endif
 
 // Simple IP-based access-control system
 // Interpret a "HOST/BITS" IP mask specification. (Ex. 192.168.1.64/28)

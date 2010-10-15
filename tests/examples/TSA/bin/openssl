@@ -1,5 +1,8 @@
 #!/bin/sh
 
-DIR=`arch`
+chmod 666 ~/.rnd
 
+DIR=`arch`
 exec /mnt/home/stefano/openssl/bin/$DIR/openssl "$@"
+
+# exec /usr/bin/openssl "$@"

@@ -34,7 +34,12 @@ bool UServices::setFtw(const UString* dir, const UString* filter)
 
    u_ftw_ctx.depth = true;
 
-   if (dir)
+   if (dir == 0)
+      {
+      u_buffer[0]  = '.';
+      u_buffer_len = 1;
+      }
+   else
       {
       u_buffer_len    = dir->size();
       const char* ptr = dir->c_str();
@@ -53,11 +58,6 @@ bool UServices::setFtw(const UString* dir, const UString* filter)
          }
 
       (void) U_SYSCALL(memcpy, "%p,%p,%u", u_buffer, ptr, u_buffer_len);
-      }
-   else
-      {
-      u_buffer[0]  = '.';
-      u_buffer_len = 1;
       }
 
    u_buffer[u_buffer_len] = '\0';
@@ -134,24 +134,24 @@ bool UServices::read(int fd, UString& buffer, int count, int timeoutMS) // read 
    U_INTERNAL_ASSERT_DIFFERS(count,0)
 
    int byte_read = 0;
-   uint32_t value, start = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua...
    bool single_read = (count == U_SINGLE_READ);
+   uint32_t value, capacity, start = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua...
 
-   if (count < (int)U_CAPACITY) single_read = true;
+restart:
+   capacity = buffer.capacity() - start;
 
-   (void) buffer.reserve(start + (single_read ? (int)U_CAPACITY : count));
+   if (count < (int)capacity) single_read = true;
+
+   if (buffer.reserve(start + (single_read ? (int)capacity : count))) goto restart;
 
    char* ptr = buffer.c_pointer(start);
 
    U_INTERNAL_DUMP("start = %u single_read = %b count = %d", start, single_read, count)
 
 read:
-   value = UNotifier::read(fd, ptr + byte_read, (single_read ? (int)U_CAPACITY : count - byte_read), timeoutMS);
+   value = UNotifier::read(fd, ptr + byte_read, (single_read ? (int)capacity : count - byte_read), timeoutMS);
 
-   if (value <= 0)
-      {
-      U_RETURN(false);
-      }
+   if (value <= 0) U_RETURN(false);
 
    byte_read += value;
 
@@ -163,11 +163,15 @@ read:
       {
       // NB: may be there are available more bytes to read...
 
-      if (value == U_CAPACITY)
+      if (value == capacity)
          {
          buffer.size_adjust_force(start + byte_read); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
 
-         if (buffer.reserve(start + byte_read + U_CAPACITY)) ptr = buffer.c_pointer(start);
+         if (buffer.reserve(start + byte_read + capacity))
+            {
+            ptr      = buffer.c_pointer(start);
+            capacity = buffer.capacity() - (start + byte_read);
+            }
 
          goto read;
          }
@@ -536,7 +540,7 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
       U_INTERNAL_ASSERT_POINTER(u_pkey)
       }
 
-   UString output(U_CAPACITY);
+   UString output(2000);
 
    uint32_t bytes_written = u_dgst_sign_finish((unsigned char*)output.data(), base64);
 

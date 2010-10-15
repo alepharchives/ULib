@@ -140,7 +140,7 @@ static void
 test2 (void)
 {
    char buf[50];
-   char buf2[512];
+   char buf2[1024];
    size_t n = snprintf (buf, sizeof (buf), "%30s", "foo");
 
    printf ("snprintf (\"%%30s\", \"foo\") == %d, \"%.*s\"\n", n, n, buf);

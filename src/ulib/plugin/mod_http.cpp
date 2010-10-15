@@ -15,7 +15,6 @@
 #include <ulib/utility/uhttp.h>
 #include <ulib/plugin/mod_http.h>
 #include <ulib/net/server/server.h>
-#include <ulib/container/hash_map.h>
 #include <ulib/utility/string_ext.h>
 
 U_CREAT_FUNC(UHttpPlugIn)
@@ -50,9 +49,18 @@ UHttpPlugIn::~UHttpPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UHttpPlugIn)
 
-   // delete global HTTP var...
+   UHTTP::dtor(); // delete global HTTP context...
+}
 
-   UHTTP::dtor();
+// define method VIRTUAL of class UEventFd
+
+int UHttpPlugIn::handlerRead()
+{
+   U_TRACE(0, "UHttpPlugIn::handlerRead()")
+
+   UHTTP::in_READ();
+
+   U_RETURN(U_NOTIFIER_OK);
 }
 
 // Server-wide hooks
@@ -81,8 +89,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
    UVector<UString> tmp;
 
-   if (cfg.loadVector(tmp, "REWRITE_RULE_NF") &&
-       tmp.empty() == false)
+   if (cfg.loadVector(tmp, "REWRITE_RULE_NF") && tmp.empty() == false)
       {
       uint32_t n = tmp.size();
 
@@ -91,7 +98,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       UHTTP::RewriteRule* rule;
       UHTTP::vRewriteRule = U_NEW(UVector<UHTTP::RewriteRule*>(n));
 
-      for (uint32_t i = 0; i < n; i += 2)
+      for (int32_t i = 0; i < (int32_t)n; i += 2)
          {
          rule = U_NEW(UHTTP::RewriteRule(tmp[i], tmp[i+1]));
 
@@ -101,20 +108,24 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
    if (cfg.loadTable())
       {
-      U_INTERNAL_ASSERT_EQUALS(UHTTP::cache_file_mask, 0)
-
-       UHTTP::cache_file_mask  = U_NEW(UString);
-      *UHTTP::cache_file_mask  = cfg[*str_CACHE_FILE_MASK];
-
-      uri_protected_mask       = cfg[*str_URI_PROTECTED_MASK];
-      uri_protected_allowed_ip = cfg[*str_URI_PROTECTED_ALLOWED_IP];
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::cache_file_mask,0)
 
 #  ifdef HAVE_SSL
-      uri_request_cert_mask    = cfg[*str_URI_REQUEST_CERT_MASK];
+      uri_request_cert_mask        = cfg[*str_URI_REQUEST_CERT_MASK];
 #  endif
+      uri_protected_mask           = cfg[*str_URI_PROTECTED_MASK];
+      uri_protected_allowed_ip     = cfg[*str_URI_PROTECTED_ALLOWED_IP];
+      UHTTP::virtual_host          = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
+      UHTTP::digest_authentication = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
 
-      UHTTP::virtual_host                 = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
-      UServer_Base::digest_authentication = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
+       UHTTP::cache_file_mask      = U_NEW(UString);
+      *UHTTP::cache_file_mask      = cfg[*str_CACHE_FILE_MASK];
+
+      if (UHTTP::cache_file_mask->empty())
+         {
+         delete UHTTP::cache_file_mask;
+                UHTTP::cache_file_mask = 0;
+         }
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -124,19 +135,9 @@ int UHttpPlugIn::handlerInit()
 {
    U_TRACE(0, "UHttpPlugIn::handlerInit()")
 
-   // init global HTTP var...
+   // init HTTP context
 
-   UHTTP::ctor();
-
-   // USP (ULib Servlet Page)
-
-   if (UHTTP::pages &&
-       UHTTP::pages->empty())
-      {
-      U_SRV_LOG_MSG("initialization of plugin FAILED");
-
-      U_RETURN(U_PLUGIN_HANDLER_ERROR);
-      }
+   UHTTP::ctor(this);
 
    // URI PROTECTED and ALIAS
 
@@ -151,14 +152,6 @@ int UHttpPlugIn::handlerInit()
          }
       }
 
-   // CACHE FILE
-
-   if (UHTTP::cache_file_mask &&
-       UHTTP::cache_file_mask->empty() == false)
-      {
-      UHTTP::searchFileForCache();
-      }
-
    U_SRV_LOG_MSG("initialization of plugin success");
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -166,9 +159,9 @@ int UHttpPlugIn::handlerInit()
 
 // Connection-wide hooks
 
-int UHttpPlugIn::handlerRead()
+int UHttpPlugIn::handlerREAD()
 {
-   U_TRACE(0, "UHttpPlugIn::handlerRead()")
+   U_TRACE(0, "UHttpPlugIn::handlerREAD()")
 
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
 
@@ -225,27 +218,27 @@ int UHttpPlugIn::handlerRead()
 
       if (valias.empty() == false)
          {
+         UString item;
+
          // NB: check if needed to reset prev alias uri
 
          if (UHTTP::virtual_host == false) UHTTP::alias->setEmpty();
 
-         // manage alias uri
-
-         (void) UHTTP::request_uri->assign(U_HTTP_URI_TO_PARAM);
-
-         // gcc - warning: cannot optimize loop, the loop counter may overflow... ???
-
-         for (uint32_t i = 0, n = valias.size(); i < n; i += 2)
+         for (int32_t i = 0, n = valias.size(); i < n; i += 2)
             {
-            if (*UHTTP::request_uri == valias[i])
+            item = valias[i];
+
+            if (U_HTTP_URI_EQUAL(item))
                {
+               // manage alias uri
+
+               *UHTTP::request_uri = item;
+
                (void) UHTTP::alias->append(valias[i+1]);
 
                goto next;
                }
             }
-
-         UHTTP::request_uri->clear();
          }
 next:
       if (UHTTP::alias->empty() == false)
@@ -329,7 +322,9 @@ int UHttpPlugIn::handlerRequest()
          {
          UString environment = UHTTP::getCGIEnvironment() + *UHTTP::penvironment;
 
-         if (UHTTP::processCGIRequest((UCommand*)0, &environment)) (void) UHTTP::processCGIOutput();
+         // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
+
+         if (UHTTP::processCGIRequest((UCommand*)0, &environment, true)) (void) UHTTP::processCGIOutput();
          }
       else
          {

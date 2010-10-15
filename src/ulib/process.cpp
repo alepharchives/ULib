@@ -64,7 +64,9 @@ bool UProcess::fork()
    U_RETURN(running);
 }
 
-inline void UProcess::setStdInOutErr(bool fd_stdin, bool fd_stdout, bool fd_stderr)
+// inlining failed in call to 'UProcess::setStdInOutErr(bool, bool, bool)': call is unlikely and code size would grow
+
+U_NO_EXPORT void UProcess::setStdInOutErr(bool fd_stdin, bool fd_stdout, bool fd_stderr)
 {
    U_TRACE(1, "UProcess::setStdInOutErr(%b,%b,%b)", fd_stdin, fd_stdout, fd_stderr)
 

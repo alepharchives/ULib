@@ -126,8 +126,11 @@ private:
 };
 
 union uupcAddress {
+   uint32_t i;
+#ifdef HAVE_IPV6
+   struct in6_addr s;
+#endif
    char p[16];
-   uint32_t* i;
 };
 
 class U_EXPORT UIPAddress {
@@ -193,6 +196,7 @@ public:
 
    u_short getAddressFamily() const { return iAddressType; }
 
+#ifdef HAVE_IPV6
    /********************************************************************************/
    /* This method converts the IPAddress instance to the specified type - either   */
    /* AF_INET or AF_INET6. If the address family is already of the specified       */
@@ -210,42 +214,7 @@ public:
    /* Finally, the new address family is set along with both lazy evaluation flags */
    /********************************************************************************/
 
-#ifdef HAVE_IPV6
-   void convertToAddressFamily(int iNewAddressFamily)
-      {
-      U_TRACE(1, "UIPAddress::convertToAddressFamily(%d)", iNewAddressFamily)
-
-      U_CHECK_MEMORY
-
-      if (iAddressType != iNewAddressFamily)
-         {
-         switch (iNewAddressFamily)
-            {
-            case AF_INET:
-               {
-               if (IN6_IS_ADDR_V4MAPPED(pcAddress.i))
-                  {
-                  setAddress(pcAddress.p + 12, sizeof(in_addr));
-                  }
-               }
-            break;
-
-            case AF_INET6:
-               {
-               iAddressLength = sizeof(in6_addr);
-
-               (void) memset(pcAddress.p,               0, 10);
-               (void) memset(pcAddress.p + 10,       0xff,  2);
-               (void) memcpy(pcAddress.p + 12, pcAddress.p, 4);
-               }
-            break;
-            }
-
-         iAddressType = iNewAddressFamily;
-
-         bHostNameUnresolved = bStrAddressUnresolved = true;
-         }
-      }
+   void convertToAddressFamily(int iNewAddressFamily);
 #endif
 
    // Returns the address represented by UIPAddress
@@ -286,17 +255,7 @@ public:
 
    // ASSEGNAZIONE
 
-   void set(const UIPAddress& cOtherAddr)
-      {
-      U_TRACE(1, "UIPAddress::set(%p)", &cOtherAddr)
-
-      iAddressType = cOtherAddr.iAddressType;
-
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", pcAddress.p,  cOtherAddr.pcAddress.p, (iAddressLength = cOtherAddr.iAddressLength));
-
-      if ((bHostNameUnresolved   = cOtherAddr.bHostNameUnresolved)   == false) strHostName = cOtherAddr.strHostName;
-      if ((bStrAddressUnresolved = cOtherAddr.bStrAddressUnresolved) == false) (void) strcpy(pcStrAddress, cOtherAddr.pcStrAddress);
-      }
+   void set(const UIPAddress& cOtherAddr);
 
    UIPAddress(const UIPAddress& cOtherAddr)
       {

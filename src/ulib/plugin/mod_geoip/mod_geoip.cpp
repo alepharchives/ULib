@@ -203,9 +203,9 @@ int UGeoIPPlugIn::handlerInit()
 
 // Connection-wide hooks
 
-int UGeoIPPlugIn::handlerRead()
+int UGeoIPPlugIn::handlerREAD()
 {
-   U_TRACE(0, "UGeoIPPlugIn::handlerRead()")
+   U_TRACE(0, "UGeoIPPlugIn::handlerREAD()")
 
    if (country_forbidden_mask.empty() == false                                 &&
        setCountryCode(UClientImage_Base::remoteIPAddress().getAddressString()) &&

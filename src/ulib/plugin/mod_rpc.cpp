@@ -65,9 +65,9 @@ int URpcPlugIn::handlerInit()
 
 // Connection-wide hooks
 
-int URpcPlugIn::handlerRead()
+int URpcPlugIn::handlerREAD()
 {
-   U_TRACE(0, "URpcPlugIn::handlerRead()")
+   U_TRACE(0, "URpcPlugIn::handlerREAD()")
 
    // read the RPC request
 

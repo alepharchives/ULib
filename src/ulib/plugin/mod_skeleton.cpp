@@ -39,9 +39,9 @@ int USkeletonPlugIn::handlerInit()
 
 // Connection-wide hooks
 
-int USkeletonPlugIn::handlerRead()
+int USkeletonPlugIn::handlerREAD()
 {
-   U_TRACE(0, "USkeletonPlugIn::handlerRead()")
+   U_TRACE(0, "USkeletonPlugIn::handlerREAD()")
 
    int result = U_PLUGIN_HANDLER_GO_ON;
 

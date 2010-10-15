@@ -34,7 +34,6 @@ int                        UServer_Base::max_Keep_Alive;
 int                        UServer_Base::preforked_num_kids;
 bool                       UServer_Base::flag_loop;
 bool                       UServer_Base::block_on_accept;
-bool                       UServer_Base::digest_authentication;
 bool                       UServer_Base::flag_use_tcp_optimization;
 char                       UServer_Base::mod_name[20];
 ULog*                      UServer_Base::log;
@@ -42,6 +41,7 @@ ULock*                     UServer_Base::lock;
 UString*                   UServer_Base::host;
 USocket*                   UServer_Base::socket;
 UProcess*                  UServer_Base::proc;
+UEventFd*                  UServer_Base::handler_event;
 UEventTime*                UServer_Base::ptime;
 UServer_Base*              UServer_Base::pthis;
 UVector<UIPAllow*>*        UServer_Base::vallow_IP;
@@ -87,11 +87,6 @@ const UString* UServer_Base::str_MAX_KEEP_ALIVE;
 const UString* UServer_Base::str_PID_FILE;
 const UString* UServer_Base::str_USE_TCP_OPTIMIZATION;
 
-UString*       UServer_Base::htpasswd;
-UString*       UServer_Base::htdigest;
-const UString* UServer_Base::str_htpasswd;
-const UString* UServer_Base::str_htdigest;
-
 void UServer_Base::str_allocate()
 {
    U_TRACE(0, "UServer_Base::str_allocate()")
@@ -132,9 +127,6 @@ void UServer_Base::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_PID_FILE,0)
    U_INTERNAL_ASSERT_EQUALS(str_USE_TCP_OPTIMIZATION,0)
 
-   U_INTERNAL_ASSERT_EQUALS(str_htdigest,0)
-   U_INTERNAL_ASSERT_EQUALS(str_htpasswd,0)
-
    static ustringrep stringrep_storage[] = {
    { U_STRINGREP_FROM_CONSTANT("USE_IPV6") },
    { U_STRINGREP_FROM_CONSTANT("PORT") },
@@ -171,10 +163,7 @@ void UServer_Base::str_allocate()
    { U_STRINGREP_FROM_CONSTANT("MAX_KEEP_ALIVE") },
    { U_STRINGREP_FROM_CONSTANT("PID_FILE") },
    { U_STRINGREP_FROM_CONSTANT("USE_TCP_OPTIMIZATION") },
-
-   { U_STRINGREP_FROM_CONSTANT(".htdigest") },
-   { U_STRINGREP_FROM_CONSTANT(".htpasswd") }
-};
+   };
 
    U_NEW_ULIB_OBJECT(str_USE_IPV6,              U_STRING_FROM_STRINGREP_STORAGE(0));
    U_NEW_ULIB_OBJECT(str_PORT,                  U_STRING_FROM_STRINGREP_STORAGE(1));
@@ -211,9 +200,6 @@ void UServer_Base::str_allocate()
    U_NEW_ULIB_OBJECT(str_MAX_KEEP_ALIVE,        U_STRING_FROM_STRINGREP_STORAGE(32));
    U_NEW_ULIB_OBJECT(str_PID_FILE,              U_STRING_FROM_STRINGREP_STORAGE(33));
    U_NEW_ULIB_OBJECT(str_USE_TCP_OPTIMIZATION,  U_STRING_FROM_STRINGREP_STORAGE(34));
-
-   U_NEW_ULIB_OBJECT(str_htdigest,              U_STRING_FROM_STRINGREP_STORAGE(35));
-   U_NEW_ULIB_OBJECT(str_htpasswd,              U_STRING_FROM_STRINGREP_STORAGE(36));
 }
 
 UServer_Base::UServer_Base(UFileConfig* cfg)
@@ -239,8 +225,9 @@ UServer_Base::~UServer_Base()
 
    UClientImage_Base::resetBuffer();
 
-   UNotifier::erase(this, false); // NB: to avoid to delete himself...
-   UNotifier::clear();
+                      UNotifier::erase(this,          false); // NB: to avoid to delete himself...
+   if (handler_event) UNotifier::erase(handler_event, false);
+                      UNotifier::clear();
 
 #ifdef HAVE_MODULES
    if (vplugin)
@@ -257,8 +244,6 @@ UServer_Base::~UServer_Base()
    if (host)       delete host;
    if (proc)       delete proc;
    if (ptime)      delete ptime;
-   if (htpasswd)   delete htpasswd;
-   if (htdigest)   delete htdigest;
    if (vallow_IP)  delete vallow_IP;
 
    delete socket;
@@ -392,7 +377,7 @@ int UServer_Base::loadPlugins(const UString& plugin_dir, UVector<UString>& plugi
 
    int result;
    UString name;
-   UServerPlugIn* plugin;
+   UServerPlugIn* _plugin;
 
    vplugin = U_NEW(UVector<UServerPlugIn*>(10U));
 
@@ -400,17 +385,17 @@ int UServer_Base::loadPlugins(const UString& plugin_dir, UVector<UString>& plugi
 
    for (uint32_t i = 0, length = plugin_list.size(); i < length; ++i)
       {
-      name   = plugin_list[i];
-      plugin = UPlugIn<UServerPlugIn*>::create(U_STRING_TO_PARAM(name));
+      name    = plugin_list[i];
+      _plugin = UPlugIn<UServerPlugIn*>::create(U_STRING_TO_PARAM(name));
 
-      if (plugin == 0)
+      if (_plugin == 0)
          {
          U_WARNING("load of plugin '%.*s' FAILED", U_STRING_TO_TRACE(name));
 
          U_RETURN(U_PLUGIN_HANDLER_ERROR);
          }
 
-      vplugin->push_back(plugin);
+      vplugin->push_back(_plugin);
 
       if (cfg &&
           cfg->searchForObjectStream(U_STRING_TO_PARAM(name)))
@@ -419,7 +404,7 @@ int UServer_Base::loadPlugins(const UString& plugin_dir, UVector<UString>& plugi
 
          (void) u_snprintf(mod_name, sizeof(mod_name), "[%.*s] ", U_STRING_TO_TRACE(name));
 
-         result = plugin->handlerConfig(*cfg);
+         result = _plugin->handlerConfig(*cfg);
 
          cfg->reset();
 
@@ -437,7 +422,7 @@ end:
 
 // manage plugin handler hooks...
 
-#  define U_PLUGIN_HANDLER(xxx)                                                              \
+#define U_PLUGIN_HANDLER(xxx)                                                             \
                                                                                              \
 int UServer_Base::plugins_handler##xxx()                                                     \
 {                                                                                            \
@@ -446,19 +431,19 @@ int UServer_Base::plugins_handler##xxx()                                        
    U_INTERNAL_ASSERT_POINTER(vplugin)                                                        \
                                                                                              \
    int result;                                                                               \
-   UServerPlugIn* plugin;                                                                    \
+   UServerPlugIn* _plugin;                                                                   \
    UPlugIn<void*>* wrapper;                                                                  \
                                                                                              \
    for (uint32_t i = 0, length = vplugin->size(); i < length; ++i)                           \
       {                                                                                      \
-      plugin  = vplugin->at(i);                                                              \
-      wrapper = UPlugIn<void*>::getObjWrapper(plugin);                                       \
+      _plugin = vplugin->at(i);                                                              \
+      wrapper = UPlugIn<void*>::getObjWrapper(_plugin);                                      \
                                                                                              \
       U_INTERNAL_ASSERT_POINTER(wrapper)                                                     \
                                                                                              \
       (void) u_snprintf(mod_name, sizeof(mod_name), "[%.*s] ", U_PLUGIN_TO_TRACE(*wrapper)); \
                                                                                              \
-      result = plugin->handler##xxx();                                                       \
+      result = _plugin->handler##xxx();                                                      \
                                                                                              \
       if (result != U_PLUGIN_HANDLER_GO_ON) goto end;                                        \
       }                                                                                      \
@@ -472,7 +457,7 @@ end:                                                                            
 }
 
 U_PLUGIN_HANDLER(Init)
-U_PLUGIN_HANDLER(Read)
+U_PLUGIN_HANDLER(READ)
 U_PLUGIN_HANDLER(Request)
 U_PLUGIN_HANDLER(Reset)
 #endif
@@ -502,13 +487,54 @@ void UServer_Base::runAsUser()
       }
 }
 
+void UServer_Base::setNotifier(bool bfork)
+{
+   U_TRACE(0, "UServer_Base::setNotifier(%b)", bfork)
+
+   // NB: in the classic model we don't need event manager (loop: accept-fork) and the forked child don't accept new client...
+
+   if (bfork)
+      {
+      UNotifier::init();
+
+      if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
+
+      if (isPreForked())
+         {
+                            UNotifier::insert(pthis);          // NB: we ask to notify for request of connection...
+         if (handler_event) UNotifier::insert(handler_event);  // NB: we ask to notify for change of file system (inotify)...
+
+         // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
+         UInterrupt::setHandlerForSignal(SIGHUP, (sighandler_t)SIG_IGN);
+         }
+      else
+         {
+         U_ASSERT(isClassic()) // NB: we don't ask to notify for request of connection...
+         }
+      }
+   else
+      {
+      if (preforked_num_kids == 0)
+         {
+         UNotifier::init();
+
+                            UNotifier::insert(pthis);          // NB: we ask to notify for request of connection...
+         if (handler_event) UNotifier::insert(handler_event);  // NB: we ask to notify for change of file system (inotify)...
+         }
+      }
+}
+
 void UServer_Base::init()
 {
    U_TRACE(1, "UServer_Base::init()")
 
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
 
-   if (name_sock.empty() == false)
+   if (name_sock.empty())
+      {
+      if (isPreForked() == false) block_on_accept = true;
+      }
+   else
       {
       block_on_accept        = true;
       USocket::accept4_flags = 0;
@@ -531,7 +557,7 @@ void UServer_Base::init()
 
    // get name host
 
-   host = U_NEW(UString(server.empty() ? getNodeName() : server));
+   host = U_NEW(UString(server.empty() ? USocketExt::getNodeName() : server));
 
    if (port != 80)
       {
@@ -597,7 +623,7 @@ void UServer_Base::init()
       {
       U_INTERNAL_ASSERT(document_root.isNullTerminated())
 
-      u_canonicalize_pathname(document_root.data());
+      (void) u_canonicalize_pathname(document_root.data());
 
       U_INTERNAL_DUMP("document_root = %S", document_root.data())
       }
@@ -611,16 +637,7 @@ void UServer_Base::init()
 
    U_SRV_LOG_VAR("working directory (DOCUMENT_ROOT) changed to %S", document_root.data());
 
-   // NB: if serialize (0 and >1) we ask to notify for request of connection,
-   //     in this way only in the classic model the forked child don't accept new client...
-
-   if (preforked_num_kids == 0)
-      {
-      acceptNewClient(pthis);
-
-      block_on_accept = true;
-      }
-   else
+   if (preforked_num_kids)
       {
       // manage shared data...
 
@@ -629,8 +646,6 @@ void UServer_Base::init()
       ptr = (shared_data*) UFile::mmap(sizeof(shared_data) + sizeof(sem_t));
 
       U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
-
-      if (isClassic()) block_on_accept = true;
       }
 
    // manage block on accept...
@@ -654,39 +669,8 @@ void UServer_Base::init()
       U_INTERNAL_DUMP("O_NONBLOCK = %B, U_SOCKET_FLAGS = %B", O_NONBLOCK, U_SOCKET_FLAGS)
       }
 
-   // manage authorization data...
-
 #ifdef HAVE_SSL
-   htpasswd = U_NEW(UString(UFile::contentOf(*str_htpasswd)));
-   htdigest = U_NEW(UString(UFile::contentOf(*str_htdigest)));
-
-   if (htpasswd->empty())
-      {
-      delete htpasswd;
-             htpasswd = 0;
-      }
-   else
-      {
-      U_SRV_LOG_VAR("file data users permission: '%.*s' loaded", U_STRING_TO_TRACE(*str_htpasswd));
-      }
-
-   if (htdigest->empty())
-      {
-      delete htdigest;
-             htdigest = 0;
-      }
-   else
-      {
-      U_SRV_LOG_VAR("file data users permission: '%.*s' loaded", U_STRING_TO_TRACE(*str_htdigest));
-      }
-
-   // For ULIB facility request TODO stateless session cookies... 
-
-   UServices::generateKey();
-
-   // For SSL skip tcp optimization
-
-   if (UClientImage_Base::socket->isSSL()) goto next;
+   if (UClientImage_Base::socket->isSSL()) goto next; // For SSL skip tcp optimization
 #endif
 
    if (flag_use_tcp_optimization)
@@ -744,6 +728,10 @@ next:
 #endif
 
    runAsUser();
+
+   setNotifier(false);
+
+   if (USocket::req_timeout) ptime = U_NEW(UTimeoutConnection(USocket::req_timeout, 0L));
 }
 
 RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
@@ -790,11 +778,14 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
       sendSigTERM();
       }
-#ifdef HAVE_LIBEVENT
-   else (void) UDispatcher::exit(0);
-#endif
+   else
+      {
+#  ifdef HAVE_LIBEVENT
+      (void) UDispatcher::exit(0);
+#  endif
 
-   UInterrupt::erase(SIGTERM); // async signal
+      UInterrupt::erase(SIGTERM); // async signal
+      }
 }
 
 int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
@@ -861,7 +852,7 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 
    if (isLog()   &&
        flag_loop && // check for SIGTERM event...
-       (block_on_accept || UClientImage_Base::socket->iState != -EAGAIN)) // NB: for avoid to log spurious EAGAIN on accept() with epoll()
+       (block_on_accept || UClientImage_Base::socket->iState != -EAGAIN)) // NB: to avoid log spurious EAGAIN on accept() with epoll()...
       {
       char buffer[4096];
 
@@ -917,33 +908,19 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 
    // NB: check to avoid to delete himself...
 
-   if (cimg == pthis) U_RETURN(false);
+   U_INTERNAL_DUMP("pthis = %p handler_event = %p", pthis, handler_event)
+
+   if (cimg == pthis ||
+       cimg == handler_event)
+      {
+      U_RETURN(false);
+      }
 
    U_SRV_LOG_TIMEOUT((UClientImage_Base*)cimg);
 
    ((UClientImage_Base*)cimg)->resetSocket(USocket::BROKEN);
 
    U_RETURN(true);
-}
-
-void UServer_Base::handlerIdleConnection()
-{
-   U_TRACE(0, "UServer_Base::handlerIdleConnection()")
-
-   if (isSerialize())
-      {
-      UNotifier::callForAllEntry(handlerTimeoutConnection);
-      }
-   else
-      {
-      U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
-
-      U_SRV_LOG_TIMEOUT(UClientImage_Base::pClientImage);
-
-      UClientImage_Base::pClientImage->resetSocket(USocket::BROKEN);
-
-      UNotifier::erase(UClientImage_Base::pClientImage, true);
-      }
 }
 
 void UServer_Base::handlerNewConnection()
@@ -990,12 +967,7 @@ void UServer_Base::handlerNewConnection()
             return;
             }
 
-         if (proc->child())
-            {
-            acceptNewClient(0);
-
-            if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
-            }
+         if (proc->child()) setNotifier(true);
          }
 
       U_TOT_CONNECTION++;
@@ -1046,10 +1018,10 @@ void UServer_Base::run()
 
    if (isPreForked())
       {
-      int pid, status, nkids = 0;
       UTimeVal to_sleep(0L, 500 * 1000L);
+      int pid, status, nkids = 0, n = max_Keep_Alive / preforked_num_kids;
 
-      UNotifier::preallocate(max_Keep_Alive / preforked_num_kids);
+      if (n) UNotifier::preallocate(n);
 
       while (flag_loop)
          {
@@ -1071,12 +1043,7 @@ void UServer_Base::run()
                {
                U_INTERNAL_DUMP("block_on_accept = %b tot_connection = %d", block_on_accept, U_TOT_CONNECTION)
 
-               acceptNewClient(pthis);
-
-               if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
-
-               // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
-               UInterrupt::setHandlerForSignal(SIGHUP, (sighandler_t)SIG_IGN);
+               setNotifier(true);
 
                goto preforked_child;
                }
@@ -1117,19 +1084,19 @@ preforked_child:
 
    while (flag_loop)
       {
+      if (UInterrupt::event_signal_pending)
+         {
+         UInterrupt::callHandlerSignal();
+
+         continue;
+         }
+
       // check if we can go to blocking on accept()...
 
       if (block_on_accept &&
           isClientConnect() == false)
          {
          if (isLog() && isClassic() == false) ULog::log("waiting for connection\n", 0);
-
-         if (UInterrupt::event_signal_pending)
-            {
-            UInterrupt::callHandlerSignal();
-
-            continue;
-            }
 
          // here we go to block on accept(), plus fork() - eventually child start here...
 
@@ -1169,7 +1136,7 @@ UCommand* UServer_Base::loadConfigCommand(UFileConfig& cfg)
       {
       if (U_ENDS_WITH(command, ".sh"))
          {
-         UString buffer(U_CAPACITY);
+         UString buffer(U_PATH_MAX);
 
          buffer.snprintf("%s %.*s", U_PATH_SHELL, U_STRING_TO_TRACE(command));
 
@@ -1200,54 +1167,6 @@ void UServer_Base::logCommandMsgError(const char* cmd)
       }
 }
 
-UString UServer_Base::getUserHA1(const UString& user, const UString& realm)
-{
-   U_TRACE(0, "UServer_Base::getUserHA1(%.*S,%.*S)", U_STRING_TO_TRACE(user), U_STRING_TO_TRACE(realm))
-
-   UString ha1;
-
-   if (htdigest)
-      {
-      // s.casazza:Protected Area:...............\n
-
-      UString line(100U);
-
-      line.snprintf("%.*s:%.*s:", U_STRING_TO_TRACE(user), U_STRING_TO_TRACE(realm));
-
-      uint32_t pos = htdigest->find(line);
-
-      if (pos != U_NOT_FOUND)
-         {
-         pos += line.size();
-         ha1  = htdigest->substr(pos, 32);
-
-         U_INTERNAL_ASSERT_EQUALS(htdigest->c_char(pos + 32),'\n')
-         }
-      }
-
-   U_RETURN_STRING(ha1);
-}
-
-bool UServer_Base::isUserAuthorized(const UString& user, const UString& password)
-{
-   U_TRACE(0, "UServer_Base::isUserAuthorized(%.*S,%.*S)", U_STRING_TO_TRACE(user), U_STRING_TO_TRACE(password))
-
-#ifdef HAVE_SSL
-   if (htpasswd)
-      {
-      UString line(100U), output(100U);
-
-      UServices::generateDigest(U_HASH_SHA1, 0, password, output, true);
-
-      line.snprintf("%.*s:{SHA}%.*s\n", U_STRING_TO_TRACE(user), U_STRING_TO_TRACE(output));
-
-      if (htpasswd->find(line) != U_NOT_FOUND) U_RETURN(true);
-      }
-#endif
-
-   U_RETURN(false);
-}
-
 // DEBUG
 
 #ifdef DEBUG
@@ -1264,7 +1183,6 @@ const char* UServer_Base::dump(bool reset) const
                   << "num_connection            " << num_connection              << '\n'
                   << "block_on_accept           " << block_on_accept             << '\n'
                   << "preforked_num_kids        " << preforked_num_kids          << '\n'
-                  << "digest_authentication     " << digest_authentication       << '\n'
                   << "flag_use_tcp_optimization " << flag_use_tcp_optimization   << '\n'
                   << "log           (ULog       " << (void*)log                  << ")\n"
                   << "lock          (ULock      " << (void*)lock                 << ")\n"
@@ -1279,8 +1197,6 @@ const char* UServer_Base::dump(bool reset) const
                   << "password      (UString    " << (void*)&password            << ")\n"
                   << "cert_file     (UString    " << (void*)&cert_file           << ")\n"
                   << "name_sock     (UString    " << (void*)&name_sock           << ")\n"
-                  << "htpasswd      (UString    " << (void*)htpasswd             << ")\n"
-                  << "htdigest      (UString    " << (void*)htdigest             << ")\n"
                   << "IP_address    (UString    " << (void*)&IP_address          << ")\n"
                   << "document_root (UString    " << (void*)&document_root       << ")\n"
                   << "proc          (UProcess   " << (void*)proc                 << ')';

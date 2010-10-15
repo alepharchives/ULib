@@ -91,7 +91,7 @@ bPFpcupcud u_pfn_match = u_dosmatch;
 
 const char* u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 
-const char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_path_len)
+char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_path_len)
 {
    U_INTERNAL_TRACE("u_getPathRelativ(%s,%u)", path, *ptr_path_len)
 
@@ -144,7 +144,7 @@ const char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_p
       U_INTERNAL_PRINT("path(%u) = %.*s", *ptr_path_len, *ptr_path_len, path)
       }
 
-   return path;
+   return (char*)path;
 }
 
 /* find sequence of U_LF2 or U_CRLF2 */
@@ -1234,7 +1234,7 @@ bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_
          {
          /* We can, so normalize the name and return it below */
 
-         u_canonicalize_pathname(result);
+         (void) u_canonicalize_pathname(result);
 
          return true;
          }
@@ -1253,11 +1253,14 @@ bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_
 // Non-leading '../' and trailing '..' are handled by removing portions of the path
 // ---------------------------------------------------------------------------------- */
 
-void u_canonicalize_pathname(char* restrict path)
+bool u_canonicalize_pathname(char* restrict path)
 {
    int len;
    char* restrict p;
    char* restrict s;
+   char* restrict src;
+   char* restrict dst;
+   bool is_modified = false;
    char* restrict lpath = path;
 
    U_INTERNAL_TRACE("u_canonicalize_pathname(%s)", path)
@@ -1277,7 +1280,11 @@ void u_canonicalize_pathname(char* restrict path)
 
          while (*(++s) == '/') {}
 
-         (void) strcpy(p + 1, s);
+         is_modified = true;
+
+         for (src = s, dst = p + 1; (*dst = *src); ++src, ++dst) {} /* strcpy(p + 1, s); */
+
+         U_INTERNAL_PRINT("path = %s", path)
          }
       }
 
@@ -1291,7 +1298,11 @@ void u_canonicalize_pathname(char* restrict path)
           p[1] == '.' &&
           p[2] == '/')
          {
-         (void) strcpy(p, p + 2);
+         is_modified = true;
+
+         for (src = p + 2, dst = p; (*dst = *src); ++src, ++dst) {} /* strcpy(p, p + 2); */
+
+         U_INTERNAL_PRINT("path = %s", path)
          }
       else
          {
@@ -1301,9 +1312,15 @@ void u_canonicalize_pathname(char* restrict path)
 
    /* Remove trailing slashes */
 
-   p = lpath + u_strlen(lpath) - 1;
+   p = lpath + strlen(lpath) - 1;
 
-   while (p > lpath && *p == '/') *p-- = '\0';
+   if ( p > lpath &&
+       *p == '/')
+      {
+      is_modified = true;
+
+      do { *p-- = '\0'; } while (p > lpath && *p == '/');
+      }
 
    /* Remove leading "./" */
 
@@ -1314,34 +1331,41 @@ void u_canonicalize_pathname(char* restrict path)
          {
          lpath[1] = 0;
 
-         return;
+         return true;
          }
 
-      p   = lpath + 2;
-      len = u_strlen(p);
+      is_modified = true;
 
-      (void) memmove(lpath, p, len);
+      for (src = lpath + 2, dst = lpath; (*dst = *src); ++src, ++dst) {} /* strcpy(lpath, lpath + 2); */
 
-      lpath[len] = 0;
+      U_INTERNAL_PRINT("path = %s", path)
       }
 
    /* Remove trailing "/" or "/." */
 
-   len = u_strlen(lpath);
+   len = strlen(lpath);
 
-   if (len < 2) return;
+   if (len < 2) goto end;
 
-   if (lpath[len - 1] == '/') lpath[len - 1] = 0;
+   if (lpath[len - 1] == '/')
+      {
+      lpath[len - 1] = 0;
+
+      is_modified = true;
+      }
    else
       {
-      if (lpath[len - 1] == '.' && lpath[len - 2] == '/')
+      if (lpath[len - 1] == '.' &&
+          lpath[len - 2] == '/')
          {
          if (len == 2)
             {
             lpath[1] = 0;
 
-            return;
+            return true;
             }
+
+         is_modified = true;
 
          lpath[len - 2] = 0;
          }
@@ -1351,10 +1375,15 @@ void u_canonicalize_pathname(char* restrict path)
 
    p = lpath;
 
-   while (p[0] && p[1] && p[2])
+   while (p[0] &&
+          p[1] &&
+          p[2])
       {
-      if ((p[0] != '/' || p[1] != '.' || p[2] != '.') ||
-          (p[3] != '/' && p[3] != 0))
+      if ((p[0] != '/'  ||
+           p[1] != '.'  ||
+           p[2] != '.') ||
+          (p[3] != '/'  &&
+           p[3] != 0))
          {
          ++p;
 
@@ -1371,19 +1400,25 @@ void u_canonicalize_pathname(char* restrict path)
 
       /* If the previous token is "..", we cannot collapse it */
 
-      if (s[0] == '.' && s[1] == '.' && (s + 2) == p)
+      if (s[0]    == '.' &&
+          s[1]    == '.' &&
+          (s + 2) == p)
          {
          p += 3;
 
          continue;
          }
 
-      if (p[3] != 0)
+      if (p[3] != '\0')
          {
          /*      "/../foo" -> "/foo" */
          /* "token/../foo" ->  "foo" */
 
-         (void) strcpy(s + (s == lpath && *s == '/'), p + 4);
+         is_modified = true;
+
+         for (src = p + 4, dst = s + (s == lpath && *s == '/'); (*dst = *src); ++src, ++dst) {} /* strcpy(s + (s == lpath && *s == '/'), p + 4); */
+
+         U_INTERNAL_PRINT("path = %s", path)
 
          p = s - (s > lpath);
 
@@ -1391,6 +1426,8 @@ void u_canonicalize_pathname(char* restrict path)
          }
 
       /* trailing ".." */
+
+      is_modified = true;
 
       if (s == lpath)
          {
@@ -1406,12 +1443,15 @@ void u_canonicalize_pathname(char* restrict path)
 
          if (s == (lpath + 1)) s[ 0] = '\0';
          else                  s[-1] = '\0';
-
-         break;
          }
 
       break;
       }
+
+end:
+   U_INTERNAL_PRINT("path = %s", path)
+
+   return is_modified;
 }
 
 /* Prepare command for call to exec() */
@@ -1588,6 +1628,7 @@ static void u_ftw_call(char* restrict d_name, uint32_t d_namlen, unsigned char d
 
    if ( u_ftw_ctx.depth &&
        (u_ftw_ctx.is_directory ||
+        d_type == DT_LNK       ||
         d_type == DT_UNKNOWN))
       {
       u_ftw();

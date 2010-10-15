@@ -10,7 +10,7 @@ mkdir -p out err tmp
 #USIMERR="error.sim"
 #EXEC_ON_EXIT="/utility/stack_dump.sh"
 #WINELOADER=wine
-#VALGRIND=valgrind
+#VALGRIND='valgrind --leak-check=full'
 export UTRACE UOBJDUMP USIMERR EXEC_ON_EXIT VALGRIND WINELOADER PID RESULT
 
 # context
@@ -222,32 +222,46 @@ start_cmd_background() {
 	$SLEEP
 }
 
-# function : wait_prg
-wait_prg() {
-
-	wait $PID 2>/dev/null
-
-	unset PID
-}
-
 # function : kill_cmd
 kill_cmd() {
 
+	# -------------------------------------------------------------------------------------------------
+	# An AND list has the form: command1 && command2
+	#
+	# command2 is executed if, and only if, command1 returns an exit status of zero.
+	# -------------------------------------------------------------------------------------------------
+	# An OR  list has the form: command1 || command2
+	#
+	# command2 is executed if and only if command1 returns a non-zero exit status.
+	# -------------------------------------------------------------------------------------------------
+	# The return status of AND and OR lists is the exit status of the last command executed in the list
+
 	if [ -n "$PID" ]; then
-		kill -0 $PID >/dev/null 2>/dev/null && kill -s $1 $PID && return 1
+		kill -0 $PID 2>/dev/null && kill -s $1 $PID 2>/dev/null && return 0
 	fi
 
-	return 0
+	return 1
+}
+
+# function : wait_prg
+wait_prg() {
+
+	wait	  $PID 2>/dev/null
+	kill -0 $PID 2>/dev/null || return 0
+
+	return 1
 }
 
 # function : kill_prg
 kill_prg() {
 
-	kill_cmd $2 && wait_prg
-
 	if [ -n "$WINELOADER" ]; then
-		pkill $1 2>/dev/null
+		pkill $1 2>/dev/null		&& return 0
+	else
+		kill_cmd $2 && wait_prg && return 0
 	fi
+
+	return 1
 }
 
 # function : post_processing

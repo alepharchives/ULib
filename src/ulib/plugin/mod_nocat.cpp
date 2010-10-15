@@ -666,6 +666,13 @@ void UNoCatPlugIn::getTraffic()
    UModNoCatPeer* peer;
    struct ipt_acc_handle_ip* entry;
 
+   union uuaddress {
+      uint32_t       ip;
+      struct in_addr addr;
+   };
+
+   union uuaddress address;
+
    for (uint32_t i = 0, n = vLocalNetwork.size(); i < n; ++i)
       {
       U_INTERNAL_ASSERT(vLocalNetwork[i].isNullTerminated())
@@ -676,7 +683,9 @@ void UNoCatPlugIn::getTraffic()
          {
          while ((entry = ipt->getNextEntry()))
             {
-            ip = inet_ntoa(*(in_addr*)&(entry->ip));
+            address.ip = entry->ip;
+
+            ip = inet_ntoa(address.addr);
 
             U_INTERNAL_DUMP("IP: %s SRC packets: %u bytes: %u DST packets: %u bytes: %u",
                              ip, entry->src_packets, entry->src_bytes, entry->dst_packets, entry->dst_bytes)
@@ -1298,7 +1307,7 @@ int UNoCatPlugIn::handlerInit()
 
    peers->allocate();
 
-   access_point   = UServer_Base::getNodeName();
+   access_point   = USocketExt::getNodeName();
    status_content = U_NEW(UString(U_CAPACITY));
 
    gateway.insert(0, UServer_Base::getIPAddress());

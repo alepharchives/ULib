@@ -91,7 +91,7 @@ uint32_t u_foldkey(unsigned char* k, uint32_t length)
 {
    uint32_t ikey = 0, tkey, ishift = 0, fkey = 0;
 
-   U_INTERNAL_TRACE("u_foldkey(%.*S,%u)", length, k, length)
+   U_INTERNAL_TRACE("u_foldkey(%.*s,%u)", U_min(length,128), k, length)
 
    for (; ikey < length; ++ikey)
       {
@@ -175,7 +175,7 @@ uint32_t u_hash(unsigned char* k, uint32_t length, bool ignore_case)
 {
    uint32_t a,b,c,len;
 
-   U_INTERNAL_TRACE("u_hash(%.*S,%u,%b)", length, k, length, ignore_case)
+   U_INTERNAL_TRACE("u_hash(%.*s,%u,%b)", U_min(length,128), k, length, ignore_case)
 
    // Set up the internal state
 
@@ -258,18 +258,18 @@ uint32_t u_hash(unsigned char* k, uint32_t length, bool ignore_case)
    return c;
 }
 
+// the famous DJB hash function for strings
+
 uint32_t u_hash(unsigned char* t, uint32_t tlen, bool ignore_case)
 {
    uint32_t h = 5381;
 
-   if (ignore_case)
-      {
-      while (tlen--) h = ((h << 5) + h) ^ u_tolower(*t++);
-      }
-   else
-      {
-      while (tlen--) h = ((h << 5) + h) ^ *t++;
-      }
+   U_INTERNAL_TRACE("u_hash(%.*s,%u,%d)", U_min(tlen,128), t, tlen, ignore_case)
+
+   if (ignore_case) while (tlen--) h = ((h << 5) + h) + u_tolower(*t++);
+   else             while (tlen--) h = ((h << 5) + h) +           *t++;
+
+   h &= ~(1 << 31); // strip the highest bit
 
    return h;
 }
@@ -330,7 +330,7 @@ uint32_t u_hash(unsigned char* restrict bp, uint32_t len, bool ignore_case)
    uint32_t hval              = FNV_32_INIT;
    unsigned char* restrict be = bp + len; /* beyond end of buffer */
 
-   U_INTERNAL_TRACE("u_hash(%.*S,%u)", len, bp, len)
+   U_INTERNAL_TRACE("u_hash(%.*s,%u)", U_min(len,128), bp, len)
 
    /* FNV-1 hash each octet of the buffer */
 
@@ -378,7 +378,7 @@ uint64_t u_hash64(unsigned char* bp, uint32_t len)
    uint64_t hval     = FNV_64_INIT;
    unsigned char* be = bp + len; // beyond end of buffer
 
-   U_INTERNAL_TRACE("u_hash64(%.*S,%u)", len, bp, len)
+   U_INTERNAL_TRACE("u_hash64(%.*s,%u)", U_min(len,128), bp, len)
 
    // FNV-1 hash each octet of the buffer
 

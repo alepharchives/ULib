@@ -51,6 +51,17 @@ void USOAPParser::str_allocate()
    U_NEW_ULIB_OBJECT(str_version11,      U_STRING_FROM_STRINGREP_STORAGE(5));
 }
 
+USOAPParser::~USOAPParser()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, USOAPParser)
+
+   clearData();
+
+#ifdef U_SOAP_NAMESPACE
+   XMLNStoURN.deallocate();
+#endif
+}
+
 bool USOAPParser::parse(const UString& msg)
 {
    U_TRACE(0, "USOAPParser::parse(%.*S)", U_STRING_TO_TRACE(msg))

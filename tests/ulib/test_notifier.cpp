@@ -153,7 +153,7 @@ public:
                   {
                   handler_output = U_NEW(handlerOutput);
 
-                  UNotifier::insert(handler_output, true);
+                  UNotifier::insert(handler_output);
                   }
                }
             }
@@ -201,9 +201,10 @@ int U_EXPORT main(int argc, char* argv[])
    handlerInput* c = U_NEW(handlerInput);
    handlerInput* d = U_NEW(handlerInput);
 
-   UNotifier::init(c);
+   UNotifier::init();
+   UNotifier::insert(c);
    UNotifier::erase(c, true);
-   UNotifier::insert(d, true);
+   UNotifier::insert(d);
 
 #ifdef __unix__
    U_ASSERT(UNotifier::waitForRead( fds[0], 500) <= 0)

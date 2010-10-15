@@ -14,6 +14,7 @@
 #ifndef U_MOD_HTTP_H
 #define U_MOD_HTTP_H 1
 
+#include <ulib/event/event_fd.h>
 #include <ulib/container/vector.h>
 #include <ulib/net/server/server_plugin.h>
 
@@ -31,7 +32,7 @@ UServer has 5 hooks which are used in different states of the execution of the r
 
 * Connection-wide hooks:
 ````````````````````````
-3) handlerRead:
+3) handlerREAD:
 4) handlerRequest:
 5) handlerReset:
   called in `UClientImage_Base::handlerRead()`
@@ -45,8 +46,12 @@ RETURNS:
   U_PLUGIN_HANDLER_ERROR    on error
 */
 
-class U_EXPORT UHttpPlugIn : public UServerPlugIn {
+class U_EXPORT UHttpPlugIn : public UServerPlugIn, UEventFd {
 public:
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
 
    static UString* str_CACHE_FILE_MASK;
    static UString* str_URI_PROTECTED_MASK;
@@ -60,6 +65,9 @@ public:
    UHttpPlugIn()
       {
       U_TRACE_REGISTER_OBJECT(0, UHttpPlugIn, "", 0)
+
+      UEventFd::fd      = -1;
+      UEventFd::op_mask = U_READ_IN;
 
       if (str_URI_PROTECTED_MASK == 0) str_allocate();
       }
@@ -75,9 +83,13 @@ public:
 
    // Connection-wide hooks
 
-   virtual int handlerRead();
+   virtual int handlerREAD();
    virtual int handlerRequest();
    virtual int handlerReset();
+
+   // define method VIRTUAL of class UEventFd
+
+   virtual int handlerRead();
 
    // DEBUG
 
@@ -90,8 +102,8 @@ protected:
    UString uri_protected_mask, uri_protected_allowed_ip, uri_request_cert_mask;
 
 private:
-   UHttpPlugIn(const UHttpPlugIn&) : UServerPlugIn() {}
-   UHttpPlugIn& operator=(const UHttpPlugIn&)        { return *this; }
+   UHttpPlugIn(const UHttpPlugIn&) : UServerPlugIn(), UEventFd() {}
+   UHttpPlugIn& operator=(const UHttpPlugIn&)                    { return *this; }
 };
 
 #endif

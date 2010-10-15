@@ -188,34 +188,34 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
       {
       int header_size;
       const char* restrict ptr = input + U_CONSTANT_SIZE(GZIP_MAGIC);
-      char flags, method = *ptr++; /* method */
+      char _flags, _method = *ptr++; /* method */
 
-      if (method != Z_DEFLATED) /* 8 */
+      if (_method != Z_DEFLATED) /* 8 */
          {
-         U_WARNING("u_gz_inflate(): unknown method %d -- not supported", method);
+         U_WARNING("u_gz_inflate(): unknown method %d -- not supported", _method);
 
          return 0;
          }
 
-      flags = *ptr++; /* compression flags */
+      _flags = *ptr++; /* compression flags */
 
-      if ((flags & ENCRYPTED) != 0)
+      if ((_flags & ENCRYPTED) != 0)
          {
          U_WARNING("u_gz_inflate(): file is encrypted -- not supported", 0);
 
          return 0;
          }
 
-      if ((flags & CONTINUATION) != 0)
+      if ((_flags & CONTINUATION) != 0)
          {
          U_WARNING("u_gz_inflate(): file is a a multi-part gzip file -- not supported", 0);
 
          return 0;
          }
 
-      if ((flags & RESERVED) != 0)
+      if ((_flags & RESERVED) != 0)
          {
-         U_WARNING("u_gz_inflate(): has flags 0x%x -- not supported", flags);
+         U_WARNING("u_gz_inflate(): has flags 0x%x -- not supported", _flags);
 
          return 0;
          }
@@ -227,7 +227,7 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
 
       ptr += 4 + 1 + 1;
 
-      if ((flags & EXTRA_FIELD) != 0)
+      if ((_flags & EXTRA_FIELD) != 0)
          {
          unsigned _len  =  (unsigned)*ptr++;
                   _len |= ((unsigned)*ptr++) << 8;
@@ -235,8 +235,8 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
          input += _len;
          }
 
-      if ((flags & ORIG_NAME) != 0) while (*ptr++ != '\0') {} /* Discard file name if any */
-      if ((flags & COMMENT)   != 0) while (*ptr++ != '\0') {} /* Discard file comment if any */
+      if ((_flags & ORIG_NAME) != 0) while (*ptr++ != '\0') {} /* Discard file name if any */
+      if ((_flags & COMMENT)   != 0) while (*ptr++ != '\0') {} /* Discard file comment if any */
 
       header_size = (ptr - input);
 
