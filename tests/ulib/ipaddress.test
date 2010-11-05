@@ -32,14 +32,24 @@ else
 	hostname --version 2>&1 | grep net-tools >/dev/null 2>&1
 	if [ $? -eq 0 ]; then
 		ARG2=`hostname -d`
+		echo $ARG2 | grep -i Unknown >/dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			ARG2=""
+		fi
 	else
 		type domainname >/dev/null 2>&1
 		if [ $? -eq 0 ]; then
 			ARG2=`domainname`
-		elif [ -f /etc/domainname ]; then
-			ARG2=`cat /etc/domainname`
-		else
-			ARG2="unirel.intranet"
+			if [ "$ARG2" = "(none)" ]; then
+				ARG2=""
+			fi
+		fi
+		if [ -z "$ARG2" ]; then
+			if [ -f /etc/domainname ]; then
+				ARG2=`cat /etc/domainname`
+			else
+				ARG2="unirel.intranet"
+			fi
 		fi
 	fi
 

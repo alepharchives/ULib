@@ -322,8 +322,8 @@ public:
 #endif
 
 protected:
-   size_t bytes_to_read;
    int port, response;
+   uint32_t bytes_to_read;
    Socket pasv;
 
    const char* status();

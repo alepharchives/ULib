@@ -235,7 +235,7 @@ public:
 
    UClientImage() : UClientImage_Base()
       {
-      U_TRACE_REGISTER_OBJECT(0, UClientImage, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UClientImage, "")
       }
 
    virtual ~UClientImage()
@@ -265,7 +265,7 @@ public:
 
    UClientImage() : UClientImage_Base()
       {
-      U_TRACE_REGISTER_OBJECT(0, UClientImage<USSLSocket>, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UClientImage<USSLSocket>, "")
 
       // NB: we need this because we reuse the same object USocket...
 

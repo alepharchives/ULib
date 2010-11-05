@@ -32,8 +32,11 @@ elif [ "$REQUEST_METHOD" = "POST" ]; then
 
 	DIR=uploads
 
-#	mkdir -p ../$DIR
-	mv $1		../$DIR
+	if [ ! -d ../$DIR ]; then
+		mkdir -p ../$DIR
+	fi
+
+	mv $1	../$DIR
 
 	FILE=/$DIR/`basename $1`
 
@@ -62,5 +65,12 @@ END
 
 	exit 0
 fi
+
+# printenv -- just prints its environment
+
+echo -e 'Content-Type: text/html; charset=utf8\r\n\r'
+echo '<pre>'
+env
+echo '</pre>'
 
 exit 1

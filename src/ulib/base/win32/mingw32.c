@@ -378,7 +378,7 @@ uint64_t u_get_inode(int fd)
 
 pid_t fork(void)
 {
-   U_INTERNAL_TRACE("fork()", 0)
+   U_INTERNAL_TRACE("fork()")
 
    errno = ENOSYS;
 
@@ -387,7 +387,7 @@ pid_t fork(void)
 
 pid_t vfork(void)
 {
-   U_INTERNAL_TRACE("vfork()", 0)
+   U_INTERNAL_TRACE("vfork()")
 
    errno = ENOSYS;
 
@@ -405,7 +405,7 @@ int nice(int inc)
 
 pid_t getppid(void)
 {
-   U_INTERNAL_TRACE("getppid()", 0)
+   U_INTERNAL_TRACE("getppid()")
 
    errno = ENOSYS;
 
@@ -432,7 +432,7 @@ int socketpair(int d, int type, int protocol, int sv[2])
 
 int setpgrp(void)
 {
-   U_INTERNAL_TRACE("setpgrp()", 0)
+   U_INTERNAL_TRACE("setpgrp()")
 
    errno = ENOSYS;
 

@@ -132,7 +132,7 @@ void UInterrupt::sendOurselves(int signo)
 
    u_exit();
 
-   (void) U_SYSCALL(kill, "%ld,%d", u_pid, signo);
+   (void) U_SYSCALL(kill, "%d,%d", u_pid, signo);
 }
 
 RETSIGTYPE UInterrupt::handlerInterrupt(int signo)

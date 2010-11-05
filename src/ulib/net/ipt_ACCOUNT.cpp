@@ -48,9 +48,9 @@ UIptAccount::UIptAccount(bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
 
    if (USocket::socket(SOCK_RAW, IPPROTO_ICMP) == false)
       {
-      if (UServices::isSetuidRoot() == false) U_ERROR("Must run as root to create raw socket...", 0);
+      if (UServices::isSetuidRoot() == false) U_ERROR("Must run as root to create raw socket...");
 
-      U_ERROR("Can't open socket to kernel. Permission denied or ipt_ACCOUNT module not loaded", 0);
+      U_ERROR("Can't open socket to kernel. Permission denied or ipt_ACCOUNT module not loaded");
       }
 
    // 4096 bytes default buffer should save us from reallocations as it fits 200 concurrent active clients
@@ -227,7 +227,7 @@ const char* UIptAccount::getNextName()
 {
    U_TRACE(0, "UIptAccount::getNextName()")
 
-   const char* rtn;
+   const char* rtn = 0;
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
    if (((char*)data)[pos] == '\0') U_RETURN((const char*)0);

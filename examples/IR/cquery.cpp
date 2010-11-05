@@ -63,7 +63,7 @@ void WeightWord::push()
 
       if (tbl->find(*UPosting::filename))
          {
-         U_INTERNAL_DUMP("DUPLICATE", 0)
+         U_INTERNAL_DUMP("DUPLICATE")
 
          return;
          }
@@ -297,7 +297,7 @@ void Query::run(const char* ptr)
 
    if (strpbrk(ptr, "?*"))
       {
-      if (is_space) U_ERROR("syntax error on query...", 0);
+      if (is_space) U_ERROR("syntax error on query...");
 
       if (*UPosting::word == U_STRING_FROM_CONSTANT("*")) cdb_names->callForAllEntry(push);
       else

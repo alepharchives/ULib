@@ -44,8 +44,8 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static UString* str_done;
-   static UString* str_fault;
+   static const UString* str_done;
+   static const UString* str_fault;
 
    static void str_allocate();
 
@@ -53,7 +53,7 @@ public:
 
    URPCMethod()
       {
-      U_TRACE_REGISTER_OBJECT(0, URPCMethod, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, URPCMethod, "")
 
       if (str_done == 0) str_allocate();
       }

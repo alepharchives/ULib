@@ -24,9 +24,9 @@
 #  include <ulib/replace/strstream.h>
 #endif
 
-UString* UFileConfig::str_yes;
-UString* UFileConfig::str_FILE;
-UString* UFileConfig::str_string;
+const UString* UFileConfig::str_yes;
+const UString* UFileConfig::str_FILE;
+const UString* UFileConfig::str_string;
 
 void UFileConfig::str_allocate()
 {
@@ -59,51 +59,58 @@ bool UFileConfig::open()
 
    if (result)
       {
+      const char* suffix;
+
       // manage if we need preprocessing...
 
       if (U_STRING_FIND(data, 0, "\n#include ") != U_NOT_FOUND)
          {
+#     ifdef DEBUG
+         static int fd_stderr = UFile::creat("/tmp/cpp.err", O_WRONLY | O_APPEND, PERM_FILE);
+#     else
+         static int fd_stderr = UServices::getDevNull();
+#     endif
+
          (void) UFile::lseek(U_SEEK_BEGIN, SEEK_SET);
 
          UString command(200U), _dir = UStringExt::dirname(pathname);
 
          command.snprintf("cpp -undef -nostdinc -w -P -C -I%.*s -", U_STRING_TO_TRACE(_dir));
 
-         data = UCommand::outputCommand(command, 0, UFile::getFd(), UServices::getDevNull());
+         data = UCommand::outputCommand(command, 0, UFile::getFd(), fd_stderr);
          }
 
-      if (data.empty()) result = false;
-      else
+      if (data.empty()) goto err;
+
+      _end   = data.end();
+      _start = data.data();
+      _size  = data.size();
+
+      if (table.capacity() == 0) table.allocate();
+
+      // Loads configuration information from the file.
+      // The file type is determined by the file extension.
+      // The following extensions are supported:
+      // -------------------------------------------------------------
+      // .properties - properties file (JAVA Properties)
+      // .ini        - initialization file (Windows INI)
+
+      suffix = UFile::getSuffix();
+
+      if (suffix)
          {
-         _end   = data.end();
-         _start = data.data();
-         _size  = data.size();
+         U_INTERNAL_ASSERT_EQUALS(suffix[0], '.')
 
-         if (table.capacity() == 0) table.allocate();
+         ++suffix;
 
-         // Loads configuration information from the file.
-         // The file type is determined by the file extension.
-         // The following extensions are supported:
-         // -------------------------------------------------------------
-         // .properties - properties file (JAVA Properties)
-         // .ini        - initialization file (Windows INI)
-
-         const char* suffix = UFile::getSuffix();
-
-         if (suffix == 0) result = load(0, 0);
-         else
-            {
-            U_INTERNAL_ASSERT_EQUALS(suffix[0], '.')
-
-            ++suffix;
-
-                 if (U_STRNEQ(suffix, "ini"))        result = loadINI();
-            else if (U_STRNEQ(suffix, "properties")) result = loadProperties();
-            else                                     result = load(0, 0);
-            }
+              if (U_STRNEQ(suffix, "ini"))        { result = loadINI();        goto next; }
+         else if (U_STRNEQ(suffix, "properties")) { result = loadProperties(); goto next; }
          }
+
+      result = load(0, 0);
       }
 
+next:
    if (result)
       {
       if (UFile::isOpen()) UFile::close();
@@ -111,6 +118,7 @@ bool UFileConfig::open()
       U_RETURN(true);
       }
 
+err:
    U_ERROR("configuration file %S not valid...", UFile::getPath().data());
 
    U_RETURN(false);

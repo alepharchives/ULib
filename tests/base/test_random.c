@@ -8,16 +8,20 @@ static uint32_t n, cnt, sides, maxroll;
 
 int main(int argc, char* argv[])
 {
+#ifdef DEBUG
    uint32_t hash1, hash2, hash3;
+#endif
 
    u_init(argv);
 
+#ifdef DEBUG
    hash1 = u_hash((unsigned char*)U_CONSTANT_TO_PARAM("Set-Cookie2"), false),
    hash2 = u_hash((unsigned char*)U_CONSTANT_TO_PARAM("Set-Cookie2"), true),
    hash3 = u_hash((unsigned char*)U_CONSTANT_TO_PARAM("Set-COOkie2"), true);
 
    U_INTERNAL_ASSERT(hash1 != hash2)
    U_INTERNAL_ASSERT(hash2 == hash3)
+#endif
 
    sides   = (argc > 1 ? atol(argv[1]) :    6);
    maxroll = (argc > 2 ? atol(argv[2]) : 1000);

@@ -37,7 +37,7 @@ union uuvararg USimulationError::var_arg;
 
 void USimulationError::init()
 {
-   U_INTERNAL_TRACE("USimulationError::init()", 0)
+   U_INTERNAL_TRACE("USimulationError::init()")
 
    int fd    = 0;
    char* env = getenv("USIMERR");

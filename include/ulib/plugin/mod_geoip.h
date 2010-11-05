@@ -51,7 +51,7 @@ RETURNS:
 class U_EXPORT UGeoIPPlugIn : public UServerPlugIn {
 public:
 
-   static UString* str_COUNTRY_FORBIDDEN_MASK;
+   static const UString* str_COUNTRY_FORBIDDEN_MASK;
 
    static void str_allocate();
 
@@ -59,7 +59,7 @@ public:
 
    UGeoIPPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, UGeoIPPlugIn, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UGeoIPPlugIn, "")
 
       if (str_COUNTRY_FORBIDDEN_MASK == 0) str_allocate();
       }

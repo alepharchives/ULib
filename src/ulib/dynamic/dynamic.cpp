@@ -62,25 +62,21 @@ void* UDynamic::operator[](const char* _sym)
 
    U_INTERNAL_ASSERT_POINTER(handle)
 
-   if (sym != _sym)
+#if defined(__MINGW32__)
+   addr = (void*) ::GetProcAddress(handle, _sym);
+#else
+   addr = U_SYSCALL(dlsym, "%p,%S", handle, _sym);
+#endif
+
+   if (addr == 0)
       {
 #  if defined(__MINGW32__)
-      addr = (void*) ::GetProcAddress(handle, _sym);
+      err = "symbol missing";
 #  else
-      addr = U_SYSCALL(dlsym, "%p,%S", handle, _sym);
+      err = ::dlerror();
 #  endif
 
-      if (addr) sym = _sym;
-      else
-         {
-#     if defined(__MINGW32__)
-         err = "symbol missing";
-#     else
-         err = ::dlerror();
-#     endif
-
-         U_INTERNAL_DUMP("err = %.*S", 256, err)
-         }
+      U_INTERNAL_DUMP("err = %.*S", 256, err)
       }
 
    U_RETURN(addr);
@@ -100,7 +96,6 @@ void UDynamic::close()
    (void) U_SYSCALL(dlclose, "%p", handle);
 #endif
 
-   sym    = 0;
    err    = 0;
    addr   = 0;
    handle = 0;
@@ -114,7 +109,6 @@ void UDynamic::close()
 const char* UDynamic::dump(bool reset) const
 {
    *UObjectIO::os << "err           " << err        << '\n'
-                  << "sym           " << (void*)sym << '\n'
                   << "addr          " << addr       << '\n'
                   << "handle        " << (void*)handle;
 

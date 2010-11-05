@@ -232,7 +232,7 @@ bool UTransformCtx::nodesListRead(xmlNodePtr node, int usage)
 
 UDSIGContext::UDSIGContext()
 {
-   U_TRACE_REGISTER_OBJECT(0, UDSIGContext, "", 0)
+   U_TRACE_REGISTER_OBJECT(0, UDSIGContext, "")
 
    U_INTERNAL_ASSERT_EQUALS(pthis, 0)
 

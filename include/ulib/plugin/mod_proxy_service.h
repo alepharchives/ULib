@@ -29,8 +29,8 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static UString* str_FOLLOW_REDIRECTS;
-   static UString* str_CLIENT_CERTIFICATE;
+   static const UString* str_FOLLOW_REDIRECTS;
+   static const UString* str_CLIENT_CERTIFICATE;
 
    static void str_allocate();
 
@@ -51,7 +51,7 @@ public:
 
    UModProxyService()
       {
-      U_TRACE_REGISTER_OBJECT(0, UModProxyService, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UModProxyService, "")
 
       if (str_FOLLOW_REDIRECTS == 0) str_allocate();
       }

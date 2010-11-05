@@ -58,7 +58,7 @@ public:
 
    USOAPEncoder()
       {
-      U_TRACE_REGISTER_OBJECT(0, USOAPEncoder, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, USOAPEncoder, "")
 
       if (str_boolean == 0) str_allocate();
       }

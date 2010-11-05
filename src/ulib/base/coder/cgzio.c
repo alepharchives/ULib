@@ -201,14 +201,14 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
 
       if ((_flags & ENCRYPTED) != 0)
          {
-         U_WARNING("u_gz_inflate(): file is encrypted -- not supported", 0);
+         U_WARNING("u_gz_inflate(): file is encrypted -- not supported");
 
          return 0;
          }
 
       if ((_flags & CONTINUATION) != 0)
          {
-         U_WARNING("u_gz_inflate(): file is a a multi-part gzip file -- not supported", 0);
+         U_WARNING("u_gz_inflate(): file is a a multi-part gzip file -- not supported");
 
          return 0;
          }

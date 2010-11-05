@@ -121,7 +121,7 @@ public:
 
    UFile()
       {
-      U_TRACE_REGISTER_OBJECT(0, UFile, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UFile, "")
 
       fd = -1;
 
@@ -182,7 +182,7 @@ public:
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
       U_INTERNAL_ASSERT_POINTER(path_relativ)
-      U_INTERNAL_ASSERT_MAJOR(path_relativ_len, 0)
+      U_INTERNAL_ASSERT_MAJOR(path_relativ_len,0)
 
       bool result = name.equal(path_relativ, path_relativ_len);
 
@@ -215,34 +215,21 @@ public:
 
    // OPEN - CLOSE
 
-   static int open(const char* pathname, int flags, mode_t mode)
+   static int  open(const char*  pathname, int flags,                    mode_t mode);
+   static int creat(const char* _pathname, int flags = O_TRUNC | O_RDWR, mode_t mode = PERM_FILE)
       {
-      U_TRACE(1, "UFile::open(%S,%d,%d)", pathname, flags, mode)
+      U_TRACE(0, "UFile::creat(%S,%d,%d)", _pathname, flags, mode)
 
-      U_INTERNAL_ASSERT_POINTER(pathname)
-      U_INTERNAL_ASSERT_MAJOR(strlen(pathname), 0)
-
-      // NB: we centralize here O_BINARY...
-
-      int fd = U_SYSCALL(open, "%S,%d,%d", U_PATH_CONV(pathname), flags | O_CLOEXEC | O_BINARY, mode);
-
-      U_RETURN(fd);
+      return open(_pathname, flags | O_CREAT, mode);
       }
 
-   static int creat(const char* pathname, int flags = O_TRUNC | O_RDWR, mode_t mode = PERM_FILE)
+   static void close(int _fd)
       {
-      U_TRACE(0, "UFile::creat(%S,%d,%d)", pathname, flags, mode)
+      U_TRACE(1, "UFile::close(%d)", _fd)
 
-      return open(pathname, flags | O_CREAT, mode);
-      }
+      U_INTERNAL_ASSERT_DIFFERS(_fd, -1)
 
-   static void close(int fd)
-      {
-      U_TRACE(1, "UFile::close(%d)", fd)
-
-      U_INTERNAL_ASSERT_DIFFERS(fd, -1)
-
-      (void) U_SYSCALL(close, "%d", fd);
+      (void) U_SYSCALL(close, "%d", _fd);
       }
 
    bool open(                       int flags = O_RDONLY);
@@ -360,17 +347,17 @@ public:
       (void) U_SYSCALL(fstat, "%d,%p", fd, (struct stat*)this);
       }
 
-   off_t lseek(off_t offset, int whence)
+   off_t lseek(uint32_t offset, int whence)
       {
-      U_TRACE(1, "UFile::lseek(%I,%d)", offset, whence)
+      U_TRACE(1, "UFile::lseek(%u,%d)", offset, whence)
 
       U_CHECK_MEMORY
 
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
-      offset = U_SYSCALL(lseek, "%d,%I,%d", fd, offset, whence);
+      off_t result = U_SYSCALL(lseek, "%d,%u,%d", fd, offset, whence);
 
-      U_RETURN(offset);
+      U_RETURN(result);
       }
 
    void readSize()
@@ -380,7 +367,7 @@ public:
       U_CHECK_MEMORY
 
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
-      U_INTERNAL_ASSERT_EQUALS(st_size, 0)
+      U_INTERNAL_ASSERT_EQUALS(st_size,0)
       U_INTERNAL_ASSERT_POINTER(path_relativ)
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
@@ -453,8 +440,8 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(st_size, 0)
-      U_INTERNAL_ASSERT_DIFFERS(st_ino, 0)
+      U_INTERNAL_ASSERT_MAJOR(st_size,0)
+      U_INTERNAL_ASSERT_DIFFERS(st_ino,0)
 
       UString _etag(100U);
 
@@ -471,8 +458,8 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(st_size, 0)
-      U_INTERNAL_ASSERT_DIFFERS(st_ino, 0)
+      U_INTERNAL_ASSERT_MAJOR(st_size,0)
+      U_INTERNAL_ASSERT_DIFFERS(st_ino,0)
 
       U_RETURN(st_ino);
       }
@@ -490,13 +477,13 @@ public:
       U_RETURN(mtime != st_mtime);
       }
 
-   static bool isBlocking(int fd, int& flags) // actual state is blocking...?
+   static bool isBlocking(int _fd, int& flags) // actual state is blocking...?
       {
-      U_TRACE(1, "UFile::isBlocking(%d,%d)", fd, flags)
+      U_TRACE(1, "UFile::isBlocking(%d,%d)", _fd, flags)
 
-      U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+      U_INTERNAL_ASSERT_DIFFERS(_fd, -1)
 
-      if (flags == -1) flags = U_SYSCALL(fcntl, "%d,%d,%d", fd, F_GETFL, 0);
+      if (flags == -1) flags = U_SYSCALL(fcntl, "%d,%d,%d", _fd, F_GETFL, 0);
 
       U_INTERNAL_DUMP("O_NONBLOCK = %B, flags = %B", O_NONBLOCK, flags)
 
@@ -519,14 +506,14 @@ public:
 
    // unlink
 
-   static bool unlink(const char* pathname)
+   static bool unlink(const char* _pathname)
       {
-      U_TRACE(1, "UFile::unlink(%S)", pathname)
+      U_TRACE(1, "UFile::unlink(%S)", _pathname)
 
 #  ifdef __MINGW32__
-      bool result = (U_SYSCALL(unlink_w32, "%S", U_PATH_CONV(pathname)) == 0);
+      bool result = (U_SYSCALL(unlink_w32, "%S", U_PATH_CONV(_pathname)) == 0);
 #  else
-      bool result = (U_SYSCALL(unlink,     "%S",             pathname)  == 0);
+      bool result = (U_SYSCALL(unlink,     "%S",             _pathname)  == 0);
 #  endif
 
       U_RETURN(result);
@@ -577,34 +564,34 @@ public:
       (void) U_SYSCALL(fsync, "%d", fd);
       }
 
-   bool fallocate(off_t n);
-   bool ftruncate(off_t n);
+   bool fallocate(uint32_t n);
+   bool ftruncate(uint32_t n);
 
    static bool chdir(const char* path, bool flag_save = false);
 
    // LOCKING
 
-   bool lock(short l_type = F_WRLCK, off_t start = 0, off_t len = 0) const; /* set the lock, waiting if necessary */
+   bool lock(short l_type = F_WRLCK, uint32_t start = 0, uint32_t len = 0) const; /* set the lock, waiting if necessary */
 
-   bool unlock(off_t start = 0, off_t len = 0) const { return lock(F_UNLCK, start, len); }
+   bool unlock(uint32_t start = 0, uint32_t len = 0) const { return lock(F_UNLCK, start, len); }
 
    // MEMORY MAPPED I/O
 
-   static char* mmap(size_t length,
-                     int fd = -1,
+   static char* mmap(uint32_t length,
+                     int _fd = -1,
                      int prot = PROT_READ | PROT_WRITE,
                      int flags = MAP_SHARED | MAP_ANONYMOUS,
-                     off_t offset = 0)
+                     uint32_t offset = 0)
       {
-      U_TRACE(1, "UFile::mmap(%lu,%d,%d,%d,%I)", length, fd, prot, flags, offset)
+      U_TRACE(1, "UFile::mmap(%u,%d,%d,%d,%u)", length, _fd, prot, flags, offset)
 
 #  ifndef HAVE_ARCH64
-      U_INTERNAL_ASSERT_RANGE(1UL,length,3UL*1024UL*1024UL*1024UL) // limit of linux system
+      U_INTERNAL_ASSERT_RANGE(1,length,3*1024*1024*1024) // limit of linux system
 #  endif
 
-      char* map = (char*) U_SYSCALL(mmap, "%d,%lu,%d,%d,%d,%I", 0, length, prot, flags, fd, offset);
+      char* _map = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, length, prot, flags, _fd, offset);
 
-      return map;
+      return _map;
       }
 
    bool isMapped() const
@@ -619,13 +606,13 @@ public:
    char* getMap() const { return map; }
 
           void munmap();
-   static void munmap(void* map, size_t length)
+   static void munmap(void* _map, uint32_t length)
       {
-      U_TRACE(1, "UFile::munmap(%p,%lu)", map, length)
+      U_TRACE(1, "UFile::munmap(%p,%u)", _map, length)
 
-      U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
+      U_INTERNAL_ASSERT_DIFFERS(_map, MAP_FAILED)
 
-      (void) U_SYSCALL(munmap, "%p,%lu", map, length);
+      (void) U_SYSCALL(munmap, "%p,%u", _map, length);
       }
 
    static void msync(char* ptr, char* page, int flags = MS_SYNC); // flushes changes made to memory mapped file back to disk
@@ -633,16 +620,16 @@ public:
    // mremap expands (or shrinks) an existing memory  mapping, potentially moving it at the same time
    // (controlled by the flags argument and the available virtual address space)
 
-   static void* mremap(void* old_address, size_t old_size, size_t new_size, int flags = 0) // MREMAP_MAYMOVE == 1
+   static void* mremap(void* old_address, uint32_t old_size, uint32_t new_size, int flags = 0) // MREMAP_MAYMOVE == 1
       {
-      U_TRACE(1, "UFile::mremap(%p,%lu,%lu,%d)", old_address, old_size, new_size, flags)
+      U_TRACE(1, "UFile::mremap(%p,%u,%u,%d)", old_address, old_size, new_size, flags)
 
-      void* result = U_SYSCALL(mremap, "%p,%lu,%lu,%d", old_address, old_size, new_size, flags);
+      void* result = U_SYSCALL(mremap, "%p,%u,%u,%d", old_address, old_size, new_size, flags);
 
       U_RETURN(result);
       }
 
-   bool memmap(int prot = PROT_READ, UString* str = 0, off_t offset = 0, size_t length = 0);
+   bool memmap(int prot = PROT_READ, UString* str = 0, uint32_t offset = 0, uint32_t length = 0);
 
    char* eof() const
       {
@@ -654,7 +641,7 @@ public:
 
       U_INTERNAL_DUMP("st_size = %I map_size = %u", st_size, map_size)
 
-      char* result = map + (st_size ? (size_t)st_size : map_size);
+      char* result = map + (st_size ? (uint32_t)st_size : map_size);
 
       U_RETURN(result);
       }
@@ -663,9 +650,9 @@ public:
    static UString contentOf(const char*    pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
    static UString contentOf(const UString& pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
 
-   static void mkSharedMemory(UString& buffer, size_t size)
+   static void mkSharedMemory(UString& buffer, uint32_t size)
       {
-      U_TRACE(0, "UFile::mkSharedMemory(%.*S,%lu)", U_STRING_TO_TRACE(buffer), size)
+      U_TRACE(0, "UFile::mkSharedMemory(%.*S,%u)", U_STRING_TO_TRACE(buffer), size)
 
       buffer.mmap(mmap(size), size);
       }  
@@ -679,26 +666,26 @@ public:
 
    // PREAD - PWRITE
 
-   static bool pread(int fd, void* buf, size_t count, off_t offset)
+   static bool pread(int _fd, void* buf, uint32_t count, uint32_t offset)
       {
-      U_TRACE(1, "UFile::pread(%d,%p,%lu,%I)", fd, buf, count, offset)
+      U_TRACE(1, "UFile::pread(%d,%p,%u,%u)", _fd, buf, count, offset)
 
-      bool result = (U_SYSCALL(pread, "%d,%p,%lu,%I", fd, buf, count, offset) == (ssize_t)count);
+      bool result = (U_SYSCALL(pread, "%d,%p,%u,%u", _fd, buf, count, offset) == (ssize_t)count);
 
       U_RETURN(result);
       }
 
-   static bool pwrite(int fd, const void* buf, size_t count, off_t offset)
+   static bool pwrite(int _fd, const void* buf, uint32_t count, uint32_t offset)
       {
-      U_TRACE(1, "UFile::pwrite(%d,%p,%lu,%I)", fd, buf, count, offset)
+      U_TRACE(1, "UFile::pwrite(%d,%p,%u,%u)", _fd, buf, count, offset)
 
-      bool result = (U_SYSCALL(pwrite, "%d,%p,%lu,%I", fd, buf, count, offset) == (ssize_t)count);
+      bool result = (U_SYSCALL(pwrite, "%d,%p,%u,%u", _fd, buf, count, offset) == (ssize_t)count);
 
       U_RETURN(result);
       }
 
-   bool pread(       void* buf, size_t count, off_t offset);
-   bool pwrite(const void* buf, size_t count, off_t offset);
+   bool pread(       void* buf, uint32_t count, uint32_t offset);
+   bool pwrite(const void* buf, uint32_t count, uint32_t offset);
 
    // SERVICES
 
@@ -720,20 +707,20 @@ public:
       U_RETURN(result);
       }
 
-   static bool write(int fd, const void* buf, size_t count)
+   static bool write(int _fd, const void* buf, uint32_t count)
       {
-      U_TRACE(1, "UFile::write(%d,%p,%lu)", fd, buf, count)
+      U_TRACE(1, "UFile::write(%d,%p,%u)", _fd, buf, count)
 
-      bool result = (U_SYSCALL(write, "%d,%p,%lu", fd, buf, count) == (ssize_t)count);
+      bool result = (U_SYSCALL(write, "%d,%p,%u", _fd, buf, count) == (ssize_t)count);
 
       U_RETURN(result);
       }
 
-   static int writev(int fd, const struct iovec* iov, int n)
+   static int writev(int _fd, const struct iovec* iov, int n)
       {
-      U_TRACE(1, "UFile::writev(%d,%p,%d)", fd, iov, n)
+      U_TRACE(1, "UFile::writev(%d,%p,%d)", _fd, iov, n)
 
-      int result = U_SYSCALL(writev, "%d,%p,%d", fd, iov, n);
+      int result = U_SYSCALL(writev, "%d,%p,%d", _fd, iov, n);
 
       U_RETURN(result);
       }
@@ -798,8 +785,8 @@ public:
 
    // TEMP FILES
 
-          bool mkTemp(const char* _tmpl = "lockXXXXXX");  // temporary  file for locking...
-   static bool mkTempStorage(UString& space, off_t size); // temporary space for upload file...
+          bool mkTemp(const char* _tmpl = "lockXXXXXX");     // temporary  file for locking...
+   static bool mkTempStorage(UString& space, uint32_t size); // temporary space for upload file...
 
    // ----------------------------------------------------------------------------------------------------------------------
    // create a unique temporary file
@@ -829,7 +816,7 @@ public:
    the kernel, sendfile() does not need to spend time transferring data to and from user space.
    */
 
-   bool sendfile(int out_fd, off_t* poffset = 0, size_t count = 0);
+   bool sendfile(int out_fd, off_t* poffset = 0, uint32_t count = 0);
 
    // DIR OP
 
@@ -859,16 +846,22 @@ public:
 
 protected:
    char* map;
-   const char* path_relativ;  // la stringa potrebbe non essere scrivibile...
-   uint32_t path_relativ_len;
-
-   int fd;
-   size_t map_size;           // size to mmap(), may be larger than the size of the file...
    UString pathname;
+   const char* path_relativ;            // la stringa potrebbe non essere scrivibile...
+   uint32_t path_relativ_len, map_size; // size to mmap(), may be larger than the size of the file...
+   int fd;
+
+   static bool _root;
+   static UTree<UString>* tree;
+   static UVector<UString>* vector;
 
    void setPathRelativ();
    void substitute(UFile& file);
    void setPath(const UFile& file, char* buffer_path, const char* suffix, uint32_t len);
+
+   static void ftw_tree_up();
+   static void ftw_tree_push();
+   static void ftw_vector_push();
 
 private:
 #ifdef __MINGW32__

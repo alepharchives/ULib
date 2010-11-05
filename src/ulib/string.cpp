@@ -17,18 +17,18 @@
 
 static ustringrep empty_string_rep_storage = {
 #ifdef DEBUG
-   0,                                  // memory_error (_this) NB: non puo'essere cancellata...
+   0,                                      // memory_error (_this) NB: non puo'essere cancellata...
 #endif
 #if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-   0,                                  // parent - substring increment reference of source string
+   0,                                      // parent - substring increment reference of source string
 #  ifdef DEBUG
-   0,                                  // child - substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
+   0,                                      //  child - substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
 #  endif
 #endif
-   0,                                  // _length
-   0,                                  // _capacity
-   0,                                  // references
-   (char*) &empty_string_rep_storage   // str
+   0,                                      // _length
+   0,                                      // _capacity
+   0,                                      // references
+   (const char*)&empty_string_rep_storage  // str           NB: we need an address because c_str(),isNullTerminated(),...
 };
 
 static uustringrep uustringrepnull      = { &empty_string_rep_storage };
@@ -101,7 +101,7 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
    U_INTERNAL_ASSERT_MAJOR(capacity,0)
 
    // NB: Need an array of char[capacity], plus a terminating null char element,
-   // plus enough for the UStringRep data structure. Whew. Seemingly so needy, yet so elemental...
+   //     plus enough for the UStringRep data structure. Whew. Seemingly so needy, yet so elemental...
 
    UStringRep* r = (UStringRep*) U_MALLOC_STR(sizeof(UStringRep) + capacity + 1, capacity);
 
@@ -152,7 +152,7 @@ bool UStringRep::checkIfReferences(const char* name_class, const void* ptr_objec
 
    if (U_STREQ(name_class, "UString"))
       {
-      U_INTERNAL_DUMP("references = %d", ((UString*)ptr_object)->rep->references + 1)
+      U_INTERNAL_DUMP("references = %u", ((UString*)ptr_object)->rep->references + 1)
 
       if (((UString*)ptr_object)->rep == string_rep_share) U_RETURN(true);
       }
@@ -256,9 +256,43 @@ void UStringRep::checkIfMReserve()
 }
 #endif
 
-void UStringRep::destroy()
+void UStringRep::assign(UStringRep*& rep, const char* s, uint32_t n)
 {
-   U_TRACE(1, "UStringRep::destroy()")
+   U_TRACE(0, "UStringRep::assign(%p,%S,%u)", rep, s, n)
+
+   if (rep->references ||
+       rep->_capacity < n)
+      {
+      rep->release();
+
+      rep = create(s, n, 0U);
+      }
+   else
+      {
+      char* ptr = (char*)rep->str;
+
+      U_INTERNAL_ASSERT_MAJOR(n,0)
+
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, n);
+
+      ptr[(rep->_length = n)] = '\0';
+      }
+}
+
+void UStringRep::release()
+{
+   U_TRACE(0, "UStringRep::release()")
+
+   U_INTERNAL_DUMP("this = %p parent = %p references = %u child = %d", this, parent, references + 1, child)
+
+   if (references)
+      {
+      --references;
+
+      return;
+      }
+
+   // DESTROY
 
    U_INTERNAL_ASSERT_DIFFERS(this, string_rep_null)
 
@@ -313,54 +347,35 @@ void UStringRep::destroy()
    memory._this = 0;
 #endif
 
-#ifdef U_MEMORY_POOL
-   if (_capacity == 0) UMemoryPool::push(this, U_SIZEOF_TO_STACK_INDEX(UStringRep)); // no room for data, constant string...
+   if (_capacity == 0) UMemoryPool::push(this, U_SIZE_TO_STACK_INDEX(sizeof(UStringRep))); // no room for data, constant string...
    else
-#endif
-   {
-#if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-   checkIfMReserve();
-#endif
+      {
+#  if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
+      checkIfMReserve();
+#  endif
 
-   U_FREE_STR(this, sizeof(UStringRep) + _capacity + 1);
-   }
+      U_FREE_STR(this, sizeof(UStringRep) + _capacity + 1);
+      }
 }
 
-void UStringRep::assign(UStringRep*& rep, const char* s, uint32_t n)
+uint32_t UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
 {
-   U_TRACE(0, "UStringRep::assign(%p,%S,%u)", rep, s, n)
+   U_TRACE(1, "UStringRep::copy(%p,%u,%u)", s, n, pos)
 
-   if (rep->references ||
-       rep->_capacity < n)
-      {
-      rep->release();
+   U_INTERNAL_ASSERT(pos <= _length)
 
-      rep = create(s, n, 0U);
-      }
-   else
-      {
-      char* ptr = (char*)rep->str;
+   if (n > (_length - pos)) n = (_length - pos);
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, (rep->_length = n));
+   U_INTERNAL_ASSERT_MAJOR(n,0)
 
-      ptr[n] = '\0';
-      }
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", s, str + pos, n);
+
+   U_RETURN(n);
 }
 
 // ----------------------------------------------
 // gcc: call is unlikely and code size would grow
 // ----------------------------------------------
-void UStringRep::release()
-{
-   U_TRACE(0, "UStringRep::release()")
-
-   U_INTERNAL_DUMP("this = %p parent = %p references = %d child = %d", this, parent, references + 1, child)
-
-   U_INTERNAL_ASSERT_MAJOR(references,-1)
-
-   if (references-- <= 0) destroy();
-}
-
 bool UStringRep::isBase64(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isBase64(%u)", pos)
@@ -482,6 +497,8 @@ bool     UString::equal(const char* s, uint32_t n) const { return rep->equal(s, 
 
 void     UString::size_adjust_force(uint32_t value)      { rep->size_adjust_force(value); }
 
+void     UString::setEmpty()                             { rep->size_adjust(0); }
+
 UString  UString::substr(uint32_t pos, uint32_t n) const { return substr(rep->str + pos, rep->fold(pos, n)); }
 
 UString& UString::operator+=(const UString& str)         { return append(str.data(), str.size()); }
@@ -515,7 +532,7 @@ void UStringRep::size_adjust(uint32_t value)
    U_TRACE(0+256, "UStringRep::size_adjust(%u)", value)
 
 #ifdef DEBUG
-   if (references > 0)
+   if (references)
       {
       errorReferences(this);
 
@@ -612,52 +629,56 @@ U_NO_EXPORT char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
 {
    U_TRACE(0, "UString::__replace(%u,%u,%u)", pos, n1, n2)
 
+   U_INTERNAL_ASSERT_DIFFERS(n2, U_NOT_FOUND)
+
    uint32_t sz = size();
 
    U_INTERNAL_ASSERT(pos <= sz)
 
-   uint32_t sz1      = rep->fold(pos, n1),
-            n        = sz + n2 - sz1,
-            how_much = sz - pos - n1;
+   uint32_t sz1 = rep->fold(pos, n1),
+            n   = sz + n2  - sz1;
 
-   U_INTERNAL_DUMP("sz1 = %u, n = %u, how_much = %u", sz1, n, how_much)
+   U_INTERNAL_DUMP("sz1 = %u, n = %u", sz1, n)
+
+   if (n == 0)
+      {
+      assign(UStringRep::string_rep_null);
+
+      return 0;
+      }
+
+   int32_t how_much = sz - pos - sz1;
+
+   U_INTERNAL_DUMP("how_much = %d", how_much)
+
+   U_INTERNAL_ASSERT(how_much >= 0)
 
          char* str = (char*)rep->str;
-   const char* src = str + pos + n1;
+   const char* src = str + pos + sz1;
 
    uint32_t __capacity = rep->_capacity;
 
    if (uniq() == false ||
        n > __capacity)
       {
-      UStringRep* r;
+      UStringRep* r = UStringRep::create(n, U_max(n,__capacity), 0);
 
-      if (n > 0)
-         {
-         r = UStringRep::create(n, U_max(n,__capacity), 0);
+      if (pos) (void) U_SYSCALL(memcpy, "%p,%p,%u", (void*)r->str,            str, pos);
+               (void) U_SYSCALL(memcpy, "%p,%p,%u", (char*)r->str + pos + n2, src, how_much);
 
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", (void*)r->str,            str, pos);
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", (char*)r->str + pos + n2, src, how_much);
-
-         set(r);
-         }
-      else
-         {
-         r = UStringRep::string_rep_null;
-
-         assign(r);
-         }
+      set(r);
 
       str = (char*)r->str;
       }
-   else
+   else if (how_much > 0 &&
+            n1 != n2)
       {
-      if (how_much && (n1 != n2)) (void) U_SYSCALL(memmove, "%p,%p,%u", str + pos + n2, src, how_much);
-
-      rep->_length = n;
+      (void) U_SYSCALL(memmove, "%p,%p,%u", str + pos + n2, src, how_much);
       }
 
-   return (char*)str + pos;
+   str[(rep->_length = n)] = '\0';
+
+   return str + pos;
 }
 
 UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
@@ -666,7 +687,7 @@ UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
 
    char* ptr = __replace(pos, n1, n2);
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, n2);
+   if (ptr && n2) (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, n2);
 
    U_INTERNAL_ASSERT(invariant())
 
@@ -679,7 +700,7 @@ UString& UString::replace(uint32_t pos, uint32_t n1, uint32_t n2, char c)
 
    char* ptr = __replace(pos, n1, n2);
 
-   (void) U_SYSCALL(memset, "%p,%C,%u", ptr, c, n2);
+   if (ptr && n2) (void) U_SYSCALL(memset, "%p,%C,%u", ptr, c, n2);
 
    U_INTERNAL_ASSERT(invariant())
 
@@ -694,16 +715,13 @@ U_NO_EXPORT char* UString::__append(uint32_t n)
    char* str = (char*)rep->str;
    uint32_t sz = size(), sz1 = sz + n;
 
+   U_INTERNAL_DUMP("sz1 = %u", sz1)
+
+   U_INTERNAL_ASSERT_MAJOR(sz1,0)
+
    if (uniq() == false ||
        (sz1 > rep->_capacity))
       {
-      if (sz1 == 0)
-         {
-         assign(UStringRep::string_rep_null);
-
-         return 0;
-         }
-
       r = UStringRep::create(sz, U_SIZE_TO_CHUNK(sz1), str);
 
       set(r);
@@ -711,7 +729,7 @@ U_NO_EXPORT char* UString::__append(uint32_t n)
       str = (char*)r->str;
       }
 
-   rep->_length = sz1;
+   str[(rep->_length = sz1)] = '\0';
 
    return str + sz;
 }
@@ -720,9 +738,12 @@ UString& UString::append(const char* s, uint32_t n)
 {
    U_TRACE(0, "UString::append(%.*S,%u)", n, s, n)
 
-   char* ptr = __append(n);
+   if (n)
+      {
+      char* ptr = __append(n);
 
-   if (ptr) (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, n);
+      (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, n);
+      }
 
    U_INTERNAL_ASSERT(invariant())
 
@@ -733,9 +754,12 @@ UString& UString::append(uint32_t n, char c)
 {
    U_TRACE(0, "UString::append(%u,%C)", n, c)
 
-   char* ptr = __append(n);
+   if (n)
+      {
+      char* ptr = __append(n);
 
-   if (ptr) (void) U_SYSCALL(memset, "%p,%C,%u", ptr, c, n);
+      (void) U_SYSCALL(memset, "%p,%C,%u", ptr, c, n);
+      }
 
    U_INTERNAL_ASSERT(invariant())
 
@@ -1221,12 +1245,12 @@ UStringRep* UStringRep::fromUTF8(const unsigned char* s, uint32_t n)
    int c, c1, c2;
    UStringRep* r = UStringRep::create(n, n, 0);
 
-   char* p                  = (char*)r->str;
-   const unsigned char* end = s + n;
+   char* p                   = (char*)r->str;
+   const unsigned char* _end = s + n;
 
-   while (s < end)
+   while (s < _end)
       {
-      if (  s < (end - 1)         &&
+      if (  s < (_end - 1)        &&
           (*s     & 0xE0) == 0xC0 &&
           (*(s+1) & 0xC0) == 0x80)
          {
@@ -1262,10 +1286,10 @@ UStringRep* UStringRep::toUTF8(const unsigned char* s, uint32_t n)
    int c;
    UStringRep* r = UStringRep::create(n, n * 2, 0);
 
-   char* p                  = (char*)r->str;
-   const unsigned char* end = s + n;
+   char* p                   = (char*)r->str;
+   const unsigned char* _end = s + n;
 
-   while (s < end)
+   while (s < _end)
       {
       c = *s++;
 
@@ -1380,7 +1404,7 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
          while (extracted < n &&
                 u_isspace(c) == false)
             {
-            str.append(c);
+            str._append(c);
 
             ++extracted;
 
@@ -1391,7 +1415,7 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
             if (c == EOF) break;
             }
 
-         str.append();
+         str._append();
          }
 
       if (c == EOF) in.setstate(ios::eofbit);
@@ -1437,12 +1461,12 @@ istream& UString::getline(istream& in, char delim)
 
             if (c == delim)
                {
-               append(delim);
+               _append(delim);
 
                continue;
                }
 
-            if (c != '\n') append('\\');
+            if (c != '\n') _append('\\');
             else
                {
                // comprime serie di white-space in un singolo spazio...
@@ -1467,10 +1491,10 @@ istream& UString::getline(istream& in, char delim)
 
          if (c == delim) break;
 
-         append(c);
+         _append(c);
          }
 
-      append();
+      _append();
 
       U_INTERNAL_DUMP("size = %u, str = %.*S", size(), size(), data())
 
@@ -1627,7 +1651,7 @@ bool UStringRep::invariant() const
       return false;
       }
 
-   if (references < 0)
+   if ((int32_t)references < 0)
       {
       U_WARNING("error on rep string: (leak reference)\n"
                 "--------------------------------------------------\n%s", UStringRep::dump(true));
@@ -1644,7 +1668,7 @@ bool UString::invariant() const
 
    if (rep == 0)
       {
-      U_WARNING("error on string: (rep = null pointer)", 0);
+      U_WARNING("error on string: (rep = null pointer)");
 
       return false;
       }

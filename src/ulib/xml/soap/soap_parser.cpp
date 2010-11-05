@@ -16,12 +16,12 @@
 #include <ulib/xml/soap/soap_parser.h>
 #include <ulib/xml/soap/soap_encoder.h>
 
-UString* USOAPParser::str_ns;
-UString* USOAPParser::str_true;
-UString* USOAPParser::str_fault;
-UString* USOAPParser::str_xmlns;
-UString* USOAPParser::str_version11;
-UString* USOAPParser::str_mustUnderstand;
+const UString* USOAPParser::str_ns;
+const UString* USOAPParser::str_true;
+const UString* USOAPParser::str_fault;
+const UString* USOAPParser::str_xmlns;
+const UString* USOAPParser::str_version11;
+const UString* USOAPParser::str_mustUnderstand;
 
 void USOAPParser::str_allocate()
 {

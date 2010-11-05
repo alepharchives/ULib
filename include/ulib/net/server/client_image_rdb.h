@@ -30,7 +30,7 @@ public:
 
    URDBClientImage() : UClientImage<UTCPSocket>()
       {
-      U_TRACE_REGISTER_OBJECT(0, URDBClientImage, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, URDBClientImage, "")
       }
 
    virtual ~URDBClientImage()

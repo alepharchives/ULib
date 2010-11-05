@@ -111,7 +111,7 @@ const char* UCURL::error()
 
 U_NO_EXPORT void UCURL::setup()
 {
-   U_TRACE(1, "UCURL::setup()", 0)
+   U_TRACE(1, "UCURL::setup()")
 
    U_INTERNAL_ASSERT_EQUALS(inited,false)
 
@@ -128,7 +128,7 @@ U_NO_EXPORT void UCURL::setup()
 
 U_NO_EXPORT size_t UCURL::writeFunction(void* ptr, size_t size, size_t nmemb, void* obj)
 {
-   U_TRACE(0, "UCURL::writeFunction(%p,%ld,%ld,%p)", ptr, size, nmemb, obj)
+   U_TRACE(0, "UCURL::writeFunction(%p,%lu,%lu,%p)", ptr, size, nmemb, obj)
 
    size_t len = size * nmemb;
 
@@ -141,7 +141,7 @@ U_NO_EXPORT size_t UCURL::writeFunction(void* ptr, size_t size, size_t nmemb, vo
 
 UCURL::UCURL() : response(U_CAPACITY)
 {
-   U_TRACE_REGISTER_OBJECT(0, UCURL, "", 0)
+   U_TRACE_REGISTER_OBJECT(0, UCURL, "")
 
    added     = false;
    formPost  = 0;

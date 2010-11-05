@@ -151,7 +151,7 @@ struct U_EXPORT UServices {
    static unsigned char key[16];
 
    static UString getTokenData(const char* token);
-   static UString generateToken(UString& data, time_t expire);
+   static UString generateToken(const UString& data, time_t expire);
 
    #ifdef HAVE_SSL
    static void generateDigest(int alg, const UString& data) { generateDigest(alg, (unsigned char*)U_STRING_TO_PARAM(data)); }

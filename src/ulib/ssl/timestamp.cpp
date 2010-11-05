@@ -24,11 +24,11 @@ TS_RESP* UTimeStamp::readTimeStampResponse(const UString& x)
 
    BIO* in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(x));
 
-   TS_RESP* response = (TS_RESP*) U_SYSCALL(d2i_TS_RESP_bio, "%p,%p", in, 0);
+   TS_RESP* _response = (TS_RESP*) U_SYSCALL(d2i_TS_RESP_bio, "%p,%p", in, 0);
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
-   U_RETURN_POINTER(response,TS_RESP);
+   U_RETURN_POINTER(_response,TS_RESP);
 }
 
 UTimeStamp::UTimeStamp(UString& request, Url& TSA) : UPKCS7(0,0)
@@ -71,13 +71,13 @@ bool UTimeStamp::isTimeStampResponse(const UString& content)
 
    BIO* in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(content));
 
-   TS_RESP* response = (TS_RESP*) U_SYSCALL(d2i_TS_RESP_bio, "%p,%p", in, 0);
+   TS_RESP* _response = (TS_RESP*) U_SYSCALL(d2i_TS_RESP_bio, "%p,%p", in, 0);
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
-   if (response)
+   if (_response)
       {
-      U_SYSCALL_VOID(TS_RESP_free, "%p", response);
+      U_SYSCALL_VOID(TS_RESP_free, "%p", _response);
 
       U_RETURN(true);
       }

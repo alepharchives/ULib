@@ -17,7 +17,14 @@
 #include <ulib/net/server/client_image.h>
 #include <ulib/plugin/mod_proxy_service.h>
 
-U_CREAT_FUNC(UProxyPlugIn)
+U_CREAT_FUNC(mod_proxy, UProxyPlugIn)
+
+UProxyPlugIn::~UProxyPlugIn()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UProxyPlugIn)
+
+   if (vservice) delete vservice;
+}
 
 // Server-wide hooks
 
@@ -25,7 +32,9 @@ int UProxyPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UProxyPlugIn::handlerConfig(%p)", &cfg)
 
-   UModProxyService::loadConfig(cfg, vservice, &vmsg_error);
+   vservice = U_NEW(UVector<UModProxyService*>);
+
+   UModProxyService::loadConfig(cfg, *vservice, &vmsg_error);
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
@@ -34,16 +43,16 @@ int UProxyPlugIn::handlerInit()
 {
    U_TRACE(0, "UProxyPlugIn::handlerInit()")
 
-   if (vservice.empty())
+   if (vservice->empty())
       {
-      U_SRV_LOG_MSG("initialization of plugin FAILED");
+      U_SRV_LOG("initialization of plugin FAILED");
 
       U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
 
    if (UServer_Base::preforked_num_kids == 0) client_http.setHostForbidden(UServer_Base::getHost());
 
-   U_SRV_LOG_MSG("initialization of plugin success");
+   U_SRV_LOG("initialization of plugin success");
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
@@ -61,7 +70,7 @@ int UProxyPlugIn::handlerRequest()
    UString host(U_HTTP_HOST_TO_PARAM),
            method = UHTTP::getHTTPMethod();
 
-   UModProxyService* service = UModProxyService::findService(host, method, vservice);
+   UModProxyService* service = UModProxyService::findService(host, method, *vservice);
 
    if (service)
       {
@@ -149,7 +158,7 @@ int UProxyPlugIn::handlerRequest()
 
          if (client_http.isConnected() == false)
             {
-            U_SRV_LOG_MSG(client_http.getResponseData());
+            if (UServer_Base::isLog()) ULog::log("%s%s\n", UServer_Base::mod_name, client_http.getResponseData());
 
             err = UModProxyService::INTERNAL_ERROR;
 
@@ -195,7 +204,7 @@ const char* UProxyPlugIn::dump(bool reset) const
 {
    *UObjectIO::os << "vmsg_error  (UVector<UString>           " << (void*)&vmsg_error  << ")\n"
                   << "client_http (UHttpClient<USocket>       " << (void*)&client_http << ")\n"
-                  << "vservice    (UVector<UModProxyService*> " << (void*)&vservice    << ')';
+                  << "vservice    (UVector<UModProxyService*> " << (void*)vservice     << ')';
 
    if (reset)
       {

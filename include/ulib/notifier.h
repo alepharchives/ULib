@@ -52,7 +52,7 @@ public:
 
    UNotifier()
       {
-      U_TRACE_REGISTER_OBJECT(0, UNotifier, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UNotifier, "")
 
       next             = 0;
       handler_event_fd = 0;

@@ -112,7 +112,7 @@ inline bool UCDB::match(uint32_t pos)
 
    if (UFile::map == MAP_FAILED)
       {
-      char buf[32];
+      char _buf[32];
       uint32_t len = key.dsize, n;
       char* pkey = (char*) key.dptr;
 
@@ -120,11 +120,11 @@ inline bool UCDB::match(uint32_t pos)
 
       while (len)
          {
-         n = U_min(len, sizeof(buf));
+         n = U_min(len, sizeof(_buf));
 
-         (void) UFile::pread(buf, n, pos);
+         (void) UFile::pread(_buf, n, pos);
 
-         if (u_equal(pkey, buf, n, ignore_case)) U_RETURN(false);
+         if (u_equal(pkey, _buf, n, ignore_case)) U_RETURN(false);
 
          pkey += n;
          pos  += n;
@@ -622,12 +622,12 @@ void UCDB::_callForAllEntry(UString* pattern)
    char* pattern_data = 0;
    uint32_t pattern_size = 0;
 
-   char* ptr = internal.ptr_cdb->start();
-   char* end = internal.ptr_cdb->end();
+   char* ptr  = internal.ptr_cdb->start();
+   char* _end = internal.ptr_cdb->end();
 
-   U_INTERNAL_DUMP("ptr = %p end = %p", ptr, end)
+   U_INTERNAL_DUMP("ptr = %p _end = %p", ptr, _end)
 
-   U_INTERNAL_ASSERT_MINOR(ptr,end)
+   U_INTERNAL_ASSERT_MINOR(ptr,_end)
 
    if (pattern)
       {
@@ -636,7 +636,7 @@ void UCDB::_callForAllEntry(UString* pattern)
 
       tmp = ptr + sizeof(UCDB::cdb_record_header);
 
-      internal.ptr_pattern = (char*) u_find(tmp, end - tmp, pattern_data, pattern_size);
+      internal.ptr_pattern = (char*) u_find(tmp, _end - tmp, pattern_data, pattern_size);
 
       if (internal.ptr_pattern == 0) goto fine;
       }
@@ -658,18 +658,18 @@ void UCDB::_callForAllEntry(UString* pattern)
 
       call(ptr + sizeof(UCDB::cdb_record_header), klen, tmp - dlen, dlen);
 
-      if (tmp >= end ||
+      if (tmp >= _end ||
           internal.stop_call_for_all_entry) break;
 
       if (pattern)
          {
          ptr = tmp + sizeof(UCDB::cdb_record_header);
 
-         internal.ptr_pattern = (char*) u_find(ptr, end - ptr, pattern_data, pattern_size);
+         internal.ptr_pattern = (char*) u_find(ptr, _end - ptr, pattern_data, pattern_size);
 
          if (internal.ptr_pattern == 0) break;
 
-         U_INTERNAL_ASSERT_MINOR(internal.ptr_pattern,end)
+         U_INTERNAL_ASSERT_MINOR(internal.ptr_pattern,_end)
          }
 
 end_loop:
@@ -677,7 +677,7 @@ end_loop:
       }
 
 fine:
-   U_INTERNAL_ASSERT(tmp <= end)
+   U_INTERNAL_ASSERT(tmp <= _end)
 
    (void) U_SYSCALL(memset, "%p,%d,%u", &internal, 0, sizeof(UCDB::cdb_internal));
 }
@@ -804,10 +804,10 @@ bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, pvPFpvpb func)
       if (result == false) U_RETURN(false);
 
       bool bdelete;
-      UStringRep* key;
+      UStringRep* _key;
       UStringRep* value;
       char* ptr = cdb.start(); // init of DATA
-      UCDB::cdb_record_header* hr;
+      UCDB::cdb_record_header* _hr;
 
       U_INTERNAL_DUMP("table->_length = %u", table->_length)
 
@@ -852,21 +852,21 @@ bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, pvPFpvpb func)
 
                if (value)
                   {
-                  key = node->key;
+                  _key = node->key;
 
-                  klen =   key->size(); //  key length
+                  klen =  _key->size(); //  key length
                   dlen = value->size(); // data length
 
-                  hr = (UCDB::cdb_record_header*) ptr;
+                  _hr = (UCDB::cdb_record_header*) ptr;
 
-                  u_put_unaligned(klen, hr->klen);
-                  u_put_unaligned(dlen, hr->dlen);
+                  u_put_unaligned(klen, _hr->klen);
+                  u_put_unaligned(dlen, _hr->dlen);
 
                   U_INTERNAL_DUMP("hr = { %u, %u }", klen, dlen)
 
                   ptr += sizeof(UCDB::cdb_record_header);
 
-                  (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, key->data(), klen);
+                  (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, _key->data(), klen);
 
                   U_INTERNAL_DUMP("key = %.*S", klen, ptr)
 
@@ -1003,7 +1003,7 @@ U_EXPORT ostream& operator<<(ostream& os, UCDB& cdb)
 
 // DEBUG
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(U_TEST)
 
 U_NO_EXPORT void UCDB::checkAllEntry(UStringRep* key, UStringRep* value)
 {
@@ -1035,6 +1035,9 @@ bool UCDB::invariant()
    return true;
 }
 
+#endif
+
+#ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
 const char* UCDB::dump(bool _reset) const

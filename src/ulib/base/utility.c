@@ -91,6 +91,36 @@ bPFpcupcud u_pfn_match = u_dosmatch;
 
 const char* u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 
+char* u_inet_nltoa(uint32_t ip)
+{
+   char* result;
+
+   U_INTERNAL_TRACE("u_inet_nltoa(%u)", ip)
+
+   union uuaddress address;
+
+   address.ip = ip;
+
+   result = inet_ntoa(address.addr);
+
+   return result;
+}
+
+char* u_inet_nstoa(uint8_t* ip)
+{
+   char* result;
+
+   U_INTERNAL_TRACE("u_inet_nstoa(%p)", ip)
+
+   union uuaddress address;
+
+   (void) memcpy(address.inaddr, ip, 4);
+
+   result = inet_ntoa(address.addr);
+
+   return result;
+}
+
 char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_path_len)
 {
    U_INTERNAL_TRACE("u_getPathRelativ(%s,%u)", path, *ptr_path_len)
@@ -248,7 +278,7 @@ int u_getScreenWidth(void)
    struct winsize wsz;
 #endif
 
-   U_INTERNAL_TRACE("u_getScreenWidth()", 0)
+   U_INTERNAL_TRACE("u_getScreenWidth()")
 
    /* If there's a way to get the terminal size using POSIX tcgetattr(), somebody please tell me. */
 
@@ -1721,7 +1751,7 @@ void u_ftw(void)
 {
    DIR* restrict dirp;
 
-   U_INTERNAL_TRACE("u_ftw()", 0)
+   U_INTERNAL_TRACE("u_ftw()")
 
    U_INTERNAL_ASSERT_EQUALS(strlen(u_buffer), u_buffer_len)
 

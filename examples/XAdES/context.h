@@ -46,7 +46,7 @@ public:
 
    UTransformCtx() : chain(5)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTransformCtx, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UTransformCtx, "")
 
       uri         = 0;
       status      = 0;

@@ -16,16 +16,16 @@
 #include <ulib/utility/uhttp.h>
 #include <ulib/container/vector.h>
 
-UString* UMimeHeader::str_name;
-UString* UMimeHeader::str_ascii;
-UString* UMimeHeader::str_charset;
-UString* UMimeHeader::str_msg_rfc;
-UString* UMimeHeader::str_boundary;
-UString* UMimeHeader::str_filename;
-UString* UMimeHeader::str_txt_xml;
-UString* UMimeHeader::str_txt_plain;
-UString* UMimeHeader::str_mime_version;
-UString* UMimeHeader::str_content_transfer_encoding;
+const UString* UMimeHeader::str_name;
+const UString* UMimeHeader::str_ascii;
+const UString* UMimeHeader::str_charset;
+const UString* UMimeHeader::str_msg_rfc;
+const UString* UMimeHeader::str_boundary;
+const UString* UMimeHeader::str_filename;
+const UString* UMimeHeader::str_txt_xml;
+const UString* UMimeHeader::str_txt_plain;
+const UString* UMimeHeader::str_mime_version;
+const UString* UMimeHeader::str_content_transfer_encoding;
 
 void UMimeHeader::str_allocate()
 {
@@ -83,9 +83,9 @@ uint32_t UMimeHeader::parse(const UString& buffer)
 
    header = buffer;
    char* ptr = buffer.data();
-   uint32_t n = table.size(), pos, pos1 = 0, pos2, end = buffer.size();
+   uint32_t n = table.size(), pos, pos1 = 0, pos2, _end = buffer.size();
 
-   U_INTERNAL_DUMP("n = %u, end = %u", n, end)
+   U_INTERNAL_DUMP("n = %u, _end = %u", n, _end)
 
    bool cr;
    UString key, value;
@@ -94,13 +94,13 @@ uint32_t UMimeHeader::parse(const UString& buffer)
 
    if (*ptr == '\n') U_RETURN(0); // line empty: we have reached the MIME headers delimiter
 
-   while (pos1 < end)
+   while (pos1 < _end)
       {
       U_INTERNAL_DUMP("buffer = %.*S", 80, buffer.c_pointer(pos1))
 
       pos2 = buffer.find('\n', pos1);
 
-      if (pos2 == U_NOT_FOUND) pos2 = end; // we have reached the MIME headers end without line empty...
+      if (pos2 == U_NOT_FOUND) pos2 = _end; // we have reached the MIME headers end without line empty...
 
       cr = (ptr[--pos2] == '\r');
 
@@ -114,7 +114,7 @@ uint32_t UMimeHeader::parse(const UString& buffer)
 
       if (u_isspace(ptr[pos1]))
          {
-         do { ++pos1; } while (pos1 < end && u_isspace(ptr[pos1]));
+         do { ++pos1; } while (pos1 < _end && u_isspace(ptr[pos1]));
 
          U_INTERNAL_ASSERT_MINOR(pos1,pos2)
 
@@ -137,7 +137,7 @@ uint32_t UMimeHeader::parse(const UString& buffer)
 
          key = buffer.substr(pos1, pos - pos1);
 
-         do { ++pos; } while (pos < end && u_isspace(ptr[pos]));
+         do { ++pos; } while (pos < _end && u_isspace(ptr[pos]));
 
          value = buffer.substr(pos, pos2 - pos);
 

@@ -22,7 +22,7 @@
 class U_EXPORT USOAPGenericMethod : public URPCGenericMethod {
 public:
 
-   static UString* str_response;
+   static const UString* str_response;
 
    static void str_allocate();
 

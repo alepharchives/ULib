@@ -10,8 +10,13 @@ mkdir -p out err tmp
 #USIMERR="error.sim"
 #EXEC_ON_EXIT="/utility/stack_dump.sh"
 #WINELOADER=wine
-#VALGRIND='valgrind --leak-check=full'
-export UTRACE UOBJDUMP USIMERR EXEC_ON_EXIT VALGRIND WINELOADER PID RESULT
+#MALLOC_CHECK_=3
+#VALGRIND=valgrind
+MUDFLAP_OPTIONS="-ignore-reads -backtrace=8"
+export UTRACE UOBJDUMP USIMERR EXEC_ON_EXIT WINELOADER PID RESULT MALLOC_CHECK_ VALGRIND MUDFLAP_OPTIONS
+
+# core dump
+# ulimit -c unlimited
 
 # context
 

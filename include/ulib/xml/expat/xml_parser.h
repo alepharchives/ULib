@@ -38,7 +38,7 @@ public:
 
    UXMLParser()
       {
-      U_TRACE_REGISTER_OBJECT(0, UXMLParser, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UXMLParser, "")
 
       m_parser = 0;
       }

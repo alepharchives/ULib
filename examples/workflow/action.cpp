@@ -41,7 +41,7 @@ void Action::processInputData(int expected)
 
    UServices::readEOF(STDIN_FILENO, data);
 
-   if (data.empty()) U_ERROR("cannot read data from stdin...", 0);
+   if (data.empty()) U_ERROR("cannot read data from stdin...");
 
    request.setBuffer(data.size());
 
@@ -53,7 +53,7 @@ void Action::processInputData(int expected)
             expected == 5 ? U_SYSCALL(sscanf, "%S,%S,%p,%p,%p,%p,%p",    ptr1, ptr2, id, customer, installation, ptr3, uid) :
                             U_SYSCALL(sscanf, "%S,%S,%p,%p,%p,%p,%p,%p", ptr1, ptr2, id, event, state, action_name, error_message, ptr3));
 
-   if (n != expected) U_ERROR("scanf error on input data...", 0);
+   if (n != expected) U_ERROR("scanf error on input data...");
 
    request.size_adjust();
 

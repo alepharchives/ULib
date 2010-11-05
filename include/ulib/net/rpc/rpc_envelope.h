@@ -33,7 +33,7 @@ public:
 
    URPCEnvelope()
       {
-      U_TRACE_REGISTER_OBJECT(0, URPCEnvelope, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, URPCEnvelope, "")
       }
 
    ~URPCEnvelope()

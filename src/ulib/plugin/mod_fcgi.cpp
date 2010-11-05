@@ -125,10 +125,10 @@ static void fill_header(FCGI_Header& h, u_char type, u_short content_length)
 // END Fast CGI stuff
 // ---------------------------------------------------------------------------------------------------------------
 
-U_CREAT_FUNC(UFCGIPlugIn)
+U_CREAT_FUNC(mod_fcgi, UFCGIPlugIn)
 
-UString* UFCGIPlugIn::str_FCGI_URI_MASK;
-UString* UFCGIPlugIn::str_FCGI_KEEP_CONN;
+const UString* UFCGIPlugIn::str_FCGI_URI_MASK;
+const UString* UFCGIPlugIn::str_FCGI_KEEP_CONN;
 
 void UFCGIPlugIn::str_allocate()
 {
@@ -204,15 +204,15 @@ int UFCGIPlugIn::handlerInit()
 
       if (connection->connect())
          {
-         U_SRV_LOG_VAR("connection to the fastcgi-backend %.*S accepted", U_STRING_TO_TRACE(connection->host_port));
+         U_SRV_LOG("connection to the fastcgi-backend %.*S accepted", U_STRING_TO_TRACE(connection->host_port));
 
-         U_SRV_LOG_MSG("initialization of plugin success");
+         U_SRV_LOG("initialization of plugin success");
 
          U_RETURN(U_PLUGIN_HANDLER_GO_ON);
          }
       }
 
-   U_SRV_LOG_MSG("initialization of plugin FAILED");
+   U_SRV_LOG("initialization of plugin FAILED");
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }

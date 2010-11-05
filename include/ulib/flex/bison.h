@@ -33,7 +33,7 @@ public:
 
    UBison()
       {
-      U_TRACE_REGISTER_OBJECT(0, UBison, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UBison, "")
       }
 
    UBison(const UString& data_) : UFlexer(data_)

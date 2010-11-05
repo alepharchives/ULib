@@ -354,9 +354,11 @@ protected:
 
 private:
    uint32_t* pnode;
-   uint32_t node;
+   uint32_t   node;
 
+   static URDB* ptr_rdb;
    static UCDB::datum key1;
+   static UVector<UString>* kvec;
 
    bool reorganize();             // Combines the old cdb file and the diffs in a new cdb file
    bool htLookup() U_NO_EXPORT;   // Search one key/data pair in the cache

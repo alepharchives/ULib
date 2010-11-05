@@ -141,7 +141,7 @@ public:
 
    UTranformBase64()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformBase64, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UTranformBase64, "")
       }
 
    virtual ~UTranformBase64()
@@ -185,7 +185,7 @@ public:
 
    UTranformInclC14N()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformInclC14N, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UTranformInclC14N, "")
       }
 
    virtual ~UTranformInclC14N()
@@ -226,7 +226,7 @@ public:
 
    UTranformSha1()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformSha1, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UTranformSha1, "")
       }
 
    virtual ~UTranformSha1()
@@ -267,7 +267,7 @@ public:
 
    UTranformRsaMd5()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformRsaMd5, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UTranformRsaMd5, "")
       }
 
    virtual ~UTranformRsaMd5()
@@ -308,7 +308,7 @@ public:
 
    UTranformRsaSha1()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformRsaSha1, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UTranformRsaSha1, "")
       }
 
    virtual ~UTranformRsaSha1()
@@ -349,7 +349,7 @@ public:
 
    UTranformXPointer() : dataList(5)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTranformXPointer, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UTranformXPointer, "")
       }
 
    virtual ~UTranformXPointer();

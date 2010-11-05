@@ -13,10 +13,11 @@
 
 #include <ulib/net/rpc/rpc_method.h>
 
-UString*     URPCMethod::str_done;
-UString*     URPCMethod::str_fault;
 URPCFault*   URPCMethod::pFault;
 URPCEncoder* URPCMethod::encoder;
+
+const UString* URPCMethod::str_done;
+const UString* URPCMethod::str_fault;
 
 void URPCMethod::str_allocate()
 {

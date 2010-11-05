@@ -53,7 +53,7 @@ public:
 
    USoapPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, USoapPlugIn, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, USoapPlugIn, "")
       }
 
    virtual ~USoapPlugIn();

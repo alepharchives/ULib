@@ -48,7 +48,7 @@ public:
 
       U_INTERNAL_DUMP("optind = %d", optind)
 
-      if (ptr == 0) U_ERROR("<query> not specified...", 0);
+      if (ptr == 0) U_ERROR("<query> not specified...");
 
       if (IR::openCDB(false))
          {

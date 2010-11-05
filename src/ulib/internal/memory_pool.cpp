@@ -193,7 +193,7 @@ void UMemoryPool::_free_str(void* ptr, size_t sz)
 
 typedef struct ustackmemorypool {
 #ifdef DEBUG
-   void* _this;
+   ustackmemorypool* _this;
 #endif
    void** pointer_block;
    uint32_t type, len, space;
@@ -447,13 +447,27 @@ void* UStackMemoryPool::pop()
    U_RETURN(ptr);
 }
 
+#define U_STACK_INDEX_TO_SIZE(index)  (index == 0 ? U_STACK_TYPE_0 : \
+                                       index == 1 ? U_STACK_TYPE_1 : \
+                                       index == 2 ? U_STACK_TYPE_2 : \
+                                       index == 3 ? U_STACK_TYPE_3 : \
+                                       index == 4 ? U_STACK_TYPE_4 : \
+                                       index == 5 ? U_STACK_TYPE_5 : \
+                                       index == 6 ? U_STACK_TYPE_6 : \
+                                       index == 7 ? U_STACK_TYPE_7 : \
+                                       index == 8 ? U_STACK_TYPE_8 : U_MAX_SIZE_PREALLOCATE)
+
 void* UMemoryPool::pop(int stack_index)
 {
    U_TRACE(0+256, "UMemoryPool::pop(%d)", stack_index)
 
    U_INTERNAL_ASSERT_MINOR(stack_index,U_NUM_STACK_TYPE)
 
+#ifdef U_MEMORY_POOL
    void* ptr = ((UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index))->pop();
+#else
+   void* ptr = U_SYSCALL(malloc, "%u", U_STACK_INDEX_TO_SIZE(stack_index));
+#endif
 
    U_RETURN(ptr);
 }
@@ -464,7 +478,11 @@ void UMemoryPool::push(void* ptr, int stack_index)
 
    U_INTERNAL_ASSERT_MINOR(stack_index,U_NUM_STACK_TYPE)
 
+#ifdef U_MEMORY_POOL
    ((UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index))->push(ptr);
+#else
+   U_SYSCALL_VOID(free, "%p", ptr);
+#endif
 }
 
 void* UMemoryPool::_malloc(size_t sz)

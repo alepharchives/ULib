@@ -57,7 +57,6 @@ f) Riunire i frammenti del messaggio
 typedef int (*PEM_PASSWD_CB)(char* buf, int size, int rwflag, void* password); // Password callback
 
 class UServer_Base;
-class USSLFtpClient;
 template <class T> class UServer;
 template <class T> class UClientImage;
 
@@ -190,10 +189,10 @@ public:
 
    virtual void closesocket();
 
-   virtual int send(const void* pData,   int iDataLen);
-   virtual int recv(      void* pBuffer, int iBufferLen);
+   virtual int send(const void* pData,   uint32_t iDataLen);
+   virtual int recv(      void* pBuffer, uint32_t iBufferLen);
 
-   virtual ssize_t writev(const struct iovec* iov, int iovcnt);
+   virtual int writev(const struct iovec* iov, int iovcnt);
 
    virtual const char* getMsgError(char* buffer, uint32_t buffer_size);
 
@@ -254,7 +253,6 @@ private:
    USSLSocket& operator=(const USSLSocket&)          { return *this; }
 
                       friend class UServer_Base;
-                      friend class USSLFtpClient;
    template <class T> friend class UServer;
    template <class T> friend class UClientImage;
 };

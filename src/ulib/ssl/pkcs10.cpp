@@ -22,8 +22,8 @@ X509_REQ* UPKCS10::readPKCS10(const UString& x, const char* format)
    U_TRACE(1, "UPKCS10::readPKCS10(%.*S,%S)", U_STRING_TO_TRACE(x), format)
 
    BIO* in;
-   UString tmp       = x;
-   X509_REQ* request = 0;
+   UString tmp        = x;
+   X509_REQ* _request = 0;
 
    if (format == 0) format = (x.isBinary() ? "DER" : "PEM");
 
@@ -43,27 +43,27 @@ X509_REQ* UPKCS10::readPKCS10(const UString& x, const char* format)
 next:
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
-   request = (X509_REQ*) (U_STREQ(format, "PEM") ? U_SYSCALL(PEM_read_bio_X509_REQ, "%p,%p,%p,%p", in, 0, 0, 0)
-                                                 : U_SYSCALL(d2i_X509_REQ_bio,      "%p,%p",       in, 0));
+   _request = (X509_REQ*) (U_STREQ(format, "PEM") ? U_SYSCALL(PEM_read_bio_X509_REQ, "%p,%p,%p,%p", in, 0, 0, 0)
+                                                  : U_SYSCALL(d2i_X509_REQ_bio,      "%p,%p",       in, 0));
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
-   U_RETURN_POINTER(request, X509_REQ);
+   U_RETURN_POINTER(_request, X509_REQ);
 }
 
-UString UPKCS10::getSubject(X509_REQ* request)
+UString UPKCS10::getSubject(X509_REQ* _request)
 {
-   U_TRACE(1, "UPKCS10::getSubject(%p)", request)
+   U_TRACE(1, "UPKCS10::getSubject(%p)", _request)
 
-   U_INTERNAL_ASSERT_POINTER(request)
+   U_INTERNAL_ASSERT_POINTER(_request)
 
-   X509_NAME* name = X509_REQ_get_subject_name(request);
+   X509_NAME* name = X509_REQ_get_subject_name(_request);
    unsigned len    = U_SYSCALL(i2d_X509_NAME, "%p,%p", name, 0);
 
    UString subject(len);
    char* ptr = subject.data();
 
-   (void) U_SYSCALL(X509_NAME_oneline, "%p,%p,%d", name, ptr, subject.capacity() );
+   (void) U_SYSCALL(X509_NAME_oneline, "%p,%p,%d", name, ptr, subject.capacity());
 
    len = u_strlen(ptr);
 
@@ -72,19 +72,19 @@ UString UPKCS10::getSubject(X509_REQ* request)
    U_RETURN_STRING(subject);
 }
 
-UString UPKCS10::getSignable(X509_REQ* request)
+UString UPKCS10::getSignable(X509_REQ* _request)
 {
-   U_TRACE(1, "UPKCS10::getSignable(%p)", request)
+   U_TRACE(1, "UPKCS10::getSignable(%p)", _request)
 
-   U_INTERNAL_ASSERT_POINTER(request)
+   U_INTERNAL_ASSERT_POINTER(_request)
 
-   unsigned len = U_SYSCALL(i2d_X509_REQ_INFO, "%p,%p", request->req_info, 0);
+   unsigned len = U_SYSCALL(i2d_X509_REQ_INFO, "%p,%p", _request->req_info, 0);
 
    UString signable(len);
 
    unsigned char* data = (unsigned char*) signable.data();
 
-   (void) U_SYSCALL(i2d_X509_REQ_INFO, "%p,%p", request->req_info, &data);
+   (void) U_SYSCALL(i2d_X509_REQ_INFO, "%p,%p", _request->req_info, &data);
 
    // len = u_strlen(data);
 

@@ -65,36 +65,36 @@ public:
       IMAP_SESSION_BAD
    };
 
-   static UString* str_list;
-   static UString* str_marked;
-   static UString* str_unseen;
-   static UString* str_recent;
-   static UString* str_uidnext;
-   static UString* str_unmarked;
-   static UString* str_noselect;
-   static UString* str_asterisk;
-   static UString* str_messages;
-   static UString* str_noinferiors;
-   static UString* str_uidvalidity;
+   static const UString* str_list;
+   static const UString* str_marked;
+   static const UString* str_unseen;
+   static const UString* str_recent;
+   static const UString* str_uidnext;
+   static const UString* str_unmarked;
+   static const UString* str_noselect;
+   static const UString* str_asterisk;
+   static const UString* str_messages;
+   static const UString* str_noinferiors;
+   static const UString* str_uidvalidity;
 
-   static UString* str_seen;
-   static UString* str_draft;
-   static UString* str_flags;
-   static UString* str_exists;
-   static UString* str_recent1;
-   static UString* str_flagged;
-   static UString* str_deleted;
-   static UString* str_answered;
-   static UString* str_asterisk1;
-   static UString* str_read_write;
-   static UString* str_permanentflags;
+   static const UString* str_seen;
+   static const UString* str_draft;
+   static const UString* str_flags;
+   static const UString* str_exists;
+   static const UString* str_recent1;
+   static const UString* str_flagged;
+   static const UString* str_deleted;
+   static const UString* str_answered;
+   static const UString* str_asterisk1;
+   static const UString* str_read_write;
+   static const UString* str_permanentflags;
 
-   static UString* str_has_children;
-   static UString* str_has_no_children;
-   static UString* str_message_disposition_notification;
-   static UString* str_junk;
-   static UString* str_no_junk;
-   static UString* str_Forwarded;
+   static const UString* str_has_children;
+   static const UString* str_has_no_children;
+   static const UString* str_message_disposition_notification;
+   static const UString* str_junk;
+   static const UString* str_no_junk;
+   static const UString* str_Forwarded;
 
    static void str_allocate();
 

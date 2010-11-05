@@ -17,7 +17,8 @@
 #include <ulib/utility/string_ext.h>
 #include <ulib/utility/socket_ext.h>
 
-char           USmtpClient::buffer[128];
+char USmtpClient::buffer[128];
+
 const UString* USmtpClient::str_empty;
 const UString* USmtpClient::str_address;
 const UString* USmtpClient::str_subject;

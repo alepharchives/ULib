@@ -69,51 +69,49 @@
   48 sizeof(UCURL)
   48 sizeof(UDialog)
   48 sizeof(UMimeHeader)
+  48 sizeof(UMimeEntity)
   48 sizeof(UQueryParser)
   48 sizeof(USOAPEncoder)
   48 sizeof(UXMLElement)
   56 sizeof(UOptions)
-  56 sizeof(UMimeEntity)
+  56 sizeof(UPlugIn<void*>)
+  64 sizeof(UPCRE)
   64 sizeof(UCommand)
   64 sizeof(UApplication)
-  64 sizeof(UPlugIn<void*>)
+  72 sizeof(UMimePKCS7)
   80 sizeof(UZIP)
-  80 sizeof(UCommand)
-  80 sizeof(UMimePKCS7)
-  88 sizeof(UPCRE)
   88 sizeof(UIPAddress) <==
   88 sizeof(UMimeMultipartMsg)
 -------------------------
    U_STACK_TYPE_3
 
- 112 sizeof(UMimeMessage)
+  96 sizeof(UMimeMessage)
  112 sizeof(UServer<UTCPSocket>)
  120 sizeof(URDBServer)
  128 sizeof(USOAPParser)
+ 128 sizeof(UMimeMultipart)
 -------------------------
    U_STACK_TYPE_4
 
- 136 sizeof(UMimeMultipart)
- 168 sizeof(URDBClient<UTCPSocket>)
+ 160 sizeof(URDBClient<UTCPSocket>)
  184 sizeof(ULog)
  184 sizeof(UFile)
- 212 sizeof(USocket)
- 212 sizeof(UTCPSocket)
- 212 sizeof(UUDPSocket)
  216 sizeof(UBison)
  216 sizeof(UFlexer)
- 232 sizeof(UHttpClient<UTCPSocket>)
- 232 sizeof(USSLSocket)
+ 216 sizeof(USocket)
+ 216 sizeof(UTCPSocket)
+ 216 sizeof(UUDPSocket)
+ 224 sizeof(UHttpClient<UTCPSocket>)
+ 240 sizeof(USSLSocket)
  256 sizeof(UFileConfig)
 -------------------------
    U_STACK_TYPE_5
 
  264 sizeof(USSHSocket)
- 272 sizeof(USmtpClient)
- 280 sizeof(USOAPClient<UTCPSocket>)
+ 272 sizeof(USOAPClient<UTCPSocket>)
  296 sizeof(UCDB)
- 448 sizeof(UFtpClient)
- 448 sizeof(USSLFtpClient)
+ 296 sizeof(USmtpClient)
+ 496 sizeof(UFtpClient)
  512 sizeof(URDB)
 -------------------------
    U_STACK_TYPE_6
@@ -158,8 +156,6 @@
                                     (sz) <= U_STACK_TYPE_7 ? 7 : \
                                     (sz) <= U_STACK_TYPE_8 ? 8 : \
                                     (sz) <= U_STACK_TYPE_9 ? 9 : 10)
-
-#define U_SIZEOF_TO_STACK_INDEX(type) U_SIZE_TO_STACK_INDEX(sizeof(type))
 
 struct U_EXPORT UMemoryPool {
 

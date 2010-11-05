@@ -497,7 +497,7 @@ static int shib_handler()
 
       if (res.first) U_RETURN((long)res.second);
 
-      U_WARNING("doHandler() did not do anything", 0);
+      U_WARNING("doHandler() did not do anything");
 
       U_RETURN(-2);
       }
@@ -519,7 +519,7 @@ static int shib_handler()
 
 }
 
-U_CREAT_FUNC(UShibPlugIn)
+U_CREAT_FUNC(mod_shib, UShibPlugIn)
 
 UShibPlugIn::UShibPlugIn()
 {
@@ -592,14 +592,14 @@ int UShibPlugIn::handlerInit()
 
          if (conf->load(SHIB_CONFIG))
             {
-            U_SRV_LOG_MSG("initialization of plugin success");
+            U_SRV_LOG("initialization of plugin success");
 
             U_RETURN(U_PLUGIN_HANDLER_GO_ON);
             }
          }
       }
 
-   U_SRV_LOG_MSG("initialization of plugin FAILED");
+   U_SRV_LOG("initialization of plugin FAILED");
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }

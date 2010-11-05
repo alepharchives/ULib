@@ -149,6 +149,9 @@ protected:
    uint32_t boundary_len;
    UVector<UString> vec_part;
 
+   static uint32_t counter;
+   static const char* str_encoding[4];
+
 private:
           inline char* mkboundary() U_NO_EXPORT;
    static inline int encodeAutodetect(const UString& content, const char* charset) U_NO_EXPORT;

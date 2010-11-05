@@ -72,7 +72,7 @@ public:
 
    UTimeVal()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeVal, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UTimeVal, "")
       }
 
    UTimeVal(long sec, long micro_sec = 0L)

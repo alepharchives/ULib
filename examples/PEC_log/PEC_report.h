@@ -267,7 +267,7 @@ public:
 
       // manage options
 
-      if (UApplication::isOptions() == false) U_ERROR("you must specify at least parameters directory and title report...", 0);
+      if (UApplication::isOptions() == false) U_ERROR("you must specify at least parameters directory and title report...");
 
       manageOptions();
 

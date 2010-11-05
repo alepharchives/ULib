@@ -93,15 +93,15 @@ int UDate::toJulian(int day, int month, int year)
    U_INTERNAL_ASSERT_RANGE(1,   month,   12)
    U_INTERNAL_ASSERT_RANGE(1752, year, 8000)
 
-   int julian;
+   int _julian;
 
    /*
-   julian = day - 32075l +
+   _julian = day - 32075l +
             1461l * (year  + 4800l + (month - 14l) / 12l) /   4l +
              367l * (month - 2l    - (month - 14l) / 12l  *  12l) / 12l -
                3l * ((year + 4900l + (month - 14l) / 12l) / 100l) / 4l;
 
-   U_INTERNAL_DUMP("julian = %d", julian)
+   U_INTERNAL_DUMP("_julian = %d", _julian)
    */
 
    // -----------------------------------------------------------------------
@@ -123,13 +123,13 @@ int UDate::toJulian(int day, int month, int year)
 
    year -= century * 100;
 
-   julian = 1721119 + day + ((146097 * century) / 4) +
-                            ((  1461 * year) / 4) +
-                            ((   153 * month) + 2) / 5;
+   _julian = 1721119 + day + ((146097 * century) / 4) +
+                             ((  1461 * year)    / 4) +
+                             ((   153 * month) + 2) / 5;
 
-   U_INTERNAL_ASSERT(julian >= FIRST_DAY)
+   U_INTERNAL_ASSERT(_julian >= FIRST_DAY)
 
-   U_RETURN(julian);
+   U_RETURN(_julian);
 }
 
 // gcc: call is unlikely and code size would grow
@@ -307,7 +307,7 @@ time_t UDate::getSecondFromTime(const char* str, bool gmt, const char* fmt)
 
    time_t t;
    struct tm tm;
-   int n, julian;
+   int n, _julian;
 
    (void) memset(&tm, 0, sizeof(tm)); // do not remove this
 
@@ -373,9 +373,9 @@ scanf:
 
    if (gmt)
       {
-      julian = toJulian(tm.tm_mday, tm.tm_mon, tm.tm_year);
+      _julian = toJulian(tm.tm_mday, tm.tm_mon, tm.tm_year);
 
-      t = tm.tm_sec + (tm.tm_min * 60) + (tm.tm_hour * 3600) + getSecondFromJulian(julian);
+      t = tm.tm_sec + (tm.tm_min * 60) + (tm.tm_hour * 3600) + getSecondFromJulian(_julian);
 
 #  if defined(DEBUG) && !defined(__MINGW32__)
       tm.tm_year -= 1900; /* tm relative format year  - is number of years since 1900 */

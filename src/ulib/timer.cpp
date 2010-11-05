@@ -285,8 +285,7 @@ U_EXPORT ostream& operator<<(ostream& os, const UTimer& t)
    return os;
 }
 
-#ifdef DEBUG
-
+#if defined(DEBUG) || defined(U_TEST)
 bool UTimer::invariant()
 {
    U_TRACE(0, "UTimer::invariant()")
@@ -303,6 +302,9 @@ bool UTimer::invariant()
 
    U_RETURN(true);
 }
+#endif
+
+#ifdef DEBUG
 
 void UTimer::printInfo(ostream& os)
 {

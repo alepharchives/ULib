@@ -46,10 +46,9 @@ public:
 
    UDynamic()
       {
-      U_TRACE_REGISTER_OBJECT(0, UDynamic, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UDynamic, "")
 
       err    = "none";
-      sym    = 0;
       addr   = 0;
       handle = 0;
       }
@@ -89,7 +88,6 @@ public:
 protected:
    void* addr;
    const char* err;
-   const char* sym;
    HINSTANCE handle;
 
 private:

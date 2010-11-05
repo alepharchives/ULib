@@ -58,7 +58,7 @@ public:
 
    UCache()
       {
-      U_TRACE_REGISTER_OBJECT(0, UCache, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UCache, "")
       }
 
    ~UCache()

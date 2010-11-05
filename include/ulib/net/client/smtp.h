@@ -88,8 +88,6 @@ public:
       TRANSACTION_FAILED          = 554  // error transaction failed
       };
 
-   static void str_allocate();
-
    static const UString* str_empty;
    static const UString* str_address;
    static const UString* str_subject;
@@ -98,6 +96,8 @@ public:
    static const UString* str_SMTP_SERVER;
    static const UString* str_SENDER_ADDRESS;
    static const UString* str_REPLY_TO_ADDRESS;
+
+   static void str_allocate();
 
    /**
    Constructs a new USmtpClient with default values for all properties

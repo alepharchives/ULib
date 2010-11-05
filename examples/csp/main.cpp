@@ -18,7 +18,7 @@
    if (method) op = atoi(method);
    else
       {
-   // if (UDialog::isXdialog() == false) U_ERROR("num_method not specified and I don't find Xdialog...", 0);
+   // if (UDialog::isXdialog() == false) U_ERROR("num_method not specified and I don't find Xdialog...");
 
       static const char* items[] = { "CA creation",
                                      "CA list",
@@ -47,7 +47,7 @@
             goto end;
             }
 
-         if (vec.split(list, '\n') == 0) U_ERROR("first you need to create some CA...", 0);
+         if (vec.split(list, '\n') == 0) U_ERROR("first you need to create some CA...");
 
          x.setSize(20, 50); // height of 10 characters and width of 50 characters
 
@@ -108,7 +108,7 @@
                }
             }
 
-         if (days <= 0) U_ERROR("certificate validity period not valid...", 0);
+         if (days <= 0) U_ERROR("certificate validity period not valid...");
 
          if (cnf.empty() == false) cnf = UFile::contentOf(cnf);
 
@@ -163,7 +163,7 @@
 
          pkcs = UFile::contentOf(pkcs);
 
-         if (pkcs.empty()) U_ERROR("missing certificate request...", 0);
+         if (pkcs.empty()) U_ERROR("missing certificate request...");
 
          result = (op == 3 ? client->signP10(  ca, pkcs, policy)
                            : client->signSPKAC(ca, pkcs, policy));
@@ -191,7 +191,7 @@
             compress = x.yesno("Do you want the CA certificates list be compressed ?");
             }
 
-         if (ca.empty()) U_ERROR("missing CA name...", 0);
+         if (ca.empty()) U_ERROR("missing CA name...");
 
          result = client->listCerts(ca, compress);
 
@@ -217,7 +217,7 @@
             certs = UCertificate::loadCerts(list);
             n     = U_SYSCALL(sk_X509_num, "%p", certs);
 
-            if (n == 0) U_ERROR("empty CA certificates list...", 0);
+            if (n == 0) U_ERROR("empty CA certificates list...");
 
             // NB: we need this reset...
 
@@ -296,7 +296,7 @@
             if (argv[optind]) ca = UString(argv[optind]);
             }
 
-         if (ca.empty()) U_ERROR("missing CA name...", 0);
+         if (ca.empty()) U_ERROR("missing CA name...");
 
          if (client->zeroCerts(ca)) UApplication::exit_value = 0;
 
@@ -314,7 +314,7 @@
             if (argv[optind]) ca = UString(argv[optind]);
             }
 
-         if (ca.empty()) U_ERROR("missing CA name...", 0);
+         if (ca.empty()) U_ERROR("missing CA name...");
 
          if (client->emitCRL(ca)) UApplication::exit_value = 0;
 
@@ -332,7 +332,7 @@
             if (argv[optind]) ca = UString(argv[optind]);
             }
 
-         if (ca.empty()) U_ERROR("missing CA name...", 0);
+         if (ca.empty()) U_ERROR("missing CA name...");
 
          result = client->getCRL(ca);
 
@@ -350,7 +350,7 @@
             if (argv[optind]) ca = UString(argv[optind]);
             }
 
-         if (ca.empty()) U_ERROR("missing CA name...", 0);
+         if (ca.empty()) U_ERROR("missing CA name...");
 
          result = client->getCA(ca);
 
@@ -359,7 +359,7 @@
       break;
 
       default:
-         U_ERROR("num_method not valid...", 0);
+         U_ERROR("num_method not valid...");
       break;
       }
 

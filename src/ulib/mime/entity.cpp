@@ -21,7 +21,7 @@
 
 UMimeEntity::UMimeEntity() : content(U_CAPACITY)
 {
-   U_TRACE_REGISTER_OBJECT(0, UMimeEntity, "", 0)
+   U_TRACE_REGISTER_OBJECT(0, UMimeEntity, "")
 
    header      = U_NEW(UMimeHeader);
    startHeader = endHeader = 0;
@@ -97,10 +97,10 @@ bool UMimeEntity::parse()
       {
       parse_result = false;
 
-      const char* ptr = str;
-      const char* end = data.rep->end();
+      const char* ptr  = str;
+      const char* _end = data.rep->end();
 
-      while ((ptr < end) && u_isspace(*ptr)) ++ptr;
+      while ((ptr < _end) && u_isspace(*ptr)) ++ptr;
 
       endHeader = ptr - str;
       }
@@ -206,13 +206,13 @@ void UMimeEntity::setEmpty()
 
 // checks whether [current,end[ matches -*[\r\t ]*(\n|$)
 
-inline bool UMimeMultipart::isOnlyWhiteSpaceOrDashesUntilEndOfLine(const char* current, const char* end)
+inline bool UMimeMultipart::isOnlyWhiteSpaceOrDashesUntilEndOfLine(const char* current, const char* _end)
 {
-   U_TRACE(0, "UMimeMultipart::isOnlyWhiteSpaceOrDashesUntilEndOfLine(%S,%p)", current, end)
+   U_TRACE(0, "UMimeMultipart::isOnlyWhiteSpaceOrDashesUntilEndOfLine(%S,%p)", current, _end)
 
    bool dashesStillAllowed = true;
 
-   while (current < end)
+   while (current < _end)
       {
       switch (*current)
          {

@@ -23,7 +23,7 @@
 class U_EXPORT USOAPFault : public URPCFault {
 public:
 
-   static UString* str_env_fault;
+   static const UString* str_env_fault;
 
    static void str_allocate();
 
@@ -31,7 +31,7 @@ public:
 
    USOAPFault()
       {
-      U_TRACE_REGISTER_OBJECT(0, USOAPFault, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, USOAPFault, "")
 
       if (str_env_fault == 0) str_allocate();
       }

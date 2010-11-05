@@ -73,7 +73,7 @@ public:
 
    UFlexer() : yyFlexLexer()
       {
-      U_TRACE_REGISTER_OBJECT(0, UFlexer, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UFlexer, "")
 
       parsed_chars = write_position = 0;
       }

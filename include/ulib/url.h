@@ -91,11 +91,13 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static UString* str_ftp;
-   static UString* str_smtp;
-   static UString* str_pop3;
-   static UString* str_http;
-   static UString* str_https;
+   static const UString* str_ftp;
+   static const UString* str_smtp;
+   static const UString* str_pop3;
+   static const UString* str_http;
+   static const UString* str_https;
+
+   static void str_allocate();
 
    /** Constructor of the class.
     *
@@ -104,7 +106,7 @@ public:
 
    Url()
       {
-      U_TRACE_REGISTER_OBJECT(0, Url, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, Url, "")
 
       service_end = user_begin = user_end = host_begin = host_end = path_begin = path_end = query = -1;
       }
@@ -492,8 +494,6 @@ public:
 
    static void decode(const UString& input, UString& buffer, bool no_line_break = false)
       { decode(U_STRING_TO_PARAM(input), buffer, no_line_break); }
-
-   static void str_allocate();
 
    // STREAM
 

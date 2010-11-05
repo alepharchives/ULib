@@ -31,10 +31,36 @@ if [ "$TERM" != "cygwin" ]; then
 	  ln -sf ../mod_geoip/.libs/mod_geoip.so )
 fi
 
+# function : creat_link
+creat_link() {
+
+	if [ ! -L $2 ]; then
+		ln -sf $1 $2
+	fi
+}
+
+# function : send_req
+send_req() {
+
+	sed "s/Host: localhost/Host: $1/" $2 | $NC -w $3 127.0.0.1 80 >>out/web_server.out
+	if [ $? -ne 0 ]; then
+		exit 1
+	fi
+}
+
 # function : start_test
 start_test() {
 
+touch vuoto.txt
+cat << EOF >tmp/c
+c
+c
+EOF
+
+#MALLOC_CHECK_=3
+#VALGRIND=valgrind
 #STRACE=$TRUSS
+#MUDFLAP_OPTIONS="-ignore-reads  -backtrace=8"
  start_prg_background userver_tcp -c $1
 
 for i in 1 2 3 4 5; do
@@ -60,16 +86,8 @@ for i in $LS; do
 	fi
 done
 
-touch vuoto.txt
-
- $NC -w 4 127.0.0.1 80 <inp/http/all.inp  >>out/web_server.out
- if [ $? -ne 0 ]; then
-	exit 1
- fi
- $NC -w 2 127.0.0.1 80 <inp/http/post.inp >>out/web_server.out
- if [ $? -ne 0 ]; then
-	exit 1
- fi
+ send_req $2 inp/http/all.inp  4
+ send_req $2 inp/http/post.inp 2
 
 # test upload
 
@@ -78,8 +96,8 @@ mkdir -p		   uploads
 $CHOWN apache: uploads
 chmod 777      uploads
 
- $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" http://127.0.0.1/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
- $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" http://127.0.0.1/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
+ $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" http://$2/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
+ $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" http://$2/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
 
  kill_prg userver_tcp TERM
  if [ $? -ne 0 ]; then
@@ -94,10 +112,32 @@ chmod 777      uploads
  fi
 }
 
- start_test web_server0.cfg
- start_test web_server1.cfg
- start_test web_server2.cfg
- start_test web_serverN.cfg
+ start_test web_server0.cfg localhost
+ start_test web_server1.cfg localhost
+ start_test web_server2.cfg localhost
+ start_test web_serverN.cfg localhost
+
+# ---------------------------------------------------------
+# virtual host
+# ---------------------------------------------------------
+ grep /etc/hosts www.sito1.com  >/dev/null 2>/dev/null
+ if [ $? -ne 0 ]; then
+	echo '# virtual host userver' >> /etc/hosts
+	echo 127.0.0.1 www.sito1.com  >> /etc/hosts
+	echo 127.0.0.1 www.sito2.com  >> /etc/hosts
+ fi
+
+ mkdir -p www.sito1.com/inp/http
+
+ creat_link ../tmp					  www.sito1.com/tmp
+ creat_link ../SSI					  www.sito1.com/SSI
+ creat_link ../cgi-bin				  www.sito1.com/cgi-bin
+ creat_link ../uploads				  www.sito1.com/uploads
+ creat_link ../../../inp/http/data www.sito1.com/inp/http/data
+ creat_link ../vuoto.txt			  www.sito1.com/vuoto.txt
+
+ start_test web_serverV.cfg		  www.sito1.com
+# ---------------------------------------------------------
 
 diff inp/xml2txt/operazione.xml uploads/operazione.xml
 RESULT=$?

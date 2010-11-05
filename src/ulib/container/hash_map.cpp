@@ -36,29 +36,9 @@ void UHashMap<void*>::lookup(UStringRep* keyr)
 
    U_INTERNAL_ASSERT_MINOR(index,_capacity)
 
-   UHashMapNode* prev = 0;
-
    for (node = table[index]; node; node = node->next)
       {
-      if (node->key->equal(keyr, ignore_case))
-         {
-         /* lista self-organizing (move-to-front), antepongo l'elemento
-          * trovato all'inizio della lista delle collisioni...
-
-         if (prev)
-            {
-            prev->next   = node->next;
-            node->next   = table[index];
-            table[index] = node;
-            }
-
-         U_INTERNAL_ASSERT_EQUALS(node,table[index])
-         */
-
-         break;
-         }
-
-      prev = node;
+      if (node->key->equal(keyr, ignore_case)) break;
       }
 
    U_INTERNAL_DUMP("node = %p", node)
@@ -97,12 +77,7 @@ void* UHashMap<void*>::at(UStringRep* _key)
 
    lookup(_key);
 
-   if (node)
-      {
-      void* _elem = node->elem;
-
-      U_RETURN(_elem);
-      }
+   if (node) U_RETURN(node->elem);
 
    U_RETURN((void*)0);
 }
@@ -127,6 +102,8 @@ void UHashMap<void*>::insertAfterFind(const UString& _key, void* _elem)
 void UHashMap<void*>::eraseAfterFind()
 {
    U_TRACE(0, "UHashMap<void*>::eraseAfterFind()")
+
+   U_CHECK_MEMORY
 
    U_INTERNAL_DUMP("node = %p", node)
 
@@ -247,6 +224,8 @@ void UHashMap<void*>::reserve(uint32_t n)
 
          do {
             ++width;
+
+            _next = _n->next;
             }
          while ((_n = _next));
 

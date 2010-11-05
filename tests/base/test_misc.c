@@ -57,16 +57,13 @@ main (int argc, char* argv[])
 {
    int n_cmp;
    unsigned len;
-   char path_separator;
 
    u_init(argv);
 
 #ifdef __MINGW32__
    n_cmp = 8;
-   path_separator = (strrchr(u_progpath, '/') ? '/' : '\\');
 #else
    n_cmp = 4;
-   path_separator = PATH_SEPARATOR;
 #endif
 
    U_INTERNAL_ASSERT(argc >= 5)

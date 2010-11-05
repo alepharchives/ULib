@@ -223,9 +223,9 @@ bool USSLSocket::setContext(const char* cert_file,
    U_RETURN(true);
 }
 
-const char* USSLSocket::status(SSL* ssl, int ret, bool flag, char* buffer, uint32_t buffer_size)
+const char* USSLSocket::status(SSL* _ssl, int _ret, bool flag, char* buffer, uint32_t buffer_size)
 {
-   U_TRACE(1, "USSLSocket::status(%p,%d,%b,%p,%u)", ssl, ret, flag, buffer, buffer_size)
+   U_TRACE(1, "USSLSocket::status(%p,%d,%b,%p,%u)", _ssl, _ret, flag, buffer, buffer_size)
 
    if (buffer == 0)
       {
@@ -238,9 +238,9 @@ const char* USSLSocket::status(SSL* ssl, int ret, bool flag, char* buffer, uint3
    const char* descr  = "SSL_ERROR_NONE";
    const char* errstr = "ok";
 
-   if (ret != SSL_ERROR_NONE) // 0
+   if (_ret != SSL_ERROR_NONE) // 0
       {
-      if (flag) ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
+      if (flag) _ret = U_SYSCALL(SSL_get_error, "%p,%d", _ssl, _ret);
 
       /* -------------------------------------
        * #define SSL_ERROR_NONE              0
@@ -255,7 +255,7 @@ const char* USSLSocket::status(SSL* ssl, int ret, bool flag, char* buffer, uint3
        * -------------------------------------
        */
 
-      switch (ret)
+      switch (_ret)
          {
          case SSL_ERROR_SSL:
             {
@@ -317,7 +317,7 @@ const char* USSLSocket::status(SSL* ssl, int ret, bool flag, char* buffer, uint3
          }
       }
 
-   uint32_t len, buffer_len = u_snprintf(buffer, buffer_size, "(%d, %s) - %s", ret, descr, errstr);
+   uint32_t len, buffer_len = u_snprintf(buffer, buffer_size, "(%d, %s) - %s", _ret, descr, errstr);
 
    char* sslerr = UServices::getOpenSSLError(0, 0, &len);
 
@@ -546,9 +546,9 @@ void USSLSocket::closesocket()
    UTCPSocket::closesocket();
 }
 
-int USSLSocket::recv(void* pBuffer, int iBufferLen)
+int USSLSocket::recv(void* pBuffer, uint32_t iBufferLen)
 {
-   U_TRACE(1, "USSLSocket::recv(%p,%d)", pBuffer, iBufferLen)
+   U_TRACE(1, "USSLSocket::recv(%p,%u)", pBuffer, iBufferLen)
 
    U_INTERNAL_ASSERT(USocket::isConnected())
 
@@ -583,9 +583,9 @@ loop:
    U_RETURN(iBytesRead);
 }
 
-int USSLSocket::send(const void* pData, int iDataLen)
+int USSLSocket::send(const void* pData, uint32_t iDataLen)
 {
-   U_TRACE(1, "USSLSocket::send(%p,%d)", pData, iDataLen)
+   U_TRACE(1, "USSLSocket::send(%p,%u)", pData, iDataLen)
 
    U_INTERNAL_ASSERT(USocket::isOpen())
 
@@ -622,20 +622,19 @@ loop:
 
 // write data into multiple buffers
 
-ssize_t USSLSocket::writev(const struct iovec* iov, int iovcnt)
+int USSLSocket::writev(const struct iovec* iov, int iovcnt)
 {
    U_TRACE(0, "USSLSocket::writev(%p,%d)", iov, iovcnt)
 
    // Determine the total length of all the buffers in <iov>
 
-   int i;
    char* buf;
    char* ptr;
-   size_t length = 0;
+   int i, length = 0, result;
 
    for (i = 0; i < iovcnt; ++i) length += iov[i].iov_len;
 
-   ptr = buf = (char*) UMemoryPool::_malloc(length);
+   ptr = buf = (char*) U_MALLOC_GEN(length);
 
    for (i = 0; i < iovcnt; ++i)
       {
@@ -644,9 +643,9 @@ ssize_t USSLSocket::writev(const struct iovec* iov, int iovcnt)
       ptr += iov[i].iov_len;
       }
 
-   ssize_t result = USSLSocket::send(buf, length);
+   result = USSLSocket::send(buf, length);
 
-   UMemoryPool::_free(buf, length);
+   U_FREE_GEN(buf, length);
 
    U_RETURN(result);
 }

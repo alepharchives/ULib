@@ -40,7 +40,7 @@ public:
 
     UMySQL()
       {
-      U_TRACE_REGISTER_OBJECT(0, UMySQL, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UMySQL, "")
 
       connPtr = (MYSQL*) U_SYSCALL(mysql_init, "%p", 0);
       }

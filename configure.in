@@ -4,7 +4,7 @@
 #
 # Process this file with autoconf to produce a configure script.
 #
-# AC_PREREQ(2.54)
+# AC_PREREQ(2.59)
 #
 # The autoconf documentation states that this is the recommended sequence for this file:
 #
@@ -67,8 +67,14 @@ AC_LANG(C++)
 
 AC_CONFIG_AUX_DIR(autoconf)
 
+dnl Initial CFLAGS
+AC_MSG_CHECKING(initial CFLAGS)
+AC_MSG_RESULT($CFLAGS)
+
 # Check what platform we are running on.
 AC_CANONICAL_SYSTEM
+
+AC_CONFIG_MACRO_DIR([m4])
 
 # Every other copy of the package version number gets its value from here
 AM_INIT_AUTOMAKE(ULib, [$VERSION])
@@ -144,7 +150,13 @@ fi
 # if they don't conflict with the shared libraries. You can modify these defaults by calling either the
 # `AC_DISABLE_SHARED' or `AC_DISABLE_STATIC' macros:
 
-AC_LIBTOOL_WIN32_DLL
+dnl Initialize Libtool
+m4_ifdef([LT_INIT],
+  [LT_INIT([dlopen shared static win32-dll])],
+  [AC_LIBTOOL_DLOPEN
+   AC_LIBTOOL_WIN32_DLL
+   ])
+
 AM_DISABLE_STATIC
 
 TWOCAN_CONF_MSG(Common C++ checks)
@@ -628,6 +640,117 @@ fi
 
 # SECTION 14: checks for aggregated features
 
+use_static_module=""
+AC_ARG_ENABLE(static-module,
+	   AC_HELP_STRING([--enable-static-module=MODULES][]),
+	   [use_static_module="$use_static_module $enableval "],[])
+
+modules="mod_rpc mod_echo mod_stream mod_nocat mod_socket mod_scgi mod_fcgi mod_shib mod_geoip mod_proxy mod_soap mod_ssi mod_http mod_tsa"
+
+# Remove modules that will not be compiles
+
+if test "$HAVE_EXPAT" != "yes"; then
+	modules=`echo $modules | sed s/mod_soap//`
+fi
+if test "$HAVE_PCRE" != "yes"; then
+	modules=`echo $modules | sed s/mod_proxy//`
+fi
+if test "x$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" != "xyes"; then
+	modules=`echo $modules | sed s/mod_geoip//`
+fi
+
+add_calls=""
+static_handler_http=""
+static_handler_rcp=""
+static_handler_echo=""
+static_handler_stream=""
+static_handler_nocat=""
+static_handler_socket=""
+static_handler_scgi=""
+static_handler_fcgi=""
+static_handler_shib=""
+static_handler_geoip=""
+static_handler_proxy=""
+static_handler_soap=""
+static_handler_ssi=""
+static_handler_tsa=""
+
+for mod in $modules; do
+	AC_MSG_CHECKING([module "$mod"])
+
+	if echo $use_static_module | grep -w $mod >/dev/null || echo $use_static_module | grep all >/dev/null; then
+
+		add_calls="$add_calls \n loadStaticLinkedModules(\"$mod\");"
+
+		if test "$mod" = "mod_http"; then
+			static_handler_http="yes"
+			AC_DEFINE(U_STATIC_HANDLER_HTTP,, [STATIC_HANDLER_HTTP])
+		elif test "$mod" = "mod_rpc"; then
+			static_handler_rpc="yes"
+			AC_DEFINE(U_STATIC_HANDLER_RPC,, [STATIC_HANDLER_RPC])
+		elif test "$mod" = "mod_echo"; then
+			static_handler_echo="yes"
+			AC_DEFINE(U_STATIC_HANDLER_ECHO,, [STATIC_HANDLER_ECHO])
+		elif test "$mod" = "mod_stream"; then
+			static_handler_stream="yes"
+			AC_DEFINE(U_STATIC_HANDLER_STREAM,, [STATIC_HANDLER_STREAM])
+		elif test "$mod" = "mod_nocat"; then
+			static_handler_nocat="yes"
+			AC_DEFINE(U_STATIC_HANDLER_NOCAT,, [STATIC_HANDLER_NOCAT])
+		elif test "$mod" = "mod_socket"; then
+			static_handler_socket="yes"
+			AC_DEFINE(U_STATIC_HANDLER_SOCKET,, [STATIC_HANDLER_SOCKET])
+		elif test "$mod" = "mod_scgi"; then
+			static_handler_scgi="yes"
+			AC_DEFINE(U_STATIC_HANDLER_SCGI,, [STATIC_HANDLER_SCGI])
+		elif test "$mod" = "mod_fcgi"; then
+			static_handler_fcgi="yes"
+			AC_DEFINE(U_STATIC_HANDLER_FCGI,, [STATIC_HANDLER_FCGI])
+		elif test "$mod" = "mod_shib"; then
+			static_handler_shib="yes"
+			AC_DEFINE(U_STATIC_HANDLER_SHIB,, [STATIC_HANDLER_SHIB])
+		elif test "$mod" = "mod_geoip"; then
+			static_handler_geoip="yes"
+			AC_DEFINE(U_STATIC_HANDLER_GEOIP,, [STATIC_HANDLER_GEOIP])
+		elif test "$mod" = "mod_proxy"; then
+			static_handler_proxy="yes"
+			AC_DEFINE(U_STATIC_HANDLER_PROXY,, [STATIC_HANDLER_PROXY])
+		elif test "$mod" = "mod_soap"; then
+			static_handler_soap="yes"
+			AC_DEFINE(U_STATIC_HANDLER_SOAP,, [STATIC_HANDLER_SOAP])
+		elif test "$mod" = "mod_ssi"; then
+			static_handler_ssi="yes"
+			AC_DEFINE(U_STATIC_HANDLER_SSI,, [STATIC_HANDLER_SSI])
+		elif test "$mod" = "mod_tsa"; then
+			static_handler_tsa="yes"
+			AC_DEFINE(U_STATIC_HANDLER_TSA,, [STATIC_HANDLER_TSA])
+		fi
+
+	   AC_MSG_RESULT([static])
+	else
+	   AC_MSG_RESULT([dynamic])
+	fi
+done
+
+AC_MSG_CHECKING([loader.autoconf files])
+printf "$add_calls\n" > src/ulib/plugin/loader.autoconf.cpp
+AC_MSG_RESULT([done])
+
+AM_CONDITIONAL(STATIC_HANDLER_HTTP,   test "$static_handler_http"	  = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_RPC,    test "$static_handler_rpc"	  = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_ECHO,	  test "$static_handler_echo"   = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_STREAM, test "$static_handler_stream" = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_NOCAT,  test "$static_handler_nocat"  = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_SOCKET, test "$static_handler_socket" = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_SCGI,	  test "$static_handler_scgi"	  = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_FCGI,	  test "$static_handler_fcgi"	  = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_SHIB,	  test "$static_handler_shib"	  = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_GEOIP,  test "$static_handler_geoip"  = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_PROXY,  test "$static_handler_proxy"  = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_SOAP,   test "$static_handler_soap"   = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_SSI,    test "$static_handler_ssi"    = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_TSA,    test "$static_handler_tsa"    = "yes")
+
 # SECTION 15: Final checks
 
 if test "$enable_debug" = "yes"; then
@@ -661,7 +784,7 @@ fi
 
 if test "$enable_LFS" = "yes"; then
 	ulib_LFS_msg="enabled"
-	CPPFLAGS="${CPPFLAGS} -D_FILE_OFFSET_BITS=64"
+	CPPFLAGS="${CPPFLAGS} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
 	AC_DEFINE(SIZEOF_OFF_T, 8, [Define if enable LFS support])
 else
 	AC_CHECK_SIZEOF(off_t)
@@ -712,18 +835,27 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 	# NB: this is the only version of gcc compiler that work with...
 	AM_CONDITIONAL(MOD_SHIB, test "$enable_debug" = "yes" && test "$gcc_version_raw" = "4.2.2")
 
+	if test "${enable_gcc_optimized}" = "yes"; then
+		MAYBE_FLAGS="$MAYBE_FLAGS -fomit-frame-pointer -finline -fstrict-aliasing \
+				-findirect-inlining -ftree-switch-conversion -floop-interchange -floop-strip-mine -floop-block"
+	fi
+
 	# Also to turn various gcc/glibc-specific preprocessor checks
-	MAYBE_FLAGS="$MAYBE_FLAGS -finline -fstrict-aliasing \
-		-findirect-inlining -ftree-switch-conversion -floop-interchange -floop-strip-mine -floop-block \
-		-Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op \
-		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wno-format -Wno-format-extra-args -Wenum-compare"
+	# -------------------------------------------------------------------------------------
+	# -Wno-format -Wno-format-extra-args
+	# -------------------------------------------------------------------------------------
+	MAYBE_FLAGS="$MAYBE_FLAGS -Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op \
+		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat -Wformat-extra-args -Wenum-compare"
 
 	if test "x$gcc_version_raw" != "x"; then
 		case "${gcc_version_raw}" in
 			[2-4].[0-4])
 			;;
 			*)
-			MAYBE_FLAGS="$MAYBE_FLAGS -Ofast -flto -Wno-unused-result -Wshadow -Wsuggest-attribute=const -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn"
+			if test "${enable_gcc_optimized}" = "yes"; then
+				MAYBE_FLAGS="$MAYBE_FLAGS -Ofast -flto"
+			fi
+			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result -Wshadow -Wsuggest-attribute=const -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn"
 			;;
 		esac
 	fi
@@ -798,10 +930,6 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 
 	# NB: "-g -O2" e' gia' inserito in configure...
 	CPPFLAGS="${CPPFLAGS} -pipe -D_GNU_SOURCE"
-
-	if test "$enable_profiling" != "yes"; then
-		CPPFLAGS="${CPPFLAGS} -fomit-frame-pointer"
-	fi
 
 	CFLAGS="${CFLAGS} $ulib_cv_CC_flags"
 	CPPFLAGS="${CPPFLAGS} $ulib_cv_flags"

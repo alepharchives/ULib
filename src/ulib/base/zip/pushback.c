@@ -107,7 +107,7 @@ int pb_read(pb_file* pbf, void* buff, int amt)
 
       if (pbf->buff_amt > 0)
          {
-         U_INTERNAL_TRACE("giving data from buffer", 0)
+         U_INTERNAL_TRACE("giving data from buffer")
 
          /* calculate how much we can actually give the caller */
 
@@ -150,7 +150,7 @@ int pb_read(pb_file* pbf, void* buff, int amt)
          }
       else
          {
-         U_INTERNAL_TRACE("Reading from file...", 0)
+         U_INTERNAL_TRACE("Reading from file...")
 
          /* The pushback buffer was empty, so we just need to read from the file */
 

@@ -126,13 +126,13 @@ public:
 
    static UString getFileName(long hash, bool crl = false, bool* exist = 0);
 
-   static UString getFileName(X509* x509)
+   static UString getFileName(X509* _x509)
       {
-      U_TRACE(0, "UCertificate::getFileName(%p)", x509)
+      U_TRACE(0, "UCertificate::getFileName(%p)", _x509)
 
-      U_INTERNAL_ASSERT_POINTER(x509)
+      U_INTERNAL_ASSERT_POINTER(_x509)
 
-      long hash = U_SYSCALL(X509_subject_name_hash, "%p", x509);
+      long hash = U_SYSCALL(X509_subject_name_hash, "%p", _x509);
 
       return getFileName(hash);
       }
@@ -153,13 +153,13 @@ public:
 
    static UString getName(X509_NAME* n, bool ldap = false);
 
-   static UString getIssuer(X509* x509, bool ldap = false)
+   static UString getIssuer(X509* _x509, bool ldap = false)
       {
-      U_TRACE(1, "UCertificate::getIssuer(%p,%b)", x509, ldap)
+      U_TRACE(1, "UCertificate::getIssuer(%p,%b)", _x509, ldap)
 
-      U_INTERNAL_ASSERT_POINTER(x509)
+      U_INTERNAL_ASSERT_POINTER(_x509)
 
-      X509_NAME* n = (X509_NAME*) U_SYSCALL(X509_get_issuer_name, "%p", x509);
+      X509_NAME* n = (X509_NAME*) U_SYSCALL(X509_get_issuer_name, "%p", _x509);
 
       return getName(n, ldap);
       }
@@ -172,13 +172,13 @@ public:
    * Returns <i>subject</i> of this certificate
    */
 
-   static UString getSubject(X509* x509, bool ldap = false)
+   static UString getSubject(X509* _x509, bool ldap = false)
       {
-      U_TRACE(1, "UCertificate::getSubject(%p,%b)", x509, ldap)
+      U_TRACE(1, "UCertificate::getSubject(%p,%b)", _x509, ldap)
 
-      U_INTERNAL_ASSERT_POINTER(x509)
+      U_INTERNAL_ASSERT_POINTER(_x509)
 
-      X509_NAME* n = (X509_NAME*) U_SYSCALL(X509_get_subject_name, "%p", x509);
+      X509_NAME* n = (X509_NAME*) U_SYSCALL(X509_get_subject_name, "%p", _x509);
 
       return getName(n, ldap);
       }

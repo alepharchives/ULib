@@ -70,11 +70,11 @@ public:
 
 		const char* filename = argv[1];
 
-		if (filename == 0) U_ERROR("filename not specified...", 0);
+		if (filename == 0) U_ERROR("filename not specified...");
 
 		UString usp = UFile::contentOf(filename);
 
-		if (usp.empty()) U_ERROR("filename not valid...", 0);
+		if (usp.empty()) U_ERROR("filename not valid...");
 
 		bool bcontent_type = true;
 		uint32_t endHeader = u_findEndHeader(U_STRING_TO_PARAM(usp));
@@ -185,7 +185,7 @@ public:
 
 		result.snprintf(U_DYNAMIC_PAGE_TEMPLATE,
 							 U_STRING_TO_TRACE(declaration),
-							 (bcontent_type ? "" : "\nUClientImage_Base::wbuffer->snprintf(\"Content-Type: \" U_CTYPE_HTML \"\\r\\n\\r\\n\", 0);\n"),
+							 (bcontent_type ? "" : "\nUClientImage_Base::wbuffer->snprintf(\"Content-Type: \" U_CTYPE_HTML \"\\r\\n\\r\\n\");\n"),
 							 U_STRING_TO_TRACE(output));
 
 

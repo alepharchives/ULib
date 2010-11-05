@@ -65,7 +65,7 @@ inline void Messaggio::allocDestinatari(int n)
 
 Messaggio::Messaggio() : id(*PEC_report::id), mittente(*PEC_report::mittente), identifier(*PEC_report::identifier)
 {
-   U_TRACE_REGISTER_OBJECT(5, Messaggio, "", 0)
+   U_TRACE_REGISTER_OBJECT(5, Messaggio, "")
 
    (void) memset(flag, '0', sizeof(flag)-1);
 

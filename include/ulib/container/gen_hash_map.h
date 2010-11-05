@@ -80,7 +80,7 @@ protected:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
+      U_INTERNAL_ASSERT_MAJOR(_capacity,0)
 
       hash  = hashcode(key);
       index = hash % _capacity;
@@ -121,7 +121,7 @@ public:
 
    UGenericHashMap()
       {
-      U_TRACE_REGISTER_OBJECT(0, UGenericHashMap, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UGenericHashMap, "")
 
       _length = _capacity = 0;
       }
@@ -139,10 +139,8 @@ public:
 
       U_CHECK_MEMORY
 
-      table     = U_MALLOC_VECTOR(n, UGenericHashMapNode);
       _capacity = n;
-
-      (void) memset(table, '\0', n * sizeof(UGenericHashMapNode*));
+      table     = U_CALLOC_VECTOR(n, UGenericHashMapNode);
       }
 
    void deallocate()
@@ -151,7 +149,7 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
+      U_INTERNAL_ASSERT_MAJOR(_capacity,0)
 
       U_FREE_VECTOR(table, _capacity, UGenericHashMapNode);
 
@@ -240,7 +238,7 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_EQUALS(node, 0)
+      U_INTERNAL_ASSERT_EQUALS(node,0)
 
       // antepongo l'elemento all'inizio della lista delle collisioni
 
@@ -308,7 +306,7 @@ public:
       {
       U_TRACE(0, "UGenericHashMap<K,I>::reserve(%u)", n)
 
-      U_INTERNAL_ASSERT_EQUALS(_capacity, 0)
+      U_INTERNAL_ASSERT_EQUALS(_capacity,0)
 
       UGenericHashMapNode** old_table = table;
       uint32_t           old_capacity = _capacity;

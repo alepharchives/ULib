@@ -21,10 +21,11 @@ extern "C" {
    extern unsigned long _GeoIP_lookupaddress(const char* host);
 }
 
-U_CREAT_FUNC(UGeoIPPlugIn)
+U_CREAT_FUNC(mod_geoip, UGeoIPPlugIn)
 
-bool     UGeoIPPlugIn::bGEOIP_CITY_EDITION_REV1;
-UString* UGeoIPPlugIn::str_COUNTRY_FORBIDDEN_MASK;
+bool UGeoIPPlugIn::bGEOIP_CITY_EDITION_REV1;
+
+const UString* UGeoIPPlugIn::str_COUNTRY_FORBIDDEN_MASK;
 
 void UGeoIPPlugIn::str_allocate()
 {
@@ -73,7 +74,7 @@ bool UGeoIPPlugIn::setCountryCode(const char* ipaddress)
                   country_code = GeoIP_country_code[country_id];
                   country_name = GeoIP_country_name[country_id];
 
-                  U_SRV_LOG_VAR_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i], ipaddress, country_code, country_name);
+                  U_SRV_LOG_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i], ipaddress, country_code, country_name);
                   }
                }
             else if (GEOIP_REGION_EDITION_REV0 == i || GEOIP_REGION_EDITION_REV1 == i)
@@ -82,7 +83,7 @@ bool UGeoIPPlugIn::setCountryCode(const char* ipaddress)
 
                if (region)
                   {
-                  U_SRV_LOG_VAR_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i], ipaddress, region->country_code, region->region);
+                  U_SRV_LOG_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i], ipaddress, region->country_code, region->region);
 
                   U_SYSCALL_VOID(GeoIPRegion_delete, "%p", region);
                   }
@@ -123,7 +124,7 @@ bool UGeoIPPlugIn::checkCountryForbidden()
 
    if (u_dosmatch_with_OR(country_code, 2, U_STRING_TO_PARAM(country_forbidden_mask), 0))
       {
-      U_SRV_LOG_VAR("COUNTRY_FORBIDDEN: request from %s denied by access list", country_name);
+      U_SRV_LOG("COUNTRY_FORBIDDEN: request from %s denied by access list", country_name);
 
       UHTTP::setHTTPForbidden();
 
@@ -174,7 +175,7 @@ int UGeoIPPlugIn::handlerInit()
 
          if (gi[i] == 0)
             {
-            U_SRV_LOG_VAR("%s not available, skipping...", GeoIPDBDescription[i]);
+            U_SRV_LOG("%s not available, skipping...", GeoIPDBDescription[i]);
             }
          else
             {
@@ -182,7 +183,7 @@ int UGeoIPPlugIn::handlerInit()
 
             db_info = U_SYSCALL(GeoIP_database_info, "%p", gi[i]);
 
-            U_SRV_LOG_VAR("%s available, %s", GeoIPDBDescription[i], db_info);
+            U_SRV_LOG("%s available, %s", GeoIPDBDescription[i], db_info);
 
             U_SYSCALL_VOID(free, "%p", (void*)db_info);
             }
@@ -191,12 +192,12 @@ int UGeoIPPlugIn::handlerInit()
 
    if (result)
       {
-      U_SRV_LOG_MSG("initialization of plugin success");
+      U_SRV_LOG("initialization of plugin success");
 
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
 
-   U_SRV_LOG_MSG("initialization of plugin FAILED");
+   U_SRV_LOG("initialization of plugin FAILED");
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }

@@ -35,7 +35,7 @@ char        UObjectIO::buffer_output[U_BUFSZ_OBJ_IO];
 
 void UObjectIO::init()
 {
-   U_INTERNAL_TRACE("UObjectIO::init()", 0)
+   U_INTERNAL_TRACE("UObjectIO::init()")
 
 #ifdef HAVE_OLD_IOSTREAM
    os = new ostrstream(buffer_output, U_BUFSZ_OBJ_IO);
@@ -70,7 +70,7 @@ void UObjectIO::input(char* t, uint32_t tlen)
 
 void UObjectIO::output()
 {
-   U_INTERNAL_TRACE("UObjectIO::output()", 0)
+   U_INTERNAL_TRACE("UObjectIO::output()")
 
    U_INTERNAL_ASSERT_POINTER(os)
 

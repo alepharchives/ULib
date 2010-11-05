@@ -46,7 +46,7 @@ public:
 
    // SERVICES
 
-   static UString* str_RES_TIMEOUT;
+   static const UString* str_RES_TIMEOUT;
 
    static void str_allocate();
 
@@ -308,7 +308,7 @@ public:
       if (getSocket()->setContext(cert_file.data(), key_file.data(), password.data(),
                                     ca_file.data(),  ca_path.data(), verify_mode) == false)
          {
-         U_ERROR("SSL setContext() failed...", 0);
+         U_ERROR("SSL setContext() failed...");
          }
       }
 

@@ -16,13 +16,14 @@
 #include <ulib/net/rpc/rpc_object.h>
 #include <ulib/net/rpc/rpc_envelope.h>
 
-UString*    URPCObject::str_response_type_0;
-UString*    URPCObject::str_response_type_1;
-UString*    URPCObject::str_response_type_2;
-UString*    URPCObject::str_response_type_3;
-UString*    URPCObject::str_response_type_4;
-UString*    URPCObject::str_response_type_5;
-UString*    URPCObject::str_fault_reason;
+const UString* URPCObject::str_response_type_0;
+const UString* URPCObject::str_response_type_1;
+const UString* URPCObject::str_response_type_2;
+const UString* URPCObject::str_response_type_3;
+const UString* URPCObject::str_response_type_4;
+const UString* URPCObject::str_response_type_5;
+const UString* URPCObject::str_fault_reason;
+
 URPCObject* URPCObject::dispatcher;
 
 void URPCObject::str_allocate()

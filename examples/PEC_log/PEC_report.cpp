@@ -1256,7 +1256,7 @@ void PEC_report::manageOptions()
             cfg_from.empty()   &&
             directory->empty() &&
             cfg_suffix.empty() &&
-            cfg_domain.empty())) U_ERROR("you can't specify both configuration file and other parameters...", 0);
+            cfg_domain.empty())) U_ERROR("you can't specify both configuration file and other parameters...");
 
       // manage file configuration
 
@@ -1287,18 +1287,18 @@ void PEC_report::manageOptions()
       if (rejected == false) cfg_domain = cfg[U_STRING_FROM_CONSTANT("DOMAINS_LIST_FILE")]; 
       }
 
-   if (directory->empty()) U_ERROR("parameter directory is mandatory...", 0);
+   if (directory->empty()) U_ERROR("parameter directory is mandatory...");
 
    optimization = (opt['o'] == U_STRING_FROM_CONSTANT("1"));
 
    if (checklink == false)
       {
-      if (title->empty()) U_ERROR("parameter title report is mandatory...", 0);
+      if (title->empty()) U_ERROR("parameter title report is mandatory...");
 
       if (cfg_domain.empty())
          {
          if (rejected) scan_form = new U_STRING_FROM_CONSTANT("%*[^-]-%4c");
-         else          U_ERROR("parameter domain is mandatory...", 0);
+         else          U_ERROR("parameter domain is mandatory...");
          }
 
       if (rejected == false)

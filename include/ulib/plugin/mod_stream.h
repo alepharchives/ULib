@@ -50,9 +50,9 @@ class UCommand;
 class U_EXPORT UStreamPlugIn : public UServerPlugIn {
 public:
 
-   static UString* str_URI_PATH;
-   static UString* str_METADATA;
-   static UString* str_CONTENT_TYPE;
+   static const UString* str_URI_PATH;
+   static const UString* str_METADATA;
+   static const UString* str_CONTENT_TYPE;
 
    static void str_allocate();
 
@@ -60,7 +60,7 @@ public:
 
    UStreamPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, UStreamPlugIn, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UStreamPlugIn, "")
 
       command   = 0;
       fmetadata = 0;

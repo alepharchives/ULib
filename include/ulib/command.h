@@ -50,7 +50,7 @@ public:
 
    UCommand()
       {
-      U_TRACE_REGISTER_OBJECT(0, UCommand, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UCommand, "")
 
       zero();
       }
@@ -265,7 +265,7 @@ public:
       {
       U_TRACE(0, "UCommand::printMsgError()")
 
-      U_INTERNAL_ASSERT_MAJOR(u_buffer_len, 0)
+      U_INTERNAL_ASSERT_MAJOR(u_buffer_len,0)
 
       U_WARNING("%.*s", u_buffer_len, u_buffer);
 

@@ -114,36 +114,36 @@ template <> inline void u_destroy(UIPAddress** ptr, uint32_t n) { U_TRACE(0,"u_d
 class U_EXPORT UNoCatPlugIn : public UServerPlugIn {
 public:
 
-   static UString* str_ROUTE_ONLY;
-   static UString* str_DNS_ADDR;
-   static UString* str_INCLUDE_PORTS;
-   static UString* str_EXCLUDE_PORTS;
-   static UString* str_ALLOWED_WEB_HOSTS;
-   static UString* str_EXTERNAL_DEVICE;
-   static UString* str_INTERNAL_DEVICE;
-   static UString* str_LOCAL_NETWORK;
+   static const UString* str_ROUTE_ONLY;
+   static const UString* str_DNS_ADDR;
+   static const UString* str_INCLUDE_PORTS;
+   static const UString* str_EXCLUDE_PORTS;
+   static const UString* str_ALLOWED_WEB_HOSTS;
+   static const UString* str_EXTERNAL_DEVICE;
+   static const UString* str_INTERNAL_DEVICE;
+   static const UString* str_LOCAL_NETWORK;
 
-   static UString* str_AUTH_SERVICE_URL;
-   static UString* str_LOGOUT_URL;
-   static UString* str_LOGIN_TIMEOUT;
-   static UString* str_INIT_CMD;
-   static UString* str_ACCESS_CMD;
-   static UString* str_RESET_CMD;
-   static UString* str_DECRYPT_CMD;
-   static UString* str_DECRYPT_KEY;
-   static UString* str_CHECK_BY_ARPING;
-   static UString* str_Action;
-   static UString* str_Permit;
-   static UString* str_Deny;
-   static UString* str_Mode;
-   static UString* str_Redirect;
-   static UString* str_renew;
-   static UString* str_Mac;
-   static UString* str_Timeout;
-   static UString* str_Token;
-   static UString* str_User;
-   static UString* str_anonymous;
-   static UString* str_Traffic;
+   static const UString* str_AUTH_SERVICE_URL;
+   static const UString* str_LOGOUT_URL;
+   static const UString* str_LOGIN_TIMEOUT;
+   static const UString* str_INIT_CMD;
+   static const UString* str_ACCESS_CMD;
+   static const UString* str_RESET_CMD;
+   static const UString* str_DECRYPT_CMD;
+   static const UString* str_DECRYPT_KEY;
+   static const UString* str_CHECK_BY_ARPING;
+   static const UString* str_Action;
+   static const UString* str_Permit;
+   static const UString* str_Deny;
+   static const UString* str_Mode;
+   static const UString* str_Redirect;
+   static const UString* str_renew;
+   static const UString* str_Mac;
+   static const UString* str_Timeout;
+   static const UString* str_Token;
+   static const UString* str_User;
+   static const UString* str_anonymous;
+   static const UString* str_Traffic;
 
    static void str_allocate();
 

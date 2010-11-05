@@ -36,7 +36,7 @@ static des_key_schedule inp1_sched, inp2_sched, inp3_sched, out1_sched, out2_sch
 
 void u_des_init(void)
 {
-   U_INTERNAL_TRACE("u_des_init()", 0)
+   U_INTERNAL_TRACE("u_des_init()")
 
    if (password) des_string_to_key(password, &key);
    else          des_set_odd_parity(&key);
@@ -54,7 +54,7 @@ void u_des_init(void)
 
 void u_des3_init(void)
 {
-   U_INTERNAL_TRACE("u_des3_init()", 0)
+   U_INTERNAL_TRACE("u_des3_init()")
 
 // OpenSSL_add_all_algorithms(); // called in ULib_init()
 
@@ -67,7 +67,7 @@ void u_des3_init(void)
 
 void u_des_reset(void)
 {
-   U_INTERNAL_TRACE("u_des_reset()", 0)
+   U_INTERNAL_TRACE("u_des_reset()")
 
    inp_num = out_num = 0;
 
@@ -87,7 +87,7 @@ void u_des_reset(void)
 
 void u_des3_reset(void)
 {
-   U_INTERNAL_TRACE("u_des3_reset()", 0)
+   U_INTERNAL_TRACE("u_des3_reset()")
 
    u_des3_init();
 }

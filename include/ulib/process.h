@@ -46,7 +46,7 @@ public:
 
    UProcess()
       {
-      U_TRACE_REGISTER_OBJECT(0, UProcess, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UProcess, "")
 
       _pid    = (pid_t) -1;
       running = false;
@@ -94,13 +94,13 @@ public:
 
           char* exitInfo() const { return exitInfo(status); }
 
-   static int exitValue(int status)
+   static int exitValue(int _status)
       {
-      U_TRACE(0, "UProcess::exitValue(%d)", status)
+      U_TRACE(0, "UProcess::exitValue(%d)", _status)
 
-      int exit_value = (WIFEXITED(status)
-                           ? WEXITSTATUS(status)
-                           : (WTERMSIG(status) << 8));
+      int exit_value = (WIFEXITED(_status)
+                      ? WEXITSTATUS(_status)
+                      : (WTERMSIG(_status) << 8));
 
       U_RETURN(exit_value);
       }

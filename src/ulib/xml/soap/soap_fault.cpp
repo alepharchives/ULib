@@ -13,7 +13,7 @@
 
 #include <ulib/xml/soap/soap_fault.h>
 
-UString* USOAPFault::str_env_fault;
+const UString* USOAPFault::str_env_fault;
 
 void USOAPFault::str_allocate()
 {

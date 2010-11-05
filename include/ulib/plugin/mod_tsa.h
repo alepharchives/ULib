@@ -53,7 +53,7 @@ public:
 
    UTsaPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTsaPlugIn, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UTsaPlugIn, "")
 
       command = 0;
       }

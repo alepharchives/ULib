@@ -81,7 +81,7 @@ public:
          {
          active = false;
 
-         U_INTERNAL_DUMP("active = false", 0)
+         U_INTERNAL_DUMP("active = false")
          }
       }
 };

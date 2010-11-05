@@ -38,7 +38,7 @@ public:
 
       uint32_t subject = U_STRING_FIND(request, 0, "Subject: ");
 
-      if (subject == U_NOT_FOUND) U_ERROR("cannot find mail header subject on input data...", 0);
+      if (subject == U_NOT_FOUND) U_ERROR("cannot find mail header subject on input data...");
 
       // scanf mail header Subject: from request
       // ----------------------------------------------------------------------------------------------------------------------------
@@ -51,7 +51,7 @@ public:
 
       int n = U_SYSCALL(sscanf, "%S,%S,%p,%p,%p,%p", request.c_pointer(subject), subj_tmpl.data(), customer, installation, uid);
 
-      if (n != 3) U_ERROR("scanf error on mail header subject...", 0);
+      if (n != 3) U_ERROR("scanf error on mail header subject...");
 
       U_INTERNAL_DUMP("sscanf() customer = %S installation = %S uid = %S", customer, installation, uid)
 

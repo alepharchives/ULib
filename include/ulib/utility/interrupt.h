@@ -91,9 +91,9 @@ struct U_EXPORT UInterrupt {
    static void sendOurselves(int signo);
    static bool sendSignal(   int signo, pid_t pid)
       {
-      U_TRACE(1, "UInterrupt::sendSignal(%d,%ld)", signo, pid)
+      U_TRACE(1, "UInterrupt::sendSignal(%d,%d)", signo, pid)
 
-      bool ok = (U_SYSCALL(kill, "%ld,%d", pid, signo) != -1);
+      bool ok = (U_SYSCALL(kill, "%d,%d", pid, signo) != -1);
 
       U_RETURN(ok);
       }

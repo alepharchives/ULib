@@ -67,7 +67,7 @@ public:
 
    UApplication() : opt(126)
       {
-      U_TRACE_REGISTER_OBJECT(0, UApplication, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UApplication, "")
 
 #  ifdef U_OPTIONS
 #     ifndef U_OPTIONS_1

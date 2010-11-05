@@ -74,7 +74,7 @@ int yyerror(char*);
 
 message: fields tEND_HEADER
 {
-	U_INTERNAL_TRACE("yyparse() <message 1>", 0);
+	U_INTERNAL_TRACE("yyparse() <message 1>");
 
 	((ParserInterface*)obj)->setHeaderBoundary($1.offset, $1.offset + $1.length);
 	((ParserInterface*)obj)->setBodyBoundary($2.offset + $2.length);
@@ -84,13 +84,13 @@ message: fields tEND_HEADER
 }
 	| fields tSTART_BODY
 		{
-		U_INTERNAL_TRACE("yyparse() <message 2a>", 0);
+		U_INTERNAL_TRACE("yyparse() <message 2a>");
 
 		((ParserInterface*)obj)->buildMultipart();
 		}
 		message_body tEND_BODY
 			{
-			U_INTERNAL_TRACE("yyparse() <message 2b>", 0);
+			U_INTERNAL_TRACE("yyparse() <message 2b>");
 
 			((ParserInterface*)obj)->setHeaderBoundary($1.offset, $1.offset + $1.length);
 			((ParserInterface*)obj)->setBodyBoundary($4.offset, $4.offset + $4.length);
@@ -102,13 +102,13 @@ message: fields tEND_HEADER
 
 fields: fields_item
 {
-	U_INTERNAL_TRACE("yyparse() <fields 1>", 0);
+	U_INTERNAL_TRACE("yyparse() <fields 1>");
 
 	$$ = $1;
 }
 	| fields tCRLF fields_item
 {
-	U_INTERNAL_TRACE("yyparse() <fields 2>", 0);
+	U_INTERNAL_TRACE("yyparse() <fields 2>");
 
 	$$.offset = $1.offset;
 	$$.length = $3.offset - $1.offset + $3.length;

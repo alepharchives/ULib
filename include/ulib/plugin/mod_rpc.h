@@ -53,7 +53,7 @@ public:
 
    URpcPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, URpcPlugIn, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, URpcPlugIn, "")
       }
 
    virtual ~URpcPlugIn();

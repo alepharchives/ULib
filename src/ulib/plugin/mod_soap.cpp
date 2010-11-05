@@ -18,7 +18,7 @@
 #include <ulib/xml/soap/soap_object.h>
 #include <ulib/xml/soap/soap_parser.h>
 
-U_CREAT_FUNC(USoapPlugIn)
+U_CREAT_FUNC(mod_soap, USoapPlugIn)
 
 USoapPlugIn::~USoapPlugIn()
 {
@@ -58,7 +58,7 @@ int USoapPlugIn::handlerInit()
       USOAPObject::loadGenericMethod(0);
       }
 
-   U_SRV_LOG_MSG("initialization of plugin success");
+   U_SRV_LOG("initialization of plugin success");
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
@@ -80,7 +80,7 @@ int USoapPlugIn::handlerRequest()
       UString body   = soap_parser->processMessage(*UClientImage_Base::body, *URPCObject::dispatcher, bSendingFault),
               method = soap_parser->getMethodName();
 
-      U_SRV_LOG_VAR_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
+      U_SRV_LOG_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
 
       UHTTP::setHTTPResponse(HTTP_OK, UHTTP::str_ctype_soap, &body);
 

@@ -47,26 +47,26 @@ RETURNS:
 class U_EXPORT USSIPlugIn : public UServerPlugIn {
 public:
 
-   static UString* str_var;
-   static UString* str_cmd;
-   static UString* str_cgi;
-   static UString* str_file;
-   static UString* str_value;
-   static UString* str_bytes;
-   static UString* str_abbrev;
-   static UString* str_errmsg;
-   static UString* str_virtual;
-   static UString* str_timefmt;
-   static UString* str_sizefmt;
-   static UString* str_DATE_GMT;
-   static UString* str_USER_NAME;
-   static UString* str_DATE_LOCAL;
-   static UString* str_DOCUMENT_URI;
-   static UString* str_DOCUMENT_NAME;
-   static UString* str_LAST_MODIFIED;
-   static UString* str_SSI_EXT_MASK;
-   static UString* str_errmsg_default;
-   static UString* str_timefmt_default;
+   static const UString* str_var;
+   static const UString* str_cmd;
+   static const UString* str_cgi;
+   static const UString* str_file;
+   static const UString* str_value;
+   static const UString* str_bytes;
+   static const UString* str_abbrev;
+   static const UString* str_errmsg;
+   static const UString* str_virtual;
+   static const UString* str_timefmt;
+   static const UString* str_sizefmt;
+   static const UString* str_DATE_GMT;
+   static const UString* str_USER_NAME;
+   static const UString* str_DATE_LOCAL;
+   static const UString* str_DOCUMENT_URI;
+   static const UString* str_DOCUMENT_NAME;
+   static const UString* str_LAST_MODIFIED;
+   static const UString* str_SSI_EXT_MASK;
+   static const UString* str_errmsg_default;
+   static const UString* str_timefmt_default;
 
    static void str_allocate();
 
@@ -74,7 +74,7 @@ public:
 
    USSIPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, USSIPlugIn, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, USSIPlugIn, "")
 
       if (str_SSI_EXT_MASK == 0) str_allocate();
       }

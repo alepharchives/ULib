@@ -75,7 +75,7 @@ public:
 
    UValue()
       {
-      U_TRACE_REGISTER_OBJECT(0, UValue, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UValue, "")
 
       type_       = NULL_VALUE;
       value.real_ = 0.0;

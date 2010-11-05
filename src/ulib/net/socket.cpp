@@ -31,30 +31,30 @@
 #endif
 
 int USocket::req_timeout;
-int USocket::accept4_flags = SOCK_NONBLOCK | SOCK_CLOEXEC; // If flags is 0, then accept4() is the same as accept()
+int USocket::accept4_flags; // If flags is 0, then accept4() is the same as accept()
 
-UString* USocket::str_host;
-UString* USocket::str_range;
-UString* USocket::str_close;
-UString* USocket::str_cookie;
-UString* USocket::str_setcookie;
-UString* USocket::str_starttls;
-UString* USocket::str_location;
-UString* USocket::str_connection;
-UString* USocket::str_user_agent;
-UString* USocket::str_authorization;
-UString* USocket::str_content_type;
-UString* USocket::str_content_length;
-UString* USocket::str_content_disposition;
-UString* USocket::str_accept_language;
-UString* USocket::str_accept_encoding;
-UString* USocket::str_if_range;
-UString* USocket::str_if_none_match;
-UString* USocket::str_if_modified_since;
-UString* USocket::str_if_unmodified_since;
-UString* USocket::str_referer;
-UString* USocket::str_X_Real_IP;
-UString* USocket::str_X_Forwarded_For;
+const UString* USocket::str_host;
+const UString* USocket::str_range;
+const UString* USocket::str_close;
+const UString* USocket::str_cookie;
+const UString* USocket::str_setcookie;
+const UString* USocket::str_starttls;
+const UString* USocket::str_location;
+const UString* USocket::str_connection;
+const UString* USocket::str_user_agent;
+const UString* USocket::str_authorization;
+const UString* USocket::str_content_type;
+const UString* USocket::str_content_length;
+const UString* USocket::str_content_disposition;
+const UString* USocket::str_accept_language;
+const UString* USocket::str_accept_encoding;
+const UString* USocket::str_if_range;
+const UString* USocket::str_if_none_match;
+const UString* USocket::str_if_modified_since;
+const UString* USocket::str_if_unmodified_since;
+const UString* USocket::str_referer;
+const UString* USocket::str_X_Real_IP;
+const UString* USocket::str_X_Forwarded_For;
 
 void USocket::str_allocate()
 {
@@ -296,28 +296,28 @@ loop:
    U_RETURN(false);
 }
 
-ssize_t USocket::recv(int fd, void* buf, size_t len, int recv_flags)
+int USocket::recv(int fd, void* _buf, uint32_t len, int recv_flags)
 {
-   U_TRACE(1, "USocket::recv(%d,%p,%lu,%d)", fd, buf, len, recv_flags)
+   U_TRACE(1, "USocket::recv(%d,%p,%u,%d)", fd, _buf, len, recv_flags)
 
    U_INTERNAL_ASSERT(fd != -1)
 
-   ssize_t n;
+   int n;
 
 loop:
-   n = U_SYSCALL(recv, "%d,%p,%d,%d", fd, CAST(buf), len, recv_flags);
+   n = U_SYSCALL(recv, "%d,%p,%u,%d", fd, CAST(_buf), len, recv_flags);
 
    if (n == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
 #ifdef DEBUG
-   if (n  >  0) U_INTERNAL_DUMP("BytesRead(%d) = %#.*S", n, n, CAST(buf))
+   if (n  >  0) U_INTERNAL_DUMP("BytesRead(%d) = %#.*S", n, n, CAST(_buf))
 #endif
 
    U_RETURN(n);
 }
 
-int USocket::recvFrom(void* pBuffer, int iBufLength, uint32_t uiFlags, UIPAddress& cSourceIP, int& iSourcePortNumber)
+int USocket::recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags, UIPAddress& cSourceIP, int& iSourcePortNumber)
 {
-   U_TRACE(1, "USocket::recvFrom(%p,%d,%u,%p,%p)", pBuffer, iBufLength, uiFlags, &cSourceIP, &iSourcePortNumber)
+   U_TRACE(1, "USocket::recvFrom(%p,%u,%u,%p,%p)", pBuffer, iBufLength, uiFlags, &cSourceIP, &iSourcePortNumber)
 
    U_CHECK_MEMORY
 
@@ -329,7 +329,7 @@ int USocket::recvFrom(void* pBuffer, int iBufLength, uint32_t uiFlags, UIPAddres
    socklen_t slDummy = cSource.sizeOf();
 
 loop:
-   iBytesRead = U_SYSCALL(recvfrom, "%d,%p,%d,%u,%p,%p", iSockDesc, CAST(pBuffer), iBufLength, uiFlags, (sockaddr*)cSource, &slDummy);
+   iBytesRead = U_SYSCALL(recvfrom, "%d,%p,%u,%u,%p,%p", iSockDesc, CAST(pBuffer), iBufLength, uiFlags, (sockaddr*)cSource, &slDummy);
 
    if (iBytesRead == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
    if (iBytesRead  >  0)
@@ -343,9 +343,9 @@ loop:
    U_RETURN(iBytesRead);
 }
 
-int USocket::sendTo(void* pPayload, int iPayloadLength, uint32_t uiFlags, UIPAddress& cDestinationIP, int iDestinationPortNumber)
+int USocket::sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags, UIPAddress& cDestinationIP, int iDestinationPortNumber)
 {
-   U_TRACE(1, "USocket::sendTo(%p,%d,%u,%p,%d)", pPayload, iPayloadLength, uiFlags, &cDestinationIP, iDestinationPortNumber)
+   U_TRACE(1, "USocket::sendTo(%p,%u,%u,%p,%d)", pPayload, iPayloadLength, uiFlags, &cDestinationIP, iDestinationPortNumber)
 
    U_CHECK_MEMORY
 
@@ -358,7 +358,7 @@ int USocket::sendTo(void* pPayload, int iPayloadLength, uint32_t uiFlags, UIPAdd
    cDestination.setPortNumber(iDestinationPortNumber);
 
 loop:
-   iBytesWrite = U_SYSCALL(sendto, "%d,%p,%d,%u,%p,%d", iSockDesc, CAST(pPayload), iPayloadLength, uiFlags, (sockaddr*)cDestination, cDestination.sizeOf());
+   iBytesWrite = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", iSockDesc, CAST(pPayload), iPayloadLength, uiFlags, (sockaddr*)cDestination, cDestination.sizeOf());
 
    if (iBytesWrite == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
 #ifdef DEBUG
@@ -452,6 +452,63 @@ void USocket::checkErrno(int value)
    U_INTERNAL_DUMP("state = %d", iState)
 }
 
+int USocket::recvBinary16Bits()
+{
+   U_TRACE(0, "USocket::recvBinary16Bits()")
+
+   uint16_t uiNetOrder;
+   uint32_t iBytesLeft = sizeof(uint16_t);
+   char* pcEndReadBuffer = ((char*)&uiNetOrder) + iBytesLeft;
+
+   do {
+      iBytesLeft -= recv((void*)(pcEndReadBuffer - iBytesLeft), iBytesLeft);
+      }
+   while (iBytesLeft);
+
+   int result = ntohs(uiNetOrder);
+
+   U_RETURN(result);
+}
+
+uint32_t USocket::recvBinary32Bits()
+{
+   U_TRACE(0, "USocket::recvBinary32Bits()")
+
+   uint32_t uiNetOrder, iBytesLeft = sizeof(uint32_t);
+   char* pcEndReadBuffer = ((char*)&uiNetOrder) + iBytesLeft;
+
+   do {
+      iBytesLeft -= recv((void*)(pcEndReadBuffer - iBytesLeft), iBytesLeft);
+      }
+   while (iBytesLeft);
+
+   int result = ntohl(uiNetOrder);
+
+   U_RETURN(result);
+}
+
+bool USocket::sendBinary16Bits(uint16_t iData)
+{
+   U_TRACE(0, "USocket::sendBinary16Bits(%u)", iData)
+
+   uint16_t uiNetOrder = htons(iData);
+
+   bool result = (send(&uiNetOrder, sizeof(uint16_t)) == sizeof(uint16_t));
+
+   U_RETURN(result);
+}
+
+bool USocket::sendBinary32Bits(uint32_t lData)
+{
+   U_TRACE(0, "USocket::sendBinary32Bits(%u)", lData)
+
+   uint32_t uiNetOrder = htonl(lData);
+
+   bool result = (send(&uiNetOrder, sizeof(uint32_t)) == sizeof(uint32_t));
+
+   U_RETURN(result);
+}
+
 // VIRTUAL METHOD
 
 #ifdef closesocket
@@ -489,7 +546,7 @@ const char* USocket::getMsgError(char* buffer, uint32_t buffer_size)
       {
       errno = -iState;
 
-      (void) u_snprintf(buffer, buffer_size, "%R", 0);
+      (void) u_snprintf(buffer, buffer_size, "%R");
 
       buffer += 3;
 
@@ -548,7 +605,7 @@ bool USocket::setServer(SocketAddress& cLocal, int iBackLog)
             {
             char buffer[32];
 
-            buffer[U_SYSCALL(read, "%d,%p,%lu", somaxconn.getFd(), buffer, sizeof(buffer)-1)] = '\0';
+            buffer[U_SYSCALL(read, "%d,%p,%u", somaxconn.getFd(), buffer, sizeof(buffer)-1)] = '\0';
 
             if (atoi(buffer) < (iBackLog * 2)) (void) somaxconn.write(UStringExt::numberToString(iBackLog * 2));
 
@@ -669,18 +726,18 @@ loop:
    U_RETURN(false);
 }
 
-int USocket::send(const void* pPayload, int iPayloadLength)
+int USocket::send(const void* pPayload, uint32_t iPayloadLength)
 {
-   U_TRACE(1, "USocket::send(%p,%d)", pPayload, iPayloadLength)
+   U_TRACE(1, "USocket::send(%p,%u)", pPayload, iPayloadLength)
 
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT(isOpen())
 
-   ssize_t iBytesWrite;
+   int iBytesWrite;
 
 loop:
-   iBytesWrite = U_SYSCALL(send, "%d,%p,%d,%u", iSockDesc, CAST(pPayload), iPayloadLength, 0);
+   iBytesWrite = U_SYSCALL(send, "%d,%p,%u,%u", iSockDesc, CAST(pPayload), iPayloadLength, 0);
 
    if (iBytesWrite == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
 #ifdef DEBUG
@@ -692,22 +749,22 @@ loop:
 
 // write data into multiple buffers
 
-ssize_t USocket::writev(const struct iovec* iov, int iovcnt)
+int USocket::writev(const struct iovec* _iov, int iovcnt)
 {
-   U_TRACE(1, "USocket::writev(%p,%d)", iov, iovcnt)
+   U_TRACE(1, "USocket::writev(%p,%d)", _iov, iovcnt)
 
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT(isOpen())
 
-   ssize_t iBytesWrite;
+   int iBytesWrite;
 
 loop:
-   iBytesWrite = U_SYSCALL(writev, "%d,%p,%d", iSockDesc, iov, iovcnt);
+   iBytesWrite = U_SYSCALL(writev, "%d,%p,%d", iSockDesc, _iov, iovcnt);
 
    if (iBytesWrite == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
 #ifdef DEBUG
-   if (iBytesWrite  >  0) U_INTERNAL_DUMP("BytesWrite(%d) = %.*S", iBytesWrite, iov[0].iov_len, iov[0].iov_base)
+   if (iBytesWrite  >  0) U_INTERNAL_DUMP("BytesWrite(%d) = %.*S", iBytesWrite, _iov[0].iov_len, _iov[0].iov_base)
 #endif
 
    U_RETURN(iBytesWrite);

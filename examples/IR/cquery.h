@@ -27,7 +27,7 @@ public:
 
    WeightWord() : word_freq(0)
       {
-      U_TRACE_REGISTER_OBJECT(5, WeightWord, "", 0)
+      U_TRACE_REGISTER_OBJECT(5, WeightWord, "")
       }
 
    WeightWord(const UString& x, uint32_t f) : filename(x), word_freq(f)

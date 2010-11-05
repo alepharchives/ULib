@@ -37,7 +37,7 @@
 
 void u_printError(void)
 {
-   U_INTERNAL_TRACE("u_printError()", 0)
+   U_INTERNAL_TRACE("u_printError()")
 
    if (u_is_tty) (void) write(STDERR_FILENO, U_CONSTANT_TO_PARAM(U_RED_STR));
                  (void) write(STDERR_FILENO, U_CONSTANT_TO_PARAM(U_STR_ERROR));
@@ -847,7 +847,7 @@ void u_execOnExit(void)
 {
    char* cmd_on_exit = getenv("EXEC_ON_EXIT");
 
-   U_INTERNAL_TRACE("u_execOnExit()", 0)
+   U_INTERNAL_TRACE("u_execOnExit()")
 
    if ( cmd_on_exit &&
        *cmd_on_exit)

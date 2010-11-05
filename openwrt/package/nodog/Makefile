@@ -44,7 +44,10 @@ define Package/nodog/conffiles
 /usr/lib/nodog/bin/upload-logs.sh
 endef
 
-NODOG_OPTIONS:= --disable-static --disable-new-ldflags --disable-zip --with-ssl --with-libz --without-pcre --without-expat --without-magic \
+NODOG_OPTIONS:= --with-ssl --with-libz \
+					 --without-pcre --without-expat --without-magic \
+					 --disable-static --disable-new-ldflags --disable-zip --disable-LFS --disable-gcc-optimized \
+					 --enable-static-module="mod_nocat mod_http" \
 					 $(if $(CONFIG_NODOG_UUID),--with-libuuid,--without-libuuid) $(if $(CONFIG_NODOG_DEBUG),--enable-debug)
 
 define Build/Configure
@@ -67,7 +70,6 @@ define Package/nodog/install
 	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" install
 	$(INSTALL_DIR) $(1)/etc $(1)/usr/sbin $(1)/usr/libexec/ulib $(1)/usr/lib/nodog
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libulib* $(1)/usr/lib/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/ulib/mod_http* $(PKG_INSTALL_DIR)/usr/lib/ulib/mod_nocat* $(1)/usr/libexec/ulib/
 	$(CP) $(PKG_BUILD_DIR)/examples/userver/.libs/userver_tcp $(PKG_BUILD_DIR)/examples/uclient/.libs/uclient $(1)/usr/sbin
 	$(CP) -r $(PKG_BUILD_DIR)/tests/examples/nocat/* 	 $(1)/usr/lib/nodog
 	$(CP) -r $(PKG_BUILD_DIR)/tests/examples/nocat/.ht* $(1)/usr/lib/nodog

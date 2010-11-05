@@ -50,8 +50,8 @@ class UClient_Base;
 class U_EXPORT USCGIPlugIn : public UServerPlugIn {
 public:
 
-   static UString* str_SCGI_URI_MASK;
-   static UString* str_SCGI_KEEP_CONN;
+   static const UString* str_SCGI_URI_MASK;
+   static const UString* str_SCGI_KEEP_CONN;
 
    static void str_allocate();
 
@@ -59,7 +59,7 @@ public:
 
    USCGIPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, USCGIPlugIn, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, USCGIPlugIn, "")
 
       connection = 0;
 

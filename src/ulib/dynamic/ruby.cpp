@@ -131,7 +131,8 @@ const char* URUBY::dump(bool reset) const
 {
    UDynamic::dump(false);
 
-   *UObjectIO::os << "result       " << result              << '\n'
+   *UObjectIO::os << '\n'
+                  << "result       " << result              << '\n'
                   << "ruby_init    " << (void*)ruby_init    << '\n'
                   << "ruby_exec    " << (void*)ruby_exec    << '\n'
                   << "ruby_options " << (void*)ruby_options << '\n'

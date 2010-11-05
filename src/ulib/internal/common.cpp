@@ -77,7 +77,7 @@ void ULib_init()
 
       // Tell the user that we could not find a usable WinSock DLL
 
-      U_ERROR("Couldn't find useable Winsock DLL. Must be at least 2.2. Aborting...", 0);
+      U_ERROR("Couldn't find useable Winsock DLL. Must be at least 2.2. Aborting...");
       }
 
    (void) U_SYSCALL(atexit, "%p", (vPF)&WSACleanup);
@@ -126,6 +126,9 @@ void ULib_init()
    // (when running 32 bit applications))
    asm("ta 6");
 #endif
+
+   U_INTERNAL_ASSERT_EQUALS(sizeof(off_t),      SIZEOF_OFF_T)
+   U_INTERNAL_ASSERT_EQUALS(sizeof(UStringRep), U_SIZEOF_UStringRep)
 
    U_INTERNAL_DUMP("UStringRep::string_rep_null = %p", UStringRep::string_rep_null)
 }

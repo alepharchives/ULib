@@ -88,12 +88,12 @@ UPing::~UPing()
 
 // Checksum (16 bits), calculated with the ICMP part of the packet (the IP header is not used)
 
-inline void UPing::cksum(void* hdr, size_t len)
+inline void UPing::cksum(void* hdr, int len)
 {
    U_TRACE(0, "UPing::cksum(%p,%d)", hdr, len)
 
+   int i = 0, b1 = 0, b2 = 0;
    uint8_t* cb = (uint8_t*)hdr;
-   size_t i = 0, b1 = 0, b2 = 0;
 
    ((icmphdr*)hdr)->checksum = 0;
 
@@ -130,7 +130,7 @@ inline void UPing::cksum(void* hdr, size_t len)
    cb[0] = ~(uint8_t)b1;
    cb[1] = ~(uint8_t)b2;
 
-   U_INTERNAL_DUMP("b1 = %d b2 = %d", b1, b2)
+   U_INTERNAL_DUMP("b1 = %ld b2 = %ld", b1, b2)
 }
 
 // This method is called to test whether a particular host is reachable across an IP network; it is also used to self test the network interface card
@@ -144,9 +144,9 @@ void UPing::initPing()
 
    if (USocket::socket(SOCK_RAW, IPPROTO_ICMP) == false)
       {
-      if (UServices::isSetuidRoot() == false) U_ERROR("Must run as root to create raw socket...", 0);
+      if (UServices::isSetuidRoot() == false) U_ERROR("Must run as root to create raw socket...");
 
-      U_ERROR("Sorry, could not create raw socket", 0);
+      U_ERROR("Sorry, could not create raw socket");
       }
 
    (void) setTimeoutSND(timeoutMS);
@@ -167,10 +167,10 @@ bool UPing::ping(UIPAddress& addr)
    };
 
    union uuiphdr u;
+   uint16_t seq = 0;
    UIPAddress cResponseIP;
    unsigned char buf[4096];
-   size_t iphdrlen, seq = 0;
-   int ret, iSourcePortNumber;
+   int iphdrlen, ret, iSourcePortNumber;
 
    (void) U_SYSCALL(memset, "%p,%C,%u", &req, 0, sizeof(req));
 
@@ -342,16 +342,16 @@ void UPing::initArpPing(const char* device)
 
    if (USocket::isClosed())
       {
-      if (UServices::isSetuidRoot() == false) U_ERROR("Must run as root to create packet socket...", 0);
+      if (UServices::isSetuidRoot() == false) U_ERROR("Must run as root to create packet socket...");
 
-      U_ERROR("Sorry, could not create packet socket", 0);
+      U_ERROR("Sorry, could not create packet socket");
       }
 
    uint32_t value = 1;
 
    if (USocket::setSockOpt(SOL_SOCKET, SO_BROADCAST, (const void*)&value, sizeof(uint32_t)) == false)
       {
-      U_ERROR("can't enable bcast on packet socket", 0);
+      U_ERROR("can't enable bcast on packet socket");
       }
 
    struct ifreq ifr;
@@ -386,13 +386,13 @@ void UPing::initArpPing(const char* device)
    (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.sHaddr,   ifr.ifr_hwaddr.sa_data,               6); /* source hardware address */
 
    U_INTERNAL_DUMP("SOURCE = %s (%02x:%02x:%02x:%02x:%02x:%02x)",
-                      inet_ntoa(*(struct in_addr*)arp.sInaddr),
-                      ifr.ifr_hwaddr.sa_data[0] & 0xFF,
-                      ifr.ifr_hwaddr.sa_data[1] & 0xFF,
-                      ifr.ifr_hwaddr.sa_data[2] & 0xFF,
-                      ifr.ifr_hwaddr.sa_data[3] & 0xFF,
-                      ifr.ifr_hwaddr.sa_data[4] & 0xFF,
-                      ifr.ifr_hwaddr.sa_data[5] & 0xFF)
+                      u_inet_nstoa(arp.sInaddr),
+                      arp.sHaddr[0] & 0xFF,
+                      arp.sHaddr[1] & 0xFF,
+                      arp.sHaddr[2] & 0xFF,
+                      arp.sHaddr[3] & 0xFF,
+                      arp.sHaddr[4] & 0xFF,
+                      arp.sHaddr[5] & 0xFF)
 
    (void) setTimeoutSND(timeoutMS);
    (void) setTimeoutRCV(timeoutMS);
@@ -421,7 +421,7 @@ bool UPing::arping(UIPAddress& addr, const char* device)
    // -----------------------------------------------------------------------------------------------------------------------
 
    U_DUMP("ARP request from %s (%02x:%02x:%02x:%02x:%02x:%02x) to %s (%02x:%02x:%02x:%02x:%02x:%02x)",
-            inet_ntoa(*(struct in_addr*)arp.sInaddr),
+            u_inet_nstoa(arp.sInaddr),
             arp.sHaddr[0] & 0xFF, arp.sHaddr[1] & 0xFF, arp.sHaddr[2] & 0xFF,
             arp.sHaddr[3] & 0xFF, arp.sHaddr[4] & 0xFF, arp.sHaddr[5] & 0xFF,
             addr.getAddressString(),
@@ -471,8 +471,8 @@ loop:
 
       str_from[0] = str_to[0] = '\0';
 
-      (void) strcpy(str_from, inet_ntoa(*(struct in_addr*)reply.sInaddr));
-      (void) strcpy(str_to,   inet_ntoa(*(struct in_addr*)reply.tInaddr));
+      (void) strcpy(str_from, u_inet_nstoa(reply.sInaddr));
+      (void) strcpy(str_to,   u_inet_nstoa(reply.tInaddr));
 
       U_INTERNAL_DUMP("ARP reply from %s (%02x:%02x:%02x:%02x:%02x:%02x) to %s (%02x:%02x:%02x:%02x:%02x:%02x)",
                         str_from,

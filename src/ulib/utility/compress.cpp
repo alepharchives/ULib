@@ -15,6 +15,8 @@
 #include <ulib/base/lzo/minilzo.h>
 #include <ulib/utility/compress.h>
 
+bool UCompress::flag_init;
+
 /* Work-memory needed for compression. Allocate memory in units
  * of `lzo_align_t' (instead of `char') to make sure it is properly aligned
  */
@@ -22,11 +24,12 @@
 #define HEAP_ALLOC(var,size) \
       lzo_align_t __LZO_MMODEL var [ ((size) + (sizeof(lzo_align_t) - 1)) / sizeof(lzo_align_t) ]
 
-static bool flag_init;
 static HEAP_ALLOC(wrkmem,LZO1X_1_MEM_COMPRESS);
 
-static inline void init()
+void UCompress::init()
 {
+   U_TRACE(0, "UCompress::init()")
+
    if (flag_init == false)
       {
 #  ifdef DEBUG
@@ -34,13 +37,10 @@ static inline void init()
 
       U_INTERNAL_ASSERT_EQUALS(r,LZO_E_OK)
 #  else
-       (void) lzo_init();
+      (void) lzo_init();
 #  endif
 
-   // if (r != LZO_E_OK)
-   //    {
-   //    U_ERROR("lzo_init() failed!", 0);
-   //    }
+   // if (r != LZO_E_OK) U_ERROR("lzo_init() failed");
 
       flag_init = true;
       }

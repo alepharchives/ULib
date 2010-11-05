@@ -36,8 +36,27 @@ CACERT="../ulib/CA/username.crt"
 USER_KEY="../ulib/CA/username.key"
 LCMD="$OPENSSL s_client -no_ssl2 -quiet -cert $CACERT -key $USER_KEY -pass pass:caciucco -CApath $CAPATH -verify 0 -connect localhost:443"
 
+# function : timeout
+TIMEOUT() {
+
+	type timeout >/dev/null 2>&1
+
+	if [ $? -eq 0 ]; then
+		timeout "$@"
+	else
+		shift
+		eval "$@"
+	fi
+}
+
 # function : start_test
 start_test() {
+
+touch vuoto.txt
+cat << EOF >tmp/c
+c
+c
+EOF
 
 #STRACE=$TRUSS
  start_prg_background userver_ssl -c $1
@@ -55,26 +74,24 @@ done
 #mkdir -p /tmp/web_server
 #for i in $LS
 #do
-# timeout 2 $LCMD <inp/http/and/$i >/tmp/web_server/$i
+# TIMEOUT 2 $LCMD <inp/http/and/$i >/tmp/web_server/$i
 #done
 
 LS=`ls inp/http/close`
 for i in $LS
 do
-	timeout 2 $LCMD <inp/http/close/$i >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+	TIMEOUT 2 $LCMD <inp/http/close/$i >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 	if [ $? -ne 0 ]; then
 		exit 1
 	fi
 done
 
-touch vuoto.txt
-
- timeout 10 $LCMD <inp/http/all.inp  >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+ TIMEOUT 10 $LCMD <inp/http/all.inp  >>out/web_server_ssl.out 2>>err/web_server_ssl.err
  EXIT_VALUE=$?
  if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then
 	exit 1
  fi
- timeout 4  $LCMD <inp/http/post.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+ TIMEOUT 4  $LCMD <inp/http/post.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
  EXIT_VALUE=$?
  if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then
 	exit 1
@@ -87,8 +104,8 @@ mkdir -p		   uploads
 $CHOWN apache: uploads
 chmod 777      uploads
 
- timeout 5 $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" -k https://127.0.0.1:443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
- timeout 5 $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" -k https://127.0.0.1:443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+ TIMEOUT 5 $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" -k https://127.0.0.1:443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+ TIMEOUT 5 $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" -k https://127.0.0.1:443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 
  kill_prg userver_ssl TERM
  if [ $? -ne 0 ]; then

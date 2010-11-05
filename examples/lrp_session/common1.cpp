@@ -18,7 +18,7 @@ static const char* device_attr_name[] = { DEVICE_ATTR_IPHOST_STRING, DEVICE_ATTR
 
    const char* operation = argv[optind++];
 
-   if (operation == 0) U_ERROR("<operation(apply|drop)> not specified...", 0);
+   if (operation == 0) U_ERROR("<operation(apply|drop)> not specified...");
 
    // manage file configuration
 
@@ -81,7 +81,7 @@ static const char* device_attr_name[] = { DEVICE_ATTR_IPHOST_STRING, DEVICE_ATTR
        ldap.set_protocol() == false ||
        ldap.bind(LDAP_binddn.c_str(), LDAP_password.c_str()) == false)
       {
-      U_ERROR("login to LDAP failed...", 0);
+      U_ERROR("login to LDAP failed...");
       }
 
    // check for directory value

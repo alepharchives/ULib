@@ -17,7 +17,7 @@
 #include <ulib/utility/socket_ext.h>
 #include <ulib/net/server/client_image.h>
 
-U_CREAT_FUNC(UEchoPlugIn)
+U_CREAT_FUNC(mod_echo, UEchoPlugIn)
 
 // Server-wide hooks
 

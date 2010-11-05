@@ -174,12 +174,12 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static UString* str_ns;
-   static UString* str_true;
-   static UString* str_fault;
-   static UString* str_xmlns;
-   static UString* str_version11;
-   static UString* str_mustUnderstand;
+   static const UString* str_ns;
+   static const UString* str_true;
+   static const UString* str_fault;
+   static const UString* str_xmlns;
+   static const UString* str_version11;
+   static const UString* str_mustUnderstand;
 
    static void str_allocate();
 
@@ -187,7 +187,7 @@ public:
 
    USOAPParser(UVector<UString>* arg = 0) : URPCParser(arg), tree(0,0,2)
       {
-      U_TRACE_REGISTER_OBJECT(0, USOAPParser, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, USOAPParser, "")
 
 #  ifdef U_SOAP_NAMESPACE
       XMLNStoURN.allocate();

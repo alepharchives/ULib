@@ -43,7 +43,7 @@ public:
 
    OtpAuthToken()
       {
-      U_TRACE_REGISTER_OBJECT(5, OtpAuthToken, "", 0)
+      U_TRACE_REGISTER_OBJECT(5, OtpAuthToken, "")
       }
 
    /**

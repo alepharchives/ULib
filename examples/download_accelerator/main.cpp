@@ -733,7 +733,7 @@ public:
             case 254:
                {
 #           ifdef DEBUG
-               if (code == 254) U_INTERNAL_DUMP("RECEIVED AN UNKNOWN PACKET", 0)
+               if (code == 254) U_INTERNAL_DUMP("RECEIVED AN UNKNOWN PACKET")
 #           endif
 
                continue;
@@ -836,7 +836,7 @@ public:
          if (host->num_in  == 0 ||
              host->num_out == 0)
             {
-            U_INTERNAL_DUMP("%-35s %5u ms %2d hops %3d%%", host->server.data(), 9999, host->hops_less_than, 0)
+            U_INTERNAL_DUMP("%-35s 9999 ms %2d hops 0%%", host->server.data(), host->hops_less_than)
             }
          else
             {
@@ -960,7 +960,7 @@ public:
 
       // manage url file
 
-      if (argv[optind] == NULL) U_ERROR("arg <url> not specified...", 0);
+      if (argv[optind] == NULL) U_ERROR("arg <url> not specified...");
 
       Url url(argv[optind], u_strlen(argv[optind]));
 
@@ -975,7 +975,7 @@ public:
 
       file.setPath(filename);
 
-      if (file.creat() == false) U_ERROR("file creat failed...", 0);
+      if (file.creat() == false) U_ERROR("file creat failed...");
 
       off_t offset = file.size();
 

@@ -40,7 +40,7 @@ public:
 
    URPCEncoder() : buffer(U_CAPACITY), encodedValue(U_CAPACITY)
       {
-      U_TRACE_REGISTER_OBJECT(0, URPCEncoder, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, URPCEncoder, "")
 
       bIsResponse = false;
       }

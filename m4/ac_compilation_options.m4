@@ -39,6 +39,43 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([$enable_coverage])
 
+	dnl Check if compile with GCC optimizations flags enabled
+
+	AC_MSG_CHECKING(for compile with GCC optimizations flags enabled)
+	AC_ARG_ENABLE(gcc-optimized,
+				[  --enable-gcc-optimized  compile with GCC optimizations flags enabled (-finline,-fstrict-aliasing,...) [[default=yes]]])
+	if test -z "$enable_gcc_optimized" ; then
+		enable_gcc_optimized="yes"
+	fi
+	AC_MSG_RESULT([${enable_gcc_optimized}])
+
+	dnl Enable debugging via mudflap.
+	dnl All code, as far as possible, is compiled instrumented to catch all the bugs valgrind is able to catch.
+
+	AC_MSG_CHECKING(for build binaries with mudflap instrumentation)
+	AC_ARG_ENABLE(mudflap,
+				[  --enable-mudflap        build binaries with mudflap instrumentation [[default=no]]])
+	if test -z "$enable_mudflap" ; then
+		enable_mudflap="no"
+	fi
+	if test "x$enable_mudflap" = xyes; then
+		# Check whether the compiler support -fmudflap.
+		use_mudflap=no
+		old_CFLAGS="$CFLAGS"
+		CFLAGS="$CFLAGS -fmudflap"
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],[use_mudflap=yes],[use_mudflap=fail])
+		CFLAGS="$old_CFLAGS"
+		if test "$use_mudflap" = fail; then
+			AC_MSG_FAILURE([--enable-mudflap requires a compiler which understands this option])
+		fi
+	fi
+	if test "x$enable_mudflap" = xyes; then
+		enable_gcc_optimized="no"
+		LDFLAGS="${LDFLAGS} -lmudflap -rdynamic"
+		CPPFLAGS="${CPPFLAGS} -fmudflap -funwind-tables"
+	fi
+	AC_MSG_RESULT([${enable_mudflap}])
+
 	AC_MSG_CHECKING(if you want to enable mode final for build of ulib library)
 	AC_ARG_ENABLE(final,
 				[  --enable-final          build size optimized apps (needs more amounts of memory) [[default=yes]]])

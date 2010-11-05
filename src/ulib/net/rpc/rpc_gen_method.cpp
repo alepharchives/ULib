@@ -12,11 +12,12 @@
 // ============================================================================
 
 #include <ulib/file.h>
+#include <ulib/utility/services.h>
 #include <ulib/net/rpc/rpc_object.h>
 #include <ulib/net/rpc/rpc_envelope.h>
 
-UString* URPCGenericMethod::str_command_fault;
-UString* URPCGenericMethod::str_command_not_started;
+const UString* URPCGenericMethod::str_command_fault;
+const UString* URPCGenericMethod::str_command_not_started;
 
 void URPCGenericMethod::str_allocate()
 {

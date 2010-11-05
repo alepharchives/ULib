@@ -165,8 +165,8 @@ public:
 
    // EXT
 
-   bool    tokenSeen(UString* x);
    UString getTokenQueryParser();
+   bool    tokenSeen(const UString* x);
 
    bool skipNumber(bool& isReal);
    bool skipToken(const char* token, uint32_t sz);

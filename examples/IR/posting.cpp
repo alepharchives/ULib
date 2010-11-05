@@ -1382,7 +1382,7 @@ start:
 
                                                buffer->snprintf_add("(%llX,%u,%u", cur_doc_id, word_freq, vpos[0]);
       for (uint32_t i = 1; i < word_freq; ++i) buffer->snprintf_add(",%u", vpos[i]);
-                                               buffer->snprintf_add(")", 0);
+                                               (void) buffer->append(U_CONSTANT_TO_PARAM(")"));
       }
    else
       {

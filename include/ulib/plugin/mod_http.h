@@ -53,10 +53,10 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static UString* str_CACHE_FILE_MASK;
-   static UString* str_URI_PROTECTED_MASK;
-   static UString* str_URI_REQUEST_CERT_MASK;
-   static UString* str_URI_PROTECTED_ALLOWED_IP;
+   static const UString* str_CACHE_FILE_MASK;
+   static const UString* str_URI_PROTECTED_MASK;
+   static const UString* str_URI_REQUEST_CERT_MASK;
+   static const UString* str_URI_PROTECTED_ALLOWED_IP;
 
    static void str_allocate();
 
@@ -64,7 +64,7 @@ public:
 
    UHttpPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, UHttpPlugIn, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UHttpPlugIn, "")
 
       UEventFd::fd      = -1;
       UEventFd::op_mask = U_READ_IN;

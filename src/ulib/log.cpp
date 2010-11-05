@@ -65,7 +65,7 @@ bool ULog::open(uint32_t _size, mode_t mode)
 
    if (UFile::creat(O_CREAT | O_RDWR | O_APPEND, mode))
       {
-      off_t file_size = 0;
+      uint32_t file_size = 0;
 
       if (_size)
          {
@@ -79,7 +79,7 @@ bool ULog::open(uint32_t _size, mode_t mode)
          }
 
       pthis = this;
-      ptr  = U_MALLOC_TYPE(log_data);
+      ptr   = U_MALLOC_TYPE(log_data);
 
       LOG_ptr = LOG_page = (_size ? (UFile::map + file_size)      : 0); // append mode...
               file_limit = (_size ? (UFile::map + UFile::st_size) : 0);
@@ -170,7 +170,7 @@ void ULog::write(const struct iovec* iov, int n)
    if (bsyslog)
       {
 #  ifndef __MINGW32__
-      for (int i = 0; i < n; ++i) U_SYSCALL_VOID(syslog, "%d,%S,%d,%p", LOG_INFO, "%.*s", (int)iov[i].iov_len, iov[i].iov_base);
+      for (int i = 0; i < n; ++i) U_SYSCALL_VOID(syslog, "%d,%S,%d,%p", LOG_INFO, "%.*s", (int)iov[i].iov_len, (char*)iov[i].iov_base);
 #  endif
 
       return;
@@ -213,7 +213,7 @@ void ULog::write(const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-   struct iovec iov[1] = { { (caddr_t)buffer, u_vsnprintf(buffer, 4096, format, argp) } };
+   struct iovec iov[1] = { { (caddr_t)buffer, u_vsnprintf(buffer, sizeof(buffer), format, argp) } };
 
    va_end(argp);
 
@@ -227,12 +227,12 @@ void ULog::log(const char* format, ...)
    char buffer[4096];
    struct iovec iov[1] = { { (caddr_t)buffer, 0 } };
 
-   if (prefix) iov[0].iov_len = u_vsnprintf(buffer, 4096, prefix, 0);
+   if (prefix) iov[0].iov_len = u_snprintf(buffer, sizeof(buffer), prefix);
 
    va_list argp;
    va_start(argp, format);
 
-   iov[0].iov_len += u_vsnprintf(buffer + iov[0].iov_len, 4096 - iov[0].iov_len, format, argp); 
+   iov[0].iov_len += u_vsnprintf(buffer + iov[0].iov_len, sizeof(buffer) - iov[0].iov_len, format, argp); 
 
    va_end(argp);
 
@@ -257,7 +257,7 @@ void ULog::close()
 
          if (file_limit)
             {
-            off_t size = LOG_ptr - pthis->UFile::map;
+            uint32_t size = LOG_ptr - pthis->UFile::map;
 
             U_INTERNAL_ASSERT_MINOR(size, pthis->UFile::st_size)
 
@@ -332,7 +332,7 @@ void ULog::backup()
       lock->lock();
       }
 
-   (void) UFile::setPathFromFile(*pthis, path, suffix, u_snprintf(suffix, sizeof(suffix), ".%6D.gz", 0));
+   (void) UFile::setPathFromFile(*pthis, path, suffix, u_snprintf(suffix, sizeof(suffix), ".%6D.gz"));
 
    U_ASSERT_EQUALS(UFile::access(buffer_path, R_OK | W_OK), false)
 
@@ -340,7 +340,7 @@ void ULog::backup()
 
    if (fp)
       {
-      off_t size;
+      uint32_t size;
 
       if (file_limit)
          {
@@ -357,7 +357,7 @@ void ULog::backup()
 
 #  ifdef DEBUG
       int value = U_SYSCALL(gzwrite, "%p,%p,%u", fp, pthis->UFile::map, size);
-      U_INTERNAL_ASSERT_EQUALS(value,size)
+      U_INTERNAL_ASSERT_EQUALS(value,(int)size)
 #  else
       (void) U_SYSCALL(gzwrite, "%p,%p,%u", fp, pthis->UFile::map, size);
 #  endif

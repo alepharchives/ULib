@@ -15,7 +15,7 @@
 #include <ulib/plugin/mod_skeleton.h>
 #include <ulib/net/server/client_image.h>
 
-U_CREAT_FUNC(USkeletonPlugIn)
+U_CREAT_FUNC(mod_skel, USkeletonPlugIn)
 
 // Server-wide hooks
 

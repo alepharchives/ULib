@@ -24,28 +24,28 @@
 // within your HTML such as the local date and time. One might use a server side include to add
 // a signature file to an HTML file or company logo. 
 
-U_CREAT_FUNC(USSIPlugIn)
+U_CREAT_FUNC(mod_ssi, USSIPlugIn)
 
-UString* USSIPlugIn::str_var;
-UString* USSIPlugIn::str_cmd;
-UString* USSIPlugIn::str_cgi;
-UString* USSIPlugIn::str_file;
-UString* USSIPlugIn::str_value;
-UString* USSIPlugIn::str_bytes;
-UString* USSIPlugIn::str_abbrev;
-UString* USSIPlugIn::str_errmsg;
-UString* USSIPlugIn::str_virtual;
-UString* USSIPlugIn::str_timefmt;
-UString* USSIPlugIn::str_sizefmt;
-UString* USSIPlugIn::str_DATE_GMT;
-UString* USSIPlugIn::str_USER_NAME;
-UString* USSIPlugIn::str_DATE_LOCAL;
-UString* USSIPlugIn::str_DOCUMENT_URI;
-UString* USSIPlugIn::str_DOCUMENT_NAME;
-UString* USSIPlugIn::str_LAST_MODIFIED;
-UString* USSIPlugIn::str_SSI_EXT_MASK;
-UString* USSIPlugIn::str_errmsg_default;
-UString* USSIPlugIn::str_timefmt_default;
+const UString* USSIPlugIn::str_var;
+const UString* USSIPlugIn::str_cmd;
+const UString* USSIPlugIn::str_cgi;
+const UString* USSIPlugIn::str_file;
+const UString* USSIPlugIn::str_value;
+const UString* USSIPlugIn::str_bytes;
+const UString* USSIPlugIn::str_abbrev;
+const UString* USSIPlugIn::str_errmsg;
+const UString* USSIPlugIn::str_virtual;
+const UString* USSIPlugIn::str_timefmt;
+const UString* USSIPlugIn::str_sizefmt;
+const UString* USSIPlugIn::str_DATE_GMT;
+const UString* USSIPlugIn::str_USER_NAME;
+const UString* USSIPlugIn::str_DATE_LOCAL;
+const UString* USSIPlugIn::str_DOCUMENT_URI;
+const UString* USSIPlugIn::str_DOCUMENT_NAME;
+const UString* USSIPlugIn::str_LAST_MODIFIED;
+const UString* USSIPlugIn::str_SSI_EXT_MASK;
+const UString* USSIPlugIn::str_errmsg_default;
+const UString* USSIPlugIn::str_timefmt_default;
 
 void USSIPlugIn::str_allocate()
 {
@@ -130,7 +130,7 @@ U_NO_EXPORT UString USSIPlugIn::getInclude(const UString& include, int include_l
       if (include_level < 16) content = processSSIRequest(content, include_level + 1);
       else
          {
-         U_SRV_LOG_VAR("SSI #include level is too deep (%.*S)", U_FILE_TO_TRACE(*UHTTP::file));
+         U_SRV_LOG("SSI #include level is too deep (%.*S)", U_FILE_TO_TRACE(*UHTTP::file));
          }
       }
 
@@ -428,7 +428,7 @@ int USSIPlugIn::handlerRequest()
       {
       uint32_t pos;
       const char* ptr;
-      UString body, header(300U);
+      UString body, header(U_CAPACITY);
 
       // init
 
@@ -441,7 +441,7 @@ int USSIPlugIn::handlerRequest()
 
       // read the SSI file
 
-      bool deflate = (U_http_is_accept_deflate == 1), bappend = deflate;
+      bool deflate = (U_http_is_accept_deflate == '1'), bappend = deflate;
 
       if (UHTTP::isHTTPRequestAlreadyProcessed())
          {

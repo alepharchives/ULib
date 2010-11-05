@@ -35,9 +35,9 @@
 class U_EXPORT UHttpClient_Base : virtual public UClient_Base {
 public:
 
-   static UString* str_www_authenticate;
-   static UString* str_proxy_authenticate;
-   static UString* str_proxy_authorization;
+   static const UString* str_www_authenticate;
+   static const UString* str_proxy_authenticate;
+   static const UString* str_proxy_authorization;
 
    static void str_allocate();
 

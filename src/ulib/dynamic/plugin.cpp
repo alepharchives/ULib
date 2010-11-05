@@ -13,58 +13,55 @@
 
 #include <ulib/dynamic/plugin.h>
 
-static pvPF creator;
-
 const char*     UPlugIn<void*>::plugin_dir = "/usr/libexec/ulib";
 UPlugIn<void*>* UPlugIn<void*>::first;
 
 #ifdef __MINGW32__
-#  define U_EXT ".dll"
+#  define U_FMT_LIBPATH "%s/%.*s.dll"
 #else
-#  define U_EXT ".so"
+#  define U_FMT_LIBPATH "%s/%.*s.so"
 #endif
 
-void UPlugIn<void*>::_create(const char* n, uint32_t len)
+void* UPlugIn<void*>::create(const char* _name, uint32_t _name_len)
 {
-   U_TRACE(0, "UPlugIn<void*>::_create(%.*S,%u)", len, n, len)
-
-   name     = strndup(n, len);
-   name_len = len;
-
-   char libname[U_PATH_MAX];
-   (void) sprintf(libname, "%s/%.*s" U_EXT, U_PATH_CONV(plugin_dir), len, n);
-
-   creator = (pvPF) (UDynamic::load(libname) ? operator[]("u_creat") : 0);
-
-   if (creator)
-      {
-      obj = U_SYSCALL_NO_PARAM(creator);
-
-      U_INTERNAL_DUMP("obj = %p", obj)
-      }
-}
-
-void* UPlugIn<void*>::create(const char* name, uint32_t name_len)
-{
-   U_TRACE(0, "UPlugIn<void*>::create(%.*S,%u)", name_len, name, name_len)
+   U_TRACE(0, "UPlugIn<void*>::create(%.*S,%u)", _name_len, _name, _name_len)
 
    UPlugIn<void*>* item = U_NEW(UPlugIn<void*>);
 
    item->next = first;
    first      = item;
 
-   item->_create(name, name_len);
+   item->name     = strndup(_name, _name_len);
+   item->name_len = _name_len;
+
+   char buffer[U_PATH_MAX];
+
+   (void) snprintf(buffer, U_PATH_MAX, U_FMT_LIBPATH, U_PATH_CONV(plugin_dir), _name_len, _name);
+
+   if (item->UDynamic::load(buffer))
+      {
+      (void) sprintf(buffer, "u_creat_%.*s", _name_len, _name);
+
+      pvPF creator = (pvPF) item->operator[](buffer);
+
+      if (creator)
+         {
+         item->obj = creator();
+
+         U_INTERNAL_DUMP("obj = %p", item->obj)
+         }
+      }
 
    U_RETURN(item->obj);
 }
 
-UPlugIn<void*>* UPlugIn<void*>::getObjWrapper(void* obj)
+UPlugIn<void*>* UPlugIn<void*>::getObjWrapper(void* _obj)
 {
-   U_TRACE(0, "UPlugIn<void*>::getObjWrapper(%p)", obj)
+   U_TRACE(0, "UPlugIn<void*>::getObjWrapper(%p)", _obj)
 
    for (UPlugIn<void*>* item = first; item; item = item->next)
       {
-      if (item->obj == obj) U_RETURN_POINTER(item,UPlugIn<void*>);
+      if (item->obj == _obj) U_RETURN_POINTER(item,UPlugIn<void*>);
       }
 
    U_RETURN_POINTER(0,UPlugIn<void*>);

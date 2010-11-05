@@ -30,7 +30,7 @@ public:
 
    ULock()
       {
-      U_TRACE_REGISTER_OBJECT(0, ULock, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, ULock, "")
 
       sem    = 0;
       locked = false;

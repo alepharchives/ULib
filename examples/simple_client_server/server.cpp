@@ -28,7 +28,7 @@ public:
 
    UClientImageExample() : UClientImage<UTCPSocket>()
       {
-      U_TRACE_REGISTER_OBJECT(5, UClientImageExample, "", 0)
+      U_TRACE_REGISTER_OBJECT(5, UClientImageExample, "")
       }
 
    ~UClientImageExample()
@@ -98,7 +98,7 @@ public:
 
       // manage config file
 
-      if (argv[optind] == NULL) U_ERROR("argument 'file_config' not specified...", 0);
+      if (argv[optind] == NULL) U_ERROR("argument 'file_config' not specified...");
 
       request_response  = new UVector<UString>();
 

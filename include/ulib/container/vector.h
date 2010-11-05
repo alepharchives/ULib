@@ -309,7 +309,7 @@ public:
 
       U_INTERNAL_ASSERT_RANGE(2,_length,_capacity)
 
-      U_SYSCALL_VOID(qsort, "%p,%d,%d,%p", (void*)vec, (size_t)_length, sizeof(void*), compare_obj);
+      U_SYSCALL_VOID(qsort, "%p,%u,%d,%p", (void*)vec, _length, sizeof(void*), compare_obj);
       }
 
 #ifdef DEBUG

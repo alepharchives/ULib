@@ -39,6 +39,7 @@ dist-hook:
 		$(distdir)/tests/examples/TSA/DB/log \
 		$(distdir)/tests/examples/TSA/DB/.rnd \
 		$(distdir)/tests/examples/TSA/response/* \
+		$(distdir)/tests/examples/www.sito1.com \
 		$(distdir)/tests/examples/CSP/DB_CA/CA* \
 		$(distdir)/tests/examples/CSP/DB_CA/log \
 		$(distdir)/tests/examples/CSP/DB_CA/.rnd \

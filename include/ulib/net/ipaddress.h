@@ -52,7 +52,7 @@ public:
 
    UIPAllow()
       {
-      U_TRACE_REGISTER_OBJECT(0, UIPAllow, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UIPAllow, "")
       }
 
    ~UIPAllow()
@@ -147,7 +147,7 @@ public:
 
    UIPAddress()
       {
-      U_TRACE_REGISTER_OBJECT(0, UIPAddress, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UIPAddress, "")
       }
 
    ~UIPAddress()
@@ -167,30 +167,6 @@ public:
    // A boolean value is used to indicate if this points to an IPv6 or IPv4 address.
 
    void setAddress(void* address, bool bIPv6 = false);
-
-protected:
-
-   /****************************************************************************/
-   /* This method is used to set the contents of the iAddressLength and        */
-   /* pcAddress member variables. Address Length bytes are copied from the     */
-   /* source address to the pcAddress array. This array is 16 bytes long, long */
-   /* enough to hold both IPv4 and IPv6 addresses.                             */
-   /****************************************************************************/
-
-   void setAddress(const char* pcNewAddress, int iNewAddressLength)
-      {
-      U_TRACE(1, "UIPAddress::setAddress(%S,%d)", pcNewAddress, iNewAddressLength)
-
-      U_CHECK_MEMORY
-
-      iAddressLength = iNewAddressLength;
-
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", pcAddress.p, pcNewAddress, iAddressLength);
-
-      U_INTERNAL_DUMP("addr = %u", getInAddr())
-      }
-
-public:
 
    // Returns a constant integer of the address family represented by the UIPAddress.
 
@@ -292,6 +268,15 @@ protected:
 
    void resolveHostName();
    void resolveStrAddress();
+
+   /****************************************************************************/
+   /* This method is used to set the contents of the iAddressLength and        */
+   /* pcAddress member variables. Address Length bytes are copied from the     */
+   /* source address to the pcAddress array. This array is 16 bytes long, long */
+   /* enough to hold both IPv4 and IPv6 addresses.                             */
+   /****************************************************************************/
+
+   void setAddress(const char* pcNewAddress, int iNewAddressLength);
 
 private:
    friend class USocket;

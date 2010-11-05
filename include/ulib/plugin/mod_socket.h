@@ -49,7 +49,7 @@ class UCommand;
 class U_EXPORT UWebSocketPlugIn : public UServerPlugIn {
 public:
 
-   static UString* str_USE_SIZE_PREAMBLE;
+   static const UString* str_USE_SIZE_PREAMBLE;
 
    static void str_allocate();
 
@@ -57,7 +57,7 @@ public:
 
    UWebSocketPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, UWebSocketPlugIn, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UWebSocketPlugIn, "")
 
       command = 0;
 

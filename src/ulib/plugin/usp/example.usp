@@ -22,7 +22,7 @@
     <blockquote>
       <table width="750" cellpadding="5">
         <tr>
-          <td bgcolor="#E0E0FF"><% U_DYNAMIC_PAGE_OUTPUT("ULib Servlet Page (USP): %N (pid %P) [%U@%H] - %D", 0); %></td>
+          <td bgcolor="#E0E0FF"><% U_DYNAMIC_PAGE_OUTPUT("ULib Servlet Page (USP): %N (pid %P) [%U@%H] - %D"); %></td>
         </tr>
       </table>
     </blockquote>

@@ -167,7 +167,7 @@ public:
 
             if (U_STRING_FIND(*content, 0, "<?xml-stylesheet type=\"text/xsl\"") != U_NOT_FOUND)
                {
-               U_INTERNAL_DUMP("FOUND XML WITH stylesheet", 0)
+               U_INTERNAL_DUMP("FOUND XML WITH stylesheet")
 
                static int fd_stderr;
 
@@ -621,7 +621,7 @@ public:
 
       if (content->empty())
          {
-         U_ERROR("EMPTY OR UNEXISTANT FILE", 0);
+         U_ERROR("EMPTY OR UNEXISTANT FILE");
 
          U_RETURN(false);
          }
@@ -688,7 +688,7 @@ public:
 
       filename = argv[optind];
 
-      if (filename == 0) U_ERROR("document not specified...", 0);
+      if (filename == 0) U_ERROR("document not specified...");
 
       U_INTERNAL_DUMP("htmlview = %b treeview = %b inner_p7 = %b", htmlview, treeview, inner_p7)
 
@@ -701,7 +701,7 @@ public:
             {
             dialog = U_NEW(UDialog(0, 24, 80));
 
-            if (UDialog::isXdialog() == false) U_ERROR("I don't find Xdialog...", 0);
+            if (UDialog::isXdialog() == false) U_ERROR("I don't find Xdialog...");
 
             output = U_NEW(UString(U_CAPACITY));
             }

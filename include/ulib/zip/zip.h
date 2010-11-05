@@ -73,11 +73,11 @@ public:
 
    UString archive(const char** add_to_filenames);
 
-   static bool archive(const char* zipfile, const char** filenames)
+   static bool archive(const char* zipfile, const char** _filenames)
       {
-      U_TRACE(1, "UZIP::archive(%S,%p)", zipfile, filenames)
+      U_TRACE(1, "UZIP::archive(%S,%p)", zipfile, _filenames)
 
-      bool result = (U_SYSCALL(zip_archive, "%S,%p", zipfile, filenames) == 0);
+      bool result = (U_SYSCALL(zip_archive, "%S,%p", zipfile, _filenames) == 0);
 
       U_RETURN(result);
       }

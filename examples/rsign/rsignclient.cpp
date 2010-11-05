@@ -38,7 +38,7 @@ public:
 
       RSIGN_SIGN()
          {
-         U_TRACE_REGISTER_OBJECT(5, RSIGN_SIGN, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, RSIGN_SIGN, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("SIG2");
          }

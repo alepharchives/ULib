@@ -106,11 +106,11 @@ public:
 
       UServices::readEOF(STDIN_FILENO, x);
 
-      if (x.empty()) U_ERROR("cannot read data from <stdin>...", 0);
+      if (x.empty()) U_ERROR("cannot read data from <stdin>...");
 
       content.setBuffer(x.size());
 
-      if (UBase64::decode(x, content) == false) U_ERROR("decoding data read failed...", 0);
+      if (UBase64::decode(x, content) == false) U_ERROR("decoding data read failed...");
 
       // manage arguments...
 
@@ -119,14 +119,14 @@ public:
                               ? cfg[U_STRING_FROM_CONSTANT("XAdES-L.ArchiveTimeStamp")]
                               : UString(U_ARCHIVE_TIMESTAMP));
 
-      if (archive_timestamp.empty()) U_ERROR("error on archive timestamp: empty", 0);
+      if (archive_timestamp.empty()) U_ERROR("error on archive timestamp: empty");
 
       schema = ( U_SCHEMA == 0 ||
                 *U_SCHEMA == '\0'
                   ? cfg[U_STRING_FROM_CONSTANT("XAdES-L.Schema")]
                   : UString(U_SCHEMA));
 
-      if (schema.empty()) U_ERROR("error on XAdES schema: empty", 0);
+      if (schema.empty()) U_ERROR("error on XAdES schema: empty");
 
       UXML2Schema XAdES_schema(UFile::contentOf(schema));
 
@@ -140,7 +140,7 @@ public:
 
       UXML2Document document(content);
 
-      if (XAdES_schema.validate(document) == false) U_ERROR("error on input data: not XAdES", 0);
+      if (XAdES_schema.validate(document) == false) U_ERROR("error on input data: not XAdES");
 
       // manage arguments...
 

@@ -87,7 +87,7 @@ public:
           ldap.bind(LDAP_rootdn.c_str(), LDAP_rootpw.c_str()) == false)
 
          {
-         U_ERROR("login to LDAP failed...", 0);
+         U_ERROR("login to LDAP failed...");
          }
 
       // search to LDAP
@@ -99,7 +99,7 @@ public:
 
       n = ldap.search(buffer, LDAP_SCOPE_BASE, (char**)attr_name);
 
-      if (n != 1) U_ERROR("search error on ldap...", 0);
+      if (n != 1) U_ERROR("search error on ldap...");
 
       ULDAPEntry entry(2, attr_name, 1);
 

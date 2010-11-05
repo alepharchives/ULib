@@ -23,7 +23,7 @@ public:
 
    URUBY()
       {
-      U_TRACE_REGISTER_OBJECT(0, URUBY, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, URUBY, "")
 
       result = 0;
       }

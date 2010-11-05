@@ -49,7 +49,7 @@ static ub1 data_descriptor[16];
 
 static void init_headers(void)
 {
-   U_INTERNAL_TRACE("init_headers()", 0)
+   U_INTERNAL_TRACE("init_headers()")
 
    /* packing file header */
 
@@ -444,7 +444,7 @@ static int add_to_zip(int fd, const char* file)
       PACK_UB2(file_header, LOC_FNLEN,   nlen);
       PACK_UB4(file_header, LOC_MODTIME, mod_time);
 
-      U_INTERNAL_TRACE("adding: %s (in=%d) (out=%d) (stored 0%%)", fullname, 0, 0)
+      U_INTERNAL_TRACE("adding: %s (in=0) (out=0) (stored 0%%)", fullname)
 
       ze = (zipentry*) calloc(1, sizeof(zipentry)); /* clear all the fields */
 
@@ -481,7 +481,7 @@ static int add_to_zip(int fd, const char* file)
 
          if (add_to_zip(fd, fullname))
             {
-            U_INTERNAL_TRACE("Error adding file to zip", 0)
+            U_INTERNAL_TRACE("Error adding file to zip")
 
             return 1;
             }
@@ -504,7 +504,7 @@ static int add_to_zip(int fd, const char* file)
 
       if (add_file_to_zip(fd, add_fd, file, &statbuf))
          {
-         U_INTERNAL_TRACE("Error adding file to zip", 0)
+         U_INTERNAL_TRACE("Error adding file to zip")
 
          return 1;
          }
@@ -523,7 +523,7 @@ static int filename_len;
 
 static void zip_close(void)
 {
-   U_INTERNAL_TRACE("zip_close()", 0)
+   U_INTERNAL_TRACE("zip_close()")
 
    if (filename != 0)
       {
@@ -536,7 +536,7 @@ static void zip_close(void)
    if (zipfd == -1 ||
        close(zipfd) != 0)
       {
-      U_INTERNAL_TRACE("Error closing zip archive", 0)
+      U_INTERNAL_TRACE("Error closing zip archive")
       }
 }
 
@@ -664,7 +664,7 @@ static ub4 signature, usize, csize, crc;
 
 static int zip_read_entry(void)
 {
-   U_INTERNAL_TRACE("zip_read_entry()", 0)
+   U_INTERNAL_TRACE("zip_read_entry()")
 
    if ((rdamt = pb_read(&pbf, scratch, 4)) != 4)
       {
@@ -679,7 +679,7 @@ static int zip_read_entry(void)
 
    if (signature == 0x08074b50)
       {
-      U_INTERNAL_TRACE("skipping data_descriptor", 0)
+      U_INTERNAL_TRACE("skipping data_descriptor")
 
       pb_read(&pbf, scratch, 12);
 
@@ -688,7 +688,7 @@ static int zip_read_entry(void)
 
    if (signature == 0x02014b50)
       {
-      U_INTERNAL_TRACE("Central header reached... we're all done", 0)
+      U_INTERNAL_TRACE("Central header reached... we're all done")
 
       return 1;
       }
@@ -901,7 +901,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
                }
             else if (S_ISDIR(sbuf.st_mode))
                {
-               U_INTERNAL_TRACE("Directory exists", 0)
+               U_INTERNAL_TRACE("Directory exists")
 
                continue;
                }
@@ -912,7 +912,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
                return 0;
                }
 
-            U_INTERNAL_TRACE("Making directory...", 0)
+            U_INTERNAL_TRACE("Making directory...")
 
             if (mkdir(tmp_buff, 0755) < 0)
                {
@@ -942,7 +942,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
          if (f_fd < 0)
             {
-            U_INTERNAL_TRACE("Error extracting ZIP archive", 0)
+            U_INTERNAL_TRACE("Error extracting ZIP archive")
 
             perror((const char*)filename);
 
@@ -953,7 +953,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
       if (method != 8 &&
           (flags & 0x0008))
          {
-         U_INTERNAL_TRACE("Error: not compressed but data_descriptor", 0)
+         U_INTERNAL_TRACE("Error: not compressed but data_descriptor")
 
          return 0;
          }
@@ -1016,7 +1016,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
          if (signature != 0x08074b50)
             {
-            U_INTERNAL_TRACE("Error: missing data_descriptor", 0)
+            U_INTERNAL_TRACE("Error: missing data_descriptor")
 
             return 0;
             }
@@ -1094,7 +1094,7 @@ unsigned zip_get_content(const char* zipdata, unsigned datalen, char*** filename
       if (method != 8 &&
           (flags & 0x0008))
          {
-         U_INTERNAL_TRACE("Error: not compressed but data_descriptor", 0)
+         U_INTERNAL_TRACE("Error: not compressed but data_descriptor")
 
          return 0;
          }
@@ -1146,7 +1146,7 @@ unsigned zip_get_content(const char* zipdata, unsigned datalen, char*** filename
 
          if (signature != 0x08074b50)
             {
-            U_INTERNAL_TRACE("Error: missing data_descriptor", 0)
+            U_INTERNAL_TRACE("Error: missing data_descriptor")
 
             return 0;
             }

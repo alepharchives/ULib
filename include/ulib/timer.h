@@ -32,7 +32,7 @@ public:
 
    UTimer()
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimer, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UTimer, "")
 
       next  = 0;
       alarm = 0;
@@ -69,13 +69,13 @@ public:
    static void insert(UEventTime* alarm,                  bool set_timer = true);
    static void  erase(UEventTime* alarm, bool flag_reuse, bool set_timer = true);
 
-   static bool isHandler(UEventTime* alarm)
+   static bool isHandler(UEventTime* _alarm)
       {
-      U_TRACE(0, "UTimer::isHandler(%p)", alarm)
+      U_TRACE(0, "UTimer::isHandler(%p)", _alarm)
 
       for (UTimer* item = first; item; item = item->next)
          {
-         if (item->alarm == alarm) U_RETURN(true);
+         if (item->alarm == _alarm) U_RETURN(true);
          }
 
       U_RETURN(false);
@@ -95,9 +95,11 @@ public:
    friend U_EXPORT ostream& operator<<(ostream& os, const UTimer& t);
 
 #ifdef DEBUG
-   static bool invariant();
    static void printInfo(ostream& os);
    const char* dump(bool reset) const;
+#endif
+#if defined(DEBUG) || defined(U_TEST)
+   static bool invariant();
 #endif
 
 protected:

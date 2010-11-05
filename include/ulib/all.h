@@ -1,5 +1,11 @@
 // all.h
 
+/*
+#if defined(U_ALL_CPP) && !defined(DEBUG)
+#  define U_TEST
+#endif
+*/
+
 #include <ulib/log.h>
 #include <ulib/cache.h>
 #include <ulib/timer.h>
@@ -12,6 +18,7 @@
 #include <ulib/query/parser.h>
 #include <ulib/net/udpsocket.h>
 #include <ulib/mime/multipart.h>
+#include <ulib/net/client/ftp.h>
 #include <ulib/net/client/http.h>
 #include <ulib/net/client/smtp.h>
 #include <ulib/net/client/pop3.h>

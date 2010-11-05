@@ -22,10 +22,10 @@
 #  include <ulib/net/unixsocket.h>
 #endif
 
-U_CREAT_FUNC(USCGIPlugIn)
+U_CREAT_FUNC(mod_scgi, USCGIPlugIn)
 
-UString* USCGIPlugIn::str_SCGI_URI_MASK;
-UString* USCGIPlugIn::str_SCGI_KEEP_CONN;
+const UString* USCGIPlugIn::str_SCGI_URI_MASK;
+const UString* USCGIPlugIn::str_SCGI_KEEP_CONN;
 
 void USCGIPlugIn::str_allocate()
 {
@@ -101,15 +101,15 @@ int USCGIPlugIn::handlerInit()
 
       if (connection->connect())
          {
-         U_SRV_LOG_VAR("connection to the scgi-backend %.*S accepted", U_STRING_TO_TRACE(connection->host_port));
+         U_SRV_LOG("connection to the scgi-backend %.*S accepted", U_STRING_TO_TRACE(connection->host_port));
 
-         U_SRV_LOG_MSG("initialization of plugin success");
+         U_SRV_LOG("initialization of plugin success");
 
          U_RETURN(U_PLUGIN_HANDLER_GO_ON);
          }
       }
 
-   U_SRV_LOG_MSG("initialization of plugin FAILED");
+   U_SRV_LOG("initialization of plugin FAILED");
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }

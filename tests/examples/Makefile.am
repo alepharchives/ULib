@@ -5,7 +5,7 @@ MAINTAINERCLEANFILES	= Makefile.in
 DEFAULT_INCLUDES =  -I. -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/examples/http_header/include
 
 EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN nocat wi-auth WAGSM RA icons ws IR/WEB IR/benchmark IR/doc_dir *.cfg *.ini *.properties *.test *.sh \
-				 index.html 100*.html .htpasswd .htdigest cgi-bin www.sito?.com error_msg workflow doc_parse favicon.ico robots.txt SSI
+				 index.html 100*.html .htpasswd .htdigest cgi-bin www.sito?.com error_msg workflow doc_parse favicon.ico robots.txt SSI css js
 
 DEFS  = -DU_TEST @DEFS@
 

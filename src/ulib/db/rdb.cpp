@@ -14,7 +14,9 @@
 #include <ulib/db/rdb.h>
 #include <ulib/container/vector.h>
 
-UCDB::datum URDB::key1;
+URDB*             URDB::ptr_rdb;
+UCDB::datum       URDB::key1;
+UVector<UString>* URDB::kvec;
 
 // Search one key/data pair in the cache.
 // To save code, I use only a single function to do the lookup in the hash table and binary search tree
@@ -127,9 +129,9 @@ bool URDB::open(uint32_t log_size, int flag)
        journal.ftruncate(journal.size() + (log_size ? log_size : 512L*1024L)))
       {
 #if defined(__CYGWIN__) || defined(__MINGW32__)
-      off_t journal_size =       journal.st_size;
+      uint32_t journal_size =       journal.st_size;
 #  else
-      off_t journal_size = U_max(journal.st_size, 32L*1024L*1024L); // oversize mmap for optimize resizeJournal() with ftruncate()
+      uint32_t journal_size = U_max(journal.st_size, 32*1024*1024); // oversize mmap for optimize resizeJournal() with ftruncate()
 #  endif
 
       if (journal.memmap(PROT_READ | PROT_WRITE, 0, 0, journal_size))
@@ -244,8 +246,6 @@ char* URDB::parseLine(const char* ptr, UCDB::datum* _key, UCDB::datum* _data)
 }
 
 // Call function for all entry
-
-static URDB* ptr_rdb;
 
 U_NO_EXPORT void URDB::makeAdd1(uint32_t offset) // entry presenti nella cache...
 {
@@ -391,9 +391,9 @@ bool URDB::reorganize()
 
          makeAdd();
 
-         off_t pos = cdb.makeFinish(false);
+         uint32_t pos = cdb.makeFinish(false);
 
-         U_INTERNAL_ASSERT(pos <= (off_t)cdb.st_size)
+         U_INTERNAL_ASSERT(pos <= cdb.st_size)
 
 #     if defined(__CYGWIN__) || defined(__MINGW32__)
          cdb.munmap(); // for ftruncate()...
@@ -749,12 +749,12 @@ U_NO_EXPORT inline bool URDB::resizeJournal(char* ptr)
 
    U_CHECK_MEMORY
 
-   off_t    _size = (journal.st_size / 2),
+   uint32_t _size = (journal.st_size / 2),
          oversize = (ptr - RDB_eof);
 
    if (oversize < _size) oversize = _size;
 
-   U_INTERNAL_DUMP("oversize = %ld", oversize)
+   U_INTERNAL_DUMP("oversize = %u", oversize)
 
 // msync();
 
@@ -807,9 +807,9 @@ U_NO_EXPORT inline bool URDB::resizeJournal(char* ptr)
    U_RETURN(false);
 }
 
-U_NO_EXPORT bool URDB::writev(const struct iovec* iov, int n, uint32_t _size)
+U_NO_EXPORT bool URDB::writev(const struct iovec* _iov, int n, uint32_t _size)
 {
-   U_TRACE(0, "URDB::writev(%p,%d,%u)", iov, n, _size)
+   U_TRACE(0, "URDB::writev(%p,%d,%u)", _iov, n, _size)
 
    U_INTERNAL_ASSERT_MAJOR(_size,0)
 
@@ -827,7 +827,7 @@ U_NO_EXPORT bool URDB::writev(const struct iovec* iov, int n, uint32_t _size)
 
    for (int i = 0; i < n; ++i)
       {
-      (void) memcpy(journal_ptr, iov[i].iov_base, iov[i].iov_len);
+      (void) memcpy(journal_ptr, _iov[i].iov_base, _iov[i].iov_len);
 
       // NB: Una volta scritti i dati sul journal si cambiano i riferimenti in memoria ai dati
       // e alle chiavi in modo che puntino appunto sul journal mappato in memoria...
@@ -844,7 +844,7 @@ U_NO_EXPORT bool URDB::writev(const struct iovec* iov, int n, uint32_t _size)
          else if (i == 4) data.dptr = journal_ptr;
          }
 
-      journal_ptr += iov[i].iov_len;
+      journal_ptr += _iov[i].iov_len;
       }
 
    RDB_off = (journal_ptr - journal.map);
@@ -867,10 +867,10 @@ bool URDB::logJournal(int op)
 
       U_INTERNAL_DUMP("hrec = { %u, %u }", hrec.klen, hrec.dlen)
 
-      struct iovec iov[2] = { { (caddr_t)&hrec, sizeof(UCDB::cdb_record_header) },
-                              { (caddr_t)key.dptr, key.dsize } };
+      struct iovec _iov[2] = { { (caddr_t)&hrec, sizeof(UCDB::cdb_record_header) },
+                               { (caddr_t)key.dptr, key.dsize } };
 
-      if (writev(iov, 2, sizeof(UCDB::cdb_record_header) + key.dsize) == false) U_RETURN(false);
+      if (writev(_iov, 2, sizeof(UCDB::cdb_record_header) + key.dsize) == false) U_RETURN(false);
       }
    else if (op == 1) // store
       {
@@ -878,11 +878,11 @@ bool URDB::logJournal(int op)
 
       U_INTERNAL_DUMP("hrec = { %u, %u }", hrec.klen, hrec.dlen)
 
-      struct iovec iov[3] = { { (caddr_t)&hrec, sizeof(UCDB::cdb_record_header) },
-                              { (caddr_t) key.dptr,  key.dsize },
-                              { (caddr_t)data.dptr, data.dsize } };
+      struct iovec _iov[3] = { { (caddr_t)&hrec, sizeof(UCDB::cdb_record_header) },
+                               { (caddr_t) key.dptr,  key.dsize },
+                               { (caddr_t)data.dptr, data.dsize } };
 
-      if (writev(iov, 3, sizeof(UCDB::cdb_record_header) + key.dsize + data.dsize) == false) U_RETURN(false);
+      if (writev(_iov, 3, sizeof(UCDB::cdb_record_header) + key.dsize + data.dsize) == false) U_RETURN(false);
       }
    else // substitute
       {
@@ -899,13 +899,13 @@ bool URDB::logJournal(int op)
 
       U_INTERNAL_DUMP("hrec1 = { %u, %u } hrec = { %u, %u }", hrec1.klen, hrec1.dlen, hrec.klen, hrec.dlen)
 
-      struct iovec iov[5] = { { (caddr_t)&hrec1, sizeof(UCDB::cdb_record_header) },
-                              { (caddr_t)key1.dptr, key1.dsize },
-                              { (caddr_t)&hrec, sizeof(UCDB::cdb_record_header) },
-                              { (caddr_t)key.dptr, key.dsize },
-                              { (caddr_t)data.dptr, data.dsize } };
+      struct iovec _iov[5] = { { (caddr_t)&hrec1, sizeof(UCDB::cdb_record_header) },
+                               { (caddr_t)key1.dptr, key1.dsize },
+                               { (caddr_t)&hrec, sizeof(UCDB::cdb_record_header) },
+                               { (caddr_t)key.dptr, key.dsize },
+                               { (caddr_t)data.dptr, data.dsize } };
 
-      if (writev(iov, 5, 2*sizeof(UCDB::cdb_record_header) + key1.dsize + key.dsize + data.dsize) == false) U_RETURN(false);
+      if (writev(_iov, 5, 2*sizeof(UCDB::cdb_record_header) + key1.dsize + key.dsize + data.dsize) == false) U_RETURN(false);
       }
 
    U_RETURN(true);

@@ -133,7 +133,7 @@ void u_dgst_init(int alg, const char* restrict _key, uint32_t keylen)
 
 void u_dgst_reset(void) /* Reset the hash */
 {
-   U_INTERNAL_TRACE("u_dgst_reset()", 0)
+   U_INTERNAL_TRACE("u_dgst_reset()")
 
    U_INTERNAL_PRINT("alg = %d", u_hashType)
 

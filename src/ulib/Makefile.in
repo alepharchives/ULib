@@ -85,8 +85,23 @@ target_triplet = @target@
 @MINGW_TRUE@am__append_36 = base/win32/mingw32.c
 @MINGW_FALSE@am__append_37 = net/unixsocket.cpp
 
+# Handler static/dynamic plugin
+@STATIC_HANDLER_RPC_TRUE@am__append_38 = plugin/mod_rpc.cpp
+@STATIC_HANDLER_HTTP_TRUE@am__append_39 = plugin/mod_http.cpp
+@STATIC_HANDLER_TSA_TRUE@am__append_40 = plugin/mod_tsa.cpp
+@STATIC_HANDLER_NOCAT_TRUE@am__append_41 = plugin/mod_nocat.cpp
+@STATIC_HANDLER_ECHO_TRUE@am__append_42 = plugin/mod_echo.cpp
+@STATIC_HANDLER_FCGI_TRUE@am__append_43 = plugin/mod_fcgi.cpp
+@STATIC_HANDLER_SCGI_TRUE@am__append_44 = plugin/mod_scgi.cpp
+@STATIC_HANDLER_STREAM_TRUE@am__append_45 = plugin/mod_stream.cpp
+@STATIC_HANDLER_SOCKET_TRUE@am__append_46 = plugin/mod_socket.cpp
+@STATIC_HANDLER_SSI_TRUE@am__append_47 = plugin/mod_ssi.cpp
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__append_48 = plugin/mod_soap.cpp
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__append_49 = plugin/mod_proxy.cpp
+@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__append_50 = plugin/mod_geoip/mod_geoip.cpp
+
 # ---------- Win32 stuff ----------
-@MINGW_TRUE@am__append_38 = -export-symbols $(srcdir)/@ULIB@.def -no-undefined -Wl,ULib-win32-res.o
+@MINGW_TRUE@am__append_51 = -export-symbols $(srcdir)/@ULIB@.def -no-undefined -Wl,ULib-win32-res.o
 subdir = src/ulib
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/ULib.pc.in $(srcdir)/ULib.rc.in
@@ -174,7 +189,12 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	xml/soap/soap_encoder.cpp xml/libxml2/node.cpp \
 	xml/libxml2/document.cpp xml/libxml2/schema.cpp \
 	magic/magic.cpp mysql/mysql.cpp libevent/event.cpp \
-	net/unixsocket.cpp all_c.c all_cpp.cpp
+	net/unixsocket.cpp plugin/mod_rpc.cpp plugin/mod_http.cpp \
+	plugin/mod_tsa.cpp plugin/mod_nocat.cpp plugin/mod_echo.cpp \
+	plugin/mod_fcgi.cpp plugin/mod_scgi.cpp plugin/mod_stream.cpp \
+	plugin/mod_socket.cpp plugin/mod_ssi.cpp plugin/mod_soap.cpp \
+	plugin/mod_proxy.cpp plugin/mod_geoip/mod_geoip.cpp all_c.c \
+	all_cpp.cpp
 @DEBUG_TRUE@am__objects_1 = base_trace.lo
 @GETOPT_LONG_FALSE@am__objects_2 = getopt_long.lo
 @MREMAP_FALSE@am__objects_3 = mremap.lo
@@ -228,7 +248,20 @@ am__objects_21 = base.lo base_error.lo hash.lo utility.lo minilzo.lo \
 @MYSQL_TRUE@am__objects_36 = mysql.lo
 @LIBEVENT_TRUE@am__objects_37 = event.lo
 @MINGW_FALSE@am__objects_38 = unixsocket.lo
-am__objects_39 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo \
+@STATIC_HANDLER_RPC_TRUE@am__objects_39 = mod_rpc.lo
+@STATIC_HANDLER_HTTP_TRUE@am__objects_40 = mod_http.lo
+@STATIC_HANDLER_TSA_TRUE@am__objects_41 = mod_tsa.lo
+@STATIC_HANDLER_NOCAT_TRUE@am__objects_42 = mod_nocat.lo
+@STATIC_HANDLER_ECHO_TRUE@am__objects_43 = mod_echo.lo
+@STATIC_HANDLER_FCGI_TRUE@am__objects_44 = mod_fcgi.lo
+@STATIC_HANDLER_SCGI_TRUE@am__objects_45 = mod_scgi.lo
+@STATIC_HANDLER_STREAM_TRUE@am__objects_46 = mod_stream.lo
+@STATIC_HANDLER_SOCKET_TRUE@am__objects_47 = mod_socket.lo
+@STATIC_HANDLER_SSI_TRUE@am__objects_48 = mod_ssi.lo
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__objects_49 = mod_soap.lo
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__objects_50 = mod_proxy.lo
+@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__objects_51 = mod_geoip.lo
+am__objects_52 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo \
 	header.lo entity.lo multipart.lo vector.lo hash_map.lo tree.lo \
 	interrupt.lo compress.lo services.lo semaphore.lo base64.lo \
 	lock.lo string_ext.lo socket_ext.lo uhttp.lo ring_buffer.lo \
@@ -244,9 +277,13 @@ am__objects_39 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo \
 	$(am__objects_28) $(am__objects_29) $(am__objects_30) \
 	$(am__objects_31) $(am__objects_32) $(am__objects_33) \
 	$(am__objects_34) $(am__objects_35) $(am__objects_36) \
-	$(am__objects_37) $(am__objects_38)
+	$(am__objects_37) $(am__objects_38) $(am__objects_39) \
+	$(am__objects_40) $(am__objects_41) $(am__objects_42) \
+	$(am__objects_43) $(am__objects_44) $(am__objects_45) \
+	$(am__objects_46) $(am__objects_47) $(am__objects_48) \
+	$(am__objects_49) $(am__objects_50) $(am__objects_51)
 @FINAL_FALSE@am_lib@ULIB@_la_OBJECTS = $(am__objects_21) \
-@FINAL_FALSE@	$(am__objects_39)
+@FINAL_FALSE@	$(am__objects_52)
 @FINAL_TRUE@am_lib@ULIB@_la_OBJECTS = all_c.lo all_cpp.lo
 lib@ULIB@_la_OBJECTS = $(am_lib@ULIB@_la_OBJECTS)
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
@@ -445,6 +482,34 @@ SSL_FALSE = @SSL_FALSE@
 SSL_TRUE = @SSL_TRUE@
 SSL_TS_FALSE = @SSL_TS_FALSE@
 SSL_TS_TRUE = @SSL_TS_TRUE@
+STATIC_HANDLER_ECHO_FALSE = @STATIC_HANDLER_ECHO_FALSE@
+STATIC_HANDLER_ECHO_TRUE = @STATIC_HANDLER_ECHO_TRUE@
+STATIC_HANDLER_FCGI_FALSE = @STATIC_HANDLER_FCGI_FALSE@
+STATIC_HANDLER_FCGI_TRUE = @STATIC_HANDLER_FCGI_TRUE@
+STATIC_HANDLER_GEOIP_FALSE = @STATIC_HANDLER_GEOIP_FALSE@
+STATIC_HANDLER_GEOIP_TRUE = @STATIC_HANDLER_GEOIP_TRUE@
+STATIC_HANDLER_HTTP_FALSE = @STATIC_HANDLER_HTTP_FALSE@
+STATIC_HANDLER_HTTP_TRUE = @STATIC_HANDLER_HTTP_TRUE@
+STATIC_HANDLER_NOCAT_FALSE = @STATIC_HANDLER_NOCAT_FALSE@
+STATIC_HANDLER_NOCAT_TRUE = @STATIC_HANDLER_NOCAT_TRUE@
+STATIC_HANDLER_PROXY_FALSE = @STATIC_HANDLER_PROXY_FALSE@
+STATIC_HANDLER_PROXY_TRUE = @STATIC_HANDLER_PROXY_TRUE@
+STATIC_HANDLER_RPC_FALSE = @STATIC_HANDLER_RPC_FALSE@
+STATIC_HANDLER_RPC_TRUE = @STATIC_HANDLER_RPC_TRUE@
+STATIC_HANDLER_SCGI_FALSE = @STATIC_HANDLER_SCGI_FALSE@
+STATIC_HANDLER_SCGI_TRUE = @STATIC_HANDLER_SCGI_TRUE@
+STATIC_HANDLER_SHIB_FALSE = @STATIC_HANDLER_SHIB_FALSE@
+STATIC_HANDLER_SHIB_TRUE = @STATIC_HANDLER_SHIB_TRUE@
+STATIC_HANDLER_SOAP_FALSE = @STATIC_HANDLER_SOAP_FALSE@
+STATIC_HANDLER_SOAP_TRUE = @STATIC_HANDLER_SOAP_TRUE@
+STATIC_HANDLER_SOCKET_FALSE = @STATIC_HANDLER_SOCKET_FALSE@
+STATIC_HANDLER_SOCKET_TRUE = @STATIC_HANDLER_SOCKET_TRUE@
+STATIC_HANDLER_SSI_FALSE = @STATIC_HANDLER_SSI_FALSE@
+STATIC_HANDLER_SSI_TRUE = @STATIC_HANDLER_SSI_TRUE@
+STATIC_HANDLER_STREAM_FALSE = @STATIC_HANDLER_STREAM_FALSE@
+STATIC_HANDLER_STREAM_TRUE = @STATIC_HANDLER_STREAM_TRUE@
+STATIC_HANDLER_TSA_FALSE = @STATIC_HANDLER_TSA_FALSE@
+STATIC_HANDLER_TSA_TRUE = @STATIC_HANDLER_TSA_TRUE@
 STRIP = @STRIP@
 STRNDUP_FALSE = @STRNDUP_FALSE@
 STRNDUP_TRUE = @STRNDUP_TRUE@
@@ -568,10 +633,14 @@ SRC_CPP = internal/common.cpp internal/objectIO.cpp ui/dialog.cpp \
 	$(am__append_27) $(am__append_28) $(am__append_29) \
 	$(am__append_30) $(am__append_31) $(am__append_32) \
 	$(am__append_33) $(am__append_34) $(am__append_35) \
-	$(am__append_37)
+	$(am__append_37) $(am__append_38) $(am__append_39) \
+	$(am__append_40) $(am__append_41) $(am__append_42) \
+	$(am__append_43) $(am__append_44) $(am__append_45) \
+	$(am__append_46) $(am__append_47) $(am__append_48) \
+	$(am__append_49) $(am__append_50)
 @FINAL_FALSE@lib@ULIB@_la_SOURCES = $(SRC_C) $(SRC_CPP)
 @FINAL_TRUE@lib@ULIB@_la_SOURCES = all_c.c all_cpp.cpp
-lib@ULIB@_la_LDFLAGS = $(LIBRARY_LIBTOOL_OPTIONS) $(am__append_38)
+lib@ULIB@_la_LDFLAGS = $(LIBRARY_LIBTOOL_OPTIONS) $(am__append_51)
 lib_LTLIBRARIES = lib@ULIB@.la
 @MINGW_TRUE@lib@ULIB@_la_DEPENDENCIES = ULib-win32-res.o
 @MS_LIB_AVAILABLE_TRUE@noinst_DATA = @ULIB@-$(VERSION).lib
@@ -718,6 +787,19 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mingw32.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/minilzo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mkdtemp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_echo.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_fcgi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_geoip.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_http.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_nocat.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_proxy.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_rpc.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_scgi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_soap.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_socket.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_ssi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_stream.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_tsa.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mremap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multipart.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mysql.Plo@am__quote@
@@ -1659,6 +1741,97 @@ unixsocket.lo: net/unixsocket.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='net/unixsocket.cpp' object='unixsocket.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o unixsocket.lo `test -f 'net/unixsocket.cpp' || echo '$(srcdir)/'`net/unixsocket.cpp
+
+mod_rpc.lo: plugin/mod_rpc.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_rpc.lo -MD -MP -MF "$(DEPDIR)/mod_rpc.Tpo" -c -o mod_rpc.lo `test -f 'plugin/mod_rpc.cpp' || echo '$(srcdir)/'`plugin/mod_rpc.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/mod_rpc.Tpo" "$(DEPDIR)/mod_rpc.Plo"; else rm -f "$(DEPDIR)/mod_rpc.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/mod_rpc.cpp' object='mod_rpc.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_rpc.lo `test -f 'plugin/mod_rpc.cpp' || echo '$(srcdir)/'`plugin/mod_rpc.cpp
+
+mod_http.lo: plugin/mod_http.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_http.lo -MD -MP -MF "$(DEPDIR)/mod_http.Tpo" -c -o mod_http.lo `test -f 'plugin/mod_http.cpp' || echo '$(srcdir)/'`plugin/mod_http.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/mod_http.Tpo" "$(DEPDIR)/mod_http.Plo"; else rm -f "$(DEPDIR)/mod_http.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/mod_http.cpp' object='mod_http.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_http.lo `test -f 'plugin/mod_http.cpp' || echo '$(srcdir)/'`plugin/mod_http.cpp
+
+mod_tsa.lo: plugin/mod_tsa.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_tsa.lo -MD -MP -MF "$(DEPDIR)/mod_tsa.Tpo" -c -o mod_tsa.lo `test -f 'plugin/mod_tsa.cpp' || echo '$(srcdir)/'`plugin/mod_tsa.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/mod_tsa.Tpo" "$(DEPDIR)/mod_tsa.Plo"; else rm -f "$(DEPDIR)/mod_tsa.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/mod_tsa.cpp' object='mod_tsa.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_tsa.lo `test -f 'plugin/mod_tsa.cpp' || echo '$(srcdir)/'`plugin/mod_tsa.cpp
+
+mod_nocat.lo: plugin/mod_nocat.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_nocat.lo -MD -MP -MF "$(DEPDIR)/mod_nocat.Tpo" -c -o mod_nocat.lo `test -f 'plugin/mod_nocat.cpp' || echo '$(srcdir)/'`plugin/mod_nocat.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/mod_nocat.Tpo" "$(DEPDIR)/mod_nocat.Plo"; else rm -f "$(DEPDIR)/mod_nocat.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/mod_nocat.cpp' object='mod_nocat.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_nocat.lo `test -f 'plugin/mod_nocat.cpp' || echo '$(srcdir)/'`plugin/mod_nocat.cpp
+
+mod_echo.lo: plugin/mod_echo.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_echo.lo -MD -MP -MF "$(DEPDIR)/mod_echo.Tpo" -c -o mod_echo.lo `test -f 'plugin/mod_echo.cpp' || echo '$(srcdir)/'`plugin/mod_echo.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/mod_echo.Tpo" "$(DEPDIR)/mod_echo.Plo"; else rm -f "$(DEPDIR)/mod_echo.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/mod_echo.cpp' object='mod_echo.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_echo.lo `test -f 'plugin/mod_echo.cpp' || echo '$(srcdir)/'`plugin/mod_echo.cpp
+
+mod_fcgi.lo: plugin/mod_fcgi.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_fcgi.lo -MD -MP -MF "$(DEPDIR)/mod_fcgi.Tpo" -c -o mod_fcgi.lo `test -f 'plugin/mod_fcgi.cpp' || echo '$(srcdir)/'`plugin/mod_fcgi.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/mod_fcgi.Tpo" "$(DEPDIR)/mod_fcgi.Plo"; else rm -f "$(DEPDIR)/mod_fcgi.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/mod_fcgi.cpp' object='mod_fcgi.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_fcgi.lo `test -f 'plugin/mod_fcgi.cpp' || echo '$(srcdir)/'`plugin/mod_fcgi.cpp
+
+mod_scgi.lo: plugin/mod_scgi.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_scgi.lo -MD -MP -MF "$(DEPDIR)/mod_scgi.Tpo" -c -o mod_scgi.lo `test -f 'plugin/mod_scgi.cpp' || echo '$(srcdir)/'`plugin/mod_scgi.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/mod_scgi.Tpo" "$(DEPDIR)/mod_scgi.Plo"; else rm -f "$(DEPDIR)/mod_scgi.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/mod_scgi.cpp' object='mod_scgi.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_scgi.lo `test -f 'plugin/mod_scgi.cpp' || echo '$(srcdir)/'`plugin/mod_scgi.cpp
+
+mod_stream.lo: plugin/mod_stream.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_stream.lo -MD -MP -MF "$(DEPDIR)/mod_stream.Tpo" -c -o mod_stream.lo `test -f 'plugin/mod_stream.cpp' || echo '$(srcdir)/'`plugin/mod_stream.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/mod_stream.Tpo" "$(DEPDIR)/mod_stream.Plo"; else rm -f "$(DEPDIR)/mod_stream.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/mod_stream.cpp' object='mod_stream.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_stream.lo `test -f 'plugin/mod_stream.cpp' || echo '$(srcdir)/'`plugin/mod_stream.cpp
+
+mod_socket.lo: plugin/mod_socket.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_socket.lo -MD -MP -MF "$(DEPDIR)/mod_socket.Tpo" -c -o mod_socket.lo `test -f 'plugin/mod_socket.cpp' || echo '$(srcdir)/'`plugin/mod_socket.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/mod_socket.Tpo" "$(DEPDIR)/mod_socket.Plo"; else rm -f "$(DEPDIR)/mod_socket.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/mod_socket.cpp' object='mod_socket.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_socket.lo `test -f 'plugin/mod_socket.cpp' || echo '$(srcdir)/'`plugin/mod_socket.cpp
+
+mod_ssi.lo: plugin/mod_ssi.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_ssi.lo -MD -MP -MF "$(DEPDIR)/mod_ssi.Tpo" -c -o mod_ssi.lo `test -f 'plugin/mod_ssi.cpp' || echo '$(srcdir)/'`plugin/mod_ssi.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/mod_ssi.Tpo" "$(DEPDIR)/mod_ssi.Plo"; else rm -f "$(DEPDIR)/mod_ssi.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/mod_ssi.cpp' object='mod_ssi.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_ssi.lo `test -f 'plugin/mod_ssi.cpp' || echo '$(srcdir)/'`plugin/mod_ssi.cpp
+
+mod_soap.lo: plugin/mod_soap.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_soap.lo -MD -MP -MF "$(DEPDIR)/mod_soap.Tpo" -c -o mod_soap.lo `test -f 'plugin/mod_soap.cpp' || echo '$(srcdir)/'`plugin/mod_soap.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/mod_soap.Tpo" "$(DEPDIR)/mod_soap.Plo"; else rm -f "$(DEPDIR)/mod_soap.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/mod_soap.cpp' object='mod_soap.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_soap.lo `test -f 'plugin/mod_soap.cpp' || echo '$(srcdir)/'`plugin/mod_soap.cpp
+
+mod_proxy.lo: plugin/mod_proxy.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_proxy.lo -MD -MP -MF "$(DEPDIR)/mod_proxy.Tpo" -c -o mod_proxy.lo `test -f 'plugin/mod_proxy.cpp' || echo '$(srcdir)/'`plugin/mod_proxy.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/mod_proxy.Tpo" "$(DEPDIR)/mod_proxy.Plo"; else rm -f "$(DEPDIR)/mod_proxy.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/mod_proxy.cpp' object='mod_proxy.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_proxy.lo `test -f 'plugin/mod_proxy.cpp' || echo '$(srcdir)/'`plugin/mod_proxy.cpp
+
+mod_geoip.lo: plugin/mod_geoip/mod_geoip.cpp
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_geoip.lo -MD -MP -MF "$(DEPDIR)/mod_geoip.Tpo" -c -o mod_geoip.lo `test -f 'plugin/mod_geoip/mod_geoip.cpp' || echo '$(srcdir)/'`plugin/mod_geoip/mod_geoip.cpp; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/mod_geoip.Tpo" "$(DEPDIR)/mod_geoip.Plo"; else rm -f "$(DEPDIR)/mod_geoip.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/mod_geoip/mod_geoip.cpp' object='mod_geoip.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_geoip.lo `test -f 'plugin/mod_geoip/mod_geoip.cpp' || echo '$(srcdir)/'`plugin/mod_geoip/mod_geoip.cpp
 
 mostlyclean-libtool:
 	-rm -f *.lo

@@ -31,7 +31,7 @@ X509* UCertificate::readX509(const UString& x, const char* format)
    U_TRACE(1, "UCertificate::readX509(%.*S,%S)", U_STRING_TO_TRACE(x), format)
 
    BIO* in;
-   X509* x509  = 0;
+   X509* _x509 = 0;
    UString tmp = x;
 
    if (format == 0) format = (x.isBinary() ? "DER" : "PEM");
@@ -52,12 +52,12 @@ X509* UCertificate::readX509(const UString& x, const char* format)
 next:
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
-   x509 = (X509*) (U_STREQ(format, "PEM") ? U_SYSCALL(PEM_read_bio_X509, "%p,%p,%p,%p", in, 0, 0, 0)
-                                          : U_SYSCALL(d2i_X509_bio,      "%p,%p",       in, 0));
+   _x509 = (X509*) (U_STREQ(format, "PEM") ? U_SYSCALL(PEM_read_bio_X509, "%p,%p,%p,%p", in, 0, 0, 0)
+                                           : U_SYSCALL(d2i_X509_bio,      "%p,%p",       in, 0));
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
-   U_RETURN_POINTER(x509, X509);
+   U_RETURN_POINTER(_x509, X509);
 }
 
 UString UCertificate::getName(X509_NAME* n, bool ldap)
@@ -168,19 +168,19 @@ bool UCertificate::isSameIssuerAndSubject() const
    U_RETURN(false);
 }
 
-UString UCertificate::getSignable(X509* x509)
+UString UCertificate::getSignable(X509* _x509)
 {
-   U_TRACE(1, "UCertificate::getSignable(%p)", x509)
+   U_TRACE(1, "UCertificate::getSignable(%p)", _x509)
 
-   U_INTERNAL_ASSERT_POINTER(x509)
+   U_INTERNAL_ASSERT_POINTER(_x509)
 
-   unsigned len = U_SYSCALL(i2d_X509_CINF, "%p,%p", x509->cert_info, 0);
+   unsigned len = U_SYSCALL(i2d_X509_CINF, "%p,%p", _x509->cert_info, 0);
 
    UString signable(len);
 
    unsigned char* data = (unsigned char*) signable.data();
 
-   (void) U_SYSCALL(i2d_X509_CINF, "%p,%p", x509->cert_info, &data);
+   (void) U_SYSCALL(i2d_X509_CINF, "%p,%p", _x509->cert_info, &data);
 
 // len = u_strlen(data);
 
@@ -193,7 +193,7 @@ UString UCertificate::checkForSerialNumber(long number)
 {
    U_TRACE(1, "UCertificate::checkForSerialNumber(%ld)", number)
 
-   if (number == 0) U_ERROR("serial number certificate not valid...", 0);
+   if (number == 0) U_ERROR("serial number certificate not valid...");
 
    ASN1_INTEGER* a = ASN1_INTEGER_new();
 

@@ -217,7 +217,7 @@ public:
 
       if (argv[optind] == NULL)
          {
-         U_ERROR("arg <file_template_test> not specified...", 0);
+         U_ERROR("arg <file_template_test> not specified...");
          }
 
       UString pathname(argv[optind]);

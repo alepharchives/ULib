@@ -1,4 +1,5 @@
 POST /path HTTP/1.1
+Host: localhost
 Connection: Keep-Alive
 User-Agent: Mozilla/5.0 (compatible; Konqueror/3.1; Linux; it, en_US, en)
 Pragma: no-cache
@@ -7,7 +8,6 @@ Accept: text/html, image/jpeg, image/png, text/*, image/*, */*
 Accept-Encoding: x-gzip, x-deflate, gzip, deflate, identity
 Accept-Charset: iso-8859-1, utf-8;q=0.5, *;q=0.5
 Accept-Language: it, en
-Host: 127.0.0.1:8080
 Content-Type: application/x-www-form-urlencoded
 Content-Length: 50
 

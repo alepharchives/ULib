@@ -61,7 +61,7 @@ UTranformXPointer::~UTranformXPointer()
 
 UBaseTransform::UBaseTransform()
 {
-   U_TRACE_REGISTER_OBJECT(0, UBaseTransform, "", 0)
+   U_TRACE_REGISTER_OBJECT(0, UBaseTransform, "")
 
    status    = 0;
    hereNode  = 0;

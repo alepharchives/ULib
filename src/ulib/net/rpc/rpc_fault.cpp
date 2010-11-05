@@ -13,12 +13,12 @@
 
 #include <ulib/net/rpc/rpc_fault.h>
 
-UString* URPCFault::str_encode;
-UString* URPCFault::str_sender;
-UString* URPCFault::str_receiver;
-UString* URPCFault::str_MustUnderstand;
-UString* URPCFault::str_VersionMismatch;
-UString* URPCFault::str_DataEncodingUnknown;
+const UString* URPCFault::str_encode;
+const UString* URPCFault::str_sender;
+const UString* URPCFault::str_receiver;
+const UString* URPCFault::str_MustUnderstand;
+const UString* URPCFault::str_VersionMismatch;
+const UString* URPCFault::str_DataEncodingUnknown;
 
 void URPCFault::str_allocate()
 {

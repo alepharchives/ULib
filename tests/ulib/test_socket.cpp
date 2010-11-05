@@ -51,7 +51,7 @@ static void TCPEchoClient(UIPAddress& cEchoServer, int iPortNumber, const char* 
    char pcRecvBuffer[65535];
    UTCPSocket cClientSocket(bIPv6);
 
-   sprintf(pcRecvBuffer, "");
+   pcRecvBuffer[0] = '\0';
 
    printf("TCP %s Echo Client\n\n", (bIPv6)?"IPv6":"IPv4");
 
@@ -113,7 +113,7 @@ static void TCPEchoServer(int iPortNumber, bool bIPv6)
    UTCPSocket cServerSocket(bIPv6);
    cServerSocket.setServer(iPortNumber, 5);
 
-   sprintf(pcBuffer, "");
+   pcBuffer[0] = '\0';
 
    printf("TCP %s Echo Server\n\n", (bIPv6)?"IPv6":"IPv4");
 
@@ -195,7 +195,7 @@ static void UDPEchoClient(UIPAddress& cEchoServer, int iPortNumber, const char* 
    char pcRecvBuffer[65535];
    UUDPSocket cClientSocket(bIPv6);
 
-   sprintf(pcRecvBuffer, "");
+   pcRecvBuffer[0] = '\0';
 
    printf("UDP %s Echo Client\n\n", (bIPv6)?"IPv6":"IPv4");
 
@@ -256,7 +256,7 @@ static void UDPEchoServer(int iPortNumber, bool bIPv6)
    UUDPSocket     cServerSocket(bIPv6);
    cServerSocket.setServer(iPortNumber, 5);
 
-   sprintf(pcBuffer, "");
+   pcBuffer[0] = '\0';
 
    printf("UDP %s Echo Server\n\n", (bIPv6)?"IPv6":"IPv4");
 

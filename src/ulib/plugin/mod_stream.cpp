@@ -17,13 +17,13 @@
 #include <ulib/plugin/mod_stream.h>
 #include <ulib/net/server/server.h>
 
-U_CREAT_FUNC(UStreamPlugIn)
+U_CREAT_FUNC(mod_stream, UStreamPlugIn)
 
 pid_t    UStreamPlugIn::pid = (pid_t)-1;
 
-UString* UStreamPlugIn::str_URI_PATH;
-UString* UStreamPlugIn::str_METADATA;
-UString* UStreamPlugIn::str_CONTENT_TYPE;
+const UString* UStreamPlugIn::str_URI_PATH;
+const UString* UStreamPlugIn::str_METADATA;
+const UString* UStreamPlugIn::str_CONTENT_TYPE;
 
 void UStreamPlugIn::str_allocate()
 {
@@ -141,7 +141,7 @@ int UStreamPlugIn::handlerInit()
 
          content_type.setNullTerminated();
 
-         U_SRV_LOG_MSG("initialization of plugin success");
+         U_SRV_LOG("initialization of plugin success");
 
          U_RETURN(U_PLUGIN_HANDLER_GO_ON);
          }
@@ -171,7 +171,7 @@ int UStreamPlugIn::handlerInit()
       }
 
 end:
-   U_SRV_LOG_MSG("initialization of plugin FAILED");
+   U_SRV_LOG("initialization of plugin FAILED");
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }

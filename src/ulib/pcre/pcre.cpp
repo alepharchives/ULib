@@ -91,7 +91,7 @@ U_NO_EXPORT void UPCRE::zero(int flags)
 
 UPCRE::UPCRE()
 {
-   U_TRACE_REGISTER_OBJECT(0, UPCRE, "", 0)
+   U_TRACE_REGISTER_OBJECT(0, UPCRE, "")
 
    zero(0);
 }

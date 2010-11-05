@@ -44,7 +44,7 @@ public:
 
    UDate()
       {
-      U_TRACE_REGISTER_OBJECT(0, UDate, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UDate, "")
 
       julian = _day = _month = _year = 0;
       }
@@ -205,13 +205,13 @@ public:
           UString strftime(const char* fmt);
    static UString strftime(const char* fmt, time_t t);
 
-   static time_t getSecondFromJulian(int julian)
+   static time_t getSecondFromJulian(int _julian)
       {
-      U_TRACE(0, "UDate::getSecondFromJulian(%d)")
+      U_TRACE(0, "UDate::getSecondFromJulian(%d)", _julian)
 
-      U_INTERNAL_ASSERT(julian >= 2440588) // 2440588 -> 01/01/1970
+      U_INTERNAL_ASSERT(_julian >= 2440588) // 2440588 -> 01/01/1970
 
-      time_t t = U_ONE_DAY_IN_SECOND * (julian - 2440588);
+      time_t t = U_ONE_DAY_IN_SECOND * (_julian - 2440588);
 
       U_RETURN(t);
       }

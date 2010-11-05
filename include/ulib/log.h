@@ -42,7 +42,7 @@ public:
 
    ULog()
       {
-      U_TRACE_REGISTER_OBJECT(0, ULog, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, ULog, "")
 
       U_INTERNAL_ASSERT_EQUALS(ptr,0)
       }

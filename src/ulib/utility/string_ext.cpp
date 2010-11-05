@@ -96,15 +96,15 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
    void* p;
    char* r;
    UString x(U_CAPACITY);
-   uint32_t start = 0, end, num, len;
+   uint32_t start = 0, _end, num, len;
 
    while ((p = (void*)memchr(s + start, '\t', n - start)))
       {
-      end = (const char*)p - s;
+      _end = (const char*)p - s;
 
-      if (end > start)
+      if (_end > start)
          {
-         len = end - start;
+         len = _end - start;
 
          (void) x.reserve(x.size() + len + tab);
 
@@ -118,13 +118,13 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
 
       num = tab - (x.rep->_length % tab);
 
-      U_INTERNAL_DUMP("start = %u end = %u num = %u", start, end, num)
+      U_INTERNAL_DUMP("start = %u _end = %u num = %u", start, _end, num)
 
       r = x.rep->data();
 
       while (num--) r[x.rep->_length++] = ' ';
 
-      start = end + 1;
+      start = _end + 1;
       }
 
    len = n - start;
@@ -143,15 +143,15 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
    U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
    void* p;
-   uint32_t start = 0, end, len;
+   uint32_t start = 0, _end, len;
    UString x(U_min((n / n1) * (n2 ? n2 : 1), 256 * 1024 * 1024)); // caso peggiore...
 
    while ((p = u_find(s + start, n - start, a, n1)))
       {
-      end = (const char*)p - s;
-      len = (end > start ? end - start : 0);
+      _end = (const char*)p - s;
+      len  = (_end > start ? _end - start : 0);
 
-      U_INTERNAL_DUMP("start = %u end = %u len = %u", start, end, len)
+      U_INTERNAL_DUMP("start = %u _end = %u len = %u", start, _end, len)
 
       (void) x.reserve(x.size() + len + n2);
 
@@ -166,7 +166,7 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 
       x.rep->_length += n2;
 
-      start = end + n1;
+      start = _end + n1;
       }
 
    len = n - start;
@@ -188,11 +188,11 @@ UString UStringExt::dos2unix(const UString& s, bool unix2dos)
 
    char c;
    const char* ptr   = s.data();
-   const char* end   = s.end();
+   const char* _end  = s.end();
          char* str   = result.data();
          char* start = str;
 
-   while (ptr < end)
+   while (ptr < _end)
       {
       c = *ptr++;
 
@@ -217,9 +217,9 @@ UString UStringExt::expandPath(const char* path_data, uint32_t path_size)
 {
    U_TRACE(1, "UStringExt::expandPath(%.*S,%u)", path_size, path_data, path_size)
 
-   UString pathname, path(U_CAPACITY);
+   UString path(U_max(U_CAPACITY, path_size)), pathname;
 
-   path.assign(path_data, path_size);
+   (void) path.assign(path_data, path_size);
 
    path_data = path.data();
 
@@ -244,17 +244,17 @@ UString UStringExt::expandPath(const char* path_data, uint32_t path_size)
          if (pw &&
              pw->pw_dir)
             {
-            pathname = pw->pw_dir;
+            (void) pathname.assign(pw->pw_dir);
             }
          }
 
       if (ptr != (path_data + len))
          {
-         uint32_t tmp = u_strlen(path_data);
+         uint32_t n = u_strlen(path_data);
 
          *ptr = '/';
 
-         pathname.append(ptr, len - tmp);
+         (void) pathname.append(ptr, len - n);
          }
       }
    else if (path_data[0] == '$')
@@ -274,11 +274,11 @@ UString UStringExt::expandPath(const char* path_data, uint32_t path_size)
 
       if (ptr != (path_data + len))
          {
-         uint32_t tmp = u_strlen(path_data);
+         uint32_t n = u_strlen(path_data);
 
          *ptr = '/';
 
-         (void) pathname.append(ptr, len - tmp);
+         (void) pathname.append(ptr, len - n);
          }
       }
    else
@@ -301,10 +301,10 @@ UString UStringExt::expandEnvVar(const char* s, uint32_t n)
 
    char* ptr;
    char* value;
-   UString x(n);
    const char* p;
    char name[128];
-   uint32_t end, len, n1;
+   UString x(n+100);
+   uint32_t _end, len, n1, n2;
 
    while ((p = (const char*) memchr(s, '$', n)))
       {
@@ -315,7 +315,7 @@ UString UStringExt::expandEnvVar(const char* s, uint32_t n)
 
       // read name $var
 
-      for (ptr = name, end = 1; (end < n && u_isspace(p[end]) == false && p[end] != '$'); ++end) *ptr++ = p[end];
+      for (ptr = name, _end = 1; (_end < n && u_isspace(p[_end]) == false && p[_end] != '$'); ++_end) *ptr++ = p[_end];
                                                                                                  *ptr   = '\0';
 
       value = U_SYSCALL(getenv, "%S", name);
@@ -324,26 +324,30 @@ UString UStringExt::expandEnvVar(const char* s, uint32_t n)
 
       // check for space
 
-      if (n1 > end) (void) x.reserve(x.size() + (n1 - end));
+      n2 = x.size();
 
-      ptr = x.rep->end();
+      if (n1 > _end) (void) x.reserve(n2 + (n1 - _end));
+
+      ptr = x.c_pointer(n2);
 
       if (n1)
          {
          (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr,           s, len);
          (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr + len, value,  n1);
 
-         x.rep->_length += len + n1;
+         n2 += n1;
          }
       else
          {
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, len + end);
+         (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, len + _end);
 
-         x.rep->_length += len + end;
+         n2 += _end;
          }
 
-      s  = p + end;
-      n -= end;
+      x.size_adjust(n2 + len);
+
+      s  = p + _end;
+      n -=     _end;
       }
 
    if (n) (void) x.append(s, n);
@@ -366,12 +370,12 @@ UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
    char* p;
    uint32_t sz, sz1 = 0;
    UString result(n * 2);
-   const char* end = s + n;
+   const char* _end = s + n;
    char* str = result.data();
 
-   while (s < end)
+   while (s < _end)
       {
-      p = (char*) memchr(s, delimiter, end - s);
+      p = (char*) memchr(s, delimiter, _end - s);
 
       if (p)
          {
@@ -389,7 +393,7 @@ UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
          }
       else
          {
-         sz = end - s;
+         sz = _end - s;
 
          (void) U_SYSCALL(memcpy, "%p,%p,%u", str, s, sz);
 
@@ -417,12 +421,12 @@ UString UStringExt::removeEscape(const char* s, uint32_t n)
    char* p;
    UString result(n);
    uint32_t sz, sz1 = 0;
-   const char* end = s + n;
+   const char* _end = s + n;
    char* str = result.data();
 
-   while (s < end)
+   while (s < _end)
       {
-      p = (char*) memchr(s, '\\', end - s);
+      p = (char*) memchr(s, '\\', _end - s);
 
       if (p)
          {
@@ -437,7 +441,7 @@ UString UStringExt::removeEscape(const char* s, uint32_t n)
          }
       else
          {
-         sz = end - s;
+         sz = _end - s;
 
          (void) U_SYSCALL(memcpy, "%p,%p,%u", str, s, sz);
 
@@ -503,9 +507,9 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
    char* str = result.data();
 
    const char* p;
-   const char* end = s + n;
+   const char* _end = s + n;
 
-   while (s < end)
+   while (s < _end)
       {
       // skip white space from start
 
@@ -518,7 +522,7 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
 
       p = s++;
 
-      while (s < end &&
+      while (s < _end &&
              u_isspace(*s) == false)
          {
          ++s;
@@ -530,7 +534,7 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
 
       sz += sz1;
 
-      if (++s < end) str[sz++] = ' ';
+      if (++s < _end) str[sz++] = ' ';
       }
 
    if (sz && u_isspace(str[sz-1])) --sz;

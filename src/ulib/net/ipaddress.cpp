@@ -183,6 +183,19 @@ void UIPAddress::setLocalHost(bool bIPv6)
    bHostNameUnresolved = bStrAddressUnresolved = false;
 }
 
+void UIPAddress::setAddress(const char* pcNewAddress, int iNewAddressLength)
+{
+   U_TRACE(1, "UIPAddress::setAddress(%S,%d)", pcNewAddress, iNewAddressLength)
+
+   U_CHECK_MEMORY
+
+   iAddressLength = iNewAddressLength;
+
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", pcAddress.p, pcNewAddress, iAddressLength);
+
+   U_INTERNAL_DUMP("addr = %u", getInAddr())
+}
+
 bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
 {
    U_TRACE(1, "UIPAddress::setHostName(%.*S,%b)", U_STRING_TO_TRACE(pcNewHostName), bIPv6)

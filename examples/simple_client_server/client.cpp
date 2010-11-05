@@ -96,7 +96,7 @@ public:
 
       // manage config file
 
-      if (argv[optind] == NULL) U_ERROR("arg <file_config> not specified...", 0);
+      if (argv[optind] == NULL) U_ERROR("arg <file_config> not specified...");
 
       // load config file (section SERVER and section REQUEST_AND_RESPONSE)
 

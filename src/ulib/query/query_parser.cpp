@@ -19,11 +19,11 @@ UVector<UString>**    UQueryParser::positives;
 UVector<UString>**    UQueryParser::negatives;
 UVector<UQueryNode*>* UQueryParser::termRoots;
 
-UString*              UQueryParser::s_p1;
-UString*              UQueryParser::s_p2;
-UString*              UQueryParser::s_or;
-UString*              UQueryParser::s_and;
-UString*              UQueryParser::s_not;
+const UString* UQueryParser::s_p1;
+const UString* UQueryParser::s_p2;
+const UString* UQueryParser::s_or;
+const UString* UQueryParser::s_and;
+const UString* UQueryParser::s_not;
 
 void UQueryParser::str_allocate()
 {
@@ -122,7 +122,7 @@ bool UQueryParser::parse(const UString& query)
 
    if (tree)
       {
-      if (t.atEnd() == false) U_ERROR("syntax error on query - GARBAGE AT END", 0);
+      if (t.atEnd() == false) U_ERROR("syntax error on query - GARBAGE AT END");
 
       switch (tree->type)
          {
@@ -208,7 +208,7 @@ U_NO_EXPORT UQueryNode* UQueryParser::parseAtom()
       {
       UQueryNode* expr = parseExpr();
 
-      if (isBraceEnd() == false) U_ERROR("syntax error on query - RUNAWAY PARENTHESIS", 0);
+      if (isBraceEnd() == false) U_ERROR("syntax error on query - RUNAWAY PARENTHESIS");
 
       U_RETURN_POINTER(expr,UQueryNode);
       }
@@ -697,18 +697,18 @@ U_NO_EXPORT void UQueryNode::destroyDNFOrNodes(UQueryNode* root)
 
    // Detach the OR node's subtrees, so that 'delete' does not affect them:
 
-   UQueryNode* left  = root->left;
-   UQueryNode* right = root->right;
+   UQueryNode* _left  = root->left;
+   UQueryNode* _right = root->right;
 
-   U_INTERNAL_ASSERT_POINTER(left)
-   U_INTERNAL_ASSERT_POINTER(right)
+   U_INTERNAL_ASSERT_POINTER(_left)
+   U_INTERNAL_ASSERT_POINTER(_right)
 
    root->left = root->right = 0;
 
    delete root;
 
-   destroyDNFOrNodes(left);
-   destroyDNFOrNodes(right);
+   destroyDNFOrNodes(_left);
+   destroyDNFOrNodes(_right);
 }
 
 // override the default...
@@ -853,9 +853,9 @@ void UQueryParser::startEvaluate(bPFpr func)
       }
 }
 
-void UQueryParser::evaluate(UStringRep* word, bool positive)
+void UQueryParser::evaluate(UStringRep* _word, bool positive)
 {
-   U_TRACE(0, "UQueryParser::evaluate(%.*S,%b)", U_STRING_TO_TRACE(*word), positive)
+   U_TRACE(0, "UQueryParser::evaluate(%.*S,%b)", U_STRING_TO_TRACE(*_word), positive)
 
    U_INTERNAL_ASSERT_EQUALS(partial,1)
 
@@ -884,21 +884,21 @@ void UQueryParser::evaluate(UStringRep* word, bool positive)
    --------------------------------------------------------------------------------------
    */
 
-   char* p = (u_buffer_len ? (char*) u_find(u_buffer, u_buffer_len, (const char*)&word, sizeof(void*))
+   char* p = (u_buffer_len ? (char*) u_find(u_buffer, u_buffer_len, (const char*)&_word, sizeof(void*))
                            : 0);
 
    bool result = (p ? (p[sizeof(void*)] == '1')
-                    : function(word));
+                    : function(_word));
 
    if (!p)
       {
-      (void) memcpy(u_buffer+u_buffer_len, &word, sizeof(void*));
+      (void) memcpy(u_buffer+u_buffer_len, &_word, sizeof(void*));
 
       u_buffer_len += sizeof(void*);
 
       u_buffer[u_buffer_len++] = (result ? '1' : '0');
 
-      U_INTERNAL_ASSERT_MINOR(u_buffer_len,sizeof(u_buffer))
+      U_INTERNAL_ASSERT_MINOR(u_buffer_len, sizeof(u_buffer))
       }
 
    /*
@@ -913,20 +913,20 @@ void UQueryParser::evaluate(UStringRep* word, bool positive)
    U_INTERNAL_DUMP("partial = %u result = %b", partial, result)
 }
 
-inline bool UQueryParser::pos_evaluate(void* word)
+inline bool UQueryParser::pos_evaluate(void* _word)
 {
-   U_TRACE(0, "UQueryParser::pos_evaluate(%p)", word)
+   U_TRACE(0, "UQueryParser::pos_evaluate(%p)", _word)
 
-   evaluate((UStringRep*)word, true);
+   evaluate((UStringRep*)_word, true);
 
    U_RETURN(partial == 1);
 }
 
-inline bool UQueryParser::neg_evaluate(void* word)
+inline bool UQueryParser::neg_evaluate(void* _word)
 {
-   U_TRACE(0, "UQueryParser::neg_evaluate(%p)", word)
+   U_TRACE(0, "UQueryParser::neg_evaluate(%p)", _word)
 
-   if (partial) evaluate((UStringRep*)word, false);
+   if (partial) evaluate((UStringRep*)_word, false);
 
    U_RETURN(partial == 1);
 }

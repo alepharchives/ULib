@@ -178,6 +178,66 @@ else
 SRC_CPP += net/unixsocket.cpp
 endif
 
+# Handler static/dynamic plugin
+
+if STATIC_HANDLER_RPC
+SRC_CPP += plugin/mod_rpc.cpp
+endif
+
+if STATIC_HANDLER_HTTP
+SRC_CPP += plugin/mod_http.cpp
+endif
+
+if STATIC_HANDLER_TSA
+SRC_CPP += plugin/mod_tsa.cpp
+endif
+
+if STATIC_HANDLER_NOCAT
+SRC_CPP += plugin/mod_nocat.cpp
+endif
+
+if STATIC_HANDLER_ECHO
+SRC_CPP += plugin/mod_echo.cpp
+endif
+
+if STATIC_HANDLER_FCGI
+SRC_CPP += plugin/mod_fcgi.cpp
+endif
+
+if STATIC_HANDLER_SCGI
+SRC_CPP += plugin/mod_scgi.cpp
+endif
+
+if STATIC_HANDLER_STREAM
+SRC_CPP += plugin/mod_stream.cpp
+endif
+
+if STATIC_HANDLER_SOCKET
+SRC_CPP += plugin/mod_socket.cpp
+endif
+
+if STATIC_HANDLER_SSI
+SRC_CPP += plugin/mod_ssi.cpp
+endif
+
+if EXPAT
+if STATIC_HANDLER_SOAP
+SRC_CPP += plugin/mod_soap.cpp
+endif
+endif
+
+if PCRE
+if STATIC_HANDLER_PROXY
+SRC_CPP += plugin/mod_proxy.cpp
+endif
+endif
+
+if GEOIP
+if STATIC_HANDLER_GEOIP
+SRC_CPP += plugin/mod_geoip/mod_geoip.cpp
+endif
+endif
+
 if FINAL
 lib@ULIB@_la_SOURCES = all_c.c all_cpp.cpp
 else

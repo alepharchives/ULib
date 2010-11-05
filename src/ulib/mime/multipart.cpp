@@ -28,7 +28,8 @@
 #  define RFC2231DOENCODE(c) (strchr("()'\"\\%:;=", (c)) || (c) <= ' ' || (c) >= 127)
 #endif
 
-static const char* str_encoding[] = {
+uint32_t    UMimeMultipartMsg::counter;
+const char* UMimeMultipartMsg::str_encoding[4] = {
    "7bit",
    "8bit",
    "quoted-printable",
@@ -39,9 +40,7 @@ inline char* UMimeMultipartMsg::mkboundary()
 {
    U_TRACE(0, "UMimeMultipartMsg::mkboundary()")
 
-   static uint32_t n;
-
-   boundary_len = u_snprintf(boundary, sizeof(boundary), "%s--=_%u_%6D_%P", u_line_terminator, ++n);
+   boundary_len = u_snprintf(boundary, sizeof(boundary), "%s--=_%u_%6D_%P", u_line_terminator, ++counter);
 
    char* ptr = boundary + u_line_terminator_len + 2;
 
@@ -82,15 +81,15 @@ uint32_t UMimeMultipartMsg::message(UString& body)
 
    U_ASSERT_MAJOR(vec_part.size(),1)
 
-   char buf[64];
+   char _buf[64];
    uint32_t content_length = vec_part[0].size(),
-            len = u_snprintf(buf, sizeof(buf), "%s%s", boundary, u_line_terminator);
+            len = u_snprintf(_buf, sizeof(_buf), "%s%s", boundary, u_line_terminator);
 
-   body = vec_part.join(buf, len);
+   body = vec_part.join(_buf, len);
 
-   len = u_snprintf(buf, sizeof(buf), "%s--%s", boundary, u_line_terminator);
+   len = u_snprintf(_buf, sizeof(_buf), "%s--%s", boundary, u_line_terminator);
 
-   (void) body.append(buf, len);
+   (void) body.append(_buf, len);
 
    content_length = body.size() - content_length;
 
@@ -115,10 +114,10 @@ inline int UMimeMultipartMsg::encodeAutodetect(const UString& content, const cha
    unsigned char ch;
    bool longline = false;
    Encoding encoding = BIT7;
-   unsigned char* ptr = (unsigned char*) content.data();
-   unsigned char* end = (unsigned char*) content.rep->end();
+   unsigned char* ptr  = (unsigned char*) content.data();
+   unsigned char* _end = (unsigned char*) content.rep->end();
 
-   while (ptr < end)
+   while (ptr < _end)
       {
       ch = *ptr++;
 

@@ -15,9 +15,10 @@
 #include <ulib/net/client/client.h>
 #include <ulib/net/server/server.h>
 
-bool     UClient_Base::log_shared_with_server;
-ULog*    UClient_Base::log;
-UString* UClient_Base::str_RES_TIMEOUT;
+bool  UClient_Base::log_shared_with_server;
+ULog* UClient_Base::log;
+
+const UString* UClient_Base::str_RES_TIMEOUT;
 
 void UClient_Base::str_allocate()
 {
@@ -34,7 +35,7 @@ void UClient_Base::str_allocate()
 
 UClient_Base::UClient_Base() : response(U_CAPACITY), buffer(U_CAPACITY), host_port(100U), logbuf(100U)
 {
-   U_TRACE_REGISTER_OBJECT(0, UClient_Base, "", 0)
+   U_TRACE_REGISTER_OBJECT(0, UClient_Base, "")
 
    bIPv6     = false;
    port      = verify_mode = 0;
@@ -214,7 +215,7 @@ bool UClient_Base::connect()
       U_RETURN(true);
       }
 
-   response.snprintf("Sorry, couldn't connect to server %.*S%R", U_STRING_TO_TRACE(host_port), 0);
+   response.snprintf("Sorry, couldn't connect to server %.*S%R", U_STRING_TO_TRACE(host_port));
 
    if (log)
       {
@@ -243,14 +244,14 @@ bool UClient_Base::setUrl(const UString& location)
       char* p;
       uint32_t len, size;
       const char* src  = UHTTP::http_info.uri;
-      const char* end  = src + UHTTP::http_info.uri_len;
+      const char* _end = src + UHTTP::http_info.uri_len;
 
       char* dest = tmp;
       char* ptr  = dest;
 
-      while (src < end)
+      while (src < _end)
          {
-         p = (char*) memchr(src, '/', end - src);
+         p = (char*) memchr(src, '/', _end - src);
 
          if (p == NULL) break;
 
@@ -368,7 +369,7 @@ send:
             {
             ULog::log("%sConnection to %.*s reset by peer%R\n",
                      log_shared_with_server ? UServer_Base::mod_name : "",
-                     U_STRING_TO_TRACE(logbuf), 0);
+                     U_STRING_TO_TRACE(logbuf));
             }
          }
       }
@@ -383,7 +384,7 @@ send:
             {
             ULog::log("%sConnection to %.*s reset by peer%R\n",
                      log_shared_with_server ? UServer_Base::mod_name : "",
-                     U_STRING_TO_TRACE(logbuf), 0);
+                     U_STRING_TO_TRACE(logbuf));
             }
 
          if (++counter < 2 &&

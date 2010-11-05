@@ -20,11 +20,15 @@
                              u_name_file     = __FILE__, \
                              u_name_function = __PRETTY_FUNCTION__)
 
-/* Manage debug for C library */
+/*
+ * Manage debug for C library
+ *
+ * the token preceding the special `##' must be a comma, and there must be white space between that comma and whatever comes immediately before it
+ */
 
 #ifdef DEBUG_DEBUG
 #  define U_INTERNAL_TRACE(format,args...) \
-      { char u_internal_buf[8192]; (void) sprintf(u_internal_buf, format"\n", args); \
+      { char u_internal_buf[8192]; (void) sprintf(u_internal_buf, format"\n" , ##args); \
         (void) write(STDERR_FILENO, u_internal_buf, strlen(u_internal_buf)); }
 #  define U_INTERNAL_PRINT(format,args...) U_INTERNAL_TRACE(format,args)
 #else
@@ -94,10 +98,10 @@
 
 /* Manage message info */
 
-#  define U_ERROR(  format,args...) u_printf("%W%N%W: %Q%WERROR: "format"%W",BRIGHTCYAN,YELLOW, 1,RED,args,RESET)
-#  define U_ABORT(  format,args...) u_printf("%W%N%W: %Q%WABORT: "format"%W",BRIGHTCYAN,YELLOW,-1,RED,args,RESET)
-#  define U_WARNING(format,args...) u_printf("%W%N%W: WARNING: "  format"%W",BRIGHTCYAN,YELLOW,       args,RESET)
-#  define U_MESSAGE(format,args...) u_printf("%W%N%W: "           format,    BRIGHTCYAN,RESET,        args)
+#  define U_ERROR(  format,args...) u_printf("%W%N%W: %Q%WERROR: "format"%W",BRIGHTCYAN,YELLOW, 1,RED , ##args,RESET)
+#  define U_ABORT(  format,args...) u_printf("%W%N%W: %Q%WABORT: "format"%W",BRIGHTCYAN,YELLOW,-1,RED , ##args,RESET)
+#  define U_WARNING(format,args...) u_printf("%W%N%W: WARNING: "  format"%W",BRIGHTCYAN,YELLOW ,        ##args,RESET)
+#  define U_MESSAGE(format,args...) u_printf("%W%N%W: "           format,    BRIGHTCYAN,RESET ,         ##args)
 
 #  define   U_ERROR_SYSCALL(msg)      U_ERROR("%R",msg)
 #  define   U_ABORT_SYSCALL(msg)      U_ABORT("%R",msg)

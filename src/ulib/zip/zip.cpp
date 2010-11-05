@@ -15,7 +15,7 @@
 
 UZIP::UZIP() : tmpdir(U_CAPACITY)
 {
-   U_TRACE_REGISTER_OBJECT(0, UZIP, "", 0)
+   U_TRACE_REGISTER_OBJECT(0, UZIP, "")
 
    npart         = 0;
    file          = 0;

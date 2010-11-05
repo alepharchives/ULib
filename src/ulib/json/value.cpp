@@ -325,25 +325,25 @@ UValue& UValue::operator[](const UString& key)
    return *result;
 }
 
-void UValue::output(UString& result, UValue& value)
+void UValue::output(UString& result, UValue& _value)
 {
-   U_TRACE(0, "UValue::output(%.*S,%p)", U_STRING_TO_TRACE(result), &value)
+   U_TRACE(0, "UValue::output(%.*S,%p)", U_STRING_TO_TRACE(result), &_value)
 
-   U_INTERNAL_ASSERT_RANGE(0,value.type_,OBJECT_VALUE)
+   U_INTERNAL_ASSERT_RANGE(0,_value.type_,OBJECT_VALUE)
 
    char buffer[32];
 
-   switch (value.type_)
+   switch (_value.type_)
       {
-      case    NULL_VALUE:                  (void) result.append(U_CONSTANT_TO_PARAM("null"));  break;
-      case BOOLEAN_VALUE: value.asBool() ? (void) result.append(U_CONSTANT_TO_PARAM("true"))
-                                         : (void) result.append(U_CONSTANT_TO_PARAM("false")); break;
+      case    NULL_VALUE:                   (void) result.append(U_CONSTANT_TO_PARAM("null"));  break;
+      case BOOLEAN_VALUE: _value.asBool() ? (void) result.append(U_CONSTANT_TO_PARAM("true"))
+                                          : (void) result.append(U_CONSTANT_TO_PARAM("false")); break;
 
-      case  INT_VALUE: (void) result.append(buffer, u_snprintf(buffer, sizeof(buffer), "%d", value.asInt()));  break;
-      case UINT_VALUE: (void) result.append(buffer, u_snprintf(buffer, sizeof(buffer), "%u", value.asUInt())); break;
+      case  INT_VALUE: (void) result.append(buffer, u_snprintf(buffer, sizeof(buffer), "%d", _value.asInt()));  break;
+      case UINT_VALUE: (void) result.append(buffer, u_snprintf(buffer, sizeof(buffer), "%u", _value.asUInt())); break;
       case REAL_VALUE:
          {
-         uint32_t n = u_snprintf(buffer, sizeof(buffer), "%#.16g", value.asDouble());
+         uint32_t n = u_snprintf(buffer, sizeof(buffer), "%#.16g", _value.asDouble());
 
          const char* ch = buffer + n - 1;
 
@@ -381,9 +381,9 @@ end:
 
       case STRING_VALUE:
          {
-         (void) result.reserve(result.size() + value.getString()->size() * 6);
+         (void) result.reserve(result.size() + _value.getString()->size() * 6);
 
-         UEscape::encode(*(value.getString()), result, true);
+         UEscape::encode(*(_value.getString()), result, true);
          }
       break;
 
@@ -391,11 +391,11 @@ end:
          {
          (void) result.append(1, '[');
 
-         for (uint32_t index = 0, size = value.size(); index < size; ++index)
+         for (uint32_t index = 0, size = _value.size(); index < size; ++index)
             {
             if (index) (void) result.append(1, ',');
 
-            output(result, value[index]);
+            output(result, _value[index]);
             }
 
          (void) result.append(1, ']');
@@ -407,9 +407,9 @@ end:
          (void) result.append(1, '{');
 
          UString name;
-         uint32_t sz = value.size();
+         uint32_t sz = _value.size();
          UVector<UString> members(sz);
-         (void) value.getMemberNames(members);
+         (void) _value.getMemberNames(members);
 
       // if (sz > 1) members.sort();
 
@@ -425,7 +425,7 @@ end:
 
             (void) result.append(1, ':');
 
-            output(result, value[name]);
+            output(result, _value[name]);
             }
 
          (void) result.append(1, '}');
@@ -434,9 +434,9 @@ end:
       }
 }
 
-U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* value)
+U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
 {
-   U_TRACE(0, "UValue::readValue(%p,%p)", &tok, value)
+   U_TRACE(0, "UValue::readValue(%p,%p)", &tok, _value)
 
    tok.skipSpaces();
 
@@ -450,16 +450,16 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* value)
       {
       case '\0':
          {
-         result             = true;
-         value->type_       = NULL_VALUE;
-         value->value.real_ = 0.0;
+         result              = true;
+         _value->type_       = NULL_VALUE;
+         _value->value.real_ = 0.0;
          }
       break;
 
       case 'n':
          {
-         value->type_       = NULL_VALUE;
-         value->value.real_ = 0.0;
+         _value->type_       = NULL_VALUE;
+         _value->value.real_ = 0.0;
 
          result = tok.skipToken(U_CONSTANT_TO_PARAM("ull"));
          }
@@ -473,8 +473,8 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* value)
 
          if (result)
             {
-            value->type_       = BOOLEAN_VALUE;
-            value->value.bool_ = (c == 't');
+            _value->type_       = BOOLEAN_VALUE;
+            _value->value.bool_ = (c == 't');
             }
          }
       break;
@@ -497,24 +497,24 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* value)
             {
             if (breal)
                {
-               value->type_       = REAL_VALUE;
-               value->value.real_ = strtod(start, 0);
+               _value->type_       = REAL_VALUE;
+               _value->value.real_ = strtod(start, 0);
 
-               U_INTERNAL_DUMP("value.real_ = %.16g", value->value.real_)
+               U_INTERNAL_DUMP("_value.real_ = %.16g", _value->value.real_)
                }
             else if (c == '-')
                {
-               value->type_      = INT_VALUE;
-               value->value.int_ = strtol(start, 0, 10);
+               _value->type_      = INT_VALUE;
+               _value->value.int_ = strtol(start, 0, 10);
 
-               U_INTERNAL_DUMP("value.int_ = %d", value->value.int_)
+               U_INTERNAL_DUMP("_value.int_ = %d", _value->value.int_)
                }
             else
                {
-               value->type_       = UINT_VALUE;
-               value->value.uint_ = strtoul(start, 0, 10);
+               _value->type_       = UINT_VALUE;
+               _value->value.uint_ = strtoul(start, 0, 10);
 
-               U_INTERNAL_DUMP("value.uint_ = %u", value->value.uint_)
+               U_INTERNAL_DUMP("_value.uint_ = %u", _value->value.uint_)
                }
             }
          }
@@ -522,37 +522,37 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* value)
 
       case '"':
          {
-         value->type_    = STRING_VALUE;
-         const char* ptr = tok.getPointer();
-         const char* end = tok.getEnd();
-         const char* last = u_find_char(ptr, end, '"');
+         _value->type_    = STRING_VALUE;
+         const char* ptr  = tok.getPointer();
+         const char* _end = tok.getEnd();
+         const char* last = u_find_char(ptr, _end, '"');
          uint32_t sz      = (last ? last - ptr : 0);
 
          U_INTERNAL_DUMP("sz = %u", sz)
 
          if (sz)
             {
-            value->value.ptr_ = U_NEW(UString(sz));
+            _value->value.ptr_ = U_NEW(UString(sz));
 
-            result = UEscape::decode(ptr, sz, *(value->getString()));
+            result = UEscape::decode(ptr, sz, *(_value->getString()));
             }
          else
             {
-            value->value.ptr_ = U_NEW(UString());
+            _value->value.ptr_ = U_NEW(UString());
 
             result = true;
             }
 
-         if (last < end) tok.setPointer(last+1);
+         if (last < _end) tok.setPointer(last+1);
 
-         U_INTERNAL_DUMP("value.ptr_ = %.*S", U_STRING_TO_TRACE(*(value->getString())))
+         U_INTERNAL_DUMP("_value.ptr_ = %.*S", U_STRING_TO_TRACE(*(_value->getString())))
          }
       break;
 
       case '[':
          {
-         value->type_      = ARRAY_VALUE;
-         value->value.ptr_ = U_NEW(UVector<UValue*>);
+         _value->type_      = ARRAY_VALUE;
+         _value->value.ptr_ = U_NEW(UVector<UValue*>);
 
          UValue* item;
 
@@ -576,25 +576,25 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* value)
                U_RETURN(false);
                }
 
-            value->getArray()->push(item);
+            _value->getArray()->push(item);
             }
 
          result = true;
 
-         uint32_t sz = value->getArray()->size();
+         uint32_t sz = _value->getArray()->size();
 
          U_INTERNAL_DUMP("sz = %u", sz)
 
-         if (sz) value->getArray()->reserve(sz);
+         if (sz) _value->getArray()->reserve(sz);
          }
       break;
 
       case '{':
          {
-         value->type_      = OBJECT_VALUE;
-         value->value.ptr_ = U_NEW(UHashMap<UValue*>);
+         _value->type_      = OBJECT_VALUE;
+         _value->value.ptr_ = U_NEW(UHashMap<UValue*>);
 
-         value->getObject()->allocate();
+         _value->getObject()->allocate();
 
          UValue  name;
          UValue* item;
@@ -629,14 +629,14 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* value)
                U_RETURN(false);
                }
 
-            value->getObject()->insert(*(name.getString()), item);
+            _value->getObject()->insert(*(name.getString()), item);
 
             name.clear();
             }
 
          result = true;
 
-         U_DUMP("hash map size = %u", value->getObject()->size())
+         U_DUMP("hash map size = %u", _value->getObject()->size())
          }
       break;
 

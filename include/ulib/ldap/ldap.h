@@ -104,7 +104,7 @@ public:
 
    ULDAP()
       {
-      U_TRACE_REGISTER_OBJECT(0, ULDAP, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, ULDAP, "")
 
       ld           = 0;
       ludpp        = 0;
@@ -195,7 +195,7 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_EQUALS(ld, 0)
+      U_INTERNAL_ASSERT_EQUALS(ld,0)
 
       ld = (LDAP*) U_SYSCALL(ldap_open, "%S,%d", host, port);
 

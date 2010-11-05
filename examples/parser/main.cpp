@@ -28,7 +28,7 @@ public:
 
       if (argv[optind] == NULL)
          {
-         U_ERROR("mail file not specified with <filename>...", 0);
+         U_ERROR("mail file not specified with <filename>...");
          }
 
       UFile mail_file;

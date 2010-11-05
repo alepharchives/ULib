@@ -12,7 +12,7 @@ public:
 
    ParserInterface()
       {
-      U_TRACE_REGISTER_OBJECT(5, ParserInterface, "", 0)
+      U_TRACE_REGISTER_OBJECT(5, ParserInterface, "")
       }
 
    ParserInterface(const UString& data) : UBison(data)

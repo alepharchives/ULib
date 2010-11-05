@@ -34,8 +34,8 @@ PKCS7* UPKCS7::readPKCS7(const UString& x, const char* format)
    U_TRACE(1, "UPKCS7::readPKCS7(%.*S,%S)", U_STRING_TO_TRACE(x), format)
 
    BIO* in;
-   UString tmp  = x;
-   PKCS7* pkcs7 = 0;
+   UString tmp   = x;
+   PKCS7* _pkcs7 = 0;
 
    if (format == 0) format = (x.isBinary() ? "DER" : "PEM");
 
@@ -55,12 +55,12 @@ PKCS7* UPKCS7::readPKCS7(const UString& x, const char* format)
 next:
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
-   pkcs7 = (PKCS7*) (U_STREQ(format, "PEM") ? U_SYSCALL(PEM_read_bio_PKCS7, "%p,%p,%p,%p", in, 0, 0, 0)
-                                            : U_SYSCALL(d2i_PKCS7_bio,      "%p,%p",       in, 0));
+   _pkcs7 = (PKCS7*) (U_STREQ(format, "PEM") ? U_SYSCALL(PEM_read_bio_PKCS7, "%p,%p,%p,%p", in, 0, 0, 0)
+                                             : U_SYSCALL(d2i_PKCS7_bio,      "%p,%p",       in, 0));
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
-   U_RETURN_POINTER(pkcs7, PKCS7);
+   U_RETURN_POINTER(_pkcs7, PKCS7);
 }
 
 UString UPKCS7::getContent(bool* valid_content) const
@@ -277,17 +277,17 @@ PKCS7* UPKCS7::sign(const UString& data, const UString& signcert, const UString&
 
 /* convert PKCS#7 structure to S/MIME format */
 
-UString UPKCS7::writeMIME(PKCS7* pkcs7)
+UString UPKCS7::writeMIME(PKCS7* _pkcs7)
 {
-   U_TRACE(1, "UPKCS7::writeMIME(%p)", pkcs7)
+   U_TRACE(1, "UPKCS7::writeMIME(%p)", _pkcs7)
 
-   U_INTERNAL_ASSERT_POINTER(pkcs7)
+   U_INTERNAL_ASSERT_POINTER(_pkcs7)
 
    UString result;
 
    BIO* out = (BIO*) U_SYSCALL(BIO_new, "%p", BIO_s_mem());
 
-   if (U_SYSCALL(SMIME_write_PKCS7, "%p,%p,%p,%d", out, pkcs7, 0, 0))
+   if (U_SYSCALL(SMIME_write_PKCS7, "%p,%p,%p,%d", out, _pkcs7, 0, 0))
       {
       result = UStringExt::BIOtoString(out);
       }

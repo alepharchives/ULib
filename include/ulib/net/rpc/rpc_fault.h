@@ -32,12 +32,12 @@ public:
 
    enum FaultCode { Sender, Receiver, DataEncodingUnknown, MustUnderstand, VersionMismatch };
 
-   static UString* str_encode;
-   static UString* str_sender;
-   static UString* str_receiver;
-   static UString* str_MustUnderstand;
-   static UString* str_VersionMismatch;
-   static UString* str_DataEncodingUnknown;
+   static const UString* str_encode;
+   static const UString* str_sender;
+   static const UString* str_receiver;
+   static const UString* str_MustUnderstand;
+   static const UString* str_VersionMismatch;
+   static const UString* str_DataEncodingUnknown;
 
    static void str_allocate();
 
@@ -45,7 +45,7 @@ public:
 
    URPCFault() : detail(U_CAPACITY)
       {
-      U_TRACE_REGISTER_OBJECT(0, URPCFault, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, URPCFault, "")
 
       faultCode = Sender;
 

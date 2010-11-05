@@ -38,7 +38,7 @@ public:
 
       IR::run(argc, argv, env);
 
-      if (UPosting::dir_content_as_doc) U_ERROR("sorry, not implemented...", 0);
+      if (UPosting::dir_content_as_doc) U_ERROR("sorry, not implemented...");
 
       // manage options
 

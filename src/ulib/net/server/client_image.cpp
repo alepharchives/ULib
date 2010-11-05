@@ -176,7 +176,7 @@ void UClientImage_Base::clear()
 
 UClientImage_Base::UClientImage_Base()
 {
-   U_TRACE_REGISTER_OBJECT(0, UClientImage_Base, "", 0)
+   U_TRACE_REGISTER_OBJECT(0, UClientImage_Base, "")
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
@@ -363,7 +363,7 @@ void UClientImage_Base::run()
 
    if (msg_welcome)
       {
-      U_SRV_LOG_MSG_WITH_ADDR("sent welcome message to");
+      U_SRV_LOG_WITH_ADDR("sent welcome message to");
 
       if (USocketExt::write(socket, *msg_welcome) == false) goto dtor;
       }
@@ -421,7 +421,7 @@ int UClientImage_Base::handlerRead()
    int result = U_PLUGIN_HANDLER_ERROR;
 
    do {
-#  ifdef HAVE_MODULES // Connection-wide hooks
+      // Connection-wide hooks
       result = UServer_Base::pluginsHandlerREAD(); // read request...
 
       if (result == U_PLUGIN_HANDLER_FINISHED)
@@ -438,7 +438,6 @@ int UClientImage_Base::handlerRead()
          }
 
       if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
-#  endif
 
       U_INTERNAL_DUMP("flag_loop = %b", UServer_Base::flag_loop)
 

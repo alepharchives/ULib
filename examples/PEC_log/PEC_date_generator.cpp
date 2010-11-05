@@ -28,14 +28,14 @@ public:
 
       // manage options
 
-      if (UApplication::isOptions() == false) U_ERROR("parameters <from> and <to> are mandatory...", 0);
+      if (UApplication::isOptions() == false) U_ERROR("parameters <from> and <to> are mandatory...");
 
       UString cfg_from = opt['f'],
               cfg_to   = opt['t'],
               cfg_day  = opt['d'];
 
       if (cfg_from.empty() ||
-            cfg_to.empty()) U_ERROR("parameters <from> and <to> are mandatory...", 0);
+            cfg_to.empty()) U_ERROR("parameters <from> and <to> are mandatory...");
 
       UDate from(cfg_from.c_str()),
               to(cfg_to.c_str());
@@ -50,7 +50,7 @@ public:
 
       if (ndays < days_between)
          {
-         U_WARNING("the number of days between <from> and <to> date is minor of param <days_between>...", 0);
+         U_WARNING("the number of days between <from> and <to> date is minor of param <days_between>...");
 
          cout << from << ' ' << to << '\n';
          }

@@ -38,7 +38,7 @@ public:
 
    UEventFd()
       {
-      U_TRACE_REGISTER_OBJECT(0, UEventFd, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UEventFd, "")
 
 #  ifdef HAVE_LIBEVENT
       pevent = 0;

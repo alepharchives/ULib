@@ -78,7 +78,7 @@ public:
 
       int i, n = ldap.search(DN_filter.c_str(), LDAP_SCOPE_BASE, (char**)filter_attr_name);
 
-      if (n != 1) U_ERROR("cannot get filter attribute from LDAP...", 0);
+      if (n != 1) U_ERROR("cannot get filter attribute from LDAP...");
 
       ULDAPEntry filter_entry(FILTER_NUM_ATTR, filter_attr_name);
 
@@ -112,7 +112,7 @@ public:
              ldap_url.set_protocol() == false ||
              ldap_url.simple_bind() == false)
             {
-            U_ERROR("login to LDAP with URL failed...", 0);
+            U_ERROR("login to LDAP with URL failed...");
             }
 
          n = ldap_url.search();
@@ -122,7 +122,7 @@ public:
          n = ldap.search("o=Policies,o=tnet", LDAP_SCOPE_SUBTREE, (char**)policy_attr_name, rule);
          }
 
-      if (n <= 0) U_ERROR("cannot find policy from LDAP...", 0);
+      if (n <= 0) U_ERROR("cannot find policy from LDAP...");
 
       ULDAPEntry policy_entry(POLICY_NUM_ATTR, policy_attr_name, n);
 

@@ -233,7 +233,7 @@ public:
 
          pvPFpmpb func = Application::MessageToString;
 
-         if (rdb->writeTo(table, (pvPFpvpb)func) == false) U_ERROR("failed to write table on database, exit...", 0);
+         if (rdb->writeTo(table, (pvPFpvpb)func) == false) U_ERROR("failed to write table on database, exit...");
 
          rdbname->setEmpty();
 #     else

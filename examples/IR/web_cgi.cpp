@@ -281,7 +281,7 @@ static void view_page()
 
    // documents
 
-   if (NUM_DOC == 0) RESULT_DOC.snprintf("<p class=\"note\">Your search did not match any documents.</p>", 0);
+   if (NUM_DOC == 0) RESULT_DOC.snprintf("<p class=\"note\">Your search did not match any documents.</p>");
    else
       {
       /* result.doc
@@ -476,7 +476,7 @@ static void save_value_session()
          {
          int result = rdb_session->store(*cookie, data, RDB_REPLACE);
 
-         if (result) U_SRV_LOG_VAR("error '%d' on store session data...", result);
+         if (result) U_SRV_LOG("error '%d' on store session data...", result);
          }
 
       delete session;
@@ -568,7 +568,7 @@ static void init()
 
    bool ok = (ir->loadFileConfig(cfg_index) && ir->openCDB(false));
 
-   if (ok == false) U_ERROR("error on init query application...", 0);
+   if (ok == false) U_ERROR("error on init query application...");
 
    query            = U_NEW(Query);
    cache            = U_NEW(UCache);

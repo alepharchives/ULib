@@ -66,11 +66,11 @@ public:
 
       const char* ip_device = argv[optind++];
 
-      if (ip_device == 0) U_ERROR("<ip_device> not specified...", 0);
+      if (ip_device == 0) U_ERROR("<ip_device> not specified...");
 
       const char* file_request = argv[optind++];
 
-      if (file_request == 0) U_ERROR("<file_request> not specified...", 0);
+      if (file_request == 0) U_ERROR("<file_request> not specified...");
 
       // LDAP attribute for devices
       // manage arg operation

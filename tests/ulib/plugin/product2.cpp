@@ -10,4 +10,4 @@ public:
    virtual void print(std::ostream& os) const { os << "I am Product2" << endl; }
 };
 
-U_CREAT_FUNC(Product2)
+U_CREAT_FUNC(product2, Product2)

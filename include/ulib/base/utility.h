@@ -24,8 +24,16 @@ extern "C" {
 
 /* Services */
 
+union uuaddress {
+   uint8_t        inaddr[4];
+   uint32_t       ip;
+   struct in_addr addr;
+};
+
 extern U_EXPORT const char* u_short_units[]; /* { "B", "KB", "MB", "GB", "TB", 0 } */
 
+extern U_EXPORT char*    u_inet_nstoa(uint8_t* ip);
+extern U_EXPORT char*    u_inet_nltoa(uint32_t ip);
 extern U_EXPORT int      u_getScreenWidth(void); /* Determine the width of the terminal we're running on */
 extern U_EXPORT int      u_get_num_random(int range);
 extern U_EXPORT bool     u_isNumber(const char* restrict s, uint32_t n);
@@ -41,7 +49,7 @@ extern U_EXPORT void* memmem(const void* restrict haystack, size_t haystacklen, 
 
 /* check if string have length */
 
-static inline size_t u_strlen(const char* restrict s)
+static inline uint32_t u_strlen(const char* restrict s)
 {
    U_INTERNAL_TRACE("u_strlen(%s)", s)
 

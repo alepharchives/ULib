@@ -30,7 +30,7 @@ static uint32_t file_size;
 
 static void printInfo(void)
 {
-   U_INTERNAL_TRACE("printInfo()", 0)
+   U_INTERNAL_TRACE("printInfo()")
 
    /* segnala caratteristiche esecuzione modalita' trace */
 
@@ -51,7 +51,7 @@ static char* restrict file_limit;
 
 void u_trace_check_if_interrupt(void) /* check for context manage signal event - interrupt */
 {
-   U_INTERNAL_TRACE("u_trace_check_if_interrupt()", 0)
+   U_INTERNAL_TRACE("u_trace_check_if_interrupt()")
 
    if (file_size            &&
        file_ptr != file_mem &&
@@ -106,7 +106,7 @@ void u_trace_close(void)
    int lfd = u_trace_fd;
              u_trace_fd = 0;
 
-   U_INTERNAL_TRACE("u_trace_close()", 0)
+   U_INTERNAL_TRACE("u_trace_close()")
 
    if (lfd > STDERR_FILENO)
       {
@@ -148,7 +148,7 @@ static RETSIGTYPE handlerSIGUSR2(int signo)
 
 static void setHandlerSIGUSR2(void)
 {
-   U_INTERNAL_TRACE("setHandlerSIGUSR2()", 0)
+   U_INTERNAL_TRACE("setHandlerSIGUSR2()")
 
    act.sa_handler = handlerSIGUSR2;
 
@@ -203,7 +203,7 @@ void u_trace_init(bool force, bool info, bool offset)
          {
          char name[128];
 
-         (void) u_snprintf(name, 128, "trace.%N.%P", 0);
+         (void) u_snprintf(name, 128, "trace.%N.%P");
 
          /* NB: O_RDWR e' necessario per mmap(MAP_SHARED)... */
 
@@ -220,7 +220,7 @@ void u_trace_init(bool force, bool info, bool offset)
 
                if (ftruncate(u_trace_fd, file_size))
                   {
-                  U_WARNING("out of space on file system, (required %lu bytes)", file_size);
+                  U_WARNING("out of space on file system, (required %u bytes)", file_size);
 
                   file_size = 0;
                   }
@@ -262,7 +262,7 @@ void u_trace_init(bool force, bool info, bool offset)
 
 static void handlerSignal(void)
 {
-   U_INTERNAL_TRACE("handlerSignal()", 0)
+   U_INTERNAL_TRACE("handlerSignal()")
 
    if (u_trace_fd <= 0 ||
        level_active < 0)
@@ -335,7 +335,7 @@ bool u_trace_check_if_active(int level, void* restrict hook)
 
 void u_trace_check_init(void)
 {
-   U_INTERNAL_TRACE("u_trace_check_init()", 0)
+   U_INTERNAL_TRACE("u_trace_check_init()")
 
    // controllo se sono avvenute precedenti creazioni di oggetti globali
    // che possono avere forzato l'inizializzazione del file di trace...
@@ -346,7 +346,7 @@ void u_trace_check_init(void)
       {
       char name[128];
 
-      (void) u_snprintf(name, 128, "trace.%N.%P", 0);
+      (void) u_snprintf(name, 128, "trace.%N.%P");
 
       (void) rename("trace..", name);
       }
@@ -407,15 +407,15 @@ void u_trace_suspend(int resume)
 
 void u_trace_dump(const char* restrict format, ...)
 {
-   va_list argp;
    char buffer[4096];
    uint32_t buffer_len;
 
-   U_INTERNAL_TRACE("u_trace_dump(%s)", format)
+// U_INTERNAL_TRACE("u_trace_dump(%s)", format)
 
+   va_list argp;
    va_start(argp, format);
 
-   buffer_len = u_vsnprintf(buffer, 4096, format, argp);
+   buffer_len = u_vsnprintf(buffer, sizeof(buffer), format, argp);
 
    va_end(argp);
 
@@ -430,7 +430,7 @@ void u_trace_dump(const char* restrict format, ...)
 
 void u_trace_initFork(void)
 {
-   U_INTERNAL_TRACE("u_trace_initFork()", 0)
+   U_INTERNAL_TRACE("u_trace_initFork()")
 
    if (u_trace_fd > STDERR_FILENO)
       {

@@ -25,11 +25,11 @@
 #  define bswap_64(x) (((uint64_t)(bswap_32((uint32_t)(x)))) << 32 | bswap_32((uint32_t)((x) >> 32)))
 #endif
 
-U_CREAT_FUNC(UWebSocketPlugIn)
+U_CREAT_FUNC(mod_socket, UWebSocketPlugIn)
 
 bool UWebSocketPlugIn::bUseSizePreamble;
 
-UString* UWebSocketPlugIn::str_USE_SIZE_PREAMBLE;
+const UString* UWebSocketPlugIn::str_USE_SIZE_PREAMBLE;
 
 void UWebSocketPlugIn::str_allocate()
 {
@@ -163,7 +163,7 @@ read_from_client:
                                                           sz - 2); // skip 0xff
                }
 
-            U_SRV_LOG_VAR_WITH_ADDR("received message (%u bytes) %.*S from", frame.size(), U_STRING_TO_TRACE(frame))
+            U_SRV_LOG_WITH_ADDR("received message (%u bytes) %.*S from", frame.size(), U_STRING_TO_TRACE(frame))
 
             if (UNotifier::write(UProcess::filedes[1], U_STRING_TO_PARAM(frame))) goto loop;
 
@@ -196,7 +196,7 @@ read_from_client:
                frame = '\0' + *UClientImage_Base::wbuffer + '\377';
                }
 
-            U_SRV_LOG_VAR_WITH_ADDR("sent message (%u bytes) %.*S to", frame.size(), U_STRING_TO_TRACE(frame))
+            U_SRV_LOG_WITH_ADDR("sent message (%u bytes) %.*S to", frame.size(), U_STRING_TO_TRACE(frame))
 
             if (USocketExt::write(UClientImage_Base::socket, U_STRING_TO_PARAM(frame))) goto loop;
             }
@@ -237,12 +237,12 @@ int UWebSocketPlugIn::handlerInit()
 
    if (command)
       {
-      U_SRV_LOG_MSG("initialization of plugin success");
+      U_SRV_LOG("initialization of plugin success");
 
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
 
-   U_SRV_LOG_MSG("initialization of plugin FAILED");
+   U_SRV_LOG("initialization of plugin FAILED");
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }
@@ -255,7 +255,7 @@ int UWebSocketPlugIn::handlerRequest()
 
    U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
 
-   if (U_http_upgrade)
+   if (U_http_upgrade == '1')
       {
       // process handshake
 

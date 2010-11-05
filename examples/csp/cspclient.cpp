@@ -35,7 +35,7 @@ public:
 
       CSP_CA()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_CA, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, CSP_CA, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("CREA");
          }
@@ -65,7 +65,7 @@ public:
 
       CSP_LIST_CA()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_LIST_CA, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, CSP_LIST_CA, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("LST1");
          }
@@ -89,7 +89,7 @@ public:
 
       CSP_SIGN_P10()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_SIGN_P10, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, CSP_SIGN_P10, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("SIGP");
          }
@@ -120,7 +120,7 @@ public:
 
       CSP_SIGN_SPKAC()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_SIGN_SPKAC, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, CSP_SIGN_SPKAC, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("SIGK");
          }
@@ -152,7 +152,7 @@ public:
 
       CSP_LIST_CERTS()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_LIST_CERTS, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, CSP_LIST_CERTS, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("LST2");
          }
@@ -182,7 +182,7 @@ public:
 
       CSP_REMOVE_CERT()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_REMOVE_CERT, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, CSP_REMOVE_CERT, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("DELC");
          }
@@ -212,7 +212,7 @@ public:
 
       CSP_ZERO_CERTS()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_ZERO_CERTS, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, CSP_ZERO_CERTS, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("ZERO");
          }
@@ -241,7 +241,7 @@ public:
 
       CSP_EMIT_CRL()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_EMIT_CRL, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, CSP_EMIT_CRL, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("EMIT");
          }
@@ -270,7 +270,7 @@ public:
 
       CSP_GET_CRL()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_GET_CRL, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, CSP_GET_CRL, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("GETL");
          }
@@ -299,7 +299,7 @@ public:
 
       CSP_GET_CA()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_GET_CA, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, CSP_GET_CA, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("GETC");
          }
@@ -328,7 +328,7 @@ public:
 
       CSP_REVOKE_CERT()
          {
-         U_TRACE_REGISTER_OBJECT(5, CSP_REVOKE_CERT, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, CSP_REVOKE_CERT, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("REVK");
          }

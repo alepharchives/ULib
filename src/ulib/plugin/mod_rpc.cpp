@@ -18,7 +18,7 @@
 #include <ulib/net/rpc/rpc_object.h>
 #include <ulib/net/rpc/rpc_parser.h>
 
-U_CREAT_FUNC(URpcPlugIn)
+U_CREAT_FUNC(mod_rpc, URpcPlugIn)
 
 URpcPlugIn::~URpcPlugIn()
 {
@@ -58,7 +58,7 @@ int URpcPlugIn::handlerInit()
       URPCObject::loadGenericMethod(0);
       }
 
-   U_SRV_LOG_MSG("initialization of plugin success");
+   U_SRV_LOG("initialization of plugin success");
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
@@ -102,7 +102,7 @@ int URpcPlugIn::handlerRequest()
 
    *UClientImage_Base::wbuffer = rpc_parser->processMessage(method, *URPCObject::dispatcher, bSendingFault);
 
-   U_SRV_LOG_VAR_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
+   U_SRV_LOG_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }

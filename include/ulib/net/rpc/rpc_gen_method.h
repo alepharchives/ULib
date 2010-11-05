@@ -20,8 +20,8 @@
 class U_EXPORT URPCGenericMethod : public URPCMethod {
 public:
 
-   static UString* str_command_fault;
-   static UString* str_command_not_started;
+   static const UString* str_command_fault;
+   static const UString* str_command_not_started;
 
    static void str_allocate();
 

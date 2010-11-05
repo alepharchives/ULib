@@ -13,7 +13,7 @@
 
 #include <ulib/xml/soap/soap_gen_method.h>
 
-UString* USOAPGenericMethod::str_response;
+const UString* USOAPGenericMethod::str_response;
 
 void USOAPGenericMethod::str_allocate()
 {

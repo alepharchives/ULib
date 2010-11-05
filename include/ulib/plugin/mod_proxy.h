@@ -54,13 +54,10 @@ public:
 
    UProxyPlugIn() : client_http((UFileConfig*)0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UProxyPlugIn, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UProxyPlugIn, "")
       }
 
-   virtual ~UProxyPlugIn()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UProxyPlugIn)
-      }
+   virtual ~UProxyPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
 
@@ -83,7 +80,7 @@ public:
 protected:
    UVector<UString> vmsg_error;
    UHttpClient<USocket> client_http;
-   UVector<UModProxyService*> vservice;
+   UVector<UModProxyService*>* vservice;
 
 private:
    UProxyPlugIn(const UProxyPlugIn&) : UServerPlugIn(), client_http((UFileConfig*)0) {}

@@ -18,36 +18,36 @@
 #define U_IMAP_OK  "* OK"
 #define U_IMAP_ERR "* BAD"
 
-UString* UImapClient::str_list;
-UString* UImapClient::str_marked;
-UString* UImapClient::str_unseen;
-UString* UImapClient::str_recent;
-UString* UImapClient::str_uidnext;
-UString* UImapClient::str_unmarked;
-UString* UImapClient::str_noselect;
-UString* UImapClient::str_asterisk;
-UString* UImapClient::str_messages;
-UString* UImapClient::str_noinferiors;
-UString* UImapClient::str_uidvalidity;
+const UString* UImapClient::str_list;
+const UString* UImapClient::str_marked;
+const UString* UImapClient::str_unseen;
+const UString* UImapClient::str_recent;
+const UString* UImapClient::str_uidnext;
+const UString* UImapClient::str_unmarked;
+const UString* UImapClient::str_noselect;
+const UString* UImapClient::str_asterisk;
+const UString* UImapClient::str_messages;
+const UString* UImapClient::str_noinferiors;
+const UString* UImapClient::str_uidvalidity;
 
-UString* UImapClient::str_seen;
-UString* UImapClient::str_draft;
-UString* UImapClient::str_flags;
-UString* UImapClient::str_exists;
-UString* UImapClient::str_recent1;
-UString* UImapClient::str_flagged;
-UString* UImapClient::str_deleted;
-UString* UImapClient::str_answered;
-UString* UImapClient::str_asterisk1;
-UString* UImapClient::str_read_write;
-UString* UImapClient::str_permanentflags;
+const UString* UImapClient::str_seen;
+const UString* UImapClient::str_draft;
+const UString* UImapClient::str_flags;
+const UString* UImapClient::str_exists;
+const UString* UImapClient::str_recent1;
+const UString* UImapClient::str_flagged;
+const UString* UImapClient::str_deleted;
+const UString* UImapClient::str_answered;
+const UString* UImapClient::str_asterisk1;
+const UString* UImapClient::str_read_write;
+const UString* UImapClient::str_permanentflags;
 
-UString* UImapClient::str_has_children;
-UString* UImapClient::str_has_no_children;
-UString* UImapClient::str_message_disposition_notification;
-UString* UImapClient::str_junk;
-UString* UImapClient::str_no_junk;
-UString* UImapClient::str_Forwarded;
+const UString* UImapClient::str_has_children;
+const UString* UImapClient::str_has_no_children;
+const UString* UImapClient::str_message_disposition_notification;
+const UString* UImapClient::str_junk;
+const UString* UImapClient::str_no_junk;
+const UString* UImapClient::str_Forwarded;
 
 void UImapClient::str_allocate()
 {
@@ -421,7 +421,7 @@ bool UImapClient::list(const UString& ref, const UString& wild, UVector<ListResp
                      }
                   else
                      {
-                     U_ERROR("Unknow tag response for LIST command, exit..", 0);
+                     U_ERROR("Unknow tag response for LIST command, exit..");
                      }
                   }
                }
@@ -513,7 +513,7 @@ bool UImapClient::status(const UString& mailboxName, StatusInfo& retval, int ite
                }
             else
                {
-               U_ERROR("Unknow tag response for STATUS command, exit..", 0);
+               U_ERROR("Unknow tag response for STATUS command, exit..");
                }
             }
 
@@ -616,7 +616,7 @@ U_NO_EXPORT void UImapClient::setFlag(int& _flags, UVector<UString>& vec)
          }
       else
          {
-         U_ERROR("Unknow tag response for SELECT command, exit..", 0);
+         U_ERROR("Unknow tag response for SELECT command, exit..");
          }
       }
 
@@ -719,7 +719,7 @@ U_NO_EXPORT void UImapClient::setMailBox(MailboxInfo& retval)
                }
             else
                {
-               U_ERROR("Unknow tag response for SELECT command, exit..", 0);
+               U_ERROR("Unknow tag response for SELECT command, exit..");
                }
 
             vec.clear();
@@ -771,7 +771,7 @@ U_NO_EXPORT void UImapClient::setMailBox(MailboxInfo& retval)
             }
          else
             {
-            U_ERROR("Unknow tag response for SELECT command, exit..", 0);
+            U_ERROR("Unknow tag response for SELECT command, exit..");
             }
 
          vec.clear();

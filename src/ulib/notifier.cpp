@@ -978,13 +978,13 @@ const char* UNotifier::dump(bool reset) const
                   << "fd_write_cnt                " << fd_write_cnt << '\n';
 
    *UObjectIO::os << "fd_set_read                 ";
-   char buffer1[70];
-   UObjectIO::os->write(buffer1, u_snprintf(buffer1, 70, "%B", __FDS_BITS(&fd_set_read)[0]));
+   char _buffer1[70];
+   UObjectIO::os->write(_buffer1, u_snprintf(_buffer1, 70, "%B", __FDS_BITS(&fd_set_read)[0]));
    UObjectIO::os->put('\n');
 
    *UObjectIO::os << "fd_set_write                ";
-   char buffer2[70];
-   UObjectIO::os->write(buffer2, u_snprintf(buffer2, 70, "%B", __FDS_BITS(&fd_set_write)[0]));
+   char _buffer2[70];
+   UObjectIO::os->write(_buffer2, u_snprintf(_buffer2, 70, "%B", __FDS_BITS(&fd_set_write)[0]));
    UObjectIO::os->put('\n');
 
    *UObjectIO::os << "pool             (UNotifier " << (void*)pool             << ")\n"

@@ -24,8 +24,8 @@ X509_CRL* UCrl::readCRL(const UString& x, const char* format)
    U_TRACE(1, "UCrl::readCRL(%.*S,%S)", U_STRING_TO_TRACE(x), format)
 
    BIO* in;
-   UString tmp   = x;
-   X509_CRL* crl = 0;
+   UString tmp    = x;
+   X509_CRL* _crl = 0;
 
    if (format == 0) format = (x.isBinary() ? "DER" : "PEM");
 
@@ -45,21 +45,21 @@ X509_CRL* UCrl::readCRL(const UString& x, const char* format)
 next:
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
-   crl = (X509_CRL*) (U_STREQ(format, "PEM") ? U_SYSCALL(PEM_read_bio_X509_CRL, "%p,%p,%p,%p", in, 0, 0, 0)
-                                             : U_SYSCALL(d2i_X509_CRL_bio,      "%p,%p",       in, 0));
+   _crl = (X509_CRL*) (U_STREQ(format, "PEM") ? U_SYSCALL(PEM_read_bio_X509_CRL, "%p,%p,%p,%p", in, 0, 0, 0)
+                                              : U_SYSCALL(d2i_X509_CRL_bio,      "%p,%p",       in, 0));
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
-   U_RETURN_POINTER(crl, X509_CRL);
+   U_RETURN_POINTER(_crl, X509_CRL);
 }
 
-UString UCrl::getIssuer(X509_CRL* crl, bool ldap)
+UString UCrl::getIssuer(X509_CRL* _crl, bool ldap)
 {
-   U_TRACE(0, "UCrl::getIssuer(%p,%b)", crl, ldap)
+   U_TRACE(0, "UCrl::getIssuer(%p,%b)", _crl, ldap)
 
-   U_INTERNAL_ASSERT_POINTER(crl)
+   U_INTERNAL_ASSERT_POINTER(_crl)
 
-   X509_NAME* n = X509_CRL_get_issuer(crl);
+   X509_NAME* n = X509_CRL_get_issuer(_crl);
 
    return UCertificate::getName(n, ldap);
 }
@@ -114,15 +114,15 @@ bool UCrl::isIssued(UCertificate& ca) const
    U_RETURN(ok ==  X509_V_OK);
 }
 
-unsigned UCrl::getRevokedSerials(X509_CRL* crl, long* revoked, unsigned sz)
+unsigned UCrl::getRevokedSerials(X509_CRL* _crl, long* revoked, unsigned sz)
 {
-   U_TRACE(0, "UCrl::getRevokedSerials(%p,%p,%u)", crl, revoked, sz)
+   U_TRACE(0, "UCrl::getRevokedSerials(%p,%p,%u)", _crl, revoked, sz)
 
-   U_INTERNAL_ASSERT_POINTER(crl)
+   U_INTERNAL_ASSERT_POINTER(_crl)
 
    unsigned i = 0;
    X509_REVOKED* rev;
-   STACK_OF(X509_REVOKED)* stackRevoked = sk_X509_REVOKED_dup(X509_CRL_get_REVOKED(crl));
+   STACK_OF(X509_REVOKED)* stackRevoked = sk_X509_REVOKED_dup(X509_CRL_get_REVOKED(_crl));
 
    while ((rev = sk_X509_REVOKED_pop(stackRevoked)) != 0)
       {
@@ -137,13 +137,13 @@ unsigned UCrl::getRevokedSerials(X509_CRL* crl, long* revoked, unsigned sz)
    U_RETURN(i);
 }
 
-UString UCrl::getFileName(X509_CRL* crl)
+UString UCrl::getFileName(X509_CRL* _crl)
 {
-   U_TRACE(0, "UCrl::getFileName(%p)", crl)
+   U_TRACE(0, "UCrl::getFileName(%p)", _crl)
 
-   U_INTERNAL_ASSERT_POINTER(crl)
+   U_INTERNAL_ASSERT_POINTER(_crl)
 
-   long hash = X509_NAME_hash(X509_CRL_get_issuer(crl));
+   long hash = X509_NAME_hash(X509_CRL_get_issuer(_crl));
 
    UString name = UCertificate::getFileName(hash, true);
 
@@ -194,13 +194,13 @@ UString UCrl::getEncoded(const char* format) const
    U_RETURN_STRING(UString::getStringNull());
 }
 
-long UCrl::getNumber(X509_CRL* crl)
+long UCrl::getNumber(X509_CRL* _crl)
 {
-   U_TRACE(1, "UCrl::getNumber(%p)", crl)
+   U_TRACE(1, "UCrl::getNumber(%p)", _crl)
 
-   U_INTERNAL_ASSERT_POINTER(crl)
+   U_INTERNAL_ASSERT_POINTER(_crl)
 
-   ASN1_INTEGER* crlnum = (ASN1_INTEGER*) U_SYSCALL(X509_CRL_get_ext_d2i, "%p,%d,%p,%p", crl, NID_crl_number, 0, 0);
+   ASN1_INTEGER* crlnum = (ASN1_INTEGER*) U_SYSCALL(X509_CRL_get_ext_d2i, "%p,%d,%p,%p", _crl, NID_crl_number, 0, 0);
 
    long result = 0;
 
@@ -214,13 +214,13 @@ long UCrl::getNumber(X509_CRL* crl)
    U_RETURN(result);
 }
 
-time_t UCrl::getIssueTime(X509_CRL* crl)
+time_t UCrl::getIssueTime(X509_CRL* _crl)
 {
-   U_TRACE(0, "UCrl::getIssueTime(%p)", crl)
+   U_TRACE(0, "UCrl::getIssueTime(%p)", _crl)
 
-   U_INTERNAL_ASSERT_POINTER(crl)
+   U_INTERNAL_ASSERT_POINTER(_crl)
 
-   ASN1_UTCTIME* utctime = X509_CRL_get_lastUpdate(crl);
+   ASN1_UTCTIME* utctime = X509_CRL_get_lastUpdate(_crl);
 
    time_t result = UDate::getSecondFromTime((const char*)utctime->data, true, "%2u%2u%2u%2u%2u%2uZ"); // 100212124550Z
 

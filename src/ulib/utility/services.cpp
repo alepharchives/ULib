@@ -214,10 +214,10 @@ UString UServices::getUUID()
 #  if !defined(HAVE_OPENSSL_97) && !defined(HAVE_OPENSSL_98)
 #     warning "WARNING: I must to disable some function with this version of openssl... be aware"
 
-#     define ENGINE_load_dynamic()            0
-#     define X509_STORE_set_flags(a,b)        0
-#     define ENGINE_load_public_key(a,b,c,d)  0
-#     define ENGINE_load_private_key(a,b,c,d) 0
+#     define ENGINE_load_dynamic()            getpid()
+#     define X509_STORE_set_flags(a,b)        getpid()
+#     define ENGINE_load_public_key(a,b,c,d)  getpid()
+#     define ENGINE_load_private_key(a,b,c,d) getpid()
 
 #     ifdef DEBUG
 #        define trace_sysreturn_type(a) trace_sysreturn_type(0)
@@ -248,14 +248,14 @@ char* UServices::getOpenSSLError(char* buffer, uint32_t buffer_size, uint32_t* p
 
    while ((i = ERR_get_error()))
       {
-      char buf[256];
+      char _buf[256];
 
-      (void) ERR_error_string_n(i, buf, sizeof(buf));
+      (void) ERR_error_string_n(i, _buf, sizeof(_buf));
 
-      U_INTERNAL_DUMP("buf = %.*S", u_strlen(buf), buf)
+      U_INTERNAL_DUMP("buf = %.*S", u_strlen(_buf), _buf)
 
       ptr  += size;
-      size += u_snprintf(ptr, buffer_size - (ptr - buffer), "(%ld, %s)", i, buf);
+      size += u_snprintf(ptr, buffer_size - (ptr - buffer), "(%ld, %s)", i, _buf);
 
       U_INTERNAL_ASSERT_MINOR(size,buffer_size)
       }
@@ -582,7 +582,7 @@ void UServices::generateKey()
 #elif defined(HAVE_LIBUUID)
    U_SYSCALL_VOID(uuid_generate, "%p", key);
 #else
-   (void) u_snprintf((char*)key, 16, "%4u%lu", u_pid, u_now.tv_sec);
+   (void) u_snprintf((char*)key, 16, "%P%lu", u_now.tv_usec);
 #endif
 }
 
@@ -604,11 +604,11 @@ void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, ui
 #endif
 }
 
-UString UServices::generateToken(UString& data, time_t expire)
+UString UServices::generateToken(const UString& data, time_t expire)
 {
    U_TRACE(0, "UServices::generateToken(%.*S,%ld)", U_STRING_TO_TRACE(data), expire)
 
-   UString token(100U);
+   UString token(data.size() + 12U);
 
    token.snprintf("%.*s&%ld&", U_STRING_TO_TRACE(data), expire);
 

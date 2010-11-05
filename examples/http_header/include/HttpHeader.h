@@ -42,7 +42,7 @@ public:
 
    HttpHeader()
       {
-      U_TRACE_REGISTER_OBJECT(5, HttpHeader, "", 0)
+      U_TRACE_REGISTER_OBJECT(5, HttpHeader, "")
       }
 
    /** Destructor of the class.

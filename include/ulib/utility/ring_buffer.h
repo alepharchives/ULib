@@ -39,7 +39,7 @@ public:
 
    URingBuffer()
       {
-      U_TRACE_REGISTER_OBJECT(0, URingBuffer, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, URingBuffer, "")
 
       ptr = 0;
       }
@@ -135,7 +135,7 @@ public:
 
    int write(const char* buf, int len, bool pkt);
 
-   int write(const UString& buf, bool pkt) { return write(buf.data(), buf.size(), pkt); }
+   int write(const UString& _buf, bool pkt) { return write(_buf.data(), _buf.size(), pkt); }
 
    int readFromFdAndWrite(int fd);
 

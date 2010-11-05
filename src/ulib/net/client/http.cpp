@@ -201,9 +201,9 @@ Connection closed by foreign host.
 
 #define U_MAX_REDIRECTS 10 // HTTP 1.0 used to suggest 5
 
-UString* UHttpClient_Base::str_www_authenticate;
-UString* UHttpClient_Base::str_proxy_authenticate;
-UString* UHttpClient_Base::str_proxy_authorization;
+const UString* UHttpClient_Base::str_www_authenticate;
+const UString* UHttpClient_Base::str_proxy_authenticate;
+const UString* UHttpClient_Base::str_proxy_authorization;
 
 void UHttpClient_Base::str_allocate()
 {
@@ -500,7 +500,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 
       if (++redirectCount > U_MAX_REDIRECTS)
          {
-         U_INTERNAL_DUMP("REDIRECTION LIMIT REACHED...", 0)
+         U_INTERNAL_DUMP("REDIRECTION LIMIT REACHED...")
 
          U_RETURN(-1);
          }

@@ -17,17 +17,18 @@
 #include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
 
-U_CREAT_FUNC(UHttpPlugIn)
+U_CREAT_FUNC(mod_http, UHttpPlugIn)
 
-UString* UHttpPlugIn::str_CACHE_FILE_MASK;
-UString* UHttpPlugIn::str_URI_PROTECTED_MASK;
-UString* UHttpPlugIn::str_URI_REQUEST_CERT_MASK;
-UString* UHttpPlugIn::str_URI_PROTECTED_ALLOWED_IP;
+const UString* UHttpPlugIn::str_CACHE_FILE_MASK;
+const UString* UHttpPlugIn::str_URI_PROTECTED_MASK;
+const UString* UHttpPlugIn::str_URI_REQUEST_CERT_MASK;
+const UString* UHttpPlugIn::str_URI_PROTECTED_ALLOWED_IP;
 
 void UHttpPlugIn::str_allocate()
 {
    U_TRACE(0, "UHttpPlugIn::str_allocate()")
 
+   U_INTERNAL_ASSERT_EQUALS(str_CACHE_FILE_MASK,0)
    U_INTERNAL_ASSERT_EQUALS(str_URI_PROTECTED_MASK,0)
    U_INTERNAL_ASSERT_EQUALS(str_URI_REQUEST_CERT_MASK,0)
    U_INTERNAL_ASSERT_EQUALS(str_URI_PROTECTED_ALLOWED_IP,0)
@@ -152,7 +153,7 @@ int UHttpPlugIn::handlerInit()
          }
       }
 
-   U_SRV_LOG_MSG("initialization of plugin success");
+   U_SRV_LOG("initialization of plugin success");
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
@@ -187,7 +188,7 @@ int UHttpPlugIn::handlerREAD()
 
       // HTTP 1.1 want header "Host: ..."
 
-      if (U_http_version            == 1 &&
+      if (U_http_version            == '1' &&
           UHTTP::http_info.host_len == 0)
          {
          UHTTP::setHTTPBadRequest();
@@ -195,17 +196,16 @@ int UHttpPlugIn::handlerREAD()
          goto send_response;
          }
 
-      U_INTERNAL_DUMP("U_http_version = %d", U_http_version)
+      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
-      if (UHTTP::virtual_host)
+      // manage virtual host
+
+      if (UHTTP::virtual_host &&
+          UHTTP::http_info.host_len) 
          {
-         // manage virtual host
-
          UString host(U_HTTP_HOST_TO_PARAM);
 
-         // Host: hostname[:port]
-
-         host_end = host.find(':');
+         host_end = host.find(':'); // Host: hostname[:port]
 
          if (host_end != U_NOT_FOUND) host.size_adjust(host_end);
 
@@ -214,15 +214,11 @@ int UHttpPlugIn::handlerREAD()
          UHTTP::alias->snprintf("/%.*s%.*s", U_STRING_TO_TRACE(host), U_HTTP_URI_TO_TRACE);
          }
 
-      U_INTERNAL_DUMP("alias = %.*S", U_STRING_TO_TRACE(*UHTTP::alias))
+      // manage alias uri
 
       if (valias.empty() == false)
          {
          UString item;
-
-         // NB: check if needed to reset prev alias uri
-
-         if (UHTTP::virtual_host == false) UHTTP::alias->setEmpty();
 
          for (int32_t i = 0, n = valias.size(); i < n; i += 2)
             {
@@ -230,8 +226,6 @@ int UHttpPlugIn::handlerREAD()
 
             if (U_HTTP_URI_EQUAL(item))
                {
-               // manage alias uri
-
                *UHTTP::request_uri = item;
 
                (void) UHTTP::alias->append(valias[i+1]);
@@ -245,7 +239,7 @@ next:
          {
          UHTTP::setHTTPUri(UHTTP::alias->data(), UHTTP::alias->size());
 
-         U_SRV_LOG_VAR("ALIAS: URI request changed to: %.*s", U_STRING_TO_TRACE(*UHTTP::alias));
+         U_SRV_LOG("ALIAS: URI request changed to: %.*s", U_STRING_TO_TRACE(*UHTTP::alias));
          }
 
 #  ifdef HAVE_SSL
@@ -254,7 +248,7 @@ next:
          {
          if (((UServer<USSLSocket>*)UServer_Base::pthis)->askForClientCertificate() == false)
             {
-            U_SRV_LOG_VAR("URI_REQUEST_CERT: request %.*S denied by mandatory certificate from client", U_HTTP_URI_TO_TRACE);
+            U_SRV_LOG("URI_REQUEST_CERT: request %.*S denied by mandatory certificate from client", U_HTTP_URI_TO_TRACE);
 
             UHTTP::setHTTPForbidden();
 
@@ -358,13 +352,26 @@ int UHttpPlugIn::handlerReset()
 
    // check if dynamic page (ULib Servlet Page)
 
-   if (UHTTP::runDynamicPage)
+   if (UHTTP::page)
       {
       U_INTERNAL_ASSERT_POINTER(UHTTP::pages)
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::pages->empty(),false)
+      U_INTERNAL_ASSERT_POINTER(UHTTP::page->runDynamicPage)
 
-      UHTTP::runDynamicPage((void*)-1); // call reset for module...
+      UHTTP::page->runDynamicPage((UClientImage_Base*)-1); // call reset for module...
 
-      UHTTP::runDynamicPage = 0;
+      UHTTP::page = 0;
+      }
+
+   // NB: check if needed to reset alias URI
+
+   U_INTERNAL_DUMP("UHTTP::alias = %.*S UHTTP::request_uri = %.*S", U_STRING_TO_TRACE(*UHTTP::alias), U_STRING_TO_TRACE(*UHTTP::request_uri))
+
+   if (UHTTP::alias->empty() == false)
+      {
+      UHTTP::alias->setEmpty();
+
+      UHTTP::request_uri->clear();
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

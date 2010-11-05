@@ -105,9 +105,9 @@ restart:
 read:
    value = socket->recv(ptr + byte_read, (single_read ? (int)capacity : count - byte_read));
 
-   if (value <= 0)
+   if (value <= 0L)
       {
-      if (value == 0) socket->close(); // EOF
+      if (value == 0L) socket->close(); // EOF
       else
          {
          socket->checkErrno(value);
@@ -137,7 +137,7 @@ read:
       {
       // NB: may be there are available more bytes to read...
 
-      if (value == capacity)
+      if (value == (ssize_t)capacity)
          {
          buffer.size_adjust_force(start + byte_read); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
 
@@ -252,14 +252,14 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
 
    ssize_t value, count = sz1 + sz2;
 
-   struct iovec iov[2] = { { (caddr_t)header.data(), sz1 },
-                           { (caddr_t)  body.data(), sz2 } };
+   struct iovec _iov[2] = { { (caddr_t)header.data(), sz1 },
+                            { (caddr_t)  body.data(), sz2 } };
 
    while (true)
       {
       U_INTERNAL_DUMP("count = %u", count)
 
-      value = s->writev(iov, 2);
+      value = s->writev(_iov, 2);
 
       if (s->checkIO(value, count) == false)
          {
@@ -284,7 +284,7 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
          if (sz1 >= value)
             {
             sz1             -= value;
-            iov[0].iov_base  = (char*)iov[0].iov_base + value;
+            _iov[0].iov_base = (char*)_iov[0].iov_base + value;
 
             value = 0;
             }
@@ -294,13 +294,13 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
                      sz1 = 0;
             }
 
-         iov[0].iov_len = sz1;
+         _iov[0].iov_len = sz1;
          }
 
-      iov[1].iov_len  -= value;
-      iov[1].iov_base  = (char*)iov[1].iov_base + value;
+      _iov[1].iov_len  -= value;
+      _iov[1].iov_base  = (char*)_iov[1].iov_base + value;
 
-      count = sz1 + iov[1].iov_len;
+      count = sz1 + _iov[1].iov_len;
 
       U_INTERNAL_ASSERT_MAJOR(count,0)
       }
@@ -512,7 +512,7 @@ UString USocketExt::getNetworkDevice(const char* exclude)
 
    // Skip first line
 
-   if (U_SYSCALL(fscanf, "%p,%S", route, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s", 0) != EOF)
+   if (U_SYSCALL(fscanf, "%p,%S", route, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s") != EOF)
       {
       while (U_SYSCALL(fscanf, "%p,%S", route, "%6s %8s %*s %*s %*s %*s %*s %*s %*s %*s %*s\n", dev, dest) != EOF)
          {
@@ -589,7 +589,7 @@ UString USocketExt::getMacAddress(int fd, const char* device_or_ip)
       // 10.30.1.131      0x1         0x2         00:16:ec:fb:46:da     *        eth0
       // ------------------------------------------------------------------------------
 
-      if (U_SYSCALL(fscanf, "%p,%S", arp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s", 0) != EOF)
+      if (U_SYSCALL(fscanf, "%p,%S", arp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s") != EOF)
          {
          bool found;
          char ip[16], hw[18];
@@ -653,7 +653,7 @@ UString USocketExt::getNetworkInterfaceName(const UString& ip)
    // 10.30.1.131      0x1         0x2         00:16:ec:fb:46:da     *        eth0
    // ------------------------------------------------------------------------------
 
-   if (U_SYSCALL(fscanf, "%p,%S", arp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s", 0) != EOF)
+   if (U_SYSCALL(fscanf, "%p,%S", arp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s") != EOF)
       {
       char _ip[16], dev[7];
 
@@ -689,7 +689,7 @@ void USocketExt::getARPCache(UVector<UString>& vec)
    // 10.30.1.131      0x1         0x2         00:16:ec:fb:46:da     *        eth0
    // ------------------------------------------------------------------------------
 
-   if (U_SYSCALL(fscanf, "%p,%S", arp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s", 0) != EOF)
+   if (U_SYSCALL(fscanf, "%p,%S", arp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s") != EOF)
       {
       char _ip[16];
 

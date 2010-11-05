@@ -156,7 +156,7 @@ private:
 
    // Checksum (16 bits), calculated with the ICMP part of the packet (the IP header is not used)
 
-   static inline void cksum(void* hdr, size_t len) U_NO_EXPORT;
+   static inline void cksum(void* hdr, int len) U_NO_EXPORT;
 
    UPing(const UPing&) : USocket(false) {}
    UPing& operator=(const UPing&)       { return *this; }

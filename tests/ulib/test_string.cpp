@@ -1647,6 +1647,15 @@ U_EXPORT main (int argc, char* argv[])
    U_ASSERT( UStringExt::dirname(z)  == U_STRING_FROM_CONSTANT("/dir") )
    U_ASSERT( UStringExt::basename(z) == U_STRING_FROM_CONSTANT("base.suffix") )
 
+   u_cwd     =                 "/mnt/storage/stefano/ulib/nodebug/ULib-1.0.5/tests/examples";
+   u_cwd_len = U_CONSTANT_SIZE("/mnt/storage/stefano/ulib/nodebug/ULib-1.0.5/tests/examples"); // 59
+
+   z.setBuffer(U_PATH_MAX);
+   z.snprintf("%w%.*s", U_CONSTANT_TO_TRACE("/demo"));
+
+   U_ASSERT_DIFFERS( z.size(), u_cwd_len )
+   U_ASSERT( z == U_STRING_FROM_CONSTANT("/mnt/storage/stefano/ulib/nodebug/ULib-1.0.5/tests/examples/demo") )
+
    /* Sort two version numbers, comparing equivalently seperated strings of digits numerically
     *
     * Returns a positive number if (a > b)

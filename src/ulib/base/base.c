@@ -118,7 +118,7 @@ void u_setPid(void)
    pid_t pid_copy;
    static char buffer[10];
 
-   U_INTERNAL_TRACE("u_setPid()", 0)
+   U_INTERNAL_TRACE("u_setPid()")
 
    u_pid_str = buffer + sizeof(buffer);
 
@@ -144,7 +144,7 @@ void u_setPid(void)
 
 void u_getcwd(void) /* get current working directory */
 {
-   U_INTERNAL_TRACE("u_getcwd()", 0)
+   U_INTERNAL_TRACE("u_getcwd()")
 
    u_cwd = (const char* restrict) getcwd(u_cwd_buffer, 256);
 
@@ -161,7 +161,7 @@ void u_getcwd(void) /* get current working directory */
 
 void u_check_now_adjust(void)
 {
-   U_INTERNAL_TRACE("u_check_now_adjust()", 0)
+   U_INTERNAL_TRACE("u_check_now_adjust()")
 
    /* calculate number of seconds between UTC to current time zone
     *
@@ -206,7 +206,7 @@ void u_check_now_adjust(void)
 
       /* NB: check if current date is OK - Fri Apr 23 17:26:25 CEST 2010 */
 
-      if (u_now.tv_sec > 1272036378) u_start_time = u_now.tv_sec + u_now_adjust;
+      if (u_now.tv_sec > 1272036378L) u_start_time = u_now.tv_sec + u_now_adjust;
       }
 }
 
@@ -215,11 +215,12 @@ void u_init(char** restrict argv)
    const char* restrict pwd;
    struct passwd* restrict pw;
 
-   U_INTERNAL_TRACE("u_init()", 0)
+   U_INTERNAL_TRACE("u_init()")
 
    u_setPid();
 
-   u_progname = u_basename(u_progpath = argv[0]);
+   u_progpath = *argv;
+   u_progname = u_basename(u_progpath);
 
    U_INTERNAL_ASSERT_POINTER(u_progname)
 
@@ -272,11 +273,11 @@ void u_init(char** restrict argv)
 
 uint32_t u_snprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...)
 {
-   va_list argp;
    uint32_t bytes_written;
 
-   U_INTERNAL_TRACE("u_snprintf(%s)", format)
+// U_INTERNAL_TRACE("u_snprintf(%s)", format)
 
+   va_list argp;
    va_start(argp, format);
 
    bytes_written = u_vsnprintf(buffer, buffer_size, format, argp);
@@ -1695,7 +1696,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             for (i = 0; i < line; ++i)
                {
 iteration:
-               (void) sprintf(bp, "%016X ", ptr2int(cp));
+               (void) sprintf(bp, "%016lX ", ptr2int(cp));
 
                bp += 17;
 
@@ -1889,7 +1890,7 @@ static bool u_askForContinue(void)
 {
    bool bcontinue = false;
 
-   U_INTERNAL_TRACE("u_askForContinue()", 0)
+   U_INTERNAL_TRACE("u_askForContinue()")
 
    if (u_is_tty &&
        isatty(STDIN_FILENO))
@@ -1914,17 +1915,17 @@ static bool u_askForContinue(void)
 
 void u_printf(const char* format, ...)
 {
-   va_list argp;
    char buffer[4096];
    uint32_t bytes_written;
 
-   U_INTERNAL_TRACE("u_printf(%s)", format)
+// U_INTERNAL_TRACE("u_printf(%s)", format)
 
+   va_list argp;
    va_start(argp, format);
 
    u_flag_exit = 0;
 
-   bytes_written = u_vsnprintf(buffer, 4095, format, argp);
+   bytes_written = u_vsnprintf(buffer, sizeof(buffer)-1, format, argp);
 
    va_end(argp);
 
@@ -2023,7 +2024,7 @@ void u_exit(void)
 {
    int i;
 
-   U_INTERNAL_TRACE("u_exit()", 0)
+   U_INTERNAL_TRACE("u_exit()")
 
    U_INTERNAL_PRINT("u_fns_index = %d", u_fns_index)
 

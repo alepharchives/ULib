@@ -20,9 +20,9 @@
 class U_EXPORT UFileConfig : public UFile {
 public:
 
-   static UString* str_yes;
-   static UString* str_FILE;
-   static UString* str_string;
+   static const UString* str_yes;
+   static const UString* str_FILE;
+   static const UString* str_string;
 
    static void str_allocate();
 
@@ -30,7 +30,7 @@ public:
 
    UFileConfig()
       {
-      U_TRACE_REGISTER_OBJECT(0, UFileConfig, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UFileConfig, "")
 
       UFile::map      = (char*)MAP_FAILED;
       UFile::st_size  = 0;

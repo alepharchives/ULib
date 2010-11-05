@@ -45,7 +45,7 @@ void UTCPSocket::closesocket()
 
       if (USocket::shutdown())
          {
-         char buf[8*1024];
+         char _buf[8*1024];
          uint32_t count = 0;
 
          /* At this point, the socket layer has to wait until the receiver has
@@ -56,7 +56,7 @@ void UTCPSocket::closesocket()
 
          UFile::setBlocking(iSockDesc, flags, true);
 
-         do { if (count++ > 5) break; errno = 0; } while (USocket::recv(iSockDesc, buf, sizeof(buf)) > 0 || errno == EAGAIN);
+         do { if (count++ > 5) break; errno = 0; } while (USocket::recv(iSockDesc, _buf, sizeof(_buf)) > 0 || errno == EAGAIN);
          }
       }
 

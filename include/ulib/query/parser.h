@@ -177,17 +177,19 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static UString* s_p1;
-   static UString* s_p2;
-   static UString* s_or;
-   static UString* s_and;
-   static UString* s_not;
+   static const UString* s_p1;
+   static const UString* s_p2;
+   static const UString* s_or;
+   static const UString* s_and;
+   static const UString* s_not;
+
+   static void str_allocate();
 
    // COSTRUTTORE
 
    UQueryParser()
       {
-      U_TRACE_REGISTER_OBJECT(0, UQueryParser, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UQueryParser, "")
 
       tree = 0;
 
@@ -204,8 +206,6 @@ public:
    // SERVICES
 
    void clear();
-
-   static void str_allocate();
 
    UQueryNode* getTree() const { return tree; }
 

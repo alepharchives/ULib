@@ -203,7 +203,7 @@ int URDBClientImage::handlerRead()
          UStringExt::buildTokenInt(res = STR_500, 0, *wbuffer);
          }
 
-      U_SRV_LOG_VAR_WITH_ADDR("method %.4S return %s for", ptr, res);
+      U_SRV_LOG_WITH_ADDR("method %.4S return %s for", ptr, res);
 
       result = handlerWrite();
 

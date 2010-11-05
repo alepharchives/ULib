@@ -32,12 +32,12 @@ public:
 
    UHashMapObjectDumpable()
       {
-      U_INTERNAL_TRACE("UHashMapObjectDumpable::UHashMapObjectDumpable()", 0)
+      U_INTERNAL_TRACE("UHashMapObjectDumpable::UHashMapObjectDumpable()")
       }
 
    ~UHashMapObjectDumpable()
       {
-      U_INTERNAL_TRACE("UHashMapObjectDumpable::~UHashMapObjectDumpable()", 0)
+      U_INTERNAL_TRACE("UHashMapObjectDumpable::~UHashMapObjectDumpable()")
       }
 
    // Services
@@ -102,7 +102,7 @@ public:
 
    static void resize()
       {
-      U_INTERNAL_TRACE("UHashMapObjectDumpable::resize()", 0)
+      U_INTERNAL_TRACE("UHashMapObjectDumpable::resize()")
 
       uint32_t                 old_table_size = table_size;
       UHashMapObjectDumpable** old_table      = table;
@@ -260,6 +260,24 @@ U_NO_EXPORT char*    UObjectDB::file_mem;
 U_NO_EXPORT char*    UObjectDB::file_limit;
 U_NO_EXPORT uint32_t UObjectDB::file_size;
 
+U_NO_EXPORT char     UObjectDB::buffer1[64];
+U_NO_EXPORT char     UObjectDB::buffer2[256];
+
+U_NO_EXPORT char*    UObjectDB::lbuf;
+U_NO_EXPORT char*    UObjectDB::lend;
+U_NO_EXPORT bPFpcpv  UObjectDB::checkObject;
+
+U_NO_EXPORT iovec    UObjectDB::liov[7] = {
+   { 0, 0 },
+   { (caddr_t) UObjectDB::buffer1, 0 },
+   { (caddr_t) UObjectDB::buffer2, 0 },
+   { 0, 0 },
+   { (caddr_t)  U_CONSTANT_TO_PARAM(U_LF2) },
+   { 0, 0 },
+   { (caddr_t) "\n---------------------------------------"
+               "-----------------------------------------\n", 82 }
+};
+
 void UObjectDB::init(bool flag, bool info)
 {
    U_INTERNAL_TRACE("UObjectDB::init(%d,%d)", flag, info)
@@ -282,7 +300,7 @@ void UObjectDB::init(bool flag, bool info)
 
       if (file_size) U_NUMBER_SUFFIX(file_size, suffix);
 
-      (void) u_snprintf(name, 128, "object.%N.%P", 0);
+      (void) u_snprintf(name, 128, "object.%N.%P");
 
       // NB: O_RDWR e' necessario per mmap(MAP_SHARED)...
 
@@ -296,7 +314,7 @@ void UObjectDB::init(bool flag, bool info)
             {
             if (ftruncate(fd, file_size))
                {
-               U_WARNING("out of space on file system, (required %lu bytes)", file_size);
+               U_WARNING("out of space on file system, (required %u bytes)", file_size);
 
                file_size = 0;
                }
@@ -362,7 +380,7 @@ U_NO_EXPORT void UObjectDB::_write(const struct iovec* iov, int _n)
 
 void UObjectDB::close()
 {
-   U_INTERNAL_TRACE("UObjectDB::close()", 0)
+   U_INTERNAL_TRACE("UObjectDB::close()")
 
    if (fd > 0)
       {
@@ -391,7 +409,7 @@ void UObjectDB::close()
 
 void UObjectDB::initFork()
 {
-   U_INTERNAL_TRACE("UObjectDB::initFork()", 0)
+   U_INTERNAL_TRACE("UObjectDB::initFork()")
 
    U_INTERNAL_ASSERT_RANGE(1,fd,1024)
 
@@ -429,49 +447,31 @@ void UObjectDB::unregisterObject(const void* ptr_object)
 
 // dump
 
-static char buffer1[64];
-static char buffer2[256];
-
-static iovec iov[7] = {
-   { 0, 0 },
-   { (caddr_t) buffer1, 0 },
-   { (caddr_t) buffer2, 0 },
-   { 0, 0 },
-   { (caddr_t)  U_CONSTANT_TO_PARAM(U_LF2) },
-   { 0, 0 },
-   { (caddr_t) "\n---------------------------------------"
-               "-----------------------------------------\n", 82 }
-};
-
 void UObjectDB::dumpObject(const UObjectDumpable* dumper)
 {
    U_INTERNAL_TRACE("UObjectDB::dumpObject(%p)", dumper)
 
    U_INTERNAL_ASSERT(dumper->level >= level_active)
 
-   iov[0].iov_len  =  u_strlen(dumper->name_class);
-   iov[0].iov_base = (caddr_t) dumper->name_class;
+   liov[0].iov_len  =  u_strlen(dumper->name_class);
+   liov[0].iov_base = (caddr_t) dumper->name_class;
 
    (void) sprintf(buffer1, " %p size %d level %d", // cnt %09d",
                   dumper->ptr_object, dumper->size_object, dumper->level); //, dumper->cnt);
 
    (void) ::sprintf(buffer2, "\n%s(%d)\n", dumper->name_file, dumper->num_line);
 
-   iov[1].iov_len = u_strlen(buffer1);
-   iov[2].iov_len = u_strlen(buffer2);
+   liov[1].iov_len = u_strlen(buffer1);
+   liov[2].iov_len = u_strlen(buffer2);
 
-   iov[3].iov_len  = u_strlen(dumper->name_function);
-   iov[3].iov_base = (caddr_t) dumper->name_function;
+   liov[3].iov_len  = u_strlen(dumper->name_function);
+   liov[3].iov_base = (caddr_t) dumper->name_function;
 
-   iov[5].iov_base = (caddr_t) dumper->dump();
-   iov[5].iov_len  = u_strlen((const char*)iov[5].iov_base);
+   liov[5].iov_base = (caddr_t) dumper->dump();
+   liov[5].iov_len  = u_strlen((const char*)liov[5].iov_base);
 }
 
 // dump single object...
-
-static char* buf;
-static char* end;
-static bPFpcpv checkObject;
 
 U_NO_EXPORT bool UObjectDB::printObjLive(const UObjectDumpable* dumper)
 {
@@ -484,11 +484,11 @@ U_NO_EXPORT bool UObjectDB::printObjLive(const UObjectDumpable* dumper)
 
       for (int i = 0; i < 7; ++i)
          {
-         if ((buf + iov[i].iov_len) > end) return false;
+         if ((lbuf + liov[i].iov_len) > lend) return false;
 
-         (void) memcpy(buf, iov[i].iov_base, iov[i].iov_len);
+         (void) memcpy(lbuf, liov[i].iov_base, liov[i].iov_len);
 
-         buf += iov[i].iov_len;
+         lbuf += liov[i].iov_len;
          }
       }
 
@@ -499,15 +499,15 @@ uint32_t UObjectDB::dumpObject(char* buffer, uint32_t buffer_size, bPFpcpv check
 {
    U_INTERNAL_TRACE("UObjectDB::dumpObject(%p,%u,%p)", buffer, buffer_size, check_object)
 
-   buf         = buffer;
-   end         = buffer + buffer_size;
+   lbuf        = buffer;
+   lend        = buffer + buffer_size;
    checkObject = check_object;
 
    UHashMapObjectDumpable::callForAllEntry(UObjectDB::printObjLive);
 
-   U_INTERNAL_ASSERT(buf > buffer)
+   U_INTERNAL_ASSERT(lbuf > buffer)
 
-   return (buf - buffer);
+   return (lbuf - buffer);
 }
 
 // sorting object live for time creation...
@@ -541,7 +541,7 @@ U_NO_EXPORT int UObjectDB::compareDumper(const void* dumper1, const void* dumper
 
 void UObjectDB::dumpObjects()
 {
-   U_INTERNAL_TRACE("UObjectDB::dumpObjects()", 0)
+   U_INTERNAL_TRACE("UObjectDB::dumpObjects()")
 
    const UObjectDumpable* obj_live[8192];
 
@@ -563,7 +563,7 @@ void UObjectDB::dumpObjects()
          {
          dumpObject(dumper);
 
-         _write(iov, 7);
+         _write(liov, 7);
          }
       }
 }

@@ -31,7 +31,7 @@ static z_stream zs;
 
 int init_compression(void)
 {
-   U_INTERNAL_TRACE("init_compression()", 0)
+   U_INTERNAL_TRACE("init_compression()")
 
    (void) memset(&zs, 0, sizeof(z_stream));
 
@@ -41,7 +41,7 @@ int init_compression(void)
 
    if (zlib_deflateInit2(&zs, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -MAX_WBITS, 9, Z_DEFAULT_STRATEGY) != Z_OK)
       {
-      U_INTERNAL_TRACE("Error initializing deflation!", 0)
+      U_INTERNAL_TRACE("Error initializing deflation!")
 
       return 1;
       }
@@ -56,7 +56,7 @@ int compress_file(int in_fd, int out_fd, struct zipentry* ze)
    Bytef  in_buff[RDSZ],
          out_buff[RDSZ];
 
-   U_INTERNAL_TRACE("compress_file()", 0)
+   U_INTERNAL_TRACE("compress_file()")
 
    zs.avail_in  = 0;
    zs.next_in   = in_buff;
@@ -178,7 +178,7 @@ int compress_file(int in_fd, int out_fd, struct zipentry* ze)
    /* Reset the deflation for the next time around */
    if (zlib_deflateReset(&zs) != Z_OK)
       {
-      U_INTERNAL_TRACE("Error resetting deflation", 0)
+      U_INTERNAL_TRACE("Error resetting deflation")
 
       return 1;
       }
@@ -190,7 +190,7 @@ int end_compression(void)
 {
    int rtval;
 
-   U_INTERNAL_TRACE("end_compression()", 0)
+   U_INTERNAL_TRACE("end_compression()")
 
    /* Oddly enough, zlib always returns Z_DATA_ERROR if you specify no zlib header. Go fig. */
 
@@ -207,13 +207,13 @@ int end_compression(void)
 
 int init_inflation(void)
 {
-   U_INTERNAL_TRACE("init_inflation()", 0)
+   U_INTERNAL_TRACE("init_inflation()")
 
    (void) memset(&zs, 0, sizeof(z_stream));
 
    if (zlib_inflateInit2(&zs, -MAX_WBITS) != Z_OK)
       {
-      U_INTERNAL_TRACE("Error initializing deflation!", 0);
+      U_INTERNAL_TRACE("Error initializing deflation!");
 
       return 1;
       }
@@ -261,7 +261,7 @@ int inflate_file(pb_file* pbf, int out_fd, struct zipentry* ze)
          {
          if (rtval == Z_STREAM_END)
             {
-            U_INTERNAL_TRACE("end of stream", 0);
+            U_INTERNAL_TRACE("end of stream");
 
             if (zs.avail_out != RDSZ)
                {

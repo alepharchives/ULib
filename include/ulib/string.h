@@ -125,12 +125,9 @@ public:
       ++references;
 
       U_INTERNAL_DUMP("this = %p parent = %p references = %d child = %d", this, parent, references + 1, child)
-
-      U_INTERNAL_ASSERT_MAJOR(references,0)
       }
 
    void release();
-   void destroy();
 
    // Size and Capacity
 
@@ -160,9 +157,9 @@ public:
 
    bool isNullTerminated() const { return (str[_length] == '\0'); }
 
-   bool mmap() const
+   bool isMmap() const
       {
-      U_TRACE(0, "UStringRep::mmap()")
+      U_TRACE(0, "UStringRep::isMmap()")
 
       U_RETURN(_capacity == U_NOT_FOUND); 
       }
@@ -215,18 +212,7 @@ public:
 
    char* data() const { return (char*)str; }
 
-   uint32_t copy(char* s, uint32_t n, uint32_t pos = 0) const
-      {
-      U_TRACE(1, "UStringRep::copy(%p,%u,%u)", s, n, pos)
-
-      U_INTERNAL_ASSERT(pos <= _length)
-
-      if (n > (_length - pos)) n = (_length - pos);
-
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", s, str + pos, n);
-
-      U_RETURN(n);
-      }
+   uint32_t copy(char* s, uint32_t n, uint32_t pos = 0) const;
 
    // ELEMENT ACCESS
 
@@ -499,10 +485,7 @@ public:
    friend ostream& operator<<(ostream& os, const UStringRep& r) { r.write(os); return os; }
 
 protected:
-   uint32_t _length, _capacity;
-public:
-   int32_t references; // NB: must be here, see string_rep_null...
-protected:
+   uint32_t _length, _capacity, references; // NB: must be here, see string_rep_null...
    const char* str;
    // ----------------> maybe unnamed array of char...
 
@@ -530,6 +513,7 @@ private:
                       friend class UStringExt;
                       friend class UHttpPlugIn;
    template <class T> friend class UHashMap;
+   template <class T> friend void u_construct(T*, uint32_t);
                       friend void ULib_init();
 };
 
@@ -615,7 +599,7 @@ public:
 
    UString()
       {
-      U_TRACE_REGISTER_OBJECT(0, UString, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UString, "")
 
       copy(UStringRep::string_rep_null);
       }
@@ -838,7 +822,8 @@ public:
 
    // Modifiers
 
-   void push_back(char c) { (void) append(uint32_t(1), c); }
+   void push(     char c) { (void) append(1U, c); }
+   void push_back(char c) { (void) append(1U, c); }
 
    UString& append(uint32_t n, char c);
    UString& append(const char* s, uint32_t n);
@@ -855,7 +840,7 @@ public:
    UString& append(const char* s);
    UString& append(const UString& str);
 
-   UString& operator+=(char c)               { return append(uint32_t(1), c); }
+   UString& operator+=(char c)               { return append(1U, c); }
    UString& operator+=(const char* s)        { return append(s, u_strlen(s)); }
    UString& operator+=(const UString& str);
 
@@ -864,9 +849,9 @@ public:
    static char* ptrbuf;
    static char  appbuf[1024];
 
-   void append(unsigned char c)
+   void _append(unsigned char c)
       {
-      U_TRACE(0, "UString::append(%C)", c)
+      U_TRACE(0, "UString::_append(%C)", c)
 
       U_INTERNAL_ASSERT_RANGE(appbuf,ptrbuf,appbuf+sizeof(appbuf))
 
@@ -880,9 +865,9 @@ public:
       *ptrbuf++ = c;
       }
 
-   void append()
+   void _append()
       {
-      U_TRACE(0, "UString::append()")
+      U_TRACE(0, "UString::_append()")
 
       if (ptrbuf > appbuf)
          {
@@ -1092,7 +1077,7 @@ public:
    // -----------------------------------------------------------------------------------------------------------------------
 
    bool isNull() const                       { return (rep == UStringRep::string_rep_null); }
-   bool isMmap() const                       { return rep->mmap(); }
+   bool isMmap() const                       { return rep->isMmap(); }
    bool isNullTerminated() const             { return rep->isNullTerminated(); }
    bool isText(uint32_t pos = 0) const       { return rep->isText(pos); }
    bool isUTF8(uint32_t pos = 0) const       { return rep->isUTF8(pos); }
@@ -1147,20 +1132,24 @@ public:
       {
       U_TRACE(0, "UString::setConstant(%.*S,%u)", tlen, t, tlen)
 
-      set(UStringRep::create(t, tlen, 0U));
+      UStringRep* _rep = UStringRep::create(t, tlen, 0U);
+
+      set(_rep);
 
       U_INTERNAL_ASSERT(invariant())
       }
 
    // manage UString as memory mapped area...
 
-   void mmap(char* map, uint32_t len)
+   void mmap(const char* map, uint32_t len)
       {
       U_TRACE(0, "UString::mmap(%.*S,%u)", len, map, len)
 
       U_INTERNAL_ASSERT(map != MAP_FAILED)
 
-      set(UStringRep::create(map, len, U_NOT_FOUND));
+      UStringRep* _rep = UStringRep::create(map, len, U_NOT_FOUND);
+
+      set(_rep);
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -1170,7 +1159,7 @@ public:
    void size_adjust(      uint32_t value = U_NOT_FOUND) { rep->size_adjust(value); }
    void size_adjust_force(uint32_t value = U_NOT_FOUND);
 
-   void setEmpty()      { rep->size_adjust(0); }
+   void setEmpty();
    void setEmptyForce() { rep->size_adjust_force(0); }
 
    void setBuffer(uint32_t n);

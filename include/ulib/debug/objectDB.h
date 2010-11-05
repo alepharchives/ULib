@@ -129,6 +129,14 @@ private:
    static uint32_t n;
    static const UObjectDumpable** vec_obj_live;
 
+   static char buffer1[64];
+   static char buffer2[256];
+
+   static char* lbuf;
+   static char* lend;
+   static iovec liov[7];
+   static bPFpcpv checkObject;
+
    static void _write(const struct iovec* iov, int n) U_NO_EXPORT;
    static bool addObjLive(const UObjectDumpable* dumper) U_NO_EXPORT;
    static bool printObjLive(const UObjectDumpable* dumper) U_NO_EXPORT;

@@ -36,7 +36,7 @@ public:
 
    USOAPObject()
       {
-      U_TRACE_REGISTER_OBJECT(0, USOAPObject, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, USOAPObject, "")
       }
 
    virtual ~USOAPObject()

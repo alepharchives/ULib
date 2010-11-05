@@ -23,9 +23,12 @@
 #  include <ulib/magic/magic.h>
 #endif
 
-int         UFile::mime_index;
-uint32_t    UFile::cwd_len_save;
-const char* UFile::cwd_save;
+int               UFile::mime_index;
+bool              UFile::_root;
+uint32_t          UFile::cwd_len_save;
+const char*       UFile::cwd_save;
+UTree<UString>*   UFile::tree;
+UVector<UString>* UFile::vector;
 
 #ifdef DEBUG
 int         UFile::num_file_object;
@@ -108,6 +111,20 @@ bool UFile::open(int flags)
    fd = UFile::open(path_relativ, flags, PERM_FILE);
 
    U_RETURN(fd != -1);
+}
+
+int UFile::open(const char* _pathname, int flags, mode_t mode)
+{
+   U_TRACE(1, "UFile::open(%S,%d,%d)", _pathname, flags, mode)
+
+   U_INTERNAL_ASSERT_POINTER(_pathname)
+   U_INTERNAL_ASSERT_MAJOR(u_strlen(_pathname), 0)
+
+   // NB: we centralize here O_BINARY...
+
+   int _fd = U_SYSCALL(open, "%S,%d,%d", U_PATH_CONV(_pathname), flags | O_CLOEXEC | O_BINARY, mode);
+
+   U_RETURN(_fd);
 }
 
 bool UFile::creat(const UString& path, int flags, mode_t mode)
@@ -284,9 +301,9 @@ off_t UFile::size(bool bstat)
    U_RETURN(st_size);
 }
 
-bool UFile::memmap(int prot, UString* str, off_t offset, size_t length)
+bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
 {
-   U_TRACE(0, "UFile::memmap(%d,%p,%I,%lu)", prot, str, offset, length)
+   U_TRACE(0, "UFile::memmap(%d,%p,%u,%u)", prot, str, offset, length)
 
    U_CHECK_MEMORY
 
@@ -301,10 +318,10 @@ bool UFile::memmap(int prot, UString* str, off_t offset, size_t length)
    U_INTERNAL_ASSERT((off_t)length <= st_size)     // Don't allow mappings beyond EOF since Windows can't handle that POSIX like
 #endif
 
-   map_size = (length ? length : (size_t)(st_size - offset));
+   map_size = (length ? length : (uint32_t)(st_size - offset));
 
 #ifndef HAVE_ARCH64
-   U_INTERNAL_ASSERT_RANGE(1UL,map_size,3UL*1024UL*1024UL*1024UL) // limit of linux system
+   U_INTERNAL_ASSERT_RANGE(1,map_size,3U*1024U*1024U*1024U) // limit of linux system
 #endif
 
    map = UFile::mmap(map_size, fd, prot, MAP_SHARED | MAP_POPULATE, offset);
@@ -312,7 +329,7 @@ bool UFile::memmap(int prot, UString* str, off_t offset, size_t length)
    if (map != MAP_FAILED)
       {
 #  if defined(MADV_SEQUENTIAL)
-      if (map_size > (128 * PAGESIZE)) (void) U_SYSCALL(madvise, "%p,%I,%d", map, map_size, MADV_SEQUENTIAL);
+      if (map_size > (128 * PAGESIZE)) (void) U_SYSCALL(madvise, "%p,%u,%d", map, map_size, MADV_SEQUENTIAL);
 #  endif
 
       if (str) str->mmap(map, map_size);
@@ -373,10 +390,10 @@ UString UFile::getContent(bool brdonly, bool bstat, bool bmap)
       goto end;
       }
 
-   U_INTERNAL_DUMP("fd = %d map = %p map_size = %lu st_size = %I", fd, map, map_size, st_size)
+   U_INTERNAL_DUMP("fd = %d map = %p map_size = %u st_size = %I", fd, map, map_size, st_size)
 
    if (bmap ||
-       st_size > (off_t)(16 * 1024))
+       st_size > (off_t)(16L * 1024L))
       {
       int                   prot  = PROT_READ;
       if (brdonly == false) prot |= PROT_WRITE;
@@ -389,9 +406,9 @@ UString UFile::getContent(bool brdonly, bool bstat, bool bmap)
 
       char* ptr = tmp.data();
 
-      ssize_t value = U_SYSCALL(pread, "%d,%p,%u,%I", fd, ptr, st_size, 0);
+      ssize_t value = U_SYSCALL(pread, "%d,%p,%u,%u", fd, ptr, st_size, 0);
 
-      if (value < 0) value = 0;
+      if (value < 0L) value = 0L;
 
       ptr[value] = '\0'; // NB: in this way we can use string function data()...
 
@@ -406,24 +423,32 @@ end:
    U_RETURN_STRING(fileContent);
 }
 
-UString UFile::contentOf(const char* pathname, int flags, bool bstat, bool bmap)
+UString UFile::contentOf(const char* _pathname, int flags, bool bstat, bool bmap)
 {
-   U_TRACE(0, "UFile::contentOf(%S,%d,%b,%b)", pathname, flags, bstat, bmap)
+   U_TRACE(0, "UFile::contentOf(%S,%d,%b,%b)", _pathname, flags, bstat, bmap)
 
    UFile file;
+   UString content;
 
    file.reset();
 
-   if (file.open(pathname, flags)) return file.getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat, bmap);
+   if (file.open(_pathname, flags)) content = file.getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat, bmap);
 
-   U_RETURN_STRING(UString::getStringNull());
+   U_RETURN_STRING(content);
 }
 
-UString UFile::contentOf(const UString& pathname, int flags, bool bstat, bool bmap)
+UString UFile::contentOf(const UString& _pathname, int flags, bool bstat, bool bmap)
 {
-   U_TRACE(0, "UFile::contentOf(%.*S,%d,%b,%b)", U_STRING_TO_TRACE(pathname), flags, bstat, bmap)
+   U_TRACE(0, "UFile::contentOf(%.*S,%d,%b,%b)", U_STRING_TO_TRACE(_pathname), flags, bstat, bmap)
 
-   return UFile(pathname).getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat, bmap);
+   UFile file;
+   UString content;
+
+   file.reset();
+
+   if (file.open(_pathname, flags)) content = file.getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat, bmap);
+
+   U_RETURN_STRING(content);
 }
 
 bool UFile::write(const UString& data, bool append, bool bmkdirs)
@@ -471,12 +496,11 @@ bool UFile::write(const UString& data, bool append, bool bmkdirs)
 
       if (sz > PAGESIZE)
          {
-         off_t offset   = (append ? size() : 0);
-         uint32_t resto = 0;
+         uint32_t offset = (append ? size() : 0), resto = 0;
 
          esito = fallocate(offset + sz);
 
-         if (esito == false) U_WARNING("no more space on disk for size %I", offset + sz);
+         if (esito == false) U_WARNING("no more space on disk for size %u", offset + sz);
          else
             {
             if (offset)
@@ -545,9 +569,9 @@ the last byte that was read. COUNT is the number of bytes to copy between file d
 the kernel, sendfile() does not need to spend time transferring data to and from user space.
 */
 
-bool UFile::sendfile(int out_fd, off_t* poffset, size_t count)
+bool UFile::sendfile(int out_fd, off_t* poffset, uint32_t count)
 {
-   U_TRACE(1, "UFile::sendfile(%d,%p,%lu)", out_fd, poffset, count)
+   U_TRACE(1, "UFile::sendfile(%d,%p,%u)", out_fd, poffset, count)
 
    U_CHECK_MEMORY
 
@@ -565,9 +589,9 @@ bool UFile::sendfile(int out_fd, off_t* poffset, size_t count)
    do {
       U_INTERNAL_DUMP("count = %u", count)
 
-      value = U_SYSCALL(sendfile, "%d,%d,%p,%lu", out_fd, fd, poffset, count);
+      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", out_fd, fd, poffset, count);
 
-      if (value < 0)
+      if (value < 0L)
          {
          U_INTERNAL_DUMP("errno = %d", errno)
 
@@ -593,9 +617,9 @@ bool UFile::sendfile(int out_fd, off_t* poffset, size_t count)
    U_RETURN(true);
 }
 
-bool UFile::lock(short l_type, off_t start, off_t len) const
+bool UFile::lock(short l_type, uint32_t start, uint32_t len) const
 {
-   U_TRACE(1, "UFile::lock(%d,%I,%I)", l_type, start, len)
+   U_TRACE(1, "UFile::lock(%d,%u,%u)", l_type, start, len)
 
    U_CHECK_MEMORY
 
@@ -631,9 +655,9 @@ bool UFile::lock(short l_type, off_t start, off_t len) const
    U_RETURN(result);
 }
 
-bool UFile::ftruncate(off_t n)
+bool UFile::ftruncate(uint32_t n)
 {
-   U_TRACE(1, "UFile::ftruncate(%I)", n)
+   U_TRACE(1, "UFile::ftruncate(%u)", n)
 
    U_CHECK_MEMORY
 
@@ -647,14 +671,14 @@ bool UFile::ftruncate(off_t n)
 #endif
 
    if (map != MAP_FAILED &&
-       map_size < (size_t)n)
+       map_size < (uint32_t)n)
       {
 #  ifndef HAVE_ARCH64
       if (n >= 512UL*1024UL*1024UL) U_RETURN(false); // NB: on 32 bit, i can't trust mremap beyond this limit for linux system...
 #  endif
 
-      size_t _map_size = n * 2;
-      char* _map       = (char*) mremap(map, map_size, _map_size, MREMAP_MAYMOVE);
+      uint32_t _map_size = n * 2;
+      char* _map         = (char*) mremap(map, map_size, _map_size, MREMAP_MAYMOVE);
 
       if (_map == MAP_FAILED) U_RETURN(false);
 
@@ -662,7 +686,7 @@ bool UFile::ftruncate(off_t n)
       map_size = _map_size;
       }
 
-   bool result = (U_SYSCALL(ftruncate, "%d,%I", fd, n) == 0);
+   bool result = (U_SYSCALL(ftruncate, "%d,%u", fd, n) == 0);
 
    if (result)
       {
@@ -674,9 +698,9 @@ bool UFile::ftruncate(off_t n)
    U_RETURN(false);
 }
 
-bool UFile::fallocate(off_t n)
+bool UFile::fallocate(uint32_t n)
 {
-   U_TRACE(1, "UFile::fallocate(%I)", n)
+   U_TRACE(1, "UFile::fallocate(%u)", n)
 
    U_CHECK_MEMORY
 
@@ -687,9 +711,9 @@ bool UFile::fallocate(off_t n)
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
 #ifdef FALLOCATE_IS_SUPPORTED
-   if (U_SYSCALL(fallocate, "%d,%d,%I,%I", fd, 0, 0, n) == 0)
+   if (U_SYSCALL(fallocate, "%d,%d,%u,%u", fd, 0, 0, n) == 0)
 #else
-   if (U_SYSCALL(ftruncate, "%d,%I", fd, n) == 0)
+   if (U_SYSCALL(ftruncate, "%d,%u", fd, n) == 0)
 #endif
       {
       st_size = n;
@@ -700,9 +724,9 @@ bool UFile::fallocate(off_t n)
    U_RETURN(false);
 }
 
-bool UFile::pread(void* buf, size_t count, off_t offset)
+bool UFile::pread(void* buf, uint32_t count, uint32_t offset)
 {
-   U_TRACE(0, "UFile::pread(%p,%lu,%I)", buf, count, offset)
+   U_TRACE(0, "UFile::pread(%p,%u,%u)", buf, count, offset)
 
    U_CHECK_MEMORY
 
@@ -716,9 +740,9 @@ bool UFile::pread(void* buf, size_t count, off_t offset)
    U_RETURN(result);
 }
 
-bool UFile::pwrite(const void* buf, size_t count, off_t offset)
+bool UFile::pwrite(const void* _buf, uint32_t count, uint32_t offset)
 {
-   U_TRACE(0, "UFile::pwrite(%p,%lu,%I)", buf, count, offset)
+   U_TRACE(0, "UFile::pwrite(%p,%u,%u)", _buf, count, offset)
 
    U_CHECK_MEMORY
 
@@ -727,16 +751,16 @@ bool UFile::pwrite(const void* buf, size_t count, off_t offset)
 
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
-   bool result = UFile::pwrite(fd, buf, count, offset);
+   bool result = UFile::pwrite(fd, _buf, count, offset);
 
    U_RETURN(result);
 }
 
-void UFile::setBlocking(int fd, int& flags, bool block)
+void UFile::setBlocking(int _fd, int& flags, bool block)
 {
-   U_TRACE(1, "UFile::setBlocking(%d,%d,%b)", fd, flags, block)
+   U_TRACE(1, "UFile::setBlocking(%d,%d,%b)", _fd, flags, block)
 
-   U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+   U_INTERNAL_ASSERT_DIFFERS(_fd, -1)
 
    /* ------------------------------------------------------
    * #define O_RDONLY           00
@@ -762,7 +786,7 @@ void UFile::setBlocking(int fd, int& flags, bool block)
    * ------------------------------------------------------
    */
 
-   bool blocking = isBlocking(fd, flags); // actual state is blocking...?
+   bool blocking = isBlocking(_fd, flags); // actual state is blocking...?
 
    // ----------------------------------------------------------------------------------------
    // determina se le operazioni I/O sul descrittore indicato sono di tipo bloccante o meno...
@@ -778,7 +802,7 @@ void UFile::setBlocking(int fd, int& flags, bool block)
 
       U_INTERNAL_DUMP("flags = %B", flags)
 
-      (void) U_SYSCALL(fcntl, "%d,%d,%d", fd, F_SETFL, flags);
+      (void) U_SYSCALL(fcntl, "%d,%d,%d", _fd, F_SETFL, flags);
       }
 }
 
@@ -817,13 +841,13 @@ int UFile::mkstemp(char* _template)
 
    mode_t old_mode = U_SYSCALL(umask, "%d", 077);  // Create file with restrictive permissions
 
-   int fd = U_SYSCALL(mkstemp, "%S", U_PATH_CONV(_template));
+   int _fd = U_SYSCALL(mkstemp, "%S", U_PATH_CONV(_template));
 
    U_INTERNAL_DUMP("_template = %S", _template)
 
    (void) U_SYSCALL(umask, "%d", old_mode);
 
-   U_RETURN(fd);
+   U_RETURN(_fd);
 }
 
 // temporary file for locking...
@@ -847,9 +871,9 @@ bool UFile::mkTemp(const char* name)
 
 // temporary space for upload file...
 
-bool UFile::mkTempStorage(UString& space, off_t size)
+bool UFile::mkTempStorage(UString& space, uint32_t size)
 {
-   U_TRACE(0, "UFile::mkTempStorage(%.*S,%I)", U_STRING_TO_TRACE(space), size)
+   U_TRACE(0, "UFile::mkTempStorage(%.*S,%u)", U_STRING_TO_TRACE(space), size)
 
    U_ASSERT(space.empty())
 
@@ -1054,7 +1078,7 @@ void UFile::substitute(UFile& file)
    st_size  = file.st_size;
    map_size = file.map_size;
 
-   U_INTERNAL_DUMP("fd = %d map = %p map_size = %lu st_size = %I", fd, map, map_size, st_size)
+   U_INTERNAL_DUMP("fd = %d map = %p map_size = %u st_size = %I", fd, map, map_size, st_size)
 
    if (fd != -1) UFile::fsync();
 
@@ -1063,11 +1087,9 @@ void UFile::substitute(UFile& file)
 
 // LS
 
-static UVector<UString>* vector;
-
-static void ftw_vector_push()
+void UFile::ftw_vector_push()
 {
-   U_TRACE(0, "ftw_vector_push()")
+   U_TRACE(0, "UFile::ftw_vector_push()")
 
    uint32_t len;
    const char* ptr;
@@ -1114,12 +1136,9 @@ uint32_t UFile::listContentOf(UVector<UString>& vec, const UString* dir, const U
    U_RETURN(result);
 }
 
-static bool _root;
-static UTree<UString>* tree;
-
-static void ftw_tree_push()
+void UFile::ftw_tree_push()
 {
-   U_TRACE(0, "ftw_tree_push()")
+   U_TRACE(0, "UFile::ftw_tree_push()")
 
    U_INTERNAL_DUMP("u_ftw_ctx.is_directory = %b", u_ftw_ctx.is_directory)
 
@@ -1134,9 +1153,9 @@ static void ftw_tree_push()
       }
 }
 
-static void ftw_tree_up()
+void UFile::ftw_tree_up()
 {
-   U_TRACE(0, "ftw_tree_up()")
+   U_TRACE(0, "UFile::ftw_tree_up()")
 
    tree = tree->parent();
 }
@@ -1227,7 +1246,7 @@ const char* UFile::getMimeType()
 {
    U_TRACE(0, "UFile::getMimeType()")
 
-   const char* content_type;
+   const char* content_type = 0;
 
 #ifdef HAVE_MAGIC
    if (map               == MAP_FAILED &&

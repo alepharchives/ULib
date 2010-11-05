@@ -31,7 +31,7 @@ public:
 
    UXMLElement()
       {
-      U_TRACE_REGISTER_OBJECT(0, UXMLElement, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UXMLElement, "")
       }
 
    UXMLElement(const UString& s, const UString& a, const UString& n) : str(s), accessorName(a), namespaceName(n)

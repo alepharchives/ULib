@@ -56,13 +56,13 @@ public:
                              standard_output_binary = 4,
                        stdin_standard_output_binary = 5 };
 
-   static UString* str_response_type_0;
-   static UString* str_response_type_1;
-   static UString* str_response_type_2;
-   static UString* str_response_type_3;
-   static UString* str_response_type_4;
-   static UString* str_response_type_5;
-   static UString* str_fault_reason;
+   static const UString* str_response_type_0;
+   static const UString* str_response_type_1;
+   static const UString* str_response_type_2;
+   static const UString* str_response_type_3;
+   static const UString* str_response_type_4;
+   static const UString* str_response_type_5;
+   static const UString* str_fault_reason;
 
    static void str_allocate();
 
@@ -70,7 +70,7 @@ public:
 
    URPCObject()
       {
-      U_TRACE_REGISTER_OBJECT(0, URPCObject, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, URPCObject, "")
 
       if (str_fault_reason == 0) str_allocate();
       }

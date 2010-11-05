@@ -104,10 +104,8 @@ public:
 
       U_CHECK_MEMORY
 
-      table     = U_MALLOC_VECTOR(n, UHashMapNode);
       _capacity = n;
-
-      (void) memset(table, '\0', n * sizeof(UHashMapNode*));
+      table     = U_CALLOC_VECTOR(n, UHashMapNode);
       }
 
    void deallocate()
@@ -116,7 +114,7 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
+      U_INTERNAL_ASSERT_MAJOR(_capacity,0)
 
       U_FREE_VECTOR(table, _capacity, UHashMapNode);
 
@@ -164,7 +162,7 @@ public:
       {
       U_TRACE(0, "UHashMap<void*>::setIgnoreCase(%b)", flag)
 
-      U_INTERNAL_ASSERT_EQUALS(_length, 0)
+      U_INTERNAL_ASSERT_EQUALS(_length,0)
 
       ignore_case = flag;
       }
@@ -448,8 +446,8 @@ public:
       {
       U_TRACE(0, "UHashMap<T*>::assign(%p)", &h)
 
+      U_INTERNAL_ASSERT_EQUALS(gperf,0)
       U_INTERNAL_ASSERT_DIFFERS(this, &h)
-      U_INTERNAL_ASSERT_EQUALS(gperf, 0)
       U_INTERNAL_ASSERT_EQUALS(ignore_case, h.ignore_case)
 
       clear();

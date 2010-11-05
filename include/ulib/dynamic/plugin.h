@@ -21,7 +21,7 @@
 #define U_PLUGIN_TO_PARAM(mod) (mod).getName(),(mod).getNameLen()
 #define U_PLUGIN_TO_TRACE(mod) (mod).getNameLen(),(mod).getName()
 
-#define U_CREAT_FUNC(obj) extern "C" { extern void* u_creat(); U_EXPORT void* u_creat() { return new obj(); } }
+#define U_CREAT_FUNC(name, obj) extern "C" { extern void* u_creat_##name(); U_EXPORT void* u_creat_##name() { return new obj(); } }
 
 template <class T> class UPlugIn;
 
@@ -32,7 +32,7 @@ public:
 
    UPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, UPlugIn<void*>, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UPlugIn<void*>, "")
 
       obj      = 0;
       next     = 0;
@@ -44,8 +44,8 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UPlugIn<void*>)
 
-      if (next) delete next;
       if (name) U_SYSCALL_VOID(free, "%p", (void*)name);
+      if (next) delete next;
       }
 
    // SERVICES
@@ -97,7 +97,6 @@ protected:
    static UPlugIn<void*>* first;
    static const char* plugin_dir;
 
-          void _create(const char* name, uint32_t name_len);
    static void* create(const char* name, uint32_t name_len);
 
 private:
@@ -112,7 +111,7 @@ public:
 
    UPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, UPlugIn<T*>, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UPlugIn<T*>, "")
       }
 
    ~UPlugIn()

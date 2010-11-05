@@ -212,7 +212,7 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
             {
             ++u_base64_errors;
 
-            U_INTERNAL_PRINT("Decoding incomplete: at least 2 bits missing", 0)
+            U_INTERNAL_PRINT("Decoding incomplete: at least 2 bits missing")
             }
          break;
 

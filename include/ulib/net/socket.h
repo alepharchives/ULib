@@ -56,7 +56,6 @@ class USmtpClient;
 class UImapClient;
 class UPop3Client;
 class UServer_Base;
-class USSLFtpClient;
 class SocketAddress;
 class UClientImage_Base;
 
@@ -72,28 +71,28 @@ public:
 
    // COSTRUTTORI
 
-   static UString* str_host;
-   static UString* str_range;
-   static UString* str_close;
-   static UString* str_cookie;
-   static UString* str_setcookie;
-   static UString* str_starttls;
-   static UString* str_location;
-   static UString* str_connection;
-   static UString* str_user_agent;
-   static UString* str_authorization;
-   static UString* str_content_type;
-   static UString* str_content_length;
-   static UString* str_content_disposition;
-   static UString* str_accept_language;
-   static UString* str_accept_encoding;
-   static UString* str_if_range;
-   static UString* str_if_none_match;
-   static UString* str_if_modified_since;
-   static UString* str_if_unmodified_since;
-   static UString* str_referer;
-   static UString* str_X_Real_IP;
-   static UString* str_X_Forwarded_For;
+   static const UString* str_host;
+   static const UString* str_range;
+   static const UString* str_close;
+   static const UString* str_cookie;
+   static const UString* str_setcookie;
+   static const UString* str_starttls;
+   static const UString* str_location;
+   static const UString* str_connection;
+   static const UString* str_user_agent;
+   static const UString* str_authorization;
+   static const UString* str_content_type;
+   static const UString* str_content_length;
+   static const UString* str_content_disposition;
+   static const UString* str_accept_language;
+   static const UString* str_accept_encoding;
+   static const UString* str_if_range;
+   static const UString* str_if_none_match;
+   static const UString* str_if_modified_since;
+   static const UString* str_if_unmodified_since;
+   static const UString* str_referer;
+   static const UString* str_X_Real_IP;
+   static const UString* str_X_Forwarded_For;
 
    static void str_allocate();
 
@@ -509,13 +508,13 @@ public:
    the source address information. The number of bytes read is returned
    */
 
-   int recvFrom(void* pBuffer, int iBufLength, uint32_t uiFlags, UIPAddress& cSourceIP, int& iSourcePortNumber);
+   int recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags, UIPAddress& cSourceIP, int& iSourcePortNumber);
 
    /**
    The socket transmits the data to the remote socket.
    */
 
-   int sendTo(void* pPayload, int iPayloadLength, uint32_t uiFlags, UIPAddress& cDestinationIP, int iDestinationPortNumber);
+   int sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags, UIPAddress& cDestinationIP, int iDestinationPortNumber);
 
    /**
    This method is called to receive a block of data on the connected socket.
@@ -524,7 +523,7 @@ public:
    the recv() system call to receive the data, returning the number of bytes actually readden
    */
 
-   static ssize_t recv(int fd, void* buf, size_t len, int recv_flags = 0);
+   static int recv(int fd, void* buf, uint32_t len, int recv_flags = 0);
 
    /**
    This method is called to read a 16-bit binary value from the remote connection.
@@ -533,21 +532,7 @@ public:
    Once the value is read into uiNetOrder, we convert it to host byte order and return the read value
    */
 
-   int recvBinary16Bits()
-      {
-      U_TRACE(0, "USocket::recvBinary16Bits()")
-
-      uint16_t uiNetOrder;
-      int iBytesLeft = sizeof(uint16_t);
-      char* pcEndReadBuffer = ((char*)&uiNetOrder) + iBytesLeft;
-
-      do {
-         iBytesLeft -= recv((void*)(pcEndReadBuffer - iBytesLeft), iBytesLeft);
-         }
-      while (iBytesLeft);
-
-      U_RETURN((int)ntohs(uiNetOrder));
-      }
+   int recvBinary16Bits();
 
    /**
    This method is called to read a 32-bit binary value from the remote connection.
@@ -556,21 +541,7 @@ public:
    Once the value is read into uiNetOrder, we convert it to host byte order and return the read value
    */
 
-   uint32_t recvBinary32Bits()
-      {
-      U_TRACE(0, "USocket::recvBinary32Bits()")
-
-      uint32_t uiNetOrder;
-      int iBytesLeft = sizeof(uint32_t);
-      char* pcEndReadBuffer = ((char*)&uiNetOrder) + iBytesLeft;
-
-      do {
-         iBytesLeft -= recv((void*)(pcEndReadBuffer - iBytesLeft), iBytesLeft);
-         }
-      while (iBytesLeft);
-
-      U_RETURN(ntohl(uiNetOrder));
-      }
+   uint32_t recvBinary32Bits();
 
    /**
    This method is called to send a 16-bit binary value to the remote connection.
@@ -578,16 +549,7 @@ public:
    If two bytes are not sent (the returned value is not two), return false
    */
 
-   bool sendBinary16Bits(int iData)
-      {
-      U_TRACE(0, "USocket::sendBinary16Bits(%d)", iData)
-
-      uint16_t uiNetOrder = htons(iData);
-
-      bool result = (send(&uiNetOrder, sizeof(uint16_t)) == sizeof(uint16_t));
-
-      U_RETURN(result);
-      }
+   bool sendBinary16Bits(uint16_t iData);
 
    /**
    This method is called to send a 32-bit binary value to the remote connection.
@@ -595,16 +557,7 @@ public:
    If four bytes are not sent (the returned value is not four), return false
    */
 
-   bool sendBinary32Bits(uint32_t lData)
-      {
-      U_TRACE(0, "UTCPSocket::sendBinary32Bits(%u)", lData)
-
-      uint32_t uiNetOrder = htonl(lData);
-
-      bool result = (send(&uiNetOrder, sizeof(uint32_t)) == sizeof(uint32_t));
-
-      U_RETURN(result);
-      }
+   bool sendBinary32Bits(uint32_t lData);
 
    // -----------------------------------------------------------------------------------------------------------
    // VIRTUAL METHOD
@@ -663,9 +616,9 @@ public:
    the recv() method to receive the data, returning the number of bytes actually readden
    */
 
-   virtual int recv(void* pBuffer, int iBufLength)
+   virtual int recv(void* pBuffer, uint32_t iBufLength)
       {
-      U_TRACE(0, "USocket::recv(%p,%d)", pBuffer, iBufLength)
+      U_TRACE(0, "USocket::recv(%p,%u)", pBuffer, iBufLength)
 
       U_CHECK_MEMORY
 
@@ -683,11 +636,11 @@ public:
    the send() method to send the data, returning the number of bytes actually sent
    */
 
-   virtual int send(const void* pPayload, int iPayloadLength);
+   virtual int send(const void* pPayload, uint32_t iPayloadLength);
 
    // write data into multiple buffers
 
-   virtual ssize_t writev(const struct iovec* iov, int iovcnt);
+   virtual int writev(const struct iovec* iov, int iovcnt);
    // -----------------------------------------------------------------------------------------------------------
 
    // DEBUG
@@ -724,7 +677,6 @@ private:
                       friend class UImapClient;
                       friend class UPop3Client;
                       friend class UServer_Base;
-                      friend class USSLFtpClient;
                       friend class UClientImage_Base;
    template <class T> friend class UServer;
 };

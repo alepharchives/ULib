@@ -8,10 +8,12 @@ SUBDIRS = ulib
 if PLUGIN
 SUBDIRS += ulib/plugin ulib/plugin/usp
 if FCGI
-SUBDIRS += 				  ulib/plugin/mod_fcgi
+if DEBUG
+SUBDIRS += ulib/plugin/mod_fcgi
+endif
 endif
 if GEOIP
-SUBDIRS += 				  ulib/plugin/mod_geoip
+SUBDIRS += ulib/plugin/mod_geoip
 endif
 if SSL
 if PCRE

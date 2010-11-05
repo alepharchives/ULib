@@ -205,12 +205,12 @@ public:
 
    // Save memory hash table as Constant DataBase
 
-   static uint32_t sizeFor(uint32_t nrecord)
+   static uint32_t sizeFor(uint32_t _nrecord)
       {
-      U_TRACE(0, "UCDB::sizeFor(%u)", nrecord)
+      U_TRACE(0, "UCDB::sizeFor(%u)", _nrecord)
 
       uint32_t size = CDB_NUM_HASH_TABLE_POINTER * sizeof(cdb_hash_table_pointer) +
-                      nrecord * (sizeof(cdb_record_header) + sizeof(cdb_hash_table_slot));
+                      _nrecord * (sizeof(cdb_record_header) + sizeof(cdb_hash_table_slot));
 
       U_RETURN(size);
       }
@@ -230,8 +230,10 @@ public:
    // DEBUG
 
 #ifdef DEBUG
-   bool invariant();
    const char* dump(bool reset) const;
+#endif
+#if defined(DEBUG) || defined(U_TEST)
+   bool invariant();
 #endif
 
 protected:
@@ -315,7 +317,7 @@ private:
 
    inline bool match(uint32_t pos) U_NO_EXPORT;
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(U_TEST)
    static void checkAllEntry(UStringRep* key, UStringRep* value) U_NO_EXPORT;
 #endif
 

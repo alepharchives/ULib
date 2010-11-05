@@ -35,7 +35,7 @@ public:
 
    UXMLAttribute()
       {
-      U_TRACE_REGISTER_OBJECT(0, UXMLAttribute, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UXMLAttribute, "")
       }
 
    UXMLAttribute(const UString& s, const UString& a, const UString& n, const UString& v)

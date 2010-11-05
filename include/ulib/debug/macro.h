@@ -45,7 +45,7 @@
 
 // Manage info on execution of program
 
-#  define U_TRACE(level,args...)    UTrace utr(level, args);
+#  define U_TRACE(level,args...)    UTrace utr(level , ##args);
 
 // NB: U_DUMP(), U_SYSCALL(), U_RETURN() sono vincolati alla presenza di U_TRACE()
 
@@ -53,13 +53,13 @@
 #  define          U_DUMP(args...) { if (utr.active) { UTrace::suspend(); u_trace_dump(args); \
                                                        UTrace::resume(); } }
 
-#  define U_SYSCALL(name,format,args...)        (utr.trace_syscall("::"#name"("format")",args), \
+#  define U_SYSCALL(name,format,args...)        (utr.trace_syscall("::"#name"("format")" , ##args), \
                                                  utr.trace_sysreturn_type(::name(args)))
 
 #  define U_SYSCALL_NO_PARAM(name)              (utr.trace_syscall("::"#name"()",0), \
                                                  utr.trace_sysreturn_type(::name()))
 
-#  define U_SYSCALL_VOID(name,format,args...)   {utr.trace_syscall("::"#name"("format")",args); \
+#  define U_SYSCALL_VOID(name,format,args...)   {utr.trace_syscall("::"#name"("format")" , ##args); \
                                                  name(args); utr.trace_sysreturn(false,0);}
 
 #  define U_SYSCALL_VOID_NO_PARAM(name)         {utr.trace_syscall("::"#name"()",0); \
@@ -92,7 +92,7 @@
 #  define U_TRACE_REGISTER_OBJECT(level,CLASS,format,args...) if (UObjectDB::flag_new_object == false) U_SET_LOCATION_INFO; \
                                                                   UObjectDB::flag_new_object =  false; \
                                                               U_REGISTER_OBJECT(level,CLASS) \
-                                                              UTrace utr(level, #CLASS"::"#CLASS"("format")", args);
+                                                              UTrace utr(level, #CLASS"::"#CLASS"("format")" , ##args);
 
 #  define U_TRACE_UNREGISTER_OBJECT(level,CLASS)              U_UNREGISTER_OBJECT(level,this) \
                                                               UTrace utr(level, #CLASS"::~"#CLASS"()");

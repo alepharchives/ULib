@@ -118,6 +118,8 @@ U_NO_EXPORT void UCommand::setEnvironment(const UString& env)
 
    char* argv[U_MAX_ARGS];
 
+   env.duplicate();
+
    nenv = u_split(U_STRING_TO_PARAM(env), argv, 0);
 
    U_INTERNAL_DUMP("nenv = %d", nenv)
@@ -147,8 +149,6 @@ void UCommand::setEnvironment(const UString* penv)
    else
       {
       environment = *penv;
-
-      environment.duplicate();
 
       if ((flag_expand = penv->find('$')) == U_NOT_FOUND) setEnvironment(environment);
       }
@@ -237,13 +237,13 @@ U_NO_EXPORT void UCommand::execute(bool flag_stdin, bool flag_stdout, bool flag_
    U_INTERNAL_ASSERT_POINTER(argv_exec)
 
 #ifdef DEBUG
-   char* end   = (char*) command.end();
+   char* _end  = (char*) command.end();
    char* begin =         command.data();
 
-   U_INTERNAL_DUMP("begin = %p end = %p argv_exec[1] = %p %S", begin, end, argv_exec[1], argv_exec[1])
+   U_INTERNAL_DUMP("begin = %p end = %p argv_exec[1] = %p %S", begin, _end, argv_exec[1], argv_exec[1])
 
 #  ifndef __MINGW32__
-   U_INTERNAL_ASSERT_RANGE(begin,argv_exec[1],end)
+   U_INTERNAL_ASSERT_RANGE(begin,argv_exec[1],_end)
 #  endif
 
    int32_t i;
@@ -258,14 +258,14 @@ U_NO_EXPORT void UCommand::execute(bool flag_stdin, bool flag_stdout, bool flag_
        envp != environ &&
        flag_expand == U_NOT_FOUND)
       {
-      end   = (char*) environment.end();
+      _end  = (char*) environment.end();
       begin =         environment.data();
 
-      U_INTERNAL_DUMP("begin = %p end = %p envp[0] = %p %S", begin, end, envp[0], envp[0])
+      U_INTERNAL_DUMP("begin = %p _end = %p envp[0] = %p %S", begin, _end, envp[0], envp[0])
 
       for (i = 0; envp[i]; ++i)
          {
-         U_INTERNAL_ASSERT_RANGE(begin,envp[i],end)
+         U_INTERNAL_ASSERT_RANGE(begin,envp[i],_end)
          }
 
       U_INTERNAL_ASSERT_EQUALS(i,nenv)
@@ -434,12 +434,7 @@ bool UCommand::execute(UString* input, UString* output, int fd_stdin, int fd_std
 {
    U_TRACE(0, "UCommand::execute(%p,%p,%d,%d)", input, output, fd_stdin, fd_stderr)
 
-   if (flag_expand != U_NOT_FOUND)
-      {
-      UString env = UStringExt::expandEnvVar(environment);
-
-      setEnvironment(env);
-      }
+   if (flag_expand != U_NOT_FOUND) setEnvironment(UStringExt::expandEnvVar(environment));
 
    bool flag_stdin  = (input ? true : fd_stdin != -1),
         flag_stdout = (output != 0),
@@ -462,8 +457,8 @@ void UCommand::outputCommandWithDialog(const UString& cmd, char** penv, UString*
 
    U_INTERNAL_ASSERT_POINTER(output)
 
-   bool flag_stdin  = (fd_stdin  != -1),
-        flag_stderr = (fd_stderr != -1);
+   UCommand tmp(cmd, penv);
+   bool flag_stdin = (fd_stdin  != -1), flag_stdout, flag_stderr;
 
    if (dialog)
       {
@@ -472,16 +467,18 @@ void UCommand::outputCommandWithDialog(const UString& cmd, char** penv, UString*
       U_INTERNAL_ASSERT_MAJOR(UProcess::filedes[2],STDOUT_FILENO)
       U_INTERNAL_ASSERT_MAJOR(UProcess::filedes[3],STDOUT_FILENO)
 
-      setStdInOutErr(fd_stdin, flag_stdin, false, fd_stderr);
-
-      UCommand(cmd, penv).execute(flag_stdin, false, false);
+      flag_stdout = false;
+      flag_stderr = false;
       }
    else
       {
-      setStdInOutErr(fd_stdin, flag_stdin, true, fd_stderr);
-
-      UCommand(cmd, penv).execute(flag_stdin, true, flag_stderr);
+      flag_stdout = true;
+      flag_stderr = (fd_stderr != -1);
       }
+
+   setStdInOutErr(fd_stdin, flag_stdin, flag_stdout, fd_stderr);
+
+   tmp.execute(flag_stdin, flag_stdout, flag_stderr);
 
    if (postCommand(0, output) == false || exit_value) setMsgError(cmd.data());
 }

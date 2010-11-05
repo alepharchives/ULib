@@ -14,11 +14,11 @@
 #include <ulib/url.h>
 #include <ulib/utility/string_ext.h>
 
-UString* Url::str_ftp;
-UString* Url::str_smtp;
-UString* Url::str_pop3;
-UString* Url::str_http;
-UString* Url::str_https;
+const UString* Url::str_ftp;
+const UString* Url::str_smtp;
+const UString* Url::str_pop3;
+const UString* Url::str_http;
+const UString* Url::str_https;
 
 void Url::str_allocate()
 {
@@ -171,14 +171,15 @@ uint32_t Url::getPort(char* buffer, uint32_t size)
       {
       size = path_begin - host_end - 1;
 
-      if (size <= 5)
+      if (size &&
+          size <= 5)
          {
          (void) url.copy(buffer, size, host_end + 1);
 
          buffer[size] = '\0';
-         }
 
-      U_RETURN(size);
+         U_RETURN(size);
+         }
       }
 
    U_RETURN(0);
@@ -294,9 +295,9 @@ UString Url::getQuery()
    U_TRACE(0, "Url::getQuery()")
 
    UString _query;
-   int end = url.size() - 1;
+   int _end = url.size() - 1;
 
-   if (path_end < end) _query = url.substr(path_end + 1, end - path_end);
+   if (path_end < _end) _query = url.substr(path_end + 1, _end - path_end);
 
    U_RETURN_STRING(_query);
 }

@@ -37,8 +37,18 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@EXPAT_TRUE@am__append_1 = mod_soap.la
-@PCRE_TRUE@am__append_2 = mod_proxy.la
+@STATIC_HANDLER_RPC_FALSE@am__append_1 = mod_rpc.la
+@STATIC_HANDLER_HTTP_FALSE@am__append_2 = mod_http.la
+@STATIC_HANDLER_TSA_FALSE@am__append_3 = mod_tsa.la
+@STATIC_HANDLER_NOCAT_FALSE@am__append_4 = mod_nocat.la
+@STATIC_HANDLER_ECHO_FALSE@am__append_5 = mod_echo.la
+@STATIC_HANDLER_FCGI_FALSE@am__append_6 = mod_fcgi.la
+@STATIC_HANDLER_SCGI_FALSE@am__append_7 = mod_scgi.la
+@STATIC_HANDLER_STREAM_FALSE@am__append_8 = mod_stream.la
+@STATIC_HANDLER_SOCKET_FALSE@am__append_9 = mod_socket.la
+@STATIC_HANDLER_SSI_FALSE@am__append_10 = mod_ssi.la
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am__append_11 = mod_soap.la
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am__append_12 = mod_proxy.la
 subdir = src/ulib/plugin
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -78,46 +88,86 @@ am__installdirs = "$(DESTDIR)$(moduledir)"
 moduleLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(module_LTLIBRARIES)
 am__DEPENDENCIES_1 = $(top_builddir)/src/ulib/lib@ULIB@.la
-mod_echo_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_mod_echo_la_OBJECTS = mod_echo.lo
+@STATIC_HANDLER_ECHO_FALSE@mod_echo_la_DEPENDENCIES =  \
+@STATIC_HANDLER_ECHO_FALSE@	$(am__DEPENDENCIES_1)
+am__mod_echo_la_SOURCES_DIST = mod_echo.cpp
+@STATIC_HANDLER_ECHO_FALSE@am_mod_echo_la_OBJECTS = mod_echo.lo
 mod_echo_la_OBJECTS = $(am_mod_echo_la_OBJECTS)
-mod_fcgi_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_mod_fcgi_la_OBJECTS = mod_fcgi.lo
+@STATIC_HANDLER_ECHO_FALSE@am_mod_echo_la_rpath = -rpath $(moduledir)
+@STATIC_HANDLER_FCGI_FALSE@mod_fcgi_la_DEPENDENCIES =  \
+@STATIC_HANDLER_FCGI_FALSE@	$(am__DEPENDENCIES_1)
+am__mod_fcgi_la_SOURCES_DIST = mod_fcgi.cpp
+@STATIC_HANDLER_FCGI_FALSE@am_mod_fcgi_la_OBJECTS = mod_fcgi.lo
 mod_fcgi_la_OBJECTS = $(am_mod_fcgi_la_OBJECTS)
-mod_http_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_mod_http_la_OBJECTS = mod_http.lo
+@STATIC_HANDLER_FCGI_FALSE@am_mod_fcgi_la_rpath = -rpath $(moduledir)
+@STATIC_HANDLER_HTTP_FALSE@mod_http_la_DEPENDENCIES =  \
+@STATIC_HANDLER_HTTP_FALSE@	$(am__DEPENDENCIES_1)
+am__mod_http_la_SOURCES_DIST = mod_http.cpp
+@STATIC_HANDLER_HTTP_FALSE@am_mod_http_la_OBJECTS = mod_http.lo
 mod_http_la_OBJECTS = $(am_mod_http_la_OBJECTS)
-mod_nocat_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_mod_nocat_la_OBJECTS = mod_nocat.lo
+@STATIC_HANDLER_HTTP_FALSE@am_mod_http_la_rpath = -rpath $(moduledir)
+@STATIC_HANDLER_NOCAT_FALSE@mod_nocat_la_DEPENDENCIES =  \
+@STATIC_HANDLER_NOCAT_FALSE@	$(am__DEPENDENCIES_1)
+am__mod_nocat_la_SOURCES_DIST = mod_nocat.cpp
+@STATIC_HANDLER_NOCAT_FALSE@am_mod_nocat_la_OBJECTS = mod_nocat.lo
 mod_nocat_la_OBJECTS = $(am_mod_nocat_la_OBJECTS)
-@PCRE_TRUE@mod_proxy_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+@STATIC_HANDLER_NOCAT_FALSE@am_mod_nocat_la_rpath = -rpath \
+@STATIC_HANDLER_NOCAT_FALSE@	$(moduledir)
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@mod_proxy_la_DEPENDENCIES =  \
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@	$(am__DEPENDENCIES_1)
 am__mod_proxy_la_SOURCES_DIST = mod_proxy.cpp mod_proxy_service.cpp
-@PCRE_TRUE@am_mod_proxy_la_OBJECTS = mod_proxy.lo mod_proxy_service.lo
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am_mod_proxy_la_OBJECTS =  \
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@	mod_proxy.lo \
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@	mod_proxy_service.lo
 mod_proxy_la_OBJECTS = $(am_mod_proxy_la_OBJECTS)
-@PCRE_TRUE@am_mod_proxy_la_rpath = -rpath $(moduledir)
-mod_rpc_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_mod_rpc_la_OBJECTS = mod_rpc.lo
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am_mod_proxy_la_rpath = -rpath \
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@	$(moduledir)
+@STATIC_HANDLER_RPC_FALSE@mod_rpc_la_DEPENDENCIES =  \
+@STATIC_HANDLER_RPC_FALSE@	$(am__DEPENDENCIES_1)
+am__mod_rpc_la_SOURCES_DIST = mod_rpc.cpp
+@STATIC_HANDLER_RPC_FALSE@am_mod_rpc_la_OBJECTS = mod_rpc.lo
 mod_rpc_la_OBJECTS = $(am_mod_rpc_la_OBJECTS)
-mod_scgi_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_mod_scgi_la_OBJECTS = mod_scgi.lo
+@STATIC_HANDLER_RPC_FALSE@am_mod_rpc_la_rpath = -rpath $(moduledir)
+@STATIC_HANDLER_SCGI_FALSE@mod_scgi_la_DEPENDENCIES =  \
+@STATIC_HANDLER_SCGI_FALSE@	$(am__DEPENDENCIES_1)
+am__mod_scgi_la_SOURCES_DIST = mod_scgi.cpp
+@STATIC_HANDLER_SCGI_FALSE@am_mod_scgi_la_OBJECTS = mod_scgi.lo
 mod_scgi_la_OBJECTS = $(am_mod_scgi_la_OBJECTS)
-@EXPAT_TRUE@mod_soap_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+@STATIC_HANDLER_SCGI_FALSE@am_mod_scgi_la_rpath = -rpath $(moduledir)
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@mod_soap_la_DEPENDENCIES =  \
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@	$(am__DEPENDENCIES_1)
 am__mod_soap_la_SOURCES_DIST = mod_soap.cpp
-@EXPAT_TRUE@am_mod_soap_la_OBJECTS = mod_soap.lo
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am_mod_soap_la_OBJECTS =  \
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@	mod_soap.lo
 mod_soap_la_OBJECTS = $(am_mod_soap_la_OBJECTS)
-@EXPAT_TRUE@am_mod_soap_la_rpath = -rpath $(moduledir)
-mod_socket_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_mod_socket_la_OBJECTS = mod_socket.lo
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am_mod_soap_la_rpath = -rpath \
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@	$(moduledir)
+@STATIC_HANDLER_SOCKET_FALSE@mod_socket_la_DEPENDENCIES =  \
+@STATIC_HANDLER_SOCKET_FALSE@	$(am__DEPENDENCIES_1)
+am__mod_socket_la_SOURCES_DIST = mod_socket.cpp
+@STATIC_HANDLER_SOCKET_FALSE@am_mod_socket_la_OBJECTS = mod_socket.lo
 mod_socket_la_OBJECTS = $(am_mod_socket_la_OBJECTS)
-mod_ssi_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_mod_ssi_la_OBJECTS = mod_ssi.lo
+@STATIC_HANDLER_SOCKET_FALSE@am_mod_socket_la_rpath = -rpath \
+@STATIC_HANDLER_SOCKET_FALSE@	$(moduledir)
+@STATIC_HANDLER_SSI_FALSE@mod_ssi_la_DEPENDENCIES =  \
+@STATIC_HANDLER_SSI_FALSE@	$(am__DEPENDENCIES_1)
+am__mod_ssi_la_SOURCES_DIST = mod_ssi.cpp
+@STATIC_HANDLER_SSI_FALSE@am_mod_ssi_la_OBJECTS = mod_ssi.lo
 mod_ssi_la_OBJECTS = $(am_mod_ssi_la_OBJECTS)
-mod_stream_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_mod_stream_la_OBJECTS = mod_stream.lo
+@STATIC_HANDLER_SSI_FALSE@am_mod_ssi_la_rpath = -rpath $(moduledir)
+@STATIC_HANDLER_STREAM_FALSE@mod_stream_la_DEPENDENCIES =  \
+@STATIC_HANDLER_STREAM_FALSE@	$(am__DEPENDENCIES_1)
+am__mod_stream_la_SOURCES_DIST = mod_stream.cpp
+@STATIC_HANDLER_STREAM_FALSE@am_mod_stream_la_OBJECTS = mod_stream.lo
 mod_stream_la_OBJECTS = $(am_mod_stream_la_OBJECTS)
-mod_tsa_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_mod_tsa_la_OBJECTS = mod_tsa.lo
+@STATIC_HANDLER_STREAM_FALSE@am_mod_stream_la_rpath = -rpath \
+@STATIC_HANDLER_STREAM_FALSE@	$(moduledir)
+@STATIC_HANDLER_TSA_FALSE@mod_tsa_la_DEPENDENCIES =  \
+@STATIC_HANDLER_TSA_FALSE@	$(am__DEPENDENCIES_1)
+am__mod_tsa_la_SOURCES_DIST = mod_tsa.cpp
+@STATIC_HANDLER_TSA_FALSE@am_mod_tsa_la_OBJECTS = mod_tsa.lo
 mod_tsa_la_OBJECTS = $(am_mod_tsa_la_OBJECTS)
+@STATIC_HANDLER_TSA_FALSE@am_mod_tsa_la_rpath = -rpath $(moduledir)
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -134,12 +184,17 @@ SOURCES = $(mod_echo_la_SOURCES) $(mod_fcgi_la_SOURCES) \
 	$(mod_scgi_la_SOURCES) $(mod_soap_la_SOURCES) \
 	$(mod_socket_la_SOURCES) $(mod_ssi_la_SOURCES) \
 	$(mod_stream_la_SOURCES) $(mod_tsa_la_SOURCES)
-DIST_SOURCES = $(mod_echo_la_SOURCES) $(mod_fcgi_la_SOURCES) \
-	$(mod_http_la_SOURCES) $(mod_nocat_la_SOURCES) \
-	$(am__mod_proxy_la_SOURCES_DIST) $(mod_rpc_la_SOURCES) \
-	$(mod_scgi_la_SOURCES) $(am__mod_soap_la_SOURCES_DIST) \
-	$(mod_socket_la_SOURCES) $(mod_ssi_la_SOURCES) \
-	$(mod_stream_la_SOURCES) $(mod_tsa_la_SOURCES)
+DIST_SOURCES = $(am__mod_echo_la_SOURCES_DIST) \
+	$(am__mod_fcgi_la_SOURCES_DIST) \
+	$(am__mod_http_la_SOURCES_DIST) \
+	$(am__mod_nocat_la_SOURCES_DIST) \
+	$(am__mod_proxy_la_SOURCES_DIST) \
+	$(am__mod_rpc_la_SOURCES_DIST) $(am__mod_scgi_la_SOURCES_DIST) \
+	$(am__mod_soap_la_SOURCES_DIST) \
+	$(am__mod_socket_la_SOURCES_DIST) \
+	$(am__mod_ssi_la_SOURCES_DIST) \
+	$(am__mod_stream_la_SOURCES_DIST) \
+	$(am__mod_tsa_la_SOURCES_DIST)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -314,6 +369,34 @@ SSL_FALSE = @SSL_FALSE@
 SSL_TRUE = @SSL_TRUE@
 SSL_TS_FALSE = @SSL_TS_FALSE@
 SSL_TS_TRUE = @SSL_TS_TRUE@
+STATIC_HANDLER_ECHO_FALSE = @STATIC_HANDLER_ECHO_FALSE@
+STATIC_HANDLER_ECHO_TRUE = @STATIC_HANDLER_ECHO_TRUE@
+STATIC_HANDLER_FCGI_FALSE = @STATIC_HANDLER_FCGI_FALSE@
+STATIC_HANDLER_FCGI_TRUE = @STATIC_HANDLER_FCGI_TRUE@
+STATIC_HANDLER_GEOIP_FALSE = @STATIC_HANDLER_GEOIP_FALSE@
+STATIC_HANDLER_GEOIP_TRUE = @STATIC_HANDLER_GEOIP_TRUE@
+STATIC_HANDLER_HTTP_FALSE = @STATIC_HANDLER_HTTP_FALSE@
+STATIC_HANDLER_HTTP_TRUE = @STATIC_HANDLER_HTTP_TRUE@
+STATIC_HANDLER_NOCAT_FALSE = @STATIC_HANDLER_NOCAT_FALSE@
+STATIC_HANDLER_NOCAT_TRUE = @STATIC_HANDLER_NOCAT_TRUE@
+STATIC_HANDLER_PROXY_FALSE = @STATIC_HANDLER_PROXY_FALSE@
+STATIC_HANDLER_PROXY_TRUE = @STATIC_HANDLER_PROXY_TRUE@
+STATIC_HANDLER_RPC_FALSE = @STATIC_HANDLER_RPC_FALSE@
+STATIC_HANDLER_RPC_TRUE = @STATIC_HANDLER_RPC_TRUE@
+STATIC_HANDLER_SCGI_FALSE = @STATIC_HANDLER_SCGI_FALSE@
+STATIC_HANDLER_SCGI_TRUE = @STATIC_HANDLER_SCGI_TRUE@
+STATIC_HANDLER_SHIB_FALSE = @STATIC_HANDLER_SHIB_FALSE@
+STATIC_HANDLER_SHIB_TRUE = @STATIC_HANDLER_SHIB_TRUE@
+STATIC_HANDLER_SOAP_FALSE = @STATIC_HANDLER_SOAP_FALSE@
+STATIC_HANDLER_SOAP_TRUE = @STATIC_HANDLER_SOAP_TRUE@
+STATIC_HANDLER_SOCKET_FALSE = @STATIC_HANDLER_SOCKET_FALSE@
+STATIC_HANDLER_SOCKET_TRUE = @STATIC_HANDLER_SOCKET_TRUE@
+STATIC_HANDLER_SSI_FALSE = @STATIC_HANDLER_SSI_FALSE@
+STATIC_HANDLER_SSI_TRUE = @STATIC_HANDLER_SSI_TRUE@
+STATIC_HANDLER_STREAM_FALSE = @STATIC_HANDLER_STREAM_FALSE@
+STATIC_HANDLER_STREAM_TRUE = @STATIC_HANDLER_STREAM_TRUE@
+STATIC_HANDLER_TSA_FALSE = @STATIC_HANDLER_TSA_FALSE@
+STATIC_HANDLER_TSA_TRUE = @STATIC_HANDLER_TSA_TRUE@
 STRIP = @STRIP@
 STRNDUP_FALSE = @STRNDUP_FALSE@
 STRNDUP_TRUE = @STRNDUP_TRUE@
@@ -396,45 +479,46 @@ MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 moduledir = $(libexecdir)/ulib
-module_LTLIBRARIES = mod_rpc.la mod_http.la mod_tsa.la mod_nocat.la \
-	mod_echo.la mod_fcgi.la mod_scgi.la mod_stream.la \
-	mod_socket.la mod_ssi.la $(am__append_1) $(am__append_2)
-mod_rpc_la_SOURCES = mod_rpc.cpp
-mod_rpc_la_LIBADD = $(ulib_la)
-mod_rpc_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-mod_http_la_SOURCES = mod_http.cpp
-mod_http_la_LIBADD = $(ulib_la)
-mod_http_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-mod_tsa_la_SOURCES = mod_tsa.cpp
-mod_tsa_la_LIBADD = $(ulib_la)
-mod_tsa_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-mod_nocat_la_SOURCES = mod_nocat.cpp
-mod_nocat_la_LIBADD = $(ulib_la)
-mod_nocat_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-mod_echo_la_SOURCES = mod_echo.cpp
-mod_echo_la_LIBADD = $(ulib_la)
-mod_echo_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-mod_fcgi_la_SOURCES = mod_fcgi.cpp
-mod_fcgi_la_LIBADD = $(ulib_la)
-mod_fcgi_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-mod_scgi_la_SOURCES = mod_scgi.cpp
-mod_scgi_la_LIBADD = $(ulib_la)
-mod_scgi_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-mod_stream_la_SOURCES = mod_stream.cpp
-mod_stream_la_LIBADD = $(ulib_la)
-mod_stream_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-mod_socket_la_SOURCES = mod_socket.cpp
-mod_socket_la_LIBADD = $(ulib_la)
-mod_socket_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-mod_ssi_la_SOURCES = mod_ssi.cpp
-mod_ssi_la_LIBADD = $(ulib_la)
-mod_ssi_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-@EXPAT_TRUE@mod_soap_la_SOURCES = mod_soap.cpp
-@EXPAT_TRUE@mod_soap_la_LIBADD = $(ulib_la)
-@EXPAT_TRUE@mod_soap_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-@PCRE_TRUE@mod_proxy_la_SOURCES = mod_proxy.cpp mod_proxy_service.cpp
-@PCRE_TRUE@mod_proxy_la_LIBADD = $(ulib_la)
-@PCRE_TRUE@mod_proxy_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+module_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_4) $(am__append_5) $(am__append_6) \
+	$(am__append_7) $(am__append_8) $(am__append_9) \
+	$(am__append_10) $(am__append_11) $(am__append_12)
+@STATIC_HANDLER_RPC_FALSE@mod_rpc_la_SOURCES = mod_rpc.cpp
+@STATIC_HANDLER_RPC_FALSE@mod_rpc_la_LIBADD = $(ulib_la)
+@STATIC_HANDLER_RPC_FALSE@mod_rpc_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@STATIC_HANDLER_HTTP_FALSE@mod_http_la_SOURCES = mod_http.cpp
+@STATIC_HANDLER_HTTP_FALSE@mod_http_la_LIBADD = $(ulib_la)
+@STATIC_HANDLER_HTTP_FALSE@mod_http_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@STATIC_HANDLER_TSA_FALSE@mod_tsa_la_SOURCES = mod_tsa.cpp
+@STATIC_HANDLER_TSA_FALSE@mod_tsa_la_LIBADD = $(ulib_la)
+@STATIC_HANDLER_TSA_FALSE@mod_tsa_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@STATIC_HANDLER_NOCAT_FALSE@mod_nocat_la_SOURCES = mod_nocat.cpp
+@STATIC_HANDLER_NOCAT_FALSE@mod_nocat_la_LIBADD = $(ulib_la)
+@STATIC_HANDLER_NOCAT_FALSE@mod_nocat_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@STATIC_HANDLER_ECHO_FALSE@mod_echo_la_SOURCES = mod_echo.cpp
+@STATIC_HANDLER_ECHO_FALSE@mod_echo_la_LIBADD = $(ulib_la)
+@STATIC_HANDLER_ECHO_FALSE@mod_echo_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@STATIC_HANDLER_FCGI_FALSE@mod_fcgi_la_SOURCES = mod_fcgi.cpp
+@STATIC_HANDLER_FCGI_FALSE@mod_fcgi_la_LIBADD = $(ulib_la)
+@STATIC_HANDLER_FCGI_FALSE@mod_fcgi_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@STATIC_HANDLER_SCGI_FALSE@mod_scgi_la_SOURCES = mod_scgi.cpp
+@STATIC_HANDLER_SCGI_FALSE@mod_scgi_la_LIBADD = $(ulib_la)
+@STATIC_HANDLER_SCGI_FALSE@mod_scgi_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@STATIC_HANDLER_STREAM_FALSE@mod_stream_la_SOURCES = mod_stream.cpp
+@STATIC_HANDLER_STREAM_FALSE@mod_stream_la_LIBADD = $(ulib_la)
+@STATIC_HANDLER_STREAM_FALSE@mod_stream_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@STATIC_HANDLER_SOCKET_FALSE@mod_socket_la_SOURCES = mod_socket.cpp
+@STATIC_HANDLER_SOCKET_FALSE@mod_socket_la_LIBADD = $(ulib_la)
+@STATIC_HANDLER_SOCKET_FALSE@mod_socket_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@STATIC_HANDLER_SSI_FALSE@mod_ssi_la_SOURCES = mod_ssi.cpp
+@STATIC_HANDLER_SSI_FALSE@mod_ssi_la_LIBADD = $(ulib_la)
+@STATIC_HANDLER_SSI_FALSE@mod_ssi_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@mod_soap_la_SOURCES = mod_soap.cpp
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@mod_soap_la_LIBADD = $(ulib_la)
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@mod_soap_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@mod_proxy_la_SOURCES = mod_proxy.cpp mod_proxy_service.cpp
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@mod_proxy_la_LIBADD = $(ulib_la)
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@mod_proxy_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
 all: all-am
 
 .SUFFIXES:
@@ -496,29 +580,29 @@ clean-moduleLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 mod_echo.la: $(mod_echo_la_OBJECTS) $(mod_echo_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(moduledir) $(mod_echo_la_LDFLAGS) $(mod_echo_la_OBJECTS) $(mod_echo_la_LIBADD) $(LIBS)
+	$(CXXLINK) $(am_mod_echo_la_rpath) $(mod_echo_la_LDFLAGS) $(mod_echo_la_OBJECTS) $(mod_echo_la_LIBADD) $(LIBS)
 mod_fcgi.la: $(mod_fcgi_la_OBJECTS) $(mod_fcgi_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(moduledir) $(mod_fcgi_la_LDFLAGS) $(mod_fcgi_la_OBJECTS) $(mod_fcgi_la_LIBADD) $(LIBS)
+	$(CXXLINK) $(am_mod_fcgi_la_rpath) $(mod_fcgi_la_LDFLAGS) $(mod_fcgi_la_OBJECTS) $(mod_fcgi_la_LIBADD) $(LIBS)
 mod_http.la: $(mod_http_la_OBJECTS) $(mod_http_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(moduledir) $(mod_http_la_LDFLAGS) $(mod_http_la_OBJECTS) $(mod_http_la_LIBADD) $(LIBS)
+	$(CXXLINK) $(am_mod_http_la_rpath) $(mod_http_la_LDFLAGS) $(mod_http_la_OBJECTS) $(mod_http_la_LIBADD) $(LIBS)
 mod_nocat.la: $(mod_nocat_la_OBJECTS) $(mod_nocat_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(moduledir) $(mod_nocat_la_LDFLAGS) $(mod_nocat_la_OBJECTS) $(mod_nocat_la_LIBADD) $(LIBS)
+	$(CXXLINK) $(am_mod_nocat_la_rpath) $(mod_nocat_la_LDFLAGS) $(mod_nocat_la_OBJECTS) $(mod_nocat_la_LIBADD) $(LIBS)
 mod_proxy.la: $(mod_proxy_la_OBJECTS) $(mod_proxy_la_DEPENDENCIES) 
 	$(CXXLINK) $(am_mod_proxy_la_rpath) $(mod_proxy_la_LDFLAGS) $(mod_proxy_la_OBJECTS) $(mod_proxy_la_LIBADD) $(LIBS)
 mod_rpc.la: $(mod_rpc_la_OBJECTS) $(mod_rpc_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(moduledir) $(mod_rpc_la_LDFLAGS) $(mod_rpc_la_OBJECTS) $(mod_rpc_la_LIBADD) $(LIBS)
+	$(CXXLINK) $(am_mod_rpc_la_rpath) $(mod_rpc_la_LDFLAGS) $(mod_rpc_la_OBJECTS) $(mod_rpc_la_LIBADD) $(LIBS)
 mod_scgi.la: $(mod_scgi_la_OBJECTS) $(mod_scgi_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(moduledir) $(mod_scgi_la_LDFLAGS) $(mod_scgi_la_OBJECTS) $(mod_scgi_la_LIBADD) $(LIBS)
+	$(CXXLINK) $(am_mod_scgi_la_rpath) $(mod_scgi_la_LDFLAGS) $(mod_scgi_la_OBJECTS) $(mod_scgi_la_LIBADD) $(LIBS)
 mod_soap.la: $(mod_soap_la_OBJECTS) $(mod_soap_la_DEPENDENCIES) 
 	$(CXXLINK) $(am_mod_soap_la_rpath) $(mod_soap_la_LDFLAGS) $(mod_soap_la_OBJECTS) $(mod_soap_la_LIBADD) $(LIBS)
 mod_socket.la: $(mod_socket_la_OBJECTS) $(mod_socket_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(moduledir) $(mod_socket_la_LDFLAGS) $(mod_socket_la_OBJECTS) $(mod_socket_la_LIBADD) $(LIBS)
+	$(CXXLINK) $(am_mod_socket_la_rpath) $(mod_socket_la_LDFLAGS) $(mod_socket_la_OBJECTS) $(mod_socket_la_LIBADD) $(LIBS)
 mod_ssi.la: $(mod_ssi_la_OBJECTS) $(mod_ssi_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(moduledir) $(mod_ssi_la_LDFLAGS) $(mod_ssi_la_OBJECTS) $(mod_ssi_la_LIBADD) $(LIBS)
+	$(CXXLINK) $(am_mod_ssi_la_rpath) $(mod_ssi_la_LDFLAGS) $(mod_ssi_la_OBJECTS) $(mod_ssi_la_LIBADD) $(LIBS)
 mod_stream.la: $(mod_stream_la_OBJECTS) $(mod_stream_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(moduledir) $(mod_stream_la_LDFLAGS) $(mod_stream_la_OBJECTS) $(mod_stream_la_LIBADD) $(LIBS)
+	$(CXXLINK) $(am_mod_stream_la_rpath) $(mod_stream_la_LDFLAGS) $(mod_stream_la_OBJECTS) $(mod_stream_la_LIBADD) $(LIBS)
 mod_tsa.la: $(mod_tsa_la_OBJECTS) $(mod_tsa_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(moduledir) $(mod_tsa_la_LDFLAGS) $(mod_tsa_la_OBJECTS) $(mod_tsa_la_LIBADD) $(LIBS)
+	$(CXXLINK) $(am_mod_tsa_la_rpath) $(mod_tsa_la_LDFLAGS) $(mod_tsa_la_OBJECTS) $(mod_tsa_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

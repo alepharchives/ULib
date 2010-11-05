@@ -322,7 +322,7 @@ public:
 
    UMimeMultipart() : UMimeEntity()
       {
-      U_TRACE_REGISTER_OBJECT(0, UMimeMultipart, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UMimeMultipart, "")
       }
 
    UMimeMultipart(UMimeEntity& item) : UMimeEntity(item)

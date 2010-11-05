@@ -14,23 +14,23 @@
 #include <ulib/utility/escape.h>
 #include <ulib/xml/expat/element.h>
 
-void UXMLElement::splitNamespaceAndName(const UString& str, UString& namespaceName, UString& accessorName)
+void UXMLElement::splitNamespaceAndName(const UString& _str, UString& _namespaceName, UString& _accessorName)
 {
-   U_TRACE(0+256, "UXMLElement::splitNamespaceAndName(%.*S,%p,%p)", U_STRING_TO_TRACE(str), &namespaceName, &accessorName)
+   U_TRACE(0+256, "UXMLElement::splitNamespaceAndName(%.*S,%p,%p)", U_STRING_TO_TRACE(_str), &_namespaceName, &_accessorName)
 
-   U_ASSERT(str.empty() == false)
+   U_ASSERT_DIFFERS(_str.empty(),true)
 
-   uint32_t nColonPos = str.find(':');
+   uint32_t nColonPos = _str.find(':');
 
    if (nColonPos != U_NOT_FOUND)
       {
-      namespaceName = str.substr(0U, nColonPos);
-       accessorName = str.substr(nColonPos + 1, str.length() - nColonPos - 1);
+      _namespaceName = _str.substr(0U, nColonPos);
+       _accessorName  = _str.substr(nColonPos + 1, _str.length() - nColonPos - 1);
       }
    else
       {
-      namespaceName.clear();
-       accessorName = str;
+      _namespaceName.clear();
+       _accessorName = _str;
       }
 }
 

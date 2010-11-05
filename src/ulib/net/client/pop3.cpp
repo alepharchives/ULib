@@ -464,7 +464,7 @@ int UPop3Client::getAllHeader(UVector<UString>& vec)
       int i = 2;
       UString req(U_max(U_CAPACITY, 11U*num_msg));
 
-                                req.snprintf(    "TOP  1 0\r\n", 0);
+                                req.snprintf(    "TOP  1 0\r\n");
       for (; i <= num_msg; ++i) req.snprintf_add("TOP %d 0\r\n", i);
 
       (void) buffer.reserve(size_msg);
@@ -502,7 +502,7 @@ int UPop3Client::getAllMessage(UVector<UString>& vec)
       int i = 2;
       UString req(U_max(U_CAPACITY, 10U*num_msg));
 
-                                req.snprintf(    "RETR  1\r\n", 0);
+                                req.snprintf(    "RETR  1\r\n");
       for (; i <= num_msg; ++i) req.snprintf_add("RETR %d\r\n", i);
 
       (void) buffer.reserve(size_msg + (num_msg * (sizeof(U_POP3_OK) + sizeof("Message follows") + sizeof(U_POP3_EODML))));
@@ -541,7 +541,7 @@ bool UPop3Client::deleteAllMessage()
       UString req(U_max(U_CAPACITY, 10U*num_msg));
       uint32_t size = num_msg * (sizeof(U_POP3_OK) + sizeof(" message deleted"));
 
-                                req.snprintf(    "DELE  1\r\n", 0);
+                                req.snprintf(    "DELE  1\r\n");
       for (; i <= num_msg; ++i) req.snprintf_add("DELE %d\r\n", i);
 
       (void) buffer.reserve(size);

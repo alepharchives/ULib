@@ -30,9 +30,9 @@ int UProcess::filedes[6];
 
 void UProcess::kill(pid_t pid, int sig)
 {
-   U_TRACE(1, "UProcess::kill(%ld,%d)", pid, sig)
+   U_TRACE(1, "UProcess::kill(%d,%d)", pid, sig)
 
-   (void) U_SYSCALL(kill, "%ld,%d", pid, sig);
+   (void) U_SYSCALL(kill, "%d,%d", pid, sig);
 }
 
 void UProcess::nice(int inc)
@@ -44,9 +44,9 @@ void UProcess::nice(int inc)
 
 void UProcess::setProcessGroup(pid_t pid, pid_t pgid)
 {
-   U_TRACE(1, "UProcess::setProcessGroup(%ld,%ld)", pid, pgid)
+   U_TRACE(1, "UProcess::setProcessGroup(%d,%d)", pid, pgid)
 
-   (void) U_SYSCALL(setpgid, "%ld,%ld", pid, pgid);
+   (void) U_SYSCALL(setpgid, "%d,%d", pid, pgid);
 }
 
 bool UProcess::fork()
@@ -454,21 +454,21 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
 
 #endif
 
-int UProcess::waitpid(pid_t pid, int* status, int options)
+int UProcess::waitpid(pid_t pid, int* _status, int options)
 {
-   U_TRACE(1, "UProcess::waitpid(%d,%p,%d)", pid, status, options)
+   U_TRACE(1, "UProcess::waitpid(%d,%p,%d)", pid, _status, options)
 
    int result;
 
 loop:
-   result = U_SYSCALL(waitpid, "%d,%p,%d", pid, status, options);
+   result = U_SYSCALL(waitpid, "%d,%p,%d", pid, _status, options);
 
    if (result == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
 
    // errno == ECHILD: if the process specified in pid does not exist or is not a child of the calling process...
 
 #if DEBUG
-   if (status) U_INTERNAL_DUMP("status = %d", *status)
+   if (_status) U_INTERNAL_DUMP("status = %d", *_status)
 #endif
 
    U_RETURN(result);
@@ -497,36 +497,36 @@ int UProcess::waitAll()
    U_RETURN(result);
 }
 
-char* UProcess::exitInfo(int status)
+char* UProcess::exitInfo(int _status)
 {
-   U_TRACE(0, "UProcess::exitInfo(%d)", status)
+   U_TRACE(0, "UProcess::exitInfo(%d)", _status)
 
    uint32_t n = 0;
 
    static char buffer[128];
 
-   if (WIFEXITED(status))
+   if (WIFEXITED(_status))
       {
-      n = u_snprintf(buffer, sizeof(buffer), "Exit %d", WEXITSTATUS(status));
+      n = u_snprintf(buffer, sizeof(buffer), "Exit %d", WEXITSTATUS(_status));
       }
-   else if (WIFSIGNALED(status))
+   else if (WIFSIGNALED(_status))
       {
 #  ifndef WCOREDUMP
 #  define WCOREDUMP(status) ((status) & 0200) // settimo bit
 #  endif
 
-      n = u_snprintf(buffer, sizeof(buffer), "Signal %Y%s", WTERMSIG(status), (WCOREDUMP(status) ? " - core dumped" : ""));
+      n = u_snprintf(buffer, sizeof(buffer), "Signal %Y%s", WTERMSIG(_status), (WCOREDUMP(_status) ? " - core dumped" : ""));
       }
-   else if (WIFSTOPPED(status))
+   else if (WIFSTOPPED(_status))
       {
-      n = u_snprintf(buffer, sizeof(buffer), "Signal %Y", WSTOPSIG(status));
+      n = u_snprintf(buffer, sizeof(buffer), "Signal %Y", WSTOPSIG(_status));
       }
 #  ifndef WIFCONTINUED
 #  define WIFCONTINUED(status)  ((status) == 0xffff)
 #  endif
-   else if (WIFCONTINUED(status))
+   else if (WIFCONTINUED(_status))
       {
-      n = u_snprintf(buffer, sizeof(buffer), "SIGCONT", 0);
+      n = u_snprintf(buffer, sizeof(buffer), "SIGCONT");
       }
 
    buffer[n] = '\0';

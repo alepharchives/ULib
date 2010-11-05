@@ -84,16 +84,16 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static UString* str_name;
-   static UString* str_ascii;
-   static UString* str_charset;
-   static UString* str_boundary;
-   static UString* str_filename;
-   static UString* str_txt_xml;
-   static UString* str_txt_plain;
-   static UString* str_msg_rfc;
-   static UString* str_mime_version;
-   static UString* str_content_transfer_encoding;
+   static const UString* str_name;
+   static const UString* str_ascii;
+   static const UString* str_charset;
+   static const UString* str_boundary;
+   static const UString* str_filename;
+   static const UString* str_txt_xml;
+   static const UString* str_txt_plain;
+   static const UString* str_msg_rfc;
+   static const UString* str_mime_version;
+   static const UString* str_content_transfer_encoding;
 
    static void str_allocate();
 
@@ -101,7 +101,7 @@ public:
 
    UMimeHeader() : table(false) // ignore case...
       {
-      U_TRACE_REGISTER_OBJECT(0, UMimeHeader, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UMimeHeader, "")
 
       table.allocate();
 

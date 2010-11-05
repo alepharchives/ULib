@@ -20,7 +20,7 @@ public:
 
    HttpField()
       {
-      U_TRACE_REGISTER_OBJECT(5, HttpField, "", 0)
+      U_TRACE_REGISTER_OBJECT(5, HttpField, "")
       }
 
    HttpField(const char* name_, unsigned name_len, const char* value_, unsigned value_len)

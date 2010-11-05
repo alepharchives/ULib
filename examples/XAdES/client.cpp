@@ -77,7 +77,7 @@ public:
 
       XAdES_BES()
          {
-         U_TRACE_REGISTER_OBJECT(5, XAdES_BES, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, XAdES_BES, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("XAdES-BES");
          }
@@ -138,7 +138,7 @@ public:
 
       XAdES_C()
          {
-         U_TRACE_REGISTER_OBJECT(5, XAdES_C, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, XAdES_C, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("XAdES-C");
          }
@@ -188,7 +188,7 @@ public:
 
       XAdES_L()
          {
-         U_TRACE_REGISTER_OBJECT(5, XAdES_L, "", 0)
+         U_TRACE_REGISTER_OBJECT(5, XAdES_L, "")
 
          URPCMethod::method_name = U_STRING_FROM_CONSTANT("XAdES-L");
          }
@@ -395,7 +395,7 @@ public:
             break;
 
             default:
-               U_ERROR("type_of_signature not valid...", 0);
+               U_ERROR("type_of_signature not valid...");
             break;
             }
 

@@ -601,29 +601,29 @@ public:
 
       UServices::readEOF(STDIN_FILENO, x);
 
-      if (x.empty()) U_ERROR("cannot read data from <stdin>...", 0);
+      if (x.empty()) U_ERROR("cannot read data from <stdin>...");
 
       (void) document.reserve(x.size());
 
-      if (UBase64::decode(x, document) == false) U_ERROR("decoding data read failed...", 0);
+      if (UBase64::decode(x, document) == false) U_ERROR("decoding data read failed...");
 
       // manage arguments...
 
       U_INTERNAL_ASSERT_POINTER(U_DATA_URI)
 
-      if (*U_DATA_URI == '\0') U_ERROR("DATA_URI is mandatory...", 0);
+      if (*U_DATA_URI == '\0') U_ERROR("DATA_URI is mandatory...");
 
       U_INTERNAL_ASSERT_POINTER(U_X509)
 
-      if (*U_X509 == '\0') U_ERROR("X509 is mandatory...", 0);
+      if (*U_X509 == '\0') U_ERROR("X509 is mandatory...");
 
       UCertificate cert(UString(U_X509));
 
-      if (cert.isValid() == false) U_ERROR("certificate not valid", 0);
+      if (cert.isValid() == false) U_ERROR("certificate not valid");
 
       U_INTERNAL_ASSERT_POINTER(U_KEY_HANDLE)
 
-      if (*U_KEY_HANDLE == '\0') U_ERROR("KEY_HANDLE is mandatory...", 0);
+      if (*U_KEY_HANDLE == '\0') U_ERROR("KEY_HANDLE is mandatory...");
 
       digest_algorithm = getOptionValue(U_DIGEST_ALGORITHM, "DigestAlgorithm");
 
@@ -766,7 +766,7 @@ public:
          }
 
 #     ifdef HAVE_OPENSSL_98
-      if (cert.matchPrivateKey(u_pkey) == false) U_ERROR("the private key doesn't matches the public key of the certificate", 0);
+      if (cert.matchPrivateKey(u_pkey) == false) U_ERROR("the private key doesn't matches the public key of the certificate");
 #     endif
 
       x.clear();

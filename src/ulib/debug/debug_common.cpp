@@ -36,7 +36,7 @@ static const char* __restrict__ uid = "@(#) " PACKAGE " " VERSION " " PLATFORM_V
 
 extern "C" void U_EXPORT u_debug_at_exit(void)
 {
-   U_INTERNAL_TRACE("u_debug_at_exit()", 0)
+   U_INTERNAL_TRACE("u_debug_at_exit()")
 
    // NB: if error in this code maybe recursion occurs...
 
@@ -54,7 +54,7 @@ extern "C" void U_EXPORT u_debug_at_exit(void)
 
 void U_EXPORT u_debug_init(void)
 {
-   U_INTERNAL_TRACE("u_debug_init()", 0)
+   U_INTERNAL_TRACE("u_debug_init()")
 
    U_MESSAGE("DEBUG MODE (pid %W%P%W) - %s%W", CYAN, YELLOW, uid + 5, RESET); // print program mode and info for ULib...
 
@@ -106,7 +106,7 @@ static bool fork_called;
 
 pid_t U_EXPORT u_debug_fork(pid_t _pid)
 {
-   U_INTERNAL_TRACE("u_debug_fork(%ld)", _pid)
+   U_INTERNAL_TRACE("u_debug_fork(%d)", _pid)
 
    if (_pid == 0) // child
       {
@@ -132,7 +132,7 @@ pid_t U_EXPORT u_debug_fork(pid_t _pid)
 
 pid_t U_EXPORT u_debug_vfork(pid_t _pid)
 {
-   U_INTERNAL_TRACE("u_debug_vfork(%ld)", _pid)
+   U_INTERNAL_TRACE("u_debug_vfork(%d)", _pid)
 
    // NB: same address space...  Parent process execution stopped until the child calls exec() or exit()
 

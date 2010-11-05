@@ -63,7 +63,7 @@ UTrace::UTrace(int level, const char* format, ...)
 
 UTrace::~UTrace()
 {
-   U_INTERNAL_TRACE("UTrace::~UTrace()", 0);
+   U_INTERNAL_TRACE("UTrace::~UTrace()");
 
    if (active)
       {

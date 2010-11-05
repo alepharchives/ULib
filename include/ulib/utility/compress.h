@@ -18,6 +18,9 @@
 
 struct U_EXPORT UCompress {
 
+   static bool flag_init;
+   static void init();
+
    static uint32_t   compress(const char* src, uint32_t src_len, char* dst);
    static uint32_t decompress(const char* src, uint32_t src_len, char* dst);
 

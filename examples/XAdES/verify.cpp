@@ -80,11 +80,11 @@ public:
 
       UServices::readEOF(STDIN_FILENO, x);
 
-      if (x.empty()) U_ERROR("cannot read data from <stdin>...", 0);
+      if (x.empty()) U_ERROR("cannot read data from <stdin>...");
 
       (void) content.reserve(x.size());
 
-      if (UBase64::decode(x, content) == false) U_ERROR("decoding data read failed...", 0);
+      if (UBase64::decode(x, content) == false) U_ERROR("decoding data read failed...");
 
       // manage arguments...
 
@@ -93,7 +93,7 @@ public:
                   ? cfg[U_STRING_FROM_CONSTANT("XAdES-L.Schema")]
                   : UString(U_SCHEMA));
 
-      if (schema.empty()) U_ERROR("error on XAdES schema: empty", 0);
+      if (schema.empty()) U_ERROR("error on XAdES schema: empty");
 
       UXML2Schema XAdES_schema(UFile::contentOf(schema));
 
@@ -109,7 +109,7 @@ public:
 
       UXML2Document document(content);
 
-      if (XAdES_schema.validate(document) == false) U_ERROR("error on input data: not XAdES", 0);
+      if (XAdES_schema.validate(document) == false) U_ERROR("error on input data: not XAdES");
 
       UDSIGContext dsigCtx;
 

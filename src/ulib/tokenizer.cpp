@@ -177,7 +177,7 @@ tok:
    U_RETURN(false);
 }
 
-bool UTokenizer::tokenSeen(UString* x)
+bool UTokenizer::tokenSeen(const UString* x)
 {
    U_TRACE(0, "UTokenizer::tokenSeen(%.*S)", U_STRING_TO_TRACE(*x))
 

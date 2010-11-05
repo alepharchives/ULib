@@ -169,7 +169,7 @@ uint32_t u_quoted_printable_decode(const char* restrict inptr, uint32_t len, uns
             {
             /* data was truncated */
 
-            U_WARNING("u_quoted_printable_decode(): Decoding incomplete: data was truncated", 0);
+            U_WARNING("u_quoted_printable_decode(): Decoding incomplete: data was truncated");
 
             break;
             }

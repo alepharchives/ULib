@@ -26,8 +26,8 @@
 #  include <ulib/replace/strstream.h>
 #endif
 
-UString* UModProxyService::str_FOLLOW_REDIRECTS;
-UString* UModProxyService::str_CLIENT_CERTIFICATE;
+const UString* UModProxyService::str_FOLLOW_REDIRECTS;
+const UString* UModProxyService::str_CLIENT_CERTIFICATE;
 
 void UModProxyService::str_allocate()
 {
@@ -175,7 +175,7 @@ void UModProxyService::setMsgError(int err, UVector<UString>& vmsg_error)
             UString fmt = vmsg_error[err - UModProxyService::FORBIDDEN - 1];
 
             UClientImage_Base::wbuffer->setBuffer(100U + fmt.size());
-            UClientImage_Base::wbuffer->snprintf(fmt.c_str(), 0);
+            UClientImage_Base::wbuffer->snprintf(fmt.c_str());
             }
          }
       }

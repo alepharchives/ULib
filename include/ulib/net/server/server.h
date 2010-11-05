@@ -20,10 +20,7 @@
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/socket_ext.h>
 #include <ulib/net/server/client_image.h>
-
-#ifdef HAVE_MODULES
-#  include <ulib/net/server/server_plugin.h>
-#endif
+#include <ulib/net/server/server_plugin.h>
 
 /**
    @class UServer
@@ -69,15 +66,12 @@ virtual void newClientImage() { (void) new client_class(); } }
 
 // manage write to log server
 
-#define U_SRV_LOG_VAR(          fmt,args...) { if (UServer_Base::isLog()) ULog::log("%s"fmt"\n",      UServer_Base::mod_name, args); }
-#define U_SRV_LOG_VAR_WITH_ADDR(fmt,args...) { if (UServer_Base::isLog()) ULog::log("%s"fmt" %.*s\n", UServer_Base::mod_name, args, \
+#define U_SRV_LOG(          fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%s"fmt"\n",      UServer_Base::mod_name , ##args); }
+#define U_SRV_LOG_WITH_ADDR(fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%s"fmt" %.*s\n", UServer_Base::mod_name , ##args, \
                                                                                   U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf))); }
 
-#define U_SRV_LOG_MSG(          msg) U_SRV_LOG_VAR("%s",          (msg))
-#define U_SRV_LOG_MSG_WITH_ADDR(msg) U_SRV_LOG_VAR_WITH_ADDR("%s",(msg))
-
-#define U_SRV_LOG_TIMEOUT(cimg)      U_SRV_LOG_VAR("client connected didn't send any request in %u secs (timeout), close connection %.*s", \
-                                                      UServer_Base::getReqTimeout(), U_STRING_TO_TRACE(*((cimg)->logbuf)))
+#define U_SRV_LOG_TIMEOUT(cimg) U_SRV_LOG("client connected didn't send any request in %u secs (timeout), close connection %.*s", \
+                                                   UServer_Base::getReqTimeout(), U_STRING_TO_TRACE(*((cimg)->logbuf)))
 
 class UHTTP;
 class UCommand;
@@ -216,20 +210,18 @@ public:
    // -------------------------------------------------------------------
 
    static char mod_name[20];
+   static UEventFd* handler_event;
 
    // load plugin modules and call server-wide hooks handlerConfig()...
+   static int loadPlugins(const UString& plugin_dir, const UString& plugin_list, UFileConfig* cfg);
 
-#ifdef HAVE_MODULES
-   static int loadPlugins(const UString& plugin_dir, UVector<UString>& plugin_list, UFileConfig* cfg);
-
-   static int pluginsHandlerInit()     { return (vplugin ? plugins_handlerInit()    : U_PLUGIN_HANDLER_FINISHED); }
+   // Server-wide hooks
+   static int pluginsHandlerInit();
 
    // Connection-wide hooks
-
-   static int pluginsHandlerREAD()     { return (vplugin ? plugins_handlerREAD()    : U_PLUGIN_HANDLER_FINISHED); }
-   static int pluginsHandlerRequest()  { return (vplugin ? plugins_handlerRequest() : U_PLUGIN_HANDLER_FINISHED); }
-   static int pluginsHandlerReset()    { return (vplugin ? plugins_handlerReset()   : U_PLUGIN_HANDLER_FINISHED); }
-#endif
+   static int pluginsHandlerREAD();
+   static int pluginsHandlerRequest();
+   static int pluginsHandlerReset();
 
    // -----------------------------------------------------------------------------------------------------------------------------
    // Manage process server
@@ -377,7 +369,6 @@ protected:
    static USocket* socket;
    static UEventTime* ptime;
    static UServer_Base* pthis;
-   static UEventFd* handler_event;
    static UVector<UIPAllow*>* vallow_IP;
    static bool flag_loop, flag_use_tcp_optimization;
 
@@ -443,19 +434,8 @@ protected:
    static const char* getNumConnection();
    static void        setNotifier(bool bfork);
 
-#ifdef HAVE_MODULES
+   static UVector<UString>* vplugin_name;
    static UVector<UServerPlugIn*>* vplugin;
-
-   // manage plugin modules for server-wide hooks...
-
-   static int plugins_handlerInit();
-
-   // manage plugin modules for connection-wide hooks...
-
-   static int plugins_handlerREAD();
-   static int plugins_handlerRequest();
-   static int plugins_handlerReset();
-#endif
 
    // define method VIRTUAL of class UEventFd
 
@@ -483,6 +463,8 @@ private:
    friend class UClient_Base;
    friend class UStreamPlugIn;
    friend class UClientImage_Base;
+
+   static void loadStaticLinkedModules(const char* name) U_NO_EXPORT;
 
    UServer_Base(const UServer_Base&) : UEventFd() {}
    UServer_Base& operator=(const UServer_Base&)   { return *this; }
@@ -557,10 +539,6 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UServer<USSLSocket>, "%p", cfg)
 
-      USSLSocket::method            = (SSL_METHOD*) SSLv23_server_method();
-      USocket::accept4_flags        = 0;
-      UServer_Base::block_on_accept = true;
-
       socket =                U_NEW(USSLSocket(UClientImage_Base::bIPv6));
       UClientImage_Base::init(U_NEW(USSLSocket(UClientImage_Base::bIPv6, getSocket()->ctx)));
       }
@@ -586,7 +564,7 @@ public:
 
       if (has_cert == false)
          {
-         U_SRV_LOG_MSG_WITH_ADDR("ask for a client certificate to");
+         U_SRV_LOG_WITH_ADDR("ask for a client certificate to");
 
          if (sslsocket->askForClientCertificate())
             {
@@ -625,7 +603,7 @@ public:
       if (sslsocket->setContext(cert_file.data(), key_file.data(), password.data(),
                                   ca_file.data(),  ca_path.data(), verify_mode) == false)
          {
-         U_ERROR("SSL setContext() failed...", 0);
+         U_ERROR("SSL setContext() failed...");
          }
 
       UServer_Base::run(); // loop waiting for connection

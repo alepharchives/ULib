@@ -17,7 +17,7 @@
 #include <ulib/plugin/mod_tsa.h>
 #include <ulib/net/server/server.h>
 
-U_CREAT_FUNC(UTsaPlugIn)
+U_CREAT_FUNC(mod_tsa, UTsaPlugIn)
 
 UTsaPlugIn::~UTsaPlugIn()
 {
@@ -50,12 +50,12 @@ int UTsaPlugIn::handlerInit()
 
    if (command)
       {
-      U_SRV_LOG_MSG("initialization of plugin success");
+      U_SRV_LOG("initialization of plugin success");
 
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
 
-   U_SRV_LOG_MSG("initialization of plugin FAILED");
+   U_SRV_LOG("initialization of plugin FAILED");
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }

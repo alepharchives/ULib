@@ -14,7 +14,9 @@
 #ifndef U_SERVER_PLUGIN_H
 #define U_SERVER_PLUGIN_H 1
 
-#include <ulib/dynamic/plugin.h>
+#ifdef HAVE_MODULES
+#  include <ulib/dynamic/plugin.h>
+#endif
 
 /*
 The plugin interface is an integral part of UServer which provides a flexible way to add specific functionality to UServer.

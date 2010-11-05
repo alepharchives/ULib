@@ -18,6 +18,49 @@
 #include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
 
+#ifdef U_STATIC_HANDLER_HTTP
+#  include <ulib/plugin/mod_http.h>
+#endif
+#ifdef U_STATIC_HANDLER_RPC
+#  include <ulib/plugin/mod_rpc.h>
+#endif
+#ifdef U_STATIC_HANDLER_SSI
+#  include <ulib/plugin/mod_ssi.h>
+#endif
+#ifdef U_STATIC_HANDLER_NOCAT
+#  include <ulib/plugin/mod_nocat.h>
+#endif
+#ifdef U_STATIC_HANDLER_FCGI
+#  include <ulib/plugin/mod_fcgi.h>
+#endif
+#ifdef U_STATIC_HANDLER_SCGI
+#  include <ulib/plugin/mod_scgi.h>
+#endif
+#ifdef U_STATIC_HANDLER_SOAP
+#  include <ulib/plugin/mod_soap.h>
+#endif
+#ifdef U_STATIC_HANDLER_PROXY
+#  include <ulib/plugin/mod_proxy.h>
+#endif
+#ifdef U_STATIC_HANDLER_STREAM
+#  include <ulib/plugin/mod_stream.h>
+#endif
+#ifdef U_STATIC_HANDLER_SOCKET
+#  include <ulib/plugin/mod_socket.h>
+#endif
+#ifdef U_STATIC_HANDLER_TSA
+#  include <ulib/plugin/mod_tsa.h>
+#endif
+#ifdef U_STATIC_HANDLER_GEOIP
+#  include <ulib/plugin/mod_geoip.h>
+#endif
+#ifdef U_STATIC_HANDLER_ECHO
+#  include <ulib/plugin/mod_echo.h>
+#endif
+#ifdef U_STATIC_HANDLER_SHIB
+#  include <ulib/plugin/mod_shib.h>
+#endif
+
 #ifndef __MINGW32__
 #  include <ulib/net/unixsocket.h>
 #endif
@@ -44,12 +87,10 @@ UProcess*                  UServer_Base::proc;
 UEventFd*                  UServer_Base::handler_event;
 UEventTime*                UServer_Base::ptime;
 UServer_Base*              UServer_Base::pthis;
+UVector<UString>*          UServer_Base::vplugin_name;
 UVector<UIPAllow*>*        UServer_Base::vallow_IP;
-UServer_Base::shared_data* UServer_Base::ptr;
-
-#ifdef HAVE_MODULES
 UVector<UServerPlugIn*>*   UServer_Base::vplugin;
-#endif
+UServer_Base::shared_data* UServer_Base::ptr;
 
 const UString* UServer_Base::str_USE_IPV6;
 const UString* UServer_Base::str_PORT;
@@ -162,7 +203,7 @@ void UServer_Base::str_allocate()
    { U_STRINGREP_FROM_CONSTANT("IP_ADDRESS") },
    { U_STRINGREP_FROM_CONSTANT("MAX_KEEP_ALIVE") },
    { U_STRINGREP_FROM_CONSTANT("PID_FILE") },
-   { U_STRINGREP_FROM_CONSTANT("USE_TCP_OPTIMIZATION") },
+   { U_STRINGREP_FROM_CONSTANT("USE_TCP_OPTIMIZATION") }
    };
 
    U_NEW_ULIB_OBJECT(str_USE_IPV6,              U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -229,14 +270,15 @@ UServer_Base::~UServer_Base()
    if (handler_event) UNotifier::erase(handler_event, false);
                       UNotifier::clear();
 
-#ifdef HAVE_MODULES
    if (vplugin)
       {
       delete vplugin;
+      delete vplugin_name;
 
+#  ifdef HAVE_MODULES
       UPlugIn<void*>::clear();
+#  endif
       }
-#endif
 
    if (log)        delete log;
    if (ptr)        UFile::munmap(ptr, sizeof(shared_data) + sizeof(sem_t));
@@ -347,20 +389,10 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    // load plugin modules and call server-wide hooks handlerConfig()...
 
-#ifdef HAVE_MODULES
-   UString plugin_list = cfg[*str_PLUGIN];
-
-   if (plugin_list.empty() == false)
+   if (loadPlugins(cfg[*str_PLUGIN_DIR], cfg[*str_PLUGIN], &cfg) == U_PLUGIN_HANDLER_ERROR)
       {
-      UVector<UString> vname(plugin_list);
-
-      if (vname.empty()                                  == false &&
-          loadPlugins(cfg[*str_PLUGIN_DIR], vname, &cfg) == U_PLUGIN_HANDLER_ERROR)
-         {
-         U_ERROR("plugins load FAILED. Going down...", 0);
-         }
+      U_ERROR("plugins load FAILED. Going down...");
       }
-#endif
 
    cfg.clear();
    cfg.deallocate();
@@ -368,41 +400,148 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
 // load plugin modules and call server-wide hooks handlerConfig()...
 
-#ifdef HAVE_MODULES
-int UServer_Base::loadPlugins(const UString& plugin_dir, UVector<UString>& plugin_list, UFileConfig* cfg)
+U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 {
-   U_TRACE(0, "UServer_Base::loadPlugins(%.*S,%p,%p)", U_STRING_TO_TRACE(plugin_dir), &plugin_list, cfg)
+   U_TRACE(0, "UServer_Base::loadStaticLinkedModules(%S)", name)
 
+   UString x(name);
+
+   vplugin_name->push_back(x);
+
+   UServerPlugIn* _plugin = 0;
+
+#ifdef U_STATIC_HANDLER_HTTP
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_http")))   { _plugin = U_NEW(UHttpPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_RPC
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_rpc")))    { _plugin = U_NEW(URpcPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_SSI
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_ssi")))    { _plugin = U_NEW(USSIPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_NOCAT
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_nocat")))  { _plugin = U_NEW(UNoCatPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_FCGI
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_fcgi")))   { _plugin = U_NEW(UFCGIPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_SCGI
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_scgi")))   { _plugin = U_NEW(USCGIPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_SOAP
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_soap")))   { _plugin = U_NEW(USoapPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_PROXY
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_proxy")))  { _plugin = U_NEW(UProxyPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_STREAM
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_stream"))) { _plugin = U_NEW(UStreamPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_SOCKET
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_socket"))) { _plugin = U_NEW(UWebSocketPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_TSA
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_tsa")))    { _plugin = U_NEW(UTsaPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_GEOIP
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_geoip")))  { _plugin = U_NEW(UGeoIPPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_ECHO
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_echo")))   { _plugin = U_NEW(UEchoPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_SHIB
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_shib")))   { _plugin = U_NEW(UShibPlugIn); goto next; }
+#endif
+
+   goto next;
+
+next:
+   U_INTERNAL_ASSERT_POINTER(_plugin)
+
+   vplugin->push_back(_plugin);
+
+   if (isLog()) ULog::log("[%s] link of static plugin ok\n", name);
+}
+
+int UServer_Base::loadPlugins(const UString& plugin_dir, const UString& plugin_list, UFileConfig* cfg)
+{
+   U_TRACE(0, "UServer_Base::loadPlugins(%.*S,%.*S,%p)", U_STRING_TO_TRACE(plugin_dir), U_STRING_TO_TRACE(plugin_list), cfg)
+
+   UString name;
+   bool bnostatic;
+   uint32_t i, length;
+   UServerPlugIn* _plugin = 0;
+   UVector<UString> vec(plugin_list);
+   int result = U_PLUGIN_HANDLER_ERROR;
+
+   vplugin_name = U_NEW(UVector<UString>(10U));
+   vplugin      = U_NEW(UVector<UServerPlugIn*>(10U));
+
+   /* I do know that to include code in the middle of a function is hacky and dirty,
+    * but this is the best solution that I could figure out. If you have some idea to
+    * clean it up, please, don't hesitate and let me know.
+    */
+
+#  include "plugin/loader.autoconf.cpp"
+
+   if (plugin_list.empty()) goto next;
+
+   bnostatic = vplugin->empty();
+
+#ifdef HAVE_MODULES
    U_INTERNAL_ASSERT(plugin_dir.isNullTerminated())
 
-   int result;
-   UString name;
-   UServerPlugIn* _plugin;
-
-   vplugin = U_NEW(UVector<UServerPlugIn*>(10U));
-
    if (plugin_dir.empty() == false) UPlugIn<void*>::setPluginDirectory(plugin_dir.data());
+#endif
 
-   for (uint32_t i = 0, length = plugin_list.size(); i < length; ++i)
+   for (i = 0, length = vec.size(); i < length; ++i)
       {
-      name    = plugin_list[i];
+      name = vec[i];
+
+      if (vplugin_name->find(name) != U_NOT_FOUND) continue;
+
+#  ifdef HAVE_MODULES
       _plugin = UPlugIn<UServerPlugIn*>::create(U_STRING_TO_PARAM(name));
+#  endif
 
       if (_plugin == 0)
          {
-         U_WARNING("load of plugin '%.*s' FAILED", U_STRING_TO_TRACE(name));
+         U_SRV_LOG("load of plugin '%.*s' FAILED", U_STRING_TO_TRACE(name));
 
-         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         goto end;
          }
 
-      vplugin->push_back(_plugin);
+      name.duplicate();
 
-      if (cfg &&
-          cfg->searchForObjectStream(U_STRING_TO_PARAM(name)))
+      if (isLog()) ULog::log("[%.*s] load of plugin success\n", U_STRING_TO_TRACE(name));
+
+      if (bnostatic)
+         {
+         vplugin->push_back(_plugin);
+         vplugin_name->push_back(name);
+         }
+      else
+         {
+         vplugin->insert(0, _plugin);
+         vplugin_name->insert(0, name);
+         }
+      }
+
+next:
+   U_INTERNAL_ASSERT_EQUALS(vplugin->size(), vplugin_name->size())
+
+   if (cfg == 0) goto ok;
+
+   for (i = 0, length = vplugin->size(); i < length; ++i)
+      {
+      name    = (*vplugin_name)[i];
+      _plugin = (*vplugin)[i];
+
+      if (cfg->searchForObjectStream(U_STRING_TO_PARAM(name)))
          {
          cfg->clear();
 
-         (void) u_snprintf(mod_name, sizeof(mod_name), "[%.*s] ", U_STRING_TO_TRACE(name));
+         if (isLog()) (void) snprintf(mod_name, sizeof(mod_name), "[%.*s] ", U_STRING_TO_TRACE(name));
 
          result = _plugin->handlerConfig(*cfg);
 
@@ -412,6 +551,7 @@ int UServer_Base::loadPlugins(const UString& plugin_dir, UVector<UString>& plugi
          }
       }
 
+ok:
    result = U_PLUGIN_HANDLER_FINISHED;
 
 end:
@@ -423,44 +563,45 @@ end:
 // manage plugin handler hooks...
 
 #define U_PLUGIN_HANDLER(xxx)                                                             \
-                                                                                             \
-int UServer_Base::plugins_handler##xxx()                                                     \
-{                                                                                            \
-   U_TRACE(0, "UServer_Base::plugins_handler"#xxx"()")                                       \
-                                                                                             \
-   U_INTERNAL_ASSERT_POINTER(vplugin)                                                        \
-                                                                                             \
-   int result;                                                                               \
-   UServerPlugIn* _plugin;                                                                   \
-   UPlugIn<void*>* wrapper;                                                                  \
-                                                                                             \
-   for (uint32_t i = 0, length = vplugin->size(); i < length; ++i)                           \
-      {                                                                                      \
-      _plugin = vplugin->at(i);                                                              \
-      wrapper = UPlugIn<void*>::getObjWrapper(_plugin);                                      \
-                                                                                             \
-      U_INTERNAL_ASSERT_POINTER(wrapper)                                                     \
-                                                                                             \
-      (void) u_snprintf(mod_name, sizeof(mod_name), "[%.*s] ", U_PLUGIN_TO_TRACE(*wrapper)); \
-                                                                                             \
-      result = _plugin->handler##xxx();                                                      \
-                                                                                             \
-      if (result != U_PLUGIN_HANDLER_GO_ON) goto end;                                        \
-      }                                                                                      \
-                                                                                             \
-   result = U_PLUGIN_HANDLER_FINISHED;                                                       \
-                                                                                             \
-end:                                                                                         \
-   mod_name[0] = '\0';                                                                       \
-                                                                                             \
-   U_RETURN(result);                                                                         \
+                                                                                          \
+int UServer_Base::pluginsHandler##xxx()                                                   \
+{                                                                                         \
+   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                                     \
+                                                                                          \
+   U_INTERNAL_ASSERT_POINTER(vplugin)                                                     \
+                                                                                          \
+   int result;                                                                            \
+   UString name;                                                                          \
+   UServerPlugIn* _plugin;                                                                \
+                                                                                          \
+   for (uint32_t i = 0, length = vplugin->size(); i < length; ++i)                        \
+      {                                                                                   \
+      _plugin = (*vplugin)[i];                                                            \
+                                                                                          \
+      if (isLog())                                                                        \
+         {                                                                                \
+         name = (*vplugin_name)[i];                                                       \
+                                                                                          \
+         (void) snprintf(mod_name, sizeof(mod_name), "[%.*s] ", U_STRING_TO_TRACE(name)); \
+         }                                                                                \
+                                                                                          \
+      result = _plugin->handler##xxx();                                                   \
+                                                                                          \
+      if (result != U_PLUGIN_HANDLER_GO_ON) goto end;                                     \
+      }                                                                                   \
+                                                                                          \
+   result = U_PLUGIN_HANDLER_FINISHED;                                                    \
+                                                                                          \
+end:                                                                                      \
+   mod_name[0] = '\0';                                                                    \
+                                                                                          \
+   U_RETURN(result);                                                                      \
 }
 
 U_PLUGIN_HANDLER(Init)
 U_PLUGIN_HANDLER(READ)
 U_PLUGIN_HANDLER(Request)
 U_PLUGIN_HANDLER(Reset)
-#endif
 
 void UServer_Base::runAsUser()
 {
@@ -474,7 +615,7 @@ void UServer_Base::runAsUser()
 
       if (u_ranAsUser(user, false))
          {
-         U_SRV_LOG_VAR("server run with user %S permission", user);
+         U_SRV_LOG("server run with user %S permission", user);
          }
       else
          {
@@ -532,12 +673,22 @@ void UServer_Base::init()
 
    if (name_sock.empty())
       {
-      if (isPreForked() == false) block_on_accept = true;
+      if (UClientImage_Base::socket->isSSL())
+         {
+         block_on_accept = true;
+
+         USSLSocket::method = (SSL_METHOD*) SSLv23_server_method();
+         }
+      else
+         {
+         USocket::accept4_flags = SOCK_NONBLOCK | SOCK_CLOEXEC;
+
+         if (isPreForked() == false) block_on_accept = true;
+         }
       }
    else
       {
-      block_on_accept        = true;
-      USocket::accept4_flags = 0;
+      block_on_accept = true;
 
 #  ifndef __MINGW32__
       U_INTERNAL_ASSERT(socket->isIPC())
@@ -566,7 +717,7 @@ void UServer_Base::init()
       (void) host->append(UStringExt::numberToString(port));
       }
 
-   U_SRV_LOG_VAR("HOST registered as: %.*s", U_STRING_TO_TRACE(*host));
+   U_SRV_LOG("HOST registered as: %.*s", U_STRING_TO_TRACE(*host));
 
    // get IP address host (default source)
 
@@ -593,7 +744,7 @@ void UServer_Base::init()
       if (IP_address.empty()) IP_address = UString(socket->getLocalInfo());
       }
 
-   U_SRV_LOG_VAR("SERVER IP ADDRESS registered as: %.*s", U_STRING_TO_TRACE(IP_address));
+   U_SRV_LOG("SERVER IP ADDRESS registered as: %.*s", U_STRING_TO_TRACE(IP_address));
 
    // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be
    // supplied optionally after a trailing slash, e.g. 192.168.0.0/24, in which case addresses that
@@ -635,7 +786,7 @@ void UServer_Base::init()
       U_ERROR("chdir to working directory (DOCUMENT_ROOT) %S FAILED. Going down...", document_root.data());
       }
 
-   U_SRV_LOG_VAR("working directory (DOCUMENT_ROOT) changed to %S", document_root.data());
+   U_SRV_LOG("working directory (DOCUMENT_ROOT) changed to %S", document_root.data());
 
    if (preforked_num_kids)
       {
@@ -723,9 +874,11 @@ next:
 
    setProcessManager();
 
-#ifdef HAVE_MODULES
-   if (pluginsHandlerInit() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("initialization of plugins FAILED. Going down...", 0);
-#endif
+   if (vplugin &&
+       pluginsHandlerInit() != U_PLUGIN_HANDLER_FINISHED)
+      {
+      U_ERROR("plugins initialization FAILED. Going down...");
+      }
 
    runAsUser();
 
@@ -742,7 +895,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    U_INTERNAL_ASSERT(proc->parent())
 
-   U_SRV_LOG_MSG("--- SIGHUP (Interrupt) ---");
+   U_SRV_LOG("--- SIGHUP (Interrupt) ---");
 
    pthis->handlerSignal(); // manage before regenering preforked pool of children...
 
@@ -765,7 +918,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 {
    U_TRACE(0, "[SIGTERM] UServer_Base::handlerForSigTERM(%d)", signo)
 
-   U_SRV_LOG_MSG("--- SIGTERM (Interrupt) ---");
+   U_SRV_LOG("--- SIGTERM (Interrupt) ---");
 
    U_INTERNAL_ASSERT(flag_loop)
 
@@ -836,7 +989,7 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
       if (vallow_IP &&
           UIPAllow::isAllowed(UClientImage_Base::socket->remoteIPAddress().getInAddr(), *vallow_IP) == false)
          {
-         U_SRV_LOG_VAR("new client connected from %S, connection denied by access list", UClientImage_Base::socket->getRemoteInfo());
+         U_SRV_LOG("new client connected from %S, connection denied by access list", UClientImage_Base::socket->getRemoteInfo());
 
          UClientImage_Base::socket->close();
 
@@ -871,8 +1024,8 @@ const char* UServer_Base::getNumConnection()
 
    static char buffer[32];
 
-   if (isPreForked()) (void) u_snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
-   else               (void) u_snprintf(buffer, sizeof(buffer), "%d",      (isClassic() ? U_TOT_CONNECTION : num_connection));
+   if (isPreForked()) (void) snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
+   else               (void) snprintf(buffer, sizeof(buffer), "%d",     (isClassic() ? U_TOT_CONNECTION : num_connection));
 
    U_RETURN(buffer);
 }
@@ -895,7 +1048,7 @@ void UServer_Base::handlerCloseConnection()
       U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
       }
 
-   U_SRV_LOG_VAR("client closed connection from %.*s, %s clients still connected",
+   U_SRV_LOG("client closed connection from %.*s, %s clients still connected",
                      U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
 }
 
@@ -951,7 +1104,7 @@ void UServer_Base::handlerNewConnection()
             {
             --num_connection;
 
-            U_SRV_LOG_VAR("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%d)",
+            U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%d)",
                               UClientImage_Base::socket->getRemoteInfo(), max_Keep_Alive);
 
             return;
@@ -979,7 +1132,7 @@ void UServer_Base::handlerNewConnection()
 
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
 
-   U_SRV_LOG_VAR("new client connected from %.*s, %s clients currently connected",
+   U_SRV_LOG("new client connected from %.*s, %s clients currently connected",
                      U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
 
    UClientImage_Base::run();
@@ -1034,7 +1187,7 @@ void UServer_Base::run()
 
                U_INTERNAL_DUMP("up to %u children", nkids)
 
-               U_SRV_LOG_VAR("started new child (pid %ld), up to %u children", proc->pid(), nkids);
+               U_SRV_LOG("started new child (pid %d), up to %u children", proc->pid(), nkids);
 
                U_INTERNAL_DUMP("block_on_accept = %b tot_connection = %d", block_on_accept, U_TOT_CONNECTION)
                }
@@ -1064,7 +1217,7 @@ void UServer_Base::run()
 
             U_INTERNAL_DUMP("down to %u children", nkids)
 
-            U_SRV_LOG_VAR("child (pid %d) exited with value %d (%s), down to %u children", pid, status, UProcess::exitInfo(status), nkids);
+            U_SRV_LOG("child (pid %d) exited with value %d (%s), down to %u children", pid, status, UProcess::exitInfo(status), nkids);
 
             U_INTERNAL_DUMP("block_on_accept = %b tot_connection = %d", block_on_accept, U_TOT_CONNECTION)
             }
@@ -1078,7 +1231,7 @@ void UServer_Base::run()
       goto end;
       }
 
-   if (isLog() && isClassic()) ULog::log("waiting for connection\n", 0);
+   if (isLog() && isClassic()) ULog::log("waiting for connection\n");
 
 preforked_child:
 
@@ -1096,7 +1249,7 @@ preforked_child:
       if (block_on_accept &&
           isClientConnect() == false)
          {
-         if (isLog() && isClassic() == false) ULog::log("waiting for connection\n", 0);
+         if (isLog() && isClassic() == false) ULog::log("waiting for connection\n");
 
          // here we go to block on accept(), plus fork() - eventually child start here...
 

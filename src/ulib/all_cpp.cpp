@@ -13,9 +13,7 @@
 #  include "debug/error_simulation.cpp"
 #endif
 
-#ifdef U_MEMORY_POOL
-#  include "internal/memory_pool.cpp"
-#endif
+#include "internal/memory_pool.cpp"
 
 #include "command.cpp"
 #include "options.cpp"
@@ -153,4 +151,58 @@
 
 #ifdef HAVE_LIBEVENT
 #  include "libevent/event.cpp"
+#endif
+
+// Handler static/dynamic plugin
+
+#ifdef U_STATIC_HANDLER_RPC
+#  include "plugin/mod_rpc.cpp"
+#endif
+
+#ifdef U_STATIC_HANDLER_HTTP
+#  include "plugin/mod_http.cpp"
+#endif
+
+#ifdef U_STATIC_HANDLER_TSA
+#  include "plugin//mod_tsa.cpp"
+#endif
+
+#ifdef U_STATIC_HANDLER_NOCAT
+#  include "plugin/mod_nocat.cpp"
+#endif
+
+#ifdef U_STATIC_HANDLER_ECHO
+#  include "plugin/mod_echo.cpp"
+#endif
+
+#ifdef U_STATIC_HANDLER_FCGI
+#  include "plugin/mod_fcgi.cpp"
+#endif
+
+#ifdef U_STATIC_HANDLER_SCGI
+#  include "plugin/mod_scgi.cpp"
+#endif
+
+#ifdef U_STATIC_HANDLER_STREAM
+#  include "plugin/mod_stream.cpp"
+#endif
+
+#ifdef U_STATIC_HANDLER_SOCKET
+#  include "plugin/mod_socket.cpp"
+#endif
+
+#ifdef U_STATIC_HANDLER_SSI
+#  include "plugin/mod_ssi.cpp"
+#endif
+
+#if defined(HAVE_EXPAT) && defined(U_STATIC_HANDLER_SOAP)
+#  include "plugin/mod_soap.cpp"
+#endif
+
+#if defined(HAVE_PCRE) && defined(U_STATIC_HANDLER_PROXY)
+#  include "plugin/mod_proxy.cpp"
+#endif
+
+#if defined(HAVE_LIBGEOIP) && defined(U_STATIC_HANDLER_GEOIP)
+#  include "plugin/mod_geoip/mod_geoip.cpp"
 #endif
