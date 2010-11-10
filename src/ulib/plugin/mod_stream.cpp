@@ -14,6 +14,7 @@
 #include <ulib/command.h>
 #include <ulib/file_config.h>
 #include <ulib/utility/uhttp.h>
+#include <ulib/utility/services.h>
 #include <ulib/plugin/mod_stream.h>
 #include <ulib/net/server/server.h>
 

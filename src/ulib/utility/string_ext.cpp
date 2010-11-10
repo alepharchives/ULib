@@ -475,7 +475,7 @@ UString UStringExt::trim(const char* s, uint32_t n)
 
    if (i < (int32_t)n) // not only white space
       {
-      while (u_isspace(s[--n])); // skip white space from end
+      while (u_isspace(s[--n])) {} // skip white space from end
 
       U_INTERNAL_DUMP("n = %u", n)
 

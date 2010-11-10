@@ -46,6 +46,7 @@ c
 c
 EOF
 
+#STRACE=$LTRUSS
 start_prg misc "$ARG1" "$ARG2" $ARG3 $ARG4 < tmp/c
 
 # Test against expected output

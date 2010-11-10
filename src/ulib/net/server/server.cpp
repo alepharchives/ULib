@@ -673,6 +673,7 @@ void UServer_Base::init()
 
    if (name_sock.empty())
       {
+#  ifdef HAVE_SSL
       if (UClientImage_Base::socket->isSSL())
          {
          block_on_accept = true;
@@ -680,6 +681,7 @@ void UServer_Base::init()
          USSLSocket::method = (SSL_METHOD*) SSLv23_server_method();
          }
       else
+#  endif
          {
          USocket::accept4_flags = SOCK_NONBLOCK | SOCK_CLOEXEC;
 

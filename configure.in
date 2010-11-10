@@ -95,9 +95,9 @@ AC_PROG_CXXCPP
 if test "${ac_cv_c_compiler_gnu}" = "yes" ; then
 	# We don't want gcc 2.7
 	AC_MSG_CHECKING([for a supported version of gcc])
-	gcc_version=`${CC} --version | head -n1`
+	gcc_version=`${CC} -dumpversion`
 	case "${gcc_version}" in
-		gcc-2.7.*)
+		2.7.*)
 		AC_MSG_RESULT([no (${gcc_version})])
 		AC_MSG_ERROR([please use a more recent (>= gcc-2.95) version of gcc])
 		;;
@@ -831,9 +831,8 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 
 	AC_CC_TRY_FLAG
 
-	gcc_version_raw=`echo ${gcc_version} | cut -d' ' -f3`
 	# NB: this is the only version of gcc compiler that work with...
-	AM_CONDITIONAL(MOD_SHIB, test "$enable_debug" = "yes" && test "$gcc_version_raw" = "4.2.2")
+	AM_CONDITIONAL(MOD_SHIB, test "$enable_debug" = "yes" && test "$gcc_version" = "4.2.2")
 
 	if test "${enable_gcc_optimized}" = "yes"; then
 		MAYBE_FLAGS="$MAYBE_FLAGS -fomit-frame-pointer -finline -fstrict-aliasing \
@@ -847,18 +846,29 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 	MAYBE_FLAGS="$MAYBE_FLAGS -Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op \
 		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat -Wformat-extra-args -Wenum-compare"
 
-	if test "x$gcc_version_raw" != "x"; then
-		case "${gcc_version_raw}" in
-			[2-4].[0-4])
-			;;
-			*)
-			if test "${enable_gcc_optimized}" = "yes"; then
-				MAYBE_FLAGS="$MAYBE_FLAGS -Ofast -flto"
-			fi
-			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result -Wshadow -Wsuggest-attribute=const -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn"
-			;;
-		esac
-	fi
+	case "${gcc_version}" in
+		2*)
+		;;
+		3*)
+		;;
+		4.0*)
+		;;
+		4.1*)
+		;;
+		4.2*)
+		;;
+		4.3*)
+		;;
+		4.4*)
+		;;
+		*)
+		MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result -Wshadow -Wsuggest-attribute=const -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn"
+
+		if test "${enable_gcc_optimized}" = "yes"; then
+			MAYBE_FLAGS="$MAYBE_FLAGS -Ofast -flto"
+		fi
+		;;
+	esac
 
 #	-fno-common
 #  -Wno-missing-field-initializers -Wno-attributes -Wno-long-long

@@ -970,6 +970,8 @@ bool UFile::rmdir(const char* path, bool remove_all)
 
             file = vec[i].data();
 
+            U_ASSERT_DIFFERS(tmp,file)
+
             if (UFile::unlink(file) == false &&
 #        ifdef __MINGW32__
                 (errno == EISDIR || errno == EPERM || errno == EACCES))

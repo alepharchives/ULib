@@ -68,7 +68,9 @@
 #  ifdef HAVE_SYS_INOTIFY_H
 #  undef HAVE_SYS_INOTIFY_H
 #  endif
-#  include <ulib/replace/inotify-nosys.h>
+#  ifndef __MINGW32__
+#     include <ulib/replace/inotify-nosys.h>
+#  endif
 #endif
 
 #ifdef __MINGW32__
@@ -504,13 +506,13 @@ void UHTTP::ctor(UEventFd* handler_event)
 
    cache_file->allocate();
 
+#ifdef HAVE_SYS_INOTIFY_H
    if (handler_event)
       {
-      UServer_Base::handler_event = handler_event;
-
       // INIT INOTIFY FOR CACHE FILE SYSTEM
 
-#ifdef HAVE_SYS_INOTIFY_H
+      UServer_Base::handler_event = handler_event;
+
 #  ifdef HAVE_INOTIFY_INIT1
       handler_event->fd = U_SYSCALL(inotify_init1, "%d", IN_NONBLOCK | IN_CLOEXEC);
 #  else
@@ -527,8 +529,8 @@ void UHTTP::ctor(UEventFd* handler_event)
          {
          U_SRV_LOG("Inode based directory notification enabled");
          }
-#endif
       }
+#endif
 
    (void) UServices::setFtw(0);
 
@@ -2272,7 +2274,6 @@ void UHTTP::setHTTPUnAuthorized()
 {
    U_TRACE(0, "UHTTP::setHTTPUnAuthorized()")
 
-#ifdef HAVE_SSL
    UString ext(100U), body(500U);
 
    body.snprintf(str_frm_body->data(),
@@ -2288,9 +2289,6 @@ void UHTTP::setHTTPUnAuthorized()
    (void) ext.append(U_CONSTANT_TO_PARAM(" realm=\"" U_HTTP_REALM "\""));
 
    setHTTPResponse(HTTP_UNAUTHORIZED, &ext, &body);
-#else
-   setHTTPForbidden();
-#endif
 }
 
 void UHTTP::setHTTPInternalError()
@@ -2483,7 +2481,6 @@ U_NO_EXPORT bool UHTTP::processHTTPAuthorization()
 
    bool result = false;
 
-#ifdef HAVE_SSL
    const char* ptr = getHTTPHeaderValuePtr(*USocket::str_authorization);
 
    if (ptr == 0) U_RETURN(false);
@@ -2665,7 +2662,6 @@ U_NO_EXPORT bool UHTTP::processHTTPAuthorization()
       }
 
    U_SRV_LOG("request authorization for user %.*S %s", U_STRING_TO_TRACE(user), result ? "success" : "failed");
-#endif
 
    U_RETURN(result);
 }
@@ -2702,7 +2698,6 @@ bool UHTTP::isUserAuthorized(const UString& user, const UString& password)
 {
    U_TRACE(0, "UHTTP::isUserAuthorized(%.*S,%.*S)", U_STRING_TO_TRACE(user), U_STRING_TO_TRACE(password))
 
-#ifdef HAVE_SSL
    if (htpasswd)
       {
       UString line(100U), output(100U);
@@ -2713,7 +2708,6 @@ bool UHTTP::isUserAuthorized(const UString& user, const UString& password)
 
       if (htpasswd->find(line) != U_NOT_FOUND) U_RETURN(true);
       }
-#endif
 
    U_RETURN(false);
 }

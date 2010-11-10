@@ -586,7 +586,7 @@ public:
       U_TRACE(1, "UFile::mmap(%u,%d,%d,%d,%u)", length, _fd, prot, flags, offset)
 
 #  ifndef HAVE_ARCH64
-      U_INTERNAL_ASSERT_RANGE(1,length,3*1024*1024*1024) // limit of linux system
+      U_INTERNAL_ASSERT_RANGE(1U,length,3U*1024U*1024U*1024U) // limit of linux system
 #  endif
 
       char* _map = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, length, prot, flags, _fd, offset);

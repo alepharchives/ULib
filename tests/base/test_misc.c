@@ -175,8 +175,8 @@ main (int argc, char* argv[])
 
    if (u_ranAsUser("mail", true))
       {
-      strcpy(buf,    u_cwd);
-      strcpy(buffer, argv[5]); /* /var/mail, /var/spool/mail, /var/spool/clientmqueue, ... */
+      strcpy(buf,    argv[5]); /* /var/mail, /var/spool/mail, /var/spool/clientmqueue, ... */
+      strcpy(buffer, u_cwd);
 
       if (strcmp(buf, buffer)) goto failed;
       }

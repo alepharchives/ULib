@@ -1761,7 +1761,7 @@ void u_ftw(void)
     * dirp = (DIR*) (u_ftw_ctx.filetype && strchr(u_buffer+1, u_ftw_ctx.filetype) ? 0 : opendir(u_buffer));
     */
 
-   u_ftw_ctx.is_directory = ((dirp = (DIR* restrict) opendir(u_buffer)) != 0);
+   u_ftw_ctx.is_directory = ((dirp = (DIR* restrict) opendir(U_PATH_CONV(u_buffer))) != 0);
 
    if (u_ftw_ctx.is_directory == false ||
        u_ftw_ctx.call_if_directory)
