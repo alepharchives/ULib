@@ -122,7 +122,7 @@ void USOAPEncoder::encodeArgument(const UString& argName, const UString& argType
    encodedValue.setBuffer(str_encode_wrap->size() +
                           (argName.size() * 2)    +
                           argType.size()          +
-                          argContent.size());
+                          argContent.size() + 100U);
 
    encodedValue.snprintf(str_encode_wrap->data(), U_STRING_TO_TRACE(argName),
                                                   U_STRING_TO_TRACE(argType),
@@ -159,7 +159,7 @@ UString USOAPEncoder::encodeMethod(URPCMethod& method, const UString& nsName) //
                        str_envelope->size()    +
                        encodedValue.size()     +
                        szHeaderContents.size() +
-                       (szMethodName.size() * 2));
+                       (szMethodName.size() * 2) + 100U);
 
       buffer.snprintf(str_envelope->data(), U_STRING_TO_TRACE(szHeaderContents), U_STRING_TO_TRACE(szMethodName),
                                             U_STRING_TO_TRACE(nsName),

@@ -28,17 +28,7 @@ public:
 
    // COSTRUTTORI
 
-   UFileConfig()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UFileConfig, "")
-
-      UFile::map      = (char*)MAP_FAILED;
-      UFile::st_size  = 0;
-      UFile::map_size = 0;
-
-      if (str_yes == 0) str_allocate();
-      }
-
+    UFileConfig();
    ~UFileConfig()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UFileConfig)

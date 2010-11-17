@@ -41,7 +41,7 @@ UString UStringExt::BIOtoString(BIO* bio)
       {
       UString result(len);
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", result.data(), buffer, len);
+      (void) u_memcpy(result.data(), buffer, len);
 
       result.size_adjust(len);
 
@@ -110,7 +110,7 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
 
          if (len)
             {
-            (void) U_SYSCALL(memcpy, "%p,%p,%u", x.rep->end(), s + start, len);
+            (void) u_memcpy(x.rep->end(), s + start, len);
 
             x.rep->_length += len;
             }
@@ -157,12 +157,12 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 
       if (len)
          {
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", x.rep->end(), s + start, len);
+         (void) u_memcpy(x.rep->end(), s + start, len);
 
          x.rep->_length += len;
          }
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", x.rep->end(), b, n2);
+      (void) u_memcpy(x.rep->end(), b, n2);
 
       x.rep->_length += n2;
 
@@ -320,7 +320,7 @@ UString UStringExt::expandEnvVar(const char* s, uint32_t n)
 
       value = U_SYSCALL(getenv, "%S", name);
 
-      n1 = (value ? strlen(value) : 0);
+      n1 = (value ? u_strlen(value) : 0);
 
       // check for space
 
@@ -332,14 +332,14 @@ UString UStringExt::expandEnvVar(const char* s, uint32_t n)
 
       if (n1)
          {
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr,           s, len);
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr + len, value,  n1);
+         (void) u_memcpy(ptr,           s, len);
+         (void) u_memcpy(ptr + len, value,  n1);
 
          n2 += n1;
          }
       else
          {
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, len + _end);
+         (void) u_memcpy(ptr, s, len + _end);
 
          n2 += _end;
          }
@@ -381,7 +381,7 @@ UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
          {
          sz = p - s;
 
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", str, s, sz);
+         (void) u_memcpy(str, s, sz);
 
          s    = p + 1;
          str += sz;
@@ -395,7 +395,7 @@ UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
          {
          sz = _end - s;
 
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", str, s, sz);
+         (void) u_memcpy(str, s, sz);
 
          sz1 += sz;
 
@@ -432,7 +432,7 @@ UString UStringExt::removeEscape(const char* s, uint32_t n)
          {
          sz = p - s;
 
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", str, s, sz);
+         (void) u_memcpy(str, s, sz);
 
          s    = p + 1;
          str += sz;
@@ -443,7 +443,7 @@ UString UStringExt::removeEscape(const char* s, uint32_t n)
          {
          sz = _end - s;
 
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", str, s, sz);
+         (void) u_memcpy(str, s, sz);
 
          sz1 += sz;
 
@@ -485,7 +485,7 @@ UString UStringExt::trim(const char* s, uint32_t n)
 
       U_INTERNAL_ASSERT_MAJOR(sz,0)
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", result.data(), s+i, sz);
+      (void) u_memcpy(result.data(), s+i, sz);
 
       result.size_adjust(sz);
       }
@@ -530,7 +530,7 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
 
       sz1 = (s - p);
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", str + sz, p, sz1); // result.append(p, sz1);
+      (void) u_memcpy(str + sz, p, sz1); // result.append(p, sz1);
 
       sz += sz1;
 
@@ -720,13 +720,13 @@ UString UStringExt::compress(const UString& s)
 
    // copy magic byte
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, U_CONSTANT_TO_PARAM(U_LZOP_COMPRESS));
+   (void) U_MEMCPY(ptr, U_LZOP_COMPRESS);
 
    ptr += U_CONSTANT_SIZE(U_LZOP_COMPRESS);
 
    // copy original size
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, &sz, sizeof(uint32_t));
+   (void) u_memcpy(ptr, &sz, sizeof(uint32_t));
 
    ptr += sizeof(uint32_t);
 
@@ -981,13 +981,13 @@ void UStringExt::buildTokenInt(const char* token, uint32_t value, UString& buffe
    U_TRACE(1, "UStringExt::buildTokenInt(%S,%u,%.*S)", token, value, U_STRING_TO_TRACE(buffer))
 
    U_INTERNAL_ASSERT_POINTER(token)
-   U_INTERNAL_ASSERT(strlen(token) == U_TOKEN_NM)
+   U_INTERNAL_ASSERT(u_strlen(token) == U_TOKEN_NM)
 
    uint32_t start = buffer.size();
 
    char* ptr = buffer.c_pointer(start);
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, token, U_TOKEN_NM);
+   (void) u_memcpy(ptr, token, U_TOKEN_NM);
 
    u_int2hex(ptr + U_TOKEN_NM, value);
 

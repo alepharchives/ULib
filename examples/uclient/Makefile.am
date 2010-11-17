@@ -7,7 +7,7 @@ uclient_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la
 uclient_SOURCES = uclient.cpp
 uclient_LDFLAGS = $(PRG_LDFLAGS)
 
-noinst_PROGRAMS = uclient
+bin_PROGRAMS = uclient
 endif
 
 clean-local:

@@ -27,7 +27,7 @@ void USemaphore::init(sem_t* ptr, unsigned resource)
 
    U_CHECK_MEMORY
 
-#if defined(__MINGW32__)
+#if defined(__MINGW32__) && !defined(HAVE_SEMAPHORE_H)
    sem = ::CreateSemaphore((LPSECURITY_ATTRIBUTES)NULL, (LONG)resource, MAX_SEM_VALUE, (LPCTSTR)NULL);
 #elif defined(U_LOCKFILE)
    (void) tmp.mkTemp();
@@ -66,7 +66,7 @@ USemaphore::~USemaphore()
 {
    U_TRACE_UNREGISTER_OBJECT(0, USemaphore)
 
-#if defined(__MINGW32__)
+#if defined(__MINGW32__) && !defined(HAVE_SEMAPHORE_H)
    ::CloseHandle(sem);
 #elif defined(U_LOCKFILE)
    (void) tmp.close();
@@ -97,7 +97,7 @@ bool USemaphore::wait(timeout_t timeout)
 
    U_CHECK_MEMORY
 
-#ifdef __MINGW32__
+#if defined(__MINGW32__) && !defined(HAVE_SEMAPHORE_H)
    bool result = (::WaitForSingleObject(sem, (timeout ? timeout : INFINITE)) == WAIT_OBJECT_0);
 
    U_RETURN(result);
@@ -147,7 +147,7 @@ void USemaphore::post()
 
    U_CHECK_MEMORY
 
-#if defined(__MINGW32__)
+#if defined(__MINGW32__) && !defined(HAVE_SEMAPHORE_H)
    ::ReleaseSemaphore(sem, 1, (LPLONG)NULL);
 #elif defined(U_LOCKFILE)
    (void) tmp.unlock();
@@ -169,7 +169,7 @@ void USemaphore::post()
 
 const char* USemaphore::dump(bool reset) const
 {
-#if defined(__MINGW32__)
+#if defined(__MINGW32__) && !defined(HAVE_SEMAPHORE_H)
    *UObjectIO::os << "sem        " << (void*)sem;
 #elif defined(U_LOCKFILE)
    *UObjectIO::os << "tmp (UFile " << (void*)&tmp   << ')';

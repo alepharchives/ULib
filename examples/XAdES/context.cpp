@@ -885,8 +885,8 @@ bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
 
    int uriType = 0;
 
-   if (       _uri  == 0 ||
-       strlen(_uri) == 0)
+   if (         _uri  == 0 ||
+       u_strlen(_uri) == 0)
       {
       uriType = EMPTY;
       }

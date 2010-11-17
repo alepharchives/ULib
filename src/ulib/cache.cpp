@@ -87,8 +87,8 @@ UString UCache::addContentOf(const UString& pathname)
 
    char* ptr = add(key, keylen, datalen, 0);
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr,           key,  keylen);
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr + keylen, data, datalen);
+   (void) u_memcpy(ptr,           key,  keylen);
+   (void) u_memcpy(ptr + keylen, data, datalen);
 
    U_RETURN_STRING(content);
 }
@@ -317,7 +317,7 @@ U_EXPORT istream& operator>>(istream& is, UCache& cache)
 
       ptr = cache.add(key, keylen, datalen, 0);
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, key, keylen);
+      (void) u_memcpy(ptr, key, keylen);
 
       is.get(); // skip '-'
       is.get(); // skip '>'

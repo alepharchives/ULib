@@ -16,10 +16,9 @@
 
 #include <ulib/base/macro.h>
 
-#ifdef DEBUG // Some useful macros for conditionally compiling debug features...
-
 // Design by contract - if (expr == false) then stop
 
+#ifdef DEBUG
 #  define U_ASSERT(expr)                 UTrace::suspend(); U_INTERNAL_ASSERT(expr);                UTrace::resume();
 #  define U_ASSERT_MINOR(a,b)            UTrace::suspend(); U_INTERNAL_ASSERT_MINOR(a,b);           UTrace::resume();
 #  define U_ASSERT_MAJOR(a,b)            UTrace::suspend(); U_INTERNAL_ASSERT_MAJOR(a,b);           UTrace::resume();
@@ -35,7 +34,43 @@
 #  define U_ASSERT_DIFFERS_MSG(a,b,info) UTrace::suspend(); U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info) UTrace::resume();
 #  define U_ASSERT_POINTER_MSG(ptr,info) UTrace::suspend(); U_INTERNAL_ASSERT_POINTER_MSG(ptr,info) UTrace::resume();
 #  define U_ASSERT_RANGE_MSG(a,x,b,info) UTrace::suspend(); U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info) UTrace::resume();
+#elif defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__)
+#  define U_ASSERT(expr)                                    U_INTERNAL_ASSERT(expr)
+#  define U_ASSERT_MINOR(a,b)                               U_INTERNAL_ASSERT_MINOR(a,b)
+#  define U_ASSERT_MAJOR(a,b)                               U_INTERNAL_ASSERT_MAJOR(a,b)
+#  define U_ASSERT_EQUALS(a,b)                              U_INTERNAL_ASSERT_EQUALS(a,b)
+#  define U_ASSERT_DIFFERS(a,b)                             U_INTERNAL_ASSERT_DIFFERS(a,b)
+#  define U_ASSERT_POINTER(ptr)                             U_INTERNAL_ASSERT_POINTER(ptr)
+#  define U_ASSERT_RANGE(a,x,b)                             U_INTERNAL_ASSERT_RANGE(a,x,b)
 
+#  define U_ASSERT_MSG(expr,info)                           U_INTERNAL_ASSERT_MSG(expr,info)
+#  define U_ASSERT_MINOR_MSG(a,b,info)                      U_INTERNAL_ASSERT_MINOR_MSG(a,b,info))
+#  define U_ASSERT_MAJOR_MSG(a,b,info)                      U_INTERNAL_ASSERT_MAJOR_MSG(a,b,info))
+#  define U_ASSERT_EQUALS_MSG(a,b,info)                     U_INTERNAL_ASSERT_EQUALS_MSG(a,b,info)
+#  define U_ASSERT_DIFFERS_MSG(a,b,info)                    U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info)
+#  define U_ASSERT_POINTER_MSG(ptr,info)                    U_INTERNAL_ASSERT_POINTER_MSG(ptr,info)
+#  define U_ASSERT_RANGE_MSG(a,x,b,info)                    U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info)
+#else
+#  define U_ASSERT(expr)
+#  define U_ASSERT_MINOR(a,b)
+#  define U_ASSERT_MAJOR(a,b)
+#  define U_ASSERT_EQUALS(a,b)
+#  define U_ASSERT_DIFFERS(a,b)
+#  define U_ASSERT_POINTER(ptr)
+#  define U_ASSERT_RANGE(a,x,b)
+
+#  define U_ASSERT_MSG(expr,info)
+#  define U_ASSERT_MINOR_MSG(a,b,info)
+#  define U_ASSERT_MAJOR_MSG(a,b,info)
+#  define U_ASSERT_EQUALS_MSG(a,b,info)
+#  define U_ASSERT_DIFFERS_MSG(a,b,info)
+#  define U_ASSERT_POINTER_MSG(ptr,info)
+#  define U_ASSERT_RANGE_MSG(a,x,b,info)
+#endif
+
+// Some useful macros for conditionally compiling debug features...
+
+#ifdef DEBUG
 // Manage test for memory corruption
 
 #  define U_MEMORY_TEST             UMemoryError memory;
@@ -196,54 +231,6 @@ if (envp) \
 #  define U_EXEC(pathname, argv, envp) u_exec_failed = false; ::execve(pathname, argv, envp); u_exec_failed = true; \
                                        U_WARNING("::execve(%s,%p,%p) = -1%R", pathname, argv, envp, NULL); \
                                        ::_exit(EX_UNAVAILABLE)
-
-// useful macros for conditionally compiling debug features in TESTING...
-
-#  if defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__)
-#     ifdef HAVE_ASSERT_H
-#        include <assert.h>
-#     else
-      /*
-      extern "C" { void __assert(const char* __assertion,
-                                 const char* __file,
-                                 int __line); }
-      */
-#     endif
-#     define U_ASSERT(expr) \
-         { if ((bool)(expr) == false) { __assert(#expr, __FILE__, __LINE__);  } }
-
-#     define U_ASSERT_MINOR(a,b)            U_ASSERT((a) < (b))
-#     define U_ASSERT_MAJOR(a,b)            U_ASSERT((a) > (b))
-#     define U_ASSERT_EQUALS(a,b)           U_ASSERT((a) == (b))
-#     define U_ASSERT_DIFFERS(a,b)          U_ASSERT((a) != (b))
-#     define U_ASSERT_POINTER(ptr)          U_ASSERT(ptr != 0)
-#     define U_ASSERT_RANGE(a,x,b)          U_ASSERT((x) >= (a) && (x) <= (b))
-
-#     define U_ASSERT_MSG(expr,info)        U_ASSERT(expr)
-#     define U_ASSERT_MINOR_MSG(a,b,info)   U_ASSERT((a) < (b))
-#     define U_ASSERT_MAJOR_MSG(a,b,info)   U_ASSERT((a) > (b))
-#     define U_ASSERT_EQUALS_MSG(a,b,info)  U_ASSERT((a) == (b))
-#     define U_ASSERT_DIFFERS_MSG(a,b,info) U_ASSERT((a) != (b))
-#     define U_ASSERT_POINTER_MSG(ptr,info) U_ASSERT(ptr != 0)
-#     define U_ASSERT_RANGE_MSG(a,x,b,info) U_ASSERT((x) >= (a) && (x) <= (b))
-#  else
-#     define U_ASSERT(expr)
-#     define U_ASSERT_MINOR(a,b)
-#     define U_ASSERT_MAJOR(a,b)
-#     define U_ASSERT_EQUALS(a,b)
-#     define U_ASSERT_DIFFERS(a,b)
-#     define U_ASSERT_POINTER(ptr)
-#     define U_ASSERT_RANGE(a,x,b)
-
-#     define U_ASSERT_MSG(expr,info)
-#     define U_ASSERT_MINOR_MSG(a,b,info)
-#     define U_ASSERT_MAJOR_MSG(a,b,info)
-#     define U_ASSERT_EQUALS_MSG(a,b,info)
-#     define U_ASSERT_DIFFERS_MSG(a,b,info)
-#     define U_ASSERT_POINTER_MSG(ptr,info)
-#     define U_ASSERT_RANGE_MSG(a,x,b,info)
-#  endif
-
 #endif /* DEBUG */
 
 #endif

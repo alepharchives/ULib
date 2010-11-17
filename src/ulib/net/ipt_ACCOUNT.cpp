@@ -99,7 +99,7 @@ bool UIptAccount::readEntries(const char* table, bool dont_flush)
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
    uint32_t s = sizeof(struct ipt_acc_handle_sockopt);
 
-   (void) strncpy(handle->name, table, ACCOUNT_TABLE_NAME_LEN-1);
+   (void) u_strncpy(handle->name, table, ACCOUNT_TABLE_NAME_LEN-1);
 
    // Get table information
 
@@ -134,7 +134,7 @@ bool UIptAccount::readEntries(const char* table, bool dont_flush)
 
    // Copy data from kernel
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", data, handle, sizeof(struct ipt_acc_handle_sockopt));
+   (void) u_memcpy(data, handle, sizeof(struct ipt_acc_handle_sockopt));
 
    if (USocket::getSockOpt(IPPROTO_IP, IPT_SO_GET_ACCOUNT_GET_DATA, data, data_size) == false)
       {

@@ -80,7 +80,7 @@ void UWebSocketPlugIn::getPart(const char* key, unsigned char* part)
 
    division = htonl(division);
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", part, &division, sizeof(uint32_t));
+   (void) u_memcpy(part, &division, sizeof(uint32_t));
 }
 
 RETSIGTYPE UWebSocketPlugIn::handlerForSigTERM(int signo)
@@ -240,12 +240,13 @@ int UWebSocketPlugIn::handlerInit()
       {
       U_SRV_LOG("initialization of plugin success");
 
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+      goto end;
       }
 
    U_SRV_LOG("initialization of plugin FAILED");
 
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+end:
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 // Connection-wide hooks
@@ -256,7 +257,8 @@ int UWebSocketPlugIn::handlerRequest()
 
    U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
 
-   if (U_http_upgrade == '1')
+   if (command &&
+       U_http_upgrade == '1')
       {
       // process handshake
 
@@ -303,9 +305,9 @@ int UWebSocketPlugIn::handlerRequest()
 
             unsigned char challenge[16];
 
-                                   getPart(key1, challenge);
-                                   getPart(key2, challenge+4);
-            (void) U_SYSCALL(memcpy, "%p,%p,%u", challenge+8, U_STRING_TO_PARAM(*UClientImage_Base::body));
+              getPart(key1, challenge);
+              getPart(key2, challenge+4);
+            (void) u_memcpy(challenge+8, UClientImage_Base::body->data(), UClientImage_Base::body->size());
 
             // MD5(challenge)
 

@@ -24,7 +24,7 @@ URpcPlugIn::~URpcPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, URpcPlugIn)
 
-   if (URPCMethod::encoder)
+   if (rpc_parser)
       {
       delete rpc_parser;
       delete URPCMethod::encoder;
@@ -51,15 +51,16 @@ int URpcPlugIn::handlerInit()
 {
    U_TRACE(0, "URpcPlugIn::handlerInit()")
 
-   if (URPCMethod::encoder == 0)
+   if (rpc_parser)
       {
-      rpc_parser = U_NEW(URPCParser);
+      U_SRV_LOG("initialization of plugin success");
 
-      URPCObject::loadGenericMethod(0);
+      goto end;
       }
 
-   U_SRV_LOG("initialization of plugin success");
+   U_SRV_LOG("initialization of plugin FAILED");
 
+end:
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
@@ -69,42 +70,51 @@ int URpcPlugIn::handlerREAD()
 {
    U_TRACE(0, "URpcPlugIn::handlerREAD()")
 
-   // read the RPC request
+   if (rpc_parser)
+      {
+      // read the RPC request
 
-   bool is_rpc_msg = URPC::readRPC(UClientImage_Base::socket, *UClientImage_Base::rbuffer);
+      is_rpc_msg = URPC::readRPC(UClientImage_Base::socket, *UClientImage_Base::rbuffer);
 
-   // check if close connection... (read() == 0)
+      // check if close connection... (read() == 0)
 
-   if (UClientImage_Base::socket->isClosed()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
-   if (UClientImage_Base::rbuffer->empty())   U_RETURN(U_PLUGIN_HANDLER_AGAIN);
+      if (UClientImage_Base::socket->isClosed()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      if (UClientImage_Base::rbuffer->empty())   U_RETURN(U_PLUGIN_HANDLER_AGAIN);
 
-   if (UServer_Base::isLog()) UClientImage_Base::logRequest();
+      if (is_rpc_msg)
+         {
+         if (UServer_Base::isLog()) UClientImage_Base::logRequest();
 
-   // manage buffered read (pipelining)
+         UClientImage_Base::manageForPipeline(); // manage buffered read (pipelining)
 
-   UClientImage_Base::manageForPipeline();
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         }
+      }
 
-   if (is_rpc_msg) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 int URpcPlugIn::handlerRequest()
 {
    U_TRACE(0, "URpcPlugIn::handlerRequest()")
 
-   // process the RPC request
+   if (is_rpc_msg)
+      {
+      // process the RPC request
 
-   U_INTERNAL_ASSERT_POINTER(rpc_parser)
+      U_INTERNAL_ASSERT_POINTER(rpc_parser)
 
-   bool bSendingFault;
-   UString method = UClientImage_Base::rbuffer->substr(0U, U_TOKEN_NM);
+      bool bSendingFault;
+      UString method = UClientImage_Base::rbuffer->substr(0U, U_TOKEN_NM);
 
-   *UClientImage_Base::wbuffer = rpc_parser->processMessage(method, *URPCObject::dispatcher, bSendingFault);
+      *UClientImage_Base::wbuffer = rpc_parser->processMessage(method, *URPCObject::dispatcher, bSendingFault);
 
-   U_SRV_LOG_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
+      U_SRV_LOG_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
 
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      }
+
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 // DEBUG
@@ -114,7 +124,8 @@ int URpcPlugIn::handlerRequest()
 
 const char* URpcPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "rpc_parser (URPCParser " << (void*)rpc_parser << ')';
+   *UObjectIO::os << "is_rpc_msg             " << is_rpc_msg        << '\n'
+                  << "rpc_parser (URPCParser " << (void*)rpc_parser << ')';
 
    if (reset)
       {

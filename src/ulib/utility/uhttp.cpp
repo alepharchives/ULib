@@ -32,12 +32,33 @@
 // --------------
 // %b    => %d
 // %S    => %s
-// %.2S  => %.2s
-// %.8S  => %.8s
+// %I    => %ld
 // %.*S  => %.*s
 // %#.*S => %.*s
+// %.2S  => %.2s
+// %.8S  => %.8s
 // %.20S => %.20s
 // --------------
+
+# ifndef U_TEST
+#   include <assert.h>
+
+#   undef  U_ASSERT
+#   define U_ASSERT(expr) { if ((bool)(expr) == false) { __assert(#expr, __FILE__, __LINE__);  } }
+
+#   undef  U_ASSERT_MINOR
+#   define U_ASSERT_MINOR(a,b)    U_ASSERT((a) < (b))
+#   undef  U_ASSERT_MAJOR
+#   define U_ASSERT_MAJOR(a,b)    U_ASSERT((a) > (b))
+#   undef  U_ASSERT_EQUALS
+#   define U_ASSERT_EQUALS(a,b)   U_ASSERT((a) == (b))
+#   undef  U_ASSERT_DIFFERS
+#   define U_ASSERT_DIFFERS(a,b)  U_ASSERT((a) != (b))
+#   undef  U_ASSERT_POINTER
+#   define U_ASSERT_POINTER(ptr)  U_ASSERT(ptr != 0)
+#   undef  U_ASSERT_RANGE
+#   define U_ASSERT_RANGE(a,x,b)  U_ASSERT((x) >= (a) && (x) <= (b))
+# endif
 #endif
 */
 
@@ -160,7 +181,7 @@ void UHTTP::str_allocate()
    { U_STRINGREP_FROM_CONSTANT(U_CTYPE_HTML) },
    { U_STRINGREP_FROM_CONSTANT("application/soap+xml; charset=\"utf-8\"") },
    { U_STRINGREP_FROM_CONSTANT("HTTP/1.%c %d %s\r\n"
-                               "Server: ULib/1.0\r\n"
+                               "Server: ULib/" VERSION "\r\n"
                                "%.*s"
                                "%.*s") },
    { U_STRINGREP_FROM_CONSTANT("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
@@ -168,7 +189,7 @@ void UHTTP::str_allocate()
                                "<title>%d %s</title>\r\n"
                                "</head><body>\r\n"
                                "<h1>%s</h1>\r\n"
-                               "<p>%.*s</p>\r\n"
+                               "<p>%s</p>\r\n"
                                "<hr>\r\n"
                                "<address>ULib Server</address>\r\n"
                                "</body></html>\r\n") },
@@ -364,7 +385,7 @@ void UHTTP::in_READ()
 
          for (len = event.ip->len; event.ip->name[len-1] == '\0'; --len) {}
 
-         U_INTERNAL_ASSERT_EQUALS(len,strlen(event.ip->name))
+         U_INTERNAL_ASSERT_EQUALS(len,u_strlen(event.ip->name))
 
          checkInotifyForCache(event.ip->wd, event.ip->name, len);
 
@@ -411,7 +432,7 @@ void UHTTP::ctor(UEventFd* handler_event)
    file            = U_NEW(UFile);
    pcmd            = U_NEW(UCommand);
    pkey            = UStringRep::create(0U, 100U, 0);
-   alias           = U_NEW(UString(U_CAPACITY));
+   alias           = U_NEW(UString);
    tmpdir          = U_NEW(UString(U_PATH_MAX));
    qcontent        = U_NEW(UString);
    pathname        = U_NEW(UString(U_CAPACITY));
@@ -1173,7 +1194,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString& rbuffer, UString& body)
 
          while (*inp++ != '\n') {}
 
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", out, inp, chunkSize);
+         (void) u_memcpy(out, inp, chunkSize);
 
          inp += chunkSize + u_line_terminator_len;
          out += chunkSize;
@@ -1195,7 +1216,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString& rbuffer, UString& body)
       if (http_info.clength > (64 * 1024 * 1024) && // 64M
           UFile::mkTempStorage(body, http_info.clength))
          {
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", body.data(), rbuffer.c_pointer(http_info.endHeader), body_byte_read);
+         (void) u_memcpy(body.data(), rbuffer.c_pointer(http_info.endHeader), body_byte_read);
 
          body.size_adjust(body_byte_read);
 
@@ -1789,22 +1810,27 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
                         "<td></td>"
                      "</tr>", U_FILE_TO_TRACE(*file), U_FILE_TO_TRACE(*file));
 
-   if (UFile::chdir(file->getPathRelativ(), true))
+   U_INTERNAL_ASSERT(file->pathname.isNullTerminated())
+
+   const char* ptr = file->getPathRelativ();
+
+   if (UFile::chdir(ptr, true))
       {
       bool is_dir;
       UVector<UString> vec;
       UString item, size, entry(4000U), value_encoded(U_CAPACITY);
-      uint32_t pos = buffer.size(), n = UFile::listContentOf(vec);
+      uint32_t pos = buffer.size(), n = UFile::listContentOf(vec), len = file->getPathRelativLen(), item_len;
 
       if (n > 1) vec.sort();
 
       for (uint32_t i = 0; i < n; ++i)
          {
-         item = vec[i];
+         item     = vec[i];
+         item_len = item.size();
 
-         pathname->setBuffer(file->getPathRelativLen() + 1 + item.size());
+         pathname->setBuffer(len + 1 + item_len);
 
-         pathname->snprintf("%.*s/%.*s", U_FILE_TO_TRACE(*file), U_STRING_TO_TRACE(item));
+         pathname->snprintf("%.*s/%.*s", len, ptr, item_len, item.data());
 
          file_data = (*cache_file)[*pathname];
 
@@ -1821,7 +1847,7 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
                            "<td align=\"right\" valign=\"bottom\">%.*s</td>"
                            "<td align=\"right\" valign=\"bottom\">%#4D</td>"
                          "</tr>",
-                         U_FILE_TO_TRACE(*file), U_STRING_TO_TRACE(value_encoded), (is_dir ? "menu" : "gopher-unknown"), U_STRING_TO_TRACE(item),
+                         len, ptr, U_STRING_TO_TRACE(value_encoded), (is_dir ? "menu" : "gopher-unknown"), item_len, item.data(),
                          U_STRING_TO_TRACE(size),
                          file_data->mtime);
 
@@ -1957,6 +1983,8 @@ uint32_t UHTTP::processHTTPForm()
    if (UFile::mkdtemp(*tmpdir) == false) U_RETURN(0);
 
    UMimeEntity* item;
+   const char* ptr = tmpdir->data();
+   uint32_t len, sz = tmpdir->size();
    UString content, name, filename, basename;
 
    for (uint32_t i = 0, j = formMulti->getNumBodyPart(); i < j; ++i)
@@ -1972,9 +2000,11 @@ uint32_t UHTTP::processHTTPForm()
 
          basename = UStringExt::basename(filename);
 
-         pathname->setBuffer(tmpdir->size() + 1 + basename.size());
+         len = basename.size();
 
-         pathname->snprintf("%.*s/%.*s", U_STRING_TO_TRACE(*tmpdir), U_STRING_TO_TRACE(basename));
+         pathname->setBuffer(sz + 1 + len);
+
+         pathname->snprintf("%.*s/%.*s", sz, ptr, len, basename.data());
 
          (void) UFile::writeTo(*pathname, content);
 
@@ -2151,10 +2181,12 @@ void UHTTP::setHTTPForbidden()
 
    const char* status = getHTTPStatusDescription(HTTP_FORBIDDEN);
 
+   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+
    body.snprintf(str_frm_body->data(),
                   HTTP_FORBIDDEN, status,
                   status,
-                  U_STRING_TO_TRACE(msg));
+                  msg.data());
 
    setHTTPResponse(HTTP_FORBIDDEN, str_ctype_html, &body);
 }
@@ -2171,10 +2203,12 @@ void UHTTP::setHTTPNotFound()
 
    const char* status = getHTTPStatusDescription(HTTP_NOT_FOUND);
 
+   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+
    body.snprintf(str_frm_body->data(),
                   HTTP_NOT_FOUND, status,
                   status,
-                  U_STRING_TO_TRACE(msg));
+                  msg.data());
 
    setHTTPResponse(HTTP_NOT_FOUND, str_ctype_html, &body);
 }
@@ -2229,10 +2263,12 @@ void UHTTP::setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint
 
    const char* status = getHTTPStatusDescription(nResponseCode);
 
+   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+
    body.snprintf(str_frm_body->data(),
                   nResponseCode, status,
                   status,
-                  U_STRING_TO_TRACE(msg));
+                  msg.data());
 
    (void) tmp.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\nLocation: "));
    (void) tmp.append(ptr_location, len_location);
@@ -2262,10 +2298,12 @@ void UHTTP::setHTTPBadRequest()
 
    const char* status = getHTTPStatusDescription(HTTP_BAD_REQUEST);
 
+   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+
    body.snprintf(str_frm_body->data(),
                   HTTP_BAD_REQUEST, status,
                   status,
-                  U_STRING_TO_TRACE(msg));
+                  msg.data());
 
    setHTTPResponse(HTTP_BAD_REQUEST, str_ctype_html, &body);
 }
@@ -2276,10 +2314,12 @@ void UHTTP::setHTTPUnAuthorized()
 
    UString ext(100U), body(500U);
 
+   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+
    body.snprintf(str_frm_body->data(),
                   HTTP_UNAUTHORIZED, getHTTPStatusDescription(HTTP_UNAUTHORIZED),
                   "Sorry, Password Required",
-                  U_CONSTANT_TO_TRACE("An account (with a password) is required to view the page that you requested"));
+                  "An account (with a password) is required to view the page that you requested");
 
    (void) ext.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\nWWW-Authenticate: "));
 
@@ -2297,18 +2337,20 @@ void UHTTP::setHTTPInternalError()
 
    U_http_is_connection_close = U_YES;
 
-   UString body(1000U);
+   UString body(2000U);
 
    const char* status = getHTTPStatusDescription(HTTP_INTERNAL_ERROR);
+
+   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
 
    body.snprintf(str_frm_body->data(),
                  HTTP_INTERNAL_ERROR, status,
                  status,
-                 U_CONSTANT_TO_TRACE("The server encountered an internal error or misconfiguration "
-                                     "and was unable to complete your request. Please contact the server "
-                                     "administrator, and inform them of the time the error occurred, and "
-                                     "anything you might have done that may have caused the error. More "
-                                     "information about this error may be available in the server error log"));
+                 "The server encountered an internal error or misconfiguration "
+                 "and was unable to complete your request. Please contact the server "
+                 "administrator, and inform them of the time the error occurred, and "
+                 "anything you might have done that may have caused the error. More "
+                 "information about this error may be available in the server error log");
 
    setHTTPResponse(HTTP_INTERNAL_ERROR, str_ctype_html, &body);
 }
@@ -2323,11 +2365,13 @@ void UHTTP::setHTTPServiceUnavailable()
 
    const char* status = getHTTPStatusDescription(HTTP_UNAVAILABLE);
 
+   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+
    body.snprintf(str_frm_body->data(),
                   HTTP_UNAVAILABLE, status,
                   status,
-                  U_CONSTANT_TO_TRACE("Sorry, the service you requested is not available at this moment. "
-                                      "Please contact the server administrator and inform them about this"));
+                  "Sorry, the service you requested is not available at this moment. "
+                  "Please contact the server administrator and inform them about this");
 
    setHTTPResponse(HTTP_UNAVAILABLE, str_ctype_html, &body);
 }
@@ -2350,7 +2394,7 @@ void UHTTP::setHTTPCgiResponse(int nResponseCode, bool header_content_length, bo
       {
       // NB: there is body...it's KO Content-Length: 0...
 
-      (void) tmp.assign(U_CONSTANT_TO_PARAM("X-Powered-By: ULib/1.0\r\n"));
+      (void) tmp.assign(U_CONSTANT_TO_PARAM("X-Powered-By: ULib/" VERSION "\r\n"));
       }
    else
       {
@@ -2427,11 +2471,17 @@ U_NO_EXPORT bool UHTTP::openFile()
          {
          // Check if there is an index file (index.html) in the directory...
 
-         pathname->setBuffer(file->getPathRelativLen() + 1 + str_indexhtml->size());
+         uint32_t sz = file->getPathRelativLen(), len = str_indexhtml->size();
 
-         pathname->snprintf("%.*s/%.*s", U_FILE_TO_TRACE(*file), U_STRING_TO_TRACE(*str_indexhtml));
+         if (sz == 0) file_data = (*cache_file)[*str_indexhtml];
+         else
+            {
+            pathname->setBuffer(sz + 1 + len);
 
-         file_data = (*cache_file)[*pathname];
+            pathname->snprintf("%.*s/%.*s", sz, file->getPathRelativ(), len, str_indexhtml->data());
+
+            file_data = (*cache_file)[*pathname];
+            }
 
          if (file_data)
             {
@@ -2445,7 +2495,7 @@ U_NO_EXPORT bool UHTTP::openFile()
                U_RETURN(false);
                }
 
-            file->setPath(*pathname);
+            file->setPath(*(sz ? pathname : str_indexhtml));
 
             file->st_size  = file_data->size;
             file->st_mode  = file_data->mode;
@@ -2918,6 +2968,10 @@ bool UHTTP::isFileInCache()
    pkey->str     = file->getPathRelativ();
    pkey->_length = file->getPathRelativLen();
 
+   U_INTERNAL_ASSERT_POINTER(pkey->str)
+   U_INTERNAL_ASSERT_MAJOR(pkey->_length, 0)
+
+
    file_data = (*cache_file)[pkey];
 
    if (file_data)
@@ -2994,6 +3048,8 @@ U_NO_EXPORT void UHTTP::checkPath()
 
    U_INTERNAL_DUMP("pathname = %.*S", U_STRING_TO_TRACE(*pathname))
 
+   U_INTERNAL_ASSERT(pathname->isNullTerminated())
+
    if (u_canonicalize_pathname(pathname->data())) pathname->size_adjust_force(); // NB: can be referenced by file...
 
    if (UServer_Base::isFileInsideDocumentRoot(*pathname) == false) // like chroot()...
@@ -3008,7 +3064,8 @@ U_NO_EXPORT void UHTTP::checkPath()
          {
          U_INTERNAL_ASSERT_EQUALS(http_info.uri[0], '/')
 
-         file->setRoot();
+         file->st_mode          = S_IFDIR|0755;
+         file->path_relativ_len = 0;
 
          U_http_request_check = '2'; // need processing...
          }
@@ -3117,7 +3174,7 @@ bool UHTTP::checkForCGIRequest()
          {
          lsz = uri_len - 1;
 
-         (void) U_SYSCALL(memcpy, "%p,%S,%u", cgi_dir, uri + 1, lsz);
+         (void) u_memcpy(cgi_dir, uri + 1, lsz);
 
          cgi_dir[lsz] = '\0';
          cgi_dir[ sz] = '\0';
@@ -3203,6 +3260,8 @@ void UHTTP::checkHTTPRequest()
       }
 
    pathname->setBuffer(u_cwd_len + http_info.uri_len);
+
+   U_INTERNAL_DUMP("u_cwd(%u) = %.*S", u_cwd_len, u_cwd_len, u_cwd)
 
    pathname->snprintf("%w%.*s", U_HTTP_URI_TO_TRACE);
 
@@ -4796,5 +4855,21 @@ U_EXPORT const char* UHTTP::UFileCacheData::dump(bool reset) const
 # define U_INTERNAL_DUMP(args...)
 # undef  U_INTERNAL_TRACE
 # define U_INTERNAL_TRACE(args...)
+# ifndef U_TEST
+#   undef  U_ASSERT
+#   define U_ASSERT(expr)
+#   undef  U_ASSERT_MINOR
+#   define U_ASSERT_MINOR(a,b)
+#   undef  U_ASSERT_MAJOR
+#   define U_ASSERT_MAJOR(a,b)
+#   undef  U_ASSERT_EQUALS
+#   define U_ASSERT_EQUALS(a,b)
+#   undef  U_ASSERT_DIFFERS
+#   define U_ASSERT_DIFFERS(a,b)
+#   undef  U_ASSERT_POINTER
+#   define U_ASSERT_POINTER(ptr)
+#   undef  U_ASSERT_RANGE
+#   define U_ASSERT_RANGE(a,x,b)
+# endif
 #endif
 */

@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/base/utility.h>
 #include <ulib/internal/common.h>
 
 // --------------------------------------------------------------------------------------
@@ -32,7 +33,7 @@
                           U_STACK_TYPE_9  * U_NUM_ENTRY_MEM_BLOCK)
 // --------------------------------------------------------------------------------------
 
-#ifdef DEBUG
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
 sig_atomic_t UMemoryPool::index_stack_busy = -1;
 #endif
 
@@ -275,7 +276,7 @@ public:
 
       void** new_pointer_block = (void**) UMemoryPool::_malloc(space * sizeof(void*));
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", new_pointer_block, pointer_block, old_size);
+      (void) u_memcpy(new_pointer_block, pointer_block, old_size);
 
       void** old_pointer_block = pointer_block;
 
@@ -299,15 +300,15 @@ public:
          growPointerBlock();
          }
 
-#  ifdef DEBUG
+#  if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
       UMemoryPool::index_stack_busy = index;
+#  endif
 
       (void) U_SYSCALL(memset, "%p,%p,%u", ptr, 0, type);
-#  endif
 
       pointer_block[len++] = ptr;
 
-#  ifdef DEBUG
+#  if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
       UMemoryPool::index_stack_busy = -1;
 #  endif
       }
@@ -329,7 +330,7 @@ public:
 
       // ...che viene inizializzato suddividendolo in base al type 'dimensione' e assegnando i valori dei puntatori relativi nel nuovo stack
 
-#  ifdef DEBUG
+#  if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
       UMemoryPool::index_stack_busy = index;
 #  endif
 
@@ -340,7 +341,9 @@ public:
          }
       while (len < U_NUM_ENTRY_MEM_BLOCK);
 
+#  if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
    // UMemoryPool::index_stack_busy = -1;
+#  endif
       }
 
    // NB: pop() non varia gli attributi 'pointer_block', 'space'
@@ -432,13 +435,13 @@ void* UStackMemoryPool::pop()
    U_INTERNAL_ASSERT_DIFFERS(index,(uint32_t)UMemoryPool::index_stack_busy)
 
    if (isEmpty()) allocateMemoryBlocks(); // len == 0
-#ifdef DEBUG
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
    else UMemoryPool::index_stack_busy = index;
 #endif
 
    void* ptr = pointer_block[--len];
 
-#ifdef DEBUG
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
    UMemoryPool::index_stack_busy = -1;
 #endif
 

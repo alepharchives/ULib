@@ -18,47 +18,47 @@
 #include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
 
-#ifdef U_STATIC_HANDLER_HTTP
-#  include <ulib/plugin/mod_http.h>
-#endif
 #ifdef U_STATIC_HANDLER_RPC
 #  include <ulib/plugin/mod_rpc.h>
 #endif
-#ifdef U_STATIC_HANDLER_SSI
-#  include <ulib/plugin/mod_ssi.h>
-#endif
-#ifdef U_STATIC_HANDLER_NOCAT
-#  include <ulib/plugin/mod_nocat.h>
-#endif
-#ifdef U_STATIC_HANDLER_FCGI
-#  include <ulib/plugin/mod_fcgi.h>
-#endif
-#ifdef U_STATIC_HANDLER_SCGI
-#  include <ulib/plugin/mod_scgi.h>
-#endif
-#ifdef U_STATIC_HANDLER_SOAP
-#  include <ulib/plugin/mod_soap.h>
-#endif
-#ifdef U_STATIC_HANDLER_PROXY
-#  include <ulib/plugin/mod_proxy.h>
-#endif
-#ifdef U_STATIC_HANDLER_STREAM
-#  include <ulib/plugin/mod_stream.h>
-#endif
-#ifdef U_STATIC_HANDLER_SOCKET
-#  include <ulib/plugin/mod_socket.h>
-#endif
-#ifdef U_STATIC_HANDLER_TSA
-#  include <ulib/plugin/mod_tsa.h>
-#endif
-#ifdef U_STATIC_HANDLER_GEOIP
-#  include <ulib/plugin/mod_geoip.h>
+#ifdef U_STATIC_HANDLER_SHIB
+#  include <ulib/plugin/mod_shib.h>
 #endif
 #ifdef U_STATIC_HANDLER_ECHO
 #  include <ulib/plugin/mod_echo.h>
 #endif
-#ifdef U_STATIC_HANDLER_SHIB
-#  include <ulib/plugin/mod_shib.h>
+#ifdef U_STATIC_HANDLER_STREAM
+#  include <ulib/plugin/mod_stream.h>
+#endif
+#ifdef U_STATIC_HANDLER_NOCAT
+#  include <ulib/plugin/mod_nocat.h>
+#endif
+#ifdef U_STATIC_HANDLER_SOCKET
+#  include <ulib/plugin/mod_socket.h>
+#endif
+#ifdef U_STATIC_HANDLER_SCGI
+#  include <ulib/plugin/mod_scgi.h>
+#endif
+#ifdef U_STATIC_HANDLER_FCGI
+#  include <ulib/plugin/mod_fcgi.h>
+#endif
+#ifdef U_STATIC_HANDLER_GEOIP
+#  include <ulib/plugin/mod_geoip.h>
+#endif
+#ifdef U_STATIC_HANDLER_PROXY
+#  include <ulib/plugin/mod_proxy.h>
+#endif
+#ifdef U_STATIC_HANDLER_SOAP
+#  include <ulib/plugin/mod_soap.h>
+#endif
+#ifdef U_STATIC_HANDLER_SSI
+#  include <ulib/plugin/mod_ssi.h>
+#endif
+#ifdef U_STATIC_HANDLER_TSA
+#  include <ulib/plugin/mod_tsa.h>
+#endif
+#ifdef U_STATIC_HANDLER_HTTP
+#  include <ulib/plugin/mod_http.h>
 #endif
 
 #ifndef __MINGW32__
@@ -410,47 +410,47 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 
    UServerPlugIn* _plugin = 0;
 
-#ifdef U_STATIC_HANDLER_HTTP
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_http")))   { _plugin = U_NEW(UHttpPlugIn); goto next; }
-#endif
 #ifdef U_STATIC_HANDLER_RPC
    if (x.equal(U_CONSTANT_TO_PARAM("mod_rpc")))    { _plugin = U_NEW(URpcPlugIn); goto next; }
 #endif
-#ifdef U_STATIC_HANDLER_SSI
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_ssi")))    { _plugin = U_NEW(USSIPlugIn); goto next; }
-#endif
-#ifdef U_STATIC_HANDLER_NOCAT
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_nocat")))  { _plugin = U_NEW(UNoCatPlugIn); goto next; }
-#endif
-#ifdef U_STATIC_HANDLER_FCGI
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_fcgi")))   { _plugin = U_NEW(UFCGIPlugIn); goto next; }
-#endif
-#ifdef U_STATIC_HANDLER_SCGI
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_scgi")))   { _plugin = U_NEW(USCGIPlugIn); goto next; }
-#endif
-#ifdef U_STATIC_HANDLER_SOAP
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_soap")))   { _plugin = U_NEW(USoapPlugIn); goto next; }
-#endif
-#ifdef U_STATIC_HANDLER_PROXY
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_proxy")))  { _plugin = U_NEW(UProxyPlugIn); goto next; }
-#endif
-#ifdef U_STATIC_HANDLER_STREAM
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_stream"))) { _plugin = U_NEW(UStreamPlugIn); goto next; }
-#endif
-#ifdef U_STATIC_HANDLER_SOCKET
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_socket"))) { _plugin = U_NEW(UWebSocketPlugIn); goto next; }
-#endif
-#ifdef U_STATIC_HANDLER_TSA
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_tsa")))    { _plugin = U_NEW(UTsaPlugIn); goto next; }
-#endif
-#ifdef U_STATIC_HANDLER_GEOIP
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_geoip")))  { _plugin = U_NEW(UGeoIPPlugIn); goto next; }
+#ifdef U_STATIC_HANDLER_SHIB
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_shib")))   { _plugin = U_NEW(UShibPlugIn); goto next; }
 #endif
 #ifdef U_STATIC_HANDLER_ECHO
    if (x.equal(U_CONSTANT_TO_PARAM("mod_echo")))   { _plugin = U_NEW(UEchoPlugIn); goto next; }
 #endif
-#ifdef U_STATIC_HANDLER_SHIB
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_shib")))   { _plugin = U_NEW(UShibPlugIn); goto next; }
+#ifdef U_STATIC_HANDLER_STREAM
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_stream"))) { _plugin = U_NEW(UStreamPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_NOCAT
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_nocat")))  { _plugin = U_NEW(UNoCatPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_SOCKET
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_socket"))) { _plugin = U_NEW(UWebSocketPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_SCGI
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_scgi")))   { _plugin = U_NEW(USCGIPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_FCGI
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_fcgi")))   { _plugin = U_NEW(UFCGIPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_GEOIP
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_geoip")))  { _plugin = U_NEW(UGeoIPPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_PROXY
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_proxy")))  { _plugin = U_NEW(UProxyPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_SOAP
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_soap")))   { _plugin = U_NEW(USoapPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_SSI
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_ssi")))    { _plugin = U_NEW(USSIPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_TSA
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_tsa")))    { _plugin = U_NEW(UTsaPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_HTTP
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_http")))   { _plugin = U_NEW(UHttpPlugIn); goto next; }
 #endif
 
    goto next;
@@ -770,7 +770,7 @@ void UServer_Base::init()
    if (document_root.empty() ||
        document_root.equal(U_CONSTANT_TO_PARAM(".")))
       {
-      (void) document_root.assign(u_cwd, u_cwd_len);
+      (void) document_root.replace(u_cwd, u_cwd_len);
       }
    else
       {
@@ -1291,9 +1291,11 @@ UCommand* UServer_Base::loadConfigCommand(UFileConfig& cfg)
       {
       if (U_ENDS_WITH(command, ".sh"))
          {
-         UString buffer(U_PATH_MAX);
+         uint32_t len = command.size();
 
-         buffer.snprintf("%s %.*s", U_PATH_SHELL, U_STRING_TO_TRACE(command));
+         UString buffer(U_CONSTANT_SIZE(U_PATH_SHELL) + 1 + len);
+
+         buffer.snprintf("%s %.*s", U_PATH_SHELL, len, command.data());
 
          command = buffer;
          }

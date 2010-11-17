@@ -167,7 +167,7 @@ void UOptions::add(const UString& desc,
 
       item = U_MALLOC_N(capacity, option_item);
 
-      (void) memcpy(item, old_item, length * sizeof(option_item));
+      (void) u_memcpy(item, old_item, length * sizeof(option_item));
 
       U_FREE_N(old_item, old_capacity, option_item);
       }
@@ -347,7 +347,7 @@ void UOptions::printHelp(vPF func)
 
       name_len = u_strlen(ptr_long_options->name);
 
-      (void) memcpy(ptr, ptr_long_options->name, name_len); 
+      (void) u_memcpy(ptr, ptr_long_options->name, name_len); 
 
       ptr += name_len;
 
@@ -376,28 +376,35 @@ void UOptions::printHelp(vPF func)
 
       if (i < 2)
          {
-         (void) strcpy(ptr, (i ? "Show version information"
-                               : "Show help about options"));
+         (void) u_strcpy(ptr, (i ? "Show version information"
+                                 : "Show help about options"));
 
          ptr += u_strlen(ptr);
          }
       else
          {
          uint32_t j = i - 2;
+         UStringRep* x = item[j].desc;
+         uint32_t n = x->size();
 
-         (void) memcpy(ptr, U_STRING_TO_PARAM(*(item[j].desc)));
+         if (n)
+            {
+            (void) u_memcpy(ptr, x->data(), n);
 
-         ptr += item[j].desc->size();
+            ptr += n;
+            }
 
-         if (item[j].value->size())
+         n = item[j].value->size();
+
+         if (n)
             {
             (void) U_MEMCPY(ptr, " (default=");
 
             ptr += 10;
 
-            (void) memcpy(ptr, U_STRING_TO_PARAM(*(item[j].value)));
+            (void) u_memcpy(ptr, item[j].value->data(), n);
 
-            ptr += item[j].value->size();
+            ptr += n;
 
             *ptr++ = ')';
             }

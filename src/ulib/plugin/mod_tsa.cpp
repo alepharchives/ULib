@@ -52,12 +52,13 @@ int UTsaPlugIn::handlerInit()
       {
       U_SRV_LOG("initialization of plugin success");
 
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+      goto end;
       }
 
    U_SRV_LOG("initialization of plugin FAILED");
 
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+end:
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 // Connection-wide hooks
@@ -66,11 +67,10 @@ int UTsaPlugIn::handlerRequest()
 {
    U_TRACE(0, "UTsaPlugIn::handlerRequest()")
 
-   if (UHTTP::isTSARequest())
+   if (command &&
+       UHTTP::isTSARequest())
       {
       // process TSA request
-
-      U_INTERNAL_ASSERT_POINTER(command)
 
       UString body;
 

@@ -375,9 +375,7 @@ public:
       {
       U_TRACE(0, "UHTTP::isSOAPRequest()")
 
-      U_ASSERT(isHttpPOST())
-
-      bool result = U_HTTP_URI_STRNEQ("/soap");
+      bool result = (isHttpPOST() && U_HTTP_URI_STRNEQ("/soap"));
 
       U_RETURN(result);
       }
@@ -386,9 +384,7 @@ public:
       {
       U_TRACE(0, "UHTTP::isTSARequest()")
 
-      U_ASSERT(isHttpPOST())
-
-      bool result = U_HTTP_URI_STRNEQ("/tsa");
+      bool result = (isHttpPOST() && U_HTTP_URI_STRNEQ("/tsa"));
 
       U_RETURN(result);
       }

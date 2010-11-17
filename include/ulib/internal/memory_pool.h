@@ -159,9 +159,8 @@
 
 struct U_EXPORT UMemoryPool {
 
-#ifdef DEBUG
-   // Segnala operazione in corso su stack (per check rientranza)
-   static sig_atomic_t index_stack_busy;
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+   static sig_atomic_t index_stack_busy; // Segnala operazione in corso su stack (per check rientranza)
 #endif
 
    static uint32_t findStackIndex(uint32_t sz);

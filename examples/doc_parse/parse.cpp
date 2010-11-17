@@ -191,9 +191,9 @@ public:
 
       // NB: we need to remember the previous element to discriminate if current element is structured (folder)...
 
-      (void) strcpy(old_prefix, prefix);
+      (void) u_strcpy(old_prefix, prefix);
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", old_buffer, u_buffer_ptr, (old_buffer_len = u_buffer_len));
+      (void) u_memcpy(old_buffer, u_buffer_ptr, (old_buffer_len = u_buffer_len));
       }
 
    static void printHTMLElement()

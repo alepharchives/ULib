@@ -54,6 +54,8 @@ public:
    USoapPlugIn()
       {
       U_TRACE_REGISTER_OBJECT(0, USoapPlugIn, "")
+
+      soap_parser = 0;
       }
 
    virtual ~USoapPlugIn();

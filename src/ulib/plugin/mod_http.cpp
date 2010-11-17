@@ -211,6 +211,8 @@ int UHttpPlugIn::handlerREAD()
 
          U_INTERNAL_DUMP("host = %.*S", U_STRING_TO_TRACE(host))
 
+         UHTTP::alias->setBuffer(1 + host_end + UHTTP::http_info.host_len);
+
          UHTTP::alias->snprintf("/%.*s%.*s", U_STRING_TO_TRACE(host), U_HTTP_URI_TO_TRACE);
          }
 
@@ -237,9 +239,12 @@ int UHttpPlugIn::handlerREAD()
 next:
       if (UHTTP::alias->empty() == false)
          {
-         UHTTP::setHTTPUri(UHTTP::alias->data(), UHTTP::alias->size());
+         uint32_t len    = UHTTP::alias->size();
+         const char* ptr = UHTTP::alias->data();
 
-         U_SRV_LOG("ALIAS: URI request changed to: %.*s", U_STRING_TO_TRACE(*UHTTP::alias));
+         UHTTP::setHTTPUri(ptr, len);
+
+         U_SRV_LOG("ALIAS: URI request changed to: %.*s", len, ptr);
          }
 
 #  ifdef HAVE_SSL
@@ -369,8 +374,7 @@ int UHttpPlugIn::handlerReset()
 
    if (UHTTP::alias->empty() == false)
       {
-      UHTTP::alias->setEmpty();
-
+      UHTTP::alias->clear();
       UHTTP::request_uri->clear();
       }
 

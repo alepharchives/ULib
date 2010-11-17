@@ -47,7 +47,7 @@
 "{\n"	\
 "  U_TRACE(0, \"::runDynamicPage(%%p)\", client_image)\n" \
 "\n" \
-"  if (client_image == 0 || client_image == (void*)-1 || client_image == (void*)-2) return;\n" \
+"  if (client_image == 0 || client_image == (UClientImage_Base*)-1 || client_image == (UClientImage_Base*)-2) return;\n" \
 "\n" \
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_value)\n" \
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_buffer)\n" \

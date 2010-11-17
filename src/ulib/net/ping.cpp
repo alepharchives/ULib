@@ -358,7 +358,7 @@ void UPing::initArpPing(const char* device)
 
    (void) U_SYSCALL(memset, "%p,%C,%u", &ifr, '\0', sizeof(struct ifreq));
 
-   (void) strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
+   (void) u_strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
 
    if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFINDEX, (char*)&ifr) == -1) U_ERROR("Unknown iface for interface %S", device);
    if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFFLAGS, (char*)&ifr) == -1) U_ERROR("ioctl(SIOCGIFFLAGS) failed for interface %S", device);
@@ -377,13 +377,13 @@ void UPing::initArpPing(const char* device)
 
    if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFADDR,   (char*)&ifr) == -1) U_ERROR("ioctl(SIOCGIFADDR) failed for interface %S", device);
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.sInaddr, ifr.ifr_addr.sa_data + sizeof(short), 4); /* source IP address */
+   (void) u_memcpy(arp.sInaddr, ifr.ifr_addr.sa_data + sizeof(short), 4); /* source IP address */
 
    if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFHWADDR, (char*)&ifr) == -1) U_ERROR("ioctl(SIOCGIFHWADDR) failed for interface %S", device);
 
-   (void) U_SYSCALL(memset, "%p,%C,%u", arp.h_dest,                     0xff,               6); /* MAC DA */
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.h_source, ifr.ifr_hwaddr.sa_data,               6); /* MAC SA */
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.sHaddr,   ifr.ifr_hwaddr.sa_data,               6); /* source hardware address */
+   (void) U_SYSCALL(memset, "%p,%C,%u", arp.h_dest,                     0xff, 6); /* MAC DA */
+   (void)                      u_memcpy(arp.h_source, ifr.ifr_hwaddr.sa_data, 6); /* MAC SA */
+   (void)                      u_memcpy(arp.sHaddr,   ifr.ifr_hwaddr.sa_data, 6); /* source hardware address */
 
    U_INTERNAL_DUMP("SOURCE = %s (%02x:%02x:%02x:%02x:%02x:%02x)",
                       u_inet_nstoa(arp.sInaddr),
@@ -400,8 +400,8 @@ void UPing::initArpPing(const char* device)
    // -----------------------------------------------------------------------------------------------------------------------
    // Target address - TODO...
    // -----------------------------------------------------------------------------------------------------------------------
-   //                                      arp.tHaddr is zero-filled                            /* target hardware address */
-   // (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.tInaddr, addr.get_in_addr(), 4);                 /* target IP address */
+   //                 arp.tHaddr is zero-filled             /* target hardware address */
+   // (void) u_memcpy(arp.tInaddr, addr.get_in_addr(), 4);  /* target IP address */
    // -----------------------------------------------------------------------------------------------------------------------
 }
 
@@ -416,8 +416,8 @@ bool UPing::arping(UIPAddress& addr, const char* device)
    // -----------------------------------------------------------------------------------------------------------------------
    // Target address
    // -----------------------------------------------------------------------------------------------------------------------
-   //                                   arp.tHaddr is zero-filled                            /* target hardware address */
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.tInaddr, addr.get_in_addr(), 4);                 /* target IP address */
+   //              arp.tHaddr is zero-filled             /* target hardware address */
+   (void) u_memcpy(arp.tInaddr, addr.get_in_addr(), 4);  /* target IP address */
    // -----------------------------------------------------------------------------------------------------------------------
 
    U_DUMP("ARP request from %s (%02x:%02x:%02x:%02x:%02x:%02x) to %s (%02x:%02x:%02x:%02x:%02x:%02x)",
@@ -434,7 +434,7 @@ bool UPing::arping(UIPAddress& addr, const char* device)
 
    (void) U_SYSCALL(memset, "%p,%C,%u", &saddr, '\0', sizeof(struct sockaddr));
 
-   (void) strncpy(saddr.sa_data, device, sizeof(saddr.sa_data));
+   (void) u_strncpy(saddr.sa_data, device, sizeof(saddr.sa_data));
 
    for (int i = 0; i < 3; ++i)
       {
@@ -471,8 +471,8 @@ loop:
 
       str_from[0] = str_to[0] = '\0';
 
-      (void) strcpy(str_from, u_inet_nstoa(reply.sInaddr));
-      (void) strcpy(str_to,   u_inet_nstoa(reply.tInaddr));
+      (void) u_strcpy(str_from, u_inet_nstoa(reply.sInaddr));
+      (void) u_strcpy(str_to,   u_inet_nstoa(reply.tInaddr));
 
       U_INTERNAL_DUMP("ARP reply from %s (%02x:%02x:%02x:%02x:%02x:%02x) to %s (%02x:%02x:%02x:%02x:%02x:%02x)",
                         str_from,

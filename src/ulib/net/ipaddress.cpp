@@ -90,7 +90,7 @@ void UIPAddress::setAddress(void* address, bool bIPv6)
       iAddressType   = AF_INET6;
       iAddressLength = sizeof(in6_addr);
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", pcAddress.p, address, iAddressLength);
+      (void) u_memcpy(pcAddress.p, address, iAddressLength);
       }
    else
 #endif
@@ -117,7 +117,7 @@ void UIPAddress::set(const UIPAddress& cOtherAddr)
       {
       U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in6_addr))
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", pcAddress.p, cOtherAddr.pcAddress.p, sizeof(in6_addr));
+      (void) u_memcpy(pcAddress.p, cOtherAddr.pcAddress.p, sizeof(in6_addr));
       }
    else
 #endif
@@ -128,8 +128,8 @@ void UIPAddress::set(const UIPAddress& cOtherAddr)
       pcAddress.i = cOtherAddr.pcAddress.i;
       }
 
-   if ((bHostNameUnresolved   = cOtherAddr.bHostNameUnresolved)   == false)               strHostName = cOtherAddr.strHostName;
-   if ((bStrAddressUnresolved = cOtherAddr.bStrAddressUnresolved) == false) (void) strcpy(pcStrAddress, cOtherAddr.pcStrAddress);
+   if ((bHostNameUnresolved   = cOtherAddr.bHostNameUnresolved)   == false)                 strHostName = cOtherAddr.strHostName;
+   if ((bStrAddressUnresolved = cOtherAddr.bStrAddressUnresolved) == false) (void) u_strcpy(pcStrAddress, cOtherAddr.pcStrAddress);
 
    U_INTERNAL_DUMP("addr = %u", getInAddr())
 }
@@ -164,7 +164,7 @@ void UIPAddress::setLocalHost(bool bIPv6)
       iAddressType   = AF_INET6;
       iAddressLength = sizeof(in6_addr);
 
-      (void) strcpy(pcStrAddress, "::1");
+      (void) u_strcpy(pcStrAddress, "::1");
       }
    else
 #endif
@@ -177,7 +177,7 @@ void UIPAddress::setLocalHost(bool bIPv6)
       iAddressType   = AF_INET;
       iAddressLength = sizeof(in_addr);
 
-      (void) strcpy(pcStrAddress, "127.0.0.1");
+      (void) u_strcpy(pcStrAddress, "127.0.0.1");
       }
 
    bHostNameUnresolved = bStrAddressUnresolved = false;
@@ -191,7 +191,7 @@ void UIPAddress::setAddress(const char* pcNewAddress, int iNewAddressLength)
 
    iAddressLength = iNewAddressLength;
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", pcAddress.p, pcNewAddress, iAddressLength);
+   (void) u_memcpy(pcAddress.p, pcNewAddress, iAddressLength);
 
    U_INTERNAL_DUMP("addr = %u", getInAddr())
 }
@@ -363,7 +363,7 @@ void UIPAddress::resolveStrAddress()
 #  else
       result = U_SYSCALL(inet_ntoa, "%p", *((struct in_addr*)pcAddress.p));
 
-      if (result) (void) strcpy(pcStrAddress, result);
+      if (result) (void) u_strcpy(pcStrAddress, result);
 #  endif
 
       if (result) bStrAddressUnresolved = false;
@@ -476,9 +476,9 @@ void UIPAddress::convertToAddressFamily(int iNewAddressFamily)
             {
             iAddressLength = sizeof(in6_addr);
 
-            (void) memset(pcAddress.p,               0, 10);
-            (void) memset(pcAddress.p + 10,       0xff,  2);
-            (void) memcpy(pcAddress.p + 12, pcAddress.p, 4);
+            (void)   memset(pcAddress.p,                0, 10);
+            (void)   memset(pcAddress.p + 10,        0xff,  2);
+            (void) u_memcpy(pcAddress.p + 12, pcAddress.p,  4);
             }
          break;
          }

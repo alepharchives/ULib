@@ -86,11 +86,11 @@ int UStreamPlugIn::handlerConfig(UFileConfig& cfg)
 
    if (cfg.loadTable())
       {
-      command = UServer_Base::loadConfigCommand(cfg);
-
       uri_path     = cfg[*str_URI_PATH];
       metadata     = cfg[*str_METADATA];
       content_type = cfg[*str_CONTENT_TYPE];
+
+      command = UServer_Base::loadConfigCommand(cfg);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -100,81 +100,82 @@ int UStreamPlugIn::handlerInit()
 {
    U_TRACE(0, "UStreamPlugIn::handlerInit()")
 
-   int fd_stderr;
-
-   if (command == 0) goto end;
-
-   UServer_Base::runAsUser();
-
-#ifdef DEBUG
-   fd_stderr = UFile::creat("/tmp/UStreamPlugIn.err", O_WRONLY | O_APPEND, PERM_FILE);
-#else
-   fd_stderr = UServices::getDevNull();
-#endif
-
-   if (command->execute(0, (UString*)-1, -1, fd_stderr))
+   if (command)
       {
-      UServer_Base::logCommandMsgError(command->getCommand());
+      UServer_Base::runAsUser();
 
-      rbuf.init(2 * 1024 * 1024); // 2M size ring buffer
+   #ifdef DEBUG
+      int fd_stderr = UFile::creat("/tmp/UStreamPlugIn.err", O_WRONLY | O_APPEND, PERM_FILE);
+   #else
+      int fd_stderr = UServices::getDevNull();
+   #endif
 
-      if (metadata.empty() == false)
+      if (command->execute(0, (UString*)-1, -1, fd_stderr))
          {
-         fmetadata = U_NEW(UFile(metadata));
+         UServer_Base::logCommandMsgError(command->getCommand());
 
-         if (fmetadata->open()) fmetadata->readSize();
-         }
+         rbuf.init(2 * 1024 * 1024); // 2M size ring buffer
 
-      // NB: feeding by a child of this...
-
-      U_INTERNAL_ASSERT_POINTER(UServer_Base::proc)
-
-      if (UServer_Base::proc->fork() &&
-          UServer_Base::proc->parent())
-         {
-         pid = UServer_Base::proc->pid();
-
-         /*
-         pid_t pgid = U_SYSCALL_NO_PARAM(getpgrp);
-
-         UProcess::setProcessGroup(pid, pgid);
-         */
-
-         content_type.setNullTerminated();
-
-         U_SRV_LOG("initialization of plugin success");
-
-         U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-         }
-
-      if (UServer_Base::proc->child())
-         {
-         UTimeVal to_sleep(0L, 50 * 1000L);
-
-         pid = UCommand::pid;
-
-         if (UServer_Base::isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
-
-         UInterrupt::insert(SIGTERM, (sighandler_t)UStreamPlugIn::handlerForSigTERM); // async signal
-
-         int nread;
-
-         while (UNotifier::waitForRead(UProcess::filedes[2]) == 1)
+         if (metadata.empty() == false)
             {
-            nread = rbuf.readFromFdAndWrite(UProcess::filedes[2]);
+            fmetadata = U_NEW(UFile(metadata));
 
-            if (nread == 0) break;                // EOF
-            if (nread  < 0) to_sleep.nanosleep(); // EAGAIN
+            if (fmetadata->open()) fmetadata->readSize();
             }
 
-         handlerForSigTERM(SIGTERM);
+         // NB: feeding by a child of this...
+
+         U_INTERNAL_ASSERT_POINTER(UServer_Base::proc)
+
+         if (UServer_Base::proc->fork() &&
+             UServer_Base::proc->parent())
+            {
+            pid = UServer_Base::proc->pid();
+
+            /*
+            pid_t pgid = U_SYSCALL_NO_PARAM(getpgrp);
+
+            UProcess::setProcessGroup(pid, pgid);
+            */
+
+            content_type.setNullTerminated();
+
+            U_SRV_LOG("initialization of plugin success");
+
+            goto end;
+            }
+
+         if (UServer_Base::proc->child())
+            {
+            UTimeVal to_sleep(0L, 50 * 1000L);
+
+            pid = UCommand::pid;
+
+            if (UServer_Base::isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
+
+            UInterrupt::insert(SIGTERM, (sighandler_t)UStreamPlugIn::handlerForSigTERM); // async signal
+
+            int nread;
+
+            while (UNotifier::waitForRead(UProcess::filedes[2]) == 1)
+               {
+               nread = rbuf.readFromFdAndWrite(UProcess::filedes[2]);
+
+               if (nread == 0) break;                // EOF
+               if (nread  < 0) to_sleep.nanosleep(); // EAGAIN
+               }
+
+            handlerForSigTERM(SIGTERM);
+
+            goto end;
+            }
          }
       }
 
-end:
    U_SRV_LOG("initialization of plugin FAILED");
 
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+end:
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 // Connection-wide hooks
@@ -183,9 +184,8 @@ int UStreamPlugIn::handlerRequest()
 {
    U_TRACE(0, "UStreamPlugIn::handlerRequest()")
 
-   U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
-
-   if (U_HTTP_URI_EQUAL(uri_path))
+   if (command &&
+       U_HTTP_URI_EQUAL(uri_path))
       {
       U_http_is_connection_close = U_YES;
 

@@ -6,6 +6,7 @@
 #define U_NO_SSL
 #endif
 
+#include <ulib/file_config.h>
 #include <ulib/net/tcpsocket.h>
 #include <ulib/net/server/server.h>
 
@@ -18,11 +19,19 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
+   UFileConfig fcg;
    UServerExample server(0);
    UString plugin_dir( argv[1]);
    UString plugin_list(argv[2]);
 
-   server.loadPlugins(plugin_dir, plugin_list, 0);
+   if (argv[3])
+      {
+      UString x(argv[3]);
+
+      (void) fcg.open(x);
+      }
+
+   server.loadPlugins(plugin_dir, plugin_list, &fcg);
 
    server.go();
 }

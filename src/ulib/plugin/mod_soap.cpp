@@ -24,7 +24,7 @@ USoapPlugIn::~USoapPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, USoapPlugIn)
 
-   if (URPCMethod::encoder)
+   if (soap_parser)
       {
       delete soap_parser;
       delete URPCMethod::encoder;
@@ -51,15 +51,16 @@ int USoapPlugIn::handlerInit()
 {
    U_TRACE(0, "USoapPlugIn::handlerInit()")
 
-   if (URPCMethod::encoder == 0)
+   if (soap_parser)
       {
-      soap_parser = U_NEW(USOAPParser);
+      U_SRV_LOG("initialization of plugin success");
 
-      USOAPObject::loadGenericMethod(0);
+      goto end;
       }
 
-   U_SRV_LOG("initialization of plugin success");
+   U_SRV_LOG("initialization of plugin FAILED");
 
+end:
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
@@ -69,11 +70,10 @@ int USoapPlugIn::handlerRequest()
 {
    U_TRACE(0, "USoapPlugIn::handlerRequest()")
 
-   if (UHTTP::isSOAPRequest())
+   if (soap_parser &&
+       UHTTP::isSOAPRequest())
       {
       // process the SOAP message -- should be the contents of the message from "<SOAP:" to the end of the string
-
-      U_INTERNAL_ASSERT_POINTER(soap_parser)
 
       bool bSendingFault;
 

@@ -43,17 +43,19 @@ int UProxyPlugIn::handlerInit()
 {
    U_TRACE(0, "UProxyPlugIn::handlerInit()")
 
-   if (vservice->empty())
+   if (vservice == 0 ||
+       vservice->empty())
       {
       U_SRV_LOG("initialization of plugin FAILED");
 
-      U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      goto end;
       }
 
    if (UServer_Base::preforked_num_kids == 0) client_http.setHostForbidden(UServer_Base::getHost());
 
    U_SRV_LOG("initialization of plugin success");
 
+end:
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
@@ -63,7 +65,11 @@ int UProxyPlugIn::handlerRequest()
 {
    U_TRACE(0, "UProxyPlugIn::handlerRequest()")
 
-   U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
+   if (vservice == 0 ||
+       vservice->empty())
+      {
+      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+      }
 
    // find proxy service for the HTTP request
 

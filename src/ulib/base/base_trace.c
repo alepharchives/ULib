@@ -12,6 +12,7 @@
 // ============================================================================
  
 #include <ulib/base/trace.h>
+#include <ulib/base/utility.h>
 
 #ifndef __MINGW32__
 #  include <sys/uio.h>
@@ -81,7 +82,7 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
 
          if ((file_ptr + iov[i].iov_len) > file_limit) file_ptr = file_mem;
 
-         (void) memcpy(file_ptr, iov[i].iov_base, iov[i].iov_len);
+         (void) u_memcpy(file_ptr, iov[i].iov_base, iov[i].iov_len);
 
          file_ptr += iov[i].iov_len;
          }

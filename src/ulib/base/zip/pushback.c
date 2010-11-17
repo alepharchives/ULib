@@ -1,6 +1,6 @@
 /* pushback.c - code for a pushback buffer to handle file I/O */
 
-#include <ulib/base/base.h>
+#include <ulib/base/utility.h>
 #include <ulib/base/zip/zipentry.h>
 #include <ulib/base/zip/pushback.h>
 
@@ -26,8 +26,7 @@ int pb_push(pb_file* pbf, void* buff, int amt)
 {
    U_INTERNAL_TRACE("pb_push(%p,%p,%d)", pbf, buff, amt)
 
-   int in_amt;
-   int wrap = 0;
+   int in_amt, wrap = 0, n;
 
    U_INTERNAL_TRACE("%d bytes being pushed back to the buffer", amt)
 
@@ -59,11 +58,13 @@ int pb_push(pb_file* pbf, void* buff, int amt)
 
    /* write everything up til the end of the buffer */
 
-   memcpy(pbf->next, buff, (in_amt - wrap));
+   n = in_amt - wrap;
+
+   if (n > 0) (void) u_memcpy(pbf->next, buff, n);
 
    /* finish writing what's wrapped around */
 
-   memcpy(pbf->pb_buff, ((char *)buff + (in_amt - wrap)), wrap);
+   if (wrap > 0) (void) u_memcpy(pbf->pb_buff, ((char*)buff + n), wrap);
 
    /* update the buff_amt field */
 
@@ -78,10 +79,8 @@ int pb_read(pb_file* pbf, void* buff, int amt)
 {
    U_INTERNAL_TRACE("pb_read(%p,%p,%d)", pbf, buff, amt)
 
-   int tmp;
-   int wrap = 0;
-   int out_amt = 0;
    void* bp = buff;
+   int tmp, wrap = 0, out_amt = 0, n;
 
    U_INTERNAL_TRACE("%d bytes requested from us", amt)
 
@@ -89,12 +88,15 @@ int pb_read(pb_file* pbf, void* buff, int amt)
       {  
       if (amt > (int)pbf->buff_amt) amt = pbf->buff_amt;
 
-      memcpy(buff, pbf->next, amt);
+      if (amt > 0)
+         {
+         (void) u_memcpy(buff, pbf->next, amt);
 
-      /* update the buff_amt field */
+         /* update the buff_amt field */
 
-      pbf->next     += amt;
-      pbf->buff_amt -= amt;
+         pbf->next     += amt;
+         pbf->buff_amt -= amt;
+         }
 
       U_INTERNAL_TRACE("%d bytes remaining in buffer", pbf->buff_amt)
 
@@ -121,15 +123,17 @@ int pb_read(pb_file* pbf, void* buff, int amt)
             wrap = tmp - ((pbf->pb_buff + RDSZ) - pbf->next);
             }
 
-         memcpy(bp, pbf->next, (tmp - wrap));
+         n = tmp - wrap;
 
-         bp = &(((char *)bp)[tmp - wrap]);
+         if (n > 0) (void) u_memcpy(bp, pbf->next, n);
+
+         bp = &(((char*)bp)[n]);
 
          /* If we need to wrap, read from the start of the buffer */
 
          if (wrap > 0)
             {
-            memcpy(bp, pbf->pb_buff, wrap);
+            (void) u_memcpy(bp, pbf->pb_buff, wrap);
 
             bp = &(((char *)bp)[wrap]);
             }

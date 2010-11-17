@@ -285,7 +285,7 @@ U_EXPORT ostream& operator<<(ostream& os, const UTimer& t)
    return os;
 }
 
-#if defined(DEBUG) || defined(U_TEST)
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
 bool UTimer::invariant()
 {
    U_TRACE(0, "UTimer::invariant()")
@@ -294,9 +294,7 @@ bool UTimer::invariant()
       {
       for (UTimer* item = first; item->next; item = item->next)
          {
-#     if defined(__unix__) && !defined(__CYGWIN__)
-         U_INTERNAL_ASSERT((*item < *item->next))
-#     endif
+         U_INTERNAL_ASSERT_MINOR(*item,*(item->next))
          }
       }
 
@@ -305,6 +303,7 @@ bool UTimer::invariant()
 #endif
 
 #ifdef DEBUG
+#  include <ulib/internal/objectIO.h>
 
 void UTimer::printInfo(ostream& os)
 {
@@ -322,8 +321,6 @@ void UTimer::printInfo(ostream& os)
 
    os << "\n";
 }
-
-#  include <ulib/internal/objectIO.h>
 
 const char* UTimer::dump(bool reset) const
 {

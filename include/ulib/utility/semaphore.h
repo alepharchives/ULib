@@ -16,41 +16,45 @@
 
 #include <ulib/internal/common.h>
 
-#if defined(__MINGW32__)
-typedef HANDLE sem_t;
-typedef DWORD timeout_t;
-#  define MAX_SEM_VALUE 1000000
-#else
-typedef unsigned long timeout_t;
-#  ifdef HAVE_SEMAPHORE_H
-#     include <semaphore.h>
-//    -------------------------------------------------------------
-//    check for broken implementation on Linux (debian)...
-//    -------------------------------------------------------------
-#     if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
-#        include <linux/version.h>
-#        ifndef KERNEL_VERSION
-#           define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
-#        endif
-#        ifndef LINUX_VERSION_CODE
-#           error "You need to use at least 2.0 Linux kernel."
-#        endif
-#        if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,7)
-#           define U_MAYBE_BROKEN_SEM_IMPL
-#        endif
+#ifdef HAVE_SEMAPHORE_H
+#  include <semaphore.h>
+// -------------------------------------------------------------
+// check for broken implementation on Linux (debian)...
+// -------------------------------------------------------------
+#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#     include <linux/version.h>
+#     ifndef KERNEL_VERSION
+#        define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
 #     endif
-//    -------------------------------------------------------------
-#  else
+#     ifndef LINUX_VERSION_CODE
+#        error "You need to use at least 2.0 Linux kernel."
+#     endif
+#     if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,7)
+#        define U_MAYBE_BROKEN_SEM_IMPL
+#     endif
+#  endif
+// -------------------------------------------------------------
+#else
 /*
 typedef int sem_t;
 extern "C" {
 extern int sem_wait(sem_t*__sem);
 extern int sem_post(sem_t* __sem);
 extern int sem_destroy(sem_t* __sem);
+extern int sem_getvalue(sem_t* sem, int* sval);
 extern int sem_init(sem_t* __sem, int __pshared, unsigned int __value):
 }
 */
+#endif
+
+#ifdef __MINGW32__
+typedef DWORD timeout_t;
+#  define MAX_SEM_VALUE 1000000
+#  ifndef HAVE_SEMAPHORE_H
+typedef HANDLE sem_t;
 #  endif
+#else
+typedef unsigned long timeout_t;
 #endif
 
 #if !defined(HAVE_SEMAPHORE_H) || defined(U_MAYBE_BROKEN_SEM_IMPL) // _LIBC // uClib
@@ -146,7 +150,7 @@ public:
 #endif
 
 protected:
-#if defined(__MINGW32__)
+#if defined(__MINGW32__) && !defined(HAVE_SEMAPHORE_H)
    HANDLE sem;
 #elif defined(U_LOCKFILE)
    UFile tmp;
@@ -159,7 +163,7 @@ protected:
    bool flag, broken;
 #endif
 
-#if !defined(__MINGW32__) && defined(DEBUG)
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
 #  if defined(U_LOCKFILE) || defined(U_MAYBE_BROKEN_SEM_IMPL)
    int getValue() { return -1; }
 #  else

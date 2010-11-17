@@ -146,7 +146,7 @@ public:
          if (size > USocketExt::size_message)
             {
             USocketExt::pcount  = size - USocketExt::size_message;
-#        ifdef DEBUG
+#        if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
             USocketExt::pbuffer = rbuffer->data();
 #        endif
 

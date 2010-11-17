@@ -50,6 +50,19 @@
 #  include <termios.h>
 #endif
 
+/*
+#ifndef DEBUG
+# undef  U_INTERNAL_TRACE
+
+# define U_INTERNAL_TRACE(format,args...) \
+   { char u_internal_buf[16 * 1024]; (void) sprintf(u_internal_buf, format"\n" , ##args); \
+      (void) write(STDERR_FILENO, u_internal_buf, strlen(u_internal_buf)); }
+
+# undef  U_INTERNAL_PRINT
+# define U_INTERNAL_PRINT(format,args...) U_INTERNAL_TRACE(format,args)
+#endif
+*/
+
 /* Startup */
 bool                 u_is_tty;
 pid_t                u_pid;
@@ -60,9 +73,8 @@ const char* restrict u_progpath;
 const char* restrict u_progname;
 
 /* Current working directory */
-char                 u_cwd_buffer[256];
+char                 u_cwd[U_PATH_MAX];
 uint32_t             u_cwd_len;
-const char* restrict u_cwd;
 
 /* Location info */
 uint32_t             u_num_line;
@@ -146,17 +158,16 @@ void u_getcwd(void) /* get current working directory */
 {
    U_INTERNAL_TRACE("u_getcwd()")
 
-   u_cwd = (const char* restrict) getcwd(u_cwd_buffer, 256);
-
-   U_INTERNAL_ASSERT_POINTER(u_cwd)
+   (void) getcwd(u_cwd, sizeof(u_cwd));
 
 #ifdef __MINGW32__
-   (void) strcpy(u_cwd_buffer, u_slashify(u_cwd, PATH_SEPARATOR, '/'));
+   (void) u_strcpy(u_cwd, u_slashify(u_cwd, PATH_SEPARATOR, '/'));
 #endif
 
-   u_cwd_len = strlen(u_cwd_buffer);
+   u_cwd_len = u_strlen(u_cwd);
 
    U_INTERNAL_ASSERT_MAJOR(u_cwd_len,0)
+   U_INTERNAL_ASSERT_MINOR(u_cwd_len,U_PATH_MAX)
 }
 
 void u_check_now_adjust(void)
@@ -248,17 +259,17 @@ void u_init(char** restrict argv)
       {
       char* restrict tmp = getenv("HOSTNAME"); /* bash setting... */
 
-      if (tmp && *tmp) strcpy(u_hostname, tmp);
+      if (tmp && *tmp) u_strcpy(u_hostname, tmp);
       }
 
-   u_hostname_len = strlen(u_hostname);
+   u_hostname_len = u_strlen(u_hostname);
 
    pw = getpwuid(getuid());
 
    if (pw) u_user_name_len = u_strlen(pw->pw_name);
 
-   if (u_user_name_len) (void) memcpy(u_user_name, pw->pw_name,  u_user_name_len);
-   else                 (void) memcpy(u_user_name,      "root", (u_user_name_len = 4));
+   if (u_user_name_len) (void) u_memcpy(u_user_name, pw->pw_name,  u_user_name_len);
+   else                 (void) u_memcpy(u_user_name,      "root", (u_user_name_len = 4));
 
    /* initialize AT EXIT */
 
@@ -655,7 +666,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          // if (count >= (maxsize - n)) return 0;
 
-            (void) strncpy(&s[count], tzname[i], n);
+            (void) u_strncpy(&s[count], tzname[i], n);
 
             count += n;
             }
@@ -1238,7 +1249,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                (void) sprintf(bp, (const char* restrict)fmt_float, width, prec, dbl);
                }
 
-            len = strlen(bp);
+            len = u_strlen(bp);
 
             bp  += len;
             ret += len;
@@ -1260,7 +1271,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             argument = SARG();
 
-            if ((int64_t) argument < 0LL)
+            if ((int64_t)argument < 0LL)
                {
                sign     = '-';
                argument = -argument;
@@ -1276,24 +1287,26 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             n = VA_ARG(int);
 
+#        ifndef __MINGW32__
             if (u_is_tty)
                {
                U_INTERNAL_ASSERT(n <= BRIGHTWHITE)
 
                len = sizeof(U_RESET_STR) - (n == RESET);
 
-               (void) memcpy(bp, tab_color[n], len);
+               (void) u_memcpy(bp, tab_color[n], len);
 
                bp  += len;
                ret += len;
                }
+#        endif
 
             continue;
             }
 
          case 'H': /* print host name */
             {
-            (void) memcpy(bp, u_hostname, u_hostname_len);
+            (void) u_memcpy(bp, u_hostname, u_hostname_len);
 
             bp  += u_hostname_len;
             ret += u_hostname_len;
@@ -1305,7 +1318,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             U_INTERNAL_ASSERT_MAJOR(u_cwd_len,0)
 
-            (void) memcpy(bp, u_cwd, u_cwd_len);
+            (void) u_memcpy(bp, u_cwd, u_cwd_len);
 
             bp  += u_cwd_len;
             ret += u_cwd_len;
@@ -1315,7 +1328,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'N': /* print program name */
             {
-            (void) memcpy(bp, u_progname, u_progname_len);
+            (void) u_memcpy(bp, u_progname, u_progname_len);
 
             bp  += u_progname_len;
             ret += u_progname_len;
@@ -1325,7 +1338,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'P': /* print process pid */
             {
-            (void) memcpy(bp, u_pid_str, u_pid_str_len);
+            (void) u_memcpy(bp, u_pid_str, u_pid_str_len);
 
             bp  += u_pid_str_len;
             ret += u_pid_str_len;
@@ -1353,7 +1366,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                {
                len = u_strlen(ccp);
 
-               (void) memcpy(bp, ccp, len);
+               (void) u_memcpy(bp, ccp, len);
 
                bp  += len;
                ret += len;
@@ -1374,7 +1387,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                ccp = getSysError_w32(&len);
 
-               (void) memcpy(bp, ccp, len);
+               (void) u_memcpy(bp, ccp, len);
 
                bp  += len;
                ret += len;
@@ -1390,7 +1403,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             ccp = u_getSysError(&len);
 
-            (void) memcpy(bp, ccp, len);
+            (void) u_memcpy(bp, ccp, len);
 
             bp  += len;
             ret += len;
@@ -1400,7 +1413,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'U': /* print user name */
             {
-            (void) memcpy(bp, u_user_name, u_user_name_len);
+            (void) u_memcpy(bp, u_user_name, u_user_name_len);
 
             bp  += u_user_name_len;
             ret += u_user_name_len;
@@ -1415,7 +1428,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             n   = VA_ARG(int);
             str = u_getSysSignal(n, &len);
 
-            (void) memcpy(bp, str, len);
+            (void) u_memcpy(bp, str, len);
 
             bp  += len;
             ret += len;
@@ -1430,7 +1443,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             n   = VA_ARG(int);
             str = u_getExitStatus(n, &len);
 
-            (void) memcpy(bp, str, len);
+            (void) u_memcpy(bp, str, len);
 
             bp  += len;
             ret += len;
@@ -1491,7 +1504,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                   len = strlen(tmp);
 
-                  (void) memcpy(bp, tmp, len);
+                  (void) u_memcpy(bp, tmp, len);
 
                   bp  += len;
                   ret += len;
@@ -1503,9 +1516,9 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                (void) sprintf(tmp, "_%03lu", u_now.tv_usec / 1000L);
 
-               len = strlen(tmp);
+               len = u_strlen(tmp);
 
-               (void) memcpy(bp, tmp, len);
+               (void) u_memcpy(bp, tmp, len);
 
                bp  += len;
                ret += len;
@@ -1791,6 +1804,8 @@ iteration:
       required by any leftover floating precision; finally, if LADJUST, pad with blanks.
       ---------------------------------------------------------------------- */
 
+      U_INTERNAL_PRINT("size = %d width = %d prec = %d dprec = %d sign = %c", size, width, prec, dprec, sign)
+
       dpad = dprec - size; /* compute actual size, so we know how much to pad */
 
       if (dpad < 0) dpad = 0;
@@ -1801,15 +1816,21 @@ iteration:
 
       if (pads < 0) pads = 0;
 
+      U_INTERNAL_PRINT("fieldsz = %d pads = %d dpad = %d", fieldsz, pads, dpad)
+
       /* adjust ret */
 
       ret += (width > fieldsz ? width : fieldsz);
 
       if (ret >= buffer_size)
          {
-         U_INTERNAL_ASSERT_MSG(false, "BUFFER OVERFLOW at u_vsnprintf()...")
-
          ret -= (width > fieldsz ? width : fieldsz);
+
+#     ifdef DEBUG
+         U_INTERNAL_ASSERT_MSG(false, "BUFFER OVERFLOW at u_vsnprintf()...")
+#     else
+         U_ABORT("BUFFER OVERFLOW at u_vsnprintf() - ret = %u buffer_size = %u", ret, buffer_size);
+#     endif
 
          break;
          }
@@ -2038,3 +2059,12 @@ void u_exit(void)
          }
       }
 }
+
+/*
+#if defined(U_ALL_C) && !defined(DEBUG)
+# undef  U_INTERNAL_TRACE
+# define U_INTERNAL_TRACE(format,args...)
+# undef  U_INTERNAL_PRINT
+# define U_INTERNAL_PRINT(format,args...)
+#endif
+*/

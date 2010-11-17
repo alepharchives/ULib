@@ -3,7 +3,7 @@
 
 AUTOMAKE_OPTIONS = ## dist-shar dist-zip
 
-EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private \
+EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private server_rpc.cfg \
 				 file_config.cf file_config.gperf file_config.gperf.sh file_config.key
 
 MAINTAINERCLEANFILES	= Makefile.in

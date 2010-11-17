@@ -57,7 +57,7 @@ bool UServices::setFtw(const UString* dir, const UString* filter)
          U_RETURN(false);
          }
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", u_buffer, ptr, u_buffer_len);
+      (void) u_memcpy(u_buffer, ptr, u_buffer_len);
       }
 
    u_buffer[u_buffer_len] = '\0';
@@ -578,7 +578,7 @@ void UServices::generateKey()
    U_TRACE(1, "UServices::generateKey()")
 
 #if defined(U_TEST)
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", key, "1234567890123456", 16);
+   (void) U_MEMCPY(key, "1234567890123456");
 #elif defined(HAVE_LIBUUID)
    U_SYSCALL_VOID(uuid_generate, "%p", key);
 #else

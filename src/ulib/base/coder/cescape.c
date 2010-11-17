@@ -295,9 +295,12 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
          {
          len = p - inptr;
 
-         (void) memcpy(outptr, inptr, len);
+         if (len)
+            {
+            (void) u_memcpy(outptr, inptr, len);
 
-         outptr += len;
+            outptr += len;
+            }
 
          /* \u four-hex-digits (unicode char) */
 
@@ -305,7 +308,7 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
              (inptr[2] != '0' ||
               inptr[3] != '0'))
             {
-            (void) memcpy(outptr, inptr, 6);
+            (void) u_memcpy(outptr, inptr, 6);
 
             outptr += 6;
             inptr  += 6;
@@ -320,9 +323,12 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
          {
          len = inend - inptr;
 
-         (void) memcpy(outptr, inptr, len);
+         if (len)
+            {
+            (void) u_memcpy(outptr, inptr, len);
 
-         outptr += len;
+            outptr += len;
+            }
 
          break;
          }

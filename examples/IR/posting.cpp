@@ -440,7 +440,7 @@ U_NO_EXPORT void UPosting::del()
       return;
       }
 
-#ifdef DEBUG
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
    uint32_t last_offset = POSTING_OFFSET_LAST_DOC_ID;
 #endif
 
@@ -1044,7 +1044,7 @@ inline UString UPosting::extractDocID()
          U_INTERNAL_DUMP("size_entry = %u",   size_entry)
          U_INTERNAL_DUMP("cur_doc_id = %llu", cur_doc_id)
 
-         (void) memcpy((void*)sptr, &cur_doc_id, sizeof(cur_doc_id));
+         (void) u_memcpy((void*)sptr, &cur_doc_id, sizeof(cur_doc_id));
 
           ptr += size_entry;
          sptr += sizeof(uint64_t);
@@ -1224,7 +1224,7 @@ U_NO_EXPORT bool UPosting::callForCompositeWord(vPF function)
 
    U_ASSERT_DIFFERS(posting->empty(),true)
 
-#ifdef DEBUG
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
    uint32_t posting_size = posting->size();
 #endif
 

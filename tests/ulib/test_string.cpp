@@ -1647,14 +1647,14 @@ U_EXPORT main (int argc, char* argv[])
    U_ASSERT( UStringExt::dirname(z)  == U_STRING_FROM_CONSTANT("/dir") )
    U_ASSERT( UStringExt::basename(z) == U_STRING_FROM_CONSTANT("base.suffix") )
 
-   u_cwd     =                 "/mnt/storage/stefano/ulib/nodebug/ULib-1.0.5/tests/examples";
-   u_cwd_len = U_CONSTANT_SIZE("/mnt/storage/stefano/ulib/nodebug/ULib-1.0.5/tests/examples"); // 59
+   (void) strcpy(u_cwd,        "/mnt/storage/stefano/ulib/nodebug/64/gentoo/ULib-1.0.5/tests/examples");
+   u_cwd_len = U_CONSTANT_SIZE("/mnt/storage/stefano/ulib/nodebug/64/gentoo/ULib-1.0.5/tests/examples"); // 69
 
-   z.setBuffer(U_PATH_MAX);
-   z.snprintf("%w%.*s", U_CONSTANT_TO_TRACE("/demo"));
+   z.setBuffer(u_cwd_len + U_CONSTANT_SIZE( "/www.sito1.com/cgi-bin/redirect.sh")); // 34
+   z.snprintf("%w%.*s", U_CONSTANT_TO_TRACE("/www.sito1.com/cgi-bin/redirect.sh")); // 69 + 34 = 103 => (128 - (1 + U_SIZEOF_UStringRep))
 
    U_ASSERT_DIFFERS( z.size(), u_cwd_len )
-   U_ASSERT( z == U_STRING_FROM_CONSTANT("/mnt/storage/stefano/ulib/nodebug/ULib-1.0.5/tests/examples/demo") )
+   U_ASSERT( z == U_STRING_FROM_CONSTANT("/mnt/storage/stefano/ulib/nodebug/64/gentoo/ULib-1.0.5/tests/examples/www.sito1.com/cgi-bin/redirect.sh") )
 
    /* Sort two version numbers, comparing equivalently seperated strings of digits numerically
     *

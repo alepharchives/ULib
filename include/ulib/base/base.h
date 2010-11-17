@@ -75,9 +75,8 @@ extern U_EXPORT void u_atexit(vPF function);
 extern U_EXPORT void u_unatexit(vPF function);
 
 /* Current working directory */
-extern U_EXPORT char                 u_cwd_buffer[256];
-extern U_EXPORT uint32_t             u_cwd_len;
-extern U_EXPORT const char* restrict u_cwd;
+extern U_EXPORT char     u_cwd[U_PATH_MAX];
+extern U_EXPORT uint32_t u_cwd_len;
 
 extern U_EXPORT void u_getcwd(void);
 

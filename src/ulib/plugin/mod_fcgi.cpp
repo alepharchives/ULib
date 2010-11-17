@@ -208,13 +208,14 @@ int UFCGIPlugIn::handlerInit()
 
          U_SRV_LOG("initialization of plugin success");
 
-         U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+         goto end;
          }
       }
 
    U_SRV_LOG("initialization of plugin FAILED");
 
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+end:
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 // Connection-wide hooks
@@ -223,8 +224,15 @@ int UFCGIPlugIn::handlerRequest()
 {
    U_TRACE(0, "UFCGIPlugIn::handlerRequest()")
 
-   if (UHTTP::isHTTPRequestAlreadyProcessed() == false &&
-       u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(fcgi_uri_mask), 0))
+   if (UHTTP::isHTTPRequestAlreadyProcessed() ||
+       fcgi_uri_mask.empty()                  ||
+       u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(fcgi_uri_mask), 0) == false)
+      {
+      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+      }
+
+   if (connection &&
+       connection->isConnected())
       {
       // Set FCGI_BEGIN_REQUEST
 
@@ -270,7 +278,7 @@ int UFCGIPlugIn::handlerRequest()
          U_INTERNAL_ASSERT_POINTER(equalPtr)
 
           nameLen = (equalPtr - envp[i]);
-         valueLen = strlen(++equalPtr);
+         valueLen = u_strlen(++equalPtr);
 
          U_INTERNAL_ASSERT_MAJOR( nameLen, 0)
          U_INTERNAL_ASSERT_MAJOR(valueLen, 0)
@@ -444,12 +452,15 @@ int UFCGIPlugIn::handlerReset()
 {
    U_TRACE(0, "UFCGIPlugIn::handlerReset()")
 
-   connection->clearData();
-
-   if (fcgi_keep_conn == false &&
-       connection->isConnected())
+   if (connection)
       {
-      connection->close();
+      connection->clearData();
+
+      if (fcgi_keep_conn == false &&
+          connection->isConnected())
+         {
+         connection->close();
+         }
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

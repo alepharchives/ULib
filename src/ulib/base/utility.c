@@ -91,6 +91,61 @@ bPFpcupcud u_pfn_match = u_dosmatch;
 
 const char* u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 
+#ifdef DEBUG
+size_t u_strlen(const char* restrict s)
+{
+   U_INTERNAL_TRACE("u_strlen(%s)", s)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+
+   return strlen(s);
+}
+
+char* u_strcpy(char* restrict dest, const char* restrict src)
+{
+   size_t n = u_strlen(src);
+
+   U_INTERNAL_TRACE("u_strcpy(%p,%p,%ld)", dest, src, n)
+
+   U_INTERNAL_ASSERT_MAJOR(n,0)
+   U_INTERNAL_ASSERT_POINTER(src)
+   U_INTERNAL_ASSERT_POINTER(dest)
+   U_INTERNAL_ASSERT(dest < src || dest > (src+n)) /* Overlapping Memory */
+
+   (void) strcpy(dest, src);
+
+   return dest;
+}
+
+void* u_memcpy(void* restrict dest, const void* restrict src, size_t n)
+{
+   U_INTERNAL_TRACE("u_memcpy(%p,%p,%ld)", dest, src, n)
+
+   U_INTERNAL_ASSERT_MAJOR(n,0)
+   U_INTERNAL_ASSERT_POINTER(src)
+   U_INTERNAL_ASSERT_POINTER(dest)
+   U_INTERNAL_ASSERT(dest < src || (char*)dest > (((char*)src)+n)) /* Overlapping Memory */
+
+   (void) memcpy(dest, src, n);
+
+   return dest;
+}
+
+char* u_strncpy(char* restrict dest, const char* restrict src, size_t n)
+{
+   U_INTERNAL_TRACE("u_strncpy(%p,%p,%ld)", dest, src, n)
+
+   U_INTERNAL_ASSERT_MAJOR(n,0)
+   U_INTERNAL_ASSERT_POINTER(src)
+   U_INTERNAL_ASSERT_POINTER(dest)
+   U_INTERNAL_ASSERT(dest < src || dest > (src+n)) /* Overlapping Memory */
+
+   (void) strncpy(dest, src, n);
+
+   return dest;
+}
+#endif
+
 char* u_inet_nltoa(uint32_t ip)
 {
    char* result;
@@ -114,7 +169,7 @@ char* u_inet_nstoa(uint8_t* ip)
 
    union uuaddress address;
 
-   (void) memcpy(address.inaddr, ip, 4);
+   (void) u_memcpy(address.inaddr, ip, 4);
 
    result = inet_ntoa(address.addr);
 
@@ -253,7 +308,7 @@ bool u_ranAsUser(const char* restrict user, bool change_dir)
 
    /* change user name */
 
-   (void) strncpy(u_user_name, user, (u_user_name_len = u_strlen(user)));
+   (void) u_strncpy(u_user_name, user, (u_user_name_len = u_strlen(user)));
 
    if (change_dir &&
        pw->pw_dir &&
@@ -329,7 +384,7 @@ void u_printSize(char* restrict buffer, uint64_t bytes)
 
    if (bytes == 0)
       {
-      (void) strcpy(buffer, "0 Byte");
+      (void) u_strcpy(buffer, "0 Byte");
 
       return;
       }
@@ -1162,7 +1217,7 @@ static inline void make_absolute(char* restrict result, const char* restrict dot
 
    if (dot_path[0])
       {
-      strcpy(result, dot_path);
+      u_strcpy(result, dot_path);
 
       result_len = u_strlen(result);
 
@@ -1181,7 +1236,7 @@ static inline void make_absolute(char* restrict result, const char* restrict dot
       result_len = 2;
       }
 
-   strcpy(result + result_len, string);
+   u_strcpy(result + result_len, string);
 }
 
 /* --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1204,8 +1259,8 @@ static const char* u_check_for_suffix_exe(const char* restrict program)
 
    if (u_endsWith(program, len, U_CONSTANT_TO_PARAM(".exe")) == false)
       {
-      (void) memcpy(program_w32, program, len);
-      (void) memcpy(program_w32+len, ".exe", sizeof(".exe"));
+      (void) u_memcpy(program_w32, program, len);
+      (void) u_memcpy(program_w32+len, ".exe", sizeof(".exe"));
 
       program = program_w32;
 
@@ -1312,7 +1367,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
          is_modified = true;
 
-         for (src = s, dst = p + 1; (*dst = *src); ++src, ++dst) {} /* strcpy(p + 1, s); */
+         for (src = s, dst = p + 1; (*dst = *src); ++src, ++dst) {} /* u_strcpy(p + 1, s); */
 
          U_INTERNAL_PRINT("path = %s", path)
          }
@@ -1330,7 +1385,7 @@ bool u_canonicalize_pathname(char* restrict path)
          {
          is_modified = true;
 
-         for (src = p + 2, dst = p; (*dst = *src); ++src, ++dst) {} /* strcpy(p, p + 2); */
+         for (src = p + 2, dst = p; (*dst = *src); ++src, ++dst) {} /* u_strcpy(p, p + 2); */
 
          U_INTERNAL_PRINT("path = %s", path)
          }
@@ -1342,7 +1397,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
    /* Remove trailing slashes */
 
-   p = lpath + strlen(lpath) - 1;
+   p = lpath + u_strlen(lpath) - 1;
 
    if ( p > lpath &&
        *p == '/')
@@ -1366,14 +1421,14 @@ bool u_canonicalize_pathname(char* restrict path)
 
       is_modified = true;
 
-      for (src = lpath + 2, dst = lpath; (*dst = *src); ++src, ++dst) {} /* strcpy(lpath, lpath + 2); */
+      for (src = lpath + 2, dst = lpath; (*dst = *src); ++src, ++dst) {} /* u_strcpy(lpath, lpath + 2); */
 
       U_INTERNAL_PRINT("path = %s", path)
       }
 
    /* Remove trailing "/" or "/." */
 
-   len = strlen(lpath);
+   len = u_strlen(lpath);
 
    if (len < 2) goto end;
 
@@ -1446,7 +1501,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
          is_modified = true;
 
-         for (src = p + 4, dst = s + (s == lpath && *s == '/'); (*dst = *src); ++src, ++dst) {} /* strcpy(s + (s == lpath && *s == '/'), p + 4); */
+         for (src = p + 4, dst = s + (s == lpath && *s == '/'); (*dst = *src); ++src, ++dst) {} /* u_strcpy(s + (s == lpath && *s == '/'), p + 4); */
 
          U_INTERNAL_PRINT("path = %s", path)
 
@@ -1646,7 +1701,7 @@ static void u_ftw_call(char* restrict d_name, uint32_t d_namlen, unsigned char d
        d_type != DT_LNK &&
        d_type != DT_UNKNOWN) return;
 
-   (void) memcpy(u_buffer + u_buffer_len, d_name, d_namlen);
+   (void) u_memcpy(u_buffer + u_buffer_len, d_name, d_namlen);
 
    u_buffer_len += d_namlen;
 
@@ -1714,7 +1769,7 @@ static void u_ftw_readdir(DIR* restrict dirp)
             ds->d_ino  = dp->d_ino;
             ds->d_type = U_DT_TYPE;
 
-            (void) memcpy(u_dir.free + (ds->d_name = u_dir.pfree), dp->d_name, (ds->d_namlen = d_namlen));
+            (void) u_memcpy(u_dir.free + (ds->d_name = u_dir.pfree), dp->d_name, (ds->d_namlen = d_namlen));
 
             u_dir.pfree += d_namlen;
             u_dir.nfree -= d_namlen;
@@ -1753,7 +1808,7 @@ void u_ftw(void)
 
    U_INTERNAL_TRACE("u_ftw()")
 
-   U_INTERNAL_ASSERT_EQUALS(strlen(u_buffer), u_buffer_len)
+   U_INTERNAL_ASSERT_EQUALS(u_strlen(u_buffer), u_buffer_len)
 
    /*
     * NB: if is present the char 'filetype' this item isn't a directory and we don't need to try opendir()...
@@ -1799,7 +1854,7 @@ int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict passwor
 {
    U_INTERNAL_TRACE("u_passwd_cb(%p,%d,%d,%p)", buf, size, rwflag, password)
 
-   (void) memcpy(buf, (char* restrict)password, size);
+   (void) u_memcpy(buf, (char* restrict)password, size);
 
    buf[size-1] = '\0';
 

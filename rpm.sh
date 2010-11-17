@@ -3,7 +3,7 @@
  PACKAGE=$HOME/rpmbuild			# fedora
 #PACKAGE=/usr/src/packages		# SUSE
 
-VERSION=1.0.5
+VERSION=1.1.0
 
 run_build() {
 

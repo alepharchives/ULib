@@ -94,12 +94,12 @@ public:
 
    friend U_EXPORT ostream& operator<<(ostream& os, const UTimer& t);
 
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+   static bool invariant();
+#endif
 #ifdef DEBUG
    static void printInfo(ostream& os);
    const char* dump(bool reset) const;
-#endif
-#if defined(DEBUG) || defined(U_TEST)
-   static bool invariant();
 #endif
 
 protected:

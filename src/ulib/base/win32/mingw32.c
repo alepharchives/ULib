@@ -65,8 +65,8 @@ struct passwd* getpwuid(uid_t uid)
       char name[256];
       DWORD length = sizeof(name);
 
-      if (GetUserName(name, &length)) strcpy(passwd_any_name, name);
-      else                            strcpy(passwd_any_name, "unknown");
+      if (GetUserName(name, &length)) u_strcpy(passwd_any_name, name);
+      else                            u_strcpy(passwd_any_name, "unknown");
       }
 
    return &passwd_any;
@@ -134,12 +134,12 @@ char* realpath(const char* name, char* resolved_path)
       return NULL;
       }
 
-   if (U_STREQ(name, ".")) (void) strncpy(resolved_path, u_cwd, u_cwd_len);
+   if (U_STREQ(name, ".")) (void) u_strncpy(resolved_path, u_cwd, u_cwd_len);
    else
       {
       /* We can, so normalize the name and return it below */
 
-      (void) strcpy(resolved_path, name);
+      (void) u_strcpy(resolved_path, name);
 
       (void) u_canonicalize_pathname(resolved_path);
       }
@@ -149,7 +149,7 @@ char* realpath(const char* name, char* resolved_path)
 
 char* u_slashify(const char* src, char slash_from, char slash_to)
 {
-   static char u_slashify_buffer[4096]; /* NB: we cannot use u_buffer, is used by u_ftw... */
+   static char u_slashify_buffer[U_PATH_MAX]; /* NB: we cannot use u_buffer, is used by u_ftw... */
 
    char* dst = u_slashify_buffer;
 
@@ -1266,7 +1266,7 @@ ssize_t writev(int fd, const struct iovec* iov, int count)
 
    for (i = 0; i < count; ++i)
       {
-      (void) memcpy(ptr, iov[i].iov_base, iov[i].iov_len);
+      (void) u_memcpy(ptr, iov[i].iov_base, iov[i].iov_len);
 
       ptr += iov[i].iov_len;
       }

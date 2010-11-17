@@ -105,13 +105,14 @@ int USCGIPlugIn::handlerInit()
 
          U_SRV_LOG("initialization of plugin success");
 
-         U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+         goto end;
          }
       }
 
    U_SRV_LOG("initialization of plugin FAILED");
 
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+end:
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 // Connection-wide hooks
@@ -120,22 +121,26 @@ int USCGIPlugIn::handlerRequest()
 {
    U_TRACE(0, "USCGIPlugIn::handlerRequest()")
 
-   if (UHTTP::isHTTPRequestAlreadyProcessed() == false &&
-       u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(scgi_uri_mask), 0))
+   if (UHTTP::isHTTPRequestAlreadyProcessed() ||
+       scgi_uri_mask.empty()                  ||
+       u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(scgi_uri_mask), 0) == false)
       {
-      char* equalPtr;
-      char* envp[128];
-      UString request(U_CAPACITY), environment(U_CAPACITY);
+      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+      }
 
+   if (connection &&
+       connection->isConnected())
+      {
       // Set environment for the SCGI application server
 
-      environment = UHTTP::getCGIEnvironment() + "SCGI=1\n" + *UHTTP::penvironment;
-
+      char* equalPtr;
+      char* envp[128];
+      UString environment = UHTTP::getCGIEnvironment() + "SCGI=1\n" + *UHTTP::penvironment;
       int n = u_split(U_STRING_TO_PARAM(environment), envp, 0);
 
       U_INTERNAL_ASSERT_MINOR(n, 128)
 
-#  ifdef DEBUG
+#  if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
       uint32_t hlength = 0; // calculate the total length of the headers
 #  endif
 
@@ -145,18 +150,22 @@ int USCGIPlugIn::handlerRequest()
 
          U_INTERNAL_ASSERT_POINTER(equalPtr)
          U_INTERNAL_ASSERT_MAJOR(equalPtr-envp[i], 0)
-         U_INTERNAL_ASSERT_MAJOR(strlen(equalPtr+1), 0)
+         U_INTERNAL_ASSERT_MAJOR(u_strlen(equalPtr+1), 0)
 
-#     ifdef DEBUG
-         hlength += (equalPtr - envp[i]) + strlen(equalPtr) + 1;
+#     if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+         hlength += (equalPtr - envp[i]) + u_strlen(equalPtr) + 1;
 #     endif
 
          *equalPtr = '\0';
          }
 
-      U_INTERNAL_ASSERT_EQUALS(hlength, environment.size())
+      n = environment.size();
+
+      U_INTERNAL_ASSERT_EQUALS(hlength, n)
 
       // send header data as netstring -> [len]":"[string]","
+
+      UString request(10U + n);
 
       request.snprintf("%u:%.*s,", environment.size(), U_STRING_TO_TRACE(environment));
 
@@ -191,12 +200,15 @@ int USCGIPlugIn::handlerReset()
 {
    U_TRACE(0, "USCGIPlugIn::handlerReset()")
 
-   connection->clearData();
-
-   if (scgi_keep_conn == false &&
-       connection->isConnected())
+   if (connection)
       {
-      connection->close();
+      connection->clearData();
+
+      if (scgi_keep_conn == false &&
+          connection->isConnected())
+         {
+         connection->close();
+         }
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

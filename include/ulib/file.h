@@ -104,9 +104,6 @@ public:
 #  define chk_num_file_object()
 #endif
 
-   static const char* cwd_save;
-   static uint32_t    cwd_len_save;
-
    void reset()
       {
       U_TRACE(0, "UFile::reset()")
@@ -156,15 +153,15 @@ public:
       {
       U_TRACE(0, "UFile::setRoot()")
 
+      reset();
+
       pathname.setConstant(U_CONSTANT_TO_PARAM("/")); 
 
       path_relativ_len = 1;
       path_relativ     = pathname.data();
 
-      U_INTERNAL_DUMP("u_cwd(%u)        = %.*S", u_cwd_len, u_cwd_len, u_cwd)
+      U_INTERNAL_DUMP("u_cwd            = %S", u_cwd)
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
-      reset();
       }
 
    void setPath(const UString& path);
@@ -854,6 +851,9 @@ protected:
    static bool _root;
    static UTree<UString>* tree;
    static UVector<UString>* vector;
+
+   static char     cwd_save[U_PATH_MAX];
+   static uint32_t cwd_len_save;
 
    void setPathRelativ();
    void substitute(UFile& file);

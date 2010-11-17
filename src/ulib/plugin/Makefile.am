@@ -17,18 +17,11 @@ mod_rpc_la_LIBADD    = $(ulib_la)
 mod_rpc_la_LDFLAGS   = -module $(MODULE_LIBTOOL_OPTIONS)
 endif
 
-if !STATIC_HANDLER_HTTP
-module_LTLIBRARIES  += mod_http.la
-mod_http_la_SOURCES  = mod_http.cpp
-mod_http_la_LIBADD   = $(ulib_la)
-mod_http_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
-endif
-
-if !STATIC_HANDLER_TSA
-module_LTLIBRARIES  += mod_tsa.la
-mod_tsa_la_SOURCES   = mod_tsa.cpp
-mod_tsa_la_LIBADD    = $(ulib_la)
-mod_tsa_la_LDFLAGS   = -module $(MODULE_LIBTOOL_OPTIONS)
+if !STATIC_HANDLER_STREAM
+module_LTLIBRARIES    += mod_stream.la
+mod_stream_la_SOURCES  = mod_stream.cpp
+mod_stream_la_LIBADD   = $(ulib_la)
+mod_stream_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
 endif
 
 if !STATIC_HANDLER_NOCAT
@@ -38,18 +31,11 @@ mod_nocat_la_LIBADD  = $(ulib_la)
 mod_nocat_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
 endif
 
-if !STATIC_HANDLER_ECHO
-module_LTLIBRARIES  += mod_echo.la
-mod_echo_la_SOURCES  = mod_echo.cpp
-mod_echo_la_LIBADD   = $(ulib_la)
-mod_echo_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
-endif
-
-if !STATIC_HANDLER_FCGI
-module_LTLIBRARIES  += mod_fcgi.la
-mod_fcgi_la_SOURCES  = mod_fcgi.cpp
-mod_fcgi_la_LIBADD   = $(ulib_la)
-mod_fcgi_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
+if !STATIC_HANDLER_SOCKET
+module_LTLIBRARIES    += mod_socket.la
+mod_socket_la_SOURCES  = mod_socket.cpp
+mod_socket_la_LIBADD   = $(ulib_la)
+mod_socket_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
 endif
 
 if !STATIC_HANDLER_SCGI
@@ -59,25 +45,20 @@ mod_scgi_la_LIBADD   = $(ulib_la)
 mod_scgi_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
 endif
 
-if !STATIC_HANDLER_STREAM
-module_LTLIBRARIES  += mod_stream.la
-mod_stream_la_SOURCES  = mod_stream.cpp
-mod_stream_la_LIBADD   = $(ulib_la)
-mod_stream_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
+if !STATIC_HANDLER_FCGI
+module_LTLIBRARIES  += mod_fcgi.la
+mod_fcgi_la_SOURCES  = mod_fcgi.cpp
+mod_fcgi_la_LIBADD   = $(ulib_la)
+mod_fcgi_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
 endif
 
-if !STATIC_HANDLER_SOCKET
-module_LTLIBRARIES  += mod_socket.la
-mod_socket_la_SOURCES  = mod_socket.cpp
-mod_socket_la_LIBADD   = $(ulib_la)
-mod_socket_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
+if PCRE
+if !STATIC_HANDLER_PROXY
+module_LTLIBRARIES  += mod_proxy.la
+mod_proxy_la_SOURCES = mod_proxy.cpp mod_proxy_service.cpp
+mod_proxy_la_LIBADD  = $(ulib_la)
+mod_proxy_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
 endif
-
-if !STATIC_HANDLER_SSI
-module_LTLIBRARIES  += mod_ssi.la
-mod_ssi_la_SOURCES  = mod_ssi.cpp
-mod_ssi_la_LIBADD   = $(ulib_la)
-mod_ssi_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
 endif
 
 if EXPAT
@@ -89,13 +70,32 @@ mod_soap_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
 endif
 endif
 
-if PCRE
-if !STATIC_HANDLER_PROXY
-module_LTLIBRARIES  += mod_proxy.la
-mod_proxy_la_SOURCES = mod_proxy.cpp mod_proxy_service.cpp
-mod_proxy_la_LIBADD  = $(ulib_la)
-mod_proxy_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+if !STATIC_HANDLER_SSI
+module_LTLIBRARIES += mod_ssi.la
+mod_ssi_la_SOURCES  = mod_ssi.cpp
+mod_ssi_la_LIBADD   = $(ulib_la)
+mod_ssi_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
 endif
+
+if !STATIC_HANDLER_TSA
+module_LTLIBRARIES  += mod_tsa.la
+mod_tsa_la_SOURCES   = mod_tsa.cpp
+mod_tsa_la_LIBADD    = $(ulib_la)
+mod_tsa_la_LDFLAGS   = -module $(MODULE_LIBTOOL_OPTIONS)
+endif
+
+if !STATIC_HANDLER_HTTP
+module_LTLIBRARIES  += mod_http.la
+mod_http_la_SOURCES  = mod_http.cpp
+mod_http_la_LIBADD   = $(ulib_la)
+mod_http_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
+endif
+
+if !STATIC_HANDLER_ECHO
+module_LTLIBRARIES  += mod_echo.la
+mod_echo_la_SOURCES  = mod_echo.cpp
+mod_echo_la_LIBADD   = $(ulib_la)
+mod_echo_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
 endif
 
 clean-local:

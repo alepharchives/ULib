@@ -192,8 +192,8 @@ void ULog::write(const struct iovec* iov, int n)
             LOG_ptr = LOG_page = pthis->UFile::map;
             }
 
-         (void) memcpy(LOG_ptr, iov[i].iov_base, iov[i].iov_len);
-                       LOG_ptr +=                iov[i].iov_len;
+         (void) u_memcpy(LOG_ptr, iov[i].iov_base, iov[i].iov_len);
+                         LOG_ptr +=                iov[i].iov_len;
 
          U_INTERNAL_DUMP("memcpy() -> %.*S", iov[i].iov_len, LOG_ptr - iov[i].iov_len)
          }
@@ -318,9 +318,9 @@ void ULog::backup()
 
    if (dir_log_gz)
       {
-      uint32_t len = strlen(dir_log_gz);
+      uint32_t len = u_strlen(dir_log_gz);
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", path, dir_log_gz, len);
+      (void) U_SYSCALL(u_memcpy, "%p,%p,%u", path, dir_log_gz, len);
 
        path  += len;
       *path++ = '/';

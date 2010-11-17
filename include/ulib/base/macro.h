@@ -28,7 +28,7 @@
 
 #ifdef DEBUG_DEBUG
 #  define U_INTERNAL_TRACE(format,args...) \
-      { char u_internal_buf[8192]; (void) sprintf(u_internal_buf, format"\n" , ##args); \
+      { char u_internal_buf[16 * 1024]; (void) sprintf(u_internal_buf, format"\n" , ##args); \
         (void) write(STDERR_FILENO, u_internal_buf, strlen(u_internal_buf)); }
 #  define U_INTERNAL_PRINT(format,args...) U_INTERNAL_TRACE(format,args)
 #else
@@ -38,7 +38,8 @@
 
 /* Design by contract - if (assertion == false) then stop */
 
-#define U_ASSERT_MACRO(assertion,msg,info) \
+#ifdef DEBUG
+#  define U_ASSERT_MACRO(assertion,msg,info) \
       if ((bool)(assertion) == false) { \
          u_printf("%W%N%W: %Q%W%s%W\n" \
          "-------------------------------------\n" \
@@ -54,8 +55,20 @@
          CYAN, __LINE__, YELLOW, \
          CYAN, __PRETTY_FUNCTION__, YELLOW, \
          CYAN, #assertion, YELLOW, MAGENTA, info, YELLOW); }
+#elif defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__)
+#  ifdef HAVE_ASSERT_H
+#     include <assert.h>
+#  else
+      /*
+      extern "C" { void __assert(const char* __assertion,
+                                 const char* __file,
+                                 int __line); }
+      */
+#  endif
+#  define U_ASSERT_MACRO(assertion,msg,info) { if ((int)(assertion) == 0) { __assert(#assertion, __FILE__, __LINE__);  } }
+#endif
 
-#ifdef DEBUG
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
 #  define U_INTERNAL_ASSERT(expr)        { U_ASSERT_MACRO(expr,"ASSERTION FALSE","") }
 #  define U_INTERNAL_ASSERT_MINOR(a,b)   { U_ASSERT_MACRO((a)<(b),"NOT LESS","") }
 #  define U_INTERNAL_ASSERT_MAJOR(a,b)   { U_ASSERT_MACRO((a)>(b),"NOT GREATER","") }
@@ -113,15 +126,14 @@
 #define U_CONSTANT_TO_PARAM(str) str,U_CONSTANT_SIZE(str)
 #define U_CONSTANT_TO_TRACE(str)     U_CONSTANT_SIZE(str),str
 
-#define U_STRNCPY(a,b)    (void)strncpy((const char* restrict)(a),b,U_CONSTANT_SIZE(b))
+#define U_MEMCPY(a,b) (void) memcpy((char* restrict)(a),b,U_CONSTANT_SIZE(b))
+
+#define U_MEMCMP(a,b)            memcmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b))
 #define U_STRNCMP(a,b)          strncmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b))
 #define U_STRNCASECMP(a,b)  strncasecmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b))
 
 #define U_STREQ(a,b)  (strcmp( (const char* restrict)(a),b) == 0)
 #define U_STRNEQ(a,b) (U_STRNCMP((a),b)                     == 0)
-
-#define U_MEMCPY(a,b) memcpy((      char* restrict)(a),b,U_CONSTANT_SIZE(b))
-#define U_MEMCMP(a,b) memcmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b))
 
 /* Note that IS_ABSOLUTE_PATH accepts d:foo as well, although it is only semi-absolute. This is because the users of IS_ABSOLUTE_PATH
  * want to know whether to prepend the current working directory to a file name, which should not be done with a name like d:foo

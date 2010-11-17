@@ -209,9 +209,9 @@ static void set_ENV(const UString& rbuffer)
 
    if (memcmp(accept_language, old_accept_language, 2))
       {
-      (void) snprintf(FORM_FILE_DIR, sizeof(FORM_FILE_DIR), "IR/WEB/form/%.2s", (char*) memcpy(old_accept_language, accept_language, 2));
+      (void) snprintf(FORM_FILE_DIR, sizeof(FORM_FILE_DIR), "IR/WEB/form/%.2s", (char*) u_memcpy(old_accept_language, accept_language, 2));
 
-      if (UFile::access(FORM_FILE_DIR) == false) (void) strcpy(FORM_FILE_DIR, FORM_FILE_DIR_DEFAULT);
+      if (UFile::access(FORM_FILE_DIR) == false) (void) u_strcpy(FORM_FILE_DIR, FORM_FILE_DIR_DEFAULT);
       }
 
    *cookie = UHTTP::getHTTPCookie(true);

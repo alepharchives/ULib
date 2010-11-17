@@ -317,6 +317,7 @@ void UMimeHeader::writeHeaders(UString& buffer)
 
    UStringRep* key;
    UStringRep* value;
+   uint32_t len1, len2;
    UString tmp(U_CAPACITY);
 
    if (table.first())
@@ -325,7 +326,12 @@ void UMimeHeader::writeHeaders(UString& buffer)
          key   = table.key();
          value = table.elem();
 
-         tmp.snprintf("%.*s: %.*s\r\n", key->size(), key->data(), value->size(), value->data());
+         len1 =   key->size();
+         len2 = value->size();
+
+         tmp.setBuffer(len1 + 2 + len2 + 2);
+
+         tmp.snprintf("%.*s: %.*s\r\n", len1, key->data(), len2, value->data());
 
          buffer += tmp;
          }

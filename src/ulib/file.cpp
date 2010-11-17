@@ -25,8 +25,8 @@
 
 int               UFile::mime_index;
 bool              UFile::_root;
+char              UFile::cwd_save[U_PATH_MAX];
 uint32_t          UFile::cwd_len_save;
-const char*       UFile::cwd_save;
 UTree<UString>*   UFile::tree;
 UVector<UString>* UFile::vector;
 
@@ -54,6 +54,8 @@ void UFile::setPathRelativ()
 
    U_ASSERT_EQUALS(pathname.empty(),false)
 
+   reset();
+
    char c = pathname.c_char(0);
 
    if (c == '~' ||
@@ -79,10 +81,8 @@ void UFile::setPathRelativ()
       }
    */
 
-   U_INTERNAL_DUMP("u_cwd(%u)        = %.*S", u_cwd_len, u_cwd_len, u_cwd)
+   U_INTERNAL_DUMP("u_cwd            = %S", u_cwd)
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
-   reset();
 }
 
 // gcc - call is unlikely and code size would grow
@@ -173,58 +173,55 @@ bool UFile::chdir(const char* path, bool flag_save)
 
    chk_num_file_object();
 
-   U_INTERNAL_DUMP("u_cwd(%u)    = %.*S", u_cwd_len, u_cwd_len, u_cwd)
+   U_INTERNAL_DUMP("u_cwd    = %S", u_cwd)
+   U_INTERNAL_DUMP("cwd_save = %S", cwd_save)
 
    if (path)
       {
       if (strcmp(path, u_cwd) == 0) U_RETURN(true);
 
+      U_INTERNAL_ASSERT(IS_DIR_SEPARATOR(u_cwd[0]))
+
       if (flag_save)
          {
-         if (IS_DIR_SEPARATOR(u_cwd[0]) == false) u_getcwd();
-
-         cwd_save     = u_cwd;
          cwd_len_save = u_cwd_len;
+
+         (void) u_strcpy(cwd_save, u_cwd);
          }
       }
    else
       {
-      U_INTERNAL_ASSERT_POINTER(cwd_save)
-
+      U_INTERNAL_ASSERT(flag_save)
       U_INTERNAL_ASSERT_MAJOR(cwd_len_save,0)
 
-     ((char*)cwd_save)[cwd_len_save] = '\0';
       path = cwd_save;
-
-      U_INTERNAL_DUMP("path = %S", path)
       }
-
-   U_INTERNAL_DUMP("cwd_save(%u) = %.*S", cwd_len_save, cwd_len_save, cwd_save)
 
    bool result = (U_SYSCALL(chdir, "%S", U_PATH_CONV(path)) != -1);
 
    if (result)
       {
-      if (path == cwd_save)
+      if (path == cwd_save) // NB: => chdir(0, true)...
          {
-         const char* tmp = u_cwd;
+         U_INTERNAL_ASSERT(flag_save)
 
-         u_cwd     = cwd_save;
          u_cwd_len = cwd_len_save;
 
-         cwd_save     = tmp;
-         cwd_len_save = 0;
+         (void) u_strcpy(u_cwd, cwd_save);
          }
+      else if (IS_DIR_SEPARATOR(path[0]) == false) u_getcwd();
       else
          {
-         u_cwd     = path;
          u_cwd_len = u_strlen(path);
 
-         if (IS_DIR_SEPARATOR(u_cwd[0]) == false) u_getcwd();
+         U_INTERNAL_ASSERT_MINOR(u_cwd_len,U_PATH_MAX)
+
+         (void) u_strcpy(u_cwd, path);
          }
       }
 
-   U_INTERNAL_DUMP("u_cwd(%u)    = %.*S", u_cwd_len, u_cwd_len, u_cwd)
+   U_INTERNAL_DUMP("u_cwd    = %S", u_cwd)
+   U_INTERNAL_DUMP("cwd_save = %S", cwd_save)
 
    U_RETURN(result);
 }
@@ -235,8 +232,8 @@ uint32_t UFile::setPathFromFile(const UFile& file, char* buffer_path, const char
 
    U_INTERNAL_DUMP("file.path_relativ(%u) = %.*S", file.path_relativ_len, file.path_relativ_len, file.path_relativ)
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", buffer_path,                         file.path_relativ, file.path_relativ_len);
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", buffer_path + file.path_relativ_len,            suffix,                   len);
+   (void) u_memcpy(buffer_path,                         file.path_relativ, file.path_relativ_len);
+   (void) u_memcpy(buffer_path + file.path_relativ_len,            suffix,                   len);
 
    uint32_t new_path_relativ_len = file.path_relativ_len + len;
 
@@ -253,8 +250,8 @@ void UFile::setPath(const UFile& file, char* buffer_path, const char* suffix, ui
 {
    U_TRACE(1, "UFile::setPath(%p,%p,%.*S,%u)", &file, buffer_path, len, suffix, len)
 
-   U_INTERNAL_DUMP("u_cwd             = %S", u_cwd)
-   U_INTERNAL_DUMP("cwd_save          = %.*S", cwd_len_save, cwd_save)
+   U_INTERNAL_DUMP("u_cwd    = %S", u_cwd)
+   U_INTERNAL_DUMP("cwd_save = %.*S", cwd_len_save, cwd_save)
 
    reset();
 
@@ -318,7 +315,16 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
    U_INTERNAL_ASSERT((off_t)length <= st_size)     // Don't allow mappings beyond EOF since Windows can't handle that POSIX like
 #endif
 
-   map_size = (length ? length : (uint32_t)(st_size - offset));
+   if (length == 0)
+      {
+#  ifdef HAVE_ARCH64
+      U_INTERNAL_ASSERT_MINOR_MSG(st_size,4L*1024L*1024L*1024L,"we can't manage file bigger than 4G...") // limit of UString
+#  endif
+
+      length = st_size;
+      }
+
+   map_size = (length - offset);
 
 #ifndef HAVE_ARCH64
    U_INTERNAL_ASSERT_RANGE(1,map_size,3U*1024U*1024U*1024U) // limit of linux system
@@ -481,7 +487,7 @@ bool UFile::write(const UString& data, bool append, bool bmkdirs)
 
             uint32_t len = ptr - path_relativ;
 
-            (void) U_SYSCALL(memcpy, "%p,%p,%u", buffer, path_relativ, len);
+            (void) u_memcpy(buffer, path_relativ, len);
 
             buffer[len] = '\0';
 
@@ -515,7 +521,7 @@ bool UFile::write(const UString& data, bool append, bool bmkdirs)
 
             if (esito)
                {
-               (void) U_SYSCALL(memcpy, "%p,%p,%u", map + resto, data.data(), sz);
+               (void) u_memcpy(map + resto, data.data(), sz);
 
                munmap();
                }
@@ -932,7 +938,7 @@ bool UFile::mkdirs(const char* path, mode_t mode)
 
          uint32_t len = ptr - path;
 
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", buffer, path, len);
+         (void) u_memcpy(buffer, path, len);
 
          buffer[len] = '\0';
 
@@ -1018,7 +1024,7 @@ bool UFile::rmdirs(const char* path, bool remove_all)
 
          int length = ptr - path + 1;
 
-         (void) U_SYSCALL(memcpy, "%p,%p,%u", newpath, path, length);
+         (void) u_memcpy(newpath, path, length);
 
          newpath[length] = '\0';
 
@@ -1080,11 +1086,11 @@ void UFile::substitute(UFile& file)
    st_size  = file.st_size;
    map_size = file.map_size;
 
+   file.reset();
+
    U_INTERNAL_DUMP("fd = %d map = %p map_size = %u st_size = %I", fd, map, map_size, st_size)
 
    if (fd != -1) UFile::fsync();
-
-   file.reset();
 }
 
 // LS

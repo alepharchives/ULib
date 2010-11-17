@@ -109,7 +109,7 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
 
    char* _ptr = (char*)r->str;
 
-   if (ptr && length) (void) U_SYSCALL(memcpy, "%p,%p,%u", (void*)_ptr, ptr, length);
+   if (ptr && length) (void) u_memcpy((void*)_ptr, ptr, length);
 
    _ptr[length] = '\0';
 
@@ -273,7 +273,7 @@ void UStringRep::assign(UStringRep*& rep, const char* s, uint32_t n)
 
       U_INTERNAL_ASSERT_MAJOR(n,0)
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, n);
+      (void) u_memcpy(ptr, s, n);
 
       ptr[(rep->_length = n)] = '\0';
       }
@@ -368,7 +368,7 @@ uint32_t UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", s, str + pos, n);
+   (void) u_memcpy(s, str + pos, n);
 
    U_RETURN(n);
 }
@@ -579,7 +579,7 @@ bool UString::reserve(uint32_t n)
       const char* ptr1 = rep->str;
             char* ptr2 = (char*) U_SYSCALL(malloc, "%u", n);
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr2, ptr1, rep->_length);
+      (void) u_memcpy(ptr2, ptr1, rep->_length);
 
       rep->checkIfMReserve();
 
@@ -608,12 +608,13 @@ void UString::setBuffer(uint32_t n)
 {
    U_TRACE(0, "UString::setBuffer(%u)", n)
 
+   U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT(n <= max_size())
 
    if (rep->references ||
        rep->_capacity < n)
       {
-      UStringRep* r = UStringRep::create(0U, (n ? n : 100U), 0);
+      UStringRep* r = UStringRep::create(0U, n, 0);
 
       set(r);
       }
@@ -658,13 +659,13 @@ U_NO_EXPORT char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
 
    uint32_t __capacity = rep->_capacity;
 
-   if (uniq() == false ||
+   if (rep->references ||
        n > __capacity)
       {
       UStringRep* r = UStringRep::create(n, U_max(n,__capacity), 0);
 
-      if (pos) (void) U_SYSCALL(memcpy, "%p,%p,%u", (void*)r->str,            str, pos);
-               (void) U_SYSCALL(memcpy, "%p,%p,%u", (char*)r->str + pos + n2, src, how_much);
+      if (pos)       (void) u_memcpy((void*)r->str,            str, pos);
+      if (how_much)  (void) u_memcpy((char*)r->str + pos + n2, src, how_much);
 
       set(r);
 
@@ -687,7 +688,7 @@ UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
 
    char* ptr = __replace(pos, n1, n2);
 
-   if (ptr && n2) (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, n2);
+   if (ptr && n2) (void) u_memcpy(ptr, s, n2);
 
    U_INTERNAL_ASSERT(invariant())
 
@@ -719,8 +720,8 @@ U_NO_EXPORT char* UString::__append(uint32_t n)
 
    U_INTERNAL_ASSERT_MAJOR(sz1,0)
 
-   if (uniq() == false ||
-       (sz1 > rep->_capacity))
+   if (rep->references ||
+       sz1 > rep->_capacity)
       {
       r = UStringRep::create(sz, U_SIZE_TO_CHUNK(sz1), str);
 
@@ -742,7 +743,7 @@ UString& UString::append(const char* s, uint32_t n)
       {
       char* ptr = __append(n);
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", ptr, s, n);
+      (void) u_memcpy(ptr, s, n);
       }
 
    U_INTERNAL_ASSERT(invariant())
@@ -1593,37 +1594,23 @@ U_EXPORT UString operator+(const UString& lhs, const char* rhs)
 U_EXPORT UString operator+(const UString& lhs, char rhs)
 { UString str(lhs); (void) str.append(uint32_t(1), rhs); return str; }
 
-#ifdef DEBUG
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
 #  include <ulib/internal/objectIO.h>
 
 const char* UStringRep::dump(bool reset) const
 {
-   *UObjectIO::os << "parent     " << (void*)parent << '\n'
-                  << "child      " << child         << '\n'
-                  << "length     " << _length       << '\n'
+   *UObjectIO::os << "length     " << _length       << '\n'
                   << "capacity   " << _capacity     << '\n'
                   << "references " << references+1  << '\n'
+#              ifdef DEBUG
+                  << "parent     " << (void*)parent << '\n'
+                  << "child      " << child         << '\n'
+#              endif
                   << "str        " << (void*)str    << ' ';
 
    char buffer[1024];
 
    UObjectIO::os->write(buffer, u_snprintf(buffer, sizeof(buffer), "%.*S", U_min(_length, 256U), str));
-
-   if (reset)
-      {
-      UObjectIO::output();
-
-      return UObjectIO::buffer_output;
-      }
-
-   return 0;
-}
-
-const char* UString::dump(bool reset) const
-{
-   *UObjectIO::os << "rep (UStringRep " << (void*)rep << ")";
-
-   if (rep == rep->string_rep_null) *UObjectIO::os << " == UStringRepNull";
 
    if (reset)
       {
@@ -1675,5 +1662,22 @@ bool UString::invariant() const
 
    return rep->invariant();
 }
+#endif
 
+#ifdef DEBUG
+const char* UString::dump(bool reset) const
+{
+   *UObjectIO::os << "rep (UStringRep " << (void*)rep << ")";
+
+   if (rep == rep->string_rep_null) *UObjectIO::os << " == UStringRepNull";
+
+   if (reset)
+      {
+      UObjectIO::output();
+
+      return UObjectIO::buffer_output;
+      }
+
+   return 0;
+}
 #endif

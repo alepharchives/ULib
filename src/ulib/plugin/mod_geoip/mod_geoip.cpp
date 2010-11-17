@@ -194,12 +194,13 @@ int UGeoIPPlugIn::handlerInit()
       {
       U_SRV_LOG("initialization of plugin success");
 
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+      goto end;
       }
 
    U_SRV_LOG("initialization of plugin FAILED");
 
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+end:
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
 // Connection-wide hooks

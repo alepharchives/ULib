@@ -325,7 +325,7 @@ const char* USSLSocket::status(SSL* _ssl, int _ret, bool flag, char* buffer, uin
       {
       buffer[buffer_len++] = ' ';
 
-      (void) U_SYSCALL(memcpy, "%p,%p,%u", (void*)(buffer + buffer_len), sslerr, len+1);
+      (void) u_memcpy((void*)(buffer + buffer_len), sslerr, len+1);
       }
 
    U_RETURN((const char*)buffer);
@@ -638,9 +638,12 @@ int USSLSocket::writev(const struct iovec* iov, int iovcnt)
 
    for (i = 0; i < iovcnt; ++i)
       {
-      (void) memcpy(ptr, iov[i].iov_base, iov[i].iov_len);
+      if (iov[i].iov_len)
+         {
+         (void) u_memcpy(ptr, iov[i].iov_base, iov[i].iov_len);
 
-      ptr += iov[i].iov_len;
+         ptr += iov[i].iov_len;
+         }
       }
 
    result = USSLSocket::send(buf, length);

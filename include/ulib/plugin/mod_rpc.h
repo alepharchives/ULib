@@ -54,6 +54,9 @@ public:
    URpcPlugIn()
       {
       U_TRACE_REGISTER_OBJECT(0, URpcPlugIn, "")
+
+      rpc_parser = 0;
+      is_rpc_msg = false;
       }
 
    virtual ~URpcPlugIn();
@@ -78,6 +81,7 @@ public:
 
 protected:
    URPCParser* rpc_parser;
+   bool is_rpc_msg;
 
 private:
    URpcPlugIn(const URpcPlugIn&) : UServerPlugIn() {}

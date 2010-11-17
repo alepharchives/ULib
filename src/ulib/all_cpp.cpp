@@ -131,11 +131,6 @@
 #  include "curl/curl.cpp"
 #endif
 
-#ifdef HAVE_MODULES
-#  include "dynamic/dynamic.cpp"
-#  include "dynamic/plugin.cpp"
-#endif
-
 #ifdef USE_PARSER
 #  include "flex/flexer.cpp"
 #  include "flex/bison.cpp"
@@ -155,54 +150,65 @@
 
 // Handler static/dynamic plugin
 
-#ifdef U_STATIC_HANDLER_RPC
-#  include "plugin/mod_rpc.cpp"
+#ifdef HAVE_MODULES
+#  include "dynamic/dynamic.cpp"
+#  include "dynamic/plugin.cpp"
 #endif
 
-#ifdef U_STATIC_HANDLER_HTTP
-#  include "plugin/mod_http.cpp"
-#endif
-
-#ifdef U_STATIC_HANDLER_TSA
-#  include "plugin//mod_tsa.cpp"
-#endif
-
-#ifdef U_STATIC_HANDLER_NOCAT
-#  include "plugin/mod_nocat.cpp"
+#ifdef U_STATIC_HANDLER_SHIB
+#  include "plugin/mod_shib/mod_shib.cpp"
+#  include "plugin/mod_proxy_service.cpp"
 #endif
 
 #ifdef U_STATIC_HANDLER_ECHO
 #  include "plugin/mod_echo.cpp"
 #endif
 
-#ifdef U_STATIC_HANDLER_FCGI
-#  include "plugin/mod_fcgi.cpp"
-#endif
-
-#ifdef U_STATIC_HANDLER_SCGI
-#  include "plugin/mod_scgi.cpp"
-#endif
-
 #ifdef U_STATIC_HANDLER_STREAM
 #  include "plugin/mod_stream.cpp"
+#endif
+
+#ifdef U_STATIC_HANDLER_NOCAT
+#  include "plugin/mod_nocat.cpp"
 #endif
 
 #ifdef U_STATIC_HANDLER_SOCKET
 #  include "plugin/mod_socket.cpp"
 #endif
 
-#ifdef U_STATIC_HANDLER_SSI
-#  include "plugin/mod_ssi.cpp"
+#ifdef U_STATIC_HANDLER_SCGI
+#  include "plugin/mod_scgi.cpp"
+#endif
+
+#ifdef U_STATIC_HANDLER_FCGI
+#  include "plugin/mod_fcgi.cpp"
+#endif
+
+#if defined(HAVE_LIBGEOIP) && defined(U_STATIC_HANDLER_GEOIP)
+#  include "plugin/mod_geoip/mod_geoip.cpp"
+#endif
+
+#if defined(HAVE_PCRE) && defined(U_STATIC_HANDLER_PROXY)
+#  include "plugin/mod_proxy.cpp"
+#  include "plugin/mod_proxy_service.cpp"
 #endif
 
 #if defined(HAVE_EXPAT) && defined(U_STATIC_HANDLER_SOAP)
 #  include "plugin/mod_soap.cpp"
 #endif
 
-#if defined(HAVE_PCRE) && defined(U_STATIC_HANDLER_PROXY)
-#  include "plugin/mod_proxy.cpp"
+#ifdef U_STATIC_HANDLER_SSI
+#  include "plugin/mod_ssi.cpp"
 #endif
 
-#if defined(HAVE_LIBGEOIP) && defined(U_STATIC_HANDLER_GEOIP)
-#  include "plugin/mod_geoip/mod_geoip.cpp"
+#ifdef U_STATIC_HANDLER_TSA
+#  include "plugin//mod_tsa.cpp"
+#endif
+
+#ifdef U_STATIC_HANDLER_HTTP
+#  include "plugin/mod_http.cpp"
+#endif
+
+#ifdef U_STATIC_HANDLER_RPC
+#  include "plugin/mod_rpc.cpp"
 #endif

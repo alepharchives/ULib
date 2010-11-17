@@ -47,6 +47,20 @@ void UFileConfig::str_allocate()
    U_NEW_ULIB_OBJECT(str_string, U_STRING_FROM_STRINGREP_STORAGE(2));
 }
 
+UFileConfig::UFileConfig()
+{
+   U_TRACE_REGISTER_OBJECT(0, UFileConfig, "")
+
+   _size  = 0;
+   _start = _end = data.data();
+
+   UFile::map      = (char*)MAP_FAILED;
+   UFile::st_size  = 0;
+   UFile::map_size = 0;
+
+   if (str_yes == 0) str_allocate();
+}
+
 bool UFileConfig::open()
 {
    U_TRACE(0, "UFileConfig::open()")
@@ -77,7 +91,7 @@ bool UFileConfig::open()
 
          command.snprintf("cpp -undef -nostdinc -w -P -C -I%.*s -", U_STRING_TO_TRACE(_dir));
 
-         data = UCommand::outputCommand(command, 0, UFile::getFd(), fd_stderr);
+         data = UCommand::outputCommand(command, environ, UFile::getFd(), fd_stderr);
          }
 
       if (data.empty()) goto err;
@@ -247,7 +261,7 @@ bool UFileConfig::loadVector(UVector<UString>& vec, const char* name)
 
    U_INTERNAL_DUMP("_start = %.*S", 10, _start)
 
-   uint32_t len = (name ? strlen(name) : 0);
+   uint32_t len = (name ? u_strlen(name) : 0);
 
    if (len)
       {
@@ -346,8 +360,9 @@ bool UFileConfig::loadINI()
 
    U_INTERNAL_DUMP("_size = %u _start = %.*S", _size, 10, _start)
 
+   uint32_t len;
    const char* ptr;
-   UString sectionKey, fullKey(80U), key, value;
+   UString sectionKey, fullKey(U_CAPACITY), key, value;
 
    while (_start < _end)
       {
@@ -412,10 +427,12 @@ bool UFileConfig::loadINI()
          // The name of a property is composed of the section key and the value key,
          // separated by a period (<section key>.<value key>).
 
-         fullKey.setBuffer(fullKey.size());
+         len = sectionKey.size();
 
-         if (sectionKey.empty()) fullKey.snprintf(     "%.*s",                                U_STRING_TO_TRACE(key));
-         else                    fullKey.snprintf("%.*s.%.*s", U_STRING_TO_TRACE(sectionKey), U_STRING_TO_TRACE(key));
+         fullKey.setBuffer(len + 1 + key.size());
+
+         if (len == 0) fullKey.snprintf(     "%.*s",                         U_STRING_TO_TRACE(key));
+         else          fullKey.snprintf("%.*s.%.*s", len, sectionKey.data(), U_STRING_TO_TRACE(key));
 
          table.insert(fullKey, value);
          }

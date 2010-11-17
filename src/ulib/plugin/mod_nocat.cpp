@@ -1223,122 +1223,130 @@ int UNoCatPlugIn::handlerInit()
 {
    U_TRACE(0, "UNoCatPlugIn::handlerInit()")
 
-   Url* url;
-   UIPAddress addr;
-   UString opt, auth_ip;
-
-   // NB: get IP address of AUTH hosts...
-
-   for (uint32_t i = 0, n = vauth_login.size(); i < n; ++i)
+   if (init_cmd.empty() == false)
       {
-      url = U_NEW(Url(vauth_login[i]));
+      Url* url;
+      UIPAddress addr;
+      UString opt, auth_ip;
 
-      vauth_service_url.push(url);
+      // NB: get IP address of AUTH hosts...
 
-      auth_ip = url->getHost();
-
-      if (addr.setHostName(auth_ip, UClientImage_Base::bIPv6) == false)
+      for (uint32_t i = 0, n = vauth_login.size(); i < n; ++i)
          {
-         U_SRV_LOG("unknown AUTH host %.*S", U_STRING_TO_TRACE(auth_ip));
+         url = U_NEW(Url(vauth_login[i]));
+
+         vauth_service_url.push(url);
+
+         auth_ip = url->getHost();
+
+         if (addr.setHostName(auth_ip, UClientImage_Base::bIPv6) == false)
+            {
+            U_SRV_LOG("unknown AUTH host %.*S", U_STRING_TO_TRACE(auth_ip));
+            }
+         else
+            {
+            (void) auth_ip.replace(addr.getAddressString());
+
+            U_SRV_LOG("AUTH host registered: %.*s", U_STRING_TO_TRACE(auth_ip));
+
+            vauth_ip.push(auth_ip);
+            }
+
+         url = U_NEW(Url(vauth_logout[i]));
+
+         vlogout_url.push(url);
+
+         url = U_NEW(Url(vauth_logout[i]));
+
+         vinfo_url.push(url);
          }
-      else
+
+      U_INTERNAL_ASSERT_EQUALS(vauth_ip.size(), vauth_login.size())
+
+      opt = vauth_ip.join(U_CONSTANT_TO_PARAM(" "));
+
+      vfwopt.push(opt);
+
+      // FIREWALL OPTIONS (8 + 2): params for setup the firewall rules, write data to /tmp/firewall.opt
+
+      opt = vfwopt.join();
+
+      opt.push_back('\n');
+
+      (void) UFile::writeTo(U_STRING_FROM_CONSTANT("/tmp/firewall.opt"), opt);
+
+      // crypto cmd
+
+                                        cmd.set(   init_cmd, (char**)0);
+      if (decrypt_cmd.empty() == false) pgp.set(decrypt_cmd, (char**)0);
+
+      U_INTERNAL_ASSERT(decrypt_key.isNullTerminated())
+
+      if (decrypt_key.empty() == false) UDES3::setPassword(decrypt_key.data());
+
+#  ifdef DEBUG
+      fd_stderr = UFile::creat("/tmp/firewall.err", O_WRONLY | O_APPEND, PERM_FILE);
+#  else
+      fd_stderr = UServices::getDevNull();
+#  endif
+
+      (void) cmd.executeAndWait(0, -1, fd_stderr); // initialize the firewall: direct all port 80 traffic to us...
+
+      UServer_Base::logCommandMsgError(cmd.getCommand());
+
+      if (login_timeout) UTimer::init(true); // async...
+
+      peers = U_NEW(UHashMap<UModNoCatPeer*>);
+
+      peers->allocate();
+
+      access_point   = USocketExt::getNodeName();
+      status_content = U_NEW(UString(U_CAPACITY));
+
+      gateway.insert(0, UServer_Base::getIPAddress());
+
+      U_INTERNAL_DUMP("gateway = %.*S access_point = %.*S", U_STRING_TO_TRACE(gateway), U_STRING_TO_TRACE(access_point))
+
+      // users traffic
+
+      ipt = U_NEW(UIptAccount(UClientImage_Base::bIPv6));
+
+      // NB: needed because all instance try to close the log... (inherits from its parent)
+
+      unatexit = (UServer_Base::isLog() ? &ULog::close : 0);
+
+      // manage internal device...
+
+      sockp = U_MALLOC_VECTOR(num_radio, UPing);
+      vaddr = U_MALLOC_VECTOR(num_radio, UVector<UIPAddress*>);
+
+      for (uint32_t i = 0; i < num_radio; ++i)
          {
-         (void) auth_ip.replace(addr.getAddressString());
+         vaddr[i] = U_NEW(UVector<UIPAddress*>);
+         sockp[i] = U_NEW(UPing(3000, UClientImage_Base::bIPv6));
 
-         U_SRV_LOG("AUTH host registered: %.*s", U_STRING_TO_TRACE(auth_ip));
+         if (arping)
+            {
+            sockp[i]->setLocal(UServer_Base::getSocket()->localIPAddress());
 
-         vauth_ip.push(auth_ip);
+#        ifdef HAVE_NETPACKET_PACKET_H
+            U_INTERNAL_ASSERT(vInternalDevice[i].isNullTerminated())
+
+            sockp[i]->initArpPing(vInternalDevice[i].data());
+#        endif
+            }
          }
 
-      url = U_NEW(Url(vauth_logout[i]));
+      pthis = this;
 
-      vlogout_url.push(url);
+      U_SRV_LOG("initialization of plugin success");
 
-      url = U_NEW(Url(vauth_logout[i]));
-
-      vinfo_url.push(url);
+      goto end;
       }
 
-   U_INTERNAL_ASSERT_EQUALS(vauth_ip.size(), vauth_login.size())
+   U_SRV_LOG("initialization of plugin FAILED");
 
-   opt = vauth_ip.join(U_CONSTANT_TO_PARAM(" "));
-
-   vfwopt.push(opt);
-
-   // FIREWALL OPTIONS (8 + 2): params for setup the firewall rules, write data to /tmp/firewall.opt
-
-   opt = vfwopt.join();
-
-   opt.push_back('\n');
-
-   (void) UFile::writeTo(U_STRING_FROM_CONSTANT("/tmp/firewall.opt"), opt);
-
-   // crypto cmd
-
-                                     cmd.set(   init_cmd, (char**)0);
-   if (decrypt_cmd.empty() == false) pgp.set(decrypt_cmd, (char**)0);
-
-   U_INTERNAL_ASSERT(decrypt_key.isNullTerminated())
-
-   if (decrypt_key.empty() == false) UDES3::setPassword(decrypt_key.data());
-
-#ifdef DEBUG
-   fd_stderr = UFile::creat("/tmp/firewall.err", O_WRONLY | O_APPEND, PERM_FILE);
-#else
-   fd_stderr = UServices::getDevNull();
-#endif
-
-   (void) cmd.executeAndWait(0, -1, fd_stderr); // initialize the firewall: direct all port 80 traffic to us...
-
-   UServer_Base::logCommandMsgError(cmd.getCommand());
-
-   if (login_timeout) UTimer::init(true); // async...
-
-   peers = U_NEW(UHashMap<UModNoCatPeer*>);
-
-   peers->allocate();
-
-   access_point   = USocketExt::getNodeName();
-   status_content = U_NEW(UString(U_CAPACITY));
-
-   gateway.insert(0, UServer_Base::getIPAddress());
-
-   U_INTERNAL_DUMP("gateway = %.*S access_point = %.*S", U_STRING_TO_TRACE(gateway), U_STRING_TO_TRACE(access_point))
-
-   // users traffic
-
-   ipt = U_NEW(UIptAccount(UClientImage_Base::bIPv6));
-
-   // NB: needed because all instance try to close the log... (inherits from its parent)
-
-   unatexit = (UServer_Base::isLog() ? &ULog::close : 0);
-
-   // manage internal device...
-
-   sockp = U_MALLOC_VECTOR(num_radio, UPing);
-   vaddr = U_MALLOC_VECTOR(num_radio, UVector<UIPAddress*>);
-
-   for (uint32_t i = 0; i < num_radio; ++i)
-      {
-      vaddr[i] = U_NEW(UVector<UIPAddress*>);
-      sockp[i] = U_NEW(UPing(3000, UClientImage_Base::bIPv6));
-
-      if (arping)
-         {
-         sockp[i]->setLocal(UServer_Base::getSocket()->localIPAddress());
-
-#     ifdef HAVE_NETPACKET_PACKET_H
-         U_INTERNAL_ASSERT(vInternalDevice[i].isNullTerminated())
-
-         sockp[i]->initArpPing(vInternalDevice[i].data());
-#     endif
-         }
-      }
-
-   pthis = this;
-
-   U_SRV_LOG("initialization of plugin success");
-
+end:
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
@@ -1348,7 +1356,8 @@ int UNoCatPlugIn::handlerRequest()
 {
    U_TRACE(0, "UNoCatPlugIn::handlerRequest()")
 
-   if (UHTTP::isHTTPRequestNotFound())
+   if (UHTTP::isHTTPRequestNotFound() &&
+       init_cmd.empty() == false)
       {
       Url url;
       UModNoCatPeer* peer = 0;

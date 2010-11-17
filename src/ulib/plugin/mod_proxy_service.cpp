@@ -11,6 +11,9 @@
 //
 // ============================================================================
 
+#ifndef U_MOD_PROXY_SERVICE_CPP
+#define U_MOD_PROXY_SERVICE_CPP 1
+
 #include <ulib/date.h>
 #include <ulib/command.h>
 #include <ulib/file_config.h>
@@ -208,5 +211,6 @@ const char* UModProxyService::dump(bool reset) const
 
    return 0;
 }
+#endif
 
 #endif

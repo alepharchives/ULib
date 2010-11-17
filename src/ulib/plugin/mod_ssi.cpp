@@ -149,7 +149,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
    bool bgroup, bfile;
    const char* directive;
    UVector<UString> name_value;
-   uint32_t distance, pos, size;
+   uint32_t distance, pos, size, len;
    UString token, name, value, pathname, include, directory, output(U_CAPACITY);
 
    (directory = UHTTP::getDirectoryURI()).duplicate();
@@ -385,7 +385,14 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                     if (name == *str_cmd) (void) output.append(UCommand::outputCommand(name_value[1], 0, -1, UServices::getDevNull()));
                else if (name == *str_cgi)
                   {
-                  UHTTP::pathname->snprintf("%w%.*s", U_STRING_TO_TRACE(name_value[1]));
+                  value = name_value[1];
+                  len   = value.size();
+
+                  UHTTP::pathname->setBuffer(u_cwd_len + len);
+
+                  UHTTP::pathname->snprintf("%w%.*s", len, value.data());
+
+                  U_INTERNAL_ASSERT_DIFFERS(UHTTP::pathname->size(), u_cwd_len)
 
                   if (UHTTP::checkForCGIRequest() &&
                       UHTTP::processCGIRequest((UCommand*)0, &environment, false))

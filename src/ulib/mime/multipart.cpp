@@ -56,7 +56,7 @@ UMimeMultipartMsg::UMimeMultipartMsg(const char* type, Encoding encoding, const 
 
    char* ptr = mkboundary();
 
-   UString buffer(4000);
+   UString buffer(4000U);
 
    buffer.snprintf("%s%s"                                            // MIME-Version: 1.0
                    "Content-Type: multipart/%s; boundary=\"%s\"%s"
@@ -186,7 +186,7 @@ UString UMimeMultipartMsg::section(const UString& content,
 
    U_INTERNAL_ASSERT_MAJOR(length,0)
 
-   UString buffer(4000);
+   UString buffer(4000U);
 
    buffer.snprintf("%s%s"
                    "Content-Type: %s",

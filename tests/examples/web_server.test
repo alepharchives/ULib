@@ -26,9 +26,10 @@ if [ "$TERM" != "cygwin" ]; then
 	  cd ../../../src/ulib/plugin/usp/;
 	  make jsonrequest.la  >/dev/null 2>&1 || exit 1;
 	  make benchmarking.la >/dev/null 2>&1 || exit 1;
-	  cd ../.libs;
-	  ln -sf ../mod_shib/.libs/mod_shib.so;
-	  ln -sf ../mod_geoip/.libs/mod_geoip.so )
+	  test -d ../.libs &&
+	  ( cd ../.libs;
+	    ln -sf ../mod_shib/.libs/mod_shib.so;
+	    ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
 fi
 
 # function : creat_link
@@ -137,6 +138,9 @@ chmod 777      uploads
  creat_link ../vuoto.txt			  www.sito1.com/vuoto.txt
 
  start_test web_serverV.cfg		  www.sito1.com
+
+# for GDB
+# sed "s/Host: localhost/Host: www.sito1.com/" inp/http/all.inp | nc 127.0.0.1 80
 # ---------------------------------------------------------
 
 diff inp/xml2txt/operazione.xml uploads/operazione.xml

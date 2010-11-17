@@ -25,7 +25,7 @@
 
 int      USocketExt::pcount;
 uint32_t USocketExt::size_message;
-#ifdef DEBUG
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
 char*    USocketExt::pbuffer;
 #endif
 
@@ -159,7 +159,7 @@ read:
          if (pcount >= 0)
             {
             byte_read = count;
-#        ifdef DEBUG
+#        if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
             pbuffer   = buffer.data();
 #        endif
             }
@@ -380,7 +380,7 @@ int USocketExt::vsyncCommandToken(USocket* s, UString& buffer, const char* forma
       if (pos_token != U_NOT_FOUND)
          {
                           U_ASSERT(buffer.c_char(buffer.size()-1) == '\n')
-#     ifdef DEBUG
+#     if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
          if (pos_token) { U_ASSERT(buffer.c_char(pos_token-1)     == '\n') }
 #     endif
 
@@ -545,8 +545,8 @@ UString USocketExt::getNetworkAddress(int fd, const char* device)
 #ifndef __MINGW32__
    struct ifreq ifaddr, ifnetmask;
 
-   (void) strncpy(   ifaddr.ifr_name, device, IFNAMSIZ-1);
-   (void) strncpy(ifnetmask.ifr_name, device, IFNAMSIZ-1);
+   (void) u_strncpy(   ifaddr.ifr_name, device, IFNAMSIZ-1);
+   (void) u_strncpy(ifnetmask.ifr_name, device, IFNAMSIZ-1);
 
    (void) U_SYSCALL(ioctl, "%d,%d,%p", fd,    SIOCGIFADDR, &ifaddr);
    (void) U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFNETMASK, &ifnetmask);
@@ -615,7 +615,7 @@ UString USocketExt::getMacAddress(int fd, const char* device_or_ip)
 
       struct ifreq ifr;
 
-      (void) strncpy(ifr.ifr_name, device_or_ip, IFNAMSIZ-1);
+      (void) u_strncpy(ifr.ifr_name, device_or_ip, IFNAMSIZ-1);
 
       (void) U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFHWADDR, &ifr);
 
@@ -717,7 +717,7 @@ UString USocketExt::getIPAddress(int fd, const char* device)
 #ifndef __MINGW32__
    struct ifreq ifr;
 
-   (void) strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
+   (void) u_strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
 
    /* Get the IP address of the interface */
 

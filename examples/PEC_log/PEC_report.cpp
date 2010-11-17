@@ -917,7 +917,7 @@ bool PEC_report::readContent()
 
       U_INTERNAL_DUMP("ptr = %.*S", 100, ptr)
 
-      (void) strncpy(time, ptr + U_LINEDATA + 1, 8);
+      (void) u_strncpy(time, ptr + U_LINEDATA + 1, 8);
 
       // time[8] = '\0';
 
@@ -935,7 +935,7 @@ bool PEC_report::readContent()
          if (n < 3) continue;
          */
 
-         (void) strncpy(month, ptr, 3);
+         (void) u_strncpy(month, ptr, 3);
 
          // month[3] = '\0';
 

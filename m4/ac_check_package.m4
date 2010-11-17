@@ -310,7 +310,7 @@ dnl		printf "libSSH found in $sshdir\n";
 			HAVE_SSH=yes
 			CPPFLAGS="$CPPFLAGS -DHAVE_SSH";
 dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -d' ' -f3)
-			libssh_version=$(strings $sshdir/lib/libssh.so | grep '^SSH-[[0-9]]' | head -n1 | cut -d'-' -f4)
+			libssh_version=$(strings $sshdir/lib*/libssh.so | grep '^SSH-[[0-9]]' | head -n1 | cut -d'-' -f4)
 			if test -z "${libssh_version}"; then
 				libssh_version="Unknown"
 			fi
@@ -439,6 +439,11 @@ dnl		printf "MySQL found in $mysqldir\n";
 				CPPFLAGS="$CPPFLAGS -I$mysqldir/include";
 				LDFLAGS="$LDFLAGS -L$mysqldir/lib -Wl,-R$mysqldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$mysqldir/lib";
+			else
+				if ! test -f $mysqldir/lib64/libmysqlclient.so && test -f $mysqldir/lib64/mysql/libmysqlclient.so; then
+					LDFLAGS="$LDFLAGS -L$mysqldir/lib64/mysql -Wl,-R$mysqldir/lib64/mysql";
+					PRG_LDFLAGS="$PRG_LDFLAGS -L$mysqldir/lib64/mysql";
+				fi
 			fi
 		fi
 	fi

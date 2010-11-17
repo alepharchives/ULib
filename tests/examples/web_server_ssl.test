@@ -26,9 +26,10 @@ if [ "$TERM" != "cygwin" ]; then
 	  cd ../../../src/ulib/plugin/usp/;
 	  make jsonrequest.la  >/dev/null 2>&1 || exit 1;
 	  make benchmarking.la >/dev/null 2>&1 || exit 1;
-	  cd ../.libs;
-	  ln -sf ../mod_shib/.libs/mod_shib.so;
-	  ln -sf ../mod_geoip/.libs/mod_geoip.so )
+     test -d ../.libs &&
+	  ( cd ../.libs;
+	    ln -sf ../mod_shib/.libs/mod_shib.so;
+	    ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
 fi
 
 CAPATH="../ulib/CA/CApath"

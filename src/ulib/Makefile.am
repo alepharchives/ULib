@@ -107,12 +107,6 @@ if MEMORY_POOL
 SRC_CPP += internal/memory_pool.cpp
 endif
 
-if PLUGIN
-SRC_CPP += dynamic/dynamic.cpp dynamic/plugin.cpp \
-			  net/server/server.cpp net/server/client_image.cpp \
-			  net/client/client_rdb.cpp net/server/client_image_rdb.cpp net/server/server_rdb.cpp
-endif
-
 if ZIP
 SRC_C   += base/zip/inflate.c base/zip/dostime.c base/zip/pushback.c base/zip/ziptool.c
 SRC_CPP += zip/zip.cpp
@@ -180,44 +174,52 @@ endif
 
 # Handler static/dynamic plugin
 
+if PLUGIN
+SRC_CPP += dynamic/dynamic.cpp dynamic/plugin.cpp \
+			  net/server/server.cpp net/server/client_image.cpp \
+			  net/client/client_rdb.cpp net/server/client_image_rdb.cpp net/server/server_rdb.cpp
+endif
+
 if STATIC_HANDLER_RPC
 SRC_CPP += plugin/mod_rpc.cpp
 endif
 
-if STATIC_HANDLER_HTTP
-SRC_CPP += plugin/mod_http.cpp
+if MOD_SHIB
+if STATIC_HANDLER_SHIB
+SRC_CPP += plugin/mod_shib/mod_shib.cpp plugin/mod_proxy_service.cpp
 endif
-
-if STATIC_HANDLER_TSA
-SRC_CPP += plugin/mod_tsa.cpp
-endif
-
-if STATIC_HANDLER_NOCAT
-SRC_CPP += plugin/mod_nocat.cpp
-endif
-
-if STATIC_HANDLER_ECHO
-SRC_CPP += plugin/mod_echo.cpp
-endif
-
-if STATIC_HANDLER_FCGI
-SRC_CPP += plugin/mod_fcgi.cpp
-endif
-
-if STATIC_HANDLER_SCGI
-SRC_CPP += plugin/mod_scgi.cpp
 endif
 
 if STATIC_HANDLER_STREAM
 SRC_CPP += plugin/mod_stream.cpp
 endif
 
+if STATIC_HANDLER_NOCAT
+SRC_CPP += plugin/mod_nocat.cpp
+endif
+
 if STATIC_HANDLER_SOCKET
 SRC_CPP += plugin/mod_socket.cpp
 endif
 
-if STATIC_HANDLER_SSI
-SRC_CPP += plugin/mod_ssi.cpp
+if STATIC_HANDLER_SCGI
+SRC_CPP += plugin/mod_scgi.cpp
+endif
+
+if STATIC_HANDLER_FCGI
+SRC_CPP += plugin/mod_fcgi.cpp
+endif
+
+if GEOIP
+if STATIC_HANDLER_GEOIP
+SRC_CPP += plugin/mod_geoip/mod_geoip.cpp
+endif
+endif
+
+if PCRE
+if STATIC_HANDLER_PROXY
+SRC_CPP += plugin/mod_proxy.cpp plugin/mod_proxy_service.cpp
+endif
 endif
 
 if EXPAT
@@ -226,16 +228,20 @@ SRC_CPP += plugin/mod_soap.cpp
 endif
 endif
 
-if PCRE
-if STATIC_HANDLER_PROXY
-SRC_CPP += plugin/mod_proxy.cpp
-endif
+if STATIC_HANDLER_SSI
+SRC_CPP += plugin/mod_ssi.cpp
 endif
 
-if GEOIP
-if STATIC_HANDLER_GEOIP
-SRC_CPP += plugin/mod_geoip/mod_geoip.cpp
+if STATIC_HANDLER_TSA
+SRC_CPP += plugin/mod_tsa.cpp
 endif
+
+if STATIC_HANDLER_HTTP
+SRC_CPP += plugin/mod_http.cpp
+endif
+
+if STATIC_HANDLER_ECHO
+SRC_CPP += plugin/mod_echo.cpp
 endif
 
 if FINAL

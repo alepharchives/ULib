@@ -14,6 +14,8 @@
 #ifndef ULIB_USTRING_H
 #define ULIB_USTRING_H 1
 
+#include <ulib/base/hash.h>
+#include <ulib/base/utility.h>
 #include <ulib/internal/common.h>
 
 #include <iostream>
@@ -29,9 +31,6 @@
 #ifndef __MINGW32__
 #  include <sys/mman.h>
 #endif
-
-#include <ulib/base/hash.h>
-#include <ulib/base/utility.h>
 
 // macro for constant string like "xxx"
 
@@ -403,10 +402,12 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-#ifdef DEBUG
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
    bool invariant() const;
    const char* dump(bool reset) const;
+#endif
 
+#ifdef DEBUG
    static int32_t max_child;
    static UStringRep* parent_destroy;
    static UStringRep* string_rep_share;
@@ -1067,8 +1068,10 @@ public:
 
    // --------------------------------------------------------------
 
-#ifdef DEBUG
+#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
    bool invariant() const;
+#endif
+#ifdef DEBUG
    const char* dump(bool reset) const;
 #endif
 
@@ -1200,7 +1203,11 @@ public:
       U_INTERNAL_ASSERT(rep->references == 0)
       U_INTERNAL_ASSERT_MAJOR(rep->_capacity,u_strlen(format))
 
-      rep->_length = u_vsnprintf(rep->data(), rep->_capacity, format, argp); 
+      // NB: +1 because there is space for null-terminator...
+
+      rep->_length = u_vsnprintf(rep->data(), rep->_capacity+1, format, argp); 
+
+      U_INTERNAL_DUMP("ret = %u buffer_size = %u", rep->_length, rep->_capacity+1)
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -1214,7 +1221,13 @@ public:
       U_INTERNAL_ASSERT(rep->references == 0)
       U_ASSERT_MAJOR(rep->space(),u_strlen(format))
 
-      rep->_length += u_vsnprintf(c_pointer(rep->_length), rep->space(), format, argp); 
+      // NB: +1 because there is space for null-terminator...
+
+      uint32_t ret = u_vsnprintf(c_pointer(rep->_length), rep->space()+1, format, argp); 
+
+      U_INTERNAL_DUMP("ret = %u buffer_size = %u", ret, rep->space()+1)
+
+      rep->_length += ret; 
 
       U_INTERNAL_ASSERT(invariant())
       }
