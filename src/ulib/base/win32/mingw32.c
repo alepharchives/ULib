@@ -1266,9 +1266,12 @@ ssize_t writev(int fd, const struct iovec* iov, int count)
 
    for (i = 0; i < count; ++i)
       {
-      (void) u_memcpy(ptr, iov[i].iov_base, iov[i].iov_len);
+      if (iov[i].iov_len)
+         {
+         (void) u_memcpy(ptr, iov[i].iov_base, iov[i].iov_len);
 
-      ptr += iov[i].iov_len;
+         ptr += iov[i].iov_len;
+         }
       }
 
    if (is_socket(fd) == TRUE)

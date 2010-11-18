@@ -60,7 +60,7 @@ public:
 
       // manage file configuration
 
-      if (cfg_str.empty()) cfg_str = U_STRING_FROM_CONSTANT("uclient.cfg");
+      if (cfg_str.empty()) cfg_str = U_STRING_FROM_CONSTANT("/etc/uclient.cfg");
 
       // ----------------------------------------------------------------------------------------------------------------------------------
       // uclient - configuration parameters

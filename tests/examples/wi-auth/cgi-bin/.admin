@@ -2,13 +2,6 @@
 
 # .admin
 
-confirm_page() {
-
-	BASE_NAME=confirm_page
-
-	print_page "$@"
-}
-
 view_menu_admin() {
 
 	BASE_NAME=admin
@@ -30,7 +23,9 @@ view_recovery() {
 
 confirm_recovery() {
 
-	confirm_page "Conferma recovery" "Conferma recovery" "$1" "execute_recovery" "$1" "$BACK_TAG"
+	BASE_NAME=confirm_page
+
+	print_page "Conferma recovery" "Conferma recovery" "$1" "execute_recovery" "$1" "$BACK_TAG"
 }
 
 view_user() {
@@ -76,7 +71,7 @@ execute_recovery() {
 		message_page "Errore" "Errore recovery: fallita cancellazione utente $1 (ldap branch user)"
 	fi
 
-	rm -f $DIR_CTX/$1.ctx $DIR_STAT/$1.* $DIR_CNT/$POLICY/$1.* $DIR_REG/$1.reg
+	rm -f $DIR_CTX/"$1".ctx $DIR_STAT/"$1".* $DIR_CNT/$POLICY/"$1".* $DIR_REG/"$1".reg
 
 	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $BASE_NAME: User <$1> recovered"
 
@@ -164,6 +159,8 @@ print_user_data() {
 
 get_status_ap() {
 
+#	set -x
+
 	# $1 -> gateway
 	# $2 -> ap
 
@@ -175,7 +172,9 @@ get_status_ap() {
 
 	send_request_to_nodog "http://$GATEWAY/status" $DIR_STAT/$2.html
 
-	echo -e "Location: /wi-auth/stat/$2.html\r\n\r"
+#	set +x
+
+	echo -e "X-Sendfile: wi-auth/stat/$2.html\r\n\r"
 
 	exit 0
 }
@@ -216,7 +215,7 @@ get_status_network() {
 	append_to_FILE "$OUTPUT"																$DIR_STAT/network.html
 	append_to_FILE "`cat $FORM_FILE_DIR/${BASE_NAME}_end.tmpl 2>/dev/null`" $DIR_STAT/network.html
 
-	echo -e "Location: /wi-auth/stat/network.html\r\n\r"
+	echo -e "X-Sendfile: wi-auth/stat/network.html\r\n\r"
 
 #	set +x
 

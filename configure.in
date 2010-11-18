@@ -393,16 +393,6 @@ AC_CHECK_LIB(nsl,inet_ntop)
 AC_CHECK_LIB(posix4,nanosleep)
 AC_CHECK_LIB(socket,socketpair)
 
-if test "$ac_cv_lib_rt_sem_init" = "yes" ; then
-	AM_CONDITIONAL(SEMAPHORE, test "$ac_cv_lib_rt_sem_init"		 = "yes")
-else
-	AC_CHECK_LIB(pthread,sem_init)
-	if test "$ac_cv_lib_pthread_sem_init" = "yes" ; then
-		OST_LIB_PTHREAD
-		AM_CONDITIONAL(SEMAPHORE, true)
-	fi
-fi
-
 LIBS_SAVE=${LIBS}
 AC_CHECK_LIB(GeoIP,GeoIP_id_by_ipnum)
 AC_CHECK_LIB(fcgi, FCGX_Accept)
@@ -483,15 +473,7 @@ if test "$HAVE_MAGIC" = "yes"; then
 fi
 
 if test "$HAVE_SSL" = "yes"; then
-#	AC_CHECK_LIB(crypto,OPENSSL_config) // conflit with ssh library...
    ulib_ssl_msg="enabled"
-	case "$target_os" in
-		mingw32*)
-		LIBS_SAVE="${LIBS_SAVE} -lwsock32 -lgdi32 -lz";
-		;;
-		cygwin*)
-		;;
-	esac
 else
 	AC_DEFINE(U_NO_SSL, 1, [Define if we don't use openssl])
 fi
@@ -527,7 +509,7 @@ AC_HEADER_TIME
 AC_HEADER_MAJOR
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([assert.h byteswap.h endian.h execinfo.h ndir.h semaphore.h string.h netpacket/packet.h sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h \
+AC_CHECK_HEADERS([assert.h byteswap.h endian.h execinfo.h ndir.h string.h netpacket/packet.h sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h \
 						sysexits.h termios.h streambuf.h linux/netfilter_ipv4/ipt_ACCOUNT.h])
 
 AC_CHECK_HEADERS([sys/inotify.h mcheck.h])
@@ -547,12 +529,6 @@ AC_CHECK_FUNCS([inotify_init1])
 fi
 
 # SECTION 6: Checks for typedefs
-
-if test "$target_os" = "cygwin"; then
-	AC_DEFINE(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])
-else
-	AC_CHECK_TYPE(siginfo_t, [AC_DEFINE_UNQUOTED(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])], [], [#include <signal.h>])
-fi
 
 AC_TYPE_SIGNAL
 
@@ -808,21 +784,6 @@ fi
 if test "${enable_shared}" != "yes"; then
 	enable_final="yes"
 	AM_CONDITIONAL(PLUGIN, false)
-else
-	case "$target_os" in
-		mingw32*)
-		enable_final="yes"
-		AC_DEFINE(HAVE_MODULES, [1], [support for plugin modules])
-		AM_CONDITIONAL(PLUGIN, true)
-		;;
-		*)
-		AM_CONDITIONAL(PLUGIN, test "$ost_cv_dynloader" = "yes")
-		;;
-	esac
-fi
-
-if test "${target_os}" = "mingw32"; then
-	LIBS="${LIBS} -lwinmm -lws2_32"
 fi
 
 if test "$enable_final" = "yes"; then
@@ -949,39 +910,52 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 
 	CFLAGS="${CFLAGS} $ulib_cv_CC_flags"
 	CPPFLAGS="${CPPFLAGS} $ulib_cv_flags"
-
-	if test "$ac_cv_cxx_visibility_inlines_hidden_flag" = "yes" ; then
-		case "$target_os" in
-			mingw32*)
-			;;
-			*)
-			AC_DEFINE(HAVE_GNUC_VISIBILTY, 1, [enable gcc visibility features])
-			CXXFLAGS="${CXXFLAGS} -fvisibility=hidden -fvisibility-inlines-hidden"
-			;;
-		esac
-	fi
-
 	CXXFLAGS="${CXXFLAGS} $ulib_cv_CXX_flags"
 fi
 
-if test "$with_gnu_ld" = "yes"; then
-	LDFLAGS="${LDFLAGS} -Wl,-O1"
-	case "$target_os" in
-		mingw32*)
+case "$target_os" in
+	mingw32*)
+	if test "$with_gnu_ld" = "yes"; then
 		LDFLAGS="${LDFLAGS} -Wl,--enable-auto-import"
-		;;
-		cygwin*)
-		;;
-		solaris*)
-		;;
-		*)
-		LDFLAGS="${LDFLAGS} -Wl,-z,now"
-		if test "$enable_new_ldflags" = "yes"; then
-			LDFLAGS="${LDFLAGS} -Wl,-z,now,--as-needed,--enable-new-dtags,-O1,--hash-style=gnu,--sort-common"
+	fi
+	LIBS="${LIBS} -lwinmm -lws2_32"
+	if test "$HAVE_SSL" = "yes"; then
+		LIBS="${LIBS} -lwsock32 -lgdi32 -lz";
+	fi
+	if test "${enable_shared}" = "yes"; then
+		enable_final="yes"
+		AC_DEFINE(HAVE_MODULES, [1], [support for plugin modules])
+		AM_CONDITIONAL(PLUGIN, true)
+	fi
+	AM_CONDITIONAL(SEMAPHORE, false)
+	;;
+	cygwin*)
+	AC_DEFINE(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])
+	;;
+	*)
+	AC_CHECK_HEADERS([semaphore.h])
+	AC_CHECK_TYPE([siginfo_t], [AC_DEFINE_UNQUOTED(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])], [], [#include <signal.h>])
+	if test "$ac_cv_cxx_visibility_inlines_hidden_flag" = "yes"; then
+		AC_DEFINE(HAVE_GNUC_VISIBILTY, 1, [enable gcc visibility features])
+		CXXFLAGS="${CXXFLAGS} -fvisibility=hidden -fvisibility-inlines-hidden"
+	fi
+	if test "$with_gnu_ld" = "yes" && test "$enable_new_ldflags" = "yes"; then
+		LDFLAGS="${LDFLAGS} -Wl,-z,now,-O1,--as-needed,--enable-new-dtags,--hash-style=gnu,--sort-common"
+	fi
+	if test "${enable_shared}" = "yes"; then
+		AM_CONDITIONAL(PLUGIN, test "$ost_cv_dynloader" = "yes")
+	fi
+	if test "$ac_cv_lib_rt_sem_init" = "yes"; then
+		AM_CONDITIONAL(SEMAPHORE, true)
+	else
+		AC_CHECK_LIB(pthread,sem_init)
+		if test "$ac_cv_lib_pthread_sem_init" = "yes"; then
+			OST_LIB_PTHREAD
+			AM_CONDITIONAL(SEMAPHORE, true)
 		fi
-		;;
-	esac
-fi
+	fi
+	;;
+esac
 
 # manuale
 

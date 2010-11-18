@@ -280,23 +280,26 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
                                                                                 is_console(aStartupInfo.hStdOutput), aStartupInfo.hStdOutput,
                                                                                 is_console(aStartupInfo.hStdError),  aStartupInfo.hStdError)
 
-   char* w32_shell = (strcmp(argv[0], "sh.exe") ? NULL : (char*)pathname); 
+   char* w32_shell = (U_STRNEQ(argv[0], "sh.exe") ? (char*)pathname : 0); 
 
    U_INTERNAL_DUMP("w32_shell = %S", w32_shell)
 
    int index = 0;
-   char* w32_cmd;
    char buffer1[4096];
+   char* w32_cmd = (char*)pathname;
 
    if (argv[1])
       {
       bool flag;
+      w32_cmd = buffer1;
       int len = u_strlen(pathname);
 
-      index   = len;
-      w32_cmd = buffer1;
+      if (len)
+         {
+         index = len;
 
-      (void) u_memcpy(w32_cmd, pathname, len);
+         (void) u_memcpy(w32_cmd, pathname, len);
+         }
 
       for (int i = 1; argv[i]; ++i)
          {
@@ -304,30 +307,29 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
 
          len = u_strlen(argv[i]);
 
-         U_INTERNAL_ASSERT_MINOR(index + len + 3,4096)
+         if (len)
+            {
+            U_INTERNAL_ASSERT_MINOR(index+len+3,4096)
 
-         flag = (strchr(argv[i], ' ') != 0);
+            flag = (strchr(argv[i], ' ') != 0);
 
-         if (flag) w32_cmd[index++] = '"';
+            if (flag) w32_cmd[index++] = '"';
 
-         (void) u_memcpy(w32_cmd+index, argv[i], len);
+            (void) u_memcpy(w32_cmd+index, argv[i], len);
 
-         index += len;
+            index += len;
 
-         if (flag) w32_cmd[index++] = '"';
+            if (flag) w32_cmd[index++] = '"';
+            }
          }
 
       w32_cmd[index] = '\0';
       }
-   else
-      {
-      w32_cmd = (char*)pathname;
-      }
 
-   U_INTERNAL_DUMP("w32_cmd = %.*S", index, w32_cmd)
+   U_INTERNAL_DUMP("w32_cmd(%d) = %.*S", index, index, w32_cmd)
 
+   char* w32_envp = 0;
    char buffer2[32000];
-   char* w32_envp = NULL;
 
    if (envp)
       {
@@ -338,18 +340,21 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
          {
          len = u_strlen(envp[i]);
 
-         U_INTERNAL_ASSERT_MINOR(index + len + 1,32000)
+         if (len)
+            {
+            U_INTERNAL_ASSERT_MINOR(index+len+1,32000)
 
-         (void) u_memcpy(w32_envp+index, envp[i], len);
+            (void) u_memcpy(w32_envp+index, envp[i], len);
 
-         index += len;
+            index += len;
 
-         w32_envp[index] = '\0';
+            w32_envp[index] = '\0';
+            }
          }
 
       w32_envp[index+1] = '\0';
 
-      U_INTERNAL_DUMP("w32_envp = %#.*S", index+1, w32_envp)
+      U_INTERNAL_DUMP("w32_envp(%d) = %#.*S", index, index+1, w32_envp)
       }
 
    pid_t pid;

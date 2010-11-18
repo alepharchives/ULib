@@ -180,7 +180,9 @@ bool UFile::chdir(const char* path, bool flag_save)
       {
       if (strcmp(path, u_cwd) == 0) U_RETURN(true);
 
+#  ifndef __MINGW32__
       U_INTERNAL_ASSERT(IS_DIR_SEPARATOR(u_cwd[0]))
+#  endif
 
       if (flag_save)
          {

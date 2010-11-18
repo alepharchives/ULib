@@ -845,7 +845,7 @@ User		$8"
 		append_to_FILE " $8" $REQ_FILE # si aggiunge UUID alla request...
 	fi
 
-	echo -e "Location: http://$4/ticket?ticket=$SIGNED_DATA\r\n\r"
+	echo -e "Location: http://$4/$URI_TICKET?ticket=$SIGNED_DATA\r\n\r"
 
 	exit 0
 }
@@ -1108,6 +1108,16 @@ info_notified_from_nodog() {
 
 	append_to_FILE "`_date` op: INFO uid: $5, ap: $4, ip: $2, mac: $1, logout: $6, connected: $7, traffic: $8" $FILE_LOG.info
 
+	# --------------------------------------------------------------------
+	# GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
+	# --------------------------------------------------------------------
+	FILE_UID=$DIR_REQ/$5.uid
+
+	read UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC < $FILE_UID
+
+	load_policy
+	# --------------------------------------------------------------------
+
 	check_for_user_already_connected "$1" "$2" "$3" "$4" "$5"
 
 	# NB: FILE_CTX e' settato da get_user_context_connection() che e' chiamato da check_for_user_already_connected()...
@@ -1133,16 +1143,6 @@ info_notified_from_nodog() {
 		# we remove the connection context data saved on file and NoDog data saved on file
 		rm -f $FILE_CTX $DIR_REQ/$2.req
 	fi
-
-	# --------------------------------------------------------------------
-	# GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
-	# --------------------------------------------------------------------
-	FILE_UID=$DIR_REQ/$5.uid
-
-	read UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC < $FILE_UID
-
-	load_policy
-	# --------------------------------------------------------------------
 
 	FILE_CNT=$DIR_CNT/$POLICY/$UUID_TO_LOG
 	# --------------------------------------------------------------------
