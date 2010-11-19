@@ -2,6 +2,12 @@
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
+if CURL
+feed_LDADD      = $(top_builddir)/src/ulib/lib@ULIB@.la
+feed_SOURCES    = feed.cpp
+feed_LDFLAGS    = $(PRG_LDFLAGS)
+endif
+
 sign_LDADD      = libutility.la $(top_builddir)/src/ulib/lib@ULIB@.la
 sign_SOURCES    = sign.cpp
 sign_LDFLAGS    = $(PRG_LDFLAGS)
@@ -24,7 +30,7 @@ libutility_la_SOURCES = utility.cpp
 ## for convenience library
 noinst_LTLIBRARIES = libutility.la libverify.la
 
-bin_PROGRAMS = sign archive client verify
+bin_PROGRAMS = sign archive client verify feed
 
 clean-local:
 	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out

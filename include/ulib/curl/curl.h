@@ -192,15 +192,17 @@ public:
 
    // EXEC
 
-   bool performWait()
+   bool performWait(uint32_t n = 0)
       {
-      U_TRACE(1, "UCURL::performWait()")
+      U_TRACE(1, "UCURL::performWait(%u)", n)
 
       U_CHECK_MEMORY
 
       U_INTERNAL_ASSERT_POINTER(easyHandle)
 
       response.setEmpty();
+
+      if (n) (void) response.reserve(n);
 
       result = U_SYSCALL(curl_easy_perform, "%p", easyHandle);
 

@@ -106,7 +106,7 @@ bool USmtpClient::connectServer(const UString& server, int port, uint32_t timeou
       {
       response = CONNREFUSED;
 
-      (void) u_snprintf(buffer, sizeof(buffer), "Sorry, couldn't connect to server '%.*s:%d'%R", U_STRING_TO_TRACE(server), port, NULL);
+      (void) u_snprintf(buffer, sizeof(buffer), "Sorry, couldn't connect to server '%.*s:%d'%R", U_STRING_TO_TRACE(server), port, 0); // NB: the last argument (0) is necessary...
       }
    else
       {

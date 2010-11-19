@@ -102,6 +102,7 @@ extern U_EXPORT uint32_t             u_line_terminator_len;
 extern U_EXPORT const char* restrict u_line_terminator;
 
 /* Services */
+extern U_EXPORT int                   u_errno; /* An errno value */
 extern U_EXPORT int                   u_flag_exit;
 extern U_EXPORT int                   u_flag_test;
 extern U_EXPORT bool                  u_recursion;

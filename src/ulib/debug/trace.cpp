@@ -190,11 +190,13 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
                {
                char msg_sys_error[sizeof(buffer_syscall)];
 
-               buffer_syscall_len += u_snprintf(msg_sys_error, sizeof(buffer_syscall), "%R", NULL);
+               buffer_syscall_len += u_snprintf(msg_sys_error, sizeof(buffer_syscall), "%R", 0); // NB: the last argument (0) is necessary...
 
                U_INTERNAL_ASSERT_MINOR(buffer_syscall_len, sizeof(buffer_syscall))
 
                (void) strcat(buffer_syscall, msg_sys_error);
+
+               u_errno = errno;
                }
 
             U_WARNING("%s", buffer_syscall);

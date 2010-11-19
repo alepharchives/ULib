@@ -95,9 +95,15 @@ public:
       {
       U_TRACE(0, "UHttpClient_Base::connectServer(%p)", &location)
 
-      if (UClient_Base::setUrl(location.get()) && UClient_Base::isConnected()) UClient_Base::socket->close(); // change server and/or port to connect...
+      if (UClient_Base::setUrl(location.get()) &&
+          UClient_Base::isConnected())
+         {
+         UClient_Base::socket->close(); // NB: is changed server and/or port to connect...
+         }
 
-      return UClient_Base::connect();
+      bool result = UClient_Base::connect();
+
+      U_RETURN(result);
       }
 
    //=============================================================================

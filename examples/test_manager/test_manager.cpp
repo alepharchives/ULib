@@ -140,7 +140,7 @@ public:
                if (flag_log ||
                    n == -1)
                   {
-                  buffer_len = u_snprintf(buffer, sizeof(buffer), "command '%s' didn't start %R\n", argv_exec[(n == -1 ? 1 : 0)], NULL);
+                  buffer_len = u_snprintf(buffer, sizeof(buffer), "command '%s' didn't start %R\n", argv_exec[(n == -1 ? 1 : 0)], 0); // NB: the last argument (0) is necessary...
 
                   print(0);
                   }

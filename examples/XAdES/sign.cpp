@@ -96,8 +96,7 @@
 
 #define U_XMLDSIG_TEMPLATE \
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n" \
-"<ds:Signature xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" Id=\"SigID\">\r\n" \
-"%.*s" \
+"<ds:Signature Id=\"idPackageSignature\" xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\r\n" \
 "%.*s" \
 "%.*s" \
 "%.*s" \
@@ -105,7 +104,7 @@
 "</ds:Signature>\r\n"
 
 #define U_XADES_REFERENCE_TEMPLATE \
-"    <ds:Reference xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" URI=\"#SigID-SignedProperties\" Type=\"http://uri.etsi.org/01903#SignedProperties\">\r\n" \
+"    <ds:Reference xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" URI=\"#idPackageSignature-SignedProperties\" Type=\"http://uri.etsi.org/01903#SignedProperties\">\r\n" \
 "      <ds:DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#%.*s\"></ds:DigestMethod>\r\n" \
 "      <ds:DigestValue>%.*s</ds:DigestValue>\r\n" \
 "    </ds:Reference>\r\n"
@@ -172,7 +171,7 @@
 "            </xades:EncapsulatedCRLValue>\r\n"
 
 #define U_XADES_SIGNED_PROPERTIES_TEMPLATE \
-"      <xades:SignedProperties xmlns:xades=\"http://uri.etsi.org/01903/v1.4.1#\" xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" Id=\"SigID-SignedProperties\">\r\n" \
+"      <xades:SignedProperties xmlns:xades=\"http://uri.etsi.org/01903/v1.4.1#\" xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" Id=\"idPackageSignature-SignedProperties\">\r\n" \
 "        <xades:SignedSignatureProperties>\r\n" \
 "%.*s" \
 "          <xades:SigningCertificate>\r\n" \
@@ -190,7 +189,6 @@
 "%.*s" \
 "        </xades:SignedSignatureProperties>\r\n" \
 "        <xades:SignedDataObjectProperties>\r\n" \
-"%.*s" \
 "%.*s" \
 "        </xades:SignedDataObjectProperties>\r\n" \
 "      </xades:SignedProperties>\r\n"
@@ -252,8 +250,8 @@
 "%.*s"
 
 #define U_XADES_TEMPLATE \
-"  <ds:Object xmlns:xades=\"http://uri.etsi.org/01903/v1.4.1#\" xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\r\n" \
-"    <xades:QualifyingProperties Target=\"#SigID\">\r\n" \
+"  <ds:Object Id=\"idPackageObject\" xmlns:xades=\"http://uri.etsi.org/01903/v1.4.1#\" xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\r\n" \
+"    <xades:QualifyingProperties Target=\"#idPackageSignature\">\r\n" \
 "%.*s" \
 "      <xades:UnsignedProperties>\r\n" \
 "        <xades:UnsignedSignatureProperties>\r\n" \
@@ -371,10 +369,7 @@ public:
 
       if (claimed_role.empty() == false) roleTemplate.snprintf(U_XADES_SIGNER_ROLE_TEMPLATE, U_STRING_TO_TRACE(claimed_role));
 
-      UString allDataObjectTimeStamp(U_CAPACITY);
-
-      (void) signedProperties.reserve(U_CONSTANT_SIZE(U_XADES_SIGNED_PROPERTIES_TEMPLATE) + 8192U +
-                                      signingTime.size() + allDataObjectTimeStamp.size());
+      (void) signedProperties.reserve(U_CONSTANT_SIZE(U_XADES_SIGNED_PROPERTIES_TEMPLATE) + 8192U + signingTime.size());
 
       signedProperties.snprintf(U_XADES_SIGNED_PROPERTIES_TEMPLATE,
                                 U_STRING_TO_TRACE(signingTime),
@@ -384,8 +379,7 @@ public:
                                 U_STRING_TO_TRACE(production_place_postal_code),
                                 U_STRING_TO_TRACE(production_place_country_name),
                                 U_STRING_TO_TRACE(roleTemplate),
-                                U_STRING_TO_TRACE(DataObjectFormat),
-                                U_STRING_TO_TRACE(allDataObjectTimeStamp));
+                                U_STRING_TO_TRACE(DataObjectFormat));
 
       to_digest = UXML2Document::xmlC14N(signedProperties);
 
@@ -688,7 +682,7 @@ public:
                        X509SerialNumber,
                        U_STRING_TO_TRACE(X509CertificateValue));
 
-      UString XMLDSIGObject(U_CAPACITY), Object(U_CAPACITY), ObjectDigestValue(200U),
+      UString ObjectDigestValue(200U),
               Reference(U_CAPACITY), dataObjectFormat(U_CAPACITY),
               XMLDSIGReference(U_CAPACITY), XMLDSIGReferenceC14N(U_CAPACITY);
 
@@ -809,13 +803,12 @@ public:
       // 5. Compose the final XML document including the signatureValue, this time in non-canonicalized form.
       // ---------------------------------------------------------------------------------------------------------------
       UString output(U_CONSTANT_SIZE(U_XMLDSIG_TEMPLATE) + 8192U + 
-                     SignedInfo.size() + SignatureValue.size() + XMLDSIGObject.size() + XAdESObject.size());
+                     SignedInfo.size() + SignatureValue.size() + XAdESObject.size());
 
       output.snprintf(U_XMLDSIG_TEMPLATE,
                         U_STRING_TO_TRACE(SignedInfo),
                         U_STRING_TO_TRACE(SignatureValue),
                         U_STRING_TO_TRACE(KeyInfo),
-                        U_STRING_TO_TRACE(XMLDSIGObject),
                         U_STRING_TO_TRACE(XAdESObject));
       // ---------------------------------------------------------------------------------------------------------------
 

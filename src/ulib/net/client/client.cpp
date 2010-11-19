@@ -215,7 +215,7 @@ bool UClient_Base::connect()
       U_RETURN(true);
       }
 
-   response.snprintf("Sorry, couldn't connect to server %.*S%R", U_STRING_TO_TRACE(host_port));
+   response.snprintf("Sorry, couldn't connect to server %.*S%R", U_STRING_TO_TRACE(host_port), 0); // NB: the last argument (0) is necessary...
 
    if (log)
       {
@@ -369,7 +369,7 @@ send:
             {
             ULog::log("%sConnection to %.*s reset by peer%R\n",
                      log_shared_with_server ? UServer_Base::mod_name : "",
-                     U_STRING_TO_TRACE(logbuf));
+                     U_STRING_TO_TRACE(logbuf), 0); // NB: the last argument (0) is necessary...
             }
          }
       }
@@ -384,7 +384,7 @@ send:
             {
             ULog::log("%sConnection to %.*s reset by peer%R\n",
                      log_shared_with_server ? UServer_Base::mod_name : "",
-                     U_STRING_TO_TRACE(logbuf));
+                     U_STRING_TO_TRACE(logbuf), 0); // NB: the last argument (0) is necessary...
             }
 
          if (++counter < 2 &&

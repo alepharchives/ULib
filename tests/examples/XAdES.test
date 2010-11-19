@@ -8,13 +8,14 @@ rm -f tsa_http.log TSA/log \
 		out/sign.out err/sign.err \
 		out/archive.out err/archive.err \
 		out/verify.out err/verify.err \
+		trace.*feed*.[0-9]* object.*feed*.[0-9]* stack.*feed*.[0-9]* \
 		trace.*sign*.[0-9]* object.*sign*.[0-9]* stack.*sign*.[0-9]* \
 		trace.*archive*.[0-9]* object.*archive*.[0-9]* stack.*archive*.[0-9]* \
 		trace.*verify*.[0-9]* object.*verify*.[0-9]* stack.*verify*.[0-9]* \
 		out/userver_tcp.out err/userver_tcp.err \
       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
 
-#UTRACE="0 10M 0"
+ UTRACE="0 10M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --leak-check=full"
@@ -40,8 +41,8 @@ DIR_CMD="../../examples/userver"
 #STRACE=$LTRUSS
 #start_prg_background userver_tcp -c tsa_http.cfg
 
- DIR_CA=/usr/src/ULib-1.0.5/tests/ulib/CA
-#DIR_CA=/mnt/storage/stefano/MinGW/etc/CA
+ DIR_CA=/usr/src/ULib-1.1.0/tests/ulib/CA
+#DIR_CA=/mnt/storage/stefano/XAdES/CA_STORE
 DATA_URI=$DOCUMENT
 X509=`cat $DIR_CA/server.crt`
  KEY_HANDLE=$DIR_CA/server.key
@@ -57,6 +58,9 @@ CA_STORE=$DIR_CA/CApath
 SIGNATURE_TIMESTAMP="http://localhost/tsa"
 
 DIR_CMD="../../examples/XAdES"
+
+ start_prg feed -c XAdES.ini -- http://www.cnipa.gov.it/site/_files/LISTACER_20100907.zip.p7m 
+ exit 0
 
 #STRACE=$LTRUSS
 start_prg sign -c XAdES.ini -- \

@@ -208,7 +208,7 @@ void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], char* const
       {
       if (fork_called) u_trace_init(false, false, true);
 
-      iov[1].iov_len = u_snprintf(buffer, sizeof(buffer), " = -1%R", NULL);
+      iov[1].iov_len = u_snprintf(buffer, sizeof(buffer), " = -1%R", 0); // NB: the last argument (0) is necessary...
 
       u_trace_writev(iov+1, 2);
 
@@ -219,7 +219,7 @@ void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], char* const
       if (fork_called) u_trace_close();
       }
 
-   U_WARNING("::execve(%s,%p,%p) = -1%R", pathname, argv, envp, NULL);
+   U_WARNING("::execve(%s,%p,%p) = -1%R", pathname, argv, envp, 0); // NB: the last argument (0) is necessary...
 
    ::_exit(EX_UNAVAILABLE);
 }

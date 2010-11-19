@@ -37,7 +37,7 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 bin_PROGRAMS = sign$(EXEEXT) archive$(EXEEXT) client$(EXEEXT) \
-	verify$(EXEEXT)
+	verify$(EXEEXT) feed$(EXEEXT)
 subdir = examples/XAdES
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -90,6 +90,13 @@ client_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 client_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
 	$(client_LDFLAGS) $(LDFLAGS) -o $@
+am__feed_SOURCES_DIST = feed.cpp
+@CURL_TRUE@am_feed_OBJECTS = feed.$(OBJEXT)
+feed_OBJECTS = $(am_feed_OBJECTS)
+@CURL_TRUE@feed_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
+feed_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
+	$(feed_LDFLAGS) $(LDFLAGS) -o $@
 am_sign_OBJECTS = sign.$(OBJEXT)
 sign_OBJECTS = $(am_sign_OBJECTS)
 sign_DEPENDENCIES = libutility.la \
@@ -117,11 +124,11 @@ CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(libutility_la_SOURCES) $(libverify_la_SOURCES) \
-	$(archive_SOURCES) $(client_SOURCES) $(sign_SOURCES) \
-	$(verify_SOURCES)
+	$(archive_SOURCES) $(client_SOURCES) $(feed_SOURCES) \
+	$(sign_SOURCES) $(verify_SOURCES)
 DIST_SOURCES = $(libutility_la_SOURCES) $(libverify_la_SOURCES) \
-	$(archive_SOURCES) $(client_SOURCES) $(sign_SOURCES) \
-	$(verify_SOURCES)
+	$(archive_SOURCES) $(client_SOURCES) $(am__feed_SOURCES_DIST) \
+	$(sign_SOURCES) $(verify_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -294,6 +301,9 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
+@CURL_TRUE@feed_LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la
+@CURL_TRUE@feed_SOURCES = feed.cpp
+@CURL_TRUE@feed_LDFLAGS = $(PRG_LDFLAGS)
 sign_LDADD = libutility.la $(top_builddir)/src/ulib/lib@ULIB@.la
 sign_SOURCES = sign.cpp
 sign_LDFLAGS = $(PRG_LDFLAGS)
@@ -405,6 +415,9 @@ archive$(EXEEXT): $(archive_OBJECTS) $(archive_DEPENDENCIES)
 client$(EXEEXT): $(client_OBJECTS) $(client_DEPENDENCIES) 
 	@rm -f client$(EXEEXT)
 	$(client_LINK) $(client_OBJECTS) $(client_LDADD) $(LIBS)
+feed$(EXEEXT): $(feed_OBJECTS) $(feed_DEPENDENCIES) 
+	@rm -f feed$(EXEEXT)
+	$(feed_LINK) $(feed_OBJECTS) $(feed_LDADD) $(LIBS)
 sign$(EXEEXT): $(sign_OBJECTS) $(sign_DEPENDENCIES) 
 	@rm -f sign$(EXEEXT)
 	$(sign_LINK) $(sign_OBJECTS) $(sign_LDADD) $(LIBS)
@@ -421,6 +434,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/archive.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/context.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/feed.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sign.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/transform.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utility.Plo@am__quote@

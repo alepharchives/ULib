@@ -227,7 +227,7 @@ const char* USSHSocket::getError()
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len,0)
 
-      (void) u_snprintf(u_buffer, sizeof(u_buffer), "%R", NULL);
+      (void) u_snprintf(u_buffer, sizeof(u_buffer), "%R", 0); // NB: the last argument (0) is necessary...
 
       U_RETURN(u_buffer+3);
       }

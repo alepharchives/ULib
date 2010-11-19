@@ -477,17 +477,11 @@ UString UStringExt::trim(const char* s, uint32_t n)
       {
       while (u_isspace(s[--n])) {} // skip white space from end
 
-      U_INTERNAL_DUMP("n = %u", n)
+      n += 1 - i;
 
-      U_INTERNAL_ASSERT_MAJOR(n,0)
+      (void) u_memcpy(result.data(), s+i, n);
 
-      int32_t sz = n - i + 1;
-
-      U_INTERNAL_ASSERT_MAJOR(sz,0)
-
-      (void) u_memcpy(result.data(), s+i, sz);
-
-      result.size_adjust(sz);
+      result.size_adjust(n);
       }
 
    U_RETURN_STRING(result);

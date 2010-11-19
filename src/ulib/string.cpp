@@ -579,7 +579,7 @@ bool UString::reserve(uint32_t n)
       const char* ptr1 = rep->str;
             char* ptr2 = (char*) U_SYSCALL(malloc, "%u", n);
 
-      (void) u_memcpy(ptr2, ptr1, rep->_length);
+      if (rep->_length) (void) u_memcpy(ptr2, ptr1, rep->_length);
 
       rep->checkIfMReserve();
 

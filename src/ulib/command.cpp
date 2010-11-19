@@ -379,7 +379,7 @@ void UCommand::setMsgError(const char* cmd)
 
    if (isStarted() == false)
       {
-      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "command %S didn't start %R",  cmd, NULL);
+      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "command %S didn't start %R",  cmd, 0); // NB: the last argument (0) is necessary...
       }
    else if (isTimeout())
       {

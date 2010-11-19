@@ -96,6 +96,7 @@ const char* restrict u_line_terminator     = U_LF;
 uint32_t             u_line_terminator_len = 1;
 
 /* Services */
+int                  u_errno; /* An errno value */
 int                  u_flag_exit;
 int                  u_flag_test;
 bool                 u_recursion;
@@ -1355,8 +1356,6 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'R': /* print msg - u_getSysError() */
             {
-            static int errno_old;
-
             uint32_t l               = U_CONSTANT_SIZE(" - ");
             const char* restrict ccp = VA_ARG(const char* restrict);
 
@@ -1377,8 +1376,11 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             bp  += l;
             ret += l;
 
-            if (errno) errno_old = errno;
-            else       errno     = errno_old;
+            if (errno == 0)
+               {
+                 errno = u_errno;
+               u_errno = 0;
+               }
 
 #        ifdef __MINGW32__
             if (errno < 0)
