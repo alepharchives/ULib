@@ -94,7 +94,7 @@ public:
 
    friend U_EXPORT ostream& operator<<(ostream& os, const UTimer& t);
 
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
    static bool invariant();
 #endif
 #ifdef DEBUG

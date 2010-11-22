@@ -4,7 +4,8 @@
 #include <ulib/curl/curl.h>
 #include <ulib/ssl/pkcs7.h>
 #include <ulib/file_config.h>
-#include <ulib/utility/services.h>
+#include <ulib/ssl/certificate.h>
+#include <ulib/utility/string_ext.h>
 
 #undef  PACKAGE
 #define PACKAGE "feed"
@@ -83,6 +84,12 @@ public:
 
       (void) cfg.open(cfg_str);
 
+      UString ca_store = cfg[U_STRING_FROM_CONSTANT("XAdES-C.CAStore")];
+
+      if (ca_store.empty()) U_ERROR("XAdES - CAStore is empty...");
+
+      if (UFile::chdir(ca_store.c_str(), true) == false) U_ERROR("XAdES - chdir on CAStore %S failed...", ca_store.data());
+
       // manage arguments...
 
       uri = ( U_ZIPPONE == 0 ||
@@ -96,21 +103,85 @@ public:
 
       if (curl.performWait(1024U * 1024U))
          {
-         UString list;
-         UPKCS7 item(curl.getResponse(), "DER");
+         UPKCS7 zippone(curl.getResponse(), "DER");
 
-         if (item.isValid() == false)
+         if (zippone.isValid() == false) U_ERROR("Error reading S/MIME Public Certificate List, may be the file is not signed...");
+
+         UZIP zip(zippone.getContent());
+
+         if (zip.readContent() == false) U_ERROR("Error reading ZIP Public Certificate List, may be the file is not zipped...");
+
+         bool exist;
+         long hash_code;
+         UVector<UString> vec(5U);
+         uint32_t i, j, k, n = zip.getFilesCount();
+         UString namefile, hash(100U), item, list, uri_crl;
+
+         U_INTERNAL_DUMP("ZIP: %d parts", n)
+
+         for (i = 0; i < n; ++i)
             {
-            U_ERROR("Error reading S/MIME Public Certificate List, may be the file is not signed...");
-            }
+            namefile = zip.getFilenameAt(i);
 
-         UZIP zip(item.getContent());
+            U_INTERNAL_DUMP("Part %d: Filename=%.*S", i+1, U_STRING_TO_TRACE(namefile))
 
-         if (zip.readContent() == false)
-            {
-            U_ERROR("Error reading ZIP Public Certificate List, may be the file is not zipped...");
+            // .cer .crt .der
+
+            if (UStringExt::endsWith(namefile, U_CONSTANT_TO_PARAM(".cer")) ||
+                UStringExt::endsWith(namefile, U_CONSTANT_TO_PARAM(".crt")) ||
+                UStringExt::endsWith(namefile, U_CONSTANT_TO_PARAM(".der")))
+               {
+               UCertificate cert(zip.getFileContentAt(i));
+
+               if (cert.isValid())
+                  {
+                  // Link a certificate to its subject name hash value, each hash is of
+                  // the form <hash>.<n> where n is an integer. If the hash value already exists
+                  // then we need to up the value of n, unless its a duplicate in which
+                  // case we skip the link. We check for duplicates by comparing the
+                  // certificate fingerprints
+
+                  hash_code = cert.hashCode();
+
+                  hash.snprintf("%08x.0", hash_code);
+
+                  exist = UFile::access(hash.data(), R_OK);
+
+                  list = cert.getRevocationURL();
+
+                  if (list.empty()) uri_crl.clear();
+                  else
+                     {
+                     for (j = 0, k = vec.split(list); j < k; ++j)
+                        {
+                        item = vec[j];
+
+                        if (U_STRNEQ(item.data(), "URI:"))
+                           {
+                           (void) uri_crl.replace(item.substr(U_CONSTANT_SIZE("URI:")));
+
+                           U_INTERNAL_DUMP("uri_crl = %.*S", U_STRING_TO_TRACE(uri_crl))
+                           }
+                        }
+
+#                 ifdef DEBUG
+                      vec.clear();
+                     item.clear();
+#                 endif
+                     }
+
+                  U_INTERNAL_DUMP("namefile = %.*S hash = %.*S exist = %b", U_STRING_TO_TRACE(namefile), U_STRING_TO_TRACE(hash), exist)
+
+                  if (exist == false)
+                     {
+                     (void) UFile::writeTo(hash, cert.getEncoded("PEM"));
+                     }
+                  }
+               }
             }
          }
+
+      (void) UFile::chdir(0, true);
       }
 
 private:

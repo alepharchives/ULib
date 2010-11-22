@@ -1594,7 +1594,7 @@ U_EXPORT UString operator+(const UString& lhs, const char* rhs)
 U_EXPORT UString operator+(const UString& lhs, char rhs)
 { UString str(lhs); (void) str.append(uint32_t(1), rhs); return str; }
 
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
 #  include <ulib/internal/objectIO.h>
 
 const char* UStringRep::dump(bool reset) const

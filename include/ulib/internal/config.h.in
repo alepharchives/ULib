@@ -713,6 +713,9 @@ typedef unsigned long long uint64;
 /* Define if enable ZIP support */
 #undef HAVE_ZIP
 
+/* Define to 1 if you have the `__assert' function. */
+#undef HAVE___ASSERT
+
 /* Linker Flags */
 #undef LDFLAGS_VAR
 

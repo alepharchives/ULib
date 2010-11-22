@@ -27,6 +27,8 @@ SRC_CPP = internal/common.cpp internal/objectIO.cpp \
 			 utility/interrupt.cpp utility/compress.cpp utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
 			 utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp utility/uhttp.cpp utility/ring_buffer.cpp \
 			 net/ipaddress.cpp net/socket.cpp net/ping.cpp net/tcpsocket.cpp \
+			 net/server/server.cpp net/server/client_image.cpp \
+			 net/client/client_rdb.cpp net/server/client_image_rdb.cpp net/server/server_rdb.cpp \
  			 net/rpc/rpc.cpp net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp net/rpc/rpc_method.cpp net/rpc/rpc_encoder.cpp \
  			 net/rpc/rpc_object.cpp net/rpc/rpc_gen_method.cpp net/rpc/rpc_parser.cpp \
 			 net/client/smtp.cpp net/client/ftp.cpp net/client/pop3.cpp net/client/imap.cpp \
@@ -103,6 +105,10 @@ if !PREAD
 SRC_C += replace/pread.c
 endif
 
+if !ASSERT
+SRC_C += replace/assert.c
+endif
+
 if MEMORY_POOL
 SRC_CPP += internal/memory_pool.cpp
 endif
@@ -175,9 +181,7 @@ endif
 # Handler static/dynamic plugin
 
 if PLUGIN
-SRC_CPP += dynamic/dynamic.cpp dynamic/plugin.cpp \
-			  net/server/server.cpp net/server/client_image.cpp \
-			  net/client/client_rdb.cpp net/server/client_image_rdb.cpp net/server/server_rdb.cpp
+SRC_CPP += dynamic/dynamic.cpp dynamic/plugin.cpp
 endif
 
 if STATIC_HANDLER_RPC

@@ -34,15 +34,14 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@PLUGIN_TRUE@am__append_1 = userver
-@MINGW_FALSE@@PLUGIN_TRUE@am__append_2 = lcsp
-@SSL_TRUE@am__append_3 = http_header uclient
-@LIBZ_TRUE@@SSL_TRUE@am__append_4 = PEC_log
-@LIBZ_TRUE@@SSL_TRUE@@ZIP_TRUE@am__append_5 = doc_parse doc_classifier
-@LIBXML2_TRUE@@LIBZ_TRUE@@SSL_TRUE@@ZIP_TRUE@am__append_6 = XAdES
-@PLUGIN_TRUE@@SSL_TRUE@am__append_7 = rsign csp
-@EXPAT_TRUE@am__append_8 = xml2txt
-@LDAP_TRUE@am__append_9 = form_completion
+@MINGW_FALSE@am__append_1 = lcsp
+@SSL_TRUE@am__append_2 = http_header uclient
+@LIBZ_TRUE@@SSL_TRUE@am__append_3 = PEC_log
+@LIBZ_TRUE@@SSL_TRUE@@ZIP_TRUE@am__append_4 = doc_parse doc_classifier
+@LIBXML2_TRUE@@LIBZ_TRUE@@SSL_TRUE@@ZIP_TRUE@am__append_5 = XAdES
+@PLUGIN_TRUE@@SSL_TRUE@am__append_6 = rsign csp
+@EXPAT_TRUE@am__append_7 = xml2txt
+@LDAP_TRUE@am__append_8 = form_completion
 subdir = examples
 DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -91,7 +90,7 @@ AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
 	distdir
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = test_manager IR simple_client_server workflow userver \
+DIST_SUBDIRS = userver test_manager IR simple_client_server workflow \
 	lcsp http_header uclient PEC_log doc_parse doc_classifier \
 	XAdES rsign csp xml2txt form_completion
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -310,10 +309,10 @@ EXTRA_DIST = README \
 				 workflow/*.h workflow/*.cpp workflow/Makefile.*
 
 MAINTAINERCLEANFILES = Makefile.in
-SUBDIRS = test_manager IR simple_client_server workflow \
+SUBDIRS = userver test_manager IR simple_client_server workflow \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7) $(am__append_8) $(am__append_9)
+	$(am__append_7) $(am__append_8)
 all: all-recursive
 
 .SUFFIXES:

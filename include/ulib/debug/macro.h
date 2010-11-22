@@ -34,7 +34,7 @@
 #  define U_ASSERT_DIFFERS_MSG(a,b,info) UTrace::suspend(); U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info) UTrace::resume();
 #  define U_ASSERT_POINTER_MSG(ptr,info) UTrace::suspend(); U_INTERNAL_ASSERT_POINTER_MSG(ptr,info) UTrace::resume();
 #  define U_ASSERT_RANGE_MSG(a,x,b,info) UTrace::suspend(); U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info) UTrace::resume();
-#elif defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__)
+#elif defined(U_TEST)
 #  define U_ASSERT(expr)                                    U_INTERNAL_ASSERT(expr)
 #  define U_ASSERT_MINOR(a,b)                               U_INTERNAL_ASSERT_MINOR(a,b)
 #  define U_ASSERT_MAJOR(a,b)                               U_INTERNAL_ASSERT_MAJOR(a,b)
@@ -44,8 +44,8 @@
 #  define U_ASSERT_RANGE(a,x,b)                             U_INTERNAL_ASSERT_RANGE(a,x,b)
 
 #  define U_ASSERT_MSG(expr,info)                           U_INTERNAL_ASSERT_MSG(expr,info)
-#  define U_ASSERT_MINOR_MSG(a,b,info)                      U_INTERNAL_ASSERT_MINOR_MSG(a,b,info))
-#  define U_ASSERT_MAJOR_MSG(a,b,info)                      U_INTERNAL_ASSERT_MAJOR_MSG(a,b,info))
+#  define U_ASSERT_MINOR_MSG(a,b,info)                      U_INTERNAL_ASSERT_MINOR_MSG(a,b,info)
+#  define U_ASSERT_MAJOR_MSG(a,b,info)                      U_INTERNAL_ASSERT_MAJOR_MSG(a,b,info)
 #  define U_ASSERT_EQUALS_MSG(a,b,info)                     U_INTERNAL_ASSERT_EQUALS_MSG(a,b,info)
 #  define U_ASSERT_DIFFERS_MSG(a,b,info)                    U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info)
 #  define U_ASSERT_POINTER_MSG(ptr,info)                    U_INTERNAL_ASSERT_POINTER_MSG(ptr,info)

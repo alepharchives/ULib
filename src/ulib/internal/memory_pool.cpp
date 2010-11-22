@@ -33,7 +33,7 @@
                           U_STACK_TYPE_9  * U_NUM_ENTRY_MEM_BLOCK)
 // --------------------------------------------------------------------------------------
 
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
 sig_atomic_t UMemoryPool::index_stack_busy = -1;
 #endif
 
@@ -300,7 +300,7 @@ public:
          growPointerBlock();
          }
 
-#  if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#  if defined(DEBUG) || defined(U_TEST)
       UMemoryPool::index_stack_busy = index;
 #  endif
 
@@ -308,7 +308,7 @@ public:
 
       pointer_block[len++] = ptr;
 
-#  if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#  if defined(DEBUG) || defined(U_TEST)
       UMemoryPool::index_stack_busy = -1;
 #  endif
       }
@@ -330,7 +330,7 @@ public:
 
       // ...che viene inizializzato suddividendolo in base al type 'dimensione' e assegnando i valori dei puntatori relativi nel nuovo stack
 
-#  if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#  if defined(DEBUG) || defined(U_TEST)
       UMemoryPool::index_stack_busy = index;
 #  endif
 
@@ -341,7 +341,7 @@ public:
          }
       while (len < U_NUM_ENTRY_MEM_BLOCK);
 
-#  if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#  if defined(DEBUG) || defined(U_TEST)
    // UMemoryPool::index_stack_busy = -1;
 #  endif
       }
@@ -435,13 +435,13 @@ void* UStackMemoryPool::pop()
    U_INTERNAL_ASSERT_DIFFERS(index,(uint32_t)UMemoryPool::index_stack_busy)
 
    if (isEmpty()) allocateMemoryBlocks(); // len == 0
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
    else UMemoryPool::index_stack_busy = index;
 #endif
 
    void* ptr = pointer_block[--len];
 
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
    UMemoryPool::index_stack_busy = -1;
 #endif
 

@@ -96,6 +96,10 @@
 #  include "replace/pread.c"
 #endif
 
+#ifndef HAVE___ASSERT
+#  include "replace/assert.c"
+#endif
+
 #ifdef DEBUG
 #  include "base/base_trace.c"
 #endif

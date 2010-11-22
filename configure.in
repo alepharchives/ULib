@@ -388,10 +388,18 @@ AC_MSG_RESULT($use_distcc)
 TWOCAN_CONF_MSG(Checking for libraries to link against)
 
 AC_CHECK_LIB(dl,dlopen)
-AC_CHECK_LIB(rt,sem_init)
 AC_CHECK_LIB(nsl,inet_ntop)
+AC_CHECK_LIB(pthread,sem_init)
 AC_CHECK_LIB(posix4,nanosleep)
 AC_CHECK_LIB(socket,socketpair)
+
+if test "$ac_cv_lib_pthread_sem_init" = "yes"; then
+	OST_LIB_PTHREAD
+	AM_CONDITIONAL(SEMAPHORE, true)
+else
+	AC_CHECK_LIB(rt,sem_init)
+	AM_CONDITIONAL(SEMAPHORE, test "$ac_cv_lib_rt_sem_init" = "yes")
+fi
 
 LIBS_SAVE=${LIBS}
 AC_CHECK_LIB(GeoIP,GeoIP_id_by_ipnum)
@@ -510,7 +518,7 @@ AC_HEADER_MAJOR
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([assert.h byteswap.h endian.h execinfo.h ndir.h string.h netpacket/packet.h sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h \
-						sysexits.h termios.h streambuf.h linux/netfilter_ipv4/ipt_ACCOUNT.h])
+						semaphore.h sysexits.h termios.h streambuf.h linux/netfilter_ipv4/ipt_ACCOUNT.h])
 
 AC_CHECK_HEADERS([sys/inotify.h mcheck.h])
 AC_LANG_C
@@ -576,7 +584,7 @@ AC_FUNC_NANOSLEEP
 AC_FUNC_CLOSEDIR_VOID
 # Check for functions in one big call, to reduce the size of configure
 AC_CHECK_FUNCS([accept4 daemon epoll_create1 epoll_wait fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem \
-					 mremap pread sendfile64 strndup mkdtemp strptime strtof strtoull strtold gmtime_r timegm strerror strsignal])
+					 __assert mremap pread sendfile64 strndup mkdtemp strptime strtof strtoull strtold gmtime_r timegm strerror strsignal])
 
 AM_CONDITIONAL(GEOIP,		 test "$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" = "yes")
 AM_CONDITIONAL(FCGI,			 test "$ac_cv_lib_fcgi_FCGX_Accept"			 = "yes")
@@ -595,6 +603,7 @@ AM_CONDITIONAL(FALLOCATE,	 test "$ac_cv_func_fallocate"					 = "yes")
 AM_CONDITIONAL(FALLOCATE64, test "$ac_cv_func_fallocate64"				 = "yes")
 AM_CONDITIONAL(NANOSLEEP,   test "$ac_cv_func_nanosleep"					 = "yes")
 AM_CONDITIONAL(GETOPT_LONG, test "$ac_cv_func_getopt_long"				 = "yes")
+AM_CONDITIONAL(ASSERT,		 test "$ac_cv_func___assert"					 = "yes")
 
 # SECTION 11: checks for function characteristics
 
@@ -781,11 +790,6 @@ if test "$enable_pch" = "yes" ; then
 	CPPFLAGS="-include $DIR/include/ulib/all.h -Winvalid-pch ${CPPFLAGS}"
 fi
 
-if test "${enable_shared}" != "yes"; then
-	enable_final="yes"
-	AM_CONDITIONAL(PLUGIN, false)
-fi
-
 if test "$enable_final" = "yes"; then
 	ulib_final_msg="enabled"
 	AM_CONDITIONAL(FINAL, true)
@@ -926,14 +930,14 @@ case "$target_os" in
 		enable_final="yes"
 		AC_DEFINE(HAVE_MODULES, [1], [support for plugin modules])
 		AM_CONDITIONAL(PLUGIN, true)
+	else
+		AM_CONDITIONAL(PLUGIN, false)
 	fi
-	AM_CONDITIONAL(SEMAPHORE, false)
 	;;
 	cygwin*)
 	AC_DEFINE(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])
 	;;
 	*)
-	AC_CHECK_HEADERS([semaphore.h])
 	AC_CHECK_TYPE([siginfo_t], [AC_DEFINE_UNQUOTED(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])], [], [#include <signal.h>])
 	if test "$ac_cv_cxx_visibility_inlines_hidden_flag" = "yes"; then
 		AC_DEFINE(HAVE_GNUC_VISIBILTY, 1, [enable gcc visibility features])
@@ -942,18 +946,7 @@ case "$target_os" in
 	if test "$with_gnu_ld" = "yes" && test "$enable_new_ldflags" = "yes"; then
 		LDFLAGS="${LDFLAGS} -Wl,-z,now,-O1,--as-needed,--enable-new-dtags,--hash-style=gnu,--sort-common"
 	fi
-	if test "${enable_shared}" = "yes"; then
-		AM_CONDITIONAL(PLUGIN, test "$ost_cv_dynloader" = "yes")
-	fi
-	if test "$ac_cv_lib_rt_sem_init" = "yes"; then
-		AM_CONDITIONAL(SEMAPHORE, true)
-	else
-		AC_CHECK_LIB(pthread,sem_init)
-		if test "$ac_cv_lib_pthread_sem_init" = "yes"; then
-			OST_LIB_PTHREAD
-			AM_CONDITIONAL(SEMAPHORE, true)
-		fi
-	fi
+	AM_CONDITIONAL(PLUGIN, test "$ost_cv_dynloader" = "yes")
 	;;
 esac
 

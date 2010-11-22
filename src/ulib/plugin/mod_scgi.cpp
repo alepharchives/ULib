@@ -140,7 +140,7 @@ int USCGIPlugIn::handlerRequest()
 
       U_INTERNAL_ASSERT_MINOR(n, 128)
 
-#  if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#  if defined(DEBUG) || defined(U_TEST)
       uint32_t hlength = 0; // calculate the total length of the headers
 #  endif
 
@@ -152,7 +152,7 @@ int USCGIPlugIn::handlerRequest()
          U_INTERNAL_ASSERT_MAJOR(equalPtr-envp[i], 0)
          U_INTERNAL_ASSERT_MAJOR(u_strlen(equalPtr+1), 0)
 
-#     if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#     if defined(DEBUG) || defined(U_TEST)
          hlength += (equalPtr - envp[i]) + u_strlen(equalPtr) + 1;
 #     endif
 

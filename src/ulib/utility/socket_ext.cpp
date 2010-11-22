@@ -25,7 +25,7 @@
 
 int      USocketExt::pcount;
 uint32_t USocketExt::size_message;
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
 char*    USocketExt::pbuffer;
 #endif
 
@@ -159,7 +159,7 @@ read:
          if (pcount >= 0)
             {
             byte_read = count;
-#        if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#        if defined(DEBUG) || defined(U_TEST)
             pbuffer   = buffer.data();
 #        endif
             }
@@ -380,7 +380,7 @@ int USocketExt::vsyncCommandToken(USocket* s, UString& buffer, const char* forma
       if (pos_token != U_NOT_FOUND)
          {
                           U_ASSERT(buffer.c_char(buffer.size()-1) == '\n')
-#     if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#     if defined(DEBUG) || defined(U_TEST)
          if (pos_token) { U_ASSERT(buffer.c_char(pos_token-1)     == '\n') }
 #     endif
 

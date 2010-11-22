@@ -285,7 +285,7 @@ U_EXPORT ostream& operator<<(ostream& os, const UTimer& t)
    return os;
 }
 
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
 bool UTimer::invariant()
 {
    U_TRACE(0, "UTimer::invariant()")

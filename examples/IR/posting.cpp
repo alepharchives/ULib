@@ -440,7 +440,7 @@ U_NO_EXPORT void UPosting::del()
       return;
       }
 
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
    uint32_t last_offset = POSTING_OFFSET_LAST_DOC_ID;
 #endif
 
@@ -1224,7 +1224,7 @@ U_NO_EXPORT bool UPosting::callForCompositeWord(vPF function)
 
    U_ASSERT_DIFFERS(posting->empty(),true)
 
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
    uint32_t posting_size = posting->size();
 #endif
 

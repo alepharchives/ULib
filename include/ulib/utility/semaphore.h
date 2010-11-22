@@ -16,7 +16,10 @@
 
 #include <ulib/internal/common.h>
 
-#ifdef HAVE_SEMAPHORE_H
+#ifdef __MINGW32__
+typedef HANDLE sem_t;
+#  define MAX_SEM_VALUE 1000000
+#elif defined(HAVE_SEMAPHORE_H)
 #  include <semaphore.h>
 // -------------------------------------------------------------
 // check for broken implementation on Linux (debian)...
@@ -37,6 +40,7 @@
 #else
 /*
 typedef int sem_t;
+
 extern "C" {
 extern int sem_wait(sem_t*__sem);
 extern int sem_post(sem_t* __sem);
@@ -45,16 +49,6 @@ extern int sem_getvalue(sem_t* sem, int* sval);
 extern int sem_init(sem_t* __sem, int __pshared, unsigned int __value):
 }
 */
-#endif
-
-#ifdef __MINGW32__
-typedef DWORD timeout_t;
-#  define MAX_SEM_VALUE 1000000
-#  ifndef HAVE_SEMAPHORE_H
-typedef HANDLE sem_t;
-#  endif
-#else
-typedef unsigned long timeout_t;
 #endif
 
 #if !defined(HAVE_SEMAPHORE_H) || defined(U_MAYBE_BROKEN_SEM_IMPL) // _LIBC // uClib
@@ -78,6 +72,12 @@ extern int pthread_mutex_init(pthread_mutex_t* mutex, const pthread_mutexattr_t*
 
 #ifdef U_LOCKFILE
 #  include <ulib/file.h>
+#endif
+
+#ifdef __MINGW32__
+typedef DWORD  timeout_t;
+#else
+typedef time_t timeout_t;
 #endif
 
 /**
@@ -150,7 +150,7 @@ public:
 #endif
 
 protected:
-#if defined(__MINGW32__) && !defined(HAVE_SEMAPHORE_H)
+#ifdef __MINGW32__
    HANDLE sem;
 #elif defined(U_LOCKFILE)
    UFile tmp;
@@ -163,7 +163,7 @@ protected:
    bool flag, broken;
 #endif
 
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
 #  if defined(U_LOCKFILE) || defined(U_MAYBE_BROKEN_SEM_IMPL)
    int getValue() { return -1; }
 #  else

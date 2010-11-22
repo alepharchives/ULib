@@ -402,7 +402,7 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
    bool invariant() const;
    const char* dump(bool reset) const;
 #endif
@@ -1068,7 +1068,7 @@ public:
 
    // --------------------------------------------------------------
 
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
    bool invariant() const;
 #endif
 #ifdef DEBUG

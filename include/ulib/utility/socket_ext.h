@@ -40,7 +40,7 @@ public:
 
    static int pcount;
    static uint32_t size_message;
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
    static char* pbuffer;
 #endif
 

@@ -55,20 +55,23 @@
          CYAN, __LINE__, YELLOW, \
          CYAN, __PRETTY_FUNCTION__, YELLOW, \
          CYAN, #assertion, YELLOW, MAGENTA, info, YELLOW); }
-#elif defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__)
+#elif defined(U_TEST)
 #  ifdef HAVE_ASSERT_H
 #     include <assert.h>
+#     define U_ASSERT_MACRO(assertion,msg,info) assert(assertion);
 #  else
-      /*
-      extern "C" { void __assert(const char* __assertion,
-                                 const char* __file,
-                                 int __line); }
-      */
+#     ifdef __cplusplus
+      extern "C" {
+#     endif
+      void __assert(const char* __assertion, const char* __file, int __line, const char* __function);
+#     ifdef __cplusplus
+      }
+#     endif
+#     define U_ASSERT_MACRO(assertion,msg,info) { if ((int)(assertion) == 0) { __assert(#assertion, __FILE__, __LINE__,__PRETTY_FUNCTION__);  } }
 #  endif
-#  define U_ASSERT_MACRO(assertion,msg,info) { if ((int)(assertion) == 0) { __assert(#assertion, __FILE__, __LINE__);  } }
 #endif
 
-#if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
+#if defined(DEBUG) || defined(U_TEST)
 #  define U_INTERNAL_ASSERT(expr)        { U_ASSERT_MACRO(expr,"ASSERTION FALSE","") }
 #  define U_INTERNAL_ASSERT_MINOR(a,b)   { U_ASSERT_MACRO((a)<(b),"NOT LESS","") }
 #  define U_INTERNAL_ASSERT_MAJOR(a,b)   { U_ASSERT_MACRO((a)>(b),"NOT GREATER","") }

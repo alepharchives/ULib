@@ -34,7 +34,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@PLUGIN_TRUE@am__append_1 = web_server.test web_server_multiclient.test web_socket.test
+@PLUGIN_TRUE@am__append_1 = web_socket.test
 @PLUGIN_TRUE@@SSL_TRUE@am__append_2 = tsa_http.test tsa_https.test csp_rpc.test rsign_rpc.test tsa_rpc.test uclient.test
 @EXPAT_TRUE@@PLUGIN_TRUE@@SSL_TRUE@am__append_3 = csp.test tsa_ssoap.test rsign.test
 @MINGW_FALSE@@PLUGIN_TRUE@@SSL_TRUE@am__append_4 = lcsp_rpc.test
@@ -273,10 +273,11 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/e
 EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN nocat wi-auth WAGSM RA icons ws IR/WEB IR/benchmark IR/doc_dir *.cfg *.ini *.properties *.test *.sh \
 				 index.html 100*.html .htpasswd .htdigest cgi-bin www.sito?.com error_msg workflow doc_parse favicon.ico robots.txt SSI css js
 
-TESTS = client_server.test test_manager.test IR.test $(am__append_1) \
-	$(am__append_2) $(am__append_3) $(am__append_4) \
-	$(am__append_5) $(am__append_6) $(am__append_7) \
-	$(am__append_8) $(am__append_9) ../reset.color
+TESTS = client_server.test test_manager.test IR.test web_server.test \
+	web_server_multiclient.test $(am__append_1) $(am__append_2) \
+	$(am__append_3) $(am__append_4) $(am__append_5) \
+	$(am__append_6) $(am__append_7) $(am__append_8) \
+	$(am__append_9) ../reset.color
 @SSL_TRUE@PRG = test_http_header
 @SSL_TRUE@test_http_header_SOURCES = test_http_header.cpp
 @SSL_TRUE@HTTP_LIB = $(top_builddir)/examples/http_header/libhttp.la

@@ -24,14 +24,11 @@ EXTRA_DIST = README \
 
 MAINTAINERCLEANFILES = Makefile.in
 
-SUBDIRS = test_manager IR simple_client_server workflow
+SUBDIRS = userver test_manager IR simple_client_server workflow
 
-if PLUGIN
-SUBDIRS += userver
 ## MINGW don't have unix socket...
 if !MINGW
 SUBDIRS += lcsp
-endif
 endif
 
 if SSL

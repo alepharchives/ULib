@@ -61,8 +61,8 @@ target_triplet = @target@
 @LIBEVENT_TRUE@am__append_24 = event.test
 @MINGW_FALSE@am__append_25 = test_process test_interrupt test_unixsocket_client test_unixsocket_server
 @MINGW_FALSE@am__append_26 = process.test interrupt.test unixsocket.test
-@PLUGIN_TRUE@am__append_27 = test_plugin test_server
-@PLUGIN_TRUE@am__append_28 = plugin.test server.test server_rpc.test
+@PLUGIN_TRUE@am__append_27 = test_plugin
+@PLUGIN_TRUE@am__append_28 = plugin.test
 check_PROGRAMS = $(am__EXEEXT_15)
 subdir = tests/ulib
 DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
@@ -135,7 +135,7 @@ product2_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 @MINGW_FALSE@	test_interrupt$(EXEEXT) \
 @MINGW_FALSE@	test_unixsocket_client$(EXEEXT) \
 @MINGW_FALSE@	test_unixsocket_server$(EXEEXT)
-@PLUGIN_TRUE@am__EXEEXT_14 = test_plugin$(EXEEXT) test_server$(EXEEXT)
+@PLUGIN_TRUE@am__EXEEXT_14 = test_plugin$(EXEEXT)
 am__EXEEXT_15 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_notifier$(EXEEXT) test_string$(EXEEXT) test_file$(EXEEXT) \
 	test_cdb$(EXEEXT) test_rdb$(EXEEXT) test_file_config$(EXEEXT) \
@@ -150,11 +150,12 @@ am__EXEEXT_15 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_tokenizer$(EXEEXT) test_query_parser$(EXEEXT) \
 	test_multipart$(EXEEXT) test_command$(EXEEXT) \
 	test_dialog$(EXEEXT) test_rdb_server$(EXEEXT) \
-	test_json$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
-	$(am__EXEEXT_3) $(am__EXEEXT_4) $(am__EXEEXT_5) \
-	$(am__EXEEXT_6) $(am__EXEEXT_7) $(am__EXEEXT_8) \
-	$(am__EXEEXT_9) $(am__EXEEXT_10) $(am__EXEEXT_11) \
-	$(am__EXEEXT_12) $(am__EXEEXT_13) $(am__EXEEXT_14)
+	test_json$(EXEEXT) test_server$(EXEEXT) $(am__EXEEXT_1) \
+	$(am__EXEEXT_2) $(am__EXEEXT_3) $(am__EXEEXT_4) \
+	$(am__EXEEXT_5) $(am__EXEEXT_6) $(am__EXEEXT_7) \
+	$(am__EXEEXT_8) $(am__EXEEXT_9) $(am__EXEEXT_10) \
+	$(am__EXEEXT_11) $(am__EXEEXT_12) $(am__EXEEXT_13) \
+	$(am__EXEEXT_14)
 am_test_application_OBJECTS = test_application.$(OBJEXT)
 test_application_OBJECTS = $(am_test_application_OBJECTS)
 test_application_LDADD = $(LDADD)
@@ -357,8 +358,7 @@ am_test_rdb_server_OBJECTS = test_rdb_server.$(OBJEXT)
 test_rdb_server_OBJECTS = $(am_test_rdb_server_OBJECTS)
 test_rdb_server_LDADD = $(LDADD)
 test_rdb_server_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
-am__test_server_SOURCES_DIST = test_server.cpp
-@PLUGIN_TRUE@am_test_server_OBJECTS = test_server.$(OBJEXT)
+am_test_server_OBJECTS = test_server.$(OBJEXT)
 test_server_OBJECTS = $(am_test_server_OBJECTS)
 test_server_LDADD = $(LDADD)
 test_server_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
@@ -539,7 +539,7 @@ DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
 	$(test_pop3_SOURCES) $(am__test_process_SOURCES_DIST) \
 	$(test_query_parser_SOURCES) $(test_rdb_SOURCES) \
 	$(test_rdb_client_SOURCES) $(test_rdb_server_SOURCES) \
-	$(am__test_server_SOURCES_DIST) $(test_services_SOURCES) \
+	$(test_server_SOURCES) $(test_services_SOURCES) \
 	$(test_smtp_SOURCES) $(am__test_soap_client_SOURCES_DIST) \
 	$(am__test_soap_server_SOURCES_DIST) $(test_socket_SOURCES) \
 	$(am__test_ssh_client_SOURCES_DIST) \
@@ -740,12 +740,12 @@ PRG = test_timeval test_timer test_notifier test_string test_file \
 	test_header test_entity test_ipaddress test_socket test_smtp \
 	test_pop3 test_imap test_ftp test_http test_rdb_client \
 	test_tokenizer test_query_parser test_multipart test_command \
-	test_dialog test_rdb_server test_json $(am__append_1) \
-	$(am__append_3) $(am__append_5) $(am__append_7) \
-	$(am__append_9) $(am__append_11) $(am__append_13) \
-	$(am__append_15) $(am__append_17) $(am__append_19) \
-	$(am__append_21) $(am__append_23) $(am__append_25) \
-	$(am__append_27)
+	test_dialog test_rdb_server test_json test_server \
+	$(am__append_1) $(am__append_3) $(am__append_5) \
+	$(am__append_7) $(am__append_9) $(am__append_11) \
+	$(am__append_13) $(am__append_15) $(am__append_17) \
+	$(am__append_19) $(am__append_21) $(am__append_23) \
+	$(am__append_25) $(am__append_27)
 TST = timeval.test timer.test notifier.test string.test file.test \
 	cdb.test rdb.test file_config.test log.test vector.test \
 	options.test application.test tree.test compress.test \
@@ -753,12 +753,12 @@ TST = timeval.test timer.test notifier.test string.test file.test \
 	header.test entity.test ipaddress.test socket.test smtp.test \
 	pop3.test imap.test ftp.test http.test tokenizer.test \
 	query_parser.test multipart.test command.test \
-	rdb_client_server.test json.test $(am__append_2) \
-	$(am__append_4) $(am__append_6) $(am__append_8) \
-	$(am__append_10) $(am__append_12) $(am__append_14) \
-	$(am__append_16) $(am__append_18) $(am__append_20) \
-	$(am__append_22) $(am__append_24) $(am__append_26) \
-	$(am__append_28)
+	rdb_client_server.test json.test server.test server_rpc.test \
+	$(am__append_2) $(am__append_4) $(am__append_6) \
+	$(am__append_8) $(am__append_10) $(am__append_12) \
+	$(am__append_14) $(am__append_16) $(am__append_18) \
+	$(am__append_20) $(am__append_22) $(am__append_24) \
+	$(am__append_26) $(am__append_28)
 test_ipaddress_SOURCES = test_ipaddress.cpp
 test_socket_SOURCES = test_socket.cpp
 test_ftp_SOURCES = test_ftp.cpp
@@ -795,6 +795,7 @@ test_command_SOURCES = test_command.cpp
 test_dialog_SOURCES = test_dialog.cpp
 test_rdb_server_SOURCES = test_rdb_server.cpp
 test_json_SOURCES = test_json.cpp
+test_server_SOURCES = test_server.cpp
 @ZIP_TRUE@test_zip_SOURCES = test_zip.cpp
 @USE_PARSER_TRUE@test_flexer_SOURCES = test_flexer.ll
 @USE_PARSER_TRUE@test_bison_SOURCES = test_bison_flexer.ll test_bison.yy
@@ -823,7 +824,6 @@ test_json_SOURCES = test_json.cpp
 @MINGW_FALSE@test_unixsocket_client_SOURCES = test_unixsocket_client.cpp
 @MINGW_FALSE@test_unixsocket_server_SOURCES = test_unixsocket_server.cpp
 @PLUGIN_TRUE@test_plugin_SOURCES = test_plugin.cpp
-@PLUGIN_TRUE@test_server_SOURCES = test_server.cpp
 @PLUGIN_TRUE@product1_la_SOURCES = plugin/product1.cpp
 @PLUGIN_TRUE@product1_la_LIBADD = $(LDADD)
 @PLUGIN_TRUE@product1_la_LDFLAGS = -module -rpath /nowhere $(MODULE_LIBTOOL_OPTIONS)
