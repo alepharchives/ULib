@@ -9,10 +9,8 @@ EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN nocat wi-auth WAGSM RA icons ws IR/WEB
 
 DEFS  = -DU_TEST @DEFS@
 
-TESTS = client_server.test test_manager.test IR.test web_server.test web_server_multiclient.test ## workflow.test
+TESTS = client_server.test test_manager.test IR.test web_server.test web_server_multiclient.test web_socket.test ## workflow.test
 
-if PLUGIN
-TESTS += web_socket.test
 if SSL
 TESTS += tsa_http.test tsa_https.test csp_rpc.test rsign_rpc.test tsa_rpc.test uclient.test
 if EXPAT
@@ -23,7 +21,6 @@ if !MINGW
 TESTS += lcsp_rpc.test
 if EXPAT
 TESTS += lcsp.test
-endif
 endif
 endif
 endif

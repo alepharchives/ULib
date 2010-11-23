@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-extern U_EXPORT void __assert(const char* assertion, const char* filename, int linenumber, const char* function)
+extern U_EXPORT void __assert(const char* assertion, const char* filename, int linenumber, const char* function);
 
 U_EXPORT void __assert(const char* assertion, const char* filename, int linenumber, const char* function)
 {

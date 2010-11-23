@@ -26,7 +26,9 @@
 // within your HTML such as the local date and time. One might use a server side include to add
 // a signature file to an HTML file or company logo. 
 
+#ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_ssi, USSIPlugIn)
+#endif
 
 const UString* USSIPlugIn::str_var;
 const UString* USSIPlugIn::str_cmd;

@@ -33,6 +33,9 @@ endif
 
 if SSL
 SUBDIRS += http_header uclient
+if EXPAT
+SUBDIRS += csp rsign
+endif
 if LIBZ
 SUBDIRS += PEC_log
 if ZIP
@@ -41,9 +44,6 @@ if LIBXML2
 SUBDIRS += XAdES
 endif
 endif
-endif
-if PLUGIN
-SUBDIRS += rsign csp
 endif
 endif
 

@@ -17,7 +17,9 @@
 #include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
 
+#ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_http, UHttpPlugIn)
+#endif
 
 const UString* UHttpPlugIn::str_CACHE_FILE_MASK;
 const UString* UHttpPlugIn::str_URI_PROTECTED_MASK;

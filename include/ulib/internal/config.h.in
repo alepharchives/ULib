@@ -294,9 +294,6 @@ typedef unsigned long long uint64;
 /* enable Large File Support features */
 #undef HAVE_LFS
 
-/* Define to 1 if you have the `dl' library (-ldl). */
-#undef HAVE_LIBDL
-
 /* Define to 1 if you have the `fcgi' library (-lfcgi). */
 #undef HAVE_LIBFCGI
 
@@ -712,9 +709,6 @@ typedef unsigned long long uint64;
 
 /* Define if enable ZIP support */
 #undef HAVE_ZIP
-
-/* Define to 1 if you have the `__assert' function. */
-#undef HAVE___ASSERT
 
 /* Linker Flags */
 #undef LDFLAGS_VAR

@@ -22,6 +22,7 @@ SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c \
 
 SRC_CPP = internal/common.cpp internal/objectIO.cpp \
 			 ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
+			 dynamic/dynamic.cpp dynamic/plugin.cpp \
 			 mime/header.cpp mime/entity.cpp mime/multipart.cpp \
 			 container/vector.cpp container/hash_map.cpp container/tree.cpp \
 			 utility/interrupt.cpp utility/compress.cpp utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
@@ -178,11 +179,7 @@ else
 SRC_CPP += net/unixsocket.cpp
 endif
 
-# Handler static/dynamic plugin
-
-if PLUGIN
-SRC_CPP += dynamic/dynamic.cpp dynamic/plugin.cpp
-endif
+# Handler static plugin
 
 if STATIC_HANDLER_RPC
 SRC_CPP += plugin/mod_rpc.cpp

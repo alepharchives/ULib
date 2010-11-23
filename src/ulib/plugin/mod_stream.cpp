@@ -18,9 +18,11 @@
 #include <ulib/plugin/mod_stream.h>
 #include <ulib/net/server/server.h>
 
+#ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_stream, UStreamPlugIn)
+#endif
 
-pid_t    UStreamPlugIn::pid = (pid_t)-1;
+pid_t UStreamPlugIn::pid = (pid_t)-1;
 
 const UString* UStreamPlugIn::str_URI_PATH;
 const UString* UStreamPlugIn::str_METADATA;

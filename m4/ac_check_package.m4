@@ -3,57 +3,6 @@ dnl Macros that add compilation options to a `configure' script.
 dnl AC_CHECK_PACKAGE
 
 AC_DEFUN([AC_CHECK_PACKAGE],[
-	AC_MSG_CHECKING(if SSL library is wanted)
-	wanted=1;
-	if test -z "$with_ssl" ; then
-		wanted=0;
-		with_ssl="${CROSS_ENVIRONMENT}/usr";
-	fi
-	AC_ARG_WITH(ssl, [  --with-ssl              use system      SSL library - [[will check /usr /usr/local]] [[default=yes]]],
-	[if test "$withval" = "no"; then
-		AC_MSG_RESULT(no)
-	else
-		AC_MSG_RESULT(yes)
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
-			ssldir="$dir";
-			if test -f "$dir/include/openssl/ssl.h"; then
-				found_ssl="yes";
-				break;
-			fi
-		done
-		if test x_$found_ssl != x_yes; then
-			msg="Cannot find SSL library";
-			if test $wanted = 1; then
-				AC_MSG_ERROR($msg)
-			else
-				AC_MSG_RESULT($msg)
-			fi
-		else
-			echo "${T_MD}OpenSSL found in $ssldir${T_ME}"
-dnl		printf "OpenSSL found in $ssldir\n";
-			HAVE_SSL=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_SSL";
-			if test -f "$ssldir/include/openssl/ts.h"; then
-				HAVE_SSL_TS="yes";
-				CPPFLAGS="$CPPFLAGS -DHAVE_SSL_TS";
-			fi
-dnl		openssl_version=$($ssldir/bin/openssl version | cut -d' ' -f2)
-			openssl_version=$(pkg-config --modversion openssl)
-			if test -z "${openssl_version}"; then
-				openssl_version="Unknown"
-			fi
-			LIBS="-lssl -lcrypto $LIBS";
-			if test $ssldir != "${CROSS_ENVIRONMENT}/usr"; then
-				CPPFLAGS="$CPPFLAGS -I$ssldir/include";
-				LDFLAGS="$LDFLAGS -L$ssldir/lib -Wl,-R$ssldir/lib";
-				PRG_LDFLAGS="$PRG_LDFLAGS -L$ssldir/lib";
-			fi
-		fi
-	fi
-	AC_SUBST(HAVE_SSL)
-	AC_SUBST(HAVE_SSL_TS)],
-	[AC_MSG_RESULT(no)])
-
 	AC_MSG_CHECKING(if LIBZ library is wanted)
 	wanted=1;
 	if test -z "$with_libz" ; then
@@ -108,51 +57,6 @@ dnl		printf "LIBZ found in $libzdir\n";
 		enable_zip="no"
 	fi
 	AC_MSG_RESULT([$enable_zip])
-
-	AC_MSG_CHECKING(if PCRE library is wanted)
-	wanted=1;
-	if test -z "$with_pcre" ; then
-		wanted=0;
-		with_pcre="${CROSS_ENVIRONMENT}/usr";
-	fi
-	AC_ARG_WITH(pcre, [  --with-pcre             use system     PCRE library - [[will check /usr /usr/local]] [[default=yes]]],
-	[if test "$withval" = "no"; then
-		AC_MSG_RESULT(no)
-	else
-		AC_MSG_RESULT(yes)
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
-			pcredir="$dir"
-			if test -f "$dir/include/pcre.h"; then
-				found_pcre="yes";
-				break;
-			fi
-		done
-		if test x_$found_pcre != x_yes; then
-			msg="Cannot find PCRE library";
-			if test $wanted = 1; then
-				AC_MSG_ERROR($msg)
-			else
-				AC_MSG_RESULT($msg)
-			fi
-		else
-			echo "${T_MD}PCRE found in $pcredir${T_ME}"
-dnl		printf "PCRE found in $pcredir\n";
-			HAVE_PCRE=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_PCRE"
-			pcre_version=$($pcredir/bin/pcre-config --version)
-			if test -z "${pcre_version}"; then
-				pcre_version="Unknown"
-			fi
-			LIBS="-lpcre $LIBS";
-			if test $pcredir != "${CROSS_ENVIRONMENT}/usr"; then
-				CPPFLAGS="$CPPFLAGS -I$pcredir/include"
-				LDFLAGS="$LDFLAGS -L$pcredir/lib -Wl,-R$pcredir/lib";
-				PRG_LDFLAGS="$PRG_LDFLAGS -L$pcredir/lib";
-			fi
-		fi
-	fi
-	AC_SUBST(HAVE_PCRE)],
-	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if libuuid library is wanted)
 	wanted=1;
@@ -244,6 +148,138 @@ dnl		printf "libmagic found in $magicdir\n";
 	AC_SUBST(HAVE_MAGIC)],
 	[AC_MSG_RESULT(no)])
 
+	AC_MSG_CHECKING(if SSL library is wanted)
+	wanted=1;
+	if test -z "$with_ssl" ; then
+		wanted=0;
+		with_ssl="${CROSS_ENVIRONMENT}/usr";
+	fi
+	AC_ARG_WITH(ssl, [  --with-ssl              use system      SSL library - [[will check /usr /usr/local]] [[default=yes]]],
+	[if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			ssldir="$dir";
+			if test -f "$dir/include/openssl/ssl.h"; then
+				found_ssl="yes";
+				break;
+			fi
+		done
+		if test x_$found_ssl != x_yes; then
+			msg="Cannot find SSL library";
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
+		else
+			echo "${T_MD}OpenSSL found in $ssldir${T_ME}"
+dnl		printf "OpenSSL found in $ssldir\n";
+			HAVE_SSL=yes
+			CPPFLAGS="$CPPFLAGS -DHAVE_SSL";
+			if test -f "$ssldir/include/openssl/ts.h"; then
+				HAVE_SSL_TS="yes";
+				CPPFLAGS="$CPPFLAGS -DHAVE_SSL_TS";
+			fi
+dnl		openssl_version=$($ssldir/bin/openssl version | cut -d' ' -f2)
+			openssl_version=$(pkg-config --modversion openssl)
+			if test -z "${openssl_version}"; then
+				openssl_version="Unknown"
+			fi
+			LIBS="-lssl -lcrypto $LIBS";
+			if test $ssldir != "${CROSS_ENVIRONMENT}/usr"; then
+				CPPFLAGS="$CPPFLAGS -I$ssldir/include";
+				LDFLAGS="$LDFLAGS -L$ssldir/lib -Wl,-R$ssldir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$ssldir/lib";
+			fi
+		fi
+	fi
+	AC_SUBST(HAVE_SSL)
+	AC_SUBST(HAVE_SSL_TS)],
+	[AC_MSG_RESULT(no)])
+
+	AC_MSG_CHECKING(if SSH library is wanted)
+	AC_ARG_WITH(ssh, [  --with-ssh              use system      SSH library - [[will check /usr /usr/local]]],
+	[if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			sshdir="$dir";
+			if test -f "$dir/include/libssh/libssh.h"; then
+				found_ssh="yes";
+				break;
+			fi
+		done
+		if test x_$found_ssh != x_yes; then
+			AC_MSG_ERROR(Cannot find SSH library)
+		else
+			echo "${T_MD}libssh found in $sshdir${T_ME}"
+dnl		printf "libSSH found in $sshdir\n";
+			HAVE_SSH=yes
+			CPPFLAGS="$CPPFLAGS -DHAVE_SSH";
+dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -d' ' -f3)
+			libssh_version=$(strings $sshdir/lib*/libssh.so | grep '^SSH-[[0-9]]' | head -n1 | cut -d'-' -f4)
+			if test -z "${libssh_version}"; then
+				libssh_version="Unknown"
+			fi
+			LIBS="-lssh $LIBS";
+			if test $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
+				CPPFLAGS="$CPPFLAGS -I$sshdir/include";
+				LDFLAGS="$LDFLAGS -L$sshdir/lib -Wl,-R$sshdir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$sshdir/lib";
+			fi
+		fi
+	fi
+	AC_SUBST(HAVE_SSH)],
+	[AC_MSG_RESULT(no)])
+
+	AC_MSG_CHECKING(if PCRE library is wanted)
+	wanted=1;
+	if test -z "$with_pcre" ; then
+		wanted=0;
+		with_pcre="${CROSS_ENVIRONMENT}/usr";
+	fi
+	AC_ARG_WITH(pcre, [  --with-pcre             use system     PCRE library - [[will check /usr /usr/local]] [[default=yes]]],
+	[if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
+			pcredir="$dir"
+			if test -f "$dir/include/pcre.h"; then
+				found_pcre="yes";
+				break;
+			fi
+		done
+		if test x_$found_pcre != x_yes; then
+			msg="Cannot find PCRE library";
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
+		else
+			echo "${T_MD}PCRE found in $pcredir${T_ME}"
+dnl		printf "PCRE found in $pcredir\n";
+			HAVE_PCRE=yes
+			CPPFLAGS="$CPPFLAGS -DHAVE_PCRE"
+			pcre_version=$($pcredir/bin/pcre-config --version)
+			if test -z "${pcre_version}"; then
+				pcre_version="Unknown"
+			fi
+			LIBS="-lpcre $LIBS";
+			if test $pcredir != "${CROSS_ENVIRONMENT}/usr"; then
+				CPPFLAGS="$CPPFLAGS -I$pcredir/include"
+				LDFLAGS="$LDFLAGS -L$pcredir/lib -Wl,-R$pcredir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$pcredir/lib";
+			fi
+		fi
+	fi
+	AC_SUBST(HAVE_PCRE)],
+	[AC_MSG_RESULT(no)])
+
 	AC_MSG_CHECKING(if EXPAT library for XML parsing is wanted)
 	wanted=1;
 	if test -z "$with_expat" ; then
@@ -287,42 +323,6 @@ dnl		printf "EXPAT found in $expatdir\n";
 		fi
 	fi
 	AC_SUBST(HAVE_EXPAT)],
-	[AC_MSG_RESULT(no)])
-
-	AC_MSG_CHECKING(if SSH library is wanted)
-	AC_ARG_WITH(ssh, [  --with-ssh              use system      SSH library - [[will check /usr /usr/local]]],
-	[if test "$withval" = "no"; then
-		AC_MSG_RESULT(no)
-	else
-		AC_MSG_RESULT(yes)
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
-			sshdir="$dir";
-			if test -f "$dir/include/libssh/libssh.h"; then
-				found_ssh="yes";
-				break;
-			fi
-		done
-		if test x_$found_ssh != x_yes; then
-			AC_MSG_ERROR(Cannot find SSH library)
-		else
-			echo "${T_MD}libssh found in $sshdir${T_ME}"
-dnl		printf "libSSH found in $sshdir\n";
-			HAVE_SSH=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_SSH";
-dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -d' ' -f3)
-			libssh_version=$(strings $sshdir/lib*/libssh.so | grep '^SSH-[[0-9]]' | head -n1 | cut -d'-' -f4)
-			if test -z "${libssh_version}"; then
-				libssh_version="Unknown"
-			fi
-			LIBS="-lssh $LIBS";
-			if test $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
-				CPPFLAGS="$CPPFLAGS -I$sshdir/include";
-				LDFLAGS="$LDFLAGS -L$sshdir/lib -Wl,-R$sshdir/lib";
-				PRG_LDFLAGS="$PRG_LDFLAGS -L$sshdir/lib";
-			fi
-		fi
-	fi
-	AC_SUBST(HAVE_SSH)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if cURL library is wanted)

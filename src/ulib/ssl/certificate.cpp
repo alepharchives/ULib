@@ -342,14 +342,14 @@ int UCertificate::getExtensions(UHashMap<UString>& table) const
 
          len = BIO_read(out, buffer, sizeof(buffer));
 
-         str.replace(buffer, len);
+         (void) str.replace(buffer, len);
 
          U_INTERNAL_DUMP("ext[%d] = <%.*S,%.*S>", i, U_STRING_TO_TRACE(key), U_STRING_TO_TRACE(str))
 
          table.insert(key, str);
          }
 
-      BIO_free(out);
+      (void) U_SYSCALL(BIO_free, "%p", out);
       }
 
    U_RETURN(count);
@@ -358,6 +358,53 @@ int UCertificate::getExtensions(UHashMap<UString>& table) const
 UString UCertificate::getRevocationURL(const char* ext_id) const
 {
    U_TRACE(0, "UCertificate::getRevocationURL(%S)", ext_id)
+
+   /*
+    * This is a multi-valued extension whose options can be either in name:value pair
+    * using the same form as subject alternative name or a single value representing a
+    * section name containing all the distribution point fields.
+    *
+    * For a name:value pair a new DistributionPoint with the fullName field set to the
+    * given value both the cRLissuer and reasons fields are omitted in this case.
+    *
+    * In the single option case the section indicated contains values for each field.
+    * In this section:
+    *
+    * If the name is ``fullname'' the value field should contain the full name of the
+    * distribution point in the same format as subject alternative name.
+    *
+    * If the name is ``relativename'' then the value field should contain a section
+    * name whose contents represent a DN fragment to be placed in this field.
+    *
+    * The name ``CRLIssuer'' if present should contain a value for this field in
+    * subject alternative name format.
+    *
+    * If the name is ``reasons'' the value field should consist of a comma separated
+    * field containing the reasons. Valid reasons are: ``keyCompromise'',
+    * ``CACompromise'', ``affiliationChanged'', ``superseded'',
+    * ``cessationOfOperation'', ``certificateHold'', ``privilegeWithdrawn'' and
+    * ``AACompromise''.
+    *
+    * Simple examples:
+    *
+    *  crlDistributionPoints=URI:http://myhost.com/myca.crl
+    *  crlDistributionPoints=URI:http://my.com/my.crl,URI:http://oth.com/my.crl
+    *
+    *  Full distribution point example:
+    *
+    *  crlDistributionPoints=crldp1_section
+    *
+    *  [crldp1_section]
+    *
+    *  fullname=URI:http://myhost.com/myca.crl
+    *  CRLissuer=dirName:issuer_sect
+    *  reasons=keyCompromise, CACompromise
+    *
+    *  [issuer_sect]
+    *  C=UK
+    *  O=Organisation
+    *  CN=Some Name
+    */
 
    UString crl;
    UHashMap<UString> table;

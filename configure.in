@@ -174,8 +174,6 @@ OST_CC_TYPES
 OST_CC_ENDIAN
 OST_CC_SIGNAL
 OST_CC_STRING
-OST_CC_DYNAMIC
-#OST_LIB_PTHREAD
 OST_LIB_REENTRANT
 OST_LIB_POLL
 OST_SYS_SOCKET
@@ -387,23 +385,12 @@ AC_MSG_RESULT($use_distcc)
 
 TWOCAN_CONF_MSG(Checking for libraries to link against)
 
-AC_CHECK_LIB(dl,dlopen)
-AC_CHECK_LIB(nsl,inet_ntop)
-AC_CHECK_LIB(pthread,sem_init)
 AC_CHECK_LIB(posix4,nanosleep)
 AC_CHECK_LIB(socket,socketpair)
 
-if test "$ac_cv_lib_pthread_sem_init" = "yes"; then
-	OST_LIB_PTHREAD
-	AM_CONDITIONAL(SEMAPHORE, true)
-else
-	AC_CHECK_LIB(rt,sem_init)
-	AM_CONDITIONAL(SEMAPHORE, test "$ac_cv_lib_rt_sem_init" = "yes")
-fi
-
 LIBS_SAVE=${LIBS}
-AC_CHECK_LIB(GeoIP,GeoIP_id_by_ipnum)
 AC_CHECK_LIB(fcgi, FCGX_Accept)
+AC_CHECK_LIB(GeoIP,GeoIP_id_by_ipnum)
 LIBS=${LIBS_SAVE}
 
 libz_version="None"
@@ -506,6 +493,50 @@ if test "$HAVE_LIBXML2" = "yes"; then
    ulib_libxml2_msg="enabled"
 fi
 
+case "$target_os" in
+	mingw32*)
+	if test "$with_gnu_ld" = "yes"; then
+		LDFLAGS="${LDFLAGS} -Wl,--enable-auto-import"
+	fi
+	LIBS_SAVE="${LIBS_SAVE} -lwinmm -lws2_32"
+	if test "$HAVE_SSL" = "yes"; then
+		LIBS_SAVE="${LIBS_SAVE} -lwsock32 -lgdi32 -lz";
+	fi
+	if test "${enable_shared}" = "yes"; then
+		AC_DEFINE(HAVE_MODULES, [1], [support for plugin modules])
+		AM_CONDITIONAL(PLUGIN, true)
+	else
+		AM_CONDITIONAL(PLUGIN, false)
+	fi
+	AM_CONDITIONAL(SEMAPHORE, true)
+	;;
+	*)
+	AC_CHECK_LIB(pthread,sem_init)
+	if test "$ac_cv_lib_pthread_sem_init" = "yes"; then
+		OST_LIB_PTHREAD
+		AM_CONDITIONAL(SEMAPHORE, true)
+		LIBS_SAVE="${LIBS_SAVE} -l$ost_cv_thread_library";
+	else
+		AC_CHECK_LIB(rt,sem_init)
+		if test "$ac_cv_lib_rt_sem_init" = "yes"; then
+			LIBS_SAVE="${LIBS_SAVE} -lrt";
+			AM_CONDITIONAL(SEMAPHORE, true)
+		else
+			AM_CONDITIONAL(SEMAPHORE, false)
+		fi
+	fi
+	if test "${enable_shared}" = "yes"; then
+		OST_CC_DYNAMIC
+		if test "$ost_cv_dynloader" = "yes"; then
+			AM_CONDITIONAL(PLUGIN, true)
+			LIBS_SAVE="${LIBS_SAVE} $lt_cv_dlopen_libs"
+		fi
+	else
+		AM_CONDITIONAL(PLUGIN, false)
+	fi
+	;;
+esac
+
 LIBS=${LIBS_SAVE}
 
 # SECTION 5: checks for header files
@@ -584,7 +615,11 @@ AC_FUNC_NANOSLEEP
 AC_FUNC_CLOSEDIR_VOID
 # Check for functions in one big call, to reduce the size of configure
 AC_CHECK_FUNCS([accept4 daemon epoll_create1 epoll_wait fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem \
-					 __assert mremap pread sendfile64 strndup mkdtemp strptime strtof strtoull strtold gmtime_r timegm strerror strsignal])
+					 mremap pread sendfile64 strndup mkdtemp strptime strtof strtoull strtold gmtime_r timegm strerror strsignal])
+
+if test "$ac_cv_func_inet_ntop" != "yes"; then
+	AC_CHECK_LIB(nsl,inet_ntop)
+fi
 
 AM_CONDITIONAL(GEOIP,		 test "$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" = "yes")
 AM_CONDITIONAL(FCGI,			 test "$ac_cv_lib_fcgi_FCGX_Accept"			 = "yes")
@@ -603,7 +638,7 @@ AM_CONDITIONAL(FALLOCATE,	 test "$ac_cv_func_fallocate"					 = "yes")
 AM_CONDITIONAL(FALLOCATE64, test "$ac_cv_func_fallocate64"				 = "yes")
 AM_CONDITIONAL(NANOSLEEP,   test "$ac_cv_func_nanosleep"					 = "yes")
 AM_CONDITIONAL(GETOPT_LONG, test "$ac_cv_func_getopt_long"				 = "yes")
-AM_CONDITIONAL(ASSERT,		 test "$ac_cv_func___assert"					 = "yes")
+AM_CONDITIONAL(ASSERT,		 test "$ac_cv_header_assert_h"				 = "yes")
 
 # SECTION 11: checks for function characteristics
 
@@ -919,20 +954,6 @@ fi
 
 case "$target_os" in
 	mingw32*)
-	if test "$with_gnu_ld" = "yes"; then
-		LDFLAGS="${LDFLAGS} -Wl,--enable-auto-import"
-	fi
-	LIBS="${LIBS} -lwinmm -lws2_32"
-	if test "$HAVE_SSL" = "yes"; then
-		LIBS="${LIBS} -lwsock32 -lgdi32 -lz";
-	fi
-	if test "${enable_shared}" = "yes"; then
-		enable_final="yes"
-		AC_DEFINE(HAVE_MODULES, [1], [support for plugin modules])
-		AM_CONDITIONAL(PLUGIN, true)
-	else
-		AM_CONDITIONAL(PLUGIN, false)
-	fi
 	;;
 	cygwin*)
 	AC_DEFINE(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])
@@ -946,7 +967,6 @@ case "$target_os" in
 	if test "$with_gnu_ld" = "yes" && test "$enable_new_ldflags" = "yes"; then
 		LDFLAGS="${LDFLAGS} -Wl,-z,now,-O1,--as-needed,--enable-new-dtags,--hash-style=gnu,--sort-common"
 	fi
-	AM_CONDITIONAL(PLUGIN, test "$ost_cv_dynloader" = "yes")
 	;;
 esac
 

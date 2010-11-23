@@ -34,7 +34,9 @@
 #  define ULLONG_MAX 0xffffffffffffffffULL
 #endif
 
+#ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_nocat, UNoCatPlugIn)
+#endif
 
 const UString* UNoCatPlugIn::str_ROUTE_ONLY;
 const UString* UNoCatPlugIn::str_DNS_ADDR;

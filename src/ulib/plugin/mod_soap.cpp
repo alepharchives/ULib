@@ -18,7 +18,9 @@
 #include <ulib/xml/soap/soap_object.h>
 #include <ulib/xml/soap/soap_parser.h>
 
+#ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_soap, USoapPlugIn)
+#endif
 
 USoapPlugIn::~USoapPlugIn()
 {

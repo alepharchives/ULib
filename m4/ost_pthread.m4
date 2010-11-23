@@ -268,7 +268,7 @@ AC_LANG_RESTORE
 
 	AC_SUBST(THREAD_FLAGS)
 	AC_SUBST(THREAD_LIBS)
-#	LIBS="$THREAD_LIBS $LIBS"
+ 	LIBS="$LIBS $THREAD_LIBS"
 	if test "$ost_cv_thread_library" != "lthread" ; then
 		AC_CHECK_HEADERS(pthread_np.h)
 	fi

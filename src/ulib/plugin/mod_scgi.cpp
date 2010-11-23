@@ -22,7 +22,9 @@
 #  include <ulib/net/unixsocket.h>
 #endif
 
+#ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_scgi, USCGIPlugIn)
+#endif
 
 const UString* USCGIPlugIn::str_SCGI_URI_MASK;
 const UString* USCGIPlugIn::str_SCGI_KEEP_CONN;

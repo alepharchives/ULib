@@ -462,6 +462,7 @@ void UHTTP::ctor(UEventFd* handler_event)
    U_INTERNAL_ASSERT_EQUALS(page,0)
    U_INTERNAL_ASSERT_EQUALS(pages,0)
 
+#ifdef HAVE_MODULES
    if (UFile::chdir("usp", true))
       {
       const char* ptr;
@@ -518,6 +519,7 @@ void UHTTP::ctor(UEventFd* handler_event)
 
       page = 0;
       }
+#endif
 
    // CACHE FILE SYSTEM
 
@@ -1083,8 +1085,6 @@ bool UHTTP::readHTTPBody(USocket* s, UString& rbuffer, UString& body)
 
       if (chunk == U_NOT_FOUND)
          {
-         U_ASSERT(isHttpPOST())
-
          if (U_http_version == '1') U_RETURN(false); // HTTP/1.1 compliance: no missing Content-Length on POST requests
 
          // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/

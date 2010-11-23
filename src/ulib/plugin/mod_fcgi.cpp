@@ -125,7 +125,9 @@ static void fill_header(FCGI_Header& h, u_char type, u_short content_length)
 // END Fast CGI stuff
 // ---------------------------------------------------------------------------------------------------------------
 
+#ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_fcgi, UFCGIPlugIn)
+#endif
 
 const UString* UFCGIPlugIn::str_FCGI_URI_MASK;
 const UString* UFCGIPlugIn::str_FCGI_KEEP_CONN;

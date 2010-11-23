@@ -164,7 +164,7 @@ protected:
 #endif
 
 #if defined(DEBUG) || defined(U_TEST)
-#  if defined(U_LOCKFILE) || defined(U_MAYBE_BROKEN_SEM_IMPL)
+#  if defined(__MINGW32__) || defined(U_LOCKFILE) || defined(U_MAYBE_BROKEN_SEM_IMPL)
    int getValue() { return -1; }
 #  else
    int getValue() { int value; sem_getvalue(sem, &value); return value; }

@@ -17,7 +17,9 @@
 #include <ulib/net/server/client_image.h>
 #include <ulib/plugin/mod_proxy_service.h>
 
+#ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_proxy, UProxyPlugIn)
+#endif
 
 UProxyPlugIn::~UProxyPlugIn()
 {

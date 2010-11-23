@@ -17,7 +17,7 @@ VS_VERSION_INFO VERSIONINFO
 	VALUE "FileDescription", "ULib"
 	VALUE "FileVersion", "@VERSION@.0"
 	VALUE "InternalName", "libulib-1.0-0"
-	VALUE "LegalCopyright", "Copyright © 2009 Unirel"
+	VALUE "LegalCopyright", "Copyright © 2011 Unirel"
 	VALUE "OriginalFilename", "libulib-1.0-0.dll"
 	VALUE "ProductName", "Ulib"
 	VALUE "ProductVersion", "1.4.0"

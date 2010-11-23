@@ -96,7 +96,7 @@
 #  include "replace/pread.c"
 #endif
 
-#ifndef HAVE___ASSERT
+#ifndef HAVE_ASSERT_H
 #  include "replace/assert.c"
 #endif
 

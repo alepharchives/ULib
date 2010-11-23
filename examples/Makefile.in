@@ -36,10 +36,10 @@ host_triplet = @host@
 target_triplet = @target@
 @MINGW_FALSE@am__append_1 = lcsp
 @SSL_TRUE@am__append_2 = http_header uclient
-@LIBZ_TRUE@@SSL_TRUE@am__append_3 = PEC_log
-@LIBZ_TRUE@@SSL_TRUE@@ZIP_TRUE@am__append_4 = doc_parse doc_classifier
-@LIBXML2_TRUE@@LIBZ_TRUE@@SSL_TRUE@@ZIP_TRUE@am__append_5 = XAdES
-@PLUGIN_TRUE@@SSL_TRUE@am__append_6 = rsign csp
+@EXPAT_TRUE@@SSL_TRUE@am__append_3 = csp rsign
+@LIBZ_TRUE@@SSL_TRUE@am__append_4 = PEC_log
+@LIBZ_TRUE@@SSL_TRUE@@ZIP_TRUE@am__append_5 = doc_parse doc_classifier
+@LIBXML2_TRUE@@LIBZ_TRUE@@SSL_TRUE@@ZIP_TRUE@am__append_6 = XAdES
 @EXPAT_TRUE@am__append_7 = xml2txt
 @LDAP_TRUE@am__append_8 = form_completion
 subdir = examples
@@ -91,8 +91,8 @@ AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
 ETAGS = etags
 CTAGS = ctags
 DIST_SUBDIRS = userver test_manager IR simple_client_server workflow \
-	lcsp http_header uclient PEC_log doc_parse doc_classifier \
-	XAdES rsign csp xml2txt form_completion
+	lcsp http_header uclient csp rsign PEC_log doc_parse \
+	doc_classifier XAdES xml2txt form_completion
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 am__relativize = \
   dir0=`pwd`; \

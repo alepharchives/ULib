@@ -18,7 +18,9 @@
 #include <ulib/net/rpc/rpc_object.h>
 #include <ulib/net/rpc/rpc_parser.h>
 
+#ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_rpc, URpcPlugIn)
+#endif
 
 URpcPlugIn::~URpcPlugIn()
 {

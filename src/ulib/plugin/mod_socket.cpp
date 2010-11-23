@@ -26,7 +26,9 @@
 #  define bswap_64(x) (((uint64_t)(bswap_32((uint32_t)(x)))) << 32 | bswap_32((uint32_t)((x) >> 32)))
 #endif
 
+#ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_socket, UWebSocketPlugIn)
+#endif
 
 bool UWebSocketPlugIn::bUseSizePreamble;
 
@@ -116,7 +118,7 @@ loop:
       {
       if (FD_ISSET(sock, &read_set))
          {
-         UClientImage_Base::rbuffer->setEmpty();
+         UClientImage_Base::rbuffer->setEmptyForce(); // NB: can be referenced by frame...
 
 read_from_client:
 

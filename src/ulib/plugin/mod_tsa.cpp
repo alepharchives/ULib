@@ -17,7 +17,9 @@
 #include <ulib/plugin/mod_tsa.h>
 #include <ulib/net/server/server.h>
 
+#ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_tsa, UTsaPlugIn)
+#endif
 
 UTsaPlugIn::~UTsaPlugIn()
 {
