@@ -1,12 +1,12 @@
 POST /soap HTTP/1.1
 Host: localhost
-User-Agent: ULib/1.0
+User-Agent: ULib/1.1.0
 Content-Type: application/soap+xml; charset="utf-8"
 Content-Length: 304
 
 <?xml version='1.0' ?><soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"><soap:Header></soap:Header><soap:Body><ns:add soap:encodingStyle="http://www.w3.org/2003/05/soap-encoding" xmlns:ns="ns"><a xsi:type="xsd:int">10</a><b xsi:type="xsd:int">20</b></ns:add></soap:Body></soap:Envelope>POST /soap HTTP/1.1
 Host: localhost
-User-Agent: ULib/1.0
+User-Agent: ULib/1.1.0
 Content-Type: application/soap+xml; charset="utf-8"
 Content-Length: 299
 

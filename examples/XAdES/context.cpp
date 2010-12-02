@@ -894,7 +894,7 @@ bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
       {
       uriType = SAME_DOCUMENT;
       }
-   else if (U_MEMCMP(_uri, "file://") == 0)
+   else if (U_STRNEQ(_uri, "file://"))
       {
       uriType = TYPE_LOCAL;
       }
@@ -922,7 +922,7 @@ bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
       U_RETURN(true);
       }
 
-   if (U_MEMCMP(_uri, "#xpointer(/)") == 0)
+   if (U_STRNEQ(_uri, "#xpointer(/)"))
       {
       xptrExpr = _uri;
 

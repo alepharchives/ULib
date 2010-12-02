@@ -578,6 +578,22 @@ void UHttpClient_Base::composeRequest(UString& data, uint32_t& startHeader)
    startHeader = data.find(U_CRLF, 0, 2) + 2;
 }
 
+bool UHttpClient_Base::connectServer(const UString& _url)
+{
+   U_TRACE(0, "UHttpClient_Base::connectServer(%.*S)", U_STRING_TO_TRACE(_url))
+
+   if (UClient_Base::setUrl(_url))
+      {
+      if (UClient_Base::isConnected()) UClient_Base::socket->close(); // NB: is changed server and/or port to connect...
+
+      if (UClient_Base::connect() == false) U_RETURN(false);
+      }
+
+   bool result = UClient_Base::isConnected();
+
+   U_RETURN(result);
+}
+
 //=============================================================================
 // Send the http request to the remote host.
 //
@@ -660,15 +676,15 @@ bool UHttpClient_Base::sendRequest(UString& data)
                      ? checkResponse(redirectCount)
                      : -1);
 
-      if (result ==  2) break;    // no redirection, read body...
+      if (result ==  2) break;           // no redirection, read body...
 
-      if (result == -1) goto end; // same error...
+      if (result == -1) U_RETURN(false); // same error...
 
-      if (result ==  1) continue; // redirection, use the same socket connection...
+      if (result ==  1) continue;        // redirection, use the same socket connection...
 
       UClient_Base::socket->close();
 
-      if (UClient_Base::connect() == false) goto end;
+      if (UClient_Base::connect() == false) U_RETURN(false);
       }
 
    U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", UHTTP::http_info.nResponseCode)
@@ -677,10 +693,9 @@ bool UHttpClient_Base::sendRequest(UString& data)
 
    UHTTP::http_info.clength = responseHeader->getHeader(*USocket::str_content_length).strtol();
 
-   if (UHTTP::readHTTPBody(socket, UClient_Base::response, body)) U_RETURN(true);
+   if (UHTTP::readHTTPBody(socket, UClient_Base::response, body) == false) U_RETURN(false);
 
-end:
-   U_RETURN(false);
+   U_RETURN(true);
 }
 
 #define U_HTTP_POST_REQUEST \
@@ -692,23 +707,22 @@ end:
 "\r\n" \
 "%.*s"
 
-bool UHttpClient_Base::sendPost(Url& url, const UString& pbody, const char* content_type)
+bool UHttpClient_Base::sendPost(const UString& _url, const UString& pbody, const char* content_type)
 {
-   U_TRACE(0, "UHttpClient_Base::sendPost(%p,%.*S,%S)", &url, U_STRING_TO_TRACE(pbody), content_type)
+   U_TRACE(0, "UHttpClient_Base::sendPost(%.*S,%.*S,%S)", U_STRING_TO_TRACE(_url), U_STRING_TO_TRACE(pbody), content_type)
 
-   bool ok = connectServer(url);
+   bool ok = connectServer(_url);
 
    UHTTP::resetHTTPInfo();
 
    if (ok == false) body = UClient_Base::response;
    else
       {
-      UString host(url.getHost()),
-              path(url.getPath()),
-              post(path.size() + host.size() + pbody.size() + 300U);
+      UString path(UClient_Base::url.getPath()),
+              post(path.size() + UClient_Base::server.size() + pbody.size() + 300U);
 
       post.snprintf(U_HTTP_POST_REQUEST, U_STRING_TO_TRACE(path),
-                                         U_STRING_TO_TRACE(host), url.getPort(),
+                                         U_STRING_TO_TRACE(UClient_Base::server), UClient_Base::port,
                                          pbody.size(),
                                          content_type,
                                          U_STRING_TO_TRACE(pbody));
@@ -730,9 +744,9 @@ bool UHttpClient_Base::sendPost(Url& url, const UString& pbody, const char* cont
 "\r\n" \
 "------------------------------b34551106891--\r\n"
 
-bool UHttpClient_Base::upload(Url& location, UFile& file)
+bool UHttpClient_Base::upload(const UString& _url, UFile& file)
 {
-   U_TRACE(0, "UHttpClient_Base::upload(%p,%.*S)", &location, U_FILE_TO_TRACE(file))
+   U_TRACE(0, "UHttpClient_Base::upload(%.*S,%.*S)", U_STRING_TO_TRACE(_url), U_FILE_TO_TRACE(file))
 
    UString content = file.getContent(), pbody(content.size() + 300U);
 
@@ -743,7 +757,7 @@ bool UHttpClient_Base::upload(Url& location, UFile& file)
 
    // send upload request to server and get response
 
-   bool ok = sendPost(location, pbody, "multipart/form-data; boundary=----------------------------b34551106891");
+   bool ok = sendPost(_url, pbody, "multipart/form-data; boundary=----------------------------b34551106891");
 
    U_RETURN(ok);
 }
@@ -763,7 +777,6 @@ const char* UHttpClient_Base::dump(bool _reset) const
                   << "body           (UString             " << (void*)&body            << ")\n"
                   << "user           (UString             " << (void*)&user            << ")\n"
                   << "method         (UString             " << (void*)&method          << ")\n"
-                  << "service        (UString             " << (void*)&service         << ")\n"
                   << "password       (UString             " << (void*)&password        << ")\n"
                   << "requestHeader  (UMimeHeader         " << (void*)requestHeader    << ")\n"
                   << "responseHeader (UMimeHeader         " << (void*)responseHeader   << ')';

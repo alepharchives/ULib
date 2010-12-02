@@ -8,6 +8,7 @@ rm -f tsa_http.log TSA/log \
 		out/sign.out err/sign.err \
 		out/archive.out err/archive.err \
 		out/verify.out err/verify.err \
+		out/feed.out err/feed.err \
 		trace.*feed*.[0-9]* object.*feed*.[0-9]* stack.*feed*.[0-9]* \
 		trace.*sign*.[0-9]* object.*sign*.[0-9]* stack.*sign*.[0-9]* \
 		trace.*archive*.[0-9]* object.*archive*.[0-9]* stack.*archive*.[0-9]* \
@@ -16,7 +17,7 @@ rm -f tsa_http.log TSA/log \
       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
 
  UTRACE="0 10M 0"
-#UOBJDUMP="0 100k 10"
+ UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --leak-check=full"
  export UTRACE UOBJDUMP USIMERR
@@ -56,10 +57,13 @@ PRODUCTION_PLACE_POSTAL_CODE=11111
 PRODUCTION_PLACE_COUNTRY_NAME=Italy
 CA_STORE=$DIR_CA/CApath
 SIGNATURE_TIMESTAMP="http://localhost/tsa"
+#ZIPPONE=file:///mnt/storage/stefano/XAdES/zippone/LISTACER_20100907.zip.p7m
+#ZIPPONE=file:///mnt/storage/stefano/XAdES/zippone/LISTACER_20101103.zip.p7m
+ ZIPPONE=file:///mnt/storage/stefano/XAdES/zippone/debug.zip.p7m
 
 DIR_CMD="../../examples/XAdES"
 
- start_prg feed -c XAdES.ini -- http://www.cnipa.gov.it/site/_files/LISTACER_20100907.zip.p7m 
+ start_prg feed -c XAdES.ini -- $ZIPPONE
  exit 0
 
 #STRACE=$LTRUSS

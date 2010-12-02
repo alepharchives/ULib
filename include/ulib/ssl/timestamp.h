@@ -28,8 +28,6 @@
  * (the TSA's response returned to the requesting client).
  */
 
-class Url;
-
 class U_EXPORT UTimeStamp : public UPKCS7 {
 public:
 
@@ -50,7 +48,7 @@ public:
       if (response) pkcs7 = (PKCS7*) U_SYSCALL(TS_RESP_get_token, "%p", response);
       }
 
-   UTimeStamp(UString& request, Url& TSA);
+   UTimeStamp(UString& request, const UString& TSA);
 
    /**
    * Deletes this object.

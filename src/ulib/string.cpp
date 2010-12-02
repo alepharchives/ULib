@@ -514,7 +514,7 @@ void UString::clear()
    U_INTERNAL_ASSERT(invariant())
 }
 
-UString UString::copy()
+UString UString::copy() const
 {
    U_TRACE(0, "UString::copy()")
 
@@ -554,7 +554,6 @@ bool UString::reserve(uint32_t n)
 {
    U_TRACE(0, "UString::reserve(%u)", n)
 
-   U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT(n <= max_size())
 
    if (rep->_capacity >= n) U_RETURN(false);

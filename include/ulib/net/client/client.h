@@ -68,22 +68,18 @@ public:
       U_RETURN(result);
       }
 
-   bool isHttps() const
-      {
-      U_TRACE(0, "UClient_Base::isHttps()")
-
-      if (Url::str_https == 0) Url::str_allocate();
-
-      bool result = (UClient_Base::service == *Url::str_https);
-
-      U_RETURN(result);
-      }
-
    void reset()
       {
       U_TRACE(0, "UClient_Base::reset()")
 
       request.clear();
+      }
+
+   void reserve(uint32_t n)
+      {
+      U_TRACE(0, "UClient_Base::reserve(%u)", n)
+
+      (void) response.reserve(n);
       }
 
    void close()
@@ -207,12 +203,7 @@ public:
 
 protected:
    USocket* socket;
-
-   int port,            // the port number to connect to
-       verify_mode;     // mode of verification of connection
-   uint32_t timeoutMS;  // the time-out value in milliseconds. A zero value indicates that the client will wait forever,
-                        // or until the underlying operating system decides that the connection cannot be established
-
+   Url url;
    UString server,      // host name or ip address for server
            cert_file,   // locations for certificate of client
            key_file,    // locations for private key of client
@@ -220,19 +211,22 @@ protected:
            ca_file,     // locations of trusted CA certificates used in the verification
            ca_path,     // locations of trusted CA certificates used in the verification
            log_file,    // locations for file log
+           uri,
            request,
            response,
            buffer,
-           service,
            host_port,
            logbuf;
-
+   int port,            // the port number to connect to
+       verify_mode;     // mode of verification of connection
+   uint32_t timeoutMS;  // the time-out value in milliseconds. A zero value indicates that the client will wait forever,
+                        // or until the underlying operating system decides that the connection cannot be established
    bool bIPv6;
 
    static ULog* log;
    static bool log_shared_with_server;
 
-   bool setUrl(const UString& newLocation);
+   bool setUrl(const UString& url);
 
    // COSTRUTTORI
 

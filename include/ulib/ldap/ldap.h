@@ -58,7 +58,8 @@ public:
    const char* getCStr(  int index_names, int index_entry = 0);
    UString     getString(int index_names, int index_entry = 0);
 
-   void set(char* attribute, char** values, int index_entry = 0);
+   void set(char* attribute, char** values,              int index_entry = 0);
+   void set(char* attribute, char*  value, uint32_t len, int index_entry = 0);
 
    // DEBUG
 
@@ -114,10 +115,16 @@ public:
       searchResult = 0;
       }
 
-   ~ULDAP();
+   ~ULDAP()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, ULDAP)
+
+      clear();
+      }
 
    // VARIE
 
+   void        clear();
    const char* error();
 
    bool set_protocol(int protocol = LDAP_VERSION3)
@@ -268,7 +275,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(ld)
 
-      result = U_SYSCALL(ldap_search_st,"%p,%S,%d,%S,%p,%d,%p,%p",ld,dn,scope,filter,attrs,0,pTimeOut,&searchResult);
+      result = U_SYSCALL(ldap_search_st, "%p,%S,%d,%S,%p,%d,%p,%p", ld, dn, scope, filter, attrs, 0, pTimeOut, &searchResult);
 
       int num = (result == LDAP_SUCCESS ? U_SYSCALL(ldap_count_entries, "%p,%p", ld, searchResult) : -1);
 
@@ -332,6 +339,15 @@ public:
     * LDAPEntry entry(attr_name, 5};
     * ---------------------------------------------------------------------------------------------------------
     */
+
+   const char** getAttrs() const
+      {
+      U_TRACE(0, "ULDAP::getAttrs()")
+
+      U_INTERNAL_ASSERT_POINTER(ludpp)
+
+      return (const char**)ludpp->lud_attrs;
+      }
 
    void get(ULDAPEntry& e);
 

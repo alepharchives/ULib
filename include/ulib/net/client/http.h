@@ -91,20 +91,7 @@ public:
    @sa sendRequest()
    */
 
-   bool connectServer(Url& location)
-      {
-      U_TRACE(0, "UHttpClient_Base::connectServer(%p)", &location)
-
-      if (UClient_Base::setUrl(location.get()) &&
-          UClient_Base::isConnected())
-         {
-         UClient_Base::socket->close(); // NB: is changed server and/or port to connect...
-         }
-
-      bool result = UClient_Base::connect();
-
-      U_RETURN(result);
-      }
+   bool connectServer(const UString& url);
 
    //=============================================================================
    // Send the http request to the remote host.
@@ -130,8 +117,8 @@ public:
    //=============================================================================
 
    bool sendRequest(UString& data);
-   bool upload(Url& location, UFile& file);
-   bool sendPost(Url& location, const UString& pbody, const char* content_type = "application/x-www-form-urlencoded");
+   bool upload(const UString& url, UFile& file);
+   bool sendPost(const UString& url, const UString& pbody, const char* content_type = "application/x-www-form-urlencoded");
 
    UString getContent() const   { return body; }
    int     responseCode() const { return UHTTP::http_info.nResponseCode; }

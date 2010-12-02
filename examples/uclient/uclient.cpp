@@ -37,8 +37,6 @@ public:
 
       UApplication::run(argc, argv, env);
 
-      UApplication::exit_value = 1;
-
       // manage options
 
       bool include = false;
@@ -52,11 +50,7 @@ public:
 
       // manage arg operation
 
-      const char* url = argv[optind++];
-
-      arg = UString(url);
-
-      Url srv(arg);
+      UString url(argv[optind++]);
 
       // manage file configuration
 
@@ -93,16 +87,15 @@ public:
       client->setFollowRedirects(follow_redirects);
       client->setRequestPasswordAuthentication(user, password);
 
+      UApplication::exit_value = 1;
+
       if (upload.empty() == false)
          {
          UFile file(upload);
 
-         if (client->upload(srv, file))
-            {
-            UApplication::exit_value = 0;
-            }
+         if (client->upload(url, file)) UApplication::exit_value = 0;
          }
-      else if (client->connectServer(srv) &&
+      else if (client->connectServer(url) &&
                client->sendRequest(result))
          {
          UApplication::exit_value = 0;
@@ -111,16 +104,13 @@ public:
       result = (include ? client->getResponse()
                         : client->getContent());
 
-      if (result.empty() == false)
-         {
-         cout.write(U_STRING_TO_PARAM(result));
-         }
+      if (result.empty() == false) cout.write(U_STRING_TO_PARAM(result));
       }
 
 private:
    UHttpClient<USSLSocket>* client;
    UFileConfig cfg;
-   UString cfg_str, upload, user, password, result, arg;
+   UString cfg_str, upload, user, password, result;
    bool follow_redirects;
 };
 

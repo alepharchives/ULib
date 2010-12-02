@@ -70,6 +70,7 @@ UClient_Base::~UClient_Base()
    delete socket;
 
 #ifdef DEBUG
+        url.clear(); // url can depend on response... (Location: xxx)
    response.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE... (response may be substr of buffer)
 #endif
 }
@@ -93,7 +94,7 @@ bool UClient_Base::setHostPort(const UString& host, int _port)
 
    U_INTERNAL_DUMP("host_differs = %b port_differs = %b", host_differs, port_differs)
 
-   server = host;
+   server = host.copy(); // NB: we cannot depend on url...
    port   = _port;
 
    // If the URL contains a port, then add that to the Host header
@@ -127,7 +128,6 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
 
    U_ASSERT_EQUALS(cfg.empty(), false)
 
-   if (         Url::str_ftp         == 0)          Url::str_allocate();
    if (UServer_Base::str_LOG_FILE    == 0) UServer_Base::str_allocate();
    if (              str_RES_TIMEOUT == 0)               str_allocate();
 
@@ -231,22 +231,20 @@ bool UClient_Base::setUrl(const UString& location)
 {
    U_TRACE(0, "UClient_Base::setUrl(%.*S)", U_STRING_TO_TRACE(location))
 
-   U_INTERNAL_DUMP("service = %.*S uri = %.*S", U_STRING_TO_TRACE(service), U_HTTP_URI_TO_TRACE)
-
-   static char tmp[U_CAPACITY];
-
    // Check we've been passed a absolute URL
 
-   if (Url::str_ftp == 0) Url::str_allocate();
-
-   if (location.find(*Url::str_http) == U_NOT_FOUND)
+   if (u_isURL(U_STRING_TO_PARAM(location)) == false)
       {
+      U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
+
       char* p;
-      uint32_t len, size;
-      const char* src  = UHTTP::http_info.uri;
+      uint32_t len;
+      const char* src  =       UHTTP::http_info.uri;
       const char* _end = src + UHTTP::http_info.uri_len;
 
-      char* dest = tmp;
+      static char _buffer[U_PATH_MAX];
+
+      char* dest = _buffer;
       char* ptr  = dest;
 
       while (src < _end)
@@ -269,41 +267,28 @@ bool UClient_Base::setUrl(const UString& location)
 
       (void) u_memcpy(dest, location.data(), len);
 
-      size = dest - ptr + len;
-
-   // (void) u_memcpy(UHTTP::http_info.uri, tmp, size);
-
-      UHTTP::http_info.uri     = tmp;
-      UHTTP::http_info.uri_len = size;
+      UHTTP::http_info.uri     = _buffer;
+      UHTTP::http_info.uri_len = dest - ptr + len;
 
       U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
 
       U_RETURN(false);
       }
 
-   Url url(location);
+   url.set(location);
 
-   service = url.getService();
+#ifdef HAVE_SSL
+   if (socket->isSSL()) ((USSLSocket*)socket)->setActive(url.isHTTPS());
+#endif
 
-   if (service.empty() == false)
+   uri = url.getFile();
+
+   if (uri.empty() == false)
       {
-      U_ASSERT(service.find(*Url::str_http) != U_NOT_FOUND) // Check we've been passed a valid URL...
+      UHTTP::http_info.uri     = uri.data();
+      UHTTP::http_info.uri_len = uri.size();
 
-      service.duplicate(); // services depend on url string...
-
-#  ifdef HAVE_SSL
-      if (socket->isSSL()) ((USSLSocket*)socket)->setActive(isHttps());
-#  endif
-      }
-
-   UString value = url.getFile();
-
-   if (value.empty() == false)
-      {
-      UHTTP::http_info.uri     = tmp;
-      UHTTP::http_info.uri_len = value.copy(tmp, value.size());
-
-      U_INTERNAL_DUMP("service = %.*S uri = %.*S", U_STRING_TO_TRACE(service), U_HTTP_URI_TO_TRACE)
+      U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
       }
 
    bool bchange = setHostPort(url.getHost(), url.getPort());
@@ -321,7 +306,7 @@ void UClient_Base::wrapRequestWithHTTP(const char* extension, const char* conten
 
    tmp.snprintf("%.*s %.*s%s%.*s HTTP/1.1\r\n"
                 "Host: %.*s\r\n"
-                "User-Agent: ULib/1.0\r\n"
+                "User-Agent: ULib/" VERSION "\r\n"
                 "%s",
                 U_HTTP_METHOD_TO_TRACE,
                 U_HTTP_URI_TO_TRACE,
@@ -482,6 +467,7 @@ const char* UClient_Base::dump(bool _reset) const
                   << "verify_mode                         " << verify_mode             << '\n'
                   << "log_shared_with_server              " << log_shared_with_server  << '\n'
                   << "log            (ULog                " << (void*)log              << ")\n"
+                  << "uri            (UString             " << (void*)&uri             << ")\n"
                   << "server         (UString             " << (void*)&server          << ")\n"
                   << "ca_file        (UString             " << (void*)&ca_file         << ")\n"
                   << "ca_path        (UString             " << (void*)&ca_path         << ")\n"
@@ -492,7 +478,6 @@ const char* UClient_Base::dump(bool _reset) const
                   << "cert_file      (UString             " << (void*)&cert_file       << ")\n"
                   << "buffer         (UString             " << (void*)&buffer          << ")\n"
                   << "request        (UString             " << (void*)&request         << ")\n"
-                  << "service        (UString             " << (void*)&service         << ")\n"
                   << "response       (UString             " << (void*)&response        << ")\n"
                   << "host_port      (UString             " << (void*)&host_port       << ")\n"
                   << "socket         (USocket             " << (void*)socket           << ')';

@@ -99,9 +99,15 @@ U_NO_EXPORT void UZIP::assignFilenames()
    U_INTERNAL_ASSERT_POINTER(filenames)
    U_INTERNAL_ASSERT_POINTER(filenames_len)
 
+   UString name;
    zippartname = U_NEW(UVector<UString>(npart));
 
-   for (uint32_t i = 0; i < npart; ++i) zippartname->push_back(UString(filenames[i], filenames_len[i]));
+   for (uint32_t i = 0; i < npart; ++i)
+      {
+      (void) name.assign(filenames[i], filenames_len[i]);
+
+      zippartname->push_back(name);
+      }
 }
 
 bool UZIP::extract(const UString* _tmpdir, bool bdir)

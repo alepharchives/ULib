@@ -901,6 +901,57 @@ bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restric
       }
 }
 
+bool u_isURL(const char* restrict url, uint32_t len)
+{
+   int ch;
+   bool alphanumeric, special;
+   const char* restrict url2;
+   const char* restrict first_slash;
+
+   U_INTERNAL_TRACE("u_isURL(%.*s,%u)", U_min(len,128), url, len)
+
+   U_INTERNAL_ASSERT_POINTER(url)
+
+   first_slash = (const char* restrict) memchr(url, '/', len);
+
+   if (first_slash     == 0   ||
+       first_slash     == url ||     /* Input with no slash at all or slash first can't be URL */
+       first_slash[-1] != ':' ||
+       first_slash[ 1] != '/' ||     /* Character before must be : and next must be / */
+       first_slash     == (url + 1)) /* There must be something before the :// */
+      {
+      return false;
+      }
+
+   /* Check all characters up to first slash - 1. Only alphanum is allowed */
+
+   url2 = url;
+
+   --first_slash;
+
+   while (url2 < first_slash)
+      {
+      ch = *(unsigned char*)url2;
+
+      /* The set of valid URL schemes, as per STD66 (RFC3986) is
+       * '[A-Za-z][A-Za-z0-9+.-]*'. But use sightly looser check
+       * of '[A-Za-z0-9][A-Za-z0-9+.-]*' because earlier version
+       * of check used '[A-Za-z0-9]+' so not to break any remote helpers.
+       */
+
+      special      = (ch == '+' || ch == '-' || ch == '.');
+      alphanumeric = (ch > 0 && u_isalnum(ch));
+
+      if (alphanumeric == false && (url2 != url && special) == false) return false;
+
+      ++url2;
+      }
+
+   /* Valid enough */
+
+   return true;
+}
+
 bool u_isMacAddr(const char* restrict p, uint32_t len)
 {
    uint32_t c;

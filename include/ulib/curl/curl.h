@@ -66,6 +66,50 @@ public:
       U_INTERNAL_ASSERT_EQUALS(result,CURLE_OK)
       }
 
+   void setInterface(const char* interfaceIP)
+      {
+      U_TRACE(0, "UCURL::setInterface(%S)", interfaceIP)
+
+      setOption(CURLOPT_INTERFACE, (long)interfaceIP);
+      }
+
+   void setURL(const char* url)
+      {
+      U_TRACE(0, "UCURL::setURL(%S)", url)
+
+      U_INTERNAL_ASSERT(u_isURL(url, u_strlen(url)))
+
+      setOption(CURLOPT_URL, (long)url);
+      }
+
+   void setTimeout(long timeout)
+      {
+      U_TRACE(0, "UCURL::setTimeout(%ld)", timeout)
+
+      U_INTERNAL_ASSERT_MINOR(timeout, 1000) // NB: must be in seconds...
+
+      setOption(CURLOPT_CONNECTTIMEOUT, timeout);
+      }
+
+   void setMaxTime(long maxtime)
+      {
+      U_TRACE(0, "UCURL::setMaxTime(%ld)", maxtime)
+
+      U_INTERNAL_ASSERT_MINOR(maxtime, 1000) // NB: must be in seconds...
+
+      setOption(CURLOPT_TIMEOUT, maxtime);
+      }
+
+   void setInsecure()
+      {
+      U_TRACE(0, "UCURL::setInsecure()")
+
+      /* new stuff needed for libcurl 7.10 */
+
+      setOption(CURLOPT_SSL_VERIFYPEER, 0);
+      setOption(CURLOPT_SSL_VERIFYHOST, 1);
+      }
+
    void setNoBody()
       {
       U_TRACE(0, "UCURL::setNoBody()")
@@ -78,41 +122,6 @@ public:
       U_TRACE(0, "UCURL::setGetMode()")
 
       setOption(CURLOPT_HTTPGET, 1L);
-      }
-
-   void setHTTPPostMode()
-      {
-      U_TRACE(0, "UCURL::setHTTPPostMode()")
-
-      setOption(CURLOPT_HTTPPOST, (long)formPost);
-      }
-
-   void setTimeout(long timeout)
-      {
-      U_TRACE(0, "UCURL::setTimeout(%ld)", timeout)
-
-      setOption(CURLOPT_TIMEOUT, timeout);
-      }
-
-   void setRequestFileTime(bool request)
-      {
-      U_TRACE(0, "UCURL::setRequestFileTime(%b)", request)
-
-      setOption(CURLOPT_FILETIME, request ? 1L : 0L);
-      }
-
-   void setURL(const char* url)
-      {
-      U_TRACE(0, "UCURL::setURL(%S)", url)
-
-      setOption(CURLOPT_URL, (long)url);
-      }
-
-   void setInterface(const char* interfaceIP)
-      {
-      U_TRACE(0, "UCURL::setInterface(%S)", interfaceIP)
-
-      setOption(CURLOPT_INTERFACE, (long)interfaceIP);
       }
 
    void setUserAgent(const char* userAgent)
@@ -145,6 +154,13 @@ public:
          }
       }
 
+   void setRequestFileTime(bool request)
+      {
+      U_TRACE(0, "UCURL::setRequestFileTime(%b)", request)
+
+      setOption(CURLOPT_FILETIME, request ? 1L : 0L);
+      }
+
    void setTimeCondition(bool modified_since, time_t t)
       {
       U_TRACE(0, "UCURL::setTimeCondition(%b,%ld)", modified_since, t)
@@ -161,6 +177,13 @@ public:
       }
 
    // POST - FORM
+
+   void setHTTPPostMode()
+      {
+      U_TRACE(0, "UCURL::setHTTPPostMode()")
+
+      setOption(CURLOPT_HTTPPOST, (long)formPost);
+      }
 
    void setPostMode(const char* postData, uint32_t size)
       {
@@ -192,17 +215,22 @@ public:
 
    // EXEC
 
-   bool performWait(uint32_t n = 0)
+   void reserve(uint32_t n)
       {
-      U_TRACE(1, "UCURL::performWait(%u)", n)
+      U_TRACE(0, "UCURL::reserve(%u)", n)
+
+      (void) response.reserve(n);
+      }
+
+   bool performWait()
+      {
+      U_TRACE(1, "UCURL::performWait()")
 
       U_CHECK_MEMORY
 
       U_INTERNAL_ASSERT_POINTER(easyHandle)
 
       response.setEmpty();
-
-      if (n) (void) response.reserve(n);
 
       result = U_SYSCALL(curl_easy_perform, "%p", easyHandle);
 
@@ -284,8 +312,7 @@ public:
 
       FD_ZERO(&exc);
 
-      CURLMcode mresult = (CURLMcode) U_SYSCALL(curl_multi_fdset, "%p,%p,%p,%p,%p",
-                                                   multiHandle, &read, &write, &exc, &max_fd);
+      CURLMcode mresult = (CURLMcode) U_SYSCALL(curl_multi_fdset, "%p,%p,%p,%p,%p", multiHandle, &read, &write, &exc, &max_fd);
 
       U_INTERNAL_ASSERT_EQUALS(mresult,CURLM_OK)
 

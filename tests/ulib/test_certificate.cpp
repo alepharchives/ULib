@@ -2,6 +2,7 @@
 
 #include <ulib/file.h>
 #include <ulib/ssl/certificate.h>
+#include <ulib/container/vector.h>
 
 #include <iostream>
 
@@ -12,22 +13,27 @@ static void check(const UString& dati_cert, const UString& dati_ca)
    UCertificate c(dati_cert);
    UCertificate ca(dati_ca);
 
-   cout << c                        << "\n"
-        << c.isSelfSigned()         << "\n"
-        << c.isIssued(ca)           << "\n"
-        << c.getIssuer()            << "\n" 
-   //   << c.getIssuerForLDAP()     << "\n" 
-        << c.getSubject()           << "\n"
-        << c.getVersionNumber()     << "\n"           
-        << c.getSerialNumber()      << "\n" 
-        << c.hashCode()             << "\n" 
-        << c.getSignatureAlgorithm()<< "\n" 
-        << c.getNotBefore()         << "\n" 
-        << c.getNotAfter()          << "\n" 
-        << c.checkValidity()        << "\n"
-   //   << c.getSignature()         << "\n" 
-   //   << c.getSignable()          << "\n" 
-        << c.getRevocationURL();
+   UVector<UString> vec1, vec2;
+   (void) c.getCAIssuers(vec1);
+   (void) c.getRevocationURL(vec2);
+
+   cout << c                        << '\n'
+        << c.isSelfSigned()         << '\n'
+        << c.isIssued(ca)           << '\n'
+        << c.getIssuer()            << '\n' 
+   //   << c.getIssuerForLDAP()     << '\n' 
+        << c.getSubject()           << '\n'
+        << c.getVersionNumber()     << '\n'           
+        << c.getSerialNumber()      << '\n' 
+        << c.hashCode()             << '\n' 
+        << c.getSignatureAlgorithm()<< '\n' 
+        << c.getNotBefore()         << '\n' 
+        << c.getNotAfter()          << '\n' 
+        << c.checkValidity()        << '\n'
+   //   << c.getSignature()         << '\n' 
+   //   << c.getSignable()          << '\n' 
+        << vec1                     << '\n'
+        << vec2                     << '\n';
 
    UString encoded = c.getEncoded("PEM");
 

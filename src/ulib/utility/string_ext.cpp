@@ -891,6 +891,8 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 
       len = pos - oldPos;
 
+      U_INTERNAL_ASSERT_MAJOR(len,0)
+
       if (form)
          {
          // name is URL encoded...
@@ -931,20 +933,24 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 
       len = (pos == U_NOT_FOUND ? size : pos) - oldPos;
 
-      if (form)
-         {
-         value.setBuffer(len);
-
-         Url::decode(content.c_pointer(oldPos), len, value);
-         }
+      if (len == 0) name_value.push_back(UString::getStringNull());
       else
          {
-         value = content.substr(oldPos, len);
+         if (form)
+            {
+            value.setBuffer(len);
 
-         if (value.isQuoted()) value.unQuote();
+            Url::decode(content.c_pointer(oldPos), len, value);
+            }
+         else
+            {
+            value = content.substr(oldPos, len);
+
+            if (value.isQuoted()) value.unQuote();
+            }
+
+         name_value.push_back(value);
          }
-
-      name_value.push_back(value);
 
       if (pos == U_NOT_FOUND) break;
 

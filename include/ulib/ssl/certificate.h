@@ -18,6 +18,7 @@
 #include <ulib/string.h>
 
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 template <class T> class UVector;
 template <class T> class UHashMap;
@@ -104,7 +105,16 @@ public:
 
       if (isValid()) clear();
 
-      if (x509) x509 = X509_dup(px509);
+      if (px509) x509 = X509_dup(px509);
+      }
+
+   bool set(const UString& x, const char* format = 0)
+      {
+      U_TRACE(0, "UCertificate::set(%.*S,%S)", U_STRING_TO_TRACE(x), format)
+
+      set(readX509(x, format));
+
+      U_RETURN(x509 != 0);
       }
 
    /**
@@ -442,11 +452,21 @@ public:
 
    int getExtensions(UHashMap<UString>& table) const;
 
+
+   /**
+   * parse cert's \c authorityInfoAccess extension and find all the
+   * instances of the \c id-ad-caIssuers access method which can be:
+   * - HTTP uri: pointer to a cert file or pointer to a certs-only CMS msg ie. a .p7[bc] file
+   * - LDAP uri: LDAP server name + directory entry + attributes ie. \c cACertificate and/or \c crossCertificatePair
+   */
+
+   uint32_t getCAIssuers(UVector<UString>& vec) const;
+
    /**
    * Returns <i>RevocationURL</i> for the CA that issued this certificate
    */
 
-   UString getRevocationURL(const char* ext_id = LN_crl_distribution_points) const; // "X509v3 CRL Distribution Points"
+   uint32_t getRevocationURL(UVector<UString>& vec) const; // "X509v3 CRL Distribution Points"
 
    /**
    * Indicate the data certificate ("issuer","serial") for logging...
@@ -495,6 +515,8 @@ protected:
    static int verifyCallback(int ok, X509_STORE_CTX* ctx);
 
 private:
+   static UString getRevocationURI(GENERAL_NAMES* gens) U_NO_EXPORT;
+
    UCertificate(const UCertificate&)            {}
    UCertificate& operator=(const UCertificate&) { return *this; }
 };

@@ -108,6 +108,8 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, Url, "")
 
+      if (str_ftp == 0) str_allocate();
+
       service_end = user_begin = user_end = host_begin = host_end = path_begin = path_end = query = -1;
       }
 
@@ -121,6 +123,8 @@ public:
    Url(const UString& x) : url(x)
       {
       U_TRACE_REGISTER_OBJECT(0, Url, "%.*S", U_STRING_TO_TRACE(x))
+
+      if (str_ftp == 0) str_allocate();
 
       findpos();
       }
@@ -187,6 +191,15 @@ public:
    const char* getUrlData() const    { return url.data(); }
    uint32_t    getUrlDataLen() const { return url.size(); }
 
+   void clear()
+      {
+      U_TRACE(0, "Url::clear()")
+
+      url.clear();
+
+      service_end = user_begin = user_end = host_begin = host_end = path_begin = path_end = query = -1;
+      }
+
    /** This methode returns the specified service of the url.
     *
     * If there is no service specified the buffer will be empty.
@@ -195,9 +208,9 @@ public:
     * @return str.
     */
 
-   UString getService();
+   UString getService() const;
 
-   bool isHTTP()
+   bool isHTTP() const
       {
       U_TRACE(0, "Url::isHTTP()")
 
@@ -208,7 +221,7 @@ public:
       U_RETURN(result);
       }
 
-   bool isHTTPS()
+   bool isHTTPS() const
       {
       U_TRACE(0, "Url::isHTTPS()")
 

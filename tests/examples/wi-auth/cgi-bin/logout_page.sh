@@ -4,12 +4,12 @@
 
 . ./.env
 
+#	set -x
+
 if [ "$REQUEST_METHOD" = "GET" ]; then
 
-	logout_page
+	print_page
 
 fi
 
-write_OUTPUT "$OUTPUT"
-
-exit 1
+write_OUTPUT

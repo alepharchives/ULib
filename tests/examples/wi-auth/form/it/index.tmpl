@@ -1,112 +1,207 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 <head>
-  <title>T-Services www.tunwired.com</title>
-  <link rel="stylesheet" type="text/css" href="/wi-auth/css/style.css" />
+  <title>Firenze WiFi</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <style type="text/css">
+  .test {
+        font-family: Verdana, Arial, Helvetica, sans-serif;
+        font-size: 24px;
+        border: 1px solid #CCCCCC;
+        line-height: 30px;
+        text-indent: 28pt;
+  }
+  .link {
+        color:#666666;
+        font-size: 20px;
+        TEXT-DECORATION: none;
+        font-family: Verdana, Arial, Helvetica, sans-serif;
+        font-weight: bold;
+        background-color: #CCCCCC;
+  }
+  .link:hover {color:#990000; TEXT-DECORATION: none
+  }
+  .test2 {
+        font-family: Verdana, Arial, Helvetica, sans-serif;
+        font-size: 22px;
+        line-height: 30px;
+  }
+  .test1 {
+        font-family: Verdana, Arial, Helvetica, sans-serif;
+        font-size: 22px;
+  }
+  .tabella {
+        background-image: none;
+        border: 1px solid #666666;
+  }
+  </style>
 </head>
 
 <body>
-  <!-- Import jquery -->
-  <script language="JavaScript" type="text/javascript" src="/wi-auth/_jquery/jquery-1.2.1.min.js">
-</script><script language="JavaScript" type="text/javascript" src="/wi-auth/_jquery/jquery.curvycorners/rounded_corners_lite.inc.js">
-</script><!-- plugin per i corner -->
-  <script language="JavaScript" type="text/javascript" src="/wi-auth/_jquery/effetti.js">
-</script>
-	<!-- Begin Wrapper -->
+  <form method="post" action="%s">
+    <input value="10_piazze" name="realm" type="hidden">
 
-  <div id="wrapper">
-    <!-- Begin Header -->
+    <table width="700" border="0" align="center" class="tabella">
+      <tr>
+        <td>
+          <div align="center"><img src="wi-auth/images/sfondo2_wifi.jpg" width="784" height="251"></div>
+        </td>
+      </tr>
 
-    <div id="header">
-      <table class="table_header">
+      <tr>
+        <td>&nbsp;</td>
+      </tr>
+
+		<!--
         <tr>
-          <td>
-            <div class="logo_link"><img src="/wi-auth/images/logo_t.service_NoSfondo.png" /></div>
-          </td>
-
-          <td>
-            <!-- Begin Logo -->
-
-            <div class="logo">
-              <p id="lineone"><span>T-UNWIRED</span></p><!-- End logo -->
+          <td class="test2">
+            <div align="center">
+              Se sei un utente registrato ed e' la prima volta<br>
+              che utilizzi il servizio premi <a href="http://%s">qui</a> per istallare il<br>
+              certificato per la verifica del server<br>
+              <br>
+              Altrimenti inserisci le tue credenziali
             </div>
           </td>
         </tr>
-      </table>
-    </div><!-- End Header -->
-    <!-- Begin Content -->
+      -->
 
-    <div id="content">
-      <!-- Begin Double Box -->
+      <tr>
+        <td class="test2">
+          <div align="center">
+            Se sei un utente registrato, inserisci le tue credenziali
+          </div>
+        </td>
+      </tr>
 
-      <div id="doublebox">
-        <table class="content_table">
-          <tbody>
+      <tr>
+        <td>&nbsp;</td>
+      </tr>
+
+      <tr>
+        <td>
+          <table width="100%%" border="0">
             <tr>
               <td>
-                <div class="content_center">
-                  <!-- Begin Login -->
-
-                  <div class="login" id="loginbox">
-                    <form method="post" action="/wi-auth/cgi-bin/login.sh">
-							 <!--
-                      <input type="hidden" name="mac" value="" />
-							 <input type="hidden" name="ip" value="" />
-							 <input type="hidden" name="redirect" value="" />
-							 <input type="hidden" name="gateway" value="" />
-							 <input type="hidden" name="timeout" value="" />
-							 <input type="hidden" name="token" value="" />
-							 <input type="hidden" name="ap" value="" />
-							 -->
-                      <ul>
-                        <li id="titolo">LOGIN</li><!-- Begin Login_box -->
-
-                        <li style="list-style: none; display: inline">
-                          <div class="login_box">
-                            <ul>
-                              <li class="login_item">Login:</li>
-
-                              <li style="list-style: none"><input class="login_input" type="text" name="uid" /></li>
-
-                              <li class="login_item">Password:</li>
-
-                              <li style="list-style: none"><input class="login_input" type="password" name="pass" /></li>
-
-                              <li><input id="login_button" type="submit" name="submit" value="Entra" /></li><!-- End login_box -->
-                            </ul>
-                          </div>
-                        </li>
-                      </ul>
-                    </form><!-- End Login --><!-- End Content Center -->
-                  </div>
-                </div>
-              </td><!-- FINE prima COLONNA-->
-            </tr>
-
-            <tr>
-              <td>
-                <div class="content_center_bottom">
-                  Tutti i link sono accessibili dopo l'accesso.
+                <div align="right" class="test1">
+                  Username:
                 </div>
               </td>
+
+              <td><input type="text" name="uid"></td>
             </tr>
-          </tbody>
-        </table>
 
-        <div class="clear"></div><!-- End Double Box -->
-      </div>
-    </div><!-- End Content -->
-    <!-- Begin Footer -->
+            <tr>
+              <td>
+                <div align="right" class="test1">
+                  Password:
+                </div>
+              </td>
 
-    <div id="footer">
-      <div id="footer_logo">
-        <p>Designed by</p>
+              <td><input type="password" name="pass"></td>
+            </tr>
+          </table>
+        </td>
+      </tr>
 
-        <p><img src="/wi-auth/images/lv7-logo-small.png" /></p>
-      </div>
-    </div><!-- End Footer -->
-  </div><!-- End Wrapper -->
+      <tr>
+        <td>
+          <div align="center">
+            <input type="image" src="wi-auth/images/accedi.gif" name="submit" value="Entra">
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td>&nbsp;</td>
+      </tr>
+
+		<!--
+        <tr>
+          <td class="test1" >
+            <div align="center">
+					Ti suggeriamo di prendere nota della pagina di uscita (logout),<br>
+					magari inserendola tra i tuoi segnalibri (bookmarks).<br>
+					Se utilizzerai questa pagina, quando hai finito di navigare,<br>
+					il tempo e traffico della tua navigazione, e quindi quanto<br>
+					ti rimane, saranno corrispondenti a quelli effettivi.<br>
+					La pagina di uscita (logout): <a href="http://%s/logout_page">http://%s/logout_page</a>
+            </div>
+          </td>
+        </tr>
+		  -->
+
+      <tr>
+        <td>
+          <table width="100%%" border="0">
+
+			 <!--
+			 <tr>
+				<td>&nbsp;</td>
+				<td>&nbsp;<b>A causa di un intervento di manutenzione programmata il servizio non sarà disponibile tra le <u>9 e le 12 di giovedì 19 novembre.</u> Ci scusiamo per l'inconveniente.</b></td>
+			 </tr>
+			 <tr>
+				<td>&nbsp;</td>
+			 </tr>
+			 -->
+				
+            <tr>
+              <td>&nbsp;</td>
+
+              <td width="80%%" bgcolor="#CCCCCC" class="test2">
+                <div align="center">
+                  <font size="5">Se non sei un utente registrato, <a href="%s" class="link"><font size="5">clicca qui</font></a></font>
+                </div>
+              </td>
+
+              <td>&nbsp;</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <tr>
+        <td>&nbsp;</td>
+      </tr>
+
+      <tr>
+        <td>
+          <div align="center" class="test2">
+            Il Wi-Fi scende in piazza<br>
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <table width="100%%" border="0">
+            <tr>
+              <td width="88%%">
+                <div align="right" class="test2">
+                  Per informazioni sul servizio lun-sab 8,00-20,00: 055-055
+                </div>
+              </td>
+
+              <td width="12%%">
+                <div align="left"><img src="wi-auth/images/linea_comune.gif" width="80" height="40"></div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <tr>
+        <td>&nbsp;</td>
+      </tr>
+
+      <tr>
+        <td>
+          <div align="center"><img src="wi-auth/images/logowifi.gif" width="700" height="118"></div>
+        </td>
+      </tr>
+    </table>
+  </form>
 </body>
 </html>
+<!-- %s %s %s %s %s %s %s %s -->

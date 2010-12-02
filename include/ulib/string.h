@@ -924,7 +924,7 @@ public:
    char* c_strdup() const                                            { return strndup(rep->str, rep->_length); }
    char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const { return strndup(rep->str + pos, rep->fold(pos, n)); }
 
-   UString  copy();
+   UString  copy() const;
    uint32_t copy(char* s, uint32_t n, uint32_t pos = 0) const { return rep->copy(s, n, pos); }
 
    // STRING OPERATIONS

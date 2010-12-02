@@ -56,7 +56,7 @@ void Url::set(const UString& x)
    findpos();
 }
 
-UString Url::getService()
+UString Url::getService() const
 {
    U_TRACE(0, "Url::getService()")
 
@@ -201,8 +201,6 @@ int Url::getPort()
    if (service_end > 0)
       {
       UString tmp = url.substr(0U, (uint32_t)service_end);
-
-      if (str_ftp == 0) str_allocate();
 
       if (tmp.equal(*str_http))  U_RETURN(80);
       if (tmp.equal(*str_https)) U_RETURN(443);
@@ -379,23 +377,22 @@ void Url::findpos()
 {
    U_TRACE(0, "Url::findpos()")
 
-   int temp;
-
    // proto://[user[:password]@]hostname[:port]/[path]?[query]
 
    service_end = U_STRING_FIND(url, 0, "//");
 
    if (service_end < 0)
       {
-      service_end = 0;
-      user_begin  = service_end;
-      }
-   else
-      {
-      user_begin = service_end + 2;
+      service_end = user_begin = user_end = host_begin = host_end = path_begin = path_end = query = 0;
 
-      --service_end; // cut ':'
+      return;
       }
+
+   U_INTERNAL_ASSERT(u_isURL(U_STRING_TO_PARAM(url)))
+
+   user_begin = service_end + 2;
+
+   --service_end; // cut ':'
 
    path_begin = url.find('/', user_begin);
 
@@ -405,6 +402,8 @@ void Url::findpos()
 
       if (path_begin < 0) path_begin = url.size();
       }
+
+   int temp;
 
    if (service_end == 0 &&
        path_begin       &&

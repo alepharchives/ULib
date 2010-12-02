@@ -166,6 +166,8 @@ static inline void u_setPfnMatch(int match_type, int flags)
                   match_type == U_DOSMATCH ? u_dosmatch : u_dosmatch_with_OR);
 }
 
+extern U_EXPORT bool u_isURL(const char* restrict url, uint32_t len);
+
 extern U_EXPORT bool u_isMacAddr(const char* restrict p, uint32_t len);
 
 /* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */

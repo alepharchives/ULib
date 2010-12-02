@@ -17,9 +17,8 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5, "main(%d)", argc)
 
-   UString x, tmp(argv[1], strlen(argv[1]));
+   UString x, url(argv[1], strlen(argv[1]));
 
-   Url url(tmp);
    UHttpClient<UTCPSocket> http(0);
 
 #ifndef JOHN

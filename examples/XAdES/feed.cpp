@@ -1,11 +1,18 @@
 // feed.cpp
 
 #include <ulib/zip/zip.h>
+#include <ulib/ssl/crl.h>
 #include <ulib/curl/curl.h>
 #include <ulib/ssl/pkcs7.h>
 #include <ulib/file_config.h>
 #include <ulib/ssl/certificate.h>
+#include <ulib/net/client/http.h>
+#include <ulib/ssl/net/sslsocket.h>
 #include <ulib/utility/string_ext.h>
+
+#ifdef HAVE_LDAP
+#  include <ulib/ldap/ldap.h>
+#endif
 
 #undef  PACKAGE
 #define PACKAGE "feed"
@@ -35,9 +42,153 @@
 class Application : public UApplication {
 public:
 
+   Application() : client(0)
+      {
+      U_TRACE(5, "Application::Application()")
+      }
+
    ~Application()
       {
       U_TRACE(5, "Application::~Application()")
+      }
+
+   bool download(bool bcrl)
+      {
+      U_TRACE(5, "Application::download(%b)", bcrl)
+
+      if (u_isURL(U_STRING_TO_PARAM(uri)) == false) U_RETURN(false);
+
+      output.clear();
+
+      if (u_startsWith(U_STRING_TO_PARAM(uri), U_CONSTANT_TO_PARAM("http")))
+         {
+         UString request;
+
+         if (client.connectServer(uri) &&
+             client.sendRequest(request))
+            {
+            output = client.getContent();
+            }
+         }
+      else if (u_startsWith(U_STRING_TO_PARAM(uri), U_CONSTANT_TO_PARAM("ldap")))
+         {
+#     ifdef HAVE_LDAP
+         if (ldap.init(uri.c_str()) &&
+             ldap.set_protocol()    &&
+             ldap.bind())
+            {
+            int n = ldap.search();
+
+            if (n > 0)
+               {
+               static const char*  ca_attr_name[] = { "cACertificate",             "crossCertificatePair",    0 };
+               static const char* crl_attr_name[] = { "certificateRevocationList", "authorityRevocationList", 0 };
+
+               ULDAPEntry entry(2, (bcrl ? crl_attr_name : ca_attr_name), n);
+
+               ldap.get(entry);
+
+               for (int i = 0; i < n; ++i)
+                  {
+                  output = entry.getString(0, i);
+
+                  if (output.empty() == false) break;
+                  }
+               }
+            }
+#     else
+         curl.setURL(uri.c_str());
+
+         if (curl.performWait())
+            {
+            UString tmp = curl.getResponse();
+
+            /* Example of output
+             *
+             * DN: ou=Actalis - Firma Digitale,o=CSP
+             *    certificateRevocationList;binary:: MIIHHDCCBgQCAQEwDQYJKoZIhvcNAQELBQAwcjELMAkGA1UEBhMCSVQxFz....
+             *
+             */
+
+            uint32_t pos = U_STRING_FIND(tmp, 0, "\n\t");
+
+            if (pos == U_NOT_FOUND) U_RETURN(false);
+
+            pos += 2;
+
+            pos = U_STRING_FIND(tmp, pos, ": ");
+
+            if (pos == U_NOT_FOUND) U_RETURN(false);
+
+            pos += 2;
+
+            output = UStringExt::trim(tmp.c_pointer(pos), tmp.size() - pos);
+            }
+#     endif
+         }
+      else
+         {
+         curl.setURL(uri.c_str());
+
+         if (curl.performWait()) output = curl.getResponse();
+         }
+
+      bool result = (output.empty() == false);
+
+      U_RETURN(result);
+      }
+
+   bool manageCRL()
+      {
+      U_TRACE(5, "Application::manageCRL()")
+
+      if (download(true) &&
+          crl.set(output))
+         {
+         UString hash(100U);
+         long hash_code = crl.hashCode();
+
+         hash.snprintf("%08x.r0", hash_code);
+
+         U_DUMP("hash = %.*S exist = %b", U_STRING_TO_TRACE(hash), UFile::access(hash.data(), R_OK))
+
+         if (UFile::writeTo(hash, crl.getEncoded("PEM"))) U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   void writeCertificate()
+      {
+      U_TRACE(5, "Application::writeCertificate()")
+
+      // Link a certificate to its subject name hash value, each hash is of
+      // the form <hash>.<n> where n is an integer. If the hash value already exists
+      // then we need to up the value of n, unless its a duplicate in which
+      // case we skip the link. We check for duplicates by comparing the
+      // certificate fingerprints
+
+      UString hash(100U);
+      long hash_code = cert.hashCode();
+
+      hash.snprintf("%08x.0", hash_code);
+
+      bool exist = UFile::access(hash.data(), R_OK);
+
+      U_INTERNAL_DUMP("hash = %.*S exist = %b", U_STRING_TO_TRACE(hash), exist)
+
+      if (exist == false) (void) UFile::writeTo(hash, cert.getEncoded("PEM"));
+      }
+
+   void manageCertificate()
+      {
+      U_TRACE(5, "Application::manageCertificate()")
+
+      if (download(false) &&
+          cert.set(output))
+         {
+         writeCertificate();
+         }
       }
 
    void run(int argc, char* argv[], char* env[])
@@ -47,6 +198,9 @@ public:
       UApplication::run(argc, argv, env);
 
       // manage options
+
+      UString cfg_str;
+      UFileConfig cfg;
 
       if (UApplication::isOptions()) cfg_str = opt['c'];
 
@@ -88,22 +242,26 @@ public:
 
       if (ca_store.empty()) U_ERROR("XAdES - CAStore is empty...");
 
-      if (UFile::chdir(ca_store.c_str(), true) == false) U_ERROR("XAdES - chdir on CAStore %S failed...", ca_store.data());
+      if (UFile::chdir(ca_store.c_str(), true) == false) U_ERROR("XAdES - chdir() on CAStore %S failed...", ca_store.data());
 
       // manage arguments...
 
       uri = ( U_ZIPPONE == 0 ||
-                *U_ZIPPONE == '\0'
-                  ? cfg[U_STRING_FROM_CONSTANT("XAdES-C.UriPublicListCerticate")]
-                  : UString(U_ZIPPONE));
+             *U_ZIPPONE == '\0'
+               ? cfg[U_STRING_FROM_CONSTANT("XAdES-C.UriPublicListCerticate")]
+               : UString(U_ZIPPONE));
 
       if (uri.empty()) U_ERROR("XAdES - UriPublicListCerticate is empty...");
 
-      curl.setURL(uri.c_str());
+      curl.setInsecure();
+      curl.setTimeout(60);
 
-      if (curl.performWait(1024U * 1024U))
+      client.reserve(512U * 1024U);
+      client.setFollowRedirects(true);
+
+      if (download(false))
          {
-         UPKCS7 zippone(curl.getResponse(), "DER");
+         UPKCS7 zippone(output, "DER");
 
          if (zippone.isValid() == false) U_ERROR("Error reading S/MIME Public Certificate List, may be the file is not signed...");
 
@@ -111,11 +269,9 @@ public:
 
          if (zip.readContent() == false) U_ERROR("Error reading ZIP Public Certificate List, may be the file is not zipped...");
 
-         bool exist;
-         long hash_code;
-         UVector<UString> vec(5U);
+         UString namefile;
+         UVector<UString> vec_ca(5U), vec_crl(5U);
          uint32_t i, j, k, n = zip.getFilesCount();
-         UString namefile, hash(100U), item, list, uri_crl;
 
          U_INTERNAL_DUMP("ZIP: %d parts", n)
 
@@ -127,56 +283,34 @@ public:
 
             // .cer .crt .der
 
-            if (UStringExt::endsWith(namefile, U_CONSTANT_TO_PARAM(".cer")) ||
-                UStringExt::endsWith(namefile, U_CONSTANT_TO_PARAM(".crt")) ||
-                UStringExt::endsWith(namefile, U_CONSTANT_TO_PARAM(".der")))
+            if ((UStringExt::endsWith(namefile, U_CONSTANT_TO_PARAM(".cer"))  ||
+                 UStringExt::endsWith(namefile, U_CONSTANT_TO_PARAM(".crt"))  ||
+                 UStringExt::endsWith(namefile, U_CONSTANT_TO_PARAM(".der"))) &&
+                cert.set(zip.getFileContentAt(i)))
                {
-               UCertificate cert(zip.getFileContentAt(i));
+               writeCertificate();
 
-               if (cert.isValid())
+               for (j = 0, k = cert.getCAIssuers(vec_ca); j < k; ++j)
                   {
-                  // Link a certificate to its subject name hash value, each hash is of
-                  // the form <hash>.<n> where n is an integer. If the hash value already exists
-                  // then we need to up the value of n, unless its a duplicate in which
-                  // case we skip the link. We check for duplicates by comparing the
-                  // certificate fingerprints
+                  uri = vec_ca[j];
 
-                  hash_code = cert.hashCode();
+                  U_INTERNAL_DUMP("uri(CA) = %.*S", U_STRING_TO_TRACE(uri))
 
-                  hash.snprintf("%08x.0", hash_code);
-
-                  exist = UFile::access(hash.data(), R_OK);
-
-                  list = cert.getRevocationURL();
-
-                  if (list.empty()) uri_crl.clear();
-                  else
-                     {
-                     for (j = 0, k = vec.split(list); j < k; ++j)
-                        {
-                        item = vec[j];
-
-                        if (U_STRNEQ(item.data(), "URI:"))
-                           {
-                           (void) uri_crl.replace(item.substr(U_CONSTANT_SIZE("URI:")));
-
-                           U_INTERNAL_DUMP("uri_crl = %.*S", U_STRING_TO_TRACE(uri_crl))
-                           }
-                        }
-
-#                 ifdef DEBUG
-                      vec.clear();
-                     item.clear();
-#                 endif
-                     }
-
-                  U_INTERNAL_DUMP("namefile = %.*S hash = %.*S exist = %b", U_STRING_TO_TRACE(namefile), U_STRING_TO_TRACE(hash), exist)
-
-                  if (exist == false)
-                     {
-                     (void) UFile::writeTo(hash, cert.getEncoded("PEM"));
-                     }
+                  manageCertificate();
                   }
+
+               vec_ca.clear();
+
+               for (j = 0, k = cert.getRevocationURL(vec_crl); j < k; ++j)
+                  {
+                  uri = vec_crl[j];
+
+                  U_INTERNAL_DUMP("uri(CRL) = %.*S", U_STRING_TO_TRACE(uri))
+
+                  if (manageCRL()) break;
+                  }
+
+               vec_crl.clear();
                }
             }
          }
@@ -185,9 +319,15 @@ public:
       }
 
 private:
+   UCrl crl;
    UCURL curl;
-   UFileConfig cfg;
-   UString cfg_str, uri;
+   UCertificate cert;
+   UString uri, output;
+
+#ifdef HAVE_LDAP
+   ULDAP ldap;
+#endif
+   UHttpClient<USSLSocket> client;
 };
 
 U_MAIN(Application)

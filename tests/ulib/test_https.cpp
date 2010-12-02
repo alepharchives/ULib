@@ -9,9 +9,8 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
-   UString x, tmp(argv[1], strlen(argv[1])); 
+   UString x, url(argv[1], strlen(argv[1])); 
 
-   Url url(tmp);
    UHttpClient<USSLSocket> http(0);
    http.setRequestPasswordAuthentication(U_STRING_FROM_CONSTANT("Aladdin"),
                                          U_STRING_FROM_CONSTANT("open sesame"));

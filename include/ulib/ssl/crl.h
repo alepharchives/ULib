@@ -94,6 +94,24 @@ public:
       U_RETURN(crl != 0);
       }
 
+   void set(X509_CRL* pcrl)
+      {
+      U_TRACE(0, "UCrl::set(%p)", pcrl)
+
+      if (isValid()) clear();
+
+      if (pcrl) crl = X509_CRL_dup(pcrl);
+      }
+
+   bool set(const UString& x, const char* format = 0)
+      {
+      U_TRACE(0, "UCrl::set(%.*S,%S)", U_STRING_TO_TRACE(x), format)
+
+      set(readCRL(x, format));
+
+      U_RETURN(crl != 0);
+      }
+
    X509_CRL* getCrl() const { return crl; }
 
    bool isUpToDate() const;

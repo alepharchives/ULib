@@ -20,7 +20,6 @@
 #include <ulib/container/hash_map.h>
 
 #include <openssl/pem.h>
-#include <openssl/x509v3.h>
 
 bool                    UCertificate::verify_result;
 X509_STORE_CTX*         UCertificate::csc;
@@ -355,11 +354,47 @@ int UCertificate::getExtensions(UHashMap<UString>& table) const
    U_RETURN(count);
 }
 
-UString UCertificate::getRevocationURL(const char* ext_id) const
+U_NO_EXPORT UString UCertificate::getRevocationURI(GENERAL_NAMES* gens)
 {
-   U_TRACE(0, "UCertificate::getRevocationURL(%S)", ext_id)
+   U_TRACE(0, "UCertificate::getRevocationURI(%p)", gens)
 
-   /*
+   GENERAL_NAME* gen;
+   UString uri(1000U);
+
+   for (int j = 0, k = sk_GENERAL_NAME_num(gens); j < k; ++j)
+      {
+      gen = sk_GENERAL_NAME_value(gens, j);
+
+      // try to grab the first one that matches
+
+      if (gen->type == GEN_URI)
+         {
+         uri = (char*) U_SYSCALL(ASN1_STRING_data, "%p", gen->d.uniformResourceIdentifier);
+         }
+      else if (gen->type == GEN_DIRNAME)
+         {
+         (void) U_SYSCALL(X509_NAME_oneline, "%p,%p,%d", gen->d.directoryName, uri.data(), uri.capacity());
+
+         uri.size_adjust();
+         }
+
+      /* unsupported generalName decoding...
+
+      else
+         {
+         }
+      */
+      }
+
+   U_RETURN_STRING(uri);
+}
+
+uint32_t UCertificate::getRevocationURL(UVector<UString>& vec) const
+{
+   U_TRACE(0, "UCertificate::getRevocationURL(%p)", &vec)
+
+   /* X509v3 CRL Distribution Points
+    *
     * This is a multi-valued extension whose options can be either in name:value pair
     * using the same form as subject alternative name or a single value representing a
     * section name containing all the distribution point fields.
@@ -380,8 +415,9 @@ UString UCertificate::getRevocationURL(const char* ext_id) const
     * subject alternative name format.
     *
     * If the name is ``reasons'' the value field should consist of a comma separated
-    * field containing the reasons. Valid reasons are: ``keyCompromise'',
-    * ``CACompromise'', ``affiliationChanged'', ``superseded'',
+    * field containing the reasons. Valid reasons are:
+    *
+    * ``keyCompromise'', * ``CACompromise'', ``affiliationChanged'', ``superseded'',
     * ``cessationOfOperation'', ``certificateHold'', ``privilegeWithdrawn'' and
     * ``AACompromise''.
     *
@@ -406,20 +442,140 @@ UString UCertificate::getRevocationURL(const char* ext_id) const
     *  CN=Some Name
     */
 
-   UString crl;
-   UHashMap<UString> table;
+   UString uri;
+   X509_NAME* base;
+   X509_NAME* merge;
+   GENERAL_NAME* nm;
+   DIST_POINT* point;
+   uint32_t result, n = vec.size();
 
-   if (getExtensions(table))
+   // CRLDistributionPoints ::= SEQUENCE OF DistributionPoint
+
+   STACK_OF(DIST_POINT)* crld = (STACK_OF(DIST_POINT)*) U_SYSCALL(X509_get_ext_d2i, "%p,%d,%p,%p", x509, NID_crl_distribution_points, 0, 0);
+
+   for (int i = 0, j = sk_DIST_POINT_num(crld); i < j; ++i)
       {
-      UString id = UString(ext_id);
+      point = sk_DIST_POINT_value(crld, i);
 
-      crl = table[id];
+      U_INTERNAL_DUMP("point->distpoint = %p point->CRLissuer = %p", point->distpoint, point->CRLissuer)
 
-      table.clear();
-      table.deallocate();
+      if (point->distpoint)
+         {
+         // in case distributionPoint is set it can be either fullName (0) or nameRelativeToCRLIssuer (1)...
+
+         U_INTERNAL_DUMP("point->distpoint->type = %d", point->distpoint->type)
+
+         if (point->distpoint->type == 0) // fullName
+            {
+            uri = getRevocationURI(point->distpoint->name.fullname);
+            }
+         else // 1 nameRelativeToCRLIssuer
+            {
+            U_INTERNAL_ASSERT_EQUALS(sk_X509_NAME_ENTRY_num(point->distpoint->name.relativename),1)
+
+            if (point->CRLissuer)
+               {
+               nm = sk_GENERAL_NAME_value(point->CRLissuer, 0);
+
+               U_INTERNAL_ASSERT_EQUALS(nm->type,GEN_DIRNAME) // NB: it MUST be a directory name...
+
+               base = nm->d.directoryName;
+               }
+            else
+               {
+               base = (X509_NAME*) U_SYSCALL(X509_get_issuer_name,  "%p", x509);
+               }
+
+            merge = X509_NAME_dup(base);
+
+            (void) X509_NAME_add_entry(merge, sk_X509_NAME_ENTRY_value(point->distpoint->name.relativename, 0), -1, 0);
+
+            uri.setBuffer(1000U);
+
+            (void) U_SYSCALL(X509_NAME_oneline, "%p,%p,%d", merge, uri.data(), uri.capacity());
+
+            uri.size_adjust();
+
+            (void) X509_NAME_free(merge);
+            }
+         }
+      else
+         {
+         /* RFC3280: If the distributionPoint field is omitted, cRLIssuer MUST be present
+          * and include a Name corresponding to an X.500 or LDAP directory entry where the CRL is located
+          */
+
+         if (point->CRLissuer) uri = getRevocationURI(point->CRLissuer);
+
+         // either distributionPoint or cRLIssuer MUST be present..
+         // this distributionPoint is sick, let's try another one
+         }
+
+      if (uri.empty() == false)
+         {
+         vec.push_back(uri);
+
+         uri.clear();
+         }
       }
 
-   U_RETURN_STRING(crl);
+   result = (vec.size() - n);
+
+   U_RETURN(result);
+}
+
+uint32_t UCertificate::getCAIssuers(UVector<UString>& vec) const
+{
+   U_TRACE(0, "UCertificate::getCAIssuers(%p)", &vec)
+
+   /* Authority Info Access
+    *
+    * The authority information access extension gives details about how to access
+    * certain information relating to the CA. Its syntax is accessOID;location where
+    * location has the same syntax as subject alternative name (except that email:copy
+    * is not supported). accessOID can be any valid OID but only certain values are meaningful,
+    * for example OCSP and caIssuers.
+    *
+    * Example:
+    *
+    * authorityInfoAccess = OCSP;URI:http://ocsp.my.host/
+    * authorityInfoAccess = caIssuers;URI:http://my.ca/ca.html
+    */
+
+   UString uri;
+   ACCESS_DESCRIPTION* ad;
+
+   // try to extract an AuthorityInfoAccessSyntax extension from x509
+
+   AUTHORITY_INFO_ACCESS* aia = (AUTHORITY_INFO_ACCESS*) U_SYSCALL(X509_get_ext_d2i, "%p,%d,%p,%p", x509, NID_info_access, 0, 0);
+
+   // AuthorityInfoAccessSyntax ::= SEQUENCE OF AccessDescription
+
+   for (int i = 0, j = sk_ACCESS_DESCRIPTION_num(aia); i < j; ++i)
+      {
+      ad = sk_ACCESS_DESCRIPTION_value(aia, i);
+
+      U_INTERNAL_DUMP("ad->method = %d ad->location->type = %d", ad->method, ad->location->type)
+
+      /* we are interested in id-ad-caIssuers accessMethod only,
+       * extract general name from accessLocation. RFC3280 states:
+       * "where the information is available via HTTP, FTP, or LDAP, accessLocation MUST be a uniformResourceIdentifier"
+       */
+
+      if (OBJ_obj2nid(ad->method) == NID_ad_ca_issuers &&
+          ad->location->type      == GEN_URI)
+         {
+         uri = (char*) U_SYSCALL(ASN1_STRING_data, "%p", ad->location->d.uniformResourceIdentifier);
+
+         if (uri.empty() == false) vec.push_back(uri);
+         }
+      }
+
+   uint32_t result, n = vec.size();
+
+   result = (vec.size() - n);
+
+   U_RETURN(result);
 }
 
 UString UCertificate::getEncoded(const char* format) const

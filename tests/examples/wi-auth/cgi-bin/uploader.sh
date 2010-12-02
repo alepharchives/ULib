@@ -4,12 +4,19 @@
 
 . ./.env
 
-if [ "$REQUEST_METHOD" = "POST" -a $# -eq 1 ]; then
+# set -x
 
-	upload_log_ap "$1"
+if [ $# -eq 1 -a \
+	  "$REQUEST_METHOD" = "POST"]; then
+
+	# -----------------------------------------
+	# $1 -> path file upload
+	# -----------------------------------------
+
+	mv $1 $HISTORICAL_LOG_DIR
+
+	OUTPUT="<html><body>OK</body></html>"
 
 fi
 
-write_OUTPUT "$OUTPUT"
-
-exit 1
+write_OUTPUT

@@ -13,7 +13,7 @@
 
 #include <ulib/ldap/ldap.h>
 
-struct timeval ULDAP::timeOut = { 10, 0 }; /* 10 second connection/search timeout */
+struct timeval ULDAP::timeOut = { 30L, 0L }; /* 30 second connection/search timeout */
 
 ULDAPEntry::ULDAPEntry(int num_names, const char** names, int num_entry)
 {
@@ -67,6 +67,8 @@ void ULDAPEntry::set(char* attribute, char** values, int index_entry)
 {
    U_TRACE(0, "ULDAPEntry::set(%S,%p,%d)", attribute, values, index_entry)
 
+   U_DUMP_ATTRS(values)
+
    U_INTERNAL_ASSERT_MINOR(index_entry, n_entry)
 
    int k = index_entry * n_attr;
@@ -79,11 +81,34 @@ void ULDAPEntry::set(char* attribute, char** values, int index_entry)
 
          attr_val[k] = U_NEW(UString((void*)values[0]));
 
-         for (j = 1; values[j] != 0; ++j)
+         for (j = 1; values[j]; ++j)
             {
             attr_val[k]->append(U_CONSTANT_TO_PARAM("; "));
             attr_val[k]->append(values[j]);
             }
+
+         U_INTERNAL_DUMP("value = %.*S", U_STRING_TO_TRACE(*attr_val[k]))
+
+         break;
+         }
+      }
+}
+
+void ULDAPEntry::set(char* attribute, char* value, uint32_t len, int index_entry)
+{
+   U_TRACE(0, "ULDAPEntry::set(%S,%.*S,%u,%d)", attribute, len, value, len, index_entry)
+
+   U_INTERNAL_ASSERT_MINOR(index_entry, n_entry)
+
+   int k = index_entry * n_attr;
+
+   for (int j = 0; j < n_attr; ++j, ++k)
+      {
+      if (strcmp(attr_name[j], attribute) == 0)
+         {
+         U_INTERNAL_DUMP("ULDAPEntry(%d): %S", k, attr_name[j])
+
+         attr_val[k] = U_NEW(UString((void*)value, len));
 
          U_INTERNAL_DUMP("value = %.*S", U_STRING_TO_TRACE(*attr_val[k]))
 
@@ -130,17 +155,26 @@ const char* ULDAPEntry::getCStr(int index_names, int index_entry)
    U_RETURN("");
 }
 
-ULDAP::~ULDAP()
+void ULDAP::clear()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, ULDAP)
+   U_TRACE(1, "ULDAP::clear()")
 
-   if (ludpp) U_SYSCALL_VOID(ldap_free_urldesc, "%p", ludpp);
+   if (ludpp)
+      {
+      U_SYSCALL_VOID(ldap_free_urldesc, "%p", ludpp);
+                                              ludpp = 0;
+      }
 
    if (ld)
       {
-      if (searchResult) U_SYSCALL(ldap_msgfree, "%p", searchResult);
+      if (searchResult)
+         {
+         U_SYSCALL(ldap_msgfree, "%p", searchResult);
+                                       searchResult = 0;
+         }
 
       U_SYSCALL(ldap_unbind_s, "%p", ld);
+                                     ld = 0;
 
 #  ifdef HAVE_LDAP_SSL_H
    // if (isSecure) U_SYSCALL_NO_PARAM(ldapssl_client_deinit);
@@ -282,7 +316,7 @@ bool ULDAP::init(const char* url)
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT_EQUALS(ludpp,0)
+   if (ludpp) clear();
 
    result = U_SYSCALL(ldap_url_parse, "%S,%p", url, &ludpp);
 
@@ -361,7 +395,7 @@ bool ULDAP::init(const char* url)
    /* Get the URL scheme (either ldap or ldaps) */
 
 #ifdef HAVE_LDAP_SSL_H
-   if (U_MEMCMP(url, "ldaps:") == 0)
+   if (U_STRNEQ(url, "ldaps:"))
       {
       /* Making encrypted connection */
 
@@ -439,32 +473,62 @@ void ULDAP::get(ULDAPEntry& e)
    U_INTERNAL_ASSERT_POINTER(ld)
    U_INTERNAL_ASSERT_POINTER(searchResult)
 
-   /* Go through the search results by checking entries */
+   // Go through the search results by checking entries
 
-   int k = 0;
+   int i = 0, j;
    char** values;
    char* attribute;
-
    LDAPMessage* entry;
    BerElement* ber = 0;
 
-   for (entry = ldap_first_entry(ld, searchResult); entry != 0;
-        entry = ldap_next_entry( ld, entry), ++k)
+   char* _attribute;
+   struct berval** bvs = 0;
+
+   for (entry = ldap_first_entry(ld, searchResult); entry;
+        entry = ldap_next_entry( ld, entry), ++i)
       {
-      e.dn[k] = ldap_get_dn(ld, entry);
+      e.dn[i] = ldap_get_dn(ld, entry);
 
-      U_INTERNAL_DUMP("dn[%d]: %S", k, e.dn[k])
+      U_INTERNAL_DUMP("dn[%d]: %S", i, e.dn[i])
 
-      for (attribute = ldap_first_attribute(ld, entry, &ber); attribute != 0;
+      for (attribute = ldap_first_attribute(ld, entry, &ber); attribute;
            attribute = ldap_next_attribute( ld, entry,  ber))
          {
          values = ldap_get_values(ld, entry, attribute); /* Get values */
 
-         U_INTERNAL_ASSERT_POINTER(values)
+         U_INTERNAL_DUMP("values = %p attribute = %S", values, attribute)
 
-         e.set(attribute, values, k);
+         if (values)
+            {
+            e.set(attribute, values, i);
 
-         ldap_value_free(values);
+            ldap_value_free(values);
+            }
+         else
+            {
+            for (j = 0; j < e.n_attr; ++j)
+               {
+               // be prepared to the 'attr;binary' versions of 'attr'
+
+               _attribute = (char*)e.attr_name[j];
+
+               U_INTERNAL_DUMP("e.attr_name[%d] = %S", j, _attribute)
+
+               if (strncmp(attribute, _attribute, u_strlen(_attribute)) == 0)
+                  {
+                  bvs = ldap_get_values_len(ld, entry, attribute);
+
+                  if (bvs)
+                     {
+                     e.set(_attribute, bvs[0]->bv_val, bvs[0]->bv_len, i);
+
+                     ldap_value_free_len(bvs);
+
+                     break;
+                     }
+                  }
+               }
+            }
 
          ldap_memfree(attribute);
          }

@@ -31,9 +31,9 @@ TS_RESP* UTimeStamp::readTimeStampResponse(const UString& x)
    U_RETURN_POINTER(_response,TS_RESP);
 }
 
-UTimeStamp::UTimeStamp(UString& request, Url& TSA) : UPKCS7(0,0)
+UTimeStamp::UTimeStamp(UString& request, const UString& TSA) : UPKCS7(0,0)
 {
-   U_TRACE_REGISTER_OBJECT(0, UTimeStamp, "%.*S,%.*S", U_STRING_TO_TRACE(request), U_URL_TO_TRACE(TSA))
+   U_TRACE_REGISTER_OBJECT(0, UTimeStamp, "%.*S,%.*S", U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(TSA))
 
    SSL_METHOD* method = USSLSocket::method;
    USSLSocket::method = (SSL_METHOD*) SSLv3_client_method();
@@ -182,10 +182,9 @@ UString UTimeStamp::getTimeStampToken(int alg, const UString& data, const UStrin
 
    U_ASSERT(url.empty() == false)
 
-   Url TSA(url);
    UString token, request = createQuery(alg, data, 0, false, false);
 
-   UTimeStamp ts(request, TSA);
+   UTimeStamp ts(request, url);
 
    if (ts.UPKCS7::isValid()) token = ts.UPKCS7::getEncoded("BASE64");
 

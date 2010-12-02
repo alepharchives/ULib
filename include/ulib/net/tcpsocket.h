@@ -41,7 +41,7 @@ public:
     */
 
    virtual bool connectServer(const UString& server, int iServPort)
-      { return (USocket::socket(SOCK_STREAM) && USocket::connectServer(server, iServPort)); }
+      { return ((USocket::isOpen() || USocket::socket(SOCK_STREAM)) && USocket::connectServer(server, iServPort)); }
 
    /**
    * We try to bind the USocket to the specified port number and any local IP Address using the bind() method.

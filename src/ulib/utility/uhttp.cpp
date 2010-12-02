@@ -1097,7 +1097,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString& rbuffer, UString& body)
 
          U_INTERNAL_DUMP("http_info.clength = %u", http_info.clength)
 
-         if (http_info.clength == 0) U_RETURN(false);
+         if (http_info.clength == 0) U_RETURN(true);
 
          goto end;
          }
@@ -1353,7 +1353,7 @@ bool UHTTP::readHTTPRequest()
 
                   p = ptr + pos;
 
-                  if (U_MEMCMP(p, "close") == 0)
+                  if (U_STRNEQ(p, "close"))
                      {
                      U_http_is_connection_close = U_YES;
 
@@ -1365,7 +1365,7 @@ bool UHTTP::readHTTPRequest()
 
                      U_INTERNAL_DUMP("U_http_keep_alive = %C", U_http_keep_alive)
                      }
-                  else if (U_MEMCMP(p, "Upgrade") == 0)
+                  else if (U_STRNEQ(p, "Upgrade"))
                      {
                      U_http_upgrade = '1';
 
@@ -3215,6 +3215,7 @@ void UHTTP::checkHTTPRequest()
 
    // check if dynamic page (ULib Servlet Page)
 
+#ifdef HAVE_MODULES
    if (isUSPRequest() &&
        U_HTTP_URI_STRNEQ("/usp/"))
       {
@@ -3258,6 +3259,7 @@ void UHTTP::checkHTTPRequest()
 
       return;
       }
+#endif
 
    pathname->setBuffer(u_cwd_len + http_info.uri_len);
 

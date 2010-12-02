@@ -114,96 +114,93 @@ loop:
 
    n = U_SYSCALL(select, "%d,%p,%p,%p,%p", fdmax, &read_set, 0, 0, 0);
 
-   if (n > 0)
+   if (n <= 0) goto end;
+
+   if (FD_ISSET(sock, &read_set))
       {
-      if (FD_ISSET(sock, &read_set))
-         {
-         UClientImage_Base::rbuffer->setEmptyForce(); // NB: can be referenced by frame...
+      UClientImage_Base::rbuffer->setEmptyForce(); // NB: can be referenced by frame...
 
 read_from_client:
 
-         if (USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer))
-            {
-            sz   =                 UClientImage_Base::rbuffer->size();
-            type = (unsigned char) UClientImage_Base::rbuffer->first_char();
+      if (USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer) == false) goto end;
 
-            if (bUseSizePreamble)
-               {
-               // big-endian 64 bit unsigned integer
+      sz   =                 UClientImage_Base::rbuffer->size();
+      type = (unsigned char) UClientImage_Base::rbuffer->first_char();
 
-               frame_length = *((uint64_t*)UClientImage_Base::rbuffer->c_pointer(1));
-
-#           if __BYTE_ORDER == __LITTLE_ENDIAN
-               frame_length = bswap_64(frame_length);
-#           endif
-
-               if (frame_length == 0)
-                  {
-                  if (type == 0x00) goto end;
-
-                  goto loop;
-                  }
-
-               U_INTERNAL_ASSERT_EQUALS(type,0xff)
-
-               sz -= 1 + sizeof(uint64_t);
-
-               if (frame_length > sz)
-                  {
-                  // wait max 3 sec for other data...
-
-                  if (USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer, frame_length - sz, 3 * 1000) == false) goto end;
-                  }
-
-               frame = UClientImage_Base::rbuffer->substr(1 + sizeof(uint64_t), frame_length);
-               }
-            else
-               {
-               U_INTERNAL_ASSERT_EQUALS(type,0x00)
-               U_ASSERT_EQUALS((unsigned char)UClientImage_Base::rbuffer->last_char(),0xff)
-
-               frame = UClientImage_Base::rbuffer->substr(1,       // skip 0x00
-                                                          sz - 2); // skip 0xff
-               }
-
-            U_SRV_LOG_WITH_ADDR("received message (%u bytes) %.*S from", frame.size(), U_STRING_TO_TRACE(frame))
-
-            if (UNotifier::write(UProcess::filedes[1], U_STRING_TO_PARAM(frame))) goto loop;
-
-            U_RETURN(true);
-            }
-         }
-      else if (FD_ISSET(UProcess::filedes[2], &read_set))
+      if (bUseSizePreamble)
          {
-         UClientImage_Base::wbuffer->setEmpty();
+         // big-endian 64 bit unsigned integer
 
-         if (UServices::read(UProcess::filedes[2], *UClientImage_Base::wbuffer))
+         frame_length = *((uint64_t*)UClientImage_Base::rbuffer->c_pointer(1));
+
+#        if __BYTE_ORDER == __LITTLE_ENDIAN
+         frame_length = bswap_64(frame_length);
+#        endif
+
+         if (frame_length == 0)
             {
-            if (bUseSizePreamble)
-               {
-               (void) frame.assign(1, '\0');
+            if (type == 0x00) goto end;
 
-               // big-endian 64 bit unsigned integer
-
-               frame_length = UClientImage_Base::wbuffer->size();
-
-#           if __BYTE_ORDER == __LITTLE_ENDIAN
-               frame_length = bswap_64(frame_length);
-#           endif
-
-               (void) frame.append((const char*)&frame_length, sizeof(uint64_t));
-               (void) frame.append(*UClientImage_Base::wbuffer);
-               }
-            else
-               {
-               frame = '\0' + *UClientImage_Base::wbuffer + '\377';
-               }
-
-            U_SRV_LOG_WITH_ADDR("sent message (%u bytes) %.*S to", frame.size(), U_STRING_TO_TRACE(frame))
-
-            if (USocketExt::write(UClientImage_Base::socket, U_STRING_TO_PARAM(frame))) goto loop;
+            goto loop;
             }
+
+         U_INTERNAL_ASSERT_EQUALS(type,0xff)
+
+         sz -= 1 + sizeof(uint64_t);
+
+         if (frame_length > sz)
+            {
+            // wait max 3 sec for other data...
+
+            if (USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer, frame_length - sz, 3 * 1000) == false) goto end;
+            }
+
+         frame = UClientImage_Base::rbuffer->substr(1 + sizeof(uint64_t), frame_length);
          }
+      else
+         {
+         U_INTERNAL_ASSERT_EQUALS(type,0x00)
+         U_ASSERT_EQUALS((unsigned char)UClientImage_Base::rbuffer->last_char(),0xff)
+
+         frame = UClientImage_Base::rbuffer->substr(1,       // skip 0x00
+                                                    sz - 2); // skip 0xff
+         }
+
+      U_SRV_LOG_WITH_ADDR("received message (%u bytes) %.*S from", frame.size(), U_STRING_TO_TRACE(frame))
+
+      if (UNotifier::write(UProcess::filedes[1], U_STRING_TO_PARAM(frame))) goto loop;
+
+      U_RETURN(true);
+      }
+   else if (FD_ISSET(UProcess::filedes[2], &read_set))
+      {
+      UClientImage_Base::wbuffer->setEmptyForce();
+
+      if (UServices::read(UProcess::filedes[2], *UClientImage_Base::wbuffer) == false) goto end;
+
+      if (bUseSizePreamble)
+         {
+         (void) frame.assign(1, '\0');
+
+         // big-endian 64 bit unsigned integer
+
+         frame_length = UClientImage_Base::wbuffer->size();
+
+#        if __BYTE_ORDER == __LITTLE_ENDIAN
+         frame_length = bswap_64(frame_length);
+#        endif
+
+         (void) frame.append((const char*)&frame_length, sizeof(uint64_t));
+         (void) frame.append(*UClientImage_Base::wbuffer);
+         }
+      else
+         {
+         frame = '\0' + *UClientImage_Base::wbuffer + '\377';
+         }
+
+      U_SRV_LOG_WITH_ADDR("sent message (%u bytes) %.*S to", frame.size(), U_STRING_TO_TRACE(frame))
+
+      if (USocketExt::write(UClientImage_Base::socket, U_STRING_TO_PARAM(frame))) goto loop;
       }
 
 end:

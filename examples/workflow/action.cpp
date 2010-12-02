@@ -72,8 +72,7 @@ bool Action::sendHttpPostRequest(const UString& url, const UString& body, const 
 {
    U_TRACE(5, "Action::sendHttpPostRequest(%.*S,%.*S,%S,%S)", U_STRING_TO_TRACE(url), U_STRING_TO_TRACE(body), content_type, expected)
 
-   Url location(url);
-   bool ok  = client_http.sendPost(location, body, content_type);
+   bool ok  = client_http.sendPost(url, body, content_type);
    response = client_http.getContent();
 
    // manage error
