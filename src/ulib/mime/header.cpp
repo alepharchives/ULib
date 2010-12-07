@@ -77,74 +77,80 @@ void UMimeHeader::str_allocate()
 // MIME headers are delimited by an empty line.
 //=============================================================================
 
-uint32_t UMimeHeader::parse(const UString& buffer)
+uint32_t UMimeHeader::parse(const char* ptr, uint32_t len)
 {
-   U_TRACE(0+256, "UMimeHeader::parse(%.*S)", U_STRING_TO_TRACE(buffer))
-
-   header = buffer;
-   char* ptr = buffer.data();
-   uint32_t n = table.size(), pos, pos1 = 0, pos2, _end = buffer.size();
-
-   U_INTERNAL_DUMP("n = %u, _end = %u", n, _end)
-
-   bool cr;
-   UString key, value;
-
-   // Until we reach the data part of the response we know we are dealing with iso-8859-1 characters
+   U_TRACE(0, "UMimeHeader::parse(%.*S,%u)", len, ptr, len)
 
    if (*ptr == '\n') U_RETURN(0); // line empty: we have reached the MIME headers delimiter
 
-   while (pos1 < _end)
+   bool cr;
+   const char* pkv;
+   UString key, value;
+   const char* prev = ptr;
+   uint32_t n = table.size();
+   const char* _end = ptr + len;
+
+   U_INTERNAL_DUMP("n = %u", n)
+
+   // Until we reach the data part of the response we know we are dealing with iso-8859-1 characters
+
+   while (prev < _end)
       {
-      U_INTERNAL_DUMP("buffer = %.*S", 80, buffer.c_pointer(pos1))
+      U_INTERNAL_DUMP("prev = %.*S", 80, prev)
 
-      pos2 = buffer.find('\n', pos1);
+      ptr = (const char*) memchr(prev, '\n', _end - prev);
 
-      if (pos2 == U_NOT_FOUND) pos2 = _end; // we have reached the MIME headers end without line empty...
+      U_INTERNAL_DUMP("ptr  = %.*S", 80, ptr)
 
-      cr = (ptr[--pos2] == '\r');
+      if (ptr == 0) ptr = _end; // we have reached the MIME headers end without line empty...
+      else
+         {
+         len = (ptr - prev);
 
-      U_INTERNAL_DUMP("pos1 = %u, pos2 = %u cr = %b", pos1, pos2, cr)
+         U_INTERNAL_DUMP("len  = %u", len)
 
-      if (cr == false) ++pos2;
+         if (len == 0 || u_isWhiteSpace(prev, len)) break; // line empty: we have reached the MIME headers delimiter...
+         }
 
-      if (pos2 == pos1) break; // line empty: we have reached the MIME headers delimiter
+      cr = (ptr[-1] == '\r');
+
+      U_INTERNAL_DUMP("cr   = %b", cr)
 
       // Check for continuation of preceding header
 
-      if (u_isspace(ptr[pos1]))
+      if (u_isspace(*prev))
          {
-         do { ++pos1; } while (pos1 < _end && u_isspace(ptr[pos1]));
+         do { ++prev; } while (prev < _end && u_isspace(*prev));
 
-         U_INTERNAL_ASSERT_MINOR(pos1,pos2)
+         U_INTERNAL_ASSERT_MINOR(prev,ptr)
 
          if (value.empty() == false)
             {
-            value.append(ptr + pos1, pos2 - pos1);
+            value.append(prev, ptr - prev - cr);
 
             table.replaceAfterFind(value);
             }
          }
       else
          {
-         pos = buffer.find(':', pos1);
+         pkv = (const char*) memchr(prev, ':', _end - prev);
 
-         U_INTERNAL_DUMP("pos = %u, pos2 = %u", pos, pos2)
+         if (pkv == 0 ||
+             pkv >= ptr)
+            {
+            break;
+            }
 
-         if (pos >= pos2) break;
-   
-      // U_INTERNAL_ASSERT_MINOR(pos,pos2)
+         (void) key.assign(prev, pkv - prev);
 
-         key = buffer.substr(pos1, pos - pos1);
+         do { ++pkv; } while (pkv < _end && u_isspace(*pkv));
 
-         do { ++pos; } while (pos < _end && u_isspace(ptr[pos]));
-
-         value = buffer.substr(pos, pos2 - pos);
+         (void) value.assign(pkv, ptr - pkv - cr);
 
          table.insert(key, value);
          }
 
-      pos1 = pos2 + 1 + cr;
+      prev = ptr + 1;
       }
 
    U_RETURN(table.size() - n);
@@ -363,13 +369,15 @@ bool UMimeHeader::readHeader(USocket* socket, UString& data)
 {
    U_TRACE(0, "UMimeHeader::readHeader(%p,%p)", socket, &data)
 
-   U_ASSERT(empty() == true)
+   U_ASSERT(empty())
 
    UHTTP::resetHTTPInfo();
 
    bool result = (UHTTP::readHTTPHeader(socket, data)
-                     ? parse(U_HTTP_HEADER(data)) > 0
+                     ? parse(data.c_pointer(UHTTP::http_info.startHeader), UHTTP::http_info.szHeader) > 0
                      : false);
+
+   if (result) header = data;
 
    U_RETURN(result);
 }

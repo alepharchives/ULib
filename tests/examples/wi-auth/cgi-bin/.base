@@ -46,7 +46,7 @@ write_OUTPUT() {
 			echo -e "Set-Cookie: TODO[ $SET_COOKIE 4320 ]\r" # 180 days
 		fi
 
-		echo -e "Content-Type: text/html; charset=utf8\r\n\r"
+		echo -e "Content-Type: text/html; charset=utf-8\r\n\r"
 		echo -n -E "$OUTPUT"
 
 	else

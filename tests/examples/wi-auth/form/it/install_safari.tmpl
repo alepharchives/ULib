@@ -5,7 +5,7 @@
   <meta name="generator" content="HTML Tidy for Linux (vers 25 March 2009), see www.w3.org">
 
   <title>Siena WiFi</title>
-  <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <style type="text/css">
 .test {
             BORDER-BOTTOM: #cccccc 1px solid; BORDER-LEFT: #cccccc 1px solid; LINE-HEIGHT: 30px; TEXT-INDENT: 28pt; font-FAMILY: Verdana, Arial, Helvetica, sans-serif; font-SIZE: 24px; BORDER-TOP: #cccccc 1px solid; BORDER-RIGHT: #cccccc 1px solid
@@ -54,22 +54,21 @@
           <td class="test2">
             <div align="center">
               <h2>Apple Safari</h2><br>
-              To add the CAcert Root Certificate to Apple Safari, we need to use the Keychain Access application which is shipped with Mac OS X.<br>
+              Per aggiungere il certificato di CA a Apple Safari, si deve utilizzare l'applicazione "Accesso Portachiavi" che si trova nella distribuzione di Mac OS X.<br>
               <br>
-              To install the certificate system-wide, you need to follow these steps:<br>
+              Per installare il certificato segui questi passi<br>
               <br>
-              Download the file <a href="/CA/ServerCA.crt">from here</a>. It will be downloaded to your desktop.<br>
-              Double click on the 'serverca.crt' file. The Keychain Access application will be launched<br>
-              To check the certificate, click on the 'View Certificates' button on the left side of the dialog. A dialog with information about the
-              certificate will pop up. Make sure the following values match:<br>
+              Scarica il file <a href="/CA/ServerCA.crt">da qui</a>. Sara' memorizzato sul tuo desktop<br>
+     	      Fai un doppio click sul file 'serverca.crt'. Partirá 'applicazione "Accesso Portachiavi"<br> 
+	      Per verificare il certificato, seleziona il bottone 'Mostra certificati' situato sulla sinistra della finestra. Si aprirá un'altra finestra che visualizza le informazioni del certificato. Assicurati che i seguenti valori siano corrispondenti:
               <br>
               Fingerprints<br>
               <br>
               SHA1: 99:9E:70:2A:53:16:3C:06:94:6A:A9:32:8B:6B:27:79:B8:27:3E:69<br>
               MD5: E4:A1:6C:CF:EC:55:DD:01:43:8F:F9:01:DB:7A:6D:D3<br>
               <br>
-              Select 'X509Anchors' from the 'Keychain' dropdownlist and press 'OK'.<br>
-              You will be asked to authenticate yourself. After that, the certificate will be installed system-wide.<br>
+              Seleziona 'X509Anchors' dal menu a tendina 'Portachiavi' e premi 'OK'.<br>
+              Ti sará chiesto di autenticarti. Successivamente il certificato sará installato nel sistema<br>
             </div>
           </td>
         </tr>

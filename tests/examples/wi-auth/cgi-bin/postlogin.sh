@@ -30,7 +30,7 @@ if [ "$REQUEST_METHOD" = "GET" ]; then
 		FILE_CTX=$DIR_CTX/$1.ctx
 
 		if [ -s $FILE_CTX ]; then
-			message_page "PostLogin" "Sei gia' loggato! (postlogin)"
+			message_page "PostLogin" "Sei già loggato! (postlogin)"
 		fi
 
 		# stefano 10.30.1.131:5280 00:e0:4c:d4:63:f5 10.30.1.105 http://www.google.com 0 10.30.1.105&1257603166&2a2436611f452f8eebddce4992e88f8d 055340773

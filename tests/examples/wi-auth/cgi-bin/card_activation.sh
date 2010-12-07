@@ -44,7 +44,7 @@ if [ $# -eq 1						 -a \
 
 	if [ -n "$WA_USEDBY" ]; then
 
-		MSG="Utente $CALLER_ID gi· attivato!"
+		MSG="Utente $CALLER_ID gi√† attivato!"
 
 		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $BASE_NAME: $MSG"
 

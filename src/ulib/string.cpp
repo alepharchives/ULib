@@ -241,21 +241,6 @@ UStringRep* UStringRep::substr(const char* t, uint32_t tlen)
    U_RETURN_POINTER(r, UStringRep);
 }
 
-#if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-void UStringRep::checkIfMReserve()
-{
-   U_TRACE(1, "UStringRep::checkIfMReserve()")
-
-   if (_capacity > U_CAPACITY &&
-       str != (const char*)(this + 1))
-      {
-      U_SYSCALL_VOID(free, "%p", (void*)str);
-
-      _capacity = U_CAPACITY;
-      }
-}
-#endif
-
 void UStringRep::assign(UStringRep*& rep, const char* s, uint32_t n)
 {
    U_TRACE(0, "UStringRep::assign(%p,%S,%u)", rep, s, n)
@@ -317,7 +302,7 @@ void UStringRep::release()
          {
          if (UObjectDB::fd > 0)
             {
-            char buffer[8192];
+            char buffer[4096];
 
             parent_destroy = this;
 
@@ -325,7 +310,7 @@ void UStringRep::release()
 
             U_INTERNAL_ASSERT_MINOR(n, sizeof(buffer))
 
-            U_INTERNAL_DUMP("DEAD OF SOURCE STRING WITH CHILD ALIVE... n = %u child of this = %.*s", n, n, buffer)
+            U_INTERNAL_DUMP("DEAD OF SOURCE STRING WITH CHILD ALIVE... n = %u child of this = %.*s\n\n", n, U_min(n,4000), buffer)
             }
 
          if (check_dead_of_source_string_with_child_alive) U_INTERNAL_ASSERT_MSG(false, "DEAD OF SOURCE STRING WITH CHILD ALIVE...")
@@ -348,14 +333,7 @@ void UStringRep::release()
 #endif
 
    if (_capacity == 0) UMemoryPool::push(this, U_SIZE_TO_STACK_INDEX(sizeof(UStringRep))); // no room for data, constant string...
-   else
-      {
-#  if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-      checkIfMReserve();
-#  endif
-
-      U_FREE_STR(this, sizeof(UStringRep) + _capacity + 1);
-      }
+   else                       U_FREE_STR(this,       _capacity + 1 + sizeof(UStringRep));
 }
 
 uint32_t UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
@@ -503,7 +481,11 @@ UString  UString::substr(uint32_t pos, uint32_t n) const { return substr(rep->st
 
 UString& UString::operator+=(const UString& str)         { return append(str.data(), str.size()); }
 
-uint32_t UString::find(const UString& str, uint32_t pos, uint32_t how_much) const { return find(str.data(), pos, str.size(), how_much); }
+uint32_t UString::find(const UString& str, uint32_t pos, uint32_t how_much) const
+   { return find(str.data(), pos, str.size(), how_much); }
+
+uint32_t UString::findnocase(const UString& str, uint32_t pos, uint32_t how_much) const
+   { return findnocase(str.data(), pos, str.size(), how_much); }
 
 void UString::clear()
 {
@@ -564,35 +546,8 @@ bool UString::reserve(uint32_t n)
 
    UStringRep* r;
 
-#if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-
-   // I can't change the address of the object (parent) because is possible that it has some childs (substrings)...
-
    U_INTERNAL_ASSERT(rep->_capacity == 0 ||
                      rep->_capacity >= U_CAPACITY) // it must start with U_CAPACITY...
-
-   if (rep->_capacity)
-      {
-      U_INTERNAL_DUMP("str = %.*S", size(), data())
-
-      const char* ptr1 = rep->str;
-            char* ptr2 = (char*) U_SYSCALL(malloc, "%u", n);
-
-      if (rep->_length) (void) u_memcpy(ptr2, ptr1, rep->_length);
-
-      rep->checkIfMReserve();
-
-      rep->str       = ptr2;
-      rep->_capacity = n;
-
-      U_INTERNAL_DUMP("str = %.*S", size(), data())
-
-      U_INTERNAL_ASSERT(invariant())
-
-      U_RETURN(true);
-      }
-
-#endif
 
    r = UStringRep::create(rep->_length, n, rep->str);
 

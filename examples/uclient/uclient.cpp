@@ -87,6 +87,8 @@ public:
       client->setFollowRedirects(follow_redirects);
       client->setRequestPasswordAuthentication(user, password);
 
+      client->getResponseHeader()->setIgnoreCase(true);
+
       UApplication::exit_value = 1;
 
       if (upload.empty() == false)

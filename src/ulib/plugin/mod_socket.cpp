@@ -261,7 +261,7 @@ int UWebSocketPlugIn::handlerRequest()
       {
       // process handshake
 
-      const char* origin = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_origin);
+      const char* origin = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *UHTTP::str_origin, false);
 
       if (origin)
          {
@@ -273,7 +273,7 @@ int UWebSocketPlugIn::handlerRequest()
 
          U_INTERNAL_DUMP("origin = %.*S", origin_len, origin)
 
-         const char* protocol = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_prot);
+         const char* protocol = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *UHTTP::str_websocket_prot, false);
 
          if (protocol)
             {
@@ -294,8 +294,8 @@ int UWebSocketPlugIn::handlerRequest()
                                               U_HTTP_HOST_TO_TRACE, U_HTTP_URI_TO_TRACE,
                                               U_STRING_TO_TRACE(tmp));
 
-         const char* key1 = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_key1);
-         const char* key2 = UHTTP::getHTTPHeaderValuePtr(*UHTTP::str_websocket_key2);
+         const char* key1 = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *UHTTP::str_websocket_key1, false);
+         const char* key2 = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *UHTTP::str_websocket_key2, false);
 
          if (key1 &&
              key2)

@@ -16,12 +16,14 @@
 
 #include <ulib/string.h>
 
-#define LDAP_DEPRECATED 1
-
-#include <ldap.h>
-
-#ifdef HAVE_LDAP_SSL_H
-#  include <ldap_ssl.h>
+#if defined(__MINGW32__) && defined(HAVE_WINLDAP_H)
+#  include <winldap.h>
+#else
+#  define LDAP_DEPRECATED 1
+#  include <ldap.h>
+#  ifdef HAVE_LDAP_SSL_H
+#     include <ldap_ssl.h>
+#  endif
 #endif
 
 class U_EXPORT ULDAPEntry {

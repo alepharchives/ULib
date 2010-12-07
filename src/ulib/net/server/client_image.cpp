@@ -264,7 +264,7 @@ bool UClientImage_Base::setRealIP()
    // check for X-Forwarded-For: client, proxy1, proxy2 and X-Real-IP: ...
 
    uint32_t    ip_client_len = 0;
-   const char* ip_client     = UHTTP::getHTTPHeaderValuePtr(*USocket::str_X_Forwarded_For);
+   const char* ip_client     = UHTTP::getHTTPHeaderValuePtr(*rbuffer, *USocket::str_X_Forwarded_For, true);
 
    if (ip_client)
       {
@@ -286,7 +286,7 @@ len:
       U_RETURN(true);
       }
 
-   ip_client = UHTTP::getHTTPHeaderValuePtr(*USocket::str_X_Real_IP);
+   ip_client = UHTTP::getHTTPHeaderValuePtr(*rbuffer, *USocket::str_X_Real_IP, true);
 
    if (ip_client) goto len;
 

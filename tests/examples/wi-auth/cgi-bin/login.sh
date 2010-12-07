@@ -152,7 +152,7 @@ elif [ $# -ge 4								  -a \
 				anomalia 9
 			fi
 
-			message_page "Login" "Sei gia' loggato! (login_request)"
+			message_page "Login" "Sei già loggato! (login_request)"
 		fi
 
 		UUID_TO_APPEND=1

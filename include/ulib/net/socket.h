@@ -93,6 +93,7 @@ public:
    static const UString* str_referer;
    static const UString* str_X_Real_IP;
    static const UString* str_X_Forwarded_For;
+   static const UString* str_Transfer_Encoding;
 
    static void str_allocate();
 

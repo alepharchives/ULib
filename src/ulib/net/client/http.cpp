@@ -671,7 +671,7 @@ bool UHttpClient_Base::sendRequest(UString& data)
 
       responseHeader->clear();
 
-      result = (UClient_Base::sendRequest() &&
+      result = (UClient_Base::sendRequest(true) &&
                 responseHeader->readHeader(socket, UClient_Base::response)
                      ? checkResponse(redirectCount)
                      : -1);
@@ -689,13 +689,13 @@ bool UHttpClient_Base::sendRequest(UString& data)
 
    U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", UHTTP::http_info.nResponseCode)
 
-   body.clear();
-
    UHTTP::http_info.clength = responseHeader->getHeader(*USocket::str_content_length).strtol();
 
-   if (UHTTP::readHTTPBody(socket, UClient_Base::response, body) == false) U_RETURN(false);
+   body.clear();
 
-   U_RETURN(true);
+   bool ok = UHTTP::readHTTPBody(socket, UClient_Base::response, body);
+
+   U_RETURN(ok);
 }
 
 #define U_HTTP_POST_REQUEST \

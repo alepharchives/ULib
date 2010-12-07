@@ -55,6 +55,7 @@ const UString* USocket::str_if_unmodified_since;
 const UString* USocket::str_referer;
 const UString* USocket::str_X_Real_IP;
 const UString* USocket::str_X_Forwarded_For;
+const UString* USocket::str_Transfer_Encoding;
 
 void USocket::str_allocate()
 {
@@ -82,6 +83,7 @@ void USocket::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_referer,0)
    U_INTERNAL_ASSERT_EQUALS(str_X_Real_IP,0)
    U_INTERNAL_ASSERT_EQUALS(str_X_Forwarded_For,0)
+   U_INTERNAL_ASSERT_EQUALS(str_Transfer_Encoding,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("Host") },
@@ -105,7 +107,8 @@ void USocket::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("If-Unmodified-Since") },
       { U_STRINGREP_FROM_CONSTANT("Referer") },
       { U_STRINGREP_FROM_CONSTANT("X-Real-IP") },
-      { U_STRINGREP_FROM_CONSTANT("X-Forwarded-For") }
+      { U_STRINGREP_FROM_CONSTANT("X-Forwarded-For") },
+      { U_STRINGREP_FROM_CONSTANT("Transfer-Encoding") }
    };
 
    U_NEW_ULIB_OBJECT(str_host,                  U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -130,6 +133,7 @@ void USocket::str_allocate()
    U_NEW_ULIB_OBJECT(str_referer,               U_STRING_FROM_STRINGREP_STORAGE(19));
    U_NEW_ULIB_OBJECT(str_X_Real_IP,             U_STRING_FROM_STRINGREP_STORAGE(20));
    U_NEW_ULIB_OBJECT(str_X_Forwarded_For,       U_STRING_FROM_STRINGREP_STORAGE(21));
+   U_NEW_ULIB_OBJECT(str_Transfer_Encoding,     U_STRING_FROM_STRINGREP_STORAGE(22));
 }
 
 bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)

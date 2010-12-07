@@ -34,11 +34,13 @@
 
 // macro for constant string like "xxx"
 
-#define U_STRING_RFIND(x,str)             (x).rfind(str,U_NOT_FOUND,U_CONSTANT_SIZE(str))             // string constant
-#define U_STRING_FIND(x,start,str)        (x).find( str,(start),U_CONSTANT_SIZE(str))                 // string constant
-#define U_STRING_FIND_EXT(x,start,str,n)  (x).find( str,(start),U_CONSTANT_SIZE(str),n)               // string constant
-#define U_STRING_FROM_CONSTANT(str)       UString(str,U_CONSTANT_SIZE(str))                           // string constant
-#define U_ENDS_WITH(x,str)                u_endsWith((x).data(),(x).size(),U_CONSTANT_TO_PARAM(str))  // string constant
+#define U_STRING_RFIND(x,str)                  (x).rfind(str,U_NOT_FOUND,U_CONSTANT_SIZE(str))    // string constant
+#define U_STRING_FIND(x,start,str)             (x).find(str,(start),U_CONSTANT_SIZE(str))         // string constant
+#define U_STRING_FIND_EXT(x,start,str,n)       (x).find(str,(start),U_CONSTANT_SIZE(str),n)       // string constant
+#define U_STRING_FINDNOCASE_EXT(x,start,str,n) (x).findnocase(str,(start),U_CONSTANT_SIZE(str),n) // string constant
+
+#define U_STRING_FROM_CONSTANT(str) UString(str,U_CONSTANT_SIZE(str))                             // string constant
+#define U_ENDS_WITH(x,str)          u_endsWith((x).data(),(x).size(),U_CONSTANT_TO_PARAM(str))    // string constant
 
 // UString content and size
 
@@ -407,17 +409,6 @@ public:
    const char* dump(bool reset) const;
 #endif
 
-#ifdef DEBUG
-   static int32_t max_child;
-   static UStringRep* parent_destroy;
-   static UStringRep* string_rep_share;
-   static bool check_dead_of_source_string_with_child_alive;
-
-   static void errorReferences(                          UStringRep* ptr_object);
-   static bool checkIfChild(     const char* name_class, const void* ptr_object);
-   static bool checkIfReferences(const char* name_class, const void* ptr_object);
-#endif
-
    // EXTENSION
 
    bool isText(uint32_t pos) const;
@@ -493,6 +484,17 @@ protected:
    // The following storage is init'd to 0 by the linker, resulting (carefully) in an empty string with zero(=one) reference...
    static UStringRep* string_rep_null;
 
+#ifdef DEBUG
+   static int32_t max_child;
+   static UStringRep* parent_destroy;
+   static UStringRep* string_rep_share;
+   static bool check_dead_of_source_string_with_child_alive;
+
+   static void errorReferences(                          UStringRep* ptr_object);
+   static bool checkIfChild(     const char* name_class, const void* ptr_object);
+   static bool checkIfReferences(const char* name_class, const void* ptr_object);
+#endif
+
 private:
     UStringRep() {}
    ~UStringRep() { U_TRACE_UNREGISTER_OBJECT(0, UStringRep) }
@@ -504,9 +506,6 @@ private:
    UStringRep& operator=(const UStringRep&) { return *this; }
 
 private:
-#if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-   inline void checkIfMReserve() U_NO_EXPORT;
-#endif
    inline void set(uint32_t length, uint32_t capacity, const char* ptr) U_NO_EXPORT;
 
                       friend class UHTTP;
@@ -977,12 +976,10 @@ public:
 
    // Find with ignore case
 
-   uint32_t findnocase(const char* s, uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const;
+   uint32_t findnocase(const char* s,      uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const;
+   uint32_t findnocase(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const;
 
-   uint32_t findnocase(const UString& str, uint32_t pos = 0, uint32_t how_much = U_NOT_FOUND) const
-      { return findnocase(str.data(), pos, str.size(), how_much); }
-
-   uint32_t findnocase(const char* s, uint32_t pos = 0) const { return findnocase(s, pos, u_strlen(s), U_NOT_FOUND); }
+   uint32_t findnocase(const char* s,      uint32_t pos = 0) const { return findnocase(s, pos, u_strlen(s), U_NOT_FOUND); }
 
    // Compare
 

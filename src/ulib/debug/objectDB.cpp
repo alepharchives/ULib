@@ -459,7 +459,7 @@ void UObjectDB::dumpObject(const UObjectDumpable* dumper)
    (void) sprintf(buffer1, " %p size %d level %d", // cnt %09d",
                   dumper->ptr_object, dumper->size_object, dumper->level); //, dumper->cnt);
 
-   (void) ::sprintf(buffer2, "\n%s(%d)\n", dumper->name_file, dumper->num_line);
+   (void) sprintf(buffer2, "\n%s(%d)\n", dumper->name_file, dumper->num_line);
 
    liov[1].iov_len = u_strlen(buffer1);
    liov[2].iov_len = u_strlen(buffer2);
@@ -505,9 +505,11 @@ uint32_t UObjectDB::dumpObject(char* buffer, uint32_t buffer_size, bPFpcpv check
 
    UHashMapObjectDumpable::callForAllEntry(UObjectDB::printObjLive);
 
-   U_INTERNAL_ASSERT(lbuf > buffer)
+   U_INTERNAL_ASSERT_MAJOR(lbuf,buffer)
 
-   return (lbuf - buffer);
+   uint32_t result = (lbuf - buffer);
+
+   return result;
 }
 
 // sorting object live for time creation...

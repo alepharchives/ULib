@@ -382,6 +382,14 @@ dnl		printf "cURL found in $curldir\n";
 				LDAP_LIBS="-lldap50"
 				break
 			fi
+			if test -f "$dir/include/winldap.h"; then
+				found_ldap="yes"
+				LDAP_INCS="$ldapdir/include"
+				LDAP_LDFLAGS="$ldapdir/lib"
+				LDAP_LIBS="-lwldap"
+				CPPFLAGS="$CPPFLAGS -DHAVE_WINLDAP_H -DHAVE_LDAP_SSL_H"
+				break
+			fi
 		done
 		if test x_$found_ldap != x_yes; then
 			AC_MSG_ERROR(Cannot find LDAP include)
@@ -395,7 +403,7 @@ dnl		printf "LDAP found in $ldapdir\n"
 			fi
 dnl		ldap_version=$(strings $LDAP_LDFLAGS/libldap.so | grep "@(#)")
 dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -f1)
-			ldap_version=$(grep LDAP_API_VERSION ${LDAP_INCS}/ldap*.h | awk '{print $NF}')
+			ldap_version=$(grep LDAP_API_VERSION ${LDAP_INCS}/*ldap*.h | awk '{print $NF}')
 			if test -z "${ldap_version}"; then
 				ldap_version="Unknown"
 			fi

@@ -80,7 +80,7 @@ waCell: $CALLER_ID
 "
 
 	if [ $EXIT_VALUE -eq 68 ]; then
-		message_page "Utente gi· registrato" "Utente gi· registrato"
+		message_page "Utente gi√† registrato" "Utente gi√† registrato"
 	fi
 
 	UUID=`uuidgen 2>/dev/null`
@@ -102,7 +102,7 @@ waTraffic: $MAX_TRAFFIC
 "
 
 	if [ $EXIT_VALUE -eq 68 ]; then
-		message_page "Utente gi· registrato" "Utente gi· registrato (ldap branch card)"
+		message_page "Utente gi√† registrato" "Utente gi√† registrato (ldap branch card)"
 	fi
 
 	BASE_NAME=post_registrazione

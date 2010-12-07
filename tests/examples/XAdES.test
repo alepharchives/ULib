@@ -16,8 +16,8 @@ rm -f tsa_http.log TSA/log \
 		out/userver_tcp.out err/userver_tcp.err \
       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
 
- UTRACE="0 10M 0"
- UOBJDUMP="0 100k 10"
+ UTRACE="5 10M 0"
+#UOBJDUMP="0 10M 800"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --leak-check=full"
  export UTRACE UOBJDUMP USIMERR
@@ -57,9 +57,9 @@ PRODUCTION_PLACE_POSTAL_CODE=11111
 PRODUCTION_PLACE_COUNTRY_NAME=Italy
 CA_STORE=$DIR_CA/CApath
 SIGNATURE_TIMESTAMP="http://localhost/tsa"
+#ZIPPONE=file:///mnt/storage/stefano/XAdES/zippone/debug.zip.p7m
 #ZIPPONE=file:///mnt/storage/stefano/XAdES/zippone/LISTACER_20100907.zip.p7m
-#ZIPPONE=file:///mnt/storage/stefano/XAdES/zippone/LISTACER_20101103.zip.p7m
- ZIPPONE=file:///mnt/storage/stefano/XAdES/zippone/debug.zip.p7m
+ ZIPPONE=file:///mnt/storage/stefano/XAdES/zippone/LISTACER_20101103.zip.p7m
 
 DIR_CMD="../../examples/XAdES"
 

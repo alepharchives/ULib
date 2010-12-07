@@ -130,7 +130,18 @@ public:
 
    // VARIE
 
-   uint32_t parse(const UString& header);
+   uint32_t parse(const UString& buffer)
+      {
+      U_TRACE(0, "UMimeHeader::parse(%.*S)", U_STRING_TO_TRACE(buffer))
+
+      header = buffer;
+
+      uint32_t n = parse(buffer.data(), buffer.size());
+
+      U_RETURN(n);
+      }
+
+   uint32_t parse(const char* ptr, uint32_t n);
 
    void   removeHeader(const UString& key);
    bool containsHeader(const UString& key) { return table.find(key); }

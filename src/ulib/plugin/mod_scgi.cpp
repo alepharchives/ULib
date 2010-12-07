@@ -163,7 +163,7 @@ int USCGIPlugIn::handlerRequest()
 
       n = environment.size();
 
-      U_INTERNAL_ASSERT_EQUALS(hlength, n)
+      U_INTERNAL_ASSERT_EQUALS((int)hlength, n)
 
       // send header data as netstring -> [len]":"[string]","
 

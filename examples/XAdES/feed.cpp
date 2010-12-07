@@ -69,6 +69,9 @@ public:
             {
             output = client.getContent();
             }
+         else U_WARNING("failed to download URI: %.*S", U_STRING_TO_TRACE(uri));
+
+         client.reset();
          }
       else if (u_startsWith(U_STRING_TO_PARAM(uri), U_CONSTANT_TO_PARAM("ldap")))
          {
@@ -103,12 +106,12 @@ public:
             {
             UString tmp = curl.getResponse();
 
-            /* Example of output
-             *
-             * DN: ou=Actalis - Firma Digitale,o=CSP
-             *    certificateRevocationList;binary:: MIIHHDCCBgQCAQEwDQYJKoZIhvcNAQELBQAwcjELMAkGA1UEBhMCSVQxFz....
-             *
-             */
+            // Example of output
+            //
+            // DN: ou=Actalis - Firma Digitale,o=CSP
+            //    certificateRevocationList;binary:: MIIHHDCCBgQCAQEwDQYJKoZIhvcNAQELBQAwcjELMAkGA1UEBhMCSVQxFz....
+            //
+            //
 
             uint32_t pos = U_STRING_FIND(tmp, 0, "\n\t");
 
@@ -258,6 +261,7 @@ public:
 
       client.reserve(512U * 1024U);
       client.setFollowRedirects(true);
+      client.getResponseHeader()->setIgnoreCase(true);
 
       if (download(false))
          {
@@ -319,15 +323,14 @@ public:
       }
 
 private:
+   UHttpClient<USSLSocket> client; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+#ifdef HAVE_LDAP
+   ULDAP ldap;
+#endif
    UCrl crl;
    UCURL curl;
    UCertificate cert;
    UString uri, output;
-
-#ifdef HAVE_LDAP
-   ULDAP ldap;
-#endif
-   UHttpClient<USSLSocket> client;
 };
 
 U_MAIN(Application)

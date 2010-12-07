@@ -17,8 +17,8 @@ rm -f XAdES-API.log /tmp/URPCGenericMethod.err \
 		out/userver_tcp.out err/userver_tcp.err \
       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
 
-#UTRACE="0 10M 0"
-#UOBJDUMP="0 100k 10"
+ UTRACE="0 10M 0"
+ UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --leak-check=full"
  export UTRACE UOBJDUMP USIMERR

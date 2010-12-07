@@ -7,7 +7,7 @@
 # set -x
 
 if [ $# -eq 1 -a \
-	  "$REQUEST_METHOD" = "POST"]; then
+     "$REQUEST_METHOD" = "POST" ]; then
 
 	# -----------------------------------------
 	# $1 -> path file upload

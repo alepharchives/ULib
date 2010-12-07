@@ -21736,6 +21736,14 @@ $as_echo "yes" >&6; }
 				LDAP_LIBS="-lldap50"
 				break
 			fi
+			if test -f "$dir/include/winldap.h"; then
+				found_ldap="yes"
+				LDAP_INCS="$ldapdir/include"
+				LDAP_LDFLAGS="$ldapdir/lib"
+				LDAP_LIBS="-lwldap"
+				CPPFLAGS="$CPPFLAGS -DHAVE_WINLDAP_H -DHAVE_LDAP_SSL_H"
+				break
+			fi
 		done
 		if test x_$found_ldap != x_yes; then
 			as_fn_error $? "Cannot find LDAP include" "$LINENO" 5
@@ -21746,7 +21754,7 @@ $as_echo "yes" >&6; }
 			if test -f "$LDAP_INCS/ldap_ssl.h"; then
 				CPPFLAGS="$CPPFLAGS -DHAVE_LDAP_SSL_H"
 			fi
-			ldap_version=$(grep LDAP_API_VERSION ${LDAP_INCS}/ldap*.h | awk '{print $NF}')
+			ldap_version=$(grep LDAP_API_VERSION ${LDAP_INCS}/*ldap*.h | awk '{print $NF}')
 			if test -z "${ldap_version}"; then
 				ldap_version="Unknown"
 			fi

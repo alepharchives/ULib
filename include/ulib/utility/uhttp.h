@@ -407,7 +407,7 @@ public:
    static UString     getDocumentName();
    static UString     getDirectoryURI();
    static UString     getRequestURI(bool bquery);
-   static const char* getHTTPHeaderValuePtr(const UString& name);
+   static const char* getHTTPHeaderValuePtr(const UString& rbuffer, const UString& name, bool nocase);
 
    static void setHTTPRequestProcessed()
       {

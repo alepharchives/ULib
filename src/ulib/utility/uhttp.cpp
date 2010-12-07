@@ -1078,12 +1078,10 @@ bool UHTTP::readHTTPBody(USocket* s, UString& rbuffer, UString& body)
             char* out;
       const char* inp;
       const char* chunk_terminator;
-      uint32_t count, chunkSize, chunk_terminator_len,
-               chunk = U_STRING_FIND_EXT(rbuffer, http_info.startHeader, "Transfer-Encoding: chunked", http_info.szHeader);
+      uint32_t count, chunkSize, chunk_terminator_len;
+      const char* chunk_ptr = getHTTPHeaderValuePtr(rbuffer, *USocket::str_Transfer_Encoding, true);
 
-      U_INTERNAL_DUMP("chunk = %u", chunk)
-
-      if (chunk == U_NOT_FOUND)
+      if (chunk_ptr == 0)
          {
          if (U_http_version == '1') U_RETURN(false); // HTTP/1.1 compliance: no missing Content-Length on POST requests
 
@@ -1133,6 +1131,8 @@ bool UHTTP::readHTTPBody(USocket* s, UString& rbuffer, UString& body)
       least ignore them correctly. Footers are also rare, but might be appropriate for things like checksums
       or digital signatures
       -------------------------------------------------------------------------------------------------------- */
+
+      U_INTERNAL_ASSERT(U_STRNEQ(chunk_ptr, "chunk"))
 
       // manage buffered read
 
@@ -1371,14 +1371,14 @@ bool UHTTP::readHTTPRequest()
 
                      U_INTERNAL_DUMP("U_http_upgrade = %C", U_http_upgrade)
 
-                     if (getHTTPHeaderValuePtr(*str_websocket)) // web socket
+                     // web socket
+                  
+                     if (getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *str_websocket, false) &&
+                         getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *str_websocket_key1, false))
                         {
-                        if (getHTTPHeaderValuePtr(*str_websocket_key1))
-                           {
-                           U_ASSERT_POINTER(getHTTPHeaderValuePtr(*str_websocket_key2))
+                        U_ASSERT_POINTER(getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *str_websocket_key2, false))
 
-                           http_info.clength = 8;
-                           }
+                        http_info.clength = 8;
                         }
                      }
                   }
@@ -1481,19 +1481,29 @@ bool UHTTP::readHTTPRequest()
    U_RETURN(true);
 }
 
-const char* UHTTP::getHTTPHeaderValuePtr(const UString& name)
+const char* UHTTP::getHTTPHeaderValuePtr(const UString& rbuffer, const UString& name, bool nocase)
 {
-   U_TRACE(0, "UHTTP::getHTTPHeaderValuePtr(%.*S)", U_STRING_TO_TRACE(name))
+   U_TRACE(0, "UHTTP::getHTTPHeaderValuePtr(%.*S,%.*S,%b)", U_STRING_TO_TRACE(rbuffer), U_STRING_TO_TRACE(name), nocase)
 
-   uint32_t header_line = UClientImage_Base::rbuffer->find(name, http_info.startHeader, http_info.szHeader);
+   const char* ptr_header_value;
+   uint32_t header_line = rbuffer.find(name, http_info.startHeader, http_info.szHeader);
 
-// if (header_line == U_NOT_FOUND) header_line = UClientImage_Base::rbuffer->findnocase(name, http_info.startHeader, http_info.szHeader); 
+   if (header_line == U_NOT_FOUND)
+      {
+      if (nocase)
+         {
+         header_line = rbuffer.findnocase(name, http_info.startHeader, http_info.szHeader); 
 
-   if (header_line == U_NOT_FOUND) U_RETURN((const char*)0);
+         if (header_line != U_NOT_FOUND) goto next;
+         }
 
-   U_INTERNAL_DUMP("header_line = %.*S", 20, UClientImage_Base::rbuffer->c_pointer(header_line))
+      U_RETURN((const char*)0);
+      }
 
-   const char* ptr_header_value = UClientImage_Base::rbuffer->c_pointer(header_line + name.size() + 2);
+next:
+   U_INTERNAL_DUMP("header_line = %.*S", 20, rbuffer.c_pointer(header_line))
+
+   ptr_header_value = rbuffer.c_pointer(header_line + name.size() + 2);
 
    U_RETURN(ptr_header_value);
 }
@@ -1506,7 +1516,7 @@ const char* UHTTP::getAcceptLanguage()
 {
    U_TRACE(0, "UHTTP::getAcceptLanguage()")
 
-   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_accept_language);
+   const char* ptr = getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *USocket::str_accept_language, false);
 
    const char* accept_language = (ptr ? ptr : "en");
 
@@ -1666,7 +1676,7 @@ UString UHTTP::getHTTPCookie()
 {
    U_TRACE(1, "UHTTP::getHTTPCookie()")
 
-   const char* cookie_ptr = getHTTPHeaderValuePtr(*USocket::str_cookie);
+   const char* cookie_ptr = getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *USocket::str_cookie, false);
 
    if (cookie_ptr)
       {
@@ -1882,6 +1892,8 @@ U_NO_EXPORT void UHTTP::resetForm(bool brmdir)
    U_INTERNAL_ASSERT_POINTER(formMulti)
    U_INTERNAL_ASSERT_POINTER(form_name_value)
 
+   form_name_value->clear();
+
    if (qcontent->empty() == false) qcontent->clear();
    else
       {
@@ -1901,8 +1913,6 @@ U_NO_EXPORT void UHTTP::resetForm(bool brmdir)
 
       if (formMulti->isEmpty() == false) formMulti->clear();
       }
-
-   form_name_value->clear();
 }
 
 // retrieve information on specific HTML form elements
@@ -2531,7 +2541,7 @@ U_NO_EXPORT bool UHTTP::processHTTPAuthorization()
 
    bool result = false;
 
-   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_authorization);
+   const char* ptr = getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *USocket::str_authorization, false);
 
    if (ptr == 0) U_RETURN(false);
 
@@ -3354,7 +3364,7 @@ UString UHTTP::getCGIEnvironment()
    // Accept-Language: en-us,en;q=0.5
 
    uint32_t    accept_language_len = 0;
-   const char* accept_language_ptr = getHTTPHeaderValuePtr(*USocket::str_accept_language);
+   const char* accept_language_ptr = getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *USocket::str_accept_language, false);
 
    if (accept_language_ptr)
       {
@@ -3366,7 +3376,7 @@ UString UHTTP::getCGIEnvironment()
    // Referer: http://www.cgi101.com/class/ch3/text.html
 
    uint32_t    referer_len = 0;
-   const char* referer_ptr = getHTTPHeaderValuePtr(*USocket::str_referer);
+   const char* referer_ptr = getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *USocket::str_referer, false);
 
    if (referer_ptr)
       {
@@ -3378,7 +3388,7 @@ UString UHTTP::getCGIEnvironment()
    // User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
 
    uint32_t    user_agent_len = 0;
-   const char* user_agent_ptr = getHTTPHeaderValuePtr(*USocket::str_user_agent);
+   const char* user_agent_ptr = getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *USocket::str_user_agent, false);
 
    if (user_agent_ptr)
       {
@@ -4331,7 +4341,7 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestIfRange(const UString& etag)
 {
    U_TRACE(0, "UHTTP::checkHTTPGetRequestIfRange(%.*S)", U_STRING_TO_TRACE(etag))
 
-   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_if_range);
+   const char* ptr = getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *USocket::str_if_range, false);
 
    if (ptr)
       {
@@ -4599,7 +4609,7 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestIfModified()
       [blank line here]
       */
 
-      const char* ptr = getHTTPHeaderValuePtr(*USocket::str_if_unmodified_since);
+      const char* ptr = getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *USocket::str_if_unmodified_since, false);
 
       if (ptr)
          {
@@ -4637,7 +4647,7 @@ void UHTTP::processHTTPGetRequest()
 #ifndef U_NO_Etag
    etag = file->etag();
 
-   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_if_none_match);
+   const char* ptr = getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *USocket::str_if_none_match, false);
 
    if (ptr)
       {
