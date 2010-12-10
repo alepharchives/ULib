@@ -92,6 +92,8 @@ public:
    U_MEMORY_DEALLOCATOR
 
    static const UString* str_ftp;
+   static const UString* str_ldap;
+   static const UString* str_ldaps;
    static const UString* str_smtp;
    static const UString* str_pop3;
    static const UString* str_http;
@@ -214,8 +216,6 @@ public:
       {
       U_TRACE(0, "Url::isHTTP()")
 
-      U_INTERNAL_ASSERT_POINTER(str_http)
-
       bool result = (getService() == *str_http);
 
       U_RETURN(result);
@@ -225,9 +225,25 @@ public:
       {
       U_TRACE(0, "Url::isHTTPS()")
 
-      U_INTERNAL_ASSERT_POINTER(str_https)
-
       bool result = (getService() == *str_https);
+
+      U_RETURN(result);
+      }
+
+   bool isLDAP() const
+      {
+      U_TRACE(0, "Url::isLDAP()")
+
+      bool result = (getService() == *str_ldap);
+
+      U_RETURN(result);
+      }
+
+   bool isLDAPS() const
+      {
+      U_TRACE(0, "Url::isLDAPS()")
+
+      bool result = (getService() == *str_ldaps);
 
       U_RETURN(result);
       }
@@ -425,45 +441,6 @@ public:
 
    void addQuery(const char* entry, uint32_t entry_len, const char* value, uint32_t value_len);
 
-   /** This methode get the first query entry and decode it.
-    *
-    * @param entry Buffer for the name of the entry.
-    * @param value Buffer for the value of the entry.
-    *
-    * @retval true The first entry found.
-    * @retval false No entry found.
-    *
-    * @see nextQuery, addQuery;
-    */
-
-   bool firstQuery(UString& entry, UString& value);
-
-   /** This methode get the next query entry and decode it.
-    *
-    * @param entry Buffer for the name of the entry.
-    * @param value Buffer for the value of the entry.
-    *
-    * @retval true The first entry found.
-    * @retval false No entry found. 
-    *
-    * @see firstQuery, addQuery;
-    */
-
-   bool nextQuery(UString& entry, UString& value);
-
-   /** This methode search for the query entry and decode it.
-    *
-    * @param entry Buffer for the name of the entry.
-    * @param value Buffer for the value of the entry.
-    *
-    * @retval true entry found.
-    * @retval false No entry found.
-    *
-    * @see nextQuery, addQuery;
-    */
-
-   bool findQuery(UString& entry, UString& value);
-
    /** Converts a Unicode string into the MIME @c x-www-form-urlencoded format.
     *
     * To convert a String, each Unicode character is examined in turn:
@@ -480,6 +457,8 @@ public:
    static void encode(const char* input, uint32_t len, UString& buffer, const char* extra_enc_chars = 0)
       {
       U_TRACE(0, "Url::encode(%.*S,%u,%p,%S)", len, input, len, &buffer, extra_enc_chars)
+
+      U_ASSERT(buffer.capacity() >= len * 3)
 
       buffer.size_adjust(u_url_encode((const unsigned char*)input, len, (unsigned char*)buffer.data(), extra_enc_chars));
 
@@ -500,9 +479,11 @@ public:
       {
       U_TRACE(0, "Url::decode(%.*S,%u,%p,%b)", len, input, len, &buffer, no_line_break)
 
+      U_ASSERT(buffer.capacity() >= len)
+
       buffer.size_adjust(u_url_decode(input, len, (unsigned char*)buffer.data(), no_line_break));
 
-      U_INTERNAL_DUMP("buffer.size() = %u", buffer.size())
+      U_INTERNAL_DUMP("size() = %u", buffer.size())
       }
 
    static void decode(const UString& input, UString& buffer, bool no_line_break = false)
@@ -538,10 +519,6 @@ private:
    /** prepeats the string to add a query.
    */
    bool prepeareForQuery() U_NO_EXPORT;
-
-   /** get the positions of the next query entry.
-   */
-   bool nextQueryPos(int& entry_start, int& entry_end, int& value_start, int& value_end) U_NO_EXPORT;
 };
 
 #endif

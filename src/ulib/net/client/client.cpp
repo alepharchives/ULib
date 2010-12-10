@@ -275,6 +275,8 @@ bool UClient_Base::setUrl(const UString& location)
       U_RETURN(false);
       }
 
+   uri.clear();
+
    url.set(location);
 
 #ifdef HAVE_SSL
@@ -283,13 +285,10 @@ bool UClient_Base::setUrl(const UString& location)
 
    uri = url.getFile();
 
-   if (uri.empty() == false)
-      {
-      UHTTP::http_info.uri     = uri.data();
-      UHTTP::http_info.uri_len = uri.size();
+   UHTTP::http_info.uri     = uri.data();
+   UHTTP::http_info.uri_len = uri.size();
 
-      U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
-      }
+   U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
 
    bool bchange = setHostPort(url.getHost(), url.getPort());
 

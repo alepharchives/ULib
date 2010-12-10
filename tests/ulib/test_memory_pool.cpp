@@ -17,7 +17,7 @@ static void print_size()
    U_TRACE(5, "print_size()")
 
    U_PRINT_SIZEOF(UApplication)
-   U_PRINT_SIZEOF(UBison)
+// U_PRINT_SIZEOF(UBison)
    U_PRINT_SIZEOF(UCDB)
    U_PRINT_SIZEOF(UCURL)
    U_PRINT_SIZEOF(UCache)
@@ -28,24 +28,30 @@ static void print_size()
    U_PRINT_SIZEOF(UCommand)
 // U_PRINT_SIZEOF(UConnection)
 // U_PRINT_SIZEOF(UConstMethodSlot)
+#ifdef HAVE_CURL
    U_PRINT_SIZEOF(UCrl)
+#endif
    U_PRINT_SIZEOF(UDate)
    U_PRINT_SIZEOF(UDialog)
 // U_PRINT_SIZEOF(UFCgi)
    U_PRINT_SIZEOF(UFile)
    U_PRINT_SIZEOF(UFileConfig)
-   U_PRINT_SIZEOF(UFlexer)
+// U_PRINT_SIZEOF(UFlexer)
    U_PRINT_SIZEOF(UFtpClient)
 // U_PRINT_SIZEOF(UFuncSlot)
    U_PRINT_SIZEOF(UHashMap<UString>)
    U_PRINT_SIZEOF(UHashMapNode)
    U_PRINT_SIZEOF(UHttpClient<UTCPSocket>)
    U_PRINT_SIZEOF(UIPAddress)
+#ifdef HAVE_LDAP
    U_PRINT_SIZEOF(ULDAP)
    U_PRINT_SIZEOF(ULDAPEntry)
+#endif
    U_PRINT_SIZEOF(ULock)
    U_PRINT_SIZEOF(ULog)
+#ifdef HAVE_MAGIC
    U_PRINT_SIZEOF(UMagic)
+#endif
 // U_PRINT_SIZEOF(UMethodSlot)
    U_PRINT_SIZEOF(UMimeEntity)
    U_PRINT_SIZEOF(UMimeHeader)
@@ -55,7 +61,9 @@ static void print_size()
    U_PRINT_SIZEOF(UMimePKCS7)
    U_PRINT_SIZEOF(UNotifier)
    U_PRINT_SIZEOF(UOptions)
+#ifdef HAVE_PCRE
    U_PRINT_SIZEOF(UPCRE)
+#endif
    U_PRINT_SIZEOF(UPKCS10)
    U_PRINT_SIZEOF(UPKCS7)
    U_PRINT_SIZEOF(UPlugIn<void*>)
@@ -72,8 +80,12 @@ static void print_size()
    U_PRINT_SIZEOF(USOAPGenericMethod)
    U_PRINT_SIZEOF(USOAPObject)
    U_PRINT_SIZEOF(USOAPParser)
+#ifdef HAVE_SSH
    U_PRINT_SIZEOF(USSHSocket)
+#endif
+#ifdef HAVE_SSL
    U_PRINT_SIZEOF(USSLSocket)
+#endif
    U_PRINT_SIZEOF(USemaphore)
    U_PRINT_SIZEOF(UServer<UTCPSocket>)
    U_PRINT_SIZEOF(USmtpClient)
@@ -91,10 +103,14 @@ static void print_size()
    U_PRINT_SIZEOF(UTree<UString>)
    U_PRINT_SIZEOF(UUDPSocket)
    U_PRINT_SIZEOF(UVector<UString>)
+#ifdef HAVE_EXPAT
    U_PRINT_SIZEOF(UXMLAttribute)
    U_PRINT_SIZEOF(UXMLElement)
    U_PRINT_SIZEOF(UXMLParser)
+#endif
+#ifdef HAVE_LIBZ
    U_PRINT_SIZEOF(UZIP)
+#endif
    U_PRINT_SIZEOF(Url)
 }
 #endif

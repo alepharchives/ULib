@@ -386,7 +386,7 @@ dnl		printf "cURL found in $curldir\n";
 				found_ldap="yes"
 				LDAP_INCS="$ldapdir/include"
 				LDAP_LDFLAGS="$ldapdir/lib"
-				LDAP_LIBS="-lwldap"
+				LDAP_LIBS="-lwldap32"
 				CPPFLAGS="$CPPFLAGS -DHAVE_WINLDAP_H -DHAVE_LDAP_SSL_H"
 				break
 			fi

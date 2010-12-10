@@ -69,7 +69,8 @@ public:
             {
             output = client.getContent();
             }
-         else U_WARNING("failed to download URI: %.*S", U_STRING_TO_TRACE(uri));
+         else U_ERROR(  "failed to download URI: %.*S", U_STRING_TO_TRACE(uri));
+      // else U_WARNING("failed to download URI: %.*S", U_STRING_TO_TRACE(uri));
 
          client.reset();
          }

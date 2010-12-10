@@ -72,6 +72,7 @@ public:
       {
       U_TRACE(0, "UClient_Base::reset()")
 
+          uri.clear();
       request.clear();
       }
 

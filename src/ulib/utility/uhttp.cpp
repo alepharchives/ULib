@@ -993,7 +993,7 @@ start:
 
       // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
 
-      if (count++ > 5) U_RETURN(false);
+      if (count++ > 10) U_RETURN(false);
 
       timeoutMS = 3 * 1000;
 
@@ -1089,7 +1089,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString& rbuffer, UString& body)
 
          count = 0;
 
-         do { if (count++ > 5) U_RETURN(false); } while (USocketExt::read(s, rbuffer, U_SINGLE_READ, 3 * 1000)); // wait max 3 sec for other data...
+         do { if (count++ > 10) U_RETURN(false); } while (USocketExt::read(s, rbuffer, U_SINGLE_READ, 3 * 1000)); // wait max 3 sec for other data...
 
          http_info.clength = (rbuffer.size() - http_info.endHeader);
 
@@ -2032,7 +2032,7 @@ uint32_t UHTTP::processHTTPForm()
 
 get_name_value:
 
-   if (qcontent->empty() == false) n = UStringExt::getNameValueFromData(*qcontent, *form_name_value);
+   if (qcontent->empty() == false) n = UStringExt::getNameValueFromData(*qcontent, *form_name_value, U_CONSTANT_TO_PARAM("&"));
 
    U_RETURN(n);
 }

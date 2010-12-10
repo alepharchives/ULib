@@ -98,7 +98,7 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
 {
    U_TRACE(1, "UStringRep::create(%u,%u,%p)", length, capacity, ptr)
 
-   U_INTERNAL_ASSERT_MAJOR(capacity,0)
+   U_INTERNAL_ASSERT_RANGE(1,capacity,max_size())
 
    // NB: Need an array of char[capacity], plus a terminating null char element,
    //     plus enough for the UStringRep data structure. Whew. Seemingly so needy, yet so elemental...
@@ -442,7 +442,7 @@ UString::UString(const char* t, uint32_t len)
    U_TRACE_REGISTER_OBJECT(0, UString, "%.*S,%u", len, t, len)
 
    if (len) rep = UStringRep::create(t, len, 0U);
-   else      copy(UStringRep::string_rep_null);
+   else     copy( UStringRep::string_rep_null);
 }
 
 UString& UString::operator=(const UString& str)
@@ -544,14 +544,10 @@ bool UString::reserve(uint32_t n)
 
    // Make room for a total of n element
 
-   UStringRep* r;
-
    U_INTERNAL_ASSERT(rep->_capacity == 0 ||
                      rep->_capacity >= U_CAPACITY) // it must start with U_CAPACITY...
 
-   r = UStringRep::create(rep->_length, n, rep->str);
-
-   set(r);
+   set(UStringRep::create(rep->_length, n, rep->str));
 
    U_INTERNAL_ASSERT(invariant())
 
@@ -562,15 +558,12 @@ void UString::setBuffer(uint32_t n)
 {
    U_TRACE(0, "UString::setBuffer(%u)", n)
 
-   U_INTERNAL_ASSERT_MAJOR(n,0)
-   U_INTERNAL_ASSERT(n <= max_size())
+   U_INTERNAL_ASSERT_RANGE(1,n,max_size())
 
    if (rep->references ||
        rep->_capacity < n)
       {
-      UStringRep* r = UStringRep::create(0U, n, 0);
-
-      set(r);
+      set(UStringRep::create(0U, n, 0));
       }
    else
       {
@@ -791,7 +784,9 @@ uint32_t UString::find(const char* s, uint32_t pos, uint32_t s_len, uint32_t how
    const char* str = rep->str;
    const char* ptr = (const char*) u_find(str + pos, n, s, s_len);
 
-   U_RETURN(ptr ? ptr - str : U_NOT_FOUND);
+   n = (ptr ? ptr - str : U_NOT_FOUND);
+
+   U_RETURN(n);
 }
 
 uint32_t UString::findnocase(const char* s, uint32_t pos, uint32_t s_len, uint32_t how_much) const
@@ -1074,7 +1069,7 @@ long UStringRep::strtol(int base) const
       errno = 0;
 
       char* endptr;
-      long result = (long) strtoul(str, &endptr, base);
+      long  result = (long) strtoul(str, &endptr, base);
 
       U_INTERNAL_DUMP("errno = %d", errno)
 

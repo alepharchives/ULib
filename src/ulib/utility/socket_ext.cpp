@@ -45,7 +45,7 @@ bool USocketExt::read(USocket* socket, UString& buffer, int count, int timeoutMS
    ssize_t value;
    bool single_read;
    int diff, byte_read;
-   uint32_t start, capacity;
+   uint32_t start, capacity, num = 0, max_num = 0;
 
    // NB: THINK REALLY VERY MUCH BEFORE CHANGE CODE HERE...
 
@@ -131,7 +131,14 @@ read:
 
    U_INTERNAL_DUMP("byte_read = %d", byte_read)
 
-   if (byte_read < count) goto read;
+   if (byte_read < count)
+      {
+      // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
+
+      if (max_num == 0) max_num = 20 + (count / 1024);
+
+      if (num++ < max_num) goto read;
+      }
 
    if (single_read)
       {
@@ -192,7 +199,9 @@ uint32_t USocketExt::read(USocket* s, UString& buffer, const char* token, uint32
 
       start = buffer.size();
 
-      if (count++ > 10) break;
+      // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
+
+      if (count++ > 20) break;
       }
 
    U_RETURN(U_NOT_FOUND);

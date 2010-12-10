@@ -9,7 +9,9 @@ static void check(const UString& dati, const UString& file)
 {
    U_TRACE(5,"check(%p,%p)", dati.data(), file.data())
 
-   UString buffer1(dati.size() * 4), buffer2(dati.size());
+   uint32_t sz = dati.size() * 4;
+
+   UString buffer1(sz), buffer2(sz);
 
    /*
    UBase64::decode( (const unsigned char*)U_STRING_TO_PARAM(dati), buffer1);

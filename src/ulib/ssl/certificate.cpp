@@ -19,6 +19,10 @@
 #include <ulib/utility/string_ext.h>
 #include <ulib/container/hash_map.h>
 
+#if defined(__MINGW32__)
+#  undef X509_NAME
+#endif
+
 #include <openssl/pem.h>
 
 bool                    UCertificate::verify_result;
@@ -59,9 +63,9 @@ next:
    U_RETURN_POINTER(_x509, X509);
 }
 
-UString UCertificate::getName(X509_NAME* n, bool ldap)
+UString UCertificate::getName(X509_NAME* n, bool bldap)
 {
-   U_TRACE(1, "UCertificate::getName(%p,%b)", n, ldap)
+   U_TRACE(1, "UCertificate::getName(%p,%b)", n, bldap)
 
    U_INTERNAL_ASSERT_POINTER(n)
 
@@ -90,7 +94,7 @@ UString UCertificate::getName(X509_NAME* n, bool ldap)
    U_X509_NAME_DUMP(NID_pkcs9_emailAddress,    "emailAddress        (Email)") // Email - emailAddress
 #endif
 
-   if (ldap)
+   if (bldap)
       {
       BIO* bio = (BIO*) U_SYSCALL(BIO_new, "%p", BIO_s_mem());
 

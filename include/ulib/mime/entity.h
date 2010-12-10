@@ -16,7 +16,6 @@
 
 #include <ulib/mime/header.h>
 #include <ulib/container/vector.h>
-#include <ulib/utility/string_ext.h>
 
 // UMimeEntity -- class representing a MIME entity
 //
@@ -175,25 +174,6 @@ public:
       }
 
    UString getFileName() const { return UMimeHeader::getFileName(getContentDisposition()); }
-
-   // retrieve information on specific HTML form elements
-   // (such as checkboxes, radio buttons, and text fields)
-   // as couple <name1>=<value1>&<name2>=<value2>&...
-
-   uint32_t getNameValueFormData(UVector<UString>& name_value) const
-      {
-      U_TRACE(0, "UMimeEntity::getNameValueFormData(%p)", &name_value)
-
-      U_ASSERT(header->empty() == false)
-      U_ASSERT(content.empty() == false)
-
-      // Standard content type: "application/x-www-form-urlencoded"
-      // It may not be explicitly specified
-
-      U_ASSERT(content_type.empty() || isURLEncoded())
-
-      return UStringExt::getNameValueFromData(content, name_value);
-      }
 
    // read with socket
 

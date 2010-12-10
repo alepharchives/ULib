@@ -15,6 +15,8 @@
 #include <ulib/utility/string_ext.h>
 
 const UString* Url::str_ftp;
+const UString* Url::str_ldap;
+const UString* Url::str_ldaps;
 const UString* Url::str_smtp;
 const UString* Url::str_pop3;
 const UString* Url::str_http;
@@ -25,6 +27,8 @@ void Url::str_allocate()
    U_TRACE(0, "Url::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_ftp,0)
+   U_INTERNAL_ASSERT_EQUALS(str_ldap,0)
+   U_INTERNAL_ASSERT_EQUALS(str_ldaps,0)
    U_INTERNAL_ASSERT_EQUALS(str_smtp,0)
    U_INTERNAL_ASSERT_EQUALS(str_pop3,0)
    U_INTERNAL_ASSERT_EQUALS(str_http,0)
@@ -32,6 +36,8 @@ void Url::str_allocate()
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("ftp") },
+      { U_STRINGREP_FROM_CONSTANT("ldap") },
+      { U_STRINGREP_FROM_CONSTANT("ldaps") },
       { U_STRINGREP_FROM_CONSTANT("smtp") },
       { U_STRINGREP_FROM_CONSTANT("pop3") },
       { U_STRINGREP_FROM_CONSTANT("http") },
@@ -39,10 +45,12 @@ void Url::str_allocate()
    };
 
    U_NEW_ULIB_OBJECT(str_ftp,   U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_smtp,  U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_pop3,  U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_http,  U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_https, U_STRING_FROM_STRINGREP_STORAGE(4));
+   U_NEW_ULIB_OBJECT(str_ldap,  U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_ldaps, U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_smtp,  U_STRING_FROM_STRINGREP_STORAGE(3));
+   U_NEW_ULIB_OBJECT(str_pop3,  U_STRING_FROM_STRINGREP_STORAGE(4));
+   U_NEW_ULIB_OBJECT(str_http,  U_STRING_FROM_STRINGREP_STORAGE(5));
+   U_NEW_ULIB_OBJECT(str_https, U_STRING_FROM_STRINGREP_STORAGE(6));
 }
 
 // gcc: call is unlikely and code size would grow
@@ -204,6 +212,8 @@ int Url::getPort()
 
       if (tmp.equal(*str_http))  U_RETURN(80);
       if (tmp.equal(*str_https)) U_RETURN(443);
+      if (tmp.equal(*str_ldap))  U_RETURN(389);
+      if (tmp.equal(*str_ldaps)) U_RETURN(636);
       if (tmp.equal(*str_ftp))   U_RETURN(21);
       if (tmp.equal(*str_smtp))  U_RETURN(25);
       if (tmp.equal(*str_pop3))  U_RETURN(110);
@@ -236,28 +246,6 @@ bool Url::setPort(uint32_t port)
    U_RETURN(false);
 }
 
-UString Url::getPath()
-{
-   U_TRACE(0, "Url::getPath()")
-
-   UString path(U_CAPACITY);
-
-   if (path_begin < path_end)
-      {
-      uint32_t copy_size = path_end - path_begin;
-
-      (void) path.reserve(copy_size);
-
-      decode(url.c_pointer(path_begin), copy_size, path);
-      }
-   else
-      {
-      path.push_back('/');
-      }
-
-   U_RETURN_STRING(path);
-}
-
 void Url::setPath(const char* path, uint32_t n)
 {
    U_TRACE(0, "Url::setPath(%S,%u)", path, n)
@@ -288,29 +276,49 @@ void Url::setPath(const char* path, uint32_t n)
    findpos();
 }
 
+UString Url::getPath()
+{
+   U_TRACE(0, "Url::getPath()")
+
+   UString path(U_CAPACITY);
+
+   if (path_begin < path_end) decode(url.c_pointer(path_begin), path_end - path_begin, path);
+   else                       path.push_back('/');
+
+   U_RETURN_STRING(path);
+}
+
 UString Url::getQuery()
 {
    U_TRACE(0, "Url::getQuery()")
 
-   UString _query;
    int _end = url.size() - 1;
 
-   if (path_end < _end) _query = url.substr(path_end + 1, _end - path_end);
+   if (path_end < _end)
+      {
+      uint32_t sz = _end - path_end;
 
-   U_RETURN_STRING(_query);
+      UString _query(sz);
+
+      decode(url.c_pointer(path_end + 1), sz, _query);
+
+      U_RETURN_STRING(_query);
+      }
+
+   U_RETURN_STRING(UString::getStringNull());
 }
 
 uint32_t Url::getQuery(UVector<UString>& vec)
 {
    U_TRACE(0, "Url::getQuery(%p)", &vec)
 
-   uint32_t n = vec.size();
+   uint32_t n = vec.size(), result;
 
    UString _query = getQuery();
 
-   if (_query.empty() == false) (void) UStringExt::getNameValueFromData(_query, vec);
+   if (_query.empty() == false) (void) UStringExt::getNameValueFromData(_query, vec, U_CONSTANT_TO_PARAM("&"), true);
 
-   uint32_t result = (vec.size() - n);
+   result = (vec.size() - n);
 
    U_RETURN(result);
 }
@@ -361,14 +369,10 @@ UString Url::getFile()
 {
    U_TRACE(0, "Url::getFile()")
 
-   UString file   = getPath(),
-           _query = getQuery();
+   UString file;
 
-   if (_query.empty() == false)
-      {
-             file.push_back('?');
-      (void) file.append(_query);
-      }
+   if (path_begin < path_end) file = url.substr(path_begin);
+   else                       file.push_back('/');
 
    U_RETURN_STRING(file);
 }
@@ -493,7 +497,9 @@ void Url::addQuery(const char* entry, uint32_t entry_len, const char* value, uin
 {
    U_TRACE(0, "Url::addQuery(%.*S,%u,%.*S,%u)", entry_len, entry, entry_len, value_len, value, value_len)
 
-   if (prepeareForQuery() && entry)
+   U_INTERNAL_ASSERT_POINTER(entry)
+
+   if (prepeareForQuery())
       {
       uint32_t v_size = 0, b_size = entry_len, e_size = b_size;
 
@@ -520,97 +526,6 @@ void Url::addQuery(const char* entry, uint32_t entry_len, const char* value, uin
          (void) url.append(buffer);
          }
       }
-}
-
-U_NO_EXPORT bool Url::nextQueryPos(int& entry_start, int& entry_end, int& value_start, int& value_end)
-{
-   U_TRACE(0, "Url::nextQueryPos(%p,%p,%p,%p)", &entry_start, &entry_end, &value_start, &value_end)
-
-   int end = url.size();
-
-   if ((query < end) && (query >= path_end))
-      {
-      entry_start = ++query;
-
-      value_end = url.find_first_of("&?", entry_start, 2);
-
-      if (value_end < 0) query = value_end = end;
-      else               query = value_end;
-
-      value_start = url.find('=', entry_start);
-
-      if ((value_start < entry_start) || (value_start > value_end))
-         {
-         value_start = entry_end = value_end;
-         }
-      else
-         {
-         entry_end = value_start;
-
-         ++value_start;
-         }
-
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
-bool Url::firstQuery(UString& entry, UString& value)
-{
-   U_TRACE(0, "Url::firstQuery(%.*S,%.*S)", U_STRING_TO_TRACE(entry), U_STRING_TO_TRACE(value))
-
-   if (path_end < (int)url.size())
-      {
-      query = path_end;
-
-      return nextQuery(entry, value);
-      }
-
-   U_RETURN(false);
-}
-
-bool Url::nextQuery(UString& entry, UString& value)
-{
-   U_TRACE(0, "Url::nextQuery(%.*S,%.*S)", U_STRING_TO_TRACE(entry), U_STRING_TO_TRACE(value))
-
-   int entry_start, entry_end, value_start, value_end;
-
-   if (nextQueryPos(entry_start, entry_end, value_start, value_end))
-      {
-      decode(url.c_pointer(entry_start), entry_end - entry_start, entry);
-      decode(url.c_pointer(value_start), value_end - value_start, value);
-
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
-bool Url::findQuery(UString& entry, UString& value)
-{
-   U_TRACE(0, "Url::findQuery(%.*S,%.*S)", U_STRING_TO_TRACE(entry), U_STRING_TO_TRACE(value))
-
-   if (path_end < (int)url.size())
-      {
-      query = path_end;
-
-      UString e(1000), v(1000);
-
-      while (nextQuery(e, v))
-         {
-         if (entry == e ||
-             value == v)
-            {
-            entry = e;
-            value = v;
-
-            U_RETURN(true);
-            }
-         }
-      }
-
-   U_RETURN(false);
 }
 
 // STREAM

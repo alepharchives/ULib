@@ -9,8 +9,9 @@ static void check(const UString& dati, const char* file)
 {
    U_TRACE(5,"check(%p,%S)", dati.data(), file)
 
-   UString buffer1(dati.size() + 32),
-           buffer2(dati.size());
+   uint32_t sz = dati.size() + 32;
+
+   UString buffer1(sz), buffer2(sz);
 
    UDES3::encode(dati,    buffer1);
    UDES3::decode(buffer1, buffer2);

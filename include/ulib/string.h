@@ -1266,8 +1266,8 @@ public:
    // -----------------------------------------------------------------------------------------------------------------------
 
 private:
-   U_NO_EXPORT char* __append(uint32_t n);
-   U_NO_EXPORT char* __replace(uint32_t pos, uint32_t n1, uint32_t n2);
+   char* __append(uint32_t n) U_NO_EXPORT;
+   char* __replace(uint32_t pos, uint32_t n1, uint32_t n2) U_NO_EXPORT;
 };
 
 // operator ==

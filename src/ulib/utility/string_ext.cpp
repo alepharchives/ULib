@@ -862,9 +862,9 @@ UString UStringExt::toupper(const UString& x)
 
 // retrieve information on form elements as couple <name1>=<value1>&<name2>=<value2>&...
 
-uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UString>& name_value, const char* delim, uint32_t dlen)
+uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UString>& name_value, const char* delim, uint32_t dlen, bool decoded)
 {
-   U_TRACE(0, "UStringExt::getNameValueFromData(%.*S,%p,%.*S,%u)", U_STRING_TO_TRACE(content), &name_value, dlen, delim, dlen)
+   U_TRACE(0, "UStringExt::getNameValueFromData(%.*S,%p,%.*S,%u,%b)", U_STRING_TO_TRACE(content), &name_value, dlen, delim, dlen, decoded)
 
    U_INTERNAL_ASSERT_POINTER(delim)
    U_ASSERT_EQUALS(content.empty(),false)
@@ -893,7 +893,8 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 
       U_INTERNAL_ASSERT_MAJOR(len,0)
 
-      if (form)
+      if (form &&
+          decoded == false)
          {
          // name is URL encoded...
 
@@ -938,9 +939,13 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
          {
          if (form)
             {
-            value.setBuffer(len);
+            if (decoded) value = content.substr(oldPos, len);
+            else
+               {
+               value.setBuffer(len);
 
-            Url::decode(content.c_pointer(oldPos), len, value);
+               Url::decode(content.c_pointer(oldPos), len, value);
+               }
             }
          else
             {

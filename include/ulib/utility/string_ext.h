@@ -234,7 +234,9 @@ public:
 
    // retrieve information on form elements as couple <name1>=<value1>&<name2>=<value2>&...
 
-   static uint32_t getNameValueFromData(const UString& content, UVector<UString>& name_value, const char* delim = "&", uint32_t dlen = 1);
+   static uint32_t getNameValueFromData(const UString& content,
+                                        UVector<UString>& name_value,
+                                        const char* delim, uint32_t dlen, bool decoded = false);
 
 #  define U_TOKEN_NM 4U
 #  define U_TOKEN_LN (U_TOKEN_NM + 8U)

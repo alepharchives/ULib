@@ -63,10 +63,6 @@
 #  include <ulib/pcre/pcre.h>
 #endif
 
-#ifdef HAVE_LDAP
-#  include <ulib/ldap/ldap.h>
-#endif
-
 #ifdef HAVE_CURL
 #  include <ulib/curl/curl.h>
 #endif
@@ -86,4 +82,8 @@
 #ifdef HAVE_EXPAT
 #  include <ulib/xml/soap/soap_client.h>
 #  include <ulib/xml/soap/soap_object.h>
+#endif
+
+#ifdef HAVE_LDAP
+#  include <ulib/ldap/ldap.h>
 #endif

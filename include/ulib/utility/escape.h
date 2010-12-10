@@ -43,6 +43,8 @@ struct U_EXPORT UEscape {
       {
       U_TRACE(0, "UEscape::encode(%.*S,%u,%.*S,%b)", n, s, n, U_STRING_TO_TRACE(buffer), json)
 
+      U_ASSERT(buffer.capacity() >= n)
+
       uint32_t sz  = buffer.size(),
                pos = u_escape_encode(s, n, buffer.c_pointer(sz), buffer.space(), json);
 
@@ -55,6 +57,8 @@ struct U_EXPORT UEscape {
    static bool decode(const char* s, uint32_t n, UString& buffer)
       {
       U_TRACE(0, "UEscape::decode(%.*S,%u,%.*S)", n, s, n, U_STRING_TO_TRACE(buffer))
+
+      U_ASSERT(buffer.capacity() >= n)
 
       uint32_t pos = u_escape_decode(s, n, (unsigned char*)buffer.data());
 

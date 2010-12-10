@@ -25,7 +25,6 @@
 -------------------------
    1 sizeof(UMagic)
 
-   8 sizeof(UCGI)
    8 sizeof(UCrl)
    8 sizeof(UPKCS10)
    8 sizeof(UString) <==
@@ -93,24 +92,24 @@
 -------------------------
    U_STACK_TYPE_4
 
- 160 sizeof(URDBClient<UTCPSocket>)
  184 sizeof(ULog)
  184 sizeof(UFile)
+ 192 sizeof(URDBClient<UTCPSocket>)
  216 sizeof(UBison)
  216 sizeof(UFlexer)
  216 sizeof(USocket)
  216 sizeof(UTCPSocket)
  216 sizeof(UUDPSocket)
- 224 sizeof(UHttpClient<UTCPSocket>)
  240 sizeof(USSLSocket)
  256 sizeof(UFileConfig)
+ 256 sizeof(UHttpClient<UTCPSocket>)
 -------------------------
    U_STACK_TYPE_5
 
  264 sizeof(USSHSocket)
- 272 sizeof(USOAPClient<UTCPSocket>)
  296 sizeof(UCDB)
  296 sizeof(USmtpClient)
+ 304 sizeof(USOAPClient<UTCPSocket>)
  496 sizeof(UFtpClient)
  512 sizeof(URDB)
 -------------------------

@@ -25,7 +25,7 @@ void UBase64::encode(const unsigned char* s, uint32_t n, UString& buffer)
    U_ASSERT(buffer.capacity() >= length + num_lines + 1)
 #endif
 
-   uint32_t pos = u_base64_encode(s, n, (unsigned char*) buffer.data());
+   uint32_t pos = u_base64_encode(s, n, (unsigned char*)buffer.data());
 
    buffer.size_adjust(pos);
 }
@@ -34,7 +34,9 @@ bool UBase64::decode(const char* s, uint32_t n, UString& buffer)
 {
    U_TRACE(0, "UBase64::decode(%.*S,%u,%.*S)", n, s, n, U_STRING_TO_TRACE(buffer))
 
-   uint32_t pos = u_base64_decode(s, n, (unsigned char*) buffer.data());
+   U_ASSERT(buffer.capacity() >= n)
+
+   uint32_t pos = u_base64_decode(s, n, (unsigned char*)buffer.data());
 
    buffer.size_adjust(pos);
 

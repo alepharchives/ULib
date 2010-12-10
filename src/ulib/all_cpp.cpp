@@ -123,10 +123,6 @@
 #  include "xml/libxml2/document.cpp"
 #endif
 
-#ifdef HAVE_LDAP
-#  include "ldap/ldap.cpp"
-#endif
-
 #ifdef HAVE_CURL
 #  include "curl/curl.cpp"
 #endif
@@ -212,3 +208,8 @@
 #ifdef U_STATIC_HANDLER_RPC
 #  include "plugin/mod_rpc.cpp"
 #endif
+
+#ifdef HAVE_LDAP
+#  include "ldap/ldap.cpp"
+#endif
+

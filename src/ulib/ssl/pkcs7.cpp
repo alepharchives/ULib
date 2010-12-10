@@ -72,7 +72,7 @@ UString UPKCS7::getContent(bool* valid_content) const
    U_INTERNAL_DUMP("type = %p PKCS7_type_is_signed() = %d PKCS7_get_detached() = %d",
                      OBJ_obj2nid(pkcs7->type), PKCS7_type_is_signed(pkcs7), PKCS7_get_detached(pkcs7))
 
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(__MINGW32__)
    // dump signatures on data
 
    STACK_OF(PKCS7_SIGNER_INFO)* sinfos = PKCS7_get_signer_info(pkcs7);

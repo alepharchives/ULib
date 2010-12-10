@@ -132,7 +132,7 @@ public:
 protected:
    UMimeHeader* requestHeader;
    UMimeHeader* responseHeader;
-   UString body, forbidden, user, password, method, uri;
+   UString body, forbidden, user, password, method;
    bool bFollowRedirects;
 
     UHttpClient_Base(UFileConfig* cfg);

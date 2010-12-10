@@ -24,6 +24,8 @@ struct U_EXPORT UQuotedPrintable {
       {
       U_TRACE(0, "UQuotedPrintable::encode(%.*S,%u,%.*S)", n, s, n, U_STRING_TO_TRACE(buffer))
 
+      U_ASSERT(buffer.capacity() >= n)
+
       uint32_t pos = u_quoted_printable_encode(s, n, (unsigned char*)buffer.data());
 
       buffer.size_adjust(pos);
@@ -35,6 +37,8 @@ struct U_EXPORT UQuotedPrintable {
    static bool decode(const char* s, uint32_t n, UString& buffer)
       {
       U_TRACE(0, "UQuotedPrintable::decode(%.*S,%u,%.*S)", n, s, n, U_STRING_TO_TRACE(buffer))
+
+      U_ASSERT(buffer.capacity() >= n)
 
       uint32_t pos = u_quoted_printable_decode(s, n, (unsigned char*)buffer.data());
 

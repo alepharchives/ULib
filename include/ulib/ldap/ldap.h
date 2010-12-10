@@ -17,9 +17,31 @@
 #include <ulib/string.h>
 
 #if defined(__MINGW32__) && defined(HAVE_WINLDAP_H)
+#  undef  CRL_REASON_UNSPECIFIED             // 0
+#  undef  CRL_REASON_KEY_COMPROMISE          // 1
+#  undef  CRL_REASON_CA_COMPROMISE           // 2
+#  undef  CRL_REASON_AFFILIATION_CHANGED     // 3
+#  undef  CRL_REASON_SUPERSEDED              // 4
+#  undef  CRL_REASON_CESSATION_OF_OPERATION  // 5
+#  undef  CRL_REASON_CERTIFICATE_HOLD        // 6
+#  undef  CRL_REASON_REMOVE_FROM_CRL         // 8
+
 #  include <winldap.h>
+#  define LDAPS_PORT   636 /* ldaps:///  default LDAP over TLS port */
+#  define LDAP_TIMEVAL struct l_timeval
+#  define ldapssl_init ldap_sslinit
+typedef struct {
+   const char* lud_host;
+   int         lud_port;
+   const char* lud_dn;
+   char**      lud_attrs;
+   int         lud_scope;
+   char*       lud_filter;
+   char**      lud_exts;
+} LDAPURLDesc;
 #else
 #  define LDAP_DEPRECATED 1
+#  define LDAP_TIMEVAL struct timeval
 #  include <ldap.h>
 #  ifdef HAVE_LDAP_SSL_H
 #     include <ldap_ssl.h>
@@ -150,7 +172,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(ld)
 
-      result = U_SYSCALL(ldap_simple_bind_s, "%p,%S,%S", ld, who, passwd);
+      result = U_SYSCALL(ldap_simple_bind_s, "%p,%S,%S", ld, (char*)who, (char*)passwd);
 
       U_RETURN(result == LDAP_SUCCESS);
       }
@@ -163,7 +185,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(ld)
 
-      result = U_SYSCALL(ldap_bind_s, "%p,%S,%S,%d", ld, who, cred, authmethod);
+      result = U_SYSCALL(ldap_bind_s, "%p,%S,%S,%d", ld, (char*)who, (char*)cred, authmethod);
 
       U_RETURN(result == LDAP_SUCCESS);
       }
@@ -184,7 +206,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(ld,0)
 
-      ld = (LDAP*) U_SYSCALL(ldap_init, "%S,%d", host, port);
+      ld = (LDAP*) U_SYSCALL(ldap_init, "%S,%d", (char*)host, port);
 
       if (ld == 0)
          {
@@ -206,7 +228,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(ld,0)
 
-      ld = (LDAP*) U_SYSCALL(ldap_open, "%S,%d", host, port);
+      ld = (LDAP*) U_SYSCALL(ldap_open, "%S,%d", (char*)host, port);
 
       U_RETURN(ld != 0);
       }
@@ -219,7 +241,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(ld)
 
-      result = U_SYSCALL(ldap_add_s, "%p,%S,%p", ld, dn, ldapmods);
+      result = U_SYSCALL(ldap_add_s, "%p,%S,%p", ld, (char*)dn, ldapmods);
 
       U_RETURN(result == LDAP_SUCCESS);
       }
@@ -232,7 +254,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(ld)
 
-      result = U_SYSCALL(ldap_modify_s, "%p,%S,%p", ld, dn, ldapmods);
+      result = U_SYSCALL(ldap_modify_s, "%p,%S,%p", ld, (char*)dn, ldapmods);
 
       U_RETURN(result == LDAP_SUCCESS);
       }
@@ -245,7 +267,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(ld)
 
-      result = U_SYSCALL(ldap_delete_s, "%p,%S", ld, dn);
+      result = U_SYSCALL(ldap_delete_s, "%p,%S", ld, (char*)dn);
 
       U_RETURN(result == LDAP_SUCCESS);
       }
@@ -258,7 +280,7 @@ public:
 #  define LDAP_OPT_NETWORK_TIMEOUT LDAP_OPT_TIMELIMIT
 #endif
 
-      ldap_set_option(0, LDAP_OPT_NETWORK_TIMEOUT, (pTimeOut = timeout));
+      (void) U_SYSCALL(ldap_set_option, "%p,%d,%d", 0, LDAP_OPT_NETWORK_TIMEOUT, (LDAP_TIMEVAL*)(pTimeOut = timeout));
       }
 
    // ---------------------
@@ -277,7 +299,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(ld)
 
-      result = U_SYSCALL(ldap_search_st, "%p,%S,%d,%S,%p,%d,%p,%p", ld, dn, scope, filter, attrs, 0, pTimeOut, &searchResult);
+      result = U_SYSCALL(ldap_search_st, "%p,%S,%d,%S,%p,%d,%p,%p", ld, (char*)dn, scope, (char*)filter, attrs, 0, (LDAP_TIMEVAL*)pTimeOut, &searchResult);
 
       int num = (result == LDAP_SUCCESS ? U_SYSCALL(ldap_count_entries, "%p,%p", ld, searchResult) : -1);
 
@@ -296,7 +318,7 @@ public:
       return search(ludpp->lud_dn, ludpp->lud_scope, ludpp->lud_attrs, ludpp->lud_filter);
       }
 
-#ifdef HAVE_LDAP_SSL_H
+#if defined(HAVE_LDAP_SSL_H) && !defined(__MINGW32__) && !defined(HAVE_WINLDAP_H)
    bool search(const char* url)
       {
       U_TRACE(1, "ULDAP::search(%S)", url)
@@ -318,6 +340,7 @@ public:
       }
 #endif
 
+#if !defined(__MINGW32__) || !defined(HAVE_WINLDAP_H)
    void sort(const char* sortAttribute = "sn")
       {
       U_TRACE(0, "ULDAP::sort(%S)", sortAttribute)
@@ -327,6 +350,7 @@ public:
 
       ldap_sort_entries(ld, &searchResult, (char*)sortAttribute, strcmp); /* client-sort */
       }
+#endif
 
    /* Example (from NGSS):
     * ---------------------------------------------------------------------------------------------------------
@@ -370,6 +394,10 @@ protected:
    static struct timeval timeOut;
 
 private:
+#if defined(__MINGW32__) && defined(HAVE_WINLDAP_H)
+   static char** split_str(char* str) U_NO_EXPORT;
+#endif
+
    ULDAP(const ULDAP&)            {}
    ULDAP& operator=(const ULDAP&) { return *this; }
 };

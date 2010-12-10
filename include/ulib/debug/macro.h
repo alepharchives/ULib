@@ -143,24 +143,24 @@
 
 // Dump argument for exec()...
 
-#  define U_DUMP_EXEC(argv, envp) { uint32_t i; \
-for (i = 0; argv[i]; ++i) \
+#  define U_DUMP_EXEC(argv, envp) { uint32_t _i; \
+for (_i = 0; argv[_i]; ++_i) \
    { \
-   U_INTERNAL_DUMP("argv[%2u] = %p %S", i, argv[i], argv[i]) \
+   U_INTERNAL_DUMP("argv[%2u] = %p %S", _i, argv[_i], argv[_i]) \
    } \
-U_INTERNAL_DUMP("argv[%2u] = %p %S", i, argv[i], argv[i]) \
+U_INTERNAL_DUMP("argv[%2u] = %p %S", _i, argv[_i], argv[_i]) \
 if (envp) \
    { \
-   for (i = 0; envp[i]; ++i) \
+   for (_i = 0; envp[_i]; ++_i) \
       { \
-      U_INTERNAL_DUMP("envp[%2u] = %p %S", i, envp[i], envp[i]) \
+      U_INTERNAL_DUMP("envp[%2u] = %p %S", _i, envp[_i], envp[_i]) \
       } \
-   U_INTERNAL_DUMP("envp[%2u] = %p %S", i, envp[i], envp[i]) \
+   U_INTERNAL_DUMP("envp[%2u] = %p %S", _i, envp[_i], envp[_i]) \
    } }
 
 // Dump attributes...
 
-#  define U_DUMP_ATTRS(attrs) { uint32_t i; for (i = 0; attrs[i]; ++i) { U_INTERNAL_DUMP("attrs[%2u] = %S", i, attrs[i]) } }
+#  define U_DUMP_ATTRS(attrs) { uint32_t _i; for (_i = 0; attrs[_i]; ++_i) { U_INTERNAL_DUMP("attrs[%2u] = %S", _i, attrs[_i]) } }
 
 #ifdef __MINGW32__
 #  define U_FORK()                     -1

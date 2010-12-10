@@ -9,7 +9,9 @@ static void check(const UString& dati, const UString& file)
 {
    U_TRACE(5,"check(%p,%p)", &dati, &file)
 
-   UString buffer1(dati.size() * 4), buffer2(dati.size());
+   uint32_t sz = dati.size() * 4;
+
+   UString buffer1(sz), buffer2(sz);
 
    Url::encode(dati,    buffer1);
    Url::decode(buffer1, buffer2);
@@ -108,25 +110,22 @@ int U_EXPORT main(int argc, char* argv[])
    U_ASSERT( u.getQuery()   == UString( u.getQuery(buffer, sizeof(buffer)) ) )
    */
 
+   /*
    UString entry(1000), value(1000);
 
-   /*
    U_ASSERT( u.firstQuery(entry, value) == u.firstQuery(buffer1, sizeof(buffer1), buffer2, sizeof(buffer2)) )
    U_ASSERT( entry == UString(buffer1) )
    U_ASSERT( value == UString(buffer2) )
    U_ASSERT( entry == UString(U_CONSTANT_TO_PARAM("var1")) )
    U_ASSERT( value == UString(U_CONSTANT_TO_PARAM("foo")) )
-   */
 
    u.firstQuery(entry, value);
    u.nextQuery(entry, value);
 
-   /*
    u.firstQuery(buffer1, sizeof(buffer1), buffer2, sizeof(buffer2));
    u.nextQuery(buffer1, sizeof(buffer1), buffer2, sizeof(buffer2));
    U_ASSERT( entry == UString(buffer1) )
    U_ASSERT( value == UString(buffer2) )
-   */
    U_ASSERT( entry == U_STRING_FROM_CONSTANT("var2") )
    U_ASSERT( value == U_STRING_FROM_CONSTANT("ba") )
 
@@ -136,7 +135,6 @@ int U_EXPORT main(int argc, char* argv[])
    u.nextQuery(entry, value);
    u.nextQuery(entry, value);
 
-   /*
    U_ASSERT( u.firstQuery(entry, value) == u.firstQuery(buffer1, sizeof(buffer1), buffer2, sizeof(buffer2)) )
    u.nextQuery(entry, value);
    u.nextQuery(entry, value);
@@ -146,7 +144,6 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_ASSERT( entry == UString(buffer1) )
    U_ASSERT( value == UString(buffer2) )
-   */
    U_ASSERT( entry == U_STRING_FROM_CONSTANT("var3") )
    U_ASSERT( value == U_STRING_FROM_CONSTANT("co") )
 
@@ -162,4 +159,5 @@ int U_EXPORT main(int argc, char* argv[])
    U_ASSERT( u.findQuery(entry, value) == true )
    U_ASSERT( entry == U_STRING_FROM_CONSTANT("var1") )
    U_ASSERT( value == U_STRING_FROM_CONSTANT("foo") )
+   */
 }

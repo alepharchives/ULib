@@ -31,6 +31,8 @@ struct U_EXPORT UDES3 {
       {
       U_TRACE(0, "UDES3::encode(%.*S,%u,%.*S)", n, s, n, U_STRING_TO_TRACE(buffer))
 
+      U_ASSERT(buffer.capacity() >= n)
+
       long pos = u_des3_encode(s, n, (unsigned char*)buffer.data());
 
       buffer.size_adjust(pos);
@@ -42,6 +44,8 @@ struct U_EXPORT UDES3 {
    static bool decode(const unsigned char* s, uint32_t n, UString& buffer)
       {
       U_TRACE(0, "UDES3::decode(%.*S,%u,%.*S)", n, s, n, U_STRING_TO_TRACE(buffer))
+
+      U_ASSERT(buffer.capacity() >= n)
 
       long pos = u_des3_decode(s, n, (unsigned char*)buffer.data());
 

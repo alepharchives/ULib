@@ -250,7 +250,6 @@ void UHttpClient_Base::reset()
     requestHeader->clear();
    responseHeader->clear();
 
-      uri.clear();
      body.clear();
    method.clear();
 
@@ -400,10 +399,10 @@ bool UHttpClient_Base::createAuthorizationHeader()
       static uint32_t nc; //  nonce: counter incremented by client
                           // cnonce: client generated random nonce (u_now)
 
-      UString a1(100U), ha1(33U),       // MD5(user : realm : password)
-              a2(4 + 1 + uri.size()),   //     method : uri
-              ha2(33U),                 // MD5(method : uri)
-              a3(200U), _response(33U); // MD5(HA1 : nonce : nc : cnonce : qop : HA2)
+      UString a1(100U), ha1(33U),                     // MD5(user : realm : password)
+              a2(4 + 1 + UClient_Base::uri.size()),   //     method : uri
+              ha2(33U),                               // MD5(method : uri)
+              a3(200U), _response(33U);               // MD5(HA1 : nonce : nc : cnonce : qop : HA2)
 
       // MD5(user : realm : password)
 
@@ -413,7 +412,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
 
       // MD5(method : uri)
 
-      a2.snprintf("%.*s:%.*s", U_STRING_TO_TRACE(method), U_STRING_TO_TRACE(uri));
+      a2.snprintf("%.*s:%.*s", U_STRING_TO_TRACE(method), U_STRING_TO_TRACE(UClient_Base::uri));
 
       UServices::generateDigest(U_HASH_MD5, 0, a2, ha2, false);
 
@@ -430,7 +429,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
 
       headerValue.snprintf("Digest username=\"%.*s\", realm=%.*s, nonce=%.*s, uri=\"%.*s\", cnonce=\"%ld\", nc=%08u, response=\"%.*s\", qop=%.*s",
                            U_STRING_TO_TRACE(user), U_STRING_TO_TRACE(realm), U_STRING_TO_TRACE(nonce),
-                           U_STRING_TO_TRACE(uri), u_now.tv_sec, nc, U_STRING_TO_TRACE(_response), U_STRING_TO_TRACE(qop));
+                           U_STRING_TO_TRACE(UClient_Base::uri), u_now.tv_sec, nc, U_STRING_TO_TRACE(_response), U_STRING_TO_TRACE(qop));
 
       if (algorithm.empty() == false) (void) headerValue.append(U_CONSTANT_TO_PARAM(", algorithm=\"MD5\""));
       }
@@ -554,9 +553,9 @@ void UHttpClient_Base::composeRequest(UString& data, uint32_t& startHeader)
 {
    U_TRACE(0, "UHttpClient_Base::composeRequest(%.*S,%p)", U_STRING_TO_TRACE(data), &startHeader)
 
-   uri = (UHTTP::http_info.uri_len ? UString(U_HTTP_URI_TO_PARAM) : U_STRING_FROM_CONSTANT("/"));
+   UClient_Base::uri = (UHTTP::http_info.uri_len ? UString(U_HTTP_URI_TO_PARAM) : U_STRING_FROM_CONSTANT("/"));
 
-   UHTTP::setHTTPInfo(method, uri);
+   UHTTP::setHTTPInfo(method, UClient_Base::uri);
 
    UString extension = U_STRING_FROM_CONSTANT("\r\n");
 
@@ -628,7 +627,7 @@ bool UHttpClient_Base::sendRequest(UString& data)
 
    if (data.empty() == false)
       {
-      UHTTP::getHTTPInfo(data, method, uri);
+      UHTTP::getHTTPInfo(data, method, UClient_Base::uri);
 
       startHeader = UHTTP::http_info.startHeader;
       }
@@ -664,12 +663,13 @@ bool UHttpClient_Base::sendRequest(UString& data)
             }
          }
 
-      // write the request to the HTTP server and
-      // read the response header of the HTTP server
+                 body.clear();
+      responseHeader->clear();
 
       UClient_Base::response.setEmpty();
 
-      responseHeader->clear();
+      // write the request to the HTTP server and
+      // read the response header of the HTTP server
 
       result = (UClient_Base::sendRequest(true) &&
                 responseHeader->readHeader(socket, UClient_Base::response)
@@ -690,8 +690,6 @@ bool UHttpClient_Base::sendRequest(UString& data)
    U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", UHTTP::http_info.nResponseCode)
 
    UHTTP::http_info.clength = responseHeader->getHeader(*USocket::str_content_length).strtol();
-
-   body.clear();
 
    bool ok = UHTTP::readHTTPBody(socket, UClient_Base::response, body);
 
@@ -773,7 +771,6 @@ const char* UHttpClient_Base::dump(bool _reset) const
 
    *UObjectIO::os << '\n'
                   << "bFollowRedirects                    " << bFollowRedirects        << '\n'
-                  << "uri            (UString             " << (void*)&uri             << ")\n"
                   << "body           (UString             " << (void*)&body            << ")\n"
                   << "user           (UString             " << (void*)&user            << ")\n"
                   << "method         (UString             " << (void*)&method          << ")\n"

@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/url.h>
 #include <ulib/ldap/ldap.h>
 
 struct timeval ULDAP::timeOut = { 30L, 0L }; /* 30 second connection/search timeout */
@@ -161,8 +162,33 @@ void ULDAP::clear()
 
    if (ludpp)
       {
+#  if !defined(__MINGW32__) && !defined(HAVE_WINLDAP_H)
       U_SYSCALL_VOID(ldap_free_urldesc, "%p", ludpp);
-                                              ludpp = 0;
+#  else
+      int i;
+
+      if (ludpp->lud_dn)     U_SYSCALL_VOID(free, "%p", (void*)ludpp->lud_dn);
+      if (ludpp->lud_host)   U_SYSCALL_VOID(free, "%p", (void*)ludpp->lud_host);
+      if (ludpp->lud_filter) U_SYSCALL_VOID(free, "%p",        ludpp->lud_filter);
+
+      if (ludpp->lud_attrs)
+         {
+         for (i = 0; ludpp->lud_attrs[i]; ++i) U_SYSCALL_VOID(free, "%p", ludpp->lud_attrs[i]);
+
+         U_SYSCALL_VOID(free, "%p", ludpp->lud_attrs);
+         }
+
+      if (ludpp->lud_exts)
+         {
+         for (i = 0; ludpp->lud_exts[i]; ++i) U_SYSCALL_VOID(free, "%p", ludpp->lud_exts[i]);
+
+         U_SYSCALL_VOID(free, "%p", ludpp->lud_exts);
+         }
+
+      U_SYSCALL_VOID(free, "%p", ludpp);
+#  endif
+
+      ludpp = 0;
       }
 
    if (ld)
@@ -176,8 +202,8 @@ void ULDAP::clear()
       U_SYSCALL(ldap_unbind_s, "%p", ld);
                                      ld = 0;
 
-#  ifdef HAVE_LDAP_SSL_H
-   // if (isSecure) U_SYSCALL_NO_PARAM(ldapssl_client_deinit);
+#  if defined(HAVE_LDAP_SSL_H) && defined(HAS_NOVELL_LDAPSDK)
+      if (isSecure) U_SYSCALL_NO_PARAM(ldapssl_client_deinit);
 #  endif
       }
 }
@@ -293,13 +319,11 @@ const char* ULDAP::error()
 
    char* descr = ldap_err2string(result);
 
-#ifdef HAVE_LDAP_SSL_H
-   /*
-    * get a meaningful error string back from the security library
+   /* get a meaningful error string back from the security library
     * this function should be called, if ldap_err2string doesn't
     * identify the error code.
     */
-
+#if defined(HAVE_LDAP_SSL_H) && !defined(__MINGW32__) && !defined(HAVE_WINLDAP_H)
    if (descr == 0) descr = (char*)ldapssl_err2string(result);
 #endif
 
@@ -307,6 +331,33 @@ const char* ULDAP::error()
 
    U_RETURN(buffer);
 }
+
+#if defined(__MINGW32__) && defined(HAVE_WINLDAP_H)
+
+/* Split 'str' into strings separated by commas.
+ *
+ * Note: res[] points into 'str'.
+ */
+
+U_NO_EXPORT char** ULDAP::split_str(char* str)
+{
+   U_TRACE(0, "ULDAP::split_str(%S)", str)
+
+   int i;
+   char **res, *s;
+
+   for (i = 2, s = strchr(str, ','); s; ++i) s = strchr(++s, ',');
+
+   res = (char**)calloc(i, sizeof(char*));
+
+   for (i = 0, s = strtok(str, ","); s; s = strtok(0, ","), ++i) res[i] = s;
+
+   U_DUMP_ATTRS(res)
+
+   return res;
+}
+
+#endif
 
 /* Initialize the LDAP session */
 
@@ -316,9 +367,92 @@ bool ULDAP::init(const char* url)
 
    U_CHECK_MEMORY
 
+   U_INTERNAL_ASSERT_POINTER(url)
+
    if (ludpp) clear();
 
+#if !defined(__MINGW32__) && !defined(HAVE_WINLDAP_H)
    result = U_SYSCALL(ldap_url_parse, "%S,%p", url, &ludpp);
+#else
+   result = LDAP_INVALID_SYNTAX;
+
+   /* Break apart the pieces of an LDAP URL.
+    *
+    * Syntax:
+    *   ldap://<hostname>:<port>/<base_dn>?<attributes>?<scope>?<filter>?<ext>
+    *
+    * Defined in RFC4516 section 2.
+    */
+
+   Url _url(url, strlen(url));
+
+   ludpp = (LDAPURLDesc*) calloc(1, sizeof(LDAPURLDesc));
+
+   ludpp->lud_host  = _url.getHost().c_strdup();
+   ludpp->lud_port  = _url.getPort();
+   ludpp->lud_dn    = _url.getPath().c_strndup(1);
+   ludpp->lud_scope = LDAP_SCOPE_BASE;
+
+   U_INTERNAL_DUMP("host = %S dn = %S", ludpp->lud_host, ludpp->lud_dn)
+
+   // parse attributes, skip "??".
+
+   UString query = _url.getQuery();
+
+   char* p = query.data();
+   char* q = strchr(p, '?');
+
+   if (q) *q++ = '\0';
+
+   U_INTERNAL_DUMP("attributes = %S", p)
+
+   if (*p && *p != '?') ludpp->lud_attrs = split_str(p);
+
+   p = q;
+
+   if (!p) goto next;
+
+   // parse scope, skip "??"
+
+   q = strchr(p, '?');
+
+   if (q) *q++ = '\0';
+
+   if (*p && *p != '?')
+      {
+           if (U_STREQ(p, "base"))     ludpp->lud_scope = LDAP_SCOPE_BASE;
+      else if (U_STREQ(p, "one"))      ludpp->lud_scope = LDAP_SCOPE_ONELEVEL;
+      else if (U_STREQ(p, "onetree"))  ludpp->lud_scope = LDAP_SCOPE_ONELEVEL;
+      else if (U_STREQ(p, "sub"))      ludpp->lud_scope = LDAP_SCOPE_SUBTREE;
+      else if (U_STREQ(p, "subtree"))  ludpp->lud_scope = LDAP_SCOPE_SUBTREE;
+
+      U_INTERNAL_DUMP("scope = %d %S", ludpp->lud_scope, p)
+      }
+
+   p = q;
+
+   if (!p) goto next;
+
+   // parse filter
+
+   q = strchr(p, '?');
+
+   if (q) *q++ = '\0';
+
+   if (!*p) goto next;
+
+   ludpp->lud_filter = strdup(p);
+
+   U_INTERNAL_DUMP("filter = %S", ludpp->lud_filter)
+
+   // parse extensions
+
+   if (q) ludpp->lud_exts = split_str(q);
+
+   result = LDAP_SUCCESS;
+
+next:
+#endif
 
    if (result != LDAP_SUCCESS)
       {
@@ -327,59 +461,65 @@ bool ULDAP::init(const char* url)
 
       switch (result)
          {
-         case  LDAP_URL_ERR_MEM:
+#  if !defined(__MINGW32__) || !defined(HAVE_WINLDAP_H)
+         case LDAP_INVALID_SYNTAX:
+            (void) sprintf(buffer, "LDAP_INVALID_SYNTAX (%d, %s)", result, "Invalid URL syntax");
+         break;
+
+         case LDAP_URL_ERR_MEM:
             (void) sprintf(buffer, "LDAP_URL_ERR_MEM (%d, %s)", result, "Cannot allocate memory space");
          break;
 
-         case  LDAP_URL_ERR_PARAM:
+         case LDAP_URL_ERR_PARAM:
             (void) sprintf(buffer, "LDAP_URL_ERR_PARAM (%d, %s)", result, "Invalid parameter");
          break;
 
-         case  LDAP_URL_ERR_BADSCOPE:
+         case LDAP_URL_ERR_BADSCOPE:
             (void) sprintf(buffer, "LDAP_URL_ERR_BADSCOPE (%d, %s)", result, "Invalid or missing scope string");
          break;
 
-#     ifdef HAVE_LDAP_SSL_H
-         case  LDAP_URL_ERR_NOTLDAP:
+#     if defined(HAVE_LDAP_SSL_H)
+         case LDAP_URL_ERR_NOTLDAP:
             (void) sprintf(buffer, "LDAP_URL_ERR_NOTLDAP (%d, %s)", result, "URL doesn't begin with \"ldap://\"");
          break;
 
-         case  LDAP_URL_ERR_NODN:
+         case LDAP_URL_ERR_NODN:
             (void) sprintf(buffer, "LDAP_URL_ERR_NODN (%d, %s)", result, "URL has no DN (required)");
          break;
 
-         case  LDAP_URL_UNRECOGNIZED_CRITICAL_EXTENSION:
+         case LDAP_URL_UNRECOGNIZED_CRITICAL_EXTENSION:
             (void) sprintf(buffer, "LDAP_URL_UNRECOGNIZED_CRITICAL_EXTENSION (%d, %s)", result, "");
          break;
 #     else
-         case  LDAP_URL_ERR_BADSCHEME:
+         case LDAP_URL_ERR_BADSCHEME:
             (void) sprintf(buffer, "LDAP_URL_ERR_BADSCHEME (%d, %s)", result, "URL doesnt begin with \"ldap[s]://\"");
          break;
 
-         case  LDAP_URL_ERR_BADENCLOSURE:
+         case LDAP_URL_ERR_BADENCLOSURE:
             (void) sprintf(buffer, "LDAP_URL_ERR_BADENCLOSURE (%d, %s)", result, "URL is missing trailing \">\"");
          break;
 
-         case  LDAP_URL_ERR_BADURL:
+         case LDAP_URL_ERR_BADURL:
             (void) sprintf(buffer, "LDAP_URL_ERR_BADURL (%d, %s)", result, "Invalid URL");
          break;
 
-         case  LDAP_URL_ERR_BADHOST:
+         case LDAP_URL_ERR_BADHOST:
             (void) sprintf(buffer, "LDAP_URL_ERR_BADHOST (%d, %s)", result, "Host port is invalid");
          break;
 
-         case  LDAP_URL_ERR_BADATTRS:
+         case LDAP_URL_ERR_BADATTRS:
             (void) sprintf(buffer, "LDAP_URL_ERR_BADATTRS (%d, %s)", result, "Invalid or missing attributes");
          break;
 
-         case  LDAP_URL_ERR_BADFILTER:
+         case LDAP_URL_ERR_BADFILTER:
             (void) sprintf(buffer, "LDAP_URL_ERR_BADFILTER (%d, %s)", result, "Invalid or missing filter");
          break;
 
-         case  LDAP_URL_ERR_BADEXTS:
+         case LDAP_URL_ERR_BADEXTS:
             (void) sprintf(buffer, "LDAP_URL_ERR_BADEXTS (%d, %s)", result, "Invalid or missing extensions");
          break;
 #     endif
+#  endif
 
          default:
             (void) sprintf(buffer, "??? (%d, %s)", result, "");
@@ -401,6 +541,7 @@ bool ULDAP::init(const char* url)
 
       isSecure = true;
 
+#  ifdef HAS_NOVELL_LDAPSDK
       /*
        * Initialize the ssl library. The first parameter of
        * ldapssl_client_init is a certificate file. However, when used
@@ -416,7 +557,6 @@ bool ULDAP::init(const char* url)
 
       if (result != LDAP_SUCCESS) U_RETURN(false);
 
-#  ifdef LDAPSSL_VERIFY_NONE
       /*
        * Configure the LDAP SSL library to not verify the server certificate.
        * The default is LDAPSSL_VERIFY_SERVER which validates all servers
@@ -434,7 +574,7 @@ bool ULDAP::init(const char* url)
 
       if (result != LDAP_SUCCESS)
          {
-      // U_SYSCALL_NO_PARAM(ldapssl_client_deinit);
+         U_SYSCALL_NO_PARAM(ldapssl_client_deinit);
 
          U_RETURN(false);
          }
@@ -442,16 +582,22 @@ bool ULDAP::init(const char* url)
 
       /* create a LDAP session handle that is enabled for ssl connection */
 
-      ld = (LDAP*) U_SYSCALL(ldapssl_init, "%S,%d,%d", ludpp->lud_host,   /* host name */
-                        (ludpp->lud_port ? ludpp->lud_port : LDAPS_PORT), /* port number */
-                        1);                                               /* 0 - clear text, 1 - enable for ssl */
+      ld = (LDAP*) U_SYSCALL(ldapssl_init, "%S,%d,%d", (char*)ludpp->lud_host, /* host name */
+                        (ludpp->lud_port ? ludpp->lud_port : LDAPS_PORT),      /* port number */
+                        1);                                                    /* 0 - clear text, 1 - enable for ssl */
 
       if (ld == 0)
          {
-      // U_SYSCALL_NO_PARAM(ldapssl_client_deinit);
+#     ifdef HAS_NOVELL_LDAPSDK
+         U_SYSCALL_NO_PARAM(ldapssl_client_deinit);
+#     endif
 
          U_RETURN(false);
          }
+
+#  if defined(__MINGW32__) && defined(HAVE_WINLDAP_H)
+      (void) U_SYSCALL(ldap_set_option, "%p,%d,%d", ld, LDAP_OPT_SSL, LDAP_OPT_ON);
+#  endif
       }
    else
 #endif

@@ -161,20 +161,20 @@ public:
    * Returns <i>CA</i> that signed this certificate
    */
 
-   static UString getName(X509_NAME* n, bool ldap = false);
+   static UString getName(X509_NAME* n, bool bldap = false);
 
-   static UString getIssuer(X509* _x509, bool ldap = false)
+   static UString getIssuer(X509* _x509, bool bldap = false)
       {
-      U_TRACE(1, "UCertificate::getIssuer(%p,%b)", _x509, ldap)
+      U_TRACE(1, "UCertificate::getIssuer(%p,%b)", _x509, bldap)
 
       U_INTERNAL_ASSERT_POINTER(_x509)
 
       X509_NAME* n = (X509_NAME*) U_SYSCALL(X509_get_issuer_name, "%p", _x509);
 
-      return getName(n, ldap);
+      return getName(n, bldap);
       }
 
-   UString getIssuer(bool ldap = false) const { return getIssuer(x509, ldap); }
+   UString getIssuer(bool bldap = false) const { return getIssuer(x509, bldap); }
 
    UString getIssuerForLDAP() const { return getIssuer(true); }
 
@@ -182,18 +182,18 @@ public:
    * Returns <i>subject</i> of this certificate
    */
 
-   static UString getSubject(X509* _x509, bool ldap = false)
+   static UString getSubject(X509* _x509, bool bldap = false)
       {
-      U_TRACE(1, "UCertificate::getSubject(%p,%b)", _x509, ldap)
+      U_TRACE(1, "UCertificate::getSubject(%p,%b)", _x509, bldap)
 
       U_INTERNAL_ASSERT_POINTER(_x509)
 
       X509_NAME* n = (X509_NAME*) U_SYSCALL(X509_get_subject_name, "%p", _x509);
 
-      return getName(n, ldap);
+      return getName(n, bldap);
       }
 
-   UString getSubject(bool ldap = false) const { return getSubject(x509, ldap); }
+   UString getSubject(bool bldap = false) const { return getSubject(x509, bldap); }
 
    UString getSubjectForLDAP() const { return getSubject(true); }
 
