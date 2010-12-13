@@ -24,10 +24,11 @@
 #endif
 
 int      USocketExt::pcount;
-uint32_t USocketExt::size_message;
 #if defined(DEBUG) || defined(U_TEST)
 char*    USocketExt::pbuffer;
 #endif
+uint32_t USocketExt::size_message;
+uint32_t USocketExt::request_read_timeout;
 
 // Socket I/O
 
@@ -45,7 +46,7 @@ bool USocketExt::read(USocket* socket, UString& buffer, int count, int timeoutMS
    ssize_t value;
    bool single_read;
    int diff, byte_read;
-   uint32_t start, capacity, num = 0, max_num = 0;
+   uint32_t start, capacity, read_timeout = 0;
 
    // NB: THINK REALLY VERY MUCH BEFORE CHANGE CODE HERE...
 
@@ -133,11 +134,25 @@ read:
 
    if (byte_read < count)
       {
-      // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
+      if (request_read_timeout)
+         {
+         (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
 
-      if (max_num == 0) max_num = 20 + (count / 1024);
+         if (read_timeout == 0) read_timeout = request_read_timeout + u_now.tv_sec;
 
-      if (num++ < max_num) goto read;
+         // NB: may be is attacked by a "slow loris"... http://lwn.net/Articles/337853/
+
+         if (u_now.tv_sec > read_timeout)
+            {
+            socket->iState = USocket::BROKEN;
+
+            socket->close();
+
+            U_RETURN(false);
+            }
+         }
+
+      goto read;
       }
 
    if (single_read)
@@ -201,7 +216,7 @@ uint32_t USocketExt::read(USocket* s, UString& buffer, const char* token, uint32
 
       // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
 
-      if (count++ > 20) break;
+      if (count++ > 10) break;
       }
 
    U_RETURN(U_NOT_FOUND);

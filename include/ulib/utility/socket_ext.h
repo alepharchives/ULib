@@ -31,18 +31,18 @@ public:
    static UString getNetworkAddress(int fd, const char* device);        // eth0
    static UString getNetworkDevice(         const char* exclude);       // eth0
 
+   static int pcount;
+#if defined(DEBUG) || defined(U_TEST)
+   static char* pbuffer;
+#endif
+   static uint32_t size_message, request_read_timeout;
+
    /**
     * Read data from socket
     *
     * @param timeoutMS specified the timeout value, in milliseconds.
     *        A negative value indicates no timeout, i.e. an infinite wait.
     */
-
-   static int pcount;
-   static uint32_t size_message;
-#if defined(DEBUG) || defined(U_TEST)
-   static char* pbuffer;
-#endif
 
    // read while not received count data
 

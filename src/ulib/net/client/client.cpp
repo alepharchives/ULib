@@ -275,7 +275,9 @@ bool UClient_Base::setUrl(const UString& location)
       U_RETURN(false);
       }
 
-   uri.clear();
+#ifdef DEBUG
+   uri.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE... (uri is substr of url)
+#endif
 
    url.set(location);
 

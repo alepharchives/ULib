@@ -57,6 +57,8 @@ public:
    static const UString* str_URI_PROTECTED_MASK;
    static const UString* str_URI_REQUEST_CERT_MASK;
    static const UString* str_URI_PROTECTED_ALLOWED_IP;
+   static const UString* str_LIMIT_REQUEST_BODY;
+   static const UString* str_REQUEST_READ_TIMEOUT;
 
    static void str_allocate();
 

@@ -540,12 +540,12 @@ bool UString::reserve(uint32_t n)
 
    if (rep->_capacity >= n) U_RETURN(false);
 
-   n = U_SIZE_TO_CHUNK(n);
+   U_INTERNAL_ASSERT(rep->_capacity == 0 ||
+                     rep->_capacity >= U_CAPACITY) // it must start with U_CAPACITY...
 
    // Make room for a total of n element
 
-   U_INTERNAL_ASSERT(rep->_capacity == 0 ||
-                     rep->_capacity >= U_CAPACITY) // it must start with U_CAPACITY...
+   n = U_SIZE_TO_CHUNK(n);
 
    set(UStringRep::create(rep->_length, n, rep->str));
 

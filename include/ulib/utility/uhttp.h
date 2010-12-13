@@ -397,6 +397,7 @@ public:
    static bool virtual_host;
    static UString* pathname;
    static UString* request_uri;
+   static uint32_t limit_request_body;
 
    static void checkHTTPRequest();
    static void processHTTPGetRequest();

@@ -84,7 +84,7 @@ userver {
 
 # PLUGIN_DIR     /usr/local/libexec/ulib
 
-  REQ_TIMEOUT     5
+  REQ_TIMEOUT    30
   CGI_TIMEOUT    60
 
   MAX_KEEP_ALIVE 1024
@@ -115,6 +115,11 @@ userver {
 # URI_PROTECTED_ALLOWED_IP   list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
 #
 # URI_REQUEST_CERT_MASK      mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
+#
+# This directive gives greater control over abnormal client request behavior, which may be useful for avoiding some forms of denial-of-service attacks
+#
+# LIMIT_REQUEST_BODY			  restricts the total size of the HTTP request body sent from the client
+# REQUEST_READ_TIMEOUT       set timeout for receiving requests
 # ------------------------------------------------------------------------------------------------------------------------------------------
 
 mod_http {
@@ -143,6 +148,12 @@ mod_http {
 # URI_PROTECTED_ALLOWED_IP  127.0.0.1,10.30.0.0/16
 #
 # URI_REQUEST_CERT_MASK     /wi-auth/cgi-bin/cpe.sh
+
+# This directive gives greater control over abnormal client request behavior,
+# which may be useful for avoiding some forms of denial-of-service attacks
+#
+# LIMIT_REQUEST_BODY			  100K
+# REQUEST_READ_TIMEOUT       30 
 }
 
 # -----------------------------------------------------------------------------------------------

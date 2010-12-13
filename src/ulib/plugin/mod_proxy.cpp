@@ -53,7 +53,7 @@ int UProxyPlugIn::handlerInit()
       goto end;
       }
 
-   if (UServer_Base::preforked_num_kids == 0) client_http.setHostForbidden(UServer_Base::getHost());
+   if (UServer_Base::preforked_num_kids == 0) client_http.setLocalHost(UServer_Base::getHost());
 
    U_SRV_LOG("initialization of plugin success");
 

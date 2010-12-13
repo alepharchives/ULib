@@ -42,7 +42,7 @@ public:
    static void str_allocate();
 
    void reset();
-   void setHostForbidden(const UString& host) { forbidden = host; }
+   void setLocalHost(const UString& host) { localhost = host; }
 
    // Returns a modifiable sequence of MIME-type headers that will be used to form a request to the HTTP server
 
@@ -132,7 +132,7 @@ public:
 protected:
    UMimeHeader* requestHeader;
    UMimeHeader* responseHeader;
-   UString body, forbidden, user, password, method;
+   UString body, localhost, user, password, method;
    bool bFollowRedirects;
 
     UHttpClient_Base(UFileConfig* cfg);

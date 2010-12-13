@@ -253,7 +253,7 @@ void UHttpClient_Base::reset()
      body.clear();
    method.clear();
 
-   UClient_Base::reset();
+   UClient_Base::request.clear();
 }
 
 //=======================================================================================
@@ -522,10 +522,9 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
          U_RETURN(-1);
          }
 
-      if (forbidden.empty() == false &&
-          newLocation.find(forbidden) != U_NOT_FOUND)
+      if (newLocation.find(localhost) != U_NOT_FOUND)
          {
-         U_INTERNAL_DUMP("LOCATION HEADER POINT TO FORBIDDEN HOST")
+         U_INTERNAL_DUMP("LOCATION HEADER POINT TO LOCALHOST CAUSING DEADLOCK")
 
          U_RETURN(-1);
          }
@@ -568,7 +567,7 @@ void UHttpClient_Base::composeRequest(UString& data, uint32_t& startHeader)
       requestHeader->clear();
       }
 
-   UClient_Base::reset();
+   UClient_Base::request.clear();
 
    UClient_Base::wrapRequestWithHTTP(extension.c_str());
 

@@ -25,6 +25,8 @@ const UString* UHttpPlugIn::str_CACHE_FILE_MASK;
 const UString* UHttpPlugIn::str_URI_PROTECTED_MASK;
 const UString* UHttpPlugIn::str_URI_REQUEST_CERT_MASK;
 const UString* UHttpPlugIn::str_URI_PROTECTED_ALLOWED_IP;
+const UString* UHttpPlugIn::str_LIMIT_REQUEST_BODY;
+const UString* UHttpPlugIn::str_REQUEST_READ_TIMEOUT;
 
 void UHttpPlugIn::str_allocate()
 {
@@ -34,18 +36,24 @@ void UHttpPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_URI_PROTECTED_MASK,0)
    U_INTERNAL_ASSERT_EQUALS(str_URI_REQUEST_CERT_MASK,0)
    U_INTERNAL_ASSERT_EQUALS(str_URI_PROTECTED_ALLOWED_IP,0)
+   U_INTERNAL_ASSERT_EQUALS(str_LIMIT_REQUEST_BODY,0)
+   U_INTERNAL_ASSERT_EQUALS(str_REQUEST_READ_TIMEOUT,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("CACHE_FILE_MASK") },
       { U_STRINGREP_FROM_CONSTANT("URI_PROTECTED_MASK") },
       { U_STRINGREP_FROM_CONSTANT("URI_REQUEST_CERT_MASK") },
       { U_STRINGREP_FROM_CONSTANT("URI_PROTECTED_ALLOWED_IP") },
+      { U_STRINGREP_FROM_CONSTANT("LIMIT_REQUEST_BODY") },
+      { U_STRINGREP_FROM_CONSTANT("REQUEST_READ_TIMEOUT") }
    };
 
    U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,          U_STRING_FROM_STRINGREP_STORAGE(0));
    U_NEW_ULIB_OBJECT(str_URI_PROTECTED_MASK,       U_STRING_FROM_STRINGREP_STORAGE(1));
    U_NEW_ULIB_OBJECT(str_URI_REQUEST_CERT_MASK,    U_STRING_FROM_STRINGREP_STORAGE(2));
    U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP, U_STRING_FROM_STRINGREP_STORAGE(3));
+   U_NEW_ULIB_OBJECT(str_LIMIT_REQUEST_BODY,       U_STRING_FROM_STRINGREP_STORAGE(4));
+   U_NEW_ULIB_OBJECT(str_REQUEST_READ_TIMEOUT,     U_STRING_FROM_STRINGREP_STORAGE(5));
 }
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -86,6 +94,12 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // URI_PROTECTED_ALLOWED_IP      list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
    //
    // URI_REQUEST_CERT_MASK         mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
+   //
+   // ----------------------------------------------------------------------------------------------------------------------------------------------------
+   // This directive gives greater control over abnormal client request behavior, which may be useful for avoiding some forms of denial-of-service attacks
+   // ----------------------------------------------------------------------------------------------------------------------------------------------------
+   // LIMIT_REQUEST_BODY           restricts the total size of the HTTP request body sent from the client
+   // REQUEST_READ_TIMEOUT         set timeout for receiving requests
    // ------------------------------------------------------------------------------------------------------------------------------------------------
 
    (void) cfg.loadVector(valias, "ALIAS");
@@ -114,15 +128,16 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       U_INTERNAL_ASSERT_EQUALS(UHTTP::cache_file_mask,0)
 
 #  ifdef HAVE_SSL
-      uri_request_cert_mask        = cfg[*str_URI_REQUEST_CERT_MASK];
+      uri_request_cert_mask            = cfg[*str_URI_REQUEST_CERT_MASK];
 #  endif
-      uri_protected_mask           = cfg[*str_URI_PROTECTED_MASK];
-      uri_protected_allowed_ip     = cfg[*str_URI_PROTECTED_ALLOWED_IP];
-      UHTTP::virtual_host          = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
-      UHTTP::digest_authentication = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
-
-       UHTTP::cache_file_mask      = U_NEW(UString);
-      *UHTTP::cache_file_mask      = cfg[*str_CACHE_FILE_MASK];
+      uri_protected_mask               = cfg[*str_URI_PROTECTED_MASK];
+      uri_protected_allowed_ip         = cfg[*str_URI_PROTECTED_ALLOWED_IP];
+      UHTTP::limit_request_body        = cfg[*str_LIMIT_REQUEST_BODY].strtol();
+      USocketExt::request_read_timeout = cfg[*str_REQUEST_READ_TIMEOUT].strtol();
+      UHTTP::virtual_host              = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
+      UHTTP::digest_authentication     = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
+       UHTTP::cache_file_mask          = U_NEW(UString);
+      *UHTTP::cache_file_mask          = cfg[*str_CACHE_FILE_MASK];
 
       if (UHTTP::cache_file_mask->empty())
          {

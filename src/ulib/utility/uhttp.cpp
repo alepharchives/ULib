@@ -116,6 +116,7 @@ UString*                          UHTTP::penvironment;
 UString*                          UHTTP::cache_file_mask;
 UString*                          UHTTP::htpasswd;
 UString*                          UHTTP::htdigest;
+uint32_t                          UHTTP::limit_request_body;
 UCommand*                         UHTTP::pcmd;
 uhttpinfo                         UHTTP::http_info;
 UStringRep*                       UHTTP::pkey;
@@ -1204,13 +1205,19 @@ bool UHTTP::readHTTPBody(USocket* s, UString& rbuffer, UString& body)
 
       U_RETURN(true);
       }
-
+   
    body_byte_read = (rbuffer.size() - http_info.endHeader);
 
    U_INTERNAL_DUMP("rbuffer.size() = %u body_byte_read = %u Content-Length = %u", rbuffer.size(), body_byte_read, http_info.clength)
 
    if (http_info.clength > body_byte_read)
       {
+      if (limit_request_body &&
+          http_info.clength > limit_request_body)
+         {
+         U_RETURN(false);
+         }
+
       UString* pbuffer;
 
       if (http_info.clength > (64 * 1024 * 1024) && // 64M
