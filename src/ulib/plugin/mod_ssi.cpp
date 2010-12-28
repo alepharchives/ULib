@@ -30,6 +30,7 @@
 U_CREAT_FUNC(mod_ssi, USSIPlugIn)
 #endif
 
+const UString* USSIPlugIn::str_expr;
 const UString* USSIPlugIn::str_var;
 const UString* USSIPlugIn::str_cmd;
 const UString* USSIPlugIn::str_cgi;
@@ -55,6 +56,7 @@ void USSIPlugIn::str_allocate()
 {
    U_TRACE(0, "USSIPlugIn::str_allocate()")
 
+   U_INTERNAL_ASSERT_EQUALS(str_expr,0)
    U_INTERNAL_ASSERT_EQUALS(str_var,0)
    U_INTERNAL_ASSERT_EQUALS(str_cmd,0)
    U_INTERNAL_ASSERT_EQUALS(str_cgi,0)
@@ -77,6 +79,7 @@ void USSIPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_timefmt_default,0)
 
    static ustringrep stringrep_storage[] = {
+      { U_STRINGREP_FROM_CONSTANT("expr") },
       { U_STRINGREP_FROM_CONSTANT("var") },
       { U_STRINGREP_FROM_CONSTANT("cmd") },
       { U_STRINGREP_FROM_CONSTANT("cgi") },
@@ -99,26 +102,27 @@ void USSIPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("%A, %d-%b-%Y %H:%M:%S GMT") }
    };
 
-   U_NEW_ULIB_OBJECT(str_var,             U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_cmd,             U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_cgi,             U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_file,            U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_value,           U_STRING_FROM_STRINGREP_STORAGE(4));
-   U_NEW_ULIB_OBJECT(str_bytes,           U_STRING_FROM_STRINGREP_STORAGE(5));
-   U_NEW_ULIB_OBJECT(str_abbrev,          U_STRING_FROM_STRINGREP_STORAGE(6));
-   U_NEW_ULIB_OBJECT(str_errmsg,          U_STRING_FROM_STRINGREP_STORAGE(7));
-   U_NEW_ULIB_OBJECT(str_virtual,         U_STRING_FROM_STRINGREP_STORAGE(8));
-   U_NEW_ULIB_OBJECT(str_timefmt,         U_STRING_FROM_STRINGREP_STORAGE(9));
-   U_NEW_ULIB_OBJECT(str_sizefmt,         U_STRING_FROM_STRINGREP_STORAGE(10));
-   U_NEW_ULIB_OBJECT(str_DATE_GMT,        U_STRING_FROM_STRINGREP_STORAGE(11));
-   U_NEW_ULIB_OBJECT(str_USER_NAME,       U_STRING_FROM_STRINGREP_STORAGE(12));
-   U_NEW_ULIB_OBJECT(str_DATE_LOCAL,      U_STRING_FROM_STRINGREP_STORAGE(13));
-   U_NEW_ULIB_OBJECT(str_DOCUMENT_URI,    U_STRING_FROM_STRINGREP_STORAGE(14));
-   U_NEW_ULIB_OBJECT(str_DOCUMENT_NAME,   U_STRING_FROM_STRINGREP_STORAGE(15));
-   U_NEW_ULIB_OBJECT(str_LAST_MODIFIED,   U_STRING_FROM_STRINGREP_STORAGE(16));
-   U_NEW_ULIB_OBJECT(str_SSI_EXT_MASK,    U_STRING_FROM_STRINGREP_STORAGE(17));
-   U_NEW_ULIB_OBJECT(str_errmsg_default,  U_STRING_FROM_STRINGREP_STORAGE(18));
-   U_NEW_ULIB_OBJECT(str_timefmt_default, U_STRING_FROM_STRINGREP_STORAGE(19));
+   U_NEW_ULIB_OBJECT(str_expr,            U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_var,             U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_cmd,             U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_cgi,             U_STRING_FROM_STRINGREP_STORAGE(3));
+   U_NEW_ULIB_OBJECT(str_file,            U_STRING_FROM_STRINGREP_STORAGE(4));
+   U_NEW_ULIB_OBJECT(str_value,           U_STRING_FROM_STRINGREP_STORAGE(5));
+   U_NEW_ULIB_OBJECT(str_bytes,           U_STRING_FROM_STRINGREP_STORAGE(6));
+   U_NEW_ULIB_OBJECT(str_abbrev,          U_STRING_FROM_STRINGREP_STORAGE(7));
+   U_NEW_ULIB_OBJECT(str_errmsg,          U_STRING_FROM_STRINGREP_STORAGE(8));
+   U_NEW_ULIB_OBJECT(str_virtual,         U_STRING_FROM_STRINGREP_STORAGE(9));
+   U_NEW_ULIB_OBJECT(str_timefmt,         U_STRING_FROM_STRINGREP_STORAGE(10));
+   U_NEW_ULIB_OBJECT(str_sizefmt,         U_STRING_FROM_STRINGREP_STORAGE(11));
+   U_NEW_ULIB_OBJECT(str_DATE_GMT,        U_STRING_FROM_STRINGREP_STORAGE(12));
+   U_NEW_ULIB_OBJECT(str_USER_NAME,       U_STRING_FROM_STRINGREP_STORAGE(13));
+   U_NEW_ULIB_OBJECT(str_DATE_LOCAL,      U_STRING_FROM_STRINGREP_STORAGE(14));
+   U_NEW_ULIB_OBJECT(str_DOCUMENT_URI,    U_STRING_FROM_STRINGREP_STORAGE(15));
+   U_NEW_ULIB_OBJECT(str_DOCUMENT_NAME,   U_STRING_FROM_STRINGREP_STORAGE(16));
+   U_NEW_ULIB_OBJECT(str_LAST_MODIFIED,   U_STRING_FROM_STRINGREP_STORAGE(17));
+   U_NEW_ULIB_OBJECT(str_SSI_EXT_MASK,    U_STRING_FROM_STRINGREP_STORAGE(18));
+   U_NEW_ULIB_OBJECT(str_errmsg_default,  U_STRING_FROM_STRINGREP_STORAGE(19));
+   U_NEW_ULIB_OBJECT(str_timefmt_default, U_STRING_FROM_STRINGREP_STORAGE(20));
 }
 
 U_NO_EXPORT UString USSIPlugIn::getInclude(const UString& include, int include_level)
@@ -145,13 +149,13 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 {
    U_TRACE(0, "USSIPlugIn::processSSIRequest(%.*S,%d)", U_STRING_TO_TRACE(content), include_level)
 
-   int op;
    UString tmp; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
    int32_t i, n;
-   bool bgroup, bfile;
    const char* directive;
    UVector<UString> name_value;
    uint32_t distance, pos, size, len;
+   int op, if_level = 0, if_is_false_level = 0;
+   bool bgroup, bfile, if_is_false = false, if_is_false_endif = false;
    UString token, name, value, pathname, include, directory, output(U_CAPACITY);
 
    (directory = UHTTP::getDirectoryURI()).duplicate();
@@ -159,7 +163,8 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
    UTokenizer t(content);
    t.setGroup(U_CONSTANT_TO_PARAM("<!--->"));
 
-   enum { SSI_NONE, SSI_INCLUDE, SSI_EXEC, SSI_ECHO, SSI_CONFIG, SSI_FLASTMOD, SSI_FSIZE, SSI_PRINTENV, SSI_SET };
+   enum { SSI_NONE, SSI_INCLUDE, SSI_EXEC, SSI_ECHO, SSI_CONFIG, SSI_FLASTMOD,
+          SSI_FSIZE, SSI_PRINTENV, SSI_SET, SSI_IF, SSI_ELSE, SSI_ELIF, SSI_ENDIF };
 
    while (true)
       {
@@ -180,7 +185,11 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
          size = pos - distance;
 
-         if (size) (void) output.append(content.substr(distance, size)); // plain html block
+         if (size &&
+             if_is_false == false)
+            {
+            (void) output.append(content.substr(distance, size)); // plain html block
+            }
          }
 
       if (t.next(token, &bgroup) == false) break;
@@ -193,6 +202,47 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
       U_INTERNAL_DUMP("directive = %10s", directive)
 
+      /**
+       * <!--#element attribute=value attribute=value ... -->
+       *
+       * config       DONE
+       *   errmsg     DONE
+       *   sizefmt    DONE
+       *   timefmt    DONE
+       * echo         DONE
+       *   var        DONE
+       *   encoding   -- missing
+       * exec         DONE
+       *   cgi        DONE
+       *   cmd        DONE
+       * fsize        DONE
+       *   file       DONE
+       *   virtual    DONE
+       * flastmod     DONE
+       *   file       DONE
+       *   virtual    DONE
+       * include      DONE
+       *   file       DONE
+       *   virtual    DONE
+       * printenv     DONE
+       * set          DONE
+       *   var        DONE
+       *   value      DONE
+       *
+       * if           DONE
+       * elif         DONE
+       * else         DONE
+       * endif        DONE
+       *
+       * expressions
+       * &&, ||       DONE
+       * comp         DONE
+       * ${...}       DONE
+       * $...         DONE
+       * '...'        DONE
+       * ( ... )      DONE
+       */
+
       // Check element
 
       op = SSI_NONE;
@@ -201,6 +251,26 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
          {
          op = SSI_INCLUDE;
          i += U_CONSTANT_SIZE("include ");
+         }
+      else if (U_STRNEQ(directive, "if "))
+         {
+         op = SSI_IF;
+         i += U_CONSTANT_SIZE("if ");
+         }
+      else if (U_STRNEQ(directive, "else "))
+         {
+         op = SSI_ELSE;
+         i += U_CONSTANT_SIZE("else ");
+         }
+      else if (U_STRNEQ(directive, "elif "))
+         {
+         op = SSI_ELIF;
+         i += U_CONSTANT_SIZE("elif ");
+         }
+      else if (U_STRNEQ(directive, "endif "))
+         {
+         op = SSI_ENDIF;
+         i += U_CONSTANT_SIZE("endif ");
          }
       else if (U_STRNEQ(directive, "exec "))
          {
@@ -232,12 +302,13 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
          op = SSI_PRINTENV;
          i += U_CONSTANT_SIZE("printenv ");
          }
-
       else if (U_STRNEQ(directive, "set "))
          {
          op = SSI_SET;
          i += U_CONSTANT_SIZE("set ");
          }
+
+      U_INTERNAL_DUMP("op = %d", op)
 
       n = token.size() - i;
 
@@ -254,6 +325,89 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
          n = UStringExt::getNameValueFromData(tmp, name_value, U_CONSTANT_TO_PARAM(" "));
          }
+
+      U_INTERNAL_DUMP("if_is_false = %b if_is_false_level = %d if_level = %d if_is_false_endif = %b",
+                       if_is_false,     if_is_false_level,     if_level,     if_is_false_endif)
+
+      switch (op)
+         {
+         case SSI_IF:
+         case SSI_ELIF:
+            {
+            if (n != 2) U_ERROR("SSI: syntax error for %S statement", op == SSI_IF ? "if" : "elif");
+
+            name = name_value[0];
+
+            if (name != *str_expr) U_ERROR("SSI: unknow attribute %S for %S statement", U_STRING_TO_TRACE(name), op == SSI_IF ? "if" : "elif");
+
+            value = name_value[1];
+
+            if (op == SSI_IF)
+               {
+               if ( if_is_false       == false &&
+                   (if_is_false_level == 0 || (if_level < if_is_false_level)))
+                  {
+                  if_is_false = (UStringExt::evalExpression(value, environment).empty() ? (if_is_false_level = if_level, true) : false);
+                  }
+               }
+            else
+               {
+               --if_level;
+
+               if (if_level == if_is_false_level)
+                  {
+                  if (if_is_false &&
+                      if_is_false_endif == false)
+                     {
+                     if_is_false = (UStringExt::evalExpression(value, environment).empty() ? (if_is_false_level = if_level, true) : false);
+                     }
+                  else
+                     {
+                     if_is_false_level = if_level;
+                     if_is_false = if_is_false_endif = true;
+                     }
+                  }
+               }
+
+            ++if_level;
+            }
+         break;
+
+         case SSI_ELSE:
+            {
+            --if_level;
+
+            if (if_is_false)
+               {
+               if (if_level          == if_is_false_level &&
+                   if_is_false_endif == false)
+                  {
+                  if_is_false = false;
+                  }
+               }
+            else
+               {
+               if_is_false       = true;
+               if_is_false_level = if_level;
+               }
+
+            ++if_level;
+            }
+         break;
+
+         case SSI_ENDIF:
+            {
+            --if_level;
+
+            if (if_level == if_is_false_level) if_is_false = if_is_false_endif = false;
+            }
+         break;
+         }
+
+      U_INTERNAL_DUMP("if_is_false = %b if_is_false_level = %d if_level = %d if_is_false_endif = %b",
+                       if_is_false,     if_is_false_level,     if_level,     if_is_false_endif)
+
+      if (if_is_false) continue;
 
       switch (op)
          {
@@ -300,6 +454,16 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                if (name == *str_var)
                   {
+                  /**
+                   * DATE_GMT       The current date in Greenwich Mean Time.
+                   * DATE_LOCAL     The current date in the local time zone.
+                   * LAST_MODIFIED  The last modification date of the document requested by the user.
+                   * USER_NAME      Contains the owner of the file which included it.
+                   * DOCUMENT_NAME  The filename (excluding directories) of the document requested by the user.
+                   * DOCUMENT_URI   The URL path of the document requested by the user. Note that in the case of
+                   *                nested include files, this is not then URL for the current document.
+                   */
+
                        if (value == *str_DATE_GMT)      (void) output.append(UDate::strftime(timefmt.data(), u_now.tv_sec));
                   else if (value == *str_DATE_LOCAL)    (void) output.append(UDate::strftime(timefmt.data(), u_now.tv_sec + u_now_adjust));
                   else if (value == *str_LAST_MODIFIED) (void) output.append(UDate::strftime(timefmt.data(), last_modified));
@@ -308,21 +472,10 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                   else if (value == *str_DOCUMENT_NAME) (void) output.append(docname);
                   else
                      {
-                     // check if it is a cgi-var
+                     value = UStringExt::getEnvironmentVar(value, environment);
 
-                     pos = environment.find(value);
-
-                     if (pos == U_NOT_FOUND) (void) output.append(U_CONSTANT_TO_PARAM("(none)"));
-                     else
-                        {
-                        pos += value.size() + 1;
-
-                        distance = environment.find('\n', pos);
-
-                        if (environment.c_char(distance-1) == '"') --distance;
-
-                        (void) output.append(environment.c_pointer(pos), distance - pos);
-                        }
+                     if (value.empty()) (void) output.append(U_CONSTANT_TO_PARAM("(none)"));
+                     else               (void) output.append(value);
                      }
                   }
                }
@@ -407,6 +560,11 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
          break;
          }
       }
+
+   U_INTERNAL_DUMP("if_is_false = %b if_is_false_level = %d if_level = %d if_is_false_endif = %b",
+                    if_is_false,     if_is_false_level,     if_level,     if_is_false_endif)
+
+   if (if_is_false || if_is_false_endif || if_level || if_is_false_level) U_ERROR("SSI: syntax error for conditional statement");
 
    U_RETURN_STRING(output);
 }

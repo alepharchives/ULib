@@ -312,15 +312,16 @@ uint32_t Url::getQuery(UVector<UString>& vec)
 {
    U_TRACE(0, "Url::getQuery(%p)", &vec)
 
-   uint32_t n = vec.size(), result;
+   int _end = url.size() - 1;
 
-   UString _query = getQuery();
+   if (path_end < _end)
+      {
+      uint32_t result = UStringExt::getNameValueFromData(url.substr(path_end + 1, _end - path_end), vec, U_CONSTANT_TO_PARAM("&"));
 
-   if (_query.empty() == false) (void) UStringExt::getNameValueFromData(_query, vec, U_CONSTANT_TO_PARAM("&"), true);
+      U_RETURN(result);
+      }
 
-   result = (vec.size() - n);
-
-   U_RETURN(result);
+   U_RETURN(0);
 }
 
 bool Url::setQuery(const char* query_, uint32_t n)
@@ -365,9 +366,9 @@ bool Url::setQuery(UVector<UString>& vec)
    U_RETURN(false);
 }
 
-UString Url::getFile()
+UString Url::getPathAndQuery()
 {
-   U_TRACE(0, "Url::getFile()")
+   U_TRACE(0, "Url::getPathAndQuery()")
 
    UString file;
 

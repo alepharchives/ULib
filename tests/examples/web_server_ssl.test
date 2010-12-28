@@ -11,7 +11,7 @@ rm -f web_server_ssl?.log* uploads/* \
       trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]*
 
 #UTRACE="0 50M 0"
-#UOBJDUMP="0 100k 10"
+#UOBJDUMP="0 10M 5000"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 

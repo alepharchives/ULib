@@ -378,11 +378,8 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
 
 static int add_to_zip(int fd, const char* file)
 {
-   DIR* dir;
    zipentry* ze;
    int stat_return;
-   unsigned d_namlen;
-   struct dirent* de;
    struct stat statbuf;
 
    U_INTERNAL_TRACE("add_to_zip(%d,%s)", fd, file)
@@ -403,9 +400,11 @@ static int add_to_zip(int fd, const char* file)
       int nlen;
       char* t_ptr;
       char* fullname;
+      struct dirent* de;
+      unsigned d_namlen;
       unsigned long mod_time;
 
-      dir = opendir(file);
+      DIR* dir = opendir(file);
 
       if (dir == 0)
          {
@@ -811,7 +810,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
    unsigned n = 0;
    char* names[1024];
    unsigned names_len[1024];
-   int j, f_fd, dir, handle, file_num = 0;
+   int j, f_fd, handle, file_num = 0;
 
    U_INTERNAL_TRACE("zip_extract(%s,%p,%p,%p)", zipfile, files, filenames, filenames_len)
 
@@ -827,7 +826,6 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
       f_fd = 0;
       ze.crc = 0;
 
-      dir    = 0; /* by default, the file isn't a dir */
       handle = 1; /* by default we'll extract/create the file */
 
       if (zip_read_entry()) break;
@@ -923,8 +921,6 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
             }
 
          /* only a directory */
-
-         if (u_strlen((const char *)start) == 0) dir = 1;
 
          U_INTERNAL_TRACE("Leftovers are \"%s\" (%d)", start, u_strlen((const char*)start))
 

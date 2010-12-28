@@ -75,7 +75,7 @@ int UProxyPlugIn::handlerRequest()
 
    // find proxy service for the HTTP request
 
-   UString host(U_HTTP_HOST_TO_PARAM),
+   UString host(U_HTTP_VHOST_TO_PARAM),
            method = UHTTP::getHTTPMethod();
 
    UModProxyService* service = UModProxyService::findService(host, method, *vservice);

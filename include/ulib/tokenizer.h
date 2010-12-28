@@ -16,6 +16,30 @@
 
 #include <ulib/string.h>
 
+/**
+ * TOKEN ID
+ **/
+
+#define U_TK_ERROR    -1
+#define U_TK_AND       1
+#define U_TK_OR        2
+#define U_TK_EQ        3
+#define U_TK_NE        4
+#define U_TK_GT        5
+#define U_TK_GE        6
+#define U_TK_LT        7
+#define U_TK_LE        8
+#define U_TK_PLUS      9
+#define U_TK_MINUS    10
+#define U_TK_MULT     11
+#define U_TK_DIV      12
+#define U_TK_MOD      13
+#define U_TK_NOT      14
+#define U_TK_LPAREN   15
+#define U_TK_RPAREN   16
+#define U_TK_VALUE    17
+#define U_TK_NAME     18
+
 template <class T> class UVector;
 
 class U_EXPORT UTokenizer {
@@ -166,6 +190,7 @@ public:
    // EXT
 
    UString getTokenQueryParser();
+   int     getTokenId(UString& token);
    bool    tokenSeen(const UString* x);
 
    bool skipNumber(bool& isReal);

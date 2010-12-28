@@ -205,6 +205,22 @@
 
 enum AffermationType { U_MAYBE = 0, U_YES = 1, U_NOT = 2 };
 
+// string representation
+
+typedef struct ustringrep {
+#ifdef DEBUG
+   const void* restrict _this;
+#endif
+#if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
+   struct ustringrep* parent; // manage substring for increment reference of source string
+#  ifdef DEBUG
+   int32_t child;      // manage substring for capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
+#  endif
+#endif
+   uint32_t _length, _capacity, references;
+   const char* str;
+} ustringrep;
+
 /**
  * Enumeration of Hash (Digest) types
  * 

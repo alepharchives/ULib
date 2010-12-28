@@ -307,7 +307,6 @@ time_t UDate::getSecondFromTime(const char* str, bool gmt, const char* fmt)
 
    time_t t;
    struct tm tm;
-   int n, _julian;
 
    (void) memset(&tm, 0, sizeof(tm)); // do not remove this
 
@@ -350,8 +349,8 @@ time_t UDate::getSecondFromTime(const char* str, bool gmt, const char* fmt)
 scanf:
       // NB: fmt must be compatible with the sequence "YY MM DD HH MM SS"...
 
-      n = U_SYSCALL(sscanf, "%S,%S,%p,%p,%p,%p,%p,%p", str, fmt,
-                    &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
+      int n = U_SYSCALL(sscanf, "%S,%S,%p,%p,%p,%p,%p,%p", str, fmt,
+                        &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
 
       if (n != 6) U_RETURN(-1);
 
@@ -373,7 +372,7 @@ scanf:
 
    if (gmt)
       {
-      _julian = toJulian(tm.tm_mday, tm.tm_mon, tm.tm_year);
+      int _julian = toJulian(tm.tm_mday, tm.tm_mon, tm.tm_year);
 
       t = tm.tm_sec + (tm.tm_min * 60) + (tm.tm_hour * 3600) + getSecondFromJulian(_julian);
 

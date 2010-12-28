@@ -1302,6 +1302,9 @@ bool UHTTP::readHTTPRequest()
 
    char c;
    const char* p;
+   const char* p1;
+   const char* p2;
+   const char* p3;
    const char* ptr    = UClientImage_Base::rbuffer->data();
    const char* start  = ptr;
    uint32_t pos, pos1 = http_info.startHeader, pos2, l, char_r = (u_line_terminator_len == 2);
@@ -1331,10 +1334,27 @@ bool UHTTP::readHTTPRequest()
                 l == 3   && // sizeof("ost")
                 memcmp(ptrH, p, l) == 0)
                {
-               http_info.host     = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos;
-               http_info.host_len = pos2 - pos - char_r;
+               http_info.host      = (ptr - (ptrdiff_t)start) + (ptrdiff_t)pos;
+               http_info.host_len  =
+               http_info.host_vlen = pos2 - pos - char_r;
 
-               U_INTERNAL_DUMP("http_info.host = %.*S", http_info.host_len, start + (ptrdiff_t)http_info.host)
+               p2 = p1 = start + (ptrdiff_t)http_info.host;
+
+               U_INTERNAL_DUMP("http_info.host_len  = %u U_HTTP_HOST  = %.*S", http_info.host_len, http_info.host_len,  p1)
+
+               // Host: hostname[:port]
+
+               for (p3 = p2 + http_info.host_len; p2 < p3; ++p2)  
+                  {
+                  if (*p2 == ':')
+                     {
+                     http_info.host_vlen = p2 - p1;
+
+                     break;
+                     }
+                  }
+
+               U_INTERNAL_DUMP("http_info.host_vlen = %u U_HTTP_VHOST = %.*S", http_info.host_vlen, http_info.host_vlen, p1)
                }
             else if (c == 'A'                    &&
                      l == 14                     && // sizeof("ccept-Encoding")
@@ -3546,7 +3566,11 @@ UString UHTTP::getCGIEnvironment()
    // The difference between HTTP_HOST and SERVER_NAME is that
    // HTTP_HOST can include the «:PORT» text, and SERVER_NAME only the name
 
-   if (http_info.host_len)         buffer.snprintf_add("HTTP_HOST=%.*s\n", U_HTTP_HOST_TO_TRACE);
+   if (http_info.host_len)
+      {
+                                   buffer.snprintf_add("HTTP_HOST=%.*s\n",     U_HTTP_HOST_TO_TRACE);
+      if (virtual_host)            buffer.snprintf_add("VIRTUAL_HOST=/%.*s\n", U_HTTP_VHOST_TO_TRACE);
+      }
    else                            buffer.snprintf_add("HTTP_HOST=%.*s\n", U_STRING_TO_TRACE(ip_server));
 
    if (referer_len)                buffer.snprintf_add("HTTP_REFERER=%.*s\n", referer_len, referer_ptr); // The URL of the page that called your script

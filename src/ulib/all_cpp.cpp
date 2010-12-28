@@ -78,6 +78,7 @@
 #include "utility/string_ext.cpp"
 #include "utility/socket_ext.cpp"
 #include "utility/ring_buffer.cpp"
+#include "lemon/expression.cpp"
 
 #ifndef __MINGW32__
 #  include "net/unixsocket.cpp"

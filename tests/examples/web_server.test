@@ -11,7 +11,7 @@ rm -f web_server?.log* uploads/* \
       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
 
 #UTRACE="0 50M 0"
-#UOBJDUMP="0 100k 10"
+#UOBJDUMP="0 5M 5000"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 

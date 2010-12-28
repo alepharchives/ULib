@@ -198,7 +198,6 @@ UStringRep* UStringRep::substr(const char* t, uint32_t tlen)
    U_TRACE(0, "UStringRep::substr(%.*S,%u)", tlen, t, tlen)
 
    U_INTERNAL_ASSERT(tlen <= _length)
-   U_INTERNAL_ASSERT_RANGE(str,t,end())
 
    UStringRep* r;
 
@@ -210,6 +209,8 @@ UStringRep* UStringRep::substr(const char* t, uint32_t tlen)
       }
    else
       {
+      U_INTERNAL_ASSERT_RANGE(str,t,end())
+
       r = U_MALLOC_TYPE(UStringRep);
 
       r->set(tlen, 0, t);
@@ -539,9 +540,6 @@ bool UString::reserve(uint32_t n)
    U_INTERNAL_ASSERT(n <= max_size())
 
    if (rep->_capacity >= n) U_RETURN(false);
-
-   U_INTERNAL_ASSERT(rep->_capacity == 0 ||
-                     rep->_capacity >= U_CAPACITY) // it must start with U_CAPACITY...
 
    // Make room for a total of n element
 

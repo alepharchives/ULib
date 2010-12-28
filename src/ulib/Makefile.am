@@ -2,6 +2,7 @@
 
 EXTRA_DIST = base/* container/* db/* debug/* dynamic/* flex/* internal/* ldap/* mime/* net/* pcre/* \
 			 	 replace/* ssl/* ssh/* ui/* utility/* xml/expat/* xml/libxml2/* zip/* \
+				 lemon/Makefile.* lemon/*.c lemon/*.cpp lemon/*.y \
 				 plugin/*.cpp plugin/Makefile.* \
 				 plugin/mod_shib/*.cpp plugin/mod_shib/Makefile.* \
 				 plugin/mod_fcgi/*.cpp plugin/mod_fcgi/Makefile.* \
@@ -27,6 +28,7 @@ SRC_CPP = internal/common.cpp internal/objectIO.cpp \
 			 container/vector.cpp container/hash_map.cpp container/tree.cpp \
 			 utility/interrupt.cpp utility/compress.cpp utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
 			 utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp utility/uhttp.cpp utility/ring_buffer.cpp \
+			 lemon/expression.cpp \
 			 net/ipaddress.cpp net/socket.cpp net/ping.cpp net/tcpsocket.cpp \
 			 net/server/server.cpp net/server/client_image.cpp \
 			 net/client/client_rdb.cpp net/server/client_image_rdb.cpp net/server/server_rdb.cpp \

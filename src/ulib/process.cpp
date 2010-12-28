@@ -329,7 +329,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
    U_INTERNAL_DUMP("w32_cmd(%d) = %.*S", index, index, w32_cmd)
 
    char* w32_envp = 0;
-   char buffer2[32000];
+   char buffer2[32000] = { '\0' };
 
    if (envp)
       {

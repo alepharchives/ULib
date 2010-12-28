@@ -103,7 +103,7 @@ typedef struct uhttpinfo {
    const char* interpreter;
    time_t      if_modified_since;
    uint32_t    nResponseCode, startHeader, endHeader, szHeader, clength,
-               method_len, uri_len, query_len, host_len, content_type_len, range_len;
+               method_len, uri_len, query_len, host_len, host_vlen, content_type_len, range_len;
    char        flag[8];
 } uhttpinfo;
 
@@ -132,14 +132,21 @@ enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_G
 #define U_HTTP_URI_QUERY_TO_PARAM    UHTTP::http_info.uri, (UHTTP::http_info.uri_len + UHTTP::http_info.query_len + (UHTTP::http_info.query_len ? 1 : 0))
 #define U_HTTP_URI_QUERY_TO_TRACE    (UHTTP::http_info.uri_len + UHTTP::http_info.query_len + (UHTTP::http_info.query_len ? 1 : 0)), UHTTP::http_info.uri
 
-#define U_HTTP_HOST_TO_PARAM         UHTTP::http_info.host, UHTTP::http_info.host_len
-#define U_HTTP_HOST_TO_TRACE         UHTTP::http_info.host_len, UHTTP::http_info.host
-
 #define U_HTTP_CTYPE_TO_PARAM        UHTTP::http_info.content_type, UHTTP::http_info.content_type_len
 #define U_HTTP_CTYPE_TO_TRACE        UHTTP::http_info.content_type_len, UHTTP::http_info.content_type
 
 #define U_HTTP_RANGE_TO_PARAM        UHTTP::http_info.range, UHTTP::http_info.range_len
 #define U_HTTP_RANGE_TO_TRACE        UHTTP::http_info.range_len, UHTTP::http_info.range
+
+// The hostname of your server from header's request.
+// The difference between U_HTTP_HOST_.. and U_HTTP_VHOST_.. is that
+// U_HTTP_HOST_.. can include the «:PORT» text, and U_HTTP_VHOST_.. only the name
+
+#define U_HTTP_HOST_TO_PARAM         UHTTP::http_info.host, UHTTP::http_info.host_len
+#define U_HTTP_HOST_TO_TRACE         UHTTP::http_info.host_len, UHTTP::http_info.host
+
+#define U_HTTP_VHOST_TO_PARAM        UHTTP::http_info.host, UHTTP::http_info.host_vlen
+#define U_HTTP_VHOST_TO_TRACE        UHTTP::http_info.host_vlen, UHTTP::http_info.host
 
 // HTTP Compare
 

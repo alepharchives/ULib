@@ -92,7 +92,7 @@ bool UTokenizer::extend(UString& token, char c)
 
 bool UTokenizer::next(UString& token, bool* bgroup)
 {
-   U_TRACE(1, "UTokenizer::next(%p,%p)", &token, bgroup)
+   U_TRACE(0, "UTokenizer::next(%p,%p)", &token, bgroup)
 
    const char* p  = s;
    uint32_t shift = 1;
@@ -223,7 +223,7 @@ bool UTokenizer::skipNumber(bool& isReal)
 
    for (char c; s < end; ++s)
       {
-      c = s[0];
+      c = *s;
 
       if (u_isdigit(c) || c == '-') continue;
 
@@ -271,6 +271,169 @@ UString UTokenizer::getTokenQueryParser()
    U_RETURN_STRING(token);
 }
 
+/*
+Expression is tokenized as:
+
+logical: && || !
+compare: = < <= > => !=
+Multiplicative operators: *, /, %
+Additive operators: +, -
+precedence: ( )
+quoted strings: 'string with a dollar: $FOO'
+unquoted strings: string
+variable substitution: $REMOTE_ADDR ${REMOTE_ADDR}
+*/
+
+int UTokenizer::getTokenId(UString& token)
+{
+   U_TRACE(0, "UTokenizer::getTokenId(%p)", &token)
+
+   char c;
+   int tid = 0;
+   const char* p1;
+   const char* p2;
+
+   U_INTERNAL_DUMP("s = %.*S", 20, s)
+
+loop:
+   p1 = p2 = s;
+
+   if (s >= end) goto end;
+
+   c = *s++;
+
+   if (u_isspace(c)) goto loop;
+
+   switch (c)
+      {
+      case '+': tid = U_TK_PLUS;                                  p2 = s; break;
+      case '-': tid = U_TK_MINUS;                                 p2 = s; break;
+      case '*': tid = U_TK_MULT;                                  p2 = s; break;
+      case '%': tid = U_TK_MOD;                                   p2 = s; break;
+      case '(': tid = U_TK_LPAREN;                                p2 = s; break;
+      case ')': tid = U_TK_RPAREN;                                p2 = s; break;
+      case '=': tid = (*s == '=' ? (++s, U_TK_EQ)  : U_TK_EQ);    p2 = s; break;
+      case '>': tid = (*s == '=' ? (++s, U_TK_GE)  : U_TK_GT);    p2 = s; break;
+      case '<': tid = (*s == '=' ? (++s, U_TK_LE)  : U_TK_LT);    p2 = s; break;
+      case '!': tid = (*s == '=' ? (++s, U_TK_NE)  : U_TK_NOT);   p2 = s; break;
+      case '&': tid = (*s == '&' ? (++s, U_TK_AND) : U_TK_ERROR); p2 = s; break;
+      case '|': tid = (*s == '|' ? (++s, U_TK_OR)  : U_TK_ERROR); p2 = s; break;
+
+      case '$':
+         {
+         tid = U_TK_NAME;
+
+         if (*s == '{')
+            {
+            p1 = ++s;
+
+            while (s < end && *s != '}') ++s;
+
+            p2 = s++;
+            }
+         else
+            {
+            p1 = s;
+
+            while (s < end && (u_isalpha(*s) || *s == '_')) ++s;
+
+            p2 = s;
+            }
+         }
+      break;
+
+      case '\'':
+         {
+         tid = U_TK_VALUE;
+
+         p1 = s;
+
+         while (s < end && *s != '\'') ++s;
+
+         p2 = s++;
+         }
+      break;
+
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+         {
+         tid = U_TK_VALUE;
+
+         while (s < end && u_isdigit(*s)) ++s;
+
+         p2 = s;
+         }
+      break;
+
+      case 't':
+      case 'f':
+         {
+         if (c == 't' ? skipToken(U_CONSTANT_TO_PARAM("rue"))
+                      : skipToken(U_CONSTANT_TO_PARAM("alse")))
+            {
+            tid = U_TK_VALUE;
+
+            if (c == 't') p2 = s;
+
+            break;
+            }
+
+         goto value;
+         }
+   // break;
+
+      case '/':
+         {
+         c = *s;
+
+         if (u_isdigit(c) ||
+             u_isspace(c))
+            {
+            p2  = s;
+            tid = U_TK_DIV;
+
+            break;
+            }
+
+         goto value;
+         }
+   // break;
+
+      default:
+         {
+value:
+         tid = U_TK_VALUE;
+
+         while (s < end)
+            {
+            c = *s;
+
+            if (u_isgraph(c) == false || c == ')') break;
+
+            ++s;
+            }
+
+         p2 = s;
+         }
+      break;
+      }
+
+end:
+   token = str.substr(p1, p2 - p1);
+
+   U_INTERNAL_DUMP("token = %.*S", U_STRING_TO_TRACE(token))
+
+   U_RETURN(tid);
+}
+
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
@@ -302,5 +465,4 @@ const char* UTokenizer::dump(bool reset) const
 
    return 0;
 }
-
 #endif

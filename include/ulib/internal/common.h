@@ -65,21 +65,7 @@
 #define U_SUBSTR_INC_REF
 */
 
-// string representation (for gcc compiler strict aliasing problem...)
-
-typedef struct ustringrep {
-#ifdef DEBUG
-   const UMemoryError* restrict _this;
-#endif
-#if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-   ustringrep* parent; // manage substring for increment reference of source string
-#  ifdef DEBUG
-   int32_t child;      // manage substring for capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
-#  endif
-#endif
-   uint32_t _length, _capacity, references;
-   const char* str;
-} ustringrep;
+// for gcc compiler strict aliasing problem...
 
 class UStringRep;
 

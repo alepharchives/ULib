@@ -504,13 +504,15 @@ bool UFile::write(const UString& data, bool append, bool bmkdirs)
 
       if (sz > PAGESIZE)
          {
-         uint32_t offset = (append ? size() : 0), resto = 0;
+         uint32_t offset = (append ? size() : 0);
 
          esito = fallocate(offset + sz);
 
          if (esito == false) U_WARNING("no more space on disk for size %u", offset + sz);
          else
             {
+            uint32_t resto = 0;
+
             if (offset)
                {
                resto   = offset % PAGESIZE;

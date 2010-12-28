@@ -267,7 +267,7 @@ int UWebSocketPlugIn::handlerRequest()
          {
          char c;
          UString tmp(100U);
-         uint32_t origin_len = 0, protocol_len = 0;
+         uint32_t origin_len = 0;
 
          for (c = u_line_terminator[0]; origin[origin_len] != c; ++origin_len) {}
 
@@ -277,6 +277,8 @@ int UWebSocketPlugIn::handlerRequest()
 
          if (protocol)
             {
+            uint32_t protocol_len = 0;
+
             for (c = u_line_terminator[0]; protocol[protocol_len] != c; ++protocol_len) {}
 
             U_INTERNAL_DUMP("protocol = %.*S", protocol_len, protocol)

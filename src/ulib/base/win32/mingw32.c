@@ -277,7 +277,7 @@ int unlink_w32(const char* path)
 int mkstemp(char* tmplate)
 {
    char* pChr;
-   int ret, iRnd, iLen = u_strlen(tmplate);
+   int ret, iLen = u_strlen(tmplate);
 
    U_INTERNAL_TRACE("mkstemp(%s)", tmplate)
 
@@ -289,7 +289,7 @@ int mkstemp(char* tmplate)
 
       if (strncmp(pChr, "XXXXXX", 6) == 0)
          {
-         int iChr;
+         int iChr, iRnd;
 
          for (iChr = 0; iChr < 6; ++iChr)
             {

@@ -224,7 +224,9 @@ void u_check_now_adjust(void)
 
 void u_init(char** restrict argv)
 {
+#ifndef __MINGW32__
    const char* restrict pwd;
+#endif
    struct passwd* restrict pw;
 
    U_INTERNAL_TRACE("u_init()")

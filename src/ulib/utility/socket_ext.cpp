@@ -44,16 +44,16 @@ bool USocketExt::read(USocket* socket, UString& buffer, int count, int timeoutMS
 
    char* ptr;
    ssize_t value;
+   int byte_read;
    bool single_read;
-   int diff, byte_read;
    uint32_t start, capacity, read_timeout = 0;
 
    // NB: THINK REALLY VERY MUCH BEFORE CHANGE CODE HERE...
 
 restart:
    start       = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua
-   byte_read   = 0;
    capacity    = buffer.capacity() - start;
+   byte_read   = 0;
    single_read = (count == U_SINGLE_READ);
 
    // manage buffered read
@@ -66,7 +66,7 @@ restart:
 
       if (single_read) count = pcount;
 
-      diff = pcount - count;
+      int diff = pcount - count;
 
       U_INTERNAL_DUMP("diff = %d", diff)
 
@@ -530,14 +530,15 @@ UString USocketExt::getNetworkDevice(const char* exclude)
    UString result(100U);
 
 #ifndef __MINGW32__
-   bool found;
-   char dev[7], dest[9];
    FILE* route = (FILE*) U_SYSCALL(fopen, "%S,%S", "/proc/net/route", "r");
 
    // Skip first line
 
    if (U_SYSCALL(fscanf, "%p,%S", route, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s") != EOF)
       {
+      bool found;
+      char dev[7], dest[9];
+
       while (U_SYSCALL(fscanf, "%p,%S", route, "%6s %8s %*s %*s %*s %*s %*s %*s %*s %*s %*s\n", dev, dest) != EOF)
          {
          found = (exclude ? (strncmp(dev, exclude, 6) != 0)   // not the whatever it is

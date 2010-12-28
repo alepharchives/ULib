@@ -218,19 +218,13 @@ int UHttpPlugIn::handlerREAD()
       // manage virtual host
 
       if (UHTTP::virtual_host &&
-          UHTTP::http_info.host_len) 
+          UHTTP::http_info.host_vlen) 
          {
-         UString host(U_HTTP_HOST_TO_PARAM);
+         // Host: hostname[:port]
 
-         host_end = host.find(':'); // Host: hostname[:port]
+         UHTTP::alias->setBuffer(1 + UHTTP::http_info.host_vlen + UHTTP::http_info.uri_len);
 
-         if (host_end != U_NOT_FOUND) host.size_adjust(host_end);
-
-         U_INTERNAL_DUMP("host = %.*S", U_STRING_TO_TRACE(host))
-
-         UHTTP::alias->setBuffer(1 + host_end + UHTTP::http_info.host_len);
-
-         UHTTP::alias->snprintf("/%.*s%.*s", U_STRING_TO_TRACE(host), U_HTTP_URI_TO_TRACE);
+         UHTTP::alias->snprintf("/%.*s%.*s", U_HTTP_VHOST_TO_TRACE, U_HTTP_URI_TO_TRACE);
          }
 
       // manage alias uri

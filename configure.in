@@ -965,7 +965,7 @@ case "$target_os" in
 		CXXFLAGS="${CXXFLAGS} -fvisibility=hidden -fvisibility-inlines-hidden"
 	fi
 	if test "$with_gnu_ld" = "yes" && test "$enable_new_ldflags" = "yes"; then
-		LDFLAGS="${LDFLAGS} -Wl,-z,now,-O1,--as-needed,--enable-new-dtags,--hash-style=gnu,--sort-common"
+		LDFLAGS="${LDFLAGS} -Wl,-O1 -Wl,--as-needed -Wl,-z,now,-O1,--hash-style=gnu,--sort-common -Wl,--as-needed"
 	fi
 	;;
 esac
@@ -1095,6 +1095,7 @@ AC_OUTPUT(Makefile \
 			 src/ulib/Makefile \
 			 src/ulib/ULib.rc \
 			 src/ulib/ULib.pc \
+			 src/ulib/lemon/Makefile \
 			 src/ulib/plugin/Makefile \
 			 src/ulib/plugin/usp/Makefile \
 			 src/ulib/plugin/mod_shib/Makefile \

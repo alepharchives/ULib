@@ -1786,6 +1786,22 @@ U_EXPORT main (int argc, char* argv[])
    U_INTERNAL_ASSERT( U_STRING_FROM_CONSTANT("           \n\t\r").isWhiteSpace() )
    U_INTERNAL_ASSERT( U_STRING_FROM_CONSTANT("gXWUj7VekBdkycg3Z9kXuglV9plUl2cs4XkNLSDhe5VHRgE03e63VypMChCWDGI=").isBase64() )
 
+   UString expressions[] = { U_STRING_FROM_CONSTANT("2 + 3 + 5"), // = 10
+                             U_STRING_FROM_CONSTANT("2 * 3 + 5"), // = 11
+                             U_STRING_FROM_CONSTANT("2 * (3 + 5)"), // = 16
+                             U_STRING_FROM_CONSTANT("2 * (2*(2*(2+1)))"), // = 24 
+                             U_STRING_FROM_CONSTANT("10 % 3"), // = 1 
+                             U_STRING_FROM_CONSTANT("true || false"), // = true 
+                             U_STRING_FROM_CONSTANT("false || ! (false && 1)"), // = true 
+                             U_STRING_FROM_CONSTANT("3 > 2 && 1 <= (3-2)"), // = true 
+                             U_STRING_FROM_CONSTANT("3 % 2 != 10 % 3"), // = false 
+                             UString::getStringNull() };
+
+    for (int i = 0; expressions[i].empty() == false; ++i )
+      {
+      cout << UStringExt::evalExpression(expressions[i], UString::getStringNull()) << "\n";
+      }
+
 #ifdef HAVE_PCRE
    // date (YYYY/MM/DD) --> (DD/MM/YYYY)
 

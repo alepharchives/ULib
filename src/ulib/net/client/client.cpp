@@ -70,6 +70,7 @@ UClient_Base::~UClient_Base()
    delete socket;
 
 #ifdef DEBUG
+        uri.clear(); // uri can depend on url...
         url.clear(); // url can depend on response... (Location: xxx)
    response.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE... (response may be substr of buffer)
 #endif
@@ -285,7 +286,7 @@ bool UClient_Base::setUrl(const UString& location)
    if (socket->isSSL()) ((USSLSocket*)socket)->setActive(url.isHTTPS());
 #endif
 
-   uri = url.getFile();
+   uri = url.getPathAndQuery();
 
    UHTTP::http_info.uri     = uri.data();
    UHTTP::http_info.uri_len = uri.size();

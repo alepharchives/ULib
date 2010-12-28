@@ -47,6 +47,7 @@ RETURNS:
 class U_EXPORT USSIPlugIn : public UServerPlugIn {
 public:
 
+   static const UString* str_expr;
    static const UString* str_var;
    static const UString* str_cmd;
    static const UString* str_cgi;
@@ -106,7 +107,7 @@ protected:
    bool use_size_abbrev;
 
 private:
-   UString getInclude(       const UString& include, int include_level) U_NO_EXPORT;
+   UString getInclude(const UString& include, int include_level) U_NO_EXPORT;
    UString processSSIRequest(const UString& content, int include_level) U_NO_EXPORT;
 
    USSIPlugIn(const USSIPlugIn&) : UServerPlugIn() {}

@@ -130,6 +130,9 @@ public:
    static UString expandEnvVar(const char* s, uint32_t n);
    static UString expandEnvVar(const UString& s) { return expandEnvVar(U_STRING_TO_PARAM(s)); }
 
+   static UString evalExpression(const UString& expr, const UString& environment);
+   static UString getEnvironmentVar(const UString& name, const UString& environment);
+
    static void putenv(const char* name, uint32_t value)
       {
       U_TRACE(1, "UStringExt::putenv(%S,%u)", name, value)
@@ -236,7 +239,7 @@ public:
 
    static uint32_t getNameValueFromData(const UString& content,
                                         UVector<UString>& name_value,
-                                        const char* delim, uint32_t dlen, bool decoded = false);
+                                        const char* delim, uint32_t dlen);
 
 #  define U_TOKEN_NM 4U
 #  define U_TOKEN_LN (U_TOKEN_NM + 8U)

@@ -435,8 +435,8 @@ UString UPCRE::replace(const UString& piece, const UString& with)
    U_TRACE(0, "UPCRE::replace(%.*S,%.*S)", U_STRING_TO_TRACE(piece), U_STRING_TO_TRACE(with))
 
    bool bReplaced = false;
+   int iReplaced = -1, len;
    UString replaced(piece), use_with;
-   int iReplaced = -1, len, match_pos;
 
    if (replace_t == false) (void) checkBrackets();
 
@@ -448,6 +448,8 @@ UString UPCRE::replace(const UString& piece, const UString& with)
 
    if (global_t)
       {
+      int match_pos;
+
       do {
          // here we need to resolve the vars certainly for every hit.
          // could be different content sometimes!

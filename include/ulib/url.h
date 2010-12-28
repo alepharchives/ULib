@@ -379,7 +379,7 @@ public:
     * @c http://www.google.com/search?q=xml
     */
 
-   UString getFile();
+   UString getPathAndQuery();
 
    /** This methode check the existence of the query from the url.
     *

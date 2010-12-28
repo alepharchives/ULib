@@ -1,6 +1,5 @@
 <pre>
 SSI_BEGIN
-
 Name of user: <!--#echo var="USER_NAME" -->
 
 Document name: <!--#echo var="DOCUMENT_NAME" -->
@@ -19,10 +18,16 @@ You're using: <!--#echo var="HTTP_USER_AGENT" -->
 
 $HTTP_X_SENDFILE: <!--#echo var="HTTP_X_SENDFILE" --><!--#set var="HTTP_X_SENDFILE"  value="puppamelo" -->
 
+<!--#if expr="${HTTP_X_SENDFILE} = 'puppamelo'" -->
 start PRINTENV
 --------------
 <!--#printenv -->--------------
 end   PRINTENV
+<!--#elif expr="$HTTP_X_SENDFILE != puppamelo" -->
+error
+<!--#else -->
+ssi conditional expression don't work...!
+<!--#endif --> 
 
 start LS
 --------------

@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/url.h>
+#include <ulib/tokenizer.h>
 #include <ulib/utility/compress.h>
 #include <ulib/utility/string_ext.h>
 
@@ -355,6 +356,74 @@ UString UStringExt::expandEnvVar(const char* s, uint32_t n)
    U_INTERNAL_ASSERT(x.invariant())
 
    U_RETURN_STRING(x);
+}
+
+UString UStringExt::getEnvironmentVar(const UString& name, const UString& environment)
+{
+   U_TRACE(0, "UStringExt::getEnvironmentVar(%.*S,%.*S)", U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(environment))
+
+   UString value;
+
+   // check if it is a environment-var
+
+   uint32_t start = environment.find(name);
+
+   if (start != U_NOT_FOUND)
+      {
+      start += name.size() + 1;
+
+      uint32_t end = environment.find('\n', start);
+
+      if (environment.c_char(end-1) == '"') --end;
+
+      (void) value.assign(environment.c_pointer(start), end - start);
+      }
+
+   U_RETURN_STRING(value);
+}
+
+extern void* expressionParserAlloc(void* (*mallocProc)(size_t));
+extern void  expressionParserFree(void* p, void (*freeProc)(void*));
+extern void  expressionParserTrace(FILE* stream, char* zPrefix);
+extern void  expressionParser(void* yyp, int yymajor, UString* yyminor, UString* result);
+
+UString UStringExt::evalExpression(const UString& expr, const UString& environment)
+{
+   U_TRACE(0, "UStringExt::evalExpression(%.*S,%.*S)", U_STRING_TO_TRACE(expr), U_STRING_TO_TRACE(environment))
+
+   int token_id;
+   UTokenizer t(expr);
+   UString token, result(U_CONSTANT_TO_PARAM("true"));
+
+   void* pParser = expressionParserAlloc(malloc);
+
+#ifdef DEBUG
+   (void) fprintf(stderr, "start parsing expr: \"%.*s\"\n", U_STRING_TO_TRACE(expr));
+
+   expressionParserTrace(stderr, (char*)"parser: ");
+#endif
+
+   while (result.empty() == false &&
+          (token_id = t.getTokenId(token)) > 0)
+      {
+      if (token_id == U_TK_NAME)
+         {
+         token    = UStringExt::getEnvironmentVar(token, environment);
+         token_id = U_TK_VALUE;
+         }
+
+      expressionParser(pParser, token_id, U_NEW(UString(token)), &result);
+      }
+
+   expressionParser(   pParser,        0,                     0, &result);
+
+   expressionParserFree(pParser, free);
+
+#ifdef DEBUG
+   (void) fprintf(stderr, "ended parsing expr: \"%.*s\"\n", U_STRING_TO_TRACE(expr));
+#endif
+
+   U_RETURN_STRING(result);
 }
 
 // Returns a string that has the delimiter escaped
@@ -862,9 +931,9 @@ UString UStringExt::toupper(const UString& x)
 
 // retrieve information on form elements as couple <name1>=<value1>&<name2>=<value2>&...
 
-uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UString>& name_value, const char* delim, uint32_t dlen, bool decoded)
+uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UString>& name_value, const char* delim, uint32_t dlen)
 {
-   U_TRACE(0, "UStringExt::getNameValueFromData(%.*S,%p,%.*S,%u,%b)", U_STRING_TO_TRACE(content), &name_value, dlen, delim, dlen, decoded)
+   U_TRACE(0, "UStringExt::getNameValueFromData(%.*S,%p,%.*S,%u)", U_STRING_TO_TRACE(content), &name_value, dlen, delim, dlen)
 
    U_INTERNAL_ASSERT_POINTER(delim)
    U_ASSERT_EQUALS(content.empty(),false)
@@ -893,8 +962,8 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 
       U_INTERNAL_ASSERT_MAJOR(len,0)
 
-      if (form &&
-          decoded == false)
+      if (form == false) name_value.push_back(content.substr(oldPos, len));
+      else
          {
          // name is URL encoded...
 
@@ -903,12 +972,6 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
          Url::decode(content.c_pointer(oldPos), len, name);
 
          name_value.push_back(name);
-         }
-      else
-         {
-         // name is already decoded...
-
-         name_value.push_back(content.substr(oldPos, len));
          }
 
       // Find the delimitator separating subsequent name/value pairs
@@ -939,13 +1002,9 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
          {
          if (form)
             {
-            if (decoded) value = content.substr(oldPos, len);
-            else
-               {
-               value.setBuffer(len);
+            value.setBuffer(len);
 
-               Url::decode(content.c_pointer(oldPos), len, value);
-               }
+            Url::decode(content.c_pointer(oldPos), len, value);
             }
          else
             {

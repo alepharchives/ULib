@@ -116,15 +116,13 @@ U_NO_EXPORT bool UPop3Client::syncCommand(int eod, const char* format, ...)
 
       if (eod)
          {
-         bool esito;
-
          // adjust how many bytes read...
 
          eod += (U_CONSTANT_SIZE(U_POP3_EOD) - (buffer.size() - pos));
 
          if (eod > 0)
             {
-            esito = USocketExt::read(this, buffer, eod);
+            bool esito = USocketExt::read(this, buffer, eod);
 
             if (esito == false) U_RETURN(false);
             }
