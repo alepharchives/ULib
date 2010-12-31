@@ -35,10 +35,12 @@
 #define U_TK_DIV      12
 #define U_TK_MOD      13
 #define U_TK_NOT      14
-#define U_TK_LPAREN   15
-#define U_TK_RPAREN   16
-#define U_TK_VALUE    17
-#define U_TK_NAME     18
+#define U_TK_FN_CALL  15
+#define U_TK_LPAREN   16
+#define U_TK_RPAREN   17
+#define U_TK_VALUE    18
+#define U_TK_COMMA    19
+#define U_TK_NAME     20
 
 template <class T> class UVector;
 

@@ -1789,12 +1789,14 @@ U_EXPORT main (int argc, char* argv[])
    UString expressions[] = { U_STRING_FROM_CONSTANT("2 + 3 + 5"), // = 10
                              U_STRING_FROM_CONSTANT("2 * 3 + 5"), // = 11
                              U_STRING_FROM_CONSTANT("2 * (3 + 5)"), // = 16
-                             U_STRING_FROM_CONSTANT("2 * (2*(2*(2+1)))"), // = 24 
-                             U_STRING_FROM_CONSTANT("10 % 3"), // = 1 
-                             U_STRING_FROM_CONSTANT("true || false"), // = true 
-                             U_STRING_FROM_CONSTANT("false || ! (false && 1)"), // = true 
-                             U_STRING_FROM_CONSTANT("3 > 2 && 1 <= (3-2)"), // = true 
-                             U_STRING_FROM_CONSTANT("3 % 2 != 10 % 3"), // = false 
+                             U_STRING_FROM_CONSTANT("2 * (2*(2*(2+1)))"), // = 24
+                             U_STRING_FROM_CONSTANT("10 % 3"), // = 1
+                             U_STRING_FROM_CONSTANT("true || false"), // = true
+                             U_STRING_FROM_CONSTANT("false || ! (false && 1)"), // = true
+                             U_STRING_FROM_CONSTANT("3 > 2 && 1 <= (3-2)"), // = true
+                             U_STRING_FROM_CONSTANT("3 % 2 != 10 % 3"), // = false
+                             U_STRING_FROM_CONSTANT("rand() == 0"), // = false
+                           //U_STRING_FROM_CONSTANT("/pippo/pluto == UStringExt::expandEnvVar('$HOME', 5)/pluto"), // = false
                              UString::getStringNull() };
 
     for (int i = 0; expressions[i].empty() == false; ++i )

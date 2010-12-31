@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/url.h>
 #include <ulib/date.h>
 #include <ulib/command.h>
 #include <ulib/tokenizer.h>
@@ -19,6 +20,7 @@
 #include <ulib/plugin/mod_ssi.h>
 #include <ulib/utility/services.h>
 #include <ulib/net/server/server.h>
+#include <ulib/utility/xml_escape.h>
 #include <ulib/utility/string_ext.h>
 
 // Server Side Include (SSI) commands are executed by the server as it parses your HTML file.
@@ -52,6 +54,11 @@ const UString* USSIPlugIn::str_SSI_EXT_MASK;
 const UString* USSIPlugIn::str_errmsg_default;
 const UString* USSIPlugIn::str_timefmt_default;
 
+const UString* USSIPlugIn::str_encoding;
+const UString* USSIPlugIn::str_encoding_none;
+const UString* USSIPlugIn::str_encoding_url;
+const UString* USSIPlugIn::str_encoding_entity;
+
 void USSIPlugIn::str_allocate()
 {
    U_TRACE(0, "USSIPlugIn::str_allocate()")
@@ -78,6 +85,11 @@ void USSIPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_errmsg_default,0)
    U_INTERNAL_ASSERT_EQUALS(str_timefmt_default,0)
 
+   U_INTERNAL_ASSERT_EQUALS(str_encoding,0)
+   U_INTERNAL_ASSERT_EQUALS(str_encoding_none,0)
+   U_INTERNAL_ASSERT_EQUALS(str_encoding_url,0)
+   U_INTERNAL_ASSERT_EQUALS(str_encoding_entity,0)
+
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("expr") },
       { U_STRINGREP_FROM_CONSTANT("var") },
@@ -99,7 +111,12 @@ void USSIPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("LAST_MODIFIED") },
       { U_STRINGREP_FROM_CONSTANT("SSI_EXT_MASK") },
       { U_STRINGREP_FROM_CONSTANT("Error") },
-      { U_STRINGREP_FROM_CONSTANT("%A, %d-%b-%Y %H:%M:%S GMT") }
+      { U_STRINGREP_FROM_CONSTANT("%A, %d-%b-%Y %H:%M:%S GMT") },
+
+      { U_STRINGREP_FROM_CONSTANT("encoding") },
+      { U_STRINGREP_FROM_CONSTANT("none") },
+      { U_STRINGREP_FROM_CONSTANT("url") },
+      { U_STRINGREP_FROM_CONSTANT("entity") }
    };
 
    U_NEW_ULIB_OBJECT(str_expr,            U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -123,6 +140,11 @@ void USSIPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_SSI_EXT_MASK,    U_STRING_FROM_STRINGREP_STORAGE(18));
    U_NEW_ULIB_OBJECT(str_errmsg_default,  U_STRING_FROM_STRINGREP_STORAGE(19));
    U_NEW_ULIB_OBJECT(str_timefmt_default, U_STRING_FROM_STRINGREP_STORAGE(20));
+
+   U_NEW_ULIB_OBJECT(str_encoding,        U_STRING_FROM_STRINGREP_STORAGE(21));
+   U_NEW_ULIB_OBJECT(str_encoding_none,   U_STRING_FROM_STRINGREP_STORAGE(22));
+   U_NEW_ULIB_OBJECT(str_encoding_url,    U_STRING_FROM_STRINGREP_STORAGE(23));
+   U_NEW_ULIB_OBJECT(str_encoding_entity, U_STRING_FROM_STRINGREP_STORAGE(24));
 }
 
 U_NO_EXPORT UString USSIPlugIn::getInclude(const UString& include, int include_level)
@@ -154,9 +176,10 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
    const char* directive;
    UVector<UString> name_value;
    uint32_t distance, pos, size, len;
+   enum {E_NONE, E_URL, E_ENTITY} encode;
    int op, if_level = 0, if_is_false_level = 0;
    bool bgroup, bfile, if_is_false = false, if_is_false_endif = false;
-   UString token, name, value, pathname, include, directory, output(U_CAPACITY);
+   UString token, name, value, pathname, include, directory, output(U_CAPACITY), x, encoded;
 
    (directory = UHTTP::getDirectoryURI()).duplicate();
 
@@ -211,7 +234,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
        *   timefmt    DONE
        * echo         DONE
        *   var        DONE
-       *   encoding   -- missing
+       *   encoding   DONE
        * exec         DONE
        *   cgi        DONE
        *   cmd        DONE
@@ -447,12 +470,22 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
          case SSI_ECHO:
             {
+            /* <!--#echo [encoding="..."] var="..." [encoding="..."] var="..." ... --> */
+
+            encode = E_NONE;
+
             for (i = 0; i < n; i += 2)
                {
                name  = name_value[i];
                value = name_value[i+1];
 
-               if (name == *str_var)
+               if (name == *str_encoding)
+                  {
+                       if (value == *str_encoding_none)   encode = E_NONE;
+                  else if (value == *str_encoding_url)    encode = E_URL;
+                  else if (value == *str_encoding_entity) encode = E_ENTITY;
+                  }
+               else if (name == *str_var)
                   {
                   /**
                    * DATE_GMT       The current date in Greenwich Mean Time.
@@ -464,19 +497,45 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                    *                nested include files, this is not then URL for the current document.
                    */
 
-                       if (value == *str_DATE_GMT)      (void) output.append(UDate::strftime(timefmt.data(), u_now.tv_sec));
-                  else if (value == *str_DATE_LOCAL)    (void) output.append(UDate::strftime(timefmt.data(), u_now.tv_sec + u_now_adjust));
-                  else if (value == *str_LAST_MODIFIED) (void) output.append(UDate::strftime(timefmt.data(), last_modified));
-                  else if (value == *str_USER_NAME)     (void) output.append(u_user_name, u_user_name_len);
-                  else if (value == *str_DOCUMENT_URI)  (void) output.append(U_HTTP_URI_TO_PARAM);
-                  else if (value == *str_DOCUMENT_NAME) (void) output.append(docname);
+                       if (value == *str_DATE_GMT)      x = UDate::strftime(timefmt.data(), u_now.tv_sec);
+                  else if (value == *str_DATE_LOCAL)    x = UDate::strftime(timefmt.data(), u_now.tv_sec + u_now_adjust);
+                  else if (value == *str_LAST_MODIFIED) x = UDate::strftime(timefmt.data(), last_modified);
+                  else if (value == *str_USER_NAME)     (void) x.assign(u_user_name, u_user_name_len);
+                  else if (value == *str_DOCUMENT_URI)  (void) x.assign(U_HTTP_URI_TO_PARAM);
+                  else if (value == *str_DOCUMENT_NAME) x = docname;
                   else
                      {
-                     value = UStringExt::getEnvironmentVar(value, environment);
+                     x = UStringExt::getEnvironmentVar(value, environment);
 
-                     if (value.empty()) (void) output.append(U_CONSTANT_TO_PARAM("(none)"));
-                     else               (void) output.append(value);
+                     if (x.empty()) (void) x.assign(U_CONSTANT_TO_PARAM("(none)"));
                      }
+
+                  switch (encode)
+                     {
+                     case E_NONE:
+                        {
+                        encoded = x;
+                        }
+                     break;
+
+                     case E_URL:
+                        {
+                        encoded.setBuffer(x.size());
+
+                        Url::encode(x, encoded);
+                        }
+                     break;
+
+                     case E_ENTITY:
+                        {
+                        encoded.setBuffer(x.size());
+
+                        UXMLEscape::encode(x, encoded);
+                        }
+                     break;
+                     }
+
+                  (void) output.append(encoded);
                   }
                }
             }

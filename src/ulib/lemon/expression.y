@@ -1,16 +1,17 @@
-%token_prefix U_TK_
-%token_type { UString* }
-%extra_argument { UString* result }
-%name expressionParser
-
 %include {
 #include <ulib/tokenizer.h>
+#include <ulib/dynamic/dynamic.h>
 #include <ulib/utility/string_ext.h>
 
-extern void* U_EXPORT expressionParserAlloc(void* (*mallocProc)(size_t));
-extern void  U_EXPORT expressionParserFree(void* p, void (*freeProc)(void*));
-extern void  U_EXPORT expressionParserTrace(FILE* stream, char* zPrefix);
-extern void  U_EXPORT expressionParser(void* yyp, int yymajor, UString* yyminor, UString* result);
+typedef long (*lPFv)(void);
+typedef long (*lPFll)(long, long);
+
+typedef UVector<UString> Items;
+
+extern void* expressionParserAlloc(void* (*mallocProc)(size_t));
+extern void  expressionParserFree(void* p, void (*freeProc)(void*));
+extern void  expressionParserTrace(FILE* stream, char* zPrefix);
+extern void  expressionParser(void* yyp, int yymajor, UString* yyminor, UString* result);
 
 extern void token_destructor(UString* token);
 
@@ -19,9 +20,20 @@ void token_destructor(UString* token) {
 
 	delete token;
 }
+
 } /* %include */
 
+%name expressionParser
+%extra_argument { UString* result }
+
+%token_prefix U_TK_
+%token_type { UString* }
 %token_destructor { token_destructor($$); }
+
+%destructor params {
+	U_TRACE(0, "::params_destructor(%p)", $$)
+	delete $$;
+}
 
 %parse_accept {
 	U_TRACE(0, "::parse_accept()")
@@ -51,17 +63,17 @@ void token_destructor(UString* token) {
 %left PLUS MINUS.
 %left MULT DIV MOD.
 %right NOT.
+%nonassoc FN_CALL .
 
-%type cond { int }
-%type value { UString* }
+%default_type { UString* }
 
-%type booleanExpression { UString* }
-%type equalityExpression { UString* }
-%type relationalExpression { UString* }
-%type additiveExpression { UString* }
-%type multiplicativeExpression { UString* }
-%type unaryExpression { UString* }
-%type primaryExpression { UString* }
+%type params { Items* }
+
+%type booleanCond { int }
+%type equalityCond { int }
+%type relationalCond { int }
+%type additiveCond { int }
+%type multiplicativeCond { int }
 
 input ::= booleanExpression(B). {
 	U_TRACE(0, "input ::= booleanExpression(B)")
@@ -76,9 +88,8 @@ input ::= booleanExpression(B). {
 	delete B;
 }
 
-/*
-booleanExpression(A) ::= booleanExpression(B) cond(C) equalityExpression(D). {
-   U_TRACE(0, "booleanExpression(A) ::= booleanExpression(B) cond(C) equalityExpression(D)")
+booleanExpression(A) ::= booleanExpression(B) booleanCond(C) equalityExpression(D). {
+   U_TRACE(0, "booleanExpression(A) ::= booleanExpression(B) booleanCond(C) equalityExpression(D)")
 
    U_INTERNAL_ASSERT_POINTER(B)
    U_INTERNAL_ASSERT_POINTER(D)
@@ -97,39 +108,6 @@ booleanExpression(A) ::= booleanExpression(B) cond(C) equalityExpression(D). {
 
 	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
 }
-*/
-
-booleanExpression(A) ::= booleanExpression(B) OR equalityExpression(C). {
-	U_TRACE(0, "booleanExpression(A) ::= booleanExpression(B) OR equalityExpression(C)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(C)
-
-	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
-
-	A = (B->empty() == false || C->empty() == false ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-	delete C;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-booleanExpression(A) ::= booleanExpression(B) AND equalityExpression(C). {
-	U_TRACE(0, "booleanExpression(A) ::= booleanExpression(B) AND equalityExpression(C)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(C)
-
-	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
-
-	A = (B->empty() == false && C->empty() == false ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-	delete C;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
 
 booleanExpression(A) ::= equalityExpression(B). {
 	U_TRACE(0, "booleanExpression(A) ::= equalityExpression(B)")
@@ -143,17 +121,17 @@ booleanExpression(A) ::= equalityExpression(B). {
 	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
 }
 
-/*
-equalityExpression(A) ::= equalityExpression(B) cond(C) relationalExpression(D). {
-   U_TRACE(0, "equalityExpression(A) ::= equalityExpression(B) cond(C) relationalExpression(D)")
+equalityExpression(A) ::= equalityExpression(B) equalityCond(C) relationalExpression(D). {
+   U_TRACE(0, "equalityExpression(A) ::= equalityExpression(B) equalityCond(C) relationalExpression(D)")
 
    U_INTERNAL_ASSERT_POINTER(B)
    U_INTERNAL_ASSERT_POINTER(D)
 
 	U_INTERNAL_DUMP("B = %.*S C = %d D = %.*S", U_STRING_TO_TRACE(*B), C, U_STRING_TO_TRACE(*D))
 
-   bool bo, Bbo = (B->empty() == false),
-				Dbo = (D->empty() == false);
+   bool bo = false,
+		 Bbo = (B->empty() == false),
+		 Dbo = (D->empty() == false);
 
 	int cmp = (Bbo && Dbo ? B->compare(D->rep) : Bbo - Dbo);
 
@@ -172,53 +150,6 @@ equalityExpression(A) ::= equalityExpression(B) cond(C) relationalExpression(D).
 
 	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
 }
-*/
-
-equalityExpression(A) ::= equalityExpression(B) EQ relationalExpression(C). {
-	U_TRACE(0, "equalityExpression(A) ::= equalityExpression(B) EQ relationalExpression(C)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(C)
-
-	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
-
-	bool Bbo = (B->empty() == false),
-		  Cbo = (C->empty() == false);
-
-	int cmp = (Bbo && Cbo ? B->compare(C->rep) : Bbo - Cbo);
-
-	U_INTERNAL_DUMP("cmp = %d", cmp)
-
-	A = (cmp == 0 ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-	delete C;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-equalityExpression(A) ::= equalityExpression(B) NE relationalExpression(C). {
-	U_TRACE(0, "equalityExpression(A) ::= equalityExpression(B) NE relationalExpression(C)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(C)
-
-	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
-
-	bool Bbo = (B->empty() == false),
-		  Cbo = (C->empty() == false);
-
-	int cmp = (Bbo && Cbo ? B->compare(C->rep) : Bbo - Cbo);
-
-	U_INTERNAL_DUMP("cmp = %d", cmp)
-
-	A = (cmp != 0 ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-	delete C;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
 
 equalityExpression(A) ::= relationalExpression(B). {
 	U_TRACE(0, "equalityExpression(A) ::= relationalExpression(B)")
@@ -232,17 +163,17 @@ equalityExpression(A) ::= relationalExpression(B). {
 	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
 }
 
-/*
-relationalExpression(A) ::= relationalExpression(B) cond(C) additiveExpression(D). {
-   U_TRACE(0, "relationalExpression(A) ::= relationalExpression(B) cond(C) additiveExpression(D)")
+relationalExpression(A) ::= relationalExpression(B) relationalCond(C) additiveExpression(D). {
+   U_TRACE(0, "relationalExpression(A) ::= relationalExpression(B) relationalCond(C) additiveExpression(D)")
 
    U_INTERNAL_ASSERT_POINTER(B)
    U_INTERNAL_ASSERT_POINTER(D)
 
 	U_INTERNAL_DUMP("B = %.*S C = %d D = %.*S", U_STRING_TO_TRACE(*B), C, U_STRING_TO_TRACE(*D))
 
-   bool bo, Bbo = (B->empty() == false),
-				Dbo = (D->empty() == false);
+   bool bo = false,
+		 Bbo = (B->empty() == false),
+		 Dbo = (D->empty() == false);
 
 	int cmp = (Bbo && Dbo ? B->compare(D->rep) : Bbo - Dbo);
 
@@ -263,99 +194,6 @@ relationalExpression(A) ::= relationalExpression(B) cond(C) additiveExpression(D
 
 	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
 }
-*/
-
-relationalExpression(A) ::= relationalExpression(B) LT additiveExpression(C). {
-	U_TRACE(0, "relationalExpression(A) ::= relationalExpression(B) LT additiveExpression(C)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(C)
-
-	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
-
-	bool Bbo = (B->empty() == false),
-		  Cbo = (C->empty() == false);
-
-	int cmp = (Bbo && Cbo ? B->strtol() - C->strtol() : Bbo - Cbo);
-
-	U_INTERNAL_DUMP("cmp = %d", cmp)
-
-	A = (cmp < 0 ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-	delete C;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-relationalExpression(A) ::= relationalExpression(B) LE additiveExpression(C). {
-	U_TRACE(0, "relationalExpression(A) ::= relationalExpression(B) LE additiveExpression(C)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(C)
-
-	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
-
-	bool Bbo = (B->empty() == false),
-		  Cbo = (C->empty() == false);
-
-	int cmp = (Bbo && Cbo ? B->strtol() - C->strtol() : Bbo - Cbo);
-
-	U_INTERNAL_DUMP("cmp = %d", cmp)
-
-	A = (cmp <= 0 ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-	delete C;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-relationalExpression(A) ::= relationalExpression(B) GT additiveExpression(C). {
-	U_TRACE(0, "relationalExpression(A) ::= relationalExpression(B) GT additiveExpression(C)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(C)
-
-	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
-
-	bool Bbo = (B->empty() == false),
-		  Cbo = (C->empty() == false);
-
-	int cmp = (Bbo && Cbo ? B->strtol() - C->strtol() : Bbo - Cbo);
-
-	U_INTERNAL_DUMP("cmp = %d", cmp)
-
-	A = (cmp > 0 ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-	delete C;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-relationalExpression(A) ::= relationalExpression(B) GE additiveExpression(C). {
-	U_TRACE(0, "relationalExpression(A) ::= relationalExpression(B) GE additiveExpression(C)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(C)
-
-	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
-
-	bool Bbo = (B->empty() == false),
-		  Cbo = (C->empty() == false);
-
-	int cmp = (Bbo && Cbo ? B->strtol() - C->strtol() : Bbo - Cbo);
-
-	U_INTERNAL_DUMP("cmp = %d", cmp)
-
-	A = (cmp >= 0 ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-	delete C;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
 
 relationalExpression(A) ::= additiveExpression(B). {
 	U_TRACE(0, "relationalExpression(A) ::= additiveExpression(B)")
@@ -369,9 +207,8 @@ relationalExpression(A) ::= additiveExpression(B). {
 	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
 }
 
-/*
-additiveExpression(A) ::= additiveExpression(B) cond(C) multiplicativeExpression(D). {
-   U_TRACE(0, "additiveExpression(A) ::= additiveExpression(B) cond(C) multiplicativeExpression(D)")
+additiveExpression(A) ::= additiveExpression(B) additiveCond(C) multiplicativeExpression(D). {
+   U_TRACE(0, "additiveExpression(A) ::= additiveExpression(B) additiveCond(C) multiplicativeExpression(D)")
 
    U_INTERNAL_ASSERT_POINTER(B)
    U_INTERNAL_ASSERT_POINTER(D)
@@ -390,39 +227,6 @@ additiveExpression(A) ::= additiveExpression(B) cond(C) multiplicativeExpression
 
 	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
 }
-*/
-
-additiveExpression(A) ::= additiveExpression(B) PLUS multiplicativeExpression(C). {
-	U_TRACE(0, "additiveExpression(A) ::= additiveExpression(B) PLUS multiplicativeExpression(C)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(C)
-
-	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
-
-	A = U_NEW(UString(UStringExt::numberToString(B->strtol() + C->strtol())));
-
-	delete B;
-	delete C;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-additiveExpression(A) ::= additiveExpression(B) MINUS multiplicativeExpression(C). {
-	U_TRACE(0, "additiveExpression(A) ::= additiveExpression(B) MINUS multiplicativeExpression(C)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(C)
-
-	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
-
-	A = U_NEW(UString(UStringExt::numberToString(B->strtol() - C->strtol())));
-
-	delete B;
-	delete C;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
 
 additiveExpression(A) ::= multiplicativeExpression(B). {
 	U_TRACE(0, "additiveExpression(A) ::= multiplicativeExpression(B)")
@@ -436,9 +240,8 @@ additiveExpression(A) ::= multiplicativeExpression(B). {
 	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
 }
 
-/*
-multiplicativeExpression(A) ::= multiplicativeExpression(B) cond(C) unaryExpression(D). {
-   U_TRACE(0, "multiplicativeExpression(A) ::= multiplicativeExpression(B) cond(C) unaryExpression(D)")
+multiplicativeExpression(A) ::= multiplicativeExpression(B) multiplicativeCond(C) unaryExpression(D). {
+   U_TRACE(0, "multiplicativeExpression(A) ::= multiplicativeExpression(B) multiplicativeCond(C) unaryExpression(D)")
 
    U_INTERNAL_ASSERT_POINTER(B)
    U_INTERNAL_ASSERT_POINTER(D)
@@ -455,55 +258,6 @@ multiplicativeExpression(A) ::= multiplicativeExpression(B) cond(C) unaryExpress
 
 	delete B;
 	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-*/
-
-multiplicativeExpression(A) ::= multiplicativeExpression(B) MULT unaryExpression(C). {
-	U_TRACE(0, "multiplicativeExpression(A) ::= multiplicativeExpression(B) MULT unaryExpression(C)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(C)
-
-	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
-
-	A = U_NEW(UString(UStringExt::numberToString(B->strtol() * C->strtol())));
-
-	delete B;
-	delete C;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-multiplicativeExpression(A) ::= multiplicativeExpression(B) DIV unaryExpression(C). {
-	U_TRACE(0, "multiplicativeExpression(A) ::= multiplicativeExpression(B) DIV unaryExpression(C)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(C)
-
-	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
-
-	A = U_NEW(UString(UStringExt::numberToString(B->strtol() / C->strtol())));
-
-	delete B;
-	delete C;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-multiplicativeExpression(A) ::= multiplicativeExpression(B) MOD unaryExpression(C). {
-	U_TRACE(0, "multiplicativeExpression(A) ::= multiplicativeExpression(B) MOD unaryExpression(C)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(C)
-
-	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
-
-	A = U_NEW(UString(UStringExt::numberToString(B->strtol() % C->strtol())));
-
-	delete B;
-	delete C;
 
 	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
 }
@@ -585,10 +339,10 @@ value(A) ::= VALUE(B). {
 value(A) ::= value(B) VALUE(C). {
 	U_TRACE(0, "value(A) ::= value(B) VALUE(C)")
 
-	U_INTERNAL_DUMP("A = %p B = %p C = %p", A, B, C)
-
 	U_INTERNAL_ASSERT_POINTER(B)
 	U_INTERNAL_ASSERT_POINTER(C)
+
+	U_INTERNAL_DUMP("B = %.*S C = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*C))
 
 	 A  =  B;
 	*A += *C;
@@ -598,375 +352,115 @@ value(A) ::= value(B) VALUE(C). {
 	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
 }
 
-/*
-cond(A) ::= AND. {
-   U_TRACE(0, "cond(A) ::= AND")
-   A = U_TK_AND;
-}
-cond(A) ::= OR. {
-   U_TRACE(0, "cond(A) ::= OR")
+booleanCond(A) ::= OR. {
+   U_TRACE(0, "booleanCond(A) ::= OR")
    A = U_TK_OR;
 }
-cond(A) ::= EQ. {
-   U_TRACE(0, "cond(A) ::= EQ")
+booleanCond(A) ::= AND. {
+   U_TRACE(0, "booleanCond(A) ::= AND")
+   A = U_TK_AND;
+}
+equalityCond(A) ::= EQ. {
+   U_TRACE(0, "equalityCond(A) ::= EQ")
    A = U_TK_EQ;
 }
-cond(A) ::= NE. {
-   U_TRACE(0, "cond(A) ::= NE")
+equalityCond(A) ::= NE. {
+   U_TRACE(0, "equalityCond(A) ::= NE")
    A = U_TK_NE;
 }
-cond(A) ::= GT. {
-   U_TRACE(0, "cond(A) ::= GT")
+relationalCond(A) ::= GT. {
+   U_TRACE(0, "relationalCond(A) ::= GT")
    A = U_TK_GT;
 }
-cond(A) ::= GE. {
-   U_TRACE(0, "cond(A) ::= GE")
+relationalCond(A) ::= GE. {
+   U_TRACE(0, "relationalCond(A) ::= GE")
    A = U_TK_GE;
 }
-cond(A) ::= LT. {
-   U_TRACE(0, "cond(A) ::= LT")
+relationalCond(A) ::= LT. {
+   U_TRACE(0, "relationalCond(A) ::= LT")
    A = U_TK_LT;
 }
-cond(A) ::= LE. {
-   U_TRACE(0, "cond(A) ::= LE")
+relationalCond(A) ::= LE. {
+   U_TRACE(0, "relationalCond(A) ::= LE")
    A = U_TK_LE;
 }
-cond(A) ::= PLUS. {
-   U_TRACE(0, "cond(A) ::= PLUS")
+additiveCond(A) ::= PLUS. {
+   U_TRACE(0, "additiveCond(A) ::= PLUS")
    A = U_TK_PLUS;
 }
-cond(A) ::= MINUS. {
-   U_TRACE(0, "cond(A) ::= MINUS")
+additiveCond(A) ::= MINUS. {
+   U_TRACE(0, "additiveCond(A) ::= MINUS")
    A = U_TK_MINUS;
 }
-cond(A) ::= MULT. {
-   U_TRACE(0, "cond(A) ::= MULT")
+multiplicativeCond(A) ::= MULT. {
+   U_TRACE(0, "multiplicativeCond(A) ::= MULT")
    A = U_TK_MULT;
 }
-cond(A) ::= DIV. {
-   U_TRACE(0, "cond(A) ::= DIV")
+multiplicativeCond(A) ::= DIV. {
+   U_TRACE(0, "multiplicativeCond(A) ::= DIV")
    A = U_TK_DIV;
 }
-cond(A) ::= MOD. {
-   U_TRACE(0, "cond(A) ::= MOD")
+multiplicativeCond(A) ::= MOD. {
+   U_TRACE(0, "multiplicativeCond(A) ::= MOD")
    A = U_TK_MOD;
 }
-*/
 
-/*
-%type expr { UString* }
-%type exprline { UString* }
-
-input ::= exprline(B). {
-	U_TRACE(0, "input ::= exprline(B)")
+primaryExpression(A) ::= FN_CALL(B) LPAREN RPAREN. {
+	U_TRACE(0, "primaryExpression(A) ::= FN_CALL(B) LPAREN RPAREN")
 
 	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(result)
 
-	U_INTERNAL_DUMP("B = %.*S result = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*result))
+	U_INTERNAL_DUMP("A = %p B = %.*S", A, U_STRING_TO_TRACE(*B))
 
-	*result = *B;
+   long lo;
+	lPFv addr = (lPFv) U_SYSCALL(dlsym, "%p,%S", RTLD_DEFAULT, B->c_str());
+
+	A = (addr ? (lo = (*addr)(), U_NEW(UString(UStringExt::numberToString(lo)))) : U_NEW(UString));
 
 	delete B;
 }
 
-exprline(A) ::= exprline(B) AND expr(D). {
-	U_TRACE(0, "exprline(A) ::= exprline(B) AND expr(D)")
+primaryExpression(A) ::= FN_CALL(B) LPAREN params(C) RPAREN. {
+	U_TRACE(0, "primaryExpression(A) ::= FN_CALL(B) LPAREN params(C) RPAREN")
 
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(D)
+   U_INTERNAL_ASSERT_POINTER(B)
+   U_INTERNAL_ASSERT_POINTER(C)
 
-	U_INTERNAL_DUMP("B = %.*S D = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*D))
+	U_INTERNAL_DUMP("B = %.*S C = %p", U_STRING_TO_TRACE(*B), C)
 
-	A = (B->empty() == false && D->empty() == false ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
+   long lo, lo0, lo1;
+	lPFll addr = (lPFll) U_SYSCALL(dlsym, "%p,%S", RTLD_DEFAULT, B->c_str());
 
-	delete B;
-	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-exprline(A) ::= exprline(B) OR expr(D). {
-	U_TRACE(0, "exprline(A) ::= exprline(B) OR expr(D)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(D)
-
-	U_INTERNAL_DUMP("B = %.*S D = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*D))
-
-	A = (B->empty() == false || D->empty() == false ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
+	A = (addr ? (lo0 = (*C)[0].strtol(), lo1 = (*C)[1].strtol(), lo = (*addr)(lo0, lo1), U_NEW(UString(UStringExt::numberToString(lo)))) : U_NEW(UString));
 
 	delete B;
-	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
 }
 
-exprline(A) ::= exprline(B) EQ expr(D). {
-	U_TRACE(0, "exprline(A) ::= exprline(B) EQ expr(D)")
+params(A) ::= VALUE(B). {
+	U_TRACE(0, "params(A) ::= VALUE(B)")
 
 	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(D)
 
-	U_INTERNAL_DUMP("B = %.*S D = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*D))
+	U_INTERNAL_DUMP("A = %p B = %.*S", A, U_STRING_TO_TRACE(*B))
 
-   bool Bbo = (B->empty() == false),
-        Dbo = (D->empty() == false);
+	A = U_NEW(Items);
 
-   int cmp = (Bbo && Dbo ? B->compare(D->rep) : Bbo - Dbo);
-
-   U_INTERNAL_DUMP("cmp = %d", cmp)
-
-   A = (cmp == 0 ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
+	A->push_back(*B);
 
 	delete B;
-	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
 }
 
-exprline(A) ::= exprline(B) NE expr(D). {
-	U_TRACE(0, "exprline(A) ::= exprline(B) NE expr(D)")
+params(A) ::= params(B) COMMA VALUE(C). {
+	U_TRACE(0, "params(A) ::= params(B) COMMA VALUE(C)")
 
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(D)
+   U_INTERNAL_ASSERT_POINTER(B)
+   U_INTERNAL_ASSERT_POINTER(C)
 
-	U_INTERNAL_DUMP("B = %.*S D = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*D))
+	U_INTERNAL_DUMP("B = %p C = %.*S", B, U_STRING_TO_TRACE(*C))
 
-   bool Bbo = (B->empty() == false),
-        Dbo = (D->empty() == false);
-
-   int cmp = (Bbo && Dbo ? B->compare(D->rep) : Bbo - Dbo);
-
-   U_INTERNAL_DUMP("cmp = %d", cmp)
-
-   A = (cmp != 0 ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-exprline(A) ::= exprline(B) GT expr(D). {
-	U_TRACE(0, "exprline(A) ::= exprline(B) GT expr(D)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(D)
-
-	U_INTERNAL_DUMP("B = %.*S D = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*D))
-
-   bool Bbo = (B->empty() == false),
-        Dbo = (D->empty() == false);
-
-   int cmp = (Bbo && Dbo ? B->strtol() - D->strtol() : Bbo - Dbo);
-
-   U_INTERNAL_DUMP("cmp = %d", cmp)
-
-   A = (cmp > 0 ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-exprline(A) ::= exprline(B) GE expr(D). {
-	U_TRACE(0, "exprline(A) ::= exprline(B) GE expr(D)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(D)
-
-	U_INTERNAL_DUMP("B = %.*S D = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*D))
-
-   bool Bbo = (B->empty() == false),
-        Dbo = (D->empty() == false);
-
-   int cmp = (Bbo && Dbo ? B->strtol() - D->strtol() : Bbo - Dbo);
-
-   U_INTERNAL_DUMP("cmp = %d", cmp)
-
-   A = (cmp >= 0 ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-exprline(A) ::= exprline(B) LT expr(D). {
-	U_TRACE(0, "exprline(A) ::= exprline(B) LT expr(D)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(D)
-
-	U_INTERNAL_DUMP("B = %.*S D = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*D))
-
-   bool Bbo = (B->empty() == false),
-        Dbo = (D->empty() == false);
-
-   int cmp = (Bbo && Dbo ? B->strtol() - D->strtol() : Bbo - Dbo);
-
-   U_INTERNAL_DUMP("cmp = %d", cmp)
-
-   A = (cmp < 0 ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-exprline(A) ::= exprline(B) LE expr(D). {
-	U_TRACE(0, "exprline(A) ::= exprline(B) LE expr(D)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(D)
-
-	U_INTERNAL_DUMP("B = %.*S D = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*D))
-
-   bool Bbo = (B->empty() == false),
-        Dbo = (D->empty() == false);
-
-   int cmp = (Bbo && Dbo ? B->strtol() - D->strtol() : Bbo - Dbo);
-
-   U_INTERNAL_DUMP("cmp = %d", cmp)
-
-   A = (cmp <= 0 ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-exprline(A) ::= exprline(B) PLUS expr(D). {
-	U_TRACE(0, "exprline(A) ::= exprline(B) PLUS expr(D)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(D)
-
-	U_INTERNAL_DUMP("B = %.*S D = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*D))
-
-	A = U_NEW(UString(UStringExt::numberToString(B->strtol() + D->strtol())));
-
-	delete B;
-	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-exprline(A) ::= exprline(B) MINUS expr(D). {
-	U_TRACE(0, "exprline(A) ::= exprline(B) MINUS expr(D)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(D)
-
-	U_INTERNAL_DUMP("B = %.*S D = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*D))
-
-	A = U_NEW(UString(UStringExt::numberToString(B->strtol() - D->strtol())));
-
-	delete B;
-	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-exprline(A) ::= exprline(B) MULT expr(D). {
-	U_TRACE(0, "exprline(A) ::= exprline(B) MULT expr(D)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(D)
-
-	U_INTERNAL_DUMP("B = %.*S D = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*D))
-
-	A = U_NEW(UString(UStringExt::numberToString(B->strtol() * D->strtol())));
-
-	delete B;
-	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-exprline(A) ::= exprline(B) DIV expr(D). {
-	U_TRACE(0, "exprline(A) ::= exprline(B) DIV expr(D)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(D)
-
-	U_INTERNAL_DUMP("B = %.*S D = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*D))
-
-	A = U_NEW(UString(UStringExt::numberToString(B->strtol() / D->strtol())));
-
-	delete B;
-	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-exprline(A) ::= exprline(B) MOD expr(D). {
-	U_TRACE(0, "exprline(A) ::= exprline(B) MOD expr(D)")
-
-	U_INTERNAL_ASSERT_POINTER(B)
-	U_INTERNAL_ASSERT_POINTER(D)
-
-	U_INTERNAL_DUMP("B = %.*S D = %.*S", U_STRING_TO_TRACE(*B), U_STRING_TO_TRACE(*D))
-
-	A = U_NEW(UString(UStringExt::numberToString(B->strtol() % D->strtol())));
-
-	delete B;
-	delete D;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-exprline(A) ::= expr(B). {
-	U_TRACE(0, "exprline(A) ::= expr(B)")
-
-	U_INTERNAL_DUMP("A = %p B = %p", A, B)
-
-	U_INTERNAL_ASSERT_POINTER(B)
+	B->push_back(*C);
 
 	A = B;
 
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
+	delete C;
 }
-
-expr(A) ::= NOT expr(B). {
-	U_TRACE(0, "expr(A) ::= NOT expr(B)")
-
-	U_INTERNAL_DUMP("A = %p B = %p", A, B)
-
-	U_INTERNAL_ASSERT_POINTER(B)
-
-	A = (B->empty() ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
-
-	delete B;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-expr(A) ::= LPAREN exprline(B) RPAREN. {
-	U_TRACE(0, "expr(A) ::= LPAREN exprline(B) RPAREN")
-
-	U_INTERNAL_DUMP("A = %p B = %p", A, B)
-
-	U_INTERNAL_ASSERT_POINTER(B)
-
-	A = B;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-
-expr(A) ::= value(B). {
-	U_TRACE(0, "expr(A) ::= value(B)")
-
-	U_INTERNAL_DUMP("A = %p B = %p", A, B)
-
-	U_INTERNAL_ASSERT_POINTER(B)
-
-	A = B;
-
-	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
-}
-*/

@@ -282,6 +282,7 @@ precedence: ( )
 quoted strings: 'string with a dollar: $FOO'
 unquoted strings: string
 variable substitution: $REMOTE_ADDR ${REMOTE_ADDR}
+function call with optional params: FN_CALL([p1,p2,...,pn])
 */
 
 int UTokenizer::getTokenId(UString& token)
@@ -306,18 +307,24 @@ loop:
 
    switch (c)
       {
-      case '+': tid = U_TK_PLUS;                                  p2 = s; break;
-      case '-': tid = U_TK_MINUS;                                 p2 = s; break;
-      case '*': tid = U_TK_MULT;                                  p2 = s; break;
-      case '%': tid = U_TK_MOD;                                   p2 = s; break;
-      case '(': tid = U_TK_LPAREN;                                p2 = s; break;
-      case ')': tid = U_TK_RPAREN;                                p2 = s; break;
-      case '=': tid = (*s == '=' ? (++s, U_TK_EQ)  : U_TK_EQ);    p2 = s; break;
-      case '>': tid = (*s == '=' ? (++s, U_TK_GE)  : U_TK_GT);    p2 = s; break;
-      case '<': tid = (*s == '=' ? (++s, U_TK_LE)  : U_TK_LT);    p2 = s; break;
-      case '!': tid = (*s == '=' ? (++s, U_TK_NE)  : U_TK_NOT);   p2 = s; break;
-      case '&': tid = (*s == '&' ? (++s, U_TK_AND) : U_TK_ERROR); p2 = s; break;
-      case '|': tid = (*s == '|' ? (++s, U_TK_OR)  : U_TK_ERROR); p2 = s; break;
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+         {
+         tid = U_TK_VALUE;
+
+         while (s < end && u_isdigit(*s)) ++s;
+
+         p2 = s;
+         }
+      break;
 
       case '$':
          {
@@ -354,24 +361,19 @@ loop:
          }
       break;
 
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-         {
-         tid = U_TK_VALUE;
-
-         while (s < end && u_isdigit(*s)) ++s;
-
-         p2 = s;
-         }
-      break;
+      case '+': tid = U_TK_PLUS;                                  p2 = s; break;
+      case '-': tid = U_TK_MINUS;                                 p2 = s; break;
+      case '*': tid = U_TK_MULT;                                  p2 = s; break;
+      case '%': tid = U_TK_MOD;                                   p2 = s; break;
+      case '(': tid = U_TK_LPAREN;                                p2 = s; break;
+      case ')': tid = U_TK_RPAREN;                                p2 = s; break;
+      case ',': tid = U_TK_COMMA;                                 p2 = s; break;
+      case '=': tid = (*s == '=' ? (++s, U_TK_EQ)  : U_TK_EQ);    p2 = s; break;
+      case '>': tid = (*s == '=' ? (++s, U_TK_GE)  : U_TK_GT);    p2 = s; break;
+      case '<': tid = (*s == '=' ? (++s, U_TK_LE)  : U_TK_LT);    p2 = s; break;
+      case '!': tid = (*s == '=' ? (++s, U_TK_NE)  : U_TK_NOT);   p2 = s; break;
+      case '&': tid = (*s == '&' ? (++s, U_TK_AND) : U_TK_ERROR); p2 = s; break;
+      case '|': tid = (*s == '|' ? (++s, U_TK_OR)  : U_TK_ERROR); p2 = s; break;
 
       case 't':
       case 'f':
@@ -410,18 +412,23 @@ loop:
       default:
          {
 value:
-         tid = U_TK_VALUE;
-
          while (s < end)
             {
             c = *s;
 
-            if (u_isgraph(c) == false || c == ')') break;
+            if (c == '(' ||
+                c == ')' ||
+                c == ',' ||
+                u_isgraph(c) == false)
+               {         
+               break;
+               }
 
             ++s;
             }
 
-         p2 = s;
+         p2  = s;
+         tid = (c == '(' ? U_TK_FN_CALL : U_TK_VALUE);
          }
       break;
       }

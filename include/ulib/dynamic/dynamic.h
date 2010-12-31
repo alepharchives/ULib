@@ -79,6 +79,8 @@ public:
 
    const char* getError() const { return err; }
 
+   static void* getAddressOfFunction(const char* name);
+
    // DEBUG
 
 #ifdef DEBUG
@@ -89,6 +91,8 @@ protected:
    void* addr;
    const char* err;
    HINSTANCE handle;
+
+   static UDynamic* pmain;
 
 private:
    UDynamic(const UDynamic&)            {}

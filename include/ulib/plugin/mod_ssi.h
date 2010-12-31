@@ -69,6 +69,11 @@ public:
    static const UString* str_errmsg_default;
    static const UString* str_timefmt_default;
 
+   static const UString* str_encoding;
+   static const UString* str_encoding_none;
+   static const UString* str_encoding_url;
+   static const UString* str_encoding_entity;
+
    static void str_allocate();
 
    // COSTRUTTORI
