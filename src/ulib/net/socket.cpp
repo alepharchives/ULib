@@ -13,6 +13,7 @@
 
 #include <ulib/file.h>
 #include <ulib/timeval.h>
+#include <ulib/notifier.h>
 #include <ulib/net/socket.h>
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/string_ext.h>
@@ -56,6 +57,7 @@ const UString* USocket::str_referer;
 const UString* USocket::str_X_Real_IP;
 const UString* USocket::str_X_Forwarded_For;
 const UString* USocket::str_Transfer_Encoding;
+const UString* USocket::str_X_Progress_ID;
 
 void USocket::str_allocate()
 {
@@ -84,6 +86,7 @@ void USocket::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_X_Real_IP,0)
    U_INTERNAL_ASSERT_EQUALS(str_X_Forwarded_For,0)
    U_INTERNAL_ASSERT_EQUALS(str_Transfer_Encoding,0)
+   U_INTERNAL_ASSERT_EQUALS(str_X_Progress_ID,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("Host") },
@@ -108,7 +111,8 @@ void USocket::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("Referer") },
       { U_STRINGREP_FROM_CONSTANT("X-Real-IP") },
       { U_STRINGREP_FROM_CONSTANT("X-Forwarded-For") },
-      { U_STRINGREP_FROM_CONSTANT("Transfer-Encoding") }
+      { U_STRINGREP_FROM_CONSTANT("Transfer-Encoding") },
+      { U_STRINGREP_FROM_CONSTANT("X-Progress-ID") }
    };
 
    U_NEW_ULIB_OBJECT(str_host,                  U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -134,6 +138,7 @@ void USocket::str_allocate()
    U_NEW_ULIB_OBJECT(str_X_Real_IP,             U_STRING_FROM_STRINGREP_STORAGE(20));
    U_NEW_ULIB_OBJECT(str_X_Forwarded_For,       U_STRING_FROM_STRINGREP_STORAGE(21));
    U_NEW_ULIB_OBJECT(str_Transfer_Encoding,     U_STRING_FROM_STRINGREP_STORAGE(22));
+   U_NEW_ULIB_OBJECT(str_X_Progress_ID,         U_STRING_FROM_STRINGREP_STORAGE(23));
 }
 
 bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)
@@ -511,6 +516,57 @@ bool USocket::sendBinary32Bits(uint32_t lData)
    bool result = (send(&uiNetOrder, sizeof(uint32_t)) == sizeof(uint32_t));
 
    U_RETURN(result);
+}
+
+/*
+sendfile() copies data between one file descriptor and another. Either or both of these file descriptors may refer to a socket.
+OUT_FD should be a descriptor opened for writing. POFFSET is a pointer to a variable holding the input file pointer position from
+which sendfile() will start reading data. When sendfile() returns, this variable will be set to the offset of the byte following
+the last byte that was read. COUNT is the number of bytes to copy between file descriptors. Because this copying is done within
+the kernel, sendfile() does not need to spend time transferring data to and from user space.
+*/
+
+bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count)
+{
+   U_TRACE(1, "USocket::sendfile(%d,%p,%u)", in_fd, poffset, count)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+   U_INTERNAL_ASSERT_MAJOR(count,0)
+
+   ssize_t value;
+   bool write_again;
+
+   do {
+      U_INTERNAL_DUMP("count = %u", count)
+
+      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", iSockDesc, in_fd, poffset, count);
+
+      if (value < 0L)
+         {
+         U_INTERNAL_DUMP("errno = %d", errno)
+
+         if (errno == EAGAIN &&
+             UNotifier::waitForWrite(iSockDesc, 3 * 1000) == 1)
+            {
+            UFile::setBlocking(iSockDesc, flags, true);
+
+            continue;
+            }
+
+         U_RETURN(false);
+         }
+
+      write_again = (value != (ssize_t)count);
+
+      count -= value;
+      }
+   while (write_again);
+
+   U_INTERNAL_ASSERT_EQUALS(count,0)
+
+   U_RETURN(true);
 }
 
 // VIRTUAL METHOD

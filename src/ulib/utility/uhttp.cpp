@@ -130,6 +130,7 @@ const char*                       UHTTP::ptrA;
 UMimeMultipart*                   UHTTP::formMulti;
 UVector<UString>*                 UHTTP::form_name_value;
 UVector<UIPAllow*>*               UHTTP::vallow_IP;
+UHTTP::upload_progress*           UHTTP::ptr_upload_progress;
 
          UHTTP::UServletPage*     UHTTP::page;
 UHashMap<UHTTP::UServletPage*>*   UHTTP::pages;
@@ -498,6 +499,18 @@ void UHTTP::ctor(UEventFd* handler_event)
             pages->insert(key, page);
 
             U_SRV_LOG("USP found: usp/%s, USP service registered (URI): /usp/%.*s", ptr, U_STRING_TO_TRACE(key));
+
+            if (UServer_Base::isPreForked() &&
+                U_STRNEQ(key.data(), "upload_progress.usp"))
+               {
+               // UPLOAD PROGRESS
+
+               USocketExt::upload_hook = updateUploadProgress;
+
+               U_INTERNAL_ASSERT_EQUALS(UServer_Base::shared_data_add,0)
+
+               UServer_Base::shared_data_add = sizeof(upload_progress) * U_MAX_UPLOAD_PROGRESS;
+               }
             }
          else
             {
@@ -764,7 +777,8 @@ bool UHTTP::isHTTPRequest(const char* ptr)
    if (c != 'G' && // GET
        c != 'P' && // POST/PUT
        c != 'D' && // DELETE
-       c != 'H')   // HEAD
+       c != 'H' && // HEAD
+       c != 'O')   // OPTIONS
       {
       U_RETURN(false);
       }
@@ -785,9 +799,13 @@ bool UHTTP::isHTTPRequest(const char* ptr)
       {
       if (U_STRNCASECMP(ptr, "DELETE ")) U_RETURN(false);
       }
-   else // HEAD
+   else if (c == 'H') // HEAD
       {
       if (U_STRNCASECMP(ptr, "HEAD ")) U_RETURN(false);
+      }
+   else // OPTIONS
+      {
+      if (U_STRNCASECMP(ptr, "OPTIONS ")) U_RETURN(false);
       }
 
    U_RETURN(true);
@@ -803,12 +821,18 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
     * The default is GET for input requests and POST for output requests
     *
     * Other possible alternatives are:
+    *
     *  - PUT
     *  - HEAD
     *  - DELETE
-    *  ---- NOT implemented -----
-    *  - TRACE
     *  - OPTIONS
+    *
+    *  ---- NOT implemented -----
+    *
+    *  - PATCH
+    *  - CONNECT
+    *  - TRACE (because can send client cookie information, dangerous...)
+    *
     *  --------------------------
     *
     * See http://ietf.org/rfc/rfc2616.txt for further information about HTTP request methods
@@ -825,8 +849,9 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
 
    if (c != 'G' && // GET
        c != 'P' && // POST/PUT
+       c != 'H' && // HEAD or response
        c != 'D' && // DELETE
-       c != 'H')   // HEAD or response
+       c != 'O')   // OPTIONS
       {
       U_RETURN(false);
       }
@@ -860,14 +885,7 @@ bypass:
          U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(http_info.method, "PUT "), 0)
          }
       }
-   else if (c == 'D') // DELETE
-      {
-      U_http_method_type   = HTTP_DELETE;
-      http_info.method_len = 6;
-
-      U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(http_info.method, "DELETE "), 0)
-      }
-   else // HEAD or response
+   else if (c == 'H') // HEAD or response
       {
       if (ptr[1] == 'T')
          {
@@ -888,6 +906,20 @@ bypass:
       http_info.method_len = 4;
 
       U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(http_info.method, "HEAD "), 0)
+      }
+   else if (c == 'D') // DELETE
+      {
+      U_http_method_type   = HTTP_DELETE;
+      http_info.method_len = 6;
+
+      U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(http_info.method, "DELETE "), 0)
+      }
+   else // OPTIONS
+      {
+      U_http_method_type   = HTTP_OPTIONS;
+      http_info.method_len = 7;
+
+      U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(http_info.method, "OPTIONS "), 0)
       }
 
    U_INTERNAL_DUMP("method = %.*S method_type = %C", U_HTTP_METHOD_TO_TRACE, U_http_method_type)
@@ -1234,9 +1266,22 @@ bool UHTTP::readHTTPBody(USocket* s, UString& rbuffer, UString& body)
          pbuffer = &rbuffer;
          }
 
+      // UPLOAD PROGRESS
+
+      if (USocketExt::upload_hook)
+         {
+         (void) initUploadProgress(http_info.clength);
+
+         if (body_byte_read) updateUploadProgress(body_byte_read);
+         }
+
       // NB: wait max 3 sec for other data...
 
       if (USocketExt::read(s, *pbuffer, http_info.clength - body_byte_read, 3 * 1000) == false) U_RETURN(false);
+
+      // UPLOAD PROGRESS
+
+      if (USocketExt::upload_hook) updateUploadProgress(http_info.clength); // done...
 
       U_INTERNAL_DUMP("pbuffer = %.*S", U_STRING_TO_TRACE(*pbuffer))
       }
@@ -2088,10 +2133,13 @@ UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, const UString& conten
    uint32_t sz;
    const char* ptr;
 
-   if (nResponseCode == HTTP_NOT_IMPLEMENTED)
+   if (nResponseCode == HTTP_NOT_IMPLEMENTED ||
+       nResponseCode == HTTP_OPTIONS_RESPONSE)
       {
-      ptr =                 "Allow: GET, HEAD, POST, PUT, DELETE\r\nContent-Length: 0\r\n\r\n";
-      sz  = U_CONSTANT_SIZE("Allow: GET, HEAD, POST, PUT, DELETE\r\nContent-Length: 0\r\n\r\n");
+      ptr =                 "Allow: GET, HEAD, POST, PUT, DELETE, OPTIONS\r\nContent-Length: 0\r\n\r\n";
+      sz  = U_CONSTANT_SIZE("Allow: GET, HEAD, POST, PUT, DELETE, OPTIONS\r\nContent-Length: 0\r\n\r\n");
+
+      if (nResponseCode == HTTP_OPTIONS_RESPONSE) nResponseCode = HTTP_OK;
       }
    else
       {
@@ -2435,48 +2483,42 @@ void UHTTP::setHTTPCgiResponse(int nResponseCode, bool header_content_length, bo
       }
    else
       {
-      if (content_encoding                ||
-          http_info.clength        <= 100 ||
-          U_http_is_accept_deflate == '\0')
+      const char* ptr;
+      uint32_t sz, endHeader = UClientImage_Base::wbuffer->size() - http_info.clength;
+      bool bcompress = (content_encoding == false && http_info.clength > 100 && U_http_is_accept_deflate == '1');
+
+      U_INTERNAL_DUMP("bcompress = %b endHeader = %u", bcompress, endHeader)
+
+      UString content  = UClientImage_Base::wbuffer->substr(endHeader),
+              compress = (bcompress ? UStringExt::deflate(content) : content);
+
+      http_info.clength = compress.size();
+
+      if (endHeader)
          {
-         tmp.snprintf("Content-Length: %u\r\n"
-                      "%s",
-                      http_info.clength,
-                      (header_content_type ? "" : "Content-Type: " U_CTYPE_HTML "\r\n\r\n"));
+         // NB: endHeader comprende anche la blank line...
+      
+         ptr = UClientImage_Base::wbuffer->data();
+         sz  = endHeader;
          }
       else
          {
-         const char* ptr;
-         uint32_t sz, endHeader = UClientImage_Base::wbuffer->size() - http_info.clength;
+         ptr =                 U_CRLF;
+         sz  = U_CONSTANT_SIZE(U_CRLF);
+         }
 
-         U_INTERNAL_DUMP("endHeader = %u", endHeader)
+      tmp.snprintf("%s"
+                   "Content-Length: %u\r\n"
+                   "%s"
+                   "%.*s",
+                   (header_content_type ? "" : "Content-Type: " U_CTYPE_HTML "\r\n"),
+                   http_info.clength,
+                   (bcompress ? "Content-Encoding: deflate\r\n" : ""),
+                   sz, ptr);
 
-         UString content  = UClientImage_Base::wbuffer->substr(endHeader),
-                 compress = UStringExt::deflate(content);
-
-         http_info.clength = compress.size();
-
-         if (endHeader)
-            {
-            // NB: endHeader comprende anche la blank line...
-         
-            ptr = UClientImage_Base::wbuffer->data();
-            sz  = endHeader;
-            }
-         else
-            {
-            ptr =                 U_CRLF;
-            sz  = U_CONSTANT_SIZE(U_CRLF);
-            }
-
-         tmp.snprintf("%s"
-                      "Content-Length: %u\r\n"
-                      "Content-Encoding: deflate\r\n"
-                      "%.*s",
-                      (header_content_type ? "" : "Content-Type: " U_CTYPE_HTML "\r\n"),
-                      http_info.clength,
-                      sz, ptr);
-
+      if (bcompress == false) UClientImage_Base::wbuffer->erase(0, endHeader);
+      else
+         {
 #     ifdef DEBUG
          content.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
 #     endif
@@ -4818,7 +4860,9 @@ void UHTTP::processHTTPGetRequest()
 
       off_t lstart = start;
 
-      if (file->sendfile(UClientImage_Base::socket->getFd(), &lstart, size)) UClientImage_Base::socket->setTcpCork(0U);
+      (void) UClientImage_Base::socket->sendfile(file->getFd(), &lstart, size);
+      
+      UClientImage_Base::socket->setTcpCork(0U);
       }
 #ifdef DEBUG
    else if (nResponseCode == HTTP_PARTIAL) UClientImage_Base::body->clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
@@ -4826,6 +4870,155 @@ void UHTTP::processHTTPGetRequest()
 
 end:
    if (file->isOpen()) file->close();
+}
+
+// ------------------------------------------------------------------------------------------------------------------------------
+// UPLOAD PROGRESS
+// ------------------------------------------------------------------------------------------------------------------------------
+// The basic technique is simple: on the page containing your upload form is some JavaScript to generate a unique identifier
+// for the upload request. When the form is submitted, that identifier is passed along with the rest of the data. When the
+// server starts receiving the POST request, it starts logging the bytes received for the identifier. While the file's being
+// uploaded, the JavaScript on the upload page makes periodic requests asking for the upload progress, and updates a progress
+// widget accordingly. On the server, you need two views: one to handle the upload form, and one to respond to progress requests.
+// ------------------------------------------------------------------------------------------------------------------------------
+
+U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
+{
+   U_TRACE(0, "UHTTP::initUploadProgress(%d)", byte_read)
+
+   U_ASSERT(UServer_Base::isPreForked())
+
+   int i;
+   in_addr_t client = UClientImage_Base::socket->remoteIPAddress().getInAddr();
+   ptr_upload_progress = (upload_progress*)((char*)UServer_Base::ptr_shared_data + sizeof(UServer_Base::shared_data));
+
+   if (byte_read > 0)
+      {
+      int uuid_key_size = USocket::str_X_Progress_ID->size() + 1;
+
+      // find first available slot
+
+      for (i = 0; i < U_MAX_UPLOAD_PROGRESS; ++i)
+         {
+         U_INTERNAL_DUMP("i = %2d uuid = %.32S byte_read = %d count = %d",
+                          i, ptr_upload_progress[i].uuid, ptr_upload_progress[i].byte_read, ptr_upload_progress[i].count)
+
+         if (ptr_upload_progress[i].byte_read ==
+             ptr_upload_progress[i].count)
+            {
+            ptr_upload_progress += i;
+
+            ptr_upload_progress->count     = byte_read;
+            ptr_upload_progress->client    = client;
+            ptr_upload_progress->byte_read = 0;
+
+            // The HTTP POST request can contain a query parameter, 'X-Progress-ID', which should contain a
+            // unique string to identify the upload to be tracked.
+
+            if (http_info.query_len ==                  32 ||
+                http_info.query_len == (uuid_key_size + 32))
+               {
+               U_INTERNAL_DUMP("query(%u) = %.*S", http_info.query_len, U_HTTP_QUERY_TO_TRACE)
+
+               (void) u_memcpy(ptr_upload_progress->uuid, http_info.query + (http_info.query_len == 32 ? 0 : uuid_key_size), 32);
+
+               U_INTERNAL_DUMP("uuid = %.32S", ptr_upload_progress->uuid)
+               }
+
+            break;
+            }
+         }
+      }
+   else
+      {
+      // find current slot: The HTTP request to this location must have either an X-Progress-ID parameter or
+      // X-Progress-ID HTTP header containing the unique identifier as specified in your upload/POST request
+      // to the relevant tracked zone. If you are using the X-Progress-ID as a query-string parameter, ensure
+      // it is the LAST argument in the URL.
+
+      uint32_t sz = form_name_value->size();
+
+      const char* uuid_ptr = (form_name_value->isEqual(sz-2, *USocket::str_X_Progress_ID, true)
+                                 ? form_name_value->c_pointer(sz-1)
+                                 : getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *USocket::str_X_Progress_ID, true));
+
+      U_INTERNAL_DUMP("uuid = %.32S", uuid_ptr)
+
+      for (i = 0; i < U_MAX_UPLOAD_PROGRESS; ++i)
+         {
+         U_INTERNAL_DUMP("i = %2d uuid = %.32S byte_read = %d count = %d",
+                          i, ptr_upload_progress[i].uuid, ptr_upload_progress[i].byte_read, ptr_upload_progress[i].count)
+
+         if ((uuid_ptr ? memcmp(uuid_ptr, ptr_upload_progress[i].uuid, 32) == 0
+                       :                  ptr_upload_progress[i].client == client)) 
+            {
+            ptr_upload_progress += i;
+
+            break;
+            }
+         }
+      }
+
+   if (i == U_MAX_UPLOAD_PROGRESS)
+      {
+      ptr_upload_progress = 0;
+
+      U_RETURN(false);
+      }
+
+   U_RETURN(true);
+}
+
+U_NO_EXPORT void UHTTP::updateUploadProgress(int byte_read)
+{
+   U_TRACE(0, "UHTTP::updateUploadProgress(%d)", byte_read)
+
+   U_INTERNAL_ASSERT_MAJOR(byte_read,0)
+
+   U_ASSERT(UServer_Base::isPreForked())
+
+   if (ptr_upload_progress)
+      {
+      U_INTERNAL_DUMP("byte_read = %d count = %d", ptr_upload_progress->byte_read, ptr_upload_progress->count)
+
+      U_INTERNAL_ASSERT_MAJOR(ptr_upload_progress->count,0)
+
+      ptr_upload_progress->byte_read = byte_read;
+      }
+}
+
+// Return JSON object with information about the progress of an upload.
+// The JSON returned is what the JavaScript uses to render the progress bar...
+
+UString UHTTP::getUploadProgress()
+{
+   U_TRACE(0, "UHTTP::getUploadProgress()")
+
+   U_ASSERT(UServer_Base::isPreForked())
+
+   if (ptr_upload_progress == 0)
+      {
+      UTimeVal to_sleep(0L, 300 * 1000L);
+
+      for (int i = 0; i < 10 && initUploadProgress(0) == false; ++i) to_sleep.nanosleep();
+      }
+
+   UString result(100U);
+
+   if (ptr_upload_progress == 0) (void) result.assign(U_CONSTANT_TO_PARAM("{ 'state' : 'error' }"));
+   else
+      {
+      U_INTERNAL_DUMP("byte_read = %d count = %d", ptr_upload_progress->byte_read, ptr_upload_progress->count)
+
+      U_INTERNAL_ASSERT_MAJOR(ptr_upload_progress->count,0)
+
+      result.snprintf("{ 'state' : '%s', 'received' : %d, 'size' : %d }",
+                              (ptr_upload_progress->byte_read < ptr_upload_progress->count ? "uploading" : "done"),
+                               ptr_upload_progress->byte_read,
+                               ptr_upload_progress->count);
+      }
+
+   U_RETURN_STRING(result);
 }
 
 // DEBUG

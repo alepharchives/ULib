@@ -46,6 +46,7 @@ extern "C" {
 #endif
 
 typedef void  (*vPF)     (void);
+typedef void  (*vPFi)    (int);
 typedef void* (*pvPF)    (void);
 typedef void  (*vPFpv)   (void*);
 typedef void  (*vPFpvpv) (void*,void*);

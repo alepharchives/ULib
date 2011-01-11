@@ -12,12 +12,10 @@
 // ============================================================================
 
 #include <ulib/file.h>
-#include <ulib/notifier.h>
 #include <ulib/tokenizer.h>
 #include <ulib/container/tree.h>
 #include <ulib/utility/services.h>
 #include <ulib/utility/string_ext.h>
-#include <ulib/net/server/client_image.h>
 
 #ifdef HAVE_MAGIC
 #  include <ulib/magic/magic.h>
@@ -569,62 +567,6 @@ bool UFile::writeToTmpl(const char* tmpl, const UString& data, bool append, bool
       }
 
    U_RETURN(result);
-}
-
-/*
-sendfile() copies data between one file descriptor and another. Either or both of these file descriptors may refer to a socket.
-OUT_FD should be a descriptor opened for writing. POFFSET is a pointer to a variable holding the input file pointer position from
-which sendfile() will start reading data. When sendfile() returns, this variable will be set to the offset of the byte following
-the last byte that was read. COUNT is the number of bytes to copy between file descriptors. Because this copying is done within
-the kernel, sendfile() does not need to spend time transferring data to and from user space.
-*/
-
-bool UFile::sendfile(int out_fd, off_t* poffset, uint32_t count)
-{
-   U_TRACE(1, "UFile::sendfile(%d,%p,%u)", out_fd, poffset, count)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_DIFFERS(fd, -1)
-   U_INTERNAL_ASSERT_MAJOR(st_size, 0)
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-
-   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
-   if (count == 0) count = st_size;
-
-   ssize_t value;
-   bool write_again;
-
-   do {
-      U_INTERNAL_DUMP("count = %u", count)
-
-      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", out_fd, fd, poffset, count);
-
-      if (value < 0L)
-         {
-         U_INTERNAL_DUMP("errno = %d", errno)
-
-         if (errno == EAGAIN &&
-             UNotifier::waitForWrite(out_fd, 3 * 1000) == 1)
-            {
-            setBlocking(out_fd, UClientImage_Base::socket->flags, true);
-
-            continue;
-            }
-
-         U_RETURN(false);
-         }
-
-      write_again = (value != (ssize_t)count);
-
-      count -= value;
-      }
-   while (write_again);
-
-   U_INTERNAL_ASSERT_EQUALS(count,0)
-
-   U_RETURN(true);
 }
 
 bool UFile::lock(short l_type, uint32_t start, uint32_t len) const

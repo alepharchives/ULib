@@ -8,10 +8,8 @@ if [ "$REQUEST_METHOD" = "GET" ]; then
 <html>
 <head>
   <title>Sample File Upload Form</title>
-  <link type="text/css" href="/css/upload.css" rel="stylesheet">
-  <script type="text/javascript" src="/js/jquery.js"></script>
-  <script type="text/javascript" src="/js/jquery.uploadProgress.js"></script>
-  <script type="text/javascript" src="/js/upload.js"></script>
+  <script type="text/javascript" src="/js/prototype/prototype.js"></script>
+  <script type="text/javascript" src="/js/bramus/jsProgressBarHandler.js"></script>
 </head>
 
 <body>
@@ -25,14 +23,7 @@ if [ "$REQUEST_METHOD" = "GET" ]; then
     Notes about the file: <input type="text" name="note"><br><br>
     <input type="submit" value="Press"> to upload the file!
   </form>
-
-  <div id="progress_container">
-    <div id="progress_filename"></div>
-	 <div id="progress_bar">
-	   <div id="progress_indicator"></div>
-	 </div>
-  </div>
-
+  <span class="progressBar" id="element1">0%</span>
   <hr>
 </body>
 </html>

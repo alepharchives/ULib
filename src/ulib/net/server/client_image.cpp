@@ -307,7 +307,7 @@ void UClientImage_Base::resetBuffer()
    U_INTERNAL_ASSERT_EQUALS(rbuffer->isNull(), false);
    U_ASSERT(                rbuffer->writeable())
 
-   rbuffer->setEmptyForce(); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more than one)...
+   rbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
 
    if (real_ip->empty() == false) real_ip->setEmpty();
 

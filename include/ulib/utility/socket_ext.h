@@ -32,6 +32,7 @@ public:
    static UString getNetworkDevice(         const char* exclude);       // eth0
 
    static int pcount;
+   static vPFi upload_hook; // it allows the generation of a progress meter during upload...
 #if defined(DEBUG) || defined(U_TEST)
    static char* pbuffer;
 #endif

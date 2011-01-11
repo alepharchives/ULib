@@ -51,6 +51,8 @@
 #define HTTP_RESET               205
 #define HTTP_PARTIAL             206
 
+#define HTTP_OPTIONS_RESPONSE    222
+
 // 3xx redirects the client to another URL
 #define HTTP_MULT_CHOICE         300
 #define HTTP_MOVED_PERM          301
@@ -116,7 +118,7 @@ typedef struct uhttpinfo {
 #define U_http_is_accept_deflate   UHTTP::http_info.flag[6]
 #define U_http_is_connection_close UHTTP::http_info.flag[7]
 
-enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_GET = '4', HTTP_HEAD = '5' };
+enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_GET = '4', HTTP_HEAD = '5', HTTP_OPTIONS = '6' };
 
 #define U_HTTP_HEADER(str)           str.substr(UHTTP::http_info.startHeader, UHTTP::http_info.szHeader)
 
@@ -164,6 +166,8 @@ enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_G
 // Default content type
 
 #define U_CTYPE_HTML "text/html; charset=iso-8859-1"
+
+#define U_MAX_UPLOAD_PROGRESS 32
 
 class UFile;
 class UValue;
@@ -378,6 +382,15 @@ public:
       U_RETURN(result);
       }
 
+   static bool isHttpOPTIONS()
+      {
+      U_TRACE(0, "UHTTP::isHttpOPTIONS()")
+
+      bool result = (U_http_method_type == HTTP_OPTIONS);
+
+      U_RETURN(result);
+      }
+
    static bool isSOAPRequest()
       {
       U_TRACE(0, "UHTTP::isSOAPRequest()")
@@ -557,6 +570,18 @@ public:
    static bool    checkUriProtected();
    static UString getUserHA1(const UString& user, const UString& realm);
    static bool    isUserAuthorized(const UString& user, const UString& password);
+
+   // UPLOAD PROGRESS
+
+   typedef struct upload_progress {
+      char uuid[32];
+      in_addr_t client;
+      int byte_read, count;
+   } upload_progress;
+
+   static upload_progress* ptr_upload_progress;
+
+   static UString getUploadProgress();
 
    // USP (ULib Servlet Page)
 
@@ -787,6 +812,8 @@ private:
    static void resetForm(bool brmdir) U_NO_EXPORT;
    static bool processHTTPAuthorization() U_NO_EXPORT;
    static bool checkHTTPGetRequestIfModified() U_NO_EXPORT;
+   static bool initUploadProgress(int byte_read) U_NO_EXPORT;
+   static void updateUploadProgress(int byte_read) U_NO_EXPORT;
    static bool setCGIShellScript(UString& command) U_NO_EXPORT;
    static int  sortHTTPRange(const void* a, const void* b) U_NO_EXPORT;
    static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;

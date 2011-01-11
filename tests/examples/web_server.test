@@ -22,10 +22,13 @@ fi
 DIR_CMD="../../examples/userver"
 
 if [ "$TERM" != "cygwin" ]; then
-	( mkdir -p usp; cd usp; ln -sf ../../../src/ulib/plugin/usp/.libs/jsonrequest.so
+	( mkdir -p usp; cd usp;
+	  ln -sf ../../../src/ulib/plugin/usp/.libs/jsonrequest.so;
+	  ln -sf ../../../src/ulib/plugin/usp/.libs/upload_progress.so;
 	  cd ../../../src/ulib/plugin/usp/;
-	  make jsonrequest.la  >/dev/null 2>&1 || exit 1;
-	  make benchmarking.la >/dev/null 2>&1 || exit 1;
+	  make jsonrequest.la	  >/dev/null 2>&1 || exit 1;
+	  make benchmarking.la	  >/dev/null 2>&1 || exit 1;
+	  make upload_progress.la >/dev/null 2>&1 || exit 1;
 	  test -d ../.libs &&
 	  ( cd ../.libs;
 	    ln -sf ../mod_shib/.libs/mod_shib.so;

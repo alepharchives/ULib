@@ -24,6 +24,7 @@
 #endif
 
 int      USocketExt::pcount;
+vPFi     USocketExt::upload_hook; // it allows the generation of a progress meter during upload...
 #if defined(DEBUG) || defined(U_TEST)
 char*    USocketExt::pbuffer;
 #endif
@@ -151,6 +152,8 @@ read:
             U_RETURN(false);
             }
          }
+
+      if (upload_hook) upload_hook(byte_read);
 
       goto read;
       }

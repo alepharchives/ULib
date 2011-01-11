@@ -196,14 +196,13 @@ int UHttpPlugIn::handlerREAD()
 
    UClientImage_Base::manageForPipeline();
 
-   int nResponseCode;
-   uint32_t host_end;
-
    if (is_http_req)
       {
       UHTTP::getTimeIfNeeded(false);
 
       // HTTP 1.1 want header "Host: ..."
+
+      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
       if (U_http_version            == '1' &&
           UHTTP::http_info.host_len == 0)
@@ -213,7 +212,12 @@ int UHttpPlugIn::handlerREAD()
          goto send_response;
          }
 
-      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+      if (UHTTP::isHttpOPTIONS())
+         {
+         UHTTP::setHTTPResponse(HTTP_OPTIONS_RESPONSE, 0, 0);
+
+         goto send_response;
+         }
 
       // manage virtual host
 
@@ -290,7 +294,8 @@ next:
    //                      Sends 501 for request-method != (GET|POST|HEAD)
    //                      Sends 505 for protocol != HTTP/1.[0-1]
 
-   nResponseCode = HTTP_NOT_IMPLEMENTED;
+   {
+   int nResponseCode = HTTP_NOT_IMPLEMENTED;
 
    if (U_http_method_type)
       {
@@ -308,6 +313,7 @@ next:
    U_http_is_connection_close = U_YES;
 
    UHTTP::setHTTPResponse(nResponseCode, 0, 0);
+   }
 
 send_response:
 

@@ -1,3 +1,6 @@
+OPTIONS / HTTP/1.1
+Host: localhost
+
 HEAD /Z/x,validate HTTP/1.1
 Host: localhost
 

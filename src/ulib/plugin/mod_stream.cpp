@@ -213,7 +213,7 @@ int UStreamPlugIn::handlerRequest()
             offset = 0;
 
             if (fmetadata &&
-                fmetadata->sendfile(UClientImage_Base::socket->getFd(), &offset) == false) goto end;
+                UClientImage_Base::socket->sendfile(fmetadata->getFd(), &offset, fmetadata->getSize()) == false) goto end;
 
             UTimeVal to_sleep(0L, 10 * 1000L);
 

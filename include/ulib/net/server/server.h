@@ -232,14 +232,16 @@ public:
    // -----------------------------------------------------------------------------------------------------------------------------
 
    typedef struct shared_data {
-      int socket_flags;          // socket accept descriptor flags from fcntl(fd, F_GETFL, 0)
+      int socket_flags; // socket accept descriptor flags from fcntl(fd, F_GETFL, 0)
       sig_atomic_t tot_connection;
    } shared_data;
 
    static ULock* lock;
-   static shared_data* ptr;
    static bool block_on_accept;
    static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves
+
+   static uint32_t shared_data_add;
+   static shared_data* ptr_shared_data;
 
    static bool isPreForked()
       {

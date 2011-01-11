@@ -31,9 +31,9 @@
 "\n" \
 "#define U_DYNAMIC_PAGE_APPEND(string)              (void)UClientImage_Base::wbuffer->append(string)\n" \
 "\n" \
-"#define U_DYNAMIC_PAGE_OUTPUT(fmt,args...)			 (UClientImage_Base::_buffer->snprintf(fmt,args),UClientImage_Base::wbuffer->append(*UClientImage_Base::_buffer))\n" \
+"#define U_DYNAMIC_PAGE_OUTPUT(fmt,args...)			 (UClientImage_Base::_buffer->snprintf(fmt , ##args),UClientImage_Base::wbuffer->append(*UClientImage_Base::_buffer))\n" \
 "\n" \
-"#define U_DYNAMIC_PAGE_OUTPUT_ENCODED(fmt,args...) (UClientImage_Base::_buffer->snprintf(fmt,args),UXMLEscape::encode(*UClientImage_Base::_buffer,*UClientImage_Base::_encoded),UClientImage_Base::wbuffer->append(*UClientImage_Base::_encoded))\n" \
+"#define U_DYNAMIC_PAGE_OUTPUT_ENCODED(fmt,args...) (UClientImage_Base::_buffer->snprintf(fmt , ##args),UXMLEscape::encode(*UClientImage_Base::_buffer,*UClientImage_Base::_encoded),UClientImage_Base::wbuffer->append(*UClientImage_Base::_encoded))\n" \
 "\n" \
 "#define U_DYNAMIC_PAGE_GET_FORM_VALUE(n)                UHTTP::getFormValue(*UClientImage_Base::_value, n)\n" \
 "\n" \

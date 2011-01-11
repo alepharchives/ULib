@@ -795,6 +795,19 @@ public:
 
    UString operator[](uint32_t pos) const { return at(pos); }
 
+   char* c_pointer(uint32_t pos)
+      {
+      U_TRACE(0, "UVector<UString>::c_pointer(%u)", pos)
+
+      U_CHECK_MEMORY
+
+      if (empty()) return 0;
+
+      UStringRep* rep = UVector<UStringRep*>::at(pos);
+
+      return rep->data();
+      }
+
    void replace(uint32_t pos, const UString& str)
       {
       U_TRACE(0, "UVector<UString>::replace(%u,%.*S)", pos, U_STRING_TO_TRACE(str))
@@ -931,6 +944,23 @@ public:
    bool     contains(UVector<UString>& vec, bool ignore_case = false);
 
    bool isContained(const UString& str, bool ignore_case = false) { return (contains(str, ignore_case) != U_NOT_FOUND); }
+
+   // Check equality with string at pos
+
+   bool isEqual(uint32_t pos, const UString& str, bool ignore_case = false)
+      {
+      U_TRACE(0, "UVector<UString>::isEqual(%u,%.*S,%b)", pos, U_STRING_TO_TRACE(str), ignore_case)
+
+      U_CHECK_MEMORY
+
+      if (empty()) U_RETURN(false);
+
+      UStringRep* rep = UVector<UStringRep*>::at(pos);
+
+      bool result = (ignore_case ? str.equalnocase(rep) : str.equal(rep));
+
+      U_RETURN(result);
+      }
 
    // Check equality with an existing vector object
 

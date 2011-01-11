@@ -65,9 +65,11 @@
 #  include <ulib/net/unixsocket.h>
 #endif
 
-#define U_DEFAULT_PORT     80
-#define U_SOCKET_FLAGS     ptr->socket_flags
-#define U_TOT_CONNECTION   ptr->tot_connection
+#define U_DEFAULT_PORT           80
+#define U_DEFAULT_MAX_KEEP_ALIVE 256
+
+#define U_SOCKET_FLAGS     ptr_shared_data->socket_flags
+#define U_TOT_CONNECTION   ptr_shared_data->tot_connection
 
 int                        UServer_Base::port;
 int                        UServer_Base::cgi_timeout;
@@ -81,6 +83,7 @@ bool                       UServer_Base::flag_use_tcp_optimization;
 char                       UServer_Base::mod_name[20];
 ULog*                      UServer_Base::log;
 ULock*                     UServer_Base::lock;
+uint32_t                   UServer_Base::shared_data_add;
 UString*                   UServer_Base::host;
 USocket*                   UServer_Base::socket;
 UProcess*                  UServer_Base::proc;
@@ -90,7 +93,7 @@ UServer_Base*              UServer_Base::pthis;
 UVector<UString>*          UServer_Base::vplugin_name;
 UVector<UIPAllow*>*        UServer_Base::vallow_IP;
 UVector<UServerPlugIn*>*   UServer_Base::vplugin;
-UServer_Base::shared_data* UServer_Base::ptr;
+UServer_Base::shared_data* UServer_Base::ptr_shared_data;
 
 const UString* UServer_Base::str_USE_IPV6;
 const UString* UServer_Base::str_PORT;
@@ -281,12 +284,13 @@ UServer_Base::~UServer_Base()
       }
 
    if (log)        delete log;
-   if (ptr)        UFile::munmap(ptr, sizeof(shared_data) + sizeof(sem_t));
    if (lock)       delete lock;
    if (host)       delete host;
    if (proc)       delete proc;
    if (ptime)      delete ptime;
    if (vallow_IP)  delete vallow_IP;
+
+   if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add + sizeof(sem_t));
 
    delete socket;
 
@@ -327,7 +331,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // CGI_TIMEOUT   timeout for cgi execution
    //
    // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
-   //                (Value <= 1 will disable Keep-Alive)
+   //                (Value <= 1 will disable Keep-Alive) (default 256)
    //
    // CERT_FILE     server certificate
    // KEY_FILE      server private key
@@ -356,7 +360,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    port                       = cfg.readLong(*str_PORT, U_DEFAULT_PORT);
    cgi_timeout                = cfg.readLong(*str_CGI_TIMEOUT);
-   max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE);
+   max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE, U_DEFAULT_MAX_KEEP_ALIVE);
    USocket::req_timeout       = cfg.readLong(*str_REQ_TIMEOUT);
    u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE);
 
@@ -790,38 +794,6 @@ void UServer_Base::init()
 
    U_SRV_LOG("working directory (DOCUMENT_ROOT) changed to %S", document_root.data());
 
-   if (preforked_num_kids)
-      {
-      // manage shared data...
-
-      U_INTERNAL_ASSERT_EQUALS(ptr,0)
-
-      ptr = (shared_data*) UFile::mmap(sizeof(shared_data) + sizeof(sem_t));
-
-      U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
-      }
-
-   // manage block on accept...
-
-   if (block_on_accept == false)
-      {
-      (void) U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_SETFL, O_RDWR | O_NONBLOCK | O_CLOEXEC);
-      }
-   else if (isPreForked())
-      {
-      U_INTERNAL_ASSERT_EQUALS(lock,0)
-
-      lock = U_NEW(ULock);
-
-      U_INTERNAL_ASSERT_POINTER(lock)
-
-      lock->init((sem_t*)((char*)ptr + sizeof(shared_data)));
-
-      U_SOCKET_FLAGS = U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_GETFL, 0);
-
-      U_INTERNAL_DUMP("O_NONBLOCK = %B, U_SOCKET_FLAGS = %B", O_NONBLOCK, U_SOCKET_FLAGS)
-      }
-
 #ifdef HAVE_SSL
    if (UClientImage_Base::socket->isSSL()) goto next; // For SSL skip tcp optimization
 #endif
@@ -880,6 +852,40 @@ next:
        pluginsHandlerInit() != U_PLUGIN_HANDLER_FINISHED)
       {
       U_ERROR("plugins initialization FAILED. Going down...");
+      }
+
+   if (preforked_num_kids)
+      {
+      // manage shared data...
+
+      U_INTERNAL_ASSERT_EQUALS(ptr_shared_data,0)
+
+      U_INTERNAL_DUMP("shared_data_add = %u", shared_data_add)
+
+      ptr_shared_data = (shared_data*) UFile::mmap(sizeof(shared_data) + shared_data_add + sizeof(sem_t));
+
+      U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data,MAP_FAILED)
+      }
+
+   // manage block on accept...
+
+   if (block_on_accept == false)
+      {
+      (void) U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_SETFL, O_RDWR | O_NONBLOCK | O_CLOEXEC);
+      }
+   else if (isPreForked())
+      {
+      U_INTERNAL_ASSERT_EQUALS(lock,0)
+
+      lock = U_NEW(ULock);
+
+      U_INTERNAL_ASSERT_POINTER(lock)
+
+      lock->init((sem_t*)((char*)ptr_shared_data + shared_data_add));
+
+      U_SOCKET_FLAGS = U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_GETFL, 0);
+
+      U_INTERNAL_DUMP("O_NONBLOCK = %B, U_SOCKET_FLAGS = %B", O_NONBLOCK, U_SOCKET_FLAGS)
       }
 
    runAsUser();
@@ -1331,14 +1337,15 @@ void UServer_Base::logCommandMsgError(const char* cmd)
 
 const char* UServer_Base::dump(bool reset) const
 {
-   *UObjectIO::os << "ptr                       " << (void*)ptr                  << '\n'
-                  << "port                      " << port                        << '\n'
+   *UObjectIO::os << "port                      " << port                        << '\n'
                   << "flag_loop                 " << flag_loop                   << '\n'
                   << "verify_mode               " << verify_mode                 << '\n'
                   << "cgi_timeout               " << cgi_timeout                 << '\n'
                   << "verify_mode               " << verify_mode                 << '\n'
                   << "num_connection            " << num_connection              << '\n'
                   << "block_on_accept           " << block_on_accept             << '\n'
+                  << "shared_data_add           " << shared_data_add             << '\n'
+                  << "ptr_shared_data           " << (void*)ptr_shared_data      << '\n'
                   << "preforked_num_kids        " << preforked_num_kids          << '\n'
                   << "flag_use_tcp_optimization " << flag_use_tcp_optimization   << '\n'
                   << "log           (ULog       " << (void*)log                  << ")\n"
