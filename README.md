@@ -23,7 +23,6 @@ The current version offers the following features :
     * Chunk-encoding transfers support.
     * HTTP multi-range request support.
     * Memory caching for small static pages with smart compression (and on Linux automatic update with inotify).
-    * Accept HTTP uploads up to 4 GB without increasing memory usage.
     * Support for pipelining.
     * Support for virtual hosts (also with SSL).
     * Support for basic/digest authentication.
@@ -33,6 +32,7 @@ The current version offers the following features :
     * Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache,
       some CMS (SilverStripe) require it.
     * Support for JSONRequest (http://json.org/JSONRequest.html).
+    * Accept HTTP uploads up to 4 GB without increasing memory usage.
     * Support for upload progress via USP (ULib Servlet Page).
     * CGI support for shell script processes (with automatic management of form and cookie).
     * General CGI support (run any CGI script) with automatic output compression (using deflate method).
