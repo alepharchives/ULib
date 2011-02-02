@@ -409,6 +409,17 @@ public:
       U_RETURN(result);
       }
 
+   static bool isHTTPRequestTooLarge()
+      {
+      U_TRACE(0, "UHTTP::isHTTPRequestTooLarge()")
+
+      U_INTERNAL_ASSERT_MAJOR(limit_request_body,0)
+
+      bool result = (http_info.clength > limit_request_body);
+
+      U_RETURN(result);
+      }
+
    // SERVICES
 
    static UFile* file;

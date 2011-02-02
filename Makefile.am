@@ -9,8 +9,13 @@ EXTRA_DIST = autoconf configure.help TODO LICENSE* README.md README.LZO cdb READ
 
 MAINTAINERCLEANFILES = configure aclocal.m4 libtool Makefile.in Makefile INSTALL
 
-SUBDIRS = include src examples contrib tests
-DIST_SUBDIRS = include src m4 doc contrib examples tests
+SUBDIRS  = include src/ulib
+if PLUGIN
+SUBDIRS += src/ulib/net/server/plugin
+endif
+SUBDIRS += examples contrib tests
+
+DIST_SUBDIRS = include src/ulib src/ulib/net/server/plugin m4 doc contrib examples tests
 
 ## bin_SCRIPTS = ulib-config
 
@@ -47,7 +52,19 @@ dist-hook:
 		$(distdir)/tests/examples/IR/benchmark/log \
 		$(distdir)/tests/examples/IR/benchmark/err \
 		$(distdir)/tests/examples/IR/benchmark/index.cfg \
-		$(distdir)/tests/examples/nocat/Pagine/index.html
+		$(distdir)/tests/examples/nocat/Pagine/index.html \
+		$(distdir)/src/ulib/net/server/plugin/Makefile \
+  		$(distdir)/src/ulib/net/server/plugin/*.o \
+  		$(distdir)/src/ulib/net/server/plugin/*.l? \
+  		$(distdir)/src/ulib/net/server/plugin/.deps \
+  		$(distdir)/src/ulib/net/server/plugin/.libs \
+  		$(distdir)/src/ulib/net/server/plugin/*/Makefile \
+  		$(distdir)/src/ulib/net/server/plugin/*/*.o \
+  		$(distdir)/src/ulib/net/server/plugin/*/*.l? \
+  		$(distdir)/src/ulib/net/server/plugin/*/.deps \
+  		$(distdir)/src/ulib/net/server/plugin/*/.libs \
+  		$(distdir)/src/ulib/net/server/plugin/mod_fcgi/test_fcgi \
+  		$(distdir)/src/ulib/net/server/plugin/usp/usp_translator
 
 ##install-data-local:
 ##	 @if test -f /etc/ld.so.conf \
@@ -70,7 +87,7 @@ dist-hook:
 
 ##if PLUGIN
 ##install-exec-hook:
-##	@cd $(top_builddir)/src/ulib/plugin; \
+##	@cd $(top_builddir)/src/ulib/net/server/plugin; \
 ##	 if [ ! -f .libs/mod_rpc.so ]; then \
 ##	   make .libs/mod_rpc.so   >/dev/null 2>/dev/null; \
 ##	   make .libs/mod_tsa.so   >/dev/null 2>/dev/null; \

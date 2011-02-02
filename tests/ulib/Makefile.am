@@ -153,6 +153,12 @@ TST += memory_pool.test
 test_memory_pool_SOURCES = test_memory_pool.cpp
 endif
 
+if DBI
+PRG += test_dbi
+TST += dbi.test
+test_dbi_SOURCES = test_dbi.cpp
+endif
+
 if LIBEVENT
 PRG += test_event
 TST += event.test

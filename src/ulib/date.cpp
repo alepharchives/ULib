@@ -301,14 +301,20 @@ UString UDate::strftime(const char* fmt, time_t t)
    U_RETURN_STRING(result);
 }
 
-time_t UDate::getSecondFromTime(const char* str, bool gmt, const char* fmt)
+time_t UDate::getSecondFromTime(const char* str, bool gmt, const char* fmt, struct tm* tm)
 {
-   U_TRACE(1, "UDate::getSecondFromTime(%S,%b,%S)", str, gmt, fmt)
+   U_TRACE(1, "UDate::getSecondFromTime(%S,%b,%S,%p)", str, gmt, fmt, tm)
+
+   if (tm == 0)
+      {
+      static struct tm tm_;
+
+      tm = &tm_;
+      }
+
+   (void) memset(tm, 0, sizeof(struct tm)); // do not remove this
 
    time_t t;
-   struct tm tm;
-
-   (void) memset(&tm, 0, sizeof(tm)); // do not remove this
 
    if (gmt)
       {
@@ -319,25 +325,25 @@ time_t UDate::getSecondFromTime(const char* str, bool gmt, const char* fmt)
           * 0  3 5  8  12   17 20 23
           */
 
-         tm.tm_mday = atoi(str+5);
-         tm.tm_mon  = getMonth(str+8);
-         tm.tm_year = atoi(str+12);
-         tm.tm_hour = atoi(str+17);
-         tm.tm_min  = atoi(str+20);
-         tm.tm_sec  = atoi(str+23);
+         tm->tm_mday = atoi(str+5);
+         tm->tm_mon  = getMonth(str+8);
+         tm->tm_year = atoi(str+12);
+         tm->tm_hour = atoi(str+17);
+         tm->tm_min  = atoi(str+20);
+         tm->tm_sec  = atoi(str+23);
          }
-      else if ((tm.tm_mon = getMonth(str)))
+      else if ((tm->tm_mon = getMonth(str)))
          {
          /* Jan 25 11:54:00 2005 GMT
           * |   |  |  |  |  |
           * 0   4  7 10 13 16
           */
 
-         tm.tm_mday = atoi(str+4);
-         tm.tm_hour = atoi(str+7);
-         tm.tm_min  = atoi(str+10);
-         tm.tm_sec  = atoi(str+13);
-         tm.tm_year = atoi(str+16);
+         tm->tm_mday = atoi(str+4);
+         tm->tm_hour = atoi(str+7);
+         tm->tm_min  = atoi(str+10);
+         tm->tm_sec  = atoi(str+13);
+         tm->tm_year = atoi(str+16);
          }
       else
          {
@@ -350,48 +356,48 @@ scanf:
       // NB: fmt must be compatible with the sequence "YY MM DD HH MM SS"...
 
       int n = U_SYSCALL(sscanf, "%S,%S,%p,%p,%p,%p,%p,%p", str, fmt,
-                        &tm.tm_year, &tm.tm_mon, &tm.tm_mday, &tm.tm_hour, &tm.tm_min, &tm.tm_sec);
+                        &tm->tm_year, &tm->tm_mon, &tm->tm_mday, &tm->tm_hour, &tm->tm_min, &tm->tm_sec);
 
       if (n != 6) U_RETURN(-1);
 
       // ts.tm_year is number of years since 1900
 
-      if      (tm.tm_year <  50) { tm.tm_year += 2000; }
-      else if (tm.tm_year < 100) { tm.tm_year += 1900; }
+      if      (tm->tm_year <  50) { tm->tm_year += 2000; }
+      else if (tm->tm_year < 100) { tm->tm_year += 1900; }
       }
 
-   if ((tm.tm_year < 1900) ||
-       (tm.tm_mon  < 1)    || (tm.tm_mon  > 12) ||
-       (tm.tm_mday < 1)    || (tm.tm_mday > 31) ||
-       (tm.tm_hour < 0)    || (tm.tm_hour > 23) ||
-       (tm.tm_min  < 0)    || (tm.tm_min  > 59) ||
-       (tm.tm_sec  < 0)    || (tm.tm_sec  > 61))
+   if ((tm->tm_year < 1900) ||
+       (tm->tm_mon  < 1)    || (tm->tm_mon  > 12) ||
+       (tm->tm_mday < 1)    || (tm->tm_mday > 31) ||
+       (tm->tm_hour < 0)    || (tm->tm_hour > 23) ||
+       (tm->tm_min  < 0)    || (tm->tm_min  > 59) ||
+       (tm->tm_sec  < 0)    || (tm->tm_sec  > 61))
       {
       U_RETURN(-1);
       }
 
    if (gmt)
       {
-      int _julian = toJulian(tm.tm_mday, tm.tm_mon, tm.tm_year);
+      int _julian = toJulian(tm->tm_mday, tm->tm_mon, tm->tm_year);
 
-      t = tm.tm_sec + (tm.tm_min * 60) + (tm.tm_hour * 3600) + getSecondFromJulian(_julian);
+      t = tm->tm_sec + (tm->tm_min * 60) + (tm->tm_hour * 3600) + getSecondFromJulian(_julian);
 
 #  if defined(DEBUG) && !defined(__MINGW32__)
-      tm.tm_year -= 1900; /* tm relative format year  - is number of years since 1900 */
-      tm.tm_mon  -=    1; /* tm relative format month - range from 0-11 */
+      tm->tm_year -= 1900; /* tm relative format year  - is number of years since 1900 */
+      tm->tm_mon  -=    1; /* tm relative format month - range from 0-11 */
 
-      U_INTERNAL_ASSERT_EQUALS(t, timegm(&tm))
+      U_INTERNAL_ASSERT_EQUALS(t, timegm(tm))
 #  endif
       }
    else
       {
       /* NB: The timelocal() function is equivalent to the POSIX standard function mktime(3) */
 
-      tm.tm_year -= 1900; /* tm relative format year  - is number of years since 1900 */
-      tm.tm_mon  -=    1; /* tm relative format month - range from 0-11 */
-      tm.tm_isdst =   -1;
+      tm->tm_year -= 1900; /* tm relative format year  - is number of years since 1900 */
+      tm->tm_mon  -=    1; /* tm relative format month - range from 0-11 */
+      tm->tm_isdst =   -1;
 
-      t = U_SYSCALL(mktime, "%p", &tm);
+      t = U_SYSCALL(mktime, "%p", tm);
       }
 
    U_RETURN(t);

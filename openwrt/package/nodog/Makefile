@@ -69,9 +69,10 @@ define Package/nodog/install
 	mkdir -p $(PKG_INSTALL_DIR)
 	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" install
 	$(INSTALL_DIR) $(1)/etc $(1)/usr/sbin $(1)/usr/libexec/ulib $(1)/usr/lib/nodog
-	$(CP) $(PKG_INSTALL_DIR)/usr/bin/uclient $(PKG_INSTALL_DIR)/usr/bin/userver_tcp $(1)/usr/sbin/
-	$(CP) -r $(PKG_BUILD_DIR)/tests/examples/nocat/* 	 $(1)/usr/lib/nodog
-	$(CP) -r $(PKG_BUILD_DIR)/tests/examples/nocat/.ht* $(1)/usr/lib/nodog
+	$(CP) -a  $(PKG_INSTALL_DIR)/usr/lib/libulib* $(1)/usr/lib/
+	$(CP)     $(PKG_INSTALL_DIR)/usr/bin/uclient $(PKG_INSTALL_DIR)/usr/bin/userver_tcp $(1)/usr/sbin/
+	$(CP) -r  $(PKG_BUILD_DIR)/tests/examples/nocat/* 	 $(1)/usr/lib/nodog
+	$(CP) -r  $(PKG_BUILD_DIR)/tests/examples/nocat/.ht* $(1)/usr/lib/nodog
 	$(CP) -r  $(1)/usr/lib/nodog/etc  						 $(1)/
 	$(RM) -rf $(1)/usr/lib/nodog/etc
 endef

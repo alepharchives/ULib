@@ -35,6 +35,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
+@PLUGIN_TRUE@am__append_1 = src/ulib/net/server/plugin
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/ULib.spec.in \
@@ -187,6 +188,7 @@ GENERIC_LIBRARY_VERSION = @GENERIC_LIBRARY_VERSION@
 GETOPT_LIBS = @GETOPT_LIBS@
 GREP = @GREP@
 HAVE_CURL = @HAVE_CURL@
+HAVE_DBI = @HAVE_DBI@
 HAVE_EXPAT = @HAVE_EXPAT@
 HAVE_LDAP = @HAVE_LDAP@
 HAVE_LIBEVENT = @HAVE_LIBEVENT@
@@ -326,8 +328,8 @@ EXTRA_DIST = autoconf configure.help TODO LICENSE* README.md README.LZO cdb READ
 				 doc/Doxyfile doc/benchmark doc/readme.txt shtool
 
 MAINTAINERCLEANFILES = configure aclocal.m4 libtool Makefile.in Makefile INSTALL
-SUBDIRS = include src examples contrib tests
-DIST_SUBDIRS = include src m4 doc contrib examples tests
+SUBDIRS = include src/ulib $(am__append_1) examples contrib tests
+DIST_SUBDIRS = include src/ulib src/ulib/net/server/plugin m4 doc contrib examples tests
 aclocaldir = $(datadir)/aclocal
 aclocal_DATA = ULib.m4
 all: all-recursive
@@ -886,7 +888,19 @@ dist-hook:
 		$(distdir)/tests/examples/IR/benchmark/log \
 		$(distdir)/tests/examples/IR/benchmark/err \
 		$(distdir)/tests/examples/IR/benchmark/index.cfg \
-		$(distdir)/tests/examples/nocat/Pagine/index.html
+		$(distdir)/tests/examples/nocat/Pagine/index.html \
+		$(distdir)/src/ulib/net/server/plugin/Makefile \
+  		$(distdir)/src/ulib/net/server/plugin/*.o \
+  		$(distdir)/src/ulib/net/server/plugin/*.l? \
+  		$(distdir)/src/ulib/net/server/plugin/.deps \
+  		$(distdir)/src/ulib/net/server/plugin/.libs \
+  		$(distdir)/src/ulib/net/server/plugin/*/Makefile \
+  		$(distdir)/src/ulib/net/server/plugin/*/*.o \
+  		$(distdir)/src/ulib/net/server/plugin/*/*.l? \
+  		$(distdir)/src/ulib/net/server/plugin/*/.deps \
+  		$(distdir)/src/ulib/net/server/plugin/*/.libs \
+  		$(distdir)/src/ulib/net/server/plugin/mod_fcgi/test_fcgi \
+  		$(distdir)/src/ulib/net/server/plugin/usp/usp_translator
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

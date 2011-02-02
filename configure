@@ -710,6 +710,8 @@ LIBXML2_FALSE
 LIBXML2_TRUE
 LIBEVENT_FALSE
 LIBEVENT_TRUE
+DBI_FALSE
+DBI_TRUE
 MYSQL_FALSE
 MYSQL_TRUE
 MAGIC_FALSE
@@ -733,6 +735,7 @@ SSL_TRUE
 PRG_LDFLAGS
 HAVE_LIBXML2
 HAVE_LIBEVENT
+HAVE_DBI
 HAVE_MYSQL
 HAVE_LDAP
 HAVE_CURL
@@ -933,6 +936,7 @@ with_expat
 with_curl
 with_ldap
 with_mysql
+with_dbi
 with_libevent
 with_libxml2
 with_pthread
@@ -1620,6 +1624,7 @@ Optional Packages:
   --with-curl             use system     cURL library - [will check /usr /usr/local]
   --with-ldap             use system openLDAP library - [will check /usr /usr/local]
   --with-mysql            use system    MySQL library - [will check /usr /usr/local]
+  --with-dbi              use system      DBI library - [will check /usr /usr/local]
   --with-libevent         use system libevent library - [will check /usr /usr/local]
   --with-libxml2          use system  libxml2 library - [will check /usr /usr/local]
   --with-pthread=lib    using specified pthread library
@@ -21821,6 +21826,54 @@ $as_echo "no" >&6; }
 fi
 
 
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if DBI library is wanted" >&5
+$as_echo_n "checking if DBI library is wanted... " >&6; }
+
+# Check whether --with-dbi was given.
+if test "${with_dbi+set}" = set; then :
+  withval=$with_dbi; if test "$withval" = "no"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			dbidir="$dir";
+			if test -f "$dir/include/dbi/dbi.h"; then
+				found_dbi="yes";
+				break;
+			fi
+		done
+		if test x_$found_dbi != x_yes; then
+			as_fn_error $? "Cannot find DBI library" "$LINENO" 5
+		else
+			echo "${T_MD}DBI found in $dbidir${T_ME}"
+			HAVE_DBI=yes
+			CPPFLAGS="$CPPFLAGS -DHAVE_DBI";
+			libdbi_version=$(strings $dbidir/lib*/libdbi.* | grep "^libdbi v[0-9]" | cut -d'v' -f2 | head -n1)
+			if test -z "${libdbi_version}"; then
+				libdbi_version="Unknown"
+			fi
+			LIBS="-ldbi $LIBS";
+			if test $dbidir != "${CROSS_ENVIRONMENT}/usr"; then
+				CPPFLAGS="$CPPFLAGS -I$dbidir/include";
+				LDFLAGS="$LDFLAGS -L$dbidir/lib -Wl,-R$dbidir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$dbidir/lib";
+			else
+				if ! test -f $dbidir/lib64/libdbi.so && test -f $dbidir/lib64/dbi/libdbi.so; then
+					LDFLAGS="$LDFLAGS -L$dbidir/lib64/dbi -Wl,-R$dbidir/lib64/dbi";
+					PRG_LDFLAGS="$PRG_LDFLAGS -L$dbidir/lib64/dbi";
+				fi
+			fi
+		fi
+	fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if libevent library is wanted" >&5
 $as_echo_n "checking if libevent library is wanted... " >&6; }
 
@@ -21989,6 +22042,14 @@ else
   MYSQL_FALSE=
 fi
 
+ if test "$HAVE_DBI"		  = "yes"; then
+  DBI_TRUE=
+  DBI_FALSE='#'
+else
+  DBI_TRUE='#'
+  DBI_FALSE=
+fi
+
  if test "$HAVE_LIBEVENT" = "yes"; then
   LIBEVENT_TRUE=
   LIBEVENT_FALSE='#'
@@ -22059,6 +22120,11 @@ _ACEOF
 
 cat >>confdefs.h <<_ACEOF
 #define _MYSQL_VERSION "${libmysql_version}"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define _DBI_VERSION "${libdbi_version}"
 _ACEOF
 
 
@@ -22167,6 +22233,10 @@ fi
 
 if test "$HAVE_MYSQL" = "yes"; then
    ulib_mysql_msg="enabled"
+fi
+
+if test "$HAVE_DBI" = "yes"; then
+   ulib_dbi_msg="enabled"
 fi
 
 if test "$HAVE_LIBUUID" = "yes"; then
@@ -26353,7 +26423,7 @@ done
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking loader.autoconf files" >&5
 $as_echo_n "checking loader.autoconf files... " >&6; }
-printf "$add_calls\n" > src/ulib/plugin/loader.autoconf.cpp
+printf "$add_calls\n" > src/ulib/net/server/plugin/loader.autoconf.cpp
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: done" >&5
 $as_echo "done" >&6; }
 
@@ -26881,7 +26951,7 @@ $as_echo "#define HAVE_GNUC_VISIBILTY 1" >>confdefs.h
 		CXXFLAGS="${CXXFLAGS} -fvisibility=hidden -fvisibility-inlines-hidden"
 	fi
 	if test "$with_gnu_ld" = "yes" && test "$enable_new_ldflags" = "yes"; then
-		LDFLAGS="${LDFLAGS} -Wl,-z,now,-O1,--as-needed,--enable-new-dtags,--hash-style=gnu,--sort-common"
+		LDFLAGS="${LDFLAGS} -Wl,-O1 -Wl,--as-needed -Wl,-z,now,-O1,--hash-style=gnu,--sort-common -Wl,--as-needed"
 	fi
 	;;
 esac
@@ -27108,6 +27178,8 @@ configure: Configured to build src/ulib/libulib:
          MAGIC library: ${libmagic_version}
          MySQL support: ${ulib_mysql_msg}
          MySQL library: ${libmysql_version}
+           DBI support: ${ulib_dbi_msg}
+           DBI library: ${libdbi_version}
        libuuid support: ${ulib_libuuid_msg}
        libuuid library: ${libuuid_version}
       libevent support: ${ulib_libevent_msg}
@@ -27186,7 +27258,7 @@ fi
 
 # SECTION 16: `AC_OUTPUT([FILE...])' read Makefile.in and write Makefile
 
-ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile src/Makefile include/Makefile contrib/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/lemon/Makefile src/ulib/plugin/Makefile src/ulib/plugin/usp/Makefile src/ulib/plugin/mod_shib/Makefile src/ulib/plugin/mod_fcgi/Makefile src/ulib/plugin/mod_geoip/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/XAdES/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
+ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/lemon/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_fcgi/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/XAdES/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -27455,6 +27527,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MYSQL_TRUE}" && test -z "${MYSQL_FALSE}"; then
   as_fn_error $? "conditional \"MYSQL\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${DBI_TRUE}" && test -z "${DBI_FALSE}"; then
+  as_fn_error $? "conditional \"DBI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LIBEVENT_TRUE}" && test -z "${LIBEVENT_FALSE}"; then
@@ -28660,18 +28736,17 @@ do
     "ULib.spec") CONFIG_FILES="$CONFIG_FILES ULib.spec" ;;
     "m4/Makefile") CONFIG_FILES="$CONFIG_FILES m4/Makefile" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
-    "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
     "contrib/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/Makefile" ;;
     "src/ulib/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/Makefile" ;;
     "src/ulib/ULib.rc") CONFIG_FILES="$CONFIG_FILES src/ulib/ULib.rc" ;;
     "src/ulib/ULib.pc") CONFIG_FILES="$CONFIG_FILES src/ulib/ULib.pc" ;;
     "src/ulib/lemon/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/lemon/Makefile" ;;
-    "src/ulib/plugin/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/plugin/Makefile" ;;
-    "src/ulib/plugin/usp/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/plugin/usp/Makefile" ;;
-    "src/ulib/plugin/mod_shib/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/plugin/mod_shib/Makefile" ;;
-    "src/ulib/plugin/mod_fcgi/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/plugin/mod_fcgi/Makefile" ;;
-    "src/ulib/plugin/mod_geoip/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/plugin/mod_geoip/Makefile" ;;
+    "src/ulib/net/server/plugin/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/Makefile" ;;
+    "src/ulib/net/server/plugin/usp/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/usp/Makefile" ;;
+    "src/ulib/net/server/plugin/mod_shib/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_shib/Makefile" ;;
+    "src/ulib/net/server/plugin/mod_fcgi/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_fcgi/Makefile" ;;
+    "src/ulib/net/server/plugin/mod_geoip/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_geoip/Makefile" ;;
     "include/ulib/Makefile") CONFIG_FILES="$CONFIG_FILES include/ulib/Makefile" ;;
     "contrib/HCSP/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/HCSP/Makefile" ;;
     "contrib/RSIGN/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/RSIGN/Makefile" ;;

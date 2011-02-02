@@ -141,6 +141,10 @@
 #  include "mysql/mysql.cpp"
 #endif
 
+#ifdef HAVE_DBI
+#  include "dbi/dbi.cpp"
+#endif
+
 #ifdef HAVE_LIBEVENT
 #  include "libevent/event.cpp"
 #endif

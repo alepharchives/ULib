@@ -458,6 +458,46 @@ dnl		printf "MySQL found in $mysqldir\n";
 	AC_SUBST(HAVE_MYSQL)],
 	[AC_MSG_RESULT(no)])
 
+	AC_MSG_CHECKING(if DBI library is wanted)
+	AC_ARG_WITH(dbi, [  --with-dbi              use system      DBI library - [[will check /usr /usr/local]]],
+	[if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			dbidir="$dir";
+			if test -f "$dir/include/dbi/dbi.h"; then
+				found_dbi="yes";
+				break;
+			fi
+		done
+		if test x_$found_dbi != x_yes; then
+			AC_MSG_ERROR(Cannot find DBI library)
+		else
+			echo "${T_MD}DBI found in $dbidir${T_ME}"
+dnl		printf "DBI found in $dbidir\n";
+			HAVE_DBI=yes
+			CPPFLAGS="$CPPFLAGS -DHAVE_DBI";
+			libdbi_version=$(strings $dbidir/lib*/libdbi.* | grep "^libdbi v[[0-9]]" | cut -d'v' -f2 | head -n1)
+			if test -z "${libdbi_version}"; then
+				libdbi_version="Unknown"
+			fi
+			LIBS="-ldbi $LIBS";
+			if test $dbidir != "${CROSS_ENVIRONMENT}/usr"; then
+				CPPFLAGS="$CPPFLAGS -I$dbidir/include";
+				LDFLAGS="$LDFLAGS -L$dbidir/lib -Wl,-R$dbidir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$dbidir/lib";
+			else
+				if ! test -f $dbidir/lib64/libdbi.so && test -f $dbidir/lib64/dbi/libdbi.so; then
+					LDFLAGS="$LDFLAGS -L$dbidir/lib64/dbi -Wl,-R$dbidir/lib64/dbi";
+					PRG_LDFLAGS="$PRG_LDFLAGS -L$dbidir/lib64/dbi";
+				fi
+			fi
+		fi
+	fi
+	AC_SUBST(HAVE_DBI)],
+	[AC_MSG_RESULT(no)])
+
 	AC_MSG_CHECKING(if libevent library is wanted)
 	AC_ARG_WITH(libevent, [  --with-libevent         use system libevent library - [[will check /usr /usr/local]]],
 	[if test "$withval" = "no"; then

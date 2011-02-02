@@ -13,7 +13,7 @@ start_msg server
 
 #VALGRIND=valgrind # --gen-suppressions=all
 #STRACE=$LTRUSS
-start_prg_background server ../../src/ulib/plugin/.libs '"mod_http mod_echo"' # '"mod_http mod_soap"'
+start_prg_background server ../../src/ulib/net/server/plugin/.libs '"mod_http mod_echo"' # '"mod_http mod_soap"'
 $SLEEP
 
 #$TRUSS $NC -w 5 127.0.0.1 80 <inp/http/form_enctype.http     >out/server.out 2>trace.out

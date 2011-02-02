@@ -3,10 +3,10 @@
 EXTRA_DIST = base/* container/* db/* debug/* dynamic/* flex/* internal/* ldap/* mime/* net/* pcre/* \
 			 	 replace/* ssl/* ssh/* ui/* utility/* xml/expat/* xml/libxml2/* zip/* \
 				 lemon/Makefile.* lemon/*.c lemon/*.cpp lemon/*.y \
-				 plugin/*.cpp plugin/Makefile.* \
-				 plugin/mod_shib/*.cpp plugin/mod_shib/Makefile.* \
-				 plugin/mod_fcgi/*.cpp plugin/mod_fcgi/Makefile.* \
-				 plugin/mod_geoip/*.cpp plugin/mod_geoip/Makefile.* \
+             net/server/plugin/*.cpp net/server/plugin/Makefile.* \
+             net/server/plugin/mod_shib/*.cpp net/server/plugin/mod_shib/Makefile.* \
+             net/server/plugin/mod_fcgi/*.cpp net/server/plugin/mod_fcgi/Makefile.* \
+             net/server/plugin/mod_geoip/*.cpp net/server/plugin/mod_geoip/Makefile.* \
 				 *.cpp all_c.c ULib.pc.in ULib.rc.in
 
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
@@ -171,6 +171,10 @@ if MYSQL
 SRC_CPP += mysql/mysql.cpp
 endif
 
+if DBI
+SRC_CPP += dbi/dbi.cpp
+endif
+
 if LIBEVENT
 SRC_CPP += libevent/event.cpp
 endif
@@ -184,67 +188,67 @@ endif
 # Handler static plugin
 
 if STATIC_HANDLER_RPC
-SRC_CPP += plugin/mod_rpc.cpp
+SRC_CPP += net/server/plugin/mod_rpc.cpp
 endif
 
 if MOD_SHIB
 if STATIC_HANDLER_SHIB
-SRC_CPP += plugin/mod_shib/mod_shib.cpp plugin/mod_proxy_service.cpp
+SRC_CPP += net/server/plugin/mod_shib/mod_shib.cpp net/server/plugin/mod_proxy_service.cpp
 endif
 endif
 
 if STATIC_HANDLER_STREAM
-SRC_CPP += plugin/mod_stream.cpp
+SRC_CPP += net/server/plugin/mod_stream.cpp
 endif
 
 if STATIC_HANDLER_NOCAT
-SRC_CPP += plugin/mod_nocat.cpp
+SRC_CPP += net/server/plugin/mod_nocat.cpp
 endif
 
 if STATIC_HANDLER_SOCKET
-SRC_CPP += plugin/mod_socket.cpp
+SRC_CPP += net/server/plugin/mod_socket.cpp
 endif
 
 if STATIC_HANDLER_SCGI
-SRC_CPP += plugin/mod_scgi.cpp
+SRC_CPP += net/server/plugin/mod_scgi.cpp
 endif
 
 if STATIC_HANDLER_FCGI
-SRC_CPP += plugin/mod_fcgi.cpp
+SRC_CPP += net/server/plugin/mod_fcgi.cpp
 endif
 
 if GEOIP
 if STATIC_HANDLER_GEOIP
-SRC_CPP += plugin/mod_geoip/mod_geoip.cpp
+SRC_CPP += net/server/plugin/mod_geoip/mod_geoip.cpp
 endif
 endif
 
 if PCRE
 if STATIC_HANDLER_PROXY
-SRC_CPP += plugin/mod_proxy.cpp plugin/mod_proxy_service.cpp
+SRC_CPP += net/server/plugin/mod_proxy.cpp net/server/plugin/mod_proxy_service.cpp
 endif
 endif
 
 if EXPAT
 if STATIC_HANDLER_SOAP
-SRC_CPP += plugin/mod_soap.cpp
+SRC_CPP += net/server/plugin/mod_soap.cpp
 endif
 endif
 
 if STATIC_HANDLER_SSI
-SRC_CPP += plugin/mod_ssi.cpp
+SRC_CPP += net/server/plugin/mod_ssi.cpp
 endif
 
 if STATIC_HANDLER_TSA
-SRC_CPP += plugin/mod_tsa.cpp
+SRC_CPP += net/server/plugin/mod_tsa.cpp
 endif
 
 if STATIC_HANDLER_HTTP
-SRC_CPP += plugin/mod_http.cpp
+SRC_CPP += net/server/plugin/mod_http.cpp
 endif
 
 if STATIC_HANDLER_ECHO
-SRC_CPP += plugin/mod_echo.cpp
+SRC_CPP += net/server/plugin/mod_echo.cpp
 endif
 
 if FINAL

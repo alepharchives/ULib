@@ -143,7 +143,7 @@ read:
 
          // NB: may be is attacked by a "slow loris"... http://lwn.net/Articles/337853/
 
-         if (u_now.tv_sec > read_timeout)
+         if (u_now.tv_sec > (long)read_timeout)
             {
             socket->iState = USocket::BROKEN;
 

@@ -83,26 +83,30 @@ public:
 
    // manage return from system call for tipology of value (of return)...
 
-   U_MANAGE_SYSRETURN_VALUE(int,           "%d",   ret == -1)
-   U_MANAGE_SYSRETURN_VALUE(unsigned int,  "%u",   ret == 0U)
-   U_MANAGE_SYSRETURN_VALUE(long,          "%ld",  ret == -1L)
-   U_MANAGE_SYSRETURN_VALUE(unsigned long, "%lu",  ret == 0UL)
-   U_MANAGE_SYSRETURN_VALUE(pvoid_t,       "%p",   ret ==  0 ||
-                                                   ret == (void*)-1)
-   U_MANAGE_SYSRETURN_VALUE(pchar_t,       "%S",   ret ==  0)
-   U_MANAGE_SYSRETURN_VALUE(pcchar_t,      "%S",   ret ==  0)
-   U_MANAGE_SYSRETURN_VALUE(puchar_t,      "%S",   ret ==  0)
-   U_MANAGE_SYSRETURN_VALUE(pcuchar_t,     "%S",   ret ==  0)
-   U_MANAGE_SYSRETURN_VALUE(sighandler_t,  "%p",   ret == (sighandler_t) SIG_ERR)
+   U_MANAGE_SYSRETURN_VALUE(int,                "%d",   ret == -1)
+   U_MANAGE_SYSRETURN_VALUE(unsigned int,       "%u",   ret == 0U)
+   U_MANAGE_SYSRETURN_VALUE(long,               "%ld",  ret == -1L)
+   U_MANAGE_SYSRETURN_VALUE(long long,          "%lld", ret == -1LL)
+   U_MANAGE_SYSRETURN_VALUE(unsigned long,      "%lu",  ret == 0UL)
+   U_MANAGE_SYSRETURN_VALUE(unsigned long long, "%llu", ret == 0ULL)
+   U_MANAGE_SYSRETURN_VALUE(float,              "%f",   ret == 0.0)
+   U_MANAGE_SYSRETURN_VALUE(double,             "%g",   ret == 0.0)
+   U_MANAGE_SYSRETURN_VALUE(pvoid_t,            "%p",   ret ==  0 ||
+                                                        ret == (void*)-1)
+   U_MANAGE_SYSRETURN_VALUE(pchar_t,            "%S",   ret ==  0)
+   U_MANAGE_SYSRETURN_VALUE(pcchar_t,           "%S",   ret ==  0)
+   U_MANAGE_SYSRETURN_VALUE(puchar_t,           "%S",   ret ==  0)
+   U_MANAGE_SYSRETURN_VALUE(pcuchar_t,          "%S",   ret ==  0)
+   U_MANAGE_SYSRETURN_VALUE(sighandler_t,       "%p",   ret == (sighandler_t) SIG_ERR)
 
 #if SIZEOF_OFF_T != SIZEOF_LONG
-   U_MANAGE_SYSRETURN_VALUE(off_t,         "%I",   ret == -1LL)
+   U_MANAGE_SYSRETURN_VALUE(off_t,              "%I",   ret == -1LL)
 #elif SIZEOF_OFF_T == 4 
-   U_MANAGE_SYSRETURN_VALUE(loff_t,        "%I",   ret == -1LL) /* Type of file sizes and offsets (LFS) */
+   U_MANAGE_SYSRETURN_VALUE(loff_t,             "%I",   ret == -1LL) /* Type of file sizes and offsets (LFS) */
 #endif
 
-// U_MANAGE_SYSRETURN_VALUE(x11error_t,   "%p", ret == (x11error_t) 0)
-// U_MANAGE_SYSRETURN_VALUE(x11IOerror_t, "%p", ret == (x11IOerror_t) 0)
+// U_MANAGE_SYSRETURN_VALUE(x11error_t,         "%p",   ret == (x11error_t) 0)
+// U_MANAGE_SYSRETURN_VALUE(x11IOerror_t,       "%p",   ret == (x11IOerror_t) 0)
 
    // Attivazione-disattivazione temporanea
 

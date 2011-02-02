@@ -907,6 +907,9 @@ typedef unsigned long long uint64;
 /* libcURL - multiprotocol file transfer library version */
 #undef _CURL_VERSION
 
+/* libdbi - Database Independent Abstraction Layer version */
+#undef _DBI_VERSION
+
 /* Expat version */
 #undef _EXPAT_VERSION
 

@@ -25,14 +25,15 @@ TO_INC = ulib/README \
 			ulib/magic/*.h \
 			ulib/mime/*.h \
 			ulib/mysql/*.h \
+			ulib/dbi/*.h \
 			ulib/libevent/*.h \
 			ulib/net/*.h \
 			ulib/net/rpc/*.h \
 			ulib/net/client/*.h \
 			ulib/net/server/*.h \
+			ulib/net/server/plugin/*.h \
 			ulib/pcre/*.h \
 			ulib/json/*.h \
-			ulib/plugin/*.h \
 			ulib/query/*.h \
 			ulib/replace/*.h \
 			ulib/ssh/net/*.h \

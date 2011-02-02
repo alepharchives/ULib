@@ -17,7 +17,7 @@ rm -rf err/server_rpc.err \
 mv err/server.err err/server_old.err
 
 #STRACE=$TRUSS
-start_prg_background server ../../src/ulib/plugin/.libs mod_rpc server_rpc.cfg
+start_prg_background server ../../src/ulib/net/server/plugin/.libs mod_rpc server_rpc.cfg
 $SLEEP
 
 #$TRUSS $NC -w 5 127.0.0.1 80 <inp/rpc_request >out/server_rpc.out 2>trace.out

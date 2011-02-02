@@ -239,7 +239,7 @@ public:
       U_RETURN(t);
       }
 
-   static time_t getSecondFromTime(const char* str, bool gmt, const char* fmt = "%a, %d %b %Y %H:%M:%S GMT");
+   static time_t getSecondFromTime(const char* str, bool gmt, const char* fmt = "%a, %d %b %Y %H:%M:%S GMT", struct tm* tm = 0);
 
    void setCurrentDate()
       {

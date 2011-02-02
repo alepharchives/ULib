@@ -57,6 +57,12 @@
 #  define MYSQL_ENABLE        "no"
 #endif
 
+#ifdef HAVE_DBI
+#  define DBI_ENABLE          "enabled"
+#else
+#  define DBI_ENABLE          "no"
+#endif
+
 #ifdef HAVE_LIBUUID
 #  define LIBUUID_ENABLE     "enabled"
 #else
@@ -549,6 +555,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
                "Expat library........:%W " _EXPAT_VERSION "%W\n"
                "MAGIC library........:%W " _MAGIC_VERSION "%W\n"
                "MySQL library........:%W " _MYSQL_VERSION "%W\n"
+               "DBI   library........:%W " _DBI_VERSION "%W\n"
                "libuuid library......:%W " _LIBUUID_VERSION "%W\n"
                "libevent library.....:%W " _LIBEVENT_VERSION "%W\n"
                "libxml2 library......:%W " _LIBXML2_VERSION "%W\n"
@@ -557,6 +564,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
                "ipv6 support.........:%W " IPV6_ENABLE "%W\n"
                "MAGIC support........:%W " MAGIC_ENABLE "%W\n"
                "MySQL support........:%W " MYSQL_ENABLE "%W\n"
+               "DBI support..........:%W " DBI_ENABLE "%W\n"
                "libuuid support......:%W " LIBUUID_ENABLE "%W\n"
                "libevent support.....:%W " LIBEVENT_ENABLE "%W\n"
                "libxml2 support......:%W " LIBXML2_ENABLE "%W\n"
@@ -565,6 +573,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
                BRIGHTGREEN, U_STRING_TO_TRACE(version), RESET,
                U_STRING_TO_TRACE(purpose), BRIGHTWHITE, RESET,
                BRIGHTCYAN, RESET,
+               BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,

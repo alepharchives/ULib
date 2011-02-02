@@ -116,7 +116,7 @@ UString*                          UHTTP::penvironment;
 UString*                          UHTTP::cache_file_mask;
 UString*                          UHTTP::htpasswd;
 UString*                          UHTTP::htdigest;
-uint32_t                          UHTTP::limit_request_body;
+uint32_t                          UHTTP::limit_request_body = (((U_NOT_FOUND - sizeof(ustringrep))/sizeof(char)) - 4096);
 UCommand*                         UHTTP::pcmd;
 uhttpinfo                         UHTTP::http_info;
 UStringRep*                       UHTTP::pkey;
@@ -1244,11 +1244,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString& rbuffer, UString& body)
 
    if (http_info.clength > body_byte_read)
       {
-      if (limit_request_body &&
-          http_info.clength > limit_request_body)
-         {
-         U_RETURN(false);
-         }
+      if (isHTTPRequestTooLarge()) U_RETURN(false);
 
       UString* pbuffer;
 
@@ -2150,6 +2146,8 @@ UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, const UString& conten
          {
          ptr =                 "Content-Length: 0\r\n\r\n";
          sz  = U_CONSTANT_SIZE("Content-Length: 0\r\n\r\n");
+
+         if (nResponseCode == HTTP_OK) nResponseCode = HTTP_NO_CONTENT;
          }
       }
 
@@ -2333,6 +2331,7 @@ void UHTTP::setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint
 {
    U_TRACE(0, "UHTTP::setHTTPRedirectResponse(%.*S,%.*S,%u)", U_STRING_TO_TRACE(ext), len_location, ptr_location, len_location)
 
+   U_ASSERT(isHttpGETorHEAD())
    U_ASSERT_EQUALS(u_find(ptr_location,len_location,"\n",1),0)
 
    // NB: firefox chiede conferma all'utente con 307
@@ -4936,10 +4935,10 @@ U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
       // to the relevant tracked zone. If you are using the X-Progress-ID as a query-string parameter, ensure
       // it is the LAST argument in the URL.
 
-      uint32_t sz = form_name_value->size();
+      uint32_t n = form_name_value->size();
 
-      const char* uuid_ptr = (form_name_value->isEqual(sz-2, *USocket::str_X_Progress_ID, true)
-                                 ? form_name_value->c_pointer(sz-1)
+      const char* uuid_ptr = (n >= 2 && form_name_value->isEqual(n-2, *USocket::str_X_Progress_ID, true)
+                                 ? form_name_value->c_pointer(n-1)
                                  : getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *USocket::str_X_Progress_ID, true));
 
       U_INTERNAL_DUMP("uuid = %.32S", uuid_ptr)
