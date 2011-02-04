@@ -161,7 +161,7 @@ public:
    function called to established a socket connection with the FTP network server
    */
 
-   bool connectServer(const UIPAddress& ip, int _port = 21, uint32_t timeoutMS = U_TIMEOUT)
+   bool connectServer(const UIPAddress& ip, int _port = 21, uint32_t timeoutMS = U_TIMEOUT_MS)
       {
       U_TRACE(0, "UFtpClient::connectServer(%p,%d,%u)", &ip, _port, timeoutMS)
 
@@ -172,7 +172,7 @@ public:
       U_RETURN(result);
       }
 
-   bool connectServer(const UString& server, int _port = 21, uint32_t timeoutMS = U_TIMEOUT)
+   bool connectServer(const UString& server, int _port = 21, uint32_t timeoutMS = U_TIMEOUT_MS)
       {
       U_TRACE(0, "UFtpClient::connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), _port, timeoutMS)
 

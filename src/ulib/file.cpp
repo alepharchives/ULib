@@ -44,6 +44,12 @@ void UFile::chk_num_file_object() { if (num_file_object) U_WARNING("UFile::chdir
 #define MREMAP_MAYMOVE 1
 #endif
 
+#ifdef MADV_SEQUENTIAL
+#  ifndef MADV_HUGEPAGE
+#  define MADV_HUGEPAGE 0
+#  endif
+#endif
+
 void UFile::setPathRelativ()
 {
    U_TRACE(0, "UFile::setPathRelativ()")
@@ -334,8 +340,8 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
 
    if (map != MAP_FAILED)
       {
-#  if defined(MADV_SEQUENTIAL)
-      if (map_size > (128 * PAGESIZE)) (void) U_SYSCALL(madvise, "%p,%u,%d", map, map_size, MADV_SEQUENTIAL);
+#  ifdef MADV_SEQUENTIAL
+      if (map_size > (128 * PAGESIZE)) (void) U_SYSCALL(madvise, "%p,%u,%d", map, map_size, MADV_SEQUENTIAL | MADV_HUGEPAGE);
 #  endif
 
       if (str) str->mmap(map, map_size);

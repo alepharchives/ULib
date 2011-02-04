@@ -828,7 +828,7 @@ uint32_t UNotifier::read(int fd, char* buffer, int count, int timeoutMS)
             break;
             }
 
-         timeoutMS = -1; // in this way is only for the first read...
+         timeoutMS = -1; // in this way it is only for the first read...
          }
 
 #  ifdef __MINGW32__
@@ -879,7 +879,7 @@ uint32_t UNotifier::write(int fd, const char* str, int count, int timeoutMS)
             break;
             }
 
-         timeoutMS = -1; // in this way is only for the first write...
+         timeoutMS = -1; // in this way it is only for the first write...
          }
 
 #  ifdef __MINGW32__

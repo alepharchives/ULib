@@ -31,7 +31,6 @@
 #  define SOCK_CLOEXEC 02000000 /* Atomically set close-on-exec flag for the new descriptor(s) */
 #endif
 
-int USocket::req_timeout;
 int USocket::accept4_flags; // If flags is 0, then accept4() is the same as accept()
 
 const UString* USocket::str_host;
@@ -751,7 +750,6 @@ loop:
          (void) U_SYSCALL(fcntl, "%d,%d,%d", pcNewConnection->iSockDesc, F_SETFL, O_RDWR | O_NONBLOCK | O_CLOEXEC);
 #     endif
          }
-      else if (req_timeout) (void) pcNewConnection->setTimeoutRCV(req_timeout * 1000);
 
    /*
 #  ifdef DEBUG
@@ -830,6 +828,123 @@ loop:
    U_RETURN(iBytesWrite);
 }
 
+// timeoutMS specified the timeout value, in milliseconds.
+// A negative value indicates no timeout, i.e. an infinite wait
+
+int USocket::recv(void* pBuffer, uint32_t iBufLength, int timeoutMS)
+{
+   U_TRACE(0, "USocket::recv(%p,%u,%d)", pBuffer, iBufLength, timeoutMS)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+
+   int iBytesRead;
+   bool blocking = isBlocking(); 
+
+   if (blocking        &&
+       timeoutMS != -1 &&
+       pending() ==  0)
+      {
+loop:
+      if (UNotifier::waitForRead(iSockDesc, timeoutMS) != 1)
+         {
+         errno  = EAGAIN;
+         iState = TIMEOUT;
+
+         U_RETURN(-1);
+         }
+      }
+
+   iBytesRead = recv(pBuffer, iBufLength);
+
+   if (iBytesRead == -1     &&
+       errno      == EAGAIN &&
+       blocking   == false  &&
+       timeoutMS  != -1)
+      {
+      goto loop;
+      }
+
+   U_RETURN(iBytesRead);
+}
+
+int USocket::send(const void* pPayload, uint32_t iPayloadLength, int timeoutMS)
+{
+   U_TRACE(1, "USocket::send(%p,%u,%d)", pPayload, iPayloadLength, timeoutMS)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+
+   int iBytesWrite;
+   bool blocking = isBlocking();
+
+   if (blocking &&
+       timeoutMS != -1)
+      {
+loop:
+      if (UNotifier::waitForWrite(iSockDesc, timeoutMS) != 1)
+         {
+         errno  = EAGAIN;
+         iState = TIMEOUT;
+
+         U_RETURN(-1);
+         }
+      }
+
+   iBytesWrite = send(pPayload, iPayloadLength);
+
+   if (iBytesWrite == -1     &&
+       errno       == EAGAIN &&
+       blocking    == false  &&
+       timeoutMS   != -1)
+      {
+      goto loop;
+      }
+
+   U_RETURN(iBytesWrite);
+}
+
+// write data into multiple buffers
+
+int USocket::writev(const struct iovec* _iov, int iovcnt, int timeoutMS)
+{
+   U_TRACE(1, "USocket::writev(%p,%d,%d)", _iov, iovcnt, timeoutMS)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+
+   int iBytesWrite;
+   bool blocking = isBlocking();
+
+   if (blocking &&
+       timeoutMS != -1)
+      {
+loop:
+      if (UNotifier::waitForWrite(iSockDesc, timeoutMS) != 1)
+         {
+         errno  = EAGAIN;
+         iState = TIMEOUT;
+
+         U_RETURN(-1);
+         }
+      }
+
+   iBytesWrite = writev(_iov, iovcnt);
+
+   if (iBytesWrite == -1     &&
+       errno       == EAGAIN &&
+       blocking    == false  &&
+       timeoutMS   != -1)
+      {
+      goto loop;
+      }
+
+   U_RETURN(iBytesWrite);
+}
+
 // DEBUG
 
 #ifdef DEBUG
@@ -844,7 +959,6 @@ const char* USocket::dump(bool reset) const
                   << "iLocalPort                    " << iLocalPort             << '\n'
                   << "iRemotePort                   " << iRemotePort            << '\n'
                   << "bIPv6Socket                   " << bIPv6Socket            << '\n'
-                  << "req_timeout                   " << req_timeout            << '\n'
                   << "cLocalAddress   (UIPAddress   " << (void*)&cLocalAddress  << ")\n"
                   << "cRemoteAddress  (UIPAddress   " << (void*)&cRemoteAddress << ')';
 

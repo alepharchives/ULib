@@ -72,6 +72,7 @@
 #define U_TOT_CONNECTION   ptr_shared_data->tot_connection
 
 int                        UServer_Base::port;
+int                        UServer_Base::timeoutMS = -1;
 int                        UServer_Base::cgi_timeout;
 int                        UServer_Base::verify_mode;
 int                        UServer_Base::num_connection;
@@ -359,10 +360,13 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    flag_use_tcp_optimization  = cfg.readBoolean(*str_USE_TCP_OPTIMIZATION);
 
    port                       = cfg.readLong(*str_PORT, U_DEFAULT_PORT);
+   timeoutMS                  = cfg.readLong(*str_REQ_TIMEOUT);
    cgi_timeout                = cfg.readLong(*str_CGI_TIMEOUT);
    max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE, U_DEFAULT_MAX_KEEP_ALIVE);
-   USocket::req_timeout       = cfg.readLong(*str_REQ_TIMEOUT);
    u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE);
+
+   if (timeoutMS) timeoutMS *= 1000;
+   else           timeoutMS  = -1;
 
    if (cgi_timeout) UCommand::setTimeout(cgi_timeout);
 
@@ -892,7 +896,7 @@ next:
 
    setNotifier(false);
 
-   if (USocket::req_timeout) ptime = U_NEW(UTimeoutConnection(USocket::req_timeout, 0L));
+   if (timeoutMS != -1) ptime = U_NEW(UTimeoutConnection);
 }
 
 RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
@@ -1080,6 +1084,8 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
    U_SRV_LOG_TIMEOUT((UClientImage_Base*)cimg);
 
    ((UClientImage_Base*)cimg)->resetSocket(USocket::BROKEN);
+
+   (void) pluginsHandlerReset(); // manage reset...
 
    U_RETURN(true);
 }
@@ -1284,6 +1290,47 @@ end:
       }
 }
 
+// it creates a copy of itself, return true if parent...
+
+bool UServer_Base::parallelization()
+{
+   U_TRACE(0, "UServer_Base::parallelization()")
+
+   U_INTERNAL_ASSERT_POINTER(proc)
+
+   U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::checkForPipeline(),false)
+
+   if (proc->parent()) proc->wait(); // NB: to avoid fork bomb...
+
+   if (proc->fork() &&
+       proc->parent())
+      {
+      UClientImage_Base::write_off = true;
+
+      U_RETURN(true);
+      }
+
+   if (proc->child())
+      {
+      flag_loop = false;
+
+      if (isLog())
+         {
+         u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
+
+         if (ULog::isMemoryMapped() &&
+             ULog::isShared() == false)
+            {
+            // NB: we need locking to write log...
+
+            log = 0;
+            }
+         }
+      }
+
+   U_RETURN(false);
+}
+
 UCommand* UServer_Base::loadConfigCommand(UFileConfig& cfg)
 {
    U_TRACE(0, "UServer_Base::loadConfigCommand(%p)", &cfg)
@@ -1339,6 +1386,7 @@ const char* UServer_Base::dump(bool reset) const
 {
    *UObjectIO::os << "port                      " << port                        << '\n'
                   << "flag_loop                 " << flag_loop                   << '\n'
+                  << "timeoutMS                 " << timeoutMS                   << '\n'
                   << "verify_mode               " << verify_mode                 << '\n'
                   << "cgi_timeout               " << cgi_timeout                 << '\n'
                   << "verify_mode               " << verify_mode                 << '\n'

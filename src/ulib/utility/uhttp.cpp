@@ -347,7 +347,7 @@ U_NO_EXPORT void UHTTP::in_DELETE()
 
 void UHTTP::in_READ()
 {
-   U_TRACE(1, "UHTTP::in_READ()")
+   U_TRACE(1+256, "UHTTP::in_READ()")
 
    /*
    struct inotify_event {
@@ -1004,8 +1004,8 @@ bool UHTTP::readHTTPHeader(USocket* s, UString& rbuffer)
    U_INTERNAL_ASSERT_EQUALS(http_info.startHeader,0)
 
    const char* ptr;
-   int timeoutMS = -1;
    uint32_t endHeader = 0, count = 0;
+   int timeoutMS = UServer_Base::timeoutMS;
 
 start:
    U_INTERNAL_DUMP("startHeader = %u", http_info.startHeader)
@@ -1025,6 +1025,8 @@ start:
       if (rbuffer.isBinary()) U_RETURN(false);
 
       // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
+
+      U_INTERNAL_DUMP("slow loris count = %u", count)
 
       if (count++ > 10) U_RETURN(false);
 
@@ -1122,7 +1124,12 @@ bool UHTTP::readHTTPBody(USocket* s, UString& rbuffer, UString& body)
 
          count = 0;
 
-         do { if (count++ > 10) U_RETURN(false); } while (USocketExt::read(s, rbuffer, U_SINGLE_READ, 3 * 1000)); // wait max 3 sec for other data...
+         do {
+            U_INTERNAL_DUMP("slow loris count = %u", count)
+
+            if (count++ > 10) U_RETURN(false);
+            }
+         while (USocketExt::read(s, rbuffer, U_SINGLE_READ, 3 * 1000)); // wait max 3 sec for other data...
 
          http_info.clength = (rbuffer.size() - http_info.endHeader);
 
@@ -2949,7 +2956,7 @@ end:
 
 void UHTTP::checkFileForCache()
 {
-   U_TRACE(0, "UHTTP::checkFileForCache()")
+   U_TRACE(0+256, "UHTTP::checkFileForCache()")
 
    U_INTERNAL_DUMP("u_buffer(%u) = %.*S", u_buffer_len, u_buffer_len, u_buffer)
 
@@ -4273,45 +4280,14 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async)
    static int fd_stderr = UServices::getDevNull();
 #endif
 
-   if (async                                 &&
-       UServer_Base::preforked_num_kids == 0 &&
-       UClientImage_Base::checkForPipeline() == false)
+   if (async &&
+       UServer_Base::parallelization())
       {
-      U_INTERNAL_ASSERT_POINTER(UServer_Base::proc)
+      if (reset_form) resetForm(false);
 
-      // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
+      if (cgi_dir[0]) cgi_dir[0] = '\0';
 
-      if (UServer_Base::proc->parent()) UServer_Base::proc->wait(); // NB: to avoid fork bomb...
-
-      if (UServer_Base::proc->fork() &&
-          UServer_Base::proc->parent())
-         {
-         if (reset_form) resetForm(false);
-
-         if (cgi_dir[0]) cgi_dir[0] = '\0';
-
-         UClientImage_Base::write_off = true;
-
-         U_RETURN(false);
-         }
-
-      if (UServer_Base::proc->child())
-         {
-         UServer_Base::flag_loop = false;
-
-         if (UServer_Base::isLog())
-            {
-            u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
-
-            if (ULog::isMemoryMapped() &&
-                ULog::isShared() == false)
-               {
-               // NB: we need locking to write log...
-
-               UServer_Base::log = 0;
-               }
-            }
-         }
+      U_RETURN(false);
       }
 
    UString environment;

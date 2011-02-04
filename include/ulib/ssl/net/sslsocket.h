@@ -187,6 +187,8 @@ public:
       U_RETURN(true);
       }
 
+   virtual uint32_t pending() const; // returns the number of bytes which are available inside ssl for immediate read
+
    virtual void closesocket();
 
    virtual int send(const void* pData,   uint32_t iDataLen);

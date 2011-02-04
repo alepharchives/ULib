@@ -122,8 +122,8 @@ public:
    function called to established a socket connection with the SMTP network server
    */
 
-   bool connectServer(UFileConfig& file,     int port = 25, uint32_t timeout = U_TIMEOUT);
-   bool connectServer(const UString& server, int port = 25, uint32_t timeout = U_TIMEOUT);
+   bool connectServer(UFileConfig& file,     int port = 25, uint32_t timeout = U_TIMEOUT_MS);
+   bool connectServer(const UString& server, int port = 25, uint32_t timeout = U_TIMEOUT_MS);
 
    /**
    Execute an smtp transaction

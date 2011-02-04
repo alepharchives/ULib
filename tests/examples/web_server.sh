@@ -26,7 +26,7 @@ start_test() {
 
 	if [ -z "$PIDS" ]; then
 #		rm -f										   $SOCK1
-		../../src/ulib/plugin/mod_fcgi/$CMD $SOCK1 2>/tmp/$CMD.err &
+		../../src/ulib/net/server/plugin/mod_fcgi/$CMD $SOCK1 2>/tmp/$CMD.err &
 	fi
 }
 
@@ -36,9 +36,9 @@ DIR_CMD="../../examples/userver"
 
 if [ "$TERM" != "cygwin" ]; then
 	( mkdir -p usp; cd usp;
-	  ln -sf ../../../src/ulib/plugin/usp/.libs/jsonrequest.so;
-	  ln -sf ../../../src/ulib/plugin/usp/.libs/upload_progress.so;
-	  cd ../../../src/ulib/plugin/usp/;
+	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/jsonrequest.so;
+	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/upload_progress.so;
+	  cd ../../../src/ulib/net/server/plugin/usp/;
 	  make jsonrequest.la	  >/dev/null 2>&1 || exit 1;
 	  make benchmarking.la	  >/dev/null 2>&1 || exit 1;
 	  make upload_progress.la >/dev/null 2>&1 || exit 1;

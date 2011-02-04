@@ -46,7 +46,7 @@ bool USocketExt::read(USocket* socket, UString& buffer, int count, int timeoutMS
    char* ptr;
    ssize_t value;
    int byte_read;
-   bool single_read;
+   bool single_read, result = true;
    uint32_t start, capacity, read_timeout = 0;
 
    // NB: THINK REALLY VERY MUCH BEFORE CHANGE CODE HERE...
@@ -105,7 +105,7 @@ restart:
    U_INTERNAL_DUMP("start = %u single_read = %b count = %d", start, single_read, count)
 
 read:
-   value = socket->recv(ptr + byte_read, (single_read ? (int)capacity : count - byte_read));
+   value = socket->recv(ptr + byte_read, (single_read ? (int)capacity : count - byte_read), timeoutMS);
 
    if (value <= 0L)
       {
@@ -114,19 +114,23 @@ read:
          {
          socket->checkErrno(value);
 
-         if (timeoutMS != -1     &&
-             socket->isTimeout() &&
-             UNotifier::waitForRead(socket->getFd(), timeoutMS) == 1)
+         // NB: maybe we have failed to read more bytes...
+
+         if (byte_read   &&
+             single_read &&
+             socket->isTimeout())
             {
+            U_INTERNAL_ASSERT_EQUALS(timeoutMS,500)
+
             socket->iState = USocket::CONNECT;
 
-            UFile::setBlocking(socket->getFd(), socket->flags, true);
-
-            goto read;
+            U_RETURN(true);
             }
          }
 
-      U_RETURN(false);
+      result = false;
+
+      goto done;
       }
 
    byte_read += value;
@@ -149,7 +153,9 @@ read:
 
             socket->close();
 
-            U_RETURN(false);
+            result = false;
+
+            goto done;
             }
          }
 
@@ -171,6 +177,8 @@ read:
             ptr      = buffer.c_pointer(start);
             capacity = buffer.capacity() - (start + byte_read);
             }
+
+         timeoutMS = 500; // half second...
 
          goto read;
          }
@@ -196,7 +204,7 @@ read:
 done:
    buffer.size_adjust_force(start + byte_read); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
 
-   U_RETURN(true);
+   U_RETURN(result);
 }
 
 // read while not received token, return position of token in buffer
@@ -219,6 +227,8 @@ uint32_t USocketExt::read(USocket* s, UString& buffer, const char* token, uint32
 
       // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
 
+      U_INTERNAL_DUMP("slow loris count = %u", count)
+
       if (count++ > 10) break;
       }
 
@@ -239,21 +249,9 @@ bool USocketExt::write(USocket* s, const char* ptr, uint32_t count, int timeoutM
    do {
       U_INTERNAL_DUMP("count = %u", count)
 
-      value = s->send(ptr, count);
+      value = s->send(ptr, count, timeoutMS);
 
-      if (s->checkIO(value, count) == false)
-         {
-         if (timeoutMS != -1 &&
-             s->isTimeout()  &&
-             UNotifier::waitForWrite(s->getFd(), timeoutMS) == 1)
-            {
-            s->iState = USocket::CONNECT;
-
-            continue;
-            }
-
-         U_RETURN(false);
-         }
+      if (s->checkIO(value, count) == false) U_RETURN(false);
 
       write_again = (value != (ssize_t)count);
 
@@ -273,8 +271,7 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
 
    U_INTERNAL_ASSERT(s->isOpen())
 
-   int fd  = s->getFd(),
-       sz1 = header.size(),
+   int sz1 = header.size(),
        sz2 =   body.size();
 
    ssize_t value, count = sz1 + sz2;
@@ -286,23 +283,9 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
       {
       U_INTERNAL_DUMP("count = %u", count)
 
-      value = s->writev(_iov, 2);
+      value = s->writev(_iov, 2, timeoutMS);
 
-      if (s->checkIO(value, count) == false)
-         {
-         if (timeoutMS != -1 &&
-             s->isTimeout()  &&
-             UNotifier::waitForWrite(fd, timeoutMS) == 1)
-            {
-            s->iState = USocket::CONNECT;
-
-            UFile::setBlocking(fd, s->flags, true);
-
-            continue;
-            }
-
-         U_RETURN(false);
-         }
+      if (s->checkIO(value, count) == false) U_RETURN(false);
 
       if (value == count) break;
 

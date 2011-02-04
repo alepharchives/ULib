@@ -218,9 +218,8 @@ protected:
            host_port,
            logbuf;
    int port,            // the port number to connect to
+       timeoutMS,       // the time-out value in milliseconds
        verify_mode;     // mode of verification of connection
-   uint32_t timeoutMS;  // the time-out value in milliseconds. A zero value indicates that the client will wait forever,
-                        // or until the underlying operating system decides that the connection cannot be established
    bool bIPv6;
 
    static ULog* log;

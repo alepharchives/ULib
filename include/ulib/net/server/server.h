@@ -179,7 +179,7 @@ public:
    static bool isIPv6()        { return UClientImage_Base::bIPv6; }
    static int  getPort()       { return port; }
    static int  getCgiTimeout() { return cgi_timeout; }
-   static int  getReqTimeout() { return USocket::req_timeout; }
+   static int  getReqTimeout() { return (timeoutMS / 1000); }
 
    // The directory out of which you will serve your documents...
 
@@ -285,6 +285,8 @@ public:
       UProcess::kill(0, SIGTERM); // SIGTERM is sent to every process in the process group of the calling process...
       }
 
+   static bool parallelization(); // it creates a copy of itself, return true if parent...
+
    // manage log server...
 
    static ULog* log;
@@ -361,7 +363,8 @@ protected:
            IP_address;  // IP address of this server
 
    static int port,           // the port number to bind to
-              cgi_timeout,    // the time-out value in seconds for read output cgi process
+              timeoutMS,      // the time-out value in milliseconds for client request
+              cgi_timeout,    // the time-out value in seconds for output cgi process
               verify_mode,    // mode of verification ssl connection
               max_Keep_Alive, // Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session
               num_connection;
@@ -390,9 +393,9 @@ protected:
 
    // COSTRUTTORI
 
-   UTimeoutConnection(long sec, long usec) : UEventTime(sec, usec)
+   UTimeoutConnection() : UEventTime(getReqTimeout(), 0L)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeoutConnection, "%ld,%ld", sec, usec)
+      U_TRACE_REGISTER_OBJECT(0, UTimeoutConnection, "")
       }
 
    virtual ~UTimeoutConnection()

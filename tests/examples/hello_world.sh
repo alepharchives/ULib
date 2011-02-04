@@ -16,7 +16,7 @@ rm -f hello_world.log* err/hello_world.err \
 DIR_CMD="../../examples/userver"
 
 CURDIR=`pwd`
-cd ../../src/ulib/plugin/usp/; make hello_world.la || exit 1
+cd ../../src/ulib/net/server/plugin/usp/; make hello_world.la || exit 1
 cd $CURDIR
 
 mkdir -p usp
@@ -24,9 +24,9 @@ cd usp
 rm -f *.so
 if [ "$TERM" = "msys" ]; then
 	cp ../../../src/ulib/.libs/libulib*.dll ..
-	cp ../../../src/ulib/plugin/usp/.libs/hello_world.dll .
+	cp ../../../src/ulib/net/server/plugin/usp/.libs/hello_world.dll .
 else
-	ln -sf ../../../src/ulib/plugin/usp/.libs/hello_world.so
+	ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/hello_world.so
 fi
 cd $CURDIR
 

@@ -342,13 +342,20 @@ int UHttpPlugIn::handlerRequest()
 
          // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
 
-         if (UHTTP::processCGIRequest((UCommand*)0, &environment, true)) (void) UHTTP::processCGIOutput();
+         bool async = (UServer_Base::preforked_num_kids == 0 && UClientImage_Base::checkForPipeline() == false);
+
+         if (UHTTP::processCGIRequest((UCommand*)0, &environment, async)) (void) UHTTP::processCGIOutput();
          }
       else
          {
-         // NB: we don't want to process the form here (other plugin...)
+         if (UHTTP::isHttpGETorHEAD() == false)
+            {
+            // NB: we don't want to process this request here (maybe other plugin after...)
 
-         if (UHTTP::isHttpGETorHEAD() == false) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+            UHTTP::setHTTPResponse(HTTP_NOT_IMPLEMENTED, 0, 0);
+
+            U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+            }
 
          UHTTP::processHTTPGetRequest(); // GET,HEAD
          }
@@ -372,7 +379,18 @@ end: // check for "Connection: close" in headers...
 
 int UHttpPlugIn::handlerReset()
 {
-   U_TRACE(0, "UUspPlugIn::handlerReset()")
+   U_TRACE(0, "UHttpPlugIn::handlerReset()")
+
+   // check for timeout
+
+   if (UClientImage_Base::socket->isBroken())
+      {
+      UHTTP::setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
+
+      (void) UClientImage_Base::pClientImage->handlerWrite();
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      }
 
    // check if dynamic page (ULib Servlet Page)
 

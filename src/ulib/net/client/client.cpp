@@ -39,7 +39,7 @@ UClient_Base::UClient_Base() : response(U_CAPACITY), buffer(U_CAPACITY), host_po
 
    bIPv6     = false;
    port      = verify_mode = 0;
-   timeoutMS = U_TIMEOUT;
+   timeoutMS = U_TIMEOUT_MS;
 }
 
 UClient_Base::UClient_Base(UFileConfig* cfg) : response(U_CAPACITY), buffer(U_CAPACITY), host_port(100U), logbuf(100U)
@@ -51,7 +51,7 @@ UClient_Base::UClient_Base(UFileConfig* cfg) : response(U_CAPACITY), buffer(U_CA
       {
       bIPv6     = false;
       port      = verify_mode = 0;
-      timeoutMS = U_TIMEOUT;
+      timeoutMS = U_TIMEOUT_MS;
       }
 }
 
@@ -183,8 +183,11 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
 #ifdef HAVE_IPV6
    bIPv6       = cfg.readBoolean(*UServer_Base::str_USE_IPV6);
 #endif
-   timeoutMS   = cfg.readLong(*str_RES_TIMEOUT) * 1000;
    verify_mode = cfg.readLong(*UServer_Base::str_VERIFY_MODE);
+   timeoutMS   = cfg.readLong(*str_RES_TIMEOUT);
+
+   if (timeoutMS) timeoutMS *= 1000;
+   else           timeoutMS  = -1;
 
    UString host      = cfg[*UServer_Base::str_SERVER],
            name_sock = cfg[*UServer_Base::str_SOCKET_NAME];

@@ -14,7 +14,7 @@
 #ifndef ULIB_MACRO_H
 #define ULIB_MACRO_H 1
 
-#define U_TIMEOUT     (30L * 1000L) /* 30 second connection/read timeout */
+#define U_TIMEOUT_MS  (30L * 1000L) /* 30 second connection/read timeout */
 #define U_SINGLE_READ -1
 
 #define U_SIZEOF_UStringRep sizeof(ustringrep)

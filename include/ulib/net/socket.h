@@ -235,6 +235,25 @@ public:
       }
 
    /**
+   Actual state is blocking...?
+   */
+
+   bool isBlocking()
+      {
+      U_TRACE(0, "USocket::isBlocking()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT(isOpen())
+
+      U_INTERNAL_DUMP("O_NONBLOCK = %B, flags = %B", O_NONBLOCK, flags)
+
+      bool blocking = ((flags & O_NONBLOCK) != O_NONBLOCK);
+
+      U_RETURN(blocking);
+      }
+
+   /**
    Connect the socket to the specified server IP Address and port number
    */
 
@@ -512,8 +531,8 @@ public:
    @param timeoutMS the specified timeout value, in milliseconds. A zero value indicates no timeout, i.e. an infinite wait
    */
 
-   bool setTimeoutRCV(uint32_t timeoutMS = U_TIMEOUT);
-   bool setTimeoutSND(uint32_t timeoutMS = U_TIMEOUT);
+   bool setTimeoutRCV(uint32_t timeoutMS = U_TIMEOUT_MS);
+   bool setTimeoutSND(uint32_t timeoutMS = U_TIMEOUT_MS);
 
    /**
    The recvfrom() function is called with the proper parameters, params is placed for obtaining
@@ -599,6 +618,15 @@ public:
       U_RETURN(false);
       }
 
+   // returns the number of bytes which are available inside for immediate read
+
+   virtual uint32_t pending() const
+      {
+      U_TRACE(0, "USocket::pending()")
+
+      U_RETURN(0);
+      }
+
 #ifdef closesocket
 #undef closesocket
 #endif
@@ -638,6 +666,7 @@ public:
    the recv() method to receive the data, returning the number of bytes actually readden
    */
 
+           int recv(void* pBuffer, uint32_t iBufLength, int timeoutMS);
    virtual int recv(void* pBuffer, uint32_t iBufLength)
       {
       U_TRACE(0, "USocket::recv(%p,%u)", pBuffer, iBufLength)
@@ -659,10 +688,12 @@ public:
    */
 
    virtual int send(const void* pPayload, uint32_t iPayloadLength);
+           int send(const void* pPayload, uint32_t iPayloadLength, int timeoutMS);
 
    // write data into multiple buffers
 
    virtual int writev(const struct iovec* iov, int iovcnt);
+           int writev(const struct iovec* iov, int iovcnt, int timeoutMS);
    // -----------------------------------------------------------------------------------------------------------
 
    // DEBUG
@@ -676,8 +707,7 @@ protected:
    UIPAddress cLocalAddress, cRemoteAddress;
    bool bIPv6Socket, bLocalSet;
 
-   static int req_timeout,   // the time-out value in seconds for client send request
-              accept4_flags; // If flags is 0, then accept4() is the same as accept()
+   static int accept4_flags; // If flags is 0, then accept4() is the same as accept()
 
    bool connect();
    void setRemote();

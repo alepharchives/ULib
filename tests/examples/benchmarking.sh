@@ -19,7 +19,7 @@ rm -f benchmarking.log* err/benchmarking.err \
 DIR_CMD="../../examples/userver"
 
 CURDIR=`pwd`
-cd ../../src/ulib/plugin/usp/; make benchmarking.la || exit 1
+cd ../../src/ulib/net/server/plugin/usp/; make benchmarking.la || exit 1
 cd $CURDIR
 
 mkdir -p usp
@@ -27,9 +27,9 @@ cd usp
 rm -f *.so
 if [ "$TERM" = "msys" ]; then
 	cp ../../../src/ulib/.libs/libulib*.dll ..
-	cp ../../../src/ulib/plugin/usp/.libs/benchmarking.dll .
+	cp ../../../src/ulib/net/server/plugin/usp/.libs/benchmarking.dll .
 else
-	ln -sf ../../../src/ulib/plugin/usp/.libs/benchmarking.so
+	ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/benchmarking.so
 fi
 cd $CURDIR
 
