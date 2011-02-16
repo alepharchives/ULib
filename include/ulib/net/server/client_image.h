@@ -53,9 +53,12 @@ public:
    static USocket* socket;
    static UString* rbuffer;
    static UString* wbuffer;
-   static UString* real_ip;      // NB: check for HTTP Header X-Forwarded-For: client, proxy1, proxy2 and X-Real-IP: client...
-   static bool bIPv6, write_off; // NB: we not send response because we can have used sendfile() etc...
+   static UString* request; // NB: it is only a pointer, not a string object...
+   static UString* pbuffer;
+   static const char* rpointer;
+   static uint32_t rstart, size_request;
    static UClientImage_Base* pClientImage;
+   static bool bIPv6, pipeline, write_off; // NB: we not send response because we can have used sendfile() etc...
 
    // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
 
@@ -67,8 +70,7 @@ public:
 
    static void run();
    static void clear();
-   static void resetBuffer();
-   static void genericReset();
+   static int  genericRead();
    static void init(USocket* p);
 
    // log
@@ -94,87 +96,29 @@ public:
       return socket->remoteIPAddress();
       }
 
-   static bool setRealIP(); // check for X-Forwarded-For: client, proxy1, proxy2 and X-Real-IP: client...
-
-   static UString getRemoteIP()
-      {
-      U_TRACE(0, "UClientImage_Base::getRemoteIP()")
-
-      if (real_ip->empty() && setRealIP() == false) (void) real_ip->replace(remoteIPAddress().getAddressString());
-
-      if (real_ip->isNullTerminated() == false) real_ip->setNullTerminated();
-
-      U_RETURN_STRING(*real_ip);
-      }
-
    // welcome message
 
    static void setMsgWelcome(const UString& msg);
 
    // define method VIRTUAL to redefine
 
-   virtual void reset()
-      {
-      U_TRACE(0, "UClientImage_Base::reset()")
-
-      reuse(); // NB: we need this because we reuse the same object USocket...
-
-      genericReset();
-      }
+   virtual void reset();
 
    // define method VIRTUAL of class UEventFd
 
    virtual int handlerRead();
    virtual int handlerWrite();
 
-   // manage if data read already available... (pipelining)
+   // manage if other request already available... (pipelining)
 
-   static bool isPipeline();
-   static void manageForPipeline()
+   static bool isPipeline()
       {
-      U_TRACE(0, "UClientImage_Base::manageForPipeline()")
+      U_TRACE(0, "UClientImage_Base::isPipeline()")
 
-      U_INTERNAL_ASSERT_POINTER(rbuffer)
-
-      U_INTERNAL_DUMP("rbuffer->size() = %u size_message = %u pcount = %d pbuffer = %p",
-                       rbuffer->size(), USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
-
-      if (USocketExt::size_message)
-         {
-         uint32_t size = rbuffer->size();
-
-         if (size > USocketExt::size_message)
-            {
-            USocketExt::pcount  = size - USocketExt::size_message;
-#        if defined(DEBUG) || (defined(U_TEST) && !defined(__CYGWIN__) && !defined(__MINGW32__))
-            USocketExt::pbuffer = rbuffer->data();
-#        endif
-
-            U_INTERNAL_DUMP("pcount = %d pbuffer = %p", USocketExt::pcount, USocketExt::pbuffer)
-            }
-         }
+      U_RETURN(pipeline);
       }
 
-   static bool checkForPipeline()
-      {
-      U_TRACE(0, "UClientImage_Base::checkForPipeline()")
-
-      U_INTERNAL_ASSERT_POINTER(rbuffer)
-
-      U_INTERNAL_DUMP("rbuffer->size() = %u size_message = %u pcount = %d pbuffer = %p",
-                       rbuffer->size(), USocketExt::size_message, USocketExt::pcount, USocketExt::pbuffer)
-
-      uint32_t size = rbuffer->size();
-
-      if (size                     &&
-          USocketExt::size_message &&
-          (USocketExt::pcount > 0 || size > USocketExt::size_message))
-         {
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
+   static void setRequestSize(uint32_t n);
 
    // DEBUG
 
@@ -185,7 +129,7 @@ public:
 protected:
    static UString* msg_welcome;
 
-   // NB: we need this because we reuse the same object USocket...
+   // NB: we need this because we reuse the same object UClientImage_Base...
 
    void reuse()
       {
@@ -213,7 +157,7 @@ protected:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UClientImage_Base)
 
-      reuse(); // NB: we need this because we reuse the same object USocket...
+      reuse(); // NB: we need this because we reuse the same object UClientImage_Base...
 
       destroy();
       }

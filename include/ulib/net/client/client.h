@@ -33,6 +33,7 @@ class ULog;
 class UFileConfig;
 class UFCGIPlugIn;
 class USCGIPlugIn;
+class UHttpClient_Base;
 
 class U_EXPORT UClient_Base {
 public:
@@ -136,6 +137,8 @@ public:
    // and optionally data corresponding to the length.
    // -----------------------------------------------------------------------------------------------------------------------
 
+   bool readRPCResponse();
+
    // Transmit token name (4 characters) and value (32-bit int, as 8 hex characters)
 
    bool sendTokenInt(const char* token, uint32_t value)
@@ -150,50 +153,6 @@ public:
 
    bool sendTokenVector(const char* token, UVector<UString>& vec)
       { buffer.setEmpty(); return URPC::sendTokenVector(socket, token, vec, buffer); }
-
-   // Read a token and value
-
-   bool readTokenInt(const char* token)
-      { response.setEmpty(); return (URPC::readTokenInt(socket, token, response) > 0); }
-
-   // Read a token, and then the string data
-
-   bool readTokenString(const char* token)
-      {
-      U_TRACE(0, "UClient_Base::readTokenString(%S)", token)
-
-      // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
-
-        buffer.setEmptyForce();
-      response.setEmptyForce();
-
-      if (URPC::readTokenString(socket, token, buffer, response))
-         {
-         // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
-
-         buffer.size_adjust_force(U_TOKEN_NM);
-
-         U_INTERNAL_DUMP("buffer = %.*S response = %.*S)", U_STRING_TO_TRACE(buffer), U_STRING_TO_TRACE(response))
-
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
-
-   bool readRPCResponse()
-      {
-      U_TRACE(0, "UClient_Base::readRPCResponse()")
-
-      bool result = (this->readTokenString(0) || this->UClient_Base::buffer.empty() == false); 
-
-      U_RETURN(result);
-      }
-
-   // Read an vector of string from the network
-
-   bool readTokenVector(const char* token, UVector<UString>& vec)
-      { response.setEmpty(); return URPC::readTokenVector(socket, token, response, vec); }
 
    // DEBUG
 
@@ -239,6 +198,7 @@ private:
 
    friend class UFCGIPlugIn;
    friend class USCGIPlugIn;
+   friend class UHttpClient_Base;
 };
 
 template <class Socket> class U_EXPORT UClient : virtual public UClient_Base {

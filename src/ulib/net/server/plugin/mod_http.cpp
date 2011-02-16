@@ -132,11 +132,11 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 #  endif
       uri_protected_mask               = cfg[*str_URI_PROTECTED_MASK];
       uri_protected_allowed_ip         = cfg[*str_URI_PROTECTED_ALLOWED_IP];
-      USocketExt::request_read_timeout = cfg[*str_REQUEST_READ_TIMEOUT].strtol();
 
       UHTTP::virtual_host              = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
-      UHTTP::digest_authentication     = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
       UHTTP::limit_request_body        = cfg.readLong(*str_LIMIT_REQUEST_BODY, UString::max_size() - 4096);
+      UHTTP::request_read_timeout      = cfg[*str_REQUEST_READ_TIMEOUT].strtol();
+      UHTTP::digest_authentication     = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
 
        UHTTP::cache_file_mask          = U_NEW(UString);
       *UHTTP::cache_file_mask          = cfg[*str_CACHE_FILE_MASK];
@@ -183,22 +183,7 @@ int UHttpPlugIn::handlerREAD()
 {
    U_TRACE(0, "UHttpPlugIn::handlerREAD()")
 
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
-
-   bool is_http_req = UHTTP::readHTTPRequest();
-
-   // check if close connection... (read() == 0)
-
-   if (UClientImage_Base::socket->isClosed()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
-   if (UClientImage_Base::rbuffer->empty())   U_RETURN(U_PLUGIN_HANDLER_AGAIN);
-
-   if (UServer_Base::isLog()) UClientImage_Base::logRequest();
-
-   // manage buffered read (pipelining)
-
-   UClientImage_Base::manageForPipeline();
-
-   if (is_http_req)
+   if (UHTTP::readHTTPRequest())
       {
       UHTTP::getTimeIfNeeded(false);
 
@@ -210,13 +195,6 @@ int UHttpPlugIn::handlerREAD()
           UHTTP::http_info.host_len == 0)
          {
          UHTTP::setHTTPBadRequest();
-
-         goto send_response;
-         }
-
-      if (UHTTP::isHttpOPTIONS())
-         {
-         UHTTP::setHTTPResponse(HTTP_OPTIONS_RESPONSE, 0, 0);
 
          goto send_response;
          }
@@ -336,13 +314,15 @@ int UHttpPlugIn::handlerRequest()
 
    if (UHTTP::isHTTPRequestNeedProcessing())
       {
+      U_ASSERT_DIFFERS(UClientImage_Base::request->empty(), true)
+
       if (UHTTP::isCGIRequest())
          {
          UString environment = UHTTP::getCGIEnvironment() + *UHTTP::penvironment;
 
          // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
 
-         bool async = (UServer_Base::preforked_num_kids == 0 && UClientImage_Base::checkForPipeline() == false);
+         bool async = (UServer_Base::preforked_num_kids == 0 && UClientImage_Base::isPipeline() == false);
 
          if (UHTTP::processCGIRequest((UCommand*)0, &environment, async)) (void) UHTTP::processCGIOutput();
          }
@@ -357,7 +337,7 @@ int UHttpPlugIn::handlerRequest()
             U_RETURN(U_PLUGIN_HANDLER_GO_ON);
             }
 
-         UHTTP::processHTTPGetRequest(); // GET,HEAD
+         UHTTP::processHTTPGetRequest(*UClientImage_Base::request); // GET,HEAD
          }
       }
    else if (UHTTP::isHTTPRequestNotFound())  UHTTP::setHTTPNotFound();  // set not found error response...
@@ -381,16 +361,7 @@ int UHttpPlugIn::handlerReset()
 {
    U_TRACE(0, "UHttpPlugIn::handlerReset()")
 
-   // check for timeout
-
-   if (UClientImage_Base::socket->isBroken())
-      {
-      UHTTP::setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
-
-      (void) UClientImage_Base::pClientImage->handlerWrite();
-
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-      }
+   if (UHTTP::real_ip->empty() == false) UHTTP::real_ip->setEmpty();
 
    // check if dynamic page (ULib Servlet Page)
 
@@ -413,6 +384,19 @@ int UHttpPlugIn::handlerReset()
       {
       UHTTP::alias->clear();
       UHTTP::request_uri->clear();
+      }
+
+   // check if timeout
+
+   if (UClientImage_Base::socket->isBroken())
+      {
+      U_http_is_connection_close = U_YES;
+
+      UHTTP::setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
+
+      (void) UClientImage_Base::pClientImage->handlerWrite();
+
+      U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

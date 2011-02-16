@@ -58,7 +58,6 @@ public:
 
    // Connection-wide hooks
 
-   virtual int handlerREAD();
    virtual int handlerRequest();
 
 private:

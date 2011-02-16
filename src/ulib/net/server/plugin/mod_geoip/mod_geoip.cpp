@@ -223,8 +223,8 @@ int UGeoIPPlugIn::handlerRequest()
 {
    U_TRACE(0, "UGeoIPPlugIn::handlerRequest()")
 
-   if (country_forbidden_mask.empty() == false                 &&
-       setCountryCode(UClientImage_Base::getRemoteIP().data()) &&
+   if (country_forbidden_mask.empty() == false     &&
+       setCountryCode(UHTTP::getRemoteIP().data()) &&
        checkCountryForbidden() == false)
       {
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);

@@ -618,15 +618,6 @@ public:
       U_RETURN(false);
       }
 
-   // returns the number of bytes which are available inside for immediate read
-
-   virtual uint32_t pending() const
-      {
-      U_TRACE(0, "USocket::pending()")
-
-      U_RETURN(0);
-      }
-
 #ifdef closesocket
 #undef closesocket
 #endif

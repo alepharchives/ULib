@@ -31,23 +31,18 @@ public:
    static UString getNetworkAddress(int fd, const char* device);        // eth0
    static UString getNetworkDevice(         const char* exclude);       // eth0
 
-   static int pcount;
-   static vPFi upload_hook; // it allows the generation of a progress meter during upload...
-#if defined(DEBUG) || defined(U_TEST)
-   static char* pbuffer;
-#endif
-   static uint32_t size_message, request_read_timeout;
+   static vPFi byte_read_hook; // it allows the generation of a progress meter during upload...
 
    /**
     * Read data from socket
     *
-    * @param timeoutMS specified the timeout value, in milliseconds.
-    *        A negative value indicates no timeout, i.e. an infinite wait.
+    * @param timeoutMS  specified the timeout value, in milliseconds. A negative value indicates no timeout, i.e. an infinite wait
+    * @param time_limit specified the maximum execution time, in seconds. If set to zero, no time limit is imposed
     */
 
-   // read while not received count data
+   // read while not received almost count data
 
-   static bool read(USocket* s, UString& buffer, int count = U_SINGLE_READ, int timeoutMS = -1);
+   static bool read(USocket* s, UString& buffer, int count = U_SINGLE_READ, int timeoutMS = -1, uint32_t time_limit = 0);
 
    // read while not received token, return position of token in buffer
 
@@ -59,7 +54,7 @@ public:
       {
       U_TRACE(0, "USocketExt::readEOF(%p,%.*S)", s, U_STRING_TO_TRACE(buffer))
 
-      while (USocketExt::read(s, buffer)) {}
+      while (USocketExt::read(s, buffer, U_SINGLE_READ, -1, 0)) {}
       }
 
    // write while sending data
@@ -70,8 +65,6 @@ public:
 
    // Send a command to a server and wait for a response (single line)
 
-   static int vsyncCommand(USocket* s, char* buffer, uint32_t buffer_size, const char* format, va_list argp);
-
    static int vsyncCommand(USocket* s, const char* format, va_list argp)
       {
       U_TRACE(0, "USocketExt::vsyncCommand(%p,%S)", s, format)
@@ -81,9 +74,9 @@ public:
       return vsyncCommand(s, u_buffer, sizeof(u_buffer), format, argp);
       }
 
-   // response from server (single line)
+   static int vsyncCommand(USocket* s, char* buffer, uint32_t buffer_size, const char* format, va_list argp);
 
-   static int readLineReply(USocket* s, char* buffer, uint32_t buffer_size);
+   // response from server (single line)
 
    static int readLineReply(USocket* s)
       {
@@ -93,6 +86,8 @@ public:
 
       return readLineReply(s, u_buffer, sizeof(u_buffer));
       }
+
+   static int readLineReply(USocket* s, char* buffer, uint32_t buffer_size);
 
    static int readLineReply(USocket* s, UString& buffer)
       {
@@ -107,8 +102,6 @@ public:
 
    // Send a command to a server and wait for a response (multi line)
 
-   static int vsyncCommandML(USocket* s, char* buffer, uint32_t buffer_size, const char* format, va_list argp);
-
    static int vsyncCommandML(USocket* s, const char* format, va_list argp)
       {
       U_TRACE(0, "USocketExt::vsyncCommandML(%p,%S)", s, format)
@@ -118,9 +111,9 @@ public:
       return vsyncCommandML(s, u_buffer, sizeof(u_buffer), format, argp);
       }
 
-   // response from server (multi line)
+   static int vsyncCommandML(USocket* s, char* buffer, uint32_t buffer_size, const char* format, va_list argp);
 
-   static int readMultilineReply(USocket* s, char* buffer, uint32_t buffer_size);
+   // response from server (multi line)
 
    static int readMultilineReply(USocket* s)
       {
@@ -130,6 +123,8 @@ public:
 
       return readMultilineReply(s, u_buffer, sizeof(u_buffer));
       }
+
+   static int readMultilineReply(USocket* s, char* buffer, uint32_t buffer_size);
 
    // Send a command to a server and wait for a response (check for token line)
 

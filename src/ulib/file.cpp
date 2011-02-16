@@ -21,6 +21,8 @@
 #  include <ulib/magic/magic.h>
 #endif
 
+#include <sys/mman.h>
+
 int               UFile::mime_index;
 bool              UFile::_root;
 char              UFile::cwd_save[U_PATH_MAX];
@@ -42,12 +44,6 @@ void UFile::chk_num_file_object() { if (num_file_object) U_WARNING("UFile::chdir
 
 #ifndef MREMAP_MAYMOVE
 #define MREMAP_MAYMOVE 1
-#endif
-
-#ifdef MADV_SEQUENTIAL
-#  ifndef MADV_HUGEPAGE
-#  define MADV_HUGEPAGE 0
-#  endif
 #endif
 
 void UFile::setPathRelativ()
@@ -341,7 +337,7 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
    if (map != MAP_FAILED)
       {
 #  ifdef MADV_SEQUENTIAL
-      if (map_size > (128 * PAGESIZE)) (void) U_SYSCALL(madvise, "%p,%u,%d", map, map_size, MADV_SEQUENTIAL | MADV_HUGEPAGE);
+      if (map_size > (128 * PAGESIZE)) (void) U_SYSCALL(madvise, "%p,%u,%d", map, map_size, MADV_SEQUENTIAL);
 #  endif
 
       if (str) str->mmap(map, map_size);

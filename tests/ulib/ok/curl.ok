@@ -34,13 +34,16 @@ URL: http://www.unirel.com/index.html
 </HTML>
 URL: ftp://ftp.at.debian.org/debian/README
 See http://www.debian.org/ for information about Debian GNU/Linux.
-Three Debian releases are available on the main site:
+Four Debian releases are available on the main site:
 
-Debian 5.0.5, or lenny.  Access this release through dists/stable
-Debian 5.0.5 was released Saturday, 26 June 2010.
+Debian 5.0.8, or lenny.  Access this release through dists/oldstable
+Debian 5.0.8 was released Saturday, 22 January 2011.
 
-Testing, or squeeze.  Access this release through dists/testing.  The
-current tested development snapshot is named squeeze.  Packages which
+Debian 6.0, or squeeze.  Access this release through dists/stable
+Debian 6.0 was released Saturday, 05 February 2011.
+
+Testing, or wheezy.  Access this release through dists/testing.  The
+current tested development snapshot is named wheezy.  Packages which
 have been tested in unstable and passed automated tests propogate to
 this release.
 
@@ -95,7 +98,7 @@ the <a href="mailto:webmaster@unirel.com">webmaster</a>.
 <address>
   <a href="/">www.unirel.com</a><br />
   
-  <span>Mon Jun 28 16:09:29 2010<br />
+  <span>Wed Feb  9 17:46:12 2011<br />
   Apache/2.0.49 (Linux/SuSE)</span>
 </address>
 </body>

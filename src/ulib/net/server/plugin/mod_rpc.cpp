@@ -74,23 +74,11 @@ int URpcPlugIn::handlerREAD()
 
    if (rpc_parser)
       {
-      // read the RPC request
+      // check for RPC request
 
-      is_rpc_msg = URPC::readRPC(UClientImage_Base::socket, *UClientImage_Base::rbuffer);
+      is_rpc_msg = URPC::readRPCRequest(false); // NB: resetRPCInfo() it is already called by clearData()...
 
-      // check if close connection... (read() == 0)
-
-      if (UClientImage_Base::socket->isClosed()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
-      if (UClientImage_Base::rbuffer->empty())   U_RETURN(U_PLUGIN_HANDLER_AGAIN);
-
-      if (is_rpc_msg)
-         {
-         if (UServer_Base::isLog()) UClientImage_Base::logRequest();
-
-         UClientImage_Base::manageForPipeline(); // manage buffered read (pipelining)
-
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-         }
+      if (is_rpc_msg) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -105,9 +93,10 @@ int URpcPlugIn::handlerRequest()
       // process the RPC request
 
       U_INTERNAL_ASSERT_POINTER(rpc_parser)
+      U_ASSERT_DIFFERS(UClientImage_Base::request->empty(), true)
 
       bool bSendingFault;
-      UString method = UClientImage_Base::rbuffer->substr(0U, U_TOKEN_NM);
+      UString method = UClientImage_Base::request->substr(0U, U_TOKEN_NM);
 
       *UClientImage_Base::wbuffer = rpc_parser->processMessage(method, *URPCObject::dispatcher, bSendingFault);
 

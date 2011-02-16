@@ -25,36 +25,11 @@ U_CREAT_FUNC(mod_echo, UEchoPlugIn)
 
 // Connection-wide hooks
 
-int UEchoPlugIn::handlerREAD()
-{
-   U_TRACE(0, "UEchoPlugIn::handlerREAD()")
-
-   bool is_msg = USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer);
-
-   // check if close connection... (read() == 0)
-
-   if (UClientImage_Base::socket->isClosed()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
-   if (UClientImage_Base::rbuffer->empty())   U_RETURN(U_PLUGIN_HANDLER_AGAIN);
-
-   if (UServer_Base::isLog()) UClientImage_Base::logRequest();
-
-   if (is_msg)
-      {
-      USocketExt::size_message = UClientImage_Base::rbuffer->size();
-
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-      }
-
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
-}
-
 int UEchoPlugIn::handlerRequest()
 {
    U_TRACE(0, "UEchoPlugIn::handlerRequest()")
 
-   U_INTERNAL_ASSERT_MAJOR(USocketExt::size_message,0U)
-
-   *UClientImage_Base::wbuffer = UClientImage_Base::rbuffer->substr(0U, USocketExt::size_message);
+   *UClientImage_Base::wbuffer = *UClientImage_Base::request;
 
     UClientImage_Base::body->clear();
 

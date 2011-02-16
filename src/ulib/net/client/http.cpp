@@ -222,6 +222,8 @@ void UHttpClient_Base::str_allocate()
    U_NEW_ULIB_OBJECT(str_www_authenticate,    U_STRING_FROM_STRINGREP_STORAGE(0));
    U_NEW_ULIB_OBJECT(str_proxy_authenticate,  U_STRING_FROM_STRINGREP_STORAGE(1));
    U_NEW_ULIB_OBJECT(str_proxy_authorization, U_STRING_FROM_STRINGREP_STORAGE(2));
+
+   if (UIPAddress::str_localhost == 0) UIPAddress::str_allocate();
 }
 
 UHttpClient_Base::UHttpClient_Base(UFileConfig* cfg) : UClient_Base(cfg)
@@ -522,7 +524,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
          U_RETURN(-1);
          }
 
-      if (newLocation.find(localhost) != U_NOT_FOUND)
+      if (newLocation.find(*UIPAddress::str_localhost) != U_NOT_FOUND)
          {
          U_INTERNAL_DUMP("LOCATION HEADER POINT TO LOCALHOST CAUSING DEADLOCK")
 
@@ -690,7 +692,7 @@ bool UHttpClient_Base::sendRequest(UString& data)
 
    UHTTP::http_info.clength = responseHeader->getHeader(*USocket::str_content_length).strtol();
 
-   bool ok = UHTTP::readHTTPBody(socket, UClient_Base::response, body);
+   bool ok = UHTTP::readHTTPBody(socket, &response, body);
 
    U_RETURN(ok);
 }

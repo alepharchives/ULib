@@ -30,26 +30,20 @@ protected:
       {
       U_TRACE(5, "UUnixClientImage::handlerRead()")
 
-      reset(); // virtual method
+      reset();
 
-      int result = (USocketExt::read(socket, *rbuffer) ? U_NOTIFIER_OK
-                                                       : U_NOTIFIER_DELETE);
+      int result = genericRead();
 
-      // check if close connection... (read() == 0)
-
-      if (UClientImage_Base::socket->isClosed()) U_RETURN(U_NOTIFIER_DELETE);
-      if (UClientImage_Base::rbuffer->empty())   U_RETURN(U_NOTIFIER_OK);
+      if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
+      if (result == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_NOTIFIER_DELETE);
 
       if (UServer_Base::isLog()) UClientImage_Base::logRequest();
 
-      if (result == U_NOTIFIER_OK)
-         {
-         // manage buffered read (pipelining)
+      U_INTERNAL_ASSERT_EQUALS(result, U_PLUGIN_HANDLER_GO_ON)
 
-         *wbuffer = rbuffer->substr(0U, (USocketExt::size_message = rbuffer->size()));
+      *wbuffer = *rbuffer;
 
-         result = handlerWrite();
-         }
+      result = handlerWrite();
 
       U_RETURN(result);
       }

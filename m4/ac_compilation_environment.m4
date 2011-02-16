@@ -43,7 +43,7 @@ if test "$cross_compiling" != "yes"; then
 	fi
 
 	if test -n "$stdgpp_dir"; then
-		stdgpp_version=`ls -l ${stdgpp_dir}/libstdc++.* | tail -n 1 | awk '{ nf=split ($NF, f, "/"); print f[[nf]] }'`
+		stdgpp_version=`ls -l ${stdgpp_dir}/libstdc++.* 2>/dev/null | tail -n 1 | awk '{ nf=split ($NF, f, "/"); print f[[nf]] }'`
 	fi
 fi
 AC_DEFINE_UNQUOTED(STDGPP_VERSION, "${stdgpp_version}", [Stardard GNU C++ Library version])

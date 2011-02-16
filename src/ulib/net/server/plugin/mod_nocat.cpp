@@ -1363,7 +1363,7 @@ int UNoCatPlugIn::handlerRequest()
       {
       Url url;
       UModNoCatPeer* peer = 0;
-      UString host(U_HTTP_HOST_TO_PARAM), buffer(U_CAPACITY), ip_client = UClientImage_Base::getRemoteIP();
+      UString host(U_HTTP_HOST_TO_PARAM), buffer(U_CAPACITY), ip_client = UHTTP::getRemoteIP();
 
       U_INTERNAL_DUMP("host = %.*S ip_client = %.*S", U_STRING_TO_TRACE(host), U_STRING_TO_TRACE(ip_client))
 

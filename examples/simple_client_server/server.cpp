@@ -52,14 +52,15 @@ protected:
 
       reset(); // virtual method
 
-      int result = (USocketExt::read(socket, *rbuffer, U_SINGLE_READ, 3 * 1000)
-                           ? U_NOTIFIER_OK
-                           : U_NOTIFIER_DELETE);
+      int result = genericRead(); // read request...
 
-      if (result == U_NOTIFIER_OK)
+      if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
+      if (result == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_NOTIFIER_DELETE);
+
+      if (UServer_Base::isLog()) logRequest();
+
+      if (result == U_PLUGIN_HANDLER_GO_ON)
          {
-         if (UServer_Base::isLog()) logRequest();
-
          for (unsigned i = 0; i < request_response->size(); i += 2)
             {
             if (UServices::match(*rbuffer, (*request_response)[i]))

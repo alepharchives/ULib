@@ -16,6 +16,10 @@
 #include <ulib/container/vector.h>
 #include <ulib/utility/socket_ext.h>
 
+#ifdef HAVE_SSL
+#  include <ulib/ssl/net/sslsocket.h>
+#endif
+
 #ifdef __MINGW32__
 #  include <ws2tcpip.h>
 #elif defined(HAVE_NETPACKET_PACKET_H) && !defined(U_ALL_CPP)
@@ -23,106 +27,52 @@
 #  include <sys/ioctl.h>
 #endif
 
-int      USocketExt::pcount;
-vPFi     USocketExt::upload_hook; // it allows the generation of a progress meter during upload...
-#if defined(DEBUG) || defined(U_TEST)
-char*    USocketExt::pbuffer;
-#endif
-uint32_t USocketExt::size_message;
-uint32_t USocketExt::request_read_timeout;
+vPFi USocketExt::byte_read_hook; // it allows the generation of a progress meter during upload...
 
 // Socket I/O
 
-// param timeoutMS specified the timeout value, in milliseconds.
-// A negative value indicates no timeout, i.e. an infinite wait
+// read while not received almost count data
+//
+// timeoutMS  specified the timeout value, in milliseconds. A negative value indicates no timeout, i.e. an infinite wait
+// time_limit specified the maximum execution time, in seconds. If set to zero, no time limit is imposed
 
-bool USocketExt::read(USocket* socket, UString& buffer, int count, int timeoutMS) // read while not received count data
+bool USocketExt::read(USocket* s, UString& buffer, int count, int timeoutMS, uint32_t time_limit)
 {
-   U_TRACE(0, "USocketExt::read(%p,%.*S,%d,%d)", socket, U_STRING_TO_TRACE(buffer), count, timeoutMS)
+   U_TRACE(1, "USocketExt::read(%p,%.*S,%d,%d,%u)", s, U_STRING_TO_TRACE(buffer), count, timeoutMS, time_limit)
 
+   U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_DIFFERS(count,0)
-   U_INTERNAL_ASSERT(socket->isConnected())
+   U_INTERNAL_ASSERT(s->isConnected())
 
-   char* ptr;
    ssize_t value;
-   int byte_read;
-   bool single_read, result = true;
-   uint32_t start, capacity, read_timeout = 0;
+   long timeout = 0;
+   int byte_read = 0;
+   bool result = true;
+   uint32_t start = buffer.size(); // NB: il buffer di lettura potrebbe iniziare con una parte residua
 
-   // NB: THINK REALLY VERY MUCH BEFORE CHANGE CODE HERE...
+   (void) buffer.reserve(start + U_max(count,(int)U_CAPACITY));
 
-restart:
-   start       = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua
-   capacity    = buffer.capacity() - start;
-   byte_read   = 0;
-   single_read = (count == U_SINGLE_READ);
-
-   // manage buffered read
-
-   if (pcount > 0) // NB: va bene cosi'.... (la size di un argomento di RPC puo' essere anche di un byte...)
-      {
-      U_INTERNAL_DUMP("pcount = %d pbuffer = %p buffer = %p", pcount, pbuffer, buffer.data())
-
-      U_INTERNAL_ASSERT_EQUALS(buffer.data(), pbuffer)
-
-      if (single_read) count = pcount;
-
-      int diff = pcount - count;
-
-      U_INTERNAL_DUMP("diff = %d", diff)
-
-      if (diff >= 0)
-         {
-         // NB: NO read()...!!!
-
-         pcount -= (byte_read = count);
-
-         U_INTERNAL_DUMP("pcount = %d", pcount)
-
-         goto done;
-         }
-
-      // diff < 0
-
-      buffer.size_adjust_force(start + pcount); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
-
-      count -= pcount;
-      pcount = 0;
-
-      if (count < (int)capacity) count = U_SINGLE_READ; // NB: may be we can read more bytes then required...
-
-      U_INTERNAL_DUMP("count = %d", count)
-
-      goto restart;
-      }
-
-   if (count < (int)capacity) single_read = true;
-
-   if (buffer.reserve(start + (single_read ? (int)capacity : count))) goto restart;
-
-   ptr = buffer.c_pointer(start);
-
-   U_INTERNAL_DUMP("start = %u single_read = %b count = %d", start, single_read, count)
+   char* ptr       = buffer.c_pointer(start);
+   uint32_t ncount = buffer.space();
 
 read:
-   value = socket->recv(ptr + byte_read, (single_read ? (int)capacity : count - byte_read), timeoutMS);
+   value = s->recv(ptr + byte_read, ncount, timeoutMS);
 
    if (value <= 0L)
       {
-      if (value == 0L) socket->close(); // EOF
+      if (value == 0L) s->close(); // EOF
       else
          {
-         socket->checkErrno(value);
+         s->checkErrno(value);
 
          // NB: maybe we have failed to read more bytes...
 
-         if (byte_read   &&
-             single_read &&
-             socket->isTimeout())
+         if (byte_read &&
+             s->isTimeout())
             {
             U_INTERNAL_ASSERT_EQUALS(timeoutMS,500)
 
-            socket->iState = USocket::CONNECT;
+            s->iState = USocket::CONNECT;
 
             U_RETURN(true);
             }
@@ -139,19 +89,21 @@ read:
 
    if (byte_read < count)
       {
-      if (request_read_timeout)
+      U_INTERNAL_ASSERT_DIFFERS(count,U_SINGLE_READ)
+
+      if (time_limit)
          {
          (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
 
-         if (read_timeout == 0) read_timeout = request_read_timeout + u_now.tv_sec;
+         if (timeout == 0) timeout = u_now.tv_sec + time_limit;
 
          // NB: may be is attacked by a "slow loris"... http://lwn.net/Articles/337853/
 
-         if (u_now.tv_sec > (long)read_timeout)
+         if (u_now.tv_sec > timeout)
             {
-            socket->iState = USocket::BROKEN;
+            s->iState = USocket::BROKEN;
 
-            socket->close();
+            s->close();
 
             result = false;
 
@@ -159,53 +111,48 @@ read:
             }
          }
 
-      if (upload_hook) upload_hook(byte_read);
+      if (byte_read_hook) byte_read_hook(byte_read);
 
       goto read;
       }
 
-   if (single_read)
+   if (value == (ssize_t)ncount)
       {
       // NB: may be there are available more bytes to read...
 
-      if (value == (ssize_t)capacity)
+      buffer.size_adjust_force(start + byte_read); // NB: we force because string can be referenced...
+
+      if (buffer.reserve(start + byte_read + ncount)) ptr = buffer.c_pointer(start);
+
+#  ifdef HAVE_SSL
+      if (s->isSSL())
          {
-         buffer.size_adjust_force(start + byte_read); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
+         uint32_t available = ((USSLSocket*)s)->pending();
 
-         if (buffer.reserve(start + byte_read + capacity))
+         if (available)
             {
-            ptr      = buffer.c_pointer(start);
-            capacity = buffer.capacity() - (start + byte_read);
+            byte_read += s->recv(ptr + byte_read, available);
+
+            goto done;
             }
-
-         timeoutMS = 500; // half second...
-
-         goto read;
          }
+#  endif
 
-      if (count != U_SINGLE_READ)
-         {
-         // NB: may be we have read more bytes then required...
+      timeoutMS = 500; // wait max for half second...
 
-         pcount = (byte_read - count); // NB: here pcount is always == 0...
+      ncount = buffer.space();
 
-         if (pcount >= 0)
-            {
-            byte_read = count;
-#        if defined(DEBUG) || defined(U_TEST)
-            pbuffer   = buffer.data();
-#        endif
-            }
-
-         U_INTERNAL_DUMP("byte_read = %d count = %d pcount = %d", byte_read, count, pcount)
-         }
+      goto read;
       }
 
 done:
-   buffer.size_adjust_force(start + byte_read); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
+   buffer.size_adjust_force(start + byte_read); // NB: we force because string can be referenced...
 
    U_RETURN(result);
 }
+
+// param timeoutMS specified the timeout value, in milliseconds.
+// A negative value indicates no timeout, i.e. an infinite wait
 
 // read while not received token, return position of token in buffer
 

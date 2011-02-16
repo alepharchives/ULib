@@ -630,7 +630,7 @@ int UShibPlugIn::handlerRequest()
       if (pos == U_NOT_FOUND) pos               = host.size();
       else                    UShibTarget::port = atoi(host.c_pointer(pos+1));
 
-      UString ip_client = UClientImage_Base::getRemoteIP();
+      UString ip_client = UHTTP::getRemoteIP();
 
    // UShibTarget::protocol    = "http";
       UShibTarget::hostname    = strndup(host.data(), pos);
@@ -672,7 +672,7 @@ int UShibPlugIn::handlerRequest()
          U_ASSERT(UHTTP::isHttpPOST())
 
 #     ifdef DEBUG
-         const char* ptr = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *USocket::str_content_type, true);
+         const char* ptr = UHTTP::getHTTPHeaderValuePtr(*UHTTP::pbuffer, *USocket::str_content_type, true);
 
          U_INTERNAL_ASSERT(U_STRNEQ(ptr,"application/x-www-form-urlencoded"))
 #     endif

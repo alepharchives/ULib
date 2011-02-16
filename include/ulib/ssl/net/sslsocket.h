@@ -178,6 +178,26 @@ public:
 
    bool askForClientCertificate();
 
+   /**
+   Returns the number of bytes which are available inside ssl for immediate read
+   */
+
+   uint32_t pending() const
+      {
+      U_TRACE(0, "USocket::pending()")
+
+      if (active == false) U_RETURN(0);
+
+      U_INTERNAL_ASSERT_POINTER(ssl)
+
+      // NB: data are received in blocks from the peer. Therefore data can be buffered
+      // inside ssl and are ready for immediate retrieval with SSL_read()...
+
+      uint32_t result = U_SYSCALL(SSL_pending, "%p", ssl);
+
+      U_RETURN(result);
+      }
+
    // VIRTUAL METHOD
 
    virtual bool isSSL() const
@@ -186,8 +206,6 @@ public:
 
       U_RETURN(true);
       }
-
-   virtual uint32_t pending() const; // returns the number of bytes which are available inside ssl for immediate read
 
    virtual void closesocket();
 

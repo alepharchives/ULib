@@ -31,45 +31,39 @@ protected:
       {
       U_TRACE(5, "USSLClientImage::handlerRead()")
 
-      reset(); // virtual method
+      reset();
 
-      int result = (USocketExt::read(socket, *rbuffer) ? U_NOTIFIER_OK
-                                                       : U_NOTIFIER_DELETE);
+      int result = genericRead();
 
-      // check if close connection... (read() == 0)
-
-      if (UClientImage_Base::socket->isClosed()) U_RETURN(U_NOTIFIER_DELETE);
-      if (UClientImage_Base::rbuffer->empty())   U_RETURN(U_NOTIFIER_OK);
+      if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
+      if (result == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_NOTIFIER_DELETE);
 
       if (UServer_Base::isLog()) UClientImage_Base::logRequest();
 
-      if (result == U_NOTIFIER_OK)
+      U_INTERNAL_ASSERT_EQUALS(result, U_PLUGIN_HANDLER_GO_ON)
+
+      static bool init;
+
+      if (init == false)
          {
-         static bool init;
+         init = true;
 
-         if (init == false)
+         X509* x509 = getSocket()->getPeerCertificate();
+
+         if (x509 == 0 &&
+             getSocket()->askForClientCertificate())
             {
-            init = true;
+            x509 = getSocket()->getPeerCertificate();
 
-            X509* x509 = getSocket()->getPeerCertificate();
-
-            if (x509 == 0 &&
-                getSocket()->askForClientCertificate())
-               {
-               x509 = getSocket()->getPeerCertificate();
-
-               U_INTERNAL_ASSERT_DIFFERS(x509, 0)
-               }
-
-            if (x509) cerr << UCertificate(x509).print();
+            U_INTERNAL_ASSERT_DIFFERS(x509, 0)
             }
 
-         // manage buffered read (pipelining)
-
-         *wbuffer = rbuffer->substr(0U, (USocketExt::size_message = rbuffer->size()));
-
-         result = handlerWrite();
+         if (x509) cerr << UCertificate(x509).print();
          }
+
+      *wbuffer = *rbuffer;
+
+      result = handlerWrite();
 
       U_RETURN(result);
       }

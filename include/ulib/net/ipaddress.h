@@ -143,6 +143,10 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
+   static const UString* str_localhost;
+
+   static void str_allocate();
+
    // COSTRUTTORI
 
    UIPAddress()

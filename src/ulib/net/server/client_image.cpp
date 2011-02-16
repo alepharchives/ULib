@@ -18,15 +18,20 @@
 #ifndef EPOLLET
 #define EPOLLET 0
 #endif
-
+   
 bool               UClientImage_Base::bIPv6;
+bool               UClientImage_Base::pipeline;
 bool               UClientImage_Base::write_off;  // NB: we not send response because we can have used sendfile() etc...
+uint32_t           UClientImage_Base::rstart;
+uint32_t           UClientImage_Base::size_request;
 USocket*           UClientImage_Base::socket;
 UString*           UClientImage_Base::body;
 UString*           UClientImage_Base::rbuffer;
 UString*           UClientImage_Base::wbuffer;
-UString*           UClientImage_Base::real_ip;
+UString*           UClientImage_Base::request; // NB: it is only a pointer, not a string object...
+UString*           UClientImage_Base::pbuffer;
 UString*           UClientImage_Base::msg_welcome;
+const char*        UClientImage_Base::rpointer;
 UClientImage_Base* UClientImage_Base::pClientImage;
 
 #undef  GCC_VERSION
@@ -46,10 +51,10 @@ void UClientImage_Base::logRequest(const char* filereq)
 {
    U_TRACE(0+256, "UClientImage_Base::logRequest(%S)", filereq)
 
-   U_INTERNAL_ASSERT_POINTER(rbuffer)
+   U_INTERNAL_ASSERT_POINTER(request)
    U_INTERNAL_ASSERT_POINTER(pClientImage)
    U_INTERNAL_ASSERT(UServer_Base::isLog())
-   U_ASSERT_EQUALS(rbuffer->empty(), false)
+   U_ASSERT_EQUALS(request->empty(), false)
    U_INTERNAL_ASSERT_POINTER(pClientImage->logbuf)
 
    uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
@@ -60,19 +65,19 @@ void UClientImage_Base::logRequest(const char* filereq)
       {
       if (UHTTP::isHTTPRequest()) // NB: only HTTP header...
          {
-         u_printf_string_max_length = (UHTTP::http_info.endHeader ? UHTTP::http_info.endHeader : rbuffer->size()); 
+         u_printf_string_max_length = (UHTTP::http_info.endHeader ? UHTTP::http_info.endHeader : request->size()); 
 
          U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
          }
       }
 
-   UServer_Base::log->log("%sreceived request (%u bytes) %.*S from %.*s\n", UServer_Base::mod_name, rbuffer->size(),
-                                                                            U_STRING_TO_TRACE(*rbuffer), U_STRING_TO_TRACE(*(pClientImage->logbuf)));
+   UServer_Base::log->log("%sreceived request (%u bytes) %.*S from %.*s\n", UServer_Base::mod_name, request->size(),
+                                                                            U_STRING_TO_TRACE(*request), U_STRING_TO_TRACE(*(pClientImage->logbuf)));
 
    u_printf_string_max_length = u_printf_string_max_length_save;
 
 #if GCC_VERSION != 30303 /* Test for GCC == 3.3.3 (SuSE Linux) */
-   if (filereq) (void) UFile::writeToTmpl(filereq, *rbuffer, true);
+   if (filereq) (void) UFile::writeToTmpl(filereq, *request, true);
 #endif
 }
 
@@ -128,6 +133,7 @@ void UClientImage_Base::init(USocket* p)
    U_INTERNAL_ASSERT_EQUALS(socket,   0);
    U_INTERNAL_ASSERT_EQUALS(rbuffer,  0);
    U_INTERNAL_ASSERT_EQUALS(wbuffer,  0);
+   U_INTERNAL_ASSERT_EQUALS(pbuffer,  0);
    U_INTERNAL_ASSERT_EQUALS(_value,   0);
    U_INTERNAL_ASSERT_EQUALS(_buffer,  0);
    U_INTERNAL_ASSERT_EQUALS(_encoded, 0);
@@ -136,7 +142,7 @@ void UClientImage_Base::init(USocket* p)
    body    = U_NEW(UString);
    rbuffer = U_NEW(UString(U_CAPACITY));
    wbuffer = U_NEW(UString);
-   real_ip = U_NEW(UString(20U));
+   pbuffer = U_NEW(UString);
 
    // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
 
@@ -153,6 +159,7 @@ void UClientImage_Base::clear()
    U_INTERNAL_ASSERT_POINTER(socket);
    U_INTERNAL_ASSERT_POINTER(rbuffer);
    U_INTERNAL_ASSERT_POINTER(wbuffer);
+   U_INTERNAL_ASSERT_POINTER(pbuffer);
    U_INTERNAL_ASSERT_POINTER(_value);
    U_INTERNAL_ASSERT_POINTER(_buffer);
    U_INTERNAL_ASSERT_POINTER(_encoded);
@@ -161,8 +168,8 @@ void UClientImage_Base::clear()
 
    delete body;
    delete wbuffer;
+   delete pbuffer;
    delete rbuffer;
-   delete real_ip;
 
           socket->iSockDesc = -1;
    delete socket;
@@ -255,105 +262,6 @@ void UClientImage_Base::logCertificate(void* x509)
 #endif
 }
 
-bool UClientImage_Base::setRealIP()
-{
-   U_TRACE(0, "UClientImage_Base::setRealIP()")
-
-   U_ASSERT_DIFFERS(rbuffer->empty(), true)
-
-   // check for X-Forwarded-For: client, proxy1, proxy2 and X-Real-IP: ...
-
-   uint32_t    ip_client_len = 0;
-   const char* ip_client     = UHTTP::getHTTPHeaderValuePtr(*rbuffer, *USocket::str_X_Forwarded_For, true);
-
-   if (ip_client)
-      {
-      char c;
-len:
-      while (true)
-         {
-         c = ip_client[ip_client_len];
-
-         if (u_isspace(c) || c == ',') break;
-
-         ++ip_client_len;
-         }
-
-      U_INTERNAL_DUMP("ip_client = %.*S", ip_client_len, ip_client)
-
-      (void) real_ip->replace(ip_client, ip_client_len);
-
-      U_RETURN(true);
-      }
-
-   ip_client = UHTTP::getHTTPHeaderValuePtr(*rbuffer, *USocket::str_X_Real_IP, true);
-
-   if (ip_client) goto len;
-
-   U_RETURN(false);
-}
-
-void UClientImage_Base::resetBuffer()
-{
-   U_TRACE(0, "UClientImage_Base::resetBuffer()")
-
-   U_INTERNAL_ASSERT_POINTER(body);
-   U_INTERNAL_ASSERT_POINTER(rbuffer)
-   U_INTERNAL_ASSERT_POINTER(wbuffer)
-
-      body->clear();
-   wbuffer->clear();
-
-   U_INTERNAL_ASSERT_EQUALS(rbuffer->isNull(), false);
-   U_ASSERT(                rbuffer->writeable())
-
-   rbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
-
-   if (real_ip->empty() == false) real_ip->setEmpty();
-
-   // manage buffered read (pipelining)
-
-   USocketExt::size_message = 0;
-
-   U_INTERNAL_DUMP("USocketExt::size_message = %u", USocketExt::size_message)
-}
-
-// check if read data already available... (pipelining)
-
-bool UClientImage_Base::isPipeline()
-{
-   U_TRACE(0, "UClientImage_Base::isPipeline()")
-
-   if (checkForPipeline())
-      {
-      // NB: for RPC message...
-
-      if (rbuffer->size() == USocketExt::size_message)
-         {
-         // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more than one)...
-
-         rbuffer->size_adjust_force(USocketExt::size_message + USocketExt::pcount);
-         }
-
-      // NB: check for spurios white space (IE)...
-
-      if (rbuffer->isWhiteSpace(USocketExt::size_message) == false)
-         {
-         rbuffer->moveToBeginDataInBuffer(USocketExt::size_message);
-
-         U_INTERNAL_DUMP("rbuffer = %.*S", U_STRING_TO_TRACE(*rbuffer))
-
-         resetBuffer();
-
-         U_RETURN(true);
-         }
-      }
-
-   USocketExt::pcount = 0; // reset read data available...
-
-   U_RETURN(false);
-}
-
 void UClientImage_Base::run()
 {
    U_TRACE(0, "UClientImage_Base::run()")
@@ -392,19 +300,72 @@ dtor:
    delete pClientImage;
 }
 
-// define method VIRTUAL of class UClientImage_Base
+// define method VIRTUAL to redefine
 
-void UClientImage_Base::genericReset()
+void UClientImage_Base::reset()
 {
-   U_TRACE(0, "UClientImage_Base::genericReset()")
+   U_TRACE(0, "UClientImage_Base::reset()")
 
-   resetBuffer();
+   reuse();                       // NB: we need this because we reuse the same object UClientImage_Base...
+   resetSocket(USocket::CONNECT); // NB: we need this because we reuse the same object USocket...
 
-   // NB: we need this because we reuse the same object UClientImage_Base...
+   if (   body->isNull() == false)    body->clear();
+   if (pbuffer->isNull() == false) pbuffer->clear();
+                                   wbuffer->clear();
 
-   U_INTERNAL_ASSERT_POINTER(pClientImage)
+   U_INTERNAL_ASSERT_EQUALS(rbuffer->isNull(), false);
+   U_ASSERT(                rbuffer->writeable())
 
-   pClientImage->resetSocket(USocket::CONNECT);
+   rbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
+}
+
+int UClientImage_Base::genericRead()
+{
+   U_TRACE(0, "UClientImage_Base::genericRead()")
+
+   U_INTERNAL_ASSERT_POINTER(socket)
+   U_INTERNAL_ASSERT_POINTER(rbuffer)
+
+   if (USocketExt::read(socket, *(request = rbuffer), U_SINGLE_READ, UServer_Base::timeoutMS) == false)
+      {
+      // check if close connection... (read() == 0)
+
+      if (socket->isClosed()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      if (rbuffer->empty())   U_RETURN(U_PLUGIN_HANDLER_AGAIN); // NONBLOCKING...
+      }
+
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+}
+
+void UClientImage_Base::setRequestSize(uint32_t n)
+{
+   U_TRACE(0, "UClientImage_Base::setRequestSize(%u)", n)
+
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
+
+   U_INTERNAL_DUMP("pipeline = %b", pipeline)
+
+   size_request = n;
+
+   if (pipeline)
+      {
+      U_INTERNAL_ASSERT_DIFFERS(rstart, 0U)
+      U_INTERNAL_ASSERT(request == pbuffer && pbuffer->isNull() == false && pbuffer->same(*rbuffer) == false)
+
+      pbuffer->size_adjust(n);
+      }
+   else
+      {
+      pipeline = (rbuffer->size() > n);
+
+      if (pipeline)
+         {
+         U_INTERNAL_ASSERT_EQUALS(rstart, 0U)
+
+         *pbuffer = rbuffer->substr(0U, n);
+          request = pbuffer;
+         }
+      }
 }
 
 // define method VIRTUAL of class UEventFd
@@ -413,45 +374,97 @@ int UClientImage_Base::handlerRead()
 {
    U_TRACE(0, "UClientImage_Base::handlerRead()")
 
-   reset(); // virtual method
-
+   U_INTERNAL_ASSERT_POINTER(body)
+   U_INTERNAL_ASSERT_POINTER(rbuffer)
+   U_INTERNAL_ASSERT_POINTER(wbuffer)
+   U_INTERNAL_ASSERT_POINTER(pbuffer)
    U_INTERNAL_ASSERT_POINTER(pClientImage)
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, pClientImage->UEventFd::fd)
 
-   int result = U_PLUGIN_HANDLER_ERROR;
+   // Connection-wide hooks
 
-   do {
-      // Connection-wide hooks
-      result = UServer_Base::pluginsHandlerREAD(); // read request...
+   reset(); // reset before read
 
-      if (result == U_PLUGIN_HANDLER_FINISHED)
+   int result = genericRead(); // read request...
+
+   if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
+   if (result == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_NOTIFIER_DELETE);
+
+   // init after read
+
+   rstart   = size_request = 0;
+   pipeline = false;
+   rpointer = rbuffer->data();
+
+loop:
+   if (UServer_Base::isLog()) logRequest();
+
+   result = UServer_Base::pluginsHandlerREAD(); // check request...
+
+   if (result == U_PLUGIN_HANDLER_FINISHED)
+      {
+      // NB: it is possible a resize of the read buffer string...
+
+      if (rpointer != rbuffer->data())
          {
-         result = UServer_Base::pluginsHandlerRequest(); // manage request...
+          rpointer  = rbuffer->data();
 
-         if (result                       != U_PLUGIN_HANDLER_FINISHED ||
-             pClientImage->handlerWrite() == U_NOTIFIER_DELETE)
-            {
-            result = U_PLUGIN_HANDLER_ERROR;
-            }
-
-         (void) UServer_Base::pluginsHandlerReset(); // manage reset...
+         if (pipeline) *pbuffer = rbuffer->substr(rstart);
          }
 
-      if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
+      result = UServer_Base::pluginsHandlerRequest(); // manage request...
 
-      U_INTERNAL_DUMP("flag_loop = %b", UServer_Base::flag_loop)
-
-      if (UServer_Base::flag_loop == false  ||
-          (result == U_PLUGIN_HANDLER_ERROR &&
-           (socket->isConnected() == false  ||
-            checkForPipeline()    == false)))
+      if (result         != U_PLUGIN_HANDLER_FINISHED ||
+          handlerWrite() == U_NOTIFIER_DELETE)
          {
-         USocketExt::pcount = 0; // reset read data available...
+         result = U_PLUGIN_HANDLER_ERROR;
+         }
 
-         U_RETURN(U_NOTIFIER_DELETE);
+      (void) UServer_Base::pluginsHandlerReset(); // manage reset...
+      }
+
+   U_INTERNAL_DUMP("flag_loop = %b pipeline = %b", UServer_Base::flag_loop, pipeline)
+
+   if (UServer_Base::flag_loop == false  ||
+       (result == U_PLUGIN_HANDLER_ERROR &&
+        (pipeline              == false  ||
+         socket->isConnected() == false)))
+      {
+      U_RETURN(U_NOTIFIER_DELETE);
+      }
+
+   if (pipeline)
+      {
+      // manage pipelining
+
+      U_ASSERT(isPipeline())
+      U_INTERNAL_ASSERT_POINTER(request)
+      U_INTERNAL_ASSERT(request == pbuffer && pbuffer->isNull() == false && pbuffer->same(*rbuffer) == false)
+
+      U_INTERNAL_DUMP("size_request = %u request->size() = %u", size_request, request->size())
+
+      U_ASSERT_EQUALS(size_request, request->size())
+      U_ASSERT_EQUALS(rstart, rbuffer->distance(request->data()))
+
+      rstart += size_request;
+
+      U_INTERNAL_DUMP("rstart = %u rbuffer->size() = %u", rstart, rbuffer->size())
+
+      if (rbuffer->size() > rstart)
+         {
+         // NB: check for spurios white space (IE)...
+
+         if (rbuffer->isWhiteSpace(rstart) == false)
+            {
+            *pbuffer = rbuffer->substr(rstart);
+
+               body->clear();
+            wbuffer->clear();
+
+            goto loop;
+            }
          }
       }
-   while (isPipeline());
 
    U_RETURN(U_NOTIFIER_OK);
 }
@@ -501,6 +514,8 @@ const char* UClientImage_Base::dump(bool _reset) const
                   << "logbuf          (UString           " << (void*)logbuf         << ")\n"
                   << "rbuffer         (UString           " << (void*)rbuffer        << ")\n"
                   << "wbuffer         (UString           " << (void*)wbuffer        << ")\n"
+                  << "request         (UString           " << (void*)request        << ")\n"
+                  << "pbuffer         (UString           " << (void*)pbuffer        << ")\n"
                   << "msg_welcome     (UString           " << (void*)msg_welcome    << ")\n"
                   << "socket          (USocket           " << (void*)socket         << ")\n"
                   << "clientAddress   (UIPAddress        " << (void*)clientAddress  << ")\n"

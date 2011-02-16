@@ -7,7 +7,7 @@
 start_msg server
 
 #UTRACE="0 50M 0"
-#UOBJDUMP="0 100k 10"
+#UOBJDUMP="0 50M 1000"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 

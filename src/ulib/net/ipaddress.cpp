@@ -23,6 +23,21 @@
 #  include "socket_address.cpp"
 #endif
 
+const UString* UIPAddress::str_localhost;
+
+void UIPAddress::str_allocate()
+{
+   U_TRACE(0, "UIPAddress::str_allocate()")
+
+   U_INTERNAL_ASSERT_EQUALS(str_localhost,0)
+
+   static ustringrep stringrep_storage[] = {
+      { U_STRINGREP_FROM_CONSTANT("localhost") }
+   };
+
+   U_NEW_ULIB_OBJECT(str_localhost, U_STRING_FROM_STRINGREP_STORAGE(0));
+}
+
 /* Platform specific code
  *
  * These macros allow different implementations for functionality on the
@@ -138,16 +153,7 @@ void UIPAddress::setLocalHost(bool bIPv6)
 {
    U_TRACE(0, "UIPAddress::setLocalHost(%b)", bIPv6)
 
-   static UString* str_localhost;
-
-   if (str_localhost == 0)
-      {
-      static ustringrep stringrep_storage[] = {
-         { U_STRINGREP_FROM_CONSTANT("localhost") }
-      };
-
-      U_NEW_ULIB_OBJECT(str_localhost, U_STRING_FROM_STRINGREP_STORAGE(0));
-      }
+   if (str_localhost == 0) str_allocate();
 
    strHostName = *str_localhost;
 

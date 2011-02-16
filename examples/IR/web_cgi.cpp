@@ -198,9 +198,9 @@ static uint32_t NUM_START, NUM_END, NUM_DOC, pagina_corrente;
 
 static UString* output;
 
-static void set_ENV(const UString& rbuffer)
+static void set_ENV(const UString& buffer)
 {
-   U_TRACE(5, "::set_ENV(%.*S)", U_STRING_TO_TRACE(rbuffer))
+   U_TRACE(5, "::set_ENV(%.*S)", U_STRING_TO_TRACE(buffer))
 
    U_INTERNAL_ASSERT_POINTER(output)
 
@@ -495,7 +495,7 @@ static void execute_query(UClientImage_Base* client_image)
       {
       static uint32_t counter;
 
-      UString ip_client = UClientImage_Base::getRemoteIP();
+      UString ip_client = UHTTP::getRemoteIP();
 
       // REQ: [ data expire path domain secure HttpOnly ]
       // ----------------------------------------------------------------------------------------------------------------------------
@@ -670,12 +670,13 @@ U_EXPORT void runDynamicPage(UClientImage_Base* client_image)
    U_INTERNAL_ASSERT_POINTER(UHTTP::form_name_value)
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_value)
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_buffer)
+   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::request)
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::rbuffer)
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::wbuffer)
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_encoded)
    U_INTERNAL_ASSERT_EQUALS( UClientImage_Base::pClientImage, client_image)
 
-   set_ENV(*client_image->rbuffer);
+   set_ENV(*client_image->request);
 
    uint32_t n = UHTTP::form_name_value->size() / 2;
 

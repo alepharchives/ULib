@@ -107,7 +107,14 @@ bool UWebSocketPlugIn::handleDataFraming()
    FD_SET(sock,                 &fd_set_read);
    FD_SET(UProcess::filedes[2], &fd_set_read);
 
-   if (UClientImage_Base::isPipeline()) goto read_from_client;
+   if (UClientImage_Base::isPipeline())
+      {
+      UClientImage_Base::rbuffer->moveToBeginDataInBuffer(UClientImage_Base::size_request);
+
+      U_INTERNAL_DUMP("UClientImage_Base::rbuffer = %#.*S", U_STRING_TO_TRACE(*UClientImage_Base::rbuffer))
+
+      goto handle_data;
+      }
 
 loop:
    read_set = fd_set_read;
@@ -120,10 +127,9 @@ loop:
       {
       UClientImage_Base::rbuffer->setEmptyForce(); // NB: can be referenced by frame...
 
-read_from_client:
-
       if (USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer) == false) goto end;
 
+handle_data:
       sz   =                 UClientImage_Base::rbuffer->size();
       type = (unsigned char) UClientImage_Base::rbuffer->first_char();
 
@@ -133,9 +139,9 @@ read_from_client:
 
          frame_length = *((uint64_t*)UClientImage_Base::rbuffer->c_pointer(1));
 
-#        if __BYTE_ORDER == __LITTLE_ENDIAN
+#     if __BYTE_ORDER == __LITTLE_ENDIAN
          frame_length = bswap_64(frame_length);
-#        endif
+#     endif
 
          if (frame_length == 0)
             {
@@ -261,7 +267,7 @@ int UWebSocketPlugIn::handlerRequest()
       {
       // process handshake
 
-      const char* origin = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *UHTTP::str_origin, false);
+      const char* origin = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::request, *UHTTP::str_origin, false);
 
       if (origin)
          {
@@ -273,7 +279,7 @@ int UWebSocketPlugIn::handlerRequest()
 
          U_INTERNAL_DUMP("origin = %.*S", origin_len, origin)
 
-         const char* protocol = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *UHTTP::str_websocket_prot, false);
+         const char* protocol = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::request, *UHTTP::str_websocket_prot, false);
 
          if (protocol)
             {
@@ -296,8 +302,8 @@ int UWebSocketPlugIn::handlerRequest()
                                               U_HTTP_HOST_TO_TRACE, U_HTTP_URI_TO_TRACE,
                                               U_STRING_TO_TRACE(tmp));
 
-         const char* key1 = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *UHTTP::str_websocket_key1, false);
-         const char* key2 = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::rbuffer, *UHTTP::str_websocket_key2, false);
+         const char* key1 = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::request, *UHTTP::str_websocket_key1, false);
+         const char* key2 = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::request, *UHTTP::str_websocket_key2, false);
 
          if (key1 &&
              key2)

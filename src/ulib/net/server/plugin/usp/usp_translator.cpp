@@ -51,6 +51,7 @@
 "\n" \
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_value)\n" \
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_buffer)\n" \
+"  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::request)\n" \
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::rbuffer)\n" \
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::wbuffer)\n" \
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_encoded)\n" \

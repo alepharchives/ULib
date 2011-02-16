@@ -49,20 +49,19 @@ public:
       rpc_info->clear();
       }
 
-   static bool readRPC(USocket* socket, UString& rbuffer)
-      {
-      U_TRACE(0, "URPC::readRPC(%p,%p)", socket, &rbuffer)
+   static bool readRPCRequest(bool reset);
 
-      bool is_rpc_msg = readTokenVector(socket, 0, rbuffer, *rpc_info);
+   // Read a token and value
 
-      // manage buffered read (pipelining)
+   static uint32_t readTokenInt(USocket* s, const char* token, UString& buffer, uint32_t& rstart);
 
-      USocketExt::size_message = rbuffer.size();
+   // Read a token, and then the string data
 
-      U_INTERNAL_DUMP("size_message = %u", USocketExt::size_message)
+   static uint32_t readTokenString(USocket* s, const char* token, UString& buffer, uint32_t& rstart, UString& data);
 
-      U_RETURN(is_rpc_msg);
-      }
+   // Read an vector of string from the network
+
+   static uint32_t readTokenVector(USocket* s, const char* token, UString& buffer, UVector<UString>& vec);
 
    // Transmit token name (U_TOKEN_NM characters) and value (32-bit int, as 8 hex characters)
 
@@ -102,19 +101,6 @@ public:
 
       U_RETURN(result);
       }
-
-   // Read a token and value
-
-   static uint32_t readTokenInt(USocket* s, const char* token, UString& buffer);
-
-   // Read a token, and then the string data
-
-   static uint32_t readTokenString(USocket* s, const char* token, UString& buffer, UString& data);
-
-   // Read an vector of string from the network
-
-   static bool readTokenVector(USocket* s, const char* token, UString& buffer, UVector<UString>& vec);
-   // -----------------------------------------------------------------------------------------------------------------------------
 
 private:
    URPC(const URPC&)            {}

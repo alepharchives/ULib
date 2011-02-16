@@ -19,46 +19,46 @@
 #include <ulib/utility/string_ext.h>
 
 #ifdef U_STATIC_HANDLER_RPC
-#  include <ulib/plugin/mod_rpc.h>
+#  include <ulib/net/server/plugin/mod_rpc.h>
 #endif
 #ifdef U_STATIC_HANDLER_SHIB
-#  include <ulib/plugin/mod_shib.h>
+#  include <ulib/net/server/plugin/mod_shib.h>
 #endif
 #ifdef U_STATIC_HANDLER_ECHO
-#  include <ulib/plugin/mod_echo.h>
+#  include <ulib/net/server/plugin/mod_echo.h>
 #endif
 #ifdef U_STATIC_HANDLER_STREAM
-#  include <ulib/plugin/mod_stream.h>
+#  include <ulib/net/server/plugin/mod_stream.h>
 #endif
 #ifdef U_STATIC_HANDLER_NOCAT
-#  include <ulib/plugin/mod_nocat.h>
+#  include <ulib/net/server/plugin/mod_nocat.h>
 #endif
 #ifdef U_STATIC_HANDLER_SOCKET
-#  include <ulib/plugin/mod_socket.h>
+#  include <ulib/net/server/plugin/mod_socket.h>
 #endif
 #ifdef U_STATIC_HANDLER_SCGI
-#  include <ulib/plugin/mod_scgi.h>
+#  include <ulib/net/server/plugin/mod_scgi.h>
 #endif
 #ifdef U_STATIC_HANDLER_FCGI
-#  include <ulib/plugin/mod_fcgi.h>
+#  include <ulib/net/server/plugin/mod_fcgi.h>
 #endif
 #ifdef U_STATIC_HANDLER_GEOIP
-#  include <ulib/plugin/mod_geoip.h>
+#  include <ulib/net/server/plugin/mod_geoip.h>
 #endif
 #ifdef U_STATIC_HANDLER_PROXY
-#  include <ulib/plugin/mod_proxy.h>
+#  include <ulib/net/server/plugin/mod_proxy.h>
 #endif
 #ifdef U_STATIC_HANDLER_SOAP
-#  include <ulib/plugin/mod_soap.h>
+#  include <ulib/net/server/plugin/mod_soap.h>
 #endif
 #ifdef U_STATIC_HANDLER_SSI
-#  include <ulib/plugin/mod_ssi.h>
+#  include <ulib/net/server/plugin/mod_ssi.h>
 #endif
 #ifdef U_STATIC_HANDLER_TSA
-#  include <ulib/plugin/mod_tsa.h>
+#  include <ulib/net/server/plugin/mod_tsa.h>
 #endif
 #ifdef U_STATIC_HANDLER_HTTP
-#  include <ulib/plugin/mod_http.h>
+#  include <ulib/net/server/plugin/mod_http.h>
 #endif
 
 #ifndef __MINGW32__
@@ -268,7 +268,9 @@ UServer_Base::~UServer_Base()
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
-   UClientImage_Base::resetBuffer();
+   UClientImage_Base::body->clear();
+   UClientImage_Base::wbuffer->clear();
+   UClientImage_Base::pbuffer->clear();
 
                       UNotifier::erase(this,          false); // NB: to avoid to delete himself...
    if (handler_event) UNotifier::erase(handler_event, false);
@@ -701,7 +703,7 @@ void UServer_Base::init()
       block_on_accept = true;
 
 #  ifndef __MINGW32__
-      U_INTERNAL_ASSERT(socket->isIPC())
+      U_ASSERT(socket->isIPC())
 
       UUnixSocket::setPath(name_sock.data()); // unix socket...
 #  endif
@@ -804,7 +806,9 @@ void UServer_Base::init()
 
    if (flag_use_tcp_optimization)
       {
-      U_ASSERT(name_sock.empty()) // no unix socket...
+      // no unix socket...
+      U_ASSERT(name_sock.empty())
+      U_ASSERT_EQUALS(socket->isIPC(),false)
 
    // socket->setBufferRCV(128 * 1024);
    // socket->setBufferSND(128 * 1024);
@@ -1298,7 +1302,7 @@ bool UServer_Base::parallelization()
 
    U_INTERNAL_ASSERT_POINTER(proc)
 
-   U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::checkForPipeline(),false)
+   U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::isPipeline(),false)
 
    if (proc->parent()) proc->wait(); // NB: to avoid fork bomb...
 

@@ -31,7 +31,7 @@
 #  define SOCK_CLOEXEC 02000000 /* Atomically set close-on-exec flag for the new descriptor(s) */
 #endif
 
-int USocket::accept4_flags; // If flags is 0, then accept4() is the same as accept()
+int  USocket::accept4_flags;  // If flags is 0, then accept4() is the same as accept()
 
 const UString* USocket::str_host;
 const UString* USocket::str_range;
@@ -842,9 +842,8 @@ int USocket::recv(void* pBuffer, uint32_t iBufLength, int timeoutMS)
    int iBytesRead;
    bool blocking = isBlocking(); 
 
-   if (blocking        &&
-       timeoutMS != -1 &&
-       pending() ==  0)
+   if (blocking &&
+       timeoutMS != -1)
       {
 loop:
       if (UNotifier::waitForRead(iSockDesc, timeoutMS) != 1)

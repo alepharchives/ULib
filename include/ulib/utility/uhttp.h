@@ -321,8 +321,8 @@ public:
    static const char* getHTTPStatusDescription(uint32_t nResponseCode);
 
    static bool readHTTPRequest();
-   static bool readHTTPHeader(USocket* socket, UString& rbuffer);
-   static bool readHTTPBody(  USocket* socket, UString& rbuffer, UString& body);
+   static bool readHTTPHeader(USocket* socket, UString& buffer);
+   static bool readHTTPBody(  USocket* socket, UString* buffer, UString& body);
 
    // TYPE
 
@@ -428,18 +428,28 @@ public:
    static bool virtual_host;
    static UString* pathname;
    static UString* request_uri;
-   static uint32_t limit_request_body;
+   static uint32_t limit_request_body, request_read_timeout;
 
    static void checkHTTPRequest();
-   static void processHTTPGetRequest();
    static void getTimeIfNeeded(bool all_http_version);
+   static void processHTTPGetRequest(const UString& request);
+   static void checkHTTPRequestForHeader(const UString& request);
    static bool checkHTTPContentLength(const char* ptr, uint32_t length, UString& ext);
    static void getFileMimeType(const char* suffix, const char* content_type, UString& ext, uint32_t size);
 
    static UString     getDocumentName();
    static UString     getDirectoryURI();
    static UString     getRequestURI(bool bquery);
-   static const char* getHTTPHeaderValuePtr(const UString& rbuffer, const UString& name, bool nocase);
+   static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase);
+
+   // check for HTTP Header X-Forwarded-For: client, proxy1, proxy2 and X-Real-IP: client...
+
+   static UString* real_ip;
+
+   static bool    setRealIP();
+   static UString getRemoteIP();
+
+   // request state processing
 
    static void setHTTPRequestProcessed()
       {
@@ -465,6 +475,17 @@ public:
       U_RETURN(result);
       }
 
+   static void setHTTPRequestInFileCache()
+      {
+      U_TRACE(0, "UHTTP::setHTTPRequestInFileCache()")
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
+
+      U_http_request_check = '3';
+      }
+
    static bool isHTTPRequestInFileCache()
       {
       U_TRACE(0, "UHTTP::isHTTPRequestInFileCache()")
@@ -476,6 +497,17 @@ public:
       bool result = (U_http_request_check == '3');
 
       U_RETURN(result);
+      }
+
+   static void setHTTPRequestNeedProcessing()
+      {
+      U_TRACE(0, "UHTTP::setHTTPRequestNeedProcessing()")
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
+
+      U_http_request_check = '2';
       }
 
    static bool isHTTPRequestNeedProcessing()
@@ -491,6 +523,17 @@ public:
       U_RETURN(result);
       }
 
+   static void setHTTPRequestNotFound()
+      {
+      U_TRACE(0, "UHTTP::setHTTPRequestNotFound()")
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
+
+      U_http_request_check = '\0';
+      }
+
    static bool isHTTPRequestNotFound()
       {
       U_TRACE(0, "UHTTP::isHTTPRequestNotFound()")
@@ -502,6 +545,17 @@ public:
       bool result = (U_http_request_check == '\0');
 
       U_RETURN(result);
+      }
+
+   static void setHTTPRequestForbidden()
+      {
+      U_TRACE(0, "UHTTP::setHTTPRequestForbidden()")
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
+
+      U_http_request_check = '1';
       }
 
    static bool isHTTPRequestForbidden()
@@ -531,7 +585,7 @@ public:
    static UVector<UString>* form_name_value;
 
    static uint32_t processHTTPForm();
-   static void     getFormValue(UString& buffer, uint32_t n);
+   static void     getFormValue(UString& value, uint32_t n);
 
    // param: "[ data expire path domain secure HttpOnly ]"
    // ----------------------------------------------------------------------------------------------------------------------------
@@ -821,15 +875,15 @@ private:
    static void processFileCache() U_NO_EXPORT;
    static void processRewriteRule() U_NO_EXPORT;
    static void resetForm(bool brmdir) U_NO_EXPORT;
-   static bool processHTTPAuthorization() U_NO_EXPORT;
-   static bool checkHTTPGetRequestIfModified() U_NO_EXPORT;
    static bool initUploadProgress(int byte_read) U_NO_EXPORT;
    static void updateUploadProgress(int byte_read) U_NO_EXPORT;
    static bool setCGIShellScript(UString& command) U_NO_EXPORT;
    static int  sortHTTPRange(const void* a, const void* b) U_NO_EXPORT;
    static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;
+   static bool processHTTPAuthorization(const UString& request) U_NO_EXPORT;
    static void _callRunDynamicPage(UStringRep* key, void* value) U_NO_EXPORT;
    static void getInotifyPathDirectory(UStringRep* key, void* value) U_NO_EXPORT;
+   static bool checkHTTPGetRequestIfModified(const UString& request) U_NO_EXPORT;
    static void checkInotifyForCache(int wd, char* name, uint32_t len) U_NO_EXPORT;
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext) U_NO_EXPORT;
    static bool checkHTTPGetRequestForRange(uint32_t& start, uint32_t& size, UString& ext, const UString& data) U_NO_EXPORT;

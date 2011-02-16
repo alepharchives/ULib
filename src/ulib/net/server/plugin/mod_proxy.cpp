@@ -154,11 +154,11 @@ int UProxyPlugIn::handlerRequest()
 
          // send request to server and get response
 
-         if (output_to_server == false) *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer;
+         if (output_to_server == false) *UClientImage_Base::wbuffer = *UClientImage_Base::request;
 
          (void) client_http.sendRequest(*UClientImage_Base::wbuffer);
 
-         // reset reference to rbuffer...
+         // reset reference to request...
 
          *UClientImage_Base::wbuffer = client_http.getResponse();
 

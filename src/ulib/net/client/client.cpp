@@ -447,7 +447,7 @@ bool UClient_Base::readHTTPResponse()
          {
          UHTTP::http_info.clength = (uint32_t) strtoul(buffer.c_pointer(pos + USocket::str_content_length->size() + 2), 0, 0);
 
-         if (UHTTP::readHTTPBody(socket, buffer, response))
+         if (UHTTP::readHTTPBody(socket, &buffer, response))
             {
             if (log) logResponse(buffer);
 
@@ -457,6 +457,31 @@ bool UClient_Base::readHTTPResponse()
       }
 
    U_RETURN(false);
+}
+
+bool UClient_Base::readRPCResponse()
+{
+   U_TRACE(0, "UClient_Base::readRPCResponse()")
+
+   // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
+
+     buffer.setEmptyForce();
+   response.setEmptyForce();
+
+   uint32_t rstart = 0;
+
+   if (URPC::readTokenString(socket, 0, buffer, rstart, response))
+      {
+      // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
+
+      buffer.size_adjust_force(U_TOKEN_NM);
+      }
+
+   U_INTERNAL_DUMP("buffer = %.*S response = %.*S)", U_STRING_TO_TRACE(buffer), U_STRING_TO_TRACE(response))
+
+   bool result = (buffer.empty() == false);
+
+   U_RETURN(result);
 }
 
 // DEBUG
