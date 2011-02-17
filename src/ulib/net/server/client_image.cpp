@@ -437,7 +437,6 @@ loop:
       {
       // manage pipelining
 
-      U_ASSERT(isPipeline())
       U_INTERNAL_ASSERT_POINTER(request)
       U_INTERNAL_ASSERT(request == pbuffer && pbuffer->isNull() == false && pbuffer->same(*rbuffer) == false)
 

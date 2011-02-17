@@ -159,9 +159,9 @@ public:
 
                   if (output_len)
                      {
-                     struct iovec iov[1] = { { (caddr_t)output.data(), output_len } };
+                     struct iovec _iov[1] = { { (caddr_t)output.data(), output_len } };
 
-                     ulog.write(iov, 1);
+                     ulog.write(_iov, 1);
                      }
 
                   UFile::close(UProcess::filedes[2]);

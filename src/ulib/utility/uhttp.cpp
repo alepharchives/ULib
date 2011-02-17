@@ -241,15 +241,16 @@ UHTTP::UFileCacheData::UFileCacheData()
    array = 0;
 
 #ifdef HAVE_SYS_INOTIFY_H
-   U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_event)
-
-   int                  flags  = IN_ONLYDIR | IN_CREATE | IN_DELETE;
-   if (cache_file_mask) flags |= IN_MODIFY;
-
-   if (u_ftw_ctx.is_directory ||
-       file->dir())
+   if (UServer_Base::handler_event)
       {
-      wd = U_SYSCALL(inotify_add_watch, "%d,%s,%u", UServer_Base::handler_event->fd, pathname->c_str(), flags);
+      int                  flags  = IN_ONLYDIR | IN_CREATE | IN_DELETE;
+      if (cache_file_mask) flags |= IN_MODIFY;
+
+      if (u_ftw_ctx.is_directory ||
+          file->dir())
+         {
+         wd = U_SYSCALL(inotify_add_watch, "%d,%s,%u", UServer_Base::handler_event->fd, pathname->c_str(), flags);
+         }
       }
 #endif
 
@@ -267,9 +268,12 @@ UHTTP::UFileCacheData::~UFileCacheData()
    if (array) delete array;
 
 #ifdef HAVE_SYS_INOTIFY_H
-   U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_event)
+   if (UServer_Base::handler_event)
+      {
+      U_INTERNAL_ASSERT_DIFFERS(UServer_Base::handler_event->fd, -1)
 
-   if (wd != -1) (void) U_SYSCALL(inotify_rm_watch, "%d,%d", UServer_Base::handler_event->fd, wd);
+      if (wd != -1) (void) U_SYSCALL(inotify_rm_watch, "%d,%d", UServer_Base::handler_event->fd, wd);
+      }
 #endif
 }
 
@@ -351,6 +355,7 @@ void UHTTP::in_READ()
 {
    U_TRACE(1+256, "UHTTP::in_READ()")
 
+#ifdef HAVE_SYS_INOTIFY_H
    /*
    struct inotify_event {
       int wd;           // The watch descriptor
@@ -361,7 +366,8 @@ void UHTTP::in_READ()
    }
    */
 
-#ifdef HAVE_SYS_INOTIFY_H
+   U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_event)
+
    union uuinotify_event {
                       char*  p;
       struct inotify_event* ip;
@@ -551,8 +557,6 @@ void UHTTP::ctor(UEventFd* handler_event)
       {
       // INIT INOTIFY FOR CACHE FILE SYSTEM
 
-      UServer_Base::handler_event = handler_event;
-
 #  ifdef HAVE_INOTIFY_INIT1
       handler_event->fd = U_SYSCALL(inotify_init1, "%d", IN_NONBLOCK | IN_CLOEXEC);
 #  else
@@ -563,10 +567,12 @@ void UHTTP::ctor(UEventFd* handler_event)
 
       if (handler_event->fd == -1)
          {
-         U_ERROR("Inode based directory notification failed");
+         U_WARNING("Inode based directory notification failed");
          }
       else
          {
+         UServer_Base::handler_event = handler_event;
+
          U_SRV_LOG("Inode based directory notification enabled");
          }
       }
@@ -658,9 +664,10 @@ void UHTTP::dtor()
       // inotify: Inode based directory notification...
 
 #  ifdef HAVE_SYS_INOTIFY_H
-      if (UServer_Base::handler_event &&
-          UServer_Base::handler_event->fd != -1)
+      if (UServer_Base::handler_event)
          {
+         U_INTERNAL_ASSERT_DIFFERS(UServer_Base::handler_event->fd, -1)
+
          (void) U_SYSCALL(close, "%d", UServer_Base::handler_event->fd);
          }
 #  endif
@@ -1110,7 +1117,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
 
    // NB: check if request includes an entity-body (as indicated by the presence of Content-Length or Transfer-Encoding)
 
-   uint32_t body_byte_read;
+   uint32_t body_byte_read, rstart;
 
    if (http_info.clength == 0)
       {
@@ -1293,10 +1300,16 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
       if (USocketExt::byte_read_hook) updateUploadProgress(http_info.clength); // done...
 
       U_INTERNAL_DUMP("pstr = %.*S", U_STRING_TO_TRACE(*pstr))
+
+      if (body.empty() == false) U_RETURN(true);
       }
 
 end:
-   if (body.empty()) body = pbuffer->substr(UClientImage_Base::rstart + http_info.endHeader, http_info.clength);
+   rstart = (UClientImage_Base::isPipeline() && pbuffer == UClientImage_Base::rbuffer ? UClientImage_Base::rstart : 0);
+
+   U_INTERNAL_DUMP("pipeline = %b start = %u", UClientImage_Base::isPipeline(), rstart)
+
+   body = pbuffer->substr(UClientImage_Base::rstart + http_info.endHeader, http_info.clength);
 
    U_RETURN(true);
 }
@@ -3234,7 +3247,7 @@ U_NO_EXPORT void UHTTP::checkPath()
          if (isFileInCache()) setHTTPRequestInFileCache();
 
 #     ifdef HAVE_SYS_INOTIFY_H
-         return; // NB: there is inotify, we are sure that the file don't exists...
+         if (UServer_Base::handler_event) return; // NB: there is inotify, we are sure that the file don't exists...
 #     endif
 
          if (file->stat()) setHTTPRequestNeedProcessing();

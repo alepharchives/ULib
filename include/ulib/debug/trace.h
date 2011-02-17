@@ -97,16 +97,19 @@ public:
    U_MANAGE_SYSRETURN_VALUE(pcchar_t,           "%S",   ret ==  0)
    U_MANAGE_SYSRETURN_VALUE(puchar_t,           "%S",   ret ==  0)
    U_MANAGE_SYSRETURN_VALUE(pcuchar_t,          "%S",   ret ==  0)
-   U_MANAGE_SYSRETURN_VALUE(sighandler_t,       "%p",   ret == (sighandler_t) SIG_ERR)
+   U_MANAGE_SYSRETURN_VALUE(sighandler_t,       "%p",   ret == (sighandler_t)SIG_ERR)
 
+   /*
+    * Type of file sizes and offsets (LFS)
 #if SIZEOF_OFF_T != SIZEOF_LONG
    U_MANAGE_SYSRETURN_VALUE(off_t,              "%I",   ret == -1LL)
 #elif SIZEOF_OFF_T == 4 
-   U_MANAGE_SYSRETURN_VALUE(loff_t,             "%I",   ret == -1LL) /* Type of file sizes and offsets (LFS) */
+   U_MANAGE_SYSRETURN_VALUE(loff_t,             "%I",   ret == -1LL)
 #endif
 
-// U_MANAGE_SYSRETURN_VALUE(x11error_t,         "%p",   ret == (x11error_t) 0)
-// U_MANAGE_SYSRETURN_VALUE(x11IOerror_t,       "%p",   ret == (x11IOerror_t) 0)
+   U_MANAGE_SYSRETURN_VALUE(x11error_t,         "%p",   ret == (x11error_t)0)
+   U_MANAGE_SYSRETURN_VALUE(x11IOerror_t,       "%p",   ret == (x11IOerror_t)0)
+   */
 
    // Attivazione-disattivazione temporanea
 

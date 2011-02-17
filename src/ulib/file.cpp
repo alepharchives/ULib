@@ -21,8 +21,6 @@
 #  include <ulib/magic/magic.h>
 #endif
 
-#include <sys/mman.h>
-
 int               UFile::mime_index;
 bool              UFile::_root;
 char              UFile::cwd_save[U_PATH_MAX];

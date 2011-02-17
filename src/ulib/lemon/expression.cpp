@@ -1179,7 +1179,11 @@ static void yy_reduce(
    U_INTERNAL_DUMP("yygotominor.yy67 = %p yymsp[-2].minor.yy0 = %.*S", yygotominor.yy67, U_STRING_TO_TRACE(*yymsp[-2].minor.yy0))
 
    long lo;
+#ifdef __MINGW32__
+   lPFv addr = (lPFv) ::GetProcAddress((HMODULE)0, yymsp[-2].minor.yy0->c_str());
+#else
    lPFv addr = (lPFv) U_SYSCALL(dlsym, "%p,%S", RTLD_DEFAULT, yymsp[-2].minor.yy0->c_str());
+#endif
 
    yygotominor.yy67 = (addr ? (lo = (*addr)(), U_NEW(UString(UStringExt::numberToString(lo)))) : U_NEW(UString));
 
@@ -1187,10 +1191,10 @@ static void yy_reduce(
   yy_destructor(16,&yymsp[-1].minor);
   yy_destructor(17,&yymsp[0].minor);
 }
-#line 1193 "expression.c"
+#line 1197 "expression.c"
         break;
       case 31: /* primaryExpression ::= FN_CALL LPAREN params RPAREN */
-#line 423 "expression.y"
+#line 427 "expression.y"
 {
    U_TRACE(0, "primaryExpression(yygotominor.yy67) ::= FN_CALL(yymsp[-3].minor.yy0) LPAREN params(yymsp[-1].minor.yy41) RPAREN")
 
@@ -1200,7 +1204,11 @@ static void yy_reduce(
    U_INTERNAL_DUMP("yymsp[-3].minor.yy0 = %.*S yymsp[-1].minor.yy41 = %p", U_STRING_TO_TRACE(*yymsp[-3].minor.yy0), yymsp[-1].minor.yy41)
 
    long lo, lo0, lo1;
+#ifdef __MINGW32__
+   lPFll addr = (lPFll) ::GetProcAddress((HMODULE)0, yymsp[-3].minor.yy0->c_str());
+#else
    lPFll addr = (lPFll) U_SYSCALL(dlsym, "%p,%S", RTLD_DEFAULT, yymsp[-3].minor.yy0->c_str());
+#endif
 
    yygotominor.yy67 = (addr ? (lo0 = (*yymsp[-1].minor.yy41)[0].strtol(), lo1 = (*yymsp[-1].minor.yy41)[1].strtol(), lo = (*addr)(lo0, lo1), U_NEW(UString(UStringExt::numberToString(lo)))) : U_NEW(UString));
 
@@ -1208,10 +1216,10 @@ static void yy_reduce(
   yy_destructor(16,&yymsp[-2].minor);
   yy_destructor(17,&yymsp[0].minor);
 }
-#line 1214 "expression.c"
+#line 1222 "expression.c"
         break;
       case 32: /* params ::= VALUE */
-#line 439 "expression.y"
+#line 447 "expression.y"
 {
    U_TRACE(0, "params(yygotominor.yy41) ::= VALUE(yymsp[0].minor.yy0)")
 
@@ -1225,10 +1233,10 @@ static void yy_reduce(
 
    delete yymsp[0].minor.yy0;
 }
-#line 1231 "expression.c"
+#line 1239 "expression.c"
         break;
       case 33: /* params ::= params COMMA VALUE */
-#line 453 "expression.y"
+#line 461 "expression.y"
 {
    U_TRACE(0, "params(yygotominor.yy41) ::= params(yymsp[-2].minor.yy41) COMMA VALUE(yymsp[0].minor.yy0)")
 
@@ -1244,7 +1252,7 @@ static void yy_reduce(
    delete yymsp[0].minor.yy0;
   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 1250 "expression.c"
+#line 1258 "expression.c"
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;
@@ -1295,7 +1303,7 @@ static void yy_parse_failed(
    U_INTERNAL_ASSERT_POINTER(result)
    result->clear();
    U_WARNING("Parse failure!");
-#line 1302 "expression.c"
+#line 1310 "expression.c"
   expressionParserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
@@ -1315,7 +1323,7 @@ static void yy_syntax_error(
    U_INTERNAL_ASSERT_POINTER(result)
    result->clear();
    U_WARNING("Syntax error!");
-#line 1323 "expression.c"
+#line 1331 "expression.c"
   expressionParserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
@@ -1339,7 +1347,7 @@ static void yy_accept(
    U_TRACE(0, "::parse_accept()")
    U_INTERNAL_ASSERT_POINTER(result)
    U_INTERNAL_DUMP("result = %.*S", U_STRING_TO_TRACE(*result))
-#line 1348 "expression.c"
+#line 1356 "expression.c"
   expressionParserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 

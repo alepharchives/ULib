@@ -413,7 +413,11 @@ primaryExpression(A) ::= FN_CALL(B) LPAREN RPAREN. {
 	U_INTERNAL_DUMP("A = %p B = %.*S", A, U_STRING_TO_TRACE(*B))
 
    long lo;
+#ifdef __MINGW32__
+   lPFv addr = (lPFv) ::GetProcAddress((HMODULE)0, B->c_str());
+#else
 	lPFv addr = (lPFv) U_SYSCALL(dlsym, "%p,%S", RTLD_DEFAULT, B->c_str());
+#endif
 
 	A = (addr ? (lo = (*addr)(), U_NEW(UString(UStringExt::numberToString(lo)))) : U_NEW(UString));
 
@@ -429,7 +433,11 @@ primaryExpression(A) ::= FN_CALL(B) LPAREN params(C) RPAREN. {
 	U_INTERNAL_DUMP("B = %.*S C = %p", U_STRING_TO_TRACE(*B), C)
 
    long lo, lo0, lo1;
+#ifdef __MINGW32__
+   lPFll addr = (lPFll) ::GetProcAddress((HMODULE)0, B->c_str());
+#else
 	lPFll addr = (lPFll) U_SYSCALL(dlsym, "%p,%S", RTLD_DEFAULT, B->c_str());
+#endif
 
 	A = (addr ? (lo0 = (*C)[0].strtol(), lo1 = (*C)[1].strtol(), lo = (*addr)(lo0, lo1), U_NEW(UString(UStringExt::numberToString(lo)))) : U_NEW(UString));
 
