@@ -127,4 +127,11 @@ typedef _off_t     off_t;
 
 #include <stdarg.h> /* this is the place to define _VA_LIST */
 
+#ifndef PACKAGE
+#define PACKAGE PACKAGE_NAME
+#endif
+#ifndef VERSION
+#define VERSION PACKAGE_VERSION
+#endif
+
 #endif

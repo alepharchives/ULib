@@ -49,7 +49,7 @@ autoconf/install-sh -c -m 644 $SRC/doc_parse/cgi-bin/doc_parse.sh	$DST/var/doc_p
 autoconf/install-sh -c -m 644 $SRC/icons/open.gif						$DST/var/icons
 autoconf/install-sh -c -m 644 $SRC/icons/closed.gif					$DST/var/icons
 autoconf/install-sh -c -m 644 $SRC/icons/doc.gif						$DST/var/icons
-autoconf/install-sh -c -m 644 $SRC/icons/img.gif						$DST/var/icons
+autoconf/install-sh -c -m 644 $SRC/icons/img.png						$DST/var/icons
 autoconf/install-sh -c -m 644 $SRC/icons/xml.gif						$DST/var/icons
 autoconf/install-sh -c -m 644 $SRC/icons/x.gif							$DST/var/icons
 autoconf/install-sh -c -m 644 $SRC/icons/pdf.gif						$DST/var/icons
@@ -80,3 +80,4 @@ rm -rf %{buildroot}
 /srv/doc_parse/var/doc_parse/cgi-bin/*.sh
 /srv/doc_parse/var/doc_parse/cgi-bin/.env
 /srv/doc_parse/var/icons/*.gif
+/srv/doc_parse/var/icons/*.png

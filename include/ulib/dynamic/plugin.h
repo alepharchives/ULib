@@ -23,6 +23,7 @@
 
 #define U_CREAT_FUNC(name, obj) extern "C" { extern void* u_creat_##name(); U_EXPORT void* u_creat_##name() { return new obj(); } }
 
+                   class UHTTP;
 template <class T> class UPlugIn;
 
 template <> class U_EXPORT UPlugIn<void*> : public UDynamic {
@@ -77,6 +78,8 @@ public:
       {
       U_TRACE(0, "UPlugIn<void*>::setPluginDirectory(%S)", dir)
 
+      U_INTERNAL_DUMP("plugin_dir = %S", plugin_dir)
+
       plugin_dir = dir;
       }
 
@@ -102,6 +105,8 @@ protected:
 private:
    UPlugIn<void*>(const UPlugIn<void*>&) : UDynamic() {}
    UPlugIn<void*>& operator=(const UPlugIn<void*>&)   { return *this; }
+
+   friend class UHTTP;
 };
 
 template <class T> class U_EXPORT UPlugIn<T*> : public UPlugIn<void*> {

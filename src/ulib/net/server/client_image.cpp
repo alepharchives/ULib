@@ -379,7 +379,6 @@ int UClientImage_Base::handlerRead()
    U_INTERNAL_ASSERT_POINTER(wbuffer)
    U_INTERNAL_ASSERT_POINTER(pbuffer)
    U_INTERNAL_ASSERT_POINTER(pClientImage)
-   U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, pClientImage->UEventFd::fd)
 
    // Connection-wide hooks
 
@@ -399,7 +398,7 @@ int UClientImage_Base::handlerRead()
 loop:
    if (UServer_Base::isLog()) logRequest();
 
-   result = UServer_Base::pluginsHandlerREAD(); // check request...
+   result = UServer_Base::pluginsHandlerREAD(); // check request type...
 
    if (result == U_PLUGIN_HANDLER_FINISHED)
       {

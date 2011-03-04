@@ -276,7 +276,7 @@ U_EXPORT main (int argc, char* argv[])
    // EXTENSION
 
    UString filter = U_STRING_FROM_CONSTANT("?db.*");
-   n = UFile::listContentOf(y, 0, &filter);
+   n = UFile::listContentOf(y, 0, U_STRING_TO_PARAM(filter));
 
    U_ASSERT( n == 2 )
 

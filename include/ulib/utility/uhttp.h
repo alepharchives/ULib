@@ -171,9 +171,9 @@ enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_G
 
 class UFile;
 class UValue;
-class UDynamic;
 class UEventFd;
 class UCommand;
+class UPageSpeed;
 class UMimeMultipart;
 
 template <class T> class UHashMap;
@@ -186,7 +186,6 @@ public:
    static void str_allocate();
 
    static const UString* str_origin;
-   static const UString* str_favicon;
    static const UString* str_frm_body;
    static const UString* str_htpasswd;
    static const UString* str_htdigest;
@@ -200,6 +199,7 @@ public:
    static const UString* str_websocket_key1;
    static const UString* str_websocket_key2;
    static const UString* str_websocket_prot;
+   static const UString* str_expect_100_continue;
 
    // HTTP header representation
 
@@ -215,7 +215,7 @@ public:
 
    // COSTRUTTORE e DISTRUTTORE
 
-   static void ctor(UEventFd* handler_event);
+   static void ctor();
    static void dtor();
 
    static void setHTTPMethod(const char* method, uint32_t method_len)
@@ -609,7 +609,7 @@ public:
 
    static bool processCGIOutput();
    static bool checkForCGIRequest();
-   static bool processCGIRequest(UCommand* pcmd, UString* penvironment, bool async);
+   static bool processCGIRequest(UCommand* pcmd, UString* penvironment, bool async, bool process_output);
    static void setHTTPCgiResponse(int nResponseCode, bool header_content_length, bool header_content_type, bool content_encoding);
 
    static UString getCGIEnvironment();
@@ -653,9 +653,9 @@ public:
    class UServletPage : public UDynamic {
    public:
 
-   // COSTRUTTORI
-
    vPFpv runDynamicPage;
+
+   // COSTRUTTORI
 
    UServletPage()
       {
@@ -702,6 +702,44 @@ public:
    // ------------------------------
 
    static void callRunDynamicPage(int arg);
+
+#ifdef HAVE_PAGE_SPEED // (Google Page Speed)
+
+   typedef void (*vPFstr)(UString&);
+   typedef void (*vPFpcstr)(const char*, UString&);
+
+   class UPageSpeed : public UDynamic {
+   public:
+
+   vPFpcstr minify_html;
+   vPFstr optimize_gif, optimize_png, optimize_jpg;
+
+   // COSTRUTTORI
+
+   UPageSpeed()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UPageSpeed, "")
+
+      minify_html = 0;
+      optimize_gif = optimize_png = optimize_jpg = 0;
+      }
+
+   ~UPageSpeed()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UPageSpeed)
+      }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const U_EXPORT;
+#endif
+
+   private:
+   UPageSpeed(const UPageSpeed&) : UDynamic() {}
+   UPageSpeed& operator=(const UPageSpeed&)   { return *this; }
+   };
+
+   static UPageSpeed* page_speed;
+#endif
 
    // REWRITE RULE
 
@@ -766,6 +804,7 @@ public:
    int wd;                  // if directory a "watch list" associated with an inotify instance...
    mode_t mode;             // file type
    time_t mtime;            // time of last modification
+   time_t expire;           // expire time of the entry
    UVector<UString>* array; // content, header, deflate(content, header)
    uint32_t size;           // size content
 
@@ -791,6 +830,8 @@ public:
       os.put(' ');
       os << d.mtime;
       os.put(' ');
+      os << d.expire;
+      os.put(' ');
    // os << d.array;
    // os.put(' ');
       os.put('}');
@@ -814,6 +855,7 @@ public:
    static void in_READ();
    static bool isFileInCache();
    static void checkFileForCache();
+   static UString getDataFromCache(bool header, bool deflate);
 
    static bool isDataFromCache(bool deflate)
       {
@@ -824,24 +866,6 @@ public:
       bool result = (file_data->array ? file_data->array->size() > (deflate * 2U) : false);
 
       U_RETURN(result);
-      }
-
-   static UString getDataFromCache(bool header, bool deflate)
-      {
-      U_TRACE(0, "UHTTP::getDataFromCache(%b,%b)", header, deflate)
-
-      U_INTERNAL_ASSERT_POINTER(file_data)
-
-      UString result;
-
-      if (file_data->array)
-         {
-         U_INTERNAL_DUMP("idx = %u", (deflate * 2) + header)
-
-         result = file_data->array->operator[]((deflate * 2) + header);
-         }
-
-      U_RETURN_STRING(result);
       }
 
    // Accept-Language: en-us,en;q=0.5

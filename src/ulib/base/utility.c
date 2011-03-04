@@ -74,14 +74,6 @@
 #  include <pwd.h>
 #endif
 
-#ifndef FNM_CASEFOLD
-#define FNM_CASEFOLD FNM_IGNORECASE
-#endif
-
-#ifndef FNM_LEADING_DIR
-#define FNM_LEADING_DIR FNM_PERIOD
-#endif
-
 /* Match */
 
 int        u_pfn_flags;
@@ -740,10 +732,11 @@ const char* u_delimit_token(const char* restrict s, const char** restrict p, con
    return s;
 }
 
-/* Match STRING against the filename pattern MASK, returning true if it matches, false if not */
+/* Match STRING against the filename pattern MASK, returning true if it matches, false if not, inversion if flags contain FNM_INVERT */
 
-bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int ignorecase)
+bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
 {
+   bool result;
    const char* restrict cp = 0;
    const char* restrict mp = 0;
    unsigned char c1 = 0, c2 = 0;
@@ -751,14 +744,14 @@ bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, 
    const char* restrict end_s    =    s + n1;
    const char* restrict end_mask = mask + n2;
 
-   U_INTERNAL_TRACE("u_dosmatch(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, ignorecase)
+   U_INTERNAL_TRACE("u_dosmatch(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, flags)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(mask)
    U_INTERNAL_ASSERT_MAJOR(n1,0)
    U_INTERNAL_ASSERT_MAJOR(n2,0)
 
-   if (ignorecase)
+   if (flags & FNM_IGNORECASE)
       {
       while (s < end_s)
          {
@@ -769,7 +762,7 @@ bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, 
          c1 = u_tolower(*s);
 
          if (c2 != c1 &&
-             c2 != '?') return false;
+             c2 != '?') return (flags & FNM_INVERT ? true : false);
 
          ++s;
          ++mask;
@@ -783,14 +776,16 @@ bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, 
             {
             while (*mask == '*') ++mask;
 
-            return (mask >= end_mask);
+            result = (mask >= end_mask);
+
+            return (flags & FNM_INVERT ? (result != true) : result);
             }
 
          c2 = u_tolower(*mask);
 
          if (c2 == '*')
             {
-            if (++mask >= end_mask) return true;
+            if (++mask >= end_mask) return (flags & FNM_INVERT ? false : true);
 
             cp = s + 1;
             mp = mask;
@@ -826,7 +821,7 @@ bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, 
          c1 = *s;
 
          if (c2 != c1 &&
-             c2 != '?') return false;
+             c2 != '?') return (flags & FNM_INVERT ? true : false);
 
          ++s;
          ++mask;
@@ -840,14 +835,16 @@ bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, 
             {
             while (*mask == '*') ++mask;
 
-            return (mask >= end_mask);
+            result = (mask >= end_mask);
+
+            return (flags & FNM_INVERT ? (result != true) : result);
             }
 
          c2 = *mask;
 
          if (c2 == '*')
             {
-            if (++mask >= end_mask) return true;
+            if (++mask >= end_mask) return (flags & FNM_INVERT ? false : true);
 
             cp = s + 1;
             mp = mask;
@@ -874,14 +871,17 @@ bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, 
       }
 }
 
-/* Match STRING against the filename pattern MASK and multiple patterns separated by '|', returning true if it matches, false if not */
+/* Match STRING against the filename pattern MASK and multiple patterns separated by '|',
+   returning true if it matches, false if not, inversion if flags contain FNM_INVERT
+*/
 
-bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int ignorecase)
+bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
 {
+   bool result;
    const char* restrict p_or;
    const char* restrict end = mask + n2;
 
-   U_INTERNAL_TRACE("u_dosmatch_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, ignorecase)
+   U_INTERNAL_TRACE("u_dosmatch_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, flags)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(mask)
@@ -892,9 +892,27 @@ bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restric
       {
       p_or = (const char* restrict) memchr(mask, '|', n2);
 
-      if (p_or == 0) return u_dosmatch(s, n1, mask, n2, ignorecase);
+      if (p_or == 0)
+         {
+         result = u_dosmatch(s, n1, mask, n2, flags);
 
-      if (u_dosmatch(s, n1, mask, (p_or - mask), ignorecase)) return true;
+         U_INTERNAL_PRINT("result = %d", result)
+
+         return result;
+         }
+
+      result = u_dosmatch(s, n1, mask, (p_or - mask), flags);
+
+      U_INTERNAL_PRINT("result = %d", result)
+
+      if (flags & FNM_INVERT)
+         {
+         if (result == false) return false;
+         }
+      else
+         {
+         if (result) return true;
+         }
 
       mask = p_or + 1;
       n2   = end - mask;
@@ -1808,7 +1826,7 @@ static void u_ftw_readdir(DIR* restrict dirp)
 
       if (U_ISDOTS(dp->d_name)) continue;
 
-      if (u_ftw_ctx.filter == 0 ||
+      if (u_ftw_ctx.filter_len == 0 ||
           u_pfn_match(dp->d_name, d_namlen, u_ftw_ctx.filter, u_ftw_ctx.filter_len, u_pfn_flags))
          {
          if (u_ftw_ctx.sort_by)
@@ -1960,7 +1978,7 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
 
       if (pattern > end_p) return (-1); /* if (c == EOS) return (RANGE_ERROR); */
 
-      if (c == '/' && (flags & FNM_PATHNAME)) return (0);
+      if (c == '/' && (flags & FNM_PATHNAME)) return 0;
 
       if (flags & FNM_CASEFOLD) c = u_tolower((unsigned char)c);
 

@@ -461,8 +461,6 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 
    U_DUMP("UHTTP::getHTTPStatus() = %S", UHTTP::getHTTPStatus())
 
-   if (UClient_Base::log) UClient_Base::logResponse(UClient_Base::response);
-
    // check if you can use the same socket connection
 
    if (responseHeader->isClose()) U_http_is_connection_close = U_YES;

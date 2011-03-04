@@ -28,9 +28,9 @@ int UServices::getDevNull() /* return open(/dev/null) */
    U_RETURN(fd_stderr);
 }
 
-bool UServices::setFtw(const UString* dir, const UString* filter)
+bool UServices::setFtw(const UString* dir, const char* filter, uint32_t filter_len)
 {
-   U_TRACE(0, "UServices::setFtw(%p,%p)", dir, filter)
+   U_TRACE(0, "UServices::setFtw(%p,%.*S,%u)", dir, filter_len, filter, filter_len)
 
    u_ftw_ctx.depth = true;
 
@@ -62,16 +62,8 @@ bool UServices::setFtw(const UString* dir, const UString* filter)
 
    u_buffer[u_buffer_len] = '\0';
 
-   if (filter)
-      {
-      u_ftw_ctx.filter     = filter->data();
-      u_ftw_ctx.filter_len = filter->size();
-      }
-   else
-      {
-      u_ftw_ctx.filter     = 0;
-      u_ftw_ctx.filter_len = 0;
-      }
+   u_ftw_ctx.filter     = filter;
+   u_ftw_ctx.filter_len = filter_len;
 
    U_INTERNAL_DUMP("u_cwd    = %S", u_cwd)
    U_INTERNAL_DUMP("u_buffer = %S", u_buffer)

@@ -682,10 +682,6 @@ fine:
    (void) U_SYSCALL(memset, "%p,%d,%u", &internal, 0, sizeof(UCDB::cdb_internal));
 }
 
-#ifndef FNM_CASEFOLD
-#define FNM_CASEFOLD 0x10 /* Case insensitive search. */
-#endif
-
 uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString& mask_key, uint32_t* _size)
 {
    U_TRACE(0, "UCDB::getValuesWithKeyNask(%p,%.*S,%p)", &vec_values, U_STRING_TO_TRACE(mask_key), _size)

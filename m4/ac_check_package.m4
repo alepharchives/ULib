@@ -567,4 +567,31 @@ dnl		printf "libxml2 found in $libxml2dir\n";
 	fi
 	AC_SUBST(HAVE_LIBXML2)],
 	[AC_MSG_RESULT(no)])
+
+	AC_MSG_CHECKING(if you want to use page-speed SDK)
+	AC_ARG_WITH(page-speed, [  --with-page-speed       use page-speed SDK - [[will check /usr /usr/local]] [[default=no]] ],
+	[if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			page_speeddir="$dir";
+			if test -d $dir/page-speed-*; then
+				found_page_speed="yes";
+				break;
+			fi
+		done
+		if test x_$found_page_speed != x_yes; then
+			AC_MSG_ERROR("Cannot find page-speed SDK");
+		else
+			echo "${T_MD}page-speed SDK found in $page_speeddir${T_ME}"
+			HAVE_PAGE_SPEED=yes
+			CPPFLAGS="$CPPFLAGS -DHAVE_PAGE_SPEED";
+			page_speed_version=$(ls -1 $page_speeddir | grep page-speed | cut -d'-' -f3)
+			PAGESPEED_ROOT_DIR=$page_speeddir/page-speed-$page_speed_version
+			AC_SUBST(PAGESPEED_ROOT_DIR)
+		fi
+	fi
+	AC_SUBST(HAVE_PAGE_SPEED)],
+	[AC_MSG_RESULT(no)])
 ])

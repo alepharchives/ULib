@@ -399,7 +399,9 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    // load plugin modules and call server-wide hooks handlerConfig()...
 
-   if (loadPlugins(cfg[*str_PLUGIN_DIR], cfg[*str_PLUGIN], &cfg) == U_PLUGIN_HANDLER_ERROR)
+   UString plugin_dir = cfg[*str_PLUGIN_DIR];
+
+   if (loadPlugins(plugin_dir, cfg[*str_PLUGIN], &cfg) == U_PLUGIN_HANDLER_ERROR)
       {
       U_ERROR("plugins load FAILED. Going down...");
       }
@@ -473,7 +475,7 @@ next:
    if (isLog()) ULog::log("[%s] link of static plugin ok\n", name);
 }
 
-int UServer_Base::loadPlugins(const UString& plugin_dir, const UString& plugin_list, UFileConfig* cfg)
+int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list, UFileConfig* cfg)
 {
    U_TRACE(0, "UServer_Base::loadPlugins(%.*S,%.*S,%p)", U_STRING_TO_TRACE(plugin_dir), U_STRING_TO_TRACE(plugin_list), cfg)
 
@@ -499,9 +501,19 @@ int UServer_Base::loadPlugins(const UString& plugin_dir, const UString& plugin_l
    bnostatic = vplugin->empty();
 
 #ifdef HAVE_MODULES
-   U_INTERNAL_ASSERT(plugin_dir.isNullTerminated())
+   if (plugin_dir.empty() == false)
+      {
+      // NB: we can't use relativ path because after we call chdir()...
 
-   if (plugin_dir.empty() == false) UPlugIn<void*>::setPluginDirectory(plugin_dir.data());
+      if (plugin_dir.first_char() == '.')
+         {
+         U_INTERNAL_ASSERT(plugin_dir.isNullTerminated())
+
+         plugin_dir = UFile::getRealPath(plugin_dir.data());
+         }
+
+      UPlugIn<void*>::setPluginDirectory(plugin_dir.c_strdup());
+      }
 #endif
 
    for (i = 0, length = vec.size(); i < length; ++i)
@@ -935,8 +947,6 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
    U_TRACE(0, "[SIGTERM] UServer_Base::handlerForSigTERM(%d)", signo)
 
    U_SRV_LOG("--- SIGTERM (Interrupt) ---");
-
-   U_INTERNAL_ASSERT(flag_loop)
 
    flag_loop = false;
 

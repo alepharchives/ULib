@@ -35,7 +35,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@DEBUG_TRUE@@FCGI_TRUE@am__append_1 = mod_fcgi
+@PAGE_SPEED_TRUE@am__append_1 = page_speed
 @GEOIP_TRUE@@STATIC_HANDLER_GEOIP_FALSE@am__append_2 = mod_geoip
 @MOD_SHIB_TRUE@@PCRE_TRUE@@SSL_TRUE@@STATIC_HANDLER_SHIB_FALSE@am__append_3 = mod_shib
 @STATIC_HANDLER_RPC_FALSE@am__append_4 = mod_rpc.la
@@ -252,7 +252,7 @@ AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
 	distdir
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = usp mod_fcgi mod_geoip mod_shib
+DIST_SUBDIRS = usp page_speed mod_geoip mod_shib
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 am__relativize = \
   dir0=`pwd`; \
@@ -324,6 +324,7 @@ HAVE_LIBXML2 = @HAVE_LIBXML2@
 HAVE_LIBZ = @HAVE_LIBZ@
 HAVE_MAGIC = @HAVE_MAGIC@
 HAVE_MYSQL = @HAVE_MYSQL@
+HAVE_PAGE_SPEED = @HAVE_PAGE_SPEED@
 HAVE_PCRE = @HAVE_PCRE@
 HAVE_SSH = @HAVE_SSH@
 HAVE_SSL = @HAVE_SSL@
@@ -365,6 +366,7 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
+PAGESPEED_ROOT_DIR = @PAGESPEED_ROOT_DIR@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PRG_LDFLAGS = @PRG_LDFLAGS@
 PTHREAD_CC = @PTHREAD_CC@
@@ -451,8 +453,8 @@ top_srcdir = @top_srcdir@
 SUBDIRS = usp $(am__append_1) $(am__append_2) $(am__append_3)
 EXTRA_DIST = *.cpp Makefile.* \
 				 mod_shib/*.cpp mod_shib/Makefile.* \
-				 mod_fcgi/*.cpp mod_fcgi/Makefile.* \
-				 mod_geoip/*.cpp mod_geoip/Makefile.*
+				 mod_geoip/*.cpp mod_geoip/Makefile.* \
+				 page_speed/*.cpp page_speed/Makefile.*
 
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include

@@ -2,8 +2,10 @@
 
 #include <ulib/cache.h>
 #include <ulib/debug/crono.h>
+#include <ulib/utility/uhttp.h>
 #include <ulib/net/server/server.h>
 #include <ulib/internal/objectIO.h>
+#include <ulib/utility/string_ext.h>
 #include <ulib/utility/xml_escape.h>
 
 #include "cquery.h"
@@ -214,7 +216,7 @@ static void set_ENV(const UString& buffer)
       if (UFile::access(FORM_FILE_DIR) == false) (void) u_strcpy(FORM_FILE_DIR, FORM_FILE_DIR_DEFAULT);
       }
 
-   *cookie = UHTTP::getHTTPCookie(true);
+   *cookie = UHTTP::getHTTPCookie();
 
    U_INTERNAL_DUMP("cookie = %.*S", U_STRING_TO_TRACE(*cookie))
 

@@ -430,7 +430,7 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
 
 UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
 {
-   U_TRACE(1, "UStringExt::insertEscape(%.*S,%u,%C)", n, s, n, delimiter)
+   U_TRACE(0, "UStringExt::insertEscape(%.*S,%u,%C)", n, s, n, delimiter)
 
    U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
@@ -481,7 +481,7 @@ UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
 
 UString UStringExt::removeEscape(const char* s, uint32_t n)
 {
-   U_TRACE(1, "UStringExt::removeEscape(%.*S,%u,%C)", n, s, n)
+   U_TRACE(0, "UStringExt::removeEscape(%.*S,%u,%C)", n, s, n)
 
    U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
@@ -529,7 +529,7 @@ UString UStringExt::removeEscape(const char* s, uint32_t n)
 
 UString UStringExt::trim(const char* s, uint32_t n)
 {
-   U_TRACE(1, "UStringExt::trim(%.*S,%u)", n, s, n)
+   U_TRACE(0, "UStringExt::trim(%.*S,%u)", n, s, n)
 
    // U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
@@ -561,9 +561,9 @@ UString UStringExt::trim(const char* s, uint32_t n)
 
 UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
 {
-   U_TRACE(1, "UStringExt::simplifyWhiteSpace(%.*S,%u)", n, s, n)
+   U_TRACE(0, "UStringExt::simplifyWhiteSpace(%.*S,%u)", n, s, n)
 
-   // U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+// U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
 
    UString result(n);
    uint32_t sz1, sz = 0;
@@ -1042,7 +1042,7 @@ end:
 
 void UStringExt::buildTokenInt(const char* token, uint32_t value, UString& buffer)
 {
-   U_TRACE(1, "UStringExt::buildTokenInt(%S,%u,%.*S)", token, value, U_STRING_TO_TRACE(buffer))
+   U_TRACE(0, "UStringExt::buildTokenInt(%S,%u,%.*S)", token, value, U_STRING_TO_TRACE(buffer))
 
    U_INTERNAL_ASSERT_POINTER(token)
    U_INTERNAL_ASSERT(u_strlen(token) == U_TOKEN_NM)
@@ -1056,4 +1056,170 @@ void UStringExt::buildTokenInt(const char* token, uint32_t value, UString& buffe
    u_int2hex(ptr + U_TOKEN_NM, value);
 
    buffer.size_adjust(start + U_TOKEN_LN);
+}
+
+// Minifies CSS/JS by removing comments and whitespaces
+
+static inline bool unextendable(char c)
+{
+   U_TRACE(0, "::unextendable(%C)", c)
+
+   // return true for any character that never needs to be separated from other characters via whitespace
+
+   switch (c)
+      {
+      case '[':
+      case ']':
+      case '{':
+      case '}':
+      case '/':
+      case ';':
+      case ':': U_RETURN(true);
+      default:  U_RETURN(false);
+      }
+}
+
+// return true for any character that must separated from other "extendable"
+// characters by whitespace on the _right_ in order keep tokens separate.
+
+static inline bool isExtendableOnRight(char c)
+{
+   U_TRACE(0, "::isExtendableOnRight(%C)", c)
+
+   // NB: left paren only here -- see http://code.google.com/p/page-speed/issues/detail?id=339
+
+   bool result = ((unextendable(c) || c == '(') == false);
+
+   U_RETURN(result);
+}
+
+// return true for any character that must separated from other "extendable"
+// characters by whitespace on the _left_ in order keep tokens separate.
+
+static inline bool isExtendableOnLeft(char c)
+{
+   U_TRACE(0, "::isExtendableOnLeft(%C)", c)
+
+   // NB: right paren only here
+
+   bool result = ((unextendable(c) || c == ')') == false);
+
+   U_RETURN(result);
+}
+
+void UStringExt::minifyCssJs(UString& x)
+{
+   U_TRACE(0, "UStringExt::minifyCssJs(%.*S)", U_STRING_TO_TRACE(x))
+
+   uint32_t n = x.size();
+
+// U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
+
+   char quote;
+   const char* s;
+   const char* start;
+   const char* begin = x.data();
+   uint32_t capacity, sz1, sz = 0;
+   const char* _end  = (s = begin) + n;
+   char* str = (char*) U_MALLOC_STR(n + 128, capacity);
+
+   // we have these tokens: comment, whitespace, single/double-quoted string, and other
+
+   while (s < _end)
+      {
+      if ( *s      == '/' &&
+          *(s + 1) == '*' &&
+           (s + 1) < _end)
+         {
+         // comment: scan to end of comment
+
+         s += 2;
+
+         for (; s < _end; ++s)
+            {
+            if (*s      == '*' &&
+               *(s + 1) == '/' &&
+                (s + 1) < _end)
+               {
+               s += 2;
+
+               break;
+               }
+            }
+         }
+      else if (u_isspace(*s))
+         {
+         // whitespace: scan to end of whitespace; put a single space into the
+         // consumer if necessary to separate tokens, otherwise put nothing
+
+         start = s;
+
+         do { ++s; } while (s < _end && u_isspace(*s));
+
+         if (s < _end                          &&
+             start > begin                     &&
+             isExtendableOnRight(*(start - 1)) &&
+             isExtendableOnLeft(*s))
+            {
+            str[sz++] = ' ';
+            }
+         }
+      else if (*s == '\'' ||
+               *s == '"')
+         {
+         // single/double-quoted string: scan to end of string (first unescaped quote of the
+         // same kind used to open the string), and put the whole string into the consumer
+
+         start =  s;
+         quote = *s++;
+
+         while (s < _end)
+            {
+            if (*s == quote)
+               {
+               ++s;
+
+               break;
+               }
+            else if (*s == '\\' && (s + 1) < _end)
+               {
+               s += 2;
+               }
+            else
+               {
+               ++s;
+               }
+            }
+
+         sz1 = (s - start);
+
+         (void) u_memcpy(str + sz, start, sz1);  // result.append(start, sz1);
+
+         sz += sz1;
+         }
+      else
+         {
+         // other: just copy the character over
+
+         str[sz++] = *s;
+
+         if (*s == '}')
+            {
+            // add a newline after each closing brace to prevent output lines from being too long
+
+            str[sz++] = '\n';
+            }
+
+         ++s;
+         }
+
+      if (sz > n) goto end;
+      }
+
+   U_INTERNAL_ASSERT_MINOR(sz, n)
+
+   (void) x.replace(str, sz);
+
+end:
+   U_FREE_STR(str, capacity);
 }

@@ -32,6 +32,7 @@ if [ "$TERM" != "cygwin" ]; then
      test -d ../.libs &&
 	  ( cd ../.libs;
 	    ln -sf ../mod_shib/.libs/mod_shib.so;
+		 ln -sf ../page_speed/.libs/mod_pagespeed.so;
 	    ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
 fi
 

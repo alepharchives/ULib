@@ -124,8 +124,8 @@ UModProxyService* UModProxyService::findService(const UString& host, const UStri
 
       U_INTERNAL_DUMP("method_mask = %.*S uri_mask = %.*S", U_STRING_TO_TRACE(elem->method_mask), U_STRING_TO_TRACE(elem->uri_mask.getMask()))
 
-      if ((elem->host_mask.empty()       || UServices::DosMatchWithOR(host, elem->host_mask, 0))     &&
-          (elem->method_mask.empty()     || UServices::DosMatchWithOR(method, elem->method_mask, 0)) &&
+      if ((elem->host_mask.empty()       || UServices::dosMatchWithOR(host, elem->host_mask, 0))     &&
+          (elem->method_mask.empty()     || UServices::dosMatchWithOR(method, elem->method_mask, 0)) &&
           (elem->uri_mask.getPcre() == 0 || elem->uri_mask.search(U_HTTP_URI_TO_PARAM)))
          {
          U_RETURN_POINTER(elem, UModProxyService);

@@ -152,10 +152,22 @@ extern U_EXPORT int        u_pfn_flags;
 extern U_EXPORT bPFpcupcud u_pfn_match;
 
 extern U_EXPORT bool u_fnmatch(         const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
-extern U_EXPORT bool u_dosmatch(        const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int ignorecase);
-extern U_EXPORT bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int ignorecase); /* multiple patterns separated by '|' */ 
+extern U_EXPORT bool u_dosmatch(        const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
+extern U_EXPORT bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags); /* multiple patterns separated by '|' */ 
 
 enum MatchType { U_FNMATCH = 0, U_DOSMATCH = 1, U_DOSMATCH_WITH_OR = 2 };
+
+#ifndef FNM_CASEFOLD
+#define FNM_CASEFOLD    (1 <<  4)   /* Compare without regard to case */
+#endif
+#define FNM_INVERT      (1 << 28)   /* invert the result */
+
+#ifndef FNM_IGNORECASE
+#define FNM_IGNORECASE  FNM_CASEFOLD
+#endif
+#ifndef FNM_LEADING_DIR
+#define FNM_LEADING_DIR FNM_PERIOD
+#endif
 
 static inline void u_setPfnMatch(int match_type, int flags)
 {
@@ -163,7 +175,8 @@ static inline void u_setPfnMatch(int match_type, int flags)
 
    u_pfn_flags = flags;
    u_pfn_match = (match_type == U_FNMATCH  ? u_fnmatch  :
-                  match_type == U_DOSMATCH ? u_dosmatch : u_dosmatch_with_OR);
+                  match_type == U_DOSMATCH ? u_dosmatch :
+                                             u_dosmatch_with_OR);
 }
 
 extern U_EXPORT bool u_isURL(const char* restrict url, uint32_t len);

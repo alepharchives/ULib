@@ -1067,11 +1067,11 @@ void UFile::ftw_vector_push()
    vector->push(str);
 }
 
-uint32_t UFile::listContentOf(UVector<UString>& vec, const UString* dir, const UString* filter)
+uint32_t UFile::listContentOf(UVector<UString>& vec, const UString* dir, const char* filter, uint32_t filter_len)
 {
-   U_TRACE(0, "UFile::listContentOf(%p,%p,%p)", &vec, dir, filter)
+   U_TRACE(0, "UFile::listContentOf(%p,%p,%.*S,%u)", &vec, dir, filter_len, filter, filter_len)
 
-   if (UServices::setFtw(dir, filter) == false) U_RETURN(0);
+   if (UServices::setFtw(dir, filter, filter_len) == false) U_RETURN(0);
 
    uint32_t n = vec.size();
 
@@ -1114,11 +1114,11 @@ void UFile::ftw_tree_up()
    tree = tree->parent();
 }
 
-void UFile::listRecursiveContentOf(UTree<UString>& t, const UString* dir, const UString* filter)
+void UFile::listRecursiveContentOf(UTree<UString>& t, const UString* dir, const char* filter, uint32_t filter_len)
 {
-   U_TRACE(0, "UFile::listRecursiveContentOf(%p,%p,%p)", &t, dir, filter)
+   U_TRACE(0, "UFile::listRecursiveContentOf(%p,%p,%.*S,%u)", &t, dir, filter_len, filter, filter_len)
 
-   if (UServices::setFtw(dir, filter) == false) return;
+   if (UServices::setFtw(dir, filter, filter_len) == false) return;
 
    if (dir == 0)
       {
@@ -1164,14 +1164,14 @@ uint32_t UFile::buildFilenameListFrom(UVector<UString>& vec, const UString& arg,
 
          if (pos == U_NOT_FOUND)
             {
-            (void) listContentOf(vec, 0, &filename);
+            (void) listContentOf(vec, 0, U_STRING_TO_PARAM(filename));
             }
          else
             {
             dir    = filename.substr(0U, pos);
             filter = filename.substr(pos + 1);
 
-            (void) listContentOf(vec, &dir, &filter);
+            (void) listContentOf(vec, &dir, U_STRING_TO_PARAM(filter));
             }
          }
       }
@@ -1264,7 +1264,7 @@ static struct mimeentry mimetab_c[] = {
    // certificate, and any subsequent certificates will be added as untrusted CA
    // certificates to the local database.
    // -------------------------------------------------------------------------------
-   MIME_ENTRY( "css", "text/css" ),                   // U_css
+   MIME_ENTRY( "css", "text/css" ), // U_css
    MIME_ENTRY( "crt", "application/x-x509-ca-cert" ),
    MIME_ENTRY( "cer", "application/x-x509-ca-cert" ),
 
@@ -1324,13 +1324,13 @@ static struct mimeentry mimetab_f[] = {
 };
 
 static struct mimeentry mimetab_g[] = {
-   MIME_ENTRY( "gif", "image/gif" ),
+   MIME_ENTRY( "gif", "image/gif" ),   // U_gif
    MIME_ENTRY( "gz",  "application/x-gunzip" ),
    { 0, 0, 0 }
 };
 
 static struct mimeentry mimetab_h[] = {
-   MIME_ENTRY( "htm",  "text/html" ),
+   MIME_ENTRY( "htm",  "text/html" ),  // U_html
 
    /*
    MIME_ENTRY( "html", "text/html" ),
@@ -1345,10 +1345,10 @@ static struct mimeentry mimetab_i[] = {
 };
 
 static struct mimeentry mimetab_j[] = {
-   MIME_ENTRY( "js",   "text/javascript" ),  // U_js
-   MIME_ENTRY( "jpg",  "image/jpeg" ),
-   MIME_ENTRY( "jpeg", "image/jpeg" ),
+   MIME_ENTRY( "js",   "text/javascript" ), // U_js
    MIME_ENTRY( "json", "application/json" ),
+   MIME_ENTRY( "jpg",  "image/jpeg" ),      // U_jpg
+   MIME_ENTRY( "jpeg", "image/jpeg" ),      // U_jpg
    { 0, 0, 0 }
 };
 
@@ -1375,9 +1375,9 @@ static struct mimeentry mimetab_o[] = {
 };
 
 static struct mimeentry mimetab_p[] = {
+   MIME_ENTRY( "png", "image/png" ),   // U_png
    MIME_ENTRY( "pem", "application/x-x509-ca-cert" ),
    MIME_ENTRY( "php", "application/x-httpd-php" ),
-   MIME_ENTRY( "png", "image/png" ),
    MIME_ENTRY( "pdf", "application/pdf" ),
    MIME_ENTRY( "ps",  "application/postscript" ),
    MIME_ENTRY( "p7b", "application/x-pkcs7-certificates" ),
@@ -1467,6 +1467,8 @@ const char* UFile::getMimeType(const char* suffix)
    U_INTERNAL_ASSERT_POINTER(suffix)
 
    char c;
+   uint32_t i;
+   ptrdiff_t diff;
    struct mimeentry* ptr;
    struct mimeentry* mimetab;
 
@@ -1509,9 +1511,9 @@ loop:
       {
       U_INTERNAL_DUMP("mimetab = %p (%S,%u,%S)", ptr, ptr->name, ptr->name_len, ptr->type)
 
-      for (uint32_t j = 0; j < ptr->name_len; ++j)
+      for (i = 0; i < ptr->name_len; ++i)
          {
-         if (suffix[j] != ptr->name[j])
+         if (suffix[i] != ptr->name[i])
             {
             ++ptr;
 
@@ -1519,9 +1521,12 @@ loop:
             }
          }
 
-      // NB: first entry: 'c' (U_css) - 'j' (U_js)
+      diff = ptr - mimetab;
 
-      mime_index = (ptr == mimetab && (c == 'c' || c == 'j') ? c : -1);
+      U_INTERNAL_DUMP("diff = %u sizeof(mimeentry) = %u", diff, sizeof(mimeentry))
+
+           if (diff ==  0)                       mime_index =  c;  // NB: first entry: 'c' (U_css), 'j' (U_js), 'h' (U_html), 'g' (U_gif), 'p' (U_png)
+      else if (diff >= (ptrdiff_t)2 && c == 'j') mime_index = 'J'; // NB: 3|4 entry: U_jpg
 
       U_INTERNAL_DUMP("mime_index = %C", mime_index)
 

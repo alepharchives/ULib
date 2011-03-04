@@ -13,14 +13,12 @@
 
 #include <ulib/dynamic/plugin.h>
 
-const char*     UPlugIn<void*>::plugin_dir = "/usr/libexec/ulib";
-UPlugIn<void*>* UPlugIn<void*>::first;
-
-#ifdef __MINGW32__
-#  define U_FMT_LIBPATH "%s/%.*s.dll"
-#else
-#  define U_FMT_LIBPATH "%s/%.*s.so"
+#ifndef U_LIBEXECDIR
+#define U_LIBEXECDIR "/usr/libexec/ulib"
 #endif
+
+const char*     UPlugIn<void*>::plugin_dir = U_LIBEXECDIR;
+UPlugIn<void*>* UPlugIn<void*>::first;
 
 void* UPlugIn<void*>::create(const char* _name, uint32_t _name_len)
 {

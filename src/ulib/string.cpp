@@ -604,10 +604,16 @@ U_NO_EXPORT char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
 
    uint32_t __capacity = rep->_capacity;
 
+   if (__capacity == U_NOT_FOUND) __capacity = 0;
+
    if (rep->references ||
        n > __capacity)
       {
-      UStringRep* r = UStringRep::create(n, U_max(n,__capacity), 0);
+      U_INTERNAL_DUMP("__capacity = %u, n = %u", __capacity, n)
+
+      if (__capacity < n) __capacity = n;
+
+      UStringRep* r = UStringRep::create(n, __capacity, 0);
 
       if (pos)       (void) u_memcpy((void*)r->str,            str, pos);
       if (how_much)  (void) u_memcpy((char*)r->str + pos + n2, src, how_much);

@@ -69,8 +69,6 @@
 // Note that the UStringRep object is a POD so that you can have a static "empty string" UStringRep object
 // already "constructed" before static constructors have run. The reference-count encoding is chosen so that
 // a 0 indicates one reference, so you never try to destroy the empty-string UStringRep object
-// 
-// NB: U_NOT_FOUND represents the maximum size that the allocator can hold
 
 #ifdef DEBUG
 #  define U_STRINGREP_FROM_CONSTANT(c_str) 0, 0, 0, U_CONSTANT_SIZE(c_str), 0, 0, c_str

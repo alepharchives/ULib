@@ -294,9 +294,6 @@ typedef unsigned long long uint64;
 /* enable Large File Support features */
 #undef HAVE_LFS
 
-/* Define to 1 if you have the `fcgi' library (-lfcgi). */
-#undef HAVE_LIBFCGI
-
 /* Define to 1 if you have the `GeoIP' library (-lGeoIP). */
 #undef HAVE_LIBGEOIP
 
@@ -734,9 +731,6 @@ typedef unsigned long long uint64;
    <sysmacros.h>. */
 #undef MAJOR_IN_SYSMACROS
 
-/* Name of package */
-#undef PACKAGE
-
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
@@ -837,6 +831,9 @@ typedef unsigned long long uint64;
 #endif
 
 
+/* install directory for plugins */
+#undef U_LIBEXECDIR
+
 /* enable memory pool features */
 #undef U_MEMORY_POOL
 
@@ -891,9 +888,6 @@ typedef unsigned long long uint64;
 /* Define if we have zlib with this function */
 #undef U_ZLIB_DEFLATE_WORKSPACESIZE
 
-/* Version number of package */
-#undef VERSION
-
 /* bsd system using linuxthreads */
 #undef WITH_LINUXTHREADS
 
@@ -928,7 +922,7 @@ typedef unsigned long long uint64;
 /* libuuid - version library to create a new UUID value */
 #undef _LIBUUID_VERSION
 
-/* libxml2 - Version 2 of the library to manipulate XML files */
+/* libxml2 - version 2 of the library to manipulate XML files */
 #undef _LIBXML2_VERSION
 
 /* libz - general purpose compression library version */
@@ -948,6 +942,9 @@ typedef unsigned long long uint64;
 
 /* Operating System version */
 #undef _OS_VERSION
+
+/* PageSpeed - version of Google page speed SDK */
+#undef _PAGE_SPEED_VERSION
 
 /* PCRE - Perl compatible regular expressions version */
 #undef _PCRE_VERSION

@@ -125,7 +125,7 @@
 
 /* get string costant size from compiler */
 
-#define U_CONSTANT_SIZE(str)     (sizeof(str)-1)
+#define U_CONSTANT_SIZE(str)     (int)(sizeof(str)-1)
 #define U_CONSTANT_TO_PARAM(str) str,U_CONSTANT_SIZE(str)
 #define U_CONSTANT_TO_TRACE(str)     U_CONSTANT_SIZE(str),str
 

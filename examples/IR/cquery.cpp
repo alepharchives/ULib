@@ -244,10 +244,6 @@ const char* Query::checkQuoting(char* argv[])
    U_RETURN_POINTER(ptr,const char);
 }
 
-#ifndef FNM_CASEFOLD
-#define FNM_CASEFOLD 0x10 /* Case insensitive search. */
-#endif
-
 void Query::run(const char* ptr)
 {
    U_TRACE(5, "Query::run(%S)", ptr)

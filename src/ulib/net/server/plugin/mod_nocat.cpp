@@ -241,7 +241,7 @@ void UNoCatPlugIn::setStatusContent(UModNoCatPeer* peer)
                       U_STRING_TO_TRACE(vfwopt[6]), U_STRING_TO_TRACE(vfwopt[7]), U_STRING_TO_TRACE(vfwopt[8]),
                       U_STRING_TO_TRACE(vfwopt[9]),
                       login_timeout, peers->size(), total_connections,
-                      U_STRING_TO_TRACE(*status_content), "/images/auth_logo.gif");
+                      U_STRING_TO_TRACE(*status_content), "/images/auth_logo.png");
 
       *status_content = buffer;
       }

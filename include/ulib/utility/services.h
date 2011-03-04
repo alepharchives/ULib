@@ -112,9 +112,9 @@ struct U_EXPORT UServices {
 
    // DOS or wildcard regexpr
 
-   static bool DosMatch(const UString& s, const UString& mask, int flags)
+   static bool dosMatch(const UString& s, const UString& mask, int flags)
       {
-      U_TRACE(0, "UServices::DosMatch(%.*S,%.*S,%d)", U_STRING_TO_TRACE(s), U_STRING_TO_TRACE(mask), flags)
+      U_TRACE(0, "UServices::dosMatch(%.*S,%.*S,%d)", U_STRING_TO_TRACE(s), U_STRING_TO_TRACE(mask), flags)
 
       bool result = u_dosmatch(U_STRING_TO_PARAM(mask), U_STRING_TO_PARAM(mask), flags);
 
@@ -123,9 +123,9 @@ struct U_EXPORT UServices {
 
    // DOS or wildcard regexpr - multiple patterns separated by '|'
 
-   static bool DosMatchWithOR(const UString& s, const UString& mask, int flags)
+   static bool dosMatchWithOR(const UString& s, const UString& mask, int flags)
       {
-      U_TRACE(0, "UServices::DosMatchWithOR(%.*S,%.*S,%d)", U_STRING_TO_TRACE(s), U_STRING_TO_TRACE(mask), flags)
+      U_TRACE(0, "UServices::dosMatchWithOR(%.*S,%.*S,%d)", U_STRING_TO_TRACE(s), U_STRING_TO_TRACE(mask), flags)
 
       bool result = u_dosmatch_with_OR(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags);
 
@@ -143,7 +143,7 @@ struct U_EXPORT UServices {
 
    // FTW
 
-   static bool setFtw(const UString* dir, const UString* filter = 0);
+   static bool setFtw(const UString* dir, const char* filter = 0, uint32_t filter_len = 0);
 
    // manage stateless session cookies and hashing password...
 

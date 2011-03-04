@@ -213,7 +213,7 @@ public:
    static UEventFd* handler_event;
 
    // load plugin modules and call server-wide hooks handlerConfig()...
-   static int loadPlugins(const UString& plugin_dir, const UString& plugin_list, UFileConfig* cfg);
+   static int loadPlugins(UString& plugin_dir, const UString& plugin_list, UFileConfig* cfg);
 
    // Server-wide hooks
    static int pluginsHandlerInit();

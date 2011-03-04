@@ -5,6 +5,7 @@
 # Process this file with autoconf to produce a configure script.
 #
 AC_PREREQ(2.65)
+
 #
 # The autoconf documentation states that this is the recommended sequence for this file:
 #
@@ -26,13 +27,22 @@ AC_PREREQ(2.65)
 # This macro must be the very first invoked.
 # Its argument names a file that must exist in the directory where autoconf will run, just to check things
 
-AC_INIT(include/ulib/internal/common.h)
+# OLD: Every other copy of the package version number gets its value from here
+#AC_INIT(include/ulib/internal/common.h)
+#AM_INIT_AUTOMAKE(ULib, [$VERSION])
+
+AC_INIT(ULib, [1.1.0], [stefano.casazza@gmail.com])
+AC_CONFIG_SRCDIR([include/ulib/internal/common.h])
+AC_CONFIG_AUX_DIR(autoconf)
+
+#AC_DEFINE_UNQUOTED(PACKAGE_TARNAME, "ULib", [package tar name])
+#AC_SUBST(PACKAGE_TARNAME)
 
 # define a msg macro...
-define(TWOCAN_CONF_MSG,[dnl
+define(TWOCAN_CONF_MSG,[
 AC_MSG_RESULT()
 AC_MSG_RESULT(${T_MD}$1:${T_ME})
-])dnl
+])
 
 # Scary shtool stuff... borowed from pth-1.0
 if test ".`echo dummy $@ | grep help`" = .; then
@@ -45,6 +55,11 @@ if test ".`echo dummy $@ | grep help`" = .; then
 fi
 
 TWOCAN_CONF_MSG(Initial phase)
+
+# Check what platform we are running on.
+AC_CANONICAL_SYSTEM
+# pick a newer and better tar implementation like tar-pax
+AM_INIT_AUTOMAKE([1.11 no-define tar-pax])
 
 # Versioning
 VERSION="1.1.0"
@@ -67,19 +82,11 @@ AC_USE_SYSTEM_EXTENSIONS
 dnl this is a C++ library after all..
 AC_LANG(C++)
 
-AC_CONFIG_AUX_DIR(autoconf)
-
 dnl Initial CFLAGS
 AC_MSG_CHECKING(initial CFLAGS)
 AC_MSG_RESULT($CFLAGS)
 
-# Check what platform we are running on.
-AC_CANONICAL_SYSTEM
-
 AC_CONFIG_MACRO_DIR([m4])
-
-# Every other copy of the package version number gets its value from here
-AM_INIT_AUTOMAKE(ULib, [$VERSION])
 
 # Generate a header file with all settings, a config.h file (Automake will add -DHAVE_CONFIG_H)
 AM_CONFIG_HEADER(include/ulib/internal/config.h)
@@ -316,27 +323,28 @@ OST_CXX_NEW_INIT
 #OST_CXX_NOEXCEPTIONS
 
 dnl initialize all the info variables to 'no'
-     ulib_ssl_msg="no     (--with-ssl)"
-     ulib_ssh_msg="no     (--with-ssh)"
-    ulib_pcre_msg="no     (--with-pcre)"
-    ulib_ldap_msg="no     (--with-ldap)"
-    ulib_libz_msg="no     (--with-libz)"
-    ulib_curl_msg="no     (--with-curl)"
-   ulib_expat_msg="no     (--with-expat)"
-   ulib_magic_msg="no     (--with-magic)"
-  ulib_parser_msg="no     (--with-parser)"
-   ulib_mysql_msg="no     (--with-mysql)"
- ulib_libuuid_msg="no     (--with-libuuid)"
-ulib_libevent_msg="no     (--with-libevent)"
- ulib_libxml2_msg="no     (--with-libxml2)"
-    ulib_ipv6_msg="no     (--with-ipv6)"
-     ulib_pch_msg="no     (--enable-pch)"
-     ulib_LFS_msg="no     (--enable-LFS)"
-     ulib_dbg_msg="no     (--enable-debug)"
-   ulib_final_msg="no     (--enable-final)"
-     ulib_zip_msg="no     (--enable-zip)"
-    ulib_memp_msg="no     (--enable-memory-pool)"
-# ulib_manual_msg="no     (--enable-manual)"
+      ulib_ssl_msg="no    (--with-ssl)"
+      ulib_ssh_msg="no    (--with-ssh)"
+     ulib_pcre_msg="no    (--with-pcre)"
+     ulib_ldap_msg="no    (--with-ldap)"
+     ulib_libz_msg="no    (--with-libz)"
+     ulib_curl_msg="no    (--with-curl)"
+    ulib_expat_msg="no    (--with-expat)"
+    ulib_magic_msg="no    (--with-magic)"
+   ulib_parser_msg="no    (--with-parser)"
+    ulib_mysql_msg="no    (--with-mysql)"
+  ulib_libuuid_msg="no    (--with-libuuid)"
+ ulib_libevent_msg="no    (--with-libevent)"
+  ulib_libxml2_msg="no    (--with-libxml2)"
+ulib_pagespeed_msg="no    (--with-page-speed)"
+     ulib_ipv6_msg="no    (--with-ipv6)"
+      ulib_pch_msg="no    (--enable-pch)"
+      ulib_LFS_msg="no    (--enable-LFS)"
+      ulib_dbg_msg="no    (--enable-debug)"
+    ulib_final_msg="no    (--enable-final)"
+      ulib_zip_msg="no    (--enable-zip)"
+     ulib_memp_msg="no    (--enable-memory-pool)"
+#  ulib_manual_msg="no    (--enable-manual)"
 
 # Add --{enable,disable,with,without}-feature options.
 AC_COMPILATION_OPTIONS
@@ -389,7 +397,6 @@ AC_CHECK_LIB(posix4,nanosleep)
 AC_CHECK_LIB(socket,socketpair)
 
 LIBS_SAVE=${LIBS}
-AC_CHECK_LIB(fcgi, FCGX_Accept)
 AC_CHECK_LIB(GeoIP,GeoIP_id_by_ipnum)
 LIBS=${LIBS_SAVE}
 
@@ -405,39 +412,42 @@ libmysql_version="None"
 libuuid_version="None"
 libevent_version="None"
 libxml2_version="None"
+page_speed_version="None"
 
 AC_CHECK_PACKAGE
 AC_SUBST(PRG_LDFLAGS)
 
-AM_CONDITIONAL(SSL, 		 test "$HAVE_SSL"		  = "yes")
-AM_CONDITIONAL(SSH, 		 test "$HAVE_SSH"		  = "yes")
-AM_CONDITIONAL(SSL_TS,	 test "$HAVE_SSL_TS"	  = "yes")
-AM_CONDITIONAL(PCRE, 	 test "$HAVE_PCRE"	  = "yes")
-AM_CONDITIONAL(LDAP, 	 test "$HAVE_LDAP"	  = "yes")
-AM_CONDITIONAL(CURL, 	 test "$HAVE_CURL"	  = "yes")
-AM_CONDITIONAL(LIBZ, 	 test "$HAVE_LIBZ"	  = "yes")
-AM_CONDITIONAL(EXPAT, 	 test "$HAVE_EXPAT"	  = "yes")
-AM_CONDITIONAL(MAGIC, 	 test "$HAVE_MAGIC"	  = "yes")
-AM_CONDITIONAL(MYSQL, 	 test "$HAVE_MYSQL"	  = "yes")
-AM_CONDITIONAL(DBI,		 test "$HAVE_DBI"		  = "yes")
-AM_CONDITIONAL(LIBEVENT, test "$HAVE_LIBEVENT" = "yes")
-AM_CONDITIONAL(LIBXML2,  test "$HAVE_LIBXML2"  = "yes")
+AM_CONDITIONAL(SSL,			test "$HAVE_SSL"		  = "yes")
+AM_CONDITIONAL(SSH,			test "$HAVE_SSH"		  = "yes")
+AM_CONDITIONAL(SSL_TS,		test "$HAVE_SSL_TS"	  = "yes")
+AM_CONDITIONAL(PCRE,			test "$HAVE_PCRE"	  = "yes")
+AM_CONDITIONAL(LDAP,			test "$HAVE_LDAP"	  = "yes")
+AM_CONDITIONAL(CURL,			test "$HAVE_CURL"	  = "yes")
+AM_CONDITIONAL(LIBZ,			test "$HAVE_LIBZ"	  = "yes")
+AM_CONDITIONAL(EXPAT,		test "$HAVE_EXPAT"	  = "yes")
+AM_CONDITIONAL(MAGIC,		test "$HAVE_MAGIC"	  = "yes")
+AM_CONDITIONAL(MYSQL,		test "$HAVE_MYSQL"	  = "yes")
+AM_CONDITIONAL(DBI,			test "$HAVE_DBI"		  = "yes")
+AM_CONDITIONAL(LIBEVENT,	test "$HAVE_LIBEVENT" = "yes")
+AM_CONDITIONAL(LIBXML2,		test "$HAVE_LIBXML2"  = "yes")
+AM_CONDITIONAL(PAGE_SPEED, test "$HAVE_PAGE_SPEED"  = "yes")
 
-AC_DEFINE_UNQUOTED(_FLEX_VERSION,  	 "${flex_version}",     [Flex version])
-AC_DEFINE_UNQUOTED(_BISON_VERSION, 	 "${bison_version}",    [Bison version])
-AC_DEFINE_UNQUOTED(_PCRE_VERSION, 	 "${pcre_version}", 	   [PCRE - Perl compatible regular expressions version])
-AC_DEFINE_UNQUOTED(_LDAP_VERSION, 	 "${ldap_version}", 	   [Ldap version])
-AC_DEFINE_UNQUOTED(_EXPAT_VERSION, 	 "${expat_version}",    [Expat version])
-AC_DEFINE_UNQUOTED(_LIBZ_VERSION,  	 "${libz_version}", 	   [libz - general purpose compression library version])
-AC_DEFINE_UNQUOTED(_LIBSSH_VERSION,  "${libssh_version}",   [libSSH version])
-AC_DEFINE_UNQUOTED(_OPENSSL_VERSION, "${openssl_version}",  [OpenSSL version])
-AC_DEFINE_UNQUOTED(_CURL_VERSION, 	 "${libcurl_version}",  [libcURL - multiprotocol file transfer library version])
-AC_DEFINE_UNQUOTED(_MAGIC_VERSION, 	 "${libmagic_version}", [libmagic - magic number recognition library version])
-AC_DEFINE_UNQUOTED(_MYSQL_VERSION, 	 "${libmysql_version}", [libmysql - MySQL Database System library version])
-AC_DEFINE_UNQUOTED(_DBI_VERSION, 	 "${libdbi_version}",	[libdbi - Database Independent Abstraction Layer version])
-AC_DEFINE_UNQUOTED(_LIBUUID_VERSION, "${libuuid_version}",  [libuuid - version library to create a new UUID value])
-AC_DEFINE_UNQUOTED(_LIBEVENT_VERSION,"${libevent_version}", [libevent - event notification library version])
-AC_DEFINE_UNQUOTED(_LIBXML2_VERSION, "${libxml2_version}",  [libxml2 - Version 2 of the library to manipulate XML files])
+AC_DEFINE_UNQUOTED(_FLEX_VERSION,		 "${flex_version}",			[Flex version])
+AC_DEFINE_UNQUOTED(_BISON_VERSION,		 "${bison_version}",			[Bison version])
+AC_DEFINE_UNQUOTED(_PCRE_VERSION,		 "${pcre_version}",			[PCRE - Perl compatible regular expressions version])
+AC_DEFINE_UNQUOTED(_LDAP_VERSION,		 "${ldap_version}",			[Ldap version])
+AC_DEFINE_UNQUOTED(_EXPAT_VERSION,		 "${expat_version}",			[Expat version])
+AC_DEFINE_UNQUOTED(_LIBZ_VERSION,		 "${libz_version}",			[libz - general purpose compression library version])
+AC_DEFINE_UNQUOTED(_LIBSSH_VERSION,		 "${libssh_version}",		[libSSH version])
+AC_DEFINE_UNQUOTED(_OPENSSL_VERSION,	 "${openssl_version}",		[OpenSSL version])
+AC_DEFINE_UNQUOTED(_CURL_VERSION,		 "${libcurl_version}",		[libcURL - multiprotocol file transfer library version])
+AC_DEFINE_UNQUOTED(_MAGIC_VERSION,		 "${libmagic_version}",		[libmagic - magic number recognition library version])
+AC_DEFINE_UNQUOTED(_MYSQL_VERSION,		 "${libmysql_version}",		[libmysql - MySQL Database System library version])
+AC_DEFINE_UNQUOTED(_DBI_VERSION,			 "${libdbi_version}",		[libdbi - Database Independent Abstraction Layer version])
+AC_DEFINE_UNQUOTED(_LIBUUID_VERSION,	 "${libuuid_version}",		[libuuid - version library to create a new UUID value])
+AC_DEFINE_UNQUOTED(_LIBEVENT_VERSION,	 "${libevent_version}",		[libevent - event notification library version])
+AC_DEFINE_UNQUOTED(_LIBXML2_VERSION,	 "${libxml2_version}",		[libxml2 - version 2 of the library to manipulate XML files])
+AC_DEFINE_UNQUOTED(_PAGE_SPEED_VERSION, "${page_speed_version}",  [PageSpeed - version of Google page speed SDK])
  
 LIBS_SAVE=${LIBS}
 
@@ -497,6 +507,10 @@ fi
 
 if test "$HAVE_LIBXML2" = "yes"; then
    ulib_libxml2_msg="enabled"
+fi
+
+if test "$HAVE_PAGE_SPEED" = "yes"; then
+   ulib_pagespeed_msg="enabled"
 fi
 
 case "$target_os" in
@@ -628,7 +642,6 @@ if test "$ac_cv_func_inet_ntop" != "yes"; then
 fi
 
 AM_CONDITIONAL(GEOIP,		 test "$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" = "yes")
-AM_CONDITIONAL(FCGI,			 test "$ac_cv_lib_fcgi_FCGX_Accept"			 = "yes")
 AM_CONDITIONAL(PREAD,		 test "$ac_cv_func_pread"						 = "yes")
 AM_CONDITIONAL(DAEMON,		 test "$ac_cv_func_daemon"						 = "yes")
 AM_CONDITIONAL(TIMEGM,		 test "$ac_cv_func_timegm"						 = "yes")
@@ -1021,6 +1034,9 @@ else
 	pkglibexecdir="$prefix/libexec/ulib"
 fi
 
+# pkugin dir
+AC_DEFINE_UNQUOTED(U_LIBEXECDIR, "${pkglibexecdir}", [install directory for plugins])
+
 echo \
 "------------------------------------------------------------------------
 configure: Configured to build src/ulib/libulib:
@@ -1073,6 +1089,8 @@ configure: Configured to build src/ulib/libulib:
       libevent library: ${libevent_version}
        libxml2 support: ${ulib_libxml2_msg}
        libxml2 library: ${libxml2_version}
+    Page-Speed support: ${ulib_pagespeed_msg}
+        Page-Speed SDK: ${page_speed_version}
       LEX/YACC support: ${ulib_parser_msg}
       Lexical analyzer: ${LEX} ( ${flex_version} )
       Parser generator: ${YACC} ( ${bison_version} )
@@ -1106,8 +1124,8 @@ AC_OUTPUT(Makefile \
 			 src/ulib/net/server/plugin/Makefile \
 			 src/ulib/net/server/plugin/usp/Makefile \
 			 src/ulib/net/server/plugin/mod_shib/Makefile \
-			 src/ulib/net/server/plugin/mod_fcgi/Makefile \
 			 src/ulib/net/server/plugin/mod_geoip/Makefile \
+			 src/ulib/net/server/plugin/page_speed/Makefile \
 			 include/ulib/Makefile \
 			 contrib/HCSP/Makefile \
 			 contrib/RSIGN/Makefile \

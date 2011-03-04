@@ -210,6 +210,10 @@ public:
    static UString simplifyWhiteSpace(const char* s, uint32_t n);
    static UString simplifyWhiteSpace(const UString& s) { return simplifyWhiteSpace(U_STRING_TO_PARAM(s)); }
 
+   // Minifies CSS/JS by removing comments and whitespaces
+
+   static void minifyCssJs(UString& s);
+
    // Sort two version numbers, comparing equivalently seperated strings of digits numerically
    // ----------------------------------------------------------------------------------------
    // Returns a positive number if (a > b)

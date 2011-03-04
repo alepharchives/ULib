@@ -8,9 +8,9 @@ start_msg web_server_multiclient
 
 rm -f web_server_multiclient.log \
 		out/userver_tcp.out err/userver_tcp.err err/web_server_multiclient.err \
-      trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]*
+      trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
 
-#UTRACE="0 15M 1"
+#UTRACE="0 50M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
@@ -21,20 +21,18 @@ fi
 
 DIR_CMD="../../examples/userver"
 
-CURDIR=`pwd`
-cd ../../src/ulib/net/server/plugin/usp/; make benchmarking.la >/dev/null 2>&1 || exit 1
-cd $CURDIR
-
-mkdir -p usp
-cd usp
-rm -f *.so
-if [ "$TERM" = "msys" ]; then
-   cp ../../../src/ulib/.libs/libulib*.dll ..
-   cp ../../../src/ulib/net/server/plugin/usp/.libs/benchmarking.dll .
-else
-   ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/benchmarking.so
+if [ "$TERM" != "cygwin" ]; then
+   ( mkdir -p usp; cd usp;
+	  rm -f *.so;
+     ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/benchmarking.so;
+     cd ../../../src/ulib/net/server/plugin/usp/;
+     make benchmarking.la >/dev/null 2>&1 || exit 1;
+     test -d ../.libs &&
+     ( cd ../.libs;
+       ln -sf ../mod_shib/.libs/mod_shib.so;
+       ln -sf ../page_speed/.libs/mod_pagespeed.so;
+       ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
 fi
-cd $CURDIR
 
 #STRACE=$TRUSS
 start_prg_background userver_tcp -c web_server_multiclient.cfg

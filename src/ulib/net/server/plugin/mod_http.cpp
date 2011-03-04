@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/command.h>
 #include <ulib/file_config.h>
 #include <ulib/utility/uhttp.h>
 #include <ulib/net/server/server.h>
@@ -27,6 +28,7 @@ const UString* UHttpPlugIn::str_URI_REQUEST_CERT_MASK;
 const UString* UHttpPlugIn::str_URI_PROTECTED_ALLOWED_IP;
 const UString* UHttpPlugIn::str_LIMIT_REQUEST_BODY;
 const UString* UHttpPlugIn::str_REQUEST_READ_TIMEOUT;
+const UString* UHttpPlugIn::str_ENABLE_INOTIFY;
 
 void UHttpPlugIn::str_allocate()
 {
@@ -38,6 +40,7 @@ void UHttpPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_URI_PROTECTED_ALLOWED_IP,0)
    U_INTERNAL_ASSERT_EQUALS(str_LIMIT_REQUEST_BODY,0)
    U_INTERNAL_ASSERT_EQUALS(str_REQUEST_READ_TIMEOUT,0)
+   U_INTERNAL_ASSERT_EQUALS(str_ENABLE_INOTIFY,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("CACHE_FILE_MASK") },
@@ -45,7 +48,8 @@ void UHttpPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("URI_REQUEST_CERT_MASK") },
       { U_STRINGREP_FROM_CONSTANT("URI_PROTECTED_ALLOWED_IP") },
       { U_STRINGREP_FROM_CONSTANT("LIMIT_REQUEST_BODY") },
-      { U_STRINGREP_FROM_CONSTANT("REQUEST_READ_TIMEOUT") }
+      { U_STRINGREP_FROM_CONSTANT("REQUEST_READ_TIMEOUT") },
+      { U_STRINGREP_FROM_CONSTANT("ENABLE_INOTIFY") }
    };
 
    U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,          U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -54,6 +58,7 @@ void UHttpPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP, U_STRING_FROM_STRINGREP_STORAGE(3));
    U_NEW_ULIB_OBJECT(str_LIMIT_REQUEST_BODY,       U_STRING_FROM_STRINGREP_STORAGE(4));
    U_NEW_ULIB_OBJECT(str_REQUEST_READ_TIMEOUT,     U_STRING_FROM_STRINGREP_STORAGE(5));
+   U_NEW_ULIB_OBJECT(str_ENABLE_INOTIFY,           U_STRING_FROM_STRINGREP_STORAGE(6));
 }
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -84,6 +89,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // ALIAS                        vector of URI redirection (request -> alias)
    // REWRITE_RULE_NF              vector of URI rewrite rule applied after checks that files do not exist (regex1 -> uri1 ...)
    //
+   // ENABLE_INOTIFY               enable automatic update of document root image with inotify
    // CACHE_FILE_MASK              mask (DOS regexp) of pathfile that be cached in memory
    //
    // VIRTUAL_HOST                 flag to activate practice of maintaining more than one server on one machine,
@@ -146,6 +152,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          delete UHTTP::cache_file_mask;
                 UHTTP::cache_file_mask = 0;
          }
+
+      if (cfg.readBoolean(*str_ENABLE_INOTIFY)) UServer_Base::handler_event = this;
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -157,7 +165,7 @@ int UHttpPlugIn::handlerInit()
 
    // init HTTP context
 
-   UHTTP::ctor(this);
+   UHTTP::ctor();
 
    // URI PROTECTED and ALIAS
 
@@ -182,6 +190,8 @@ int UHttpPlugIn::handlerInit()
 int UHttpPlugIn::handlerREAD()
 {
    U_TRACE(0, "UHttpPlugIn::handlerREAD()")
+
+   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
 
    if (UHTTP::readHTTPRequest())
       {
@@ -269,35 +279,33 @@ next:
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
-   // HTTP/1.1 compliance: Sends 411 for missing Content-Length on POST requests
-   //                      Sends 400 for broken Request-Line
-   //                      Sends 501 for request-method != (GET|POST|HEAD)
-   //                      Sends 505 for protocol != HTTP/1.[0-1]
-
-   {
-   int nResponseCode = HTTP_NOT_IMPLEMENTED;
-
-   if (U_http_method_type)
-      {
-      if (UHTTP::http_info.uri_len == 0)
-         {
-         UHTTP::setHTTPBadRequest();
-
-         goto send_response;
-         }
-
-           if (UHTTP::isHttpPOST())            nResponseCode = (UHTTP::isHTTPRequestTooLarge() ? HTTP_ENTITY_TOO_LARGE : HTTP_LENGTH_REQUIRED);
-      else if (UHTTP::http_info.szHeader == 0) nResponseCode = HTTP_VERSION;
-      }
-
    U_http_is_connection_close = U_YES;
 
-   UHTTP::setHTTPResponse(nResponseCode, 0, 0);
-   }
+   if (UClientImage_Base::wbuffer->empty())
+      {
+      // HTTP/1.1 compliance: Sends 411 for missing Content-Length on POST requests
+      //                      Sends 400 for broken Request-Line
+      //                      Sends 501 for request-method != (GET|POST|HEAD)
+      //                      Sends 505 for protocol != HTTP/1.[0-1]
+
+      int nResponseCode = HTTP_NOT_IMPLEMENTED;
+
+      if (U_http_method_type)
+         {
+         if (UHTTP::http_info.uri_len == 0)
+            {
+            UHTTP::setHTTPBadRequest();
+
+            goto send_response;
+            }
+
+         if (UHTTP::http_info.szHeader == 0) nResponseCode = HTTP_VERSION;
+         }
+
+      UHTTP::setHTTPResponse(nResponseCode, 0, 0);
+      }
 
 send_response:
-
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
 
    (void) UClientImage_Base::pClientImage->handlerWrite();
 
@@ -324,7 +332,11 @@ int UHttpPlugIn::handlerRequest()
 
          bool async = (UServer_Base::preforked_num_kids == 0 && UClientImage_Base::isPipeline() == false);
 
-         if (UHTTP::processCGIRequest((UCommand*)0, &environment, async)) (void) UHTTP::processCGIOutput();
+         if (UHTTP::processCGIRequest((UCommand*)0, &environment, async, true) == false)
+            {
+            if (UCommand::isTimeout()) UHTTP::setHTTPResponse(HTTP_GATEWAY_TIMEOUT, 0, 0);
+            else                       UHTTP::setHTTPInternalError();
+            }
          }
       else
          {
@@ -343,7 +355,7 @@ int UHttpPlugIn::handlerRequest()
    else if (UHTTP::isHTTPRequestNotFound())  UHTTP::setHTTPNotFound();  // set not found error response...
    else if (UHTTP::isHTTPRequestForbidden()) UHTTP::setHTTPForbidden(); // set forbidden error response...
 
-end: // check for "Connection: close" in headers...
+end:  // check for "Connection: close" in headers...
 
    U_INTERNAL_DUMP("U_http_is_connection_close = %d", U_http_is_connection_close)
 

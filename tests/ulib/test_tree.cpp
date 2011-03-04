@@ -125,7 +125,7 @@ int U_EXPORT main(int argc, char* argv[])
 
    UString filter = U_STRING_FROM_CONSTANT("?db.*");
 
-   UFile::listRecursiveContentOf(y, 0, &filter);
+   UFile::listRecursiveContentOf(y, 0, U_STRING_TO_PARAM(filter));
 
    U_ASSERT( y.size() == 2 )
 

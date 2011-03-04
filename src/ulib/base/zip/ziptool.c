@@ -378,9 +378,10 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
 
 static int add_to_zip(int fd, const char* file)
 {
+   DIR* dir = 0;
    zipentry* ze;
-   int stat_return;
    struct stat statbuf;
+   int stat_return, result = 0;
 
    U_INTERNAL_TRACE("add_to_zip(%d,%s)", fd, file)
 
@@ -404,7 +405,7 @@ static int add_to_zip(int fd, const char* file)
       unsigned d_namlen;
       unsigned long mod_time;
 
-      DIR* dir = opendir(file);
+      dir = opendir(file);
 
       if (dir == 0)
          {
@@ -451,7 +452,9 @@ static int add_to_zip(int fd, const char* file)
          {
          perror("malloc");
 
-         return 1;
+         result = 1;
+
+         goto end;
          }
 
       ze->filename = (char*) malloc((nlen + 1) * sizeof(char) + 1);
@@ -482,13 +485,13 @@ static int add_to_zip(int fd, const char* file)
             {
             U_INTERNAL_TRACE("Error adding file to zip")
 
-            return 1;
+            result = 1;
+
+            goto end;
             }
          }
 
       free(fullname);
-
-      (void) closedir(dir);
       }
    else if (S_ISREG(statbuf.st_mode))
       {
@@ -511,9 +514,14 @@ static int add_to_zip(int fd, const char* file)
    else
       {
       U_INTERNAL_TRACE("Illegal file specified: %s", file)
+
+      return 0;
       }
 
-   return 0;
+end:
+   (void) closedir(dir);
+
+   return result;
 }
 
 static int zipfd;
@@ -863,13 +871,14 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
          {
          /* Loop through all the directories in the path, (everything w/ a '/') */
 
+         const ub1* idx;
          struct stat sbuf;
          const ub1* start = filename;
          char* tmp_buff = (char*) malloc(fnlen);
 
          for (;;)
             {
-            const ub1* idx = (const unsigned char*)strchr((const char*)start, '/');
+            idx = (const unsigned char*)strchr((const char*)start, '/');
 
             if (idx == 0) break;
 
@@ -931,6 +940,14 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
          free(tmp_buff);
          }
 
+      if (method != 8 &&
+          (flags & 0x0008))
+         {
+         U_INTERNAL_TRACE("Error: not compressed but data_descriptor")
+
+         return 0;
+         }
+
       if (handle &&
           f_fd != -1)
          {
@@ -944,14 +961,6 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
             return 0;
             }
-         }
-
-      if (method != 8 &&
-          (flags & 0x0008))
-         {
-         U_INTERNAL_TRACE("Error: not compressed but data_descriptor")
-
-         return 0;
          }
 
       if (method == 8 ||
@@ -981,6 +990,8 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
                {
                perror("read");
 
+               (void) close(f_fd);
+
                return 0;
                }
 
@@ -996,6 +1007,8 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
          if (eflen) consume(eflen);
          }
+
+      (void) close(f_fd);
 
       /* if there is a data descriptor left, compare the CRC */
 
@@ -1026,8 +1039,6 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
          return 0;
          }
-
-      (void) close(f_fd);
 
       ++n;
       }

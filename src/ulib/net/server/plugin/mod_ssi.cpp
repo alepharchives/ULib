@@ -609,7 +609,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                   U_INTERNAL_ASSERT_DIFFERS(UHTTP::pathname->size(), u_cwd_len)
 
                   if (UHTTP::checkForCGIRequest() &&
-                      UHTTP::processCGIRequest((UCommand*)0, &environment, false))
+                      UHTTP::processCGIRequest((UCommand*)0, &environment, false, false))
                      {
                      (void) output.append(U_STRING_TO_PARAM(*UClientImage_Base::wbuffer));
                      }
@@ -669,14 +669,11 @@ int USSIPlugIn::handlerRequest()
 
       // read the SSI file
 
-      bool deflate = (U_http_is_accept_deflate == '1'), bappend = deflate;
+      bool deflate = (U_http_is_accept_deflate == '1');
 
       if (UHTTP::isHTTPRequestAlreadyProcessed())
          {
-         if (deflate) bappend = (UHTTP::isDataFromCache(true) == false);
-
          body          = UHTTP::getDataFromCache(false, false);
-         header        = UHTTP::getDataFromCache(true, (bappend == false));
          last_modified = UHTTP::file_data->mtime;
          }
       else
@@ -685,9 +682,9 @@ int USSIPlugIn::handlerRequest()
          last_modified = UHTTP::file->st_mtime;
          }
 
-      if (bappend) (void) header.append(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+      if (deflate) (void) header.append(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
 
-      if (UHTTP::isHTTPRequestAlreadyProcessed() == false) UHTTP::getFileMimeType(UHTTP::file->getSuffix(), 0, header, UHTTP::file->getSize());
+      UHTTP::getFileMimeType(UHTTP::file->getSuffix(), 0, header, UHTTP::file->getSize());
 
       header = UHTTP::getHTTPHeaderForResponse(HTTP_OK, header);
 

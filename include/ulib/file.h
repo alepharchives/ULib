@@ -60,8 +60,12 @@
 #define U_FILE_TO_PARAM(file) (file).getPathRelativ(),(file).getPathRelativLen()
 #define U_FILE_TO_TRACE(file) (file).getPathRelativLen(),(file).getPathRelativ()
 
-#define U_css 'c' // text/css
-#define U_js  'j' // text/javascript
+#define U_js   'j' // text/javascript
+#define U_css  'c' // text/css
+#define U_html 'h' // text/html
+#define U_gif  'g' // image/gif
+#define U_png  'p' // image/png
+#define U_jpg  'J' // image/jpg
 
 class URDB;
 class UHTTP;
@@ -811,9 +815,10 @@ public:
 
    // LS
 
-   static uint32_t listContentOf(UVector<UString>& vec,         const UString* dir = 0, const UString* filter = 0);
-   static void     listRecursiveContentOf(UTree<UString>& tree, const UString* dir = 0, const UString* filter = 0);
-   static uint32_t buildFilenameListFrom(UVector<UString>& vec, const UString& arg,     char sep = ',');
+   static uint32_t buildFilenameListFrom(UVector<UString>& vec, const UString& arg, char sep = ',');
+
+   static uint32_t listContentOf(UVector<UString>& vec,         const UString* dir = 0, const char* filter = 0, uint32_t filter_len = 0);
+   static void     listRecursiveContentOf(UTree<UString>& tree, const UString* dir = 0, const char* filter = 0, uint32_t filter_len = 0);
 
    // DEBUG
 

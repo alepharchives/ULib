@@ -2,11 +2,10 @@
 
 SUBDIRS = usp
 
-if FCGI
-if DEBUG
-SUBDIRS += mod_fcgi
+if PAGE_SPEED
+SUBDIRS += page_speed
 endif
-endif
+
 if GEOIP
 if !STATIC_HANDLER_GEOIP
 SUBDIRS += mod_geoip
@@ -24,8 +23,8 @@ endif
 
 EXTRA_DIST = *.cpp Makefile.* \
 				 mod_shib/*.cpp mod_shib/Makefile.* \
-				 mod_fcgi/*.cpp mod_fcgi/Makefile.* \
-				 mod_geoip/*.cpp mod_geoip/Makefile.*
+				 mod_geoip/*.cpp mod_geoip/Makefile.* \
+				 page_speed/*.cpp page_speed/Makefile.*
 
 MAINTAINERCLEANFILES = Makefile.in
 

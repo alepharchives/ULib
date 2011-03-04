@@ -45,16 +45,8 @@ autoconf/install-sh -c -m 644 $SRC/web_server.cfg						$DST/etc/web_server.cfg.d
 autoconf/install-sh -c -m 644 $SRC/CSP/WEB/cgi-bin/.env				$DST/var/cgi-bin
 autoconf/install-sh -c -m 644 $SRC/CSP/WEB/cgi-bin/get-ca.sh		$DST/var/cgi-bin
 autoconf/install-sh -c -m 644 $SRC/CSP/WEB/cgi-bin/get-crl.sh		$DST/var/cgi-bin
-autoconf/install-sh -c -m 644 $SRC/icons/binary.gif					$DST/var/icons
 autoconf/install-sh -c -m 644 $SRC/icons/gopher-unknown.gif			$DST/var/icons
-autoconf/install-sh -c -m 644 $SRC/icons/image.gif						$DST/var/icons
-autoconf/install-sh -c -m 644 $SRC/icons/index.gif						$DST/var/icons
-autoconf/install-sh -c -m 644 $SRC/icons/menu.gif						$DST/var/icons
-autoconf/install-sh -c -m 644 $SRC/icons/movie.gif						$DST/var/icons
-autoconf/install-sh -c -m 644 $SRC/icons/sound.gif						$DST/var/icons
-autoconf/install-sh -c -m 644 $SRC/icons/telnet.gif					$DST/var/icons
-autoconf/install-sh -c -m 644 $SRC/icons/text.gif						$DST/var/icons
-autoconf/install-sh -c -m 644 $SRC/icons/unknown.gif					$DST/var/icons
+autoconf/install-sh -c -m 644 $SRC/icons/menu.png						$DST/var/icons
 
 cat > $RPM_BUILD_ROOT/etc/sysconfig/web_server << EOF
 #ld_library_path=/usr/lib64
@@ -81,3 +73,4 @@ rm -rf %{buildroot}
 /srv/WEB/var/cgi-bin/*.sh
 /srv/WEB/var/cgi-bin/.env
 /srv/WEB/var/icons/*.gif
+/srv/WEB/var/icons/*.png

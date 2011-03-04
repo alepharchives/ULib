@@ -157,7 +157,7 @@ public:
          {
          const char* type = stype->data();
 
-         if      (U_STRNEQ(type, "image/"))                       icon = "/icons/img.gif";
+         if      (U_STRNEQ(type, "image/"))                       icon = "/icons/img.png";
          else if (U_STRNEQ(type, "application/x-"))               icon = "/icons/x.gif";
          else if (U_STRNEQ(type, "application/pdf"))              icon = "/icons/pdf.gif";
          else if (U_STRNEQ(type, "application/timestamp-reply"))  icon = "/icons/timestamp.gif";

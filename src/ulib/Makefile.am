@@ -4,9 +4,6 @@ EXTRA_DIST = base/* container/* db/* debug/* dynamic/* flex/* internal/* ldap/* 
 			 	 replace/* ssl/* ssh/* ui/* utility/* xml/expat/* xml/libxml2/* zip/* \
 				 lemon/Makefile.* lemon/*.c lemon/*.cpp lemon/*.y \
              net/server/plugin/*.cpp net/server/plugin/Makefile.* \
-             net/server/plugin/mod_shib/*.cpp net/server/plugin/mod_shib/Makefile.* \
-             net/server/plugin/mod_fcgi/*.cpp net/server/plugin/mod_fcgi/Makefile.* \
-             net/server/plugin/mod_geoip/*.cpp net/server/plugin/mod_geoip/Makefile.* \
 				 *.cpp all_c.c ULib.pc.in ULib.rc.in
 
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
