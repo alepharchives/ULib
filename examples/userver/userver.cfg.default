@@ -28,6 +28,7 @@
 # MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
 #                (Value <= 1 will disable Keep-Alive)
 #
+# DH_FILE       dh param
 # CERT_FILE     certificate of server
 # KEY_FILE      private key of server
 # PASSWORD      password for private key of server
@@ -89,6 +90,7 @@ userver {
 
   MAX_KEEP_ALIVE 1024
 
+# DH_FILE        ../ulib/CA/param.dh
 # CERT_FILE      ../ulib/CA/server.crt
 #  KEY_FILE      ../ulib/CA/server.key
 # PASSWORD       stefano
@@ -111,6 +113,8 @@ userver {
 # VIRTUAL_HOST               flag to activate practice of maintaining more than one server on one machine,
 #                            as differentiated by their apparent hostname 
 # DIGEST_AUTHENTICATION      flag authentication method (yes = digest, no = basic)
+#
+# ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add Cache control: public directive)
 #
 # URI_PROTECTED_MASK         mask (DOS regexp) of URI protected from prying eyes
 # URI_PROTECTED_ALLOWED_IP   list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
@@ -143,8 +147,9 @@ mod_http {
 # ENABLE_INOTIFY        yes
 # CACHE_FILE_MASK       *.css|*.js|*.gif|*.png|*.jpg|*.*html
 
-# VIRTUAL_HOST          yes
-# DIGEST_AUTHENTICATION yes
+# VIRTUAL_HOST							 yes
+# DIGEST_AUTHENTICATION				 yes
+# ENABLE_CACHING_BY_PROXY_SERVERS yes
 #
 # URI_PROTECTED_MASK        /RA/admin/cgi-bin/*
 # URI_PROTECTED_ALLOWED_IP  127.0.0.1,10.30.0.0/16

@@ -19,14 +19,25 @@ clean-local:
 
 ## usp section
 ## ----------------------------------------------------------------------------------------------------
-moduledir = $(libexecdir)/ulib
+moduledir = $(libexecdir)/ulib/usp
 MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
 
 SUFFIXES = .cpp .usp .lo .la
 
-.usp.cpp:
+upload_progress.cpp: ./usp_translator$(EXEEXT)
+
+.usp.cpp: ./usp_translator$(EXEEXT)
 	@$(WINELOADER) ./usp_translator$(EXEEXT) $<
 
 .lo.la:
 	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) -no-undefined $< $(ulib_la) $(LIBS)
+
+module_LTLIBRARIES 			= upload_progress.la
+upload_progress_la_SOURCES = upload_progress.cpp
+upload_progress_la_LIBADD  = $(ulib_la)
+upload_progress_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+
+FOR_ALL = .libs/upload_progress.so
+
+all: $(FOR_ALL)
 ## ----------------------------------------------------------------------------------------------------

@@ -68,7 +68,8 @@ bool USSLSocket::useDHFile(const char* dh_file)
 
    DH* dh;
 
-   if (dh_file)
+   if ( dh_file &&
+       *dh_file)
       {
       FILE* paramfile = (FILE*) U_SYSCALL(fopen, "%S,%S", dh_file, "r");
 
@@ -125,13 +126,13 @@ bool USSLSocket::useDHFile(const char* dh_file)
    U_RETURN(true);
 }
 
-bool USSLSocket::setContext(const char* cert_file,
-                            const char* private_key_file, const char* passwd,
-                            const char* CAfile, const char* CApath, int mode)
+bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const char* private_key_file, const char* passwd, const char* CAfile, const char* CApath, int mode)
 {
-   U_TRACE(1, "USSLSocket::setContext(%S,%S,%S,%S,%S,%d)", cert_file, private_key_file, passwd, CAfile, CApath, mode)
+   U_TRACE(1, "USSLSocket::setContext(%S,%S,%S,%S,%S,%S,%d)", dh_file, cert_file, private_key_file, passwd, CAfile, CApath, mode)
 
    U_INTERNAL_ASSERT_POINTER(ctx)
+
+   if (useDHFile(dh_file) == false) U_RETURN(false);
 
    int result;
 

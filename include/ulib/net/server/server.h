@@ -115,6 +115,7 @@ public:
    // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
    //                (Value <= 1 will disable Keep-Alive)
    //
+   // DH_FILE       dh param (these are the bit DH parameters from "Assigned Number for SKIP Protocols")
    // CERT_FILE     server certificate
    // KEY_FILE      server private key
    // PASSWORD      password for server private key
@@ -140,6 +141,7 @@ public:
    static const UString* str_CERT_FILE;
    static const UString* str_KEY_FILE;
    static const UString* str_PASSWORD;
+   static const UString* str_DH_FILE;
    static const UString* str_CA_FILE;
    static const UString* str_CA_PATH;
    static const UString* str_VERIFY_MODE;
@@ -353,6 +355,7 @@ protected:
    UString server,      // host name or ip address for the listening socket
            as_user,     // change the current working directory to the user's home dir, and downgrade security to that user account
            log_file,    // locations for file log
+           dh_file,     // These are the 1024 bit DH parameters from "Assigned Number for SKIP Protocols"
            cert_file,   // locations for certificate of server
            key_file,    // locations for private key of server
            password,    // password for private key of server
@@ -591,22 +594,16 @@ public:
       USSLSocket* sslsocket = getSocket();
 
       U_INTERNAL_ASSERT(sslsocket->isSSL())
+      U_INTERNAL_ASSERT(  dh_file.isNullTerminated())
       U_INTERNAL_ASSERT(  ca_file.isNullTerminated())
       U_INTERNAL_ASSERT(  ca_path.isNullTerminated())
       U_INTERNAL_ASSERT( key_file.isNullTerminated())
       U_INTERNAL_ASSERT( password.isNullTerminated())
       U_INTERNAL_ASSERT(cert_file.isNullTerminated())
 
-      // These are the 1024 bit DH parameters from "Assigned Number for SKIP Protocols"
-      // (http://www.skip-vpn.org/spec/numbers.html).
-      // See there for how they were generated.
-
-      sslsocket->useDHFile();
-
       // Load our certificate
 
-      if (sslsocket->setContext(cert_file.data(), key_file.data(), password.data(),
-                                  ca_file.data(),  ca_path.data(), verify_mode) == false)
+      if (sslsocket->setContext(dh_file.data(), cert_file.data(), key_file.data(), password.data(), ca_file.data(),  ca_path.data(), verify_mode) == false)
          {
          U_ERROR("SSL setContext() failed...");
          }

@@ -240,13 +240,8 @@ typedef enum {
    U_HASH_RIPEMD160 = 9
 } UHashType;
 
-#if SIZEOF_VOID_P == 4
-#  define int2ptr(x) ((void*)(uint32_t)x)
-#  define ptr2int(x) ((uint64_t)(uint32_t)x)
-#else
-#  define int2ptr(x) ((void*)x)
-#  define ptr2int(x) ((uint64_t)x)
-#endif
+#define int2ptr(x) ((void*)(long)x)
+#define ptr2int(x) ((long)x)
 
 /* Type of file sizes and offsets (LFS) */
 

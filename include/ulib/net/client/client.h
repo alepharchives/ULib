@@ -258,8 +258,7 @@ public:
 
       // Load our certificate
 
-      if (getSocket()->setContext(cert_file.data(), key_file.data(), password.data(),
-                                    ca_file.data(),  ca_path.data(), verify_mode) == false)
+      if (getSocket()->setContext(0, cert_file.data(), key_file.data(), password.data(), ca_file.data(),  ca_path.data(), verify_mode) == false)
          {
          U_ERROR("SSL setContext() failed...");
          }

@@ -109,6 +109,7 @@ const UString* UServer_Base::str_LOG_MSG_SIZE;
 const UString* UServer_Base::str_CERT_FILE;
 const UString* UServer_Base::str_KEY_FILE;
 const UString* UServer_Base::str_PASSWORD;
+const UString* UServer_Base::str_DH_FILE;
 const UString* UServer_Base::str_CA_FILE;
 const UString* UServer_Base::str_CA_PATH;
 const UString* UServer_Base::str_VERIFY_MODE;
@@ -149,6 +150,7 @@ void UServer_Base::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_CERT_FILE,0)
    U_INTERNAL_ASSERT_EQUALS(str_KEY_FILE,0)
    U_INTERNAL_ASSERT_EQUALS(str_PASSWORD,0)
+   U_INTERNAL_ASSERT_EQUALS(str_DH_FILE,0)
    U_INTERNAL_ASSERT_EQUALS(str_CA_FILE,0)
    U_INTERNAL_ASSERT_EQUALS(str_CA_PATH,0)
    U_INTERNAL_ASSERT_EQUALS(str_VERIFY_MODE,0)
@@ -186,6 +188,7 @@ void UServer_Base::str_allocate()
    { U_STRINGREP_FROM_CONSTANT("CERT_FILE") },
    { U_STRINGREP_FROM_CONSTANT("KEY_FILE") },
    { U_STRINGREP_FROM_CONSTANT("PASSWORD") },
+   { U_STRINGREP_FROM_CONSTANT("DH_FILE") },
    { U_STRINGREP_FROM_CONSTANT("CA_FILE") },
    { U_STRINGREP_FROM_CONSTANT("CA_PATH") },
    { U_STRINGREP_FROM_CONSTANT("VERIFY_MODE") },
@@ -223,28 +226,29 @@ void UServer_Base::str_allocate()
    U_NEW_ULIB_OBJECT(str_CERT_FILE,             U_STRING_FROM_STRINGREP_STORAGE(10));
    U_NEW_ULIB_OBJECT(str_KEY_FILE,              U_STRING_FROM_STRINGREP_STORAGE(11));
    U_NEW_ULIB_OBJECT(str_PASSWORD,              U_STRING_FROM_STRINGREP_STORAGE(12));
-   U_NEW_ULIB_OBJECT(str_CA_FILE,               U_STRING_FROM_STRINGREP_STORAGE(13));
-   U_NEW_ULIB_OBJECT(str_CA_PATH,               U_STRING_FROM_STRINGREP_STORAGE(14));
-   U_NEW_ULIB_OBJECT(str_VERIFY_MODE,           U_STRING_FROM_STRINGREP_STORAGE(15));
-   U_NEW_ULIB_OBJECT(str_ALLOWED_IP,            U_STRING_FROM_STRINGREP_STORAGE(16));
-   U_NEW_ULIB_OBJECT(str_SOCKET_NAME,           U_STRING_FROM_STRINGREP_STORAGE(17));
-   U_NEW_ULIB_OBJECT(str_DOCUMENT_ROOT,         U_STRING_FROM_STRINGREP_STORAGE(18));
-   U_NEW_ULIB_OBJECT(str_PLUGIN,                U_STRING_FROM_STRINGREP_STORAGE(19));
-   U_NEW_ULIB_OBJECT(str_PLUGIN_DIR,            U_STRING_FROM_STRINGREP_STORAGE(20));
-   U_NEW_ULIB_OBJECT(str_REQ_TIMEOUT,           U_STRING_FROM_STRINGREP_STORAGE(21));
-   U_NEW_ULIB_OBJECT(str_CGI_TIMEOUT,           U_STRING_FROM_STRINGREP_STORAGE(22));
-   U_NEW_ULIB_OBJECT(str_VIRTUAL_HOST,          U_STRING_FROM_STRINGREP_STORAGE(23));
-   U_NEW_ULIB_OBJECT(str_DIGEST_AUTHENTICATION, U_STRING_FROM_STRINGREP_STORAGE(24));
-   U_NEW_ULIB_OBJECT(str_URI,                   U_STRING_FROM_STRINGREP_STORAGE(25));
-   U_NEW_ULIB_OBJECT(str_HOST,                  U_STRING_FROM_STRINGREP_STORAGE(26));
-   U_NEW_ULIB_OBJECT(str_USER,                  U_STRING_FROM_STRINGREP_STORAGE(27));
-   U_NEW_ULIB_OBJECT(str_SERVER,                U_STRING_FROM_STRINGREP_STORAGE(28));
-   U_NEW_ULIB_OBJECT(str_METHOD_NAME,           U_STRING_FROM_STRINGREP_STORAGE(29));
-   U_NEW_ULIB_OBJECT(str_RESPONSE_TYPE,         U_STRING_FROM_STRINGREP_STORAGE(30));
-   U_NEW_ULIB_OBJECT(str_IP_ADDRESS,            U_STRING_FROM_STRINGREP_STORAGE(31));
-   U_NEW_ULIB_OBJECT(str_MAX_KEEP_ALIVE,        U_STRING_FROM_STRINGREP_STORAGE(32));
-   U_NEW_ULIB_OBJECT(str_PID_FILE,              U_STRING_FROM_STRINGREP_STORAGE(33));
-   U_NEW_ULIB_OBJECT(str_USE_TCP_OPTIMIZATION,  U_STRING_FROM_STRINGREP_STORAGE(34));
+   U_NEW_ULIB_OBJECT(str_DH_FILE,               U_STRING_FROM_STRINGREP_STORAGE(13));
+   U_NEW_ULIB_OBJECT(str_CA_FILE,               U_STRING_FROM_STRINGREP_STORAGE(14));
+   U_NEW_ULIB_OBJECT(str_CA_PATH,               U_STRING_FROM_STRINGREP_STORAGE(15));
+   U_NEW_ULIB_OBJECT(str_VERIFY_MODE,           U_STRING_FROM_STRINGREP_STORAGE(16));
+   U_NEW_ULIB_OBJECT(str_ALLOWED_IP,            U_STRING_FROM_STRINGREP_STORAGE(17));
+   U_NEW_ULIB_OBJECT(str_SOCKET_NAME,           U_STRING_FROM_STRINGREP_STORAGE(18));
+   U_NEW_ULIB_OBJECT(str_DOCUMENT_ROOT,         U_STRING_FROM_STRINGREP_STORAGE(19));
+   U_NEW_ULIB_OBJECT(str_PLUGIN,                U_STRING_FROM_STRINGREP_STORAGE(20));
+   U_NEW_ULIB_OBJECT(str_PLUGIN_DIR,            U_STRING_FROM_STRINGREP_STORAGE(21));
+   U_NEW_ULIB_OBJECT(str_REQ_TIMEOUT,           U_STRING_FROM_STRINGREP_STORAGE(22));
+   U_NEW_ULIB_OBJECT(str_CGI_TIMEOUT,           U_STRING_FROM_STRINGREP_STORAGE(23));
+   U_NEW_ULIB_OBJECT(str_VIRTUAL_HOST,          U_STRING_FROM_STRINGREP_STORAGE(24));
+   U_NEW_ULIB_OBJECT(str_DIGEST_AUTHENTICATION, U_STRING_FROM_STRINGREP_STORAGE(25));
+   U_NEW_ULIB_OBJECT(str_URI,                   U_STRING_FROM_STRINGREP_STORAGE(26));
+   U_NEW_ULIB_OBJECT(str_HOST,                  U_STRING_FROM_STRINGREP_STORAGE(27));
+   U_NEW_ULIB_OBJECT(str_USER,                  U_STRING_FROM_STRINGREP_STORAGE(28));
+   U_NEW_ULIB_OBJECT(str_SERVER,                U_STRING_FROM_STRINGREP_STORAGE(29));
+   U_NEW_ULIB_OBJECT(str_METHOD_NAME,           U_STRING_FROM_STRINGREP_STORAGE(30));
+   U_NEW_ULIB_OBJECT(str_RESPONSE_TYPE,         U_STRING_FROM_STRINGREP_STORAGE(31));
+   U_NEW_ULIB_OBJECT(str_IP_ADDRESS,            U_STRING_FROM_STRINGREP_STORAGE(32));
+   U_NEW_ULIB_OBJECT(str_MAX_KEEP_ALIVE,        U_STRING_FROM_STRINGREP_STORAGE(33));
+   U_NEW_ULIB_OBJECT(str_PID_FILE,              U_STRING_FROM_STRINGREP_STORAGE(34));
+   U_NEW_ULIB_OBJECT(str_USE_TCP_OPTIMIZATION,  U_STRING_FROM_STRINGREP_STORAGE(35));
 }
 
 UServer_Base::UServer_Base(UFileConfig* cfg)
@@ -336,6 +340,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
    //                (Value <= 1 will disable Keep-Alive) (default 256)
    //
+   // DH_FILE       DH param
    // CERT_FILE     server certificate
    // KEY_FILE      server private key
    // PASSWORD      password for server private key
@@ -375,6 +380,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    UClientImage_Base::setMsgWelcome(cfg[*str_MSG_WELCOME]);
 
 #ifdef HAVE_SSL
+   dh_file     = cfg[*str_DH_FILE];
    ca_file     = cfg[*str_CA_FILE];
    ca_path     = cfg[*str_CA_PATH];
    key_file    = cfg[*str_KEY_FILE];
@@ -629,10 +635,16 @@ void UServer_Base::runAsUser()
 {
    U_TRACE(0, "UServer_Base::runAsUser()")
 
-   U_INTERNAL_ASSERT(pthis->as_user.isNullTerminated())
+   /* If you want the webserver to run as a process of a defined user, you can call it.
+    * For the change of user to work, it's necessary to execute the server with root privileges.
+    * If it's started by a user that that doesn't have root privileges, this step will be omitted.
+    */
 
-   if (pthis->as_user.empty() == false)
+   if (pthis->as_user.empty() == false &&
+       UServices::isSetuidRoot())
       {
+      U_INTERNAL_ASSERT(pthis->as_user.isNullTerminated())
+
       const char* user = pthis->as_user.data();
 
       if (u_ranAsUser(user, false))
@@ -1416,6 +1428,7 @@ const char* UServer_Base::dump(bool reset) const
                   << "host          (UString    " << (void*)host                 << ")\n"
                   << "server        (UString    " << (void*)&server              << ")\n"
                   << "log_file      (UString    " << (void*)&log_file            << ")\n"
+                  << "dh_file       (UString    " << (void*)&dh_file             << ")\n"
                   << "ca_file       (UString    " << (void*)&ca_file             << ")\n"
                   << "ca_path       (UString    " << (void*)&ca_path             << ")\n"
                   << "allow_IP      (UString    " << (void*)&allow_IP            << ")\n"

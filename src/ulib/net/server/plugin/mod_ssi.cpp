@@ -654,62 +654,49 @@ int USSIPlugIn::handlerRequest()
        ssi_ext_mask.empty()            == false &&
        u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(ssi_ext_mask), 0))
       {
-      uint32_t pos;
-      const char* ptr;
+      bool deflate;
+      char bsuffix[32];
+      const char* suffix;
       UString body, header(U_CAPACITY);
 
       // init
 
       errmsg          = *str_errmsg_default;
+      deflate         = (U_http_is_accept_deflate == '1');
       timefmt         = *str_timefmt_default;
       environment     = UHTTP::getCGIEnvironment() + *UHTTP::penvironment;
+      last_modified   = UHTTP::file->st_mtime;
       use_size_abbrev = true;
 
       (docname = UHTTP::getDocumentName()).duplicate();
 
+      suffix = UHTTP::file->getSuffix();
+
+      (void) strncpy(bsuffix, suffix, UHTTP::file->getSuffixLen(suffix));
+
       // read the SSI file
 
-      bool deflate = (U_http_is_accept_deflate == '1');
+      body = (UHTTP::isDataFromCache(false) ? UHTTP::getDataFromCache(false, false)
+                                            : UHTTP::file->getContent());
 
-      if (UHTTP::isHTTPRequestAlreadyProcessed())
+      // process the SSI file
+
+      *UClientImage_Base::body = processSSIRequest(body, 0);
+
+#  ifdef HAVE_PAGE_SPEED
+      UHTTP::page_speed->minify_html("USSIPlugIn::handlerRequest(()", *UClientImage_Base::body);
+#  endif
+
+      if (deflate)
          {
-         body          = UHTTP::getDataFromCache(false, false);
-         last_modified = UHTTP::file_data->mtime;
-         }
-      else
-         {
-         body          = UHTTP::file->getContent();
-         last_modified = UHTTP::file->st_mtime;
+         *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
+
+         (void) header.append(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
          }
 
-      if (deflate) (void) header.append(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+      UHTTP::getFileMimeType(bsuffix, 0, header, UClientImage_Base::body->size(), 0);
 
-      UHTTP::getFileMimeType(UHTTP::file->getSuffix(), 0, header, UHTTP::file->getSize());
-
-      header = UHTTP::getHTTPHeaderForResponse(HTTP_OK, header);
-
-      U_INTERNAL_DUMP("header = %.*S", U_STRING_TO_TRACE(header))
-
-      pos = header.find(*USocket::str_content_length);
-
-      U_INTERNAL_DUMP("pos = %.*S", 20, header.c_pointer(pos))
-
-      U_INTERNAL_ASSERT_DIFFERS(pos, U_NOT_FOUND)
-
-      ptr = header.c_pointer(pos + USocket::str_content_length->size() + 2);
-
-      // process SSI file
-
-                   *UClientImage_Base::body = processSSIRequest(body, 0);
-      if (deflate) *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
-
-      // NB: adjusting the size of response...
-
-      (void) UHTTP::checkHTTPContentLength(ptr, UClientImage_Base::body->size(), header);
-
-      U_INTERNAL_DUMP("header = %.*S", U_STRING_TO_TRACE(header))
-
-      *UClientImage_Base::wbuffer = header;
+      *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, header);
 
       UHTTP::setHTTPRequestProcessed();
       }

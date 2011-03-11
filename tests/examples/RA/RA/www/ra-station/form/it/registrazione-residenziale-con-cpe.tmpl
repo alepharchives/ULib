@@ -373,10 +373,8 @@
   </form><script type="text/javascript">
 var valComm = new LiveValidation( 'dati_utente_nome', {onlyOnSubmit: true, validMessage: "OK" } );
   valComm.add( Validate.Presence, {failureMessage: "Devi inserire il nome"} );
-  valComm.add( Validate.Format, {pattern: /^([A-Za-z '\-]+)$/, failureMessage: "nome non valido"} );
   var valComm = new LiveValidation( 'dati_utente_cognome', {onlyOnSubmit: true, validMessage: "OK" } );
   valComm.add( Validate.Presence, {failureMessage: "Devi inserire il cognome"} );
-  valComm.add( Validate.Format, {pattern: /^([A-Za-z '\-]+)$/, failureMessage: "cognome non valido"} );
   var valComm = new LiveValidation( 'dati_utente_luogo_di_nascita', {onlyOnSubmit: true, validMessage: "OK" } );
   valComm.add( Validate.Presence, {failureMessage: "Devi inserire il luogo di nascita"} );
   valComm.add( Validate.Format, {pattern: /^([A-Za-z '\-.]+)$/, failureMessage: "luogo di nascita non valido"} );
@@ -399,12 +397,12 @@ var valComm = new LiveValidation( 'dati_utente_nome', {onlyOnSubmit: true, valid
   valComm.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "cap non valido"} );
   var valComm = new LiveValidation( 'dati_utente_numero_documento', {onlyOnSubmit: true, validMessage: "OK" } );
   valComm.add( Validate.Presence, {failureMessage: "Devi inserire il numero documento"} );
-  valComm.add( Validate.Format, {pattern: /^\w{1,}$/, failureMessage: "numero documento non valido"} );
   var valComm = new LiveValidation( 'dati_utente_ente_di_emissione', {onlyOnSubmit: true, validMessage: "OK" } );
   valComm.add( Validate.Presence, {failureMessage: "Devi inserire l'ente di emissione"} );
   var valComm = new LiveValidation( 'dati_utente_data_rilascio', {onlyOnSubmit: true, validMessage: "OK" } );
   valComm.add( Validate.Presence, {failureMessage: "Devi inserire la data di rilascio"} );
   valComm.add( Validate.Format, {pattern: /^[\d]{1,2}\/[\d]{1,2}\/[\d]{4}$/, failureMessage: "data di rilascio non valida"} );
+
   var valComm = new LiveValidation( 'installazione_indirizzo', {onlyOnSubmit: true, validMessage: "OK" } );
   valComm.add( Validate.Presence, {failureMessage: "Devi inserire indirizzo installazione"} );
   var valComm = new LiveValidation( 'installazione_comune', {onlyOnSubmit: true, validMessage: "OK" } );

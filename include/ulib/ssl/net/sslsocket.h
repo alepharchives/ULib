@@ -103,7 +103,7 @@ public:
    Returns true on success
    */
 
-   bool setContext(const char* cert_file,
+   bool setContext(const char* dh_file, const char* cert_file,
                    const char* private_key_file, const char* passwd,
                    const char* CAfile, const char* CApath, int mode = SSL_VERIFY_PEER_STRICT | SSL_VERIFY_CLIENT_ONCE);
 

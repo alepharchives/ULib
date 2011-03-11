@@ -64,9 +64,11 @@ void UNotifier::init()
       }
 #  ifdef HAVE_EPOLL_CREATE1
    epollfd = U_SYSCALL(epoll_create1, "%d", EPOLL_CLOEXEC);
-#  else
-   epollfd = U_SYSCALL(epoll_create,  "%d", 1024);
+
+   if (epollfd != -1 || errno != ENOSYS) return;
 #  endif
+
+   epollfd = U_SYSCALL(epoll_create,  "%d", 1024);
 
    U_INTERNAL_ASSERT_MAJOR(epollfd,0)
    U_INTERNAL_ASSERT_EQUALS(U_READ_IN,EPOLLIN)

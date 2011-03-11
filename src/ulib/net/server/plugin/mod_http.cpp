@@ -29,6 +29,7 @@ const UString* UHttpPlugIn::str_URI_PROTECTED_ALLOWED_IP;
 const UString* UHttpPlugIn::str_LIMIT_REQUEST_BODY;
 const UString* UHttpPlugIn::str_REQUEST_READ_TIMEOUT;
 const UString* UHttpPlugIn::str_ENABLE_INOTIFY;
+const UString* UHttpPlugIn::str_ENABLE_CACHING_BY_PROXY_SERVERS;
 
 void UHttpPlugIn::str_allocate()
 {
@@ -41,6 +42,7 @@ void UHttpPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_LIMIT_REQUEST_BODY,0)
    U_INTERNAL_ASSERT_EQUALS(str_REQUEST_READ_TIMEOUT,0)
    U_INTERNAL_ASSERT_EQUALS(str_ENABLE_INOTIFY,0)
+   U_INTERNAL_ASSERT_EQUALS(str_ENABLE_CACHING_BY_PROXY_SERVERS,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("CACHE_FILE_MASK") },
@@ -49,16 +51,18 @@ void UHttpPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("URI_PROTECTED_ALLOWED_IP") },
       { U_STRINGREP_FROM_CONSTANT("LIMIT_REQUEST_BODY") },
       { U_STRINGREP_FROM_CONSTANT("REQUEST_READ_TIMEOUT") },
-      { U_STRINGREP_FROM_CONSTANT("ENABLE_INOTIFY") }
+      { U_STRINGREP_FROM_CONSTANT("ENABLE_INOTIFY") },
+      { U_STRINGREP_FROM_CONSTANT("ENABLE_CACHING_BY_PROXY_SERVERS") }
    };
 
-   U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,          U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_MASK,       U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_URI_REQUEST_CERT_MASK,    U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP, U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_LIMIT_REQUEST_BODY,       U_STRING_FROM_STRINGREP_STORAGE(4));
-   U_NEW_ULIB_OBJECT(str_REQUEST_READ_TIMEOUT,     U_STRING_FROM_STRINGREP_STORAGE(5));
-   U_NEW_ULIB_OBJECT(str_ENABLE_INOTIFY,           U_STRING_FROM_STRINGREP_STORAGE(6));
+   U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,                   U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_MASK,                U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_URI_REQUEST_CERT_MASK,             U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP,          U_STRING_FROM_STRINGREP_STORAGE(3));
+   U_NEW_ULIB_OBJECT(str_LIMIT_REQUEST_BODY,                U_STRING_FROM_STRINGREP_STORAGE(4));
+   U_NEW_ULIB_OBJECT(str_REQUEST_READ_TIMEOUT,              U_STRING_FROM_STRINGREP_STORAGE(5));
+   U_NEW_ULIB_OBJECT(str_ENABLE_INOTIFY,                    U_STRING_FROM_STRINGREP_STORAGE(6));
+   U_NEW_ULIB_OBJECT(str_ENABLE_CACHING_BY_PROXY_SERVERS,   U_STRING_FROM_STRINGREP_STORAGE(7));
 }
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -95,6 +99,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // VIRTUAL_HOST                 flag to activate practice of maintaining more than one server on one machine,
    //                              as differentiated by their apparent hostname
    // DIGEST_AUTHENTICATION        flag authentication method (yes = digest, no = basic)
+   //
+   // ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add Cache control: public directive)
    //
    // URI_PROTECTED_MASK           mask (DOS regexp) of URI protected from prying eyes
    // URI_PROTECTED_ALLOWED_IP     list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
@@ -134,18 +140,19 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       U_INTERNAL_ASSERT_EQUALS(UHTTP::cache_file_mask,0)
 
 #  ifdef HAVE_SSL
-      uri_request_cert_mask            = cfg[*str_URI_REQUEST_CERT_MASK];
+      uri_request_cert_mask    = cfg[*str_URI_REQUEST_CERT_MASK];
 #  endif
-      uri_protected_mask               = cfg[*str_URI_PROTECTED_MASK];
-      uri_protected_allowed_ip         = cfg[*str_URI_PROTECTED_ALLOWED_IP];
+      uri_protected_mask       = cfg[*str_URI_PROTECTED_MASK];
+      uri_protected_allowed_ip = cfg[*str_URI_PROTECTED_ALLOWED_IP];
 
-      UHTTP::virtual_host              = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
-      UHTTP::limit_request_body        = cfg.readLong(*str_LIMIT_REQUEST_BODY, UString::max_size() - 4096);
-      UHTTP::request_read_timeout      = cfg[*str_REQUEST_READ_TIMEOUT].strtol();
-      UHTTP::digest_authentication     = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
+      UHTTP::virtual_host                    = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
+      UHTTP::limit_request_body              = cfg.readLong(*str_LIMIT_REQUEST_BODY, UString::max_size() - 4096);
+      UHTTP::request_read_timeout            = cfg.readLong(*str_REQUEST_READ_TIMEOUT);
+      UHTTP::digest_authentication           = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
+      UHTTP::enable_caching_by_proxy_servers = cfg.readBoolean(*str_ENABLE_CACHING_BY_PROXY_SERVERS);
 
-       UHTTP::cache_file_mask          = U_NEW(UString);
-      *UHTTP::cache_file_mask          = cfg[*str_CACHE_FILE_MASK];
+       UHTTP::cache_file_mask = U_NEW(UString);
+      *UHTTP::cache_file_mask = cfg[*str_CACHE_FILE_MASK];
 
       if (UHTTP::cache_file_mask->empty())
          {

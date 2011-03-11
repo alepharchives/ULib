@@ -77,9 +77,11 @@ bool UServices::isSetuidRoot()
 {
    U_TRACE(1, "UServices::isSetuidRoot()")
 
-   bool i_am_root = ((uid_t) U_SYSCALL_NO_PARAM(getuid) == 0);
+   U_INTERNAL_DUMP("u_ser_name = %.*S", u_user_name_len, u_user_name)
 
-   if (i_am_root == false &&
+   bool i_am_root = (u_user_name_len == 4 && (uid_t) U_SYSCALL_NO_PARAM(getuid) == 0);
+
+   if (i_am_root ||
        ((uid_t) U_SYSCALL_NO_PARAM(geteuid) == 0 ||
         (uid_t) U_SYSCALL_NO_PARAM(getegid) == 0))
       {

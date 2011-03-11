@@ -59,6 +59,7 @@ int         UHTTP::inotify_wd;
 char        UHTTP::cgi_dir[U_PATH_MAX];
 bool        UHTTP::virtual_host;
 bool        UHTTP::digest_authentication;
+bool        UHTTP::enable_caching_by_proxy_servers;
 void*       UHTTP::argument;
 UFile*      UHTTP::file;
 UValue*     UHTTP::json;
@@ -609,7 +610,7 @@ void UHTTP::ctor()
 
       UString ext(U_CAPACITY);
 
-      getFileMimeType(".ico", 0, ext, file_data->size);
+      getFileMimeType(".ico", 0, ext, file_data->size, U_TIME_FOR_EXPIRE);
 
       U_INTERNAL_DUMP("ext = %.*S", U_STRING_TO_TRACE(ext))
 
@@ -1981,7 +1982,7 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
    buffer.snprintf("<html><head><title></title></head>"
                    "<body><h1>Index of directory: %.*s</h1><hr>"
                      "<table><tr>"
-                       "<td><a href=\"/%.*s/..\"><img WIDTH=\"20\" HEIGHT=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/menu.png\"> Up one level</a></td>"
+                       "<td><a href=\"/%.*s/..\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/menu.png\"> Up one level</a></td>"
                        "<td></td>"
                        "<td></td>"
                      "</tr>", U_FILE_TO_TRACE(*file), U_FILE_TO_TRACE(*file));
@@ -2019,7 +2020,7 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
          size = UStringExt::numberToString(file_data->size, true);
 
          entry.snprintf("<tr>"
-                           "<td><a href=\"/%.*s/%.*s\"><img WIDTH=\"20\" HEIGHT=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/%s\"> %.*s</a></td>"
+                           "<td><a href=\"/%.*s/%.*s\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/%s\"> %.*s</a></td>"
                            "<td align=\"right\" valign=\"bottom\">%.*s</td>"
                            "<td align=\"right\" valign=\"bottom\">%#4D</td>"
                          "</tr>",
@@ -3040,9 +3041,9 @@ bool UHTTP::checkUriProtected()
    U_RETURN(true);
 }
 
-void UHTTP::getFileMimeType(const char* suffix, const char* content_type, UString& ext, uint32_t size)
+void UHTTP::getFileMimeType(const char* suffix, const char* content_type, UString& ext, uint32_t size, time_t expire)
 {
-   U_TRACE(0, "UHTTP::getFileMimeType(%S,%S,%.*S,%u)", suffix, content_type, U_STRING_TO_TRACE(ext), size)
+   U_TRACE(0, "UHTTP::getFileMimeType(%S,%S,%.*S,%u,%ld)", suffix, content_type, U_STRING_TO_TRACE(ext), size, expire)
 
    U_INTERNAL_ASSERT_POINTER(file)
 
@@ -3093,22 +3094,74 @@ end:
 
    U_INTERNAL_ASSERT_MAJOR(ext.capacity(), 300)
 
-   const char* cache_control = "";
+   /* http://code.google.com/speed/page-speed/docs/caching.html
+    *
+    * HTTP/1.1 provides the following caching response headers:
+
+    * Expires and Cache-Control: max-age. These specify the freshness lifetime of a resource, that is, the time period during which the browser
+    * can use the cached resource without checking to see if a new version is available from the web server. They are "strong caching headers"
+    * that apply unconditionally; that is, once they're set and the resource is downloaded, the browser will not issue any GET requests for the
+    * resource until the expiry date or maximum age is reached.
+    *
+    * Last-Modified and ETag. These specify some characteristic about the resource that the browser checks to determine if the files are the same.
+    * In the Last-Modified header, this is always a date. In the ETag header, this can be any value that uniquely identifies a resource (file
+    * versions or content hashes are typical). Last-Modified is a "weak" caching header in that the browser applies a heuristic to determine
+    * whether to fetch the item from cache or not. (The heuristics are different among different browsers.) However, these headers allow the
+    * browser to efficiently update its cached resources by issuing conditional GET requests when the user explicitly reloads the page. Conditional
+    * GETs don't return the full response unless the resource has changed at the server, and thus have lower latency than full GETs.
+    *
+    * It is important to specify one of Expires or Cache-Control max-age, and one of Last-Modified or ETag, for all cacheable resources. It is
+    * redundant to specify both Expires and Cache-Control: max-age, or to specify both Last-Modified and ETag. 
+    *
+    * Recommendations:
+    * Set caching headers aggressively for all static resources.
+    * For all cacheable resources, we recommend the following settings:
+    * Set Expires to a minimum of one month, and preferably up to one year, in the future. (We prefer Expires over Cache-Control: max-age because
+    * it is is more widely supported.) Do not set it to more than one year in the future, as that violates the RFC guidelines. If you know exactly
+    * when a resource is going to change, setting a shorter expiration is okay. But if you think it "might change soon" but don't know when, you
+    * should set a long expiration and use URL fingerprinting (described below). Setting caching aggressively does not "pollute" browser caches:
+    * as far as we know, all browsers clear their caches according to a Least Recently Used algorithm; we are not aware of any browsers that wait
+    * until resources expire before purging them.
+    * Set the Last-Modified date to the last time the resource was changed. If the Last-Modified date is sufficiently far enough in the past,
+    * chances are the browser won't refetch it.
+    *
+    * Use fingerprinting to dynamically enable caching. For resources that change occasionally, you can have the browser cache the resource until
+    * it changes on the server, at which point the server tells the browser that a new version is available. You accomplish this by embedding a
+    * fingerprint of the resource in its URL (i.e. the file path). When the resource changes, so does its fingerprint, and in turn, so does its URL.
+    * As soon as the URL changes, the browser is forced to re-fetch the resource. Fingerprinting allows you to set expiry dates long into the future
+    * even for resources that change more frequently than that. Of course, this technique requires that all of the pages that reference the resource
+    * know about the fingerprinted URL, which may or may not be feasible, depending on how your pages are coded.
+    *
+    * Set the Vary header correctly for Internet Explorer.Internet Explorer does not cache any resources that are served with the Vary header and any
+    * fields but Accept-Encoding and User-Agent. To ensure these resources are cached by IE, make sure to strip out any other fields from the Vary
+    * header, or remove the Vary header altogether if possible
+    *
+    * Avoid URLs that cause cache collisions in Firefox. The Firefox disk cache hash functions can generate collisions for URLs that differ only
+    * slightly, namely only on 8-character boundaries. When resources hash to the same key, only one of the resources is persisted to disk cache;
+    * the remaining resources with the same key have to be re-fetched across browser restarts. Thus, if you are using fingerprinting or are otherwise
+    * programmatically generating file URLs, to maximize cache hit rate, avoid the Firefox hash collision issue by ensuring that your application
+    * generates URLs that differ on more than 8-character boundaries. 
+    *
+    * Use the Cache control: public directive to enable HTTPS caching for Firefox. Some versions of Firefox require that the Cache control: public
+    * header to be set in order for resources sent over SSL to be cached on disk, even if the other caching headers are explicitly set. Although this
+    * header is normally used to enable caching by proxy servers (as described below), proxies cannot cache any content sent over HTTPS, so it is
+    * always safe to set this header for HTTPS resources. 
+    */
+
+   if (expire) ext.snprintf_add("Expires: %#D\r\n", expire);
 
 #ifdef HAVE_SSL
-   if (UClientImage_Base::socket->isSSL()) cache_control = "Cache-Control: public, max-age=31536000\r\nVary: Accept-Encoding\r\n";
+   if (UClientImage_Base::socket->isSSL()) enable_caching_by_proxy_servers = true;
 #endif
 
    ext.snprintf_add("Accept-Ranges: bytes\r\n"
                     "Content-Length: %u\r\n"
                     "Last-Modified: %#D\r\n"
-                    "Expires: %#D\r\n"
                     "%s"
                     "\r\n",
                     size,
                     file->st_mtime,
-                    U_TIME_FOR_EXPIRE,
-                    cache_control);
+                    enable_caching_by_proxy_servers ? "Cache-Control: public, max-age=31536000\r\nVary: Accept-Encoding\r\n" : "");
 }
 
 void UHTTP::checkFileForCache()
@@ -3156,9 +3209,10 @@ void UHTTP::checkFileForCache()
    file_data->array->push_back(content);
 
    UString ext(U_CAPACITY);
+   time_t expire = U_TIME_FOR_EXPIRE;
    const char* suffix = file->getSuffix();
 
-   getFileMimeType(suffix, 0, ext, file_data->size);
+   getFileMimeType(suffix, 0, ext, file_data->size, expire);
 
    U_INTERNAL_DUMP("ext = %.*S", U_STRING_TO_TRACE(ext))
 
@@ -3241,7 +3295,7 @@ next:
 
       if (deflated) (void) ext.assign(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
 
-      getFileMimeType(suffix, 0, ext, size);
+      getFileMimeType(suffix, 0, ext, size, expire);
 
       file_data->array->push_back(content);
       file_data->array->push_back(ext);
@@ -4676,36 +4730,50 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestForRange(uint32_t& start, uint32_t& s
    HTTPRange* cur;
    HTTPRange* prev;
    const char* spec;
-   uint32_t i, n, _end;
    UVector<HTTPRange*> array;
-   UString range(http_info.range, http_info.range_len), tmp(100U);
+   uint32_t i, n, _end, cur_start, cur_end;
+   UString range(http_info.range, http_info.range_len), item, tmp(100U);
 
    UVector<UString> range_list(range, ',');
 
    for (i = 0, n = range_list.size(); i < n; ++i)
       {
-      cur  = new HTTPRange;
-      spec = range_list[i].data();
+      item = range_list[i];
+      spec = item.data();
 
       U_INTERNAL_DUMP("spec = %.*S", 10, spec)
 
       if (*spec == '-')
          {
-         cur->start = strtol(spec, &pend, 0) + size;
-         cur->end   = size - 1;
+         cur_start = strtol(spec, &pend, 0) + size;
+         cur_end   = size - 1;
          }
       else
          {
-         cur->start = strtol(spec, &pend, 0);
+         cur_start = strtol(spec, &pend, 0);
 
          if (*pend == '-') ++pend;
 
-         cur->end = (*pend ? strtol(pend, &pend, 0) : size - 1);
+         U_INTERNAL_DUMP("item.remain(pend) = %u", item.remain(pend))
+
+         cur_end = (item.remain(pend) ? strtol(pend, &pend, 0) : size - 1);
          }
 
-      U_INTERNAL_DUMP("cur->start = %u cur->end = %u", cur->start, cur->end)
+      U_INTERNAL_DUMP("cur_start = %u cur_end = %u", cur_start, cur_end)
 
-      array.push(cur);
+      if (cur_end >= size) cur_end = size - 1;
+
+      if (cur_start <= cur_end)
+         {
+         U_INTERNAL_ASSERT_RANGE(cur_start,cur_end,size-1)
+
+         cur = new HTTPRange;
+
+         cur->end   = cur_end;
+         cur->start = cur_start;
+
+         array.push(cur);
+         }
       }
 
    n = array.size();
@@ -4749,8 +4817,6 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestForRange(uint32_t& start, uint32_t& s
       cur   = array[0];
       _end  = cur->end;
       start = cur->start;
-
-      if (_end >= size) _end = size - 1;
 
       U_INTERNAL_DUMP("start = %u _end = %u", start, _end)
 
@@ -5023,7 +5089,7 @@ void UHTTP::processHTTPGetRequest(const UString& request)
          }
       }
 
-   getFileMimeType(suffix, content_type, ext, size);
+   getFileMimeType(suffix, content_type, ext, size, 0);
 
    // build response...
 
@@ -5260,6 +5326,7 @@ U_EXPORT const char* UHTTP::UServletPage::dump(bool reset) const
    return 0;
 }
 
+#  ifdef HAVE_PAGE_SPEED
 U_EXPORT const char* UHTTP::UPageSpeed::dump(bool reset) const
 {
    UDynamic::dump(false);
@@ -5279,6 +5346,7 @@ U_EXPORT const char* UHTTP::UPageSpeed::dump(bool reset) const
 
    return 0;
 }
+#  endif
 
 U_EXPORT const char* UHTTP::RewriteRule::dump(bool reset) const
 {

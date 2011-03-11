@@ -57,6 +57,23 @@ load_value_session() {
 	done < $1
 }
 
+load_value_session_with_xml_escape() {
+
+	i=0
+	while read LINE
+	do
+		LINE=${LINE//&/&amp;}
+		LINE=${LINE//</&lt;}
+		LINE=${LINE//>/&gt;}
+		LINE=${LINE//\'/&apos;}
+		LINE=${LINE//\"/&quot;}
+
+		eval v$i=\"$LINE\"
+
+		let "i = i + 1"
+	done < $1
+}
+
 save_value_session() {
 
 	cat <<END >$TMP_FORM_FILE
@@ -280,6 +297,11 @@ reset_scansione() {
 
 rascan_image() {
 
+#	set -x
+
+	# $1 -> resolution
+	# $2 -> parametri scansione multipla (opt)
+
 	# 75|100|150|200|300|600|1200dpi [75]
 	RESOLUTION=$1
 
@@ -294,11 +316,14 @@ rascan_image() {
 
 	let "NUM_DOC = $NUM_PAGE + 1"
 
+	rm -f /tmp/scan.log
+
 	if [ -n "$2" ]; then
 		OUTPUT=/tmp/scan.log
-		SCANIMAGE_PARAM="$SCANIMAGE_PARAM --batch-start=$NUM_DOC"
+		SCANIMAGE_PARAM="$SCANIMAGE_MULTI_PARAM --batch-start=$NUM_DOC"
 	else
 		printf -v OUTPUT "$DIR_SCAN/page%d.tiff" $NUM_DOC
+		SCANIMAGE_PARAM=$SCANIMAGE_SINGLE_PARAM
 	fi
 
 	scanimage -d $DEVICE_SCANNER --format=tiff --mode $SCANMODE --resolution $RESOLUTION -x $X -y $Y $2 $SCANIMAGE_PARAM > $OUTPUT 2>&1
@@ -328,7 +353,7 @@ rascan_image() {
 
 rascan_image_multipla()
 {
-	rascan_image $1 "--batch="$DIR_SCAN/page%d.tiff" --batch-scan=yes --source ADF"
+	rascan_image $1 "--batch=$DIR_SCAN/page%d.tiff --source ADF"
 }
 
 rascan_image_singola() {
@@ -384,7 +409,7 @@ view_page_image() {
 
 registrazione_contratto() {
 
- 	set -x
+# 	set -x
 
 	# load specific script env, for signing and sending message to workflow...
 
@@ -393,7 +418,7 @@ registrazione_contratto() {
 	TMP_FORM_FILE=$DIR_SCAN/$BASE_NAME.curr
 
 	if [ -f $TMP_FORM_FILE ]; then
-		load_value_session $TMP_FORM_FILE
+		load_value_session_with_xml_escape $TMP_FORM_FILE
 	fi
 
 	# create PDF...

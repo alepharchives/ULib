@@ -425,17 +425,17 @@ public:
    static UFile* file;
    static UString* alias;
    static UStringRep* pkey;
-   static bool virtual_host;
    static UString* pathname;
    static UString* request_uri;
    static uint32_t limit_request_body, request_read_timeout;
+   static bool virtual_host, enable_caching_by_proxy_servers;
 
    static void checkHTTPRequest();
    static void getTimeIfNeeded(bool all_http_version);
    static void processHTTPGetRequest(const UString& request);
    static void checkHTTPRequestForHeader(const UString& request);
    static bool checkHTTPContentLength(const char* ptr, uint32_t length, UString& ext);
-   static void getFileMimeType(const char* suffix, const char* content_type, UString& ext, uint32_t size);
+   static void getFileMimeType(const char* suffix, const char* content_type, UString& ext, uint32_t size, time_t expire);
 
    static UString     getDocumentName();
    static UString     getDirectoryURI();

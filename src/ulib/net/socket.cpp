@@ -728,10 +728,13 @@ bool USocket::acceptClient(USocket* pcNewConnection)
 loop:
 #ifdef HAVE_ACCEPT4
    pcNewConnection->iSockDesc = U_SYSCALL(accept4, "%d,%p,%p,%d", iSockDesc, (sockaddr*)cRemote, &slDummy, accept4_flags);
-#else
-   pcNewConnection->iSockDesc = U_SYSCALL(accept,  "%d,%p,%p",    iSockDesc, (sockaddr*)cRemote, &slDummy);
+
+   if (pcNewConnection->iSockDesc != -1 || errno != ENOSYS) goto next;
 #endif
 
+   pcNewConnection->iSockDesc = U_SYSCALL(accept,  "%d,%p,%p",    iSockDesc, (sockaddr*)cRemote, &slDummy);
+
+next:
    if (pcNewConnection->iSockDesc == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
    if (pcNewConnection->iSockDesc != -1)
       {

@@ -22,7 +22,8 @@ The current version offers the following features :
     * Browser cache management (headers: If-Modified-Since/Last-modified).
     * Chunk-encoding transfers support.
     * HTTP multi-range request support.
-    * Memory caching for small static pages with smart compression (and on Linux automatic update with inotify).
+    * Memory caching for small static pages with smart compression and CSS/JS reduction
+      (also HTML with google page speed SDK wrapping and on Linux automatic update with inotify).
     * Support for pipelining.
     * Support for virtual hosts (also with SSL).
     * Support for basic/digest authentication.

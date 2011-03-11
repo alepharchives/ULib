@@ -15,7 +15,7 @@ U_EXPORT main (int argc, char* argv[])
 
    // Check server certificates agains our known trusted certificate
 
-   if (x.getSocket()->setContext(getArg(argv[1]), getArg(argv[2]), getArg(argv[3]), getArg(argv[4]), getArg(argv[5]), atoi(argv[6])) &&
+   if (x.getSocket()->setContext(0, getArg(argv[1]), getArg(argv[2]), getArg(argv[3]), getArg(argv[4]), getArg(argv[5]), atoi(argv[6])) &&
        x.getSocket()->connectServer(U_STRING_FROM_CONSTANT("localhost"), 80))
       {
       U_DUMP("getPeerCertificate() = %p", x.getSocket()->getPeerCertificate())

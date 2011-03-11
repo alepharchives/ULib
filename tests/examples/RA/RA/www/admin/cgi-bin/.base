@@ -104,11 +104,11 @@ send_MAIL() {
 	# exit 0
 	# --------------------------------------------
 
-#	msmtp --tls=on --tls-certcheck=off --tls-min-dh-prime-bits=512 \
+	msmtp --tls=on --tls-certcheck=off --tls-min-dh-prime-bits=512 \
 			--host="${SMTP_HOST}" --port="${SMTP_PORT}" --from="${FROM}" -- "${TO}" <$1.p7m >/dev/null 2>&1
 
 	if [ $? -eq 0 ]; then
-		rm -f $1.p7m
+		#rm -f $1.p7m
 		exit 0
 	fi
 
