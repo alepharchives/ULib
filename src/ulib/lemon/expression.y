@@ -59,7 +59,7 @@ void token_destructor(UString* token) {
 
 %left AND.
 %left OR.
-%nonassoc EQ NE GT GE LT LE.
+%nonassoc EQ NE PE GT GE LT LE.
 %left PLUS MINUS.
 %left MULT DIV MOD.
 %right NOT.
@@ -136,10 +136,15 @@ equalityExpression(A) ::= equalityExpression(B) equalityCond(C) relationalExpres
 	int cmp = (Bbo && Dbo ? B->compare(D->rep) : Bbo - Dbo);
 
    switch (C)
-      {
-      case U_TK_EQ: bo = (cmp == 0); break;
-      case U_TK_NE: bo = (cmp != 0); break;
-      }
+		{
+		case U_TK_EQ: bo = (cmp == 0); break;
+		case U_TK_NE: bo = (cmp != 0); break;
+		case U_TK_PE:
+			{
+			if (Bbo && Dbo) bo = (B->pcompare(D->rep));
+			}
+		break;
+		}
 
    U_INTERNAL_DUMP("bo = %b cmp = %d", bo, cmp)
 
@@ -367,6 +372,10 @@ equalityCond(A) ::= EQ. {
 equalityCond(A) ::= NE. {
    U_TRACE(0, "equalityCond(A) ::= NE")
    A = U_TK_NE;
+}
+equalityCond(A) ::= PE. {
+   U_TRACE(0, "equalityCond(A) ::= PE")
+   A = U_TK_PE;
 }
 relationalCond(A) ::= GT. {
    U_TRACE(0, "relationalCond(A) ::= GT")

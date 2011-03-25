@@ -341,7 +341,7 @@ int UWebSocketPlugIn::handlerRequest()
 
             U_http_sh_script = command->isShellScript();
 
-            UString environment = UHTTP::getCGIEnvironment() + command->getStringEnvironment() + *UHTTP::penvironment;
+            UString environment = UHTTP::getCGIEnvironment(U_http_sh_script) + command->getStringEnvironment() + *UHTTP::penvironment;
 
             command->setEnvironment(&environment);
 

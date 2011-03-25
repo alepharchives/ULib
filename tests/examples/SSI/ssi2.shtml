@@ -14,9 +14,9 @@ This page is: <!--#fsize file="embed.c" -->
 
 This file last modified: <!--#config timefmt="%B %d, %Y" --><!--#flastmod file="embed.c" -->
 
-You're using: <!--#echo var="HTTP_USER_AGENT" -->
+You're using: <!--#echo var="$HTTP_USER_AGENT" -->
 
-$HTTP_X_SENDFILE: <!--#echo var="HTTP_X_SENDFILE" --><!--#set var="HTTP_X_SENDFILE"  value="puppamelo" -->
+$HTTP_X_SENDFILE: <!--#echo var="$HTTP_X_SENDFILE" --><!--#set var="HTTP_X_SENDFILE" value="puppamelo" -->
 
 <!--#if expr="${HTTP_X_SENDFILE} = 'puppamelo'" -->
 start PRINTENV

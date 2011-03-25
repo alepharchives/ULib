@@ -275,7 +275,7 @@ UString UTokenizer::getTokenQueryParser()
 Expression is tokenized as:
 
 logical: && || !
-compare: = < <= > => !=
+compare: = == != ~= < <= > =>
 Multiplicative operators: *, /, %
 Additive operators: +, -
 precedence: ( )
@@ -342,7 +342,7 @@ loop:
             {
             p1 = s;
 
-            while (s < end && (u_isalpha(*s) || *s == '_')) ++s;
+            while (s < end && (u_isalnum(*s) || *s == '_')) ++s;
 
             p2 = s;
             }
@@ -372,6 +372,7 @@ loop:
       case '>': tid = (*s == '=' ? (++s, U_TK_GE)  : U_TK_GT);    p2 = s; break;
       case '<': tid = (*s == '=' ? (++s, U_TK_LE)  : U_TK_LT);    p2 = s; break;
       case '!': tid = (*s == '=' ? (++s, U_TK_NE)  : U_TK_NOT);   p2 = s; break;
+      case '~': tid = (*s == '=' ? (++s, U_TK_PE)  : U_TK_ERROR); p2 = s; break;
       case '&': tid = (*s == '&' ? (++s, U_TK_AND) : U_TK_ERROR); p2 = s; break;
       case '|': tid = (*s == '|' ? (++s, U_TK_OR)  : U_TK_ERROR); p2 = s; break;
 

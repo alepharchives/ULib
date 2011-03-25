@@ -299,6 +299,15 @@ public:
       U_RETURN(r);
       }
 
+   bool pcompare(const UStringRep* rep) const
+      {
+      U_TRACE(0, "UStringRep::pcompare(%.*S)", U_min(_length, rep->_length), rep->str)
+
+      if (memcmp(str, rep->str, rep->_length)) U_RETURN(false);
+
+      U_RETURN(true);
+      }
+
    // Compare with ignore case
 
    int comparenocase(const char* s, uint32_t n) const
@@ -984,6 +993,9 @@ public:
    int compare(UStringRep* _rep) const          { return rep->compare(_rep); }
    int compare(const char* s, uint32_t n) const { return rep->compare(s, n); }
    int compare(const UString& str) const        { return rep->compare(str.rep); }
+
+   bool pcompare(UStringRep* _rep) const        { return rep->pcompare(_rep); }
+   bool pcompare(const UString& str) const      { return rep->pcompare(str.rep); }
 
    int compare(uint32_t pos, uint32_t n1, const char* s, uint32_t n2) const
       { return rep->compare(pos, U_min(size() - pos, n1), s, U_min(u_strlen(s), n2)); }

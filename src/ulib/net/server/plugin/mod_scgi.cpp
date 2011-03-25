@@ -137,7 +137,7 @@ int USCGIPlugIn::handlerRequest()
 
       char* equalPtr;
       char* envp[128];
-      UString environment = UHTTP::getCGIEnvironment() + "SCGI=1\n" + *UHTTP::penvironment;
+      UString environment = UHTTP::getCGIEnvironment(false) + "SCGI=1\n" + *UHTTP::penvironment;
       int n = u_split(U_STRING_TO_PARAM(environment), envp, 0);
 
       U_INTERNAL_ASSERT_MINOR(n, 128)

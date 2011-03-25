@@ -43,15 +43,15 @@ The current version offers the following features :
     * Requests cut in phases for modular architecture (apache-like).
     * Configuration file with dedicated section.
     * Built-in modules :
+          o mod_echo : echo features.
           o mod_rpc : generic Remote Procedure Call.
           o mod_http : core features, static file handler and dynamic page (ULib Servlet Page).
-          o mod_tsa : server side time stamp support.
-          o mod_echo : echo features.
-          o mod_soap : generic SOAP server services support.
+          o mod_ssi : Server Side Includes support (with enhanced #set and direct include).
           o mod_nocat : captive portal implementation.
+          o mod_tsa : server side Time Stamp support.
+          o mod_soap : generic SOAP server services support.
           o mod_fcgi : third-party applications support thru FastCGI interface.
           o mod_scgi : module that implements the client side of the SCGI protocol (experimental).
-          o mod_ssi : Server Side Includes support (experimental).
           o mod_shib : web single sign-on support (experimental).
           o mod_proxy : proxy support (experimental).
           o mod_geoip : geolocation support (experimental).

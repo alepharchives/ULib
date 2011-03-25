@@ -55,7 +55,7 @@ public:
       zero();
       }
 
-   UCommand(const UString& cmd, char** penv) : command(cmd)
+   UCommand(const UString& cmd, char** penv = 0) : command(cmd)
       {
       U_TRACE_REGISTER_OBJECT(0, UCommand, "%.*S,%p", U_STRING_TO_TRACE(cmd), penv)
 
@@ -64,7 +64,7 @@ public:
       setEnvironment(penv);
       }
 
-   UCommand(const UString& cmd, const UString* penv = 0) : command(cmd)
+   UCommand(const UString& cmd, const UString* penv) : command(cmd)
       {
       U_TRACE_REGISTER_OBJECT(0, UCommand, "%.*S,%p", U_STRING_TO_TRACE(cmd), penv)
 
@@ -86,9 +86,8 @@ public:
       {
       U_TRACE(0, "UCommand::setEnvironment(%p)", penv)
 
-      setEnvironment((const UString*)0);
-
-      envp = penv;
+      envp        = penv;
+      flag_expand = U_NOT_FOUND;
       }
 
    void setEnvironment(const UString* env);
@@ -177,7 +176,7 @@ public:
       setCommand();
       }
 
-   void set(const UString& cmd, char** penv)
+   void set(const UString& cmd, char** penv = 0)
       {
       U_TRACE(0, "UCommand::set(%.*S,%p)", U_STRING_TO_TRACE(cmd), penv)
 

@@ -285,6 +285,7 @@ bool u_ranAsUser(const char* restrict user, bool change_dir)
 #ifdef __MINGW32__
    return false;
 #else
+   char buffer[128];
    struct passwd* restrict pw;
 
    U_INTERNAL_TRACE("u_ranAsUser(%s,%d)", user, change_dir)
@@ -298,9 +299,11 @@ bool u_ranAsUser(const char* restrict user, bool change_dir)
       return false;
       }
 
-   /* change user name */
+   (void) snprintf(buffer, sizeof(buffer), "HOME=%s", pw->pw_dir);
 
-   (void) u_strncpy(u_user_name, user, (u_user_name_len = u_strlen(user)));
+   (void) putenv(strdup(buffer));
+
+   (void) u_strncpy(u_user_name, user, (u_user_name_len = u_strlen(user))); /* change user name */
 
    if (change_dir &&
        pw->pw_dir &&
@@ -416,30 +419,32 @@ bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* 
 
 void* u_find(const char* restrict s, uint32_t n, const char* restrict a, uint32_t n1)
 {
-#ifdef HAVE_MEMMEM
-   void* restrict p;
-#else
-   uint32_t pos = 0;
-#endif
-
    U_INTERNAL_TRACE("u_find(%.*s,%u,%.*s,%u)", U_min(n,128), s, n, U_min(n1,128), a, n1)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(a)
-   U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT_MAJOR(n1,0)
 
-   if (n1 == 1) return (void*) memchr(s, *a, n);
+   if (n)
+      {
+      if (n1 == 1) return (void*) memchr(s, *a, n);
 
 #ifdef HAVE_MEMMEM
-   p = memmem(s, n, a, n1);
+      {
+      void* restrict p = memmem(s, n, a, n1);
 
-   U_INTERNAL_PRINT("memmem() = %p", p)
+      U_INTERNAL_PRINT("memmem() = %p", p)
 
-   return p;
+      return p;
+      }
 #else
-   for (; (pos + n1) <= n; ++pos) if (memcmp(s + pos, a, n1) == 0) return (void*)(s+pos);
+      {
+      uint32_t pos = 0;
+
+      for (; (pos + n1) <= n; ++pos) if (memcmp(s + pos, a, n1) == 0) return (void*)(s+pos);
+      }
 #endif
+      }
 
    return 0;
 }

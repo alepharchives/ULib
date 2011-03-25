@@ -122,16 +122,22 @@ public:
 
    // expand path (~/... and ~user/... plus $var and $var/...)
 
-   static UString expandPath(const char* s, uint32_t n);
-   static UString expandPath(const UString& s) { return expandPath(U_STRING_TO_PARAM(s)); }
+   static UString expandPath(const char* s, uint32_t n, const UString* environment);
+   static UString expandPath(const UString& s,          const UString* environment) { return expandPath(U_STRING_TO_PARAM(s), environment); }
+
+   // expand environment variables
+
+   static UString getEnvironmentVar(const char* s, uint32_t n, const UString* environment);
+   static UString getEnvironmentVar(const UString& name,       const UString* environment) { return getEnvironmentVar(U_STRING_TO_PARAM(name), environment); }
 
    // recursively expand environment variables if needed
 
-   static UString expandEnvVar(const char* s, uint32_t n);
-   static UString expandEnvVar(const UString& s) { return expandEnvVar(U_STRING_TO_PARAM(s)); }
+   static UString expandEnvironmentVar(const char* s, uint32_t n, const UString* environment);
+   static UString expandEnvironmentVar(const UString& s,          const UString* environment) { return expandEnvironmentVar(U_STRING_TO_PARAM(s), environment); }
+
+   // eval expression 
 
    static UString evalExpression(const UString& expr, const UString& environment);
-   static UString getEnvironmentVar(const UString& name, const UString& environment);
 
    static void putenv(const char* name, uint32_t value)
       {

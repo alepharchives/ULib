@@ -137,12 +137,6 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
    if (cfg.loadTable())
       {
-      U_INTERNAL_ASSERT_EQUALS(UHTTP::cache_file_mask,0)
-
-#  ifdef HAVE_SSL
-      uri_request_cert_mask    = cfg[*str_URI_REQUEST_CERT_MASK];
-#  endif
-      uri_protected_mask       = cfg[*str_URI_PROTECTED_MASK];
       uri_protected_allowed_ip = cfg[*str_URI_PROTECTED_ALLOWED_IP];
 
       UHTTP::virtual_host                    = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
@@ -151,14 +145,20 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       UHTTP::digest_authentication           = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
       UHTTP::enable_caching_by_proxy_servers = cfg.readBoolean(*str_ENABLE_CACHING_BY_PROXY_SERVERS);
 
-       UHTTP::cache_file_mask = U_NEW(UString);
-      *UHTTP::cache_file_mask = cfg[*str_CACHE_FILE_MASK];
+#  ifdef HAVE_SSL
+      uri_request_cert_mask                  = cfg[*str_URI_REQUEST_CERT_MASK];
+#  endif
 
-      if (UHTTP::cache_file_mask->empty())
-         {
-         delete UHTTP::cache_file_mask;
-                UHTTP::cache_file_mask = 0;
-         }
+      UString x = cfg[*str_CACHE_FILE_MASK];
+
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::cache_file_mask,0)
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::uri_protected_mask,0)
+
+      if (x.empty() == false) UHTTP::cache_file_mask = U_NEW(UString(x));
+
+      x = cfg[*str_URI_PROTECTED_MASK];
+
+      if (x.empty() == false) UHTTP::uri_protected_mask = U_NEW(UString(x));
 
       if (cfg.readBoolean(*str_ENABLE_INOTIFY)) UServer_Base::handler_event = this;
       }
@@ -174,7 +174,7 @@ int UHttpPlugIn::handlerInit()
 
    UHTTP::ctor();
 
-   // URI PROTECTED and ALIAS
+   // URI PROTECTED
 
    if (uri_protected_allowed_ip.empty() == false)
       {
@@ -230,7 +230,8 @@ int UHttpPlugIn::handlerREAD()
 
       // manage alias uri
 
-      if (valias.empty() == false)
+      if (UHTTP::ssi_alias ||
+          valias.empty() == false)
          {
          UString item;
 
@@ -245,6 +246,22 @@ int UHttpPlugIn::handlerREAD()
                (void) UHTTP::alias->append(valias[i+1]);
 
                goto next;
+               }
+            }
+
+         if (UHTTP::ssi_alias)
+            {
+            const char* suffix = (const char*) memrchr(UHTTP::http_info.uri, '.', UHTTP::http_info.uri_len);
+
+            if (suffix == 0)
+               {
+               uint32_t len = UHTTP::ssi_alias->size();
+
+               (void) UHTTP::request_uri->assign(U_HTTP_URI_TO_PARAM);
+
+               UHTTP::alias->setBuffer(UHTTP::alias->size() + 1 + len);
+
+               UHTTP::alias->snprintf_add("/%.*s", len, UHTTP::ssi_alias->data());
                }
             }
          }
@@ -274,8 +291,7 @@ next:
          }
 #  endif
 
-      if (uri_protected_mask.empty() == false                                               &&
-          u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(uri_protected_mask), 0) &&
+      if (UHTTP::uri_protected_mask &&
           UHTTP::checkUriProtected() == false)
          {
          goto send_response;
@@ -333,7 +349,7 @@ int UHttpPlugIn::handlerRequest()
 
       if (UHTTP::isCGIRequest())
          {
-         UString environment = UHTTP::getCGIEnvironment() + *UHTTP::penvironment;
+         UString environment = UHTTP::getCGIEnvironment(U_http_sh_script) + *UHTTP::penvironment;
 
          // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
 
@@ -341,8 +357,8 @@ int UHttpPlugIn::handlerRequest()
 
          if (UHTTP::processCGIRequest((UCommand*)0, &environment, async, true) == false)
             {
-            if (UCommand::isTimeout()) UHTTP::setHTTPResponse(HTTP_GATEWAY_TIMEOUT, 0, 0);
-            else                       UHTTP::setHTTPInternalError();
+                 if (UCommand::isTimeout())               UHTTP::setHTTPResponse(HTTP_GATEWAY_TIMEOUT, 0, 0);
+            else if (UClientImage_Base::wbuffer->empty()) UHTTP::setHTTPInternalError();
             }
          }
       else
@@ -428,8 +444,7 @@ int UHttpPlugIn::handlerReset()
 
 const char* UHttpPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "uri_protected_mask       (UString          " << (void*)&uri_protected_mask         << ")\n"
-                  << "uri_request_cert_mask    (UString          " << (void*)&uri_request_cert_mask      << ")\n"
+   *UObjectIO::os << "uri_request_cert_mask    (UString          " << (void*)&uri_request_cert_mask      << ")\n"
                   << "uri_protected_allowed_ip (UString          " << (void*)&uri_protected_allowed_ip   << ")\n"
                   << "valias                   (UVector<UString> " << (void*)&valias                     << ')';
 

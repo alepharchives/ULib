@@ -163,6 +163,23 @@ mod_http {
 # REQUEST_READ_TIMEOUT       30 
 }
 
+# -----------------------------------------------------------------------------------------------------
+# mod_ssi - plugin parameters
+# -----------------------------------------------------------------------------------------------------
+# ENVIRONMENT					path of file configuration environment for SSI
+#
+# SSI_AUTOMATIC_ALIASING	special SSI HTML file that is recognized automatically as alias of all
+#									uri request without suffix (generally cause navigation directory not working)
+# -----------------------------------------------------------------------------------------------------
+
+# mod_ssi {
+#
+# ENVIRONMENT ~/etc/environment.conf 
+#
+# SSI_AUTOMATIC_ALIASING index.shtml
+# }
+
+
 # -----------------------------------------------------------------------------------------------
 # mod_fcgi - plugin parameters
 # -----------------------------------------------------------------------------------------------
@@ -229,17 +246,6 @@ mod_http {
 # SCGI_KEEP_CONN yes
 #
 # LOG_FILE      /var/log/userver.log
-# }
-
-# -----------------------------------------------------------------------------------------------------
-# mod_ssi - plugin parameters
-# -----------------------------------------------------------------------------------------------------
-# SSI_EXT_MASK  mask (DOS regexp) of special filename extension that recognize an SSI-enabled HTML file
-# -----------------------------------------------------------------------------------------------------
-
-# mod_ssi {
-#
-# SSI_EXT_MASK *.shtml|*.shtm|*.sht 
 # }
 
 # -----------------------------------------------------------------------------------------------

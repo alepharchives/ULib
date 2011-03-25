@@ -141,7 +141,7 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 {
    U_TRACE(1, "UStringExt::substitute(%.*S,%u,%.*S,%u,%.*S,%u)", n, s, n, n1, a, n1, n2, b, n2)
 
-   U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+   U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 
    void* p;
    uint32_t start = 0, _end, len;
@@ -214,138 +214,139 @@ UString UStringExt::dos2unix(const UString& s, bool unix2dos)
    U_RETURN_STRING(result);
 }
 
-UString UStringExt::expandPath(const char* path_data, uint32_t path_size)
+UString UStringExt::expandPath(const char* s, uint32_t n, const UString* environment)
 {
-   U_TRACE(1, "UStringExt::expandPath(%.*S,%u)", path_size, path_data, path_size)
+   U_TRACE(0, "UStringExt::expandPath(%.*S,%u,%p)", n, s, n, environment)
 
-   UString path(U_max(U_CAPACITY, path_size)), pathname;
+   U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 
-   (void) path.assign(path_data, path_size);
+   char c = *s;
+   UString x(n+100);
 
-   path_data = path.data();
-
-   if (path_data[0] == '~')
+   if (c == '~' ||
+       c == '$')
       {
-      // expand ~/... and ~user/...
+      UString value;
+      uint32_t _end = 1;
 
-      struct passwd* pw;
+      while (_end < n && s[_end] != '/') ++_end;
 
-      uint32_t len = path_size - 1;
-      char* ptr    = (char*) memchr(++path_data, '/', len);
+      U_INTERNAL_DUMP("_end = %u", _end)
 
-      if (ptr == 0) ptr = (char*)path_data + len;
+      if (_end == 1)
+         {
+         if (c == '$') goto end;
 
-      *ptr = '\0';
+         // expand ~/...
 
-      if (ptr == path_data) pathname = U_SYSCALL(getenv, "%S", "HOME");
+         value = getEnvironmentVar(U_CONSTANT_TO_PARAM("HOME"), environment);
+         }
+      else if (c == '$')
+         {
+         // expand $var... and $var/...
+
+         value = getEnvironmentVar(s + 1, _end - 1, environment);
+         }
       else
          {
-         pw = (struct passwd*) U_SYSCALL(getpwnam, "%S", path_data);
+         // expand ~user/...
 
-         if (pw &&
-             pw->pw_dir)
-            {
-            (void) pathname.assign(pw->pw_dir);
-            }
+         char buffer[128];
+
+         U_INTERNAL_ASSERT_MINOR(_end, sizeof(buffer))
+
+         (void) u_memcpy(buffer, s + 1, _end - 1);
+
+         buffer[_end-1] = '\0';
+
+         struct passwd* pw = (struct passwd*) U_SYSCALL(getpwnam, "%S", buffer);
+
+         if (pw && pw->pw_dir) (void) value.assign(pw->pw_dir);
          }
 
-      if (ptr != (path_data + len))
-         {
-         uint32_t n = u_strlen(path_data);
+      s += _end;
+      n -= _end;
 
-         *ptr = '/';
-
-         (void) pathname.append(ptr, len - n);
-         }
-      }
-   else if (path_data[0] == '$')
-      {
-      // expand $var... and $var/...
-
-      uint32_t len = path_size - 1;
-      char* ptr    = (char*) memchr(++path_data, '/', len);
-
-      if (ptr == 0) ptr = (char*)path_data + len;
-
-      *ptr = '\0';
-
-      char* envvar = U_SYSCALL(getenv, "%S", path_data);
-
-      if (envvar) (void) pathname.assign(envvar);
-
-      if (ptr != (path_data + len))
-         {
-         uint32_t n = u_strlen(path_data);
-
-         *ptr = '/';
-
-         (void) pathname.append(ptr, len - n);
-         }
-      }
-   else
-      {
-      pathname = path;
+      (void) x.append(value);
       }
 
-   U_INTERNAL_ASSERT(pathname.invariant())
+end:
+   if (n) (void) x.append(s, n);
 
-   U_RETURN_STRING(pathname);
+   U_INTERNAL_ASSERT(x.invariant())
+
+   U_RETURN_STRING(x);
 }
 
 // recursively expand environment variables if needed
 
-UString UStringExt::expandEnvVar(const char* s, uint32_t n)
+UString UStringExt::expandEnvironmentVar(const char* s, uint32_t n, const UString* environment)
 {
-   U_TRACE(1, "UStringExt::expandEnvVar(%.*S,%u)", n, s, n)
+   U_TRACE(0, "UStringExt::expandEnvironmentVar(%.*S,%u,%p)", n, s, n, environment)
 
-   U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+   U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 
-   char* ptr;
-   char* value;
+   char* p2;
    const char* p;
-   char name[128];
-   UString x(n+100);
-   uint32_t _end, len, n1, n2;
+   const char* p1 = 0;
+   UString value, x(n+100);
+   uint32_t _end, len, n1, n2 = 0;
 
    while ((p = (const char*) memchr(s, '$', n)))
       {
       len = p - s;
       n  -= len;
 
-      U_INTERNAL_DUMP("len = %u n = %u", len, n)
-
       // read name $var
 
-      for (ptr = name, _end = 1; (_end < n && u_isspace(p[_end]) == false && p[_end] != '$'); ++_end) *ptr++ = p[_end];
-                                                                                                 *ptr   = '\0';
+      _end = 1;
 
-      value = U_SYSCALL(getenv, "%S", name);
+      while (_end < n && (u_isalnum(p[_end]) || p[_end] == '_'))
+         {
+         U_INTERNAL_ASSERT_DIFFERS(p[_end], '$')
+         U_INTERNAL_ASSERT_EQUALS(u_isspace(p[_end]), false)
 
-      n1 = (value ? u_strlen(value) : 0);
+         ++_end;
+         }
+
+      U_INTERNAL_DUMP("len = %u n = %u _end = %u", len, n, _end)
+
+      if (_end == 1) n1 = 0;
+      else
+         {
+         value = getEnvironmentVar(p + 1, _end - 1, environment);
+
+         if (n2 &&
+             value.find('$', 0U) != U_NOT_FOUND)
+            {
+            value = getEnvironmentVar(p + 1, _end - 1, &x);
+            }
+
+         n1 = value.size();
+         p1 = value.data();
+         }
 
       // check for space
 
-      n2 = x.size();
-
       if (n1 > _end) (void) x.reserve(n2 + (n1 - _end));
 
-      ptr = x.c_pointer(n2);
+      p2 = x.c_pointer(n2);
 
       if (n1)
          {
-         (void) u_memcpy(ptr,           s, len);
-         (void) u_memcpy(ptr + len, value,  n1);
+         if (len) (void) u_memcpy(p2,        s, len);
+                  (void) u_memcpy(p2 + len, p1,  n1);
 
          n2 += n1;
          }
       else
          {
-         (void) u_memcpy(ptr, s, len + _end);
-
-         n2 += _end;
+         if (len) (void) u_memcpy(p2, s, len);
          }
 
-      x.size_adjust(n2 + len);
+      n2 += len;
+
+      x.size_adjust(n2);
 
       s  = p + _end;
       n -=     _end;
@@ -358,25 +359,68 @@ UString UStringExt::expandEnvVar(const char* s, uint32_t n)
    U_RETURN_STRING(x);
 }
 
-UString UStringExt::getEnvironmentVar(const UString& name, const UString& environment)
+UString UStringExt::getEnvironmentVar(const char* s, uint32_t n, const UString* environment)
 {
-   U_TRACE(0, "UStringExt::getEnvironmentVar(%.*S,%.*S)", U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(environment))
+   U_TRACE(1, "UStringExt::getEnvironmentVar(%.*S,%u,%p)", n, s, n, environment)
 
-   UString value;
+   UString value(100U);
 
-   // check if it is a environment-var
-
-   uint32_t start = environment.find(name);
-
-   if (start != U_NOT_FOUND)
+   if (environment)
       {
-      start += name.size() + 1;
+      // check if s param it is a environment-var
 
-      uint32_t end = environment.find('\n', start);
+      uint32_t start = environment->find(s, 0U, n);
 
-      if (environment.c_char(end-1) == '"') --end;
+      if (start == U_NOT_FOUND) goto next;
 
-      (void) value.assign(environment.c_pointer(start), end - start);
+      char c = '\0';
+
+      if (start)
+         {
+         c = environment->c_char(start-1);
+
+         U_INTERNAL_DUMP("c = %C", c)
+
+         if (c == '#') goto next;
+         }
+
+      start += n + 1;
+
+      uint32_t end = environment->find('\n', start);
+
+      if (end == U_NOT_FOUND) end = environment->size();
+      else
+         {
+         char c1 = environment->c_char(end-1);
+
+         if ((c1 == '"' || c1 == '\'') && (c == c1)) --end;
+         }
+
+      n = end - start;
+
+      if (n)
+         {
+         s = environment->c_pointer(start);
+
+         (void) value.assign(s, n);
+
+         if (value.find('$', 0U) != U_NOT_FOUND) value = expandEnvironmentVar(value, environment);
+         }
+      }
+   else
+      {
+next:
+      char buffer[128];
+
+      U_INTERNAL_ASSERT_MINOR(n, sizeof(buffer))
+
+      (void) u_memcpy(buffer, s,  n);
+
+      buffer[n] = '\0';
+
+      const char* ptr = U_SYSCALL(getenv, "%S", buffer);
+
+      if (ptr) (void) value.assign(ptr);
       }
 
    U_RETURN_STRING(value);
@@ -408,7 +452,7 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
       {
       if (token_id == U_TK_NAME)
          {
-         token    = UStringExt::getEnvironmentVar(token, environment);
+         token    = UStringExt::getEnvironmentVar(token, &environment);
          token_id = U_TK_VALUE;
          }
 

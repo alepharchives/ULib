@@ -68,11 +68,13 @@ UString*    UHTTP::tmpdir;
 UString*    UHTTP::real_ip;
 UString*    UHTTP::qcontent;
 UString*    UHTTP::pathname;
+UString*    UHTTP::htpasswd;
+UString*    UHTTP::htdigest;
+UString*    UHTTP::ssi_alias;
 UString*    UHTTP::request_uri;
 UString*    UHTTP::penvironment;
 UString*    UHTTP::cache_file_mask;
-UString*    UHTTP::htpasswd;
-UString*    UHTTP::htdigest;
+UString*    UHTTP::uri_protected_mask;
 uint32_t    UHTTP::limit_request_body = (((U_NOT_FOUND - sizeof(ustringrep))/sizeof(char)) - 4096);
 uint32_t    UHTTP::request_read_timeout;
 UCommand*   UHTTP::pcmd;
@@ -452,11 +454,11 @@ void UHTTP::ctor()
       U_INTERNAL_ASSERT_POINTER(page_speed->optimize_png)
       U_INTERNAL_ASSERT_POINTER(page_speed->optimize_jpg)
 
-      U_SRV_LOG("[mod_http] load of plugin 'mod_pagespeed' success");
+      U_SRV_LOG("load of plugin 'mod_pagespeed' success");
       }
    else
       {
-      U_SRV_LOG("[mod_http] load of plugin 'mod_pagespeed' FAILED");
+      U_SRV_LOG("load of plugin 'mod_pagespeed' FAILED");
 
       delete page_speed;
              page_speed = 0;
@@ -549,6 +551,10 @@ void UHTTP::ctor()
 
    cache_file->allocate();
 
+#ifdef HAVE_SSL
+   if (UServer_Base::getSocket()->isSSL()) enable_caching_by_proxy_servers = true;
+#endif
+
 #ifndef HAVE_SYS_INOTIFY_H
    UServer_Base::handler_event = 0;
 #else
@@ -619,6 +625,31 @@ void UHTTP::ctor()
       U_SRV_LOG("file cached: \"favicon.ico\" - %u bytes - (0%%) compressed ratio", file_data->size);
       }
 
+   // manage ssi_alias...
+
+   if (ssi_alias)
+      {
+      file_data = (*cache_file)[*ssi_alias];
+
+      if (file_data &&
+          file_data->array == 0)
+         {
+         file_data->array = U_NEW(UVector<UString>(4U));
+
+         file_data->array->push_back(UFile::contentOf(*ssi_alias));
+
+         UString ext(U_CAPACITY);
+
+         getFileMimeType(".shtml", 0, ext, file_data->size, 0);
+
+         U_INTERNAL_DUMP("ext = %.*S", U_STRING_TO_TRACE(ext))
+
+         file_data->array->push_back(ext);
+
+         U_SRV_LOG("file cached: %.*S - %u bytes - (0%%) compressed ratio", U_STRING_TO_TRACE(*ssi_alias), file_data->size);
+         }
+      }
+
    // manage authorization data...
 
    file_data = (*cache_file)[*str_htpasswd];
@@ -648,7 +679,9 @@ void UHTTP::dtor()
 {
    U_TRACE(0, "UHTTP::dtor()")
 
-   if (cache_file_mask) delete cache_file_mask;
+   if (ssi_alias)          delete ssi_alias;
+   if (cache_file_mask)    delete cache_file_mask;
+   if (uri_protected_mask) delete uri_protected_mask;
 
    if (file)
       {
@@ -2042,7 +2075,7 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
 
       (void) UFile::chdir(0, true);
 
-      (void) buffer.append(U_CONSTANT_TO_PARAM("</table><hr><address>ULib Server</address>\r\n</body></html>"));
+      (void) buffer.append(U_CONSTANT_TO_PARAM("</table><hr><address>ULib Server</address></body></html>"));
       }
 
    U_INTERNAL_DUMP("buffer(%u) = %.*S", buffer.size(), U_STRING_TO_TRACE(buffer))
@@ -2595,7 +2628,7 @@ void UHTTP::setHTTPCgiResponse(int nResponseCode, bool header_content_length, bo
       {
       const char* ptr;
       uint32_t sz, endHeader = UClientImage_Base::wbuffer->size() - http_info.clength;
-      bool bcompress = (content_encoding == false && http_info.clength > 150 && U_http_is_accept_deflate == '1'); // NB: 150 is google advice...
+      bool bcompress = (content_encoding == false && http_info.clength > 150 && U_http_is_accept_deflate); // NB: 150 is google advice...
 
       U_INTERNAL_DUMP("bcompress = %b endHeader = %u", bcompress, endHeader)
 
@@ -2680,7 +2713,7 @@ U_NO_EXPORT bool UHTTP::openFile()
             {
             if (isDataFromCache(false))
                {
-               bool deflate = ((U_http_is_accept_deflate == '1') && isDataFromCache(true));
+               bool deflate = (U_http_is_accept_deflate && isDataFromCache(true));
 
                if (isHttpHEAD() == false) *UClientImage_Base::body    = getDataFromCache(false, deflate);
                                           *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_OK, getDataFromCache(true, deflate));
@@ -3009,6 +3042,15 @@ bool UHTTP::checkUriProtected()
 {
    U_TRACE(0, "UHTTP::checkUriProtected()")
 
+   U_INTERNAL_ASSERT_POINTER(uri_protected_mask)
+
+   if ((request_uri->empty() ||
+        u_dosmatch_with_OR(U_STRING_TO_PARAM(*request_uri), U_STRING_TO_PARAM(*uri_protected_mask), 0) == false) &&
+        u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM,             U_STRING_TO_PARAM(*uri_protected_mask), 0) == false)
+      {
+      U_RETURN(true);
+      }
+
    if (vallow_IP)
       {
       bool ok = UIPAllow::isAllowed(UClientImage_Base::socket->remoteIPAddress().getInAddr(), *vallow_IP);
@@ -3148,20 +3190,14 @@ end:
     * always safe to set this header for HTTPS resources. 
     */
 
-   if (expire) ext.snprintf_add("Expires: %#D\r\n", expire);
-
-#ifdef HAVE_SSL
-   if (UClientImage_Base::socket->isSSL()) enable_caching_by_proxy_servers = true;
-#endif
+   if (expire)                                 ext.snprintf_add("Expires: %#D\r\n", expire);
+   if (UFile::mime_index != U_ssi)             ext.snprintf_add("Last-Modified: %#D\r\n", file->st_mtime);
+   if (enable_caching_by_proxy_servers) (void) ext.append(U_CONSTANT_TO_PARAM("Cache-Control: public, max-age=31536000\r\nVary: Accept-Encoding\r\n"));
 
    ext.snprintf_add("Accept-Ranges: bytes\r\n"
                     "Content-Length: %u\r\n"
-                    "Last-Modified: %#D\r\n"
-                    "%s"
                     "\r\n",
-                    size,
-                    file->st_mtime,
-                    enable_caching_by_proxy_servers ? "Cache-Control: public, max-age=31536000\r\nVary: Accept-Encoding\r\n" : "");
+                    size);
 }
 
 void UHTTP::checkFileForCache()
@@ -3268,8 +3304,11 @@ void UHTTP::checkFileForCache()
 #endif
 
 #ifdef HAVE_LIBZ
-   content  = UStringExt::deflate(content);
-   deflated = true;
+   if (UFile::mime_index != U_ssi)
+      {
+      content  = UStringExt::deflate(content);
+      deflated = true;
+      }
 #endif
 
 next:
@@ -3382,19 +3421,13 @@ U_NO_EXPORT void UHTTP::processFileCache()
 
       nResponseCode = HTTP_PARTIAL;
       }
-   else if (U_http_is_accept_deflate)
+   else if (U_http_is_accept_deflate &&
+            isDataFromCache(true))
       {
-      if (isDataFromCache(true))
-         {
-                                                         ext = getDataFromCache(true,  true);
-         if (isHttpHEAD() == false) *UClientImage_Base::body = getDataFromCache(false, true);
+                                                      ext = getDataFromCache(true,  true);
+      if (isHttpHEAD() == false) *UClientImage_Base::body = getDataFromCache(false, true);
 
-         goto next;
-         }
-
-      U_http_is_accept_deflate = '2';
-
-      U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
+      goto next;
       }
 
    if (isHttpHEAD() == false) *UClientImage_Base::body    = getDataFromCache(false, false).substr(start, size);
@@ -3563,7 +3596,7 @@ bool UHTTP::checkForCGIRequest()
    else if (U_STRNEQ(lptr,   ".py"))  http_info.interpreter = "python";
    else if (U_STRNEQ(lptr,   ".rb"))  http_info.interpreter = "ruby";
 
-   U_INTERNAL_DUMP("http_info.interpreter = %S", http_info.interpreter)
+   U_INTERNAL_DUMP("U_http_sh_script = %C http_info.interpreter = %S", U_http_sh_script, http_info.interpreter)
 
    bool result = (http_info.interpreter || cgi_dir[0]);
 
@@ -3737,9 +3770,9 @@ void UHTTP::callRunDynamicPage(int arg)
 
 // manage CGI
 
-UString UHTTP::getCGIEnvironment()
+UString UHTTP::getCGIEnvironment(bool sh_script)
 {
-   U_TRACE(0, "UHTTP::getCGIEnvironment()")
+   U_TRACE(0, "UHTTP::getCGIEnvironment(%b)", sh_script)
 
    char c = u_line_terminator[0];
 
@@ -3937,7 +3970,7 @@ UString UHTTP::getCGIEnvironment()
 
    buffer.snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(uri));
 
-   if (U_http_sh_script)
+   if (sh_script)
       {
       // ULIB facility: some env var for shell script...
 
@@ -3949,6 +3982,10 @@ UString UHTTP::getCGIEnvironment()
          }
 
       buffer.snprintf_add("HTTP_ACCEPT_LANGUAGE=%.2s\n", (accept_language_len ? accept_language_ptr : "en"));
+
+      const char* home = U_SYSCALL(getenv, "%S", "HOME");
+
+      if (home) buffer.snprintf_add("HOME=%s\n", home);
       }
    else
       {
@@ -4583,7 +4620,7 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool pro
    UString environment;
 
    if (penv)                environment = *penv;
-   if (environment.empty()) environment = getCGIEnvironment();
+   if (environment.empty()) environment = getCGIEnvironment(U_http_sh_script);
 
    cmd->setEnvironment(&environment);
 

@@ -54,6 +54,7 @@ public:
    static const UString* str_file;
    static const UString* str_value;
    static const UString* str_bytes;
+   static const UString* str_direct;
    static const UString* str_abbrev;
    static const UString* str_errmsg;
    static const UString* str_virtual;
@@ -65,7 +66,7 @@ public:
    static const UString* str_DOCUMENT_URI;
    static const UString* str_DOCUMENT_NAME;
    static const UString* str_LAST_MODIFIED;
-   static const UString* str_SSI_EXT_MASK;
+   static const UString* str_SSI_AUTOMATIC_ALIASING;
    static const UString* str_errmsg_default;
    static const UString* str_timefmt_default;
 
@@ -82,7 +83,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, USSIPlugIn, "")
 
-      if (str_SSI_EXT_MASK == 0) str_allocate();
+      if (str_SSI_AUTOMATIC_ALIASING == 0) str_allocate();
       }
 
    virtual ~USSIPlugIn()
@@ -95,6 +96,7 @@ public:
    // Server-wide hooks
 
    virtual int handlerConfig(UFileConfig& cfg);
+   virtual int handlerInit();
 
    // Connection-wide hooks
 
@@ -108,12 +110,14 @@ public:
 
 protected:
    time_t last_modified;
-   UString ssi_ext_mask, environment, docname, timefmt, errmsg;
+   UString cfg_environment, environment, docname, timefmt, errmsg;
    bool use_size_abbrev;
 
 private:
    UString getInclude(const UString& include, int include_level) U_NO_EXPORT;
    UString processSSIRequest(const UString& content, int include_level) U_NO_EXPORT;
+
+   static UString getPathname(const UString& name, const UString& value, const UString& directory) U_NO_EXPORT;
 
    USSIPlugIn(const USSIPlugIn&) : UServerPlugIn() {}
    USSIPlugIn& operator=(const USSIPlugIn&)        { return *this; }

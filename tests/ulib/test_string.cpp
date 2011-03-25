@@ -1706,13 +1706,13 @@ U_EXPORT main (int argc, char* argv[])
 
    U_DUMP_ATTRS(environ);
 
-   z = UStringExt::expandEnvVar(U_STRING_FROM_CONSTANT(ENV_1));
+   z = UStringExt::expandEnvironmentVar(U_STRING_FROM_CONSTANT(ENV_1), 0);
 
 #define ENV_2    \
    "HOME=1000\n" \
    "PATH=da qualche parte\n" \
-   "BRUTTOBUCO=$BRUTTOBUCO\n" \
-   "LOGNAME=bucaiolo$\n"
+   "BRUTTOBUCO=\n" \
+   "LOGNAME=bucaiolo\n"
 
    U_ASSERT( z == U_STRING_FROM_CONSTANT(ENV_2) )
 
@@ -1796,7 +1796,7 @@ U_EXPORT main (int argc, char* argv[])
                              U_STRING_FROM_CONSTANT("3 > 2 && 1 <= (3-2)"), // = true
                              U_STRING_FROM_CONSTANT("3 % 2 != 10 % 3"), // = false
                              U_STRING_FROM_CONSTANT("rand() == 0"), // = false
-                           //U_STRING_FROM_CONSTANT("/pippo/pluto == UStringExt::expandEnvVar('$HOME', 5)/pluto"), // = false
+                           //U_STRING_FROM_CONSTANT("/pippo/pluto == UStringExt::expandEnvironmentVar('$HOME', 5, 0)/pluto"), // = false
                              UString::getStringNull() };
 
     for (int i = 0; expressions[i].empty() == false; ++i )

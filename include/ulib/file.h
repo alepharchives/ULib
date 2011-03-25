@@ -66,6 +66,7 @@
 #define U_gif  'g' // image/gif
 #define U_png  'p' // image/png
 #define U_jpg  'J' // image/jpg
+#define U_ssi  's' // SSI
 
 class URDB;
 class UHTTP;
@@ -158,13 +159,13 @@ public:
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
       }
 
-   void setPath(const UString& path);
+   void setPath(const UString& path, const UString* environment = 0);
 
    // NB: la stringa potrebbe non essere scrivibile e quindi path_relativ[path_relativ_len] potrebbe non essere '\0'...
 
-   const UString& getPath() const           { return pathname; }
-   const char*    getPathRelativ() const    { return path_relativ; }
-   int32_t        getPathRelativLen() const { return path_relativ_len; }
+   UString&    getPath()                 { return pathname; }
+   const char* getPathRelativ() const    { return path_relativ; }
+   int32_t     getPathRelativLen() const { return path_relativ_len; }
 
    bool isPathRelativ(const UString& name) const
       {
@@ -840,8 +841,8 @@ protected:
    static char     cwd_save[U_PATH_MAX];
    static uint32_t cwd_len_save;
 
-   void setPathRelativ();
    void substitute(UFile& file);
+   void setPathRelativ(const UString* environment = 0);
    void setPath(const UFile& file, char* buffer_path, const char* suffix, uint32_t len);
 
    static void ftw_tree_up();

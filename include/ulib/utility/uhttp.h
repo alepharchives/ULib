@@ -120,7 +120,8 @@ typedef struct uhttpinfo {
 
 enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_GET = '4', HTTP_HEAD = '5', HTTP_OPTIONS = '6' };
 
-#define U_HTTP_HEADER(str)           str.substr(UHTTP::http_info.startHeader, UHTTP::http_info.szHeader)
+#define U_HTTP_BODY(str)             (str).substr(UHTTP::http_info.endHeader, UHTTP::http_info.clength)
+#define U_HTTP_HEADER(str)           (str).substr(UHTTP::http_info.startHeader, UHTTP::http_info.szHeader)
 
 #define U_HTTP_METHOD_TO_PARAM       UHTTP::http_info.method, UHTTP::http_info.method_len
 #define U_HTTP_METHOD_TO_TRACE       UHTTP::http_info.method_len, UHTTP::http_info.method
@@ -409,6 +410,17 @@ public:
       U_RETURN(result);
       }
 
+   static bool isSSIRequest()
+      {
+      U_TRACE(0, "UHTTP::isSSIRequest()")
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      bool result = (u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".shtml")));
+
+      U_RETURN(result);
+      }
+
    static bool isHTTPRequestTooLarge()
       {
       U_TRACE(0, "UHTTP::isHTTPRequestTooLarge()")
@@ -426,7 +438,9 @@ public:
    static UString* alias;
    static UStringRep* pkey;
    static UString* pathname;
+   static UString* ssi_alias;
    static UString* request_uri;
+   static UString* uri_protected_mask;
    static uint32_t limit_request_body, request_read_timeout;
    static bool virtual_host, enable_caching_by_proxy_servers;
 
@@ -612,7 +626,7 @@ public:
    static bool processCGIRequest(UCommand* pcmd, UString* penvironment, bool async, bool process_output);
    static void setHTTPCgiResponse(int nResponseCode, bool header_content_length, bool header_content_type, bool content_encoding);
 
-   static UString getCGIEnvironment();
+   static UString getCGIEnvironment(bool sh_script);
 
    static bool isCGIRequest()
       {

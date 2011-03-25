@@ -649,6 +649,8 @@ void UServer_Base::runAsUser()
 
       if (u_ranAsUser(user, false))
          {
+         U_INTERNAL_DUMP("$HOME = %S", getenv("HOME"))
+
          U_SRV_LOG("server run with user %S permission", user);
          }
       else
@@ -880,6 +882,8 @@ next:
 
    setProcessManager();
 
+   runAsUser();
+
    if (vplugin &&
        pluginsHandlerInit() != U_PLUGIN_HANDLER_FINISHED)
       {
@@ -919,8 +923,6 @@ next:
 
       U_INTERNAL_DUMP("O_NONBLOCK = %B, U_SOCKET_FLAGS = %B", O_NONBLOCK, U_SOCKET_FLAGS)
       }
-
-   runAsUser();
 
    setNotifier(false);
 
@@ -1379,11 +1381,11 @@ UCommand* UServer_Base::loadConfigCommand(UFileConfig& cfg)
          command = buffer;
          }
 
+      cmd = U_NEW(UCommand(command));
+
       UString environment = cfg[*str_ENVIRONMENT];
 
-      const UString* penv = (environment.empty() ? 0 : &environment);
-
-      cmd = U_NEW(UCommand(command, penv));
+      if (environment.empty() == false) cmd->setEnvironment(&environment);
       }
 
    U_RETURN_POINTER(cmd,UCommand);

@@ -71,7 +71,10 @@ void UCommand::reset(const UString* penv)
    envp = 0;
    nenv = 0;
 
-   if (penv) environment = *penv;
+   if (penv)
+      {
+      environment = *penv;
+      }
    else
       {
       freeCommand();
@@ -116,11 +119,11 @@ U_NO_EXPORT void UCommand::setEnvironment(const UString& env)
 
    freeEnvironment();
 
-   char* argv[U_MAX_ARGS];
+   char* argp[U_MAX_ARGS];
 
    env.duplicate();
 
-   nenv = u_split(U_STRING_TO_PARAM(env), argv, 0);
+   nenv = u_split(U_STRING_TO_PARAM(env), argp, 0);
 
    U_INTERNAL_DUMP("nenv = %d", nenv)
 
@@ -130,7 +133,9 @@ U_NO_EXPORT void UCommand::setEnvironment(const UString& env)
 
    envp = envp_exec = U_MALLOC_VECTOR(nenv+1, char); // NB: considera anche null terminator...
 
-   (void) u_memcpy(envp_exec, argv, (nenv+1) * sizeof(char*)); // NB: copia anche null terminator...
+   (void) u_memcpy(envp_exec, argp, (nenv+1) * sizeof(char*)); // NB: copia anche null terminator...
+
+   U_INTERNAL_DUMP("envp = %p", envp)
 
    U_DUMP_EXEC(argv_exec, envp)
 }
@@ -139,19 +144,12 @@ void UCommand::setEnvironment(const UString* penv)
 {
    U_TRACE(0, "UCommand::setEnvironment(%p)", penv)
 
+   U_INTERNAL_ASSERT_POINTER(penv)
    U_INTERNAL_ASSERT_POINTER(argv_exec)
 
-   if (penv == 0)
-      {
-      envp        = 0;
-      flag_expand = U_NOT_FOUND;
-      }
-   else
-      {
-      environment = *penv;
+   environment = *penv;
 
-      if ((flag_expand = penv->find('$')) == U_NOT_FOUND) setEnvironment(environment);
-      }
+   if ((flag_expand = penv->find('$')) == U_NOT_FOUND) setEnvironment(environment);
 
    U_INTERNAL_DUMP("flag_expand = %u", flag_expand)
 }
@@ -235,6 +233,15 @@ U_NO_EXPORT void UCommand::execute(bool flag_stdin, bool flag_stdout, bool flag_
    U_TRACE(0, "UCommand::execute(%b,%b,%b)", flag_stdin, flag_stdout, flag_stderr)
 
    U_INTERNAL_ASSERT_POINTER(argv_exec)
+
+   if (flag_expand != U_NOT_FOUND)
+      {
+      // NB: it must remain in this way (I don't understand why...)
+
+      environment = UStringExt::expandEnvironmentVar(environment, &environment);
+
+      setEnvironment(environment);
+      }
 
 #ifdef DEBUG
    char* _end  = (char*) command.end();
@@ -433,8 +440,6 @@ bool UCommand::executeAndWait(UString* input, int fd_stdin, int fd_stderr)
 bool UCommand::execute(UString* input, UString* output, int fd_stdin, int fd_stderr)
 {
    U_TRACE(0, "UCommand::execute(%p,%p,%d,%d)", input, output, fd_stdin, fd_stderr)
-
-   if (flag_expand != U_NOT_FOUND) setEnvironment(UStringExt::expandEnvVar(environment));
 
    bool flag_stdin  = (input ? true : fd_stdin != -1),
         flag_stdout = (output != 0),

@@ -44,9 +44,9 @@ void UFile::chk_num_file_object() { if (num_file_object) U_WARNING("UFile::chdir
 #define MREMAP_MAYMOVE 1
 #endif
 
-void UFile::setPathRelativ()
+void UFile::setPathRelativ(const UString* environment)
 {
-   U_TRACE(0, "UFile::setPathRelativ()")
+   U_TRACE(0, "UFile::setPathRelativ(%p)", environment)
 
    U_CHECK_MEMORY
 
@@ -59,7 +59,7 @@ void UFile::setPathRelativ()
    if (c == '~' ||
        c == '$')
       {
-      pathname = UStringExt::expandPath(pathname);
+      pathname = UStringExt::expandPath(pathname, environment);
       }
 
    // NB: la stringa potrebbe non essere scrivibile...!!!!
@@ -85,13 +85,13 @@ void UFile::setPathRelativ()
 
 // gcc - call is unlikely and code size would grow
 
-void UFile::setPath(const UString& path)
+void UFile::setPath(const UString& path, const UString* environment)
 {
-   U_TRACE(0, "UFile::setPath(%.*S)", U_STRING_TO_TRACE(path))
+   U_TRACE(0, "UFile::setPath(%.*S,%p)", U_STRING_TO_TRACE(path), environment)
 
    pathname = path;
 
-   setPathRelativ();
+   setPathRelativ(environment);
 }
 
 bool UFile::open(int flags)
@@ -1406,14 +1406,15 @@ static struct mimeentry mimetab_r[] = {
 };
 
 static struct mimeentry mimetab_s[] = {
-   MIME_ENTRY( "shtm", "text/html" ),
-   MIME_ENTRY( "svg",  "image/svg+xml" ),
-   MIME_ENTRY( "swf",  "application/x-shockwave-flash" ),
+   MIME_ENTRY( "shtm", "text/html" ), // U_ssi
 
    /*
-   MIME_ENTRY( "sig",   "application/pgp-signature" ),
    MIME_ENTRY( "shtml", "text/html" ),
+   MIME_ENTRY( "sig",   "application/pgp-signature" ),
    */
+
+   MIME_ENTRY( "svg",  "image/svg+xml" ),
+   MIME_ENTRY( "swf",  "application/x-shockwave-flash" ),
 
    { 0, 0, 0 }
 };
@@ -1525,7 +1526,7 @@ loop:
 
       U_INTERNAL_DUMP("diff = %u sizeof(mimeentry) = %u", diff, sizeof(mimeentry))
 
-           if (diff ==  0)                       mime_index =  c;  // NB: first entry: 'c' (U_css), 'j' (U_js), 'h' (U_html), 'g' (U_gif), 'p' (U_png)
+           if (diff ==  0)                       mime_index =  c;  // NB: first entry: 'c' (U_css), 'j' (U_js), 'h' (U_html), 'g' (U_gif), 'p' (U_png), 's' (U_ssi)
       else if (diff >= (ptrdiff_t)2 && c == 'j') mime_index = 'J'; // NB: 3|4 entry: U_jpg
 
       U_INTERNAL_DUMP("mime_index = %C", mime_index)

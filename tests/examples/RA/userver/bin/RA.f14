@@ -7,7 +7,7 @@
 ### END INIT INFO
 
 # chkconfig: - 41 89
-# config: /srv/RA/etc/environment.conf
+# config: /srv/userver/etc/RA.cfg
 
 # Source function library.
 . /etc/init.d/functions
@@ -18,9 +18,8 @@
 #USIMERR="error.accept"
  export UTRACE UOBJDUMP USIMERR
 
-[ -f /srv/RA/etc/environment.conf ] && . /srv/RA/etc/environment.conf
-
-mkdir -p /var/run /var/log /tmp/scan /tmp/mail
+mkdir -p /var/run /var/log /tmp/client/scan # /tmp/scan /tmp/mail
+chown -R ra: /srv/RA /tmp/client
 
 start() {
 	# Check that networking is configured.
@@ -31,7 +30,7 @@ start() {
                 RETVAL=4
                 failure
         else
-		daemon /srv/userver/bin/userver_tcp -c /srv/userver/etc/RA.cfg
+		daemon /srv/userver/bin/userver_tcp -c /srv/userver/etc/RA.cfg >/tmp/userver_tcp.err 2>&1 &
 		RETVAL=$?
 		[ $RETVAL -eq 0 ]
 	fi;
