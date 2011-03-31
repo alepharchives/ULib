@@ -22,8 +22,8 @@ The current version offers the following features :
     * Browser cache management (headers: If-Modified-Since/Last-modified).
     * Chunk-encoding transfers support.
     * HTTP multi-range request support.
-    * Memory caching for small static pages with smart compression and CSS/JS reduction
-      (also HTML with google page speed SDK wrapping and on Linux automatic update with inotify).
+    * Memory caching of document root for (small) static pages with smart compression and CSS/JS reduction.
+    * Support for automatic update of caching document root with inotify (on Linux).
     * Support for pipelining.
     * Support for virtual hosts (also with SSL).
     * Support for basic/digest authentication.
@@ -38,6 +38,7 @@ The current version offers the following features :
     * CGI support for shell script processes (with automatic management of form and cookie).
     * General CGI support (run any CGI script) with automatic output compression (using deflate method).
     * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
+    * Support for minify HTML CGI output with wrapping google page speed SDK.
     * Web Socket support (experimental).
     * Support for Windows (without preforking).
     * Requests cut in phases for modular architecture (apache-like).
@@ -77,18 +78,21 @@ Take a look at:
 
     $ ./configure --help
 * ......
-* --with-ssl              use system      SSL library - [will check /usr /usr/local] [default=yes]
 * --with-libz             use system     LIBZ library - [will check /usr /usr/local] [default=yes]
-* --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=yes]
+* --enable-zip            enable build of ZIP support - require libz [default: depend from libz]
 * --with-libuuid          use system  libuuid library - [will check /usr /usr/local] [default=yes]
 * --with-magic            use system libmagic library - [will check /usr /usr/local] [default=yes]
-* --with-expat            use system    EXPAT library - [will check /usr /usr/local] [default=yes]
+* --with-ssl              use system      SSL library - [will check /usr /usr/local] [default=yes]
 * --with-ssh              use system      SSH library - [will check /usr /usr/local]
+* --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=yes]
+* --with-expat            use system    EXPAT library - [will check /usr /usr/local] [default=yes]
 * --with-curl             use system     cURL library - [will check /usr /usr/local]
 * --with-ldap             use system openLDAP library - [will check /usr /usr/local]
 * --with-mysql            use system    MySQL library - [will check /usr /usr/local]
+* --with-dbi              use system      DBI library - [will check /usr /usr/local]
 * --with-libevent         use system libevent library - [will check /usr /usr/local]
 * --with-libxml2          use system  libxml2 library - [will check /usr /usr/local]
+* --with-page-speed       use google page-speed SDK   - [will check /usr /usr/local] [default=no]
 
 if you desire wrapping of some system library installed.
 

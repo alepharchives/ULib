@@ -197,10 +197,11 @@ MODULE_LIBTOOL_OPTIONS="-export-dynamic -avoid-version"
 # check for cross compiling
 if test "$cross_compiling" = "yes"; then
 	CROSS_ENVIRONMENT=$STAGING_DIR
-#  AM_CONDITIONAL(CROSS_COMPILING, true)
 	PKG_CONFIG_PATH=${CROSS_ENVIRONMENT}/usr/lib/pkgconfig
 	TWOCAN_CONF_MSG(Build for Target <${target}> with Environment <${CROSS_ENVIRONMENT}>)
+	AM_CONDITIONAL(CROSS_COMPILING, true)
 else
+	AM_CONDITIONAL(CROSS_COMPILING, false)
 	PKG_CONFIG_PATH=`pkg-config --variable pc_path pkg-config`
 fi
 
@@ -336,6 +337,7 @@ dnl initialize all the info variables to 'no'
   ulib_libuuid_msg="no    (--with-libuuid)"
  ulib_libevent_msg="no    (--with-libevent)"
   ulib_libxml2_msg="no    (--with-libxml2)"
+      ulib_dbi_msg="no    (--with-libdbi)"
 ulib_pagespeed_msg="no    (--with-page-speed)"
      ulib_ipv6_msg="no    (--with-ipv6)"
       ulib_pch_msg="no    (--enable-pch)"
@@ -412,6 +414,7 @@ libmysql_version="None"
 libuuid_version="None"
 libevent_version="None"
 libxml2_version="None"
+libdbi_version="None"
 page_speed_version="None"
 
 AC_CHECK_PACKAGE

@@ -144,22 +144,7 @@ public:
    by the provided host name and port number. We call the ssh_connect() function to perform the connection
    */
 
-   virtual bool connectServer(const UString& server, int iServPort) // 22
-      {
-      U_TRACE(1, "USSHSocket::connectServer(%.*S,%d)", U_STRING_TO_TRACE(server), iServPort)
-
-      if (UTCPSocket::connectServer(server, iServPort))
-         {
-         const char* srv = server.c_str();
-
-         (void) U_SYSCALL(ssh_options_set, "%p,%d,%S", session, SSH_OPTIONS_HOST, srv);
-         (void) U_SYSCALL(ssh_options_set, "%p,%d,%p", session, SSH_OPTIONS_PORT, &iServPort);
-
-         if (SSHConnection(USocket::iSockDesc)) U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
+   virtual bool connectServer(const UString& server, int iServPort); // 22
 
 #ifdef DEBUG
    const char* dump(bool reset) const;

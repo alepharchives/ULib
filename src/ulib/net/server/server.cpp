@@ -65,13 +65,20 @@
 #  include <ulib/net/unixsocket.h>
 #endif
 
-#define U_DEFAULT_PORT           80
+#define U_DEFAULT_PORT            80
 #define U_DEFAULT_MAX_KEEP_ALIVE 256
+
+#ifdef DEBUG
+#  define U_DEFAULT_LISTEN_BACKLOG SOMAXCONN
+#else
+#  define U_DEFAULT_LISTEN_BACKLOG 1024
+#endif
 
 #define U_SOCKET_FLAGS     ptr_shared_data->socket_flags
 #define U_TOT_CONNECTION   ptr_shared_data->tot_connection
 
 int                        UServer_Base::port;
+int                        UServer_Base::iBackLog;
 int                        UServer_Base::timeoutMS = -1;
 int                        UServer_Base::cgi_timeout;
 int                        UServer_Base::verify_mode;
@@ -132,6 +139,9 @@ const UString* UServer_Base::str_IP_ADDRESS;
 const UString* UServer_Base::str_MAX_KEEP_ALIVE;
 const UString* UServer_Base::str_PID_FILE;
 const UString* UServer_Base::str_USE_TCP_OPTIMIZATION;
+const UString* UServer_Base::str_LISTEN_BACKLOG;
+
+static int sysctl_somaxconn, tcp_abort_on_overflow, sysctl_max_syn_backlog, tcp_fin_timeout;
 
 void UServer_Base::str_allocate()
 {
@@ -173,6 +183,7 @@ void UServer_Base::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_MAX_KEEP_ALIVE,0)
    U_INTERNAL_ASSERT_EQUALS(str_PID_FILE,0)
    U_INTERNAL_ASSERT_EQUALS(str_USE_TCP_OPTIMIZATION,0)
+   U_INTERNAL_ASSERT_EQUALS(str_LISTEN_BACKLOG,0)
 
    static ustringrep stringrep_storage[] = {
    { U_STRINGREP_FROM_CONSTANT("USE_IPV6") },
@@ -210,7 +221,8 @@ void UServer_Base::str_allocate()
    { U_STRINGREP_FROM_CONSTANT("IP_ADDRESS") },
    { U_STRINGREP_FROM_CONSTANT("MAX_KEEP_ALIVE") },
    { U_STRINGREP_FROM_CONSTANT("PID_FILE") },
-   { U_STRINGREP_FROM_CONSTANT("USE_TCP_OPTIMIZATION") }
+   { U_STRINGREP_FROM_CONSTANT("USE_TCP_OPTIMIZATION") },
+   { U_STRINGREP_FROM_CONSTANT("LISTEN_BACKLOG") }
    };
 
    U_NEW_ULIB_OBJECT(str_USE_IPV6,              U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -249,6 +261,7 @@ void UServer_Base::str_allocate()
    U_NEW_ULIB_OBJECT(str_MAX_KEEP_ALIVE,        U_STRING_FROM_STRINGREP_STORAGE(33));
    U_NEW_ULIB_OBJECT(str_PID_FILE,              U_STRING_FROM_STRINGREP_STORAGE(34));
    U_NEW_ULIB_OBJECT(str_USE_TCP_OPTIMIZATION,  U_STRING_FROM_STRINGREP_STORAGE(35));
+   U_NEW_ULIB_OBJECT(str_LISTEN_BACKLOG,        U_STRING_FROM_STRINGREP_STORAGE(36));
 }
 
 UServer_Base::UServer_Base(UFileConfig* cfg)
@@ -302,6 +315,21 @@ UServer_Base::~UServer_Base()
    delete socket;
 
    UClientImage_Base::clear();
+
+#ifndef __MINGW32__
+   if (iBackLog == 1) (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", tcp_abort_on_overflow, true);
+
+   if (flag_use_tcp_optimization)
+      {
+      (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", tcp_fin_timeout, true);
+
+      if (iBackLog >= SOMAXCONN)
+         {
+         (void) UFile::setSysParam("/proc/sys/net/core/somaxconn",           sysctl_somaxconn,       true);
+         (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", sysctl_max_syn_backlog, true);
+         }
+      }
+#endif
 }
 
 void UServer_Base::loadConfigParam(UFileConfig& cfg)
@@ -320,6 +348,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // IP_ADDRESS    public ip address of host for the interface connected to the Internet (autodetected if not specified)
    // ALLOWED_IP    list of comma separated client address for IP-based access control (IPADDR[/MASK])
    //
+   // LISTEN_BACKLOG       max number of ready to be delivered connections to accept()
    // USE_TCP_OPTIMIZATION flag indicating the use of TCP/IP options to optimize data transmission (TCP_CORK, TCP_DEFER_ACCEPT, TCP_QUICKACK)
    //
    // PID_FILE      write pid on file indicated
@@ -366,10 +395,12 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 #endif
    flag_use_tcp_optimization  = cfg.readBoolean(*str_USE_TCP_OPTIMIZATION);
 
-   port                       = cfg.readLong(*str_PORT, U_DEFAULT_PORT);
+   port                       = cfg.readLong(*str_PORT,           U_DEFAULT_PORT);
+   iBackLog                   = cfg.readLong(*str_LISTEN_BACKLOG, U_DEFAULT_LISTEN_BACKLOG);
+   max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE, U_DEFAULT_MAX_KEEP_ALIVE);
+
    timeoutMS                  = cfg.readLong(*str_REQ_TIMEOUT);
    cgi_timeout                = cfg.readLong(*str_CGI_TIMEOUT);
-   max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE, U_DEFAULT_MAX_KEEP_ALIVE);
    u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE);
 
    if (timeoutMS) timeoutMS *= 1000;
@@ -735,7 +766,50 @@ void UServer_Base::init()
 #  endif
       }
 
-   if (socket->setServer(server, port, 1024) == false)
+   /* sysctl_somaxconn (SOMAXCONN: 128) specifies the maximum number of sockets in state SYN_RECV per listen socket queue.
+    * At listen(2) time the backlog is adjusted to this limit if bigger then that.
+    *
+    * sysctl_max_syn_backlog on the other hand is dynamically adjusted, depending on the memory characteristic of the system.
+    * Default is 256, 128 for small systems and up to 1024 for bigger systems.
+    *
+    * sysctl_tcp_abort_on_overflow when its on, new connections are reset once the backlog is exhausted.
+    *
+    * The system limits (somaxconn & tcp_max_syn_backlog) specify a _maximum_, the user cannot exceed this limit with listen(2).
+    * The backlog argument for listen on the other hand specify a _minimum_
+    */
+
+#  ifndef __MINGW32__
+   if (iBackLog == 1) tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
+
+   if (flag_use_tcp_optimization)
+      {
+      /* timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
+       * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
+       * maximum segment lifetime (2MSL) state. During this time, reopening the connection to the client and server cost
+       * less than establishing a new connection. By reducing the value of this entry, TCP/IP can release closed connections
+       * faster, providing more resources for new connections. Adjust this parameter if the running application requires rapid
+       * release, the creation of new connections, and a low throughput due to many connections sitting in the TIME_WAIT state.
+       */
+
+                                tcp_fin_timeout = UFile::getSysParam("/proc/sys/net/ipv4/tcp_fin_timeout");
+      if (tcp_fin_timeout > 30) tcp_fin_timeout = UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", 30, true);
+
+      if (iBackLog >= SOMAXCONN)
+         {
+         int value = iBackLog * (flag_use_tcp_optimization ? 2 : 1);
+
+         // NB: take a look at `netstat -s | grep overflowed`
+
+         sysctl_somaxconn       = UFile::setSysParam("/proc/sys/net/core/somaxconn", value);
+         sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 2);
+         }
+      }
+#  endif
+
+   U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
+                    sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
+
+   if (socket->setServer(server, port, iBackLog) == false)
       {
       if (server.empty()) server = U_STRING_FROM_CONSTANT("*");
 
@@ -836,6 +910,7 @@ void UServer_Base::init()
       U_ASSERT(name_sock.empty())
       U_ASSERT_EQUALS(socket->isIPC(),false)
 
+#ifndef __MINGW32__
    // socket->setBufferRCV(128 * 1024);
    // socket->setBufferSND(128 * 1024);
 
@@ -873,6 +948,7 @@ void UServer_Base::init()
        */
 
       socket->setTcpQuickAck(0U);
+#endif
       }
 
    // init plugin modules...
@@ -1413,6 +1489,7 @@ void UServer_Base::logCommandMsgError(const char* cmd)
 const char* UServer_Base::dump(bool reset) const
 {
    *UObjectIO::os << "port                      " << port                        << '\n'
+                  << "iBackLog                  " << iBackLog                    << '\n'
                   << "flag_loop                 " << flag_loop                   << '\n'
                   << "timeoutMS                 " << timeoutMS                   << '\n'
                   << "verify_mode               " << verify_mode                 << '\n'

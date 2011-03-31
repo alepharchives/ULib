@@ -15,7 +15,7 @@ U_EXPORT main (int argc, char* argv[])
    USSHSocket x;
    UString hostname(argv[2]);
 
-   x.setVerbosity();
+   x.setVerbosity(4);
    x.setUser(getArg(argv[1]));
    x.setKey(getArg(argv[3]), getArg(argv[4]));
 

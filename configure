@@ -775,6 +775,8 @@ MINGW_FALSE
 MINGW_TRUE
 LINUX_FALSE
 LINUX_TRUE
+CROSS_COMPILING_FALSE
+CROSS_COMPILING_TRUE
 LIBGETOPTOBJS
 GETOPT_LIBS
 SOCKET_LIBS
@@ -1635,7 +1637,7 @@ Optional Packages:
   --with-dbi              use system      DBI library - [will check /usr /usr/local]
   --with-libevent         use system libevent library - [will check /usr /usr/local]
   --with-libxml2          use system  libxml2 library - [will check /usr /usr/local]
-  --with-page-speed       use page-speed SDK - [will check /usr /usr/local] [default=no]
+  --with-page-speed       use google page-speed SDK   - [will check /usr /usr/local] [default=no]
   --with-pthread=lib    using specified pthread library
   --with-linuxthreads     use linux kernel mode library
 
@@ -19447,7 +19449,6 @@ MODULE_LIBTOOL_OPTIONS="-export-dynamic -avoid-version"
 # check for cross compiling
 if test "$cross_compiling" = "yes"; then
 	CROSS_ENVIRONMENT=$STAGING_DIR
-#  AM_CONDITIONAL(CROSS_COMPILING, true)
 	PKG_CONFIG_PATH=${CROSS_ENVIRONMENT}/usr/lib/pkgconfig
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
@@ -19455,7 +19456,23 @@ $as_echo "" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Build for Target <${target}> with Environment <${CROSS_ENVIRONMENT}>:${T_ME}" >&5
 $as_echo "${T_MD}Build for Target <${target}> with Environment <${CROSS_ENVIRONMENT}>:${T_ME}" >&6; }
 
+	 if true; then
+  CROSS_COMPILING_TRUE=
+  CROSS_COMPILING_FALSE='#'
 else
+  CROSS_COMPILING_TRUE='#'
+  CROSS_COMPILING_FALSE=
+fi
+
+else
+	 if false; then
+  CROSS_COMPILING_TRUE=
+  CROSS_COMPILING_FALSE='#'
+else
+  CROSS_COMPILING_TRUE='#'
+  CROSS_COMPILING_FALSE=
+fi
+
 	PKG_CONFIG_PATH=`pkg-config --variable pc_path pkg-config`
 fi
 
@@ -20707,6 +20724,7 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
   ulib_libuuid_msg="no    (--with-libuuid)"
  ulib_libevent_msg="no    (--with-libevent)"
   ulib_libxml2_msg="no    (--with-libxml2)"
+      ulib_dbi_msg="no    (--with-libdbi)"
 ulib_pagespeed_msg="no    (--with-page-speed)"
      ulib_ipv6_msg="no    (--with-ipv6)"
       ulib_pch_msg="no    (--enable-pch)"
@@ -21462,6 +21480,7 @@ libmysql_version="None"
 libuuid_version="None"
 libevent_version="None"
 libxml2_version="None"
+libdbi_version="None"
 page_speed_version="None"
 
 
@@ -27637,6 +27656,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MAINTAINER_MODE_TRUE}" && test -z "${MAINTAINER_MODE_FALSE}"; then
   as_fn_error $? "conditional \"MAINTAINER_MODE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${CROSS_COMPILING_TRUE}" && test -z "${CROSS_COMPILING_FALSE}"; then
+  as_fn_error $? "conditional \"CROSS_COMPILING\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${CROSS_COMPILING_TRUE}" && test -z "${CROSS_COMPILING_FALSE}"; then
+  as_fn_error $? "conditional \"CROSS_COMPILING\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LINUX_TRUE}" && test -z "${LINUX_FALSE}"; then

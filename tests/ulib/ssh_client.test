@@ -14,6 +14,7 @@ start_msg ssh_client
 /etc/init.d/sshd start > /dev/null 2>&1
 $SLEEP
 
+#STRACE=$LTRUSS
 #start_prg 	ssh_client lrpadmin laptop 	'private/id_rsa' 'private/id_rsa.pub'	inp/ssh_request.xml
  start_prg 	ssh_client lrpadmin localhost 'private/id_rsa' 'private/id_rsa.pub'	inp/ssh_request.xml
 

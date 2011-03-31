@@ -296,6 +296,13 @@ typedef enum {
 #  endif
 #endif
 
+/* GCC have printf type attribute check */
+#ifdef __GNUC__
+#define PRINTF_ATTRIBUTE(a,b) __attribute__ ((__format__ (printf, a, b)))
+#else
+#define PRINTF_ATTRIBUTE(a,b)
+#endif /* __GNUC__ */
+
 /* Provide convenience macros for handling structure fields through their offsets */
 
 #define U_STRUCT_MEMBER_SIZE(type,member)   (sizeof(((type*)0)->member))

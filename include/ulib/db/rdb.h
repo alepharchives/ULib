@@ -145,19 +145,8 @@ public:
 #  define RDB_INSERT  0 // Insertion of new entries only
 #  define RDB_REPLACE 1 // Allow replacing existing entries
 
-   int store(int flag);
-
-   int store(const UString& _key, const UString& _data, int flag = RDB_INSERT)
-      {
-      U_TRACE(0, "URDB::store(%.*S,%.*S,%d)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(_data), flag)
-
-      UCDB::setKey(_key);
-      UCDB::setData(_data);
-
-      int result = store(flag);
-
-      U_RETURN(result);
-      }
+   int store(                                           int flag);
+   int store(const UString& _key, const UString& _data, int flag = RDB_INSERT);
 
    // ---------------------------------------------------------------------
    // Mark a key/value as deleted
@@ -189,15 +178,7 @@ public:
    // Ricerche
 
    bool fetch();
-
-   bool find(const UString& _key)
-      {
-      U_TRACE(0, "URDB::find(%.*S)", U_STRING_TO_TRACE(_key))
-
-      UCDB::setKey(_key);
-
-      return fetch(); // Fetch the value for a given key from the database
-      }
+   bool find(const UString& _key);
 
    uint32_t getDataSize() const     { return RDB_node_data_sz; }
    void*    getDataPointer() const  { return RDB_node_data; }

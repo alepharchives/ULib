@@ -275,7 +275,7 @@ UString UTokenizer::getTokenQueryParser()
 Expression is tokenized as:
 
 logical: && || !
-compare: = == != ~= < <= > =>
+compare: = == != < <= > =>
 Multiplicative operators: *, /, %
 Additive operators: +, -
 precedence: ( )
@@ -283,6 +283,10 @@ quoted strings: 'string with a dollar: $FOO'
 unquoted strings: string
 variable substitution: $REMOTE_ADDR ${REMOTE_ADDR}
 function call with optional params: FN_CALL([p1,p2,...,pn])
+
+contains:    ^
+ends_with:   =~
+starts_with: ~=
 */
 
 int UTokenizer::getTokenId(UString& token)
@@ -361,20 +365,31 @@ loop:
          }
       break;
 
-      case '+': tid = U_TK_PLUS;                                  p2 = s; break;
-      case '-': tid = U_TK_MINUS;                                 p2 = s; break;
-      case '*': tid = U_TK_MULT;                                  p2 = s; break;
-      case '%': tid = U_TK_MOD;                                   p2 = s; break;
-      case '(': tid = U_TK_LPAREN;                                p2 = s; break;
-      case ')': tid = U_TK_RPAREN;                                p2 = s; break;
-      case ',': tid = U_TK_COMMA;                                 p2 = s; break;
-      case '=': tid = (*s == '=' ? (++s, U_TK_EQ)  : U_TK_EQ);    p2 = s; break;
-      case '>': tid = (*s == '=' ? (++s, U_TK_GE)  : U_TK_GT);    p2 = s; break;
-      case '<': tid = (*s == '=' ? (++s, U_TK_LE)  : U_TK_LT);    p2 = s; break;
-      case '!': tid = (*s == '=' ? (++s, U_TK_NE)  : U_TK_NOT);   p2 = s; break;
-      case '~': tid = (*s == '=' ? (++s, U_TK_PE)  : U_TK_ERROR); p2 = s; break;
-      case '&': tid = (*s == '&' ? (++s, U_TK_AND) : U_TK_ERROR); p2 = s; break;
-      case '|': tid = (*s == '|' ? (++s, U_TK_OR)  : U_TK_ERROR); p2 = s; break;
+      case '+': tid = U_TK_PLUS;                                          p2 = s; break;
+      case '-': tid = U_TK_MINUS;                                         p2 = s; break;
+      case '*': tid = U_TK_MULT;                                          p2 = s; break;
+      case '%': tid = U_TK_MOD;                                           p2 = s; break;
+      case '(': tid = U_TK_LPAREN;                                        p2 = s; break;
+      case ')': tid = U_TK_RPAREN;                                        p2 = s; break;
+      case ',': tid = U_TK_COMMA;                                         p2 = s; break;
+      case '^': tid = U_TK_CONTAINS;                                      p2 = s; break;
+      case '>': tid = (*s == '=' ? (++s, U_TK_GE)          : U_TK_GT);    p2 = s; break;
+      case '<': tid = (*s == '=' ? (++s, U_TK_LE)          : U_TK_LT);    p2 = s; break;
+      case '!': tid = (*s == '=' ? (++s, U_TK_NE)          : U_TK_NOT);   p2 = s; break;
+      case '|': tid = (*s == '|' ? (++s, U_TK_OR)          : U_TK_ERROR); p2 = s; break;
+      case '&': tid = (*s == '&' ? (++s, U_TK_AND)         : U_TK_ERROR); p2 = s; break;
+      case '~': tid = (*s == '=' ? (++s, U_TK_STARTS_WITH) : U_TK_ERROR); p2 = s; break;
+
+      case '=':
+         {
+         tid = U_TK_EQ;
+
+              if (*s == '=') ++s;
+         else if (*s == '~') ++s, tid = U_TK_ENDS_WITH;
+
+         p2 = s;
+         }
+      break;
 
       case 't':
       case 'f':

@@ -98,13 +98,36 @@ U_NO_EXPORT const char* USSHSocket::status()
    U_RETURN(u_buffer);
 }
 
+bool USSHSocket::connectServer(const UString& server, int iServPort) // 22
+{
+   U_TRACE(1, "USSHSocket::connectServer(%.*S,%d)", U_STRING_TO_TRACE(server), iServPort)
+
+#if LIBSSH_VERSION_INT < 1280 // (0.5.0)
+   if (UTCPSocket::connectServer(server, iServPort))
+      {
+#else
+   if (UTCPSocket::cRemoteAddress.setHostName(server, UTCPSocket::bIPv6Socket))
+      {
+      UTCPSocket::iRemotePort = iServPort;
+#endif
+      const char* srv = server.c_str();
+
+      (void) U_SYSCALL(ssh_options_set, "%p,%d,%S", session, SSH_OPTIONS_HOST, srv);
+      (void) U_SYSCALL(ssh_options_set, "%p,%d,%p", session, SSH_OPTIONS_PORT, &iServPort);
+
+      if (SSHConnection(USocket::iSockDesc)) U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
 bool USSHSocket::SSHConnection(int fd)
 {
    U_TRACE(1, "USSHSocket::SSHConnection(%d)", fd)
 
    ret = auth = 0;
 
-   (void) U_SYSCALL(ssh_options_set, "%p,%d,%p", session, SSH_OPTIONS_FD, &fd); // get SSH to use our socket
+   if (fd != -1) (void) U_SYSCALL(ssh_options_set, "%p,%d,%p", session, SSH_OPTIONS_FD, &fd); // get SSH to use our socket
 
    // get SSH to handshake with server
 
@@ -204,7 +227,7 @@ bool USSHSocket::SSHConnection(int fd)
          if (ret == SSH_NO_ERROR)
             {
             USocket::iState    = CONNECT;
-            USocket::iSockDesc = fd;
+            USocket::iSockDesc = U_SYSCALL(ssh_get_fd, "%p", session);
 
             U_RETURN(true);
             }

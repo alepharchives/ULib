@@ -166,7 +166,7 @@ enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_G
 
 // Default content type
 
-#define U_CTYPE_HTML "text/html; charset=iso-8859-1"
+#define U_CTYPE_HTML "text/html"
 
 #define U_MAX_UPLOAD_PROGRESS 32
 
@@ -292,12 +292,7 @@ public:
       U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
       }
 
-   static void resetHTTPInfo()
-      {
-      U_TRACE(0, "UHTTP::resetHTTPInfo()")
-
-      (void) U_SYSCALL(memset, "%p,%d,%u", &http_info, 0, sizeof(uhttpinfo));
-      }
+   static void resetHTTPInfo();
 
    static void setHTTPInfo(const char* method, uint32_t method_len, const char* uri, uint32_t uri_len)
       {
@@ -626,7 +621,7 @@ public:
    static bool processCGIRequest(UCommand* pcmd, UString* penvironment, bool async, bool process_output);
    static void setHTTPCgiResponse(int nResponseCode, bool header_content_length, bool header_content_type, bool content_encoding);
 
-   static UString getCGIEnvironment(bool sh_script);
+   static UString getCGIEnvironment();
 
    static bool isCGIRequest()
       {

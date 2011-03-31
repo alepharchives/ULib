@@ -95,6 +95,7 @@ public:
    // IP_ADDRESS    public ip address of host for the interface connected to the Internet (autodetected if not specified)
    // ALLOWED_IP    list of comma separated client address for IP-based access control (IPADDR[/MASK])
    //
+   // LISTEN_BACKLOG       max number of ready to be delivered connections to accept()
    // USE_TCP_OPTIMIZATION flag indicating the use of TCP/IP options to optimize data transmission (TCP_CORK, TCP_DEFER_ACCEPT, TCP_QUICKACK)
    //
    // PID_FILE      write pid on file indicated
@@ -164,6 +165,7 @@ public:
    static const UString* str_MAX_KEEP_ALIVE;
    static const UString* str_PID_FILE;
    static const UString* str_USE_TCP_OPTIMIZATION;
+   static const UString* str_LISTEN_BACKLOG;
 
    static void str_allocate();
 
@@ -366,6 +368,7 @@ protected:
            IP_address;  // IP address of this server
 
    static int port,           // the port number to bind to
+              iBackLog,       // max number of ready to be delivered connections to accept()
               timeoutMS,      // the time-out value in milliseconds for client request
               cgi_timeout,    // the time-out value in seconds for output cgi process
               verify_mode,    // mode of verification ssl connection

@@ -569,7 +569,7 @@ dnl		printf "libxml2 found in $libxml2dir\n";
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if you want to use page-speed SDK)
-	AC_ARG_WITH(page-speed, [  --with-page-speed       use page-speed SDK - [[will check /usr /usr/local]] [[default=no]] ],
+	AC_ARG_WITH(page-speed, [  --with-page-speed       use google page-speed SDK   - [[will check /usr /usr/local]] [[default=no]] ],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else

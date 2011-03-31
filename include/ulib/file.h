@@ -733,6 +733,9 @@ public:
       U_RETURN(result);
       }
 
+   static int getSysParam(const char* name);
+   static int setSysParam(const char* name, int value, bool force = false);
+
           bool write(                        const UString& data, bool append = false, bool bmkdirs = false);
    static bool writeTo(const UString& path,  const UString& data, bool append = false, bool bmkdirs = false);
    static bool writeToTmpl(const char* tmpl, const UString& data, bool append = false, bool bmkdirs = false);

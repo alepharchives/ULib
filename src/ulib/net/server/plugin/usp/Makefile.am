@@ -2,7 +2,7 @@
 
 MAINTAINERCLEANFILES = Makefile.in
 
-EXTRA_DIST = *.usp usp2so.sh
+EXTRA_DIST = *.usp usp2so.sh *.cpp
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
@@ -22,6 +22,12 @@ clean-local:
 moduledir = $(libexecdir)/ulib/usp
 MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
 
+module_LTLIBRARIES 			= upload_progress.la
+upload_progress_la_SOURCES = upload_progress.cpp
+upload_progress_la_LIBADD  = $(ulib_la)
+upload_progress_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+
+if !CROSS_COMPILING
 SUFFIXES = .cpp .usp .lo .la
 
 upload_progress.cpp: ./usp_translator$(EXEEXT)
@@ -32,12 +38,8 @@ upload_progress.cpp: ./usp_translator$(EXEEXT)
 .lo.la:
 	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) -no-undefined $< $(ulib_la) $(LIBS)
 
-module_LTLIBRARIES 			= upload_progress.la
-upload_progress_la_SOURCES = upload_progress.cpp
-upload_progress_la_LIBADD  = $(ulib_la)
-upload_progress_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-
 FOR_ALL = .libs/upload_progress.so
 
 all: $(FOR_ALL)
+endif
 ## ----------------------------------------------------------------------------------------------------

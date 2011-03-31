@@ -738,7 +738,7 @@ int USSIPlugIn::handlerRequest()
 
          errmsg           = *str_errmsg_default;
          timefmt          = *str_timefmt_default;
-         environment      = UHTTP::getCGIEnvironment(true) + *UHTTP::penvironment + cfg_environment;
+         environment      = UHTTP::getCGIEnvironment() + *UHTTP::penvironment + cfg_environment;
          last_modified    = UHTTP::file->st_mtime;
          use_size_abbrev  = true;
 

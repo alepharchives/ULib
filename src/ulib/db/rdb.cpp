@@ -1205,7 +1205,28 @@ end:
    U_RETURN(result);
 }
 
-// inlining failed in call to 'URDB::substitute(UString const&, UString const&, UString const&, int)': call is unlikely and code size would grow
+// inlining failed in call to ...: call is unlikely and code size would grow
+
+bool URDB::find(const UString& _key)
+{
+   U_TRACE(0, "URDB::find(%.*S)", U_STRING_TO_TRACE(_key))
+
+   UCDB::setKey(_key);
+
+   return fetch(); // Fetch the value for a given key from the database
+}
+
+int URDB::store(const UString& _key, const UString& _data, int flag)
+{
+   U_TRACE(0, "URDB::store(%.*S,%.*S,%d)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(_data), flag)
+
+   UCDB::setKey(_key);
+   UCDB::setData(_data);
+
+   int result = store(flag);
+
+   U_RETURN(result);
+}
 
 int URDB::substitute(const UString& _key, const UString& new_key, const UString& _data, int flag)
 {

@@ -59,7 +59,7 @@ void token_destructor(UString* token) {
 
 %left AND.
 %left OR.
-%nonassoc EQ NE PE GT GE LT LE.
+%nonassoc EQ NE GT GE LT LE STARTS_WITH ENDS_WITH CONTAINS.
 %left PLUS MINUS.
 %left MULT DIV MOD.
 %right NOT.
@@ -139,11 +139,10 @@ equalityExpression(A) ::= equalityExpression(B) equalityCond(C) relationalExpres
 		{
 		case U_TK_EQ: bo = (cmp == 0); break;
 		case U_TK_NE: bo = (cmp != 0); break;
-		case U_TK_PE:
-			{
-			if (Bbo && Dbo) bo = (B->pcompare(D->rep));
-			}
-		break;
+
+		case U_TK_CONTAINS:		if (Bbo && Dbo) bo = (B->find(*D) != U_NOT_FOUND);		break;
+		case U_TK_ENDS_WITH:		if (Bbo && Dbo) bo = UStringExt::endsWith(  *B, *D);	break;
+		case U_TK_STARTS_WITH:	if (Bbo && Dbo) bo = UStringExt::startsWith(*B, *D);	break;
 		}
 
    U_INTERNAL_DUMP("bo = %b cmp = %d", bo, cmp)
@@ -373,9 +372,17 @@ equalityCond(A) ::= NE. {
    U_TRACE(0, "equalityCond(A) ::= NE")
    A = U_TK_NE;
 }
-equalityCond(A) ::= PE. {
-   U_TRACE(0, "equalityCond(A) ::= PE")
-   A = U_TK_PE;
+equalityCond(A) ::= STARTS_WITH. {
+   U_TRACE(0, "equalityCond(A) ::= STARTS_WITH")
+   A = U_TK_STARTS_WITH;
+}
+equalityCond(A) ::= ENDS_WITH. {
+   U_TRACE(0, "equalityCond(A) ::= ENDS_WITH")
+   A = U_TK_ENDS_WITH;
+}
+equalityCond(A) ::= CONTAINS. {
+   U_TRACE(0, "equalityCond(A) ::= CONTAINS")
+   A = U_TK_CONTAINS;
 }
 relationalCond(A) ::= GT. {
    U_TRACE(0, "relationalCond(A) ::= GT")

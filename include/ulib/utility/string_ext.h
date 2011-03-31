@@ -76,19 +76,13 @@ public:
 
    // check if string s1 start with string s2
 
-   static bool startsWith(const UString& s1, const UString& s2)
-      { return u_startsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2)); }
-
-   static bool startsWith(const UString& s1, const char* s2, uint32_t n2)
-      { return u_startsWith(U_STRING_TO_PARAM(s1), s2, n2); }
+   static bool startsWith(const UString& s1, const UString& s2);
+   static bool startsWith(const UString& s1, const char* s2, uint32_t n2) { return u_startsWith(U_STRING_TO_PARAM(s1), s2, n2); }
 
    // check if string s1 terminate with string s2
 
-   static bool endsWith(const UString& s1, const UString& s2)
-      { return u_endsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2)); }
-
-   static bool endsWith(const UString& s1, const char* s2, uint32_t n2)
-      { return u_endsWith(U_STRING_TO_PARAM(s1), s2, n2); }
+   static bool endsWith(const UString& s1, const UString& s2);
+   static bool endsWith(const UString& s1, const char* s2, uint32_t n2) { return u_endsWith(U_STRING_TO_PARAM(s1), s2, n2); }
 
    // SUBSTITUTE: sostituzione di tutte le occorrenze di 'a' con 'b'
 

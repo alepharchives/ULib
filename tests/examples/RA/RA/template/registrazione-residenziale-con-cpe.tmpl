@@ -311,10 +311,13 @@
 	  <td class="racss_label">Dominio:</td>
 
 	  <td class="racss_field"><select name="dominio" onblur="compose_email()">
-		 <option value="trust-engine.com">
-			trust-engine.com
-		 </option>
-
+			<option value="<!--#echo var=$DOMINIO_CPE_EMAIL_ADDRESS1 -->"><!--#echo var=$DOMINIO_CPE_EMAIL_ADDRESS1 --></option>
+<!--#if expr=$DOMINIO_CPE_EMAIL_ADDRESS2 -->
+			<option value="<!--#echo var=$DOMINIO_CPE_EMAIL_ADDRESS2 -->"><!--#echo var=$DOMINIO_CPE_EMAIL_ADDRESS2 --></option>
+<!--#endif -->
+<!--#if expr=$DOMINIO_CPE_EMAIL_ADDRESS3 -->
+			<option value="<!--#echo var=$DOMINIO_CPE_EMAIL_ADDRESS3 -->"><!--#echo var=$DOMINIO_CPE_EMAIL_ADDRESS3 --></option>
+<!--#endif -->
 	  </select></td>
 	</tr>
 

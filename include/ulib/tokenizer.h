@@ -25,23 +25,27 @@
 #define U_TK_OR        2
 #define U_TK_EQ        3
 #define U_TK_NE        4
-#define U_TK_PE        5
-#define U_TK_GT        6
-#define U_TK_GE        7
-#define U_TK_LT        8
-#define U_TK_LE        9
-#define U_TK_PLUS     10
-#define U_TK_MINUS    11
-#define U_TK_MULT     12
-#define U_TK_DIV      13
-#define U_TK_MOD      14
-#define U_TK_NOT      15
-#define U_TK_FN_CALL  16
-#define U_TK_LPAREN   17
-#define U_TK_RPAREN   18
-#define U_TK_VALUE    19
-#define U_TK_COMMA    20
-#define U_TK_NAME     21
+#define U_TK_GT        5
+#define U_TK_GE        6
+#define U_TK_LT        7
+#define U_TK_LE        8
+
+#define U_TK_STARTS_WITH  9
+#define U_TK_ENDS_WITH   10
+#define U_TK_CONTAINS    11
+
+#define U_TK_PLUS     12
+#define U_TK_MINUS    13
+#define U_TK_MULT     14
+#define U_TK_DIV      15
+#define U_TK_MOD      16
+#define U_TK_NOT      17
+#define U_TK_FN_CALL  18
+#define U_TK_LPAREN   19
+#define U_TK_RPAREN   20
+#define U_TK_VALUE    21
+#define U_TK_COMMA    22
+#define U_TK_NAME     23
 
 template <class T> class UVector;
 

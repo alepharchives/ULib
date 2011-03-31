@@ -1267,3 +1267,8 @@ void UStringExt::minifyCssJs(UString& x)
 end:
    U_FREE_STR(str, capacity);
 }
+
+// inlining failed in call to ...: call is unlikely and code size would grow
+
+bool UStringExt::startsWith(const UString& s1, const UString& s2) { return u_startsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2)); }
+bool UStringExt::endsWith(  const UString& s1, const UString& s2) { return   u_endsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2)); }

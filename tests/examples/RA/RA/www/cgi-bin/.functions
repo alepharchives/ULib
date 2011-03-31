@@ -305,7 +305,7 @@ visualizza_contratto() {
 			HEAD_HTML="<script type=\"text/javascript\" src=\"/js/stampa.js\"></script>"
 
 			if [ ! -f $DIR_SCAN/page01.tiff ]; then
-				DISABLE='disabled="1"'
+				DISABLE=disabled
 			fi
 
 			printf -v FORM_BOTTONI "`cat $DIR_TEMPLATE/contratto-bottoni.tmpl`" $REQUEST_URI "$ATTIVA_SCANSIONE_MULTIPLA" "$DISABLE" $tipo "$DISABLE"

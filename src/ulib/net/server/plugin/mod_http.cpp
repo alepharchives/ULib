@@ -349,7 +349,7 @@ int UHttpPlugIn::handlerRequest()
 
       if (UHTTP::isCGIRequest())
          {
-         UString environment = UHTTP::getCGIEnvironment(U_http_sh_script) + *UHTTP::penvironment;
+         UString environment = UHTTP::getCGIEnvironment() + *UHTTP::penvironment;
 
          // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
 

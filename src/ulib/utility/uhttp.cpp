@@ -1626,6 +1626,15 @@ void UHTTP::checkHTTPRequestForHeader(const UString& request)
       }
 }
 
+// inlining failed in call to ...: call is unlikely and code size would grow
+
+void UHTTP::resetHTTPInfo()
+{
+   U_TRACE(0, "UHTTP::resetHTTPInfo()")
+
+   (void) U_SYSCALL(memset, "%p,%d,%u", &http_info, 0, sizeof(uhttpinfo));
+}
+
 bool UHTTP::readHTTPRequest()
 {
    U_TRACE(0, "UHTTP::readHTTPRequest()")
@@ -3770,9 +3779,9 @@ void UHTTP::callRunDynamicPage(int arg)
 
 // manage CGI
 
-UString UHTTP::getCGIEnvironment(bool sh_script)
+UString UHTTP::getCGIEnvironment()
 {
-   U_TRACE(0, "UHTTP::getCGIEnvironment(%b)", sh_script)
+   U_TRACE(0, "UHTTP::getCGIEnvironment()")
 
    char c = u_line_terminator[0];
 
@@ -3915,6 +3924,7 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
    */
 
    uint32_t len = UClientImage_Base::body->size();
+   const char* home = U_SYSCALL(getenv, "%S", "HOME");
    UString name = USocketExt::getNodeName(), uri = getRequestURI(false),
            ip_server = UServer_Base::getIPAddress(), ip_client = getRemoteIP(),
            buffer(4000U + http_info.query_len + referer_len + user_agent_len);
@@ -3961,36 +3971,17 @@ UString UHTTP::getCGIEnvironment(bool sh_script)
       }
    else                            buffer.snprintf_add("HTTP_HOST=%.*s\n", U_STRING_TO_TRACE(ip_server));
 
+   if (home)                       buffer.snprintf_add("HOME=%s\n", home);
    if (referer_len)                buffer.snprintf_add("HTTP_REFERER=%.*s\n", referer_len, referer_ptr); // The URL of the page that called your script
    if (user_agent_len)             buffer.snprintf_add("\"HTTP_USER_AGENT=%.*s\"\n", user_agent_len, user_agent_ptr); // The browser type of the visitor
+   if (accept_language_len)        buffer.snprintf_add("HTTP_ACCEPT_LANGUAGE=%.*s\n", accept_language_len, accept_language_ptr);
+
    if (http_info.query_len)        buffer.snprintf_add("QUERY_STRING=%.*s\n", U_HTTP_QUERY_TO_TRACE); // contains the parameters of the request
    if (http_info.content_type_len) buffer.snprintf_add("\"CONTENT_TYPE=%.*s\"\n", U_HTTP_CTYPE_TO_TRACE);
 
    // The interpreted pathname of the requested document or CGI (relative to the document root)
 
    buffer.snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(uri));
-
-   if (sh_script)
-      {
-      // ULIB facility: some env var for shell script...
-
-      if (user_agent_len)
-         {
-         // check for MSIE in "User-Agent: ...." in header request...
-
-         if (u_find(user_agent_ptr, user_agent_len, U_CONSTANT_TO_PARAM("MSIE"))) (void) buffer.append(U_CONSTANT_TO_PARAM("BROWSER_MSIE=1\n"));
-         }
-
-      buffer.snprintf_add("HTTP_ACCEPT_LANGUAGE=%.2s\n", (accept_language_len ? accept_language_ptr : "en"));
-
-      const char* home = U_SYSCALL(getenv, "%S", "HOME");
-
-      if (home) buffer.snprintf_add("HOME=%s\n", home);
-      }
-   else
-      {
-      if (accept_language_len) buffer.snprintf_add("\"HTTP_ACCEPT_LANGUAGE=%.*s\"\n", accept_language_len, accept_language_ptr);
-      }
 
 #ifdef HAVE_SSL
    if (UClientImage_Base::socket->isSSL())
@@ -4620,7 +4611,7 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool pro
    UString environment;
 
    if (penv)                environment = *penv;
-   if (environment.empty()) environment = getCGIEnvironment(U_http_sh_script);
+   if (environment.empty()) environment = getCGIEnvironment();
 
    cmd->setEnvironment(&environment);
 

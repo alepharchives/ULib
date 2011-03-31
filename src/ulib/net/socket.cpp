@@ -647,32 +647,7 @@ bool USocket::setServer(SocketAddress& cLocal, int iBackLog)
 
    if (bind(cLocal))
       {
-      if (iBackLog)
-         {
-         /*
-          * La variabile sysctl net.core.somaxconn limita la dimensione della coda in ascolto per le connessioni TCP.
-          * Il valore predefinito è di 128, generalmente troppo basso per una gestione robusta di nuove connessioni in
-          * ambienti come i web server molto carichi. Per tali ambienti, è consigliato aumentare questo valore a 1024
-          * o maggiore. Il demone di servizio può a sua volta limitare la dimensione della coda (e.g. sendmail(8), o
-          * Apache) ma spesso avrà una direttiva nel proprio file di configurazione per correggere la dimensione della
-          * coda. Grosse code di ascolto aiutano anche ad evitare attacchi di tipo Denial of Service (DoS).
-          */
-
-         UFile somaxconn(U_STRING_FROM_CONSTANT("/proc/sys/net/core/somaxconn"));
-
-         if (somaxconn.open(O_RDWR))
-            {
-            char buffer[32];
-
-            buffer[U_SYSCALL(read, "%d,%p,%u", somaxconn.getFd(), buffer, sizeof(buffer)-1)] = '\0';
-
-            if (atoi(buffer) < (iBackLog * 2)) (void) somaxconn.write(UStringExt::numberToString(iBackLog * 2));
-
-            somaxconn.close();
-            }
-
-         listen(iBackLog);
-         }
+      listen(iBackLog);
 
       U_RETURN(true);
       }
@@ -729,12 +704,12 @@ loop:
 #ifdef HAVE_ACCEPT4
    pcNewConnection->iSockDesc = U_SYSCALL(accept4, "%d,%p,%p,%d", iSockDesc, (sockaddr*)cRemote, &slDummy, accept4_flags);
 
-   if (pcNewConnection->iSockDesc != -1 || errno != ENOSYS) goto next;
+// if (pcNewConnection->iSockDesc != -1 || errno != ENOSYS) goto next;
+#else
+   pcNewConnection->iSockDesc = U_SYSCALL(accept,  "%d,%p,%p",    iSockDesc, (sockaddr*)cRemote, &slDummy);
 #endif
 
-   pcNewConnection->iSockDesc = U_SYSCALL(accept,  "%d,%p,%p",    iSockDesc, (sockaddr*)cRemote, &slDummy);
-
-next:
+// next:
    if (pcNewConnection->iSockDesc == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
    if (pcNewConnection->iSockDesc != -1)
       {

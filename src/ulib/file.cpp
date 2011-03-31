@@ -676,6 +676,52 @@ next: st_size = n;
    U_RETURN(false);
 }
 
+int UFile::getSysParam(const char* name)
+{
+   U_TRACE(0, "UFile::getSysParam(%S)", name)
+
+   int value = -1, fd = open(name, O_RDWR, PERM_FILE);
+
+   if (fd != -1)
+      {
+      char buffer[32];
+
+      buffer[U_SYSCALL(read, "%d,%p,%u", fd, buffer, sizeof(buffer)-1)] = '\0';
+
+      value = atoi(buffer);
+      }
+
+   U_RETURN(value);
+}
+
+int UFile::setSysParam(const char* name, int value, bool force)
+{
+   U_TRACE(0, "UFile::setSysParam(%S,%u,%b)", name, value, force)
+
+   int old_value = -1, fd = open(name, O_RDWR, PERM_FILE);
+
+   if (fd != -1)
+      {
+      char buffer[32];
+
+      buffer[U_SYSCALL(read, "%d,%p,%u", fd, buffer, sizeof(buffer)-1)] = '\0';
+
+      old_value = atoi(buffer);
+
+      if (force ||
+          old_value < value)
+         {
+         UString data = UStringExt::numberToString(value);
+
+         (void) write(fd, U_STRING_TO_PARAM(data));
+         }
+
+      close(fd);
+      }
+
+   U_RETURN(old_value);
+}
+
 bool UFile::pread(void* buf, uint32_t count, uint32_t offset)
 {
    U_TRACE(0, "UFile::pread(%p,%u,%u)", buf, count, offset)
