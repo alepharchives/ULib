@@ -12,7 +12,7 @@ C++ library and other similar class frameworks. It include as application exampl
 server (plugin oriented) which results, out of John Fremlin accurate investigations (http://john.freml.in/ulib-fast-io-framework), to be one of the faster
 web application frameworks for serving small dynamic webpages (and also make easier the usage of shell scripts for CGI application)
 
-userver_(tcp|ssl|ipc) multi purpose server (plugin oriented)
+userver_(tcp|ssl|ipc) application server (plugin oriented)
 ------------------------------------------------------------
 
 The current version offers the following features :
@@ -93,7 +93,7 @@ For serving static content I use 3 file of different size:
  * 1000.html	      (1000 byte)
  * WebSocketMain.swf (180K byte)
 
-For serving dynamic content I use a simple request: "<h1>Hello {name}<h1>"
+For serving dynamic content I use a simple request: "Hello {name}"
 
 The raw data in csv format are here (https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark).
 
