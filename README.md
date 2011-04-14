@@ -71,12 +71,12 @@ Use apachebench (ab)
 	$ ab -n 100000 -c10 http://127.0.0.1/usp/benchmarking.usp?name=stefano (or)
 	$ ab -n 100000 -c10 http://127.0.0.1/usp/hello_world.usp
 
-[Comparative Benchmarking](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark "link title here")
+[Comparative Benchmarking](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark)
 -------------------------------------------------------------------------------------------
 I consider in this benchmark only the performant server [G-WAN 2.1.20 (32 bit)] (http://www.gwan.ch/).
 All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz) running Gentoo 64 bit (kernel 2.6.38.2).
 
-The client is available [here](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark/bin/bench1.c):
+The client [bench1.c](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark/bin/bench1.c)
 relies on ApacheBench (ab) and it is a slightly modified version of [G-WAN client](http://gwan.ch/source/ab.c.txt).
 
 The client is running on different computer than the web server (networking is involved).
@@ -95,7 +95,7 @@ For serving static content I use 3 file of different size:
 
 For serving dynamic content I use a simple request: "Hello {name}"
 
-The raw data in csv format are here (https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark).
+The raw data in csv format are [here](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark).
 
 userver_tcp is the winner of this benchmark in all case for almost all level of concurrency.
 
