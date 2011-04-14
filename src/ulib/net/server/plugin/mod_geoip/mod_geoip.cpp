@@ -232,14 +232,14 @@ int UGeoIPPlugIn::handlerRequest()
 
    if (country_id)
       {
-      UHTTP::penvironment->snprintf_add("GEOIP_COUNTRY_CODE=%s\n"  // code international du pays (suivant la norme ISO 3166)
-                                        "GEOIP_COUNTRY_NAME=%s\n", // nom complet du pays (en anglais)
-                                        country_code, country_name);
+      UHTTP::geoip->snprintf_add("GEOIP_COUNTRY_CODE=%s\n"  // code international du pays (suivant la norme ISO 3166)
+                                 "GEOIP_COUNTRY_NAME=%s\n", // nom complet du pays (en anglais)
+                                 country_code, country_name);
       }
 
    if (gir)
       {
-      UHTTP::penvironment->snprintf_add(
+      UHTTP::geoip->snprintf_add(
          "GEOIP_REGION=%s\n"        // un code indiquant la région
          "GEOIP_CITY=%s\n",         // la ville
          "GEOIP_DMA_CODE=%s\n",     // code DMA (Designated Market Area) attribué à une zone où les fréquences (télévision, radio, etc)
@@ -265,7 +265,7 @@ int UGeoIPPlugIn::handlerReset()
 {
    U_TRACE(0, "UGeoIPPlugIn::handlerReset()")
 
-   if (country_id || gir) UHTTP::penvironment->setEmpty();
+   if (country_id || gir) UHTTP::geoip->setEmpty();
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }

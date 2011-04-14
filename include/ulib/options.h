@@ -52,32 +52,7 @@ public:
 
    // COSTRUTTORI
 
-   UOptions(uint32_t n)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UOptions, "%u", n)
-
-      length   = 0;
-      capacity = n;
-
-      item = U_MALLOC_N(n, option_item);
-
-#  ifdef PACKAGE
-      package = U_STRING_FROM_CONSTANT(PACKAGE);
-#  endif
-#  ifdef VERSION
-      version = U_STRING_FROM_CONSTANT(VERSION);
-#  endif
-#  ifdef PURPOSE
-      purpose = U_STRING_FROM_CONSTANT(PURPOSE);
-#  endif
-#  ifdef ARGS
-      args = U_STRING_FROM_CONSTANT(ARGS);
-#  endif
-#  ifdef REPORT_BUGS
-      report_bugs = U_STRING_FROM_CONSTANT(REPORT_BUGS);
-#  endif
-      }
-
+    UOptions(uint32_t n);
    ~UOptions();
 
    // SERVICES

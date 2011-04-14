@@ -212,7 +212,7 @@ public:
    // check if line contain <field>...
 
    static uint32_t findField(int field);
-   static uint32_t sizeField(uint32_t start, char c = ':');
+   static uint32_t sizeField(uint32_t start, char c = ':') __pure;
 
    static UString getValueField(int field);
    static UString getValueLastField(const char* field, uint32_t size);

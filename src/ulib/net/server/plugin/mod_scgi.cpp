@@ -107,6 +107,8 @@ int USCGIPlugIn::handlerInit()
 
          U_SRV_LOG("initialization of plugin success");
 
+         (void) UServer_Base::senvironment->append(U_CONSTANT_TO_PARAM("SCGI=1\n"));
+
          goto end;
          }
       }
@@ -137,7 +139,7 @@ int USCGIPlugIn::handlerRequest()
 
       char* equalPtr;
       char* envp[128];
-      UString environment = UHTTP::getCGIEnvironment() + "SCGI=1\n" + *UHTTP::penvironment;
+      UString environment = UHTTP::getCGIEnvironment();
       int n = u_split(U_STRING_TO_PARAM(environment), envp, 0);
 
       U_INTERNAL_ASSERT_MINOR(n, 128)

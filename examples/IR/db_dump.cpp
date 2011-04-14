@@ -8,8 +8,8 @@
 #define ARGS ""
 
 #define U_OPTIONS \
-"purpose \"dump databases of index documents files...\"\n" \
-"option c config 1 \"path of configuration file\" \"\"\n"
+"purpose 'dump databases of index documents files...'\n" \
+"option c config 1 'path of configuration file' ''\n"
 
 #include "IR.h"
 

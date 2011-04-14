@@ -56,7 +56,7 @@ public:
    * @param name_ Field name to search in headers
    * return: the number of field founded in headers
    */
-   unsigned count(const UString& name_);
+   unsigned count(const UString& name_) __pure;
 
    /**
    * @param header_ Header to add to headers
@@ -68,7 +68,7 @@ public:
    * @param name_  Field name to search in headers
    * @param index_ Index of header to get
    */
-   HttpField* find(const UString& name_, unsigned index_ = 0);
+   HttpField* find(const UString& name_, unsigned index_ = 0) __pure;
 
    /**
    * @param name_  Field to delete in headers

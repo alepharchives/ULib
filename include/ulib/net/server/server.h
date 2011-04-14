@@ -76,8 +76,10 @@ virtual void newClientImage() { (void) new client_class(); } }
 class UHTTP;
 class UCommand;
 class UFileConfig;
+class USSIPlugIn;
 class UHttpPlugIn;
 class UFCGIPlugIn;
+class USCGIPlugIn;
 class UClient_Base;
 class UProxyPlugIn;
 class UStreamPlugIn;
@@ -282,6 +284,19 @@ public:
       proc->setProcessGroup();
       }
 
+   static bool isChild()
+      {
+      U_TRACE(0, "UServer_Base::isChild()")
+
+      U_INTERNAL_DUMP("preforked_num_kids = %d", preforked_num_kids)
+
+      U_INTERNAL_ASSERT_POINTER(proc)
+
+      bool result = (preforked_num_kids && proc->child());
+
+      U_RETURN(result);
+      }
+
    static void sendSigTERM()
       {
       U_TRACE(0, "UServer_Base::sendSigTERM()")
@@ -380,6 +395,7 @@ protected:
    static USocket* socket;
    static UEventTime* ptime;
    static UServer_Base* pthis;
+   static UString* senvironment;
    static UVector<UIPAllow*>* vallow_IP;
    static bool flag_loop, flag_use_tcp_optimization;
 
@@ -468,7 +484,9 @@ protected:
 
 private:
    friend class UHTTP;
+   friend class USSIPlugIn;
    friend class UHttpPlugIn;
+   friend class USCGIPlugIn;
    friend class UFCGIPlugIn;
    friend class UProxyPlugIn;
    friend class UClient_Base;

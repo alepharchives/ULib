@@ -111,7 +111,7 @@ private:
    static inline bool    setSubWord(uint32_t i) U_NO_EXPORT;
    static inline void    setDocID(bool from_inode) U_NO_EXPORT;
    static inline bool    checkEntry(const char* str, const char* s, uint32_t n) U_NO_EXPORT;
-   static const char*    find(const char* s, uint32_t n, bool boptmize) U_NO_EXPORT;
+   static const char*    find(const char* s, uint32_t n, bool boptmize) U_NO_EXPORT __pure;
    static       void     add() U_NO_EXPORT; // op 0
    static       void     del() U_NO_EXPORT; // op 2
    static       void     checkWord() U_NO_EXPORT;

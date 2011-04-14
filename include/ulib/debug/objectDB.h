@@ -90,7 +90,7 @@ public:
 
    // Concrete dump method (simply delegates to the 'dump()' method of class Concrete)
 
-   virtual const char* dump() const { return ((const Concrete*)ptr_object)->dump(true); }
+   virtual const char* dump() const __pure { return ((const Concrete*)ptr_object)->dump(true); }
 };
 
 /** class UObjectDB
@@ -140,7 +140,7 @@ private:
    static void _write(const struct iovec* iov, int n) U_NO_EXPORT;
    static bool addObjLive(const UObjectDumpable* dumper) U_NO_EXPORT;
    static bool printObjLive(const UObjectDumpable* dumper) U_NO_EXPORT;
-   static int  compareDumper(const void* dumper1, const void* dumper2) U_NO_EXPORT;
+   static int  compareDumper(const void* dumper1, const void* dumper2) __pure U_NO_EXPORT;
 };
 
 #endif

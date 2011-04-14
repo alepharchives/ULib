@@ -305,11 +305,11 @@ uint32_t UCDB::makeFinish(bool _reset)
       {
       uint32_t klen; // key length
 
-      typedef struct cdb_tmp {
+      struct cdb_tmp {
          uint32_t hash;
          uint32_t pos;
          uint32_t index;
-      } cdb_tmp;
+      };
 
       cdb_tmp*  tmp = U_MALLOC_N(nrecord, cdb_tmp);
       cdb_tmp* ptmp = tmp;
@@ -1053,10 +1053,10 @@ const char* UCDB::dump(bool _reset) const
                   << "loop                      " << loop           << '\n'
                   << "nslot                     " << nslot          << '\n'
                   << "khash                     " << khash          << '\n'
-                  << "offset                    " << (void*)offset  << '\n'
+                  << "offset                    " << offset         << '\n'
                   << "nrecord                   " << nrecord        << '\n'
                   << "ignore_case               " << ignore_case    << '\n'
-                  << "start_hash_table_slot     " << (void*)start_hash_table_slot;
+                  << "start_hash_table_slot     " << start_hash_table_slot;
 
    if (_reset)
       {

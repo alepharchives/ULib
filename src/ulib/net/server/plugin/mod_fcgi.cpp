@@ -261,13 +261,13 @@ int UFCGIPlugIn::handlerRequest()
       unsigned char  headerBuff[8];
       unsigned char* headerBuffPtr;
       int nameLen, valueLen, headerLen, byte_to_read, i, n;
-      UString request(U_CAPACITY), environment(U_CAPACITY), params(U_CAPACITY), response;
+      UString request(U_CAPACITY), params(U_CAPACITY), response;
 
       (void) request.append((const char*)&beginRecord, sizeof(FCGI_BeginRequestRecord));
 
       // Set environment for the FCGI application server
 
-      environment = UHTTP::getCGIEnvironment() + *UHTTP::penvironment;
+      UString environment = UHTTP::getCGIEnvironment();
 
       n = u_split(U_STRING_TO_PARAM(environment), envp, 0);
 

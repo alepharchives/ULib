@@ -21,7 +21,6 @@
 #  include <ulib/magic/magic.h>
 #endif
 
-int               UFile::mime_index;
 bool              UFile::_root;
 char              UFile::cwd_save[U_PATH_MAX];
 uint32_t          UFile::cwd_len_save;
@@ -1246,341 +1245,35 @@ const char* UFile::getMimeType()
 {
    U_TRACE(0, "UFile::getMimeType()")
 
+   u_mime_index = -1;
+
+   const char* suffix       = getSuffix();
    const char* content_type = 0;
 
-#ifdef HAVE_MAGIC
-   if (map               == MAP_FAILED &&
-       memmap(PROT_READ) == false)
+   if (suffix)
       {
-      U_RETURN((const char*)0);
+      U_INTERNAL_ASSERT_EQUALS(suffix[0], '.')
+      U_INTERNAL_ASSERT_EQUALS(strchr(suffix, '/'), 0)
+
+      content_type = u_get_mimetype(suffix+1);
+
+      U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
       }
 
-   content_type = UMagic::getType(map, map_size).data();
-#else
-   const char* ptr = getSuffix();
-
-   if (ptr)
+   if (content_type == 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(ptr[0], '.')
+#  ifdef HAVE_MAGIC
+      if (map != MAP_FAILED) content_type = UMagic::getType(map, map_size).data();
 
-      content_type = getMimeType(ptr+1);
+      if (content_type == 0)
+#  endif
+
+      content_type = "application/octet-stream";
       }
-#endif
+
+   U_INTERNAL_ASSERT_POINTER(content_type)
 
    U_RETURN(content_type);
-}
-
-typedef struct mimeentry {
-   const char* type;
-   const char* name;
-   uint32_t name_len;
-} mimeentry;
-
-#define MIME_ENTRY(name,type) { type, name+1, U_CONSTANT_SIZE(name)-1 }
-
-static struct mimeentry mimetab_a[] = {
-   MIME_ENTRY( "ai",   "application/postscript" ),
-   MIME_ENTRY( "arj",  "application/x-arj-compressed" ),
-   MIME_ENTRY( "asx",  "video/x-ms-asf" ),
-   MIME_ENTRY( "atom", "application/atom+xml" ),
-   MIME_ENTRY( "avi",  "video/x-msvideo" ),
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_b[] = {
-   MIME_ENTRY( "bat",  "application/x-msdos-program" ),
-   MIME_ENTRY( "bmp",  "image/x-ms-bmp" ),
-   MIME_ENTRY( "bild", "image/jpeg" ),
-   MIME_ENTRY( "boz",  "application/x-bzip2" ),
-
-   /*
-   MIME_ENTRY( "bin",  "application/octet-stream" ),
-   */
-
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_c[] = {
-   // -------------------------------------------------------------------------------
-   // The certificate being downloaded represents a Certificate Authority.
-   // When it is downloaded the user will be shown a sequence of dialogs that
-   // will guide them through the process of accepting the Certificate Authority
-   // and deciding if they wish to trust sites certified by the CA. If a certificate
-   // chain is being imported then the first certificate in the chain must be the CA
-   // certificate, and any subsequent certificates will be added as untrusted CA
-   // certificates to the local database.
-   // -------------------------------------------------------------------------------
-   MIME_ENTRY( "css", "text/css" ), // U_css
-   MIME_ENTRY( "crt", "application/x-x509-ca-cert" ),
-   MIME_ENTRY( "cer", "application/x-x509-ca-cert" ),
-
-   /*
-   MIME_ENTRY( "c",        "text/x-c" ),
-   MIME_ENTRY( "c++",      "text/x-c++src" ),
-   MIME_ENTRY( "c4d",      "application/vnd.clonk.c4group" ),
-   MIME_ENTRY( "cac",      "chemical/x-cache" ),
-   MIME_ENTRY( "cascii",   "chemical/x-cactvs-binary" ),
-   MIME_ENTRY( "cct",      "application/x-director" ),
-   MIME_ENTRY( "cdf",      "application/x-netcdf" ),
-   MIME_ENTRY( "cef",      "chemical/x-cxf" ),
-   MIME_ENTRY( "cls",      "text/x-tex" ),
-   MIME_ENTRY( "csm",      "chemical/x-csml" ),
-   MIME_ENTRY( "cdf",      "application/x-netcdf" ),
-   */
-
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_d[] = {
-   // -------------------------------------------------------------------------------
-   // The certificate being downloaded represents a Certificate Authority.
-   // When it is downloaded the user will be shown a sequence of dialogs that
-   // will guide them through the process of accepting the Certificate Authority
-   // and deciding if they wish to trust sites certified by the CA. If a certificate
-   // chain is being imported then the first certificate in the chain must be the CA
-   // certificate, and any subsequent certificates will be added as untrusted CA
-   // certificates to the local database.
-   // -------------------------------------------------------------------------------
-   MIME_ENTRY( "der", "application/x-x509-ca-cert" ),
-   MIME_ENTRY( "doc", "application/msword" ),
-   MIME_ENTRY( "dtd", "application/xml" ),
-
-   /*
-   MIME_ENTRY( "deb", "application/x-debian-package" ),
-   MIME_ENTRY( "dll", "application/octet-stream" ),
-   MIME_ENTRY( "dvi", "application/x-dvi" ),
-   */
-
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_e[] = {
-   MIME_ENTRY( "eps", "application/postscript" ),
-
-   /*
-   MIME_ENTRY( "exe", "application/octet-stream" ),
-   */
-
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_f[] = {
-   MIME_ENTRY( "flv", "video/x-flv" ),
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_g[] = {
-   MIME_ENTRY( "gif", "image/gif" ),   // U_gif
-   MIME_ENTRY( "gz",  "application/x-gunzip" ),
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_h[] = {
-   MIME_ENTRY( "htm",  "text/html" ),  // U_html
-
-   /*
-   MIME_ENTRY( "html", "text/html" ),
-   */
-
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_i[] = {
-   MIME_ENTRY( "ico", "image/x-icon" ),
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_j[] = {
-   MIME_ENTRY( "js",   "text/javascript" ), // U_js
-   MIME_ENTRY( "json", "application/json" ),
-   MIME_ENTRY( "jpg",  "image/jpeg" ),      // U_jpg
-   MIME_ENTRY( "jpeg", "image/jpeg" ),      // U_jpg
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_m[] = {
-   MIME_ENTRY( "mng",  "video/x-mng" ),
-   MIME_ENTRY( "mp3",  "audio/mpeg" ),
-   MIME_ENTRY( "mpg",  "video/mpeg" ),
-   MIME_ENTRY( "mp4",  "video/mp4" ),
-   MIME_ENTRY( "m4a",  "audio/mp4" ),
-   MIME_ENTRY( "mpeg", "video/mpeg" ),
-   MIME_ENTRY( "md5",  "text/plain" ),
-   MIME_ENTRY( "mov",  "video/quicktime" ),
-
-   /*
-   MIME_ENTRY( "m3u", "audio/x-mpegurl" ),
-   */
-
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_o[] = {
-   MIME_ENTRY( "ogg", "application/ogg" ),
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_p[] = {
-   MIME_ENTRY( "png", "image/png" ),   // U_png
-   MIME_ENTRY( "pem", "application/x-x509-ca-cert" ),
-   MIME_ENTRY( "php", "application/x-httpd-php" ),
-   MIME_ENTRY( "pdf", "application/pdf" ),
-   MIME_ENTRY( "ps",  "application/postscript" ),
-   MIME_ENTRY( "p7b", "application/x-pkcs7-certificates" ),
-   MIME_ENTRY( "p7c", "application/x-pkcs7-mime" ),
-   MIME_ENTRY( "p12", "application/x-pkcs12" ),
-   MIME_ENTRY( "pot", "application/vnd.ms-powerpoint" ),
-
-   /*
-   MIME_ENTRY( "pac", "application/x-ns-proxy-autoconfig" ),
-   */
-
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_q[] = {
-   MIME_ENTRY( "qt", "video/quicktime" ),
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_r[] = {
-   MIME_ENTRY( "rar", "application/x-rar-compressed" ),
-   MIME_ENTRY( "rtf", "text/richtext" ),
-   MIME_ENTRY( "rss", "application/rss+xml" ),
-
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_s[] = {
-   MIME_ENTRY( "shtm", "text/html" ), // U_ssi
-
-   /*
-   MIME_ENTRY( "shtml", "text/html" ),
-   MIME_ENTRY( "sig",   "application/pgp-signature" ),
-   */
-
-   MIME_ENTRY( "svg",  "image/svg+xml" ),
-   MIME_ENTRY( "swf",  "application/x-shockwave-flash" ),
-
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_t[] = {
-   MIME_ENTRY( "tar",  "application/x-tar" ),
-   MIME_ENTRY( "tif",  "image/tiff" ),
-   MIME_ENTRY( "text", "text/plain" ),
-   MIME_ENTRY( "txt",  "text/plain" ),
-   MIME_ENTRY( "tgz",  "application/x-tar-gz" ),
-
-   /*
-   MIME_ENTRY( "torrent",  "application/x-bittorrent" ),
-   */
-
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_w[] = {
-   MIME_ENTRY( "wav", "audio/x-wav" ),
-   MIME_ENTRY( "wmv", "video/x-ms-wmv" ),
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_x[] = {
-   MIME_ENTRY( "xls", "application/excel" ),
-   MIME_ENTRY( "xml", "application/xml" ),
-   MIME_ENTRY( "xpm", "image/x-xpixmap" ),
-   MIME_ENTRY( "xbm", "image/x-xbitmap" ),
-
-   /*
-   MIME_ENTRY( "xwd", "image/x-xwindowdump" ),
-   */
-
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_z[] = {
-   MIME_ENTRY( "zip", "application/zip" ),
-   { 0, 0, 0 }
-};
-
-static struct mimeentry mimetab_null[] = {
-   { 0, 0, 0 }
-};
-
-const char* UFile::getMimeType(const char* suffix)
-{
-   U_TRACE(0, "UFile::getMimeType(%S)", suffix)
-
-   U_INTERNAL_ASSERT_POINTER(suffix)
-
-   char c;
-   uint32_t i;
-   ptrdiff_t diff;
-   struct mimeentry* ptr;
-   struct mimeentry* mimetab;
-
-   switch ((c = *suffix++))
-      {
-      case 'a': mimetab = mimetab_a; break;
-      case 'b': mimetab = mimetab_b; break;
-      case 'c': mimetab = mimetab_c; break;
-      case 'd': mimetab = mimetab_d; break;
-      case 'e': mimetab = mimetab_e; break;
-      case 'f': mimetab = mimetab_f; break;
-      case 'g': mimetab = mimetab_g; break;
-      case 'h': mimetab = mimetab_h; break;
-      case 'i': mimetab = mimetab_i; break;
-      case 'j': mimetab = mimetab_j; break;
-   // case 'k': mimetab = mimetab_null; break;
-   // case 'l': mimetab = mimetab_null; break;
-      case 'm': mimetab = mimetab_m; break;
-   // case 'n': mimetab = mimetab_null; break;
-      case 'o': mimetab = mimetab_o; break;
-      case 'p': mimetab = mimetab_p; break;
-      case 'q': mimetab = mimetab_q; break;
-      case 'r': mimetab = mimetab_r; break;
-      case 's': mimetab = mimetab_s; break;
-      case 't': mimetab = mimetab_t; break;
-   // case 'u': mimetab = mimetab_null; break;
-   // case 'v': mimetab = mimetab_null; break;
-      case 'w': mimetab = mimetab_w; break;
-      case 'x': mimetab = mimetab_x; break;
-      case 'z': mimetab = mimetab_z; break;
-      default:  mimetab = mimetab_null;
-      }
-
-   U_INTERNAL_DUMP("c = %C", c)
-
-   ptr = mimetab;
-
-loop:
-   while (ptr->name)
-      {
-      U_INTERNAL_DUMP("mimetab = %p (%S,%u,%S)", ptr, ptr->name, ptr->name_len, ptr->type)
-
-      for (i = 0; i < ptr->name_len; ++i)
-         {
-         if (suffix[i] != ptr->name[i])
-            {
-            ++ptr;
-
-            goto loop;
-            }
-         }
-
-      diff = ptr - mimetab;
-
-      U_INTERNAL_DUMP("diff = %u sizeof(mimeentry) = %u", diff, sizeof(mimeentry))
-
-           if (diff ==  0)                       mime_index =  c;  // NB: first entry: 'c' (U_css), 'j' (U_js), 'h' (U_html), 'g' (U_gif), 'p' (U_png), 's' (U_ssi)
-      else if (diff >= (ptrdiff_t)2 && c == 'j') mime_index = 'J'; // NB: 3|4 entry: U_jpg
-
-      U_INTERNAL_DUMP("mime_index = %C", mime_index)
-
-      U_RETURN(ptr->type);
-      }
-
-   U_RETURN((const char*)0);
 }
 
 // DEBUG

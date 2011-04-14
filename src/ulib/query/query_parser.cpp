@@ -224,7 +224,7 @@ U_NO_EXPORT UQueryNode* UQueryParser::parseAtom()
 Determines if the tree rooted at this node is in the DNF
 */
 
-bool UQueryNode::isDisjunctiveNormalForm() const
+__pure bool UQueryNode::isDisjunctiveNormalForm() const
 {
    U_TRACE(0, "UQueryNode::isDisjunctiveNormalForm()")
 

@@ -890,7 +890,7 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 		4.4*)
 		;;
 		*)
-		MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result -Wshadow -Wsuggest-attribute=const -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn"
+		MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn" # -Wsuggest-attribute=const
 
 		if test "${enable_gcc_optimized}" = "yes"; then
 			MAYBE_FLAGS="$MAYBE_FLAGS -Ofast -flto" ## -ffunction-sections -fdata-sections

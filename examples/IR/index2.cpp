@@ -8,8 +8,8 @@
 #define ARGS ""
 
 #define U_OPTIONS \
-"purpose \"index document files to be searched by query...\"\n" \
-"option c config 1 \"path of configuration file\" \"\"\n"
+"purpose 'index document files to be searched by query...'\n" \
+"option c config 1 'path of configuration file' ''\n"
 
 #define U_CDB_CLASS URDB
 #define U_RDB_OPEN_WORDS (uint32_t)(cfg_dimension * 2048U)

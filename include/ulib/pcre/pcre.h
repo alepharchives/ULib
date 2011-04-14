@@ -96,12 +96,7 @@ public:
    @return A new UPCRE object, which holds the compiled pattern.
    */
 
-   UPCRE(const UString& expression, int flags)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UPCRE, "%.*S,%u", U_STRING_TO_TRACE(expression), flags)
-
-      set(expression, flags);
-      }
+   UPCRE(const UString& expression, int flags);
 
    /**
    Compile the given pattern. An UPCRE object created this way can be used multiple times to do searches
@@ -118,23 +113,13 @@ public:
    @return A new UPCRE object, which holds the compiled pattern.
    */
 
-   UPCRE(const UString& expression, const char* flags)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UPCRE, "%.*S,%S", U_STRING_TO_TRACE(expression), flags)
-
-      set(expression, flags);
-      }
+   UPCRE(const UString& expression, const char* flags);
 
    /**
    The destructor will automatically invoked if the object is no more used. It frees all the memory allocated by pcre.
    */
 
-   ~UPCRE()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UPCRE)
-
-      clear();
-      }
+   ~UPCRE();
 
    /**
    reset the object and re-intialize it

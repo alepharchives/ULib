@@ -130,10 +130,7 @@ public:
       num_msg = -1;
       }
 
-   virtual ~UPop3Client()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UPop3Client)
-      }
+   virtual ~UPop3Client();
 
    /**
    function called to established a socket connection with the POP3 network server

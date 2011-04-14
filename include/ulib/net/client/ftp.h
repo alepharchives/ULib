@@ -152,10 +152,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UFtpClient, "%b", bSocketIsIPv6)
       }
 
-   virtual ~UFtpClient()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UFtpClient)
-      }
+   virtual ~UFtpClient();
 
    /**
    function called to established a socket connection with the FTP network server
@@ -165,9 +162,7 @@ public:
       {
       U_TRACE(0, "UFtpClient::connectServer(%p,%d,%u)", &ip, _port, timeoutMS)
 
-      if (USocket::isClosed()) USocket::socket(SOCK_STREAM);
-
-      bool result = USocket::connectServer(ip, _port) && waitReady(timeoutMS);
+      bool result = (USocket::connectServer(ip, _port) && waitReady(timeoutMS));
 
       U_RETURN(result);
       }
@@ -181,7 +176,7 @@ public:
       ((USSLSocket*)this)->setActive(false);
 #  endif
 
-      bool result = Socket::connectServer(server, _port) && waitReady(timeoutMS);
+      bool result = (Socket::connectServer(server, _port) && waitReady(timeoutMS));
 
       U_RETURN(result);
       }

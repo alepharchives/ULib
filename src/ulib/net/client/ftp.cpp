@@ -14,6 +14,11 @@
 #include <ulib/net/client/ftp.h>
 #include <ulib/utility/socket_ext.h>
 
+UFtpClient::~UFtpClient()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UFtpClient)
+}
+
 const char* UFtpClient::status()
 {
    U_TRACE(0, "UFtpClient::status()")

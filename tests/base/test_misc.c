@@ -173,7 +173,7 @@ main (int argc, char* argv[])
 
    if (u_rmatch(U_CONSTANT_TO_PARAM("1234567890#Envelope"), U_CONSTANT_TO_PARAM("#Envelope")) == false) goto failed;
 
-   if (u_ranAsUser("mail", true))
+   if (u_runAsUser("mail", true))
       {
       strcpy(buf,    argv[5]); /* /var/mail, /var/spool/mail, /var/spool/clientmqueue, ... */
       strcpy(buffer, u_cwd);

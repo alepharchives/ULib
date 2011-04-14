@@ -194,16 +194,29 @@
 #  define U_ONE_DAY_IN_SECOND (24 * 60 * 60)
 #endif
 
-#define U_NOT_FOUND ((uint32_t)-1)
-
-#define GZIP_MAGIC "\037\213" /* Magic header for gzip files, 1F 8B */
-
 #ifdef  NULL
 #undef  NULL
 #endif
 #define NULL ((void*)0)
 
+#define U_NOT_FOUND ((uint32_t)-1)
+
+#define GZIP_MAGIC "\037\213" /* Magic header for gzip files, 1F 8B */
+
 enum AffermationType { U_MAYBE = 0, U_YES = 1, U_NOT = 2 };
+
+/* MIME type */
+
+#define U_js   'j' /* text/javascript */
+#define U_css  'c' /* text/css */
+#define U_html 'h' /* text/html */
+#define U_gif  'g' /* image/gif */
+#define U_png  'p' /* image/png */
+#define U_jpg  'J' /* image/jpg */
+#define U_ssi  's' /* SSI */
+
+#define U_CTYPE_HTML "text/html"
+#define U_CTYPE_ICO  "image/x-icon"
 
 // string representation
 
@@ -298,9 +311,38 @@ typedef enum {
 
 /* GCC have printf type attribute check */
 #ifdef __GNUC__
-#define PRINTF_ATTRIBUTE(a,b) __attribute__ ((__format__ (printf, a, b)))
+#define GCC_VERSION_NUM (__GNUC__       * 10000 + \
+                         __GNUC_MINOR__ *   100 + \
+                         __GNUC_PATCHLEVEL__)
+#  if GCC_VERSION_NUM > 29600
+#     define __pure                       __attribute__((pure))
+#     define likely(x)                    __builtin_expect(!!(x), 1)
+#     define unlikely(x)                  __builtin_expect(!!(x), 0)
+#     define PRINTF_ATTRIBUTE(a,b)        __attribute__ ((__format__ (printf, a, b)))
+#     define PREFETCH_ATTRIBUTE(addr,rw)  __builtin_prefetch(addr, rw, 1);
+#  else
+#     define __pure
+#     define likely(x)
+#     define unlikely(x)
+#     define PRINTF_ATTRIBUTE(a,b)
+#     define PREFETCH_ATTRIBUTE(addr,rw)
+#     if GCC_VERSION_NUM < 40300
+#        define __hot
+#        define __cold
+#     else
+#        define __hot                     __attribute__((hot))
+#        define __cold                    __attribute__((cold))
+#     endif
+#  endif
 #else
-#define PRINTF_ATTRIBUTE(a,b)
+#  define GCC_VERSION_NUM 0
+#  define PRINTF_ATTRIBUTE(a,b)
+#  define __pure
+#  define __hot            
+#  define __cold           
+#  define likely(x)                    (x)
+#  define unlikely(x)                  (x)
+#  define PREFETCH_ATTRIBUTE(addr,rw)
 #endif /* __GNUC__ */
 
 /* Provide convenience macros for handling structure fields through their offsets */

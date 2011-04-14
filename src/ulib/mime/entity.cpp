@@ -37,16 +37,16 @@ UMimeEntity::UMimeEntity(const UString& _data, uint32_t _startHeader) : data(_da
    if (parse()) decodeBody();
 }
 
-bool UMimeEntity::isXML() const                { return UMimeHeader::isXML(content_type); }
-bool UMimeEntity::isText() const               { return UMimeHeader::isText(content_type); }
-bool UMimeEntity::isPKCS7() const              { return UMimeHeader::isPKCS7(content_type); }
-bool UMimeEntity::isRFC822() const             { return UMimeHeader::isRFC822(content_type); }
-bool UMimeEntity::isMessage() const            { return UMimeHeader::isMessage(content_type); }
-bool UMimeEntity::isURLEncoded() const         { return UMimeHeader::isURLEncoded(content_type); }
-bool UMimeEntity::isApplication() const        { return UMimeHeader::isApplication(content_type); }
-bool UMimeEntity::isMultipartFormData() const  { return UMimeHeader::isMultipartFormData(content_type); }
+__pure bool UMimeEntity::isXML() const                { return UMimeHeader::isXML(content_type); }
+__pure bool UMimeEntity::isText() const               { return UMimeHeader::isText(content_type); }
+__pure bool UMimeEntity::isPKCS7() const              { return UMimeHeader::isPKCS7(content_type); }
+__pure bool UMimeEntity::isRFC822() const             { return UMimeHeader::isRFC822(content_type); }
+__pure bool UMimeEntity::isMessage() const            { return UMimeHeader::isMessage(content_type); }
+__pure bool UMimeEntity::isURLEncoded() const         { return UMimeHeader::isURLEncoded(content_type); }
+__pure bool UMimeEntity::isApplication() const        { return UMimeHeader::isApplication(content_type); }
+__pure bool UMimeEntity::isMultipartFormData() const  { return UMimeHeader::isMultipartFormData(content_type); }
 
-bool UMimeEntity::isMultipart() const
+__pure bool UMimeEntity::isMultipart() const
 {
    U_TRACE(0, "UMimeEntity::isMultipart()")
 

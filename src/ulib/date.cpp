@@ -17,7 +17,32 @@ static const short monthDays[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30
 static const char* months[]    = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
 static const char* months_it[] = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" };
 
-int UDate::getMonth(const char* buf)
+UDate::UDate(int day, int year)
+{
+   U_TRACE_REGISTER_OBJECT(0, UDate, "%d,%d", day, year)
+
+   julian = toJulian(1,1,year) - 1 + day;
+
+   fromJulian(julian);
+}
+
+UDate::UDate(int day, int month, int year)
+{
+   U_TRACE_REGISTER_OBJECT(0, UDate, "%d,%d,%d", day, month, year)
+
+   set(day, month, year);
+}
+
+__pure int UDate::getDayOfYear()
+{
+   U_TRACE(0, "UDate::getDayOfYear()")
+
+   int y = _year - 1901;
+
+   U_RETURN(getJulian() - (y * 365) - (y / 4) - 2415385); // 2415385 -> 31/12/1900
+}
+
+__pure int UDate::getMonth(const char* buf)
 {
    U_TRACE(0, "UDate::getMonth(%S)", buf)
 

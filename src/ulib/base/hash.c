@@ -25,7 +25,7 @@ and the correlation between succesive hashes is (hopefully) extremely small (if 
 used as a quick, dirty, portable and open source random number generator that generates randomness on all 32 bits
 */
 
-uint32_t u_random(uint32_t a)
+uint32_t __pure u_random(uint32_t a)
 {
    /* Random sequence table - source of random numbers.
       The random() routine 'amplifies' this 2**8 long sequence into a 2**32 long sequence.
@@ -325,7 +325,7 @@ uint32_t u_hash(unsigned char* t, uint32_t tlen, bool ignore_case)
 #define FNV_32_PRIME ((uint32_t)0x01000193)
 #define FNV_64_PRIME ((uint64_t)0x100000001b3ULL)
 
-uint32_t u_hash(unsigned char* restrict bp, uint32_t len, bool ignore_case)
+uint32_t __pure u_hash(unsigned char* restrict bp, uint32_t len, bool ignore_case)
 {
    uint32_t hval              = FNV_32_INIT;
    unsigned char* restrict be = bp + len; /* beyond end of buffer */
@@ -401,7 +401,7 @@ uint64_t u_hash64(unsigned char* bp, uint32_t len)
 
 #ifdef HAVE_ARCH64
 
-uint32_t u_random64(uint64_t ptr)
+uint32_t __pure u_random64(uint64_t ptr)
 {
    uint32_t a = (uint32_t)((ptr & 0xffffffff00000000) >> 32L),
             b = (uint32_t)((ptr & 0x00000000ffffffff));

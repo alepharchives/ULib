@@ -23,6 +23,11 @@ int      UApplication::exit_value;
 bool     UApplication::is_options;
 uint32_t UApplication::num_args;
 
+UApplication::UApplication() : opt(126)
+{
+   U_TRACE_REGISTER_OBJECT(0, UApplication, "")
+}
+
 UApplication::~UApplication()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UApplication)

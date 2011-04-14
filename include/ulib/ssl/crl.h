@@ -176,7 +176,7 @@ public:
    * Returns the last update of this CRL
    */
 
-   const char* getLastUpdate() const
+   const char* getLastUpdate() const __pure
       {
       U_TRACE(0, "UCrl::getLastUpdate()")
 
@@ -194,7 +194,7 @@ public:
    * Returns the next update for this CRL
    */
 
-   const char* getNextUpdate() const
+   const char* getNextUpdate() const __pure
       {
       U_TRACE(0, "UCrl::getNextUpdate()")
 

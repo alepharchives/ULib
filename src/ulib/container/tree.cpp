@@ -36,9 +36,18 @@ void UTree<void*>::callForAllEntry(vPFpvpv function)
       }
 }
 
+UString UTree<UString>::back() { return ((UTree<UString>*)UVector<void*>::back())->elem(); }
+
+void UTree<UString>::insert(uint32_t pos, const UString& str) // add elem before pos
+{
+   U_TRACE(0, "UTree<UString>::insert(%u,%.*S)", pos, U_STRING_TO_TRACE(str))
+
+   UTree<UStringRep*>::insert(pos, str.rep);
+}
+
 // EXTENSION
 
-uint32_t UTree<UString>::find(const UString& str)
+__pure uint32_t UTree<UString>::find(const UString& str)
 {
    U_TRACE(0, "UTree<UString>::find(%.*S)", U_STRING_TO_TRACE(str))
 

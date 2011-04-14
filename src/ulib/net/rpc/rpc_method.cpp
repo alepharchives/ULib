@@ -35,6 +35,13 @@ void URPCMethod::str_allocate()
    U_NEW_ULIB_OBJECT(str_fault, U_STRING_FROM_STRINGREP_STORAGE(1));
 }
 
+URPCMethod::URPCMethod()
+{
+   U_TRACE_REGISTER_OBJECT(0, URPCMethod, "")
+
+   if (str_done == 0) str_allocate();
+}
+
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 

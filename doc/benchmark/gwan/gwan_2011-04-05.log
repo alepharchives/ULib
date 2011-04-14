@@ -1,0 +1,46 @@
+[Tue Apr 05 18:03:44 2011 GMT] ----------------------------------------
+[Tue Apr 05 18:03:44 2011 GMT] G-WAN 2.1.20 (Jan 20 2011 17:46:00)
+[Tue Apr 05 18:03:44 2011 GMT] ----------------------------------------
+[Tue Apr 05 18:03:44 2011 GMT] Local Time: Tue, 05 Apr 2011 20:03:44 GMT+2
+[Tue Apr 05 18:03:44 2011 GMT] RAM : (212.50 MB free + 0 shared + 158.93 MB buffers) / 1.99 GB total
+[Tue Apr 05 18:03:44 2011 GMT] DISK: 0 free / 0 total
+[Tue Apr 05 18:03:44 2011 GMT] 1               Intel(R) Pentium(R) 4 CPU 2.80GHz (2 logical CPUs)
+[Tue Apr 05 18:03:44 2011 GMT] 32-bit little-endian (least significant byte first)
+[Tue Apr 05 18:03:44 2011 GMT] Linux v#2 SMP Tue Mar 29 14:28:35 CEST 2011 built 2.6.38.2
+[Tue Apr 05 18:03:44 2011 GMT] user: root (uid:0), group: root (uid:0), members: root
+[Tue Apr 05 18:03:44 2011 GMT] system  fd_max: 200,000
+[Tue Apr 05 18:03:44 2011 GMT] program fd_max: 200,000
+[Tue Apr 05 18:03:44 2011 GMT] Available network interfaces (2):
+[Tue Apr 05 18:03:44 2011 GMT] 127.0.0.1
+[Tue Apr 05 18:03:44 2011 GMT] 10.30.1.131
+[Tue Apr 05 18:03:44 2011 GMT] Host /mnt/storage/stefano/ulib/gwan/CURRENT/0.0.0.0_8080/#0.0.0.0:
+[Tue Apr 05 18:03:44 2011 GMT] server started
+[Tue Apr 05 18:03:44 2011 GMT] loaded request.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded trace.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded cache0.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded getheaders.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded redirect.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded base64.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded while.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded cache1.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded attack.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded cache2.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded crash_gwcall.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded sleep.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded noheaders.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded crash.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded cache3.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded cache4.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded chart.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded served_from.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded contact.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded httpdate.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded argv.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded loan.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded hellox.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded hello.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded setheaders.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded exit.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded crash_libc.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded fractal.c
+[Tue Apr 05 18:03:44 2011 GMT] loaded json.c

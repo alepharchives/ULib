@@ -47,7 +47,7 @@ public:
    static void sortObjects();
    static void dumpObjects();
    static void allocVector(uint32_t n = 64);
-   static int  compareObj(const void* obj1, const void* obj2);
+   static int  compareObj(const void* obj1, const void* obj2) __pure;
 
    static uint32_t size() { return (vec ? vec->size() : 0); }
 

@@ -63,16 +63,7 @@ public:
       U_RETURN(result);
       }
 
-   static void clear()
-      {
-      U_TRACE(0, "UPlugIn<void*>::clear()")
-
-      if (first)
-         {
-         delete first;
-                first = 0;
-         }
-      }
+   static void clear() __pure;
 
    static void setPluginDirectory(const char* dir)
       {
@@ -83,7 +74,7 @@ public:
       plugin_dir = dir;
       }
 
-   static UPlugIn<void*>* getObjWrapper(void* obj);
+   static UPlugIn<void*>* getObjWrapper(void* obj) __pure;
 
    // DEBUG
 

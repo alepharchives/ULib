@@ -49,6 +49,11 @@ const UString* UImapClient::str_junk;
 const UString* UImapClient::str_no_junk;
 const UString* UImapClient::str_Forwarded;
 
+UImapClient::~UImapClient()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UImapClient)
+}
+
 void UImapClient::str_allocate()
 {
    U_TRACE(0, "UImapClient_Base::str_allocate()")

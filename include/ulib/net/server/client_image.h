@@ -108,6 +108,14 @@ public:
 
    virtual int handlerRead();
    virtual int handlerWrite();
+   virtual int handlerError()
+      {
+      U_TRACE(0, "UClientImage_Base::handlerError()")
+
+      resetSocket(USocket::RESET); // NB: we need this because we reuse the same object USocket...
+
+      U_RETURN(U_NOTIFIER_DELETE);
+      }
 
    // manage if other request already available... (pipelining)
 

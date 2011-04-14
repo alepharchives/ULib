@@ -166,7 +166,7 @@ private:
     * Return the read descriptor that have the major number of bytes waiting in the buffer
     */
 
-   int min_pread() U_NO_EXPORT;
+   int min_pread() __pure U_NO_EXPORT;
 
    /**
     * If there is exactly one reader and one writer, there is no need to lock read or write operations.

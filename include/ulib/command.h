@@ -192,7 +192,7 @@ public:
       setEnvironment(penv);
       }
 
-   bool isShellScript() const
+   bool isShellScript() const __pure
       {
       U_TRACE(0, "UCommand::isShellScript()")
 
@@ -203,7 +203,7 @@ public:
       U_RETURN(result);
       }
 
-   char* getCommand() const
+   char* getCommand() const __pure
       {
       U_TRACE(0, "UCommand::getCommand()")
 

@@ -386,7 +386,7 @@ U_EXPORT ostream& operator<<(ostream& os, const UCache& c)
 const char* UCache::dump(bool _reset) const
 {
    *UObjectIO::os << "x      " << (void*)x       << '\n'
-                  << "ttl    " << (void*)ttl     << '\n'
+                  << "ttl    " << ttl            << '\n'
                   << "start  " << (void*)start   << '\n'
                   << "size   " << info->size     << '\n'
                   << "hsize  " << info->hsize    << '\n'

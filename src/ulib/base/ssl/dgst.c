@@ -45,7 +45,7 @@ void u_dgst_hexdump(unsigned char* restrict buf)
       }
 }
 
-int u_dgst_get_algoritm(const char* restrict alg)
+int __pure u_dgst_get_algoritm(const char* restrict alg)
 {
    int result = -1;
 

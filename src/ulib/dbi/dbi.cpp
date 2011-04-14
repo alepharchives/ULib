@@ -442,6 +442,19 @@ bool UDBIRow::fetch(int pos, UString& value)
    U_RETURN(false);
 }
 
+unsigned long long UDBISet::rows()
+{
+   U_TRACE(1, "UDBISet::rows()")
+
+   U_INTERNAL_ASSERT_POINTER_MSG(res, "DBI: no result assigned")
+
+   unsigned long long r = U_SYSCALL(dbi_result_get_numrows, "%p", res);
+
+   U_INTERNAL_ASSERT_DIFFERS_MSG(r,DBI_FIELD_ERROR,"DBI: failed to fetch number of rows")
+
+   U_RETURN(r);
+}
+
 bool UDBISet::next(UDBIRow& r)
 {
    U_TRACE(1, "UDBISet::next(%p)", &r)

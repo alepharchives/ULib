@@ -34,11 +34,6 @@ UString*           UClientImage_Base::msg_welcome;
 const char*        UClientImage_Base::rpointer;
 UClientImage_Base* UClientImage_Base::pClientImage;
 
-#undef  GCC_VERSION
-#define GCC_VERSION (__GNUC__       * 10000 + \
-                     __GNUC_MINOR__ *   100 + \
-                     __GNUC_PATCHLEVEL__)
-
 // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
 
 UString* UClientImage_Base::_value;
@@ -76,7 +71,7 @@ void UClientImage_Base::logRequest(const char* filereq)
 
    u_printf_string_max_length = u_printf_string_max_length_save;
 
-#if GCC_VERSION != 30303 /* Test for GCC == 3.3.3 (SuSE Linux) */
+#if GCC_VERSION_NUM != 30303 /* Test for GCC == 3.3.3 (SuSE Linux) */
    if (filereq) (void) UFile::writeToTmpl(filereq, *request, true);
 #endif
 }
@@ -119,7 +114,7 @@ void UClientImage_Base::logResponse(const char* fileres)
 
    u_printf_string_max_length = u_printf_string_max_length_save;
 
-#if GCC_VERSION != 30303 /* Test for GCC == 3.3.3 (SuSE Linux) */
+#if GCC_VERSION_NUM != 30303 /* Test for GCC == 3.3.3 (SuSE Linux) */
    if (fileres) (void) UFile::writeToTmpl(fileres, *wbuffer, true);
 #endif
 }

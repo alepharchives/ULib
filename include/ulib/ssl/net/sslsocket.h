@@ -221,18 +221,7 @@ public:
    by the provided host name and port number. We call the SSL_connect() function to perform the connection
    */
 
-   virtual bool connectServer(const UString& server, int iServPort)
-      {
-      U_TRACE(0, "USSLSocket::connectServer(%.*S,%d)", U_STRING_TO_TRACE(server), iServPort)
-
-      if (UTCPSocket::connectServer(server, iServPort) &&
-          (active ? secureConnection(USocket::iSockDesc) : true))
-         {
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
+   virtual bool connectServer(const UString& server, int iServPort);
 
    /**
    This method is called to accept a new pending connection on the server socket.

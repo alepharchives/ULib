@@ -127,15 +127,15 @@ public:
 
    bool isMime() { return header->isMime(); }
 
-   bool isXML() const;
-   bool isText() const;
-   bool isPKCS7() const;
-   bool isRFC822() const;
-   bool isMessage() const;
-   bool isMultipart() const;
-   bool isURLEncoded() const;
-   bool isApplication() const;
-   bool isMultipartFormData() const;
+   bool isXML() const __pure;
+   bool isText() const __pure;
+   bool isPKCS7() const __pure;
+   bool isRFC822() const __pure;
+   bool isMessage() const __pure;
+   bool isMultipart() const __pure;
+   bool isURLEncoded() const __pure;
+   bool isApplication() const __pure;
+   bool isMultipartFormData() const __pure;
 
    UString getCharSet() const        { return UMimeHeader::getCharSet(content_type); } // get charset/content-type info
    UString shortContentType() const  { return UMimeHeader::shortContentType(content_type); }

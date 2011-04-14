@@ -14,7 +14,7 @@ rm -f FIRENZE*.log err/FIRENZE*.err \
 		$DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]* \
 		/tmp/processCGIRequest.err
 
- UTRACE="0 50M 1"
+#UTRACE="0 50M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.accept"
  export UTRACE UOBJDUMP USIMERR

@@ -111,10 +111,7 @@ public:
       if (str_list == 0) str_allocate();
       }
 
-   virtual ~UImapClient()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UImapClient)
-      }
+   virtual ~UImapClient();
 
    /**
    function called to established a socket connection with the IMAP network server

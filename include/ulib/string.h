@@ -409,12 +409,12 @@ public:
 
    // EXTENSION
 
-   bool isText(uint32_t pos) const;
-   bool isUTF8(uint32_t pos) const;
-   bool isUTF16(uint32_t pos) const;
-   bool isBase64(uint32_t pos) const;
-   bool isBinary(uint32_t pos) const;
-   bool isWhiteSpace(uint32_t pos) const;
+   bool isText(uint32_t pos) const __pure;
+   bool isUTF8(uint32_t pos) const __pure;
+   bool isUTF16(uint32_t pos) const __pure;
+   bool isBase64(uint32_t pos) const __pure;
+   bool isBinary(uint32_t pos) const __pure;
+   bool isWhiteSpace(uint32_t pos) const __pure;
 
    // UTF8 <--> ISO Latin 1
 
@@ -779,8 +779,8 @@ public:
    const char* rbegin() const { return rep->rbegin(); }
    const char* rend()   const { return rep->rend(); }
 
-   char at(uint32_t pos) const         { return rep->at(pos); }
-   char operator[](uint32_t pos) const { return rep->operator[](pos); }
+   __pure char at(uint32_t pos) const           { return rep->at(pos); }
+          char operator[](uint32_t pos) const   { return rep->operator[](pos); }
 
    char* _begin()
       {
@@ -903,7 +903,7 @@ public:
 
    void resize(uint32_t n, char c = '\0');
 
-   UString& erase(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) { return replace(pos, rep->fold(pos, n), "", 0); }
+   UString& erase(uint32_t pos = 0, uint32_t n = U_NOT_FOUND);
 
    // C-Style String
 
@@ -918,8 +918,8 @@ public:
       U_RETURN(rep->str);
       }
 
-   char* c_strdup() const                                            { return strndup(rep->str, rep->_length); }
-   char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const { return strndup(rep->str + pos, rep->fold(pos, n)); }
+   char* c_strdup() const;
+   char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const;
 
    UString  copy() const;
    uint32_t copy(char* s, uint32_t n, uint32_t pos = 0) const { return rep->copy(s, n, pos); }
@@ -929,30 +929,30 @@ public:
    // The `find' function searches string for a specified string (possibly a single character) and returns
    // its starting position. You can supply the parameter pos to specify the position where search must begin
 
-   uint32_t find(const char* s,      uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const;
-   uint32_t find(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const;
+   uint32_t find(const char* s,      uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const __pure;
+   uint32_t find(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const __pure;
 
-   uint32_t find(char c,        uint32_t pos = 0) const;
+   uint32_t find(char c,        uint32_t pos = 0) const __pure;
    uint32_t find(const char* s, uint32_t pos = 0) const { return find(s, pos, u_strlen(s), U_NOT_FOUND); }
 
    // The `rfind' function searches from end to beginning string for a specified string (possibly a single
    // character) and returns its starting position. You can supply the parameter pos to specify the position
    // where search must begin
 
-   uint32_t rfind(const char* s,      uint32_t pos, uint32_t n) const;
-   uint32_t rfind(char c,             uint32_t pos = U_NOT_FOUND) const;
+   uint32_t rfind(const char* s,      uint32_t pos, uint32_t n) const __pure;
+   uint32_t rfind(char c,             uint32_t pos = U_NOT_FOUND) const __pure;
    uint32_t rfind(const char* s,      uint32_t pos = U_NOT_FOUND) const { return rfind(s, pos, u_strlen(s)); }
    uint32_t rfind(const UString& str, uint32_t pos = U_NOT_FOUND) const { return rfind(str.data(), pos, str.size()); }
 
    // The `find_first_of' function searches string for the first match of any character stored in s and returns its position
    // The `find_last_of'  function searches string for the last  match of any character stored in s and returns its position
 
-   uint32_t find_first_of(const char* s,      uint32_t pos, uint32_t n) const;
+   uint32_t find_first_of(const char* s,      uint32_t pos, uint32_t n) const __pure;
    uint32_t find_first_of(char c,             uint32_t pos = 0) const { return find(c, pos); }
    uint32_t find_first_of(const char* s,      uint32_t pos = 0) const { return find_first_of(s, pos, u_strlen(s)); }
    uint32_t find_first_of(const UString& str, uint32_t pos = 0) const { return find_first_of(str.data(), pos, str.size()); }
 
-   uint32_t find_last_of(const char* s,       uint32_t pos, uint32_t n) const;
+   uint32_t find_last_of(const char* s,       uint32_t pos, uint32_t n) const __pure;
    uint32_t find_last_of(char c,              uint32_t pos = U_NOT_FOUND) const { return rfind(c, pos); }
    uint32_t find_last_of(const char* s,       uint32_t pos = U_NOT_FOUND) const { return find_last_of(s, pos, u_strlen(s)); }
    uint32_t find_last_of(const UString& str,  uint32_t pos = U_NOT_FOUND) const { return find_last_of(str.data(), pos, str.size()); }
@@ -962,20 +962,20 @@ public:
    // The `find_last_not_of'  function searches the last  element of string that doesn't match any character stored in s
    // and returns its position
 
-   uint32_t find_first_not_of(const char* s,      uint32_t pos, uint32_t n) const;
-   uint32_t find_first_not_of(char c,             uint32_t pos = 0) const;
+   uint32_t find_first_not_of(const char* s,      uint32_t pos, uint32_t n) const __pure;
+   uint32_t find_first_not_of(char c,             uint32_t pos = 0) const __pure;
    uint32_t find_first_not_of(const char* s,      uint32_t pos = 0) const { return find_first_not_of(s, pos, u_strlen(s)); }
    uint32_t find_first_not_of(const UString& str, uint32_t pos = 0) const { return find_first_not_of(str.data(), pos, str.size()); }
 
-   uint32_t find_last_not_of(const char* s,      uint32_t pos, uint32_t n) const;
-   uint32_t find_last_not_of(char c,             uint32_t pos = U_NOT_FOUND) const;
+   uint32_t find_last_not_of(const char* s,      uint32_t pos, uint32_t n) const __pure;
+   uint32_t find_last_not_of(char c,             uint32_t pos = U_NOT_FOUND) const __pure;
    uint32_t find_last_not_of(const char* s,      uint32_t pos = U_NOT_FOUND) const { return find_last_not_of(s, pos, u_strlen(s)); }
    uint32_t find_last_not_of(const UString& str, uint32_t pos = U_NOT_FOUND) const { return find_last_not_of(str.data(), pos, str.size()); }
 
    // Find with ignore case
 
-   uint32_t findnocase(const char* s,      uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const;
-   uint32_t findnocase(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const;
+   uint32_t findnocase(const char* s,      uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const __pure;
+   uint32_t findnocase(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const __pure;
 
    uint32_t findnocase(const char* s,      uint32_t pos = 0) const { return findnocase(s, pos, u_strlen(s), U_NOT_FOUND); }
 
@@ -993,20 +993,20 @@ public:
    int compare(uint32_t pos, uint32_t n, const char* s) const
       { return rep->compare(pos, U_min(size() - pos, n), s, u_strlen(s)); }
 
-   int compare(uint32_t pos, uint32_t n, const UString& str) const
+   __pure int compare(uint32_t pos, uint32_t n, const UString& str) const
       { return rep->compare(pos, U_min(size() - pos, n), str.data(), str.size()); }
 
-   int compare(uint32_t pos1, uint32_t n1, const UString& str, uint32_t pos2, uint32_t n2) const
+   __pure int compare(uint32_t pos1, uint32_t n1, const UString& str, uint32_t pos2, uint32_t n2) const
       { return rep->compare(pos1, U_min(size() - pos1, n1), str.data() + pos2,
                                   U_min(str.size() - pos2, n2)); }
 
    // Compare with ignore case
 
-   int comparenocase(const char* s, uint32_t n) const     { return rep->comparenocase(s, n); }
-   int comparenocase(const char* s) const                 { return rep->comparenocase(s, u_strlen(s)); }
+   int comparenocase(const char* s, uint32_t n) const { return rep->comparenocase(s, n); }
+   int comparenocase(const char* s) const             { return rep->comparenocase(s, u_strlen(s)); }
 
-   int comparenocase(UStringRep* _rep) const              { return rep->comparenocase(_rep); }
-   int comparenocase(const UString& str) const            { return rep->comparenocase(str.rep); }
+   int comparenocase(UStringRep* _rep) const          { return rep->comparenocase(_rep); }
+   int comparenocase(const UString& str) const        { return rep->comparenocase(str.rep); }
 
    // Same string representation
 
@@ -1015,10 +1015,10 @@ public:
 
    // Equal
 
-   bool equal(const char* s) const;
-   bool equal(const char* s, uint32_t n) const;
+   bool equal(const char* s) const __pure;
+   bool equal(const char* s, uint32_t n) const __pure;
 
-   bool equal(UStringRep* _rep) const;
+   bool equal(UStringRep* _rep) const __pure;
    bool equal(const UString& str) const                   { return equal(str.rep); }
 
    // Equal with ignore case
@@ -1027,7 +1027,7 @@ public:
    bool equalnocase(const char* s) const                  { return rep->equalnocase(s, u_strlen(s)); }
 
    bool equalnocase(UStringRep* _rep) const               { return same(_rep) || rep->equalnocase(_rep); }
-   bool equalnocase(const UString& str) const             { return equalnocase(str.rep); }
+   bool equalnocase(const UString& str) const __pure;
 
    bool equal(UStringRep* _rep, bool ignore_case) const   { return same(_rep) || rep->equal(_rep, ignore_case); }
    bool equal(const UString& str, bool ignore_case) const { return equal(str.rep, ignore_case); }
@@ -1089,8 +1089,8 @@ public:
    char  c_char(uint32_t pos) const    { return rep->at(pos); }
    char* c_pointer(uint32_t pos) const { return (rep->data() + pos); }
 
-   uint32_t remain(const char* ptr) const    { return rep->remain(ptr); }
-   uint32_t distance(const char* ptr) const  { return rep->distance(ptr); }
+          uint32_t remain(const char* ptr) const   { return rep->remain(ptr); }
+   __pure uint32_t distance(const char* ptr) const { return rep->distance(ptr); }
 
    void setFromInode(uint64_t* p)  { (void) replace((const char*)p, sizeof(uint64_t)); }
 

@@ -69,11 +69,11 @@ public:
    static const UString* str_SSI_AUTOMATIC_ALIASING;
    static const UString* str_errmsg_default;
    static const UString* str_timefmt_default;
-
    static const UString* str_encoding;
    static const UString* str_encoding_none;
    static const UString* str_encoding_url;
    static const UString* str_encoding_entity;
+   static const UString* str_usp;
 
    static void str_allocate();
 
@@ -110,7 +110,7 @@ public:
 
 protected:
    time_t last_modified;
-   UString cfg_environment, environment, docname, timefmt, errmsg;
+   UString environment, docname, timefmt, errmsg;
    bool use_size_abbrev;
 
 private:

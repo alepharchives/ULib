@@ -93,6 +93,7 @@ ULog*                      UServer_Base::log;
 ULock*                     UServer_Base::lock;
 uint32_t                   UServer_Base::shared_data_add;
 UString*                   UServer_Base::host;
+UString*                   UServer_Base::senvironment;
 USocket*                   UServer_Base::socket;
 UProcess*                  UServer_Base::proc;
 UEventFd*                  UServer_Base::handler_event;
@@ -268,12 +269,14 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
 {
    U_TRACE_REGISTER_OBJECT(0, UServer_Base, "%p", cfg)
 
-   U_INTERNAL_ASSERT_EQUALS(pthis, 0)
+   U_INTERNAL_ASSERT_EQUALS(pthis,0)
+   U_INTERNAL_ASSERT_EQUALS(senvironment,0)
 
    if (str_USE_IPV6 == 0) str_allocate();
 
    port              = U_DEFAULT_PORT;
    pthis             = this;
+   senvironment      = U_NEW(UString(U_CAPACITY));
    UEventFd::op_mask = U_READ_IN;
 
    if (cfg) loadConfigParam(*cfg);
@@ -303,33 +306,38 @@ UServer_Base::~UServer_Base()
 #  endif
       }
 
+   UClientImage_Base::clear();
+
+#ifndef __MINGW32__
+   if (isChild() == false)
+      {
+      if (iBackLog == 1) (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", tcp_abort_on_overflow, true);
+
+      if (flag_use_tcp_optimization)
+         {
+         (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", tcp_fin_timeout, true);
+
+         if (iBackLog >= SOMAXCONN)
+            {
+            (void) UFile::setSysParam("/proc/sys/net/core/somaxconn",           sysctl_somaxconn,       true);
+            (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", sysctl_max_syn_backlog, true);
+            }
+         }
+      }
+#endif
+
+   delete senvironment;
+
    if (log)        delete log;
+   if (proc)       delete proc;
    if (lock)       delete lock;
    if (host)       delete host;
-   if (proc)       delete proc;
    if (ptime)      delete ptime;
    if (vallow_IP)  delete vallow_IP;
 
    if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add + sizeof(sem_t));
 
    delete socket;
-
-   UClientImage_Base::clear();
-
-#ifndef __MINGW32__
-   if (iBackLog == 1) (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", tcp_abort_on_overflow, true);
-
-   if (flag_use_tcp_optimization)
-      {
-      (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", tcp_fin_timeout, true);
-
-      if (iBackLog >= SOMAXCONN)
-         {
-         (void) UFile::setSysParam("/proc/sys/net/core/somaxconn",           sysctl_somaxconn,       true);
-         (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", sysctl_max_syn_backlog, true);
-         }
-      }
-#endif
 }
 
 void UServer_Base::loadConfigParam(UFileConfig& cfg)
@@ -678,7 +686,7 @@ void UServer_Base::runAsUser()
 
       const char* user = pthis->as_user.data();
 
-      if (u_ranAsUser(user, false))
+      if (u_runAsUser(user, false))
          {
          U_INTERNAL_DUMP("$HOME = %S", getenv("HOME"))
 

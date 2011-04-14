@@ -189,6 +189,22 @@ void URDB::close()
    lock.unlock();
 }
 
+bool URDB::closeReorganize()
+{
+   U_TRACE(0, "URDB::closeReorganize()")
+
+   if (reorganize())
+      {
+      URDB::close();
+
+      (void) journal.unlink();
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
 char* URDB::parseLine(const char* ptr, UCDB::datum* _key, UCDB::datum* _data)
 {
    U_TRACE(0, "URDB::parseLine(%p,%p,%p)", ptr, _key, _data)

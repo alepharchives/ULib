@@ -531,7 +531,7 @@ U_NO_EXPORT bool UObjectDB::addObjLive(const UObjectDumpable* dumper)
    return false;
 }
 
-U_NO_EXPORT int UObjectDB::compareDumper(const void* dumper1, const void* dumper2)
+U_NO_EXPORT int __pure UObjectDB::compareDumper(const void* dumper1, const void* dumper2)
 {
    U_INTERNAL_TRACE("UObjectDB::compareDumper(%p,%p)", dumper1, dumper2)
 

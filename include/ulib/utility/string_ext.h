@@ -76,12 +76,12 @@ public:
 
    // check if string s1 start with string s2
 
-   static bool startsWith(const UString& s1, const UString& s2);
+   static bool startsWith(const UString& s1, const UString& s2) __pure;
    static bool startsWith(const UString& s1, const char* s2, uint32_t n2) { return u_startsWith(U_STRING_TO_PARAM(s1), s2, n2); }
 
    // check if string s1 terminate with string s2
 
-   static bool endsWith(const UString& s1, const UString& s2);
+   static bool endsWith(const UString& s1, const UString& s2) __pure;
    static bool endsWith(const UString& s1, const char* s2, uint32_t n2) { return u_endsWith(U_STRING_TO_PARAM(s1), s2, n2); }
 
    // SUBSTITUTE: sostituzione di tutte le occorrenze di 'a' con 'b'
@@ -220,24 +220,14 @@ public:
    // Returns a negative number if (a < b)
    // Returns zero              if (a == b)
    // ----------------------------------------------------------------------------------------
-   static int compareversion(const char* a, uint32_t n1, const char* b, uint32_t n2);
+   static int compareversion(const char* a, uint32_t n1, const char* b, uint32_t n2) __pure;
 
-   static int compareversion(const UString& s, const UString& a)
-      { return compareversion(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a)); }
-
-   static int compareversion(const UString& s, const char* a, uint32_t n)
-      { return compareversion(U_STRING_TO_PARAM(s), a, n); }
+   static int compareversion(const UString& s, const UString& a) __pure;
+   static int compareversion(const UString& s, const char* a, uint32_t n) __pure { return compareversion(U_STRING_TO_PARAM(s), a, n); }
 
    /* Verifies that the passed string is actually an e-mail address */
 
-   static bool isEmailAddress(const UString& s)
-      {
-      U_TRACE(0, "UStringExt::isEmailAddress(%.*S)", U_STRING_TO_TRACE(s))
-
-      if (u_validate_email_address(U_STRING_TO_PARAM(s))) U_RETURN(true);
-
-      U_RETURN(false);
-      }
+   static bool isEmailAddress(const UString& s) __pure;
 
    // retrieve information on form elements as couple <name1>=<value1>&<name2>=<value2>&...
 

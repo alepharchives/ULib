@@ -100,7 +100,7 @@ public:
    void* front()  { return begin(); }
    void* back()   { return rbegin(); }
 
-   void*& at(uint32_t pos)
+   void*& at(uint32_t pos) __pure
       {
       U_TRACE(0, "UVector<void*>::at(%u)", pos)
 
@@ -110,7 +110,7 @@ public:
       return vec[pos];
       }
 
-   void* at(uint32_t pos) const
+   void* at(uint32_t pos) const __pure
       {
       U_TRACE(0, "UVector<void*>::at(%u) const", pos)
 
@@ -247,7 +247,7 @@ public:
    // located at positions 6 and 7. Similarly, the parent of the node at position i
    // is located at i div 2. Note that array entry 0 is unused.
 
-   void* bh_min() const
+   void* bh_min() const __pure
       {
       U_TRACE(0, "UVector<void*>::bh_min()")
 
@@ -369,11 +369,11 @@ public:
    T* front()  { return (T*) UVector<void*>::front(); }
    T* back()   { return (T*) UVector<void*>::back(); }
 
-   T*& at(uint32_t pos)       { return (T*&) UVector<void*>::at(pos); }
-   T*  at(uint32_t pos) const { return (T*)  UVector<void*>::at(pos); }
+   T*& at(uint32_t pos)       __pure { return (T*&) UVector<void*>::at(pos); }
+   T*  at(uint32_t pos) const __pure { return (T*)  UVector<void*>::at(pos); }
 
-   T*& operator[](uint32_t pos)       { return at(pos); }
-   T*  operator[](uint32_t pos) const { return at(pos); }
+   __pure T*& operator[](uint32_t pos)       { return at(pos); }
+          T*  operator[](uint32_t pos) const { return at(pos); }
 
    void replace(uint32_t pos, T* elem)
       {
@@ -546,7 +546,7 @@ public:
 
    // BINARY HEAP
 
-   T* bh_min() const { return (T*) UVector<void*>::bh_min(); }
+   T* bh_min() const __pure { return (T*) UVector<void*>::bh_min(); }
 
    void bh_put(T* elem)
       {
@@ -791,9 +791,9 @@ public:
    UString front()  { return UString(UVector<UStringRep*>::front()); }
    UString back()   { return UString(UVector<UStringRep*>::back()); }
 
-   UString at(uint32_t pos) const { return UString(UVector<UStringRep*>::at(pos)); }
+   UString at(uint32_t pos) const __pure { return UString(UVector<UStringRep*>::at(pos)); }
 
-   UString operator[](uint32_t pos) const { return at(pos); }
+   UString operator[](uint32_t pos) const;
 
    char* c_pointer(uint32_t pos)
       {
@@ -906,7 +906,7 @@ public:
 
    // BINARY HEAP
 
-   UString bh_min() const { return UString(UVector<UStringRep*>::bh_min()); }
+   UString bh_min() const __pure { return UString(UVector<UStringRep*>::bh_min()); }
 
    void bh_put(const UString& str)
       {
@@ -984,55 +984,12 @@ public:
       return (*(UStringRep**)p)->comparenocase(*(UStringRep**)q);
       }
 
-   void sort(bool ignore_case = false)
-      {
-      U_TRACE(0, "UVector<UString>::sort(%b)", ignore_case)
+   void sort(bool ignore_case = false);
 
-      U_INTERNAL_DUMP("_length = %u", _length)
+   uint32_t find(const char* s, uint32_t n, uint32_t offset = 0) __pure;
 
-      U_INTERNAL_ASSERT_RANGE(2,_length,_capacity)
-
-      if (ignore_case) UVector<void*>::sort(UVector<UString>::qscomp);
-      else             mksort((UStringRep**)vec, _length, 0);
-      }
-
-   uint32_t find(const UString& str, bool ignore_case = false)
-      {
-      U_TRACE(0, "UVector<UString>::find(%.*S,%b)", U_STRING_TO_TRACE(str), ignore_case)
-
-      U_CHECK_MEMORY
-
-      UStringRep* r;
-
-      for (uint32_t i = 0; i < _length; ++i)
-         {
-         r = UVector<UStringRep*>::at(i);
-
-         if ((ignore_case ? str.equalnocase(r) : str.equal(r)) == true) U_RETURN(i);
-         }
-
-      U_RETURN(U_NOT_FOUND);
-      }
-
-   uint32_t find(const char* s, uint32_t n, uint32_t offset = 0)
-      {
-      U_TRACE(0, "UVector<UString>::find(%#.*S,%u)", n, s, n)
-
-      U_CHECK_MEMORY
-
-      UStringRep* r;
-
-      for (uint32_t i = 0; i < _length; ++i)
-         {
-         r = UVector<UStringRep*>::at(i);
-
-         if (u_find(r->data() + offset, r->size() - offset, s, n)) U_RETURN(i);
-         }
-
-      U_RETURN(U_NOT_FOUND);
-      }
-
-   uint32_t findSorted(const UString& str, bool ignore_case = false);
+   uint32_t find(      const UString& str, bool ignore_case = false) __pure;
+   uint32_t findSorted(const UString& str, bool ignore_case = false) __pure;
 
    // AS SET
 

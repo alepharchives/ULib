@@ -62,7 +62,7 @@ void UEventTime::setTimerVal(struct timeval* it_value)
    U_INTERNAL_ASSERT(it_value->tv_usec >= 0)
 }
 
-bool UEventTime::isOld() const
+__pure bool UEventTime::isOld() const
 {
    U_TRACE(0, "UEventTime::isOld()")
 
@@ -79,7 +79,7 @@ bool UEventTime::isOld() const
    U_RETURN(result);
 }
 
-bool UEventTime::operator<(const UEventTime& t) const
+__pure bool UEventTime::operator<(const UEventTime& t) const
 {
    U_TRACE(0, "UEventTime::operator<(%O)", U_OBJECT_TO_TRACE(t))
 

@@ -27,7 +27,7 @@ extern U_EXPORT uint32_t u_trace_num_tab;
 extern U_EXPORT void u_trace_close(void);
 extern U_EXPORT void u_trace_initFork(void);
 extern U_EXPORT void u_trace_check_init(void);
-extern U_EXPORT bool u_trace_isActive(int level);
+extern U_EXPORT bool u_trace_isActive(int level) __pure;
 extern U_EXPORT void u_trace_check_if_interrupt(void); /* check for context manage signal event - interrupt */
 extern U_EXPORT void u_trace_dump(const char* restrict format, ...);
 extern U_EXPORT void u_trace_write(const char* restrict t, uint32_t tlen);

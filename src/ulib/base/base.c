@@ -99,6 +99,7 @@ uint32_t             u_line_terminator_len = 1;
 int                  u_errno; /* An errno value */
 int                  u_flag_exit;
 int                  u_flag_test;
+int                  u_mime_index;
 bool                 u_recursion;
 bool                 u_exec_failed;
 char                 u_hostname[255];
@@ -111,19 +112,41 @@ const unsigned char  u_alphabet[]  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop
 const unsigned char  u_hex_upper[] = "0123456789ABCDEF";
 const unsigned char  u_hex_lower[] = "0123456789abcdef";
 
-const char* u_basename(const char* restrict name)
+__pure const char* u_basename(const char* restrict path)
 {
    const char* restrict base;
 
-   U_INTERNAL_TRACE("u_basename(%s)", name)
+   U_INTERNAL_TRACE("u_basename(%s)", path)
 
 #ifdef __MINGW32__
-   if (u_isalpha(name[0]) && name[1] == ':') name += 2; /* Skip over the disk name in MSDOS pathnames */
+   if (u_isalpha(path[0]) && path[1] == ':') path += 2; /* Skip over the disk name in MSDOS pathnames */
 #endif
 
-   for (base = name; *name; ++name) if (IS_DIR_SEPARATOR(*name)) base = name + 1;
+   for (base = path; *path; ++path) if (IS_DIR_SEPARATOR(*path)) base = path + 1;
 
    return base;
+}
+
+__pure const char* u_getsuffix(const char* restrict path, uint32_t len)
+{
+   const char* restrict ptr;
+
+   U_INTERNAL_TRACE("u_getsuffix(%.*s,%u)", U_min(len,128), path, len)
+
+   U_INTERNAL_ASSERT_POINTER(path)
+
+   // NB: we can have something like 'www.sito1.com/tmp'...
+
+   ptr = (const char*) memrchr(path, '/', len);
+
+   if (ptr) len -= (++ptr - path);
+   else     ptr  = path;
+
+   U_INTERNAL_PRINT("ptr = %.*s len = %u", len, ptr, len)
+
+   ptr = (const char*) memrchr(ptr, '.', len);
+
+   return ptr;
 }
 
 void u_setPid(void)

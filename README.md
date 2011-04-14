@@ -17,59 +17,87 @@ userver_(tcp|ssl|ipc) multi purpose server (plugin oriented)
 
 The current version offers the following features :
 
-    * HTTP/1.0 and 1.1 protocols supported.
-    * Persistent connections for HTTP/1.1 and Keep-Alive support for HTTP/1.0.
-    * Browser cache management (headers: If-Modified-Since/Last-modified).
-    * Chunk-encoding transfers support.
-    * HTTP multi-range request support.
-    * Memory caching of document root for (small) static pages with smart compression and CSS/JS reduction.
-    * Support for automatic update of caching document root with inotify (on Linux).
-    * Support for pipelining.
-    * Support for virtual hosts (also with SSL).
-    * Support for basic/digest authentication.
-    * Support for directory listings via basic/digest authentication.
-    * Support for uri protection.
-    * Support for aliases/redirection.
-    * Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache,
-      some CMS (SilverStripe) require it.
-    * Support for JSONRequest (http://json.org/JSONRequest.html).
-    * Accept HTTP uploads up to 4 GB without increasing memory usage.
-    * Support for upload progress via USP (ULib Servlet Page).
-    * CGI support for shell script processes (with automatic management of form and cookie).
-    * General CGI support (run any CGI script) with automatic output compression (using deflate method).
-    * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
-    * Support for minify HTML CGI output with wrapping google page speed SDK.
-    * Web Socket support (experimental).
-    * Support for Windows (without preforking).
-    * Requests cut in phases for modular architecture (apache-like).
-    * Configuration file with dedicated section.
-    * Built-in modules :
-          o mod_echo : echo features.
-          o mod_rpc : generic Remote Procedure Call.
-          o mod_http : core features, static file handler and dynamic page (ULib Servlet Page).
-          o mod_ssi : Server Side Includes support (with enhanced #set and direct include).
-          o mod_nocat : captive portal implementation.
-          o mod_tsa : server side Time Stamp support.
-          o mod_soap : generic SOAP server services support.
-          o mod_fcgi : third-party applications support thru FastCGI interface.
-          o mod_scgi : module that implements the client side of the SCGI protocol (experimental).
-          o mod_shib : web single sign-on support (experimental).
-          o mod_proxy : proxy support (experimental).
-          o mod_geoip : geolocation support (experimental).
-          o mod_stream : simple streaming support (experimental).
-          o mod_socket : web sockets application framework (experimental).
+   * HTTP/1.0 and 1.1 protocols supported.
+   * Persistent connections for HTTP/1.1 and Keep-Alive support for HTTP/1.0.
+   * Browser cache management (headers: If-Modified-Since/Last-modified).
+   * Chunk-encoding transfers support.
+   * HTTP multi-range request support.
+   * Memory caching of document root for (small) static pages with smart compression and CSS/JS reduction.
+   * Support for automatic update of caching document root with inotify (on Linux).
+   * Support for pipelining.
+   * Support for virtual hosts (also with SSL).
+   * Support for basic/digest authentication.
+   * Support for directory listings via basic/digest authentication.
+   * Support for uri protection.
+   * Support for aliases/redirection.
+   * Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache,
+     some CMS (SilverStripe) require it.
+   * Support for JSONRequest (http://json.org/JSONRequest.html).
+   * Accept HTTP uploads up to 4 GB without increasing memory usage.
+   * Support for upload progress via USP (ULib Servlet Page).
+   * CGI support for shell script processes (with automatic management of form and cookie).
+   * General CGI support (run any CGI script) with automatic output compression (using deflate method).
+   * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
+   * Support for minify HTML CGI output with wrapping google page speed SDK.
+   * Web Socket support (experimental).
+   * Support for Windows (without preforking).
+   * Requests cut in phases for modular architecture (apache-like).
+   * Configuration file with dedicated section.
+   * Built-in modules :
+       o mod_echo : echo features.
+       o mod_rpc : generic Remote Procedure Call.
+       o mod_http : core features, static file handler and dynamic page (ULib Servlet Page).
+       o mod_ssi : Server Side Includes support with enhanced #set, direct include and #exec usp (ULib Servlet Page).
+       o mod_nocat : captive portal implementation.
+       o mod_tsa : server side Time Stamp support.
+       o mod_soap : generic SOAP server services support.
+       o mod_fcgi : third-party applications support thru FastCGI interface.
+       o mod_scgi : module that implements the client side of the SCGI protocol (experimental).
+       o mod_shib : web single sign-on support (experimental).
+       o mod_proxy : proxy support (experimental).
+       o mod_geoip : geolocation support (experimental).
+       o mod_stream : simple streaming support (experimental).
+       o mod_socket : web sockets application framework (experimental).
 
 Benchmarking
 ------------
 
-    $ ./configure && make
-    $ cd tests/examples
-    $ ./benchmarking.sh (or hello_world.sh)
+   $ ./configure && make
+   $ cd tests/examples
+   $ ./benchmarking.sh (or hello_world.sh)
 
-Use apachebench
+Use apachebench (ab)
 
 	$ ab -n 100000 -c10 http://127.0.0.1/usp/benchmarking.usp?name=stefano (or)
 	$ ab -n 100000 -c10 http://127.0.0.1/usp/hello_world.usp
+
+Comparative Benchmarking (https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark)
+-------------------------------------------------------------------------------------------
+I consider in this benchmark only the performant server G-WAN 2.1.20 (32 bit) (http://www.gwan.ch/).
+All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz) running Gentoo 64 bit (kernel 2.6.38.2).
+
+The client (available here: https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark/bin/bench1.c)
+relies on ApacheBench (ab) and it is a slightly modified version of http://gwan.ch/source/ab.c.txt.
+
+The client is running on different computer than the web server (networking is involved).
+
+I had to increase the local port range on client (because of the TIME_WAIT status of the TCP ports).
+
+ * HTTP Keep-Alives: yes/no
+ * Concurrency: from 0 to 1000, step 10
+ * Requests: up to 1000000 - within a fixed total amount of time (1 sec)
+
+For serving static content I use 3 file of different size:
+
+ *   99.html         (  99 byte)
+ * 1000.html	      (1000 byte)
+ * WebSocketMain.swf (180K byte)
+
+For serving dynamic content I use a simple request: <h1>Hello {name}<h1>
+
+The raw data in csv format are here (https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark).
+
+userver_tcp is the winner of this benchmark in all case for almost all level of concurrency.
 
 Quickstart
 ----------

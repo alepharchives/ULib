@@ -53,12 +53,12 @@ public:
 #  endif
       }
 
-   bool operator<(const UEventTime& t) const;
+   bool operator<(const UEventTime& t) const __pure;
 
    // SERVICES
 
-   bool isOld() const;
    void setCurrentTime();
+   bool isOld() const __pure;
    void setTimerVal(struct timeval* it_value);
 
    time_t expire() { return (ctime.tv_sec + tv_sec); }

@@ -1,0 +1,18 @@
+/usr/src/ULib-1.1.0/src/ulib/.libs/libulib_g-1.1.0.so.1(_ZN6UError9stackDumpEv+0x29)[0x7f486c21d3e9]
+/usr/src/ULib-1.1.0/src/ulib/.libs/libulib_g-1.1.0.so.1(u_debug_at_exit+0x20)[0x7f486c21cd40]
+/usr/src/ULib-1.1.0/src/ulib/.libs/libulib_g-1.1.0.so.1(u_printf+0x123)[0x7f486c0839c3]
+/usr/src/ULib-1.1.0/src/ulib/.libs/libulib_g-1.1.0.so.1(_ZN11UIptAccountC1Eb+0x937)[0x7f486c1af737]
+/usr/src/ULib-1.1.0/src/ulib/net/server/plugin/.libs/mod_nocat.so(_ZN12UNoCatPlugIn11handlerInitEv+0x1ee8)[0x7f486ae94238]
+/usr/src/ULib-1.1.0/src/ulib/.libs/libulib_g-1.1.0.so.1(_ZN12UServer_Base18pluginsHandlerInitEv+0x259)[0x7f486c14b589]
+/usr/src/ULib-1.1.0/src/ulib/.libs/libulib_g-1.1.0.so.1(_ZN12UServer_Base4initEv+0x6d1)[0x7f486c151d31]
+/usr/src/ULib-1.1.0/src/ulib/.libs/libulib_g-1.1.0.so.1(_ZN12UServer_Base3runEv+0x46)[0x7f486c153496]
+/usr/src/ULib-1.1.0/examples/userver/.libs/userver_tcp[0x4053b7]
+/usr/src/ULib-1.1.0/examples/userver/.libs/userver_tcp[0x402003]
+/lib64/libc.so.6(__libc_start_main+0xfd)[0x300041eebd]
+/usr/src/ULib-1.1.0/examples/userver/.libs/userver_tcp[0x4020d1]
+=== STACK TRACE ===
+UIptAccount::UIptAccount(bool)
+UNoCatPlugIn::handlerInit()
+UServer_Base::pluginsHandlerInit()
+UServer_Base::init()
+UServer_Base::run()

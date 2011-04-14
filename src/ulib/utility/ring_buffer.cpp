@@ -107,7 +107,7 @@ U_NO_EXPORT void URingBuffer::checkLocking()
       }
 }
 
-U_NO_EXPORT int URingBuffer::min_pread()
+U_NO_EXPORT __pure int URingBuffer::min_pread()
 {
    U_TRACE(0, "URingBuffer::min_pread()")
 

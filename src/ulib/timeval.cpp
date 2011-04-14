@@ -21,6 +21,27 @@ extern "C" { int nanosleep (const struct timespec* requested_time,
                                   struct timespec* remaining); }
 #endif
 
+void UTimeVal::adjust(long* tv_sec, long* tv_usec)
+{
+   U_TRACE(0, "UTimeVal::adjust(%ld, %ld)", *tv_sec, *tv_usec)
+
+   long riporto = *tv_usec / U_SECOND;
+
+   // NB: riporto puo' essere anche negativo...
+
+   if (riporto)
+      {
+      *tv_sec  += riporto;
+      *tv_usec %= U_SECOND;
+      }
+
+   U_INTERNAL_ASSERT_MINOR(*tv_usec, U_SECOND)
+
+   if (*tv_usec < 0L) { *tv_usec += U_SECOND; --(*tv_sec); }
+
+   U_INTERNAL_ASSERT_RANGE(0L, *tv_usec, U_SECOND)
+}
+
 void UTimeVal::nanosleep()
 {
    U_TRACE(1, "UTimeVal::nanosleep()")
@@ -54,6 +75,18 @@ loop:
       }
 
    U_INTERNAL_DUMP("Return nanosleep(%2D)")
+}
+
+__pure bool UTimeVal::operator<(const UTimeVal& t) const
+{
+   U_TRACE(0, "UTimeVal::operator<(%O,%O)", U_OBJECT_TO_TRACE(*this), U_OBJECT_TO_TRACE(t))
+
+   U_CHECK_MEMORY
+
+   bool result = (tv_sec <  t.tv_sec ||
+                 (tv_sec == t.tv_sec && tv_usec < t.tv_usec));
+
+   U_RETURN(result);
 }
 
 // STREAMS

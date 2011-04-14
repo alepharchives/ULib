@@ -24,8 +24,6 @@
 #  include <ws2tcpip.h>
 #endif
 
-#include "socket_address.cpp"
-
 #ifndef HAVE_ACCEPT4
 #  define SOCK_NONBLOCK   04000 /* Atomically mark descriptor(s) as non-blocking */
 #  define SOCK_CLOEXEC 02000000 /* Atomically set close-on-exec flag for the new descriptor(s) */
@@ -57,6 +55,8 @@ const UString* USocket::str_X_Real_IP;
 const UString* USocket::str_X_Forwarded_For;
 const UString* USocket::str_Transfer_Encoding;
 const UString* USocket::str_X_Progress_ID;
+
+#include "socket_address.cpp"
 
 void USocket::str_allocate()
 {
@@ -138,6 +138,79 @@ void USocket::str_allocate()
    U_NEW_ULIB_OBJECT(str_X_Forwarded_For,       U_STRING_FROM_STRINGREP_STORAGE(21));
    U_NEW_ULIB_OBJECT(str_Transfer_Encoding,     U_STRING_FROM_STRINGREP_STORAGE(22));
    U_NEW_ULIB_OBJECT(str_X_Progress_ID,         U_STRING_FROM_STRINGREP_STORAGE(23));
+}
+
+USocket::~USocket()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, USocket)
+
+   U_INTERNAL_DUMP("iSockDesc = %d", iSockDesc)
+
+   if (isOpen()) USocket::closesocket();
+}
+
+__pure int USocket::localPortNumber()
+{
+   U_TRACE(0, "USocket::localPortNumber()")
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isLocalSet())
+
+   U_RETURN(iLocalPort);
+}
+
+__pure UIPAddress& USocket::localIPAddress()
+{
+   U_TRACE(0, "USocket::localIPAddress()")
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isLocalSet())
+
+   return cLocalAddress;
+}
+
+bool USocket::socket(int iSocketType, int protocol)
+{
+   U_TRACE(1, "USocket::socket(%d,%d)", iSocketType, protocol)
+
+   U_INTERNAL_ASSERT(isClosed())
+
+   iSockDesc = socket(bIPv6Socket ? AF_INET6 : AF_INET, iSocketType, protocol);
+
+   if (isOpen()) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
+bool USocket::connectServer(const UIPAddress& cAddr, int iServPort)
+{
+   U_TRACE(1, "USocket::connectServer(%p,%d)", &cAddr, iServPort)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+
+   iRemotePort    = iServPort;
+   cRemoteAddress = cAddr;
+
+   if (connect()) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
+int USocket::recv(void* pBuffer, uint32_t iBufLength)
+{
+   U_TRACE(0, "USocket::recv(%p,%u)", pBuffer, iBufLength)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+
+   int iBytesRead = recv(iSockDesc, CAST(pBuffer), iBufLength, 0);
+
+   U_RETURN(iBytesRead);
 }
 
 bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)

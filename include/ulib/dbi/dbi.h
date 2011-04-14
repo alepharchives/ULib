@@ -544,18 +544,7 @@ public:
 
    // Get number of rows in the returned result
 
-   unsigned long long rows()
-      {
-      U_TRACE(1, "UDBISet::rows()")
-
-      U_INTERNAL_ASSERT_POINTER_MSG(res, "DBI: no result assigned")
-
-      unsigned long long r = U_SYSCALL(dbi_result_get_numrows, "%p", res);
-
-      U_INTERNAL_ASSERT_DIFFERS_MSG(r,DBI_FIELD_ERROR,"DBI: failed to fetch number of rows")
-
-      U_RETURN(r);
-      }
+   unsigned long long rows();
 
    // Get number of columns in the returned result
 

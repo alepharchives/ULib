@@ -66,3 +66,7 @@ dn:   uid=tickets,o=mail
 cn:   tickets
 mail: tickets@unirel.com
 
+dn:   uid=paolo.lai,o=mail
+cn:   Paolo Lai
+mail: paolo.lai@unirel.com
+

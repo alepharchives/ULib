@@ -2,7 +2,7 @@
 
 #include <HttpHeader.h>
 
-unsigned HttpHeader::count(const UString& name)
+__pure unsigned HttpHeader::count(const UString& name)
 {
    U_TRACE(5, "HttpHeader::count(%.*S)", U_STRING_TO_TRACE(name))
 
@@ -47,7 +47,7 @@ HttpField* HttpHeader::add(HttpField* field, unsigned index)
    U_RETURN_POINTER(field, HttpField);
 }
 
-HttpField* HttpHeader::find(const UString& name, unsigned index)
+__pure HttpField* HttpHeader::find(const UString& name, unsigned index)
 {
    U_TRACE(5, "HttpHeader::find(%.*S,%d)", U_STRING_TO_TRACE(name), index)
 

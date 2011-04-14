@@ -6,11 +6,12 @@
 
 start_msg services
 
-#UTRACE="0 5M 3"
+#UTRACE="0 5M 0"
 #UOBJDUMP="-1 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
+#STRACE=$TRUSS
 #VALGRIND='valgrind' #  --leak-check=full
 start_prg services
 

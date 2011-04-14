@@ -107,21 +107,7 @@ public:
    // Combines the old cdb file and the diffs in a new cdb file.
    // Close the database and deletes the obsolete journal file if everything worked out
 
-   bool closeReorganize()
-      {
-      U_TRACE(0, "URDB::closeReorganize()")
-
-      if (reorganize())
-         {
-         URDB::close();
-
-         (void) journal.unlink();
-
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
+   bool closeReorganize();
 
    void reset();
 

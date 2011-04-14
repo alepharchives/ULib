@@ -1,7 +1,7 @@
-ULib: 1.0.5
+ULib: 1.1.0
 Purpose: sample test for UOption class
 Usage:
-  test_options [ OPTIONS ] [ARGS]
+  test_options [ Options ] 
 Options:
    -h  --help                          Show help about options
    -V  --version                       Show version information
@@ -10,6 +10,4 @@ Options:
    -c  --option_c[=VALUE]              A option with optional arg (default=Hello)
        --option_with_no_short_1        A option without short (default=1)
        --option_with_no_short_2=VALUE  A option with default (default=Bucaiolo a te)
-
-Maintained by Stefano Casazza <stefano.casazza@gmail.com>
 Report bugs to <stefano.casazza@gmail.com>

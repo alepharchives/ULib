@@ -40,9 +40,9 @@ public:
 
    void* elem() const { return _elem; }
 
-   UTree<void*>*   parent() const               { return (UTree<void*>*)_parent; }
-   UVector<void*>* vector() const               { return (UVector<void*>*)this; }
-   UTree<void*>*   childAt(uint32_t pos) const  { return (UTree<void*>*)vector()->at(pos); }
+   UTree<void*>*   parent() const                      { return (UTree<void*>*)_parent; }
+   UVector<void*>* vector() const                      { return (UVector<void*>*)this; }
+   UTree<void*>*   childAt(uint32_t pos) const  __pure { return (UTree<void*>*)vector()->at(pos); }
 
    // SERVICES
 
@@ -76,7 +76,7 @@ public:
 
    // compute the depth to the root
 
-   uint32_t depth() const
+   uint32_t depth() const __pure
       {
       U_TRACE(0, "UTree<void*>::depth()")
 
@@ -242,9 +242,9 @@ public:
 
    T* elem() const { return (T*) _elem; }
 
-   UTree<T*>*   parent() const               { return (UTree<T*>*)_parent; }
-   UVector<T*>* vector() const               { return (UVector<T*>*)this; }
-   UTree<T*>*   childAt(uint32_t pos) const  { return (UTree<T*>*)((UVector<void*>*)this)->at(pos); }
+   UTree<T*>*   parent() const                      { return (UTree<T*>*)_parent; }
+   UVector<T*>* vector() const                      { return (UVector<T*>*)this; }
+   UTree<T*>*   childAt(uint32_t pos) const  __pure { return (UTree<T*>*)((UVector<void*>*)this)->at(pos); }
 
    T* begin()  { return ((UTree<T*>*)UVector<void*>::begin())->elem(); }
    T* end()    { return ((UTree<T*>*)UVector<void*>::end())->elem(); }
@@ -412,16 +412,17 @@ public:
       U_RETURN_STRING(UString::getStringNull());
       }
 
-   UTree<UString>*   parent() const                { return (UTree<UString>*)_parent; }
-   UVector<UString>* vector() const                { return (UVector<UString>*)this; }
-   UTree<UString>*   childAt(uint32_t pos) const   { return (UTree<UString>*)((UVector<void*>*)this)->at(pos); }
+   UTree<UString>*   parent() const                       { return (UTree<UString>*)_parent; }
+   UVector<UString>* vector() const                       { return (UVector<UString>*)this; }
+   UTree<UString>*   childAt(uint32_t pos) const   __pure { return (UTree<UString>*)((UVector<void*>*)this)->at(pos); }
 
    UString begin()  { return ((UTree<UString>*)UVector<void*>::begin())->elem(); }
    UString end()    { return ((UTree<UString>*)UVector<void*>::end())->elem(); }
    UString rbegin() { return ((UTree<UString>*)UVector<void*>::rbegin())->elem(); }
    UString rend()   { return ((UTree<UString>*)UVector<void*>::rend())->elem(); }
    UString front()  { return ((UTree<UString>*)UVector<void*>::front())->elem(); }
-   UString back()   { return ((UTree<UString>*)UVector<void*>::back())->elem(); }
+
+   UString back();
 
    UString at(uint32_t pos) const { return ((UTree<UString>*)UVector<void*>::at(pos))->elem(); }
 
@@ -468,16 +469,11 @@ public:
 
    // LIST
 
-   void insert(uint32_t pos, const UString& str) // add elem before pos
-      {
-      U_TRACE(0, "UTree<UString>::insert(%u,%.*S)", pos, U_STRING_TO_TRACE(str))
-
-      UTree<UStringRep*>::insert(pos, str.rep);
-      }
+   void insert(uint32_t pos, const UString& str); // add elem before pos
 
    // EXTENSION
 
-   uint32_t find(const UString& str);
+   uint32_t find(const UString& str) __pure;
 
    // STREAMS
 

@@ -60,14 +60,6 @@
 #define U_FILE_TO_PARAM(file) (file).getPathRelativ(),(file).getPathRelativLen()
 #define U_FILE_TO_TRACE(file) (file).getPathRelativLen(),(file).getPathRelativ()
 
-#define U_js   'j' // text/javascript
-#define U_css  'c' // text/css
-#define U_html 'h' // text/html
-#define U_gif  'g' // image/gif
-#define U_png  'p' // image/png
-#define U_jpg  'J' // image/jpg
-#define U_ssi  's' // SSI
-
 class URDB;
 class UHTTP;
 
@@ -187,7 +179,9 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(path_relativ)
 
-      const char* ptr = (const char*) memrchr(path_relativ, '.', path_relativ_len);
+      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      const char* ptr = u_getsuffix(path_relativ, path_relativ_len);
 
       U_RETURN(ptr);
       }
@@ -201,6 +195,21 @@ public:
       uint32_t len = (path_relativ  + path_relativ_len) - ptr;
 
       U_RETURN(len);
+      }
+
+   bool isSuffix(const char* suffix) const
+      {
+      U_TRACE(0, "UFile::isSuffix(%S)", suffix)
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
+
+      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      const char* ptr = u_getsuffix(path_relativ, path_relativ_len);
+
+      bool result = (ptr && strcmp(ptr, suffix) == 0);
+
+      U_RETURN(result);
       }
 
    static uint32_t setPathFromFile(const UFile& file, char* buffer_path, const char* suffix, uint32_t len);
@@ -651,10 +660,7 @@ public:
 
    // MIME TYPE
 
-   static int mime_index;
-
-          const char* getMimeType();
-   static const char* getMimeType(const char* suffix);
+   const char* getMimeType();
 
    // PREAD - PWRITE
 

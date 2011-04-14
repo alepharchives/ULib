@@ -164,10 +164,6 @@ enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_G
 
 #define U_HTTP_REALM "Protected Area"
 
-// Default content type
-
-#define U_CTYPE_HTML "text/html"
-
 #define U_MAX_UPLOAD_PROGRESS 32
 
 class UFile;
@@ -310,7 +306,7 @@ public:
    static void setHTTPInfo(                  const UString& method, const UString& uri)
       { setHTTPInfo(U_STRING_TO_PARAM(method), U_STRING_TO_PARAM(uri)); }
 
-   static bool    isHTTPRequest(const char* ptr);
+   static bool    isHTTPRequest(const char* ptr) __pure;
    static bool scanfHTTPHeader( const char* ptr);
 
    static const char* getHTTPStatus();
@@ -323,6 +319,17 @@ public:
    // TYPE
 
    static bool isHTTPRequest() { return (U_http_method_type && http_info.szHeader); }
+
+   static bool isHTTPRequestTooLarge()
+      {
+      U_TRACE(0, "UHTTP::isHTTPRequestTooLarge()")
+
+      U_INTERNAL_ASSERT_MAJOR(limit_request_body,0)
+
+      bool result = (http_info.clength > limit_request_body);
+
+      U_RETURN(result);
+      }
 
    static bool isHttpGETorHEAD()
       {
@@ -416,17 +423,6 @@ public:
       U_RETURN(result);
       }
 
-   static bool isHTTPRequestTooLarge()
-      {
-      U_TRACE(0, "UHTTP::isHTTPRequestTooLarge()")
-
-      U_INTERNAL_ASSERT_MAJOR(limit_request_body,0)
-
-      bool result = (http_info.clength > limit_request_body);
-
-      U_RETURN(result);
-      }
-
    // SERVICES
 
    static UFile* file;
@@ -443,13 +439,13 @@ public:
    static void getTimeIfNeeded(bool all_http_version);
    static void processHTTPGetRequest(const UString& request);
    static void checkHTTPRequestForHeader(const UString& request);
-   static bool checkHTTPContentLength(const char* ptr, uint32_t length, UString& ext);
-   static void getFileMimeType(const char* suffix, const char* content_type, UString& ext, uint32_t size, time_t expire);
+   static bool checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
 
    static UString     getDocumentName();
    static UString     getDirectoryURI();
    static UString     getRequestURI(bool bquery);
-   static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase);
+   static UString     getHeaderMimeType(const char* content_type, uint32_t size, time_t expire);
+   static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase) __pure;
 
    // check for HTTP Header X-Forwarded-For: client, proxy1, proxy2 and X-Real-IP: client...
 
@@ -612,16 +608,9 @@ public:
 
    // CGI
 
+   static UString* geoip;
    static UCommand* pcmd;
-   static UString* penvironment;
    static char cgi_dir[U_PATH_MAX];
-
-   static bool processCGIOutput();
-   static bool checkForCGIRequest();
-   static bool processCGIRequest(UCommand* pcmd, UString* penvironment, bool async, bool process_output);
-   static void setHTTPCgiResponse(int nResponseCode, bool header_content_length, bool header_content_type, bool content_encoding);
-
-   static UString getCGIEnvironment();
 
    static bool isCGIRequest()
       {
@@ -633,6 +622,12 @@ public:
 
       U_RETURN(result);
       }
+
+   static bool    processCGIOutput();
+   static UString getCGIEnvironment();
+   static bool    checkForCGIRequest();
+   static bool    processCGIRequest(UCommand* pcmd, UString* penvironment, bool async, bool process_output);
+   static void    setHTTPCgiResponse(int nResponseCode, bool header_content_length, bool header_content_type, bool content_encoding);
 
    // URI PROTECTED
 
@@ -701,6 +696,8 @@ public:
 
       U_RETURN(result);
       }
+
+   static void processUSPRequest(const char* uri, uint32_t uri_len);
 
    // ------------------------------
    // argument value for usp mudule:
@@ -810,11 +807,11 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   int wd;                  // if directory a "watch list" associated with an inotify instance...
+   UVector<UString>* array; // content, header, deflate(content, header)
+   int wd;                  // if directory it is a "watch list" associated with an inotify instance...
    mode_t mode;             // file type
    time_t mtime;            // time of last modification
    time_t expire;           // expire time of the entry
-   UVector<UString>* array; // content, header, deflate(content, header)
    uint32_t size;           // size content
 
    // COSTRUTTORI
@@ -861,27 +858,39 @@ public:
    static UFileCacheData* file_data;
    static UHashMap<UFileCacheData*>* cache_file;
 
-   static void in_READ();
-   static bool isFileInCache();
-   static void checkFileForCache();
-   static UString getDataFromCache(bool header, bool deflate);
-
-   static bool isDataFromCache(bool deflate)
+   static bool isDataFromCache()
       {
-      U_TRACE(0, "UHTTP::isDataFromCache(%b)", deflate)
+      U_TRACE(0, "UHTTP::isDataFromCache()")
 
       U_INTERNAL_ASSERT_POINTER(file_data)
 
-      bool result = (file_data->array ? file_data->array->size() > (deflate * 2U) : false);
+      bool result = (file_data->array != 0);
 
       U_RETURN(result);
       }
+
+   static bool isDataCompressFromCache()
+      {
+      U_TRACE(0, "UHTTP::isDataCompressFromCache()")
+
+      U_INTERNAL_ASSERT_POINTER(file_data)
+      U_INTERNAL_ASSERT_POINTER(file_data->array)
+
+      bool result = (file_data->array->size() > 2);
+
+      U_RETURN(result);
+      }
+
+   static void    in_READ();
+   static bool    isFileInCache();
+   static void    checkFileForCache();
+   static UString getDataFromCache(bool header, bool deflate);
 
    // Accept-Language: en-us,en;q=0.5
    // ----------------------------------------------------
    // take only the first 2 character (it, en, de fr, ...)
 
-   static const char* getAcceptLanguage();
+   static const char* getAcceptLanguage() __pure;
 
    // set HTTP main error message
 
@@ -905,16 +914,17 @@ private:
    static void in_CREATE() U_NO_EXPORT;
    static void in_DELETE() U_NO_EXPORT;
    static void checkPath() U_NO_EXPORT;
-   static void processFileCache() U_NO_EXPORT;
+   static bool processFileCache() U_NO_EXPORT;
    static void processRewriteRule() U_NO_EXPORT;
    static void resetForm(bool brmdir) U_NO_EXPORT;
    static bool initUploadProgress(int byte_read) U_NO_EXPORT;
    static void updateUploadProgress(int byte_read) U_NO_EXPORT;
    static bool setCGIShellScript(UString& command) U_NO_EXPORT;
-   static int  sortHTTPRange(const void* a, const void* b) U_NO_EXPORT;
    static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;
    static bool processHTTPAuthorization(const UString& request) U_NO_EXPORT;
    static void _callRunDynamicPage(UStringRep* key, void* value) U_NO_EXPORT;
+   static int  sortHTTPRange(const void* a, const void* b) __pure U_NO_EXPORT;
+   static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
    static void getInotifyPathDirectory(UStringRep* key, void* value) U_NO_EXPORT;
    static bool checkHTTPGetRequestIfModified(const UString& request) U_NO_EXPORT;
    static void checkInotifyForCache(int wd, char* name, uint32_t len) U_NO_EXPORT;

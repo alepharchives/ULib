@@ -276,7 +276,7 @@ inline bool UPosting::checkEntry(const char* str, const char* s, uint32_t n)
    U_RETURN(false);
 }
 
-U_NO_EXPORT const char* UPosting::find(const char* s, uint32_t n, bool boptmize)
+U_NO_EXPORT __pure const char* UPosting::find(const char* s, uint32_t n, bool boptmize)
 {
    U_TRACE(5, "UPosting::find(%p,%u,%b)", s, n, boptmize)
 

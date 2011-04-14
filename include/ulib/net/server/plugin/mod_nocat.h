@@ -201,7 +201,7 @@ protected:
    void addPeerInfo(UModNoCatPeer* peer, time_t logout);
    void setRedirectLocation(UModNoCatPeer* peer, const UString& redirect, const Url& auth);
 
-   static UModNoCatPeer* getPeer(uint32_t i);
+   static UModNoCatPeer* getPeer(uint32_t i) __pure;
           UModNoCatPeer* getPeerFromMAC(const UString& mac);
           UModNoCatPeer* creatNewPeer(const UString& peer_ip);
 

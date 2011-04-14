@@ -27,6 +27,11 @@
 #  include <ulib/file.h>
 #endif
 
+UPop3Client::~UPop3Client()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UPop3Client)
+}
+
 U_NO_EXPORT const char* UPop3Client::status()
 {
    U_TRACE(0, "UPop3Client::status()")

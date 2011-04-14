@@ -113,10 +113,7 @@ public:
       if (str_empty == 0) str_allocate();
       }
 
-   virtual ~USmtpClient()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, USmtpClient)
-      }
+   virtual ~USmtpClient();
 
    /**
    function called to established a socket connection with the SMTP network server

@@ -5,15 +5,15 @@
 #include <ulib/options.h>
 
 #define OPTIONS \
-"# package <PACKNAME>\n" \
-"# version <VERSION>\n" \
-"  purpose \"sample test for UOption class\"\n" \
-"# report_bugs <REPORT_BUGS>\n" \
-"option a option_a               0 \"A option without arg\"       \"\"\n" \
-"option b option_b               1 \"A option with arg\"          \"\"\n" \
-"option c option_c               2 \"A option with optional arg\" Hello\n" \
-"option - option_with_no_short_1 0 \"A option without short\"     \"\"\n" \
-"option - option_with_no_short_2 1 \"A option with default\"      Hello"
+"package " PACKAGE "\n" \
+"version " VERSION "\n" \
+"purpose 'sample test for UOption class'\n" \
+"report_bugs 'Report bugs to <stefano.casazza@gmail.com>'\n" \
+"option a option_a               0 'A option without arg' ''\n" \
+"option b option_b               1 'A option with arg' ''\n" \
+"option c option_c               2 'A option with optional arg' Hello\n" \
+"option - option_with_no_short_1 0 'A option without short' ''\n" \
+"option - option_with_no_short_2 1 'A option with default' Hello"
 
 int
 U_EXPORT main (int argc, char* argv[])

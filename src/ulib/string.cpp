@@ -355,7 +355,7 @@ uint32_t UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
 // ----------------------------------------------
 // gcc: call is unlikely and code size would grow
 // ----------------------------------------------
-bool UStringRep::isBase64(uint32_t pos) const
+__pure bool UStringRep::isBase64(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isBase64(%u)", pos)
 
@@ -366,7 +366,7 @@ bool UStringRep::isBase64(uint32_t pos) const
    U_RETURN(result);
 }
 
-bool UStringRep::isWhiteSpace(uint32_t pos) const
+__pure bool UStringRep::isWhiteSpace(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isWhiteSpace(%u)", pos)
 
@@ -377,7 +377,7 @@ bool UStringRep::isWhiteSpace(uint32_t pos) const
    U_RETURN(result);
 }
 
-bool UStringRep::isText(uint32_t pos) const
+__pure bool UStringRep::isText(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isText(%u)", pos)
 
@@ -388,7 +388,7 @@ bool UStringRep::isText(uint32_t pos) const
    U_RETURN(result);
 }
 
-bool UStringRep::isBinary(uint32_t pos) const
+__pure bool UStringRep::isBinary(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isBinary(%u)", pos)
 
@@ -399,7 +399,7 @@ bool UStringRep::isBinary(uint32_t pos) const
    U_RETURN(result);
 }
 
-bool UStringRep::isUTF8(uint32_t pos) const
+__pure bool UStringRep::isUTF8(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isUTF8(%u)", pos)
 
@@ -410,7 +410,7 @@ bool UStringRep::isUTF8(uint32_t pos) const
    U_RETURN(result);
 }
 
-bool UStringRep::isUTF16(uint32_t pos) const
+__pure bool UStringRep::isUTF16(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isUTF16(%u)", pos)
 
@@ -466,26 +466,32 @@ UString UString::substr(const char* t, uint32_t tlen) const
    U_RETURN_STRING(result);
 }
 
+char* UString::c_strdup() const                          { return strndup(rep->str, rep->_length); }
+char* UString::c_strndup(uint32_t pos, uint32_t n) const { return strndup(rep->str + pos, rep->fold(pos, n)); }
+
 UString& UString::assign(const char* s)                  { return assign(s, u_strlen(s)); }
 UString& UString::append(const char* s)                  { return append(s, u_strlen(s)); }
 UString& UString::append(const UString& str)             { return append(str.data(), str.size()); }
 
-bool     UString::equal(UStringRep* _rep) const          { return same(_rep) || rep->equal(_rep); }
-bool     UString::equal(const char* s) const             { return rep->equal(s, u_strlen(s)); }
-bool     UString::equal(const char* s, uint32_t n) const { return rep->equal(s, n); }
+__pure bool UString::equal(UStringRep* _rep) const          { return same(_rep) || rep->equal(_rep); }
+__pure bool UString::equal(const char* s) const             { return rep->equal(s, u_strlen(s)); }
+__pure bool UString::equal(const char* s, uint32_t n) const { return rep->equal(s, n); }
+__pure bool UString::equalnocase(const UString& str) const  { return equalnocase(str.rep); }
 
-void     UString::size_adjust_force(uint32_t value)      { rep->size_adjust_force(value); }
+void UString::size_adjust_force(uint32_t value)      { rep->size_adjust_force(value); }
 
-void     UString::setEmpty()                             { rep->size_adjust(0); }
+void UString::setEmpty()                             { rep->size_adjust(0); }
 
 UString  UString::substr(uint32_t pos, uint32_t n) const { return substr(rep->str + pos, rep->fold(pos, n)); }
 
 UString& UString::operator+=(const UString& str)         { return append(str.data(), str.size()); }
 
-uint32_t UString::find(const UString& str, uint32_t pos, uint32_t how_much) const
+UString& UString::erase(uint32_t pos, uint32_t n)        { return replace(pos, rep->fold(pos, n), "", 0); }
+
+__pure uint32_t UString::find(const UString& str, uint32_t pos, uint32_t how_much) const
    { return find(str.data(), pos, str.size(), how_much); }
 
-uint32_t UString::findnocase(const UString& str, uint32_t pos, uint32_t how_much) const
+__pure uint32_t UString::findnocase(const UString& str, uint32_t pos, uint32_t how_much) const
    { return findnocase(str.data(), pos, str.size(), how_much); }
 
 void UString::clear()
@@ -774,7 +780,7 @@ void UString::resize(uint32_t n, char c)
 // The `find' function searches string for a specified string (possibly a single character) and returns
 // its starting position. You can supply the parameter pos to specify the position where search must begin
 
-uint32_t UString::find(const char* s, uint32_t pos, uint32_t s_len, uint32_t how_much) const
+__pure uint32_t UString::find(const char* s, uint32_t pos, uint32_t s_len, uint32_t how_much) const
 {
    U_TRACE(0, "UString::find(%S,%u,%u,%u)", s, pos, s_len, how_much)
 
@@ -793,7 +799,7 @@ uint32_t UString::find(const char* s, uint32_t pos, uint32_t s_len, uint32_t how
    U_RETURN(n);
 }
 
-uint32_t UString::findnocase(const char* s, uint32_t pos, uint32_t s_len, uint32_t how_much) const
+__pure uint32_t UString::findnocase(const char* s, uint32_t pos, uint32_t s_len, uint32_t how_much) const
 {
    U_TRACE(0, "UString::findnocase(%S,%u,%u,%u)", s, pos, s_len, how_much)
 
@@ -815,7 +821,7 @@ uint32_t UString::findnocase(const char* s, uint32_t pos, uint32_t s_len, uint32
    U_RETURN(U_NOT_FOUND);
 }
 
-uint32_t UString::find(char c, uint32_t pos) const
+__pure uint32_t UString::find(char c, uint32_t pos) const
 {
    U_TRACE(0, "UString::find(%C,%u)", c, pos)
 
@@ -841,7 +847,7 @@ uint32_t UString::find(char c, uint32_t pos) const
 // this is rfind(). instead of starting at the beginning of the string and searching for the text's first occurence,
 // rfind() starts its search at the end and returns the last occurence.
 
-uint32_t UString::rfind(char c, uint32_t pos) const
+__pure uint32_t UString::rfind(char c, uint32_t pos) const
 {
    U_TRACE(0, "UString::rfind(%C,%u)", c, pos)
 
@@ -864,7 +870,7 @@ uint32_t UString::rfind(char c, uint32_t pos) const
    U_RETURN(U_NOT_FOUND);
 }
 
-uint32_t UString::rfind(const char* s, uint32_t pos, uint32_t n) const
+__pure uint32_t UString::rfind(const char* s, uint32_t pos, uint32_t n) const
 {
    U_TRACE(0, "UString::rfind(%S,%u,%u)", s, pos, n)
 
@@ -889,7 +895,7 @@ uint32_t UString::rfind(const char* s, uint32_t pos, uint32_t n) const
 // between the strings being compared. And yes, this means that the find_first_of()s that take a single char are
 // exactly the same as the find() functions with the same parameters
 
-uint32_t UString::find_first_of(const char* s, uint32_t pos, uint32_t n) const
+__pure uint32_t UString::find_first_of(const char* s, uint32_t pos, uint32_t n) const
 {
    U_TRACE(0, "UString::find_first_of(%S,%u,%u)", s, pos, n)
 
@@ -908,7 +914,7 @@ uint32_t UString::find_first_of(const char* s, uint32_t pos, uint32_t n) const
    U_RETURN(U_NOT_FOUND);
 }
 
-uint32_t UString::find_last_of(const char* s, uint32_t pos, uint32_t n) const
+__pure uint32_t UString::find_last_of(const char* s, uint32_t pos, uint32_t n) const
 {
    U_TRACE(0, "UString::find_last_of(%S,%u,%u)", s, pos, n)
 
@@ -932,7 +938,7 @@ uint32_t UString::find_last_of(const char* s, uint32_t pos, uint32_t n) const
 // Now these functions, instead of returning an index to the first common element,
 // returns an index to the first non-common element
 
-uint32_t UString::find_first_not_of(const char* s, uint32_t pos, uint32_t n) const
+__pure uint32_t UString::find_first_not_of(const char* s, uint32_t pos, uint32_t n) const
 {
    U_TRACE(0, "UString::find_first_not_of(%S,%u,%u)", s, pos, n)
 
@@ -952,7 +958,7 @@ uint32_t UString::find_first_not_of(const char* s, uint32_t pos, uint32_t n) con
    U_RETURN(U_NOT_FOUND);
 }
 
-uint32_t UString::find_first_not_of(char c, uint32_t pos) const
+__pure uint32_t UString::find_first_not_of(char c, uint32_t pos) const
 {
    U_TRACE(0, "UString::find_first_not_of(%C,%u)", c, pos)
 
@@ -969,7 +975,7 @@ uint32_t UString::find_first_not_of(char c, uint32_t pos) const
    U_RETURN(U_NOT_FOUND);
 }
 
-uint32_t UString::find_last_not_of(const char* s, uint32_t pos, uint32_t n) const
+__pure uint32_t UString::find_last_not_of(const char* s, uint32_t pos, uint32_t n) const
 {
    U_TRACE(0, "UString::find_last_not_of(%S,%u,%u)", s, pos, n)
 
@@ -990,7 +996,7 @@ uint32_t UString::find_last_not_of(const char* s, uint32_t pos, uint32_t n) cons
    U_RETURN(U_NOT_FOUND);
 }
 
-uint32_t UString::find_last_not_of(char c, uint32_t pos) const
+__pure uint32_t UString::find_last_not_of(char c, uint32_t pos) const
 {
    U_TRACE(0, "UString::find_last_not_of(%C,%u)", c, pos)
 

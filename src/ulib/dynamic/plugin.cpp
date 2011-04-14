@@ -53,7 +53,18 @@ void* UPlugIn<void*>::create(const char* _name, uint32_t _name_len)
    U_RETURN(item->obj);
 }
 
-UPlugIn<void*>* UPlugIn<void*>::getObjWrapper(void* _obj)
+__pure void UPlugIn<void*>::clear()
+{
+   U_TRACE(0, "UPlugIn<void*>::clear()")
+
+   if (first)
+      {
+      delete first;
+             first = 0;
+      }
+}
+
+__pure UPlugIn<void*>* UPlugIn<void*>::getObjWrapper(void* _obj)
 {
    U_TRACE(0, "UPlugIn<void*>::getObjWrapper(%p)", _obj)
 

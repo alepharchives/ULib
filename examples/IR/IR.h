@@ -67,7 +67,7 @@ public:
 
    ~IR();
 
-   bool openCDB(bool parsing, bool index = false)
+   bool openCDB(bool parsing, bool index = false) // NB: must be inline...(see #define)
       {
       U_TRACE(5, "IR::openCDB(%b,%b)", parsing, index)
 

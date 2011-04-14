@@ -62,6 +62,11 @@ void USmtpClient::str_allocate()
    U_NEW_ULIB_OBJECT(str_REPLY_TO_ADDRESS, U_STRING_FROM_STRINGREP_STORAGE(7));
 }
 
+USmtpClient::~USmtpClient()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, USmtpClient)
+}
+
 char* USmtpClient::status()
 {
    U_TRACE(0, "USmtpClient::status()")

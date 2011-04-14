@@ -67,7 +67,6 @@ extern U_EXPORT const char* restrict u_progname;
 extern U_EXPORT void u_init(char** restrict argv);
 
 /* AT EXIT */
-
 extern U_EXPORT vPF u_fns[32];
 extern U_EXPORT int u_fns_index;
 
@@ -107,6 +106,7 @@ extern U_EXPORT int                   u_errno; /* An errno value */
 extern U_EXPORT int                   u_flag_exit;
 extern U_EXPORT int                   u_flag_test;
 extern U_EXPORT bool                  u_recursion;
+extern U_EXPORT int                   u_mime_index;
 extern U_EXPORT bool                  u_exec_failed;
 extern U_EXPORT char                  u_hostname[255];
 extern U_EXPORT char                  u_user_name[32];
@@ -117,7 +117,8 @@ extern U_EXPORT const unsigned char   u_hex_lower[]; /* "0123456789abcdef" */
 extern U_EXPORT const char* restrict  u_tmpdir;
 
 extern U_EXPORT void        u_setPid(void);
-extern U_EXPORT const char* u_basename(const char* restrict path);
+extern U_EXPORT const char* u_basename(const char* restrict path) __pure;
+extern U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure;
 extern U_EXPORT uint32_t    u_strftime(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, time_t now);
 
 /* Print with format extension: bBCDHMNOPQrRSUYwW

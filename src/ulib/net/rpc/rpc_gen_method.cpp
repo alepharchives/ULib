@@ -110,9 +110,9 @@ const char* URPCGenericMethod::dump(bool reset) const
    URPCMethod::dump(false);
 
    *UObjectIO::os << '\n'
-                  << "response_type            " << (void*)response_type << '\n'
-                  << "command     (UCommand    " << (void*)command       << ")\n"
-                  << "response    (UString     " << (void*)&response     << ')';
+                  << "response_type            " << response_type    << '\n'
+                  << "command     (UCommand    " << (void*)command   << ")\n"
+                  << "response    (UString     " << (void*)&response << ')';
 
    if (reset)
       {

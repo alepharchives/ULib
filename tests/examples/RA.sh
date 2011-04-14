@@ -15,6 +15,9 @@ rm -f RA.log /tmp/processCGIRequest.err \
 
 DIR_CMD="../../examples/userver"
 
+mkdir -p /var/run /var/log /tmp/client/scan # /tmp/scan /tmp/mail
+chown -R ra: /srv/RA /tmp/client
+
 #STRACE=$TRUSS
  start_prg_background userver_tcp -c RA.cfg
 

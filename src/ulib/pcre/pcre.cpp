@@ -96,6 +96,27 @@ UPCRE::UPCRE()
    zero(0);
 }
 
+UPCRE::UPCRE(const UString& expression, int flags)
+{
+   U_TRACE_REGISTER_OBJECT(0, UPCRE, "%.*S,%u", U_STRING_TO_TRACE(expression), flags)
+
+   set(expression, flags);
+}
+
+UPCRE::UPCRE(const UString& expression, const char* flags)
+{
+   U_TRACE_REGISTER_OBJECT(0, UPCRE, "%.*S,%S", U_STRING_TO_TRACE(expression), flags)
+
+   set(expression, flags);
+}
+
+UPCRE::~UPCRE()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UPCRE)
+
+   clear();
+}
+
 void UPCRE::set(const UString& expression, int flags)
 {
    U_TRACE(0, "UPCRE::set(%.*S,%d)", U_STRING_TO_TRACE(expression), flags)
@@ -275,7 +296,10 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
         if (num == 1) num_matches = 0; /* we had a match, but without substrings */
    else if (num >  1)                  /* we had matching substrings */
       {
-      int i, res;
+      int i;
+#ifdef DEBUG
+      int res;
+#endif
 
       num_matches = num - 1;
 
@@ -292,7 +316,10 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
 
       if (bresultset == false) goto end;
 
-      res = U_SYSCALL(pcre_get_substring_list, "%S,%p,%d,%p", stuff, sub_vec, num, &stringlist);
+#ifdef DEBUG
+      res =
+#endif
+      U_SYSCALL(pcre_get_substring_list, "%S,%p,%d,%p", stuff, sub_vec, num, &stringlist);
 
       U_DUMP("status() = %S", status(res))
 

@@ -91,6 +91,16 @@ struct option UOptions::long_options[128] = {
 { "help",    0, 0, 'h' },
 { "version", 0, 0, 'V' } };
 
+UOptions::UOptions(uint32_t n)
+{
+   U_TRACE_REGISTER_OBJECT(0, UOptions, "%u", n)
+
+   length   = 0;
+   capacity = n;
+
+   item = U_MALLOC_N(n, option_item);
+}
+
 UOptions::~UOptions()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UOptions)

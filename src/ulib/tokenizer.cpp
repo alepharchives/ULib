@@ -20,6 +20,15 @@ uint32_t    UTokenizer::group_len;
 uint32_t    UTokenizer::group_len_div_2;
 const char* UTokenizer::group;
 
+void UTokenizer::setData(const UString& data)
+{
+   U_TRACE(0, "UTokenizer::setData(%.*S)", U_STRING_TO_TRACE(data))
+
+   str = data;
+   s   = data.data();
+   end = s + data.size();
+}
+
 bool UTokenizer::next(UString& token, char c)
 {
    U_TRACE(0, "UTokenizer::next(%p,%C)", &token, c)

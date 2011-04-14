@@ -78,7 +78,7 @@ void WeightWord::push()
    vec->push_back(item);
 }
 
-int WeightWord::compareObj(const void* obj1, const void* obj2)
+__pure int WeightWord::compareObj(const void* obj1, const void* obj2)
 {
    U_TRACE(5, "WeightWord::compareObj(%p,%p)", obj1, obj2)
 

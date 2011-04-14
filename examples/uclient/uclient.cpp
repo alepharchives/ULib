@@ -12,10 +12,10 @@
 #define ARGS "[HTTP URL...]"
 
 #define U_OPTIONS \
-"purpose \"simple client http...\"\n" \
-"option c config  1 \"path of configuration file\" \"\"\n" \
-"option u upload  1 \"path of file to upload to url\" \"\"\n" \
-"option i include 0 \"Include the HTTP-header in the output. The HTTP-header includes things like server-name, date of the document, HTTP-version\" \"\"\n"
+"purpose 'simple http client...'\n" \
+"option c config  1 'path of configuration file' ''\n" \
+"option u upload  1 'path of file to upload to url' ''\n" \
+"option i include 0 'include the HTTP-header in the output. The HTTP-header includes things like server-name, date of the document, HTTP-version' ''\n"
 
 #include <ulib/application.h>
 

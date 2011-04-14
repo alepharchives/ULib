@@ -1,81 +1,112 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="it-IT" lang="it-IT">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-  <meta name="generator" content="HTML Tidy for Linux (vers 25 March 2009), see www.w3.org">
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <title>Login</title>
-  <link type="text/css" href="/wi-auth/css/layout.css" rel="stylesheet">
+  <title>T-Services www.tunwired.com</title>
+  <link rel="stylesheet" type="text/css" href="/wi-auth/css/style.css" />
 </head>
 
 <body>
+  <!-- Import jquery -->
+  <script language="JavaScript" type="text/javascript" src="/wi-auth/_jquery/jquery-1.2.1.min.js">
+</script><script language="JavaScript" type="text/javascript" src="/wi-auth/_jquery/jquery.curvycorners/rounded_corners_lite.inc.js">
+</script><!-- plugin per i corner -->
+  <script language="JavaScript" type="text/javascript" src="/wi-auth/_jquery/effetti.js">
+</script>
+	<!-- Begin Wrapper -->
 
-	  <form method="post" name="form" action="/%s" id="form">
-	<div id="page-wrap">
-		<div id="inside">
-			
-			<div id="header">
-				<table class="centered" width="784" border="0">
-				  <tr> 
-				      <td>
-					<div align="center">
-						  <img src="/wi-auth/images/sfondo2_wifi.jpg" width="784" height="251">
-					  </div>
-				      </td>
-				  </tr>
-				</table>
-			</div>
-		
-			<div id="left-sidebar">
+  <div id="wrapper">
+    <!-- Begin Header -->
 
-				<ul>
-				<li><p>Seleziona il cuircuito presso cui si é registrati e inserire le credenziali</p></li>
-				</ul>
+    <div id="header">
+      <table class="table_header">
+        <tr>
+          <td>
+            <div class="logo_link"><img src="/wi-auth/images/logo_t.service_NoSfondo.png" /></div>
+          </td>
 
-				<br/>
-				<br/>
-				<br/>
+          <td>
+            <!-- Begin Logo -->
 
-				<select id="realm" name="realm">
+            <div class="logo">
+              <p id="lineone"><span>T-UNWIRED</span></p><!-- End logo -->
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div><!-- End Header -->
+    <!-- Begin Content -->
 
-				  <option value="10_piazze">10 Piazze</option>
-				  <option value="paas">PAAS</option>
+    <div id="content">
+      <!-- Begin Double Box -->
 
-				</select>
+      <div id="doublebox">
+        <table class="content_table">
+          <tbody>
+            <tr>
+              <td>
+                <div class="content_center">
+                  <!-- Begin Login -->
 
-			</div>
-	
-			<div id="main-content">
+                  <div class="login" id="loginbox">
+                    <form method="post" action="/wi-auth/cgi-bin/login.sh">
+							 <!--
+                      <input type="hidden" name="mac" value="" />
+							 <input type="hidden" name="ip" value="" />
+							 <input type="hidden" name="redirect" value="" />
+							 <input type="hidden" name="gateway" value="" />
+							 <input type="hidden" name="timeout" value="" />
+							 <input type="hidden" name="token" value="" />
+							 <input type="hidden" name="ap" value="" />
+							 -->
+                      <ul>
+                        <li id="titolo">LOGIN</li><!-- Begin Login_box -->
 
-		          <br/>
-		          <br/>
+                        <li style="list-style: none; display: inline">
+                          <div class="login_box">
+                            <ul>
+                              <li class="login_item">Login:</li>
 
-				<div>
-				    <p>Login (numero del cellulare):</p>
+                              <li style="list-style: none"><input class="login_input" type="text" name="uid" /></li>
 
-				    <p><input class="login_input" type="text" name="uid" /></p>
+                              <li class="login_item">Password:</li>
 
-				    <p>Password:</p>
+                              <li style="list-style: none"><input class="login_input" type="password" name="pass" /></li>
 
-				    <p><input class="login_input" type="password" name="pass" /></p>
+                              <li><input id="login_button" type="submit" name="submit" value="Entra" /></li><!-- End login_box -->
+                            </ul>
+                          </div>
+                        </li>
+                      </ul>
+                    </form><!-- End Login --><!-- End Content Center -->
+                  </div>
+                </div>
+              </td><!-- FINE prima COLONNA-->
+            </tr>
 
-				    <p><input id="login_button" type="submit" name="submit" value="Entra" /></p>
-				</div>
-		          <br/>
-		          <br/>
-			</div>
-			
-			<div style="clear: both;"></div>
-			
-			<div id="footer">
-			</div>
-		
-		</div>
-		<div style="clear: both;"></div>
-	</div>
-			  </form>
+            <tr>
+              <td>
+                <div class="content_center_bottom">
+                  Tutti i link sono accessibili dopo l'accesso.
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="clear"></div><!-- End Double Box -->
+      </div>
+    </div><!-- End Content -->
+    <!-- Begin Footer -->
+
+    <div id="footer">
+      <div id="footer_logo">
+        <p>Designed by</p>
+
+        <p><img src="/wi-auth/images/lv7-logo-small.png" /></p>
+      </div>
+    </div><!-- End Footer -->
+  </div><!-- End Wrapper -->
 </body>
-
 </html>
-
-

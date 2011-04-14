@@ -76,25 +76,12 @@ public:
       setYear(year);
       }
 
-   UDate(int day, int month, int year)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UDate, "%d,%d,%d", day, month, year)
-
-      set(day, month, year);
-      }
-
    // Construct a UDate with a given day of the year and a given year.
    // The base date for this computation is 31 Dec. of the previous year.
    // i.e., UDate(-1,1901) = 31 Dec. 1900 and UDate(1,1901) = 2 Jan. 1901
 
-   UDate(int day, int year)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UDate, "%d,%d", day, year)
-
-      julian = toJulian(1,1,year) - 1 + day;
-
-      fromJulian(julian);
-      }
+   UDate(int day,            int year);
+   UDate(int day, int month, int year);
 
    ~UDate()
       {
@@ -161,7 +148,7 @@ public:
 
    void addMonths(int months);
 
-   static int getMonth(const char* buf);
+   static int getMonth(const char* buf) __pure;
 
    void addYears(int years)
       {
@@ -187,14 +174,7 @@ public:
 
    // Returns the day of the year [1,366] for this date
 
-   int getDayOfYear()
-      {
-      U_TRACE(0, "UDate::getDayOfYear()")
-
-      int y = _year - 1901;
-
-      U_RETURN(getJulian() - (y * 365) - (y / 4) - 2415385); // 2415385 -> 31/12/1900
-      }
+   int getDayOfYear() __pure;
 
    // Returns true if the specified year is a leap year; otherwise returns false
 

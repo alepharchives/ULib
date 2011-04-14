@@ -27001,7 +27001,7 @@ $as_echo "$ulib_cc_flag" >&6; }
 		4.4*)
 		;;
 		*)
-		MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result -Wshadow -Wsuggest-attribute=const -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn"
+		MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn" # -Wsuggest-attribute=const
 
 		if test "${enable_gcc_optimized}" = "yes"; then
 			MAYBE_FLAGS="$MAYBE_FLAGS -Ofast -flto" ## -ffunction-sections -fdata-sections

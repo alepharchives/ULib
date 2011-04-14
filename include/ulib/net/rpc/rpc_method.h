@@ -51,13 +51,7 @@ public:
 
    // COSTRUTTORI
 
-   URPCMethod()
-      {
-      U_TRACE_REGISTER_OBJECT(0, URPCMethod, "")
-
-      if (str_done == 0) str_allocate();
-      }
-
+            URPCMethod();
    virtual ~URPCMethod()
       {
       U_TRACE_UNREGISTER_OBJECT(0, URPCMethod)

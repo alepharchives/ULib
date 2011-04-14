@@ -16,9 +16,11 @@
 
 #include <ulib/string.h>
 
-#if defined(__MINGW32__)
+#ifdef __MINGW32__
 #  include <ws2tcpip.h>
 #else
+#  include <netdb.h>
+#  include <arpa/inet.h>
 #  include <netinet/in.h>
 #  include <sys/socket.h>
 #endif
@@ -26,6 +28,14 @@
 #ifndef INET6_ADDRSTRLEN
 #define INET6_ADDRSTRLEN 46
 #endif
+
+union uusockaddr {
+   struct sockaddr     psaGeneric;
+   struct sockaddr_in  psaIP4Addr;
+#ifdef HAVE_IPV6
+   struct sockaddr_in6 psaIP6Addr;
+#endif
+};
 
 /****************************************************************************/
 /* This class is used to provide transparent IPv4 and IPv6 address support  */
@@ -106,8 +116,8 @@ public:
       U_RETURN(result);
       }
 
-   static uint32_t contains(in_addr_t         client, UVector<UIPAllow*>& vipallow);
-   static uint32_t contains(const UString& ip_client, UVector<UIPAllow*>& vipallow);
+   static uint32_t contains(in_addr_t         client, UVector<UIPAllow*>& vipallow) __pure;
+   static uint32_t contains(const UString& ip_client, UVector<UIPAllow*>& vipallow) __pure;
 
    static bool isAllowed(in_addr_t         client, UVector<UIPAllow*>& vipallow) { return (contains(   client, vipallow) != U_NOT_FOUND); }
    static bool isAllowed(const UString& ip_client, UVector<UIPAllow*>& vipallow) { return (contains(ip_client, vipallow) != U_NOT_FOUND); }

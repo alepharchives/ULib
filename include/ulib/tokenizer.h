@@ -100,14 +100,7 @@ public:
       delim = sep;
       }
 
-   void setData(const UString& data)
-      {
-      U_TRACE(0, "UTokenizer::setData(%.*S)", U_STRING_TO_TRACE(data))
-
-      str = data;
-      s   = data.data();
-      end = s + data.size();
-      }
+   void setData(const UString& data);
 
    void skipSpaces()
       {
@@ -146,7 +139,7 @@ public:
       s = str.c_pointer(pos);
       }
 
-   uint32_t getDistance() const
+   uint32_t getDistance() const __pure
       {
       U_TRACE(0, "UTokenizer::getDistance()")
 

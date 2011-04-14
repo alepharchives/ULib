@@ -8,30 +8,26 @@ rm -f benchmarking.log* err/benchmarking.err \
 		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* \
 		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]*
 
-#UTRACE="0 30M 0"
+#UTRACE="0 50M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --trace-children=yes"
  export UTRACE UOBJDUMP USIMERR VALGRIND
 
- export UTRACE UOBJDUMP USIMERR
-
 DIR_CMD="../../examples/userver"
 
-CURDIR=`pwd`
-cd ../../src/ulib/net/server/plugin/usp/; make benchmarking.la || exit 1
-cd $CURDIR
-
-mkdir -p usp
-cd usp
-rm -f *.so
-if [ "$TERM" = "msys" ]; then
-	cp ../../../src/ulib/.libs/libulib*.dll ..
-	cp ../../../src/ulib/net/server/plugin/usp/.libs/benchmarking.dll .
-else
-	ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/benchmarking.so
+if [ "$TERM" != "cygwin" ]; then
+   ( mkdir -p usp; cd usp;
+     rm -f *.so;
+     ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/benchmarking.so;
+     cd ../../../src/ulib/net/server/plugin/usp/;
+     make benchmarking.la >/dev/null 2>&1 || exit 1;
+     test -d ../.libs &&
+     ( cd ../.libs;
+       ln -sf ../mod_shib/.libs/mod_shib.so;
+       ln -sf ../page_speed/.libs/mod_pagespeed.so;
+       ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
 fi
-cd $CURDIR
 
 #ulimit -n 100000
 #echo 1024 > /proc/sys/net/core/somaxconn

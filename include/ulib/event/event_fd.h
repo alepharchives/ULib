@@ -62,6 +62,7 @@ public:
 
    virtual int handlerRead()  { return U_NOTIFIER_DELETE; }
    virtual int handlerWrite() { return U_NOTIFIER_DELETE; }
+   virtual int handlerError() { return U_NOTIFIER_DELETE; }
 
 #ifdef HAVE_LIBEVENT
    UEvent<UEventFd>* pevent;

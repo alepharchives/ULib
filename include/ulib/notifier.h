@@ -82,6 +82,8 @@ public:
 
       for (UNotifier* item = first; item; item = item->next)
          {
+         PREFETCH_ATTRIBUTE(item->next, 0)
+
          if (item->handler_event_fd == handler_event) U_RETURN(true);
          }
 
@@ -159,7 +161,7 @@ private:
    static bool handlerResult(int& n, UNotifier*  i,
                                      UNotifier** ptr,
                                      UEventFd* handler_event,
-                                     bool bread, bool bwrite, bool flag_handler_call) U_NO_EXPORT; 
+                                     bool bread, bool bwrite, bool bexcept) U_NO_EXPORT; 
 #endif
 
    UNotifier(const UNotifier&)            {}

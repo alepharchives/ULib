@@ -53,7 +53,7 @@ PAGESPEED_LIBS = $(addprefix $(pagespeed_root_dir)/out/Release/obj.target/, $(PA
 # NB: compile with CXXFLAGS='-fPIC' make
 # ----------------------------------------------
 $(PAGESPEED_LIBS):
-	CFLAGS='-fPIC -DPIC' CXXFLAGS='-fPIC -DPIC' $(MAKE) -C $(pagespeed_root_dir)
+	CFLAGS='-fPIC -DPIC -Wno-error -Wno-error=unused-but-set-variable' CXXFLAGS='-fPIC -DPIC -Wno-error -Wno-error=unused-but-set-variable' $(MAKE) -C $(pagespeed_root_dir)
 
 DEFAULT_INCLUDES += -I$(pagespeed_root_dir)/third_party/chromium/src \
     					  -I$(pagespeed_root_dir) \

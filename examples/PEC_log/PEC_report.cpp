@@ -137,7 +137,7 @@ uint32_t PEC_report::findField(int i)
    U_RETURN(n);
 }
 
-uint32_t PEC_report::sizeField(uint32_t start, char c)
+__pure uint32_t PEC_report::sizeField(uint32_t start, char c)
 {
    U_TRACE(5, "PEC_report::sizeField(%u,%C)", start, c)
 

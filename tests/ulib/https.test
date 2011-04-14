@@ -6,6 +6,8 @@
 
 start_msg https
 
+rm -f err/https.err
+
 #UTRACE="0 5M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
@@ -23,8 +25,9 @@ SERVER_KEY="CA/server.key"
 SERVER_CERT="CA/server.crt"
 #fi
 
-LCMD="$OPENSSL s_server -quiet -accept 4333 -no_dhe -cert $SERVER_CERT -key $SERVER_KEY -pass pass:caciucco"
+LCMD="$OPENSSL s_server -quiet -accept 4333 -no_dhe -cert $SERVER_CERT -key $SERVER_KEY -pass pass:caciucco 2>>err/https.err"
 
+#STRACE=$TRUSS
 start_cmd_background "$LCMD <inp/http/response.chunked >out/request.https"
 $SLEEP
 $SLEEP

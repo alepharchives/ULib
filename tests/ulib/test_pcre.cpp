@@ -181,7 +181,7 @@ static UPCRE* reg;
 static string flags;
 static map<string, vector<string> > hash;
 
-inline void set(std::string& str)
+static void set(std::string& str)
 {
    U_TRACE(5, "set(%p)", &str)
 
@@ -192,7 +192,7 @@ inline void set(std::string& str)
    reg = new UPCRE(expression, flags.c_str());
 }
 
-inline bool search(UPCRE& pcre, std::string& str)
+static bool search(UPCRE& pcre, std::string& str)
 {
    U_TRACE(5, "search(%p,%p)", &pcre, &str)
 

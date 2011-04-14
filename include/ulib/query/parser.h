@@ -118,7 +118,7 @@ private:
    Determines if the tree rooted at this node is in the DNF
    */
 
-   bool isDisjunctiveNormalForm() const U_NO_EXPORT;
+   bool isDisjunctiveNormalForm() const U_NO_EXPORT __pure;
 
    /**
    Determines if this DNF term always evaluates to false.

@@ -29,10 +29,9 @@
 #include <errno.h>
 
 #ifdef __MINGW32__
-#define CAST(a) (char*)a
+#  define CAST(a) (char*)a
 #else
-#define CAST(a) a
-#  include <sys/socket.h>
+#  define CAST(a) a
 #  include <netinet/tcp.h>
 #endif
 
@@ -134,14 +133,7 @@ public:
       if (str_range == 0) str_allocate();
       }
 
-   virtual ~USocket()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, USocket)
-
-      U_INTERNAL_DUMP("iSockDesc = %d", iSockDesc)
-
-      if (isOpen()) USocket::closesocket();
-      }
+   virtual ~USocket();
 
    int  getFd() const       { return  iSockDesc; }
    bool isOpen() const      { return (iSockDesc != -1); }
@@ -180,16 +172,7 @@ public:
       U_RETURN(fd);
       }
 
-   bool socket(int iSocketType, int protocol = 0)
-      {
-      U_TRACE(1, "USocket::socket(%d,%d)", iSocketType, protocol)
-
-      U_INTERNAL_ASSERT(isClosed())
-
-      iSockDesc = socket(bIPv6Socket ? AF_INET6 : AF_INET, iSocketType, protocol);
-
-      U_RETURN(isOpen());
-      }
+   bool socket(int iSocketType, int protocol = 0);
 
    void close()
       {
@@ -257,21 +240,7 @@ public:
    Connect the socket to the specified server IP Address and port number
    */
 
-   bool connectServer(const UIPAddress& cAddr, int iServPort)
-      {
-      U_TRACE(1, "USocket::connectServer(%p,%d)", &cAddr, iServPort)
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT(isOpen())
-
-      iRemotePort    = iServPort;
-      cRemoteAddress = cAddr;
-
-      if (connect()) U_RETURN(true);
-
-      U_RETURN(false);
-      }
+   bool connectServer(const UIPAddress& cAddr, int iServPort);
 
    /**
    The method is called with a local IP address and port number to bind the socket to.
@@ -300,27 +269,8 @@ public:
    Get details of the IP address and port number bound to the local socket
    */
 
-   int localPortNumber()
-      {
-      U_TRACE(0, "USocket::localPortNumber()")
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT(isLocalSet())
-
-      U_RETURN(iLocalPort);
-      }
-
-   UIPAddress& localIPAddress()
-      {
-      U_TRACE(0, "USocket::localIPAddress()")
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT(isLocalSet())
-
-      return cLocalAddress;
-      }
+   UIPAddress& localIPAddress()  __pure;
+   int         localPortNumber() __pure;
 
    const char* getLocalInfo()
       {
@@ -658,18 +608,7 @@ public:
    */
 
            int recv(void* pBuffer, uint32_t iBufLength, int timeoutMS);
-   virtual int recv(void* pBuffer, uint32_t iBufLength)
-      {
-      U_TRACE(0, "USocket::recv(%p,%u)", pBuffer, iBufLength)
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT(isOpen())
-
-      int iBytesRead = recv(iSockDesc, CAST(pBuffer), iBufLength, 0);
-
-      U_RETURN(iBytesRead);
-      }
+   virtual int recv(void* pBuffer, uint32_t iBufLength);
 
    /**
    This method is called to send a block of data to the remote connection.

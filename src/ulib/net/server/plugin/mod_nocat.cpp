@@ -795,7 +795,7 @@ void UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
       }
 }
 
-UModNoCatPeer* UNoCatPlugIn::getPeer(uint32_t n)
+__pure UModNoCatPeer* UNoCatPlugIn::getPeer(uint32_t n)
 {
    U_TRACE(0, "UNoCatPlugIn::getPeer(%u)", n)
 

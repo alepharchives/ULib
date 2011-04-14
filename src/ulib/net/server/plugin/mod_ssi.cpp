@@ -54,11 +54,11 @@ const UString* USSIPlugIn::str_LAST_MODIFIED;
 const UString* USSIPlugIn::str_SSI_AUTOMATIC_ALIASING;
 const UString* USSIPlugIn::str_errmsg_default;
 const UString* USSIPlugIn::str_timefmt_default;
-
 const UString* USSIPlugIn::str_encoding;
 const UString* USSIPlugIn::str_encoding_none;
 const UString* USSIPlugIn::str_encoding_url;
 const UString* USSIPlugIn::str_encoding_entity;
+const UString* USSIPlugIn::str_usp;
 
 void USSIPlugIn::str_allocate()
 {
@@ -86,11 +86,11 @@ void USSIPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_SSI_AUTOMATIC_ALIASING,0)
    U_INTERNAL_ASSERT_EQUALS(str_errmsg_default,0)
    U_INTERNAL_ASSERT_EQUALS(str_timefmt_default,0)
-
    U_INTERNAL_ASSERT_EQUALS(str_encoding,0)
    U_INTERNAL_ASSERT_EQUALS(str_encoding_none,0)
    U_INTERNAL_ASSERT_EQUALS(str_encoding_url,0)
    U_INTERNAL_ASSERT_EQUALS(str_encoding_entity,0)
+   U_INTERNAL_ASSERT_EQUALS(str_usp,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("expr") },
@@ -115,11 +115,11 @@ void USSIPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("SSI_AUTOMATIC_ALIASING") },
       { U_STRINGREP_FROM_CONSTANT("Error") },
       { U_STRINGREP_FROM_CONSTANT("%A, %d-%b-%Y %H:%M:%S GMT") },
-
       { U_STRINGREP_FROM_CONSTANT("encoding") },
       { U_STRINGREP_FROM_CONSTANT("none") },
       { U_STRINGREP_FROM_CONSTANT("url") },
-      { U_STRINGREP_FROM_CONSTANT("entity") }
+      { U_STRINGREP_FROM_CONSTANT("entity") },
+      { U_STRINGREP_FROM_CONSTANT("usp") }
    };
 
    U_NEW_ULIB_OBJECT(str_expr,                   U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -144,11 +144,11 @@ void USSIPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_SSI_AUTOMATIC_ALIASING, U_STRING_FROM_STRINGREP_STORAGE(19));
    U_NEW_ULIB_OBJECT(str_errmsg_default,         U_STRING_FROM_STRINGREP_STORAGE(20));
    U_NEW_ULIB_OBJECT(str_timefmt_default,        U_STRING_FROM_STRINGREP_STORAGE(21));
-
    U_NEW_ULIB_OBJECT(str_encoding,               U_STRING_FROM_STRINGREP_STORAGE(22));
    U_NEW_ULIB_OBJECT(str_encoding_none,          U_STRING_FROM_STRINGREP_STORAGE(23));
    U_NEW_ULIB_OBJECT(str_encoding_url,           U_STRING_FROM_STRINGREP_STORAGE(24));
    U_NEW_ULIB_OBJECT(str_encoding_entity,        U_STRING_FROM_STRINGREP_STORAGE(25));
+   U_NEW_ULIB_OBJECT(str_usp,                    U_STRING_FROM_STRINGREP_STORAGE(26));
 }
 
 U_NO_EXPORT UString USSIPlugIn::getPathname(const UString& name, const UString& value, const UString& directory)
@@ -258,8 +258,9 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
        *   var        DONE
        *   encoding   DONE
        * exec         DONE
-       *   cgi        DONE
        *   cmd        DONE
+       *   cgi        DONE
+       *   usp        DONE
        * fsize        DONE
        *   file       DONE
        *   virtual    DONE
@@ -597,6 +598,12 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                if (pathname.empty())
                   {
                        if (name == *str_cmd) x = UCommand::outputCommand(value, 0, -1, UServices::getDevNull());
+                  else if (name == *str_usp)
+                     {
+                     UHTTP::processUSPRequest(U_STRING_TO_PARAM(value));
+
+                     x = *UClientImage_Base::wbuffer;
+                     }
                   else if (name == *str_cgi)
                      {
                      len = value.size();
@@ -619,7 +626,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                   UHTTP::file->setPath(pathname, &environment);
 
                   if (UHTTP::isFileInCache() &&
-                      UHTTP::isDataFromCache(false))
+                      UHTTP::isDataFromCache())
                      {
                      include = UHTTP::getDataFromCache(false, false);
                      }
@@ -696,7 +703,7 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x.empty() == false) UHTTP::ssi_alias = U_NEW(UString(x));
 
-      cfg_environment = cfg[*UServer_Base::str_ENVIRONMENT];
+      environment = cfg[*UServer_Base::str_ENVIRONMENT];
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -706,7 +713,9 @@ int USSIPlugIn::handlerInit()
 {
    U_TRACE(0, "USSIPlugIn::handlerInit()")
 
-   if (cfg_environment.empty() == false) cfg_environment = UFile::contentOf(cfg_environment); 
+   // NB: it must be here because now runAsUser() was called...
+
+   if (environment.empty() == false) (void) UServer_Base::senvironment->append(UFile::contentOf(environment));
 
    U_SRV_LOG("initialization of plugin success");
 
@@ -720,59 +729,81 @@ int USSIPlugIn::handlerRequest()
    U_TRACE(0, "USSIPlugIn::handlerRequest()")
 
    if (UHTTP::isHTTPRequestNotFound()  == false &&
-       UHTTP::isHTTPRequestForbidden() == false)
+       UHTTP::isHTTPRequestForbidden() == false &&
+       UHTTP::file->isSuffix(".shtml"))
       {
-      const char* suffix = UHTTP::file->getSuffix();
+      U_ASSERT(UHTTP::isSSIRequest())
 
-      if (suffix &&
-          U_STRNEQ(suffix, ".shtml"))
+      // init
+
+      errmsg          = *str_errmsg_default;
+      timefmt         = *str_timefmt_default;
+      environment     = UHTTP::getCGIEnvironment();
+      last_modified   = UHTTP::file->st_mtime;
+      use_size_abbrev = true;
+
+      (docname = UHTTP::getDocumentName()).duplicate();
+
+      UString body;
+      UHTTP::UFileCacheData* file_data;
+      bool bcache = UHTTP::isDataFromCache();
+
+      // read the SSI file
+
+      if (bcache)
          {
-         U_ASSERT(UHTTP::isSSIRequest())
+         file_data = UHTTP::file_data;
 
-         char bsuffix[32];
-         UString body, header(U_CAPACITY);
+         U_INTERNAL_ASSERT_POINTER(file_data->array)
+         U_INTERNAL_ASSERT_EQUALS(file_data->array->size(),2)
 
-         (void) strncpy(bsuffix, suffix, UHTTP::file->getSuffixLen(suffix));
-
-         // init
-
-         errmsg           = *str_errmsg_default;
-         timefmt          = *str_timefmt_default;
-         environment      = UHTTP::getCGIEnvironment() + *UHTTP::penvironment + cfg_environment;
-         last_modified    = UHTTP::file->st_mtime;
-         use_size_abbrev  = true;
-
-         (docname = UHTTP::getDocumentName()).duplicate();
-
-         // read the SSI file
-
-         body = (UHTTP::isDataFromCache(false) ? UHTTP::getDataFromCache(false, false)
-                                               : UHTTP::file->getContent());
-
-         // process the SSI file
-
-         if (UHTTP::isHttpPOST()) *UClientImage_Base::body = U_HTTP_BODY(*UClientImage_Base::request);
-                                  *UClientImage_Base::body = processSSIRequest(body, 0);
-
-#     ifdef HAVE_PAGE_SPEED
-         UHTTP::page_speed->minify_html("USSIPlugIn::handlerRequest()", *UClientImage_Base::body);
-#     endif
-
-         U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
-
-         if (U_http_is_accept_deflate)
-            {
-            *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
-
-            (void) header.append(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
-            }
-
-         UHTTP::getFileMimeType(bsuffix, 0, header, UClientImage_Base::body->size(), 0);
-
-         *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, header);
-
-         UHTTP::setHTTPRequestProcessed();
+         body = UHTTP::getDataFromCache(false, false);
          }
+      else
+         {
+         UHTTP::file->getContent();
+         }
+
+      // process the SSI file
+
+      if (UHTTP::isHttpPOST()) *UClientImage_Base::body = U_HTTP_BODY(*UClientImage_Base::request);
+                               *UClientImage_Base::body = processSSIRequest(body, 0);
+
+#  ifdef HAVE_PAGE_SPEED
+      UHTTP::page_speed->minify_html("USSIPlugIn::handlerRequest()", *UClientImage_Base::body);
+#  endif
+
+      UString header(U_CAPACITY);
+
+      U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
+
+      if (U_http_is_accept_deflate)
+         {
+         *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
+
+         (void) header.assign(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+         }
+
+      if (bcache)
+         {
+         UHTTP::file_data = file_data;
+
+         (void) header.append(UHTTP::getDataFromCache(true, false));
+
+         // NB: adjusting the size of response...
+
+         (void) UHTTP::checkHTTPContentLength(header, UClientImage_Base::body->size());
+         }
+      else
+         {
+         u_mime_index = U_ssi;
+
+         (void) header.append(UHTTP::getHeaderMimeType(U_CTYPE_HTML, UClientImage_Base::body->size(), 0));
+         }
+
+      *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, header);
+
+      UHTTP::setHTTPRequestProcessed();
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -785,13 +816,12 @@ int USSIPlugIn::handlerRequest()
 
 const char* USSIPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "last_modified            " << last_modified           << '\n'
-                  << "use_size_abbrev          " << use_size_abbrev         << '\n'
-                  << "errmsg          (UString " << (void*)&errmsg          << ")\n"
-                  << "timefmt         (UString " << (void*)&timefmt         << ")\n"
-                  << "docname         (UString " << (void*)&docname         << ")\n"
-                  << "environment     (UString " << (void*)&environment     << ")\n"
-                  << "cfg_environment (UString " << (void*)&cfg_environment << ')';
+   *UObjectIO::os << "last_modified            " << last_modified       << '\n'
+                  << "use_size_abbrev          " << use_size_abbrev     << '\n'
+                  << "errmsg          (UString " << (void*)&errmsg      << ")\n"
+                  << "timefmt         (UString " << (void*)&timefmt     << ")\n"
+                  << "docname         (UString " << (void*)&docname     << ")\n"
+                  << "environment     (UString " << (void*)&environment << ')';
 
    if (reset)
       {

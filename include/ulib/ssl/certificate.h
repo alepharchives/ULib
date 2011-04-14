@@ -340,7 +340,7 @@ public:
    * Returns the earliest time that the certificate is valid
    */
 
-   const char* getNotBefore() const
+   const char* getNotBefore() const __pure
       {
       U_TRACE(0, "UCertificate::getNotBefore()")
 
@@ -355,7 +355,7 @@ public:
    * Returns the latest time that the certificate is valid
    */
 
-   const char* getNotAfter() const
+   const char* getNotAfter() const __pure
       {
       U_TRACE(0, "UCertificate::getNotAfter()")
 

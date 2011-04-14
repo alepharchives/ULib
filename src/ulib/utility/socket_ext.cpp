@@ -681,16 +681,13 @@ UString USocketExt::getIPAddress(int fd, const char* device)
 
    (void) U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFADDR, &ifr);
 
-   union uusockaddr {
-      struct sockaddr*    psaGeneric;
-      struct sockaddr_in* psaIP4Addr;
-   };
+   uusockaddr addr;
 
-   union uusockaddr psaGeneric = { &(ifr.ifr_addr) };
+   (void) u_memcpy(&addr, &ifr.ifr_addr, sizeof(struct sockaddr));
 
-   U_INTERNAL_ASSERT_EQUALS(psaGeneric.psaIP4Addr->sin_family, AF_INET)
+   U_INTERNAL_ASSERT_EQUALS(addr.psaIP4Addr.sin_family, AF_INET)
 
-   (void) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", AF_INET, &(psaGeneric.psaIP4Addr->sin_addr), result.data(), INET_ADDRSTRLEN);
+   (void) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", AF_INET, &(addr.psaIP4Addr.sin_addr), result.data(), INET_ADDRSTRLEN);
 
    result.size_adjust();
 #endif

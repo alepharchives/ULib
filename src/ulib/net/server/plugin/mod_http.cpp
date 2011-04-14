@@ -216,10 +216,21 @@ int UHttpPlugIn::handlerREAD()
          goto send_response;
          }
 
+      // manage dynamic page request (ULib Servlet Page)
+
+      if (UHTTP::isUSPRequest())
+         {
+         UHTTP::processUSPRequest(U_HTTP_URI_TO_PARAM);
+
+         UHTTP::setHTTPRequestProcessed();
+
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         }
+
       // manage virtual host
 
       if (UHTTP::virtual_host &&
-          UHTTP::http_info.host_vlen) 
+          UHTTP::http_info.host_vlen)
          {
          // Host: hostname[:port]
 
@@ -249,20 +260,16 @@ int UHttpPlugIn::handlerREAD()
                }
             }
 
-         if (UHTTP::ssi_alias)
+         if (UHTTP::ssi_alias &&
+             u_getsuffix(U_HTTP_URI_TO_PARAM) == 0)
             {
-            const char* suffix = (const char*) memrchr(UHTTP::http_info.uri, '.', UHTTP::http_info.uri_len);
+            uint32_t len = UHTTP::ssi_alias->size();
 
-            if (suffix == 0)
-               {
-               uint32_t len = UHTTP::ssi_alias->size();
+            (void) UHTTP::request_uri->assign(U_HTTP_URI_TO_PARAM);
 
-               (void) UHTTP::request_uri->assign(U_HTTP_URI_TO_PARAM);
+            UHTTP::alias->setBuffer(UHTTP::alias->size() + 1 + len);
 
-               UHTTP::alias->setBuffer(UHTTP::alias->size() + 1 + len);
-
-               UHTTP::alias->snprintf_add("/%.*s", len, UHTTP::ssi_alias->data());
-               }
+            UHTTP::alias->snprintf_add("/%.*s", len, UHTTP::ssi_alias->data());
             }
          }
 next:
@@ -329,7 +336,6 @@ next:
       }
 
 send_response:
-
    (void) UClientImage_Base::pClientImage->handlerWrite();
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
@@ -349,13 +355,11 @@ int UHttpPlugIn::handlerRequest()
 
       if (UHTTP::isCGIRequest())
          {
-         UString environment = UHTTP::getCGIEnvironment() + *UHTTP::penvironment;
-
          // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
 
          bool async = (UServer_Base::preforked_num_kids == 0 && UClientImage_Base::isPipeline() == false);
 
-         if (UHTTP::processCGIRequest((UCommand*)0, &environment, async, true) == false)
+         if (UHTTP::processCGIRequest((UCommand*)0, 0, async, true) == false)
             {
                  if (UCommand::isTimeout())               UHTTP::setHTTPResponse(HTTP_GATEWAY_TIMEOUT, 0, 0);
             else if (UClientImage_Base::wbuffer->empty()) UHTTP::setHTTPInternalError();

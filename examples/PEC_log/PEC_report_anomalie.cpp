@@ -328,13 +328,13 @@ void PEC_report_anomalie::processLine(bool bnew)
       {
       // from version > 2.0...
 
-      int U_field       = U_consegna;
+   // int U_field       = U_consegna;
       UString U_value   = getValueField(U_consegna);
       bPFstr U_function = Messaggio::setConsegna; 
 
       if (U_value.empty())
          {
-         U_field    = U_ricezione;
+     //  U_field    = U_ricezione;
          U_value    = getValueField(U_ricezione);
          U_function = Messaggio::setRicezione; 
          }

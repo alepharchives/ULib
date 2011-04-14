@@ -8,8 +8,8 @@
 #define ARGS "<query>"
 
 #define U_OPTIONS \
-"purpose \"search in index database of document files...\"\n" \
-"option c config 1 \"path of configuration file\" \"\"\n"
+"purpose 'search in index database of document files...'\n" \
+"option c config 1 'path of configuration file' ''\n"
 
 #include "cquery.h"
 

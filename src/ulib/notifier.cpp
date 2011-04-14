@@ -258,10 +258,10 @@ loop:
 // NB: n e' necessario per la rientranza delle funzioni (vedi test_notifier...) 
 
 #ifndef HAVE_LIBEVENT
-U_NO_EXPORT
-bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** ptr, UEventFd* handler_event, bool bread, bool bwrite, bool flag_handler_call)
+U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** ptr,
+                                          UEventFd* handler_event, bool bread, bool bwrite, bool bexcept)
 {
-   U_TRACE(0, "UNotifier::handlerResult(%d,%p,%p,%p,%b,%b,%b)", n, item, ptr, handler_event, bread, bwrite, flag_handler_call)
+   U_TRACE(0, "UNotifier::handlerResult(%d,%p,%p,%p,%b,%b,%b)", n, item, ptr, handler_event, bread, bwrite, bexcept)
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT(bread || bwrite)
@@ -278,7 +278,8 @@ bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** ptr, UEventFd
 
       --n;
 
-      ret = (flag_handler_call ? handler_event->handlerRead() : U_NOTIFIER_DELETE);
+      ret = (bexcept ? handler_event->handlerError()
+                     : handler_event->handlerRead());
 
       if (ret == U_NOTIFIER_DELETE)
          {
@@ -323,7 +324,8 @@ bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** ptr, UEventFd
 
       --n;
 
-      ret = (flag_handler_call ? handler_event->handlerWrite() : U_NOTIFIER_DELETE);
+      ret = (bexcept ? handler_event->handlerError()
+                     : handler_event->handlerWrite());
 
       if (ret == U_NOTIFIER_DELETE)
          {
@@ -375,7 +377,7 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 #ifdef HAVE_LIBEVENT
    (void) UDispatcher::dispatch(UDispatcher::ONCE);
 #else
-   fd_set read_set, write_set;
+   fd_set read_set, write_set, except_set;
 #  ifdef HAVE_EPOLL_WAIT
    waitForEvent(0, 0, 0, timeout);
 #  else
@@ -399,6 +401,7 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 #  ifdef HAVE_EPOLL_WAIT
       if (fd_read_cnt)  FD_ZERO(&read_set);
       if (fd_write_cnt) FD_ZERO(&write_set);
+                        FD_ZERO(&except_set);
 
       for (int i = 0; i < result; ++i)
          {
@@ -406,12 +409,13 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 
          if ((events[i].events & U_READ_IN)   != 0) FD_SET(events[i].data.fd, &read_set);
          if ((events[i].events & U_WRITE_OUT) != 0) FD_SET(events[i].data.fd, &write_set);
+         if ((events[i].events & EPOLLERR)    != 0) FD_SET(events[i].data.fd, &except_set);
          }
 #  endif
 
       int n = result;
-      bool bread, bwrite;
       UEventFd* handler_event;
+      bool bread, bwrite, bexcept;
 
       UNotifier* item =  first;
       UNotifier** ptr = &first;
@@ -425,13 +429,14 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 
          U_INTERNAL_DUMP("fd = %d op_mask = %B", handler_event->fd, handler_event->op_mask)
 
-         bread  = (fd_read_cnt  && FD_ISSET(handler_event->fd, &read_set));
-         bwrite = (fd_write_cnt && FD_ISSET(handler_event->fd, &write_set));
+         bread   = (fd_read_cnt  && FD_ISSET(handler_event->fd, &read_set));
+         bwrite  = (fd_write_cnt && FD_ISSET(handler_event->fd, &write_set));
+         bexcept = (                FD_ISSET(handler_event->fd, &except_set));
 
-         U_INTERNAL_DUMP("bread = %b bwrite = %b", bread, bwrite)
+         U_INTERNAL_DUMP("bread = %b bwrite = %b bexcept = %b", bread, bwrite, bexcept)
 
          if ((bread || bwrite) &&
-             handlerResult(n, item, ptr, handler_event, bread, bwrite, true) == false) continue;
+             handlerResult(n, item, ptr, handler_event, bread, bwrite, bexcept) == false) continue;
 
          ptr = &(*ptr)->next;
          }
@@ -499,8 +504,8 @@ void UNotifier::removeBadFd()
    fd_set* rmask;
    fd_set* wmask;
    UEventFd* handler_event;
+   bool bread, bwrite, bexcept;
    struct timeval polling = { 0L, 0L };
-   bool bread, bwrite, flag_handler_call;
 
    UNotifier* item =  first;
    UNotifier** ptr = &first;
@@ -531,9 +536,9 @@ void UNotifier::removeBadFd()
 
       if (n)
          {
-         flag_handler_call = (n == -1 ? (n = (bread + bwrite), false) : true);
+         bexcept = (n == -1 ? (n = (bread + bwrite), true) : false);
 
-         if (handlerResult(n, item, ptr, handler_event, bread, bwrite, flag_handler_call) == false) continue;
+         if (handlerResult(n, item, ptr, handler_event, bread, bwrite, bexcept) == false) continue;
          }
 
       ptr = &(*ptr)->next;

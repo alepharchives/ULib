@@ -280,7 +280,7 @@ uint32_t u_findEndHeader(const char* restrict str, uint32_t n)
 
 /* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */
 
-bool u_ranAsUser(const char* restrict user, bool change_dir)
+bool u_runAsUser(const char* restrict user, bool change_dir)
 {
 #ifdef __MINGW32__
    return false;
@@ -288,7 +288,7 @@ bool u_ranAsUser(const char* restrict user, bool change_dir)
    char buffer[128];
    struct passwd* restrict pw;
 
-   U_INTERNAL_TRACE("u_ranAsUser(%s,%d)", user, change_dir)
+   U_INTERNAL_TRACE("u_runAsUser(%s,%d)", user, change_dir)
 
    U_INTERNAL_ASSERT_POINTER(user)
 
@@ -322,7 +322,7 @@ bool u_ranAsUser(const char* restrict user, bool change_dir)
 
 /* Determine the width of the terminal we're running on */
 
-int u_getScreenWidth(void)
+__pure int u_getScreenWidth(void)
 {
 #ifdef TIOCGWINSZ
    struct winsize wsz;
@@ -390,7 +390,7 @@ void u_printSize(char* restrict buffer, uint64_t bytes)
    else       (void) sprintf(buffer, "%7.0f Bytes", size);
 }
 
-bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len)
+__pure bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len)
 {
    U_INTERNAL_TRACE("u_rmatch(%.*s,%u,%.*s,%u)", U_min(haystack_len,128), haystack, haystack_len,
                                                  U_min(  needle_len,128),  needle,   needle_len)
@@ -417,7 +417,7 @@ bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* 
    return false;
 }
 
-void* u_find(const char* restrict s, uint32_t n, const char* restrict a, uint32_t n1)
+__pure void* u_find(const char* restrict s, uint32_t n, const char* restrict a, uint32_t n1)
 {
    U_INTERNAL_TRACE("u_find(%.*s,%u,%.*s,%u)", U_min(n,128), s, n, U_min(n1,128), a, n1)
 
@@ -453,7 +453,7 @@ void* u_find(const char* restrict s, uint32_t n, const char* restrict a, uint32_
  * Locates the first occurrence in the string s of any of the characters in the string accept
  */
  
-const char* u_strpbrk(const char* restrict s, uint32_t slen, const char* restrict _accept)
+__pure const char* u_strpbrk(const char* restrict s, uint32_t slen, const char* restrict _accept)
 {
    const char* restrict c;
    const char* restrict end = s + slen;
@@ -479,7 +479,8 @@ const char* u_strpbrk(const char* restrict s, uint32_t slen, const char* restric
 
 /* Search a string for a terminator of a group of delimitator {} [] () <%%>...*/
 
-const char* u_strpend(const char* restrict s, uint32_t slen, const char* restrict group_delimitor, uint32_t group_delimitor_len, char skip_line_comment)
+__pure const char* u_strpend(const char* restrict s, uint32_t slen,
+                             const char* restrict group_delimitor, uint32_t group_delimitor_len, char skip_line_comment)
 {
    char c;
    int level = 1;
@@ -544,7 +545,7 @@ loop:
 
 /* check if string a start with string b */
 
-bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2)
+__pure bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2)
 {
    int32_t diff = n1 - n2;
 
@@ -561,7 +562,7 @@ bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, u
 
 /* check if string a terminate with string b */
 
-bool u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2)
+__pure bool u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2)
 {
    int32_t diff = n1 - n2;
 
@@ -576,7 +577,7 @@ bool u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uin
    return false;
 }
 
-bool u_isNumber(const char* restrict s, uint32_t n)
+__pure bool u_isNumber(const char* restrict s, uint32_t n)
 {
    int vdigit[]             = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0 };
    const char* restrict end = s + n;
@@ -606,7 +607,7 @@ bool u_isNumber(const char* restrict s, uint32_t n)
 
 /* find char not quoted */
 
-const char* u_find_char(const char* restrict s, const char* restrict end, char c)
+__pure const char* u_find_char(const char* restrict s, const char* restrict end, char c)
 {
    U_INTERNAL_TRACE("u_find_char(%.*s,%p,%d)", U_min(end-s,128), s, end, c)
 
@@ -638,7 +639,7 @@ const char* u_find_char(const char* restrict s, const char* restrict end, char c
 
 /* skip string delimiter or white space and line comment */
 
-const char* u_skip(const char* restrict s, const char* restrict end, const char* restrict delim, char line_comment)
+__pure const char* u_skip(const char* restrict s, const char* restrict end, const char* restrict delim, char line_comment)
 {
    U_INTERNAL_TRACE("u_skip(%.*s,%p,%s,%d)", U_min(end-s,128), s, end, delim, line_comment)
 
@@ -739,7 +740,7 @@ const char* u_delimit_token(const char* restrict s, const char** restrict p, con
 
 /* Match STRING against the filename pattern MASK, returning true if it matches, false if not, inversion if flags contain FNM_INVERT */
 
-bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
+__pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
 {
    bool result;
    const char* restrict cp = 0;
@@ -880,7 +881,7 @@ bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, 
    returning true if it matches, false if not, inversion if flags contain FNM_INVERT
 */
 
-bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
+__pure bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
 {
    bool result;
    const char* restrict p_or;
@@ -924,7 +925,7 @@ bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restric
       }
 }
 
-bool u_isURL(const char* restrict url, uint32_t len)
+__pure bool u_isURL(const char* restrict url, uint32_t len)
 {
    int ch;
    bool alphanumeric, special;
@@ -975,7 +976,7 @@ bool u_isURL(const char* restrict url, uint32_t len)
    return true;
 }
 
-bool u_isMacAddr(const char* restrict p, uint32_t len)
+__pure bool u_isMacAddr(const char* restrict p, uint32_t len)
 {
    uint32_t c;
 
@@ -1029,7 +1030,7 @@ bool u_isMacAddr(const char* restrict p, uint32_t len)
 
 #define RFC822_SPECIALS "()<>@,;:\\\"[]"
 
-bool u_validate_email_address(const char* restrict address, uint32_t address_len)
+__pure bool u_validate_email_address(const char* restrict address, uint32_t address_len)
 {
    int count;
    const char* restrict c;
@@ -1109,7 +1110,7 @@ bool u_validate_email_address(const char* restrict address, uint32_t address_len
 
 /* Perform 'natural order' comparisons of strings. */
 
-int u_strnatcmp(char const* restrict a, char const* restrict b)
+__pure int u_strnatcmp(char const* restrict a, char const* restrict b)
 {
    char ca, cb;
    int ai = 0, bi = 0;
@@ -1801,7 +1802,7 @@ end:
    u_buffer_len -= d_namlen;
 }
 
-int u_ftw_ino_cmp(const void* restrict a, const void* restrict b)
+__pure int u_ftw_ino_cmp(const void* restrict a, const void* restrict b)
 { return (((const struct u_dirent_s* restrict)a)->d_ino - ((const struct u_dirent_s* restrict)b)->d_ino); }
 
 static void u_ftw_readdir(DIR* restrict dirp)
@@ -2011,7 +2012,7 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
    return (ok == negate ? 0 : 1);
 }
 
-static inline int kfnmatch(const char* restrict pattern, const char* restrict string, int flags, int nesting)
+static inline __pure int kfnmatch(const char* restrict pattern, const char* restrict string, int flags, int nesting)
 {
    char c, test;
    char* restrict newp;
@@ -2202,19 +2203,20 @@ bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pa
       case 3: { c = *s++; exec_code; }     \
       case 2: { c = *s++; exec_code; }     \
       case 1: { c = *s++; exec_code; }     \
+              PREFETCH_ATTRIBUTE(s, 0)     \
          } while (--U_LOOP_CNT); } }
 #endif
 
-bool u_isBase64(const char* restrict s, uint32_t n)
+__pure bool u_isBase64(const char* restrict s, uint32_t n)
 {
    U_LOOP_STRING( if (u_isbase64(c) == false) return false )
-
+ 
    U_INTERNAL_TRACE("u_isBase64(%.*s,%u)", U_min(n,128), s, n)
 
    return true;
 }
 
-bool u_isWhiteSpace(const char* restrict s, uint32_t n)
+__pure bool u_isWhiteSpace(const char* restrict s, uint32_t n)
 {
    U_LOOP_STRING( if (u_isspace(c) == false) return false )
 
@@ -2223,7 +2225,7 @@ bool u_isWhiteSpace(const char* restrict s, uint32_t n)
    return true;
 }
 
-bool u_isText(const unsigned char* restrict s, uint32_t n)
+__pure bool u_isText(const unsigned char* restrict s, uint32_t n)
 {
    U_LOOP_STRING( if (u_istext(c) == false) return false )
 
@@ -2231,6 +2233,8 @@ bool u_isText(const unsigned char* restrict s, uint32_t n)
 
    return true;
 }
+
+__pure bool u_isBinary(const unsigned char* restrict s, uint32_t n) { return ((u_isText(s,n) || u_isUTF8(s,n) || u_isUTF16(s,n)) == false); }
 
 /* From RFC 3986
 
@@ -2304,7 +2308,7 @@ const unsigned char u_text_chars[256] = {
  * 0000 0800-0000 FFFF   1110xxxx 10xxxxxx 10xxxxxx                     *
  ************************************************************************/
 
-bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
+__pure bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
 {
    unsigned char c;
    bool result = false;
@@ -2370,7 +2374,7 @@ bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
    return result;
 }
 
-int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
+__pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 {
    uint32_t be, i, c;
 
@@ -2533,3 +2537,433 @@ const unsigned char u__ct_tou[256] = {
    0xd0,   0xd1,   0xd2,   0xd3,   0xd4,   0xd5,   0xd6,   0xf7,
    0xd8,   0xd9,   0xda,   0xdb,   0xdc,   0xdd,   0xde,   0xff
 };
+
+// MIME TYPE
+
+typedef struct mimeentry {
+   const char* restrict type;
+   const char* restrict name;
+   uint32_t name_len;
+} mimeentry;
+
+#define MIME_ENTRY(name,type) { type, name+1, U_CONSTANT_SIZE(name)-1 }
+
+static struct mimeentry mimetab_a[] = {
+   MIME_ENTRY( "ai",   "application/postscript" ),
+   MIME_ENTRY( "arj",  "application/x-arj-compressed" ),
+   MIME_ENTRY( "asx",  "video/x-ms-asf" ),
+   MIME_ENTRY( "atom", "application/atom+xml" ),
+   MIME_ENTRY( "avi",  "video/x-msvideo" ),
+
+   /*
+   MIME_ENTRY( "aif",  "audio/x-aiff" ), (aifc, aiff)
+   MIME_ENTRY( "api",  "application/postscript" ),
+   MIME_ENTRY( "asc",  "text/plain" ),
+   MIME_ENTRY( "au",   "audio/basic" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_b[] = {
+   MIME_ENTRY( "bat",  "application/x-msdos-program" ),
+   MIME_ENTRY( "bmp",  "image/x-ms-bmp" ),
+   MIME_ENTRY( "bild", "image/jpeg" ),
+   MIME_ENTRY( "boz",  "application/x-bzip2" ),
+
+   /*
+   MIME_ENTRY( "bin",   "application/x-bcpio" ),
+   MIME_ENTRY( "bcpio", "application/octet-stream" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_c[] = {
+   /* -------------------------------------------------------------------------------
+   * The certificate being downloaded represents a Certificate Authority.
+   * When it is downloaded the user will be shown a sequence of dialogs that
+   * will guide them through the process of accepting the Certificate Authority
+   * and deciding if they wish to trust sites certified by the CA. If a certificate
+   * chain is being imported then the first certificate in the chain must be the CA
+   * certificate, and any subsequent certificates will be added as untrusted CA
+   * certificates to the local database.
+   * ------------------------------------------------------------------------------- */
+   MIME_ENTRY( "css", "text/css" ), /* U_css */
+   MIME_ENTRY( "crt", "application/x-x509-ca-cert" ),
+   MIME_ENTRY( "cer", "application/x-x509-ca-cert" ),
+
+   /*
+   MIME_ENTRY( "c++",     "text/x-c++src" ),
+   MIME_ENTRY( "c4d",     "application/vnd.clonk.c4group" ),
+   MIME_ENTRY( "cac",     "chemical/x-cache" ),
+   MIME_ENTRY( "cascii",  "chemical/x-cactvs-binary" ),
+   MIME_ENTRY( "cct",     "application/x-director" ),
+   MIME_ENTRY( "cdf",     "application/x-netcdf" ),
+   MIME_ENTRY( "cef",     "chemical/x-cxf" ),
+   MIME_ENTRY( "cls",     "text/x-tex" ),
+   MIME_ENTRY( "cpio",    "application/x-cpio" ),
+   MIME_ENTRY( "cpt",     "application/mac-compactpro" ),
+   MIME_ENTRY( "csm",     "chemical/x-csml" ),
+   MIME_ENTRY( "csh",     "application/x-csh" ),
+   MIME_ENTRY( "cdf",     "application/x-netcdf" ),
+   MIME_ENTRY( "c",       "text/x-c" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_d[] = {
+   /* -------------------------------------------------------------------------------
+   * The certificate being downloaded represents a Certificate Authority.
+   * When it is downloaded the user will be shown a sequence of dialogs that
+   * will guide them through the process of accepting the Certificate Authority
+   * and deciding if they wish to trust sites certified by the CA. If a certificate
+   * chain is being imported then the first certificate in the chain must be the CA
+   * certificate, and any subsequent certificates will be added as untrusted CA
+   * certificates to the local database.
+   * ------------------------------------------------------------------------------- */
+   MIME_ENTRY( "der", "application/x-x509-ca-cert" ),
+   MIME_ENTRY( "doc", "application/msword" ),
+   MIME_ENTRY( "dtd", "application/xml" ),
+
+   /*
+   MIME_ENTRY( "dcr", "application/x-director" ),
+   MIME_ENTRY( "deb", "application/x-debian-package" ),
+   MIME_ENTRY( "dir", "application/x-director" ),
+   MIME_ENTRY( "dll", "application/octet-stream" ),
+   MIME_ENTRY( "dms", "application/octet-stream" ),
+   MIME_ENTRY( "dvi", "application/x-dvi" ),
+   MIME_ENTRY( "dxr", "application/x-director" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_e[] = {
+   MIME_ENTRY( "eps", "application/postscript" ),
+
+   /*
+   MIME_ENTRY( "etx", "text/x-setext" ),
+   MIME_ENTRY( "ez",  "application/andrew-inset" ),
+   MIME_ENTRY( "exe", "application/octet-stream" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_f[] = {
+   MIME_ENTRY( "flv", "video/x-flv" ),
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_g[] = {
+   MIME_ENTRY( "gif",  "image/gif" ),  /* U_gif */
+   MIME_ENTRY( "gtar", "application/x-gtar" ),
+   MIME_ENTRY( "gz",   "application/x-gzip" ),
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_h[] = {
+   MIME_ENTRY( "htm", U_CTYPE_HTML ),  /* (html) U_html */
+
+   /*
+   MIME_ENTRY( "hdf", "application/x-hdf" ),
+   MIME_ENTRY( "hqx", "application/mac-binhex40" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_i[] = {
+   MIME_ENTRY( "ico", U_CTYPE_ICO ),
+
+   /*
+   MIME_ENTRY( "ice", "x-conference/x-cooltalk" ),
+   MIME_ENTRY( "ief", "image/ief" ),
+   MIME_ENTRY( "ig",  "model/iges" ), (igs, iges) 
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_j[] = {
+   MIME_ENTRY( "js",   "text/javascript" ), /* U_js */
+   MIME_ENTRY( "json", "application/json" ),
+   MIME_ENTRY( "jp",   "image/jpeg" ),      /* (jpg, jpe, jpeg) U_jpg */
+   { 0, 0, 0 }
+};
+
+/*
+static struct mimeentry mimetab_k[] = {
+   MIME_ENTRY( "kar", "audio/midi" ),
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_l[] = {
+   MIME_ENTRY( "latex", "application/x-latex" ),
+   MIME_ENTRY( "lh",    "application/octet-stream" ), (lha, lhz)
+   { 0, 0, 0 }
+};
+*/
+
+static struct mimeentry mimetab_m[] = {
+   MIME_ENTRY( "mng",  "video/x-mng" ),
+   MIME_ENTRY( "mp4",  "video/mp4" ),
+   MIME_ENTRY( "m4a",  "audio/mp4" ),
+   MIME_ENTRY( "mp",   "video/mpeg" ), /* (mp2, mp3, mpg, mpe, mpeg, mpga) */
+   MIME_ENTRY( "md5",  "text/plain" ),
+   MIME_ENTRY( "mov",  "video/quicktime" ),
+
+   /*
+   MIME_ENTRY( "m3u",  "audio/x-mpegurl" ),
+   MIME_ENTRY( "man",  "application/x-troff-man" ),
+   MIME_ENTRY( "me",   "application/x-troff-me" ),
+   MIME_ENTRY( "mesh", "model/mesh" ),
+   MIME_ENTRY( "msh",  "model/mesh" ),
+   MIME_ENTRY( "mif",  "application/vnd.mif" ),
+   MIME_ENTRY( "mi",   "audio/midi" ), (mid, midi)
+   MIME_ENTRY( "movie","video/x-sgi-movie" ),
+   MIME_ENTRY( "ms",   "application/x-troff-ms" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+/*
+static struct mimeentry mimetab_n[] = {
+   MIME_ENTRY( "nc", "application/x-netcdf" ),
+   { 0, 0, 0 }
+};
+*/
+
+static struct mimeentry mimetab_o[] = {
+   MIME_ENTRY( "ogg", "application/ogg" ),
+
+   /*
+   MIME_ENTRY( "oda",  "application/oda" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_p[] = {
+   MIME_ENTRY( "png", "image/png" ),   /* U_png */
+   MIME_ENTRY( "pdf", "application/pdf" ),
+   MIME_ENTRY( "pem", "application/x-x509-ca-cert" ),
+   MIME_ENTRY( "php", "application/x-httpd-php" ),
+   MIME_ENTRY( "pbm", "image/x-portable-bitmap" ),
+   MIME_ENTRY( "pgm", "image/x-portable-graymap" ),
+   MIME_ENTRY( "pnm", "image/x-portable-anymap" ),
+   MIME_ENTRY( "ppm", "image/x-portable-pixmap" ),
+   MIME_ENTRY( "ps",  "application/postscript" ),
+   MIME_ENTRY( "p7b", "application/x-pkcs7-certificates" ),
+   MIME_ENTRY( "p7c", "application/x-pkcs7-mime" ),
+   MIME_ENTRY( "p12", "application/x-pkcs12" ),
+   MIME_ENTRY( "ppt", "application/vnd.ms-powerpoint" ),
+
+   /*
+   MIME_ENTRY( "pac", "application/x-ns-proxy-autoconfig" ),
+   MIME_ENTRY( "pdb", "chemical/x-pdb" ),
+   MIME_ENTRY( "pgn", "application/x-chess-pgn" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_q[] = {
+   MIME_ENTRY( "qt", "video/quicktime" ),
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_r[] = {
+   MIME_ENTRY( "rar",  "application/x-rar-compressed" ),
+   MIME_ENTRY( "rtf",  "text/rtf" ),
+   MIME_ENTRY( "rtx",  "text/richtext" ),
+   MIME_ENTRY( "roff", "application/x-troff" ),
+   MIME_ENTRY( "rss",  "application/rss+xml" ),
+
+   /*
+   MIME_ENTRY( "ra",  "audio/x-realaudio" ),
+   MIME_ENTRY( "ras", "image/x-cmu-raster" ),
+   MIME_ENTRY( "rgb", "image/x-rgb" ),
+   MIME_ENTRY( "rpm", "audio/x-pn-realaudio-plugin" ),
+   MIME_ENTRY( "ram", "audio/x-pn-realaudio" ),
+   MIME_ENTRY( "rm",  "audio/x-pn-realaudio" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_s[] = {
+   MIME_ENTRY( "shtm", U_CTYPE_HTML ), /* (shtml) U_ssi */
+   MIME_ENTRY( "svg", "image/svg+xml" ),
+   MIME_ENTRY( "swf", "application/x-shockwave-flash" ),
+   MIME_ENTRY( "sgm", "text/sgml" ), /* (sgml) */
+
+   /*
+   MIME_ENTRY( "sh",      "application/x-sh" ),
+   MIME_ENTRY( "snd",     "audio/basic" ),
+   MIME_ENTRY( "shar",    "application/x-shar" ),
+   MIME_ENTRY( "sit",     "application/x-stuffit" ),
+   MIME_ENTRY( "silo",    "model/mesh" ),
+   MIME_ENTRY( "sig",     "application/pgp-signature" ),
+   MIME_ENTRY( "spl",     "application/x-futuresplash" ),
+   MIME_ENTRY( "src",     "application/x-wais-source" ),
+   MIME_ENTRY( "smi",     "application/smil" ), (smil)
+   MIME_ENTRY( "sk",      "application/x-koan" ), (skd, skm, skp, skt)
+   MIME_ENTRY( "sv4cpio", "application/x-sv4cpio" ),
+   MIME_ENTRY( "sv4crc",  "application/x-sv4crc" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_t[] = {
+   MIME_ENTRY( "tar",  "application/x-tar" ),
+   MIME_ENTRY( "tif",  "image/tiff" ), /* (tiff) */
+   MIME_ENTRY( "text", "text/plain" ),
+   MIME_ENTRY( "txt",  "text/plain" ),
+   MIME_ENTRY( "tgz",  "application/x-tar-gz" ),
+
+   /*
+   MIME_ENTRY( "texi",     "application/x-texinfo" ), (texinfo)
+   MIME_ENTRY( "tex",      "application/x-tex" ),
+   MIME_ENTRY( "tr",       "application/x-troff" ),
+   MIME_ENTRY( "tcl",      "application/x-tcl" ),
+   MIME_ENTRY( "tsv",      "text/tab-separated-values" ),
+   MIME_ENTRY( "torrent",  "application/x-bittorrent" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+/*
+static struct mimeentry mimetab_u[] = {
+   MIME_ENTRY( "untar",  "application/x-ustar" ),
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_v[] = {
+   MIME_ENTRY( "vbxml", "application/vnd.wap.wbxml" ),
+   MIME_ENTRY( "vcd",   "application/x-cdlink" ),
+   MIME_ENTRY( "vmrl",  "model/vrml" ),
+   { 0, 0, 0 }
+};
+*/
+
+static struct mimeentry mimetab_w[] = {
+   MIME_ENTRY( "wav", "audio/x-wav" ),
+   MIME_ENTRY( "wmv", "video/x-ms-wmv" ),
+
+   /*
+   MIME_ENTRY( "wbmp",  "image/vnd.wap.wbmp" ),
+   MIME_ENTRY( "wml",   "text/vnd.wap.wml" ),
+   MIME_ENTRY( "wmls",  "text/vnd.wap.wmlscript" ),
+   MIME_ENTRY( "wmlc",  "application/vnd.wap.wmlc" ),
+   MIME_ENTRY( "wmlsc", "application/vnd.wap.wmlscriptc" ),
+   MIME_ENTRY( "wrl",   "model/vrml" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_x[] = {
+   MIME_ENTRY( "xls", "application/vnd.ms-excel" ),
+   MIME_ENTRY( "xml", "text/xml" ),
+   MIME_ENTRY( "xsl", "text/xml" ),
+   MIME_ENTRY( "xpm", "image/x-xpixmap" ),
+   MIME_ENTRY( "xbm", "image/x-xbitmap" ),
+
+   /*
+   MIME_ENTRY( "xyz", "chemical/x-pdb" ),
+   MIME_ENTRY( "xwd", "image/x-xwindowdump" ),
+   */
+
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_z[] = {
+   MIME_ENTRY( "zip", "application/zip" ),
+   { 0, 0, 0 }
+};
+
+static struct mimeentry mimetab_null[] = {
+   { 0, 0, 0 }
+};
+
+const char* u_get_mimetype(const char* restrict suffix)
+{
+   char c;
+   uint32_t i;
+   ptrdiff_t diff;
+   struct mimeentry* ptr;
+   struct mimeentry* mimetab;
+
+   U_INTERNAL_TRACE("u_get_mimetype(%s)", suffix)
+
+   U_INTERNAL_ASSERT_POINTER(suffix)
+
+   switch ((c = *suffix++))
+      {
+      case 'a': mimetab = mimetab_a; break;
+      case 'b': mimetab = mimetab_b; break;
+      case 'c': mimetab = mimetab_c; break;
+      case 'd': mimetab = mimetab_d; break;
+      case 'e': mimetab = mimetab_e; break;
+      case 'f': mimetab = mimetab_f; break;
+      case 'g': mimetab = mimetab_g; break;
+      case 'h': mimetab = mimetab_h; break;
+      case 'i': mimetab = mimetab_i; break;
+      case 'j': mimetab = mimetab_j; break;
+   /* case 'k': mimetab = mimetab_null; break; */
+   /* case 'l': mimetab = mimetab_null; break; */
+      case 'm': mimetab = mimetab_m; break;
+   /* case 'n': mimetab = mimetab_null; break; */
+      case 'o': mimetab = mimetab_o; break;
+      case 'p': mimetab = mimetab_p; break;
+      case 'q': mimetab = mimetab_q; break;
+      case 'r': mimetab = mimetab_r; break;
+      case 's': mimetab = mimetab_s; break;
+      case 't': mimetab = mimetab_t; break;
+   /* case 'u': mimetab = mimetab_null; break; */
+   /* case 'v': mimetab = mimetab_null; break; */
+      case 'w': mimetab = mimetab_w; break;
+      case 'x': mimetab = mimetab_x; break;
+      case 'z': mimetab = mimetab_z; break;
+      default:  mimetab = mimetab_null;
+      }
+
+   U_INTERNAL_PRINT("c = %d", c)
+
+   ptr = mimetab;
+
+   loop:
+   while (ptr->name)
+      {
+      U_INTERNAL_PRINT("mimetab = %p (%s,%u,%s)", ptr, ptr->name, ptr->name_len, ptr->type)
+
+      for (i = 0; i < ptr->name_len; ++i)
+         {
+         if (suffix[i] != ptr->name[i])
+            {
+            ++ptr;
+
+            goto loop;
+            }
+         }
+
+      diff = ptr - mimetab;
+
+      U_INTERNAL_PRINT("diff = %u sizeof(mimeentry) = %u", diff, sizeof(mimeentry))
+
+           if (diff ==  0)                       u_mime_index =  c;  /* NB: 1 entry: c (U_css), j (U_js), h (U_html), g (U_gif), p (U_png), s (U_ssi) */
+      else if (diff == (ptrdiff_t)2 && c == 'j') u_mime_index = 'J'; /* NB: 3 entry: U_jpg */
+
+      U_INTERNAL_PRINT("u_mime_index = %d", u_mime_index)
+
+      return ptr->type;
+      }
+
+   return 0;
+}

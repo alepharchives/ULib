@@ -14,11 +14,6 @@
 #include <ulib/net/ipaddress.h>
 #include <ulib/container/vector.h>
 
-#ifndef __MINGW32__
-#  include <netdb.h>
-#  include <arpa/inet.h>
-#endif
-
 #if defined(HAVE_GETADDRINFO) || defined(HAVE_GETNAMEINFO)
 #  include "socket_address.cpp"
 #endif
@@ -581,7 +576,7 @@ uint32_t UIPAllow::parseMask(const UString& vspec, UVector<UIPAllow*>& vipallow)
    U_RETURN(result);
 }
 
-uint32_t UIPAllow::contains(in_addr_t client, UVector<UIPAllow*>& vipallow)
+__pure uint32_t UIPAllow::contains(in_addr_t client, UVector<UIPAllow*>& vipallow)
 {
    U_TRACE(0, "UIPAllow::contains(%u,%p)", client, &vipallow)
 
@@ -593,7 +588,7 @@ uint32_t UIPAllow::contains(in_addr_t client, UVector<UIPAllow*>& vipallow)
    U_RETURN(U_NOT_FOUND);
 }
 
-uint32_t UIPAllow::contains(const UString& ip_client, UVector<UIPAllow*>& vipallow)
+__pure uint32_t UIPAllow::contains(const UString& ip_client, UVector<UIPAllow*>& vipallow)
 {
    U_TRACE(0, "UIPAllow::contains(%.*S,%p)", U_STRING_TO_TRACE(ip_client), &vipallow)
 
@@ -612,8 +607,8 @@ uint32_t UIPAllow::contains(const UString& ip_client, UVector<UIPAllow*>& vipall
 
 const char* UIPAllow::dump(bool reset) const
 {
-   *UObjectIO::os << "addr " << (void*)addr << '\n'
-                  << "mask " << (void*)mask << ')';
+   *UObjectIO::os << "addr " << addr << '\n'
+                  << "mask " << mask << ')';
 
    if (reset)
       {

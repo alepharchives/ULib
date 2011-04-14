@@ -52,11 +52,11 @@
 extern "C" {
 #endif
 
-extern U_EXPORT uint32_t u_random(uint32_t a); /* quick 4byte hashing function */
+extern U_EXPORT uint32_t u_random(uint32_t a) __pure; /* quick 4byte hashing function */
 #ifdef HAVE_ARCH64
-extern U_EXPORT uint32_t u_random64(uint64_t ptr);
+extern U_EXPORT uint32_t u_random64(uint64_t ptr) __pure;
 #endif
-extern U_EXPORT uint32_t u_hash(  unsigned char* restrict t, uint32_t tlen, bool ignore_case); /* hash variable-length key into 32-bit value */
+extern U_EXPORT uint32_t u_hash(  unsigned char* restrict t, uint32_t tlen, bool ignore_case) __pure; /* hash variable-length key into 32-bit value */
 /*
 extern U_EXPORT uint64_t u_hash64(unsigned char* restrict t, uint32_t tlen);
 */

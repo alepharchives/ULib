@@ -87,7 +87,7 @@ void UValue::clear() // erase all element
 
 // CONVERSION
 
-bool UValue::asBool() const
+__pure bool UValue::asBool() const
 {
    U_TRACE(0, "UValue::asBool()")
 
@@ -111,7 +111,7 @@ bool UValue::asBool() const
    U_RETURN(result);
 }
 
-int UValue::asInt() const
+__pure int UValue::asInt() const
 {
    U_TRACE(0, "UValue::asInt()")
 
@@ -143,7 +143,7 @@ int UValue::asInt() const
    U_RETURN(result);
 }
 
-unsigned int UValue::asUInt() const
+__pure unsigned int UValue::asUInt() const
 {
    U_TRACE(0, "UValue::asUInt()")
 
@@ -176,7 +176,7 @@ unsigned int UValue::asUInt() const
    U_RETURN(result);
 }
 
-double UValue::asDouble() const
+__pure double UValue::asDouble() const
 {
    U_TRACE(0, "UValue::asDouble()")
 
@@ -202,7 +202,7 @@ double UValue::asDouble() const
    U_RETURN(result);
 }
 
-UString UValue::asString() const
+__pure UString UValue::asString() const
 {
    U_TRACE(0, "UValue::asString()")
 
@@ -230,7 +230,7 @@ UString UValue::asString() const
    U_RETURN_STRING(result);
 }
 
-bool UValue::isConvertibleTo(UValue::ValueType other) const
+__pure bool UValue::isConvertibleTo(UValue::ValueType other) const
 {
    U_TRACE(0, "UValue::isConvertibleTo(%d)", other)
 
@@ -294,7 +294,7 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
    U_RETURN(_size);
 }
 
-uint32_t UValue::size() const
+__pure uint32_t UValue::size() const
 {
    U_TRACE(0, "UValue::size()")
 
@@ -307,7 +307,7 @@ uint32_t UValue::size() const
    U_RETURN(result);
 }
 
-UValue& UValue::operator[](uint32_t pos)
+__pure UValue& UValue::operator[](uint32_t pos)
 {
    U_TRACE(0, "UValue::operator[](%u)", pos)
 
@@ -316,7 +316,7 @@ UValue& UValue::operator[](uint32_t pos)
    return *result;
 }
 
-UValue& UValue::operator[](const UString& key)
+__pure UValue& UValue::operator[](const UString& key)
 {
    U_TRACE(0, "UValue::operator[](%.*S)", U_STRING_TO_TRACE(key))
 

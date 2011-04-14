@@ -32,8 +32,8 @@
 #define ARGS ""
 
 #define U_OPTIONS \
-"purpose \"general server by ULib...\"\n" \
-"option c config 1 \"path of configuration file\" \"\"\n"
+"purpose 'application server by ULib...'\n" \
+"option c config 1 'path of configuration file' ''\n"
 
 #include <ulib/application.h>
 

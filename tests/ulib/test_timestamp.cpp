@@ -3,7 +3,7 @@
 #include <ulib/file.h>
 #include <ulib/ssl/timestamp.h>
 
-void check(const UString& dati)
+static void check(const UString& dati)
 {
    U_TRACE(5, "check(%p)", dati.data())
 

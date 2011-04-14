@@ -126,7 +126,8 @@ bool USSLSocket::useDHFile(const char* dh_file)
    U_RETURN(true);
 }
 
-bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const char* private_key_file, const char* passwd, const char* CAfile, const char* CApath, int mode)
+bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const char* private_key_file,
+                            const char* passwd,  const char* CAfile,    const char* CApath, int mode)
 {
    U_TRACE(1, "USSLSocket::setContext(%S,%S,%S,%S,%S,%S,%d)", dh_file, cert_file, private_key_file, passwd, CAfile, CApath, mode)
 
@@ -581,6 +582,19 @@ loop:
 #endif
 
    U_RETURN(iBytesRead);
+}
+
+bool USSLSocket::connectServer(const UString& server, int iServPort)
+{
+   U_TRACE(0, "USSLSocket::connectServer(%.*S,%d)", U_STRING_TO_TRACE(server), iServPort)
+
+   if (UTCPSocket::connectServer(server, iServPort) &&
+       (active ? secureConnection(USocket::iSockDesc) : true))
+      {
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 int USSLSocket::send(const void* pData, uint32_t iDataLen)

@@ -290,7 +290,7 @@ static void handlerSignal(void)
 #endif
 }
 
-bool u_trace_isActive(int level)
+bool __pure u_trace_isActive(int level)
 {
    bool result = (u_trace_fd > 0      &&
                  flag_mask_level == 0 &&

@@ -65,9 +65,9 @@ UString UStringExt::pregReplace(const UString& pattern, const UString& replaceme
 {
    U_TRACE(0, "UStringExt::pregReplace(%.*S,%.*S,%.*S)", U_STRING_TO_TRACE(pattern), U_STRING_TO_TRACE(replacement), U_STRING_TO_TRACE(subject))
 
-   UPCRE pcre(pattern, PCRE_FOR_REPLACE);
+   UPCRE _pcre(pattern, PCRE_FOR_REPLACE);
 
-   UString result = pcre.replace(subject, replacement);
+   UString result = _pcre.replace(subject, replacement);
 
    U_RETURN_STRING(result);
 }
@@ -363,35 +363,45 @@ UString UStringExt::getEnvironmentVar(const char* s, uint32_t n, const UString* 
 {
    U_TRACE(1, "UStringExt::getEnvironmentVar(%.*S,%u,%p)", n, s, n, environment)
 
+   char c, c1;
    UString value(100U);
+   uint32_t start = 0, end;
 
    if (environment)
       {
-      // check if s param it is a environment-var
-
-      uint32_t start = environment->find(s, 0U, n);
+      // NB: check if s param it is a environment-var
+loop:
+      start = environment->find(s, start, n);
 
       if (start == U_NOT_FOUND) goto next;
 
-      char c = '\0';
+      c = '\0';
 
       if (start)
          {
+         // NB: check if comment...
+         
          c = environment->c_char(start-1);
 
          U_INTERNAL_DUMP("c = %C", c)
 
-         if (c == '#') goto next;
+         if (c == '#') goto loop;
          }
 
-      start += n + 1;
+      start += n;
 
-      uint32_t end = environment->find('\n', start);
+      c = environment->c_char(start);
+
+      U_INTERNAL_DUMP("c = %C", c)
+
+      if (c != '=') goto loop;
+
+      end = environment->find('\n', ++start);
 
       if (end == U_NOT_FOUND) end = environment->size();
       else
          {
-         char c1 = environment->c_char(end-1);
+         c1 = environment->c_char(end-1);
 
          if ((c1 == '"' || c1 == '\'') && (c == c1)) --end;
          }
@@ -749,7 +759,7 @@ UString UStringExt::suffix(const UString& s, char sep)
  * Returns zero if (a == b)
  */
 
-int UStringExt::compareversion(const char* a, uint32_t alen, const char* b, uint32_t blen)
+__pure int UStringExt::compareversion(const char* a, uint32_t alen, const char* b, uint32_t blen)
 {
    U_TRACE(0, "UStringExt::compareversion(%.*S,%u,%.*S,%u)", alen, a, alen, blen, b, blen)
 
@@ -815,6 +825,17 @@ int UStringExt::compareversion(const char* a, uint32_t alen, const char* b, uint
 
    /* the version with a suffix remaining is greater */
    U_RETURN(apos2 < alen ? 1 : -1);
+}
+
+__pure int UStringExt::compareversion(const UString& s, const UString& a) { return compareversion(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a)); }
+
+__pure bool UStringExt::isEmailAddress(const UString& s)
+{
+   U_TRACE(0, "UStringExt::isEmailAddress(%.*S)", U_STRING_TO_TRACE(s))
+
+   if (u_validate_email_address(U_STRING_TO_PARAM(s))) U_RETURN(true);
+
+   U_RETURN(false);
 }
 
 UString UStringExt::compress(const UString& s)
@@ -1270,5 +1291,5 @@ end:
 
 // inlining failed in call to ...: call is unlikely and code size would grow
 
-bool UStringExt::startsWith(const UString& s1, const UString& s2) { return u_startsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2)); }
-bool UStringExt::endsWith(  const UString& s1, const UString& s2) { return   u_endsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2)); }
+__pure bool UStringExt::startsWith(const UString& s1, const UString& s2) { return u_startsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2)); }
+__pure bool UStringExt::endsWith(  const UString& s1, const UString& s2) { return u_endsWith(  U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2)); }

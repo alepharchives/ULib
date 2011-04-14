@@ -245,20 +245,20 @@ public:
 
    // CONVERSION
 
-   bool         asBool() const;
-   int          asInt() const;
-   unsigned int asUInt() const;
-   double       asDouble() const;
-   UString      asString() const;
+   bool         asBool() const __pure;
+   int          asInt() const __pure;
+   unsigned int asUInt() const __pure;
+   double       asDouble() const __pure;
+   UString      asString() const __pure;
 
-   bool isConvertibleTo(UValue::ValueType other) const;
+   bool isConvertibleTo(UValue::ValueType other) const __pure;
 
    // manage values in array or object
 
-   uint32_t size() const;
+   uint32_t size() const __pure;
 
-   UValue& operator[](uint32_t pos);
-   UValue& operator[](const UString& key);
+   UValue& operator[](uint32_t pos) __pure;
+   UValue& operator[](const UString& key) __pure;
 
              UString* getString() const { return (          UString*)value.ptr_; }
     UVector<UValue*>* getArray()  const { return ( UVector<UValue*>*)value.ptr_; }
