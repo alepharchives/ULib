@@ -9,7 +9,7 @@ It is a result of many years of work as C++ programmer. I think, in my opinion, 
 debugging. This framework offers a class foundation that disables language features that consume memory or introduce runtime overhead, such as rtti and
 exception handling, and assumes one will mostly be linking applications with other pure C based libraries rather than using the overhead of the standard
 C++ library and other similar class frameworks. It include as application example a powerful search engine with relative web interface and a multi purpose
-server (plugin oriented) which results, out of John Fremlin accurate investigations (http://john.freml.in/ulib-fast-io-framework), to be one of the faster
+server (plugin oriented) which results, out of John Fremlin accurate [investigations](http://john.freml.in/ulib-fast-io-framework), to be one of the faster
 web application frameworks for serving small dynamic webpages (and also make easier the usage of shell scripts for CGI application)
 
 userver_(tcp|ssl|ipc) application server (plugin oriented)
