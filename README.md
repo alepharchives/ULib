@@ -62,9 +62,9 @@ The current version offers the following features :
 Benchmarking
 ------------
 
-   $ ./configure && make
-   $ cd tests/examples
-   $ ./benchmarking.sh (or hello_world.sh)
+    $ ./configure && make
+    $ cd tests/examples
+    $ ./benchmarking.sh (or hello_world.sh)
 
 Use apachebench (ab)
 
