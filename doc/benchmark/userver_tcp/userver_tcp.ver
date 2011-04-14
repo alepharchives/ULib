@@ -1,13 +1,13 @@
-userver (1.1.0): general server by ULib...
+userver (1.1.0): application server by ULib...
 
 Developed with ULib (C++ application development framework)
 
-Building Environment.: Gentoo 2.0.2 (AMD64) (Apr  7 2011)
+Building Environment.: Gentoo 2.0.2 (AMD64) (Apr 13 2011)
 Operating System.....: Linux stefano 2.6.38.2 #2 SMP Tue Mar 29 14:28:35 CEST 2011 x86_64 Intel(R) Pentium(R) 4 CPU 2.80GHz GenuineIntel GNU/Linux
 C++ Compiler.........: 4.6.0
 C   Flags............: -g -O2  -Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition
 C++ Flags............: -g -O2  -fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated -fvisibility=hidden -fvisibility-inlines-hidden
-Preprocessor Flags...:  -DHAVE_LIBZ -DHAVE_LIBUUID -DHAVE_MAGIC -DHAVE_SSL -DHAVE_SSL_TS -DHAVE_PCRE -DHAVE_EXPAT -DHAVE_CURL -DHAVE_LDAP -DHAVE_DBI -DHAVE_LIBXML2 -I/usr/include/libxml2 -DHAVE_PAGE_SPEED -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -pipe -D_GNU_SOURCE  -fomit-frame-pointer -finline -fstrict-aliasing -findirect-inlining -ftree-switch-conversion -Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat -Wformat-extra-args -Wenum-compare -Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn -Ofast -flto -Winline -Wno-unused-parameter -Wno-unused-variable -mtune=native
+Preprocessor Flags...:  -DHAVE_LIBZ -DHAVE_LIBUUID -DHAVE_MAGIC -DHAVE_SSL -DHAVE_SSL_TS -DHAVE_PCRE -DHAVE_EXPAT -DHAVE_CURL -DHAVE_LDAP -DHAVE_DBI -DHAVE_LIBXML2 -I/usr/include/libxml2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -pipe -D_GNU_SOURCE  -fomit-frame-pointer -finline -fstrict-aliasing -findirect-inlining -ftree-switch-conversion -Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat -Wformat-extra-args -Wenum-compare -Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn -Ofast -flto -Winline -Wno-unused-parameter -Wno-unused-variable -mtune=native
 Linker Flags.........:  -Wl,-O1 -Wl,--as-needed -Wl,-z,now,-O1,--hash-style=gnu,--sort-common -Wl,--as-needed
 Linker...............: GNU ld (GNU Binutils) 2.21
 Libraries............: -lxml2 -ldbi -lldap -llber -lcurl -lexpat -lpcre -lssl -lcrypto -lmagic -luuid -lz  -lpthread -ldl
@@ -37,7 +37,7 @@ DBI support..........: enabled
 libuuid support......: enabled
 libevent support.....: no
 libxml2 support......: enabled
-Page-Speed support...: enabled
+Page-Speed support...: no
 memory pool support..: enabled
 
 Request:

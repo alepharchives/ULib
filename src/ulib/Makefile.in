@@ -188,21 +188,21 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	query/query_parser.cpp event/event_time.cpp timeval.cpp \
 	timer.cpp notifier.cpp string.cpp file.cpp process.cpp \
 	file_config.cpp log.cpp options.cpp application.cpp cache.cpp \
-	date.cpp url.cpp tokenizer.cpp command.cpp debug/trace.cpp \
-	debug/debug_common.cpp debug/error.cpp debug/error_memory.cpp \
-	debug/error_simulation.cpp debug/objectDB.cpp \
-	internal/memory_pool.cpp zip/zip.cpp flex/flexer.cpp \
-	flex/bison.cpp pcre/pcre.cpp ssl/certificate.cpp ssl/pkcs7.cpp \
-	ssl/crl.cpp ssl/pkcs10.cpp ssl/mime/mime_pkcs7.cpp \
-	ssl/net/sslsocket.cpp ssl/timestamp.cpp ssh/net/sshsocket.cpp \
-	ldap/ldap.cpp curl/curl.cpp xml/expat/attribute.cpp \
-	xml/expat/element.cpp xml/expat/xml_parser.cpp \
-	xml/soap/soap_fault.cpp xml/soap/soap_gen_method.cpp \
-	xml/soap/soap_parser.cpp xml/soap/soap_encoder.cpp \
-	xml/libxml2/node.cpp xml/libxml2/document.cpp \
-	xml/libxml2/schema.cpp magic/magic.cpp mysql/mysql.cpp \
-	dbi/dbi.cpp libevent/event.cpp net/unixsocket.cpp \
-	net/server/plugin/mod_rpc.cpp \
+	date.cpp url.cpp tokenizer.cpp command.cpp thread.cpp \
+	debug/trace.cpp debug/debug_common.cpp debug/error.cpp \
+	debug/error_memory.cpp debug/error_simulation.cpp \
+	debug/objectDB.cpp internal/memory_pool.cpp zip/zip.cpp \
+	flex/flexer.cpp flex/bison.cpp pcre/pcre.cpp \
+	ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
+	ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp \
+	ssl/timestamp.cpp ssh/net/sshsocket.cpp ldap/ldap.cpp \
+	curl/curl.cpp xml/expat/attribute.cpp xml/expat/element.cpp \
+	xml/expat/xml_parser.cpp xml/soap/soap_fault.cpp \
+	xml/soap/soap_gen_method.cpp xml/soap/soap_parser.cpp \
+	xml/soap/soap_encoder.cpp xml/libxml2/node.cpp \
+	xml/libxml2/document.cpp xml/libxml2/schema.cpp \
+	magic/magic.cpp mysql/mysql.cpp dbi/dbi.cpp libevent/event.cpp \
+	net/unixsocket.cpp net/server/plugin/mod_rpc.cpp \
 	net/server/plugin/mod_shib/mod_shib.cpp \
 	net/server/plugin/mod_proxy_service.cpp \
 	net/server/plugin/mod_stream.cpp \
@@ -295,17 +295,18 @@ am__objects_54 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo \
 	ipt_ACCOUNT.lo value.lo query_parser.lo event_time.lo \
 	timeval.lo timer.lo notifier.lo string.lo file.lo process.lo \
 	file_config.lo log.lo options.lo application.lo cache.lo \
-	date.lo url.lo tokenizer.lo command.lo $(am__objects_23) \
-	$(am__objects_24) $(am__objects_25) $(am__objects_26) \
-	$(am__objects_27) $(am__objects_28) $(am__objects_29) \
-	$(am__objects_30) $(am__objects_31) $(am__objects_32) \
-	$(am__objects_33) $(am__objects_34) $(am__objects_35) \
-	$(am__objects_36) $(am__objects_37) $(am__objects_38) \
-	$(am__objects_39) $(am__objects_40) $(am__objects_41) \
-	$(am__objects_42) $(am__objects_43) $(am__objects_44) \
-	$(am__objects_45) $(am__objects_46) $(am__objects_47) \
-	$(am__objects_48) $(am__objects_49) $(am__objects_50) \
-	$(am__objects_51) $(am__objects_52) $(am__objects_53)
+	date.lo url.lo tokenizer.lo command.lo thread.lo \
+	$(am__objects_23) $(am__objects_24) $(am__objects_25) \
+	$(am__objects_26) $(am__objects_27) $(am__objects_28) \
+	$(am__objects_29) $(am__objects_30) $(am__objects_31) \
+	$(am__objects_32) $(am__objects_33) $(am__objects_34) \
+	$(am__objects_35) $(am__objects_36) $(am__objects_37) \
+	$(am__objects_38) $(am__objects_39) $(am__objects_40) \
+	$(am__objects_41) $(am__objects_42) $(am__objects_43) \
+	$(am__objects_44) $(am__objects_45) $(am__objects_46) \
+	$(am__objects_47) $(am__objects_48) $(am__objects_49) \
+	$(am__objects_50) $(am__objects_51) $(am__objects_52) \
+	$(am__objects_53)
 @FINAL_FALSE@am_lib@ULIB@_la_OBJECTS = $(am__objects_22) \
 @FINAL_FALSE@	$(am__objects_54)
 @FINAL_TRUE@am_lib@ULIB@_la_OBJECTS = all_c.lo all_cpp.lo
@@ -552,17 +553,18 @@ SRC_CPP = internal/common.cpp internal/objectIO.cpp ui/dialog.cpp \
 	query/query_parser.cpp event/event_time.cpp timeval.cpp \
 	timer.cpp notifier.cpp string.cpp file.cpp process.cpp \
 	file_config.cpp log.cpp options.cpp application.cpp cache.cpp \
-	date.cpp url.cpp tokenizer.cpp command.cpp $(am__append_2) \
-	$(am__append_19) $(am__append_21) $(am__append_23) \
-	$(am__append_24) $(am__append_26) $(am__append_27) \
-	$(am__append_28) $(am__append_29) $(am__append_30) \
-	$(am__append_31) $(am__append_32) $(am__append_33) \
-	$(am__append_34) $(am__append_35) $(am__append_36) \
-	$(am__append_38) $(am__append_39) $(am__append_40) \
-	$(am__append_41) $(am__append_42) $(am__append_43) \
-	$(am__append_44) $(am__append_45) $(am__append_46) \
-	$(am__append_47) $(am__append_48) $(am__append_49) \
-	$(am__append_50) $(am__append_51) $(am__append_52)
+	date.cpp url.cpp tokenizer.cpp command.cpp thread.cpp \
+	$(am__append_2) $(am__append_19) $(am__append_21) \
+	$(am__append_23) $(am__append_24) $(am__append_26) \
+	$(am__append_27) $(am__append_28) $(am__append_29) \
+	$(am__append_30) $(am__append_31) $(am__append_32) \
+	$(am__append_33) $(am__append_34) $(am__append_35) \
+	$(am__append_36) $(am__append_38) $(am__append_39) \
+	$(am__append_40) $(am__append_41) $(am__append_42) \
+	$(am__append_43) $(am__append_44) $(am__append_45) \
+	$(am__append_46) $(am__append_47) $(am__append_48) \
+	$(am__append_49) $(am__append_50) $(am__append_51) \
+	$(am__append_52)
 @FINAL_FALSE@lib@ULIB@_la_SOURCES = $(SRC_C) $(SRC_CPP)
 @FINAL_TRUE@lib@ULIB@_la_SOURCES = all_c.c all_cpp.cpp
 lib@ULIB@_la_LDFLAGS = $(LIBRARY_LIBTOOL_OPTIONS) $(am__append_53)
@@ -785,6 +787,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strndup.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/strptime.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tcpsocket.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/thread.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timegm.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timestamp.Plo@am__quote@

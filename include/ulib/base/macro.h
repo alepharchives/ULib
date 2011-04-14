@@ -318,10 +318,12 @@ typedef enum {
 #     define __pure                       __attribute__((pure))
 #     define likely(x)                    __builtin_expect(!!(x), 1)
 #     define unlikely(x)                  __builtin_expect(!!(x), 0)
-#     define PRINTF_ATTRIBUTE(a,b)        __attribute__ ((__format__ (printf, a, b)))
+#     define __noreturn                   __attribute__((noreturn))
+#     define PRINTF_ATTRIBUTE(a,b)        __attribute__((__format__(printf, a, b)))
 #     define PREFETCH_ATTRIBUTE(addr,rw)  __builtin_prefetch(addr, rw, 1);
 #  else
 #     define __pure
+#     define __noreturn
 #     define likely(x)
 #     define unlikely(x)
 #     define PRINTF_ATTRIBUTE(a,b)
@@ -342,6 +344,7 @@ typedef enum {
 #  define __cold           
 #  define likely(x)                    (x)
 #  define unlikely(x)                  (x)
+#  define __noreturn
 #  define PREFETCH_ATTRIBUTE(addr,rw)
 #endif /* __GNUC__ */
 

@@ -2,8 +2,6 @@
 
 # csp.sh
 
-#set -x
-
 # const char* IP  = (argv[1]?	    argv[1] :"localhost");
 # const char* URL = (argv[2]?	    argv[2] :"/index.html");
 # int PORT			= (argv[3]?atoi(argv[3]):80);
@@ -25,12 +23,12 @@ sleep 60
 mv test.txt csp_keepalive.csv
 
 sleep 60
-./bench_NO_keepalive $HOST "/100.html" 8080 0
-mv test.txt gwan_100_NO_keepalive.csv
+./bench_NO_keepalive $HOST "/99.html" 8080 0
+mv test.txt gwan_99_NO_keepalive.csv
 
 sleep 60
-./bench_keepalive    $HOST "/100.html" 8080 0
-mv test.txt gwan_100_keepalive.csv
+./bench_keepalive    $HOST "/99.html" 8080 0
+mv test.txt gwan_99_keepalive.csv
 
 sleep 60
 ./bench_NO_keepalive $HOST "/1000.html" 8080 0
