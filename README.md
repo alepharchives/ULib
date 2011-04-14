@@ -32,7 +32,7 @@ The current version offers the following features :
    * Support for aliases/redirection.
    * Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache,
      some CMS (SilverStripe) require it.
-   * Support for JSONRequest (http://json.org/JSONRequest.html).
+   * Support for [JSONRequest](http://json.org/JSONRequest.html).
    * Accept HTTP uploads up to 4 GB without increasing memory usage.
    * Support for upload progress via USP (ULib Servlet Page).
    * CGI support for shell script processes (with automatic management of form and cookie).
