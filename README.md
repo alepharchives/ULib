@@ -44,20 +44,20 @@ The current version offers the following features :
    * Requests cut in phases for modular architecture (apache-like).
    * Configuration file with dedicated section.
    * Built-in modules :
-       o mod_echo : echo features.
-       o mod_rpc : generic Remote Procedure Call.
-       o mod_http : core features, static file handler and dynamic page (ULib Servlet Page).
-       o mod_ssi : Server Side Includes support with enhanced #set, direct include and #exec usp (ULib Servlet Page).
-       o mod_nocat : captive portal implementation.
-       o mod_tsa : server side Time Stamp support.
-       o mod_soap : generic SOAP server services support.
-       o mod_fcgi : third-party applications support thru FastCGI interface.
-       o mod_scgi : module that implements the client side of the SCGI protocol (experimental).
-       o mod_shib : web single sign-on support (experimental).
-       o mod_proxy : proxy support (experimental).
-       o mod_geoip : geolocation support (experimental).
-       o mod_stream : simple streaming support (experimental).
-       o mod_socket : web sockets application framework (experimental).
+       * mod_echo : echo features.
+       * mod_rpc : generic Remote Procedure Call.
+       * mod_http : core features, static file handler and dynamic page (ULib Servlet Page).
+       * mod_ssi : Server Side Includes support with enhanced #set, direct include and #exec usp (ULib Servlet Page).
+       * mod_nocat : captive portal implementation.
+       * mod_tsa : server side Time Stamp support.
+       * mod_soap : generic SOAP server services support.
+       * mod_fcgi : third-party applications support thru FastCGI interface.
+       * mod_scgi : module that implements the client side of the SCGI protocol (experimental).
+       * mod_shib : web single sign-on support (experimental).
+       * mod_proxy : proxy support (experimental).
+       * mod_geoip : geolocation support (experimental).
+       * mod_stream : simple streaming support (experimental).
+       * mod_socket : web sockets application framework (experimental).
 
 Benchmarking
 ------------
@@ -93,7 +93,7 @@ For serving static content I use 3 file of different size:
  * 1000.html	      (1000 byte)
  * WebSocketMain.swf (180K byte)
 
-For serving dynamic content I use a simple request: <h1>Hello {name}<h1>
+For serving dynamic content I use a simple request: "<h1>Hello {name}<h1>"
 
 The raw data in csv format are here (https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark).
 
