@@ -38,7 +38,7 @@ The current version offers the following features :
    * CGI support for shell script processes (with automatic management of form and cookie).
    * General CGI support (run any CGI script) with automatic output compression (using deflate method).
    * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
-   * Support for minify HTML CGI output with wrapping google page speed SDK.
+   * Support for minify HTML CGI output with wrapping [google page speed SDK](http://code.google.com/speed/page-speed/download.html#pagespeed-sdk).
    * Web Socket support (experimental).
    * Support for Windows (without preforking).
    * Requests cut in phases for modular architecture (apache-like).
