@@ -76,8 +76,8 @@ Use apachebench (ab)
 I consider in this benchmark only the performant server [G-WAN 2.1.20 (32 bit)] (http://www.gwan.ch/).
 All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz) running Gentoo 64 bit (kernel 2.6.38.2).
 
-The client (available here: https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark/bin/bench1.c)
-relies on ApacheBench (ab) and it is a slightly modified version of http://gwan.ch/source/ab.c.txt.
+The client is available [here](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark/bin/bench1.c):
+relies on ApacheBench (ab) and it is a slightly modified version of [G-WAN client](http://gwan.ch/source/ab.c.txt).
 
 The client is running on different computer than the web server (networking is involved).
 
