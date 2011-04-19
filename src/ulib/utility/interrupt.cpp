@@ -213,17 +213,17 @@ void UInterrupt::setMaskInterrupt(sigset_t* mask, int signo)
 
    if (mask)
       {
-#  ifdef sigemptyset
+#     ifdef sigemptyset
       sigemptyset(mask);
-#  else
+#     else
       (void) U_SYSCALL(sigemptyset, "%p", mask);
-#  endif
+#     endif
 
-#  ifdef sigaddset
+#     ifdef sigaddset
       sigaddset(mask, signo);
-#  else
+#     else
       (void) U_SYSCALL(sigaddset, "%p,%d", mask, signo);
-#  endif
+#     endif
       }
    else
       {
@@ -231,23 +231,23 @@ void UInterrupt::setMaskInterrupt(sigset_t* mask, int signo)
 
       mask_interrupt = new sigset_t;
 
-#  ifdef sigemptyset
+#     ifdef sigemptyset
       sigemptyset(mask_interrupt);
-#  else
+#     else
       (void) U_SYSCALL(sigemptyset, "%p", mask_interrupt);
-#  endif
+#     endif
 
-#  ifdef sigaddset
+#     ifdef sigaddset
       sigaddset(mask_interrupt, SIGUSR1); // 10
       sigaddset(mask_interrupt, SIGUSR2); // 12
       sigaddset(mask_interrupt, SIGALRM); // 14
       sigaddset(mask_interrupt, SIGCHLD); // 17
-#  else
+#     else
       (void) U_SYSCALL(sigaddset, "%p,%d", mask_interrupt, SIGUSR1); // 10
       (void) U_SYSCALL(sigaddset, "%p,%d", mask_interrupt, SIGUSR2); // 12
       (void) U_SYSCALL(sigaddset, "%p,%d", mask_interrupt, SIGALRM); // 14
       (void) U_SYSCALL(sigaddset, "%p,%d", mask_interrupt, SIGCHLD); // 17
-#  endif
+#     endif
       }
 }
 

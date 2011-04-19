@@ -885,6 +885,9 @@ typedef unsigned long long uint64;
 /* STATIC_HANDLER_TSA */
 #undef U_STATIC_HANDLER_TSA
 
+/* install directory for configuration data */
+#undef U_SYSCONFDIR
+
 /* Define if we have zlib with this function */
 #undef U_ZLIB_DEFLATE_WORKSPACESIZE
 

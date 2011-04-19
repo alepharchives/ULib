@@ -35,37 +35,39 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@ZIP_TRUE@am__append_1 = test_zip
-@ZIP_TRUE@am__append_2 = zip.test
-@USE_PARSER_TRUE@am__append_3 = test_flexer test_bison
-@USE_PARSER_TRUE@am__append_4 = flexer.test bison.test
-@PCRE_TRUE@am__append_5 = test_pcre
-@PCRE_TRUE@am__append_6 = pcre.test
-@SSL_TRUE@am__append_7 = test_des3 test_digest test_certificate test_crl test_pkcs10 test_ssl_client test_ssl_server test_https test_pkcs7
-@SSL_TRUE@am__append_8 = des3.test digest.test certificate.test crl.test pkcs10.test ssl_client_server.test https.test pkcs7.test
-@SSL_TRUE@@SSL_TS_TRUE@am__append_9 = test_timestamp
-@SSL_TRUE@@SSL_TS_TRUE@am__append_10 = timestamp.test
-@SSH_TRUE@am__append_11 = test_ssh_client
-@SSH_TRUE@am__append_12 = ssh_client.test
-@LDAP_TRUE@am__append_13 = test_ldap
-@LDAP_TRUE@am__append_14 = ldap.test
-@CURL_TRUE@am__append_15 = test_curl
-@CURL_TRUE@am__append_16 = curl.test
-@MAGIC_TRUE@am__append_17 = test_magic
-@MAGIC_TRUE@am__append_18 = magic.test
-@EXPAT_TRUE@am__append_19 = test_expat test_soap_server test_soap_client
-@EXPAT_TRUE@am__append_20 = expat.test soap_server.test soap_client.test
-@MEMORY_POOL_TRUE@am__append_21 = test_memory_pool
-@MEMORY_POOL_TRUE@am__append_22 = memory_pool.test
-@DBI_TRUE@am__append_23 = test_dbi
-@DBI_TRUE@am__append_24 = dbi.test
-@LIBEVENT_TRUE@am__append_25 = test_event
-@LIBEVENT_TRUE@am__append_26 = event.test
-@MINGW_FALSE@am__append_27 = test_process test_interrupt test_unixsocket_client test_unixsocket_server
-@MINGW_FALSE@am__append_28 = process.test interrupt.test unixsocket.test
-@PLUGIN_TRUE@am__append_29 = test_plugin
-@PLUGIN_TRUE@am__append_30 = plugin.test
-check_PROGRAMS = $(am__EXEEXT_16)
+@PTHREAD_TRUE@am__append_1 = test_thread
+@PTHREAD_TRUE@am__append_2 = thread.test
+@ZIP_TRUE@am__append_3 = test_zip
+@ZIP_TRUE@am__append_4 = zip.test
+@USE_PARSER_TRUE@am__append_5 = test_flexer test_bison
+@USE_PARSER_TRUE@am__append_6 = flexer.test bison.test
+@PCRE_TRUE@am__append_7 = test_pcre
+@PCRE_TRUE@am__append_8 = pcre.test
+@SSL_TRUE@am__append_9 = test_des3 test_digest test_certificate test_crl test_pkcs10 test_ssl_client test_ssl_server test_https test_pkcs7
+@SSL_TRUE@am__append_10 = des3.test digest.test certificate.test crl.test pkcs10.test ssl_client_server.test https.test pkcs7.test
+@SSL_TRUE@@SSL_TS_TRUE@am__append_11 = test_timestamp
+@SSL_TRUE@@SSL_TS_TRUE@am__append_12 = timestamp.test
+@SSH_TRUE@am__append_13 = test_ssh_client
+@SSH_TRUE@am__append_14 = ssh_client.test
+@LDAP_TRUE@am__append_15 = test_ldap
+@LDAP_TRUE@am__append_16 = ldap.test
+@CURL_TRUE@am__append_17 = test_curl
+@CURL_TRUE@am__append_18 = curl.test
+@MAGIC_TRUE@am__append_19 = test_magic
+@MAGIC_TRUE@am__append_20 = magic.test
+@EXPAT_TRUE@am__append_21 = test_expat test_soap_server test_soap_client
+@EXPAT_TRUE@am__append_22 = expat.test soap_server.test soap_client.test
+@MEMORY_POOL_TRUE@am__append_23 = test_memory_pool
+@MEMORY_POOL_TRUE@am__append_24 = memory_pool.test
+@DBI_TRUE@am__append_25 = test_dbi
+@DBI_TRUE@am__append_26 = dbi.test
+@LIBEVENT_TRUE@am__append_27 = test_event
+@LIBEVENT_TRUE@am__append_28 = event.test
+@MINGW_FALSE@am__append_29 = test_process test_interrupt test_unixsocket_client test_unixsocket_server
+@MINGW_FALSE@am__append_30 = process.test interrupt.test unixsocket.test
+@PLUGIN_TRUE@am__append_31 = test_plugin
+@PLUGIN_TRUE@am__append_32 = plugin.test
+check_PROGRAMS = $(am__EXEEXT_17)
 subdir = tests/ulib
 DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	test_bison.cc test_bison.h test_bison_flexer.cc test_flexer.cc
@@ -114,32 +116,33 @@ product2_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(product2_la_LDFLAGS) $(LDFLAGS) -o $@
 @PLUGIN_TRUE@am_product2_la_rpath =
-@ZIP_TRUE@am__EXEEXT_1 = test_zip$(EXEEXT)
-@USE_PARSER_TRUE@am__EXEEXT_2 = test_flexer$(EXEEXT) \
+@PTHREAD_TRUE@am__EXEEXT_1 = test_thread$(EXEEXT)
+@ZIP_TRUE@am__EXEEXT_2 = test_zip$(EXEEXT)
+@USE_PARSER_TRUE@am__EXEEXT_3 = test_flexer$(EXEEXT) \
 @USE_PARSER_TRUE@	test_bison$(EXEEXT)
-@PCRE_TRUE@am__EXEEXT_3 = test_pcre$(EXEEXT)
-@SSL_TRUE@am__EXEEXT_4 = test_des3$(EXEEXT) test_digest$(EXEEXT) \
+@PCRE_TRUE@am__EXEEXT_4 = test_pcre$(EXEEXT)
+@SSL_TRUE@am__EXEEXT_5 = test_des3$(EXEEXT) test_digest$(EXEEXT) \
 @SSL_TRUE@	test_certificate$(EXEEXT) test_crl$(EXEEXT) \
 @SSL_TRUE@	test_pkcs10$(EXEEXT) test_ssl_client$(EXEEXT) \
 @SSL_TRUE@	test_ssl_server$(EXEEXT) test_https$(EXEEXT) \
 @SSL_TRUE@	test_pkcs7$(EXEEXT)
-@SSL_TRUE@@SSL_TS_TRUE@am__EXEEXT_5 = test_timestamp$(EXEEXT)
-@SSH_TRUE@am__EXEEXT_6 = test_ssh_client$(EXEEXT)
-@LDAP_TRUE@am__EXEEXT_7 = test_ldap$(EXEEXT)
-@CURL_TRUE@am__EXEEXT_8 = test_curl$(EXEEXT)
-@MAGIC_TRUE@am__EXEEXT_9 = test_magic$(EXEEXT)
-@EXPAT_TRUE@am__EXEEXT_10 = test_expat$(EXEEXT) \
+@SSL_TRUE@@SSL_TS_TRUE@am__EXEEXT_6 = test_timestamp$(EXEEXT)
+@SSH_TRUE@am__EXEEXT_7 = test_ssh_client$(EXEEXT)
+@LDAP_TRUE@am__EXEEXT_8 = test_ldap$(EXEEXT)
+@CURL_TRUE@am__EXEEXT_9 = test_curl$(EXEEXT)
+@MAGIC_TRUE@am__EXEEXT_10 = test_magic$(EXEEXT)
+@EXPAT_TRUE@am__EXEEXT_11 = test_expat$(EXEEXT) \
 @EXPAT_TRUE@	test_soap_server$(EXEEXT) \
 @EXPAT_TRUE@	test_soap_client$(EXEEXT)
-@MEMORY_POOL_TRUE@am__EXEEXT_11 = test_memory_pool$(EXEEXT)
-@DBI_TRUE@am__EXEEXT_12 = test_dbi$(EXEEXT)
-@LIBEVENT_TRUE@am__EXEEXT_13 = test_event$(EXEEXT)
-@MINGW_FALSE@am__EXEEXT_14 = test_process$(EXEEXT) \
+@MEMORY_POOL_TRUE@am__EXEEXT_12 = test_memory_pool$(EXEEXT)
+@DBI_TRUE@am__EXEEXT_13 = test_dbi$(EXEEXT)
+@LIBEVENT_TRUE@am__EXEEXT_14 = test_event$(EXEEXT)
+@MINGW_FALSE@am__EXEEXT_15 = test_process$(EXEEXT) \
 @MINGW_FALSE@	test_interrupt$(EXEEXT) \
 @MINGW_FALSE@	test_unixsocket_client$(EXEEXT) \
 @MINGW_FALSE@	test_unixsocket_server$(EXEEXT)
-@PLUGIN_TRUE@am__EXEEXT_15 = test_plugin$(EXEEXT)
-am__EXEEXT_16 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
+@PLUGIN_TRUE@am__EXEEXT_16 = test_plugin$(EXEEXT)
+am__EXEEXT_17 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_notifier$(EXEEXT) test_string$(EXEEXT) test_file$(EXEEXT) \
 	test_cdb$(EXEEXT) test_rdb$(EXEEXT) test_file_config$(EXEEXT) \
 	test_log$(EXEEXT) test_vector$(EXEEXT) test_options$(EXEEXT) \
@@ -153,12 +156,12 @@ am__EXEEXT_16 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_tokenizer$(EXEEXT) test_query_parser$(EXEEXT) \
 	test_multipart$(EXEEXT) test_command$(EXEEXT) \
 	test_dialog$(EXEEXT) test_rdb_server$(EXEEXT) \
-	test_json$(EXEEXT) test_server$(EXEEXT) test_thread$(EXEEXT) \
-	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
-	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
-	$(am__EXEEXT_7) $(am__EXEEXT_8) $(am__EXEEXT_9) \
-	$(am__EXEEXT_10) $(am__EXEEXT_11) $(am__EXEEXT_12) \
-	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15)
+	test_json$(EXEEXT) test_server$(EXEEXT) $(am__EXEEXT_1) \
+	$(am__EXEEXT_2) $(am__EXEEXT_3) $(am__EXEEXT_4) \
+	$(am__EXEEXT_5) $(am__EXEEXT_6) $(am__EXEEXT_7) \
+	$(am__EXEEXT_8) $(am__EXEEXT_9) $(am__EXEEXT_10) \
+	$(am__EXEEXT_11) $(am__EXEEXT_12) $(am__EXEEXT_13) \
+	$(am__EXEEXT_14) $(am__EXEEXT_15) $(am__EXEEXT_16)
 am_test_application_OBJECTS = test_application.$(OBJEXT)
 test_application_OBJECTS = $(am_test_application_OBJECTS)
 test_application_LDADD = $(LDADD)
@@ -411,7 +414,8 @@ am_test_string_OBJECTS = test_string.$(OBJEXT)
 test_string_OBJECTS = $(am_test_string_OBJECTS)
 test_string_LDADD = $(LDADD)
 test_string_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
-am_test_thread_OBJECTS = test_thread.$(OBJEXT)
+am__test_thread_SOURCES_DIST = test_thread.cpp
+@PTHREAD_TRUE@am_test_thread_OBJECTS = test_thread.$(OBJEXT)
 test_thread_OBJECTS = $(am_test_thread_OBJECTS)
 test_thread_LDADD = $(LDADD)
 test_thread_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
@@ -559,7 +563,7 @@ DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
 	$(am__test_ssh_client_SOURCES_DIST) \
 	$(am__test_ssl_client_SOURCES_DIST) \
 	$(am__test_ssl_server_SOURCES_DIST) $(test_string_SOURCES) \
-	$(test_thread_SOURCES) $(test_timer_SOURCES) \
+	$(am__test_thread_SOURCES_DIST) $(test_timer_SOURCES) \
 	$(am__test_timestamp_SOURCES_DIST) $(test_timeval_SOURCES) \
 	$(test_tokenizer_SOURCES) $(test_tree_SOURCES) \
 	$(am__test_unixsocket_client_SOURCES_DIST) \
@@ -757,12 +761,13 @@ PRG = test_timeval test_timer test_notifier test_string test_file \
 	test_header test_entity test_ipaddress test_socket test_smtp \
 	test_pop3 test_imap test_ftp test_http test_rdb_client \
 	test_tokenizer test_query_parser test_multipart test_command \
-	test_dialog test_rdb_server test_json test_server test_thread \
+	test_dialog test_rdb_server test_json test_server \
 	$(am__append_1) $(am__append_3) $(am__append_5) \
 	$(am__append_7) $(am__append_9) $(am__append_11) \
 	$(am__append_13) $(am__append_15) $(am__append_17) \
 	$(am__append_19) $(am__append_21) $(am__append_23) \
-	$(am__append_25) $(am__append_27) $(am__append_29)
+	$(am__append_25) $(am__append_27) $(am__append_29) \
+	$(am__append_31)
 TST = timeval.test timer.test notifier.test string.test file.test \
 	cdb.test rdb.test file_config.test log.test vector.test \
 	options.test application.test tree.test compress.test \
@@ -771,11 +776,12 @@ TST = timeval.test timer.test notifier.test string.test file.test \
 	pop3.test imap.test ftp.test http.test tokenizer.test \
 	query_parser.test multipart.test command.test \
 	rdb_client_server.test json.test server.test server_rpc.test \
-	thread.test $(am__append_2) $(am__append_4) $(am__append_6) \
+	$(am__append_2) $(am__append_4) $(am__append_6) \
 	$(am__append_8) $(am__append_10) $(am__append_12) \
 	$(am__append_14) $(am__append_16) $(am__append_18) \
 	$(am__append_20) $(am__append_22) $(am__append_24) \
-	$(am__append_26) $(am__append_28) $(am__append_30)
+	$(am__append_26) $(am__append_28) $(am__append_30) \
+	$(am__append_32)
 test_ipaddress_SOURCES = test_ipaddress.cpp
 test_socket_SOURCES = test_socket.cpp
 test_ftp_SOURCES = test_ftp.cpp
@@ -813,7 +819,7 @@ test_dialog_SOURCES = test_dialog.cpp
 test_rdb_server_SOURCES = test_rdb_server.cpp
 test_json_SOURCES = test_json.cpp
 test_server_SOURCES = test_server.cpp
-test_thread_SOURCES = test_thread.cpp
+@PTHREAD_TRUE@test_thread_SOURCES = test_thread.cpp
 @ZIP_TRUE@test_zip_SOURCES = test_zip.cpp
 @USE_PARSER_TRUE@test_flexer_SOURCES = test_flexer.ll
 @USE_PARSER_TRUE@test_bison_SOURCES = test_bison_flexer.ll test_bison.yy

@@ -82,8 +82,6 @@ public:
 
       for (UNotifier* item = first; item; item = item->next)
          {
-         PREFETCH_ATTRIBUTE(item->next, 0)
-
          if (item->handler_event_fd == handler_event) U_RETURN(true);
          }
 

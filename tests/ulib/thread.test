@@ -12,6 +12,7 @@ start_msg thread
 #VALGRIND='valgrind --leak-check=full'
  export UTRACE UOBJDUMP USIMERR
 
+#STRACE=$TRUSS
 start_prg thread
 
 # Test against expected output

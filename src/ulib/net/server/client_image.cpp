@@ -285,7 +285,7 @@ void UClientImage_Base::run()
    U_INTERNAL_DUMP("UClientImage_Base::run() flag_loop = %b", UServer_Base::flag_loop)
 
    if (UServer_Base::flag_loop          == false &&
-       UServer_Base::preforked_num_kids == 0     &&
+       UServer_Base::preforked_num_kids <= 0     &&
        UServer_Base::proc->child())
       {
       U_EXIT(0);

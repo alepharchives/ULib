@@ -14,9 +14,7 @@
 #include <ulib/net/ipaddress.h>
 #include <ulib/container/vector.h>
 
-#if defined(HAVE_GETADDRINFO) || defined(HAVE_GETNAMEINFO)
-#  include "socket_address.cpp"
-#endif
+#include "socket_address.cpp"
 
 const UString* UIPAddress::str_localhost;
 

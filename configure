@@ -705,6 +705,8 @@ THREAD_FLAGS
 thrprefix
 SEMAPHORE_FALSE
 SEMAPHORE_TRUE
+PTHREAD_FALSE
+PTHREAD_TRUE
 PLUGIN_FALSE
 PLUGIN_TRUE
 PAGE_SPEED_FALSE
@@ -22537,6 +22539,14 @@ fi
 
 	fi
 	 if true; then
+  PTHREAD_TRUE=
+  PTHREAD_FALSE='#'
+else
+  PTHREAD_TRUE='#'
+  PTHREAD_FALSE=
+fi
+
+	 if true; then
   SEMAPHORE_TRUE=
   SEMAPHORE_FALSE='#'
 else
@@ -24677,6 +24687,14 @@ $as_echo "#define COMMON_AIX_FIXES 1" >>confdefs.h
 
 
 		 if true; then
+  PTHREAD_TRUE=
+  PTHREAD_FALSE='#'
+else
+  PTHREAD_TRUE='#'
+  PTHREAD_FALSE=
+fi
+
+		 if true; then
   SEMAPHORE_TRUE=
   SEMAPHORE_FALSE='#'
 else
@@ -24686,6 +24704,14 @@ fi
 
 		LIBS_SAVE="${LIBS_SAVE} -l$ost_cv_thread_library";
 	else
+		 if false; then
+  PTHREAD_TRUE=
+  PTHREAD_FALSE='#'
+else
+  PTHREAD_TRUE='#'
+  PTHREAD_FALSE=
+fi
+
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sem_init in -lrt" >&5
 $as_echo_n "checking for sem_init in -lrt... " >&6; }
 if ${ac_cv_lib_rt_sem_init+:} false; then :
@@ -27381,15 +27407,21 @@ _ACEOF
 
 if test "$prefix" = "NONE"; then
 	prefix="/usr/local"
-	pkglibexecdir="/usr/local/libexec/ulib"
-else
-	pkglibexecdir="$prefix/libexec/ulib"
 fi
 
-# pkugin dir
+sysconfdir="$prefix/etc/ulib"
+pkglibexecdir="$prefix/libexec/ulib"
+
+# plugin dir
 
 cat >>confdefs.h <<_ACEOF
 #define U_LIBEXECDIR "${pkglibexecdir}"
+_ACEOF
+
+# config dir
+
+cat >>confdefs.h <<_ACEOF
+#define U_SYSCONFDIR "${sysconfdir}"
 _ACEOF
 
 
@@ -27401,6 +27433,7 @@ configure: Configured to build src/ulib/libulib:
             Host setup: ${host}
         Install prefix: ${prefix}
         Install plugin: ${pkglibexecdir}
+    Configuration data: ${sysconfdir}
       Operating System: $os_version
           C++ Compiler: ${CXX} ( $gcc_version )
              C   Flags: ${CFLAGS}
@@ -27826,12 +27859,24 @@ if test -z "${PLUGIN_TRUE}" && test -z "${PLUGIN_FALSE}"; then
   as_fn_error $? "conditional \"PLUGIN\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${SEMAPHORE_TRUE}" && test -z "${SEMAPHORE_FALSE}"; then
-  as_fn_error $? "conditional \"SEMAPHORE\" was never defined.
+if test -z "${PTHREAD_TRUE}" && test -z "${PTHREAD_FALSE}"; then
+  as_fn_error $? "conditional \"PTHREAD\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SEMAPHORE_TRUE}" && test -z "${SEMAPHORE_FALSE}"; then
   as_fn_error $? "conditional \"SEMAPHORE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${PTHREAD_TRUE}" && test -z "${PTHREAD_FALSE}"; then
+  as_fn_error $? "conditional \"PTHREAD\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${SEMAPHORE_TRUE}" && test -z "${SEMAPHORE_FALSE}"; then
+  as_fn_error $? "conditional \"SEMAPHORE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${PTHREAD_TRUE}" && test -z "${PTHREAD_FALSE}"; then
+  as_fn_error $? "conditional \"PTHREAD\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SEMAPHORE_TRUE}" && test -z "${SEMAPHORE_FALSE}"; then

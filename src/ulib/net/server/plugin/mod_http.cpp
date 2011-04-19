@@ -357,7 +357,7 @@ int UHttpPlugIn::handlerRequest()
          {
          // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
 
-         bool async = (UServer_Base::preforked_num_kids == 0 && UClientImage_Base::isPipeline() == false);
+         bool async = (UServer_Base::preforked_num_kids <= 0 && UClientImage_Base::isPipeline() == false);
 
          if (UHTTP::processCGIRequest((UCommand*)0, 0, async, true) == false)
             {

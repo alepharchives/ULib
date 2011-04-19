@@ -84,6 +84,10 @@
 #  include "net/unixsocket.cpp"
 #endif
 
+#ifdef HAVE_PTHREAD_H
+#  include "thread.cpp"
+#endif
+
 #ifdef HAVE_ZIP
 #  include "zip/zip.cpp"
 #endif

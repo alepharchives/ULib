@@ -995,8 +995,8 @@ const char* UNotifier::dump(bool reset) const
    UObjectIO::os->put('\n');
 
    *UObjectIO::os << "pool             (UNotifier " << (void*)pool             << ")\n"
-                  << "first            (UNotifier " << (void*)first            << ")\n"
                   << "next             (UNotifier " << (void*)next             << ")\n"
+                  << "first            (UNotifier " << (void*)first            << ")\n"
                   << "handler_event_fd (UEventFd  " << (void*)handler_event_fd << ')';
 
    if (reset)

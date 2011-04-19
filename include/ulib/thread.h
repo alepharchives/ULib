@@ -34,15 +34,14 @@ public:
       cancelDisabled    /* ignore cancellation */
    };
 
-   enum Suspend {
-      suspendEnable,    /* suspend enabled */
-      suspendDisable    /* suspend disabled, Suspend do nothing */
-   };
-
    // COSTRUTTORI
 
-            UThread();
+            UThread(bool __suspendEnable = false);
    virtual ~UThread();
+
+   // SERVICES
+
+   static void sleep(time_t timeoutMS);
 
    /**
     * All threads execute by deriving the run method of UThread.
@@ -51,31 +50,7 @@ public:
     * also terminate.
     */
 
-   virtual void run() = 0;
-
-   /**
-    * The initial method is called by a newly created thread when it
-    * starts execution.  This method is ran with deferred cancellation
-    * disabled by default.  The Initial method is given a separate
-    * handler so that it can create temporary objects on it's own
-    * stack frame, rather than having objects created on run() that
-    * are only needed by startup and yet continue to consume stack space.
-    */
-
-   virtual void initial() {}
-
-    /**
-     * A thread that is self terminating, either by invoking exit() or
-     * leaving it's run(), will have this method called. It can be used
-     * to self delete the current object assuming the object was created
-     * with new on the heap rather than stack local, hence one may often
-     * see final defined as "delete this" in a derived thread class.  A
-     * final method, while running, cannot be terminated or cancelled by
-     * another thread. Final is called for all cancellation type (even
-     * immediate).
-     */
-
-   virtual void final() {}
+   virtual void run() {} 
 
    /**
     * When a new thread is created, it does not begin immediate
@@ -85,10 +60,21 @@ public:
     * combinations. It can be started directly after the constructor
     * completes by calling the start() method.
     *
-    * @return error code if execution fails.
+    * @return false if execution fails.
     */
 
-   int start();
+   bool start();
+   void stop();
+
+   /**
+    * Start a new thread as "detached". This is an alternative
+    * start() method that resolves some issues with later glibc
+    * implimentations which incorrectly impliment self-detach.
+    *
+    * @return false if execution fails.
+    */
+
+   bool detach();
 
    /**
     * Yields the current thread's CPU time slice to allow another thread to
@@ -97,20 +83,38 @@ public:
 
    void yield();
 
-   // SERVICES
-
-   void sleep(time_t timeout);
-
-   void setCancel(int mode);
-
    /**
-    * Used to retrieve the cancellation mode in effect for the
-    * selected thread.
-    *
-    * @return cancellation mode constant.
+    * Suspends execution of the selected thread. Pthreads do not
+    * normally support suspendable threads, so the behavior is
+    * simulated with signals.
     */
 
-    int getCancel() { return _cancel; }
+   void suspend();
+
+   /**
+    * Resumes execution of the selected thread.
+    */
+
+   void resume();
+
+   /**
+    * Check if this thread is detached.
+    *
+    * @return true if the thread is detached.
+    */
+
+   bool isDetached() const;
+
+   /** 
+    * Each time a thread receives a signal, it stores the
+    * signal number locally.
+    */
+
+   void signal(int signo);
+
+   // Cancellation
+
+   void setCancel(int mode);
 
    /**
     * This is used to help build wrapper functions in libraries
@@ -130,57 +134,34 @@ public:
 
    void exitCancel(int cancel);
 
-   /**
-    * Suspends execution of the selected thread. Pthreads do not
-    * normally support suspendable threads, so the behavior is
-    * simulated with signals. On systems such as Linux that
-    * define threads as processes, SIGSTOP and SIGCONT may be used.
-    */
-
-   void suspend();
-
-   /**
-    * Resumes execution of the selected thread.
-    */
-
-   void resume();
-
-   /**
-    * Check if this thread is detached.
-    *
-    * @return true if the thread is detached.
-    */
-
-   bool isDetached() const;
-
-   /**
-    * Sets the thread's ability to be suspended from execution. The
-    * thread may either have suspend enabled (suspendEnable) or
-    * disabled (suspendDisable).
-    *
-    * @param mode for suspend.
-    */
-
-   void setSuspend(Suspend mode);
-
 #ifdef DEBUG
    const char* dump(bool reset) const;
 #endif
 
 protected:
-   int _cancel;
-   pthread_t _tid;
-   pthread_attr_t _attr;
-   volatile bool _suspendEnable:1;
+   UThread* next;
+
+   static UThread* first;
+   static pthread_cond_t cond;
+   static pthread_mutex_t lock;
 
    void close(); // close current thread, free all
+   void sigInstall(int signo);
 
-   static void execHandler(UThread* th) __noreturn;
-   static void threadCleanup(UThread* th) { th->close(); }
+   static void sigHandler(int signo);
+   static void execHandler(UThread* th);
+   static void threadCleanup(UThread* th);
 
-   static sigset_t* blockedSignals(sigset_t* sig);
+   // A special global function, getThread(), is provided to identify the thread object that represents the current
+   // execution context you are running under. This is sometimes needed to deliver signals to the correct thread.
+
+   static UThread* getThread();
 
 private:
+   // private data
+   class UThreadImpl* priv;
+   friend class UThreadImpl;
+
    UThread(const UThread&)            {}
    UThread& operator=(const UThread&) { return *this; }
 };

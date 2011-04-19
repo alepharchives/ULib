@@ -35,11 +35,11 @@ The current version offers the following features :
    * Support for [JSONRequest](http://json.org/JSONRequest.html).
    * Accept HTTP uploads up to 4 GB without increasing memory usage.
    * Support for upload progress via USP (ULib Servlet Page).
+   * General [CGI](http://it.wikipedia.org/wiki/Common_Gateway_Interface) support (run any CGI script) with automatic output compression (using deflate method).
    * CGI support for shell script processes (with automatic management of form and cookie).
-   * General CGI support (run any CGI script) with automatic output compression (using deflate method).
    * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
    * Support for minify HTML CGI output with wrapping [google page speed SDK](http://code.google.com/speed/page-speed/download.html#pagespeed-sdk).
-   * Web Socket support (experimental).
+   * [Web Socket](http://dev.w3.org/html5/websockets) support (experimental).
    * Support for Windows (without preforking).
    * Requests cut in phases for modular architecture (apache-like).
    * Configuration file with dedicated section.
@@ -49,13 +49,13 @@ The current version offers the following features :
        * mod_http : core features, static file handler and dynamic page (ULib Servlet Page).
        * mod_ssi : [Server Side Includes]( http://en.wikipedia.org/wiki/Server_Side_Include) support with enhanced #set, direct include and #exec usp (ULib Servlet Page).
        * mod_nocat : [captive portal](http://nocat.net/) implementation.
-       * mod_tsa : server side Time Stamp support.
-       * mod_soap : generic SOAP server services support.
-       * mod_fcgi : third-party applications support thru FastCGI interface.
-       * mod_scgi : module that implements the client side of the SCGI protocol (experimental).
-       * mod_shib : web single sign-on support (experimental).
+       * mod_tsa : server side [Time Stamp](http://www.opentsa.org) support.
+       * mod_soap : generic [SOAP](http://java.sun.com/developer/technicalArticles/xml/webservices) server services support.
+       * mod_fcgi : third-party applications support thru [FastCGI](http://www.fastcgi.com/drupal) interface.
+       * mod_scgi : module that implements the client side of the [SCGI](http://www.mems-exchange.org/software/scgi) protocol (experimental).
+       * mod_shib : [web single sign-on support](http://shibboleth.internet2.edu) (experimental).
        * mod_proxy : proxy support (experimental).
-       * mod_geoip : geolocation support (experimental).
+       * mod_geoip : [geolocation support](http://www.maxmind.com/geoip/api/c.shtml) (experimental).
        * mod_stream : simple streaming support (experimental).
        * mod_socket : web sockets application framework (experimental).
 

@@ -7,28 +7,28 @@ VERSION=@VERSION@
 
 run_build() {
 
-	mv ULib-$VERSION $1-$VERSION
+	mv ulib-$VERSION $1-$VERSION
 	tar czf $PACKAGE/SOURCES/$1-$VERSION.tar.gz $1-$VERSION
 
 	cp $1-$VERSION/examples/$2/$3.spec $PACKAGE/SPECS/
 
 	rpmbuild -ba --clean --rmsource $1-$VERSION/examples/$2/$3.spec >>rpm.log 2>&1
 
-	mv $1-$VERSION ULib-$VERSION
+	mv $1-$VERSION ulib-$VERSION
 }
 
-ULIB_TO_REMOVE=`ls -d ULib-*`
+ULIB_TO_REMOVE=`ls -d ulib-*`
 
 if [ -n "$ULIB_TO_REMOVE" ]; then
 	for i in "$ULIB_TO_REMOVE"; do
-		if [ "$i" != "ULib-$VERSION.tar.gz" ]; then
+		if [ "$i" != "ulib-$VERSION.tar.gz" ]; then
 			rm -rf $i
 		fi
 	done
 fi
 
-tar xzf ULib-$VERSION.tar.gz
-cd ULib-$VERSION
+tar xzf ulib-$VERSION.tar.gz
+cd ulib-$VERSION
 
 #------------------------------------
 # SUSE
@@ -39,15 +39,15 @@ cd ULib-$VERSION
 ./configure -C --enable-static --enable-shared
 
 cd ..
-tar czf ULib-$VERSION.tar.gz ULib-$VERSION
+tar czf ulib-$VERSION.tar.gz ulib-$VERSION
 
-cp ULib-$VERSION.tar.gz $PACKAGE/SOURCES/
+cp ulib-$VERSION.tar.gz $PACKAGE/SOURCES/
 
-cp ULib-$VERSION/ULib.spec				$PACKAGE/SPECS/
-cp ULib-$VERSION/examples/*/*.start $PACKAGE/SOURCES/
+cp ulib-$VERSION/ULib.spec				$PACKAGE/SPECS/
+cp ulib-$VERSION/examples/*/*.start $PACKAGE/SOURCES/
 
-rpmbuild -ba --clean --rmsource ULib-$VERSION/ULib.spec >rpm.log 2>&1
-
+rpmbuild -ba --clean --rmsource ulib-$VERSION/ULib.spec >rpm.log 2>&1
+exit 0
 run_build lcsp					lcsp			lcsp
 run_build lcsp_rpc			lcsp			lcsp_rpc
 run_build cspserver			userver		cspserver

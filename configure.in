@@ -531,15 +531,18 @@ case "$target_os" in
 	else
 		AM_CONDITIONAL(PLUGIN, false)
 	fi
+	AM_CONDITIONAL(PTHREAD, true)
 	AM_CONDITIONAL(SEMAPHORE, true)
 	;;
 	*)
 	AC_CHECK_LIB(pthread,sem_init)
 	if test "$ac_cv_lib_pthread_sem_init" = "yes"; then
 		OST_LIB_PTHREAD
+		AM_CONDITIONAL(PTHREAD, true)
 		AM_CONDITIONAL(SEMAPHORE, true)
 		LIBS_SAVE="${LIBS_SAVE} -l$ost_cv_thread_library";
 	else
+		AM_CONDITIONAL(PTHREAD, false)
 		AC_CHECK_LIB(rt,sem_init)
 		if test "$ac_cv_lib_rt_sem_init" = "yes"; then
 			LIBS_SAVE="${LIBS_SAVE} -lrt";
@@ -1032,13 +1035,15 @@ AC_COMPILATION_ENVIRONMENT
 
 if test "$prefix" = "NONE"; then
 	prefix="/usr/local"
-	pkglibexecdir="/usr/local/libexec/ulib"
-else
-	pkglibexecdir="$prefix/libexec/ulib"
 fi
 
-# pkugin dir
+sysconfdir="$prefix/etc/ulib"
+pkglibexecdir="$prefix/libexec/ulib"
+
+# plugin dir
 AC_DEFINE_UNQUOTED(U_LIBEXECDIR, "${pkglibexecdir}", [install directory for plugins])
+# config dir
+AC_DEFINE_UNQUOTED(U_SYSCONFDIR, "${sysconfdir}", [install directory for configuration data])
 
 echo \
 "------------------------------------------------------------------------
@@ -1048,6 +1053,7 @@ configure: Configured to build src/ulib/libulib:
             Host setup: ${host}
         Install prefix: ${prefix}
         Install plugin: ${pkglibexecdir}
+    Configuration data: ${sysconfdir}
       Operating System: $os_version
           C++ Compiler: ${CXX} ( $gcc_version )
              C   Flags: ${CFLAGS}

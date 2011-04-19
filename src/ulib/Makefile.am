@@ -37,7 +37,11 @@ SRC_CPP = internal/common.cpp internal/objectIO.cpp \
 			 json/value.cpp \
 			 query/query_parser.cpp  event/event_time.cpp \
 			 timeval.cpp timer.cpp notifier.cpp string.cpp file.cpp process.cpp file_config.cpp log.cpp \
-			 options.cpp application.cpp cache.cpp date.cpp url.cpp tokenizer.cpp command.cpp thread.cpp
+			 options.cpp application.cpp cache.cpp date.cpp url.cpp tokenizer.cpp command.cpp
+
+if PTHREAD
+SRC_CPP += thread.cpp
+endif
 
 if DEBUG
 SRC_C   += base/base_trace.c

@@ -75,8 +75,6 @@ public:
 
       for (UTimer* item = first; item; item = item->next)
          {
-         PREFETCH_ATTRIBUTE(item->next, 0)
-
          if (item->alarm == _alarm) U_RETURN(true);
          }
 

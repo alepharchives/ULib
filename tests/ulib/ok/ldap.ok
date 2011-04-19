@@ -70,3 +70,15 @@ dn:   uid=paolo.lai,o=mail
 cn:   Paolo Lai
 mail: paolo.lai@unirel.com
 
+dn:   uid=provahorde,o=mail
+cn:   Prova Horde
+mail: provahorde@unirel.com
+
+dn:   ou=hordeprefs,o=mail
+cn:   
+mail: 
+
+dn:   ou=hordegroups,o=mail
+cn:   
+mail: 
+

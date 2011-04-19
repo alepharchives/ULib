@@ -59,8 +59,6 @@ U_NO_EXPORT void UTimer::insertEntry()
 
    while (*ptr)
       {
-      PREFETCH_ATTRIBUTE(&(*ptr)->next, 1)
-
       if (*this < **ptr) break;
 
       ptr = &(*ptr)->next;
@@ -275,8 +273,6 @@ U_EXPORT ostream& operator<<(ostream& os, const UTimer& t)
 
    for (UTimer* item = t.next; item; item = item->next)
       {
-      PREFETCH_ATTRIBUTE(item->next, 0)
-
       os.put(' ');
 
       if (item->alarm) os << *item->alarm;
@@ -298,8 +294,6 @@ bool UTimer::invariant()
       {
       for (UTimer* item = first; item->next; item = item->next)
          {
-         PREFETCH_ATTRIBUTE(item->next, 0)
-
          U_INTERNAL_ASSERT_MINOR(*item,*(item->next))
          }
       }

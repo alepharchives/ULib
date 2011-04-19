@@ -1297,6 +1297,8 @@ void UServer_Base::run()
 
    if (isPreForked())
       {
+      U_INTERNAL_ASSERT_MAJOR(preforked_num_kids,0)
+
       UTimeVal to_sleep(0L, 500 * 1000L);
       int pid, status, nkids = 0, n = max_Keep_Alive / preforked_num_kids;
 

@@ -1,4 +1,4 @@
-Name: ULib
+Name: ulib
 Summary: ULib C++ library - A package for creating small and fast C++ programs
 Version: @VERSION@
 Release: 1
@@ -9,7 +9,7 @@ URL: http://www.unirel.com
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}
 Provides: ULib
-Packager: Stefano Casazza <stefano.casazza@unirel.com>
+Packager: Stefano Casazza <stefano.casazza@gmail.com>
 
 @RPM_REQUIRE@
 
@@ -36,8 +36,9 @@ make LDFLAGS="-s"
 %install
 rm -rf %{buildroot}
 %makeinstall
-mkdir -p %{buildroot}/usr/libexec/ulib
+mkdir -p %{_sysconfdir}/ulib
 mkdir -p %{buildroot}/usr/share/aclocal
+mkdir -p %{buildroot}/usr/libexec/ulib/usp
 
 %clean
 rm -rf %{buildroot}
@@ -45,15 +46,22 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root,-)
 %doc AUTHORS COPYING NEWS README TODO ChangeLog
+%{_bindir}/uclient
+%{_bindir}/userver_*
 %{_libdir}/*.so.*
-%{_libexecdir}/ulib/mod_*.so
-%dir %{_libexecdir}/ulib
+%{_sysconfdir}/*.cfg*
+%{_libexecdir}/ulib/mod_*.*
+%{_libexecdir}/ulib/usp/*.*
+%dir %{_libexecdir}/ulib/usp
 
 %files devel
 %defattr(-,root,root,-)
+%{_bindir}/uclient
+%{_bindir}/userver_*
 %{_libdir}/*.a
 %{_libdir}/*.so
 %{_libdir}/*.la
+%{_sysconfdir}/*.cfg*
 %dir %{_includedir}/ulib
 %{_includedir}/ulib/*.h
 %{_includedir}/ulib/README
@@ -69,7 +77,10 @@ rm -rf %{buildroot}
 %{_libexecdir}/ulib/mod_*.a
 %{_libexecdir}/ulib/mod_*.so
 %{_libexecdir}/ulib/mod_*.la
-%dir %{_libexecdir}/ulib
+%{_libexecdir}/ulib/usp/*.a
+%{_libexecdir}/ulib/usp/*.so
+%{_libexecdir}/ulib/usp/*.la
+%dir %{_libexecdir}/ulib/usp
 
 %post -p /sbin/ldconfig
 

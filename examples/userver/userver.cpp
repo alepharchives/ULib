@@ -21,7 +21,7 @@
 #  define U_NO_SSL
 #  endif
 #else
-#  error "you must define the socket type... (U_SSL_SOCKET | U_TCP_SOCKET | U_UNIX_SOCKET)"
+#  error "you must define the socket type (U_SSL_SOCKET | U_TCP_SOCKET | U_UNIX_SOCKET)"
 #endif
 
 #include <ulib/net/server/server.h>
@@ -32,7 +32,7 @@
 #define ARGS ""
 
 #define U_OPTIONS \
-"purpose 'application server by ULib...'\n" \
+"purpose 'application server by ULib' \n" \
 "option c config 1 'path of configuration file' ''\n"
 
 #include <ulib/application.h>
@@ -63,17 +63,19 @@ public:
 
       // manage file configuration
 
-      if (cfg_str.empty()) cfg_str = U_STRING_FROM_CONSTANT("/etc/userver.cfg");
+      if (cfg_str.empty()) cfg_str = U_STRING_FROM_CONSTANT(U_SYSCONFDIR "/userver.cfg");
 
       // ---------------------------------------------------------------------------------------------------------------------------------------
       // userver - configuration parameters
       // ---------------------------------------------------------------------------------------------------------------------------------------
       // USE_IPV6       flag to indicate use of ipv6
+      // SERVER         host name or ip address for the listening socket
       // PORT           port number for the listening socket
       // SOCKET_NAME    file name   for the listening socket
       // IP_ADDRESS     public ip address of host for the interface connected to the Internet (autodetected if not specified)
       // ALLOWED_IP     list of comma separated client address for IP-based access control (IPADDR[/MASK])
       //
+      // LISTEN_BACKLOG       max number of ready to be delivered connections to accept()
       // USE_TCP_OPTIMIZATION flag indicating the use of TCP/IP options to optimize data transmission (TCP_CORK, TCP_DEFER_ACCEPT, TCP_QUICKACK)
 
       // PID_FILE       write pid on file indicated
@@ -92,8 +94,9 @@ public:
       // CGI_TIMEOUT    timeout for cgi execution
       //
       // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
-      //                (Value <= 1 will disable Keep-Alive)
+      //                (Value <= 1 will disable Keep-Alive) (default 256)
       //
+      // DH_FILE        DH param
       // CERT_FILE      certificate of server
       // KEY_FILE       private key of server
       // PASSWORD       password for private key of server

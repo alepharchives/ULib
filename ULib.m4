@@ -8,30 +8,26 @@ dnl This macro tries to find the ULib library and header files.
 dnl
 dnl We define the following configure script flags:
 dnl
-dnl		--with-ULib: Give prefix for both library and headers, and try
-dnl			to guess subdirectory names for each.
-dnl		--with-ULib-lib: Similar to --with-ULib, but for library only.
-dnl		--with-ULib-include: Similar to --with-ULib, but for headers only.
+dnl	--with-ulib: Give prefix for both library and headers, and try to guess subdirectory names for each.
+dnl
+dnl	--with-ulib-lib:		Similar to --with-ulib, but for library only.
+dnl	--with-ulib-include: Similar to --with-ulib, but for headers only.
 
-AC_DEFUN([AC_ULIB],
-[
-AC_CACHE_CHECK([for ULib library stuff], ac_cv_ULib,
-[
-	#
-	# Set up configure script macros
-	#
-	AC_ARG_WITH(ULib,
-		[  --with-ULib=<path>     path containing ULib header and library subdirs],
-		[ULIB_lib_check="$with_ULib/lib $with_ULib/lib/ULib"
-		  ULIB_inc_check="$with_ULib/include $with_ULib/include/ULib"],
-		[ULIB_lib_check="/usr/local/ULib/lib /usr/local/lib/ULib /opt/ULib/lib /usr/lib/ULib /usr/local/lib /usr/lib"
-		  ULIB_inc_check="/usr/local/ULib/include /usr/local/include/ULib /opt/ULib/include /usr/local/include/ULib /usr/local/include /usr/include/ULib /usr/include"])
-	AC_ARG_WITH(ULib-lib,
-		[  --with-ULib-lib=<path> directory path of ULib library],
-		[ULIB_lib_check="$with_ULib_lib $with_ULib_lib/lib $with_ULib_lib/lib/ULib"])
-	AC_ARG_WITH(ULib-include,
-		[  --with-ULib-include=<path> directory path of ULib headers],
-		[ULIB_inc_check="$with_ULib_include $with_ULib_include/include $with_ULib_include/include/ULib"])
+AC_DEFUN([AC_ULIB],[
+AC_CACHE_CHECK([for ULib library stuff], ac_cv_ulib,
+[ # Set up configure script macros
+	AC_ARG_WITH(ulib,
+	[  --with-ulib=<path>     path containing ULib header and library subdirs],
+	[ULIB_lib_check="$with_ulib/lib $with_ulib/lib/ulib"
+	 ULIB_inc_check="$with_ulib/include $with_ulib/include/ulib"],
+	[ULIB_lib_check="/usr/local/ulib/lib /usr/local/lib/ulib /opt/ulib/lib /usr/lib/ulib /usr/local/lib /usr/lib"
+	 ULIB_inc_check="/usr/local/ulib/include /usr/local/include/ulib /opt/ulib/include /usr/local/include/ulib /usr/local/include /usr/include/ulib /usr/include"])
+	AC_ARG_WITH(ulib-lib,
+		[  --with-ulib-lib=<path> directory path of ULib library],
+		[ULIB_lib_check="$with_ulib_lib $with_ulib_lib/lib $with_ulib_lib/lib/ulib"])
+	AC_ARG_WITH(ulib-include,
+		[  --with-ulib-include=<path> directory path of ULib headers],
+		[ULIB_inc_check="$with_ulib_include $with_ulib_include/include $with_ulib_include/include/ulib"])
 
 	#
 	# Look for ULib library
@@ -55,7 +51,7 @@ AC_CACHE_CHECK([for ULib library stuff], ac_cv_ULib,
 
 	case "$ULIB_libdir" in
 		/* ) ;;
-		* )  AC_MSG_ERROR([The ULib library directory ($ULIB_libdir) must be an absolute path.]) ;;
+		 * )  AC_MSG_ERROR([The ULib library directory ($ULIB_libdir) must be an absolute path.]) ;;
 	esac
 
 	AC_MSG_RESULT([lib in $ULIB_libdir])
@@ -64,7 +60,6 @@ AC_CACHE_CHECK([for ULib library stuff], ac_cv_ULib,
 	  /usr/lib) ;;
 	  *) LDFLAGS="$LDFLAGS -L${ULIB_libdir}" ;;
 	esac
-
 
 	#
 	# Look for ULib headers
@@ -87,7 +82,7 @@ AC_CACHE_CHECK([for ULib library stuff], ac_cv_ULib,
 
 	case "$ULIB_incdir" in
 		/* ) ;;
-		* )  AC_MSG_ERROR([The ULib header directory ($ULIB_incdir) must be an absolute path.]) ;;
+		 * )  AC_MSG_ERROR([The ULib header directory ($ULIB_incdir) must be an absolute path.]) ;;
 	esac
 
 	AC_MSG_RESULT([$ULIB_incdir])
@@ -98,7 +93,9 @@ AC_CACHE_CHECK([for ULib library stuff], ac_cv_ULib,
 	AC_COMPILE_IFELSE(
 		[AC_LANG_PROGRAM([#include <all.h>],
 		[UString s; s.c_str();])],
-		ac_cv_ULib=yes,
+		ac_cv_ulib=yes,
 		AC_MSG_ERROR(no))
-])]) dnl End ULIB
+])
+])
+dnl End ULIB
 

@@ -18,65 +18,188 @@
 typedef void* (*exec_t)(void*);
 typedef void  (*cleanup_t)(void*);
 
+#define U_SIGSTOP SIGRTMIN+1
+#define U_SIGCONT SIGRTMIN+2
+
 #ifndef HAVE_NANOSLEEP
 extern "C" { int nanosleep (const struct timespec* requested_time,
                                   struct timespec* remaining); }
 #endif
 
-#define CCXX_SIG_THREAD_SUSPEND SIGSTOP
-#define CCXX_SIG_THREAD_RESUME  SIGCONT
+UThread*        UThread::first;
+pthread_cond_t  UThread::cond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t UThread::lock = PTHREAD_MUTEX_INITIALIZER;
 
-UThread::UThread()
+class UThreadImpl {
+public:
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+    UThreadImpl(bool __suspendEnable)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UThreadImpl, "%b", __suspendEnable)
+
+      _tid           = 0;
+      _signal        = 0;
+      _cancel        = 0;
+      _suspendCount  = 0;
+      _suspendEnable = __suspendEnable;
+
+      (void) U_SYSCALL(pthread_attr_init, "%p", &_attr);
+      }
+
+   ~UThreadImpl()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UThreadImpl)
+
+      (void) U_SYSCALL(pthread_attr_destroy, "%p", &_attr);
+      }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const;
+#endif
+
+private:
+   pthread_t _tid;
+   pthread_attr_t _attr;
+   int _cancel, _signal, _suspendCount;
+   bool _suspendEnable;
+
+   // derived class copy constructor creates new instance, so base
+   // copy constructor of ThreadImpl should do nothing...
+
+   UThreadImpl(const UThreadImpl& copy)            {}
+   UThreadImpl& operator=(const UThreadImpl& copy) { return *this; }
+
+   friend class UThread;
+};
+
+UThread::UThread(bool __suspendEnable)
 {
-   U_TRACE_REGISTER_OBJECT(0, UThread, "")
+   U_TRACE_REGISTER_OBJECT(0, UThread, "%b", __suspendEnable)
 
-   _tid           = 0;
-   _cancel        = cancelInitial;
-   _suspendEnable = true;
+   priv  = U_NEW(UThreadImpl(__suspendEnable));
+   next  = first;
+   first = this;
 
-   (void) U_SYSCALL(pthread_attr_init, "%p", &_attr);
+   U_INTERNAL_DUMP("first = %p next = %p", first, next)
 }
 
 UThread::~UThread()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UThread)
 
-   (void) U_SYSCALL(pthread_attr_destroy, "%p", &_attr);
+   if (priv) stop();
+
+   U_INTERNAL_DUMP("first = %p next = %p", first, next)
+
+   if (next) delete next;
 }
 
-sigset_t* UThread::blockedSignals(sigset_t* sig)
+UThread* UThread::getThread()
 {
-   U_TRACE(0, "UThread::blockedSignals(%p)", sig)
+   U_TRACE(1, "UThread::getThread()")
 
-   sigemptyset(sig);
+   U_INTERNAL_DUMP("first = %p", first)
 
-   sigaddset(sig, SIGINT);
-   sigaddset(sig, SIGKILL);
-   sigaddset(sig, SIGHUP);
-   sigaddset(sig, SIGABRT);
-   sigaddset(sig, SIGALRM);
-   sigaddset(sig, SIGPIPE);
+   pthread_t _tid = U_SYSCALL_NO_PARAM(pthread_self);
 
-   return sig;
+   for (UThread* obj = first; obj; obj = obj->next)
+      {
+      if (U_SYSCALL(pthread_equal, "%p,%p", _tid, obj->priv->_tid)) U_RETURN_POINTER(obj, UThread);
+      }
+
+   U_RETURN_POINTER(0, UThread);
+}
+
+void UThread::stop()
+{
+   U_TRACE(1, "UThread::stop()")
+
+   U_INTERNAL_ASSERT_POINTER(priv)
+
+   (void) U_SYSCALL(pthread_mutex_unlock, "%p", &lock);
+
+   (void) U_SYSCALL(pthread_cancel, "%p", priv->_tid);
+
+   if (isDetached() == false) (void) U_SYSCALL(pthread_join, "%p,%p", priv->_tid, 0);
+   else
+      {
+#  ifdef HAVE_PTHREAD_YIELD
+      (void) U_SYSCALL_NO_PARAM(pthread_yield);
+#  endif
+      }
+}
+
+void UThread::close()
+{
+   U_TRACE(1, "UThread::close()")
+
+   U_INTERNAL_ASSERT_POINTER(priv)
+
+   UThread* obj  =  first;
+   UThread** ptr = &first;
+
+   while ((obj = *ptr))
+      {
+      U_INTERNAL_ASSERT_POINTER(obj)
+
+      if (U_SYSCALL(pthread_equal, "%p,%p", priv->_tid, obj->priv->_tid))
+         {
+         *ptr = obj->next;
+                obj->next = 0;
+
+         break;
+         }
+
+      ptr = &(*ptr)->next;
+      }
+
+   delete priv;
+          priv = 0;
+}
+
+void UThread::threadCleanup(UThread* th)
+{
+   U_TRACE(0, "UThread::threadCleanup(%p)", th)
+
+   th->close();
 }
 
 void UThread::yield()
 {
    U_TRACE(1, "UThread::yield()")
 
-#ifdef CCXX_SIG_THREAD_CANCEL
+   // Yields the current thread's CPU time slice to allow another thread to begin immediate execution.
+
+   U_INTERNAL_DUMP("_cancel = %d", priv->_cancel)
+
+#ifndef CCXX_SIG_THREAD_CANCEL
+   U_SYSCALL_VOID_NO_PARAM(pthread_testcancel);
+#else
    sigset_t cancel, old;
+   bool bcancel = (priv->_cancel != cancelDisabled && priv->_cancel != cancelInitial);
 
-   sigemptyset(&cancel);
-   sigaddset(&cancel, CCXX_SIG_THREAD_CANCEL);
-
-   if (th->_cancel != cancelDisabled &&
-       th->_cancel != cancelInitial)
+   if (bcancel)
       {
+#     ifdef sigemptyset
+      sigemptyset(&cancel);
+#     else
+      (void) U_SYSCALL(sigemptyset, "%p", &cancel);
+#     endif
+
+#     ifdef sigaddset
+      sigaddset(&cancel, CCXX_SIG_THREAD_CANCEL);
+#     else
+      (void) U_SYSCALL(sigaddset, "%p,%d", &cancel, CCXX_SIG_THREAD_CANCEL);
+#     endif
+
       (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &cancel, &old);
       }
-#else
-   U_SYSCALL_VOID_NO_PARAM(pthread_testcancel);
 #endif
 
 #ifdef HAVE_PTHREAD_YIELD
@@ -84,124 +207,224 @@ void UThread::yield()
 #endif
 
 #ifdef CCXX_SIG_THREAD_CANCEL
-   if (th->_cancel != cancelDisabled &&
-       th->_cancel != cancelInitial)
-      {
-      (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_SETMASK, &old, 0);
-      }
+   if (bcancel) (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_SETMASK, &old, 0);
 #endif
 }
 
 bool UThread::isDetached() const
 {
-   U_TRACE(1, "UThread::close()")
+   U_TRACE(1, "UThread::isDetached()")
 
-   if (_tid)
-      {
-      int state;
+   U_INTERNAL_ASSERT_POINTER(priv->_tid)
 
-      (void) U_SYSCALL(pthread_attr_getdetachstate, "%p,%p", &_attr, &state);
+   int state;
 
-      if (state == PTHREAD_CREATE_DETACHED) U_RETURN(true);
-      }
+   (void) U_SYSCALL(pthread_attr_getdetachstate, "%p,%p", &(priv->_attr), &state);
+
+   if (state == PTHREAD_CREATE_DETACHED) U_RETURN(true);
 
    U_RETURN(false);
 }
 
-void UThread::close()
+void UThread::sigInstall(int signo)
 {
-   U_TRACE(1, "UThread::close()")
+   U_TRACE(1, "UThread::sigInstall(%d)", signo)
 
-   bool detached = isDetached();
+   struct sigaction sa;
 
-   setCancel(cancelDisabled);
+#  ifdef sigemptyset
+   sigemptyset(&sa.sa_mask);
+#  else
+   (void) U_SYSCALL(sigemptyset, "%p", &sa.sa_mask);
+#  endif
 
-   // final can call destructor (that call Terminate)
+#ifdef SA_RESTART
+   sa.sa_flags  = SA_RESTART;
+#else
+   s.sa_flags   = 0;
+#endif
 
-   final();
+#ifdef SA_INTERRUPT
+   sa.sa_flags |= SA_INTERRUPT;
+#endif
+   sa.sa_handler = sigHandler;
 
-   // see if detached, and hence self deleting
-
-   if (detached) delete this;
+   (void) U_SYSCALL(sigaction, "%d,%p,%p", signo,  &sa, 0);
 }
 
-void UThread::setSuspend(Suspend mode)
+void UThread::sigHandler(int signo)
 {
-   U_TRACE(1, "UThread::setSuspend(%d)", mode)
+   U_TRACE(1, "UThread::sigHandler(%d)", signo)
 
-   if (_tid)
+   (void) U_SYSCALL(pthread_mutex_lock, "%p", &lock);
+
+   UThread* th = getThread();
+
+   U_INTERNAL_DUMP("_signal = %d _suspendCount = %d", th->priv->_signal, th->priv->_suspendCount)
+
+   th->priv->_signal = signo;
+
+   if (signo == U_SIGSTOP &&
+       th->priv->_suspendCount++ == 0)
       {
-      _suspendEnable = (mode == suspendEnable);
+      U_INTERNAL_DUMP("SUSPEND: start(%6D)")
 
-#ifndef HAVE_PTHREAD_SUSPEND
-#  ifdef CCXX_SIG_THREAD_SUSPEND
-      sigset_t mask;
+      (void) U_SYSCALL(pthread_cond_wait, "%p,%p", &cond, &lock);
 
-      sigemptyset(&mask);
-      sigaddset(&mask, CCXX_SIG_THREAD_SUSPEND);
+      U_INTERNAL_DUMP("SUSPEND: end(%6D)")
+      }
+   else if (signo == U_SIGCONT             &&
+            th->priv->_suspendCount    > 0 &&
+            th->priv->_suspendCount-- == 1)
+      {
+      (void) U_SYSCALL(pthread_cond_signal, "%p",  &cond);
+      }
 
-      switch(mode)
-         {
-         case suspendEnable:  (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, 0); break;
-         case suspendDisable: (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_BLOCK,   &mask, 0); break;
-         }
-#  endif
-#endif
+   (void) U_SYSCALL(pthread_mutex_unlock, "%p", &lock);
+}
+
+void UThread::signal(int signo)
+{
+   U_TRACE(1, "UThread::signal(%d)", signo)
+
+   // set the _signal variable to the given value. Can only be
+   // done if called from the process that the thread is associated
+   // with. If called from a different process, the given signal
+   // is sent to the process.
+
+   pthread_t _tid = U_SYSCALL_NO_PARAM(pthread_self);
+
+   if (U_SYSCALL(pthread_equal, "%p,%p", _tid, priv->_tid)) sigHandler(signo);
+   else
+      {
+      (void) U_SYSCALL(pthread_kill, "%p,%d", priv->_tid, signo);
+
+      yield(); // give the signal a time to kick in
       }
 }
+
+/* You can't kill or stop just one thread from another process. You can send a signal to a particular thread,
+ * but the stop/abort action that is taken by the signal affects the whole process. In the earlier implementation
+ * of Linux threads, it was possible to stop a single thread with SIGSTOP, but this behaviour has now been fixed
+ * to conform to the Posix standard (so it stops all threads in the process).
+ */
 
 void UThread::suspend()
 {
    U_TRACE(1, "UThread::suspend()")
 
-   if (_tid) (void) U_SYSCALL(pthread_kill, "%d,%d", _tid, CCXX_SIG_THREAD_SUSPEND);
+   U_INTERNAL_ASSERT_POINTER(priv->_tid)
+
+   if (priv->_suspendEnable) signal(U_SIGSTOP);
 }
 
 void UThread::resume()
 {
    U_TRACE(1, "UThread::resume()")
 
-   if (_tid) (void) U_SYSCALL(pthread_kill, "%d,%d", _tid, CCXX_SIG_THREAD_RESUME);
+   U_INTERNAL_ASSERT_POINTER(priv->_tid)
+
+   if (priv->_suspendEnable) signal(U_SIGCONT);
 }
 
-__noreturn void UThread::execHandler(UThread* th)
+void UThread::execHandler(UThread* th)
 {
    U_TRACE(1, "UThread::execHandler(%p)", th)
 
    sigset_t mask;
 
-   (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_BLOCK, blockedSignals(&mask), 0);
+#  ifdef sigemptyset
+   sigemptyset(&mask);
+#  else
+   (void) U_SYSCALL(sigemptyset, "%p", &mask);
+#  endif
 
-   th->_tid = U_SYSCALL_NO_PARAM(pthread_self);
+#  ifdef sigaddset
+   sigaddset(&mask, SIGHUP);
+   sigaddset(&mask, SIGINT);
+   sigaddset(&mask, SIGABRT);
+   sigaddset(&mask, SIGPIPE);
+   sigaddset(&mask, SIGALRM);
+#  else
+   (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGHUP);
+   (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGINT);
+   (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGABRT);
+   (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGPIPE);
+   (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGALRM);
+#  endif
 
-   th->setSuspend(suspendEnable);
+   (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_BLOCK, &mask, 0);
 
-   th->yield();
+   if (th->priv->_suspendEnable)
+      {
+#  ifndef HAVE_PTHREAD_SUSPEND
+      // You can't kill or stop just one thread from another process. You can send a signal to a particular thread,
+      // but the stop/abort action that is taken by the signal affects the whole process. In the earlier implementation
+      // of Linux threads, it was possible to stop a single thread with SIGSTOP, but this behaviour has now been fixed
+      // to conform to the Posix standard (so it stops all threads in the process).
+      //
 
-   pthread_cleanup_push((cleanup_t)threadCleanup, th);
+#     ifdef sigemptyset
+      sigemptyset(&mask);
+#     else
+      (void) U_SYSCALL(sigemptyset, "%p", &mask);
+#     endif
 
-   th->initial();
+#     ifdef sigaddset
+      sigaddset(&mask, U_SIGSTOP);
+      sigaddset(&mask, U_SIGCONT);
+#     else
+      (void) U_SYSCALL(sigaddset, "%p,%d", &mask, U_SIGSTOP);
+      (void) U_SYSCALL(sigaddset, "%p,%d", &mask, U_SIGCONT);
+#     endif
 
-   if (th->getCancel() == cancelInitial) th->setCancel(cancelDeferred);
+      (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, 0);
+
+      th->sigInstall(U_SIGSTOP);
+      th->sigInstall(U_SIGCONT);
+#  endif
+      }
+
+   th->priv->_tid = U_SYSCALL_NO_PARAM(pthread_self);
+
+   U_INTERNAL_DUMP("_tid = %p", th->priv->_tid)
+
+   pthread_cleanup_push((cleanup_t)UThread::threadCleanup, th);
+
+   th->setCancel(cancelDeferred);
 
    th->run();
-
-   th->setCancel(cancelDisabled);
 
    pthread_cleanup_pop(0);
 
    th->close();
-
-   U_SYSCALL_VOID(pthread_exit, "%p", 0);
 }
 
-int UThread::start()
+bool UThread::start()
 {
    U_TRACE(1, "UThread::start()")
 
-   int result = (_tid ? -1 : U_SYSCALL(pthread_create, "%p,%p,%p,%p", &_tid, &_attr, (exec_t)execHandler, this));
+   U_INTERNAL_ASSERT_EQUALS(priv->_tid, 0)
 
-   U_RETURN(result);
+   if (U_SYSCALL(pthread_create, "%p,%p,%p,%p", &(priv->_tid), &(priv->_attr), (exec_t)execHandler, this) == 0) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
+bool UThread::detach()
+{
+   U_TRACE(1, "UThread::detach()")
+
+   if (priv->_tid)
+      {
+      if (U_SYSCALL(pthread_detach, "%p", priv->_tid)) U_RETURN(false);
+      }
+   else
+      {
+      if (U_SYSCALL(pthread_attr_setdetachstate, "%p,%d", &(priv->_attr), PTHREAD_CREATE_DETACHED)) U_RETURN(false);
+      }
+
+   U_RETURN(true);
 }
 
 void UThread::setCancel(int mode)
@@ -227,14 +450,18 @@ void UThread::setCancel(int mode)
       break;
       }
 
-   _cancel = mode;
+   priv->_cancel = mode;
+
+   U_INTERNAL_DUMP("_cancel = %d", priv->_cancel)
 }
 
 int UThread::enterCancel()
 {
    U_TRACE(1, "UThread::enterCancel()")
 
-    int old = _cancel;
+   U_INTERNAL_DUMP("_cancel = %d", priv->_cancel)
+
+    int old = priv->_cancel;
 
     if (old != cancelDisabled &&
         old != cancelImmediate)
@@ -251,7 +478,9 @@ void UThread::exitCancel(int old)
 {
    U_TRACE(1, "UThread::exitCancel(%d)", old)
 
-   if (old != _cancel)
+   U_INTERNAL_DUMP("_cancel = %d", priv->_cancel)
+
+   if (old != priv->_cancel)
       {
       U_SYSCALL_VOID_NO_PARAM(pthread_testcancel);
 
@@ -259,29 +488,60 @@ void UThread::exitCancel(int old)
       }
 }
 
-void UThread::sleep(time_t timeout)
+void UThread::sleep(time_t timeoutMS)
 {
-   U_TRACE(1, "UThread::sleep(%ld)", timeout)
+   U_TRACE(1+256, "UThread::sleep(%ld)", timeoutMS)
 
-   struct timespec ts;
-   int old = enterCancel();
+#ifdef CCXX_SIG_THREAD_CANCEL
+   UThread* th = getThread();
 
-   ts.tv_sec  =  timeout / 1000;
-   ts.tv_nsec = (timeout % 1000) * 1000000;
+   int old = th->enterCancel();
+#endif
+   struct timespec ts = {  timeoutMS / 1000L, (timeoutMS % 1000L) * 1000000L };
+
+   U_INTERNAL_ASSERT(ts.tv_sec >= 0L)
+   U_INTERNAL_ASSERT_RANGE(0L, ts.tv_nsec, 999999999L)
+
+#ifdef  HAVE_PTHREAD_DELAY
+    pthread_delay(&ts);
+#else
+   U_INTERNAL_DUMP("Call   nanosleep(%2D)")
 
    (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
 
-   exitCancel(old);
+   U_INTERNAL_DUMP("Return nanosleep(%2D)")
+#endif
+
+#ifdef CCXX_SIG_THREAD_CANCEL
+   th->exitCancel(old);
+#endif
 }
 
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
+const char* UThreadImpl::dump(bool reset) const
+{
+   *UObjectIO::os << "_tid           " << _tid           << '\n'
+                  << "_cancel        " << _cancel        << '\n'
+                  << "_signal        " << _signal        << '\n'
+                  << "_suspendCount  " << _suspendCount  << '\n'
+                  << "_suspendEnable " << _suspendEnable << ')';
+
+   if (reset)
+      {
+      UObjectIO::output();
+
+      return UObjectIO::buffer_output;
+      }
+
+   return 0;
+}
+
 const char* UThread::dump(bool reset) const
 {
-   *UObjectIO::os << "_tid           " << _tid << '\n'
-                  << "_cancel        " << _cancel << '\n'
-                  << "_suspendEnable " << _suspendEnable;
+   *UObjectIO::os << "next  (UThread " << (void*)next  << ")\n"
+                  << "first (UThread " << (void*)first << ')';
 
    if (reset)
       {
