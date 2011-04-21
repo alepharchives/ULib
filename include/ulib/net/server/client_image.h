@@ -68,7 +68,6 @@ public:
 
    // SERVICES
 
-   static void run();
    static void clear();
    static int  genericRead();
    static void init(USocket* p);

@@ -24,7 +24,7 @@ rm -f TSA/response/response*
 
 #../../tmp/openssl/ssl/misc/tsget -h http://127.0.0.1:8443/tsa TSA/request/tsq.req
 $NC -w 2 127.0.0.1 80 <TSA/request/http.req >TSA/response/response
-tail -c +142 TSA/response/response > TSA/response/response.tsr
+tail -c +136 TSA/response/response > TSA/response/response.tsr
 
 TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
 						 -in TSA/response/response.tsr -CApath TSA/CA/CApath > out/tsa_http.out
@@ -33,7 +33,7 @@ rm -f TSA/response/response*
 
 #../../tmp/openssl/ssl/misc/tsget -h http://127.0.0.1:8443/tsa TSA/request/tsq.req
 $NC -w 2 127.0.0.1 80 <TSA/request/http.req >TSA/response/response
-tail -c +142 TSA/response/response > TSA/response/response.tsr
+tail -c +136 TSA/response/response > TSA/response/response.tsr
 
 kill_prg userver_tcp TERM
 

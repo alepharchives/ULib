@@ -333,9 +333,11 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
 
    if (map != MAP_FAILED)
       {
+/*
 #  ifdef MADV_SEQUENTIAL
       if (map_size > (128 * PAGESIZE)) (void) U_SYSCALL(madvise, "%p,%u,%d", map, map_size, MADV_SEQUENTIAL);
 #  endif
+*/
 
       if (str) str->mmap(map, map_size);
 

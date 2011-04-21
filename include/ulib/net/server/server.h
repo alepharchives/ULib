@@ -83,6 +83,7 @@ class USCGIPlugIn;
 class UClient_Base;
 class UProxyPlugIn;
 class UStreamPlugIn;
+class UClientThread;
 
 class U_EXPORT UServer_Base : public UEventFd {
 public:
@@ -266,23 +267,9 @@ public:
 
       U_INTERNAL_DUMP("preforked_num_kids = %d", preforked_num_kids)
 
-      bool result = (preforked_num_kids ==  1 ||
-                     preforked_num_kids == -1);
+      bool result = (preforked_num_kids ==  1);
 
       U_RETURN(result);
-      }
-
-   static void setProcessManager()
-      {
-      U_TRACE(0, "UServer_Base::setProcessManager()")
-
-      U_INTERNAL_ASSERT_EQUALS(proc,0)
-
-      proc = U_NEW(UProcess);
-
-      U_INTERNAL_ASSERT_POINTER(proc)
-
-      proc->setProcessGroup();
       }
 
    static bool isChild()
@@ -291,9 +278,7 @@ public:
 
       U_INTERNAL_DUMP("preforked_num_kids = %d", preforked_num_kids)
 
-      U_INTERNAL_ASSERT_POINTER(proc)
-
-      bool result = (preforked_num_kids && proc->child());
+      bool result = (preforked_num_kids >= 1 && proc->child());
 
       U_RETURN(result);
       }
@@ -332,8 +317,7 @@ public:
 
       U_INTERNAL_DUMP("num_connection = %d", num_connection)
 
-      bool result = (isClassic() ? proc->child()
-                                 : num_connection > 0);
+      bool result = (preforked_num_kids == 1 ? proc->child() : num_connection > 0);
 
       U_RETURN(result);
       }
@@ -399,6 +383,10 @@ protected:
    static UString* senvironment;
    static UVector<UIPAllow*>* vallow_IP;
    static bool flag_loop, flag_use_tcp_optimization;
+
+#ifdef HAVE_PTHREAD_H
+   static UClientThread* pthread;
+#endif
 
    // COSTRUTTORI
 
@@ -480,6 +468,7 @@ protected:
 
    // SERVICES
 
+   static void handlerRequest();
    static RETSIGTYPE handlerForSigHUP( int signo);
    static RETSIGTYPE handlerForSigTERM(int signo);
 
@@ -492,6 +481,7 @@ private:
    friend class UProxyPlugIn;
    friend class UClient_Base;
    friend class UStreamPlugIn;
+   friend class UClientThread;
    friend class UClientImage_Base;
 
    static void loadStaticLinkedModules(const char* name) U_NO_EXPORT;

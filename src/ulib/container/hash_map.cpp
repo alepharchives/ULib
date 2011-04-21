@@ -156,10 +156,14 @@ void UHashMap<void*>::reserve(uint32_t n)
    U_INTERNAL_ASSERT_EQUALS(gperf,0)
    U_INTERNAL_ASSERT_MAJOR(_capacity,0)
 
+   uint32_t new_capacity = U_GET_NEXT_PRIME_NUMBER(n);
+
+   if (new_capacity == _capacity) return;
+
    UHashMapNode** old_table    = table;
    uint32_t       old_capacity = _capacity, i;
 
-   allocate(U_GET_NEXT_PRIME_NUMBER(n));
+   allocate(new_capacity);
 
 #ifdef DEBUG
    int sum = 0, max = 0, min = 1024, width;

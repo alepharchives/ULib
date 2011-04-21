@@ -18,9 +18,6 @@
 typedef void* (*exec_t)(void*);
 typedef void  (*cleanup_t)(void*);
 
-#define U_SIGSTOP SIGRTMIN+1
-#define U_SIGCONT SIGRTMIN+2
-
 #ifndef HAVE_NANOSLEEP
 extern "C" { int nanosleep (const struct timespec* requested_time,
                                   struct timespec* remaining); }
@@ -50,6 +47,7 @@ public:
       _suspendEnable = __suspendEnable;
 
       (void) U_SYSCALL(pthread_attr_init, "%p", &_attr);
+      (void) U_SYSCALL(pthread_attr_setdetachstate, "%p,%d", &_attr, PTHREAD_CREATE_JOINABLE);
       }
 
    ~UThreadImpl()
@@ -122,7 +120,7 @@ void UThread::stop()
 
    U_INTERNAL_ASSERT_POINTER(priv)
 
-   (void) U_SYSCALL(pthread_mutex_unlock, "%p", &lock);
+// (void) U_SYSCALL(pthread_mutex_unlock, "%p", &lock);
 
    (void) U_SYSCALL(pthread_cancel, "%p", priv->_tid);
 

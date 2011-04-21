@@ -547,23 +547,26 @@ void UNotifier::removeBadFd()
 }
 #endif
 
-void UNotifier::preallocate(int n)
+void UNotifier::preallocate(uint32_t n)
 {
    U_TRACE(0+256, "UNotifier::preallocate(%u)", n)
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
 
-   UNotifier* item;
-
-   for (int i = 0; i < n; ++i)
+   if (n < (1024U * 1024U))
       {
-      item = U_NEW(UNotifier);
+      UNotifier* item;
 
-      item->next = pool;
-      pool       = item;
+      for (uint32_t i = 0; i < n; ++i)
+         {
+         item = U_NEW(UNotifier);
+
+         item->next = pool;
+         pool       = item;
+         }
+
+      U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
       }
-
-   U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
 }
 
 U_NO_EXPORT void UNotifier::eraseHandler(UEventFd* handler_event)

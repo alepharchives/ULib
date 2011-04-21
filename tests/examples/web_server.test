@@ -6,7 +6,7 @@
 
 start_msg web_server
 
-rm -f web_server?.log* uploads/* \
+rm -f web_server*.log* uploads/* \
       out/userver_tcp.out err/userver_tcp.err web_server.err \
       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
 
@@ -119,10 +119,11 @@ chmod 777      uploads
  fi
 }
 
- start_test web_server0.cfg localhost
- start_test web_server1.cfg localhost
- start_test web_server2.cfg localhost
- start_test web_serverN.cfg localhost
+#start_test 'web_server-1.cfg' localhost
+ start_test  web_server0.cfg   localhost
+ start_test  web_server1.cfg   localhost
+ start_test  web_server2.cfg   localhost
+ start_test  web_serverN.cfg   localhost
 
 # ---------------------------------------------------------
 # virtual host
@@ -143,7 +144,7 @@ chmod 777      uploads
  creat_link ../../../inp/http/data www.sito1.com/inp/http/data
  creat_link ../vuoto.txt			  www.sito1.com/vuoto.txt
 
- start_test web_serverV.cfg		  www.sito1.com
+ start_test  web_serverV.cfg		  www.sito1.com
 
 # for GDB
 # sed "s/Host: localhost/Host: www.sito1.com/" inp/http/all.inp | nc 127.0.0.1 80

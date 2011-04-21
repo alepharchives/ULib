@@ -61,6 +61,8 @@ union uusockaddr_un {
    struct sockaddr_un  psaUnixAddr;
 };
 
+class UServer_Base;
+
 class U_EXPORT UUnixSocket : public USocket {
 public:
 
@@ -117,6 +119,8 @@ private:
 
    UUnixSocket(const UUnixSocket&) : USocket(false) {}
    UUnixSocket& operator=(const UUnixSocket&)       { return *this; }
+
+   friend class UServer_Base;
 };
 
 #endif

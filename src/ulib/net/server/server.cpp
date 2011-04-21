@@ -142,6 +142,30 @@ const UString* UServer_Base::str_PID_FILE;
 const UString* UServer_Base::str_USE_TCP_OPTIMIZATION;
 const UString* UServer_Base::str_LISTEN_BACKLOG;
 
+#ifdef HAVE_PTHREAD_H
+#  include "ulib/thread.h"
+
+class UClientThread : public UThread {
+public:
+
+   UClientThread() : UThread(true) {}
+
+   virtual void run()
+      {
+      U_TRACE(0, "UClientThread::run()")
+
+      while (UServer_Base::flag_loop)
+         {
+         if (UNotifier::empty()) suspend();
+
+         (void) UNotifier::waitForEvent(UServer_Base::ptime);
+         }
+      }
+};
+
+UClientThread* UServer_Base::pthread;
+#endif
+
 static int sysctl_somaxconn, tcp_abort_on_overflow, sysctl_max_syn_backlog, tcp_fin_timeout;
 
 void UServer_Base::str_allocate()
@@ -287,6 +311,10 @@ UServer_Base::~UServer_Base()
    U_TRACE_UNREGISTER_OBJECT(0, UServer_Base)
 
    U_INTERNAL_ASSERT_POINTER(socket)
+
+#ifdef HAVE_PTHREAD_H
+   if (pthread) delete pthread;
+#endif
 
    UClientImage_Base::body->clear();
    UClientImage_Base::wbuffer->clear();
@@ -730,10 +758,10 @@ void UServer_Base::setNotifier(bool bfork)
       }
    else
       {
+      UNotifier::init();
+
       if (preforked_num_kids == 0)
          {
-         UNotifier::init();
-
                             UNotifier::insert(pthis);          // NB: we ask to notify for request of connection...
          if (handler_event) UNotifier::insert(handler_event);  // NB: we ask to notify for change of file system (inotify)...
          }
@@ -746,33 +774,26 @@ void UServer_Base::init()
 
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
 
-   if (name_sock.empty())
+#ifndef __MINGW32__
+   if (UClientImage_Base::socket->isIPC())
       {
-#  ifdef HAVE_SSL
-      if (UClientImage_Base::socket->isSSL())
-         {
-         block_on_accept = true;
+      if (name_sock.empty() == false) UUnixSocket::setPath(name_sock.data());
 
-         USSLSocket::method = (SSL_METHOD*) SSLv23_server_method();
-         }
-      else
-#  endif
-         {
-         USocket::accept4_flags = SOCK_NONBLOCK | SOCK_CLOEXEC;
-
-         if (isPreForked() == false) block_on_accept = true;
-         }
+      if (UUnixSocket::path == 0) U_ERROR("UNIX domain socket is not bound to a file system pathname...");
       }
-   else
+#endif
+
+   block_on_accept        = (preforked_num_kids <= 1);
+   USocket::accept4_flags = SOCK_NONBLOCK | SOCK_CLOEXEC;
+
+#ifdef HAVE_SSL
+   if (UClientImage_Base::socket->isSSL())
       {
-      block_on_accept = true;
-
-#  ifndef __MINGW32__
-      U_ASSERT(socket->isIPC())
-
-      UUnixSocket::setPath(name_sock.data()); // unix socket...
-#  endif
+      block_on_accept        = true;
+      USSLSocket::method     = (SSL_METHOD*) SSLv23_server_method();
+      USocket::accept4_flags = SOCK_CLOEXEC;
       }
+#endif
 
    /* sysctl_somaxconn (SOMAXCONN: 128) specifies the maximum number of sockets in state SYN_RECV per listen socket queue.
     * At listen(2) time the backlog is adjusted to this limit if bigger then that.
@@ -786,7 +807,7 @@ void UServer_Base::init()
     * The backlog argument for listen on the other hand specify a _minimum_
     */
 
-#  ifndef __MINGW32__
+#ifndef __MINGW32__
    if (iBackLog == 1) tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
 
    if (flag_use_tcp_optimization)
@@ -812,7 +833,7 @@ void UServer_Base::init()
          sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 2);
          }
       }
-#  endif
+#endif
 
    U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
                     sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
@@ -915,7 +936,7 @@ void UServer_Base::init()
    if (flag_use_tcp_optimization)
       {
       // no unix socket...
-      U_ASSERT(name_sock.empty())
+
       U_ASSERT_EQUALS(socket->isIPC(),false)
 
 #ifndef __MINGW32__
@@ -964,7 +985,13 @@ void UServer_Base::init()
 next:
    flag_loop = true;
 
-   setProcessManager();
+   U_INTERNAL_ASSERT_EQUALS(proc,0)
+
+   proc = U_NEW(UProcess);
+
+   U_INTERNAL_ASSERT_POINTER(proc)
+
+   proc->setProcessGroup();
 
    runAsUser();
 
@@ -1007,6 +1034,9 @@ next:
 
       U_INTERNAL_DUMP("O_NONBLOCK = %B, U_SOCKET_FLAGS = %B", O_NONBLOCK, U_SOCKET_FLAGS)
       }
+#ifdef HAVE_PTHREAD_H
+   else if (preforked_num_kids == -1) pthread = U_NEW(UClientThread);
+#endif
 
    setNotifier(false);
 
@@ -1149,7 +1179,7 @@ const char* UServer_Base::getNumConnection()
    static char buffer[32];
 
    if (isPreForked()) (void) snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
-   else               (void) snprintf(buffer, sizeof(buffer), "%d",     (isClassic() ? U_TOT_CONNECTION : num_connection));
+   else               (void) snprintf(buffer, sizeof(buffer),      "%d", (preforked_num_kids == 1 ? U_TOT_CONNECTION : num_connection));
 
    U_RETURN(buffer);
 }
@@ -1159,13 +1189,12 @@ void UServer_Base::handlerCloseConnection()
    U_TRACE(0, "UServer_Base::handlerCloseConnection()")
 
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
-// U_ASSERT_EQUALS(UNotifier::isHandler(UClientImage_Base::pClientImage), false)
 
    --num_connection;
 
    U_INTERNAL_DUMP("num_connection = %d", num_connection)
 
-   if (preforked_num_kids)
+   if (preforked_num_kids >= 1)
       {
       U_TOT_CONNECTION--;
 
@@ -1173,7 +1202,9 @@ void UServer_Base::handlerCloseConnection()
       }
 
    U_SRV_LOG("client closed connection from %.*s, %s clients still connected",
-                     U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
+              U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
+
+   if (isClassic()) U_EXIT(0);
 }
 
 bool UServer_Base::handlerTimeoutConnection(void* cimg)
@@ -1202,6 +1233,64 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
    U_RETURN(true);
 }
 
+void UServer_Base::handlerRequest()
+{
+   U_TRACE(0, "UServer_Base::handlerRequest()")
+
+#ifdef HAVE_PTHREAD_H
+   bool is_empty;
+#endif
+
+   // NB: new UClientImage object referenced by pClientImage...
+
+   pthis->newClientImage();
+
+   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
+
+   U_SRV_LOG("new client connected from %.*s, %s clients currently connected",
+              U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
+
+   if (UClientImage_Base::msg_welcome)
+      {
+      U_SRV_LOG_WITH_ADDR("sent welcome message to");
+
+      if (USocketExt::write(UClientImage_Base::socket, *UClientImage_Base::msg_welcome) == false) goto dtor;
+      }
+
+   if (UClientImage_Base::pClientImage->handlerRead() == U_NOTIFIER_DELETE)
+      {
+      // NB: if server with no prefork (ex: nodog) process the HTTP CGI request with fork....
+
+      U_INTERNAL_DUMP("flag_loop = %b", flag_loop)
+
+      if (flag_loop          == false &&
+          preforked_num_kids <= 0     &&
+          proc->child())
+         {
+         U_EXIT(0);
+         }
+
+      goto dtor;
+      }
+
+#ifdef HAVE_PTHREAD_H
+   is_empty = UNotifier::empty();
+#endif
+
+   // NB: this new object (pClientImage) is deleted by UNotifier (when response from handlerRead() is U_NOTIFIER_DELETE)
+
+   UNotifier::insert(UClientImage_Base::pClientImage);
+
+#ifdef HAVE_PTHREAD_H
+   if (is_empty) pthread->resume();
+#endif
+
+   return;
+
+dtor:
+   delete UClientImage_Base::pClientImage;
+}
+
 void UServer_Base::handlerNewConnection()
 {
    U_TRACE(0, "UServer_Base::handlerNewConnection()")
@@ -1213,28 +1302,28 @@ void UServer_Base::handlerNewConnection()
 
    U_INTERNAL_DUMP("num_connection = %d", num_connection)
 
-   if (preforked_num_kids)
-      {
-      // --------------------------------------------------------------------------------------------------------------------------
-      // PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
-      //                                                                     1 - classic, forking after accept client
-      //                                                                    >1 - pool of process serialize plus monitoring process)
-      // --------------------------------------------------------------------------------------------------------------------------
+   // --------------------------------------------------------------------------------------------------------------------------
+   // PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
+   //                                                                     1 - classic, forking after accept client
+   //                                                                    >1 - pool of process serialize plus monitoring process)
+   // --------------------------------------------------------------------------------------------------------------------------
 
+   if (preforked_num_kids >= 1)
+      {
       if (isClassic())
          {
-         U_INTERNAL_ASSERT_POINTER(proc)
-
          if (max_Keep_Alive &&
              max_Keep_Alive <= U_TOT_CONNECTION)
             {
             --num_connection;
 
             U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%d)",
-                              UClientImage_Base::socket->getRemoteInfo(), max_Keep_Alive);
+                        UClientImage_Base::socket->getRemoteInfo(), max_Keep_Alive);
 
             return;
             }
+
+         U_INTERNAL_ASSERT_POINTER(proc)
 
          if (proc->fork() &&
              proc->parent())
@@ -1254,14 +1343,7 @@ void UServer_Base::handlerNewConnection()
       U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
       }
 
-   pthis->newClientImage();
-
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
-
-   U_SRV_LOG("new client connected from %.*s, %s clients currently connected",
-                     U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
-
-   UClientImage_Base::run();
+   handlerRequest();
 }
 
 void UServer_Base::run()
@@ -1290,19 +1372,42 @@ void UServer_Base::run()
    //                                                                    >1 - pool of process serialize plus monitoring process)
    // --------------------------------------------------------------------------------------------------------------------------
 
-   /**
-   * Main loop for the parent process with the new preforked implementation.
-   * The parent is just responsible for keeping a pool of children and they accept connections themselves...
-   **/
+   uint32_t n = max_Keep_Alive / (preforked_num_kids <= 0 ? 1 : preforked_num_kids);
+
+   if (n) UNotifier::preallocate(n);
+
+#ifdef HAVE_PTHREAD_H
+   if (preforked_num_kids == -1)
+      {
+      pthread->start();
+
+      while (flag_loop)
+         {
+         if (UInterrupt::event_signal_pending)
+            {
+            UInterrupt::callHandlerSignal();
+
+            continue;
+            }
+
+         (void) pthis->handlerRead();
+         }
+
+      return;
+      }
+#endif
 
    if (isPreForked())
       {
       U_INTERNAL_ASSERT_MAJOR(preforked_num_kids,0)
 
-      UTimeVal to_sleep(0L, 500 * 1000L);
-      int pid, status, nkids = 0, n = max_Keep_Alive / preforked_num_kids;
+      /**
+      * Main loop for the parent process with the new preforked implementation.
+      * The parent is just responsible for keeping a pool of children and they accept connections themselves...
+      **/
 
-      if (n) UNotifier::preallocate(n);
+      int pid, status, nkids = 0;
+      UTimeVal to_sleep(0L, 500 * 1000L);
 
       while (flag_loop)
          {
@@ -1391,7 +1496,7 @@ preforked_child:
       if (UNotifier::waitForEvent(ptime) == false) break; // no more events registered...
       }
 
-   if (preforked_num_kids)
+   if (preforked_num_kids >= 1)
       {
 end:
       if (proc->parent()) (void) proc->waitAll();

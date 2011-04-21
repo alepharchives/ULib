@@ -18,6 +18,9 @@
 
 #include <pthread.h>
 
+#define U_SIGSTOP (SIGRTMIN+1)
+#define U_SIGCONT (SIGRTMIN+2)
+
 class U_EXPORT UThread {
 public:
    // Check for memory error

@@ -119,15 +119,17 @@ void UVector<void*>::reserve(uint32_t n)
 {
    U_TRACE(0, "UVector<void*>::reserve(%u)", n)
 
-   void**   old_vec      = vec;
-   uint32_t old_capacity = _capacity;
-
-   if (n == 0) allocate(64);
-   else
+        if (n == 0) allocate(64); // NB: the check n == 0 is specific for class UTree...
+   else if (n != _capacity)
       {
+      U_INTERNAL_ASSERT_MAJOR(_capacity,0)
+
+      void**   old_vec      = vec;
+      uint32_t old_capacity = _capacity;
+
       allocate(n);
 
-      (void) u_memcpy(vec, old_vec, _length * sizeof(void*));
+      if (_length) (void) u_memcpy(vec, old_vec, _length * sizeof(void*));
 
       U_FREE_VECTOR(old_vec, old_capacity, void);
       }

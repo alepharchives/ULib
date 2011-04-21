@@ -148,7 +148,7 @@ void UHTTP::str_allocate()
    { U_STRINGREP_FROM_CONSTANT(U_CTYPE_HTML) },
    { U_STRINGREP_FROM_CONSTANT("application/soap+xml; charset=\"utf-8\"") },
    { U_STRINGREP_FROM_CONSTANT("HTTP/1.%c %d %s\r\n"
-                               "Server: ULib/" VERSION "\r\n"
+                               "Server: ULib\r\n" // VERSION "\r\n"
                                "%.*s"
                                "%.*s") },
    { U_STRINGREP_FROM_CONSTANT("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
@@ -324,6 +324,8 @@ void UHTTP::in_READ()
 {
    U_TRACE(1+256, "UHTTP::in_READ()")
 
+   U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_event)
+
 #ifdef HAVE_SYS_INOTIFY_H
    /*
    struct inotify_event {
@@ -334,8 +336,6 @@ void UHTTP::in_READ()
       char name[];      // The name of the file, padding to the end with NULs
    }
    */
-
-   U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_event)
 
    union uuinotify_event {
                       char*  p;
@@ -436,6 +436,11 @@ void UHTTP::ctor()
    ptrA = USocket::str_accept_encoding->c_pointer(1);   // "Accept-Encoding"
    ptrI = USocket::str_if_modified_since->c_pointer(1); // "If-Modified-Since"
 
+#ifdef HAVE_SSL
+   if (UServer_Base::getSocket()->isSSL()) enable_caching_by_proxy_servers = true;
+#endif
+
+   uint32_t sz;
    char buffer[U_PATH_MAX];
 
 #ifdef HAVE_PAGE_SPEED
@@ -547,31 +552,26 @@ void UHTTP::ctor()
 
    // CACHE FILE SYSTEM
 
-   U_INTERNAL_ASSERT_EQUALS(cache_file,0)
-
-   cache_file = U_NEW(UHashMap<UFileCacheData*>);
-
-   cache_file->allocate();
-
-#ifdef HAVE_SSL
-   if (UServer_Base::getSocket()->isSSL()) enable_caching_by_proxy_servers = true;
-#endif
-
 #ifndef HAVE_SYS_INOTIFY_H
    UServer_Base::handler_event = 0;
-#else
+#endif
+
+#ifdef HAVE_SYS_INOTIFY_H
    if (UServer_Base::handler_event)
       {
       // INIT INOTIFY FOR CACHE FILE SYSTEM
 
 #  ifdef HAVE_INOTIFY_INIT1
       UServer_Base::handler_event->fd = U_SYSCALL(inotify_init1, "%d", IN_NONBLOCK | IN_CLOEXEC);
-#  else
+
+      if (UServer_Base::handler_event->fd != -1 || errno != ENOSYS) goto next;
+#  endif
+
       UServer_Base::handler_event->fd = U_SYSCALL_NO_PARAM(inotify_init);
 
       (void) U_SYSCALL(fcntl, "%d,%d,%d", UServer_Base::handler_event->fd, F_SETFL, O_NONBLOCK | O_CLOEXEC);
-#  endif
 
+next:
       if (UServer_Base::handler_event->fd != -1)
          {
          U_SRV_LOG("Inode based directory notification enabled");
@@ -585,6 +585,12 @@ void UHTTP::ctor()
       }
 #endif
 
+   U_INTERNAL_ASSERT_EQUALS(cache_file,0)
+
+   cache_file = U_NEW(UHashMap<UFileCacheData*>);
+
+   cache_file->allocate(6151U);
+
    u_setPfnMatch(U_DOSMATCH, FNM_INVERT);
 
    (void) UServices::setFtw(0, U_CONSTANT_TO_PARAM("usp"));
@@ -596,14 +602,6 @@ void UHTTP::ctor()
    u_ftw();
 
    u_buffer_len = 0;
-
-   uint32_t sz = cache_file->size();
-
-   U_INTERNAL_DUMP("cache size = %u", sz)
-
-   sz += (sz / 100) * 25;
-
-   cache_file->reserve(sz + 128);
 
    // manage favicon...
 
@@ -640,6 +638,16 @@ void UHTTP::ctor()
          U_INTERNAL_ASSERT_EQUALS(file_data->array->size(),2)
          }
       }
+
+   // resize hash table...
+
+   sz = cache_file->size();
+
+   U_INTERNAL_DUMP("cache size = %u", sz)
+
+   sz += (sz / 100) * 25;
+
+   cache_file->reserve(sz + 128);
 
    // manage authorization data...
 
@@ -3292,13 +3300,13 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
                         u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".jpg")) ||
                         u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".jpeg")))
 
-#  ifdef HAVE_PAGE_SPEED
+#if defined(HAVE_PAGE_SPEED) && defined(DEBUG)
            if (u_mime_index == U_gif) page_speed->optimize_gif(content);
       else if (u_mime_index == U_png) page_speed->optimize_png(content);
       else                            page_speed->optimize_jpg(content);
 
       if (content.size() < file_data->size) U_SRV_LOG("warning: found not optimized image: %S", pathname->data());
-#  endif
+#endif
 
       goto next;
       }
@@ -3310,6 +3318,8 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
                         u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".js")))
 
       UStringExt::minifyCssJs(content); // minifies CSS/JS by removing comments and whitespaces...
+
+      if (content.empty()) goto end;
       }
 #ifdef HAVE_PAGE_SPEED
    else if (u_mime_index == U_html)
@@ -3355,6 +3365,7 @@ next:
          }
       }
 
+end:
    U_SRV_LOG("file cached: %S - %u bytes - (%d%%) compressed ratio%s", pathname->data(), file_data->size, 100 - ratio, motivation);
 }
 

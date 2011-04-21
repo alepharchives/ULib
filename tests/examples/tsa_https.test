@@ -68,7 +68,7 @@ rm -f TSA/response/response*
 #../../tmp/openssl/ssl/misc/tsget -h https://localhost:443/tsa -C TSA/request/cacert.pem TSA/request/tsq.req
 $LCMD <TSA/request/http.req >TSA/response/response 2>>err/tsa_https.err
 
-tail -c +142 TSA/response/response > TSA/response/response.tsr
+tail -c +136 TSA/response/response > TSA/response/response.tsr
 
 TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
 						 -in TSA/response/response.tsr -CApath TSA/CA/CApath > out/tsa_https.out
@@ -78,7 +78,7 @@ rm -f TSA/response/response*
 #../../tmp/openssl/ssl/misc/tsget -h https://localhost:443/tsa -C TSA/request/cacert.pem TSA/request/tsq.req
 $LCMD <TSA/request/http.req >TSA/response/response 2>>err/tsa_https.err
 
-tail -c +142 TSA/response/response > TSA/response/response.tsr
+tail -c +136 TSA/response/response > TSA/response/response.tsr
 
 $SLEEP
 kill_prg userver_ssl TERM

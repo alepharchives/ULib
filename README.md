@@ -39,7 +39,6 @@ The current version offers the following features :
    * CGI support for shell script processes (with automatic management of form and cookie).
    * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
    * Support for minify HTML CGI output with wrapping [google page speed SDK](http://code.google.com/speed/page-speed/download.html#pagespeed-sdk).
-   * [Web Socket](http://dev.w3.org/html5/websockets) support (experimental).
    * Support for Windows (without preforking).
    * Requests cut in phases for modular architecture (apache-like).
    * Configuration file with dedicated section.
@@ -57,7 +56,7 @@ The current version offers the following features :
        * mod_proxy : proxy support (experimental).
        * mod_geoip : [geolocation support](http://www.maxmind.com/geoip/api/c.shtml) (experimental).
        * mod_stream : simple streaming support (experimental).
-       * mod_socket : web sockets application framework (experimental).
+       * mod_socket : [Web Socket](http://dev.w3.org/html5/websockets) application framework (experimental).
 
 Benchmarking
 ------------

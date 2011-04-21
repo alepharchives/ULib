@@ -21747,7 +21747,7 @@ $as_echo "yes" >&6; }
 			echo "${T_MD}libssh found in $sshdir${T_ME}"
 			HAVE_SSH=yes
 			CPPFLAGS="$CPPFLAGS -DHAVE_SSH";
-			libssh_version=$(strings $sshdir/lib*/libssh.so | grep '^SSH-[0-9]' | head -n1 | cut -d'-' -f4)
+			libssh_version=$(strings $sshdir/lib*/libssh.so | grep 'libssh-[0-9]' | head -n1 | cut -d'-' -f4)
 			if test -z "${libssh_version}"; then
 				libssh_version="Unknown"
 			fi

@@ -52,9 +52,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UVector<void*>, "%u", n)
 
-      allocate(n);
+      _capacity = _length = 0;
 
-      _length = 0;
+      allocate(n);
       }
 
    ~UVector()

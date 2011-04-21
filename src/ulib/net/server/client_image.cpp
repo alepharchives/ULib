@@ -186,6 +186,8 @@ UClientImage_Base::UClientImage_Base()
    UEventFd::fd      = socket->iSockDesc;
    UEventFd::op_mask = U_READ_IN | EPOLLET;
 
+   U_INTERNAL_DUMP("pClientImage = %p fd = %d socket->iSockDesc = %d", pClientImage, UEventFd::fd, socket->iSockDesc)
+
    if (UServer_Base::isLog() == false) logbuf = 0;
    else
       {
@@ -206,8 +208,6 @@ void UClientImage_Base::destroy()
    UServer_Base::handlerCloseConnection();
 
    if (socket->isOpen()) socket->closesocket();
-
-   if (UServer_Base::isClassic()) U_EXIT(0);
 
    if (pClientImage->logbuf)
       {
@@ -255,44 +255,6 @@ void UClientImage_Base::logCertificate(void* x509)
       U_INTERNAL_DUMP("logbuf = %.*S", U_STRING_TO_TRACE(*(pClientImage->logbuf)))
       }
 #endif
-}
-
-void UClientImage_Base::run()
-{
-   U_TRACE(0, "UClientImage_Base::run()")
-
-   U_INTERNAL_ASSERT_POINTER(socket)
-   U_INTERNAL_ASSERT_POINTER(pClientImage)
-
-   if (msg_welcome)
-      {
-      U_SRV_LOG_WITH_ADDR("sent welcome message to");
-
-      if (USocketExt::write(socket, *msg_welcome) == false) goto dtor;
-      }
-
-   if (pClientImage->handlerRead() != U_NOTIFIER_DELETE)
-      {
-      // NB: this new object (pClientImage) is deleted by UNotifier (when response U_NOTIFIER_DELETE from handlerRead()...)
-
-      UNotifier::insert(pClientImage);
-
-      return;
-      }
-
-   // NB: if server with no prefork (ex: nodog) process the HTTP CGI request with fork....
-
-   U_INTERNAL_DUMP("UClientImage_Base::run() flag_loop = %b", UServer_Base::flag_loop)
-
-   if (UServer_Base::flag_loop          == false &&
-       UServer_Base::preforked_num_kids <= 0     &&
-       UServer_Base::proc->child())
-      {
-      U_EXIT(0);
-      }
-
-dtor:
-   delete pClientImage;
 }
 
 // define method VIRTUAL to redefine
