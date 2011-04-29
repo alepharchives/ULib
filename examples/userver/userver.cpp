@@ -4,19 +4,19 @@
 
 #if defined(U_SSL_SOCKET)
 #  include <ulib/ssl/net/sslsocket.h>
-#  define Socket USSLSocket
+#  define Server UServer<USSLSocket>
 #  ifdef U_NO_SSL
 #  undef U_NO_SSL
 #  endif
 #elif defined(U_TCP_SOCKET)
 #  include <ulib/net/tcpsocket.h>
-#  define Socket UTCPSocket
+#  define Server UServer<UTCPSocket>
 #  ifndef U_NO_SSL
 #  define U_NO_SSL
 #  endif
 #elif defined(U_UNIX_SOCKET)
 #  include <ulib/net/unixsocket.h>
-#  define Socket UUnixSocket
+#  define Server UServer<UUnixSocket>
 #  ifndef U_NO_SSL
 #  define U_NO_SSL
 #  endif
@@ -36,8 +36,6 @@
 "option c config 1 'path of configuration file' ''\n"
 
 #include <ulib/application.h>
-
-U_MACROSERVER(Server, UClientImage<Socket>, Socket);
 
 class Application : public UApplication {
 public:
@@ -94,7 +92,7 @@ public:
       // CGI_TIMEOUT    timeout for cgi execution
       //
       // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
-      //                (Value <= 1 will disable Keep-Alive) (default 256)
+      //                (Value <= 0 will disable Keep-Alive) (default 1020)
       //
       // DH_FILE        DH param
       // CERT_FILE      certificate of server

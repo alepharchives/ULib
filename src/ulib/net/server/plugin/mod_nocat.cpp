@@ -1329,7 +1329,7 @@ int UNoCatPlugIn::handlerInit()
 
          if (arping)
             {
-            sockp[i]->setLocal(UServer_Base::getSocket()->localIPAddress());
+            sockp[i]->setLocal(UServer_Base::socket->localIPAddress());
 
 #        ifdef HAVE_NETPACKET_PACKET_H
             U_INTERNAL_ASSERT(vInternalDevice[i].isNullTerminated())

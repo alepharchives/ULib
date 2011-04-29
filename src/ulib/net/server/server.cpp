@@ -65,14 +65,14 @@
 #  include <ulib/net/unixsocket.h>
 #endif
 
-#define U_DEFAULT_PORT            80
-#define U_DEFAULT_MAX_KEEP_ALIVE 256
-
 #ifdef DEBUG
 #  define U_DEFAULT_LISTEN_BACKLOG SOMAXCONN
 #else
 #  define U_DEFAULT_LISTEN_BACKLOG 1024
 #endif
+
+#define U_DEFAULT_PORT             80
+#define U_DEFAULT_MAX_KEEP_ALIVE 1020
 
 #define U_SOCKET_FLAGS     ptr_shared_data->socket_flags
 #define U_TOT_CONNECTION   ptr_shared_data->tot_connection
@@ -100,6 +100,7 @@ UEventFd*                  UServer_Base::handler_event;
 UEventTime*                UServer_Base::ptime;
 UServer_Base*              UServer_Base::pthis;
 UVector<UString>*          UServer_Base::vplugin_name;
+UClientImage_Base*         UServer_Base::vClientImage;
 UVector<UIPAllow*>*        UServer_Base::vallow_IP;
 UVector<UServerPlugIn*>*   UServer_Base::vplugin;
 UServer_Base::shared_data* UServer_Base::ptr_shared_data;
@@ -164,6 +165,11 @@ public:
 };
 
 UClientThread* UServer_Base::pthread;
+
+#  ifndef DEBUG
+#  undef  HAVE_PTHREAD_H
+#  define HAVE_PTHREAD_BUT_NDEBUG
+#  endif
 #endif
 
 static int sysctl_somaxconn, tcp_abort_on_overflow, sysctl_max_syn_backlog, tcp_fin_timeout;
@@ -312,14 +318,6 @@ UServer_Base::~UServer_Base()
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
-#ifdef HAVE_PTHREAD_H
-   if (pthread) delete pthread;
-#endif
-
-   UClientImage_Base::body->clear();
-   UClientImage_Base::wbuffer->clear();
-   UClientImage_Base::pbuffer->clear();
-
                       UNotifier::erase(this,          false); // NB: to avoid to delete himself...
    if (handler_event) UNotifier::erase(handler_event, false);
                       UNotifier::clear();
@@ -334,11 +332,34 @@ UServer_Base::~UServer_Base()
 #  endif
       }
 
+#ifdef HAVE_PTHREAD_H
+   if (pthread) delete pthread;
+#endif
+
+   U_INTERNAL_DUMP("vClientImage = %p", vClientImage)
+
+   if (isClassic() == false) delete[] vClientImage;
+
    UClientImage_Base::clear();
+
+   delete senvironment;
+
+   if (log)        delete log;
+   if (lock)       delete lock;
+   if (host)       delete host;
+   if (ptime)      delete ptime;
+   if (vallow_IP)  delete vallow_IP;
+
+   if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add + sizeof(sem_t));
+
+   delete socket;
 
 #ifndef __MINGW32__
    if (isChild() == false)
       {
+      (void) U_SYSCALL(setegid, "%d", 0);
+      (void) U_SYSCALL(seteuid, "%d", 0);
+
       if (iBackLog == 1) (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", tcp_abort_on_overflow, true);
 
       if (flag_use_tcp_optimization)
@@ -354,18 +375,7 @@ UServer_Base::~UServer_Base()
       }
 #endif
 
-   delete senvironment;
-
-   if (log)        delete log;
-   if (proc)       delete proc;
-   if (lock)       delete lock;
-   if (host)       delete host;
-   if (ptime)      delete ptime;
-   if (vallow_IP)  delete vallow_IP;
-
-   if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add + sizeof(sem_t));
-
-   delete socket;
+   if (proc) delete proc;
 }
 
 void UServer_Base::loadConfigParam(UFileConfig& cfg)
@@ -403,7 +413,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // CGI_TIMEOUT   timeout for cgi execution
    //
    // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
-   //                (Value <= 1 will disable Keep-Alive) (default 256)
+   //                (Value <= 0 will disable Keep-Alive) (default 1020)
    //
    // DH_FILE       DH param
    // CERT_FILE     server certificate
@@ -784,7 +794,7 @@ void UServer_Base::init()
 #endif
 
    block_on_accept        = (preforked_num_kids <= 1);
-   USocket::accept4_flags = SOCK_NONBLOCK | SOCK_CLOEXEC;
+   USocket::accept4_flags = SOCK_CLOEXEC | SOCK_NONBLOCK;
 
 #ifdef HAVE_SSL
    if (UClientImage_Base::socket->isSSL())
@@ -794,6 +804,9 @@ void UServer_Base::init()
       USocket::accept4_flags = SOCK_CLOEXEC;
       }
 #endif
+
+   if (USocket::accept4_flags & SOCK_CLOEXEC)  UClientImage_Base::socket->flags |= O_CLOEXEC;
+   if (USocket::accept4_flags & SOCK_NONBLOCK) UClientImage_Base::socket->flags |= O_NONBLOCK;
 
    /* sysctl_somaxconn (SOMAXCONN: 128) specifies the maximum number of sockets in state SYN_RECV per listen socket queue.
     * At listen(2) time the backlog is adjusted to this limit if bigger then that.
@@ -930,7 +943,7 @@ void UServer_Base::init()
    U_SRV_LOG("working directory (DOCUMENT_ROOT) changed to %S", document_root.data());
 
 #ifdef HAVE_SSL
-   if (UClientImage_Base::socket->isSSL()) goto next; // For SSL skip tcp optimization
+   if (UClientImage_Base::socket->isSSL()) goto next; // For SSL skip TCP optimization
 #endif
 
    if (flag_use_tcp_optimization)
@@ -983,8 +996,6 @@ void UServer_Base::init()
    // init plugin modules...
 
 next:
-   flag_loop = true;
-
    U_INTERNAL_ASSERT_EQUALS(proc,0)
 
    proc = U_NEW(UProcess);
@@ -1001,7 +1012,7 @@ next:
       U_ERROR("plugins initialization FAILED. Going down...");
       }
 
-   if (preforked_num_kids)
+   if (preforked_num_kids > 0)
       {
       // manage shared data...
 
@@ -1011,7 +1022,7 @@ next:
 
       ptr_shared_data = (shared_data*) UFile::mmap(sizeof(shared_data) + shared_data_add + sizeof(sem_t));
 
-      U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data,MAP_FAILED)
+      U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
       }
 
    // manage block on accept...
@@ -1095,6 +1106,75 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       }
 }
 
+void UServer_Base::handlerNewConnection()
+{
+   U_TRACE(0, "UServer_Base::handlerNewConnection()")
+
+   U_INTERNAL_ASSERT_POINTER(pthis)
+   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
+
+   // NB: UClientImage object is also referenced by UClientImage_Base::pClientImage...
+
+   UClientImage_Base* ptr = vClientImage + num_connection++;
+
+   U_INTERNAL_DUMP("num_connection = %d", num_connection)
+
+   // --------------------------------------------------------------------------------------------------------------------------
+   // PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
+   //                                                                     1 - classic, forking after accept client
+   //                                                                    >1 - pool of process serialize plus monitoring process)
+   // --------------------------------------------------------------------------------------------------------------------------
+
+   if (isPreForked())
+      {
+      U_TOT_CONNECTION++;
+
+      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+      }
+   else if (isClassic())
+      {
+      U_INTERNAL_ASSERT_POINTER(proc)
+
+      if (proc->fork() &&
+          proc->parent())
+         {
+         UClientImage_Base::socket->close();
+
+         // per evitare troppi zombie...
+
+         if (UProcess::waitpid() > 0)
+            {
+            --num_connection;
+
+            U_INTERNAL_DUMP("num_connection = %d", num_connection)
+            }
+
+         return;
+         }
+
+      if (proc->child()) setNotifier(true);
+      }
+
+   // NB: we do the same as when the object is deleted by UNotifier (when response from handlerRead() is U_NOTIFIER_DELETE)
+
+#ifdef HAVE_PTHREAD_H
+   bool is_empty = UNotifier::empty();
+
+   if (pthread) goto next;
+#endif
+
+   if (ptr->handlerRead() == U_NOTIFIER_DELETE) ptr->handlerDelete();
+   else
+      {
+next:
+      UNotifier::insert(ptr);
+      }
+
+#ifdef HAVE_PTHREAD_H
+   if (pthread && is_empty) pthread->resume();
+#endif
+}
+
 int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
 {
    U_TRACE(1, "UServer_Base::handlerRead()")
@@ -1147,12 +1227,21 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 
          UClientImage_Base::socket->close();
 
-         goto end;
+         U_RETURN(U_NOTIFIER_OK);
+         }
+
+      if (num_connection >= max_Keep_Alive)
+         {
+         U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%u)", UClientImage_Base::socket->getRemoteInfo(), max_Keep_Alive);
+
+         UClientImage_Base::socket->close();
+
+         U_RETURN(U_NOTIFIER_OK);
          }
 
       handlerNewConnection();
 
-      goto end;
+      U_RETURN(U_NOTIFIER_OK);
       }
 
    U_INTERNAL_DUMP("flag_loop = %b block_on_accept = %b", flag_loop, block_on_accept)
@@ -1168,7 +1257,6 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
       ULog::log("%saccept new client failed %#.*S\n", mod_name, u_strlen(msg_error), msg_error);
       }
 
-end:
    U_RETURN(U_NOTIFIER_OK);
 }
 
@@ -1179,32 +1267,50 @@ const char* UServer_Base::getNumConnection()
    static char buffer[32];
 
    if (isPreForked()) (void) snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
-   else               (void) snprintf(buffer, sizeof(buffer),      "%d", (preforked_num_kids == 1 ? U_TOT_CONNECTION : num_connection));
+   else               (void) snprintf(buffer, sizeof(buffer),      "%d", num_connection);
 
    U_RETURN(buffer);
 }
 
-void UServer_Base::handlerCloseConnection()
+void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
 {
-   U_TRACE(0, "UServer_Base::handlerCloseConnection()")
+   U_TRACE(0, "UServer_Base::handlerCloseConnection(%p)", ptr)
 
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
+   U_INTERNAL_ASSERT_POINTER(ptr)
 
-   --num_connection;
-
-   U_INTERNAL_DUMP("num_connection = %d", num_connection)
-
-   if (preforked_num_kids >= 1)
+   if (num_connection)
       {
-      U_TOT_CONNECTION--;
+      --num_connection;
 
-      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+      U_INTERNAL_DUMP("num_connection = %d", num_connection)
+
+      if (isPreForked())
+         {
+         U_TOT_CONNECTION--;
+
+         U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+         }
+
+      if (isLog())
+         {
+         U_INTERNAL_DUMP("UEventFd::fd = %d logbuf = %.*S", ptr->UEventFd::fd, U_STRING_TO_TRACE(*(ptr->logbuf)))
+
+         U_ASSERT_EQUALS(ptr->UEventFd::fd, ptr->logbuf->strtol())
+
+         U_SRV_LOG("client closed connection from %.*s, %s clients still connected", U_STRING_TO_TRACE(*(ptr->logbuf)), getNumConnection());
+         }
+
+      if (isClassic()) U_EXIT(0);
+
+      if (UClientImage_Base::socket->isOpen()) UClientImage_Base::socket->closesocket();
       }
-
-   U_SRV_LOG("client closed connection from %.*s, %s clients still connected",
-              U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
-
-   if (isClassic()) U_EXIT(0);
+#ifdef DEBUG
+   else if (ptr->logbuf)
+      {
+      delete ptr->logbuf;
+      delete ptr->clientAddress;
+      }
+#endif
 }
 
 bool UServer_Base::handlerTimeoutConnection(void* cimg)
@@ -1226,124 +1332,11 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 
    U_SRV_LOG_TIMEOUT((UClientImage_Base*)cimg);
 
-   ((UClientImage_Base*)cimg)->resetSocket(USocket::BROKEN);
+   ((UClientImage_Base*)cimg)->handlerError(USocket::BROKEN);
 
    (void) pluginsHandlerReset(); // manage reset...
 
    U_RETURN(true);
-}
-
-void UServer_Base::handlerRequest()
-{
-   U_TRACE(0, "UServer_Base::handlerRequest()")
-
-#ifdef HAVE_PTHREAD_H
-   bool is_empty;
-#endif
-
-   // NB: new UClientImage object referenced by pClientImage...
-
-   pthis->newClientImage();
-
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
-
-   U_SRV_LOG("new client connected from %.*s, %s clients currently connected",
-              U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf)), getNumConnection());
-
-   if (UClientImage_Base::msg_welcome)
-      {
-      U_SRV_LOG_WITH_ADDR("sent welcome message to");
-
-      if (USocketExt::write(UClientImage_Base::socket, *UClientImage_Base::msg_welcome) == false) goto dtor;
-      }
-
-   if (UClientImage_Base::pClientImage->handlerRead() == U_NOTIFIER_DELETE)
-      {
-      // NB: if server with no prefork (ex: nodog) process the HTTP CGI request with fork....
-
-      U_INTERNAL_DUMP("flag_loop = %b", flag_loop)
-
-      if (flag_loop          == false &&
-          preforked_num_kids <= 0     &&
-          proc->child())
-         {
-         U_EXIT(0);
-         }
-
-      goto dtor;
-      }
-
-#ifdef HAVE_PTHREAD_H
-   is_empty = UNotifier::empty();
-#endif
-
-   // NB: this new object (pClientImage) is deleted by UNotifier (when response from handlerRead() is U_NOTIFIER_DELETE)
-
-   UNotifier::insert(UClientImage_Base::pClientImage);
-
-#ifdef HAVE_PTHREAD_H
-   if (is_empty) pthread->resume();
-#endif
-
-   return;
-
-dtor:
-   delete UClientImage_Base::pClientImage;
-}
-
-void UServer_Base::handlerNewConnection()
-{
-   U_TRACE(0, "UServer_Base::handlerNewConnection()")
-
-   U_INTERNAL_ASSERT_POINTER(pthis)
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
-
-   ++num_connection;
-
-   U_INTERNAL_DUMP("num_connection = %d", num_connection)
-
-   // --------------------------------------------------------------------------------------------------------------------------
-   // PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
-   //                                                                     1 - classic, forking after accept client
-   //                                                                    >1 - pool of process serialize plus monitoring process)
-   // --------------------------------------------------------------------------------------------------------------------------
-
-   if (preforked_num_kids >= 1)
-      {
-      if (isClassic())
-         {
-         if (max_Keep_Alive &&
-             max_Keep_Alive <= U_TOT_CONNECTION)
-            {
-            --num_connection;
-
-            U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%d)",
-                        UClientImage_Base::socket->getRemoteInfo(), max_Keep_Alive);
-
-            return;
-            }
-
-         U_INTERNAL_ASSERT_POINTER(proc)
-
-         if (proc->fork() &&
-             proc->parent())
-            {
-            UClientImage_Base::socket->close();
-
-            (void) UProcess::waitpid(); // per evitare piu' di 1 zombie...
-
-            return;
-            }
-
-         if (proc->child()) setNotifier(true);
-         }
-
-      U_TOT_CONNECTION++;
-
-      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
-      }
-
-   handlerRequest();
 }
 
 void UServer_Base::run()
@@ -1356,7 +1349,7 @@ void UServer_Base::run()
 
    UInterrupt::syscall_restart = false;
 
-   UNotifier::exit_loop_wait_event_for_signal = true;
+   UNotifier::exit_loop_wait_event_for_signal = flag_loop = true;
 
 #ifdef HAVE_LIBEVENT
    UInterrupt::setHandlerForSignal( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  //  sync signal
@@ -1372,10 +1365,15 @@ void UServer_Base::run()
    //                                                                    >1 - pool of process serialize plus monitoring process)
    // --------------------------------------------------------------------------------------------------------------------------
 
-   uint32_t n = max_Keep_Alive / (preforked_num_kids <= 0 ? 1 : preforked_num_kids);
+   if (max_Keep_Alive <= 0) max_Keep_Alive = U_DEFAULT_MAX_KEEP_ALIVE;
 
-   if (n) UNotifier::preallocate(n);
+   UNotifier::preallocate(max_Keep_Alive);
+       pthis->preallocate(max_Keep_Alive);
 
+   U_INTERNAL_DUMP("vClientImage = %p", vClientImage)
+
+   U_INTERNAL_ASSERT_POINTER(vClientImage)
+   
 #ifdef HAVE_PTHREAD_H
    if (preforked_num_kids == -1)
       {
@@ -1399,7 +1397,7 @@ void UServer_Base::run()
 
    if (isPreForked())
       {
-      U_INTERNAL_ASSERT_MAJOR(preforked_num_kids,0)
+      U_INTERNAL_ASSERT_MAJOR(preforked_num_kids,1)
 
       /**
       * Main loop for the parent process with the new preforked implementation.
@@ -1644,4 +1642,8 @@ const char* UServer_Base::dump(bool reset) const
    return 0;
 }
 
+#endif
+
+#ifdef HAVE_PTHREAD_BUT_NDEBUG
+#  define HAVE_PTHREAD_H
 #endif

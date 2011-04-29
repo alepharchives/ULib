@@ -363,14 +363,14 @@ UString UStringExt::getEnvironmentVar(const char* s, uint32_t n, const UString* 
 {
    U_TRACE(1, "UStringExt::getEnvironmentVar(%.*S,%u,%p)", n, s, n, environment)
 
-   char c, c1;
    UString value(100U);
-   uint32_t start = 0, end;
 
    if (environment)
       {
-      // NB: check if s param it is a environment-var
-loop:
+      char c, c1;
+      uint32_t start = 0, end;
+
+loop: // NB: check if s param it is a environment-var
       start = environment->find(s, start, n);
 
       if (start == U_NOT_FOUND) goto next;

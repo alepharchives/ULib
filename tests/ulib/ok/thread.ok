@@ -40,7 +40,6 @@ starting father thread
 starting child thread
 child start
 father end
-child end
 
 starting thread
 created auto object on stack

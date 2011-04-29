@@ -18,8 +18,8 @@
 
 #include <pthread.h>
 
-#define U_SIGSTOP (SIGRTMIN+1)
-#define U_SIGCONT (SIGRTMIN+2)
+#define U_SIGSTOP (SIGRTMIN+5)
+#define U_SIGCONT (SIGRTMIN+6)
 
 class U_EXPORT UThread {
 public:
@@ -39,7 +39,7 @@ public:
 
    // COSTRUTTORI
 
-            UThread(bool __suspendEnable = false);
+            UThread(bool suspendEnable = false, bool joinEnable = true);
    virtual ~UThread();
 
    // SERVICES
@@ -158,7 +158,7 @@ protected:
    // A special global function, getThread(), is provided to identify the thread object that represents the current
    // execution context you are running under. This is sometimes needed to deliver signals to the correct thread.
 
-   static UThread* getThread();
+   static UThread* getThread() __pure;
 
 private:
    // private data

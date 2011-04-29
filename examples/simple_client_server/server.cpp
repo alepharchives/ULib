@@ -50,8 +50,6 @@ protected:
       {
       U_TRACE(5, "UClientImageExample::handlerRead()")
 
-      reset(); // virtual method
-
       int result = genericRead(); // read request...
 
       if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...

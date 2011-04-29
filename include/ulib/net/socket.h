@@ -120,7 +120,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, USocket, "%b", bSocketIsIPv6)
 
-      flags       = O_RDWR | O_CLOEXEC;
+      flags       = O_RDWR;
       iState      = CLOSE;
       iSockDesc   = -1;
       bLocalSet   = false;

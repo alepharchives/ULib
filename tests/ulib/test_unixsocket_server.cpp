@@ -30,8 +30,6 @@ protected:
       {
       U_TRACE(5, "UUnixClientImage::handlerRead()")
 
-      reset();
-
       int result = genericRead();
 
       if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...

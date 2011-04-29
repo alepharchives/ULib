@@ -36,18 +36,18 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-    UThreadImpl(bool __suspendEnable)
+    UThreadImpl(bool suspendEnable, bool joinEnable)
       {
-      U_TRACE_REGISTER_OBJECT(0, UThreadImpl, "%b", __suspendEnable)
+      U_TRACE_REGISTER_OBJECT(0, UThreadImpl, "%b,%b", suspendEnable, joinEnable)
 
       _tid           = 0;
       _signal        = 0;
       _cancel        = 0;
       _suspendCount  = 0;
-      _suspendEnable = __suspendEnable;
+      _suspendEnable = suspendEnable;
 
       (void) U_SYSCALL(pthread_attr_init, "%p", &_attr);
-      (void) U_SYSCALL(pthread_attr_setdetachstate, "%p,%d", &_attr, PTHREAD_CREATE_JOINABLE);
+      (void) U_SYSCALL(pthread_attr_setdetachstate, "%p,%d", &_attr, (joinEnable ? PTHREAD_CREATE_JOINABLE : PTHREAD_CREATE_DETACHED));
       }
 
    ~UThreadImpl()
@@ -76,11 +76,11 @@ private:
    friend class UThread;
 };
 
-UThread::UThread(bool __suspendEnable)
+UThread::UThread(bool suspendEnable, bool joinEnable)
 {
-   U_TRACE_REGISTER_OBJECT(0, UThread, "%b", __suspendEnable)
+   U_TRACE_REGISTER_OBJECT(0, UThread, "%b,%b", suspendEnable, joinEnable)
 
-   priv  = U_NEW(UThreadImpl(__suspendEnable));
+   priv  = U_NEW(UThreadImpl(suspendEnable, joinEnable));
    next  = first;
    first = this;
 
@@ -98,7 +98,7 @@ UThread::~UThread()
    if (next) delete next;
 }
 
-UThread* UThread::getThread()
+__pure UThread* UThread::getThread()
 {
    U_TRACE(1, "UThread::getThread()")
 
@@ -120,17 +120,18 @@ void UThread::stop()
 
    U_INTERNAL_ASSERT_POINTER(priv)
 
-// (void) U_SYSCALL(pthread_mutex_unlock, "%p", &lock);
-
    (void) U_SYSCALL(pthread_cancel, "%p", priv->_tid);
 
-   if (isDetached() == false) (void) U_SYSCALL(pthread_join, "%p,%p", priv->_tid, 0);
+   if (isDetached() == false)
+      {
+      (void) U_SYSCALL(pthread_join, "%p,%p", priv->_tid, 0);
+      }
+#ifdef HAVE_PTHREAD_YIELD
    else
       {
-#  ifdef HAVE_PTHREAD_YIELD
       (void) U_SYSCALL_NO_PARAM(pthread_yield);
-#  endif
       }
+#endif
 }
 
 void UThread::close()
@@ -148,8 +149,12 @@ void UThread::close()
 
       if (U_SYSCALL(pthread_equal, "%p,%p", priv->_tid, obj->priv->_tid))
          {
+         (void) U_SYSCALL(pthread_mutex_lock, "%p", &lock);
+
          *ptr = obj->next;
                 obj->next = 0;
+
+         (void) U_SYSCALL(pthread_mutex_unlock, "%p", &lock);
 
          break;
          }
@@ -329,6 +334,10 @@ void UThread::execHandler(UThread* th)
 {
    U_TRACE(1, "UThread::execHandler(%p)", th)
 
+   th->priv->_tid = U_SYSCALL_NO_PARAM(pthread_self);
+
+   U_INTERNAL_DUMP("_tid = %p", th->priv->_tid)
+
    sigset_t mask;
 
 #  ifdef sigemptyset
@@ -382,10 +391,6 @@ void UThread::execHandler(UThread* th)
       th->sigInstall(U_SIGCONT);
 #  endif
       }
-
-   th->priv->_tid = U_SYSCALL_NO_PARAM(pthread_self);
-
-   U_INTERNAL_DUMP("_tid = %p", th->priv->_tid)
 
    pthread_cleanup_push((cleanup_t)UThread::threadCleanup, th);
 

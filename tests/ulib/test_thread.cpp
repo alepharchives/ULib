@@ -132,11 +132,11 @@ public:
 
       UThread* th = new Child;
 
-      th->detach();
-
       th->start();
 
       UThread::sleep(1000);
+
+      delete th;
 
       cout << "father end" << endl;
       }
@@ -229,6 +229,7 @@ int U_EXPORT main(int argc, char* argv[])
    test.suspend();
    TEST_CHANGE(false);
    TEST_CHANGE(false);
+   test.resume();
 
    // Test child thread destroying before father
 
@@ -255,7 +256,6 @@ int U_EXPORT main(int argc, char* argv[])
    delete th1; // delete to join
 
    printf("\nNow program should finish... :)\n");
-   test.resume();
 
    return 0;
 }

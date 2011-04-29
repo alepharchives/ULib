@@ -49,6 +49,12 @@ public:
    UString* logbuf;
    UIPAddress* clientAddress;
 
+   // NB: we need that (not put on it in class UClientImage<USSLSocket>) otherwise there are problem with delete[]...
+
+#ifdef HAVE_SSL
+   SSL* ssl;
+#endif
+
    static UString* body;
    static USocket* socket;
    static UString* rbuffer;
@@ -68,52 +74,38 @@ public:
 
    // SERVICES
 
+   int  genericRead();
+   void logCertificate(void* x509); // aggiungo nel log il certificato Peer del client ("issuer","serial")
+
    static void clear();
-   static int  genericRead();
    static void init(USocket* p);
 
    // log
 
-   static void logRequest( const char* filereq = FILETEST_REQ);
-   static void logResponse(const char* fileres = FILETEST_RES);
-
-   static void logCertificate(void* x509); // aggiungo nel log il certificato Peer del client ("issuer","serial")
+   void logRequest( const char* filereq = FILETEST_REQ);
+   void logResponse(const char* fileres = FILETEST_RES);
 
    // get remote ip address
 
-   static UIPAddress& remoteIPAddress()
-      {
-      U_TRACE(0, "UClientImage_Base::remoteIPAddress()")
-
-      U_INTERNAL_ASSERT_POINTER(socket)
-      U_INTERNAL_ASSERT_POINTER(pClientImage)
-
-      if (pClientImage->logbuf) return *pClientImage->clientAddress;
-
-      socket->setRemote();
-
-      return socket->remoteIPAddress();
-      }
+   static UIPAddress& remoteIPAddress();
 
    // welcome message
 
    static void setMsgWelcome(const UString& msg);
 
-   // define method VIRTUAL to redefine
-
-   virtual void reset();
-
    // define method VIRTUAL of class UEventFd
 
-   virtual int handlerRead();
-   virtual int handlerWrite();
-   virtual int handlerError()
+   virtual int  handlerRead();
+   virtual int  handlerWrite();
+   virtual void handlerDelete();
+   virtual void handlerError(int state)
       {
-      U_TRACE(0, "UClientImage_Base::handlerError()")
+      U_TRACE(0, "UClientImage_Base::handlerError(%d)", state)
 
-      resetSocket(USocket::RESET); // NB: we need this because we reuse the same object USocket...
+      // NB: we need this because we use the same object USocket...
 
-      U_RETURN(U_NOTIFIER_DELETE);
+      socket->iState    = state;
+      socket->iSockDesc = UEventFd::fd;
       }
 
    // manage if other request already available... (pipelining)
@@ -136,27 +128,6 @@ public:
 protected:
    static UString* msg_welcome;
 
-   // NB: we need this because we reuse the same object UClientImage_Base...
-
-   void reuse()
-      {
-      U_TRACE(0, "UClientImage_Base::reuse()")
-
-      pClientImage = this;
-
-      U_INTERNAL_DUMP("pClientImage = %p fd = %d socket->iSockDesc = %d", pClientImage, UEventFd::fd, socket->iSockDesc)
-      }
-
-   void resetSocket(USocket::State state)
-      {
-      U_TRACE(0, "UClientImage_Base::resetSocket(%d)", state)
-
-      U_INTERNAL_DUMP("pClientImage = %p fd = %d socket->iSockDesc = %d", pClientImage, UEventFd::fd, socket->iSockDesc)
-
-      socket->iState    = state;
-      socket->iSockDesc = UEventFd::fd;
-      }
-
    // COSTRUTTORI
 
             UClientImage_Base();
@@ -164,12 +135,8 @@ protected:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UClientImage_Base)
 
-      reuse(); // NB: we need this because we reuse the same object UClientImage_Base...
-
-      destroy();
+      handlerDelete();
       }
-
-   static void destroy();
 
 private:
    UClientImage_Base(const UClientImage_Base&) : UEventFd() {}
@@ -194,8 +161,6 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UClientImage)
       }
 
-   static Socket* getSocket() { return (Socket*) socket; }
-
    // DEBUG
 
 #ifdef DEBUG
@@ -212,17 +177,12 @@ private:
 template <> class U_EXPORT UClientImage<USSLSocket> : public UClientImage_Base {
 public:
 
-   SSL* ssl;
-
    UClientImage() : UClientImage_Base()
       {
       U_TRACE_REGISTER_OBJECT(0, UClientImage<USSLSocket>, "")
 
-      // NB: we need this because we reuse the same object USocket...
-
-      ssl = getSocket()->ssl;
-
-      if (logbuf) UClientImage_Base::logCertificate(getSocket()->getPeerCertificate());
+      U_INTERNAL_ASSERT_POINTER(socket)
+      U_ASSERT(socket->isSSL())
       }
 
    virtual ~UClientImage()
@@ -230,37 +190,82 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UClientImage<USSLSocket>)
 
       U_INTERNAL_ASSERT_POINTER(socket)
-      U_INTERNAL_ASSERT(socket->isSSL())
-
-      if (socket->isOpen())
-         {
-         U_INTERNAL_DUMP("ssl = %p ssl_fd = %d fd = %d sock_fd = %d", ssl, SSL_get_fd(ssl), UEventFd::fd, socket->getFd())
-
-         U_INTERNAL_ASSERT_EQUALS(SSL_get_fd(ssl), UEventFd::fd)
-
-         // NB: we need this because we reuse the same object USocket...
-
-         getSocket()->ssl = ssl;
-         }
+      U_ASSERT(socket->isSSL())
       }
 
    // SERVICES
 
    static USSLSocket* getSocket() { return (USSLSocket*)socket; }
 
-   // define method VIRTUAL of class UClientImage_Base
-
-   virtual void reset()
+   void checkForFirstUse()
       {
-      U_TRACE(0, "UClientImage<USSLSocket>::reset()")
+      U_TRACE(0, "UClientImage<USSLSocket>::checkForFirstUse()")
 
-      U_INTERNAL_DUMP("ssl = %p ssl_fd = %d fd = %d", ssl, SSL_get_fd(ssl), UEventFd::fd)
+      // Check if it is the first use of this object...
 
-      U_INTERNAL_ASSERT(UEventFd::fd == SSL_get_fd(ssl))
+      U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->getFd())
+
+      if (logbuf &&
+          UEventFd::fd == 0)
+         {
+         UClientImage_Base::logCertificate(getSocket()->getPeerCertificate());
+         }
+
+      // NB: we need this because we reuse the same object USocket...
+
+      if (ssl == 0)
+         {
+         ssl = getSocket()->ssl;
+               getSocket()->ssl = 0;
+
+         U_INTERNAL_DUMP("ssl = %p ssl_fd = %d", ssl, SSL_get_fd(ssl))
+         }
+      }
+
+   // define method VIRTUAL of class UEventFd
+
+   virtual int handlerRead()
+      {
+      U_TRACE(0, "UClientImage<USSLSocket>::handlerRead()")
+
+      checkForFirstUse();
+
+      int result = UClientImage_Base::handlerRead();
+
+      U_RETURN(result);
+      }
+
+   virtual void handlerDelete()
+      {
+      U_TRACE(0, "UClientImage<USSLSocket>::handlerDelete()")
+
+      if (socket->isOpen())
+         {
+         U_INTERNAL_DUMP("ssl = %p ssl_fd = %d fd = %d sock_fd = %d", ssl, SSL_get_fd(ssl), UEventFd::fd, socket->getFd())
+
+         U_INTERNAL_ASSERT_POINTER(ssl)
+         U_INTERNAL_ASSERT_EQUALS(SSL_get_fd(ssl), UEventFd::fd)
+
+         getSocket()->ssl = ssl;
+         }
+
+      ssl = 0;
+
+      UClientImage_Base::handlerDelete();
+      }
+
+   virtual void handlerError(int state)
+      {
+      U_TRACE(0, "UClientImage<USSLSocket>::handlerError(%d)", state)
+
+      U_INTERNAL_DUMP("ssl = %p ssl_fd = %d", ssl, SSL_get_fd(ssl))
+
+      U_INTERNAL_ASSERT_POINTER(ssl)
+      U_INTERNAL_ASSERT_EQUALS(SSL_get_fd(ssl), UEventFd::fd)
 
       getSocket()->ssl = ssl; // NB: we need this because we reuse the same object USocket...
 
-      UClientImage_Base::reset();
+      UClientImage_Base::handlerError(state);
       }
 
    // DEBUG

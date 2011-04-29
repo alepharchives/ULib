@@ -57,6 +57,7 @@ f) Riunire i frammenti del messaggio
 typedef int (*PEM_PASSWD_CB)(char* buf, int size, int rwflag, void* password); // Password callback
 
 class UServer_Base;
+class UClientImage_Base;
 template <class T> class UServer;
 template <class T> class UClientImage;
 
@@ -262,6 +263,7 @@ private:
    USSLSocket& operator=(const USSLSocket&)          { return *this; }
 
                       friend class UServer_Base;
+                      friend class UClientImage_Base;
    template <class T> friend class UServer;
    template <class T> friend class UClientImage;
 };

@@ -100,7 +100,7 @@ int URpcPlugIn::handlerRequest()
 
       *UClientImage_Base::wbuffer = rpc_parser->processMessage(method, *URPCObject::dispatcher, bSendingFault);
 
-      U_SRV_LOG_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
+      U_SRV_LOG_WITH_ADDR(UClientImage_Base::pClientImage, "method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
 
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }

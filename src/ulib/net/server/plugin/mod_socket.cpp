@@ -96,9 +96,7 @@ bool UWebSocketPlugIn::handleDataFraming()
 {
    U_TRACE(0, "UWebSocketPlugIn::handleDataFraming()")
 
-   uint32_t sz;
    UString frame;
-   unsigned char type;
    uint64_t frame_length;
    fd_set fd_set_read, read_set;
    int n, sock = UClientImage_Base::socket->getFd(), fdmax = U_max(sock, UProcess::filedes[2]) + 1;
@@ -125,6 +123,9 @@ loop:
 
    if (FD_ISSET(sock, &read_set))
       {
+      uint32_t sz;
+      unsigned char type;
+
       UClientImage_Base::rbuffer->setEmptyForce(); // NB: can be referenced by frame...
 
       if (USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer) == false) goto end;
@@ -172,7 +173,7 @@ handle_data:
                                                     sz - 2); // skip 0xff
          }
 
-      U_SRV_LOG_WITH_ADDR("received message (%u bytes) %.*S from", frame.size(), U_STRING_TO_TRACE(frame))
+      U_SRV_LOG_WITH_ADDR(UClientImage_Base::pClientImage, "received message (%u bytes) %.*S from", frame.size(), U_STRING_TO_TRACE(frame))
 
       if (UNotifier::write(UProcess::filedes[1], U_STRING_TO_PARAM(frame))) goto loop;
 
@@ -204,7 +205,7 @@ handle_data:
          frame = '\0' + *UClientImage_Base::wbuffer + '\377';
          }
 
-      U_SRV_LOG_WITH_ADDR("sent message (%u bytes) %.*S to", frame.size(), U_STRING_TO_TRACE(frame))
+      U_SRV_LOG_WITH_ADDR(UClientImage_Base::pClientImage, "sent message (%u bytes) %.*S to", frame.size(), U_STRING_TO_TRACE(frame))
 
       if (USocketExt::write(UClientImage_Base::socket, U_STRING_TO_PARAM(frame))) goto loop;
       }

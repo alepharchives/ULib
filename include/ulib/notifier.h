@@ -16,9 +16,6 @@
 
 #include <ulib/string.h>
 
-#include <ulib/event/event_fd.h>
-#include <ulib/event/event_time.h>
-
 /* NB: to force use of select()
 #ifdef HAVE_EPOLL_WAIT
 #undef HAVE_EPOLL_WAIT
@@ -32,6 +29,9 @@
 #     define MAX_EVENTS 32
 #  endif
 #endif
+
+#include <ulib/event/event_fd.h>
+#include <ulib/event/event_time.h>
 
 class UServer_Base;
 class UClientImage_Base;

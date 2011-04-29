@@ -477,10 +477,9 @@ loop:
 
       if (ret == 1)
          {
-         pcNewConnection->ssl = ssl;
          pcNewConnection->ret = SSL_ERROR_NONE;
-
-         ssl = 0;
+         pcNewConnection->ssl = ssl;
+                                ssl = 0;
 
          U_RETURN(true);
          }

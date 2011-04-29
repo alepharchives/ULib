@@ -27,7 +27,7 @@
 # CGI_TIMEOUT   timeout for cgi execution
 #
 # MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
-#                (Value <= 1 will disable Keep-Alive)
+#                (Value <= 0 will disable Keep-Alive)
 #
 # DH_FILE       dh param
 # CERT_FILE     certificate of server

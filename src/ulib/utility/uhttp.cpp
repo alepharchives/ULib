@@ -437,7 +437,7 @@ void UHTTP::ctor()
    ptrI = USocket::str_if_modified_since->c_pointer(1); // "If-Modified-Since"
 
 #ifdef HAVE_SSL
-   if (UServer_Base::getSocket()->isSSL()) enable_caching_by_proxy_servers = true;
+   if (UServer_Base::socket->isSSL()) enable_caching_by_proxy_servers = true;
 #endif
 
    uint32_t sz;
@@ -1147,7 +1147,7 @@ start:
 
       U_INTERNAL_DUMP("slow loris count = %u", count)
 
-      if (count++ > 10) U_RETURN(false);
+      if (++count > 10) U_RETURN(false);
 
       timeoutMS = 3 * 1000;
 
@@ -1255,7 +1255,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
          do {
             U_INTERNAL_DUMP("slow loris count = %u", count)
 
-            if (count++ > 10)
+            if (++count > 10)
                {
                setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
 
@@ -2372,23 +2372,6 @@ UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, const UString& conten
 
    U_INTERNAL_DUMP("U_http_version = %C U_http_keep_alive = %C U_http_is_connection_close = %d",
                     U_http_version,     U_http_keep_alive,     U_http_is_connection_close)
-
-   /*
-   Max Keep-Alive Requests
-
-   Description: Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
-                Connection will be closed once this limit is reached.
-
-   Syntax: Integer number
-
-   Tips: [Performance] Set it to a resonable high value (256). Value <= 1 will disable Keep-Alive.
-   */
-
-   if (UServer_Base::isMaxKeepAlive())
-      {
-      U_http_keep_alive          = 0;
-      U_http_is_connection_close = U_YES;
-      }
 
    UString tmp(300U + sz), connection(200U);
 

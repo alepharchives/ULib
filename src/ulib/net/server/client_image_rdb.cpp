@@ -36,8 +36,6 @@ int URDBClientImage::handlerRead()
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::rbuffer)
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::wbuffer)
 
-   reset(); // reset before read
-
    int result = genericRead();
 
    if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
@@ -201,7 +199,7 @@ int URDBClientImage::handlerRead()
       UStringExt::buildTokenInt(res = STR_500, 0, *wbuffer);
       }
 
-   U_SRV_LOG_WITH_ADDR("method %.4S return %s for", ptr, res);
+   U_SRV_LOG_WITH_ADDR(this, "method %.4S return %s for", ptr, res);
 
    result = handlerWrite();
 

@@ -31,7 +31,7 @@ protected:
       {
       U_TRACE(5, "USSLClientImage::handlerRead()")
 
-      reset();
+      UClientImage<USSLSocket>::checkForFirstUse();
 
       int result = genericRead();
 

@@ -250,15 +250,13 @@ bool USocket::bind(SocketAddress& cLocal)
 loop:
    result = U_SYSCALL(bind, "%d,%p,%d", iSockDesc, (sockaddr*)cLocal, cLocal.sizeOf());
 
-   if (result == -1 &&
-       errno  == EADDRINUSE)
+   if (result == -1         &&
+       errno  == EADDRINUSE &&
+       ++counter <= 3)
       {
-      if (counter++ < 3)
-         {
-         UTimeVal(1L).nanosleep();
+      UTimeVal(1L).nanosleep();
 
-         goto loop;
-         }
+      goto loop;
       }
 
    if (result == 0)
@@ -792,17 +790,14 @@ loop:
       cRemote.getIPAddress( pcNewConnection->cRemoteAddress);
 
       U_INTERNAL_ASSERT_EQUALS(pcNewConnection->bIPv6Socket, (cRemoteAddress.getAddressFamily() == AF_INET6))
+      U_INTERNAL_ASSERT_EQUALS(((accept4_flags & SOCK_CLOEXEC)  != 0),((pcNewConnection->flags & O_CLOEXEC)  != 0))
+      U_INTERNAL_ASSERT_EQUALS(((accept4_flags & SOCK_NONBLOCK) != 0),((pcNewConnection->flags & O_NONBLOCK) != 0))
 
-      if (accept4_flags)
-         {
-         pcNewConnection->flags |= O_NONBLOCK;
+#  ifndef HAVE_ACCEPT4
+      if (accept4_flags) (void) U_SYSCALL(fcntl, "%d,%d,%d", pcNewConnection->iSockDesc, F_SETFL, pcNewConnection->flags);
+#  endif
 
-#     ifndef HAVE_ACCEPT4
-         (void) U_SYSCALL(fcntl, "%d,%d,%d", pcNewConnection->iSockDesc, F_SETFL, O_RDWR | O_NONBLOCK | O_CLOEXEC);
-#     endif
-         }
-
-   /*
+/*
 #  ifdef DEBUG
       uint32_t value = U_NOT_FOUND, tmp = sizeof(uint32_t);
 #     ifdef TCP_CORK
@@ -825,7 +820,7 @@ loop:
       U_INTERNAL_DUMP("TCP_CONGESTION = %S", buffer)
 #     endif
 #  endif
-   */
+*/
 
       U_RETURN(true);
       }

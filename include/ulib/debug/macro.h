@@ -135,6 +135,7 @@
 // Manage location info for object allocation
 
 #  define U_NEW(args...)                  (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, new args)
+#  define U_NEW_VEC(n,args...)            (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, new args[n])
 #  define U_NEW_ULIB_OBJECT(obj,args...)  UObjectDB::flag_ulib_object = true, \
                                           obj = U_NEW(args), \
                                           UObjectDB::flag_ulib_object = false
@@ -214,6 +215,7 @@ if (envp) \
 
 #  define U_NEW(args...)                        new args
 #  define U_ALLOCA(args...)                         args
+#  define U_NEW_VEC(n,args...)                  new args[n]
 #  define U_NEW_ULIB_OBJECT(obj,args...)  obj = new args
 
 #  define U_DUMP_ATTRS(attrs)

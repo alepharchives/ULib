@@ -4,7 +4,7 @@
 
 DOC_ROOT=/mnt/home/stefano/sito/ridwhan
 
-rm -f web_server?.log \
+rm -f web_server*.log \
       out/userver_tcp.out err/userver_tcp.err \
 					 trace.*userver_tcp*.[0-9]*			  object.*userver_tcp*.[0-9]*				 stack.*userver_tcp*.[0-9]* \
       $DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* $DOC_ROOT/stack.*userver_ssl*.[0-9]* \
@@ -49,7 +49,7 @@ if [ "$TERM" != "cygwin" ]; then
 fi
 
 #STRACE=$TRUSS
-start_prg_background userver_tcp -c web_server2.cfg
+start_prg_background userver_tcp -c 'web_server-1.cfg'
 												# RA/RA.cfg
 												# web_server.cfg
 												# deployment.properties

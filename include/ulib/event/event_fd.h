@@ -24,6 +24,10 @@
 #define U_NOTIFIER_OK      0
 #define U_NOTIFIER_DELETE -1
 
+#ifndef EPOLLET
+#define EPOLLET 0
+#endif
+
 class U_EXPORT UEventFd {
 public:
 
@@ -39,6 +43,9 @@ public:
    UEventFd()
       {
       U_TRACE_REGISTER_OBJECT(0, UEventFd, "")
+
+      fd      = 0;
+      op_mask = U_READ_IN | EPOLLET;
 
 #  ifdef HAVE_LIBEVENT
       pevent = 0;
@@ -60,9 +67,10 @@ public:
 
    // method VIRTUAL to define
 
-   virtual int handlerRead()  { return U_NOTIFIER_DELETE; }
-   virtual int handlerWrite() { return U_NOTIFIER_DELETE; }
-   virtual int handlerError() { return U_NOTIFIER_DELETE; }
+   virtual int  handlerRead()           { return U_NOTIFIER_DELETE; }
+   virtual int  handlerWrite()          { return U_NOTIFIER_DELETE; }
+   virtual void handlerDelete()         { delete this; }
+   virtual void handlerError(int state) {}
 
 #ifdef HAVE_LIBEVENT
    UEvent<UEventFd>* pevent;

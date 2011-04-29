@@ -74,7 +74,7 @@ bool UGeoIPPlugIn::setCountryCode(const char* ipaddress)
                   country_code = GeoIP_country_code[country_id];
                   country_name = GeoIP_country_name[country_id];
 
-                  U_SRV_LOG_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i], ipaddress, country_code, country_name);
+                  U_SRV_LOG_WITH_ADDR(UClientImage_Base::pClientImage, "%s: IP %S is from %s, %s for", GeoIPDBDescription[i], ipaddress, country_code, country_name);
                   }
                }
             else if (GEOIP_REGION_EDITION_REV0 == i || GEOIP_REGION_EDITION_REV1 == i)
@@ -83,7 +83,7 @@ bool UGeoIPPlugIn::setCountryCode(const char* ipaddress)
 
                if (region)
                   {
-                  U_SRV_LOG_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i], ipaddress, region->country_code, region->region);
+                  U_SRV_LOG_WITH_ADDR(UClientImage_Base::pClientImage, "%s: IP %S is from %s, %s for", GeoIPDBDescription[i], ipaddress, region->country_code, region->region);
 
                   U_SYSCALL_VOID(GeoIPRegion_delete, "%p", region);
                   }

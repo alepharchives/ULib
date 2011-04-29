@@ -82,7 +82,7 @@ int USoapPlugIn::handlerRequest()
       UString body   = soap_parser->processMessage(*UClientImage_Base::body, *URPCObject::dispatcher, bSendingFault),
               method = soap_parser->getMethodName();
 
-      U_SRV_LOG_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
+      U_SRV_LOG_WITH_ADDR(UClientImage_Base::pClientImage, "method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
 
       UHTTP::setHTTPResponse(HTTP_OK, UHTTP::str_ctype_soap, &body);
 

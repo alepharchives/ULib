@@ -27,11 +27,11 @@
 
    @brief Handles incoming connections.
 
-   The UServer class contains the methods needed to write a portable TCP/IP server.
-   In general, a TCP/IP server listens for incoming network requests on a
-   well-known IP address and port number. When a connection request is received,
-   the UServer makes this connection available to the server program as a new socket.
-   The new socket represents a two-way (full-duplex) connection with the client.
+   The UServer class contains the methods needed to write a portable server.
+   In general, a server listens for incoming network requests on a well-known
+   IP address and port number. When a connection request is received,
+   the UServer makes this connection available to the server program as a socket.
+   The socket represents a two-way (full-duplex) connection with the client.
 
    In common with normal socket programming, the life-cycle of a UServer follows this basic course:
    1) bind() to an IP-address/port number and listen for incoming connections
@@ -50,9 +50,9 @@ public: \
 ~server_class()                                             { U_TRACE_UNREGISTER_OBJECT(5, server_class) } \
 const char* dump(bool reset) const { return UServer<type_socket>::dump(reset); } \
 protected: \
-virtual void newClientImage() { \
-U_TRACE(5, #server_class "::newClientImage()") \
-(void) U_NEW(client_class()); } }
+virtual void preallocate(uint32_t n) { \
+U_TRACE(5, #server_class "::preallocate(%u)", n) \
+vClientImage = U_NEW_VEC(n, client_class); } }
 #else
 #  define U_MACROSERVER(server_class,client_class,type_socket) \
 class server_class : public UServer<type_socket> { \
@@ -60,15 +60,15 @@ public: \
  server_class(UFileConfig* cfg) : UServer<type_socket>(cfg) {} \
 ~server_class()                                             {} \
 protected: \
-virtual void newClientImage() { (void) new client_class(); } }
+virtual void preallocate(uint32_t n) { vClientImage = new client_class[n]; } }
 #endif
 // ---------------------------------------------------------------------------------------------
 
 // manage write to log server
 
-#define U_SRV_LOG(          fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%s"fmt"\n",      UServer_Base::mod_name , ##args); }
-#define U_SRV_LOG_WITH_ADDR(fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%s"fmt" %.*s\n", UServer_Base::mod_name , ##args, \
-                                                                                  U_STRING_TO_TRACE(*(UClientImage_Base::pClientImage->logbuf))); }
+#define U_SRV_LOG(               fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%s"fmt"\n",      UServer_Base::mod_name , ##args); }
+#define U_SRV_LOG_WITH_ADDR(cimg,fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%s"fmt" %.*s\n", UServer_Base::mod_name , ##args, \
+                                                                   U_STRING_TO_TRACE(*((cimg)->logbuf))); }
 
 #define U_SRV_LOG_TIMEOUT(cimg) U_SRV_LOG("client connected didn't send any request in %u secs (timeout), close connection %.*s", \
                                                    UServer_Base::getReqTimeout(), U_STRING_TO_TRACE(*((cimg)->logbuf)))
@@ -80,6 +80,7 @@ class USSIPlugIn;
 class UHttpPlugIn;
 class UFCGIPlugIn;
 class USCGIPlugIn;
+class UNoCatPlugIn;
 class UClient_Base;
 class UProxyPlugIn;
 class UStreamPlugIn;
@@ -117,7 +118,7 @@ public:
    // CGI_TIMEOUT   timeout for cgi execution
    //
    // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
-   //                (Value <= 1 will disable Keep-Alive)
+   //                (Value <= 0 will disable Keep-Alive)
    //
    // DH_FILE       dh param (these are the bit DH parameters from "Assigned Number for SKIP Protocols")
    // CERT_FILE     server certificate
@@ -180,13 +181,11 @@ public:
 
    // tipologia server...
 
-   static UString  getHost()   { return *host; }
-   static USocket* getSocket() { return pthis->socket; }
-
-   static bool isIPv6()        { return UClientImage_Base::bIPv6; }
-   static int  getPort()       { return port; }
-   static int  getCgiTimeout() { return cgi_timeout; }
-   static int  getReqTimeout() { return (timeoutMS / 1000); }
+   static int     getPort()       { return port; }
+   static int     getCgiTimeout() { return cgi_timeout; }
+   static int     getReqTimeout() { return (timeoutMS / 1000); }
+   static bool    isIPv6()        { return UClientImage_Base::bIPv6; }
+   static UString getHost()       { return *host; }
 
    // The directory out of which you will serve your documents...
 
@@ -290,7 +289,22 @@ public:
       UProcess::kill(0, SIGTERM); // SIGTERM is sent to every process in the process group of the calling process...
       }
 
+   // NB: if server with no prefork (ex: nodog) process the HTTP CGI request with fork....
+
    static bool parallelization(); // it creates a copy of itself, return true if parent...
+
+   static bool isParallelization()
+      {
+      U_TRACE(0, "UServer_Base::isParallelization()")
+
+      U_INTERNAL_DUMP("flag_loop = %b", flag_loop)
+
+      U_INTERNAL_ASSERT_EQUALS(flag_loop, false)
+
+      bool result = (preforked_num_kids <= 0 && proc->child());
+
+      U_RETURN(result);
+      }
 
    // manage log server...
 
@@ -323,15 +337,6 @@ public:
       }
 
    static int getMaxKeepAlive() { return max_Keep_Alive; }
-
-   static bool isMaxKeepAlive()
-      {
-      U_TRACE(0, "UServer_Base::isMaxKeepAlive()")
-
-      bool result = (num_connection >= max_Keep_Alive);
-
-      U_RETURN(result);
-      }
 
    static bool useTcpOptimization()
       {
@@ -382,6 +387,7 @@ protected:
    static UServer_Base* pthis;
    static UString* senvironment;
    static UVector<UIPAllow*>* vallow_IP;
+   static UClientImage_Base* vClientImage;
    static bool flag_loop, flag_use_tcp_optimization;
 
 #ifdef HAVE_PTHREAD_H
@@ -443,8 +449,8 @@ protected:
    };
 
    static void handlerNewConnection();
-   static void handlerCloseConnection();
    static bool handlerTimeoutConnection(void* cimg);
+   static void handlerCloseConnection(UClientImage_Base* ptr);
 
    static void        runAsUser();
    static const char* getNumConnection();
@@ -464,11 +470,10 @@ protected:
       U_TRACE(0, "UServer_Base::handlerSignal()")
       }
 
-   virtual void newClientImage() = 0;
+   virtual void preallocate(uint32_t n) = 0;
 
    // SERVICES
 
-   static void handlerRequest();
    static RETSIGTYPE handlerForSigHUP( int signo);
    static RETSIGTYPE handlerForSigTERM(int signo);
 
@@ -479,6 +484,7 @@ private:
    friend class USCGIPlugIn;
    friend class UFCGIPlugIn;
    friend class UProxyPlugIn;
+   friend class UNoCatPlugIn;
    friend class UClient_Base;
    friend class UStreamPlugIn;
    friend class UClientThread;
@@ -506,13 +512,11 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UServer)
       }
 
-   static Socket* getSocket() { return (Socket*) pthis->socket; }
-
    // MANAGE ALL...
 
    void go()
       {
-      U_TRACE(0, "UServer::go()")
+      U_TRACE(0, "UServer<Socket>::go()")
 
       UServer_Base::run(); // loop waiting for connection
       }
@@ -532,17 +536,11 @@ protected:
    Derived classes that have overridden UClientImage object may call this function to implement the creation logic
    */
 
-   virtual void newClientImage()
+   virtual void preallocate(uint32_t n)
       {
-      U_TRACE(0, "UServer::newClientImage()")
+      U_TRACE(0, "UServer<Socket>::preallocate(%u)", n)
 
-#  ifdef DEBUG
-      UClientImage_Base* pClientImage = U_NEW(UClientImage<Socket>);
-
-      U_INTERNAL_ASSERT_EQUALS(pClientImage, UClientImage_Base::pClientImage)
-#  else
-      (void) U_NEW(UClientImage<Socket>);
-#  endif
+      vClientImage = U_NEW_VEC(n, UClientImage<Socket>);
       }
 
 private:
@@ -572,7 +570,7 @@ public:
 
    static USSLSocket* getSocket() { return (USSLSocket*) pthis->socket; }
 
-   static bool askForClientCertificate()
+   bool askForClientCertificate()
       {
       U_TRACE(0, "UServer<USSLSocket>::askForClientCertificate()")
 
@@ -584,13 +582,13 @@ public:
 
       if (has_cert == false)
          {
-         U_SRV_LOG_WITH_ADDR("ask for a client certificate to");
+         U_SRV_LOG_WITH_ADDR(UClientImage_Base::pClientImage, "ask for a client certificate to");
 
          if (sslsocket->askForClientCertificate())
             {
             has_cert = true;
 
-            UClientImage_Base::logCertificate(sslsocket->getPeerCertificate());
+            UClientImage_Base::pClientImage->logCertificate(sslsocket->getPeerCertificate());
             }
          }
 
@@ -603,9 +601,7 @@ public:
       {
       U_TRACE(0, "UServer<USSLSocket>::go()")
 
-      USSLSocket* sslsocket = getSocket();
-
-      U_INTERNAL_ASSERT(sslsocket->isSSL())
+      U_INTERNAL_ASSERT(getSocket()->isSSL())
       U_INTERNAL_ASSERT(  dh_file.isNullTerminated())
       U_INTERNAL_ASSERT(  ca_file.isNullTerminated())
       U_INTERNAL_ASSERT(  ca_path.isNullTerminated())
@@ -615,7 +611,7 @@ public:
 
       // Load our certificate
 
-      if (sslsocket->setContext(dh_file.data(), cert_file.data(), key_file.data(), password.data(), ca_file.data(),  ca_path.data(), verify_mode) == false)
+      if (getSocket()->setContext(dh_file.data(), cert_file.data(), key_file.data(), password.data(), ca_file.data(),  ca_path.data(), verify_mode) == false)
          {
          U_ERROR("SSL setContext() failed...");
          }
@@ -638,17 +634,11 @@ protected:
    Derived classes that have overridden UClientImage object may call this function to implement the creation logic
    */
 
-   virtual void newClientImage()
+   virtual void preallocate(uint32_t n)
       {
-      U_TRACE(0, "UServer<USSLSocket>::newClientImage()")
+      U_TRACE(0, "UServer<USSLSocket>::preallocate(%u)", n)
 
-#  ifdef DEBUG
-      UClientImage_Base* pClientImage = U_NEW(UClientImage<USSLSocket>);
-
-      U_INTERNAL_ASSERT_EQUALS(pClientImage, UClientImage_Base::pClientImage)
-#  else
-      (void) U_NEW(UClientImage<USSLSocket>);
-#  endif
+      vClientImage = U_NEW_VEC(n, UClientImage<USSLSocket>);
       }
 
 private:

@@ -80,8 +80,9 @@ UNotifier::~UNotifier()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UNotifier)
 
-   if (next)             delete next;
-   if (handler_event_fd) delete handler_event_fd;
+   if (next) delete next;
+
+   if (handler_event_fd) handler_event_fd->handlerDelete();
 }
 
 void UNotifier::insert(UEventFd* handler_event)
@@ -148,7 +149,7 @@ void UNotifier::insert(UEventFd* handler_event)
 
    if (pool)
       {
-      if (pool->handler_event_fd) delete pool->handler_event_fd;
+      if (pool->handler_event_fd) pool->handler_event_fd->handlerDelete();
 
       item = pool;
       pool = pool->next;
@@ -278,8 +279,8 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** p
 
       --n;
 
-      ret = (bexcept ? handler_event->handlerError()
-                     : handler_event->handlerRead());
+      ret = (bexcept ? (handler_event->handlerError(3), U_NOTIFIER_DELETE) // 3 -> USocket::RESET
+                     :  handler_event->handlerRead());
 
       if (ret == U_NOTIFIER_DELETE)
          {
@@ -306,7 +307,7 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** p
 
          U_INTERNAL_ASSERT_EQUALS(handler_event, item->handler_event_fd)
 
-         delete handler_event;
+         handler_event->handlerDelete();
 
          item->handler_event_fd = 0;
 
@@ -324,8 +325,8 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** p
 
       --n;
 
-      ret = (bexcept ? handler_event->handlerError()
-                     : handler_event->handlerWrite());
+      ret = (bexcept ? (handler_event->handlerError(3), U_NOTIFIER_DELETE) // 3 -> USocket::RESET
+                     :  handler_event->handlerWrite());
 
       if (ret == U_NOTIFIER_DELETE)
          {
@@ -352,7 +353,7 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** p
 
          U_INTERNAL_ASSERT_EQUALS(handler_event, item->handler_event_fd)
 
-         delete handler_event;
+         handler_event->handlerDelete();
 
          item->handler_event_fd = 0;
 
@@ -623,8 +624,8 @@ U_NO_EXPORT void UNotifier::eraseItem(UNotifier* item, bool flag_reuse)
       item->next = pool;
       pool       = item;
 
-      delete item->handler_event_fd;
-             item->handler_event_fd = 0;
+      item->handler_event_fd->handlerDelete();
+      item->handler_event_fd = 0;
 
       U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
       }
