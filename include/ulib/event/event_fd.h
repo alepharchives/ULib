@@ -18,15 +18,22 @@
 #  include <ulib/libevent/event.h>
 #endif
 
-#define U_READ_IN    0x001 // NB: same as EPOLLIN
-#define U_WRITE_OUT  0x004 // NB: same as EPOLLOUT
-
-#define U_NOTIFIER_OK      0
-#define U_NOTIFIER_DELETE -1
-
+#ifdef EPOLLIN
+#define U_READ_IN  EPOLLIN
+#else
+#define U_READ_IN  0x001 // NB: same as EPOLLIN
+#endif
+#ifdef EPOLLOUT
+#define U_WRITE_OUT EPOLLOUT
+#else
+#define U_WRITE_OUT 0x004 // NB: same as EPOLLOUT
+#endif
 #ifndef EPOLLET
 #define EPOLLET 0
 #endif
+
+#define U_NOTIFIER_OK      0
+#define U_NOTIFIER_DELETE -1
 
 class U_EXPORT UEventFd {
 public:

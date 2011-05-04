@@ -315,6 +315,9 @@ typedef unsigned long long uint64;
 /* Define to 1 if you have the `socket' library (-lsocket). */
 #undef HAVE_LIBSOCKET
 
+/* Define to 1 if you have the `tcc' library (-ltcc). */
+#undef HAVE_LIBTCC
+
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
 

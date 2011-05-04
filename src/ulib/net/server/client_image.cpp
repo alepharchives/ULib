@@ -272,6 +272,47 @@ void UClientImage_Base::setRequestSize(uint32_t n)
       }
 }
 
+bool UClientImage_Base::newConnection()
+{
+   U_TRACE(0, "UClientImage_Base::newConnection()")
+
+   U_INTERNAL_ASSERT_POINTER(socket)
+
+   UEventFd::fd = socket->iSockDesc;
+
+   if (logbuf)
+      {
+      bool berror = false;
+
+      socket->getRemoteInfo(*logbuf);
+
+      *clientAddress = socket->remoteIPAddress();
+
+      UString tmp(U_CAPACITY);
+
+      if (ULog::prefix) tmp.snprintf(ULog::prefix);
+
+      tmp.snprintf_add("new client connected from %.*s, %s clients currently connected\n", U_STRING_TO_TRACE(*logbuf), UServer_Base::getNumConnection());
+
+      if (msg_welcome)
+         {
+         if (ULog::prefix) tmp.snprintf_add(ULog::prefix);
+
+         tmp.snprintf_add("sent welcome message to %.*s\n", U_STRING_TO_TRACE(*logbuf));
+
+         if (USocketExt::write(socket, *msg_welcome) == false) berror = true;
+         }
+
+      struct iovec iov[1] = { { (caddr_t)tmp.data(), tmp.size() } };
+
+      UServer_Base::log->write(iov, 1);
+
+      if (berror) U_RETURN(false);
+      }
+
+   U_RETURN(true);
+}
+
 int UClientImage_Base::genericRead()
 {
    U_TRACE(0, "UClientImage_Base::genericRead()")
@@ -282,43 +323,14 @@ int UClientImage_Base::genericRead()
    U_INTERNAL_ASSERT_POINTER(pbuffer)
    U_INTERNAL_ASSERT_POINTER(wbuffer)
 
-   // Check if it is the first use of this object...
+   // Check if it is a new connection...
 
    U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->iSockDesc)
 
-   if (UEventFd::fd == 0)
+   if (UEventFd::fd    == 0 &&
+       newConnection() == false)
       {
-      UEventFd::fd = socket->iSockDesc;
-
-      if (logbuf)
-         {
-         bool berror = false;
-
-         socket->getRemoteInfo(*logbuf);
-
-         *clientAddress = socket->remoteIPAddress();
-
-         UString tmp(U_CAPACITY);
-
-         if (ULog::prefix) tmp.snprintf(ULog::prefix);
-
-         tmp.snprintf_add("new client connected from %.*s, %s clients currently connected\n", U_STRING_TO_TRACE(*logbuf), UServer_Base::getNumConnection());
-
-         if (msg_welcome)
-            {
-            if (ULog::prefix) tmp.snprintf_add(ULog::prefix);
-
-            tmp.snprintf_add("sent welcome message to %.*s\n", U_STRING_TO_TRACE(*logbuf));
-
-            if (USocketExt::write(socket, *msg_welcome) == false) berror = true;
-            }
-
-         struct iovec iov[1] = { { (caddr_t)tmp.data(), tmp.size() } };
-
-         UServer_Base::log->write(iov, 1);
-
-         if (berror) goto error;
-         }
+      goto error;
       }
 
    // reset buffer before read
@@ -330,6 +342,8 @@ int UClientImage_Base::genericRead()
 
    // NB: we need this because we use the same object USocket...
 
+   pClientImage = this;
+
    handlerError(USocket::CONNECT);
 
    if (USocketExt::read(socket, *(request = rbuffer), U_SINGLE_READ, UServer_Base::timeoutMS) == false)
@@ -339,8 +353,6 @@ int UClientImage_Base::genericRead()
       if (socket->isClosed()) goto error;
       if (rbuffer->empty())   U_RETURN(U_PLUGIN_HANDLER_AGAIN); // NONBLOCKING...
       }
-
-   pClientImage = this;
 
    // reset buffer after read
 

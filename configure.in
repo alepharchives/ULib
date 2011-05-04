@@ -400,6 +400,8 @@ AC_CHECK_LIB(socket,socketpair)
 
 LIBS_SAVE=${LIBS}
 AC_CHECK_LIB(GeoIP,GeoIP_id_by_ipnum)
+LIBS="-ldl"
+AC_CHECK_LIB(tcc,tcc_compile_string)
 LIBS=${LIBS_SAVE}
 
 libz_version="None"
@@ -420,20 +422,20 @@ page_speed_version="None"
 AC_CHECK_PACKAGE
 AC_SUBST(PRG_LDFLAGS)
 
-AM_CONDITIONAL(SSL,			test "$HAVE_SSL"		  = "yes")
-AM_CONDITIONAL(SSH,			test "$HAVE_SSH"		  = "yes")
-AM_CONDITIONAL(SSL_TS,		test "$HAVE_SSL_TS"	  = "yes")
-AM_CONDITIONAL(PCRE,			test "$HAVE_PCRE"	  = "yes")
-AM_CONDITIONAL(LDAP,			test "$HAVE_LDAP"	  = "yes")
-AM_CONDITIONAL(CURL,			test "$HAVE_CURL"	  = "yes")
-AM_CONDITIONAL(LIBZ,			test "$HAVE_LIBZ"	  = "yes")
-AM_CONDITIONAL(EXPAT,		test "$HAVE_EXPAT"	  = "yes")
-AM_CONDITIONAL(MAGIC,		test "$HAVE_MAGIC"	  = "yes")
-AM_CONDITIONAL(MYSQL,		test "$HAVE_MYSQL"	  = "yes")
-AM_CONDITIONAL(DBI,			test "$HAVE_DBI"		  = "yes")
-AM_CONDITIONAL(LIBEVENT,	test "$HAVE_LIBEVENT" = "yes")
-AM_CONDITIONAL(LIBXML2,		test "$HAVE_LIBXML2"  = "yes")
-AM_CONDITIONAL(PAGE_SPEED, test "$HAVE_PAGE_SPEED"  = "yes")
+AM_CONDITIONAL(SSL,			test "$HAVE_SSL"			= "yes")
+AM_CONDITIONAL(SSH,			test "$HAVE_SSH"			= "yes")
+AM_CONDITIONAL(SSL_TS,		test "$HAVE_SSL_TS"		= "yes")
+AM_CONDITIONAL(PCRE,			test "$HAVE_PCRE"			= "yes")
+AM_CONDITIONAL(LDAP,			test "$HAVE_LDAP"			= "yes")
+AM_CONDITIONAL(CURL,			test "$HAVE_CURL"			= "yes")
+AM_CONDITIONAL(LIBZ,			test "$HAVE_LIBZ"			= "yes")
+AM_CONDITIONAL(EXPAT,		test "$HAVE_EXPAT"		= "yes")
+AM_CONDITIONAL(MAGIC,		test "$HAVE_MAGIC"		= "yes")
+AM_CONDITIONAL(MYSQL,		test "$HAVE_MYSQL"		= "yes")
+AM_CONDITIONAL(DBI,			test "$HAVE_DBI"			= "yes")
+AM_CONDITIONAL(LIBEVENT,	test "$HAVE_LIBEVENT"	= "yes")
+AM_CONDITIONAL(LIBXML2,		test "$HAVE_LIBXML2"		= "yes")
+AM_CONDITIONAL(PAGE_SPEED, test "$HAVE_PAGE_SPEED" = "yes")
 
 AC_DEFINE_UNQUOTED(_FLEX_VERSION,		 "${flex_version}",			[Flex version])
 AC_DEFINE_UNQUOTED(_BISON_VERSION,		 "${bison_version}",			[Bison version])
@@ -647,6 +649,7 @@ if test "$ac_cv_func_inet_ntop" != "yes"; then
 	AC_CHECK_LIB(nsl,inet_ntop)
 fi
 
+AM_CONDITIONAL(TCC,			 test "$ac_cv_lib_tcc_tcc_compile_string"	 = "yes")
 AM_CONDITIONAL(GEOIP,		 test "$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" = "yes")
 AM_CONDITIONAL(PREAD,		 test "$ac_cv_func_pread"						 = "yes")
 AM_CONDITIONAL(DAEMON,		 test "$ac_cv_func_daemon"						 = "yes")
@@ -1132,6 +1135,7 @@ AC_OUTPUT(Makefile \
 			 src/ulib/lemon/Makefile \
 			 src/ulib/net/server/plugin/Makefile \
 			 src/ulib/net/server/plugin/usp/Makefile \
+			 src/ulib/net/server/plugin/mod_tcc/Makefile \
 			 src/ulib/net/server/plugin/mod_shib/Makefile \
 			 src/ulib/net/server/plugin/mod_geoip/Makefile \
 			 src/ulib/net/server/plugin/page_speed/Makefile \

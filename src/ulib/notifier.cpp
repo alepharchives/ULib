@@ -202,7 +202,7 @@ loop:
 
    if (result == 0) // timeout
       {
-      // chiama il gestore dell'evento scadenza temporale
+      // call the manager of timeout
 
       U_INTERNAL_ASSERT_POINTER(timeout)
 
@@ -256,7 +256,7 @@ loop:
 #endif
 }
 
-// NB: n e' necessario per la rientranza delle funzioni (vedi test_notifier...) 
+// NB: n is needeed for rientrance of function (see test_notifier...) 
 
 #ifndef HAVE_LIBEVENT
 U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** ptr,
@@ -273,7 +273,7 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** p
       {
       U_INTERNAL_ASSERT_MAJOR(fd_read_cnt,0)
       U_INTERNAL_ASSERT(handler_event->op_mask & U_READ_IN)
-#  if defined(DEBUG) && !defined(HAVE_EPOLL_WAIT)
+#  if !defined(HAVE_EPOLL_WAIT)
       U_INTERNAL_ASSERT(FD_ISSET(handler_event->fd, &fd_set_read))
 #  endif
 
@@ -303,8 +303,6 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** p
          setNFDS(handler_event->fd);
 #     endif
 
-         // this must be done in some way with libevent...
-
          U_INTERNAL_ASSERT_EQUALS(handler_event, item->handler_event_fd)
 
          handler_event->handlerDelete();
@@ -319,7 +317,7 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier* item, UNotifier** p
       {
       U_INTERNAL_ASSERT_MAJOR(fd_write_cnt,0)
       U_INTERNAL_ASSERT(handler_event->op_mask & U_WRITE_OUT)
-#  if defined(DEBUG) && !defined(HAVE_EPOLL_WAIT)
+#  if !defined(HAVE_EPOLL_WAIT)
       U_INTERNAL_ASSERT(FD_ISSET(handler_event->fd, &fd_set_write))
 #  endif
 
@@ -442,6 +440,10 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
          ptr = &(*ptr)->next;
          }
       while (n > 0 && (item = *ptr));
+
+      U_INTERNAL_DUMP("n = %d", n)
+
+      U_INTERNAL_ASSERT_EQUALS(n, 0)
       }
 #endif
 
@@ -625,6 +627,7 @@ U_NO_EXPORT void UNotifier::eraseItem(UNotifier* item, bool flag_reuse)
       pool       = item;
 
       item->handler_event_fd->handlerDelete();
+
       item->handler_event_fd = 0;
 
       U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))

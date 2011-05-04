@@ -120,9 +120,11 @@ void UThread::stop()
 
    U_INTERNAL_ASSERT_POINTER(priv)
 
+   bool bdetached = isDetached();
+
    (void) U_SYSCALL(pthread_cancel, "%p", priv->_tid);
 
-   if (isDetached() == false)
+   if (bdetached == false)
       {
       (void) U_SYSCALL(pthread_join, "%p,%p", priv->_tid, 0);
       }
@@ -138,32 +140,29 @@ void UThread::close()
 {
    U_TRACE(1, "UThread::close()")
 
-   U_INTERNAL_ASSERT_POINTER(priv)
-
-   UThread* obj  =  first;
-   UThread** ptr = &first;
-
-   while ((obj = *ptr))
+   if (priv)
       {
-      U_INTERNAL_ASSERT_POINTER(obj)
+      UThread* obj  =  first;
+      UThread** ptr = &first;
 
-      if (U_SYSCALL(pthread_equal, "%p,%p", priv->_tid, obj->priv->_tid))
+      while ((obj = *ptr))
          {
-         (void) U_SYSCALL(pthread_mutex_lock, "%p", &lock);
+         U_INTERNAL_ASSERT_POINTER(obj)
 
-         *ptr = obj->next;
-                obj->next = 0;
+         if (U_SYSCALL(pthread_equal, "%p,%p", priv->_tid, obj->priv->_tid))
+            {
+            *ptr = obj->next;
+                   obj->next = 0;
 
-         (void) U_SYSCALL(pthread_mutex_unlock, "%p", &lock);
+            break;
+            }
 
-         break;
+         ptr = &(*ptr)->next;
          }
 
-      ptr = &(*ptr)->next;
+      delete priv;
+             priv = 0;
       }
-
-   delete priv;
-          priv = 0;
 }
 
 void UThread::threadCleanup(UThread* th)

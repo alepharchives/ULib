@@ -9,7 +9,7 @@
 # ALLOWED_IP    client address IP-based access control (IPADDR[/MASK])
 #
 # LISTEN_BACKLOG			max number of ready to be delivered connections to accept()
-# USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (NODELAY, DEFER_ACCEPT, QUICKACK)
+# USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (DEFER_ACCEPT, QUICKACK)
 #
 # PID_FILE      write pid on file indicated
 # WELCOME_MSG   message of welcome to send initially to client
@@ -48,9 +48,10 @@
 # SSL/TLS clients will usually set VERIFY_MODE to SSL_VERIFY_FAIL_IF_NO_PEER_CERT.
 # ----------------------------------------------------------------------------------------------------------------------------------------
 #
-# PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
-#                                                                     1 - classic, forking after accept client)
-#                                                                    >1 - pool of process serialize plus monitoring process)
+# PREFORK_CHILD number of child server processes created at startup: -1 - thread approach (experimental)
+#                                                                     0 - serialize, no forking
+#                                                                     1 - classic, forking after accept client
+#                                                                    >1 - pool of process serialize plus monitoring process
 # ----------------------------------------------------------------------------------------------------------------------------------------
 
 userver {

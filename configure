@@ -697,6 +697,8 @@ PREAD_FALSE
 PREAD_TRUE
 GEOIP_FALSE
 GEOIP_TRUE
+TCC_FALSE
+TCC_TRUE
 LIBOBJS
 DYN_LOADER
 PTHREAD_CC
@@ -21468,6 +21470,52 @@ _ACEOF
 
 fi
 
+LIBS="-ldl"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for tcc_compile_string in -ltcc" >&5
+$as_echo_n "checking for tcc_compile_string in -ltcc... " >&6; }
+if ${ac_cv_lib_tcc_tcc_compile_string+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ltcc  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char tcc_compile_string ();
+int
+main ()
+{
+return tcc_compile_string ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  ac_cv_lib_tcc_tcc_compile_string=yes
+else
+  ac_cv_lib_tcc_tcc_compile_string=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_tcc_tcc_compile_string" >&5
+$as_echo "$ac_cv_lib_tcc_tcc_compile_string" >&6; }
+if test "x$ac_cv_lib_tcc_tcc_compile_string" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBTCC 1
+_ACEOF
+
+  LIBS="-ltcc $LIBS"
+
+fi
+
 LIBS=${LIBS_SAVE}
 
 libz_version="None"
@@ -22201,7 +22249,7 @@ fi
 
 
 
- if test "$HAVE_SSL"		  = "yes"; then
+ if test "$HAVE_SSL"			= "yes"; then
   SSL_TRUE=
   SSL_FALSE='#'
 else
@@ -22209,7 +22257,7 @@ else
   SSL_FALSE=
 fi
 
- if test "$HAVE_SSH"		  = "yes"; then
+ if test "$HAVE_SSH"			= "yes"; then
   SSH_TRUE=
   SSH_FALSE='#'
 else
@@ -22217,7 +22265,7 @@ else
   SSH_FALSE=
 fi
 
- if test "$HAVE_SSL_TS"	  = "yes"; then
+ if test "$HAVE_SSL_TS"		= "yes"; then
   SSL_TS_TRUE=
   SSL_TS_FALSE='#'
 else
@@ -22225,7 +22273,7 @@ else
   SSL_TS_FALSE=
 fi
 
- if test "$HAVE_PCRE"	  = "yes"; then
+ if test "$HAVE_PCRE"			= "yes"; then
   PCRE_TRUE=
   PCRE_FALSE='#'
 else
@@ -22233,7 +22281,7 @@ else
   PCRE_FALSE=
 fi
 
- if test "$HAVE_LDAP"	  = "yes"; then
+ if test "$HAVE_LDAP"			= "yes"; then
   LDAP_TRUE=
   LDAP_FALSE='#'
 else
@@ -22241,7 +22289,7 @@ else
   LDAP_FALSE=
 fi
 
- if test "$HAVE_CURL"	  = "yes"; then
+ if test "$HAVE_CURL"			= "yes"; then
   CURL_TRUE=
   CURL_FALSE='#'
 else
@@ -22249,7 +22297,7 @@ else
   CURL_FALSE=
 fi
 
- if test "$HAVE_LIBZ"	  = "yes"; then
+ if test "$HAVE_LIBZ"			= "yes"; then
   LIBZ_TRUE=
   LIBZ_FALSE='#'
 else
@@ -22257,7 +22305,7 @@ else
   LIBZ_FALSE=
 fi
 
- if test "$HAVE_EXPAT"	  = "yes"; then
+ if test "$HAVE_EXPAT"		= "yes"; then
   EXPAT_TRUE=
   EXPAT_FALSE='#'
 else
@@ -22265,7 +22313,7 @@ else
   EXPAT_FALSE=
 fi
 
- if test "$HAVE_MAGIC"	  = "yes"; then
+ if test "$HAVE_MAGIC"		= "yes"; then
   MAGIC_TRUE=
   MAGIC_FALSE='#'
 else
@@ -22273,7 +22321,7 @@ else
   MAGIC_FALSE=
 fi
 
- if test "$HAVE_MYSQL"	  = "yes"; then
+ if test "$HAVE_MYSQL"		= "yes"; then
   MYSQL_TRUE=
   MYSQL_FALSE='#'
 else
@@ -22281,7 +22329,7 @@ else
   MYSQL_FALSE=
 fi
 
- if test "$HAVE_DBI"		  = "yes"; then
+ if test "$HAVE_DBI"			= "yes"; then
   DBI_TRUE=
   DBI_FALSE='#'
 else
@@ -22289,7 +22337,7 @@ else
   DBI_FALSE=
 fi
 
- if test "$HAVE_LIBEVENT" = "yes"; then
+ if test "$HAVE_LIBEVENT"	= "yes"; then
   LIBEVENT_TRUE=
   LIBEVENT_FALSE='#'
 else
@@ -22297,7 +22345,7 @@ else
   LIBEVENT_FALSE=
 fi
 
- if test "$HAVE_LIBXML2"  = "yes"; then
+ if test "$HAVE_LIBXML2"		= "yes"; then
   LIBXML2_TRUE=
   LIBXML2_FALSE='#'
 else
@@ -22305,7 +22353,7 @@ else
   LIBXML2_FALSE=
 fi
 
- if test "$HAVE_PAGE_SPEED"  = "yes"; then
+ if test "$HAVE_PAGE_SPEED" = "yes"; then
   PAGE_SPEED_TRUE=
   PAGE_SPEED_FALSE='#'
 else
@@ -26251,6 +26299,14 @@ fi
 
 fi
 
+ if test "$ac_cv_lib_tcc_tcc_compile_string"	 = "yes"; then
+  TCC_TRUE=
+  TCC_FALSE='#'
+else
+  TCC_TRUE='#'
+  TCC_FALSE=
+fi
+
  if test "$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" = "yes"; then
   GEOIP_TRUE=
   GEOIP_FALSE='#'
@@ -27552,7 +27608,7 @@ fi
 
 # SECTION 16: `AC_OUTPUT([FILE...])' read Makefile.in and write Makefile
 
-ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/lemon/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/page_speed/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/XAdES/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
+ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/lemon/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/mod_tcc/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/page_speed/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/XAdES/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -27893,6 +27949,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PLUGIN_TRUE}" && test -z "${PLUGIN_FALSE}"; then
   as_fn_error $? "conditional \"PLUGIN\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${TCC_TRUE}" && test -z "${TCC_FALSE}"; then
+  as_fn_error $? "conditional \"TCC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${GEOIP_TRUE}" && test -z "${GEOIP_FALSE}"; then
@@ -29062,6 +29122,7 @@ do
     "src/ulib/lemon/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/lemon/Makefile" ;;
     "src/ulib/net/server/plugin/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/Makefile" ;;
     "src/ulib/net/server/plugin/usp/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/usp/Makefile" ;;
+    "src/ulib/net/server/plugin/mod_tcc/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_tcc/Makefile" ;;
     "src/ulib/net/server/plugin/mod_shib/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_shib/Makefile" ;;
     "src/ulib/net/server/plugin/mod_geoip/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_geoip/Makefile" ;;
     "src/ulib/net/server/plugin/page_speed/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/page_speed/Makefile" ;;

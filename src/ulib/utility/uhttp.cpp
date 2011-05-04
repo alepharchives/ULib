@@ -2406,7 +2406,7 @@ UString UHTTP::getHTTPHeaderForResponse(int nResponseCode, const UString& conten
             {
             // ...to indicate that the session is being kept alive for a maximum of x requests and a per-request timeout of x seconds
 
-            connection.snprintf_add("Keep-Alive: max=%d, timeout=%d\r\n", UServer_Base::getMaxKeepAlive(), UServer_Base::getReqTimeout());
+            connection.snprintf_add("Keep-Alive: max=%d, timeout=%d\r\n", UServer_Base::max_Keep_Alive, UServer_Base::getReqTimeout());
             }
          }
       }

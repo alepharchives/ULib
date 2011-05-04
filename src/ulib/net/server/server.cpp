@@ -65,17 +65,9 @@
 #  include <ulib/net/unixsocket.h>
 #endif
 
-#ifdef DEBUG
-#  define U_DEFAULT_LISTEN_BACKLOG SOMAXCONN
-#else
-#  define U_DEFAULT_LISTEN_BACKLOG 1024
-#endif
-
-#define U_DEFAULT_PORT             80
+#define U_DEFAULT_PORT           80
+#define U_TOT_CONNECTION         ptr_shared_data->tot_connection
 #define U_DEFAULT_MAX_KEEP_ALIVE 1020
-
-#define U_SOCKET_FLAGS     ptr_shared_data->socket_flags
-#define U_TOT_CONNECTION   ptr_shared_data->tot_connection
 
 int                        UServer_Base::port;
 int                        UServer_Base::iBackLog;
@@ -86,11 +78,9 @@ int                        UServer_Base::num_connection;
 int                        UServer_Base::max_Keep_Alive;
 int                        UServer_Base::preforked_num_kids;
 bool                       UServer_Base::flag_loop;
-bool                       UServer_Base::block_on_accept;
 bool                       UServer_Base::flag_use_tcp_optimization;
 char                       UServer_Base::mod_name[20];
 ULog*                      UServer_Base::log;
-ULock*                     UServer_Base::lock;
 uint32_t                   UServer_Base::shared_data_add;
 UString*                   UServer_Base::host;
 UString*                   UServer_Base::senvironment;
@@ -149,7 +139,7 @@ const UString* UServer_Base::str_LISTEN_BACKLOG;
 class UClientThread : public UThread {
 public:
 
-   UClientThread() : UThread(true) {}
+   UClientThread() : UThread(true, false) {}
 
    virtual void run()
       {
@@ -166,10 +156,12 @@ public:
 
 UClientThread* UServer_Base::pthread;
 
+/*
 #  ifndef DEBUG
 #  undef  HAVE_PTHREAD_H
 #  define HAVE_PTHREAD_BUT_NDEBUG
 #  endif
+*/
 #endif
 
 static int sysctl_somaxconn, tcp_abort_on_overflow, sysctl_max_syn_backlog, tcp_fin_timeout;
@@ -332,10 +324,6 @@ UServer_Base::~UServer_Base()
 #  endif
       }
 
-#ifdef HAVE_PTHREAD_H
-   if (pthread) delete pthread;
-#endif
-
    U_INTERNAL_DUMP("vClientImage = %p", vClientImage)
 
    if (isClassic() == false) delete[] vClientImage;
@@ -345,12 +333,11 @@ UServer_Base::~UServer_Base()
    delete senvironment;
 
    if (log)        delete log;
-   if (lock)       delete lock;
    if (host)       delete host;
    if (ptime)      delete ptime;
    if (vallow_IP)  delete vallow_IP;
 
-   if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add + sizeof(sem_t));
+   if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add);
 
    delete socket;
 
@@ -376,6 +363,10 @@ UServer_Base::~UServer_Base()
 #endif
 
    if (proc) delete proc;
+
+#ifdef HAVE_PTHREAD_H
+   if (pthread) delete pthread;
+#endif
 }
 
 void UServer_Base::loadConfigParam(UFileConfig& cfg)
@@ -395,7 +386,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // ALLOWED_IP    list of comma separated client address for IP-based access control (IPADDR[/MASK])
    //
    // LISTEN_BACKLOG       max number of ready to be delivered connections to accept()
-   // USE_TCP_OPTIMIZATION flag indicating the use of TCP/IP options to optimize data transmission (TCP_CORK, TCP_DEFER_ACCEPT, TCP_QUICKACK)
+   // USE_TCP_OPTIMIZATION flag indicating the use of TCP/IP options to optimize data transmission (DEFER_ACCEPT, QUICKACK)
    //
    // PID_FILE      write pid on file indicated
    // WELCOME_MSG   message of welcome to send initially to client
@@ -423,9 +414,10 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // CA_PATH       locations of trusted CA certificates used in the verification
    // VERIFY_MODE   mode of verification (SSL_VERIFY_NONE=0, SSL_VERIFY_PEER=1, SSL_VERIFY_FAIL_IF_NO_PEER_CERT=2, SSL_VERIFY_CLIENT_ONCE=4)
    //
-   // PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
+   // PREFORK_CHILD number of child server processes created at startup: -1 - thread approach (experimental)
+   //                                                                     0 - serialize, no forking
    //                                                                     1 - classic, forking after client accept
-   //                                                                    >1 - pool of serialized processes plus monitoring process)
+   //                                                                    >1 - pool of serialized processes plus monitoring process
    // --------------------------------------------------------------------------------------------------------------------------------------
 
    server        = cfg[*str_SERVER];
@@ -442,7 +434,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    flag_use_tcp_optimization  = cfg.readBoolean(*str_USE_TCP_OPTIMIZATION);
 
    port                       = cfg.readLong(*str_PORT,           U_DEFAULT_PORT);
-   iBackLog                   = cfg.readLong(*str_LISTEN_BACKLOG, U_DEFAULT_LISTEN_BACKLOG);
+   iBackLog                   = cfg.readLong(*str_LISTEN_BACKLOG, SOMAXCONN);
    max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE, U_DEFAULT_MAX_KEEP_ALIVE);
 
    timeoutMS                  = cfg.readLong(*str_REQ_TIMEOUT);
@@ -577,7 +569,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list, U
     * clean it up, please, don't hesitate and let me know.
     */
 
-#  include "plugin/loader.autoconf.cpp"
+#include "plugin/loader.autoconf.cpp"
 
    if (plugin_list.empty()) goto next;
 
@@ -793,17 +785,12 @@ void UServer_Base::init()
       }
 #endif
 
-   block_on_accept        = (preforked_num_kids <= 1);
-   USocket::accept4_flags = SOCK_CLOEXEC | SOCK_NONBLOCK;
-
+   USocket::accept4_flags  = SOCK_CLOEXEC;
 #ifdef HAVE_SSL
-   if (UClientImage_Base::socket->isSSL())
-      {
-      block_on_accept        = true;
-      USSLSocket::method     = (SSL_METHOD*) SSLv23_server_method();
-      USocket::accept4_flags = SOCK_CLOEXEC;
-      }
+   if (UClientImage_Base::socket->isSSL()) USSLSocket::method = (SSL_METHOD*) SSLv23_server_method();
+   else
 #endif
+   USocket::accept4_flags |= SOCK_NONBLOCK;
 
    if (USocket::accept4_flags & SOCK_CLOEXEC)  UClientImage_Base::socket->flags |= O_CLOEXEC;
    if (USocket::accept4_flags & SOCK_NONBLOCK) UClientImage_Base::socket->flags |= O_NONBLOCK;
@@ -857,8 +844,6 @@ void UServer_Base::init()
 
       U_ERROR("run as server with local address '%.*s:%d' FAILED...", U_STRING_TO_TRACE(server), port);
       }
-
-   UEventFd::fd = socket->getFd();
 
    // get name host
 
@@ -946,6 +931,17 @@ void UServer_Base::init()
    if (UClientImage_Base::socket->isSSL()) goto next; // For SSL skip TCP optimization
 #endif
 
+   /* Let's say an application just issued a request to send a small block of data. Now, we could
+    * either send the data immediately or wait for more data. Some interactive and client-server
+    * applications will benefit greatly if we send the data right away. For example, when we are
+    * sending a short request and awaiting a large response, the relative overhead is low compared
+    * to the total amount of data transferred, and the response time could be much better if the
+    * request is sent immediately. This is achieved by setting the TCP_NODELAY option on the socket,
+    * which disables the Nagle algorithm.
+    */
+
+   socket->setTcpNoDelay(1U);
+
    if (flag_use_tcp_optimization)
       {
       // no unix socket...
@@ -955,17 +951,6 @@ void UServer_Base::init()
 #ifndef __MINGW32__
    // socket->setBufferRCV(128 * 1024);
    // socket->setBufferSND(128 * 1024);
-
-      /* Let's say an application just issued a request to send a small block of data. Now, we could
-       * either send the data immediately or wait for more data. Some interactive and client-server
-       * applications will benefit greatly if we send the data right away. For example, when we are
-       * sending a short request and awaiting a large response, the relative overhead is low compared
-       * to the total amount of data transferred, and the response time could be much better if the
-       * request is sent immediately. This is achieved by setting the TCP_NODELAY option on the socket,
-       * which disables the Nagle algorithm.
-       */
-
-      socket->setTcpNoDelay(1U);
 
       /* Linux (along with some other OSs) includes a TCP_DEFER_ACCEPT option in its TCP implementation.
        * Set on a server-side listening socket, it instructs the kernel not to wait for the final ACK packet
@@ -993,8 +978,6 @@ void UServer_Base::init()
 #endif
       }
 
-   // init plugin modules...
-
 next:
    U_INTERNAL_ASSERT_EQUALS(proc,0)
 
@@ -1006,48 +989,46 @@ next:
 
    runAsUser();
 
+#ifdef HAVE_PTHREAD_H
+   if (preforked_num_kids == -1) goto next1;
+#endif
+
+   if (isClassic() == false)
+      {
+      /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
+       * a readability event because the connection might have been removed by an asynchronous network error or
+       * another thread before accept() is called. If this happens then the call will block waiting for the next
+       * connection to arrive. To ensure that accept() never blocks, the passed socket sockfd needs to have the
+       * O_NONBLOCK flag set (see socket(7)).
+       */
+
+      socket->flags |= O_NONBLOCK | O_CLOEXEC;
+
+      (void) U_SYSCALL(fcntl, "%d,%d,%d", (UEventFd::fd = socket->iSockDesc), F_SETFL, socket->flags);
+      }
+
+next1:
+   // init plugin modules...
+
    if (vplugin &&
        pluginsHandlerInit() != U_PLUGIN_HANDLER_FINISHED)
       {
       U_ERROR("plugins initialization FAILED. Going down...");
       }
 
-   if (preforked_num_kids > 0)
-      {
-      // manage shared data...
+   // manage shared data...
 
+   if (isPreForked())
+      {
       U_INTERNAL_ASSERT_EQUALS(ptr_shared_data,0)
 
       U_INTERNAL_DUMP("shared_data_add = %u", shared_data_add)
 
-      ptr_shared_data = (shared_data*) UFile::mmap(sizeof(shared_data) + shared_data_add + sizeof(sem_t));
+      ptr_shared_data = (shared_data*) UFile::mmap(sizeof(shared_data) + shared_data_add);
 
       U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
+      U_INTERNAL_ASSERT_EQUALS(U_TOT_CONNECTION,0)
       }
-
-   // manage block on accept...
-
-   if (block_on_accept == false)
-      {
-      (void) U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_SETFL, O_RDWR | O_NONBLOCK | O_CLOEXEC);
-      }
-   else if (isPreForked())
-      {
-      U_INTERNAL_ASSERT_EQUALS(lock,0)
-
-      lock = U_NEW(ULock);
-
-      U_INTERNAL_ASSERT_POINTER(lock)
-
-      lock->init((sem_t*)((char*)ptr_shared_data + shared_data_add));
-
-      U_SOCKET_FLAGS = U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_GETFL, 0);
-
-      U_INTERNAL_DUMP("O_NONBLOCK = %B, U_SOCKET_FLAGS = %B", O_NONBLOCK, U_SOCKET_FLAGS)
-      }
-#ifdef HAVE_PTHREAD_H
-   else if (preforked_num_kids == -1) pthread = U_NEW(UClientThread);
-#endif
 
    setNotifier(false);
 
@@ -1119,11 +1100,12 @@ void UServer_Base::handlerNewConnection()
 
    U_INTERNAL_DUMP("num_connection = %d", num_connection)
 
-   // --------------------------------------------------------------------------------------------------------------------------
-   // PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
+   // -------------------------------------------------------------------------------------------------------------------------
+   // PREFORK_CHILD number of child server processes created at startup: -1 - thread approach (experimental)
+   //                                                                     0 - serialize, no forking
    //                                                                     1 - classic, forking after accept client
-   //                                                                    >1 - pool of process serialize plus monitoring process)
-   // --------------------------------------------------------------------------------------------------------------------------
+   //                                                                    >1 - pool of process serialize plus monitoring process
+   // -------------------------------------------------------------------------------------------------------------------------
 
    if (isPreForked())
       {
@@ -1140,13 +1122,15 @@ void UServer_Base::handlerNewConnection()
          {
          UClientImage_Base::socket->close();
 
-         // per evitare troppi zombie...
+         // to avoid too much zombie...
 
          if (UProcess::waitpid() > 0)
             {
             --num_connection;
 
             U_INTERNAL_DUMP("num_connection = %d", num_connection)
+
+            if (isLog() && num_connection == 0) ULog::log("waiting for connection\n");
             }
 
          return;
@@ -1160,8 +1144,15 @@ void UServer_Base::handlerNewConnection()
 #ifdef HAVE_PTHREAD_H
    bool is_empty = UNotifier::empty();
 
-   if (pthread) goto next;
+   if (pthread)
+      {
+      if (ptr->newConnection() == false) return;
+
+      goto next;
+      }
 #endif
+
+   ptr->UEventFd::fd = 0; // new connection...
 
    if (ptr->handlerRead() == U_NOTIFIER_DELETE) ptr->handlerDelete();
    else
@@ -1180,36 +1171,6 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
    U_TRACE(1, "UServer_Base::handlerRead()")
 
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
-
-   /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
-    * a readability event because the connection might have been removed by an asynchronous network error or
-    * another thread before accept() is called. If this happens then the call will block waiting for the next
-    * connection to arrive. To ensure that accept() never blocks, the passed socket sockfd needs to have the
-    * O_NONBLOCK flag set (see socket(7)).
-    */
-
-   if (lock)
-      {
-      U_ASSERT(isPreForked())
-
-      bool block = (num_connection == 0);
-
-      U_INTERNAL_DUMP("block = %b num_connection = %d tot_connection = %d", block, num_connection, U_TOT_CONNECTION)
-
-      if (block != UFile::isBlocking(UEventFd::fd, U_SOCKET_FLAGS))
-         {
-         lock->lock();
-
-         U_SOCKET_FLAGS = (block ? (U_SOCKET_FLAGS & ~O_NONBLOCK)
-                                 : (U_SOCKET_FLAGS |  O_NONBLOCK));
-
-         U_INTERNAL_DUMP("flags = %B", U_SOCKET_FLAGS)
-
-         (void) U_SYSCALL(fcntl, "%d,%d,%d", UEventFd::fd, F_SETFL, U_SOCKET_FLAGS);
-
-         lock->unlock();
-         }
-      }
 
    if (socket->acceptClient(UClientImage_Base::socket))
       {
@@ -1244,11 +1205,11 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
       U_RETURN(U_NOTIFIER_OK);
       }
 
-   U_INTERNAL_DUMP("flag_loop = %b block_on_accept = %b", flag_loop, block_on_accept)
+   U_INTERNAL_DUMP("flag_loop = %b", flag_loop)
 
    if (isLog()   &&
        flag_loop && // check for SIGTERM event...
-       (block_on_accept || UClientImage_Base::socket->iState != -EAGAIN)) // NB: to avoid log spurious EAGAIN on accept() with epoll()...
+       UClientImage_Base::socket->iState != -EAGAIN) // NB: to avoid log spurious EAGAIN on accept() with epoll()...
       {
       char buffer[4096];
 
@@ -1298,6 +1259,8 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
          U_ASSERT_EQUALS(ptr->UEventFd::fd, ptr->logbuf->strtol())
 
          U_SRV_LOG("client closed connection from %.*s, %s clients still connected", U_STRING_TO_TRACE(*(ptr->logbuf)), getNumConnection());
+
+         if (num_connection == 0) ULog::log("waiting for connection\n");
          }
 
       if (isClassic()) U_EXIT(0);
@@ -1359,11 +1322,12 @@ void UServer_Base::run()
    UInterrupt::insert(             SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
 #endif
 
-   // --------------------------------------------------------------------------------------------------------------------------
-   // PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
+   // -------------------------------------------------------------------------------------------------------------------------
+   // PREFORK_CHILD number of child server processes created at startup: -1 - thread approach (experimental)
+   //                                                                     0 - serialize, no forking
    //                                                                     1 - classic, forking after accept client
-   //                                                                    >1 - pool of process serialize plus monitoring process)
-   // --------------------------------------------------------------------------------------------------------------------------
+   //                                                                    >1 - pool of process serialize plus monitoring process
+   // -------------------------------------------------------------------------------------------------------------------------
 
    if (max_Keep_Alive <= 0) max_Keep_Alive = U_DEFAULT_MAX_KEEP_ALIVE;
 
@@ -1373,27 +1337,6 @@ void UServer_Base::run()
    U_INTERNAL_DUMP("vClientImage = %p", vClientImage)
 
    U_INTERNAL_ASSERT_POINTER(vClientImage)
-   
-#ifdef HAVE_PTHREAD_H
-   if (preforked_num_kids == -1)
-      {
-      pthread->start();
-
-      while (flag_loop)
-         {
-         if (UInterrupt::event_signal_pending)
-            {
-            UInterrupt::callHandlerSignal();
-
-            continue;
-            }
-
-         (void) pthis->handlerRead();
-         }
-
-      return;
-      }
-#endif
 
    if (isPreForked())
       {
@@ -1420,16 +1363,34 @@ void UServer_Base::run()
 
                U_SRV_LOG("started new child (pid %d), up to %u children", proc->pid(), nkids);
 
-               U_INTERNAL_DUMP("block_on_accept = %b tot_connection = %d", block_on_accept, U_TOT_CONNECTION)
+               U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
                }
 
             if (proc->child())
                {
-               U_INTERNAL_DUMP("block_on_accept = %b tot_connection = %d", block_on_accept, U_TOT_CONNECTION)
+               U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
 
                setNotifier(true);
 
-               goto preforked_child;
+               U_SRV_LOG("waiting for connection");
+
+               while (flag_loop)
+                  {
+                  if (UInterrupt::event_signal_pending)
+                     {
+                     UInterrupt::callHandlerSignal();
+
+                     continue;
+                     }
+
+                  if (UNotifier::waitForEvent(ptime) == false) break; // no more events registered...
+                  }
+
+               // NB: it is needed because only the parent process must close the log...
+
+               if (isLog()) log = 0;
+
+               return;
                }
 
             /* Don't start them too quickly, or we might overwhelm a machine that's having trouble. */
@@ -1450,7 +1411,7 @@ void UServer_Base::run()
 
             U_SRV_LOG("child (pid %d) exited with value %d (%s), down to %u children", pid, status, UProcess::exitInfo(status), nkids);
 
-            U_INTERNAL_DUMP("block_on_accept = %b tot_connection = %d", block_on_accept, U_TOT_CONNECTION)
+            U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
             }
 
          /* Another little safety brake here: since children should not exit
@@ -1459,50 +1420,48 @@ void UServer_Base::run()
          to_sleep.nanosleep();
          }
 
-      goto end;
+      U_INTERNAL_ASSERT(proc->parent())
+
+      (void) proc->waitAll();
       }
-
-   if (isLog() && isClassic()) ULog::log("waiting for connection\n");
-
-preforked_child:
-
-   while (flag_loop)
+   else
       {
-      if (UInterrupt::event_signal_pending)
-         {
-         UInterrupt::callHandlerSignal();
+      U_SRV_LOG("waiting for connection");
 
-         continue;
+#  ifdef HAVE_PTHREAD_H
+      if (preforked_num_kids == -1)
+         {
+         pthread = U_NEW(UClientThread);
+
+         pthread->start();
          }
+#  endif
 
-      // check if we can go to blocking on accept()...
-
-      if (block_on_accept &&
-          isClientConnect() == false)
+      while (flag_loop)
          {
-         if (isLog() && isClassic() == false) ULog::log("waiting for connection\n");
+         if (UInterrupt::event_signal_pending)
+            {
+            UInterrupt::callHandlerSignal();
 
-         // here we go to block on accept(), plus fork() - eventually child start here...
+            continue;
+            }
 
-         (void) pthis->handlerRead();
+#     ifdef HAVE_PTHREAD_H
+         if (pthread) goto next;
+#     endif
 
-         U_INTERNAL_DUMP("flag_loop = %b", flag_loop)
+         // NB: in the classic model we don't need event manager (loop: accept-fork) and the forked child don't accept new client...
 
-         continue; // may be interrupt...
-         }
+         if (UNotifier::empty())
+            {
+            U_ASSERT(isClassic())
+next:
+            (void) pthis->handlerRead();
 
-      if (UNotifier::waitForEvent(ptime) == false) break; // no more events registered...
-      }
+            continue;
+            }
 
-   if (preforked_num_kids >= 1)
-      {
-end:
-      if (proc->parent()) (void) proc->waitAll();
-      else
-         {
-         // NB: needed because only the parent process must close the log...
-
-         if (proc->child() && isLog()) log = 0;
+         if (UNotifier::waitForEvent(ptime) == false) break; // no more events registered...
          }
       }
 }
@@ -1609,13 +1568,11 @@ const char* UServer_Base::dump(bool reset) const
                   << "cgi_timeout               " << cgi_timeout                 << '\n'
                   << "verify_mode               " << verify_mode                 << '\n'
                   << "num_connection            " << num_connection              << '\n'
-                  << "block_on_accept           " << block_on_accept             << '\n'
                   << "shared_data_add           " << shared_data_add             << '\n'
                   << "ptr_shared_data           " << (void*)ptr_shared_data      << '\n'
                   << "preforked_num_kids        " << preforked_num_kids          << '\n'
                   << "flag_use_tcp_optimization " << flag_use_tcp_optimization   << '\n'
                   << "log           (ULog       " << (void*)log                  << ")\n"
-                  << "lock          (ULock      " << (void*)lock                 << ")\n"
                   << "socket        (USocket    " << (void*)socket               << ")\n"
                   << "host          (UString    " << (void*)host                 << ")\n"
                   << "server        (UString    " << (void*)&server              << ")\n"

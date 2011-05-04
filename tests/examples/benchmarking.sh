@@ -9,7 +9,7 @@ rm -f benchmarking.log* err/benchmarking.err \
 		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]*
 
 #UTRACE="0 50M 0"
-#UOBJDUMP="0 100k 10"
+#UOBJDUMP="0 1M 100"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --trace-children=yes"
  export UTRACE UOBJDUMP USIMERR VALGRIND

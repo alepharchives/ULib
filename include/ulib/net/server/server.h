@@ -100,7 +100,7 @@ public:
    // ALLOWED_IP    list of comma separated client address for IP-based access control (IPADDR[/MASK])
    //
    // LISTEN_BACKLOG       max number of ready to be delivered connections to accept()
-   // USE_TCP_OPTIMIZATION flag indicating the use of TCP/IP options to optimize data transmission (TCP_CORK, TCP_DEFER_ACCEPT, TCP_QUICKACK)
+   // USE_TCP_OPTIMIZATION flag indicating the use of TCP/IP options to optimize data transmission (DEFER_ACCEPT, QUICKACK)
    //
    // PID_FILE      write pid on file indicated
    // WELCOME_MSG   message of welcome to send initially to client
@@ -229,23 +229,20 @@ public:
    static int pluginsHandlerRequest();
    static int pluginsHandlerReset();
 
-   // -----------------------------------------------------------------------------------------------------------------------------
+   // ----------------------------------------------------------------------------------------------------------------------------
    // Manage process server
-   // -----------------------------------------------------------------------------------------------------------------------------
-   // PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
+   // ----------------------------------------------------------------------------------------------------------------------------
+   // PREFORK_CHILD number of child server processes created at startup: -1 - thread approach (experimental)
+   //                                                                     0 - serialize, no forking
    //                                                                     1 - classic, forking after client accept
-   //                                                                    >1 - pool of serialized processes plus monitoring process)
-   // -----------------------------------------------------------------------------------------------------------------------------
+   //                                                                    >1 - pool of serialized processes plus monitoring process
+   // ----------------------------------------------------------------------------------------------------------------------------
 
    typedef struct shared_data {
-      int socket_flags; // socket accept descriptor flags from fcntl(fd, F_GETFL, 0)
       sig_atomic_t tot_connection;
    } shared_data;
 
-   static ULock* lock;
-   static bool block_on_accept;
    static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves
-
    static uint32_t shared_data_add;
    static shared_data* ptr_shared_data;
 
@@ -324,26 +321,6 @@ public:
 
    static void      logCommandMsgError(const char* cmd);
    static UCommand* loadConfigCommand(UFileConfig& cfg);
-
-   static bool isClientConnect()
-      {
-      U_TRACE(0, "UServer_Base::isClientConnect()")
-
-      U_INTERNAL_DUMP("num_connection = %d", num_connection)
-
-      bool result = (preforked_num_kids == 1 ? proc->child() : num_connection > 0);
-
-      U_RETURN(result);
-      }
-
-   static int getMaxKeepAlive() { return max_Keep_Alive; }
-
-   static bool useTcpOptimization()
-      {
-      U_TRACE(0, "UServer_Base::useTcpOptimization()")
-
-      U_RETURN(flag_use_tcp_optimization);
-      }
 
    // NETWORK CTX
 

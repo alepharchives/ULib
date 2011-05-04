@@ -75,6 +75,7 @@ public:
    // SERVICES
 
    int  genericRead();
+   bool newConnection();
    void logCertificate(void* x509); // aggiungo nel log il certificato Peer del client ("issuer","serial")
 
    static void clear();
@@ -197,11 +198,9 @@ public:
 
    static USSLSocket* getSocket() { return (USSLSocket*)socket; }
 
-   void checkForFirstUse()
+   void checkForNewConnection()
       {
-      U_TRACE(0, "UClientImage<USSLSocket>::checkForFirstUse()")
-
-      // Check if it is the first use of this object...
+      U_TRACE(0, "UClientImage<USSLSocket>::checkForNewConnection()")
 
       U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->getFd())
 
@@ -228,7 +227,7 @@ public:
       {
       U_TRACE(0, "UClientImage<USSLSocket>::handlerRead()")
 
-      checkForFirstUse();
+      checkForNewConnection();
 
       int result = UClientImage_Base::handlerRead();
 

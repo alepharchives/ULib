@@ -119,7 +119,7 @@ chmod 777      uploads
  fi
 }
 
-#start_test 'web_server-1.cfg' localhost
+ start_test 'web_server-1.cfg' localhost
  start_test  web_server0.cfg   localhost
  start_test  web_server1.cfg   localhost
  start_test  web_server2.cfg   localhost

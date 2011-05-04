@@ -113,7 +113,7 @@ public:
 
       cout << "child start" << endl;
 
-      UThread::sleep(1000);
+      UThread::sleep(1500);
 
       cout << "child end" << endl;
       }
