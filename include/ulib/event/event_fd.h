@@ -52,7 +52,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UEventFd, "")
 
       fd      = 0;
-      op_mask = U_READ_IN | EPOLLET;
+      op_mask = U_READ_IN; // | EPOLLET;
 
 #  ifdef HAVE_LIBEVENT
       pevent = 0;

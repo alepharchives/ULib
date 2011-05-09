@@ -513,9 +513,9 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                   else
                      {
                      x = UStringExt::expandEnvironmentVar(value, &environment);
-
-                     if (x.empty()) (void) x.assign(U_CONSTANT_TO_PARAM("(none)"));
                      }
+
+                  if (x.empty()) continue;
 
                   switch (encode)
                      {

@@ -19,6 +19,7 @@ bool               UClientImage_Base::bIPv6;
 bool               UClientImage_Base::pipeline;
 bool               UClientImage_Base::write_off;  // NB: we not send response because we can have used sendfile() etc...
 uint32_t           UClientImage_Base::rstart;
+uint32_t           UClientImage_Base::corked;
 uint32_t           UClientImage_Base::size_request;
 USocket*           UClientImage_Base::socket;
 UString*           UClientImage_Base::body;
@@ -144,14 +145,10 @@ void UClientImage_Base::clear()
 {
    U_TRACE(0, "UClientImage_Base::clear()")
 
-   U_INTERNAL_ASSERT_POINTER(body);
-   U_INTERNAL_ASSERT_POINTER(socket);
-   U_INTERNAL_ASSERT_POINTER(rbuffer);
-   U_INTERNAL_ASSERT_POINTER(wbuffer);
-   U_INTERNAL_ASSERT_POINTER(pbuffer);
-   U_INTERNAL_ASSERT_POINTER(_value);
-   U_INTERNAL_ASSERT_POINTER(_buffer);
-   U_INTERNAL_ASSERT_POINTER(_encoded);
+   U_INTERNAL_ASSERT_POINTER(body)
+   U_INTERNAL_ASSERT_POINTER(wbuffer)
+   U_INTERNAL_ASSERT_POINTER(pbuffer)
+   U_INTERNAL_ASSERT_POINTER(rbuffer)
 
    if (msg_welcome) delete msg_welcome;
 
@@ -160,10 +157,16 @@ void UClientImage_Base::clear()
    delete pbuffer;
    delete rbuffer;
 
+   U_INTERNAL_ASSERT_POINTER(socket)
+
           socket->iSockDesc = -1;
    delete socket;
 
    // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
+
+   U_INTERNAL_ASSERT_POINTER(_value)
+   U_INTERNAL_ASSERT_POINTER(_buffer)
+   U_INTERNAL_ASSERT_POINTER(_encoded)
 
    delete _value;
    delete _buffer;
@@ -194,10 +197,11 @@ UIPAddress& UClientImage_Base::remoteIPAddress()
 {
    U_TRACE(0, "UClientImage_Base::remoteIPAddress()")
 
-   U_INTERNAL_ASSERT_POINTER(socket)
    U_INTERNAL_ASSERT_POINTER(pClientImage)
 
    if (pClientImage->logbuf) return *(pClientImage->clientAddress);
+
+   U_INTERNAL_ASSERT_POINTER(socket)
 
    socket->setRemote();
 
@@ -239,6 +243,20 @@ void UClientImage_Base::logCertificate(void* x509)
       U_INTERNAL_DUMP("logbuf = %.*S", U_STRING_TO_TRACE(*logbuf))
       }
 #endif
+}
+
+void UClientImage_Base::setTcpCork(uint32_t value)
+{
+   U_TRACE(0, "UClientImage_Base::setTcpCork(%u)", value)
+
+   if (value)
+      {
+      if (corked == 0) socket->setTcpCork((corked = 1));
+      }
+   else
+      {
+      if (corked == 1) socket->setTcpCork((corked = 0));
+      }
 }
 
 void UClientImage_Base::setRequestSize(uint32_t n)
@@ -501,8 +519,14 @@ int UClientImage_Base::handlerWrite()
 
    if (logbuf) logResponse();
 
+   // NB: we don't need corking because we use writev...
+
+// if (body->empty() == false) setTcpCork(1U);
+
    int result = (USocketExt::write(socket, *wbuffer, *body, 3 * 1000) ? U_NOTIFIER_OK
                                                                       : U_NOTIFIER_DELETE);
+
+// if (body->empty() == false) setTcpCork(0U);
 
    U_RETURN(result);
 }
@@ -522,6 +546,7 @@ void UClientImage_Base::handlerDelete()
 const char* UClientImage_Base::dump(bool _reset) const
 {
    *UObjectIO::os << "bIPv6                              " << bIPv6                 << '\n'
+                  << "corked                             " << corked                << '\n'
                   << "write_off                          " << write_off             << '\n'
                   << "body            (UString           " << (void*)body           << ")\n"
                   << "logbuf          (UString           " << (void*)logbuf         << ")\n"

@@ -190,10 +190,10 @@ void UTimer::erase(UEventTime* a, bool flag_reuse, bool set_timer)
 
    U_INTERNAL_ASSERT_POINTER(first)
 
-   UTimer* item =  first;
-   UTimer** ptr = &first;
+   UTimer* item;
 
-   do {
+   for (UTimer** ptr = &first; (item = *ptr); ptr = &(*ptr)->next)
+      {
       if (item->alarm == a)
          {
          U_INTERNAL_DUMP("alarm = %O", U_OBJECT_TO_TRACE(*item->alarm))
@@ -224,10 +224,7 @@ void UTimer::erase(UEventTime* a, bool flag_reuse, bool set_timer)
 
          break;
          }
-
-      ptr = &(*ptr)->next;
       }
-   while ((item = *ptr));
 
    if (set_timer) setTimer();
 }

@@ -712,9 +712,12 @@ bool USocket::setServer(SocketAddress& cLocal, int iBackLog)
 
    // Avoid "Address already in use" thingie
 
-   const int iReUseAddrFlag = 1;
+   const int flag = 1;
+   struct linger ling = { 0, 0 };
 
-   (void) setSockOpt(SOL_SOCKET, SO_REUSEADDR, &iReUseAddrFlag, sizeof(iReUseAddrFlag));
+   (void) setSockOpt(SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
+   (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag));
+   (void) setSockOpt(SOL_SOCKET, SO_LINGER,    &ling, sizeof(ling));
 
    if (bind(cLocal))
       {

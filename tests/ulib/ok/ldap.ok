@@ -82,3 +82,7 @@ dn:   ou=hordegroups,o=mail
 cn:   
 mail: 
 
+dn:   uid=test.numera,o=mail
+cn:   Test Numera
+mail: test.numera@unirel.com
+

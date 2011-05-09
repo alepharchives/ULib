@@ -122,27 +122,29 @@ protected:
    UEventFd* handler_event_fd;
 
    static UNotifier* pool;
+   static UNotifier* vpool;
    static UNotifier* first;
-   static int result, fd_set_max;
-   static int fd_read_cnt, fd_write_cnt;
-   static fd_set fd_set_read, fd_set_write;
    static bool exit_loop_wait_event_for_signal;
 
    static void preallocate(uint32_t n);
-   static void waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
+   static int waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
 
 #ifdef USE_POLL
-   static void waitForEvent(struct pollfd* ufds, int timeoutMS = -1);
+   static int waitForEvent(struct pollfd* ufds, int timeoutMS = -1);
 #endif
 
-#if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+#ifdef HAVE_LIBEVENT
+#elif defined(HAVE_EPOLL_WAIT)
    static int epollfd;
    static struct epoll_event events[MAX_EVENTS];
 #else
+   static int fd_set_max;
+   static int fd_read_cnt, fd_write_cnt;
+   static fd_set fd_set_read, fd_set_write;
+
    // nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
 
    static int  getNFDS();
-   static void setNFDS(int fd);
 
    // rimuove i descrittori di file diventati invalidi (possibile con EPIPE)
 
@@ -152,14 +154,10 @@ protected:
 private:
    void outputEntry(ostream& os) const U_NO_EXPORT;
 
-   static void eraseHandler(UEventFd* handler_event) U_NO_EXPORT;
-   static void eraseItem(UNotifier* item, bool flag_reuse) U_NO_EXPORT;
+   static void eraseItem(UNotifier** ptr, bool flag_reuse) U_NO_EXPORT;
 
 #ifndef HAVE_LIBEVENT
-   static bool handlerResult(int& n, UNotifier*  i,
-                                     UNotifier** ptr,
-                                     UEventFd* handler_event,
-                                     bool bread, bool bwrite, bool bexcept) U_NO_EXPORT; 
+   static bool handlerResult(int& n, UNotifier** ptr, bool bread, bool bwrite, bool bexcept) U_NO_EXPORT; 
 #endif
 
    UNotifier(const UNotifier&)            {}

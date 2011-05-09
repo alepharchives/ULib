@@ -126,7 +126,9 @@ chmod 777      uploads
 }
 
  start_test web_server_ssl0.cfg
+
 #start_test web_server_ssl1.cfg # NB: openssl s_client close the connection in pipeline...
+
  start_test web_server_ssl2.cfg
  start_test web_server_sslN.cfg
 

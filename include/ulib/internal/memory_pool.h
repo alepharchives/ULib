@@ -57,14 +57,14 @@
   32 sizeof(UHashMapNode)                                                      
   32 sizeof(UXMLAttribute)
   32 sizeof(UTree<UString>)
-  32 sizeof(UClientImage<UTCPSocket>) <==
--------------------------
-   U_STACK_TYPE_2
-
   40 sizeof(Url)
   40 sizeof(ULDAP)
   40 sizeof(UHashMap<UString>)
   40 sizeof(USOAPGenericMethod)
+  40 sizeof(UClientImage<UTCPSocket>) <==
+-------------------------
+   U_STACK_TYPE_2
+
   48 sizeof(UCURL)
   48 sizeof(UDialog)
   48 sizeof(UMimeHeader)
@@ -130,7 +130,7 @@
 
 #define U_STACK_TYPE_0     8U
 #define U_STACK_TYPE_1    24U
-#define U_STACK_TYPE_2    32U
+#define U_STACK_TYPE_2    40U
 #define U_STACK_TYPE_3    88U
 #define U_STACK_TYPE_4   128U
 #define U_STACK_TYPE_5   256U

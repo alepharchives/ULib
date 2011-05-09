@@ -62,9 +62,9 @@ public:
    static UString* request; // NB: it is only a pointer, not a string object...
    static UString* pbuffer;
    static const char* rpointer;
-   static uint32_t rstart, size_request;
    static UClientImage_Base* pClientImage;
    static bool bIPv6, pipeline, write_off; // NB: we not send response because we can have used sendfile() etc...
+   static uint32_t rstart, size_request, corked;
 
    // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
 
@@ -80,6 +80,7 @@ public:
 
    static void clear();
    static void init(USocket* p);
+   static void setTcpCork(uint32_t corked);
 
    // log
 

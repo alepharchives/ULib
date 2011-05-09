@@ -308,8 +308,6 @@ UServer_Base::~UServer_Base()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UServer_Base)
 
-   U_INTERNAL_ASSERT_POINTER(socket)
-
                       UNotifier::erase(this,          false); // NB: to avoid to delete himself...
    if (handler_event) UNotifier::erase(handler_event, false);
                       UNotifier::clear();
@@ -326,9 +324,11 @@ UServer_Base::~UServer_Base()
 
    U_INTERNAL_DUMP("vClientImage = %p", vClientImage)
 
-   if (isClassic() == false) delete[] vClientImage;
+// if (isClassic() == false) delete[] vClientImage;
 
    UClientImage_Base::clear();
+
+   U_INTERNAL_ASSERT_POINTER(senvironment)
 
    delete senvironment;
 
@@ -338,6 +338,8 @@ UServer_Base::~UServer_Base()
    if (vallow_IP)  delete vallow_IP;
 
    if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add);
+
+   U_INTERNAL_ASSERT_POINTER(socket)
 
    delete socket;
 
@@ -942,13 +944,11 @@ void UServer_Base::init()
 
    socket->setTcpNoDelay(1U);
 
+#ifndef __MINGW32__
    if (flag_use_tcp_optimization)
       {
-      // no unix socket...
+      U_ASSERT_EQUALS(socket->isIPC(),false) // no unix socket...
 
-      U_ASSERT_EQUALS(socket->isIPC(),false)
-
-#ifndef __MINGW32__
    // socket->setBufferRCV(128 * 1024);
    // socket->setBufferSND(128 * 1024);
 
@@ -975,8 +975,8 @@ void UServer_Base::init()
        */
 
       socket->setTcpQuickAck(0U);
-#endif
       }
+#endif
 
 next:
    U_INTERNAL_ASSERT_EQUALS(proc,0)
@@ -1094,9 +1094,7 @@ void UServer_Base::handlerNewConnection()
    U_INTERNAL_ASSERT_POINTER(pthis)
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
 
-   // NB: UClientImage object is also referenced by UClientImage_Base::pClientImage...
-
-   UClientImage_Base* ptr = vClientImage + num_connection++;
+   ++num_connection;
 
    U_INTERNAL_DUMP("num_connection = %d", num_connection)
 
@@ -1139,7 +1137,15 @@ void UServer_Base::handlerNewConnection()
       if (proc->child()) setNotifier(true);
       }
 
-   // NB: we do the same as when the object is deleted by UNotifier (when response from handlerRead() is U_NOTIFIER_DELETE)
+   // NB: UClientImage object is also referenced by UClientImage_Base::pClientImage...
+
+   uint32_t index_reuse_object = (UNotifier::pool > UNotifier::vpool ? UNotifier::pool - UNotifier::vpool : 0);
+
+   U_INTERNAL_DUMP("index_reuse_object = %u", index_reuse_object)
+
+   U_INTERNAL_ASSERT_MINOR(index_reuse_object, max_Keep_Alive)
+
+   UClientImage_Base* ptr = vClientImage + index_reuse_object;
 
 #ifdef HAVE_PTHREAD_H
    bool is_empty = UNotifier::empty();
@@ -1152,7 +1158,7 @@ void UServer_Base::handlerNewConnection()
       }
 #endif
 
-   ptr->UEventFd::fd = 0; // new connection...
+   // NB: we do the same as when the object is deleted by UNotifier (when response from handlerRead() is U_NOTIFIER_DELETE)
 
    if (ptr->handlerRead() == U_NOTIFIER_DELETE) ptr->handlerDelete();
    else
@@ -1263,6 +1269,8 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
          if (num_connection == 0) ULog::log("waiting for connection\n");
          }
 
+      ptr->UEventFd::fd = 0; // to reuse object...
+
       if (isClassic()) U_EXIT(0);
 
       if (UClientImage_Base::socket->isOpen()) UClientImage_Base::socket->closesocket();
@@ -1285,11 +1293,11 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 
    // NB: check to avoid to delete himself...
 
-   U_INTERNAL_DUMP("pthis = %p handler_event = %p", pthis, handler_event)
-
    if (cimg == pthis ||
        cimg == handler_event)
       {
+      U_INTERNAL_DUMP("cimg = %p pthis = %p handler_event = %p ", cimg, pthis, handler_event)
+
       U_RETURN(false);
       }
 
@@ -1363,12 +1371,12 @@ void UServer_Base::run()
 
                U_SRV_LOG("started new child (pid %d), up to %u children", proc->pid(), nkids);
 
-               U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+               U_INTERNAL_DUMP("num_connection = %d tot_connection = %d", num_connection, U_TOT_CONNECTION)
                }
 
             if (proc->child())
                {
-               U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+               U_INTERNAL_DUMP("num_connection = %d tot_connection = %d", num_connection, U_TOT_CONNECTION)
 
                setNotifier(true);
 

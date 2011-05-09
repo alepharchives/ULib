@@ -5,8 +5,8 @@
 rm -f benchmarking.log* err/benchmarking.err \
       out/userver_tcp.out err/userver_tcp.err \
       out/userver_ssl.out err/userver_ssl.err \
-		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* \
-		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]*
+		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* \
+		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*
 
 #UTRACE="0 50M 0"
 #UOBJDUMP="0 1M 100"
@@ -33,6 +33,8 @@ fi
 #echo 1024 > /proc/sys/net/core/somaxconn
 
 #STRACE=$TRUSS
+#VALGRIND="valgrind --tool=exp-dhat"
+#MUDFLAP_OPTIONS="-ignore-reads  -backtrace=8"
  start_prg_background userver_tcp -c benchmarking.cfg
 #start_prg_background userver_ssl -c benchmarking_ssl.cfg
 

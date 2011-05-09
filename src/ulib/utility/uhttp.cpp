@@ -5245,7 +5245,7 @@ void UHTTP::processHTTPGetRequest(const UString& request)
       off_t lstart = start;
 
       (void) UClientImage_Base::socket->sendfile(file->getFd(), &lstart, size);
-      
+
       UClientImage_Base::socket->setTcpCork(0U);
       }
 #ifdef DEBUG

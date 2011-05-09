@@ -515,7 +515,7 @@ protected:
 
    virtual void preallocate(uint32_t n)
       {
-      U_TRACE(0, "UServer<Socket>::preallocate(%u)", n)
+      U_TRACE(0+256, "UServer<Socket>::preallocate(%u)", n)
 
       vClientImage = U_NEW_VEC(n, UClientImage<Socket>);
       }
@@ -613,7 +613,7 @@ protected:
 
    virtual void preallocate(uint32_t n)
       {
-      U_TRACE(0, "UServer<USSLSocket>::preallocate(%u)", n)
+      U_TRACE(0+256, "UServer<USSLSocket>::preallocate(%u)", n)
 
       vClientImage = U_NEW_VEC(n, UClientImage<USSLSocket>);
       }

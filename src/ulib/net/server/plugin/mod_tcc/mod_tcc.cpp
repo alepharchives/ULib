@@ -18,6 +18,8 @@
 
 U_CREAT_FUNC(mod_tcc, UTCCPlugIn)
 
+typedef int (*iPFipvc)(int,char**);
+
 const UString* UTCCPlugIn::str_CSP_directory;
 
 void UTCCPlugIn::str_allocate()
@@ -45,7 +47,7 @@ int UTCCPlugIn::handlerConfig(UFileConfig& cfg)
    U_TRACE(0, "UTCCPlugIn::handlerConfig(%p)", &cfg)
 
    // ------------------------------------------------------------------------------------------
-   // CSP_directory
+   // CSP_directory        directory of c script servlet
    // ------------------------------------------------------------------------------------------
 
    if (cfg.loadTable()) CSP_directory = cfg[*str_CSP_directory];
@@ -64,17 +66,38 @@ int UTCCPlugIn::handlerInit()
 " return 0;\n"
 "}\n";
 
-   TCCState* s = tcc_new();
+   TCCState* s = (TCCState*) U_SYSCALL_NO_PARAM(tcc_new);
 
-   tcc_set_output_type(s, TCC_OUTPUT_MEMORY);
+   (void) U_SYSCALL(tcc_set_output_type, "%p,%d", s, TCC_OUTPUT_MEMORY);
 
-   if (tcc_compile_string(s, my_program) == -1)
+   if (U_SYSCALL(tcc_compile_string, "%p,%S", s, my_program) != -1)
       {
+      void* ptr;
+      char** argv = 0;
+      iPFipvc prog_main;
+
+      int ret, sz = U_SYSCALL(tcc_relocate, "%p,%p", s, 0);
+
+      if (sz < 0) goto error;
+
+      ptr = U_MALLOC_GEN(sz);
+
+      (void) U_SYSCALL(tcc_relocate, "%p,%p", s, ptr);
+
+      prog_main = (iPFipvc) U_SYSCALL(tcc_get_symbol, "%p,%S", s, "main");
+
+      U_SYSCALL_VOID(tcc_delete, "%p", s);
+
+      ret = (*prog_main)(1, argv);
+
+      U_FREE_GEN(ptr,sz);
+
       U_SRV_LOG("initialization of plugin success");
 
       goto end;
       }
 
+error:
    U_SRV_LOG("initialization of plugin FAILED");
 
 end:
