@@ -730,9 +730,7 @@ UString UStringExt::basename(const UString& s)
 
    uint32_t pos = s.rfind('/'); /* Find last '/' */
 
-   UString result = (pos == U_NOT_FOUND ? s : s.substr(pos+1));
-
-   U_INTERNAL_ASSERT(result.invariant())
+   UString result = s.substr(pos+1);
 
    U_RETURN_STRING(result);
 }

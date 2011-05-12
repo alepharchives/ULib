@@ -868,7 +868,7 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
 #endif
 
 #ifdef __MINGW32__
-   if (is_socket(fd) == false) U_RETURN(1);
+   int ret = (is_socket(fd) == false);
 #elif defined(USE_POLL)
    struct pollfd fds[1] = { { fd, POLLIN, 0 } };
 
@@ -898,7 +898,7 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
 #endif
 
 #ifdef __MINGW32__
-   if (is_socket(fd) == false) U_RETURN(1);
+   int ret = (is_socket(fd) == false);
 #elif defined(USE_POLL)
    struct pollfd fds[1] = { { fd, POLLOUT, 0 } };
 

@@ -18,7 +18,8 @@ rm -f web_server_tcc*.log \
 DIR_CMD="../../examples/userver"
 
 if [ "$TERM" != "cygwin" ]; then
-   ( cd ../../src/ulib/net/server/plugin/.libs &&
+   ( cd libraries; make; cd ..;
+	  cd ../../src/ulib/net/server/plugin/.libs &&
      ln -sf ../mod_tcc/.libs/mod_tcc.so )
 fi
 
@@ -29,3 +30,5 @@ start_prg_background userver_tcp -c 'web_server_tcc.cfg'
 #kill_prg userver_tcp TERM
 
 mv err/userver_tcp.err err/web_server_tcc.err
+
+#kill_prg userver_tcp TERM

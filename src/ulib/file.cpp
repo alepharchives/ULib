@@ -273,6 +273,22 @@ void UFile::setPath(const UFile& file, char* buffer_path, const char* suffix, ui
    U_INTERNAL_DUMP("path_relativ = %.*S", path_relativ_len, path_relativ)
 }
 
+bool UFile::isName(const UString& name) const
+{
+   U_TRACE(0, "UFile::isName(%.*S)", U_STRING_TO_TRACE(name))
+
+   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
+   U_INTERNAL_ASSERT_MAJOR(path_relativ_len,0)
+
+   UString s(path_relativ, path_relativ_len), basename = UStringExt::basename(s);
+
+   bool result = name.equal(basename);
+
+   U_RETURN(result);
+}
+
 off_t UFile::size(bool bstat)
 {
    U_TRACE(0, "UFile::size(%b)", bstat)

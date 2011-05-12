@@ -2984,9 +2984,9 @@ U_NO_EXPORT bool UHTTP::openFile()
       }
    else
       {
-      result = (file->regular()                             &&
-                file->isPathRelativ(*str_htpasswd) == false && // NB: '.htpasswd' is forbidden
-                file->isPathRelativ(*str_htdigest) == false && // NB: '.htdigest' is forbidden
+      result = (file->regular()                      &&
+                file->isName(*str_htpasswd) == false && // NB: '.htpasswd' is forbidden
+                file->isName(*str_htdigest) == false && // NB: '.htdigest' is forbidden
                 file->open());
       }
 

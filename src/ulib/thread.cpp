@@ -24,8 +24,8 @@ extern "C" { int nanosleep (const struct timespec* requested_time,
 #endif
 
 UThread*        UThread::first;
-pthread_cond_t  UThread::cond = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t UThread::lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t  UThread::cond  = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t UThread::_lock = PTHREAD_MUTEX_INITIALIZER;
 
 class UThreadImpl {
 public:
@@ -258,7 +258,7 @@ void UThread::sigHandler(int signo)
 {
    U_TRACE(1, "UThread::sigHandler(%d)", signo)
 
-   (void) U_SYSCALL(pthread_mutex_lock, "%p", &lock);
+   (void) U_SYSCALL(pthread_mutex_lock, "%p", &_lock);
 
    UThread* th = getThread();
 
@@ -271,7 +271,7 @@ void UThread::sigHandler(int signo)
       {
       U_INTERNAL_DUMP("SUSPEND: start(%6D)")
 
-      (void) U_SYSCALL(pthread_cond_wait, "%p,%p", &cond, &lock);
+      (void) U_SYSCALL(pthread_cond_wait, "%p,%p", &cond, &_lock);
 
       U_INTERNAL_DUMP("SUSPEND: end(%6D)")
       }
@@ -282,7 +282,7 @@ void UThread::sigHandler(int signo)
       (void) U_SYSCALL(pthread_cond_signal, "%p",  &cond);
       }
 
-   (void) U_SYSCALL(pthread_mutex_unlock, "%p", &lock);
+   (void) U_SYSCALL(pthread_mutex_unlock, "%p", &_lock);
 }
 
 void UThread::signal(int signo)

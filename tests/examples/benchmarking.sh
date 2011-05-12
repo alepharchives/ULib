@@ -31,6 +31,9 @@ fi
 
 #ulimit -n 100000
 #echo 1024 > /proc/sys/net/core/somaxconn
+ echo    0 > /proc/sys/net/ipv4/tcp_syncookies
+ echo    0 > kernel.printk_ratelimit # 5
+ echo    0 > kernel.printk_ratelimit_burst # 10
 
 #STRACE=$TRUSS
 #VALGRIND="valgrind --tool=exp-dhat"

@@ -25,7 +25,7 @@ int UTCCPlugIn::handlerInit()
 
    UHTTP::initCSP();
 
-   U_SRV_LOG("initialization of plugin SUCCESS");
+   U_SRV_LOG("initialization of plugin success");
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }

@@ -159,19 +159,7 @@ public:
    const char* getPathRelativ() const    { return path_relativ; }
    int32_t     getPathRelativLen() const { return path_relativ_len; }
 
-   bool isPathRelativ(const UString& name) const
-      {
-      U_TRACE(0, "UFile::isPathRelativ(%.*S)", U_STRING_TO_TRACE(name))
-
-      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
-      U_INTERNAL_ASSERT_MAJOR(path_relativ_len,0)
-
-      bool result = name.equal(path_relativ, path_relativ_len);
-
-      U_RETURN(result);
-      }
+   bool isName(const UString& name) const;
 
    const char* getSuffix() const
       {

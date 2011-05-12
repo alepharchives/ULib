@@ -44,6 +44,9 @@ public:
 
    // SERVICES
 
+   void lock()   { (void) pthread_mutex_lock(&_lock); }
+   void unlock() { (void) pthread_mutex_unlock(&_lock); }
+
    static void sleep(time_t timeoutMS);
 
    /**
@@ -146,7 +149,7 @@ protected:
 
    static UThread* first;
    static pthread_cond_t cond;
-   static pthread_mutex_t lock;
+   static pthread_mutex_t _lock;
 
    void close(); // close current thread, free all
    void sigInstall(int signo);

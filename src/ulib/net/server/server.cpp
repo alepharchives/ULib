@@ -1128,33 +1128,27 @@ void UServer_Base::handlerNewConnection()
    U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::fd, 0)
 
 #ifdef HAVE_PTHREAD_H
-   bool is_empty = UNotifier::empty();
-
    if (pthread)
       {
-      if (ptr->newConnection() == false) return;
+      bool is_empty = UNotifier::empty();
 
-      goto next;
+      if (ptr->newConnection())
+         {
+         UNotifier::insert(ptr);
+
+         if (is_empty) pthread->resume();
+         }
+
+      return;
       }
 #endif
 
-   // loop:
-   // NB: we do the same as when the object is deleted by UNotifier (when response from handlerRead() is U_NOTIFIER_DELETE)
+   // NB: in the classic model we don't need to notify for request of connection
+   // (loop: accept-fork) and the forked child don't accept new client, but we need
+   // event manager for the forked child to feel timeout for request of new client...
+
    if (ptr->handlerRead() == U_NOTIFIER_DELETE) ptr->handlerDelete();
-   else
-      {
-      // NB: in the classic model we don't need to notify for request of connection
-      // (loop: accept-fork) and the forked child don't accept new client, but we need
-      // event manager for the forked child to feel timeout for request of new client...
-
-      // if (isClassic()) goto loop;
-next:
-      UNotifier::insert(ptr);
-      }
-
-#ifdef HAVE_PTHREAD_H
-   if (pthread && is_empty) pthread->resume();
-#endif
+   else                                         UNotifier::insert(ptr);
 }
 
 int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
@@ -1445,23 +1439,20 @@ void UServer_Base::run()
             }
 
 #     ifdef HAVE_PTHREAD_H
-         if (pthread) goto next;
+         if (pthread)
+            {
+            (void) pthis->handlerRead();
+
+            continue;
+            }
 #     endif
 
          // NB: in the classic model we don't need to notify for request of connection
          // (loop: accept-fork) and the forked child don't accept new client, but we need
          // event manager for the forked child to feel timeout for request of new client...
 
-         if (UNotifier::empty())
-            {
-            U_ASSERT(isClassic())
-next:
-            (void) pthis->handlerRead();
-
-            continue;
-            }
-
-         if (UNotifier::waitForEvent(ptime) == false) break; // no more events registered...
+              if (UNotifier::empty()) (void) pthis->handlerRead();
+         else if (UNotifier::waitForEvent(ptime) == false) break; // no more events registered...
          }
       }
 }
