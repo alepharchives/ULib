@@ -431,7 +431,6 @@ protected:
 
    static void        runAsUser();
    static const char* getNumConnection();
-   static void        setNotifier(bool bfork);
 
    static UVector<UString>* vplugin_name;
    static UVector<UServerPlugIn*>* vplugin;

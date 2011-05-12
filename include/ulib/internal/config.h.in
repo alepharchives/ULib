@@ -846,6 +846,9 @@ typedef unsigned long long uint64;
 /* enable use of our versions of the memory operators */
 #undef U_OVERLOAD_NEW_DELETE
 
+/* install directory */
+#undef U_PREFIXDIR
+
 /* STATIC_HANDLER_ECHO */
 #undef U_STATIC_HANDLER_ECHO
 
@@ -884,6 +887,9 @@ typedef unsigned long long uint64;
 
 /* STATIC_HANDLER_STREAM */
 #undef U_STATIC_HANDLER_STREAM
+
+/* STATIC_HANDLER_TCC */
+#undef U_STATIC_HANDLER_TCC
 
 /* STATIC_HANDLER_TSA */
 #undef U_STATIC_HANDLER_TSA

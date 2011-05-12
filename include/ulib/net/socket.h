@@ -108,12 +108,12 @@ public:
    static void str_allocate();
 
    enum State {
-      CLOSE   = 0,
-      TIMEOUT = 1,
-      BROKEN  = 2,
-      RESET   = 3,
-      CONNECT = 4,
-      LOGIN   = 5
+      CLOSE   = 0x000,
+      TIMEOUT = 0x001,
+      BROKEN  = 0x002,
+      RESET   = 0x004,
+      CONNECT = 0x008,
+      LOGIN   = 0x010
    };
 
    USocket(bool bSocketIsIPv6 = false)
@@ -140,8 +140,8 @@ public:
    bool isReset() const     { return (iState == RESET); }
    bool isLogin() const     { return (iState == LOGIN); }
    bool isClosed() const    { return (iSockDesc == -1); }
-   bool isBroken() const    { return (iState == BROKEN); }
-   bool isTimeout() const   { return (iState == TIMEOUT); }
+   bool isBroken() const    { return ((iState & BROKEN)  != 0); }
+   bool isTimeout() const   { return ((iState & TIMEOUT) != 0); }
    bool isSysError() const  { return (iState  < CLOSE); }
    bool isConnected() const { return (iState >= CONNECT); }
 

@@ -620,7 +620,7 @@ bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count)
          if (errno == EAGAIN &&
              UNotifier::waitForWrite(iSockDesc, 3 * 1000) == 1)
             {
-            UFile::setBlocking(iSockDesc, flags, true);
+            flags = UFile::setBlocking(iSockDesc, flags, true);
 
             continue;
             }
@@ -788,6 +788,8 @@ loop:
    if (pcNewConnection->iSockDesc != -1)
       {
       pcNewConnection->iState = CONNECT;
+
+      if (accept4_flags & SOCK_NONBLOCK) pcNewConnection->flags |= O_NONBLOCK;
 
       cRemote.getPortNumber(pcNewConnection->iRemotePort);
       cRemote.getIPAddress( pcNewConnection->cRemoteAddress);

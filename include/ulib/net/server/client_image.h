@@ -161,6 +161,8 @@ public:
    virtual ~UClientImage()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UClientImage)
+
+      U_INTERNAL_DUMP("this = %p", this)
       }
 
    // DEBUG

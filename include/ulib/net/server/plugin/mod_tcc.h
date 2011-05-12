@@ -11,13 +11,10 @@
 //
 // ============================================================================
 
-#ifndef U_MOD_GEOIP_H
-#define U_MOD_GEOIP_H 1
+#ifndef U_MOD_TCC_H
+#define U_MOD_TCC_H 1
 
-#include <ulib/string.h>
 #include <ulib/net/server/server_plugin.h>
-
-#include <libtcc.h>
 
 /*
 The plugin interface is an integral part of UServer which provides a flexible way to add specific functionality to UServer.
@@ -50,33 +47,25 @@ RETURNS:
 class U_EXPORT UTCCPlugIn : public UServerPlugIn {
 public:
 
-   static const UString* str_CSP_directory;
-
-   static void str_allocate();
-
    // COSTRUTTORI
 
    UTCCPlugIn()
       {
       U_TRACE_REGISTER_OBJECT(0, UTCCPlugIn, "")
-
-      if (str_CSP_directory == 0) str_allocate();
       }
 
-   virtual ~UTCCPlugIn();
+   virtual ~UTCCPlugIn()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UTCCPlugIn)
+      }
 
    // define method VIRTUAL of class UServerPlugIn
 
    // Server-wide hooks
 
-   virtual int handlerConfig(UFileConfig& cfg);
    virtual int handlerInit();
 
    // Connection-wide hooks
-
-   virtual int handlerREAD();
-   virtual int handlerRequest();
-   virtual int handlerReset();
 
    // DEBUG
 
@@ -85,7 +74,6 @@ public:
 #endif
 
 protected:
-   UString CSP_directory;
 
 private:
    UTCCPlugIn(const UTCCPlugIn&) : UServerPlugIn() {}

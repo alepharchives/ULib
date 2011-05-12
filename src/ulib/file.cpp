@@ -755,7 +755,7 @@ bool UFile::pwrite(const void* _buf, uint32_t count, uint32_t offset)
    U_RETURN(result);
 }
 
-void UFile::setBlocking(int _fd, int& flags, bool block)
+int UFile::setBlocking(int _fd, int flags, bool block)
 {
    U_TRACE(1, "UFile::setBlocking(%d,%d,%b)", _fd, flags, block)
 
@@ -803,6 +803,8 @@ void UFile::setBlocking(int _fd, int& flags, bool block)
 
       (void) U_SYSCALL(fcntl, "%d,%d,%d", _fd, F_SETFL, flags);
       }
+
+   U_RETURN(flags);
 }
 
 // risolve link simbolici e/o riferimenti a "./" and "../"

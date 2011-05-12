@@ -493,7 +493,7 @@ public:
       U_RETURN(blocking);
       }
 
-   static void setBlocking(int fd, int& flags, bool block);
+   static int setBlocking(int fd, int flags, bool block);
 
 #ifdef __MINGW32__
 #undef mkdir

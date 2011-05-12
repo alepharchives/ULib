@@ -74,7 +74,7 @@ public:
    static void init();
    static void clear();
    static void insert(UEventFd* handler_event);
-   static void erase( UEventFd* handler_event, bool flag_reuse);
+   static void erase( UEventFd* handler_event, bool flag);
 
    static bool isHandler(UEventFd* handler_event)
       {

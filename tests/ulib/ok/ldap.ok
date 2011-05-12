@@ -86,3 +86,7 @@ dn:   uid=test.numera,o=mail
 cn:   Test Numera
 mail: test.numera@unirel.com
 
+dn:   uid=caterina.guzzi,o=mail
+cn:   Caterina Guzzi
+mail: caterina.guzzi@unirel.com
+

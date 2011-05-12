@@ -33,6 +33,9 @@
 #ifdef HAVE_MAGIC
 #  include <ulib/magic/magic.h>
 #endif
+#ifdef HAVE_LIBTCC
+#  include <libtcc.h>
+#endif
 
 #ifdef SYS_INOTIFY_H_EXISTS_AND_WORKS
 #  include <sys/inotify.h>
@@ -43,12 +46,6 @@
 #  ifndef __MINGW32__
 #     include <ulib/replace/inotify-nosys.h>
 #  endif
-#endif
-
-#ifdef __MINGW32__
-#define U_LEN_SUFFIX 4 // .dll
-#else
-#define U_LEN_SUFFIX 3 // .so
 #endif
 
 #define U_TIME_FOR_EXPIRE       (u_now.tv_sec + (365 * U_ONE_DAY_IN_SECOND))
@@ -94,8 +91,10 @@ UVector<UString>*       UHTTP::form_name_value;
 UVector<UIPAllow*>*     UHTTP::vallow_IP;
 UHTTP::upload_progress* UHTTP::ptr_upload_progress;
 
-         UHTTP::UServletPage*     UHTTP::page;
-UHashMap<UHTTP::UServletPage*>*   UHTTP::pages;
+         UHTTP::UServletPage*     UHTTP::usp_page;
+         UHTTP::UCServletPage*    UHTTP::csp_page;
+UHashMap<UHTTP::UServletPage*>*   UHTTP::usp_pages;
+UHashMap<UHTTP::UCServletPage*>*  UHTTP::csp_pages;
 
          UHTTP::UFileCacheData*   UHTTP::file_data;
 UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
@@ -388,6 +387,242 @@ void UHTTP::in_READ()
 #endif
 }
 
+// USP (ULib Servlet Page)
+
+#ifdef __MINGW32__
+#define U_LIB_EXT  ".dll"
+#else
+#define U_LIB_EXT  ".so"
+#endif
+
+void UHTTP::initUSP()
+{
+   U_TRACE(0, "UHTTP::initUSP()")
+
+   U_INTERNAL_ASSERT_EQUALS(usp_page,0)
+   U_INTERNAL_ASSERT_EQUALS(usp_pages,0)
+
+   if (UFile::chdir("usp", true))
+      {
+      const char* ptr;
+      UVector<UString> vec;
+      char buffer[U_PATH_MAX];
+      UString name, key(100U);
+
+      usp_pages = U_NEW(UHashMap<UHTTP::UServletPage*>);
+
+      usp_pages->allocate();
+
+      for (uint32_t i = 0, n = UFile::listContentOf(vec); i < n; ++i)
+         {
+         name = vec[i];
+
+         if (UStringExt::endsWith(name, U_CONSTANT_TO_PARAM(U_LIB_EXT)))
+            {
+            ptr      = name.data();
+            usp_page = U_NEW(UHTTP::UServletPage);
+
+            // NB: dlopen() fail if name is not prefixed with "./"...
+
+            (void) snprintf(buffer, U_PATH_MAX, "./%.*s", U_STRING_TO_TRACE(name));
+
+            if (usp_page->UDynamic::load(buffer) == false)
+               {
+               U_SRV_LOG("USP load failed: usp/%s", ptr);
+
+               delete usp_page;
+
+               continue;
+               }
+
+            usp_page->runDynamicPage = (vPFpv) (*usp_page)["runDynamicPage"];
+
+            U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
+
+            (void) snprintf(buffer, U_PATH_MAX, "%.*s.usp", name.size() - U_CONSTANT_SIZE(U_LIB_EXT), ptr);
+
+            (void) u_canonicalize_pathname(buffer);
+
+            (void) key.replace(buffer);
+
+            usp_pages->insert(key, usp_page);
+
+            U_SRV_LOG("USP found: usp/%s, USP service registered (URI): /usp/%.*s", ptr, U_STRING_TO_TRACE(key));
+
+            if (UServer_Base::isPreForked() &&
+                U_STRNEQ(key.data(), "upload_progress.usp"))
+               {
+               // UPLOAD PROGRESS
+
+               USocketExt::byte_read_hook = updateUploadProgress;
+
+               U_INTERNAL_ASSERT_EQUALS(UServer_Base::shared_data_add,0)
+
+               UServer_Base::shared_data_add = sizeof(upload_progress) * U_MAX_UPLOAD_PROGRESS;
+               }
+            }
+         }
+
+      (void) UFile::chdir(0, true);
+
+      if (usp_pages->empty() == false) callRunDynamicPage(0); // call init for all usp modules...
+      else
+         {
+         usp_pages->deallocate();
+
+         delete usp_pages;
+                usp_pages = 0;
+         }
+
+      usp_page = 0;
+      }
+}
+
+// CSP (C Servlet Page)
+
+#define U_CSP_CPP_LIB        "#pragma link "
+#define U_CSP_REPLY_CAPACITY (4096 * 16)
+
+#ifdef HAVE_LIBTCC
+static char*        get_reply(void)          { return UClientImage_Base::wbuffer->data(); }
+static unsigned int get_reply_capacity(void) { return U_CSP_REPLY_CAPACITY; }
+#endif
+
+bool UHTTP::UCServletPage::compile(const UString& program)
+{
+   U_TRACE(1, "UCServletPage::compile(%.*S)", U_STRING_TO_TRACE(program))
+
+   bool result = false;
+#ifdef HAVE_LIBTCC
+   TCCState* s = (TCCState*) U_SYSCALL_NO_PARAM(tcc_new);
+
+   (void) U_SYSCALL(tcc_set_output_type, "%p,%d", s, TCC_OUTPUT_MEMORY);
+
+   const char* ptr = program.c_str();
+
+   if (U_SYSCALL(tcc_compile_string, "%p,%S", s, ptr) != -1)
+      {
+      /* we add a symbol that the compiled program can use */
+
+      (void) U_SYSCALL(tcc_add_symbol, "%p,%S,%p", s, "get_reply",          (void*)get_reply);
+      (void) U_SYSCALL(tcc_add_symbol, "%p,%S,%p", s, "get_reply_capacity", (void*)get_reply_capacity);
+
+      /* define preprocessor symbol 'sym'. Can put optional value */
+
+      U_SYSCALL_VOID(tcc_define_symbol, "%p,%S,%S", s, "HAVE_CONFIG_H", 0);
+
+      /* You may also open a dll with tcc_add_file() and use symbols from that */
+
+#  ifdef DEBUG
+      (void) U_SYSCALL(tcc_add_file, "%p,%S,%d", s, U_PREFIXDIR "/lib/libulib_g.so");
+#  else
+      (void) U_SYSCALL(tcc_add_file, "%p,%S,%d", s, U_PREFIXDIR "/lib/libulib.so");
+#  endif
+
+      UString token;
+      uint32_t pos = 0;
+      UTokenizer t(program);
+      char buffer[U_PATH_MAX];
+
+      while ((pos = U_STRING_FIND(program,pos,U_CSP_CPP_LIB)) != U_NOT_FOUND)
+         {
+         pos += U_CONSTANT_SIZE(U_CSP_CPP_LIB);
+
+         t.setDistance(pos);
+
+         if (t.next(token, (bool*)0) == false) break;
+
+         (void) snprintf(buffer, U_PATH_MAX, "%s%.*s", (token.first_char() == '/' ? "" : "../"), U_STRING_TO_TRACE(token));
+
+         (void) U_SYSCALL(tcc_add_file, "%p,%S,%d", s, buffer);
+         }
+
+      size = U_SYSCALL(tcc_relocate, "%p,%p", s, 0);
+
+      if (size > 0)
+         {
+         relocated = U_MALLOC_GEN(size);
+
+         (void) U_SYSCALL(tcc_relocate, "%p,%p", s, relocated);
+
+         prog_main = (iPFipvc) U_SYSCALL(tcc_get_symbol, "%p,%S", s, "main");
+
+         if (prog_main) result = true;
+         }
+      }
+
+   U_SYSCALL_VOID(tcc_delete, "%p", s);
+#endif
+
+   U_RETURN(result);
+}
+
+void UHTTP::initCSP()
+{
+   U_TRACE(0, "UHTTP::initCSP()")
+
+   U_INTERNAL_ASSERT_EQUALS(csp_page,0)
+   U_INTERNAL_ASSERT_EQUALS(csp_pages,0)
+
+   if (UFile::chdir("csp", true))
+      {
+      const char* ptr;
+      UVector<UString> vec;
+      char buffer[U_PATH_MAX];
+      UString name, key(100U), program;
+
+      csp_pages = U_NEW(UHashMap<UHTTP::UCServletPage*>);
+
+      csp_pages->allocate();
+
+      for (uint32_t i = 0, n = UFile::listContentOf(vec); i < n; ++i)
+         {
+         name = vec[i];
+
+         if (UStringExt::endsWith(name, U_CONSTANT_TO_PARAM(".c")))
+            {
+            ptr      = name.data();
+            program  = UFile::contentOf(ptr);
+            csp_page = U_NEW(UHTTP::UCServletPage);
+
+            if (program.empty()            == false &&
+                csp_page->compile(program) == false)
+               {
+               U_SRV_LOG("CSP load failed: csp/%s", ptr);
+
+               delete csp_page;
+
+               continue;
+               }
+
+            U_INTERNAL_ASSERT_POINTER(csp_page->prog_main)
+
+            (void) snprintf(buffer, U_PATH_MAX, "%.*s", name.size() - 2, ptr);
+
+            (void) u_canonicalize_pathname(buffer);
+
+            (void) key.replace(buffer);
+
+            csp_pages->insert(key, csp_page);
+
+            U_SRV_LOG("CSP found: csp/%s, CSP servlet registered (URI): /csp/%.*s", ptr, U_STRING_TO_TRACE(key));
+            }
+         }
+
+      (void) UFile::chdir(0, true);
+
+      if (csp_pages->empty())
+         {
+         csp_pages->deallocate();
+
+         delete csp_pages;
+                csp_pages = 0;
+         }
+
+      csp_page = 0;
+      }
+}
+
 void UHTTP::ctor()
 {
    U_TRACE(0, "UHTTP::ctor()")
@@ -440,11 +675,10 @@ void UHTTP::ctor()
    if (UServer_Base::socket->isSSL()) enable_caching_by_proxy_servers = true;
 #endif
 
-   uint32_t sz;
-   char buffer[U_PATH_MAX];
-
 #ifdef HAVE_PAGE_SPEED
    U_INTERNAL_ASSERT_EQUALS(page_speed,0)
+
+   char buffer[U_PATH_MAX];
 
    (void) snprintf(buffer, U_PATH_MAX, U_FMT_LIBPATH, U_PATH_CONV(UPlugIn<void*>::plugin_dir), U_CONSTANT_TO_TRACE("mod_pagespeed"));
 
@@ -475,80 +709,8 @@ void UHTTP::ctor()
    U_INTERNAL_ASSERT_POINTER(page_speed)
 #endif
 
-   // USP (ULib Servlet Page)
-
-   U_INTERNAL_ASSERT_EQUALS(page,0)
-   U_INTERNAL_ASSERT_EQUALS(pages,0)
-
-   if (UFile::chdir("usp", true))
-      {
-      const char* ptr;
-      UVector<UString> vec;
-      UString name, key(100U);
-
-      pages = U_NEW(UHashMap<UHTTP::UServletPage*>);
-
-      pages->allocate();
-
-      for (uint32_t i = 0, n = UFile::listContentOf(vec); i < n; ++i)
-         {
-         name = vec[i];
-         ptr  = name.data();
-         page = U_NEW(UHTTP::UServletPage);
-
-         // NB: dlopen() fail if name is not prefixed with "./"...
-
-         (void) snprintf(buffer, U_PATH_MAX, "./%.*s", U_STRING_TO_TRACE(name));
-
-         if (page->UDynamic::load(buffer))
-            {
-            page->runDynamicPage = (vPFpv) (*page)["runDynamicPage"];
-
-            U_INTERNAL_ASSERT_POINTER(page->runDynamicPage)
-
-            (void) snprintf(buffer, U_PATH_MAX, "%.*s.usp", name.size() - U_LEN_SUFFIX, ptr);
-
-            (void) u_canonicalize_pathname(buffer);
-
-            (void) key.replace(buffer);
-
-            pages->insert(key, page);
-
-            U_SRV_LOG("USP found: usp/%s, USP service registered (URI): /usp/%.*s", ptr, U_STRING_TO_TRACE(key));
-
-            if (UServer_Base::isPreForked() &&
-                U_STRNEQ(key.data(), "upload_progress.usp"))
-               {
-               // UPLOAD PROGRESS
-
-               USocketExt::byte_read_hook = updateUploadProgress;
-
-               U_INTERNAL_ASSERT_EQUALS(UServer_Base::shared_data_add,0)
-
-               UServer_Base::shared_data_add = sizeof(upload_progress) * U_MAX_UPLOAD_PROGRESS;
-               }
-            }
-         else
-            {
-            U_SRV_LOG("USP load failed: usp/%.*s.usp", name.size() - U_LEN_SUFFIX, ptr);
-
-            delete page;
-            }
-         }
-
-      (void) UFile::chdir(0, true);
-
-      if (pages->empty() == false) callRunDynamicPage(0); // call init for all usp modules...
-      else
-         {
-         pages->deallocate();
-
-         delete pages;
-                pages = 0;
-         }
-
-      page = 0;
-      }
+   initUSP(); // USP (ULib Servlet Page)
+// initCSP(); // CSP (C    Servlet Page)
 
    // CACHE FILE SYSTEM
 
@@ -641,7 +803,7 @@ next:
 
    // resize hash table...
 
-   sz = cache_file->size();
+   uint32_t sz = cache_file->size();
 
    U_INTERNAL_DUMP("cache size = %u", sz)
 
@@ -784,16 +946,28 @@ void UHTTP::dtor()
 
       // USP (ULib Servlet Page)
 
-      if (pages)
+      if (usp_pages)
          {
-         U_INTERNAL_ASSERT_EQUALS(pages->empty(),false)
+         U_INTERNAL_ASSERT_EQUALS(usp_pages->empty(),false)
 
          callRunDynamicPage(-2); // call end for all usp modules...
 
-         pages->clear();
-         pages->deallocate();
+         usp_pages->clear();
+         usp_pages->deallocate();
 
-         delete pages;
+         delete usp_pages;
+         }
+
+      // CSP (C Servlet Page)
+
+      if (csp_pages)
+         {
+         U_INTERNAL_ASSERT_EQUALS(csp_pages->empty(),false)
+
+         csp_pages->clear();
+         csp_pages->deallocate();
+
+         delete csp_pages;
          }
       }
 }
@@ -2171,7 +2345,7 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
    U_RETURN_STRING(buffer);
 }
 
-U_NO_EXPORT void UHTTP::resetForm(bool brmdir)
+void UHTTP::resetForm(bool brmdir)
 {
    U_TRACE(0, "UHTTP::resetForm(%b)", brmdir)
 
@@ -3655,25 +3829,27 @@ bool UHTTP::checkForCGIRequest()
    U_RETURN(result);
 }
 
+// USP (ULib Servlet Page)
+
 void UHTTP::processUSPRequest(const char* uri, uint32_t uri_len)
 {
    U_TRACE(0, "UHTTP::processUSPRequest(%.*S,%u)", uri_len, uri, uri_len)
 
    // 5 => U_CONSTANT_SIZE("/usp/")
 
-   U_INTERNAL_ASSERT_POINTER(pages)
+   U_INTERNAL_ASSERT_POINTER(usp_pages)
    U_INTERNAL_ASSERT_MAJOR(uri_len, 5)
    U_INTERNAL_ASSERT(U_STRNEQ(uri, "/usp/"))
-   U_INTERNAL_ASSERT_EQUALS(pages->empty(), false)
+   U_INTERNAL_ASSERT_EQUALS(usp_pages->empty(), false)
 
    pkey->str     = uri     + 5;
    pkey->_length = uri_len - 5;
 
    U_INTERNAL_DUMP("pkey = %.*S", U_STRING_TO_TRACE(*pkey))
 
-   page = (*pages)[pkey];
+   usp_page = (*usp_pages)[pkey];
 
-   if (page == 0)
+   if (usp_page == 0)
       {
       U_SRV_LOG("USP request %.*S NOT available...", U_HTTP_URI_TO_TRACE);
 
@@ -3681,7 +3857,7 @@ void UHTTP::processUSPRequest(const char* uri, uint32_t uri_len)
       }
    else
       {
-      U_INTERNAL_ASSERT_POINTER(page->runDynamicPage)
+      U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
 
       // retrieve information on specific HTML form elements
       // (such as checkboxes, radio buttons, and text fields), or uploaded files
@@ -3690,11 +3866,71 @@ void UHTTP::processUSPRequest(const char* uri, uint32_t uri_len)
 
       UClientImage_Base::wbuffer->setBuffer(U_CAPACITY);
 
-      page->runDynamicPage(UClientImage_Base::pClientImage);
+      usp_page->runDynamicPage(UClientImage_Base::pClientImage);
 
       if (n) resetForm(true);
 
       (void) processCGIOutput();
+      }
+}
+
+// CSP (ULib Servlet Page)
+
+void UHTTP::processCSPRequest(const char* uri, uint32_t uri_len)
+{
+   U_TRACE(0, "UHTTP::processCSPRequest(%.*S,%u)", uri_len, uri, uri_len)
+
+   // 5 => U_CONSTANT_SIZE("/csp/")
+
+   U_INTERNAL_ASSERT_POINTER(csp_pages)
+   U_INTERNAL_ASSERT_MAJOR(uri_len, 5)
+   U_INTERNAL_ASSERT(U_STRNEQ(uri, "/csp/"))
+   U_INTERNAL_ASSERT_EQUALS(csp_pages->empty(), false)
+
+   pkey->str     = uri     + 5;
+   pkey->_length = uri_len - 5;
+
+   U_INTERNAL_DUMP("pkey = %.*S", U_STRING_TO_TRACE(*pkey))
+
+   csp_page = (*csp_pages)[pkey];
+
+   if (csp_page == 0)
+      {
+      U_SRV_LOG("CSP request %.*S NOT available...", U_HTTP_URI_TO_TRACE);
+
+      UHTTP::setHTTPServiceUnavailable(); // set Service Unavailable error response...
+      }
+   else
+      {
+      U_INTERNAL_ASSERT_POINTER(csp_page->prog_main)
+
+      // retrieve information on specific HTML form elements
+      // (such as checkboxes, radio buttons, and text fields), or uploaded files
+
+      uint32_t i, n = processHTTPForm();
+
+      const char** argv = U_MALLOC_VECTOR(n+1, const char);
+
+      for (i = 0; i < n; ++i) argv[i] = (*form_name_value)[i].c_str();
+                              argv[i] = 0;
+
+      UClientImage_Base::wbuffer->setBuffer(U_CSP_REPLY_CAPACITY);
+
+      int ret = csp_page->prog_main(n, argv);
+
+      UClientImage_Base::wbuffer->size_adjust();
+
+      U_FREE_VECTOR(argv, n+1, const char);
+
+      if (n) resetForm(true);
+
+      if (ret == 0) (void) processCGIOutput();
+      else
+         {
+         http_info.clength = UClientImage_Base::wbuffer->size();
+
+         setHTTPCgiResponse(ret, false, false, false);
+         }
       }
 }
 
@@ -3743,6 +3979,33 @@ void UHTTP::checkHTTPRequest()
 
       return;
       }
+
+   // check if dynamic page (C Servlet Page)
+
+#ifdef HAVE_LIBTCC
+   if (isCSPRequest())
+      {
+      // NB: we can have something like '/www.sito1.com/usp/jsonrequest.usp'...
+
+      const char* uri  = http_info.uri; 
+      uint32_t uri_len = http_info.uri_len;
+
+      if (virtual_host &&
+          http_info.host_vlen)
+         {
+         U_INTERNAL_ASSERT_EQUALS(strncmp(uri+1, http_info.host, http_info.host_vlen), 0)
+
+         uri     += 1 + http_info.host_vlen;
+         uri_len -= 1 + http_info.host_vlen;
+         }
+
+      processCSPRequest(uri, uri_len);
+
+      setHTTPRequestProcessed();
+
+      return;
+      }
+#endif
 
    pathname->setBuffer(u_cwd_len + http_info.uri_len);
 
@@ -3837,14 +4100,14 @@ void UHTTP::callRunDynamicPage(int arg)
 {
    U_TRACE(0, "UHTTP::callRunDynamicPage(%d)", arg)
 
-   U_INTERNAL_ASSERT_POINTER(pages)
-   U_INTERNAL_ASSERT_EQUALS(pages->empty(),false)
+   U_INTERNAL_ASSERT_POINTER(usp_pages)
+   U_INTERNAL_ASSERT_EQUALS(usp_pages->empty(),false)
 
    // call for all usp modules...
 
    argument = int2ptr(arg);
 
-   pages->callForAllEntry(_callRunDynamicPage);
+   usp_pages->callForAllEntry(_callRunDynamicPage);
 }
 
 // manage CGI
@@ -5417,6 +5680,22 @@ U_EXPORT const char* UHTTP::UServletPage::dump(bool reset) const
 
    *UObjectIO::os << '\n'
                   << "runDynamicPage" << (void*)runDynamicPage << '\n';
+
+   if (reset)
+      {
+      UObjectIO::output();
+
+      return UObjectIO::buffer_output;
+      }
+
+   return 0;
+}
+
+U_EXPORT const char* UHTTP::UCServletPage::dump(bool reset) const
+{
+   *UObjectIO::os << "size      " << size             << '\n'
+                  << "relocated " << (void*)relocated << '\n'
+                  << "prog_main " << (void*)prog_main << '\n';
 
    if (reset)
       {

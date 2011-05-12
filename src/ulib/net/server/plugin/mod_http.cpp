@@ -404,15 +404,15 @@ int UHttpPlugIn::handlerReset()
 
    // check if dynamic page (ULib Servlet Page)
 
-   if (UHTTP::page)
+   if (UHTTP::usp_page)
       {
-      U_INTERNAL_ASSERT_POINTER(UHTTP::pages)
-      U_INTERNAL_ASSERT_EQUALS(UHTTP::pages->empty(),false)
-      U_INTERNAL_ASSERT_POINTER(UHTTP::page->runDynamicPage)
+      U_INTERNAL_ASSERT_POINTER(UHTTP::usp_pages)
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::usp_pages->empty(),false)
+      U_INTERNAL_ASSERT_POINTER(UHTTP::usp_page->runDynamicPage)
 
-      UHTTP::page->runDynamicPage((UClientImage_Base*)-1); // call reset for module...
+      UHTTP::usp_page->runDynamicPage((UClientImage_Base*)-1); // call reset for module...
 
-      UHTTP::page = 0;
+      UHTTP::usp_page = 0;
       }
 
    // NB: check if needed to reset alias URI

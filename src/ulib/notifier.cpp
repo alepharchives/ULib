@@ -48,29 +48,47 @@ void UNotifier::init()
    U_TRACE(0, "UNotifier::init()")
 
 #ifdef HAVE_LIBEVENT
-   if (u_ev_base) (void) U_SYSCALL(event_reinit, "%p", u_ev_base); // Reinitialized the event base after a fork
+   if (u_ev_base) (void) U_SYSCALL(event_reinit, "%p", u_ev_base); // NB: reinitialized the event base after fork()...
    else           u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
 
    U_INTERNAL_ASSERT_POINTER(u_ev_base)
 #elif defined(HAVE_EPOLL_WAIT)
-   if (epollfd)
-      {
-      // Reinitialized epoll after a fork
+   int old = epollfd;
 
-      U_INTERNAL_ASSERT_EQUALS(first,0)
+   U_INTERNAL_DUMP("old = %d", old)
 
-      (void) U_SYSCALL(close, "%d", epollfd);
-      }
 #  ifdef HAVE_EPOLL_CREATE1
    epollfd = U_SYSCALL(epoll_create1, "%d", EPOLL_CLOEXEC);
-
-   if (epollfd != -1 || errno != ENOSYS) return;
+   if (epollfd != -1 || errno != ENOSYS) goto next;
 #  endif
    epollfd = U_SYSCALL(epoll_create,  "%d", 1024);
+next:
 
    U_INTERNAL_ASSERT_MAJOR(epollfd,0)
    U_INTERNAL_ASSERT_EQUALS(U_READ_IN,EPOLLIN)
    U_INTERNAL_ASSERT_EQUALS(U_WRITE_OUT,EPOLLOUT)
+
+   if (old)
+      {
+      // NB: reinitialized all after fork()...
+
+      int fd;
+
+      for (UNotifier* item = first; item; item = item->next)
+         {
+         fd = item->handler_event_fd->fd;
+
+         U_INTERNAL_DUMP("fd = %d", fd)
+
+         (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", old, EPOLL_CTL_DEL, fd, (struct epoll_event*)1);
+
+         struct epoll_event _events = { item->handler_event_fd->op_mask, { int2ptr(fd) } };
+
+         (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, fd, &_events);
+         }
+
+      (void) U_SYSCALL(close, "%d", old);
+      }
 #endif
 }
 
@@ -104,6 +122,9 @@ void UNotifier::insert(UEventFd* handler_event)
    for (item = first; item; item = item->next)
       {
       U_INTERNAL_DUMP("fd = %d", item->handler_event_fd->fd)
+
+      U_INTERNAL_ASSERT_MAJOR(handler_event->fd,         0)
+      U_INTERNAL_ASSERT_MAJOR(item->handler_event_fd->fd,0)
 
       if (handler_event->fd == item->handler_event_fd->fd)
          {
@@ -145,6 +166,8 @@ void UNotifier::insert(UEventFd* handler_event)
       U_INTERNAL_ASSERT(fd_read_cnt >= 0)
 
       ++fd_read_cnt;
+
+      U_INTERNAL_DUMP("fd_set_read = %B", __FDS_BITS(&fd_set_read)[0])
       }
 
    if (handler_event->op_mask & U_WRITE_OUT)
@@ -156,6 +179,8 @@ void UNotifier::insert(UEventFd* handler_event)
       U_INTERNAL_ASSERT(fd_write_cnt >= 0)
 
       ++fd_write_cnt;
+
+      U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
       }
 
    if (fd_set_max <= handler_event->fd) fd_set_max = handler_event->fd + 1;
@@ -302,7 +327,7 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier** ptr, bool bread, b
 
       --n;
 
-      ret = (bexcept ? (handler_event->handlerError(3), U_NOTIFIER_DELETE) // 3 -> USocket::RESET
+      ret = (bexcept ? (handler_event->handlerError(0x002), U_NOTIFIER_DELETE) // 0x002 -> USocket::RESET
                      :  handler_event->handlerRead());
 
       if (ret == U_NOTIFIER_DELETE)
@@ -329,7 +354,7 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier** ptr, bool bread, b
 
       --n;
 
-      ret = (bexcept ? (handler_event->handlerError(3), U_NOTIFIER_DELETE) // 3 -> USocket::RESET
+      ret = (bexcept ? (handler_event->handlerError(0x002), U_NOTIFIER_DELETE) // 0x002 -> USocket::RESET
                      :  handler_event->handlerWrite());
 
       if (ret == U_NOTIFIER_DELETE)
@@ -471,9 +496,12 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 #     endif
          }
 #  else
-      U_INTERNAL_ASSERT(n <= (fd_read_cnt + fd_write_cnt))
-
       bool bdelete;
+      int fd_cnt = (fd_read_cnt + fd_write_cnt);
+
+      U_INTERNAL_DUMP("fd_cnt = %d", fd_cnt)
+
+      U_INTERNAL_ASSERT(n <= fd_cnt)
 
       item =  first;
       ptr  = &first;
@@ -545,7 +573,7 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
          }
 #  endif
 
-      fd_set_max = getNFDS();
+      if (fd_cnt > (fd_read_cnt + fd_write_cnt)) fd_set_max = getNFDS();
 #  endif
 
       U_INTERNAL_DUMP("n = %d", n)
@@ -629,9 +657,9 @@ void UNotifier::removeBadFd()
 }
 #endif
 
-U_NO_EXPORT void UNotifier::eraseItem(UNotifier** ptr, bool flag_reuse)
+U_NO_EXPORT void UNotifier::eraseItem(UNotifier** ptr, bool flag)
 {
-   U_TRACE(1, "UNotifier::eraseItem(%p,%b)", ptr, flag_reuse)
+   U_TRACE(1, "UNotifier::eraseItem(%p,%b)", ptr, flag)
 
    UNotifier* item = *ptr;
 
@@ -640,27 +668,6 @@ U_NO_EXPORT void UNotifier::eraseItem(UNotifier** ptr, bool flag_reuse)
    UEventFd* handler_event = item->handler_event_fd;
 
    U_INTERNAL_DUMP("fd = %d op_mask = %B", handler_event->fd, handler_event->op_mask)
-
-   *ptr = item->next;
-
-   if (flag_reuse)
-      {
-      item->next = pool;
-      pool       = item;
-
-      item->handler_event_fd = 0;
-
-      U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
-
-      handler_event->handlerDelete();
-      }
-   else
-      {
-      item->next             = 0;
-      item->handler_event_fd = 0;
-
-      if (vpool == 0 && pool == 0) delete item;
-      }
 
 #ifdef HAVE_LIBEVENT
 #elif defined(HAVE_EPOLL_WAIT)
@@ -694,6 +701,27 @@ U_NO_EXPORT void UNotifier::eraseItem(UNotifier** ptr, bool flag_reuse)
 
    if (first) fd_set_max = getNFDS();
 #endif
+
+   *ptr = item->next;
+
+   if (flag)
+      {
+      item->next = pool;
+      pool       = item;
+
+      item->handler_event_fd = 0;
+
+      U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
+
+      handler_event->handlerDelete();
+      }
+   else
+      {
+      item->next             = 0;
+      item->handler_event_fd = 0;
+
+      delete item;
+      }
 
 #ifdef DEBUG
    if (first) U_INTERNAL_DUMP("first = %O", U_OBJECT_TO_TRACE(*first))

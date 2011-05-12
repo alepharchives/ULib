@@ -59,6 +59,7 @@ const UString* USSIPlugIn::str_encoding_none;
 const UString* USSIPlugIn::str_encoding_url;
 const UString* USSIPlugIn::str_encoding_entity;
 const UString* USSIPlugIn::str_usp;
+const UString* USSIPlugIn::str_csp;
 
 void USSIPlugIn::str_allocate()
 {
@@ -91,6 +92,7 @@ void USSIPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_encoding_url,0)
    U_INTERNAL_ASSERT_EQUALS(str_encoding_entity,0)
    U_INTERNAL_ASSERT_EQUALS(str_usp,0)
+   U_INTERNAL_ASSERT_EQUALS(str_csp,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("expr") },
@@ -119,7 +121,8 @@ void USSIPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("none") },
       { U_STRINGREP_FROM_CONSTANT("url") },
       { U_STRINGREP_FROM_CONSTANT("entity") },
-      { U_STRINGREP_FROM_CONSTANT("usp") }
+      { U_STRINGREP_FROM_CONSTANT("usp") },
+      { U_STRINGREP_FROM_CONSTANT("csp") }
    };
 
    U_NEW_ULIB_OBJECT(str_expr,                   U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -149,6 +152,7 @@ void USSIPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_encoding_url,           U_STRING_FROM_STRINGREP_STORAGE(24));
    U_NEW_ULIB_OBJECT(str_encoding_entity,        U_STRING_FROM_STRINGREP_STORAGE(25));
    U_NEW_ULIB_OBJECT(str_usp,                    U_STRING_FROM_STRINGREP_STORAGE(26));
+   U_NEW_ULIB_OBJECT(str_csp,                    U_STRING_FROM_STRINGREP_STORAGE(27));
 }
 
 U_NO_EXPORT UString USSIPlugIn::getPathname(const UString& name, const UString& value, const UString& directory)
@@ -261,6 +265,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
        *   cmd        DONE
        *   cgi        DONE
        *   usp        DONE
+       *   csp        DONE
        * fsize        DONE
        *   file       DONE
        *   virtual    DONE
@@ -601,6 +606,12 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                   else if (name == *str_usp)
                      {
                      UHTTP::processUSPRequest(U_STRING_TO_PARAM(value));
+
+                     x = *UClientImage_Base::wbuffer;
+                     }
+                  else if (name == *str_csp)
+                     {
+                     UHTTP::processCSPRequest(U_STRING_TO_PARAM(value));
 
                      x = *UClientImage_Base::wbuffer;
                      }

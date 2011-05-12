@@ -7,7 +7,9 @@ SUBDIRS += page_speed
 endif
 
 if TCC
+if !STATIC_HANDLER_TCC
 SUBDIRS += mod_tcc
+endif
 endif
 
 if GEOIP
@@ -15,6 +17,7 @@ if !STATIC_HANDLER_GEOIP
 SUBDIRS += mod_geoip
 endif
 endif
+
 if SSL
 if PCRE
 if MOD_SHIB

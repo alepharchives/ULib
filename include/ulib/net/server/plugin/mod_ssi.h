@@ -74,6 +74,7 @@ public:
    static const UString* str_encoding_url;
    static const UString* str_encoding_entity;
    static const UString* str_usp;
+   static const UString* str_csp;
 
    static void str_allocate();
 

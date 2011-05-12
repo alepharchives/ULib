@@ -42,6 +42,9 @@
 #ifdef U_STATIC_HANDLER_FCGI
 #  include <ulib/net/server/plugin/mod_fcgi.h>
 #endif
+#ifdef U_STATIC_HANDLER_TCC
+#  include <ulib/net/server/plugin/mod_tcc.h>
+#endif
 #ifdef U_STATIC_HANDLER_GEOIP
 #  include <ulib/net/server/plugin/mod_geoip.h>
 #endif
@@ -324,7 +327,7 @@ UServer_Base::~UServer_Base()
 
    U_INTERNAL_DUMP("vClientImage = %p", vClientImage)
 
-// if (isClassic() == false) delete[] vClientImage;
+   if (isClassic() == false) delete[] vClientImage;
 
    UClientImage_Base::clear();
 
@@ -522,6 +525,9 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 #endif
 #ifdef U_STATIC_HANDLER_FCGI
    if (x.equal(U_CONSTANT_TO_PARAM("mod_fcgi")))   { _plugin = U_NEW(UFCGIPlugIn); goto next; }
+#endif
+#ifdef U_STATIC_HANDLER_TCC
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_tcc")))    { _plugin = U_NEW(UTCCPlugIn); goto next; }
 #endif
 #ifdef U_STATIC_HANDLER_GEOIP
    if (x.equal(U_CONSTANT_TO_PARAM("mod_geoip")))  { _plugin = U_NEW(UGeoIPPlugIn); goto next; }
@@ -735,43 +741,6 @@ void UServer_Base::runAsUser()
       }
 }
 
-void UServer_Base::setNotifier(bool bfork)
-{
-   U_TRACE(0, "UServer_Base::setNotifier(%b)", bfork)
-
-   // NB: in the classic model we don't need event manager (loop: accept-fork) and the forked child don't accept new client...
-
-   if (bfork)
-      {
-      UNotifier::init();
-
-      if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
-
-      if (isPreForked())
-         {
-                            UNotifier::insert(pthis);          // NB: we ask to notify for request of connection...
-         if (handler_event) UNotifier::insert(handler_event);  // NB: we ask to notify for change of file system (inotify)...
-
-         // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
-         UInterrupt::setHandlerForSignal(SIGHUP, (sighandler_t)SIG_IGN);
-         }
-      else
-         {
-         U_ASSERT(isClassic()) // NB: we don't ask to notify for request of connection...
-         }
-      }
-   else
-      {
-      UNotifier::init();
-
-      if (preforked_num_kids == 0)
-         {
-                            UNotifier::insert(pthis);          // NB: we ask to notify for request of connection...
-         if (handler_event) UNotifier::insert(handler_event);  // NB: we ask to notify for change of file system (inotify)...
-         }
-      }
-}
-
 void UServer_Base::init()
 {
    U_TRACE(1, "UServer_Base::init()")
@@ -787,65 +756,14 @@ void UServer_Base::init()
       }
 #endif
 
-   USocket::accept4_flags  = SOCK_CLOEXEC;
-#ifdef HAVE_SSL
-   if (UClientImage_Base::socket->isSSL()) USSLSocket::method = (SSL_METHOD*) SSLv23_server_method();
-   else
-#endif
-   USocket::accept4_flags |= SOCK_NONBLOCK;
-
-   if (USocket::accept4_flags & SOCK_CLOEXEC)  UClientImage_Base::socket->flags |= O_CLOEXEC;
-   if (USocket::accept4_flags & SOCK_NONBLOCK) UClientImage_Base::socket->flags |= O_NONBLOCK;
-
-   /* sysctl_somaxconn (SOMAXCONN: 128) specifies the maximum number of sockets in state SYN_RECV per listen socket queue.
-    * At listen(2) time the backlog is adjusted to this limit if bigger then that.
-    *
-    * sysctl_max_syn_backlog on the other hand is dynamically adjusted, depending on the memory characteristic of the system.
-    * Default is 256, 128 for small systems and up to 1024 for bigger systems.
-    *
-    * sysctl_tcp_abort_on_overflow when its on, new connections are reset once the backlog is exhausted.
-    *
-    * The system limits (somaxconn & tcp_max_syn_backlog) specify a _maximum_, the user cannot exceed this limit with listen(2).
-    * The backlog argument for listen on the other hand specify a _minimum_
-    */
-
-#ifndef __MINGW32__
-   if (iBackLog == 1) tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
-
-   if (flag_use_tcp_optimization)
-      {
-      /* timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
-       * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
-       * maximum segment lifetime (2MSL) state. During this time, reopening the connection to the client and server cost
-       * less than establishing a new connection. By reducing the value of this entry, TCP/IP can release closed connections
-       * faster, providing more resources for new connections. Adjust this parameter if the running application requires rapid
-       * release, the creation of new connections, and a low throughput due to many connections sitting in the TIME_WAIT state.
-       */
-
-                                tcp_fin_timeout = UFile::getSysParam("/proc/sys/net/ipv4/tcp_fin_timeout");
-      if (tcp_fin_timeout > 30) tcp_fin_timeout = UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", 30, true);
-
-      if (iBackLog >= SOMAXCONN)
-         {
-         int value = iBackLog * (flag_use_tcp_optimization ? 2 : 1);
-
-         // NB: take a look at `netstat -s | grep overflowed`
-
-         sysctl_somaxconn       = UFile::setSysParam("/proc/sys/net/core/somaxconn", value);
-         sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 2);
-         }
-      }
-#endif
-
-   U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
-                    sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
-
    if (socket->setServer(server, port, iBackLog) == false)
       {
       if (server.empty()) server = U_STRING_FROM_CONSTANT("*");
 
       U_ERROR("run as server with local address '%.*s:%d' FAILED...", U_STRING_TO_TRACE(server), port);
       }
+
+   UEventFd::fd = socket->iSockDesc;
 
    // get name host
 
@@ -930,7 +848,12 @@ void UServer_Base::init()
    U_SRV_LOG("working directory (DOCUMENT_ROOT) changed to %S", document_root.data());
 
 #ifdef HAVE_SSL
-   if (UClientImage_Base::socket->isSSL()) goto next; // For SSL skip TCP optimization
+   if (UClientImage_Base::socket->isSSL())
+      {
+      USSLSocket::method = (SSL_METHOD*) SSLv23_server_method();
+
+      goto next; // NB: if SSL skip TCP optimization...
+      }
 #endif
 
    /* Let's say an application just issued a request to send a small block of data. Now, we could
@@ -975,8 +898,47 @@ void UServer_Base::init()
        */
 
       socket->setTcpQuickAck(0U);
+
+      /* timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
+       * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
+       * maximum segment lifetime (2MSL) state. During this time, reopening the connection to the client and server cost
+       * less than establishing a new connection. By reducing the value of this entry, TCP/IP can release closed connections
+       * faster, providing more resources for new connections. Adjust this parameter if the running application requires rapid
+       * release, the creation of new connections, and a low throughput due to many connections sitting in the TIME_WAIT state.
+       */
+
+                                tcp_fin_timeout = UFile::getSysParam("/proc/sys/net/ipv4/tcp_fin_timeout");
+      if (tcp_fin_timeout > 30) tcp_fin_timeout = UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", 30, true);
+
+      /* sysctl_somaxconn (SOMAXCONN: 128) specifies the maximum number of sockets in state SYN_RECV per listen socket queue.
+       * At listen(2) time the backlog is adjusted to this limit if bigger then that.
+       *
+       * sysctl_max_syn_backlog on the other hand is dynamically adjusted, depending on the memory characteristic of the system.
+       * Default is 256, 128 for small systems and up to 1024 for bigger systems.
+       */
+
+      if (iBackLog >= SOMAXCONN)
+         {
+         int value = iBackLog * (flag_use_tcp_optimization ? 2 : 1);
+
+         // NB: take a look at `netstat -s | grep overflowed`
+
+         sysctl_somaxconn       = UFile::setSysParam("/proc/sys/net/core/somaxconn", value);
+         sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 2);
+         }
       }
+
+   /* sysctl_tcp_abort_on_overflow when its on, new connections are reset once the backlog is exhausted.
+    *
+    * The system limits (somaxconn & tcp_max_syn_backlog) specify a _maximum_, the user cannot exceed this limit with listen(2).
+    * The backlog argument for listen on the other hand specify a _minimum_
+    */
+
+   if (iBackLog == 1) tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
 #endif
+
+   U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
+                    sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
 
 next:
    U_INTERNAL_ASSERT_EQUALS(proc,0)
@@ -987,27 +949,10 @@ next:
 
    proc->setProcessGroup();
 
+   UNotifier::init();
+
    runAsUser();
 
-#ifdef HAVE_PTHREAD_H
-   if (preforked_num_kids == -1) goto next1;
-#endif
-
-   if (isClassic() == false)
-      {
-      /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
-       * a readability event because the connection might have been removed by an asynchronous network error or
-       * another thread before accept() is called. If this happens then the call will block waiting for the next
-       * connection to arrive. To ensure that accept() never blocks, the passed socket sockfd needs to have the
-       * O_NONBLOCK flag set (see socket(7)).
-       */
-
-      socket->flags |= O_NONBLOCK | O_CLOEXEC;
-
-      (void) U_SYSCALL(fcntl, "%d,%d,%d", (UEventFd::fd = socket->iSockDesc), F_SETFL, socket->flags);
-      }
-
-next1:
    // init plugin modules...
 
    if (vplugin &&
@@ -1016,21 +961,54 @@ next1:
       U_ERROR("plugins initialization FAILED. Going down...");
       }
 
-   // manage shared data...
+   socket->flags          |= O_CLOEXEC;
+   USocket::accept4_flags  = SOCK_CLOEXEC;
+
+   // NB: in the classic model we don't need to notify for request of connection
+   // (loop: accept-fork) and the forked child don't accept new client, but we need
+   // event manager for the forked child to feel timeout for request of new client...
+
+   if (isClassic()) goto next1;
+
+#ifdef HAVE_PTHREAD_H
+   if (preforked_num_kids == -1) goto next1;
+#endif
+
+                      UNotifier::insert(pthis);         // NB: we ask to notify for request of connection...
+   if (handler_event) UNotifier::insert(handler_event); // NB: we ask to notify for change of file system (inotify)...
+
+   /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
+    * a readability event because the connection might have been removed by an asynchronous network error or
+    * another thread before accept() is called. If this happens then the call will block waiting for the next
+    * connection to arrive. To ensure that accept() never blocks, the passed socket sockfd needs to have the
+    * O_NONBLOCK flag set (see socket(7)).
+    */
+
+   socket->flags |= O_NONBLOCK;
+
+next1:
+   (void) U_SYSCALL(fcntl, "%d,%d,%d", socket->iSockDesc, F_SETFL, socket->flags);
+
+#ifdef HAVE_SSL
+   if (UClientImage_Base::socket->isSSL() == false) USocket::accept4_flags |= SOCK_NONBLOCK;
+#endif
+
+                                               UClientImage_Base::socket->flags |= O_CLOEXEC;
+   if (USocket::accept4_flags & SOCK_NONBLOCK) UClientImage_Base::socket->flags |= O_NONBLOCK;
 
    if (isPreForked())
       {
+      // manage shared data...
+
       U_INTERNAL_ASSERT_EQUALS(ptr_shared_data,0)
 
       U_INTERNAL_DUMP("shared_data_add = %u", shared_data_add)
 
       ptr_shared_data = (shared_data*) UFile::mmap(sizeof(shared_data) + shared_data_add);
 
-      U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
       U_INTERNAL_ASSERT_EQUALS(U_TOT_CONNECTION,0)
+      U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
       }
-
-   setNotifier(false);
 
    if (timeoutMS != -1) ptime = U_NEW(UTimeoutConnection);
 }
@@ -1134,18 +1112,20 @@ void UServer_Base::handlerNewConnection()
          return;
          }
 
-      if (proc->child()) setNotifier(true);
+      if (proc->child() && isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
       }
 
    // NB: UClientImage object is also referenced by UClientImage_Base::pClientImage...
 
-   uint32_t index_reuse_object = (UNotifier::pool > UNotifier::vpool ? UNotifier::pool - UNotifier::vpool : 0);
+   int index_reuse_object = (UNotifier::pool > UNotifier::vpool ? UNotifier::pool - UNotifier::vpool : 0);
 
-   U_INTERNAL_DUMP("index_reuse_object = %u", index_reuse_object)
+   U_INTERNAL_DUMP("index_reuse_object = %d", index_reuse_object)
 
    U_INTERNAL_ASSERT_MINOR(index_reuse_object, max_Keep_Alive)
 
    UClientImage_Base* ptr = vClientImage + index_reuse_object;
+
+   U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::fd, 0)
 
 #ifdef HAVE_PTHREAD_H
    bool is_empty = UNotifier::empty();
@@ -1158,11 +1138,16 @@ void UServer_Base::handlerNewConnection()
       }
 #endif
 
+   // loop:
    // NB: we do the same as when the object is deleted by UNotifier (when response from handlerRead() is U_NOTIFIER_DELETE)
-
    if (ptr->handlerRead() == U_NOTIFIER_DELETE) ptr->handlerDelete();
    else
       {
+      // NB: in the classic model we don't need to notify for request of connection
+      // (loop: accept-fork) and the forked child don't accept new client, but we need
+      // event manager for the forked child to feel timeout for request of new client...
+
+      // if (isClassic()) goto loop;
 next:
       UNotifier::insert(ptr);
       }
@@ -1269,9 +1254,9 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
          if (num_connection == 0) ULog::log("waiting for connection\n");
          }
 
-      ptr->UEventFd::fd = 0; // to reuse object...
-
       if (isClassic()) U_EXIT(0);
+
+      ptr->UEventFd::fd = 0; // to reuse object...
 
       if (UClientImage_Base::socket->isOpen()) UClientImage_Base::socket->closesocket();
       }
@@ -1303,7 +1288,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 
    U_SRV_LOG_TIMEOUT((UClientImage_Base*)cimg);
 
-   ((UClientImage_Base*)cimg)->handlerError(USocket::BROKEN);
+   ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
 
    (void) pluginsHandlerReset(); // manage reset...
 
@@ -1378,7 +1363,12 @@ void UServer_Base::run()
                {
                U_INTERNAL_DUMP("num_connection = %d tot_connection = %d", num_connection, U_TOT_CONNECTION)
 
-               setNotifier(true);
+               UNotifier::init();
+
+               if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
+
+               // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
+               UInterrupt::setHandlerForSignal(SIGHUP, (sighandler_t)SIG_IGN);
 
                U_SRV_LOG("waiting for connection");
 
@@ -1458,7 +1448,9 @@ void UServer_Base::run()
          if (pthread) goto next;
 #     endif
 
-         // NB: in the classic model we don't need event manager (loop: accept-fork) and the forked child don't accept new client...
+         // NB: in the classic model we don't need to notify for request of connection
+         // (loop: accept-fork) and the forked child don't accept new client, but we need
+         // event manager for the forked child to feel timeout for request of new client...
 
          if (UNotifier::empty())
             {

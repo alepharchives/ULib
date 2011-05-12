@@ -13,7 +13,7 @@
 
 #include <ulib/dynamic/plugin.h>
 
-#ifndef U_LIBEXECDIR
+#if !defined(HAVE_CONFIG_H) && !defined(U_LIBEXECDIR)
 #define U_LIBEXECDIR "/usr/libexec/ulib"
 #endif
 

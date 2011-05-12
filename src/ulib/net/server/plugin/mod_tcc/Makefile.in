@@ -88,7 +88,7 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(moduledir)"
 LTLIBRARIES = $(module_LTLIBRARIES)
-mod_tcc_la_DEPENDENCIES = $(ulib_la)
+mod_tcc_la_LIBADD =
 am_mod_tcc_la_OBJECTS = mod_tcc.lo
 mod_tcc_la_OBJECTS = $(am_mod_tcc_la_OBJECTS)
 mod_tcc_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -289,7 +289,6 @@ moduledir = $(libexecdir)/ulib
 module_LTLIBRARIES = mod_tcc.la
 mod_tcc_la_SOURCES = mod_tcc.cpp
 mod_tcc_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-mod_tcc_la_LIBADD = -ltcc $(ulib_la)
 all: all-am
 
 .SUFFIXES:

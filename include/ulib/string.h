@@ -84,6 +84,7 @@ class UHTTP;
 class UValue;
 class UString;
 class UStringExt;
+class UTCCPlugIn;
 class UHttpPlugIn;
 template <class T> class UHashMap;
 
@@ -509,6 +510,7 @@ private:
                       friend class UHTTP;
                       friend class UString;
                       friend class UStringExt;
+                      friend class UTCCPlugIn;
                       friend class UHttpPlugIn;
    template <class T> friend class UHashMap;
    template <class T> friend void u_construct(T*, uint32_t);

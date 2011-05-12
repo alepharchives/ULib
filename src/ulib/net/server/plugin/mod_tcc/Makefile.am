@@ -12,7 +12,6 @@ module_LTLIBRARIES = mod_tcc.la
 
 mod_tcc_la_SOURCES = mod_tcc.cpp
 mod_tcc_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-mod_tcc_la_LIBADD  = -ltcc $(ulib_la)
 
 clean-local:
 	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out

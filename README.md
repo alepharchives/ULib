@@ -46,7 +46,8 @@ The current version offers the following features :
        * mod_echo : echo features.
        * mod_rpc : generic Remote Procedure Call.
        * mod_http : core features, static file handler and dynamic page (ULib Servlet Page).
-       * mod_ssi : [Server Side Includes]( http://en.wikipedia.org/wiki/Server_Side_Include) support with enhanced #set, direct include and #exec usp (ULib Servlet Page).
+       * mod_ssi : [Server Side Includes]( http://en.wikipedia.org/wiki/Server_Side_Include) support with enhanced #set,
+		             direct include and #exec usp (ULib Servlet Page) and csp (C Servlet Page).
        * mod_nocat : [captive portal](http://nocat.net/) implementation.
        * mod_tsa : server side [Time Stamp](http://www.opentsa.org) support.
        * mod_soap : generic [SOAP](http://java.sun.com/developer/technicalArticles/xml/webservices) server services support.
@@ -54,6 +55,7 @@ The current version offers the following features :
        * mod_scgi : module that implements the client side of the [SCGI](http://www.mems-exchange.org/software/scgi) protocol (experimental).
        * mod_shib : [web single sign-on support](http://shibboleth.internet2.edu) (experimental).
        * mod_proxy : proxy support (experimental).
+       * mod_tcc : [C Servlet Support](http://bellard.org/tcc/) with libtcc as a backend for dynamic code generation (experimental).
        * mod_geoip : [geolocation support](http://www.maxmind.com/geoip/api/c.shtml) (experimental).
        * mod_stream : simple streaming support (experimental).
        * mod_socket : [Web Socket](http://dev.w3.org/html5/websockets) application framework (experimental).

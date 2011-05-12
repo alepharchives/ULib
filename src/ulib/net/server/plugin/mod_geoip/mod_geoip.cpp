@@ -136,7 +136,7 @@ bool UGeoIPPlugIn::checkCountryForbidden()
 
 UGeoIPPlugIn::~UGeoIPPlugIn()
 {
-   U_TRACE(1, "UGeoIPPlugIn::~UGeoIPPlugIn()")
+   U_TRACE_UNREGISTER_OBJECT(0, UGeoIPPlugIn)
 
    for (uint32_t i = 0; i < NUM_DB_TYPES; ++i) if (gi[i]) U_SYSCALL_VOID(GeoIP_delete, "%p", gi[i]);
 }

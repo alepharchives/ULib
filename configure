@@ -647,6 +647,8 @@ STATIC_HANDLER_PROXY_FALSE
 STATIC_HANDLER_PROXY_TRUE
 STATIC_HANDLER_GEOIP_FALSE
 STATIC_HANDLER_GEOIP_TRUE
+STATIC_HANDLER_TCC_FALSE
+STATIC_HANDLER_TCC_TRUE
 STATIC_HANDLER_FCGI_FALSE
 STATIC_HANDLER_FCGI_TRUE
 STATIC_HANDLER_SCGI_FALSE
@@ -26612,7 +26614,7 @@ if test "${enable_static_module+set}" = set; then :
 fi
 
 
-modules="mod_rpc mod_shib mod_stream mod_nocat mod_socket mod_scgi mod_fcgi mod_geoip mod_proxy mod_soap mod_ssi mod_tsa mod_http mod_echo"
+modules="mod_rpc mod_shib mod_stream mod_nocat mod_socket mod_scgi mod_fcgi mod_tcc mod_geoip mod_proxy mod_soap mod_ssi mod_tsa mod_http mod_echo"
 
 # Remove modules that will not be compiles
 
@@ -26621,6 +26623,9 @@ if test "$HAVE_EXPAT" != "yes"; then
 fi
 if test "$HAVE_PCRE" != "yes"; then
 	modules=`echo $modules | sed s/mod_proxy//`
+fi
+if test "x$ac_cv_lib_tcc_tcc_compile_string" != "xyes"; then
+	modules=`echo $modules | sed s/mod_tcc//`
 fi
 if test "x$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" != "xyes"; then
 	modules=`echo $modules | sed s/mod_geoip//`
@@ -26655,6 +26660,7 @@ static_handler_nocat=""
 static_handler_socket=""
 static_handler_scgi=""
 static_handler_fcgi=""
+static_handler_tcc=""
 static_handler_geoip=""
 static_handler_proxy=""
 static_handler_soap=""
@@ -26706,6 +26712,12 @@ $as_echo "#define U_STATIC_HANDLER_SCGI /**/" >>confdefs.h
 			static_handler_fcgi="yes"
 
 $as_echo "#define U_STATIC_HANDLER_FCGI /**/" >>confdefs.h
+
+		elif test "$mod" = "mod_tcc"; then
+			static_handler_tcc="yes"
+			LIBS="-ltcc ${LIBS}"
+
+$as_echo "#define U_STATIC_HANDLER_TCC /**/" >>confdefs.h
 
 		elif test "$mod" = "mod_geoip"; then
 			static_handler_geoip="yes"
@@ -26813,6 +26825,14 @@ fi
 else
   STATIC_HANDLER_FCGI_TRUE='#'
   STATIC_HANDLER_FCGI_FALSE=
+fi
+
+ if test "$static_handler_tcc"	  = "yes"; then
+  STATIC_HANDLER_TCC_TRUE=
+  STATIC_HANDLER_TCC_FALSE='#'
+else
+  STATIC_HANDLER_TCC_TRUE='#'
+  STATIC_HANDLER_TCC_FALSE=
 fi
 
  if test "$static_handler_geoip"  = "yes"; then
@@ -27465,8 +27485,15 @@ if test "$prefix" = "NONE"; then
 	prefix="/usr/local"
 fi
 
+pkglibdir="$prefix/lib"
 sysconfdir="$prefix/etc/ulib"
 pkglibexecdir="$prefix/libexec/ulib"
+
+# prefix dir
+
+cat >>confdefs.h <<_ACEOF
+#define U_PREFIXDIR "${prefix}"
+_ACEOF
 
 # plugin dir
 
@@ -27608,7 +27635,7 @@ fi
 
 # SECTION 16: `AC_OUTPUT([FILE...])' read Makefile.in and write Makefile
 
-ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/lemon/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/mod_tcc/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/page_speed/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/XAdES/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
+ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/lemon/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/mod_tcc/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/XAdES/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -28057,6 +28084,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${STATIC_HANDLER_FCGI_TRUE}" && test -z "${STATIC_HANDLER_FCGI_FALSE}"; then
   as_fn_error $? "conditional \"STATIC_HANDLER_FCGI\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${STATIC_HANDLER_TCC_TRUE}" && test -z "${STATIC_HANDLER_TCC_FALSE}"; then
+  as_fn_error $? "conditional \"STATIC_HANDLER_TCC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${STATIC_HANDLER_GEOIP_TRUE}" && test -z "${STATIC_HANDLER_GEOIP_FALSE}"; then
@@ -29122,10 +29153,10 @@ do
     "src/ulib/lemon/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/lemon/Makefile" ;;
     "src/ulib/net/server/plugin/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/Makefile" ;;
     "src/ulib/net/server/plugin/usp/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/usp/Makefile" ;;
-    "src/ulib/net/server/plugin/mod_tcc/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_tcc/Makefile" ;;
     "src/ulib/net/server/plugin/mod_shib/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_shib/Makefile" ;;
     "src/ulib/net/server/plugin/mod_geoip/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_geoip/Makefile" ;;
     "src/ulib/net/server/plugin/page_speed/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/page_speed/Makefile" ;;
+    "src/ulib/net/server/plugin/mod_tcc/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_tcc/Makefile" ;;
     "include/ulib/Makefile") CONFIG_FILES="$CONFIG_FILES include/ulib/Makefile" ;;
     "contrib/HCSP/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/HCSP/Makefile" ;;
     "contrib/RSIGN/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/RSIGN/Makefile" ;;

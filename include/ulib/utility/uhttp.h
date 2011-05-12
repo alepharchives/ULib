@@ -590,6 +590,7 @@ public:
    static UVector<UString>* form_name_value;
 
    static uint32_t processHTTPForm();
+   static void     resetForm(bool brmdir);
    static void     getFormValue(UString& value, uint32_t n);
 
    // param: "[ data expire path domain secure HttpOnly ]"
@@ -683,8 +684,8 @@ public:
    };
 
    static void* argument;
-   static UServletPage* page;
-   static UHashMap<UServletPage*>* pages;
+   static UServletPage* usp_page;
+   static UHashMap<UServletPage*>* usp_pages;
 
    static bool isUSPRequest()
       {
@@ -692,11 +693,12 @@ public:
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
-      bool result = (pages && u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".usp")));
+      bool result = (usp_pages && u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".usp")));
 
       U_RETURN(result);
       }
 
+   static void initUSP();
    static void processUSPRequest(const char* uri, uint32_t uri_len);
 
    // ------------------------------
@@ -709,8 +711,72 @@ public:
 
    static void callRunDynamicPage(int arg);
 
-#ifdef HAVE_PAGE_SPEED // (Google Page Speed)
+   // CSP (C Servlet Page)
 
+   typedef int (*iPFipvc)(int,const char**);
+
+   class UCServletPage {
+   public:
+
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   int size;
+   void* relocated;
+   iPFipvc prog_main;
+
+   // COSTRUTTORI
+
+   UCServletPage()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UCServletPage, "")
+
+      relocated = 0;
+      prog_main = 0;
+      }
+
+   ~UCServletPage()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UCServletPage)
+
+      if (relocated) U_FREE_GEN(relocated,size);
+      }
+
+   bool compile(const UString& program);
+
+   // STREAM
+
+#ifdef DEBUG
+   const char* dump(bool reset) const U_EXPORT;
+#endif
+
+   private:
+   UCServletPage(const UCServletPage&)            {}
+   UCServletPage& operator=(const UCServletPage&) { return *this; }
+   };
+
+   static UCServletPage* csp_page;
+   static UHashMap<UCServletPage*>* csp_pages;
+
+   static bool isCSPRequest()
+      {
+      U_TRACE(0, "UHTTP::isCSPRequest()")
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      bool result = (csp_pages && u_startsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM("/csp/")));
+
+      U_RETURN(result);
+      }
+
+   static void initCSP();
+   static void processCSPRequest(const char* uri, uint32_t uri_len);
+
+#ifdef HAVE_PAGE_SPEED // (Google Page Speed)
    typedef void (*vPFstr)(UString&);
    typedef void (*vPFpcstr)(const char*, UString&);
 
@@ -916,7 +982,6 @@ private:
    static void checkPath() U_NO_EXPORT;
    static bool processFileCache() U_NO_EXPORT;
    static void processRewriteRule() U_NO_EXPORT;
-   static void resetForm(bool brmdir) U_NO_EXPORT;
    static bool initUploadProgress(int byte_read) U_NO_EXPORT;
    static void updateUploadProgress(int byte_read) U_NO_EXPORT;
    static bool setCGIShellScript(UString& command) U_NO_EXPORT;

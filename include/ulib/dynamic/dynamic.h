@@ -49,7 +49,7 @@ public:
 
    UDynamic()
       {
-      U_TRACE_REGISTER_OBJECT(0, UDynamic, "")
+      U_TRACE(0, "UDynamic::UDynamic()")
 
       err    = "none";
       addr   = 0;
@@ -58,7 +58,7 @@ public:
 
    ~UDynamic()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UDynamic)
+      U_TRACE(0, "UDynamic::~UDynamic()")
       }
 
    /** Load a object file

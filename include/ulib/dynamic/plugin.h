@@ -33,7 +33,7 @@ public:
 
    UPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT(0, UPlugIn<void*>, "")
+      U_TRACE(0, "UPlugIn::UPlugIn()")
 
       obj      = 0;
       next     = 0;
@@ -43,7 +43,7 @@ public:
 
    ~UPlugIn()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UPlugIn<void*>)
+      U_TRACE(0, "UPlugIn::~UPlugIn()")
 
       if (name) U_SYSCALL_VOID(free, "%p", (void*)name);
       if (next) delete next;

@@ -28,7 +28,8 @@ void UTCPSocket::closesocket()
 
    U_INTERNAL_ASSERT(USocket::isOpen())
 
-   U_INTERNAL_DUMP("isBroken() = %b", USocket::isBroken())
+   U_INTERNAL_DUMP("isBroken()  = %b", USocket::isBroken())
+   U_INTERNAL_DUMP("isTimeout() = %b", USocket::isTimeout())
 
    if (USocket::isBroken())
       {
@@ -54,9 +55,14 @@ void UTCPSocket::closesocket()
           * Once recv() returns 0 (or less), 1/2 of the socket is closed
           */
 
-         UFile::setBlocking(iSockDesc, flags, true);
+         do {
+            if (count++ > 5) break;
 
-         do { if (count++ > 5) break; errno = 0; } while (USocket::recv(iSockDesc, _buf, sizeof(_buf)) > 0 || errno == EAGAIN);
+            errno = 0;
+
+            if (count == 2 && USocket::isTimeout() == false) (void) UFile::setBlocking(iSockDesc, flags, true);
+            }
+         while (USocket::recv(iSockDesc, _buf, sizeof(_buf)) > 0 || errno == EAGAIN);
          }
       }
 
