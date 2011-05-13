@@ -16,6 +16,11 @@
 
 #include <errno.h>
 
+#ifdef HAVE_PTHREAD_H
+#  include "ulib/thread.h"
+UThread* UNotifier::pthread;
+#endif
+
 bool       UNotifier::exit_loop_wait_event_for_signal;
 UNotifier* UNotifier::pool;
 UNotifier* UNotifier::vpool;
@@ -188,18 +193,23 @@ void UNotifier::insert(UEventFd* handler_event)
    U_INTERNAL_DUMP("fd_set_max = %d", fd_set_max)
 #endif
 
-   if (pool)
+#ifdef HAVE_PTHREAD_H
+   if (pthread) pthread->lock();
+#endif
+
+   if (pool == 0) item = U_NEW(UNotifier);
+   else
       {
       item = pool;
       pool = pool->next;
       }
-   else
-      {
-      item = U_NEW(UNotifier);
-      }
 
    item->next = first;
    first      = item;
+
+#ifdef HAVE_PTHREAD_H
+   if (pthread) pthread->unlock();
+#endif
 
    item->handler_event_fd = handler_event;
 }
@@ -373,10 +383,18 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier** ptr, bool bread, b
 
    if (bdelete)
       {
+#  ifdef HAVE_PTHREAD_H
+      if (pthread) pthread->lock();
+#  endif
+
       *ptr = item->next;
 
       item->next = pool;
       pool       = item;
+
+#  ifdef HAVE_PTHREAD_H
+      if (pthread) pthread->unlock();
+#  endif
 
       item->handler_event_fd = 0;
 
@@ -461,7 +479,7 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 
                continue;
                }
-
+found:
             bread   = ((pev->events & U_READ_IN)   != 0);
             bwrite  = ((pev->events & U_WRITE_OUT) != 0);
             bexcept = ((pev->events & EPOLLERR)    != 0);
@@ -490,6 +508,18 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
          if (bfound == false)
             {
             U_WARNING("epoll_wait() fire events %B on file descriptor %d without handler...", pev->events, pev->data.fd);
+
+#        ifdef HAVE_PTHREAD_H
+            if (pthread)
+               {
+               for (item = vpool; item; ++item)
+                  {
+                  U_INTERNAL_DUMP("fd = %d", item->handler_event_fd->fd)
+
+                  if (item->handler_event_fd->fd == pev->data.fd) goto found;
+                  }
+               }
+#        endif
 
             (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_DEL, pev->data.fd, (struct epoll_event*)1);
             }
@@ -829,6 +859,10 @@ void UNotifier::clear()
 
 #if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
    (void) U_SYSCALL(close, "%d", epollfd);
+#endif
+
+#ifdef HAVE_PTHREAD_H
+   if (pthread) delete pthread;
 #endif
 }
 

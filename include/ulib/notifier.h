@@ -21,6 +21,11 @@
 #undef HAVE_EPOLL_WAIT
 #endif
 */
+/* NB: to force not use of pthread
+#ifdef HAVE_PTHREAD_H
+#undef HAVE_PTHREAD_H
+#endif
+*/
 
 #ifndef __MINGW32__
 #  include <sys/select.h>
@@ -33,6 +38,7 @@
 #include <ulib/event/event_fd.h>
 #include <ulib/event/event_time.h>
 
+class UThread;
 class UServer_Base;
 class UClientImage_Base;
 
@@ -124,6 +130,9 @@ protected:
    static UNotifier* pool;
    static UNotifier* vpool;
    static UNotifier* first;
+#ifdef HAVE_PTHREAD_H
+   static UThread* pthread;
+#endif
    static bool exit_loop_wait_event_for_signal;
 
    static void preallocate(uint32_t n);

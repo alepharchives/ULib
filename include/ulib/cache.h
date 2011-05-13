@@ -78,9 +78,9 @@ public:
 
    void initStart()
       {
-      U_TRACE(1, "UCache::initStart()")
+      U_TRACE(0, "UCache::initStart()")
 
-      (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
+      u_gettimeofday();
 
       start = u_now.tv_sec;
       }
@@ -129,9 +129,9 @@ public:
 
    uint32_t getTime() const
       {
-      U_TRACE(1, "UCache::getTime()")
+      U_TRACE(0, "UCache::getTime()")
 
-      (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
+      u_gettimeofday();
 
       uint32_t now = (uint32_t)(u_now.tv_sec - start);
 

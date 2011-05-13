@@ -372,9 +372,9 @@ public:
 
    bool checkValidity() const
       {
-      U_TRACE(1, "UCertificate::checkValidity()")
+      U_TRACE(0, "UCertificate::checkValidity()")
 
-      (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
+      u_gettimeofday();
 
       bool result = checkValidity(u_now.tv_sec);
 

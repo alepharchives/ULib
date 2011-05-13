@@ -18,7 +18,6 @@ extern unsigned int u_snprintf(char* buffer, unsigned int  buffer_size, char* fo
 000000000003faf0 T u_basename
 0000000000046ac0 T u_calcRate
 00000000000497d0 T u_canonicalize_pathname
-000000000003fe20 T u_check_now_adjust
 00000000001dbc30 T u_debug_at_exit
 0000000000048820 T u_delimit_token
 00000000000541d0 T u_des3_decode

@@ -367,10 +367,6 @@ protected:
    static UClientImage_Base* vClientImage;
    static bool flag_loop, flag_use_tcp_optimization;
 
-#ifdef HAVE_PTHREAD_H
-   static UClientThread* pthread;
-#endif
-
    // COSTRUTTORI
 
             UServer_Base(UFileConfig* cfg);

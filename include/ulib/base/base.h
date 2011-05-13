@@ -90,12 +90,13 @@ extern U_EXPORT char     u_buffer[4096];
 extern U_EXPORT uint32_t u_buffer_len; /* assert that is busy */
 
 /* Time services */
+extern U_EXPORT void*  u_pthread_time; /* pthread clock */
 extern U_EXPORT time_t u_start_time;
 extern U_EXPORT time_t u_now_adjust; /* GMT based time */
 extern U_EXPORT struct timeval u_now;
 extern U_EXPORT struct tm u_strftime_tm;
 
-extern U_EXPORT void u_check_now_adjust(void); /* calculate number of seconds between UTC to current time zone */
+extern U_EXPORT void u_gettimeofday(void); /* calculate number of seconds between UTC to current time zone */
 
 /* Scan services */
 extern U_EXPORT uint32_t             u_line_terminator_len;

@@ -261,7 +261,7 @@ void UDate::setYear(int year)
 
 UDate::UDate(const char* str, bool UTC)
 {
-   U_TRACE_REGISTER_OBJECT(1, UDate, "%S,%b", str, UTC)
+   U_TRACE_REGISTER_OBJECT(0, UDate, "%S,%b", str, UTC)
 
    julian = _day = _month = _year = 0;
 
@@ -275,7 +275,7 @@ UDate::UDate(const char* str, bool UTC)
       {
       // Complete for the user
 
-      (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
+      u_gettimeofday();
 
 #  if defined(DEBUG) && !defined(__MINGW32__)
       U_SYSCALL_VOID(localtime_r, "%p,%p", &u_now.tv_sec, &u_strftime_tm);

@@ -44,8 +44,19 @@ public:
 
    // SERVICES
 
-   void lock()   { (void) pthread_mutex_lock(&_lock); }
-   void unlock() { (void) pthread_mutex_unlock(&_lock); }
+   void lock()
+      {
+      U_TRACE(1, "UThread::lock()")
+
+      (void) U_SYSCALL(pthread_mutex_lock, "%p", &_lock);
+      }
+
+   void unlock()
+      {
+      U_TRACE(1, "UThread::unlock()")
+
+      (void) U_SYSCALL(pthread_mutex_unlock, "%p", &_lock);
+      }
 
    static void sleep(time_t timeoutMS);
 

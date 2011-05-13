@@ -86,6 +86,7 @@ char     u_buffer[4096];
 uint32_t u_buffer_len; /* signal that is busy */
 
 /* Time services */
+void*  u_pthread_time; /* pthread clock */
 time_t u_start_time;
 time_t u_now_adjust; /* GMT based time */
 struct timeval u_now;
@@ -194,9 +195,9 @@ void u_getcwd(void) /* get current working directory */
    U_INTERNAL_ASSERT_MINOR(u_cwd_len,U_PATH_MAX)
 }
 
-void u_check_now_adjust(void)
+void u_gettimeofday(void)
 {
-   U_INTERNAL_TRACE("u_check_now_adjust()")
+   U_INTERNAL_TRACE("u_gettimeofday()")
 
    /* calculate number of seconds between UTC to current time zone
     *
@@ -209,7 +210,7 @@ void u_check_now_adjust(void)
     * };
     */
 
-   (void) gettimeofday(&u_now, 0);
+   if (u_pthread_time == 0) (void) gettimeofday(&u_now, 0);
 
    if (u_start_time == 0)
       {
@@ -305,7 +306,7 @@ void u_init(char** restrict argv)
 
    tzset();
 
-   u_check_now_adjust();
+   u_gettimeofday();
 }
 
 uint32_t u_snprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...)
@@ -359,7 +360,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
       {
       if (t == 0)
          {
-         u_check_now_adjust();
+         u_gettimeofday();
 
          t = u_now.tv_sec + u_now_adjust;
          }
@@ -1540,6 +1541,8 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             else if (width == 6) /* _millisec */
                {
                char tmp[16];
+
+               if (u_pthread_time) (void) gettimeofday(&u_now, 0);
 
                (void) sprintf(tmp, "_%03lu", u_now.tv_usec / 1000L);
 

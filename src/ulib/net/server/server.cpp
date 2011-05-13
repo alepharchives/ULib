@@ -139,25 +139,36 @@ const UString* UServer_Base::str_LISTEN_BACKLOG;
 #ifdef HAVE_PTHREAD_H
 #  include "ulib/thread.h"
 
+class UTimeThread : public UThread {
+public:
+
+   UTimeThread() : UThread(false, false) {}
+
+   virtual void run()
+      {
+      U_TRACE(0, "UTimeThread::run()")
+
+      while (true)
+         {
+         (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
+
+         sleep(1000);
+         }
+      }
+};
+
 class UClientThread : public UThread {
 public:
 
-   UClientThread() : UThread(true, false) {}
+   UClientThread() : UThread(false, false) {}
 
    virtual void run()
       {
       U_TRACE(0, "UClientThread::run()")
 
-      while (UServer_Base::flag_loop)
-         {
-         if (UNotifier::empty()) suspend();
-
-         (void) UNotifier::waitForEvent(UServer_Base::ptime);
-         }
+      while (UServer_Base::flag_loop) (void) UNotifier::waitForEvent(UServer_Base::ptime);
       }
 };
-
-UClientThread* UServer_Base::pthread;
 
 /*
 #  ifndef DEBUG
@@ -368,10 +379,6 @@ UServer_Base::~UServer_Base()
 #endif
 
    if (proc) delete proc;
-
-#ifdef HAVE_PTHREAD_H
-   if (pthread) delete pthread;
-#endif
 }
 
 void UServer_Base::loadConfigParam(UFileConfig& cfg)
@@ -475,7 +482,14 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    // open log
 
-   if (log_file.empty() == false) openLog(log_file, cfg.readLong(*str_LOG_FILE_SZ));
+   if (log_file.empty() == false)
+      {
+#  ifdef HAVE_PTHREAD_H
+      ((UTimeThread*)(u_pthread_time = U_NEW(UTimeThread)))->start();
+#  endif
+
+      openLog(log_file, cfg.readLong(*str_LOG_FILE_SZ));
+      }
 
    // load plugin modules and call server-wide hooks handlerConfig()...
 
@@ -1125,23 +1139,23 @@ void UServer_Base::handlerNewConnection()
 
    UClientImage_Base* ptr = vClientImage + index_reuse_object;
 
-   U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::fd, 0)
-
 #ifdef HAVE_PTHREAD_H
-   if (pthread)
+   if (UNotifier::pthread)
       {
-      bool is_empty = UNotifier::empty();
-
-      if (ptr->newConnection())
+      while (ptr->UEventFd::fd)
          {
-         UNotifier::insert(ptr);
+         ++ptr;
 
-         if (is_empty) pthread->resume();
+         if (ptr >= (vClientImage + max_Keep_Alive)) ptr = vClientImage;
          }
+
+      if (ptr->newConnection()) UNotifier::insert(ptr);
 
       return;
       }
 #endif
+
+   U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::fd, 0)
 
    // NB: in the classic model we don't need to notify for request of connection
    // (loop: accept-fork) and the forked child don't accept new client, but we need
@@ -1421,12 +1435,7 @@ void UServer_Base::run()
       U_SRV_LOG("waiting for connection");
 
 #  ifdef HAVE_PTHREAD_H
-      if (preforked_num_kids == -1)
-         {
-         pthread = U_NEW(UClientThread);
-
-         pthread->start();
-         }
+      if (preforked_num_kids == -1) (UNotifier::pthread = U_NEW(UClientThread))->start();
 #  endif
 
       while (flag_loop)
@@ -1439,7 +1448,7 @@ void UServer_Base::run()
             }
 
 #     ifdef HAVE_PTHREAD_H
-         if (pthread)
+         if (UNotifier::pthread)
             {
             (void) pthis->handlerRead();
 
