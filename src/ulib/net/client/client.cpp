@@ -46,6 +46,10 @@ UClient_Base::UClient_Base(UFileConfig* cfg) : response(U_CAPACITY), buffer(U_CA
 {
    U_TRACE_REGISTER_OBJECT(0, UClient_Base, "%p", cfg)
 
+   u_init_hostname();
+
+   U_INTERNAL_DUMP("u_hostname(%u) = %.*S", u_hostname_len, u_hostname_len, u_hostname)
+
    if (cfg) loadConfigParam(*cfg);
    else
       {

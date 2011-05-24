@@ -1261,9 +1261,9 @@ bool UFile::mkdir(const char* path, mode_t mode)
 
 // MIME TYPE
 
-const char* UFile::getMimeType()
+const char* UFile::getMimeType(bool bmagic)
 {
-   U_TRACE(0, "UFile::getMimeType()")
+   U_TRACE(0, "UFile::getMimeType(%b)", bmagic)
 
    u_mime_index = -1;
 
@@ -1279,6 +1279,20 @@ const char* UFile::getMimeType()
 
       U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
       }
+
+#ifdef HAVE_MAGIC
+   if (bmagic                &&
+       u_mime_index != U_ssi &&
+       u_mime_index == U_css &&
+       u_mime_index == U_js)
+      {
+      U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
+
+      const char* ctype = UMagic::getType(map, map_size).data();
+
+      if (ctype) content_type = ctype;
+      }
+#endif
 
    if (content_type == 0)
       {

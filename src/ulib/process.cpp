@@ -15,9 +15,12 @@
 #include <ulib/utility/interrupt.h>
 
 #ifdef __MINGW32__
-static STARTUPINFO aStartupInfo;
-static PROCESS_INFORMATION aProcessInformation;
-static HANDLE hFile[6], hChildIn, hChildOut, hChildErr;
+HANDLE               UProcess::hFile[6];
+HANDLE               UProcess::hChildIn;
+HANDLE               UProcess::hChildOut;
+HANDLE               UProcess::hChildErr;
+STARTUPINFO          UProcess::aStartupInfo;
+PROCESS_INFORMATION  UProcess::aProcessInformation;
 #else
 #  include <sys/wait.h>
 #endif
@@ -81,10 +84,12 @@ U_NO_EXPORT void UProcess::setStdInOutErr(bool fd_stdin, bool fd_stdout, bool fd
 #  ifdef __MINGW32__
       if (hFile[1]) // Created parent-output pipe...
          {
-         // Duplicating as inheritable child-input pipe
+         hChildIn = hFile[0];
 
-         (void) U_SYSCALL(DuplicateHandle, "%p,%p,%p,%p,%lu,%b,%lu", hProcess, hFile[0], hProcess, &hChildIn, 0, TRUE, DUPLICATE_SAME_ACCESS);
-         (void) U_SYSCALL(    CloseHandle, "%p",                               hFile[0]);
+         // Duplicating as inheritable child-input pipe
+         // -------------------------------------------
+         // (void) U_SYSCALL(DuplicateHandle, "%p,%p,%p,%p,%lu,%b,%lu", hProcess, hFile[0], hProcess, &hChildIn, 0, TRUE, DUPLICATE_SAME_ACCESS);
+         // (void) U_SYSCALL(    CloseHandle, "%p",                               hFile[0]);
          }
       else
          {
@@ -106,10 +111,12 @@ U_NO_EXPORT void UProcess::setStdInOutErr(bool fd_stdin, bool fd_stdout, bool fd
 #  ifdef __MINGW32__
       if (hFile[2]) // Created parent-input pipe...
          {
-         // Duplicating as inheritable child-output pipe
+         hChildOut = hFile[3];
 
-         (void) U_SYSCALL(DuplicateHandle, "%p,%p,%p,%p,%lu,%b,%lu", hProcess, hFile[3], hProcess, &hChildOut, 0, TRUE, DUPLICATE_SAME_ACCESS);
-         (void) U_SYSCALL(    CloseHandle, "%p",                               hFile[3]);
+         // Duplicating as inheritable child-output pipe
+         // -------------------------------------------
+         // (void) U_SYSCALL(DuplicateHandle, "%p,%p,%p,%p,%lu,%b,%lu", hProcess, hFile[3], hProcess, &hChildOut, 0, TRUE, DUPLICATE_SAME_ACCESS);
+         // (void) U_SYSCALL(    CloseHandle, "%p",                               hFile[3]);
          }
       else
          {
@@ -131,10 +138,12 @@ U_NO_EXPORT void UProcess::setStdInOutErr(bool fd_stdin, bool fd_stdout, bool fd
 #  ifdef __MINGW32__
       if (hFile[4]) // Created parent-input pipe...
          {
-         // Duplicating as inheritable child-output pipe
+         hChildErr = hFile[5];
 
-         (void) U_SYSCALL(DuplicateHandle, "%p,%p,%p,%p,%lu,%b,%lu", hProcess, hFile[5], hProcess, &hChildErr, 0, TRUE, DUPLICATE_SAME_ACCESS);
-         (void) U_SYSCALL(    CloseHandle, "%p",                               hFile[5]);
+         // Duplicating as inheritable child-output pipe
+         // -------------------------------------------
+         // (void) U_SYSCALL(DuplicateHandle, "%p,%p,%p,%p,%lu,%b,%lu", hProcess, hFile[5], hProcess, &hChildErr, 0, TRUE, DUPLICATE_SAME_ACCESS);
+         // (void) U_SYSCALL(    CloseHandle, "%p",                               hFile[5]);
          }
       else
          {

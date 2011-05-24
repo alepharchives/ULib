@@ -648,7 +648,7 @@ public:
 
    // MIME TYPE
 
-   const char* getMimeType();
+   const char* getMimeType(bool bmagic);
 
    // PREAD - PWRITE
 

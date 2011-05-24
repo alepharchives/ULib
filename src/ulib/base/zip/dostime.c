@@ -28,7 +28,7 @@ time_t dos2unixtime(unsigned long dostime)
    u_gettimeofday();
 
    /* Call localtime to initialize timezone in TIME */
-   ltime = *localtime(&u_now.tv_sec);
+   ltime = *localtime(&(u_now->tv_sec));
 
    ltime.tm_year =  (dostime >> 25) + 80;
    ltime.tm_mon  = ((dostime >> 21) & 0x0f) - 1;

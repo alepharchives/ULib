@@ -34,6 +34,8 @@
 #define U_FAILED_SOME  2
 #define U_FAILED_ALL   3
 
+class UCommand;
+
 class U_EXPORT UProcess {
 public:
 
@@ -132,11 +134,19 @@ protected:
    int status;
    bool running;
 
+#ifdef __MINGW32__
+   static STARTUPINFO aStartupInfo;
+   static PROCESS_INFORMATION aProcessInformation;
+   static HANDLE hFile[6], hChildIn, hChildOut, hChildErr;
+#endif
+
    static void setStdInOutErr(bool fd_stdin, bool fd_stdout, bool fd_stderr) U_NO_EXPORT;
 
 private:
    UProcess(const UProcess&)            {}
    UProcess& operator=(const UProcess&) { return *this; }
+
+   friend class UCommand;
 };
 
 #endif

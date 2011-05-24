@@ -21,7 +21,7 @@
 
    (void) log.ready();
 
-   time_t tm_session = u_now.tv_sec;
+   time_t tm_session = u_now->tv_sec;
 
    bool esito;
    USemaphore sem;

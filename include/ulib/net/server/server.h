@@ -239,6 +239,7 @@ public:
    // ----------------------------------------------------------------------------------------------------------------------------
 
    typedef struct shared_data {
+      struct timeval _timeval;
       sig_atomic_t tot_connection;
    } shared_data;
 
@@ -363,6 +364,7 @@ protected:
    static UEventTime* ptime;
    static UServer_Base* pthis;
    static UString* senvironment;
+   static int start_index_reuse_object;
    static UVector<UIPAllow*>* vallow_IP;
    static UClientImage_Base* vClientImage;
    static bool flag_loop, flag_use_tcp_optimization;

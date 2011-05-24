@@ -48,7 +48,7 @@
 #  endif
 #endif
 
-#define U_TIME_FOR_EXPIRE       (u_now.tv_sec + (365 * U_ONE_DAY_IN_SECOND))
+#define U_TIME_FOR_EXPIRE       (u_now->tv_sec + (365 * U_ONE_DAY_IN_SECOND))
 
 #define U_MIN_SIZE_FOR_DEFLATE  100
 #define U_MIN_SIZE_FOR_SENDFILE (32 * 1024) // NB: for major size it is better to use sendfile()
@@ -670,6 +670,10 @@ void UHTTP::ctor()
    ptrL = USocket::str_content_length->c_pointer(1);    // "Content-Length"
    ptrA = USocket::str_accept_encoding->c_pointer(1);   // "Accept-Encoding"
    ptrI = USocket::str_if_modified_since->c_pointer(1); // "If-Modified-Since"
+
+#ifdef HAVE_MAGIC
+   (void) UMagic::init();
+#endif
 
 #ifdef HAVE_SSL
    if (UServer_Base::socket->isSSL()) enable_caching_by_proxy_servers = true;
@@ -2090,7 +2094,7 @@ UString UHTTP::setHTTPCookie(const UString& param)
 
    if (vec.empty())
       {
-      expire = u_now.tv_sec - U_ONE_DAY_IN_SECOND;
+      expire = u_now->tv_sec - U_ONE_DAY_IN_SECOND;
 
       set_cookie.snprintf("Set-Cookie: ulib_sid=deleted; expires=%#D", expire);
       }
@@ -2102,7 +2106,7 @@ UString UHTTP::setHTTPCookie(const UString& param)
 
       long num_hours = vec[1].strtol();
 
-      expire = (num_hours ? u_now.tv_sec + (num_hours * 60L * 60L) : 0L);
+      expire = (num_hours ? u_now->tv_sec + (num_hours * 60L * 60L) : 0L);
 
       // HMAC-MD5(data&expire)
 
@@ -2782,7 +2786,7 @@ void UHTTP::setHTTPUnAuthorized()
 
    (void) ext.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\nWWW-Authenticate: "));
 
-   if (digest_authentication)        ext.snprintf_add("Digest qop=\"auth\", nonce=\"%ld\", algorithm=MD5,", u_now.tv_sec);
+   if (digest_authentication)        ext.snprintf_add("Digest qop=\"auth\", nonce=\"%ld\", algorithm=MD5,", u_now->tv_sec);
    else                       (void) ext.append(U_CONSTANT_TO_PARAM("Basic"));
 
    (void) ext.append(U_CONSTANT_TO_PARAM(" realm=\"" U_HTTP_REALM "\""));
@@ -3094,7 +3098,7 @@ U_NO_EXPORT bool UHTTP::processHTTPAuthorization(const UString& request)
 
                   // XXX: Due to a bug in MSIE (version=??), we do not check for authentication timeout...
 
-                  if ((u_now.tv_sec - value.strtol()) > 3600) U_RETURN(false);
+                  if ((u_now->tv_sec - value.strtol()) > 3600) U_RETURN(false);
 
                   nonce = value;
                   }
@@ -3564,7 +3568,7 @@ void UHTTP::checkFileForCache()
       return;
       }
 
-   putDataInCache(getHeaderMimeType(file->getMimeType(), 0, U_TIME_FOR_EXPIRE), content);
+   putDataInCache(getHeaderMimeType(file->getMimeType(true), 0, U_TIME_FOR_EXPIRE), content);
 }
 
 bool UHTTP::isFileInCache()
@@ -3600,7 +3604,7 @@ UString UHTTP::getDataFromCache(bool header, bool deflate)
    U_INTERNAL_ASSERT_POINTER(file_data)
    U_INTERNAL_ASSERT_POINTER(file_data->array)
 
-   if (u_now.tv_sec > file_data->expire)
+   if (u_now->tv_sec > file_data->expire)
       {
       u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "./%.*s", U_STRING_TO_TRACE(*(cache_file->key())));
 
@@ -5430,7 +5434,7 @@ void UHTTP::processHTTPGetRequest(const UString& request)
             {
             (void) file->memmap(PROT_READ, UClientImage_Base::body);
 
-            content_type = file->getMimeType();
+            content_type = file->getMimeType(false);
             }
 
          if (http_info.range_len &&

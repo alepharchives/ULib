@@ -18,6 +18,9 @@
 
 #include <magic.h>
 
+class UHttpClient_Base;
+class UMimeMultipartMsg;
+
 class U_EXPORT UMagic {
 public:
 
@@ -33,6 +36,8 @@ public:
    UMagic(int flags)
       {
       U_TRACE_REGISTER_OBJECT(0, UMagic, "%d", flags)
+
+      if (magic == 0) (void) init();
 
       U_INTERNAL_ASSERT_POINTER(magic)
 
@@ -103,6 +108,9 @@ protected:
 private:
    UMagic(const UMagic&)            {}
    UMagic& operator=(const UMagic&) { return *this; }
+
+   friend class UHttpClient_Base;
+   friend class UMimeMultipartMsg;
 };
 
 #endif

@@ -116,7 +116,12 @@ private:
           void outputEntry(ostream& os) const U_NO_EXPORT;
    inline void callHandlerTime() U_NO_EXPORT;
 
-   bool operator<(const UTimer& t) const { return (*alarm < *t.alarm); }
+   bool operator< (const UTimer& t) const { return (*alarm < *t.alarm); }
+   bool operator> (const UTimer& t) const { return  t.operator<(*this); }
+   bool operator<=(const UTimer& t) const { return !t.operator<(*this); }
+   bool operator>=(const UTimer& t) const { return !  operator<(t); }
+   bool operator==(const UTimer& t) const { return (*alarm == *t.alarm); }
+   bool operator!=(const UTimer& t) const { return !  operator==(t); }
 
    UTimer(const UTimer&)            {}
    UTimer& operator=(const UTimer&) { return *this; }

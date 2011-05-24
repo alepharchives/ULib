@@ -34,7 +34,7 @@ public:
       {
       U_TRACE(5, "Application::resetDate()")
 
-      inizio->fromTime(u_now.tv_sec);
+      inizio->fromTime(u_now->tv_sec);
 
       fine->set(1,1,1970);
       }

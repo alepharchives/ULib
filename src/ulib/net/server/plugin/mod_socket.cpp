@@ -22,8 +22,8 @@
 #  include <byteswap.h>
 #else
 #  define rotr32(x,n) (((x) >> n) | ((x) << (32 - n)))
-#  define bswap_32(x) (rotr32((x), 24) & 0x00ff00ff | rotr32((x), 8) & 0xff00ff00)
-#  define bswap_64(x) (((uint64_t)(bswap_32((uint32_t)(x)))) << 32 | bswap_32((uint32_t)((x) >> 32)))
+#  define bswap_32(x) ((rotr32((x), 24) & 0x00ff00ff) | (rotr32((x), 8) & 0xff00ff00))
+#  define bswap_64(x) ((((uint64_t)(bswap_32((uint32_t)(x)))) << 32) | (bswap_32((uint32_t)((x) >> 32))))
 #endif
 
 #ifdef HAVE_MODULES

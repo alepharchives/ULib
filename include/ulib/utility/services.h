@@ -69,7 +69,7 @@ struct U_EXPORT UServices {
       {
       U_TRACE(0, "UServices::readEOF(%d,%.*S)", fd, U_STRING_TO_TRACE(buffer))
 
-      while (UServices::read(fd, buffer)) {}
+      while (UServices::read(fd, buffer, U_SINGLE_READ, -1)) {}
       }
 
    // generic MatchType { U_FNMATCH = 0, U_DOSMATCH = 1, U_DOSMATCH_WITH_OR = 2 };

@@ -77,10 +77,12 @@ public:
       U_RETURN(esito);
       }
 
+   static uint32_t size();
+
    static void init();
    static void clear();
+   static void erase( UEventFd* handler_event);
    static void insert(UEventFd* handler_event);
-   static void erase( UEventFd* handler_event, bool flag);
 
    static bool isHandler(UEventFd* handler_event)
       {
@@ -128,12 +130,24 @@ protected:
    UEventFd* handler_event_fd;
 
    static UNotifier* pool;
+   static uint32_t vpooln;
    static UNotifier* vpool;
    static UNotifier* first;
 #ifdef HAVE_PTHREAD_H
    static UThread* pthread;
 #endif
    static bool exit_loop_wait_event_for_signal;
+
+   static int getIndexReuseObject(int start)
+      {
+      U_TRACE(0, "UNotifier::getIndexReuseObject(%d)", start)
+
+      int result = (pool - (vpool + start));
+
+      U_INTERNAL_ASSERT_MINOR(result,(int)vpooln)
+
+      U_RETURN(result);
+      }
 
    static void preallocate(uint32_t n);
    static int waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
@@ -163,7 +177,7 @@ protected:
 private:
    void outputEntry(ostream& os) const U_NO_EXPORT;
 
-   static void eraseItem(UNotifier** ptr, bool flag_reuse) U_NO_EXPORT;
+   static void eraseItem(UNotifier** ptr) U_NO_EXPORT;
 
 #ifndef HAVE_LIBEVENT
    static bool handlerResult(int& n, UNotifier** ptr, bool bread, bool bwrite, bool bexcept) U_NO_EXPORT; 

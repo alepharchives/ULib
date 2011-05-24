@@ -38,11 +38,11 @@ void UEventTime::setCurrentTime()
 
    U_CHECK_MEMORY
 
-   (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
+   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
-   U_INTERNAL_DUMP("u_now = { %ld %6ld }", u_now.tv_sec, u_now.tv_usec)
+   U_INTERNAL_DUMP("u_now = { %ld %6ld }", u_now->tv_sec, u_now->tv_usec)
 
-   ctime = u_now;
+   ctime = *u_now;
 }
 
 void UEventTime::setTimerVal(struct timeval* it_value)
@@ -51,8 +51,8 @@ void UEventTime::setTimerVal(struct timeval* it_value)
 
    U_CHECK_MEMORY
 
-   it_value->tv_sec  = ctime.tv_sec  + tv_sec  - u_now.tv_sec;
-   it_value->tv_usec = ctime.tv_usec + tv_usec - u_now.tv_usec;
+   it_value->tv_sec  = ctime.tv_sec  + tv_sec  - u_now->tv_sec;
+   it_value->tv_usec = ctime.tv_usec + tv_usec - u_now->tv_usec;
 
    UTimeVal::adjust((long*)&(it_value->tv_sec), (long*)&(it_value->tv_usec));
 
@@ -72,9 +72,9 @@ __pure bool UEventTime::isOld() const
 
    U_INTERNAL_DUMP("this = { %ld %6ld }", t1, ctime.tv_usec + tv_usec)
 
-   bool result = (  t1  < u_now.tv_sec) ||
-                  ((t1 == u_now.tv_sec) &&
-                   ((ctime.tv_usec + tv_usec) < u_now.tv_usec));
+   bool result = (  t1  < u_now->tv_sec) ||
+                  ((t1 == u_now->tv_sec) &&
+                   ((ctime.tv_usec + tv_usec) < u_now->tv_usec));
 
    U_RETURN(result);
 }

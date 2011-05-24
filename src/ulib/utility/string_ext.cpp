@@ -367,7 +367,7 @@ UString UStringExt::getEnvironmentVar(const char* s, uint32_t n, const UString* 
 
    if (environment)
       {
-      char c, c1;
+      char c;
       uint32_t start = 0, end;
 
 loop: // NB: check if s param it is a environment-var
@@ -401,7 +401,7 @@ loop: // NB: check if s param it is a environment-var
       if (end == U_NOT_FOUND) end = environment->size();
       else
          {
-         c1 = environment->c_char(end-1);
+         char c1 = environment->c_char(end-1);
 
          if ((c1 == '"' || c1 == '\'') && (c == c1)) --end;
          }

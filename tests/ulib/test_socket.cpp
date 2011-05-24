@@ -351,6 +351,8 @@ int U_EXPORT main(int iArgC, char** ppcArgV)
 
    U_TRACE(5, "::main(%d,%p)", iArgC, ppcArgV)
 
+   u_init_hostname();
+
    char* pcEchoString;
    UIPAddress cEchoServerAddress;
    bool bUseIPv6, bUseTCP, bServer;

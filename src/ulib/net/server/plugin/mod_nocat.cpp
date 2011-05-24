@@ -155,12 +155,12 @@ void UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
    const char* mac = peer->mac.data();
    time_t how_much_connected, how_much_remain;
 
-   U_INTERNAL_DUMP("now    = %#4D", u_now.tv_sec)
+   U_INTERNAL_DUMP("now    = %#4D", u_now->tv_sec)
    U_INTERNAL_DUMP("logout = %#4D", peer->logout)
    U_INTERNAL_DUMP("expire = %#4D", peer->expire)
 
-   if (login_timeout                &&
-       peer->expire <= u_now.tv_sec &&
+   if (login_timeout                 &&
+       peer->expire <= u_now->tv_sec &&
        peer->status == UModNoCatPeer::PEER_ACCEPT) deny(peer, false, false);
 
    if (peer->status == UModNoCatPeer::PEER_ACCEPT)
@@ -168,8 +168,8 @@ void UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
       color  = "green";
       status = "PERMIT";
 
-      how_much_connected = u_now.tv_sec - peer->connected;
-      how_much_remain    = (peer->expire > u_now.tv_sec ? (peer->expire - u_now.tv_sec) : 0);
+      how_much_connected = u_now->tv_sec - peer->connected;
+      how_much_remain    = (peer->expire > u_now->tv_sec ? (peer->expire - u_now->tv_sec) : 0);
       }
    else
       {
@@ -279,7 +279,7 @@ UModNoCatPeer::UModNoCatPeer(const UString& peer_ip) : ip(peer_ip), command(100U
 
    // set connection time
 
-   ctime = connected = expire = logout = u_now.tv_sec;
+   ctime = connected = expire = logout = u_now->tv_sec;
 
    // set traffic
 
@@ -379,7 +379,7 @@ void UNoCatPlugIn::deny(UModNoCatPeer* peer, bool alarm, bool disconnected)
       U_SRV_LOG("Removing peer %.*s", U_STRING_TO_TRACE(peer->ip));
 
       bool bdelete;
-      time_t t         = peer->expire - u_now.tv_sec;
+      time_t t         = peer->expire - u_now->tv_sec;
       uint64_t traffic = (peer->ltraffic > peer->traffic ? (peer->ltraffic - peer->traffic) : 0);
 
       if (traffic < 1024 ||
@@ -397,7 +397,7 @@ void UNoCatPlugIn::deny(UModNoCatPeer* peer, bool alarm, bool disconnected)
          // request of logout or user disconnected...
 
          bdelete      = false;
-         peer->logout = u_now.tv_sec;
+         peer->logout = u_now->tv_sec;
          }
 
       pthis->addPeerInfo(peer, (disconnected ? -1 : peer->logout));
@@ -429,7 +429,7 @@ void UNoCatPlugIn::permit(UModNoCatPeer* peer, time_t timeout)
 
       // set connection time
 
-      peer->expire = (peer->ctime = peer->connected = peer->logout = u_now.tv_sec) + timeout;
+      peer->expire = (peer->ctime = peer->connected = peer->logout = u_now->tv_sec) + timeout;
 
       if (timeout > U_NOCAT_MAX_TIMEOUT) timeout = U_NOCAT_MAX_TIMEOUT; // check for safe timeout...
 
@@ -473,7 +473,7 @@ void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& redir
       // non corrisponda piu' a quello inviato dal portale per l'autorizzazione...
       // ---------------------------------------------------------------------------------------------------------------------
 
-      time_t expire = u_now.tv_sec + (30L * 60L);
+      time_t expire = u_now->tv_sec + (30L * 60L);
       peer->token   = UServices::generateToken(peer->mac, expire);
       }
 
@@ -733,8 +733,8 @@ void UNoCatPlugIn::addPeerInfo(UModNoCatPeer* peer, time_t logout)
 
    info_url->addQuery(U_CONSTANT_TO_PARAM("logout"), U_STRING_TO_PARAM(buffer));
 
-   buffer = UStringExt::numberToString(u_now.tv_sec - peer->ctime);
-                                                      peer->ctime = u_now.tv_sec;
+   buffer = UStringExt::numberToString(u_now->tv_sec - peer->ctime);
+                                                       peer->ctime = u_now->tv_sec;
 
    info_url->addQuery(U_CONSTANT_TO_PARAM("connected"), U_STRING_TO_PARAM(buffer));
 
@@ -754,7 +754,7 @@ void UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
 
    if (peer->status == UModNoCatPeer::PEER_ACCEPT)
       {
-      time_t t         = peer->expire - u_now.tv_sec;
+      time_t t         = peer->expire - u_now->tv_sec;
       uint64_t traffic = (peer->ltraffic > peer->traffic ? (peer->ltraffic - peer->traffic) : 0);
 
       U_SRV_LOG("Checking peer %.*s for info, remain: %ld secs %llu bytes", U_STRING_TO_TRACE(peer->ip), U_max(0,t), traffic);
@@ -828,7 +828,7 @@ void UNoCatPlugIn::checkPeersForInfo()
 
    uint32_t i;
    UModNoCatPeer* peer;
-   time_t last_request = u_now.tv_sec - last_request_check;
+   time_t last_request = u_now->tv_sec - last_request_check;
 
    U_INTERNAL_DUMP("last_request = %ld", last_request)
 
@@ -845,7 +845,7 @@ void UNoCatPlugIn::checkPeersForInfo()
 
    if (last_request >= 15) // NB: protection from DoS...
       {
-      last_request_check = u_now.tv_sec;
+      last_request_check = u_now->tv_sec;
 
       U_SRV_LOG("Checking peers for info");
 

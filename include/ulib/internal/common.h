@@ -78,6 +78,11 @@ union uustringrep {
 
 USING(std) // Common C++
 
-extern U_EXPORT void ULib_init(); // Init library
+// Init library
+
+extern U_EXPORT void ULib_init();
+#ifdef HAVE_SSL
+extern U_EXPORT void ULib_init_openssl();
+#endif
 
 #endif

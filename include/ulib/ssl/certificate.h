@@ -376,7 +376,7 @@ public:
 
       u_gettimeofday();
 
-      bool result = checkValidity(u_now.tv_sec);
+      bool result = checkValidity(u_now->tv_sec);
 
       U_RETURN(result);
       }

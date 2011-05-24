@@ -50,6 +50,7 @@
 
 #define FD_CLOEXEC      1 /* actually anything with low bit set goes */
 #define O_NONBLOCK      04000
+#define O_CLOEXEC       02000000 /* Set close_on_exec */
 #define S_ISSOCK(mode)  0
 
 #if defined _FILE_OFFSET_BITS && _FILE_OFFSET_BITS == 64

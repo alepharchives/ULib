@@ -14,14 +14,15 @@
 #include <ulib/notifier.h>
 #include <ulib/utility/interrupt.h>
 
-#include <errno.h>
-
 #ifdef HAVE_PTHREAD_H
 #  include "ulib/thread.h"
 UThread* UNotifier::pthread;
 #endif
 
+#include <errno.h>
+
 bool       UNotifier::exit_loop_wait_event_for_signal;
+uint32_t   UNotifier::vpooln;
 UNotifier* UNotifier::pool;
 UNotifier* UNotifier::vpool;
 UNotifier* UNotifier::first;
@@ -113,6 +114,19 @@ UNotifier::~UNotifier()
       }
 }
 
+uint32_t UNotifier::size()
+{
+   U_TRACE(0, "UNotifier::size()")
+
+   UNotifier* item;
+
+   uint32_t length = 0;
+
+   for (item = first; item; item = item->next) ++length;
+
+   U_RETURN(length);
+}
+
 void UNotifier::insert(UEventFd* handler_event)
 {
    U_TRACE(0, "UNotifier::insert(%p)", handler_event)
@@ -197,6 +211,8 @@ void UNotifier::insert(UEventFd* handler_event)
    if (pthread) pthread->lock();
 #endif
 
+   U_INTERNAL_DUMP("pool = %p", pool)
+
    if (pool == 0) item = U_NEW(UNotifier);
    else
       {
@@ -229,8 +245,6 @@ loop:
    if ( read_set) U_INTERNAL_DUMP(" read_set = %B", __FDS_BITS( read_set)[0])
    if (write_set) U_INTERNAL_DUMP("write_set = %B", __FDS_BITS(write_set)[0])
 #  endif
-
-   U_ASSERT_EQUALS(empty(), false)
 
    // On Linux, the function select modifies timeout to reflect the amount of time not slept;
    // most other implementations do not do this. This causes problems both when Linux code which
@@ -383,6 +397,14 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier** ptr, bool bread, b
 
    if (bdelete)
       {
+#  ifdef HAVE_EPOLL_WAIT
+      (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_DEL, handler_event->fd, (struct epoll_event*)1);
+#  endif
+
+      item->handler_event_fd = 0;
+
+      handler_event->handlerDelete();
+
 #  ifdef HAVE_PTHREAD_H
       if (pthread) pthread->lock();
 #  endif
@@ -396,15 +418,7 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier** ptr, bool bread, b
       if (pthread) pthread->unlock();
 #  endif
 
-      item->handler_event_fd = 0;
-
       U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
-
-#  ifdef HAVE_EPOLL_WAIT
-   // (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_DEL, handler_event->fd, (struct epoll_event*)1);
-#  endif
-
-      handler_event->handlerDelete();
 
       U_RETURN(true);
       }
@@ -449,7 +463,7 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 
 #  ifdef HAVE_LIBEVENT
 #  elif defined(HAVE_EPOLL_WAIT)
-      bool bexcept;
+      bool bexcept, bfound;
 
       for (struct epoll_event* pev = events, *pev_end = pev + n; pev < pev_end; ++pev)
          {
@@ -459,11 +473,8 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
                            (pev->events & U_WRITE_OUT) != 0 ||
                            (pev->events & EPOLLERR)    != 0)
 
-         ptr = &first;
-
-#     ifdef DEBUG
-         bool bfound = false;
-#     endif
+         ptr    = &first;
+         bfound = false;
 
          while ((item = *ptr))
             {
@@ -497,14 +508,11 @@ found:
                goto end;
                }
 
-#        ifdef DEBUG
             bfound = true;
-#        endif
 
             break;
             }
 
-#     ifdef DEBUG
          if (bfound == false)
             {
             U_WARNING("epoll_wait() fire events %B on file descriptor %d without handler...", pev->events, pev->data.fd);
@@ -512,18 +520,27 @@ found:
 #        ifdef HAVE_PTHREAD_H
             if (pthread)
                {
-               for (item = vpool; item; ++item)
+               for (uint32_t i = 0; i < vpooln; ++i)
                   {
-                  U_INTERNAL_DUMP("fd = %d", item->handler_event_fd->fd)
+                  U_INTERNAL_DUMP("vpool[%d].fd = %d", i, vpool[i].handler_event_fd->fd)
 
-                  if (item->handler_event_fd->fd == pev->data.fd) goto found;
+                  if (vpool[i].handler_event_fd->fd == pev->data.fd)
+                     {
+                     U_INTERNAL_ASSERT_EQUALS(vpool[i-1].next,vpool+i)
+
+                     ptr = &(vpool[i-1].next);
+
+                     goto found;
+                     }
                   }
                }
 #        endif
 
+#        ifdef DEBUG
             (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_DEL, pev->data.fd, (struct epoll_event*)1);
+            (void) U_SYSCALL(close, "%d", pev->data.fd);
+#        endif
             }
-#     endif
          }
 #  else
       bool bdelete;
@@ -687,9 +704,9 @@ void UNotifier::removeBadFd()
 }
 #endif
 
-U_NO_EXPORT void UNotifier::eraseItem(UNotifier** ptr, bool flag)
+U_NO_EXPORT void UNotifier::eraseItem(UNotifier** ptr)
 {
-   U_TRACE(1, "UNotifier::eraseItem(%p,%b)", ptr, flag)
+   U_TRACE(1, "UNotifier::eraseItem(%p)", ptr)
 
    UNotifier* item = *ptr;
 
@@ -734,33 +751,23 @@ U_NO_EXPORT void UNotifier::eraseItem(UNotifier** ptr, bool flag)
 
    *ptr = item->next;
 
-   if (flag)
-      {
-      item->next = pool;
-      pool       = item;
+   item->next = pool;
+   pool       = item;
 
-      item->handler_event_fd = 0;
+   item->handler_event_fd = 0;
 
-      U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
+   U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
 
-      handler_event->handlerDelete();
-      }
-   else
-      {
-      item->next             = 0;
-      item->handler_event_fd = 0;
-
-      delete item;
-      }
+   handler_event->handlerDelete();
 
 #ifdef DEBUG
    if (first) U_INTERNAL_DUMP("first = %O", U_OBJECT_TO_TRACE(*first))
 #endif
 }
 
-void UNotifier::erase(UEventFd* handler_event, bool flag_reuse)
+void UNotifier::erase(UEventFd* handler_event)
 {
-   U_TRACE(0, "UNotifier::erase(%p,%b)", handler_event, flag_reuse)
+   U_TRACE(0, "UNotifier::erase(%p)", handler_event)
 
    U_INTERNAL_ASSERT_POINTER(handler_event)
 
@@ -770,7 +777,7 @@ void UNotifier::erase(UEventFd* handler_event, bool flag_reuse)
       {
       if (item->handler_event_fd == handler_event)
          {
-         eraseItem(ptr, flag_reuse);
+         eraseItem(ptr);
 
          return;
          }
@@ -790,7 +797,7 @@ void UNotifier::callForAllEntry(bPFpv function)
       {
       if (function(item->handler_event_fd))
          {
-         eraseItem(ptr, true);
+         eraseItem(ptr);
 
          continue;
          }
@@ -807,11 +814,13 @@ void UNotifier::preallocate(uint32_t n)
 
    if (n < (1024U * 1024U))
       {
-      pool = vpool = U_NEW_VEC(n, UNotifier);
+      vpool  = pool = U_MALLOC_N(n, UNotifier);
+      vpooln = n;
 
       for (uint32_t i = 0, end = n - 1; i < end; ++i)
          {
-         pool[i].next = pool + i + 1;
+         pool[i].next             = pool + i + 1;
+         pool[i].handler_event_fd = 0;
          }
 
       U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
@@ -826,21 +835,12 @@ void UNotifier::clear()
 
    if (vpool)
       {
-      UNotifier* item;
-      UNotifier* next;
+      U_FREE_N(vpool,vpooln,UNotifier);
 
-      for (item = pool; item; item = next)
-         {
-         next = item->next;
-                item->next = 0;
-
-         U_INTERNAL_DUMP("item = %p item->next = %p item->handler_event_fd = %p", item, next, item->handler_event_fd)
-
-         item->handler_event_fd = 0;
-         }
-
-      delete[] vpool;
-               vpool = 0;
+      pool   = 0;
+      first  = 0;
+      vpool  = 0;
+      vpooln = 0;
       }
    else
       {
@@ -901,13 +901,30 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
    if (timeoutMS != -1) U_INTERNAL_ASSERT_MAJOR(timeoutMS,499)
 #endif
 
-#ifdef __MINGW32__
-   int ret = (is_socket(fd) == false);
-#elif defined(USE_POLL)
+#ifdef USE_POLL
    struct pollfd fds[1] = { { fd, POLLIN, 0 } };
 
    int ret = waitForEvent(fds, timeoutMS);
 #else
+
+#  ifdef __MINGW32__
+   if (is_socket(fd) == false)
+      {
+      DWORD count = 0;
+
+      while (U_SYSCALL(PeekNamedPipe, "%p,%p,%ld,%p,%p,%p", (HANDLE)_get_osfhandle(fd), 0, 0, 0, &count, 0) &&
+             count     == 0                                                                                 &&
+             timeoutMS != -1)
+         {
+         Sleep(timeoutMS);
+
+         timeoutMS = -1;
+         }
+
+      U_RETURN(count);
+      }
+#  endif
+
    UEventTime time(0L, timeoutMS * 1000L);
    UEventTime* ptime = (timeoutMS < 0 ? 0 : (time.adjust(), &time));
 
@@ -931,13 +948,30 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
    if (timeoutMS != -1) U_INTERNAL_ASSERT_MAJOR(timeoutMS,499)
 #endif
 
-#ifdef __MINGW32__
-   int ret = (is_socket(fd) == false);
-#elif defined(USE_POLL)
+#ifdef USE_POLL
    struct pollfd fds[1] = { { fd, POLLOUT, 0 } };
 
    int ret = waitForEvent(fds, timeoutMS);
 #else
+
+#  ifdef __MINGW32__
+   if (is_socket(fd) == false)
+      {
+      DWORD count = 0;
+
+      while (U_SYSCALL(PeekNamedPipe, "%p,%p,%ld,%p,%p,%p", (HANDLE)_get_osfhandle(fd), 0, 0, 0, &count, 0) &&
+             count     == 0                                                                                 &&
+             timeoutMS != -1)
+         {
+         Sleep(timeoutMS);
+
+         timeoutMS = -1;
+         }
+
+      U_RETURN(count);
+      }
+#  endif
+
    UEventTime time(0L, timeoutMS * 1000L);
    UEventTime* ptime = (timeoutMS < 0 ? 0 : (time.adjust(), &time));
 
@@ -1076,14 +1110,46 @@ U_EXPORT ostream& operator<<(ostream& os, const UNotifier& n)
    os.put(' ');
 
    if (n.handler_event_fd) n.outputEntry(os);
-   else                    os << (void*)&n;
+   else
+      {
+      if (UNotifier::vpool)
+         {
+         int i = (&n - UNotifier::vpool);
+
+         if (i >= 0)
+            {
+            os.put('[');
+            os << i;
+            os.put(']');
+            os.put(' ');
+            }
+         }
+
+      os << (void*)&n;
+      }
 
    for (UNotifier* item = n.next; item; item = item->next)
       {
       os.put(' ');
 
       if (item->handler_event_fd) item->outputEntry(os);
-      else                        os << (void*)item;
+      else
+         {
+         if (UNotifier::vpool)
+            {
+            int i = (item - UNotifier::vpool);
+
+            if (i >= 0)
+               {
+               os.put('[');
+               os << i;
+               os.put(']');
+               os.put(' ');
+               }
+            }
+
+         os << (void*)item;
+         }
       }
 
    os.put(' ');

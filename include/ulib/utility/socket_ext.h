@@ -22,7 +22,17 @@ public:
 
    // SERVICES
 
-   static UString getNodeName();
+   static UString getNodeName()
+      {
+      U_TRACE(0, "USocketExt::getNodeName()")
+
+      U_INTERNAL_ASSERT_MAJOR(u_hostname_len,0)
+
+      UString result(u_hostname, u_hostname_len);
+
+      U_RETURN_STRING(result);
+      }
+
    static void    getARPCache(UVector<UString>& vec);
    static UString getNetworkInterfaceName(const UString& ip);
 

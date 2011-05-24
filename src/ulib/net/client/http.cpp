@@ -16,6 +16,10 @@
 #include <ulib/net/client/http.h>
 #include <ulib/utility/services.h>
 
+#ifdef HAVE_MAGIC
+#  include <ulib/magic/magic.h>
+#endif
+
 /*
 An Example with HTTP/1.0 
 ==========================================================================================
@@ -421,7 +425,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
       // MD5(HA1 : nonce : nc : cnonce : qop : HA2)
 
       a3.snprintf("%.*s:%.*s:%08u:%ld:%.*s:%.*s", U_STRING_TO_TRACE(ha1), U_STRING_TO_TRACE(nonce),
-                                                   ++nc,                   u_now.tv_sec,
+                                                   ++nc,                   u_now->tv_sec,
                                                    U_STRING_TO_TRACE(qop), U_STRING_TO_TRACE(ha2));
 
       UServices::generateDigest(U_HASH_MD5, 0, a3, _response, false);
@@ -431,7 +435,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
 
       headerValue.snprintf("Digest username=\"%.*s\", realm=%.*s, nonce=%.*s, uri=\"%.*s\", cnonce=\"%ld\", nc=%08u, response=\"%.*s\", qop=%.*s",
                            U_STRING_TO_TRACE(user), U_STRING_TO_TRACE(realm), U_STRING_TO_TRACE(nonce),
-                           U_STRING_TO_TRACE(UClient_Base::uri), u_now.tv_sec, nc, U_STRING_TO_TRACE(_response), U_STRING_TO_TRACE(qop));
+                           U_STRING_TO_TRACE(UClient_Base::uri), u_now->tv_sec, nc, U_STRING_TO_TRACE(_response), U_STRING_TO_TRACE(qop));
 
       if (algorithm.empty() == false) (void) headerValue.append(U_CONSTANT_TO_PARAM(", algorithm=\"MD5\""));
       }
@@ -745,11 +749,15 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file)
 {
    U_TRACE(0, "UHttpClient_Base::upload(%.*S,%.*S)", U_STRING_TO_TRACE(_url), U_FILE_TO_TRACE(file))
 
+#ifdef HAVE_MAGIC
+   if (UMagic::magic == 0) (void) UMagic::init();
+#endif
+
    UString content = file.getContent(), pbody(content.size() + 300U);
 
    pbody.snprintf(U_HTTP_UPLOAD_REQUEST_BODY,
                      U_FILE_TO_TRACE(file),
-                     file.getMimeType(),
+                     file.getMimeType(false),
                      U_STRING_TO_TRACE(content));
 
    // send upload request to server and get response

@@ -278,9 +278,9 @@ UDate::UDate(const char* str, bool UTC)
       u_gettimeofday();
 
 #  if defined(DEBUG) && !defined(__MINGW32__)
-      U_SYSCALL_VOID(localtime_r, "%p,%p", &u_now.tv_sec, &u_strftime_tm);
+      U_SYSCALL_VOID(localtime_r, "%p,%p", &(u_now->tv_sec), &u_strftime_tm);
 #  else
-                     localtime_r(          &u_now.tv_sec, &u_strftime_tm);
+                     localtime_r(          &(u_now->tv_sec), &u_strftime_tm);
 #  endif
 
       switch (scanned)

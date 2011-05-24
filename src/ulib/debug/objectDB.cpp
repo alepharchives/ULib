@@ -67,34 +67,15 @@ public:
       random = u_random(  (uint32_t)ptr_object);
 #  endif
 
-      index  = random % table_size;
+      index = random % table_size;
 
       U_INTERNAL_PRINT("index = %u", index)
 
       U_INTERNAL_ASSERT_MINOR(index,table_size)
 
-      UHashMapObjectDumpable* prev = 0;
-
       for (node = table[index]; node; node = node->next)
          {
-         if (node->objDumper->ptr_object == ptr_object)
-            {
-            // lista self-organizing (move-to-front), antepongo
-            // l'elemento trovato all'inizio della lista delle collisioni...
-
-            if (prev)
-               {
-               prev->next   = node->next;
-               node->next   = table[index];
-               table[index] = node;
-               }
-
-            U_INTERNAL_ASSERT_EQUALS(node,table[index])
-
-            break;
-            }
-
-         prev = node;
+         if (node->objDumper->ptr_object == ptr_object) break;
          }
 
       U_INTERNAL_PRINT("node = %p", node)
@@ -183,20 +164,49 @@ public:
 
       lookup(ptr_object);
 
-      if (node)
+      if (node == 0) return;
+
+      UHashMapObjectDumpable* prev = 0;
+
+      for (UHashMapObjectDumpable* pnode = table[index]; pnode; pnode = pnode->next)
          {
-         // presuppone l'elemento da cancellare all'inizio della lista
-         // delle collisioni - lista self-organizing (move-to-front)
+         if (pnode == node)
+            {
+            U_INTERNAL_ASSERT_EQUALS(pnode->objDumper->ptr_object, ptr_object)
 
-         U_INTERNAL_ASSERT_EQUALS(node,table[index])
+            /* lista self-organizing (move-to-front), antepongo l'elemento
+             * trovato all'inizio della lista delle collisioni...
+             */
 
-         table[index] = node->next;
+            if (prev)
+               {
+               prev->next   = pnode->next;
+               node->next   = table[index];
+               table[index] = pnode;
+               }
 
-         delete node->objDumper;
-         delete node;
+            U_INTERNAL_ASSERT_EQUALS(node,table[index])
 
-         --num;
+            break;
+            }
+
+         prev = pnode;
          }
+
+      U_INTERNAL_PRINT("prev = %p", prev)
+
+      /* presuppone l'elemento da cancellare all'inizio della lista
+       * delle collisioni - lista self-organizing (move-to-front)...
+       */
+
+      U_INTERNAL_ASSERT_EQUALS(node,table[index])
+
+      table[index] = node->next;
+
+      delete node->objDumper;
+      delete node;
+
+      --num;
 
       U_INTERNAL_PRINT("num = %u", num)
       }

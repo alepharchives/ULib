@@ -9,6 +9,8 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
+   u_init_hostname();
+
    ULog y(U_STRING_FROM_CONSTANT("$PWD/test_log.log"), 1024);
 
    y.setClient();

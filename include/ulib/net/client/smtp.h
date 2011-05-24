@@ -103,16 +103,7 @@ public:
    Constructs a new USmtpClient with default values for all properties
    */
 
-   USmtpClient(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6)
-      {
-      U_TRACE_REGISTER_OBJECT(0, USmtpClient, "%b", bSocketIsIPv6)
-
-      state    = INIT;
-      response = NONE;
-
-      if (str_empty == 0) str_allocate();
-      }
-
+            USmtpClient(bool bSocketIsIPv6 = false);
    virtual ~USmtpClient();
 
    /**

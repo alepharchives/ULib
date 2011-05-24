@@ -209,6 +209,10 @@ U_NO_EXPORT void UCommand::setStdInOutErr(int fd_stdin, bool flag_stdin, bool fl
          {
          UProcess::pipe(STDIN_FILENO); // UProcess::filedes[0] is for READING,
                                        // UProcess::filedes[1] is for WRITING
+#     ifdef __MINGW32__
+         // Ensure the write handle to the pipe for STDIN is not inherited
+         (void) U_SYSCALL(SetHandleInformation, "%p,%ld,%ld", UProcess::hFile[1], HANDLE_FLAG_INHERIT, 0);
+#     endif
          }
       else
          {
@@ -220,6 +224,10 @@ U_NO_EXPORT void UCommand::setStdInOutErr(int fd_stdin, bool flag_stdin, bool fl
       {
       UProcess::pipe(STDOUT_FILENO);   // UProcess::filedes[2] is for READING,
                                        // UProcess::filedes[3] is for WRITING
+#  ifdef __MINGW32__
+      // Ensure the read handle to the pipe for STDOUT is not inherited
+      (void) U_SYSCALL(SetHandleInformation, "%p,%ld,%ld", UProcess::hFile[2], HANDLE_FLAG_INHERIT, 0);
+#  endif
       }
 
    if (fd_stderr != -1)
@@ -287,6 +295,8 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
 {
    U_TRACE(1, "UCommand::postCommand(%p,%p)", input, output)
 
+   U_INTERNAL_DUMP("pid = %d", pid)
+
    if (input)
       {
                     UFile::close(UProcess::filedes[0]); // UProcess::filedes[0] for READING...
@@ -326,11 +336,20 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
    if (output &&
        output != (void*)-1) // special value...
       {
+      bool kill_command;
+
       output->setBuffer(U_CAPACITY); // to avoid reserve()...
 
-      bool kill_command = (UNotifier::waitForRead(UProcess::filedes[2]) != 1);
+#  ifdef __MINGW32__
+      kill_command = false;
 
-      if (kill_command == false) UServices::readEOF(UProcess::filedes[2], *output);
+               (void) UNotifier::waitForRead(UProcess::filedes[2], 1000);
+#  else
+      kill_command = (UNotifier::waitForRead(UProcess::filedes[2]) != 1);
+
+      if (kill_command == false)
+#  endif
+      UServices::readEOF(UProcess::filedes[2], *output);
 
       UFile::close(UProcess::filedes[2]);
                    UProcess::filedes[2] = 0;

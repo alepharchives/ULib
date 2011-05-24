@@ -63,13 +63,13 @@ int U_EXPORT main (int argc, char* argv[])
    U_ASSERT(tv1 != tv2);
    U_ASSERT(tv6 != tv1);
 
-   U_ASSERT(y < UTimeVal(u_now));
+   U_ASSERT(y < UTimeVal(*u_now));
 
    set_alarm();
 
    y.nanosleep();
 
-   y += UTimeVal(u_now);
+   y += UTimeVal(*u_now);
 
-   U_ASSERT(y > UTimeVal(u_now));
+   U_ASSERT(y > UTimeVal(*u_now));
 }

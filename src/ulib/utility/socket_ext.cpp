@@ -38,7 +38,7 @@ vPFi USocketExt::byte_read_hook; // it allows the generation of a progress meter
 
 bool USocketExt::read(USocket* s, UString& buffer, int count, int timeoutMS, uint32_t time_limit)
 {
-   U_TRACE(1, "USocketExt::read(%p,%.*S,%d,%d,%u)", s, U_STRING_TO_TRACE(buffer), count, timeoutMS, time_limit)
+   U_TRACE(0, "USocketExt::read(%p,%.*S,%d,%d,%u)", s, U_STRING_TO_TRACE(buffer), count, timeoutMS, time_limit)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_DIFFERS(count,0)
@@ -93,13 +93,13 @@ read:
 
       if (time_limit)
          {
-         (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
+         u_gettimeofday();
 
-         if (timeout == 0) timeout = u_now.tv_sec + time_limit;
+         if (timeout == 0) timeout = u_now->tv_sec + time_limit;
 
          // NB: may be is attacked by a "slow loris"... http://lwn.net/Articles/337853/
 
-         if (u_now.tv_sec > timeout)
+         if (u_now->tv_sec > timeout)
             {
             s->iState = USocket::BROKEN;
 
@@ -691,32 +691,6 @@ UString USocketExt::getIPAddress(int fd, const char* device)
 
    result.size_adjust();
 #endif
-
-   U_RETURN_STRING(result);
-}
-
-UString USocketExt::getNodeName()
-{
-   U_TRACE(0, "USocketExt::getNodeName()")
-
-#ifndef __MINGW32__
-   /*
-   UString result(100U);
-   */
-
-   /* 1
-   struct utsname buf;
-   if (U_SYSCALL(uname, "%p", &buf) == 0) (void) result.assign(buf.nodename);
-   */
-
-   /* 2
-   FILE* node = (FILE*) U_SYSCALL(fopen, "%S,%S", "/proc/sys/kernel/hostname", "r");
-   if (U_SYSCALL(fscanf, "%p,%S", node, "%*s", result.data()) != EOF) result.size_adjust();
-   (void) U_SYSCALL(fclose, "%p", node);
-   */
-#endif
-
-   UString result(u_hostname, u_hostname_len);
 
    U_RETURN_STRING(result);
 }

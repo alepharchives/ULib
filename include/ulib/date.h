@@ -223,13 +223,13 @@ public:
 
    void setCurrentDate()
       {
-      U_TRACE(1, "UDate::setCurrentDate()")
+      U_TRACE(0, "UDate::setCurrentDate()")
 
       // UNIX system time - SecsSince1Jan1970UTC
 
-      (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
+      u_gettimeofday();
 
-      fromTime(u_now.tv_sec);
+      fromTime(u_now->tv_sec);
       }
 
    static void setCurrentDate(UDate& date)

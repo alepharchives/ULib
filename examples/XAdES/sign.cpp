@@ -302,6 +302,9 @@ public:
    ~Application()
       {
       U_TRACE(5, "Application::~Application()")
+
+      U_SYSCALL_VOID_NO_PARAM(xmlCleanupParser);
+      U_SYSCALL_VOID_NO_PARAM(xmlMemoryDump);
       }
 
    UString getOptionValue(const char* param, const char* tag)
@@ -554,6 +557,10 @@ public:
 
       UApplication::run(argc, argv, env);
 
+      U_SYSCALL_VOID_NO_PARAM(xmlInitParser); // init libxml
+
+      LIBXML_TEST_VERSION
+
       // manage options
 
       if (UApplication::isOptions()) cfg_str = opt['c'];
@@ -619,6 +626,8 @@ public:
 
       if (*U_KEY_HANDLE == '\0') U_ERROR("KEY_HANDLE is mandatory...");
 
+      xades_c = (U_CA_STORE != 0);
+
       digest_algorithm = getOptionValue(U_DIGEST_ALGORITHM, "DigestAlgorithm");
 
       alg = u_dgst_get_algoritm(digest_algorithm.c_str());
@@ -632,8 +641,6 @@ public:
       production_place_postal_code       = getOptionValue(U_PRODUCTION_PLACE_POSTAL_CODE,       "ProductionPlacePostalCode");
       production_place_country_name      = getOptionValue(U_PRODUCTION_PLACE_COUNTRY_NAME,      "ProductionPlaceCountryName");
       data_object_format_mimetype        = getOptionValue("",                                   "DataObjectFormatMimeType");
-
-      xades_c = (U_CA_STORE != 0);
 
       if (xades_c == false) num_ca = 0;
       else
@@ -746,10 +753,10 @@ public:
 
       ENGINE* e;
 
-#  ifdef __MINGW32__
+   #  ifdef __MINGW32__
       e = UServices::loadEngine("HCSP", ENGINE_METHOD_RSA);
       x = U_KEY_HANDLE;
-#  else
+   #  else
       e = 0;
       x = UFile::contentOf(U_KEY_HANDLE);
 
@@ -759,12 +766,12 @@ public:
          U_ERROR("I can't load the private key: %S", U_KEY_HANDLE);
          }
 
-#     ifdef HAVE_OPENSSL_98
+   #     ifdef HAVE_OPENSSL_98
       if (cert.matchPrivateKey(u_pkey) == false) U_ERROR("the private key doesn't matches the public key of the certificate");
-#     endif
+   #     endif
 
       x.clear();
-#  endif
+   #  endif
 
       UString sign = UServices::getSignatureValue(alg, to_sign, x, UString::getStringNull(), true, e);
 

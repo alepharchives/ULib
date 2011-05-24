@@ -121,9 +121,9 @@ bool USemaphore::wait(timeout_t timeout)
       {
       /* Wait for sem being posted */
 
-      U_INTERNAL_ASSERT(u_now.tv_sec > 1260183779) // 07/12/2009
+      U_INTERNAL_ASSERT(u_now->tv_sec > 1260183779) // 07/12/2009
 
-      struct timespec abs_timeout = { u_now.tv_sec + timeout / 1000, 0 };
+      struct timespec abs_timeout = { u_now->tv_sec + timeout / 1000, 0 };
 
       U_INTERNAL_DUMP("abs_timeout = { %d, %d }", abs_timeout.tv_sec, abs_timeout.tv_nsec)
 

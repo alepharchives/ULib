@@ -285,7 +285,6 @@ bool u_runAsUser(const char* restrict user, bool change_dir)
 #ifdef __MINGW32__
    return false;
 #else
-   char buffer[128];
    struct passwd* restrict pw;
 
    U_INTERNAL_TRACE("u_runAsUser(%s,%d)", user, change_dir)
@@ -299,9 +298,13 @@ bool u_runAsUser(const char* restrict user, bool change_dir)
       return false;
       }
 
+   {
+   static char buffer[128];
+
    (void) snprintf(buffer, sizeof(buffer), "HOME=%s", pw->pw_dir);
 
-   (void) putenv(strdup(buffer));
+   (void) putenv(buffer);
+   }
 
    (void) u_strncpy(u_user_name, user, (u_user_name_len = u_strlen(user))); /* change user name */
 

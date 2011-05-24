@@ -103,8 +103,8 @@ void u_init_mingw(void)
 /* (void) InitializeSecurityDescriptor(&sec_descr, SECURITY_DESCRIPTOR_REVISION); */
 
    sec_none.nLength              = sizeof(SECURITY_ATTRIBUTES);
-   sec_none.lpSecurityDescriptor = 0;     /* &sec_descr; */
    sec_none.bInheritHandle       = TRUE; /* Set the bInheritHandle flag so pipe handles are inherited */
+   sec_none.lpSecurityDescriptor = 0;    /* &sec_descr; */
 }
 
 char* realpath(const char* name, char* resolved_path)
@@ -285,7 +285,7 @@ int mkstemp(char* tmplate)
       {
       pChr = tmplate + iLen - 6;
 
-      srand(u_now.tv_sec);
+      srand(u_now->tv_sec);
 
       if (strncmp(pChr, "XXXXXX", 6) == 0)
          {

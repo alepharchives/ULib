@@ -76,7 +76,7 @@ inline void UTimer::callHandlerTime()
 {
    U_TRACE(0, "UTimer::callHandlerTime()")
 
-   U_INTERNAL_DUMP("u_now = %#4D (next alarm expire) = %#4D", u_now.tv_sec, (next ? next->alarm->expire() : 0))
+   U_INTERNAL_DUMP("u_now = %#4D (next alarm expire) = %#4D", u_now->tv_sec, (next ? next->alarm->expire() : 0))
 
    int result = alarm->handlerTime(); // chiama il gestore dell'evento scadenza temporale
 
@@ -115,9 +115,9 @@ void UTimer::setTimer()
    UTimer* item;
    UTimer** ptr = &first;
 
-   (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
+   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
-   U_INTERNAL_DUMP("u_now = { %ld %6ld }", u_now.tv_sec, u_now.tv_usec)
+   U_INTERNAL_DUMP("u_now = { %ld %6ld }", u_now->tv_sec, u_now->tv_usec)
 
    while ((item = *ptr))
       {
@@ -291,7 +291,7 @@ bool UTimer::invariant()
       {
       for (UTimer* item = first; item->next; item = item->next)
          {
-         U_INTERNAL_ASSERT_MINOR(*item,*(item->next))
+         U_INTERNAL_ASSERT(*item <= *(item->next))
          }
       }
 

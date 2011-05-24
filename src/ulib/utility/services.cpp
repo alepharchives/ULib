@@ -143,7 +143,7 @@ restart:
    U_INTERNAL_DUMP("start = %u single_read = %b count = %d", start, single_read, count)
 
 read:
-   value = UNotifier::read(fd, ptr + byte_read, (single_read ? (int)capacity : count - byte_read), timeoutMS);
+   value = UNotifier::read(fd, ptr + byte_read, (single_read ? U_SINGLE_READ : count - byte_read), timeoutMS);
 
    if (value <= 0) U_RETURN(false);
 
@@ -576,7 +576,7 @@ void UServices::generateKey()
 #elif defined(HAVE_LIBUUID)
    U_SYSCALL_VOID(uuid_generate, "%p", key);
 #else
-   (void) u_snprintf((char*)key, 16, "%P%lu", u_now.tv_usec);
+   (void) u_snprintf((char*)key, 16, "%P%lu", u_now->tv_usec);
 #endif
 }
 
@@ -633,10 +633,10 @@ UString UServices::getTokenData(const char* token)
       data.size_adjust();
       hmac.size_adjust(32U); // 32 -> MD5 output len
 
-      U_INTERNAL_DUMP("data = %.*S u_now = %ld expire = %ld (u_now < expire) = %b", U_STRING_TO_TRACE(data), u_now.tv_sec, expire, (u_now.tv_sec < expire))
+      U_INTERNAL_DUMP("data = %.*S u_now = %ld expire = %ld (u_now < expire) = %b", U_STRING_TO_TRACE(data), u_now->tv_sec, expire, (u_now->tv_sec < expire))
 
                                                                          //... '&' time '&'
-      if (UServices::checkHMAC(U_HASH_MD5, (unsigned char*)token, data.size() + 1 + 10 + 1, hmac) && u_now.tv_sec < expire) U_RETURN_STRING(data);
+      if (UServices::checkHMAC(U_HASH_MD5, (unsigned char*)token, data.size() + 1 + 10 + 1, hmac) && u_now->tv_sec < expire) U_RETURN_STRING(data);
       }
 
    U_RETURN_STRING(UString::getStringNull());

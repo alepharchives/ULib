@@ -20,15 +20,6 @@
 
 #include <errno.h>
 
-#ifdef __MINGW32__
-#  include <ws2tcpip.h>
-#endif
-
-#ifndef HAVE_ACCEPT4
-#  define SOCK_NONBLOCK   04000 /* Atomically mark descriptor(s) as non-blocking */
-#  define SOCK_CLOEXEC 02000000 /* Atomically set close-on-exec flag for the new descriptor(s) */
-#endif
-
 int  USocket::accept4_flags;  // If flags is 0, then accept4() is the same as accept()
 
 const UString* USocket::str_host;
@@ -138,6 +129,27 @@ void USocket::str_allocate()
    U_NEW_ULIB_OBJECT(str_X_Forwarded_For,       U_STRING_FROM_STRINGREP_STORAGE(21));
    U_NEW_ULIB_OBJECT(str_Transfer_Encoding,     U_STRING_FROM_STRINGREP_STORAGE(22));
    U_NEW_ULIB_OBJECT(str_X_Progress_ID,         U_STRING_FROM_STRINGREP_STORAGE(23));
+
+#ifdef HAVE_SSL
+   ULib_init_openssl();
+#endif
+}
+
+USocket::USocket(bool bSocketIsIPv6)
+{
+   U_TRACE_REGISTER_OBJECT(0, USocket, "%b", bSocketIsIPv6)
+
+   flags       = O_RDWR;
+   iState      = CLOSE;
+   iSockDesc   = -1;
+   bLocalSet   = false;
+#ifdef HAVE_IPV6
+   bIPv6Socket = bSocketIsIPv6;
+#else
+   bIPv6Socket = false;
+#endif
+
+   if (str_host == 0) str_allocate();
 }
 
 USocket::~USocket()

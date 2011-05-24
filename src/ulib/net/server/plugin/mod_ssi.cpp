@@ -181,6 +181,8 @@ U_NO_EXPORT UString USSIPlugIn::getInclude(const UString& include, int include_l
 
    UString content = include;
 
+   U_INTERNAL_DUMP("file = %.*S", U_FILE_TO_TRACE(*UHTTP::file))
+
    if (u_endsWith(U_FILE_TO_PARAM(*UHTTP::file), U_CONSTANT_TO_PARAM(".shtml")))
       {
       if (include_level < 16) content = processSSIRequest(content, include_level + 1);
@@ -249,7 +251,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
       directive = token.c_pointer((i = 2)); // "-#"...
 
-      U_INTERNAL_DUMP("directive = %10s", directive)
+      U_INTERNAL_DUMP("directive = %.*S", 10, directive)
 
       /**
        * <!--#element attribute=value attribute=value ... -->
@@ -509,8 +511,8 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                    *                nested include files, this is not then URL for the current document.
                    */
 
-                       if (value == *str_DATE_GMT)      x = UDate::strftime(timefmt.data(), u_now.tv_sec);
-                  else if (value == *str_DATE_LOCAL)    x = UDate::strftime(timefmt.data(), u_now.tv_sec + u_now_adjust);
+                       if (value == *str_DATE_GMT)      x = UDate::strftime(timefmt.data(), u_now->tv_sec);
+                  else if (value == *str_DATE_LOCAL)    x = UDate::strftime(timefmt.data(), u_now->tv_sec + u_now_adjust);
                   else if (value == *str_LAST_MODIFIED) x = UDate::strftime(timefmt.data(), last_modified);
                   else if (value == *str_USER_NAME)     (void) x.assign(u_user_name, u_user_name_len);
                   else if (value == *str_DOCUMENT_URI)  (void) x.assign(U_HTTP_URI_TO_PARAM);

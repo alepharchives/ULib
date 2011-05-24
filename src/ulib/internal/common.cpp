@@ -18,19 +18,10 @@
 #  include <ulib/internal/objectIO.h>
 #endif
 
-#ifdef HAVE_MAGIC
-#  include <ulib/magic/magic.h>
-#endif
-
 #ifdef HAVE_SSL
 #  include <openssl/ssl.h>
 #  include <openssl/rand.h>
 #  include <openssl/conf.h>
-#endif
-
-#ifdef HAVE_LIBXML2
-#  include <libxml/parser.h>
-#  include <libxml/xmlversion.h>
 #endif
 
 void ULib_init()
@@ -54,11 +45,7 @@ void ULib_init()
    if (u_tmpdir == 0) u_tmpdir = "/tmp";
 
 #ifdef DEBUG
-    UObjectIO::init();
-#endif
-
-#ifdef HAVE_MAGIC
-   (void) UMagic::init();
+   UObjectIO::init();
 #endif
 
 #ifdef __MINGW32__
@@ -83,7 +70,23 @@ void ULib_init()
    (void) U_SYSCALL(atexit, "%p", (vPF)&WSACleanup);
 #endif
 
+#if defined(SOLARIS) && (defined(SPARC) || defined(sparc))
+   // make this if there are pointer misalligned (because pointers must be always a multiple of 4
+   // (when running 32 bit applications))
+   asm("ta 6");
+#endif
+
+   U_INTERNAL_ASSERT_EQUALS(sizeof(off_t),      SIZEOF_OFF_T)
+   U_INTERNAL_ASSERT_EQUALS(sizeof(UStringRep), U_SIZEOF_UStringRep)
+
+   U_INTERNAL_DUMP("UStringRep::string_rep_null = %p", UStringRep::string_rep_null)
+}
+
 #ifdef HAVE_SSL
+void ULib_init_openssl()
+{
+   U_TRACE(1, "ULib_init_openssl()")
+
    // A typical TLS/SSL application will start with the library initialization,
    // will provide readable error messages and will seed the PRNG (Pseudo Random Number Generator).
    // The environment variable OPENSSL_CONFIG can be set to specify the location of the configuration file
@@ -113,22 +116,5 @@ void ULib_init()
       RAND_seed(&tmp, sizeof(int));
       }
 #  endif
-#endif
-
-#ifdef HAVE_LIBXML2
-   U_SYSCALL_VOID_NO_PARAM(xmlInitParser); // init libxml
-
-   LIBXML_TEST_VERSION
-#endif
-
-#if defined(SOLARIS) && (defined(SPARC) || defined(sparc))
-   // make this if there are pointer misalligned (because pointers must be always a multiple of 4
-   // (when running 32 bit applications))
-   asm("ta 6");
-#endif
-
-   U_INTERNAL_ASSERT_EQUALS(sizeof(off_t),      SIZEOF_OFF_T)
-   U_INTERNAL_ASSERT_EQUALS(sizeof(UStringRep), U_SIZEOF_UStringRep)
-
-   U_INTERNAL_DUMP("UStringRep::string_rep_null = %p", UStringRep::string_rep_null)
 }
+#endif

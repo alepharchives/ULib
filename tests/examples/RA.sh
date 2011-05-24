@@ -5,10 +5,11 @@
 DOC_ROOT=/srv/RA/www
 
 rm -f RA.log /tmp/processCGIRequest.err \
+		$DOC_ROOT/client/*/*/ \
 		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* \
  		$DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]*
 
-#UTRACE="0 50M 0"
+ UTRACE="0 50M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR

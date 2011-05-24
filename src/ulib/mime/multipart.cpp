@@ -175,6 +175,8 @@ UString UMimeMultipartMsg::section(const UString& content,
    if (*type == 0)
       {
 #  ifdef HAVE_MAGIC
+      if (UMagic::magic == 0) (void) UMagic::init();
+
       charset = "";
       type    = UMagic::getType(content).data();
 #  else

@@ -16,8 +16,8 @@ start_msg rdb
 if [ "$TERM" = "msys"   ] || \
    [ "$TERM" = "cygwin" ]
 then
-	ARG1="/c/msys/1.0/etc/test_rdb"
-	rm -f /etc/test_rdb*
+	ARG1="/c/tmp/test_rdb"
+	rm -f /c/tmp/test_rdb*
 else
 	ARG1="tmp/test_rdb"
 	rm -f tmp/test_rdb*
@@ -28,7 +28,7 @@ start_prg rdb "$ARG1" 3150 <inp/cdb.input
 if [ "$TERM" = "msys"   ] || \
    [ "$TERM" = "cygwin" ]
 then
-	rm -f /etc/test_rdb*
+	rm -f /c/tmp/test_rdb*
 fi
 
 # Test against expected output

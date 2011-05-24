@@ -26,21 +26,31 @@
 #  endif
 #endif
 
-#include <errno.h>
-
 #ifdef __MINGW32__
+#  include <ws2tcpip.h>
 #  define CAST(a) (char*)a
 #else
 #  define CAST(a) a
 #  include <netinet/tcp.h>
 #endif
 
+#include <errno.h>
+
 #if !defined(HAVE_IPV6) && !defined(AF_INET6)
 #  define AF_INET6 AF_INET
 #endif
 
-#ifndef   SOL_TCP
-#  define SOL_TCP IPPROTO_TCP
+#ifndef SOL_TCP
+#define SOL_TCP IPPROTO_TCP
+#endif
+
+/* Atomically mark descriptor(s) as non-blocking */
+#ifndef SOCK_NONBLOCK
+#define SOCK_NONBLOCK   04000
+#endif
+/* Atomically set close-on-exec flag for the new descriptor(s) */
+#ifndef SOCK_CLOEXEC
+#define SOCK_CLOEXEC    02000000
 #endif
 
 /**
@@ -116,23 +126,7 @@ public:
       LOGIN   = 0x010
    };
 
-   USocket(bool bSocketIsIPv6 = false)
-      {
-      U_TRACE_REGISTER_OBJECT(0, USocket, "%b", bSocketIsIPv6)
-
-      flags       = O_RDWR;
-      iState      = CLOSE;
-      iSockDesc   = -1;
-      bLocalSet   = false;
-#ifdef HAVE_IPV6
-      bIPv6Socket = bSocketIsIPv6;
-#else
-      bIPv6Socket = false;
-#endif
-
-      if (str_range == 0) str_allocate();
-      }
-
+            USocket(bool bSocketIsIPv6 = false);
    virtual ~USocket();
 
    int  getFd() const       { return  iSockDesc; }

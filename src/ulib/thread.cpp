@@ -38,7 +38,7 @@ public:
 
     UThreadImpl(bool suspendEnable, bool joinEnable)
       {
-      U_TRACE_REGISTER_OBJECT(0, UThreadImpl, "%b,%b", suspendEnable, joinEnable)
+      U_TRACE(0, "UThreadImpl::UThreadImpl(%b,%b)", suspendEnable, joinEnable)
 
       _tid           = 0;
       _signal        = 0;
@@ -52,7 +52,7 @@ public:
 
    ~UThreadImpl()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UThreadImpl)
+      U_TRACE(0, "UThreadImpl::~UThreadImpl()")
 
       (void) U_SYSCALL(pthread_attr_destroy, "%p", &_attr);
       }
@@ -528,7 +528,7 @@ const char* UThreadImpl::dump(bool reset) const
                   << "_cancel        " << _cancel        << '\n'
                   << "_signal        " << _signal        << '\n'
                   << "_suspendCount  " << _suspendCount  << '\n'
-                  << "_suspendEnable " << _suspendEnable << ')';
+                  << "_suspendEnable " << _suspendEnable;
 
    if (reset)
       {

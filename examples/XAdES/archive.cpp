@@ -44,6 +44,9 @@ public:
       U_TRACE(5, "Application::~Application()")
 
       vec.clear();
+
+      U_SYSCALL_VOID_NO_PARAM(xmlCleanupParser);
+      U_SYSCALL_VOID_NO_PARAM(xmlMemoryDump);
       }
 
    UString getTimeStampToken(const UString& data, const UString& url)
@@ -64,6 +67,10 @@ public:
       U_TRACE(5, "Application::run(%d,%p,%p)", argc, argv, env)
 
       UApplication::run(argc, argv, env);
+
+      U_SYSCALL_VOID_NO_PARAM(xmlInitParser); // init libxml
+
+      LIBXML_TEST_VERSION
 
       // manage options
 

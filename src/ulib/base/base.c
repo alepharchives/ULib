@@ -40,6 +40,7 @@
 #ifndef __MINGW32__
 #  include <pwd.h>
 #  include <sys/uio.h>
+#  include <sys/utsname.h>
 #endif
 
 /* For TIOCGWINSZ and friends: */
@@ -86,11 +87,13 @@ char     u_buffer[4096];
 uint32_t u_buffer_len; /* signal that is busy */
 
 /* Time services */
-void*  u_pthread_time; /* pthread clock */
 time_t u_start_time;
 time_t u_now_adjust; /* GMT based time */
-struct timeval u_now;
 struct tm u_strftime_tm;
+
+void*  u_pthread_time; /* pthread clock */
+struct timeval u_timeval;
+struct timeval* u_now = &u_timeval;
 
 /* Scan services */
 const char* restrict u_line_terminator     = U_LF;
@@ -179,6 +182,39 @@ void u_setPid(void)
    u_pid_str_len = buffer + sizeof(buffer) - u_pid_str;
 }
 
+void u_init_hostname(void)
+{
+   if (gethostname(u_hostname, sizeof(u_hostname)))
+      {
+      char* restrict tmp = getenv("HOSTNAME"); /* bash setting... */
+
+      if (tmp && *tmp) u_strcpy(u_hostname, tmp);
+      else
+         {
+#     ifndef __MINGW32__
+         FILE* node = (FILE*) fopen("/proc/sys/kernel/hostname", "r");
+
+         if (node)
+            {
+            (void) fscanf(node, "%255s", u_hostname);
+
+            (void) fclose(node);
+            }
+         else
+            {
+            struct utsname buf;
+
+            if (uname(&buf) == 0) (void) strcpy(u_hostname, buf.nodename);
+            }
+#     endif
+         }
+      }
+
+   u_hostname_len = u_strlen(u_hostname);
+
+   if (u_hostname_len == 0) (void) strncpy(u_hostname, "localhost", (u_hostname_len = 9));
+}
+
 void u_getcwd(void) /* get current working directory */
 {
    U_INTERNAL_TRACE("u_getcwd()")
@@ -210,7 +246,9 @@ void u_gettimeofday(void)
     * };
     */
 
-   if (u_pthread_time == 0) (void) gettimeofday(&u_now, 0);
+   U_INTERNAL_ASSERT_POINTER(u_now)
+
+   if (u_pthread_time == 0) (void) gettimeofday(u_now, 0);
 
    if (u_start_time == 0)
       {
@@ -226,7 +264,7 @@ void u_gettimeofday(void)
        * need not set tzname, timezone, and daylight
        */
 
-      (void) localtime_r(&u_now.tv_sec, &u_strftime_tm);
+      (void) localtime_r(&(u_now->tv_sec), &u_strftime_tm);
 
       /* The timegm() function converts the broken-down time representation, expressed in Coordinated Universal
        * Time (UTC) to calendar time
@@ -234,7 +272,7 @@ void u_gettimeofday(void)
 
       lnow = timegm(&u_strftime_tm);
 
-      u_now_adjust = (lnow - u_now.tv_sec);
+      u_now_adjust = (lnow - u_now->tv_sec);
 
       U_INTERNAL_PRINT("u_now_adjust = %ld timezone = %ld daylight = %d tzname[2] = { %s, %s }", u_now_adjust, timezone, daylight, tzname[0], tzname[1])
 
@@ -242,7 +280,7 @@ void u_gettimeofday(void)
 
       /* NB: check if current date is OK - Fri Apr 23 17:26:25 CEST 2010 */
 
-      if (u_now.tv_sec > 1272036378L) u_start_time = u_now.tv_sec + u_now_adjust;
+      if (u_now->tv_sec > 1272036378L) u_start_time = u_now->tv_sec + u_now_adjust;
       }
 }
 
@@ -281,15 +319,6 @@ void u_init(char** restrict argv)
 #endif
 
    u_is_tty = isatty(STDERR_FILENO);
-
-   if (gethostname(u_hostname, 255))
-      {
-      char* restrict tmp = getenv("HOSTNAME"); /* bash setting... */
-
-      if (tmp && *tmp) u_strcpy(u_hostname, tmp);
-      }
-
-   u_hostname_len = u_strlen(u_hostname);
 
    pw = getpwuid(getuid());
 
@@ -362,7 +391,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
          {
          u_gettimeofday();
 
-         t = u_now.tv_sec + u_now_adjust;
+         t = u_now->tv_sec + u_now_adjust;
          }
 
       if (t != old_now)
@@ -1333,6 +1362,8 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'H': /* print host name */
             {
+            U_INTERNAL_ASSERT_MAJOR(u_hostname_len,0)
+
             (void) u_memcpy(bp, u_hostname, u_hostname_len);
 
             bp  += u_hostname_len;
@@ -1486,8 +1517,8 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             /* flag '#' => var-argument */
 
             time_t t = (flags & ALT ? VA_ARG(time_t)              :
-                        width == 0  ? u_now.tv_sec                :
-                        width == 7  ? u_now.tv_sec + u_now_adjust : 0);
+                        width == 0  ? u_now->tv_sec                :
+                        width == 7  ? u_now->tv_sec + u_now_adjust : 0);
 
             if (t == 0 &&
                 (flags & ALT))
@@ -1542,9 +1573,9 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                {
                char tmp[16];
 
-               if (u_pthread_time) (void) gettimeofday(&u_now, 0);
+               if (u_pthread_time) (void) gettimeofday(u_now, 0);
 
-               (void) sprintf(tmp, "_%03lu", u_now.tv_usec / 1000L);
+               (void) sprintf(tmp, "_%03lu", u_now->tv_usec / 1000L);
 
                len = u_strlen(tmp);
 
@@ -1854,13 +1885,9 @@ iteration:
 
       if (ret >= buffer_size)
          {
-         ret -= (width > fieldsz ? width : fieldsz);
-
-#     ifdef DEBUG
-         U_INTERNAL_ASSERT_MSG(false, "BUFFER OVERFLOW at u_vsnprintf()...")
-#     else
          U_ABORT("BUFFER OVERFLOW at u_vsnprintf() - ret = %u buffer_size = %u", ret, buffer_size);
-#     endif
+
+         ret -= (width > fieldsz ? width : fieldsz);
 
          break;
          }

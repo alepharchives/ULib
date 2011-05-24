@@ -62,6 +62,16 @@ void USmtpClient::str_allocate()
    U_NEW_ULIB_OBJECT(str_REPLY_TO_ADDRESS, U_STRING_FROM_STRINGREP_STORAGE(7));
 }
 
+USmtpClient::USmtpClient(bool bSocketIsIPv6) : Socket(bSocketIsIPv6)
+{
+   U_TRACE_REGISTER_OBJECT(0, USmtpClient, "%b", bSocketIsIPv6)
+
+   state    = INIT;
+   response = NONE;
+
+   if (str_empty == 0) str_allocate();
+}
+
 USmtpClient::~USmtpClient()
 {
    U_TRACE_UNREGISTER_OBJECT(0, USmtpClient)

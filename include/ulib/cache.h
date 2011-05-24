@@ -82,7 +82,7 @@ public:
 
       u_gettimeofday();
 
-      start = u_now.tv_sec;
+      start = u_now->tv_sec;
       }
 
    void init(uint32_t size);
@@ -133,7 +133,7 @@ public:
 
       u_gettimeofday();
 
-      uint32_t now = (uint32_t)(u_now.tv_sec - start);
+      uint32_t now = (uint32_t)(u_now->tv_sec - start);
 
       U_RETURN(now);
       }

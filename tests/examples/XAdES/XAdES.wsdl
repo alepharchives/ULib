@@ -195,7 +195,7 @@
   <output message="tns:BASE64-ENCODINGResponse"/>
  </operation>
  <operation name="BASE64-DECODING">
-  <documentation>Service definition of function ns__XAdES_LIST_CERTS</documentation>
+  <documentation>Service definition of function ns__BASE64-DECODING</documentation>
   <input message="tns:BASE64-DECODINGRequest"/>
   <output message="tns:BASE64-DECODINGResponse"/>
  </operation>

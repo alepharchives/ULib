@@ -80,6 +80,7 @@ int                        UServer_Base::verify_mode;
 int                        UServer_Base::num_connection;
 int                        UServer_Base::max_Keep_Alive;
 int                        UServer_Base::preforked_num_kids;
+int                        UServer_Base::start_index_reuse_object;
 bool                       UServer_Base::flag_loop;
 bool                       UServer_Base::flag_use_tcp_optimization;
 char                       UServer_Base::mod_name[20];
@@ -146,13 +147,13 @@ public:
 
    virtual void run()
       {
-      U_TRACE(0, "UTimeThread::run()")
+      struct timespec ts = {  1L, 0L };
 
       while (true)
          {
-         (void) U_SYSCALL(gettimeofday, "%p,%p", &u_now, 0);
+         (void) gettimeofday(u_now, 0);
 
-         sleep(1000);
+         (void) nanosleep(&ts, 0);
          }
       }
 };
@@ -315,6 +316,10 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    senvironment      = U_NEW(UString(U_CAPACITY));
    UEventFd::op_mask = U_READ_IN;
 
+   u_init_hostname();
+
+   U_INTERNAL_DUMP("u_hostname(%u) = %.*S", u_hostname_len, u_hostname_len, u_hostname)
+
    if (cfg) loadConfigParam(*cfg);
 }
 
@@ -322,9 +327,19 @@ UServer_Base::~UServer_Base()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UServer_Base)
 
-                      UNotifier::erase(this,          false); // NB: to avoid to delete himself...
-   if (handler_event) UNotifier::erase(handler_event, false);
-                      UNotifier::clear();
+   U_INTERNAL_DUMP("vClientImage = %p", vClientImage)
+
+   if (num_connection)
+      {
+      UClientImage_Base* ptr = vClientImage;
+
+      for (int i = 0; i < max_Keep_Alive; ++i, ++ptr)
+         {
+         U_INTERNAL_DUMP("vClientImage[%d].UEventFd::fd = %d", i, ptr->UEventFd::fd)
+
+         if (ptr->UEventFd::fd) UNotifier::erase(ptr);
+         }
+      }
 
    if (vplugin)
       {
@@ -336,11 +351,10 @@ UServer_Base::~UServer_Base()
 #  endif
       }
 
-   U_INTERNAL_DUMP("vClientImage = %p", vClientImage)
-
    if (isClassic() == false) delete[] vClientImage;
 
    UClientImage_Base::clear();
+           UNotifier::clear();
 
    U_INTERNAL_ASSERT_POINTER(senvironment)
 
@@ -350,8 +364,6 @@ UServer_Base::~UServer_Base()
    if (host)       delete host;
    if (ptime)      delete ptime;
    if (vallow_IP)  delete vallow_IP;
-
-   if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add);
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
@@ -379,6 +391,20 @@ UServer_Base::~UServer_Base()
 #endif
 
    if (proc) delete proc;
+
+#ifdef HAVE_PTHREAD_H
+   if (u_pthread_time)
+      {
+      delete (UTimeThread*)u_pthread_time;
+                           u_pthread_time = 0;
+      }
+#endif
+
+   if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add);
+
+#ifdef HAVE_SSL
+   if (UServices::CApath) delete UServices::CApath;
+#endif
 }
 
 void UServer_Base::loadConfigParam(UFileConfig& cfg)
@@ -472,6 +498,22 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
 #ifndef __MINGW32__
    preforked_num_kids = cfg.readLong(*str_PREFORK_CHILD);
+
+   if (isPreForked())
+      {
+      // manage shared data...
+
+      U_INTERNAL_ASSERT_EQUALS(ptr_shared_data,0)
+
+      U_INTERNAL_DUMP("shared_data_add = %u", shared_data_add)
+
+      ptr_shared_data = (shared_data*) UFile::mmap(sizeof(shared_data) + shared_data_add);
+
+      U_INTERNAL_ASSERT_EQUALS(U_TOT_CONNECTION,0)
+      U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
+
+      u_now = &(ptr_shared_data->_timeval);
+      }
 #endif
 
    // write pid on file...
@@ -963,9 +1005,9 @@ next:
 
    proc->setProcessGroup();
 
-   UNotifier::init();
-
    runAsUser();
+
+   UNotifier::init();
 
    // init plugin modules...
 
@@ -977,6 +1019,11 @@ next:
 
    socket->flags          |= O_CLOEXEC;
    USocket::accept4_flags  = SOCK_CLOEXEC;
+
+   if (max_Keep_Alive <= 0) max_Keep_Alive = U_DEFAULT_MAX_KEEP_ALIVE;
+
+              preallocate(max_Keep_Alive);
+   UNotifier::preallocate(max_Keep_Alive + 10);
 
    // NB: in the classic model we don't need to notify for request of connection
    // (loop: accept-fork) and the forked child don't accept new client, but we need
@@ -990,6 +1037,8 @@ next:
 
                       UNotifier::insert(pthis);         // NB: we ask to notify for request of connection...
    if (handler_event) UNotifier::insert(handler_event); // NB: we ask to notify for change of file system (inotify)...
+
+   start_index_reuse_object = UNotifier::size();
 
    /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
     * a readability event because the connection might have been removed by an asynchronous network error or
@@ -1009,20 +1058,6 @@ next1:
 
                                                UClientImage_Base::socket->flags |= O_CLOEXEC;
    if (USocket::accept4_flags & SOCK_NONBLOCK) UClientImage_Base::socket->flags |= O_NONBLOCK;
-
-   if (isPreForked())
-      {
-      // manage shared data...
-
-      U_INTERNAL_ASSERT_EQUALS(ptr_shared_data,0)
-
-      U_INTERNAL_DUMP("shared_data_add = %u", shared_data_add)
-
-      ptr_shared_data = (shared_data*) UFile::mmap(sizeof(shared_data) + shared_data_add);
-
-      U_INTERNAL_ASSERT_EQUALS(U_TOT_CONNECTION,0)
-      U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
-      }
 
    if (timeoutMS != -1) ptime = U_NEW(UTimeoutConnection);
 }
@@ -1131,24 +1166,30 @@ void UServer_Base::handlerNewConnection()
 
    // NB: UClientImage object is also referenced by UClientImage_Base::pClientImage...
 
-   int index_reuse_object = (UNotifier::pool > UNotifier::vpool ? UNotifier::pool - UNotifier::vpool : 0);
-
-   U_INTERNAL_DUMP("index_reuse_object = %d", index_reuse_object)
-
-   U_INTERNAL_ASSERT_MINOR(index_reuse_object, max_Keep_Alive)
+   int index_reuse_object = UNotifier::getIndexReuseObject(start_index_reuse_object);
 
    UClientImage_Base* ptr = vClientImage + index_reuse_object;
+
+   U_INTERNAL_DUMP("vClientImage[%d].UEventFd::fd = %d", index_reuse_object, ptr->UEventFd::fd)
+
+   U_INTERNAL_ASSERT_RANGE(0, index_reuse_object, num_connection)
 
 #ifdef HAVE_PTHREAD_H
    if (UNotifier::pthread)
       {
-      while (ptr->UEventFd::fd)
+#  ifdef DEBUG
+      if (ptr->UEventFd::fd)
          {
-         ++ptr;
+         do {
+            ++ptr;
 
-         if (ptr >= (vClientImage + max_Keep_Alive)) ptr = vClientImage;
+            U_INTERNAL_DUMP("vClientImage[%d].UEventFd::fd = %d", (ptr - vClientImage), ptr->UEventFd::fd)
+
+            if (ptr >= (vClientImage + max_Keep_Alive)) ptr = vClientImage;
+            }
+         while (ptr->UEventFd::fd);
          }
-
+#  endif
       if (ptr->newConnection()) UNotifier::insert(ptr);
 
       return;
@@ -1238,11 +1279,11 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
 
    U_INTERNAL_ASSERT_POINTER(ptr)
 
+   U_INTERNAL_DUMP("num_connection = %d", num_connection)
+
    if (num_connection)
       {
       --num_connection;
-
-      U_INTERNAL_DUMP("num_connection = %d", num_connection)
 
       if (isPreForked())
          {
@@ -1329,11 +1370,6 @@ void UServer_Base::run()
    //                                                                     1 - classic, forking after accept client
    //                                                                    >1 - pool of process serialize plus monitoring process
    // -------------------------------------------------------------------------------------------------------------------------
-
-   if (max_Keep_Alive <= 0) max_Keep_Alive = U_DEFAULT_MAX_KEEP_ALIVE;
-
-   UNotifier::preallocate(max_Keep_Alive);
-       pthis->preallocate(max_Keep_Alive);
 
    U_INTERNAL_DUMP("vClientImage = %p", vClientImage)
 
