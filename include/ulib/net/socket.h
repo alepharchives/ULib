@@ -317,6 +317,7 @@ public:
       return cRemoteAddress;
       }
 
+         void  getRemoteInfo(UString& buffer);
    const char* getRemoteInfo()
       {
       U_TRACE(0, "USocket::getRemoteInfo()")
@@ -326,17 +327,6 @@ public:
       const char* address = (iRemotePort ? cRemoteAddress.getAddressString() : "localhost");
 
       U_RETURN(address);
-      }
-
-   void getRemoteInfo(UString& buffer)
-      {
-      U_TRACE(0, "USocket::getRemoteInfo(%p)", &buffer)
-
-      const char* address = getRemoteInfo();
-
-      int len = u_snprintf(buffer.data(), buffer.capacity(), "%2d '%s:%u'", iSockDesc, address, iRemotePort);
-
-      buffer.size_adjust(len);
       }
 
    /**

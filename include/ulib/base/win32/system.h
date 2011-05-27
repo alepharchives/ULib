@@ -300,6 +300,7 @@ extern __declspec(dllexport) int            rename_w32(const char* oldpath, cons
 extern __declspec(dllexport) int            select_w32(int nfds, fd_set* rd, fd_set* wr, fd_set* ex, struct timeval* timeout);
 
 extern __declspec(dllexport) void           u_init_mingw(void);
+extern __declspec(dllexport) int            is_pipe(int fd);
 extern __declspec(dllexport) int            is_socket(SOCKET fd);
 extern __declspec(dllexport) uint64_t       u_get_inode(int fd); /* INODE FOR WINDOWS - It is not stable for files on network drives (NFS) */
 extern __declspec(dllexport) const char*    getSysError_w32(unsigned* len);

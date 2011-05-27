@@ -84,6 +84,10 @@ int USoapPlugIn::handlerRequest()
 
       U_SRV_LOG_WITH_ADDR(UClientImage_Base::pClientImage, "method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
 
+#  ifdef DEBUG
+      (void) UFile::writeToTmpl("/tmp/soap.res", body);
+#  endif
+
       UHTTP::setHTTPResponse(HTTP_OK, UHTTP::str_ctype_soap, &body);
 
       UHTTP::setHTTPRequestProcessed();

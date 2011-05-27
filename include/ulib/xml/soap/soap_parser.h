@@ -174,7 +174,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static const UString* str_ns;
    static const UString* str_true;
    static const UString* str_fault;
    static const UString* str_xmlns;
@@ -193,7 +192,7 @@ public:
       XMLNStoURN.allocate();
 #  endif
 
-      if (str_ns == 0) str_allocate();
+      if (str_true == 0) str_allocate();
 
       zero();
       }

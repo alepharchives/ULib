@@ -27,11 +27,12 @@ public:
 
    // COSTRUTTORI
 
-   URPCGenericMethod(const UString& n, UCommand* cmd, int rtype) : response_type(rtype), response(U_CAPACITY)
+   URPCGenericMethod(const UString& n, const UString& _ns, UCommand* cmd, int rtype) : response_type(rtype), response(U_CAPACITY)
       {
-      U_TRACE_REGISTER_OBJECT(0, URPCGenericMethod, "%.*S,%p,%d", U_STRING_TO_TRACE(n), cmd, rtype) 
+      U_TRACE_REGISTER_OBJECT(0, URPCGenericMethod, "%.*S,%.*S,%p,%d", U_STRING_TO_TRACE(n), U_STRING_TO_TRACE(_ns), cmd, rtype) 
 
       command                 = cmd;
+      URPCMethod::ns          = _ns;
       URPCMethod::method_name = n;
 
       if (str_command_fault == 0) str_allocate();

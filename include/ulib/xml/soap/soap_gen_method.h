@@ -28,9 +28,9 @@ public:
 
    // COSTRUTTORI
 
-   USOAPGenericMethod(const UString& n, UCommand* cmd, int rtype) : URPCGenericMethod(n, cmd, rtype)
+   USOAPGenericMethod(const UString& n, const UString& _ns, UCommand* cmd, int rtype) : URPCGenericMethod(n, _ns, cmd, rtype)
       {
-      U_TRACE_REGISTER_OBJECT(0, USOAPGenericMethod, "%.*S,%p,%d", U_STRING_TO_TRACE(n), cmd, rtype) 
+      U_TRACE_REGISTER_OBJECT(0, USOAPGenericMethod, "%.*S,%.*S,%p,%d", U_STRING_TO_TRACE(n), U_STRING_TO_TRACE(_ns), cmd, rtype) 
 
       if (str_response == 0) str_allocate();
       }
@@ -71,8 +71,8 @@ protected:
       }
 
 private:
-   USOAPGenericMethod(const USOAPGenericMethod& g) : URPCGenericMethod(UString::getStringNull(), 0, 0) {}
-   USOAPGenericMethod& operator=(const USOAPGenericMethod& g)                                          { return *this; }
+   USOAPGenericMethod(const USOAPGenericMethod& g) : URPCGenericMethod(UString::getStringNull(), UString::getStringNull(), 0, 0) {}
+   USOAPGenericMethod& operator=(const USOAPGenericMethod& g)                                                                    { return *this; }
 };
 
 #endif

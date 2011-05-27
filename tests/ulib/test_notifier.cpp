@@ -341,7 +341,7 @@ public:
          {
          if (i & 1)
             {
-            if (UNotifier::waitForWrite(fd_output) > 0)
+            if (UNotifier::waitForWrite(fd_output) >= 1)
                {
                static handlerOutput* handler_output;
 
@@ -407,7 +407,7 @@ int U_EXPORT main(int argc, char* argv[])
 #ifdef __unix__
    U_ASSERT(UNotifier::waitForRead( fds[0], 500) <= 0)
 #endif
-   U_ASSERT(UNotifier::waitForWrite(fds[1], 500) == 1)
+   U_ASSERT(UNotifier::waitForWrite(fds[1], 500) >= 1)
 
    MyAlarm1* a = U_NEW(MyAlarm1(1L, 0L));
    MyAlarm2* b = U_NEW(MyAlarm2(1L, 0L));
@@ -462,5 +462,5 @@ int U_EXPORT main(int argc, char* argv[])
 #ifdef __unix__
    U_ASSERT(UNotifier::waitForRead( fd_input,  1 * 1000) <= 0)
 #endif
-   U_ASSERT(UNotifier::waitForWrite(fd_output, 1 * 1000) == 1)
+   U_ASSERT(UNotifier::waitForWrite(fd_output, 1 * 1000) >= 1)
 }

@@ -79,11 +79,11 @@ protected:
 
    // Adds an object method to the list of method the object can call
 
-   virtual void insertGenericMethod(const UString& n, UCommand* cmd, int rtype)
+   virtual void insertGenericMethod(const UString& n, const UString& ns, UCommand* cmd, int rtype)
       {
-      U_TRACE(0, "USOAPObject::insertGenericMethod(%.*S,%p,%d)", U_STRING_TO_TRACE(n), cmd, rtype)
+      U_TRACE(0, "USOAPObject::insertGenericMethod(%.*S,%.*S,%p,%d)", U_STRING_TO_TRACE(n), U_STRING_TO_TRACE(ns), cmd, rtype)
 
-      methodList.push_back(U_NEW(USOAPGenericMethod(n, cmd, rtype)));
+      methodList.push_back(U_NEW(USOAPGenericMethod(n, ns, cmd, rtype)));
       }
 
 private:

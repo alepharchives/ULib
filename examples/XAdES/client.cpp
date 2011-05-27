@@ -20,25 +20,25 @@
 "----------------------------------------------------------------------------------------------------------------------------------"
 
 #define U_OPTIONS \
-"option c config 1 \"path of configuration file\" \"\"\n"
+"option c config 1 'path of configuration file' ''\n"
 
 #include <ulib/application.h>
 
-#define U_DATA_URI                           (const char*)(argv[optind+0])
-#define U_X509                               (const char*)(argv[optind+1])
-#define U_KEY_HANDLE                         (const char*)(argv[optind+2])
-#define U_DIGEST_ALGORITHM                   (const char*)(argv[optind+3])
-#define U_SIGNING_TIME                                atoi(argv[optind+4])
-#define U_CLAIMED_ROLE                       (const char*)(argv[optind+5])
-#define U_PRODUCTION_PLACE_CITY              (const char*)(argv[optind+6])
-#define U_PRODUCTION_PLACE_STATE_OR_PROVINCE (const char*)(argv[optind+7])
-#define U_PRODUCTION_PLACE_POSTAL_CODE       (const char*)(argv[optind+8])
-#define U_PRODUCTION_PLACE_COUNTRY_NAME      (const char*)(argv[optind+9])
-#define U_CA_STORE                           (const char*)(argv[optind+10])
-#define U_SIGNATURE_TIMESTAMP                (const char*)(argv[optind+11])
+#define U_DATA_URI                           (const char*)(num_args >= 1  ?      argv[optind+0]  : "")
+#define U_X509                               (const char*)(num_args >= 2  ?      argv[optind+1]  : "")
+#define U_KEY_HANDLE                         (const char*)(num_args >= 3  ?      argv[optind+2]  : "")
+#define U_DIGEST_ALGORITHM                   (const char*)(num_args >= 4  ?      argv[optind+3]  : "")
+#define U_SIGNING_TIME                                    (num_args >= 5  ? atoi(argv[optind+4]) : 0)
+#define U_CLAIMED_ROLE                       (const char*)(num_args >= 6  ?      argv[optind+5]  : "")
+#define U_PRODUCTION_PLACE_CITY              (const char*)(num_args >= 7  ?      argv[optind+6]  : "")
+#define U_PRODUCTION_PLACE_STATE_OR_PROVINCE (const char*)(num_args >= 8  ?      argv[optind+7]  : "")
+#define U_PRODUCTION_PLACE_POSTAL_CODE       (const char*)(num_args >= 9  ?      argv[optind+8]  : "")
+#define U_PRODUCTION_PLACE_COUNTRY_NAME      (const char*)(num_args >= 10 ?      argv[optind+9]  : "")
+#define U_CA_STORE                           (const char*)(num_args >= 11 ?      argv[optind+10] : "")
+#define U_SIGNATURE_TIMESTAMP                (const char*)(num_args >= 12 ?      argv[optind+11] : "")
 
-#define U_ARCHIVE_TIMESTAMP                  (const char*)(argv[optind+1])
-#define U_SCHEMA                             (const char*)(argv[optind+2])
+#define U_ARCHIVE_TIMESTAMP                  (const char*)(num_args >= 0  ?      argv[optind+0]  : "")
+#define U_SCHEMA                             (const char*)(num_args >= 1  ?      argv[optind+1]  : "")
 
 template <class T> class UClientXAdES : public USOAPClient<T> {
 public:
@@ -222,7 +222,9 @@ public:
                     const char* production_place_city, const char* production_place_state_or_province,
                     const char* production_place_postal_code, const char* production_place_country_name) // 1
       {
-      U_TRACE(5, "UClientXAdES::creatBES(%.*S,%S)", U_STRING_TO_TRACE(data), data_uri)
+      U_TRACE(5, "UClientXAdES::creatBES(%.*S,%S,%.*S,%S,%S,%u,%S,%S,%S,%S,%S)", U_STRING_TO_TRACE(data), data_uri, U_STRING_TO_TRACE(x509),
+                  key_handle, digest_algorithm, signing_time, claimed_role, production_place_city,
+                  production_place_state_or_province, production_place_postal_code, production_place_country_name)
 
       m_XAdES_BES.DATA                               = data;
       m_XAdES_BES.DATA_URI                           = data_uri;
@@ -337,6 +339,10 @@ public:
 
       int op = atoi(method);
 
+      num_args = (argc - optind);
+
+      U_INTERNAL_DUMP("optind = %d num_args = %d", optind, num_args)
+
       // manage file configuration
 
       if (cfg_str.empty()) cfg_str = U_STRING_FROM_CONSTANT("XAdESclient.cfg");
@@ -416,6 +422,7 @@ public:
       }
 
 private:
+   int num_args;
    UClientXAdES<UTCPSocket>* client;
    UString cfg_str;
    UFileConfig cfg;

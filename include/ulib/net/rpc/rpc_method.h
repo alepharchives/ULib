@@ -44,6 +44,7 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
+   static const UString* str_ns;
    static const UString* str_done;
    static const UString* str_fault;
 
@@ -79,6 +80,10 @@ public:
 
    virtual UString getMethodName() const { return method_name; }
 
+   // Used to get the namespace of the method
+
+   virtual UString getNamespaces() const { return ns; }
+
    // Transforms the method into something that servers and clients can send. The encoder holds the
    // actual data while the client hands data to be entered in. This makes a whole lot more sense in the
    // samples that should have shipped with the library
@@ -113,7 +118,7 @@ public:
 #endif
 
 protected:
-   UString method_name;
+   UString method_name, ns;
 
 private:
    URPCMethod(const URPCMethod&)            {}

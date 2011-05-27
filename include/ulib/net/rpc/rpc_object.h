@@ -63,6 +63,7 @@ public:
    static const UString* str_response_type_4;
    static const UString* str_response_type_5;
    static const UString* str_fault_reason;
+   static const UString* str_NAMESPACE;
 
    static void str_allocate();
 
@@ -166,11 +167,11 @@ protected:
    // Meant to be called by classes derived from URPCObject.
    // Adds an object method to the list of method the object can call
 
-   virtual void insertGenericMethod(const UString& n, UCommand* cmd, int rtype)
+   virtual void insertGenericMethod(const UString& n, const UString& ns, UCommand* cmd, int rtype)
       {
-      U_TRACE(0, "URPCObject::insertGenericMethod(%.*S,%p,%d)", U_STRING_TO_TRACE(n), cmd, rtype) 
+      U_TRACE(0, "URPCObject::insertGenericMethod(%.*S,%.*S,%p,%d)", U_STRING_TO_TRACE(n), U_STRING_TO_TRACE(ns), cmd, rtype) 
 
-      methodList.push_back(U_NEW(URPCGenericMethod(n, cmd, rtype)));
+      methodList.push_back(U_NEW(URPCGenericMethod(n, ns, cmd, rtype)));
       }
 
 private:

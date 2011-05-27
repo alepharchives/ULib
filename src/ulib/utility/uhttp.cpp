@@ -3287,6 +3287,24 @@ UString UHTTP::getRemoteIP()
    U_RETURN_STRING(*real_ip);
 }
 
+bool UHTTP::isSOAPRequest()
+{
+   U_TRACE(0, "UHTTP::isSOAPRequest()")
+
+   bool result = (isHttpPOST() && (U_HTTP_URI_STRNEQ("/soap") || U_HTTP_CTYPE_STRNEQ("application/soap+xml")));
+
+   U_RETURN(result);
+}
+
+bool UHTTP::isTSARequest()
+{
+   U_TRACE(0, "UHTTP::isTSARequest()")
+
+   bool result = (isHttpPOST() && (U_HTTP_URI_STRNEQ("/tsa") || U_HTTP_CTYPE_STRNEQ("application/timestamp-query")));
+
+   U_RETURN(result);
+}
+
 bool UHTTP::checkUriProtected()
 {
    U_TRACE(0, "UHTTP::checkUriProtected()")

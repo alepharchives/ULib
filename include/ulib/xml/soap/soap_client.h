@@ -77,7 +77,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(URPCMethod::encoder)
 
-      this->UClient_Base::request = URPCMethod::encoder->encodeMethodCall(method, *USOAPParser::str_ns);
+      this->UClient_Base::request = URPCMethod::encoder->encodeMethodCall(method, *URPCMethod::str_ns);
 
       UHTTP::setHTTPInfo(U_CONSTANT_TO_PARAM("POST"), U_CONSTANT_TO_PARAM("/soap"));
 

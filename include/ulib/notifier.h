@@ -178,6 +178,7 @@ private:
    void outputEntry(ostream& os) const U_NO_EXPORT;
 
    static void eraseItem(UNotifier** ptr) U_NO_EXPORT;
+   static void handlerDelete(UNotifier** ptr, UNotifier* item, UEventFd* handler_event) U_NO_EXPORT;
 
 #ifndef HAVE_LIBEVENT
    static bool handlerResult(int& n, UNotifier** ptr, bool bread, bool bwrite, bool bexcept) U_NO_EXPORT; 

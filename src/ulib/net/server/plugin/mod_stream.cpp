@@ -159,7 +159,7 @@ int UStreamPlugIn::handlerInit()
 
             int nread;
 
-            while (UNotifier::waitForRead(UProcess::filedes[2]) == 1)
+            while (UNotifier::waitForRead(UProcess::filedes[2]) >= 1)
                {
                nread = rbuf.readFromFdAndWrite(UProcess::filedes[2]);
 

@@ -1393,6 +1393,25 @@ pid_t waitpid(pid_t pid, int* stat_loc, int options)
    return (ok ? pid : (pid_t) -1);
 }
 
+int is_pipe(int fd)
+{
+   static int result;
+   static int last_fd = -1;
+
+   U_INTERNAL_TRACE("is_pipe(%d)", fd)
+
+   if (fd != last_fd)
+      {
+      DWORD isdev = GetFileType((HANDLE)_get_osfhandle(fd));
+
+      result = (isdev == FILE_TYPE_PIPE);
+      }
+
+   U_INTERNAL_PRINT("ret = %d", result)
+
+   return result;
+}
+
 int is_socket(SOCKET fd)
 {
    static int result;

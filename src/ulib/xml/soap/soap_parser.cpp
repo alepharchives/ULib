@@ -16,7 +16,6 @@
 #include <ulib/xml/soap/soap_parser.h>
 #include <ulib/xml/soap/soap_encoder.h>
 
-const UString* USOAPParser::str_ns;
 const UString* USOAPParser::str_true;
 const UString* USOAPParser::str_fault;
 const UString* USOAPParser::str_xmlns;
@@ -27,7 +26,6 @@ void USOAPParser::str_allocate()
 {
    U_TRACE(0, "USOAPParser::str_allocate()")
 
-   U_INTERNAL_ASSERT_EQUALS(str_ns,0)
    U_INTERNAL_ASSERT_EQUALS(str_true,0)
    U_INTERNAL_ASSERT_EQUALS(str_fault,0)
    U_INTERNAL_ASSERT_EQUALS(str_xmlns,0)
@@ -35,7 +33,6 @@ void USOAPParser::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_mustUnderstand,0)
 
    static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("ns") },
       { U_STRINGREP_FROM_CONSTANT("true") },
       { U_STRINGREP_FROM_CONSTANT("Fault") },
       { U_STRINGREP_FROM_CONSTANT("xmlns") },
@@ -43,12 +40,11 @@ void USOAPParser::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("http://schemas.xmlsoap.org/soap/envelope/") }
    };
 
-   U_NEW_ULIB_OBJECT(str_ns,             U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_true,           U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_fault,          U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_xmlns,          U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_mustUnderstand, U_STRING_FROM_STRINGREP_STORAGE(4));
-   U_NEW_ULIB_OBJECT(str_version11,      U_STRING_FROM_STRINGREP_STORAGE(5));
+   U_NEW_ULIB_OBJECT(str_true,           U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_fault,          U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_xmlns,          U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_mustUnderstand, U_STRING_FROM_STRINGREP_STORAGE(3));
+   U_NEW_ULIB_OBJECT(str_version11,      U_STRING_FROM_STRINGREP_STORAGE(4));
 }
 
 USOAPParser::~USOAPParser()
@@ -78,10 +74,6 @@ bool USOAPParser::parse(const UString& msg)
 
       method              = body->childAt(0);
       envelope.methodName = method->elem()->getAccessorName();
-
-      // check the name of namespace qualified element information (gSOAP)
-
-      if (envelope.nsName.empty()) envelope.nsName = *str_ns;
 
       // load the parameters for the method to execute
 
@@ -231,7 +223,7 @@ void USOAPParser::startElement(const XML_Char* name, const XML_Char** attrs)
 
       if (flag_state    == 1 &&
           namespaceName == *str_xmlns &&
-           accessorName == *str_ns)
+           accessorName == *URPCMethod::str_ns)
          {
          envelope.nsName = value;
 

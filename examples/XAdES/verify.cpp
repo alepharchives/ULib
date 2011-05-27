@@ -23,7 +23,7 @@
 
 #include <ulib/application.h>
 
-#define U_SCHEMA (const char*)(argv[optind+0])
+#define U_SCHEMA (const char*)(num_args >= 0  ? argv[optind+0]  : 0)
 
 class Application : public UApplication {
 public:
@@ -47,6 +47,10 @@ public:
       LIBXML_TEST_VERSION
 
       // manage options
+
+      num_args = (argc - optind);
+
+      U_INTERNAL_DUMP("optind = %d num_args = %d", optind, num_args)
 
       if (UApplication::isOptions()) cfg_str = opt['c'];
 
@@ -126,8 +130,8 @@ public:
       }
 
 private:
-   int alg;
    UFileConfig cfg;
+   int alg, num_args;
    UXAdESUtility utility;
    UString cfg_str, content, schema;
 };

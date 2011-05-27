@@ -197,9 +197,9 @@ void UProcess::pipe(int fdp)
 
    int fdn = (fdp * 2); // filedes[fdn] is for READING, filedes[fdn+1] is for WRITING
 
-   if (U_SYSCALL(CreatePipe, "%p,%p,%p,%lu", hFile+fdn, hFile+fdn+1, &sec_none, 4096L))
+   if (U_SYSCALL(CreatePipe, "%p,%p,%p,%lu", hFile+fdn, hFile+fdn+1, &sec_none, 0))
       {
-      U_INTERNAL_DUMP("hFile[%d,%d] = { %p, %p }", fdn, fdn + 1, hFile[fdn], hFile[fdn+1])
+      U_INTERNAL_DUMP("hFile[%d,%d] = { %p, %p }", fdn, fdn+1, hFile[fdn], hFile[fdn+1])
       }
    else
       {

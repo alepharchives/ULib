@@ -71,27 +71,27 @@ void USOAPEncoder::str_allocate()
    { U_STRINGREP_FROM_CONSTANT("<%.*s xsi:type=\"xsd:%.*s\">%.*s</%.*s>") },
    { U_STRINGREP_FROM_CONSTANT(
    "<?xml version=\"1.0\" ?>"
-   "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">"
-      "<soap:Header>"
-         "<soap:Upgrade>"
-            "<soap:SupportedEnvelope qname=\"ns1:Envelope\" xmlns:ns1=\"http://www.w3.org/2003/05/soap-envelope\"/>"
-         "</soap:Upgrade>"
-      "</soap:Header>"
-      "<soap:Body>"
-         "<soap:Fault>"
-            "<faultcode>soap:VersionMismatch</faultcode>"
+   "<env:Envelope xmlns:env=\"http://schemas.xmlsoap.org/soap/envelope/\">"
+      "<env:Header>"
+         "<env:Upgrade>"
+            "<env:SupportedEnvelope qname=\"ns1:Envelope\" xmlns:ns1=\"http://www.w3.org/2003/05/soap-envelope\"/>"
+         "</env:Upgrade>"
+      "</env:Header>"
+      "<env:Body>"
+         "<env:Fault>"
+            "<faultcode>env:VersionMismatch</faultcode>"
             "<faultstring>Version Mismatch</faultstring>"
-         "</soap:Fault>"
-      "</soap:Body>"
-   "</soap:Envelope>") },
+         "</env:Fault>"
+      "</env:Body>"
+   "</env:Envelope>") },
    { U_STRINGREP_FROM_CONSTANT(
    "<?xml version='1.0' ?>"
-   "<soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\">"
-      "<soap:Header>%.*s</soap:Header>"
-         "<soap:Body>"
-            "<ns:%.*s soap:encodingStyle=\"http://www.w3.org/2003/05/soap-encoding\" xmlns:ns=\"%.*s\">%.*s</ns:%.*s>"
-         "</soap:Body>"
-   "</soap:Envelope>") }
+   "<env:Envelope xmlns:env=\"http://www.w3.org/2003/05/soap-envelope\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
+      "<env:Header>%.*s</env:Header>"
+         "<env:Body>"
+            "<%.*s:%.*s env:encodingStyle=\"http://www.w3.org/2003/05/soap-encoding\" xmlns:%.*s=\"%.*s\">%.*s</%.*s:%.*s>"
+         "</env:Body>"
+   "</env:Envelope>") }
 };
 
    U_NEW_ULIB_OBJECT(str_boolean,       U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -138,33 +138,43 @@ UString USOAPEncoder::encodeMethod(URPCMethod& method, const UString& nsName) //
 
    method.encode(); // Encode the method by virtual method...
 
-   if (method.hasFailed())
-      {
-      U_RETURN_STRING(encodedValue);
-      }
-   else
-      {
-      uint32_t num_arg = arg.size();
+   if (method.hasFailed()) U_RETURN_STRING(encodedValue);
 
-      if      (num_arg  > 1) encodedValue = arg.join(0, 0);
-      else if (num_arg == 1) encodedValue = arg[0];
-      else                   encodedValue.setEmpty();
+   uint32_t num_arg = arg.size();
 
-      UString szMethodName     = method.getMethodName(),
-              szHeaderContents = method.getHeaderContent();
+   if      (num_arg  > 1) encodedValue = arg.join(0, 0);
+   else if (num_arg == 1) encodedValue = arg[0];
+   else                   encodedValue.setEmpty();
 
-      if (bIsResponse) szMethodName += *str_response;
+   UString methodName     = method.getMethodName(),
+           headerContents = method.getHeaderContent();
 
-      buffer.setBuffer(nsName.size()           +
-                       str_envelope->size()    +
-                       encodedValue.size()     +
-                       szHeaderContents.size() +
-                       (szMethodName.size() * 2) + 100U);
+   if (bIsResponse) methodName += *str_response;
 
-      buffer.snprintf(str_envelope->data(), U_STRING_TO_TRACE(szHeaderContents), U_STRING_TO_TRACE(szMethodName),
-                                            U_STRING_TO_TRACE(nsName),
-                                            U_STRING_TO_TRACE(encodedValue),     U_STRING_TO_TRACE(szMethodName));
+   uint32_t sz_nsName         =         nsName.size(),
+            sz_methodName     =     methodName.size(),
+            sz_encodedValue   =   encodedValue.size(),
+            sz_headerContents = headerContents.size();
 
-      U_RETURN_STRING(buffer);
-      }
+   const char* ptr_nsName         =         nsName.data();
+   const char* ptr_methodName     =     methodName.data();
+   const char* ptr_encodedValue   =   encodedValue.data();
+   const char* ptr_headerContents = headerContents.data();
+
+   buffer.setBuffer((sz_nsName     * 4)  +
+                    (sz_methodName * 2)  +
+                    sz_encodedValue      +
+                    sz_headerContents    +
+                    str_envelope->size() + 100U);
+
+   buffer.snprintf(str_envelope->data(), sz_headerContents, ptr_headerContents,
+                                         sz_nsName, ptr_nsName,
+                                         sz_methodName, ptr_methodName,
+                                         sz_nsName, ptr_nsName,
+                                         sz_nsName, ptr_nsName,
+                                         sz_encodedValue, ptr_encodedValue,
+                                         sz_nsName, ptr_nsName,
+                                         sz_methodName, ptr_methodName);
+
+   U_RETURN_STRING(buffer);
 }

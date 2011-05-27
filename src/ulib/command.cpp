@@ -336,20 +336,16 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
    if (output &&
        output != (void*)-1) // special value...
       {
-      bool kill_command;
-
       output->setBuffer(U_CAPACITY); // to avoid reserve()...
 
+      bool kill_command = (UNotifier::waitForRead(UProcess::filedes[2], timeoutMS) <= 0);
+
 #  ifdef __MINGW32__
-      kill_command = false;
-
-               (void) UNotifier::waitForRead(UProcess::filedes[2], 1000);
-#  else
-      kill_command = (UNotifier::waitForRead(UProcess::filedes[2]) != 1);
-
-      if (kill_command == false)
+      // NB: we don't have select on pipe...
+      if (kill_command && timeoutMS == -1) kill_command = false;
 #  endif
-      UServices::readEOF(UProcess::filedes[2], *output);
+
+      if (kill_command == false) UServices::readEOF(UProcess::filedes[2], *output);
 
       UFile::close(UProcess::filedes[2]);
                    UProcess::filedes[2] = 0;

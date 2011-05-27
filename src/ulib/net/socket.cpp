@@ -357,6 +357,19 @@ void USocket::setRemote()
       }
 }
 
+void USocket::getRemoteInfo(UString& result)
+{
+   U_TRACE(0, "USocket::getRemoteInfo(%.*S)", U_STRING_TO_TRACE(result))
+
+   UString buffer(100U);
+
+   const char* address = getRemoteInfo();
+
+   buffer.snprintf("%2d '%s:%u'", iSockDesc, address, iRemotePort);
+
+   (void) result.insert(0, buffer);
+}
+
 bool USocket::connect()
 {
    U_TRACE(1, "USocket::connect()")
@@ -630,7 +643,7 @@ bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count)
          U_INTERNAL_DUMP("errno = %d", errno)
 
          if (errno == EAGAIN &&
-             UNotifier::waitForWrite(iSockDesc, 3 * 1000) == 1)
+             UNotifier::waitForWrite(iSockDesc, 3 * 1000) >= 1)
             {
             flags = UFile::setBlocking(iSockDesc, flags, true);
 
@@ -909,7 +922,7 @@ int USocket::recv(void* pBuffer, uint32_t iBufLength, int timeoutMS)
        timeoutMS != -1)
       {
 loop:
-      if (UNotifier::waitForRead(iSockDesc, timeoutMS) != 1)
+      if (UNotifier::waitForRead(iSockDesc, timeoutMS) <= 0)
          {
          errno  = EAGAIN;
          iState = TIMEOUT;
@@ -946,7 +959,7 @@ int USocket::send(const void* pPayload, uint32_t iPayloadLength, int timeoutMS)
        timeoutMS != -1)
       {
 loop:
-      if (UNotifier::waitForWrite(iSockDesc, timeoutMS) != 1)
+      if (UNotifier::waitForWrite(iSockDesc, timeoutMS) <= 0)
          {
          errno  = EAGAIN;
          iState = TIMEOUT;
@@ -985,7 +998,7 @@ int USocket::writev(const struct iovec* _iov, int iovcnt, int timeoutMS)
        timeoutMS != -1)
       {
 loop:
-      if (UNotifier::waitForWrite(iSockDesc, timeoutMS) != 1)
+      if (UNotifier::waitForWrite(iSockDesc, timeoutMS) <= 0)
          {
          errno  = EAGAIN;
          iState = TIMEOUT;

@@ -324,6 +324,33 @@ loop:
    U_RETURN(result);
 }
 
+U_NO_EXPORT void UNotifier::handlerDelete(UNotifier** ptr, UNotifier* item, UEventFd* handler_event)
+{
+   U_TRACE(0, "UNotifier::handlerDelete(%p,%p,%p)", ptr, item, handler_event)
+
+   U_INTERNAL_ASSERT_EQUALS(item,*ptr)
+   U_INTERNAL_ASSERT_EQUALS(handler_event,item->handler_event_fd)
+
+   item->handler_event_fd = 0;
+
+   handler_event->handlerDelete();
+
+#ifdef HAVE_PTHREAD_H
+   if (pthread) pthread->lock();
+#endif
+
+   *ptr = item->next;
+
+   item->next = pool;
+   pool       = item;
+
+#ifdef HAVE_PTHREAD_H
+   if (pthread) pthread->unlock();
+#endif
+
+   U_INTERNAL_DUMP("pool = %p pool->next = %p index_reuse_object = %d", pool, pool->next, (pool - vpool))
+}
+
 // NB: n is needeed for rientrance of function (see test_notifier...) 
 
 #ifndef HAVE_LIBEVENT
@@ -401,24 +428,7 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier** ptr, bool bread, b
       (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_DEL, handler_event->fd, (struct epoll_event*)1);
 #  endif
 
-      item->handler_event_fd = 0;
-
-      handler_event->handlerDelete();
-
-#  ifdef HAVE_PTHREAD_H
-      if (pthread) pthread->lock();
-#  endif
-
-      *ptr = item->next;
-
-      item->next = pool;
-      pool       = item;
-
-#  ifdef HAVE_PTHREAD_H
-      if (pthread) pthread->unlock();
-#  endif
-
-      U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
+      handlerDelete(ptr, item, handler_event);
 
       U_RETURN(true);
       }
@@ -749,20 +759,7 @@ U_NO_EXPORT void UNotifier::eraseItem(UNotifier** ptr)
    if (first) fd_set_max = getNFDS();
 #endif
 
-   *ptr = item->next;
-
-   item->next = pool;
-   pool       = item;
-
-   item->handler_event_fd = 0;
-
-   U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
-
-   handler_event->handlerDelete();
-
-#ifdef DEBUG
-   if (first) U_INTERNAL_DUMP("first = %O", U_OBJECT_TO_TRACE(*first))
-#endif
+   handlerDelete(ptr, item, handler_event);
 }
 
 void UNotifier::erase(UEventFd* handler_event)
@@ -819,9 +816,18 @@ void UNotifier::preallocate(uint32_t n)
 
       for (uint32_t i = 0, end = n - 1; i < end; ++i)
          {
+#     ifdef DEBUG
+         pool[i].memory._this = (const UMemoryError*)(pool + i);
+#     endif
          pool[i].next             = pool + i + 1;
          pool[i].handler_event_fd = 0;
          }
+
+#  ifdef DEBUG
+      pool[n-1].memory._this = (const UMemoryError*)(pool + (n-1));
+
+      for (uint32_t i = 0; i < n; ++i) pool[n-1].memory.invariant();
+#  endif
 
       U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
       }
@@ -908,17 +914,20 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
 #else
 
 #  ifdef __MINGW32__
-   if (is_socket(fd) == false)
+   if (is_pipe(fd))
       {
+      U_INTERNAL_ASSERT_EQUALS(is_socket(fd),false)
+
+      HANDLE h    = (HANDLE)_get_osfhandle(fd);
       DWORD count = 0;
 
-      while (U_SYSCALL(PeekNamedPipe, "%p,%p,%ld,%p,%p,%p", (HANDLE)_get_osfhandle(fd), 0, 0, 0, &count, 0) &&
-             count     == 0                                                                                 &&
-             timeoutMS != -1)
+      while (U_SYSCALL(PeekNamedPipe, "%p,%p,%ld,%p,%p,%p", h, 0, 0, 0, &count, 0) &&
+             count == 0                                                            &&
+             timeoutMS > 0)
          {
-         Sleep(timeoutMS);
+         Sleep(1000);
 
-         timeoutMS = -1;
+         timeoutMS -= 1000;
          }
 
       U_RETURN(count);
@@ -955,20 +964,11 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
 #else
 
 #  ifdef __MINGW32__
-   if (is_socket(fd) == false)
+   if (is_pipe(fd))
       {
-      DWORD count = 0;
+      U_INTERNAL_ASSERT_EQUALS(is_socket(fd),false)
 
-      while (U_SYSCALL(PeekNamedPipe, "%p,%p,%ld,%p,%p,%p", (HANDLE)_get_osfhandle(fd), 0, 0, 0, &count, 0) &&
-             count     == 0                                                                                 &&
-             timeoutMS != -1)
-         {
-         Sleep(timeoutMS);
-
-         timeoutMS = -1;
-         }
-
-      U_RETURN(count);
+      U_RETURN(1);
       }
 #  endif
 
@@ -1001,7 +1001,7 @@ uint32_t UNotifier::read(int fd, char* buffer, int count, int timeoutMS)
    do {
       if (timeoutMS != -1)
          {
-         if (waitForRead(fd, timeoutMS) != 1)
+         if (waitForRead(fd, timeoutMS) <= 0)
             {
             errno = EAGAIN;
 
@@ -1052,7 +1052,7 @@ uint32_t UNotifier::write(int fd, const char* str, int count, int timeoutMS)
    do {
       if (timeoutMS != -1)
          {
-         if (waitForWrite(fd, timeoutMS) != 1)
+         if (waitForWrite(fd, timeoutMS) <= 0)
             {
             errno = EAGAIN;
 

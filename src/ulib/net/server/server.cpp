@@ -1172,7 +1172,9 @@ void UServer_Base::handlerNewConnection()
 
    U_INTERNAL_DUMP("vClientImage[%d].UEventFd::fd = %d", index_reuse_object, ptr->UEventFd::fd)
 
-   U_INTERNAL_ASSERT_RANGE(0, index_reuse_object, num_connection)
+   // NB: index_reuse_object can be major of num_connection (depend on the last deleted connection)...
+
+   U_INTERNAL_ASSERT_RANGE(0, index_reuse_object, max_Keep_Alive)
 
 #ifdef HAVE_PTHREAD_H
    if (UNotifier::pthread)

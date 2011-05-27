@@ -23,6 +23,7 @@ const UString* URPCObject::str_response_type_3;
 const UString* URPCObject::str_response_type_4;
 const UString* URPCObject::str_response_type_5;
 const UString* URPCObject::str_fault_reason;
+const UString* URPCObject::str_NAMESPACE;
 
 URPCObject* URPCObject::dispatcher;
 
@@ -37,6 +38,7 @@ void URPCObject::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_response_type_4,0)
    U_INTERNAL_ASSERT_EQUALS(str_response_type_5,0)
    U_INTERNAL_ASSERT_EQUALS(str_fault_reason,0)
+   U_INTERNAL_ASSERT_EQUALS(str_NAMESPACE,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("success_or_failure") },
@@ -45,7 +47,8 @@ void URPCObject::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("stdin_standard_output") },
       { U_STRINGREP_FROM_CONSTANT("standard_output_binary") },
       { U_STRINGREP_FROM_CONSTANT("stdin_standard_output_binary") },
-      { U_STRINGREP_FROM_CONSTANT("The requested method does not exist on this server") }
+      { U_STRINGREP_FROM_CONSTANT("The requested method does not exist on this server") },
+      { U_STRINGREP_FROM_CONSTANT("NAMESPACE") }
    };
 
    U_NEW_ULIB_OBJECT(str_response_type_0,    U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -55,6 +58,7 @@ void URPCObject::str_allocate()
    U_NEW_ULIB_OBJECT(str_response_type_4,    U_STRING_FROM_STRINGREP_STORAGE(4));
    U_NEW_ULIB_OBJECT(str_response_type_5,    U_STRING_FROM_STRINGREP_STORAGE(5));
    U_NEW_ULIB_OBJECT(str_fault_reason,       U_STRING_FROM_STRINGREP_STORAGE(6));
+   U_NEW_ULIB_OBJECT(str_NAMESPACE,          U_STRING_FROM_STRINGREP_STORAGE(7));
 
    if (UServer_Base::str_METHOD_NAME == 0) UServer_Base::str_allocate();
 }
@@ -83,10 +87,11 @@ void URPCObject::readFileMethod(UFileConfig& file_method)
 
    int rtype;
    UCommand* command;
-   UString method_name, response_type;
+   UString method_name, method_ns, response_type;
 
    while (file_method.load())
       {
+      method_ns     = file_method[*str_NAMESPACE];
       method_name   = file_method[*UServer_Base::str_METHOD_NAME];
       response_type = file_method[*UServer_Base::str_RESPONSE_TYPE];
 
@@ -101,7 +106,7 @@ void URPCObject::readFileMethod(UFileConfig& file_method)
 
       // Adds an object method to the list of method the object can call. Take ownership of the memory
 
-      insertGenericMethod(method_name, command, rtype);
+      insertGenericMethod(method_name, method_ns, command, rtype);
 
       file_method.clear();
       }
@@ -128,9 +133,9 @@ URPCMethod* URPCObject::find(const UString& methodName)
    U_RETURN_POINTER(0, URPCMethod);
 }
 
-UString URPCObject::processMessage(URPCEnvelope& theCall, bool& bContainsFault)
+UString URPCObject::processMessage(URPCEnvelope& envelope, bool& bContainsFault)
 {
-   U_TRACE(0, "URPCObject::processMessage(%p,%p)", &theCall, &bContainsFault)
+   U_TRACE(0, "URPCObject::processMessage(%p,%p)", &envelope, &bContainsFault)
 
    U_INTERNAL_ASSERT_POINTER(URPCMethod::encoder)
 
@@ -138,7 +143,7 @@ UString URPCObject::processMessage(URPCEnvelope& theCall, bool& bContainsFault)
 
    // Iterate over the list of methods
 
-   URPCMethod* method = find(theCall.getMethodName());
+   URPCMethod* method = find(envelope.getMethodName());
 
    if (method == 0)
       {
@@ -153,8 +158,17 @@ UString URPCObject::processMessage(URPCEnvelope& theCall, bool& bContainsFault)
       }
    else
       {
-      bContainsFault = (method->execute(theCall) == false);
-      retval         = URPCMethod::encoder->encodeMethodResponse(*method, theCall.getNsName());
+      UString ns = envelope.getNsName();
+
+      U_INTERNAL_DUMP("envelope.nsName = %.*S", U_STRING_TO_TRACE(ns))
+
+      // check the name of namespace qualified element information (gSOAP)
+
+      if (ns.empty()) ns = method->getNamespaces();
+      if (ns.empty()) ns = *URPCMethod::str_ns;
+
+      bContainsFault = (method->execute(envelope) == false);
+      retval         = URPCMethod::encoder->encodeMethodResponse(*method, ns);
       }
 
    U_RETURN_STRING(retval);

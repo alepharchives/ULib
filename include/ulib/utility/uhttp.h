@@ -394,23 +394,8 @@ public:
       U_RETURN(result);
       }
 
-   static bool isSOAPRequest()
-      {
-      U_TRACE(0, "UHTTP::isSOAPRequest()")
-
-      bool result = (isHttpPOST() && U_HTTP_URI_STRNEQ("/soap"));
-
-      U_RETURN(result);
-      }
-
-   static bool isTSARequest()
-      {
-      U_TRACE(0, "UHTTP::isTSARequest()")
-
-      bool result = (isHttpPOST() && U_HTTP_URI_STRNEQ("/tsa"));
-
-      U_RETURN(result);
-      }
+   static bool isTSARequest();
+   static bool isSOAPRequest();
 
    static bool isSSIRequest()
       {

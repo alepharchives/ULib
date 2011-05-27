@@ -36,18 +36,18 @@
 
 #include <ulib/application.h>
 
-#define U_DATA_URI                           (const char*)(argv[optind+0])
-#define U_X509                               (const char*)(argv[optind+1])
-#define U_KEY_HANDLE                         (const char*)(argv[optind+2])
-#define U_DIGEST_ALGORITHM                   (const char*)(argv[optind+3])
-#define U_SIGNING_TIME                       (const char*)(argv[optind+4])
-#define U_CLAIMED_ROLE                       (const char*)(argv[optind+5])
-#define U_PRODUCTION_PLACE_CITY              (const char*)(argv[optind+6])
-#define U_PRODUCTION_PLACE_STATE_OR_PROVINCE (const char*)(argv[optind+7])
-#define U_PRODUCTION_PLACE_POSTAL_CODE       (const char*)(argv[optind+8])
-#define U_PRODUCTION_PLACE_COUNTRY_NAME      (const char*)(argv[optind+9])
-#define U_CA_STORE                           (const char*)(argv[optind+10])
-#define U_SIGNATURE_TIMESTAMP                (const char*)(argv[optind+11])
+#define U_DATA_URI                           (const char*)(num_args >= 0  ? argv[optind+0]  : 0)
+#define U_X509                               (const char*)(num_args >= 1  ? argv[optind+1]  : 0)
+#define U_KEY_HANDLE                         (const char*)(num_args >= 2  ? argv[optind+2]  : 0)
+#define U_DIGEST_ALGORITHM                   (const char*)(num_args >= 3  ? argv[optind+3]  : 0)
+#define U_SIGNING_TIME                       (const char*)(num_args >= 4  ? argv[optind+4]  : 0)
+#define U_CLAIMED_ROLE                       (const char*)(num_args >= 5  ? argv[optind+5]  : 0)
+#define U_PRODUCTION_PLACE_CITY              (const char*)(num_args >= 6  ? argv[optind+6]  : 0)
+#define U_PRODUCTION_PLACE_STATE_OR_PROVINCE (const char*)(num_args >= 7  ? argv[optind+7]  : 0)
+#define U_PRODUCTION_PLACE_POSTAL_CODE       (const char*)(num_args >= 8  ? argv[optind+8]  : 0)
+#define U_PRODUCTION_PLACE_COUNTRY_NAME      (const char*)(num_args >= 9  ? argv[optind+9]  : 0)
+#define U_CA_STORE                           (const char*)(num_args >= 10 ? argv[optind+10] : 0)
+#define U_SIGNATURE_TIMESTAMP                (const char*)(num_args >= 11 ? argv[optind+11] : 0)
 
 #define U_XMLDSIG_REFERENCE_TEMPLATE \
 "    <ds:Reference xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" URI=\"%s\">\r\n" \
@@ -318,6 +318,8 @@ public:
          {
          UString tmp(100U);
 
+         U_INTERNAL_DUMP("xades_c = %b", xades_c)
+
          tmp.snprintf("XAdES-%s.%s", (xades_c ? "C" : "BES"), tag);
 
          result = cfg[tmp];
@@ -563,6 +565,10 @@ public:
 
       // manage options
 
+      num_args = (argc - optind);
+
+      U_INTERNAL_DUMP("optind = %d num_args = %d", optind, num_args)
+
       if (UApplication::isOptions()) cfg_str = opt['c'];
 
       // manage file configuration
@@ -625,6 +631,8 @@ public:
       U_INTERNAL_ASSERT_POINTER(U_KEY_HANDLE)
 
       if (*U_KEY_HANDLE == '\0') U_ERROR("KEY_HANDLE is mandatory...");
+
+      U_INTERNAL_DUMP("U_CA_STORE = %S", U_CA_STORE)
 
       xades_c = (U_CA_STORE != 0);
 
@@ -753,10 +761,10 @@ public:
 
       ENGINE* e;
 
-   #  ifdef __MINGW32__
+#  ifdef __MINGW32__
       e = UServices::loadEngine("HCSP", ENGINE_METHOD_RSA);
       x = U_KEY_HANDLE;
-   #  else
+#  else
       e = 0;
       x = UFile::contentOf(U_KEY_HANDLE);
 
@@ -766,12 +774,12 @@ public:
          U_ERROR("I can't load the private key: %S", U_KEY_HANDLE);
          }
 
-   #     ifdef HAVE_OPENSSL_98
+#     ifdef HAVE_OPENSSL_98
       if (cert.matchPrivateKey(u_pkey) == false) U_ERROR("the private key doesn't matches the public key of the certificate");
-   #     endif
+#     endif
 
       x.clear();
-   #  endif
+#  endif
 
       UString sign = UServices::getSignatureValue(alg, to_sign, x, UString::getStringNull(), true, e);
 
@@ -827,13 +835,13 @@ public:
       }
 
 private:
-   int alg;
    bool xades_c;
    uint32_t num_ca;
+   int alg, num_args;
+   long X509SerialNumber, signing_time;
    UFileConfig cfg;
    UXAdESUtility utility;
    UVector<UCertificate*> vec_ca;
-   long X509SerialNumber, signing_time;
    UString cfg_str, str_CApath, digest_algorithm, canonicalization_algorithm, claimed_role, document, production_place_city,
            production_place_state_or_province, production_place_postal_code, production_place_country_name, uri,
            data_object_format_mimetype, signature_algorithm, to_digest, DataObjectFormat, XAdESObject, XAdESReference,

@@ -25,8 +25,8 @@
 
 #include <ulib/application.h>
 
-#define U_ARCHIVE_TIMESTAMP (const char*)(argv[optind+0])
-#define U_SCHEMA            (const char*)(argv[optind+1])
+#define U_ARCHIVE_TIMESTAMP (const char*)(num_args >= 0  ? argv[optind+0]  : 0)
+#define U_SCHEMA            (const char*)(num_args >= 1  ? argv[optind+1]  : 0)
 
 // ArchiveTimeStamp
 
@@ -73,6 +73,10 @@ public:
       LIBXML_TEST_VERSION
 
       // manage options
+
+      num_args = (argc - optind);
+
+      U_INTERNAL_DUMP("optind = %d num_args = %d", optind, num_args)
 
       if (UApplication::isOptions()) cfg_str = opt['c'];
 
@@ -316,6 +320,7 @@ public:
       }
 
 private:
+   int num_args;
    UFileConfig cfg;
    UVector<UString> vec;
    UXAdESUtility utility;

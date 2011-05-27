@@ -25,7 +25,7 @@
 
 #include <ulib/application.h>
 
-#define U_ZIPPONE (const char*)(argv[optind+0])
+#define U_ZIPPONE (const char*)(num_args >= 0  ? argv[optind+0]  : 0)
 
 // --------------------------------------------------------------
 // http://www.cnipa.gov.it/site/_files/LISTACER_20100907.zip.p7m
@@ -207,6 +207,10 @@ public:
 
       // manage options
 
+      num_args = (argc - optind);
+
+      U_INTERNAL_DUMP("optind = %d num_args = %d", optind, num_args)
+
       UString cfg_str;
       UFileConfig cfg;
 
@@ -328,6 +332,7 @@ public:
       }
 
 private:
+   int num_args;
    UHttpClient<USSLSocket> client; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
 #ifdef HAVE_LDAP
    ULDAP ldap;
