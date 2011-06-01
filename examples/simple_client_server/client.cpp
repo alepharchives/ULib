@@ -152,6 +152,8 @@ public:
 
          U_INTERNAL_DUMP("u_hostname(%u) = %.*S", u_hostname_len, u_hostname_len, u_hostname)
 
+         u_init_username();
+
          ulog->setClient();
          }
 

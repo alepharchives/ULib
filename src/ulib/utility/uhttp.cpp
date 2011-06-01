@@ -105,8 +105,6 @@ UHTTP::UPageSpeed* UHTTP::page_speed;
 
 const UString* UHTTP::str_origin;
 const UString* UHTTP::str_frm_body;
-const UString* UHTTP::str_htpasswd;
-const UString* UHTTP::str_htdigest;
 const UString* UHTTP::str_indexhtml;
 const UString* UHTTP::str_websocket;
 const UString* UHTTP::str_ctype_tsa;
@@ -123,8 +121,6 @@ void UHTTP::str_allocate()
 {
    U_TRACE(0, "UHTTP::str_allocate()")
 
-   U_INTERNAL_ASSERT_EQUALS(str_htdigest,0)
-   U_INTERNAL_ASSERT_EQUALS(str_htpasswd,0)
    U_INTERNAL_ASSERT_EQUALS(str_indexhtml,0)
    U_INTERNAL_ASSERT_EQUALS(str_ctype_tsa,0)
    U_INTERNAL_ASSERT_EQUALS(str_ctype_html,0)
@@ -140,8 +136,6 @@ void UHTTP::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_frm_websocket,0)
 
    static ustringrep stringrep_storage[] = {
-   { U_STRINGREP_FROM_CONSTANT(".htdigest") },
-   { U_STRINGREP_FROM_CONSTANT(".htpasswd") },
    { U_STRINGREP_FROM_CONSTANT("index.html") },
    { U_STRINGREP_FROM_CONSTANT("application/timestamp-reply") },
    { U_STRINGREP_FROM_CONSTANT(U_CTYPE_HTML) },
@@ -174,21 +168,19 @@ void UHTTP::str_allocate()
                                "\r\n") }
    };
 
-   U_NEW_ULIB_OBJECT(str_htdigest,            U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_htpasswd,            U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_indexhtml,           U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_ctype_tsa,           U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_ctype_html,          U_STRING_FROM_STRINGREP_STORAGE(4));
-   U_NEW_ULIB_OBJECT(str_ctype_soap,          U_STRING_FROM_STRINGREP_STORAGE(5));
-   U_NEW_ULIB_OBJECT(str_frm_header,          U_STRING_FROM_STRINGREP_STORAGE(6));
-   U_NEW_ULIB_OBJECT(str_frm_body,            U_STRING_FROM_STRINGREP_STORAGE(7));
-   U_NEW_ULIB_OBJECT(str_origin,              U_STRING_FROM_STRINGREP_STORAGE(8));
-   U_NEW_ULIB_OBJECT(str_expect_100_continue, U_STRING_FROM_STRINGREP_STORAGE(9));
-   U_NEW_ULIB_OBJECT(str_websocket,           U_STRING_FROM_STRINGREP_STORAGE(10));
-   U_NEW_ULIB_OBJECT(str_websocket_key1,      U_STRING_FROM_STRINGREP_STORAGE(11));
-   U_NEW_ULIB_OBJECT(str_websocket_key2,      U_STRING_FROM_STRINGREP_STORAGE(12));
-   U_NEW_ULIB_OBJECT(str_websocket_prot,      U_STRING_FROM_STRINGREP_STORAGE(13));
-   U_NEW_ULIB_OBJECT(str_frm_websocket,       U_STRING_FROM_STRINGREP_STORAGE(14));
+   U_NEW_ULIB_OBJECT(str_indexhtml,           U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_ctype_tsa,           U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_ctype_html,          U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_ctype_soap,          U_STRING_FROM_STRINGREP_STORAGE(3));
+   U_NEW_ULIB_OBJECT(str_frm_header,          U_STRING_FROM_STRINGREP_STORAGE(4));
+   U_NEW_ULIB_OBJECT(str_frm_body,            U_STRING_FROM_STRINGREP_STORAGE(5));
+   U_NEW_ULIB_OBJECT(str_origin,              U_STRING_FROM_STRINGREP_STORAGE(6));
+   U_NEW_ULIB_OBJECT(str_expect_100_continue, U_STRING_FROM_STRINGREP_STORAGE(7));
+   U_NEW_ULIB_OBJECT(str_websocket,           U_STRING_FROM_STRINGREP_STORAGE(8));
+   U_NEW_ULIB_OBJECT(str_websocket_key1,      U_STRING_FROM_STRINGREP_STORAGE(9));
+   U_NEW_ULIB_OBJECT(str_websocket_key2,      U_STRING_FROM_STRINGREP_STORAGE(10));
+   U_NEW_ULIB_OBJECT(str_websocket_prot,      U_STRING_FROM_STRINGREP_STORAGE(11));
+   U_NEW_ULIB_OBJECT(str_frm_websocket,       U_STRING_FROM_STRINGREP_STORAGE(12));
 }
 
 UHTTP::UFileCacheData::UFileCacheData()
@@ -761,7 +753,7 @@ next:
 
    (void) UServices::setFtw(0, U_CONSTANT_TO_PARAM("usp"));
 
-   u_ftw_ctx.call              = UHTTP::checkFileForCache;
+   u_ftw_ctx.call              = checkFileForCache;
    u_ftw_ctx.sort_by           = u_ftw_ino_cmp;
    u_ftw_ctx.call_if_directory = true;
 
@@ -776,7 +768,13 @@ next:
    if (file_data &&
        file_data->array == 0)
       {
-      UString content = UFile::contentOf("favicon.ico");
+      (void) pathname->replace(U_CONSTANT_TO_PARAM("favicon.ico"));
+
+      file->setPath(*pathname);
+
+      U_INTERNAL_ASSERT(file->stat())
+
+      UString content = file->getContent();
 
       u_mime_index = -1;
 
@@ -794,14 +792,20 @@ next:
       if (file_data &&
           file_data->array == 0)
          {
-         UString content = UFile::contentOf(*ssi_alias);
+         (void) pathname->replace(*ssi_alias);
+
+         file->setPath(*pathname);
+
+         U_INTERNAL_ASSERT(file->stat())
+
+         UString content = file->getContent();
 
          u_mime_index = U_ssi;
 
          putDataInCache(getHeaderMimeType(U_CTYPE_HTML, 0, 0), content);
 
          U_INTERNAL_ASSERT_POINTER(file_data->array)
-         U_INTERNAL_ASSERT_EQUALS(file_data->array->size(),2)
+         U_INTERNAL_ASSERT_EQUALS( file_data->array->size(),2)
          }
       }
 
@@ -817,26 +821,26 @@ next:
 
    // manage authorization data...
 
-   file_data = (*cache_file)[*str_htpasswd];
+   file_data = (*cache_file)[".htpasswd"];
 
    if (file_data)
       {
       U_INTERNAL_ASSERT_EQUALS(file_data->array,0)
 
-      htpasswd = U_NEW(UString(UFile::contentOf(*str_htpasswd)));
+      htpasswd = U_NEW(UString(UFile::contentOf(".htpasswd")));
 
-      U_SRV_LOG("file data users permission: '%.*s' loaded", U_STRING_TO_TRACE(*str_htpasswd));
+      U_SRV_LOG("file data users permission: '.htpasswd' loaded");
       }
 
-   file_data = (*cache_file)[*str_htdigest];
+   file_data = (*cache_file)[".htdigest"];
 
    if (file_data)
       {
       U_INTERNAL_ASSERT_EQUALS(file_data->array,0)
 
-      htdigest = U_NEW(UString(UFile::contentOf(*str_htdigest)));
+      htdigest = U_NEW(UString(UFile::contentOf(".htdigest")));
 
-      U_SRV_LOG("file data users permission: '%.*s' loaded", U_STRING_TO_TRACE(*str_htdigest));
+      U_SRV_LOG("file data users permission: '.htdigest' loaded");
       }
 
    UServices::generateKey(); // For ULIB facility request TODO stateless session cookies... 
@@ -1727,13 +1731,13 @@ void UHTTP::checkHTTPRequestForHeader(const UString& request)
 
          do { ++pos1; } while (u_isspace(ptr[pos1]));
 
-         U_INTERNAL_ASSERT_MINOR(pos1, end)
+         if (pos1 >= end) return; // NB: we can have too much advanced...
 
          pos2 = pos1;
 
          while (ptr[pos2] != '\n' && pos2 < end) ++pos2;
 
-   //    U_INTERNAL_DUMP("pos2 = %20S", request.c_pointer(pos2))
+      // U_INTERNAL_DUMP("pos2 = %20S", request.c_pointer(pos2))
 
          if (c == 'H')
             {
@@ -2891,7 +2895,7 @@ void UHTTP::setHTTPCgiResponse(int nResponseCode, bool header_content_length, bo
 
          content = UStringExt::deflate(content);
          }
-      
+
       http_info.clength = content.size();
 
       if (endHeader)
@@ -2988,9 +2992,8 @@ U_NO_EXPORT bool UHTTP::openFile()
       }
    else
       {
-      result = (file->regular()                      &&
-                file->isName(*str_htpasswd) == false && // NB: '.htpasswd' is forbidden
-                file->isName(*str_htdigest) == false && // NB: '.htdigest' is forbidden
+      result = (file->regular()                                                           &&
+                file->isNameDosMatch(U_CONSTANT_TO_PARAM(".htpasswd|.htdigest")) == false && // NB: '.htpasswd' and '.htdigest' are forbidden
                 file->open());
       }
 
@@ -3287,7 +3290,7 @@ UString UHTTP::getRemoteIP()
    U_RETURN_STRING(*real_ip);
 }
 
-bool UHTTP::isSOAPRequest()
+__pure bool UHTTP::isSOAPRequest()
 {
    U_TRACE(0, "UHTTP::isSOAPRequest()")
 
@@ -3296,7 +3299,7 @@ bool UHTTP::isSOAPRequest()
    U_RETURN(result);
 }
 
-bool UHTTP::isTSARequest()
+__pure bool UHTTP::isTSARequest()
 {
    U_TRACE(0, "UHTTP::isTSARequest()")
 
@@ -3438,7 +3441,9 @@ UString UHTTP::getHeaderMimeType(const char* content_type, uint32_t size, time_t
       (void) header.append("Content-Script-Type: text/javascript\r\n");
       }
 
-   if (enable_caching_by_proxy_servers) (void) header.append(U_CONSTANT_TO_PARAM("Cache-Control: public, max-age=31536000\r\nVary: Accept-Encoding\r\nAccept-Ranges: bytes\r\n"));
+   if (enable_caching_by_proxy_servers) (void) header.append(U_CONSTANT_TO_PARAM("Cache-Control: public, max-age=31536000\r\n"
+                                                                                 "Vary: Accept-Encoding\r\n"
+                                                                                 "Accept-Ranges: bytes\r\n"));
 
    if (size)        header.snprintf_add("Content-Length:   %u\r\n\r\n", size);
    else      (void) header.append(      "Content-Length:   %u\r\n\r\n");
@@ -3615,6 +3620,19 @@ bool UHTTP::isFileInCache()
    U_RETURN(false);
 }
 
+void UHTTP::renewDataCache()
+{
+   U_TRACE(0, "UHTTP::renewDataCache()")
+
+   u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "./%.*s", U_STRING_TO_TRACE(*(cache_file->key())));
+
+   cache_file->eraseAfterFind();
+
+   checkFileForCache();
+
+   u_buffer_len = 0;
+}
+
 UString UHTTP::getDataFromCache(bool header, bool deflate)
 {
    U_TRACE(0, "UHTTP::getDataFromCache(%b,%b)", header, deflate)
@@ -3622,16 +3640,9 @@ UString UHTTP::getDataFromCache(bool header, bool deflate)
    U_INTERNAL_ASSERT_POINTER(file_data)
    U_INTERNAL_ASSERT_POINTER(file_data->array)
 
-   if (u_now->tv_sec > file_data->expire)
-      {
-      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "./%.*s", U_STRING_TO_TRACE(*(cache_file->key())));
+   U_INTERNAL_DUMP("u_now->tv_sec = %#D file_data->expire = %#D", u_now->tv_sec, file_data->expire)
 
-      cache_file->eraseAfterFind();
-
-      checkFileForCache();
-
-      u_buffer_len = 0;
-      }
+   if (u_now->tv_sec > file_data->expire) renewDataCache();
 
    U_INTERNAL_DUMP("idx = %u", (deflate * 2) + header)
 
@@ -5445,8 +5456,20 @@ void UHTTP::processHTTPGetRequest(const UString& request)
          {
          if (isDataFromCache())
             {
-            bcache                   = true;
+            bcache = true;
+
+            bool data_expired = (u_now->tv_sec > file_data->expire);
+
+            if (data_expired)
+               {
+               file->close();
+
+               renewDataCache();
+               }
+
             *UClientImage_Base::body = getDataFromCache(false, false); 
+
+            if (data_expired) file->open();
             }
          else
             {

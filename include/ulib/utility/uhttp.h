@@ -184,8 +184,6 @@ public:
 
    static const UString* str_origin;
    static const UString* str_frm_body;
-   static const UString* str_htpasswd;
-   static const UString* str_htdigest;
    static const UString* str_indexhtml;
    static const UString* str_websocket;
    static const UString* str_ctype_tsa;
@@ -394,8 +392,8 @@ public:
       U_RETURN(result);
       }
 
-   static bool isTSARequest();
-   static bool isSOAPRequest();
+   static bool isTSARequest() __pure;
+   static bool isSOAPRequest() __pure;
 
    static bool isSSIRequest()
       {
@@ -934,6 +932,7 @@ public:
 
    static void    in_READ();
    static bool    isFileInCache();
+   static void    renewDataCache();
    static void    checkFileForCache();
    static UString getDataFromCache(bool header, bool deflate);
 

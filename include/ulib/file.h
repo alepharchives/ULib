@@ -160,6 +160,7 @@ public:
    int32_t     getPathRelativLen() const { return path_relativ_len; }
 
    bool isName(const UString& name) const;
+   bool isNameDosMatch(const char* mask, uint32_t mask_len) const;
 
    const char* getSuffix() const
       {
@@ -827,7 +828,7 @@ public:
 protected:
    char* map;
    UString pathname;
-   const char* path_relativ;            // la stringa potrebbe non essere scrivibile...
+   const char* path_relativ;            // the string can be not writeable...
    uint32_t path_relativ_len, map_size; // size to mmap(), may be larger than the size of the file...
    int fd;
 

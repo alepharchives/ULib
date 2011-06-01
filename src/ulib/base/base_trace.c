@@ -17,11 +17,16 @@
 #ifndef __MINGW32__
 #  include <sys/uio.h>
 #  include <sys/mman.h>
+#  ifdef HAVE_PTHREAD_H
+#     include <pthread.h>
+#     include <sys/syscall.h>
+#  endif
 #endif
 
 #include <stdlib.h>
 #include <stddef.h>
 
+void*    u_plock;
 int      u_trace_fd;
 char     u_trace_tab[256]; /* 256 max indent */
 uint32_t u_trace_num_tab;
@@ -68,6 +73,36 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
 
    U_INTERNAL_ASSERT_MINOR(u_trace_num_tab,sizeof(u_trace_tab))
 
+#ifdef HAVE_PTHREAD_H
+   if (u_plock)
+      {
+      int sz;
+      char tid_buffer[32];
+      static pid_t old_tid;
+
+      pid_t tid = syscall(SYS_gettid);
+
+      (void) pthread_mutex_lock((pthread_mutex_t*)u_plock);
+
+      if (old_tid != tid)
+         {
+         sz = snprintf(tid_buffer, sizeof(tid_buffer), "[tid %d]<--\n[tid %d]-->\n", old_tid, tid);
+
+         old_tid = tid;
+
+         if (file_size == 0) (void) write(u_trace_fd, tid_buffer, sz);
+         else
+            {
+            if ((file_ptr + sz) > file_limit) file_ptr = file_mem;
+
+            (void) u_memcpy(file_ptr, tid_buffer, sz);
+
+            file_ptr += sz;
+            }
+         }
+      }
+#endif
+
    if (file_size == 0) (void) writev(u_trace_fd, iov, n);
    else
       {
@@ -87,6 +122,10 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
          file_ptr += iov[i].iov_len;
          }
       }
+
+#ifdef HAVE_PTHREAD_H
+   if (u_plock) (void) pthread_mutex_unlock((pthread_mutex_t*)u_plock);
+#endif
 }
 
 void u_trace_write(const char* restrict t, uint32_t tlen)
@@ -376,8 +415,7 @@ void u_trace_suspend(int resume)
 
    U_INTERNAL_ASSERT_RANGE(0,resume,1)
 
-   if (u_flag_test ==  0 &&
-       u_flag_exit != -1)
+   if (u_flag_exit == 0)
       {
       static int            cnt_suspend;           /* disabilita eventuale ricorsione... */
       static void* restrict flag_mask_level_save;

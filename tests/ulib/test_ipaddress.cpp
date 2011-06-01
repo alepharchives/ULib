@@ -9,6 +9,8 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
+   u_init_hostname();
+
    UIPAddress x;
    char address[16];
    UString name = UString(argv[1]), domain, name_domain, name_ret;
@@ -89,7 +91,7 @@ U_EXPORT main (int argc, char* argv[])
 
    if (esito)
       {
-      (void) memcpy(address, x.get_in_addr(), x.getInAddrLength());
+      (void) u_memcpy(address, x.get_in_addr(), x.getInAddrLength());
 
       x.setAddress(address);
 

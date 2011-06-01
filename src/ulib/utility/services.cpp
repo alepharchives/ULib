@@ -77,7 +77,9 @@ bool UServices::isSetuidRoot()
 {
    U_TRACE(1, "UServices::isSetuidRoot()")
 
-   U_INTERNAL_DUMP("u_user_name = %.*S", u_user_name_len, u_user_name)
+   if (u_user_name_len == 0) u_init_username();
+
+   U_INTERNAL_DUMP("u_user_name(%u) = %.*S", u_user_name_len, u_user_name_len, u_user_name)
 
    bool i_am_root = (u_user_name_len == 4 && (uid_t) U_SYSCALL_NO_PARAM(getuid) == 0);
 
@@ -129,14 +131,14 @@ bool UServices::read(int fd, UString& buffer, int count, int timeoutMS) // read 
 
    int byte_read = 0;
    bool single_read = (count == U_SINGLE_READ);
-   uint32_t value, capacity, start = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua...
+   uint32_t value, space, start = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua...
 
 restart:
-   capacity = buffer.capacity() - start;
+   space = buffer.capacity() - start;
 
-   if (count < (int)capacity) single_read = true;
+   if (count < (int)space) single_read = true;
 
-   if (buffer.reserve(start + (single_read ? (int)capacity : count))) goto restart;
+   if (buffer.reserve(start + U_max(count,(int)U_CAPACITY))) goto restart;
 
    char* ptr = buffer.c_pointer(start);
 
@@ -157,14 +159,14 @@ read:
       {
       // NB: may be there are available more bytes to read...
 
-      if (value == capacity)
+      if (value == space)
          {
          buffer.size_adjust_force(start + byte_read); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
 
-         if (buffer.reserve(start + byte_read + capacity))
+         if (buffer.reserve(start + byte_read + space))
             {
-            ptr      = buffer.c_pointer(start);
-            capacity = buffer.capacity() - (start + byte_read);
+            ptr   = buffer.c_pointer(start);
+            space = buffer.capacity() - (start + byte_read);
             }
 
          goto read;

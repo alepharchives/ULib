@@ -126,7 +126,7 @@ void UTrace::trace_syscall(const char* format, ...)
 
       if (flag_syscall_read_or_write)
          {
-         if (time_syscall_read_or_write == 0) time_syscall_read_or_write = new UCrono();
+         if (time_syscall_read_or_write == 0) time_syscall_read_or_write = new UCrono;
 
          time_syscall_read_or_write->start();
          }
@@ -205,12 +205,6 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
 
       if (active)
          {
-         struct iovec iov[3] = { { (caddr_t)u_trace_tab,    u_trace_num_tab },
-                                 { (caddr_t)buffer_syscall, buffer_syscall_len },
-                                 { (caddr_t)"\n",           1 } };
-
-         u_trace_writev(iov, 2);
-
          if (error == false &&
              flag_syscall_read_or_write)
             {
@@ -229,16 +223,23 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
                if (dltime > 0)
                   {
                   int units;
+                  char msg[sizeof(buffer_syscall)];
                   double rate = u_calcRate(bytes_read_or_write, dltime, &units);
 
-                  iov[1].iov_len = sprintf(buffer_syscall, " (%7.2f%s/s)", rate, u_short_units[units]);
+                  buffer_syscall_len += u_snprintf(msg, sizeof(buffer_syscall), " (%7.2f%s/s)", rate, u_short_units[units]);
 
-                  u_trace_writev(iov+1, 1);
+                  U_INTERNAL_ASSERT_MINOR(buffer_syscall_len, sizeof(buffer_syscall))
+
+                  (void) strcat(buffer_syscall, msg);
                   }
                }
             }
 
-         u_trace_writev(iov+2, 1);
+         struct iovec iov[3] = { { (caddr_t)u_trace_tab,    u_trace_num_tab },
+                                 { (caddr_t)buffer_syscall, buffer_syscall_len },
+                                 { (caddr_t)"\n", 1 } };
+
+         u_trace_writev(iov, 3);
          }
       }
 }

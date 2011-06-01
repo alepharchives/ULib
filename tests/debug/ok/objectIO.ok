@@ -1,18 +1,7 @@
+test_objectIO: WARNING: ::getenv("TMPDIR") = (null)
 {Call   main(1)
-	{Call   Prima::operator<<()
-		this=(null)
-	}Return Prima::operator<<()
 	Prima="io_sono_la_classe_Prima"
-	{Call   Seconda::operator<<()
-		a1=(null)
-	}Return Seconda::operator<<()
 	Seconda="io_sono_la_classe_Seconda"
-	{Call   Seconda::operator<<()
-		a1=(null)
-	}Return Seconda::operator<<()
-	{Call   Prima::operator<<()
-		this=(null)
-	}Return Prima::operator<<()
 	Prima="io_sono_la_classe_Prima" Seconda="io_sono_la_classe_Seconda"
 	{Call   Prima::operator<<()
 		this=(null)

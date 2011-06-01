@@ -59,6 +59,8 @@ main (int argc, char* argv[])
    unsigned len;
 
    u_init(argv);
+   u_init_hostname();
+   u_init_username();
 
 #ifdef __MINGW32__
    n_cmp = 8;

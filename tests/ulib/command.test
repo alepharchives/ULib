@@ -12,6 +12,7 @@ start_msg command
 #VALGRIND=valgrind
  export UTRACE UOBJDUMP USIMERR
 
+#STRACE=$TRUSS
 start_prg command
 
 if [ -n "$WINELOADER" ]; then

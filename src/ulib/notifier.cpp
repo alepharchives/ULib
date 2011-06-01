@@ -114,7 +114,7 @@ UNotifier::~UNotifier()
       }
 }
 
-uint32_t UNotifier::size()
+__pure uint32_t UNotifier::size()
 {
    U_TRACE(0, "UNotifier::size()")
 
@@ -127,34 +127,94 @@ uint32_t UNotifier::size()
    U_RETURN(length);
 }
 
-void UNotifier::insert(UEventFd* handler_event)
+UNotifier* UNotifier::getItem(int& start)
 {
-   U_TRACE(0, "UNotifier::insert(%p)", handler_event)
+   U_TRACE(0, "UNotifier::getItem(%d)", start)
 
-   U_INTERNAL_DUMP("fd = %d op_mask = %B", handler_event->fd, handler_event->op_mask)
-
+   int index;
    UNotifier* item;
+
+   U_INTERNAL_DUMP("pool = %p", pool)
+
+   U_INTERNAL_ASSERT_POINTER(pool)
+
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+   if (pthread) pthread->lock();
+#endif
+
+   index = ((item = pool) - (vpool + start));
+   pool  = pool->next;
+
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+   if (pthread) pthread->unlock();
+#endif
+
+   U_INTERNAL_ASSERT_MINOR(index,(int)vpooln)
+   U_INTERNAL_ASSERT_EQUALS(item->handler_event_fd,0)
+
+   start = index;
+
+   U_RETURN_POINTER(item,UNotifier);
+}
+
+void UNotifier::insert(UNotifier* item)
+{
+   U_TRACE(0, "UNotifier::insert(%p)", item)
+
+   if (item->handler_event_fd == 0)
+      {
+#  if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+      if (pthread) pthread->lock();
+#  endif
+
+      item->next = pool;
+      pool       = item;
+
+      U_INTERNAL_DUMP("pool = %p pool->next = %p index_reuse_object = %d", pool, pool->next, (pool - vpool))
+
+#  if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+      if (pthread) pthread->unlock();
+#  endif
+
+      return;
+      }
+
+   U_INTERNAL_DUMP("fd = %d op_mask = %B", item->handler_event_fd->fd, item->handler_event_fd->op_mask)
 
 #ifdef DEBUG
    bool error = false;
 
-   for (item = first; item; item = item->next)
+   for (UNotifier* _item = first; _item; _item = _item->next)
       {
-      U_INTERNAL_DUMP("fd = %d", item->handler_event_fd->fd)
+      U_INTERNAL_DUMP("fd = %d", _item->handler_event_fd->fd)
 
-      U_INTERNAL_ASSERT_MAJOR(handler_event->fd,         0)
-      U_INTERNAL_ASSERT_MAJOR(item->handler_event_fd->fd,0)
+      U_INTERNAL_ASSERT_MAJOR( item->handler_event_fd->fd,0)
+      U_INTERNAL_ASSERT_MAJOR(_item->handler_event_fd->fd,0)
 
-      if (handler_event->fd == item->handler_event_fd->fd)
+      if ( item->handler_event_fd->fd ==
+          _item->handler_event_fd->fd)
          {
          error = true;
 
-         U_WARNING("insertion of duplicate handler for file descriptor %d...", handler_event->fd);
+         U_WARNING("insertion of duplicate handler for file descriptor %d...", item->handler_event_fd->fd);
          }
       }
 
    if (error) return;
 #endif
+
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+   if (pthread) pthread->lock();
+#endif
+
+   item->next = first;
+   first      = item;
+
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+   if (pthread) pthread->unlock();
+#endif
+
+   UEventFd* handler_event = item->handler_event_fd;
 
 #ifdef HAVE_LIBEVENT
    U_INTERNAL_ASSERT_POINTER(u_ev_base)
@@ -206,10 +266,13 @@ void UNotifier::insert(UEventFd* handler_event)
 
    U_INTERNAL_DUMP("fd_set_max = %d", fd_set_max)
 #endif
+}
 
-#ifdef HAVE_PTHREAD_H
-   if (pthread) pthread->lock();
-#endif
+void UNotifier::insert(UEventFd* handler_event)
+{
+   U_TRACE(0, "UNotifier::insert(%p)", handler_event)
+
+   UNotifier* item;
 
    U_INTERNAL_DUMP("pool = %p", pool)
 
@@ -220,14 +283,9 @@ void UNotifier::insert(UEventFd* handler_event)
       pool = pool->next;
       }
 
-   item->next = first;
-   first      = item;
-
-#ifdef HAVE_PTHREAD_H
-   if (pthread) pthread->unlock();
-#endif
-
    item->handler_event_fd = handler_event;
+
+   insert(item);
 }
 
 int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout)
@@ -324,18 +382,23 @@ loop:
    U_RETURN(result);
 }
 
-U_NO_EXPORT void UNotifier::handlerDelete(UNotifier** ptr, UNotifier* item, UEventFd* handler_event)
+U_NO_EXPORT void UNotifier::handlerDelete(UNotifier** ptr)
 {
-   U_TRACE(0, "UNotifier::handlerDelete(%p,%p,%p)", ptr, item, handler_event)
+   U_TRACE(0, "UNotifier::handlerDelete(%p)", ptr)
 
-   U_INTERNAL_ASSERT_EQUALS(item,*ptr)
-   U_INTERNAL_ASSERT_EQUALS(handler_event,item->handler_event_fd)
+   UNotifier* item = *ptr;
+
+   U_INTERNAL_ASSERT_POINTER(item)
+
+   UEventFd* handler_event = item->handler_event_fd;
+
+   U_INTERNAL_DUMP("fd = %d op_mask = %B", handler_event->fd, handler_event->op_mask)
 
    item->handler_event_fd = 0;
 
    handler_event->handlerDelete();
 
-#ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
    if (pthread) pthread->lock();
 #endif
 
@@ -344,11 +407,11 @@ U_NO_EXPORT void UNotifier::handlerDelete(UNotifier** ptr, UNotifier* item, UEve
    item->next = pool;
    pool       = item;
 
-#ifdef HAVE_PTHREAD_H
+   U_INTERNAL_DUMP("pool = %p pool->next = %p index_reuse_object = %d", pool, pool->next, (pool - vpool))
+
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
    if (pthread) pthread->unlock();
 #endif
-
-   U_INTERNAL_DUMP("pool = %p pool->next = %p index_reuse_object = %d", pool, pool->next, (pool - vpool))
 }
 
 // NB: n is needeed for rientrance of function (see test_notifier...) 
@@ -359,16 +422,21 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier** ptr, bool bread, b
    U_TRACE(0, "UNotifier::handlerResult(%d,%p,%b,%b,%b)", n, ptr, bread, bwrite, bexcept)
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
-   U_INTERNAL_ASSERT(bread || bwrite)
+   U_INTERNAL_ASSERT(bread || bwrite || bexcept)
 
    int ret;
    bool bdelete = false;
    UNotifier* item = *ptr;
+
+   U_INTERNAL_ASSERT_POINTER(item)
+
    UEventFd* handler_event = item->handler_event_fd;
 
    U_INTERNAL_ASSERT_POINTER(handler_event)
 
-   if (bread)
+   U_INTERNAL_DUMP("fd = %d op_mask = %B", handler_event->fd, handler_event->op_mask)
+
+   if (bread || bexcept)
       {
 #  ifndef HAVE_EPOLL_WAIT
       U_INTERNAL_ASSERT_MAJOR(fd_read_cnt,0)
@@ -425,10 +493,11 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier** ptr, bool bread, b
    if (bdelete)
       {
 #  ifdef HAVE_EPOLL_WAIT
-      (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_DEL, handler_event->fd, (struct epoll_event*)1);
+      // NB: if we have already closed the socket epoll_ctl() give error...
+      if (bexcept) (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_DEL, handler_event->fd, (struct epoll_event*)1);
 #  endif
 
-      handlerDelete(ptr, item, handler_event);
+      handlerDelete(ptr);
 
       U_RETURN(true);
       }
@@ -443,8 +512,13 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 {
    U_TRACE(0, "UNotifier::waitForEvent(%p)", timeout)
 
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+   if (pthread) goto start;
+#endif
+
    if (first)
       {
+start:
 #  ifdef HAVE_LIBEVENT
       (void) waitForEvent(0, 0, 0, 0);
 #  elif defined(HAVE_EPOLL_WAIT)
@@ -527,7 +601,7 @@ found:
             {
             U_WARNING("epoll_wait() fire events %B on file descriptor %d without handler...", pev->events, pev->data.fd);
 
-#        ifdef HAVE_PTHREAD_H
+#if      defined(HAVE_PTHREAD_H) && defined(DEBUG)
             if (pthread)
                {
                for (uint32_t i = 0; i < vpooln; ++i)
@@ -759,7 +833,7 @@ U_NO_EXPORT void UNotifier::eraseItem(UNotifier** ptr)
    if (first) fd_set_max = getNFDS();
 #endif
 
-   handlerDelete(ptr, item, handler_event);
+   handlerDelete(ptr);
 }
 
 void UNotifier::erase(UEventFd* handler_event)
@@ -867,7 +941,7 @@ void UNotifier::clear()
    (void) U_SYSCALL(close, "%d", epollfd);
 #endif
 
-#ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
    if (pthread) delete pthread;
 #endif
 }

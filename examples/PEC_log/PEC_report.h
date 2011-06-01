@@ -265,6 +265,8 @@ public:
 
       UApplication::run(argc, argv, env);
 
+      u_gettimeofday();
+
       ULib_init_openssl();
 
       // manage options

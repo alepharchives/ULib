@@ -170,13 +170,6 @@ public:
       while (UServer_Base::flag_loop) (void) UNotifier::waitForEvent(UServer_Base::ptime);
       }
 };
-
-/*
-#  ifndef DEBUG
-#  undef  HAVE_PTHREAD_H
-#  define HAVE_PTHREAD_BUT_NDEBUG
-#  endif
-*/
 #endif
 
 static int sysctl_somaxconn, tcp_abort_on_overflow, sysctl_max_syn_backlog, tcp_fin_timeout;
@@ -320,6 +313,10 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
 
    U_INTERNAL_DUMP("u_hostname(%u) = %.*S", u_hostname_len, u_hostname_len, u_hostname)
 
+   u_init_username();
+
+   U_INTERNAL_DUMP("u_user_name(%u) = %.*S", u_user_name_len, u_user_name_len, u_user_name)
+
    if (cfg) loadConfigParam(*cfg);
 }
 
@@ -392,7 +389,7 @@ UServer_Base::~UServer_Base()
 
    if (proc) delete proc;
 
-#ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H)
    if (u_pthread_time)
       {
       delete (UTimeThread*)u_pthread_time;
@@ -522,11 +519,12 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    if (pid_file.empty() == false) (void) UFile::writeTo(pid_file, UString(u_pid_str, u_pid_str_len));
 
-   // open log
-
-   if (log_file.empty() == false)
+   if (log_file.empty()) u_gettimeofday();
+   else
       {
-#  ifdef HAVE_PTHREAD_H
+      // open log
+
+#  if defined(HAVE_PTHREAD_H)
       ((UTimeThread*)(u_pthread_time = U_NEW(UTimeThread)))->start();
 #  endif
 
@@ -1031,7 +1029,7 @@ next:
 
    if (isClassic()) goto next1;
 
-#ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
    if (preforked_num_kids == -1) goto next1;
 #endif
 
@@ -1166,7 +1164,9 @@ void UServer_Base::handlerNewConnection()
 
    // NB: UClientImage object is also referenced by UClientImage_Base::pClientImage...
 
-   int index_reuse_object = UNotifier::getIndexReuseObject(start_index_reuse_object);
+   int index_reuse_object = start_index_reuse_object;
+
+   UNotifier* item = UNotifier::getItem(index_reuse_object);
 
    UClientImage_Base* ptr = vClientImage + index_reuse_object;
 
@@ -1174,38 +1174,28 @@ void UServer_Base::handlerNewConnection()
 
    // NB: index_reuse_object can be major of num_connection (depend on the last deleted connection)...
 
+   U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::fd,0)
+   U_INTERNAL_ASSERT_EQUALS(item->handler_event_fd,0)
    U_INTERNAL_ASSERT_RANGE(0, index_reuse_object, max_Keep_Alive)
 
-#ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
    if (UNotifier::pthread)
       {
-#  ifdef DEBUG
-      if (ptr->UEventFd::fd)
-         {
-         do {
-            ++ptr;
+      if (ptr->newConnection()) item->handler_event_fd = ptr;
 
-            U_INTERNAL_DUMP("vClientImage[%d].UEventFd::fd = %d", (ptr - vClientImage), ptr->UEventFd::fd)
-
-            if (ptr >= (vClientImage + max_Keep_Alive)) ptr = vClientImage;
-            }
-         while (ptr->UEventFd::fd);
-         }
-#  endif
-      if (ptr->newConnection()) UNotifier::insert(ptr);
-
-      return;
+      goto end;
       }
 #endif
-
-   U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::fd, 0)
 
    // NB: in the classic model we don't need to notify for request of connection
    // (loop: accept-fork) and the forked child don't accept new client, but we need
    // event manager for the forked child to feel timeout for request of new client...
 
    if (ptr->handlerRead() == U_NOTIFIER_DELETE) ptr->handlerDelete();
-   else                                         UNotifier::insert(ptr);
+   else                                         item->handler_event_fd = ptr;
+
+end:
+   UNotifier::insert(item);
 }
 
 int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
@@ -1301,6 +1291,8 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
          U_ASSERT_EQUALS(ptr->UEventFd::fd, ptr->logbuf->strtol())
 
          U_SRV_LOG("client closed connection from %.*s, %s clients still connected", U_STRING_TO_TRACE(*(ptr->logbuf)), getNumConnection());
+
+         ptr->logbuf->setEmpty();
 
          if (num_connection == 0) ULog::log("waiting for connection\n");
          }
@@ -1472,8 +1464,16 @@ void UServer_Base::run()
       {
       U_SRV_LOG("waiting for connection");
 
-#  ifdef HAVE_PTHREAD_H
-      if (preforked_num_kids == -1) (UNotifier::pthread = U_NEW(UClientThread))->start();
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+      if (preforked_num_kids == -1)
+         {
+#     ifdef DEBUG
+         static pthread_mutex_t plock = PTHREAD_MUTEX_INITIALIZER;
+                     u_plock = &plock;
+#     endif
+
+         (UNotifier::pthread = U_NEW(UClientThread))->start();
+         }
 #  endif
 
       while (flag_loop)
@@ -1485,7 +1485,7 @@ void UServer_Base::run()
             continue;
             }
 
-#     ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
          if (UNotifier::pthread)
             {
             (void) pthis->handlerRead();
@@ -1637,8 +1637,4 @@ const char* UServer_Base::dump(bool reset) const
    return 0;
 }
 
-#endif
-
-#ifdef HAVE_PTHREAD_BUT_NDEBUG
-#  define HAVE_PTHREAD_H
 #endif

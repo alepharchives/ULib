@@ -52,5 +52,7 @@ U_EXPORT main (int argc, char* argv[])
 
          cout << '\n';
          }
+
+      exit(0);
       }
 }

@@ -289,6 +289,22 @@ bool UFile::isName(const UString& name) const
    U_RETURN(result);
 }
 
+bool UFile::isNameDosMatch(const char* mask, uint32_t mask_len) const
+{
+   U_TRACE(0, "UFile::isNameDosMatch(%.*S,%u)", mask_len, mask, mask_len)
+
+   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
+   U_INTERNAL_ASSERT_MAJOR(path_relativ_len,0)
+
+   UString s(path_relativ, path_relativ_len), basename = UStringExt::basename(s);
+
+   bool result = u_dosmatch_with_OR(U_STRING_TO_PARAM(basename), mask, mask_len, 0);
+
+   U_RETURN(result);
+}
+
 off_t UFile::size(bool bstat)
 {
    U_TRACE(0, "UFile::size(%b)", bstat)
@@ -1283,8 +1299,8 @@ const char* UFile::getMimeType(bool bmagic)
 #ifdef HAVE_MAGIC
    if (bmagic                &&
        u_mime_index != U_ssi &&
-       u_mime_index == U_css &&
-       u_mime_index == U_js)
+       u_mime_index != U_css &&
+       u_mime_index != U_js)
       {
       U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
 

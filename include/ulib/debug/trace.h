@@ -47,7 +47,9 @@ typedef const unsigned char* pcuchar_t;
 class U_EXPORT UTrace {
 public:
 
-   // Initialization and termination methods.
+   // Initialization and termination methods
+
+   bool active;
 
     UTrace(int level, const char* format, ...);
    ~UTrace();
@@ -99,8 +101,8 @@ public:
    U_MANAGE_SYSRETURN_VALUE(pcuchar_t,          "%S",   ret ==  0)
    U_MANAGE_SYSRETURN_VALUE(sighandler_t,       "%p",   ret == (sighandler_t)SIG_ERR)
 
-   /*
-    * Type of file sizes and offsets (LFS)
+   /* Type of file sizes and offsets (LFS)
+
 #if SIZEOF_OFF_T != SIZEOF_LONG
    U_MANAGE_SYSRETURN_VALUE(off_t,              "%I",   ret == -1LL)
 #elif SIZEOF_OFF_T == 4 
@@ -120,8 +122,6 @@ private:
    uint32_t buffer_trace_len, buffer_syscall_len;
    char buffer_trace[1019], buffer_syscall[1019];
    bool flag_syscall_read_or_write;
-public:
-   bool active;
 };
 
 #endif

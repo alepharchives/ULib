@@ -120,6 +120,7 @@ extern U_EXPORT const unsigned char   u_hex_lower[]; /* "0123456789abcdef" */
 extern U_EXPORT const char* restrict  u_tmpdir;
 
 extern U_EXPORT void        u_setPid(void);
+extern U_EXPORT void        u_init_username(void);
 extern U_EXPORT void        u_init_hostname(void);
 extern U_EXPORT const char* u_basename(const char* restrict path) __pure;
 extern U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure;

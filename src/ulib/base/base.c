@@ -182,8 +182,24 @@ void u_setPid(void)
    u_pid_str_len = buffer + sizeof(buffer) - u_pid_str;
 }
 
+void u_init_username(void)
+{
+   struct passwd* restrict pw;
+
+   U_INTERNAL_TRACE("u_init_username()")
+
+   pw = getpwuid(getuid());
+
+   if (pw) u_user_name_len = u_strlen(pw->pw_name);
+
+   if (u_user_name_len) (void) u_memcpy(u_user_name, pw->pw_name,  u_user_name_len);
+   else                 (void) u_memcpy(u_user_name,      "root", (u_user_name_len = 4));
+}
+
 void u_init_hostname(void)
 {
+   U_INTERNAL_TRACE("u_init_hostname()")
+
    if (gethostname(u_hostname, sizeof(u_hostname)))
       {
       char* restrict tmp = getenv("HOSTNAME"); /* bash setting... */
@@ -235,6 +251,8 @@ void u_gettimeofday(void)
 {
    U_INTERNAL_TRACE("u_gettimeofday()")
 
+   U_INTERNAL_ASSERT_POINTER(u_now)
+
    /* calculate number of seconds between UTC to current time zone
     *
     *         time() returns the time since the Epoch (00:00:00 UTC, January 1, 1970), measured in seconds.
@@ -246,13 +264,13 @@ void u_gettimeofday(void)
     * };
     */
 
-   U_INTERNAL_ASSERT_POINTER(u_now)
-
-   if (u_pthread_time == 0) (void) gettimeofday(u_now, 0);
-
    if (u_start_time == 0)
       {
       time_t lnow;
+
+      /* initialize time conversion information */
+
+      tzset();
 
       /* The localtime() function converts the calendar time to broken-time representation, expressed relative
        * to the user's specified timezone. The function acts as if it called tzset(3) and sets the external
@@ -263,6 +281,8 @@ void u_gettimeofday(void)
        * functions. The localtime_r() function does the same, but stores the data in a user-supplied struct. It
        * need not set tzname, timezone, and daylight
        */
+
+      (void) gettimeofday(u_now, 0);
 
       (void) localtime_r(&(u_now->tv_sec), &u_strftime_tm);
 
@@ -282,6 +302,8 @@ void u_gettimeofday(void)
 
       if (u_now->tv_sec > 1272036378L) u_start_time = u_now->tv_sec + u_now_adjust;
       }
+
+   if (u_pthread_time == 0) (void) gettimeofday(u_now, 0);
 }
 
 void u_init(char** restrict argv)
@@ -289,7 +311,6 @@ void u_init(char** restrict argv)
 #ifndef __MINGW32__
    const char* restrict pwd;
 #endif
-   struct passwd* restrict pw;
 
    U_INTERNAL_TRACE("u_init()")
 
@@ -320,22 +341,9 @@ void u_init(char** restrict argv)
 
    u_is_tty = isatty(STDERR_FILENO);
 
-   pw = getpwuid(getuid());
-
-   if (pw) u_user_name_len = u_strlen(pw->pw_name);
-
-   if (u_user_name_len) (void) u_memcpy(u_user_name, pw->pw_name,  u_user_name_len);
-   else                 (void) u_memcpy(u_user_name,      "root", (u_user_name_len = 4));
-
    /* initialize AT EXIT */
 
    (void) atexit(u_exit);
-
-   /* initialize time conversion information */
-
-   tzset();
-
-   u_gettimeofday();
 }
 
 uint32_t u_snprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...)
@@ -1472,6 +1480,8 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'U': /* print user name */
             {
+            U_INTERNAL_ASSERT_MAJOR(u_user_name_len,0)
+
             (void) u_memcpy(bp, u_user_name, u_user_name_len);
 
             bp  += u_user_name_len;
@@ -2001,8 +2011,6 @@ void u_printf(const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-   u_flag_exit = 0;
-
    bytes_written = u_vsnprintf(buffer, sizeof(buffer)-1, format, argp);
 
    va_end(argp);
@@ -2011,7 +2019,7 @@ void u_printf(const char* format, ...)
 
    if (u_flag_exit == -1) u_printError();
 
-   (void) write(u_printf_fileno, buffer, bytes_written);
+   (void) pwrite(u_printf_fileno, buffer, bytes_written, lseek(u_printf_fileno, 0, SEEK_END));
 
    if (u_flag_exit)
       {
@@ -2024,21 +2032,35 @@ void u_printf(const char* format, ...)
 
          u_trace_writev(iov, 1);
          }
+#  endif
 
+      /* check if warning */
+
+      if (u_flag_exit == -2)
+         {
+         u_flag_exit = 0;
+
+         return;
+         }
+
+#  ifdef DEBUG
       if (u_flag_exit == -1)
          {
          if (u_flag_test > 0) /* check if to force continue - test */
             {
             --u_flag_test;
 
+            u_flag_exit = 0;
+
             return;
             }
 
-         if (u_askForContinue() == true) return;
+         if (u_askForContinue() == true)
+            {
+            u_flag_exit = 0;
 
-         /* may be reset by call to u_printf() in u_askForContinue()... */
-
-         u_flag_exit = -1;
+            return;
+            }
          }
 
       u_debug_at_exit(); /* manage for U_ERROR(), U_ABORT(), etc... */

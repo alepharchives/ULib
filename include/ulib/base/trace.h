@@ -20,6 +20,7 @@
 extern "C" {
 #endif
 
+extern U_EXPORT void*    u_plock;
 extern U_EXPORT int      u_trace_fd;
 extern U_EXPORT char     u_trace_tab[256]; /* 256 max indent */
 extern U_EXPORT uint32_t u_trace_num_tab;

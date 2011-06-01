@@ -77,12 +77,11 @@ public:
       U_RETURN(esito);
       }
 
-   static uint32_t size();
-
-   static void init();
-   static void clear();
-   static void erase( UEventFd* handler_event);
-   static void insert(UEventFd* handler_event);
+   static void     init();
+   static void     clear();
+   static uint32_t size() __pure;
+   static void     erase( UEventFd* handler_event);
+   static void     insert(UEventFd* handler_event);
 
    static bool isHandler(UEventFd* handler_event)
       {
@@ -138,19 +137,10 @@ protected:
 #endif
    static bool exit_loop_wait_event_for_signal;
 
-   static int getIndexReuseObject(int start)
-      {
-      U_TRACE(0, "UNotifier::getIndexReuseObject(%d)", start)
-
-      int result = (pool - (vpool + start));
-
-      U_INTERNAL_ASSERT_MINOR(result,(int)vpooln)
-
-      U_RETURN(result);
-      }
-
-   static void preallocate(uint32_t n);
-   static int waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
+   static UNotifier* getItem(int& start);
+   static void       insert(UNotifier* item);
+   static void       preallocate(uint32_t n);
+   static int        waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
 
 #ifdef USE_POLL
    static int waitForEvent(struct pollfd* ufds, int timeoutMS = -1);
@@ -178,7 +168,7 @@ private:
    void outputEntry(ostream& os) const U_NO_EXPORT;
 
    static void eraseItem(UNotifier** ptr) U_NO_EXPORT;
-   static void handlerDelete(UNotifier** ptr, UNotifier* item, UEventFd* handler_event) U_NO_EXPORT;
+   static void handlerDelete(UNotifier** ptr) U_NO_EXPORT;
 
 #ifndef HAVE_LIBEVENT
    static bool handlerResult(int& n, UNotifier** ptr, bool bread, bool bwrite, bool bexcept) U_NO_EXPORT; 

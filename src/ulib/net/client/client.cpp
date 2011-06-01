@@ -50,6 +50,10 @@ UClient_Base::UClient_Base(UFileConfig* cfg) : response(U_CAPACITY), buffer(U_CA
 
    U_INTERNAL_DUMP("u_hostname(%u) = %.*S", u_hostname_len, u_hostname_len, u_hostname)
 
+   u_init_username();
+
+   U_INTERNAL_DUMP("u_user_name(%u) = %.*S", u_user_name_len, u_user_name_len, u_user_name)
+
    if (cfg) loadConfigParam(*cfg);
    else
       {

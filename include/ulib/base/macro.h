@@ -114,10 +114,10 @@
 
 /* Manage message info */
 
-#  define U_ERROR(  format,args...) u_printf("%W%N%W: %Q%WERROR: "format"%W",BRIGHTCYAN,YELLOW, 1,RED , ##args,RESET)
-#  define U_ABORT(  format,args...) u_printf("%W%N%W: %Q%WABORT: "format"%W",BRIGHTCYAN,YELLOW,-1,RED , ##args,RESET)
-#  define U_WARNING(format,args...) u_printf("%W%N%W: WARNING: "  format"%W",BRIGHTCYAN,YELLOW ,        ##args,RESET)
-#  define U_MESSAGE(format,args...) u_printf("%W%N%W: "           format,    BRIGHTCYAN,RESET ,         ##args)
+#  define U_ERROR(  format,args...) (u_flag_exit =  1, u_printf("%W%N%W: %WERROR: "  format"%W",BRIGHTCYAN,RESET,RED    , ##args,RESET))
+#  define U_ABORT(  format,args...) (u_flag_exit = -1, u_printf("%W%N%W: %WABORT: "  format"%W",BRIGHTCYAN,RESET,RED    , ##args,RESET))
+#  define U_WARNING(format,args...) (u_flag_exit = -2, u_printf("%W%N%W: %WWARNING: "format"%W",BRIGHTCYAN,RESET,YELLOW , ##args,RESET))
+#  define U_MESSAGE(format,args...)                    u_printf("%W%N%W: "           format,    BRIGHTCYAN,RESET        , ##args)
 
 #  define   U_ERROR_SYSCALL(msg)      U_ERROR("%R",msg)
 #  define   U_ABORT_SYSCALL(msg)      U_ABORT("%R",msg)

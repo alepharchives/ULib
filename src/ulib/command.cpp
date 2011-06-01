@@ -341,7 +341,7 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
       bool kill_command = (UNotifier::waitForRead(UProcess::filedes[2], timeoutMS) <= 0);
 
 #  ifdef __MINGW32__
-      // NB: we don't have select on pipe...
+      // NB: we don't have select() on pipe...
       if (kill_command && timeoutMS == -1) kill_command = false;
 #  endif
 

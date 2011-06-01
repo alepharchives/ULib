@@ -309,7 +309,7 @@ bool UFileConfig::loadVector(UVector<UString>& vec, const char* name)
                if (file.open(value)) str = file.getContent();
                else
                   {
-                  U_WARNING("error on open file '%.*s' specified in configuration", U_STRING_TO_TRACE(value));
+                  U_WARNING("error on open file %.*S specified in configuration", U_STRING_TO_TRACE(value));
                   }
                }
             else if (type == *str_string)

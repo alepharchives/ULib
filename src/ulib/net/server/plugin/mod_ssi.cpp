@@ -501,6 +501,8 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                   }
                else if (name == *str_var)
                   {
+                  U_INTERNAL_ASSERT_MAJOR(u_user_name_len,0)
+
                   /**
                    * DATE_GMT       The current date in Greenwich Mean Time.
                    * DATE_LOCAL     The current date in the local time zone.

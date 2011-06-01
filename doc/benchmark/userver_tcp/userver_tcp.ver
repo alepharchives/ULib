@@ -2,8 +2,8 @@ userver (1.1.0): application server by ULib
 
 Developed with ULib (C++ application development framework)
 
-Building Environment.: Gentoo 2.0.2 (AMD64) (Apr 29 2011)
-Operating System.....: Linux stefano 2.6.38.2 #2 SMP Tue Mar 29 14:28:35 CEST 2011 x86_64 Intel(R) Pentium(R) 4 CPU 2.80GHz GenuineIntel GNU/Linux
+Building Environment.: Gentoo 2.0.2 (AMD64) (May 27 2011)
+Operating System.....: Linux stefano 2.6.39 #1 SMP Fri May 20 13:41:52 CEST 2011 x86_64 Intel(R) Pentium(R) 4 CPU 2.80GHz GenuineIntel GNU/Linux
 C++ Compiler.........: 4.6.0
 C   Flags............: -g -O2  -Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition
 C++ Flags............: -g -O2  -fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated -fvisibility=hidden -fvisibility-inlines-hidden
@@ -19,10 +19,10 @@ LIBZ  library........: 1.2.5
 PCRE  library........: 8.12
 SSL   library........: 1.0.0d
 SSH   library........: None
-cURL  library........: 7.21.4
+cURL  library........: 7.21.6
 LDAP  library........: 3001
 Expat library........: 2.0.1
-MAGIC library........: 5.05
+MAGIC library........: 5.07
 MySQL library........: None
 DBI   library........: 0.8.3
 libuuid library......: 1.41.14

@@ -252,7 +252,7 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
 
    if (gai_err)
       {
-      U_WARNING("getaddrinfo() error on host \"%s\": %s", name, gai_strerror(gai_err));
+      U_WARNING("getaddrinfo() error on host %S: %s", name, gai_strerror(gai_err));
 
       U_RETURN(false);
       }
