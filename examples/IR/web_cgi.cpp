@@ -405,7 +405,7 @@ static void set_paginazione()
 
    // creo i link alla pagina corrente ed a quelle ad essa vicine
 
-   for (uint32_t i = pagina_precedente; i <= pagina_successiva; ++i)
+   for (int32_t i = pagina_precedente; i <= (int32_t)pagina_successiva; ++i)
       {
       // se tra quelle vicine c'è la prima pagina (già riportata)
 
@@ -413,7 +413,7 @@ static void set_paginazione()
 
       // se tra quelle vicine c'è l'ultima pagina (che mostrerò con le prossime istruzioni)
 
-      if (i > ultima_pagina) continue;
+      if (i > (int32_t)ultima_pagina) continue;
 
       crea_link(i);
       }

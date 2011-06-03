@@ -515,7 +515,7 @@ uint32_t UObjectDB::dumpObject(char* buffer, uint32_t buffer_size, bPFpcpv check
 
    UHashMapObjectDumpable::callForAllEntry(UObjectDB::printObjLive);
 
-   U_INTERNAL_ASSERT_MAJOR(lbuf,buffer)
+   U_INTERNAL_ASSERT(lbuf >= buffer)
 
    uint32_t result = (lbuf - buffer);
 

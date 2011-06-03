@@ -2206,7 +2206,6 @@ bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pa
       case 3: { c = *s++; exec_code; }     \
       case 2: { c = *s++; exec_code; }     \
       case 1: { c = *s++; exec_code; }     \
-              PREFETCH_ATTRIBUTE(s, 0)     \
          } while (--U_LOOP_CNT); } }
 #endif
 

@@ -204,6 +204,12 @@ public:
    static UString trim(const char* s, uint32_t n);
    static UString trim(const UString& s) { return trim(U_STRING_TO_PARAM(s)); }
 
+   // Returns a string that has any printable character which is not a space or
+   // an alphanumeric character removed from the start and the end (leading and trailing)
+
+   static UString trimPunctuation(const char* s, uint32_t n);
+   static UString trimPunctuation(const UString& s) { return trimPunctuation(U_STRING_TO_PARAM(s)); }
+
    // returns a string that has whitespace removed from the start and the end, and
    // which has each sequence of internal whitespace replaced with a single space
 

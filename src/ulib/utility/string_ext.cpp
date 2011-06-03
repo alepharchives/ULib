@@ -610,6 +610,38 @@ UString UStringExt::trim(const char* s, uint32_t n)
    U_RETURN_STRING(result);
 }
 
+// Returns a string that has any printable character which is not a space or
+// an alphanumeric character removed from the start and the end (leading and trailing)
+
+UString UStringExt::trimPunctuation(const char* s, uint32_t n)
+{
+   U_TRACE(0, "UStringExt::trimPunctuation(%.*S,%u)", n, s, n)
+
+   // U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+
+   int32_t i = 0;
+   UString result(n);
+
+   // skip punctuation character from start
+
+   while (i < (int32_t)n && u_ispunct(s[i])) ++i;
+
+   U_INTERNAL_DUMP("i = %d", i)
+
+   if (i < (int32_t)n) // not only punctuation character
+      {
+      while (u_ispunct(s[--n])) {} // skip punctuation character from end
+
+      n += 1 - i;
+
+      (void) u_memcpy(result.data(), s+i, n);
+
+      result.size_adjust(n);
+      }
+
+   U_RETURN_STRING(result);
+}
+
 // returns a string that has whitespace removed from the start and the end, and which has each sequence of internal
 // whitespace replaced with a single space.
 

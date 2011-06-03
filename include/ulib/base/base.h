@@ -51,6 +51,7 @@ typedef void* (*pvPF)    (void);
 typedef void  (*vPFpv)   (void*);
 typedef void  (*vPFpvpv) (void*,void*);
 typedef bool  (*bPF)     (void);
+typedef bool  (*bPFi)    (int);
 typedef bool  (*bPFpv)   (void*);
 typedef bool  (*bPFpcpv) (const char*, const void*);
 typedef int   (*qcompare)(const void*, const void*);

@@ -467,8 +467,6 @@ public:
       _length -= 2;
       }
 
-   void avoidPunctuation();
-
    // STREAM
 
    void write(ostream& os) const;
@@ -1116,8 +1114,6 @@ public:
       if (rep->_length > 2) rep->unQuote();
       else                  clear();
       }
-
-   void avoidPunctuation() { return rep->avoidPunctuation(); }
 
    // set uniq
 

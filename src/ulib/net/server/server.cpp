@@ -1465,15 +1465,7 @@ void UServer_Base::run()
       U_SRV_LOG("waiting for connection");
 
 #if defined(HAVE_PTHREAD_H) && defined(DEBUG)
-      if (preforked_num_kids == -1)
-         {
-#     ifdef DEBUG
-         static pthread_mutex_t plock = PTHREAD_MUTEX_INITIALIZER;
-                     u_plock = &plock;
-#     endif
-
-         (UNotifier::pthread = U_NEW(UClientThread))->start();
-         }
+      if (preforked_num_kids == -1) (UNotifier::pthread = U_NEW(UClientThread))->start();
 #  endif
 
       while (flag_loop)

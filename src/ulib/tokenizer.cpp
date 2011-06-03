@@ -29,6 +29,41 @@ void UTokenizer::setData(const UString& data)
    end = s + data.size();
 }
 
+bool UTokenizer::next(UString& token, bPFi func)
+{
+   U_TRACE(0, "UTokenizer::next(%p,%p)", &token, func)
+
+   const char* p;
+
+   while (s < end)
+      {  
+      // skip char with function
+
+      if (func(*s))
+         {
+         ++s;
+
+         continue;
+         }
+
+      p = s;
+
+      while (s < end &&
+             func(*s) == false)
+         {
+         ++s;
+         }
+
+      token = str.substr(p, s - p);
+
+      ++s;
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
 bool UTokenizer::next(UString& token, char c)
 {
    U_TRACE(0, "UTokenizer::next(%p,%C)", &token, c)

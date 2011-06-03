@@ -7,7 +7,7 @@
 start_msg query
 
 #UTRACE="0 50M 1"
-#UOBJDUMP="0 500k 10"
+#UOBJDUMP="0 5M 1k"
 #USIMERR="error.sim"
 #VALGRIND=valgrind
 #EXEC_ON_EXIT="/utility/stack_dump.sh"
@@ -59,9 +59,10 @@ if [ ! -d $DB_DIR ]
 then
    mkdir -p $DB_DIR
 
+#export UOBJDUMP="0 5M 1k"
 #export UTRACE="0 10M 0"
    start_prg index1 -c index.cfg
-#unset UTRACE
+#unset UOBJDUMP UTRACE
 #exit 0
 
    if [ -x ../../cdb/cdbdump ]

@@ -24,7 +24,6 @@
 #  include <ulib/replace/strstream.h>
 #endif
 
-const UString* UFileConfig::str_yes;
 const UString* UFileConfig::str_FILE;
 const UString* UFileConfig::str_string;
 
@@ -32,19 +31,16 @@ void UFileConfig::str_allocate()
 {
    U_TRACE(0, "UFileConfig::str_allocate()")
 
-   U_INTERNAL_ASSERT_EQUALS(str_yes,0)
    U_INTERNAL_ASSERT_EQUALS(str_FILE,0)
    U_INTERNAL_ASSERT_EQUALS(str_string,0)
 
    static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("yes") },
       { U_STRINGREP_FROM_CONSTANT("FILE") },
       { U_STRINGREP_FROM_CONSTANT("STRING") }
    };
 
-   U_NEW_ULIB_OBJECT(str_yes,    U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_FILE,   U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_string, U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_FILE,   U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_string, U_STRING_FROM_STRINGREP_STORAGE(1));
 }
 
 UFileConfig::UFileConfig()
@@ -58,7 +54,7 @@ UFileConfig::UFileConfig()
    UFile::st_size  = 0;
    UFile::map_size = 0;
 
-   if (str_yes == 0) str_allocate();
+   if (str_FILE == 0) str_allocate();
 }
 
 bool UFileConfig::open()
@@ -348,6 +344,29 @@ bool UFileConfig::load(const char* section, uint32_t len)
    bool result = searchForObjectStream(section, len) && (table.clear(), loadTable(table));
 
    U_RETURN(result);
+}
+
+bool UFileConfig::readBoolean(const UString& key)
+{
+   U_TRACE(0, "UFileConfig::readBoolean(%.*S)", U_STRING_TO_TRACE(key))
+
+   UString value = table[key];
+
+   if (value.empty() == false)
+      {
+      char c = value.first_char();
+
+      if (          c  == '1' ||
+          u_toupper(c) == 'Y')
+         {
+         U_RETURN(true);
+         }
+
+      U_INTERNAL_ASSERT(          c  == '0' ||
+                        u_toupper(c) == 'N')
+      }
+
+   U_RETURN(false);
 }
 
 bool UFileConfig::loadINI()

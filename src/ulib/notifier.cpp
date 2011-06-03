@@ -293,7 +293,7 @@ int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEv
    U_TRACE(1, "UNotifier::waitForEvent(%d,%p,%p,%p)", fd_max, read_set, write_set, timeout)
 
 #ifdef HAVE_LIBEVENT
-   int result = UDispatcher::dispatch(UDispatcher::ONCE);
+   U_RETURN(-1);
 #else
    static struct timeval   tmp;
           struct timeval* ptmp = (timeout == 0 ? 0 : &tmp);
@@ -512,34 +512,32 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 {
    U_TRACE(0, "UNotifier::waitForEvent(%p)", timeout)
 
-#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
-   if (pthread) goto start;
+#ifdef HAVE_LIBEVENT
+   (void) UDispatcher::dispatch(UDispatcher::ONCE);
+
+   goto end;
+#elif defined(HAVE_EPOLL_WAIT)
+   int n = waitForEvent(0, 0, 0, timeout);
+#else
+   U_INTERNAL_ASSERT_POINTER(first)
+
+   U_INTERNAL_ASSERT(fd_read_cnt > 0 || fd_write_cnt > 0)
+
+   fd_set read_set, write_set;
+
+   if (fd_read_cnt)   read_set = fd_set_read;
+   if (fd_write_cnt) write_set = fd_set_write;
+
+   int n = waitForEvent(fd_set_max,
+                (fd_read_cnt  ? &read_set
+                              : 0),
+                (fd_write_cnt ? &write_set
+                              : 0),
+                timeout);
 #endif
 
-   if (first)
+   if (n > 0)
       {
-start:
-#  ifdef HAVE_LIBEVENT
-      (void) waitForEvent(0, 0, 0, 0);
-#  elif defined(HAVE_EPOLL_WAIT)
-      int n = waitForEvent(0, 0, 0, timeout);
-#  else
-      U_INTERNAL_ASSERT(fd_read_cnt > 0 || fd_write_cnt > 0)
-
-      fd_set read_set, write_set;
-
-      if (fd_read_cnt)   read_set = fd_set_read;
-      if (fd_write_cnt) write_set = fd_set_write;
-
-      int n = waitForEvent(fd_set_max,
-                   (fd_read_cnt  ? &read_set
-                                 : 0),
-                   (fd_write_cnt ? &write_set
-                                 : 0),
-                   timeout);
-#endif
-      if (n <= 0) goto end;
-
       UNotifier* item;
       UNotifier** ptr;
       bool bread, bwrite;
@@ -702,10 +700,10 @@ found:
                }
             }
          }
-#  endif
+#     endif
 
       if (fd_cnt > (fd_read_cnt + fd_write_cnt)) fd_set_max = getNFDS();
-#  endif
+#endif
 
       U_INTERNAL_DUMP("n = %d", n)
       }

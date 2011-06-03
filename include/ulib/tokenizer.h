@@ -185,6 +185,7 @@ public:
 
    bool   next(UString& tok, char c);
    bool extend(UString& tok, char c); // extend the actual token to the next char 'c'... (see PEC_report.cpp)
+   bool   next(UString& tok, bPFi func);
    bool   next(UString& tok, bool* bgroup);
 
    // EXT

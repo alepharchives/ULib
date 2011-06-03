@@ -408,6 +408,14 @@ bool UThread::start()
 
    U_INTERNAL_ASSERT_EQUALS(priv->_tid, 0)
 
+#ifdef DEBUG
+   if (u_plock == 0)
+      {
+      static pthread_mutex_t plock = PTHREAD_MUTEX_INITIALIZER;
+                  u_plock = &plock;
+      }
+#endif
+
    if (U_SYSCALL(pthread_create, "%p,%p,%p,%p", &(priv->_tid), &(priv->_attr), (exec_t)execHandler, this) == 0) U_RETURN(true);
 
    U_RETURN(false);

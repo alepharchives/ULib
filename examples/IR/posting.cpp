@@ -519,6 +519,8 @@ inline void UPosting::checkCapacity()
       {
       if (tbl_words) tbl_words_space -= posting->capacity();
 
+      if (posting->uniq() == false) posting->duplicate();
+
       posting->reserve(space * 2);
 
       if (tbl_words)
@@ -692,16 +694,17 @@ void UPosting::processWord(int32_t op)
 
    U_INTERNAL_ASSERT_POINTER(content)
 
-   word->avoidPunctuation();
-
    if (word->size() < min_word_size) return;
 
    pos = pos_start + (word->data() - content->data());
 
    U_INTERNAL_DUMP("word = %.*S pos = %u", U_STRING_TO_TRACE(*word), pos)
 
-   if      (op == 0 ||
-            op == 1) add(); // add/sub
+   if (op == 0 ||
+       op == 1)
+      {
+      add(); // add/sub
+      }
    else
       {
       readPosting(word->rep, (op == 2)); // del

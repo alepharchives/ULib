@@ -549,6 +549,30 @@ bool UString::reserve(uint32_t n)
 
    // Make room for a total of n element
 
+#ifdef DEBUG
+   if (rep->_capacity  != 0 && // NB: ref 0 -> one reference
+       rep->references != 0 && // NB: cap 0 -> const (no writeable)
+       rep != UStringRep::string_rep_null)
+      {
+      U_INTERNAL_DUMP("rep = %p rep->parent = %p rep->references = %u rep->child = %d", rep, rep->parent, rep->references + 1, rep->child)
+
+      if (UObjectDB::fd > 0)
+         {
+         char buffer[4096];
+
+         UStringRep::parent_destroy = rep;
+
+         uint32_t n1 = UObjectDB::dumpObject(buffer, sizeof(buffer), UStringRep::checkIfChild);
+
+         U_INTERNAL_ASSERT_MINOR(n1, sizeof(buffer))
+
+         U_INTERNAL_DUMP("CHANGE OF SOURCE STRING WITH CHILD REFERENCE... n1 = %u child of this = %.*s\n\n", n1, U_min(n1,4000), buffer)
+         }
+
+      U_INTERNAL_ASSERT_MSG(false, "CHANGE OF SOURCE STRING WITH CHILD REFERENCE...")
+      }
+#endif
+
    n = U_SIZE_TO_CHUNK(n);
 
    set(UStringRep::create(rep->_length, n, rep->str));
@@ -1043,27 +1067,6 @@ void UString::snprintf_add(const char* format, ...)
    UString::vsnprintf_add(format, argp); 
 
    va_end(argp);
-}
-
-void UStringRep::avoidPunctuation()
-{
-   U_TRACE(0, "UStringRep::avoidPunctuation()")
-
-   if (_length)
-      {
-      const char* ptr = str;
-
-      while (u_ispunct(*ptr) && --_length) ++ptr;
-
-      str = ptr;
-
-      if (_length)
-         {
-         ptr += _length - 1;
-
-         while (u_ispunct(*ptr) && --_length) --ptr;
-         }
-      }
 }
 
 long UStringRep::strtol(int base) const

@@ -1744,8 +1744,8 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( U_STRING_FROM_CONSTANT("pippo pluto paperino") == z )
 
-   z.snprintf("%s", "pippo.,;'?!!!");
-   z.avoidPunctuation();
+   z.snprintf("%s", "!!!.,;'?pippo.,;'?!!!");
+   z = UStringExt::trimPunctuation(z);
 
    U_ASSERT( U_STRING_FROM_CONSTANT("pippo") == z )
 

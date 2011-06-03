@@ -20,7 +20,6 @@
 class U_EXPORT UFileConfig : public UFile {
 public:
 
-   static const UString* str_yes;
    static const UString* str_FILE;
    static const UString* str_string;
 
@@ -85,6 +84,8 @@ public:
 
    // Facilities
 
+   bool readBoolean(const UString& key);
+
    long readLong(const UString& key, long default_value = 0)
       {
       U_TRACE(0, "UFileConfig::readLong(%.*S,%ld)", U_STRING_TO_TRACE(key), default_value)
@@ -94,15 +95,6 @@ public:
       if (value.empty() == false) default_value = value.strtol();
 
       U_RETURN(default_value);
-      }
-
-   bool readBoolean(const UString& key)
-      {
-      U_TRACE(0, "UFileConfig::readBoolean(%.*S)", U_STRING_TO_TRACE(key))
-
-      bool result = (table[key] == *str_yes);
-
-      U_RETURN(result);
       }
 
    // Open a configuration file
