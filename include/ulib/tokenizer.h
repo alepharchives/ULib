@@ -185,6 +185,7 @@ public:
 
    bool   next(UString& tok, char c);
    bool extend(UString& tok, char c); // extend the actual token to the next char 'c'... (see PEC_report.cpp)
+
    bool   next(UString& tok, bPFi func);
    bool   next(UString& tok, bool* bgroup);
 
@@ -197,8 +198,8 @@ public:
    bool skipNumber(bool& isReal);
    bool skipToken(const char* token, uint32_t sz);
 
-   static bool group_skip;
    static const char* group;
+   static bool group_skip, avoid_punctuation;
    static uint32_t group_len, group_len_div_2;
 
    static void setGroup(const char* grp, uint32_t grp_len = 0, bool bskip = false)
@@ -217,6 +218,13 @@ public:
 
       if (flag) setGroup(U_CONSTANT_TO_PARAM("<>"), true);
       else      setGroup(0,                      0, false);
+      }
+
+   static void setAvoidPunctuation(bool flag)
+      {
+      U_TRACE(0, "UTokenizer::setAvoidPunctuation(%b)", flag)
+
+      avoid_punctuation = flag;
       }
 
 #ifdef DEBUG

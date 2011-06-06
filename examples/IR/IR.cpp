@@ -124,29 +124,18 @@ void IR::parse()
 
    t->setData(*UPosting::content);
 
+   t->setAvoidPunctuation(true);
+
    bool bad_words_active = bad_words && (suffix_bad_words == 0 || (suffix_bad_words->find(suffix) != U_NOT_FOUND));
 
-   if (suffix_skip_tag_xml)
+   if (suffix_skip_tag_xml) t->setSkipTagXML(suffix_skip_tag_xml->find(suffix) != U_NOT_FOUND);
+
+   while (t->next(*UPosting::word, (bool*)0))
       {
-      t->setSkipTagXML(suffix_skip_tag_xml->find(suffix) != U_NOT_FOUND);
+      if (bad_words_active &&
+          UServices::match(*UPosting::word, *bad_words)) continue;
 
-      while (t->next(*UPosting::word, (bool*)0))
-         {
-         if (bad_words_active &&
-             UServices::match(*UPosting::word, *bad_words)) continue;
-
-         UPosting::processWord(operation);
-         }
-      }
-   else
-      {
-      while (t->next(*UPosting::word, u_ispunct))
-         {
-         if (bad_words_active &&
-             UServices::match(*UPosting::word, *bad_words)) continue;
-
-         UPosting::processWord(operation);
-         }
+      UPosting::processWord(operation);
       }
 
    if (operation == 2) UPosting::file->unlink(); // del

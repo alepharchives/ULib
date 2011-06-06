@@ -1618,12 +1618,12 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
          if (body_byte_read) updateUploadProgress(body_byte_read);
          }
 
-      // NB: wait max 3 sec for other data...
+      // NB: wait max 5 sec for other data...
 
-      if (USocketExt::read(s, *pstr, http_info.clength - body_byte_read, 3 * 1000, request_read_timeout) == false)
+      if (USocketExt::read(s, *pstr, http_info.clength - body_byte_read, 5 * 1000, request_read_timeout) == false)
          {
          if (s->isOpen()) setHTTPBadRequest();
-         else             setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
+         else             UClientImage_Base::write_off = true;
 
          U_RETURN(false);
          }

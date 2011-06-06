@@ -132,4 +132,22 @@ U_EXPORT main (int argc, char* argv[])
    while (t.getTokenId(z) > 0);
 
    U_ASSERT( t.getTokenId(z) == 0 )
+
+   t.setData(U_STRING_FROM_CONSTANT("!!!.,;'?pippo.,;'?!!!"));
+
+   t.setAvoidPunctuation(true);
+
+   bool result = t.next(y,(bool*)0);
+
+   U_ASSERT( result )
+
+   result = (y == U_STRING_FROM_CONSTANT("pippo"));
+
+   U_ASSERT( result )
+
+   result = t.next(y,(bool*)0);
+
+   U_ASSERT( result == false )
+
+   y.clear();
 }

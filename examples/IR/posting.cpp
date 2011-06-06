@@ -519,7 +519,7 @@ inline void UPosting::checkCapacity()
       {
       if (tbl_words) tbl_words_space -= posting->capacity();
 
-      if (posting->uniq() == false) posting->duplicate();
+   // if (posting->uniq() == false) posting->duplicate();
 
       posting->reserve(space * 2);
 

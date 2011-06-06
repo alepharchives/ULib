@@ -16,6 +16,7 @@
 #include <ulib/container/vector.h>
 
 bool        UTokenizer::group_skip;
+bool        UTokenizer::avoid_punctuation;
 uint32_t    UTokenizer::group_len;
 uint32_t    UTokenizer::group_len_div_2;
 const char* UTokenizer::group;
@@ -139,12 +140,13 @@ bool UTokenizer::next(UString& token, bool* bgroup)
    U_TRACE(0, "UTokenizer::next(%p,%p)", &token, bgroup)
 
    const char* p  = s;
-   uint32_t shift = 1;
+   uint32_t shift = 1, n;
 
    if (bgroup) *bgroup = false;
 
    while (s < end)
       {
+loop:
       if (delim)
          {
          s = u_delimit_token(s, &p, end, delim, 0);
@@ -211,7 +213,27 @@ bool UTokenizer::next(UString& token, bool* bgroup)
       s = u_delimit_token(s, &p, end, 0, 0);
 
 tok:
-      token = str.substr(p, s - p);
+      n = s - p;
+
+      if (avoid_punctuation)
+         {
+         while (u_ispunct(*p))
+            {
+            --n;
+            ++p;
+
+            if (p == s) goto loop;
+            }
+
+         while (u_ispunct(p[n-1]))
+            {
+            --n;
+
+            if (n == 0) goto loop;
+            }
+         }
+
+      token = str.substr(p, n);
 
       s += shift;
 

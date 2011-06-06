@@ -307,7 +307,7 @@ bool UInterrupt::checkForEventSignalPending()
 {
    U_TRACE(0, "UInterrupt::checkForEventSignalPending()")
 
-   U_INTERNAL_DUMP("errno = %d event_signal_pending = %d syscall_restart = %b", errno, event_signal_pending, syscall_restart)
+   U_INTERNAL_DUMP("errno = %d u_errno = %d event_signal_pending = %d syscall_restart = %b", errno, u_errno, event_signal_pending, syscall_restart)
 
    if (event_signal_pending) callHandlerSignal();
 

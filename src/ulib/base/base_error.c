@@ -39,9 +39,13 @@ void u_printError(void)
 {
    U_INTERNAL_TRACE("u_printError()")
 
+#ifndef __MINGW32__
    if (u_is_tty) (void) write(STDERR_FILENO, U_CONSTANT_TO_PARAM(U_RED_STR));
+#endif
                  (void) write(STDERR_FILENO, U_CONSTANT_TO_PARAM(U_STR_ERROR));
+#ifndef __MINGW32__
    if (u_is_tty) (void) write(STDERR_FILENO, U_CONSTANT_TO_PARAM(U_RESET_STR));
+#endif
 }
 
 /*

@@ -79,7 +79,7 @@ void ULib_init()
    U_INTERNAL_ASSERT_EQUALS(sizeof(off_t),      SIZEOF_OFF_T)
    U_INTERNAL_ASSERT_EQUALS(sizeof(UStringRep), U_SIZEOF_UStringRep)
 
-   U_INTERNAL_DUMP("UStringRep::string_rep_null = %p", UStringRep::string_rep_null)
+   U_INTERNAL_DUMP("u_is_tty = %b UStringRep::string_rep_null = %p", u_is_tty, UStringRep::string_rep_null)
 }
 
 #ifdef HAVE_SSL
