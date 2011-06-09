@@ -1,8 +1,5 @@
 ULib - C++ library
-================================
-
-What's this?
-------------
+==================
 
 ULib is a highly optimized class framework for writing C++ applications. I wrote this framework as my tool for writing applications in various contexts.
 It is a result of many years of work as C++ programmer. I think, in my opinion, that its strongest points are simplicity, efficiency and sophisticate
@@ -12,8 +9,9 @@ C++ library and other similar class frameworks. It include as application exampl
 server (plugin oriented) which results, out of [John Fremlin accurate investigations](http://john.freml.in/ulib-fast-io-framework), to be one of the faster
 web application frameworks for serving small dynamic webpages (and also make easier the usage of shell scripts for CGI application)
 
+
 userver_(tcp|ssl|ipc) application server (plugin oriented)
-------------------------------------------------------------
+----------------------------------------------------------
 
 The current version offers the following features :
 
@@ -60,6 +58,7 @@ The current version offers the following features :
        * mod_stream : simple streaming support (experimental).
        * mod_socket : [Web Socket](http://dev.w3.org/html5/websockets) application framework (experimental).
 
+
 Benchmarking
 ------------
 
@@ -72,8 +71,10 @@ Use apachebench (ab)
 	$ ab -n 100000 -c10 http://127.0.0.1/usp/benchmarking.usp?name=stefano (or)
 	$ ab -n 100000 -c10 http://127.0.0.1/usp/hello_world.usp
 
+
 [Comparative Benchmarking](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark)
--------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------
+
 I consider in this benchmark only the performant server [G-WAN 2.1.20 (32 bit)] (http://www.gwan.ch/).
 All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz) running Gentoo 64 bit (kernel 2.6.38.2).
 
@@ -100,6 +101,7 @@ The raw data in csv format are [here](https://github.com/stefanocasazza/ULib/tre
 
 userver_tcp is the winner of this benchmark in all case for almost all level of concurrency.
 
+
 Quickstart
 ----------
 
@@ -124,6 +126,7 @@ Take a look at:
 * --with-page-speed       use google page-speed SDK   - [will check /usr /usr/local] [default=no]
 
 if you desire wrapping of some system library installed.
+
 
 More info
 ---------
