@@ -49,7 +49,7 @@ public:
       rpc_info->clear();
       }
 
-   static bool readRPCRequest(bool reset);
+   static bool readRPCRequest(USocket* s, bool reset);
 
    // Read a token and value
 

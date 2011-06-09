@@ -19,9 +19,7 @@ bool               UClientImage_Base::bIPv6;
 bool               UClientImage_Base::pipeline;
 bool               UClientImage_Base::write_off;  // NB: we not send response because we can have used sendfile() etc...
 uint32_t           UClientImage_Base::rstart;
-uint32_t           UClientImage_Base::corked;
 uint32_t           UClientImage_Base::size_request;
-USocket*           UClientImage_Base::socket;
 UString*           UClientImage_Base::body;
 UString*           UClientImage_Base::rbuffer;
 UString*           UClientImage_Base::wbuffer;
@@ -29,7 +27,6 @@ UString*           UClientImage_Base::request; // NB: it is only a pointer, not 
 UString*           UClientImage_Base::pbuffer;
 UString*           UClientImage_Base::msg_welcome;
 const char*        UClientImage_Base::rpointer;
-UClientImage_Base* UClientImage_Base::pClientImage;
 
 // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
 
@@ -113,22 +110,33 @@ void UClientImage_Base::logResponse(const char* fileres)
    if (fileres) (void) UFile::writeToTmpl(fileres, *wbuffer, true);
 #endif
 }
+
+UClientImage_Base::UClientImage_Base()
+{
+   U_TRACE_REGISTER_OBJECT(0, UClientImage_Base, "")
+
+   socket = 0;
+   logbuf = (UServer_Base::isLog() ? U_NEW(UString(4000U)) : 0);
+
+#  ifdef HAVE_SSL
+   ssl = 0;
+#  endif
+}
+
 // ------------------------------------------------------------------------
 
-void UClientImage_Base::init(USocket* p)
+void UClientImage_Base::init()
 {
-   U_TRACE(0, "UClientImage_Base::init(%p)", p)
+   U_TRACE(0, "UClientImage_Base::init()")
 
-   U_INTERNAL_ASSERT_EQUALS(body,     0);
-   U_INTERNAL_ASSERT_EQUALS(socket,   0);
-   U_INTERNAL_ASSERT_EQUALS(rbuffer,  0);
-   U_INTERNAL_ASSERT_EQUALS(wbuffer,  0);
-   U_INTERNAL_ASSERT_EQUALS(pbuffer,  0);
-   U_INTERNAL_ASSERT_EQUALS(_value,   0);
-   U_INTERNAL_ASSERT_EQUALS(_buffer,  0);
-   U_INTERNAL_ASSERT_EQUALS(_encoded, 0);
+   U_INTERNAL_ASSERT_EQUALS(body,     0)
+   U_INTERNAL_ASSERT_EQUALS(rbuffer,  0)
+   U_INTERNAL_ASSERT_EQUALS(wbuffer,  0)
+   U_INTERNAL_ASSERT_EQUALS(pbuffer,  0)
+   U_INTERNAL_ASSERT_EQUALS(_value,   0)
+   U_INTERNAL_ASSERT_EQUALS(_buffer,  0)
+   U_INTERNAL_ASSERT_EQUALS(_encoded, 0)
 
-   socket  = p;
    body    = U_NEW(UString);
    rbuffer = U_NEW(UString(U_CAPACITY));
    wbuffer = U_NEW(UString);
@@ -152,60 +160,36 @@ void UClientImage_Base::clear()
 
    if (msg_welcome) delete msg_welcome;
 
-   delete body;
-   delete wbuffer;
-   delete pbuffer;
-   delete rbuffer;
-
-   U_INTERNAL_ASSERT_POINTER(socket)
-
-          socket->iSockDesc = -1;
-   delete socket;
-
-   // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
-
-   U_INTERNAL_ASSERT_POINTER(_value)
-   U_INTERNAL_ASSERT_POINTER(_buffer)
-   U_INTERNAL_ASSERT_POINTER(_encoded)
-
-   delete _value;
-   delete _buffer;
-   delete _encoded;
-}
-
-UClientImage_Base::UClientImage_Base()
-{
-   U_TRACE_REGISTER_OBJECT(0, UClientImage_Base, "")
-
-#ifdef HAVE_SSL
-   ssl = 0;
-#endif
-
-   if (UServer_Base::isLog())
+   if (body)
       {
-      logbuf        = U_NEW(UString(4000U));
-      clientAddress = U_NEW(UIPAddress);
-      }
-   else
-      {
-      logbuf        = 0;
-      clientAddress = 0;
+      delete body;
+      delete wbuffer;
+      delete pbuffer;
+      delete rbuffer;
+
+      // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
+
+      U_INTERNAL_ASSERT_POINTER(_value)
+      U_INTERNAL_ASSERT_POINTER(_buffer)
+      U_INTERNAL_ASSERT_POINTER(_encoded)
+
+      delete _value;
+      delete _buffer;
+      delete _encoded;
       }
 }
 
-UIPAddress& UClientImage_Base::remoteIPAddress()
+// Check whether the ip address client ought to be allowed
+
+__pure bool UClientImage_Base::isAllowed(UVector<UIPAllow*>& vallow_IP)
 {
-   U_TRACE(0, "UClientImage_Base::remoteIPAddress()")
-
-   U_INTERNAL_ASSERT_POINTER(pClientImage)
-
-   if (pClientImage->logbuf) return *(pClientImage->clientAddress);
+   U_TRACE(0, "UClientImage_Base::isAllowed(%p)", &vallow_IP)
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
-   socket->setRemote();
+   bool ok = UIPAllow::isAllowed(socket->remoteIPAddress().getInAddr(), vallow_IP);
 
-   return socket->remoteIPAddress();
+   U_RETURN(ok);
 }
 
 void UClientImage_Base::setMsgWelcome(const UString& msg)
@@ -243,20 +227,6 @@ void UClientImage_Base::logCertificate(void* x509)
       U_INTERNAL_DUMP("logbuf = %.*S", U_STRING_TO_TRACE(*logbuf))
       }
 #endif
-}
-
-void UClientImage_Base::setTcpCork(uint32_t value)
-{
-   U_TRACE(0, "UClientImage_Base::setTcpCork(%u)", value)
-
-   if (value)
-      {
-      if (corked == 0) socket->setTcpCork((corked = 1));
-      }
-   else
-      {
-      if (corked == 1) socket->setTcpCork((corked = 0));
-      }
 }
 
 void UClientImage_Base::setRequestSize(uint32_t n)
@@ -301,12 +271,9 @@ bool UClientImage_Base::newConnection()
    if (logbuf)
       {
       bool berror = false;
+      UString tmp(U_CAPACITY);
 
       socket->getRemoteInfo(*logbuf);
-
-      *clientAddress = socket->remoteIPAddress();
-
-      UString tmp(U_CAPACITY);
 
       if (ULog::prefix) tmp.snprintf(ULog::prefix);
 
@@ -358,11 +325,9 @@ int UClientImage_Base::genericRead()
 
    rbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
 
-   // NB: we need this because we use the same object USocket...
-
-   pClientImage = this;
-
    handlerError(USocket::CONNECT);
+
+   UServer_Base::pClientImage = this;
 
    if (USocketExt::read(socket, *(request = rbuffer), U_SINGLE_READ, UServer_Base::timeoutMS) == false)
       {
@@ -498,7 +463,6 @@ int UClientImage_Base::handlerWrite()
    U_TRACE(0, "UClientImage_Base::handlerWrite()")
 
    U_INTERNAL_ASSERT_POINTER(socket)
-   U_INTERNAL_ASSERT_EQUALS(pClientImage, this)
 
    if (UClientImage_Base::write_off)
       {
@@ -521,12 +485,8 @@ int UClientImage_Base::handlerWrite()
 
    // NB: we don't need corking because we use writev...
 
-// if (body->empty() == false) setTcpCork(1U);
-
    int result = (USocketExt::write(socket, *wbuffer, *body, 3 * 1000) ? U_NOTIFIER_OK
                                                                       : U_NOTIFIER_DELETE);
-
-// if (body->empty() == false) setTcpCork(0U);
 
    U_RETURN(result);
 }
@@ -534,6 +494,8 @@ int UClientImage_Base::handlerWrite()
 void UClientImage_Base::handlerDelete()
 {
    U_TRACE(0, "UClientImage_Base::handlerDelete()")
+
+   U_INTERNAL_ASSERT_POINTER(socket)
 
    UServer_Base::handlerCloseConnection(this);
 }
@@ -545,19 +507,16 @@ void UClientImage_Base::handlerDelete()
 
 const char* UClientImage_Base::dump(bool _reset) const
 {
-   *UObjectIO::os << "bIPv6                              " << bIPv6                 << '\n'
-                  << "corked                             " << corked                << '\n'
-                  << "write_off                          " << write_off             << '\n'
-                  << "body            (UString           " << (void*)body           << ")\n"
-                  << "logbuf          (UString           " << (void*)logbuf         << ")\n"
-                  << "rbuffer         (UString           " << (void*)rbuffer        << ")\n"
-                  << "wbuffer         (UString           " << (void*)wbuffer        << ")\n"
-                  << "request         (UString           " << (void*)request        << ")\n"
-                  << "pbuffer         (UString           " << (void*)pbuffer        << ")\n"
-                  << "msg_welcome     (UString           " << (void*)msg_welcome    << ")\n"
-                  << "socket          (USocket           " << (void*)socket         << ")\n"
-                  << "clientAddress   (UIPAddress        " << (void*)clientAddress  << ")\n"
-                  << "pClientImage    (UClientImage_Base " << (void*)pClientImage   << ')';
+   *UObjectIO::os << "bIPv6                              " << bIPv6              << '\n'
+                  << "write_off                          " << write_off          << '\n'
+                  << "body            (UString           " << (void*)body        << ")\n"
+                  << "logbuf          (UString           " << (void*)logbuf      << ")\n"
+                  << "rbuffer         (UString           " << (void*)rbuffer     << ")\n"
+                  << "wbuffer         (UString           " << (void*)wbuffer     << ")\n"
+                  << "request         (UString           " << (void*)request     << ")\n"
+                  << "pbuffer         (UString           " << (void*)pbuffer     << ")\n"
+                  << "socket          (USocket           " << (void*)socket      << ")\n"
+                  << "msg_welcome     (UString           " << (void*)msg_welcome << ')';
 
    if (_reset)
       {

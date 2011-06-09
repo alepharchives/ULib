@@ -2019,11 +2019,7 @@ void u_printf(const char* format, ...)
 
    if (u_flag_exit == -1) u_printError();
 
-#ifdef __MINGW32__
-   (void)  write(u_printf_fileno, buffer, bytes_written);
-#else
-   (void) pwrite(u_printf_fileno, buffer, bytes_written, lseek(u_printf_fileno, 0, SEEK_END));
-#endif
+   (void) write(u_printf_fileno, buffer, bytes_written);
 
    if (u_flag_exit)
       {

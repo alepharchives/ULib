@@ -74,7 +74,7 @@ bool UGeoIPPlugIn::setCountryCode(const char* ipaddress)
                   country_code = GeoIP_country_code[country_id];
                   country_name = GeoIP_country_name[country_id];
 
-                  U_SRV_LOG_WITH_ADDR(UClientImage_Base::pClientImage, "%s: IP %S is from %s, %s for", GeoIPDBDescription[i], ipaddress, country_code, country_name);
+                  U_SRV_LOG_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i], ipaddress, country_code, country_name);
                   }
                }
             else if (GEOIP_REGION_EDITION_REV0 == i || GEOIP_REGION_EDITION_REV1 == i)
@@ -83,7 +83,7 @@ bool UGeoIPPlugIn::setCountryCode(const char* ipaddress)
 
                if (region)
                   {
-                  U_SRV_LOG_WITH_ADDR(UClientImage_Base::pClientImage, "%s: IP %S is from %s, %s for", GeoIPDBDescription[i], ipaddress, region->country_code, region->region);
+                  U_SRV_LOG_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i], ipaddress, region->country_code, region->region);
 
                   U_SYSCALL_VOID(GeoIPRegion_delete, "%p", region);
                   }
@@ -209,8 +209,8 @@ int UGeoIPPlugIn::handlerREAD()
 {
    U_TRACE(0, "UGeoIPPlugIn::handlerREAD()")
 
-   if (country_forbidden_mask.empty() == false                                 &&
-       setCountryCode(UClientImage_Base::remoteIPAddress().getAddressString()) &&
+   if (country_forbidden_mask.empty() == false                                                  &&
+       setCountryCode(UServer_Base::pClientImage->socket->remoteIPAddress().getAddressString()) &&
        checkCountryForbidden() == false)
       {
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);

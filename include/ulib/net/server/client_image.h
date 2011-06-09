@@ -39,6 +39,7 @@
 */
 
 class UHTTP;
+class UIPAllow;
 class UServer_Base;
 
 class U_EXPORT UClientImage_Base : public UEventFd {
@@ -46,8 +47,8 @@ public:
 
    // NB: these are public for plugin access...
 
+   USocket* socket;
    UString* logbuf;
-   UIPAddress* clientAddress;
 
    // NB: we need that (not put on it in class UClientImage<USSLSocket>) otherwise there are problem with delete[]...
 
@@ -56,15 +57,13 @@ public:
 #endif
 
    static UString* body;
-   static USocket* socket;
    static UString* rbuffer;
    static UString* wbuffer;
    static UString* request; // NB: it is only a pointer, not a string object...
    static UString* pbuffer;
    static const char* rpointer;
-   static UClientImage_Base* pClientImage;
+   static uint32_t rstart, size_request;
    static bool bIPv6, pipeline, write_off; // NB: we not send response because we can have used sendfile() etc...
-   static uint32_t rstart, size_request, corked;
 
    // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
 
@@ -78,18 +77,17 @@ public:
    bool newConnection();
    void logCertificate(void* x509); // aggiungo nel log il certificato Peer del client ("issuer","serial")
 
+   static void init();
    static void clear();
-   static void init(USocket* p);
-   static void setTcpCork(uint32_t corked);
 
    // log
 
    void logRequest( const char* filereq = FILETEST_REQ);
    void logResponse(const char* fileres = FILETEST_RES);
 
-   // get remote ip address
+   // Check whether the ip address client ought to be allowed
 
-   static UIPAddress& remoteIPAddress();
+   bool isAllowed(UVector<UIPAllow*>& vallow_IP) __pure;
 
    // welcome message
 
@@ -104,10 +102,10 @@ public:
       {
       U_TRACE(0, "UClientImage_Base::handlerError(%d)", state)
 
-      // NB: we need this because we use the same object USocket...
+      U_INTERNAL_ASSERT_POINTER(socket)
+      U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
-      socket->iState    = state;
-      socket->iSockDesc = UEventFd::fd;
+      socket->iState = state;
       }
 
    // manage if other request already available... (pipelining)
@@ -156,6 +154,8 @@ public:
    UClientImage() : UClientImage_Base()
       {
       U_TRACE_REGISTER_OBJECT(0, UClientImage, "")
+
+      socket = U_NEW(Socket(UClientImage_Base::bIPv6));
       }
 
    virtual ~UClientImage()
@@ -185,25 +185,25 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UClientImage<USSLSocket>, "")
 
-      U_INTERNAL_ASSERT_POINTER(socket)
-      U_ASSERT(socket->isSSL())
+      socket = U_NEW(USSLSocket(UClientImage_Base::bIPv6));
       }
 
    virtual ~UClientImage()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UClientImage<USSLSocket>)
 
-      U_INTERNAL_ASSERT_POINTER(socket)
-      U_ASSERT(socket->isSSL())
+      U_INTERNAL_DUMP("this = %p", this)
       }
 
    // SERVICES
 
-   static USSLSocket* getSocket() { return (USSLSocket*)socket; }
+   USSLSocket* getSocket() { return (USSLSocket*)socket; }
 
    void checkForNewConnection()
       {
       U_TRACE(0, "UClientImage<USSLSocket>::checkForNewConnection()")
+
+      U_INTERNAL_ASSERT_POINTER(socket)
 
       U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->getFd())
 
@@ -240,6 +240,8 @@ public:
    virtual void handlerDelete()
       {
       U_TRACE(0, "UClientImage<USSLSocket>::handlerDelete()")
+
+      U_INTERNAL_ASSERT_POINTER(socket)
 
       if (socket->isOpen())
          {

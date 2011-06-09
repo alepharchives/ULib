@@ -189,15 +189,15 @@ int UStreamPlugIn::handlerRequest()
    if (command &&
        U_HTTP_URI_EQUAL(uri_path))
       {
+      USocket* csocket = UServer_Base::pClientImage->socket;
+
       U_http_is_connection_close = U_YES;
 
       UHTTP::setHTTPResponse(HTTP_OK, &content_type, 0);
 
-      UClientImage_Base::socket->setTcpCork(1U);
+      csocket->setTcpCork(1U);
 
-      U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
-
-      if (UClientImage_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
+      if (UServer_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
          {
          int readd;
          off_t offset;
@@ -213,14 +213,14 @@ int UStreamPlugIn::handlerRequest()
             offset = 0;
 
             if (fmetadata &&
-                UClientImage_Base::socket->sendfile(fmetadata->getFd(), &offset, fmetadata->getSize()) == false) goto end;
+                csocket->sendfile(fmetadata->getFd(), &offset, fmetadata->getSize()) == false) goto end;
 
             UTimeVal to_sleep(0L, 10 * 1000L);
 
             while (UServer_Base::flag_loop)
                {
                if (rbuf.isEmpty(readd) == false &&
-                   (rbuf.readAndWriteToFd(readd, UClientImage_Base::socket->getFd()) <= 0 && errno != EAGAIN)) break;
+                   (rbuf.readAndWriteToFd(readd, csocket->getFd()) <= 0 && errno != EAGAIN)) break;
 
                to_sleep.nanosleep();
                }

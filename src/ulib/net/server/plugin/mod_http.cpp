@@ -198,9 +198,7 @@ int UHttpPlugIn::handlerREAD()
 {
    U_TRACE(0, "UHttpPlugIn::handlerREAD()")
 
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::pClientImage)
-
-   if (UHTTP::readHTTPRequest())
+   if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket))
       {
       UHTTP::getTimeIfNeeded(false);
 
@@ -336,7 +334,7 @@ next:
       }
 
 send_response:
-   (void) UClientImage_Base::pClientImage->handlerWrite();
+   (void) UServer_Base::pClientImage->handlerWrite();
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }
@@ -376,7 +374,7 @@ int UHttpPlugIn::handlerRequest()
             U_RETURN(U_PLUGIN_HANDLER_GO_ON);
             }
 
-         UHTTP::processHTTPGetRequest(*UClientImage_Base::request); // GET,HEAD
+         UHTTP::processHTTPGetRequest(UServer_Base::pClientImage->socket, *UClientImage_Base::request); // GET,HEAD
          }
       }
    else if (UHTTP::isHTTPRequestNotFound())  UHTTP::setHTTPNotFound();  // set not found error response...
@@ -388,7 +386,7 @@ end:  // check for "Connection: close" in headers...
 
    if (U_http_is_connection_close == U_YES)
       {
-      (void) UClientImage_Base::pClientImage->handlerWrite();
+      (void) UServer_Base::pClientImage->handlerWrite();
 
       U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
@@ -427,13 +425,13 @@ int UHttpPlugIn::handlerReset()
 
    // check if timeout
 
-   if (UClientImage_Base::socket->isBroken())
+   if (UServer_Base::pClientImage->socket->isBroken())
       {
       U_http_is_connection_close = U_YES;
 
       UHTTP::setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
 
-      (void) UClientImage_Base::pClientImage->handlerWrite();
+      (void) UServer_Base::pClientImage->handlerWrite();
 
       U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }

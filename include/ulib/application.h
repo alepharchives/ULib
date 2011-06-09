@@ -79,7 +79,7 @@ public:
       // se esistono opzioni, queste vengono processate...
 
       is_options = (argc > 1);
-      
+
       if (is_options)
          {
 #     ifdef PACKAGE
@@ -87,6 +87,8 @@ public:
 #     endif
 #     ifdef VERSION
          opt.version = U_STRING_FROM_CONSTANT(VERSION);
+#     else
+         opt.version = U_STRING_FROM_CONSTANT(ULIB_VERSION);
 #     endif
 #     ifdef PURPOSE
          opt.purpose = U_STRING_FROM_CONSTANT(PURPOSE);

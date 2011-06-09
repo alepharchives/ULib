@@ -319,7 +319,7 @@ void UClient_Base::wrapRequestWithHTTP(const char* extension, const char* conten
 
    tmp.snprintf("%.*s %.*s%s%.*s HTTP/1.1\r\n"
                 "Host: %.*s\r\n"
-                "User-Agent: ULib/" VERSION "\r\n"
+                "User-Agent: " PACKAGE_NAME "/" ULIB_VERSION "\r\n"
                 "%s",
                 U_HTTP_METHOD_TO_TRACE,
                 U_HTTP_URI_TO_TRACE,

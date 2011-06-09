@@ -161,6 +161,8 @@ void UNotifier::insert(UNotifier* item)
 {
    U_TRACE(0, "UNotifier::insert(%p)", item)
 
+   U_INTERNAL_ASSERT_POINTER(item)
+
    if (item->handler_event_fd == 0)
       {
 #  if defined(HAVE_PTHREAD_H) && defined(DEBUG)
@@ -178,6 +180,10 @@ void UNotifier::insert(UNotifier* item)
 
       return;
       }
+
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+   if (pthread) pthread->lock();
+#endif
 
    U_INTERNAL_DUMP("fd = %d op_mask = %B", item->handler_event_fd->fd, item->handler_event_fd->op_mask)
 
@@ -201,10 +207,6 @@ void UNotifier::insert(UNotifier* item)
       }
 
    if (error) return;
-#endif
-
-#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
-   if (pthread) pthread->lock();
 #endif
 
    item->next = first;
@@ -886,20 +888,26 @@ void UNotifier::preallocate(uint32_t n)
       vpool  = pool = U_MALLOC_N(n, UNotifier);
       vpooln = n;
 
-      for (uint32_t i = 0, end = n - 1; i < end; ++i)
+      UNotifier* ptr  = vpool;
+      UNotifier* next = vpool + 1;
+      UNotifier* end  = vpool + n;
+
+      while (ptr < end)
          {
 #     ifdef DEBUG
-         pool[i].memory._this = (const UMemoryError*)(pool + i);
+         ptr->memory._this = (const UMemoryError*)ptr;
+
+         ptr->memory.invariant();
 #     endif
-         pool[i].next             = pool + i + 1;
-         pool[i].handler_event_fd = 0;
+
+         ptr->next             = next;
+         ptr->handler_event_fd = 0;
+
+         ++ptr;
+         ++next;
          }
 
-#  ifdef DEBUG
-      pool[n-1].memory._this = (const UMemoryError*)(pool + (n-1));
-
-      for (uint32_t i = 0; i < n; ++i) pool[n-1].memory.invariant();
-#  endif
+      (--ptr)->next = 0;
 
       U_INTERNAL_DUMP("pool = %O", U_OBJECT_TO_TRACE(*pool))
       }

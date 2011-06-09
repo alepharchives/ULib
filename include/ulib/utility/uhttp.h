@@ -310,9 +310,9 @@ public:
    static const char* getHTTPStatus();
    static const char* getHTTPStatusDescription(uint32_t nResponseCode);
 
-   static bool readHTTPRequest();
-   static bool readHTTPHeader(USocket* socket, UString& buffer);
-   static bool readHTTPBody(  USocket* socket, UString* buffer, UString& body);
+   static bool readHTTPRequest(USocket* socket);
+   static bool readHTTPHeader( USocket* socket, UString& buffer);
+   static bool readHTTPBody(   USocket* socket, UString* buffer, UString& body);
 
    // TYPE
 
@@ -420,8 +420,8 @@ public:
 
    static void checkHTTPRequest();
    static void getTimeIfNeeded(bool all_http_version);
-   static void processHTTPGetRequest(const UString& request);
    static void checkHTTPRequestForHeader(const UString& request);
+   static void processHTTPGetRequest(USocket* socket, const UString& request);
    static bool checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
 
    static UString     getDocumentName();

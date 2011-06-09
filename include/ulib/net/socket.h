@@ -314,6 +314,8 @@ public:
 
       U_CHECK_MEMORY
 
+      U_INTERNAL_ASSERT_MAJOR(iRemotePort, 0)
+
       return cRemoteAddress;
       }
 

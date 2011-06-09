@@ -676,7 +676,6 @@ U_EXPORT void runDynamicPage(UClientImage_Base* client_image)
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::rbuffer)
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::wbuffer)
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_encoded)
-   U_INTERNAL_ASSERT_EQUALS( UClientImage_Base::pClientImage, client_image)
 
    set_ENV(*client_image->request);
 

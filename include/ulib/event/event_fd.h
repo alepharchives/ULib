@@ -52,7 +52,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UEventFd, "")
 
       fd      = 0;
-      op_mask = U_READ_IN | EPOLLET;
+      op_mask = U_READ_IN | EPOLLET; // NB: edge-triggered (alas SIGIO, when that descriptor transitions from not ready to ready, the kernel notifies you)
 
 #  ifdef HAVE_LIBEVENT
       pevent = 0;

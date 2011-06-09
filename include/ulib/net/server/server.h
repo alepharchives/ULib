@@ -66,13 +66,9 @@ virtual void preallocate(uint32_t n) { vClientImage = new client_class[n]; } }
 
 // manage write to log server
 
-#define U_SRV_LOG(               fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%s"fmt"\n",      UServer_Base::mod_name , ##args); }
-#define U_SRV_LOG_WITH_ADDR(cimg,fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%s"fmt" %.*s\n", UServer_Base::mod_name , ##args, \
-                                                                   U_STRING_TO_TRACE(*((cimg)->logbuf))); }
-
-#define U_SRV_LOG_TIMEOUT(cimg) U_SRV_LOG("client connected didn't send any request in %u secs (timeout), close connection %.*s", \
-                                                   UServer_Base::getReqTimeout(), U_STRING_TO_TRACE(*((cimg)->logbuf)))
-
+#define U_SRV_LOG(          fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%s"fmt"\n",      UServer_Base::mod_name , ##args); }
+#define U_SRV_LOG_WITH_ADDR(fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%s"fmt" %.*s\n", UServer_Base::mod_name , ##args, \
+                                                                                 U_STRING_TO_TRACE(*(UServer_Base::pClientImage->logbuf))); }
 class UHTTP;
 class UCommand;
 class UFileConfig;
@@ -175,8 +171,8 @@ public:
 
    // bound to the port number, etc...
 
-          void init();
    static void run();
+          void init();
           void loadConfigParam(UFileConfig& file);
 
    // tipologia server...
@@ -246,6 +242,7 @@ public:
    static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves
    static uint32_t shared_data_add;
    static shared_data* ptr_shared_data;
+   static UClientImage_Base* pClientImage;
 
    static bool isPreForked()
       {
@@ -423,15 +420,14 @@ protected:
    UTimeoutConnection& operator=(const UTimeoutConnection&)     { return *this; }
    };
 
-   static void handlerNewConnection();
-   static bool handlerTimeoutConnection(void* cimg);
-   static void handlerCloseConnection(UClientImage_Base* ptr);
+   static UVector<UString>* vplugin_name;
+   static UVector<UServerPlugIn*>* vplugin;
 
    static void        runAsUser();
    static const char* getNumConnection();
 
-   static UVector<UString>* vplugin_name;
-   static UVector<UServerPlugIn*>* vplugin;
+   static bool handlerTimeoutConnection(void* cimg);
+   static void handlerCloseConnection(UClientImage_Base* ptr);
 
    // define method VIRTUAL of class UEventFd
 
@@ -477,8 +473,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UServer, "%p", cfg)
 
-      socket =                U_NEW(Socket(UClientImage_Base::bIPv6));
-      UClientImage_Base::init(U_NEW(Socket(UClientImage_Base::bIPv6)));
+      socket = U_NEW(Socket(UClientImage_Base::bIPv6));
       }
 
    virtual ~UServer()
@@ -531,8 +526,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UServer<USSLSocket>, "%p", cfg)
 
-      socket =                U_NEW(USSLSocket(UClientImage_Base::bIPv6));
-      UClientImage_Base::init(U_NEW(USSLSocket(UClientImage_Base::bIPv6, getSocket()->ctx)));
+      socket = U_NEW(USSLSocket(UClientImage_Base::bIPv6));
       }
 
    virtual ~UServer()
@@ -548,7 +542,7 @@ public:
       {
       U_TRACE(0, "UServer<USSLSocket>::askForClientCertificate()")
 
-      USSLSocket* sslsocket = (USSLSocket*)UClientImage_Base::socket;
+      USSLSocket* sslsocket = (USSLSocket*)pClientImage->socket;
 
       U_INTERNAL_ASSERT(sslsocket->isSSL())
 
@@ -556,13 +550,13 @@ public:
 
       if (has_cert == false)
          {
-         U_SRV_LOG_WITH_ADDR(UClientImage_Base::pClientImage, "ask for a client certificate to");
+         U_SRV_LOG_WITH_ADDR("ask for a client certificate to");
 
          if (sslsocket->askForClientCertificate())
             {
             has_cert = true;
 
-            UClientImage_Base::pClientImage->logCertificate(sslsocket->getPeerCertificate());
+            pClientImage->logCertificate(sslsocket->getPeerCertificate());
             }
          }
 

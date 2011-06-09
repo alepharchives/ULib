@@ -73,7 +73,7 @@ protected:
 
    virtual void preallocate(uint32_t n)
       {
-      U_TRACE(0, "URDBServer::preallocate(%u)", n)
+      U_TRACE(0+256, "URDBServer::preallocate(%u)", n)
 
       vClientImage = U_NEW_VEC(n, URDBClientImage);
       }

@@ -141,7 +141,7 @@ void UHTTP::str_allocate()
    { U_STRINGREP_FROM_CONSTANT(U_CTYPE_HTML) },
    { U_STRINGREP_FROM_CONSTANT("application/soap+xml; charset=\"utf-8\"") },
    { U_STRINGREP_FROM_CONSTANT("HTTP/1.%c %d %s\r\n"
-                               "Server: ULib\r\n" // VERSION "\r\n"
+                               "Server: ULib\r\n" // ULIB_VERSION "\r\n"
                                "%.*s"
                                "%.*s") },
    { U_STRINGREP_FROM_CONSTANT("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n"
@@ -888,8 +888,8 @@ next:
    if (home) UServer_Base::senvironment->snprintf_add("HOME=%s\n", home);
 
    (void) UServer_Base::senvironment->append(U_CONSTANT_TO_PARAM("GATEWAY_INTERFACE=CGI/1.1\n"
-                                                "SERVER_SOFTWARE=" PACKAGE "/" VERSION "\n"  // The server software you're using (such as Apache 1.3)
-                                                "PATH=/usr/local/bin:/usr/bin:/bin\n"        // The system path your server is running under
+                                                "SERVER_SOFTWARE=" PACKAGE_NAME "/" ULIB_VERSION "\n" // The server software you're using (such as Apache 1.3)
+                                                "PATH=/usr/local/bin:/usr/bin:/bin\n"                 // The system path your server is running under
                                                 "REDIRECT_STATUS=200\n"));
 
    U_ASSERT_EQUALS(UServer_Base::senvironment->isBinary(), false)
@@ -1588,7 +1588,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
 
          (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM("HTTP/1.1 100 Continue\r\n\r\n"));
 
-         (void) UClientImage_Base::pClientImage->handlerWrite();
+         (void) UServer_Base::pClientImage->handlerWrite();
          }
 
       UString* pstr;
@@ -1618,11 +1618,13 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
          if (body_byte_read) updateUploadProgress(body_byte_read);
          }
 
-      // NB: wait max 5 sec for other data...
+      // NB: wait for other data...
 
-      if (USocketExt::read(s, *pstr, http_info.clength - body_byte_read, 5 * 1000, request_read_timeout) == false)
+      int timeoutMS = (UServer_Base::timeoutMS != -1 ? UServer_Base::timeoutMS : U_TIMEOUT_MS);
+
+      if (USocketExt::read(s, *pstr, http_info.clength - body_byte_read, timeoutMS, request_read_timeout) == false)
          {
-         if (s->isOpen()) setHTTPBadRequest();
+         if (s->isOpen()) setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
          else             UClientImage_Base::write_off = true;
 
          U_RETURN(false);
@@ -1896,13 +1898,13 @@ void UHTTP::resetHTTPInfo()
    (void) U_SYSCALL(memset, "%p,%d,%u", &http_info, 0, sizeof(uhttpinfo));
 }
 
-bool UHTTP::readHTTPRequest()
+bool UHTTP::readHTTPRequest(USocket* socket)
 {
-   U_TRACE(0, "UHTTP::readHTTPRequest()")
+   U_TRACE(0, "UHTTP::readHTTPRequest(%p)", socket)
 
    if (http_info.method) resetHTTPInfo();
 
-   if (readHTTPHeader(UClientImage_Base::socket, *UClientImage_Base::request) == false) U_RETURN(false);
+   if (readHTTPHeader(socket, *UClientImage_Base::request) == false) U_RETURN(false);
 
    bool result = true;
 
@@ -1914,7 +1916,7 @@ bool UHTTP::readHTTPRequest()
       {
       // NB: it is possible a resize of the read buffer string...
 
-      result = readHTTPBody(UClientImage_Base::socket, UClientImage_Base::rbuffer, *UClientImage_Base::body);
+      result = readHTTPBody(socket, UClientImage_Base::rbuffer, *UClientImage_Base::body);
 
       if (result)
          {
@@ -2875,7 +2877,7 @@ void UHTTP::setHTTPCgiResponse(int nResponseCode, bool header_content_length, bo
       {
       // NB: there is body...it's KO Content-Length: 0...
 
-      (void) tmp.assign(U_CONSTANT_TO_PARAM("X-Powered-By: ULib/" VERSION "\r\n"));
+      (void) tmp.assign(U_CONSTANT_TO_PARAM("X-Powered-By: ULib/" ULIB_VERSION "\r\n"));
       }
    else
       {
@@ -3283,7 +3285,7 @@ UString UHTTP::getRemoteIP()
 {
    U_TRACE(0, "UHTTP::getRemoteIP()")
 
-   if (real_ip->empty() && setRealIP() == false) (void) real_ip->replace(UClientImage_Base::remoteIPAddress().getAddressString());
+   if (real_ip->empty() && setRealIP() == false) (void) real_ip->replace(UServer_Base::pClientImage->socket->remoteIPAddress().getAddressString());
 
    if (real_ip->isNullTerminated() == false) real_ip->setNullTerminated();
 
@@ -3323,7 +3325,7 @@ bool UHTTP::checkUriProtected()
 
    if (vallow_IP)
       {
-      bool ok = UIPAllow::isAllowed(UClientImage_Base::socket->remoteIPAddress().getInAddr(), *vallow_IP);
+      bool ok = UServer_Base::pClientImage->isAllowed(*vallow_IP);
 
       if (ok &&
           setRealIP())
@@ -3899,7 +3901,7 @@ void UHTTP::processUSPRequest(const char* uri, uint32_t uri_len)
 
       UClientImage_Base::wbuffer->setBuffer(U_CAPACITY);
 
-      usp_page->runDynamicPage(UClientImage_Base::pClientImage);
+      usp_page->runDynamicPage(UServer_Base::pClientImage);
 
       if (n) resetForm(true);
 
@@ -4338,9 +4340,9 @@ UString UHTTP::getCGIEnvironment()
    buffer.snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(uri));
 
 #ifdef HAVE_SSL
-   if (UClientImage_Base::socket->isSSL())
+   if (UServer_Base::pClientImage->socket->isSSL())
       {
-      X509* x509 = ((USSLSocket*)UClientImage_Base::socket)->getPeerCertificate();
+      X509* x509 = ((USSLSocket*)UServer_Base::pClientImage->socket)->getPeerCertificate();
 
       if (x509)
          {
@@ -4675,7 +4677,7 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
                      UClientImage_Base::body->clear();
                      UClientImage_Base::wbuffer->clear();
 
-                     processHTTPGetRequest(request);
+                     processHTTPGetRequest(UServer_Base::pClientImage->socket, request);
 
                      U_RETURN(true);
                      }
@@ -5375,9 +5377,9 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestIfModified(const UString& request)
    U_RETURN(true);
 }
 
-void UHTTP::processHTTPGetRequest(const UString& request)
+void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
 {
-   U_TRACE(0, "UHTTP::processHTTPGetRequest(%.*S)", U_STRING_TO_TRACE(request))
+   U_TRACE(0, "UHTTP::processHTTPGetRequest(%p,%.*S)", socket, U_STRING_TO_TRACE(request))
 
    U_ASSERT_DIFFERS(request.empty(), true)
    U_ASSERT(UClientImage_Base::body->empty())
@@ -5506,7 +5508,7 @@ void UHTTP::processHTTPGetRequest(const UString& request)
    *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(nResponseCode, ext);
 
 #ifdef HAVE_SSL
-   if (UClientImage_Base::socket->isSSL()) isSSL = true;
+   if (socket->isSSL()) isSSL = true;
 #endif
 
    // NB: check if we need to send the body with writev()...
@@ -5540,11 +5542,12 @@ void UHTTP::processHTTPGetRequest(const UString& request)
        * ------------------------------------------------------------------------------------------------------
        */
 
-      UClientImage_Base::socket->setTcpCork(1U); // NB: must be here, before the first write...
+      socket->setTcpCork(1U); // NB: must be here, before the first write...
       }
 
-   (void) UClientImage_Base::pClientImage->handlerWrite();
-          UClientImage_Base::write_off = true;
+   (void) UServer_Base::pClientImage->handlerWrite();
+
+   UClientImage_Base::write_off = true;
 
    if (UClientImage_Base::body->empty())
       {
@@ -5552,9 +5555,9 @@ void UHTTP::processHTTPGetRequest(const UString& request)
 
       off_t lstart = start;
 
-      (void) UClientImage_Base::socket->sendfile(file->getFd(), &lstart, size);
+      (void) socket->sendfile(file->getFd(), &lstart, size);
 
-      UClientImage_Base::socket->setTcpCork(0U);
+      socket->setTcpCork(0U);
       }
 #ifdef DEBUG
    else if (nResponseCode == HTTP_PARTIAL) UClientImage_Base::body->clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
@@ -5582,7 +5585,7 @@ U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
    U_ASSERT_DIFFERS(UClientImage_Base::request->empty(), true)
 
    int i;
-   in_addr_t client = UClientImage_Base::socket->remoteIPAddress().getInAddr();
+   in_addr_t client = UServer_Base::pClientImage->socket->remoteIPAddress().getInAddr();
    ptr_upload_progress = (upload_progress*)((char*)UServer_Base::ptr_shared_data + sizeof(UServer_Base::shared_data));
 
    if (byte_read > 0)

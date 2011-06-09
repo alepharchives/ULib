@@ -99,7 +99,7 @@ UHashMap<UModNoCatPeer*>* UNoCatPlugIn::peers;
 "<table border=\"0\" cellpadding=\"5\" cellspacing=\"0\">\n" \
    "<tr><td>Current Time</td><td>%7D</td></tr>\n" \
    "<tr><td>Gateway Up Since</td><td>%#7D</td></tr>\n" \
-   "<tr><td>GatewayVersion</td><td>" VERSION "</td></tr>\n" \
+   "<tr><td>GatewayVersion</td><td>" ULIB_VERSION "</td></tr>\n" \
    "<tr><td>RouteOnly</td><td>%.*s</td></tr>\n" \
    "<tr><td>DNSAddr</td><td>%.*s</td></tr>\n" \
    "<tr><td>IncludePorts</td><td>%.*s</td></tr>\n" \
@@ -641,7 +641,7 @@ UModNoCatPeer* UNoCatPlugIn::creatNewPeer(const UString& peer_ip)
 
    UModNoCatPeer* peer = U_NEW(UModNoCatPeer(peer_ip));
 
-   *((UIPAddress*)peer) = UClientImage_Base::remoteIPAddress();
+   *((UIPAddress*)peer) = UServer_Base::pClientImage->socket->remoteIPAddress();
 
    if (peer->mac.empty() && peer_ip == gateway) peer->mac = UServer_Base::getMacAddress(vfwopt[5].data()); // extdev
    if (peer->mac.empty())                       peer->mac = U_STRING_FROM_CONSTANT("00:00:00:00:00:00");

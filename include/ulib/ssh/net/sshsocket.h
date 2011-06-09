@@ -16,13 +16,32 @@
 
 #include <ulib/net/tcpsocket.h>
 
-#undef PACKAGE_NAME
-#undef PACKAGE_STRING
-#undef PACKAGE_TARNAME
-#undef PACKAGE_VERSION
-#undef PACKAGE_BUGREPORT
+/*
+#define SAVE_PACKAGE_NAME      PACKAGE_NAME
+#define SAVE_PACKAGE_STRING    PACKAGE_STRING
+#define SAVE_PACKAGE_TARNAME   PACKAGE_TARNAME
+#define SAVE_PACKAGE_BUGREPORT PACKAGE_BUGREPORT
+
+#undef                         PACKAGE_NAME
+#undef                         PACKAGE_STRING
+#undef                         PACKAGE_TARNAME
+#undef                         PACKAGE_VERSION
+#undef                         PACKAGE_BUGREPORT
+*/
 
 #include <libssh/libssh.h>
+
+/*
+#define PACKAGE_NAME       SAVE_PACKAGE_NAME
+#define PACKAGE_STRING     SAVE_PACKAGE_STRING
+#define PACKAGE_TARNAME    SAVE_PACKAGE_TARNAME
+#define PACKAGE_BUGREPORT  SAVE_PACKAGE_BUGREPORT
+
+#undef                     SAVE_PACKAGE_NAME
+#undef                     SAVE_PACKAGE_STRING
+#undef                     SAVE_PACKAGE_TARNAME
+#undef                     SAVE_PACKAGE_BUGREPORT
+*/
 
 /**
 Come funziona ssh:

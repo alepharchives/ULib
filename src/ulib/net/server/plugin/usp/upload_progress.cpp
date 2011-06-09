@@ -26,7 +26,6 @@ extern U_EXPORT void runDynamicPage(UClientImage_Base* client_image);
   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::rbuffer)
   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::wbuffer)
   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_encoded)
-  U_INTERNAL_ASSERT_EQUALS( UClientImage_Base::pClientImage, client_image)
 
 (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM("Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0\r\n\r\n"));
 U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress());

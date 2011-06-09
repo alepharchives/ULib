@@ -95,6 +95,7 @@ UEventTime*                UServer_Base::ptime;
 UServer_Base*              UServer_Base::pthis;
 UVector<UString>*          UServer_Base::vplugin_name;
 UClientImage_Base*         UServer_Base::vClientImage;
+UClientImage_Base*         UServer_Base::pClientImage;
 UVector<UIPAllow*>*        UServer_Base::vallow_IP;
 UVector<UServerPlugIn*>*   UServer_Base::vplugin;
 UServer_Base::shared_data* UServer_Base::ptr_shared_data;
@@ -389,6 +390,7 @@ UServer_Base::~UServer_Base()
 
    if (proc) delete proc;
 
+/*
 #if defined(HAVE_PTHREAD_H)
    if (u_pthread_time)
       {
@@ -396,6 +398,7 @@ UServer_Base::~UServer_Base()
                            u_pthread_time = 0;
       }
 #endif
+*/
 
    if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add);
 
@@ -799,10 +802,10 @@ void UServer_Base::init()
 {
    U_TRACE(1, "UServer_Base::init()")
 
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
+   U_INTERNAL_ASSERT_POINTER(socket)
 
 #ifndef __MINGW32__
-   if (UClientImage_Base::socket->isIPC())
+   if (socket->isIPC())
       {
       if (name_sock.empty() == false) UUnixSocket::setPath(name_sock.data());
 
@@ -852,7 +855,7 @@ void UServer_Base::init()
 
    if (cClientSocket.connectServer(U_STRING_FROM_CONSTANT("64.233.187.99"), 1001))
       {
-      UClientImage_Base::socket->setLocal((socket->cLocalAddress = cClientSocket.cLocalAddress));
+      socket->cLocalAddress = cClientSocket.cLocalAddress;
 
       if (IP_address.empty()) IP_address = UString(socket->getLocalInfo());
       }
@@ -902,7 +905,7 @@ void UServer_Base::init()
    U_SRV_LOG("working directory (DOCUMENT_ROOT) changed to %S", document_root.data());
 
 #ifdef HAVE_SSL
-   if (UClientImage_Base::socket->isSSL())
+   if (socket->isSSL())
       {
       USSLSocket::method = (SSL_METHOD*) SSLv23_server_method();
 
@@ -1005,7 +1008,8 @@ next:
 
    runAsUser();
 
-   UNotifier::init();
+           UNotifier::init();
+   UClientImage_Base::init();
 
    // init plugin modules...
 
@@ -1015,13 +1019,34 @@ next:
       U_ERROR("plugins initialization FAILED. Going down...");
       }
 
-   socket->flags          |= O_CLOEXEC;
-   USocket::accept4_flags  = SOCK_CLOEXEC;
+                                 USocket::accept4_flags  = SOCK_CLOEXEC;
+#ifdef HAVE_SSL
+   if (socket->isSSL() == false) USocket::accept4_flags |= SOCK_NONBLOCK;
+#endif
 
    if (max_Keep_Alive <= 0) max_Keep_Alive = U_DEFAULT_MAX_KEEP_ALIVE;
 
-              preallocate(max_Keep_Alive);
-   UNotifier::preallocate(max_Keep_Alive + 10);
+              preallocate(max_Keep_Alive     + 1);
+   UNotifier::preallocate(max_Keep_Alive + 3 + 1);
+
+   USocket* csocket;
+   UClientImage_Base* ptr = vClientImage;
+   UClientImage_Base* end = ptr + max_Keep_Alive + 1;
+   UIPAddress* addr = (socket->isLocalSet() ? &(socket->cLocalAddress) : 0);
+
+   while (ptr < end)
+      {
+      csocket = ptr->socket;
+
+                                                  csocket->flags |= O_CLOEXEC;
+      if (USocket::accept4_flags & SOCK_NONBLOCK) csocket->flags |= O_NONBLOCK;
+
+      U_INTERNAL_DUMP("vClientImage[%d].socket->flags = %d %B", (ptr - vClientImage), csocket->flags, csocket->flags)
+
+      if (addr) csocket->cLocalAddress.set(*addr);
+
+      ++ptr;
+      }
 
    // NB: in the classic model we don't need to notify for request of connection
    // (loop: accept-fork) and the forked child don't accept new client, but we need
@@ -1046,16 +1071,10 @@ next:
     */
 
    socket->flags |= O_NONBLOCK;
-
 next1:
+   socket->flags |= O_CLOEXEC;
+
    (void) U_SYSCALL(fcntl, "%d,%d,%d", socket->iSockDesc, F_SETFL, socket->flags);
-
-#ifdef HAVE_SSL
-   if (UClientImage_Base::socket->isSSL() == false) USocket::accept4_flags |= SOCK_NONBLOCK;
-#endif
-
-                                               UClientImage_Base::socket->flags |= O_CLOEXEC;
-   if (USocket::accept4_flags & SOCK_NONBLOCK) UClientImage_Base::socket->flags |= O_NONBLOCK;
 
    if (timeoutMS != -1) ptime = U_NEW(UTimeoutConnection);
 }
@@ -1112,12 +1131,69 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       }
 }
 
-void UServer_Base::handlerNewConnection()
+int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
 {
-   U_TRACE(0, "UServer_Base::handlerNewConnection()")
+   U_TRACE(1, "UServer_Base::handlerRead()")
 
-   U_INTERNAL_ASSERT_POINTER(pthis)
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
+   int index_reuse_object = start_index_reuse_object;
+
+   UNotifier* item = UNotifier::getItem(index_reuse_object);
+
+   UClientImage_Base* ptr = vClientImage + index_reuse_object;
+
+   U_INTERNAL_DUMP("vClientImage[%d].UEventFd::fd = %d", index_reuse_object, ptr->UEventFd::fd)
+
+   // NB: index_reuse_object can be major of num_connection (depend on the last deleted connection)...
+
+   U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::fd,0)
+   U_INTERNAL_ASSERT_EQUALS(item->handler_event_fd,0)
+   U_INTERNAL_ASSERT_RANGE(0, index_reuse_object, max_Keep_Alive)
+
+   USocket* csocket = ptr->socket;
+
+   if (socket->acceptClient(csocket) == false)
+      {
+      U_INTERNAL_DUMP("flag_loop = %b", flag_loop)
+
+      if (isLog()   &&
+          flag_loop &&                // check for SIGTERM event...
+          csocket->iState != -EAGAIN) // NB: to avoid log spurious EAGAIN on accept() with epoll()...
+         {
+         char buffer[4096];
+
+         const char* msg_error = csocket->getMsgError(buffer, sizeof(buffer));
+
+         ULog::log("accept new client failed %#.*S\n", u_strlen(msg_error), msg_error);
+         }
+
+      goto end;
+      }
+
+   U_INTERNAL_ASSERT(csocket->isConnected())
+
+   if (num_connection >= max_Keep_Alive)
+      {
+      U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%u)", csocket->remoteIPAddress().getAddressString(), max_Keep_Alive);
+
+      csocket->close();
+
+      goto end;
+      }
+
+   // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be supplied optionally after
+   // a trailing slash, e.g. 192.168.0.0/24, in which case addresses that match in the most significant MASK bits will be allowed.
+   // If no options are specified, all clients are allowed. Unauthorized connections are rejected by closing the TCP connection
+   // immediately. A warning is logged on the server but nothing is sent to the client.
+
+   if (vallow_IP &&
+       ptr->isAllowed(*vallow_IP) == false)
+      {
+      U_SRV_LOG("new client connected from %S, connection denied by access list", csocket->remoteIPAddress().getAddressString());
+
+      csocket->close();
+
+      goto end;
+      }
 
    ++num_connection;
 
@@ -1143,7 +1219,7 @@ void UServer_Base::handlerNewConnection()
       if (proc->fork() &&
           proc->parent())
          {
-         UClientImage_Base::socket->close();
+         csocket->close();
 
          // to avoid too much zombie...
 
@@ -1156,27 +1232,11 @@ void UServer_Base::handlerNewConnection()
             if (isLog() && num_connection == 0) ULog::log("waiting for connection\n");
             }
 
-         return;
+         goto end;
          }
 
       if (proc->child() && isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
       }
-
-   // NB: UClientImage object is also referenced by UClientImage_Base::pClientImage...
-
-   int index_reuse_object = start_index_reuse_object;
-
-   UNotifier* item = UNotifier::getItem(index_reuse_object);
-
-   UClientImage_Base* ptr = vClientImage + index_reuse_object;
-
-   U_INTERNAL_DUMP("vClientImage[%d].UEventFd::fd = %d", index_reuse_object, ptr->UEventFd::fd)
-
-   // NB: index_reuse_object can be major of num_connection (depend on the last deleted connection)...
-
-   U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::fd,0)
-   U_INTERNAL_ASSERT_EQUALS(item->handler_event_fd,0)
-   U_INTERNAL_ASSERT_RANGE(0, index_reuse_object, max_Keep_Alive)
 
 #if defined(HAVE_PTHREAD_H) && defined(DEBUG)
    if (UNotifier::pthread)
@@ -1196,59 +1256,6 @@ void UServer_Base::handlerNewConnection()
 
 end:
    UNotifier::insert(item);
-}
-
-int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
-{
-   U_TRACE(1, "UServer_Base::handlerRead()")
-
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::socket)
-
-   if (socket->acceptClient(UClientImage_Base::socket))
-      {
-      U_INTERNAL_ASSERT(UClientImage_Base::socket->isConnected())
-
-      // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be supplied optionally after
-      // a trailing slash, e.g. 192.168.0.0/24, in which case addresses that match in the most significant MASK bits will be allowed.
-      // If no options are specified, all clients are allowed. Unauthorized connections are rejected by closing the TCP connection
-      // immediately. A warning is logged on the server but nothing is sent to the client.
-
-      if (vallow_IP &&
-          UIPAllow::isAllowed(UClientImage_Base::socket->remoteIPAddress().getInAddr(), *vallow_IP) == false)
-         {
-         U_SRV_LOG("new client connected from %S, connection denied by access list", UClientImage_Base::socket->getRemoteInfo());
-
-         UClientImage_Base::socket->close();
-
-         U_RETURN(U_NOTIFIER_OK);
-         }
-
-      if (num_connection >= max_Keep_Alive)
-         {
-         U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%u)", UClientImage_Base::socket->getRemoteInfo(), max_Keep_Alive);
-
-         UClientImage_Base::socket->close();
-
-         U_RETURN(U_NOTIFIER_OK);
-         }
-
-      handlerNewConnection();
-
-      U_RETURN(U_NOTIFIER_OK);
-      }
-
-   U_INTERNAL_DUMP("flag_loop = %b", flag_loop)
-
-   if (isLog()   &&
-       flag_loop && // check for SIGTERM event...
-       UClientImage_Base::socket->iState != -EAGAIN) // NB: to avoid log spurious EAGAIN on accept() with epoll()...
-      {
-      char buffer[4096];
-
-      const char* msg_error = UClientImage_Base::socket->getMsgError(buffer, sizeof(buffer));
-
-      ULog::log("%saccept new client failed %#.*S\n", mod_name, u_strlen(msg_error), msg_error);
-      }
 
    U_RETURN(U_NOTIFIER_OK);
 }
@@ -1301,13 +1308,13 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
 
       ptr->UEventFd::fd = 0; // to reuse object...
 
-      if (UClientImage_Base::socket->isOpen()) UClientImage_Base::socket->closesocket();
+      if (ptr->socket->isOpen()) ptr->socket->closesocket();
       }
 #ifdef DEBUG
-   else if (ptr->logbuf)
+   else
       {
-      delete ptr->logbuf;
-      delete ptr->clientAddress;
+                       delete ptr->socket;
+      if (ptr->logbuf) delete ptr->logbuf;
       }
 #endif
 }
@@ -1329,9 +1336,13 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
       U_RETURN(false);
       }
 
-   U_SRV_LOG_TIMEOUT((UClientImage_Base*)cimg);
-
    ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
+
+   if (isLog())
+      {
+      ULog::log("client connected didn't send any request in %u secs (timeout), close connection %.*s",
+                  getReqTimeout(), U_STRING_TO_TRACE(*((UClientImage_Base*)cimg)->logbuf));
+      }
 
    (void) pluginsHandlerReset(); // manage reset...
 
@@ -1408,7 +1419,7 @@ void UServer_Base::run()
                // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
                UInterrupt::setHandlerForSignal(SIGHUP, (sighandler_t)SIG_IGN);
 
-               U_SRV_LOG("waiting for connection");
+               if (isLog()) ULog::log("waiting for connection\n");
 
                while (flag_loop)
                   {
@@ -1462,7 +1473,7 @@ void UServer_Base::run()
       }
    else
       {
-      U_SRV_LOG("waiting for connection");
+      if (isLog()) ULog::log("waiting for connection\n");
 
 #if defined(HAVE_PTHREAD_H) && defined(DEBUG)
       if (preforked_num_kids == -1) (UNotifier::pthread = U_NEW(UClientThread))->start();

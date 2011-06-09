@@ -55,7 +55,6 @@
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::rbuffer)\n" \
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::wbuffer)\n" \
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_encoded)\n" \
-"  U_INTERNAL_ASSERT_EQUALS( UClientImage_Base::pClientImage, client_image)\n" \
 "%s" \
 "\n" \
 "%.*s} }\n"

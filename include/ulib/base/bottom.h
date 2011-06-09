@@ -212,4 +212,14 @@ int fallocate(int fd, int mode, off_t offset, off_t len);
 #  endif
 #endif
 
+#if !defined(PACKAGE) && defined(PACKAGE_NAME)
+#define PACKAGE PACKAGE_NAME
+#endif
+#if !defined(ULIB_VERSION) && defined(PACKAGE_VERSION)
+#define ULIB_VERSION PACKAGE_VERSION
+#endif
+#if !defined(REPORT_BUGS) && defined(PACKAGE_BUGREPORT)
+#define REPORT_BUGS PACKAGE_BUGREPORT
+#endif
+
 #endif

@@ -5,8 +5,8 @@
 #include <ulib/options.h>
 
 #define OPTIONS \
-"package " PACKAGE "\n" \
-"version " VERSION "\n" \
+"package " PACKAGE_NAME "\n" \
+"version " ULIB_VERSION "\n" \
 "purpose 'sample test for UOption class'\n" \
 "report_bugs 'Report bugs to <stefano.casazza@gmail.com>'\n" \
 "option a option_a               0 'A option without arg' ''\n" \

@@ -90,7 +90,7 @@ protected:
 
    static RETSIGTYPE handlerForSigTERM(int signo);
 
-   static bool handleDataFraming();
+   static bool handleDataFraming(USocket* csocket);
    static void getPart(const char* key, unsigned char* part);
 
 private:

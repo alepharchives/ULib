@@ -92,14 +92,14 @@ RETSIGTYPE UWebSocketPlugIn::handlerForSigTERM(int signo)
    UInterrupt::sendOurselves(SIGTERM);
 }
 
-bool UWebSocketPlugIn::handleDataFraming()
+bool UWebSocketPlugIn::handleDataFraming(USocket* csocket)
 {
-   U_TRACE(0, "UWebSocketPlugIn::handleDataFraming()")
+   U_TRACE(0, "UWebSocketPlugIn::handleDataFraming(%p)", csocket)
 
    UString frame;
    uint64_t frame_length;
    fd_set fd_set_read, read_set;
-   int n, sock = UClientImage_Base::socket->getFd(), fdmax = U_max(sock, UProcess::filedes[2]) + 1;
+   int n, sock = csocket->getFd(), fdmax = U_max(sock, UProcess::filedes[2]) + 1;
 
    FD_ZERO(                     &fd_set_read);
    FD_SET(sock,                 &fd_set_read);
@@ -128,7 +128,7 @@ loop:
 
       UClientImage_Base::rbuffer->setEmptyForce(); // NB: can be referenced by frame...
 
-      if (USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer) == false) goto end;
+      if (USocketExt::read(csocket, *UClientImage_Base::rbuffer) == false) goto end;
 
 handle_data:
       sz   =                 UClientImage_Base::rbuffer->size();
@@ -159,7 +159,7 @@ handle_data:
             {
             // wait max 3 sec for other data...
 
-            if (USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer, frame_length - sz, 3 * 1000) == false) goto end;
+            if (USocketExt::read(csocket, *UClientImage_Base::rbuffer, frame_length - sz, 3 * 1000) == false) goto end;
             }
 
          frame = UClientImage_Base::rbuffer->substr(1 + sizeof(uint64_t), frame_length);
@@ -173,7 +173,7 @@ handle_data:
                                                     sz - 2); // skip 0xff
          }
 
-      U_SRV_LOG_WITH_ADDR(UClientImage_Base::pClientImage, "received message (%u bytes) %.*S from", frame.size(), U_STRING_TO_TRACE(frame))
+      U_SRV_LOG_WITH_ADDR("received message (%u bytes) %.*S from", frame.size(), U_STRING_TO_TRACE(frame))
 
       if (UNotifier::write(UProcess::filedes[1], U_STRING_TO_PARAM(frame))) goto loop;
 
@@ -205,9 +205,9 @@ handle_data:
          frame = '\0' + *UClientImage_Base::wbuffer + '\377';
          }
 
-      U_SRV_LOG_WITH_ADDR(UClientImage_Base::pClientImage, "sent message (%u bytes) %.*S to", frame.size(), U_STRING_TO_TRACE(frame))
+      U_SRV_LOG_WITH_ADDR("sent message (%u bytes) %.*S to", frame.size(), U_STRING_TO_TRACE(frame))
 
-      if (USocketExt::write(UClientImage_Base::socket, U_STRING_TO_PARAM(frame))) goto loop;
+      if (USocketExt::write(csocket, U_STRING_TO_PARAM(frame))) goto loop;
       }
 
 end:
@@ -324,7 +324,7 @@ int UWebSocketPlugIn::handlerRequest()
             UServices::generateDigest(U_HASH_MD5, 0, challenge, sizeof(challenge), *UClientImage_Base::body, -1);
             }
 
-         if (UClientImage_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
+         if (UServer_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
             {
             UClientImage_Base::write_off = true;
 
@@ -352,19 +352,21 @@ int UWebSocketPlugIn::handlerRequest()
 
                UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UWebSocketPlugIn::handlerForSigTERM); // sync signal
 
-               if (handleDataFraming())
+               USocket* csocket = UServer_Base::pClientImage->socket;
+
+               if (handleDataFraming(csocket))
                   {
                   // Send nine 0x00 bytes to the client to indicate the start of the closing handshake
 
                   char closing[9] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
 
-                  if (USocketExt::write(UClientImage_Base::socket, closing, sizeof(closing)))
+                  if (USocketExt::write(csocket, closing, sizeof(closing)))
                      {
                      UClientImage_Base::wbuffer->setEmpty();
 
                      // client terminated: receive nine 0x00 bytes
 
-                     (void) USocketExt::read(UClientImage_Base::socket, *UClientImage_Base::rbuffer, closing, sizeof(closing));
+                     (void) USocketExt::read(csocket, *UClientImage_Base::rbuffer, closing, sizeof(closing));
                      }
                   }
                }

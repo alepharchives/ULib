@@ -47,7 +47,7 @@ int URDBClientImage::handlerRead()
 
    // check for RPC request
 
-   if (URPC::readRPCRequest(true) == false) U_RETURN(U_NOTIFIER_DELETE);
+   if (URPC::readRPCRequest(UClientImage_Base::socket, true) == false) U_RETURN(U_NOTIFIER_DELETE);
 
    result = U_NOTIFIER_OK;
 
@@ -199,7 +199,7 @@ int URDBClientImage::handlerRead()
       UStringExt::buildTokenInt(res = STR_500, 0, *wbuffer);
       }
 
-   U_SRV_LOG_WITH_ADDR(this, "method %.4S return %s for", ptr, res);
+   U_SRV_LOG_WITH_ADDR("method %.4S return %s for", ptr, res);
 
    result = handlerWrite();
 

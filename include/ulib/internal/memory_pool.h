@@ -61,10 +61,7 @@
   40 sizeof(ULDAP)
   40 sizeof(UHashMap<UString>)
   40 sizeof(USOAPGenericMethod)
-  40 sizeof(UClientImage<UTCPSocket>) <==
--------------------------
-   U_STACK_TYPE_2
-
+  40 sizeof(UClientImage<UTCPSocket>)
   48 sizeof(UCURL)
   48 sizeof(UDialog)
   48 sizeof(UMimeHeader)
@@ -77,29 +74,32 @@
   64 sizeof(UPCRE)
   64 sizeof(UCommand)
   64 sizeof(UApplication)
+-------------------------
+   U_STACK_TYPE_2
+
   72 sizeof(UMimePKCS7)
   80 sizeof(UZIP)
-  88 sizeof(UIPAddress) <==
+  88 sizeof(UIPAddress)
   88 sizeof(UMimeMultipartMsg)
--------------------------
-   U_STACK_TYPE_3
-
   96 sizeof(UMimeMessage)
  112 sizeof(UServer<UTCPSocket>)
  120 sizeof(URDBServer)
  128 sizeof(USOAPParser)
  128 sizeof(UMimeMultipart)
 -------------------------
-   U_STACK_TYPE_4
+   U_STACK_TYPE_3
 
  184 sizeof(ULog)
  184 sizeof(UFile)
  192 sizeof(URDBClient<UTCPSocket>)
  216 sizeof(UBison)
  216 sizeof(UFlexer)
- 216 sizeof(USocket)
+ 216 sizeof(USocket) <==
  216 sizeof(UTCPSocket)
  216 sizeof(UUDPSocket)
+-------------------------
+   U_STACK_TYPE_4
+
  240 sizeof(USSLSocket)
  256 sizeof(UFileConfig)
  256 sizeof(UHttpClient<UTCPSocket>)
@@ -130,9 +130,9 @@
 
 #define U_STACK_TYPE_0     8U
 #define U_STACK_TYPE_1    24U
-#define U_STACK_TYPE_2    40U
-#define U_STACK_TYPE_3    88U
-#define U_STACK_TYPE_4   128U
+#define U_STACK_TYPE_2    64U
+#define U_STACK_TYPE_3   128U
+#define U_STACK_TYPE_4   216U
 #define U_STACK_TYPE_5   256U
 #define U_STACK_TYPE_6   512U
 #define U_STACK_TYPE_7  1024U

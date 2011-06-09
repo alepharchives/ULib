@@ -94,13 +94,13 @@ uint32_t URPC::readTokenVector(USocket* s, const char* token, UString& buffer, U
    U_RETURN(rstart);
 }
 
-bool URPC::readRPCRequest(bool reset)
+bool URPC::readRPCRequest(USocket* s, bool reset)
 {
-   U_TRACE(0, "URPC::readRPCRequest(%b)", reset)
+   U_TRACE(0, "URPC::readRPCRequest(%p,%b)", s, reset)
 
    if (reset) resetRPCInfo();
 
-   UClientImage_Base::size_request = readTokenVector(UClientImage_Base::socket, 0, *UClientImage_Base::rbuffer, *rpc_info);
+   UClientImage_Base::size_request = readTokenVector(s, 0, *UClientImage_Base::rbuffer, *rpc_info);
 
    if (UClientImage_Base::size_request == 0) U_RETURN(false);
 

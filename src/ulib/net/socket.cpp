@@ -142,6 +142,7 @@ USocket::USocket(bool bSocketIsIPv6)
    flags       = O_RDWR;
    iState      = CLOSE;
    iSockDesc   = -1;
+   iRemotePort = 0;
    bLocalSet   = false;
 #ifdef HAVE_IPV6
    bIPv6Socket = bSocketIsIPv6;
@@ -688,7 +689,8 @@ void USocket::closesocket()
    (void) U_SYSCALL(close, "%d", iSockDesc);
 #endif
 
-   iSockDesc = -1;
+   iSockDesc   = -1;
+   iRemotePort = 0;
 }
 
 const char* USocket::getMsgError(char* buffer, uint32_t buffer_size)
@@ -801,23 +803,21 @@ bool USocket::acceptClient(USocket* pcNewConnection)
 
 loop:
 #ifdef HAVE_ACCEPT4
-   pcNewConnection->iSockDesc = U_SYSCALL(accept4, "%d,%p,%p,%d", iSockDesc, (sockaddr*)cRemote, &slDummy, accept4_flags);
-
+       pcNewConnection->iSockDesc  = U_SYSCALL(accept4, "%d,%p,%p,%d", iSockDesc, (sockaddr*)cRemote, &slDummy, accept4_flags);
 // if (pcNewConnection->iSockDesc != -1 || errno != ENOSYS) goto next;
 #else
-   pcNewConnection->iSockDesc = U_SYSCALL(accept,  "%d,%p,%p",    iSockDesc, (sockaddr*)cRemote, &slDummy);
+       pcNewConnection->iSockDesc  = U_SYSCALL(accept,  "%d,%p,%p",    iSockDesc, (sockaddr*)cRemote, &slDummy);
 #endif
-
 // next:
    if (pcNewConnection->iSockDesc == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
    if (pcNewConnection->iSockDesc != -1)
       {
       pcNewConnection->iState = CONNECT;
 
-      if (accept4_flags & SOCK_NONBLOCK) pcNewConnection->flags |= O_NONBLOCK;
-
       cRemote.getPortNumber(pcNewConnection->iRemotePort);
       cRemote.getIPAddress( pcNewConnection->cRemoteAddress);
+
+      U_INTERNAL_DUMP("pcNewConnection->flags = %d %B", pcNewConnection->flags, pcNewConnection->flags)
 
       U_INTERNAL_ASSERT_EQUALS(pcNewConnection->bIPv6Socket, (cRemoteAddress.getAddressFamily() == AF_INET6))
       U_INTERNAL_ASSERT_EQUALS(((accept4_flags & SOCK_CLOEXEC)  != 0),((pcNewConnection->flags & O_CLOEXEC)  != 0))
