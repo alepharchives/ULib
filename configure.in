@@ -527,14 +527,9 @@ case "$target_os" in
 	if test "$HAVE_SSL" = "yes"; then
 		LIBS_SAVE="${LIBS_SAVE} -lwsock32 -lgdi32 -lz";
 	fi
-	if test "${enable_shared}" = "yes"; then
-		AC_DEFINE(HAVE_MODULES, [1], [support for plugin modules])
-		AM_CONDITIONAL(PLUGIN, true)
-	else
-		AM_CONDITIONAL(PLUGIN, false)
-	fi
 	AM_CONDITIONAL(PTHREAD, true)
 	AM_CONDITIONAL(SEMAPHORE, true)
+	AC_DEFINE(HAVE_MODULES, [1], [support for plugin modules])
 	;;
 	*)
 	AC_CHECK_LIB(pthread,sem_init)
@@ -553,14 +548,9 @@ case "$target_os" in
 			AM_CONDITIONAL(SEMAPHORE, false)
 		fi
 	fi
-	if test "${enable_shared}" = "yes"; then
-		OST_CC_DYNAMIC
-		if test "$ost_cv_dynloader" = "yes"; then
-			AM_CONDITIONAL(PLUGIN, true)
-			LIBS_SAVE="${LIBS_SAVE} $lt_cv_dlopen_libs"
-		fi
-	else
-		AM_CONDITIONAL(PLUGIN, false)
+	OST_CC_DYNAMIC
+	if test "$ost_cv_dynloader" = "yes"; then
+		LIBS_SAVE="${LIBS_SAVE} $lt_cv_dlopen_libs"
 	fi
 	;;
 esac
@@ -667,6 +657,7 @@ AM_CONDITIONAL(FALLOCATE64, test "$ac_cv_func_fallocate64"				 = "yes")
 AM_CONDITIONAL(NANOSLEEP,   test "$ac_cv_func_nanosleep"					 = "yes")
 AM_CONDITIONAL(GETOPT_LONG, test "$ac_cv_func_getopt_long"				 = "yes")
 AM_CONDITIONAL(ASSERT,		 test "$ac_cv_header_assert_h"				 = "yes")
+AM_CONDITIONAL(PLUGIN,		 test "$enable_shared"							 = "yes") # NB: if not don't build .so object...
 
 # SECTION 11: checks for function characteristics
 

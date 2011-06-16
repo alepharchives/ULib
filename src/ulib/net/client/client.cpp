@@ -447,7 +447,8 @@ bool UClient_Base::readHTTPResponse()
 
    clearData();
 
-   if (UHTTP::readHTTPHeader(socket, buffer))
+   if (UHTTP::readHTTPHeader(socket, buffer) &&
+       UHTTP::findEndHeader(         buffer))
       {
       uint32_t pos = buffer.find(*USocket::str_content_length, UHTTP::http_info.startHeader, UHTTP::http_info.szHeader);
 

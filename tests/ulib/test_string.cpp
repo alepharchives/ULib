@@ -1748,6 +1748,7 @@ U_EXPORT main (int argc, char* argv[])
    z = UStringExt::trimPunctuation(z);
 
    U_ASSERT( U_STRING_FROM_CONSTANT("pippo") == z )
+   U_ASSERT( U_STRING_FROM_CONSTANT("pippo\r\n\r\n").isEndHeader(5) )
 
    // NB: in UTF-8 the character ü is encoded as two bytes C3 (hex) and BC (hex)
 

@@ -14,12 +14,17 @@
 #ifndef ULIB_THREAD_H
 #define ULIB_THREAD_H
 
-#include <ulib/internal/common.h>
-
 #include <pthread.h>
+
+#include <ulib/internal/common.h>
 
 #define U_SIGSTOP (SIGRTMIN+5)
 #define U_SIGCONT (SIGRTMIN+6)
+
+#ifdef __MINGW32__
+#undef signal
+#undef sleep
+#endif
 
 class U_EXPORT UThread {
 public:

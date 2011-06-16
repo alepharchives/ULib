@@ -210,6 +210,7 @@ enum AffermationType { U_MAYBE = 0, U_YES = 1, U_NOT = 2 };
 #define U_js   'j' /* text/javascript */
 #define U_css  'c' /* text/css */
 #define U_html 'h' /* text/html */
+#define U_flv  'f' /* video/x-flv */
 #define U_gif  'g' /* image/gif */
 #define U_png  'p' /* image/png */
 #define U_jpg  'J' /* image/jpg */

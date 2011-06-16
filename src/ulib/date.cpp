@@ -87,7 +87,7 @@ bool UDate::leapYear(int y)
    U_RETURN(result);
 }
 
-bool UDate::isValid() const
+__pure bool UDate::isValid() const
 {
    U_TRACE(0, "UDate::isValid()")
 
@@ -101,7 +101,7 @@ bool UDate::isValid() const
    U_RETURN(result);
 }
 
-int UDate::getDaysInMonth() const
+__pure int UDate::getDaysInMonth() const
 {
    U_TRACE(0, "UDate::getDaysInMonth()")
 
@@ -275,7 +275,7 @@ UDate::UDate(const char* str, bool UTC)
       {
       // Complete for the user
 
-      u_gettimeofday();
+      if (u_pthread_time == 0) u_gettimeofday();
 
 #  if defined(DEBUG) && !defined(__MINGW32__)
       U_SYSCALL_VOID(localtime_r, "%p,%p", &(u_now->tv_sec), &u_strftime_tm);

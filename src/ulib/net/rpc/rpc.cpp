@@ -102,9 +102,12 @@ bool URPC::readRPCRequest(USocket* s, bool reset)
 
    UClientImage_Base::size_request = readTokenVector(s, 0, *UClientImage_Base::rbuffer, *rpc_info);
 
-   if (UClientImage_Base::size_request == 0) U_RETURN(false);
+   if (UClientImage_Base::size_request)
+      {
+      UClientImage_Base::manageRequestSize(false);
 
-   UClientImage_Base::setRequestSize(UClientImage_Base::size_request);
+      U_RETURN(true);
+      }
 
-   U_RETURN(true);
+   U_RETURN(false);
 }

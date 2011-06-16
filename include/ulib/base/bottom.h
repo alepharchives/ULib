@@ -121,7 +121,7 @@ void* memrchr(const void* s, int c, size_t count);
 #  endif
 #endif
 
-#ifndef HAVE_GMTIME_R
+#if !defined(HAVE_GMTIME_R) && !defined(PTHREAD_H)
 #  ifdef __cplusplus
 extern "C" {
 #  endif

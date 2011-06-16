@@ -311,12 +311,13 @@ public:
    static const char* getHTTPStatusDescription(uint32_t nResponseCode);
 
    static bool readHTTPRequest(USocket* socket);
+   static bool findEndHeader(             const UString& buffer);
    static bool readHTTPHeader( USocket* socket, UString& buffer);
    static bool readHTTPBody(   USocket* socket, UString* buffer, UString& body);
 
    // TYPE
 
-   static bool isHTTPRequest() { return (U_http_method_type && http_info.szHeader); }
+   static bool isHTTPRequest() { return (U_http_method_type); }
 
    static bool isHTTPRequestTooLarge()
       {
@@ -419,9 +420,9 @@ public:
    static bool virtual_host, enable_caching_by_proxy_servers;
 
    static void checkHTTPRequest();
-   static void getTimeIfNeeded(bool all_http_version);
-   static void checkHTTPRequestForHeader(const UString& request);
    static void processHTTPGetRequest(USocket* socket, const UString& request);
+
+   static bool checkHTTPRequestForHeader(const UString& request);
    static bool checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
 
    static UString     getDocumentName();
@@ -857,11 +858,12 @@ public:
    U_MEMORY_DEALLOCATOR
 
    UVector<UString>* array; // content, header, deflate(content, header)
-   int wd;                  // if directory it is a "watch list" associated with an inotify instance...
-   mode_t mode;             // file type
    time_t mtime;            // time of last modification
    time_t expire;           // expire time of the entry
    uint32_t size;           // size content
+   int wd;                  // if directory it is a "watch list" associated with an inotify instance...
+   mode_t mode;             // file type
+   int mime_index;          // index file mime type
 
    // COSTRUTTORI
 
@@ -886,6 +888,8 @@ public:
       os << d.mtime;
       os.put(' ');
       os << d.expire;
+      os.put(' ');
+      os << d.mime_index;
       os.put(' ');
    // os << d.array;
    // os.put(' ');

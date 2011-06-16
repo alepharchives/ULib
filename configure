@@ -665,6 +665,8 @@ STATIC_HANDLER_RPC_FALSE
 STATIC_HANDLER_RPC_TRUE
 MOD_SHIB_FALSE
 MOD_SHIB_TRUE
+PLUGIN_FALSE
+PLUGIN_TRUE
 ASSERT_FALSE
 ASSERT_TRUE
 GETOPT_LONG_FALSE
@@ -711,8 +713,6 @@ SEMAPHORE_FALSE
 SEMAPHORE_TRUE
 PTHREAD_FALSE
 PTHREAD_TRUE
-PLUGIN_FALSE
-PLUGIN_TRUE
 PAGE_SPEED_FALSE
 PAGE_SPEED_TRUE
 LIBXML2_FALSE
@@ -22566,28 +22566,6 @@ case "$target_os" in
 	if test "$HAVE_SSL" = "yes"; then
 		LIBS_SAVE="${LIBS_SAVE} -lwsock32 -lgdi32 -lz";
 	fi
-	if test "${enable_shared}" = "yes"; then
-
-$as_echo "#define HAVE_MODULES 1" >>confdefs.h
-
-		 if true; then
-  PLUGIN_TRUE=
-  PLUGIN_FALSE='#'
-else
-  PLUGIN_TRUE='#'
-  PLUGIN_FALSE=
-fi
-
-	else
-		 if false; then
-  PLUGIN_TRUE=
-  PLUGIN_FALSE='#'
-else
-  PLUGIN_TRUE='#'
-  PLUGIN_FALSE=
-fi
-
-	fi
 	 if true; then
   PTHREAD_TRUE=
   PTHREAD_FALSE='#'
@@ -22603,6 +22581,9 @@ else
   SEMAPHORE_TRUE='#'
   SEMAPHORE_FALSE=
 fi
+
+
+$as_echo "#define HAVE_MODULES 1" >>confdefs.h
 
 	;;
 	*)
@@ -24828,7 +24809,6 @@ fi
 
 		fi
 	fi
-	if test "${enable_shared}" = "yes"; then
 
 	DYN_LOADER=''
 	ost_cv_dynloader=no
@@ -25002,26 +24982,8 @@ fi
 	fi
 
 
-		if test "$ost_cv_dynloader" = "yes"; then
-			 if true; then
-  PLUGIN_TRUE=
-  PLUGIN_FALSE='#'
-else
-  PLUGIN_TRUE='#'
-  PLUGIN_FALSE=
-fi
-
-			LIBS_SAVE="${LIBS_SAVE} $lt_cv_dlopen_libs"
-		fi
-	else
-		 if false; then
-  PLUGIN_TRUE=
-  PLUGIN_FALSE='#'
-else
-  PLUGIN_TRUE='#'
-  PLUGIN_FALSE=
-fi
-
+	if test "$ost_cv_dynloader" = "yes"; then
+		LIBS_SAVE="${LIBS_SAVE} $lt_cv_dlopen_libs"
 	fi
 	;;
 esac
@@ -26445,6 +26407,14 @@ else
   ASSERT_FALSE=
 fi
 
+ if test "$enable_shared"							 = "yes"; then
+  PLUGIN_TRUE=
+  PLUGIN_FALSE='#'
+else
+  PLUGIN_TRUE='#'
+  PLUGIN_FALSE=
+fi
+ # NB: if not don't build .so object...
 
 # SECTION 11: checks for function characteristics
 
@@ -27934,14 +27904,6 @@ if test -z "${PAGE_SPEED_TRUE}" && test -z "${PAGE_SPEED_FALSE}"; then
   as_fn_error $? "conditional \"PAGE_SPEED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${PLUGIN_TRUE}" && test -z "${PLUGIN_FALSE}"; then
-  as_fn_error $? "conditional \"PLUGIN\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${PLUGIN_TRUE}" && test -z "${PLUGIN_FALSE}"; then
-  as_fn_error $? "conditional \"PLUGIN\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${PTHREAD_TRUE}" && test -z "${PTHREAD_FALSE}"; then
   as_fn_error $? "conditional \"PTHREAD\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -27968,14 +27930,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SEMAPHORE_TRUE}" && test -z "${SEMAPHORE_FALSE}"; then
   as_fn_error $? "conditional \"SEMAPHORE\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${PLUGIN_TRUE}" && test -z "${PLUGIN_FALSE}"; then
-  as_fn_error $? "conditional \"PLUGIN\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${PLUGIN_TRUE}" && test -z "${PLUGIN_FALSE}"; then
-  as_fn_error $? "conditional \"PLUGIN\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${TCC_TRUE}" && test -z "${TCC_FALSE}"; then
@@ -28048,6 +28002,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ASSERT_TRUE}" && test -z "${ASSERT_FALSE}"; then
   as_fn_error $? "conditional \"ASSERT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${PLUGIN_TRUE}" && test -z "${PLUGIN_FALSE}"; then
+  as_fn_error $? "conditional \"PLUGIN\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MOD_SHIB_TRUE}" && test -z "${MOD_SHIB_FALSE}"; then

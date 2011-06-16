@@ -377,6 +377,32 @@ __pure bool UStringRep::isWhiteSpace(uint32_t pos) const
    U_RETURN(result);
 }
 
+__pure bool UStringRep::isEndHeader(uint32_t pos) const
+{
+   U_TRACE(0, "UStringRep::isEndHeader(%u)", pos)
+
+   U_INTERNAL_ASSERT_MINOR(pos,_length)
+
+// U_INTERNAL_DUMP("string = %u end = %u", (*(uint32_t*)(str + pos)), (*(uint32_t*)U_CRLF2))
+
+   if ((*(uint32_t*)(str + pos)) == (*(uint32_t*)U_CRLF2))
+      {
+      u_line_terminator     = U_CRLF;
+      u_line_terminator_len = 2;
+
+      U_RETURN(true);
+      }
+   else if ((*(uint16_t*)(str + pos)) == (*(uint16_t*)U_LF2))
+      {
+      u_line_terminator     = U_LF;
+      u_line_terminator_len = 1;
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
 __pure bool UStringRep::isText(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isText(%u)", pos)
@@ -565,6 +591,8 @@ void UString::setBuffer(uint32_t n)
    U_TRACE(0, "UString::setBuffer(%u)", n)
 
    U_INTERNAL_ASSERT_RANGE(1,n,max_size())
+
+   U_INTERNAL_DUMP("rep = %p rep->parent = %p rep->references = %u rep->child = %d", rep, rep->parent, rep->references + 1, rep->child)
 
    if (rep->references ||
        rep->_capacity < n)

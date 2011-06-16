@@ -12,7 +12,8 @@ start_msg server
  export UTRACE UOBJDUMP USIMERR
 
 if [ "$TERM" != "cygwin" ]; then
-	( cd ../../src/ulib/net/server/plugin/.libs; ln -sf ../page_speed/.libs/mod_pagespeed.so )
+	DIR=../../src/ulib/net/server/plugin/.libs
+	test -d $DIR && ( cd $DIR; ln -sf ../page_speed/.libs/mod_pagespeed.so )
 fi
 
 #VALGRIND=valgrind # --gen-suppressions=all

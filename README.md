@@ -37,6 +37,7 @@ The current version offers the following features :
    * CGI support for shell script processes (with automatic management of form and cookie).
    * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
    * Support for minify HTML CGI output with wrapping [google page speed SDK](http://code.google.com/speed/page-speed/download.html#pagespeed-sdk).
+   * [HTTP pseudo-streaming](http://www.phpmotionwiz.com/what-is-pseudo-streaming) for FLV video supported.
    * Support for Windows (without preforking).
    * Requests cut in phases for modular architecture (apache-like).
    * Configuration file with dedicated section.
@@ -44,8 +45,8 @@ The current version offers the following features :
        * mod_echo : echo features.
        * mod_rpc : generic Remote Procedure Call.
        * mod_http : core features, static file handler and dynamic page (ULib Servlet Page).
-       * mod_ssi : [Server Side Includes]( http://en.wikipedia.org/wiki/Server_Side_Include) support with enhanced #set,
-		             direct include and #exec usp (ULib Servlet Page) and csp (C Servlet Page).
+       * mod_ssi : [Server Side Includes]( http://en.wikipedia.org/wiki/Server_Side_Include)
+                   support with enhanced #set, direct include and #exec usp (ULib Servlet Page) and csp (C Servlet Page).
        * mod_nocat : [captive portal](http://nocat.net/) implementation.
        * mod_tsa : server side [Time Stamp](http://www.opentsa.org) support.
        * mod_soap : generic [SOAP](http://java.sun.com/developer/technicalArticles/xml/webservices) server services support.

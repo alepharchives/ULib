@@ -70,7 +70,7 @@
 
 #define U_DEFAULT_PORT           80
 #define U_TOT_CONNECTION         ptr_shared_data->tot_connection
-#define U_DEFAULT_MAX_KEEP_ALIVE 1020
+#define U_DEFAULT_MAX_KEEP_ALIVE 1000
 
 int                        UServer_Base::port;
 int                        UServer_Base::iBackLog;
@@ -389,16 +389,6 @@ UServer_Base::~UServer_Base()
 #endif
 
    if (proc) delete proc;
-
-/*
-#if defined(HAVE_PTHREAD_H)
-   if (u_pthread_time)
-      {
-      delete (UTimeThread*)u_pthread_time;
-                           u_pthread_time = 0;
-      }
-#endif
-*/
 
    if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add);
 

@@ -232,7 +232,7 @@ uint32_t u_findEndHeader(const char* restrict str, uint32_t n)
    const char* restrict end = str + n;
    const char* restrict ptr = str;
 
-   uint32_t endHeader = U_NOT_FOUND;
+   uint32_t pos, endHeader = U_NOT_FOUND;
 
    U_INTERNAL_TRACE("u_findEndHeader(%.*s,%u)", U_min(n,128), str, n)
 
@@ -244,36 +244,42 @@ uint32_t u_findEndHeader(const char* restrict str, uint32_t n)
 
       if (p == 0) break;
 
-      // \n\n
+      // \r\n\r\n (U_CRLF2)
 
-      if (p[1] == '\n')
+      if (p[ 1] == '\r' &&
+          p[-1] == '\r' &&
+          p[ 2] == '\n')
          {
-         endHeader = p - str + 2;
+         pos = p - str + 3;
 
-         u_line_terminator     = U_LF;
-         u_line_terminator_len = 1;
+         if (pos <= n)
+            {
+            endHeader             = pos;
+            u_line_terminator     = U_CRLF;
+            u_line_terminator_len = 2;
+            }
 
          break;
          }
 
-      // \r\n\r\n
+      // \n\n (U_LF2)
 
-      if (p[-1] == '\r' &&
-          p[1]  == '\r' &&
-          p[2]  == '\n')
+      if (p[1] == '\n')
          {
-         endHeader = p - str + 3;
+         pos = p - str + 2;
 
-         u_line_terminator     = U_CRLF;
-         u_line_terminator_len = 2;
+         if (pos <= n)
+            {
+            endHeader             = pos;
+            u_line_terminator     = U_LF;
+            u_line_terminator_len = 1;
+            }
 
          break;
          }
 
       ptr = p + 1;
       }
-
-   if (endHeader > n) return U_NOT_FOUND;
 
    return endHeader;
 }
@@ -2959,7 +2965,7 @@ const char* u_get_mimetype(const char* restrict suffix)
 
       U_INTERNAL_PRINT("diff = %u sizeof(mimeentry) = %u", diff, sizeof(mimeentry))
 
-           if (diff ==  0)                       u_mime_index =  c;  /* NB: 1 entry: c (U_css), j (U_js), h (U_html), g (U_gif), p (U_png), s (U_ssi) */
+           if (diff ==  0)                       u_mime_index =  c;  /* NB: 1 entry: c (U_css), j (U_js), h (U_html), g (U_gif), f (U_flv), p (U_png), s (U_ssi) */
       else if (diff == (ptrdiff_t)2 && c == 'j') u_mime_index = 'J'; /* NB: 3 entry: U_jpg */
 
       U_INTERNAL_PRINT("u_mime_index = %d", u_mime_index)

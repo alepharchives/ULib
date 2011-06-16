@@ -90,14 +90,15 @@
 #  include "suvreq.h"
 #endif
 
+#include <sys/types.h>
+
 /* LFS */
-#if defined __MINGW32__ && _FILE_OFFSET_BITS && _FILE_OFFSET_BITS == 64
-#  define  _OFF_T_
-typedef long long _off_t;  /* Type of file sizes and offsets (LFS) */
+#if !defined(_OFF_T_) && defined(__MINGW32__) && defined(_FILE_OFFSET_BITS) && _FILE_OFFSET_BITS == 64
+#define  _OFF_T_
+typedef long long _off_t; /* Type of file sizes and offsets (LFS) */
 typedef _off_t     off_t;
 #endif
 
-#include <sys/types.h>
 #include <unistd.h>
 
 #ifdef _MSC_VER

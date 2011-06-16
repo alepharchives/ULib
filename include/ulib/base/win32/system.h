@@ -122,8 +122,8 @@ struct flock {
 #  define  S_IRWXO  (S_IRWXG >> 3)
 #endif
 
-#ifndef HAVE_LOCALTIME_R
-#define localtime_r( _clock,_result) (*(_result) = *localtime((_clock)),(_result))
+#if !defined(HAVE_LOCALTIME_R) && !defined(PTHREAD_H)
+#  define localtime_r( _clock,_result) (*(_result) = *localtime((_clock)),(_result))
 #endif
 
 #define mkdir(path,mode)      mkdir(path)
@@ -171,9 +171,16 @@ extern __declspec(dllexport) int fsync(int fd);
 #define SIGUSR2   17 /* ,31,12 */
 #define SIGCHLD   20 /* ,17,18 */
 
+#ifndef SIG_SETMASK
 #define SIG_SETMASK   0    /* set mask with sigprocmask() */
+#endif
+#ifndef SIG_BLOCK
 #define SIG_BLOCK     1    /* set of signals to block */
+#endif
+#ifndef SIG_UNBLOCK 
 #define SIG_UNBLOCK   2    /* set of signals to, well, unblock */
+#endif
+
 #define SHUT_RD       0
 #define SHUT_WR       1
 #define WNOHANG       1    /* Don't block waiting */
@@ -206,7 +213,11 @@ extern __declspec(dllexport) int fsync(int fd);
 #define ENOMEDIUM    135 /* "no medium" */
 #define ENOSHARE     136 /* "No such host or network path" */
 #define EOVERFLOW    139 /* "Value too large for defined data type" */
+
+#ifndef ETIMEDOUT
 #define ETIMEDOUT    110 /* Connection timed out */
+#endif
+
 #define EINPROGRESS  115 /* Operation now in progress */
 
 struct sigaction {       /* Structure describing the action to be taken when a signal arrives */
@@ -248,10 +259,13 @@ struct rlimit {
 
 /* POSIX.1b structure for a time value. This is like a `struct timeval' but has nanoseconds instead of microseconds. */
 
+#ifndef HAVE_STRUCT_TIMESPEC
+#define HAVE_STRUCT_TIMESPEC 1
 struct timespec {
    time_t   tv_sec;  /* Seconds. */
    long int tv_nsec; /* Nanoseconds. */
 };
+#endif
 
 #ifdef __cplusplus
 extern "C" {

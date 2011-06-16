@@ -120,7 +120,7 @@ public:
 
    // SERVICES
 
-   bool isValid() const;
+   bool isValid() const __pure;
 
    int getJulian();
 
@@ -170,7 +170,7 @@ public:
 
    // Returns the number of days in the month (28..31) for this date
 
-   int getDaysInMonth() const;
+   int getDaysInMonth() const __pure;
 
    // Returns the day of the year [1,366] for this date
 
@@ -227,7 +227,7 @@ public:
 
       // UNIX system time - SecsSince1Jan1970UTC
 
-      u_gettimeofday();
+      if (u_pthread_time == 0) u_gettimeofday();
 
       fromTime(u_now->tv_sec);
       }

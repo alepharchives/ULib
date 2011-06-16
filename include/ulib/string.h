@@ -415,6 +415,7 @@ public:
    bool isUTF16(uint32_t pos) const __pure;
    bool isBase64(uint32_t pos) const __pure;
    bool isBinary(uint32_t pos) const __pure;
+   bool isEndHeader(uint32_t pos) const __pure;
    bool isWhiteSpace(uint32_t pos) const __pure;
 
    // UTF8 <--> ISO Latin 1
@@ -1082,6 +1083,7 @@ public:
    bool isUTF16(uint32_t pos = 0) const      { return rep->isUTF16(pos); }
    bool isBinary(uint32_t pos = 0) const     { return rep->isBinary(pos); }
    bool isBase64(uint32_t pos = 0) const     { return rep->isBase64(pos); }
+   bool isEndHeader(uint32_t pos = 0) const  { return rep->isEndHeader(pos); }
    bool isWhiteSpace(uint32_t pos = 0) const { return rep->isWhiteSpace(pos); }
 
    char  last_char() const             { return rep->last_char(); }

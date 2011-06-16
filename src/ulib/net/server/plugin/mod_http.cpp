@@ -200,20 +200,6 @@ int UHttpPlugIn::handlerREAD()
 
    if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket))
       {
-      UHTTP::getTimeIfNeeded(false);
-
-      // HTTP 1.1 want header "Host: ..."
-
-      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
-
-      if (U_http_version            == '1' &&
-          UHTTP::http_info.host_len == 0)
-         {
-         UHTTP::setHTTPBadRequest();
-
-         goto send_response;
-         }
-
       // manage dynamic page request (ULib Servlet Page)
 
       if (UHTTP::isUSPRequest())

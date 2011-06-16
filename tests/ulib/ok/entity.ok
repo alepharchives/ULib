@@ -4,8 +4,8 @@ MIME-Version: 1.0
 
 --=-GNUvD8IlD4lmqXWJV65K
 Content-Transfer-Encoding: 8bit
-Content-Type: text/xml; name=t-archive.xml
 Content-Disposition: attachment; filename=t-archive.xml
+Content-Type: text/xml; name=t-archive.xml
 
 <token-index>
 <uri>keyBoardingMatteo</uri>
@@ -22,8 +22,8 @@ Content-Disposition: attachment; filename=t-archive.xml
 
 --=-GNUvD8IlD4lmqXWJV65K
 Content-Transfer-Encoding: base64
-Content-Type: application/zip; name=archive.zip
 Content-Disposition: attachment; filename=archive.zip
+Content-Type: application/zip; name=archive.zip
 
 UEsDBBQAAAAIAPpsKDGMiwX+fAIAAMUIAAARABUAa2V5Qm9hcmRpbmdNYXR0ZW9VVAkAA6cLP0Gn
 Cz9BVXgEACEAIQDNU1Fu5SAM/M8pfA9OY8lBAlv58f2lnTEkfa/qqrv9qoSJAXs8HkjvXeac0meX
@@ -153,8 +153,8 @@ ZXZlbDJfY2VydC5wZW1VVAUAA2gLP0FVeAAAUEsFBgAAAAAFAAUAxgEAAPEZAAAAAA==
 
 --=-GNUvD8IlD4lmqXWJV65K
 Content-Transfer-Encoding: base64
-Content-Type: application/timestamp-reply; name=timestamp.pk7
 Content-Disposition: attachment; filename=timestamp.pk7
+Content-Type: application/timestamp-reply; name=timestamp.pk7
 
 MIIKqTADAgEAMIIKoAYJKoZIhvcNAQcCoIIKkTCCCo0CAQExCzAJBgUrDgMCGgUAMIHaBgsqhkiG
 9w0BCRABBKCBygSBxzCBxAIBAQYCKQIwITAJBgUrDgMCGgUABBSAI0GfLYHo8PvxiQyrWklhepQV
@@ -213,8 +213,8 @@ MIME-Version: 1.0
 
 --=-GNUvD8IlD4lmqXWJV65K
 Content-Transfer-Encoding: 8bit
-Content-Type: text/xml; name=t-archive.xml
 Content-Disposition: attachment; filename=t-archive.xml
+Content-Type: text/xml; name=t-archive.xml
 
 <token-index>
 <uri>keyBoardingMatteo</uri>
@@ -231,8 +231,8 @@ Content-Disposition: attachment; filename=t-archive.xml
 
 --=-GNUvD8IlD4lmqXWJV65K
 Content-Transfer-Encoding: base64
-Content-Type: application/zip; name=archive.zip
 Content-Disposition: attachment; filename=archive.zip
+Content-Type: application/zip; name=archive.zip
 
 UEsDBBQAAAAIAPpsKDGMiwX+fAIAAMUIAAARABUAa2V5Qm9hcmRpbmdNYXR0ZW9VVAkAA6cLP0Gn
 Cz9BVXgEACEAIQDNU1Fu5SAM/M8pfA9OY8lBAlv58f2lnTEkfa/qqrv9qoSJAXs8HkjvXeac0meX
@@ -362,8 +362,8 @@ ZXZlbDJfY2VydC5wZW1VVAUAA2gLP0FVeAAAUEsFBgAAAAAFAAUAxgEAAPEZAAAAAA==
 
 --=-GNUvD8IlD4lmqXWJV65K
 Content-Transfer-Encoding: base64
-Content-Type: application/timestamp-reply; name=timestamp.pk7
 Content-Disposition: attachment; filename=timestamp.pk7
+Content-Type: application/timestamp-reply; name=timestamp.pk7
 
 MIIKqTADAgEAMIIKoAYJKoZIhvcNAQcCoIIKkTCCCo0CAQExCzAJBgUrDgMCGgUAMIHaBgsqhkiG
 9w0BCRABBKCBygSBxzCBxAIBAQYCKQIwITAJBgUrDgMCGgUABBSAI0GfLYHo8PvxiQyrWklhepQV
@@ -418,10 +418,10 @@ c9UcK+oDnALn6NooA2ZRklYmNSORXT/s1qri4OgeaiPZuZO52J4GC9iOjQZjEkTBWoauHJq/
 
 inp/entity/multipart_dos.eml parsed as multipart 
 To: Ned Freed <ned@innosoft.com>
-Content-Type: multipart/mixed; boundary="simple boundary"
-From: Nathaniel Borenstein <nsb@bellcore.com>
 Subject: Sample message
+Content-Type: multipart/mixed; boundary="simple boundary"
 MIME-Version: 1.0
+From: Nathaniel Borenstein <nsb@bellcore.com>
 
 --simple boundary
 Content-Type: text/plain
@@ -429,8 +429,8 @@ Content-Type: text/plain
 This is implicitly typed plain ASCII text.
 It does NOT end with a linebreak.
 --simple boundary
-Content-Type: text/plain
 Content-type: text/plain; charset=us-ascii
+Content-Type: text/plain
 
 This is explicitly typed plain ASCII text.
 It DOES end with a linebreak.
@@ -438,10 +438,10 @@ It DOES end with a linebreak.
 --simple boundary--
 
 inp/entity/simple_multipart-mixed.eml parsed as multipart 
-Content-Type: multipart/digest;boundary="---- next message ----"
-From: Moderator-Address
 Subject: Internet Digest, volume 42
+Content-Type: multipart/digest;boundary="---- next message ----"
 MIME-Version: 1.0
+From: Moderator-Address
 
 ------ next message ----
 Content-Type: message/rfc822
@@ -482,8 +482,8 @@ Content-Type: text/xml; charset=us-ascii
 
 ------=_Part_0_10774273.1133173337508
 Content-Transfer-Encoding: 7bit
-Content-Type: application/octet-stream; name=benchmark.log
 Content-Disposition: attachment; filename=benchmark.log
+Content-Type: application/octet-stream; name=benchmark.log
 
 ========================================================================================================================
 * Benchmark reindex Harvest for files count = 320000
@@ -500,10 +500,10 @@ Command terminated by signal 2
 
 inp/entity/parseable_multipart_error.eml parsed as multipart 
 To: Ned Freed <ned@innosoft.com> 
-Content-Type: multipart/alternative; boundary=boundary42 
-From: Nathaniel Borenstein <nsb@bellcore.com> 
 Subject: Formatted text mail 
+Content-Type: multipart/alternative; boundary=boundary42 
 MIME-Version: 1.0 
+From: Nathaniel Borenstein <nsb@bellcore.com> 
 
 --boundary42
 Content-Type: text/plain; charset=us-ascii 
@@ -522,20 +522,20 @@ Content-Type: text/x-whatever
 --boundary42--
 
 inp/entity/simple_multipart-alternative.eml parsed as multipart 
-X-Priority: 3 (Normal)
-To: pongo@unirel.com
-Message-ID: <37858.10.30.1.101.1111059841.squirrel@10.30.1.101>
 X-Mailer: SquirrelMail/1.4.3a
+To: pongo@unirel.com
+Return-Path: <pongo@unirel.com>
+User-Agent: SquirrelMail/1.4.3a
+Date: Thu, 17 Mar 2005 12:44:01 +0100 (CET)
+Subject: firma non in accordo al contenuto
+Content-Type: multipart/mixed;boundary="----=_20050317124401_79369"
 Importance: Normal
 Received: from 10.30.1.101(SquirrelMail authenticated user pongo);by www.unirel.com with HTTP;Thu, 17 Mar 2005 12:44:01 +0100 (CET)
-Content-Type: multipart/mixed;boundary="----=_20050317124401_79369"
-From: "pongo" <pongo@unirel.com>
-Delivered-To: pongo@unirel.com
-User-Agent: SquirrelMail/1.4.3a
-Subject: firma non in accordo al contenuto
-Date: Thu, 17 Mar 2005 12:44:01 +0100 (CET)
+Message-ID: <37858.10.30.1.101.1111059841.squirrel@10.30.1.101>
 MIME-Version: 1.0
-Return-Path: <pongo@unirel.com>
+Delivered-To: pongo@unirel.com
+X-Priority: 3 (Normal)
+From: "pongo" <pongo@unirel.com>
 
 ------=_20050317124401_79369
 Content-Transfer-Encoding: 8bit
@@ -544,8 +544,8 @@ Content-Type: text/plain; charset="iso-8859-1"
 
 ------=_20050317124401_79369
 Content-Transfer-Encoding: 8bit
-Content-Type: message/rfc822; name="simple_signed_leonardo.eml"
 Content-Disposition: attachment; filename="simple_signed_leonardo.eml"
+Content-Type: message/rfc822; name="simple_signed_leonardo.eml"
 
 MIME-Version: 1.0
 Content-Disposition: attachment; filename="smime.p7m"
@@ -588,8 +588,8 @@ zbUywxdMvF4jenYmKmw=
 
 ------=_20050317124401_79369
 Content-Transfer-Encoding: 8bit
-Content-Type: message/rfc822; name="simple_signed_leonardo_corrupted.eml"
 Content-Disposition: attachment;filename="simple_signed_leonardo_corrupted.eml"
+Content-Type: message/rfc822; name="simple_signed_leonardo_corrupted.eml"
 
 MIME-Version: 1.0
 Content-Disposition: attachment; filename="smime.p7m"

@@ -96,6 +96,11 @@ done
  if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then
 	exit 1
  fi
+ TIMEOUT 10 $LCMD <inp/http/all1.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+ EXIT_VALUE=$?
+ if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then
+	exit 1
+ fi
  TIMEOUT 4  $LCMD <inp/http/post.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
  EXIT_VALUE=$?
  if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then

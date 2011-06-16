@@ -15,18 +15,18 @@
 #include <ulib/utility/escape.h>
 #include <ulib/net/server/server.h>
 
-bool               UClientImage_Base::bIPv6;
-bool               UClientImage_Base::pipeline;
-bool               UClientImage_Base::write_off;  // NB: we not send response because we can have used sendfile() etc...
-uint32_t           UClientImage_Base::rstart;
-uint32_t           UClientImage_Base::size_request;
-UString*           UClientImage_Base::body;
-UString*           UClientImage_Base::rbuffer;
-UString*           UClientImage_Base::wbuffer;
-UString*           UClientImage_Base::request; // NB: it is only a pointer, not a string object...
-UString*           UClientImage_Base::pbuffer;
-UString*           UClientImage_Base::msg_welcome;
-const char*        UClientImage_Base::rpointer;
+bool        UClientImage_Base::bIPv6;
+bool        UClientImage_Base::pipeline;
+bool        UClientImage_Base::write_off;  // NB: we not send response because we can have used sendfile() etc...
+uint32_t    UClientImage_Base::rstart;
+uint32_t    UClientImage_Base::size_request;
+UString*    UClientImage_Base::body;
+UString*    UClientImage_Base::rbuffer;
+UString*    UClientImage_Base::wbuffer;
+UString*    UClientImage_Base::request; // NB: it is only a pointer, not a string object...
+UString*    UClientImage_Base::pbuffer;
+UString*    UClientImage_Base::msg_welcome;
+const char* UClientImage_Base::rpointer;
 
 // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
 
@@ -229,32 +229,41 @@ void UClientImage_Base::logCertificate(void* x509)
 #endif
 }
 
-void UClientImage_Base::setRequestSize(uint32_t n)
+void UClientImage_Base::manageRequestSize(bool request_resize)
 {
-   U_TRACE(0, "UClientImage_Base::setRequestSize(%u)", n)
+   U_TRACE(0, "UClientImage_Base::manageRequestSize(%b)", request_resize)
 
-   U_INTERNAL_ASSERT_MAJOR(n, 0)
+   U_INTERNAL_DUMP("pipeline = %b size_request = %u", pipeline, size_request)
 
-   U_INTERNAL_DUMP("pipeline = %b", pipeline)
-
-   size_request = n;
+   U_INTERNAL_ASSERT_MAJOR(size_request, 0)
 
    if (pipeline)
       {
       U_INTERNAL_ASSERT_DIFFERS(rstart, 0U)
       U_INTERNAL_ASSERT(request == pbuffer && pbuffer->isNull() == false && pbuffer->same(*rbuffer) == false)
 
-      pbuffer->size_adjust(n);
+      if (request_resize == false) pbuffer->size_adjust(size_request);
+      else
+         {
+         // NB: we use request as the new read buffer... 
+
+         rstart   = size_request = 0;
+         pipeline = false;
+         rpointer = pbuffer->data();
+
+         *rbuffer = *pbuffer;
+          request =  rbuffer;
+         }
       }
    else
       {
-      pipeline = (rbuffer->size() > n);
+      pipeline = (rbuffer->size() > size_request);
 
       if (pipeline)
          {
          U_INTERNAL_ASSERT_EQUALS(rstart, 0U)
 
-         *pbuffer = rbuffer->substr(0U, n);
+         *pbuffer = rbuffer->substr(0U, size_request);
           request = pbuffer;
          }
       }
@@ -318,6 +327,10 @@ int UClientImage_Base::genericRead()
       goto error;
       }
 
+   handlerError(USocket::CONNECT);
+
+   UServer_Base::pClientImage = this;
+
    // reset buffer before read
 
    U_INTERNAL_ASSERT_EQUALS(rbuffer->isNull(), false);
@@ -325,9 +338,9 @@ int UClientImage_Base::genericRead()
 
    rbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
 
-   handlerError(USocket::CONNECT);
-
-   UServer_Base::pClientImage = this;
+   if (pbuffer->isNull() == false) pbuffer->clear();
+   if (   body->isNull() == false)    body->clear();
+                                   wbuffer->clear();
 
    if (USocketExt::read(socket, *(request = rbuffer), U_SINGLE_READ, UServer_Base::timeoutMS) == false)
       {
@@ -336,12 +349,6 @@ int UClientImage_Base::genericRead()
       if (socket->isClosed()) goto error;
       if (rbuffer->empty())   U_RETURN(U_PLUGIN_HANDLER_AGAIN); // NONBLOCKING...
       }
-
-   // reset buffer after read
-
-   if (   body->isNull() == false)    body->clear();
-   if (pbuffer->isNull() == false) pbuffer->clear();
-                                   wbuffer->clear();
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 
@@ -407,21 +414,24 @@ loop:
       (void) UServer_Base::pluginsHandlerReset(); // manage reset...
       }
 
-   if (UServer_Base::flag_loop == false)
+   U_INTERNAL_DUMP("result = %d pipeline = %b socket->isClosed() = %b", result, pipeline, socket->isClosed())
+
+   // NB: it is difficult to change this tests...
+   // -------------------------------------------
+   if (socket->isClosed()                  ||
+       (result   == U_PLUGIN_HANDLER_ERROR &&
+        pipeline == false)                 ||
+        UServer_Base::flag_loop == false)
       {
-      if (UServer_Base::isParallelization()) U_EXIT(0);
+      if (UServer_Base::flag_loop == false &&
+          UServer_Base::isParallelization())
+         {
+         U_EXIT(0);
+         }
 
       U_RETURN(U_NOTIFIER_DELETE);
       }
-
-   U_INTERNAL_DUMP("pipeline = %b", pipeline)
-
-   if (result == U_PLUGIN_HANDLER_ERROR &&
-       (pipeline              == false  ||
-        socket->isConnected() == false))
-      {
-      U_RETURN(U_NOTIFIER_DELETE);
-      }
+   // -------------------------------------------
 
    if (pipeline)
       {

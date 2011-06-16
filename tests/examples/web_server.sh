@@ -10,7 +10,7 @@ rm -f web_server*.log \
       $DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* $DOC_ROOT/stack.*userver_ssl*.[0-9]* \
       $DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]*
 
-#UTRACE="0 50M 1"
+ UTRACE="0 50M 0"
 #UOBJDUMP="0 10M 5000"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
@@ -55,6 +55,13 @@ start_prg_background userver_tcp -c 'web_server-1.cfg'
 												# deployment.properties
 
 chmod 777 $SOCK1
+
+# HTTP pseudo-streaming for FLV video
+
+#curl -I -s -D -			'http://localhost/test.flv'					-o /dev/null
+#curl -I -s -D -			'http://localhost/test.flv'					-o /tmp/test.flv
+#curl    -s -v -r0-499	'http://localhost/test.flv'					-o /tmp/test.flv
+#curl    -s -D				'http://localhost/test.flv?start=669000'	-o /tmp/test.flv
 
 #sleep 6
 #kill_prg userver_tcp TERM

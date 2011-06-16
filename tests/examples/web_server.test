@@ -94,6 +94,7 @@ for i in $LS; do
 done
 
  send_req $2 inp/http/all.inp  4
+ send_req $2 inp/http/all1.inp 4
  send_req $2 inp/http/post.inp 2
 
 # test upload
@@ -103,8 +104,8 @@ mkdir -p		   uploads
 $CHOWN apache: uploads
 chmod 777      uploads
 
- $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" http://$2/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
- $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" http://$2/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
+$CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" http://$2/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
+$CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" http://$2/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
 
  kill_prg userver_tcp TERM
  if [ $? -ne 0 ]; then

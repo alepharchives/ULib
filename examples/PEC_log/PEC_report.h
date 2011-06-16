@@ -265,7 +265,7 @@ public:
 
       UApplication::run(argc, argv, env);
 
-      u_gettimeofday();
+      if (u_pthread_time == 0) u_gettimeofday();
 
       ULib_init_openssl();
 

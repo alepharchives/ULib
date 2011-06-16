@@ -117,7 +117,7 @@ public:
       U_RETURN(pipeline);
       }
 
-   static void setRequestSize(uint32_t n);
+   static void manageRequestSize(bool request_resize);
 
    // DEBUG
 

@@ -93,7 +93,7 @@ read:
 
       if (time_limit)
          {
-         u_gettimeofday();
+         if (u_pthread_time == 0) u_gettimeofday();
 
          if (timeout == 0) timeout = u_now->tv_sec + time_limit;
 

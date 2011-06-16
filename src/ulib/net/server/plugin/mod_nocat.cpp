@@ -1367,7 +1367,7 @@ int UNoCatPlugIn::handlerRequest()
 
       U_INTERNAL_DUMP("host = %.*S ip_client = %.*S", U_STRING_TO_TRACE(host), U_STRING_TO_TRACE(ip_client))
 
-      UHTTP::getTimeIfNeeded(true);
+      if (u_pthread_time == 0) u_gettimeofday();
 
       // NB: check for request from AUTHs
 

@@ -252,6 +252,9 @@ void u_gettimeofday(void)
    U_INTERNAL_TRACE("u_gettimeofday()")
 
    U_INTERNAL_ASSERT_POINTER(u_now)
+   U_INTERNAL_ASSERT_EQUALS(u_pthread_time,0)
+
+   (void) gettimeofday(u_now, 0);
 
    /* calculate number of seconds between UTC to current time zone
     *
@@ -282,8 +285,6 @@ void u_gettimeofday(void)
        * need not set tzname, timezone, and daylight
        */
 
-      (void) gettimeofday(u_now, 0);
-
       (void) localtime_r(&(u_now->tv_sec), &u_strftime_tm);
 
       /* The timegm() function converts the broken-down time representation, expressed in Coordinated Universal
@@ -302,8 +303,6 @@ void u_gettimeofday(void)
 
       if (u_now->tv_sec > 1272036378L) u_start_time = u_now->tv_sec + u_now_adjust;
       }
-
-   if (u_pthread_time == 0) (void) gettimeofday(u_now, 0);
 }
 
 void u_init(char** restrict argv)
@@ -397,7 +396,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
       {
       if (t == 0)
          {
-         u_gettimeofday();
+         if (u_pthread_time == 0) u_gettimeofday();
 
          t = u_now->tv_sec + u_now_adjust;
          }
@@ -1583,7 +1582,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                {
                char tmp[16];
 
-               if (u_pthread_time) (void) gettimeofday(u_now, 0);
+               (void) gettimeofday(u_now, 0);
 
                (void) sprintf(tmp, "_%03lu", u_now->tv_usec / 1000L);
 

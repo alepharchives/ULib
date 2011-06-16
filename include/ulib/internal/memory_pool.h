@@ -24,7 +24,6 @@
 /* NO DEBUG (64 bit)
 -------------------------
    1 sizeof(UMagic)
-
    8 sizeof(UCrl)
    8 sizeof(UPKCS10)
    8 sizeof(UString) <==
@@ -34,7 +33,6 @@
 
   12 sizeof(UProcess)
   16 sizeof(UDate)
-
   16 sizeof(ULock)
   16 sizeof(UTimer)
   16 sizeof(UPKCS7)
@@ -43,7 +41,6 @@
   16 sizeof(USemaphore)
   16 sizeof(UXMLParser)
   16 sizeof(UVector<UString>)
-
   24 sizeof(UStringRep) <==
   24 sizeof(USOAPObject)
 -------------------------
@@ -60,7 +57,6 @@
   40 sizeof(Url)
   40 sizeof(ULDAP)
   40 sizeof(UHashMap<UString>)
-  40 sizeof(USOAPGenericMethod)
   40 sizeof(UClientImage<UTCPSocket>)
   48 sizeof(UCURL)
   48 sizeof(UDialog)
@@ -69,6 +65,7 @@
   48 sizeof(UQueryParser)
   48 sizeof(USOAPEncoder)
   48 sizeof(UXMLElement)
+  48 sizeof(USOAPGenericMethod)
   56 sizeof(UOptions)
   56 sizeof(UPlugIn<void*>)
   64 sizeof(UPCRE)
@@ -82,8 +79,8 @@
   88 sizeof(UIPAddress)
   88 sizeof(UMimeMultipartMsg)
   96 sizeof(UMimeMessage)
- 112 sizeof(UServer<UTCPSocket>)
- 120 sizeof(URDBServer)
+ 120 sizeof(UServer<UTCPSocket>)
+ 128 sizeof(URDBServer)
  128 sizeof(USOAPParser)
  128 sizeof(UMimeMultipart)
 -------------------------
@@ -101,8 +98,8 @@
    U_STACK_TYPE_4
 
  240 sizeof(USSLSocket)
+ 248 sizeof(UHttpClient<UTCPSocket>)
  256 sizeof(UFileConfig)
- 256 sizeof(UHttpClient<UTCPSocket>)
 -------------------------
    U_STACK_TYPE_5
 

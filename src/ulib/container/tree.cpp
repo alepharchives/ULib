@@ -15,6 +15,8 @@
 
 uint32_t UTree<void*>::size_allocate;
 
+// NB: if we put as pure this function the test on tree fail...
+
 void UTree<void*>::callForAllEntry(vPFpvpv function)
 {
    U_TRACE(0, "UTree<void*>::callForAllEntry(%p)", function)

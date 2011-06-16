@@ -110,7 +110,7 @@ void UIPAddress::setAddress(void* address, bool bIPv6)
 
    bHostNameUnresolved = bStrAddressUnresolved = true;
 
-   U_INTERNAL_DUMP("addr = %u", getInAddr())
+// U_INTERNAL_DUMP("addr = %u", getInAddr())
 }
 
 void UIPAddress::set(const UIPAddress& cOtherAddr)

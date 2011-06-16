@@ -384,7 +384,8 @@ bool UMimeHeader::readHeader(USocket* socket, UString& data)
 
    UHTTP::resetHTTPInfo();
 
-   bool result = (UHTTP::readHTTPHeader(socket, data)
+   bool result = (UHTTP::readHTTPHeader(socket, data) &&
+                  UHTTP::findEndHeader(         data)
                      ? parse(data.c_pointer(UHTTP::http_info.startHeader), UHTTP::http_info.szHeader) > 0
                      : false);
 

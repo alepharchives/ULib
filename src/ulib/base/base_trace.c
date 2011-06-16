@@ -437,8 +437,7 @@ void u_trace_suspend(int resume)
             }
          }
 
-      U_INTERNAL_PRINT("cnt_suspend=%d flag_mask_level=%p flag_mask_level_save=%p",
-                           cnt_suspend, flag_mask_level, flag_mask_level_save)
+      U_INTERNAL_PRINT("cnt_suspend=%d flag_mask_level=%p flag_mask_level_save=%p", cnt_suspend, flag_mask_level, flag_mask_level_save)
 
       U_INTERNAL_ASSERT(cnt_suspend >= 0)
       }

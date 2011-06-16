@@ -388,21 +388,15 @@ U_NO_EXPORT void UNotifier::handlerDelete(UNotifier** ptr)
 {
    U_TRACE(0, "UNotifier::handlerDelete(%p)", ptr)
 
+#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+   if (pthread) pthread->lock();
+#endif
+
    UNotifier* item = *ptr;
 
    U_INTERNAL_ASSERT_POINTER(item)
 
-   UEventFd* handler_event = item->handler_event_fd;
-
-   U_INTERNAL_DUMP("fd = %d op_mask = %B", handler_event->fd, handler_event->op_mask)
-
    item->handler_event_fd = 0;
-
-   handler_event->handlerDelete();
-
-#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
-   if (pthread) pthread->lock();
-#endif
 
    *ptr = item->next;
 
@@ -499,7 +493,8 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UNotifier** ptr, bool bread, b
       if (bexcept) (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_DEL, handler_event->fd, (struct epoll_event*)1);
 #  endif
 
-      handlerDelete(ptr);
+                     handlerDelete(ptr);
+      handler_event->handlerDelete();
 
       U_RETURN(true);
       }
@@ -833,7 +828,8 @@ U_NO_EXPORT void UNotifier::eraseItem(UNotifier** ptr)
    if (first) fd_set_max = getNFDS();
 #endif
 
-   handlerDelete(ptr);
+                  handlerDelete(ptr);
+   handler_event->handlerDelete();
 }
 
 void UNotifier::erase(UEventFd* handler_event)
