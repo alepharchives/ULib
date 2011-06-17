@@ -294,9 +294,7 @@ public:
 
       U_INTERNAL_DUMP("flag_loop = %b", flag_loop)
 
-      U_INTERNAL_ASSERT_EQUALS(flag_loop, false)
-
-      bool result = (preforked_num_kids <= 0 && proc->child());
+      bool result = (flag_loop == false && preforked_num_kids <= 0 && proc->child());
 
       U_RETURN(result);
       }

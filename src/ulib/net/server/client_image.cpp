@@ -353,11 +353,7 @@ int UClientImage_Base::genericRead()
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 
 error:
-   if (UServer_Base::flag_loop == false &&
-       UServer_Base::isParallelization())
-      {
-      U_EXIT(0);
-      }
+   if (UServer_Base::isParallelization()) U_EXIT(0);
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }
@@ -423,11 +419,7 @@ loop:
         pipeline == false)                 ||
         UServer_Base::flag_loop == false)
       {
-      if (UServer_Base::flag_loop == false &&
-          UServer_Base::isParallelization())
-         {
-         U_EXIT(0);
-         }
+      if (UServer_Base::isParallelization()) U_EXIT(0);
 
       U_RETURN(U_NOTIFIER_DELETE);
       }

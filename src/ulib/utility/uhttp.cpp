@@ -5215,6 +5215,28 @@ U_NO_EXPORT __pure int UHTTP::sortHTTPRange(const void* a, const void* b)
    U_RETURN(diff);
 }
 
+U_NO_EXPORT void UHTTP::setResponseForRange(uint32_t start, uint32_t _end, uint32_t& size, uint32_t header, UString& ext)
+{
+   U_TRACE(0, "UHTTP::setResponseForRange(%u,%u,%u,%u,%.*S)", start, _end, size, header, U_STRING_TO_TRACE(ext))
+
+   // Single range
+
+   U_INTERNAL_ASSERT(start <= _end)
+   U_INTERNAL_ASSERT_RANGE(start,_end,size-1)
+
+   UString tmp(100U);
+
+   tmp.snprintf("Content-Range: bytes %u-%u/%u\r\n", start, _end, size);
+
+   size = _end - start + 1;
+
+   if (ext.empty() == false) (void) checkHTTPContentLength(ext, header + size);
+
+   (void) ext.insert(0, tmp);
+
+   U_INTERNAL_DUMP("ext = %.*S", U_STRING_TO_TRACE(ext))
+}
+
 U_NO_EXPORT bool UHTTP::checkHTTPGetRequestForRange(uint32_t& start, uint32_t& size, UString& ext, const UString& data)
 {
    U_TRACE(0, "UHTTP::checkHTTPGetRequestForRange(%u,%u,%.*S,%.*S)", start, size, U_STRING_TO_TRACE(ext), U_STRING_TO_TRACE(data))
@@ -5227,7 +5249,7 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestForRange(uint32_t& start, uint32_t& s
    const char* spec;
    UVector<HTTPRange*> array;
    uint32_t i, n, _end, cur_start, cur_end;
-   UString range(http_info.range, http_info.range_len), item, tmp(100U);
+   UString range(http_info.range, http_info.range_len), item;
 
    UVector<UString> range_list(range, ',');
 
@@ -5305,28 +5327,11 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestForRange(uint32_t& start, uint32_t& s
       U_RETURN(false);
       }
 
-   if (n == 1)
+   if (n == 1) // Single range
       {
-      // Single range
+      cur = array[0];
 
-      cur   = array[0];
-      _end  = cur->end;
-      start = cur->start;
-
-      U_INTERNAL_DUMP("start = %u _end = %u", start, _end)
-
-      U_INTERNAL_ASSERT(start <= _end)
-      U_INTERNAL_ASSERT_RANGE(start,_end,size-1)
-
-      tmp.snprintf("Content-Range: bytes %u-%u/%u\r\n", start, _end, size);
-
-      size = _end - start + 1;
-
-      if (ext.empty() == false) (void) checkHTTPContentLength(ext, size);
-
-      (void) ext.insert(0, tmp);
-
-      U_INTERNAL_DUMP("ext = %.*S", U_STRING_TO_TRACE(ext))
+      setResponseForRange((start = cur->start), cur->end, size, 0, ext);
 
       U_RETURN(true);
       }
@@ -5362,6 +5367,7 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestForRange(uint32_t& start, uint32_t& s
    --------------------------
    */
 
+   UString tmp(100U);
    const char* ptr = tmp.data();
 
    tmp.snprintf("Content-Length: %u", size);
@@ -5499,10 +5505,9 @@ void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
    if (checkHTTPGetRequestIfModified(request) == false) return;
 
    UString mmap;
+   bool bdir, isSSL = false;
    int nResponseCode = HTTP_OK;
    uint32_t start = 0, size = 0;
-   const char* content_type = U_CTYPE_HTML;
-   bool bdir, isSSL = false, bcache = false;
 
    if (openFile() == false) goto end;
 
@@ -5535,6 +5540,8 @@ void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
 
          size = UClientImage_Base::body->size();
          }
+
+      (void) ext.append(getHeaderMimeType(U_CTYPE_HTML, size, 0));
       }
    else
       {
@@ -5545,8 +5552,6 @@ void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
          {
          if (isDataFromCache())
             {
-            bcache = true;
-
             bool data_expired = (u_now->tv_sec > file_data->expire);
 
             if (data_expired)
@@ -5561,12 +5566,14 @@ void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
             if (data_expired) file->open();
 
             u_mime_index = file_data->mime_index;
+
+            (void) ext.append(getDataFromCache(true, false));
             }
          else
             {
             (void) file->memmap(PROT_READ, UClientImage_Base::body);
 
-            content_type = file->getMimeType(false);
+            (void) ext.append(getHeaderMimeType(file->getMimeType(false), size, 0));
             }
 
          if (http_info.range_len &&
@@ -5586,43 +5593,45 @@ void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
 
             nResponseCode = HTTP_PARTIAL;
             }
+
+         // NB: check for Flash pseudo-streaming...
+
+         if (u_mime_index  == U_flv        &&
+             nResponseCode != HTTP_PARTIAL &&
+             U_HTTP_QUERY_STRNEQ("start="))
+            {
+            start = atol(http_info.query + U_CONSTANT_SIZE("start="));
+
+            U_SRV_LOG("request for flash pseudo-streaming: video = %.*S start = %u", U_FILE_TO_TRACE(*file), start);
+
+            if (start >= size) start = 0;
+            else
+               {
+               // build response...
+
+               nResponseCode = HTTP_PARTIAL;
+
+               setResponseForRange(start, size-1, size, U_CONSTANT_SIZE(U_FLV_HEAD), ext);
+
+               *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(nResponseCode, ext);
+
+               (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_FLV_HEAD));
+
+               goto next;
+               }
+            }
          }
       }
-
-   (void) ext.append(bcache ? getDataFromCache(true, false)
-                            : getHeaderMimeType(content_type, size, 0));
 
    // build response...
 
    *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(nResponseCode, ext);
 
+next: // NB: check if we need to send the body with writev()...
+
 #ifdef HAVE_SSL
    if (socket->isSSL()) isSSL = true;
 #endif
-
-   // NB: Flash pseudo-streaming...
-
-   if (u_mime_index  == U_flv        &&
-       nResponseCode != HTTP_PARTIAL &&
-       U_HTTP_QUERY_STRNEQ("start="))
-      {
-      U_INTERNAL_ASSERT(U_STRNEQ(content_type, "video/x-flv"))
-
-      start = atol(http_info.query + U_CONSTANT_SIZE("start="));
-
-      U_SRV_LOG("request for flash pseudo-streaming: video = %.*S start = %u", U_FILE_TO_TRACE(*file), start);
-
-      if (start >= size) start = 0;
-      else
-         {
-         size -= start;
-
-         (void) checkHTTPContentLength(*UClientImage_Base::wbuffer, U_CONSTANT_SIZE(U_FLV_HEAD) + size);
-         (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_FLV_HEAD));
-         }
-      }
-
-   // NB: check if we need to send the body with writev()...
 
    if (bdir                             ||
        isSSL                            ||
@@ -5633,8 +5642,7 @@ void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
          {
          UClientImage_Base::body->clear(); // NB: this make also the unmmap() of file...
          }
-      else if (start ||
-               nResponseCode == HTTP_PARTIAL)
+      else if (nResponseCode == HTTP_PARTIAL)
          {
          mmap                     = *UClientImage_Base::body;
          *UClientImage_Base::body = mmap.substr(start, size);
@@ -5676,11 +5684,7 @@ void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
       socket->setTcpCork(0U);
       }
 #ifdef DEBUG
-   else if (start ||
-            nResponseCode == HTTP_PARTIAL)
-      {
-      UClientImage_Base::body->clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-      }
+   else if (nResponseCode == HTTP_PARTIAL) UClientImage_Base::body->clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
 #endif
 
 end:

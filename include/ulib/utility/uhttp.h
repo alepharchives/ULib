@@ -973,6 +973,7 @@ private:
    static bool initUploadProgress(int byte_read) U_NO_EXPORT;
    static void updateUploadProgress(int byte_read) U_NO_EXPORT;
    static bool setCGIShellScript(UString& command) U_NO_EXPORT;
+
    static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;
    static bool processHTTPAuthorization(const UString& request) U_NO_EXPORT;
    static void _callRunDynamicPage(UStringRep* key, void* value) U_NO_EXPORT;
@@ -983,6 +984,7 @@ private:
    static void checkInotifyForCache(int wd, char* name, uint32_t len) U_NO_EXPORT;
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext) U_NO_EXPORT;
    static bool checkHTTPGetRequestForRange(uint32_t& start, uint32_t& size, UString& ext, const UString& data) U_NO_EXPORT;
+   static void setResponseForRange(uint32_t start, uint32_t end, uint32_t& size, uint32_t header, UString& ext) U_NO_EXPORT;
 
    UHTTP(const UHTTP&)            {}
    UHTTP& operator=(const UHTTP&) { return *this; }
