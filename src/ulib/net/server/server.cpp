@@ -1296,9 +1296,13 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
 
       if (isClassic()) U_EXIT(0);
 
-      ptr->UEventFd::fd = 0; // to reuse object...
-
       if (ptr->socket->isOpen()) ptr->socket->closesocket();
+
+      // NB: to reuse object...
+
+      ptr->UEventFd::fd = 0;
+
+      if (USocket::accept4_flags & SOCK_NONBLOCK) ptr->socket->flags |= O_NONBLOCK;
       }
 #ifdef DEBUG
    else
