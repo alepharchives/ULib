@@ -301,7 +301,12 @@ bool UClientImage_Base::newConnection()
 
       UServer_Base::log->write(iov, 1);
 
-      if (berror) U_RETURN(false);
+      if (berror)
+         {
+         U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, 0)
+
+         U_RETURN(false);
+         }
       }
 
    U_RETURN(true);
@@ -490,6 +495,10 @@ int UClientImage_Base::handlerWrite()
    int result = (USocketExt::write(socket, *wbuffer, *body, 3 * 1000) ? U_NOTIFIER_OK
                                                                       : U_NOTIFIER_DELETE);
 
+   last_response = u_now->tv_sec;
+
+   U_INTERNAL_DUMP("last_response = %ld", last_response)
+
    U_RETURN(result);
 }
 
@@ -511,6 +520,7 @@ const char* UClientImage_Base::dump(bool _reset) const
 {
    *UObjectIO::os << "bIPv6                              " << bIPv6              << '\n'
                   << "write_off                          " << write_off          << '\n'
+                  << "last_response                      " << last_response      << '\n'
                   << "body            (UString           " << (void*)body        << ")\n"
                   << "logbuf          (UString           " << (void*)logbuf      << ")\n"
                   << "rbuffer         (UString           " << (void*)rbuffer     << ")\n"

@@ -75,6 +75,7 @@ struct U_EXPORT UInterrupt {
       }
 
    static sig_atomic_t flag_wait_for_signal;
+   static bool exit_loop_wait_event_for_signal;
 
    static RETSIGTYPE handlerSignal(int signo);
 

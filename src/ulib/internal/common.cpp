@@ -68,6 +68,8 @@ void ULib_init()
       }
 
    (void) U_SYSCALL(atexit, "%p", (vPF)&WSACleanup);
+#else
+   U_INTERNAL_ASSERT_EQUALS(sizeof(off_t), SIZEOF_OFF_T)
 #endif
 
 #if defined(SOLARIS) && (defined(SPARC) || defined(sparc))
@@ -76,7 +78,6 @@ void ULib_init()
    asm("ta 6");
 #endif
 
-   U_INTERNAL_ASSERT_EQUALS(sizeof(off_t),      SIZEOF_OFF_T)
    U_INTERNAL_ASSERT_EQUALS(sizeof(UStringRep), U_SIZEOF_UStringRep)
 
    U_INTERNAL_DUMP("u_is_tty = %b UStringRep::string_rep_null = %p", u_is_tty, UStringRep::string_rep_null)

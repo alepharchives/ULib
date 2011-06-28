@@ -7,7 +7,7 @@
 start_msg vector
 
 #UTRACE="0 20M 1"
-#UOBJDUMP="-1 100k 10"
+#UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 

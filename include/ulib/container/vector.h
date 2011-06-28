@@ -35,13 +35,28 @@ public:
 
    // allocate and deallocate methods
 
-   void allocate(uint32_t size);
+   void allocate(uint32_t n)
+      {
+      U_TRACE(0, "UVector<void*>::allocate(%u)", n)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_MINOR(n, ((0xfffffff / sizeof(void*)) - sizeof(UVector<void*>)))
+
+      // NB: we need the check for UTree management...
+
+      if ((_capacity = n)) vec = U_MALLOC_VECTOR(n, void);
+      }
 
    void deallocate()
       {
       U_TRACE(0, "UVector<void*>::deallocate()")
 
       U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_MINOR(_capacity, ((0xfffffff / sizeof(void*)) - sizeof(UVector<void*>)))
+
+      // NB: we need the check for UTree management...
 
       if (_capacity) U_FREE_VECTOR(vec, _capacity, void);
       }
@@ -52,7 +67,13 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UVector<void*>, "%u", n)
 
-      _capacity = _length = 0;
+#  ifdef U_RING_BUFFER
+      head = tail = 0;
+
+      U_INTERNAL_DUMP("head = %u tail = %u", head, tail)
+#  endif
+
+      _length = 0;
 
       allocate(n);
       }
@@ -144,7 +165,6 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_length, 0)
       U_INTERNAL_ASSERT_RANGE(1,_length,_capacity)
 
       return vec[_length-1];
@@ -156,7 +176,6 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_length, 0)
       U_INTERNAL_ASSERT_RANGE(1,_length,_capacity)
 
       return vec[--_length];
@@ -196,40 +215,6 @@ public:
 
       _length = (_length - (last - first));
       }
-
-   // RING BUFFER
-
-#ifdef U_RING_BUFFER
-   void init()
-      {
-      U_TRACE(0, "UVector<void*>::init()")
-
-      _start = _end = 0;
-      }
-
-   uint32_t start() const
-      {
-      U_TRACE(0, "UVector<void*>::start()")
-
-      U_RETURN(_start);
-      }
-
-   uint32_t end() const
-      {
-      U_TRACE(0, "UVector<void*>::end()")
-
-      U_RETURN(_end);
-      }
-
-   void resize(uint32_t n)
-      {
-      U_TRACE(0, "UVector<void*>::resize(%u)", n)
-
-      if (_length == _capacity) _end = _length;
-
-      reserve(n);
-      }
-#endif
 
    // BINARY HEAP
 
@@ -312,6 +297,61 @@ public:
       U_SYSCALL_VOID(qsort, "%p,%u,%d,%p", (void*)vec, _length, sizeof(void*), compare_obj);
       }
 
+#ifdef U_RING_BUFFER
+   bool isEmptyRingBuffer()
+      {
+      U_TRACE(0, "UVector<void*>::isEmptyRingBuffer()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_DUMP("head = %u tail = %u", head, tail)
+
+      U_INTERNAL_ASSERT_MINOR(head, _capacity)
+      U_INTERNAL_ASSERT_MINOR(tail, _capacity)
+
+      if (head == tail) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   uint32_t sizeRingBuffer()
+      {
+      U_TRACE(0, "UVector<void*>::sizeRingBuffer()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_DUMP("head = %u tail = %u", head, tail)
+
+      U_INTERNAL_ASSERT_MINOR(head, _capacity)
+      U_INTERNAL_ASSERT_MINOR(tail, _capacity)
+
+      uint32_t sz = 0, i = head;
+
+      while (i != tail)
+         {
+         ++sz;
+
+         i = ((i+1) % _capacity);
+         }
+
+      U_RETURN(sz);
+      }
+
+   void callForAllEntryRingBuffer(bPFpv function)
+      {
+      U_TRACE(0, "UVector<void*>::callForAllEntryRingBuffer(%p)", function)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_DUMP("head = %u tail = %u", head, tail)
+
+      U_INTERNAL_ASSERT_MINOR(head, _capacity)
+      U_INTERNAL_ASSERT_MINOR(tail, _capacity)
+
+      for (uint32_t i = head; i != tail && function(vec[i]); i = ((i+1) % _capacity)) {}
+      }
+#endif
+
 #ifdef DEBUG
    const char* dump(bool reset) const;
 #endif
@@ -320,7 +360,8 @@ protected:
    void** vec;
    uint32_t _length, _capacity;
 #ifdef U_RING_BUFFER
-   uint32_t _start, _end;
+   volatile uint32_t tail; // input index
+   volatile uint32_t head; // output index
 #endif
 
 private:
@@ -480,67 +521,68 @@ public:
       _length = n;
       }
 
-   // RING BUFFER
-
 #ifdef U_RING_BUFFER
-   int put(T* elem) // queue an element at the end
+   bool put(T* elem) // queue an element at the end
       {
       U_TRACE(0, "UVector<T*>::put(%p)", elem)
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
-      U_INTERNAL_ASSERT(_length <= _capacity)
+      U_INTERNAL_DUMP("head = %u tail = %u", head, tail)
 
-      U_INTERNAL_DUMP("_end = %u", _end)
+      U_INTERNAL_ASSERT_MINOR(head, _capacity)
+      U_INTERNAL_ASSERT_MINOR(tail, _capacity)
 
-      u_construct<T>(elem);
+      // Producer only: updates tail index after writing
 
-      int result;
+      uint32_t nextTail = (tail + 1) % _capacity;
 
-      if (_length < _capacity)
+      // changes only the tail, but verifies that queue is not full (check of head)
+
+      U_INTERNAL_DUMP("nextTail = %u head = %u", nextTail, head)
+
+      if (nextTail != head)
          {
-         result = 0;
+         u_construct<T>(elem);
 
-         ++_length;
-         }
-      else
-         {
-         result = -1;
+         vec[tail] = elem;
 
-         u_destroy<T>((T*)vec[_end]);
+         tail = nextTail;
+
+         U_RETURN(true);
          }
 
-      vec[_end] = elem;
+      // queue was full
 
-      _end = (_end + 1) % _capacity;
-
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
-   T* get() // dequeue the element off the front
+   bool get(T*& elem) // dequeue the element off the front
       {
-      U_TRACE(0, "UVector<T*>::get()")
+      U_TRACE(0, "UVector<T*>::get(%p)", &elem)
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
-      U_INTERNAL_ASSERT(_length <= _capacity)
+      U_INTERNAL_DUMP("head = %u tail = %u", head, tail)
 
-      U_INTERNAL_DUMP("_start = %u", _start)
+      U_INTERNAL_ASSERT_MINOR(head, _capacity)
+      U_INTERNAL_ASSERT_MINOR(tail, _capacity)
 
-      if (_length)
-         {
-         --_length;
+      // changes only the head but verifies that the queue is not empty (check of tail)
 
-         T* elem = (T*) vec[_start];
+      if (head == tail) U_RETURN(false); // empty queue
 
-         _start = (_start + 1) % _capacity;
+      // Consumer only: updates head index after reading
 
-         U_RETURN_POINTER(elem,T);
-         }
+      uint32_t nextHead = (head + 1) % _capacity;
 
-      U_RETURN_POINTER(0,T);
+      U_INTERNAL_DUMP("nextHead = %u", nextHead)
+
+      elem = (T*) vec[head];
+
+      head = nextHead;
+
+      U_RETURN(true);
       }
 #endif
 
@@ -769,7 +811,10 @@ public:
 
    // Costruttori e distruttore
 
-   UVector(uint32_t n = 64U);
+   UVector(uint32_t n = 64U) : UVector<UStringRep*>(n)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%u", n)
+      }
 
    UVector(const UString& str, char delim)
       {
@@ -875,32 +920,28 @@ public:
       UVector<UStringRep*>::assign(n, str.rep);
       }
 
-   // RING BUFFER
-
 #ifdef U_RING_BUFFER
-   int put(const UString& str) // queue an element at the end
+   bool put(const UString& str) // queue an element at the end
       {
       U_TRACE(0, "UVector<UString>::put(%.*S)", U_STRING_TO_TRACE(str))
 
       return UVector<UStringRep*>::put(str.rep);
       }
 
-   UString get() // dequeue the element off the front
+   bool get(UString& str) // dequeue the element off the front
       {
-      U_TRACE(0, "UVector<UString>::get()")
+      U_TRACE(0, "UVector<UString>::get(%p)", &str)
 
-      UStringRep* rep = UVector<UStringRep*>::get();
+      UStringRep* rep;
 
-      if (rep)
+      if (UVector<UStringRep*>::get(rep))
          {
-         UString str(rep);
+         str.set(rep);
 
-         rep->release();
-
-         U_RETURN_STRING(str);
+         U_RETURN(true);
          }
 
-      U_RETURN_STRING(UString::getStringNull());
+      U_RETURN(false);
       }
 #endif
 

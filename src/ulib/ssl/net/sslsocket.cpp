@@ -510,7 +510,7 @@ loop:
          goto retry;
          }
 
-      pcNewConnection->USocket::closesocket();
+      pcNewConnection->USocket::_closesocket();
 
       pcNewConnection->iState    = -errno;
       pcNewConnection->iSockDesc = -1;

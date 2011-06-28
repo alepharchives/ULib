@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/file.h>
+#include <ulib/notifier.h>
 #include <ulib/net/tcpsocket.h>
 
 // VIRTUAL METHOD
@@ -28,11 +29,21 @@ void UTCPSocket::closesocket()
 
    U_INTERNAL_ASSERT(USocket::isOpen())
 
-   U_INTERNAL_DUMP("isBroken()  = %b", USocket::isBroken())
-   U_INTERNAL_DUMP("isTimeout() = %b", USocket::isTimeout())
+   U_INTERNAL_DUMP("isBroken()   = %b", USocket::isBroken())
+   U_INTERNAL_DUMP("isTimeout()  = %b", USocket::isTimeout())
+   U_INTERNAL_DUMP("isEpollErr() = %b", USocket::isEpollErr())
 
    if (USocket::isBroken())
       {
+#  ifdef HAVE_EPOLL_WAIT
+      if (USocket::isEpollErr())
+         {
+         U_INTERNAL_ASSERT_MAJOR(UNotifier::epollfd,0)
+
+         goto next;
+         }
+#  endif
+
       /*
       static struct linger l = { 1, 0 };
 
@@ -66,8 +77,19 @@ void UTCPSocket::closesocket()
          }
       }
 
+   // NB: to avoid epoll_wait() fire events on file descriptor without handler...
+
+#ifdef HAVE_EPOLL_WAIT
+   if (UNotifier::epollfd &&
+       UNotifier::find(iSockDesc))
+      {
+      (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", UNotifier::epollfd, EPOLL_CTL_DEL, iSockDesc, (struct epoll_event*)1);
+      }
+next:
+#endif
+
    // Now we know that our FIN is ACK-ed, then you can close the second half of the
    // socket by calling closesocket()
 
-   USocket::closesocket();
+   USocket::_closesocket();
 }

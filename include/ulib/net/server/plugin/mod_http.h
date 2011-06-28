@@ -70,9 +70,6 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UHttpPlugIn, "")
 
-      UEventFd::fd      = -1;
-      UEventFd::op_mask = U_READ_IN;
-
       if (str_URI_PROTECTED_MASK == 0) str_allocate();
       }
 

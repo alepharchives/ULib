@@ -532,8 +532,9 @@ public:
 protected:
    static UString* string_null;
 
-   friend class UValue;
-   friend class UStringExt;
+                      friend class UValue;
+                      friend class UStringExt;
+   template <class T> friend class UVector;
 
 public:
    // mutable

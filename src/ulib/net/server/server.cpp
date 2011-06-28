@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/command.h>
+#include <ulib/notifier.h>
 #include <ulib/file_config.h>
 #include <ulib/net/udpsocket.h>
 #include <ulib/utility/services.h>
@@ -77,14 +78,13 @@ int                        UServer_Base::iBackLog;
 int                        UServer_Base::timeoutMS = -1;
 int                        UServer_Base::cgi_timeout;
 int                        UServer_Base::verify_mode;
-int                        UServer_Base::num_connection;
-int                        UServer_Base::max_Keep_Alive;
 int                        UServer_Base::preforked_num_kids;
-int                        UServer_Base::start_index_reuse_object;
 bool                       UServer_Base::flag_loop;
 bool                       UServer_Base::flag_use_tcp_optimization;
 char                       UServer_Base::mod_name[20];
 ULog*                      UServer_Base::log;
+uint32_t                   UServer_Base::max_Keep_Alive;
+uint32_t                   UServer_Base::num_connection;
 uint32_t                   UServer_Base::shared_data_add;
 UString*                   UServer_Base::host;
 UString*                   UServer_Base::senvironment;
@@ -305,10 +305,9 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
 
    if (str_USE_IPV6 == 0) str_allocate();
 
-   port              = U_DEFAULT_PORT;
-   pthis             = this;
-   senvironment      = U_NEW(UString(U_CAPACITY));
-   UEventFd::op_mask = U_READ_IN;
+   port         = U_DEFAULT_PORT;
+   pthis        = this;
+   senvironment = U_NEW(UString(U_CAPACITY));
 
    u_init_hostname();
 
@@ -325,20 +324,6 @@ UServer_Base::~UServer_Base()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UServer_Base)
 
-   U_INTERNAL_DUMP("vClientImage = %p", vClientImage)
-
-   if (num_connection)
-      {
-      UClientImage_Base* ptr = vClientImage;
-
-      for (int i = 0; i < max_Keep_Alive; ++i, ++ptr)
-         {
-         U_INTERNAL_DUMP("vClientImage[%d].UEventFd::fd = %d", i, ptr->UEventFd::fd)
-
-         if (ptr->UEventFd::fd) UNotifier::erase(ptr);
-         }
-      }
-
    if (vplugin)
       {
       delete vplugin;
@@ -349,10 +334,17 @@ UServer_Base::~UServer_Base()
 #  endif
       }
 
-   if (isClassic() == false) delete[] vClientImage;
-
    UClientImage_Base::clear();
-           UNotifier::clear();
+
+   // NB: to avoid delete itself...
+
+   while (UNotifier::pthis->size()) (void) UNotifier::pthis->pop();
+
+   U_INTERNAL_ASSERT_EQUALS(UNotifier::pthis->UVector<void*>::find(pthis),U_NOT_FOUND)
+
+   UNotifier::clear();
+
+   if (vClientImage) delete[] vClientImage;
 
    U_INTERNAL_ASSERT_POINTER(senvironment)
 
@@ -512,16 +504,20 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    if (pid_file.empty() == false) (void) UFile::writeTo(pid_file, UString(u_pid_str, u_pid_str_len));
 
-   if (log_file.empty()) u_gettimeofday();
+   if (timeoutMS == -1 &&
+       log_file.empty())
+      {
+      u_gettimeofday();
+      }
    else
       {
-      // open log
-
 #  if defined(HAVE_PTHREAD_H)
       ((UTimeThread*)(u_pthread_time = U_NEW(UTimeThread)))->start();
 #  endif
 
-      openLog(log_file, cfg.readLong(*str_LOG_FILE_SZ));
+      // open log
+
+      if (log_file.empty() == false) openLog(log_file, cfg.readLong(*str_LOG_FILE_SZ));
       }
 
    // load plugin modules and call server-wide hooks handlerConfig()...
@@ -998,7 +994,8 @@ next:
 
    runAsUser();
 
-           UNotifier::init();
+   UNotifier::init(4);
+
    UClientImage_Base::init();
 
    // init plugin modules...
@@ -1014,15 +1011,18 @@ next:
    if (socket->isSSL() == false) USocket::accept4_flags |= SOCK_NONBLOCK;
 #endif
 
-   if (max_Keep_Alive <= 0) max_Keep_Alive = U_DEFAULT_MAX_KEEP_ALIVE;
+   if (max_Keep_Alive == 0) max_Keep_Alive = U_DEFAULT_MAX_KEEP_ALIVE;
 
-              preallocate(max_Keep_Alive     + 1);
-   UNotifier::preallocate(max_Keep_Alive + 3 + 1);
+   preallocate();
 
    USocket* csocket;
    UClientImage_Base* ptr = vClientImage;
-   UClientImage_Base* end = ptr + max_Keep_Alive + 1;
+   UClientImage_Base* end = vClientImage + max_Keep_Alive;
    UIPAddress* addr = (socket->isLocalSet() ? &(socket->cLocalAddress) : 0);
+
+#ifdef DEBUG
+   UTrace::suspend();
+#endif
 
    while (ptr < end)
       {
@@ -1031,12 +1031,16 @@ next:
                                                   csocket->flags |= O_CLOEXEC;
       if (USocket::accept4_flags & SOCK_NONBLOCK) csocket->flags |= O_NONBLOCK;
 
-      U_INTERNAL_DUMP("vClientImage[%d].socket->flags = %d %B", (ptr - vClientImage), csocket->flags, csocket->flags)
+   // U_INTERNAL_DUMP("vClientImage[%d].socket->flags = %d %B", (ptr - vClientImage), csocket->flags, csocket->flags)
 
       if (addr) csocket->cLocalAddress.set(*addr);
 
       ++ptr;
       }
+
+#ifdef DEBUG
+   UTrace::resume();
+#endif
 
    // NB: in the classic model we don't need to notify for request of connection
    // (loop: accept-fork) and the forked child don't accept new client, but we need
@@ -1044,14 +1048,12 @@ next:
 
    if (isClassic()) goto next1;
 
-#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (preforked_num_kids == -1) goto next1;
 #endif
 
                       UNotifier::insert(pthis);         // NB: we ask to notify for request of connection...
    if (handler_event) UNotifier::insert(handler_event); // NB: we ask to notify for change of file system (inotify)...
-
-   start_index_reuse_object = UNotifier::size();
 
    /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
     * a readability event because the connection might have been removed by an asynchronous network error or
@@ -1125,19 +1127,35 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 {
    U_TRACE(1, "UServer_Base::handlerRead()")
 
-   int index_reuse_object = start_index_reuse_object;
+   static uint32_t index;
 
-   UNotifier* item = UNotifier::getItem(index_reuse_object);
+   UClientImage_Base* ptr;
 
-   UClientImage_Base* ptr = vClientImage + index_reuse_object;
+   while (true)
+      {
+      ptr = vClientImage + index;
 
-   U_INTERNAL_DUMP("vClientImage[%d].UEventFd::fd = %d", index_reuse_object, ptr->UEventFd::fd)
+      U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd = %d", index, ptr->UEventFd::fd)
 
-   // NB: index_reuse_object can be major of num_connection (depend on the last deleted connection)...
+      index = (index + 1) % max_Keep_Alive;
 
-   U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::fd,0)
-   U_INTERNAL_ASSERT_EQUALS(item->handler_event_fd,0)
-   U_INTERNAL_ASSERT_RANGE(0, index_reuse_object, max_Keep_Alive)
+      if (ptr->UEventFd::fd == 0)
+         {
+         U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::next,0)
+
+         break;
+         }
+
+      // check for idle connection
+
+      if (timeoutMS != -1 &&
+          (ptr->last_response - u_now->tv_sec) >= getReqTimeout())
+         {
+         U_INTERNAL_DUMP("last_response - u_now = %ld", ptr->last_response - u_now->tv_sec)
+
+         (void) handlerTimeoutConnection(ptr);
+         }
+      }
 
    USocket* csocket = ptr->socket;
 
@@ -1156,18 +1174,19 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
          ULog::log("accept new client failed %#.*S\n", u_strlen(msg_error), msg_error);
          }
 
-      goto end;
+      U_RETURN(U_NOTIFIER_OK);
       }
 
    U_INTERNAL_ASSERT(csocket->isConnected())
 
    if (num_connection >= max_Keep_Alive)
       {
-      U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%u)", csocket->remoteIPAddress().getAddressString(), max_Keep_Alive);
+      U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%u)",
+                        csocket->remoteIPAddress().getAddressString(), max_Keep_Alive);
 
       csocket->close();
 
-      goto end;
+      U_RETURN(U_NOTIFIER_OK);
       }
 
    // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be supplied optionally after
@@ -1182,12 +1201,12 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 
       csocket->close();
 
-      goto end;
+      U_RETURN(U_NOTIFIER_OK);
       }
 
    ++num_connection;
 
-   U_INTERNAL_DUMP("num_connection = %d", num_connection)
+   U_INTERNAL_DUMP("num_connection = %u", num_connection)
 
    // -------------------------------------------------------------------------------------------------------------------------
    // PREFORK_CHILD number of child server processes created at startup: -1 - thread approach (experimental)
@@ -1217,23 +1236,24 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
             {
             --num_connection;
 
-            U_INTERNAL_DUMP("num_connection = %d", num_connection)
+            U_INTERNAL_DUMP("num_connection = %u", num_connection)
 
             if (isLog() && num_connection == 0) ULog::log("waiting for connection\n");
             }
 
-         goto end;
+
+         U_RETURN(U_NOTIFIER_OK);
          }
 
       if (proc->child() && isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
       }
 
-#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNotifier::pthread)
       {
-      if (ptr->newConnection()) item->handler_event_fd = ptr;
+      if (ptr->newConnection() == false) U_RETURN(U_NOTIFIER_OK);
 
-      goto end;
+      goto insert;
       }
 #endif
 
@@ -1241,11 +1261,15 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
    // (loop: accept-fork) and the forked child don't accept new client, but we need
    // event manager for the forked child to feel timeout for request of new client...
 
-   if (ptr->handlerRead() == U_NOTIFIER_DELETE) ptr->handlerDelete();
-   else                                         item->handler_event_fd = ptr;
+   if (ptr->handlerRead() == U_NOTIFIER_DELETE)
+      {
+      ptr->handlerDelete();
 
-end:
-   UNotifier::insert(item);
+      U_RETURN(U_NOTIFIER_OK);
+      }
+
+insert:
+   UNotifier::insert(ptr, false);
 
    U_RETURN(U_NOTIFIER_OK);
 }
@@ -1256,8 +1280,8 @@ const char* UServer_Base::getNumConnection()
 
    static char buffer[32];
 
-   if (isPreForked()) (void) snprintf(buffer, sizeof(buffer), "(%d/%d)", num_connection, U_TOT_CONNECTION);
-   else               (void) snprintf(buffer, sizeof(buffer),      "%d", num_connection);
+   if (isPreForked()) (void) snprintf(buffer, sizeof(buffer), "(%u/%d)", num_connection, U_TOT_CONNECTION);
+   else               (void) snprintf(buffer, sizeof(buffer),  "%u",     num_connection);
 
    U_RETURN(buffer);
 }
@@ -1268,7 +1292,7 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
 
    U_INTERNAL_ASSERT_POINTER(ptr)
 
-   U_INTERNAL_DUMP("num_connection = %d", num_connection)
+   U_INTERNAL_DUMP("num_connection = %u", num_connection)
 
    if (num_connection)
       {
@@ -1320,23 +1344,15 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
    U_INTERNAL_ASSERT_POINTER(cimg)
    U_INTERNAL_ASSERT_POINTER(pthis)
 
-   // NB: check to avoid to delete himself...
+   U_INTERNAL_DUMP("pthis = %p handler_event = %p ", pthis, handler_event)
 
-   if (cimg == pthis ||
-       cimg == handler_event)
-      {
-      U_INTERNAL_DUMP("cimg = %p pthis = %p handler_event = %p ", cimg, pthis, handler_event)
+   U_INTERNAL_ASSERT(cimg != pthis && cimg != handler_event)
 
-      U_RETURN(false);
-      }
+   pClientImage = (UClientImage_Base*)cimg;
 
-   ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
+   pClientImage->handlerError(USocket::TIMEOUT | USocket::BROKEN);
 
-   if (isLog())
-      {
-      ULog::log("client connected didn't send any request in %u secs (timeout), close connection %.*s",
-                  getReqTimeout(), U_STRING_TO_TRACE(*((UClientImage_Base*)cimg)->logbuf));
-      }
+   U_SRV_LOG_WITH_ADDR("client connected didn't send any request in %u secs (timeout), close connection", getReqTimeout());
 
    (void) pluginsHandlerReset(); // manage reset...
 
@@ -1353,7 +1369,7 @@ void UServer_Base::run()
 
    UInterrupt::syscall_restart = false;
 
-   UNotifier::exit_loop_wait_event_for_signal = flag_loop = true;
+   flag_loop = UInterrupt::exit_loop_wait_event_for_signal = true;
 
 #ifdef HAVE_LIBEVENT
    UInterrupt::setHandlerForSignal( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  //  sync signal
@@ -1369,10 +1385,6 @@ void UServer_Base::run()
    //                                                                     1 - classic, forking after accept client
    //                                                                    >1 - pool of process serialize plus monitoring process
    // -------------------------------------------------------------------------------------------------------------------------
-
-   U_INTERNAL_DUMP("vClientImage = %p", vClientImage)
-
-   U_INTERNAL_ASSERT_POINTER(vClientImage)
 
    if (isPreForked())
       {
@@ -1399,12 +1411,12 @@ void UServer_Base::run()
 
                U_SRV_LOG("started new child (pid %d), up to %u children", proc->pid(), nkids);
 
-               U_INTERNAL_DUMP("num_connection = %d tot_connection = %d", num_connection, U_TOT_CONNECTION)
+               U_INTERNAL_DUMP("num_connection = %u tot_connection = %d", num_connection, U_TOT_CONNECTION)
                }
 
             if (proc->child())
                {
-               U_INTERNAL_DUMP("num_connection = %d tot_connection = %d", num_connection, U_TOT_CONNECTION)
+               U_INTERNAL_DUMP("num_connection = %u tot_connection = %d", num_connection, U_TOT_CONNECTION)
 
                UNotifier::init();
 
@@ -1469,7 +1481,7 @@ void UServer_Base::run()
       {
       if (isLog()) ULog::log("waiting for connection\n");
 
-#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+#  if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
       if (preforked_num_kids == -1) (UNotifier::pthread = U_NEW(UClientThread))->start();
 #  endif
 
@@ -1482,7 +1494,7 @@ void UServer_Base::run()
             continue;
             }
 
-#if defined(HAVE_PTHREAD_H) && defined(DEBUG)
+#     if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
          if (UNotifier::pthread)
             {
             (void) pthis->handlerRead();

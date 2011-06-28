@@ -71,11 +71,11 @@ protected:
 
    // method VIRTUAL to redefine
 
-   virtual void preallocate(uint32_t n)
+   virtual void preallocate()
       {
-      U_TRACE(0+256, "URDBServer::preallocate(%u)", n)
+      U_TRACE(0, "URDBServer::preallocate()")
 
-      vClientImage = U_NEW_VEC(n, URDBClientImage);
+      vClientImage = U_NEW_VEC(max_Keep_Alive, URDBClientImage);
       }
 
 private:

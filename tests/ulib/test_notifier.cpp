@@ -451,13 +451,7 @@ int U_EXPORT main(int argc, char* argv[])
    if (argc > 2) UTimer::printInfo(cout);
 #endif
 
-#ifdef DEBUG
-   if (argc > 2) UNotifier::printInfo(cout);
-#endif
    UNotifier::clear();
-#ifdef DEBUG
-   if (argc > 2) UNotifier::printInfo(cout);
-#endif
 
 #ifdef __unix__
    U_ASSERT(UNotifier::waitForRead( fd_input,  1 * 1000) <= 0)

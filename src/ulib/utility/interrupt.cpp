@@ -80,15 +80,16 @@ const char* UInterrupt::BUS_errlist[] = {
    "BUS_OBJERR", "Object specific hardware error"  // BUS_OBJERR 3
 };
 
+bool              UInterrupt::syscall_restart;     // NB: notify to make certain system calls restartable across signals...
+bool              UInterrupt::exit_loop_wait_event_for_signal;
 sigset_t*         UInterrupt::mask_interrupt;
 sig_atomic_t      UInterrupt::flag_wait_for_signal;
+struct sigaction  UInterrupt::act;
+struct sigaction  UInterrupt::old[NSIG];
 
-bool              UInterrupt::syscall_restart;     // NB: notify to make certain system calls restartable across signals...
 int               UInterrupt::event_signal_pending;
 sig_atomic_t      UInterrupt::event_signal[NSIG];
 sighandler_t      UInterrupt::handler_signal[NSIG];
-struct sigaction  UInterrupt::act;
-struct sigaction  UInterrupt::old[NSIG];
 
 void UInterrupt::insert(int signo, sighandler_t handler)
 {

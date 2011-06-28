@@ -50,9 +50,9 @@ public: \
 ~server_class()                                             { U_TRACE_UNREGISTER_OBJECT(5, server_class) } \
 const char* dump(bool reset) const { return UServer<type_socket>::dump(reset); } \
 protected: \
-virtual void preallocate(uint32_t n) { \
-U_TRACE(5, #server_class "::preallocate(%u)", n) \
-vClientImage = U_NEW_VEC(n, client_class); } }
+virtual void preallocate() { \
+U_TRACE(5+256, #server_class "::preallocate()") \
+vClientImage = U_NEW_VEC(max_Keep_Alive, client_class); } }
 #else
 #  define U_MACROSERVER(server_class,client_class,type_socket) \
 class server_class : public UServer<type_socket> { \
@@ -60,7 +60,7 @@ public: \
  server_class(UFileConfig* cfg) : UServer<type_socket>(cfg) {} \
 ~server_class()                                             {} \
 protected: \
-virtual void preallocate(uint32_t n) { vClientImage = new client_class[n]; } }
+virtual void preallocate() { vClientImage = new client_class[max_Keep_Alive]; } }
 #endif
 // ---------------------------------------------------------------------------------------------
 
@@ -242,6 +242,7 @@ public:
    static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves
    static uint32_t shared_data_add;
    static shared_data* ptr_shared_data;
+   static UClientImage_Base* vClientImage;
    static UClientImage_Base* pClientImage;
 
    static bool isPreForked()
@@ -349,9 +350,7 @@ protected:
               iBackLog,       // max number of ready to be delivered connections to accept()
               timeoutMS,      // the time-out value in milliseconds for client request
               cgi_timeout,    // the time-out value in seconds for output cgi process
-              verify_mode,    // mode of verification ssl connection
-              max_Keep_Alive, // Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session
-              num_connection;
+              verify_mode;    // mode of verification ssl connection
 
    static UString* host;
    static UProcess* proc;
@@ -359,9 +358,8 @@ protected:
    static UEventTime* ptime;
    static UServer_Base* pthis;
    static UString* senvironment;
-   static int start_index_reuse_object;
    static UVector<UIPAllow*>* vallow_IP;
-   static UClientImage_Base* vClientImage;
+   static uint32_t num_connection, max_Keep_Alive;
    static bool flag_loop, flag_use_tcp_optimization;
 
    // COSTRUTTORI
@@ -398,7 +396,7 @@ protected:
 
       // there are idle connection... (timeout)
 
-      UNotifier::callForAllEntry(handlerTimeoutConnection);
+      UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
 
       // return value:
       // ---------------
@@ -438,7 +436,7 @@ protected:
       U_TRACE(0, "UServer_Base::handlerSignal()")
       }
 
-   virtual void preallocate(uint32_t n) = 0;
+   virtual void preallocate() = 0;
 
    // SERVICES
 
@@ -503,11 +501,11 @@ protected:
    Derived classes that have overridden UClientImage object may call this function to implement the creation logic
    */
 
-   virtual void preallocate(uint32_t n)
+   virtual void preallocate()
       {
-      U_TRACE(0+256, "UServer<Socket>::preallocate(%u)", n)
+      U_TRACE(0+256, "UServer<Socket>::preallocate()")
 
-      vClientImage = U_NEW_VEC(n, UClientImage<Socket>);
+      vClientImage = U_NEW_VEC(max_Keep_Alive, UClientImage<Socket>);
       }
 
 private:
@@ -600,11 +598,11 @@ protected:
    Derived classes that have overridden UClientImage object may call this function to implement the creation logic
    */
 
-   virtual void preallocate(uint32_t n)
+   virtual void preallocate()
       {
-      U_TRACE(0+256, "UServer<USSLSocket>::preallocate(%u)", n)
+      U_TRACE(0+256, "UServer<USSLSocket>::preallocate()")
 
-      vClientImage = U_NEW_VEC(n, UClientImage<USSLSocket>);
+      vClientImage = U_NEW_VEC(max_Keep_Alive, UClientImage<USSLSocket>);
       }
 
 private:

@@ -19,19 +19,6 @@
 #  include <ulib/replace/strstream.h>
 #endif
 
-void UVector<void*>::allocate(uint32_t _size)
-{
-   U_TRACE(0, "UVector<void*>::allocate(%u)", _size)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_MINOR(_size, (0xfffffff / sizeof(void*)))
-
-   _capacity = _size;
-
-   if (_size) vec = U_MALLOC_VECTOR(_size, void);
-}
-
 void UVector<void*>::push(void* elem) // add to end
 {
    U_TRACE(0, "UVector<void*>::push(%p)", elem)
@@ -136,11 +123,6 @@ void UVector<void*>::reserve(uint32_t n)
 }
 
 // specializzazione stringa
-
-UVector<UString>::UVector(uint32_t n) : UVector<UStringRep*>(n)
-{
-   U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%u", n)
-}
 
 UVector<UString>::UVector(const UString& x, const char* delim) : UVector<UStringRep*>(64)
 {
@@ -810,14 +792,14 @@ U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
 
 const char* UVector<void*>::dump(bool reset) const
 {
-                  /*
-                  << "_end      " << _end       << '\n'
-                  << "_start    " << _start     << '\n'
-                  */
-
    *UObjectIO::os << "vec       " << (void*)vec << '\n'
                   << "_length   " << _length    << '\n'
                   << "_capacity " << _capacity;
+
+                  /*
+                  << "tail      " << tail       << '\n'
+                  << "head      " << head       << '\n'
+                  */
 
    if (reset)
       {

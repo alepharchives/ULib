@@ -57,7 +57,6 @@
   40 sizeof(Url)
   40 sizeof(ULDAP)
   40 sizeof(UHashMap<UString>)
-  40 sizeof(UClientImage<UTCPSocket>)
   48 sizeof(UCURL)
   48 sizeof(UDialog)
   48 sizeof(UMimeHeader)
@@ -68,6 +67,7 @@
   48 sizeof(USOAPGenericMethod)
   56 sizeof(UOptions)
   56 sizeof(UPlugIn<void*>)
+  56 sizeof(UClientImage<UTCPSocket>)
   64 sizeof(UPCRE)
   64 sizeof(UCommand)
   64 sizeof(UApplication)
@@ -79,13 +79,13 @@
   88 sizeof(UIPAddress)
   88 sizeof(UMimeMultipartMsg)
   96 sizeof(UMimeMessage)
- 120 sizeof(UServer<UTCPSocket>)
- 128 sizeof(URDBServer)
+ 128 sizeof(UServer<UTCPSocket>)
  128 sizeof(USOAPParser)
  128 sizeof(UMimeMultipart)
 -------------------------
    U_STACK_TYPE_3
 
+ 136 sizeof(URDBServer)
  184 sizeof(ULog)
  184 sizeof(UFile)
  192 sizeof(URDBClient<UTCPSocket>)

@@ -45,14 +45,20 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
+   UEventFd* next;
    int fd, op_mask; // [ U_READ_IN | U_WRITE_OUT ]
 
    UEventFd()
       {
       U_TRACE_REGISTER_OBJECT(0, UEventFd, "")
 
+      // EPOLLET  is edge-triggered (alas SIGIO, when that descriptor transitions from not ready to ready, the kernel notifies you)
+      // --------------------------------------------------------------------------------------------------------------------------
+      // NB: we lose notification of event with this...
+   
+      next    = 0;
       fd      = 0;
-      op_mask = U_READ_IN | EPOLLET; // NB: edge-triggered (alas SIGIO, when that descriptor transitions from not ready to ready, the kernel notifies you)
+      op_mask = U_READ_IN;
 
 #  ifdef HAVE_LIBEVENT
       pevent = 0;

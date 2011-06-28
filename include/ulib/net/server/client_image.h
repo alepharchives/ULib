@@ -49,6 +49,7 @@ public:
 
    USocket* socket;
    UString* logbuf;
+   time_t last_response;
 
    // NB: we need that (not put on it in class UClientImage<USSLSocket>) otherwise there are problem with delete[]...
 
@@ -156,6 +157,8 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UClientImage, "")
 
       socket = U_NEW(Socket(UClientImage_Base::bIPv6));
+
+      U_INTERNAL_DUMP("UEventFd::fd = %d UEventFd::next = %p", UEventFd::fd, UEventFd::next)
       }
 
    virtual ~UClientImage()

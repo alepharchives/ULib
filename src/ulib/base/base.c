@@ -2016,7 +2016,9 @@ void u_printf(const char* format, ...)
 
    buffer[bytes_written++] = '\n';
 
-   if (u_flag_exit == -1) u_printError();
+#ifdef DEBUG
+   if (u_flag_exit < 0) u_printError();
+#endif
 
    (void) write(u_printf_fileno, buffer, bytes_written);
 
@@ -2035,7 +2037,7 @@ void u_printf(const char* format, ...)
 
       /* check if warning */
 
-      if (u_flag_exit == -2)
+      if (u_flag_exit == 2)
          {
          u_flag_exit = 0;
 
@@ -2043,7 +2045,7 @@ void u_printf(const char* format, ...)
          }
 
 #  ifdef DEBUG
-      if (u_flag_exit == -1)
+      if (u_flag_exit < 0)
          {
          if (u_flag_test > 0) /* check if to force continue - test */
             {
@@ -2073,7 +2075,7 @@ void u_printf(const char* format, ...)
 
       U_INTERNAL_PRINT("u_flag_exit = %d", u_flag_exit)
 
-      if (u_flag_exit == -1) abort(); /* some assertion false - core dumped... */
+      if (u_flag_exit == -2) abort(); /* some assertion false - core dumped... */
 
       exit(u_flag_exit);
       }

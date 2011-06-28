@@ -413,6 +413,8 @@ int UHttpPlugIn::handlerReset()
 
    if (UServer_Base::pClientImage->socket->isBroken())
       {
+      U_INTERNAL_ASSERT(UServer_Base::pClientImage->socket->isTimeout())
+
       U_http_is_connection_close = U_YES;
 
       UHTTP::setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);

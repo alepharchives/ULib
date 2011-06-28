@@ -14,7 +14,7 @@
 #ifndef ULIB_NOTIFIER_H
 #define ULIB_NOTIFIER_H
 
-#include <ulib/string.h>
+#include <ulib/container/vector.h>
 
 /* NB: to force use of select()
 #ifdef HAVE_EPOLL_WAIT
@@ -39,60 +39,46 @@
 #include <ulib/event/event_time.h>
 
 class UThread;
+class USocket;
+class UTCPSocket;
 class UServer_Base;
 class UClientImage_Base;
 
-// interface to select() and/or epoll()
+// interface to select() and epoll()
 
-class U_EXPORT UNotifier {
+class U_EXPORT UNotifier : public UVector<UEventFd*> {
 public:
-
-   // Check for memory error
-   U_MEMORY_TEST
-
-   // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
 
    // COSTRUTTORI
 
-   UNotifier()
+   UNotifier(uint32_t n) : UVector<UEventFd*>(n)
       {
       U_TRACE_REGISTER_OBJECT(0, UNotifier, "")
 
-      next             = 0;
-      handler_event_fd = 0;
+      U_INTERNAL_ASSERT_EQUALS(pthis,0)
       }
 
-   ~UNotifier();
+   ~UNotifier()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UNotifier)
+      }
 
    // SERVICES
+
+   static void clear();
+   static void init(uint32_t n = 64U);
+   static void erase( UEventFd* handler_event);
+   static void insert(UEventFd* handler_event, bool bstatic = true);
 
    static bool empty()
       {
       U_TRACE(0, "UNotifier::empty()")
 
-      bool esito = (first == 0);
+      U_INTERNAL_ASSERT_POINTER(pthis)
 
-      U_RETURN(esito);
-      }
+      if (first || pthis->_length) U_RETURN(false);
 
-   static void     init();
-   static void     clear();
-   static uint32_t size() __pure;
-   static void     erase( UEventFd* handler_event);
-   static void     insert(UEventFd* handler_event);
-
-   static bool isHandler(UEventFd* handler_event)
-      {
-      U_TRACE(0, "UNotifier::isHandler(%p)", handler_event)
-
-      for (UNotifier* item = first; item; item = item->next)
-         {
-         if (item->handler_event_fd == handler_event) U_RETURN(true);
-         }
-
-      U_RETURN(false);
+      U_RETURN(true);
       }
 
    // return false if there are no more events registered
@@ -110,73 +96,53 @@ public:
    static uint32_t  read(int fd,       char* buf, int count = U_SINGLE_READ, int timeoutMS = -1);
    static uint32_t write(int fd, const char* str, int count,                 int timeoutMS = -1);
 
-   // Call function for all entry
-
-   static void callForAllEntry(bPFpv function);
-
-   // STREAM
-
-   friend U_EXPORT ostream& operator<<(ostream& os, const UNotifier& n);
-
 #ifdef DEBUG
-   static void printInfo(ostream& os);
-
    const char* dump(bool reset) const;
 #endif
 
 protected:
-   UNotifier* next;
-   UEventFd* handler_event_fd;
+   static UEventFd* first;
+   static UNotifier* pthis;
 
-   static UNotifier* pool;
-   static uint32_t vpooln;
-   static UNotifier* vpool;
-   static UNotifier* first;
 #ifdef HAVE_PTHREAD_H
    static UThread* pthread;
 #endif
-   static bool exit_loop_wait_event_for_signal;
-
-   static UNotifier* getItem(int& start);
-   static void       insert(UNotifier* item);
-   static void       preallocate(uint32_t n);
-   static int        waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
 
 #ifdef USE_POLL
    static int waitForEvent(struct pollfd* ufds, int timeoutMS = -1);
 #endif
+   static int waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
 
 #ifdef HAVE_LIBEVENT
 #elif defined(HAVE_EPOLL_WAIT)
    static int epollfd;
    static struct epoll_event events[MAX_EVENTS];
+
+   static bool find(int fd) __pure;
 #else
    static int fd_set_max;
    static int fd_read_cnt, fd_write_cnt;
    static fd_set fd_set_read, fd_set_write;
 
-   // nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
-
-   static int  getNFDS();
-
-   // rimuove i descrittori di file diventati invalidi (possibile con EPIPE)
-
-   static void removeBadFd();
+   static int  getNFDS();     // nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
+   static void removeBadFd(); // rimuove i descrittori di file diventati invalidi (possibile con EPIPE)
 #endif
+
+   static void callForAllEntryDynamic(bPFpv function);
 
 private:
-   void outputEntry(ostream& os) const U_NO_EXPORT;
-
-   static void eraseItem(UNotifier** ptr) U_NO_EXPORT;
-   static void handlerDelete(UNotifier** ptr) U_NO_EXPORT;
+   static void eraseItem(    UEventFd** ptr, UEventFd* item) U_NO_EXPORT;
+   static void handlerDelete(UEventFd** ptr, UEventFd* item) U_NO_EXPORT;
 
 #ifndef HAVE_LIBEVENT
-   static bool handlerResult(int& n, UNotifier** ptr, bool bread, bool bwrite, bool bexcept) U_NO_EXPORT; 
+   static bool handlerResult(int& n, UEventFd** ptr, UEventFd* handler_event, bool bread, bool bwrite, bool bexcept) U_NO_EXPORT; 
 #endif
 
-   UNotifier(const UNotifier&)            {}
-   UNotifier& operator=(const UNotifier&) { return *this; }
+   UNotifier(const UNotifier&) : UVector<UEventFd*>() {}
+   UNotifier& operator=(const UNotifier&)             { return *this; }
 
+   friend class USocket;
+   friend class UTCPSocket;
    friend class UServer_Base;
    friend class UClientImage_Base;
 };

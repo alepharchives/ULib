@@ -118,24 +118,24 @@ public:
    static void str_allocate();
 
    enum State {
-      CLOSE   = 0x000,
-      TIMEOUT = 0x001,
-      BROKEN  = 0x002,
-      RESET   = 0x004,
-      CONNECT = 0x008,
-      LOGIN   = 0x010
+      CLOSE       = 0x000,
+      TIMEOUT     = 0x001,
+      BROKEN      = 0x002,
+      EPOLLERROR  = 0x004,
+      CONNECT     = 0x008,
+      LOGIN       = 0x010
    };
 
             USocket(bool bSocketIsIPv6 = false);
    virtual ~USocket();
 
    int  getFd() const       { return  iSockDesc; }
-   bool isOpen() const      { return (iSockDesc != -1); }
-   bool isReset() const     { return (iState == RESET); }
+   bool isOpen() const      { return (iSockDesc > 0); }
    bool isLogin() const     { return (iState == LOGIN); }
-   bool isClosed() const    { return (iSockDesc == -1); }
-   bool isBroken() const    { return ((iState & BROKEN)  != 0); }
-   bool isTimeout() const   { return ((iState & TIMEOUT) != 0); }
+   bool isClosed() const    { return (iSockDesc <= 0); }
+   bool isBroken() const    { return ((iState & BROKEN)     != 0); }
+   bool isTimeout() const   { return ((iState & TIMEOUT)    != 0); }
+   bool isEpollErr() const  { return ((iState & EPOLLERROR) != 0); }
    bool isSysError() const  { return (iState  < CLOSE); }
    bool isConnected() const { return (iState >= CONNECT); }
 
@@ -558,7 +558,7 @@ public:
 #undef closesocket
 #endif
 
-   virtual void closesocket();
+   virtual void closesocket() { _closesocket(); }
 
    virtual const char* getMsgError(char* buffer, uint32_t buffer_size);
 
@@ -627,6 +627,7 @@ protected:
 
    bool connect();
    void setRemote();
+   void _closesocket();
    bool bind(SocketAddress& cLocal);
    bool setServer(SocketAddress& cLocal, int iBackLog);
 

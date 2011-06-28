@@ -159,7 +159,7 @@ USocket::~USocket()
 
    U_INTERNAL_DUMP("iSockDesc = %d", iSockDesc)
 
-   if (isOpen()) USocket::closesocket();
+   if (isOpen()) USocket::_closesocket();
 }
 
 __pure int USocket::localPortNumber()
@@ -549,7 +549,7 @@ void USocket::checkErrno(int value)
    if (errno == EAGAIN) iState = TIMEOUT;
    else
       {
-      iState = (errno == ECONNRESET ? RESET : BROKEN);
+      iState = (errno == ECONNRESET ? EPOLLERROR : BROKEN);
 
       closesocket();
       }
@@ -665,33 +665,31 @@ bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count)
    U_RETURN(true);
 }
 
-// VIRTUAL METHOD
-
 #ifdef closesocket
 #undef closesocket
 #endif
 
-void USocket::closesocket()
+void USocket::_closesocket()
 {
-   U_TRACE(1, "USocket::closesocket()")
+   U_TRACE(1, "USocket::_closesocket()")
 
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT(isOpen())
 
-   // Then you can close the second half of the socket by calling closesocket()
-
 #ifdef __MINGW32__
    (void) U_SYSCALL(closesocket, "%d", (SOCKET)iSockDesc);
 #elif defined(DEBUG)
-   if (U_SYSCALL(close, "%d", iSockDesc)) U_ERROR_SYSCALL("closesocket");
+   if (U_SYSCALL(   close, "%d", iSockDesc)) U_ERROR_SYSCALL("closesocket");
 #else
    (void) U_SYSCALL(close, "%d", iSockDesc);
 #endif
 
-   iSockDesc   = -1;
+   iSockDesc   = 0;
    iRemotePort = 0;
 }
+
+// VIRTUAL METHOD
 
 const char* USocket::getMsgError(char* buffer, uint32_t buffer_size)
 {

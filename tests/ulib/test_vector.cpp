@@ -1,10 +1,9 @@
 // test_vector.cpp
 
-#include <ulib/file.h>
-#include <ulib/base/hash.h>
-
 #define U_RING_BUFFER
 #include <ulib/container/vector.h>
+#include <ulib/file.h>
+#include <ulib/base/hash.h>
 
 #ifdef HAVE_STRSTREAM_H
 #  include <strstream.h>
@@ -353,9 +352,9 @@ U_EXPORT main (int argc, char* argv[])
    tmp = y[3];
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("word with space") )
 
-   UString y1 = U_STRING_FROM_CONSTANT("  word \"word with space\"    ");
+   UString x = U_STRING_FROM_CONSTANT("  word \"word with space\"    ");
 
-   n = y.split(y1);
+   n = y.split(x);
    U_ASSERT( n == 2 )
    tmp = y[4];
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("word") )
@@ -400,85 +399,6 @@ U_EXPORT main (int argc, char* argv[])
    cout << y;
 
    y.clear();
-   res = y.empty();
-   U_ASSERT( res == true )
-
-   y.deallocate();
-   y.allocate(5);
-   y.init();
-
-   // RING BUFFER
-
-   n = y.put(U_STRING_FROM_CONSTANT("riga 0"));
-   U_ASSERT( n ==  0 )
-   n = y.put(U_STRING_FROM_CONSTANT("riga 1"));
-   U_ASSERT( n ==  0 )
-   n = y.put(U_STRING_FROM_CONSTANT("riga 2"));
-   U_ASSERT( n ==  0 )
-   n = y.put(U_STRING_FROM_CONSTANT("riga 3"));
-   U_ASSERT( n ==  0 )
-   n = y.put(U_STRING_FROM_CONSTANT("riga 4"));
-   U_ASSERT( n ==  0 )
-   n = y.put(U_STRING_FROM_CONSTANT("riga 5"));
-   U_ASSERT( n == unsigned(-1) )
-   n = y.put(U_STRING_FROM_CONSTANT("riga 6"));
-   U_ASSERT( n == unsigned(-1) )
-   n = y.put(U_STRING_FROM_CONSTANT("riga 7"));
-   U_ASSERT( n == unsigned(-1) )
-
-   y.sort();
-
-   tmp = y.get();
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 3") )
-   tmp = y.get();
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 4") )
-   tmp = y.get();
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 5") )
-   tmp = y.get();
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 6") )
-   tmp = y.get();
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 7") )
-   tmp = y.get();
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("") )
-
-   y.init();
-
-   n = y.put(U_STRING_FROM_CONSTANT("riga 0"));
-   U_ASSERT( n ==  0 )
-   n = y.put(U_STRING_FROM_CONSTANT("riga 1"));
-   U_ASSERT( n ==  0 )
-   n = y.put(U_STRING_FROM_CONSTANT("riga 2"));
-   U_ASSERT( n ==  0 )
-   n = y.put(U_STRING_FROM_CONSTANT("riga 3"));
-   U_ASSERT( n ==  0 )
-   n = y.put(U_STRING_FROM_CONSTANT("riga 4"));
-   U_ASSERT( n ==  0 )
-   n = y.put(U_STRING_FROM_CONSTANT("riga 5"));
-   U_ASSERT( n == unsigned(-1) )
-
-   y.resize(10);
-
-   tmp = y.get();
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 5") )
-
-   n = y.put(U_STRING_FROM_CONSTANT("riga 6"));
-   U_ASSERT( n ==  0 )
-   n = y.put(U_STRING_FROM_CONSTANT("riga 7"));
-   U_ASSERT( n ==  0 )
-
-   tmp = y.get();
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 1") )
-   tmp = y.get();
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 2") )
-   tmp = y.get();
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 3") )
-   tmp = y.get();
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 4") )
-   tmp = y.get();
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 6") )
-   tmp = y.get();
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 7") )
-
    res = y.empty();
    U_ASSERT( res == true )
 
@@ -553,4 +473,46 @@ U_EXPORT main (int argc, char* argv[])
 
    res = y.empty();
    U_ASSERT( res == true )
+
+   // RING BUFFER
+
+   UVector<UString> y1(5);
+
+   tmp = U_STRING_FROM_CONSTANT("riga 1");
+   y1.put(tmp);
+   tmp = U_STRING_FROM_CONSTANT("riga 2");
+   y1.put(tmp);
+   tmp = U_STRING_FROM_CONSTANT("riga 3");
+   y1.put(tmp);
+   tmp = U_STRING_FROM_CONSTANT("riga 4");
+   y1.put(tmp);
+
+   U_ASSERT( y1.put(U_STRING_FROM_CONSTANT("riga 5")) == false )
+   U_ASSERT( y1.put(U_STRING_FROM_CONSTANT("riga 6")) == false )
+   U_ASSERT( y1.put(U_STRING_FROM_CONSTANT("riga 7")) == false )
+
+   y1.get(tmp);
+   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 1") )
+   y1.get(tmp);
+   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 2") )
+   y1.get(tmp);
+   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 3") )
+   y1.get(tmp);
+   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 4") )
+   U_ASSERT( y1.get(tmp) == false )
+
+   U_ASSERT( y1.put(U_STRING_FROM_CONSTANT("riga 1")) )
+   U_ASSERT( y1.put(U_STRING_FROM_CONSTANT("riga 2")) )
+   y1.get(tmp);
+   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 1") )
+   y1.get(tmp);
+   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 2") )
+
+   U_ASSERT( y1.put(U_STRING_FROM_CONSTANT("riga 3")) )
+   U_ASSERT( y1.put(U_STRING_FROM_CONSTANT("riga 4")) )
+   y1.get(tmp);
+   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 3") )
+   y1.get(tmp);
+   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 4") )
+   U_ASSERT( y1.get(tmp) == false )
 }
