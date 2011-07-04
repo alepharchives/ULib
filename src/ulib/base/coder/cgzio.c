@@ -184,7 +184,7 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
       return 0;
       }
 
-   if (memcmp(input, U_CONSTANT_TO_PARAM(GZIP_MAGIC)) == 0)
+   if (U_MEMCMP(input, GZIP_MAGIC) == 0)
       {
       int header_size;
       const char* restrict ptr = input + U_CONSTANT_SIZE(GZIP_MAGIC);

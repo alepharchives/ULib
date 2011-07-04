@@ -215,6 +215,7 @@ enum AffermationType { U_MAYBE = 0, U_YES = 1, U_NOT = 2 };
 #define U_png  'p' /* image/png */
 #define U_jpg  'J' /* image/jpg */
 #define U_ssi  's' /* SSI */
+#define U_gz   'z' /* gzip */
 
 #define U_CTYPE_HTML "text/html"
 #define U_CTYPE_ICO  "image/x-icon"

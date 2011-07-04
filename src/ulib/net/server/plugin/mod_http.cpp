@@ -30,6 +30,7 @@ const UString* UHttpPlugIn::str_LIMIT_REQUEST_BODY;
 const UString* UHttpPlugIn::str_REQUEST_READ_TIMEOUT;
 const UString* UHttpPlugIn::str_ENABLE_INOTIFY;
 const UString* UHttpPlugIn::str_ENABLE_CACHING_BY_PROXY_SERVERS;
+const UString* UHttpPlugIn::str_TELNET_ENABLE;
 
 void UHttpPlugIn::str_allocate()
 {
@@ -43,6 +44,7 @@ void UHttpPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_REQUEST_READ_TIMEOUT,0)
    U_INTERNAL_ASSERT_EQUALS(str_ENABLE_INOTIFY,0)
    U_INTERNAL_ASSERT_EQUALS(str_ENABLE_CACHING_BY_PROXY_SERVERS,0)
+   U_INTERNAL_ASSERT_EQUALS(str_TELNET_ENABLE,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("CACHE_FILE_MASK") },
@@ -52,7 +54,8 @@ void UHttpPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("LIMIT_REQUEST_BODY") },
       { U_STRINGREP_FROM_CONSTANT("REQUEST_READ_TIMEOUT") },
       { U_STRINGREP_FROM_CONSTANT("ENABLE_INOTIFY") },
-      { U_STRINGREP_FROM_CONSTANT("ENABLE_CACHING_BY_PROXY_SERVERS") }
+      { U_STRINGREP_FROM_CONSTANT("ENABLE_CACHING_BY_PROXY_SERVERS") },
+      { U_STRINGREP_FROM_CONSTANT("TELNET_ENABLE") }
    };
 
    U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,                   U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -63,6 +66,7 @@ void UHttpPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_REQUEST_READ_TIMEOUT,              U_STRING_FROM_STRINGREP_STORAGE(5));
    U_NEW_ULIB_OBJECT(str_ENABLE_INOTIFY,                    U_STRING_FROM_STRINGREP_STORAGE(6));
    U_NEW_ULIB_OBJECT(str_ENABLE_CACHING_BY_PROXY_SERVERS,   U_STRING_FROM_STRINGREP_STORAGE(7));
+   U_NEW_ULIB_OBJECT(str_TELNET_ENABLE,                     U_STRING_FROM_STRINGREP_STORAGE(8));
 }
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -94,6 +98,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // REWRITE_RULE_NF              vector of URI rewrite rule applied after checks that files do not exist (regex1 -> uri1 ...)
    //
    // ENABLE_INOTIFY               enable automatic update of document root image with inotify
+   // TELNET_ENABLE                accept fragmentation of header request (as happen with telnet)
    // CACHE_FILE_MASK              mask (DOS regexp) of pathfile that be cached in memory
    //
    // VIRTUAL_HOST                 flag to activate practice of maintaining more than one server on one machine,
@@ -140,6 +145,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       uri_protected_allowed_ip = cfg[*str_URI_PROTECTED_ALLOWED_IP];
 
       UHTTP::virtual_host                    = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
+      UHTTP::telnet_enable                   = cfg.readBoolean(*str_TELNET_ENABLE);
       UHTTP::limit_request_body              = cfg.readLong(*str_LIMIT_REQUEST_BODY, UString::max_size() - 4096);
       UHTTP::request_read_timeout            = cfg.readLong(*str_REQUEST_READ_TIMEOUT);
       UHTTP::digest_authentication           = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
@@ -200,29 +206,6 @@ int UHttpPlugIn::handlerREAD()
 
    if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket))
       {
-      // manage dynamic page request (ULib Servlet Page)
-
-      if (UHTTP::isUSPRequest())
-         {
-         UHTTP::processUSPRequest(U_HTTP_URI_TO_PARAM);
-
-         UHTTP::setHTTPRequestProcessed();
-
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-         }
-
-      // manage virtual host
-
-      if (UHTTP::virtual_host &&
-          UHTTP::http_info.host_vlen)
-         {
-         // Host: hostname[:port]
-
-         UHTTP::alias->setBuffer(1 + UHTTP::http_info.host_vlen + UHTTP::http_info.uri_len);
-
-         UHTTP::alias->snprintf("/%.*s%.*s", U_HTTP_VHOST_TO_TRACE, U_HTTP_URI_TO_TRACE);
-         }
-
       // manage alias uri
 
       if (UHTTP::ssi_alias ||
@@ -297,23 +280,22 @@ next:
 
    if (UClientImage_Base::wbuffer->empty())
       {
-      // HTTP/1.1 compliance: Sends 411 for missing Content-Length on POST requests
-      //                      Sends 400 for broken Request-Line
-      //                      Sends 501 for request-method != (GET|POST|HEAD)
-      //                      Sends 505 for protocol != HTTP/1.[0-1]
+      // HTTP/1.1 compliance:
+      // -----------------------------------------------------
+      // Sends 501 for request-method != (GET|POST|HEAD)
+      // Sends 505 for protocol != HTTP/1.[0-1]
+      // Sends 400 for broken Request-Line
+      // Sends 411 for missing Content-Length on POST requests
 
-      int nResponseCode = HTTP_NOT_IMPLEMENTED;
+      int nResponseCode;
 
-      if (U_http_method_type)
+           if (U_http_method_type == 0)                             nResponseCode = HTTP_NOT_IMPLEMENTED;
+      else if (U_http_version     == 0 && UHTTP::http_info.uri_len) nResponseCode = HTTP_VERSION;
+      else
          {
-         if (UHTTP::http_info.uri_len == 0)
-            {
-            UHTTP::setHTTPBadRequest();
+         UHTTP::setHTTPBadRequest();
 
-            goto send_response;
-            }
-
-         if (UHTTP::http_info.szHeader == 0) nResponseCode = HTTP_VERSION;
+         goto send_response;
          }
 
       UHTTP::setHTTPResponse(nResponseCode, 0, 0);
@@ -394,7 +376,7 @@ int UHttpPlugIn::handlerReset()
       U_INTERNAL_ASSERT_EQUALS(UHTTP::usp_pages->empty(),false)
       U_INTERNAL_ASSERT_POINTER(UHTTP::usp_page->runDynamicPage)
 
-      UHTTP::usp_page->runDynamicPage((UClientImage_Base*)-1); // call reset for module...
+      (void) UHTTP::usp_page->runDynamicPage((UClientImage_Base*)-1); // call reset for module...
 
       UHTTP::usp_page = 0;
       }
@@ -407,21 +389,6 @@ int UHttpPlugIn::handlerReset()
       {
       UHTTP::alias->clear();
       UHTTP::request_uri->clear();
-      }
-
-   // check if timeout
-
-   if (UServer_Base::pClientImage->socket->isBroken())
-      {
-      U_INTERNAL_ASSERT(UServer_Base::pClientImage->socket->isTimeout())
-
-      U_http_is_connection_close = U_YES;
-
-      UHTTP::setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
-
-      (void) UServer_Base::pClientImage->handlerWrite();
-
-      U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

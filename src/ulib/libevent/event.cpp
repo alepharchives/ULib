@@ -51,8 +51,6 @@ const char* UEvent_Base::dump(bool reset) const
    *UObjectIO::os << "ev_base          " << (void*)ev_base             << '\n'
                   << "ev_fd            " << ev_fd                      << '\n'
                   << "ev_events        " << ev_events                  << '\n'
-                  << "ev_ncalls        " << ev_ncalls                  << '\n'
-                  << "ev_pncalls       " << (void*)ev_pncalls          << '\n'
 
                   << "ev_timeout       " << "{ " << ev_timeout.tv_sec  << ' '
                                          <<         ev_timeout.tv_usec << " }"

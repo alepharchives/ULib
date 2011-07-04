@@ -965,9 +965,7 @@ UString UStringExt::gunzip(const UString& s, uint32_t sz) // .gz uncompress
 
    UString r(sz);
 
-#ifdef HAVE_LIBZ
-   // decompress with zlib
-
+#ifdef HAVE_LIBZ // decompress with zlib
    r.rep->_length = u_gz_inflate(s.rep->str, s.rep->_length, r.rep->data());
 
    U_INTERNAL_DUMP("u_gz_inflate() = %d", r.rep->_length)

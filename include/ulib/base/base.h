@@ -49,6 +49,7 @@ typedef void  (*vPF)     (void);
 typedef void  (*vPFi)    (int);
 typedef void* (*pvPF)    (void);
 typedef void  (*vPFpv)   (void*);
+typedef int   (*iPFpv)   (void*);
 typedef void  (*vPFpvpv) (void*,void*);
 typedef bool  (*bPF)     (void);
 typedef bool  (*bPFi)    (int);

@@ -35,7 +35,7 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	if test -z "$enable_coverage" ; then
 		enable_coverage="no"
 	elif test "$enable_coverage" = "yes" ; then
-      CXXFLAGS="${CXXFLAGS} -fprofile-arcs -ftest-coverage"
+      CPPFLAGS="${CPPFLAGS} -fprofile-arcs -ftest-coverage"
 	fi
 	AC_MSG_RESULT([$enable_coverage])
 

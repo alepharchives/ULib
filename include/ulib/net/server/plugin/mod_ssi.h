@@ -73,8 +73,7 @@ public:
    static const UString* str_encoding_none;
    static const UString* str_encoding_url;
    static const UString* str_encoding_entity;
-   static const UString* str_usp;
-   static const UString* str_csp;
+   static const UString* str_servlet;
 
    static void str_allocate();
 

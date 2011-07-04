@@ -57,6 +57,7 @@
 int         UHTTP::inotify_wd;
 char        UHTTP::cgi_dir[U_PATH_MAX];
 bool        UHTTP::virtual_host;
+bool        UHTTP::telnet_enable;
 bool        UHTTP::digest_authentication;
 bool        UHTTP::enable_caching_by_proxy_servers;
 void*       UHTTP::argument;
@@ -428,7 +429,7 @@ void UHTTP::initUSP()
                continue;
                }
 
-            usp_page->runDynamicPage = (vPFpv) (*usp_page)["runDynamicPage"];
+            usp_page->runDynamicPage = (iPFpv) (*usp_page)["runDynamicPage"];
 
             U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
 
@@ -1322,6 +1323,8 @@ bool UHTTP::findEndHeader(const UString& buffer)
 {
    U_TRACE(0, "UHTTP::findEndHeader(%.*S)", U_STRING_TO_TRACE(buffer))
 
+   U_INTERNAL_DUMP("startHeader = %u", http_info.startHeader)
+
    const char* ptr = buffer.c_pointer(http_info.startHeader);
 
    http_info.endHeader = u_findEndHeader(ptr, buffer.remain(ptr));
@@ -1349,15 +1352,48 @@ bool UHTTP::readHTTPHeader(USocket* s, UString& buffer)
    U_INTERNAL_ASSERT_EQUALS(http_info.endHeader,0)
    U_INTERNAL_ASSERT_EQUALS(http_info.startHeader,0)
 
-start:
-   U_INTERNAL_DUMP("startHeader = %u", http_info.startHeader)
+   uint32_t count = 0;
+   const char* rpointer1 = 0;
+   const char* rpointer2 = 0;
 
-   if (buffer.size() <= http_info.startHeader &&
-       USocketExt::read(s, buffer, U_SINGLE_READ, UServer_Base::timeoutMS) == false)
+   if (buffer.empty())
       {
-      U_RETURN(false);
+      // NB: it is possible a resize of the buffer string...
+read:
+      if (telnet_enable) rpointer1 = buffer.data();
+
+      if (USocketExt::read(s, buffer, U_SINGLE_READ, UServer_Base::timeoutMS) == false)
+         {
+         if (s->isTimeout())
+            {
+            U_http_is_connection_close = U_YES;
+
+            setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
+            }
+
+         U_RETURN(false);
+         }
+
+      if (telnet_enable)
+         {
+         rpointer2 = buffer.data();
+
+         if (rpointer1 != rpointer2)
+            {
+            ptrdiff_t diff = (rpointer2 - rpointer1);
+
+                                     http_info.method += diff;
+                                     http_info.uri    += diff;
+            if (http_info.query_len) http_info.query  += diff;
+
+            U_INTERNAL_DUMP("method = %.*S", U_HTTP_METHOD_TO_TRACE)
+            U_INTERNAL_DUMP("uri    = %.*S", U_HTTP_URI_TO_TRACE)
+            U_INTERNAL_DUMP("query  = %.*S", U_HTTP_QUERY_TO_TRACE)
+            }
+         }
       }
 
+start:
    if (U_http_method_type == 0)
       {
       // NB: http_info.startHeader is needed for loop...
@@ -1400,31 +1436,47 @@ start:
          U_http_method_type      = 0;
          http_info.nResponseCode = 0;
 
-         goto start;
+         if (buffer.size() <= http_info.startHeader) goto read;
+                                                     goto start;
          }
       }
 
    // NB: endHeader comprende anche la blank line...
 
-   if (buffer.isEndHeader(http_info.startHeader))
-      {
-      if (U_http_version == '1')
-         {
-         // HTTP 1.1 want header "Host: ..."
-
-         setHTTPBadRequest();
-
-         U_RETURN(false);
-         }
-
-      http_info.endHeader = http_info.startHeader + (u_line_terminator_len * 2);
-      }
+   if (buffer.isEndHeader(http_info.startHeader)) http_info.endHeader = http_info.startHeader + (u_line_terminator_len * 2);
    else
       {
-      http_info.startHeader += u_line_terminator_len;
-      http_info.szHeader     = buffer.size() - http_info.startHeader;
+      if (telnet_enable)
+         {
+         if (findEndHeader(buffer) == false)
+            {
+            http_info.endHeader = 0;
 
-      U_INTERNAL_DUMP("szHeader = %u startHeader(%u) = %.*S", http_info.szHeader, http_info.startHeader, 20, buffer.c_pointer(http_info.startHeader))
+            // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
+
+            U_INTERNAL_DUMP("slow loris count = %u", count)
+
+            if (++count > 10)
+               {
+               U_http_is_connection_close = U_YES;
+
+               setHTTPResponse(HTTP_PRECON_FAILED, 0, 0);
+
+               U_RETURN(false);
+               }
+
+            goto read;
+            }
+
+         http_info.startHeader += u_line_terminator_len;
+         }
+      else
+         {
+         http_info.startHeader += u_line_terminator_len;
+         http_info.szHeader     = buffer.size() - http_info.startHeader;
+
+         U_INTERNAL_DUMP("szHeader = %u startHeader(%u) = %.*S", http_info.szHeader, http_info.startHeader, 20, buffer.c_pointer(http_info.startHeader))
+         }
       }
 
    U_RETURN(true);
@@ -1455,6 +1507,8 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
             {
             // HTTP/1.1 compliance: no missing Content-Length on POST requests
 
+            U_http_is_connection_close = U_YES;
+
             setHTTPResponse(HTTP_LENGTH_REQUIRED, 0, 0);
 
             U_RETURN(false);
@@ -1472,7 +1526,9 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
 
             if (++count > 10)
                {
-               setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
+               U_http_is_connection_close = U_YES;
+
+               setHTTPResponse(HTTP_PRECON_FAILED, 0, 0);
 
                U_RETURN(false);
                }
@@ -1542,7 +1598,12 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
       if (count == U_NOT_FOUND)
          {
          if (s->isOpen()) setHTTPBadRequest();
-         else             setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
+         else
+            {
+            U_http_is_connection_close = U_YES;
+
+            setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
+            }
 
          U_RETURN(false);
          }
@@ -1602,6 +1663,8 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
       {
       if (isHTTPRequestTooLarge())
          {
+         U_http_is_connection_close = U_YES;
+
          setHTTPResponse(HTTP_ENTITY_TOO_LARGE, 0, 0);
 
          U_RETURN(false);
@@ -1652,8 +1715,13 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
 
       if (USocketExt::read(s, *pstr, http_info.clength - body_byte_read, timeoutMS, request_read_timeout) == false)
          {
-         if (s->isOpen()) setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
-         else             UClientImage_Base::write_off = true;
+         if (s->isOpen() == false) UClientImage_Base::write_off = true;
+         else
+            {
+            U_http_is_connection_close = U_YES;
+
+            setHTTPResponse(HTTP_CLIENT_TIMEOUT, 0, 0);
+            }
 
          U_RETURN(false);
          }
@@ -1677,7 +1745,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 {
    U_TRACE(0, "UHTTP::checkHTTPRequestForHeader(%.*S)", U_STRING_TO_TRACE(request))
 
-   U_INTERNAL_ASSERT_EQUALS(http_info.endHeader,0)
+   U_INTERNAL_ASSERT_MAJOR(http_info.szHeader,0)
 
    // --------------------------------
    // check in header request for:
@@ -1719,13 +1787,15 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
       0,   0,   0,   0,   0,   0,   0,   0  // 'x',    'y',    'z',    '{',    '|',    '}',    '~',    '\177'
    };
 
+   bool result;
    const char* p;
    const char* p1;
    const char* p2;
    const char* p3;
    unsigned char c, c1;
    const char* ptr = request.data();
-   uint32_t pos1, pos2, n, char_r = (u_line_terminator_len == 2), end = request.size();
+   uint32_t pos1, pos2, n, char_r = (u_line_terminator_len == 2),
+            end = (http_info.endHeader ? (result = true, http_info.endHeader - u_line_terminator_len) : (result = false, request.size()));
 
    for (pos1 = pos2 = http_info.startHeader; pos1 < end; pos1 = pos2 + 1)
       {
@@ -1761,7 +1831,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
          do { ++pos1; } while (u_isspace(ptr[pos1]));
 
-         if (pos1 >= end) goto end; // NB: we can have too much advanced...
+         if (pos1 >= end) U_RETURN(false); // NB: we can have too much advanced...
 
          pos2 = pos1;
 
@@ -1916,6 +1986,8 @@ next:
    // U_INTERNAL_DUMP("pos2 = %.*S", 20, request.c_pointer(pos2))
 
 check_for_end_header:
+      if (http_info.endHeader) continue;
+
       c = (p1 = (ptr + pos2))[1];
 
       U_INTERNAL_DUMP("c = %C", c)
@@ -1953,8 +2025,7 @@ check_for_end_header:
          }
       }
 
-end:
-   U_RETURN(false);
+   U_RETURN(result);
 }
 
 // inlining failed in call to ...: call is unlikely and code size would grow
@@ -1972,78 +2043,87 @@ bool UHTTP::readHTTPRequest(USocket* socket)
 
    if (http_info.method) resetHTTPInfo();
 
-   if (readHTTPHeader(socket,     *UClientImage_Base::request) == false ||
-       (http_info.endHeader                                    == 0     &&
-        checkHTTPRequestForHeader(*UClientImage_Base::request) == false))
+   if (readHTTPHeader(socket, *UClientImage_Base::request) &&
+       (http_info.szHeader == 0 || checkHTTPRequestForHeader(*UClientImage_Base::request)))
       {
-      U_RETURN(false);
-      }
+      bool result = true, request_resize = false;
 
-   bool result = true, request_resize = false;
+      U_INTERNAL_DUMP("http_info.clength = %u", http_info.clength)
 
-   U_INTERNAL_DUMP("http_info.clength = %u", http_info.clength)
+      UClientImage_Base::size_request = http_info.endHeader;
 
-   UClientImage_Base::size_request = http_info.endHeader;
+      if (http_info.clength || isHttpPOST())
+         {
+         // NB: it is possible a resize of the request string...
 
-   if (http_info.clength || isHttpPOST())
-      {
-      // NB: it is possible a resize of the request string...
+         const char* rpointer1 = UClientImage_Base::request->data();
 
-      const char* rpointer1 = UClientImage_Base::request->data();
+         result = readHTTPBody(socket, UClientImage_Base::request, *UClientImage_Base::body);
 
-      result = readHTTPBody(socket, UClientImage_Base::request, *UClientImage_Base::body);
+         if (result)
+            {
+            const char* rpointer2 = UClientImage_Base::request->data();
+
+            if (rpointer1 != rpointer2)
+               {
+               request_resize = true;
+
+               ptrdiff_t diff = (rpointer2 - rpointer1);
+
+                                               http_info.method       += diff;
+                                               http_info.uri          += diff;
+               if (http_info.host_len)         http_info.host         += diff;
+               if (http_info.query_len)        http_info.query        += diff;
+               if (http_info.range_len)        http_info.range        += diff;
+               if (http_info.content_type_len) http_info.content_type += diff;
+
+               U_INTERNAL_DUMP("method = %.*S", U_HTTP_METHOD_TO_TRACE)
+               U_INTERNAL_DUMP("uri    = %.*S", U_HTTP_URI_TO_TRACE)
+               U_INTERNAL_DUMP("host   = %.*S", U_HTTP_HOST_TO_TRACE)
+               U_INTERNAL_DUMP("vhost  = %.*S", U_HTTP_VHOST_TO_TRACE)
+               U_INTERNAL_DUMP("query  = %.*S", U_HTTP_QUERY_TO_TRACE)
+               U_INTERNAL_DUMP("range  = %.*S", U_HTTP_RANGE_TO_TRACE)
+               U_INTERNAL_DUMP("ctype  = %.*S", U_HTTP_CTYPE_TO_TRACE)
+               }
+
+            UClientImage_Base::size_request += http_info.clength;
+            }
+         }
+
+      UClientImage_Base::manageRequestSize(request_resize);
 
       if (result)
          {
-         const char* rpointer2 = UClientImage_Base::request->data();
-
-         if (rpointer1 != rpointer2)
+         if (U_http_version == '1')
             {
-            request_resize = true;
+            // HTTP 1.1 want header "Host: " ...
 
-            ptrdiff_t diff = (rpointer2 - rpointer1);
+            if (http_info.host_len == 0)
+               {
+               setHTTPBadRequest();
 
-                                            http_info.method       += diff;
-                                            http_info.uri          += diff;
-            if (http_info.host_len)         http_info.host         += diff;
-            if (http_info.query_len)        http_info.query        += diff;
-            if (http_info.range_len)        http_info.range        += diff;
-            if (http_info.content_type_len) http_info.content_type += diff;
+               U_RETURN(false);
+               }
 
-            U_INTERNAL_DUMP("method = %.*S", U_HTTP_METHOD_TO_TRACE)
-            U_INTERNAL_DUMP("uri    = %.*S", U_HTTP_URI_TO_TRACE)
-            U_INTERNAL_DUMP("host   = %.*S", U_HTTP_HOST_TO_TRACE)
-            U_INTERNAL_DUMP("vhost  = %.*S", U_HTTP_VHOST_TO_TRACE)
-            U_INTERNAL_DUMP("query  = %.*S", U_HTTP_QUERY_TO_TRACE)
-            U_INTERNAL_DUMP("range  = %.*S", U_HTTP_RANGE_TO_TRACE)
-            U_INTERNAL_DUMP("ctype  = %.*S", U_HTTP_CTYPE_TO_TRACE)
+            // ... and "Date: " 
+
+            if (u_pthread_time == 0) u_gettimeofday();
             }
 
-         UClientImage_Base::size_request += http_info.clength;
-         }
-      }
+         // manage virtual host
 
-   UClientImage_Base::manageRequestSize(request_resize);
-
-   if (result)
-      {
-      if (U_http_version == '1')
-         {
-         // HTTP 1.1 want header "Host: " ...
-
-         if (http_info.host_len == 0)
+         if (virtual_host &&
+             http_info.host_vlen)
             {
-            setHTTPBadRequest();
+            // Host: hostname[:port]
 
-            U_RETURN(false);
+            alias->setBuffer(1 + http_info.host_vlen + http_info.uri_len);
+
+            alias->snprintf("/%.*s%.*s", U_HTTP_VHOST_TO_TRACE, U_HTTP_URI_TO_TRACE);
             }
 
-         // ... and "Date: " 
-
-         if (u_pthread_time == 0) u_gettimeofday();
+         U_RETURN(true);
          }
-
-      U_RETURN(true);
       }
 
    U_RETURN(false);
@@ -2369,13 +2449,14 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
 
    UString buffer(4000U);
 
-   buffer.snprintf("<html><head><title></title></head>"
-                   "<body><h1>Index of directory: %.*s</h1><hr>"
-                     "<table><tr>"
-                       "<td><a href=\"/%.*s/..\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/menu.png\"> Up one level</a></td>"
-                       "<td></td>"
-                       "<td></td>"
-                     "</tr>", U_FILE_TO_TRACE(*file), U_FILE_TO_TRACE(*file));
+   buffer.snprintf(
+      "<html><head><title></title></head>"
+      "<body><h1>Index of directory: %.*s</h1><hr>"
+      "<table><tr>"
+      "<td><a href=\"/%.*s/..\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/menu.png\"> Up one level</a></td>"
+      "<td></td>"
+      "<td></td>"
+      "</tr>", U_FILE_TO_TRACE(*file), U_FILE_TO_TRACE(*file));
 
    U_INTERNAL_ASSERT(file->pathname.isNullTerminated())
 
@@ -3609,7 +3690,8 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
         if (file_data->size >= U_MIN_SIZE_FOR_SENDFILE) motivation = " (size exceeded)";  // NB: for major size it is better to use sendfile()
 // else if (file_data->size <= U_MIN_SIZE_FOR_DEFLATE)  motivation = " (size too small)";
 #ifdef HAVE_LIBZ
-   else if (u_mime_index != U_ssi)
+   else if (u_mime_index != U_ssi &&
+            u_mime_index != U_gz)
       {
       content  = UStringExt::deflate(content);
       deflated = true;
@@ -3680,7 +3762,24 @@ void UHTTP::checkFileForCache()
       return;
       }
 
-   putDataInCache(getHeaderMimeType(file->getMimeType(true), 0, U_TIME_FOR_EXPIRE), content);
+   bool add_encoding        = false;
+   const char* content_type = file->getMimeType(true);
+
+   if (U_STRNEQ(content_type, "application/x-gzip"))
+      {
+      content_type = file->getMimeType(false);
+
+      U_INTERNAL_ASSERT_DIFFERS(U_STRNEQ(content_type, "application/x-gzip"), true)
+
+      add_encoding = true;
+      u_mime_index = U_gz;
+      }
+
+   UString header = getHeaderMimeType(content_type, 0, U_TIME_FOR_EXPIRE);
+
+   if (add_encoding) (void) header.insert(0, U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
+
+   putDataInCache(header, content);
 }
 
 bool UHTTP::isFileInCache()
@@ -3951,183 +4050,170 @@ bool UHTTP::checkForCGIRequest()
    U_RETURN(result);
 }
 
-// USP (ULib Servlet Page)
-
-void UHTTP::processUSPRequest(const char* uri, uint32_t uri_len)
+// manage dynamic page request (C/ULib Servlet Page)
+ 
+bool UHTTP::checkHTTPServletRequest(const char* uri, uint32_t uri_len)
 {
-   U_TRACE(0, "UHTTP::processUSPRequest(%.*S,%u)", uri_len, uri, uri_len)
+   U_TRACE(0, "UHTTP::checkHTTPServletRequest(%.*S,%u)", uri_len, uri, uri_len)
 
-   // 5 => U_CONSTANT_SIZE("/usp/")
+   U_INTERNAL_ASSERT(isHTTPRequest())
 
-   U_INTERNAL_ASSERT_POINTER(usp_pages)
+#ifndef HAVE_LIBTCC
+   if (usp_pages == 0)                   U_RETURN(false);
+#else
+   if (usp_pages == 0 && csp_pages == 0) U_RETURN(false);
+#endif
+
+   // NB: we can have something like '/www.sito1.com/usp/jsonrequest.usp'...
+
+   if (virtual_host &&
+       http_info.host_vlen)
+      {
+      U_INTERNAL_ASSERT_EQUALS(strncmp(uri+1, http_info.host, http_info.host_vlen), 0)
+
+      uri     += 1 + http_info.host_vlen;
+      uri_len -= 1 + http_info.host_vlen;
+      }
+
+   if ( uri[0] != '/'  ||
+       (uri[1] != 'u'  &&
+        uri[1] != 'c') ||
+        uri[2] != 's'  ||
+        uri[3] != 'p'  ||
+        uri[4] != '/')
+      {
+      U_RETURN(false);
+      }
+
+   char c = uri[1];
+
+   if ((c == 'u' && (usp_pages == 0 || u_endsWith(uri, uri_len, U_CONSTANT_TO_PARAM(".usp")) == false)) ||
+       (c == 'c' && (csp_pages == 0)))
+      {
+      U_RETURN(false);
+      }
+
+   uint32_t n;
+   int nResponseCode;
+
+   // 5 => U_CONSTANT_SIZE("/?sp/")
+
    U_INTERNAL_ASSERT_MAJOR(uri_len, 5)
-   U_INTERNAL_ASSERT(U_STRNEQ(uri, "/usp/"))
-   U_INTERNAL_ASSERT_EQUALS(usp_pages->empty(), false)
 
    pkey->str     = uri     + 5;
    pkey->_length = uri_len - 5;
 
    U_INTERNAL_DUMP("pkey = %.*S", U_STRING_TO_TRACE(*pkey))
 
-   usp_page = (*usp_pages)[pkey];
-
-   if (usp_page == 0)
+   if (c == 'u')
       {
-      U_SRV_LOG("USP request %.*S NOT available...", U_HTTP_URI_TO_TRACE);
+      U_INTERNAL_ASSERT_POINTER(usp_pages)
+      U_INTERNAL_ASSERT_EQUALS(usp_pages->empty(), false)
+      U_INTERNAL_ASSERT(u_dosmatch(uri, uri_len, U_CONSTANT_TO_PARAM("/usp/*.usp"), 0))
 
-      setHTTPServiceUnavailable(); // set Service Unavailable error response...
+      usp_page = (*usp_pages)[pkey];
+
+      if (usp_page == 0) goto error;
       }
    else
+      {
+      U_INTERNAL_ASSERT_POINTER(csp_pages)
+      U_INTERNAL_ASSERT_EQUALS(csp_pages->empty(), false)
+      U_INTERNAL_ASSERT(u_dosmatch(uri, uri_len, U_CONSTANT_TO_PARAM("/csp/*"), 0))
+
+      csp_page = (*csp_pages)[pkey];
+
+      if (csp_page == 0) goto error;
+      }
+
+   // retrieve information on specific HTML form elements
+   // (such as checkboxes, radio buttons, and text fields), or uploaded files
+
+   n = processHTTPForm();
+
+   if (c == 'u')
       {
       U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
 
-      // retrieve information on specific HTML form elements
-      // (such as checkboxes, radio buttons, and text fields), or uploaded files
-
-      uint32_t n = processHTTPForm();
-
       UClientImage_Base::wbuffer->setBuffer(U_CAPACITY);
 
-      usp_page->runDynamicPage(UServer_Base::pClientImage);
-
-      if (n) resetForm(true);
-
-      (void) processCGIOutput();
-      }
-}
-
-// CSP (ULib Servlet Page)
-
-void UHTTP::processCSPRequest(const char* uri, uint32_t uri_len)
-{
-   U_TRACE(0, "UHTTP::processCSPRequest(%.*S,%u)", uri_len, uri, uri_len)
-
-   // 5 => U_CONSTANT_SIZE("/csp/")
-
-   U_INTERNAL_ASSERT_POINTER(csp_pages)
-   U_INTERNAL_ASSERT_MAJOR(uri_len, 5)
-   U_INTERNAL_ASSERT(U_STRNEQ(uri, "/csp/"))
-   U_INTERNAL_ASSERT_EQUALS(csp_pages->empty(), false)
-
-   pkey->str     = uri     + 5;
-   pkey->_length = uri_len - 5;
-
-   U_INTERNAL_DUMP("pkey = %.*S", U_STRING_TO_TRACE(*pkey))
-
-   csp_page = (*csp_pages)[pkey];
-
-   if (csp_page == 0)
-      {
-      U_SRV_LOG("CSP request %.*S NOT available...", U_HTTP_URI_TO_TRACE);
-
-      UHTTP::setHTTPServiceUnavailable(); // set Service Unavailable error response...
+      nResponseCode = usp_page->runDynamicPage(UServer_Base::pClientImage);
       }
    else
       {
-      U_INTERNAL_ASSERT_POINTER(csp_page->prog_main)
-
-      // retrieve information on specific HTML form elements
-      // (such as checkboxes, radio buttons, and text fields), or uploaded files
-
-      uint32_t i, n = processHTTPForm();
-
+      uint32_t i;
       const char** argv = U_MALLOC_VECTOR(n+1, const char);
+
+      U_INTERNAL_ASSERT_POINTER(csp_page->prog_main)
 
       for (i = 0; i < n; ++i) argv[i] = (*form_name_value)[i].c_str();
                               argv[i] = 0;
 
       UClientImage_Base::wbuffer->setBuffer(U_CSP_REPLY_CAPACITY);
 
-      int ret = csp_page->prog_main(n, argv);
+      nResponseCode = csp_page->prog_main(n, argv);
 
       UClientImage_Base::wbuffer->size_adjust();
 
       U_FREE_VECTOR(argv, n+1, const char);
-
-      if (n) resetForm(true);
-
-      if (ret == 0) (void) processCGIOutput();
-      else
-         {
-         http_info.clength = UClientImage_Base::wbuffer->size();
-
-         setHTTPCgiResponse(ret, false, false, false);
-         }
       }
+
+   if (n) resetForm(true);
+
+   U_INTERNAL_DUMP("nResponseCode = %d", nResponseCode)
+
+   if (nResponseCode == 0) (void) processCGIOutput();
+   else
+      {
+      http_info.clength = UClientImage_Base::wbuffer->size();
+
+      setHTTPCgiResponse(nResponseCode, false, false, false);
+      }
+
+   goto end;
+
+error:
+   U_SRV_LOG("Servlet request %.*S NOT available...", U_HTTP_URI_TO_TRACE);
+
+   UHTTP::setHTTPServiceUnavailable(); // set Service Unavailable error response...
+
+end:
+   U_RETURN(true);
+}
+
+bool UHTTP::checkHTTPOptionsRequest()
+{
+   U_TRACE(0, "UHTTP::checkHTTPOptionsRequest()")
+
+   if (U_http_method_type == HTTP_OPTIONS)
+      {
+      setHTTPResponse(HTTP_OPTIONS_RESPONSE, 0, 0);
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 void UHTTP::checkHTTPRequest()
 {
    U_TRACE(0, "UHTTP::checkHTTPRequest()")
 
-   // ...process the HTTP message
-
    U_ASSERT(isHTTPRequestNotFound())
    U_INTERNAL_ASSERT(isHTTPRequest())
    U_ASSERT_DIFFERS(UClientImage_Base::request->empty(), true)
 
+   if (checkHTTPServletRequest(U_HTTP_URI_TO_PARAM) || // manage dynamic page request (C/ULib Servlet Page)
+       checkHTTPOptionsRequest())
+      {
+      setHTTPRequestProcessed();
+
+      return;
+      }
+
+   // ...process the HTTP message
+
    U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
-
-   if (isHttpOPTIONS())
-      {
-      setHTTPRequestProcessed();
-
-      setHTTPResponse(HTTP_OPTIONS_RESPONSE, 0, 0);
-
-      return;  
-      }
-
-   // check if dynamic page (ULib Servlet Page)
-
-   if (isUSPRequest())
-      {
-      // NB: we can have something like '/www.sito1.com/usp/jsonrequest.usp'...
-
-      const char* uri  = http_info.uri; 
-      uint32_t uri_len = http_info.uri_len;
-
-      if (virtual_host &&
-          http_info.host_vlen)
-         {
-         U_INTERNAL_ASSERT_EQUALS(strncmp(uri+1, http_info.host, http_info.host_vlen), 0)
-
-         uri     += 1 + http_info.host_vlen;
-         uri_len -= 1 + http_info.host_vlen;
-         }
-
-      processUSPRequest(uri, uri_len);
-
-      setHTTPRequestProcessed();
-
-      return;
-      }
-
-   // check if dynamic page (C Servlet Page)
-
-#ifdef HAVE_LIBTCC
-   if (isCSPRequest())
-      {
-      // NB: we can have something like '/www.sito1.com/usp/jsonrequest.usp'...
-
-      const char* uri  = http_info.uri; 
-      uint32_t uri_len = http_info.uri_len;
-
-      if (virtual_host &&
-          http_info.host_vlen)
-         {
-         U_INTERNAL_ASSERT_EQUALS(strncmp(uri+1, http_info.host, http_info.host_vlen), 0)
-
-         uri     += 1 + http_info.host_vlen;
-         uri_len -= 1 + http_info.host_vlen;
-         }
-
-      processCSPRequest(uri, uri_len);
-
-      setHTTPRequestProcessed();
-
-      return;
-      }
-#endif
 
    pathname->setBuffer(u_cwd_len + http_info.uri_len);
 
@@ -4215,7 +4301,7 @@ U_NO_EXPORT void UHTTP::_callRunDynamicPage(UStringRep* key, void* value)
    // -2 -> destroy
    // ------------------------------
 
-   _page->runDynamicPage(argument);
+   (void) _page->runDynamicPage(argument);
 }
 
 void UHTTP::callRunDynamicPage(int arg)

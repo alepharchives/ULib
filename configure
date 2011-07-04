@@ -19304,7 +19304,8 @@ fi
 	if test -z "$enable_profiling" ; then
 		enable_profiling="no"
 	elif test "$enable_profiling" = "yes" ; then
-		CXXFLAGS="${CXXFLAGS} -pg"
+		LDFLAGS="${LDFLAGS} -pg"
+		CPPFLAGS="${CPPFLAGS} -pg"
 	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_profiling" >&5
 $as_echo "$enable_profiling" >&6; }
@@ -20798,7 +20799,7 @@ fi
 	if test -z "$enable_coverage" ; then
 		enable_coverage="no"
 	elif test "$enable_coverage" = "yes" ; then
-      CXXFLAGS="${CXXFLAGS} -fprofile-arcs -ftest-coverage"
+      CPPFLAGS="${CPPFLAGS} -fprofile-arcs -ftest-coverage"
 	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_coverage" >&5
 $as_echo "$enable_coverage" >&6; }

@@ -2562,6 +2562,7 @@ static struct mimeentry mimetab_a[] = {
    MIME_ENTRY( "asx",  "video/x-ms-asf" ),
    MIME_ENTRY( "atom", "application/atom+xml" ),
    MIME_ENTRY( "avi",  "video/x-msvideo" ),
+   MIME_ENTRY( "appcache", "text/cache-manifest" ),
 
    /*
    MIME_ENTRY( "aif",  "audio/x-aiff" ), (aifc, aiff)
@@ -2600,6 +2601,7 @@ static struct mimeentry mimetab_c[] = {
    MIME_ENTRY( "css", "text/css" ), /* U_css */
    MIME_ENTRY( "crt", "application/x-x509-ca-cert" ),
    MIME_ENTRY( "cer", "application/x-x509-ca-cert" ),
+   MIME_ENTRY( "crx", "application/x-chrome-extension crx" ),
 
    /*
    MIME_ENTRY( "c++",     "text/x-c++src" ),
@@ -2650,6 +2652,7 @@ static struct mimeentry mimetab_d[] = {
 
 static struct mimeentry mimetab_e[] = {
    MIME_ENTRY( "eps", "application/postscript" ),
+   MIME_ENTRY( "eot", "application/vnd.ms-fontobject" ),
 
    /*
    MIME_ENTRY( "etx", "text/x-setext" ),
@@ -2668,12 +2671,17 @@ static struct mimeentry mimetab_f[] = {
 static struct mimeentry mimetab_g[] = {
    MIME_ENTRY( "gif",  "image/gif" ),  /* U_gif */
    MIME_ENTRY( "gtar", "application/x-gtar" ),
+
+   /*
    MIME_ENTRY( "gz",   "application/x-gzip" ),
+   */
+
    { 0, 0, 0 }
 };
 
 static struct mimeentry mimetab_h[] = {
    MIME_ENTRY( "htm", U_CTYPE_HTML ),  /* (html) U_html */
+   MIME_ENTRY( "htc", "text/x-component" ),
 
    /*
    MIME_ENTRY( "hdf", "application/x-hdf" ),
@@ -2722,6 +2730,7 @@ static struct mimeentry mimetab_m[] = {
    MIME_ENTRY( "mp",   "video/mpeg" ), /* (mp2, mp3, mpg, mpe, mpeg, mpga) */
    MIME_ENTRY( "md5",  "text/plain" ),
    MIME_ENTRY( "mov",  "video/quicktime" ),
+   MIME_ENTRY( "manifest", "text/cache-manifest" ),
 
    /*
    MIME_ENTRY( "m3u",  "audio/x-mpegurl" ),
@@ -2746,7 +2755,9 @@ static struct mimeentry mimetab_n[] = {
 */
 
 static struct mimeentry mimetab_o[] = {
-   MIME_ENTRY( "ogg", "application/ogg" ),
+   MIME_ENTRY( "ogv", "video/ogg" ),
+   MIME_ENTRY( "og",  "audio/ogg" ), /* (oga, ogg) */
+   MIME_ENTRY( "otf", "font/opentype" ),
 
    /*
    MIME_ENTRY( "oda",  "application/oda" ),
@@ -2805,9 +2816,10 @@ static struct mimeentry mimetab_r[] = {
 
 static struct mimeentry mimetab_s[] = {
    MIME_ENTRY( "shtm", U_CTYPE_HTML ), /* (shtml) U_ssi */
-   MIME_ENTRY( "svg", "image/svg+xml" ),
+   MIME_ENTRY( "svg", "image/svg+xml" ), /* (svg, svgz) */
    MIME_ENTRY( "swf", "application/x-shockwave-flash" ),
    MIME_ENTRY( "sgm", "text/sgml" ), /* (sgml) */
+   MIME_ENTRY( "safariextz", "application/octet-stream" ),
 
    /*
    MIME_ENTRY( "sh",      "application/x-sh" ),
@@ -2833,6 +2845,7 @@ static struct mimeentry mimetab_t[] = {
    MIME_ENTRY( "text", "text/plain" ),
    MIME_ENTRY( "txt",  "text/plain" ),
    MIME_ENTRY( "tgz",  "application/x-tar-gz" ),
+   MIME_ENTRY( "ttf",  "font/truetype" ),
 
    /*
    MIME_ENTRY( "texi",     "application/x-texinfo" ), (texinfo)
@@ -2863,6 +2876,9 @@ static struct mimeentry mimetab_v[] = {
 static struct mimeentry mimetab_w[] = {
    MIME_ENTRY( "wav", "audio/x-wav" ),
    MIME_ENTRY( "wmv", "video/x-ms-wmv" ),
+   MIME_ENTRY( "webm", "video/webm" ),
+   MIME_ENTRY( "woff", "application/x-font-woff" ),
+   MIME_ENTRY( "webp", "image/webp" ),
 
    /*
    MIME_ENTRY( "wbmp",  "image/vnd.wap.wbmp" ),
@@ -2882,6 +2898,7 @@ static struct mimeentry mimetab_x[] = {
    MIME_ENTRY( "xsl", "text/xml" ),
    MIME_ENTRY( "xpm", "image/x-xpixmap" ),
    MIME_ENTRY( "xbm", "image/x-xbitmap" ),
+   MIME_ENTRY( "xpi", "application/x-xpinstall" ),
 
    /*
    MIME_ENTRY( "xyz", "chemical/x-pdb" ),

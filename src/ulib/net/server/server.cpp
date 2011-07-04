@@ -1048,7 +1048,7 @@ next:
 
    if (isClassic()) goto next1;
 
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
    if (preforked_num_kids == -1) goto next1;
 #endif
 
@@ -1117,9 +1117,9 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       {
 #  ifdef HAVE_LIBEVENT
       (void) UDispatcher::exit(0);
-#  endif
-
+#  else
       UInterrupt::erase(SIGTERM); // async signal
+#  endif
       }
 }
 
@@ -1248,7 +1248,7 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
       if (proc->child() && isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
       }
 
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
    if (UNotifier::pthread)
       {
       if (ptr->newConnection() == false) U_RETURN(U_NOTIFIER_OK);
@@ -1268,7 +1268,9 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
       U_RETURN(U_NOTIFIER_OK);
       }
 
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
 insert:
+#endif
    UNotifier::insert(ptr, false);
 
    U_RETURN(U_NOTIFIER_OK);
@@ -1348,9 +1350,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 
    U_INTERNAL_ASSERT(cimg != pthis && cimg != handler_event)
 
-   pClientImage = (UClientImage_Base*)cimg;
-
-   pClientImage->handlerError(USocket::TIMEOUT | USocket::BROKEN);
+   ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
 
    U_SRV_LOG_WITH_ADDR("client connected didn't send any request in %u secs (timeout), close connection", getReqTimeout());
 
@@ -1481,7 +1481,7 @@ void UServer_Base::run()
       {
       if (isLog()) ULog::log("waiting for connection\n");
 
-#  if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
+#  if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
       if (preforked_num_kids == -1) (UNotifier::pthread = U_NEW(UClientThread))->start();
 #  endif
 
@@ -1494,7 +1494,7 @@ void UServer_Base::run()
             continue;
             }
 
-#     if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
+#     if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
          if (UNotifier::pthread)
             {
             (void) pthis->handlerRead();

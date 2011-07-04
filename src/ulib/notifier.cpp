@@ -23,9 +23,9 @@ UThread* UNotifier::pthread;
 #include <errno.h>
 
 #ifdef HAVE_LIBEVENT
-void UEventFd::operator()(int fd, short event)
+void UEventFd::operator()(int _fd, short event)
 {
-   U_TRACE(0, "UEventFd::operator()(%d,%hd)", fd, event)
+   U_TRACE(0, "UEventFd::operator()(%d,%hd)", _fd, event)
 
    int ret = (event == EV_READ ? handlerRead() : handlerWrite());
 
@@ -145,14 +145,14 @@ next:
    if (bstatic) pthis->push(item);
    else
       {
-#  if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
+#  if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
       if (pthread) pthread->lock();
 #  endif
 
       item->next = first;
       first      = item;
 
-#  if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
+#  if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
       if (pthread) pthread->unlock();
 #  endif
       }
@@ -218,7 +218,7 @@ U_NO_EXPORT void UNotifier::handlerDelete(UEventFd** ptr, UEventFd* item)
 
    U_INTERNAL_DUMP("fd = %d op_mask = %B", item->fd, item->op_mask)
 
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
    if (pthread) pthread->lock();
 #endif
 
@@ -227,7 +227,7 @@ U_NO_EXPORT void UNotifier::handlerDelete(UEventFd** ptr, UEventFd* item)
    *ptr = item->next;
           item->next = 0;
 
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
    if (pthread) pthread->unlock();
 #endif
 
@@ -253,6 +253,9 @@ U_NO_EXPORT void UNotifier::eraseItem(UEventFd** ptr, UEventFd* item)
    handlerDelete(ptr, item);
 
 #ifdef HAVE_LIBEVENT
+   UDispatcher::del(item->pevent);
+             delete item->pevent;
+                    item->pevent = 0;
 #elif defined(HAVE_EPOLL_WAIT)
 #else
    if (mask & U_READ_IN)
@@ -304,36 +307,6 @@ void UNotifier::erase(UEventFd* handler_event)
       }
 }
 
-#if defined(HAVE_EPOLL_WAIT)
-__pure bool UNotifier::find(int fd)
-{
-   U_TRACE(0, "UNotifier::find(%d)", fd)
-
-   U_INTERNAL_ASSERT_POINTER(pthis)
-   U_INTERNAL_ASSERT_MAJOR(epollfd,0)
-
-   UEventFd* handler_event;
-
-   for (handler_event = first; handler_event; handler_event = handler_event->next)
-      {
-      U_INTERNAL_DUMP("fd = %d op_mask = %B", handler_event->fd, handler_event->op_mask)
-
-      if (handler_event->fd == fd) U_RETURN(true);
-      }
-
-   for (uint32_t i = 0; i < pthis->_length; ++i)
-      {
-      handler_event = (UEventFd*) pthis->vec[i];
-
-      U_INTERNAL_DUMP("fd = %d op_mask = %B", handler_event->fd, handler_event->op_mask)
-
-      if (handler_event->fd == fd) U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-#endif
-
 void UNotifier::callForAllEntryDynamic(bPFpv function)
 {
    U_TRACE(0, "UNotifier::callForAllEntryDynamic(%p)", function)
@@ -368,7 +341,7 @@ void UNotifier::clear()
 
    while ((item = *ptr)) eraseItem(ptr, item);
 
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
    if (pthread) delete pthread;
 #endif
 
@@ -409,6 +382,8 @@ loop:
 
 #  if defined(HAVE_EPOLL_WAIT)
    int result = U_SYSCALL(epoll_wait, "%d,%p,%d,%p", epollfd, events, MAX_EVENTS, (ptmp ? ((tmp.tv_sec * 1000) + (tmp.tv_usec / 1000)) : -1));
+
+   U_RETURN(result);
 #  else
    int result = U_SYSCALL(select, "%d,%p,%p,%p,%p", fd_max, read_set, write_set, 0, ptmp);
 #  endif
@@ -467,9 +442,9 @@ loop:
    if ( read_set) U_INTERNAL_DUMP(" read_set = %B", __FDS_BITS( read_set)[0])
    if (write_set) U_INTERNAL_DUMP("write_set = %B", __FDS_BITS(write_set)[0])
 #  endif
-#endif
 
    U_RETURN(result);
+#endif
 }
 
 // NB: n is needeed for rientrance of function (see test_notifier...)
@@ -561,7 +536,6 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 
 #ifdef HAVE_LIBEVENT
    (void) UDispatcher::dispatch(UDispatcher::ONCE);
-
    goto end;
 #elif defined(HAVE_EPOLL_WAIT)
    int n = waitForEvent(0, 0, 0, timeout);
@@ -580,6 +554,7 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
                               : 0),
                 timeout);
 #endif
+#ifndef HAVE_LIBEVENT
    if (n > 0)
       {
       uint32_t i;
@@ -587,8 +562,7 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
       UEventFd* handler_event;
       bool bread, bwrite, bfound;
 
-#  ifdef HAVE_LIBEVENT
-#  elif defined(HAVE_EPOLL_WAIT)
+#  if defined(HAVE_EPOLL_WAIT)
       bool bexcept;
 
       for (struct epoll_event* pev = events, *pev_end = pev + n; pev < pev_end; ++pev)
@@ -718,19 +692,46 @@ found:
          }
 
       if (fd_cnt > (fd_read_cnt + fd_write_cnt)) fd_set_max = getNFDS();
-#endif
+#  endif
       }
+#endif
 end:
    if (empty()) U_RETURN(false); // empty queue
 
    U_RETURN(true);
 }
 
-#if !defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+#ifdef HAVE_LIBEVENT
+#elif defined(HAVE_EPOLL_WAIT)
+__pure bool UNotifier::find(int fd)
+{
+   U_TRACE(0, "UNotifier::find(%d)", fd)
 
-// nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
+   U_INTERNAL_ASSERT_POINTER(pthis)
+   U_INTERNAL_ASSERT_MAJOR(epollfd,0)
 
-int UNotifier::getNFDS()
+   UEventFd* handler_event;
+
+   for (handler_event = first; handler_event; handler_event = handler_event->next)
+      {
+      U_INTERNAL_DUMP("fd = %d op_mask = %B", handler_event->fd, handler_event->op_mask)
+
+      if (handler_event->fd == fd) U_RETURN(true);
+      }
+
+   for (uint32_t i = 0; i < pthis->_length; ++i)
+      {
+      handler_event = (UEventFd*) pthis->vec[i];
+
+      U_INTERNAL_DUMP("fd = %d op_mask = %B", handler_event->fd, handler_event->op_mask)
+
+      if (handler_event->fd == fd) U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+#else
+int UNotifier::getNFDS() // nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
 {
    U_TRACE(0, "UNotifier::getNFDS()")
 
@@ -1028,12 +1029,11 @@ uint32_t UNotifier::write(int fd, const char* str, int count, int timeoutMS)
 
 const char* UNotifier::dump(bool reset) const
 {
-   *UObjectIO::os
 #ifdef HAVE_LIBEVENT
 #elif defined(HAVE_EPOLL_WAIT)
-                  << "epollfd                     " << epollfd      << '\n';
+   *UObjectIO::os << "epollfd                     " << epollfd      << '\n';
 #else
-                  << "fd_set_max                  " << fd_set_max   << '\n'
+   *UObjectIO::os << "fd_set_max                  " << fd_set_max   << '\n'
                   << "fd_read_cnt                 " << fd_read_cnt  << '\n'
                   << "fd_write_cnt                " << fd_write_cnt << '\n';
    *UObjectIO::os << "fd_set_read                 ";

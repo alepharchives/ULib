@@ -61,6 +61,7 @@ public:
    static const UString* str_REQUEST_READ_TIMEOUT;
    static const UString* str_ENABLE_INOTIFY;
    static const UString* str_ENABLE_CACHING_BY_PROXY_SERVERS;
+   static const UString* str_TELNET_ENABLE;
 
    static void str_allocate();
 

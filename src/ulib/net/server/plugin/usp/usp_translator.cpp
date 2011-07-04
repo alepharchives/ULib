@@ -42,12 +42,12 @@
 "\n" \
 "%.*s\n" \
 "extern \"C\" {\n" \
-"extern U_EXPORT void runDynamicPage(UClientImage_Base* client_image);\n" \
-"       U_EXPORT void runDynamicPage(UClientImage_Base* client_image)\n" \
+"extern U_EXPORT int runDynamicPage(UClientImage_Base* client_image);\n" \
+"       U_EXPORT int runDynamicPage(UClientImage_Base* client_image)\n" \
 "{\n" \
 "  U_TRACE(0, \"::runDynamicPage(%%p)\", client_image)\n" \
 "\n" \
-"  if (client_image == 0 || client_image == (UClientImage_Base*)-1 || client_image == (UClientImage_Base*)-2) return;\n" \
+"  if (client_image == 0 || client_image == (UClientImage_Base*)-1 || client_image == (UClientImage_Base*)-2) U_RETURN(0);\n" \
 "\n" \
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_value)\n" \
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_buffer)\n" \
@@ -57,7 +57,8 @@
 "  U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_encoded)\n" \
 "%s" \
 "\n" \
-"%.*s} }\n"
+"%.*s" \
+"U_RETURN(0); } }\n"
 
 class Application : public UApplication {
 public:

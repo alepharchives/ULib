@@ -99,15 +99,7 @@ public:
    virtual int  handlerRead();
    virtual int  handlerWrite();
    virtual void handlerDelete();
-   virtual void handlerError(int state)
-      {
-      U_TRACE(0, "UClientImage_Base::handlerError(%d)", state)
-
-      U_INTERNAL_ASSERT_POINTER(socket)
-      U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
-
-      socket->iState = state;
-      }
+   virtual void handlerError(int state);
 
    // manage if other request already available... (pipelining)
 

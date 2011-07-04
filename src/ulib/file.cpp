@@ -1296,7 +1296,6 @@ const char* UFile::getMimeType(bool bmagic)
       U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
       }
 
-#ifdef HAVE_MAGIC
    if (bmagic                &&
        u_mime_index != U_ssi &&
        u_mime_index != U_css &&
@@ -1304,11 +1303,21 @@ const char* UFile::getMimeType(bool bmagic)
       {
       U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
 
+      // check magic byte
+
+      if (U_MEMCMP(map, GZIP_MAGIC) == 0)
+         {
+         content_type = "application/x-gzip";
+
+         goto end;
+         }
+
+#  ifdef HAVE_MAGIC
       const char* ctype = UMagic::getType(map, map_size).data();
 
       if (ctype) content_type = ctype;
+#  endif
       }
-#endif
 
    if (content_type == 0)
       {
@@ -1323,6 +1332,7 @@ const char* UFile::getMimeType(bool bmagic)
 
    U_INTERNAL_ASSERT_POINTER(content_type)
 
+end:
    U_RETURN(content_type);
 }
 

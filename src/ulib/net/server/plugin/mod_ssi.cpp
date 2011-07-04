@@ -58,8 +58,7 @@ const UString* USSIPlugIn::str_encoding;
 const UString* USSIPlugIn::str_encoding_none;
 const UString* USSIPlugIn::str_encoding_url;
 const UString* USSIPlugIn::str_encoding_entity;
-const UString* USSIPlugIn::str_usp;
-const UString* USSIPlugIn::str_csp;
+const UString* USSIPlugIn::str_servlet;
 
 void USSIPlugIn::str_allocate()
 {
@@ -91,8 +90,7 @@ void USSIPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_encoding_none,0)
    U_INTERNAL_ASSERT_EQUALS(str_encoding_url,0)
    U_INTERNAL_ASSERT_EQUALS(str_encoding_entity,0)
-   U_INTERNAL_ASSERT_EQUALS(str_usp,0)
-   U_INTERNAL_ASSERT_EQUALS(str_csp,0)
+   U_INTERNAL_ASSERT_EQUALS(str_servlet,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("expr") },
@@ -121,8 +119,7 @@ void USSIPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("none") },
       { U_STRINGREP_FROM_CONSTANT("url") },
       { U_STRINGREP_FROM_CONSTANT("entity") },
-      { U_STRINGREP_FROM_CONSTANT("usp") },
-      { U_STRINGREP_FROM_CONSTANT("csp") }
+      { U_STRINGREP_FROM_CONSTANT("servlet") },
    };
 
    U_NEW_ULIB_OBJECT(str_expr,                   U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -151,8 +148,7 @@ void USSIPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_encoding_none,          U_STRING_FROM_STRINGREP_STORAGE(23));
    U_NEW_ULIB_OBJECT(str_encoding_url,           U_STRING_FROM_STRINGREP_STORAGE(24));
    U_NEW_ULIB_OBJECT(str_encoding_entity,        U_STRING_FROM_STRINGREP_STORAGE(25));
-   U_NEW_ULIB_OBJECT(str_usp,                    U_STRING_FROM_STRINGREP_STORAGE(26));
-   U_NEW_ULIB_OBJECT(str_csp,                    U_STRING_FROM_STRINGREP_STORAGE(27));
+   U_NEW_ULIB_OBJECT(str_servlet,                U_STRING_FROM_STRINGREP_STORAGE(26));
 }
 
 U_NO_EXPORT UString USSIPlugIn::getPathname(const UString& name, const UString& value, const UString& directory)
@@ -607,16 +603,9 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                if (pathname.empty())
                   {
                        if (name == *str_cmd) x = UCommand::outputCommand(value, 0, -1, UServices::getDevNull());
-                  else if (name == *str_usp)
+                  else if (name == *str_servlet &&
+                           UHTTP::checkHTTPServletRequest(U_STRING_TO_PARAM(value)))
                      {
-                     UHTTP::processUSPRequest(U_STRING_TO_PARAM(value));
-
-                     x = *UClientImage_Base::wbuffer;
-                     }
-                  else if (name == *str_csp)
-                     {
-                     UHTTP::processCSPRequest(U_STRING_TO_PARAM(value));
-
                      x = *UClientImage_Base::wbuffer;
                      }
                   else if (name == *str_cgi)

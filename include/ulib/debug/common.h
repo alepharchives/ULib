@@ -18,7 +18,7 @@ extern U_EXPORT void  u_debug_init(void);
 extern U_EXPORT pid_t u_debug_fork(pid_t pid);
 extern U_EXPORT pid_t u_debug_vfork(pid_t pid);
 extern U_EXPORT void  u_debug_exit(int exit_value);
-extern U_EXPORT void  u_debug_exec(const char* pathname, char* const argv[], char* const envp[]);
+extern U_EXPORT void  u_debug_exec(const char* pathname, char* const argv[], char* const envp[]) __noreturn;
 
 #ifdef __cplusplus
 extern "C" {

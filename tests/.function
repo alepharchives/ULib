@@ -224,7 +224,7 @@ start_cmd() {
 # function : start_cmd_background
 start_cmd_background() {
 
-	PID=`( eval "$* &"; echo $! )`
+	PID=`( eval "$VALGRIND $WINELOADER $STRACE $* &"; echo $! )`
 
 	$SLEEP
 }
@@ -348,4 +348,17 @@ test_output_wc() {
 	N2=`cat $FILE_OUT | wc -$1 2>/dev/null`
 
 	test_output "$N1" "$N2"
+}
+
+# function : TIMEOUT
+TIMEOUT() {
+
+   type timeout >/dev/null 2>&1
+
+   if [ $? -eq 0 ]; then
+      timeout "$@"
+   else
+      shift
+      eval "$@"
+   fi
 }

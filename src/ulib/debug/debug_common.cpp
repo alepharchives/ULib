@@ -173,7 +173,7 @@ void U_EXPORT u_debug_exit(int exit_value)
       }
 }
 
-void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], char* const envp[])
+__noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], char* const envp[])
 {
    U_INTERNAL_TRACE("u_debug_exec(%s,%p,%p)", pathname, argv, envp)
 
@@ -183,11 +183,11 @@ void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], char* const
                            { (caddr_t)buffer,                    0 },
                            { (caddr_t)"\n",                      1 } };
 
+   iov[1].iov_len = u_snprintf(buffer, sizeof(buffer), "::execve(%S,%p,%p)", pathname, argv, envp);
+
    if (u_trace_isActive(1))
       {
       flag_trace_active = true;
-
-      iov[1].iov_len = u_snprintf(buffer, sizeof(buffer), "::execve(%S,%p,%p)", pathname, argv, envp);
 
       u_trace_writev(iov, 2);
       }
@@ -204,11 +204,27 @@ void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], char* const
 
    u_exec_failed = true;
 
-   if (flag_trace_active)
+   if (flag_trace_active == false)
+      {
+      char _buffer[64];
+      uint32_t bytes_written = u_snprintf(_buffer, sizeof(_buffer), "%W%N%W: %WWARNING: %W",BRIGHTCYAN,RESET,YELLOW,RESET);
+
+      (void) lseek(u_printf_fileno, 0, SEEK_END);
+
+      (void) write(u_printf_fileno, _buffer, bytes_written);
+      (void) write(u_printf_fileno,  buffer, iov[1].iov_len);
+      }
+
+   iov[1].iov_len = u_snprintf(buffer, sizeof(buffer), " = -1%R", 0); // NB: the last argument (0) is necessary...
+
+   if (flag_trace_active == false)
+      {
+      (void) write(u_printf_fileno, buffer,          iov[1].iov_len);
+      (void) write(u_printf_fileno, iov[2].iov_base, iov[2].iov_len);
+      }
+   else
       {
       if (fork_called) u_trace_init(false, false, true);
-
-      iov[1].iov_len = u_snprintf(buffer, sizeof(buffer), " = -1%R", 0); // NB: the last argument (0) is necessary...
 
       u_trace_writev(iov+1, 2);
 
@@ -218,8 +234,6 @@ void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], char* const
 
       if (fork_called) u_trace_close();
       }
-
-   U_WARNING("::execve(%s,%p,%p) = -1%R", pathname, argv, envp, 0); // NB: the last argument (0) is necessary...
 
    ::_exit(EX_UNAVAILABLE);
 }

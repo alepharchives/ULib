@@ -29,7 +29,6 @@ public:
 
 #ifdef HAVE_PCRE
    // Searches subject for matches to pattern and replaces them with replacement
-
    static UString pregReplace(const UString& pattern, const UString& replacement, const UString& subject);
 #endif
 

@@ -101,7 +101,7 @@ read:
 
          if (u_now->tv_sec > timeout)
             {
-            s->iState = USocket::BROKEN;
+            s->iState = USocket::BROKEN | USocket::TIMEOUT;
 
             s->close();
 

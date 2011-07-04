@@ -659,13 +659,13 @@ static void end()
       }
 }
 
-U_EXPORT void runDynamicPage(UClientImage_Base* client_image)
+U_EXPORT int runDynamicPage(UClientImage_Base* client_image)
 {
    U_TRACE(5, "::runDynamicPage(%p)", client_image)
 
-        if (client_image ==         0) {  init(); return; } //  init (    Server-wide hooks)...
-   else if (client_image == (void*)-1) { reset(); return; } // reset (Connection-wide hooks)...
-   else if (client_image == (void*)-2) {   end(); return; } //   end
+        if (client_image ==         0) {  init(); return 0; } //  init (    Server-wide hooks)...
+   else if (client_image == (void*)-1) { reset(); return 0; } // reset (Connection-wide hooks)...
+   else if (client_image == (void*)-2) {   end(); return 0; } //   end
 
    U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
 
@@ -730,10 +730,12 @@ U_EXPORT void runDynamicPage(UClientImage_Base* client_image)
       (void) client_image->wbuffer->append(U_CONSTANT_TO_PARAM("Content-Type: " U_CTYPE_HTML "\r\n\r\n"));
       (void) client_image->wbuffer->append(*output);
 
-      return;
+      return 0;
       }
 
 bad_request:
    UHTTP::setHTTPBadRequest();
+
+   return 0;
 }
 }

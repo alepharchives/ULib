@@ -334,8 +334,6 @@ int UClientImage_Base::genericRead()
 
    handlerError(USocket::CONNECT);
 
-   UServer_Base::pClientImage = this;
-
    // reset buffer before read
 
    U_INTERNAL_ASSERT_EQUALS(rbuffer->isNull(), false);
@@ -364,6 +362,18 @@ error:
 }
 
 // define method VIRTUAL of class UEventFd
+
+void UClientImage_Base::handlerError(int state)
+{
+   U_TRACE(0, "UClientImage_Base::handlerError(%d)", state)
+
+   U_INTERNAL_ASSERT_POINTER(socket)
+   U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
+
+   socket->iState = state;
+
+   UServer_Base::pClientImage = this;
+}
 
 int UClientImage_Base::handlerRead()
 {

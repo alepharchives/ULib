@@ -384,15 +384,6 @@ public:
       U_RETURN(result);
       }
 
-   static bool isHttpOPTIONS()
-      {
-      U_TRACE(0, "UHTTP::isHttpOPTIONS()")
-
-      bool result = (U_http_method_type == HTTP_OPTIONS);
-
-      U_RETURN(result);
-      }
-
    static bool isTSARequest() __pure;
    static bool isSOAPRequest() __pure;
 
@@ -417,12 +408,14 @@ public:
    static UString* request_uri;
    static UString* uri_protected_mask;
    static uint32_t limit_request_body, request_read_timeout;
-   static bool virtual_host, enable_caching_by_proxy_servers;
+   static bool virtual_host, enable_caching_by_proxy_servers, telnet_enable;
 
    static void checkHTTPRequest();
    static void processHTTPGetRequest(USocket* socket, const UString& request);
 
+   static bool checkHTTPOptionsRequest();
    static bool checkHTTPRequestForHeader(const UString& request);
+   static bool checkHTTPServletRequest(const char* uri, uint32_t uri_len);
    static bool checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
 
    static UString     getDocumentName();
@@ -642,7 +635,7 @@ public:
    class UServletPage : public UDynamic {
    public:
 
-   vPFpv runDynamicPage;
+   iPFpv runDynamicPage;
 
    // COSTRUTTORI
 
@@ -671,19 +664,7 @@ public:
    static UServletPage* usp_page;
    static UHashMap<UServletPage*>* usp_pages;
 
-   static bool isUSPRequest()
-      {
-      U_TRACE(0, "UHTTP::isUSPRequest()")
-
-      U_INTERNAL_ASSERT(isHTTPRequest())
-
-      bool result = (usp_pages && u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".usp")));
-
-      U_RETURN(result);
-      }
-
    static void initUSP();
-   static void processUSPRequest(const char* uri, uint32_t uri_len);
 
    // ------------------------------
    // argument value for usp mudule:
@@ -746,19 +727,7 @@ public:
    static UCServletPage* csp_page;
    static UHashMap<UCServletPage*>* csp_pages;
 
-   static bool isCSPRequest()
-      {
-      U_TRACE(0, "UHTTP::isCSPRequest()")
-
-      U_INTERNAL_ASSERT(isHTTPRequest())
-
-      bool result = (csp_pages && u_startsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM("/csp/")));
-
-      U_RETURN(result);
-      }
-
    static void initCSP();
-   static void processCSPRequest(const char* uri, uint32_t uri_len);
 
 #ifdef HAVE_PAGE_SPEED // (Google Page Speed)
    typedef void (*vPFstr)(UString&);

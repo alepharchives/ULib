@@ -41,19 +41,6 @@ CACERT="../ulib/CA/username.crt"
 USER_KEY="../ulib/CA/username.key"
 LCMD="$OPENSSL s_client -no_ssl2 -quiet -cert $CACERT -key $USER_KEY -pass pass:caciucco -CApath $CAPATH -verify 0 -connect localhost:443"
 
-# function : timeout
-TIMEOUT() {
-
-	type timeout >/dev/null 2>&1
-
-	if [ $? -eq 0 ]; then
-		timeout "$@"
-	else
-		shift
-		eval "$@"
-	fi
-}
-
 # function : start_test
 start_test() {
 

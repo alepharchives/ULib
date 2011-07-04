@@ -383,16 +383,18 @@ __pure bool UStringRep::isEndHeader(uint32_t pos) const
 
    U_INTERNAL_ASSERT_MINOR(pos,_length)
 
-// U_INTERNAL_DUMP("string = %u end = %u", (*(uint32_t*)(str + pos)), (*(uint32_t*)U_CRLF2))
+   uint32_t _remain = (_length - pos);
 
-   if ((*(uint32_t*)(str + pos)) == (*(uint32_t*)U_CRLF2))
+   if (_remain >= 4 &&
+       (*(uint32_t*)(str + pos)) == (*(uint32_t*)U_CRLF2))
       {
       u_line_terminator     = U_CRLF;
       u_line_terminator_len = 2;
 
       U_RETURN(true);
       }
-   else if ((*(uint16_t*)(str + pos)) == (*(uint16_t*)U_LF2))
+   else if (_remain >= 2 &&
+            (*(uint16_t*)(str + pos)) == (*(uint16_t*)U_LF2))
       {
       u_line_terminator     = U_LF;
       u_line_terminator_len = 1;

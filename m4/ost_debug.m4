@@ -33,7 +33,8 @@ AC_DEFUN([OST_DEBUG],[
 	if test -z "$enable_profiling" ; then
 		enable_profiling="no"
 	elif test "$enable_profiling" = "yes" ; then
-		CXXFLAGS="${CXXFLAGS} -pg"
+		LDFLAGS="${LDFLAGS} -pg"
+		CPPFLAGS="${CPPFLAGS} -pg"
 	fi
 	AC_MSG_RESULT([$enable_profiling])
 ])

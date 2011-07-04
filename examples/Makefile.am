@@ -40,8 +40,10 @@ if LIBZ
 SUBDIRS += PEC_log
 if ZIP
 SUBDIRS += doc_parse doc_classifier
+if CURL
 if LIBXML2
 SUBDIRS += XAdES
+endif
 endif
 endif
 endif
