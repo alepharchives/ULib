@@ -421,8 +421,8 @@ public:
    static UString     getDocumentName();
    static UString     getDirectoryURI();
    static UString     getRequestURI(bool bquery);
-   static UString     getHeaderMimeType(const char* content_type, uint32_t size, time_t expire);
    static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase) __pure;
+   static UString     getHeaderMimeType(const char* content, const char* content_type, uint32_t size, time_t expire);
 
    // check for HTTP Header X-Forwarded-For: client, proxy1, proxy2 and X-Real-IP: client...
 

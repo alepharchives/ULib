@@ -24986,6 +24986,9 @@ fi
 	if test "$ost_cv_dynloader" = "yes"; then
 		LIBS_SAVE="${LIBS_SAVE} $lt_cv_dlopen_libs"
 	fi
+	if test "$enable_static" = "yes" && test "$enable_shared" = "no"; then
+		LIBS_SAVE="${LIBS_SAVE} -lstdc++"
+	fi
 	;;
 esac
 

@@ -98,11 +98,15 @@ void UCommand::setCommand()
 
    ncmd = u_splitCommand(U_STRING_TO_PARAM(command), argv, buffer, sizeof(buffer));
 
-   if (buffer[0]) argv[0] = pathcmd = U_SYSCALL(strdup, "%S", buffer);
+   U_INTERNAL_DUMP("ncmd = %d", ncmd)
 
-   U_INTERNAL_DUMP("ncmd = %d pathcmd = %S", ncmd, pathcmd)
+   if (ncmd == -1) return; // NB: command not found...
 
    U_INTERNAL_ASSERT_RANGE(1,ncmd,U_MAX_ARGS)
+
+   if (buffer[0]) argv[0] = pathcmd = U_SYSCALL(strdup, "%S", buffer);
+
+   U_INTERNAL_DUMP("pathcmd = %S", pathcmd)
 
    // NB: allocazione e copia lista argomenti
 

@@ -184,7 +184,11 @@ public:
                   xsltproc->set(*xsltproc_cmd, (char**)0);
                   }
 
-               (void) xsltproc->execute(content, xsltproc_out, -1, fd_stderr);
+               if (xsltproc->getCommand()) (void) xsltproc->execute(content, xsltproc_out, -1, fd_stderr);
+               else
+                  {
+                  U_WARNING("command xsltproc not found...");
+                  }
                }
             }
          }

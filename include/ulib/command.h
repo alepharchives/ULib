@@ -207,7 +207,7 @@ public:
       {
       U_TRACE(0, "UCommand::getCommand()")
 
-      char* result = argv_exec[(isShellScript() ? 2 : 0)];
+      char* result = (argv_exec ? argv_exec[(isShellScript() ? 2 : 0)] : 0);
 
       U_RETURN(result);
       }

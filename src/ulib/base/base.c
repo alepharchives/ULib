@@ -1975,14 +1975,17 @@ done:
 
 static bool u_askForContinue(void)
 {
-   bool bcontinue = false;
-
    U_INTERNAL_TRACE("u_askForContinue()")
 
    if (u_is_tty &&
        isatty(STDIN_FILENO))
       {
       char ch[2];
+
+      // NB: we use U_MESSAGE here, but we are already inside u_printf()...
+
+      int u_flag_exit_save = u_flag_exit;
+                             u_flag_exit = 0;
 
       U_MESSAGE("Press '%Wc%W' to continue, '%W%s%W' to exit: %W", GREEN, YELLOW, RED, "Enter", YELLOW, RESET);
 
@@ -1992,11 +1995,13 @@ static bool u_askForContinue(void)
          {
          (void) read(STDIN_FILENO, ch, 1); /* get 'return' key */
 
-         bcontinue = true;
+         return true;
          }
+
+      u_flag_exit = u_flag_exit_save;
       }
 
-   return bcontinue;
+   return false;
 }
 #endif
 
@@ -2056,12 +2061,7 @@ void u_printf(const char* format, ...)
             return;
             }
 
-         if (u_askForContinue() == true)
-            {
-            u_flag_exit = 0;
-
-            return;
-            }
+         if (u_askForContinue()) return;
          }
 
       u_debug_at_exit(); /* manage for U_ERROR(), U_ABORT(), etc... */

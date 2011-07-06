@@ -315,7 +315,7 @@ U_NO_EXPORT void UHTTP::in_DELETE()
 
 void UHTTP::in_READ()
 {
-   U_TRACE(1+256, "UHTTP::in_READ()")
+   U_TRACE(1, "UHTTP::in_READ()")
 
    U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_event)
 
@@ -780,7 +780,7 @@ next:
 
       u_mime_index = -1;
 
-      putDataInCache(getHeaderMimeType(U_CTYPE_ICO, 0, U_TIME_FOR_EXPIRE), content);
+      putDataInCache(getHeaderMimeType(0, U_CTYPE_ICO, 0, U_TIME_FOR_EXPIRE), content);
 
       U_INTERNAL_ASSERT_POINTER(file_data->array)
       }
@@ -804,7 +804,7 @@ next:
 
          u_mime_index = U_ssi;
 
-         putDataInCache(getHeaderMimeType(U_CTYPE_HTML, 0, 0), content);
+         putDataInCache(getHeaderMimeType(0, U_CTYPE_HTML, 0, 0), content);
 
          U_INTERNAL_ASSERT_POINTER(file_data->array)
          U_INTERNAL_ASSERT_EQUALS( file_data->array->size(),2)
@@ -3101,76 +3101,6 @@ void UHTTP::setHTTPCgiResponse(int nResponseCode, bool header_content_length, bo
 
 // --------------------------------------------------------------------------------------------------------------------------------------
 
-U_NO_EXPORT bool UHTTP::openFile()
-{
-   U_TRACE(0, "UHTTP::openFile()")
-
-   bool result;
-
-   if (file->dir())
-      {
-      // NB: cgi-bin and usp are forbidden...
-
-      result = (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("usp"))     == false &&
-                u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("cgi-bin")) == false);
-
-      if (result)
-         {
-         // Check if there is an index file (index.html) in the directory... (we check in the CACHE FILE)
-
-         uint32_t sz = file->getPathRelativLen(), len = str_indexhtml->size();
-
-         if (sz == 0) file_data = (*cache_file)[*str_indexhtml];
-         else
-            {
-            pathname->setBuffer(sz + 1 + len);
-
-            pathname->snprintf("%.*s/%.*s", sz, file->getPathRelativ(), len, str_indexhtml->data());
-
-            file_data = (*cache_file)[*pathname];
-            }
-
-         if (file_data)
-            {
-            if (isDataFromCache())
-               {
-               bool deflate = (U_http_is_accept_deflate && isDataCompressFromCache());
-
-               if (isHttpHEAD() == false) *UClientImage_Base::body    = getDataFromCache(false, deflate);
-                                          *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_OK, getDataFromCache(true, deflate));
-
-               U_RETURN(false);
-               }
-
-            file->setPath(*(sz ? pathname : str_indexhtml));
-
-            file->st_size  = file_data->size;
-            file->st_mode  = file_data->mode;
-            file->st_mtime = file_data->mtime;
-
-            result = (file->regular() && file->open());
-
-            goto end;
-            }
-
-         /* Nope, no index file, so it's an actual directory request */
-
-         result = (file->getPathRelativLen() > 1); // NB: '/' alias '.' is forbidden...
-         }
-      }
-   else
-      {
-      result = (file->regular()                                                           &&
-                file->isNameDosMatch(U_CONSTANT_TO_PARAM(".htpasswd|.htdigest")) == false && // NB: '.htpasswd' and '.htdigest' are forbidden
-                file->open());
-      }
-
-end:
-   if (result == false) setHTTPForbidden(); // set forbidden error response...
-
-   U_RETURN(result);
-}
-
 U_NO_EXPORT bool UHTTP::processHTTPAuthorization(const UString& request)
 {
    U_TRACE(0, "UHTTP::processHTTPAuthorization(%.*S)", U_STRING_TO_TRACE(request))
@@ -3521,14 +3451,30 @@ bool UHTTP::checkUriProtected()
    U_RETURN(true);
 }
 
-UString UHTTP::getHeaderMimeType(const char* content_type, uint32_t size, time_t expire)
+UString UHTTP::getHeaderMimeType(const char* content, const char* content_type, uint32_t size, time_t expire)
 {
-   U_TRACE(0, "UHTTP::getHeaderMimeType(%S,%u,%ld)", content_type, size, expire)
+   U_TRACE(0, "UHTTP::getHeaderMimeType(%p,%S,%u,%ld)", content, content_type, size, expire)
 
    U_INTERNAL_ASSERT_POINTER(file)
    U_INTERNAL_ASSERT_POINTER(content_type)
 
+   bool add_encoding = false;
    UString header(U_CAPACITY);
+
+   // check magic byte
+
+   if (content &&
+       U_MEMCMP(content, GZIP_MAGIC) == 0)
+      {
+      if (U_STRNEQ(content_type, "application/x-gzip")) content_type = file->getMimeType(false);
+
+      U_INTERNAL_ASSERT_DIFFERS(U_STRNEQ(content_type, "application/x-gzip"), true)
+
+      add_encoding = true;
+      u_mime_index = U_gz;
+      }
+
+   if (add_encoding) (void) header.assign(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
 
    /* http://code.google.com/speed/page-speed/docs/caching.html
     *
@@ -3584,7 +3530,7 @@ UString UHTTP::getHeaderMimeType(const char* content_type, uint32_t size, time_t
     * always safe to set this header for HTTPS resources. 
     */
 
-   header.snprintf("Content-Type: %s\r\n", content_type);
+   header.snprintf_add("Content-Type: %s\r\n", content_type);
 
    if (u_mime_index != U_ssi)
       {
@@ -3762,24 +3708,7 @@ void UHTTP::checkFileForCache()
       return;
       }
 
-   bool add_encoding        = false;
-   const char* content_type = file->getMimeType(true);
-
-   if (U_STRNEQ(content_type, "application/x-gzip"))
-      {
-      content_type = file->getMimeType(false);
-
-      U_INTERNAL_ASSERT_DIFFERS(U_STRNEQ(content_type, "application/x-gzip"), true)
-
-      add_encoding = true;
-      u_mime_index = U_gz;
-      }
-
-   UString header = getHeaderMimeType(content_type, 0, U_TIME_FOR_EXPIRE);
-
-   if (add_encoding) (void) header.insert(0, U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
-
-   putDataInCache(header, content);
+   putDataInCache(getHeaderMimeType(content.data(), file->getMimeType(true), 0, U_TIME_FOR_EXPIRE), content);
 }
 
 bool UHTTP::isFileInCache()
@@ -4831,13 +4760,18 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                   if (file->stat())
                      {
+                     bool bheader = (ext.empty() == false);
                      UString request(300U + pathname->size() + ext.size());
 
-                     request.snprintf("GET %.*s HTTP/1.1\r\n" \
-                                      "%.*s" \
-                                      "\r\n\r\n",
-                                      U_STRING_TO_TRACE(*pathname),
-                                      U_STRING_TO_TRACE(ext));
+                     request.snprintf("GET %.*s HTTP/1.1", U_STRING_TO_TRACE(*pathname));
+
+                     if (bheader)
+                        {
+                        (void) request.append(U_CONSTANT_TO_PARAM(U_CRLF));
+                        (void) request.append(ext);
+                        }
+
+                     (void) request.append(U_CONSTANT_TO_PARAM(U_CRLF2));
 
                      U_SRV_LOG("header X-Sendfile found in CGI output: serving file %.*S", U_STRING_TO_TRACE(*pathname));
 
@@ -4845,7 +4779,7 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                      (void) readHTTPHeader(0, request);
 
-                     (void) checkHTTPRequestForHeader(request);
+                     if (bheader) (void) checkHTTPRequestForHeader(request);
 
                      UClientImage_Base::body->clear();
                      UClientImage_Base::wbuffer->clear();
@@ -5556,6 +5490,76 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestIfModified(const UString& request)
    U_RETURN(true);
 }
 
+U_NO_EXPORT bool UHTTP::openFile()
+{
+   U_TRACE(0, "UHTTP::openFile()")
+
+   bool result;
+
+   if (file->dir())
+      {
+      // NB: cgi-bin and usp are forbidden...
+
+      result = (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("usp"))     == false &&
+                u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("cgi-bin")) == false);
+
+      if (result)
+         {
+         // Check if there is an index file (index.html) in the directory... (we check in the CACHE FILE)
+
+         uint32_t sz = file->getPathRelativLen(), len = str_indexhtml->size();
+
+         if (sz == 0) file_data = (*cache_file)[*str_indexhtml];
+         else
+            {
+            pathname->setBuffer(sz + 1 + len);
+
+            pathname->snprintf("%.*s/%.*s", sz, file->getPathRelativ(), len, str_indexhtml->data());
+
+            file_data = (*cache_file)[*pathname];
+            }
+
+         if (file_data)
+            {
+            if (isDataFromCache())
+               {
+               bool deflate = (U_http_is_accept_deflate && isDataCompressFromCache());
+
+               if (isHttpHEAD() == false) *UClientImage_Base::body    = getDataFromCache(false, deflate);
+                                          *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(HTTP_OK, getDataFromCache(true, deflate));
+
+               U_RETURN(false);
+               }
+
+            file->setPath(*(sz ? pathname : str_indexhtml));
+
+            file->st_size  = file_data->size;
+            file->st_mode  = file_data->mode;
+            file->st_mtime = file_data->mtime;
+
+            result = (file->regular() && file->open());
+
+            goto end;
+            }
+
+         /* Nope, no index file, so it's an actual directory request */
+
+         result = (file->getPathRelativLen() > 1); // NB: '/' alias '.' is forbidden...
+         }
+      }
+   else
+      {
+      result = (file->regular()                                                           &&
+                file->isNameDosMatch(U_CONSTANT_TO_PARAM(".htpasswd|.htdigest")) == false && // NB: '.htpasswd' and '.htdigest' are forbidden
+                file->open());
+      }
+
+end:
+   if (result == false) setHTTPForbidden(); // set forbidden error response...
+
+   U_RETURN(result);
+}
+
 void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
 {
    U_TRACE(0, "UHTTP::processHTTPGetRequest(%p,%.*S)", socket, U_STRING_TO_TRACE(request))
@@ -5627,7 +5631,7 @@ void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
          size = UClientImage_Base::body->size();
          }
 
-      (void) ext.append(getHeaderMimeType(U_CTYPE_HTML, size, 0));
+      (void) ext.append(getHeaderMimeType(0, U_CTYPE_HTML, size, 0));
       }
    else
       {
@@ -5636,7 +5640,8 @@ void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
 
       if (size)
          {
-         if (isDataFromCache())
+         if (file_data &&
+             isDataFromCache())
             {
             bool data_expired = (u_now->tv_sec > file_data->expire);
 
@@ -5659,7 +5664,7 @@ void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
             {
             (void) file->memmap(PROT_READ, UClientImage_Base::body);
 
-            (void) ext.append(getHeaderMimeType(file->getMimeType(false), size, 0));
+            (void) ext.append(getHeaderMimeType(UClientImage_Base::body->data(), file->getMimeType(false), size, 0));
             }
 
          if (http_info.range_len &&

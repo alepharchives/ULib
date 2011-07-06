@@ -1306,10 +1306,10 @@ void UStringExt::minifyCssJs(UString& x)
          ++s;
          }
 
-      if (sz > n) goto end;
+      if (sz >= n) goto end;
       }
 
-   U_INTERNAL_ASSERT_MINOR(sz, n)
+   U_INTERNAL_ASSERT(sz <= n)
 
    (void) x.replace(str, sz);
 

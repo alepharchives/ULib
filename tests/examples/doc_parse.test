@@ -12,6 +12,7 @@ start_msg doc_parse
 #EXEC_ON_EXIT="/utility/stack_dump.sh"
  export UTRACE UOBJDUMP USIMERR EXEC_ON_EXIT
 
+#STRACE=$TRUSS
 start_prg doc_parse -p inp/pkcs7_nested_in_tbote_signed_with_certs_from_different_chain.eml
 
 # Test against expected output

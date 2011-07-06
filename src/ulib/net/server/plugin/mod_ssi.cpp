@@ -802,7 +802,7 @@ int USSIPlugIn::handlerRequest()
          {
          u_mime_index = U_ssi;
 
-         (void) header.append(UHTTP::getHeaderMimeType(U_CTYPE_HTML, UClientImage_Base::body->size(), 0));
+         (void) header.append(UHTTP::getHeaderMimeType(0, U_CTYPE_HTML, UClientImage_Base::body->size(), 0));
          }
 
       *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, header);
