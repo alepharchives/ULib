@@ -2173,11 +2173,13 @@ norm:
    /* NOTREACHED */
 }
 
-#define __FNM_FLAGS (FNM_PATHNAME | FNM_NOESCAPE | FNM_PERIOD | FNM_LEADING_DIR | FNM_CASEFOLD)
+#define __FNM_FLAGS (FNM_PATHNAME | FNM_NOESCAPE | FNM_PERIOD | FNM_LEADING_DIR | FNM_CASEFOLD | FNM_INVERT)
 
 bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
 {
    U_INTERNAL_TRACE("u_fnmatch(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), string, n1, n2, pattern, n2, flags)
+
+   int result;
 
    U_INTERNAL_ASSERT_MAJOR(n1,0)
    U_INTERNAL_ASSERT_MAJOR(n2,0)
@@ -2188,7 +2190,9 @@ bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pa
    end_s = string  + n1;
    end_p = pattern + n2;
 
-   return (kfnmatch(pattern, string, flags, 0) == 0);
+   result = kfnmatch(pattern, string, flags, 0);
+
+   return (flags & FNM_INVERT ? (result != 0) : (result == 0));
 }
 
 #ifdef GCOV

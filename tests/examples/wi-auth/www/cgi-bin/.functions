@@ -1,0 +1,138 @@
+# .functions
+
+export TITLE_TXT HEAD_HTML BODY_SHTML BODY_STYLE
+
+write_SSI() {
+
+	if [ ! -d $DIR_SSI ]; then
+		mkdir -p $DIR_SSI
+	fi
+
+   EXIT_VALUE=0
+
+	if [ -z "$BODY_SHTML" ]; then
+		TITLE_TXT="400 Bad Request"
+
+		HEAD_HTML=""
+		BODY_SHTML="<h1>Bad Request</h1><p>Your browser sent a request that this server could not understand<br></p>"
+
+      EXIT_VALUE=1
+	fi
+
+	echo -n -e "$HEAD_HTML"	 > $FILE_HEAD_HTML
+	echo -n -e "$BODY_SHTML" > $FILE_BODY_SHTML
+
+	echo	  -e "TITLE_TXT=$TITLE_TXT\n\nBODY_STYLE=$BODY_STYLE"
+
+	exit $EXIT_VALUE
+}
+
+send_ticket() {
+
+	# ------------------------
+	# 1 -> mac
+	# 2 -> ip
+	# 3 -> redirect
+	# 4 -> gateway
+	# 5 -> timeout
+	# 6 -> token
+	# 7 -> ap
+	# ------------------------
+	# 00:e0:4c:d4:63:f5 10.30.1.105 http://www.google.com 10.30.1.131:5280 stefano 86400 lOosGl9h1aHxo lab2.wpp54
+	# ------------------------
+
+	SIGNED_DATA_FILE=/tmp/signed.$$
+ 	GPG_CMD="gpg --homedir=$HOME/gpg --keyring=$HOME/gpg/trustdb.gpg --sign --armor --no-tty"
+
+	# ----------------------------------------------------------
+	# NoCat auth message format (must be PGP signed & encrypted) 
+	# ----------------------------------------------------------
+	# Action   Permit|Deny
+	# Mode     login|??? (popup/renew?)
+	# Redirect URL_requested
+	# Mac      00:11:22:33:44:55:66
+	# Timeout  to_in_seconds
+	# Token    token
+	# ----------------------------------------------------------
+
+	$GPG_CMD <<END >$SIGNED_DATA_FILE 2>/dev/null
+
+Action   Permit
+Mode	   Login
+Redirect	http://$HTTP_HOST/postlogin?gateway=$4&redirect=$3&ap=$7&ip=$2&mac=$1&timeout=$5
+Mac		$1
+Timeout	$5
+Token		$6
+END
+
+	if [ -s $SIGNED_DATA_FILE ]; then
+
+		SIGNED_DATA=`tail -n +4 $SIGNED_DATA_FILE | head -n -1 | tr -d '\r\n' 2>/dev/null`
+
+	 	rm -f $SIGNED_DATA_FILE
+	fi
+
+	echo -e "Location: http://$4/?ticket=$SIGNED_DATA\r\n\r"
+
+	exit 2
+}
+
+user_has_valid_MAC() {
+
+	# ------------------------
+	# 1 -> mac
+	# 2 -> ip
+	# 3 -> redirect
+	# 4 -> gateway
+	# 5 -> timeout
+	# 6 -> token
+	# 7 -> ap
+	# ------------------------
+	# 00:e0:4c:d4:63:f5 10.30.1.105 http://www.google.com 10.30.1.131:5280 stefano 86400 lOosGl9h1aHxo lab2.wpp54
+	# ------------------------
+
+	# List of allowed MAC
+
+	FILE=$HOME/etc/.MAC_WHITE_LIST
+
+	if [ -s $FILE ]; then
+
+		while read MAC
+		do
+
+			if [ "$MAC" = "$1" ]; then
+
+				# ap is calling for auth, redirect back to the gateway appending a signed ticket that will signal ap to unlock the firewall...
+
+				OP=MAC_AUTH
+
+				send_ticket "$@"
+
+			fi
+
+		done < $FILE
+
+	fi
+}
+
+main_page() {
+
+	TITLE_TXT="PONZA T-Services www.tunwired.com"
+
+	HEAD_HTML="<link type=\"text/css\" href=\"css/style.css\" rel=\"stylesheet\">
+				  <script type=\"text/javascript\" src=\"js/curvycorners.js\"></script>\n<script type=\"text/javascript\" src=\"js/effetti.js\"></script>"
+
+	# ------------------------
+	# 1 -> mac
+	# 2 -> ip
+	# 3 -> redirect
+	# 4 -> gateway
+	# 5 -> timeout
+	# 6 -> token
+	# 7 -> ap
+	# ------------------------
+	# 00:e0:4c:d4:63:f5 10.30.1.105 http://www.google.com 10.30.1.131:5280 stefano 86400 lOosGl9h1aHxo lab2.wpp54
+	# ------------------------
+
+	printf -v BODY_SHTML "`cat $DIR_TEMPLATE/login.tmpl`" https://$HTTP_HOST/login "$1" "$2" "$3" "$4" "$5" "$6" "$7"
+}

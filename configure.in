@@ -339,6 +339,7 @@ dnl initialize all the info variables to 'no'
   ulib_libxml2_msg="no    (--with-libxml2)"
       ulib_dbi_msg="no    (--with-libdbi)"
 ulib_pagespeed_msg="no    (--with-page-speed)"
+       ulib_v8_msg="no    (--with-v8-javascript)"
      ulib_ipv6_msg="no    (--with-ipv6)"
       ulib_pch_msg="no    (--enable-pch)"
       ulib_LFS_msg="no    (--enable-LFS)"
@@ -418,6 +419,7 @@ libevent_version="None"
 libxml2_version="None"
 libdbi_version="None"
 page_speed_version="None"
+v8_version="None"
 
 AC_CHECK_PACKAGE
 AC_SUBST(PRG_LDFLAGS)
@@ -436,6 +438,7 @@ AM_CONDITIONAL(DBI,			test "$HAVE_DBI"			= "yes")
 AM_CONDITIONAL(LIBEVENT,	test "$HAVE_LIBEVENT"	= "yes")
 AM_CONDITIONAL(LIBXML2,		test "$HAVE_LIBXML2"		= "yes")
 AM_CONDITIONAL(PAGE_SPEED, test "$HAVE_PAGE_SPEED" = "yes")
+AM_CONDITIONAL(V8,			test "$HAVE_V8"			= "yes")
 
 AC_DEFINE_UNQUOTED(_FLEX_VERSION,		 "${flex_version}",			[Flex version])
 AC_DEFINE_UNQUOTED(_BISON_VERSION,		 "${bison_version}",			[Bison version])
@@ -453,6 +456,7 @@ AC_DEFINE_UNQUOTED(_LIBUUID_VERSION,	 "${libuuid_version}",		[libuuid - version 
 AC_DEFINE_UNQUOTED(_LIBEVENT_VERSION,	 "${libevent_version}",		[libevent - event notification library version])
 AC_DEFINE_UNQUOTED(_LIBXML2_VERSION,	 "${libxml2_version}",		[libxml2 - version 2 of the library to manipulate XML files])
 AC_DEFINE_UNQUOTED(_PAGE_SPEED_VERSION, "${page_speed_version}",  [PageSpeed - version of Google page speed SDK])
+AC_DEFINE_UNQUOTED(_V8_VERSION,			 "${v8_version}",				[V8 - version of Google V8 JavaScript Engine])
  
 LIBS_SAVE=${LIBS}
 
@@ -516,6 +520,10 @@ fi
 
 if test "$HAVE_PAGE_SPEED" = "yes"; then
    ulib_pagespeed_msg="enabled"
+fi
+
+if test "$HAVE_V8" = "yes"; then
+   ulib_v8_msg="enabled"
 fi
 
 case "$target_os" in
@@ -1111,6 +1119,8 @@ configure: Configured to build src/ulib/libulib:
        libxml2 library: ${libxml2_version}
     Page-Speed support: ${ulib_pagespeed_msg}
         Page-Speed SDK: ${page_speed_version}
+ V8 JavaScript support: ${ulib_v8_msg}
+         V8 JavaScript: ${v8_version}
       LEX/YACC support: ${ulib_parser_msg}
       Lexical analyzer: ${LEX} ( ${flex_version} )
       Parser generator: ${YACC} ( ${bison_version} )
@@ -1146,6 +1156,7 @@ AC_OUTPUT(Makefile \
 			 src/ulib/net/server/plugin/mod_shib/Makefile \
 			 src/ulib/net/server/plugin/mod_geoip/Makefile \
 			 src/ulib/net/server/plugin/page_speed/Makefile \
+			 src/ulib/net/server/plugin/v8/Makefile \
 			 src/ulib/net/server/plugin/mod_tcc/Makefile \
 			 include/ulib/Makefile \
 			 contrib/HCSP/Makefile \

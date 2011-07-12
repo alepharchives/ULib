@@ -1,296 +1,285 @@
-(pid 12739) 03/05/11 14:27:36> *** STARTUP userver_tcp (pid 12739) [root@stefano] ***
-(pid 12739) 03/05/11 14:27:36> [mod_http] load of plugin success
-(pid 12739) 03/05/11 14:27:36> HOST registered as: stefano
-(pid 12739) 03/05/11 14:27:36> SERVER IP ADDRESS registered as: 10.30.1.131
-(pid 12739) 03/05/11 14:27:36> working directory (DOCUMENT_ROOT) changed to "/usr/src/ULib-1.1.0/tests/examples"
-(pid 12739) 03/05/11 14:27:36> server run with user "apache" permission
-(pid 12739) 03/05/11 14:27:36> [mod_http] load of plugin 'mod_pagespeed' success
-(pid 12739) 03/05/11 14:27:36> [mod_http] USP found: usp/benchmarking.so, USP service registered (URI): /usp/benchmarking.usp
-(pid 12739) 03/05/11 14:27:36> [mod_http] Inode based directory notification enabled
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "RA/RA/www/css/style.css" - 13444 bytes - (85%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "RA/RA/www/images/dx-logo.png" - 28947 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "RA/RA/www/images/sx-logo.png" - 24717 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "RA/RA/www/js/livevalidation_standalone.js" - 12783 bytes - (72%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "RA/RA/www/js/stampa.js" - 667 bytes - (88%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "RA/RA.old/www/ra-station/css/style.css" - 13143 bytes - (85%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "RA/RA.old/www/ra-station/form/it/stampa.js" - 480 bytes - (51%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "RA/RA.old/www/ra-station/images/dx-logo.png" - 111 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "RA/RA.old/www/ra-station/images/sx-logo.jpg" - 6056 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "RA/RA.old/www/ra-station/js/livevalidation_standalone.js" - 12783 bytes - (72%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "css/fail.css" - 183 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "css/lpage.css" - 601 bytes - (64%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "css/ir.css" - 4972 bytes - (78%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "css/style.css" - 11834 bytes - (84%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "css/upload.css" - 348 bytes - (53%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "icons/gopher-unknown.gif" - 132 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "icons/closed.gif" - 249 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "icons/doc.gif" - 274 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "icons/img.png" - 523 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "icons/menu.png" - 163 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "icons/open.gif" - 260 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "icons/pdf.gif" - 291 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "icons/timestamp.gif" - 207 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "icons/x.gif" - 283 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "icons/xml.gif" - 646 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "inp/http/data/file1" - 64 bytes - (52%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "js/validazione_email.js" - 3220 bytes - (82%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "js/jquery.js" - 120763 bytes - (8%) compressed ratio (size exceeded)
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "js/bramus/jsProgressBarHandler.js" - 16872 bytes - (83%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "js/prototype/prototype.js" - 126127 bytes - (6%) compressed ratio (size exceeded)
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "js/livevalidation_standalone.js" - 38758 bytes - (57%) compressed ratio (size exceeded)
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "js/jquery.uploadProgress.js" - 3874 bytes - (75%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "js/upload.js" - 1113 bytes - (70%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "nocat/icons/gopher-unknown.gif" - 132 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "nocat/icons/menu.png" - 163 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "nocat/images/auth_logo.png" - 920 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/_jquery/jquery.curvycorners/rounded_corners_lite.inc.js" - 25082 bytes - (81%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/_jquery/jquery-1.2.1.min.js" - 46437 bytes - (1%) compressed ratio (size exceeded)
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/_jquery/effetti.js" - 555 bytes - (60%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/css/images/Gratta_e_naviga_v8.jpg" - 49493 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/css/images/Footer_resize.jpg" - 3326 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/css/images/Unirel_Prova.jpg" - 3752 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/css/images/LV7.jpg" - 4564 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/css/images/bgRESIZE.jpg" - 17456 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/css/images/bbg.jpg" - 401 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/css/images/gratta_post.jpg" - 154889 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/css/images/tab-right.png" - 177 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/css/images/bluebox.png" - 2221 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/css/images/bluebox2.png" - 277 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/css/images/headRESIZE150h.jpg" - 4558 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/css/images/tab-left.png" - 141 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/css/style.css" - 10959 bytes - (84%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/images/lv7-logo-small.png" - 2689 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/images/fronte_card.jpg" - 208117 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/images/gratta_ant2.jpg" - 26118 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:36> [mod_http] file cached: "wi-auth/images/logo_t.service_NoSfondo.png" - 15985 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:37> [mod_http] file cached: "wi-auth/undax_resources/a6.png" - 23318 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:37> [mod_http] file cached: "wi-auth/undax_resources/pdf.jpg" - 2089 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:37> [mod_http] file cached: "ws/jWebSocket.js" - 103546 bytes - (4%) compressed ratio (size exceeded)
-(pid 12739) 03/05/11 14:27:37> [mod_http] file cached: "ws/jwebsocket.css" - 8299 bytes - (86%) compressed ratio
-(pid 12739) 03/05/11 14:27:37> [mod_http] file cached: "CSP/WEB/css/t-services.css" - 1503 bytes - (67%) compressed ratio
-(pid 12739) 03/05/11 14:27:37> [mod_http] file cached: "CSP/WEB/images/ecumene.png" - 226061 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:37> [mod_http] file cached: "CSP/WEB/images/cyan.png" - 15288 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:37> [mod_http] file cached: "CSP/WEB/images/white.png" - 123 bytes - (0%) compressed ratio
-(pid 12739) 03/05/11 14:27:37> [mod_http] file cached: "IR/WEB/css/ir.css" - 4327 bytes - (74%) compressed ratio
-(pid 12739) 03/05/11 14:27:37> [mod_http] file cached: "LCSP/LCSP_command/csp_ZERO_CERTS.sh" - 318 bytes - (71%) compressed ratio
-(pid 12739) 03/05/11 14:27:37> [mod_http] file data users permission: '.htpasswd' loaded
-(pid 12739) 03/05/11 14:27:37> [mod_http] file data users permission: '.htdigest' loaded
-(pid 12739) 03/05/11 14:27:37> [mod_http] initialization of plugin success
-(pid 12739) 03/05/11 14:27:37> started new child (pid 12771), up to 1 children
-(pid 12771) 03/05/11 14:27:37> waiting for connection
-(pid 12739) 03/05/11 14:27:37> started new child (pid 12859), up to 2 children
-(pid 12859) 03/05/11 14:27:37> waiting for connection
-(pid 12859) 03/05/11 14:27:39> new client connected from 12 '127.0.0.1:22419', (1/1) clients currently connected
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: *"... from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> new client connected from 12 '127.0.0.1:22420', (1/2) clients currently connected
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: *"... from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22420'
-(pid 12859) 03/05/11 14:27:39> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from 12 '127.0.0.1:22419'
-(pid 12771) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22420'
-(pid 12771) 03/05/11 14:27:39> client closed connection from 12 '127.0.0.1:22420', (0/1) clients still connected
-(pid 12771) 03/05/11 14:27:39> waiting for connection
-(pid 12859) 03/05/11 14:27:39> sent response (156 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=512, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to 12 '127.0.0.1:22419'
-(pid 12859) 03/05/11 14:27:39> client closed connection from 12 '127.0.0.1:22419', (0/0) clients still connected
-(pid 12859) 03/05/11 14:27:39> waiting for connection
-(pid 12739) 03/05/11 14:27:40> --- SIGTERM (Interrupt) ---
-(pid 12771) 03/05/11 14:27:40> --- SIGTERM (Interrupt) ---
-(pid 12859) 03/05/11 14:27:40> --- SIGTERM (Interrupt) ---
-(pid 12739) 03/05/11 14:27:41> *** SHUTDOWN userver_tcp (pid 12739) [apache@stefano] ***
+(pid 28521) 12/07/11 14:30:01> *** STARTUP userver_tcp (pid 28521) [root@stefano] ***
+(pid 28521) 12/07/11 14:30:01> [mod_http] load of plugin success
+(pid 28521) 12/07/11 14:30:01> HOST registered as: stefano
+(pid 28521) 12/07/11 14:30:01> SERVER IP ADDRESS registered as: 10.30.1.131
+(pid 28521) 12/07/11 14:30:01> working directory (DOCUMENT_ROOT) changed to "/usr/src/ULib-1.1.0/tests/examples"
+(pid 28521) 12/07/11 14:30:01> server run with user "apache" permission
+(pid 28521) 12/07/11 14:30:01> [mod_http] load of plugin 'mod_pagespeed' success
+(pid 28521) 12/07/11 14:30:01> [mod_http] load of plugin 'mod_v8' success
+(pid 28521) 12/07/11 14:30:01> [mod_http] USP found: usp/benchmarking.so, USP service registered (URI): /usp/benchmarking.usp
+(pid 28521) 12/07/11 14:30:01> [mod_http] Inode based directory notification enabled
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "RA/RA/www/css/style.css" - 13444 bytes - (85%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "RA/RA/www/images/dx-logo.png" - 28947 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "RA/RA/www/images/sx-logo.png" - 24717 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "RA/RA/www/js/livevalidation_standalone.js" - 12783 bytes - (72%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "RA/RA/www/js/stampa.js" - 667 bytes - (88%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "RA/RA.old/www/ra-station/css/style.css" - 13143 bytes - (85%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "RA/RA.old/www/ra-station/form/it/stampa.js" - 480 bytes - (51%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "RA/RA.old/www/ra-station/images/dx-logo.png" - 111 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "RA/RA.old/www/ra-station/images/sx-logo.jpg" - 6056 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "RA/RA.old/www/ra-station/js/livevalidation_standalone.js" - 12783 bytes - (72%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "css/fail.css" - 183 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "css/lpage.css" - 601 bytes - (64%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "css/ir.css" - 4972 bytes - (78%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "css/style.css" - 11834 bytes - (84%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "css/upload.css" - 348 bytes - (53%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "icons/gopher-unknown.gif" - 132 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "icons/closed.gif" - 249 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "icons/doc.gif" - 274 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "icons/img.png" - 523 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "icons/menu.png" - 163 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "icons/open.gif" - 260 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "icons/pdf.gif" - 291 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "icons/timestamp.gif" - 207 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "icons/x.gif" - 283 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "icons/xml.gif" - 646 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "inp/http/data/file1" - 64 bytes - (52%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "js/validazione_email.js" - 3220 bytes - (82%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "js/jquery.js" - 120763 bytes - (8%) compressed ratio (size exceeded)
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "js/bramus/jsProgressBarHandler.js" - 16872 bytes - (83%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "js/prototype/prototype.js" - 126127 bytes - (6%) compressed ratio (size exceeded)
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "js/livevalidation_standalone.js" - 38758 bytes - (57%) compressed ratio (size exceeded)
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "js/jquery.uploadProgress.js" - 3874 bytes - (75%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "js/upload.js" - 1113 bytes - (70%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "nocat/icons/gopher-unknown.gif" - 132 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "nocat/icons/menu.png" - 163 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "nocat/images/auth_logo.png" - 920 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "wi-auth/www/js/curvycorners.js" - 30100 bytes - (72%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "wi-auth/www/js/effetti.js" - 241 bytes - (45%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "wi-auth/www/css/style.css" - 9581 bytes - (81%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "wi-auth/www/css/images/Footer_resize.jpg" - 3326 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "wi-auth/www/css/images/bbg.jpg" - 401 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "wi-auth/www/css/images/bgRESIZE.jpg" - 17456 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "wi-auth/www/css/images/headRESIZE150h.jpg" - 4558 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "wi-auth/www/images/logo_t.service_NoSfondo.png" - 15985 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "wi-auth/www/images/gratta_ant2.jpg" - 26118 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "wi-auth/www/images/lv7-logo-small.png" - 2689 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "ws/jWebSocket.js" - 103546 bytes - (4%) compressed ratio (size exceeded)
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "ws/jwebsocket.css" - 8299 bytes - (86%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "CSP/WEB/css/t-services.css" - 1503 bytes - (67%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "CSP/WEB/images/ecumene.png" - 226061 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "CSP/WEB/images/cyan.png" - 15288 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "CSP/WEB/images/white.png" - 123 bytes - (0%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "IR/WEB/css/ir.css" - 4327 bytes - (74%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file cached: "favicon.ico" - 318 bytes - (71%) compressed ratio
+(pid 28521) 12/07/11 14:30:01> [mod_http] file data users permission: '.htpasswd' loaded
+(pid 28521) 12/07/11 14:30:01> [mod_http] file data users permission: '.htdigest' loaded
+(pid 28521) 12/07/11 14:30:01> [mod_http] initialization of plugin success
+(pid 28521) 12/07/11 14:30:01> started new child (pid 28537), up to 1 children
+(pid 28537) 12/07/11 14:30:01> waiting for connection
+(pid 28521) 12/07/11 14:30:01> started new child (pid 28538), up to 2 children
+(pid 28538) 12/07/11 14:30:01> waiting for connection
+(pid 28537) 12/07/11 14:30:03> new client connected from  7 '127.0.0.1:39688', (1/1) clients currently connected
+(pid 28537) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: *"... from  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:03> new client connected from  7 '127.0.0.1:39689', (1/2) clients currently connected
+(pid 28538) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: *"... from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:03> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:03> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39689'
+(pid 28537) 12/07/11 14:30:04> received request (134 bytes) "GET /usp/benchmarking.usp?name=stefano HTTP/1.0\r\nConnection: Keep-Alive\r\nHost: 127.0.0.1\r\nUser-Agent: ApacheBench/2.3\r\nAccept: */*\r\n\r\n" from  7 '127.0.0.1:39688'
+(pid 28538) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39689'
+(pid 28538) 12/07/11 14:30:04> client closed connection from  7 '127.0.0.1:39689', (0/1) clients still connected
+(pid 28538) 12/07/11 14:30:04> waiting for connection
+(pid 28537) 12/07/11 14:30:04> sent response (154 bytes) "HTTP/1.0 200 OK\r\nServer: ULib\r\nConnection: keep-alive\r\nKeep-Alive: max=1, timeout=5\r\nContent-Type: text/html\r\nContent-Length: 22\r\n\r\n" to  7 '127.0.0.1:39688'
+(pid 28537) 12/07/11 14:30:04> client closed connection from  7 '127.0.0.1:39688', (0/0) clients still connected
+(pid 28537) 12/07/11 14:30:04> waiting for connection
+(pid 28521) 12/07/11 14:30:05> --- SIGTERM (Interrupt) ---
+(pid 28538) 12/07/11 14:30:05> --- SIGTERM (Interrupt) ---
+(pid 28537) 12/07/11 14:30:05> --- SIGTERM (Interrupt) ---
+(pid 28521) 12/07/11 14:30:05> *** SHUTDOWN userver_tcp (pid 28521) [apache@stefano] ***

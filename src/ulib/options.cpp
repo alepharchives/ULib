@@ -87,6 +87,13 @@
 #  define PAGE_SPEED_ENABLE     "no"
 #endif
 
+#ifdef HAVE_V8
+#  define V8_ENABLE     "enabled"
+#else
+#  define V8_ENABLE     "no"
+#endif
+
+
 struct option UOptions::long_options[128] = {
 { "help",    0, 0, 'h' },
 { "version", 0, 0, 'V' } };
@@ -585,11 +592,13 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
                "libevent support.....:%W " LIBEVENT_ENABLE "%W\n"
                "libxml2 support......:%W " LIBXML2_ENABLE "%W\n"
                "Page-Speed support...:%W " PAGE_SPEED_ENABLE "%W\n"
+               "V8 JavaScript support:%W " V8_ENABLE "%W\n"
                "memory pool support..:%W " MEMORY_POOL_ENABLE "%W\n",
                BRIGHTCYAN,  U_STRING_TO_TRACE(package), RESET,
                BRIGHTGREEN, U_STRING_TO_TRACE(version), RESET,
                U_STRING_TO_TRACE(purpose), BRIGHTWHITE, RESET,
                BRIGHTCYAN, RESET,
+               BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,

@@ -37,6 +37,7 @@ The current version offers the following features :
    * CGI support for shell script processes (with automatic management of form and cookie).
    * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
    * Support for minify HTML CGI output with wrapping [google page speed SDK](http://code.google.com/speed/page-speed/download.html#pagespeed-sdk).
+   * Support for running JavaScript code with wrapping [google V8 JavaScript Engine](http://code.google.com/apis/v8/intro.html).
    * [HTTP pseudo-streaming](http://www.phpmotionwiz.com/what-is-pseudo-streaming) for FLV video supported.
    * Support for Windows (without preforking).
    * Requests cut in phases for modular architecture (apache-like).

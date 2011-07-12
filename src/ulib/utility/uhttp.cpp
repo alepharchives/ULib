@@ -88,21 +88,24 @@ const char* UHTTP::ptrR;
 const char* UHTTP::ptrI;
 const char* UHTTP::ptrA;
 
-UMimeMultipart*         UHTTP::formMulti;
-UVector<UString>*       UHTTP::form_name_value;
-UVector<UIPAllow*>*     UHTTP::vallow_IP;
-UHTTP::upload_progress* UHTTP::ptr_upload_progress;
+UMimeMultipart*                   UHTTP::formMulti;
+UVector<UString>*                 UHTTP::form_name_value;
+UVector<UIPAllow*>*               UHTTP::vallow_IP;
+UHTTP::upload_progress*           UHTTP::ptr_upload_progress;
 
          UHTTP::UServletPage*     UHTTP::usp_page;
          UHTTP::UCServletPage*    UHTTP::csp_page;
 UHashMap<UHTTP::UServletPage*>*   UHTTP::usp_pages;
 UHashMap<UHTTP::UCServletPage*>*  UHTTP::csp_pages;
-
          UHTTP::UFileCacheData*   UHTTP::file_data;
 UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
 
 #ifdef HAVE_PAGE_SPEED
-UHTTP::UPageSpeed* UHTTP::page_speed;
+UHTTP::UPageSpeed*                UHTTP::page_speed;
+#endif
+
+#ifdef HAVE_V8
+UHTTP::UV8JavaScript*             UHTTP::v8_javascript;
 #endif
 
 const UString* UHTTP::str_origin;
@@ -139,9 +142,9 @@ void UHTTP::str_allocate()
 
    static ustringrep stringrep_storage[] = {
    { U_STRINGREP_FROM_CONSTANT("index.html") },
-   { U_STRINGREP_FROM_CONSTANT("application/timestamp-reply") },
-   { U_STRINGREP_FROM_CONSTANT(U_CTYPE_HTML) },
-   { U_STRINGREP_FROM_CONSTANT("application/soap+xml; charset=\"utf-8\"") },
+   { U_STRINGREP_FROM_CONSTANT("application/timestamp-reply\r\n") },
+   { U_STRINGREP_FROM_CONSTANT(U_CTYPE_HTML U_CRLF) },
+   { U_STRINGREP_FROM_CONSTANT("application/soap+xml; charset=\"utf-8\"\r\n") },
    { U_STRINGREP_FROM_CONSTANT("HTTP/1.%c %d %s\r\n"
                                "Server: ULib\r\n" // ULIB_VERSION "\r\n"
                                "%.*s"
@@ -213,10 +216,6 @@ UHTTP::UFileCacheData::UFileCacheData()
 #endif
 
    U_INTERNAL_DUMP("size = %u mtime = %ld dir() = %b u_ftw_ctx.is_directory = %b", size, mtime, S_ISDIR(mode), u_ftw_ctx.is_directory)
-
-   U_INTERNAL_ASSERT_POINTER(cache_file)
-
-   cache_file->insert(*pathname, this);
 }
 
 UHTTP::UFileCacheData::~UFileCacheData()
@@ -315,7 +314,7 @@ U_NO_EXPORT void UHTTP::in_DELETE()
 
 void UHTTP::in_READ()
 {
-   U_TRACE(1, "UHTTP::in_READ()")
+   U_TRACE(1+256, "UHTTP::in_READ()")
 
    U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_event)
 
@@ -367,7 +366,8 @@ void UHTTP::in_READ()
                  if (event.ip->mask & IN_DELETE) in_DELETE();
             else if (event.ip->mask & IN_MODIFY)
                {
-               if (file_data && isDataFromCache())
+               if (file_data &&
+                   isDataFromCache())
                   {
                   in_DELETE();
                   in_CREATE();
@@ -480,6 +480,21 @@ void UHTTP::initUSP()
 #ifdef HAVE_LIBTCC
 static char*        get_reply(void)          { return UClientImage_Base::wbuffer->data(); }
 static unsigned int get_reply_capacity(void) { return U_CSP_REPLY_CAPACITY; }
+#  ifdef HAVE_V8
+static char* runv8(const char* jssrc) // compiles and executes javascript and returns the script return value as string
+   {
+   if (UHTTP::v8_javascript)
+      {
+      UString x(jssrc);
+
+      UHTTP::v8_javascript->runv8(x);
+
+      return x.c_strdup();
+      }
+
+   return 0;
+   }
+#  endif
 #endif
 
 bool UHTTP::UCServletPage::compile(const UString& program)
@@ -500,6 +515,9 @@ bool UHTTP::UCServletPage::compile(const UString& program)
 
       (void) U_SYSCALL(tcc_add_symbol, "%p,%S,%p", s, "get_reply",          (void*)get_reply);
       (void) U_SYSCALL(tcc_add_symbol, "%p,%S,%p", s, "get_reply_capacity", (void*)get_reply_capacity);
+#  ifdef HAVE_V8
+      (void) U_SYSCALL(tcc_add_symbol, "%p,%S,%p", s, "runv8",              (void*)runv8);
+#  endif
 
       /* define preprocessor symbol 'sym'. Can put optional value */
 
@@ -673,10 +691,10 @@ void UHTTP::ctor()
    if (UServer_Base::socket->isSSL()) enable_caching_by_proxy_servers = true;
 #endif
 
+   char buffer[U_PATH_MAX];
+
 #ifdef HAVE_PAGE_SPEED
    U_INTERNAL_ASSERT_EQUALS(page_speed,0)
-
-   char buffer[U_PATH_MAX];
 
    (void) snprintf(buffer, U_PATH_MAX, U_FMT_LIBPATH, U_PATH_CONV(UPlugIn<void*>::plugin_dir), U_CONSTANT_TO_TRACE("mod_pagespeed"));
 
@@ -707,6 +725,32 @@ void UHTTP::ctor()
    U_INTERNAL_ASSERT_POINTER(page_speed)
 #endif
 
+#ifdef HAVE_V8
+   U_INTERNAL_ASSERT_EQUALS(v8_javascript,0)
+
+   (void) snprintf(buffer, U_PATH_MAX, U_FMT_LIBPATH, U_PATH_CONV(UPlugIn<void*>::plugin_dir), U_CONSTANT_TO_TRACE("mod_v8"));
+
+   v8_javascript = U_NEW(UHTTP::UV8JavaScript);
+
+   if (v8_javascript->UDynamic::load(buffer))
+      {
+      v8_javascript->runv8 = (vPFstr) (*v8_javascript)["runv8"];
+
+      U_INTERNAL_ASSERT_POINTER(v8_javascript->runv8)
+
+      U_SRV_LOG("load of plugin 'mod_v8' success");
+      }
+   else
+      {
+      U_SRV_LOG("load of plugin 'mod_v8' FAILED");
+
+      delete v8_javascript;
+             v8_javascript = 0;
+      }
+
+   U_INTERNAL_ASSERT_POINTER(v8_javascript)
+#endif
+
    initUSP(); // USP (ULib Servlet Page)
 // initCSP(); // CSP (C    Servlet Page)
 
@@ -714,9 +758,7 @@ void UHTTP::ctor()
 
 #ifndef HAVE_SYS_INOTIFY_H
    UServer_Base::handler_event = 0;
-#endif
-
-#ifdef HAVE_SYS_INOTIFY_H
+#else
    if (UServer_Base::handler_event)
       {
       // INIT INOTIFY FOR CACHE FILE SYSTEM
@@ -751,9 +793,9 @@ next:
 
    cache_file->allocate(6151U);
 
-   u_setPfnMatch(U_DOSMATCH, FNM_INVERT);
+   u_setPfnMatch(U_FNMATCH, FNM_INVERT);
 
-   (void) UServices::setFtw(0, U_CONSTANT_TO_PARAM("usp"));
+   (void) UServices::setFtw(0, U_CONSTANT_TO_PARAM("[cu]sp"));
 
    u_ftw_ctx.call              = checkFileForCache;
    u_ftw_ctx.sort_by           = u_ftw_ino_cmp;
@@ -890,9 +932,9 @@ next:
    if (home) UServer_Base::senvironment->snprintf_add("HOME=%s\n", home);
 
    (void) UServer_Base::senvironment->append(U_CONSTANT_TO_PARAM("GATEWAY_INTERFACE=CGI/1.1\n"
-                                                "SERVER_SOFTWARE=" PACKAGE_NAME "/" ULIB_VERSION "\n" // The server software you're using (such as Apache 1.3)
-                                                "PATH=/usr/local/bin:/usr/bin:/bin\n"                 // The system path your server is running under
-                                                "REDIRECT_STATUS=200\n"));
+                                             "SERVER_SOFTWARE=" PACKAGE_NAME "/" ULIB_VERSION "\n" // The server software you're using (such as Apache 1.3)
+                                             "PATH=/usr/local/bin:/usr/bin:/bin\n"                 // The system path your server is running under
+                                             "REDIRECT_STATUS=200\n"));
 
    U_ASSERT_EQUALS(UServer_Base::senvironment->isBinary(), false)
 }
@@ -930,7 +972,7 @@ void UHTTP::dtor()
 #  if defined(HAVE_SYS_INOTIFY_H) && defined(DEBUG_DEBUG)
       UStringRep* rep = UObject2StringRep(cache_file);
 
-      (void) UFile::writeToTmpl("/tmp/cache_file.%P", UString(rep));
+      (void) UFile::writeToTmpl("/tmp/doc_root_cache.%P", UString(rep));
 
       delete rep;
 #  endif
@@ -952,6 +994,10 @@ void UHTTP::dtor()
 
 #  ifdef HAVE_PAGE_SPEED
       if (page_speed) delete page_speed;
+#  endif
+
+#  ifdef HAVE_V8
+      if (v8_javascript) delete v8_javascript;
 #  endif
 
       // USP (ULib Servlet Page)
@@ -1144,24 +1190,42 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
     **/
 
    const char* start;
-   unsigned char c = ptr[0];
+   unsigned char c = *ptr;
 
-   if (c == 'G') goto bypass;
-
-   while (u_isspace(*ptr)) ++ptr; // RFC 2616 4.1 "servers SHOULD ignore any empty line(s) received where a Request-Line is expected."
-
-   c = u_toupper(ptr[0]);
-
-   if (c != 'G' && // GET
-       c != 'P' && // POST/PUT
-       c != 'H' && // HEAD or response
-       c != 'D' && // DELETE
-       c != 'O')   // OPTIONS
+   if (c != 'G')
       {
-      U_RETURN(false);
+      // RFC 2616 4.1 "servers SHOULD ignore any empty line(s) received where a Request-Line is expected"
+
+      if (u_isspace(c)) while (u_isspace((c = *++ptr)));
+
+      // DELETE
+      // GET
+      // HEAD or response
+      // POST/PUT
+      // OPTIONS
+
+      static const unsigned char is_req[] = {
+         0,   0,   0,   0,   0,   0,   0,   0,
+         0,   0,   0,   0,   0,   0,   0,   0,
+         0,   0,   0,   0,   0,   0,   0,   0,
+         0,   0,   0,   0,   0,   0,   0,   0, // 24      25      26      27      28      29      30      31 
+         0,   0,   0,   0,   0,   0,   0,   0, // ' ',    '!',    '\"',   '#',    '$',    '%',    '&',    '\'',
+         0,   0,   0,   0,   0,   0,   0,   0, // '(',    ')',    '*',    '+',    ',',    '-',    '.',    '/',
+         0,   0,   0,   0,   0,   0,   0,   0, // '0',    '1',    '2',    '3',    '4',    '5',    '6',    '7',
+         0,   0,   0,   0,   0,   0,   0,   0, // '8',    '9',    ':',    ';',    '<',    '=',    '>',    '?',
+         0,   0,   0,   0, 'D',   0,   0, 'G', // '@',    'A',    'B',    'C',    'D',    'E',    'F',    'G',
+       'H',   0,   0,   0,   0,   0,   0, 'O', // 'H',    'I',    'J',    'K',    'L',    'M',    'N',    'O',
+       'P',   0,   0,   0,   0,   0,   0,   0, // 'P',    'Q',    'R',    'S',    'T',    'U',    'V',    'W',
+         0,   0,   0,   0,   0,   0,   0,   0, // 'X',    'Y',    'Z',    '[',    '\\',   ']',    '^',    '_',
+         0,   0,   0,   0, 'D',   0,   0, 'G', // '`',    'a',    'b',    'c',    'd',    'e',    'f',    'g',
+       'H',   0,   0,   0,   0,   0,   0, 'O', // 'h',    'i',    'j',    'k',    'l',    'm',    'n',    'o',
+       'P',   0,   0,   0,   0,   0,   0,   0, // 'p',    'q',    'r',    's',    't',    'u',    'v',    'w',
+         0,   0,   0,   0,   0,   0,   0,   0  // 'x',    'y',    'z',    '{',    '|',    '}',    '~',    '\177'
+      };
+
+      if ((c = is_req[c]) == 0) U_RETURN(false);
       }
 
-bypass:
    // try to parse the request line: GET / HTTP/1.n
 
    start = http_info.method = ptr;
@@ -1237,15 +1301,13 @@ bypass:
 
    while (true)
       {
-      c = *ptr;
+      c = (*(unsigned char*)ptr);
 
       if (c == ' ') break;
 
       /* check uri for invalid characters (NB: \n can happen because openssl base64...) */
 
-      if (c <=  32 ||
-          c == 127 ||
-          c == 255)
+      if (u_iscntrl(c))
          {
          U_WARNING("invalid character %C in URI %.*S", c, ptr - http_info.uri, http_info.uri);
 
@@ -1291,7 +1353,7 @@ bypass:
 end:
    while (true)
       {
-      c = *++ptr;
+      c = (*(unsigned char*)++ptr);
 
       if (c == '\r')
          {
@@ -1771,8 +1833,8 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
    static const unsigned char header_req[] = {
       0,   0,   0,   0,   0,   0,   0,   0,
       0,   0,   0,   0,   0,   0,   0,   0,
+      0,   0,   0,   0,   0,   0,   0,   0,
       0,   0,   0,   0,   0,   0,   0,   0, // 24      25      26      27      28      29      30      31
-      0,   0,   0,   0,   0,   0,   0,   0, // 32      33      34      35      36      37      38      39
       0,   0,   0,   0,   0,   0,   0,   0, // ' ',    '!',    '\"',   '#',    '$',    '%',    '&',    '\'',
       0,   0,   0,   0,   0,   0,   0,   0, // '(',    ')',    '*',    '+',    ',',    '-',    '.',    '/',
       0,   0,   0,   0,   0,   0,   0,   0, // '0',    '1',    '2',    '3',    '4',    '5',    '6',    '7',
@@ -1804,8 +1866,6 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
       c = *(p = (ptr + pos1));
 
       U_INTERNAL_DUMP("c = %C header_req[%d] = %C", c, c, header_req[c])
-
-      c = header_req[c];
 
       if ((c = header_req[c]) &&
           ((c1 = p[(n =  4)], c1 == ':' || u_isspace(c1)) || // "Host:"
@@ -2788,11 +2848,13 @@ void UHTTP::setHTTPResponse(int nResponseCode, const UString* content_type, cons
 
    if (content_type)
       {
+      U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(*content_type), U_CONSTANT_TO_PARAM(U_CRLF)))
+
       if (body) tmp.snprintf("Content-Length: %u\r\n", body->size());
 
       (void) tmp.append(U_CONSTANT_TO_PARAM("Content-Type: "));
       (void) tmp.append(*content_type);
-      (void) tmp.append(U_CONSTANT_TO_PARAM("\r\n\r\n"));
+      (void) tmp.append(U_CONSTANT_TO_PARAM(U_CRLF));
       }
 
    if (body) *UClientImage_Base::body = *body;
@@ -2910,8 +2972,10 @@ void UHTTP::setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint
 
    if (ext.empty() == false)
       {
+      U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(ext), U_CONSTANT_TO_PARAM(U_CRLF)))
+
       (void) tmp.append(U_CONSTANT_TO_PARAM("\r\n"));
-      (void) tmp.append(UStringExt::trim(ext));
+      (void) tmp.append(ext);
 
 #  ifdef DEBUG
       ext.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
@@ -2961,7 +3025,7 @@ void UHTTP::setHTTPUnAuthorized()
    if (digest_authentication)        ext.snprintf_add("Digest qop=\"auth\", nonce=\"%ld\", algorithm=MD5,", u_now->tv_sec);
    else                       (void) ext.append(U_CONSTANT_TO_PARAM("Basic"));
 
-   (void) ext.append(U_CONSTANT_TO_PARAM(" realm=\"" U_HTTP_REALM "\""));
+   (void) ext.append(U_CONSTANT_TO_PARAM(" realm=\"" U_HTTP_REALM "\"\r\n"));
 
    setHTTPResponse(HTTP_UNAUTHORIZED, &ext, &body);
 }
@@ -3458,23 +3522,24 @@ UString UHTTP::getHeaderMimeType(const char* content, const char* content_type, 
    U_INTERNAL_ASSERT_POINTER(file)
    U_INTERNAL_ASSERT_POINTER(content_type)
 
-   bool add_encoding = false;
    UString header(U_CAPACITY);
 
    // check magic byte
 
-   if (content &&
+   U_INTERNAL_DUMP("U_http_is_accept_deflate = %C u_mime_index = %C", U_http_is_accept_deflate, u_mime_index)
+
+   if (content                  &&
+       U_http_is_accept_deflate &&
        U_MEMCMP(content, GZIP_MAGIC) == 0)
       {
+      u_mime_index = U_gz;
+
       if (U_STRNEQ(content_type, "application/x-gzip")) content_type = file->getMimeType(false);
 
       U_INTERNAL_ASSERT_DIFFERS(U_STRNEQ(content_type, "application/x-gzip"), true)
 
-      add_encoding = true;
-      u_mime_index = U_gz;
+      (void) header.assign(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
       }
-
-   if (add_encoding) (void) header.assign(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
 
    /* http://code.google.com/speed/page-speed/docs/caching.html
     *
@@ -3538,8 +3603,6 @@ UString UHTTP::getHeaderMimeType(const char* content, const char* content_type, 
                   header.snprintf_add("Last-Modified: %#D\r\n", file->st_mtime);
       }
 
-   U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
-
    if (u_mime_index == U_css)
       {
       U_INTERNAL_ASSERT(U_STRNEQ(content_type, "text/css"))
@@ -3570,6 +3633,7 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
    U_TRACE(0, "UHTTP::putDataInCache(%.*S,%.*S)", U_STRING_TO_TRACE(fmt), U_STRING_TO_TRACE(content))
 
    U_INTERNAL_ASSERT_POINTER(file)
+   U_INTERNAL_ASSERT_POINTER(file_data)
    U_INTERNAL_ASSERT(fmt.isNullTerminated())
    U_INTERNAL_ASSERT_MAJOR(file_data->size, 0)
 
@@ -3670,6 +3734,44 @@ end:
    U_SRV_LOG("file cached: %S - %u bytes - (%d%%) compressed ratio%s", pathname->data(), file_data->size, 100 - ratio, motivation);
 }
 
+U_NO_EXPORT bool UHTTP::manageDataForCache()
+{
+   U_TRACE(0, "UHTTP::manageDataForCache()")
+
+   U_INTERNAL_ASSERT_POINTER(file)
+   U_INTERNAL_ASSERT_POINTER(pathname)
+   U_INTERNAL_ASSERT_POINTER(cache_file)
+
+   file_data = U_NEW(UFileCacheData);
+
+   cache_file->insert(*pathname, file_data);
+
+   if (cache_file_mask == 0   ||
+       u_ftw_ctx.is_directory ||
+       file->dir()            || // NB: can be a simbolic link to a directory...
+       u_dosmatch_with_OR(U_FILE_TO_PARAM(*file), U_STRING_TO_PARAM(*cache_file_mask), 0) == false)
+      {
+      U_RETURN(false);
+      }
+
+   U_ASSERT_EQUALS(u_dosmatch(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("*/cgi-bin/*"), 0), false)
+
+   UString content = file->getContent();
+
+   if (content.empty() == false)
+      {
+      putDataInCache(getHeaderMimeType(content.data(), file->getMimeType(true), 0, U_TIME_FOR_EXPIRE), content);
+
+      U_RETURN(true);
+      }
+   
+   U_INTERNAL_ASSERT_EQUALS(file_data->size,0)
+
+   U_SRV_LOG("warning: found empty file: %S", pathname->data());
+
+   U_RETURN(false);
+}
+
 void UHTTP::checkFileForCache()
 {
    U_TRACE(0+256, "UHTTP::checkFileForCache()")
@@ -3685,30 +3787,9 @@ void UHTTP::checkFileForCache()
 
    file->setPath(*pathname);
 
-   if (file->stat() == false) return;
+   // NB: file->stat() get also the size of file...
 
-   file_data = U_NEW(UFileCacheData);
-
-   if (cache_file_mask == 0   ||
-       u_ftw_ctx.is_directory ||
-       file->dir()            || // NB: can be a simbolic link to a directory...
-       u_dosmatch_with_OR(U_FILE_TO_PARAM(*file), U_STRING_TO_PARAM(*cache_file_mask), 0) == false)
-      {
-      return;
-      }
-
-   U_ASSERT_EQUALS(u_dosmatch(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("*/cgi-bin/*"), 0), false)
-
-   UString content = file->getContent();
-
-   if (content.empty())
-      {
-      U_SRV_LOG("warning: found empty file: %S", pathname->data());
-
-      return;
-      }
-
-   putDataInCache(getHeaderMimeType(content.data(), file->getMimeType(true), 0, U_TIME_FOR_EXPIRE), content);
+   if (file->stat()) (void) manageDataForCache();
 }
 
 bool UHTTP::isFileInCache()
@@ -3820,10 +3901,7 @@ U_NO_EXPORT void UHTTP::checkPath()
 
    if (u_canonicalize_pathname(pathname->data())) pathname->size_adjust_force(); // NB: can be referenced by file...
 
-   if (UServer_Base::isFileInsideDocumentRoot(*pathname) == false) // like chroot()...
-      {
-      setHTTPRequestForbidden();
-      }
+   if (UServer_Base::isFileInsideDocumentRoot(*pathname) == false) setHTTPRequestForbidden(); // like chroot()...
    else
       {
       // special case: '/' alias '.'...
@@ -3841,25 +3919,14 @@ U_NO_EXPORT void UHTTP::checkPath()
          {
          file->setPath(*pathname);
 
-         if (isFileInCache())
+              if (isFileInCache()) setHTTPRequestInFileCache();
+         else if (file->stat())
             {
-            setHTTPRequestInFileCache();
+            U_SRV_LOG("Inotify %s enabled - found file not in cache: %.*S", (UServer_Base::handler_event ? "is" : "NOT"), U_FILE_TO_TRACE(*file));
 
-            return;
+            if (manageDataForCache()) setHTTPRequestInFileCache();
+            else                      setHTTPRequestNeedProcessing();
             }
-
-#     ifdef HAVE_SYS_INOTIFY_H
-         if (UServer_Base::handler_event)
-            {
-            // NB: there is inotify, we are sure that the file don't exists...
-
-            U_INTERNAL_ASSERT_EQUALS(file->stat(), false)
-
-            return;
-            }
-#     endif
-
-         if (file->stat()) setHTTPRequestNeedProcessing();
          }
       }
 }
@@ -4546,7 +4613,7 @@ U_NO_EXPORT bool UHTTP::splitCGIOutput(const char*& ptr1, const char* ptr2, uint
 
    if (ptr1)
       {
-      pos = UClientImage_Base::wbuffer->distance(ptr1) + 2; // NB: we cut \r\n...
+      pos = UClientImage_Base::wbuffer->distance(ptr1) + U_CONSTANT_SIZE(U_CRLF); // NB: we cut \r\n
 
       U_INTERNAL_ASSERT_MINOR(pos, endHeader)
 
@@ -4554,7 +4621,7 @@ U_NO_EXPORT bool UHTTP::splitCGIOutput(const char*& ptr1, const char* ptr2, uint
 
       U_INTERNAL_DUMP("diff = %u pos = %u endHeader = %u", diff, pos, endHeader)
 
-      if (diff > 4) ext += UClientImage_Base::wbuffer->substr(pos, diff - 4); // NB: we cut \r\n\r\n...
+      if (diff > U_CONSTANT_SIZE(U_CRLF2)) ext += UClientImage_Base::wbuffer->substr(pos, diff - U_CONSTANT_SIZE(U_CRLF)); // NB: we cut one couple of \r\n
 
       U_INTERNAL_DUMP("value = %.*S ext = %.*S", (uint32_t)(ptr2int(ptr1) - ptr2int(ptr2)), ptr2, U_STRING_TO_TRACE(ext))
 
@@ -4760,26 +4827,32 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                   if (file->stat())
                      {
-                     bool bheader = (ext.empty() == false);
                      UString request(300U + pathname->size() + ext.size());
 
-                     request.snprintf("GET %.*s HTTP/1.1", U_STRING_TO_TRACE(*pathname));
-
-                     if (bheader)
-                        {
-                        (void) request.append(U_CONSTANT_TO_PARAM(U_CRLF));
-                        (void) request.append(ext);
-                        }
-
-                     (void) request.append(U_CONSTANT_TO_PARAM(U_CRLF2));
+                     request.snprintf("GET %.*s HTTP/1.1\r\n" \
+                                      "%.*s" \
+                                      "\r\n",
+                                      U_STRING_TO_TRACE(*pathname),
+                                      U_STRING_TO_TRACE(ext));
 
                      U_SRV_LOG("header X-Sendfile found in CGI output: serving file %.*S", U_STRING_TO_TRACE(*pathname));
 
+                     char c = U_http_is_accept_deflate;
+
                      resetHTTPInfo();
+
+                     U_http_is_accept_deflate = c;
+
+                     U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
 
                      (void) readHTTPHeader(0, request);
 
-                     if (bheader) (void) checkHTTPRequestForHeader(request);
+                     if (ext.empty() == false)
+                        {
+                        U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(ext), U_CONSTANT_TO_PARAM(U_CRLF)))
+
+                        (void) checkHTTPRequestForHeader(request);
+                        }
 
                      UClientImage_Base::body->clear();
                      UClientImage_Base::wbuffer->clear();
@@ -5980,6 +6053,25 @@ U_EXPORT const char* UHTTP::UPageSpeed::dump(bool reset) const
                   << "optimize_gif  " << (void*)optimize_gif << '\n'
                   << "optimize_png  " << (void*)optimize_png << '\n'
                   << "optimize_jpg  " << (void*)optimize_jpg << '\n';
+
+   if (reset)
+      {
+      UObjectIO::output();
+
+      return UObjectIO::buffer_output;
+      }
+
+   return 0;
+}
+#  endif
+
+#  ifdef HAVE_V8
+U_EXPORT const char* UHTTP::UV8JavaScript::dump(bool reset) const
+{
+   UDynamic::dump(false);
+
+   *UObjectIO::os << '\n'
+                  << "runv8         " << (void*)runv8  << '\n';
 
    if (reset)
       {

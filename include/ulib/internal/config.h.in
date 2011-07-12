@@ -968,6 +968,9 @@ typedef unsigned long long uint64;
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
 
+/* V8 - version of Google V8 JavaScript Engine */
+#undef _V8_VERSION
+
 /* endian byte order */
 #undef __BYTE_ORDER
 

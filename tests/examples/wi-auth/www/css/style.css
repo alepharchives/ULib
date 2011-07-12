@@ -50,7 +50,6 @@ left : 14px;
 letter-spacing : 1px;
 margin-left : 300px;
 width : 90%;
-
 }
 .logo p#lineone span {
 color : red;
@@ -60,7 +59,6 @@ color : red;
 color : #01bcf3;
 text-decoration : none;
 }
-
 #navigation {
 width : 600px;
 color : #333333;
@@ -98,7 +96,6 @@ color : #669acc;
 }
 #content {
 width : 880px;
-
 color : #333;
 background : #f6f6ea url(images/bbg.jpg);
 margin : 0 0 0 0;
@@ -106,8 +103,6 @@ padding-top : 20px;
 padding-left : 10px;
 padding-right : 10px;
 }
-
-
 #boxes {
 height : 200px;
 width : 850px;
@@ -210,25 +205,20 @@ padding-top : 8px;
 margin : 8px auto;
 padding : 5px;
 width : 850px;
-
 height : 100%;
 background-color : #deebf2;
 text-align : justify;
 font-size : 1.2em;
-
 }
-
 .content_center_bottom {
 margin : 8px auto;
 padding : 5px;
 width : 850px;
-
 height : 100%;
 background-color : #deebf2;
 text-align : justify;
 font-size : 0.8em;
 }
-
 .content_center li {
 /*margin-left: 15px;*/
 /*font-weight: bold; */
@@ -243,7 +233,6 @@ text-align : justify;
 font-size : 0.9em;
 /*height : 8970px;*/
 height : 100%;
-
 }
 .content_center_legali li {
 margin-left: 15px;
@@ -257,9 +246,7 @@ height : 600px;
 background-color : #deebf2;
 text-align : justify;
 font-size : 1.2em;
-
 }
-
 .content_center_contatti li {
 margin-left: 15px;
 /*font-weight: bold; */
@@ -270,33 +257,29 @@ font-size : 1.7em;
 .grossetto{
 font-weight: bold;
 }
-
 .img_gratta_anteriore{
 /*background : #fff url(images/gratta_ant.jpg)no-repeat top left;*/
 height : 150px;
 width : 240px;
-
 margin-bottom : 15px;
 margin-top : 5px;
-
 }
-.img_gratta_anteriore a img{
+.img_gratta_anteriore a img {
 border: 0;
 }
-.img_gratta_posteriore a img{
+.img_gratta_posteriore a img {
 border: 0;
 }
-.img_gratta_posteriore{
+.img_gratta_posteriore {
 background : #fff url(images/gratta_post.jpg)no-repeat top left;
 height : 150px;
 width : 240px;
 margin-bottom : 15px;
 margin-top : 5px;
 }
-.img_gratta_posteriore a{
+.img_gratta_posteriore a {
 border: 0 !important;
 border: 1px solid red;
-
 }
 .img_gratta_posteriore a:hover {
 border: 1px solid blue;
@@ -305,7 +288,6 @@ border: 1px solid blue;
 margin-bottom : 15px;
 margin-top : 10px;
 }
-
 .content_left {
 margin : 7px auto;
 padding : 5px;
@@ -324,7 +306,6 @@ margin-bottom : 5px;
 font-weight: bold;
 text-align : justify;
 font-size : 0.9em;
-
 }
 .content_left h3 {
 padding-left : 5px;
@@ -336,7 +317,6 @@ font-size : 1em;
 margin-bottom : 2px;
 margin-top : 5px;
 }
-
 .spot_left {
 display : inline;
 float : left;
@@ -379,28 +359,28 @@ margin-left : 2em;
 .col h1 {
 background-color : red;
 padding : 0;
-/*background : transparent url(images/prova_banner.gif);*/
+/*background : transparent url(images/prova_banner.gif);*/
 height : 120px;
 width : 170px;
 }
 .col h2 {
 background-color : red;
 padding : 0;
-/*background : transparent url(images/prova_banner.gif);*/
+/*background : transparent url(images/prova_banner.gif);*/
 height : 120px;
 width : 170px;
 }
 .col h3 {
 background-color : red;
 padding : 0;
-/*background : transparent url(images/prova_banner.gif);*/
+/*background : transparent url(images/prova_banner.gif);*/
 height : 120px;
 width : 170px;
 }
 .col h4 {
 background-color : red;
 padding : 0;
-/*background : transparent url(images/prova_banner.gif);*/
+/*background : transparent url(images/prova_banner.gif);*/
 height : 120px;
 width : 170px;
 }
@@ -432,7 +412,7 @@ right : 390px;
 top : 882px;
 border : none;
 }
-a img{
+a img {
 border: 0;
 } 
 #logo_foo_Lv7 {
@@ -448,34 +428,14 @@ border : 0px solid black;
 margin-top : 0;
 height : 55px;
 width : 170px;
-
 }
-img.spot{
+img.spot {
 width: 170px;
 height: 55px;
 }
 .spot_container {
 margin-top : 2px;
 margin-bottom : 2px;
-}
-.login {
-/*background-color : #6699ff;*/
-background-color : #6698cd;
-color : #fffff1;
-width : 190px;
-text-align : center;
-margin-top : 25px;
-margin-bottom : 25px;
-border-style : solid;
-border-width : 1px;
-border-color : black;
-position absolute;
-left : 340px;
-}
-.login label{
-text-align : center;
-font-family : helvetica, arial, sans-serif;
-font-size : 13px;
 }
 .login_item {
 text-align : justify;
@@ -495,30 +455,59 @@ display : block;
 font-style : italic;
 }
 .login_box {
-background-color : #385e85;
+/*
+background-color: #385e85;
+*/
 }
 .login_input {
 width : 170px;
 margin-top : 5px;
 margin-left : 2px;
 margin-right : 2px;
-/*background-color : #deebf2;*/
+/*
+background-color: #deebf2;
+*/
 padding-top : 2px;
 padding-bottom : 2px;
 }
+.login {
+background-color: #6698cd;
+color: #fffff1;
+width: 190px;
+text-align: center;
+margin-top: 25px;
+margin-bottom: 25px;
+border-style: solid;
+border-width: 1px;
+border-color: black;
+position absolute;
+left: 340px;
+}
+.login label {
+text-align : center;
+font-family : helvetica, arial, sans-serif;
+font-size : 13px;
+}
 .login li#titolo {
 font-weight : bold;
-background-color : #385e85;
 color : #fffff1;
-/*padding-left : 10px;*/
+background-color : #385e85;
 margin-bottom : 10px;
 padding-bottom : 5px;
 padding-top : 5px;
 text-decoration : none;
+/* Do rounding (native in Opera, Firefox and Safari) */
+border-radius: 10px;
+-webkit-border-radius: 10px;
+-moz-border-radius: 10px;
 }
 .login input#login_button {
 margin-top : 6px;
 margin-bottom : 6px;
+/* Do rounding (native in Opera, Firefox and Safari) */
+border-radius: 5px;
+-webkit-border-radius: 5px;
+-moz-border-radius: 5px;
 }
 .login ul {
 margin : auto;

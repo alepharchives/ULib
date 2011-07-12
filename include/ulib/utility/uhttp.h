@@ -729,8 +729,9 @@ public:
 
    static void initCSP();
 
-#ifdef HAVE_PAGE_SPEED // (Google Page Speed)
    typedef void (*vPFstr)(UString&);
+
+#ifdef HAVE_PAGE_SPEED // (Google Page Speed)
    typedef void (*vPFpcstr)(const char*, UString&);
 
    class UPageSpeed : public UDynamic {
@@ -765,6 +766,40 @@ public:
 
    static UPageSpeed* page_speed;
 #endif
+
+#ifdef HAVE_V8 // (Google V8 JavaScript Engine)
+
+   class UV8JavaScript : public UDynamic {
+   public:
+
+   vPFstr runv8;
+
+   // COSTRUTTORI
+
+   UV8JavaScript()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UV8JavaScript, "")
+
+      runv8 = 0;
+      }
+
+   ~UV8JavaScript()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UV8JavaScript)
+      }
+
+#ifdef DEBUG
+   const char* dump(bool reset) const U_EXPORT;
+#endif
+
+   private:
+   UV8JavaScript(const UV8JavaScript&) : UDynamic() {}
+   UV8JavaScript& operator=(const UV8JavaScript&)   { return *this; }
+   };
+
+   static UV8JavaScript* v8_javascript;
+#endif
+
 
    // REWRITE RULE
 
@@ -943,6 +978,7 @@ private:
    static void updateUploadProgress(int byte_read) U_NO_EXPORT;
    static bool setCGIShellScript(UString& command) U_NO_EXPORT;
 
+   static bool manageDataForCache() U_NO_EXPORT;
    static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;
    static bool processHTTPAuthorization(const UString& request) U_NO_EXPORT;
    static void _callRunDynamicPage(UStringRep* key, void* value) U_NO_EXPORT;

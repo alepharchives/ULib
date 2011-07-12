@@ -140,7 +140,7 @@ int UStreamPlugIn::handlerInit()
             UProcess::setProcessGroup(pid, pgid);
             */
 
-            content_type.setNullTerminated();
+            (void) content_type.append(U_CONSTANT_TO_PARAM(U_CRLF));
 
             U_SRV_LOG("initialization of plugin success");
 

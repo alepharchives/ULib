@@ -142,12 +142,14 @@ start_msg() {
 }
 
 export DIR_CMD
+export DIR_LIB
 
 # function : test_prg
 test_prg() {
 
 	if [ -z "$DIR_CMD" ]; then
-		DIR_CMD=../../examples/$1
+		DIR_LIB=../..
+		DIR_CMD=$DIR_LIB/examples/$1
 	fi
 
 	if [ -x "./test_$1$SUFFIX" ]; then
@@ -158,7 +160,7 @@ test_prg() {
 
 		if [ -n "$STRACE" ]; then
 			CMD=".libs/$CMD"
-			export LD_LIBRARY_PATH=../../src/ulib/.libs
+			export LD_LIBRARY_PATH=$DIR_LIB/src/ulib/.libs
 		fi
 
 	elif [ -x "$DIR_CMD/$1$SUFFIX" ]; then
@@ -169,7 +171,7 @@ test_prg() {
 
 		if [ -n "$STRACE" ]; then
 			CMD="$DIR_CMD/.libs/$PRG$SUFFIX"
-			export LD_LIBRARY_PATH=../../src/ulib/.libs
+			export LD_LIBRARY_PATH=$DIR_LIB/src/ulib/.libs
 		fi
 
 	elif [ -x "../src/$1$SUFFIX" ]; then

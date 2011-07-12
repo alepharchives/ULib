@@ -17,6 +17,10 @@ rm -f web_server_tcc*.log \
 
 DIR_CMD="../../examples/userver"
 
+# ***************************************************************************************************************
+# NB: ULib (headers and libs) need to be installed for tcc find ulib/internal/csp_interface.h and link libulib.so
+# ***************************************************************************************************************
+
 if [ "$TERM" != "cygwin" ]; then
    ( cd libraries; make; cd ..;
 	  cd ../../src/ulib/net/server/plugin/.libs &&

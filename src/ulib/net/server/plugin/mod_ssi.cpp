@@ -262,8 +262,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
        * exec         DONE
        *   cmd        DONE
        *   cgi        DONE
-       *   usp        DONE
-       *   csp        DONE
+       *   servlet    DONE
        * fsize        DONE
        *   file       DONE
        *   virtual    DONE
@@ -619,9 +618,11 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                      if (UHTTP::checkForCGIRequest())
                         {
-                        (void) UHTTP::processCGIRequest((UCommand*)0, &environment, false, false);
-
-                        x = *UClientImage_Base::wbuffer;
+                        if (UHTTP::processCGIRequest((UCommand*)0, &environment, false, false)) x = *UClientImage_Base::wbuffer;
+                        else
+                           {
+                           U_RETURN_STRING(UString::getStringNull());
+                           }
                         }
                      }
                   }
@@ -773,39 +774,42 @@ int USSIPlugIn::handlerRequest()
       if (UHTTP::isHttpPOST()) *UClientImage_Base::body = U_HTTP_BODY(*UClientImage_Base::request);
                                *UClientImage_Base::body = processSSIRequest(body, 0);
 
-#  ifdef HAVE_PAGE_SPEED
-      UHTTP::page_speed->minify_html("USSIPlugIn::handlerRequest()", *UClientImage_Base::body);
-#  endif
-
-      UString header(U_CAPACITY);
-
-      U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
-
-      if (U_http_is_accept_deflate)
+      if (UClientImage_Base::body->empty() == false)
          {
-         *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
+#     ifdef HAVE_PAGE_SPEED
+         UHTTP::page_speed->minify_html("USSIPlugIn::handlerRequest()", *UClientImage_Base::body);
+#     endif
 
-         (void) header.assign(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+         UString header(U_CAPACITY);
+
+         U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
+
+         if (U_http_is_accept_deflate)
+            {
+            *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
+
+            (void) header.assign(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+            }
+
+         if (bcache)
+            {
+            UHTTP::file_data = file_data;
+
+            (void) header.append(UHTTP::getDataFromCache(true, false));
+
+            // NB: adjusting the size of response...
+
+            (void) UHTTP::checkHTTPContentLength(header, UClientImage_Base::body->size());
+            }
+         else
+            {
+            u_mime_index = U_ssi;
+
+            (void) header.append(UHTTP::getHeaderMimeType(0, U_CTYPE_HTML, UClientImage_Base::body->size(), 0));
+            }
+
+         *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, header);
          }
-
-      if (bcache)
-         {
-         UHTTP::file_data = file_data;
-
-         (void) header.append(UHTTP::getDataFromCache(true, false));
-
-         // NB: adjusting the size of response...
-
-         (void) UHTTP::checkHTTPContentLength(header, UClientImage_Base::body->size());
-         }
-      else
-         {
-         u_mime_index = U_ssi;
-
-         (void) header.append(UHTTP::getHeaderMimeType(0, U_CTYPE_HTML, UClientImage_Base::body->size(), 0));
-         }
-
-      *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, header);
 
       UHTTP::setHTTPRequestProcessed();
       }

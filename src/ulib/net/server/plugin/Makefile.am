@@ -6,6 +6,10 @@ if PAGE_SPEED
 SUBDIRS += page_speed
 endif
 
+if V8
+SUBDIRS += v8
+endif
+
 if TCC
 if !STATIC_HANDLER_TCC
 SUBDIRS += mod_tcc
@@ -32,7 +36,8 @@ EXTRA_DIST = *.cpp Makefile.* \
 				 mod_tcc/*.cpp mod_tcc/Makefile.* \
 				 mod_shib/*.cpp mod_shib/Makefile.* \
 				 mod_geoip/*.cpp mod_geoip/Makefile.* \
-				 page_speed/*.cpp page_speed/Makefile.*
+				 page_speed/*.cpp page_speed/Makefile.* \
+				 v8/*.cpp v8/Makefile.*
 
 MAINTAINERCLEANFILES = Makefile.in
 

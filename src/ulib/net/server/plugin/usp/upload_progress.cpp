@@ -2,7 +2,7 @@
 
 #define U_DYNAMIC_PAGE_APPEND(string)              (void)UClientImage_Base::wbuffer->append(string)
 
-#define U_DYNAMIC_PAGE_OUTPUT(fmt,args...)          (UClientImage_Base::_buffer->snprintf(fmt , ##args),UClientImage_Base::wbuffer->append(*UClientImage_Base::_buffer))
+#define U_DYNAMIC_PAGE_OUTPUT(fmt,args...)         (UClientImage_Base::_buffer->snprintf(fmt , ##args),UClientImage_Base::wbuffer->append(*UClientImage_Base::_buffer))
 
 #define U_DYNAMIC_PAGE_OUTPUT_ENCODED(fmt,args...) (UClientImage_Base::_buffer->snprintf(fmt , ##args),UXMLEscape::encode(*UClientImage_Base::_buffer,*UClientImage_Base::_encoded),UClientImage_Base::wbuffer->append(*UClientImage_Base::_encoded))
 

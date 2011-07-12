@@ -594,4 +594,29 @@ dnl		printf "libxml2 found in $libxml2dir\n";
 	fi
 	AC_SUBST(HAVE_PAGE_SPEED)],
 	[AC_MSG_RESULT(no)])
+
+	AC_MSG_CHECKING(if you want to use V8 JavaScript Engine)
+	AC_ARG_WITH(v8-javascript, [  --with-v8-javascript    use V8 JavaScript Engine    - [[will check /usr /usr/local]] [[default=no]] ],
+	[if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			v8dir="$dir";
+			if test -f "$dir/include/v8.h"; then
+				found_v8="yes";
+				break;
+			fi
+		done
+		if test x_$found_v8 != x_yes; then
+			AC_MSG_ERROR("Cannot find V8 JavaScript Engine");
+		else
+			echo "${T_MD}V8 JavaScript Engine found in $v8dir${T_ME}"
+			HAVE_V8=yes
+			CPPFLAGS="$CPPFLAGS -DHAVE_V8";
+			v8_version=$(strings $v8dir/lib*/libv8.so | grep -i 'libv8-' | head -n1 | cut -d'-' -f2 | head -c5)
+		fi
+	fi
+	AC_SUBST(HAVE_V8)],
+	[AC_MSG_RESULT(no)])
 ])
