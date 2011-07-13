@@ -2196,7 +2196,7 @@ bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pa
 }
 
 #ifdef GCOV
-#  define U_LOOP_STRING( exec_code ) { for (char c = *s; n--; c = *(++s)) { exec_code; }; }
+#  define U_LOOP_STRING( exec_code ) { for (unsigned char c = *s; n--; c = *(++s)) { exec_code; }; }
 #else
 /* This is INCREDIBLY ugly, but fast. We break the string up into 8 byte units. On the first time through
 // the loop we get the "leftover bytes" (strlen % 8). On every other iteration, we perform 8 BODY's so we
@@ -2204,7 +2204,7 @@ bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pa
 // used enough, it's worth the ugly coding
 */
 #  define U_LOOP_STRING( exec_code ) {     \
-   char c;                                 \
+   unsigned char c;                        \
    uint32_t U_LOOP_CNT = (n + 8 - 1) >> 3; \
    switch (n & (8 - 1)) {                  \
       case 0:                              \
@@ -2277,40 +2277,6 @@ const unsigned char u_uri_encoded_char[256] = {
    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 
-/* Text detection based on ascmagic.c from the file(1) utility */
-
-#define F 0 /* character never appears in text */
-#define T 1 /* character appears in plain ASCII text */
-#define I 2 /* character appears in ISO-8859 text */
-#define X 3 /* character appears in non-ISO extended ASCII (Mac, IBM PC) */
-
-const unsigned char u_text_chars[256] = {
-   /*                  BEL BS HT LF    FF CR    */
-   F, F, F, F, F, F, F, T, T, T, T, F, T, T, F, F,  /* 0x0X */
-   /*                              ESC          */
-   F, F, F, F, F, F, F, F, F, F, F, T, F, F, F, F,  /* 0x1X */
-   T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T,  /* 0x2X */
-   T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T,  /* 0x3X */
-   T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T,  /* 0x4X */
-   T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T,  /* 0x5X */
-   T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, T,  /* 0x6X */
-   T, T, T, T, T, T, T, T, T, T, T, T, T, T, T, F,  /* 0x7X */
-   /*            NEL                            */
-   X, X, X, X, X, T, X, X, X, X, X, X, X, X, X, X,  /* 0x8X */
-   X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,  /* 0x9X */
-   I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I,  /* 0xaX */
-   I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I,  /* 0xbX */
-   I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I,  /* 0xcX */
-   I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I,  /* 0xdX */
-   I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I,  /* 0xeX */
-   I, I, I, I, I, I, I, I, I, I, I, I, I, I, I, I   /* 0xfX */
-};
-
-#undef F
-#undef T
-#undef I
-#undef X
-
 /************************************************************************
  * From rfc2044: encoding of the Unicode values on UTF-8:               *
  *                                                                      *
@@ -2352,7 +2318,7 @@ __pure bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
          * Even if the whole file is valid UTF-8 sequences,
          * still reject it if it uses weird control characters.
          */
-         if (u_text_chars[c] != 1) return false;
+         if ((u__ct_tab[c] & 0x200) == 0) return false;
          }
       else if ((c & 0x40) == 0) return false; /* 10xxxxxx never 1st byte */
       else
@@ -2403,9 +2369,11 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
       c = (be ? buf[i+1] + 256 * buf[i]
               : buf[i]   + 256 * buf[i+1]);
 
-      if (c == 0xfffe) return 0;
-
-      if (c < 128 && u_text_chars[c] != 1) return 0;
+      if ( c == 0xfffe ||
+          (c  < 128 && ((u__ct_tab[c] & 0x200) == 0)))
+         {
+         return 0;
+         }
       }
 
    return (1 + be);
@@ -2415,42 +2383,63 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
  * Shorter definitions to make the data more compact
  */
 
-#define C 0x01 /* Control character */
-#define D 0x02 /* Digit */
-#define L 0x04 /* Lowercase */
-#define P 0x08 /* Punctuation */
-#define S 0x10 /* Space */
-#define U 0x20 /* Uppercase */
-#define X 0x40 /* Hexadecimal */
-#define B 0x80 /* Blank */
+#define C 0x001 /* Control character */
+#define D 0x002 /* Digit */
+#define L 0x004 /* Lowercase */
+#define P 0x008 /* Punctuation */
+#define S 0x010 /* Space */
+#define U 0x020 /* Uppercase */
+#define X 0x040 /* Hexadecimal */
+#define B 0x080 /* Blank (a space or a tab) */
+#define R 0x100 /* carriage return or new line (a \r or \n) */
+#define T 0x200 /* character appears in plain ASCII text */
+#define F 0x400 /* character never appears in text */
 
-#define CS  (C | S)
-#define LU  (L | U)
-#define LX  (L | X)
-#define UX  (U | X)
-#define SB  (S | B)
-#define CSB (C | S | B)
+#define CS   (C | S)
+#define CT   (C | T)
+#define CF   (C | F)
+#define PT   (P | T)
+#define DT   (D | T)
+#define UT   (U | T)
+#define LU   (L | U)
+#define LX   (L | X)
+#define LT   (L | T)
+#define UX   (U | X)
+#define SB   (S | B)
+#define LXT  (L | X | T)
+#define UXT  (U | X | T)
+#define SBT  (S | B | T)
+#define CST  (C | S | T)
+#define CSB  (C | S | B)
+#define CSF  (C | S | F)
+#define CSR  (C | S | R)
+#define CSBT (C | S | B | T)
+#define CSRT (C | S | R | T)
 
-const unsigned char u__ct_tab[256] = {
-   C,  C,  C,  C,  C,  C,  C,  C,  C,  CSB,CS, CS, CS, CS, C,  C,
-   C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,
-   SB, P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,
-   D,  D,  D,  D,  D,  D,  D,  D,  D,  D,  P,  P,  P,  P,  P,  P,
-   P,  UX, UX, UX, UX, UX, UX, U,  U,  U,  U,  U,  U,  U,  U,  U,
-   U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  P,  P,  P,  P,  P,
-   P,  LX, LX, LX, LX, LX, LX, L,  L,  L,  L,  L,  L,  L,  L,  L,
-   L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  P,  P,  P,  P,  C,
+const unsigned int u__ct_tab[256] = {
+   /*                                BEL  BS    HT    LF        FF    CR      */
+   CF,  CF,  CF,  CF,  CF,  CF,  CF,  CT, CT, CSBT, CSRT, CSF, CST, CSRT, CF, CF, /* 0x0X */
+   /*                                                     ESC                 */
+   CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF, CF,   CF,   CF,  CT,  CF,   CF, CF, CF, /* 0x1X */
+
+   SBT, PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   PT,  PT,  PT,   PT, PT, PT, /* 0x2X */
+   DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,   PT,  PT,  PT,   PT, PT, PT, /* 0x3X */
+   PT,  UXT, UXT, UXT, UXT, UXT, UXT, UT,  UT,  UT,   UT,  UT,  UT,   UT, UT, UT, /* 0x4X */
+   UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,   UT,  PT,  PT,   PT, PT, PT, /* 0x5X */
+   PT,  LXT, LXT, LXT, LXT, LXT, LXT, LT,  LT,  LT,   LT,  LT,  LT,   LT, LT, LT, /* 0x6X */
+   LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,   LT,  PT,  PT,   PT, PT, CF, /* 0x7X */
 
    /* Assume an ISO-1 character set */
 
-   C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,
-   C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,
-   S,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,
-   P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,  P,
-   U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  U,
-   U,  U,  U,  U,  U,  U,  U,  P,  U,  U,  U,  U,  U,  U,  U,  LU,
-   L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  L,
-   L,  L,  L,  L,  L,  L,  L,  P,  L,  L,  L,  L,  L,  L,  L,  L
+   /*                NEL                                             */
+   C,  C,  C,  C,  C, CT,  C,  C,  C,    C,   C,   C,   C,  C,   C,  C, /* 0x8X */
+   C,  C,  C,  C,  C,  C,  C,  C,  C,    C,   C,   C,   C,  C,   C,  C, /* 0x9X */
+   S,  P,  P,  P,  P,  P,  P,  P,  P,    P,   P,   P,   P,  P,   P,  P, /* 0xaX */
+   P,  P,  P,  P,  P,  P,  P,  P,  P,    P,   P,   P,   P,  P,   P,  P, /* 0xbX */
+   U,  U,  U,  U,  U,  U,  U,  U,  U,    U,   U,   U,   U,  U,   U,  U, /* 0xcX */
+   U,  U,  U,  U,  U,  U,  U,  P,  U,    U,   U,   U,   U,  U,   U, LU, /* 0xdX */
+   L,  L,  L,  L,  L,  L,  L,  L,  L,    L,   L,   L,   L,  L,   L,  L, /* 0xeX */
+   L,  L,  L,  L,  L,  L,  L,  P,  L,    L,   L,   L,   L,  L,   L,  L  /* 0xfX */
 };
 
 #undef C
@@ -2460,15 +2449,31 @@ const unsigned char u__ct_tab[256] = {
 #undef S
 #undef U
 #undef X
-#undef O
 #undef B
+#undef R
+#undef T
+#undef F
 
 #undef CS
+#undef CT
+#undef CF
 #undef LU
 #undef LX
 #undef UX
 #undef SB
+#undef PT
+#undef DT
+#undef UT
+#undef LT
 #undef CSB
+#undef CSR
+#undef LXT
+#undef UXT
+#undef SBT
+#undef CST
+#undef CSF
+#undef CSBT
+#undef CSRT
 
 /* Table for converting to lower-case */
 

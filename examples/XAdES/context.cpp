@@ -913,7 +913,7 @@ bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
 
    const char* xptr = strchr(_uri, '#');
 
-   if (xptr == NULL)
+   if (xptr == 0)
       {
       UBaseTransform* uriTransform = U_NEW(UTranformInputURI(_uri));
 
@@ -964,7 +964,7 @@ bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
       {
       // check for XADES
 
-      if (u_find(xptr, u_strlen(xptr), U_CONSTANT_TO_PARAM("SigID-SignedProperties")))
+      if (u_find(xptr, u_strlen(xptr), U_CONSTANT_TO_PARAM("idPackageSignature-SignedProperties")))
          {
          transform->tag = U_STRING_FROM_CONSTANT("xades:SignedProperties");
 

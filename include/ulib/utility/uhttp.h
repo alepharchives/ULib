@@ -978,7 +978,7 @@ private:
    static void updateUploadProgress(int byte_read) U_NO_EXPORT;
    static bool setCGIShellScript(UString& command) U_NO_EXPORT;
 
-   static bool manageDataForCache() U_NO_EXPORT;
+   static void manageDataForCache() U_NO_EXPORT;
    static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;
    static bool processHTTPAuthorization(const UString& request) U_NO_EXPORT;
    static void _callRunDynamicPage(UStringRep* key, void* value) U_NO_EXPORT;

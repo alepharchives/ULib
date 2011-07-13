@@ -11,18 +11,18 @@
 #include "cquery.h"
 
 extern "C" {
-extern U_EXPORT void runDynamicPage(UClientImage_Base* client_image);
+extern U_EXPORT int runDynamicPage(UClientImage_Base* client_image);
 
 #define FORM_PART1            FORM_PART[0]
 #define FORM_PART2            FORM_PART[1]
 #define FORM_PART3            FORM_PART[2]
 
 #define SCRIPT_NAME           "seek"
-#define IR_DIRECTORY          "/IR/doc"                                                // location of index db (start with / for skip /usp)...
-#define DOC_DIRECTORY         "/usr/src/ULib-" VERSION "/tests/examples" IR_DIRECTORY  // location of docs indexed...
-#define DB_SESSION            "IR/WEB/result/session"                                  // location of session db...
-#define FORM_FILE_DIR_DEFAULT "IR/WEB/form/en"                                         // default directory of form template...
-#define SESSION_SIZE          (16 * 1024)                                              // num entry of session storage...
+#define IR_DIRECTORY          "/IR/doc"                                                      // location of index db (start with / for skip /usp)...
+#define DOC_DIRECTORY         "/usr/src/ULib-" ULIB_VERSION "/tests/examples" IR_DIRECTORY   // location of docs indexed...
+#define DB_SESSION            "IR/WEB/result/session"                                        // location of session db...
+#define FORM_FILE_DIR_DEFAULT "IR/WEB/form/en"                                               // default directory of form template...
+#define SESSION_SIZE          (16 * 1024)                                                    // num entry of session storage...
 
 class DataSession {
 public:
@@ -192,7 +192,7 @@ static UString* set_cookie;
 static DataSession* session;
 static char FORM_FILE_DIR[256];
 static UHashMap<DataSession*>* tbl_session;
-static const char* FORM_PART[3] = { 0, 0, VERSION };
+static const char* FORM_PART[3] = { 0, 0, ULIB_VERSION };
 
 // paginazione
 static UString* link_paginazione;
@@ -405,7 +405,7 @@ static void set_paginazione()
 
    // creo i link alla pagina corrente ed a quelle ad essa vicine
 
-   for (int32_t i = pagina_precedente; i <= (int32_t)pagina_successiva; ++i)
+   for (uint32_t i = pagina_precedente; i <= pagina_successiva; ++i)
       {
       // se tra quelle vicine c'è la prima pagina (già riportata)
 
@@ -413,7 +413,7 @@ static void set_paginazione()
 
       // se tra quelle vicine c'è l'ultima pagina (che mostrerò con le prossime istruzioni)
 
-      if (i > (int32_t)ultima_pagina) continue;
+      if (i > ultima_pagina) continue;
 
       crea_link(i);
       }
@@ -600,7 +600,7 @@ static void init()
 
    footer = U_NEW(UString(200U));
 
-   footer->snprintf("%s, with %u documents and %u words.", VERSION, cdb_names->size(), cdb_words->size());
+   footer->snprintf("%s, with %u documents and %u words.", ULIB_VERSION, cdb_names->size(), cdb_words->size());
 
    bool exist = cache->open(U_STRING_FROM_CONSTANT("IR/WEB/form/cache.frm"), 32 * 1024);
 

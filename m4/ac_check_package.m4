@@ -9,7 +9,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 		wanted=0;
 		with_libz="${CROSS_ENVIRONMENT}/usr";
 	fi
-	AC_ARG_WITH(libz, [  --with-libz             use system     LIBZ library - [[will check /usr /usr/local]] [[default=yes]]], [
+	AC_ARG_WITH(libz, [  --with-libz             use system     LIBZ library - [[will check /usr /usr/local]] [[default=use if present]]], [
 	if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
@@ -50,7 +50,7 @@ dnl		printf "LIBZ found in $libzdir\n";
 
 	AC_MSG_CHECKING(if you want to enable build of ZIP support)
 	AC_ARG_ENABLE(zip,
-				[  --enable-zip            enable build of ZIP support - require libz [[default: depend from libz]]])
+				[  --enable-zip            enable build of ZIP support - require libz [[default: use if present libz]]])
 	if test "$enable_zip" != "no" && test x_$found_libz = x_yes; then
 		enable_zip="yes"
 	else
@@ -64,7 +64,7 @@ dnl		printf "LIBZ found in $libzdir\n";
 		wanted=0;
 		with_libuuid="${CROSS_ENVIRONMENT}/usr";
 	fi
-	AC_ARG_WITH(libuuid, [  --with-libuuid          use system  libuuid library - [[will check /usr /usr/local]] [[default=yes]]],
+	AC_ARG_WITH(libuuid, [  --with-libuuid          use system  libuuid library - [[will check /usr /usr/local]] [[default=use if present]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
@@ -109,7 +109,7 @@ dnl		printf "libuuid found in $libuuiddir\n";
 		wanted=0;
 		with_magic="${CROSS_ENVIRONMENT}/usr";
 	fi
-	AC_ARG_WITH(magic, [  --with-magic            use system libmagic library - [[will check /usr /usr/local]] [[default=yes]]],
+	AC_ARG_WITH(magic, [  --with-magic            use system libmagic library - [[will check /usr /usr/local]] [[default=use if present]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
@@ -154,7 +154,7 @@ dnl		printf "libmagic found in $magicdir\n";
 		wanted=0;
 		with_ssl="${CROSS_ENVIRONMENT}/usr";
 	fi
-	AC_ARG_WITH(ssl, [  --with-ssl              use system      SSL library - [[will check /usr /usr/local]] [[default=yes]]],
+	AC_ARG_WITH(ssl, [  --with-ssl              use system      SSL library - [[will check /usr /usr/local]] [[default=use if present]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
@@ -199,49 +199,13 @@ dnl		openssl_version=$($ssldir/bin/openssl version | cut -d' ' -f2)
 	AC_SUBST(HAVE_SSL_TS)],
 	[AC_MSG_RESULT(no)])
 
-	AC_MSG_CHECKING(if SSH library is wanted)
-	AC_ARG_WITH(ssh, [  --with-ssh              use system      SSH library - [[will check /usr /usr/local]]],
-	[if test "$withval" = "no"; then
-		AC_MSG_RESULT(no)
-	else
-		AC_MSG_RESULT(yes)
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
-			sshdir="$dir";
-			if test -f "$dir/include/libssh/libssh.h"; then
-				found_ssh="yes";
-				break;
-			fi
-		done
-		if test x_$found_ssh != x_yes; then
-			AC_MSG_ERROR(Cannot find SSH library)
-		else
-			echo "${T_MD}libssh found in $sshdir${T_ME}"
-dnl		printf "libSSH found in $sshdir\n";
-			HAVE_SSH=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_SSH";
-dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -d' ' -f3)
-			libssh_version=$(strings $sshdir/lib*/libssh.so | grep 'libssh-[[0-9]]' | head -n1 | cut -d'-' -f4)
-			if test -z "${libssh_version}"; then
-				libssh_version="Unknown"
-			fi
-			LIBS="-lssh $LIBS";
-			if test $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
-				CPPFLAGS="$CPPFLAGS -I$sshdir/include";
-				LDFLAGS="$LDFLAGS -L$sshdir/lib -Wl,-R$sshdir/lib";
-				PRG_LDFLAGS="$PRG_LDFLAGS -L$sshdir/lib";
-			fi
-		fi
-	fi
-	AC_SUBST(HAVE_SSH)],
-	[AC_MSG_RESULT(no)])
-
 	AC_MSG_CHECKING(if PCRE library is wanted)
 	wanted=1;
 	if test -z "$with_pcre" ; then
 		wanted=0;
 		with_pcre="${CROSS_ENVIRONMENT}/usr";
 	fi
-	AC_ARG_WITH(pcre, [  --with-pcre             use system     PCRE library - [[will check /usr /usr/local]] [[default=yes]]],
+	AC_ARG_WITH(pcre, [  --with-pcre             use system     PCRE library - [[will check /usr /usr/local]] [[default=use if present]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
@@ -286,7 +250,7 @@ dnl		printf "PCRE found in $pcredir\n";
 		wanted=0;
 		with_expat="${CROSS_ENVIRONMENT}/usr";
 	fi
-	AC_ARG_WITH(expat, [  --with-expat            use system    EXPAT library - [[will check /usr /usr/local]] [[default=yes]]],
+	AC_ARG_WITH(expat, [  --with-expat            use system    EXPAT library - [[will check /usr /usr/local]] [[default=use if present]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
@@ -323,6 +287,42 @@ dnl		printf "EXPAT found in $expatdir\n";
 		fi
 	fi
 	AC_SUBST(HAVE_EXPAT)],
+	[AC_MSG_RESULT(no)])
+
+	AC_MSG_CHECKING(if SSH library is wanted)
+	AC_ARG_WITH(ssh, [  --with-ssh              use system      SSH library - [[will check /usr /usr/local]]],
+	[if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			sshdir="$dir";
+			if test -f "$dir/include/libssh/libssh.h"; then
+				found_ssh="yes";
+				break;
+			fi
+		done
+		if test x_$found_ssh != x_yes; then
+			AC_MSG_ERROR(Cannot find SSH library)
+		else
+			echo "${T_MD}libssh found in $sshdir${T_ME}"
+dnl		printf "libSSH found in $sshdir\n";
+			HAVE_SSH=yes
+			CPPFLAGS="$CPPFLAGS -DHAVE_SSH";
+dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -d' ' -f3)
+			libssh_version=$(strings $sshdir/lib*/libssh.so | grep 'libssh-[[0-9]]' | head -n1 | cut -d'-' -f4)
+			if test -z "${libssh_version}"; then
+				libssh_version="Unknown"
+			fi
+			LIBS="-lssh $LIBS";
+			if test $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
+				CPPFLAGS="$CPPFLAGS -I$sshdir/include";
+				LDFLAGS="$LDFLAGS -L$sshdir/lib -Wl,-R$sshdir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$sshdir/lib";
+			fi
+		fi
+	fi
+	AC_SUBST(HAVE_SSH)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if cURL library is wanted)
@@ -569,7 +569,7 @@ dnl		printf "libxml2 found in $libxml2dir\n";
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if you want to use page-speed SDK)
-	AC_ARG_WITH(page-speed, [  --with-page-speed       use google page-speed SDK   - [[will check /usr /usr/local]] [[default=no]] ],
+	AC_ARG_WITH(page-speed, [  --with-page-speed       use google page-speed SDK   - [[will check /usr /usr/local]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
@@ -596,7 +596,7 @@ dnl		printf "libxml2 found in $libxml2dir\n";
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if you want to use V8 JavaScript Engine)
-	AC_ARG_WITH(v8-javascript, [  --with-v8-javascript    use V8 JavaScript Engine    - [[will check /usr /usr/local]] [[default=no]] ],
+	AC_ARG_WITH(v8-javascript, [  --with-v8-javascript    use V8 JavaScript Engine    - [[will check /usr /usr/local]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else

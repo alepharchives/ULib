@@ -391,6 +391,8 @@ __pure bool UStringRep::isEndHeader(uint32_t pos) const
       u_line_terminator     = U_CRLF;
       u_line_terminator_len = 2;
 
+      U_INTERNAL_ASSERT(u_islterm(str[pos]))
+
       U_RETURN(true);
       }
    else if (_remain >= 2 &&
@@ -398,6 +400,8 @@ __pure bool UStringRep::isEndHeader(uint32_t pos) const
       {
       u_line_terminator     = U_LF;
       u_line_terminator_len = 1;
+
+      U_INTERNAL_ASSERT(u_islterm(str[pos]))
 
       U_RETURN(true);
       }

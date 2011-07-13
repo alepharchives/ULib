@@ -753,9 +753,9 @@ HAVE_DBI
 HAVE_MYSQL
 HAVE_LDAP
 HAVE_CURL
+HAVE_SSH
 HAVE_EXPAT
 HAVE_PCRE
-HAVE_SSH
 HAVE_SSL_TS
 HAVE_SSL
 HAVE_MAGIC
@@ -946,9 +946,9 @@ enable_zip
 with_libuuid
 with_magic
 with_ssl
-with_ssh
 with_pcre
 with_expat
+with_ssh
 with_curl
 with_ldap
 with_mysql
@@ -1617,7 +1617,7 @@ Optional Features:
   --enable-final          build size optimized apps (needs more amounts of memory) [default=yes]
   --enable-new-ldflags    enable the new linker flags (enable-new-dtags,as-needed,...) [default=yes]
   --enable-overload-new-delete  enable use of our versions of the C++ memory operators [default=no]
-  --enable-zip            enable build of ZIP support - require libz [default: depend from libz]
+  --enable-zip            enable build of ZIP support - require libz [default: use if present libz]
   --enable-static-module=MODULES
 
 
@@ -1634,21 +1634,21 @@ Optional Packages:
                           default is disabled.
   --with-parser           use parser generator bison/yacc
   --with-distcc           use distcc
-  --with-libz             use system     LIBZ library - [will check /usr /usr/local] [default=yes]
-  --with-libuuid          use system  libuuid library - [will check /usr /usr/local] [default=yes]
-  --with-magic            use system libmagic library - [will check /usr /usr/local] [default=yes]
-  --with-ssl              use system      SSL library - [will check /usr /usr/local] [default=yes]
+  --with-libz             use system     LIBZ library - [will check /usr /usr/local] [default=use if present]
+  --with-libuuid          use system  libuuid library - [will check /usr /usr/local] [default=use if present]
+  --with-magic            use system libmagic library - [will check /usr /usr/local] [default=use if present]
+  --with-ssl              use system      SSL library - [will check /usr /usr/local] [default=use if present]
+  --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=use if present]
+  --with-expat            use system    EXPAT library - [will check /usr /usr/local] [default=use if present]
   --with-ssh              use system      SSH library - [will check /usr /usr/local]
-  --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=yes]
-  --with-expat            use system    EXPAT library - [will check /usr /usr/local] [default=yes]
   --with-curl             use system     cURL library - [will check /usr /usr/local]
   --with-ldap             use system openLDAP library - [will check /usr /usr/local]
   --with-mysql            use system    MySQL library - [will check /usr /usr/local]
   --with-dbi              use system      DBI library - [will check /usr /usr/local]
   --with-libevent         use system libevent library - [will check /usr /usr/local]
   --with-libxml2          use system  libxml2 library - [will check /usr /usr/local]
-  --with-page-speed       use google page-speed SDK   - [will check /usr /usr/local] [default=no]
-  --with-v8-javascript    use V8 JavaScript Engine    - [will check /usr /usr/local] [default=no]
+  --with-page-speed       use google page-speed SDK   - [will check /usr /usr/local]
+  --with-v8-javascript    use V8 JavaScript Engine    - [will check /usr /usr/local]
   --with-pthread=lib    using specified pthread library
   --with-linuxthreads     use linux kernel mode library
 
@@ -21781,49 +21781,6 @@ $as_echo "no" >&6; }
 fi
 
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if SSH library is wanted" >&5
-$as_echo_n "checking if SSH library is wanted... " >&6; }
-
-# Check whether --with-ssh was given.
-if test "${with_ssh+set}" = set; then :
-  withval=$with_ssh; if test "$withval" = "no"; then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	else
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
-			sshdir="$dir";
-			if test -f "$dir/include/libssh/libssh.h"; then
-				found_ssh="yes";
-				break;
-			fi
-		done
-		if test x_$found_ssh != x_yes; then
-			as_fn_error $? "Cannot find SSH library" "$LINENO" 5
-		else
-			echo "${T_MD}libssh found in $sshdir${T_ME}"
-			HAVE_SSH=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_SSH";
-			libssh_version=$(strings $sshdir/lib*/libssh.so | grep 'libssh-[0-9]' | head -n1 | cut -d'-' -f4)
-			if test -z "${libssh_version}"; then
-				libssh_version="Unknown"
-			fi
-			LIBS="-lssh $LIBS";
-			if test $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
-				CPPFLAGS="$CPPFLAGS -I$sshdir/include";
-				LDFLAGS="$LDFLAGS -L$sshdir/lib -Wl,-R$sshdir/lib";
-				PRG_LDFLAGS="$PRG_LDFLAGS -L$sshdir/lib";
-			fi
-		fi
-	fi
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if PCRE library is wanted" >&5
 $as_echo_n "checking if PCRE library is wanted... " >&6; }
 	wanted=1;
@@ -21922,6 +21879,49 @@ $as_echo "$msg" >&6; }
 				CPPFLAGS="$CPPFLAGS -I$expatdir/include"
 				LDFLAGS="$LDFLAGS -L$expatdir/lib -Wl,-R$expatdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$expatdir/lib";
+			fi
+		fi
+	fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if SSH library is wanted" >&5
+$as_echo_n "checking if SSH library is wanted... " >&6; }
+
+# Check whether --with-ssh was given.
+if test "${with_ssh+set}" = set; then :
+  withval=$with_ssh; if test "$withval" = "no"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			sshdir="$dir";
+			if test -f "$dir/include/libssh/libssh.h"; then
+				found_ssh="yes";
+				break;
+			fi
+		done
+		if test x_$found_ssh != x_yes; then
+			as_fn_error $? "Cannot find SSH library" "$LINENO" 5
+		else
+			echo "${T_MD}libssh found in $sshdir${T_ME}"
+			HAVE_SSH=yes
+			CPPFLAGS="$CPPFLAGS -DHAVE_SSH";
+			libssh_version=$(strings $sshdir/lib*/libssh.so | grep 'libssh-[0-9]' | head -n1 | cut -d'-' -f4)
+			if test -z "${libssh_version}"; then
+				libssh_version="Unknown"
+			fi
+			LIBS="-lssh $LIBS";
+			if test $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
+				CPPFLAGS="$CPPFLAGS -I$sshdir/include";
+				LDFLAGS="$LDFLAGS -L$sshdir/lib -Wl,-R$sshdir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$sshdir/lib";
 			fi
 		fi
 	fi

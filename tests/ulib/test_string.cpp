@@ -1499,6 +1499,18 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5, "main(%d)", argc)
 
+   U_INTERNAL_DUMP("u__ct_tab['\\r'] = %d %B", u__ct_tab['\r'], u__ct_tab['\r'])
+   U_INTERNAL_DUMP("u__ct_tab['\\n'] = %d %B", u__ct_tab['\n'], u__ct_tab['\n'])
+
+   U_INTERNAL_DUMP("u_islterm('\\r') = %b", u_islterm('\r'))
+   U_INTERNAL_DUMP("u_islterm('\\n') = %b", u_islterm('\n'))
+
+   U_INTERNAL_DUMP("u__ct_tab[0xC3] = %d %B", u__ct_tab[0xC3], u__ct_tab[0xC3]) // ü
+   U_INTERNAL_DUMP("u_istext( 0xC3) = %b", u_istext(0xC3))
+
+   U_INTERNAL_DUMP("u__ct_tab[0xBC] = %d %B", u__ct_tab[0xBC], u__ct_tab[0xBC]) // @
+   U_INTERNAL_DUMP("u_istext( 0xBC) = %b", u_istext(0xBC))
+
    int n = (argc > 1 ? atoi(argv[1]) : 1);
 
 #ifdef TEST_SPLIT

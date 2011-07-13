@@ -260,23 +260,25 @@ extern U_EXPORT const unsigned char u_uri_encoded_char[256];
 
 /* character type identification - Assumed an ISO-1 character set */
 
-extern U_EXPORT const unsigned char u__ct_tab[256];
+extern U_EXPORT const unsigned int  u__ct_tab[256];
 extern U_EXPORT const unsigned char u__ct_tol[256];
 extern U_EXPORT const unsigned char u__ct_tou[256];
 
-static inline bool u_iscntrl(int c)  { return (u__ct_tab[c] & 0x01) != 0; } // __C } /* Control character. */
-static inline bool u_isdigit(int c)  { return (u__ct_tab[c] & 0x02) != 0; } // __D } /* Digit. */
-static inline bool u_islower(int c)  { return (u__ct_tab[c] & 0x04) != 0; } // __L } /* Lowercase. */
-static inline bool u_ispunct(int c)  { return (u__ct_tab[c] & 0x08) != 0; } // __P } /* Punctuation. */
-static inline bool u_isspace(int c)  { return (u__ct_tab[c] & 0x10) != 0; } // __S } /* Space. */
-static inline bool u_isupper(int c)  { return (u__ct_tab[c] & 0x20) != 0; } // __U } /* Uppercase. */
-static inline bool u_isblank(int c)  { return (u__ct_tab[c] & 0x80) != 0; } // __B } /* Blank. */
+static inline bool u_iscntrl(int c)  { return ((u__ct_tab[c] & 0x001) != 0); } // __C } /* Control character. */
+static inline bool u_isdigit(int c)  { return ((u__ct_tab[c] & 0x002) != 0); } // __D } /* Digit. */
+static inline bool u_islower(int c)  { return ((u__ct_tab[c] & 0x004) != 0); } // __L } /* Lowercase. */
+static inline bool u_ispunct(int c)  { return ((u__ct_tab[c] & 0x008) != 0); } // __P } /* Punctuation. */
+static inline bool u_isspace(int c)  { return ((u__ct_tab[c] & 0x010) != 0); } // __S } /* Space. */
+static inline bool u_isupper(int c)  { return ((u__ct_tab[c] & 0x020) != 0); } // __U } /* Uppercase. */
+static inline bool u_isblank(int c)  { return ((u__ct_tab[c] & 0x080) != 0); } // __B } /* Blank (a space or a tab). */
+static inline bool u_islterm(int c)  { return ((u__ct_tab[c] & 0x100) != 0); } // __R } /* carriage return or new line (a \r or \n). */
+static inline bool u_istext( int c)  { return ((u__ct_tab[c] & 0x400) == 0); } // __F } /* character never appears in text */
 
-static inline bool u_isalpha( int c) { return (u__ct_tab[c] & 0x24) != 0; } // (__L | __U)
-static inline bool u_isxdigit(int c) { return (u__ct_tab[c] & 0x42) != 0; } // (__D | __X)
-static inline bool u_isalnum( int c) { return (u__ct_tab[c] & 0x26) != 0; } // (__D | __L | __U)
-static inline bool u_isgraph( int c) { return (u__ct_tab[c] & 0x2E) != 0; } // (__D | __L | __P | __U)
-static inline bool u_isprint( int c) { return (u__ct_tab[c] & 0x3E) != 0; } // (__D | __L | __P | __S | __U)
+static inline bool u_isalpha( int c) { return ((u__ct_tab[c] & 0x024) != 0); } // (__L | __U)
+static inline bool u_isxdigit(int c) { return ((u__ct_tab[c] & 0x042) != 0); } // (__D | __X)
+static inline bool u_isalnum( int c) { return ((u__ct_tab[c] & 0x026) != 0); } // (__D | __L | __U)
+static inline bool u_isgraph( int c) { return ((u__ct_tab[c] & 0x02E) != 0); } // (__D | __L | __P | __U)
+static inline bool u_isprint( int c) { return ((u__ct_tab[c] & 0x03E) != 0); } // (__D | __L | __P | __S | __U)
 
 static inline int u_tolower(int c)   { return u__ct_tol[c]; }
 static inline int u_toupper(int c)   { return u__ct_tou[c]; }
@@ -298,10 +300,6 @@ enum TextType {
    U_TYPE_TEXT_UTF16BE,
    U_TYPE_BINARY_DATA
 };
-
-extern U_EXPORT const unsigned char u_text_chars[256];
-
-static inline bool u_istext(int c) { return (u_text_chars[c] != 0); }
 
 extern U_EXPORT bool u_isText(  const unsigned char* restrict s, uint32_t n) __pure;
 extern U_EXPORT bool u_isUTF8(  const unsigned char* restrict s, uint32_t n) __pure;

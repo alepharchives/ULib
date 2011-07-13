@@ -110,21 +110,22 @@ Take a look at:
 
     $ ./configure --help
 * ......
-* --with-libz             use system     LIBZ library - [will check /usr /usr/local] [default=yes]
-* --enable-zip            enable build of ZIP support - require libz [default: depend from libz]
-* --with-libuuid          use system  libuuid library - [will check /usr /usr/local] [default=yes]
-* --with-magic            use system libmagic library - [will check /usr /usr/local] [default=yes]
-* --with-ssl              use system      SSL library - [will check /usr /usr/local] [default=yes]
+* --enable-zip            enable build of ZIP support - require libz [default: use if present libz]
+* --with-libz             use system     LIBZ library - [will check /usr /usr/local] [default=use if present]
+* --with-libuuid          use system  libuuid library - [will check /usr /usr/local] [default=use if present]
+* --with-magic            use system libmagic library - [will check /usr /usr/local] [default=use if present]
+* --with-ssl              use system      SSL library - [will check /usr /usr/local] [default=use if present]
+* --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=use if present]
+* --with-expat            use system    EXPAT library - [will check /usr /usr/local] [default=use if present]
 * --with-ssh              use system      SSH library - [will check /usr /usr/local]
-* --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=yes]
-* --with-expat            use system    EXPAT library - [will check /usr /usr/local] [default=yes]
 * --with-curl             use system     cURL library - [will check /usr /usr/local]
 * --with-ldap             use system openLDAP library - [will check /usr /usr/local]
 * --with-mysql            use system    MySQL library - [will check /usr /usr/local]
 * --with-dbi              use system      DBI library - [will check /usr /usr/local]
 * --with-libevent         use system libevent library - [will check /usr /usr/local]
 * --with-libxml2          use system  libxml2 library - [will check /usr /usr/local]
-* --with-page-speed       use google page-speed SDK   - [will check /usr /usr/local] [default=no]
+* --with-page-speed       use google page-speed SDK   - [will check /usr /usr/local]
+* --with-v8-javascript    use V8 JavaScript Engine    - [will check /usr /usr/local]
 
 if you desire wrapping of some system library installed.
 

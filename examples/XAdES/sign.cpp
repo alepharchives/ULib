@@ -94,6 +94,8 @@
 "    </ds:X509Data>\r\n" \
 "  </ds:KeyInfo>\r\n"
 
+// NB: if we change id name (idPackageSignature) remember to change also context.cpp...
+
 #define U_XMLDSIG_TEMPLATE \
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n" \
 "<ds:Signature Id=\"idPackageSignature\" xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\r\n" \

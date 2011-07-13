@@ -1351,25 +1351,19 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
    U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
 end:
-   while (true)
+   while (u_islterm((c = *++ptr)) == false) {} 
+
+   if (c == '\r')
       {
-      c = (*(unsigned char*)++ptr);
+      u_line_terminator     = U_CRLF;
+      u_line_terminator_len = 2;
+      }
+   else
+      {
+      U_INTERNAL_ASSERT_EQUALS(c,'\n')
 
-      if (c == '\r')
-         {
-         u_line_terminator     = U_CRLF;
-         u_line_terminator_len = 2;
-
-         break;
-         }
-
-      if (c == '\n')
-         {
-         u_line_terminator     = U_LF;
-         u_line_terminator_len = 1;
-
-         break;
-         }
+      u_line_terminator     = U_LF;
+      u_line_terminator_len = 1;
       }
 
    http_info.startHeader += (ptr - start);
@@ -1830,7 +1824,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
    U_INTERNAL_ASSERT_DIFFERS(ptrA, 0)
    U_INTERNAL_ASSERT_DIFFERS(ptrI, 0)
 
-   static const unsigned char header_req[] = {
+   static const unsigned char ctable1[] = {
       0,   0,   0,   0,   0,   0,   0,   0,
       0,   0,   0,   0,   0,   0,   0,   0,
       0,   0,   0,   0,   0,   0,   0,   0,
@@ -1849,12 +1843,31 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
       0,   0,   0,   0,   0,   0,   0,   0  // 'x',    'y',    'z',    '{',    '|',    '}',    '~',    '\177'
    };
 
+   static const unsigned char ctable2[] = {
+      0,   0,   0,   0,   0,   0,   0,   0,
+      0,   1,   0,   0,   0,   0,   0,   0, // '\b', '\t',
+      0,   0,   0,   0,   0,   0,   0,   0,
+      0,   0,   0,   0,   0,   0,   0,   0, // 24      25      26      27      28      29      30      31
+      1,   0,   0,   0,   0,   0,   0,   0, // ' ',    '!',    '\"',   '#',    '$',    '%',    '&',    '\'',
+      0,   0,   0,   0,   0,   0,   0,   0, // '(',    ')',    '*',    '+',    ',',    '-',    '.',    '/',
+      0,   0,   0,   0,   0,   0,   0,   0, // '0',    '1',    '2',    '3',    '4',    '5',    '6',    '7',
+      0,   0,   1,   0,   0,   0,   0,   0, // '8',    '9',    ':',    ';',    '<',    '=',    '>',    '?',
+      0,   0,   0,   0,   0,   0,   0,   0, // '@',    'A',    'B',    'C',    'D',    'E',    'F',    'G',
+      0,   0,   0,   0,   0,   0,   0,   0, // 'H',    'I',    'J',    'K',    'L',    'M',    'N',    'O',
+      0,   0,   0,   0,   0,   0,   0,   0, // 'P',    'Q',    'R',    'S',    'T',    'U',    'V',    'W',
+      0,   0,   0,   0,   0,   0,   0,   0, // 'X',    'Y',    'Z',    '[',    '\\',   ']',    '^',    '_',
+      0,   0,   0,   0,   0,   0,   0,   0, // '`',    'a',    'b',    'c',    'd',    'e',    'f',    'g',
+      0,   0,   0,   0,   0,   0,   0,   0, // 'h',    'i',    'j',    'k',    'l',    'm',    'n',    'o',
+      0,   0,   0,   0,   0,   0,   0,   0, // 'p',    'q',    'r',    's',    't',    'u',    'v',    'w',
+      0,   0,   0,   0,   0,   0,   0,   0  // 'x',    'y',    'z',    '{',    '|',    '}',    '~',    '\177'
+   };
+
    bool result;
    const char* p;
    const char* p1;
    const char* p2;
    const char* p3;
-   unsigned char c, c1;
+   unsigned char c;
    const char* ptr = request.data();
    uint32_t pos1, pos2, n, char_r = (u_line_terminator_len == 2),
             end = (http_info.endHeader ? (result = true, http_info.endHeader - u_line_terminator_len) : (result = false, request.size()));
@@ -1865,16 +1878,16 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
       c = *(p = (ptr + pos1));
 
-      U_INTERNAL_DUMP("c = %C header_req[%d] = %C", c, c, header_req[c])
+      U_INTERNAL_DUMP("c = %C ctable1[%d] = %C", c, c, ctable1[c])
 
-      if ((c = header_req[c]) &&
-          ((c1 = p[(n =  4)], c1 == ':' || u_isspace(c1)) || // "Host:"
-           (c1 = p[(n =  5)], c1 == ':' || u_isspace(c1)) || // "Range:"
-           (c1 = p[(n = 10)], c1 == ':' || u_isspace(c1)) || // "Connection:"
-           (c1 = p[(n = 12)], c1 == ':' || u_isspace(c1)) || // "Content-Type:"
-           (c1 = p[(n = 14)], c1 == ':' || u_isspace(c1)) || // "Content-Length:"
-           (c1 = p[(n = 15)], c1 == ':' || u_isspace(c1)) || // "Accept-Encoding:"
-           (c1 = p[(n = 17)], c1 == ':' || u_isspace(c1))))  // "If-Modified-Since:"
+      if ((c = ctable1[c])               &&
+              (ctable2[(int)p[(n =  4)]] || // "Host:"
+               ctable2[(int)p[(n =  5)]] || // "Range:"
+               ctable2[(int)p[(n = 10)]] || // "Connection:"
+               ctable2[(int)p[(n = 12)]] || // "Content-Type:"
+               ctable2[(int)p[(n = 14)]] || // "Content-Length:"
+               ctable2[(int)p[(n = 15)]] || // "Accept-Encoding:"
+               ctable2[(int)p[(n = 17)]]))  // "If-Modified-Since:"
          {
          pos1 += n;
 
@@ -1936,7 +1949,12 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
                 memcmp(ptrA,   p+1, 6) == 0  && // 6 -> sizeof("ccept-")
                 memcmp(ptrA+7, p+8, 7) == 0)    // 7 -> sizeof(       "ncoding")
                {
-               if (u_find(ptr + pos1, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)
+               p = ptr + pos1;
+
+               U_INTERNAL_DUMP("Accept-Encoding: = %.*S", pos2 - pos1 - 1, p)
+
+               if (U_STRNEQ(p, "gzip") ||
+                   u_find(p, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)
                   {
                   U_http_is_accept_deflate = '1';
 
@@ -2055,8 +2073,7 @@ check_for_end_header:
       // \n\n     (U_LF2)
       // \r\n\r\n (U_CRLF2)
 
-      if (c == '\r' ||
-          c == '\n')
+      if (u_islterm(c))
          {
          if (p1[-1] == '\r' &&
              p1[ 2] == '\n')
@@ -3734,7 +3751,7 @@ end:
    U_SRV_LOG("file cached: %S - %u bytes - (%d%%) compressed ratio%s", pathname->data(), file_data->size, 100 - ratio, motivation);
 }
 
-U_NO_EXPORT bool UHTTP::manageDataForCache()
+U_NO_EXPORT void UHTTP::manageDataForCache()
 {
    U_TRACE(0, "UHTTP::manageDataForCache()")
 
@@ -3751,25 +3768,20 @@ U_NO_EXPORT bool UHTTP::manageDataForCache()
        file->dir()            || // NB: can be a simbolic link to a directory...
        u_dosmatch_with_OR(U_FILE_TO_PARAM(*file), U_STRING_TO_PARAM(*cache_file_mask), 0) == false)
       {
-      U_RETURN(false);
+      return;
       }
 
    U_ASSERT_EQUALS(u_dosmatch(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("*/cgi-bin/*"), 0), false)
 
    UString content = file->getContent();
 
-   if (content.empty() == false)
+   if (content.empty() == false) putDataInCache(getHeaderMimeType(content.data(), file->getMimeType(true), 0, U_TIME_FOR_EXPIRE), content);
+   else
       {
-      putDataInCache(getHeaderMimeType(content.data(), file->getMimeType(true), 0, U_TIME_FOR_EXPIRE), content);
+      U_INTERNAL_ASSERT_EQUALS(file_data->size,0)
 
-      U_RETURN(true);
+      U_SRV_LOG("warning: found empty file: %S", pathname->data());
       }
-   
-   U_INTERNAL_ASSERT_EQUALS(file_data->size,0)
-
-   U_SRV_LOG("warning: found empty file: %S", pathname->data());
-
-   U_RETURN(false);
 }
 
 void UHTTP::checkFileForCache()
@@ -3789,7 +3801,7 @@ void UHTTP::checkFileForCache()
 
    // NB: file->stat() get also the size of file...
 
-   if (file->stat()) (void) manageDataForCache();
+   if (file->stat()) manageDataForCache();
 }
 
 bool UHTTP::isFileInCache()
@@ -3919,14 +3931,15 @@ U_NO_EXPORT void UHTTP::checkPath()
          {
          file->setPath(*pathname);
 
-              if (isFileInCache()) setHTTPRequestInFileCache();
-         else if (file->stat())
+         if (isFileInCache() == false &&
+             file->stat())
             {
             U_SRV_LOG("Inotify %s enabled - found file not in cache: %.*S", (UServer_Base::handler_event ? "is" : "NOT"), U_FILE_TO_TRACE(*file));
 
-            if (manageDataForCache()) setHTTPRequestInFileCache();
-            else                      setHTTPRequestNeedProcessing();
+            manageDataForCache();
             }
+
+         if (file_data) setHTTPRequestInFileCache();
          }
       }
 }

@@ -24,16 +24,17 @@ rm -f tsa_http.log TSA/log \
 
 #export TMPDIR="C:/TMP"
 
+ DIR_TOP="../../.."
 #DIR_CMD="C:/XADES/sbin"
- DIR_LIB="../../.."
- DIR_CMD="$DIR_LIB/examples/XAdES"
+#DIR_CMD="$DIR_TOP/examples/XAdES"
 
 SCHEMA=XAdESv141.xsd
-DOCUMENT=xmldsig-input.txt
+#DOCUMENT=TESTOPROVA.docx
+ DOCUMENT=xmldsig-input.txt
 
 DATA_URI=$DOCUMENT
 X509=`cat ../../ulib/CA/server.crt`
-KEY_HANDLE=../../ulib/CA/server_nopass.key
+KEY_HANDLE=`pwd`/../../ulib/CA/server_nopass.key
 DIGEST_ALGORITHM=sha1
 SIGNING_TIME=0
 CLAIMED_ROLE="Amministratore UNIREL"
@@ -43,7 +44,7 @@ PRODUCTION_PLACE_POSTAL_CODE=11111
 PRODUCTION_PLACE_COUNTRY_NAME=Italy
 
 SIGNATURE_TIMESTAMP="http://localhost/tsa"
-CA_STORE=../../ulib/CA/CApath
+CA_STORE=`pwd`/../../ulib/CA/CApath
 
 #ZIPPONE=file:///mnt/storage/stefano/XAdES/zippone/LISTACER_20100907.zip.p7m
  ZIPPONE=file:///stefano/XAdES/zippone/LISTACER_20101103.zip.p7m
