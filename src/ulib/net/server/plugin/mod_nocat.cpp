@@ -905,20 +905,14 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo()
       UHTTP::setHTTPRedirectResponse(UString::getStringNull(), U_URL_TO_PARAM(*info_url));
 
       *info_url = *(pthis->vlogout_url[index_AUTH]);
-
-      return;
       }
-
-   U_http_is_connection_close = U_YES;
-
-   if (isPingAsyncPending())
+   else
       {
-      UHTTP::setHTTPResponse(HTTP_NO_CONTENT, 0, 0);
+      U_http_is_connection_close = U_YES;
+      u_http_info.nResponseCode  = (isPingAsyncPending() ? HTTP_NO_CONTENT : HTTP_NOT_MODIFIED);
 
-      return;
+      UHTTP::setHTTPResponse();
       }
-
-   UHTTP::setHTTPResponse(HTTP_NOT_MODIFIED, 0, 0);
 }
 
 UModNoCatPeer* UNoCatPlugIn::getPeerFromMAC(const UString& mac)
@@ -1367,8 +1361,6 @@ int UNoCatPlugIn::handlerRequest()
 
       U_INTERNAL_DUMP("host = %.*S ip_client = %.*S", U_STRING_TO_TRACE(host), U_STRING_TO_TRACE(ip_client))
 
-      if (u_pthread_time == 0) u_gettimeofday();
-
       // NB: check for request from AUTHs
 
       index_AUTH = vauth_ip.contains(ip_client);
@@ -1394,8 +1386,8 @@ int UNoCatPlugIn::handlerRequest()
                {
                // NB: request from AUTH to get status user
 
-               uint32_t len    = UHTTP::http_info.query_len - U_CONSTANT_SIZE("ip=");
-               const char* ptr = UHTTP::http_info.query     + U_CONSTANT_SIZE("ip=");
+               uint32_t len    = u_http_info.query_len - U_CONSTANT_SIZE("ip=");
+               const char* ptr = u_http_info.query     + U_CONSTANT_SIZE("ip=");
 
                const char* peer_ip = getIPAddress(ptr, len);
 
@@ -1417,16 +1409,17 @@ int UNoCatPlugIn::handlerRequest()
 
             setStatusContent(peer); // NB: peer == 0 -> request from AUTH to get status access point...
 
-            UHTTP::http_info.clength    =  status_content->size();
+            u_http_info.clength         = status_content->size();
+            u_http_info.nResponseCode   = HTTP_OK;
             *UClientImage_Base::wbuffer = *status_content;
 
-            UHTTP::setHTTPCgiResponse(HTTP_OK, false, false, false);
+            UHTTP::setHTTPCgiResponse(false, false, false);
 
             goto end;
             }
 
          if (U_HTTP_URI_STRNEQ("/logout") &&
-             UHTTP::http_info.query_len)
+             u_http_info.query_len)
             {
             // NB: request from AUTH to logout user (ip=192.168.301.223&mac=00:e0:4c:d4:63:f5)
 
@@ -1521,8 +1514,8 @@ int UNoCatPlugIn::handlerRequest()
          if (U_http_version == '1') U_INTERNAL_ASSERT_EQUALS(host, gateway)
 #     endif
 
-         uint32_t len    = UHTTP::http_info.query_len - U_CONSTANT_SIZE("ticket=");
-         const char* ptr = UHTTP::http_info.query     + U_CONSTANT_SIZE("ticket=");
+         uint32_t len    = u_http_info.query_len - U_CONSTANT_SIZE("ticket=");
+         const char* ptr = u_http_info.query     + U_CONSTANT_SIZE("ticket=");
 
          if (checkSignedData(ptr, len) == false)
             {

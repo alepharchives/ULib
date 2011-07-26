@@ -162,8 +162,8 @@ bool UMimeEntity::readHeader(USocket* socket)
 
    if (header->readHeader(socket, data))
       {
-      endHeader   = UHTTP::http_info.endHeader;
-      startHeader = UHTTP::http_info.startHeader;
+      endHeader   = u_http_info.endHeader;
+      startHeader = u_http_info.startHeader;
 
       U_RETURN(true);
       }
@@ -177,9 +177,9 @@ bool UMimeEntity::readBody(USocket* socket)
 
    U_ASSERT(content.empty())
    U_INTERNAL_ASSERT_DIFFERS(endHeader, U_NOT_FOUND)
-   U_INTERNAL_ASSERT_EQUALS(endHeader, UHTTP::http_info.endHeader)
+   U_INTERNAL_ASSERT_EQUALS(endHeader, u_http_info.endHeader)
 
-   UHTTP::http_info.clength = header->getHeader(*USocket::str_content_length).strtol();
+   u_http_info.clength = header->getHeader(*USocket::str_content_length).strtol();
 
    if (UHTTP::readHTTPBody(socket, &data, content) &&
        checkContentType())

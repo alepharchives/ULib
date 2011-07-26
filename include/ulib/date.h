@@ -227,7 +227,7 @@ public:
 
       // UNIX system time - SecsSince1Jan1970UTC
 
-      if (u_pthread_time == 0) u_gettimeofday();
+      u_gettimeofday();
 
       fromTime(u_now->tv_sec);
       }

@@ -26,7 +26,7 @@ rm -f tsa_http.log TSA/log \
 
  DIR_TOP="../../.."
 #DIR_CMD="C:/XADES/sbin"
-#DIR_CMD="$DIR_TOP/examples/XAdES"
+ DIR_CMD="$DIR_TOP/examples/XAdES"
 
 SCHEMA=XAdESv141.xsd
 #DOCUMENT=TESTOPROVA.docx
@@ -79,6 +79,9 @@ $OPENSSL base64 -e -in out/sign.out -out $INPUT
 
 #STRACE=$TRUSS
  start_prg verify -c XAdES.ini -- $SCHEMA < $INPUT
+
+#openssl base64 -d -in verify.out > verify.der
+#openssl x509 -text -in verify.der -inform DER
 
  exit 0
 

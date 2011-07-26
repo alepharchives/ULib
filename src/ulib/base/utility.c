@@ -16,6 +16,7 @@
 */
 
 #include <ulib/base/utility.h>
+#include <ulib/internal/chttp.h>
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -81,6 +82,8 @@ bPFpcupcud u_pfn_match = u_dosmatch;
 
 /* Services */
 
+struct uhttpinfo u_http_info;
+
 const char* u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 
 #ifdef DEBUG
@@ -109,18 +112,27 @@ char* u_strcpy(char* restrict dest, const char* restrict src)
    return dest;
 }
 
-void* u_memcpy(void* restrict dest, const void* restrict src, size_t n)
+void* u_memcpy(void* restrict dst, const void* restrict src, size_t n)
 {
-   U_INTERNAL_TRACE("u_memcpy(%p,%p,%ld)", dest, src, n)
+   U_INTERNAL_TRACE("u_memcpy(%p,%p,%ld)", dst, src, n)
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT_POINTER(src)
-   U_INTERNAL_ASSERT_POINTER(dest)
-   U_INTERNAL_ASSERT(dest < src || (char*)dest > (((char*)src)+n)) /* Overlapping Memory */
+   U_INTERNAL_ASSERT_POINTER(dst)
 
-   (void) memcpy(dest, src, n);
+   /* not overlapping memory
+    *
+    * non_overlap(p, s, q, t) : (p + s ≤ q) ∨ (q + t ≤ p)
+    *
+    * non overlap(p, s, q, t) denotes that the memory ranges p, ... , p + s − 1 and q, ... , q + t − 1 do not overlap.
+    */
 
-   return dest;
+   U_INTERNAL_ASSERT(((((char*)src)+n) <= (char*)dst) ||
+                     ((((char*)dst)+n) <= (char*)src))
+
+   (void) memcpy(dst, src, n);
+
+   return dst;
 }
 
 char* u_strncpy(char* restrict dest, const char* restrict src, size_t n)
@@ -2739,6 +2751,7 @@ static struct mimeentry mimetab_m[] = {
    MIME_ENTRY( "mp",   "video/mpeg" ), /* (mp2, mp3, mpg, mpe, mpeg, mpga) */
    MIME_ENTRY( "md5",  "text/plain" ),
    MIME_ENTRY( "mov",  "video/quicktime" ),
+   MIME_ENTRY( "mf",       "text/cache-manifest" ),
    MIME_ENTRY( "manifest", "text/cache-manifest" ),
 
    /*
@@ -2808,8 +2821,10 @@ static struct mimeentry mimetab_r[] = {
    MIME_ENTRY( "rar",  "application/x-rar-compressed" ),
    MIME_ENTRY( "rtf",  "text/rtf" ),
    MIME_ENTRY( "rtx",  "text/richtext" ),
+   MIME_ENTRY( "rdf",  "application/rdf+xml" ),
    MIME_ENTRY( "roff", "application/x-troff" ),
    MIME_ENTRY( "rss",  "application/rss+xml" ),
+   MIME_ENTRY( "xrdf", "application/rdf+xml" ),
 
    /*
    MIME_ENTRY( "ra",  "audio/x-realaudio" ),
@@ -2855,6 +2870,7 @@ static struct mimeentry mimetab_t[] = {
    MIME_ENTRY( "txt",  "text/plain" ),
    MIME_ENTRY( "tgz",  "application/x-tar-gz" ),
    MIME_ENTRY( "ttf",  "font/truetype" ),
+   MIME_ENTRY( "ttl",  "text/turtle" ),
 
    /*
    MIME_ENTRY( "texi",     "application/x-texinfo" ), (texinfo)

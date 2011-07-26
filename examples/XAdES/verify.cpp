@@ -1,8 +1,11 @@
 // verify.cpp
 
 #include <ulib/file_config.h>
+#include <ulib/base/ssl/dgst.h>
 #include <ulib/utility/base64.h>
+#include <ulib/ssl/certificate.h>
 #include <ulib/utility/services.h>
+#include <ulib/utility/string_ext.h>
 #include <ulib/xml/libxml2/schema.h>
 
 #ifdef HAVE_SSL_TS
@@ -23,7 +26,8 @@
 
 #include <ulib/application.h>
 
-#define U_SCHEMA (const char*)(num_args >= 0  ? argv[optind+0]  : 0)
+#define U_SCHEMA               (const char*)(num_args >= 0 ? argv[optind+0] : 0)
+#define U_TAG_X509_CERTIFICATE "ds:X509Certificate"
 
 class Application : public UApplication {
 public:
@@ -106,6 +110,17 @@ public:
 
       if (schema.empty()) U_ERROR("error on XAdES schema: empty");
 
+      /*
+      UString str_CApath       = cfg[U_STRING_FROM_CONSTANT("XAdES-C.CAStore")],
+              digest_algorithm = cfg[U_STRING_FROM_CONSTANT("XAdES-C.DigestAlgorithm")];
+
+      if (str_CApath.empty() ||
+          UServices::setupOpenSSLStore(0, str_CApath.c_str()) == false)
+         {
+         U_ERROR("error on setting CA Store: %S", str_CApath.data());
+         }
+      */
+
       UXML2Schema XAdES_schema(UFile::contentOf(schema));
 
       // ---------------------------------------------------------------------------------------------------------------
@@ -123,8 +138,42 @@ public:
       if (XAdES_schema.validate(document) == false) U_ERROR("error on input data: not XAdES");
 
       UDSIGContext dsigCtx;
+      UString data, signature;
+      const char* digest_algorithm;
 
-      if (dsigCtx.verify(document)) UApplication::exit_value = 0;
+      if (dsigCtx.verify(document, digest_algorithm, data, signature))
+         {
+         UString element = document.getElementData(128, U_CONSTANT_TO_PARAM(U_TAG_X509_CERTIFICATE));
+
+         if (element.empty() == false)
+            {
+            UString certificate(element.size());
+
+            if (UBase64::decode(element, certificate))
+               {
+#           ifdef __MINGW32__
+               (void) setmode(1, O_BINARY);
+#           endif
+
+               cout.write(U_STRING_TO_PARAM(certificate));
+
+               alg = u_dgst_get_algoritm(digest_algorithm);
+
+               if (alg == -1) U_ERROR("I can't find the digest algorithm for: %s", digest_algorithm);
+
+               X509* x509 = UCertificate::readX509(certificate, "DER");
+
+               u_pkey = UCertificate::getSubjectPublicKey(x509);
+
+               U_SYSCALL_VOID(X509_free, "%p", x509);
+
+               if (UServices::verifySignature(alg, data, signature, UString::getStringNull(), 0)) UApplication::exit_value = 0;
+
+               U_SYSCALL_VOID(EVP_PKEY_free, "%p", u_pkey);
+                                                   u_pkey = 0;
+               }
+            }
+         }
 
       utility.clean();
       }

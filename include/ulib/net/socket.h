@@ -534,7 +534,7 @@ public:
    the kernel, sendfile() does not need to spend time transferring data to and from user space.
    */
 
-   bool sendfile(int in_fd, off_t* poffset, uint32_t count);
+   bool sendfile(int in_fd, off_t offset, uint32_t count);
 
    // -----------------------------------------------------------------------------------------------------------
    // VIRTUAL METHOD

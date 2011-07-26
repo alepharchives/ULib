@@ -29,6 +29,7 @@ if [ "$TERM" != "cygwin" ]; then
      make benchmarking.la >/dev/null 2>&1 || exit 1;
      test -d ../.libs &&
      ( cd ../.libs;
+       ln -sf ../v8/.libs/mod_v8.so;
        ln -sf ../mod_shib/.libs/mod_shib.so;
        ln -sf ../page_speed/.libs/mod_pagespeed.so;
        ln -sf ../mod_geoip/.libs/mod_geoip.so ) )

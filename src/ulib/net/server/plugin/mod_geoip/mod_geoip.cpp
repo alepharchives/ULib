@@ -209,6 +209,8 @@ int UGeoIPPlugIn::handlerREAD()
 {
    U_TRACE(0, "UGeoIPPlugIn::handlerREAD()")
 
+   if (country_id || gir) UHTTP::geoip->setEmpty();
+
    if (country_forbidden_mask.empty() == false                                                  &&
        setCountryCode(UServer_Base::pClientImage->socket->remoteIPAddress().getAddressString()) &&
        checkCountryForbidden() == false)
@@ -257,15 +259,6 @@ int UGeoIPPlugIn::handlerRequest()
          gir->longitude,
          gir->postal_code);
       }
-
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-}
-
-int UGeoIPPlugIn::handlerReset()
-{
-   U_TRACE(0, "UGeoIPPlugIn::handlerReset()")
-
-   if (country_id || gir) UHTTP::geoip->setEmpty();
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }

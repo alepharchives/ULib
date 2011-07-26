@@ -275,7 +275,7 @@ UDate::UDate(const char* str, bool UTC)
       {
       // Complete for the user
 
-      if (u_pthread_time == 0) u_gettimeofday();
+      u_gettimeofday();
 
 #  if defined(DEBUG) && !defined(__MINGW32__)
       U_SYSCALL_VOID(localtime_r, "%p,%p", &(u_now->tv_sec), &u_strftime_tm);

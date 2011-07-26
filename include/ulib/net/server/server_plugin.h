@@ -46,10 +46,12 @@ RETURNS:
   U_PLUGIN_HANDLER_ERROR    on error
 */
 
-enum PluginHandlerReturn { U_PLUGIN_HANDLER_ERROR    = -1,
-                           U_PLUGIN_HANDLER_FINISHED =  0,
-                           U_PLUGIN_HANDLER_GO_ON    =  1,
-                           U_PLUGIN_HANDLER_AGAIN    =  2 };
+enum PluginHandlerReturn {
+   U_PLUGIN_HANDLER_FINISHED = 0x000,
+   U_PLUGIN_HANDLER_GO_ON    = 0x001,
+   U_PLUGIN_HANDLER_AGAIN    = 0x002,
+   U_PLUGIN_HANDLER_ERROR    = 0x004
+};
 
 class UFileConfig;
 

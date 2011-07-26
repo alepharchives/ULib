@@ -77,7 +77,6 @@ public:
 
    virtual int handlerREAD();
    virtual int handlerRequest();
-   virtual int handlerReset();
 
    // DEBUG
 

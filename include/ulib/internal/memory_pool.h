@@ -67,7 +67,6 @@
   48 sizeof(USOAPGenericMethod)
   56 sizeof(UOptions)
   56 sizeof(UPlugIn<void*>)
-  56 sizeof(UClientImage<UTCPSocket>)
   64 sizeof(UPCRE)
   64 sizeof(UCommand)
   64 sizeof(UApplication)
@@ -76,6 +75,7 @@
 
   72 sizeof(UMimePKCS7)
   80 sizeof(UZIP)
+  80 sizeof(UClientImage<UTCPSocket>)
   88 sizeof(UIPAddress)
   88 sizeof(UMimeMultipartMsg)
   96 sizeof(UMimeMessage)

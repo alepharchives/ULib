@@ -242,6 +242,7 @@ public:
    static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves
    static uint32_t shared_data_add;
    static shared_data* ptr_shared_data;
+   static UClientImage_Base* poldc;
    static UClientImage_Base* vClientImage;
    static UClientImage_Base* pClientImage;
 

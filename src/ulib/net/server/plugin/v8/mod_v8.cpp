@@ -28,11 +28,11 @@ extern U_EXPORT void runv8(UString& x);
 {
    U_TRACE(0, "::runv8(%.*S)", U_STRING_TO_TRACE(x))
 
+   // Create a new context.
+   static Persistent<Context> context = Context::New();
+
    // Create a stack-allocated handle scope.
    HandleScope handle_scope;
-
-   // Create a new context.
-   Persistent<Context> context = Context::New();
 
    // Enter the created context for compiling and running the script.
    Context::Scope context_scope(context);
@@ -41,13 +41,33 @@ extern U_EXPORT void runv8(UString& x);
    Handle<String> source = String::New(U_STRING_TO_PARAM(x));
 
    // Compile the source code.
+   TryCatch tryCatch;
+
    Handle<Script> script = Script::Compile(source);
+
+   if (script.IsEmpty())
+      {
+      String::Utf8Value error(tryCatch.Exception());
+
+      (void) x.replace(*error, error.length());
+
+      return;
+      }
 
    // Run the script
    Handle<Value> result = script->Run();
 
+   if (result.IsEmpty())
+      {
+      String::Utf8Value error (tryCatch.Exception());
+
+      (void) x.replace(*error, error.length());
+
+      return;
+      }
+
    // Dispose the persistent context.
-   context.Dispose();
+   // context.Dispose();
 
    // return result as string, must be deallocated in cgo wrapper
    String::AsciiValue ascii(result);

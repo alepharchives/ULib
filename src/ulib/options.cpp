@@ -446,7 +446,10 @@ void UOptions::printHelp(vPF func)
 
    if (func) func();
 
-   if (report_bugs.size()) u_printf("%W%.*s%W", BRIGHTYELLOW, U_STRING_TO_TRACE(report_bugs), RESET);
+   if (report_bugs.empty() == false)
+      {
+      u_printf("%W\nMaintained by Stefano Casazza <stefano.casazza@gmail.com>\nReport bugs to <%.*s>%W", BRIGHTYELLOW, U_STRING_TO_TRACE(report_bugs), RESET);
+      }
 
    U_EXIT(EXIT_SUCCESS);
 }

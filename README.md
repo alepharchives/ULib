@@ -77,7 +77,7 @@ Use apachebench (ab)
 --------------------------------------------------------------------------------------------
 
 I consider in this benchmark only the performant server [G-WAN 2.1.20 (32 bit)] (http://www.gwan.ch/).
-All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz) running Gentoo 64 bit (kernel 2.6.38.2).
+All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz) running Gentoo 64 bit (kernel 2.6.39-gentoo-r2).
 
 The client [bench1.c](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark/bin/bench1.c)
 relies on ApacheBench (ab) and it is a slightly modified version of [G-WAN client](http://gwan.ch/source/ab.c.txt).
@@ -92,8 +92,8 @@ I had to increase the local port range on client (because of the TIME_WAIT statu
 
 For serving static content I use 3 file of different size:
 
- *   99.html         (  99 byte)
- * 1000.html	      (1000 byte)
+ *  100.html         ( 100 byte) (only 'XXX...' without CR/LF)
+ * 1000.html	      (1000 byte) (only 'XXX...' without CR/LF)
  * WebSocketMain.swf (180K byte)
 
 For serving dynamic content I use a simple request: "Hello {name}"

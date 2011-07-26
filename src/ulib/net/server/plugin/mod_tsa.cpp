@@ -76,8 +76,13 @@ int UTsaPlugIn::handlerRequest()
 
       UString body;
 
-      if (command->execute(UClientImage_Base::body, &body)) UHTTP::setHTTPResponse(HTTP_OK, UHTTP::str_ctype_tsa, &body);
-      else                                                  UHTTP::setHTTPInternalError();
+      if (command->execute(UClientImage_Base::body, &body))
+         {
+         u_http_info.nResponseCode  = HTTP_OK;
+
+         UHTTP::setHTTPResponse(UHTTP::str_ctype_tsa, &body);
+         }
+      else UHTTP::setHTTPInternalError();
 
       UServer_Base::logCommandMsgError(command->getCommand());
 

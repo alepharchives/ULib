@@ -455,9 +455,9 @@ bool UDSIGContext::processKeyInfoNode()
  *      Id      ID  #IMPLIED >
  */
 
-bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
+bool UDSIGContext::processSignatureNode(xmlNodePtr signature, const char*& alg, UString& data)
 {
-   U_TRACE(0, "UDSIGContext::processSignatureNode(%p)", signature)
+   U_TRACE(0, "UDSIGContext::processSignatureNode(%p,%p,%.*S)", signature, alg, U_STRING_TO_TRACE(data))
 
    U_INTERNAL_ASSERT_POINTER(signature)
    U_INTERNAL_ASSERT_EQUALS(signValueNode, 0)
@@ -517,7 +517,7 @@ bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
 
    // now validated all the references and prepare transform
 
-   if (processSignedInfoNode() == false) U_RETURN(false);
+   if (processSignedInfoNode(alg, data) == false) U_RETURN(false);
 
    /* references processing might change the status */
 
@@ -542,27 +542,19 @@ bool UDSIGContext::processSignatureNode(xmlNodePtr signature)
  * Returns: true on success or false if an error occurs.
  */
 
-bool UTransformCtx::verifyNodeContent(xmlNodePtr node)
+bool UTransformCtx::verifyNodeContent(xmlNodePtr node, UString& signature_value)
 {
-   U_TRACE(0, "UTransformCtx::verifyNodeContent(%p)", node)
+   U_TRACE(0, "UTransformCtx::verifyNodeContent(%p,%.*S)", node, U_STRING_TO_TRACE(signature_value))
 
    U_INTERNAL_ASSERT_POINTER(node)
 
-   /*
    const char* content = (const char*) UXML2Node::getContent(node);
 
    uint32_t size = u_strlen(content);
 
-   transform->inBuf.reserve(size);
+   (void) signature_value.reserve(size);
 
-   if (UBase64::decode(content, size, transform->inBuf) == false) U_RETURN(false);
-
-    * Verifies the data with transform's processing results
-    * (for digest, HMAC and signature transforms). The verification 
-    * result is stored in the #status member of #UBaseTransform object.
-
-   if (transform->verify() == false) U_RETURN(false);
-   */
+   if (UBase64::decode(content, size, signature_value) == false) U_RETURN(false);
 
    U_RETURN(true);
 }
@@ -601,9 +593,9 @@ bool UTransformCtx::execute(UString& data)
  * Returns: true on success
  */
 
-bool UDSIGContext::verify(UXML2Document& document)
+bool UDSIGContext::verify(UXML2Document& document, const char*& alg, UString& data, UString& signature_value)
 {
-   U_TRACE(0, "UDSIGContext::verify(%p)", &document)
+   U_TRACE(0, "UDSIGContext::verify(%p,%p,%.*S,%.*S)", &document, alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(signature_value))
 
    operation                   = UBaseTransform::VERIFY;
    UTranformXPointer::document = &document;
@@ -617,7 +609,7 @@ bool UDSIGContext::verify(UXML2Document& document)
    /* read signature info */
 
    if (signature == 0 ||
-       processSignatureNode(signature) == false) U_RETURN(false);
+       processSignatureNode(signature, alg, data) == false) U_RETURN(false);
 
    /* references processing might change the status */
 
@@ -625,7 +617,7 @@ bool UDSIGContext::verify(UXML2Document& document)
 
    /* verify SignatureValue node content */
 
-   if (transformCtx.verifyNodeContent(signValueNode) == false) U_RETURN(false);
+   if (transformCtx.verifyNodeContent(signValueNode, signature_value) == false) U_RETURN(false);
 
    /* set status and we are done */
 
@@ -762,9 +754,9 @@ bool UReferenceCtx::processNode(xmlNodePtr node)
  *  <!ATTLIST SignedInfo  Id   ID      #IMPLIED>
  */
 
-bool UDSIGContext::processSignedInfoNode()
+bool UDSIGContext::processSignedInfoNode(const char*& alg, UString& data)
 {
-   U_TRACE(0, "UDSIGContext::processSignedInfoNode()")
+   U_TRACE(0, "UDSIGContext::processSignedInfoNode(%p,%.*S)", alg, U_STRING_TO_TRACE(data))
 
    U_INTERNAL_ASSERT(operation == UBaseTransform::VERIFY)
    U_ASSERT_EQUALS(pthis->signedInfoReferences.size(), 0)
@@ -793,6 +785,9 @@ bool UDSIGContext::processSignedInfoNode()
    signMethod = UTransformCtx::nodeRead(cur, UBaseTransform::SIGNATURE);
 
    if (signMethod == 0) U_RETURN(false);
+
+   alg = UXML2Node::getProp(cur, "Algorithm");
+   alg = strchr(alg, '-') + 1;
 
    transformCtx.chain.push(signMethod);
 
@@ -838,6 +833,10 @@ bool UDSIGContext::processSignedInfoNode()
    // if there is something left than it's an error
 
    if (cur) U_RETURN(false);
+
+   (void) UTranformXPointer::document->getElement(data, 0, U_CONSTANT_TO_PARAM("ds:SignedInfo"));
+
+   data = UXML2Document::xmlC14N(data);
 
    U_RETURN(true);
 }

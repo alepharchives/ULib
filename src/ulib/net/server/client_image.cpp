@@ -17,7 +17,7 @@
 
 bool        UClientImage_Base::bIPv6;
 bool        UClientImage_Base::pipeline;
-bool        UClientImage_Base::write_off;  // NB: we not send response because we can have used sendfile() etc...
+bool        UClientImage_Base::write_off;
 uint32_t    UClientImage_Base::rstart;
 uint32_t    UClientImage_Base::size_request;
 UString*    UClientImage_Base::body;
@@ -47,13 +47,13 @@ void UClientImage_Base::logRequest(const char* filereq)
 
    uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
 
-   U_INTERNAL_DUMP("u_printf_string_max_length = %d UHTTP::http_info.endHeader = %u", u_printf_string_max_length, UHTTP::http_info.endHeader)
+   U_INTERNAL_DUMP("u_printf_string_max_length = %d u_http_info.endHeader = %u", u_printf_string_max_length, u_http_info.endHeader)
 
    if (u_printf_string_max_length == -1)
       {
       if (UHTTP::isHTTPRequest()) // NB: only HTTP header...
          {
-         u_printf_string_max_length = (UHTTP::http_info.endHeader ? UHTTP::http_info.endHeader : request->size()); 
+         u_printf_string_max_length = (u_http_info.endHeader ? u_http_info.endHeader : request->size()); 
 
          U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
          }
@@ -118,9 +118,16 @@ UClientImage_Base::UClientImage_Base()
    socket = 0;
    logbuf = (UServer_Base::isLog() ? U_NEW(UString(4000U)) : 0);
 
-#  ifdef HAVE_SSL
+#ifdef HAVE_SSL
    ssl = 0;
-#  endif
+#endif
+
+   // NB: these are for pending sendfile...
+
+   offset = 0;
+   sfd    = 0;
+   count  = 0;
+   bclose = U_MAYBE;
 }
 
 // ------------------------------------------------------------------------
@@ -208,6 +215,70 @@ void UClientImage_Base::setMsgWelcome(const UString& msg)
       }
 }
 
+int UClientImage_Base::sendfile()
+{
+   U_TRACE(1, "UClientImage_Base::sendfile()")
+
+   U_INTERNAL_ASSERT_MAJOR(count,0)
+   U_INTERNAL_ASSERT_DIFFERS(sfd, -1)
+   U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
+
+   ssize_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u", UEventFd::fd, sfd, &offset, count);
+
+   if (value < 0L)
+      {
+      U_INTERNAL_DUMP("errno = %d", errno)
+
+      if (errno == EAGAIN) goto end;
+
+      U_RETURN(U_NOT);
+      }
+
+   count -= value;
+
+   if (count == 0)
+      {
+      UFile::close(sfd);
+                   sfd = 0;
+
+      U_RETURN(U_YES);
+      }
+
+end:
+   U_RETURN(U_MAYBE);
+}
+
+int UClientImage_Base::sendfile(int& in_fd, char& _bclose, uint32_t _start, uint32_t _count)
+{
+   U_TRACE(0, "UClientImage_Base::sendfile(%d,%C,%u,%u)", in_fd, _bclose, _start, _count)
+
+   U_INTERNAL_ASSERT_EQUALS(sfd,0)
+
+   sfd    = in_fd;
+   count  = _count;
+   offset = _start;
+
+   int ret = sendfile();
+
+   if (ret == U_NOT) sfd = 0;
+   else
+      {
+      in_fd = -1;
+
+      if (ret == U_MAYBE)
+         {
+         bclose = _bclose;
+                  _bclose = U_NOT;
+
+         UEventFd::op_mask = U_READ_IN | U_WRITE_OUT;
+
+         UNotifier::modify(this);
+         }
+      }
+
+   U_RETURN(ret);
+}
+
 // aggiungo nel log il certificato Peer del client ("issuer","serial")
 
 void UClientImage_Base::logCertificate(void* x509)
@@ -239,8 +310,10 @@ void UClientImage_Base::manageRequestSize(bool request_resize)
 
    if (pipeline)
       {
-      U_INTERNAL_ASSERT_DIFFERS(rstart, 0U)
-      U_INTERNAL_ASSERT(request == pbuffer && pbuffer->isNull() == false && pbuffer->same(*rbuffer) == false)
+      U_INTERNAL_ASSERT_DIFFERS(rstart,0U)
+      U_INTERNAL_ASSERT_EQUALS(request,pbuffer)
+      U_INTERNAL_ASSERT_DIFFERS(pbuffer->isNull(),true)
+      U_INTERNAL_ASSERT_DIFFERS(pbuffer->same(*rbuffer),true)
 
       if (request_resize == false) pbuffer->size_adjust(size_request);
       else
@@ -261,9 +334,9 @@ void UClientImage_Base::manageRequestSize(bool request_resize)
 
       if (pipeline)
          {
-         U_INTERNAL_ASSERT_EQUALS(rstart, 0U)
+         U_INTERNAL_ASSERT_EQUALS(rstart,0U)
 
-         *pbuffer = rbuffer->substr(0U, size_request);
+         *pbuffer = rbuffer->substr(0U,size_request);
           request = pbuffer;
          }
       }
@@ -332,7 +405,7 @@ int UClientImage_Base::genericRead()
       goto error;
       }
 
-   handlerError(USocket::CONNECT);
+   handlerError(USocket::CONNECT); // NB: we must call function cause of SSL (must be a virtual method)...
 
    // reset buffer before read
 
@@ -341,11 +414,7 @@ int UClientImage_Base::genericRead()
 
    rbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
 
-   if (pbuffer->isNull() == false) pbuffer->clear();
-   if (   body->isNull() == false)    body->clear();
-                                   wbuffer->clear();
-
-   if (USocketExt::read(socket, *(request = rbuffer), U_SINGLE_READ, UServer_Base::timeoutMS) == false)
+   if (USocketExt::read(socket, *rbuffer, U_SINGLE_READ, UServer_Base::timeoutMS) == false)
       {
       // check if close connection... (read() == 0)
 
@@ -353,12 +422,27 @@ int UClientImage_Base::genericRead()
       if (rbuffer->empty())   U_RETURN(U_PLUGIN_HANDLER_AGAIN); // NONBLOCKING...
       }
 
+   request = rbuffer;
+
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 
 error:
    if (UServer_Base::isParallelization()) U_EXIT(0);
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
+}
+
+void UClientImage_Base::initAfterGenericRead()
+{
+   U_TRACE(0, "UClientImage_Base::initAfterGenericRead()")
+
+   U_INTERNAL_DUMP("pipeline = %b", pipeline)
+
+   U_INTERNAL_ASSERT_DIFFERS(pipeline, true)
+
+   if (pbuffer->isNull() == false) pbuffer->clear();
+   if (   body->isNull() == false)    body->clear();
+                                   wbuffer->clear();
 }
 
 // define method VIRTUAL of class UEventFd
@@ -372,7 +456,8 @@ void UClientImage_Base::handlerError(int state)
 
    socket->iState = state;
 
-   UServer_Base::pClientImage = this;
+   UServer_Base::poldc = UServer_Base::pClientImage;
+                         UServer_Base::pClientImage = this;
 }
 
 int UClientImage_Base::handlerRead()
@@ -391,8 +476,6 @@ int UClientImage_Base::handlerRead()
 
    if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
    if (result == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_NOTIFIER_DELETE);
-
-   // init after read
 
    rstart   = size_request = 0;
    pipeline = false;
@@ -415,14 +498,19 @@ loop:
          }
 
       result = UServer_Base::pluginsHandlerRequest(); // manage request...
+      }
 
-      if (result         != U_PLUGIN_HANDLER_FINISHED ||
-          handlerWrite() == U_NOTIFIER_DELETE)
-         {
-         result = U_PLUGIN_HANDLER_ERROR;
-         }
+   if (handlerWrite() == U_NOTIFIER_DELETE) result = U_PLUGIN_HANDLER_ERROR;
 
-      (void) UServer_Base::pluginsHandlerReset(); // manage reset...
+   if ((result & U_PLUGIN_HANDLER_AGAIN) != 0)
+      {
+      if ((result & U_PLUGIN_HANDLER_ERROR) == 0) goto end;
+
+      result = U_PLUGIN_HANDLER_ERROR;
+      }
+   else
+      {
+      if (UServer_Base::pluginsHandlerReset() == U_PLUGIN_HANDLER_ERROR) result = U_PLUGIN_HANDLER_ERROR;
       }
 
    U_INTERNAL_DUMP("result = %d pipeline = %b socket->isClosed() = %b", result, pipeline, socket->isClosed())
@@ -472,6 +560,13 @@ loop:
          }
       }
 
+end:
+   u_gettimeofday();
+
+   last_response = u_now->tv_sec;
+
+   U_INTERNAL_DUMP("last_response = %ld", last_response)
+
    U_RETURN(U_NOTIFIER_OK);
 }
 
@@ -481,11 +576,11 @@ int UClientImage_Base::handlerWrite()
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
-   if (UClientImage_Base::write_off)
-      {
-      // NB: we not send response because we can have used sendfile() etc...
+   U_INTERNAL_DUMP("write_off = %b", write_off)
 
-      UClientImage_Base::write_off = false;
+   if (write_off)
+      {
+      write_off = false;
 
       U_RETURN(U_NOTIFIER_OK);
       }
@@ -493,10 +588,40 @@ int UClientImage_Base::handlerWrite()
    U_INTERNAL_ASSERT_POINTER(wbuffer)
    U_INTERNAL_ASSERT(socket->isOpen())
 
+   // NB: check for pending sendfile...
+
+   if (sfd)
+      {
+      U_ASSERT(body->empty())
+
+      int ret = sendfile();
+
+      if (ret == U_NOT) U_RETURN(U_NOTIFIER_DELETE);
+
+      if (ret == U_YES)
+         {
+         U_INTERNAL_ASSERT_EQUALS(sfd,0)
+
+         UEventFd::op_mask = U_READ_IN;
+
+         if (bclose) U_RETURN(U_NOTIFIER_DELETE);
+
+         socket->setTcpCork(0U); // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
+
+         UNotifier::modify(this);
+         }
+
+      U_RETURN(U_NOTIFIER_OK);
+      }
+
    U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer))
    U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body))
 
    U_ASSERT_DIFFERS(wbuffer->empty(), true)
+
+   /* to check some weird ab "Non-2xx responses:"...
+   if (U_STRNEQ(wbuffer->data(), "HTTP/1.0 200 OK") == false) U_EXIT(1);
+   */
 
    if (logbuf) logResponse();
 
@@ -504,10 +629,6 @@ int UClientImage_Base::handlerWrite()
 
    int result = (USocketExt::write(socket, *wbuffer, *body, 3 * 1000) ? U_NOTIFIER_OK
                                                                       : U_NOTIFIER_DELETE);
-
-   last_response = u_now->tv_sec;
-
-   U_INTERNAL_DUMP("last_response = %ld", last_response)
 
    U_RETURN(result);
 }
@@ -528,7 +649,11 @@ void UClientImage_Base::handlerDelete()
 
 const char* UClientImage_Base::dump(bool _reset) const
 {
-   *UObjectIO::os << "bIPv6                              " << bIPv6              << '\n'
+   *UObjectIO::os << "sfd                                " << sfd                << '\n'
+                  << "count                              " << count              << '\n'
+                  << "bIPv6                              " << bIPv6              << '\n'
+                  << "offset                             " << offset             << '\n'
+                  << "bclose                             " << bclose             << '\n'
                   << "write_off                          " << write_off          << '\n'
                   << "last_response                      " << last_response      << '\n'
                   << "body            (UString           " << (void*)body        << ")\n"

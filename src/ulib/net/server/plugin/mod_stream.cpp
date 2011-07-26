@@ -106,11 +106,11 @@ int UStreamPlugIn::handlerInit()
       {
       UServer_Base::runAsUser();
 
-   #ifdef DEBUG
+#  ifdef DEBUG
       int fd_stderr = UFile::creat("/tmp/UStreamPlugIn.err", O_WRONLY | O_APPEND, PERM_FILE);
-   #else
+#  else
       int fd_stderr = UServices::getDevNull();
-   #endif
+#  endif
 
       if (command->execute(0, (UString*)-1, -1, fd_stderr))
          {
@@ -191,16 +191,16 @@ int UStreamPlugIn::handlerRequest()
       {
       USocket* csocket = UServer_Base::pClientImage->socket;
 
+      u_http_info.nResponseCode  = HTTP_OK;
       U_http_is_connection_close = U_YES;
 
-      UHTTP::setHTTPResponse(HTTP_OK, &content_type, 0);
+      UHTTP::setHTTPResponse(&content_type);
 
       csocket->setTcpCork(1U);
 
       if (UServer_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
          {
          int readd;
-         off_t offset;
 
          UClientImage_Base::write_off = true;
 
@@ -210,10 +210,8 @@ int UStreamPlugIn::handlerRequest()
 
          if (readd != -1)
             {
-            offset = 0;
-
             if (fmetadata &&
-                csocket->sendfile(fmetadata->getFd(), &offset, fmetadata->getSize()) == false) goto end;
+                csocket->sendfile(fmetadata->getFd(), 0, fmetadata->getSize()) == false) goto end;
 
             UTimeVal to_sleep(0L, 10 * 1000L);
 

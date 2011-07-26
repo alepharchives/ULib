@@ -514,14 +514,13 @@ done:
 
 /*
 data   is the data to be signed
-pkey   is the corresponsding private key
-passwd is the corresponsding password for the private key
+pkey   is the corresponding private key
+passwd is the corresponding password for the private key
 */
 
 UString UServices::getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, int base64, ENGINE* e)
 {
-   U_TRACE(0, "UServices::getSignatureValue(%d,%.*S,%.*S,%.*S,%d,%p)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(pkey),
-                                                                       U_STRING_TO_TRACE(passwd), base64, e)
+   U_TRACE(0,"UServices::getSignatureValue(%d,%.*S,%.*S,%.*S,%d,%p)",alg,U_STRING_TO_TRACE(data),U_STRING_TO_TRACE(pkey),U_STRING_TO_TRACE(passwd),base64,e)
 
    u_dgst_sign_init(alg, 0);
 
@@ -552,6 +551,38 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
    else              output.size_adjust(bytes_written);
 
    U_RETURN_STRING(output);
+}
+
+bool UServices::verifySignature(int alg, const UString& data, const UString& signature, const UString& pkey, ENGINE* e)
+{
+   U_TRACE(0, "UServices::verifySignature(%d,%.*S,%.*S,%.*S,%p)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(signature), U_STRING_TO_TRACE(pkey), e)
+
+   u_dgst_verify_init(alg, e);
+
+   u_dgst_verify_hash((unsigned char*)U_STRING_TO_PARAM(data));
+
+   bool bkey = (pkey.empty() == false);
+
+   if (bkey)
+      {
+      u_pkey = loadKey(pkey, 0, false, 0, e);
+
+      U_INTERNAL_ASSERT_POINTER(u_pkey)
+      }
+
+   int result = u_dgst_verify_finish((unsigned char*)U_STRING_TO_PARAM(signature));
+
+   if (bkey &&
+       u_pkey)
+      {
+      U_SYSCALL_VOID(EVP_PKEY_free, "%p", u_pkey);
+
+      u_pkey = 0;
+      }
+
+   if (result == 1) U_RETURN(true);
+
+   U_RETURN(false);
 }
 
 void UServices::generateDigest(int alg, unsigned char* data, uint32_t size)

@@ -294,8 +294,8 @@ int UWebSocketPlugIn::handlerRequest()
             }
 
          UClientImage_Base::wbuffer->setBuffer(100U + origin_len + tmp.size() +
-                                               UHTTP::http_info.uri_len +
-                                               UHTTP::http_info.host_len +
+                                               u_http_info.uri_len +
+                                               u_http_info.host_len +
                                                UHTTP::str_frm_websocket->size());
 
          UClientImage_Base::wbuffer->snprintf(UHTTP::str_frm_websocket->data(),

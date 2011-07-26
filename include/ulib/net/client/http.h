@@ -121,7 +121,7 @@ public:
    bool sendPost(const UString& url, const UString& pbody, const char* content_type = "application/x-www-form-urlencoded");
 
    UString getContent() const   { return body; }
-   int     responseCode() const { return UHTTP::http_info.nResponseCode; }
+   int     responseCode() const { return u_http_info.nResponseCode; }
 
    // DEBUG
 

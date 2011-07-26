@@ -82,9 +82,9 @@ protected:
    // SERVICES
 
    bool execute(UString& data);
-   bool verifyNodeContent(xmlNodePtr node);
    bool setURI(const char* uri, xmlNodePtr node);
    bool nodesListRead(xmlNodePtr node, int usage);
+   bool verifyNodeContent(xmlNodePtr node, UString& signature_value);
 
    static void            registerDefault();
    static UBaseTransform* findByHref(const char* href);
@@ -115,7 +115,7 @@ public:
 
    // SERVICES
 
-   bool verify(UXML2Document& document);
+   bool verify(UXML2Document& document, const char*& alg, UString& data, UString& signature);
 
 #ifdef DEBUG
    const char* dump(bool reset) const;
@@ -140,10 +140,10 @@ protected:
    // SERVICES
 
    bool processKeyInfoNode();
-   bool processSignedInfoNode();
    bool processObjectNode(xmlNodePtr objectNode);
-   bool processSignatureNode(xmlNodePtr signature);
    bool processManifestNode(xmlNodePtr manifestNode);
+   bool processSignedInfoNode(const char*& alg, UString& data);
+   bool processSignatureNode(xmlNodePtr signature, const char*& alg, UString& data);
 
 private:
    UDSIGContext(const UDSIGContext&)            {}

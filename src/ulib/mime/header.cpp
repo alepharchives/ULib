@@ -382,11 +382,11 @@ bool UMimeHeader::readHeader(USocket* socket, UString& data)
 
    U_ASSERT(empty())
 
-   UHTTP::resetHTTPInfo();
+   UHTTP::initHTTPInfo();
 
    bool result = (UHTTP::readHTTPHeader(socket, data) &&
                   UHTTP::findEndHeader(         data)
-                     ? parse(data.c_pointer(UHTTP::http_info.startHeader), UHTTP::http_info.szHeader) > 0
+                     ? parse(data.c_pointer(u_http_info.startHeader), u_http_info.szHeader) > 0
                      : false);
 
    if (result) header = data;

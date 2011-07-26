@@ -43,5 +43,4 @@ int UEchoPlugIn::handlerRequest()
     UClientImage_Base::body->clear();
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-// U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }

@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/utility/string_ext.h>
 #include <ulib/xml/libxml2/document.h>
 
 #include <libxml/c14n.h>
@@ -121,9 +122,28 @@ uint32_t UXML2Document::getElement(UString& element, uint32_t pos, const char* t
    U_RETURN(end);
 }
 
+UString UXML2Document::getElementData(uint32_t pos, const char* tag, uint32_t tag_len)
+{
+   U_TRACE(0, "UXML2Document::getElementData(%u,%.*S,%u)", pos, tag_len, tag, tag_len)
+
+   UString element;
+   uint32_t end = getElement(element, pos, tag, tag_len);
+
+   if (end != U_NOT_FOUND &&
+       element.empty() == false)
+      {
+      uint32_t n    = tag_len + 2;                                                       // <...>
+      UString _data = UStringExt::trim(element.substr(n, element.size() - (n * 2) - 1)); // </..>
+
+      U_RETURN_STRING(_data);
+      }
+
+   U_RETURN_STRING(element);
+}
+
 uint32_t UXML2Document::getElement(UVector<UString>& velement, const char* tag, uint32_t tag_len)
 {
-   U_TRACE(0, "UXML2Document::getElement(%.*S,%p,%.*S,%u)", U_STRING_TO_TRACE(data), &velement, tag_len, tag, tag_len)
+   U_TRACE(0, "UXML2Document::getElement(%p,%.*S,%u)", &velement, tag_len, tag, tag_len)
 
    U_INTERNAL_ASSERT_POINTER(tag)
 

@@ -209,6 +209,83 @@ next:
 #endif
 }
 
+void UNotifier::modify(UEventFd* item)
+{
+   U_TRACE(0, "UNotifier::modify(%p)", item)
+
+   U_INTERNAL_ASSERT_POINTER(item)
+
+   U_INTERNAL_DUMP("fd = %d op_mask = %B", item->fd, item->op_mask)
+
+   U_INTERNAL_ASSERT_POINTER(pthis)
+   U_INTERNAL_ASSERT_MAJOR(item->fd,0)
+
+   for (UEventFd* handler_event = first; handler_event; handler_event = handler_event->next)
+      {
+      U_INTERNAL_DUMP("fd = %d", handler_event->fd)
+
+      U_INTERNAL_ASSERT_MAJOR(handler_event->fd,0)
+
+      if (handler_event->fd == item->fd)
+         {
+#     ifdef HAVE_LIBEVENT
+         U_INTERNAL_ASSERT_POINTER(u_ev_base)
+
+         int mask = EV_PERSIST;
+
+         if (item->op_mask & U_READ_IN)   mask |= EV_READ;
+         if (item->op_mask & U_WRITE_OUT) mask |= EV_WRITE;
+
+         U_INTERNAL_DUMP("mask = %B", mask)
+
+         UDispatcher::del(item->pevent);
+                   delete item->pevent;
+                          item->pevent = U_NEW(UEvent<UEventFd>(item->fd, mask, *item));
+
+         (void) UDispatcher::add(*(item->pevent));
+#     elif defined(HAVE_EPOLL_WAIT)
+         U_INTERNAL_ASSERT_MAJOR(epollfd,0)
+
+         struct epoll_event _events = { item->op_mask, { int2ptr(item->fd) } };
+
+         (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_MOD, item->fd, &_events);
+#     else
+         U_INTERNAL_DUMP("fd_set_read = %B", __FDS_BITS(&fd_set_read)[0])
+
+         U_INTERNAL_ASSERT(fd_read_cnt >= 0)
+         U_INTERNAL_ASSERT_EQUALS(FD_ISSET(item->fd, &fd_set_read),0)
+
+         if (item->op_mask & U_WRITE_OUT)
+            {
+            U_INTERNAL_ASSERT_EQUALS(FD_ISSET(item->fd, &fd_set_write),0)
+
+            FD_SET(item->fd, &fd_set_write);
+
+            U_INTERNAL_ASSERT(fd_write_cnt >= 0)
+
+            ++fd_write_cnt;
+
+            U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+            }
+         else
+            {
+            U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_write))
+
+            FD_CLR(fd, &fd_set_write);
+
+            U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+
+            --fd_write_cnt;
+
+            U_INTERNAL_ASSERT(fd_write_cnt >= 0)
+            }
+#     endif
+
+         return;
+         }
+      }
+}
+
 U_NO_EXPORT void UNotifier::handlerDelete(UEventFd** ptr, UEventFd* item)
 {
    U_TRACE(0, "UNotifier::handlerDelete(%p,%p)", ptr, item)
@@ -480,7 +557,12 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UEventFd** ptr, UEventFd* hand
          {
          bdelete = true;
 
-#     ifndef HAVE_EPOLL_WAIT
+#     ifdef HAVE_EPOLL_WAIT
+         // sometime epoll() wake with event (EPOLLIN & EPOLLOUT),
+         // we get recv() == 0 (without EPOLLER | EPOLLHUP in the event mask),
+         // this cause closing socket and assertion failed on write()...
+         bexcept = true;
+#     else
          --fd_read_cnt;
 
          U_INTERNAL_DUMP("fd_read_cnt = %d", fd_read_cnt)
@@ -490,6 +572,8 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UEventFd** ptr, UEventFd* hand
          }
       }
 
+   U_INTERNAL_DUMP("n = %d", n)
+
    if (bwrite)
       {
 #  ifndef HAVE_EPOLL_WAIT
@@ -497,6 +581,12 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UEventFd** ptr, UEventFd* hand
       U_INTERNAL_ASSERT(FD_ISSET(handler_event->fd, &fd_set_write))
 #  endif
       U_INTERNAL_ASSERT(handler_event->op_mask & U_WRITE_OUT)
+
+#  ifdef HAVE_EPOLL_WAIT
+      // epoll() waked with (EPOLLIN & EPOLLOUT & EPOLLER & EPOLLHUP) in the event mask,
+      // this cause closing socket and no need to write()...
+      if (bread && bexcept) goto next;
+#  endif
 
       --n;
 
@@ -517,6 +607,7 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UEventFd** ptr, UEventFd* hand
          }
       }
 
+next:
    if (bdelete)
       {
       handlerDelete(ptr, handler_event);
@@ -571,6 +662,7 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 
          U_INTERNAL_ASSERT((pev->events & U_READ_IN)   != 0 ||
                            (pev->events & U_WRITE_OUT) != 0 ||
+                           (pev->events & EPOLLHUP)    != 0 ||
                            (pev->events & EPOLLERR)    != 0)
 
          ptr    = &first;
@@ -589,7 +681,8 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 found:
             bread   = ((pev->events & U_READ_IN)   != 0);
             bwrite  = ((pev->events & U_WRITE_OUT) != 0);
-            bexcept = ((pev->events & EPOLLERR)    != 0);
+            bexcept = ((pev->events & EPOLLERR)    != 0 ||
+                       (pev->events & EPOLLHUP)    != 0);
 
             U_INTERNAL_DUMP("bread = %b bwrite = %b bexcept = %b", bread, bwrite, bexcept)
 

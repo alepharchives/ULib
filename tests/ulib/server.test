@@ -13,7 +13,10 @@ start_msg server
 
 if [ "$TERM" != "cygwin" ]; then
 	DIR=../../src/ulib/net/server/plugin/.libs
-	test -d $DIR && ( cd $DIR; ln -sf ../page_speed/.libs/mod_pagespeed.so )
+	test -d $DIR &&
+		( cd $DIR;
+		  ln -sf ../v8/.libs/mod_v8.so;
+		  ln -sf ../page_speed/.libs/mod_pagespeed.so )
 fi
 
 #VALGRIND=valgrind # --gen-suppressions=all

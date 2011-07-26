@@ -8,7 +8,7 @@
 "package " PACKAGE_NAME "\n" \
 "version " ULIB_VERSION "\n" \
 "purpose 'sample test for UOption class'\n" \
-"report_bugs 'Report bugs to <stefano.casazza@gmail.com>'\n" \
+"report_bugs 'stefano.casazza@unirel.com'\n" \
 "option a option_a               0 'A option without arg' ''\n" \
 "option b option_b               1 'A option with arg' ''\n" \
 "option c option_c               2 'A option with optional arg' Hello\n" \

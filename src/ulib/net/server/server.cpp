@@ -94,8 +94,9 @@ UEventFd*                  UServer_Base::handler_event;
 UEventTime*                UServer_Base::ptime;
 UServer_Base*              UServer_Base::pthis;
 UVector<UString>*          UServer_Base::vplugin_name;
-UClientImage_Base*         UServer_Base::vClientImage;
+UClientImage_Base*         UServer_Base::poldc;
 UClientImage_Base*         UServer_Base::pClientImage;
+UClientImage_Base*         UServer_Base::vClientImage;
 UVector<UIPAllow*>*        UServer_Base::vallow_IP;
 UVector<UServerPlugIn*>*   UServer_Base::vplugin;
 UServer_Base::shared_data* UServer_Base::ptr_shared_data;
@@ -309,6 +310,8 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    pthis        = this;
    senvironment = U_NEW(UString(U_CAPACITY));
 
+   u_gettimeofday();
+
    u_init_hostname();
 
    U_INTERNAL_DUMP("u_hostname(%u) = %.*S", u_hostname_len, u_hostname_len, u_hostname)
@@ -495,6 +498,10 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
       U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
       u_now = &(ptr_shared_data->_timeval);
+
+#  if defined(HAVE_PTHREAD_H)
+      ((UTimeThread*)(u_pthread_time = U_NEW(UTimeThread)))->start();
+#  endif
       }
 #endif
 
@@ -504,21 +511,9 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    if (pid_file.empty() == false) (void) UFile::writeTo(pid_file, UString(u_pid_str, u_pid_str_len));
 
-   if (timeoutMS == -1 &&
-       log_file.empty())
-      {
-      u_gettimeofday();
-      }
-   else
-      {
-#  if defined(HAVE_PTHREAD_H)
-      ((UTimeThread*)(u_pthread_time = U_NEW(UTimeThread)))->start();
-#  endif
+   // open log
 
-      // open log
-
-      if (log_file.empty() == false) openLog(log_file, cfg.readLong(*str_LOG_FILE_SZ));
-      }
+   if (log_file.empty() == false) openLog(log_file, cfg.readLong(*str_LOG_FILE_SZ));
 
    // load plugin modules and call server-wide hooks handlerConfig()...
 
@@ -760,24 +755,30 @@ void UServer_Base::runAsUser()
     * If it's started by a user that that doesn't have root privileges, this step will be omitted.
     */
 
-   if (pthis->as_user.empty() == false &&
-       UServices::isSetuidRoot())
+   if (pthis->as_user.empty() == false)
       {
-      U_INTERNAL_ASSERT(pthis->as_user.isNullTerminated())
-
-      const char* user = pthis->as_user.data();
-
-      if (u_runAsUser(user, false))
+      if (UServices::isSetuidRoot() == false)
          {
-         U_INTERNAL_DUMP("$HOME = %S", getenv("HOME"))
-
-         U_SRV_LOG("server run with user %S permission", user);
+         U_SRV_LOG("the \"RUN_AS_USER\" directive makes sense only if the master process runs with super-user privileges, ignored");
          }
       else
          {
-#     ifndef __MINGW32__
-         U_ERROR("set user %S context failed...", user);
-#     endif
+         U_INTERNAL_ASSERT(pthis->as_user.isNullTerminated())
+
+         const char* user = pthis->as_user.data();
+
+         if (u_runAsUser(user, false))
+            {
+            U_INTERNAL_DUMP("$HOME = %S", getenv("HOME"))
+
+            U_SRV_LOG("server run with user %S permission", user);
+            }
+         else
+            {
+#        ifndef __MINGW32__
+            U_ERROR("set user %S context failed...", user);
+#        endif
+            }
          }
 
       pthis->as_user.clear();
@@ -1035,12 +1036,16 @@ next:
 
       if (addr) csocket->cLocalAddress.set(*addr);
 
+      ptr->last_response = u_now->tv_sec + 10;
+
       ++ptr;
       }
 
 #ifdef DEBUG
    UTrace::resume();
 #endif
+
+   pClientImage = vClientImage;
 
    // NB: in the classic model we don't need to notify for request of connection
    // (loop: accept-fork) and the forked child don't accept new client, but we need
@@ -1135,12 +1140,13 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
       {
       ptr = vClientImage + index;
 
-      U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd = %d", index, ptr->UEventFd::fd)
+      U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd = %d vClientImage[%u].sfd = %d", index, ptr->UEventFd::fd, index, ptr->sfd)
 
       index = (index + 1) % max_Keep_Alive;
 
       if (ptr->UEventFd::fd == 0)
          {
+         U_INTERNAL_ASSERT_EQUALS(ptr->sfd,0)
          U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::next,0)
 
          break;
@@ -1324,11 +1330,28 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
 
       if (ptr->socket->isOpen()) ptr->socket->closesocket();
 
+      // NB: check for pending sendfile...
+
+      if (ptr->sfd)
+         {
+         U_INTERNAL_DUMP("sfd = %d UEventFd::op_mask = %B", ptr->sfd, ptr->UEventFd::op_mask)
+
+         UFile::close(ptr->sfd);
+                      ptr->sfd = 0;
+
+         ptr->UEventFd::op_mask = U_READ_IN;
+         }
+
       // NB: to reuse object...
 
       ptr->UEventFd::fd = 0;
 
-      if (USocket::accept4_flags & SOCK_NONBLOCK) ptr->socket->flags |= O_NONBLOCK;
+      U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::op_mask, U_READ_IN)
+
+   // if (USocket::accept4_flags & SOCK_NONBLOCK) ptr->socket->flags |= O_NONBLOCK;
+
+      U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_CLOEXEC)  != 0),((ptr->socket->flags & O_CLOEXEC)  != 0))
+      U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_NONBLOCK) != 0),((ptr->socket->flags & O_NONBLOCK) != 0))
       }
 #ifdef DEBUG
    else

@@ -1,5 +1,7 @@
 /* csp_interface.h */
 
+#include <ulib/internal/chttp.h>
+
 extern char*        get_reply(void);
 extern unsigned int get_reply_capacity(void);
 

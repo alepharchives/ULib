@@ -16,6 +16,7 @@
 
 #include <ulib/string.h>
 #include <ulib/net/socket.h>
+#include <ulib/internal/chttp.h>
 #include <ulib/dynamic/dynamic.h>
 
 #ifdef HAVE_PCRE
@@ -24,145 +25,11 @@
 #  include <ulib/container/vector.h>
 #endif
 
-/* -----------------------------------------------------------------------------------------------------------------------------
-//  _     _   _
-//  | |__ | |_| |_ _ __
-//  | '_ \| __| __| '_ \
-//  | | | | |_| |_| |_) |
-//  |_| |_|\__|\__| .__/
-//                  |_|
-//
-// ----------------------------------------------------------------------------------------------------------------------------- */
-// HTTP message handler
-//
-// The status code is a three-digit integer, and the first digit identifies the general category of response:
-// -----------------------------------------------------------------------------------------------------------------------------
+#define U_HTTP_BODY(str)      (str).substr(u_http_info.endHeader, u_http_info.clength)
+#define U_HTTP_HEADER(str)    (str).substr(u_http_info.startHeader, u_http_info.szHeader)
+#define U_HTTP_URI_EQUAL(str) (u_http_info.uri_len == str.size() && memcmp(u_http_info.uri, str.data(), str.size()) == 0)
 
-// 1xx indicates an informational message only
-#define HTTP_CONTINUE            100
-#define HTTP_SWITCH_PROT         101
-
-// 2xx indicates success of some kind
-#define HTTP_OK                  200
-#define HTTP_CREATED             201
-#define HTTP_ACCEPTED            202
-#define HTTP_NOT_AUTHORITATIVE   203
-#define HTTP_NO_CONTENT          204
-#define HTTP_RESET               205
-#define HTTP_PARTIAL             206
-
-#define HTTP_OPTIONS_RESPONSE    222
-
-// 3xx redirects the client to another URL
-#define HTTP_MULT_CHOICE         300
-#define HTTP_MOVED_PERM          301
-#define HTTP_MOVED_TEMP          302
-#define HTTP_FOUND               302
-#define HTTP_SEE_OTHER           303
-#define HTTP_NOT_MODIFIED        304
-#define HTTP_USE_PROXY           305
-#define HTTP_TEMP_REDIR          307
-
-// 4xx indicates an error on the client's part
-#define HTTP_BAD_REQUEST         400
-#define HTTP_UNAUTHORIZED        401
-#define HTTP_PAYMENT_REQUIRED    402
-#define HTTP_FORBIDDEN           403
-#define HTTP_NOT_FOUND           404
-#define HTTP_BAD_METHOD          405
-#define HTTP_NOT_ACCEPTABLE      406
-#define HTTP_PROXY_AUTH          407
-#define HTTP_CLIENT_TIMEOUT      408
-#define HTTP_CONFLICT            409
-#define HTTP_GONE                410
-#define HTTP_LENGTH_REQUIRED     411
-#define HTTP_PRECON_FAILED       412
-#define HTTP_ENTITY_TOO_LARGE    413
-#define HTTP_REQ_TOO_LONG        414
-#define HTTP_UNSUPPORTED_TYPE    415
-#define HTTP_REQ_RANGE_NOT_OK    416
-#define HTTP_EXPECTATION_FAILED  417
-
-// 5xx indicates an error on the server's part
-#define HTTP_INTERNAL_ERROR      500
-#define HTTP_NOT_IMPLEMENTED     501
-#define HTTP_BAD_GATEWAY         502
-#define HTTP_UNAVAILABLE         503
-#define HTTP_GATEWAY_TIMEOUT     504
-#define HTTP_VERSION             505
-
-// -----------------------------------------------------------------------------------------------------------------------------
-// HTTP header representation
-// -----------------------------------------------------------------------------------------------------------------------------
-
-typedef struct uhttpinfo {
-   const char* method;
-   const char* uri;
-   const char* query;
-   const char* host;
-   const char* content_type;
-   const char* range;
-   const char* interpreter;
-   time_t      if_modified_since;
-   uint32_t    nResponseCode, startHeader, endHeader, szHeader, clength,
-               method_len, uri_len, query_len, host_len, host_vlen, content_type_len, range_len;
-   char        flag[8];
-} uhttpinfo;
-
-#define U_http_upgrade             UHTTP::http_info.flag[0]
-#define U_http_version             UHTTP::http_info.flag[1]
-#define U_http_sh_script           UHTTP::http_info.flag[2]
-#define U_http_keep_alive          UHTTP::http_info.flag[3]
-#define U_http_method_type         UHTTP::http_info.flag[4]
-#define U_http_request_check       UHTTP::http_info.flag[5]
-#define U_http_is_accept_deflate   UHTTP::http_info.flag[6]
-#define U_http_is_connection_close UHTTP::http_info.flag[7]
-
-enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_GET = '4', HTTP_HEAD = '5', HTTP_OPTIONS = '6' };
-
-#define U_HTTP_BODY(str)             (str).substr(UHTTP::http_info.endHeader, UHTTP::http_info.clength)
-#define U_HTTP_HEADER(str)           (str).substr(UHTTP::http_info.startHeader, UHTTP::http_info.szHeader)
-
-#define U_HTTP_METHOD_TO_PARAM       UHTTP::http_info.method, UHTTP::http_info.method_len
-#define U_HTTP_METHOD_TO_TRACE       UHTTP::http_info.method_len, UHTTP::http_info.method
-
-#define U_HTTP_URI_TO_TRACE          UHTTP::http_info.uri_len, UHTTP::http_info.uri
-#define U_HTTP_URI_TO_PARAM          UHTTP::http_info.uri, UHTTP::http_info.uri_len
-
-#define U_HTTP_QUERY_TO_PARAM        UHTTP::http_info.query, UHTTP::http_info.query_len
-#define U_HTTP_QUERY_TO_TRACE        UHTTP::http_info.query_len, UHTTP::http_info.query
-
-#define U_HTTP_URI_QUERY_TO_PARAM    UHTTP::http_info.uri, (UHTTP::http_info.uri_len + UHTTP::http_info.query_len + (UHTTP::http_info.query_len ? 1 : 0))
-#define U_HTTP_URI_QUERY_TO_TRACE    (UHTTP::http_info.uri_len + UHTTP::http_info.query_len + (UHTTP::http_info.query_len ? 1 : 0)), UHTTP::http_info.uri
-
-#define U_HTTP_CTYPE_TO_PARAM        UHTTP::http_info.content_type, UHTTP::http_info.content_type_len
-#define U_HTTP_CTYPE_TO_TRACE        UHTTP::http_info.content_type_len, UHTTP::http_info.content_type
-
-#define U_HTTP_RANGE_TO_PARAM        UHTTP::http_info.range, UHTTP::http_info.range_len
-#define U_HTTP_RANGE_TO_TRACE        UHTTP::http_info.range_len, UHTTP::http_info.range
-
-// The hostname of your server from header's request.
-// The difference between U_HTTP_HOST_.. and U_HTTP_VHOST_.. is that
-// U_HTTP_HOST_.. can include the «:PORT» text, and U_HTTP_VHOST_.. only the name
-
-#define U_HTTP_HOST_TO_PARAM         UHTTP::http_info.host, UHTTP::http_info.host_len
-#define U_HTTP_HOST_TO_TRACE         UHTTP::http_info.host_len, UHTTP::http_info.host
-
-#define U_HTTP_VHOST_TO_PARAM        UHTTP::http_info.host, UHTTP::http_info.host_vlen
-#define U_HTTP_VHOST_TO_TRACE        UHTTP::http_info.host_vlen, UHTTP::http_info.host
-
-// HTTP Compare
-
-#define U_HTTP_URI_STRNEQ(str)                                         U_STRNEQ(UHTTP::http_info.uri,          str)
-#define U_HTTP_HOST_STRNEQ(str)   (UHTTP::http_info.host_len         ? U_STRNEQ(UHTTP::http_info.host,         str) : false)
-#define U_HTTP_QUERY_STRNEQ(str)  (UHTTP::http_info.query_len        ? U_STRNEQ(UHTTP::http_info.query,        str) : false)
-#define U_HTTP_CTYPE_STRNEQ(str)  (UHTTP::http_info.content_type_len ? U_STRNEQ(UHTTP::http_info.content_type, str) : false)
-
-#define U_HTTP_URI_EQUAL(str)     (UHTTP::http_info.uri_len == str.size() && memcmp(UHTTP::http_info.uri, str.data(), str.size()) == 0)
-
-// HTTP Access Authentication
-
-#define U_HTTP_REALM "Protected Area"
+#define U_HTTP_REALM "Protected Area" // HTTP Access Authentication
 
 #define U_MAX_UPLOAD_PROGRESS 32
 
@@ -196,10 +63,6 @@ public:
    static const UString* str_websocket_prot;
    static const UString* str_expect_100_continue;
 
-   // HTTP header representation
-
-   static uhttpinfo http_info;
-
    static const char* ptrH; // "Host"
    static const char* ptrR; // "Range"
    static const char* ptrC; // "Connection"
@@ -217,8 +80,8 @@ public:
       {
       U_TRACE(0, "UHTTP::setHTTPMethod(%.*S,%u)", method_len, method, method_len)
 
-      http_info.method     = method;
-      http_info.method_len = method_len;
+      u_http_info.method     = method;
+      u_http_info.method_len = method_len;
 
       U_INTERNAL_DUMP("method = %.*S", U_HTTP_METHOD_TO_TRACE)
       }
@@ -231,22 +94,22 @@ public:
          {
          U_http_method_type = HTTP_GET;
 
-         U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 3)
-         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, "GET"))
+         U_INTERNAL_ASSERT_EQUALS(u_http_info.method_len, 3)
+         U_INTERNAL_ASSERT(U_STRNEQ(u_http_info.method, "GET"))
          }
       else if (c == 'P') // POST
          {
          U_http_method_type = HTTP_POST;
 
-         U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 4)
-         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, "POST"))
+         U_INTERNAL_ASSERT_EQUALS(u_http_info.method_len, 4)
+         U_INTERNAL_ASSERT(U_STRNEQ(u_http_info.method, "POST"))
          }
       else // HEAD
          {
          U_http_method_type = HTTP_HEAD;
 
-         U_INTERNAL_ASSERT_EQUALS(http_info.method_len, 4)
-         U_INTERNAL_ASSERT(U_STRNEQ(http_info.method, "HEAD"))
+         U_INTERNAL_ASSERT_EQUALS(u_http_info.method_len, 4)
+         U_INTERNAL_ASSERT(U_STRNEQ(u_http_info.method, "HEAD"))
          }
 
       U_INTERNAL_DUMP("method_type = %C", U_http_method_type)
@@ -256,9 +119,9 @@ public:
       {
       U_TRACE(0, "UHTTP::getHTTPMethod()")
 
-      if (http_info.method_len)
+      if (u_http_info.method_len)
          {
-         UString method((void*)http_info.method, http_info.method_len);
+         UString method((void*)u_http_info.method, u_http_info.method_len);
 
          U_RETURN_STRING(method);
          }
@@ -270,8 +133,8 @@ public:
       {
       U_TRACE(0, "UHTTP::setHTTPUri(%.*S,%u)", uri_len, uri, uri_len)
 
-      http_info.uri     = uri;
-      http_info.uri_len = uri_len;
+      u_http_info.uri     = uri;
+      u_http_info.uri_len = uri_len;
 
       U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
       }
@@ -280,19 +143,19 @@ public:
       {
       U_TRACE(0, "UHTTP::setHTTPQuery(%.*S,%u)", query_len, query, query_len)
 
-      http_info.query     = query;
-      http_info.query_len = query_len;
+      u_http_info.query     = query;
+      u_http_info.query_len = query_len;
 
       U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
       }
 
-   static void resetHTTPInfo();
+   static void initHTTPInfo();
 
    static void setHTTPInfo(const char* method, uint32_t method_len, const char* uri, uint32_t uri_len)
       {
       U_TRACE(0, "UHTTP::setHTTPInfo(%.*S,%u,%.*S,%u)", method_len, method, method_len, uri_len, uri, uri_len)
 
-      resetHTTPInfo();
+      initHTTPInfo();
 
       setHTTPMethod(     method, method_len);
       setHTTPMethodType(*method);
@@ -325,7 +188,7 @@ public:
 
       U_INTERNAL_ASSERT_MAJOR(limit_request_body,0)
 
-      bool result = (http_info.clength > limit_request_body);
+      bool result = (u_http_info.clength > limit_request_body);
 
       U_RETURN(result);
       }
@@ -402,15 +265,19 @@ public:
 
    static UFile* file;
    static UString* alias;
+   static UString* cbuffer;
    static UStringRep* pkey;
    static UString* pathname;
    static UString* ssi_alias;
    static UString* request_uri;
    static UString* uri_protected_mask;
-   static uint32_t limit_request_body, request_read_timeout;
-   static bool virtual_host, enable_caching_by_proxy_servers, telnet_enable;
 
-   static void checkHTTPRequest();
+   static uint32_t limit_request_body, request_read_timeout;
+   static bool     virtual_host, enable_caching_by_proxy_servers, telnet_enable;
+
+   static int  checkHTTPRequest();
+   static int  checkHTTPRequestCache();
+   static void manageHTTPRequestCache();
    static void processHTTPGetRequest(USocket* socket, const UString& request);
 
    static bool checkHTTPOptionsRequest();
@@ -594,9 +461,9 @@ public:
       {
       U_TRACE(0, "UHTTP::isCGIRequest()")
 
-      U_INTERNAL_DUMP("http_info.interpreter = %S cgi_dir = %S", http_info.interpreter, cgi_dir)
+      U_INTERNAL_DUMP("u_http_info.interpreter = %S cgi_dir = %S", u_http_info.interpreter, cgi_dir)
 
-      bool result = (http_info.interpreter || cgi_dir[0]);
+      bool result = (u_http_info.interpreter || cgi_dir[0]);
 
       U_RETURN(result);
       }
@@ -605,7 +472,7 @@ public:
    static UString getCGIEnvironment();
    static bool    checkForCGIRequest();
    static bool    processCGIRequest(UCommand* pcmd, UString* penvironment, bool async, bool process_output);
-   static void    setHTTPCgiResponse(int nResponseCode, bool header_content_length, bool header_content_type, bool content_encoding);
+   static void    setHTTPCgiResponse(bool header_content_length, bool header_content_type, bool content_encoding);
 
    // URI PROTECTED
 
@@ -961,9 +828,12 @@ public:
 
    // set HTTP response message
 
-   static UString getHTTPHeaderForResponse(int nResponseCode, const UString& content);
-   static void    setHTTPResponse(int nResponseCode, const UString* content_type, const UString* body);
-   static void    setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint32_t len_location);
+   static void setHTTPResponse(const UString* content_type = 0, const UString* body = 0);
+   static void setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint32_t len_location);
+
+   // get HTTP response message
+
+   static UString getHTTPHeaderForResponse(const UString& content);
 
 private:
    static UString getHTMLDirectoryList() U_NO_EXPORT;

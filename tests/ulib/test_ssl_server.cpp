@@ -38,6 +38,8 @@ protected:
       if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
       if (result == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_NOTIFIER_DELETE);
 
+      UClientImage_Base::initAfterGenericRead();
+
       if (UServer_Base::isLog()) UClientImage_Base::logRequest();
 
       U_INTERNAL_ASSERT_EQUALS(result, U_PLUGIN_HANDLER_GO_ON)

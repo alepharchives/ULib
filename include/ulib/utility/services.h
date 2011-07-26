@@ -246,7 +246,9 @@ struct U_EXPORT UServices {
     * passwd is the corresponsding password for the private key
     */
 
-   static UString getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, int base64, ENGINE* e = 0);
+   static UString getSignatureValue(int alg, const UString& data,                           const UString& pkey, const UString& passwd, int base64, ENGINE* e = 0);
+   static bool    verifySignature(  int alg, const UString& data, const UString& signature, const UString& pkey,                                    ENGINE* e = 0);
+
 #endif
 };
 

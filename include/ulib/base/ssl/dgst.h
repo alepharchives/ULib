@@ -134,7 +134,7 @@ static inline void u_dgst_verify_hash(unsigned char* restrict data, uint32_t len
 {
    U_INTERNAL_TRACE("u_dgst_verify_hash(%.*s,%u)", U_min(length,128), data, length)
 
-   (void) EVP_SignUpdate(&u_mdctx, data, length);
+   (void) EVP_VerifyUpdate(&u_mdctx, data, length);
 }
 
 uint32_t u_dgst_sign_finish(unsigned char* restrict sig, int base64); /* Finish and get signature */

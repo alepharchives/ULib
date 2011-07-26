@@ -271,7 +271,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
 {
    U_TRACE(0, "UHttpClient_Base::createAuthorizationHeader()")
 
-   bool bProxy = (UHTTP::http_info.nResponseCode == HTTP_PROXY_AUTH);
+   bool bProxy = (u_http_info.nResponseCode == HTTP_PROXY_AUTH);
 
    UString sHeader = *(bProxy ? str_proxy_authenticate
                               : str_www_authenticate);
@@ -280,7 +280,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
 
    if (authResponse.empty())
       {
-      U_DUMP("%.*S header missing from HTTP response: %d", U_STRING_TO_TRACE(sHeader), UHTTP::http_info.nResponseCode)
+      U_DUMP("%.*S header missing from HTTP response: %d", U_STRING_TO_TRACE(sHeader), u_http_info.nResponseCode)
 
       U_RETURN(false);
       }
@@ -477,15 +477,15 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
    // 4xx indicates an error on the client's part
    // 5xx indicates an error on the server's part
 
-   if (UHTTP::http_info.nResponseCode == HTTP_UNAUTHORIZED || // 401
-       UHTTP::http_info.nResponseCode == HTTP_PROXY_AUTH)     // 407
+   if (u_http_info.nResponseCode == HTTP_UNAUTHORIZED || // 401
+       u_http_info.nResponseCode == HTTP_PROXY_AUTH)     // 407
       {
       // If we haven't already done so, attempt to create an Authentication header. If this fails
       // (due to application not passing the credentials), then we treat it as an error.
       // If we already have one then the server is rejecting it so we have an error anyway.
 
-      if ((UHTTP::http_info.nResponseCode == HTTP_UNAUTHORIZED && requestHeader->containsHeader(*USocket::str_authorization)) ||
-          (UHTTP::http_info.nResponseCode == HTTP_PROXY_AUTH   && requestHeader->containsHeader(*str_proxy_authorization))    ||
+      if ((u_http_info.nResponseCode == HTTP_UNAUTHORIZED && requestHeader->containsHeader(*USocket::str_authorization)) ||
+          (u_http_info.nResponseCode == HTTP_PROXY_AUTH   && requestHeader->containsHeader(*str_proxy_authorization))    ||
           createAuthorizationHeader() == false)
          {
          U_RETURN(-1);
@@ -495,8 +495,8 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 
       U_RETURN(U_http_is_connection_close == U_YES ? 0 : 1);
       }
-   else if ((UHTTP::http_info.nResponseCode == HTTP_MOVED_PERM  || // 301
-             UHTTP::http_info.nResponseCode == HTTP_MOVED_TEMP) && // 302
+   else if ((u_http_info.nResponseCode == HTTP_MOVED_PERM  || // 301
+             u_http_info.nResponseCode == HTTP_MOVED_TEMP) && // 302
             bFollowRedirects)
       {
       // 3xx redirects the client to another URL
@@ -556,7 +556,7 @@ void UHttpClient_Base::composeRequest(UString& data, uint32_t& startHeader)
 {
    U_TRACE(0, "UHttpClient_Base::composeRequest(%.*S,%p)", U_STRING_TO_TRACE(data), &startHeader)
 
-   UClient_Base::uri = (UHTTP::http_info.uri_len ? UString(U_HTTP_URI_TO_PARAM) : U_STRING_FROM_CONSTANT("/"));
+   UClient_Base::uri = (u_http_info.uri_len ? UString(U_HTTP_URI_TO_PARAM) : U_STRING_FROM_CONSTANT("/"));
 
    UHTTP::setHTTPInfo(method, UClient_Base::uri);
 
@@ -632,7 +632,7 @@ bool UHttpClient_Base::sendRequest(UString& data)
       {
       UHTTP::getHTTPInfo(data, method, UClient_Base::uri);
 
-      startHeader = UHTTP::http_info.startHeader;
+      startHeader = u_http_info.startHeader;
       }
    else
       {
@@ -690,9 +690,9 @@ bool UHttpClient_Base::sendRequest(UString& data)
       if (UClient_Base::connect() == false) U_RETURN(false);
       }
 
-   U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", UHTTP::http_info.nResponseCode)
+   U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", u_http_info.nResponseCode)
 
-   UHTTP::http_info.clength = responseHeader->getHeader(*USocket::str_content_length).strtol();
+   u_http_info.clength = responseHeader->getHeader(*USocket::str_content_length).strtol();
 
    bool ok = UHTTP::readHTTPBody(socket, &response, body);
 
@@ -714,7 +714,7 @@ bool UHttpClient_Base::sendPost(const UString& _url, const UString& pbody, const
 
    bool ok = connectServer(_url);
 
-   UHTTP::resetHTTPInfo();
+   UHTTP::initHTTPInfo();
 
    if (ok == false) body = UClient_Base::response;
    else

@@ -31,6 +31,7 @@ if [ "$TERM" != "cygwin" ]; then
 	  make upload_progress.la >/dev/null 2>&1 || exit 1;
      test -d ../.libs &&
 	  ( cd ../.libs;
+       ln -sf ../v8/.libs/mod_v8.so;
 	    ln -sf ../mod_shib/.libs/mod_shib.so;
 		 ln -sf ../page_speed/.libs/mod_pagespeed.so;
 	    ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
@@ -73,9 +74,10 @@ LS=`ls inp/http/close`
 for i in $LS
 do
 	TIMEOUT 2 $LCMD <inp/http/close/$i >>out/web_server_ssl.out 2>>err/web_server_ssl.err
-	if [ $? -ne 0 ]; then
-		exit 1
-	fi
+   EXIT_VALUE=$?
+   if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then
+  	  exit 1
+   fi
 done
 
  TIMEOUT 10 $LCMD <inp/http/all.inp  >>out/web_server_ssl.out 2>>err/web_server_ssl.err
@@ -101,8 +103,8 @@ mkdir -p		   uploads
 $CHOWN apache: uploads
 chmod 777      uploads
 
- TIMEOUT 5 $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" -k https://127.0.0.1:443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
- TIMEOUT 5 $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" -k https://127.0.0.1:443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+TIMEOUT 5 $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" -k https://127.0.0.1:443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+TIMEOUT 5 $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" -k https://127.0.0.1:443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 
  kill_prg userver_ssl TERM
  if [ $? -ne 0 ]; then

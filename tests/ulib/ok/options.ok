@@ -10,4 +10,6 @@ Options:
    -c  --option_c[=VALUE]              A option with optional arg (default=Hello)
        --option_with_no_short_1        A option without short (default=1)
        --option_with_no_short_2=VALUE  A option with default (default=Bucaiolo a te)
-Report bugs to <stefano.casazza@gmail.com>
+
+Maintained by Stefano Casazza <stefano.casazza@gmail.com>
+Report bugs to <stefano.casazza@unirel.com>

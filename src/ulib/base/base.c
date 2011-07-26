@@ -252,9 +252,8 @@ void u_gettimeofday(void)
    U_INTERNAL_TRACE("u_gettimeofday()")
 
    U_INTERNAL_ASSERT_POINTER(u_now)
-   U_INTERNAL_ASSERT_EQUALS(u_pthread_time,0)
 
-   (void) gettimeofday(u_now, 0);
+   if (u_pthread_time == 0) (void) gettimeofday(u_now, 0);
 
    /* calculate number of seconds between UTC to current time zone
     *
@@ -396,7 +395,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
       {
       if (t == 0)
          {
-         if (u_pthread_time == 0) u_gettimeofday();
+         u_gettimeofday();
 
          t = u_now->tv_sec + u_now_adjust;
          }

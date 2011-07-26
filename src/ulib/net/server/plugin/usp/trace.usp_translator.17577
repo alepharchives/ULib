@@ -1,0 +1,815 @@
+{Call   ULib_init()
+	u_progname(14) = "usp_translator" u_cwd(50) = "/usr/src/ULib-1.1.0/src/ulib/net/server/plugin/usp"
+	{Call   UInterrupt::init()
+		::sigaction(7,0x7fe65bb9fd80,(nil)) = 0
+		::sigaction(11,0x7fe65bb9fd80,(nil)) = 0
+		::sigaction(2,0x7fe65bb9fd80,(nil)) = 0
+		::sigaction(15,0x7fe65bb9fd80,(nil)) = 0
+		{Call   UInterrupt::setMaskInterrupt(0x7fff388a6cc0,13)
+			::sigemptyset(0x7fff388a6cc0) = 0
+			::sigaddset(0x7fff388a6cc0,13) = 0
+		}Return UInterrupt::setMaskInterrupt(0x7fff388a6cc0,13)
+		{Call   UInterrupt::disable(0x7fff388a6cc0,(nil))
+			::sigprocmask(0,0x7fff388a6cc0,(nil)) = 0
+		}Return UInterrupt::disable(0x7fff388a6cc0,(nil)) = true
+	}Return UInterrupt::init()
+usp_translator: WARNING: ::getenv("TMPDIR") = (null)
+	::getenv("TMPDIR") = (null)
+	u_is_tty = false UStringRep::string_rep_null = 0x7fe65ba983e0
+}Return ULib_init()
+{Call   ::main(2,0x7fff388a7f18,0x7fff388a7f30)
+	{Call   UString::UString()
+		{Call   UString::copy(0x7fe65ba983e0)
+			{Call   UStringRep::hold()
+				this = 0x7fe65ba983e0 parent = (nil) references = 2 child = 0
+			}Return UStringRep::hold()
+		}Return UString::copy(0x7fe65ba983e0)
+	}Return UString::UString()
+	{Call   UString::UString()
+		{Call   UString::copy(0x7fe65ba983e0)
+			{Call   UStringRep::hold()
+				this = 0x7fe65ba983e0 parent = (nil) references = 3 child = 0
+			}Return UStringRep::hold()
+		}Return UString::copy(0x7fe65ba983e0)
+	}Return UString::UString()
+	{Call   UString::UString()
+		{Call   UString::copy(0x7fe65ba983e0)
+			{Call   UStringRep::hold()
+				this = 0x7fe65ba983e0 parent = (nil) references = 4 child = 0
+			}Return UStringRep::hold()
+		}Return UString::copy(0x7fe65ba983e0)
+	}Return UString::UString()
+	{Call   UString::UString()
+		{Call   UString::copy(0x7fe65ba983e0)
+			{Call   UStringRep::hold()
+				this = 0x7fe65ba983e0 parent = (nil) references = 5 child = 0
+			}Return UStringRep::hold()
+		}Return UString::copy(0x7fe65ba983e0)
+	}Return UString::UString()
+	{Call   UString::UString()
+		{Call   UString::copy(0x7fe65ba983e0)
+			{Call   UStringRep::hold()
+				this = 0x7fe65ba983e0 parent = (nil) references = 6 child = 0
+			}Return UStringRep::hold()
+		}Return UString::copy(0x7fe65ba983e0)
+	}Return UString::UString()
+	{Call   UString::UString()
+		{Call   UString::copy(0x7fe65ba983e0)
+			{Call   UStringRep::hold()
+				this = 0x7fe65ba983e0 parent = (nil) references = 7 child = 0
+			}Return UStringRep::hold()
+		}Return UString::copy(0x7fe65ba983e0)
+	}Return UString::UString()
+	{Call   UOptions::UOptions(126)
+		{Call   UMemoryPool::_malloc(4032)
+			{Call   UMemoryPool::findStackIndex(4032)
+			}Return UMemoryPool::findStackIndex(4032) = 9
+			{Call   UMemoryPool::pop(9)
+			}Return UMemoryPool::pop(9) = 0x7fe65bc03c60
+		}Return UMemoryPool::_malloc(4032) = 0x7fe65bc03c60
+	}Return UOptions::UOptions(126)
+	{Call   UApplication::UApplication()
+	}Return UApplication::UApplication()
+	{Call   Application::run(2,0x7fff388a7f18,0x7fff388a7f30)
+		{Call   UApplication::run(2,0x7fff388a7f18,0x7fff388a7f30)
+			argv[ 0] = 0x7fff388a8de8 "/usr/src/ULib-1.1.0/src/ulib/net/server/plugin/usp/.libs/usp_translator"
+			argv[ 1] = 0x7fff388a8e30 "upload_progress.usp"
+			argv[ 2] = (nil) (null)
+			envp[ 0] = 0x7fff388a8e44 "DIR_CMD=../../examples/userver"
+			envp[ 1] = 0x7fff388a8e63 "SLEEP=sleep 1"
+			envp[ 2] = 0x7fff388a8e71 "MANPATH=/etc/java-config-2/current-system-vm/man:/etc/java-config-2/current-system-vm/man:/etc/java-config-2/current-system-vm/m"...
+			envp[ 3] = 0x7fff388a8fb9 "CCACHE_PREFIX=distcc"
+			envp[ 4] = 0x7fff388a8fce "SSH_AGENT_PID=810"
+			envp[ 5] = 0x7fff388a8fe0 "LC_MONETARY="
+			envp[ 6] = 0x7fff388a8fed "WARNING=printf \\033[1;33m"
+			envp[ 7] = 0x7fff388a9007 "GPG_AGENT_INFO=/tmp/gpg-M2NV9s/S.gpg-agent:810:1"
+			envp[ 8] = 0x7fff388a9038 "GLADE_PIXMAP_PATH=:"
+			envp[ 9] = 0x7fff388a904c "TERM=xterm"
+			envp[10] = 0x7fff388a9057 "XDG_MENU_PREFIX=xfce-"
+			envp[11] = 0x7fff388a906d "SHELL=/bin/bash"
+			envp[12] = 0x7fff388a907d "MAKEFLAGS="
+			envp[13] = 0x7fff388a9088 "KONSOLE_DBUS_SERVICE=:1.10"
+			envp[14] = 0x7fff388a90a3 "NC=nc"
+			envp[15] = 0x7fff388a90a9 "TRUSS=strace -t -f -s 100"
+			envp[16] = 0x7fff388a90c3 "LC_NUMERIC="
+			envp[17] = 0x7fff388a90cf "WINDOWID=20971536"
+			envp[18] = 0x7fff388a90e1 "HUSHLOGIN=FALSE"
+			envp[19] = 0x7fff388a90f1 "SHELL_SESSION_ID=1bc54c3044c840008dff96f25939e2b3"
+			envp[20] = 0x7fff388a9123 "DUALCASE=1"
+			envp[21] = 0x7fff388a912e "LC_ALL=en_US.UTF-8"
+			envp[22] = 0x7fff388a9141 "USER=root"
+			envp[23] = 0x7fff388a914b "NORMAL=printf \\033[m"
+			envp[24] = 0x7fff388a9160 "SUCCESS=printf \\033[1;32m"
+			envp[25] = 0x7fff388a917a "LD_LIBRARY_PATH=/usr/src/ULib-1.1.0/src/ulib/.libs:/usr/lib64"
+			envp[26] = 0x7fff388a91b8 "PRELINK_PATH_MASK=/usr/lib64/libfreebl3.so:/usr/lib64/libnssdbm3.so:/usr/lib64/libsoftokn3.so"
+			envp[27] = 0x7fff388a9216 "LS_COLORS=rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=01;05;37;41:mi=01;05;37;41:su=37;41"...
+			envp[28] = 0x7fff388a979e "GDK_USE_XFT=1"
+			envp[29] = 0x7fff388a97ac "GLADE_MODULE_PATH=:"
+			envp[30] = 0x7fff388a97c0 "SSH_AUTH_SOCK=/tmp/gpg-gVS0sE/S.gpg-agent.ssh"
+			envp[31] = 0x7fff388a97ee "MAKELEVEL=1"
+			envp[32] = 0x7fff388a97fa "MAKEOPTS=-j4"
+			envp[33] = 0x7fff388a9807 "SESSION_MANAGER=local/stefano:@/tmp/.ICE-unix/814,unix/stefano:/tmp/.ICE-unix/814"
+			envp[34] = 0x7fff388a9859 "PAGER=/usr/bin/less"
+			envp[35] = 0x7fff388a986d "CONFIG_PROTECT_MASK=/etc/gentoo-release /etc/sandbox.d /etc/env.d/java/ /etc/php/cli-php5.3/ext-active/ /etc/php/cgi-php5.3/ext-"...
+			envp[36] = 0x7fff388a9976 "MFLAGS="
+			envp[37] = 0x7fff388a997e "MC_TMPDIR=/tmp/mc-root"
+			envp[38] = 0x7fff388a9995 "ECHO=printf %s\\n"
+			envp[39] = 0x7fff388a99a6 "XDG_CONFIG_DIRS=/etc/xdg:/etc/xdg"
+			envp[40] = 0x7fff388a99c8 "MAIL=/var/mail/root"
+			envp[41] = 0x7fff388a99dc "PATH=/usr/lib64/ccache/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/sbin:/usr/local/bin:/opt/bin:/usr/x86_64-pc-linux-gnu/gcc-bi"...
+			envp[42] = 0x7fff388a9a64 "DESKTOP_SESSION=xfce"
+			envp[43] = 0x7fff388a9a79 "LC_MESSAGES="
+			envp[44] = 0x7fff388a9a86 "LC_COLLATE="
+			envp[45] = 0x7fff388a9a92 "DISTCC_LOG="
+			envp[46] = 0x7fff388a9a9e "INPUTRC=/etc/inputrc"
+			envp[47] = 0x7fff388a9ab3 "PWD=/usr/src/ULib-1.1.0/src/ulib/net/server/plugin/usp"
+			envp[48] = 0x7fff388a9aea "JAVA_HOME=/etc/java-config-2/current-system-vm"
+			envp[49] = 0x7fff388a9b19 "JAVAC=/etc/java-config-2/current-system-vm/bin/javac"
+			envp[50] = 0x7fff388a9b4e "EDITOR=/usr/bin/vim"
+			envp[51] = 0x7fff388a9b62 "LANG=en_US.UTF-8"
+			envp[52] = 0x7fff388a9b73 "KDE_IS_PRELINKED=1"
+			envp[53] = 0x7fff388a9b86 "UTRACE=0 50M 0"
+			envp[54] = 0x7fff388a9b95 "GSETTINGS_BACKEND=gconf"
+			envp[55] = 0x7fff388a9bad "FAILURE=printf \\033[1;31m"
+			envp[56] = 0x7fff388a9bc7 "CHOWN=chown"
+			envp[57] = 0x7fff388a9bd3 "DCCC_PATH=/usr/lib64/distcc/bin"
+			envp[58] = 0x7fff388a9bf3 "KONSOLE_DBUS_SESSION=/Sessions/3"
+			envp[59] = 0x7fff388a9c14 "DISTCC_VERBOSE=0"
+			envp[60] = 0x7fff388a9c25 "BIN_SH=xpg4"
+			envp[61] = 0x7fff388a9c31 "HISTCONTROL=ignorespace"
+			envp[62] = 0x7fff388a9c49 "WINE_OPENSSL=openssl"
+			envp[63] = 0x7fff388a9c5e "COLORFGBG=15;0"
+			envp[64] = 0x7fff388a9c6d "SHLVL=5"
+			envp[65] = 0x7fff388a9c75 "HOME=/root"
+			envp[66] = 0x7fff388a9c80 "JDK_HOME=/etc/java-config-2/current-system-vm"
+			envp[67] = 0x7fff388a9cae "LANGUAGE="
+			envp[68] = 0x7fff388a9cb8 "CURL=curl"
+			envp[69] = 0x7fff388a9cc2 "MC_SID=1001"
+			envp[70] = 0x7fff388a9cce "LESS=-R -M --shift 5"
+			envp[71] = 0x7fff388a9ce3 "LOGNAME=root"
+			envp[72] = 0x7fff388a9cf0 "CVS_RSH=ssh"
+			envp[73] = 0x7fff388a9cfc "DBUS_SESSION_BUS_ADDRESS=unix:abstract=/tmp/dbus-StIGGWq9m1,guid=b2ea13c5796f7076378dd25d0000001d"
+			envp[74] = 0x7fff388a9d5e "XDG_DATA_DIRS=/usr/local/share:/usr/share:/usr/share"
+			envp[75] = 0x7fff388a9d93 "LC_CTYPE="
+			envp[76] = 0x7fff388a9d9d "LESSOPEN=|/usr/bin/lesspipe.sh %s"
+			envp[77] = 0x7fff388a9dbf "MUDFLAP_OPTIONS=-ignore-reads -backtrace=8"
+			envp[78] = 0x7fff388a9dea "WINDOWPATH=7"
+			envp[79] = 0x7fff388a9df7 "INFOPATH=/usr/share/info:/usr/share/binutils-data/x86_64-pc-linux-gnu/2.21.1/info:/usr/share/gcc-data/x86_64-pc-linux-gnu/4.6.1/"...
+			envp[80] = 0x7fff388a9e7c "SYNC=sync"
+			envp[81] = 0x7fff388a9e86 "OPENSSL=openssl"
+			envp[82] = 0x7fff388a9e96 "DISPLAY=:0"
+			envp[83] = 0x7fff388a9ea1 "PROFILEHOME=/usr/src/ULib-1.1.0"
+			envp[84] = 0x7fff388a9ec1 "LIBGLADE_MODULE_PATH=:/usr/lib64/libglade/2.0"
+			envp[85] = 0x7fff388a9eef "GLADE_CATALOG_PATH=:"
+			envp[86] = 0x7fff388a9f04 "QT_PLUGIN_PATH=/usr/lib64/kde4/plugins"
+			envp[87] = 0x7fff388a9f2b "OPENGL_PROFILE=xorg-x11"
+			envp[88] = 0x7fff388a9f43 "LC_TIME="
+			envp[89] = 0x7fff388a9f4c "LTRUSS=ltrace -f -S --demangle -n 3"
+			envp[90] = 0x7fff388a9f70 "CONFIG_PROTECT=/usr/share/gnupg/qualified.txt /usr/share/config"
+			envp[91] = (nil) (null)
+		}Return UApplication::run(2,0x7fff388a7f18,0x7fff388a7f30)
+		{Call   UFile::contentOf("upload_progress.usp",0,false,true)
+			{Call   UString::UString()
+				{Call   UString::copy(0x7fe65ba983e0)
+					{Call   UStringRep::hold()
+						this = 0x7fe65ba983e0 parent = (nil) references = 4 child = 0
+					}Return UStringRep::hold()
+				}Return UString::copy(0x7fe65ba983e0)
+			}Return UString::UString()
+			{Call   UFile::UFile()
+			}Return UFile::UFile()
+			{Call   UString::UString()
+				{Call   UString::copy(0x7fe65ba983e0)
+					{Call   UStringRep::hold()
+						this = 0x7fe65ba983e0 parent = (nil) references = 5 child = 0
+					}Return UStringRep::hold()
+				}Return UString::copy(0x7fe65ba983e0)
+			}Return UString::UString()
+			{Call   UFile::reset()
+			}Return UFile::reset()
+			{Call   UFile::open("upload_progress.usp",0)
+				{Call   UString::UString("upload_progress.usp")
+					{Call   UStringRep::create("upload_progress.usp",19,0)
+						{Call   UMemoryPool::pop(2)
+						}Return UMemoryPool::pop(2) = 0x7fe65bbc4020
+						{Call   UStringRep::set(19,0,0x7fff388a8e30)
+						}Return UStringRep::set(19,0,0x7fff388a8e30)
+					}Return UStringRep::create("upload_progress.usp",19,0) = 0x7fe65bbc4020
+				}Return UString::UString("upload_progress.usp")
+				{Call   UFile::setPath("upload_progress.usp",(nil))
+					{Call   UString::operator=(0x7fff388a52e0)
+						{Call   UString::assign(0x7fe65bbc4020)
+							{Call   UStringRep::hold()
+								this = 0x7fe65bbc4020 parent = (nil) references = 2 child = 0
+							}Return UStringRep::hold()
+							{Call   UStringRep::release()
+								this = 0x7fe65ba983e0 parent = (nil) references = 5 child = 0
+							}Return UStringRep::release()
+						}Return UString::assign(0x7fe65bbc4020)
+					}Return UString::operator=(0x7fff388a52e0)
+					{Call   UFile::setPathRelativ((nil))
+						{Call   UFile::reset()
+						}Return UFile::reset()
+						{Call   UStringRep::at(0)
+						}Return UStringRep::at(0) = 'u'
+						{Call   UString::c_str()
+						}Return UString::c_str() = "upload_progress.usp"
+						u_cwd            = "/usr/src/ULib-1.1.0/src/ulib/net/server/plugin/usp"
+						path_relativ(19) = "upload_progress.usp"
+					}Return UFile::setPathRelativ((nil))
+				}Return UFile::setPath("upload_progress.usp",(nil))
+				{Call   UFile::open(0)
+					path_relativ(19) = "upload_progress.usp"
+					{Call   UFile::open("upload_progress.usp",0,436)
+						::open("upload_progress.usp",524288,436) = 4
+					}Return UFile::open("upload_progress.usp",0,436) = 4
+				}Return UFile::open(0) = true
+				{Call   UString::~UString()
+					{Call   UStringRep::release()
+						this = 0x7fe65bbc4020 parent = (nil) references = 2 child = 0
+					}Return UStringRep::release()
+				}Return UString::~UString()
+			}Return UFile::open("upload_progress.usp",0)
+			{Call   UFile::getContent(true,false,true)
+				{Call   UFile::isOpen()
+				}Return UFile::isOpen() = true
+				{Call   UString::UString()
+					{Call   UString::copy(0x7fe65ba983e0)
+						{Call   UStringRep::hold()
+							this = 0x7fe65ba983e0 parent = (nil) references = 5 child = 0
+						}Return UStringRep::hold()
+					}Return UString::copy(0x7fe65ba983e0)
+				}Return UString::UString()
+				{Call   UFile::size(false)
+					{Call   UFile::readSize()
+						path_relativ(19) = "upload_progress.usp"
+						{Call   UFile::lseek(0,2)
+							::lseek(4,0,2) = 228
+						}Return UFile::lseek(0,2) = 228
+					}Return UFile::readSize()
+				}Return UFile::size(false) = 228
+				fd = 4 map = 0xffffffffffffffff map_size = 0 st_size = 228
+				{Call   UFile::memmap(1,0x7fff388a30a0,0,0)
+					path_relativ(19) = "upload_progress.usp"
+					{Call   UFile::mmap(228,4,1,32769,0)
+						::mmap(0,228,1,32769,4,0) = 0x7fe65b5c0000
+					}Return UFile::mmap(228,4,1,32769,0)
+					{Call   UString::mmap("Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...,228)
+						{Call   UStringRep::create("Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...,228,4294967295)
+							{Call   UMemoryPool::pop(2)
+							}Return UMemoryPool::pop(2) = 0x7fe65bbc3fe0
+							{Call   UStringRep::set(228,4294967295,0x7fe65b5c0000)
+							}Return UStringRep::set(228,4294967295,0x7fe65b5c0000)
+						}Return UStringRep::create("Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...,228,4294967295) = 0x7fe65bbc3fe0
+						{Call   UString::set(0x7fe65bbc3fe0)
+							{Call   UStringRep::release()
+								this = 0x7fe65ba983e0 parent = (nil) references = 5 child = 0
+							}Return UStringRep::release()
+						}Return UString::set(0x7fe65bbc3fe0)
+					}Return UString::mmap("Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...,228)
+				}Return UFile::memmap(1,0x7fff388a30a0,0,0) = true
+				{Call   UFile::close()
+					{Call   UFile::close(4)
+						::close(4) = 0
+					}Return UFile::close(4)
+				}Return UFile::close()
+				{Call   UString::UString(0x7fff388a30a0)
+					{Call   UString::copy(0x7fe65bbc3fe0)
+						{Call   UStringRep::hold()
+							this = 0x7fe65bbc3fe0 parent = (nil) references = 2 child = 0
+						}Return UStringRep::hold()
+					}Return UString::copy(0x7fe65bbc3fe0)
+				}Return UString::UString(0x7fff388a30a0)
+				{Call   UString::~UString()
+					{Call   UStringRep::release()
+						this = 0x7fe65bbc3fe0 parent = (nil) references = 2 child = 0
+					}Return UStringRep::release()
+				}Return UString::~UString()
+			}Return UFile::getContent(true,false,true) = "Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...
+			{Call   UString::operator=(0x7fff388a52d0)
+				{Call   UString::assign(0x7fe65bbc3fe0)
+					{Call   UStringRep::hold()
+						this = 0x7fe65bbc3fe0 parent = (nil) references = 2 child = 0
+					}Return UStringRep::hold()
+					{Call   UStringRep::release()
+						this = 0x7fe65ba983e0 parent = (nil) references = 4 child = 0
+					}Return UStringRep::release()
+				}Return UString::assign(0x7fe65bbc3fe0)
+			}Return UString::operator=(0x7fff388a52d0)
+			{Call   UString::~UString()
+				{Call   UStringRep::release()
+					this = 0x7fe65bbc3fe0 parent = (nil) references = 2 child = 0
+				}Return UStringRep::release()
+			}Return UString::~UString()
+			{Call   UString::UString(0x7fff388a52c0)
+				{Call   UString::copy(0x7fe65bbc3fe0)
+					{Call   UStringRep::hold()
+						this = 0x7fe65bbc3fe0 parent = (nil) references = 2 child = 0
+					}Return UStringRep::hold()
+				}Return UString::copy(0x7fe65bbc3fe0)
+			}Return UString::UString(0x7fff388a52c0)
+			{Call   UString::~UString()
+				{Call   UStringRep::release()
+					this = 0x7fe65bbc3fe0 parent = (nil) references = 2 child = 0
+				}Return UStringRep::release()
+			}Return UString::~UString()
+			{Call   UFile::~UFile()
+			}Return UFile::~UFile()
+			{Call   UString::~UString()
+				{Call   UStringRep::release()
+					this = 0x7fe65bbc4020 parent = (nil) references = 1 child = 0
+					str(19) = "upload_progress.usp"
+					{Call   UMemoryPool::push(0x7fe65bbc4020,2)
+					}Return UMemoryPool::push(0x7fe65bbc4020,2)
+				}Return UStringRep::release()
+			}Return UString::~UString()
+		}Return UFile::contentOf("upload_progress.usp",0,false,true) = "Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...
+		{Call   UStringRep::empty()
+		}Return UStringRep::empty() = false
+		endHeader = 171 u_line_terminator_len = 2
+		{Call   UString::find("Content-Type: ",0,14,171)
+			{Call   UStringRep::fold(0,171,228)
+			}Return UStringRep::fold(0,171,228) = 171
+		}Return UString::find("Content-Type: ",0,14,171) = 0
+		{Call   UString::UString(0x7fff388a7490)
+			{Call   UString::copy(0x7fe65bbc3fe0)
+				{Call   UStringRep::hold()
+					this = 0x7fe65bbc3fe0 parent = (nil) references = 2 child = 0
+				}Return UStringRep::hold()
+			}Return UString::copy(0x7fe65bbc3fe0)
+		}Return UString::UString(0x7fff388a7490)
+		{Call   UTokenizer::UTokenizer("Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...,(null))
+		}Return UTokenizer::UTokenizer("Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...,(null))
+		{Call   UTokenizer::setGroup("<%%>",4,false)
+		}Return UTokenizer::setGroup("<%%>",4,false)
+		{Call   UString::UString()
+			{Call   UString::copy(0x7fe65ba983e0)
+				{Call   UStringRep::hold()
+					this = 0x7fe65ba983e0 parent = (nil) references = 4 child = 0
+				}Return UStringRep::hold()
+			}Return UString::copy(0x7fe65ba983e0)
+		}Return UString::UString()
+		{Call   UString::UString()
+			{Call   UString::copy(0x7fe65ba983e0)
+				{Call   UStringRep::hold()
+					this = 0x7fe65ba983e0 parent = (nil) references = 5 child = 0
+				}Return UStringRep::hold()
+			}Return UString::copy(0x7fe65ba983e0)
+		}Return UString::UString()
+		{Call   UString::UString(4055)
+			{Call   UStringRep::create(0,4055,(nil))
+				{Call   UMemoryPool::_malloc_str(4096,0x7fff388a3aac)
+					capacity = 4096
+					{Call   UMemoryPool::pop(9)
+					}Return UMemoryPool::pop(9) = 0x7fe65bc02c60
+				}Return UMemoryPool::_malloc_str(4096,0x7fff388a3aac) = 0x7fe65bc02c60
+				{Call   UStringRep::set(0,4055,0x7fe65bc02c88)
+				}Return UStringRep::set(0,4055,0x7fe65bc02c88)
+			}Return UStringRep::create(0,4055,(nil)) = 0x7fe65bc02c60
+		}Return UString::UString(4055)
+		{Call   UString::UString(4055)
+			{Call   UStringRep::create(0,4055,(nil))
+				{Call   UMemoryPool::_malloc_str(4096,0x7fff388a3aac)
+					capacity = 4096
+					{Call   UMemoryPool::pop(9)
+					}Return UMemoryPool::pop(9) = 0x7fe65bc01c60
+				}Return UMemoryPool::_malloc_str(4096,0x7fff388a3aac) = 0x7fe65bc01c60
+				{Call   UStringRep::set(0,4055,0x7fe65bc01c88)
+				}Return UStringRep::set(0,4055,0x7fe65bc01c88)
+			}Return UStringRep::create(0,4055,(nil)) = 0x7fe65bc01c60
+		}Return UString::UString(4055)
+		{Call   UTokenizer::getDistance()
+			{Call   UStringRep::distance(0x7fe65b5c0000)
+			}Return UStringRep::distance(0x7fe65b5c0000) = 0
+		}Return UTokenizer::getDistance() = 0
+		{Call   UString::find("<%",0,2,4294967295)
+			{Call   UStringRep::fold(0,4294967295,228)
+			}Return UStringRep::fold(0,4294967295,228) = 228
+		}Return UString::find("<%",0,2,4294967295) = 171
+		{Call   UTokenizer::setDistance(171)
+		}Return UTokenizer::setDistance(171)
+		{Call   UStringRep::fold(0,171,228)
+		}Return UStringRep::fold(0,171,228) = 171
+		{Call   UString::substr("Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...,171)
+			{Call   UString::UString(0x7fe65bbc3fe0,0x7fe65b5c0000,171)
+				{Call   UStringRep::substr("Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...,171)
+					{Call   UMemoryPool::pop(2)
+					}Return UMemoryPool::pop(2) = 0x7fe65bbc4020
+					{Call   UStringRep::set(171,0,0x7fe65b5c0000)
+					}Return UStringRep::set(171,0,0x7fe65b5c0000)
+					r->parent = 0x7fe65bbc3fe0 max_child = 1
+				}Return UStringRep::substr("Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...,171) = 0x7fe65bbc4020
+			}Return UString::UString(0x7fe65bbc3fe0,0x7fe65b5c0000,171)
+			{Call   UString::UString(0x7fff388a52c0)
+				{Call   UString::copy(0x7fe65bbc4020)
+					{Call   UStringRep::hold()
+						this = 0x7fe65bbc4020 parent = 0x7fe65bbc3fe0 references = 2 child = 0
+					}Return UStringRep::hold()
+				}Return UString::copy(0x7fe65bbc4020)
+			}Return UString::UString(0x7fff388a52c0)
+			{Call   UString::~UString()
+				{Call   UStringRep::release()
+					this = 0x7fe65bbc4020 parent = 0x7fe65bbc3fe0 references = 2 child = 0
+				}Return UStringRep::release()
+			}Return UString::~UString()
+		}Return UString::substr("Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...,171) = "Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...
+		{Call   UString::operator=(0x7fff388a74e0)
+			{Call   UString::assign(0x7fe65bbc4020)
+				{Call   UStringRep::hold()
+					this = 0x7fe65bbc4020 parent = 0x7fe65bbc3fe0 references = 2 child = 0
+				}Return UStringRep::hold()
+				{Call   UStringRep::release()
+					this = 0x7fe65ba983e0 parent = (nil) references = 5 child = 0
+				}Return UStringRep::release()
+			}Return UString::assign(0x7fe65bbc4020)
+		}Return UString::operator=(0x7fff388a74e0)
+		{Call   UString::~UString()
+			{Call   UStringRep::release()
+				this = 0x7fe65bbc4020 parent = 0x7fe65bbc3fe0 references = 2 child = 0
+			}Return UStringRep::release()
+		}Return UString::~UString()
+		{Call   UString::UString(684)
+			{Call   UStringRep::create(0,684,(nil))
+				{Call   UMemoryPool::_malloc_str(725,0x7fff388a3aac)
+					capacity = 1024
+					{Call   UMemoryPool::pop(7)
+					}Return UMemoryPool::pop(7) = 0x7fe65bbd4860
+				}Return UMemoryPool::_malloc_str(725,0x7fff388a3aac) = 0x7fe65bbd4860
+				{Call   UStringRep::set(0,983,0x7fe65bbd4888)
+				}Return UStringRep::set(0,983,0x7fe65bbd4888)
+			}Return UStringRep::create(0,684,(nil)) = 0x7fe65bbd4860
+		}Return UString::UString(684)
+		{Call   UEscape::encode("Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...,171,"",false)
+			{Call   UStringRep::space()
+			}Return UStringRep::space() = 983
+			{Call   UStringRep::size_adjust(183)
+			}Return UStringRep::size_adjust(183)
+		}Return UEscape::encode("Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...,171,"",false)
+		{Call   UString::reserve(283)
+		}Return UString::reserve(283) = false
+		{Call   UString::snprintf("(void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(%.*s));\n")
+			{Call   UString::vsnprintf("(void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(%.*s));\n")
+				ret = 249 buffer_size = 4056
+			}Return UString::vsnprintf("(void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(%.*s));\n")
+		}Return UString::snprintf("(void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(%.*s));\n")
+		{Call   UString::append("(void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(\"Content-Type: application/json\\r\\nPragma: no-cache\\r\\nExpires: Th"...,249)
+			{Call   UString::__append(249)
+				sz1 = 249
+			}Return UString::__append(249)
+		}Return UString::append("(void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(\"Content-Type: application/json\\r\\nPragma: no-cache\\r\\nExpires: Th"...,249)
+		{Call   UString::~UString()
+			{Call   UStringRep::release()
+				this = 0x7fe65bbd4860 parent = (nil) references = 1 child = 0
+				str(183) = "\"Content-Type: application/json\\r\\nPragma: no-cache\\r\\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\\r\\nCache-Control: no-store, no-cac"...
+				{Call   UMemoryPool::_free_str(0x7fe65bbd4860,1024)
+					stack_index = 7
+					{Call   UMemoryPool::push(0x7fe65bbd4860,7)
+					}Return UMemoryPool::push(0x7fe65bbd4860,7)
+				}Return UMemoryPool::_free_str(0x7fe65bbd4860,1024)
+			}Return UStringRep::release()
+		}Return UString::~UString()
+		{Call   UTokenizer::next(0x7fff388a74a0,0x7fff388a754f)
+			p = " U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress()); "... s = "%>\n"
+			{Call   UString::substr(" U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress()); "...,52)
+				{Call   UString::UString(0x7fe65bbc3fe0,0x7fe65b5c00ad,52)
+					{Call   UStringRep::substr(" U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress()); "...,52)
+						{Call   UMemoryPool::pop(2)
+						}Return UMemoryPool::pop(2) = 0x7fe65bbc3fa0
+						{Call   UStringRep::set(52,0,0x7fe65b5c00ad)
+						}Return UStringRep::set(52,0,0x7fe65b5c00ad)
+						r->parent = 0x7fe65bbc3fe0 max_child = 2
+					}Return UStringRep::substr(" U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress()); "...,52) = 0x7fe65bbc3fa0
+				}Return UString::UString(0x7fe65bbc3fe0,0x7fe65b5c00ad,52)
+				{Call   UString::UString(0x7fff388a41b0)
+					{Call   UString::copy(0x7fe65bbc3fa0)
+						{Call   UStringRep::hold()
+							this = 0x7fe65bbc3fa0 parent = 0x7fe65bbc3fe0 references = 2 child = 0
+						}Return UStringRep::hold()
+					}Return UString::copy(0x7fe65bbc3fa0)
+				}Return UString::UString(0x7fff388a41b0)
+				{Call   UString::~UString()
+					{Call   UStringRep::release()
+						this = 0x7fe65bbc3fa0 parent = 0x7fe65bbc3fe0 references = 2 child = 0
+					}Return UStringRep::release()
+				}Return UString::~UString()
+			}Return UString::substr(" U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress()); "...,52) = " U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress()); "...
+			{Call   UString::operator=(0x7fff388a52d0)
+				{Call   UString::assign(0x7fe65bbc3fa0)
+					{Call   UStringRep::hold()
+						this = 0x7fe65bbc3fa0 parent = 0x7fe65bbc3fe0 references = 2 child = 0
+					}Return UStringRep::hold()
+					{Call   UStringRep::release()
+						this = 0x7fe65bbc4020 parent = 0x7fe65bbc3fe0 references = 1 child = 0
+						str(171) = "Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...
+						parent->child = 2
+						{Call   UMemoryPool::push(0x7fe65bbc4020,2)
+						}Return UMemoryPool::push(0x7fe65bbc4020,2)
+					}Return UStringRep::release()
+				}Return UString::assign(0x7fe65bbc3fa0)
+			}Return UString::operator=(0x7fff388a52d0)
+			{Call   UString::~UString()
+				{Call   UStringRep::release()
+					this = 0x7fe65bbc3fa0 parent = 0x7fe65bbc3fe0 references = 2 child = 0
+				}Return UStringRep::release()
+			}Return UString::~UString()
+		}Return UTokenizer::next(0x7fff388a74a0,0x7fff388a754f) = true
+		token = " U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress()); "...
+		directive = U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress()); %>
+
+		{Call   UStringRep::first_char()
+		}Return UStringRep::first_char() = ' '
+		{Call   UStringExt::trim(" U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress()); "...,52)
+			{Call   UString::UString(52)
+				{Call   UStringRep::create(0,52,(nil))
+					{Call   UMemoryPool::_malloc_str(93,0x7fff388a199c)
+						capacity = 216
+						{Call   UMemoryPool::pop(4)
+						}Return UMemoryPool::pop(4) = 0x7fe65bbc6b88
+					}Return UMemoryPool::_malloc_str(93,0x7fff388a199c) = 0x7fe65bbc6b88
+					{Call   UStringRep::set(0,175,0x7fe65bbc6bb0)
+					}Return UStringRep::set(0,175,0x7fe65bbc6bb0)
+				}Return UStringRep::create(0,52,(nil)) = 0x7fe65bbc6b88
+			}Return UString::UString(52)
+			i = 1
+			{Call   UStringRep::size_adjust(50)
+			}Return UStringRep::size_adjust(50)
+			{Call   UString::UString(0x7fff388a52f0)
+				{Call   UString::copy(0x7fe65bbc6b88)
+					{Call   UStringRep::hold()
+						this = 0x7fe65bbc6b88 parent = (nil) references = 2 child = 0
+					}Return UStringRep::hold()
+				}Return UString::copy(0x7fe65bbc6b88)
+			}Return UString::UString(0x7fff388a52f0)
+			{Call   UString::~UString()
+				{Call   UStringRep::release()
+					this = 0x7fe65bbc6b88 parent = (nil) references = 2 child = 0
+				}Return UStringRep::release()
+			}Return UString::~UString()
+		}Return UStringExt::trim(" U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress()); "...,52) = "U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress());"
+		{Call   UString::append("U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress());",50)
+			{Call   UString::__append(50)
+				sz1 = 299
+			}Return UString::__append(50)
+		}Return UString::append("U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress());",50)
+		{Call   UString::~UString()
+			{Call   UStringRep::release()
+				this = 0x7fe65bbc6b88 parent = (nil) references = 1 child = 0
+				str(50) = "U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress());"
+				{Call   UMemoryPool::_free_str(0x7fe65bbc6b88,216)
+					stack_index = 4
+					{Call   UMemoryPool::push(0x7fe65bbc6b88,4)
+					}Return UMemoryPool::push(0x7fe65bbc6b88,4)
+				}Return UMemoryPool::_free_str(0x7fe65bbc6b88,216)
+			}Return UStringRep::release()
+		}Return UString::~UString()
+		{Call   UString::append(1,'\n')
+			{Call   UString::__append(1)
+				sz1 = 300
+			}Return UString::__append(1)
+			::memset(0x7fe65bc01db3,'\n',1) = 0x7fe65bc01db3
+		}Return UString::append(1,'\n')
+		{Call   UTokenizer::getDistance()
+			{Call   UStringRep::distance(0x7fe65b5c00e3)
+			}Return UStringRep::distance(0x7fe65b5c00e3) = 227
+		}Return UTokenizer::getDistance() = 227
+		{Call   UString::find("<%",227,2,4294967295)
+			{Call   UStringRep::fold(227,4294967295,228)
+			}Return UStringRep::fold(227,4294967295,228) = 1
+		}Return UString::find("<%",227,2,4294967295) = 4294967295
+		{Call   UTokenizer::setDistance(228)
+		}Return UTokenizer::setDistance(228)
+		{Call   UStringRep::at(227)
+		}Return UStringRep::at(227) = '\n'
+		{Call   UStringRep::at(226)
+		}Return UStringRep::at(226) = '>'
+		{Call   UTokenizer::next(0x7fff388a74a0,0x7fff388a754f)
+		}Return UTokenizer::next(0x7fff388a74a0,0x7fff388a754f) = false
+		{Call   UString::UString(2079)
+			{Call   UStringRep::create(0,2079,(nil))
+				{Call   UMemoryPool::_malloc_str(2120,0x7fff388a3aac)
+					capacity = 4096
+					{Call   UMemoryPool::pop(9)
+					}Return UMemoryPool::pop(9) = 0x7fe65bc00c60
+				}Return UMemoryPool::_malloc_str(2120,0x7fff388a3aac) = 0x7fe65bc00c60
+				{Call   UStringRep::set(0,4055,0x7fe65bc00c88)
+				}Return UStringRep::set(0,4055,0x7fe65bc00c88)
+			}Return UStringRep::create(0,2079,(nil)) = 0x7fe65bc00c60
+		}Return UString::UString(2079)
+		{Call   UString::snprintf("#include <ulib/all.h>\n\n#define U_DYNAMIC_PAGE_APPEND(string)              (void)UClientImage_Base::wbuffer->append(string)\n\n#def"...)
+			{Call   UString::vsnprintf("#include <ulib/all.h>\n\n#define U_DYNAMIC_PAGE_APPEND(string)              (void)UClientImage_Base::wbuffer->append(string)\n\n#def"...)
+				ret = 1967 buffer_size = 4056
+			}Return UString::vsnprintf("#include <ulib/all.h>\n\n#define U_DYNAMIC_PAGE_APPEND(string)              (void)UClientImage_Base::wbuffer->append(string)\n\n#def"...)
+		}Return UString::snprintf("#include <ulib/all.h>\n\n#define U_DYNAMIC_PAGE_APPEND(string)              (void)UClientImage_Base::wbuffer->append(string)\n\n#def"...)
+		{Call   UString::snprintf("%.*s.cpp")
+			{Call   UString::vsnprintf("%.*s.cpp")
+				ret = 19 buffer_size = 4056
+			}Return UString::vsnprintf("%.*s.cpp")
+		}Return UString::snprintf("%.*s.cpp")
+		{Call   UFile::writeTo("upload_progress.cpp","#include <ulib/all.h>\n\n#define U_DYNAMIC_PAGE_APPEND(string)              (void)UClientImage_Base::wbuffer->append(string)\n\n#def"...,false,false)
+			{Call   UString::UString(0x7fff388a74c0)
+				{Call   UString::copy(0x7fe65bc02c60)
+					{Call   UStringRep::hold()
+						this = 0x7fe65bc02c60 parent = (nil) references = 2 child = 0
+					}Return UStringRep::hold()
+				}Return UString::copy(0x7fe65bc02c60)
+			}Return UString::UString(0x7fff388a74c0)
+			{Call   UFile::UFile("upload_progress.cpp")
+				{Call   UFile::setPathRelativ((nil))
+					{Call   UFile::reset()
+					}Return UFile::reset()
+					{Call   UStringRep::at(0)
+					}Return UStringRep::at(0) = 'u'
+					{Call   UString::c_str()
+					}Return UString::c_str() = "upload_progress.cpp"
+					u_cwd            = "/usr/src/ULib-1.1.0/src/ulib/net/server/plugin/usp"
+					path_relativ(19) = "upload_progress.cpp"
+				}Return UFile::setPathRelativ((nil))
+			}Return UFile::UFile("upload_progress.cpp")
+			{Call   UFile::write("#include <ulib/all.h>\n\n#define U_DYNAMIC_PAGE_APPEND(string)              (void)UClientImage_Base::wbuffer->append(string)\n\n#def"...,false,false)
+				path_relativ(19) = "upload_progress.cpp"
+				{Call   UFile::isOpen()
+				}Return UFile::isOpen() = false
+				{Call   UFile::creat(514,436)
+					path_relativ(19) = "upload_progress.cpp"
+					{Call   UFile::open("upload_progress.cpp",578,436)
+						::open("upload_progress.cpp",524866,436) = 4
+					}Return UFile::open("upload_progress.cpp",578,436) = 4
+				}Return UFile::creat(514,436) = true
+				{Call   UFile::write(4,0x7fe65bc00c88,1967)
+					::write(4,0x7fe65bc00c88,1967) = 1967
+				}Return UFile::write(4,0x7fe65bc00c88,1967) = true
+			}Return UFile::write("#include <ulib/all.h>\n\n#define U_DYNAMIC_PAGE_APPEND(string)              (void)UClientImage_Base::wbuffer->append(string)\n\n#def"...,false,false) = true
+			{Call   UFile::isOpen()
+			}Return UFile::isOpen() = true
+			{Call   UFile::close()
+				{Call   UFile::close(4)
+					::close(4) = 0
+				}Return UFile::close(4)
+			}Return UFile::close()
+			{Call   UFile::~UFile()
+			}Return UFile::~UFile()
+			{Call   UString::~UString()
+				{Call   UStringRep::release()
+					this = 0x7fe65bc02c60 parent = (nil) references = 2 child = 0
+				}Return UStringRep::release()
+			}Return UString::~UString()
+		}Return UFile::writeTo("upload_progress.cpp","#include <ulib/all.h>\n\n#define U_DYNAMIC_PAGE_APPEND(string)              (void)UClientImage_Base::wbuffer->append(string)\n\n#def"...,false,false) = true
+		{Call   UString::~UString()
+			{Call   UStringRep::release()
+				this = 0x7fe65bc00c60 parent = (nil) references = 1 child = 0
+				str(1967) = "#include <ulib/all.h>\n\n#define U_DYNAMIC_PAGE_APPEND(string)              (void)UClientImage_Base::wbuffer->append(string)\n\n#def"...
+				{Call   UMemoryPool::_free_str(0x7fe65bc00c60,4096)
+					stack_index = 9
+					{Call   UMemoryPool::push(0x7fe65bc00c60,9)
+					}Return UMemoryPool::push(0x7fe65bc00c60,9)
+				}Return UMemoryPool::_free_str(0x7fe65bc00c60,4096)
+			}Return UStringRep::release()
+		}Return UString::~UString()
+		{Call   UString::~UString()
+			{Call   UStringRep::release()
+				this = 0x7fe65bc01c60 parent = (nil) references = 1 child = 0
+				str(300) = "(void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(\"Content-Type: application/json\\r\\nPragma: no-cache\\r\\nExpires: Th"...
+				{Call   UMemoryPool::_free_str(0x7fe65bc01c60,4096)
+					stack_index = 9
+					{Call   UMemoryPool::push(0x7fe65bc01c60,9)
+					}Return UMemoryPool::push(0x7fe65bc01c60,9)
+				}Return UMemoryPool::_free_str(0x7fe65bc01c60,4096)
+			}Return UStringRep::release()
+		}Return UString::~UString()
+		{Call   UString::~UString()
+			{Call   UStringRep::release()
+				this = 0x7fe65bc02c60 parent = (nil) references = 1 child = 0
+				str(19) = "upload_progress.cpp"
+				{Call   UMemoryPool::_free_str(0x7fe65bc02c60,4096)
+					stack_index = 9
+					{Call   UMemoryPool::push(0x7fe65bc02c60,9)
+					}Return UMemoryPool::push(0x7fe65bc02c60,9)
+				}Return UMemoryPool::_free_str(0x7fe65bc02c60,4096)
+			}Return UStringRep::release()
+		}Return UString::~UString()
+		{Call   UString::~UString()
+			{Call   UStringRep::release()
+				this = 0x7fe65ba983e0 parent = (nil) references = 4 child = 0
+			}Return UStringRep::release()
+		}Return UString::~UString()
+		{Call   UString::~UString()
+			{Call   UStringRep::release()
+				this = 0x7fe65bbc3fa0 parent = 0x7fe65bbc3fe0 references = 1 child = 0
+				str(52) = " U_DYNAMIC_PAGE_APPEND(UHTTP::getUploadProgress()); "...
+				parent->child = 1
+				{Call   UMemoryPool::push(0x7fe65bbc3fa0,2)
+				}Return UMemoryPool::push(0x7fe65bbc3fa0,2)
+			}Return UStringRep::release()
+		}Return UString::~UString()
+		{Call   UTokenizer::~UTokenizer()
+		}Return UTokenizer::~UTokenizer()
+		{Call   UString::~UString()
+			{Call   UStringRep::release()
+				this = 0x7fe65bbc3fe0 parent = (nil) references = 2 child = 0
+			}Return UStringRep::release()
+		}Return UString::~UString()
+		{Call   UString::~UString()
+			{Call   UStringRep::release()
+				this = 0x7fe65bbc3fe0 parent = (nil) references = 1 child = 0
+				str(228) = "Content-Type: application/json\r\nPragma: no-cache\r\nExpires: Thu, 19 Nov 1981 08:52:00 GMT\r\nCache-Control: no-store, no-cache, mus"...
+				::munmap(0x7fe65b5c0000,228) = 0
+				{Call   UMemoryPool::push(0x7fe65bbc3fe0,2)
+				}Return UMemoryPool::push(0x7fe65bbc3fe0,2)
+			}Return UStringRep::release()
+		}Return UString::~UString()
+	}Return Application::run(2,0x7fff388a7f18,0x7fff388a7f30)
+	{Call   UApplication::~UApplication()
+		u_fns_index = 1
+		u_fns[ 0] = 0x7fe65b613fc0
+	}Return UApplication::~UApplication()
+	{Call   UOptions::~UOptions()
+		{Call   UString::clear()
+			{Call   UString::assign(0x7fe65ba983e0)
+				{Call   UStringRep::hold()
+					this = 0x7fe65ba983e0 parent = (nil) references = 4 child = 0
+				}Return UStringRep::hold()
+				{Call   UStringRep::release()
+					this = 0x7fe65bbc4120 parent = (nil) references = 1 child = 0
+					str(14) = "usp_translator"
+					{Call   UMemoryPool::push(0x7fe65bbc4120,2)
+					}Return UMemoryPool::push(0x7fe65bbc4120,2)
+				}Return UStringRep::release()
+			}Return UString::assign(0x7fe65ba983e0)
+		}Return UString::clear()
+		{Call   UString::clear()
+			{Call   UString::assign(0x7fe65ba983e0)
+				{Call   UStringRep::hold()
+					this = 0x7fe65ba983e0 parent = (nil) references = 5 child = 0
+				}Return UStringRep::hold()
+				{Call   UStringRep::release()
+					this = 0x7fe65bbc40e0 parent = (nil) references = 1 child = 0
+					str(5) = "1.1.0"
+					{Call   UMemoryPool::push(0x7fe65bbc40e0,2)
+					}Return UMemoryPool::push(0x7fe65bbc40e0,2)
+				}Return UStringRep::release()
+			}Return UString::assign(0x7fe65ba983e0)
+		}Return UString::clear()
+		{Call   UString::clear()
+			{Call   UString::assign(0x7fe65ba983e0)
+				{Call   UStringRep::hold()
+					this = 0x7fe65ba983e0 parent = (nil) references = 6 child = 0
+				}Return UStringRep::hold()
+				{Call   UStringRep::release()
+					this = 0x7fe65ba983e0 parent = (nil) references = 6 child = 0
+				}Return UStringRep::release()
+			}Return UString::assign(0x7fe65ba983e0)
+		}Return UString::clear()
+		{Call   UString::clear()
+			{Call   UString::assign(0x7fe65ba983e0)
+				{Call   UStringRep::hold()
+					this = 0x7fe65ba983e0 parent = (nil) references = 6 child = 0
+				}Return UStringRep::hold()
+				{Call   UStringRep::release()
+					this = 0x7fe65bbc4060 parent = (nil) references = 1 child = 0
+					str(25) = "stefano.casazza@gmail.com"
+					{Call   UMemoryPool::push(0x7fe65bbc4060,2)
+					}Return UMemoryPool::push(0x7fe65bbc4060,2)
+				}Return UStringRep::release()
+			}Return UString::assign(0x7fe65ba983e0)
+		}Return UString::clear()
+		{Call   UMemoryPool::_free(0x7fe65bc03c60,4032)
+			{Call   UMemoryPool::findStackIndex(4032)
+			}Return UMemoryPool::findStackIndex(4032) = 9
+			{Call   UMemoryPool::push(0x7fe65bc03c60,9)
+			}Return UMemoryPool::push(0x7fe65bc03c60,9)
+		}Return UMemoryPool::_free(0x7fe65bc03c60,4032)
+	}Return UOptions::~UOptions()
+	{Call   UString::~UString()
+		{Call   UStringRep::release()
+			this = 0x7fe65ba983e0 parent = (nil) references = 6 child = 0
+		}Return UStringRep::release()
+	}Return UString::~UString()
+	{Call   UString::~UString()
+		{Call   UStringRep::release()
+			this = 0x7fe65bbc40a0 parent = (nil) references = 1 child = 0
+			str(10) = "[filename]"
+			{Call   UMemoryPool::push(0x7fe65bbc40a0,2)
+			}Return UMemoryPool::push(0x7fe65bbc40a0,2)
+		}Return UStringRep::release()
+	}Return UString::~UString()
+	{Call   UString::~UString()
+		{Call   UStringRep::release()
+			this = 0x7fe65ba983e0 parent = (nil) references = 5 child = 0
+		}Return UStringRep::release()
+	}Return UString::~UString()
+	{Call   UString::~UString()
+		{Call   UStringRep::release()
+			this = 0x7fe65ba983e0 parent = (nil) references = 4 child = 0
+		}Return UStringRep::release()
+	}Return UString::~UString()
+	{Call   UString::~UString()
+		{Call   UStringRep::release()
+			this = 0x7fe65ba983e0 parent = (nil) references = 3 child = 0
+		}Return UStringRep::release()
+	}Return UString::~UString()
+	{Call   UString::~UString()
+		{Call   UStringRep::release()
+			this = 0x7fe65ba983e0 parent = (nil) references = 2 child = 0
+		}Return UStringRep::release()
+	}Return UString::~UString()
+}Return ::main(2,0x7fff388a7f18,0x7fff388a7f30)

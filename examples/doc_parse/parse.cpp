@@ -18,30 +18,34 @@
 #define ARGS "document"
 
 #define U_OPTIONS \
-"purpose \"parse document...\"\n" \
-"option e extract  1 \"tag document to extract\" \"\"\n" \
-"option H htmlview 0 \"html view flag\" \"\"\n" \
-"option X treeview 0 \"tree view with Xdialog flag\" \"\"\n" \
-"option p inner_p7 0 \"inner pkcs7 view flag\" \"\"\n"
+"purpose 'parse tbote document...'\n" \
+"option e extract  1 'tag document to extract' ''\n" \
+"option s css      1 'css url' ''\n" \
+"option H htmlview 0 'html view flag' ''\n" \
+"option X treeview 0 'tree view with Xdialog flag' ''\n" \
+"option p inner_p7 0 'inner pkcs7 view flag' ''\n"
 
 #include <ulib/application.h>
 
 #define U_MAX_TAB 100
 
-// #define U_PRINT_TAB
+//#define U_PRINT_TAB
+
 #ifdef U_PRINT_TAB
 static char tab[U_MAX_TAB];
 #endif
 
 #define U_PRINT(str) Application::print(str,U_CONSTANT_SIZE(str))
 
-// NB: Two cursor properties are necessary because IE and Netscape use different identifiers...
-
-#define U_HTML_TEMPLATE \
+#define U_HTML_TEMPLATE_START \
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n" \
 "<html>\n" \
 "<head>\n" \
 "  <title>doc_parse HTML View</title>\n" \
+
+// NB: Two cursor properties are necessary because IE and Netscape use different identifiers...
+
+#define U_HTML_CSS \
 "<style type=\"text/css\">\n" \
 "body {\n" \
 "  font: 10pt Verdana,sans-serif;\n" \
@@ -59,7 +63,9 @@ static char tab[U_MAX_TAB];
 "  display: none;\n" \
 "  margin-left: 16px;\n" \
 "}\n" \
-"</style>\n" \
+"</style>\n"
+
+#define U_HTML_JAVASCRIPT \
 "<script language=\"JavaScript\" type=\"text/javascript\">\n" \
 "var openImg   = new Image();\n" \
 "openImg.src   = \"/icons/open.gif\";\n" \
@@ -91,7 +97,9 @@ static char tab[U_MAX_TAB];
 "  if (objImg.src.indexOf('/icons/closed.gif') > -1) objImg.src =   openImg.src;\n" \
 "  else                                              objImg.src = closedImg.src;\n" \
 "}\n" \
-"</script>\n" \
+"</script>\n"
+
+#define U_HTML_TEMPLATE_END \
 "</head>\n" \
 "<body onload=\"showAllBranch();swapAllFolder()\">\n\n"
 
@@ -111,6 +119,7 @@ static UString* output;
 static UDialog* dialog;
 static UString* content;
 static UString* extract;
+static UString* css_url;
 static const char* icon;
 static UCommand* xsltproc;
 static char* u_buffer_ptr;
@@ -683,9 +692,14 @@ public:
          inner_p7 = (opt['p'] == tmp);
          treeview = (opt['X'] == tmp);
          htmlview = (opt['H'] == tmp);
-         tmp      =  opt['e'];
+
+         tmp = opt['e'];
 
          if (tmp.empty() == false) extract = U_NEW(UString(tmp));
+
+         tmp = opt['s'];
+
+         if (tmp.empty() == false) css_url = U_NEW(UString(tmp));
          }
 
       // manage arg operation
@@ -709,7 +723,25 @@ public:
 
             output = U_NEW(UString(U_CAPACITY));
             }
-         else if (htmlview) cout.write(U_CONSTANT_TO_PARAM(U_HTML_TEMPLATE));
+         else if (htmlview)
+            {
+            cout.write(U_CONSTANT_TO_PARAM(U_HTML_TEMPLATE_START));
+
+            if (css_url)
+               {
+               cout.write(U_CONSTANT_TO_PARAM("<link type=\"text/css\" href=\""));
+               cout.write(U_STRING_TO_PARAM(*css_url));
+               cout.write(U_CONSTANT_TO_PARAM("\" rel=\"stylesheet\">\n"));
+               }
+            else
+               {
+               cout.write(U_CONSTANT_TO_PARAM(U_HTML_CSS));
+               }
+
+            cout.write(U_CONSTANT_TO_PARAM(U_HTML_JAVASCRIPT));
+
+            cout.write(U_CONSTANT_TO_PARAM(U_HTML_TEMPLATE_END));
+            }
 
 #     ifdef U_PRINT_TAB
          (void) U_SYSCALL(memset, "%p,%d,%u", tab, '\t', U_MAX_TAB);

@@ -80,6 +80,12 @@ public:
 
    static void init();
    static void clear();
+   static void initAfterGenericRead();
+
+   // manage sendfile
+
+   int sendfile();
+   int sendfile(int& in_fd, char& bclose, uint32_t start, uint32_t count);
 
    // log
 
@@ -119,6 +125,13 @@ public:
 #endif
 
 protected:
+   // NB: these are for pending sendfile...
+
+   int sfd;
+   uint32_t count;
+   off_t offset;
+   char bclose;
+
    static UString* msg_welcome;
 
    // COSTRUTTORI

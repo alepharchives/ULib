@@ -18,23 +18,23 @@
 # ab -n 1000000 -c 10 -S -d -t 1    -H 'Accept-Encoding: gzip,deflate' "http://$HOST:80/usp/benchmarking.usp?name=stefano" // NO Keep-Alives
 # ab -n 1000000 -c 10 -S -d -t 1 -k -H 'Accept-Encoding: gzip,deflate' "http://$HOST:80/usp/benchmarking.usp?name=stefano" // KEEP-ALIVES
 
-./bench_NO_keepalive $HOST "/usp/benchmarking.usp?name=stefano" # 8080 0
-mv test.txt usp_NO_keepalive.csv
+./bench_keepalive    $HOST "/ws/flash-bridge/WebSocketMain.swf" # 8080 0
+mv test.txt userver_tcp_big_keepalive.csv
 
 sleep 60
 
-./bench_keepalive    $HOST "/usp/benchmarking.usp?name=stefano" # 8080 0
-mv test.txt usp_keepalive.csv
+./bench_NO_keepalive $HOST "/ws/flash-bridge/WebSocketMain.swf" # 8080 0
+mv test.txt userver_tcp_big_NO_keepalive.csv
 
 sleep 60
 
-./bench_NO_keepalive $HOST "/99.html"                          # 8080 0
-mv test.txt userver_tcp_99_NO_keepalive.csv
+./bench_NO_keepalive $HOST "/100.html"                          # 8080 0
+mv test.txt userver_tcp_100_NO_keepalive.csv
 
 sleep 60
 
-./bench_keepalive    $HOST "/99.html"                          # 8080 0
-mv test.txt userver_tcp_99_keepalive.csv
+./bench_keepalive    $HOST "/100.html"                          # 8080 0
+mv test.txt userver_tcp_100_keepalive.csv
 
 sleep 60
 
@@ -48,10 +48,10 @@ mv test.txt userver_tcp_1000_keepalive.csv
 
 sleep 60
 
-./bench_NO_keepalive $HOST "/ws/flash-bridge/WebSocketMain.swf" # 8080 0
-mv test.txt userver_tcp_big_NO_keepalive.csv
+./bench_NO_keepalive $HOST "/usp/benchmarking.usp?name=stefano" # 8080 0
+mv test.txt usp_NO_keepalive.csv
 
 sleep 60
 
-./bench_keepalive    $HOST "/ws/flash-bridge/WebSocketMain.swf" # 8080 0
-mv test.txt userver_tcp_big_keepalive.csv
+./bench_keepalive    $HOST "/usp/benchmarking.usp?name=stefano" # 8080 0
+mv test.txt usp_keepalive.csv

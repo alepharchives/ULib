@@ -80,7 +80,7 @@ public:
       {
       U_TRACE(0, "UCache::initStart()")
 
-      if (u_pthread_time == 0) u_gettimeofday();
+      u_gettimeofday();
 
       start = u_now->tv_sec;
       }
@@ -131,7 +131,7 @@ public:
       {
       U_TRACE(0, "UCache::getTime()")
 
-      if (u_pthread_time == 0) u_gettimeofday();
+      u_gettimeofday();
 
       uint32_t now = (uint32_t)(u_now->tv_sec - start);
 

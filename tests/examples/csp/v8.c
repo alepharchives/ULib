@@ -10,9 +10,13 @@
 
 int main(int argc, char* argv[])
 {
+   char* run = runv8("'Hello'+' world!'");
+
    char* reply = get_reply();
 
-   (void) u_snprintf(reply, get_reply_capacity(), "<h1>%s</h1>", runv8("'Hello'+' world!'"));
+   (void) u_snprintf(reply, get_reply_capacity(), "<h1>%s</h1>", run);
+
+   free(run);
 
    return 200;
 }

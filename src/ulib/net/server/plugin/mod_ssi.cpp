@@ -733,6 +733,8 @@ int USSIPlugIn::handlerRequest()
 {
    U_TRACE(0, "USSIPlugIn::handlerRequest()")
 
+   U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
+
    if (UHTTP::isHTTPRequestNotFound()  == false &&
        UHTTP::isHTTPRequestForbidden() == false &&
        UHTTP::file->isSuffix(".shtml"))
@@ -808,7 +810,8 @@ int USSIPlugIn::handlerRequest()
             (void) header.append(UHTTP::getHeaderMimeType(0, U_CTYPE_HTML, UClientImage_Base::body->size(), 0));
             }
 
-         *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(HTTP_OK, header);
+         u_http_info.nResponseCode   = HTTP_OK;
+         *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(header);
          }
 
       UHTTP::setHTTPRequestProcessed();

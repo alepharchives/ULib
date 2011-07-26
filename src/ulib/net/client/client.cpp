@@ -251,8 +251,8 @@ bool UClient_Base::setUrl(const UString& location)
 
       char* p;
       uint32_t len;
-      const char* src  =       UHTTP::http_info.uri;
-      const char* _end = src + UHTTP::http_info.uri_len;
+      const char* src  =       u_http_info.uri;
+      const char* _end = src + u_http_info.uri_len;
 
       static char _buffer[U_PATH_MAX];
 
@@ -279,8 +279,8 @@ bool UClient_Base::setUrl(const UString& location)
 
       (void) u_memcpy(dest, location.data(), len);
 
-      UHTTP::http_info.uri     = _buffer;
-      UHTTP::http_info.uri_len = dest - ptr + len;
+      u_http_info.uri     = _buffer;
+      u_http_info.uri_len = dest - ptr + len;
 
       U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
 
@@ -299,8 +299,8 @@ bool UClient_Base::setUrl(const UString& location)
 
    uri = url.getPathAndQuery();
 
-   UHTTP::http_info.uri     = uri.data();
-   UHTTP::http_info.uri_len = uri.size();
+   u_http_info.uri     = uri.data();
+   u_http_info.uri_len = uri.size();
 
    U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
 
@@ -315,7 +315,7 @@ void UClient_Base::wrapRequestWithHTTP(const char* extension, const char* conten
 
    // Add the MIME-type headers to the request for HTTP server
 
-   UString tmp(800U + UHTTP::http_info.uri_len + UHTTP::http_info.query_len + request.size());
+   UString tmp(800U + u_http_info.uri_len + u_http_info.query_len + request.size());
 
    tmp.snprintf("%.*s %.*s%s%.*s HTTP/1.1\r\n"
                 "Host: %.*s\r\n"
@@ -323,7 +323,7 @@ void UClient_Base::wrapRequestWithHTTP(const char* extension, const char* conten
                 "%s",
                 U_HTTP_METHOD_TO_TRACE,
                 U_HTTP_URI_TO_TRACE,
-                (UHTTP::http_info.query ? "?" : ""),
+                (u_http_info.query ? "?" : ""),
                 U_HTTP_QUERY_TO_TRACE,
                 U_STRING_TO_TRACE(host_port),
                 extension);
@@ -450,11 +450,11 @@ bool UClient_Base::readHTTPResponse()
    if (UHTTP::readHTTPHeader(socket, buffer) &&
        UHTTP::findEndHeader(         buffer))
       {
-      uint32_t pos = buffer.find(*USocket::str_content_length, UHTTP::http_info.startHeader, UHTTP::http_info.szHeader);
+      uint32_t pos = buffer.find(*USocket::str_content_length, u_http_info.startHeader, u_http_info.szHeader);
 
       if (pos != U_NOT_FOUND)
          {
-         UHTTP::http_info.clength = (uint32_t) strtoul(buffer.c_pointer(pos + USocket::str_content_length->size() + 2), 0, 0);
+         u_http_info.clength = (uint32_t) strtoul(buffer.c_pointer(pos + USocket::str_content_length->size() + 2), 0, 0);
 
          if (UHTTP::readHTTPBody(socket, &buffer, response))
             {

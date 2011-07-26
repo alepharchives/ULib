@@ -86,6 +86,7 @@ public:
 
    uint32_t getElement(UVector<UString>& velement,     const char* tag, uint32_t tag_len);
    uint32_t getElement(UString& element, uint32_t pos, const char* tag, uint32_t tag_len);
+   UString  getElementData(              uint32_t pos, const char* tag, uint32_t tag_len);
 
    /** getEncoding()
     *

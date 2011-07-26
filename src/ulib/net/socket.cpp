@@ -622,9 +622,9 @@ the last byte that was read. COUNT is the number of bytes to copy between file d
 the kernel, sendfile() does not need to spend time transferring data to and from user space.
 */
 
-bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count)
+bool USocket::sendfile(int in_fd, off_t offset, uint32_t count)
 {
-   U_TRACE(1, "USocket::sendfile(%d,%p,%u)", in_fd, poffset, count)
+   U_TRACE(1, "USocket::sendfile(%d,%I,%u)", in_fd, offset, count)
 
    U_CHECK_MEMORY
 
@@ -637,7 +637,7 @@ bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count)
    do {
       U_INTERNAL_DUMP("count = %u", count)
 
-      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", iSockDesc, in_fd, poffset, count);
+      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", iSockDesc, in_fd, (offset ? &offset : 0), count);
 
       if (value < 0L)
          {

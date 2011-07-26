@@ -48,7 +48,7 @@ if [ "$TERM" != "cygwin" ]; then
 	    ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
 fi
 
-#STRACE=$TRUSS
+STRACE=$TRUSS
 start_prg_background userver_tcp -c 'web_server-1.cfg'
 												# RA/RA.cfg
 												# web_server.cfg

@@ -100,6 +100,8 @@ bool URPC::readRPCRequest(USocket* s, bool reset)
 
    if (reset) resetRPCInfo();
 
+   if (UClientImage_Base::isPipeline() == false) UClientImage_Base::initAfterGenericRead();
+
    UClientImage_Base::size_request = readTokenVector(s, 0, *UClientImage_Base::rbuffer, *rpc_info);
 
    if (UClientImage_Base::size_request)

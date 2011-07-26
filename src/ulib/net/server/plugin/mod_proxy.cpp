@@ -116,8 +116,8 @@ int UProxyPlugIn::handlerRequest()
 
          const char* ptr = UClientImage_Base::wbuffer->data();
 
-         if (                        UHTTP::isHTTPRequest(  ptr)  == false ||
-            (UHTTP::resetHTTPInfo(), UHTTP::scanfHTTPHeader(ptr)) == false)
+         if (                       UHTTP::isHTTPRequest(  ptr)  == false ||
+            (UHTTP::initHTTPInfo(), UHTTP::scanfHTTPHeader(ptr)) == false)
             {
             err = UModProxyService::INTERNAL_ERROR;
 

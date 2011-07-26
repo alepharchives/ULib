@@ -105,7 +105,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    //                              as differentiated by their apparent hostname
    // DIGEST_AUTHENTICATION        flag authentication method (yes = digest, no = basic)
    //
-   // ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add Cache control: public directive)
+   // ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add "Cache control: public" directive)
    //
    // URI_PROTECTED_MASK           mask (DOS regexp) of URI protected from prying eyes
    // URI_PROTECTED_ALLOWED_IP     list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
@@ -204,8 +204,56 @@ int UHttpPlugIn::handlerREAD()
 {
    U_TRACE(0, "UHttpPlugIn::handlerREAD()")
 
-   if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket))
+   int result = UHTTP::checkHTTPRequestCache();
+
+   if (result == 0)
       {
+      if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket) == false)
+         {
+         U_http_is_connection_close = U_YES;
+
+         if (UClientImage_Base::wbuffer->empty())
+            {
+            // HTTP/1.1 compliance:
+            // -----------------------------------------------------
+            // Sends 501 for request-method != (GET|POST|HEAD)
+            // Sends 505 for protocol != HTTP/1.[0-1]
+            // Sends 400 for broken Request-Line
+            // Sends 411 for missing Content-Length on POST requests
+
+                 if (U_http_method_type == 0)                        u_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
+            else if (U_http_version     == 0 && u_http_info.uri_len) u_http_info.nResponseCode = HTTP_VERSION;
+            else
+               {
+               UHTTP::setHTTPBadRequest();
+
+               U_RETURN(U_PLUGIN_HANDLER_ERROR);
+               }
+
+            UHTTP::setHTTPResponse();
+            }
+
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
+
+      if (UHTTP::alias->empty() == false)
+         {
+         UHTTP::alias->clear();
+         UHTTP::request_uri->clear();
+         }
+
+      // manage virtual host
+
+      if (UHTTP::virtual_host &&
+          u_http_info.host_vlen)
+         {
+         // Host: hostname[:port]
+
+         UHTTP::alias->setBuffer(1 + u_http_info.host_vlen + u_http_info.uri_len);
+
+         UHTTP::alias->snprintf("/%.*s%.*s", U_HTTP_VHOST_TO_TRACE, U_HTTP_URI_TO_TRACE);
+         }
+
       // manage alias uri
 
       if (UHTTP::ssi_alias ||
@@ -250,6 +298,8 @@ next:
          U_SRV_LOG("ALIAS: URI request changed to: %.*s", len, ptr);
          }
 
+      if (UHTTP::real_ip->empty() == false) UHTTP::real_ip->setEmpty();
+
 #  ifdef HAVE_SSL
       if (uri_request_cert_mask.empty() == false &&
           u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(uri_request_cert_mask), 0))
@@ -260,7 +310,7 @@ next:
 
             UHTTP::setHTTPForbidden();
 
-            goto send_response;
+            U_RETURN(U_PLUGIN_HANDLER_ERROR);
             }
          }
 #  endif
@@ -268,43 +318,13 @@ next:
       if (UHTTP::uri_protected_mask &&
           UHTTP::checkUriProtected() == false)
          {
-         goto send_response;
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
          }
 
-      UHTTP::checkHTTPRequest();
-
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      result = UHTTP::checkHTTPRequest();
       }
 
-   U_http_is_connection_close = U_YES;
-
-   if (UClientImage_Base::wbuffer->empty())
-      {
-      // HTTP/1.1 compliance:
-      // -----------------------------------------------------
-      // Sends 501 for request-method != (GET|POST|HEAD)
-      // Sends 505 for protocol != HTTP/1.[0-1]
-      // Sends 400 for broken Request-Line
-      // Sends 411 for missing Content-Length on POST requests
-
-      int nResponseCode;
-
-           if (U_http_method_type == 0)                             nResponseCode = HTTP_NOT_IMPLEMENTED;
-      else if (U_http_version     == 0 && UHTTP::http_info.uri_len) nResponseCode = HTTP_VERSION;
-      else
-         {
-         UHTTP::setHTTPBadRequest();
-
-         goto send_response;
-         }
-
-      UHTTP::setHTTPResponse(nResponseCode, 0, 0);
-      }
-
-send_response:
-   (void) UServer_Base::pClientImage->handlerWrite();
-
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   U_RETURN(result);
 }
 
 int UHttpPlugIn::handlerRequest()
@@ -312,8 +332,6 @@ int UHttpPlugIn::handlerRequest()
    U_TRACE(0, "UHttpPlugIn::handlerRequest()")
 
    // process the HTTP request
-
-   if (UHTTP::isHTTPRequestAlreadyProcessed()) goto end;
 
    if (UHTTP::isHTTPRequestNeedProcessing())
       {
@@ -327,7 +345,12 @@ int UHttpPlugIn::handlerRequest()
 
          if (UHTTP::processCGIRequest((UCommand*)0, 0, async, true) == false)
             {
-                 if (UCommand::isTimeout())               UHTTP::setHTTPResponse(HTTP_GATEWAY_TIMEOUT, 0, 0);
+            if (UCommand::isTimeout())
+               {
+               u_http_info.nResponseCode = HTTP_GATEWAY_TIMEOUT;
+
+               UHTTP::setHTTPResponse();
+               }
             else if (UClientImage_Base::wbuffer->empty()) UHTTP::setHTTPInternalError();
             }
          }
@@ -337,7 +360,9 @@ int UHttpPlugIn::handlerRequest()
             {
             // NB: we don't want to process this request here (maybe other plugin after...)
 
-            UHTTP::setHTTPResponse(HTTP_NOT_IMPLEMENTED, 0, 0);
+            u_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
+
+            UHTTP::setHTTPResponse();
 
             U_RETURN(U_PLUGIN_HANDLER_GO_ON);
             }
@@ -347,49 +372,28 @@ int UHttpPlugIn::handlerRequest()
       }
    else if (UHTTP::isHTTPRequestNotFound())  UHTTP::setHTTPNotFound();  // set not found error response...
    else if (UHTTP::isHTTPRequestForbidden()) UHTTP::setHTTPForbidden(); // set forbidden error response...
+#ifdef DEBUG
+   else
+      {
+      // NB: it must be processed by some other plugin...
 
-end:  // check for "Connection: close" in headers...
+      U_ASSERT(UHTTP::isHTTPRequestAlreadyProcessed())
+      }
+#endif
 
    U_INTERNAL_DUMP("U_http_is_connection_close = %d", U_http_is_connection_close)
 
-   if (U_http_is_connection_close == U_YES)
-      {
-      (void) UServer_Base::pClientImage->handlerWrite();
+   // check for "Connection: close" in headers
 
-      U_RETURN(U_PLUGIN_HANDLER_ERROR);
-      }
-
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+   if (U_http_is_connection_close == U_YES) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+                                            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
 
 int UHttpPlugIn::handlerReset()
 {
    U_TRACE(0, "UHttpPlugIn::handlerReset()")
 
-   if (UHTTP::real_ip->empty() == false) UHTTP::real_ip->setEmpty();
-
-   // check if dynamic page (ULib Servlet Page)
-
-   if (UHTTP::usp_page)
-      {
-      U_INTERNAL_ASSERT_POINTER(UHTTP::usp_pages)
-      U_INTERNAL_ASSERT_EQUALS(UHTTP::usp_pages->empty(),false)
-      U_INTERNAL_ASSERT_POINTER(UHTTP::usp_page->runDynamicPage)
-
-      (void) UHTTP::usp_page->runDynamicPage((UClientImage_Base*)-1); // call reset for module...
-
-      UHTTP::usp_page = 0;
-      }
-
-   // NB: check if needed to reset alias URI
-
-   U_INTERNAL_DUMP("UHTTP::alias = %.*S UHTTP::request_uri = %.*S", U_STRING_TO_TRACE(*UHTTP::alias), U_STRING_TO_TRACE(*UHTTP::request_uri))
-
-   if (UHTTP::alias->empty() == false)
-      {
-      UHTTP::alias->clear();
-      UHTTP::request_uri->clear();
-      }
+   UHTTP::manageHTTPRequestCache();
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }

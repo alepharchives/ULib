@@ -68,6 +68,7 @@ public:
    static void clear();
    static void init(uint32_t n = 64U);
    static void erase( UEventFd* handler_event);
+   static void modify(UEventFd* handler_event);
    static void insert(UEventFd* handler_event, bool bstatic = true);
 
    static bool empty()
