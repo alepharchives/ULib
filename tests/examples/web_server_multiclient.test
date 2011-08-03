@@ -36,6 +36,7 @@ if [ "$TERM" != "cygwin" ]; then
 fi
 
 #STRACE=$TRUSS
+#VALGRIND=valgrind
 start_prg_background userver_tcp -c web_server_multiclient.cfg
 $SLEEP
 $SLEEP

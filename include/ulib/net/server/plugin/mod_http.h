@@ -62,6 +62,7 @@ public:
    static const UString* str_ENABLE_INOTIFY;
    static const UString* str_ENABLE_CACHING_BY_PROXY_SERVERS;
    static const UString* str_TELNET_ENABLE;
+   static const UString* str_MIN_SIZE_FOR_SENDFILE;
 
    static void str_allocate();
 
@@ -87,7 +88,10 @@ public:
 
    virtual int handlerREAD();
    virtual int handlerRequest();
+
+#ifdef U_CACHE_REQUEST
    virtual int handlerReset();
+#endif
 
    // define method VIRTUAL of class UEventFd
 

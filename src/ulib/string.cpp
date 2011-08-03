@@ -258,6 +258,10 @@ void UStringRep::assign(UStringRep*& rep, const char* s, uint32_t n)
       char* ptr = (char*)rep->str;
 
       U_INTERNAL_ASSERT_MAJOR(n,0)
+      U_INTERNAL_ASSERT_DIFFERS(ptr,s)
+
+      U_INTERNAL_DUMP("src+n = %p (must be <=) dst = %p", s+n, ptr)
+      U_INTERNAL_DUMP("dst+n = %p (must be <=) src = %p", ptr+n, s)
 
       (void) u_memcpy(ptr, s, n);
 
@@ -600,14 +604,14 @@ void UString::setBuffer(uint32_t n)
 
    U_INTERNAL_DUMP("rep = %p rep->parent = %p rep->references = %u rep->child = %d", rep, rep->parent, rep->references + 1, rep->child)
 
-   if (rep->references ||
-       rep->_capacity < n)
+   if (rep->references == 0 &&
+       n <= rep->_capacity)
       {
-      set(UStringRep::create(0U, n, 0));
+      ((char*)rep->str)[(rep->_length = 0)] = '\0';
       }
    else
       {
-      size_adjust(0);
+      set(UStringRep::create(0U, n, 0));
       }
 
    U_INTERNAL_ASSERT(invariant())

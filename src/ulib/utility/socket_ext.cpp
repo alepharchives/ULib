@@ -191,21 +191,20 @@ bool USocketExt::write(USocket* s, const char* ptr, uint32_t count, int timeoutM
    U_INTERNAL_ASSERT(s->isOpen())
 
    ssize_t value;
-   bool write_again;
 
    do {
       U_INTERNAL_DUMP("count = %u", count)
 
       value = s->send(ptr, count, timeoutMS);
 
-      if (s->checkIO(value, count) == false) U_RETURN(false);
+      if (value == (ssize_t)count) U_RETURN(true);
 
-      write_again = (value != (ssize_t)count);
+      if (s->checkIO(value, count) == false) U_RETURN(false);
 
       ptr   += value;
       count -= value;
       }
-   while (write_again);
+   while (count);
 
    U_INTERNAL_ASSERT_EQUALS(count,0)
 
@@ -221,45 +220,54 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
    int sz1 = header.size(),
        sz2 =   body.size();
 
-   ssize_t value, count = sz1 + sz2;
+   const char* ptr = header.data();
 
-   struct iovec _iov[2] = { { (caddr_t)header.data(), sz1 },
-                            { (caddr_t)  body.data(), sz2 } };
-
-   while (true)
+   if (sz2 == 0)
       {
-      U_INTERNAL_DUMP("count = %u", count)
+      if (write(s, ptr, sz1, timeoutMS) == false) U_RETURN(false);
+      }
+   else
+      {
+      ssize_t value, count = sz1 + sz2;
 
-      value = s->writev(_iov, 2, timeoutMS);
+      struct iovec _iov[2] = { { (caddr_t)ptr,         sz1 },
+                               { (caddr_t)body.data(), sz2 } };
 
-      if (s->checkIO(value, count) == false) U_RETURN(false);
+      do {
+         U_INTERNAL_DUMP("count = %u", count)
 
-      if (value == count) break;
+         value = s->writev(_iov, 2, timeoutMS);
 
-      if (sz1)
-         {
-         if (sz1 >= value)
+         if (value == count) U_RETURN(true);
+
+         if (s->checkIO(value, count) == false) U_RETURN(false);
+
+         if (sz1)
             {
-            sz1             -= value;
-            _iov[0].iov_base = (char*)_iov[0].iov_base + value;
+            if (sz1 >= value)
+               {
+               sz1             -= value;
+               _iov[0].iov_base = (char*)_iov[0].iov_base + value;
 
-            value = 0;
-            }
-         else
-            {
-            value -= sz1;
-                     sz1 = 0;
+               value = 0;
+               }
+            else
+               {
+               value -= sz1;
+                        sz1 = 0;
+               }
+
+            _iov[0].iov_len = sz1;
             }
 
-         _iov[0].iov_len = sz1;
+         _iov[1].iov_len  -= value;
+         _iov[1].iov_base  = (char*)_iov[1].iov_base + value;
+
+         count = sz1 + _iov[1].iov_len;
+
+         U_INTERNAL_ASSERT_MAJOR(count,0)
          }
-
-      _iov[1].iov_len  -= value;
-      _iov[1].iov_base  = (char*)_iov[1].iov_base + value;
-
-      count = sz1 + _iov[1].iov_len;
-
-      U_INTERNAL_ASSERT_MAJOR(count,0)
+      while (value < count);
       }
 
    U_RETURN(true);

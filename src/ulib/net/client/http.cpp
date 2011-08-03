@@ -556,7 +556,7 @@ void UHttpClient_Base::composeRequest(UString& data, uint32_t& startHeader)
 {
    U_TRACE(0, "UHttpClient_Base::composeRequest(%.*S,%p)", U_STRING_TO_TRACE(data), &startHeader)
 
-   UClient_Base::uri = (u_http_info.uri_len ? UString(U_HTTP_URI_TO_PARAM) : U_STRING_FROM_CONSTANT("/"));
+   U_ASSERT_DIFFERS(UClient_Base::uri.empty(),true)
 
    UHTTP::setHTTPInfo(method, UClient_Base::uri);
 
@@ -628,17 +628,17 @@ bool UHttpClient_Base::sendRequest(UString& data)
 
    // check if we need to compose the request to the HTTP server...
 
-   if (data.empty() == false)
-      {
-      UHTTP::getHTTPInfo(data, method, UClient_Base::uri);
-
-      startHeader = u_http_info.startHeader;
-      }
-   else
+   if (data.empty())
       {
       method = U_STRING_FROM_CONSTANT("GET");
 
       composeRequest(data, startHeader);
+      }
+   else
+      {
+      UHTTP::getHTTPInfo(data, method, UClient_Base::uri);
+
+      startHeader = u_http_info.startHeader;
       }
 
    U_INTERNAL_DUMP("startHeader = %u", startHeader)

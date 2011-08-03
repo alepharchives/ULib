@@ -342,6 +342,47 @@ private:
    friend class UReferenceCtx;
 };
 
+class UTranformRsaSha256 : public UBaseTransform {
+public:
+
+   // COSTRUTTORI
+
+   UTranformRsaSha256()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UTranformRsaSha256, "")
+      }
+
+   virtual ~UTranformRsaSha256()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UTranformRsaSha256)
+      }
+
+   // define method VIRTUAL of class UBaseTransform
+
+   virtual int         usage() { return _usage; } // the allowed transforms usages
+   virtual const char* name()  { return _name;  } // the transform's name
+   virtual const char* href()  { return _href;  } // the transform's identification string (href)
+
+   virtual bool execute(UString& data);
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
+#endif
+
+protected:
+   static int _usage;        // the allowed transforms usages
+   static const char* _name; // the transform's name
+   static const char* _href; // the transform's identification string (href)
+
+private:
+   UTranformRsaSha256(const UTranformRsaSha256&) : UBaseTransform() {}
+   UTranformRsaSha256& operator=(const UTranformRsaSha256&)         { return *this; }
+
+   friend class UDSIGContext;
+   friend class UTransformCtx;
+   friend class UReferenceCtx;
+};
+
 class UTranformXPointer : public UBaseTransform {
 public:
 

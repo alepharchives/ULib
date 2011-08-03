@@ -35,7 +35,7 @@
 static char tab[U_MAX_TAB];
 #endif
 
-#define U_PRINT(str) Application::print(str,U_CONSTANT_SIZE(str))
+#define U_PRINT(str) print(str,U_CONSTANT_SIZE(str))
 
 #define U_HTML_TEMPLATE_START \
 "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n" \

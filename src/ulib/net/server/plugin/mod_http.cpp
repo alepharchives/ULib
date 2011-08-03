@@ -31,6 +31,7 @@ const UString* UHttpPlugIn::str_REQUEST_READ_TIMEOUT;
 const UString* UHttpPlugIn::str_ENABLE_INOTIFY;
 const UString* UHttpPlugIn::str_ENABLE_CACHING_BY_PROXY_SERVERS;
 const UString* UHttpPlugIn::str_TELNET_ENABLE;
+const UString* UHttpPlugIn::str_MIN_SIZE_FOR_SENDFILE;
 
 void UHttpPlugIn::str_allocate()
 {
@@ -45,6 +46,7 @@ void UHttpPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_ENABLE_INOTIFY,0)
    U_INTERNAL_ASSERT_EQUALS(str_ENABLE_CACHING_BY_PROXY_SERVERS,0)
    U_INTERNAL_ASSERT_EQUALS(str_TELNET_ENABLE,0)
+   U_INTERNAL_ASSERT_EQUALS(str_MIN_SIZE_FOR_SENDFILE,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("CACHE_FILE_MASK") },
@@ -55,7 +57,8 @@ void UHttpPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("REQUEST_READ_TIMEOUT") },
       { U_STRINGREP_FROM_CONSTANT("ENABLE_INOTIFY") },
       { U_STRINGREP_FROM_CONSTANT("ENABLE_CACHING_BY_PROXY_SERVERS") },
-      { U_STRINGREP_FROM_CONSTANT("TELNET_ENABLE") }
+      { U_STRINGREP_FROM_CONSTANT("TELNET_ENABLE") },
+      { U_STRINGREP_FROM_CONSTANT("MIN_SIZE_FOR_SENDFILE") }
    };
 
    U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,                   U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -67,6 +70,7 @@ void UHttpPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_ENABLE_INOTIFY,                    U_STRING_FROM_STRINGREP_STORAGE(6));
    U_NEW_ULIB_OBJECT(str_ENABLE_CACHING_BY_PROXY_SERVERS,   U_STRING_FROM_STRINGREP_STORAGE(7));
    U_NEW_ULIB_OBJECT(str_TELNET_ENABLE,                     U_STRING_FROM_STRINGREP_STORAGE(8));
+   U_NEW_ULIB_OBJECT(str_MIN_SIZE_FOR_SENDFILE,             U_STRING_FROM_STRINGREP_STORAGE(9));
 }
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -100,6 +104,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // ENABLE_INOTIFY               enable automatic update of document root image with inotify
    // TELNET_ENABLE                accept fragmentation of header request (as happen with telnet)
    // CACHE_FILE_MASK              mask (DOS regexp) of pathfile that be cached in memory
+   // MIN_SIZE_FOR_SENDFILE        for major size it is better to use sendfile() to serve static content
    //
    // VIRTUAL_HOST                 flag to activate practice of maintaining more than one server on one machine,
    //                              as differentiated by their apparent hostname
@@ -148,6 +153,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       UHTTP::telnet_enable                   = cfg.readBoolean(*str_TELNET_ENABLE);
       UHTTP::limit_request_body              = cfg.readLong(*str_LIMIT_REQUEST_BODY, UString::max_size() - 4096);
       UHTTP::request_read_timeout            = cfg.readLong(*str_REQUEST_READ_TIMEOUT);
+      UHTTP::min_size_for_sendfile           = cfg.readLong(*str_MIN_SIZE_FOR_SENDFILE);
       UHTTP::digest_authentication           = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
       UHTTP::enable_caching_by_proxy_servers = cfg.readBoolean(*str_ENABLE_CACHING_BY_PROXY_SERVERS);
 
@@ -204,9 +210,13 @@ int UHttpPlugIn::handlerREAD()
 {
    U_TRACE(0, "UHttpPlugIn::handlerREAD()")
 
-   int result = UHTTP::checkHTTPRequestCache();
+   int result;
 
-   if (result == 0)
+#ifdef U_CACHE_REQUEST
+   result = UHTTP::checkHTTPRequestCache();
+
+   if (result == U_PLUGIN_HANDLER_FINISHED)
+#endif
       {
       if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket) == false)
          {
@@ -367,7 +377,7 @@ int UHttpPlugIn::handlerRequest()
             U_RETURN(U_PLUGIN_HANDLER_GO_ON);
             }
 
-         UHTTP::processHTTPGetRequest(UServer_Base::pClientImage->socket, *UClientImage_Base::request); // GET,HEAD
+         UHTTP::processHTTPGetRequest(*UClientImage_Base::request); // GET,HEAD
          }
       }
    else if (UHTTP::isHTTPRequestNotFound())  UHTTP::setHTTPNotFound();  // set not found error response...
@@ -389,6 +399,7 @@ int UHttpPlugIn::handlerRequest()
                                             U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
 
+#ifdef U_CACHE_REQUEST
 int UHttpPlugIn::handlerReset()
 {
    U_TRACE(0, "UHttpPlugIn::handlerReset()")
@@ -397,6 +408,7 @@ int UHttpPlugIn::handlerReset()
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
+#endif
 
 // DEBUG
 

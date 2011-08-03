@@ -62,6 +62,9 @@ void UTransformCtx::registerDefault()
    enabledTransforms->push(UString(UTranformRsaSha1::_name));              // "rsa-sha1"
    enabledTransforms->push(UString(UTranformRsaSha1::_href));
 
+   enabledTransforms->push(UString(UTranformRsaSha256::_name));            // "rsa-sha256"
+   enabledTransforms->push(UString(UTranformRsaSha256::_href));
+
    /*
    enabledTransforms->push(UString(UTranform::_name));                     // "aes128-cbc"
    enabledTransforms->push(UString(UTranform::_name));                     // "aes192-cbc"
@@ -83,7 +86,6 @@ void UTransformCtx::registerDefault()
    enabledTransforms->push(UString(UTranform::_name));                     // "ripemd160"
    enabledTransforms->push(UString(UTranform::_name));                     // "rsa-ripemd160"
    enabledTransforms->push(UString(UTranform::_name));                     // "rsa-sha224"
-   enabledTransforms->push(UString(UTranform::_name));                     // "rsa-sha256"
    enabledTransforms->push(UString(UTranform::_name));                     // "rsa-sha384"
    enabledTransforms->push(UString(UTranform::_name));                     // "rsa-sha512"
    enabledTransforms->push(UString(UTranform::_name));                     // "rsa-1_5"
@@ -140,6 +142,12 @@ UBaseTransform* UTransformCtx::findByHref(const char* href)
       break;
 
       case 11: // "rsa-sha1"
+         {
+         ptr = U_NEW(UTranformRsaSha1());
+         }
+      break;
+
+      case 13: // "rsa-sha256"
          {
          ptr = U_NEW(UTranformRsaSha1());
          }
@@ -775,6 +783,13 @@ bool UDSIGContext::processSignedInfoNode(const char*& alg, UString& data)
 
    transformCtx.chain.push(c14nMethod);
 
+   alg = UXML2Node::getProp(cur, "Algorithm");
+
+   unsigned char** inclusive_namespaces = 0;
+
+   int mode          = (U_STREQ(alg, "http://www.w3.org/TR/2001/REC-xml-c14n-20010315") ? 0 : 2),
+       with_comments = (mode == 2 && strstr(alg, "#WithComments") != 0);
+
    // next node is required SignatureMethod
 
    cur = UXML2Node::getNextSibling(cur->next);
@@ -787,6 +802,7 @@ bool UDSIGContext::processSignedInfoNode(const char*& alg, UString& data)
    if (signMethod == 0) U_RETURN(false);
 
    alg = UXML2Node::getProp(cur, "Algorithm");
+   alg = strchr(alg, '-') + 1;
    alg = strchr(alg, '-') + 1;
 
    transformCtx.chain.push(signMethod);
@@ -836,7 +852,7 @@ bool UDSIGContext::processSignedInfoNode(const char*& alg, UString& data)
 
    (void) UTranformXPointer::document->getElement(data, 0, U_CONSTANT_TO_PARAM("ds:SignedInfo"));
 
-   data = UXML2Document::xmlC14N(data);
+   data = UXML2Document::xmlC14N(data, mode, with_comments, inclusive_namespaces);
 
    U_RETURN(true);
 }

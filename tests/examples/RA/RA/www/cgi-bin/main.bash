@@ -45,9 +45,9 @@ elif [ "$REQUEST_METHOD" = "POST" ]; then
 
 		visualizza_contratto "$@"
 
-	elif [ $# -eq 3 -a "$REQUEST_URI" = "/card-generation" ]; then
+	elif [ $# -eq 4 -a "$REQUEST_URI" = "/card-generation" ]; then
 
-		send_MAIL_for_card_generation "$1" "$2"
+		send_MAIL_for_card_generation "$1" "$2" "$3"
 
 	elif [ $# -eq 1 ]; then
 

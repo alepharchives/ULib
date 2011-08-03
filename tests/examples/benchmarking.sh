@@ -8,7 +8,7 @@ rm -f benchmarking.log* err/benchmarking.err \
 		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* \
 		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*
 
-#UTRACE="0 50M 0"
+ UTRACE="0 50M 0"
 #UOBJDUMP="0 1M 100"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --trace-children=yes"

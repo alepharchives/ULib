@@ -325,9 +325,9 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(s)
 
-      bool r = (_length == n) && (memcmp(str, s, n) == 0);
+      if ((_length == n) && (memcmp(str, s, n) == 0)) U_RETURN(true);
 
-      U_RETURN(r);
+      U_RETURN(false);
       }
 
    bool equal(const UStringRep* rep) const { return equal(rep->str, rep->_length); }

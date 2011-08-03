@@ -31,7 +31,7 @@
 #  include <sys/select.h>
 #  ifdef HAVE_EPOLL_WAIT
 #     include <sys/epoll.h>
-#     define MAX_EVENTS 32
+#     define MAX_EVENTS 512
 #  endif
 #endif
 
@@ -110,8 +110,10 @@ protected:
 #endif
 
 #ifdef USE_POLL
-   static int waitForEvent(struct pollfd* ufds, int timeoutMS = -1);
+   static struct pollfd fds[1];
+   static int waitForEvent(int timeoutMS = -1);
 #endif
+
    static int waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
 
 #ifdef HAVE_LIBEVENT

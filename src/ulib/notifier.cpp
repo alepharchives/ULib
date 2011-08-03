@@ -47,6 +47,10 @@ fd_set             UNotifier::fd_set_write;
 UEventFd*          UNotifier::first;
 UNotifier*         UNotifier::pthis;
 
+#ifdef USE_POLL
+struct pollfd      UNotifier::fds[1];
+#endif
+
 void UNotifier::init(uint32_t n)
 {
    U_TRACE(0, "UNotifier::init(%u)", n)
@@ -65,7 +69,7 @@ void UNotifier::init(uint32_t n)
    epollfd = U_SYSCALL(epoll_create1, "%d", EPOLL_CLOEXEC);
    if (epollfd != -1 || errno != ENOSYS) goto next;
 #  endif
-   epollfd = U_SYSCALL(epoll_create,  "%d", 1024);
+   epollfd = U_SYSCALL(epoll_create,  "%d", 512);
 next:
    U_INTERNAL_ASSERT_MAJOR(epollfd,0)
    U_INTERNAL_ASSERT_EQUALS(U_READ_IN,EPOLLIN)
@@ -148,6 +152,8 @@ next:
 #  if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
       if (pthread) pthread->lock();
 #  endif
+
+      U_INTERNAL_ASSERT_DIFFERS(item,first)
 
       item->next = first;
       first      = item;
@@ -432,12 +438,16 @@ int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEv
 {
    U_TRACE(1, "UNotifier::waitForEvent(%d,%p,%p,%p)", fd_max, read_set, write_set, timeout)
 
+   int result;
+
 #ifdef HAVE_LIBEVENT
-   U_RETURN(-1);
+   result = -1;
+#elif defined(HAVE_EPOLL_WAIT)
+loop:
+   result = U_SYSCALL(epoll_wait, "%d,%p,%d,%p", epollfd, events, MAX_EVENTS, (timeout ? timeout->getMilliSecond() : -1));
 #else
    static struct timeval   tmp;
           struct timeval* ptmp = (timeout == 0 ? 0 : &tmp);
-
 loop:
 #  ifdef DEBUG
    if ( read_set) U_INTERNAL_DUMP(" read_set = %B", __FDS_BITS( read_set)[0])
@@ -457,14 +467,10 @@ loop:
       U_INTERNAL_DUMP("timeout = { %ld %6ld }", tmp.tv_sec, tmp.tv_usec)
       }
 
-#  if defined(HAVE_EPOLL_WAIT)
-   int result = U_SYSCALL(epoll_wait, "%d,%p,%d,%p", epollfd, events, MAX_EVENTS, (ptmp ? ((tmp.tv_sec * 1000) + (tmp.tv_usec / 1000)) : -1));
+   result = U_SYSCALL(select, "%d,%p,%p,%p,%p", fd_max, read_set, write_set, 0, ptmp);
+#endif
 
-   U_RETURN(result);
-#  else
-   int result = U_SYSCALL(select, "%d,%p,%p,%p,%p", fd_max, read_set, write_set, 0, ptmp);
-#  endif
-
+#ifndef HAVE_LIBEVENT
    if (result == 0) // timeout
       {
       // call the manager of timeout
@@ -519,9 +525,9 @@ loop:
    if ( read_set) U_INTERNAL_DUMP(" read_set = %B", __FDS_BITS( read_set)[0])
    if (write_set) U_INTERNAL_DUMP("write_set = %B", __FDS_BITS(write_set)[0])
 #  endif
+#endif
 
    U_RETURN(result);
-#endif
 }
 
 // NB: n is needeed for rientrance of function (see test_notifier...)
@@ -545,10 +551,10 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UEventFd** ptr, UEventFd* hand
 #  ifndef HAVE_EPOLL_WAIT
       U_INTERNAL_ASSERT_MAJOR(fd_read_cnt,0)
       U_INTERNAL_ASSERT(FD_ISSET(handler_event->fd, &fd_set_read))
-#  endif
-      U_INTERNAL_ASSERT(handler_event->op_mask & U_READ_IN)
 
       --n;
+#  endif
+      U_INTERNAL_ASSERT(handler_event->op_mask & U_READ_IN)
 
       ret = (bexcept ? (handler_event->handlerError(USocket::BROKEN | USocket::EPOLLERROR), U_NOTIFIER_DELETE)
                      :  handler_event->handlerRead());
@@ -572,13 +578,13 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UEventFd** ptr, UEventFd* hand
          }
       }
 
-   U_INTERNAL_DUMP("n = %d", n)
-
    if (bwrite)
       {
 #  ifndef HAVE_EPOLL_WAIT
       U_INTERNAL_ASSERT_MAJOR(fd_write_cnt,0)
       U_INTERNAL_ASSERT(FD_ISSET(handler_event->fd, &fd_set_write))
+
+      --n;
 #  endif
       U_INTERNAL_ASSERT(handler_event->op_mask & U_WRITE_OUT)
 
@@ -587,8 +593,6 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UEventFd** ptr, UEventFd* hand
       // this cause closing socket and no need to write()...
       if (bread && bexcept) goto next;
 #  endif
-
-      --n;
 
       ret = (bexcept ? (handler_event->handlerError(USocket::BROKEN | USocket::EPOLLERROR), U_NOTIFIER_DELETE)
                      :  handler_event->handlerWrite());
@@ -608,6 +612,12 @@ U_NO_EXPORT bool UNotifier::handlerResult(int& n, UEventFd** ptr, UEventFd* hand
       }
 
 next:
+#ifdef HAVE_EPOLL_WAIT
+   --n;
+#endif
+
+   U_INTERNAL_DUMP("n = %d", n)
+
    if (bdelete)
       {
       handlerDelete(ptr, handler_event);
@@ -625,11 +635,14 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 {
    U_TRACE(0, "UNotifier::waitForEvent(%p)", timeout)
 
+   int n;
+
 #ifdef HAVE_LIBEVENT
    (void) UDispatcher::dispatch(UDispatcher::ONCE);
+
    goto end;
 #elif defined(HAVE_EPOLL_WAIT)
-   int n = waitForEvent(0, 0, 0, timeout);
+   n = waitForEvent(0, 0, 0, timeout);
 #else
    U_INTERNAL_ASSERT(fd_read_cnt > 0 || fd_write_cnt > 0)
 
@@ -638,7 +651,7 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
    if (fd_read_cnt)   read_set = fd_set_read;
    if (fd_write_cnt) write_set = fd_set_write;
 
-   int n = waitForEvent(fd_set_max,
+   n = waitForEvent(fd_set_max,
                 (fd_read_cnt  ? &read_set
                               : 0),
                 (fd_write_cnt ? &write_set
@@ -674,6 +687,8 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 
             if (handler_event->fd != pev->data.fd)
                {
+               U_INTERNAL_ASSERT_DIFFERS(handler_event,handler_event->next)
+
                ptr = &(*ptr)->next;
 
                continue;
@@ -907,9 +922,9 @@ void UNotifier::removeBadFd()
 
 #ifdef USE_POLL
 
-int UNotifier::waitForEvent(struct pollfd* fds, int timeoutMS)
+int UNotifier::waitForEvent(int timeoutMS)
 {
-   U_TRACE(1, "UNotifier::waitForEvent(%p,%d)", fds, timeoutMS)
+   U_TRACE(1, "UNotifier::waitForEvent(%d)", timeoutMS)
 
    int ret;
 
@@ -938,9 +953,16 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
 #endif
 
 #ifdef USE_POLL
-   struct pollfd fds[1] = { { fd, POLLIN, 0 } };
+   // NB: POLLRDHUP stream socket peer closed connection, or ***** shut down writing half of connection ****
 
-   int ret = waitForEvent(fds, timeoutMS);
+   fds[0].fd     = fd;
+   fds[0].events = POLLIN;
+
+   int ret = waitForEvent(timeoutMS);
+
+   // NB: we don't check for POLLERR or POLLHUP because we have problem in same case (command.test)
+
+   U_INTERNAL_DUMP("revents = %d %B", fds[0].revents, fds[0].revents)
 #else
 
 #  ifdef __MINGW32__
@@ -988,26 +1010,44 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
 #endif
 
 #ifdef USE_POLL
-   struct pollfd fds[1] = { { fd, POLLOUT, 0 } };
+   // NB: POLLRDHUP stream socket peer closed connection, or ***** shut down writing half of connection ****
 
-   int ret = waitForEvent(fds, timeoutMS);
+   fds[0].fd      = fd;
+   fds[0].events  = POLLOUT;
+   fds[0].revents = 0;
+
+   int ret = waitForEvent(timeoutMS);
+
+   // NB: POLLERR Error condition (output only).
+   //     POLLHUP Hang up         (output only).
+
+   U_INTERNAL_DUMP("revents = %d %B", fds[0].revents, fds[0].revents)
+
+   if (ret == 1 &&
+       (((fds[0].revents & POLLERR) != 0) ||
+        ((fds[0].revents & POLLHUP) != 0)))
+      {
+      U_INTERNAL_ASSERT_EQUALS(::write(fd,fds,1),-1)
+
+      U_RETURN(-1);
+      }
 #else
 
-#  ifdef __MINGW32__
+#  ifdef __mingw32__
    if (is_pipe(fd))
       {
-      U_INTERNAL_ASSERT_EQUALS(is_socket(fd),false)
+      u_internal_assert_equals(is_socket(fd),false)
 
-      U_RETURN(1);
+      u_return(1);
       }
 #  endif
 
-   UEventTime time(0L, timeoutMS * 1000L);
-   UEventTime* ptime = (timeoutMS < 0 ? 0 : (time.adjust(), &time));
+   ueventtime time(0l, timeoutms * 1000l);
+   ueventtime* ptime = (timeoutms < 0 ? 0 : (time.adjust(), &time));
 
    fd_set fdmask;
-   FD_ZERO(&fdmask);
-   FD_SET(fd, &fdmask);
+   fd_zero(&fdmask);
+   fd_set(fd, &fdmask);
 
    int ret = waitForEvent(fd + 1, 0, &fdmask, ptime);
 #endif
@@ -1015,8 +1055,8 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
    U_RETURN(ret);
 }
 
-// param timeoutMS specified the timeout value, in milliseconds.
-// A negative value indicates no timeout, i.e. an infinite wait
+// param timeoutms specified the timeout value, in milliseconds.
+// a negative value indicates no timeout, i.e. an infinite wait
 
 uint32_t UNotifier::read(int fd, char* buffer, int count, int timeoutMS)
 {
@@ -1031,24 +1071,19 @@ uint32_t UNotifier::read(int fd, char* buffer, int count, int timeoutMS)
    do {
       if (timeoutMS != -1)
          {
-         if (waitForRead(fd, timeoutMS) <= 0)
-            {
-            errno = EAGAIN;
-
-            break;
-            }
+         if (waitForRead(fd, timeoutMS) <= 0) break;
 
          timeoutMS = -1; // in this way it is only for the first read...
          }
 
-#  ifdef __MINGW32__
-      (void) U_SYSCALL(ReadFile, "%p,%p,%lu,%p,%p", (HANDLE)_get_osfhandle(fd), buffer + bytes_read, (single_read ? U_CAPACITY : count - bytes_read),
-                                                    (DWORD*)&value, 0);
+#  ifdef __mingw32__
+      (void) U_SYSCALL(readfile, "%p,%p,%lu,%p,%p", (handle)_get_osfhandle(fd), buffer + bytes_read, (single_read ? U_CAPACITY : count - bytes_read),
+                                                    (dword*)&value, 0);
 #  else
       value = U_SYSCALL(read, "%d,%p,%u", fd, buffer + bytes_read, (single_read ? (int)U_CAPACITY : count - bytes_read));
 #  endif
 
-      if      (value ==  0) break; // EOF
+      if      (value ==  0) break; // eof
       else if (value == -1)
          {
          if (UInterrupt::checkForEventSignalPending()) continue;
@@ -1082,12 +1117,7 @@ uint32_t UNotifier::write(int fd, const char* str, int count, int timeoutMS)
    do {
       if (timeoutMS != -1)
          {
-         if (waitForWrite(fd, timeoutMS) <= 0)
-            {
-            errno = EAGAIN;
-
-            break;
-            }
+         if (waitForWrite(fd, timeoutMS) <= 0) break;
 
          timeoutMS = -1; // in this way it is only for the first write...
          }

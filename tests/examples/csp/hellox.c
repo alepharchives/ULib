@@ -5,6 +5,7 @@
 // ============================================================================
 
 #include <ulib/internal/csp_interface.h>
+#include <ulib/base/coder/xml.h>
 
 int main(int argc, char* argv[])
 {

@@ -49,11 +49,9 @@
 #  endif
 #endif
 
-#define U_FLV_HEAD        "FLV\x1\x1\0\0\0\x9\0\0\0\x9"
-#define U_TIME_FOR_EXPIRE (u_now->tv_sec + (365 * U_ONE_DAY_IN_SECOND))
-
-#define U_MIN_SIZE_FOR_DEFLATE  100
-#define U_MIN_SIZE_FOR_SENDFILE (32 * 1024) // NB: for major size it is better to use sendfile()
+#define U_FLV_HEAD             "FLV\x1\x1\0\0\0\x9\0\0\0\x9"
+#define U_TIME_FOR_EXPIRE      (u_now->tv_sec + (365 * U_ONE_DAY_IN_SECOND))
+#define U_MIN_SIZE_FOR_DEFLATE 100
 
 int         UHTTP::inotify_wd;
 char        UHTTP::cgi_dir[U_PATH_MAX];
@@ -79,6 +77,7 @@ UString*    UHTTP::cache_file_mask;
 UString*    UHTTP::uri_protected_mask;
 uint32_t    UHTTP::limit_request_body = (((U_NOT_FOUND - sizeof(ustringrep))/sizeof(char)) - 4096);
 uint32_t    UHTTP::request_read_timeout;
+uint32_t    UHTTP::min_size_for_sendfile; // NB: for major size it is better to use sendfile()
 UCommand*   UHTTP::pcmd;
 UStringRep* UHTTP::pkey;
 const char* UHTTP::ptrH;
@@ -789,6 +788,10 @@ next:
          }
       }
 #endif
+
+   if (min_size_for_sendfile == 0) min_size_for_sendfile = 32 * 1024;
+
+   U_INTERNAL_DUMP("min_size_for_sendfile = %u", min_size_for_sendfile)
 
    U_INTERNAL_ASSERT_EQUALS(cache_file,0)
 
@@ -2126,27 +2129,23 @@ void UHTTP::initHTTPInfo()
    (void) U_SYSCALL(memset, "%p,%d,%u", &u_http_info, 0, sizeof(uhttpinfo));
 }
 
-void UHTTP::manageHTTPRequestCache()
+void UHTTP::clearHTTPRequestCache()
 {
-   U_TRACE(0, "UHTTP::manageHTTPRequestCache()")
+   U_TRACE(0, "UHTTP::clearHTTPRequestCache()")
 
-   if (cbuffer->isNull()                          &&
-       isHttpGETorHEAD()                          &&
-       u_http_info.nResponseCode < 300            &&
-       UClientImage_Base::body->isNull() == false &&
-       UClientImage_Base::isPipeline()   == false)
+   U_INTERNAL_DUMP("cbuffer(%u) = %.*S", cbuffer->size(), U_STRING_TO_TRACE(*cbuffer))
+
+   cbuffer->clear();
+
+#ifndef U_SENDFILE_NONBLOCK
+   U_INTERNAL_DUMP("UServer_Base::sfd = %d", UServer_Base::sfd)
+
+   if (UServer_Base::sfd)
       {
-      *cbuffer = *UClientImage_Base::rbuffer;
-
-      U_INTERNAL_DUMP("cbuffer(%u) = %.*S", cbuffer->size(), U_STRING_TO_TRACE(*cbuffer))
-
-      u_gettimeofday();
-
-      U_INTERNAL_DUMP("last_response = %ld", UServer_Base::pClientImage->last_response)
-      U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
-
-      UServer_Base::pClientImage->last_response = u_now->tv_sec;
+      UFile::close(UServer_Base::sfd);
+                   UServer_Base::sfd = 0;
       }
+#endif
 }
 
 int UHTTP::checkHTTPRequestCache()
@@ -2155,29 +2154,100 @@ int UHTTP::checkHTTPRequestCache()
 
    if (cbuffer->isNull() == false)
       {
-      U_INTERNAL_DUMP("last_response = %ld", UServer_Base::poldc->last_response)
+      U_INTERNAL_DUMP("last_response = %ld", UServer_Base::last_response)
       U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
 
-      if (UServer_Base::poldc->last_response < u_now->tv_sec) cbuffer->clear();
-      else
+      if (UServer_Base::last_response < u_now->tv_sec)
          {
-         U_INTERNAL_DUMP("cbuffer(%u) = %.*S",                    cbuffer->size(), U_STRING_TO_TRACE(*cbuffer))
-         U_INTERNAL_DUMP("rbuffer(%u) = %.*S", UClientImage_Base::rbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::rbuffer))
+         clearHTTPRequestCache();
 
-         if (*cbuffer == *UClientImage_Base::rbuffer)
+         goto next;
+         }
+
+      U_INTERNAL_DUMP("cbuffer(%u) = %.*S",                    cbuffer->size(), U_STRING_TO_TRACE(*cbuffer))
+      U_INTERNAL_DUMP("rbuffer(%u) = %.*S", UClientImage_Base::rbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::rbuffer))
+
+      if (cbuffer->equal(UClientImage_Base::rbuffer->rep))
+         {
+         int                                      result  = U_PLUGIN_HANDLER_AGAIN;
+         if (U_http_is_connection_close == U_YES) result |= U_PLUGIN_HANDLER_ERROR;
+
+#     ifndef U_SENDFILE_NONBLOCK
+         U_INTERNAL_DUMP("UServer_Base::sfd = %d", UServer_Base::sfd)
+
+         if (UServer_Base::sfd)
             {
-            int result = U_PLUGIN_HANDLER_AGAIN;
+            U_ASSERT(UClientImage_Base::body->isNull())
 
-            if (U_http_is_connection_close == U_YES) result |= U_PLUGIN_HANDLER_ERROR;
+            U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd = %d", UServer_Base::pClientImage->sfd)
 
-            U_RETURN(result);
+            U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd,0)
+
+            UServer_Base::pClientImage->sfd    = UServer_Base::sfd;
+            UServer_Base::pClientImage->bclose = U_http_is_connection_close;
+
+            (void) U_SYSCALL(lseek, "%d,%u,%d", UServer_Base::sfd, UServer_Base::start, SEEK_SET);
+
+            // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
+
+            UServer_Base::pClientImage->socket->setTcpCork(1U);
             }
+#     endif
+
+         U_RETURN(result);
          }
       }
 
+next:
    if (UClientImage_Base::isPipeline() == false) UClientImage_Base::initAfterGenericRead();
 
-   U_RETURN(0);
+   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+}
+
+void UHTTP::manageHTTPRequestCache()
+{
+   U_TRACE(0, "UHTTP::manageHTTPRequestCache()")
+
+   if (cbuffer->isNull() == false) clearHTTPRequestCache();
+
+   if (isHttpGETorHEAD()               &&
+       u_http_info.nResponseCode < 300 &&
+       UClientImage_Base::isPipeline() == false)
+      {
+      (void) cbuffer->assign(UClientImage_Base::rbuffer->rep);
+
+      U_INTERNAL_DUMP("cbuffer(%u) = %.*S", cbuffer->size(), U_STRING_TO_TRACE(*cbuffer))
+
+#  ifndef U_SENDFILE_NONBLOCK
+      U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd   = %d", UServer_Base::pClientImage->sfd)
+      U_INTERNAL_DUMP("UServer_Base::pClientImage->state = %d", UServer_Base::pClientImage->state)
+
+      if (UClientImage_Base::body->isNull())
+         {
+         U_INTERNAL_DUMP("UServer_Base::sfd = %d", UServer_Base::sfd)
+
+         U_INTERNAL_ASSERT_EQUALS(UServer_Base::sfd,0)
+         U_INTERNAL_ASSERT(UServer_Base::pClientImage->sfd)
+
+         UServer_Base::sfd = UServer_Base::pClientImage->sfd;
+                             UServer_Base::pClientImage->sfd = 0;
+
+         if (U_http_version == '0')
+            {
+            UServer_Base::last_response = u_now->tv_sec + 60 * 60;
+
+            return;
+            }
+         }
+#  endif
+
+      if (u_pthread_time == 0) (void) gettimeofday(u_now, 0);
+
+      U_INTERNAL_DUMP("last_response = %ld", UServer_Base::last_response)
+      U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
+
+      UServer_Base::last_response = u_now->tv_sec;
+      }
 }
 
 bool UHTTP::readHTTPRequest(USocket* socket)
@@ -3782,8 +3852,8 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
       }
 #endif
 
-        if (file_data->size >= U_MIN_SIZE_FOR_SENDFILE) motivation = " (size exceeded)";  // NB: for major size it is better to use sendfile()
-// else if (file_data->size <= U_MIN_SIZE_FOR_DEFLATE)  motivation = " (size too small)";
+        if (file_data->size >= min_size_for_sendfile)  motivation = " (size exceeded)";  // NB: for major size it is better to use sendfile()
+// else if (file_data->size <= U_MIN_SIZE_FOR_DEFLATE) motivation = " (size too small)";
 #ifdef HAVE_LIBZ
    else if (u_mime_index != U_ssi &&
             u_mime_index != U_gz)
@@ -3937,7 +4007,7 @@ U_NO_EXPORT bool UHTTP::processFileCache()
 
    // NB: for major size it is better to use sendfile()
 
-   if (size > U_MIN_SIZE_FOR_SENDFILE) U_RETURN(false);
+   if (size > min_size_for_sendfile) U_RETURN(false);
 
    uint32_t start = 0;
    UString header = getDataFromCache(true, false);
@@ -4969,7 +5039,7 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
                      UClientImage_Base::body->clear();
                      UClientImage_Base::wbuffer->clear();
 
-                     processHTTPGetRequest(UServer_Base::pClientImage->socket, request);
+                     processHTTPGetRequest(request);
 
                      U_RETURN(true);
                      }
@@ -5753,9 +5823,9 @@ end:
    U_RETURN(result);
 }
 
-void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
+void UHTTP::processHTTPGetRequest(const UString& request)
 {
-   U_TRACE(0, "UHTTP::processHTTPGetRequest(%p,%.*S)", socket, U_STRING_TO_TRACE(request))
+   U_TRACE(0, "UHTTP::processHTTPGetRequest(%.*S)", U_STRING_TO_TRACE(request))
 
    U_ASSERT_DIFFERS(request.empty(), true)
    U_ASSERT(UClientImage_Base::body->empty())
@@ -5918,12 +5988,12 @@ void UHTTP::processHTTPGetRequest(USocket* socket, const UString& request)
 next: // NB: check if we need to send the body with writev()...
 
 #ifdef HAVE_SSL
-   if (socket->isSSL()) isSSL = true;
+   if (UServer_Base::pClientImage->socket->isSSL()) isSSL = true;
 #endif
 
-   if (bdir                             ||
-       isSSL                            ||
-       (size < U_MIN_SIZE_FOR_SENDFILE) ||
+   if (bdir                           ||
+       isSSL                          ||
+       (size < min_size_for_sendfile) ||
        isHttpHEAD())
       {
       if (isHttpHEAD())
@@ -5940,8 +6010,6 @@ next: // NB: check if we need to send the body with writev()...
       {
       // NB: we use sendfile()...
 
-      U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd,0)
-
       UClientImage_Base::body->clear(); // NB: this make also the unmmap() of file...
 
       /* On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
@@ -5956,17 +6024,19 @@ next: // NB: check if we need to send the body with writev()...
        * ------------------------------------------------------------------------------------------------------
        */
 
-      socket->setTcpCork(1U); // NB: must be here, before the first write...
+      UServer_Base::pClientImage->socket->setTcpCork(1U); // NB: must be here, before the first write...
       }
 
-   if (UServer_Base::pClientImage->handlerWrite() == U_NOTIFIER_DELETE)
+   ret = UServer_Base::pClientImage->handlerWrite();
+
+   UClientImage_Base::write_off = true;
+
+   if (ret == U_NOTIFIER_DELETE)
       {
       U_http_is_connection_close = U_YES;
 
       goto end;
       }
-
-   UClientImage_Base::write_off = true;
 
    if (UClientImage_Base::body->empty())
       {
@@ -5984,8 +6054,6 @@ next: // NB: check if we need to send the body with writev()...
          }
 
       U_INTERNAL_ASSERT_EQUALS(ret, U_YES)
-
-      if (U_http_is_connection_close != U_YES) socket->setTcpCork(0U);
       }
 #ifdef DEBUG
    else if (u_http_info.nResponseCode == HTTP_PARTIAL) UClientImage_Base::body->clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...

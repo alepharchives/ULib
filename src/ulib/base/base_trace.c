@@ -76,7 +76,6 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
 #ifdef HAVE_PTHREAD_H
    if (u_plock)
       {
-      int sz;
       char tid_buffer[32];
       static pid_t old_tid;
 
@@ -86,7 +85,7 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
 
       if (old_tid != tid)
          {
-         sz = snprintf(tid_buffer, sizeof(tid_buffer), "[tid %d]<--\n[tid %d]-->\n", old_tid, tid);
+         int sz = snprintf(tid_buffer, sizeof(tid_buffer), "[tid %d]<--\n[tid %d]-->\n", old_tid, tid);
 
          old_tid = tid;
 

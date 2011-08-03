@@ -151,12 +151,6 @@ public:
 
             if (UBase64::decode(element, certificate))
                {
-#           ifdef __MINGW32__
-               (void) setmode(1, O_BINARY);
-#           endif
-
-               cout.write(U_STRING_TO_PARAM(certificate));
-
                alg = u_dgst_get_algoritm(digest_algorithm);
 
                if (alg == -1) U_ERROR("I can't find the digest algorithm for: %s", digest_algorithm);
@@ -167,7 +161,17 @@ public:
 
                U_SYSCALL_VOID(X509_free, "%p", x509);
 
-               if (UServices::verifySignature(alg, data, signature, UString::getStringNull(), 0)) UApplication::exit_value = 0;
+               if (UServices::verifySignature(alg, data, signature, UString::getStringNull(), 0))
+                  {
+                  UApplication::exit_value = 0;
+
+#              ifdef __MINGW32__
+                  (void) setmode(1, O_BINARY);
+#              endif
+
+               // cout.write(U_STRING_TO_PARAM(certificate));
+                  cout.write(U_STRING_TO_PARAM(content));
+                  }
 
                U_SYSCALL_VOID(EVP_PKEY_free, "%p", u_pkey);
                                                    u_pkey = 0;

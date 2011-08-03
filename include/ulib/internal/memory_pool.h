@@ -74,8 +74,8 @@
    U_STACK_TYPE_2
 
   72 sizeof(UMimePKCS7)
+  72 sizeof(UClientImage<UTCPSocket>)
   80 sizeof(UZIP)
-  80 sizeof(UClientImage<UTCPSocket>)
   88 sizeof(UIPAddress)
   88 sizeof(UMimeMultipartMsg)
   96 sizeof(UMimeMessage)

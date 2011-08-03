@@ -666,13 +666,36 @@ send_MAIL_for_card_generation() {
 
 #  set -x
 
+	# 1 -> dati_numero_carte	100
+	# 2 -> tipo_validita			G
+	# 3 -> dati_validita			30
+
+	case "$2" in
+		 M)
+			let "VALIDITA = $3 * 60"
+		 ;;
+		 O)
+			let "VALIDITA = $3 * 60 * 60"
+		 ;;
+		 G)
+			let "VALIDITA = $3 * 24 * 60 * 60"
+		 ;;
+		 A)
+			let "VALIDITA = $3 * 365 * 24 * 60 * 60"
+		 ;;
+		 *)
+		 exit 2
+		 ;;
+	esac
+
 	# load specific script env, for signing and sending message to workflow...
 
 	. $HOME/etc/card-generation.conf
 
 	NAME=send_to_$$
 
-	printf "`cat $DIR_TEMPLATE/mail/card-generation.tmpl`" "$WORKFLOW_SUBJECT" "$WORKFLOW_FROM_ADDRESS" "$WORKFLOW_TO_ADDRESS" "$1" "$2" > /tmp/$NAME.eml
+	printf "`cat $DIR_TEMPLATE/mail/card-generation.tmpl`" \
+			 "$WORKFLOW_SUBJECT" "$WORKFLOW_FROM_ADDRESS" "$WORKFLOW_TO_ADDRESS" "$1" "$VALIDITA" > /tmp/$NAME.eml
 
 	send_MAIL_and_goto_MAIN_MENU $NAME
 }

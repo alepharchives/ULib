@@ -5,6 +5,7 @@
 // ==============================================================================================
 
 #include <ulib/internal/csp_interface.h>
+#include <ulib/base/coder/base64.h>
 
 #pragma link "./libraries/libcaptcha.o"
 

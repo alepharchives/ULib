@@ -16,8 +16,17 @@
 	  <td class="racss_field"><input type="text" id="dati_numero_carte" name="dati_numero_carte"> <strong class="Stile3">*</strong></td>
 	</tr>
 	<tr>
-	  <td class="racss_label">Validita' (in giorni):</td>
-	  <td class="racss_field"><input type="text" id="dati_validita" name="dati_validita"> <strong class="Stile3">*</strong></td>
+	  <td class="racss_label">Validita':</td>
+	 
+	  <td class="racss_field">
+	    <select id="tipo_validita" name="tipo_validita">
+			<option value="M">minuti</option>
+			<option value="O">ore</option>
+			<option value="G" selected="selected">giorni</option>
+			<option value="A">anni</option>
+		 </select>
+	  <input type="text" id="dati_validita" name="dati_validita"> <strong class="Stile3">*</strong>
+	</td>
 	</tr>
  </table>
  <br>
@@ -29,7 +38,7 @@ valComm.add( Validate.Presence, {failureMessage: "Devi inserire il numero di car
 valComm.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "Numero di carte da generare non valido"} );
 var valComm = new LiveValidation( 'dati_validita', {onlyOnSubmit: true, validMessage: "OK" } );
 valComm.add( Validate.Presence, {failureMessage: "Devi inserire la validita'"} );
-valComm.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "Validita' (in giorni) non valida"} );
+valComm.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "Validita' non numerica"} );
 
 var automaticOnSubmit = valComm.form.onsubmit;
 valComm.form.onsubmit = function() {

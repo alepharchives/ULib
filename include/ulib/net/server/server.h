@@ -52,7 +52,7 @@ const char* dump(bool reset) const { return UServer<type_socket>::dump(reset); }
 protected: \
 virtual void preallocate() { \
 U_TRACE(5+256, #server_class "::preallocate()") \
-vClientImage = U_NEW_VEC(max_Keep_Alive, client_class); } }
+vClientImage = U_NEW_VEC(U_max(max_Keep_Alive,16), client_class); } }
 #else
 #  define U_MACROSERVER(server_class,client_class,type_socket) \
 class server_class : public UServer<type_socket> { \
@@ -60,7 +60,7 @@ public: \
  server_class(UFileConfig* cfg) : UServer<type_socket>(cfg) {} \
 ~server_class()                                             {} \
 protected: \
-virtual void preallocate() { vClientImage = new client_class[max_Keep_Alive]; } }
+virtual void preallocate() { vClientImage = new client_class[U_max(max_Keep_Alive,16)]; } }
 #endif
 // ---------------------------------------------------------------------------------------------
 
@@ -242,9 +242,11 @@ public:
    static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves
    static uint32_t shared_data_add;
    static shared_data* ptr_shared_data;
-   static UClientImage_Base* poldc;
+
+   static UClientImage_Base* pindex;
    static UClientImage_Base* vClientImage;
    static UClientImage_Base* pClientImage;
+   static UClientImage_Base* eClientImage;
 
    static bool isPreForked()
       {
@@ -353,11 +355,14 @@ protected:
               cgi_timeout,    // the time-out value in seconds for output cgi process
               verify_mode;    // mode of verification ssl connection
 
+   static int sfd;
    static UString* host;
    static UProcess* proc;
    static USocket* socket;
    static UEventTime* ptime;
    static UServer_Base* pthis;
+   static time_t last_response;
+   static uint32_t start, count;
    static UString* senvironment;
    static UVector<UIPAllow*>* vallow_IP;
    static uint32_t num_connection, max_Keep_Alive;
@@ -506,7 +511,7 @@ protected:
       {
       U_TRACE(0+256, "UServer<Socket>::preallocate()")
 
-      vClientImage = U_NEW_VEC(max_Keep_Alive, UClientImage<Socket>);
+      vClientImage = U_NEW_VEC(U_max(max_Keep_Alive,16), UClientImage<Socket>);
       }
 
 private:
@@ -603,7 +608,7 @@ protected:
       {
       U_TRACE(0+256, "UServer<USSLSocket>::preallocate()")
 
-      vClientImage = U_NEW_VEC(max_Keep_Alive, UClientImage<USSLSocket>);
+      vClientImage = U_NEW_VEC(U_max(max_Keep_Alive,16), UClientImage<USSLSocket>);
       }
 
 private:

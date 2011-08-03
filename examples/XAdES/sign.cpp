@@ -49,16 +49,19 @@
 #define U_CA_STORE                           (const char*)(num_args >= 10 ? argv[optind+10] : 0)
 #define U_SIGNATURE_TIMESTAMP                (const char*)(num_args >= 11 ? argv[optind+11] : 0)
 
+#define U_XMLDSIG_DIGESTMETHOD_TEMPLATE \
+"<ds:DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#%.*s\"></ds:DigestMethod>\r\n"
+
 #define U_XMLDSIG_REFERENCE_TEMPLATE \
 "    <ds:Reference xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" URI=\"%s\">\r\n" \
-"      <ds:DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#%.*s\"></ds:DigestMethod>\r\n" \
+"      " U_XMLDSIG_DIGESTMETHOD_TEMPLATE \
 "      <ds:DigestValue>%.*s</ds:DigestValue>\r\n" \
 "    </ds:Reference>\r\n"
 
 #define U_XMLDSIG_SIGNED_INFO_TEMPLATE \
 "  <ds:SignedInfo xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\r\n" \
-"    <ds:CanonicalizationMethod Algorithm=\"http://www.w3.org/TR/2001/REC-xml-c14n-20010315\"></ds:CanonicalizationMethod>\r\n" \
-"    <ds:SignatureMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#rsa-%.*s\"></ds:SignatureMethod>\r\n" \
+"    <ds:CanonicalizationMethod Algorithm=\"http://www.w3.org/2006/12/xml-c14n11\"></ds:CanonicalizationMethod>\r\n" \
+"    <ds:SignatureMethod Algorithm=\"http://www.w3.org/2001/04/xmldsig-more#rsa-%.*s\"></ds:SignatureMethod>\r\n" \
 "%.*s" \
 "%.*s" \
 "  </ds:SignedInfo>\r\n"
@@ -107,7 +110,7 @@
 
 #define U_XADES_REFERENCE_TEMPLATE \
 "    <ds:Reference xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" URI=\"#idPackageSignature-SignedProperties\" Type=\"http://uri.etsi.org/01903#SignedProperties\">\r\n" \
-"      <ds:DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#%.*s\"></ds:DigestMethod>\r\n" \
+"      " U_XMLDSIG_DIGESTMETHOD_TEMPLATE \
 "      <ds:DigestValue>%.*s</ds:DigestValue>\r\n" \
 "    </ds:Reference>\r\n"
 
@@ -136,7 +139,7 @@
 #define U_XADES_CERTIFICATE_TEMPLATE \
 "            <xades:Cert>\r\n" \
 "              <xades:CertDigest>\r\n" \
-"                <ds:DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#%.*s\"></ds:DigestMethod>\r\n" \
+"                " U_XMLDSIG_DIGESTMETHOD_TEMPLATE \
 "                <ds:DigestValue>%.*s</ds:DigestValue>\r\n" \
 "              </xades:CertDigest>\r\n" \
 "              <xades:IssuerSerial>\r\n" \
@@ -150,7 +153,7 @@
 #define U_XADES_CRL_TEMPLATE \
 "              <xades:CRLRef>\r\n" \
 "                <xades:DigestAlgAndValue>\r\n" \
-"                  <ds:DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#%.*s\"></ds:DigestMethod>\r\n" \
+"                  " U_XMLDSIG_DIGESTMETHOD_TEMPLATE \
 "                  <ds:DigestValue>%.*s</ds:DigestValue>\r\n" \
 "                </xades:DigestAlgAndValue>\r\n" \
 "                <xades:CRLIdentifier>\r\n" \

@@ -73,8 +73,9 @@
 #define U_TOT_CONNECTION         ptr_shared_data->tot_connection
 #define U_DEFAULT_MAX_KEEP_ALIVE 1000
 
+int                        UServer_Base::sfd;
 int                        UServer_Base::port;
-int                        UServer_Base::iBackLog;
+int                        UServer_Base::iBackLog = SOMAXCONN;
 int                        UServer_Base::timeoutMS = -1;
 int                        UServer_Base::cgi_timeout;
 int                        UServer_Base::verify_mode;
@@ -83,6 +84,9 @@ bool                       UServer_Base::flag_loop;
 bool                       UServer_Base::flag_use_tcp_optimization;
 char                       UServer_Base::mod_name[20];
 ULog*                      UServer_Base::log;
+time_t                     UServer_Base::last_response;
+uint32_t                   UServer_Base::start;
+uint32_t                   UServer_Base::count;
 uint32_t                   UServer_Base::max_Keep_Alive;
 uint32_t                   UServer_Base::num_connection;
 uint32_t                   UServer_Base::shared_data_add;
@@ -94,9 +98,10 @@ UEventFd*                  UServer_Base::handler_event;
 UEventTime*                UServer_Base::ptime;
 UServer_Base*              UServer_Base::pthis;
 UVector<UString>*          UServer_Base::vplugin_name;
-UClientImage_Base*         UServer_Base::poldc;
-UClientImage_Base*         UServer_Base::pClientImage;
+UClientImage_Base*         UServer_Base::pindex;
 UClientImage_Base*         UServer_Base::vClientImage;
+UClientImage_Base*         UServer_Base::pClientImage;
+UClientImage_Base*         UServer_Base::eClientImage;
 UVector<UIPAllow*>*        UServer_Base::vallow_IP;
 UVector<UServerPlugIn*>*   UServer_Base::vplugin;
 UServer_Base::shared_data* UServer_Base::ptr_shared_data;
@@ -458,7 +463,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    port                       = cfg.readLong(*str_PORT,           U_DEFAULT_PORT);
    iBackLog                   = cfg.readLong(*str_LISTEN_BACKLOG, SOMAXCONN);
-   max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE, U_DEFAULT_MAX_KEEP_ALIVE);
+   max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE);
 
    timeoutMS                  = cfg.readLong(*str_REQ_TIMEOUT);
    cgi_timeout                = cfg.readLong(*str_CGI_TIMEOUT);
@@ -499,7 +504,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
       u_now = &(ptr_shared_data->_timeval);
 
-#  if defined(HAVE_PTHREAD_H)
+#  if defined(HAVE_PTHREAD_H) && defined(U_CACHE_REQUEST)
       ((UTimeThread*)(u_pthread_time = U_NEW(UTimeThread)))->start();
 #  endif
       }
@@ -513,7 +518,14 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    // open log
 
-   if (log_file.empty() == false) openLog(log_file, cfg.readLong(*str_LOG_FILE_SZ));
+   if (log_file.empty() == false)
+      {
+#  if defined(HAVE_PTHREAD_H)
+      if (u_pthread_time == 0) ((UTimeThread*)(u_pthread_time = U_NEW(UTimeThread)))->start();
+#  endif
+
+      openLog(log_file, cfg.readLong(*str_LOG_FILE_SZ));
+      }
 
    // load plugin modules and call server-wide hooks handlerConfig()...
 
@@ -813,7 +825,7 @@ void UServer_Base::init()
 
    host = U_NEW(UString(server.empty() ? USocketExt::getNodeName() : server));
 
-   if (port != 80)
+   if (port != U_DEFAULT_PORT)
       {
       host->push_back(':');
 
@@ -1007,6 +1019,10 @@ next:
       U_ERROR("plugins initialization FAILED. Going down...");
       }
 
+   USocket* csocket;
+   UClientImage_Base* ptr;
+   UIPAddress* addr = (socket->isLocalSet() ? &(socket->cLocalAddress) : 0);
+
                                  USocket::accept4_flags  = SOCK_CLOEXEC;
 #ifdef HAVE_SSL
    if (socket->isSSL() == false) USocket::accept4_flags |= SOCK_NONBLOCK;
@@ -1016,16 +1032,21 @@ next:
 
    preallocate();
 
-   USocket* csocket;
-   UClientImage_Base* ptr = vClientImage;
-   UClientImage_Base* end = vClientImage + max_Keep_Alive;
-   UIPAddress* addr = (socket->isLocalSet() ? &(socket->cLocalAddress) : 0);
+   U_INTERNAL_ASSERT_POINTER(vClientImage)
+
+   pindex = pClientImage = vClientImage;
+
+   eClientImage = vClientImage + U_max(max_Keep_Alive,16);
+
+   U_INTERNAL_DUMP("vClientImage = %p eClientImage = %p max_Keep_Alive = %u", vClientImage, eClientImage, max_Keep_Alive)
 
 #ifdef DEBUG
    UTrace::suspend();
 #endif
 
-   while (ptr < end)
+   ptr = pindex;
+
+   for (ptr = pindex; ptr < eClientImage; ++ptr)
       {
       csocket = ptr->socket;
 
@@ -1036,16 +1057,12 @@ next:
 
       if (addr) csocket->cLocalAddress.set(*addr);
 
-      ptr->last_response = u_now->tv_sec + 10;
-
-      ++ptr;
+      ptr->last_response = u_now->tv_sec;
       }
 
 #ifdef DEBUG
    UTrace::resume();
 #endif
-
-   pClientImage = vClientImage;
 
    // NB: in the classic model we don't need to notify for request of connection
    // (loop: accept-fork) and the forked child don't accept new client, but we need
@@ -1132,36 +1149,63 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 {
    U_TRACE(1, "UServer_Base::handlerRead()")
 
-   static uint32_t index;
+   time_t idle = 0;
+   UClientImage_Base* ptr; // NB: we can't use directly the variable pClientImage cause of the thread approch...
 
-   UClientImage_Base* ptr;
+start:
+   ptr = pindex;
 
-   while (true)
+   U_INTERNAL_ASSERT_MINOR(pindex, eClientImage)
+
+#if defined(U_SENDFILE_NONBLOCK) || defined(U_CACHE_REQUEST)
+   U_INTERNAL_DUMP("vClientImage[%u].sfd           = %d",    (ptr - vClientImage), ptr->sfd)
+#endif
+   U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd  = %d",    (ptr - vClientImage), ptr->UEventFd::fd)
+   U_INTERNAL_DUMP("vClientImage[%d].socket->flags = %d %B", (ptr - vClientImage), ptr->socket->flags, ptr->socket->flags)
+
+   if (ptr->UEventFd::fd)
       {
-      ptr = vClientImage + index;
-
-      U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd = %d vClientImage[%u].sfd = %d", index, ptr->UEventFd::fd, index, ptr->sfd)
-
-      index = (index + 1) % max_Keep_Alive;
-
-      if (ptr->UEventFd::fd == 0)
-         {
-         U_INTERNAL_ASSERT_EQUALS(ptr->sfd,0)
-         U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::next,0)
-
-         break;
-         }
-
-      // check for idle connection
-
       if (timeoutMS != -1 &&
-          (ptr->last_response - u_now->tv_sec) >= getReqTimeout())
+          u_pthread_time)
          {
-         U_INTERNAL_DUMP("last_response - u_now = %ld", ptr->last_response - u_now->tv_sec)
+         // check for idle connection
 
-         (void) handlerTimeoutConnection(ptr);
+         U_INTERNAL_DUMP("last_response = %ld", ptr->last_response)
+         U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
+
+         if (idle == 0)
+            {
+            idle = (u_now->tv_sec - (timeoutMS / 1000));
+
+            U_INTERNAL_DUMP("idle = %ld", idle)
+            }
+
+         if (ptr->last_response <= idle)
+            {
+            (void) handlerTimeoutConnection(ptr);
+
+            goto next;
+            }
          }
+
+      if (++pindex >= eClientImage)
+         {
+         U_INTERNAL_ASSERT_POINTER(vClientImage)
+
+         pindex = vClientImage;
+         }
+
+      U_INTERNAL_ASSERT_DIFFERS(ptr, pindex)
+
+      goto start;
       }
+
+next:
+#if defined(U_SENDFILE_NONBLOCK) || defined(U_CACHE_REQUEST)
+   U_INTERNAL_ASSERT_EQUALS(ptr->sfd,0)
+#endif
+   U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::fd,0)
+   U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::next,0)
 
    USocket* csocket = ptr->socket;
 
@@ -1330,10 +1374,13 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
 
       if (ptr->socket->isOpen()) ptr->socket->closesocket();
 
-      // NB: check for pending sendfile...
-
+#  ifndef U_SENDFILE_NONBLOCK
+      if (USocket::accept4_flags & SOCK_NONBLOCK) ptr->socket->flags |= O_NONBLOCK;
+#  else
       if (ptr->sfd)
          {
+         // NB: pending sendfile...
+
          U_INTERNAL_DUMP("sfd = %d UEventFd::op_mask = %B", ptr->sfd, ptr->UEventFd::op_mask)
 
          UFile::close(ptr->sfd);
@@ -1341,15 +1388,13 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
 
          ptr->UEventFd::op_mask = U_READ_IN;
          }
+#  endif
 
       // NB: to reuse object...
 
       ptr->UEventFd::fd = 0;
 
       U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::op_mask, U_READ_IN)
-
-   // if (USocket::accept4_flags & SOCK_NONBLOCK) ptr->socket->flags |= O_NONBLOCK;
-
       U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_CLOEXEC)  != 0),((ptr->socket->flags & O_CLOEXEC)  != 0))
       U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_NONBLOCK) != 0),((ptr->socket->flags & O_NONBLOCK) != 0))
       }

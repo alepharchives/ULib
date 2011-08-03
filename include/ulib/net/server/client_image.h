@@ -22,9 +22,19 @@
 #  include <ulib/ssl/net/sslsocket.h>
 #endif
 
-// #define FILETEST 1
+#define U_CACHE_REQUEST
+/*
+#define U_SENDFILE_NONBLOCK
+*/
 
-#ifdef U_FILETEST
+#if defined(U_SENDFILE_NONBLOCK) && defined(U_CACHE_REQUEST)
+#error "**** defined both U_SENDFILE_NONBLOCK and U_CACHE_REQUEST ****"
+#endif
+
+/*
+#define U_FILETEST 1
+*/
+#ifdef  U_FILETEST
 #  define FILETEST_REQ "request/request.%P"
 #  define FILETEST_RES "response/response.%P"
 #else
@@ -84,7 +94,6 @@ public:
 
    // manage sendfile
 
-   int sendfile();
    int sendfile(int& in_fd, char& bclose, uint32_t start, uint32_t count);
 
    // log
@@ -105,7 +114,7 @@ public:
    virtual int  handlerRead();
    virtual int  handlerWrite();
    virtual void handlerDelete();
-   virtual void handlerError(int state);
+   virtual void handlerError(int sock_state);
 
    // manage if other request already available... (pipelining)
 
@@ -125,14 +134,13 @@ public:
 #endif
 
 protected:
-   // NB: these are for pending sendfile...
-
-   int sfd;
+   int sfd, state;
    uint32_t count;
-   off_t offset;
    char bclose;
 
    static UString* msg_welcome;
+
+   int sendfile();
 
    // COSTRUTTORI
 
@@ -266,9 +274,9 @@ public:
       UClientImage_Base::handlerDelete();
       }
 
-   virtual void handlerError(int state)
+   virtual void handlerError(int sock_state)
       {
-      U_TRACE(0, "UClientImage<USSLSocket>::handlerError(%d)", state)
+      U_TRACE(0, "UClientImage<USSLSocket>::handlerError(%d)", sock_state)
 
       U_INTERNAL_DUMP("ssl = %p ssl_fd = %d", ssl, SSL_get_fd(ssl))
 
@@ -277,7 +285,7 @@ public:
 
       getSocket()->ssl = ssl; // NB: we need this because we reuse the same object USocket...
 
-      UClientImage_Base::handlerError(state);
+      UClientImage_Base::handlerError(sock_state);
       }
 
    // DEBUG

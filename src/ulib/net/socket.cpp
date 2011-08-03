@@ -232,9 +232,9 @@ bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)
 
    U_INTERNAL_ASSERT(iBytesTransferred <= iMaxBytesTransfer)
 
-   if (iBytesTransferred < 0)
+   if (iBytesTransferred <= 0)
       {
-      checkErrno(iBytesTransferred);
+      if (iBytesTransferred < 0) checkErrno(iBytesTransferred);
 
 #  ifdef DEBUG
       if (isOpen() &&
@@ -632,33 +632,34 @@ bool USocket::sendfile(int in_fd, off_t offset, uint32_t count)
    U_INTERNAL_ASSERT_MAJOR(count,0)
 
    ssize_t value;
-   bool write_again;
 
    do {
       U_INTERNAL_DUMP("count = %u", count)
 
       value = U_SYSCALL(sendfile, "%d,%d,%p,%u", iSockDesc, in_fd, (offset ? &offset : 0), count);
 
-      if (value < 0L)
+      if (value == (ssize_t)count) U_RETURN(true);
+
+      if (value <= 0L)
          {
          U_INTERNAL_DUMP("errno = %d", errno)
 
          if (errno == EAGAIN &&
-             UNotifier::waitForWrite(iSockDesc, 3 * 1000) >= 1)
+             UNotifier::waitForWrite(iSockDesc, 3 * 1000) == 1)
             {
             flags = UFile::setBlocking(iSockDesc, flags, true);
 
             continue;
             }
 
+         iState = BROKEN | EPOLLERROR;
+
          U_RETURN(false);
          }
 
-      write_again = (value != (ssize_t)count);
-
       count -= value;
       }
-   while (write_again);
+   while (count);
 
    U_INTERNAL_ASSERT_EQUALS(count,0)
 
@@ -879,29 +880,6 @@ loop:
    U_RETURN(iBytesWrite);
 }
 
-// write data into multiple buffers
-
-int USocket::writev(const struct iovec* _iov, int iovcnt)
-{
-   U_TRACE(1, "USocket::writev(%p,%d)", _iov, iovcnt)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT(isOpen())
-
-   int iBytesWrite;
-
-loop:
-   iBytesWrite = U_SYSCALL(writev, "%d,%p,%d", iSockDesc, _iov, iovcnt);
-
-   if (iBytesWrite == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
-#ifdef DEBUG
-   if (iBytesWrite  >  0) U_INTERNAL_DUMP("BytesWrite(%d) = %.*S", iBytesWrite, _iov[0].iov_len, _iov[0].iov_base)
-#endif
-
-   U_RETURN(iBytesWrite);
-}
-
 // timeoutMS specified the timeout value, in milliseconds.
 // A negative value indicates no timeout, i.e. an infinite wait
 
@@ -920,13 +898,9 @@ int USocket::recv(void* pBuffer, uint32_t iBufLength, int timeoutMS)
        timeoutMS != -1)
       {
 loop:
-      if (UNotifier::waitForRead(iSockDesc, timeoutMS) <= 0)
-         {
-         errno  = EAGAIN;
-         iState = TIMEOUT;
+      iBytesRead = UNotifier::waitForRead(iSockDesc, timeoutMS);
 
-         U_RETURN(-1);
-         }
+      if (iBytesRead <= 0) goto end;
       }
 
    iBytesRead = recv(pBuffer, iBufLength);
@@ -939,6 +913,7 @@ loop:
       goto loop;
       }
 
+end:
    U_RETURN(iBytesRead);
 }
 
@@ -951,18 +926,18 @@ int USocket::send(const void* pPayload, uint32_t iPayloadLength, int timeoutMS)
    U_INTERNAL_ASSERT(isOpen())
 
    int iBytesWrite;
-   bool blocking = isBlocking();
+   bool blocking = false;
 
-   if (blocking &&
-       timeoutMS != -1)
+   if (timeoutMS != -1)
       {
-loop:
-      if (UNotifier::waitForWrite(iSockDesc, timeoutMS) <= 0)
-         {
-         errno  = EAGAIN;
-         iState = TIMEOUT;
+      blocking = isBlocking();
 
-         U_RETURN(-1);
+      if (blocking)
+         {  
+loop:
+         iBytesWrite = UNotifier::waitForWrite(iSockDesc, timeoutMS);
+
+         if (iBytesWrite <= 0) goto end;
          }
       }
 
@@ -970,16 +945,37 @@ loop:
 
    if (iBytesWrite == -1     &&
        errno       == EAGAIN &&
-       blocking    == false  &&
-       timeoutMS   != -1)
+       timeoutMS   != -1     &&
+       blocking    == false)
       {
       goto loop;
       }
 
+end:
    U_RETURN(iBytesWrite);
 }
 
 // write data into multiple buffers
+
+int USocket::writev(const struct iovec* _iov, int iovcnt)
+{
+   U_TRACE(1, "USocket::writev(%p,%d)", _iov, iovcnt)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+
+   int iBytesWrite;
+loop:
+   iBytesWrite = U_SYSCALL(writev, "%d,%p,%d", iSockDesc, _iov, iovcnt);
+
+   if (iBytesWrite == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
+#ifdef DEBUG
+   if (iBytesWrite  >  0) U_INTERNAL_DUMP("BytesWrite(%d) = %.*S", iBytesWrite, _iov[0].iov_len, _iov[0].iov_base)
+#endif
+
+   U_RETURN(iBytesWrite);
+}
 
 int USocket::writev(const struct iovec* _iov, int iovcnt, int timeoutMS)
 {
@@ -996,13 +992,9 @@ int USocket::writev(const struct iovec* _iov, int iovcnt, int timeoutMS)
        timeoutMS != -1)
       {
 loop:
-      if (UNotifier::waitForWrite(iSockDesc, timeoutMS) <= 0)
-         {
-         errno  = EAGAIN;
-         iState = TIMEOUT;
+      iBytesWrite = UNotifier::waitForWrite(iSockDesc, timeoutMS);
 
-         U_RETURN(-1);
-         }
+      if (iBytesWrite <= 0) goto end;
       }
 
    iBytesWrite = writev(_iov, iovcnt);
@@ -1015,6 +1007,7 @@ loop:
       goto loop;
       }
 
+end:
    U_RETURN(iBytesWrite);
 }
 

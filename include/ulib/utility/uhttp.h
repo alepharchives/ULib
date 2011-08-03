@@ -272,15 +272,15 @@ public:
    static UString* request_uri;
    static UString* uri_protected_mask;
 
-   static uint32_t limit_request_body, request_read_timeout;
    static bool     virtual_host, enable_caching_by_proxy_servers, telnet_enable;
+   static uint32_t limit_request_body, request_read_timeout, min_size_for_sendfile;
 
    static int  checkHTTPRequest();
+   static void clearHTTPRequestCache();
    static int  checkHTTPRequestCache();
    static void manageHTTPRequestCache();
-   static void processHTTPGetRequest(USocket* socket, const UString& request);
-
    static bool checkHTTPOptionsRequest();
+   static void processHTTPGetRequest(const UString& request);
    static bool checkHTTPRequestForHeader(const UString& request);
    static bool checkHTTPServletRequest(const char* uri, uint32_t uri_len);
    static bool checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);

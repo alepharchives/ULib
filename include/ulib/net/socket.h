@@ -608,8 +608,8 @@ public:
 
    // write data into multiple buffers
 
-   virtual int writev(const struct iovec* iov, int iovcnt);
-           int writev(const struct iovec* iov, int iovcnt, int timeoutMS);
+   virtual int writev(const struct iovec* _iov, int iovcnt);
+           int writev(const struct iovec*  iov, int iovcnt, int timeoutMS);
    // -----------------------------------------------------------------------------------------------------------
 
    // DEBUG

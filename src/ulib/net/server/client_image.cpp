@@ -115,17 +115,15 @@ UClientImage_Base::UClientImage_Base()
 {
    U_TRACE_REGISTER_OBJECT(0, UClientImage_Base, "")
 
-   socket = 0;
-   logbuf = (UServer_Base::isLog() ? U_NEW(UString(4000U)) : 0);
+   socket        = 0;
+   logbuf        = (UServer_Base::isLog() ? U_NEW(UString(4000U)) : 0);
+   last_response = 0;
 
 #ifdef HAVE_SSL
    ssl = 0;
 #endif
 
-   // NB: these are for pending sendfile...
-
-   offset = 0;
-   sfd    = 0;
+   sfd    = state = 0;
    count  = 0;
    bclose = U_MAYBE;
 }
@@ -219,13 +217,13 @@ int UClientImage_Base::sendfile()
 {
    U_TRACE(1, "UClientImage_Base::sendfile()")
 
+   U_INTERNAL_ASSERT_MAJOR(sfd,0)
    U_INTERNAL_ASSERT_MAJOR(count,0)
-   U_INTERNAL_ASSERT_DIFFERS(sfd, -1)
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
-   ssize_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u", UEventFd::fd, sfd, &offset, count);
+   ssize_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u", UEventFd::fd, sfd, 0, count);
 
-   if (value < 0L)
+   if (value <= 0L)
       {
       U_INTERNAL_DUMP("errno = %d", errno)
 
@@ -238,6 +236,10 @@ int UClientImage_Base::sendfile()
 
    if (count == 0)
       {
+      // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
+
+      if (bclose != U_YES) socket->setTcpCork(0U);
+
       UFile::close(sfd);
                    sfd = 0;
 
@@ -254,9 +256,12 @@ int UClientImage_Base::sendfile(int& in_fd, char& _bclose, uint32_t _start, uint
 
    U_INTERNAL_ASSERT_EQUALS(sfd,0)
 
+#ifdef U_SENDFILE_NONBLOCK
+   if (_start) U_SYSCALL(lseek, "%d,%u,%d", in_fd, _start, SEEK_SET);
+
    sfd    = in_fd;
    count  = _count;
-   offset = _start;
+   bclose = _bclose;
 
    int ret = sendfile();
 
@@ -267,8 +272,7 @@ int UClientImage_Base::sendfile(int& in_fd, char& _bclose, uint32_t _start, uint
 
       if (ret == U_MAYBE)
          {
-         bclose = _bclose;
-                  _bclose = U_NOT;
+         _bclose = U_NOT;
 
          UEventFd::op_mask = U_READ_IN | U_WRITE_OUT;
 
@@ -277,6 +281,26 @@ int UClientImage_Base::sendfile(int& in_fd, char& _bclose, uint32_t _start, uint
       }
 
    U_RETURN(ret);
+#else
+#  ifdef U_CACHE_REQUEST
+   sfd = in_fd;
+         in_fd = -1;
+
+   UServer_Base::start = _start;
+   UServer_Base::count = _count;
+#  endif
+
+   if (socket->sendfile(sfd, _start, _count))
+      {
+      // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
+
+      if (_bclose != U_YES) socket->setTcpCork(0U);
+
+      U_RETURN(U_YES);
+      }
+
+   U_RETURN(U_NOT);
+#endif
 }
 
 // aggiungo nel log il certificato Peer del client ("issuer","serial")
@@ -447,17 +471,16 @@ void UClientImage_Base::initAfterGenericRead()
 
 // define method VIRTUAL of class UEventFd
 
-void UClientImage_Base::handlerError(int state)
+void UClientImage_Base::handlerError(int sock_state)
 {
-   U_TRACE(0, "UClientImage_Base::handlerError(%d)", state)
+   U_TRACE(0, "UClientImage_Base::handlerError(%d)", sock_state)
 
    U_INTERNAL_ASSERT_POINTER(socket)
-   U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
+   U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc,UEventFd::fd)
 
-   socket->iState = state;
+   socket->iState = sock_state;
 
-   UServer_Base::poldc = UServer_Base::pClientImage;
-                         UServer_Base::pClientImage = this;
+   UServer_Base::pClientImage = this;
 }
 
 int UClientImage_Base::handlerRead()
@@ -472,21 +495,25 @@ int UClientImage_Base::handlerRead()
 
    // Connection-wide hooks
 
-   int result = genericRead(); // read request...
+   state = genericRead(); // read request...
 
-   if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
-   if (result == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_NOTIFIER_DELETE);
+   if (state == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
+   if (state == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_NOTIFIER_DELETE);
 
    rstart   = size_request = 0;
    pipeline = false;
    rpointer = rbuffer->data();
 
+#ifndef U_CACHE_REQUEST
+   UClientImage_Base::initAfterGenericRead();
+#endif
+
 loop:
    if (logbuf) logRequest();
 
-   result = UServer_Base::pluginsHandlerREAD(); // check request type...
+   state = UServer_Base::pluginsHandlerREAD(); // check request type...
 
-   if (result == U_PLUGIN_HANDLER_FINISHED)
+   if (state == U_PLUGIN_HANDLER_FINISHED)
       {
       // NB: it is possible a resize of the read buffer string...
 
@@ -497,28 +524,28 @@ loop:
          if (pipeline) *pbuffer = rbuffer->substr(rstart);
          }
 
-      result = UServer_Base::pluginsHandlerRequest(); // manage request...
+      state = UServer_Base::pluginsHandlerRequest(); // manage request...
       }
 
-   if (handlerWrite() == U_NOTIFIER_DELETE) result = U_PLUGIN_HANDLER_ERROR;
+   if (handlerWrite() == U_NOTIFIER_DELETE) state = U_PLUGIN_HANDLER_ERROR;
 
-   if ((result & U_PLUGIN_HANDLER_AGAIN) != 0)
+   if ((state & U_PLUGIN_HANDLER_AGAIN) != 0)
       {
-      if ((result & U_PLUGIN_HANDLER_ERROR) == 0) goto end;
+      if ((state & U_PLUGIN_HANDLER_ERROR) == 0) goto end;
 
-      result = U_PLUGIN_HANDLER_ERROR;
+      state = U_PLUGIN_HANDLER_ERROR;
       }
    else
       {
-      if (UServer_Base::pluginsHandlerReset() == U_PLUGIN_HANDLER_ERROR) result = U_PLUGIN_HANDLER_ERROR;
+      if (UServer_Base::pluginsHandlerReset() == U_PLUGIN_HANDLER_ERROR) state = U_PLUGIN_HANDLER_ERROR;
       }
 
-   U_INTERNAL_DUMP("result = %d pipeline = %b socket->isClosed() = %b", result, pipeline, socket->isClosed())
+   U_INTERNAL_DUMP("state = %d pipeline = %b socket->isClosed() = %b", state, pipeline, socket->isClosed())
 
    // NB: it is difficult to change this tests...
    // -------------------------------------------
    if (socket->isClosed()                  ||
-       (result   == U_PLUGIN_HANDLER_ERROR &&
+       (state    == U_PLUGIN_HANDLER_ERROR &&
         pipeline == false)                 ||
         UServer_Base::flag_loop == false)
       {
@@ -561,11 +588,12 @@ loop:
       }
 
 end:
-   u_gettimeofday();
+   if (u_pthread_time)
+      {
+      last_response = u_now->tv_sec;
 
-   last_response = u_now->tv_sec;
-
-   U_INTERNAL_DUMP("last_response = %ld", last_response)
+      U_INTERNAL_DUMP("last_response = %ld", last_response)
+      }
 
    U_RETURN(U_NOTIFIER_OK);
 }
@@ -588,10 +616,11 @@ int UClientImage_Base::handlerWrite()
    U_INTERNAL_ASSERT_POINTER(wbuffer)
    U_INTERNAL_ASSERT(socket->isOpen())
 
-   // NB: check for pending sendfile...
-
+#ifdef U_SENDFILE_NONBLOCK
    if (sfd)
       {
+      // NB: pending sendfile...
+
       U_ASSERT(body->empty())
 
       int ret = sendfile();
@@ -606,13 +635,12 @@ int UClientImage_Base::handlerWrite()
 
          if (bclose) U_RETURN(U_NOTIFIER_DELETE);
 
-         socket->setTcpCork(0U); // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
-
          UNotifier::modify(this);
          }
 
       U_RETURN(U_NOTIFIER_OK);
       }
+#endif
 
    U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer))
    U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body))
@@ -627,10 +655,38 @@ int UClientImage_Base::handlerWrite()
 
    // NB: we don't need corking because we use writev...
 
-   int result = (USocketExt::write(socket, *wbuffer, *body, 3 * 1000) ? U_NOTIFIER_OK
-                                                                      : U_NOTIFIER_DELETE);
+   int ret = (USocketExt::write(socket, *wbuffer, *body) ? U_NOTIFIER_OK
+                                                         : U_NOTIFIER_DELETE);
 
-   U_RETURN(result);
+#if !defined(U_SENDFILE_NONBLOCK) && defined(U_CACHE_REQUEST)
+   if (sfd &&
+       ret == U_NOTIFIER_OK)
+      {
+      U_ASSERT(body->empty())
+
+      ret = (socket->sendfile(sfd, 0, UServer_Base::count) ? U_NOTIFIER_OK
+                                                           : U_NOTIFIER_DELETE);
+
+      sfd = 0;
+
+      if (ret == U_NOTIFIER_OK)
+         {
+         // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
+
+         if (bclose != U_YES) socket->setTcpCork(0U);
+         }
+      else
+         {
+         U_INTERNAL_DUMP("state = %d %B pipeline = %b", state, state, pipeline)
+
+         state = U_PLUGIN_HANDLER_ERROR | U_PLUGIN_HANDLER_AGAIN;
+         }
+
+      U_RETURN(U_NOTIFIER_OK);
+      }
+#endif
+
+   U_RETURN(ret);
 }
 
 void UClientImage_Base::handlerDelete()
@@ -650,9 +706,9 @@ void UClientImage_Base::handlerDelete()
 const char* UClientImage_Base::dump(bool _reset) const
 {
    *UObjectIO::os << "sfd                                " << sfd                << '\n'
+                  << "state                              " << state              << '\n'
                   << "count                              " << count              << '\n'
                   << "bIPv6                              " << bIPv6              << '\n'
-                  << "offset                             " << offset             << '\n'
                   << "bclose                             " << bclose             << '\n'
                   << "write_off                          " << write_off          << '\n'
                   << "last_response                      " << last_response      << '\n'

@@ -32,7 +32,7 @@ UVector<UIOCallback*>* UTranformInputURI::allIOCallbacks;
 
 int         UTranformInclC14N::_usage  = DSIG|C14N;
 const char* UTranformInclC14N::_name   = "c14n";
-const char* UTranformInclC14N::_href   = "http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
+const char* UTranformInclC14N::_href   = "http://www.w3.org/2006/12/xml-c14n11"; // "http://www.w3.org/TR/2001/REC-xml-c14n-20010315";
 
 int         UTranformXPointer::_usage  = DSIG;
 const char* UTranformXPointer::_name   = "xpointer";
@@ -42,7 +42,7 @@ UXML2Document* UTranformXPointer::document;
 
 int         UTranformSha1::_usage      = DIGEST;
 const char* UTranformSha1::_name       = "sha1";
-const char* UTranformSha1::_href       = "http://www.w3.org/2000/09/xmldsig#sha1";
+const char* UTranformSha1::_href       = "http://www.w3.org/2001/04/xmlenc#sha1";
 
 int         UTranformRsaMd5::_usage    = SIGNATURE;
 const char* UTranformRsaMd5::_name     = "rsa-md5";
@@ -50,7 +50,11 @@ const char* UTranformRsaMd5::_href     = "http://www.w3.org/2001/04/xmldsig-more
 
 int         UTranformRsaSha1::_usage   = SIGNATURE;
 const char* UTranformRsaSha1::_name    = "rsa-sha1";
-const char* UTranformRsaSha1::_href    = "http://www.w3.org/2000/09/xmldsig#rsa-sha1";
+const char* UTranformRsaSha1::_href    = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha1";
+
+int         UTranformRsaSha256::_usage = SIGNATURE;
+const char* UTranformRsaSha256::_name  = "rsa-sha256";
+const char* UTranformRsaSha256::_href  = "http://www.w3.org/2001/04/xmldsig-more#rsa-sha256";
 
 UTranformXPointer::~UTranformXPointer()
 {
@@ -196,6 +200,13 @@ bool UTranformRsaMd5::execute(UString& data)
 bool UTranformRsaSha1::execute(UString& data)
 {
    U_TRACE(0, "UTranformRsaSha1::execute(%.*S)", U_STRING_TO_TRACE(data))
+
+   U_RETURN(false);
+}
+
+bool UTranformRsaSha256::execute(UString& data)
+{
+   U_TRACE(0, "UTranformRsaSha256::execute(%.*S)", U_STRING_TO_TRACE(data))
 
    U_RETURN(false);
 }

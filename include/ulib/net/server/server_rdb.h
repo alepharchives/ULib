@@ -75,7 +75,7 @@ protected:
       {
       U_TRACE(0, "URDBServer::preallocate()")
 
-      vClientImage = U_NEW_VEC(max_Keep_Alive, URDBClientImage);
+      vClientImage = U_NEW_VEC(U_max(max_Keep_Alive,16), URDBClientImage);
       }
 
 private:

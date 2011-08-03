@@ -296,8 +296,8 @@ public:
     * }
     */
 
-          UString xmlC14N(                     int mode = 0, int with_comments = 0, unsigned char** inclusive_namespaces = 0);
-   static UString xmlC14N(const UString& data, int mode = 0, int with_comments = 0, unsigned char** inclusive_namespaces = 0);
+          UString xmlC14N(                     int mode = 2, int with_comments = 0, unsigned char** inclusive_namespaces = 0);
+   static UString xmlC14N(const UString& data, int mode = 2, int with_comments = 0, unsigned char** inclusive_namespaces = 0);
 
    // Access the underlying libxml2 implementation.
 
