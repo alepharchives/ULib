@@ -269,7 +269,7 @@ UString UZIP::getFileContentAt(int index)
 
       buffer.snprintf("%.*s/%.*s", U_STRING_TO_TRACE(tmpdir), U_STRING_TO_TRACE(filename));
 
-      dati = (file->setPath(buffer), file->getContent());
+      dati = (file->setPath(buffer), file->getContent(true,true));
       }
 
    U_RETURN_STRING(dati);

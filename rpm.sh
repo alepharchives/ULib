@@ -64,3 +64,4 @@ run_build xml2txt				xml2txt		xml2txt
 run_build workflow			workflow		workflow
 run_build PEC_log				PEC_log		PEC_log
 run_build doc_parse			doc_parse	doc_parse
+run_build XAdES				XAdES			XAdES

@@ -79,9 +79,9 @@
   88 sizeof(UIPAddress)
   88 sizeof(UMimeMultipartMsg)
   96 sizeof(UMimeMessage)
- 128 sizeof(UServer<UTCPSocket>)
  128 sizeof(USOAPParser)
  128 sizeof(UMimeMultipart)
+ 128 sizeof(UServer<UTCPSocket>)
 -------------------------
    U_STACK_TYPE_3
 

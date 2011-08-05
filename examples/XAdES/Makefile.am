@@ -1,5 +1,7 @@
 ## Makefile.am for examples/XAdES
 
+EXTRA_DIST = *.spec*
+
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
 if CURL

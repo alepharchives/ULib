@@ -275,9 +275,9 @@ void UNotifier::modify(UEventFd* item)
             }
          else
             {
-            U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_write))
+            U_INTERNAL_ASSERT(FD_ISSET(item->fd, &fd_set_write))
 
-            FD_CLR(fd, &fd_set_write);
+            FD_CLR(item->fd, &fd_set_write);
 
             U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
 
@@ -1042,12 +1042,12 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
       }
 #  endif
 
-   ueventtime time(0l, timeoutms * 1000l);
-   ueventtime* ptime = (timeoutms < 0 ? 0 : (time.adjust(), &time));
+   UEventTime time(0L, timeoutMS * 1000L);
+   UEventTime* ptime = (timeoutMS < 0 ? 0 : (time.adjust(), &time));
 
    fd_set fdmask;
-   fd_zero(&fdmask);
-   fd_set(fd, &fdmask);
+   FD_ZERO(&fdmask);
+   FD_SET(fd, &fdmask);
 
    int ret = waitForEvent(fd + 1, 0, &fdmask, ptime);
 #endif

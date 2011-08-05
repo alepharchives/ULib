@@ -17,23 +17,13 @@
  HOST=stefano
 #HOST=giallo
 
-./bench_keepalive    $HOST "/ws/flash-bridge/WebSocketMain.swf" 8080 0
-mv test.txt gwan_big_keepalive.csv
-
-sleep 60
-
-./bench_NO_keepalive $HOST "/ws/flash-bridge/WebSocketMain.swf" 8080 0
-mv test.txt gwan_big_NO_keepalive.csv
+./bench_keepalive    $HOST "/100.html"						8080 0
+mv test.txt gwan_100_keepalive.csv
 
 sleep 60
 
 ./bench_NO_keepalive $HOST "/100.html"						8080 0
 mv test.txt gwan_100_NO_keepalive.csv
-
-sleep 60
-
-./bench_keepalive    $HOST "/100.html"						8080 0
-mv test.txt gwan_100_keepalive.csv
 
 sleep 60
 
@@ -55,3 +45,12 @@ sleep 60
 ./bench_keepalive    $HOST "/csp?hellox&name=stefano" 8080 0
 mv test.txt csp_keepalive.csv
 
+sleep 60
+
+./bench_keepalive    $HOST "/ws/flash-bridge/WebSocketMain.swf" 8080 0
+mv test.txt gwan_big_keepalive.csv
+
+sleep 60
+
+./bench_NO_keepalive $HOST "/ws/flash-bridge/WebSocketMain.swf" 8080 0
+mv test.txt gwan_big_NO_keepalive.csv

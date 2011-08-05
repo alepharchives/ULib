@@ -1172,7 +1172,6 @@ AC_OUTPUT(Makefile \
 			 examples/csp/Makefile \
 			 examples/lcsp/Makefile \
 			 examples/rsign/Makefile \
-			 examples/XAdES/Makefile \
 			 examples/xml2txt/Makefile \
 			 examples/uclient/Makefile \
 			 examples/userver/Makefile \
@@ -1186,6 +1185,7 @@ AC_OUTPUT(Makefile \
 			 examples/form_completion/Makefile \
 			 examples/simple_client_server/Makefile \
 			 examples/download_accelerator/Makefile \
+			 examples/XAdES/Makefile examples/XAdES/XAdES.spec \
 			 examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec \
 			 examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec \
 			 examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec  examples/PEC_log/PEC_log.spec \

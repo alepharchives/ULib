@@ -260,6 +260,47 @@ private:
    friend class UReferenceCtx;
 };
 
+class UTranformSha256 : public UBaseTransform {
+public:
+
+   // COSTRUTTORI
+
+   UTranformSha256()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UTranformSha256, "")
+      }
+
+   virtual ~UTranformSha256()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UTranformSha256)
+      }
+
+   // define method VIRTUAL of class UBaseTransform
+
+   virtual int         usage() { return _usage; } // the allowed transforms usages
+   virtual const char* name()  { return _name;  } // the transform's name
+   virtual const char* href()  { return _href;  } // the transform's identification string (href)
+
+   virtual bool execute(UString& data);
+
+#ifdef DEBUG
+   const char* dump(bool reset) const { return UBaseTransform::dump(reset); }
+#endif
+
+protected:
+   static int _usage;        // the allowed transforms usages
+   static const char* _name; // the transform's name
+   static const char* _href; // the transform's identification string (href)
+
+private:
+   UTranformSha256(const UTranformSha256&) : UBaseTransform() {}
+   UTranformSha256& operator=(const UTranformSha256&)         { return *this; }
+
+   friend class UDSIGContext;
+   friend class UTransformCtx;
+   friend class UReferenceCtx;
+};
+
 class U_EXPORT UTranformRsaMd5 : public UBaseTransform {
 public:
 

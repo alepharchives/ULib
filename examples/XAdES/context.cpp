@@ -56,6 +56,9 @@ void UTransformCtx::registerDefault()
    enabledTransforms->push(UString(UTranformSha1::_name));                 // "sha1"
    enabledTransforms->push(UString(UTranformSha1::_href));  
 
+   enabledTransforms->push(UString(UTranformSha256::_name));               // "sha256"
+   enabledTransforms->push(UString(UTranformSha256::_href));  
+
    enabledTransforms->push(UString(UTranformRsaMd5::_name));               // "rsa-md5"
    enabledTransforms->push(UString(UTranformRsaMd5::_href));
 
@@ -91,7 +94,6 @@ void UTransformCtx::registerDefault()
    enabledTransforms->push(UString(UTranform::_name));                     // "rsa-1_5"
    enabledTransforms->push(UString(UTranform::_name));                     // "rsa-oaep-mgf1p"
    enabledTransforms->push(UString(UTranform::_name));                     // "sha224"
-   enabledTransforms->push(UString(UTranform::_name));                     // "sha256"
    enabledTransforms->push(UString(UTranform::_name));                     // "sha384"
    enabledTransforms->push(UString(UTranform::_name));                     // "sha512"
    */
@@ -135,21 +137,27 @@ UBaseTransform* UTransformCtx::findByHref(const char* href)
          }
       break;
 
-      case 9: // "rsa-md5"
+      case 9: // "sha256"
+         {
+         ptr = U_NEW(UTranformSha256());
+         }
+      break;
+
+      case 11: // "rsa-md5"
          {
          ptr = U_NEW(UTranformRsaMd5());
          }
       break;
 
-      case 11: // "rsa-sha1"
+      case 13: // "rsa-sha1"
          {
          ptr = U_NEW(UTranformRsaSha1());
          }
       break;
 
-      case 13: // "rsa-sha256"
+      case 15: // "rsa-sha256"
          {
-         ptr = U_NEW(UTranformRsaSha1());
+         ptr = U_NEW(UTranformRsaSha256());
          }
       break;
 

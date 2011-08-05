@@ -84,7 +84,7 @@ bool                       UServer_Base::flag_loop;
 bool                       UServer_Base::flag_use_tcp_optimization;
 char                       UServer_Base::mod_name[20];
 ULog*                      UServer_Base::log;
-time_t                     UServer_Base::last_response;
+time_t                     UServer_Base::expire;
 uint32_t                   UServer_Base::start;
 uint32_t                   UServer_Base::count;
 uint32_t                   UServer_Base::max_Keep_Alive;

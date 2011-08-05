@@ -27,6 +27,7 @@
 #include <ulib/application.h>
 
 #define U_SCHEMA               (const char*)(num_args >= 0 ? argv[optind+0] : 0)
+#define U_TAG_SIGNED_INFO      "ds:SignedInfo"
 #define U_TAG_X509_CERTIFICATE "ds:X509Certificate"
 
 class Application : public UApplication {
@@ -135,7 +136,21 @@ public:
 
       UXML2Document document(content);
 
-      if (XAdES_schema.validate(document) == false) U_ERROR("error on input data: not XAdES");
+      if (XAdES_schema.validate(document) == false)
+         {
+         UString content1;
+
+         if (document.getElement(content1, 0, U_CONSTANT_TO_PARAM(U_TAG_SIGNED_INFO)) &&
+             content1.empty() == false)
+            {
+            UXML2Document document1(content1);
+
+            if (XAdES_schema.validate(document1) == false)
+               {
+               U_ERROR("fail to validate data input based on XAdES schema");
+               }
+            }
+         }
 
       UDSIGContext dsigCtx;
       UString data, signature;

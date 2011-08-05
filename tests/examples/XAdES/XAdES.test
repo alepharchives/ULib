@@ -30,13 +30,14 @@ rm -f tsa_http.log TSA/log \
 
 SCHEMA=XAdESv141.xsd
 #DOCUMENT=TESTOPROVA.docx
- DOCUMENT=xmldsig-input.txt
+ DOCUMENT=TESTOPROVA.odt
+#DOCUMENT=xmldsig-input.txt
 
 DATA_URI=$DOCUMENT
 X509=`cat ../../ulib/CA/server.crt`
 KEY_HANDLE=`pwd`/../../ulib/CA/server_nopass.key
-DIGEST_ALGORITHM=sha1
-SIGNING_TIME=0
+DIGEST_ALGORITHM=sha256
+SIGNING_TIME=1
 CLAIMED_ROLE="Amministratore UNIREL"
 PRODUCTION_PLACE_CITY="sesto fiorentino"
 PRODUCTION_PLACE_STATE_OR_PROVINCE=SI

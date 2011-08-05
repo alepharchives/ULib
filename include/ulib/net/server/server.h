@@ -356,12 +356,12 @@ protected:
               verify_mode;    // mode of verification ssl connection
 
    static int sfd;
+   static time_t expire;
    static UString* host;
    static UProcess* proc;
    static USocket* socket;
    static UEventTime* ptime;
    static UServer_Base* pthis;
-   static time_t last_response;
    static uint32_t start, count;
    static UString* senvironment;
    static UVector<UIPAllow*>* vallow_IP;

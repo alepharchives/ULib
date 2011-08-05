@@ -2154,10 +2154,10 @@ int UHTTP::checkHTTPRequestCache()
 
    if (cbuffer->isNull() == false)
       {
-      U_INTERNAL_DUMP("last_response = %ld", UServer_Base::last_response)
+      U_INTERNAL_DUMP("expire        = %ld", UServer_Base::expire)
       U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
 
-      if (UServer_Base::last_response < u_now->tv_sec)
+      if (UServer_Base::expire < u_now->tv_sec)
          {
          clearHTTPRequestCache();
 
@@ -2174,6 +2174,13 @@ int UHTTP::checkHTTPRequestCache()
 
 #     ifndef U_SENDFILE_NONBLOCK
          U_INTERNAL_DUMP("UServer_Base::sfd = %d", UServer_Base::sfd)
+
+#        ifdef DEBUG
+         if (UClientImage_Base::body->isNull())
+            {
+            U_INTERNAL_ASSERT_MAJOR(UServer_Base::sfd,0)
+            }
+#        endif
 
          if (UServer_Base::sfd)
             {
@@ -2234,7 +2241,7 @@ void UHTTP::manageHTTPRequestCache()
 
          if (U_http_version == '0')
             {
-            UServer_Base::last_response = u_now->tv_sec + 60 * 60;
+            UServer_Base::expire = u_now->tv_sec + 60 * 60;
 
             return;
             }
@@ -2243,10 +2250,10 @@ void UHTTP::manageHTTPRequestCache()
 
       if (u_pthread_time == 0) (void) gettimeofday(u_now, 0);
 
-      U_INTERNAL_DUMP("last_response = %ld", UServer_Base::last_response)
+      U_INTERNAL_DUMP("expire        = %ld", UServer_Base::expire)
       U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
 
-      UServer_Base::last_response = u_now->tv_sec;
+      UServer_Base::expire = u_now->tv_sec;
       }
 }
 

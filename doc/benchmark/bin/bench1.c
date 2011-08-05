@@ -1,10 +1,13 @@
 // ============================================================================
-// Benchmark framework to test the (free) G-WAN Web App. Server http://gwan.ch/
+// Benchmark framework used to compare the G-WAN Web App Server http://gwan.ch/
+//                     with Apache/IIS/Nginx/Lighttpd/GlassFish/Jetty/Tomcat...
 // ----------------------------------------------------------------------------
-// a.c: invoke Apache Benchmark (IBM) or HTTPerf (HP) on a concurrency  
+// See the How-To here: http://gwan.com/en_apachebench_httperf.html
+// ----------------------------------------------------------------------------
+// a.c: invoke Apache Benchmark (IBM) or HTTPerf (HP) on a concurrency
 //      range and collect results in a CSV file suitable for LibreOffice
 //      (http://www.documentfoundation.org/download/) charting.
-// 
+//
 //      Select your benchmarking tool below:
 
 #define IBM_APACHEBENCH // the classic, made better by Zeus' author
@@ -22,7 +25,7 @@
 //       http://gwan.ch/source/
 //
 //       The ITER define can be set to 1 to speed up a test but in that case
-//       values are not as reliable as when using more rounds (and using a 
+//       values are not as reliable as when using more rounds (and using a
 //       low ITER[ations] value usually gives lower performances):
 
 #define FROM       0 // range to cover (1 - 1,000 concurrent clients)
@@ -77,7 +80,7 @@
 //#define URL "/asp/loan.aspx?name=Eva&amount=10000&rate=3.5&term=800"
 
 // your locale settings will need to use a comma or a point for 'rate'
-// (using the wrong decimal separator will raise an exception in ASP.Net C#)
+// (using the wrong decimal separator will raise an exception in .Net)
 
 //#define URL "/asp/loan.aspx?name=Eva&amount=10000&rate=3,5&term=1"
 //#define URL "/asp/loan.aspx?name=Eva&amount=10000&rate=3,5&term=10"
@@ -102,15 +105,15 @@
 # define close(sock) closesocket(sock)
 #endif
 
-//          Unless you target a localhost test, don't use a Windows machine as 
-//          the client (to run ab) as the performances are really terrible (ab 
+//          Unless you target a localhost test, don't use a Windows machine as
+//          the client (to run ab) as the performances are really terrible (ab
 //          does not use the 'IO completion ports' Windows proprietary APIs and
 //          pure BSD sockets are much slower under Windows than on Linux).
 //
 //          G-WAN for Windows upgrades Registry system values to remove some
 //          artificial limits (original values are just renamed), you need to
 //          reboot after you run G-WAN for the first time to load those values.
-//          Rebooting for each test has an effect on Windows (you are faster), 
+//          Rebooting for each test has an effect on Windows (you are faster),
 //          like testing after IIS 7.0 was tested (you are even faster), and
 //          the Windows Vista 64-bit TCP/IP stack is 10% faster (for all) if
 //          ASP.Net is *not* installed.
@@ -169,12 +172,12 @@
 //              kernel.sysrq = 0
 //              kernel.shmmax = 67108864
 //
-//          Use 'sudo sysctl -p /etc/sysctl.conf' to update your environment 
-//          -the command must be typed in each open terminal for the changes 
+//          Use 'sudo sysctl -p /etc/sysctl.conf' to update your environment
+//          -the command must be typed in each open terminal for the changes
 //          to take place (same effect as a reboot).
 //
 //          As I was not able to make the 'open files limit' persist for G-WAN
-//          after a reboot, G-WAN attemps to setup this to an 'optimal' value 
+//          after a reboot, G-WAN attemps to setup this to an 'optimal' value
 //          depending on the amount of RAM available on your system:
 //
 //              fd_max=(256*(totalram/4)<200000)?256*(total/4):1000000;
@@ -185,17 +188,17 @@
 //              or
 //              ~/Desktop/gwan$ sudo ./gwan
 //
-//          And, if you don't run gwan as 'root', Linux will restrict the 
+//          And, if you don't run gwan as 'root', Linux will restrict the
 //          number of CPUs/Cores that gwan can use (on a 8-Core machine,
-//          gwan could only use 1 Core because hyper-threading would make 
+//          gwan could only use 1 Core because hyper-threading would make
 //          2 'Cores' only address one physical Core). The only relevant
 //          documentation I have found on the subject is Linux SETCPU(7).
 //          Even with 'sudo gwan', the number of "allowed CPUs" is random
 //          (between 8 and 128) but at least it covered all my 8 Cores.
 // ----------------------------------------------------------------------------
-//          NB: this test was up to 2x faster when the a.c client was running 
-//              (on Linux 64-bit and the server on Linux 32-bit) via a gigabit 
-//              LAN (but absolute performances are less interesting me than 
+//          NB: this test was up to 2x faster when the a.c client was running
+//              (on Linux 64-bit and the server on Linux 32-bit) via a gigabit
+//              LAN (but absolute performances are less interesting me than
 //              relative server performances, hence the localhost test).
 //
 //              Experiments demonstrate that, for a 100-byte static file, IIS
@@ -210,10 +213,10 @@
 //                - make room to generate dynamic contents (C servlets);
 //                - make room for a database, proxy, email or virtual server;
 //                - save energy (CPUs consume more energy under high loads);
-//                - save money (doing 20-200,000x more on each of your server).
+//                - save money (do [20 - 200,000]x more on all your servers).
 //
-//              For a small static file such as the 100.html file, if your test 
-//              on a LAN is slower than on localhost then your environment is 
+//              For a small static file such as the 100.html file, if your test
+//              on a LAN is slower than on localhost then your environment is
 //              the bottleneck (NICs, switch, client CPU, client OS...).
 // ----------------------------------------------------------------------------
 // History
@@ -221,7 +224,8 @@
 // v1.0.5 changes: added support for non-2xx response codes and trailing stats;
 // v1.0.6 changes: corrected 64-bit platform issues and added support for gzip,
 //                 dumped a non-2xx reply on stderr for further investigations.
-// v2.1.2 changes: added support for HTTPerf as an alternative to ApacheBench.
+// 2.1.20 changes: added support for HTTPerf as an alternative to ApacheBench.
+// 2.4.20 changes: detect & report open (ab.txt output) file permission errors.
 // ----------------------------------------------------------------------------
 // This program is left in the public domain.
 // ============================================================================
@@ -267,33 +271,41 @@ static int FROM;			// = (argv[4]?atoi(argv[4]):0);
 int main(int argc, char *argv[])
 {
    int    i, j, nbr, max_rps, min_rps, ave_rps;
-   char   str[256], buff[4000];
-   FILE  *f, *fo=fopen("test.txt", "w+b");
-   time_t st=time(NULL);
-   u64    tmax_rps=0, tmin_rps=0, tave_rps=0;
-
-	// -------------------------
-	// STEFANO
-	// -------------------------
-	IP   = (argv[1]?	   argv[1] :"localhost");
-	URL  = (argv[2]?	   argv[2] :"/index.html");
-	PORT = (argv[3]?atoi(argv[3]):80);
-	FROM = (argv[4]?atoi(argv[4]):0);
-	// -------------------------
+   char   str[256], buff[4070];
+   FILE  *f, *fo = fopen("test.txt", "w+b");
+   time_t st = time(NULL);
+   u64 tmax_rps = 0, tmin_rps = 0, tave_rps = 0;
 
    //fprintf(stderr, "URL=%s\n", URL);
    //fprintf(stderr, "ret=%d\n", http_req(URL));
    //exit(0);
+   
+#ifndef _WIN32
+   if(!fo)
+   {
+      perror("can't open output file"); // "Permission denied"
+      return 1;
+   }
+#endif
 
-   for(i=FROM; i<=TO; i+=STEP)
+// -------------------------
+// STEFANO
+// -------------------------
+IP   = (argv[1]?argv[1]:"localhost");
+URL  = (argv[2]?argv[2]:"/index.html");
+PORT = (argv[3]?atoi(argv[3]):80);
+FROM = (argv[4]?atoi(argv[4]):0);
+// -------------------------
+
+   for(i = FROM; i <= TO; i += STEP)
    {
 
 #ifdef IBM_APACHEBENCH
        // ApacheBench makes it straight for you since you can directly tell
        // the 'concurrency' and 'duration' you wish:
-//     sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 -k "		// KEEP-ALIVES
-       sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 "			// NO Keep-Alives
-                    "-H \"Accept-Encoding: gzip,deflate\" " // HTTP compression
+       sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 -k "		/* KEEP-ALIVES */
+//     sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 "			/* NO Keep-Alives */
+                    "-H \"Accept-Encoding: gzip,deflate\" " /* HTTP compression */
                     "\"http://%s" ":%d" "%s" "\"" " > ab.txt", i?i:1, IP, PORT, URL);
 #else
        // HTTPerf does not let you specify the 'concurrency'rate:
@@ -310,9 +322,9 @@ int main(int argc, char *argv[])
        //   'num-conn' makes it last longer, but to get any given 'rate'
        //   'num-conn' must always be >= to 'rate'
        //
-       // HTTPerf creates new connections grogressively and only collects 
+       // HTTPerf creates new connections grogressively and only collects
        // statistics after 5 seconds (to let servers 'warm-up' before they
-       // are tested). This is NOT reflecting real-life situations where 
+       // are tested). This is NOT reflecting real-life situations where
        // clients send requests on short but intense bursts.
        //
        // Also, HTTPerf's looooong shots make the TIME_WAIT state become a
@@ -320,63 +332,72 @@ int main(int argc, char *argv[])
        //
        // Finally, HTTPerf is unable to test client concurrency: if 'rate'
        // is 1 but num-conn is 2 and num-call is 100,000 then you are more
-       // than likely to end with concurrent connections because not all 
+       // than likely to end with concurrent connections because not all
        // requests are processed when the second connection is launched.
        //
        // If you use a smaller num-call value then you are testing the TCP
        // /IP stack rather than the user-mode code of the server.
        //
        // As a result, HTTPerf can only be reliably used without Keep-Alives
-       // (with num-call=1) 
+       // (with num-call=1)
        //
        sprintf(str, "httperf --server=%s --port=%d "
-                    "--rate=%d " 
+                    "--rate=%d "
                     "--num-conns=%d --num-calls 100000 " // KEEP-ALIVES
 //                  "--num-conns=1000000 --num-calls 1 " // NO Keep_Alives
                     "--timeout 5 --hog --uri=\""
                     "%s\"" " > ab.txt", IP, PORT, i?i:1, i?i:1, URL);
-#endif                    
+#endif
 
-      for(max_rps=0, ave_rps=0, min_rps=0xffff0, j=0; j<ITER; j++)
+      for(max_rps = 0, ave_rps = 0, min_rps = 0xffff0, j = 0; j < ITER; j++)
       {
          system(str);
+
 #ifdef _WIN32
          // Windows needs to take its breath after system() calls (this is not
-         // giving any advantage to Windows as all the tests have shown that 
+         // giving any advantage to Windows as all the tests have shown that
          // this OS platform is -by far- the slowest and less scalable of all)
          Sleep(4000);
-#endif         
+#endif
          // get the information we need from res.txt
-         if(!(f=fopen("ab.txt", "rb")))
+         if(!(f = fopen("ab.txt", "rb")))
          {
-            printf("Can't open file\n");
+            printf("Can't open ab.txt output\n");
             return 1;
          }
-         memset(buff, 0, sizeof(buff)-1);
-         fread (buff, 1, sizeof(buff)-1, f);
+         //memset(buff, 0, sizeof(buff) - 1);
+         *buff = 0;
+         nbr = fread(buff, 1, sizeof(buff) - 1, f);
+         if(nbr <= 0)
+         {
+            printf("Can't read ab.txt output\n");
+            return 1;
+         }
          fclose(f);
+         *(buff + nbr) = 0;
 
-         nbr=0;
+         nbr = 0;
          if(*buff)
          {
-            // IIS 7.0 quickly stops serving loans and sends error 503 (Service 
+            // IIS 7.0 quickly stops serving loans and sends error 503 (Service
             // unavailable) at a relatively high rate. If we did not detect it
-            // this would be interpreted as a 'boost' in performance while, in 
-            // fact, IIS is dying. Soon, IIS would really die and we would have 
+            // this would be interpreted as a 'boost' in performance while, in
+            // fact, IIS is dying. Soon, IIS would really die and we would have
             // to reboot the host: a complete IIS stop/restart has no effect).
 
             // Other issues to catch here are error 30x (redirects) or 404
             // (not found) on badly configured servers that make users report
             // that their application server is fast when this is not the case.
-#ifdef IBM_APACHEBENCH            
-            char *p=strstr(buff, "Non-2xx responses:");
+#ifdef IBM_APACHEBENCH
+            char *p = strstr(buff, "Non-2xx responses:");
             if(p) // "Non-2xx responses:      50130"
             {
                char *n;
-               p+=sizeof("Non-2xx responses:");
-               while(*p==' '||*p=='\t') p++; n=p; 
-               while(*p>='0'&&*p<='9') p++; *p=0;
-               nbr=atoi(n);
+               p += sizeof("Non-2xx responses:");
+               while(*p == ' ' || *p == '\t') p++; n = p;
+               while(*p >= '0' && *p <= '9')  p++;
+               *p = 0;
+               nbr = atoi(n);
                if(nbr)
                {
                   printf("* Non-2xx responses:%d\n", nbr);
@@ -386,16 +407,16 @@ int main(int argc, char *argv[])
                   http_req(URL);
                   goto end;
                }
-            }         
-          
-            p=strstr(buff, "Requests per second:");
+            }
+
+            p = strstr(buff, "Requests per second:");
             if(p) // "Requests per second:    16270.00 [#/sec] (mean)"
             {
                char *n;
-               p+=sizeof("Requests per second:");
-               while(*p==' '||*p=='\t') p++; n=p; 
-               while(*p>='0'&&*p<='9') p++; *p=0;
-               nbr=atoi(n);
+               p += sizeof("Requests per second:");
+               while(*p == ' ' || *p == '\t') p++; n = p;
+               while(*p >= '0' && *p <= '9')  p++; *p = 0;
+               nbr = atoi(n);
             }
             else
                puts("* 'Requests per second' not found!");
@@ -405,9 +426,9 @@ int main(int argc, char *argv[])
             {
                char *n;
                p+=sizeof("Reply status: 1xx=") - 1;
-               
+
                // we are not interested in "1xx" errors
-               
+
                if(*p == '0') // pass "2xx=" if no errors
                    p = strstr(p, "3xx=");
                if(p && p[4] == '0') // pass "3xx="  if no errors
@@ -416,10 +437,10 @@ int main(int argc, char *argv[])
                    p = strstr(p, "5xx=");
                if(p && p[4] == '0') // pass "5xx="  if no errors
                   goto no_errors;
-                  
+
                p+=sizeof("5xx=");
-               
-               while(*p==' '||*p=='\t') p++; n=p; 
+
+               while(*p==' '||*p=='\t') p++; n=p;
                while(*p>='0'&&*p<='9') p++; *p=0;
                nbr=atoi(n);
                if(nbr)
@@ -431,32 +452,32 @@ int main(int argc, char *argv[])
                   http_req(URL);
                   goto end;
                }
-            }         
-no_errors:          
-            // Reply rate [replies/s]: min 163943.9 avg 166237.2 max 167482.3 
+            }
+no_errors:
+            // Reply rate [replies/s]: min 163943.9 avg 166237.2 max 167482.3
             // stddev 1060.4 (12 samples)
             p=strstr(buff, "Reply rate");
-            if(p) 
+            if(p)
             {
                char *n;
                p+=sizeof("Reply rate [replies/s]: min");
-               while(*p==' ' || *p=='\t') p++; n=p; 
+               while(*p==' ' || *p=='\t') p++; n=p;
                while(*p>='0' && *p<='9') p++; *p++=0; p++;
                min_rps=atoi(n);
-               
+
                while(*p<'0' || *p>'9') p++; // avg
-               n=p; 
+               n=p;
                while(*p>='0' && *p<='9') p++; *p++=0; p++;
                ave_rps=atoi(n);
 
                while(*p<'0' || *p>'9') p++; // max
-               n=p; 
+               n=p;
                while(*p>='0' && *p<='9') p++; *p++=0; p++;
                max_rps=atoi(n);
             }
             else
                puts("* 'Reply rate' not found!");
-               
+
             // HTTPerf needs so many more requests than AB that it quickly
             // exhausts the [1-65,535] port space. There is no obvious
             // solution other than using several HTTPerf workers OR waiting
@@ -472,37 +493,43 @@ no_errors:
                }
                printf("\n"); fflush(0);
             }*/
-               
+
             goto round_done;
-#endif            
+#endif
          }
-         if(max_rps<nbr) max_rps=nbr;
-         if(min_rps>nbr) min_rps=nbr;
-         ave_rps+=nbr;
+         if(max_rps < nbr) max_rps = nbr;
+         if(min_rps > nbr) min_rps = nbr;
+         ave_rps += nbr;
       }
-      ave_rps/=ITER;
+      ave_rps /= ITER;
+#ifndef IBM_APACHEBENCH
 round_done:
-      tmin_rps+=min_rps;
-      tmax_rps+=max_rps;
-      tave_rps+=ave_rps;
-      
+#endif
+      tmin_rps += min_rps;
+      tmax_rps += max_rps;
+      tave_rps += ave_rps;
+
       // display data for convenience and save it on disk
-      printf("##### %4d,%5d,%5d,%5d #####\n", i?i:1, min_rps, ave_rps, max_rps);
-      fprintf(fo, "%d,%d,%d,%d\n", i?i:1, min_rps, ave_rps, max_rps);
+      nbr = sprintf(buff, "\t %d,\t %d,\t %d,\t %d\n",
+                    i?i:1, min_rps, ave_rps, max_rps);
+      printf("=> %s", buff);
+      if(fwrite(buff, 1, nbr, fo) != nbr)
+      {
+         printf("fwrite(fo) failed");
+         return 1;
+      }
       fflush(fo); // in case we interrupt the test
    }
 
 end:
-   st = time(NULL)-st;
-   strftime(str, sizeof(str)-1, "%X", gmtime(&st));
-  
-   printf("\min:%"FMTU64"   avg:%"FMTU64"   max:%"FMTU64
-          " Time:%d second(s) [%s]\n",
-          tmin_rps, tave_rps, tmax_rps, st, str);
+   st = time(NULL) - st;
+   strftime(str, sizeof(str) - 1, "%X", gmtime(&st));
 
-   fprintf(fo, "\min:%"FMTU64"   avg:%"FMTU64"   max:%"FMTU64
-               " Time:%d second(s) [%s]\n",
-               tmin_rps, tave_rps, tmax_rps, st, str);
+   sprintf(buff, "min:%"FMTU64"   avg:%"FMTU64"   max:%"FMTU64
+                 " Time:%ld second(s) [%s]\n",
+                 tmin_rps, tave_rps, tmax_rps, st, str);
+   puts  (buff);
+   fputs (buff, fo);
    fclose(fo);
    return 0;
 }
@@ -515,7 +542,7 @@ end:
 static int read_line(int fd, char *buffer, int max)
 {
    char *p = buffer;
-   while(max--) 
+   while(max--)
    {
       if(read(fd, p, 1) <= 0)
          break;
@@ -537,7 +564,7 @@ static int read_len(int fd, char *buffer, int len)
   while(len > 0)
   {
       ret = read(fd, p, len);
-      if(ret <= 0) 
+      if(ret <= 0)
          return -1;
       p   += ret;
       len -= ret;
@@ -562,7 +589,7 @@ static int http_req(char *request)
 #endif
 
    while((hp = gethostbyname(IP)))
-   {  
+   {
       memset((char*)&host,0, sizeof(host));
       memmove((char*)&host.sin_addr, hp->h_addr, hp->h_length);
       host.sin_family = hp->h_addrtype;
@@ -571,30 +598,30 @@ static int http_req(char *request)
       if((s = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         break;
 
-      if(connect(s, (struct sockaddr*)&host, sizeof(host)) < 0) 
+      if(connect(s, (struct sockaddr*)&host, sizeof(host)) < 0)
         break;
-    
+
       len = sprintf(buf, "GET %s HTTP/1.1\r\n"
                     "Host: %s" ":%d" "\r\n"
                     "User-Agent: a.c\r\n"
                     "Accept-Encoding: gzip,deflate\r\n"
-                    "Connection: close\r\n\r\n", 
+                    "Connection: close\r\n\r\n",
                     request, IP, PORT);
-    
+
       if(write(s, buf, len) != len)
       {
          break;
       }
-      else 
+      else
       {
          len = read_line(s, buf, sizeof(buf)-1);
          fputs(buf, stderr);
          putc ('\n',stderr);
          if(len <= 0)
-	        break;
-         else 
-         if(sscanf(buf, "HTTP/1.%*d %3d", (int*)&ret) != 1) 
-	        break;
+           break;
+         else
+         if(sscanf(buf, "HTTP/1.%*d %3d", (int*)&ret) != 1)
+           break;
       }
 
       if(ret > 0) // ret is the HTTP status, parse the server reply
@@ -607,7 +634,7 @@ static int http_req(char *request)
              if(n <= 0)
                 break;
 
-             for(p = buf; *p && *p != ':'; p++) 
+             for(p = buf; *p && *p != ':'; p++)
                  *p = tolower(*p);
 
              sscanf(buf, "content-length: %d", &len);
@@ -621,7 +648,7 @@ static int http_req(char *request)
            fputs(buf, stderr);
            putc ('\n',stderr);
         }
-      } 
+      }
       break;
    };
 

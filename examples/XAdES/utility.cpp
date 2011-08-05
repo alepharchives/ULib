@@ -160,6 +160,35 @@ bool UXAdESUtility::checkDocument(const UString& document, const char* pathname,
 
       if (ooffice)
          {
+         UString content(U_CAPACITY),
+                 content1_name = U_STRING_FROM_CONSTANT("META-INF/manifest.xml"), content1;
+
+         if (adjust)
+            {
+            index = ZipStructure.contains(content1_name);
+
+            if (index != U_NOT_FOUND)
+               {
+               content1 = ZipContent[index];
+
+               content1.duplicate();
+
+               (void) content1.erase(U_STRING_RFIND(content1, "</manifest:manifest>"));
+
+               content.snprintf("<manifest:file-entry manifest:media-type=\"\" manifest:full-path=\"META-INF/\"/>"
+                                "<manifest:file-entry manifest:media-type=\"\" manifest:full-path=\"%.*s\"/>"
+                                "</manifest:manifest>", U_STRING_TO_TRACE(OOname));
+
+               (void) content1.append(content);
+
+               ZipContent.replace(index, content1);
+
+               docout.snprintf("%.*s/META-INF/manifest.xml", U_STRING_TO_TRACE(tmpdir));
+
+               (void) UFile::writeTo(docout, content1);
+               }
+            }
+
          for (i = 0, n = OOToBeSigned.size(); i < n; ++i)
             {
             namefile = OOToBeSigned[i];
@@ -167,8 +196,15 @@ bool UXAdESUtility::checkDocument(const UString& document, const char* pathname,
 
             if (index == U_NOT_FOUND) continue;
 
+            content = ZipContent[index];
+
+            if (adjust)
+               {
+               if (namefile == content1_name) content = content1;
+               }
+
                  vuri.push(namefile);
-            vdocument.push(ZipContent[index]);
+            vdocument.push(content);
             }
 
          docout.snprintf("%.*s/%.*s", U_STRING_TO_TRACE(tmpdir), U_STRING_TO_TRACE(OOname));

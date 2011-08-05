@@ -94,7 +94,7 @@ For serving static content I use 3 file of different size:
 
  *  100.html         ( 100 byte) (only 'XXX...' without CR/LF)
  * 1000.html	      (1000 byte) (only 'XXX...' without CR/LF)
- * WebSocketMain.swf (180K byte)
+ * WebSocketMain.swf (80K  byte)
 
 For serving dynamic content I use a simple request: "Hello {name}"
 

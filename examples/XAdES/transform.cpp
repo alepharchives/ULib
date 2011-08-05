@@ -44,6 +44,10 @@ int         UTranformSha1::_usage      = DIGEST;
 const char* UTranformSha1::_name       = "sha1";
 const char* UTranformSha1::_href       = "http://www.w3.org/2001/04/xmlenc#sha1";
 
+int         UTranformSha256::_usage    = DIGEST;
+const char* UTranformSha256::_name     = "sha256";
+const char* UTranformSha256::_href     = "http://www.w3.org/2001/04/xmlenc#sha256";
+
 int         UTranformRsaMd5::_usage    = SIGNATURE;
 const char* UTranformRsaMd5::_name     = "rsa-md5";
 const char* UTranformRsaMd5::_href     = "http://www.w3.org/2001/04/xmldsig-more#rsa-md5";
@@ -184,6 +188,19 @@ bool UTranformSha1::execute(UString& data)
    UString ObjectDigestValue(200U);
 
    UServices::generateDigest(U_HASH_SHA1, 0, data, ObjectDigestValue, true);
+
+   data = ObjectDigestValue;
+
+   U_RETURN(true);
+}
+
+bool UTranformSha256::execute(UString& data)
+{
+   U_TRACE(0, "UTranformSha256::execute(%.*S)", U_STRING_TO_TRACE(data))
+
+   UString ObjectDigestValue(200U);
+
+   UServices::generateDigest(U_HASH_SHA256, 0, data, ObjectDigestValue, true);
 
    data = ObjectDigestValue;
 

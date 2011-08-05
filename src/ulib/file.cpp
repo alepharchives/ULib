@@ -313,7 +313,8 @@ off_t UFile::size(bool bstat)
 
    U_INTERNAL_ASSERT_EQUALS(st_size, 0)
 
-   if (bstat)
+   if (bstat == false) readSize();
+   else
       {
       fstat();
 
@@ -322,10 +323,8 @@ off_t UFile::size(bool bstat)
 #  endif
 
       U_INTERNAL_DUMP("st_ino = %llu", st_ino)
-      }
-   else
-      {
-      readSize();
+
+      if (S_ISDIR(st_mode)) U_RETURN(0);
       }
 
    U_RETURN(st_size);

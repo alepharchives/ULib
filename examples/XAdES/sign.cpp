@@ -82,13 +82,9 @@
 "      </ds:RSAKeyValue>\r\n" \
 "    </ds:KeyValue>\r\n" \
 "    <ds:X509Data>\r\n" \
-"      <ds:X509SubjectName>\r\n" \
-"        %.*s\r\n" \
-"      </ds:X509SubjectName>\r\n" \
+"      <ds:X509SubjectName>%.*s</ds:X509SubjectName>\r\n" \
 "      <ds:X509IssuerSerial>\r\n" \
-"        <ds:X509IssuerName>\r\n" \
-"          %.*s\r\n" \
-"        </ds:X509IssuerName>\r\n" \
+"        <ds:X509IssuerName>%.*s</ds:X509IssuerName>\r\n" \
 "        <ds:X509SerialNumber>%ld</ds:X509SerialNumber>\r\n" \
 "      </ds:X509IssuerSerial>\r\n" \
 "      <ds:X509Certificate>\r\n" \
@@ -101,12 +97,14 @@
 
 #define U_XMLDSIG_TEMPLATE \
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n" \
+"%.*s" \
 "<ds:Signature Id=\"idPackageSignature\" xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\">\r\n" \
 "%.*s" \
 "%.*s" \
 "%.*s" \
 "%.*s" \
-"</ds:Signature>\r\n"
+"</ds:Signature>\r\n" \
+"%.*s"
 
 #define U_XADES_REFERENCE_TEMPLATE \
 "    <ds:Reference xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" URI=\"#idPackageSignature-SignedProperties\" Type=\"http://uri.etsi.org/01903#SignedProperties\">\r\n" \
@@ -143,9 +141,7 @@
 "                <ds:DigestValue>%.*s</ds:DigestValue>\r\n" \
 "              </xades:CertDigest>\r\n" \
 "              <xades:IssuerSerial>\r\n" \
-"                <ds:X509IssuerName>\r\n" \
-"                  %.*s\r\n" \
-"                </ds:X509IssuerName>\r\n" \
+"                <ds:X509IssuerName>%.*s</ds:X509IssuerName>\r\n" \
 "                <ds:X509SerialNumber>%ld</ds:X509SerialNumber>\r\n" \
 "              </xades:IssuerSerial>\r\n" \
 "            </xades:Cert>\r\n"
@@ -825,11 +821,19 @@ public:
       UString output(U_CONSTANT_SIZE(U_XMLDSIG_TEMPLATE) + 8192U + 
                      SignedInfo.size() + SignatureValue.size() + XAdESObject.size());
 
+      if (utility.ooffice)
+         {
+         OpenDocumentStart = U_STRING_FROM_CONSTANT("<document-signatures xmlns=\"urn:oasis:names:tc:opendocument:xmlns:digitalsignature:1.0\">");
+         OpenDocumentEnd   = U_STRING_FROM_CONSTANT("</document-signatures>");
+         }
+
       output.snprintf(U_XMLDSIG_TEMPLATE,
+                        U_STRING_TO_TRACE(OpenDocumentStart),
                         U_STRING_TO_TRACE(SignedInfo),
                         U_STRING_TO_TRACE(SignatureValue),
                         U_STRING_TO_TRACE(KeyInfo),
-                        U_STRING_TO_TRACE(XAdESObject));
+                        U_STRING_TO_TRACE(XAdESObject),
+                        U_STRING_TO_TRACE(OpenDocumentEnd));
       // ---------------------------------------------------------------------------------------------------------------
 
       // ---------------------------------------------------------------------------------------------------------------
@@ -851,7 +855,7 @@ private:
            production_place_state_or_province, production_place_postal_code, production_place_country_name, uri,
            data_object_format_mimetype, signature_algorithm, to_digest, DataObjectFormat, XAdESObject, XAdESReference,
            X509IssuerName, X509SubjectName, X509Certificate, signedProperties, signature_timestamp, unsignedSignatureProperties,
-           unsignedSignaturePropertiesC14N;
+           unsignedSignaturePropertiesC14N, OpenDocumentStart, OpenDocumentEnd;
 };
 
 U_MAIN(Application)
