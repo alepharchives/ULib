@@ -52,7 +52,7 @@ const char* dump(bool reset) const { return UServer<type_socket>::dump(reset); }
 protected: \
 virtual void preallocate() { \
 U_TRACE(5+256, #server_class "::preallocate()") \
-vClientImage = U_NEW_VEC(U_max(max_Keep_Alive,16), client_class); } }
+vClientImage = U_NEW_VEC(UNotifier::max_connection, client_class); } }
 #else
 #  define U_MACROSERVER(server_class,client_class,type_socket) \
 class server_class : public UServer<type_socket> { \
@@ -60,7 +60,7 @@ public: \
  server_class(UFileConfig* cfg) : UServer<type_socket>(cfg) {} \
 ~server_class()                                             {} \
 protected: \
-virtual void preallocate() { vClientImage = new client_class[U_max(max_Keep_Alive,16)]; } }
+virtual void preallocate() { vClientImage = new client_class[UNotifier::max_connection]; } }
 #endif
 // ---------------------------------------------------------------------------------------------
 
@@ -212,7 +212,7 @@ public:
    // -------------------------------------------------------------------
 
    static char mod_name[20];
-   static UEventFd* handler_event;
+   static UEventFd* handler_inotify;
 
    // load plugin modules and call server-wide hooks handlerConfig()...
    static int loadPlugins(UString& plugin_dir, const UString& plugin_list, UFileConfig* cfg);
@@ -355,18 +355,17 @@ protected:
               cgi_timeout,    // the time-out value in seconds for output cgi process
               verify_mode;    // mode of verification ssl connection
 
-   static int sfd;
    static time_t expire;
    static UString* host;
    static UProcess* proc;
    static USocket* socket;
+   static int sfd, bclose;
    static UEventTime* ptime;
    static UServer_Base* pthis;
    static uint32_t start, count;
    static UString* senvironment;
    static UVector<UIPAllow*>* vallow_IP;
-   static uint32_t num_connection, max_Keep_Alive;
-   static bool flag_loop, flag_use_tcp_optimization;
+   static bool flag_loop, flag_use_tcp_optimization, accept_edge_triggered;
 
    // COSTRUTTORI
 
@@ -410,7 +409,7 @@ protected:
       //  0 - monitoring
       // ---------------
 
-      U_RETURN(handler_event ? -1 : 0);
+      U_RETURN(0);
       }
 
 #  ifdef DEBUG
@@ -433,7 +432,15 @@ protected:
 
    // define method VIRTUAL of class UEventFd
 
-   virtual int handlerRead(); // This method is called to accept a new connection on the server socket
+   virtual int  handlerRead(); // This method is called to accept a new connection on the server socket
+   virtual void handlerDelete()
+      {
+      U_TRACE(0, "UServer_Base::handlerDelete()")
+
+      U_INTERNAL_DUMP("UEventFd::fd = %d", UEventFd::fd)
+
+      UEventFd::fd = 0; 
+      }
 
    // method VIRTUAL to redefine
 
@@ -511,7 +518,7 @@ protected:
       {
       U_TRACE(0+256, "UServer<Socket>::preallocate()")
 
-      vClientImage = U_NEW_VEC(U_max(max_Keep_Alive,16), UClientImage<Socket>);
+      vClientImage = U_NEW_VEC(UNotifier::max_connection, UClientImage<Socket>);
       }
 
 private:
@@ -608,7 +615,7 @@ protected:
       {
       U_TRACE(0+256, "UServer<USSLSocket>::preallocate()")
 
-      vClientImage = U_NEW_VEC(U_max(max_Keep_Alive,16), UClientImage<USSLSocket>);
+      vClientImage = U_NEW_VEC(UNotifier::max_connection, UClientImage<USSLSocket>);
       }
 
 private:

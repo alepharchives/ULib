@@ -322,8 +322,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, handlerInput, "", 0)
 
-      fd      = fd_input;
-      op_mask = U_READ_IN;
+      fd = fd_input;
       }
 
    ~handlerInput()
@@ -451,7 +450,7 @@ int U_EXPORT main(int argc, char* argv[])
    if (argc > 2) UTimer::printInfo(cout);
 #endif
 
-   UNotifier::clear();
+   UNotifier::clear(false);
 
 #ifdef __unix__
    U_ASSERT(UNotifier::waitForRead( fd_input,  1 * 1000) <= 0)

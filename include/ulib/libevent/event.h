@@ -61,11 +61,11 @@ public:
     * @return true if there is a pending event, false if not.
     */
 
-   bool pending(short ev = EV_READ, UTimeVal* tv = 0)
+   bool pending(short __ev = EV_READ, UTimeVal* tv = 0)
       {
-      U_TRACE(1, "UEvent_Base::pending(%hd,%p)", ev, tv)
+      U_TRACE(1, "UEvent_Base::pending(%hd,%p)", __ev, tv)
 
-      if (U_SYSCALL(event_pending, "%p,%hd,%p", this, ev, tv)) U_RETURN(true);
+      if (U_SYSCALL(event_pending, "%p,%hd,%p", this, __ev, tv)) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -139,11 +139,11 @@ public:
    * @param handler  Callback functor.
    */
 
-   UEvent(int _fd, short ev, F& handler)
+   UEvent(int _fd, short __ev, F& handler)
       {
-      U_TRACE_REGISTER_OBJECT(0, UEvent<F>, "%d,%hd,%p", _fd, ev, &handler)
+      U_TRACE_REGISTER_OBJECT(0, UEvent<F>, "%d,%hd,%p", _fd, __ev, &handler)
 
-      U_SYSCALL_VOID(event_set, "%p,%d,%hd,%p,%p", this, _fd, ev, wrapper, (void*)&handler);
+      U_SYSCALL_VOID(event_set, "%p,%d,%hd,%p,%p", this, _fd, __ev, wrapper, (void*)&handler);
       }
 
    ~UEvent()
@@ -155,13 +155,13 @@ public:
    const char* dump(bool reset) const { return UEvent_Base::dump(reset); }
 #endif
 
-   static void wrapper(int _fd, short ev, void* h)
+   static void wrapper(int _fd, short __ev, void* h)
       {
-      U_TRACE(0, "UEvent::wrapper(%d,%hd,%p)", _fd, ev, h)
+      U_TRACE(0, "UEvent::wrapper(%d,%hd,%p)", _fd, __ev, h)
 
       F& handler = *(F*)h;
 
-      handler(_fd, ev);
+      handler(_fd, __ev);
       }
 
 protected:
@@ -190,11 +190,11 @@ public:
     * @param arg     Arbitrary pointer to pass to the handler as argument.
     */
 
-   UEvent(int _fd, short ev, ccallback_type handler, void* arg = 0)
+   UEvent(int _fd, short __ev, ccallback_type handler, void* arg = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UEvent<ccallback_type>, "%d,%hd,%p,%p", _fd, ev, handler, arg)
+      U_TRACE_REGISTER_OBJECT(0, UEvent<ccallback_type>, "%d,%hd,%p,%p", _fd, __ev, handler, arg)
 
-      U_SYSCALL_VOID(event_set, "%p,%d,%hd,%p,%p", this, _fd, ev, handler, arg);
+      U_SYSCALL_VOID(event_set, "%p,%d,%hd,%p,%p", this, _fd, __ev, handler, arg);
       }
 
    ~UEvent()
@@ -445,7 +445,7 @@ public:
 
    UMemCb(O& object, M method) : _object(object), _method(method) {}
 
-   void operator()(int fd, short ev) { (_object.*_method)(fd, ev); }
+   void operator()(int fd, short _ev) { (_object.*_method)(fd, _ev); }
 
 protected:
    O& _object;
@@ -555,11 +555,11 @@ public:
    * @param handler  Callback function.
    */
 
-   template <typename F> static bool add_once(int fd, short ev, F& handler)
+   template <typename F> static bool add_once(int fd, short _ev, F& handler)
       {
-      U_TRACE(1, "UDispatcher::add_once(%d,%hd,%p)", fd, ev, &handler)
+      U_TRACE(1, "UDispatcher::add_once(%d,%hd,%p)", fd, _ev, &handler)
 
-      if (U_SYSCALL(event_once, "%d,%hd,%p,%p,%p", fd, ev, UDispatcher::wrapper<F>, (void*)&handler, 0)) U_RETURN(false);
+      if (U_SYSCALL(event_once, "%d,%hd,%p,%p,%p", fd, _ev, UDispatcher::wrapper<F>, (void*)&handler, 0)) U_RETURN(false);
 
       U_RETURN(true);
       }
@@ -576,11 +576,11 @@ public:
    * @param to       Timeout.
    */
 
-   template <typename F> static bool add_once(int fd, short ev, F& handler, const UTimeVal& to)
+   template <typename F> static bool add_once(int fd, short _ev, F& handler, const UTimeVal& to)
       {
-      U_TRACE(1, "UDispatcher::add_once(%d,%hd,%p,%O)", fd, ev, &handler, U_OBJECT_TO_TRACE(to))
+      U_TRACE(1, "UDispatcher::add_once(%d,%hd,%p,%O)", fd, _ev, &handler, U_OBJECT_TO_TRACE(to))
 
-      if (U_SYSCALL(event_once, "%d,%hd,%p,%p,%p", fd, ev, UDispatcher::wrapper<F>, (void*)&handler, (timeval*)&to)) U_RETURN(false);
+      if (U_SYSCALL(event_once, "%d,%hd,%p,%p,%p", fd, _ev, UDispatcher::wrapper<F>, (void*)&handler, (timeval*)&to)) U_RETURN(false);
 
       U_RETURN(true);
       }
@@ -597,11 +597,11 @@ public:
    * @param arg      Arbitrary pointer to pass to the handler as argument.
    */
 
-   static bool add_once(int fd, short ev, ccallback_type handler, void* arg)
+   static bool add_once(int fd, short _ev, ccallback_type handler, void* arg)
       {
-      U_TRACE(1, "UDispatcher::add_once(%d,%hd,%p,%p)", fd, ev, handler, arg)
+      U_TRACE(1, "UDispatcher::add_once(%d,%hd,%p,%p)", fd, _ev, handler, arg)
 
-      if (U_SYSCALL(event_once, "%d,%hd,%p,%p,%p", fd, ev, handler, arg, 0)) U_RETURN(false);
+      if (U_SYSCALL(event_once, "%d,%hd,%p,%p,%p", fd, _ev, handler, arg, 0)) U_RETURN(false);
 
       U_RETURN(true);
       }
@@ -619,11 +619,11 @@ public:
    * @param to       Timeout.
    */
 
-   static bool add_once(int fd, short ev, ccallback_type handler, void* arg, const UTimeVal& to)
+   static bool add_once(int fd, short _ev, ccallback_type handler, void* arg, const UTimeVal& to)
       {
-      U_TRACE(1, "UDispatcher::add_once(%d,%hd,%p,%p,%O)", fd, ev, handler, arg, U_OBJECT_TO_TRACE(to))
+      U_TRACE(1, "UDispatcher::add_once(%d,%hd,%p,%p,%O)", fd, _ev, handler, arg, U_OBJECT_TO_TRACE(to))
 
-      if (U_SYSCALL(event_once, "%d,%hd,%p,%p,%p", fd, ev, handler, arg, (timeval*)&to)) U_RETURN(false);
+      if (U_SYSCALL(event_once, "%d,%hd,%p,%p,%p", fd, _ev, handler, arg, (timeval*)&to)) U_RETURN(false);
 
       U_RETURN(true);
       }
@@ -736,13 +736,13 @@ public:
       }
 
 protected:
-   template <typename F> static void wrapper(int fd, short ev, void* h)
+   template <typename F> static void wrapper(int fd, short _ev, void* h)
       {
-      U_TRACE(0, "UDispatcher::wrapper(%d,%hd,%p)", fd, ev, h)
+      U_TRACE(0, "UDispatcher::wrapper(%d,%hd,%p)", fd, _ev, h)
 
       F& handler = *(F*)h;
 
-      handler(fd, ev);
+      handler(fd, _ev);
       }
 
 private:

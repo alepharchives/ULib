@@ -44,12 +44,6 @@ void UTCPSocket::closesocket()
          }
 #  endif
 
-      /*
-      static struct linger l = { 1, 0 };
-
-      (void) setSockOpt(SOL_SOCKET, SO_LINGER, (const void*)&l, sizeof(struct linger)); // send RST - ECONNRESET
-      */
-
       /* The shutdown() tells the receiver the server is done sending data. No
        * more data is going to be send. More importantly, it doesn't close the
        * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
@@ -77,14 +71,10 @@ void UTCPSocket::closesocket()
          }
       }
 
-   // NB: to avoid epoll_wait() fire events on file descriptor without handler...
+   // NB: to avoid epoll_wait() fire events on file descriptor already closed...
 
 #if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
-   if (UNotifier::epollfd &&
-       UNotifier::find(iSockDesc))
-      {
-      (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", UNotifier::epollfd, EPOLL_CTL_DEL, iSockDesc, (struct epoll_event*)1);
-      }
+   if (UNotifier::isDynamicConnection(iSockDesc)) (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", UNotifier::epollfd, EPOLL_CTL_DEL, iSockDesc, (struct epoll_event*)1);
 next:
 #endif
 

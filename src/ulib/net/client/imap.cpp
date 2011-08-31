@@ -185,9 +185,9 @@ U_NO_EXPORT const char* UImapClient::status()
    U_RETURN(_buffer);
 }
 
-bool UImapClient::connectServer(const UString& server, int port, uint32_t timeoutMS)
+bool UImapClient::_connectServer(const UString& server, int port, uint32_t timeoutMS)
 {
-   U_TRACE(0, "UImapClient::connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
+   U_TRACE(0, "UImapClient::_connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
 
 #ifdef HAVE_SSL
    U_INTERNAL_ASSERT(Socket::isSSL())

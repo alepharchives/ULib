@@ -12,7 +12,7 @@ U_EXPORT main (int argc, char* argv[])
    USmtpClient smtp;
    UString tmp(argv[1], strlen(argv[1]));
 
-   if (smtp.connectServer(tmp))
+   if (smtp._connectServer(tmp))
       {
       UString rcpt(argv[2], strlen(argv[2]));
 #  ifdef HAVE_SSL

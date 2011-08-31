@@ -117,7 +117,7 @@ public:
    function called to established a socket connection with the IMAP network server
    */
 
-   bool connectServer(const UString& server, int port = 143, uint32_t timeout = U_TIMEOUT_MS);
+   bool _connectServer(const UString& server, int port = 143, uint32_t timeout = U_TIMEOUT_MS);
 
    /**
    Sends a login request to the remote IMAP server

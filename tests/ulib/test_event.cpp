@@ -1,7 +1,6 @@
 // test_event.cpp
 
 #include <ulib/file.h>
-#include <ulib/notifier.h>
 #include <ulib/libevent/event.h>
 
 #include <map>
@@ -293,7 +292,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)", argc)
 
-   UNotifier::init(0);
+   u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
 
    check_mixed_way();
    check_prio_test();

@@ -108,9 +108,9 @@ char* USmtpClient::status()
    U_RETURN(buffer);
 }
 
-bool USmtpClient::connectServer(const UString& server, int port, uint32_t timeoutMS)
+bool USmtpClient::_connectServer(const UString& server, int port, uint32_t timeoutMS)
 {
-   U_TRACE(0, "USmtpClient::connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
+   U_TRACE(0, "USmtpClient::_connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
 
 #ifdef HAVE_SSL
    U_INTERNAL_ASSERT(Socket::isSSL())
@@ -142,9 +142,9 @@ bool USmtpClient::connectServer(const UString& server, int port, uint32_t timeou
    U_RETURN(false);
 }
 
-bool USmtpClient::connectServer(UFileConfig& cfg, int port, uint32_t timeoutMS)
+bool USmtpClient::_connectServer(UFileConfig& cfg, int port, uint32_t timeoutMS)
 {
-   U_TRACE(0, "USmtpClient::connectServer(%p,%d,%u)", &cfg, port, timeoutMS)
+   U_TRACE(0, "USmtpClient::_connectServer(%p,%d,%u)", &cfg, port, timeoutMS)
 
    U_ASSERT_EQUALS(cfg.empty(), false)
 
@@ -161,7 +161,7 @@ bool USmtpClient::connectServer(UFileConfig& cfg, int port, uint32_t timeoutMS)
    setSenderAddress(   cfg[*str_SENDER_ADDRESS]);
    setRecipientAddress(cfg[*str_TO_ADDRESS]);
 
-   if (connectServer(cfg[*str_SMTP_SERVER], port, timeoutMS))
+   if (_connectServer(cfg[*str_SMTP_SERVER], port, timeoutMS))
       {
       UString replyToAddress = cfg[*str_REPLY_TO_ADDRESS];
 

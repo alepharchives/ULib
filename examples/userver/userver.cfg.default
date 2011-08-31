@@ -52,6 +52,7 @@
 #                                                                     0 - serialize, no forking
 #                                                                     1 - classic, forking after accept client
 #                                                                    >1 - pool of process serialize plus monitoring process
+#                                                         (not defined) - the number of CPU in the system
 # ----------------------------------------------------------------------------------------------------------------------------------------
 
 userver {
@@ -101,7 +102,7 @@ userver {
 # CA_FILE        ../ulib/CA/cacert.pem
 # VERIFY_MODE    1
 
-  PREFORK_CHILD  3
+# PREFORK_CHILD  3
 }
 
 # ------------------------------------------------------------------------------------------------------------------------------------------

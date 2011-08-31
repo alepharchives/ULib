@@ -136,7 +136,7 @@ public:
    function called to established a socket connection with the POP3 network server
    */
 
-   bool connectServer(const UString& server, int port = 110, uint32_t timeout = U_TIMEOUT_MS);
+   bool _connectServer(const UString& server, int port = 110, uint32_t timeout = U_TIMEOUT_MS);
 
    bool startTLS();
 

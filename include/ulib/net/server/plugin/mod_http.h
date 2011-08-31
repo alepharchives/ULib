@@ -95,7 +95,15 @@ public:
 
    // define method VIRTUAL of class UEventFd
 
-   virtual int handlerRead();
+   virtual int  handlerRead();
+   virtual void handlerDelete()
+      {
+      U_TRACE(0, "UHttpPlugIn::handlerDelete()")
+
+      U_INTERNAL_DUMP("UEventFd::fd = %d", UEventFd::fd)
+
+      UEventFd::fd = 0;
+      }
 
    // DEBUG
 

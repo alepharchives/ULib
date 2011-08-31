@@ -194,7 +194,7 @@ UHTTP::UFileCacheData::UFileCacheData()
 
    U_INTERNAL_ASSERT_POINTER(file)
 
-   wd     = -1;
+   wd     = fd = -1;
    size   = file->st_size;
    mode   = file->st_mode;
    mtime  = file->st_mtime;
@@ -202,7 +202,7 @@ UHTTP::UFileCacheData::UFileCacheData()
    array  = 0;
 
 #ifdef HAVE_SYS_INOTIFY_H
-   if (UServer_Base::handler_event)
+   if (UServer_Base::handler_inotify)
       {
       int                  flags  = IN_ONLYDIR | IN_CREATE | IN_DELETE;
       if (cache_file_mask) flags |= IN_MODIFY;
@@ -210,7 +210,7 @@ UHTTP::UFileCacheData::UFileCacheData()
       if (u_ftw_ctx.is_directory ||
           file->dir())
          {
-         wd = U_SYSCALL(inotify_add_watch, "%d,%s,%u", UServer_Base::handler_event->fd, pathname->c_str(), flags);
+         wd = U_SYSCALL(inotify_add_watch, "%d,%s,%u", UServer_Base::handler_inotify->fd, pathname->c_str(), flags);
          }
       }
 #endif
@@ -225,14 +225,14 @@ UHTTP::UFileCacheData::~UFileCacheData()
    if (array) delete array;
 
 #ifdef HAVE_SYS_INOTIFY_H
-   if (UServer_Base::handler_event)
+   if (UServer_Base::handler_inotify)
       {
-      U_INTERNAL_ASSERT_DIFFERS(UServer_Base::handler_event->fd, -1)
+      U_INTERNAL_ASSERT_MAJOR(UServer_Base::handler_inotify->fd,0)
 
       if (wd != -1 &&
           UServer_Base::isChild() == false)
          {
-         (void) U_SYSCALL(inotify_rm_watch, "%d,%d", UServer_Base::handler_event->fd, wd);
+         (void) U_SYSCALL(inotify_rm_watch, "%d,%d", UServer_Base::handler_inotify->fd, wd);
          }
       }
 #endif
@@ -316,7 +316,7 @@ void UHTTP::in_READ()
 {
    U_TRACE(1+256, "UHTTP::in_READ()")
 
-   U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_event)
+   U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_inotify)
 
 #ifdef HAVE_SYS_INOTIFY_H
    /*
@@ -337,7 +337,7 @@ void UHTTP::in_READ()
    uint32_t len;
    char buffer[IN_BUFLEN];
    union uuinotify_event event;
-   int i = 0, length = U_SYSCALL(read, "%d,%p,%u", UServer_Base::handler_event->fd, buffer, IN_BUFLEN);  
+   int i = 0, length = U_SYSCALL(read, "%d,%p,%u", UServer_Base::handler_inotify->fd, buffer, IN_BUFLEN);  
 
    while (i < length)
       {
@@ -693,7 +693,9 @@ void UHTTP::ctor()
    if (UServer_Base::socket->isSSL()) enable_caching_by_proxy_servers = true;
 #endif
 
+#if defined(HAVE_PAGE_SPEED) || defined(HAVE_V8)
    char buffer[U_PATH_MAX];
+#endif
 
 #ifdef HAVE_PAGE_SPEED
    U_INTERNAL_ASSERT_EQUALS(page_speed,0)
@@ -759,30 +761,30 @@ void UHTTP::ctor()
    // CACHE FILE SYSTEM
 
 #ifndef HAVE_SYS_INOTIFY_H
-   UServer_Base::handler_event = 0;
+   UServer_Base::handler_inotify = 0;
 #else
-   if (UServer_Base::handler_event)
+   if (UServer_Base::handler_inotify)
       {
       // INIT INOTIFY FOR CACHE FILE SYSTEM
 
 #  ifdef HAVE_INOTIFY_INIT1
-      UServer_Base::handler_event->fd = U_SYSCALL(inotify_init1, "%d", IN_NONBLOCK | IN_CLOEXEC);
+      UServer_Base::handler_inotify->fd = U_SYSCALL(inotify_init1, "%d", IN_NONBLOCK | IN_CLOEXEC);
 
-      if (UServer_Base::handler_event->fd != -1 || errno != ENOSYS) goto next;
+      if (UServer_Base::handler_inotify->fd != -1 || errno != ENOSYS) goto next;
 #  endif
 
-      UServer_Base::handler_event->fd = U_SYSCALL_NO_PARAM(inotify_init);
+      UServer_Base::handler_inotify->fd = U_SYSCALL_NO_PARAM(inotify_init);
 
-      (void) U_SYSCALL(fcntl, "%d,%d,%d", UServer_Base::handler_event->fd, F_SETFL, O_NONBLOCK | O_CLOEXEC);
+      (void) U_SYSCALL(fcntl, "%d,%d,%d", UServer_Base::handler_inotify->fd, F_SETFL, O_NONBLOCK | O_CLOEXEC);
 
 next:
-      if (UServer_Base::handler_event->fd != -1)
+      if (UServer_Base::handler_inotify->fd != -1)
          {
          U_SRV_LOG("Inode based directory notification enabled");
          }
       else
          {
-         UServer_Base::handler_event = 0;
+         UServer_Base::handler_inotify = 0;
 
          U_WARNING("Inode based directory notification failed");
          }
@@ -990,14 +992,14 @@ void UHTTP::dtor()
 
       // inotify: Inode based directory notification...
 
-#  ifdef HAVE_SYS_INOTIFY_H
-      if (UServer_Base::handler_event)
+      if (UServer_Base::handler_inotify)
          {
-         U_INTERNAL_ASSERT_DIFFERS(UServer_Base::handler_event->fd, -1)
+         U_INTERNAL_ASSERT_MAJOR(UServer_Base::handler_inotify->fd,0)
 
-         (void) U_SYSCALL(close, "%d", UServer_Base::handler_event->fd);
+         (void) U_SYSCALL(close, "%d", UServer_Base::handler_inotify->fd);
+
+         UServer_Base::handler_inotify = 0;
          }
-#  endif
 
 #  ifdef HAVE_PAGE_SPEED
       if (page_speed) delete page_speed;
@@ -1102,7 +1104,7 @@ Read the request line and attached headers. A typical http request will take the
 GET / HTTP/1.1
 Host: 127.0.0.1
 User-Agent: Mozilla/5.0 (compatible; Konqueror/3.1; Linux; it, en_US, en)
-Accept-Encoding: x-gzip, x-deflate, gzip, deflate, identity
+Accept-Encoding: gzip, deflate
 Accept-Charset: iso-8859-1, utf-8;q=0.5, *;q=0.5
 Accept-Language: it, en
 Connection: Keep-Alive
@@ -1968,12 +1970,14 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
                U_INTERNAL_DUMP("Accept-Encoding: = %.*S", pos2 - pos1 - 1, p)
 
-               if (U_STRNEQ(p, "gzip") ||
+               if ((U_STRNEQ(p, "gzip") && U_STRNCMP(p+4, ";q=0")) ||
                    u_find(p, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)
                   {
                   U_http_is_accept_deflate = '1';
 
                   U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
+
+                  U_ASSERT(u_find(p, 30, U_CONSTANT_TO_PARAM("deflate")))
                   }
                }
 
@@ -2137,15 +2141,9 @@ void UHTTP::clearHTTPRequestCache()
 
    cbuffer->clear();
 
-#ifndef U_SENDFILE_NONBLOCK
    U_INTERNAL_DUMP("UServer_Base::sfd = %d", UServer_Base::sfd)
 
-   if (UServer_Base::sfd)
-      {
-      UFile::close(UServer_Base::sfd);
-                   UServer_Base::sfd = 0;
-      }
-#endif
+   if (UServer_Base::sfd) UServer_Base::sfd = 0;
 }
 
 int UHTTP::checkHTTPRequestCache()
@@ -2169,37 +2167,25 @@ int UHTTP::checkHTTPRequestCache()
 
       if (cbuffer->equal(UClientImage_Base::rbuffer->rep))
          {
-         int                                      result  = U_PLUGIN_HANDLER_AGAIN;
-         if (U_http_is_connection_close == U_YES) result |= U_PLUGIN_HANDLER_ERROR;
-
-#     ifndef U_SENDFILE_NONBLOCK
          U_INTERNAL_DUMP("UServer_Base::sfd = %d", UServer_Base::sfd)
-
-#        ifdef DEBUG
-         if (UClientImage_Base::body->isNull())
-            {
-            U_INTERNAL_ASSERT_MAJOR(UServer_Base::sfd,0)
-            }
-#        endif
 
          if (UServer_Base::sfd)
             {
             U_ASSERT(UClientImage_Base::body->isNull())
+            U_INTERNAL_ASSERT_MAJOR(UServer_Base::count,0)
 
             U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd = %d", UServer_Base::pClientImage->sfd)
 
             U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd,0)
 
             UServer_Base::pClientImage->sfd    = UServer_Base::sfd;
-            UServer_Base::pClientImage->bclose = U_http_is_connection_close;
-
-            (void) U_SYSCALL(lseek, "%d,%u,%d", UServer_Base::sfd, UServer_Base::start, SEEK_SET);
-
-            // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
-
-            UServer_Base::pClientImage->socket->setTcpCork(1U);
+            UServer_Base::pClientImage->start  = UServer_Base::start;
+            UServer_Base::pClientImage->count  = UServer_Base::count;
+            UServer_Base::pClientImage->bclose = UServer_Base::bclose;
             }
-#     endif
+
+         int                                      result  = U_PLUGIN_HANDLER_AGAIN;
+         if (U_http_is_connection_close == U_YES) result |= U_PLUGIN_HANDLER_ERROR;
 
          U_RETURN(result);
          }
@@ -2225,35 +2211,25 @@ void UHTTP::manageHTTPRequestCache()
 
       U_INTERNAL_DUMP("cbuffer(%u) = %.*S", cbuffer->size(), U_STRING_TO_TRACE(*cbuffer))
 
-#  ifndef U_SENDFILE_NONBLOCK
-      U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd   = %d", UServer_Base::pClientImage->sfd)
-      U_INTERNAL_DUMP("UServer_Base::pClientImage->state = %d", UServer_Base::pClientImage->state)
-
-      if (UClientImage_Base::body->isNull())
-         {
-         U_INTERNAL_DUMP("UServer_Base::sfd = %d", UServer_Base::sfd)
-
-         U_INTERNAL_ASSERT_EQUALS(UServer_Base::sfd,0)
-         U_INTERNAL_ASSERT(UServer_Base::pClientImage->sfd)
-
-         UServer_Base::sfd = UServer_Base::pClientImage->sfd;
-                             UServer_Base::pClientImage->sfd = 0;
-
-         if (U_http_version == '0')
-            {
-            UServer_Base::expire = u_now->tv_sec + 60 * 60;
-
-            return;
-            }
-         }
-#  endif
-
       if (u_pthread_time == 0) (void) gettimeofday(u_now, 0);
 
       U_INTERNAL_DUMP("expire        = %ld", UServer_Base::expire)
       U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
 
       UServer_Base::expire = u_now->tv_sec;
+
+      if (file_data &&
+          file_data->fd != -1)
+         {
+         U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd   = %d", UServer_Base::pClientImage->sfd)
+         U_INTERNAL_DUMP("UServer_Base::pClientImage->state = %d", UServer_Base::pClientImage->state)
+
+         U_INTERNAL_ASSERT_EQUALS(UServer_Base::sfd,0)
+
+         UServer_Base::sfd = file_data->fd;
+
+         if (U_http_version == '0') UServer_Base::expire += 60 * 60;
+         }
       }
 }
 
@@ -2959,7 +2935,7 @@ UString UHTTP::getHTTPHeaderForResponse(const UString& content)
             {
             // ...to indicate that the session is being kept alive for a maximum of x requests and a per-request timeout of x seconds
 
-            ext.snprintf_add("Keep-Alive: max=%d, timeout=%d\r\n", UServer_Base::max_Keep_Alive, UServer_Base::getReqTimeout());
+            ext.snprintf_add("Keep-Alive: max=%d, timeout=%d\r\n", UNotifier::max_connection - UNotifier::min_connection, UServer_Base::getReqTimeout());
             }
          }
       }
@@ -3967,7 +3943,7 @@ bool UHTTP::isFileInCache()
       file->st_mode  = file_data->mode;
       file->st_mtime = file_data->mtime;
 
-      U_INTERNAL_DUMP("st_size = %I st_mtime = %ld dir() = %b", file->st_size, file->st_mtime, file->dir())
+      U_INTERNAL_DUMP("file_data->fd = %d st_size = %I st_mtime = %ld dir() = %b", file_data->fd, file->st_size, file->st_mtime, file->dir())
 
       U_RETURN(true);
       }
@@ -3981,9 +3957,19 @@ void UHTTP::renewDataCache()
 
    u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "./%.*s", U_STRING_TO_TRACE(*(cache_file->key())));
 
+   int fd = file_data->fd;
+
    cache_file->eraseAfterFind();
 
    checkFileForCache();
+
+   if (fd != -1 &&
+       file->st_ino) // stat() ok...
+      {
+      UFile::close(fd);
+
+      if (file->open()) file_data->fd = file->fd;
+      }
 
    u_buffer_len = 0;
 }
@@ -4080,7 +4066,7 @@ U_NO_EXPORT void UHTTP::checkPath()
          if (isFileInCache() == false &&
              file->stat())
             {
-            U_SRV_LOG("Inotify %s enabled - found file not in cache: %.*S", (UServer_Base::handler_event ? "is" : "NOT"), U_FILE_TO_TRACE(*file));
+            U_SRV_LOG("Inotify %s enabled - found file not in cache: %.*S", (UServer_Base::handler_inotify ? "is" : "NOT"), U_FILE_TO_TRACE(*file));
 
             manageDataForCache();
             }
@@ -4331,6 +4317,8 @@ bool UHTTP::checkHTTPServletRequest(const char* uri, uint32_t uri_len)
       setHTTPCgiResponse(false, false, false);
       }
 
+   file_data = 0;
+
    goto end;
 
 error:
@@ -4462,6 +4450,8 @@ end:
          }
       */
       }
+
+   U_INTERNAL_DUMP("file_data = %p", file_data)
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
@@ -5014,39 +5004,47 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                   file->setPath(*pathname);
 
-                  if (file->stat())
+                  if (file->stat()    &&
+                      file->getSize() &&
+                      file->regular() &&
+                      file->open())
                      {
-                     UString request(300U + pathname->size() + ext.size());
-
-                     request.snprintf("GET %.*s HTTP/1.1\r\n" \
-                                      "%.*s" \
-                                      "\r\n",
-                                      U_STRING_TO_TRACE(*pathname),
-                                      U_STRING_TO_TRACE(ext));
-
                      U_SRV_LOG("header X-Sendfile found in CGI output: serving file %.*S", U_STRING_TO_TRACE(*pathname));
 
-                     char c = U_http_is_accept_deflate;
-
-                     initHTTPInfo();
-
-                     U_http_is_accept_deflate = c;
-
-                     U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
-
-                     (void) readHTTPHeader(0, request);
+                     UClientImage_Base::body->clear();
+                     UClientImage_Base::wbuffer->clear();
 
                      if (ext.empty() == false)
                         {
                         U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(ext), U_CONSTANT_TO_PARAM(U_CRLF)))
 
+                        UString request(300U + pathname->size() + ext.size());
+
+                        request.snprintf("GET %.*s HTTP/1.1\r\n" \
+                                         "%.*s" \
+                                         "\r\n",
+                                         U_STRING_TO_TRACE(*pathname),
+                                         U_STRING_TO_TRACE(ext));
+
+                        U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
+
+                        char c = U_http_is_accept_deflate;
+
+                        initHTTPInfo();
+
+                        U_http_is_accept_deflate = c;
+
+                        (void) readHTTPHeader(0, request);
                         (void) checkHTTPRequestForHeader(request);
+
+                        ext.clear();
                         }
 
-                     UClientImage_Base::body->clear();
-                     UClientImage_Base::wbuffer->clear();
+                     file_data = 0;
 
-                     processHTTPGetRequest(request);
+                     processHTTPGetRequest(UString::getStringNull(), ext);
+
+                     file->close();
 
                      U_RETURN(true);
                      }
@@ -5764,7 +5762,22 @@ U_NO_EXPORT bool UHTTP::openFile()
 
    bool result;
 
-   if (file->dir())
+   if (file->dir() == false)
+      {
+      U_INTERNAL_ASSERT_POINTER(file_data)
+
+      result = ((file->fd = file_data->fd) != -1);
+
+      if (result == false)
+         {
+         // NB: '.htpasswd' and '.htdigest' are forbidden...
+
+         result = (file->regular()                                                           &&
+                   file->isNameDosMatch(U_CONSTANT_TO_PARAM(".htpasswd|.htdigest")) == false &&
+                   (file->open(), ((file_data->fd = file->fd) != -1)));
+         }
+      }
+   else
       {
       // NB: cgi-bin and usp are forbidden...
 
@@ -5773,7 +5786,7 @@ U_NO_EXPORT bool UHTTP::openFile()
 
       if (result)
          {
-         // Check if there is an index file (index.html) in the directory... (we check in the CACHE FILE)
+         // Check if there is an index file (index.html) in the directory... (we check in the CACHE FILE SYSTEM)
 
          uint32_t sz = file->getPathRelativLen(), len = str_indexhtml->size();
 
@@ -5787,7 +5800,8 @@ U_NO_EXPORT bool UHTTP::openFile()
             file_data = (*cache_file)[*pathname];
             }
 
-         if (file_data)
+         if (file_data == 0) result = (file->getPathRelativLen() > 1); // no index file, so it's an actual directory request ('/' alias '.' is forbidden)
+         else
             {
             if (isDataFromCache())
                {
@@ -5807,25 +5821,15 @@ U_NO_EXPORT bool UHTTP::openFile()
             file->st_mode  = file_data->mode;
             file->st_mtime = file_data->mtime;
 
-            result = (file->regular() && file->open());
-
-            goto end;
+            result = (file->regular() &&
+                     ((file->fd = file_data->fd, file->isOpen()) || (file->open(), ((file_data->fd = file->fd) != -1))));
             }
-
-         /* Nope, no index file, so it's an actual directory request */
-
-         result = (file->getPathRelativLen() > 1); // NB: '/' alias '.' is forbidden...
          }
       }
-   else
-      {
-      result = (file->regular()                                                           &&
-                file->isNameDosMatch(U_CONSTANT_TO_PARAM(".htpasswd|.htdigest")) == false && // NB: '.htpasswd' and '.htdigest' are forbidden
-                file->open());
-      }
 
-end:
    if (result == false) setHTTPForbidden(); // set forbidden error response...
+
+   U_INTERNAL_DUMP("file_data = %p", file_data)
 
    U_RETURN(result);
 }
@@ -5834,7 +5838,7 @@ void UHTTP::processHTTPGetRequest(const UString& request)
 {
    U_TRACE(0, "UHTTP::processHTTPGetRequest(%.*S)", U_STRING_TO_TRACE(request))
 
-   U_ASSERT_DIFFERS(request.empty(), true)
+   U_ASSERT_DIFFERS(request.empty(),true)
    U_ASSERT(UClientImage_Base::body->empty())
 
    // If the browser has to validate a component, it uses the If-None-Match header to pass the ETag back to
@@ -5866,18 +5870,15 @@ void UHTTP::processHTTPGetRequest(const UString& request)
 
    if (checkHTTPGetRequestIfModified(request) == false) return;
 
-   int ret;
-   UString mmap;
-   bool bdir, isSSL = false;
-   uint32_t start = 0, size = 0;
+   if (openFile() == false)
+      {
+      U_ASSERT_DIFFERS(file->isOpen(),true)
 
-   if (openFile() == false) goto end;
+      return;
+      }
 
-   u_mime_index = -1;
-
-   u_http_info.nResponseCode = HTTP_OK;
-
-   if (file->dir())
+   if (file->dir() == false) processHTTPGetRequest(etag, ext);
+   else
       {
       // check if it's OK to do directory listing via authentication (digest|basic)
 
@@ -5888,7 +5889,7 @@ void UHTTP::processHTTPGetRequest(const UString& request)
          return;
          }
 
-      bdir = true;
+      uint32_t size;
 
       if (isHttpHEAD()) size = getHTMLDirectoryList().size();
       else
@@ -5905,169 +5906,152 @@ void UHTTP::processHTTPGetRequest(const UString& request)
          size = UClientImage_Base::body->size();
          }
 
+      u_mime_index              = -1;
+      u_http_info.nResponseCode = HTTP_OK;
+
       (void) ext.append(getHeaderMimeType(0, U_CTYPE_HTML, size, 0));
+
+      *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(ext); // build response...
       }
-   else
+}
+
+U_NO_EXPORT void UHTTP::processHTTPGetRequest(const UString& etag, UString& ext)
+{
+   U_TRACE(0, "UHTTP::processHTTPGetRequest(%.*S,%.*S)", U_STRING_TO_TRACE(etag), U_STRING_TO_TRACE(ext))
+
+   u_http_info.nResponseCode = HTTP_OK;
+
+   uint32_t start = 0, size = file->getSize();
+
+   if (size)
       {
-      bdir = false;
-      size = file->getSize();
-
-      if (size)
+      if (file_data &&
+          isDataFromCache())
          {
-         if (file_data &&
-             isDataFromCache())
+         if (u_now->tv_sec > file_data->expire)
             {
-            bool data_expired = (u_now->tv_sec > file_data->expire);
+            renewDataCache();
 
-            if (data_expired)
-               {
-               file->close();
-
-               renewDataCache();
-               }
-
-            *UClientImage_Base::body = getDataFromCache(false, false); 
-
-            if (data_expired) file->open();
-
-            u_mime_index = file_data->mime_index;
-
-            (void) ext.append(getDataFromCache(true, false));
+            size = file->getSize();
             }
+
+         *UClientImage_Base::body = getDataFromCache(false, false); 
+
+         u_mime_index = file_data->mime_index;
+
+         (void) ext.append(getDataFromCache(true, false));
+         }
+      else
+         {
+         (void) file->memmap(PROT_READ, UClientImage_Base::body);
+
+         (void) ext.append(getHeaderMimeType(UClientImage_Base::body->data(), file->getMimeType(false), size, 0));
+         }
+
+      if (u_http_info.range_len &&
+          checkHTTPGetRequestIfRange(etag))
+         {
+         // The Range: header is used with a GET request.
+         // For example assume that will return only a portion (let's say the first 32 bytes) of the requested resource...
+         //
+         // Range: bytes=0-31
+
+         if (checkHTTPGetRequestForRange(start, size, ext, *UClientImage_Base::body) == false)
+            {
+            UClientImage_Base::body->clear(); // NB: this make also the unmmap() of file...
+
+            return;
+            }
+
+         u_http_info.nResponseCode = HTTP_PARTIAL;
+         }
+
+      // ---------------------------------------------------------------------
+      // NB: check for Flash pseudo-streaming
+      // ---------------------------------------------------------------------
+      // Adobe Flash Player can start playing from any part of a FLV movie
+      // by sending the HTTP request below ('123' is the bytes offset):
+      //
+      // GET /movie.flv?start=123
+      //
+      // HTTP servers that support Flash Player requests must send the binary 
+      // FLV Header ("FLV\x1\x1\0\0\0\x9\0\0\0\x9") before the requested data.
+      // ---------------------------------------------------------------------
+
+      if (u_mime_index == U_flv                     &&
+          u_http_info.nResponseCode != HTTP_PARTIAL &&
+          U_HTTP_QUERY_STRNEQ("start="))
+         {
+         start = atol(u_http_info.query + U_CONSTANT_SIZE("start="));
+
+         U_SRV_LOG("request for flash pseudo-streaming: video = %.*S start = %u", U_FILE_TO_TRACE(*file), start);
+
+         if (start >= size) start = 0;
          else
             {
-            (void) file->memmap(PROT_READ, UClientImage_Base::body);
-
-            (void) ext.append(getHeaderMimeType(UClientImage_Base::body->data(), file->getMimeType(false), size, 0));
-            }
-
-         if (u_http_info.range_len &&
-             checkHTTPGetRequestIfRange(etag))
-            {
-            // The Range: header is used with a GET request.
-            // For example assume that will return only a portion (let's say the first 32 bytes) of the requested resource...
-            //
-            // Range: bytes=0-31
-
-            if (checkHTTPGetRequestForRange(start, size, ext, *UClientImage_Base::body) == false)
-               {
-               UClientImage_Base::body->clear(); // NB: this make also the unmmap() of file...
-
-               goto end;
-               }
+            // build response...
 
             u_http_info.nResponseCode = HTTP_PARTIAL;
-            }
 
-         // NB: check for Flash pseudo-streaming...
+            setResponseForRange(start, size-1, size, U_CONSTANT_SIZE(U_FLV_HEAD), ext);
 
-         if (u_mime_index == U_flv                     &&
-             u_http_info.nResponseCode != HTTP_PARTIAL &&
-             U_HTTP_QUERY_STRNEQ("start="))
-            {
-            start = atol(u_http_info.query + U_CONSTANT_SIZE("start="));
+            *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(ext);
 
-            U_SRV_LOG("request for flash pseudo-streaming: video = %.*S start = %u", U_FILE_TO_TRACE(*file), start);
+            (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_FLV_HEAD));
 
-            if (start >= size) start = 0;
-            else
-               {
-               // build response...
- 
-               u_http_info.nResponseCode = HTTP_PARTIAL;
-
-               setResponseForRange(start, size-1, size, U_CONSTANT_SIZE(U_FLV_HEAD), ext);
-
-               *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(ext);
-
-               (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_FLV_HEAD));
-
-               goto next;
-               }
+            goto next;
             }
          }
       }
 
-   // build response...
+   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(ext); // build response...
 
-   *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(ext);
+next:
 
-next: // NB: check if we need to send the body with writev()...
+   // NB: we check if we need to send the body with sendfile()
+
+   bool bsendfile = (isHttpHEAD() == false &&
+                     size > min_size_for_sendfile);
 
 #ifdef HAVE_SSL
-   if (UServer_Base::pClientImage->socket->isSSL()) isSSL = true;
+   if (bsendfile && UServer_Base::pClientImage->socket->isSSL()) bsendfile = false;
 #endif
 
-   if (bdir                           ||
-       isSSL                          ||
-       (size < min_size_for_sendfile) ||
-       isHttpHEAD())
+   if (bsendfile == false)
       {
-      if (isHttpHEAD())
+      if (u_http_info.nResponseCode == HTTP_PARTIAL)
          {
-         UClientImage_Base::body->clear(); // NB: this make also the unmmap() of file...
-         }
-      else if (u_http_info.nResponseCode == HTTP_PARTIAL)
-         {
-         mmap                     = *UClientImage_Base::body;
+         UString mmap             = *UClientImage_Base::body;
          *UClientImage_Base::body = mmap.substr(start, size);
+
+         int ret = UServer_Base::pClientImage->handlerWrite();
+
+         UClientImage_Base::write_off = true;
+
+         if (ret == U_NOTIFIER_DELETE) U_http_is_connection_close = U_YES;
+
+#     ifdef DEBUG
+         UClientImage_Base::body->clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+#     endif
          }
+      else if (isHttpHEAD()) UClientImage_Base::body->clear(); // NB: this make also the unmmap() of file...
       }
    else
       {
-      // NB: we use sendfile()...
+      // NB: we use sendfile()
 
       UClientImage_Base::body->clear(); // NB: this make also the unmmap() of file...
 
-      /* On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
-       * ------------------------------------------------------------------------------------------------------
-       * if we set the TCP_CORK option on the socket, our header packet will be padded with the bulk data
-       * and all the data will be transferred automatically in the packets according to size. When finished
-       * with the bulk data transfer, it is advisable to uncork the connection by unsetting the TCP_CORK option
-       * so that any partial frames that are left can go out. This is equally important to corking. To sum it up,
-       * we recommend setting the TCP_CORK option when you're sure that you will be sending multiple data sets
-       * together (such as header and a body of HTTP response), with no delays between them. This can greatly
-       * benefit the performance of WWW, FTP, and file servers, as well as simplifying your life
-       * ------------------------------------------------------------------------------------------------------
-       */
+      U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd = %d", UServer_Base::pClientImage->sfd)
 
-      UServer_Base::pClientImage->socket->setTcpCork(1U); // NB: must be here, before the first write...
+      U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd,0)
+
+      UServer_Base::pClientImage->sfd    = file->fd;
+      UServer_Base::pClientImage->start  = UServer_Base::start  = start;
+      UServer_Base::pClientImage->count  = UServer_Base::count  = size;
+      UServer_Base::pClientImage->bclose = UServer_Base::bclose = U_http_is_connection_close;
+                                                                  U_http_is_connection_close = U_NOT;
       }
-
-   ret = UServer_Base::pClientImage->handlerWrite();
-
-   UClientImage_Base::write_off = true;
-
-   if (ret == U_NOTIFIER_DELETE)
-      {
-      U_http_is_connection_close = U_YES;
-
-      goto end;
-      }
-
-   if (UClientImage_Base::body->empty())
-      {
-      if (size == 0 || isHttpHEAD()) goto end;
-
-      ret = UServer_Base::pClientImage->sendfile(file->fd, U_http_is_connection_close, start, size);
-
-      if (ret == U_MAYBE) return;
-
-      if (ret == U_NOT)
-         {
-         U_http_is_connection_close = U_YES;
-
-         goto end;
-         }
-
-      U_INTERNAL_ASSERT_EQUALS(ret, U_YES)
-      }
-#ifdef DEBUG
-   else if (u_http_info.nResponseCode == HTTP_PARTIAL) UClientImage_Base::body->clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-#endif
-
-end:
-   if (file->isOpen()) file->close();
 }
 
 // ------------------------------------------------------------------------------------------------------------------------------

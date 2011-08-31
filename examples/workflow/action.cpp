@@ -100,7 +100,7 @@ bool Action::sendEmail()
 {
    U_TRACE(5, "Action::sendEmail()")
 
-   bool ok = emailClient.connectServer(cfg);
+   bool ok = emailClient._connectServer(cfg);
 
    toAddress = emailClient.getRecipientAddress();
 

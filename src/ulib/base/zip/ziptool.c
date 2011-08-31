@@ -943,7 +943,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
       if (method != 8 &&
           (flags & 0x0008))
          {
-         U_INTERNAL_TRACE("Error: not compressed but data_descriptor")
+         U_WARNING("not compressed but data_descriptor - filename: %s", filename);
 
          return 0;
          }
@@ -955,11 +955,9 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
          if (f_fd < 0)
             {
-            U_INTERNAL_TRACE("Error extracting ZIP archive")
+            U_ERROR("Error extracting ZIP archive - filename: %s", filename);
 
-            perror((const char*)filename);
-
-            return 0;
+         // return 0;
             }
          }
 
@@ -1025,7 +1023,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
          if (signature != 0x08074b50)
             {
-            U_INTERNAL_TRACE("Error: missing data_descriptor")
+            U_WARNING("missing data_descriptor - filename: %s", filename);
 
             return 0;
             }
@@ -1035,9 +1033,9 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
       if (crc != ze.crc)
          {
-         U_INTERNAL_TRACE("Error: CRCs do not match, got %x, expected %x", ze.crc, crc)
+         U_WARNING("CRCs do not match, got %x, expected %x - filename: %s", ze.crc, crc, filename);
 
-         return 0;
+      // return 0;
          }
 
       ++n;

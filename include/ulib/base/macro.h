@@ -309,6 +309,11 @@ typedef enum {
 #     undef  U_NO_EXPORT
 #     define U_NO_EXPORT __attribute__ ((visibility("hidden")))
 #  endif
+/*
+#  ifdef HAVE_CLOCK_GETTIME
+#     define gettimeofday(tv,tz) clock_gettime(CLOCK_REALTIME,(struct timespec*)tv)
+#  endif
+*/
 #endif
 
 /* GCC have printf type attribute check */

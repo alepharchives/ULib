@@ -416,29 +416,27 @@ void u_trace_suspend(int resume)
 
    if (u_flag_exit == 0)
       {
-      static int            cnt_suspend;           /* disabilita eventuale ricorsione... */
+      static int cnt_suspend; /* disabilita eventuale ricorsione... */
       static void* restrict flag_mask_level_save;
-
-      if (resume)
-         {
-         if (--cnt_suspend == 0)
-            {
-            flag_mask_level      = (flag_mask_level_save != (void*)0x0001 ? flag_mask_level_save : 0);
-            flag_mask_level_save = 0;
-            }
-         }
-      else
-         {
-         if (++cnt_suspend == 1)
-            {
-            flag_mask_level_save = (flag_mask_level != (void*)0x0001 ? flag_mask_level : 0);
-            flag_mask_level      =                     (void*)0x0001;
-            }
-         }
 
       U_INTERNAL_PRINT("cnt_suspend=%d flag_mask_level=%p flag_mask_level_save=%p", cnt_suspend, flag_mask_level, flag_mask_level_save)
 
-      U_INTERNAL_ASSERT(cnt_suspend >= 0)
+      int cnt = cnt_suspend + (resume ? -1 : 1);
+
+      if (cnt == 0)
+         {
+         flag_mask_level      = (flag_mask_level_save != (void*)0x0001 ? flag_mask_level_save : 0);
+         flag_mask_level_save = 0;
+         }
+      else if (cnt == 1)
+         {
+         flag_mask_level_save = (flag_mask_level != (void*)0x0001 ? flag_mask_level : 0);
+         flag_mask_level      =                     (void*)0x0001;
+         }
+
+      cnt_suspend = cnt;
+
+      U_INTERNAL_PRINT("cnt_suspend=%d flag_mask_level=%p flag_mask_level_save=%p", cnt_suspend, flag_mask_level, flag_mask_level_save)
       }
 }
 

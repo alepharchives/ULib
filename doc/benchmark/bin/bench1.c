@@ -261,20 +261,38 @@ static int http_req(char *request);
 #undef URL
 #undef PORT
 #undef FROM
+#undef TO
 static const char* IP;  // = (argv[1]?	    argv[1] :"localhost");
 static const char* URL; // = (argv[2]?	    argv[2] :"/index.html");
 static int PORT;			// = (argv[3]?atoi(argv[3]):80);
 static int FROM;			// = (argv[4]?atoi(argv[4]):0);
+static int TO;				// = (argv[5]?atoi(argv[5]):1000);
 // -------------------------
 
 // ----------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
+// -------------------------
+// STEFANO
+// -------------------------
+IP   = (argv[1]?argv[1]:"localhost");
+URL  = (argv[2]?argv[2]:"/index.html");
+PORT = (argv[3]?atoi(argv[3]):80);
+FROM = (argv[4]?atoi(argv[4]):0);
+TO   = (argv[5]?atoi(argv[5]):1000);
+
+// #define GWAN_28x
+// #define U_KEEP_ALIVES
+// -------------------------
+
    int    i, j, nbr, max_rps, min_rps, ave_rps;
    char   str[256], buff[4070];
-   FILE  *f, *fo = fopen("test.txt", "w+b");
+   FILE  *f, *fo;
    time_t st = time(NULL);
    u64 tmax_rps = 0, tmin_rps = 0, tave_rps = 0;
+
+   sprintf(str, "%s/test.txt", IP);
+   fo = fopen(str, "w+b");
 
    //fprintf(stderr, "URL=%s\n", URL);
    //fprintf(stderr, "ret=%d\n", http_req(URL));
@@ -288,25 +306,20 @@ int main(int argc, char *argv[])
    }
 #endif
 
-// -------------------------
-// STEFANO
-// -------------------------
-IP   = (argv[1]?argv[1]:"localhost");
-URL  = (argv[2]?argv[2]:"/index.html");
-PORT = (argv[3]?atoi(argv[3]):80);
-FROM = (argv[4]?atoi(argv[4]):0);
-// -------------------------
-
    for(i = FROM; i <= TO; i += STEP)
    {
 
 #ifdef IBM_APACHEBENCH
        // ApacheBench makes it straight for you since you can directly tell
        // the 'concurrency' and 'duration' you wish:
-       sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 -k "		/* KEEP-ALIVES */
-//     sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 "			/* NO Keep-Alives */
+       sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 "	
+#	ifdef U_KEEP_ALIVES
+						  "-k "												/* KEEP-ALIVES */
+#	elif defined(GWAN_28x)
+						  "-H \"Connection: close\" "					/* GWAN 2.8.[8-14] need this if NO Keep-Alives */
+#	endif
                     "-H \"Accept-Encoding: gzip,deflate\" " /* HTTP compression */
-                    "\"http://%s" ":%d" "%s" "\"" " > ab.txt", i?i:1, IP, PORT, URL);
+                    "\"http://%s" ":%d" "%s" "\"" " > %s/ab.txt", i?i:1, IP, PORT, URL, IP);
 #else
        // HTTPerf does not let you specify the 'concurrency'rate:
        //
@@ -346,7 +359,7 @@ FROM = (argv[4]?atoi(argv[4]):0);
                     "--num-conns=%d --num-calls 100000 " // KEEP-ALIVES
 //                  "--num-conns=1000000 --num-calls 1 " // NO Keep_Alives
                     "--timeout 5 --hog --uri=\""
-                    "%s\"" " > ab.txt", IP, PORT, i?i:1, i?i:1, URL);
+                    "%s\"" " > %s/ab.txt", IP, PORT, i?i:1, i?i:1, URL, IP);
 #endif
 
       for(max_rps = 0, ave_rps = 0, min_rps = 0xffff0, j = 0; j < ITER; j++)
@@ -359,8 +372,9 @@ FROM = (argv[4]?atoi(argv[4]):0);
          // this OS platform is -by far- the slowest and less scalable of all)
          Sleep(4000);
 #endif
-         // get the information we need from res.txt
-         if(!(f = fopen("ab.txt", "rb")))
+         // get the information we need from ab.txt
+			sprintf(buff, "%s/ab.txt", IP);
+         if(!(f = fopen(buff, "rb")))
          {
             printf("Can't open ab.txt output\n");
             return 1;

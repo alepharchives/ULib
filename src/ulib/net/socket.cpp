@@ -622,9 +622,9 @@ the last byte that was read. COUNT is the number of bytes to copy between file d
 the kernel, sendfile() does not need to spend time transferring data to and from user space.
 */
 
-bool USocket::sendfile(int in_fd, off_t offset, uint32_t count)
+bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count)
 {
-   U_TRACE(1, "USocket::sendfile(%d,%I,%u)", in_fd, offset, count)
+   U_TRACE(1, "USocket::sendfile(%d,%p,%u)", in_fd, poffset, count)
 
    U_CHECK_MEMORY
 
@@ -636,7 +636,7 @@ bool USocket::sendfile(int in_fd, off_t offset, uint32_t count)
    do {
       U_INTERNAL_DUMP("count = %u", count)
 
-      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", iSockDesc, in_fd, (offset ? &offset : 0), count);
+      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", iSockDesc, in_fd, poffset, count);
 
       if (value == (ssize_t)count) U_RETURN(true);
 
@@ -833,6 +833,10 @@ loop:
       (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_CORK, (void*)&value, tmp);
       U_INTERNAL_DUMP("TCP_CORK = %d", value)
 #     endif
+#     ifdef TCP_DEFER_ACCEPT
+      (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (void*)&value, tmp);
+      U_INTERNAL_DUMP("TCP_DEFER_ACCEPT = %d", value)
+#     endif
 #     ifdef TCP_QUICKACK
       (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_QUICKACK, (void*)&value, tmp);
       U_INTERNAL_DUMP("TCP_QUICKACK = %d", value)
@@ -841,13 +845,21 @@ loop:
       (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_NODELAY, (void*)&value, tmp);
       U_INTERNAL_DUMP("TCP_NODELAY = %d", value)
 #     endif
-      U_DUMP("getBufferRCV() = %u getBufferSND() = %u", pcNewConnection->getBufferRCV(), pcNewConnection->getBufferSND())
+#     ifdef SO_KEEPALIVE
+      (void) pcNewConnection->getSockOpt(SOL_SOCKET, SO_KEEPALIVE, (void*)&value, tmp);
+      U_INTERNAL_DUMP("SO_KEEPALIVE = %d", value)
+#     endif
 #     ifdef TCP_CONGESTION
       char buffer[32];
       uint32_t tmp1 = sizeof(buffer);
       (void) pcNewConnection->getSockOpt(IPPROTO_TCP, TCP_CONGESTION, (void*)buffer, tmp1);
       U_INTERNAL_DUMP("TCP_CONGESTION = %S", buffer)
 #     endif
+      struct linger x = { 0, -1 }; // { int l_onoff; int l_linger; }
+      uint32_t tmp0 = sizeof(struct linger);
+      (void) pcNewConnection->getSockOpt(SOL_SOCKET, SO_LINGER, (void*)&x, tmp0);
+      U_INTERNAL_DUMP("SO_LINGER = { %d %d }", x.l_onoff, x.l_linger)
+      U_DUMP("getBufferRCV() = %u getBufferSND() = %u", pcNewConnection->getBufferRCV(), pcNewConnection->getBufferSND())
 #  endif
 */
 

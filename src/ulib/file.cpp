@@ -161,6 +161,8 @@ bool UFile::stat()
 
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
+   st_ino = 0;
+
    bool result = (U_SYSCALL(stat, "%S,%p", U_PATH_CONV(path_relativ), (struct stat*)this) == 0);
 
    U_RETURN(result);

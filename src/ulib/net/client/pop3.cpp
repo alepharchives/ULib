@@ -68,9 +68,9 @@ U_NO_EXPORT const char* UPop3Client::status()
    U_RETURN(_buffer);
 }
 
-bool UPop3Client::connectServer(const UString& server, int port, uint32_t timeoutMS)
+bool UPop3Client::_connectServer(const UString& server, int port, uint32_t timeoutMS)
 {
-   U_TRACE(0, "UPop3Client::connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
+   U_TRACE(0, "UPop3Client::_connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
 
 #ifdef HAVE_SSL
    U_INTERNAL_ASSERT(Socket::isSSL())
@@ -186,7 +186,7 @@ U_NO_EXPORT bool UPop3Client::syncCommandML(const UString& req, int* vpos, int* 
       U_INTERNAL_DUMP("buffer.size() = %u", buffer.size())
 
       do {
-         if (buffer.size() < (end + U_CONSTANT_SIZE(U_POP3_OK))) break;
+         if (buffer.size() < (uint32_t)(end + U_CONSTANT_SIZE(U_POP3_OK))) break;
 
       // end = U_STRING_FIND(buffer, end, U_POP3_OK);
 

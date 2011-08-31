@@ -19,21 +19,25 @@
 #endif
 
 #ifdef EPOLLIN
-#define U_READ_IN  EPOLLIN
+#  define U_READ_IN  EPOLLIN
 #else
-#define U_READ_IN  0x001 // NB: same as EPOLLIN
+#  define U_READ_IN  0x001 // NB: same as EPOLLIN
 #endif
 #ifdef EPOLLOUT
-#define U_WRITE_OUT EPOLLOUT
+#  define U_WRITE_OUT EPOLLOUT
 #else
-#define U_WRITE_OUT 0x004 // NB: same as EPOLLOUT
-#endif
-#ifndef EPOLLET
-#define EPOLLET 0
+#  define U_WRITE_OUT 0x004 // NB: same as EPOLLOUT
 #endif
 
 #define U_NOTIFIER_OK      0
 #define U_NOTIFIER_DELETE -1
+
+// -------------------------------------------------------------------------------------------------------------------------
+// EPOLLET is edge-triggered (alas SIGIO, when that descriptor transitions from not ready to ready, the kernel notifies you)
+// -------------------------------------------------------------------------------------------------------------------------
+#ifndef EPOLLET
+#  define EPOLLET 0
+#endif
 
 class U_EXPORT UEventFd {
 public:
@@ -45,18 +49,12 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   UEventFd* next;
    int fd, op_mask; // [ U_READ_IN | U_WRITE_OUT ]
 
    UEventFd()
       {
       U_TRACE_REGISTER_OBJECT(0, UEventFd, "")
-
-      // EPOLLET  is edge-triggered (alas SIGIO, when that descriptor transitions from not ready to ready, the kernel notifies you)
-      // --------------------------------------------------------------------------------------------------------------------------
-      // NB: we lose notification of event with this...
    
-      next    = 0;
       fd      = 0;
       op_mask = U_READ_IN;
 

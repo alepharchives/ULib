@@ -76,7 +76,7 @@ public:
       {
       U_INTERNAL_TRACE("UObjectDumpable_Adapter::UObjectDumpable_Adapter(%u,%s,%p)", _level, _name_class, object)
 
-      UObjectDumpable::size_object = (sizeof(Concrete) > sizeof(void*) ? sizeof(Concrete) - sizeof(void*) : 1); // - U_MEMORY_TEST...
+      UObjectDumpable::size_object = (sizeof(Concrete) > sizeof(void*) ? (uint32_t)(sizeof(Concrete) - sizeof(void*)) : 1U); // - U_MEMORY_TEST...
 
       U_INTERNAL_PRINT("this = %p", this)
       }

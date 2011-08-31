@@ -69,32 +69,31 @@
 #  include <ulib/net/unixsocket.h>
 #endif
 
-#define U_DEFAULT_PORT           80
-#define U_TOT_CONNECTION         ptr_shared_data->tot_connection
-#define U_DEFAULT_MAX_KEEP_ALIVE 1000
+#define U_DEFAULT_PORT   80
+#define U_TOT_CONNECTION ptr_shared_data->tot_connection
 
 int                        UServer_Base::sfd;
 int                        UServer_Base::port;
+int                        UServer_Base::bclose;
 int                        UServer_Base::iBackLog = SOMAXCONN;
 int                        UServer_Base::timeoutMS = -1;
 int                        UServer_Base::cgi_timeout;
 int                        UServer_Base::verify_mode;
 int                        UServer_Base::preforked_num_kids;
 bool                       UServer_Base::flag_loop;
+bool                       UServer_Base::accept_edge_triggered;
 bool                       UServer_Base::flag_use_tcp_optimization;
 char                       UServer_Base::mod_name[20];
 ULog*                      UServer_Base::log;
 time_t                     UServer_Base::expire;
 uint32_t                   UServer_Base::start;
 uint32_t                   UServer_Base::count;
-uint32_t                   UServer_Base::max_Keep_Alive;
-uint32_t                   UServer_Base::num_connection;
 uint32_t                   UServer_Base::shared_data_add;
 UString*                   UServer_Base::host;
 UString*                   UServer_Base::senvironment;
 USocket*                   UServer_Base::socket;
 UProcess*                  UServer_Base::proc;
-UEventFd*                  UServer_Base::handler_event;
+UEventFd*                  UServer_Base::handler_inotify;
 UEventTime*                UServer_Base::ptime;
 UServer_Base*              UServer_Base::pthis;
 UVector<UString>*          UServer_Base::vplugin_name;
@@ -154,11 +153,18 @@ public:
 
    virtual void run()
       {
+      int counter        = 1;
       struct timespec ts = {  1L, 0L };
 
       while (true)
          {
-         (void) gettimeofday(u_now, 0);
+         if (--counter) u_now->tv_sec += 1L;
+         else
+            {
+            counter = 30;
+
+            (void) gettimeofday(u_now, 0);
+            }
 
          (void) nanosleep(&ts, 0);
          }
@@ -344,13 +350,11 @@ UServer_Base::~UServer_Base()
 
    UClientImage_Base::clear();
 
-   // NB: to avoid delete itself...
+   U_INTERNAL_ASSERT_EQUALS(handler_inotify,0)
 
-   while (UNotifier::pthis->size()) (void) UNotifier::pthis->pop();
+   UEventFd::fd = 0; // NB: to avoid delete itself...
 
-   U_INTERNAL_ASSERT_EQUALS(UNotifier::pthis->UVector<void*>::find(pthis),U_NOT_FOUND)
-
-   UNotifier::clear();
+   UNotifier::clear(preforked_num_kids == -1);
 
    if (vClientImage) delete[] vClientImage;
 
@@ -463,7 +467,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    port                       = cfg.readLong(*str_PORT,           U_DEFAULT_PORT);
    iBackLog                   = cfg.readLong(*str_LISTEN_BACKLOG, SOMAXCONN);
-   max_Keep_Alive             = cfg.readLong(*str_MAX_KEEP_ALIVE);
+   UNotifier::max_connection  = cfg.readLong(*str_MAX_KEEP_ALIVE);
 
    timeoutMS                  = cfg.readLong(*str_REQ_TIMEOUT);
    cgi_timeout                = cfg.readLong(*str_CGI_TIMEOUT);
@@ -487,7 +491,17 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 #endif
 
 #ifndef __MINGW32__
-   preforked_num_kids = cfg.readLong(*str_PREFORK_CHILD);
+   UString x = cfg[*str_PREFORK_CHILD];
+
+   if (x.empty() == false) preforked_num_kids = x.strtol();
+   else
+      {
+      preforked_num_kids = u_get_num_cpu();
+
+      U_INTERNAL_DUMP("num_cpu = %d", preforked_num_kids)
+
+      if (preforked_num_kids < 2) preforked_num_kids = 2;
+      }
 
    if (isPreForked())
       {
@@ -996,7 +1010,9 @@ void UServer_Base::init()
    U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
                     sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
 
+#ifdef HAVE_SSL
 next:
+#endif
    U_INTERNAL_ASSERT_EQUALS(proc,0)
 
    proc = U_NEW(UProcess);
@@ -1007,9 +1023,12 @@ next:
 
    runAsUser();
 
-   UNotifier::init(4);
-
    UClientImage_Base::init();
+
+                                 USocket::accept4_flags  = SOCK_CLOEXEC;
+#ifdef HAVE_SSL
+   if (socket->isSSL() == false) USocket::accept4_flags |= SOCK_NONBLOCK;
+#endif
 
    // init plugin modules...
 
@@ -1020,15 +1039,20 @@ next:
       }
 
    USocket* csocket;
+   UIPAddress* addr;
    UClientImage_Base* ptr;
-   UIPAddress* addr = (socket->isLocalSet() ? &(socket->cLocalAddress) : 0);
 
-                                 USocket::accept4_flags  = SOCK_CLOEXEC;
-#ifdef HAVE_SSL
-   if (socket->isSSL() == false) USocket::accept4_flags |= SOCK_NONBLOCK;
+   if (UNotifier::max_connection == 0) UNotifier::max_connection  = 1020;
+
+   if (isClassic())              goto next1;
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+   if (preforked_num_kids == -1) goto next1;
 #endif
 
-   if (max_Keep_Alive == 0) max_Keep_Alive = U_DEFAULT_MAX_KEEP_ALIVE;
+   UNotifier::max_connection += (handler_inotify ? 2 : 1);
+
+next1:
+   UNotifier::init();
 
    preallocate();
 
@@ -1036,17 +1060,15 @@ next:
 
    pindex = pClientImage = vClientImage;
 
-   eClientImage = vClientImage + U_max(max_Keep_Alive,16);
+   eClientImage = vClientImage + UNotifier::max_connection;
 
-   U_INTERNAL_DUMP("vClientImage = %p eClientImage = %p max_Keep_Alive = %u", vClientImage, eClientImage, max_Keep_Alive)
+   U_INTERNAL_DUMP("vClientImage = %p eClientImage = %p UNotifier::max_connection = %u", vClientImage, eClientImage, UNotifier::max_connection)
 
 #ifdef DEBUG
    UTrace::suspend();
 #endif
 
-   ptr = pindex;
-
-   for (ptr = pindex; ptr < eClientImage; ++ptr)
+   for (ptr = pindex, addr = (socket->isLocalSet() ? &(socket->cLocalAddress) : 0); ptr < eClientImage; ++ptr)
       {
       csocket = ptr->socket;
 
@@ -1068,14 +1090,10 @@ next:
    // (loop: accept-fork) and the forked child don't accept new client, but we need
    // event manager for the forked child to feel timeout for request of new client...
 
-   if (isClassic()) goto next1;
-
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
-   if (preforked_num_kids == -1) goto next1;
+   if (isClassic())              goto next2;
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+   if (preforked_num_kids == -1) goto next2;
 #endif
-
-                      UNotifier::insert(pthis);         // NB: we ask to notify for request of connection...
-   if (handler_event) UNotifier::insert(handler_event); // NB: we ask to notify for change of file system (inotify)...
 
    /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
     * a readability event because the connection might have been removed by an asynchronous network error or
@@ -1084,8 +1102,27 @@ next:
     * O_NONBLOCK flag set (see socket(7)).
     */
 
-   socket->flags |= O_NONBLOCK;
-next1:
+   socket->flags        |= O_NONBLOCK;
+   UEventFd::op_mask    |= EPOLLET;
+   accept_edge_triggered = true;
+
+   UNotifier::insert(pthis); // NB: we ask to notify for request of connection (=> accept)
+
+   UNotifier::num_connection = UNotifier::min_connection = 1;
+
+   if (handler_inotify)
+      {
+      // NB: we ask to notify for change of file system (inotify)
+      // in the classic model or thread approach this interfere with UNotifier::empty() logic...
+
+      U_ASSERT(isPreForked())
+
+      UNotifier::insert(handler_inotify);
+
+      UNotifier::num_connection = UNotifier::min_connection = 2;
+      }
+
+next2:
    socket->flags |= O_CLOEXEC;
 
    (void) U_SYSCALL(fcntl, "%d,%d,%d", socket->iSockDesc, F_SETFL, socket->flags);
@@ -1145,23 +1182,25 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       }
 }
 
+// #define U_NOT_CALL_HANDLER_READ
+
 int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
 {
    U_TRACE(1, "UServer_Base::handlerRead()")
 
    time_t idle = 0;
    UClientImage_Base* ptr; // NB: we can't use directly the variable pClientImage cause of the thread approch...
+   struct linger l = { 1, 0 };
 
 start:
    ptr = pindex;
 
    U_INTERNAL_ASSERT_MINOR(pindex, eClientImage)
 
-#if defined(U_SENDFILE_NONBLOCK) || defined(U_CACHE_REQUEST)
    U_INTERNAL_DUMP("vClientImage[%u].sfd           = %d",    (ptr - vClientImage), ptr->sfd)
-#endif
    U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd  = %d",    (ptr - vClientImage), ptr->UEventFd::fd)
    U_INTERNAL_DUMP("vClientImage[%d].socket->flags = %d %B", (ptr - vClientImage), ptr->socket->flags, ptr->socket->flags)
+   U_INTERNAL_DUMP("vClientImage[%d].last_response = %ld",   (ptr - vClientImage), ptr->last_response)
 
    if (ptr->UEventFd::fd)
       {
@@ -1170,24 +1209,22 @@ start:
          {
          // check for idle connection
 
-         U_INTERNAL_DUMP("last_response = %ld", ptr->last_response)
-         U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
-
          if (idle == 0)
             {
             idle = (u_now->tv_sec - (timeoutMS / 1000));
 
-            U_INTERNAL_DUMP("idle = %ld", idle)
+            U_INTERNAL_DUMP("idle          = %ld", idle)
+            U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
             }
 
          if (ptr->last_response <= idle)
             {
-            (void) handlerTimeoutConnection(ptr);
+            if (handlerTimeoutConnection(ptr)) UNotifier::erase(ptr);
 
             goto next;
             }
          }
-
+back:
       if (++pindex >= eClientImage)
          {
          U_INTERNAL_ASSERT_POINTER(vClientImage)
@@ -1201,11 +1238,7 @@ start:
       }
 
 next:
-#if defined(U_SENDFILE_NONBLOCK) || defined(U_CACHE_REQUEST)
-   U_INTERNAL_ASSERT_EQUALS(ptr->sfd,0)
-#endif
    U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::fd,0)
-   U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::next,0)
 
    USocket* csocket = ptr->socket;
 
@@ -1221,23 +1254,13 @@ next:
 
          const char* msg_error = csocket->getMsgError(buffer, sizeof(buffer));
 
-         ULog::log("accept new client failed %#.*S\n", u_strlen(msg_error), msg_error);
+         if (msg_error) ULog::log("accept new client failed %S\n", msg_error);
          }
 
-      U_RETURN(U_NOTIFIER_OK);
+      goto end;
       }
 
    U_INTERNAL_ASSERT(csocket->isConnected())
-
-   if (num_connection >= max_Keep_Alive)
-      {
-      U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%u)",
-                        csocket->remoteIPAddress().getAddressString(), max_Keep_Alive);
-
-      csocket->close();
-
-      U_RETURN(U_NOTIFIER_OK);
-      }
 
    // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be supplied optionally after
    // a trailing slash, e.g. 192.168.0.0/24, in which case addresses that match in the most significant MASK bits will be allowed.
@@ -1247,16 +1270,24 @@ next:
    if (vallow_IP &&
        ptr->isAllowed(*vallow_IP) == false)
       {
-      U_SRV_LOG("new client connected from %S, connection denied by access list", csocket->remoteIPAddress().getAddressString());
+      U_SRV_LOG("new client connected from %S, connection denied by Access Control List", csocket->remoteIPAddress().getAddressString());
 
       csocket->close();
 
-      U_RETURN(U_NOTIFIER_OK);
+      goto end;
       }
 
-   ++num_connection;
+   if (++UNotifier::num_connection >= UNotifier::max_connection)
+      {
+       --UNotifier::num_connection;
 
-   U_INTERNAL_DUMP("num_connection = %u", num_connection)
+      U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%d)",
+                  csocket->remoteIPAddress().getAddressString(), UNotifier::max_connection - UNotifier::min_connection);
+
+      csocket->close();
+
+      goto end;
+      }
 
    // -------------------------------------------------------------------------------------------------------------------------
    // PREFORK_CHILD number of child server processes created at startup: -1 - thread approach (experimental)
@@ -1265,13 +1296,7 @@ next:
    //                                                                    >1 - pool of process serialize plus monitoring process
    // -------------------------------------------------------------------------------------------------------------------------
 
-   if (isPreForked())
-      {
-      U_TOT_CONNECTION++;
-
-      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
-      }
-   else if (isClassic())
+   if (isClassic())
       {
       U_INTERNAL_ASSERT_POINTER(proc)
 
@@ -1280,48 +1305,73 @@ next:
          {
          csocket->close();
 
-         // to avoid too much zombie...
+         --UNotifier::num_connection;
 
-         if (UProcess::waitpid() > 0)
+         U_INTERNAL_DUMP("UNotifier::num_connection = %d", UNotifier::num_connection)
+
+         if (isLog() &&
+             UNotifier::num_connection == UNotifier::min_connection)
             {
-            --num_connection;
-
-            U_INTERNAL_DUMP("num_connection = %u", num_connection)
-
-            if (isLog() && num_connection == 0) ULog::log("waiting for connection\n");
+            ULog::log("waiting for connection\n");
             }
 
+         (void) UProcess::waitpid(); // NB: to avoid too much zombie...
 
          U_RETURN(U_NOTIFIER_OK);
          }
 
       if (proc->child() && isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
-      }
 
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
-   if (UNotifier::pthread)
-      {
-      if (ptr->newConnection() == false) U_RETURN(U_NOTIFIER_OK);
+      // NB: in the classic model we don't need to notify for request of connection
+      // (loop: accept-fork) and the forked child don't accept new client, but we need
+      // event manager for the forked child to feel timeout for request of new client...
 
-      goto insert;
-      }
-#endif
-
-   // NB: in the classic model we don't need to notify for request of connection
-   // (loop: accept-fork) and the forked child don't accept new client, but we need
-   // event manager for the forked child to feel timeout for request of new client...
-
-   if (ptr->handlerRead() == U_NOTIFIER_DELETE)
-      {
-      ptr->handlerDelete();
+      if (ptr->newConnection()) UNotifier::insert(ptr);
 
       U_RETURN(U_NOTIFIER_OK);
       }
 
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
-insert:
+#ifdef HAVE_PTHREAD_H
+   if (UNotifier::pthread)
+      {
+      if (ptr->newConnection()) goto insert;
+
+      U_RETURN(U_NOTIFIER_OK);
+      }
 #endif
-   UNotifier::insert(ptr, false);
+
+   if (isPreForked())
+      {
+      U_TOT_CONNECTION++;
+
+      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+      }
+
+#ifndef U_NOT_CALL_HANDLER_READ
+   if (ptr->handlerRead() == U_NOTIFIER_DELETE)
+      {
+      ptr->handlerDelete();
+
+      goto check;
+      }
+#else
+   if (ptr->newConnection() == false) goto check;
+#endif
+
+   // NB: for non-keepalive connection we have chance to drop small last part of large file while sending to a slow client...
+
+   (void) csocket->setSockOpt(SOL_SOCKET, SO_LINGER, (const void*)&l, sizeof(struct linger)); // send RST - ECONNRESET
+
+insert:
+   UNotifier::insert(ptr);
+
+check:
+   if (accept_edge_triggered) goto back;
+
+end:
+#ifdef U_SCALABILITY
+   UNotifier::pevents->data.ptr = 0;
+#endif
 
    U_RETURN(U_NOTIFIER_OK);
 }
@@ -1332,8 +1382,8 @@ const char* UServer_Base::getNumConnection()
 
    static char buffer[32];
 
-   if (isPreForked()) (void) snprintf(buffer, sizeof(buffer), "(%u/%d)", num_connection, U_TOT_CONNECTION);
-   else               (void) snprintf(buffer, sizeof(buffer),  "%u",     num_connection);
+   if (isPreForked()) (void) snprintf(buffer, sizeof(buffer), "(%d/%d)", UNotifier::num_connection - UNotifier::min_connection, U_TOT_CONNECTION);
+   else               (void) snprintf(buffer, sizeof(buffer),  "%d",     UNotifier::num_connection - UNotifier::min_connection);
 
    U_RETURN(buffer);
 }
@@ -1344,67 +1394,28 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
 
    U_INTERNAL_ASSERT_POINTER(ptr)
 
-   U_INTERNAL_DUMP("num_connection = %u", num_connection)
-
-   if (num_connection)
+   if (isPreForked())
       {
-      --num_connection;
+      U_TOT_CONNECTION--;
 
-      if (isPreForked())
-         {
-         U_TOT_CONNECTION--;
-
-         U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
-         }
-
-      if (isLog())
-         {
-         U_INTERNAL_DUMP("UEventFd::fd = %d logbuf = %.*S", ptr->UEventFd::fd, U_STRING_TO_TRACE(*(ptr->logbuf)))
-
-         U_ASSERT_EQUALS(ptr->UEventFd::fd, ptr->logbuf->strtol())
-
-         U_SRV_LOG("client closed connection from %.*s, %s clients still connected", U_STRING_TO_TRACE(*(ptr->logbuf)), getNumConnection());
-
-         ptr->logbuf->setEmpty();
-
-         if (num_connection == 0) ULog::log("waiting for connection\n");
-         }
-
-      if (isClassic()) U_EXIT(0);
-
-      if (ptr->socket->isOpen()) ptr->socket->closesocket();
-
-#  ifndef U_SENDFILE_NONBLOCK
-      if (USocket::accept4_flags & SOCK_NONBLOCK) ptr->socket->flags |= O_NONBLOCK;
-#  else
-      if (ptr->sfd)
-         {
-         // NB: pending sendfile...
-
-         U_INTERNAL_DUMP("sfd = %d UEventFd::op_mask = %B", ptr->sfd, ptr->UEventFd::op_mask)
-
-         UFile::close(ptr->sfd);
-                      ptr->sfd = 0;
-
-         ptr->UEventFd::op_mask = U_READ_IN;
-         }
-#  endif
-
-      // NB: to reuse object...
-
-      ptr->UEventFd::fd = 0;
-
-      U_INTERNAL_ASSERT_EQUALS(ptr->UEventFd::op_mask, U_READ_IN)
-      U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_CLOEXEC)  != 0),((ptr->socket->flags & O_CLOEXEC)  != 0))
-      U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_NONBLOCK) != 0),((ptr->socket->flags & O_NONBLOCK) != 0))
+      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
       }
-#ifdef DEBUG
-   else
+
+   if (isLog())
       {
-                       delete ptr->socket;
-      if (ptr->logbuf) delete ptr->logbuf;
+      U_INTERNAL_DUMP("UEventFd::fd = %d logbuf = %.*S", ptr->UEventFd::fd, U_STRING_TO_TRACE(*(ptr->logbuf)))
+
+      U_INTERNAL_ASSERT_MAJOR(ptr->UEventFd::fd,0)
+      U_ASSERT_EQUALS(ptr->UEventFd::fd, ptr->logbuf->strtol())
+
+      U_SRV_LOG("client closed connection from %.*s, %s clients still connected", U_STRING_TO_TRACE(*(ptr->logbuf)), getNumConnection());
+
+      ptr->logbuf->setEmpty();
+
+      if (UNotifier::num_connection == UNotifier::min_connection) ULog::log("waiting for connection\n");
       }
-#endif
+
+   if (isClassic()) U_EXIT(0);
 }
 
 bool UServer_Base::handlerTimeoutConnection(void* cimg)
@@ -1414,17 +1425,21 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
    U_INTERNAL_ASSERT_POINTER(cimg)
    U_INTERNAL_ASSERT_POINTER(pthis)
 
-   U_INTERNAL_DUMP("pthis = %p handler_event = %p ", pthis, handler_event)
+   U_INTERNAL_DUMP("pthis = %p handler_inotify = %p ", pthis, handler_inotify)
 
-   U_INTERNAL_ASSERT(cimg != pthis && cimg != handler_event)
+   if (cimg != pthis &&
+       cimg != handler_inotify)
+      {
+      ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
 
-   ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
+      U_SRV_LOG_WITH_ADDR("client connected didn't send any request in %u secs (timeout), close connection", getReqTimeout());
 
-   U_SRV_LOG_WITH_ADDR("client connected didn't send any request in %u secs (timeout), close connection", getReqTimeout());
+      (void) pluginsHandlerReset(); // manage reset...
 
-   (void) pluginsHandlerReset(); // manage reset...
+      U_RETURN(true);
+      }
 
-   U_RETURN(true);
+   U_RETURN(false);
 }
 
 void UServer_Base::run()
@@ -1479,12 +1494,12 @@ void UServer_Base::run()
 
                U_SRV_LOG("started new child (pid %d), up to %u children", proc->pid(), nkids);
 
-               U_INTERNAL_DUMP("num_connection = %u tot_connection = %d", num_connection, U_TOT_CONNECTION)
+               U_INTERNAL_DUMP("UNotifier::num_connection = %d tot_connection = %d", UNotifier::num_connection, U_TOT_CONNECTION)
                }
 
             if (proc->child())
                {
-               U_INTERNAL_DUMP("num_connection = %u tot_connection = %d", num_connection, U_TOT_CONNECTION)
+               U_INTERNAL_DUMP("UNotifier::num_connection = %d tot_connection = %d", UNotifier::num_connection, U_TOT_CONNECTION)
 
                UNotifier::init();
 
@@ -1549,8 +1564,8 @@ void UServer_Base::run()
       {
       if (isLog()) ULog::log("waiting for connection\n");
 
-#  if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
-      if (preforked_num_kids == -1) (UNotifier::pthread = U_NEW(UClientThread))->start();
+#  if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+      if (preforked_num_kids == -1) ((UThread*)(UNotifier::pthread = U_NEW(UClientThread)))->start();
 #  endif
 
       while (flag_loop)
@@ -1562,21 +1577,21 @@ void UServer_Base::run()
             continue;
             }
 
-#     if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
-         if (UNotifier::pthread)
+         if (UNotifier::empty() ||
+             UNotifier::pthread)
             {
+            U_INTERNAL_ASSERT((socket->flags & O_NONBLOCK) == 0)
+
             (void) pthis->handlerRead();
 
             continue;
             }
-#     endif
 
          // NB: in the classic model we don't need to notify for request of connection
          // (loop: accept-fork) and the forked child don't accept new client, but we need
          // event manager for the forked child to feel timeout for request of new client...
 
-              if (UNotifier::empty()) (void) pthis->handlerRead();
-         else if (UNotifier::waitForEvent(ptime) == false) break; // no more events registered...
+         if (UNotifier::waitForEvent(ptime) == false) break; // no more events registered...
          }
       }
 }
@@ -1682,7 +1697,6 @@ const char* UServer_Base::dump(bool reset) const
                   << "verify_mode               " << verify_mode                 << '\n'
                   << "cgi_timeout               " << cgi_timeout                 << '\n'
                   << "verify_mode               " << verify_mode                 << '\n'
-                  << "num_connection            " << num_connection              << '\n'
                   << "shared_data_add           " << shared_data_add             << '\n'
                   << "ptr_shared_data           " << (void*)ptr_shared_data      << '\n'
                   << "preforked_num_kids        " << preforked_num_kids          << '\n'

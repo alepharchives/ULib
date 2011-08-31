@@ -35,6 +35,12 @@ void UTimer::init(bool _async)
 
    if ((async = _async)) UInterrupt::insert(             SIGALRM, (sighandler_t)UTimer::handlerAlarm); // async signal
    else                  UInterrupt::setHandlerForSignal(SIGALRM, (sighandler_t)UTimer::handlerAlarm);
+
+#ifdef HAVE_LIBEVENT
+   if (u_ev_base == 0) u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
+
+   U_INTERNAL_ASSERT_POINTER(u_ev_base)
+#endif
 }
 
 void UTimer::stop()

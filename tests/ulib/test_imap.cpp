@@ -26,7 +26,7 @@ U_EXPORT main (int argc, char* argv[])
    UVector<UString> vec1;
    UString tmp(argv[1], strlen(argv[1]));
 
-   if (imap.connectServer(tmp))
+   if (imap._connectServer(tmp))
       {
       if (imap.getCapabilities(vec1) && imap.isSTLS(vec1)) (void) imap.startTLS();
 

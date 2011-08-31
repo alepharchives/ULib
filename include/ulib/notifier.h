@@ -15,15 +15,17 @@
 #define ULIB_NOTIFIER_H
 
 #include <ulib/container/vector.h>
+#include <ulib/container/gen_hash_map.h>
 
 /* NB: to force use of select()
 #ifdef HAVE_EPOLL_WAIT
 #undef HAVE_EPOLL_WAIT
 #endif
 */
-/* NB: to force not use of pthread
-#ifdef HAVE_PTHREAD_H
-#undef HAVE_PTHREAD_H
+
+/*
+#if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+#  define U_SCALABILITY
 #endif
 */
 
@@ -31,12 +33,14 @@
 #  include <sys/select.h>
 #  ifdef HAVE_EPOLL_WAIT
 #     include <sys/epoll.h>
-#     define MAX_EVENTS 512
 #  endif
 #endif
 
 #include <ulib/event/event_fd.h>
 #include <ulib/event/event_time.h>
+
+// Functor used by UGenericHashMap class to generate a hashcode for an object of type <int>
+template <> struct UHashCodeFunctor<int> { uint32_t operator()(const int& fd) const { return (fd + ((fd >> 2) | (fd << 30))); } };
 
 class UThread;
 class USocket;
@@ -46,40 +50,47 @@ class UClientImage_Base;
 
 // interface to select() and epoll()
 
-class U_EXPORT UNotifier : public UVector<UEventFd*> {
+class U_EXPORT UNotifier {
 public:
 
-   // COSTRUTTORI
-
-   UNotifier(uint32_t n) : UVector<UEventFd*>(n)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UNotifier, "")
-
-      U_INTERNAL_ASSERT_EQUALS(pthis,0)
-      }
-
-   ~UNotifier()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UNotifier)
-      }
+#ifdef HAVE_EPOLL_WAIT
+   static struct epoll_event* pevents;
+#endif
+   static int min_connection, num_connection, max_connection;
 
    // SERVICES
 
-   static void clear();
-   static void init(uint32_t n = 64U);
+   static void init();
+   static void clear(bool bthread);
    static void erase( UEventFd* handler_event);
    static void modify(UEventFd* handler_event);
-   static void insert(UEventFd* handler_event, bool bstatic = true);
+   static void insert(UEventFd* handler_event);
+   static void callForAllEntryDynamic(bPFpv function);
 
    static bool empty()
       {
       U_TRACE(0, "UNotifier::empty()")
 
-      U_INTERNAL_ASSERT_POINTER(pthis)
+      U_INTERNAL_ASSERT_POINTER(lo_map_fd)
+      U_INTERNAL_ASSERT_POINTER(hi_map_fd)
 
-      if (first || pthis->_length) U_RETURN(false);
+      if (num_connection == 0)
+         {
+         U_ASSERT(hi_map_fd->empty())
 
-      U_RETURN(true);
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   static bool isDynamicConnection(int fd)
+      {
+      U_TRACE(0, "UNotifier::isDynamicConnection(%d)", fd)
+
+      if (num_connection > min_connection && find(fd)) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    // return false if there are no more events registered
@@ -102,11 +113,22 @@ public:
 #endif
 
 protected:
-   static UEventFd* first;
-   static UNotifier* pthis;
+   static int nfd_ready; // the number of file descriptors ready for the requested I/O
+   static void* pthread;
+   static UEventFd** lo_map_fd;
+   static UGenericHashMap<int,UEventFd*>* hi_map_fd; // maps a fd to a node pointer
 
-#ifdef HAVE_PTHREAD_H
-   static UThread* pthread;
+#ifdef HAVE_LIBEVENT
+#elif defined(HAVE_EPOLL_WAIT)
+   static int epollfd;
+   static struct epoll_event*  events;
+#else
+   static UEventFd* first;
+   static fd_set fd_set_read, fd_set_write;
+   static int fd_set_max, fd_read_cnt, fd_write_cnt;
+
+   static int  getNFDS();     // nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
+   static void removeBadFd(); // rimuove i descrittori di file diventati invalidi (possibile con EPIPE)
 #endif
 
 #ifdef USE_POLL
@@ -114,35 +136,18 @@ protected:
    static int waitForEvent(int timeoutMS = -1);
 #endif
 
-   static int waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
-
-#ifdef HAVE_LIBEVENT
-#elif defined(HAVE_EPOLL_WAIT)
-   static int epollfd;
-   static struct epoll_event events[MAX_EVENTS];
-
-   static bool find(int fd) __pure;
-#else
-   static int fd_set_max;
-   static int fd_read_cnt, fd_write_cnt;
-   static fd_set fd_set_read, fd_set_write;
-
-   static int  getNFDS();     // nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
-   static void removeBadFd(); // rimuove i descrittori di file diventati invalidi (possibile con EPIPE)
-#endif
-
-   static void callForAllEntryDynamic(bPFpv function);
+   static UEventFd* find(int fd);
+   static int       waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
 
 private:
-   static void eraseItem(    UEventFd** ptr, UEventFd* item) U_NO_EXPORT;
-   static void handlerDelete(UEventFd** ptr, UEventFd* item) U_NO_EXPORT;
+   static void handlerDelete(UEventFd* item) U_NO_EXPORT;
 
 #ifndef HAVE_LIBEVENT
-   static bool handlerResult(int& n, UEventFd** ptr, UEventFd* handler_event, bool bread, bool bwrite, bool bexcept) U_NO_EXPORT; 
+   static void handlerResult(UEventFd* handler_event, bool bread, bool bwrite, bool bexcept) U_NO_EXPORT; 
 #endif
 
-   UNotifier(const UNotifier&) : UVector<UEventFd*>() {}
-   UNotifier& operator=(const UNotifier&)             { return *this; }
+   UNotifier(const UNotifier&)            {}
+   UNotifier& operator=(const UNotifier&) { return *this; }
 
    friend class USocket;
    friend class UTCPSocket;

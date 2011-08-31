@@ -88,6 +88,10 @@ int UHttpPlugIn::handlerRead()
 
    UHTTP::in_READ();
 
+#ifdef U_SCALABILITY
+   UNotifier::pevents->data.ptr = 0;
+#endif
+
    U_RETURN(U_NOTIFIER_OK);
 }
 
@@ -172,7 +176,17 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x.empty() == false) UHTTP::uri_protected_mask = U_NEW(UString(x));
 
-      if (cfg.readBoolean(*str_ENABLE_INOTIFY)) UServer_Base::handler_event = this;
+      if (cfg.readBoolean(*str_ENABLE_INOTIFY))
+         {
+         // NB: we ask to notify for change of file system (inotify)
+         // in the classic model or thread approach this interfere with UNotifier::empty() logic...
+
+         if (UServer_Base::isPreForked()) UServer_Base::handler_inotify = this;
+         else
+            {
+            U_SRV_LOG("Sorry, I can enable inode based directory notification only if PREFORK_CHILD > 1");
+            }
+         }
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

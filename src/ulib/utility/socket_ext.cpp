@@ -184,29 +184,29 @@ uint32_t USocketExt::read(USocket* s, UString& buffer, const char* token, uint32
 
 // write while sending data
 
-bool USocketExt::write(USocket* s, const char* ptr, uint32_t count, int timeoutMS)
+bool USocketExt::write(USocket* s, const char* ptr, uint32_t ncount, int timeoutMS)
 {
-   U_TRACE(0, "USocketExt::write(%p,%.*S,%u,%d)", s, count, ptr, count, timeoutMS)
+   U_TRACE(0, "USocketExt::write(%p,%.*S,%u,%d)", s, ncount, ptr, ncount, timeoutMS)
 
    U_INTERNAL_ASSERT(s->isOpen())
 
    ssize_t value;
 
    do {
-      U_INTERNAL_DUMP("count = %u", count)
+      U_INTERNAL_DUMP("ncount = %u", ncount)
 
-      value = s->send(ptr, count, timeoutMS);
+      value = s->send(ptr, ncount, timeoutMS);
 
-      if (value == (ssize_t)count) U_RETURN(true);
+      if (value == (ssize_t)ncount) U_RETURN(true);
 
-      if (s->checkIO(value, count) == false) U_RETURN(false);
+      if (s->checkIO(value, ncount) == false) U_RETURN(false);
 
-      ptr   += value;
-      count -= value;
+      ptr    += value;
+      ncount -= value;
       }
-   while (count);
+   while (ncount);
 
-   U_INTERNAL_ASSERT_EQUALS(count,0)
+   U_INTERNAL_ASSERT_EQUALS(ncount,0)
 
    U_RETURN(true);
 }
@@ -228,19 +228,19 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
       }
    else
       {
-      ssize_t value, count = sz1 + sz2;
+      ssize_t value, ncount = sz1 + sz2;
 
       struct iovec _iov[2] = { { (caddr_t)ptr,         sz1 },
                                { (caddr_t)body.data(), sz2 } };
 
       do {
-         U_INTERNAL_DUMP("count = %u", count)
+         U_INTERNAL_DUMP("ncount = %u", ncount)
 
          value = s->writev(_iov, 2, timeoutMS);
 
-         if (value == count) U_RETURN(true);
+         if (value == ncount) U_RETURN(true);
 
-         if (s->checkIO(value, count) == false) U_RETURN(false);
+         if (s->checkIO(value, ncount) == false) U_RETURN(false);
 
          if (sz1)
             {
@@ -263,11 +263,11 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
          _iov[1].iov_len  -= value;
          _iov[1].iov_base  = (char*)_iov[1].iov_base + value;
 
-         count = sz1 + _iov[1].iov_len;
+         ncount = sz1 + _iov[1].iov_len;
 
-         U_INTERNAL_ASSERT_MAJOR(count,0)
+         U_INTERNAL_ASSERT_MAJOR(ncount,0)
          }
-      while (value < count);
+      while (value < ncount);
       }
 
    U_RETURN(true);

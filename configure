@@ -26269,7 +26269,7 @@ $as_echo "#define CLOSEDIR_VOID 1" >>confdefs.h
 fi
 
 # Check for functions in one big call, to reduce the size of configure
-for ac_func in accept4 daemon epoll_create1 epoll_wait fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem \
+for ac_func in accept4 clock_gettime daemon epoll_create1 epoll_wait fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem \
 					 mremap pread sendfile64 strndup mkdtemp strptime strtof strtoull strtold gmtime_r timegm strerror strsignal
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`

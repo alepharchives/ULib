@@ -67,7 +67,7 @@ EOF
 
 #MALLOC_CHECK_=3
 #STRACE=$TRUSS
-#VALGRIND="valgrind --tool=exp-dhat"
+#VALGRIND="valgrind"
 #MUDFLAP_OPTIONS="-ignore-reads  -backtrace=8"
  start_prg_background userver_tcp -c $1
 

@@ -27,6 +27,7 @@ if [ "$TERM" != "cygwin" ]; then
        ln -sf ../mod_shib/.libs/mod_shib.so;
        ln -sf ../page_speed/.libs/mod_pagespeed.so;
        ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
+   ( cd benchmark/docroot; ln -sf ../../usp )
 fi
 
 # A server that uses SYN cookies doesn't have to drop connections when its SYN queue fills up.
@@ -45,8 +46,8 @@ fi
 #STRACE=$TRUSS
 #VALGRIND="valgrind --tool=exp-dhat"
 #MUDFLAP_OPTIONS="-ignore-reads  -backtrace=8"
- start_prg_background userver_tcp -c benchmarking.cfg
-#start_prg_background userver_ssl -c benchmarking_ssl.cfg
+ start_prg_background userver_tcp -c benchmark/benchmarking.cfg
+#start_prg_background userver_ssl -c benchmark/benchmarking_ssl.cfg
 
 #run command on another computer
 #ab -f SSL3 -n 100000 -c10 http://stefano/usp/benchmarking.usp?name=stefano
@@ -56,3 +57,5 @@ fi
 
  mv err/userver_tcp.err err/benchmarking.err
 #mv err/userver_ssl.err err/benchmarking.err
+
+# gprof -b ../../examples/userver/userver_tcp gmon.out >profile.out 2>/dev/null

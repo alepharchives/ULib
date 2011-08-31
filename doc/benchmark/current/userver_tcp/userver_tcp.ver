@@ -1,0 +1,53 @@
+userver (1.1.0): application server by ULib
+
+Developed with ULib (C++ application development framework)
+
+Building Environment.: Ubuntu 11.04 (iX86) (Aug 26 2011)
+Operating System.....: Linux stefano 3.0.3 #1 SMP Thu Aug 18 12:29:57 CEST 2011 i686 i686 i386 GNU/Linux
+C++ Compiler.........: 4.5.2
+C   Flags............: -g -O2  -Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition
+C++ Flags............: -g -O2  -fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated -fvisibility=hidden -fvisibility-inlines-hidden
+Preprocessor Flags...:  -DHAVE_LIBZ -DHAVE_SSL -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -pipe -D_GNU_SOURCE  -fstrict-aliasing -fno-stack-protector -fomit-frame-pointer -finline -findirect-inlining -ftree-switch-conversion -floop-interchange -floop-strip-mine -floop-block -Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat -Wformat-extra-args -Wenum-compare -Wno-unused-result -Wshadow -flto -Winline -Wno-unused-parameter -Wno-unused-variable -mtune=native
+Linker Flags.........:  -Wl,-O1 -Wl,--as-needed -Wl,-z,now,-O1,--hash-style=gnu,--sort-common -Wl,--as-needed
+Linker...............: GNU ld (GNU Binutils for Ubuntu) 2.21.0.20110327
+Libraries............: -lssl -lcrypto -lz  -lpthread -ldl
+Standard C   library.: unknown
+Standard C++ library.: 
+Lexical analyzer.....: None
+Parser generator.....: None
+LIBZ  library........: 1.2.3.4
+PCRE  library........: None
+SSL   library........: 0.9.8o
+SSH   library........: None
+cURL  library........: None
+LDAP  library........: None
+Expat library........: None
+MAGIC library........: None
+MySQL library........: None
+DBI   library........: None
+libuuid library......: None
+libevent library.....: None
+libxml2 library......: None
+ZIP support..........: enabled
+LFS support..........: enabled
+ipv6 support.........: no
+MAGIC support........: no
+MySQL support........: no
+DBI support..........: no
+libuuid support......: no
+libevent support.....: no
+libxml2 support......: no
+Page-Speed support...: no
+V8 JavaScript support: no
+memory pool support..: enabled
+
+Request:
+	_POSIX_SOURCE defined
+	_POSIX_C_SOURCE = 200809
+	_XOPEN_SOURCE = 700
+	_XOPEN_SOURCE_EXTENDED defined
+Claims:
+	_POSIX_VERSION = 200809
+	X/Open
+	_XOPEN_VERSION = 700
+

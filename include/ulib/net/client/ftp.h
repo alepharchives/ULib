@@ -158,18 +158,18 @@ public:
    function called to established a socket connection with the FTP network server
    */
 
-   bool connectServer(const UIPAddress& ip, int _port = 21, uint32_t timeoutMS = U_TIMEOUT_MS)
+   bool _connectServer(const UIPAddress& ip, int _port = 21, uint32_t timeoutMS = U_TIMEOUT_MS)
       {
-      U_TRACE(0, "UFtpClient::connectServer(%p,%d,%u)", &ip, _port, timeoutMS)
+      U_TRACE(0, "UFtpClient::_connectServer(%p,%d,%u)", &ip, _port, timeoutMS)
 
       bool result = (USocket::connectServer(ip, _port) && waitReady(timeoutMS));
 
       U_RETURN(result);
       }
 
-   bool connectServer(const UString& server, int _port = 21, uint32_t timeoutMS = U_TIMEOUT_MS)
+   bool _connectServer(const UString& server, int _port = 21, uint32_t timeoutMS = U_TIMEOUT_MS)
       {
-      U_TRACE(0, "UFtpClient::connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), _port, timeoutMS)
+      U_TRACE(0, "UFtpClient::_connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), _port, timeoutMS)
 
 #  ifdef HAVE_SSL
       U_INTERNAL_ASSERT(Socket::isSSL())
@@ -182,7 +182,7 @@ public:
       }
 
    /**
-   This method is to be called after connectServer() and before login() to secure the ftp communication channel.
+   This method is to be called after _connectServer() and before login() to secure the ftp communication channel.
 
    @returns @c true if successful and @c false if the ssl negotiation failed
 
@@ -292,7 +292,7 @@ public:
       {
       U_TRACE(0, "UFtpClient::download(%p,%.*S,%I)", &ip, U_STRING_TO_TRACE(path), offset)
 
-      int result = (connectServer(ip) ? download(path, offset) : -1);
+      int result = (_connectServer(ip) ? download(path, offset) : -1);
 
       U_RETURN(result);
       }
@@ -301,7 +301,7 @@ public:
       {
       U_TRACE(0, "UFtpClient::download(%.*S,%.*S,%I)", U_STRING_TO_TRACE(server), U_STRING_TO_TRACE(path), offset)
 
-      int result = (connectServer(server) ? download(path, offset) : -1);
+      int result = (_connectServer(server) ? download(path, offset) : -1);
 
       U_RETURN(result);
       }

@@ -198,6 +198,10 @@ extern U_EXPORT bool u_validate_email_address(const char* restrict address, uint
 
 extern U_EXPORT int u_strnatcmp(char const* restrict a, char const* restrict b) __pure;
 
+/* get the number of the processors including offline CPUs */
+
+extern U_EXPORT int u_get_num_cpu(void);
+
 /** -------------------------------------------------------------------------------
 // Canonicalize PATH, and build a new path. The new path differs from PATH in that:
 // --------------------------------------------------------------------------------

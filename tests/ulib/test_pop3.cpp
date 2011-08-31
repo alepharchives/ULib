@@ -13,7 +13,7 @@ U_EXPORT main (int argc, char* argv[])
    UVector<UString> vec, vec1;
    UString tmp(argv[1], strlen(argv[1]));
 
-   if (pop3.connectServer(tmp))
+   if (pop3._connectServer(tmp))
       {
       if (pop3.getCapabilities(vec1) && pop3.isSTLS(vec1)) (void) pop3.startTLS();
 

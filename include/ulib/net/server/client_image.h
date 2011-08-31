@@ -28,7 +28,7 @@
 */
 
 #if defined(U_SENDFILE_NONBLOCK) && defined(U_CACHE_REQUEST)
-#error "**** defined both U_SENDFILE_NONBLOCK and U_CACHE_REQUEST ****"
+#error "**** you cannot defined both U_SENDFILE_NONBLOCK and U_CACHE_REQUEST ****"
 #endif
 
 /*
@@ -74,7 +74,7 @@ public:
    static UString* pbuffer;
    static const char* rpointer;
    static uint32_t rstart, size_request;
-   static bool bIPv6, pipeline, write_off; // NB: we not send response because we can have used sendfile() etc...
+   static bool bIPv6, pipeline, write_off;
 
    // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
 
@@ -91,10 +91,6 @@ public:
    static void init();
    static void clear();
    static void initAfterGenericRead();
-
-   // manage sendfile
-
-   int sendfile(int& in_fd, char& bclose, uint32_t start, uint32_t count);
 
    // log
 
@@ -135,8 +131,8 @@ public:
 
 protected:
    int sfd, state;
-   uint32_t count;
-   char bclose;
+   uint32_t start, count;
+   int bclose;
 
    static UString* msg_welcome;
 
@@ -171,7 +167,7 @@ public:
 
       socket = U_NEW(Socket(UClientImage_Base::bIPv6));
 
-      U_INTERNAL_DUMP("UEventFd::fd = %d UEventFd::next = %p", UEventFd::fd, UEventFd::next)
+      U_INTERNAL_DUMP("UEventFd::fd = %d", UEventFd::fd)
       }
 
    virtual ~UClientImage()

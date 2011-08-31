@@ -24,6 +24,7 @@
 /* NO DEBUG (64 bit)
 -------------------------
    1 sizeof(UMagic)
+   1 sizeof(UNotifier)
    8 sizeof(UCrl)
    8 sizeof(UPKCS10)
    8 sizeof(UString) <==
@@ -37,7 +38,6 @@
   16 sizeof(UTimer)
   16 sizeof(UPKCS7)
   16 sizeof(UTimeVal)
-  16 sizeof(UNotifier)
   16 sizeof(USemaphore)
   16 sizeof(UXMLParser)
   16 sizeof(UVector<UString>)
@@ -79,13 +79,13 @@
   88 sizeof(UIPAddress)
   88 sizeof(UMimeMultipartMsg)
   96 sizeof(UMimeMessage)
+ 120 sizeof(UServer<UTCPSocket>)
+ 128 sizeof(URDBServer)
  128 sizeof(USOAPParser)
  128 sizeof(UMimeMultipart)
- 128 sizeof(UServer<UTCPSocket>)
 -------------------------
    U_STACK_TYPE_3
 
- 136 sizeof(URDBServer)
  184 sizeof(ULog)
  184 sizeof(UFile)
  192 sizeof(URDBClient<UTCPSocket>)

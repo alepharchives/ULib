@@ -735,6 +735,7 @@ public:
    int wd;                  // if directory it is a "watch list" associated with an inotify instance...
    mode_t mode;             // file type
    int mime_index;          // index file mime type
+   int fd;                  // file descriptor
 
    // COSTRUTTORI
 
@@ -761,6 +762,8 @@ public:
       os << d.expire;
       os.put(' ');
       os << d.mime_index;
+      os.put(' ');
+      os << d.fd;
       os.put(' ');
    // os << d.array;
    // os.put(' ');
@@ -857,6 +860,7 @@ private:
    static void getInotifyPathDirectory(UStringRep* key, void* value) U_NO_EXPORT;
    static bool checkHTTPGetRequestIfModified(const UString& request) U_NO_EXPORT;
    static void checkInotifyForCache(int wd, char* name, uint32_t len) U_NO_EXPORT;
+   static void processHTTPGetRequest(const UString& etag, UString& ext) U_NO_EXPORT;
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext) U_NO_EXPORT;
    static bool checkHTTPGetRequestForRange(uint32_t& start, uint32_t& size, UString& ext, const UString& data) U_NO_EXPORT;
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t& size, uint32_t header, UString& ext) U_NO_EXPORT;

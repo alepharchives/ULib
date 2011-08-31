@@ -45,15 +45,16 @@
 extern "C" {
 #endif
 
-typedef void  (*vPF)     (void);
 typedef void  (*vPFi)    (int);
+typedef bool  (*bPFi)    (int);
+typedef void  (*vPF)     (void);
 typedef void* (*pvPF)    (void);
 typedef void  (*vPFpv)   (void*);
 typedef int   (*iPFpv)   (void*);
-typedef void  (*vPFpvpv) (void*,void*);
 typedef bool  (*bPF)     (void);
-typedef bool  (*bPFi)    (int);
 typedef bool  (*bPFpv)   (void*);
+typedef void  (*vPFpvpv) (void*,void*);
+typedef bool  (*bPFpvpv) (void*,void*);
 typedef bool  (*bPFpcpv) (const char*, const void*);
 typedef int   (*qcompare)(const void*, const void*);
 

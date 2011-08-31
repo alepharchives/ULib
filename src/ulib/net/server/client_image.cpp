@@ -124,7 +124,7 @@ UClientImage_Base::UClientImage_Base()
 #endif
 
    sfd    = state = 0;
-   count  = 0;
+   start  = count = 0;
    bclose = U_MAYBE;
 }
 
@@ -221,13 +221,20 @@ int UClientImage_Base::sendfile()
    U_INTERNAL_ASSERT_MAJOR(count,0)
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
-   ssize_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u", UEventFd::fd, sfd, 0, count);
+   ssize_t value;
+   off_t offset = start;
+
+#ifdef U_SENDFILE_NONBLOCK
+   value = U_SYSCALL(sendfile, "%d,%d,%p,%u", UEventFd::fd, sfd, &offset, count);
+#else
+   value = (socket->sendfile(sfd, &offset, count) ? count : 0);
+#endif
 
    if (value <= 0L)
       {
       U_INTERNAL_DUMP("errno = %d", errno)
 
-      if (errno == EAGAIN) goto end;
+      if (errno == EAGAIN) goto maybe;
 
       U_RETURN(U_NOT);
       }
@@ -236,71 +243,35 @@ int UClientImage_Base::sendfile()
 
    if (count == 0)
       {
-      // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
+      sfd = 0;
 
-      if (bclose != U_YES) socket->setTcpCork(0U);
-
-      UFile::close(sfd);
-                   sfd = 0;
-
-      U_RETURN(U_YES);
-      }
-
-end:
-   U_RETURN(U_MAYBE);
-}
-
-int UClientImage_Base::sendfile(int& in_fd, char& _bclose, uint32_t _start, uint32_t _count)
-{
-   U_TRACE(0, "UClientImage_Base::sendfile(%d,%C,%u,%u)", in_fd, _bclose, _start, _count)
-
-   U_INTERNAL_ASSERT_EQUALS(sfd,0)
-
-#ifdef U_SENDFILE_NONBLOCK
-   if (_start) U_SYSCALL(lseek, "%d,%u,%d", in_fd, _start, SEEK_SET);
-
-   sfd    = in_fd;
-   count  = _count;
-   bclose = _bclose;
-
-   int ret = sendfile();
-
-   if (ret == U_NOT) sfd = 0;
-   else
-      {
-      in_fd = -1;
-
-      if (ret == U_MAYBE)
+      if (bclose != U_YES)
          {
-         _bclose = U_NOT;
+         socket->setTcpCork(0U); // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
 
-         UEventFd::op_mask = U_READ_IN | U_WRITE_OUT;
+         if ((UEventFd::op_mask & U_WRITE_OUT) != 0)
+            {
+            UEventFd::op_mask = U_READ_IN;
 
-         UNotifier::modify(this);
+            UNotifier::modify(this);
+            }
          }
-      }
-
-   U_RETURN(ret);
-#else
-#  ifdef U_CACHE_REQUEST
-   sfd = in_fd;
-         in_fd = -1;
-
-   UServer_Base::start = _start;
-   UServer_Base::count = _count;
-#  endif
-
-   if (socket->sendfile(sfd, _start, _count))
-      {
-      // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
-
-      if (_bclose != U_YES) socket->setTcpCork(0U);
 
       U_RETURN(U_YES);
       }
 
-   U_RETURN(U_NOT);
-#endif
+   start += value;
+
+maybe:
+
+   if ((UEventFd::op_mask & U_WRITE_OUT) == 0)
+      {
+      UEventFd::op_mask = U_READ_IN | U_WRITE_OUT;
+
+      UNotifier::modify(this);
+      }
+
+   U_RETURN(U_MAYBE);
 }
 
 // aggiungo nel log il certificato Peer del client ("issuer","serial")
@@ -314,8 +285,8 @@ void UClientImage_Base::logCertificate(void* x509)
 
    if (x509)
       {
-      U_INTERNAL_ASSERT(UServer_Base::isLog())
       U_INTERNAL_ASSERT_POINTER(logbuf)
+      U_INTERNAL_ASSERT(UServer_Base::isLog())
 
       UCertificate::setForLog((X509*)x509, *logbuf);
 
@@ -495,6 +466,13 @@ int UClientImage_Base::handlerRead()
 
    // Connection-wide hooks
 
+#ifdef U_SCALABILITY
+   U_INTERNAL_DUMP("UNotifier::nfd_ready = %d", UNotifier::nfd_ready)
+
+   int keepalive_requests = (UNotifier::nfd_ready > 0 ? 100 : 0);
+start:
+#endif
+
    state = genericRead(); // read request...
 
    if (state == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
@@ -595,6 +573,12 @@ end:
       U_INTERNAL_DUMP("last_response = %ld", last_response)
       }
 
+#ifdef U_SCALABILITY
+   U_INTERNAL_DUMP("keepalive_requests = %d", keepalive_requests)
+
+   if (socket->flags & O_NONBLOCK && ++keepalive_requests < 100) goto start;
+#endif
+
    U_RETURN(U_NOTIFIER_OK);
 }
 
@@ -616,77 +600,45 @@ int UClientImage_Base::handlerWrite()
    U_INTERNAL_ASSERT_POINTER(wbuffer)
    U_INTERNAL_ASSERT(socket->isOpen())
 
-#ifdef U_SENDFILE_NONBLOCK
-   if (sfd)
+   U_INTERNAL_DUMP("count = %u", count)
+
+   if (count)
       {
-      // NB: pending sendfile...
+      if ((UEventFd::op_mask & U_WRITE_OUT) != 0) goto send;
 
-      U_ASSERT(body->empty())
-
-      int ret = sendfile();
-
-      if (ret == U_NOT) U_RETURN(U_NOTIFIER_DELETE);
-
-      if (ret == U_YES)
-         {
-         U_INTERNAL_ASSERT_EQUALS(sfd,0)
-
-         UEventFd::op_mask = U_READ_IN;
-
-         if (bclose) U_RETURN(U_NOTIFIER_DELETE);
-
-         UNotifier::modify(this);
-         }
-
-      U_RETURN(U_NOTIFIER_OK);
+      socket->setTcpCork(1U); // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
       }
-#endif
 
    U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer))
    U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body))
 
    U_ASSERT_DIFFERS(wbuffer->empty(), true)
 
-   /* to check some weird ab "Non-2xx responses:"...
-   if (U_STRNEQ(wbuffer->data(), "HTTP/1.0 200 OK") == false) U_EXIT(1);
-   */
-
    if (logbuf) logResponse();
 
-   // NB: we don't need corking because we use writev...
+   if (USocketExt::write(socket, *wbuffer, *body) == false) U_RETURN(U_NOTIFIER_DELETE);  
 
-   int ret = (USocketExt::write(socket, *wbuffer, *body) ? U_NOTIFIER_OK
-                                                         : U_NOTIFIER_DELETE);
-
-#if !defined(U_SENDFILE_NONBLOCK) && defined(U_CACHE_REQUEST)
-   if (sfd &&
-       ret == U_NOTIFIER_OK)
+   if (count)
       {
+send:
       U_ASSERT(body->empty())
+      U_INTERNAL_ASSERT_MAJOR(sfd,0)
 
-      ret = (socket->sendfile(sfd, 0, UServer_Base::count) ? U_NOTIFIER_OK
-                                                           : U_NOTIFIER_DELETE);
+      int ret = sendfile();
 
-      sfd = 0;
+      U_INTERNAL_DUMP("state = %d %B pipeline = %b", state, state, pipeline)
 
-      if (ret == U_NOTIFIER_OK)
+           if (ret == U_NOT) state = U_PLUGIN_HANDLER_ERROR | U_PLUGIN_HANDLER_AGAIN;
+      else if (ret == U_YES)
          {
-         // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
+         U_INTERNAL_ASSERT_EQUALS(sfd,0)
+         U_INTERNAL_ASSERT_EQUALS(count,0)
 
-         if (bclose != U_YES) socket->setTcpCork(0U);
+         if (bclose == U_YES) U_RETURN(U_NOTIFIER_DELETE);
          }
-      else
-         {
-         U_INTERNAL_DUMP("state = %d %B pipeline = %b", state, state, pipeline)
-
-         state = U_PLUGIN_HANDLER_ERROR | U_PLUGIN_HANDLER_AGAIN;
-         }
-
-      U_RETURN(U_NOTIFIER_OK);
       }
-#endif
 
-   U_RETURN(ret);
+   U_RETURN(U_NOTIFIER_OK);
 }
 
 void UClientImage_Base::handlerDelete()
@@ -695,7 +647,49 @@ void UClientImage_Base::handlerDelete()
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
-   UServer_Base::handlerCloseConnection(this);
+   U_INTERNAL_DUMP("UNotifier::num_connection = %d UNotifier::min_connection = %d", UNotifier::num_connection, UNotifier::min_connection)
+
+   if (UNotifier::num_connection > UNotifier::min_connection)
+      {
+      --UNotifier::num_connection;
+
+      UServer_Base::handlerCloseConnection(this);
+
+      if (socket->isOpen()) socket->closesocket();
+
+      U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B", sfd, count, UEventFd::op_mask)
+
+#  ifndef U_SENDFILE_NONBLOCK
+      if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;
+#  else
+      if (count)
+         {
+         // NB: pending sendfile...
+
+         U_INTERNAL_ASSERT_MAJOR(sfd,0)
+
+         sfd               = 0;
+         count             = 0;
+         UEventFd::op_mask = U_READ_IN;
+         }
+#  endif
+
+      // NB: to reuse object...
+
+      UEventFd::fd = 0;
+
+      U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, U_READ_IN)
+      U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_CLOEXEC)  != 0),((socket->flags & O_CLOEXEC)  != 0))
+      U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_NONBLOCK) != 0),((socket->flags & O_NONBLOCK) != 0))
+      }
+#ifdef DEBUG
+   else
+      {
+      delete socket;
+
+      if (logbuf) delete logbuf;
+      }
+#endif
 }
 
 // DEBUG
@@ -707,6 +701,7 @@ const char* UClientImage_Base::dump(bool _reset) const
 {
    *UObjectIO::os << "sfd                                " << sfd                << '\n'
                   << "state                              " << state              << '\n'
+                  << "start                              " << start              << '\n'
                   << "count                              " << count              << '\n'
                   << "bIPv6                              " << bIPv6              << '\n'
                   << "bclose                             " << bclose             << '\n'

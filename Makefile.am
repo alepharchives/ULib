@@ -3,7 +3,7 @@
 AUTOMAKE_OPTIONS = no-dependencies ## dist-shar dist-zip
 ACLOCAL_AMFLAGS  = -I m4
 
-EXTRA_DIST = autoconf configure.help TODO LICENSE* README.md README.LZO cdb README.cdb README.configure *.spec* \
+EXTRA_DIST = autoconf cdb configure.help TODO LICENSE* README* *.spec* \
 				 ULib.m4 rpm.sh rpmpkgreq.lst rpmpkgreq.lst.suse openwrt \
 				 doc/Doxyfile doc/benchmark doc/readme.txt shtool
 
@@ -65,6 +65,9 @@ dist-hook:
   		$(distdir)/src/ulib/net/server/plugin/*/.libs \
   		$(distdir)/src/ulib/net/server/plugin/mod_fcgi/test_fcgi \
   		$(distdir)/src/ulib/net/server/plugin/usp/usp_translator
+
+README.html: README.md
+	@Markdown.pl README.md > README.html
 
 ##install-data-local:
 ##	 @if test -f /etc/ld.so.conf \
