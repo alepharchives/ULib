@@ -168,10 +168,10 @@ nginx run with the follow configuration:
  		 }
  	}
 
-All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz running Gentoo 64 bit (kernel 3.0.3).
+All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz running `Gentoo 64 bit (kernel 3.0.4)`.
 Yes, this CPU is 11-year old (single-core) P4, but some test on more recent processor (dual-core AMD) give similar results.
 
-For better comparison with gwan (32 bit) userver_tcp and nginx are compiled and run (as gwan) in chrooted environment: Ubuntu 11.04 (iX86)
+For better comparison with gwan (32 bit) userver_tcp and nginx are compiled and run (as gwan) in chrooted environment: `Ubuntu 11.04 (iX86)`
 
 The client [bench1.c](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark/bin/bench1.c)
 relies on ApacheBench (ab) and it is a slightly modified version of [G-WAN client](http://gwan.ch/source/ab.c.txt).

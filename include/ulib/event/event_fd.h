@@ -18,10 +18,21 @@
 #  include <ulib/libevent/event.h>
 #endif
 
+// -------------------------------------------------------------------------------------------------------------------------
+// EPOLLET is edge-triggered (alas SIGIO, when that descriptor transitions from not ready to ready, the kernel notifies you)
+// -------------------------------------------------------------------------------------------------------------------------
+#ifndef EPOLLET
+#  define EPOLLET 0
+#endif
+
 #ifdef EPOLLIN
-#  define U_READ_IN  EPOLLIN
+#  ifdef U_SCALABILITY
+#     define U_READ_IN (EPOLLIN | EPOLLET)
+#  else
+#     define U_READ_IN  EPOLLIN
+#  endif
 #else
-#  define U_READ_IN  0x001 // NB: same as EPOLLIN
+#  define U_READ_IN   0x001 // NB: same as EPOLLIN
 #endif
 #ifdef EPOLLOUT
 #  define U_WRITE_OUT EPOLLOUT
@@ -31,13 +42,6 @@
 
 #define U_NOTIFIER_OK      0
 #define U_NOTIFIER_DELETE -1
-
-// -------------------------------------------------------------------------------------------------------------------------
-// EPOLLET is edge-triggered (alas SIGIO, when that descriptor transitions from not ready to ready, the kernel notifies you)
-// -------------------------------------------------------------------------------------------------------------------------
-#ifndef EPOLLET
-#  define EPOLLET 0
-#endif
 
 class U_EXPORT UEventFd {
 public:

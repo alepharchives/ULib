@@ -106,7 +106,8 @@ public:
 
    bool setContext(const char* dh_file, const char* cert_file,
                    const char* private_key_file, const char* passwd,
-                   const char* CAfile, const char* CApath, int mode = SSL_VERIFY_PEER_STRICT | SSL_VERIFY_CLIENT_ONCE);
+                   const char* CAfile, const char* CApath,
+                   int mode = SSL_VERIFY_PEER_STRICT | SSL_VERIFY_CLIENT_ONCE);
 
    /**
    For successful verification, the peer certificate must be signed with the CA certificate directly or indirectly

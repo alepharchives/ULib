@@ -80,6 +80,7 @@ int                        UServer_Base::timeoutMS = -1;
 int                        UServer_Base::cgi_timeout;
 int                        UServer_Base::verify_mode;
 int                        UServer_Base::preforked_num_kids;
+bool                       UServer_Base::bssl;
 bool                       UServer_Base::flag_loop;
 bool                       UServer_Base::accept_edge_triggered;
 bool                       UServer_Base::flag_use_tcp_optimization;
@@ -338,6 +339,10 @@ UServer_Base::~UServer_Base()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UServer_Base)
 
+   UClientImage_Base::pipeline = false;
+
+   UClientImage_Base::initAfterGenericRead();
+
    if (vplugin)
       {
       delete vplugin;
@@ -348,9 +353,9 @@ UServer_Base::~UServer_Base()
 #  endif
       }
 
-   UClientImage_Base::clear();
-
    U_INTERNAL_ASSERT_EQUALS(handler_inotify,0)
+
+   UClientImage_Base::clear(); // NB: must be here, after UHTTP::ctor()...
 
    UEventFd::fd = 0; // NB: to avoid delete itself...
 
@@ -396,7 +401,7 @@ UServer_Base::~UServer_Base()
 
    if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add);
 
-#ifdef HAVE_SSL
+#if defined(HAVE_SSL)
    if (UServices::CApath) delete UServices::CApath;
 #endif
 }
@@ -480,7 +485,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    UClientImage_Base::setMsgWelcome(cfg[*str_MSG_WELCOME]);
 
-#ifdef HAVE_SSL
+#if defined(HAVE_SSL)
    dh_file     = cfg[*str_DH_FILE];
    ca_file     = cfg[*str_CA_FILE];
    ca_path     = cfg[*str_CA_PATH];
@@ -518,7 +523,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
       u_now = &(ptr_shared_data->_timeval);
 
-#  if defined(HAVE_PTHREAD_H) && defined(U_CACHE_REQUEST)
+#  if defined(HAVE_PTHREAD_H) && defined(U_HTTP_CACHE_REQUEST)
       ((UTimeThread*)(u_pthread_time = U_NEW(UTimeThread)))->start();
 #  endif
       }
@@ -917,10 +922,12 @@ void UServer_Base::init()
 
    U_SRV_LOG("working directory (DOCUMENT_ROOT) changed to %S", document_root.data());
 
-#ifdef HAVE_SSL
-   if (socket->isSSL())
+#if defined(HAVE_SSL)
+   if (bssl)
       {
       USSLSocket::method = (SSL_METHOD*) SSLv23_server_method();
+
+      UClientImage_Base::ctx = ((USSLSocket*)socket)->ctx;
 
       goto next; // NB: if SSL skip TCP optimization...
       }
@@ -1010,7 +1017,7 @@ void UServer_Base::init()
    U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
                     sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
 
-#ifdef HAVE_SSL
+#if defined(HAVE_SSL)
 next:
 #endif
    U_INTERNAL_ASSERT_EQUALS(proc,0)
@@ -1025,9 +1032,9 @@ next:
 
    UClientImage_Base::init();
 
-                                 USocket::accept4_flags  = SOCK_CLOEXEC;
-#ifdef HAVE_SSL
-   if (socket->isSSL() == false) USocket::accept4_flags |= SOCK_NONBLOCK;
+                      USocket::accept4_flags  = SOCK_CLOEXEC;
+#if defined(HAVE_SSL)
+   if (bssl == false) USocket::accept4_flags |= SOCK_NONBLOCK;
 #endif
 
    // init plugin modules...
@@ -1090,9 +1097,9 @@ next1:
    // (loop: accept-fork) and the forked child don't accept new client, but we need
    // event manager for the forked child to feel timeout for request of new client...
 
-   if (isClassic())              goto next2;
+   if (isClassic())              goto next3;
 #if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
-   if (preforked_num_kids == -1) goto next2;
+   if (preforked_num_kids == -1) goto next3;
 #endif
 
    /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
@@ -1102,10 +1109,16 @@ next1:
     * O_NONBLOCK flag set (see socket(7)).
     */
 
-   socket->flags        |= O_NONBLOCK;
+   socket->flags |= O_NONBLOCK;
+
+#if defined(HAVE_SSL)
+   if (bssl) goto next2;
+#endif
+
    UEventFd::op_mask    |= EPOLLET;
    accept_edge_triggered = true;
 
+next2:
    UNotifier::insert(pthis); // NB: we ask to notify for request of connection (=> accept)
 
    UNotifier::num_connection = UNotifier::min_connection = 1;
@@ -1122,7 +1135,7 @@ next1:
       UNotifier::num_connection = UNotifier::min_connection = 2;
       }
 
-next2:
+next3:
    socket->flags |= O_CLOEXEC;
 
    (void) U_SYSCALL(fcntl, "%d,%d,%d", socket->iSockDesc, F_SETFL, socket->flags);
@@ -1289,6 +1302,20 @@ next:
       goto end;
       }
 
+#if !defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+   if (csocket->getFd() >= FD_SETSIZE)
+      {
+       --UNotifier::num_connection;
+
+      U_SRV_LOG("new client connected from %S, connection denied by FD_SETSIZE (%d)",
+                  csocket->remoteIPAddress().getAddressString(), FD_SETSIZE);
+
+      csocket->close();
+
+      goto end;
+      }
+#endif
+
    // -------------------------------------------------------------------------------------------------------------------------
    // PREFORK_CHILD number of child server processes created at startup: -1 - thread approach (experimental)
    //                                                                     0 - serialize, no forking
@@ -1358,9 +1385,13 @@ next:
    if (ptr->newConnection() == false) goto check;
 #endif
 
+#if defined(HAVE_SSL)
+   if (bssl) goto insert;
+#endif
+
    // NB: for non-keepalive connection we have chance to drop small last part of large file while sending to a slow client...
 
-   (void) csocket->setSockOpt(SOL_SOCKET, SO_LINGER, (const void*)&l, sizeof(struct linger)); // send RST - ECONNRESET
+   if (ptr->bclose != U_YES) (void) csocket->setSockOpt(SOL_SOCKET, SO_LINGER, (const void*)&l, sizeof(struct linger)); // send RST - ECONNRESET
 
 insert:
    UNotifier::insert(ptr);
@@ -1370,7 +1401,10 @@ check:
 
 end:
 #ifdef U_SCALABILITY
-   UNotifier::pevents->data.ptr = 0;
+   U_INTERNAL_ASSERT_DIFFERS(csocket->flags         & SOCK_NONBLOCK,0)
+   U_INTERNAL_ASSERT_DIFFERS(USocket::accept4_flags & SOCK_NONBLOCK,0)
+
+   UNotifier::pevents->events = 0;
 #endif
 
    U_RETURN(U_NOTIFIER_OK);
@@ -1433,8 +1467,6 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
       ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
 
       U_SRV_LOG_WITH_ADDR("client connected didn't send any request in %u secs (timeout), close connection", getReqTimeout());
-
-      (void) pluginsHandlerReset(); // manage reset...
 
       U_RETURN(true);
       }

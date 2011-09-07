@@ -461,7 +461,7 @@ public:
       {
       U_TRACE(0, "UHTTP::isCGIRequest()")
 
-      U_INTERNAL_DUMP("u_http_info.interpreter = %S cgi_dir = %S", u_http_info.interpreter, cgi_dir)
+      U_INTERNAL_DUMP("u_http_info.interpreter = %S cgi_dir = %S query(%u) = %.*S", u_http_info.interpreter, cgi_dir, u_http_info.query_len, U_HTTP_QUERY_TO_TRACE)
 
       bool result = (u_http_info.interpreter || cgi_dir[0]);
 
@@ -470,7 +470,7 @@ public:
 
    static bool    processCGIOutput();
    static UString getCGIEnvironment();
-   static bool    checkForCGIRequest();
+   static void    checkForCGIRequest();
    static bool    processCGIRequest(UCommand* pcmd, UString* penvironment, bool async, bool process_output);
    static void    setHTTPCgiResponse(bool header_content_length, bool header_content_type, bool content_encoding);
 

@@ -2,8 +2,8 @@ userver (1.1.0): application server by ULib
 
 Developed with ULib (C++ application development framework)
 
-Building Environment.: Ubuntu 11.04 (iX86) (Aug 26 2011)
-Operating System.....: Linux stefano 3.0.3 #1 SMP Thu Aug 18 12:29:57 CEST 2011 i686 i686 i386 GNU/Linux
+Building Environment.: Ubuntu 11.04 (iX86) (Sep  7 2011)
+Operating System.....: Linux stefano 3.0.4 #1 SMP Tue Aug 30 13:27:26 CEST 2011 i686 i686 i386 GNU/Linux
 C++ Compiler.........: 4.5.2
 C   Flags............: -g -O2  -Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition
 C++ Flags............: -g -O2  -fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated -fvisibility=hidden -fvisibility-inlines-hidden

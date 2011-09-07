@@ -89,7 +89,7 @@ int UHttpPlugIn::handlerRead()
    UHTTP::in_READ();
 
 #ifdef U_SCALABILITY
-   UNotifier::pevents->data.ptr = 0;
+   UNotifier::pevents->events = 0;
 #endif
 
    U_RETURN(U_NOTIFIER_OK);
@@ -184,7 +184,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          if (UServer_Base::isPreForked()) UServer_Base::handler_inotify = this;
          else
             {
-            U_SRV_LOG("Sorry, I can enable inode based directory notification only if PREFORK_CHILD > 1");
+            U_SRV_LOG("Sorry, I can't enable inode based directory notification because PREFORK_CHILD <= 1");
             }
          }
       }
@@ -226,7 +226,7 @@ int UHttpPlugIn::handlerREAD()
 
    int result;
 
-#ifdef U_CACHE_REQUEST
+#ifdef U_HTTP_CACHE_REQUEST
    result = UHTTP::checkHTTPRequestCache();
 
    if (result == U_PLUGIN_HANDLER_FINISHED)
@@ -361,7 +361,8 @@ int UHttpPlugIn::handlerRequest()
       {
       U_ASSERT_DIFFERS(UClientImage_Base::request->empty(), true)
 
-      if (UHTTP::isCGIRequest())
+      if (UHTTP::isCGIRequest() &&
+          U_HTTP_QUERY_STRNEQ("_nav_") == false)
          {
          // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
 
@@ -413,7 +414,7 @@ int UHttpPlugIn::handlerRequest()
                                             U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
 
-#ifdef U_CACHE_REQUEST
+#ifdef U_HTTP_CACHE_REQUEST
 int UHttpPlugIn::handlerReset()
 {
    U_TRACE(0, "UHttpPlugIn::handlerReset()")

@@ -15,6 +15,8 @@
 #include <ulib/utility/escape.h>
 #include <ulib/net/server/server.h>
 
+// #define U_SENDFILE_NONBLOCK
+
 bool        UClientImage_Base::bIPv6;
 bool        UClientImage_Base::pipeline;
 bool        UClientImage_Base::write_off;
@@ -27,6 +29,10 @@ UString*    UClientImage_Base::request; // NB: it is only a pointer, not a strin
 UString*    UClientImage_Base::pbuffer;
 UString*    UClientImage_Base::msg_welcome;
 const char* UClientImage_Base::rpointer;
+
+#ifdef HAVE_SSL
+SSL_CTX*    UClientImage_Base::ctx;
+#endif
 
 // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
 
@@ -249,12 +255,19 @@ int UClientImage_Base::sendfile()
          {
          socket->setTcpCork(0U); // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
 
-         if ((UEventFd::op_mask & U_WRITE_OUT) != 0)
+         if (UEventFd::op_mask == U_WRITE_OUT)
             {
             UEventFd::op_mask = U_READ_IN;
 
             UNotifier::modify(this);
             }
+#     if defined(U_SCALABILITY) && !defined(U_SENDFILE_NONBLOCK)
+         else if ((socket->flags          &    O_NONBLOCK) == 0 &&
+                  (USocket::accept4_flags & SOCK_NONBLOCK) != 0)
+            {
+            socket->flags = UFile::setBlocking(UEventFd::fd, socket->flags, false);
+            }
+#     endif
          }
 
       U_RETURN(U_YES);
@@ -264,11 +277,11 @@ int UClientImage_Base::sendfile()
 
 maybe:
 
-   if ((UEventFd::op_mask & U_WRITE_OUT) == 0)
+   if (UEventFd::op_mask != U_WRITE_OUT)
       {
-      UEventFd::op_mask = U_READ_IN | U_WRITE_OUT;
+      UEventFd::op_mask = U_WRITE_OUT;
 
-      UNotifier::modify(this);
+      if (UNotifier::find(UEventFd::fd)) UNotifier::modify(this);
       }
 
    U_RETURN(U_MAYBE);
@@ -452,6 +465,13 @@ void UClientImage_Base::handlerError(int sock_state)
    socket->iState = sock_state;
 
    UServer_Base::pClientImage = this;
+
+   /* maybe some specific processing
+
+   if (socket->isTimeout())
+      {
+      }
+   */
 }
 
 int UClientImage_Base::handlerRead()
@@ -482,7 +502,7 @@ start:
    pipeline = false;
    rpointer = rbuffer->data();
 
-#ifndef U_CACHE_REQUEST
+#ifndef U_HTTP_CACHE_REQUEST
    UClientImage_Base::initAfterGenericRead();
 #endif
 
@@ -604,7 +624,7 @@ int UClientImage_Base::handlerWrite()
 
    if (count)
       {
-      if ((UEventFd::op_mask & U_WRITE_OUT) != 0) goto send;
+      if (UEventFd::op_mask == U_WRITE_OUT) goto send;
 
       socket->setTcpCork(1U); // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
       }
@@ -659,19 +679,20 @@ void UClientImage_Base::handlerDelete()
 
       U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B", sfd, count, UEventFd::op_mask)
 
-#  ifndef U_SENDFILE_NONBLOCK
-      if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;
-#  else
+#  ifdef U_SENDFILE_NONBLOCK
       if (count)
          {
          // NB: pending sendfile...
 
          U_INTERNAL_ASSERT_MAJOR(sfd,0)
 
-         sfd               = 0;
-         count             = 0;
-         UEventFd::op_mask = U_READ_IN;
+         sfd   = 0;
+         count = 0;
          }
+
+      UEventFd::op_mask = U_READ_IN;
+#  else
+      if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;
 #  endif
 
       // NB: to reuse object...

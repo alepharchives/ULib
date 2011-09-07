@@ -51,8 +51,8 @@ void UTCPSocket::closesocket()
 
       if (USocket::shutdown())
          {
-         char _buf[8*1024];
          uint32_t count = 0;
+         char _buf[8 * 1024];
 
          /* At this point, the socket layer has to wait until the receiver has
           * acknowledged the FIN packet by receiving a ACK packet. This is done by
@@ -67,19 +67,22 @@ void UTCPSocket::closesocket()
 
             if (count == 2 && USocket::isTimeout() == false) (void) UFile::setBlocking(iSockDesc, flags, true);
             }
-         while (USocket::recv(iSockDesc, _buf, sizeof(_buf)) > 0 || errno == EAGAIN);
+         while ((USocket::recv(iSockDesc, _buf, sizeof(_buf)) > 0) ||
+                (errno == EAGAIN && UNotifier::waitForRead(iSockDesc, 500) > 0));
          }
       }
 
    // NB: to avoid epoll_wait() fire events on file descriptor already closed...
 
 #if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
-   if (UNotifier::isDynamicConnection(iSockDesc)) (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", UNotifier::epollfd, EPOLL_CTL_DEL, iSockDesc, (struct epoll_event*)1);
+   if (UNotifier::isDynamicConnection(iSockDesc))
+      {
+      (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", UNotifier::epollfd, EPOLL_CTL_DEL, iSockDesc, (struct epoll_event*)1);
+      }
 next:
 #endif
 
-   // Now we know that our FIN is ACK-ed, then you can close the second half of the
-   // socket by calling closesocket()
+   // Now we know that our FIN is ACK-ed, then you can close the second half of the socket by calling closesocket()
 
    USocket::_closesocket();
 }

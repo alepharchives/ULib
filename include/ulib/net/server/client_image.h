@@ -22,14 +22,7 @@
 #  include <ulib/ssl/net/sslsocket.h>
 #endif
 
-#define U_CACHE_REQUEST
-/*
-#define U_SENDFILE_NONBLOCK
-*/
-
-#if defined(U_SENDFILE_NONBLOCK) && defined(U_CACHE_REQUEST)
-#error "**** you cannot defined both U_SENDFILE_NONBLOCK and U_CACHE_REQUEST ****"
-#endif
+#define U_HTTP_CACHE_REQUEST
 
 /*
 #define U_FILETEST 1
@@ -64,7 +57,8 @@ public:
    // NB: we need that (not put on it in class UClientImage<USSLSocket>) otherwise there are problem with delete[]...
 
 #ifdef HAVE_SSL
-   SSL* ssl;
+          SSL* ssl;
+   static SSL_CTX* ctx;
 #endif
 
    static UString* body;
@@ -197,7 +191,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UClientImage<USSLSocket>, "")
 
-      socket = U_NEW(USSLSocket(UClientImage_Base::bIPv6));
+      socket = U_NEW(USSLSocket(UClientImage_Base::bIPv6, UClientImage_Base::ctx));
       }
 
    virtual ~UClientImage()

@@ -11,7 +11,7 @@ rm -f web_server*.log \
       $DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]*
 
  UTRACE="0 50M 0"
-#UOBJDUMP="0 10M 5000"
+ UOBJDUMP="0 10M 5000"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
@@ -48,10 +48,9 @@ if [ "$TERM" != "cygwin" ]; then
 	    ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
 fi
 
-STRACE=$TRUSS
-start_prg_background userver_tcp -c 'web_server-1.cfg'
+#STRACE=$TRUSS
+start_prg_background userver_tcp -c 'web_server.cfg'
 												# RA/RA.cfg
-												# web_server.cfg
 												# deployment.properties
 
 chmod 777 $SOCK1

@@ -690,7 +690,7 @@ void UHTTP::ctor()
 #endif
 
 #ifdef HAVE_SSL
-   if (UServer_Base::socket->isSSL()) enable_caching_by_proxy_servers = true;
+   if (UServer_Base::bssl) enable_caching_by_proxy_servers = true;
 #endif
 
 #if defined(HAVE_PAGE_SPEED) || defined(HAVE_V8)
@@ -2167,6 +2167,9 @@ int UHTTP::checkHTTPRequestCache()
 
       if (cbuffer->equal(UClientImage_Base::rbuffer->rep))
          {
+         int                                      result  = U_PLUGIN_HANDLER_AGAIN;
+         if (U_http_is_connection_close == U_YES) result |= U_PLUGIN_HANDLER_ERROR;
+
          U_INTERNAL_DUMP("UServer_Base::sfd = %d", UServer_Base::sfd)
 
          if (UServer_Base::sfd)
@@ -2183,9 +2186,6 @@ int UHTTP::checkHTTPRequestCache()
             UServer_Base::pClientImage->count  = UServer_Base::count;
             UServer_Base::pClientImage->bclose = UServer_Base::bclose;
             }
-
-         int                                      result  = U_PLUGIN_HANDLER_AGAIN;
-         if (U_http_is_connection_close == U_YES) result |= U_PLUGIN_HANDLER_ERROR;
 
          U_RETURN(result);
          }
@@ -2216,7 +2216,7 @@ void UHTTP::manageHTTPRequestCache()
       U_INTERNAL_DUMP("expire        = %ld", UServer_Base::expire)
       U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
 
-      UServer_Base::expire = u_now->tv_sec;
+      UServer_Base::expire = u_now->tv_sec + 1;
 
       if (file_data &&
           file_data->fd != -1)
@@ -2627,74 +2627,93 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
 {
    U_TRACE(0, "UHTTP::getHTMLDirectoryList()")
 
-   UString buffer(4000U);
-
-   buffer.snprintf(
-      "<html><head><title></title></head>"
-      "<body><h1>Index of directory: %.*s</h1><hr>"
-      "<table><tr>"
-      "<td><a href=\"/%.*s/..\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/menu.png\"> Up one level</a></td>"
-      "<td></td>"
-      "<td></td>"
-      "</tr>", U_FILE_TO_TRACE(*file), U_FILE_TO_TRACE(*file));
-
    U_INTERNAL_ASSERT(file->pathname.isNullTerminated())
 
+   bool is_dir;
+   const char* item_ptr;
+   UVector<UString> vec(2048);
+   uint32_t i, pos, n, item_len;
+   UString buffer(4000U), item, size, entry(4000U), value_encoded(U_CAPACITY);
+
+   int32_t len     = file->getPathRelativLen();
    const char* ptr = file->getPathRelativ();
 
-   if (UFile::chdir(ptr, true))
+   if (len == 0)
       {
-      bool is_dir;
-      UVector<UString> vec;
-      UString item, size, entry(4000U), value_encoded(U_CAPACITY);
-      uint32_t pos = buffer.size(), n = UFile::listContentOf(vec), len = file->getPathRelativLen(), item_len;
-
-      if (n > 1) vec.sort();
-
-      for (uint32_t i = 0; i < n; ++i)
-         {
-         item     = vec[i];
-         item_len = item.size();
-
-         pathname->setBuffer(len + 1 + item_len);
-
-         pathname->snprintf("%.*s/%.*s", len, ptr, item_len, item.data());
-
-         file_data = (*cache_file)[*pathname];
-
-         U_INTERNAL_ASSERT_POINTER(file_data)
-
-         is_dir = S_ISDIR(file_data->mode);
-
-         Url::encode(item, value_encoded);
-
-         size = UStringExt::numberToString(file_data->size, true);
-
-         entry.snprintf("<tr>"
-                           "<td><a href=\"/%.*s/%.*s\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/%s\"> %.*s</a></td>"
-                           "<td align=\"right\" valign=\"bottom\">%.*s</td>"
-                           "<td align=\"right\" valign=\"bottom\">%#4D</td>"
-                         "</tr>",
-                         len, ptr, U_STRING_TO_TRACE(value_encoded), (is_dir ? "menu.png" : "gopher-unknown.gif"), item_len, item.data(),
-                         U_STRING_TO_TRACE(size),
-                         file_data->mtime);
-
-         if (is_dir)
-            {
-            (void) buffer.insert(pos, entry);
-
-            pos += entry.size();
-            }
-         else
-            {
-            (void) buffer.append(entry);
-            }
-         }
-
-      (void) UFile::chdir(0, true);
-
-      (void) buffer.append(U_CONSTANT_TO_PARAM("</table><hr><address>ULib Server</address></body></html>"));
+      (void) buffer.assign(U_CONSTANT_TO_PARAM(
+         "<html><head><title>Index of /</title></head>"
+         "<body><h1>Index of directory: /</h1><hr>"
+         "<table><tr>"
+         "<td></td>"
+         "<td></td>"
+         "</tr>"));
       }
+   else
+      {
+      buffer.snprintf(
+         "<html><head><title>Index of %.*s</title></head>"
+         "<body><h1>Index of directory: %.*s</h1><hr>"
+         "<table><tr>"
+         "<td><a href=\"/%.*s/..?_nav_\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/menu.png\"> Up one level</a></td>"
+         "<td></td>"
+         "<td></td>"
+         "</tr>", len, ptr, len, ptr, len, ptr);
+
+      if (UFile::chdir(ptr, true) == false) goto end; 
+      }
+
+   if ((n = UFile::listContentOf(vec)) > 1) vec.sort();
+
+   pos = buffer.size();
+
+   for (i = 0; i < n; ++i)
+      {
+      item     = vec[i];
+      item_len = item.size();
+      item_ptr = item.data();
+
+      pathname->setBuffer(len + 1 + item_len);
+
+      pathname->snprintf("%.*s%s%.*s", len, ptr, (len ? "/" : ""), item_len, item_ptr);
+
+      file_data = (*cache_file)[*pathname];
+
+      if (file_data == 0) continue; // NB: this can happen ([c|u]sp for example...)
+
+      is_dir = S_ISDIR(file_data->mode);
+
+      Url::encode(item, value_encoded);
+
+      size = UStringExt::numberToString(file_data->size, true);
+
+      entry.snprintf(
+         "<tr>"
+            "<td><strong>"
+               "<a href=\"/%.*s%s%.*s?_nav_\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/%s\"> %.*s</a>"
+            "</strong></td>"
+            "<td align=\"right\" valign=\"bottom\">%.*s</td>"
+            "<td align=\"right\" valign=\"bottom\">%#4D</td>"
+         "</tr>",
+         len, ptr, (len ? "/" : ""), U_STRING_TO_TRACE(value_encoded), (is_dir ? "menu.png" : "gopher-unknown.gif"), item_len, item_ptr,
+         U_STRING_TO_TRACE(size),
+         file_data->mtime);
+
+      if (is_dir)
+         {
+         (void) buffer.insert(pos, entry);
+
+         pos += entry.size();
+         }
+      else
+         {
+         (void) buffer.append(entry);
+         }
+      }
+
+   if (len) (void) UFile::chdir(0, true);
+
+end:
+   (void) buffer.append(U_CONSTANT_TO_PARAM("</table><hr><address>ULib Server</address></body></html>"));
 
    U_INTERNAL_DUMP("buffer(%u) = %.*S", buffer.size(), U_STRING_TO_TRACE(buffer))
 
@@ -3968,7 +3987,11 @@ void UHTTP::renewDataCache()
       {
       UFile::close(fd);
 
-      if (file->open()) file_data->fd = file->fd;
+      if (file->open())
+         {
+         file_data->fd = file->fd;
+              file->fd = -1;
+         }
       }
 
    u_buffer_len = 0;
@@ -4131,7 +4154,7 @@ U_NO_EXPORT void UHTTP::processRewriteRule()
 #endif
 }
 
-bool UHTTP::checkForCGIRequest()
+void UHTTP::checkForCGIRequest()
 {
    U_TRACE(0, "UHTTP::checkForCGIRequest()")
 
@@ -4139,56 +4162,53 @@ bool UHTTP::checkForCGIRequest()
 
    int lsz = uri_len - U_CONSTANT_SIZE(".sh");
 
-   if (lsz < 0) U_RETURN(false);
-
-   uint32_t sz      = uri_len - 1;
-   const char* uri  = pathname->c_pointer(u_cwd_len);
-   const char*  ptr = uri +  sz;
-   const char* lptr = uri + lsz;
-
-   U_INTERNAL_ASSERT_POINTER(ptr)
-
-   if (*ptr != '/') // NB: check if ends with '/'...
+   if (lsz >= 0)
       {
-      while (*ptr != '/')
+      uint32_t sz      = uri_len - 1;
+      const char* uri  = pathname->c_pointer(u_cwd_len);
+      const char*  ptr = uri +  sz;
+      const char* lptr = uri + lsz;
+
+      U_INTERNAL_ASSERT_POINTER(ptr)
+
+      if (*ptr != '/') // NB: check if ends with '/'...
          {
-         --sz;
-         --ptr;
+         while (*ptr != '/')
+            {
+            --sz;
+            --ptr;
+            }
+
+         while (*ptr == '/')
+            {
+            --sz;
+            --ptr;
+            }
+
+         if (memcmp(ptr - U_CONSTANT_SIZE("/cgi-bin/") + 2, "/cgi-bin/", U_CONSTANT_SIZE("/cgi-bin/")) == 0)
+            {
+            lsz = uri_len - 1;
+
+            (void) u_memcpy(cgi_dir, uri + 1, lsz);
+
+            cgi_dir[lsz] = '\0';
+            cgi_dir[ sz] = '\0';
+
+            U_INTERNAL_DUMP("cgi_dir = %S", cgi_dir)
+            U_INTERNAL_DUMP("cgi_doc = %S", cgi_dir + u_strlen(cgi_dir) + 1)
+            }
          }
 
-      while (*ptr == '/')
-         {
-         --sz;
-         --ptr;
-         }
+      U_http_sh_script = U_STRNEQ(lptr+1, "sh");
 
-      if (memcmp(ptr - U_CONSTANT_SIZE("/cgi-bin/") + 2, "/cgi-bin/", U_CONSTANT_SIZE("/cgi-bin/")) == 0)
-         {
-         lsz = uri_len - 1;
-
-         (void) u_memcpy(cgi_dir, uri + 1, lsz);
-
-         cgi_dir[lsz] = '\0';
-         cgi_dir[ sz] = '\0';
-
-         U_INTERNAL_DUMP("cgi_dir = %S", cgi_dir)
-         U_INTERNAL_DUMP("cgi_doc = %S", cgi_dir + u_strlen(cgi_dir) + 1)
-         }
+           if (U_STRNEQ(lptr,   ".sh"))  u_http_info.interpreter = U_PATH_SHELL;
+      else if (U_STRNEQ(lptr-1, ".php")) u_http_info.interpreter = "php-cgi";
+      else if (U_STRNEQ(lptr,   ".pl"))  u_http_info.interpreter = "perl";
+      else if (U_STRNEQ(lptr,   ".py"))  u_http_info.interpreter = "python";
+      else if (U_STRNEQ(lptr,   ".rb"))  u_http_info.interpreter = "ruby";
       }
 
-   U_http_sh_script = U_STRNEQ(lptr+1, "sh");
-
-        if (U_STRNEQ(lptr,   ".sh"))  u_http_info.interpreter = U_PATH_SHELL;
-   else if (U_STRNEQ(lptr-1, ".php")) u_http_info.interpreter = "php-cgi";
-   else if (U_STRNEQ(lptr,   ".pl"))  u_http_info.interpreter = "perl";
-   else if (U_STRNEQ(lptr,   ".py"))  u_http_info.interpreter = "python";
-   else if (U_STRNEQ(lptr,   ".rb"))  u_http_info.interpreter = "ruby";
-
    U_INTERNAL_DUMP("U_http_sh_script = %C u_http_info.interpreter = %S", U_http_sh_script, u_http_info.interpreter)
-
-   bool result = (u_http_info.interpreter || cgi_dir[0]);
-
-   U_RETURN(result);
 }
 
 // manage dynamic page request (C/ULib Servlet Page)
@@ -4430,7 +4450,7 @@ int UHTTP::checkHTTPRequest()
 
    // if file exist and need to be processed check if cgi request or if we need some interpreter...
 
-        if (isHTTPRequestNeedProcessing()) (void) checkForCGIRequest();
+        if (isHTTPRequestNeedProcessing()) checkForCGIRequest();
    else if (isHTTPRequestAlreadyProcessed())
       {
 end:
@@ -4687,7 +4707,7 @@ UString UHTTP::getCGIEnvironment()
    buffer.snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(uri));
 
 #ifdef HAVE_SSL
-   if (UServer_Base::pClientImage->socket->isSSL())
+   if (UServer_Base::bssl)
       {
       X509* x509 = ((USSLSocket*)UServer_Base::pClientImage->socket)->getPeerCertificate();
 
@@ -4750,7 +4770,7 @@ U_NO_EXPORT bool UHTTP::setCGIShellScript(UString& command)
       {
       item = (*form_name_value)[i];
 
-      // check for binary data (invalid)...
+      // check for binary data (not valid)...
 
       if (item.empty() ||
           item.isBinary())
@@ -5040,11 +5060,32 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
                         ext.clear();
                         }
 
-                     file_data = 0;
+                     static UString* xpathname;
+                     static UFileCacheData* pobj;
+
+                     if (pobj == 0)
+                        {
+                        pobj      = U_NEW(UFileCacheData);
+                        xpathname = U_NEW(UString);
+                        }
+                     else
+                        {
+                        U_INTERNAL_ASSERT_MAJOR(pobj->fd,0)
+                        U_INTERNAL_ASSERT_POINTER(xpathname)
+
+                        UFile::close(pobj->fd);
+                        UFile::unlink(xpathname->c_str());
+                        }
+
+                     file_data  = pobj;
+                     *xpathname = file->getPath();
+
+                     file_data->fd = file->fd;
+                          file->fd = -1;
 
                      processHTTPGetRequest(UString::getStringNull(), ext);
 
-                     file->close();
+                     file_data = 0; // NB: don't cache the request...
 
                      U_RETURN(true);
                      }
@@ -5766,7 +5807,7 @@ U_NO_EXPORT bool UHTTP::openFile()
       {
       U_INTERNAL_ASSERT_POINTER(file_data)
 
-      result = ((file->fd = file_data->fd) != -1);
+      result = (file_data->fd != -1);
 
       if (result == false)
          {
@@ -5774,17 +5815,24 @@ U_NO_EXPORT bool UHTTP::openFile()
 
          result = (file->regular()                                                           &&
                    file->isNameDosMatch(U_CONSTANT_TO_PARAM(".htpasswd|.htdigest")) == false &&
-                   (file->open(), ((file_data->fd = file->fd) != -1)));
+                   file->open());
+
+         if (result)
+            {
+            file_data->fd = file->fd;
+                 file->fd = -1;
+            }
          }
       }
    else
       {
-      // NB: cgi-bin and usp are forbidden...
+      // NB: csp and usp are forbidden...
 
-      result = (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("usp"))     == false &&
-                u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("cgi-bin")) == false);
+      result = (u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("csp")) == false &&
+                u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("usp")) == false);
 
-      if (result)
+      if (result &&
+          U_HTTP_QUERY_STRNEQ("_nav_") == false)
          {
          // Check if there is an index file (index.html) in the directory... (we check in the CACHE FILE SYSTEM)
 
@@ -5800,8 +5848,7 @@ U_NO_EXPORT bool UHTTP::openFile()
             file_data = (*cache_file)[*pathname];
             }
 
-         if (file_data == 0) result = (file->getPathRelativLen() > 1); // no index file, so it's an actual directory request ('/' alias '.' is forbidden)
-         else
+         if (file_data)
             {
             if (isDataFromCache())
                {
@@ -5821,8 +5868,18 @@ U_NO_EXPORT bool UHTTP::openFile()
             file->st_mode  = file_data->mode;
             file->st_mtime = file_data->mtime;
 
-            result = (file->regular() &&
-                     ((file->fd = file_data->fd, file->isOpen()) || (file->open(), ((file_data->fd = file->fd) != -1))));
+            result = (file_data->fd != -1);
+
+            if (result == false)
+               {
+               result = (file->regular() && file->open());
+
+               if (result)
+                  {
+                  file_data->fd = file->fd;
+                       file->fd = -1;
+                  }
+               }
             }
          }
       }
@@ -5943,7 +6000,19 @@ U_NO_EXPORT void UHTTP::processHTTPGetRequest(const UString& etag, UString& ext)
          }
       else
          {
-         (void) file->memmap(PROT_READ, UClientImage_Base::body);
+         U_INTERNAL_ASSERT_POINTER(file_data)
+         U_INTERNAL_ASSERT_MAJOR(file_data->fd,0)
+
+         char* map = UFile::mmap(size, file_data->fd, PROT_READ, MAP_SHARED | MAP_POPULATE, 0);
+
+         if (map == MAP_FAILED)
+            {
+            setHTTPServiceUnavailable();
+
+            return;
+            }
+
+         UClientImage_Base::body->mmap(map, size);
 
          (void) ext.append(getHeaderMimeType(UClientImage_Base::body->data(), file->getMimeType(false), size, 0));
          }
@@ -6014,7 +6083,7 @@ next:
                      size > min_size_for_sendfile);
 
 #ifdef HAVE_SSL
-   if (bsendfile && UServer_Base::pClientImage->socket->isSSL()) bsendfile = false;
+   if (bsendfile && UServer_Base::bssl) bsendfile = false;
 #endif
 
    if (bsendfile == false)
@@ -6035,6 +6104,8 @@ next:
 #     endif
          }
       else if (isHttpHEAD()) UClientImage_Base::body->clear(); // NB: this make also the unmmap() of file...
+
+      file_data = 0; // NB: don't cache request as sendfile...
       }
    else
       {
@@ -6044,9 +6115,11 @@ next:
 
       U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd = %d", UServer_Base::pClientImage->sfd)
 
+      U_INTERNAL_ASSERT_POINTER(file_data)
+      U_INTERNAL_ASSERT_MAJOR(file_data->fd,0)
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd,0)
 
-      UServer_Base::pClientImage->sfd    = file->fd;
+      UServer_Base::pClientImage->sfd    = file_data->fd;
       UServer_Base::pClientImage->start  = UServer_Base::start  = start;
       UServer_Base::pClientImage->count  = UServer_Base::count  = size;
       UServer_Base::pClientImage->bclose = UServer_Base::bclose = U_http_is_connection_close;

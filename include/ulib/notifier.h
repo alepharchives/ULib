@@ -23,18 +23,18 @@
 #endif
 */
 
-/*
-#if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
-#  define U_SCALABILITY
-#endif
-*/
-
 #ifndef __MINGW32__
 #  include <sys/select.h>
 #  ifdef HAVE_EPOLL_WAIT
 #     include <sys/epoll.h>
 #  endif
 #endif
+
+/*
+#if defined(U_NO_SSL) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+#  define U_SCALABILITY
+#endif
+*/
 
 #include <ulib/event/event_fd.h>
 #include <ulib/event/event_time.h>
@@ -143,7 +143,7 @@ private:
    static void handlerDelete(UEventFd* item) U_NO_EXPORT;
 
 #ifndef HAVE_LIBEVENT
-   static void handlerResult(UEventFd* handler_event, bool bread, bool bwrite, bool bexcept) U_NO_EXPORT; 
+   static void handlerResult(UEventFd* handler_event, bool bread, bool bexcept) U_NO_EXPORT; 
 #endif
 
    UNotifier(const UNotifier&)            {}

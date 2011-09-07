@@ -365,7 +365,7 @@ protected:
    static uint32_t start, count;
    static UString* senvironment;
    static UVector<UIPAllow*>* vallow_IP;
-   static bool flag_loop, flag_use_tcp_optimization, accept_edge_triggered;
+   static bool flag_loop, bssl, flag_use_tcp_optimization, accept_edge_triggered;
 
    // COSTRUTTORI
 
@@ -535,6 +535,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UServer<USSLSocket>, "%p", cfg)
 
+      bssl   = true;
       socket = U_NEW(USSLSocket(UClientImage_Base::bIPv6));
       }
 

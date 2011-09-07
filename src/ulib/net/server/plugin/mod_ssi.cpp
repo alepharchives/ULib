@@ -616,7 +616,9 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                      U_INTERNAL_ASSERT_DIFFERS(UHTTP::pathname->size(), u_cwd_len)
 
-                     if (UHTTP::checkForCGIRequest())
+                     UHTTP::checkForCGIRequest();
+
+                     if (UHTTP::isCGIRequest())
                         {
                         if (UHTTP::processCGIRequest((UCommand*)0, &environment, false, false)) x = *UClientImage_Base::wbuffer;
                         else

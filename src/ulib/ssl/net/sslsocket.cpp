@@ -127,9 +127,9 @@ bool USSLSocket::useDHFile(const char* dh_file)
 }
 
 bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const char* private_key_file,
-                            const char* passwd,  const char* CAfile,    const char* CApath, int mode)
+                            const char* passwd,  const char* CAfile,    const char* CApath, int verify_mode)
 {
-   U_TRACE(1, "USSLSocket::setContext(%S,%S,%S,%S,%S,%S,%d)", dh_file, cert_file, private_key_file, passwd, CAfile, CApath, mode)
+   U_TRACE(1, "USSLSocket::setContext(%S,%S,%S,%S,%S,%S,%d)", dh_file, cert_file, private_key_file, passwd, CAfile, CApath, verify_mode)
 
    U_INTERNAL_ASSERT_POINTER(ctx)
 
@@ -194,7 +194,7 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
 
    if (CAfile || CApath)
       {
-      if (UServices::setupOpenSSLStore(CAfile, CApath) == false) U_RETURN(false);
+      if (UServices::setupOpenSSLStore(CAfile, CApath, (verify_mode ? U_STORE_FLAGS : 0)) == false) U_RETURN(false);
 
       U_SYSCALL_VOID(SSL_CTX_set_cert_store, "%p,%p", ctx, UServices::store);
 
@@ -208,7 +208,7 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
          }
       }
 
-   setVerifyCallback(UServices::X509Callback, mode);
+   setVerifyCallback(UServices::X509Callback, verify_mode);
 
    static int s_server_session_id_context = 1;
 

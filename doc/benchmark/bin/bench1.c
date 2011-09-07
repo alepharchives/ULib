@@ -281,6 +281,7 @@ PORT = (argv[3]?atoi(argv[3]):80);
 FROM = (argv[4]?atoi(argv[4]):0);
 TO   = (argv[5]?atoi(argv[5]):1000);
 
+// #define U_SSL
 // #define GWAN_28x
 // #define U_KEEP_ALIVES
 // -------------------------
@@ -319,7 +320,11 @@ TO   = (argv[5]?atoi(argv[5]):1000);
 						  "-H \"Connection: close\" "					/* GWAN 2.8.[8-14] need this if NO Keep-Alives */
 #	endif
                     "-H \"Accept-Encoding: gzip,deflate\" " /* HTTP compression */
+#	ifdef U_SSL
+                    "\"https://%s" ":%d" "%s" "\"" " > %s/ab.txt", i?i:1, IP, PORT, URL, IP);
+#	else
                     "\"http://%s" ":%d" "%s" "\"" " > %s/ab.txt", i?i:1, IP, PORT, URL, IP);
+#	endif
 #else
        // HTTPerf does not let you specify the 'concurrency'rate:
        //

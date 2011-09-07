@@ -89,7 +89,7 @@ public:
    virtual int handlerREAD();
    virtual int handlerRequest();
 
-#ifdef U_CACHE_REQUEST
+#ifdef U_HTTP_CACHE_REQUEST
    virtual int handlerReset();
 #endif
 
