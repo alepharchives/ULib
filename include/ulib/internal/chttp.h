@@ -91,7 +91,6 @@ typedef struct uhttpinfo {
    const char* host;
    const char* content_type;
    const char* range;
-   const char* interpreter;
    time_t      if_modified_since;
    uint32_t    nResponseCode, startHeader, endHeader, szHeader, clength,
                method_len, uri_len, query_len, host_len, host_vlen, content_type_len, range_len;
@@ -100,14 +99,14 @@ typedef struct uhttpinfo {
 
 #define U_http_upgrade             u_http_info.flag[0]
 #define U_http_version             u_http_info.flag[1]
-#define U_http_sh_script           u_http_info.flag[2]
-#define U_http_keep_alive          u_http_info.flag[3]
-#define U_http_method_type         u_http_info.flag[4]
-#define U_http_request_check       u_http_info.flag[5]
-#define U_http_is_accept_deflate   u_http_info.flag[6]
-#define U_http_is_connection_close u_http_info.flag[7]
+#define U_http_keep_alive          u_http_info.flag[2]
+#define U_http_method_type         u_http_info.flag[3]
+#define U_http_request_check       u_http_info.flag[4]
+#define U_http_is_accept_deflate   u_http_info.flag[5]
+#define U_http_is_connection_close u_http_info.flag[6]
+#define U_http_is_navigation       u_http_info.flag[7]
 
-enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_GET = '4', HTTP_HEAD = '5', HTTP_OPTIONS = '6' };
+enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_GET = '4', HTTP_HEAD = '5', HTTP_OPTIONS = '6', HTTP_COPY = '7' };
 
 #define U_HTTP_METHOD_TO_PARAM     u_http_info.method, u_http_info.method_len
 #define U_HTTP_METHOD_TO_TRACE     u_http_info.method_len, u_http_info.method

@@ -10,12 +10,6 @@ if V8
 SUBDIRS += v8
 endif
 
-if TCC
-if !STATIC_HANDLER_TCC
-SUBDIRS += mod_tcc
-endif
-endif
-
 if GEOIP
 if !STATIC_HANDLER_GEOIP
 SUBDIRS += mod_geoip
@@ -33,7 +27,6 @@ endif
 endif
 
 EXTRA_DIST = *.cpp Makefile.* \
-				 mod_tcc/*.cpp mod_tcc/Makefile.* \
 				 mod_shib/*.cpp mod_shib/Makefile.* \
 				 mod_geoip/*.cpp mod_geoip/Makefile.* \
 				 page_speed/*.cpp page_speed/Makefile.* \

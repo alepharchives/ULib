@@ -214,7 +214,7 @@ typedef struct ustackmemorypool {
    2 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
    1 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
       --   --   --   --   --   --   --   --   --   -- 
-        8   24   32   88  128  256  512 1024 2048 4096 -> type
+        8   24   52   88  128  256  512 1024 2048 4096 -> type
         0    1    2    3    4    5    6    7    8    9 -> index
         0    1    2    3    4    5    6    7    8    9 -> index_stack_mem_block
 */

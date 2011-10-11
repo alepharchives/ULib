@@ -2,13 +2,18 @@
 
 . ../.function
 
-rm -f benchmarking.log* err/benchmarking.err \
+DOC_ROOT=benchmark/docroot
+
+rm -f err/benchmarking.err \
+		benchmark/benchmarking.log* \
       out/userver_tcp.out err/userver_tcp.err \
       out/userver_ssl.out err/userver_ssl.err \
-		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* \
-		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*
+      trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]* \
+      trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* \
+      $DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* $DOC_ROOT/stack.*userver_ssl*.[0-9]* \
+      $DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]*
 
-#UTRACE="0 50M 1"
+#UTRACE="0 50M 0"
 #UOBJDUMP="0 1M 100"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --trace-children=yes"
@@ -17,7 +22,7 @@ rm -f benchmarking.log* err/benchmarking.err \
 DIR_CMD="../../examples/userver"
 
 if [ "$TERM" != "cygwin" ]; then
-   ( mkdir -p usp; cd usp;
+   ( mkdir -p servlet; cd servlet;
      rm -f *.so;
      ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/benchmarking.so;
      cd ../../../src/ulib/net/server/plugin/usp/;
@@ -27,7 +32,7 @@ if [ "$TERM" != "cygwin" ]; then
        ln -sf ../mod_shib/.libs/mod_shib.so;
        ln -sf ../page_speed/.libs/mod_pagespeed.so;
        ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
-   ( cd benchmark/docroot; ln -sf ../../usp )
+   ( cd benchmark/docroot; ln -sf ../../servlet )
 fi
 
 # A server that uses SYN cookies doesn't have to drop connections when its SYN queue fills up.
@@ -50,13 +55,15 @@ fi
 #start_prg_background userver_ssl -c benchmark/benchmarking_ssl.cfg
 
 #run command on another computer
-#ab -n 100000 -c10 http://stefano/usp/benchmarking.usp?name=stefano
-#ab -n 100000 -c10 https://stefano/usp/benchmarking.usp?name=stefano
+#ab -n 100000 -c10 http://stefano/servlet/benchmarking?name=stefano
+#ab -n 100000 -c10 https://stefano/servlet/benchmarking?name=stefano
 
 #$SLEEP
 #killall userver_tcp userver_ssl
 
  mv err/userver_tcp.err err/benchmarking.err
 #mv err/userver_ssl.err err/benchmarking.err
+
+# grep -v 'EAGAIN\|EPIPE\|ENOTCONN\|ECONNRESET' err/benchmarking.err 
 
 # gprof -b ../../examples/userver/userver_tcp gmon.out >profile.out 2>/dev/null

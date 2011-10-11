@@ -136,21 +136,7 @@ public:
 
    // PATH
 
-   void setRoot()
-      {
-      U_TRACE(0, "UFile::setRoot()")
-
-      reset();
-
-      pathname.setConstant(U_CONSTANT_TO_PARAM("/")); 
-
-      path_relativ_len = 1;
-      path_relativ     = pathname.data();
-
-      U_INTERNAL_DUMP("u_cwd            = %S", u_cwd)
-      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-      }
-
+   void setRoot();
    void setPath(const UString& path, const UString* environment = 0);
 
    // NB: la stringa potrebbe non essere scrivibile e quindi path_relativ[path_relativ_len] potrebbe non essere '\0'...
@@ -607,7 +593,7 @@ public:
 
    static void msync(char* ptr, char* page, int flags = MS_SYNC); // flushes changes made to memory mapped file back to disk
 
-   // mremap expands (or shrinks) an existing memory  mapping, potentially moving it at the same time
+   // mremap expands (or shrinks) an existing memory mapping, potentially moving it at the same time
    // (controlled by the flags argument and the available virtual address space)
 
    static void* mremap(void* old_address, uint32_t old_size, uint32_t new_size, int flags = 0) // MREMAP_MAYMOVE == 1
@@ -738,7 +724,6 @@ public:
    // symlink
 
 #ifndef __MINGW32__
-
    static bool symlink(const char* oldpath, const char* newpath)
       {
       U_TRACE(1, "UFile::symlink(%S,%S)", oldpath, newpath)
@@ -762,7 +747,6 @@ public:
 
       U_RETURN(result);
       }
-
 #endif
 
    /*

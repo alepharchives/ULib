@@ -165,6 +165,11 @@ dnl		printf "libmagic found in $magicdir\n";
 				found_ssl="yes";
 				break;
 			fi
+			if test -f "$dir/include/cyassl/openssl/ssl.h"; then
+				found_ssl="yes";
+				found_cyassl="yes";
+				break;
+			fi
 		done
 		if test x_$found_ssl != x_yes; then
 			msg="Cannot find SSL library";
@@ -174,20 +179,25 @@ dnl		printf "libmagic found in $magicdir\n";
 				AC_MSG_RESULT($msg)
 			fi
 		else
-			echo "${T_MD}OpenSSL found in $ssldir${T_ME}"
-dnl		printf "OpenSSL found in $ssldir\n";
 			HAVE_SSL=yes
 			CPPFLAGS="$CPPFLAGS -DHAVE_SSL";
-			if test -f "$ssldir/include/openssl/ts.h"; then
-				HAVE_SSL_TS="yes";
-				CPPFLAGS="$CPPFLAGS -DHAVE_SSL_TS";
+			if test "$found_cyassl" = "yes"; then
+				echo "${T_MD}CYASSL found in $ssldir${T_ME}";
+				ssl_version=$(grep VERSION $ssldir/include/cyassl/openssl/opensslv.h | cut -d' ' -f3 | tr -d '\r\n');
+				LIBS="-lcyassl $LIBS";
+			else
+				echo "${T_MD}OPENSSL found in $ssldir${T_ME}";
+				if test -f "$ssldir/include/openssl/ts.h"; then
+					HAVE_SSL_TS="yes";
+					CPPFLAGS="$CPPFLAGS -DHAVE_SSL_TS";
+				fi
+				ssl_version=$(pkg-config --modversion openssl);
+dnl			ssl_version=$($ssldir/bin/openssl version | cut -d' ' -f2)
+				LIBS="-lssl -lcrypto $LIBS";
 			fi
-dnl		openssl_version=$($ssldir/bin/openssl version | cut -d' ' -f2)
-			openssl_version=$(pkg-config --modversion openssl)
-			if test -z "${openssl_version}"; then
-				openssl_version="Unknown"
+			if test -z "${ssl_version}"; then
+				ssl_version="Unknown";
 			fi
-			LIBS="-lssl -lcrypto $LIBS";
 			if test $ssldir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$ssldir/include";
 				LDFLAGS="$LDFLAGS -L$ssldir/lib -Wl,-R$ssldir/lib";

@@ -18,7 +18,7 @@ U_EXPORT main (int argc, char* argv[])
 
       for (int i = 0; i < 2; ++i)
          {
-         if (x.send((void*)str, size) == size)
+         if (x.send(str, size) == size)
             {
             cout << str << '\n';
 

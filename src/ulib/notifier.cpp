@@ -21,6 +21,10 @@
 
 #include <errno.h>
 
+#ifdef U_SCALABILITY
+bool UNotifier::scalability;
+#endif
+
 #ifdef HAVE_LIBEVENT
 void UEventFd::operator()(int _fd, short event)
 {
@@ -76,7 +80,7 @@ void UNotifier::init()
    epollfd = U_SYSCALL(epoll_create, "%d", max_connection);
 next:
    U_INTERNAL_ASSERT_MAJOR(epollfd,0)
-   U_INTERNAL_ASSERT_EQUALS(U_WRITE_OUT,EPOLLOUT)
+   U_INTERNAL_ASSERT_EQUALS(U_WRITE_OUT,EPOLLOUT|EPOLLET)
 
    if (old)
       {
@@ -205,10 +209,7 @@ void UNotifier::insert(UEventFd* item)
 #ifdef HAVE_LIBEVENT
    U_INTERNAL_ASSERT_POINTER(u_ev_base)
 
-   int mask = EV_PERSIST;
-
-   if (item->op_mask & U_READ_IN)   mask |= EV_READ;
-   if (item->op_mask & U_WRITE_OUT) mask |= EV_WRITE;
+   int mask = EV_PERSIST | (item->op_mask == U_READ_IN ? EV_READ : EV_WRITE);
 
    U_INTERNAL_DUMP("mask = %B", mask)
 
@@ -237,7 +238,7 @@ void UNotifier::insert(UEventFd* item)
       }
    else
       {
-      U_INTERNAL_ASSERT_EQUALS(item->op_mask, U_WRITE_OUT)
+      U_INTERNAL_ASSERT_EQUALS(item->op_mask,U_WRITE_OUT)
       U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_write),0)
 
       FD_SET(fd, &fd_set_write);
@@ -337,10 +338,7 @@ void UNotifier::modify(UEventFd* item)
 #ifdef HAVE_LIBEVENT
    U_INTERNAL_ASSERT_POINTER(u_ev_base)
 
-   int mask = EV_PERSIST;
-
-   if (item->op_mask & U_READ_IN)   mask |= EV_READ;
-   if (item->op_mask & U_WRITE_OUT) mask |= EV_WRITE;
+   int mask = EV_PERSIST | (item->op_mask == U_READ_IN ? EV_READ : EV_WRITE);
 
    U_INTERNAL_DUMP("mask = %B", mask)
 
@@ -527,10 +525,10 @@ U_NO_EXPORT void UNotifier::handlerResult(UEventFd* handler_event, bool bread, b
       }
    else
       {
-      U_INTERNAL_ASSERT(handler_event->op_mask & U_WRITE_OUT)
+      U_INTERNAL_ASSERT_EQUALS(handler_event->op_mask,U_WRITE_OUT)
 
 #  ifdef HAVE_EPOLL_WAIT
-      U_INTERNAL_ASSERT((pevents->events & U_WRITE_OUT) != 0)
+      U_INTERNAL_ASSERT_DIFFERS((pevents->events & U_WRITE_OUT),0)
 #  else
       U_INTERNAL_ASSERT_MAJOR(fd_write_cnt,0)
       U_INTERNAL_ASSERT(FD_ISSET(handler_event->fd, &fd_set_write))
@@ -622,19 +620,24 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
             U_INTERNAL_ASSERT_EQUALS(pevents+1, pevents_end)
 
 #        ifdef U_SCALABILITY
-            do {
-               if (pevents->events)
-                  {
-                  handler_event = (UEventFd*) pevents->data.ptr;
+            if (scalability)
+               {
+               U_INTERNAL_ASSERT_DIFFERS(USocket::accept4_flags & SOCK_NONBLOCK,0)
 
-                  U_INTERNAL_DUMP("fd = %d op_mask = %B handler_event = %p", handler_event->fd, handler_event->op_mask, handler_event)
+               do {
+                  if (pevents->events)
+                     {
+                     handler_event = (UEventFd*) pevents->data.ptr;
 
-                  if (handler_event->op_mask == U_READ_IN) handlerResult(handler_event, true, false);
+                     U_INTERNAL_DUMP("fd = %d op_mask = %B handler_event = %p", handler_event->fd, handler_event->op_mask, handler_event)
+
+                     if (handler_event->op_mask == U_READ_IN) handlerResult(handler_event, true, false);
+                     }
                   }
-               }
-            while (--pevents >= events);
+               while (--pevents >= events);
 
-            U_INTERNAL_ASSERT_EQUALS(pevents+1, events)
+               U_INTERNAL_ASSERT_EQUALS(pevents+1, events)
+               }
 #        endif
 
             goto end;

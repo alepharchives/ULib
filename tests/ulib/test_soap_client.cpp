@@ -1,11 +1,6 @@
 // test_soap_client.cpp
 
 #include <ulib/notifier.h>
-
-#ifndef U_NO_SSL
-#define U_NO_SSL
-#endif
-
 #include <ulib/utility/services.h>
 #include <ulib/xml/soap/soap_client.h>
 

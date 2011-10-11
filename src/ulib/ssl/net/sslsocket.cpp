@@ -11,8 +11,10 @@
 //
 // ============================================================================
 
+#include <ulib/notifier.h>
 #include <ulib/utility/services.h>
 #include <ulib/ssl/net/sslsocket.h>
+#include <ulib/utility/socket_ext.h>
 
 #include <openssl/err.h>
 
@@ -21,6 +23,20 @@
 #endif
 
 SSL_METHOD* USSLSocket::method;
+
+/*
+ * When packets in SSL arrive at a destination, they are pulled off the socket in chunks of sizes controlled by the encryption protocol being
+ * used, decrypted, and placed in SSL-internal buffers. The buffer content is then transferred to the application program through SSL_read().
+ * If you've read only part of the decrypted data, there will still be pending input data on the SSL connection, but it won't show up on the
+ * underlying file descriptor via select(). Your code needs to call SSL_pending() explicitly to see if there is any pending data to be read.
+ *
+ * NON-blocking I/O
+ *
+ * A pitfall to avoid: Don't assume that SSL_read() will just read from the underlying transport or that SSL_write() will just write to it
+ * it is also possible that SSL_write() cannot do any useful work until there is data to read, or that SSL_read() cannot do anything until
+ * it is possible to send data. One reason for this is that the peer may request a new TLS/SSL handshake at any time during the protocol,
+ * requiring a bi-directional message exchange; both SSL_read() and SSL_write() will try to continue any pending handshake.
+ */
 
 USSLSocket::USSLSocket(bool bSocketIsIPv6, SSL_CTX* _ctx, bool tls) : UTCPSocket(bSocketIsIPv6)
 {
@@ -451,9 +467,11 @@ bool USSLSocket::acceptSSL(USSLSocket* pcNewConnection)
 {
    U_TRACE(1, "USSLSocket::acceptSSL(%p)", pcNewConnection)
 
-   bool reuse = (ssl != 0);
+   int fd         = pcNewConnection->iSockDesc;
+   bool reuse     = (ssl != 0);
+   uint32_t count = 0;
 
-   U_DUMP("reuse = %b isBlocking() = %b", reuse, pcNewConnection->isBlocking())
+   U_DUMP("fd = %d reuse = %b isBlocking() = %b", fd, reuse, pcNewConnection->isBlocking())
 
 retry:
    if (reuse) (void) U_SYSCALL(SSL_clear, "%p", ssl); // reuse old
@@ -467,56 +485,56 @@ retry:
    // U_SYSCALL_VOID(SSL_set_accept_state, "%p", ssl); // init SSL server session
    // --------------------------------------------------------------------------------------------------
 
-   ret = 0;
+   (void) U_SYSCALL(SSL_set_fd, "%p,%d", ssl, fd); // get SSL to use our socket
 
-   if (U_SYSCALL(SSL_set_fd, "%p,%d", ssl, pcNewConnection->iSockDesc)) // get SSL to use our socket
-      {
 loop:
-      errno = 0;
-      ret   = U_SYSCALL(SSL_accept, "%p", ssl); // get SSL handshake with client
+   errno = 0;
+   ret   = U_SYSCALL(SSL_accept, "%p", ssl); // get SSL handshake with client
 
-      if (ret == 1)
-         {
-         pcNewConnection->ret = SSL_ERROR_NONE;
-         pcNewConnection->ssl = ssl;
-                                ssl = 0;
-
-         U_RETURN(true);
-         }
-
-      U_INTERNAL_DUMP("errno = %d", errno)
-
-      pcNewConnection->ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
-
-      U_DUMP("status = %.*S", 512, status(ssl, pcNewConnection->ret, false, 0, 0))
-
-      if (pcNewConnection->ret == SSL_ERROR_WANT_READ  ||
-          pcNewConnection->ret == SSL_ERROR_WANT_WRITE ||
-          pcNewConnection->ret == SSL_ERROR_WANT_ACCEPT)
-         {
-         goto loop;
-         }
-      }
-
-   if (ret != 1)
+   if (ret == 1)
       {
-      U_SYSCALL_VOID(SSL_free, "%p", ssl);
-                                     ssl = 0;
+      pcNewConnection->ssl = ssl;
+                             ssl = 0;
 
-      if (reuse)
-         {
-         reuse = false;
+      pcNewConnection->ret    = SSL_ERROR_NONE;
+      pcNewConnection->iState = CONNECT;
 
-         goto retry;
-         }
-
-      pcNewConnection->USocket::_closesocket();
-
-      pcNewConnection->iState    = -errno;
-      pcNewConnection->iSockDesc = -1;
-
-      U_INTERNAL_DUMP("pcNewConnection->ret = %d", pcNewConnection->ret)
+      U_RETURN(true);
       }
+
+   U_INTERNAL_DUMP("errno = %d", errno)
+
+   if (errno) pcNewConnection->iState = -errno;
+
+   pcNewConnection->ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
+
+   U_DUMP("status = %.*S", 512, status(ssl, pcNewConnection->ret, false, 0, 0))
+
+   U_INTERNAL_DUMP("count = %u", count)
+
+   if (count++ < 5)
+      {
+           if (pcNewConnection->ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( fd, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+      else if (pcNewConnection->ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(fd, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+      }
+
+   errno = -pcNewConnection->iState;
+
+   U_SYSCALL_VOID(SSL_free, "%p", ssl);
+                                  ssl = 0;
+
+   if (reuse)
+      {
+      reuse = false;
+
+      goto retry;
+      }
+
+   pcNewConnection->USocket::_closesocket();
+
+   pcNewConnection->iSockDesc = -1;
+
+   U_INTERNAL_DUMP("pcNewConnection->ret = %d", pcNewConnection->ret)
 
    U_RETURN(false);
 }
@@ -543,44 +561,7 @@ void USSLSocket::closesocket()
                                      ssl = 0;                
       }
 
-   UTCPSocket::closesocket();
-}
-
-int USSLSocket::recv(void* pBuffer, uint32_t iBufferLen)
-{
-   U_TRACE(1, "USSLSocket::recv(%p,%u)", pBuffer, iBufferLen)
-
-   U_INTERNAL_ASSERT(USocket::isConnected())
-
-   int iBytesRead;
-
-   if (active == false) iBytesRead = USocket::recv(pBuffer, iBufferLen);
-   else
-      {
-      U_INTERNAL_ASSERT_POINTER(ssl)
-loop:
-      errno      = 0;
-      iBytesRead = U_SYSCALL(SSL_read, "%p,%p,%d", ssl, CAST(pBuffer), iBufferLen);
-
-      if (iBytesRead <= 0)
-         {
-         if (errno) iState = -errno;
-         else
-            {
-            ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
-
-            U_DUMP("status = %.*S", 512, status(false))
-
-            if (ret == SSL_ERROR_WANT_READ) goto loop;
-            }
-         }
-      }
-
-#ifdef DEBUG
-   if (iBytesRead > 0) U_INTERNAL_DUMP("BytesRead(%d) = %#.*S", iBytesRead, iBytesRead, CAST(pBuffer))
-#endif
-
-   U_RETURN(iBytesRead);
+   if (USocket::isOpen()) UTCPSocket::closesocket();
 }
 
 bool USSLSocket::connectServer(const UString& server, int iServPort)
@@ -596,74 +577,119 @@ bool USSLSocket::connectServer(const UString& server, int iServPort)
    U_RETURN(false);
 }
 
-int USSLSocket::send(const void* pData, uint32_t iDataLen)
+int USSLSocket::recv(void* pBuffer, uint32_t iBufferLen)
+{
+   U_TRACE(1, "USSLSocket::recv(%p,%u)", pBuffer, iBufferLen)
+
+   U_INTERNAL_ASSERT(USocket::isConnected())
+
+   int iBytesRead, lerrno;
+
+   if (active == false)
+      {
+      iBytesRead = USocket::recv(pBuffer, iBufferLen);
+
+      goto end;
+      }
+
+   U_INTERNAL_ASSERT_POINTER(ssl)
+
+   lerrno     = 0;
+loop:
+   errno      = 0;
+   iBytesRead = U_SYSCALL(SSL_read, "%p,%p,%d", ssl, CAST(pBuffer), iBufferLen);
+
+   if (iBytesRead > 0)
+      {
+      U_INTERNAL_DUMP("BytesRead(%d) = %#.*S", iBytesRead, iBytesRead, CAST(pBuffer))
+
+      goto end;
+      }
+
+   U_INTERNAL_DUMP("errno = %d", errno)
+
+   if (errno) lerrno = errno;
+
+   ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
+
+   U_DUMP("status = %.*S", 512, status(ssl, ret, false, 0, 0))
+
+        if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+   else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+
+   errno = lerrno;
+
+end:
+   U_RETURN(iBytesRead);
+}
+
+int USSLSocket::send(const char* pData, uint32_t iDataLen)
 {
    U_TRACE(1, "USSLSocket::send(%p,%u)", pData, iDataLen)
 
    U_INTERNAL_ASSERT(USocket::isOpen())
 
-   int iBytesWrite;
+   int iBytesWrite, lerrno;
 
-   if (active == false) iBytesWrite = USocket::send(pData, iDataLen);
-   else
+   if (active == false)
       {
-      U_INTERNAL_ASSERT_POINTER(ssl)
-loop:
-      errno       = 0;
-      iBytesWrite = U_SYSCALL(SSL_write, "%p,%p,%d", ssl, CAST(pData), iDataLen);
+      iBytesWrite = USocket::send(pData, iDataLen);
 
-      if (iBytesWrite <= 0)
-         {
-         if (errno) iState = -errno;
-         else
-            {
-            ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
-
-            U_DUMP("status = %.*S", 512, status(false))
-
-            if (ret == SSL_ERROR_WANT_WRITE) goto loop;
-            }
-         }
+      goto end;
       }
 
-#ifdef DEBUG
-   if (iBytesWrite > 0) U_INTERNAL_DUMP("BytesWrite(%d) = %#.*S", iBytesWrite, iBytesWrite, CAST(pData))
-#endif
+   U_INTERNAL_ASSERT_POINTER(ssl)
 
+   lerrno      = 0;
+loop:
+   errno       = 0;
+   iBytesWrite = U_SYSCALL(SSL_write, "%p,%p,%d", ssl, CAST(pData), iDataLen);
+
+   if (iBytesWrite > 0)
+      {
+      U_INTERNAL_DUMP("BytesWrite(%d) = %#.*S", iBytesWrite, iBytesWrite, CAST(pData))
+
+      goto end;
+      }
+
+   U_INTERNAL_DUMP("errno = %d", errno)
+
+   if (errno) lerrno = errno;
+
+   ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
+
+   U_DUMP("status = %.*S", 512, status(ssl, ret, false, 0, 0))
+
+        if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+   else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+
+   errno = lerrno;
+
+end:
    U_RETURN(iBytesWrite);
 }
 
-// write data into multiple buffers
+// write data from multiple buffers
 
 int USSLSocket::writev(const struct iovec* iov, int iovcnt)
 {
    U_TRACE(0, "USSLSocket::writev(%p,%d)", iov, iovcnt)
 
-   // Determine the total length of all the buffers in <iov>
+   int iBytesWrite = 0, value;
 
-   char* buf;
-   char* ptr;
-   int i, length = 0, result;
-
-   for (i = 0; i < iovcnt; ++i) length += iov[i].iov_len;
-
-   ptr = buf = (char*) U_MALLOC_GEN(length);
-
-   for (i = 0; i < iovcnt; ++i)
+   for (int i = 0; i < iovcnt; ++i)
       {
       if (iov[i].iov_len)
          {
-         (void) u_memcpy(ptr, iov[i].iov_base, iov[i].iov_len);
+         value = send((const char*)iov[i].iov_base, iov[i].iov_len);
 
-         ptr += iov[i].iov_len;
+         if (value <= 0) break;
+
+         iBytesWrite += value;
          }
       }
 
-   result = USSLSocket::send(buf, length);
-
-   U_FREE_GEN(buf, length);
-
-   U_RETURN(result);
+   U_RETURN(iBytesWrite);
 }
 
 // DEBUG

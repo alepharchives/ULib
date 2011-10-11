@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# send_req_to_portal.sh
+
+logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $1 BEGIN"
+
+TMPFILE=/tmp/$1.$$
+
+#UTRACE="0 10M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+$CLIENT_HTTP "http://$PORTAL_IP_ADDRESS/$2" >$TMPFILE 2>/dev/null
+
+if [ $? -eq 0 ]; then
+	rm -f $TMPFILE
+fi
+
+logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $1 END"
+
+if [ -n "$RSYNC_HOST" ]; then
+
+	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $1 START SYNCHRONIZING PORTAL STATUS INFO"
+
+	$WIFI_PORTAL_HOME/bin/synchronize-status.sh &&
+		{ logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $1 END SYNCHRONIZING PORTAL STATUS INFO: SUCCESS" ; true ; } ||
+		  logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $1 END SYNCHRONIZING PORTAL STATUS INFO: FAILURE"
+fi

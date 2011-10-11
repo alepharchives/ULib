@@ -17,6 +17,7 @@
 #include <ulib/tokenizer.h>
 #include <ulib/file_config.h>
 #include <ulib/utility/uhttp.h>
+#include <ulib/utility/escape.h>
 #include <ulib/utility/services.h>
 #include <ulib/net/server/server.h>
 #include <ulib/utility/xml_escape.h>
@@ -199,7 +200,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
    int32_t i, n;
    const char* directive;
    UVector<UString> name_value;
-   uint32_t distance, pos, size, len;
+   uint32_t distance, pos, size;
    enum {E_NONE, E_URL, E_ENTITY} encode;
    int op, if_level = 0, if_is_false_level = 0;
    bool bgroup, bfile, bset, if_is_false = false, if_is_false_endif = false;
@@ -216,6 +217,10 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
    while (true)
       {
       // Find next SSI tag
+
+      U_INTERNAL_DUMP("content(%u) = %.*S", content.size(), U_STRING_TO_TRACE(content))
+
+      U_ASSERT_DIFFERS(content.empty(), true)
 
       distance = t.getDistance();
       pos      = content.find("<!--#", distance);
@@ -601,34 +606,75 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                if (pathname.empty())
                   {
-                       if (name == *str_cmd) x = UCommand::outputCommand(value, 0, -1, UServices::getDevNull());
-                  else if (name == *str_servlet &&
-                           UHTTP::checkHTTPServletRequest(U_STRING_TO_PARAM(value)))
+                  if (name == *str_cmd) x = UCommand::outputCommand(value, 0, -1, UServices::getDevNull());
+                  else
                      {
-                     x = *UClientImage_Base::wbuffer;
-                     }
-                  else if (name == *str_cgi)
-                     {
-                     len = value.size();
+                     UHTTP::file->setPath(value, &environment);
 
-                     UHTTP::pathname->setBuffer(u_cwd_len + len);
-                     UHTTP::pathname->snprintf("%w%.*s", len, value.data());
-
-                     U_INTERNAL_ASSERT_DIFFERS(UHTTP::pathname->size(), u_cwd_len)
-
-                     UHTTP::checkForCGIRequest();
-
-                     if (UHTTP::isCGIRequest())
+                     if (UHTTP::isFileInCache())
                         {
-                        if (UHTTP::processCGIRequest((UCommand*)0, &environment, false, false)) x = *UClientImage_Base::wbuffer;
-                        else
+                        U_INTERNAL_ASSERT_POINTER(UHTTP::file_data)
+
+                        u_mime_index = UHTTP::file_data->mime_index;
+
+                        U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
+
+                        if (name == *str_servlet)
                            {
-                           U_RETURN_STRING(UString::getStringNull());
+                           UHTTP::manageHTTPServletRequest();
+
+                           x = *UClientImage_Base::wbuffer;
+                           }
+                        else if (name == *str_cgi)
+                           {
+                           (void) UHTTP::processCGIRequest((UCommand*)0, &environment, false, false);
+
+                           if (bset)
+                              {
+                              // NB: check if there is an alternative response to elaborate from #set...
+
+                              UString rheader = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_HEADER"), UClientImage_Base::wbuffer);
+
+                              U_INTERNAL_DUMP("response_header(%u) = %.*S", rheader.size(), U_STRING_TO_TRACE(rheader))
+
+                              if (rheader.empty() == false)
+                                 {
+                                 cgi_output = true;
+
+                                 size = rheader.size();
+
+                                 UString _tmp(size);
+
+                                 (void) UEscape::decode(rheader, _tmp);
+
+                                 // NB: we cannot use directly the body attribute because is bounded to the param content...
+
+                                 UString rbody = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_BODY"), UClientImage_Base::wbuffer);
+
+                                 U_INTERNAL_DUMP("response_body(%u) = %.*S", rbody.size(), U_STRING_TO_TRACE(rbody))
+
+                                 if (rbody.empty()) (void) header.insert(0, _tmp);
+                                 else
+                                    {
+                                    body = rbody;
+
+                                    // NB: with an alternative body response we cannot use the cached header response...
+
+                                    (void) header.replace(_tmp);
+
+                                    U_RETURN_STRING(UString::getStringNull());
+                                    }
+
+                                 UClientImage_Base::wbuffer->erase(0, U_CONSTANT_SIZE("HTTP_RESPONSE_HEADER=") + size + 3);
+                                 }
+                              }
+
+                           x = *UClientImage_Base::wbuffer;
                            }
                         }
                      }
                   }
-               else
+               else // pathname.empty()...
                   {
                   UHTTP::file->setPath(pathname, &environment);
 
@@ -651,16 +697,14 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                      include.clear();
                      }
-
-                  pathname.clear();
-
-                  UHTTP::file->getPath().clear();
                   }
 
                if (bset) (void) environment.append(x);
                else      (void)      output.append(x);
 
-               x.clear();
+                                    x.clear();
+                             pathname.clear();
+               UHTTP::file->getPath().clear();
                }
             else if (bset)
                {
@@ -737,9 +781,14 @@ int USSIPlugIn::handlerRequest()
 
    U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
 
-   if (UHTTP::isHTTPRequestNotFound()  == false &&
-       UHTTP::isHTTPRequestForbidden() == false &&
-       UHTTP::file->isSuffix(".shtml"))
+   bool bcache = (u_mime_index == U_ssi);
+
+   U_INTERNAL_DUMP("bcache = %b", bcache)
+
+   if (bcache                                    ||
+       (UHTTP::isHTTPRequestNotFound()  == false &&
+        UHTTP::isHTTPRequestForbidden() == false &&
+        UHTTP::file->isSuffix(".shtml")))
       {
       U_ASSERT(UHTTP::isSSIRequest())
 
@@ -747,30 +796,31 @@ int USSIPlugIn::handlerRequest()
 
       errmsg          = *str_errmsg_default;
       timefmt         = *str_timefmt_default;
+      cgi_output      = false;
       environment     = UHTTP::getCGIEnvironment();
       last_modified   = UHTTP::file->st_mtime;
       use_size_abbrev = true;
 
-      (docname = UHTTP::getDocumentName()).duplicate();
+      header.setBuffer(U_CAPACITY);
 
-      UString body;
-      UHTTP::UFileCacheData* file_data;
-      bool bcache = UHTTP::isDataFromCache();
+      (docname = UHTTP::getDocumentName()).duplicate();
 
       // read the SSI file
 
-      if (bcache)
-         {
-         file_data = UHTTP::file_data;
-
-         U_INTERNAL_ASSERT_POINTER(file_data->array)
-         U_INTERNAL_ASSERT_EQUALS(file_data->array->size(),2)
-
-         body = UHTTP::getDataFromCache(false, false);
-         }
+      if (bcache == false) body = UHTTP::file->getContent();
       else
          {
-         UHTTP::file->getContent();
+         U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %.*S", UClientImage_Base::body->size(), U_STRING_TO_TRACE(*UClientImage_Base::body))
+
+         U_ASSERT(UHTTP::isDataFromCache())
+         U_INTERNAL_ASSERT_POINTER(UHTTP::file_data->array)
+         U_INTERNAL_ASSERT_EQUALS(UHTTP::file_data->array->size(),2)
+
+         (void) header.append(UHTTP::getDataFromCache(true, false)); // NB: after file_data can change...
+
+         body = (UHTTP::isHttpGETorHEAD() && UClientImage_Base::body->empty() == false
+                                          ? *UClientImage_Base::body
+                                          : UHTTP::getDataFromCache(false, false));
          }
 
       // process the SSI file
@@ -778,42 +828,65 @@ int USSIPlugIn::handlerRequest()
       if (UHTTP::isHttpPOST()) *UClientImage_Base::body = U_HTTP_BODY(*UClientImage_Base::request);
                                *UClientImage_Base::body = processSSIRequest(body, 0);
 
-      if (UClientImage_Base::body->empty() == false)
+      U_INTERNAL_DUMP("cgi_output = %b", cgi_output)
+
+      if (UClientImage_Base::body->empty())
+         {
+         // NB: there is an alternative response to elaborate from #set...
+
+         U_INTERNAL_DUMP("body(%u) = %.*S", body.size(), U_STRING_TO_TRACE(body))
+
+         U_INTERNAL_ASSERT(cgi_output)
+         U_ASSERT_DIFFERS(body.empty(), true)
+
+         *UClientImage_Base::body = body;
+                                    body.clear();
+         }
+      else
          {
 #     ifdef HAVE_PAGE_SPEED
          UHTTP::page_speed->minify_html("USSIPlugIn::handlerRequest()", *UClientImage_Base::body);
 #     endif
 
-         UString header(U_CAPACITY);
-
-         U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
-
-         if (U_http_is_accept_deflate)
+         if (cgi_output == false)
             {
-            *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
+            U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
 
-            (void) header.assign(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+            if (U_http_is_accept_deflate)
+               {
+               *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
+
+               (void) header.insert(0, U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+               }
+
+            if (bcache)
+               {
+               // NB: adjusting the size of response...
+
+               (void) UHTTP::checkHTTPContentLength(header, UClientImage_Base::body->size());
+               }
+            else
+               {
+               u_mime_index = U_ssi;
+
+               (void) header.append(UHTTP::getHeaderMimeType(0, U_CTYPE_HTML, UClientImage_Base::body->size(), 0));
+               }
+
+            u_http_info.nResponseCode = HTTP_OK; // NB: can be already set to 304 (Not Modified)...
+
+            *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(header);
             }
+         }
 
-         if (bcache)
-            {
-            UHTTP::file_data = file_data;
+      if (cgi_output)
+         {
+         // NB: there is an alternative response to elaborate from #set...
 
-            (void) header.append(UHTTP::getDataFromCache(true, false));
+         (void) UClientImage_Base::wbuffer->replace(header);
+         (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_CRLF));
+         (void) UClientImage_Base::wbuffer->append(*UClientImage_Base::body);
 
-            // NB: adjusting the size of response...
-
-            (void) UHTTP::checkHTTPContentLength(header, UClientImage_Base::body->size());
-            }
-         else
-            {
-            u_mime_index = U_ssi;
-
-            (void) header.append(UHTTP::getHeaderMimeType(0, U_CTYPE_HTML, UClientImage_Base::body->size(), 0));
-            }
-
-         u_http_info.nResponseCode   = HTTP_OK;
-         *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(header);
+         (void) UHTTP::processCGIOutput();
          }
 
       UHTTP::setHTTPRequestProcessed();
@@ -829,9 +902,12 @@ int USSIPlugIn::handlerRequest()
 
 const char* USSIPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "last_modified            " << last_modified       << '\n'
+   *UObjectIO::os << "cgi_output               " << cgi_output          << '\n'
+                  << "last_modified            " << last_modified       << '\n'
                   << "use_size_abbrev          " << use_size_abbrev     << '\n'
+                  << "body            (UString " << (void*)&body        << ")\n"
                   << "errmsg          (UString " << (void*)&errmsg      << ")\n"
+                  << "header          (UString " << (void*)&header      << ")\n"
                   << "timefmt         (UString " << (void*)&timefmt     << ")\n"
                   << "docname         (UString " << (void*)&docname     << ")\n"
                   << "environment     (UString " << (void*)&environment << ')';

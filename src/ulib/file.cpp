@@ -84,6 +84,22 @@ void UFile::setPathRelativ(const UString* environment)
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 }
 
+void UFile::setRoot()
+{
+   U_TRACE(0, "UFile::setRoot()")
+
+   reset();
+
+   pathname.setConstant(U_CONSTANT_TO_PARAM("/"));
+
+   st_mode          = S_IFDIR|0755;
+   path_relativ     = pathname.data();
+   path_relativ_len = 1;
+
+   U_INTERNAL_DUMP("u_cwd           = %S", u_cwd)
+   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+}
+
 // gcc - call is unlikely and code size would grow
 
 void UFile::setPath(const UString& path, const UString* environment)
@@ -344,37 +360,50 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
 
    U_INTERNAL_ASSERT_DIFFERS(fd,-1)
    U_INTERNAL_ASSERT_MAJOR(st_size,0)
-   U_INTERNAL_ASSERT_EQUALS((offset % PAGESIZE),0) // offset should be a multiple of the page size as returned by getpagesize(2)
 #ifdef __MINGW32__
    U_INTERNAL_ASSERT((off_t)length <= st_size)     // Don't allow mappings beyond EOF since Windows can't handle that POSIX like
 #endif
 
-   if (length == 0)
-      {
-#  ifdef HAVE_ARCH64
-      U_INTERNAL_ASSERT_MINOR_MSG(st_size,4L*1024L*1024L*1024L,"we can't manage file bigger than 4G...") // limit of UString
-#  endif
+   if (length == 0) length = st_size;
 
-      length = st_size;
+   uint32_t resto = 0;
+
+   if (offset)
+      {
+      resto = offset % PAGESIZE;
+
+      offset -= resto;
+      length += resto;
       }
 
-   map_size = (length - offset);
+   U_INTERNAL_DUMP("resto = %u", resto)
 
-#ifndef HAVE_ARCH64
-   U_INTERNAL_ASSERT_RANGE(1,map_size,3U*1024U*1024U*1024U) // limit of linux system
+#ifdef HAVE_ARCH64
+   U_INTERNAL_ASSERT_MINOR_MSG(st_size, U_STRING_LIMIT, "we can't manage file bigger than 4G...") // limit of UString
+#else
+   U_INTERNAL_ASSERT_RANGE(1, map_size, 2U*1024U*1024U*1024U) // limit of linux system
 #endif
 
-   map = UFile::mmap(map_size, fd, prot, MAP_SHARED | MAP_POPULATE, offset);
+   U_INTERNAL_ASSERT_EQUALS((offset % PAGESIZE),0) // offset should be a multiple of the page size as returned by getpagesize(2)
 
    if (map != MAP_FAILED)
       {
-/*
-#  ifdef MADV_SEQUENTIAL
-      if (map_size > (128 * PAGESIZE)) (void) U_SYSCALL(madvise, "%p,%u,%d", map, map_size, MADV_SEQUENTIAL);
-#  endif
-*/
+      munmap(map, map_size);
 
-      if (str) str->mmap(map, map_size);
+      map_size = 0;
+      }
+
+   map = UFile::mmap(length, fd, prot, MAP_SHARED | MAP_POPULATE, offset);
+
+   if (map != MAP_FAILED)
+      {
+      map_size = length;
+
+      if (str) str->mmap(map + resto, length - resto);
+
+#  ifdef MADV_SEQUENTIAL
+   // if (map_size > (128 * PAGESIZE)) (void) U_SYSCALL(madvise, "%p,%u,%d", map, map_size, MADV_SEQUENTIAL);
+#  endif
 
       U_RETURN(true);
       }
@@ -440,7 +469,7 @@ UString UFile::getContent(bool brdonly, bool bstat, bool bmap)
       int                   prot  = PROT_READ;
       if (brdonly == false) prot |= PROT_WRITE;
 
-      (void) memmap(prot, &fileContent);
+      (void) memmap(prot, &fileContent, 0, st_size);
       }
    else
       {
@@ -534,7 +563,8 @@ bool UFile::write(const UString& data, bool append, bool bmkdirs)
 
    if (esito)
       {
-      uint32_t sz = data.size();
+      uint32_t sz     = data.size();
+      const char* ptr = data.data();
 
       if (sz > PAGESIZE)
          {
@@ -545,30 +575,17 @@ bool UFile::write(const UString& data, bool append, bool bmkdirs)
          if (esito == false) U_WARNING("no more space on disk for size %u", offset + sz);
          else
             {
-            uint32_t resto = 0;
-
-            if (offset)
-               {
-               resto   = offset % PAGESIZE;
-               offset -= resto;
-
-               U_INTERNAL_DUMP("resto = %u", resto)
-               }
-
-            esito = memmap(PROT_READ | PROT_WRITE, 0, offset);
+            esito = memmap(PROT_READ | PROT_WRITE, 0, offset, st_size);
 
             if (esito)
                {
-               (void) u_memcpy(map + resto, data.data(), sz);
+               (void) u_memcpy(map + (map_size - st_size), ptr, sz);
 
                munmap();
                }
             }
          }
-      else
-         {
-         if (sz) esito = UFile::write(fd, data.data(), sz);
-         }
+      else if (sz) esito = UFile::write(fd, ptr, sz);
       }
 
    U_RETURN(esito);
@@ -917,7 +934,7 @@ bool UFile::mkTempStorage(UString& space, uint32_t size)
 
    bool result = tmp.mkTemp() &&
                  tmp.fallocate(size) &&
-                 tmp.memmap(PROT_READ | PROT_WRITE, &space);
+                 tmp.memmap(PROT_READ | PROT_WRITE, &space, 0, tmp.st_size);
 
    tmp.close();
 
@@ -1109,7 +1126,7 @@ void UFile::substitute(UFile& file)
       UFile::close();
       }
 
-   if (map != MAP_FAILED) UFile::munmap();
+   if (map != MAP_FAILED) munmap();
 
    fd       = file.fd;
    map      = file.map;
@@ -1283,8 +1300,6 @@ bool UFile::mkdir(const char* path, mode_t mode)
 const char* UFile::getMimeType(bool bmagic)
 {
    U_TRACE(0, "UFile::getMimeType(%b)", bmagic)
-
-   u_mime_index = -1;
 
    const char* suffix       = getSuffix();
    const char* content_type = 0;

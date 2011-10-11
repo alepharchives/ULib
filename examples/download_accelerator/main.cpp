@@ -2,10 +2,6 @@
 
 #include <ulib/base/utility.h>
 
-#ifndef U_NO_SSL
-#define U_NO_SSL
-#endif
-
 #include <ulib/url.h>
 #include <ulib/file.h>
 #include <ulib/timer.h>

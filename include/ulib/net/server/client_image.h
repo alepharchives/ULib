@@ -22,8 +22,6 @@
 #  include <ulib/ssl/net/sslsocket.h>
 #endif
 
-#define U_HTTP_CACHE_REQUEST
-
 /*
 #define U_FILETEST 1
 */
@@ -78,8 +76,7 @@ public:
 
    // SERVICES
 
-   int  genericRead();
-   bool newConnection();
+   int  genericRead() __pure;
    void logCertificate(void* x509); // aggiungo nel log il certificato Peer del client ("issuer","serial")
 
    static void init();
@@ -105,6 +102,10 @@ public:
    virtual int  handlerWrite();
    virtual void handlerDelete();
    virtual void handlerError(int sock_state);
+
+   // method VIRTUAL to redefine
+
+   virtual bool newConnection();
 
    // manage if other request already available... (pipelining)
 
@@ -205,43 +206,30 @@ public:
 
    USSLSocket* getSocket() { return (USSLSocket*)socket; }
 
-   void checkForNewConnection()
+   // define method VIRTUAL of class UClientImage_Base
+
+   virtual bool newConnection()
       {
-      U_TRACE(0, "UClientImage<USSLSocket>::checkForNewConnection()")
+      U_TRACE(0, "UClientImage<USSLSocket>::newConnection()")
 
+      U_INTERNAL_ASSERT_EQUALS(ssl,0)
       U_INTERNAL_ASSERT_POINTER(socket)
-
-      U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->getFd())
-
-      if (logbuf &&
-          UEventFd::fd == 0)
-         {
-         UClientImage_Base::logCertificate(getSocket()->getPeerCertificate());
-         }
+      
+      if (logbuf) UClientImage_Base::logCertificate(getSocket()->getPeerCertificate());
 
       // NB: we need this because we reuse the same object USocket...
 
-      if (ssl == 0)
-         {
-         ssl = getSocket()->ssl;
-               getSocket()->ssl = 0;
+      ssl = getSocket()->ssl;
+            getSocket()->ssl = 0;
 
-         U_INTERNAL_DUMP("ssl = %p ssl_fd = %d", ssl, SSL_get_fd(ssl))
-         }
+      U_INTERNAL_DUMP("ssl = %p ssl_fd = %d", ssl, SSL_get_fd(ssl))
+
+      if (UClientImage_Base::newConnection()) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    // define method VIRTUAL of class UEventFd
-
-   virtual int handlerRead()
-      {
-      U_TRACE(0, "UClientImage<USSLSocket>::handlerRead()")
-
-      checkForNewConnection();
-
-      int result = UClientImage_Base::handlerRead();
-
-      U_RETURN(result);
-      }
 
    virtual void handlerDelete()
       {

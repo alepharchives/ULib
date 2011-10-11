@@ -17,16 +17,9 @@
 #ifdef HAVE_SSL
 #  include <ulib/ssl/net/sslsocket.h>
 #  define Socket USSLSocket
-#  ifdef U_NO_SSL
-#  undef U_NO_SSL
-#  endif
 #else
 #  include <ulib/net/tcpsocket.h>
 #  define Socket UTCPSocket
-#  define Socket UTCPSocket
-#  ifndef U_NO_SSL
-#  define U_NO_SSL
-#  endif
 #endif
 
 #include <ulib/container/vector.h>

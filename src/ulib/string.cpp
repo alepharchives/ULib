@@ -328,7 +328,11 @@ void UStringRep::release()
       {
       _capacity = 0;
 
-      (void) U_SYSCALL(munmap, "%p,%u", (void*)str, _length);
+      ptrdiff_t resto = (ptrdiff_t)str % PAGESIZE;
+
+      U_INTERNAL_DUMP("resto = %u", resto)
+
+      (void) U_SYSCALL(munmap, "%p,%u", (void*)(str - resto), _length + resto);
       }
 
 #ifdef DEBUG
@@ -817,6 +821,29 @@ void UString::resize(uint32_t n, char c)
    U_INTERNAL_ASSERT(invariant())
 }
 
+// manage UString as memory mapped area...
+
+void UString::mmap(const char* map, uint32_t len)
+{
+   U_TRACE(0, "UString::mmap(%.*S,%u)", len, map, len)
+
+   U_INTERNAL_ASSERT(map != MAP_FAILED)
+
+   if (isMmap())
+      {
+      rep->str     = map;
+      rep->_length = len;
+      }
+   else
+      {
+      UStringRep* _rep = UStringRep::create(map, len, U_NOT_FOUND);
+
+      set(_rep);
+      }
+
+   U_INTERNAL_ASSERT(invariant())
+}
+
 // The `find' function searches string for a specified string (possibly a single character) and returns
 // its starting position. You can supply the parameter pos to specify the position where search must begin
 
@@ -830,7 +857,12 @@ __pure uint32_t UString::find(const char* s, uint32_t pos, uint32_t s_len, uint3
    // found at every point in a UString, except beyond the end...
    // if (s_len == 0) U_RETURN(pos <= size() ? pos : U_NOT_FOUND);
 
-   uint32_t n      = rep->fold(pos, how_much);
+   uint32_t n = rep->fold(pos, how_much);
+
+   U_INTERNAL_DUMP("rep->_length = %u", rep->_length)
+
+   U_INTERNAL_ASSERT(n <= rep->_length)
+
    const char* str = rep->str;
    const char* ptr = (const char*) u_find(str + pos, n, s, s_len);
 

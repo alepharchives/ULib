@@ -16,10 +16,13 @@
 
 #include <ulib/internal/common.h>
 
+
 #ifdef __MINGW32__
-#  define U_FMT_LIBPATH "%s/%.*s.dll"
+#  define U_LIB_SUFFIX  "dll"
+#  define U_FMT_LIBPATH "%s/%.*s." U_LIB_SUFFIX
 #else
-#  define U_FMT_LIBPATH "%s/%.*s.so"
+#  define U_LIB_SUFFIX  "so"
+#  define U_FMT_LIBPATH "%s/%.*s." U_LIB_SUFFIX
 #  ifdef HAVE_DLFCN_H
 extern "C" {
 #     include <dlfcn.h>

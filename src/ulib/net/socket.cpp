@@ -46,6 +46,7 @@ const UString* USocket::str_X_Real_IP;
 const UString* USocket::str_X_Forwarded_For;
 const UString* USocket::str_Transfer_Encoding;
 const UString* USocket::str_X_Progress_ID;
+const UString* USocket::str_expect_100_continue;
 
 #include "socket_address.cpp"
 
@@ -77,6 +78,7 @@ void USocket::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_X_Forwarded_For,0)
    U_INTERNAL_ASSERT_EQUALS(str_Transfer_Encoding,0)
    U_INTERNAL_ASSERT_EQUALS(str_X_Progress_ID,0)
+   U_INTERNAL_ASSERT_EQUALS(str_expect_100_continue,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("Host") },
@@ -102,7 +104,8 @@ void USocket::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("X-Real-IP") },
       { U_STRINGREP_FROM_CONSTANT("X-Forwarded-For") },
       { U_STRINGREP_FROM_CONSTANT("Transfer-Encoding") },
-      { U_STRINGREP_FROM_CONSTANT("X-Progress-ID") }
+      { U_STRINGREP_FROM_CONSTANT("X-Progress-ID") },
+      { U_STRINGREP_FROM_CONSTANT("Expect: 100-continue") }
    };
 
    U_NEW_ULIB_OBJECT(str_host,                  U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -129,6 +132,7 @@ void USocket::str_allocate()
    U_NEW_ULIB_OBJECT(str_X_Forwarded_For,       U_STRING_FROM_STRINGREP_STORAGE(21));
    U_NEW_ULIB_OBJECT(str_Transfer_Encoding,     U_STRING_FROM_STRINGREP_STORAGE(22));
    U_NEW_ULIB_OBJECT(str_X_Progress_ID,         U_STRING_FROM_STRINGREP_STORAGE(23));
+   U_NEW_ULIB_OBJECT(str_expect_100_continue,   U_STRING_FROM_STRINGREP_STORAGE(24));
 
 #ifdef HAVE_SSL
    ULib_init_openssl();
@@ -598,7 +602,7 @@ bool USocket::sendBinary16Bits(uint16_t iData)
 
    uint16_t uiNetOrder = htons(iData);
 
-   bool result = (send(&uiNetOrder, sizeof(uint16_t)) == sizeof(uint16_t));
+   bool result = (send((const char*)&uiNetOrder, sizeof(uint16_t)) == sizeof(uint16_t));
 
    U_RETURN(result);
 }
@@ -609,7 +613,7 @@ bool USocket::sendBinary32Bits(uint32_t lData)
 
    uint32_t uiNetOrder = htonl(lData);
 
-   bool result = (send(&uiNetOrder, sizeof(uint32_t)) == sizeof(uint32_t));
+   bool result = (send((const char*)&uiNetOrder, sizeof(uint32_t)) == sizeof(uint32_t));
 
    U_RETURN(result);
 }
@@ -871,7 +875,7 @@ loop:
    U_RETURN(false);
 }
 
-int USocket::send(const void* pPayload, uint32_t iPayloadLength)
+int USocket::send(const char* pPayload, uint32_t iPayloadLength)
 {
    U_TRACE(1, "USocket::send(%p,%u)", pPayload, iPayloadLength)
 
@@ -953,7 +957,7 @@ loop:
          }
       }
 
-   iBytesWrite = send(pPayload, iPayloadLength);
+   iBytesWrite = send((const char*)pPayload, iPayloadLength);
 
    if (iBytesWrite == -1     &&
        errno       == EAGAIN &&

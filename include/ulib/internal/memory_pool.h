@@ -67,12 +67,13 @@
   48 sizeof(USOAPGenericMethod)
   56 sizeof(UOptions)
   56 sizeof(UPlugIn<void*>)
-  64 sizeof(UPCRE)
-  64 sizeof(UCommand)
-  64 sizeof(UApplication)
+  56 sizeof(UHTTP::UFileCacheData) <==
 -------------------------
    U_STACK_TYPE_2
 
+  64 sizeof(UPCRE)
+  64 sizeof(UCommand)
+  64 sizeof(UApplication)
   72 sizeof(UMimePKCS7)
   72 sizeof(UClientImage<UTCPSocket>)
   80 sizeof(UZIP)
@@ -127,7 +128,7 @@
 
 #define U_STACK_TYPE_0     8U
 #define U_STACK_TYPE_1    24U
-#define U_STACK_TYPE_2    64U
+#define U_STACK_TYPE_2    56U
 #define U_STACK_TYPE_3   128U
 #define U_STACK_TYPE_4   216U
 #define U_STACK_TYPE_5   256U

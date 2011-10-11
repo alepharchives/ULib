@@ -22,7 +22,7 @@ fi
 DIR_CMD="../../examples/userver"
 
 if [ "$TERM" != "cygwin" ]; then
-	( mkdir -p usp; cd usp;
+	( mkdir -p servlet; cd servlet;
 	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/jsonrequest.so;
 	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/upload_progress.so;
 	  cd ../../../src/ulib/net/server/plugin/usp/;

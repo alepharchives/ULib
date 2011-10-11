@@ -25,13 +25,14 @@
 #  include <ulib/container/vector.h>
 #endif
 
-#define U_HTTP_BODY(str)      (str).substr(u_http_info.endHeader, u_http_info.clength)
-#define U_HTTP_HEADER(str)    (str).substr(u_http_info.startHeader, u_http_info.szHeader)
-#define U_HTTP_URI_EQUAL(str) (u_http_info.uri_len == str.size() && memcmp(u_http_info.uri, str.data(), str.size()) == 0)
+#define U_HTTP_CACHE_REQUEST
+#define U_MAX_UPLOAD_PROGRESS 32
 
 #define U_HTTP_REALM "Protected Area" // HTTP Access Authentication
 
-#define U_MAX_UPLOAD_PROGRESS 32
+#define U_HTTP_BODY(str)      (str).substr(u_http_info.endHeader, u_http_info.clength)
+#define U_HTTP_HEADER(str)    (str).substr(u_http_info.startHeader, u_http_info.szHeader)
+#define U_HTTP_URI_EQUAL(str) (u_http_info.uri_len == str.size() && memcmp(u_http_info.uri, str.data(), str.size()) == 0)
 
 class UFile;
 class UValue;
@@ -61,7 +62,6 @@ public:
    static const UString* str_websocket_key1;
    static const UString* str_websocket_key2;
    static const UString* str_websocket_prot;
-   static const UString* str_expect_100_continue;
 
    static const char* ptrH; // "Host"
    static const char* ptrR; // "Range"
@@ -247,6 +247,15 @@ public:
       U_RETURN(result);
       }
 
+   static bool isHttpCOPY()
+      {
+      U_TRACE(0, "UHTTP::isHttpCOPY()")
+
+      bool result = (U_http_method_type == HTTP_COPY);
+
+      U_RETURN(result);
+      }
+
    static bool isTSARequest() __pure;
    static bool isSOAPRequest() __pure;
 
@@ -272,17 +281,13 @@ public:
    static UString* request_uri;
    static UString* uri_protected_mask;
 
-   static bool     virtual_host, enable_caching_by_proxy_servers, telnet_enable;
-   static uint32_t limit_request_body, request_read_timeout, min_size_for_sendfile;
+   static bool     virtual_host, enable_caching_by_proxy_servers, telnet_enable, bsendfile;
+   static uint32_t limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size;
 
    static int  checkHTTPRequest();
-   static void clearHTTPRequestCache();
-   static int  checkHTTPRequestCache();
-   static void manageHTTPRequestCache();
-   static bool checkHTTPOptionsRequest();
+   static void manageHTTPServletRequest();
    static void processHTTPGetRequest(const UString& request);
    static bool checkHTTPRequestForHeader(const UString& request);
-   static bool checkHTTPServletRequest(const char* uri, uint32_t uri_len);
    static bool checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
 
    static UString     getDocumentName();
@@ -290,6 +295,12 @@ public:
    static UString     getRequestURI(bool bquery);
    static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase) __pure;
    static UString     getHeaderMimeType(const char* content, const char* content_type, uint32_t size, time_t expire);
+
+#ifdef U_HTTP_CACHE_REQUEST
+   static void  clearHTTPRequestCache();
+   static int   checkHTTPRequestCache();
+   static void manageHTTPRequestCache();
+#endif
 
    // check for HTTP Header X-Forwarded-For: client, proxy1, proxy2 and X-Real-IP: client...
 
@@ -300,15 +311,19 @@ public:
 
    // request state processing
 
+#  define U_HTTP_REQUEST_IS_ALREADY_PROCESSED  '4'
+#  define U_HTTP_REQUEST_IS_IN_FILE_CACHE      '3'
+#  define U_HTTP_REQUEST_NEED_PROCESSING       '2'
+#  define U_HTTP_REQUEST_IS_FORBIDDEN          '1'
+#  define U_HTTP_REQUEST_IS_NOT_FOUND           0
+
    static void setHTTPRequestProcessed()
       {
       U_TRACE(0, "UHTTP::setHTTPRequestProcessed()")
 
-      U_INTERNAL_ASSERT(isHTTPRequest())
-
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
-      U_http_request_check = '4';
+      U_http_request_check = U_HTTP_REQUEST_IS_ALREADY_PROCESSED;
       }
 
    static bool isHTTPRequestAlreadyProcessed()
@@ -319,7 +334,7 @@ public:
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
-      bool result = (U_http_request_check == '4');
+      bool result = (U_http_request_check == U_HTTP_REQUEST_IS_ALREADY_PROCESSED);
 
       U_RETURN(result);
       }
@@ -332,7 +347,7 @@ public:
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
-      U_http_request_check = '3';
+      U_http_request_check = U_HTTP_REQUEST_IS_IN_FILE_CACHE;
       }
 
    static bool isHTTPRequestInFileCache()
@@ -343,7 +358,7 @@ public:
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
-      bool result = (U_http_request_check == '3');
+      bool result = (U_http_request_check == U_HTTP_REQUEST_IS_IN_FILE_CACHE);
 
       U_RETURN(result);
       }
@@ -356,7 +371,7 @@ public:
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
-      U_http_request_check = '2';
+      U_http_request_check = U_HTTP_REQUEST_NEED_PROCESSING;
       }
 
    static bool isHTTPRequestNeedProcessing()
@@ -367,7 +382,7 @@ public:
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
-      bool result = (U_http_request_check == '2');
+      bool result = (U_http_request_check == U_HTTP_REQUEST_NEED_PROCESSING);
 
       U_RETURN(result);
       }
@@ -380,7 +395,7 @@ public:
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
-      U_http_request_check = '\0';
+      U_http_request_check = U_HTTP_REQUEST_IS_NOT_FOUND;
       }
 
    static bool isHTTPRequestNotFound()
@@ -391,7 +406,7 @@ public:
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
-      bool result = (U_http_request_check == '\0');
+      bool result = (U_http_request_check == U_HTTP_REQUEST_IS_NOT_FOUND);
 
       U_RETURN(result);
       }
@@ -404,7 +419,7 @@ public:
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
-      U_http_request_check = '1';
+      U_http_request_check = U_HTTP_REQUEST_IS_FORBIDDEN;
       }
 
    static bool isHTTPRequestForbidden()
@@ -415,7 +430,7 @@ public:
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
-      bool result = (U_http_request_check == '1');
+      bool result = (U_http_request_check == U_HTTP_REQUEST_IS_FORBIDDEN);
 
       U_RETURN(result);
       }
@@ -453,24 +468,17 @@ public:
 
    // CGI
 
+   typedef struct ucgi {
+      char        sh_script;
+      char        dir[503];
+      const char* interpreter;
+   } ucgi;
+
    static UString* geoip;
    static UCommand* pcmd;
-   static char cgi_dir[U_PATH_MAX];
-
-   static bool isCGIRequest()
-      {
-      U_TRACE(0, "UHTTP::isCGIRequest()")
-
-      U_INTERNAL_DUMP("u_http_info.interpreter = %S cgi_dir = %S query(%u) = %.*S", u_http_info.interpreter, cgi_dir, u_http_info.query_len, U_HTTP_QUERY_TO_TRACE)
-
-      bool result = (u_http_info.interpreter || cgi_dir[0]);
-
-      U_RETURN(result);
-      }
 
    static bool    processCGIOutput();
    static UString getCGIEnvironment();
-   static void    checkForCGIRequest();
    static bool    processCGIRequest(UCommand* pcmd, UString* penvironment, bool async, bool process_output);
    static void    setHTTPCgiResponse(bool header_content_length, bool header_content_type, bool content_encoding);
 
@@ -527,22 +535,6 @@ public:
    UServletPage& operator=(const UServletPage&)   { return *this; }
    };
 
-   static void* argument;
-   static UServletPage* usp_page;
-   static UHashMap<UServletPage*>* usp_pages;
-
-   static void initUSP();
-
-   // ------------------------------
-   // argument value for usp mudule:
-   // ------------------------------
-   //  0 -> init
-   // -1 -> reset
-   // -2 -> destroy
-   // ------------------------------
-
-   static void callRunDynamicPage(int arg);
-
    // CSP (C Servlet Page)
 
    typedef int (*iPFipvc)(int,const char**);
@@ -591,11 +583,6 @@ public:
    UCServletPage& operator=(const UCServletPage&) { return *this; }
    };
 
-   static UCServletPage* csp_page;
-   static UHashMap<UCServletPage*>* csp_pages;
-
-   static void initCSP();
-
    typedef void (*vPFstr)(UString&);
 
 #ifdef HAVE_PAGE_SPEED // (Google Page Speed)
@@ -635,7 +622,6 @@ public:
 #endif
 
 #ifdef HAVE_V8 // (Google V8 JavaScript Engine)
-
    class UV8JavaScript : public UDynamic {
    public:
 
@@ -666,7 +652,6 @@ public:
 
    static UV8JavaScript* v8_javascript;
 #endif
-
 
    // REWRITE RULE
 
@@ -728,6 +713,7 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
+   void* ptr;               // data
    UVector<UString>* array; // content, header, deflate(content, header)
    time_t mtime;            // time of last modification
    time_t expire;           // expire time of the entry
@@ -751,22 +737,24 @@ public:
 
       os.put('{');
       os.put(' ');
-      os << d.wd;
-      os.put(' ');
-      os << d.size;
-      os.put(' ');
-      os << d.mode;
-      os.put(' ');
+   // os << d.ptr;
+   // os.put(' ');
+   // os << d.array;
+   // os.put(' ');
       os << d.mtime;
       os.put(' ');
       os << d.expire;
+      os.put(' ');
+      os << d.size;
+      os.put(' ');
+      os << d.wd;
+      os.put(' ');
+      os << d.mode;
       os.put(' ');
       os << d.mime_index;
       os.put(' ');
       os << d.fd;
       os.put(' ');
-   // os << d.array;
-   // os.put(' ');
       os.put('}');
 
       return os;
@@ -854,16 +842,15 @@ private:
    static void manageDataForCache() U_NO_EXPORT;
    static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;
    static bool processHTTPAuthorization(const UString& request) U_NO_EXPORT;
-   static void _callRunDynamicPage(UStringRep* key, void* value) U_NO_EXPORT;
    static int  sortHTTPRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
    static void getInotifyPathDirectory(UStringRep* key, void* value) U_NO_EXPORT;
    static bool checkHTTPGetRequestIfModified(const UString& request) U_NO_EXPORT;
    static void checkInotifyForCache(int wd, char* name, uint32_t len) U_NO_EXPORT;
    static void processHTTPGetRequest(const UString& etag, UString& ext) U_NO_EXPORT;
+   static int  checkHTTPGetRequestForRange(UString& ext, const UString& data) U_NO_EXPORT;
+   static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header, UString& ext) U_NO_EXPORT;
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext) U_NO_EXPORT;
-   static bool checkHTTPGetRequestForRange(uint32_t& start, uint32_t& size, UString& ext, const UString& data) U_NO_EXPORT;
-   static void setResponseForRange(uint32_t start, uint32_t end, uint32_t& size, uint32_t header, UString& ext) U_NO_EXPORT;
 
    UHTTP(const UHTTP&)            {}
    UHTTP& operator=(const UHTTP&) { return *this; }

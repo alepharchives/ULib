@@ -36,3 +36,6 @@ DIR_CMD="../../examples/userver"
 
 #ip route del 192.168.220.0/24 via 192.168.220.254  2>/dev/null
 #ifconfig eth0:220 192.168.220.102 down				 2>/dev/null
+
+# PORTALE TEMPORANEO
+# ssh 192.168.201.150

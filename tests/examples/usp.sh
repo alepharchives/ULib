@@ -19,7 +19,7 @@ CURDIR=`pwd`
 cd ../../src/ulib/net/server/plugin/usp/; ./usp2so.sh >/dev/null 2>&1 || exit 1
 cd $CURDIR
 
-( mkdir -p usp; cd usp; for i in `ls ../../../src/ulib/net/server/plugin/usp/.libs/*.so`; do ln -sf $i; done )
+( mkdir -p servlet; cd servlet; for i in `ls ../../../src/ulib/net/server/plugin/usp/.libs/*.so`; do ln -sf $i; done )
 
 #STRACE=$TRUSS
 start_prg_background userver_tcp -c usp.cfg

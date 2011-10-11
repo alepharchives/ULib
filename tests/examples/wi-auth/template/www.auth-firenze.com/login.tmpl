@@ -1,0 +1,185 @@
+  <form method="post" action="%s">
+    <input type="hidden" name="mac" value="%s"> <input type="hidden" name="token" value="%s"> <input type="hidden" name="redirect" value="%s">
+    <input type="hidden" name="timeout" value="%s"> <input type="hidden" name="gateway" value="%s"> <input type="hidden" name="ap" value="%s">
+    <input type="hidden" name="ip" value="%s"> <input type="hidden" name="realm" value="10_piazze">
+
+    <table width="700" border="0" align="center" class="tabella">
+      <tr>
+        <td>
+          <div align="center"><img src="images/sfondo2_wifi.jpg" width="784" height="251"></div>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <table width="100%%" border="0">
+            <!--#if expr=$MANUTENZIONE -->
+            <tr>
+              <td>
+                <h3>A causa di un intervento di manutenzione programmata il servizio non sarà disponibile</h3>
+                <h1><!--#echo var="$MANUTENZIONE"--></h1>
+                <h3>Ci scusiamo per l'inconveniente.</h3>
+              </td>
+            </tr>
+				<!--#endif -->
+          </table>
+        </td>
+      </tr>
+
+      <tr>
+        <td>&nbsp;</td>
+      </tr>
+
+      <tr>
+        <td class="test2">
+          <div align="center">
+            <!--
+            Se sei un utente registrato, inserisci le tue credenziali
+            -->
+            Se sei un utente registrato ed e' la prima volta<br>
+            che utilizzi il servizio premi <a href="http://%s">qui</a> per installare il<br>
+            certificato per la verifica del server<br>
+            <br>
+            Altrimenti inserisci le tue credenziali
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td>&nbsp;</td>
+      </tr>
+
+      <tr>
+        <td>
+          <table width="100%%" border="0">
+            <tr>
+              <td>
+                <div align="right" class="test1">
+                  Username:
+                </div>
+              </td>
+
+              <td><input type="text" name="uid"></td>
+            </tr>
+
+            <tr>
+              <td>
+                <div align="right" class="test1">
+                  Password:
+                </div>
+              </td>
+
+              <td><input type="password" name="pass"></td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <div align="center">
+            <input type="image" src="images/accedi.png" name="submit" value="Entra">
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <table width="100%%" border="0">
+            <tr>
+              <td>&nbsp;</td>
+
+              <td width="80%%" bgcolor="#CCCCCC" class="test2">
+                <div align="center">
+                  <font size="5">Se non sei un utente registrato, <a href="%s" class="link"><font size="5">clicca qui</font></a></font>
+                </div>
+              </td>
+
+              <td>&nbsp;</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <tr>
+        <td>&nbsp;</td>
+      </tr>
+
+      <tr>
+        <td class="test1">
+          <div align="center">
+            <!--#echo var="$LOGOUT_HTML"-->
+				<br><br>
+            Ti suggeriamo di prendere nota <!--#echo var="$LOGOUT_NOTE"-->
+          </div>
+        </td>
+      </tr><!--#if expr="(AppleWebKit ^ $HTTP_USER_AGENT && KHTML ^ $HTTP_USER_AGENT)"-->
+
+      <tr>
+        <td class="test2">
+          <div align="center">
+            <h3>Apple Safari</h3>Per aggiungere il certificato di CA ad Apple Safari, si deve utilizzare l'applicazione "Accesso Portachiavi" che si
+            trova nella distribuzione di Mac OS X.<br>
+            <br>
+            Per installare il certificato segui questi passi<br>
+            <br>
+            Scarica il file <a href="/CA/ServerCA.crt">da qui</a>. Sara' memorizzato sul tuo desktop<br>
+            Fai un doppio click sul file 'serverca.crt'.<br>
+            Partirá 'applicazione "Accesso Portachiavi"<br>
+            Per verificare il certificato, seleziona il bottone 'Mostra certificati' situato sulla sinistra della finestra.<br>
+            Si aprirá un'altra finestra che visualizza le informazioni del certificato. Assicurati che i seguenti valori (fingerprints) siano
+            corrispondenti:<br>
+            <br>
+            SHA1
+
+            <h5>99:9E:70:2A:53:16:3C:06:94:6A:A9:32:8B:6B:27:79:B8:27:3E:69</h5>MD5
+
+            <h5>E4:A1:6C:CF:EC:55:DD:01:43:8F:F9:01:DB:7A:6D:D3</h5>Seleziona 'X509Anchors' dal menu a tendina 'Portachiavi' e premi 'OK'.<br>
+            Ti sará chiesto di autenticarti. Successivamente il certificato sará installato nel sistema<br>
+
+            <h3>***** ******</h3>
+          </div>
+        </td>
+      </tr><!--#endif -->
+
+      <tr>
+        <td>&nbsp;</td>
+      </tr>
+
+      <tr>
+        <td>
+          <div align="center" class="test2">
+            Il Wi-Fi scende in piazza<br>
+          </div>
+        </td>
+      </tr>
+
+      <tr>
+        <td>
+          <table width="100%%" border="0">
+            <tr>
+              <td width="88%%">
+                <div align="right" class="test2">
+                  Per informazioni sul servizio lun-sab 8,00-20,00: 055-055
+                </div>
+              </td>
+
+              <td width="12%%">
+                <div align="left"><img src="images/linea_comune.png" width="80" height="40"></div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      <tr>
+        <td>&nbsp;</td>
+      </tr>
+
+      <tr>
+        <td>
+          <div align="center"><img src="images/logowifi.gif" width="700" height="118"></div>
+        </td>
+      </tr>
+    </table>
+  </form><!-- %s %s %s %s %s %s %s %s -->

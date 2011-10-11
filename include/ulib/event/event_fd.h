@@ -32,12 +32,12 @@
 #     define U_READ_IN  EPOLLIN
 #  endif
 #else
-#  define U_READ_IN   0x001 // NB: same as EPOLLIN
+#     define U_READ_IN  0x001 // NB: same as EPOLLIN
 #endif
 #ifdef EPOLLOUT
-#  define U_WRITE_OUT EPOLLOUT
+#  define U_WRITE_OUT  (EPOLLOUT | EPOLLET)
 #else
-#  define U_WRITE_OUT 0x004 // NB: same as EPOLLOUT
+#  define U_WRITE_OUT   0x004 // NB: same as EPOLLOUT
 #endif
 
 #define U_NOTIFIER_OK      0

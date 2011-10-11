@@ -15,6 +15,7 @@
 #include <ulib/notifier.h>
 #include <ulib/file_config.h>
 #include <ulib/net/udpsocket.h>
+#include <ulib/utility/uhttp.h>
 #include <ulib/utility/services.h>
 #include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
@@ -42,9 +43,6 @@
 #endif
 #ifdef U_STATIC_HANDLER_FCGI
 #  include <ulib/net/server/plugin/mod_fcgi.h>
-#endif
-#ifdef U_STATIC_HANDLER_TCC
-#  include <ulib/net/server/plugin/mod_tcc.h>
 #endif
 #ifdef U_STATIC_HANDLER_GEOIP
 #  include <ulib/net/server/plugin/mod_geoip.h>
@@ -82,6 +80,7 @@ int                        UServer_Base::verify_mode;
 int                        UServer_Base::preforked_num_kids;
 bool                       UServer_Base::bssl;
 bool                       UServer_Base::flag_loop;
+bool                       UServer_Base::bpluginsHandlerReset;
 bool                       UServer_Base::accept_edge_triggered;
 bool                       UServer_Base::flag_use_tcp_optimization;
 char                       UServer_Base::mod_name[20];
@@ -333,6 +332,10 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    U_INTERNAL_DUMP("u_user_name(%u) = %.*S", u_user_name_len, u_user_name_len, u_user_name)
 
    if (cfg) loadConfigParam(*cfg);
+
+#ifdef U_SCALABILITY
+   UNotifier::scalability = true;  
+#endif
 }
 
 UServer_Base::~UServer_Base()
@@ -401,7 +404,7 @@ UServer_Base::~UServer_Base()
 
    if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add);
 
-#if defined(HAVE_SSL)
+#ifdef HAVE_SSL
    if (UServices::CApath) delete UServices::CApath;
 #endif
 }
@@ -485,13 +488,14 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    UClientImage_Base::setMsgWelcome(cfg[*str_MSG_WELCOME]);
 
-#if defined(HAVE_SSL)
+#ifdef HAVE_SSL
    dh_file     = cfg[*str_DH_FILE];
    ca_file     = cfg[*str_CA_FILE];
    ca_path     = cfg[*str_CA_PATH];
    key_file    = cfg[*str_KEY_FILE];
    password    = cfg[*str_PASSWORD];
    cert_file   = cfg[*str_CERT_FILE];
+
    verify_mode = cfg.readLong(*str_VERIFY_MODE);
 #endif
 
@@ -594,9 +598,6 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 #endif
 #ifdef U_STATIC_HANDLER_FCGI
    if (x.equal(U_CONSTANT_TO_PARAM("mod_fcgi")))   { _plugin = U_NEW(UFCGIPlugIn); goto next; }
-#endif
-#ifdef U_STATIC_HANDLER_TCC
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_tcc")))    { _plugin = U_NEW(UTCCPlugIn); goto next; }
 #endif
 #ifdef U_STATIC_HANDLER_GEOIP
    if (x.equal(U_CONSTANT_TO_PARAM("mod_geoip")))  { _plugin = U_NEW(UGeoIPPlugIn); goto next; }
@@ -828,6 +829,10 @@ void UServer_Base::init()
       if (name_sock.empty() == false) UUnixSocket::setPath(name_sock.data());
 
       if (UUnixSocket::path == 0) U_ERROR("UNIX domain socket is not bound to a file system pathname...");
+
+#  ifdef U_SCALABILITY
+      UNotifier::scalability = false;
+#  endif
       }
 #endif
 
@@ -922,17 +927,6 @@ void UServer_Base::init()
 
    U_SRV_LOG("working directory (DOCUMENT_ROOT) changed to %S", document_root.data());
 
-#if defined(HAVE_SSL)
-   if (bssl)
-      {
-      USSLSocket::method = (SSL_METHOD*) SSLv23_server_method();
-
-      UClientImage_Base::ctx = ((USSLSocket*)socket)->ctx;
-
-      goto next; // NB: if SSL skip TCP optimization...
-      }
-#endif
-
    /* Let's say an application just issued a request to send a small block of data. Now, we could
     * either send the data immediately or wait for more data. Some interactive and client-server
     * applications will benefit greatly if we send the data right away. For example, when we are
@@ -1017,9 +1011,6 @@ void UServer_Base::init()
    U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
                     sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
 
-#if defined(HAVE_SSL)
-next:
-#endif
    U_INTERNAL_ASSERT_EQUALS(proc,0)
 
    proc = U_NEW(UProcess);
@@ -1032,10 +1023,7 @@ next:
 
    UClientImage_Base::init();
 
-                      USocket::accept4_flags  = SOCK_CLOEXEC;
-#if defined(HAVE_SSL)
-   if (bssl == false) USocket::accept4_flags |= SOCK_NONBLOCK;
-#endif
+   USocket::accept4_flags = SOCK_CLOEXEC | SOCK_NONBLOCK;
 
    // init plugin modules...
 
@@ -1097,9 +1085,9 @@ next1:
    // (loop: accept-fork) and the forked child don't accept new client, but we need
    // event manager for the forked child to feel timeout for request of new client...
 
-   if (isClassic())              goto next3;
+   if (isClassic())              goto next2;
 #if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
-   if (preforked_num_kids == -1) goto next3;
+   if (preforked_num_kids == -1) goto next2;
 #endif
 
    /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
@@ -1111,14 +1099,14 @@ next1:
 
    socket->flags |= O_NONBLOCK;
 
-#if defined(HAVE_SSL)
-   if (bssl) goto next2;
+#ifdef HAVE_SSL
+   if (bssl == false)
 #endif
+      {
+      UEventFd::op_mask    |= EPOLLET;
+      accept_edge_triggered = true;
+      }
 
-   UEventFd::op_mask    |= EPOLLET;
-   accept_edge_triggered = true;
-
-next2:
    UNotifier::insert(pthis); // NB: we ask to notify for request of connection (=> accept)
 
    UNotifier::num_connection = UNotifier::min_connection = 1;
@@ -1135,7 +1123,7 @@ next2:
       UNotifier::num_connection = UNotifier::min_connection = 2;
       }
 
-next3:
+next2:
    socket->flags |= O_CLOEXEC;
 
    (void) U_SYSCALL(fcntl, "%d,%d,%d", socket->iSockDesc, F_SETFL, socket->flags);
@@ -1192,10 +1180,12 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 #  else
       UInterrupt::erase(SIGTERM); // async signal
 #  endif
+
+      U_EXIT(0);
       }
 }
 
-// #define U_NOT_CALL_HANDLER_READ
+static struct linger lng = { 1, 0 };
 
 int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
 {
@@ -1203,7 +1193,6 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 
    time_t idle = 0;
    UClientImage_Base* ptr; // NB: we can't use directly the variable pClientImage cause of the thread approch...
-   struct linger l = { 1, 0 };
 
 start:
    ptr = pindex;
@@ -1323,7 +1312,13 @@ next:
    //                                                                    >1 - pool of process serialize plus monitoring process
    // -------------------------------------------------------------------------------------------------------------------------
 
-   if (isClassic())
+   if (isPreForked())
+      {
+      U_TOT_CONNECTION++;
+
+      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+      }
+   else if (isClassic())
       {
       U_INTERNAL_ASSERT_POINTER(proc)
 
@@ -1352,46 +1347,30 @@ next:
       // NB: in the classic model we don't need to notify for request of connection
       // (loop: accept-fork) and the forked child don't accept new client, but we need
       // event manager for the forked child to feel timeout for request of new client...
-
-      if (ptr->newConnection()) UNotifier::insert(ptr);
-
-      U_RETURN(U_NOTIFIER_OK);
       }
 
+   if (ptr->newConnection() == false)  goto check;
+
+#ifdef HAVE_SSL
+   if (bssl)                           goto insert;
+#endif
 #ifdef HAVE_PTHREAD_H
-   if (UNotifier::pthread)
-      {
-      if (ptr->newConnection()) goto insert;
-
-      U_RETURN(U_NOTIFIER_OK);
-      }
+   if (UNotifier::pthread)             goto insert;
+#endif
+#ifdef U_SCALABILITY
+   if (UNotifier::scalability)         goto insert;
 #endif
 
-   if (isPreForked())
-      {
-      U_TOT_CONNECTION++;
-
-      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
-      }
-
-#ifndef U_NOT_CALL_HANDLER_READ
    if (ptr->handlerRead() == U_NOTIFIER_DELETE)
       {
       ptr->handlerDelete();
 
       goto check;
       }
-#else
-   if (ptr->newConnection() == false) goto check;
-#endif
-
-#if defined(HAVE_SSL)
-   if (bssl) goto insert;
-#endif
 
    // NB: for non-keepalive connection we have chance to drop small last part of large file while sending to a slow client...
 
-   if (ptr->bclose != U_YES) (void) csocket->setSockOpt(SOL_SOCKET, SO_LINGER, (const void*)&l, sizeof(struct linger)); // send RST - ECONNRESET
+   if (ptr->bclose != U_YES) (void) csocket->setSockOpt(SOL_SOCKET, SO_LINGER, (const void*)&lng, sizeof(struct linger)); // send RST - ECONNRESET
 
 insert:
    UNotifier::insert(ptr);
@@ -1401,9 +1380,6 @@ check:
 
 end:
 #ifdef U_SCALABILITY
-   U_INTERNAL_ASSERT_DIFFERS(csocket->flags         & SOCK_NONBLOCK,0)
-   U_INTERNAL_ASSERT_DIFFERS(USocket::accept4_flags & SOCK_NONBLOCK,0)
-
    UNotifier::pevents->events = 0;
 #endif
 

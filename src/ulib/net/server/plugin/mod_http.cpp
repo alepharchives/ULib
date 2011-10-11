@@ -155,7 +155,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       UHTTP::virtual_host                    = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
       UHTTP::telnet_enable                   = cfg.readBoolean(*str_TELNET_ENABLE);
-      UHTTP::limit_request_body              = cfg.readLong(*str_LIMIT_REQUEST_BODY, UString::max_size() - 4096);
+      UHTTP::limit_request_body              = cfg.readLong(*str_LIMIT_REQUEST_BODY, U_STRING_LIMIT);
       UHTTP::request_read_timeout            = cfg.readLong(*str_REQUEST_READ_TIMEOUT);
       UHTTP::min_size_for_sendfile           = cfg.readLong(*str_MIN_SIZE_FOR_SENDFILE);
       UHTTP::digest_authentication           = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
@@ -195,6 +195,12 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 int UHttpPlugIn::handlerInit()
 {
    U_TRACE(0, "UHttpPlugIn::handlerInit()")
+
+#ifdef HAVE_SSL
+   if (UServer_Base::bssl) UHTTP::min_size_for_sendfile = U_NOT_FOUND;
+
+   U_INTERNAL_DUMP("UServer_Base::bssl = %b min_size_for_sendfile = %u", UServer_Base::bssl, UHTTP::min_size_for_sendfile)
+#endif
 
    // init HTTP context
 
@@ -280,8 +286,7 @@ int UHttpPlugIn::handlerREAD()
 
       // manage alias uri
 
-      if (UHTTP::ssi_alias ||
-          valias.empty() == false)
+      if (valias.empty() == false)
          {
          UString item;
 
@@ -298,19 +303,32 @@ int UHttpPlugIn::handlerREAD()
                goto next;
                }
             }
+         }
 
-         if (UHTTP::ssi_alias &&
-             u_getsuffix(U_HTTP_URI_TO_PARAM) == 0)
+      // manage SSI alias
+
+      if (UHTTP::ssi_alias &&
+          u_getsuffix(U_HTTP_URI_TO_PARAM) == 0)
+         {
+         uint32_t len = UHTTP::ssi_alias->size();
+
+         (void) UHTTP::request_uri->assign(U_HTTP_URI_TO_PARAM);
+
+         if (UHTTP::virtual_host &&
+             u_http_info.host_vlen)
             {
-            uint32_t len = UHTTP::ssi_alias->size();
+            UHTTP::alias->setBuffer(1 + u_http_info.host_vlen + 1 + len);
 
-            (void) UHTTP::request_uri->assign(U_HTTP_URI_TO_PARAM);
+            UHTTP::alias->snprintf("/%.*s/%.*s", U_HTTP_VHOST_TO_TRACE, len, UHTTP::ssi_alias->data());
+            }
+         else
+            {
+            UHTTP::alias->setBuffer(1 + len);
 
-            UHTTP::alias->setBuffer(UHTTP::alias->size() + 1 + len);
-
-            UHTTP::alias->snprintf_add("/%.*s", len, UHTTP::ssi_alias->data());
+            UHTTP::alias->snprintf("/%.*s", len, UHTTP::ssi_alias->data());
             }
          }
+
 next:
       if (UHTTP::alias->empty() == false)
          {
@@ -357,73 +375,77 @@ int UHttpPlugIn::handlerRequest()
 
    // process the HTTP request
 
-   if (UHTTP::isHTTPRequestNeedProcessing())
+   switch (U_http_request_check)
       {
-      U_ASSERT_DIFFERS(UClientImage_Base::request->empty(), true)
-
-      if (UHTTP::isCGIRequest() &&
-          U_HTTP_QUERY_STRNEQ("_nav_") == false)
+      case U_HTTP_REQUEST_NEED_PROCESSING:
          {
-         // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
+         U_ASSERT(UHTTP::isHTTPRequestNeedProcessing())
+         U_ASSERT_DIFFERS(UClientImage_Base::request->empty(), true)
 
-         bool async = (UServer_Base::preforked_num_kids <= 0 && UClientImage_Base::isPipeline() == false);
-
-         if (UHTTP::processCGIRequest((UCommand*)0, 0, async, true) == false)
-            {
-            if (UCommand::isTimeout())
-               {
-               u_http_info.nResponseCode = HTTP_GATEWAY_TIMEOUT;
-
-               UHTTP::setHTTPResponse();
-               }
-            else if (UClientImage_Base::wbuffer->empty()) UHTTP::setHTTPInternalError();
-            }
-         }
-      else
-         {
          if (UHTTP::isHttpGETorHEAD() == false)
             {
-            // NB: we don't want to process this request here (maybe other plugin after...)
+            if (U_http_method_type == HTTP_OPTIONS)
+               {
+               u_http_info.nResponseCode = HTTP_OPTIONS_RESPONSE;
+
+               UHTTP::setHTTPResponse();
+
+               goto end;
+               }
+
+            // NB: we don't want to process this kind of request here...
 
             u_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
 
             UHTTP::setHTTPResponse();
+
+            // NB: maybe there are other plugin after this...
 
             U_RETURN(U_PLUGIN_HANDLER_GO_ON);
             }
 
          UHTTP::processHTTPGetRequest(*UClientImage_Base::request); // GET,HEAD
          }
-      }
-   else if (UHTTP::isHTTPRequestNotFound())  UHTTP::setHTTPNotFound();  // set not found error response...
-   else if (UHTTP::isHTTPRequestForbidden()) UHTTP::setHTTPForbidden(); // set forbidden error response...
-#ifdef DEBUG
-   else
-      {
-      // NB: it must be processed by some other plugin...
+      break;
 
-      U_ASSERT(UHTTP::isHTTPRequestAlreadyProcessed())
-      }
-#endif
+      case U_HTTP_REQUEST_IS_NOT_FOUND:
+         {
+         U_ASSERT(UHTTP::isHTTPRequestNotFound())
 
-   U_INTERNAL_DUMP("U_http_is_connection_close = %d", U_http_is_connection_close)
+         if (U_http_method_type == HTTP_OPTIONS)
+            {
+            u_http_info.nResponseCode = HTTP_OPTIONS_RESPONSE;
+
+            UHTTP::setHTTPResponse();
+
+            goto end;
+            }
+
+         UHTTP::setHTTPNotFound(); // set not found error response...
+         }
+      break;
+
+      case U_HTTP_REQUEST_IS_FORBIDDEN:
+         {
+         U_ASSERT(UHTTP::isHTTPRequestForbidden())
+
+         UHTTP::setHTTPForbidden(); // set forbidden error response...
+         }
+      break;
+
+#  ifdef DEBUG
+      default: U_ASSERT(UHTTP::isHTTPRequestAlreadyProcessed()) break;
+#  endif
+      }
 
    // check for "Connection: close" in headers
+end:
+   U_INTERNAL_DUMP("U_http_is_connection_close = %d", U_http_is_connection_close)
 
    if (U_http_is_connection_close == U_YES) U_RETURN(U_PLUGIN_HANDLER_ERROR);
-                                            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+
+   U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
-
-#ifdef U_HTTP_CACHE_REQUEST
-int UHttpPlugIn::handlerReset()
-{
-   U_TRACE(0, "UHttpPlugIn::handlerReset()")
-
-   UHTTP::manageHTTPRequestCache();
-
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-}
-#endif
 
 // DEBUG
 

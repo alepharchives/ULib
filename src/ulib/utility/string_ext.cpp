@@ -367,7 +367,7 @@ UString UStringExt::getEnvironmentVar(const char* s, uint32_t n, const UString* 
 
    if (environment)
       {
-      char c;
+      char c, c1;
       uint32_t start = 0, end;
 
 loop: // NB: check if s param it is a environment-var
@@ -380,7 +380,7 @@ loop: // NB: check if s param it is a environment-var
       if (start)
          {
          // NB: check if comment...
-         
+
          c = environment->c_char(start-1);
 
          U_INTERNAL_DUMP("c = %C", c)
@@ -390,20 +390,20 @@ loop: // NB: check if s param it is a environment-var
 
       start += n;
 
-      c = environment->c_char(start);
+      c1 = environment->c_char(start);
 
-      U_INTERNAL_DUMP("c = %C", c)
+      U_INTERNAL_DUMP("c1 = %C", c1)
 
-      if (c != '=') goto loop;
+      if (c1 != '=') goto loop;
 
       end = environment->find('\n', ++start);
 
       if (end == U_NOT_FOUND) end = environment->size();
       else
          {
-         char c1 = environment->c_char(end-1);
+         char c2 = environment->c_char(end-1);
 
-         if ((c1 == '"' || c1 == '\'') && (c == c1)) --end;
+         if ((c2 == '"' || c2 == '\'') && (c == c2)) --end;
          }
 
       n = end - start;
@@ -1226,9 +1226,7 @@ void UStringExt::minifyCssJs(UString& x)
          {
          // comment: scan to end of comment
 
-         s += 2;
-
-         for (; s < _end; ++s)
+         for (s += 2; s < _end; ++s)
             {
             if (*s      == '*' &&
                *(s + 1) == '/' &&
@@ -1239,6 +1237,14 @@ void UStringExt::minifyCssJs(UString& x)
                break;
                }
             }
+         }
+      else if (*s       == '/' &&
+               *(s + 1) == '/' &&
+                (s + 1) < _end)
+         {
+         // comment: scan to end of comment
+
+         for (s += 2; s < _end && *s != '\n'; ++s) {}
          }
       else if (u_isspace(*s))
          {

@@ -37,21 +37,20 @@ host_triplet = @host@
 target_triplet = @target@
 @PAGE_SPEED_TRUE@am__append_1 = page_speed
 @V8_TRUE@am__append_2 = v8
-@STATIC_HANDLER_TCC_FALSE@@TCC_TRUE@am__append_3 = mod_tcc
-@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_FALSE@am__append_4 = mod_geoip
-@MOD_SHIB_TRUE@@PCRE_TRUE@@SSL_TRUE@@STATIC_HANDLER_SHIB_FALSE@am__append_5 = mod_shib
-@STATIC_HANDLER_RPC_FALSE@am__append_6 = mod_rpc.la
-@STATIC_HANDLER_STREAM_FALSE@am__append_7 = mod_stream.la
-@STATIC_HANDLER_NOCAT_FALSE@am__append_8 = mod_nocat.la
-@STATIC_HANDLER_SOCKET_FALSE@am__append_9 = mod_socket.la
-@STATIC_HANDLER_SCGI_FALSE@am__append_10 = mod_scgi.la
-@STATIC_HANDLER_FCGI_FALSE@am__append_11 = mod_fcgi.la
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am__append_12 = mod_proxy.la
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am__append_13 = mod_soap.la
-@STATIC_HANDLER_SSI_FALSE@am__append_14 = mod_ssi.la
-@STATIC_HANDLER_TSA_FALSE@am__append_15 = mod_tsa.la
-@STATIC_HANDLER_HTTP_FALSE@am__append_16 = mod_http.la
-@STATIC_HANDLER_ECHO_FALSE@am__append_17 = mod_echo.la
+@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_FALSE@am__append_3 = mod_geoip
+@MOD_SHIB_TRUE@@PCRE_TRUE@@SSL_TRUE@@STATIC_HANDLER_SHIB_FALSE@am__append_4 = mod_shib
+@STATIC_HANDLER_RPC_FALSE@am__append_5 = mod_rpc.la
+@STATIC_HANDLER_STREAM_FALSE@am__append_6 = mod_stream.la
+@STATIC_HANDLER_NOCAT_FALSE@am__append_7 = mod_nocat.la
+@STATIC_HANDLER_SOCKET_FALSE@am__append_8 = mod_socket.la
+@STATIC_HANDLER_SCGI_FALSE@am__append_9 = mod_scgi.la
+@STATIC_HANDLER_FCGI_FALSE@am__append_10 = mod_fcgi.la
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am__append_11 = mod_proxy.la
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am__append_12 = mod_soap.la
+@STATIC_HANDLER_SSI_FALSE@am__append_13 = mod_ssi.la
+@STATIC_HANDLER_TSA_FALSE@am__append_14 = mod_tsa.la
+@STATIC_HANDLER_HTTP_FALSE@am__append_15 = mod_http.la
+@STATIC_HANDLER_ECHO_FALSE@am__append_16 = mod_echo.la
 subdir = src/ulib/net/server/plugin
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -254,7 +253,7 @@ AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
 	distdir
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = usp page_speed v8 mod_tcc mod_geoip mod_shib
+DIST_SUBDIRS = usp page_speed v8 mod_geoip mod_shib
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 am__relativize = \
   dir0=`pwd`; \
@@ -454,9 +453,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = usp $(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5)
+	$(am__append_4)
 EXTRA_DIST = *.cpp Makefile.* \
-				 mod_tcc/*.cpp mod_tcc/Makefile.* \
 				 mod_shib/*.cpp mod_shib/Makefile.* \
 				 mod_geoip/*.cpp mod_geoip/Makefile.* \
 				 page_speed/*.cpp page_speed/Makefile.* \
@@ -466,10 +464,10 @@ MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 moduledir = $(libexecdir)/ulib
-module_LTLIBRARIES = $(am__append_6) $(am__append_7) $(am__append_8) \
-	$(am__append_9) $(am__append_10) $(am__append_11) \
-	$(am__append_12) $(am__append_13) $(am__append_14) \
-	$(am__append_15) $(am__append_16) $(am__append_17)
+module_LTLIBRARIES = $(am__append_5) $(am__append_6) $(am__append_7) \
+	$(am__append_8) $(am__append_9) $(am__append_10) \
+	$(am__append_11) $(am__append_12) $(am__append_13) \
+	$(am__append_14) $(am__append_15) $(am__append_16)
 @STATIC_HANDLER_RPC_FALSE@mod_rpc_la_SOURCES = mod_rpc.cpp
 @STATIC_HANDLER_RPC_FALSE@mod_rpc_la_LIBADD = $(ulib_la)
 @STATIC_HANDLER_RPC_FALSE@mod_rpc_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)

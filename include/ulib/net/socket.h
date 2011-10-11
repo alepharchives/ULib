@@ -66,6 +66,7 @@
 
 class UHTTP;
 class UFile;
+class UNotifier;
 class USocketExt;
 class USSHSocket;
 class USSLSocket;
@@ -114,6 +115,7 @@ public:
    static const UString* str_X_Forwarded_For;
    static const UString* str_Transfer_Encoding;
    static const UString* str_X_Progress_ID;
+   static const UString* str_expect_100_continue;
 
    static void str_allocate();
 
@@ -603,7 +605,7 @@ public:
    the send() method to send the data, returning the number of bytes actually sent
    */
 
-   virtual int send(const void* pPayload, uint32_t iPayloadLength);
+   virtual int send(const char* pPayload, uint32_t iPayloadLength);
            int send(const void* pPayload, uint32_t iPayloadLength, int timeoutMS);
 
    // write data into multiple buffers
@@ -637,6 +639,7 @@ private:
 
                       friend class UHTTP;
                       friend class UFile;
+                      friend class UNotifier;
                       friend class USocketExt;
                       friend class USSHSocket;
                       friend class UTCPSocket;

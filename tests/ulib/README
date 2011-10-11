@@ -1,11 +1,11 @@
 See http://www.debian.org/ for information about Debian GNU/Linux.
 Four Debian releases are available on the main site:
 
-Debian 5.0.8, or lenny.  Access this release through dists/oldstable
-Debian 5.0.8 was released Saturday, 22 January 2011.
+Debian 5.0.9, or lenny.  Access this release through dists/oldstable
+Debian 5.0.9 was released Saturday, 01 October 2011.
 
-Debian 6.0.2, or squeeze.  Access this release through dists/stable
-Debian 6.0.2 was released Saturday, 25 June 2011.
+Debian 6.0.3, or squeeze.  Access this release through dists/stable
+Debian 6.0.3 was released Saturday, 08 October 2011.
 
 Testing, or wheezy.  Access this release through dists/testing.  The
 current tested development snapshot is named wheezy.  Packages which

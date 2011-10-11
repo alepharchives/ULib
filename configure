@@ -647,8 +647,6 @@ STATIC_HANDLER_PROXY_FALSE
 STATIC_HANDLER_PROXY_TRUE
 STATIC_HANDLER_GEOIP_FALSE
 STATIC_HANDLER_GEOIP_TRUE
-STATIC_HANDLER_TCC_FALSE
-STATIC_HANDLER_TCC_TRUE
 STATIC_HANDLER_FCGI_FALSE
 STATIC_HANDLER_FCGI_TRUE
 STATIC_HANDLER_SCGI_FALSE
@@ -21539,7 +21537,7 @@ ldap_version="None"
 expat_version="None"
 libssh_version="None"
 libcurl_version="None"
-openssl_version="None"
+ssl_version="None"
 libmagic_version="None"
 libmysql_version="None"
 libuuid_version="None"
@@ -21750,6 +21748,11 @@ $as_echo "yes" >&6; }
 				found_ssl="yes";
 				break;
 			fi
+			if test -f "$dir/include/cyassl/openssl/ssl.h"; then
+				found_ssl="yes";
+				found_cyassl="yes";
+				break;
+			fi
 		done
 		if test x_$found_ssl != x_yes; then
 			msg="Cannot find SSL library";
@@ -21760,18 +21763,24 @@ $as_echo "yes" >&6; }
 $as_echo "$msg" >&6; }
 			fi
 		else
-			echo "${T_MD}OpenSSL found in $ssldir${T_ME}"
 			HAVE_SSL=yes
 			CPPFLAGS="$CPPFLAGS -DHAVE_SSL";
-			if test -f "$ssldir/include/openssl/ts.h"; then
-				HAVE_SSL_TS="yes";
-				CPPFLAGS="$CPPFLAGS -DHAVE_SSL_TS";
+			if test "$found_cyassl" = "yes"; then
+				echo "${T_MD}CYASSL found in $ssldir${T_ME}";
+				ssl_version=$(grep VERSION $ssldir/include/cyassl/openssl/opensslv.h | cut -d' ' -f3 | tr -d '\r\n');
+				LIBS="-lcyassl $LIBS";
+			else
+				echo "${T_MD}OPENSSL found in $ssldir${T_ME}";
+				if test -f "$ssldir/include/openssl/ts.h"; then
+					HAVE_SSL_TS="yes";
+					CPPFLAGS="$CPPFLAGS -DHAVE_SSL_TS";
+				fi
+				ssl_version=$(pkg-config --modversion openssl);
+				LIBS="-lssl -lcrypto $LIBS";
 			fi
-			openssl_version=$(pkg-config --modversion openssl)
-			if test -z "${openssl_version}"; then
-				openssl_version="Unknown"
+			if test -z "${ssl_version}"; then
+				ssl_version="Unknown";
 			fi
-			LIBS="-lssl -lcrypto $LIBS";
 			if test $ssldir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$ssldir/include";
 				LDFLAGS="$LDFLAGS -L$ssldir/lib -Wl,-R$ssldir/lib";
@@ -22457,7 +22466,7 @@ _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define _OPENSSL_VERSION "${openssl_version}"
+#define _SSL_VERSION "${ssl_version}"
 _ACEOF
 
 
@@ -22584,10 +22593,6 @@ fi
 
 if test "$HAVE_SSL" = "yes"; then
    ulib_ssl_msg="enabled"
-else
-
-$as_echo "#define U_NO_SSL 1" >>confdefs.h
-
 fi
 
 if test "$HAVE_SSH" = "yes"; then
@@ -25053,6 +25058,9 @@ fi
 	if test "$enable_static" = "yes" && test "$enable_shared" = "no"; then
 		LIBS_SAVE="${LIBS_SAVE} -lstdc++"
 	fi
+	if test "$ac_cv_lib_tcc_tcc_compile_string" = "yes"; then
+		LIBS_SAVE="-ltcc ${LIBS_SAVE}"
+	fi
 	;;
 esac
 
@@ -26652,7 +26660,7 @@ if test "${enable_static_module+set}" = set; then :
 fi
 
 
-modules="mod_rpc mod_shib mod_stream mod_nocat mod_socket mod_scgi mod_fcgi mod_tcc mod_geoip mod_proxy mod_soap mod_ssi mod_tsa mod_http mod_echo"
+modules="mod_rpc mod_shib mod_stream mod_nocat mod_socket mod_scgi mod_fcgi mod_geoip mod_proxy mod_soap mod_ssi mod_tsa mod_http mod_echo"
 
 # Remove modules that will not be compiles
 
@@ -26661,9 +26669,6 @@ if test "$HAVE_EXPAT" != "yes"; then
 fi
 if test "$HAVE_PCRE" != "yes"; then
 	modules=`echo $modules | sed s/mod_proxy//`
-fi
-if test "x$ac_cv_lib_tcc_tcc_compile_string" != "xyes"; then
-	modules=`echo $modules | sed s/mod_tcc//`
 fi
 if test "x$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" != "xyes"; then
 	modules=`echo $modules | sed s/mod_geoip//`
@@ -26698,7 +26703,6 @@ static_handler_nocat=""
 static_handler_socket=""
 static_handler_scgi=""
 static_handler_fcgi=""
-static_handler_tcc=""
 static_handler_geoip=""
 static_handler_proxy=""
 static_handler_soap=""
@@ -26750,12 +26754,6 @@ $as_echo "#define U_STATIC_HANDLER_SCGI /**/" >>confdefs.h
 			static_handler_fcgi="yes"
 
 $as_echo "#define U_STATIC_HANDLER_FCGI /**/" >>confdefs.h
-
-		elif test "$mod" = "mod_tcc"; then
-			static_handler_tcc="yes"
-			LIBS="-ltcc ${LIBS}"
-
-$as_echo "#define U_STATIC_HANDLER_TCC /**/" >>confdefs.h
 
 		elif test "$mod" = "mod_geoip"; then
 			static_handler_geoip="yes"
@@ -26863,14 +26861,6 @@ fi
 else
   STATIC_HANDLER_FCGI_TRUE='#'
   STATIC_HANDLER_FCGI_FALSE=
-fi
-
- if test "$static_handler_tcc"	  = "yes"; then
-  STATIC_HANDLER_TCC_TRUE=
-  STATIC_HANDLER_TCC_FALSE='#'
-else
-  STATIC_HANDLER_TCC_TRUE='#'
-  STATIC_HANDLER_TCC_FALSE=
 fi
 
  if test "$static_handler_geoip"  = "yes"; then
@@ -27580,7 +27570,7 @@ configure: Configured to build src/ulib/libulib:
           PCRE support: ${ulib_pcre_msg}
           PCRE library: ${pcre_version}
            SSL support: ${ulib_ssl_msg}
-           SSL library: ${openssl_version}
+           SSL library: ${ssl_version}
            SSH support: ${ulib_ssh_msg}
            SSH library: ${libssh_version}
           LDAP support: ${ulib_ldap_msg}
@@ -27677,7 +27667,7 @@ fi
 
 # SECTION 16: `AC_OUTPUT([FILE...])' read Makefile.in and write Makefile
 
-ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/lemon/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/mod_tcc/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
+ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/lemon/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/v8/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -28118,10 +28108,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${STATIC_HANDLER_FCGI_TRUE}" && test -z "${STATIC_HANDLER_FCGI_FALSE}"; then
   as_fn_error $? "conditional \"STATIC_HANDLER_FCGI\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${STATIC_HANDLER_TCC_TRUE}" && test -z "${STATIC_HANDLER_TCC_FALSE}"; then
-  as_fn_error $? "conditional \"STATIC_HANDLER_TCC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${STATIC_HANDLER_GEOIP_TRUE}" && test -z "${STATIC_HANDLER_GEOIP_FALSE}"; then
@@ -29191,7 +29177,6 @@ do
     "src/ulib/net/server/plugin/mod_geoip/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_geoip/Makefile" ;;
     "src/ulib/net/server/plugin/page_speed/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/page_speed/Makefile" ;;
     "src/ulib/net/server/plugin/v8/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/v8/Makefile" ;;
-    "src/ulib/net/server/plugin/mod_tcc/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_tcc/Makefile" ;;
     "include/ulib/Makefile") CONFIG_FILES="$CONFIG_FILES include/ulib/Makefile" ;;
     "contrib/HCSP/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/HCSP/Makefile" ;;
     "contrib/RSIGN/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/RSIGN/Makefile" ;;

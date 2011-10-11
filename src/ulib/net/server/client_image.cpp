@@ -15,7 +15,9 @@
 #include <ulib/utility/escape.h>
 #include <ulib/net/server/server.h>
 
-// #define U_SENDFILE_NONBLOCK
+#ifdef U_SCALABILITY
+#  define U_SENDFILE_NONBLOCK
+#endif
 
 bool        UClientImage_Base::bIPv6;
 bool        UClientImage_Base::pipeline;
@@ -231,6 +233,9 @@ int UClientImage_Base::sendfile()
    off_t offset = start;
 
 #ifdef U_SENDFILE_NONBLOCK
+   U_INTERNAL_ASSERT_DIFFERS(socket->flags          & SOCK_NONBLOCK,0)
+   U_INTERNAL_ASSERT_DIFFERS(USocket::accept4_flags & SOCK_NONBLOCK,0)
+
    value = U_SYSCALL(sendfile, "%d,%d,%p,%u", UEventFd::fd, sfd, &offset, count);
 #else
    value = (socket->sendfile(sfd, &offset, count) ? count : 0);
@@ -293,9 +298,9 @@ void UClientImage_Base::logCertificate(void* x509)
 {
    U_TRACE(0, "UClientImage_Base::logCertificate(%p)", x509)
 
-#ifdef HAVE_SSL
    // NB: OpenSSL already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...
 
+#ifdef HAVE_SSL
    if (x509)
       {
       U_INTERNAL_ASSERT_POINTER(logbuf)
@@ -350,50 +355,7 @@ void UClientImage_Base::manageRequestSize(bool request_resize)
       }
 }
 
-bool UClientImage_Base::newConnection()
-{
-   U_TRACE(0, "UClientImage_Base::newConnection()")
-
-   U_INTERNAL_ASSERT_POINTER(socket)
-
-   UEventFd::fd = socket->iSockDesc;
-
-   if (logbuf)
-      {
-      bool berror = false;
-      UString tmp(U_CAPACITY);
-
-      socket->getRemoteInfo(*logbuf);
-
-      if (ULog::prefix) tmp.snprintf(ULog::prefix);
-
-      tmp.snprintf_add("new client connected from %.*s, %s clients currently connected\n", U_STRING_TO_TRACE(*logbuf), UServer_Base::getNumConnection());
-
-      if (msg_welcome)
-         {
-         if (ULog::prefix) tmp.snprintf_add(ULog::prefix);
-
-         tmp.snprintf_add("sent welcome message to %.*s\n", U_STRING_TO_TRACE(*logbuf));
-
-         if (USocketExt::write(socket, *msg_welcome) == false) berror = true;
-         }
-
-      struct iovec iov[1] = { { (caddr_t)tmp.data(), tmp.size() } };
-
-      UServer_Base::log->write(iov, 1);
-
-      if (berror)
-         {
-         U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, 0)
-
-         U_RETURN(false);
-         }
-      }
-
-   U_RETURN(true);
-}
-
-int UClientImage_Base::genericRead()
+__pure int UClientImage_Base::genericRead()
 {
    U_TRACE(0, "UClientImage_Base::genericRead()")
 
@@ -402,16 +364,7 @@ int UClientImage_Base::genericRead()
    U_INTERNAL_ASSERT_POINTER(rbuffer)
    U_INTERNAL_ASSERT_POINTER(pbuffer)
    U_INTERNAL_ASSERT_POINTER(wbuffer)
-
-   // Check if it is a new connection...
-
-   U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->iSockDesc)
-
-   if (UEventFd::fd    == 0 &&
-       newConnection() == false)
-      {
-      goto error;
-      }
+   U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc,UEventFd::fd)
 
    handlerError(USocket::CONNECT); // NB: we must call function cause of SSL (must be a virtual method)...
 
@@ -453,6 +406,54 @@ void UClientImage_Base::initAfterGenericRead()
                                    wbuffer->clear();
 }
 
+// method VIRTUAL to redefine
+
+bool UClientImage_Base::newConnection()
+{
+   U_TRACE(0, "UClientImage_Base::newConnection()")
+
+   U_INTERNAL_ASSERT_POINTER(socket)
+   U_INTERNAL_ASSERT_EQUALS(UEventFd::fd,0)
+
+   U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->iSockDesc)
+
+   UEventFd::fd = socket->iSockDesc;
+
+   if (logbuf)
+      {
+      bool berror = false;
+      UString tmp(U_CAPACITY);
+
+      socket->getRemoteInfo(*logbuf);
+
+      if (ULog::prefix) tmp.snprintf(ULog::prefix);
+
+      tmp.snprintf_add("new client connected from %.*s, %s clients currently connected\n", U_STRING_TO_TRACE(*logbuf), UServer_Base::getNumConnection());
+
+      if (msg_welcome)
+         {
+         if (ULog::prefix) tmp.snprintf_add(ULog::prefix);
+
+         tmp.snprintf_add("sent welcome message to %.*s\n", U_STRING_TO_TRACE(*logbuf));
+
+         if (USocketExt::write(socket, *msg_welcome) == false) berror = true;
+         }
+
+      struct iovec iov[1] = { { (caddr_t)tmp.data(), tmp.size() } };
+
+      UServer_Base::log->write(iov, 1);
+
+      if (berror)
+         {
+         U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, 0)
+
+         U_RETURN(false);
+         }
+      }
+
+   U_RETURN(true);
+}
+
 // define method VIRTUAL of class UEventFd
 
 void UClientImage_Base::handlerError(int sock_state)
@@ -462,11 +463,13 @@ void UClientImage_Base::handlerError(int sock_state)
    U_INTERNAL_ASSERT_POINTER(socket)
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc,UEventFd::fd)
 
+   U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->iSockDesc)
+
    socket->iState = sock_state;
 
    UServer_Base::pClientImage = this;
 
-   /* maybe some specific processing
+   /* maybe we need some specific processing...
 
    if (socket->isTimeout())
       {
@@ -533,9 +536,10 @@ loop:
 
       state = U_PLUGIN_HANDLER_ERROR;
       }
-   else
+   else if (UServer_Base::bpluginsHandlerReset &&
+            UServer_Base::pluginsHandlerReset() == U_PLUGIN_HANDLER_ERROR)
       {
-      if (UServer_Base::pluginsHandlerReset() == U_PLUGIN_HANDLER_ERROR) state = U_PLUGIN_HANDLER_ERROR;
+      state = U_PLUGIN_HANDLER_ERROR;
       }
 
    U_INTERNAL_DUMP("state = %d pipeline = %b socket->isClosed() = %b", state, pipeline, socket->isClosed())
@@ -594,9 +598,14 @@ end:
       }
 
 #ifdef U_SCALABILITY
-   U_INTERNAL_DUMP("keepalive_requests = %d", keepalive_requests)
+   if (UNotifier::scalability)
+      {
+      U_INTERNAL_ASSERT_DIFFERS(socket->flags & SOCK_NONBLOCK,0)
 
-   if (socket->flags & O_NONBLOCK && ++keepalive_requests < 100) goto start;
+      U_INTERNAL_DUMP("keepalive_requests = %d", keepalive_requests)
+
+      if (++keepalive_requests < 100) goto start;
+      }
 #endif
 
    U_RETURN(U_NOTIFIER_OK);

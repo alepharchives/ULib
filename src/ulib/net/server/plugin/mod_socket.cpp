@@ -193,9 +193,9 @@ handle_data:
 
          frame_length = UClientImage_Base::wbuffer->size();
 
-#        if __BYTE_ORDER == __LITTLE_ENDIAN
+#     if __BYTE_ORDER == __LITTLE_ENDIAN
          frame_length = bswap_64(frame_length);
-#        endif
+#     endif
 
          (void) frame.append((const char*)&frame_length, sizeof(uint64_t));
          (void) frame.append(*UClientImage_Base::wbuffer);
@@ -339,8 +339,6 @@ int UWebSocketPlugIn::handlerRequest()
             // Set environment for the command application server
 
             UClientImage_Base::body->setBuffer(U_CAPACITY);
-
-            U_http_sh_script = command->isShellScript();
 
             UString environment = UHTTP::getCGIEnvironment() + command->getStringEnvironment();
 

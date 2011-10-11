@@ -1,13 +1,8 @@
 // test_server.cpp
 
-#include <ulib/container/vector.h>
-
-#ifndef U_NO_SSL
-#define U_NO_SSL
-#endif
-
 #include <ulib/file_config.h>
 #include <ulib/net/tcpsocket.h>
+#include <ulib/container/vector.h>
 #include <ulib/net/server/server.h>
 
 U_MACROSERVER(UServerExample, UClientImage<UTCPSocket>, UTCPSocket);

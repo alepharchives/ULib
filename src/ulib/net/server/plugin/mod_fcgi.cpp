@@ -210,6 +210,8 @@ int UFCGIPlugIn::handlerInit()
 
          U_SRV_LOG("initialization of plugin success");
 
+         UServer_Base::bpluginsHandlerReset = true;
+
          goto end;
          }
       }

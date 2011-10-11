@@ -63,6 +63,7 @@ The current version offers the following features :
    * Support for minify HTML CGI output with wrapping [google page speed SDK](http://code.google.com/speed/page-speed/download.html#pagespeed-sdk).
    * Support for running JavaScript code with wrapping [google V8 JavaScript Engine](http://code.google.com/apis/v8/intro.html).
    * [HTTP pseudo-streaming](http://www.phpmotionwiz.com/what-is-pseudo-streaming) for FLV video supported.
+   * [C Servlet Support](http://bellard.org/tcc/) with libtcc (if available) as a backend for dynamic code generation (experimental).
    * Support for Windows (without preforking).
    * Requests cut in phases for modular architecture (apache-like).
    * Configuration file with dedicated section.
@@ -78,7 +79,6 @@ The current version offers the following features :
        * `mod_scgi` : module that implements the client side of the [SCGI](http://www.mems-exchange.org/software/scgi) protocol (experimental).
        * `mod_shib` : [web single sign-on support](http://shibboleth.internet2.edu) (experimental).
        * `mod_proxy` : proxy support (experimental).
-       * `mod_tcc` : [C Servlet Support](http://bellard.org/tcc/) with libtcc as a backend for dynamic code generation (experimental).
        * `mod_geoip` : [geolocation support](http://www.maxmind.com/geoip/api/c.shtml) (experimental).
        * `mod_stream` : simple streaming support (experimental).
        * `mod_socket` : [Web Socket](http://dev.w3.org/html5/websockets) application framework (experimental).
@@ -93,14 +93,14 @@ Benchmarking
 
 Use apachebench (ab)
 
-	$ ab -n 100000 -c10 http://127.0.0.1/usp/benchmarking.usp?name=stefano (or)
-	$ ab -n 100000 -c10 http://127.0.0.1/usp/hello_world.usp
+	$ ab -n 100000 -c10 http://127.0.0.1/servlet/benchmarking?name=stefano (or)
+	$ ab -n 100000 -c10 http://127.0.0.1/servlet/hello_world
 
 
 [Comparative Benchmarking](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark)
 --------------------------------------------------------------------------------------------
 
-I consider in this benchmark the performant server [G-WAN 2.8.21 (32 bit)] (http://www.gwan.ch/) and [NGINX 1.0.5 (stable)] (http://nginx.net/).
+I consider in this benchmark the performant server [G-WAN 2.8.21 (32 bit)] (http://www.gwan.ch/) and [NGINX 1.0.6 (stable)] (http://nginx.net/).
 
 gwan run with the follow options:
 ---------------------------------
@@ -130,11 +130,10 @@ nginx run with the follow configuration:
  	user apache;
  	worker_processes 2;
  
- 	error_log  /var/log/nginx/error.log;
- 	pid        /var/run/nginx.pid;
+ 	pid /var/run/nginx.pid;
  
  	events {
- 		 worker_connections 1024;
+ 		 worker_connections 2048;
  		 multi_accept on;
  	}
  
@@ -142,18 +141,19 @@ nginx run with the follow configuration:
  		 include       mime.types;
  		 default_type  application/octet-stream;
  
+ 		 error_log   off;
  		 access_log  off;
- 		 error_log /dev/null;
+
  		 open_file_cache max=1000 inactive=20s;
  		 open_file_cache_valid 30s;
  		 open_file_cache_min_uses 2;
  
  		 sendfile          on;
- 		 keepalive_timeout 60;
+ 		 keepalive_timeout 15;
  		 gzip              off;
  		 server_tokens     off;
  		 tcp_nopush        on;
- 		 tcp_nodelay       off;
+ 		 tcp_nodelay       on;
  
  		 server {
  			  listen       80;

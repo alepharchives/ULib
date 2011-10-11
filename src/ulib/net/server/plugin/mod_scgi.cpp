@@ -109,6 +109,8 @@ int USCGIPlugIn::handlerInit()
 
          (void) UServer_Base::senvironment->append(U_CONSTANT_TO_PARAM("SCGI=1\n"));
 
+         UServer_Base::bpluginsHandlerReset = true;
+
          goto end;
          }
       }

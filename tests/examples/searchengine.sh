@@ -17,7 +17,7 @@ CURDIR=`pwd`
 cd ../../examples/IR; make web_cgi.la || exit 1
 cd $CURDIR
 
-( mkdir -p usp; cd usp; ln -sf ../../../examples/IR/.libs/web_cgi.so seek.so )
+( mkdir -p servlet; cd servlet; ln -sf ../../../examples/IR/.libs/web_cgi.so seek.so )
 
 #STRACE=$TRUSS
 start_prg_background userver_tcp -c searchengine.cfg

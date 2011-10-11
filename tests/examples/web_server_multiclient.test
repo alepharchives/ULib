@@ -22,7 +22,7 @@ fi
 DIR_CMD="../../examples/userver"
 
 if [ "$TERM" != "cygwin" ]; then
-   ( mkdir -p usp; cd usp;
+   ( mkdir -p servlet; cd servlet;
 	  rm -f *.so;
      ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/benchmarking.so;
      cd ../../../src/ulib/net/server/plugin/usp/;
@@ -33,6 +33,7 @@ if [ "$TERM" != "cygwin" ]; then
        ln -sf ../mod_shib/.libs/mod_shib.so;
        ln -sf ../page_speed/.libs/mod_pagespeed.so;
        ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
+   ( cd benchmark/docroot; ln -sf ../../servlet )
 fi
 
 #STRACE=$TRUSS
@@ -41,7 +42,7 @@ start_prg_background userver_tcp -c web_server_multiclient.cfg
 $SLEEP
 $SLEEP
 
-ab -k -n 100 -c 2 http://127.0.0.1/usp/benchmarking.usp?name=stefano >/dev/null 2>&1
+ab -k -n 100 -c 2 http://127.0.0.1/servlet/benchmarking?name=stefano >/dev/null 2>&1
 $SLEEP
 
 kill_prg userver_tcp TERM

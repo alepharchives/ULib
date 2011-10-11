@@ -211,7 +211,7 @@ public:
 
    virtual void closesocket();
 
-   virtual int send(const void* pData,   uint32_t iDataLen);
+   virtual int send(const char* pData,   uint32_t iDataLen);
    virtual int recv(      void* pBuffer, uint32_t iBufferLen);
 
    virtual int writev(const struct iovec* iov, int iovcnt);

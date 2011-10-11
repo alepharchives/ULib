@@ -99,9 +99,9 @@ void UHashMap<void*>::insertAfterFind(const UString& _key, void* _elem)
    U_INTERNAL_DUMP("_length = %u", _length)
 }
 
-void UHashMap<void*>::eraseAfterFind()
+void UHashMap<void*>::_eraseAfterFind()
 {
-   U_TRACE(0, "UHashMap<void*>::eraseAfterFind()")
+   U_TRACE(0, "UHashMap<void*>::_eraseAfterFind()")
 
    U_CHECK_MEMORY
 
@@ -141,12 +141,45 @@ void UHashMap<void*>::eraseAfterFind()
    U_INTERNAL_ASSERT_EQUALS(node,table[index])
 
    table[index] = node->next;
+}
+
+void UHashMap<void*>::eraseAfterFind()
+{
+   U_TRACE(0, "UHashMap<void*>::eraseAfterFind()")
+
+   _eraseAfterFind();
 
    delete node;
 
    --_length;
 
    U_INTERNAL_DUMP("_length = %u", _length)
+}
+
+void UHashMap<void*>::replaceKey(const UString& _key)
+{
+   U_TRACE(0, "UHashMap<void*>::replaceKey(%.*S)", U_STRING_TO_TRACE(_key))
+
+   UHashMapNode* pnode = node;
+
+   _eraseAfterFind();
+
+   lookup(_key);
+
+   U_INTERNAL_ASSERT_EQUALS(node,0)
+
+   pnode->hash = hash;
+   pnode->next = table[index];
+
+   pnode->key->release(); // NB: si decrementa la reference della stringa...
+
+   pnode->key = _key.rep;
+
+   pnode->key->hold();    // NB: si incrementa la reference della stringa...
+
+   // antepongo l'elemento all'inizio della lista delle collisioni
+
+   node = table[index] = pnode;
 }
 
 void UHashMap<void*>::reserve(uint32_t n)

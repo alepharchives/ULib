@@ -5,21 +5,12 @@
 #if defined(U_SSL_SOCKET)
 #  include <ulib/ssl/net/sslsocket.h>
 #  define Server UServer<USSLSocket>
-#  ifdef U_NO_SSL
-#  undef U_NO_SSL
-#  endif
 #elif defined(U_TCP_SOCKET)
 #  include <ulib/net/tcpsocket.h>
 #  define Server UServer<UTCPSocket>
-#  ifndef U_NO_SSL
-#  define U_NO_SSL
-#  endif
 #elif defined(U_UNIX_SOCKET)
 #  include <ulib/net/unixsocket.h>
 #  define Server UServer<UUnixSocket>
-#  ifndef U_NO_SSL
-#  define U_NO_SSL
-#  endif
 #else
 #  error "you must define the socket type (U_SSL_SOCKET | U_TCP_SOCKET | U_UNIX_SOCKET)"
 #endif

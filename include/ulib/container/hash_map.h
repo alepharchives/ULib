@@ -41,7 +41,7 @@ public:
    // COSTRUTTORI
 
    UHashMapNode(const UString& _key, void* _elem, UHashMapNode* _next, uint32_t _hash)
-         : elem(_elem), key(_key.rep), next(_next), hash(_hash)
+                  : elem(_elem), key(_key.rep), next(_next), hash(_hash)
       {
       U_TRACE_REGISTER_OBJECT(0, UHashMapNode, "%.*S,%p,%p,%u", U_STRING_TO_TRACE(_key), _elem, _next, _hash)
 
@@ -200,6 +200,8 @@ public:
       node->elem = _elem;
       }
 
+   void replaceKey(const UString& key);
+
    void* erase(UStringRep*    _key);
    void* erase(const UString& _key) { return erase(_key.rep); }
 
@@ -252,6 +254,7 @@ protected:
    void  lookup(UStringRep* keyr);
    void  lookup(const UString& _key) { return lookup(_key.rep); }
 
+   void _eraseAfterFind();
    void _callForAllEntrySorted(vPFprpv function);
 
 private:

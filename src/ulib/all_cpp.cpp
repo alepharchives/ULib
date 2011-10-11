@@ -189,10 +189,6 @@
 #  include "net/server/plugin/mod_fcgi.cpp"
 #endif
 
-#if defined(HAVE_LIBTCC) && defined(U_STATIC_HANDLER_TCC)
-#  include "net/server/plugin/mod_tcc/mod_tcc.cpp"
-#endif
-
 #if defined(HAVE_LIBGEOIP) && defined(U_STATIC_HANDLER_GEOIP)
 #  include "net/server/plugin/mod_geoip/mod_geoip.cpp"
 #endif

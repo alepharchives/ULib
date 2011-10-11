@@ -574,7 +574,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
                "Parser generator.....:%W " _BISON_VERSION "%W\n"
                "LIBZ  library........:%W " _LIBZ_VERSION "%W\n"
                "PCRE  library........:%W " _PCRE_VERSION "%W\n"
-               "SSL   library........:%W " _OPENSSL_VERSION "%W\n"
+               "SSL   library........:%W " _SSL_VERSION "%W\n"
                "SSH   library........:%W " _LIBSSH_VERSION "%W\n"
                "cURL  library........:%W " _CURL_VERSION "%W\n"
                "LDAP  library........:%W " _LDAP_VERSION "%W\n"

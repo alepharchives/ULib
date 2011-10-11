@@ -16,7 +16,7 @@ rm -f hello_world.log* err/hello_world.err \
 DIR_CMD="../../examples/userver"
 
 if [ "$TERM" != "cygwin" ]; then
-   ( mkdir -p usp; cd usp;
+   ( mkdir -p servlet; cd servlet;
      rm -f *.so;
      ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/hello_world.so;
      cd ../../../src/ulib/net/server/plugin/usp/;
@@ -26,7 +26,7 @@ if [ "$TERM" != "cygwin" ]; then
        ln -sf ../mod_shib/.libs/mod_shib.so;
        ln -sf ../page_speed/.libs/mod_pagespeed.so;
        ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
-   ( cd benchmark/docroot; ln -sf ../../usp )
+   ( cd benchmark/docroot; ln -sf ../../servlet )
 fi
 
 # A server that uses SYN cookies doesn't have to drop connections when its SYN queue fills up.

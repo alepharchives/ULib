@@ -89,10 +89,6 @@ public:
    virtual int handlerREAD();
    virtual int handlerRequest();
 
-#ifdef U_HTTP_CACHE_REQUEST
-   virtual int handlerReset();
-#endif
-
    // define method VIRTUAL of class UEventFd
 
    virtual int  handlerRead();

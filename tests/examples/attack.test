@@ -17,6 +17,8 @@ rm -f attack.log* web_server.log* \
 
 DIR_CMD="../../examples/userver"
 
+# mkdir -p `perl -e "print 'a'x200,'/','a'x200,'/','a'x200"`
+
 #STRACE=$TRUSS
 start_prg_background userver_tcp -c attack_server.cfg
 

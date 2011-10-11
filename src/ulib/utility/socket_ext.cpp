@@ -127,6 +127,13 @@ read:
 #  ifdef HAVE_SSL
       if (s->isSSL())
          {
+         /* 
+          * When packets in SSL arrive at a destination, they are pulled off the socket in chunks of sizes controlled by the encryption protocol being
+          * used, decrypted, and placed in SSL-internal buffers. The buffer content is then transferred to the application program through SSL_read().
+          * If you've read only part of the decrypted data, there will still be pending input data on the SSL connection, but it won't show up on the
+          * underlying file descriptor via select(). Your code needs to call SSL_pending() explicitly to see if there is any pending data to be read.
+          */
+
          uint32_t available = ((USSLSocket*)s)->pending();
 
          if (available)
@@ -224,53 +231,51 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
 
    if (sz2 == 0)
       {
-      if (write(s, ptr, sz1, timeoutMS) == false) U_RETURN(false);
+      if (write(s, ptr, sz1, timeoutMS)) U_RETURN(true);
+
+      U_RETURN(false);
       }
-   else
+
+   ssize_t value, ncount = sz1 + sz2;
+
+   struct iovec _iov[2] = { { (caddr_t)ptr,         sz1 },
+                            { (caddr_t)body.data(), sz2 } };
+
+loop:
+   U_INTERNAL_DUMP("ncount = %u sz1 = %d", ncount, sz1)
+
+   value = s->writev(_iov, 2, timeoutMS);
+
+   if (value == ncount) U_RETURN(true);
+
+   if (s->checkIO(value, ncount) == false) U_RETURN(false);
+
+   if (sz1)
       {
-      ssize_t value, ncount = sz1 + sz2;
+      if (sz1 >= value)
+         {
+         sz1             -= value;
+         _iov[0].iov_base = (char*)_iov[0].iov_base + value;
 
-      struct iovec _iov[2] = { { (caddr_t)ptr,         sz1 },
-                               { (caddr_t)body.data(), sz2 } };
-
-      do {
-         U_INTERNAL_DUMP("ncount = %u", ncount)
-
-         value = s->writev(_iov, 2, timeoutMS);
-
-         if (value == ncount) U_RETURN(true);
-
-         if (s->checkIO(value, ncount) == false) U_RETURN(false);
-
-         if (sz1)
-            {
-            if (sz1 >= value)
-               {
-               sz1             -= value;
-               _iov[0].iov_base = (char*)_iov[0].iov_base + value;
-
-               value = 0;
-               }
-            else
-               {
-               value -= sz1;
-                        sz1 = 0;
-               }
-
-            _iov[0].iov_len = sz1;
-            }
-
-         _iov[1].iov_len  -= value;
-         _iov[1].iov_base  = (char*)_iov[1].iov_base + value;
-
-         ncount = sz1 + _iov[1].iov_len;
-
-         U_INTERNAL_ASSERT_MAJOR(ncount,0)
+         value = 0;
          }
-      while (value < ncount);
+      else
+         {
+         value -= sz1;
+                  sz1 = 0;
+         }
+
+      _iov[0].iov_len = sz1;
       }
 
-   U_RETURN(true);
+   _iov[1].iov_len  -= value;
+   _iov[1].iov_base  = (char*)_iov[1].iov_base + value;
+
+   ncount = sz1 + _iov[1].iov_len;
+
+   U_INTERNAL_ASSERT_MAJOR(ncount,0)
+
+   goto loop;
 }
 
 // Send a command to a server and wait for a response (single line)

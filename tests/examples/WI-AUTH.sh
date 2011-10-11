@@ -9,16 +9,17 @@ rm -f WI-AUTH.log /tmp/processCGIRequest.err err/wi-auth.err \
  		$DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]*
 
  UTRACE="0 50M 0"
-#UOBJDUMP="0 100k 10"
+#UOBJDUMP="0 1M 500"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
 DIR_CMD="../../examples/userver"
 
 mkdir -p /var/run /var/log # /tmp/client/scan /tmp/scan /tmp/mail
-chown -R ra: /srv/wi-auth # /tmp/client
+chown -R ra: /srv/wi-auth  # /tmp/client
 
 #STRACE=$TRUSS
+#VALGRIND=valgrind
  start_prg_background userver_tcp -c WI-AUTH.cfg
 
 #$SLEEP

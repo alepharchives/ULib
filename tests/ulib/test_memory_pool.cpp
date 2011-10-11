@@ -53,6 +53,7 @@ static void print_size()
    U_PRINT_SIZEOF(UMagic)
 #endif
 // U_PRINT_SIZEOF(UMethodSlot)
+   U_PRINT_SIZEOF(UHTTP::UFileCacheData)
    U_PRINT_SIZEOF(UMimeEntity)
    U_PRINT_SIZEOF(UMimeHeader)
    U_PRINT_SIZEOF(UMimeMessage)

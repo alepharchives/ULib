@@ -31,8 +31,6 @@ protected:
       {
       U_TRACE(5, "USSLClientImage::handlerRead()")
 
-      UClientImage<USSLSocket>::checkForNewConnection();
-
       int result = genericRead();
 
       if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...

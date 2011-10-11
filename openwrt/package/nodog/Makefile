@@ -18,6 +18,7 @@ define Package/nodog
    TITLE:=nocat enhanced
    URL:=http://www.unirel.com/ULib
    DEPENDS:= +libstdcpp +libopenssl +zlib $(if $(CONFIG_NODOG_UUID),+libuuid) +iptables-mod-ipopt +iptables-mod-nat +iptables-mod-nat-extra
+## DEPENDS:= +libstdcpp             +zlib $(if $(CONFIG_NODOG_UUID),+libuuid) $(if $(CONFIG_NODOG_OPENSSL),+libopenssl) $(if $(CONFIG_NODOG_CYASSL),+libcyassl)
 endef
 
 define Package/nodog/Description

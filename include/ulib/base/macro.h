@@ -203,7 +203,7 @@
 
 #define GZIP_MAGIC "\037\213" /* Magic header for gzip files, 1F 8B */
 
-enum AffermationType { U_MAYBE = 0, U_YES = 1, U_NOT = 2 };
+enum AffermationType { U_MAYBE = 0, U_YES = 1, U_NOT = 2, U_PARTIAL = 3  };
 
 /* MIME type */
 
@@ -216,6 +216,10 @@ enum AffermationType { U_MAYBE = 0, U_YES = 1, U_NOT = 2 };
 #define U_jpg  'J' /* image/jpg */
 #define U_ssi  's' /* SSI */
 #define U_gz   'z' /* gzip */
+
+#define U_usp  '0' /* USP (ULib Servlet Page) */
+#define U_csp  '1' /* CSP (C    Servlet Page) */
+#define U_cgi  '2' /* cgi-bin */
 
 #define U_CTYPE_HTML "text/html"
 #define U_CTYPE_ICO  "image/x-icon"
@@ -321,7 +325,7 @@ typedef enum {
 #define GCC_VERSION_NUM (__GNUC__       * 10000 + \
                          __GNUC_MINOR__ *   100 + \
                          __GNUC_PATCHLEVEL__)
-#  if GCC_VERSION_NUM > 29600
+#  if GCC_VERSION_NUM > 29600 && GCC_VERSION_NUM != 30303 /* Test for GCC == 3.3.3 (SuSE Linux) */
 #     define __pure                       __attribute__((pure))
 #     define likely(x)                    __builtin_expect(!!(x), 1)
 #     define unlikely(x)                  __builtin_expect(!!(x), 0)

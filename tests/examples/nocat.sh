@@ -11,16 +11,17 @@ rm -f nocat.log uclient.log /tmp/firewall.err \
 		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* \
 #		$DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]*
 
-#UTRACE="0 10M 0"
+ UTRACE="0 10M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
 DIR_CMD="../../examples/uclient"
 
+QUERY="start_ap?ap=stefano\&public=10.30.1.131:5280"
+
 #STRACE=$TRUSS
- start_prg uclient -i -c uclient.cfg "http://10.30.1.131/start_ap?ap=`uname -n`"
-#start_prg uclient -i -c uclient.cfg "https://10.30.1.131/start_ap?ap=`uname -n`"
+ start_prg uclient -i -c uclient.cfg "http://www.auth-firenze.com/$QUERY"
 
 DIR_CMD="../../examples/userver"
 

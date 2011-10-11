@@ -25,7 +25,7 @@ U_EXPORT main (int argc, char* argv[])
 
       for (int i = 0; i < 2; ++i)
          {
-         if (x.getSocket()->send((void*)str, size) == size)
+         if (x.getSocket()->send(str, size) == size)
             {
             cout << str << '\n';
 

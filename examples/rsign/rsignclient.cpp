@@ -1,9 +1,5 @@
 // rsignclient.cpp
 
-#ifdef U_NO_SSL
-#undef U_NO_SSL
-#endif
-
 #include <ulib/file_config.h>
 #include <ulib/utility/base64.h>
 #include <ulib/utility/services.h>

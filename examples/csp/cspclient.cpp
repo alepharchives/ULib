@@ -1,9 +1,5 @@
 // cspclient.cpp
 
-#ifdef U_NO_SSL
-#undef U_NO_SSL
-#endif
-
 #include <ulib/ssl/crl.h>
 #include <ulib/ui/dialog.h>
 #include <ulib/file_config.h>

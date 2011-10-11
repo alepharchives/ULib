@@ -217,7 +217,7 @@ static void UDPEchoClient(UIPAddress& cEchoServer, int iPortNumber, const char* 
    printf("Receive Buffer : [%s]\n\n", pcRecvBuffer);
 
    printf("Sending Echo Request...\n");
-   iBytesTransferred = cClientSocket.send((void*)pcEchoString, (int)strlen(pcEchoString));
+   iBytesTransferred = cClientSocket.send(pcEchoString, (int)strlen(pcEchoString));
    printf("Sent %d bytes of data\n\n", iBytesTransferred);
 
    printf("Receiving Echo Response...\n");

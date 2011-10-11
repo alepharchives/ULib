@@ -1,0 +1,2 @@
+export MAX_TIME=3600
+export BONUS_FOR_EXIT=300

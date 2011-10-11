@@ -90,18 +90,16 @@ target_triplet = @target@
 @STATIC_HANDLER_SOCKET_TRUE@am__append_44 = net/server/plugin/mod_socket.cpp
 @STATIC_HANDLER_SCGI_TRUE@am__append_45 = net/server/plugin/mod_scgi.cpp
 @STATIC_HANDLER_FCGI_TRUE@am__append_46 = net/server/plugin/mod_fcgi.cpp
-@STATIC_HANDLER_TCC_TRUE@@TCC_TRUE@am__append_47 = net/server/plugin/mod_tcc/mod_tcc.cpp
-@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__append_48 = net/server/plugin/mod_geoip/mod_geoip.cpp
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__append_49 = net/server/plugin/mod_proxy.cpp net/server/plugin/mod_proxy_service.cpp
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__append_50 = net/server/plugin/mod_soap.cpp
-@STATIC_HANDLER_SSI_TRUE@am__append_51 = net/server/plugin/mod_ssi.cpp
-@STATIC_HANDLER_TSA_TRUE@am__append_52 = net/server/plugin/mod_tsa.cpp
-@STATIC_HANDLER_HTTP_TRUE@am__append_53 = net/server/plugin/mod_http.cpp
-@STATIC_HANDLER_ECHO_TRUE@am__append_54 = net/server/plugin/mod_echo.cpp
+@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__append_47 = net/server/plugin/mod_geoip/mod_geoip.cpp
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__append_48 = net/server/plugin/mod_proxy.cpp net/server/plugin/mod_proxy_service.cpp
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__append_49 = net/server/plugin/mod_soap.cpp
+@STATIC_HANDLER_SSI_TRUE@am__append_50 = net/server/plugin/mod_ssi.cpp
+@STATIC_HANDLER_TSA_TRUE@am__append_51 = net/server/plugin/mod_tsa.cpp
+@STATIC_HANDLER_HTTP_TRUE@am__append_52 = net/server/plugin/mod_http.cpp
+@STATIC_HANDLER_ECHO_TRUE@am__append_53 = net/server/plugin/mod_echo.cpp
 
 # ---------- Win32 stuff ----------
-@MINGW_TRUE@am__append_55 = -export-symbols $(srcdir)/@ULIB@.def -no-undefined -Wl,ULib-win32-res.o
-@MINGW_FALSE@lib@ULIB@_la_DEPENDENCIES =
+@MINGW_TRUE@am__append_54 = -export-symbols $(srcdir)/@ULIB@.def -no-undefined -Wl,ULib-win32-res.o
 subdir = src/ulib
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/ULib.pc.in $(srcdir)/ULib.rc.in
@@ -156,6 +154,7 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgconfigdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
+lib@ULIB@_la_LIBADD =
 am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	base/hash.c base/utility.c base/lzo/minilzo.c \
 	base/coder/cbase64.c base/coder/cquoted_printable.c \
@@ -211,7 +210,6 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	net/server/plugin/mod_nocat.cpp \
 	net/server/plugin/mod_socket.cpp \
 	net/server/plugin/mod_scgi.cpp net/server/plugin/mod_fcgi.cpp \
-	net/server/plugin/mod_tcc/mod_tcc.cpp \
 	net/server/plugin/mod_geoip/mod_geoip.cpp \
 	net/server/plugin/mod_proxy.cpp net/server/plugin/mod_soap.cpp \
 	net/server/plugin/mod_ssi.cpp net/server/plugin/mod_tsa.cpp \
@@ -278,16 +276,15 @@ am__objects_22 = base.lo base_error.lo hash.lo utility.lo minilzo.lo \
 @STATIC_HANDLER_SOCKET_TRUE@am__objects_45 = mod_socket.lo
 @STATIC_HANDLER_SCGI_TRUE@am__objects_46 = mod_scgi.lo
 @STATIC_HANDLER_FCGI_TRUE@am__objects_47 = mod_fcgi.lo
-@STATIC_HANDLER_TCC_TRUE@@TCC_TRUE@am__objects_48 = mod_tcc.lo
-@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__objects_49 = mod_geoip.lo
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__objects_50 = mod_proxy.lo \
+@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__objects_48 = mod_geoip.lo
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__objects_49 = mod_proxy.lo \
 @PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@	mod_proxy_service.lo
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__objects_51 = mod_soap.lo
-@STATIC_HANDLER_SSI_TRUE@am__objects_52 = mod_ssi.lo
-@STATIC_HANDLER_TSA_TRUE@am__objects_53 = mod_tsa.lo
-@STATIC_HANDLER_HTTP_TRUE@am__objects_54 = mod_http.lo
-@STATIC_HANDLER_ECHO_TRUE@am__objects_55 = mod_echo.lo
-am__objects_56 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo \
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__objects_50 = mod_soap.lo
+@STATIC_HANDLER_SSI_TRUE@am__objects_51 = mod_ssi.lo
+@STATIC_HANDLER_TSA_TRUE@am__objects_52 = mod_tsa.lo
+@STATIC_HANDLER_HTTP_TRUE@am__objects_53 = mod_http.lo
+@STATIC_HANDLER_ECHO_TRUE@am__objects_54 = mod_echo.lo
+am__objects_55 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo \
 	dynamic.lo plugin.lo header.lo entity.lo multipart.lo \
 	vector.lo hash_map.lo tree.lo interrupt.lo compress.lo \
 	services.lo semaphore.lo base64.lo lock.lo string_ext.lo \
@@ -311,9 +308,9 @@ am__objects_56 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo \
 	$(am__objects_45) $(am__objects_46) $(am__objects_47) \
 	$(am__objects_48) $(am__objects_49) $(am__objects_50) \
 	$(am__objects_51) $(am__objects_52) $(am__objects_53) \
-	$(am__objects_54) $(am__objects_55)
+	$(am__objects_54)
 @FINAL_FALSE@am_lib@ULIB@_la_OBJECTS = $(am__objects_22) \
-@FINAL_FALSE@	$(am__objects_56)
+@FINAL_FALSE@	$(am__objects_55)
 @FINAL_TRUE@am_lib@ULIB@_la_OBJECTS = all_c.lo all_cpp.lo
 lib@ULIB@_la_OBJECTS = $(am_lib@ULIB@_la_OBJECTS)
 lib@ULIB@_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -570,11 +567,10 @@ SRC_CPP = internal/common.cpp internal/objectIO.cpp ui/dialog.cpp \
 	$(am__append_44) $(am__append_45) $(am__append_46) \
 	$(am__append_47) $(am__append_48) $(am__append_49) \
 	$(am__append_50) $(am__append_51) $(am__append_52) \
-	$(am__append_53) $(am__append_54)
-@TCC_TRUE@lib@ULIB@_la_LIBADD = -ltcc
+	$(am__append_53)
 @FINAL_FALSE@lib@ULIB@_la_SOURCES = $(SRC_C) $(SRC_CPP)
 @FINAL_TRUE@lib@ULIB@_la_SOURCES = all_c.c all_cpp.cpp
-lib@ULIB@_la_LDFLAGS = $(LIBRARY_LIBTOOL_OPTIONS) $(am__append_55)
+lib@ULIB@_la_LDFLAGS = $(LIBRARY_LIBTOOL_OPTIONS) $(am__append_54)
 lib_LTLIBRARIES = lib@ULIB@.la
 @MINGW_TRUE@lib@ULIB@_la_DEPENDENCIES = ULib-win32-res.o
 @MS_LIB_AVAILABLE_TRUE@noinst_DATA = @ULIB@-$(VERSION).lib
@@ -743,7 +739,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_socket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_ssi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_stream.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_tcc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_tsa.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mremap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/multipart.Plo@am__quote@
@@ -1764,13 +1759,6 @@ mod_fcgi.lo: net/server/plugin/mod_fcgi.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='net/server/plugin/mod_fcgi.cpp' object='mod_fcgi.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_fcgi.lo `test -f 'net/server/plugin/mod_fcgi.cpp' || echo '$(srcdir)/'`net/server/plugin/mod_fcgi.cpp
-
-mod_tcc.lo: net/server/plugin/mod_tcc/mod_tcc.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_tcc.lo -MD -MP -MF $(DEPDIR)/mod_tcc.Tpo -c -o mod_tcc.lo `test -f 'net/server/plugin/mod_tcc/mod_tcc.cpp' || echo '$(srcdir)/'`net/server/plugin/mod_tcc/mod_tcc.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/mod_tcc.Tpo $(DEPDIR)/mod_tcc.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='net/server/plugin/mod_tcc/mod_tcc.cpp' object='mod_tcc.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o mod_tcc.lo `test -f 'net/server/plugin/mod_tcc/mod_tcc.cpp' || echo '$(srcdir)/'`net/server/plugin/mod_tcc/mod_tcc.cpp
 
 mod_geoip.lo: net/server/plugin/mod_geoip/mod_geoip.cpp
 @am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT mod_geoip.lo -MD -MP -MF $(DEPDIR)/mod_geoip.Tpo -c -o mod_geoip.lo `test -f 'net/server/plugin/mod_geoip/mod_geoip.cpp' || echo '$(srcdir)/'`net/server/plugin/mod_geoip/mod_geoip.cpp

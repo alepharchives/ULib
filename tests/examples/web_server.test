@@ -22,7 +22,7 @@ fi
 DIR_CMD="../../examples/userver"
 
 if [ "$TERM" != "cygwin" ]; then
-	( mkdir -p usp; cd usp;
+	( mkdir -p servlet; cd servlet;
 	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/jsonrequest.so;
 	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/upload_progress.so;
 	  cd ../../../src/ulib/net/server/plugin/usp/;
@@ -142,6 +142,7 @@ $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" htt
  creat_link ../tmp					  www.sito1.com/tmp
  creat_link ../SSI					  www.sito1.com/SSI
  creat_link ../cgi-bin				  www.sito1.com/cgi-bin
+ creat_link ../servlet				  www.sito1.com/servlet
  creat_link ../uploads				  www.sito1.com/uploads
  creat_link ../../../inp/http/data www.sito1.com/inp/http/data
  creat_link ../vuoto.txt			  www.sito1.com/vuoto.txt

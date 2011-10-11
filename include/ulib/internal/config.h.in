@@ -840,9 +840,6 @@ typedef unsigned long long uint64;
 /* enable memory pool features */
 #undef U_MEMORY_POOL
 
-/* Define if we don't use openssl */
-#undef U_NO_SSL
-
 /* enable use of our versions of the memory operators */
 #undef U_OVERLOAD_NEW_DELETE
 
@@ -887,9 +884,6 @@ typedef unsigned long long uint64;
 
 /* STATIC_HANDLER_STREAM */
 #undef U_STATIC_HANDLER_STREAM
-
-/* STATIC_HANDLER_TCC */
-#undef U_STATIC_HANDLER_TCC
 
 /* STATIC_HANDLER_TSA */
 #undef U_STATIC_HANDLER_TSA
@@ -949,9 +943,6 @@ typedef unsigned long long uint64;
 /* libmysql - MySQL Database System library version */
 #undef _MYSQL_VERSION
 
-/* OpenSSL version */
-#undef _OPENSSL_VERSION
-
 /* Operating System version */
 #undef _OS_VERSION
 
@@ -967,6 +958,9 @@ typedef unsigned long long uint64;
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
+
+/* SSL version */
+#undef _SSL_VERSION
 
 /* V8 - version of Google V8 JavaScript Engine */
 #undef _V8_VERSION

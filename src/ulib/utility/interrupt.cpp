@@ -178,34 +178,36 @@ void UInterrupt::callHandlerSignal()
 
    int i;
 
-   do {
-      i = event_signal_pending;
-          event_signal_pending = 0;
+loop:
+   U_INTERNAL_DUMP("event_signal_pending = %d", event_signal_pending)
 
-      if (i < NSIG)
+   i = event_signal_pending;
+       event_signal_pending = 0;
+
+   if (i < NSIG)
+      {
+      U_INTERNAL_ASSERT_POINTER(handler_signal[i])
+
+      handler_signal[i](event_signal[i]);
+
+      event_signal[i] = 0;
+      }
+   else
+      {
+      for (i = 1; i < NSIG; ++i)
          {
-         U_INTERNAL_ASSERT_POINTER(handler_signal[i])
-
-         handler_signal[i](event_signal[i]);
-
-         event_signal[i] = 0;
-         }
-      else
-         {
-         for (i = 1; i < NSIG; ++i)
+         if (event_signal[i])
             {
-            if (event_signal[i])
-               {
-               U_INTERNAL_ASSERT_POINTER(handler_signal[i])
+            U_INTERNAL_ASSERT_POINTER(handler_signal[i])
 
-               handler_signal[i](event_signal[i]);
+            handler_signal[i](event_signal[i]);
 
-               event_signal[i] = 0;
-               }
+            event_signal[i] = 0;
             }
          }
       }
-   while (event_signal_pending);
+
+   if (event_signal_pending) goto loop;
 }
 
 void UInterrupt::setMaskInterrupt(sigset_t* mask, int signo)

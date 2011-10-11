@@ -594,6 +594,8 @@ int UShibPlugIn::handlerInit()
             {
             U_SRV_LOG("initialization of plugin success");
 
+            UServer_Base::bpluginsHandlerReset = true;
+
             U_RETURN(U_PLUGIN_HANDLER_GO_ON);
             }
          }

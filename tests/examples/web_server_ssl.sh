@@ -2,19 +2,19 @@
 
 . ../.function
 
-rm -f web_server_ssl.log \
+rm -f web_server_ssl*.log \
       out/userver_ssl.out err/userver_ssl.err \
 		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]*
 
  UTRACE="0 10M 0"
- UOBJDUMP="0 100k 10"
+#UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
 DIR_CMD="../../examples/userver"
 
 #STRACE=$TRUSS
-start_prg_background userver_ssl -c web_server_ssl.cfg
+start_prg_background userver_ssl -c web_server_ssl2.cfg
 
 #$SLEEP
 #kill_prg userver_ssl TERM

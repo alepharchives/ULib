@@ -84,7 +84,6 @@ class UHTTP;
 class UValue;
 class UString;
 class UStringExt;
-class UTCCPlugIn;
 class UHttpPlugIn;
 template <class T> class UHashMap;
 
@@ -509,7 +508,6 @@ private:
                       friend class UHTTP;
                       friend class UString;
                       friend class UStringExt;
-                      friend class UTCCPlugIn;
                       friend class UHttpPlugIn;
    template <class T> friend class UHashMap;
    template <class T> friend void u_construct(T*, uint32_t);
@@ -924,7 +922,7 @@ public:
    char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const;
 
    UString  copy() const;
-   uint32_t copy(char* s, uint32_t n, uint32_t pos = 0) const { return rep->copy(s, n, pos); }
+   uint32_t copy(char* s, uint32_t n = U_NOT_FOUND, uint32_t pos = 0) const { return rep->copy(s, n, pos); }
 
    // STRING OPERATIONS
 
@@ -1140,18 +1138,7 @@ public:
 
    // manage UString as memory mapped area...
 
-   void mmap(const char* map, uint32_t len)
-      {
-      U_TRACE(0, "UString::mmap(%.*S,%u)", len, map, len)
-
-      U_INTERNAL_ASSERT(map != MAP_FAILED)
-
-      UStringRep* _rep = UStringRep::create(map, len, U_NOT_FOUND);
-
-      set(_rep);
-
-      U_INTERNAL_ASSERT(invariant())
-      }
+   void mmap(const char* map, uint32_t len);
 
    // manage UString as buffer...
 

@@ -218,13 +218,6 @@ if STATIC_HANDLER_FCGI
 SRC_CPP += net/server/plugin/mod_fcgi.cpp
 endif
 
-if TCC
-if STATIC_HANDLER_TCC
-SRC_CPP += net/server/plugin/mod_tcc/mod_tcc.cpp
-endif
-lib@ULIB@_la_LIBADD  = -ltcc
-endif
-
 if GEOIP
 if STATIC_HANDLER_GEOIP
 SRC_CPP += net/server/plugin/mod_geoip/mod_geoip.cpp

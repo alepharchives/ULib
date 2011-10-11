@@ -212,6 +212,7 @@ public:
    // -------------------------------------------------------------------
 
    static char mod_name[20];
+   static bool bpluginsHandlerReset;
    static UEventFd* handler_inotify;
 
    // load plugin modules and call server-wide hooks handlerConfig()...
@@ -537,6 +538,13 @@ public:
 
       bssl   = true;
       socket = U_NEW(USSLSocket(UClientImage_Base::bIPv6));
+
+      USSLSocket::method     = (SSL_METHOD*) SSLv23_server_method();
+      UClientImage_Base::ctx = getSocket()->ctx;
+
+#  ifdef U_SCALABILITY
+      UNotifier::scalability = false;  
+#  endif
       }
 
    virtual ~UServer()

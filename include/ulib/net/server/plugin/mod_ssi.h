@@ -110,8 +110,8 @@ public:
 
 protected:
    time_t last_modified;
-   UString environment, docname, timefmt, errmsg;
-   bool use_size_abbrev;
+   UString environment, docname, timefmt, errmsg, header, body;
+   bool use_size_abbrev, cgi_output;
 
 private:
    UString getInclude(const UString& include, int include_level) U_NO_EXPORT;

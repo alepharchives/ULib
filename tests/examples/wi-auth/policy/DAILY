@@ -1,0 +1,4 @@
+export MAX_TIME=3600
+export MAX_TRAFFIC=314572800
+export POLICY_RESET=1
+export BONUS_FOR_EXIT=300 # 5 minuti bonus

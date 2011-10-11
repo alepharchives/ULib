@@ -36,7 +36,7 @@ end   LS
 
 start CGI
 --------------
-<!--#exec cgi="/cgi-bin/msie-test.cgi" -->--------------
+<!--#exec cgi="cgi-bin/msie-test.cgi" -->--------------
 end   CGI<!--#config errmsg="SSI include failed!" -->
 <!--#include file="/etc/passwd" -->
 <!--#include file="c:\boot.ini" -->

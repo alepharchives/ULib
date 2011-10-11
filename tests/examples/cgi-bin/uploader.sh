@@ -44,10 +44,6 @@ elif [ "$REQUEST_METHOD" = "POST" ]; then
 
 	DIR=uploads
 
-	if [ ! -d ../$DIR ]; then
-		mkdir -p ../$DIR
-	fi
-
 	mv $1	../$DIR
 
 	FILE=/$DIR/`basename $1`

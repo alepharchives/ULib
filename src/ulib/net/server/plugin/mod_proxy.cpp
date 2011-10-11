@@ -57,6 +57,8 @@ int UProxyPlugIn::handlerInit()
 
    U_SRV_LOG("initialization of plugin success");
 
+   UServer_Base::bpluginsHandlerReset = true;
+
 end:
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }

@@ -1,9 +1,5 @@
 // rsignclient_rpc.cpp
 
-#ifdef U_NO_SSL
-#undef U_NO_SSL
-#endif
-
 #include <ulib/file_config.h>
 #include <ulib/ssl/net/sslsocket.h>
 #include <ulib/net/rpc/rpc_client.h>

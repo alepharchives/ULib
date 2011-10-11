@@ -1,11 +1,6 @@
 // server.cpp
 
 #include <ulib/file_config.h>
-
-#ifndef U_NO_SSL
-#define U_NO_SSL
-#endif
-
 #include <ulib/net/tcpsocket.h>
 #include <ulib/utility/services.h>
 #include <ulib/container/vector.h>
@@ -50,7 +45,7 @@ protected:
       {
       U_TRACE(5, "UClientImageExample::handlerRead()")
 
-      int result = genericRead(); // read request...
+      int result = genericRead();
 
       if (result == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
       if (result == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_NOTIFIER_DELETE);

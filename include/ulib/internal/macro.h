@@ -14,8 +14,9 @@
 #ifndef ULIB_MACRO_H
 #define ULIB_MACRO_H 1
 
-#define U_TIMEOUT_MS  (30L * 1000L) /* 30 second connection/read timeout */
-#define U_SINGLE_READ -1
+#define U_SINGLE_READ     -1
+#define U_TIMEOUT_MS      (30L * 1000L) /* 30 second connection/read timeout */
+#define U_SSL_TIMEOUT_MS  (10L * 1000L) /* 10 second handshake       timeout */
 
 #define U_SIZEOF_UStringRep sizeof(ustringrep)
 
@@ -31,5 +32,7 @@
 #  define U_CAPACITY (U_MAX_SIZE_PREALLOCATE - (1 + U_SIZEOF_UStringRep)) // UStringRep::max_size(U_MAX_SIZE_PREALLOCATE)
 //#endif
 // -------------------------------------------------------------------------------------
+
+#define U_STRING_LIMIT (((U_NOT_FOUND-sizeof(ustringrep))/sizeof(char))-4096)
 
 #endif

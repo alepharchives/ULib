@@ -1,11 +1,6 @@
 // test_rdb_server.cpp
 
 #include <ulib/string.h>
-
-#ifndef U_NO_SSL
-#define U_NO_SSL
-#endif
-
 #include <ulib/net/server/server_rdb.h>
 
 int
