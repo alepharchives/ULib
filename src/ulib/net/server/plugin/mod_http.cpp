@@ -32,6 +32,7 @@ const UString* UHttpPlugIn::str_ENABLE_INOTIFY;
 const UString* UHttpPlugIn::str_ENABLE_CACHING_BY_PROXY_SERVERS;
 const UString* UHttpPlugIn::str_TELNET_ENABLE;
 const UString* UHttpPlugIn::str_MIN_SIZE_FOR_SENDFILE;
+const UString* UHttpPlugIn::str_SENDFILE_THRESHOLD_NONBLOCK;
 
 void UHttpPlugIn::str_allocate()
 {
@@ -47,6 +48,7 @@ void UHttpPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_ENABLE_CACHING_BY_PROXY_SERVERS,0)
    U_INTERNAL_ASSERT_EQUALS(str_TELNET_ENABLE,0)
    U_INTERNAL_ASSERT_EQUALS(str_MIN_SIZE_FOR_SENDFILE,0)
+   U_INTERNAL_ASSERT_EQUALS(str_SENDFILE_THRESHOLD_NONBLOCK,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("CACHE_FILE_MASK") },
@@ -58,7 +60,8 @@ void UHttpPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("ENABLE_INOTIFY") },
       { U_STRINGREP_FROM_CONSTANT("ENABLE_CACHING_BY_PROXY_SERVERS") },
       { U_STRINGREP_FROM_CONSTANT("TELNET_ENABLE") },
-      { U_STRINGREP_FROM_CONSTANT("MIN_SIZE_FOR_SENDFILE") }
+      { U_STRINGREP_FROM_CONSTANT("MIN_SIZE_FOR_SENDFILE") },
+      { U_STRINGREP_FROM_CONSTANT("SENDFILE_THRESHOLD_NONBLOCK") }
    };
 
    U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,                   U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -71,6 +74,7 @@ void UHttpPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_ENABLE_CACHING_BY_PROXY_SERVERS,   U_STRING_FROM_STRINGREP_STORAGE(7));
    U_NEW_ULIB_OBJECT(str_TELNET_ENABLE,                     U_STRING_FROM_STRINGREP_STORAGE(8));
    U_NEW_ULIB_OBJECT(str_MIN_SIZE_FOR_SENDFILE,             U_STRING_FROM_STRINGREP_STORAGE(9));
+   U_NEW_ULIB_OBJECT(str_SENDFILE_THRESHOLD_NONBLOCK,       U_STRING_FROM_STRINGREP_STORAGE(10));
 }
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -88,10 +92,6 @@ int UHttpPlugIn::handlerRead()
 
    UHTTP::in_READ();
 
-#ifdef U_SCALABILITY
-   UNotifier::pevents->events = 0;
-#endif
-
    U_RETURN(U_NOTIFIER_OK);
 }
 
@@ -108,7 +108,9 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // ENABLE_INOTIFY               enable automatic update of document root image with inotify
    // TELNET_ENABLE                accept fragmentation of header request (as happen with telnet)
    // CACHE_FILE_MASK              mask (DOS regexp) of pathfile that be cached in memory
+   //
    // MIN_SIZE_FOR_SENDFILE        for major size it is better to use sendfile() to serve static content
+   // SENDFILE_THRESHOLD_NONBLOCK  for major size sendfile() became non-blocking
    //
    // VIRTUAL_HOST                 flag to activate practice of maintaining more than one server on one machine,
    //                              as differentiated by their apparent hostname
@@ -175,6 +177,10 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       x = cfg[*str_URI_PROTECTED_MASK];
 
       if (x.empty() == false) UHTTP::uri_protected_mask = U_NEW(UString(x));
+
+      x = cfg[*str_SENDFILE_THRESHOLD_NONBLOCK];
+
+      if (x.empty() == false) UServer_Base::sendfile_threshold_nonblock = x.strtol();
 
       if (cfg.readBoolean(*str_ENABLE_INOTIFY))
          {

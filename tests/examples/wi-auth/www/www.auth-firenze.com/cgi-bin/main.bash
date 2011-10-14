@@ -951,11 +951,13 @@ send_request_to_nodog() {
 	# $2 -> filename to save output
 	# $3 -> option
 
-	ACCESS_POINT=`grep "^$AP " ${ACCESS_POINT_LIST}.down 2>/dev/null`
+	ACCESS_POINT_NAME=${AP##*@}
+
+	ACCESS_POINT=`grep "^$ACCESS_POINT_NAME " ${ACCESS_POINT_LIST}.down 2>/dev/null`
 
 	if [ -z "$ACCESS_POINT" ]; then
 
-		ACCESS_POINT=`grep "^$AP " ${ACCESS_POINT_LIST}.up 2>/dev/null`
+		ACCESS_POINT=`grep "^$ACCESS_POINT_NAME " ${ACCESS_POINT_LIST}.up 2>/dev/null`
 
 		if [ -n "$ACCESS_POINT" ]; then
 
@@ -978,7 +980,7 @@ send_request_to_nodog() {
 
 				# si aggiunge access point alla lista di quelli non contattabili...
 
-				append_to_FILE "$AP $GATEWAY" ${ACCESS_POINT_LIST}.down
+				append_to_FILE "$ACCESS_POINT_NAME $GATEWAY" ${ACCESS_POINT_LIST}.down
 
 				anomalia 5
 			fi
@@ -1449,7 +1451,7 @@ get_user_nome_cognome() {
 #	set +x
 }
 
-logout_request() {
+logout() {
 
 	REQ_FILE=$DIR_REQ/$SESSION_ID.req # nodog data saved on file
 
@@ -1477,6 +1479,11 @@ logout_request() {
 	# --------------------------------------------------------------------
 
 	ask_nodog_to_logout_user
+}
+
+logout_request() {
+
+	logout
 
 	PARAM=""
 
@@ -1837,6 +1844,8 @@ postlogin() {
 
 logout_notified_from_popup() {
 
+	logout
+
 	CONNECTION_CLOSE=1
 
 	HEAD_HTML="<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>"
@@ -1896,7 +1905,8 @@ registrazione() {
 			"${v12}" \
 			"${v13}" \
 			"${v14}" \
-			"${v16}"
+			"${v16}" \
+			"iframe/tutela_dati.txt"
 }
 
 save_value_session() {
@@ -2337,7 +2347,9 @@ start_ap() {
 				read AP UUID GATEWAY MAC IP < $FILE 2>/dev/null
 			fi
 
-			if [ "$AP" = "$1" ]; then
+			ACCESS_POINT_NAME=${AP##*@}
+
+			if [ "$ACCESS_POINT_NAME" = "$1" ]; then
 
 				LIST_SAFE="$FILE $LIST_SAFE"
 

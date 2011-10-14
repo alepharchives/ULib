@@ -40,7 +40,8 @@ void UTCPSocket::closesocket()
          {
          U_INTERNAL_ASSERT_MAJOR(UNotifier::epollfd,0)
 
-         goto next;
+         if ((UNotifier::pevents->events & EPOLLRDHUP) != 0) goto next1;
+                                                             goto next2;
          }
 #  endif
 
@@ -61,7 +62,7 @@ void UTCPSocket::closesocket()
           */
 
          do {
-            if (count++ > 5) break;
+            if (++count > 5) break;
 
             errno = 0;
 
@@ -77,9 +78,10 @@ void UTCPSocket::closesocket()
 #if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
    if (UNotifier::isDynamicConnection(iSockDesc))
       {
+next1:
       (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", UNotifier::epollfd, EPOLL_CTL_DEL, iSockDesc, (struct epoll_event*)1);
       }
-next:
+next2:
 #endif
 
    // Now we know that our FIN is ACK-ed, then you can close the second half of the socket by calling closesocket()

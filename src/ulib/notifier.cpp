@@ -21,10 +21,6 @@
 
 #include <errno.h>
 
-#ifdef U_SCALABILITY
-bool UNotifier::scalability;
-#endif
-
 #ifdef HAVE_LIBEVENT
 void UEventFd::operator()(int _fd, short event)
 {
@@ -104,7 +100,7 @@ next:
 
                (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", old, EPOLL_CTL_DEL, fd, (struct epoll_event*)1);
 
-               struct epoll_event _events = { handler_event->op_mask, { handler_event } };
+               struct epoll_event _events = { handler_event->op_mask | EPOLLRDHUP, { handler_event } };
 
                (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, fd, &_events);
                }
@@ -119,7 +115,7 @@ next:
 
                (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", old, EPOLL_CTL_DEL, handler_event->fd, (struct epoll_event*)1);
 
-               struct epoll_event _events = { handler_event->op_mask, { handler_event } };
+               struct epoll_event _events = { handler_event->op_mask | EPOLLRDHUP, { handler_event } };
 
                (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, handler_event->fd, &_events);
                }
@@ -219,7 +215,7 @@ void UNotifier::insert(UEventFd* item)
 #elif defined(HAVE_EPOLL_WAIT)
    U_INTERNAL_ASSERT_MAJOR(epollfd,0)
 
-   struct epoll_event _events = { item->op_mask, { item } };
+   struct epoll_event _events = { item->op_mask | EPOLLRDHUP, { item } };
 
    (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, fd, &_events);
 #else
@@ -350,7 +346,7 @@ void UNotifier::modify(UEventFd* item)
 #elif defined(HAVE_EPOLL_WAIT)
    U_INTERNAL_ASSERT_MAJOR(epollfd,0)
 
-   struct epoll_event _events = { item->op_mask, { item } };
+   struct epoll_event _events = { item->op_mask | EPOLLRDHUP, { item } };
 
    (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_MOD, fd, &_events);
 #else
@@ -543,11 +539,7 @@ U_NO_EXPORT void UNotifier::handlerResult(UEventFd* handler_event, bool bread, b
 
    if (ret == U_NOTIFIER_DELETE)
       {
-#  ifdef U_SCALABILITY
       U_INTERNAL_ASSERT_EQUALS(handler_event, pevents->data.ptr)
-
-      pevents->events = 0;
-#  endif
 
       handlerDelete(handler_event);
       }
@@ -587,63 +579,48 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 
 #  ifdef HAVE_EPOLL_WAIT
       bool bexcept;
-      struct epoll_event* pevents_end = (pevents = events) + nfd_ready;
+      pevents = events + nfd_ready;
 
-      do {
-         handler_event = (UEventFd*) pevents->data.ptr;
+loop:
+      --pevents;
 
-         U_INTERNAL_ASSERT_DIFFERS(handler_event,0)
+      U_INTERNAL_ASSERT(pevents >= events)
 
-         U_INTERNAL_DUMP("events[%d].events = %B", (pevents - events), pevents->events)
+      handler_event = (UEventFd*) pevents->data.ptr;
 
-         bread   = ((pevents->events & U_READ_IN)   != 0);
-         bexcept = ((pevents->events & EPOLLERR)    != 0 ||
-                    (pevents->events & EPOLLHUP)    != 0);
+      U_INTERNAL_ASSERT_DIFFERS(handler_event,0)
 
-         U_INTERNAL_DUMP("bread = %b bwrite = %b bexcept = %b", bread, ((pevents->events & U_WRITE_OUT) != 0), bexcept)
+      U_INTERNAL_DUMP("events[%d].events = %B", (pevents - events), pevents->events)
 
-         U_INTERNAL_ASSERT((pevents->events & U_READ_IN)   != 0 ||
-                           (pevents->events & U_WRITE_OUT) != 0 ||
-                           (pevents->events & EPOLLHUP)    != 0 ||
-                           (pevents->events & EPOLLERR)    != 0)
+      bread   = ((pevents->events & U_READ_IN)  != 0);
+      bexcept = ((pevents->events & EPOLLERR)   != 0 ||
+                 (pevents->events & EPOLLHUP)   != 0 ||
+                 (pevents->events & EPOLLRDHUP) != 0);
 
-         U_INTERNAL_DUMP("fd = %d op_mask = %B handler_event = %p", handler_event->fd, handler_event->op_mask, handler_event)
+      U_INTERNAL_DUMP("bread = %b bwrite = %b bexcept = %b", bread, ((pevents->events & U_WRITE_OUT) != 0), bexcept)
 
-         U_INTERNAL_ASSERT_MAJOR(handler_event->fd,0)
+      U_INTERNAL_ASSERT((pevents->events & U_READ_IN)   != 0 ||
+                        (pevents->events & U_WRITE_OUT) != 0 ||
+                        (pevents->events & EPOLLHUP)    != 0 ||
+                        (pevents->events & EPOLLERR)    != 0 ||
+                        (pevents->events & EPOLLRDHUP)  != 0)
 
-         handlerResult(handler_event, bread, bexcept);
+      U_INTERNAL_DUMP("fd = %d op_mask = %B handler_event = %p", handler_event->fd, handler_event->op_mask, handler_event)
 
-         if (nfd_ready == 0)
-            {
-            U_INTERNAL_DUMP("events[%d]: goto end", (pevents - events))
+      U_INTERNAL_ASSERT_MAJOR(handler_event->fd,0)
 
-            U_INTERNAL_ASSERT_EQUALS(pevents+1, pevents_end)
+      handlerResult(handler_event, bread, bexcept);
 
-#        ifdef U_SCALABILITY
-            if (scalability)
-               {
-               U_INTERNAL_ASSERT_DIFFERS(USocket::accept4_flags & SOCK_NONBLOCK,0)
+      if (nfd_ready == 0)
+         {
+         U_INTERNAL_DUMP("events[%d]: goto end", (pevents - events))
 
-               do {
-                  if (pevents->events)
-                     {
-                     handler_event = (UEventFd*) pevents->data.ptr;
+         U_INTERNAL_ASSERT_EQUALS(pevents, events)
 
-                     U_INTERNAL_DUMP("fd = %d op_mask = %B handler_event = %p", handler_event->fd, handler_event->op_mask, handler_event)
-
-                     if (handler_event->op_mask == U_READ_IN) handlerResult(handler_event, true, false);
-                     }
-                  }
-               while (--pevents >= events);
-
-               U_INTERNAL_ASSERT_EQUALS(pevents+1, events)
-               }
-#        endif
-
-            goto end;
-            }
+         goto end;
          }
-      while (++pevents < pevents_end);
+
+      goto loop;
 #  else
       int fd, fd_cnt = (fd_read_cnt + fd_write_cnt);
 

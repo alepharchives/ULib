@@ -379,7 +379,7 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
    U_INTERNAL_DUMP("resto = %u", resto)
 
 #ifdef HAVE_ARCH64
-   U_INTERNAL_ASSERT_MINOR_MSG(st_size, U_STRING_LIMIT, "we can't manage file bigger than 4G...") // limit of UString
+   U_INTERNAL_ASSERT_MINOR_MSG((uint32_t)st_size, U_STRING_LIMIT, "we can't manage file bigger than 4G...") // limit of UString
 #else
    U_INTERNAL_ASSERT_RANGE(1, map_size, 2U*1024U*1024U*1024U) // limit of linux system
 #endif

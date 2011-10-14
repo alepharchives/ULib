@@ -12,6 +12,7 @@ start_msg unixsocket_client
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
+#STRACE=$TRUSS
 start_prg_background unixsocket_server "tmp/socket"
 $SLEEP
  start_prg 				unixsocket_client "tmp/socket"

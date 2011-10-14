@@ -30,12 +30,6 @@
 #  endif
 #endif
 
-/*
-#if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
-#  define U_SCALABILITY
-#endif
-*/
-
 #include <ulib/event/event_fd.h>
 #include <ulib/event/event_time.h>
 
@@ -53,9 +47,6 @@ class UClientImage_Base;
 class U_EXPORT UNotifier {
 public:
 
-#ifdef U_SCALABILITY
-   static bool scalability;
-#endif
 #ifdef HAVE_EPOLL_WAIT
    static struct epoll_event* pevents;
 #endif

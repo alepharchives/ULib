@@ -89,6 +89,7 @@ time_t                     UServer_Base::expire;
 uint32_t                   UServer_Base::start;
 uint32_t                   UServer_Base::count;
 uint32_t                   UServer_Base::shared_data_add;
+uint32_t                   UServer_Base::sendfile_threshold_nonblock = 1024 * 1024; // 1M
 UString*                   UServer_Base::host;
 UString*                   UServer_Base::senvironment;
 USocket*                   UServer_Base::socket;
@@ -332,10 +333,6 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    U_INTERNAL_DUMP("u_user_name(%u) = %.*S", u_user_name_len, u_user_name_len, u_user_name)
 
    if (cfg) loadConfigParam(*cfg);
-
-#ifdef U_SCALABILITY
-   UNotifier::scalability = true;  
-#endif
 }
 
 UServer_Base::~UServer_Base()
@@ -829,10 +826,6 @@ void UServer_Base::init()
       if (name_sock.empty() == false) UUnixSocket::setPath(name_sock.data());
 
       if (UUnixSocket::path == 0) U_ERROR("UNIX domain socket is not bound to a file system pathname...");
-
-#  ifdef U_SCALABILITY
-      UNotifier::scalability = false;
-#  endif
       }
 #endif
 
@@ -986,6 +979,9 @@ void UServer_Base::init()
        *
        * sysctl_max_syn_backlog on the other hand is dynamically adjusted, depending on the memory characteristic of the system.
        * Default is 256, 128 for small systems and up to 1024 for bigger systems.
+       *
+       * The system limits (somaxconn & tcp_max_syn_backlog) specify a _maximum_, the user cannot exceed this limit with listen(2).
+       * The backlog argument for listen on the other  hand  specify a _minimum_
        */
 
       if (iBackLog >= SOMAXCONN)
@@ -994,15 +990,12 @@ void UServer_Base::init()
 
          // NB: take a look at `netstat -s | grep overflowed`
 
-         sysctl_somaxconn       = UFile::setSysParam("/proc/sys/net/core/somaxconn", value);
+         sysctl_somaxconn       = UFile::setSysParam("/proc/sys/net/core/somaxconn",           value);
          sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 2);
          }
       }
 
    /* sysctl_tcp_abort_on_overflow when its on, new connections are reset once the backlog is exhausted.
-    *
-    * The system limits (somaxconn & tcp_max_syn_backlog) specify a _maximum_, the user cannot exceed this limit with listen(2).
-    * The backlog argument for listen on the other hand specify a _minimum_
     */
 
    if (iBackLog == 1) tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
@@ -1192,6 +1185,7 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
    U_TRACE(1, "UServer_Base::handlerRead()")
 
    time_t idle = 0;
+   uint32_t counter = 0;
    UClientImage_Base* ptr; // NB: we can't use directly the variable pClientImage cause of the thread approch...
 
 start:
@@ -1357,9 +1351,6 @@ next:
 #ifdef HAVE_PTHREAD_H
    if (UNotifier::pthread)             goto insert;
 #endif
-#ifdef U_SCALABILITY
-   if (UNotifier::scalability)         goto insert;
-#endif
 
    if (ptr->handlerRead() == U_NOTIFIER_DELETE)
       {
@@ -1376,12 +1367,9 @@ insert:
    UNotifier::insert(ptr);
 
 check:
-   if (accept_edge_triggered) goto back;
+   if (accept_edge_triggered && ++counter < 100) goto back;
 
 end:
-#ifdef U_SCALABILITY
-   UNotifier::pevents->events = 0;
-#endif
 
    U_RETURN(U_NOTIFIER_OK);
 }

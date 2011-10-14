@@ -15,10 +15,6 @@
 #include <ulib/utility/escape.h>
 #include <ulib/net/server/server.h>
 
-#ifdef U_SCALABILITY
-#  define U_SENDFILE_NONBLOCK
-#endif
-
 bool        UClientImage_Base::bIPv6;
 bool        UClientImage_Base::pipeline;
 bool        UClientImage_Base::write_off;
@@ -232,14 +228,17 @@ int UClientImage_Base::sendfile()
    ssize_t value;
    off_t offset = start;
 
-#ifdef U_SENDFILE_NONBLOCK
-   U_INTERNAL_ASSERT_DIFFERS(socket->flags          & SOCK_NONBLOCK,0)
-   U_INTERNAL_ASSERT_DIFFERS(USocket::accept4_flags & SOCK_NONBLOCK,0)
+   if (count > UServer_Base::sendfile_threshold_nonblock)
+      {
+      U_INTERNAL_ASSERT_DIFFERS(socket->flags          & SOCK_NONBLOCK,0)
+      U_INTERNAL_ASSERT_DIFFERS(USocket::accept4_flags & SOCK_NONBLOCK,0)
 
-   value = U_SYSCALL(sendfile, "%d,%d,%p,%u", UEventFd::fd, sfd, &offset, count);
-#else
-   value = (socket->sendfile(sfd, &offset, count) ? count : 0);
-#endif
+      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", UEventFd::fd, sfd, &offset, count);
+      }
+   else
+      {
+      value = (socket->sendfile(sfd, &offset, count) ? count : 0);
+      }
 
    if (value <= 0L)
       {
@@ -266,13 +265,11 @@ int UClientImage_Base::sendfile()
 
             UNotifier::modify(this);
             }
-#     if defined(U_SCALABILITY) && !defined(U_SENDFILE_NONBLOCK)
          else if ((socket->flags          &    O_NONBLOCK) == 0 &&
                   (USocket::accept4_flags & SOCK_NONBLOCK) != 0)
             {
             socket->flags = UFile::setBlocking(UEventFd::fd, socket->flags, false);
             }
-#     endif
          }
 
       U_RETURN(U_YES);
@@ -688,7 +685,6 @@ void UClientImage_Base::handlerDelete()
 
       U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B", sfd, count, UEventFd::op_mask)
 
-#  ifdef U_SENDFILE_NONBLOCK
       if (count)
          {
          // NB: pending sendfile...
@@ -700,9 +696,8 @@ void UClientImage_Base::handlerDelete()
          }
 
       UEventFd::op_mask = U_READ_IN;
-#  else
+
       if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;
-#  endif
 
       // NB: to reuse object...
 

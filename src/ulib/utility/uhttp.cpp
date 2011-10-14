@@ -1788,7 +1788,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
          pos2 = pos1;
 
-         while (ptr[pos2] != '\n' && pos2 < end) ++pos2;
+         while (pos2 < end && ptr[pos2] != '\n') ++pos2;
 
       // U_INTERNAL_DUMP("pos2 = %.*S", 20, request.c_pointer(pos2))
 
@@ -1941,7 +1941,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 next:
       pos2 = pos1;
 
-      while (ptr[pos2] != '\n' && pos2 < end) ++pos2;
+      while (pos2 < end && ptr[pos2] != '\n') ++pos2;
 
    // U_INTERNAL_DUMP("pos2 = %.*S", 20, request.c_pointer(pos2))
 
@@ -2824,12 +2824,20 @@ UString UHTTP::getHTTPHeaderForResponse(const UString& content)
       // HTTP/1.0 compliance: if not Keep-Alive we force close...
 
       if (U_http_keep_alive == '\0') U_http_is_connection_close = U_YES;
-      else
+      }
+
+   if (u_http_info.nResponseCode >= 300) (void) ext.append(U_CONSTANT_TO_PARAM("Cache-Control: no-cache\r\n"));
+
+   if (U_http_is_connection_close == U_YES)
+      {
+      if (UClientImage_Base::isPipeline() == false) (void) ext.append(U_CONSTANT_TO_PARAM("Connection: close\r\n"));
+      }
+   else
+      {
+      if (U_http_keep_alive == '1') (void) ext.append(U_CONSTANT_TO_PARAM("Connection: Keep-Alive\r\n"));
+
+      if (U_http_version == '0')
          {
-         // ...to indicate that it desires a multiple-request session
-
-         (void) ext.append(U_CONSTANT_TO_PARAM("Connection: keep-alive\r\n"));
-
          /*
          Keep-Alive Timeout
 
@@ -2850,14 +2858,6 @@ UString UHTTP::getHTTPHeaderForResponse(const UString& content)
             ext.snprintf_add("Keep-Alive: max=%d, timeout=%d\r\n", UNotifier::max_connection - UNotifier::min_connection, UServer_Base::getReqTimeout());
             }
          }
-      }
-
-   if (u_http_info.nResponseCode >= 300) (void) ext.append(U_CONSTANT_TO_PARAM("Cache-Control: no-cache\r\n"));
-
-   if (U_http_is_connection_close      == U_YES &&
-       UClientImage_Base::isPipeline() == false)
-      {
-      (void) ext.append(U_CONSTANT_TO_PARAM("Connection: close\r\n"));
       }
 
    UString tmp(300U + ext.size() + sz);
@@ -3651,9 +3651,17 @@ UString UHTTP::getHeaderMimeType(const char* content, const char* content_type, 
 
    U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
 
-   if (u_mime_index != U_ssi &&
-       u_mime_index != U_cgi)
+   const char* fmt;
+
+   if (u_mime_index == U_ssi ||
+       u_mime_index == U_cgi)
       {
+      fmt = "Content-Length: " "   " "%u\r\n\r\n";
+      }
+   else
+      {
+      fmt = "Content-Length: "       "%u\r\n\r\n";
+
       if (expire) header.snprintf_add("Expires: %#D\r\n", expire);
                   header.snprintf_add("Last-Modified: %#D\r\n", file->st_mtime);
       }
@@ -3673,12 +3681,15 @@ UString UHTTP::getHeaderMimeType(const char* content, const char* content_type, 
       (void) header.append("Content-Script-Type: text/javascript\r\n");
       }
 
-   if (enable_caching_by_proxy_servers) (void) header.append(U_CONSTANT_TO_PARAM("Cache-Control: public, max-age=31536000\r\n"
-                                                                                 "Vary: Accept-Encoding\r\n"
-                                                                                 "Accept-Ranges: bytes\r\n"));
+   if (enable_caching_by_proxy_servers)
+      {
+      (void) header.append(U_CONSTANT_TO_PARAM("Cache-Control: public, max-age=31536000\r\n"
+                                               "Vary: Accept-Encoding\r\n"
+                                               "Accept-Ranges: bytes\r\n"));
+      }
 
-   if (size)        header.snprintf_add("Content-Length:   %u\r\n\r\n", size);
-   else      (void) header.append(      "Content-Length:   %u\r\n\r\n");
+   if (size) header.snprintf_add(fmt, size);
+   else     (void) header.append(fmt);
 
    U_RETURN_STRING(header);
 }
@@ -5361,6 +5372,8 @@ bool UHTTP::checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos)
 
       ptr = x.c_pointer(pos + USocket::str_content_length->size() + 1);
       }
+
+   if (u_isspace(*ptr)) ++ptr; // NB: weighttp need at least a space...
 
    char* nptr;
    uint32_t clength = (uint32_t) strtoul(ptr, &nptr, 0);

@@ -45,6 +45,7 @@ const UString* UNoCatPlugIn::str_EXCLUDE_PORTS;
 const UString* UNoCatPlugIn::str_ALLOWED_WEB_HOSTS;
 const UString* UNoCatPlugIn::str_EXTERNAL_DEVICE;
 const UString* UNoCatPlugIn::str_INTERNAL_DEVICE;
+const UString* UNoCatPlugIn::str_INTERNAL_DEVICE_LABEL;
 const UString* UNoCatPlugIn::str_LOCAL_NETWORK;
 
 const UString* UNoCatPlugIn::str_AUTH_SERVICE_URL;
@@ -265,6 +266,9 @@ UModNoCatPeer::UModNoCatPeer(const UString& peer_ip) : ip(peer_ip), command(100U
 
    U_INTERNAL_ASSERT(ifindex <= UNoCatPlugIn::num_radio)
 
+   label = (UNoCatPlugIn::pthis->vInternalDeviceLabel.empty() ? UNoCatPlugIn::pthis->vInternalDevice[ifindex]
+                                                              : UNoCatPlugIn::pthis->vInternalDeviceLabel[ifindex]);
+
    status = UModNoCatPeer::PEER_DENY;
 
    // set MAC address
@@ -305,7 +309,8 @@ int UModNoCatPeer::handlerTime()
 }
 
 UNoCatPlugIn::UNoCatPlugIn() : vauth_service_url(4U), vlogout_url(4U), vinfo_url(4U),
-                               vfwopt(10U), vInternalDevice(4U), vLocalNetwork(4U), vauth_login(4U), vauth_logout(4U), vauth_ip(4U),
+                               vfwopt(10U), vInternalDevice(4U), vInternalDeviceLabel(4U),
+                               vLocalNetwork(4U), vauth_login(4U), vauth_logout(4U), vauth_ip(4U),
                                input(U_CAPACITY), output(U_CAPACITY), location(U_CAPACITY)
 {
    U_TRACE_REGISTER_OBJECT(0, UNoCatPlugIn, "")
@@ -479,8 +484,7 @@ void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& redir
 
    Url::encode(peer->token, value_encoded);
 
-   location.snprintf_add("%.*s&ap=%.*s",    U_STRING_TO_TRACE(value_encoded), U_STRING_TO_TRACE(access_point));
-// location.snprintf_add("%.*s&ap=%.*s:%u", U_STRING_TO_TRACE(value_encoded), U_STRING_TO_TRACE(access_point), peer->ifindex);
+   location.snprintf_add("%.*s&ap=%.*s@%.*s", U_STRING_TO_TRACE(value_encoded), U_STRING_TO_TRACE(peer->label), U_STRING_TO_TRACE(access_point));
 }
 
 bool UNoCatPlugIn::checkSignedData(const char* ptr, uint32_t len)
@@ -723,13 +727,17 @@ void UNoCatPlugIn::addPeerInfo(UModNoCatPeer* peer, time_t logout)
 
    U_INTERNAL_DUMP("peer->index_AUTH = %u info_url = %p", peer->index_AUTH, info_url)
 
+   UString buffer(100U);
+
+   buffer.snprintf("%.*s@%.*s", U_STRING_TO_TRACE(peer->label), U_STRING_TO_TRACE(access_point));
+
    info_url->addQuery(U_STRING_TO_PARAM(*str_Mac),    U_STRING_TO_PARAM(peer->mac));
    info_url->addQuery(U_CONSTANT_TO_PARAM("ip"),      U_STRING_TO_PARAM(peer->ip));
    info_url->addQuery(U_CONSTANT_TO_PARAM("gateway"), U_STRING_TO_PARAM(gateway));
-   info_url->addQuery(U_CONSTANT_TO_PARAM("ap"),      U_STRING_TO_PARAM(access_point));
+   info_url->addQuery(U_CONSTANT_TO_PARAM("ap"),      U_STRING_TO_PARAM(buffer));
    info_url->addQuery(U_STRING_TO_PARAM(*str_User),   U_STRING_TO_PARAM(peer->user));
 
-   UString buffer = UStringExt::numberToString(logout); // NB: (-1|0) mean NOT logout (only info)...
+   buffer = UStringExt::numberToString(logout); // NB: (-1|0) mean NOT logout (only info)...
 
    info_url->addQuery(U_CONSTANT_TO_PARAM("logout"), U_STRING_TO_PARAM(buffer));
 
@@ -998,6 +1006,7 @@ void UNoCatPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("ALLOWED_WEB_HOSTS") },
       { U_STRINGREP_FROM_CONSTANT("EXTERNAL_DEVICE") },
       { U_STRINGREP_FROM_CONSTANT("INTERNAL_DEVICE") },
+      { U_STRINGREP_FROM_CONSTANT("INTERNAL_DEVICE_LABEL") },
       { U_STRINGREP_FROM_CONSTANT("LOCAL_NETWORK") },
 
       { U_STRINGREP_FROM_CONSTANT("AUTH_SERVICE_URL") },
@@ -1023,37 +1032,38 @@ void UNoCatPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("Traffic") }
    };
 
-   U_NEW_ULIB_OBJECT(str_ROUTE_ONLY,         U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_DNS_ADDR,           U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_INCLUDE_PORTS,      U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_EXCLUDE_PORTS,      U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_ALLOWED_WEB_HOSTS,  U_STRING_FROM_STRINGREP_STORAGE(4));
-   U_NEW_ULIB_OBJECT(str_EXTERNAL_DEVICE,    U_STRING_FROM_STRINGREP_STORAGE(5));
-   U_NEW_ULIB_OBJECT(str_INTERNAL_DEVICE,    U_STRING_FROM_STRINGREP_STORAGE(6));
-   U_NEW_ULIB_OBJECT(str_LOCAL_NETWORK,      U_STRING_FROM_STRINGREP_STORAGE(7));
+   U_NEW_ULIB_OBJECT(str_ROUTE_ONLY,            U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_DNS_ADDR,              U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_INCLUDE_PORTS,         U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_EXCLUDE_PORTS,         U_STRING_FROM_STRINGREP_STORAGE(3));
+   U_NEW_ULIB_OBJECT(str_ALLOWED_WEB_HOSTS,     U_STRING_FROM_STRINGREP_STORAGE(4));
+   U_NEW_ULIB_OBJECT(str_EXTERNAL_DEVICE,       U_STRING_FROM_STRINGREP_STORAGE(5));
+   U_NEW_ULIB_OBJECT(str_INTERNAL_DEVICE,       U_STRING_FROM_STRINGREP_STORAGE(6));
+   U_NEW_ULIB_OBJECT(str_INTERNAL_DEVICE_LABEL, U_STRING_FROM_STRINGREP_STORAGE(7));
+   U_NEW_ULIB_OBJECT(str_LOCAL_NETWORK,         U_STRING_FROM_STRINGREP_STORAGE(8));
 
-   U_NEW_ULIB_OBJECT(str_AUTH_SERVICE_URL,   U_STRING_FROM_STRINGREP_STORAGE(8));
-   U_NEW_ULIB_OBJECT(str_LOGOUT_URL,         U_STRING_FROM_STRINGREP_STORAGE(9));
-   U_NEW_ULIB_OBJECT(str_LOGIN_TIMEOUT,      U_STRING_FROM_STRINGREP_STORAGE(10));
-   U_NEW_ULIB_OBJECT(str_INIT_CMD,           U_STRING_FROM_STRINGREP_STORAGE(11));
-   U_NEW_ULIB_OBJECT(str_RESET_CMD,          U_STRING_FROM_STRINGREP_STORAGE(12));
-   U_NEW_ULIB_OBJECT(str_ACCESS_CMD,         U_STRING_FROM_STRINGREP_STORAGE(13));
-   U_NEW_ULIB_OBJECT(str_DECRYPT_CMD,        U_STRING_FROM_STRINGREP_STORAGE(14));
-   U_NEW_ULIB_OBJECT(str_DECRYPT_KEY,        U_STRING_FROM_STRINGREP_STORAGE(15));
-   U_NEW_ULIB_OBJECT(str_CHECK_BY_ARPING,    U_STRING_FROM_STRINGREP_STORAGE(16));
+   U_NEW_ULIB_OBJECT(str_AUTH_SERVICE_URL,      U_STRING_FROM_STRINGREP_STORAGE(9));
+   U_NEW_ULIB_OBJECT(str_LOGOUT_URL,            U_STRING_FROM_STRINGREP_STORAGE(10));
+   U_NEW_ULIB_OBJECT(str_LOGIN_TIMEOUT,         U_STRING_FROM_STRINGREP_STORAGE(11));
+   U_NEW_ULIB_OBJECT(str_INIT_CMD,              U_STRING_FROM_STRINGREP_STORAGE(12));
+   U_NEW_ULIB_OBJECT(str_RESET_CMD,             U_STRING_FROM_STRINGREP_STORAGE(13));
+   U_NEW_ULIB_OBJECT(str_ACCESS_CMD,            U_STRING_FROM_STRINGREP_STORAGE(14));
+   U_NEW_ULIB_OBJECT(str_DECRYPT_CMD,           U_STRING_FROM_STRINGREP_STORAGE(15));
+   U_NEW_ULIB_OBJECT(str_DECRYPT_KEY,           U_STRING_FROM_STRINGREP_STORAGE(16));
+   U_NEW_ULIB_OBJECT(str_CHECK_BY_ARPING,       U_STRING_FROM_STRINGREP_STORAGE(17));
 
-   U_NEW_ULIB_OBJECT(str_Action,             U_STRING_FROM_STRINGREP_STORAGE(17));
-   U_NEW_ULIB_OBJECT(str_Permit,             U_STRING_FROM_STRINGREP_STORAGE(18));
-   U_NEW_ULIB_OBJECT(str_Deny,               U_STRING_FROM_STRINGREP_STORAGE(19));
-   U_NEW_ULIB_OBJECT(str_Mode,               U_STRING_FROM_STRINGREP_STORAGE(20));
-   U_NEW_ULIB_OBJECT(str_Redirect,           U_STRING_FROM_STRINGREP_STORAGE(21));
-   U_NEW_ULIB_OBJECT(str_renew,              U_STRING_FROM_STRINGREP_STORAGE(22));
-   U_NEW_ULIB_OBJECT(str_Mac,                U_STRING_FROM_STRINGREP_STORAGE(23));
-   U_NEW_ULIB_OBJECT(str_Timeout,            U_STRING_FROM_STRINGREP_STORAGE(24));
-   U_NEW_ULIB_OBJECT(str_Token,              U_STRING_FROM_STRINGREP_STORAGE(25));
-   U_NEW_ULIB_OBJECT(str_User,               U_STRING_FROM_STRINGREP_STORAGE(26));
-   U_NEW_ULIB_OBJECT(str_anonymous,          U_STRING_FROM_STRINGREP_STORAGE(27));
-   U_NEW_ULIB_OBJECT(str_Traffic,            U_STRING_FROM_STRINGREP_STORAGE(28));
+   U_NEW_ULIB_OBJECT(str_Action,                U_STRING_FROM_STRINGREP_STORAGE(18));
+   U_NEW_ULIB_OBJECT(str_Permit,                U_STRING_FROM_STRINGREP_STORAGE(19));
+   U_NEW_ULIB_OBJECT(str_Deny,                  U_STRING_FROM_STRINGREP_STORAGE(20));
+   U_NEW_ULIB_OBJECT(str_Mode,                  U_STRING_FROM_STRINGREP_STORAGE(21));
+   U_NEW_ULIB_OBJECT(str_Redirect,              U_STRING_FROM_STRINGREP_STORAGE(22));
+   U_NEW_ULIB_OBJECT(str_renew,                 U_STRING_FROM_STRINGREP_STORAGE(23));
+   U_NEW_ULIB_OBJECT(str_Mac,                   U_STRING_FROM_STRINGREP_STORAGE(24));
+   U_NEW_ULIB_OBJECT(str_Timeout,               U_STRING_FROM_STRINGREP_STORAGE(25));
+   U_NEW_ULIB_OBJECT(str_Token,                 U_STRING_FROM_STRINGREP_STORAGE(26));
+   U_NEW_ULIB_OBJECT(str_User,                  U_STRING_FROM_STRINGREP_STORAGE(27));
+   U_NEW_ULIB_OBJECT(str_anonymous,             U_STRING_FROM_STRINGREP_STORAGE(28));
+   U_NEW_ULIB_OBJECT(str_Traffic,               U_STRING_FROM_STRINGREP_STORAGE(29));
 }
 
 // Server-wide hooks
@@ -1149,9 +1159,10 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
       # **************************************************************************************************************************************************
       */
 
-      UString extdev   = cfg[*str_EXTERNAL_DEVICE],
-              intdev   = cfg[*str_INTERNAL_DEVICE],
-              localnet = cfg[*str_LOCAL_NETWORK];
+      UString extdev    = cfg[*str_EXTERNAL_DEVICE],
+              intdev    = cfg[*str_INTERNAL_DEVICE],
+              intdevlbl = cfg[*str_INTERNAL_DEVICE_LABEL],
+              localnet  = cfg[*str_LOCAL_NETWORK];
 
       if (extdev.empty())
          {
@@ -1178,6 +1189,8 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
       num_radio = vInternalDevice.split(intdev, 0, true);
 
       U_INTERNAL_DUMP("num_radio = %u", num_radio)
+
+      (void) vInternalDeviceLabel.split(intdevlbl, 0, true);
 
       if (localnet.empty())
          {
@@ -1590,6 +1603,7 @@ const char* UModNoCatPeer::dump(bool _reset) const
                   << "ip        (UString    " << (void*)&ip     << ")\n"
                   << "mac       (UString    " << (void*)&mac    << ")\n"
                   << "token     (UString    " << (void*)&token  << ")\n"
+                  << "label     (UString    " << (void*)&label  << ")\n"
                   << "ifname    (UString    " << (void*)&ifname << ")\n"
                   << "cmd       (UCommand   " << (void*)&cmd    << ')';
 
@@ -1605,42 +1619,43 @@ const char* UModNoCatPeer::dump(bool _reset) const
 
 const char* UNoCatPlugIn::dump(bool _reset) const
 {
-   *UObjectIO::os << "nfds                                        " << nfds                      <<  '\n'
-                  << "vaddr                                       " << (void*)vaddr              <<  '\n' 
-                  << "sockp                                       " << (void*)sockp              <<  '\n'
-                  << "addrmask                                    " << (void*)addrmask           <<  '\n'
-                  << "unatexit                                    " << (void*)unatexit           <<  '\n'
-                  << "fd_stderr                                   " << fd_stderr                 <<  '\n'
-                  << "num_radio                                   " << num_radio                 <<  '\n'
-                  << "index_AUTH                                  " << index_AUTH                <<  '\n'
-                  << "login_timeout                               " << login_timeout             <<  '\n'
-                  << "total_connections                           " << total_connections         <<  '\n'
-                  << "last_request_check                          " << last_request_check        <<  '\n'
-                  << "mode              (UString                  " << (void*)&mode              << ")\n"
-                  << "input             (UString                  " << (void*)&input             << ")\n"
-                  << "output            (UString                  " << (void*)&output            << ")\n"
-                  << "gateway           (UString                  " << (void*)&gateway           << ")\n"
-                  << "location          (UString                  " << (void*)&location          << ")\n"
-                  << "init_cmd          (UString                  " << (void*)&init_cmd          << ")\n"
-                  << "reset_cmd         (UString                  " << (void*)&reset_cmd         << ")\n"
-                  << "access_cmd        (UString                  " << (void*)&access_cmd        << ")\n"
-                  << "decrypt_cmd       (UString                  " << (void*)&decrypt_cmd       << ")\n"
-                  << "decrypt_key       (UString                  " << (void*)&decrypt_key       << ")\n"
-                  << "access_point      (UString                  " << (void*)&access_point      << ")\n"
-                  << "status_content    (UString                  " << (void*)status_content     << ")\n"
-                  << "cmd               (UCommand                 " << (void*)&cmd               << ")\n"
-                  << "pgp               (UCommand                 " << (void*)&pgp               << ")\n"
-                  << "ipt               (UIptAccount              " << (void*)ipt                << ")\n"
-                  << "vinfo_url         (UVector<Url*>            " << (void*)&vinfo_url         << ")\n"
-                  << "vlogout_url       (UVector<Url*>            " << (void*)&vlogout_url       << ")\n"
-                  << "vauth_service_url (UVector<Url*>            " << (void*)&vauth_service_url << ")\n"
-                  << "vfwopt            (UVector<UString>         " << (void*)&vfwopt            << ")\n"
-                  << "vauth_ip          (UVector<UString>         " << (void*)&vauth_ip          << ")\n"
-                  << "vauth_login       (UVector<UString>         " << (void*)&vauth_login       << ")\n"
-                  << "vauth_logout      (UVector<UString>         " << (void*)&vauth_logout      << ")\n"
-                  << "vLocalNetwork     (UVector<UString>         " << (void*)&vLocalNetwork     << ")\n"
-                  << "vInternalDevice   (UVector<UString>         " << (void*)&vInternalDevice   << ")\n"
-                  << "peers             (UHashMap<UModNoCatPeer*> " << (void*)peers              << ')';
+   *UObjectIO::os << "nfds                                           " << nfds                         <<  '\n'
+                  << "vaddr                                          " << (void*)vaddr                 <<  '\n' 
+                  << "sockp                                          " << (void*)sockp                 <<  '\n'
+                  << "addrmask                                       " << (void*)addrmask              <<  '\n'
+                  << "unatexit                                       " << (void*)unatexit              <<  '\n'
+                  << "fd_stderr                                      " << fd_stderr                    <<  '\n'
+                  << "num_radio                                      " << num_radio                    <<  '\n'
+                  << "index_AUTH                                     " << index_AUTH                   <<  '\n'
+                  << "login_timeout                                  " << login_timeout                <<  '\n'
+                  << "total_connections                              " << total_connections            <<  '\n'
+                  << "last_request_check                             " << last_request_check           <<  '\n'
+                  << "mode                 (UString                  " << (void*)&mode                 << ")\n"
+                  << "input                (UString                  " << (void*)&input                << ")\n"
+                  << "output               (UString                  " << (void*)&output               << ")\n"
+                  << "gateway              (UString                  " << (void*)&gateway              << ")\n"
+                  << "location             (UString                  " << (void*)&location             << ")\n"
+                  << "init_cmd             (UString                  " << (void*)&init_cmd             << ")\n"
+                  << "reset_cmd            (UString                  " << (void*)&reset_cmd            << ")\n"
+                  << "access_cmd           (UString                  " << (void*)&access_cmd           << ")\n"
+                  << "decrypt_cmd          (UString                  " << (void*)&decrypt_cmd          << ")\n"
+                  << "decrypt_key          (UString                  " << (void*)&decrypt_key          << ")\n"
+                  << "access_point         (UString                  " << (void*)&access_point         << ")\n"
+                  << "status_content       (UString                  " << (void*)status_content        << ")\n"
+                  << "cmd                  (UCommand                 " << (void*)&cmd                  << ")\n"
+                  << "pgp                  (UCommand                 " << (void*)&pgp                  << ")\n"
+                  << "ipt                  (UIptAccount              " << (void*)ipt                   << ")\n"
+                  << "vinfo_url            (UVector<Url*>            " << (void*)&vinfo_url            << ")\n"
+                  << "vlogout_url          (UVector<Url*>            " << (void*)&vlogout_url          << ")\n"
+                  << "vauth_service_url    (UVector<Url*>            " << (void*)&vauth_service_url    << ")\n"
+                  << "vfwopt               (UVector<UString>         " << (void*)&vfwopt               << ")\n"
+                  << "vauth_ip             (UVector<UString>         " << (void*)&vauth_ip             << ")\n"
+                  << "vauth_login          (UVector<UString>         " << (void*)&vauth_login          << ")\n"
+                  << "vauth_logout         (UVector<UString>         " << (void*)&vauth_logout         << ")\n"
+                  << "vLocalNetwork        (UVector<UString>         " << (void*)&vLocalNetwork        << ")\n"
+                  << "vInternalDevice      (UVector<UString>         " << (void*)&vInternalDevice      << ")\n"
+                  << "vInternalDeviceLabel (UVector<UString>         " << (void*)&vInternalDeviceLabel << ")\n"
+                  << "peers                (UHashMap<UModNoCatPeer*> " << (void*)peers                 << ')';
 
    if (_reset)
       {

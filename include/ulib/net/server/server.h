@@ -363,9 +363,9 @@ protected:
    static int sfd, bclose;
    static UEventTime* ptime;
    static UServer_Base* pthis;
-   static uint32_t start, count;
    static UString* senvironment;
    static UVector<UIPAllow*>* vallow_IP;
+   static uint32_t start, count, sendfile_threshold_nonblock;
    static bool flag_loop, bssl, flag_use_tcp_optimization, accept_edge_triggered;
 
    // COSTRUTTORI
@@ -541,10 +541,6 @@ public:
 
       USSLSocket::method     = (SSL_METHOD*) SSLv23_server_method();
       UClientImage_Base::ctx = getSocket()->ctx;
-
-#  ifdef U_SCALABILITY
-      UNotifier::scalability = false;  
-#  endif
       }
 
    virtual ~UServer()

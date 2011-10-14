@@ -22,23 +22,20 @@
 // EPOLLET is edge-triggered (alas SIGIO, when that descriptor transitions from not ready to ready, the kernel notifies you)
 // -------------------------------------------------------------------------------------------------------------------------
 #ifndef EPOLLET
-#  define EPOLLET 0
+#define EPOLLET    0
+#endif
+#ifndef EPOLLIN
+#define EPOLLIN    0x001
+#endif
+#ifndef EPOLLOUT
+#define EPOLLOUT   0x004
+#endif
+#ifndef EPOLLRDHUP
+#define EPOLLRDHUP 0x2000
 #endif
 
-#ifdef EPOLLIN
-#  ifdef U_SCALABILITY
-#     define U_READ_IN (EPOLLIN | EPOLLET)
-#  else
-#     define U_READ_IN  EPOLLIN
-#  endif
-#else
-#     define U_READ_IN  0x001 // NB: same as EPOLLIN
-#endif
-#ifdef EPOLLOUT
-#  define U_WRITE_OUT  (EPOLLOUT | EPOLLET)
-#else
-#  define U_WRITE_OUT   0x004 // NB: same as EPOLLOUT
-#endif
+#define U_READ_IN     EPOLLIN
+#define U_WRITE_OUT  (EPOLLOUT | EPOLLET)
 
 #define U_NOTIFIER_OK      0
 #define U_NOTIFIER_DELETE -1

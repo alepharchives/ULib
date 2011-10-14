@@ -98,7 +98,7 @@ protected:
    uint64_t traffic, ltraffic;
    time_t connected, expire, logout, ctime;
    uint32_t ifindex, ctraffic, rulenum, index_AUTH;
-   UString ip, mac, token, command, user, ifname;
+   UString ip, mac, token, command, user, ifname, label;
    UCommand cmd;
 
 private:
@@ -121,6 +121,7 @@ public:
    static const UString* str_ALLOWED_WEB_HOSTS;
    static const UString* str_EXTERNAL_DEVICE;
    static const UString* str_INTERNAL_DEVICE;
+   static const UString* str_INTERNAL_DEVICE_LABEL;
    static const UString* str_LOCAL_NETWORK;
 
    static const UString* str_AUTH_SERVICE_URL;
@@ -173,7 +174,7 @@ protected:
    UCommand cmd, pgp;
    UVector<UIPAllow*> vLocalNetworkMask;
    UVector<Url*> vauth_service_url, vlogout_url, vinfo_url;
-   UVector<UString> vfwopt, vInternalDevice, vLocalNetwork, vauth_login, vauth_logout, vauth_ip;
+   UVector<UString> vfwopt, vInternalDevice, vInternalDeviceLabel, vLocalNetwork, vauth_login, vauth_logout, vauth_ip;
    UString input, output, location, init_cmd, reset_cmd, access_cmd, decrypt_cmd, decrypt_key, mode, gateway, access_point;
 
    static bool arping;
