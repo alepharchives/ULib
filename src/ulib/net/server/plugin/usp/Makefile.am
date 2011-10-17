@@ -22,10 +22,12 @@ clean-local:
 moduledir = $(libexecdir)/ulib/usp
 MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
 
+if !MINGW
 module_LTLIBRARIES 			= upload_progress.la
 upload_progress_la_SOURCES = upload_progress.cpp
 upload_progress_la_LIBADD  = $(ulib_la)
 upload_progress_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+endif
 
 if !CROSS_COMPILING
 SUFFIXES = .cpp .usp .lo .la

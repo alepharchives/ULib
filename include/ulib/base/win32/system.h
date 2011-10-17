@@ -17,6 +17,10 @@
 /* sufficient Windows Common Controls features from <commctrl.h> . */
 #define _WIN32_IE 0x0300
 
+#ifndef FD_SETSIZE
+#define FD_SETSIZE 1024 // larger default than 64
+#endif
+
 #include <_mingw.h>
 #include <w32api.h>
 #include <windows.h>

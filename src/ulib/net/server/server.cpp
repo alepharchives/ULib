@@ -89,7 +89,7 @@ time_t                     UServer_Base::expire;
 uint32_t                   UServer_Base::start;
 uint32_t                   UServer_Base::count;
 uint32_t                   UServer_Base::shared_data_add;
-uint32_t                   UServer_Base::sendfile_threshold_nonblock = 1024 * 1024; // 1M
+uint32_t                   UServer_Base::sendfile_threshold_nonblock = 100 * 1024; // 100k
 UString*                   UServer_Base::host;
 UString*                   UServer_Base::senvironment;
 USocket*                   UServer_Base::socket;

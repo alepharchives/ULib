@@ -228,16 +228,16 @@ int UClientImage_Base::sendfile()
    ssize_t value;
    off_t offset = start;
 
-   if (count > UServer_Base::sendfile_threshold_nonblock)
+   if (count < UServer_Base::sendfile_threshold_nonblock)
+      {
+      value = (socket->sendfile(sfd, &offset, count) ? count : 0); // NB: it can block if new data arrive within one second...
+      }
+   else
       {
       U_INTERNAL_ASSERT_DIFFERS(socket->flags          & SOCK_NONBLOCK,0)
       U_INTERNAL_ASSERT_DIFFERS(USocket::accept4_flags & SOCK_NONBLOCK,0)
 
       value = U_SYSCALL(sendfile, "%d,%d,%p,%u", UEventFd::fd, sfd, &offset, count);
-      }
-   else
-      {
-      value = (socket->sendfile(sfd, &offset, count) ? count : 0);
       }
 
    if (value <= 0L)
@@ -486,13 +486,6 @@ int UClientImage_Base::handlerRead()
 
    // Connection-wide hooks
 
-#ifdef U_SCALABILITY
-   U_INTERNAL_DUMP("UNotifier::nfd_ready = %d", UNotifier::nfd_ready)
-
-   int keepalive_requests = (UNotifier::nfd_ready > 0 ? 100 : 0);
-start:
-#endif
-
    state = genericRead(); // read request...
 
    if (state == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NONBLOCKING...
@@ -593,17 +586,6 @@ end:
 
       U_INTERNAL_DUMP("last_response = %ld", last_response)
       }
-
-#ifdef U_SCALABILITY
-   if (UNotifier::scalability)
-      {
-      U_INTERNAL_ASSERT_DIFFERS(socket->flags & SOCK_NONBLOCK,0)
-
-      U_INTERNAL_DUMP("keepalive_requests = %d", keepalive_requests)
-
-      if (++keepalive_requests < 100) goto start;
-      }
-#endif
 
    U_RETURN(U_NOTIFIER_OK);
 }

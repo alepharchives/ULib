@@ -649,7 +649,7 @@ bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count)
          U_INTERNAL_DUMP("errno = %d", errno)
 
          if (errno == EAGAIN &&
-             UNotifier::waitForWrite(iSockDesc, 3 * 1000) == 1)
+             UNotifier::waitForWrite(iSockDesc, 1 * 1000) == 1)
             {
             flags = UFile::setBlocking(iSockDesc, flags, true);
 

@@ -539,7 +539,9 @@ U_NO_EXPORT void UNotifier::handlerResult(UEventFd* handler_event, bool bread, b
 
    if (ret == U_NOTIFIER_DELETE)
       {
+#  ifdef HAVE_EPOLL_WAIT
       U_INTERNAL_ASSERT_EQUALS(handler_event, pevents->data.ptr)
+#  endif
 
       handlerDelete(handler_event);
       }
@@ -938,12 +940,12 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
       }
 #else
 
-#  ifdef __mingw32__
+#  ifdef __MINGW32__
    if (is_pipe(fd))
       {
-      u_internal_assert_equals(is_socket(fd),false)
+      U_INTERNAL_ASSERT_EQUALS(is_socket(fd),false)
 
-      u_return(1);
+      U_RETURN(1);
       }
 #  endif
 
@@ -981,9 +983,9 @@ uint32_t UNotifier::read(int fd, char* buffer, int count, int timeoutMS)
          timeoutMS = -1; // in this way it is only for the first read...
          }
 
-#  ifdef __mingw32__
-      (void) U_SYSCALL(readfile, "%p,%p,%lu,%p,%p", (handle)_get_osfhandle(fd), buffer + bytes_read, (single_read ? U_CAPACITY : count - bytes_read),
-                                                    (dword*)&value, 0);
+#  ifdef __MINGW32__
+      (void) U_SYSCALL(ReadFile, "%p,%p,%lu,%p,%p", (HANDLE)_get_osfhandle(fd), buffer + bytes_read, (single_read ? U_CAPACITY : count - bytes_read),
+                                                    (DWORD*)&value, 0);
 #  else
       value = U_SYSCALL(read, "%d,%p,%u", fd, buffer + bytes_read, (single_read ? (int)U_CAPACITY : count - bytes_read));
 #  endif

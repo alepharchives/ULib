@@ -90,12 +90,14 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(moduledir)"
 LTLIBRARIES = $(module_LTLIBRARIES)
-upload_progress_la_DEPENDENCIES = $(ulib_la)
-am_upload_progress_la_OBJECTS = upload_progress.lo
+@MINGW_FALSE@upload_progress_la_DEPENDENCIES = $(ulib_la)
+am__upload_progress_la_SOURCES_DIST = upload_progress.cpp
+@MINGW_FALSE@am_upload_progress_la_OBJECTS = upload_progress.lo
 upload_progress_la_OBJECTS = $(am_upload_progress_la_OBJECTS)
 upload_progress_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(upload_progress_la_LDFLAGS) $(LDFLAGS) -o $@
+@MINGW_FALSE@am_upload_progress_la_rpath = -rpath $(moduledir)
 PROGRAMS = $(noinst_PROGRAMS)
 am_usp_translator_OBJECTS = usp_translator.$(OBJEXT)
 usp_translator_OBJECTS = $(am_usp_translator_OBJECTS)
@@ -116,7 +118,8 @@ CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(upload_progress_la_SOURCES) $(usp_translator_SOURCES)
-DIST_SOURCES = $(upload_progress_la_SOURCES) $(usp_translator_SOURCES)
+DIST_SOURCES = $(am__upload_progress_la_SOURCES_DIST) \
+	$(usp_translator_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -300,10 +303,10 @@ usp_translator_LDADD = $(ulib_la)
 usp_translator_SOURCES = usp_translator.cpp
 usp_translator_LDFLAGS = $(PRG_LDFLAGS)
 moduledir = $(libexecdir)/ulib/usp
-module_LTLIBRARIES = upload_progress.la
-upload_progress_la_SOURCES = upload_progress.cpp
-upload_progress_la_LIBADD = $(ulib_la)
-upload_progress_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@MINGW_FALSE@module_LTLIBRARIES = upload_progress.la
+@MINGW_FALSE@upload_progress_la_SOURCES = upload_progress.cpp
+@MINGW_FALSE@upload_progress_la_LIBADD = $(ulib_la)
+@MINGW_FALSE@upload_progress_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
 @CROSS_COMPILING_FALSE@SUFFIXES = .cpp .usp .lo .la
 @CROSS_COMPILING_FALSE@FOR_ALL = .libs/upload_progress.so
 all: all-am
@@ -372,7 +375,7 @@ clean-moduleLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 upload_progress.la: $(upload_progress_la_OBJECTS) $(upload_progress_la_DEPENDENCIES) 
-	$(upload_progress_la_LINK) -rpath $(moduledir) $(upload_progress_la_OBJECTS) $(upload_progress_la_LIBADD) $(LIBS)
+	$(upload_progress_la_LINK) $(am_upload_progress_la_rpath) $(upload_progress_la_OBJECTS) $(upload_progress_la_LIBADD) $(LIBS)
 
 clean-noinstPROGRAMS:
 	@list='$(noinst_PROGRAMS)'; test -n "$$list" || exit 0; \
