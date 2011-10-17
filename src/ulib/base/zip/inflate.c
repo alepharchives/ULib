@@ -241,7 +241,7 @@ int inflate_file(pb_file* pbf, int out_fd, struct zipentry* ze)
          {
          if ((rdamt = pb_read(pbf, in_buff, RDSZ)) == 0) break;
 
-         if ((int)rdamt < 0)
+         if (((int)rdamt) < 0)
             {
             perror("read");
 

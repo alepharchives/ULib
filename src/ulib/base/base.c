@@ -1266,7 +1266,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                   }
                }
 
-            size = buf_number + sizeof(buf_number) - cp;
+            size = (ptrdiff_t)(buf_number + sizeof(buf_number) - cp);
             }
          break;
 

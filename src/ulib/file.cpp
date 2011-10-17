@@ -361,7 +361,7 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
    U_INTERNAL_ASSERT_DIFFERS(fd,-1)
    U_INTERNAL_ASSERT_MAJOR(st_size,0)
 #ifdef __MINGW32__
-   U_INTERNAL_ASSERT((off_t)length <= st_size)     // Don't allow mappings beyond EOF since Windows can't handle that POSIX like
+   U_INTERNAL_ASSERT((off_t)length <= st_size) // Don't allow mappings beyond EOF since Windows can't handle that POSIX like
 #endif
 
    if (length == 0) length = st_size;
@@ -379,9 +379,9 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
    U_INTERNAL_DUMP("resto = %u", resto)
 
 #ifdef HAVE_ARCH64
-   U_INTERNAL_ASSERT_MINOR_MSG((uint32_t)st_size, U_STRING_LIMIT, "we can't manage file bigger than 4G...") // limit of UString
+   U_INTERNAL_ASSERT_MINOR_MSG(length, U_STRING_LIMIT, "we can't manage file bigger than 4G...") // limit of UString
 #else
-   U_INTERNAL_ASSERT_RANGE(1, map_size, 2U*1024U*1024U*1024U) // limit of linux system
+   U_INTERNAL_ASSERT_RANGE(1, length, 2U*1024U*1024U*1024U) // limit of linux system
 #endif
 
    U_INTERNAL_ASSERT_EQUALS((offset % PAGESIZE),0) // offset should be a multiple of the page size as returned by getpagesize(2)

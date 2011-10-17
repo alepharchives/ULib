@@ -450,74 +450,76 @@ int u_get_num_cpu(void)
    n = sysconf(_SC_NPROCESSORS_ONLN);
 #else
    {
-   FILE* fp = 0;
    char buf[128];
+   FILE* fp = fopen("/sys/devices/system/cpu/present", "r");
 
-   if ((fp = fopen("/sys/devices/system/cpu/present", "r")) &&
-       fgets(buf, sizeof(buf), fp))
+   if (fp)
       {
-      const char* p;
-      const char* q = buf;
-
-      buf[strlen(buf)-1] = '\0';
-
-      /* Parses a comma-separated list of numbers and ranges of numbers, with optional ':%u' strides modifying ranges.
-       *
-       * Some examples of input lists and their equivalent simple list:
-       *
-       *  Input           Equivalent to
-       *   0-3             0,1,2,3
-       *   0-7:2           0,2,4,6
-       *   1,3,5-7         1,3,5,6,7
-       *   0-3:2,8-15:4    0,2,8,12
-       */
-
-      while (p = q, q = nexttoken(q, ','), p)
+      if (fgets(buf, sizeof(buf), fp))
          {
-         unsigned int a;      /* begin of range */
-         unsigned int b;      /* end of range */
-         unsigned int s;      /* stride */
-         const char *c1, *c2; /* next tokens after '-' or ',' */
-         char nextc;          /* char after sscanf %u match */
-         int sret;            /* sscanf return (number of matches) */
+         const char* p;
+         const char* q = buf;
 
-         sret = sscanf(p, "%u%c", &a, &nextc);
+         buf[strlen(buf)-1] = '\0';
 
-         if (scan_was_ok(sret, nextc, ",-") == false) goto end;
+         /* Parses a comma-separated list of numbers and ranges of numbers, with optional ':%u' strides modifying ranges.
+          *
+          * Some examples of input lists and their equivalent simple list:
+          *
+          *  Input           Equivalent to
+          *   0-3             0,1,2,3
+          *   0-7:2           0,2,4,6
+          *   1,3,5-7         1,3,5,6,7
+          *   0-3:2,8-15:4    0,2,8,12
+          */
 
-         b  = a;
-         s  = 1;
-         c1 = nexttoken(p, '-');
-         c2 = nexttoken(p, ',');
-
-         if (c1 != 0 && (c2 == 0 || c1 < c2))
+         while (p = q, q = nexttoken(q, ','), p)
             {
-            sret = sscanf(c1, "%u%c", &b, &nextc);
+            unsigned int a;      /* begin of range */
+            unsigned int b;      /* end of range */
+            unsigned int s;      /* stride */
+            const char *c1, *c2; /* next tokens after '-' or ',' */
+            char nextc;          /* char after sscanf %u match */
+            int sret;            /* sscanf return (number of matches) */
 
-            if (scan_was_ok(sret, nextc, ",:") == false) goto end;
+            sret = sscanf(p, "%u%c", &a, &nextc);
 
-            c1 = nexttoken(c1, ':');
+            if (scan_was_ok(sret, nextc, ",-") == false) goto end;
+
+            b  = a;
+            s  = 1;
+            c1 = nexttoken(p, '-');
+            c2 = nexttoken(p, ',');
 
             if (c1 != 0 && (c2 == 0 || c1 < c2))
                {
-               sret = sscanf(c1, "%u%c", &s, &nextc);
+               sret = sscanf(c1, "%u%c", &b, &nextc);
 
-               if (scan_was_ok(sret, nextc, ",") == false) goto end;
+               if (scan_was_ok(sret, nextc, ",:") == false) goto end;
+
+               c1 = nexttoken(c1, ':');
+
+               if (c1 != 0 && (c2 == 0 || c1 < c2))
+                  {
+                  sret = sscanf(c1, "%u%c", &s, &nextc);
+
+                  if (scan_was_ok(sret, nextc, ",") == false) goto end;
+                  }
+               }
+
+            if (!(a <= b)) goto end;
+
+            while (a <= b)
+               {
+               n = a + 1; /* Number of highest set bit +1 is the number of the CPUs */
+
+               a += s;
                }
             }
-
-         if (!(a <= b)) goto end;
-
-         while (a <= b)
-            {
-            n = a + 1; /* Number of highest set bit +1 is the number of the CPUs */
-
-            a += s;
-            }
          }
-      }
 
-   (void) fclose(fp);
+      (void) fclose(fp);
+      }
    }
 end:
 #endif
