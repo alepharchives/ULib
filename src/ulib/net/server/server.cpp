@@ -332,6 +332,10 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
 
    U_INTERNAL_DUMP("u_user_name(%u) = %.*S", u_user_name_len, u_user_name_len, u_user_name)
 
+#if !defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
+   U_INTERNAL_DUMP("SOMAXCONN = %d FD_SETSIZE = %d", SOMAXCONN, FD_SETSIZE)
+#endif
+
    if (cfg) loadConfigParam(*cfg);
 }
 
@@ -1286,7 +1290,7 @@ next:
       }
 
 #if !defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
-   if (csocket->getFd() >= FD_SETSIZE)
+   if (csocket->iSockDesc >= FD_SETSIZE)
       {
        --UNotifier::num_connection;
 

@@ -228,15 +228,11 @@ int UFCGIPlugIn::handlerRequest()
 {
    U_TRACE(0, "UFCGIPlugIn::handlerRequest()")
 
-   if (UHTTP::isHTTPRequestAlreadyProcessed() ||
-       fcgi_uri_mask.empty()                  ||
-       u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(fcgi_uri_mask), 0) == false)
-      {
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-      }
-
-   if (connection &&
-       connection->isConnected())
+   if (UHTTP::isHTTPRequestAlreadyProcessed() == false &&
+       fcgi_uri_mask.empty()                  == false &&
+       connection                                      &&
+       connection->isConnected()                       &&
+       u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(fcgi_uri_mask), 0))
       {
       // Set FCGI_BEGIN_REQUEST
 
@@ -262,8 +258,8 @@ int UFCGIPlugIn::handlerRequest()
       uint32_t clength, pos, size;
       unsigned char  headerBuff[8];
       unsigned char* headerBuffPtr;
+      UString request(U_CAPACITY), params(U_CAPACITY);
       int nameLen, valueLen, headerLen, byte_to_read, i, n;
-      UString request(U_CAPACITY), params(U_CAPACITY), response;
 
       (void) request.append((const char*)&beginRecord, sizeof(FCGI_BeginRequestRecord));
 
@@ -323,6 +319,10 @@ int UFCGIPlugIn::handlerRequest()
       (void) request.append((const char*)&beginRecord, FCGI_HEADER_LEN);
       (void) request.append(params);
 
+      // maybe we have some data to put on stdin of cgi process
+
+      U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %.*S", UClientImage_Base::body->size(), U_STRING_TO_TRACE(*UClientImage_Base::body))
+
       size = UClientImage_Base::body->size();
 
       if (size)
@@ -359,16 +359,15 @@ int UFCGIPlugIn::handlerRequest()
          if (connection->shutdown() == false) goto err;
          }
 
-      pos      = 0;
-      response = connection->getResponse();
+      pos = 0;
 
       while (true)
          {
-         U_INTERNAL_DUMP("response.c_pointer(%u) = %#.*S", pos, 16, response.c_pointer(pos))
+         U_INTERNAL_DUMP("response.c_pointer(%u) = %#.*S", pos, 16, connection->response.c_pointer(pos))
 
-         U_INTERNAL_ASSERT((response.size() - pos) >= FCGI_HEADER_LEN)
+         U_INTERNAL_ASSERT((connection->response.size() - pos) >= FCGI_HEADER_LEN)
 
-         h = (FCGI_Header*) response.c_pointer(pos);
+         h = (FCGI_Header*)connection->response.c_pointer(pos);
 
          U_INTERNAL_DUMP("version = %C request_id = %u", h->version, ntohs(h->request_id))
 
@@ -378,15 +377,19 @@ int UFCGIPlugIn::handlerRequest()
          h->content_length = ntohs(h->content_length);
 
          clength      = h->content_length + h->padding_length;
-         byte_to_read = pos + FCGI_HEADER_LEN + clength - response.size();
+         byte_to_read = pos + FCGI_HEADER_LEN + clength - connection->response.size();
 
-         U_INTERNAL_DUMP("pos = %u clength = %u response.size() = %u byte_to_read = %d", pos, clength, response.size(), byte_to_read)
+         U_INTERNAL_DUMP("pos = %u clength = %u response.size() = %u byte_to_read = %d", pos, clength, connection->response.size(), byte_to_read)
 
          if (byte_to_read > 0 &&
              connection->readResponse(byte_to_read) == false)
             {
             break;
             }
+
+         // NB: connection->response can be resized...
+
+         h = (FCGI_Header*)connection->response.c_pointer(pos);
 
          // Record fully read
 
@@ -400,23 +403,23 @@ int UFCGIPlugIn::handlerRequest()
             {
             case FCGI_STDOUT:
                {
-               if (clength) (void) UClientImage_Base::wbuffer->append(response.substr(pos, clength));
+               if (clength) (void) UClientImage_Base::wbuffer->append(connection->response.substr(pos, clength));
                }
             break;
 
             case FCGI_STDERR:
-               (void) UFile::write(STDERR_FILENO, response.c_pointer(pos), clength);
+               (void) UFile::write(STDERR_FILENO, connection->response.c_pointer(pos), clength);
             break;
 
             case FCGI_END_REQUEST:
                {
-               FCGI_EndRequestBody* body = (FCGI_EndRequestBody*) response.c_pointer(pos);
+               FCGI_EndRequestBody* body = (FCGI_EndRequestBody*)connection->response.c_pointer(pos);
 
                U_INTERNAL_DUMP("protocol_status = %C app_status = %u", body->protocol_status, ntohl(body->app_status))
 
                if (body->protocol_status == FCGI_REQUEST_COMPLETE)
                   {
-                  U_INTERNAL_ASSERT_EQUALS(pos + clength, response.size())
+                  U_INTERNAL_ASSERT_EQUALS(pos + clength, connection->response.size())
 
                   (void) UHTTP::processCGIOutput();
 
@@ -434,9 +437,9 @@ int UFCGIPlugIn::handlerRequest()
 
          pos += clength;
 
-         U_INTERNAL_DUMP("pos = %u response.size() = %u", pos, response.size())
+         U_INTERNAL_DUMP("pos = %u response.size() = %u", pos, connection->response.size())
 
-         if ((response.size() - pos) < FCGI_HEADER_LEN &&
+         if ((connection->response.size() - pos) < FCGI_HEADER_LEN &&
              connection->readResponse() == false)
             {
             break;

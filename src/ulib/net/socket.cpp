@@ -145,9 +145,14 @@ USocket::USocket(bool bSocketIsIPv6)
 
    flags       = O_RDWR;
    iState      = CLOSE;
-   iSockDesc   = -1;
    iRemotePort = 0;
    bLocalSet   = false;
+
+#ifdef __MINGW32__
+   fh          = -1;
+#endif
+   iSockDesc   = -1;
+
 #ifdef HAVE_IPV6
    bIPv6Socket = bSocketIsIPv6;
 #else
@@ -194,7 +199,12 @@ bool USocket::socket(int iSocketType, int protocol)
 
    U_INTERNAL_ASSERT(isClosed())
 
-   iSockDesc = socket(bIPv6Socket ? AF_INET6 : AF_INET, iSocketType, protocol);
+#ifdef __MINGW32__
+   fh        = U_SYSCALL(socket, "%d,%d,%d", bIPv6Socket ? AF_INET6 : AF_INET, iSocketType, protocol);
+   iSockDesc = _open_osfhandle((long)fh, O_RDWR | O_BINARY);
+#else
+   iSockDesc = U_SYSCALL(socket, "%d,%d,%d", bIPv6Socket ? AF_INET6 : AF_INET, iSocketType, protocol);
+#endif
 
    if (isOpen()) U_RETURN(true);
 
@@ -225,7 +235,7 @@ int USocket::recv(void* pBuffer, uint32_t iBufLength)
 
    U_INTERNAL_ASSERT(isOpen())
 
-   int iBytesRead = recv(iSockDesc, CAST(pBuffer), iBufLength, 0);
+   int iBytesRead = recv(getFd(), CAST(pBuffer), iBufLength, 0);
 
    U_RETURN(iBytesRead);
 }
@@ -244,7 +254,7 @@ bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)
       if (isOpen() &&
           isTimeout())
          {
-         U_ASSERT_EQUALS(UFile::isBlocking(iSockDesc, flags), false)
+         U_ASSERT_EQUALS(UFile::isBlocking(getFd(), flags), false)
          }
 #  endif
 
@@ -265,7 +275,7 @@ bool USocket::bind(SocketAddress& cLocal)
    int result, counter = 0;
 
 loop:
-   result = U_SYSCALL(bind, "%d,%p,%d", iSockDesc, (sockaddr*)cLocal, cLocal.sizeOf());
+   result = U_SYSCALL(bind, "%d,%p,%d", getFd(), (sockaddr*)cLocal, cLocal.sizeOf());
 
    if (result == -1         &&
        errno  == EADDRINUSE &&
@@ -284,7 +294,7 @@ loop:
 
       socklen_t slDummy = cLocal.sizeOf();
 
-      result = U_SYSCALL(getsockname, "%d,%p,%p", iSockDesc, (sockaddr*)cLocal, &slDummy);
+      result = U_SYSCALL(getsockname, "%d,%p,%p", getFd(), (sockaddr*)cLocal, &slDummy);
 
       U_INTERNAL_ASSERT_EQUALS(result,0)
 
@@ -334,7 +344,7 @@ void USocket::setLocal()
 
    socklen_t slDummy = cLocal.sizeOf();
 
-   if (U_SYSCALL(getsockname, "%d,%p,%p", iSockDesc, (sockaddr*)cLocal, &slDummy) == 0)
+   if (U_SYSCALL(getsockname, "%d,%p,%p", getFd(), (sockaddr*)cLocal, &slDummy) == 0)
       {
       bLocalSet = true;
 
@@ -355,7 +365,7 @@ void USocket::setRemote()
 
    socklen_t slDummy = cRemote.sizeOf();
 
-   if (U_SYSCALL(getpeername, "%d,%p,%p", iSockDesc, (sockaddr*)cRemote, &slDummy) == 0)
+   if (U_SYSCALL(getpeername, "%d,%p,%p", getFd(), (sockaddr*)cRemote, &slDummy) == 0)
       {
       cRemote.getPortNumber(iRemotePort);
       cRemote.getIPAddress(cRemoteAddress);
@@ -390,7 +400,7 @@ bool USocket::connect()
    cServer.setIPAddress(cRemoteAddress);
 
 loop:
-   result = U_SYSCALL(connect, "%d,%p,%d", iSockDesc, (sockaddr*)cServer, cServer.sizeOf());
+   result = U_SYSCALL(connect, "%d,%p,%d", getFd(), (sockaddr*)cServer, cServer.sizeOf());
 
    if (result == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
    if (result ==  0)
@@ -438,7 +448,7 @@ int USocket::recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags, UIPA
    socklen_t slDummy = cSource.sizeOf();
 
 loop:
-   iBytesRead = U_SYSCALL(recvfrom, "%d,%p,%u,%u,%p,%p", iSockDesc, CAST(pBuffer), iBufLength, uiFlags, (sockaddr*)cSource, &slDummy);
+   iBytesRead = U_SYSCALL(recvfrom, "%d,%p,%u,%u,%p,%p", getFd(), CAST(pBuffer), iBufLength, uiFlags, (sockaddr*)cSource, &slDummy);
 
    if (iBytesRead == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
    if (iBytesRead  >  0)
@@ -467,7 +477,7 @@ int USocket::sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags, U
    cDestination.setPortNumber(iDestinationPortNumber);
 
 loop:
-   iBytesWrite = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", iSockDesc, CAST(pPayload), iPayloadLength, uiFlags, (sockaddr*)cDestination, cDestination.sizeOf());
+   iBytesWrite = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", getFd(), CAST(pPayload), iPayloadLength, uiFlags, (sockaddr*)cDestination, cDestination.sizeOf());
 
    if (iBytesWrite == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
 #ifdef DEBUG
@@ -640,7 +650,7 @@ bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count)
    do {
       U_INTERNAL_DUMP("count = %u", count)
 
-      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", iSockDesc, in_fd, poffset, count);
+      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", getFd(), in_fd, poffset, count);
 
       if (value == (ssize_t)count) U_RETURN(true);
 
@@ -649,9 +659,9 @@ bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count)
          U_INTERNAL_DUMP("errno = %d", errno)
 
          if (errno == EAGAIN &&
-             UNotifier::waitForWrite(iSockDesc, 1 * 1000) == 1)
+             UNotifier::waitForWrite(getFd(), 1 * 1000) == 1)
             {
-            flags = UFile::setBlocking(iSockDesc, flags, true);
+            flags = UFile::setBlocking(getFd(), flags, true);
 
             continue;
             }
@@ -683,14 +693,15 @@ void USocket::_closesocket()
    U_INTERNAL_ASSERT(isOpen())
 
 #ifdef __MINGW32__
-   (void) U_SYSCALL(closesocket, "%d", (SOCKET)iSockDesc);
+   (void) U_SYSCALL(closesocket, "%d", fh);
+                                       fh = -1;
 #elif defined(DEBUG)
-   if (U_SYSCALL(   close, "%d", iSockDesc)) U_ERROR_SYSCALL("closesocket");
+   if (U_SYSCALL(   close, "%d", getFd())) U_ERROR_SYSCALL("closesocket");
 #else
-   (void) U_SYSCALL(close, "%d", iSockDesc);
+   (void) U_SYSCALL(close, "%d", getFd());
 #endif
 
-   iSockDesc   = 0;
+   iSockDesc   = -1;
    iRemotePort = 0;
 }
 
@@ -808,6 +819,9 @@ loop:
 #ifdef HAVE_ACCEPT4
        pcNewConnection->iSockDesc  = U_SYSCALL(accept4, "%d,%p,%p,%d", iSockDesc, (sockaddr*)cRemote, &slDummy, accept4_flags);
 // if (pcNewConnection->iSockDesc != -1 || errno != ENOSYS) goto next;
+#elif defined(__MINGW32__)
+       pcNewConnection->fh         = U_SYSCALL(accept,  "%d,%p,%p",          fh, (sockaddr*)cRemote, &slDummy);
+       pcNewConnection->iSockDesc  = _open_osfhandle((long)(pcNewConnection->fh), O_RDWR | O_BINARY);
 #else
        pcNewConnection->iSockDesc  = U_SYSCALL(accept,  "%d,%p,%p",    iSockDesc, (sockaddr*)cRemote, &slDummy);
 #endif
@@ -820,7 +834,8 @@ loop:
       cRemote.getPortNumber(pcNewConnection->iRemotePort);
       cRemote.getIPAddress( pcNewConnection->cRemoteAddress);
 
-      U_INTERNAL_DUMP("pcNewConnection->flags = %d %B", pcNewConnection->flags, pcNewConnection->flags)
+      U_INTERNAL_DUMP("pcNewConnection->iSockDesc = %d pcNewConnection->flags = %d %B",
+                       pcNewConnection->iSockDesc, pcNewConnection->flags, pcNewConnection->flags)
 
       U_INTERNAL_ASSERT_EQUALS(pcNewConnection->bIPv6Socket, (cRemoteAddress.getAddressFamily() == AF_INET6))
       U_INTERNAL_ASSERT_EQUALS(((accept4_flags & SOCK_CLOEXEC)  != 0),((pcNewConnection->flags & O_CLOEXEC)  != 0))
@@ -886,7 +901,7 @@ int USocket::send(const char* pPayload, uint32_t iPayloadLength)
    int iBytesWrite;
 
 loop:
-   iBytesWrite = U_SYSCALL(send, "%d,%p,%u,%u", iSockDesc, CAST(pPayload), iPayloadLength, 0);
+   iBytesWrite = U_SYSCALL(send, "%d,%p,%u,%u", getFd(), CAST(pPayload), iPayloadLength, 0);
 
    if (iBytesWrite == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
 #ifdef DEBUG
@@ -914,7 +929,7 @@ int USocket::recv(void* pBuffer, uint32_t iBufLength, int timeoutMS)
        timeoutMS != -1)
       {
 loop:
-      iBytesRead = UNotifier::waitForRead(iSockDesc, timeoutMS);
+      iBytesRead = UNotifier::waitForRead(getFd(), timeoutMS);
 
       if (iBytesRead <= 0) goto end;
       }
@@ -951,7 +966,7 @@ int USocket::send(const void* pPayload, uint32_t iPayloadLength, int timeoutMS)
       if (blocking)
          {  
 loop:
-         iBytesWrite = UNotifier::waitForWrite(iSockDesc, timeoutMS);
+         iBytesWrite = UNotifier::waitForWrite(getFd(), timeoutMS);
 
          if (iBytesWrite <= 0) goto end;
          }
@@ -983,7 +998,7 @@ int USocket::writev(const struct iovec* _iov, int iovcnt)
 
    int iBytesWrite;
 loop:
-   iBytesWrite = U_SYSCALL(writev, "%d,%p,%d", iSockDesc, _iov, iovcnt);
+   iBytesWrite = U_SYSCALL(writev, "%d,%p,%d", getFd(), _iov, iovcnt);
 
    if (iBytesWrite == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
 #ifdef DEBUG
@@ -1008,7 +1023,7 @@ int USocket::writev(const struct iovec* _iov, int iovcnt, int timeoutMS)
        timeoutMS != -1)
       {
 loop:
-      iBytesWrite = UNotifier::waitForWrite(iSockDesc, timeoutMS);
+      iBytesWrite = UNotifier::waitForWrite(getFd(), timeoutMS);
 
       if (iBytesWrite <= 0) goto end;
       }

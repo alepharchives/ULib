@@ -131,7 +131,12 @@ public:
             USocket(bool bSocketIsIPv6 = false);
    virtual ~USocket();
 
-   int  getFd() const       { return  iSockDesc; }
+#ifdef __MINGW32__
+   int getFd() const { return fh; }
+#else
+   int getFd() const { return iSockDesc; }
+#endif
+
    bool isOpen() const      { return (iSockDesc > 0); }
    bool isLogin() const     { return (iState == LOGIN); }
    bool isClosed() const    { return (iSockDesc <= 0); }
@@ -191,7 +196,7 @@ public:
 
       U_INTERNAL_ASSERT(isOpen())
 
-      bool result = (U_SYSCALL(getsockopt, "%d,%d,%d,%p,%p", iSockDesc, iCodeLevel, iOptionName, CAST(pOptionData), (socklen_t*)&iDataLength) == 0);
+      bool result = (U_SYSCALL(getsockopt, "%d,%d,%d,%p,%p", getFd(), iCodeLevel, iOptionName, CAST(pOptionData), (socklen_t*)&iDataLength) == 0);
 
       U_RETURN(result);
       }
@@ -208,7 +213,7 @@ public:
 
       U_INTERNAL_ASSERT(isOpen())
 
-      bool result = (U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", iSockDesc, iCodeLevel, iOptionName, CAST(pOptionData), iDataLength) == 0);
+      bool result = (U_SYSCALL(setsockopt, "%d,%d,%d,%p,%u", getFd(), iCodeLevel, iOptionName, CAST(pOptionData), iDataLength) == 0);
 
       U_RETURN(result);
       }
@@ -258,7 +263,7 @@ public:
 
       U_INTERNAL_ASSERT(isOpen())
 
-      (void) U_SYSCALL(listen, "%d,%d", iSockDesc, iBackLog);
+      (void) U_SYSCALL(listen, "%d,%d", getFd(), iBackLog);
       }
 
    /**
@@ -390,7 +395,7 @@ public:
 
       U_INTERNAL_ASSERT(isOpen())
 
-      bool result = (U_SYSCALL(shutdown, "%d,%d", iSockDesc, how) == 0);
+      bool result = (U_SYSCALL(shutdown, "%d,%d", getFd(), how) == 0);
 
       U_RETURN(result);
       }
@@ -623,6 +628,9 @@ public:
 protected:
    int iSockDesc, iState, iLocalPort, iRemotePort, flags;
    UIPAddress cLocalAddress, cRemoteAddress;
+#ifdef __MINGW32__
+   SOCKET fh;
+#endif
    bool bIPv6Socket, bLocalSet;
 
    static int accept4_flags; // If flags is 0, then accept4() is the same as accept()

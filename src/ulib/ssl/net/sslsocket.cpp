@@ -384,6 +384,10 @@ loop:
          USocket::iState    = CONNECT;
          USocket::iSockDesc = fd; // used by USmtpClient class...
 
+#     ifdef __MINGW32__
+         USocket::fh = (SOCKET)_get_osfhandle(fd) ;
+#     endif
+
          U_RETURN(true);
          }
 
@@ -532,8 +536,6 @@ loop:
 
    pcNewConnection->USocket::_closesocket();
 
-   pcNewConnection->iSockDesc = -1;
-
    U_INTERNAL_DUMP("pcNewConnection->ret = %d", pcNewConnection->ret)
 
    U_RETURN(false);
@@ -614,8 +616,8 @@ loop:
 
    U_DUMP("status = %.*S", 512, status(ssl, ret, false, 0, 0))
 
-        if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
-   else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+        if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::getFd(), U_SSL_TIMEOUT_MS) > 0) goto loop; }
+   else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::getFd(), U_SSL_TIMEOUT_MS) > 0) goto loop; }
 
    errno = lerrno;
 
@@ -660,8 +662,8 @@ loop:
 
    U_DUMP("status = %.*S", 512, status(ssl, ret, false, 0, 0))
 
-        if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
-   else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+        if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::getFd(), U_SSL_TIMEOUT_MS) > 0) goto loop; }
+   else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::getFd(), U_SSL_TIMEOUT_MS) > 0) goto loop; }
 
    errno = lerrno;
 

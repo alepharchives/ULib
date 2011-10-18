@@ -140,4 +140,8 @@ typedef _off_t     off_t;
 
 #include <stdarg.h> /* this is the place to define _VA_LIST */
 
+#ifdef __MINGW32__
+#define FD_SETSIZE 1024 // larger default than 64
+#endif
+
 #endif

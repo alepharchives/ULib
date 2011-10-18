@@ -1149,7 +1149,7 @@ minus:
          case 'd':
          case 'i':
             {
-#if SIZEOF_OFF_T == 4
+#if SIZEOF_OFF_T == 4 || defined(__MINGW32__)
 integer:
 #endif
             argument = SARG();
@@ -1325,7 +1325,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'I': /* print off_t */
             {
-#        if SIZEOF_OFF_T == 4
+#        if SIZEOF_OFF_T == 4 || defined(__MINGW32__)
             goto integer;
 #        endif
 

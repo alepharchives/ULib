@@ -32,6 +32,8 @@ start_test() {
 
 #start_test
 
+#/usr/bin/spawn-fcgi -p 8080 -f /usr/bin/php-cgi -C 5 -P /var/run/spawn-fcgi.pid
+
 DIR_CMD="../../examples/userver"
 
 if [ "$TERM" != "cygwin" ]; then

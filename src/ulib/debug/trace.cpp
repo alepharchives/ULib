@@ -151,7 +151,8 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
       va_list argp;
       va_start(argp, format);
 
-      error = (va_arg(argp, int) == 0);
+      error = (va_arg(argp, int) == 0 &&
+               strstr(buffer_syscall, "::fcntl") == 0);
 
       va_end(argp);
       }
