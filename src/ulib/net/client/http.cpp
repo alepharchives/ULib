@@ -495,58 +495,77 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 
       U_RETURN(U_http_is_connection_close == U_YES ? 0 : 1);
       }
-   else if ((u_http_info.nResponseCode == HTTP_MOVED_PERM  || // 301
-             u_http_info.nResponseCode == HTTP_MOVED_TEMP) && // 302
-            bFollowRedirects)
+
+   if (bFollowRedirects)
       {
-      // 3xx redirects the client to another URL
+      UString refresh = responseHeader->getRefresh();
 
-      if (++redirectCount > U_MAX_REDIRECTS)
+      if (refresh.empty()           == false           ||
+          u_http_info.nResponseCode == HTTP_MOVED_PERM || // 301
+          u_http_info.nResponseCode == HTTP_MOVED_TEMP)   // 302
          {
-         U_INTERNAL_DUMP("REDIRECTION LIMIT REACHED...")
+         // 3xx redirects the client to another URL
 
-         U_RETURN(-1);
+         if (++redirectCount > U_MAX_REDIRECTS)
+            {
+            U_INTERNAL_DUMP("REDIRECTION LIMIT REACHED...")
+
+            U_RETURN(-1);
+            }
+
+         // not redirect if present "Set-Cookie:"
+
+         if (responseHeader->isSetCookie())
+            {
+            U_INTERNAL_DUMP("SET-COOKIE HEADER PRESENT FROM HTTP REDIRECT RESPONSE")
+
+            U_RETURN(2); // no redirection, read body
+            }
+
+         UString newLocation = responseHeader->getLocation();
+
+         if (newLocation.empty() &&
+                 refresh.empty() == false)
+            {
+            uint32_t pos = U_STRING_FIND(refresh, 0, "url=");
+
+            if (pos != U_NOT_FOUND)
+               {
+               newLocation = refresh.substr(pos + U_CONSTANT_SIZE("url="));
+
+               if (newLocation.isQuoted()) newLocation.unQuote();
+               }
+            }
+
+         if (newLocation.empty())
+            {
+            U_INTERNAL_DUMP("LOCATION HEADER MISSING FROM HTTP REDIRECT RESPONSE")
+
+            U_RETURN(-1);
+            }
+
+         if (newLocation.find(*UIPAddress::str_localhost) != U_NOT_FOUND)
+            {
+            U_INTERNAL_DUMP("LOCATION HEADER POINT TO LOCALHOST CAUSING DEADLOCK")
+
+            U_RETURN(-1);
+            }
+
+         // New locations will possibly need different authentication, so we should reset
+         // our origin authentication header (if any)
+
+         requestHeader->removeHeader(*USocket::str_authorization);
+
+         // Combine the new location with our URL
+
+         if (UClient_Base::setUrl(newLocation) == false &&
+             U_http_is_connection_close        != U_YES)
+            {
+            U_RETURN(1); // you can use the same socket connection for the redirect
+            }
+
+         U_RETURN(0); // redirects the client to another URL with another socket
          }
-
-      // not redirect if present "Set-Cookie:"
-
-      if (responseHeader->isSetCookie())
-         {
-         U_INTERNAL_DUMP("SET-COOKIE HEADER PRESENT FROM HTTP REDIRECT RESPONSE")
-
-         U_RETURN(2); // no redirection, read body
-         }
-
-      UString newLocation = responseHeader->getLocation();
-
-      if (newLocation.empty())
-         {
-         U_INTERNAL_DUMP("LOCATION HEADER MISSING FROM HTTP REDIRECT RESPONSE")
-
-         U_RETURN(-1);
-         }
-
-      if (newLocation.find(*UIPAddress::str_localhost) != U_NOT_FOUND)
-         {
-         U_INTERNAL_DUMP("LOCATION HEADER POINT TO LOCALHOST CAUSING DEADLOCK")
-
-         U_RETURN(-1);
-         }
-
-      // New locations will possibly need different authentication, so we should reset
-      // our origin authentication header (if any)
-
-      requestHeader->removeHeader(*USocket::str_authorization);
-
-      // Combine the new location with our URL
-
-      if (UClient_Base::setUrl(newLocation) == false &&
-          U_http_is_connection_close        != U_YES)
-         {
-         U_RETURN(1); // you can use the same socket connection for the redirect
-         }
-
-      U_RETURN(0); // redirects the client to another URL with another socket
       }
 
    U_RETURN(2); // indicates an success, no redirects, ok to read body

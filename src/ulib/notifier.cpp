@@ -230,7 +230,9 @@ void UNotifier::insert(UEventFd* item)
 
       ++fd_read_cnt;
 
+#  ifndef __MINGW32__
       U_INTERNAL_DUMP("fd_set_read = %B", __FDS_BITS(&fd_set_read)[0])
+#  endif
       }
    else
       {
@@ -243,7 +245,9 @@ void UNotifier::insert(UEventFd* item)
 
       ++fd_write_cnt;
 
+#  ifndef __MINGW32__
       U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+#  endif
       }
 
    if (fd_set_max <= fd) fd_set_max = fd + 1;
@@ -289,7 +293,9 @@ U_NO_EXPORT void UNotifier::handlerDelete(UEventFd* item)
 
       FD_CLR(fd, &fd_set_read);
 
+#  ifndef __MINGW32__
       U_INTERNAL_DUMP("fd_set_read = %B", __FDS_BITS(&fd_set_read)[0])
+#  endif
 
       --fd_read_cnt;
 
@@ -303,7 +309,9 @@ U_NO_EXPORT void UNotifier::handlerDelete(UEventFd* item)
 
       FD_CLR(fd, &fd_set_write);
 
+#  ifndef __MINGW32__
       U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+#  endif
 
       --fd_write_cnt;
 
@@ -350,8 +358,10 @@ void UNotifier::modify(UEventFd* item)
 
    (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_MOD, fd, &_events);
 #else
+#  ifndef __MINGW32__
    U_INTERNAL_DUMP("fd_set_read  = %B", __FDS_BITS(&fd_set_read)[0])
    U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+#endif
 
    if (item->op_mask == U_READ_IN)
       {
@@ -377,8 +387,10 @@ void UNotifier::modify(UEventFd* item)
       ++fd_write_cnt;
       }
 
+#  ifndef __MINGW32__
    U_INTERNAL_DUMP("fd_set_read  = %B", __FDS_BITS(&fd_set_read)[0])
    U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+#endif
 
    U_INTERNAL_ASSERT(fd_read_cnt  >= 0)
    U_INTERNAL_ASSERT(fd_write_cnt >= 0)
@@ -416,7 +428,7 @@ loop:
    static struct timeval   tmp;
           struct timeval* ptmp = (timeout == 0 ? 0 : &tmp);
 loop:
-#  ifdef DEBUG
+#  if defined(DEBUG) && !defined(__MINGW32__)
    if ( read_set) U_INTERNAL_DUMP(" read_set = %B", __FDS_BITS( read_set)[0])
    if (write_set) U_INTERNAL_DUMP("write_set = %B", __FDS_BITS(write_set)[0])
 #  endif
@@ -488,7 +500,7 @@ loop:
 #  endif
       }
 
-#  ifdef DEBUG
+#  if defined(DEBUG) && !defined(__MINGW32__)
    if ( read_set) U_INTERNAL_DUMP(" read_set = %B", __FDS_BITS( read_set)[0])
    if (write_set) U_INTERNAL_DUMP("write_set = %B", __FDS_BITS(write_set)[0])
 #  endif
@@ -632,7 +644,7 @@ loop:
 
       for (fd = 1; fd < fd_set_max; ++fd)
          {
-         bread = (fd_read_cnt  && FD_ISSET(fd, &read_set));
+         bread = (fd_read_cnt && FD_ISSET(fd, &read_set));
 
          if (bread ||
              (fd_write_cnt && FD_ISSET(fd, &write_set)))
@@ -873,11 +885,10 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
 #else
 
 #  ifdef __MINGW32__
-   if (is_pipe(fd))
-      {
-      U_INTERNAL_ASSERT_EQUALS(is_socket(fd),false)
+   HANDLE h = is_pipe(fd);
 
-      HANDLE h    = (HANDLE)_get_osfhandle(fd);
+   if (h != INVALID_HANDLE_VALUE)
+      {
       DWORD count = 0;
 
       while (U_SYSCALL(PeekNamedPipe, "%p,%p,%ld,%p,%p,%p", h, 0, 0, 0, &count, 0) &&
@@ -941,12 +952,7 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
 #else
 
 #  ifdef __MINGW32__
-   if (is_pipe(fd))
-      {
-      U_INTERNAL_ASSERT_EQUALS(is_socket(fd),false)
-
-      U_RETURN(1);
-      }
+   if (is_pipe(fd) != INVALID_HANDLE_VALUE) U_RETURN(1);
 #  endif
 
    UEventTime time(0L, timeoutMS * 1000L);

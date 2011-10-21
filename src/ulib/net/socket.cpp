@@ -29,6 +29,7 @@ const UString* USocket::str_cookie;
 const UString* USocket::str_setcookie;
 const UString* USocket::str_starttls;
 const UString* USocket::str_location;
+const UString* USocket::str_refresh;
 const UString* USocket::str_connection;
 const UString* USocket::str_user_agent;
 const UString* USocket::str_authorization;
@@ -61,6 +62,7 @@ void USocket::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_setcookie,0)
    U_INTERNAL_ASSERT_EQUALS(str_starttls,0)
    U_INTERNAL_ASSERT_EQUALS(str_location,0)
+   U_INTERNAL_ASSERT_EQUALS(str_refresh,0)
    U_INTERNAL_ASSERT_EQUALS(str_connection,0)
    U_INTERNAL_ASSERT_EQUALS(str_user_agent,0)
    U_INTERNAL_ASSERT_EQUALS(str_authorization,0)
@@ -88,6 +90,7 @@ void USocket::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("Set-Cookie") },
       { U_STRINGREP_FROM_CONSTANT("STARTTLS") },
       { U_STRINGREP_FROM_CONSTANT("Location") },
+      { U_STRINGREP_FROM_CONSTANT("Refresh") },
       { U_STRINGREP_FROM_CONSTANT("Connection") },
       { U_STRINGREP_FROM_CONSTANT("User-Agent") },
       { U_STRINGREP_FROM_CONSTANT("Authorization") },
@@ -115,24 +118,25 @@ void USocket::str_allocate()
    U_NEW_ULIB_OBJECT(str_setcookie,             U_STRING_FROM_STRINGREP_STORAGE(4));
    U_NEW_ULIB_OBJECT(str_starttls,              U_STRING_FROM_STRINGREP_STORAGE(5));
    U_NEW_ULIB_OBJECT(str_location,              U_STRING_FROM_STRINGREP_STORAGE(6));
-   U_NEW_ULIB_OBJECT(str_connection,            U_STRING_FROM_STRINGREP_STORAGE(7));
-   U_NEW_ULIB_OBJECT(str_user_agent,            U_STRING_FROM_STRINGREP_STORAGE(8));
-   U_NEW_ULIB_OBJECT(str_authorization,         U_STRING_FROM_STRINGREP_STORAGE(9));
-   U_NEW_ULIB_OBJECT(str_content_type,          U_STRING_FROM_STRINGREP_STORAGE(10));
-   U_NEW_ULIB_OBJECT(str_content_length,        U_STRING_FROM_STRINGREP_STORAGE(11));
-   U_NEW_ULIB_OBJECT(str_content_disposition,   U_STRING_FROM_STRINGREP_STORAGE(12));
-   U_NEW_ULIB_OBJECT(str_accept_language,       U_STRING_FROM_STRINGREP_STORAGE(13));
-   U_NEW_ULIB_OBJECT(str_accept_encoding,       U_STRING_FROM_STRINGREP_STORAGE(14));
-   U_NEW_ULIB_OBJECT(str_if_range,              U_STRING_FROM_STRINGREP_STORAGE(15));
-   U_NEW_ULIB_OBJECT(str_if_none_match,         U_STRING_FROM_STRINGREP_STORAGE(16));
-   U_NEW_ULIB_OBJECT(str_if_modified_since,     U_STRING_FROM_STRINGREP_STORAGE(17));
-   U_NEW_ULIB_OBJECT(str_if_unmodified_since,   U_STRING_FROM_STRINGREP_STORAGE(18));
-   U_NEW_ULIB_OBJECT(str_referer,               U_STRING_FROM_STRINGREP_STORAGE(19));
-   U_NEW_ULIB_OBJECT(str_X_Real_IP,             U_STRING_FROM_STRINGREP_STORAGE(20));
-   U_NEW_ULIB_OBJECT(str_X_Forwarded_For,       U_STRING_FROM_STRINGREP_STORAGE(21));
-   U_NEW_ULIB_OBJECT(str_Transfer_Encoding,     U_STRING_FROM_STRINGREP_STORAGE(22));
-   U_NEW_ULIB_OBJECT(str_X_Progress_ID,         U_STRING_FROM_STRINGREP_STORAGE(23));
-   U_NEW_ULIB_OBJECT(str_expect_100_continue,   U_STRING_FROM_STRINGREP_STORAGE(24));
+   U_NEW_ULIB_OBJECT(str_refresh,               U_STRING_FROM_STRINGREP_STORAGE(7));
+   U_NEW_ULIB_OBJECT(str_connection,            U_STRING_FROM_STRINGREP_STORAGE(8));
+   U_NEW_ULIB_OBJECT(str_user_agent,            U_STRING_FROM_STRINGREP_STORAGE(9));
+   U_NEW_ULIB_OBJECT(str_authorization,         U_STRING_FROM_STRINGREP_STORAGE(10));
+   U_NEW_ULIB_OBJECT(str_content_type,          U_STRING_FROM_STRINGREP_STORAGE(11));
+   U_NEW_ULIB_OBJECT(str_content_length,        U_STRING_FROM_STRINGREP_STORAGE(12));
+   U_NEW_ULIB_OBJECT(str_content_disposition,   U_STRING_FROM_STRINGREP_STORAGE(13));
+   U_NEW_ULIB_OBJECT(str_accept_language,       U_STRING_FROM_STRINGREP_STORAGE(14));
+   U_NEW_ULIB_OBJECT(str_accept_encoding,       U_STRING_FROM_STRINGREP_STORAGE(15));
+   U_NEW_ULIB_OBJECT(str_if_range,              U_STRING_FROM_STRINGREP_STORAGE(16));
+   U_NEW_ULIB_OBJECT(str_if_none_match,         U_STRING_FROM_STRINGREP_STORAGE(17));
+   U_NEW_ULIB_OBJECT(str_if_modified_since,     U_STRING_FROM_STRINGREP_STORAGE(18));
+   U_NEW_ULIB_OBJECT(str_if_unmodified_since,   U_STRING_FROM_STRINGREP_STORAGE(19));
+   U_NEW_ULIB_OBJECT(str_referer,               U_STRING_FROM_STRINGREP_STORAGE(20));
+   U_NEW_ULIB_OBJECT(str_X_Real_IP,             U_STRING_FROM_STRINGREP_STORAGE(21));
+   U_NEW_ULIB_OBJECT(str_X_Forwarded_For,       U_STRING_FROM_STRINGREP_STORAGE(22));
+   U_NEW_ULIB_OBJECT(str_Transfer_Encoding,     U_STRING_FROM_STRINGREP_STORAGE(23));
+   U_NEW_ULIB_OBJECT(str_X_Progress_ID,         U_STRING_FROM_STRINGREP_STORAGE(24));
+   U_NEW_ULIB_OBJECT(str_expect_100_continue,   U_STRING_FROM_STRINGREP_STORAGE(25));
 
 #ifdef HAVE_SSL
    ULib_init_openssl();
@@ -254,7 +258,7 @@ bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)
       if (isOpen() &&
           isTimeout())
          {
-         U_ASSERT_EQUALS(UFile::isBlocking(getFd(), flags), false)
+         U_ASSERT_EQUALS(UFile::isBlocking(iSockDesc, flags), false)
          }
 #  endif
 
@@ -659,9 +663,9 @@ bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count)
          U_INTERNAL_DUMP("errno = %d", errno)
 
          if (errno == EAGAIN &&
-             UNotifier::waitForWrite(getFd(), 1 * 1000) == 1)
+             UNotifier::waitForWrite(iSockDesc, 1 * 1000) == 1)
             {
-            flags = UFile::setBlocking(getFd(), flags, true);
+            flags = UFile::setBlocking(iSockDesc, flags, true);
 
             continue;
             }
@@ -696,9 +700,9 @@ void USocket::_closesocket()
    (void) U_SYSCALL(closesocket, "%d", fh);
                                        fh = -1;
 #elif defined(DEBUG)
-   if (U_SYSCALL(   close, "%d", getFd())) U_ERROR_SYSCALL("closesocket");
+   if (U_SYSCALL(   close, "%d", iSockDesc)) U_ERROR_SYSCALL("closesocket");
 #else
-   (void) U_SYSCALL(close, "%d", getFd());
+   (void) U_SYSCALL(close, "%d", iSockDesc);
 #endif
 
    iSockDesc   = -1;
@@ -717,7 +721,7 @@ const char* USocket::getMsgError(char* buffer, uint32_t buffer_size)
       {
       errno = -iState;
 
-      (void) u_snprintf(buffer, buffer_size, "%R");
+      (void) u_snprintf(buffer, buffer_size, "%R", 0); // NB: the last argument (0) is necessary...
 
       buffer += 3;
 
@@ -929,7 +933,7 @@ int USocket::recv(void* pBuffer, uint32_t iBufLength, int timeoutMS)
        timeoutMS != -1)
       {
 loop:
-      iBytesRead = UNotifier::waitForRead(getFd(), timeoutMS);
+      iBytesRead = UNotifier::waitForRead(iSockDesc, timeoutMS);
 
       if (iBytesRead <= 0) goto end;
       }
@@ -966,7 +970,7 @@ int USocket::send(const void* pPayload, uint32_t iPayloadLength, int timeoutMS)
       if (blocking)
          {  
 loop:
-         iBytesWrite = UNotifier::waitForWrite(getFd(), timeoutMS);
+         iBytesWrite = UNotifier::waitForWrite(iSockDesc, timeoutMS);
 
          if (iBytesWrite <= 0) goto end;
          }
@@ -988,6 +992,31 @@ end:
 
 // write data into multiple buffers
 
+int USocket::_writev(const struct iovec* iov, int iovcnt)
+{
+   U_TRACE(0, "USocket::_writev(%p,%d)", iov, iovcnt)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+
+   int iBytesWrite = 0, value;
+
+   for (int i = 0; i < iovcnt; ++i)
+      {
+      if (iov[i].iov_len)
+         {
+         value = send((const char*)iov[i].iov_base, iov[i].iov_len);
+
+         if (value <= 0) break;
+
+         iBytesWrite += value;
+         }
+      }
+
+   U_RETURN(iBytesWrite);
+}
+
 int USocket::writev(const struct iovec* _iov, int iovcnt)
 {
    U_TRACE(1, "USocket::writev(%p,%d)", _iov, iovcnt)
@@ -998,7 +1027,7 @@ int USocket::writev(const struct iovec* _iov, int iovcnt)
 
    int iBytesWrite;
 loop:
-   iBytesWrite = U_SYSCALL(writev, "%d,%p,%d", getFd(), _iov, iovcnt);
+   iBytesWrite = U_SYSCALL(writev, "%d,%p,%d", iSockDesc, _iov, iovcnt);
 
    if (iBytesWrite == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
 #ifdef DEBUG
@@ -1023,12 +1052,16 @@ int USocket::writev(const struct iovec* _iov, int iovcnt, int timeoutMS)
        timeoutMS != -1)
       {
 loop:
-      iBytesWrite = UNotifier::waitForWrite(getFd(), timeoutMS);
+      iBytesWrite = UNotifier::waitForWrite(iSockDesc, timeoutMS);
 
       if (iBytesWrite <= 0) goto end;
       }
 
-   iBytesWrite = writev(_iov, iovcnt);
+#ifdef __MINGW32__
+   iBytesWrite = _writev(_iov, iovcnt);
+#else
+   iBytesWrite =  writev(_iov, iovcnt);
+#endif
 
    if (iBytesWrite == -1     &&
        errno       == EAGAIN &&

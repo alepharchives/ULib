@@ -113,6 +113,8 @@ read:
 
       if (byte_read_hook) byte_read_hook(byte_read);
 
+      ncount -= byte_read;
+
       goto read;
       }
 

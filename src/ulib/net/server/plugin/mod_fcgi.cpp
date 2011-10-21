@@ -152,7 +152,8 @@ UFCGIPlugIn::~UFCGIPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UFCGIPlugIn)
 
-   if (connection) delete connection;
+   if (connection)           delete connection;
+   if (UHTTP::fcgi_uri_mask) delete UHTTP::fcgi_uri_mask;
 }
 
 // Server-wide hooks
@@ -179,10 +180,15 @@ int UFCGIPlugIn::handlerConfig(UFileConfig& cfg)
 
    if (cfg.loadTable())
       {
-      fcgi_uri_mask  = cfg[*str_FCGI_URI_MASK];
       fcgi_keep_conn = cfg.readBoolean(*str_FCGI_KEEP_CONN);
 
       connection = U_NEW(UClient_Base(&cfg));
+
+      UString x = cfg[*str_FCGI_URI_MASK];
+
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::fcgi_uri_mask,0)
+
+      if (x.empty() == false) UHTTP::fcgi_uri_mask = U_NEW(UString(x));
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -193,7 +199,7 @@ int UFCGIPlugIn::handlerInit()
    U_TRACE(1, "UFCGIPlugIn::handlerInit()")
 
    if (connection &&
-       fcgi_uri_mask.empty() == false)
+       UHTTP::fcgi_uri_mask)
       {
 #  ifdef __MINGW32__
       U_INTERNAL_ASSERT_DIFFERS(connection->port, 0)
@@ -229,10 +235,10 @@ int UFCGIPlugIn::handlerRequest()
    U_TRACE(0, "UFCGIPlugIn::handlerRequest()")
 
    if (UHTTP::isHTTPRequestAlreadyProcessed() == false &&
-       fcgi_uri_mask.empty()                  == false &&
        connection                                      &&
        connection->isConnected()                       &&
-       u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(fcgi_uri_mask), 0))
+       UHTTP::fcgi_uri_mask                            &&
+       u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*UHTTP::fcgi_uri_mask), 0))
       {
       // Set FCGI_BEGIN_REQUEST
 
@@ -319,7 +325,7 @@ int UFCGIPlugIn::handlerRequest()
       (void) request.append((const char*)&beginRecord, FCGI_HEADER_LEN);
       (void) request.append(params);
 
-      // maybe we have some data to put on stdin of cgi process
+      // maybe we have some data to put on stdin of cgi process (POST)
 
       U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %.*S", UClientImage_Base::body->size(), U_STRING_TO_TRACE(*UClientImage_Base::body))
 
@@ -327,6 +333,8 @@ int UFCGIPlugIn::handlerRequest()
 
       if (size)
          {
+         U_INTERNAL_ASSERT(UHTTP::isHttpPOST())
+
          fill_header(beginRecord.header, FCGI_PARAMS, 0);
 
          (void) request.append((const char*)&beginRecord, FCGI_HEADER_LEN);
@@ -367,7 +375,7 @@ int UFCGIPlugIn::handlerRequest()
 
          U_INTERNAL_ASSERT((connection->response.size() - pos) >= FCGI_HEADER_LEN)
 
-         h = (FCGI_Header*)connection->response.c_pointer(pos);
+         h = (FCGI_Header*) connection->response.c_pointer(pos);
 
          U_INTERNAL_DUMP("version = %C request_id = %u", h->version, ntohs(h->request_id))
 
@@ -389,7 +397,7 @@ int UFCGIPlugIn::handlerRequest()
 
          // NB: connection->response can be resized...
 
-         h = (FCGI_Header*)connection->response.c_pointer(pos);
+         h = (FCGI_Header*) connection->response.c_pointer(pos);
 
          // Record fully read
 
@@ -481,7 +489,6 @@ int UFCGIPlugIn::handlerReset()
 const char* UFCGIPlugIn::dump(bool reset) const
 {
    *UObjectIO::os << "fcgi_keep_conn              " << fcgi_keep_conn         << '\n'
-                  << "fcgi_uri_mask (UString      " << (void*)&fcgi_uri_mask  << ")\n"
                   << "connection    (UClient_Base " << (void*)connection      << ')';
 
    if (reset)

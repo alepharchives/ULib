@@ -98,6 +98,7 @@ public:
    static const UString* str_setcookie;
    static const UString* str_starttls;
    static const UString* str_location;
+   static const UString* str_refresh;
    static const UString* str_connection;
    static const UString* str_user_agent;
    static const UString* str_authorization;
@@ -639,6 +640,7 @@ protected:
    void setRemote();
    void _closesocket();
    bool bind(SocketAddress& cLocal);
+   int  _writev(const struct iovec* _iov, int iovcnt);
    bool setServer(SocketAddress& cLocal, int iBackLog);
 
 private:
@@ -653,12 +655,16 @@ private:
                       friend class UTCPSocket;
                       friend class USSLSocket;
                       friend class UUnixSocket;
+                      friend class UFtpClient;
                       friend class USmtpClient;
                       friend class UImapClient;
                       friend class UPop3Client;
                       friend class UServer_Base;
                       friend class UClientImage_Base;
+                      friend class UStreamPlugIn;
+                      friend class UWebSocketPlugIn;
    template <class T> friend class UServer;
+   template <class T> friend class UClientImage;
 };
 
 #endif

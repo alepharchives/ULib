@@ -99,7 +99,7 @@ bool UWebSocketPlugIn::handleDataFraming(USocket* csocket)
    UString frame;
    uint64_t frame_length;
    fd_set fd_set_read, read_set;
-   int n, sock = csocket->getFd(), fdmax = U_max(sock, UProcess::filedes[2]) + 1;
+   int n, sock = csocket->iSockDesc, fdmax = U_max(sock, UProcess::filedes[2]) + 1;
 
    FD_ZERO(                     &fd_set_read);
    FD_SET(sock,                 &fd_set_read);

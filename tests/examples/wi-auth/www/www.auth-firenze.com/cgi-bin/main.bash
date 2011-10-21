@@ -741,7 +741,7 @@ END
 	fi
 
 	HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
-	HTTP_RESPONSE_HEADER="Location: http://$4/?ticket=$SIGNED_DATA\r\n"
+	HTTP_RESPONSE_HEADER="Refresh: 0; url=http://$4/?ticket=$SIGNED_DATA\r\n"
 }
 
 send_ticket_to_nodog() {
@@ -866,7 +866,7 @@ User		$8"
 	fi
 
 	HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
-	HTTP_RESPONSE_HEADER="Location: http://$4/ticket?ticket=$SIGNED_DATA\r\n"
+	HTTP_RESPONSE_HEADER="Refresh: 0; url=http://$4/ticket?ticket=$SIGNED_DATA\r\n"
 }
 
 send_ticket() {
@@ -2543,7 +2543,7 @@ redirect_if_not_https() {
 
  	if [ "$HTTPS" = "on" ]; then
  		HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
- 		HTTP_RESPONSE_HEADER="Location: https://${HTTP_HOST}${REQUEST_URI}\r\n"
+ 		HTTP_RESPONSE_HEADER="Refresh: 0; url=https://${HTTP_HOST}${REQUEST_URI}\r\n"
 
  		write_SSI
  	fi

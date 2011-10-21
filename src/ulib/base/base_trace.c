@@ -242,7 +242,7 @@ void u_trace_init(bool force, bool info, bool offset)
          {
          char name[128];
 
-         (void) u_snprintf(name, 128, "trace.%N.%P");
+         (void) u_snprintf(name, 128, "trace.%N.%P", 0);
 
          /* NB: O_RDWR e' necessario per mmap(MAP_SHARED)... */
 
@@ -385,7 +385,7 @@ void u_trace_check_init(void)
       {
       char name[128];
 
-      (void) u_snprintf(name, 128, "trace.%N.%P");
+      (void) u_snprintf(name, 128, "trace.%N.%P", 0);
 
       (void) rename("trace..", name);
       }

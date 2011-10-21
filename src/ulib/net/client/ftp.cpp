@@ -127,7 +127,7 @@ bool UFtpClient::negotiateEncryption()
        response == 234)
       {
           ((USSLSocket*)this)->setActive(true);
-      if (((USSLSocket*)this)->secureConnection(USocket::getFd())) U_RETURN(true);
+      if (((USSLSocket*)this)->secureConnection(USocket::iSockDesc)) U_RETURN(true);
           ((USSLSocket*)this)->setActive(false);
       }
 #endif
@@ -313,7 +313,7 @@ int UFtpClient::retrieveFile(const UString& path, off_t offset)
          }
       }
 
-   U_RETURN(pasv.getFd());
+   U_RETURN(pasv.iSockDesc);
 }
 
 bool UFtpClient::setTransferType(TransferType type)

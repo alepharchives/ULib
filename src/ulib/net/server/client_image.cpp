@@ -49,22 +49,23 @@ void UClientImage_Base::logRequest(const char* filereq)
    U_INTERNAL_ASSERT(UServer_Base::isLog())
    U_ASSERT_EQUALS(request->empty(), false)
 
-   uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
+   const char* ptr = request->data();
+   uint32_t sz = request->size(), u_printf_string_max_length_save = u_printf_string_max_length;
 
-   U_INTERNAL_DUMP("u_printf_string_max_length = %d u_http_info.endHeader = %u", u_printf_string_max_length, u_http_info.endHeader)
+   U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
    if (u_printf_string_max_length == -1)
       {
-      if (UHTTP::isHTTPRequest()) // NB: only HTTP header...
-         {
-         u_printf_string_max_length = (u_http_info.endHeader ? u_http_info.endHeader : request->size()); 
+      u_printf_string_max_length = u_findEndHeader(ptr, sz);
 
-         U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
-         }
+      if (u_printf_string_max_length == -1) u_printf_string_max_length = sz;
+
+      U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
       }
 
-   UServer_Base::log->log("%sreceived request (%u bytes) %.*S from %.*s\n", UServer_Base::mod_name, request->size(),
-                                                                            U_STRING_TO_TRACE(*request), U_STRING_TO_TRACE(*logbuf));
+   U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
+
+   UServer_Base::log->log("%sreceived request (%u bytes) %.*S from %.*s\n", UServer_Base::mod_name, sz, sz, ptr, U_STRING_TO_TRACE(*logbuf));
 
    u_printf_string_max_length = u_printf_string_max_length_save;
 
@@ -82,31 +83,25 @@ void UClientImage_Base::logResponse(const char* fileres)
    U_INTERNAL_ASSERT(UServer_Base::isLog())
    U_ASSERT_EQUALS(wbuffer->empty(), false)
 
-   U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
+   const char* ptr = wbuffer->data();
+   uint32_t sz = wbuffer->size(), u_printf_string_max_length_save = u_printf_string_max_length;
 
-   uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
+   U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
    if (u_printf_string_max_length == -1)
       {
-      if (UHTTP::isHTTPRequest()) // NB: only HTTP header...
-         {
-         U_ASSERT_DIFFERS(wbuffer->empty(), true)
+      U_ASSERT_DIFFERS(wbuffer->empty(), true)
 
-         u_printf_string_max_length = u_findEndHeader(U_STRING_TO_PARAM(*wbuffer)); 
+      u_printf_string_max_length = u_findEndHeader(ptr, sz);
 
-         if (u_printf_string_max_length == -1)
-            {
-            U_ASSERT_DIFFERS(body->empty(), true)
+      if (u_printf_string_max_length == -1) u_printf_string_max_length = sz;
 
-            u_printf_string_max_length = wbuffer->size();
-            }
-
-         U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
-         }
+      U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
       }
 
-   UServer_Base::log->log("%ssent response (%u bytes) %.*S to %.*s\n", UServer_Base::mod_name, wbuffer->size() + body->size(),
-                                                                       U_STRING_TO_TRACE(*wbuffer), U_STRING_TO_TRACE(*logbuf));
+   U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
+
+   UServer_Base::log->log("%ssent response (%u bytes) %.*S to %.*s\n", UServer_Base::mod_name, sz, sz, ptr, U_STRING_TO_TRACE(*logbuf));
 
    u_printf_string_max_length = u_printf_string_max_length_save;
 

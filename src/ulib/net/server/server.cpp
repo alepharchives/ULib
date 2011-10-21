@@ -1035,15 +1035,8 @@ void UServer_Base::init()
    UClientImage_Base* ptr;
 
    if (UNotifier::max_connection == 0) UNotifier::max_connection  = 1020;
+   if (isPreForked())                  UNotifier::max_connection += (handler_inotify ? 2 : 1);
 
-   if (isClassic())              goto next1;
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
-   if (preforked_num_kids == -1) goto next1;
-#endif
-
-   UNotifier::max_connection += (handler_inotify ? 2 : 1);
-
-next1:
    UNotifier::init();
 
    preallocate();
@@ -1082,10 +1075,7 @@ next1:
    // (loop: accept-fork) and the forked child don't accept new client, but we need
    // event manager for the forked child to feel timeout for request of new client...
 
-   if (isClassic())              goto next2;
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
-   if (preforked_num_kids == -1) goto next2;
-#endif
+   if (preforked_num_kids <= 1) goto next;
 
    /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
     * a readability event because the connection might have been removed by an asynchronous network error or
@@ -1120,7 +1110,7 @@ next1:
       UNotifier::num_connection = UNotifier::min_connection = 2;
       }
 
-next2:
+next:
    socket->flags |= O_CLOEXEC;
 
    (void) U_SYSCALL(fcntl, "%d,%d,%d", socket->iSockDesc, F_SETFL, socket->flags);
@@ -1294,8 +1284,7 @@ next:
       {
        --UNotifier::num_connection;
 
-      U_SRV_LOG("new client connected from %S, connection denied by FD_SETSIZE (%d)",
-                  csocket->remoteIPAddress().getAddressString(), FD_SETSIZE);
+      U_SRV_LOG("new client connected from %S, connection denied by FD_SETSIZE (%d)", csocket->remoteIPAddress().getAddressString(), FD_SETSIZE);
 
       csocket->close();
 
@@ -1344,7 +1333,7 @@ next:
 
       // NB: in the classic model we don't need to notify for request of connection
       // (loop: accept-fork) and the forked child don't accept new client, but we need
-      // event manager for the forked child to feel timeout for request of new client...
+      // event manager for the forked child to feel timeout for other request of new client...
       }
 
    if (ptr->newConnection() == false)  goto check;
@@ -1564,6 +1553,8 @@ void UServer_Base::run()
       {
       if (isLog()) ULog::log("waiting for connection\n");
 
+      U_INTERNAL_ASSERT(preforked_num_kids <= 1)
+
 #  if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
       if (preforked_num_kids == -1) ((UThread*)(UNotifier::pthread = U_NEW(UClientThread)))->start();
 #  endif
@@ -1583,15 +1574,15 @@ void UServer_Base::run()
             U_INTERNAL_ASSERT((socket->flags & O_NONBLOCK) == 0)
 
             (void) pthis->handlerRead();
-
-            continue;
             }
+         else
+            {
+            // NB: in the classic model we don't need to notify for request of connection
+            // (loop: accept-fork) and the forked child don't accept new client, but we need
+            // event manager for the forked child to feel timeout for other request of new client...
 
-         // NB: in the classic model we don't need to notify for request of connection
-         // (loop: accept-fork) and the forked child don't accept new client, but we need
-         // event manager for the forked child to feel timeout for request of new client...
-
-         if (UNotifier::waitForEvent(ptime) == false) break; // no more events registered...
+            (void) UNotifier::waitForEvent(ptime);
+            }
          }
       }
 }

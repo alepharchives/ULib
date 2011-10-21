@@ -218,7 +218,7 @@ int UStreamPlugIn::handlerRequest()
             while (UServer_Base::flag_loop)
                {
                if (rbuf.isEmpty(readd) == false &&
-                   (rbuf.readAndWriteToFd(readd, csocket->getFd()) <= 0 && errno != EAGAIN)) break;
+                   (rbuf.readAndWriteToFd(readd, csocket->iSockDesc) <= 0 && errno != EAGAIN)) break;
 
                to_sleep.nanosleep();
                }

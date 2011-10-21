@@ -72,6 +72,8 @@ UString*    UHTTP::htpasswd;
 UString*    UHTTP::htdigest;
 UString*    UHTTP::ssi_alias;
 UString*    UHTTP::request_uri;
+UString*    UHTTP::fcgi_uri_mask;
+UString*    UHTTP::scgi_uri_mask;
 UString*    UHTTP::cache_file_mask;
 UString*    UHTTP::uri_protected_mask;
 uint32_t    UHTTP::range_size;
@@ -2416,68 +2418,72 @@ const char* UHTTP::getHTTPStatusDescription(uint32_t nResponseCode)
    switch (nResponseCode)
       {
       // 1xx indicates an informational message only
-      case HTTP_CONTINUE:           descr = "Continue";                        break;
-      case HTTP_SWITCH_PROT:        descr = "Switching Protocol";              break;
-   // case 102:                     descr = "HTTP Processing";                 break;
+      case HTTP_CONTINUE:                        descr = "Continue";                        break;
+      case HTTP_SWITCH_PROT:                     descr = "Switching Protocol";              break;
+   // case 102:                                  descr = "HTTP Processing";                 break;
 
       // 2xx indicates success of some kind
-      case HTTP_OK:                 descr = "OK";                              break;
-      case HTTP_CREATED:            descr = "Created";                         break;
-      case HTTP_ACCEPTED:           descr = "Accepted";                        break;
-      case HTTP_NOT_AUTHORITATIVE:  descr = "Non-Authoritative Information";   break;
-      case HTTP_NO_CONTENT:         descr = "No Content";                      break;
-      case HTTP_RESET:              descr = "Reset Content";                   break;
-      case HTTP_PARTIAL:            descr = "Partial Content";                 break;
-   // case 207:                     descr = "Webdav Multi-status";             break;
+      case HTTP_OK:                              descr = "OK";                              break;
+      case HTTP_CREATED:                         descr = "Created";                         break;
+      case HTTP_ACCEPTED:                        descr = "Accepted";                        break;
+      case HTTP_NOT_AUTHORITATIVE:               descr = "Non-Authoritative Information";   break;
+      case HTTP_NO_CONTENT:                      descr = "No Content";                      break;
+      case HTTP_RESET:                           descr = "Reset Content";                   break;
+      case HTTP_PARTIAL:                         descr = "Partial Content";                 break;
+   // case 207:                                  descr = "Webdav Multi-status";             break;
 
       // 3xx Redirection - Further action must be taken in order to complete the request
-      case HTTP_MULT_CHOICE:        descr = "Multiple Choices";                break;
-      case HTTP_MOVED_PERM:         descr = "Moved Permanently";               break;
-      case HTTP_MOVED_TEMP:         descr = "Moved Temporarily";               break;
-   // case HTTP_FOUND:              descr = "Found [Elsewhere]";               break;
-      case HTTP_SEE_OTHER:          descr = "See Other";                       break;
-      case HTTP_NOT_MODIFIED:       descr = "Not Modified";                    break;
-      case HTTP_USE_PROXY:          descr = "Use Proxy";                       break;
-      case HTTP_TEMP_REDIR:         descr = "Temporary Redirect";              break;
+      case HTTP_MULT_CHOICE:                     descr = "Multiple Choices";                break;
+      case HTTP_MOVED_PERM:                      descr = "Moved Permanently";               break;
+      case HTTP_MOVED_TEMP:                      descr = "Moved Temporarily";               break;
+   // case HTTP_FOUND:                           descr = "Found [Elsewhere]";               break;
+      case HTTP_SEE_OTHER:                       descr = "See Other";                       break;
+      case HTTP_NOT_MODIFIED:                    descr = "Not Modified";                    break;
+      case HTTP_USE_PROXY:                       descr = "Use Proxy";                       break;
+      case HTTP_TEMP_REDIR:                      descr = "Temporary Redirect";              break;
 
       // 4xx indicates an error on the client's part
-      case HTTP_BAD_REQUEST:        descr = "Bad Request";                     break;
-      case HTTP_UNAUTHORIZED:       descr = "Authorization Required";          break;
-      case HTTP_PAYMENT_REQUIRED:   descr = "Payment Required";                break;
-      case HTTP_FORBIDDEN:          descr = "Forbidden";                       break;
-      case HTTP_NOT_FOUND:          descr = "Not Found";                       break;
-      case HTTP_BAD_METHOD:         descr = "Method Not Allowed";              break;
-      case HTTP_NOT_ACCEPTABLE:     descr = "Not Acceptable";                  break;
-      case HTTP_PROXY_AUTH:         descr = "Proxy Authentication Required";   break;
-      case HTTP_CLIENT_TIMEOUT:     descr = "Request Time-out";                break;
-      case HTTP_CONFLICT:           descr = "Conflict";                        break;
-      case HTTP_GONE:               descr = "Gone";                            break;
-      case HTTP_LENGTH_REQUIRED:    descr = "Length Required";                 break;
-      case HTTP_PRECON_FAILED:      descr = "Precondition Failed";             break;
-      case HTTP_ENTITY_TOO_LARGE:   descr = "Request Entity Too Large";        break;
-      case HTTP_REQ_TOO_LONG:       descr = "Request-URI Too Long";            break;
-      case HTTP_UNSUPPORTED_TYPE:   descr = "Unsupported Media Type";          break;
-      case HTTP_REQ_RANGE_NOT_OK:   descr = "Requested Range not satisfiable"; break;
-      case HTTP_EXPECTATION_FAILED: descr = "Expectation Failed";              break;
-   // case 422:                     descr = "Unprocessable Entity";            break;
-   // case 423:                     descr = "Locked";                          break;
-   // case 424:                     descr = "Failed Dependency";               break;
-   // case 425:                     descr = "No Matching Vhost";               break;
-   // case 426:                     descr = "Upgrade Required";                break;
-   // case 449:                     descr = "Retry With Appropriate Action";   break;
+      case HTTP_BAD_REQUEST:                     descr = "Bad Request";                     break;
+      case HTTP_UNAUTHORIZED:                    descr = "Authorization Required";          break;
+      case HTTP_PAYMENT_REQUIRED:                descr = "Payment Required";                break;
+      case HTTP_FORBIDDEN:                       descr = "Forbidden";                       break;
+      case HTTP_NOT_FOUND:                       descr = "Not Found";                       break;
+      case HTTP_BAD_METHOD:                      descr = "Method Not Allowed";              break;
+      case HTTP_NOT_ACCEPTABLE:                  descr = "Not Acceptable";                  break;
+      case HTTP_PROXY_AUTH:                      descr = "Proxy Authentication Required";   break;
+      case HTTP_CLIENT_TIMEOUT:                  descr = "Request Time-out";                break;
+      case HTTP_CONFLICT:                        descr = "Conflict";                        break;
+      case HTTP_GONE:                            descr = "Gone";                            break;
+      case HTTP_LENGTH_REQUIRED:                 descr = "Length Required";                 break;
+      case HTTP_PRECON_FAILED:                   descr = "Precondition Failed";             break;
+      case HTTP_ENTITY_TOO_LARGE:                descr = "Request Entity Too Large";        break;
+      case HTTP_REQ_TOO_LONG:                    descr = "Request-URI Too Long";            break;
+      case HTTP_UNSUPPORTED_TYPE:                descr = "Unsupported Media Type";          break;
+      case HTTP_REQ_RANGE_NOT_OK:                descr = "Requested Range not satisfiable"; break;
+      case HTTP_EXPECTATION_FAILED:              descr = "Expectation Failed";              break;
+   // case 422:                                  descr = "Unprocessable Entity";            break;
+   // case 423:                                  descr = "Locked";                          break;
+   // case 424:                                  descr = "Failed Dependency";               break;
+   // case 425:                                  descr = "No Matching Vhost";               break;
+   // case 426:                                  descr = "Upgrade Required";                break;
+      case HTTP_PRECONDITION_REQUIRED:           descr = "Precondition required";           break;
+      case HTTP_TOO_MANY_REQUESTS:               descr = "Too many requests";               break;
+      case HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE: descr = "Request_header_fields_too_large"; break;
+   // case 449:                                  descr = "Retry With Appropriate Action";   break;
 
       // 5xx indicates an error on the server's part
-      case HTTP_INTERNAL_ERROR:     descr = "Internal Server Error";           break;
-      case HTTP_NOT_IMPLEMENTED:    descr = "Not Implemented";                 break;
-      case HTTP_BAD_GATEWAY:        descr = "Bad Gateway";                     break;
-      case HTTP_UNAVAILABLE:        descr = "Service Unavailable";             break;
-      case HTTP_GATEWAY_TIMEOUT:    descr = "Gateway Time-out";                break;
-      case HTTP_VERSION:            descr = "HTTP Version Not Supported";      break;
-   // case 506:                     descr = "Variant also varies";             break;
-   // case 507:                     descr = "Insufficient Storage";            break;
-   // case 510:                     descr = "Not Extended";                    break;
+      case HTTP_INTERNAL_ERROR:                  descr = "Internal Server Error";           break;
+      case HTTP_NOT_IMPLEMENTED:                 descr = "Not Implemented";                 break;
+      case HTTP_BAD_GATEWAY:                     descr = "Bad Gateway";                     break;
+      case HTTP_UNAVAILABLE:                     descr = "Service Unavailable";             break;
+      case HTTP_GATEWAY_TIMEOUT:                 descr = "Gateway Time-out";                break;
+      case HTTP_VERSION:                         descr = "HTTP Version Not Supported";      break;
+   // case 506:                                  descr = "Variant also varies";             break;
+   // case 507:                                  descr = "Insufficient Storage";            break;
+   // case 510:                                  descr = "Not Extended";                    break;
+      case HTTP_NETWORK_AUTHENTICATION_REQUIRED: descr = "Network authentication required"; break;
 
-      default:                      descr = "Code unknown";                    break;
+      default:                                   descr = "Code unknown";                    break;
       }
 
    U_RETURN(descr);
@@ -2978,22 +2984,23 @@ void UHTTP::setHTTPNotFound()
  * information necessary for a user to repeat the original request on the new URI.
  */
 
-void UHTTP::setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint32_t len_location)
+void UHTTP::setHTTPRedirectResponse(bool refresh, UString& ext, const char* ptr_location, uint32_t len_location)
 {
-   U_TRACE(0, "UHTTP::setHTTPRedirectResponse(%.*S,%.*S,%u)", U_STRING_TO_TRACE(ext), len_location, ptr_location, len_location)
+   U_TRACE(0, "UHTTP::setHTTPRedirectResponse(%b,%.*S,%.*S,%u)", refresh, U_STRING_TO_TRACE(ext), len_location, ptr_location, len_location)
 
    U_ASSERT_EQUALS(u_find(ptr_location,len_location,"\n",1),0)
 
-   // NB: firefox ask confirmation to user with response 307...
+   // NB: firefox ask confirmation to user with response 307 (HTTP_TEMP_REDIR)...
 
-   u_http_info.nResponseCode =                                            HTTP_MOVED_TEMP;
-// u_http_info.nResponseCode = (U_http_version == '1' ? HTTP_TEMP_REDIR : HTTP_MOVED_TEMP);
+   u_http_info.nResponseCode = (refresh ? HTTP_NETWORK_AUTHENTICATION_REQUIRED : HTTP_MOVED_TEMP);
 
    if (U_http_is_connection_close == U_MAYBE) U_http_is_connection_close = U_YES;
 
    UString tmp(U_CAPACITY), msg(100U + len_location), body(500U + len_location);
 
-   msg.snprintf("The document has moved <a href=\"%.*s\">here</a>", len_location, ptr_location);
+   msg.snprintf(refresh ? "The document has moved <a href=\"%.*s\">here</a>"
+                        :  "You need to <a href=\"%.*s\">authenticate with the local network</a> in order to get access",
+                  len_location, ptr_location);
 
    const char* status = getHTTPStatusDescription(u_http_info.nResponseCode);
 
@@ -3004,7 +3011,8 @@ void UHTTP::setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint
                  status,
                  msg.data());
 
-   (void) tmp.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\nLocation: "));
+   (void) tmp.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\n"));
+   (void) tmp.append(refresh ? "Refresh: 0; url=" : "Location: ");
    (void) tmp.append(ptr_location, len_location);
    (void) tmp.append(U_CONSTANT_TO_PARAM("\r\n"));
 
@@ -3204,11 +3212,8 @@ void UHTTP::setHTTPCgiResponse(bool header_content_length, bool header_content_t
                    (bcompress ? "Content-Encoding: deflate\r\n" : ""),
                    sz, ptr);
 
-      if (bcompress == false) UClientImage_Base::wbuffer->erase(0, endHeader);
-      else
-         {
-         *UClientImage_Base::wbuffer = content;
-         }
+      if (bcompress) *UClientImage_Base::wbuffer = content;
+      else            UClientImage_Base::wbuffer->erase(0, endHeader);
       }
 
    *UClientImage_Base::body    = *UClientImage_Base::wbuffer;
@@ -3520,6 +3525,21 @@ __pure bool UHTTP::isTSARequest()
    bool result = (isHttpPOST() && (U_HTTP_URI_STRNEQ("/tsa") || U_HTTP_CTYPE_STRNEQ("application/timestamp-query")));
 
    U_RETURN(result);
+}
+
+bool UHTTP::isGenCGIRequest() // FCGI or SCGI request...
+{
+   U_TRACE(0, "UHTTP::isGenCGIRequest()")
+
+   if ((fcgi_uri_mask &&
+        u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*fcgi_uri_mask), 0)) ||
+       (scgi_uri_mask &&
+        u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*scgi_uri_mask), 0)))
+      {
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 bool UHTTP::checkUriProtected()
@@ -4158,10 +4178,11 @@ U_NO_EXPORT void UHTTP::checkPath()
       {
       file->setPath(*pathname);
 
-      if (isFileInCache() == false &&
-          U_http_upgrade  == 0     && // web-socket
-          isSOAPRequest() == false && // SOAP request... (uri /soap)
-          isTSARequest()  == false && // TSA  request... (uri /tsa)
+      if (isFileInCache()   == false &&
+          U_http_upgrade    == 0     && // web-socket
+          isGenCGIRequest() == false && // FCGI or SCGI request...
+          isSOAPRequest()   == false && // SOAP request... (uri /soap)
+          isTSARequest()    == false && // TSA  request... (uri /tsa)
           file->stat())
          {
          U_SRV_LOG("Inotify %s enabled - found file not in cache: %.*S", (UServer_Base::handler_inotify ? "is" : "NOT"), U_FILE_TO_TRACE(*file));
@@ -4917,7 +4938,7 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                if (splitCGIOutput(ptr, location, endHeader, ext))
                   {
-                  setHTTPRedirectResponse(ext, location, ptr - location);
+                  setHTTPRedirectResponse(false, ext, location, ptr - location);
 
                   U_RETURN(true);
                   }

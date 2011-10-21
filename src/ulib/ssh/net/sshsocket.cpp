@@ -186,7 +186,7 @@ bool USSHSocket::SSHConnection(int fd)
             {
             static char buf1[U_PATH_MAX];
 
-            (void) u_snprintf(buf1, sizeof(buf1), public_key);
+            (void) u_snprintf(buf1, sizeof(buf1), public_key, 0);
 
             public_key = buf1;
             }
@@ -204,7 +204,7 @@ bool USSHSocket::SSHConnection(int fd)
             {
             static char buf2[U_PATH_MAX];
 
-            (void) u_snprintf(buf2, sizeof(buf2), private_key);
+            (void) u_snprintf(buf2, sizeof(buf2), private_key, 0);
 
             private_key = buf2;
             }

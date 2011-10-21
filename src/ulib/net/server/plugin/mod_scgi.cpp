@@ -49,7 +49,8 @@ USCGIPlugIn::~USCGIPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, USCGIPlugIn)
 
-   if (connection) delete connection;
+   if (connection)           delete connection;
+   if (UHTTP::scgi_uri_mask) delete UHTTP::scgi_uri_mask;
 }
 
 // Server-wide hooks
@@ -76,10 +77,15 @@ int USCGIPlugIn::handlerConfig(UFileConfig& cfg)
 
    if (cfg.loadTable())
       {
-      scgi_uri_mask  = cfg[*str_SCGI_URI_MASK];
       scgi_keep_conn = cfg.readBoolean(*str_SCGI_KEEP_CONN);
 
       connection = U_NEW(UClient_Base(&cfg));
+
+      UString x = cfg[*str_SCGI_URI_MASK];
+
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::scgi_uri_mask,0)
+
+      if (x.empty() == false) UHTTP::scgi_uri_mask = U_NEW(UString(x));
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -90,7 +96,7 @@ int USCGIPlugIn::handlerInit()
    U_TRACE(1, "USCGIPlugIn::handlerInit()")
 
    if (connection &&
-       scgi_uri_mask.empty() == false)
+       UHTTP::scgi_uri_mask)
       {
 #  ifdef __MINGW32__
       U_INTERNAL_ASSERT_DIFFERS(connection->port, 0)
@@ -127,15 +133,11 @@ int USCGIPlugIn::handlerRequest()
 {
    U_TRACE(0, "USCGIPlugIn::handlerRequest()")
 
-   if (UHTTP::isHTTPRequestAlreadyProcessed() ||
-       scgi_uri_mask.empty()                  ||
-       u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(scgi_uri_mask), 0) == false)
-      {
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-      }
-
-   if (connection &&
-       connection->isConnected())
+   if (UHTTP::isHTTPRequestAlreadyProcessed() == false &&
+       connection                                      &&
+       connection->isConnected()                       &&
+       UHTTP::scgi_uri_mask                            &&
+       u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*UHTTP::scgi_uri_mask), 0))
       {
       // Set environment for the SCGI application server
 
@@ -228,7 +230,6 @@ int USCGIPlugIn::handlerReset()
 const char* USCGIPlugIn::dump(bool reset) const
 {
    *UObjectIO::os << "scgi_keep_conn              " << scgi_keep_conn         <<  '\n'
-                  << "scgi_uri_mask (UString      " << (void*)&scgi_uri_mask  << ")\n"
                   << "connection    (UClient_Base " << (void*)connection      << ')';
 
    if (reset)

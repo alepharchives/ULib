@@ -227,12 +227,11 @@ void ULog::log(const char* format, ...)
    char buffer[4096];
    struct iovec iov[1] = { { (caddr_t)buffer, 0 } };
 
-   if (prefix) iov[0].iov_len = u_snprintf(buffer, sizeof(buffer), prefix);
-
    va_list argp;
    va_start(argp, format);
 
-   iov[0].iov_len += u_vsnprintf(buffer + iov[0].iov_len, sizeof(buffer) - iov[0].iov_len, format, argp); 
+   if (prefix) iov[0].iov_len  = u_snprintf( buffer,                  sizeof(buffer),                  prefix, 0);
+               iov[0].iov_len += u_vsnprintf(buffer + iov[0].iov_len, sizeof(buffer) - iov[0].iov_len, format, argp); 
 
    va_end(argp);
 

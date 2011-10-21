@@ -239,7 +239,7 @@ public:
 
       if (socket->isOpen())
          {
-         U_INTERNAL_DUMP("ssl = %p ssl_fd = %d fd = %d sock_fd = %d", ssl, SSL_get_fd(ssl), UEventFd::fd, socket->getFd())
+         U_INTERNAL_DUMP("ssl = %p ssl_fd = %d fd = %d sock_fd = %d", ssl, SSL_get_fd(ssl), UEventFd::fd, socket->iSockDesc)
 
          U_INTERNAL_ASSERT_POINTER(ssl)
          U_INTERNAL_ASSERT_EQUALS(SSL_get_fd(ssl), UEventFd::fd)

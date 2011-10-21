@@ -11,6 +11,8 @@
 //
 // ============================================================================
 
+#include <ulib/base/utility.h>
+
 #include <ulib/process.h>
 #include <ulib/utility/interrupt.h>
 
@@ -528,7 +530,6 @@ char* UProcess::exitInfo(int _status)
 #  ifndef WCOREDUMP
 #  define WCOREDUMP(status) ((status) & 0200) // settimo bit
 #  endif
-
       n = u_snprintf(buffer, sizeof(buffer), "Signal %Y%s", WTERMSIG(_status), (WCOREDUMP(_status) ? " - core dumped" : ""));
       }
    else if (WIFSTOPPED(_status))
@@ -540,7 +541,7 @@ char* UProcess::exitInfo(int _status)
 #  endif
    else if (WIFCONTINUED(_status))
       {
-      n = u_snprintf(buffer, sizeof(buffer), "SIGCONT");
+      (void) u_memcpy(buffer, "SIGCONT", (n = U_CONSTANT_SIZE("SIGCONT")));
       }
 
    buffer[n] = '\0';

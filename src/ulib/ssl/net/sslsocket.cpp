@@ -616,8 +616,8 @@ loop:
 
    U_DUMP("status = %.*S", 512, status(ssl, ret, false, 0, 0))
 
-        if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::getFd(), U_SSL_TIMEOUT_MS) > 0) goto loop; }
-   else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::getFd(), U_SSL_TIMEOUT_MS) > 0) goto loop; }
+        if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+   else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
 
    errno = lerrno;
 
@@ -662,35 +662,12 @@ loop:
 
    U_DUMP("status = %.*S", 512, status(ssl, ret, false, 0, 0))
 
-        if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::getFd(), U_SSL_TIMEOUT_MS) > 0) goto loop; }
-   else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::getFd(), U_SSL_TIMEOUT_MS) > 0) goto loop; }
+        if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+   else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
 
    errno = lerrno;
 
 end:
-   U_RETURN(iBytesWrite);
-}
-
-// write data from multiple buffers
-
-int USSLSocket::writev(const struct iovec* iov, int iovcnt)
-{
-   U_TRACE(0, "USSLSocket::writev(%p,%d)", iov, iovcnt)
-
-   int iBytesWrite = 0, value;
-
-   for (int i = 0; i < iovcnt; ++i)
-      {
-      if (iov[i].iov_len)
-         {
-         value = send((const char*)iov[i].iov_base, iov[i].iov_len);
-
-         if (value <= 0) break;
-
-         iBytesWrite += value;
-         }
-      }
-
    U_RETURN(iBytesWrite);
 }
 

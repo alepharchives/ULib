@@ -475,8 +475,11 @@ public:
    } ucgi;
 
    static UString* geoip;
+   static UString* fcgi_uri_mask;
+   static UString* scgi_uri_mask;
    static UCommand* pcmd;
 
+   static bool    isGenCGIRequest();
    static bool    processCGIOutput();
    static UString getCGIEnvironment();
    static bool    processCGIRequest(UCommand* pcmd, UString* penvironment, bool async, bool process_output);
@@ -820,7 +823,7 @@ public:
    // set HTTP response message
 
    static void setHTTPResponse(const UString* content_type = 0, const UString* body = 0);
-   static void setHTTPRedirectResponse(UString& ext, const char* ptr_location, uint32_t len_location);
+   static void setHTTPRedirectResponse(bool refresh, UString& ext, const char* ptr_location, uint32_t len_location);
 
    // get HTTP response message
 

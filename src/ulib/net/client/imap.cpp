@@ -250,7 +250,7 @@ bool UImapClient::startTLS()
       if (syncCommand("STARTTLS"))
          {
              ((USSLSocket*)this)->setActive(true);
-         if (((USSLSocket*)this)->secureConnection(USocket::getFd())) U_RETURN(true);
+         if (((USSLSocket*)this)->secureConnection(USocket::iSockDesc)) U_RETURN(true);
              ((USSLSocket*)this)->setActive(false);
          }
       }

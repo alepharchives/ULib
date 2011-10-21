@@ -87,7 +87,6 @@ public:
 #endif
 
 protected:
-   UString fcgi_uri_mask;
    UClient_Base* connection;
    bool fcgi_keep_conn;
 

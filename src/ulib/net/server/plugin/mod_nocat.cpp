@@ -910,7 +910,7 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo()
 
    if (info_url->isQuery())
       {
-      UHTTP::setHTTPRedirectResponse(UString::getStringNull(), U_URL_TO_PARAM(*info_url));
+      UHTTP::setHTTPRedirectResponse(false, UString::getStringNull(), U_URL_TO_PARAM(*info_url));
 
       *info_url = *(pthis->vlogout_url[index_AUTH]);
       }
@@ -1575,7 +1575,7 @@ set_redirect_to_AUTH:
 
 redirect: // redirect to AUTH
 
-      UHTTP::setHTTPRedirectResponse(UString::getStringNull(), U_STRING_TO_PARAM(location));
+      UHTTP::setHTTPRedirectResponse(true, UString::getStringNull(), U_STRING_TO_PARAM(location));
 
 end:
       UHTTP::setHTTPRequestProcessed();

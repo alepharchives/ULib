@@ -220,8 +220,16 @@ bool UClient_Base::connect()
       {
       if (log)
          {
-              if (port)           socket->getRemoteInfo(logbuf);
-         else if (logbuf.empty()) logbuf = '"' + host_port + '"';
+         if (port)
+            {
+            logbuf.setEmpty();
+
+            socket->getRemoteInfo(logbuf);
+            }
+         else if (logbuf.empty())
+            {
+            logbuf = '"' + host_port + '"';
+            }
          }
 
       U_RETURN(true);
@@ -365,7 +373,7 @@ send:
 
          if (log)
             {
-            ULog::log("%sConnection to %.*s reset by peer%R\n",
+            ULog::log("%sconnection to %.*s reset by peer%R\n",
                      log_shared_with_server ? UServer_Base::mod_name : "",
                      U_STRING_TO_TRACE(logbuf), 0); // NB: the last argument (0) is necessary...
             }
@@ -380,7 +388,7 @@ send:
          {
          if (log)
             {
-            ULog::log("%sConnection to %.*s reset by peer%R\n",
+            ULog::log("%sconnection to %.*s reset by peer%R\n",
                      log_shared_with_server ? UServer_Base::mod_name : "",
                      U_STRING_TO_TRACE(logbuf), 0); // NB: the last argument (0) is necessary...
             }

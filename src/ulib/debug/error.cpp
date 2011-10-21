@@ -39,7 +39,7 @@ void UError::stackDump()
    int size                    = backtrace(array, 256);
    char** __restrict__ strings = backtrace_symbols(array, size);
 
-   (void) u_snprintf(name, sizeof(name), "stack.%N.%P");
+   (void) u_snprintf(name, sizeof(name), "stack.%N.%P", 0);
 
    int fd = open(name, O_CREAT | O_WRONLY | O_APPEND | O_BINARY, 0666);
 

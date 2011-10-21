@@ -783,11 +783,13 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
    return count;
 }
 
+#ifndef __MINGW32__
 static const char* tab_color[] = { U_RESET_STR,
    U_BLACK_STR,       U_RED_STR,           U_GREEN_STR,       U_YELLOW_STR,
    U_BLUE_STR,        U_MAGENTA_STR,       U_CYAN_STR,        U_WHITE_STR,
    U_BRIGHTBLACK_STR, U_BRIGHTRED_STR,     U_BRIGHTGREEN_STR, U_BRIGHTYELLOW_STR,
    U_BRIGHTBLUE_STR,  U_BRIGHTMAGENTA_STR, U_BRIGHTCYAN_STR,  U_BRIGHTWHITE_STR };
+#endif
 
 /* Print with format extension: bBCDHMNOPQrRSUYwW
 ----------------------------------------------------------------------------

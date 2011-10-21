@@ -352,7 +352,7 @@ uint64_t u_get_inode(int fd)
 {
    uint64_t ino64;
    BY_HANDLE_FILE_INFORMATION FileInformation;
-   HANDLE hFile = (HANDLE) _get_osfhandle(fd); /* obtain handle to file descriptor "fd" */
+   HANDLE hFile = (HANDLE) _get_osfhandle(fd); /* obtain handle from file descriptor "fd" */
 
    U_INTERNAL_TRACE("u_get_inode(%d)", fd)
 
@@ -881,15 +881,15 @@ int truncate(const char* fname, off_t length)
 /*
 int fsync(int fd)
 {
-   HANDLE h;
+   HANDLE h = (HANDLE) _get_osfhandle(fd);
 
    U_INTERNAL_TRACE("fsync(%d)", fd)
 
    if (fd < 0) return -1;
 
-   h = (HANDLE) _get_osfhandle(fd);
+   U_INTERNAL_PRINT("h = %p", h)
 
-   if ((int)h == -1) return -1;
+   if (h == INVALID_HANDLE_VALUE) return -1;
 
    if (!FlushFileBuffers(h)) return -1;
 
@@ -1207,7 +1207,6 @@ int munmap(void* start, size_t length)
 
 /* LeaveCriticalSection(&cs); */
 
-end:
    SetLastError(0);
 
    return 0;
@@ -1248,6 +1247,61 @@ int gettimeofday(struct timeval* tv, void* tz)
 }
 */
 
+static int is_fh_socket(HANDLE fh)
+{
+   char sockbuf[80];
+   int result = TRUE, optlen = sizeof(sockbuf);
+   int retval = getsockopt((SOCKET)fh, SOL_SOCKET, SO_TYPE, sockbuf, &optlen);
+
+   U_INTERNAL_TRACE("is_fh_socket(%p)", fh)
+
+   U_INTERNAL_PRINT("retval = %d", retval)
+
+   U_INTERNAL_ASSERT_DIFFERS(fh, INVALID_HANDLE_VALUE)
+
+   if (retval == SOCKET_ERROR)
+      {
+      int iRet = WSAGetLastError();
+
+      U_INTERNAL_PRINT("iRet = %d", iRet)
+
+      if (iRet == WSAENOTSOCK ||
+          iRet == WSAEBADF    ||
+          iRet == WSANOTINITIALISED)
+         {
+         result = FALSE;
+         }
+      }
+
+   U_INTERNAL_PRINT("ret = %d", result)
+
+   return result;
+}
+
+static int is_fd_socket(int fd)
+{
+   int result;
+   SOCKET h = (SOCKET) _get_osfhandle(fd);
+
+   U_INTERNAL_TRACE("is_fd_socket(%d)", fd)
+
+   U_INTERNAL_PRINT("h = %p", h)
+
+   if ((HANDLE)h == INVALID_HANDLE_VALUE)
+      {
+      result = FALSE;
+
+      goto next;
+      }
+
+   result = is_fh_socket((HANDLE)h);
+
+next:
+   U_INTERNAL_PRINT("ret = %d", result)
+
+   return result;
+}
+
 ssize_t writev(int fd, const struct iovec* iov, int count)
 {
    int i;
@@ -1256,7 +1310,7 @@ ssize_t writev(int fd, const struct iovec* iov, int count)
    ssize_t result;
    size_t length = 0;
 
-   U_INTERNAL_TRACE("writev(%d,%p,%d)", fd, iov, count)
+   U_INTERNAL_ASSERT_DIFFERS(is_fd_socket(fd), TRUE)
 
    /* Determine the total length of all the buffers in <iov> */
 
@@ -1274,26 +1328,11 @@ ssize_t writev(int fd, const struct iovec* iov, int count)
          }
       }
 
-   if (is_socket(fd) == TRUE)
-      {
-      result = send(fd, buf, length, 0);
-      }
-   else
-      {
-      HANDLE h;
+   result = write(fd, buf, length);
 
-      result = write(fd, buf, length);
+   if (result > 0) goto next;
 
-      if (result > 0) goto next;
-
-      h = (HANDLE) _get_osfhandle(fd);
-
-      U_INTERNAL_PRINT("h = %p", h)
-
-      if (h == INVALID_HANDLE_VALUE) goto next;
-
-      if (WriteFile(h, buf, length, (DWORD*)&result, 0) == FALSE) result = -1; 
-      }
+   if (WriteFile((HANDLE)_get_osfhandle(fd), buf, length, (DWORD*)&result, 0) == FALSE) result = -1; 
 
 next:
    free(buf);
@@ -1393,149 +1432,197 @@ pid_t waitpid(pid_t pid, int* stat_loc, int options)
    return (ok ? pid : (pid_t) -1);
 }
 
-int is_pipe(int fd)
+HANDLE is_pipe(int fd)
 {
-   static int result;
-   static int last_fd = -1;
+   HANDLE h = (HANDLE) _get_osfhandle(fd);
 
    U_INTERNAL_TRACE("is_pipe(%d)", fd)
 
-   if (fd != last_fd)
+   if (h != INVALID_HANDLE_VALUE        &&
+       GetFileType(h) == FILE_TYPE_PIPE && /* The specified file is a socket, a named pipe, or an anonymous pipe */
+       is_fh_socket(h)  == FALSE)
       {
-      DWORD isdev = GetFileType((HANDLE)_get_osfhandle(fd));
-
-      result = (isdev == FILE_TYPE_PIPE);
+      return h;
       }
 
-   U_INTERNAL_PRINT("ret = %d", result)
-
-   return result;
+   return INVALID_HANDLE_VALUE;
 }
 
-int is_socket(SOCKET fd)
-{
-   static int result;
-   static int last_fd = -1;
-
-   U_INTERNAL_TRACE("is_socket(%d)", fd)
-
-   if (fd != last_fd)
-      {
-      char sockbuf[80];
-      int optlen = sizeof(sockbuf);
-      int retval = getsockopt(fd, SOL_SOCKET, SO_TYPE, sockbuf, &optlen);
-
-      U_INTERNAL_PRINT("retval = %d", retval)
-
-      last_fd = fd;
-      result  = TRUE;
-
-      if (retval == SOCKET_ERROR)
-         {
-         int iRet = WSAGetLastError();
-
-         U_INTERNAL_PRINT("iRet = %d", iRet)
-
-         if (iRet == WSAENOTSOCK ||
-             iRet == WSAEBADF    ||
-             iRet == WSANOTINITIALISED)
-            {
-            result = FALSE;
-            }
-         }
-      }
-
-   /* If we get here, then fd is actually a socket. */
-
-   U_INTERNAL_PRINT("ret = %d", result)
-
-   return result;
-}
-
+#ifdef DEBUG
 static int extract_file_fd(fd_set* set, fd_set* fileset)
 {
-   int idx;
-
    U_INTERNAL_TRACE("extract_file_fd(%p,%p)", set, fileset)
 
-   fileset->fd_count = 0;
-
-   if (!set) return 0;
-
-   for (idx = 0; idx < set->fd_count; idx++)
+   if (set)
       {
-      SOCKET fd = set->fd_array[idx];
+      int i, idx, fd;
 
-      if (is_socket(fd) == FALSE)
+      fileset->fd_count = 0;
+
+      U_INTERNAL_PRINT("set->fd_count = %d", set->fd_count)
+
+      for (idx = 0; idx < (int)set->fd_count; ++idx)
          {
-         int i;
+         fd = set->fd_array[idx];
 
-         for (i = 0; i < fileset->fd_count; ++i)
+         if (is_fd_socket(fd) == FALSE)
             {
-            if (fileset->fd_array[i] == fd) break;
-            }
-
-         if (i == fileset->fd_count)
-            {
-            if (fileset->fd_count < FD_SETSIZE)
+            for (i = 0; i < (int)fileset->fd_count; ++i)
                {
+               if ((int)fileset->fd_array[i] == fd) break;
+               }
+
+            if (i == (int)fileset->fd_count)
+               {
+               U_INTERNAL_ASSERT_MINOR(fileset->fd_count, FD_SETSIZE)
+
                fileset->fd_array[i] = fd;
 
                fileset->fd_count++;
                }
             }
          }
+
+      U_INTERNAL_PRINT("fileset->fd_count = %d", fileset->fd_count)
+
+      return fileset->fd_count;
       }
 
-   U_INTERNAL_PRINT("ret = %d", fileset->fd_count)
+   return 0;
+}
+#endif
 
-   return fileset->fd_count;
+static fd_set* fdset_fd2sock(fd_set* set, fd_set* fileset)
+{
+   U_INTERNAL_TRACE("fdset_fd2sock(%p,%p)", set, fileset)
+
+   if (set)
+      {
+      SOCKET h;
+      int idx, fd;
+
+      fileset->fd_count = set->fd_count;
+
+      U_INTERNAL_PRINT("set->fd_count = %d", set->fd_count)
+
+      for (idx = 0; idx < (int)set->fd_count; ++idx)
+         {
+         fd = set->fd_array[idx];
+         h  = (SOCKET) _get_osfhandle(fd);
+
+         U_INTERNAL_ASSERT_DIFFERS((HANDLE)h, INVALID_HANDLE_VALUE)
+         U_INTERNAL_ASSERT_EQUALS(is_fh_socket((HANDLE)h), TRUE)
+
+         U_INTERNAL_PRINT("h = %p", h)
+
+         fileset->fd_array[idx] = h;
+         }
+
+      return fileset;
+      }
+
+   return (fd_set*)0;
 }
 
-/* fd's are only implemented for sockets.  Microsoft Windows does not have a unified IO system, so it doesn't
-   support select() on files, devices, or pipes...  Microsoft provides the Berkeley select() call and an
-   asynchronous select function that sends a WIN32 message when the select condition exists... WSAAsyncSelect() */
+static void fdset_sock2fd(fd_set* fileset, fd_set* set)
+{
+   U_INTERNAL_TRACE("fdset_sock2fd(%p,%p)", fileset, set)
+
+   if (set)
+      {
+      int i, idx, fd;
+      SOCKET h1, h2 = (SOCKET)INVALID_HANDLE_VALUE;
+
+      U_INTERNAL_PRINT("fileset->fd_count = %d", fileset->fd_count)
+
+      for (idx = 0; idx < (int)fileset->fd_count; ++idx)
+         {
+         h1 = fileset->fd_array[idx];
+
+         U_INTERNAL_PRINT("h1 = %p", h1)
+
+         U_INTERNAL_ASSERT_DIFFERS((HANDLE)h1, INVALID_HANDLE_VALUE)
+         U_INTERNAL_ASSERT_EQUALS(is_fh_socket((HANDLE)h1), TRUE)
+
+         for (i = 0; i < (int)set->fd_count; ++i)
+            {
+            fd = set->fd_array[idx];
+            h2 = (SOCKET) _get_osfhandle(fd);
+
+            U_INTERNAL_PRINT("h2 = %p", h2)
+
+            U_INTERNAL_ASSERT_DIFFERS((HANDLE)h2, INVALID_HANDLE_VALUE)
+            U_INTERNAL_ASSERT_EQUALS(is_fh_socket((HANDLE)h2), TRUE)
+
+            if (h1 == h2)
+               {
+               fileset->fd_array[idx] = fd;
+
+               break;
+               }
+            }
+
+         U_INTERNAL_ASSERT_EQUALS(h1, h2)
+         }
+
+      *set = *fileset;
+
+      U_INTERNAL_PRINT("set->fd_count = %d", set->fd_count)
+
+      U_INTERNAL_ASSERT_EQUALS(set->fd_count, fileset->fd_count)
+      }
+}
+
+/* Microsoft Windows does not have a unified IO system, so it doesn't support select() on files, devices, or pipes...
+ * Microsoft provides the Berkeley select() call and an asynchronous select function that sends a WIN32 message when
+ * the select condition exists... WSAAsyncSelect()
+ */
 
 int select_w32(int nfds, fd_set* rd, fd_set* wr, fd_set* ex, struct timeval* timeout)
 {
-   int r = 0;
-   int file_nfds;
-   fd_set file_rd;
-   fd_set file_wr;
+   int r;
+   fd_set file_rd, file_wr, file_ex, sock_rd, sock_wr, sock_ex;
 
    U_INTERNAL_TRACE("select_w32(%d,%p,%p,%p,%p)", nfds, rd, wr, ex, timeout)
 
-   if (rd && rd->fd_count > r) r = rd->fd_count;
-   if (wr && wr->fd_count > r) r = wr->fd_count;
-   if (ex && ex->fd_count > r) r = ex->fd_count;
-
-   if (nfds > r) nfds = r;
-
-   if (nfds == 0 && timeout)
+   if (nfds == 0 &&
+       timeout)
       {
       Sleep(timeout->tv_sec * 1000 + timeout->tv_usec / 1000);
 
       return 0;
       }
 
+   /*
    file_nfds  = extract_file_fd(rd, &file_rd);
    file_nfds += extract_file_fd(wr, &file_wr);
+   file_nfds += extract_file_fd(ex, &file_ex);
 
    if (file_nfds)
       {
-      /* assume normal files are always readable/writable fake read/write fd_set and return value */
+      // assume normal files are always readable/writable fake read/write fd_set and return value
 
       if (rd) *rd = file_rd;
       if (wr) *wr = file_wr;
+      if (ex) *ex = file_ex;
 
       return file_nfds;
       }
+   */
 
-   r = select(nfds, rd, wr, ex, timeout);
+   U_INTERNAL_ASSERT_EQUALS(extract_file_fd(rd,&file_rd) +
+                            extract_file_fd(wr,&file_wr) +
+                            extract_file_fd(ex,&file_ex), 0)
 
-   /* if (r == SOCKET_ERROR) errno = WSAGetLastError() - WSABASEERR; */
+   /* nfds argument is ignored and included only for the sake of compatibility */
+
+   r = select(nfds, fdset_fd2sock(rd, &sock_rd), fdset_fd2sock(wr, &sock_wr), fdset_fd2sock(ex, &sock_ex), timeout);
 
    U_INTERNAL_PRINT("ret = %d", r)
+
+   fdset_sock2fd(&sock_rd, rd);
+   fdset_sock2fd(&sock_wr, wr);
+   fdset_sock2fd(&sock_ex, ex);
 
    return r;
 }
@@ -1755,7 +1842,7 @@ const char* getSysError_w32(unsigned* len)
 
    for (i = 0; i < nerr; ++i)
       {
-      if (w32_error_table[i].value == errno)
+      if ((int)w32_error_table[i].value == errno)
          {
          name = w32_error_table[i].name;
       /* msg  = w32_error_table[i].msg; */
@@ -1861,10 +1948,13 @@ EXTERN_C _CRTIMP ioinfo* __pioinfo[];
 int fcntl_w32(int fd, int cmd, void* arg)
 {
    int res = -1;
+   SOCKET h = (SOCKET) _get_osfhandle(fd);
 
    U_INTERNAL_TRACE("fcntl_w32(%d,%d,%p)", fd, cmd, arg)
 
-   if (is_socket(fd) == TRUE)
+   if ((HANDLE)h == INVALID_HANDLE_VALUE) return -1;
+
+   if (is_fh_socket((HANDLE)h) == TRUE)
       {
       unsigned long mode = (unsigned long) arg;
 
@@ -1879,7 +1969,7 @@ int fcntl_w32(int fd, int cmd, void* arg)
 
          u_long iMode = (mode & O_NONBLOCK ? 1 : 0);
 
-         res = ioctlsocket(fd, FIONBIO, &iMode);
+         res = ioctlsocket(h, FIONBIO, &iMode);
          }  
       else
          {
@@ -1900,7 +1990,7 @@ int fcntl_w32(int fd, int cmd, void* arg)
                                                                      // the operation has been completed (ignored for non-overlapped sockets)
          */
 
-         res = WSAIoctl(fd, cmd, &mode, sizeof(unsigned long), outBuffer, sizeof(outBuffer), &cbBytesReturned, 0, 0);
+         res = WSAIoctl(h, cmd, &mode, sizeof(unsigned long), outBuffer, sizeof(outBuffer), &cbBytesReturned, 0, 0);
          }
       }
    else
@@ -1963,10 +2053,6 @@ int fcntl_w32(int fd, int cmd, void* arg)
             struct flock* l = (struct flock*) arg;
             off_t l_len = (l->l_len ? l->l_len : ULONG_MAX);
 
-            HANDLE h = (HANDLE) _get_osfhandle(fd);
-
-            if (h == INVALID_HANDLE_VALUE) return -1;
-
             if (isWindowNT())
                {
                OVERLAPPED theOvInfo;
@@ -1975,13 +2061,13 @@ int fcntl_w32(int fd, int cmd, void* arg)
 
                theOvInfo.Offset = l->l_start;
 
-               if (l->l_type == F_UNLCK) result = UnlockFileEx(h,                          0, l_len, 0, &theOvInfo);
-               else                      result =   LockFileEx(h, LOCKFILE_EXCLUSIVE_LOCK, 0, l_len, 0, &theOvInfo);
+               if (l->l_type == F_UNLCK) result = UnlockFileEx((HANDLE)h,                          0, l_len, 0, &theOvInfo);
+               else                      result =   LockFileEx((HANDLE)h, LOCKFILE_EXCLUSIVE_LOCK, 0, l_len, 0, &theOvInfo);
                }
             else
                {
-               if (l->l_type == F_UNLCK) result = UnlockFile(h, l->l_start, 0, l_len, 0);
-               else                      result =   LockFile(h, l->l_start, 0, l_len, 0);
+               if (l->l_type == F_UNLCK) result = UnlockFile((HANDLE)h, l->l_start, 0, l_len, 0);
+               else                      result =   LockFile((HANDLE)h, l->l_start, 0, l_len, 0);
                }
 
             if (result == TRUE) res = 0;

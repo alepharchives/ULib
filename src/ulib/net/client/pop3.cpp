@@ -254,7 +254,7 @@ bool UPop3Client::startTLS()
    else if (syncCommand(-1, "STLS"))
       {
           ((USSLSocket*)this)->setActive(true);
-      if (((USSLSocket*)this)->secureConnection(USocket::getFd())) U_RETURN(true);
+      if (((USSLSocket*)this)->secureConnection(USocket::iSockDesc)) U_RETURN(true);
           ((USSLSocket*)this)->setActive(false);
 
       if (USocketExt::readLineReply(this, buffer) > 0 &&

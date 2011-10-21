@@ -310,7 +310,7 @@ void UObjectDB::init(bool flag, bool info)
 
       if (file_size) U_NUMBER_SUFFIX(file_size, suffix);
 
-      (void) u_snprintf(name, 128, "object.%N.%P");
+      (void) u_snprintf(name, 128, "object.%N.%P", 0);
 
       // NB: O_RDWR e' necessario per mmap(MAP_SHARED)...
 

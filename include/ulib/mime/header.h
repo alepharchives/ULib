@@ -231,6 +231,19 @@ public:
       U_RETURN_STRING(location);
       }
 
+   // Refresh
+
+   UString getRefresh()
+      {
+      U_TRACE(0, "UMimeHeader::getRefresh()")
+
+      U_ASSERT(empty() == false)
+
+      UString refresh = getHeader(*USocket::str_refresh);
+
+      U_RETURN_STRING(refresh);
+      }
+
    // Mime
 
    UString getMimeVersion()
