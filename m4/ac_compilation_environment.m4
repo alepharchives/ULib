@@ -4,10 +4,19 @@ dnl AC_COMPILATION_ENVIRONMENT
 
 AC_DEFUN([AC_COMPILATION_ENVIRONMENT],[
 dnl Collect building environment
-dnl gcc_version=`${CC} -v 2>&1 | haed -n1`
+dnl gcc_version=`${CC} -v 2>&1 | head -n1`
 AC_DEFINE_UNQUOTED(GCC_VERSION, "${gcc_version}", [GNU C/C++ Compiler version])
 
-ld_version=`${LD} -V 2>&1 | head -n1`
+ld_version=`${LD} -V 2>/dev/null | head -n1 2>/dev/null`
+
+if test -z "$ld_version"; then
+	ld_version=`${LD} -v -V 2>/dev/null | head -n1 2>/dev/null`
+fi
+
+if test -z "$ld_version"; then
+	ld_version="unknown"
+fi
+
 AC_DEFINE_UNQUOTED(LD_VERSION, "${ld_version}", [LD Linker version])
 
 if test "$cross_compiling" != "yes" && test -e /lib/libc.so.6; then
@@ -28,8 +37,6 @@ else
 fi
 AC_DEFINE_UNQUOTED(LIBC_VERSION, "${libc_version}", [Standard C lib version])
 
-stdgpp_version="unknown"
-
 if test "$cross_compiling" != "yes"; then
 	if test -e /usr/lib/libstdc++.so; then
 		LS=`ls -l /usr/lib/libstdc++.so.*`
@@ -44,7 +51,11 @@ if test "$cross_compiling" != "yes"; then
 
 	if test -n "$stdgpp_dir"; then
 		stdgpp_version=`ls -l ${stdgpp_dir}/libstdc++.* 2>/dev/null | tail -n 1 | awk '{ nf=split ($NF, f, "/"); print f[[nf]] }'`
+	else
+		stdgpp_version="unknown"
 	fi
+else
+	stdgpp_version="unknown"
 fi
 AC_DEFINE_UNQUOTED(STDGPP_VERSION, "${stdgpp_version}", [Stardard GNU C++ Library version])
 ])

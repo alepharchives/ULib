@@ -18,6 +18,22 @@
 
 #include <stdlib.h>
 
+#ifdef HAVE_SCHED_H
+#  include <sched.h>
+#endif
+
+#ifndef CPU_SETSIZE
+typedef uint64 cpu_set_t;
+#  define CPU_SETSIZE                   (sizeof(cpu_set_t) * 8)
+#  define CPU_ISSET(index, cpu_set_ptr) (*(cpu_set_ptr)  &  (1ULL << (index)))
+#  define CPU_SET(index, cpu_set_ptr)   (*(cpu_set_ptr) |=  (1ULL << (index)))
+#  define CPU_ZERO(cpu_set_ptr)         (*(cpu_set_ptr)  = 0)
+#  define CPU_CLR(index, cpu_set_ptr)   (*(cpu_set_ptr) &= ~(1ULL << (index)))
+#  define CPUSET_BITS(set) (set)
+#else
+#  define CPUSET_BITS(set) ((set)->__bits)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -198,9 +214,13 @@ extern U_EXPORT bool u_validate_email_address(const char* restrict address, uint
 
 extern U_EXPORT int u_strnatcmp(char const* restrict a, char const* restrict b) __pure;
 
-/* get the number of the processors including offline CPUs */
+/* Get the number of the processors including offline CPUs */
 
 extern U_EXPORT int u_get_num_cpu(void);
+
+/* Pin the process to a particular core */
+
+extern U_EXPORT void u_bind2cpu(pid_t pid, int n);
 
 /** -------------------------------------------------------------------------------
 // Canonicalize PATH, and build a new path. The new path differs from PATH in that:

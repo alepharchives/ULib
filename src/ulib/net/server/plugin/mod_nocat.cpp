@@ -1369,6 +1369,7 @@ int UNoCatPlugIn::handlerRequest()
        init_cmd.empty() == false)
       {
       Url url;
+      bool refresh = false;
       UModNoCatPeer* peer = 0;
       UString host(U_HTTP_HOST_TO_PARAM), buffer(U_CAPACITY), ip_client = UHTTP::getRemoteIP();
 
@@ -1492,7 +1493,7 @@ int UNoCatPlugIn::handlerRequest()
 
       U_INTERNAL_DUMP("index_AUTH = %u", index_AUTH)
 
-      // U_INTERNAL_ASSERT_DIFFERS(index_AUTH, U_NOT_FOUND)
+   // U_INTERNAL_ASSERT_DIFFERS(index_AUTH, U_NOT_FOUND)
 
       if (index_AUTH >= vauth_ip.size()) index_AUTH = 0;
 
@@ -1556,26 +1557,29 @@ int UNoCatPlugIn::handlerRequest()
 
          U_INTERNAL_DUMP("mode = %.*S", U_STRING_TO_TRACE(mode))
 
-         // OK: go to the destination...
+         // OK: go to the destination (with Location: ...)
 
          goto redirect;
          }
 
-      U_SRV_LOG("Missing ticket from peer %.*S", U_STRING_TO_TRACE(ip_client));
+      if (U_http_version == '1' &&
+          host           == gateway)
+         {
+         U_SRV_LOG("Missing ticket from peer %.*S", U_STRING_TO_TRACE(ip_client));
+         }
 
 set_redirection_url:
-
       buffer.snprintf("http://%.*s%.*s", U_STRING_TO_TRACE(host), U_HTTP_URI_TO_TRACE);
 
 set_redirect_to_AUTH:
-
       if (peer == 0) peer = creatNewPeer(ip_client);
 
       setRedirectLocation(peer, buffer, url);
 
-redirect: // redirect to AUTH
+      refresh = true;
 
-      UHTTP::setHTTPRedirectResponse(true, UString::getStringNull(), U_STRING_TO_PARAM(location));
+redirect:
+      UHTTP::setHTTPRedirectResponse(refresh, UString::getStringNull(), U_STRING_TO_PARAM(location));
 
 end:
       UHTTP::setHTTPRequestProcessed();

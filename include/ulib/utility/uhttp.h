@@ -479,7 +479,7 @@ public:
    static UString* scgi_uri_mask;
    static UCommand* pcmd;
 
-   static bool    isGenCGIRequest();
+   static bool    isGenCGIRequest() __pure;
    static bool    processCGIOutput();
    static UString getCGIEnvironment();
    static bool    processCGIRequest(UCommand* pcmd, UString* penvironment, bool async, bool process_output);

@@ -1469,6 +1469,9 @@ void UServer_Base::run()
 
       int pid, status, nkids = 0;
       UTimeVal to_sleep(0L, 500 * 1000L);
+      bool baffinity = (preforked_num_kids <= u_get_num_cpu());
+
+      U_INTERNAL_DUMP("baffinity = %b", baffinity)
 
       while (flag_loop)
          {
@@ -1477,11 +1480,25 @@ void UServer_Base::run()
             if (proc->fork() &&
                 proc->parent())
                {
+               pid = proc->pid();
+
+               cpu_set_t cpuset;
+
+               if (baffinity) u_bind2cpu(pid, nkids); // Pin the process to a particular core...
+
+               CPU_ZERO(&cpuset);
+
+#           ifdef HAVE_SCHED_GETAFFINITY
+               (void) U_SYSCALL(sched_getaffinity, "%d,%d,%p", pid, sizeof(cpuset), &cpuset);
+#           endif
+
+               U_INTERNAL_DUMP("cpuset = %ld %B", CPUSET_BITS(&cpuset)[0], CPUSET_BITS(&cpuset)[0])
+
                ++nkids;
 
                U_INTERNAL_DUMP("up to %u children", nkids)
 
-               U_SRV_LOG("started new child (pid %d), up to %u children", proc->pid(), nkids);
+               U_SRV_LOG("started new child (pid %d), up to %u children, affinity mask: %x", proc->pid(), nkids, CPUSET_BITS(&cpuset)[0]);
 
                U_INTERNAL_DUMP("UNotifier::num_connection = %d tot_connection = %d", UNotifier::num_connection, U_TOT_CONNECTION)
                }

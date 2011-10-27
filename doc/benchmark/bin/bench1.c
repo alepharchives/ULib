@@ -379,6 +379,7 @@ TO   = (argv[5]?atoi(argv[5]):1000);
 #endif
          // get the information we need from ab.txt
 			sprintf(buff, "%s/ab.txt", IP);
+			sync();
          if(!(f = fopen(buff, "rb")))
          {
             printf("Can't open ab.txt output\n");

@@ -442,14 +442,17 @@ static inline bool scan_was_ok(int sret, char nextc, const char* ok_next_chars) 
 
 int u_get_num_cpu(void)
 {
-   int n = -1;
+   static int n;
 
    U_INTERNAL_TRACE("u_get_num_cpu()")
 
+   if (n) goto end;
+
 #ifdef _SC_NPROCESSORS_ONLN
    n = sysconf(_SC_NPROCESSORS_ONLN);
+#elif defined(_SC_NPROCESSORS_CONF)
+   n = sysconf(_SC_NPROCESSORS_CONF);
 #else
-   {
    char buf[128];
    FILE* fp = fopen("/sys/devices/system/cpu/present", "r");
 
@@ -520,11 +523,33 @@ int u_get_num_cpu(void)
 
       (void) fclose(fp);
       }
-   }
-end:
 #endif
 
+end:
    return n;
+}
+
+/* Pin the process to a particular core */
+
+void u_bind2cpu(pid_t pid, int n)
+{
+   U_INTERNAL_TRACE("u_bind2cpu(%d,%d)", pid, n)
+
+   /* CPU mask of CPUs available to this process,
+    * conceptually, each bit represents a logical CPU, ie:
+    *
+    * mask = 3  (11b):   cpu0, 1
+    * mask = 13 (1101b): cpu0, 2, 3
+    */
+   cpu_set_t cpuset;
+
+   CPU_ZERO(&cpuset);
+
+   CPU_SET(n, &cpuset);
+
+#ifdef HAVE_SCHED_GETAFFINITY
+   (void) sched_setaffinity(pid, sizeof(cpuset), &cpuset);
+#endif
 }
 
 __pure bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len)

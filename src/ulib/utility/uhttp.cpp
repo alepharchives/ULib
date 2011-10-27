@@ -668,17 +668,20 @@ void UHTTP::ctor()
 
    cache_file->allocate(6151U);
 
-// u_setPfnMatch(U_FNMATCH, FNM_INVERT);
+   if (U_STRNEQ(cache_file_mask->data(), "_off_") == false)
+      {
+   // u_setPfnMatch(U_FNMATCH, FNM_INVERT);
 
-   (void) UServices::setFtw(0); // U_CONSTANT_TO_PARAM("[cu]sp"));
+      (void) UServices::setFtw(0); // U_CONSTANT_TO_PARAM("[cu]sp"));
 
-   u_ftw_ctx.call              = checkFileForCache;
-   u_ftw_ctx.sort_by           = u_ftw_ino_cmp;
-   u_ftw_ctx.call_if_directory = true;
+      u_ftw_ctx.call              = checkFileForCache;
+      u_ftw_ctx.sort_by           = u_ftw_ino_cmp;
+      u_ftw_ctx.call_if_directory = true;
 
-   u_ftw();
+      u_ftw();
 
-   u_buffer_len = 0;
+      u_buffer_len = 0;
+      }
 
    if (virtual_host == false)
       {
@@ -3012,7 +3015,7 @@ void UHTTP::setHTTPRedirectResponse(bool refresh, UString& ext, const char* ptr_
                  msg.data());
 
    (void) tmp.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\n"));
-   (void) tmp.append(refresh ? "Refresh: 0; url=" : "Location: ");
+   (void) tmp.append(refresh ? "Refresh: 1; url=" : "Location: ");
    (void) tmp.append(ptr_location, len_location);
    (void) tmp.append(U_CONSTANT_TO_PARAM("\r\n"));
 
@@ -3527,7 +3530,7 @@ __pure bool UHTTP::isTSARequest()
    U_RETURN(result);
 }
 
-bool UHTTP::isGenCGIRequest() // FCGI or SCGI request...
+__pure bool UHTTP::isGenCGIRequest() // FCGI or SCGI request...
 {
    U_TRACE(0, "UHTTP::isGenCGIRequest()")
 

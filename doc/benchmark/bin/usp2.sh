@@ -36,7 +36,7 @@ sleep 60
 ./bench2_NO_keepalive $HOST "/1000.html" 8080 0 1000 lt-userver_tcp
 mv $1/test.txt	WEIGHTTP/$1/userver_tcp_1000_NO_keepalive.csv
 sleep 60
-./bench2_keepalive	.$HOST "/1000.html" 8080 0 1000 lt-userver_tcp
+./bench2_keepalive	$HOST "/1000.html" 8080 0 1000 lt-userver_tcp
 mv $1/test.txt	WEIGHTTP/$1/userver_tcp_1000_keepalive.csv
 
 sleep 60

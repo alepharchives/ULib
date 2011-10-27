@@ -25472,7 +25472,7 @@ $as_echo "#define HAVE_SYS_WAIT_H 1" >>confdefs.h
 fi
 
 for ac_header in assert.h byteswap.h endian.h execinfo.h ndir.h string.h netpacket/packet.h sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h \
-						semaphore.h sysexits.h termios.h streambuf.h linux/netfilter_ipv4/ipt_ACCOUNT.h
+						sched.h semaphore.h sysexits.h termios.h streambuf.h linux/netfilter_ipv4/ipt_ACCOUNT.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_cxx_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -26278,7 +26278,7 @@ fi
 
 # Check for functions in one big call, to reduce the size of configure
 for ac_func in accept4 clock_gettime daemon epoll_create1 epoll_wait fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem \
-					 mremap pread sendfile64 strndup mkdtemp strptime strtof strtoull strtold gmtime_r timegm strerror strsignal
+					 mremap pread sendfile64 strndup mkdtemp strptime strtof strtoull strtold gmtime_r timegm strerror strsignal sched_getaffinity
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_cxx_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -27458,7 +27458,16 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-ld_version=`${LD} -V 2>&1 | head -n1`
+ld_version=`${LD} -V 2>/dev/null | head -n1 2>/dev/null`
+
+if test -z "$ld_version"; then
+	ld_version=`${LD} -v -V 2>/dev/null | head -n1 2>/dev/null`
+fi
+
+if test -z "$ld_version"; then
+	ld_version="unknown"
+fi
+
 
 cat >>confdefs.h <<_ACEOF
 #define LD_VERSION "${ld_version}"
@@ -27486,8 +27495,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-stdgpp_version="unknown"
-
 if test "$cross_compiling" != "yes"; then
 	if test -e /usr/lib/libstdc++.so; then
 		LS=`ls -l /usr/lib/libstdc++.so.*`
@@ -27502,7 +27509,11 @@ if test "$cross_compiling" != "yes"; then
 
 	if test -n "$stdgpp_dir"; then
 		stdgpp_version=`ls -l ${stdgpp_dir}/libstdc++.* 2>/dev/null | tail -n 1 | awk '{ nf=split ($NF, f, "/"); print f[nf] }'`
+	else
+		stdgpp_version="unknown"
 	fi
+else
+	stdgpp_version="unknown"
 fi
 
 cat >>confdefs.h <<_ACEOF

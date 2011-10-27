@@ -1824,6 +1824,8 @@ U_EXPORT main (int argc, char* argv[])
                                U_STRING_FROM_CONSTANT("$3/$2/$1"),
                                U_STRING_FROM_CONSTANT("2003/04/15"));
 
+   // cout << z << "\n";
+
    U_ASSERT( z == U_STRING_FROM_CONSTANT("15/04/2003") )
 
    // date (YYYY/MM/DD) <-- (DD/MM/YYYY)

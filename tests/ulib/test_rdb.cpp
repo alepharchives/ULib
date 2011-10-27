@@ -202,10 +202,10 @@ U_EXPORT main(int argc, char* argv[])
       if (x.open(name, size))
          {
          value = x[key1];
-         U_ASSERT( value == U_STRING_FROM_CONSTANT("Hello") )
+         U_ASSERT( value == U_STRING_FROM_CONSTANT("Another") )
 
          value = x[key2];
-         U_ASSERT( value == U_STRING_FROM_CONSTANT("Another") )
+         U_ASSERT( value == U_STRING_FROM_CONSTANT("Hello") )
 
          U_ASSERT( x[U_STRING_FROM_CONSTANT(LKEY)] == U_STRING_FROM_CONSTANT(LDATA) )
 

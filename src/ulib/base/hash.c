@@ -14,6 +14,11 @@
 #include <ulib/base/hash.h>
 #include <ulib/base/utility.h>
 
+union uuintchar {
+   uint32_t i;
+   unsigned char d[4];
+};
+
 /* Quick 4byte hashing function
 
 References: http://mia.ece.uic.edu/cgi-bin/lxr/http/ident?v=ipband-0.7.2;i=makehash
@@ -28,8 +33,8 @@ used as a quick, dirty, portable and open source random number generator that ge
 uint32_t __pure u_random(uint32_t a)
 {
    /* Random sequence table - source of random numbers.
-      The random() routine 'amplifies' this 2**8 long sequence into a 2**32 long sequence.
-   */
+    * The random() routine 'amplifies' this 2**8 long sequence into a 2**32 long sequence.
+    */
 
    static const unsigned char rseq[259] = {
     79, 181,  35, 147,  68, 177,  63, 134, 103,   0,  34,  88,  69, 221, 231,  13,
@@ -49,11 +54,6 @@ uint32_t __pure u_random(uint32_t a)
    111, 124,  33, 193,  76, 121, 125, 158, 185, 245,  16, 206,  71,  45,  20, 179,
     32,  38, 241,  80,  85, 243,  11, 217,  61,  17,  78, 172, 156, 183, 104, 164,
     79, 181,  35 };
-
-   union uuintchar {
-      uint32_t i;
-      unsigned char d[4];
-   };
 
    int i = 0;
    union uuintchar u = { 0U };
@@ -109,13 +109,17 @@ uint32_t u_foldkey(unsigned char* k, uint32_t length)
 References: http://burtleburtle.net/bob/hash/doobs.html
 --------------------------------------------------------------------
 mix -- mix 3 32-bit values reversibly.
+
 For every delta with one or two bits set, and the deltas of all three
   high bits or all three low bits, whether the original value of a,b,c
   is almost all zero or is uniformly distributed,
+
 * If mix() is run forward or backward, at least 32 bits in a,b,c
   have at least 1/4 probability of changing.
+
 * If mix() is run forward, every bit of c will change between 1/3 and
   2/3 of the time.  (Well, 22/100 and 78/100 for some 2-bit deltas.)
+
 mix() was built out of 36 single-cycle latency instructions in a 
   structure that could supported 2x parallelism, like so:
       a -= b; 
@@ -125,11 +129,11 @@ mix() was built out of 36 single-cycle latency instructions in a
       c -= a; b ^= x;
       c -= b; x = (b>>13);
       ...
-  Unfortunately, superscalar Pentiums and Sparcs can't take advantage 
-  of that parallelism.  They've also turned some of those single-cycle
-  latency instructions into multi-cycle latency instructions.  Still,
-  this is the fastest good hash I could find.  There were about 2^^68
-  to choose from.  I only looked at a billion or so.
+Unfortunately, superscalar Pentiums and Sparcs can't take advantage 
+of that parallelism.  They've also turned some of those single-cycle
+latency instructions into multi-cycle latency instructions.  Still,
+this is the fastest good hash I could find.  There were about 2^^68
+to choose from.  I only looked at a billion or so.
 --------------------------------------------------------------------
 
 #define mix(a,b,c) \
@@ -146,10 +150,12 @@ mix() was built out of 36 single-cycle latency instructions in a
 }
 
 --------------------------------------------------------------------
-u_hash() -- hash a variable-length key into a 32-bit value
+hash a variable-length key into a 32-bit value
+
   k       : the key (the unaligned variable-length array of bytes)
   len     : the length of the key, counting by bytes
   initval : can be any 4-byte value
+
 Returns a 32-bit value.  Every bit of the key affects every bit of
 the return value.  Every 1-bit and 2-bit delta achieves avalanche.
 About 6*len+35 instructions.
@@ -157,10 +163,13 @@ About 6*len+35 instructions.
 The best hash table sizes are powers of 2.  There is no need to do
 mod a prime (mod is sooo slow!).  If you need less than 32 bits,
 use a bitmask.  For example, if you need only 10 bits, do
+
   h = (h & hashmask(10));
+
 In which case, the hash table should have hashsize(10) elements.
 
 If you are hashing n strings (ub1 **)k, do it like this:
+
   for (i=0, h=0; i<n; ++i) h = hash( k[i], len[i], h);
 
 By Bob Jenkins, 1996.  bob_jenkins@burtleburtle.net.  You may use this
@@ -203,7 +212,7 @@ uint32_t u_hash(unsigned char* k, uint32_t length, bool ignore_case)
       //------------------------------------- handle the last 11 bytes
       c += length;
 
-      switch (len)              // all the case statements fall through
+      switch (len) // all the case statements fall through
          {
          case 11: c += ((uint32_t)u_tolower(k[10])<<24);
          case 10: c += ((uint32_t)u_tolower(k[9])<<16);
@@ -234,7 +243,7 @@ uint32_t u_hash(unsigned char* k, uint32_t length, bool ignore_case)
       //------------------------------------- handle the last 11 bytes
       c += length;
 
-      switch (len)              // all the case statements fall through
+      switch (len) // all the case statements fall through
          {
          case 11: c += ((uint32_t)(k[10])<<24);
          case 10: c += ((uint32_t)(k[9])<<16);
@@ -317,7 +326,6 @@ uint32_t u_hash(unsigned char* t, uint32_t tlen, bool ignore_case)
  *      http://www.isthe.com/chongo/
  *
  * Share and Enjoy! :-)
-*/
 
 #define FNV_32_INIT  ((uint32_t)0x811c9dc5)
 #define FNV_64_INIT  ((uint64_t)0xcbf29ce484222325ULL)
@@ -328,21 +336,21 @@ uint32_t u_hash(unsigned char* t, uint32_t tlen, bool ignore_case)
 uint32_t __pure u_hash(unsigned char* restrict bp, uint32_t len, bool ignore_case)
 {
    uint32_t hval              = FNV_32_INIT;
-   unsigned char* restrict be = bp + len; /* beyond end of buffer */
+   unsigned char* restrict be = bp + len; // beyond end of buffer
 
    U_INTERNAL_TRACE("u_hash(%.*s,%u)", U_min(len,128), bp, len)
 
-   /* FNV-1 hash each octet of the buffer */
+   // FNV-1 hash each octet of the buffer
 
    if (ignore_case)
       {
       while (bp < be)
          {
-         /* xor the bottom with the current octet */
+         // xor the bottom with the current octet
 
          hval ^= (uint32_t) u_tolower(*bp++);
 
-         /* multiply by the 32 bit FNV magic prime mod 2^32 */
+         // multiply by the 32 bit FNV magic prime mod 2^32
 
 #     ifdef NO_FNV_GCC_OPTIMIZATION
          hval *= FNV_32_PRIME;
@@ -355,11 +363,11 @@ uint32_t __pure u_hash(unsigned char* restrict bp, uint32_t len, bool ignore_cas
       {
       while (bp < be)
          {
-         /* xor the bottom with the current octet */
+         // xor the bottom with the current octet
 
          hval ^= (uint32_t) *bp++;
 
-         /* multiply by the 32 bit FNV magic prime mod 2^32 */
+         // multiply by the 32 bit FNV magic prime mod 2^32
 
 #     ifdef NO_FNV_GCC_OPTIMIZATION
          hval *= FNV_32_PRIME;
@@ -369,10 +377,9 @@ uint32_t __pure u_hash(unsigned char* restrict bp, uint32_t len, bool ignore_cas
          }
       }
 
-   return hval; /* return our new hash value */
+   return hval; // return our new hash value
 }
 
-/*
 uint64_t u_hash64(unsigned char* bp, uint32_t len)
 {
    uint64_t hval     = FNV_64_INIT;
@@ -398,6 +405,91 @@ uint64_t u_hash64(unsigned char* bp, uint32_t len)
    return hval; // return our new hash value
 }
 */
+
+/* MurmurHash3 was written by Austin Appleby */
+
+static inline uint32_t rotl32(uint32_t x, int8_t r) { return (x << r) | (x >> (32 - r)); }
+
+uint32_t __pure u_hash(unsigned char* restrict bp, uint32_t len, bool ignore_case)
+{
+   const int nblocks   = len / 4;
+   int i               = -nblocks;
+   const uint8_t* data = (const uint8_t*)bp;
+
+   uint32_t k1;
+   uint32_t h1 = 0xc86b14f7; /* seed */
+   uint32_t c1 = 0xcc9e2d51;
+   uint32_t c2 = 0x1b873593;
+
+   /* body */
+
+   const uint32_t* blocks = (const uint32_t*)(data + nblocks*4);
+   const uint8_t*  tail   = (const uint8_t*) (data + nblocks*4);
+
+   U_INTERNAL_TRACE("u_hash(%.*s,%u,%d)", U_min(len,128), bp, len, ignore_case)
+
+   if (ignore_case)
+      {
+      union uuintchar u;
+
+      for (; i; ++i)
+         {
+         u.i    = blocks[i];
+         u.d[0] = u_tolower(u.d[0]);
+         u.d[1] = u_tolower(u.d[1]);
+         u.d[2] = u_tolower(u.d[2]);
+         u.d[3] = u_tolower(u.d[3]);
+         k1     = u.i;
+
+         k1 *= c1;
+         k1  = rotl32(k1,15);
+         k1 *= c2;
+
+         h1 ^= k1;
+         h1  = rotl32(h1,13);
+         h1  = h1*5+0xe6546b64;
+         }
+      }
+   else
+      {
+      for (; i; ++i)
+         {
+         k1  = blocks[i];
+
+         k1 *= c1;
+         k1  = rotl32(k1,15);
+         k1 *= c2;
+
+         h1 ^= k1;
+         h1  = rotl32(h1,13);
+         h1  = h1*5+0xe6546b64;
+         }
+      }
+
+   /* tail */
+
+   k1 = 0;
+
+   switch (len & 3)
+      {
+      case 3: k1 ^= tail[2] << 16;
+      case 2: k1 ^= tail[1] <<  8;
+      case 1: k1 ^= tail[0];
+              k1 *= c1; k1 = rotl32(k1,15); k1 *= c2; h1 ^= k1;
+      }
+
+   /* finalization */
+
+   h1 ^= len;
+
+   h1 ^= h1 >> 16;
+   h1 *= 0x85ebca6b;
+   h1 ^= h1 >> 13;
+   h1 *= 0xc2b2ae35;
+   h1 ^= h1 >> 16;
+
+   return h1;
+}
 
 #ifdef HAVE_ARCH64
 

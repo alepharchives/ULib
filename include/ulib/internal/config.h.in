@@ -511,6 +511,9 @@ typedef unsigned long long uint64;
 /* reentrant readdir */
 #undef HAVE_READDIR_R
 
+/* Define to 1 if you have the `sched_getaffinity' function. */
+#undef HAVE_SCHED_GETAFFINITY
+
 /* Define to 1 if you have the `sched_getscheduler' function. */
 #undef HAVE_SCHED_GETSCHEDULER
 
