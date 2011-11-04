@@ -399,7 +399,7 @@ bool UDBIRow::fetch(int pos, struct tm& value)
          {
          char const* d = U_SYSCALL(dbi_result_get_string_idx, "%p,%d", res, pos);
 
-         (void) UDate::getSecondFromTime(d, false, "%d-%d-%d %d:%d:%d", &value);
+         (void) UTimeDate::getSecondFromTime(d, false, "%d-%d-%d %d:%d:%d", &value);
          }
       break;
 

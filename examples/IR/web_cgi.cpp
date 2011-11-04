@@ -155,7 +155,7 @@ public:
 
       char buffer[20];
 
-      UObjectIO::os->write(buffer, u_snprintf(buffer, sizeof(buffer), "%S", TIME));
+      UObjectIO::os->write(buffer, u_sn_printf(buffer, sizeof(buffer), "%S", TIME));
 
       *UObjectIO::os << '\n'
                      << "FOR_PAGE                     " << FOR_PAGE      << '\n'

@@ -330,7 +330,7 @@ int USocketExt::vsyncCommandToken(USocket* s, UString& buffer, const char* forma
    static uint32_t cmd_count;
 
    char token[32];
-   uint32_t token_len = u_snprintf(token, sizeof(token), "U%04u ", cmd_count++);
+   uint32_t token_len = u_sn_printf(token, sizeof(token), "U%04u ", cmd_count++);
 
    U_INTERNAL_DUMP("token = %.*S", token_len, token)
 
@@ -550,7 +550,7 @@ UString USocketExt::getMacAddress(int fd, const char* device_or_ip)
    UString result(100U);
 
 #ifndef __MINGW32__
-   if (u_isIPv4Addr(device_or_ip, u_strlen(device_or_ip)))
+   if (u_isIPv4Addr(device_or_ip, u_str_len(device_or_ip)))
       {
       FILE* arp = (FILE*) U_SYSCALL(fopen, "%S,%S", "/proc/net/arp", "r");
 

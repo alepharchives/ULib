@@ -257,7 +257,7 @@ bool UFileConfig::loadVector(UVector<UString>& vec, const char* name)
 
    U_INTERNAL_DUMP("_start = %.*S", 10, _start)
 
-   uint32_t len = (name ? u_strlen(name) : 0);
+   uint32_t len = (name ? u_str_len(name) : 0);
 
    if (len)
       {

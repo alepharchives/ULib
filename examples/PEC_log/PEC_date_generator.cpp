@@ -37,7 +37,7 @@ public:
       if (cfg_from.empty() ||
             cfg_to.empty()) U_ERROR("parameters <from> and <to> are mandatory...");
 
-      UDate from(cfg_from.c_str()),
+      UTimeDate from(cfg_from.c_str()),
               to(cfg_to.c_str());
 
       if (from.isValid() == false) U_ERROR("starting date <%s> not valid...", cfg_from.data());

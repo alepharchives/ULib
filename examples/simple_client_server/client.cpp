@@ -148,11 +148,11 @@ public:
          {
          flag_log = true;
 
-         u_init_hostname();
+         u_init_ulib_hostname();
 
          U_INTERNAL_DUMP("u_hostname(%u) = %.*S", u_hostname_len, u_hostname_len, u_hostname)
 
-         u_init_username();
+         u_init_ulib_username();
 
          ulog->setClient();
          }

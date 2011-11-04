@@ -222,7 +222,7 @@ time_t UCrl::getIssueTime(X509_CRL* _crl)
 
    ASN1_UTCTIME* utctime = X509_CRL_get_lastUpdate(_crl);
 
-   time_t result = UDate::getSecondFromTime((const char*)utctime->data, true, "%2u%2u%2u%2u%2u%2uZ"); // 100212124550Z
+   time_t result = UTimeDate::getSecondFromTime((const char*)utctime->data, true, "%2u%2u%2u%2u%2u%2uZ"); // 100212124550Z
 
    U_RETURN(result);
 }

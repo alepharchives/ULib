@@ -65,12 +65,12 @@ extern U_EXPORT void* memmem(const void* restrict haystack, size_t haystacklen, 
 #endif
 
 #ifdef DEBUG
-extern U_EXPORT size_t u_strlen(const char* restrict s);
+extern U_EXPORT size_t u_str_len(const char* restrict s);
 extern U_EXPORT char*  u_strcpy( char* restrict dest, const char* restrict src);
 extern U_EXPORT void*  u_memcpy( void* restrict dest, const void* restrict src, size_t n);
 extern U_EXPORT char*  u_strncpy(char* restrict dest, const char* restrict src, size_t n);
 #else
-#  define u_strlen(s)           strlen((s))
+#  define u_str_len(s)          strlen((s))
 #  define u_strcpy(dest,src)    strcpy( (dest),(src))
 #  define u_memcpy(dest,src,n)  memcpy( (dest),(src),(n))
 #  define u_strncpy(dest,src,n) strncpy((dest),(src),(n))

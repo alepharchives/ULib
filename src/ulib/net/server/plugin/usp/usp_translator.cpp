@@ -192,7 +192,7 @@ public:
                       U_STRING_TO_TRACE(output));
 
 
-      buffer.snprintf("%.*s.cpp", u_strlen(filename) - 4, filename);
+      buffer.snprintf("%.*s.cpp", u_str_len(filename) - 4, filename);
 
       (void) UFile::writeTo(buffer, result);
       }

@@ -77,7 +77,7 @@ public:
       {
       U_TRACE(0, "UCURL::setURL(%S)", url)
 
-      U_INTERNAL_ASSERT(u_isURL(url, u_strlen(url)))
+      U_INTERNAL_ASSERT(u_isURL(url, u_str_len(url)))
 
       setOption(CURLOPT_URL, (long)url);
       }
@@ -204,7 +204,7 @@ public:
                               &formPost, &formLast,
                               CURLFORM_COPYNAME, key,
                               CURLFORM_COPYCONTENTS, value,
-                              CURLFORM_CONTENTSLENGTH, u_strlen(value),
+                              CURLFORM_CONTENTSLENGTH, u_str_len(value),
                               CURLFORM_END);
 
       U_INTERNAL_ASSERT_EQUALS(res,CURL_FORMADD_OK)

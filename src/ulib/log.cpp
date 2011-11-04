@@ -230,7 +230,7 @@ void ULog::log(const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-   if (prefix) iov[0].iov_len  = u_snprintf( buffer,                  sizeof(buffer),                  prefix, 0);
+   if (prefix) iov[0].iov_len  = u_sn_printf( buffer,                 sizeof(buffer),                  prefix, 0);
                iov[0].iov_len += u_vsnprintf(buffer + iov[0].iov_len, sizeof(buffer) - iov[0].iov_len, format, argp); 
 
    va_end(argp);
@@ -317,7 +317,7 @@ void ULog::backup()
 
    if (dir_log_gz)
       {
-      uint32_t len = u_strlen(dir_log_gz);
+      uint32_t len = u_str_len(dir_log_gz);
 
       (void) U_SYSCALL(u_memcpy, "%p,%p,%u", path, dir_log_gz, len);
 
@@ -331,7 +331,7 @@ void ULog::backup()
       lock->lock();
       }
 
-   (void) UFile::setPathFromFile(*pthis, path, suffix, u_snprintf(suffix, sizeof(suffix), ".%6D.gz"));
+   (void) UFile::setPathFromFile(*pthis, path, suffix, u_sn_printf(suffix, sizeof(suffix), ".%6D.gz"));
 
    U_ASSERT_EQUALS(UFile::access(buffer_path, R_OK | W_OK), false)
 
@@ -392,12 +392,12 @@ const char* ULog::dump(bool _reset) const
 
    char buffer[1024];
 
-   if (fmt) UObjectIO::os->write(buffer, u_snprintf(buffer, 1024, "%.*s", u_strlen(fmt), fmt));
+   if (fmt) UObjectIO::os->write(buffer, u_sn_printf(buffer, 1024, "%.*s", u_str_len(fmt), fmt));
 
    *UObjectIO::os << "\"\n"
                   << "prefix                    ";
 
-   if (prefix) UObjectIO::os->write(buffer, u_snprintf(buffer, 1024, "%.*S", u_strlen(prefix), prefix));
+   if (prefix) UObjectIO::os->write(buffer, u_sn_printf(buffer, 1024, "%.*S", u_str_len(prefix), prefix));
 
    *UObjectIO::os << '\n'
                   << "bsyslog                   " << bsyslog                    << '\n'

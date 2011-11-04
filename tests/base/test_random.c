@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
    uint32_t hash1, hash2, hash3;
 #endif
 
-   u_init(argv);
+   u_init_ulib(argv);
 
 #ifdef DEBUG
    hash1 = u_hash((unsigned char*)U_CONSTANT_TO_PARAM("Set-Cookie2"), false),

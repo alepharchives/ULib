@@ -513,9 +513,9 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                    *                nested include files, this is not then URL for the current document.
                    */
 
-                       if (value == *str_DATE_GMT)      x = UDate::strftime(timefmt.data(), u_now->tv_sec);
-                  else if (value == *str_DATE_LOCAL)    x = UDate::strftime(timefmt.data(), u_now->tv_sec + u_now_adjust);
-                  else if (value == *str_LAST_MODIFIED) x = UDate::strftime(timefmt.data(), last_modified);
+                       if (value == *str_DATE_GMT)      x = UTimeDate::strftime(timefmt.data(), u_now->tv_sec);
+                  else if (value == *str_DATE_LOCAL)    x = UTimeDate::strftime(timefmt.data(), u_now->tv_sec + u_now_adjust);
+                  else if (value == *str_LAST_MODIFIED) x = UTimeDate::strftime(timefmt.data(), last_modified);
                   else if (value == *str_USER_NAME)     (void) x.assign(u_user_name, u_user_name_len);
                   else if (value == *str_DOCUMENT_URI)  (void) x.assign(U_HTTP_URI_TO_PARAM);
                   else if (value == *str_DOCUMENT_NAME) x = docname;
@@ -588,7 +588,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                  if (bfile == false)  (void) output.append(errmsg);
             else if (op == SSI_FSIZE) (void) output.append(UStringExt::numberToString(UHTTP::file->getSize(), use_size_abbrev));
-            else                      (void) output.append(UDate::strftime(timefmt.data(), UHTTP::file->st_mtime)); // SSI_FLASTMOD
+            else                      (void) output.append(UTimeDate::strftime(timefmt.data(), UHTTP::file->st_mtime)); // SSI_FLASTMOD
             }
          break;
 

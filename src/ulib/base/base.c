@@ -182,23 +182,23 @@ void u_setPid(void)
    u_pid_str_len = buffer + sizeof(buffer) - u_pid_str;
 }
 
-void u_init_username(void)
+void u_init_ulib_username(void)
 {
    struct passwd* restrict pw;
 
-   U_INTERNAL_TRACE("u_init_username()")
+   U_INTERNAL_TRACE("u_init_ulib_username()")
 
    pw = getpwuid(getuid());
 
-   if (pw) u_user_name_len = u_strlen(pw->pw_name);
+   if (pw) u_user_name_len = u_str_len(pw->pw_name);
 
    if (u_user_name_len) (void) u_memcpy(u_user_name, pw->pw_name,  u_user_name_len);
    else                 (void) u_memcpy(u_user_name,      "root", (u_user_name_len = 4));
 }
 
-void u_init_hostname(void)
+void u_init_ulib_hostname(void)
 {
-   U_INTERNAL_TRACE("u_init_hostname()")
+   U_INTERNAL_TRACE("u_init_ulib_hostname()")
 
    if (gethostname(u_hostname, sizeof(u_hostname)))
       {
@@ -226,7 +226,7 @@ void u_init_hostname(void)
          }
       }
 
-   u_hostname_len = u_strlen(u_hostname);
+   u_hostname_len = u_str_len(u_hostname);
 
    if (u_hostname_len == 0) (void) strncpy(u_hostname, "localhost", (u_hostname_len = 9));
 }
@@ -241,7 +241,7 @@ void u_getcwd(void) /* get current working directory */
    (void) u_strcpy(u_cwd, u_slashify(u_cwd, PATH_SEPARATOR, '/'));
 #endif
 
-   u_cwd_len = u_strlen(u_cwd);
+   u_cwd_len = u_str_len(u_cwd);
 
    U_INTERNAL_ASSERT_MAJOR(u_cwd_len,0)
    U_INTERNAL_ASSERT_MINOR(u_cwd_len,U_PATH_MAX)
@@ -304,13 +304,13 @@ void u_gettimeofday(void)
       }
 }
 
-void u_init(char** restrict argv)
+void u_init_ulib(char** restrict argv)
 {
 #ifndef __MINGW32__
    const char* restrict pwd;
 #endif
 
-   U_INTERNAL_TRACE("u_init()")
+   U_INTERNAL_TRACE("u_init_ulib()")
 
    u_setPid();
 
@@ -319,10 +319,10 @@ void u_init(char** restrict argv)
 
    U_INTERNAL_ASSERT_POINTER(u_progname)
 
-   u_progname_len = u_strlen(u_progname);
+   u_progname_len = u_str_len(u_progname);
 
 #ifdef __MINGW32__
-   u_init_mingw();
+   u_init_ulib_mingw();
 #endif
 
    u_getcwd(); /* get current working directory */
@@ -344,11 +344,11 @@ void u_init(char** restrict argv)
    (void) atexit(u_exit);
 }
 
-uint32_t u_snprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...)
+uint32_t u_sn_printf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...)
 {
    uint32_t bytes_written;
 
-// U_INTERNAL_TRACE("u_snprintf(%s)", format)
+// U_INTERNAL_TRACE("u_sn_printf(%s)", format)
 
    va_list argp;
    va_start(argp, format);
@@ -722,7 +722,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
          case 'Z': /* %Z Defined by ANSI C as eliciting the time zone if available */
             {
             i = (daylight != 0);
-            n = u_strlen(tzname[i]);
+            n = u_str_len(tzname[i]);
 
             U_INTERNAL_ASSERT_MINOR(count,maxsize-n)
 
@@ -1102,7 +1102,7 @@ minus:
             U_INTERNAL_ASSERT_POINTER_MSG(cp, "CHECK THE PARAMETERS OF printf()...")
 
             sign = '\0';
-            size = (prec >= 0 ? prec : (int) u_strlen(cp));
+            size = (prec >= 0 ? prec : (int) u_str_len(cp));
 
             /* if a width from format is specified, the 0 flag for padding will be ignored... */
 
@@ -1313,7 +1313,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                (void) sprintf(bp, (const char* restrict)fmt_float, width, prec, dbl);
                }
 
-            len = u_strlen(bp);
+            len = u_str_len(bp);
 
             bp  += len;
             ret += len;
@@ -1428,7 +1428,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             if (ccp)
                {
-               len = u_strlen(ccp);
+               len = u_str_len(ccp);
 
                (void) u_memcpy(bp, ccp, len);
 
@@ -1587,7 +1587,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                (void) sprintf(tmp, "_%03lu", u_now->tv_usec / 1000L);
 
-               len = u_strlen(tmp);
+               len = u_str_len(tmp);
 
                (void) u_memcpy(bp, tmp, len);
 

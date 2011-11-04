@@ -40,7 +40,7 @@ inline char* UMimeMultipartMsg::mkboundary()
 {
    U_TRACE(0, "UMimeMultipartMsg::mkboundary()")
 
-   boundary_len = u_snprintf(boundary, sizeof(boundary), "%s--=_%u_%6D_%P", u_line_terminator, ++counter);
+   boundary_len = u_sn_printf(boundary, sizeof(boundary), "%s--=_%u_%6D_%P", u_line_terminator, ++counter);
 
    char* ptr = boundary + u_line_terminator_len + 2;
 
@@ -83,11 +83,11 @@ uint32_t UMimeMultipartMsg::message(UString& body)
 
    char _buf[64];
    uint32_t content_length = vec_part[0].size(),
-            len = u_snprintf(_buf, sizeof(_buf), "%s%s", boundary, u_line_terminator);
+            len = u_sn_printf(_buf, sizeof(_buf), "%s%s", boundary, u_line_terminator);
 
    body = vec_part.join(_buf, len);
 
-   len = u_snprintf(_buf, sizeof(_buf), "%s--%s", boundary, u_line_terminator);
+   len = u_sn_printf(_buf, sizeof(_buf), "%s--%s", boundary, u_line_terminator);
 
    (void) body.append(_buf, len);
 

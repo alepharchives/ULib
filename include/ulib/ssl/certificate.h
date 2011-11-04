@@ -394,8 +394,8 @@ public:
       Not After : Jan 25 11:54:00 2006 GMT                                                                                         
       */
 
-      bool result = (time >= UDate::getSecondFromTime(getNotBefore(), true, "%s %2d %2d:%2d:%2d %4d GMT") &&
-                     time <= UDate::getSecondFromTime(getNotAfter(),  true, "%s %2d %2d:%2d:%2d %4d GMT"));
+      bool result = (time >= UTimeDate::getSecondFromTime(getNotBefore(), true, "%s %2d %2d:%2d:%2d %4d GMT") &&
+                     time <= UTimeDate::getSecondFromTime(getNotAfter(),  true, "%s %2d %2d:%2d:%2d %4d GMT"));
 
       U_RETURN(result);
       }

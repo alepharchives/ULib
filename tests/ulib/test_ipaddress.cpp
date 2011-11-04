@@ -9,7 +9,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
-   u_init_hostname();
+   u_init_ulib_hostname();
 
    UIPAddress x;
    char address[16];

@@ -234,7 +234,7 @@ const char* UIptAccount::getNextName()
 
    rtn = (const char*)data + pos;
 
-   pos += u_strlen((char*)data + pos) + 1;
+   pos += u_str_len((char*)data + pos) + 1;
 #endif
 
    U_RETURN(rtn);

@@ -366,7 +366,7 @@ public:
 
       if (signing_time)
          {
-         UString dateTime = UDate::strftime("%Y-%m-%dT%H:%M:%SZ", 0);
+         UString dateTime = UTimeDate::strftime("%Y-%m-%dT%H:%M:%SZ", 0);
 
          signingTime.snprintf(U_XADES_SIGNING_TIME_TEMPLATE, U_STRING_TO_TRACE(dateTime));
          }
@@ -493,7 +493,7 @@ public:
             CRL             = crl.getEncoded("DER");
             CRLNumber       = crl.getNumber();
             CRLIssuerName   = crl.getIssuerForLDAP();
-            CRLIssueTime    = UDate::strftime("%Y-%m-%dT%H:%M:%SZ", crl.getIssueTime());
+            CRLIssueTime    = UTimeDate::strftime("%Y-%m-%dT%H:%M:%SZ", crl.getIssueTime());
 
             DigestValue.setEmpty();
 

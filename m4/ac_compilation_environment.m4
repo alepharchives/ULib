@@ -32,9 +32,12 @@ dnl 	 Is glibc ?
 	else
 		 libc_version="unknown"
 	fi
-else
+fi
+
+if test -z "$libc_version"; then
 	libc_version="unknown"
 fi
+
 AC_DEFINE_UNQUOTED(LIBC_VERSION, "${libc_version}", [Standard C lib version])
 
 if test "$cross_compiling" != "yes"; then
@@ -54,8 +57,11 @@ if test "$cross_compiling" != "yes"; then
 	else
 		stdgpp_version="unknown"
 	fi
-else
+fi
+
+if test -z "$stdgpp_version"; then
 	stdgpp_version="unknown"
 fi
+
 AC_DEFINE_UNQUOTED(STDGPP_VERSION, "${stdgpp_version}", [Stardard GNU C++ Library version])
 ])

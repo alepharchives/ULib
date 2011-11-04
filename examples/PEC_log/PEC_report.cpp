@@ -12,11 +12,11 @@ UApplication*      PEC_report::pthis;
 
 time_t             PEC_report::nseconds;
 uint64_t           PEC_report::bytes;
-UDate*             PEC_report::to;
-UDate*             PEC_report::fix;
-UDate*             PEC_report::from;
-UDate*             PEC_report::date;
-UDate*             PEC_report::date1;
+UTimeDate*             PEC_report::to;
+UTimeDate*             PEC_report::fix;
+UTimeDate*             PEC_report::from;
+UTimeDate*             PEC_report::date;
+UTimeDate*             PEC_report::date1;
 UFile*             PEC_report::file;
 UString*           PEC_report::title;
 UString*           PEC_report::domain;
@@ -542,7 +542,7 @@ void PEC_report::setLineIdentifier()
       if (identifier->size() == 9 &&
           ptr2[3] == ' ' &&
           ptr2[6] == ' ' &&
-          UDate::getMonth(ptr2))
+          UTimeDate::getMonth(ptr2))
          {
 /*
 Feb 24 19:42:21 PEC_Milter root [1542]: Feb 24 19:42:35 PEC_Milter root [1546]: E452BE9C.0004057A.F50FB719.D305B319.posta-certificata@postecert.it: tipo=posta-certificata (BustaTrasporto): mittente=ifinanziarie@pec.gdf.it: destinatari=attivitariunite@actaliscertymail.it (certificato): oggetto=Richiesta n.<jdz9yb_1wrjlt>: message-id=E452BE9C.0004057A.F50FB719.D305B319.posta-certificata@postecert.it: gestore=Postecom S.p.A.: tipo_ricevuta=sintetica
@@ -827,7 +827,7 @@ loop1:
       else
          {
          ptr   = line->data();
-         mese1 = UDate::getMonth(ptr);
+         mese1 = UTimeDate::getMonth(ptr);
 
          U_INTERNAL_DUMP("mese1 = %d", mese1)
 
@@ -855,7 +855,7 @@ loop2:
 
       while ((*end == '\n') && (++end < enddoc)) {}
 
-      mese2 = UDate::getMonth(end);
+      mese2 = UTimeDate::getMonth(end);
 
       U_INTERNAL_DUMP("mese2 = %d", mese2)
 
@@ -952,7 +952,7 @@ bool PEC_report::readContent()
 
          U_INTERNAL_DUMP("scan line date: %d/%s/%d - %s", day, month, year, time)
 
-         U_INTERNAL_ASSERT_EQUALS(mese1, UDate::getMonth(month))
+         U_INTERNAL_ASSERT_EQUALS(mese1, UTimeDate::getMonth(month))
 
          date->set(day, mese1, year);
 
@@ -1317,14 +1317,14 @@ void PEC_report::manageOptions()
 
    if (cfg_from.empty() == false)
       {
-      from = new UDate(cfg_from.c_str());
+      from = new UTimeDate(cfg_from.c_str());
 
       if (from->isValid() == false) U_ERROR("starting date <%s> not valid...", cfg_from.data());
       }
 
    if (cfg_to.empty() == false)
       {
-      to = new UDate(cfg_to.c_str());
+      to = new UTimeDate(cfg_to.c_str());
 
       if (to->isValid() == false) U_ERROR("ending date <%s> not valid...", cfg_to.data());
       }
@@ -1340,8 +1340,8 @@ void PEC_report::manageOptions()
 
    t                = new UTokenizer;
    file             = new UFile;
-   date             = new UDate;
-   date1            = new UDate;
+   date             = new UTimeDate;
+   date1            = new UTimeDate;
    line             = new UString;
    content          = new UString;
    last_dominio     = new UString;
@@ -1364,7 +1364,7 @@ void PEC_report::manageOptions()
       }
    else
       {
-      fix         = new UDate("01/04/2007");
+      fix         = new UTimeDate("01/04/2007");
 
       vfields     = new UString(U_CONSTANT_TO_PARAM(U_TIPO " "        // 0
                                                     U_MITTENTE " "    // 1

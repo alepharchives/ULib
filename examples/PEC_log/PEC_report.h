@@ -123,11 +123,11 @@ public:
    static int      last_field;
    static UString* last_value_field;
 
-   static UDate* to;
-   static UDate* fix;
-   static UDate* from;
-   static UDate* date;
-   static UDate* date1;
+   static UTimeDate* to;
+   static UTimeDate* fix;
+   static UTimeDate* from;
+   static UTimeDate* date;
+   static UTimeDate* date1;
    static UFile* file;
    static UTokenizer* t;
    static UString* title;
@@ -199,7 +199,7 @@ public:
       {
       U_TRACE(5, "PEC_report::getTime()")
 
-      time_t _t = UDate::getSecondFromTime(line->c_pointer(U_LINEDATA+1));
+      time_t _t = UTimeDate::getSecondFromTime(line->c_pointer(U_LINEDATA+1));
 
       U_RETURN(_t);
       }

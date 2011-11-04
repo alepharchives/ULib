@@ -48,7 +48,7 @@ static void u_do_cipher(int alg, const char* key, uint32_t keylen)
 
 int main(int argc, char** argv)
 {
-   u_init(argv);
+   u_init_ulib(argv);
 
    U_INTERNAL_TRACE("main(%d,%p)", argc, argv)
 

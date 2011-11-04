@@ -17,34 +17,34 @@ static const short monthDays[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30
 static const char* months[]    = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
 static const char* months_it[] = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" };
 
-UDate::UDate(int day, int year)
+UTimeDate::UTimeDate(int day, int year)
 {
-   U_TRACE_REGISTER_OBJECT(0, UDate, "%d,%d", day, year)
+   U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%d,%d", day, year)
 
    julian = toJulian(1,1,year) - 1 + day;
 
    fromJulian(julian);
 }
 
-UDate::UDate(int day, int month, int year)
+UTimeDate::UTimeDate(int day, int month, int year)
 {
-   U_TRACE_REGISTER_OBJECT(0, UDate, "%d,%d,%d", day, month, year)
+   U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%d,%d,%d", day, month, year)
 
    set(day, month, year);
 }
 
-__pure int UDate::getDayOfYear()
+__pure int UTimeDate::getDayOfYear()
 {
-   U_TRACE(0, "UDate::getDayOfYear()")
+   U_TRACE(0, "UTimeDate::getDayOfYear()")
 
    int y = _year - 1901;
 
    U_RETURN(getJulian() - (y * 365) - (y / 4) - 2415385); // 2415385 -> 31/12/1900
 }
 
-__pure int UDate::getMonth(const char* buf)
+__pure int UTimeDate::getMonth(const char* buf)
 {
-   U_TRACE(0, "UDate::getMonth(%S)", buf)
+   U_TRACE(0, "UTimeDate::getMonth(%S)", buf)
 
    const char* ptr;
 
@@ -72,9 +72,9 @@ __pure int UDate::getMonth(const char* buf)
    return 0;
 }
 
-bool UDate::leapYear(int y)
+bool UTimeDate::leapYear(int y)
 {
-   U_TRACE(0, "UDate::leapYear(%d)", y)
+   U_TRACE(0, "UTimeDate::leapYear(%d)", y)
 
    // 1. Every year that is divisible by four is a leap year;
    // 2. of those years, if it can be divided by 100, it is NOT a leap year, unless
@@ -87,9 +87,9 @@ bool UDate::leapYear(int y)
    U_RETURN(result);
 }
 
-__pure bool UDate::isValid() const
+__pure bool UTimeDate::isValid() const
 {
-   U_TRACE(0, "UDate::isValid()")
+   U_TRACE(0, "UTimeDate::isValid()")
 
    U_CHECK_MEMORY
 
@@ -101,18 +101,18 @@ __pure bool UDate::isValid() const
    U_RETURN(result);
 }
 
-__pure int UDate::getDaysInMonth() const
+__pure int UTimeDate::getDaysInMonth() const
 {
-   U_TRACE(0, "UDate::getDaysInMonth()")
+   U_TRACE(0, "UTimeDate::getDaysInMonth()")
 
    if (_month == 2 && leapYear(_year)) U_RETURN(29);
 
    U_RETURN(monthDays[_month]);
 }
 
-int UDate::toJulian(int day, int month, int year)
+int UTimeDate::toJulian(int day, int month, int year)
 {
-   U_TRACE(0, "UDate::toJulian(%d,%d,%d)", day, month, year)
+   U_TRACE(0, "UTimeDate::toJulian(%d,%d,%d)", day, month, year)
 
    U_INTERNAL_ASSERT_RANGE(1,     day,   31)
    U_INTERNAL_ASSERT_RANGE(1,   month,   12)
@@ -133,13 +133,13 @@ int UDate::toJulian(int day, int month, int year)
    // algorithm 199 from Communications of the ACM, Volume 6, No. 8
    // (Aug. 1963), p. 444. Gregorian calendar started on 14 Sep 1752.
    // -----------------------------------------------------------------------
-   // The UDate is based on the Gregorian (modern western) calendar. England
+   // The UTimeDate is based on the Gregorian (modern western) calendar. England
    // adopted the Gregorian calendar on September 14th 1752, which is the
-   // earliest date that is supported by UDate. Using earlier dates will give
+   // earliest date that is supported by UTimeDate. Using earlier dates will give
    // undefined results. Some countries adopted the Gregorian calendar later
    // than England, thus the week day of early dates might be incorrect for
    // these countries (but correct for England). The end of time is reached
-   // around 8000AD, by which time we expect UDate to be obsolete.
+   // around 8000AD, by which time we expect UTimeDate to be obsolete.
    // -----------------------------------------------------------------------
 
    month += (month > 2 ? -3 : (--year, 9));
@@ -159,18 +159,18 @@ int UDate::toJulian(int day, int month, int year)
 
 // gcc: call is unlikely and code size would grow
 
-int UDate::getJulian() { return (julian ? julian : julian = toJulian(_day, _month, _year)); }
+int UTimeDate::getJulian() { return (julian ? julian : julian = toJulian(_day, _month, _year)); }
 
-bool UDate::operator==(UDate& date) { return getJulian() == date.getJulian(); }
-bool UDate::operator!=(UDate& date) { return getJulian() != date.getJulian(); }
-bool UDate::operator< (UDate& date) { return getJulian() <  date.getJulian(); }
-bool UDate::operator<=(UDate& date) { return getJulian() <= date.getJulian(); }
-bool UDate::operator> (UDate& date) { return getJulian() >  date.getJulian(); }
-bool UDate::operator>=(UDate& date) { return getJulian() >= date.getJulian(); }
+bool UTimeDate::operator==(UTimeDate& date) { return getJulian() == date.getJulian(); }
+bool UTimeDate::operator!=(UTimeDate& date) { return getJulian() != date.getJulian(); }
+bool UTimeDate::operator< (UTimeDate& date) { return getJulian() <  date.getJulian(); }
+bool UTimeDate::operator<=(UTimeDate& date) { return getJulian() <= date.getJulian(); }
+bool UTimeDate::operator> (UTimeDate& date) { return getJulian() >  date.getJulian(); }
+bool UTimeDate::operator>=(UTimeDate& date) { return getJulian() >= date.getJulian(); }
 
-void UDate::fromJulian(int j)
+void UTimeDate::fromJulian(int j)
 {
-   U_TRACE(0, "UDate::fromJulian(%d)", j)
+   U_TRACE(0, "UTimeDate::fromJulian(%d)", j)
 
    /*
    int t1, t2;
@@ -213,9 +213,9 @@ void UDate::fromJulian(int j)
    U_INTERNAL_ASSERT(isValid())
 }
 
-void UDate::fromTime(time_t tm)
+void UTimeDate::fromTime(time_t tm)
 {
-   U_TRACE(1, "UDate::fromTime(%#4D)", tm)
+   U_TRACE(1, "UTimeDate::fromTime(%#4D)", tm)
 
    if (tm)
       {
@@ -239,9 +239,9 @@ void UDate::fromTime(time_t tm)
       }
 }
 
-void UDate::setYear(int year)
+void UTimeDate::setYear(int year)
 {
-   U_TRACE(0, "UDate::setYear(%d)", year)
+   U_TRACE(0, "UTimeDate::setYear(%d)", year)
 
    // [   0,  50) -> [2000,2050)
    // [  50, 150] -> [1950,2050)
@@ -259,9 +259,9 @@ void UDate::setYear(int year)
 
 // UTC is flag for date and time in Coordinated Universal Time : format YYMMDDMMSSZ
 
-UDate::UDate(const char* str, bool UTC)
+UTimeDate::UTimeDate(const char* str, bool UTC)
 {
-   U_TRACE_REGISTER_OBJECT(0, UDate, "%S,%b", str, UTC)
+   U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%S,%b", str, UTC)
 
    julian = _day = _month = _year = 0;
 
@@ -292,9 +292,9 @@ UDate::UDate(const char* str, bool UTC)
       }
 }
 
-UString UDate::strftime(const char* fmt)
+UString UTimeDate::strftime(const char* fmt)
 {
-   U_TRACE(0, "UDate::strftime(%S)", fmt)
+   U_TRACE(0, "UTimeDate::strftime(%S)", fmt)
 
    UString result(100U);
 
@@ -311,9 +311,9 @@ UString UDate::strftime(const char* fmt)
    U_RETURN_STRING(result);
 }
 
-UString UDate::strftime(const char* fmt, time_t t)
+UString UTimeDate::strftime(const char* fmt, time_t t)
 {
-   U_TRACE(0, "UDate::strftime(%S,%ld)", fmt, t)
+   U_TRACE(0, "UTimeDate::strftime(%S,%ld)", fmt, t)
 
    UString result(100U);
 
@@ -326,9 +326,9 @@ UString UDate::strftime(const char* fmt, time_t t)
    U_RETURN_STRING(result);
 }
 
-time_t UDate::getSecondFromTime(const char* str, bool gmt, const char* fmt, struct tm* tm)
+time_t UTimeDate::getSecondFromTime(const char* str, bool gmt, const char* fmt, struct tm* tm)
 {
-   U_TRACE(1, "UDate::getSecondFromTime(%S,%b,%S,%p)", str, gmt, fmt, tm)
+   U_TRACE(1, "UTimeDate::getSecondFromTime(%S,%b,%S,%p)", str, gmt, fmt, tm)
 
    if (tm == 0)
       {
@@ -428,9 +428,9 @@ scanf:
    U_RETURN(t);
 }
 
-void UDate::addMonths(int nmonths)
+void UTimeDate::addMonths(int nmonths)
 {
-   U_TRACE(0, "UDate::addMonths(%d)", nmonths)
+   U_TRACE(0, "UTimeDate::addMonths(%d)", nmonths)
 
    while (nmonths != 0)
       {
@@ -487,9 +487,9 @@ void UDate::addMonths(int nmonths)
 
 // STREAM
 
-U_EXPORT istream& operator>>(istream& is, UDate& d)
+U_EXPORT istream& operator>>(istream& is, UTimeDate& d)
 {
-   U_TRACE(0, "UDate::operator>>(%p,%p)", &is, &d)
+   U_TRACE(0, "UTimeDate::operator>>(%p,%p)", &is, &d)
 
    streambuf* sb = is.rdbuf();
 
@@ -508,9 +508,9 @@ U_EXPORT istream& operator>>(istream& is, UDate& d)
    return is;
 }
 
-U_EXPORT ostream& operator<<(ostream& os, const UDate& d)
+U_EXPORT ostream& operator<<(ostream& os, const UTimeDate& d)
 {
-   U_TRACE(0, "UDate::operator<<(%p,%p)", &os, &d)
+   U_TRACE(0, "UTimeDate::operator<<(%p,%p)", &os, &d)
 
    os << d._day   << '/'
       << d._month << '/'
@@ -524,7 +524,7 @@ U_EXPORT ostream& operator<<(ostream& os, const UDate& d)
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
 
-const char* UDate::dump(bool reset) const
+const char* UTimeDate::dump(bool reset) const
 {
    *UObjectIO::os << "_day    " << _day   << '\n'
                   << "_month  " << _month << '\n'

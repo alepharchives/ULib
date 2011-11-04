@@ -36,7 +36,7 @@ public:
       UString arch_tmpl = UFile::contentOf(cfg[U_STRING_FROM_CONSTANT("ARCHIVE_TEMPLATE")], O_RDONLY, false, false),
               url       =                  cfg[U_STRING_FROM_CONSTANT("ELECTRONIC_ARCHIVATION_SERVICE_URL")];
 
-      UString body(arch_tmpl.size() + request_decoded.size() + (u_strlen(uid) * 3) + 100U);
+      UString body(arch_tmpl.size() + request_decoded.size() + (u_str_len(uid) * 3) + 100U);
 
       body.snprintf(arch_tmpl.data(), uid, uid, uid, U_STRING_TO_TRACE(request_decoded));
 

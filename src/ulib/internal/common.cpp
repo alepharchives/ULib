@@ -28,7 +28,7 @@ void ULib_init()
 {
    U_TRACE(1, "ULib_init()")
 
-   // setting from u_init(char** argv)...
+   // setting from u_init_ulib(char** argv)...
 
    U_INTERNAL_DUMP("u_progname(%u) = %.*S u_cwd(%u) = %.*S", u_progname_len, u_progname_len, u_progname, u_cwd_len, u_cwd_len, u_cwd)
 

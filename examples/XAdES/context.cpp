@@ -105,7 +105,7 @@ UBaseTransform* UTransformCtx::findByHref(const char* href)
 
    /* check with enabled transforms list */
 
-   uint32_t i = enabledTransforms->find(href, u_strlen(href));
+   uint32_t i = enabledTransforms->find(href, u_str_len(href));
 
    if (i == U_NOT_FOUND) U_RETURN_POINTER(0, UBaseTransform);
 
@@ -566,7 +566,7 @@ bool UTransformCtx::verifyNodeContent(xmlNodePtr node, UString& signature_value)
 
    const char* content = (const char*) UXML2Node::getContent(node);
 
-   uint32_t size = u_strlen(content);
+   uint32_t size = u_str_len(content);
 
    (void) signature_value.reserve(size);
 
@@ -909,7 +909,7 @@ bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
    int uriType = 0;
 
    if (         _uri  == 0 ||
-       u_strlen(_uri) == 0)
+       u_str_len(_uri) == 0)
       {
       uriType = EMPTY;
       }
@@ -970,7 +970,7 @@ bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
 
       static char buf[128];
 
-      (void) u_snprintf(buf, sizeof(buf), "xpointer(id(\'%s\'))", xptr + 1);
+      (void) u_sn_printf(buf, sizeof(buf), "xpointer(id(\'%s\'))", xptr + 1);
 
       xptr = buf;
 
@@ -987,7 +987,7 @@ bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
       {
       // check for XADES
 
-      if (u_find(xptr, u_strlen(xptr), U_CONSTANT_TO_PARAM("idPackageSignature-SignedProperties")))
+      if (u_find(xptr, u_str_len(xptr), U_CONSTANT_TO_PARAM("idPackageSignature-SignedProperties")))
          {
          transform->tag = U_STRING_FROM_CONSTANT("xades:SignedProperties");
 

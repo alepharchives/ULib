@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
    int fd, cipher;
    char* filename;
 
-   u_init(argv);
+   u_init_ulib(argv);
 
    U_INTERNAL_TRACE("main(%d,%p)", argc, argv)
 

@@ -85,7 +85,7 @@ bool Action::sendHttpPostRequest(const UString& url, const UString& body, const 
       response.setBuffer(100U);
       response.snprintf("HTTP response %d",  client_http.responseCode());
       }
-   else if (ok && strncmp(response.data(), expected, u_strlen(expected)))
+   else if (ok && strncmp(response.data(), expected, u_str_len(expected)))
       {
       ok = false;
 

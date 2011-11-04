@@ -25,7 +25,7 @@ void UUnixSocket::setPath(const char* pathname)
 
    path = pathname;
 
-   unsigned slen = u_strlen(pathname);
+   unsigned slen = u_str_len(pathname);
 
    U_INTERNAL_ASSERT_MINOR(slen, sizeof(addr.psaUnixAddr.sun_path))
 

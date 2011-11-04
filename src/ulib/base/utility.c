@@ -32,7 +32,7 @@
 #  ifdef _DIRENT_HAVE_D_NAMLEN
 #     define NAMLEN(dirent) (dirent)->d_namlen
 #  else
-#     define NAMLEN(dirent) u_strlen((dirent)->d_name)
+#     define NAMLEN(dirent) u_str_len((dirent)->d_name)
 #  endif
 #else
 #  define dirent direct
@@ -87,9 +87,9 @@ struct uhttpinfo u_http_info;
 const char* u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 
 #ifdef DEBUG
-size_t u_strlen(const char* restrict s)
+size_t u_str_len(const char* restrict s)
 {
-   U_INTERNAL_TRACE("u_strlen(%s)", s)
+   U_INTERNAL_TRACE("u_str_len(%s)", s)
 
    U_INTERNAL_ASSERT_POINTER(s)
 
@@ -98,7 +98,7 @@ size_t u_strlen(const char* restrict s)
 
 char* u_strcpy(char* restrict dest, const char* restrict src)
 {
-   size_t n = u_strlen(src);
+   size_t n = u_str_len(src);
 
    U_INTERNAL_TRACE("u_strcpy(%p,%p,%ld)", dest, src, n)
 
@@ -324,7 +324,7 @@ bool u_runAsUser(const char* restrict user, bool change_dir)
    (void) putenv(buffer);
    }
 
-   (void) u_strncpy(u_user_name, user, (u_user_name_len = u_strlen(user))); /* change user name */
+   (void) u_strncpy(u_user_name, user, (u_user_name_len = u_str_len(user))); /* change user name */
 
    if (change_dir &&
        pw->pw_dir &&
@@ -1456,7 +1456,7 @@ static inline void make_absolute(char* restrict result, const char* restrict dot
       {
       u_strcpy(result, dot_path);
 
-      result_len = u_strlen(result);
+      result_len = u_str_len(result);
 
       if (result[result_len - 1] != PATH_SEPARATOR)
          {
@@ -1490,7 +1490,7 @@ static const char* u_check_for_suffix_exe(const char* restrict program)
 {
    static char program_w32[MAX_FILENAME_LEN + 1];
 
-   int len = u_strlen(program);
+   int len = u_str_len(program);
 
    U_INTERNAL_TRACE("u_check_for_suffix_exe(%s)", program)
 
@@ -1522,7 +1522,7 @@ bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_
       {
       path = getenv("PATH");
 
-      if (path) path_len = u_strlen(path);
+      if (path) path_len = u_str_len(path);
       else
          {
          path     = U_PATH_DEFAULT;
@@ -1634,7 +1634,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
    /* Remove trailing slashes */
 
-   p = lpath + u_strlen(lpath) - 1;
+   p = lpath + u_str_len(lpath) - 1;
 
    if ( p > lpath &&
        *p == '/')
@@ -1665,7 +1665,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
    /* Remove trailing "/" or "/." */
 
-   len = u_strlen(lpath);
+   len = u_str_len(lpath);
 
    if (len < 2) goto end;
 
@@ -1820,7 +1820,7 @@ int u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* res
 
       if (u_pathfind(pathbuf, 0, 0, argv[1], R_OK | X_OK) == false) return -1;
 
-      U_INTERNAL_ASSERT_MINOR(u_strlen(pathbuf), pathbuf_size)
+      U_INTERNAL_ASSERT_MINOR(u_str_len(pathbuf), pathbuf_size)
       }
 
    return result;
@@ -2045,7 +2045,7 @@ void u_ftw(void)
 
    U_INTERNAL_TRACE("u_ftw()")
 
-   U_INTERNAL_ASSERT_EQUALS(u_strlen(u_buffer), u_buffer_len)
+   U_INTERNAL_ASSERT_EQUALS(u_str_len(u_buffer), u_buffer_len)
 
    /*
     * NB: if is present the char 'filetype' this item isn't a directory and we don't need to try opendir()...
@@ -2095,7 +2095,7 @@ int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict passwor
 
    buf[size-1] = '\0';
 
-   size = u_strlen(buf);
+   size = u_str_len(buf);
 
    U_INTERNAL_PRINT("buf(%d) = %.*s", size, U_min(size,128), buf)
 

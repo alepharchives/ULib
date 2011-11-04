@@ -755,7 +755,7 @@ void UCDB::print(char* src)
    uint32_t dlen = u_get_unaligned(ptr_hr->dlen); // data length
 
    char tmp[40];
-   uint32_t size = u_snprintf(tmp, sizeof(tmp), "+%u,%u:", klen, dlen);
+   uint32_t size = u_sn_printf(tmp, sizeof(tmp), "+%u,%u:", klen, dlen);
 
    pbuffer->append(tmp, size);
    pbuffer->append(src + sizeof(UCDB::cdb_record_header), klen);

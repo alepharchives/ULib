@@ -33,7 +33,7 @@
    U_STACK_TYPE_0
 
   12 sizeof(UProcess)
-  16 sizeof(UDate)
+  16 sizeof(UTimeDate)
   16 sizeof(ULock)
   16 sizeof(UTimer)
   16 sizeof(UPKCS7)

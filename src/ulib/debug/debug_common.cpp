@@ -183,7 +183,7 @@ __noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], 
                            { (caddr_t)buffer,                    0 },
                            { (caddr_t)"\n",                      1 } };
 
-   iov[1].iov_len = u_snprintf(buffer, sizeof(buffer), "::execve(%S,%p,%p)", pathname, argv, envp);
+   iov[1].iov_len = u_sn_printf(buffer, sizeof(buffer), "::execve(%S,%p,%p)", pathname, argv, envp);
 
    if (u_trace_isActive(1))
       {
@@ -207,7 +207,7 @@ __noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], 
    if (flag_trace_active == false)
       {
       char _buffer[64];
-      uint32_t bytes_written = u_snprintf(_buffer, sizeof(_buffer), "%W%N%W: %WWARNING: %W",BRIGHTCYAN,RESET,YELLOW,RESET);
+      uint32_t bytes_written = u_sn_printf(_buffer, sizeof(_buffer), "%W%N%W: %WWARNING: %W",BRIGHTCYAN,RESET,YELLOW,RESET);
 
       (void) lseek(u_printf_fileno, 0, SEEK_END);
 
@@ -215,7 +215,7 @@ __noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], 
       (void) write(u_printf_fileno,  buffer, iov[1].iov_len);
       }
 
-   iov[1].iov_len = u_snprintf(buffer, sizeof(buffer), " = -1%R", 0); // NB: the last argument (0) is necessary...
+   iov[1].iov_len = u_sn_printf(buffer, sizeof(buffer), " = -1%R", 0); // NB: the last argument (0) is necessary...
 
    if (flag_trace_active == false)
       {
@@ -228,7 +228,7 @@ __noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], 
 
       u_trace_writev(iov+1, 2);
 
-      iov[1].iov_len = u_snprintf(buffer, sizeof(buffer), "::_exit(%d)", EX_UNAVAILABLE);
+      iov[1].iov_len = u_sn_printf(buffer, sizeof(buffer), "::_exit(%d)", EX_UNAVAILABLE);
 
       u_trace_writev(iov, 3);
 

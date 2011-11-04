@@ -83,9 +83,9 @@ struct passwd* getpwnam(const char* name)
 #define isWindowNT()  (version.dwPlatformId == VER_PLATFORM_WIN32_NT)
 #define granularity() (system_info.dwAllocationGranularity)
 
-void u_init_mingw(void)
+void u_init_ulib_mingw(void)
 {
-   U_INTERNAL_TRACE("u_init_mingw()", 0)
+   U_INTERNAL_TRACE("u_init_ulib_mingw()", 0)
 
    /* Figure out on which OS we're running */
 
@@ -277,7 +277,7 @@ int unlink_w32(const char* path)
 int mkstemp(char* tmplate)
 {
    char* pChr;
-   int ret, iLen = u_strlen(tmplate);
+   int ret, iLen = u_str_len(tmplate);
 
    U_INTERNAL_TRACE("mkstemp(%s)", tmplate)
 
@@ -1883,7 +1883,7 @@ const char* getSysError_w32(unsigned* len)
    if (ret == 0) lenMsg = 0;
    else
       {
-      lenMsg = u_strlen(pBuffer);
+      lenMsg = u_str_len(pBuffer);
 
       U_INTERNAL_ASSERT_MINOR(lenMsg, sizeof(buffer))
 
@@ -1904,7 +1904,7 @@ const char* getSysError_w32(unsigned* len)
 
    LocalFree(pBuffer);
 
-   *len = u_strlen(buffer);
+   *len = u_str_len(buffer);
 
    U_INTERNAL_PRINT("ret = %s", buffer)
 

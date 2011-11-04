@@ -77,7 +77,7 @@ bool UServices::isSetuidRoot()
 {
    U_TRACE(1, "UServices::isSetuidRoot()")
 
-   if (u_user_name_len == 0) u_init_username();
+   if (u_user_name_len == 0) u_init_ulib_username();
 
    U_INTERNAL_DUMP("u_user_name(%u) = %.*S", u_user_name_len, u_user_name_len, u_user_name)
 
@@ -248,10 +248,10 @@ char* UServices::getOpenSSLError(char* buffer, uint32_t buffer_size, uint32_t* p
 
       (void) ERR_error_string_n(i, _buf, sizeof(_buf));
 
-      U_INTERNAL_DUMP("buf = %.*S", u_strlen(_buf), _buf)
+      U_INTERNAL_DUMP("buf = %.*S", u_str_len(_buf), _buf)
 
       ptr  += size;
-      size += u_snprintf(ptr, buffer_size - (ptr - buffer), "(%ld, %s)", i, _buf);
+      size += u_sn_printf(ptr, buffer_size - (ptr - buffer), "(%ld, %s)", i, _buf);
 
       U_INTERNAL_ASSERT_MINOR(size,buffer_size)
       }
@@ -609,7 +609,7 @@ void UServices::generateKey()
 #elif defined(HAVE_LIBUUID)
    U_SYSCALL_VOID(uuid_generate, "%p", key);
 #else
-   (void) u_snprintf((char*)key, 16, "%P%lu", u_now->tv_usec);
+   (void) u_sn_printf((char*)key, 16, "%P%lu", u_now->tv_usec);
 #endif
 }
 

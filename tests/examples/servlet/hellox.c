@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
 
    char* reply = get_reply();
 
-   (void) u_snprintf(reply, get_reply_capacity(), "<h1>Hello %.*s</h1>", u_xml_encode(argv[1], strlen(argv[1]), encoded), encoded);
+   (void) u_sn_printf(reply, get_reply_capacity(), "<h1>Hello %.*s</h1>", u_xml_encode(argv[1], strlen(argv[1]), encoded), encoded);
 
    return 200;
 }

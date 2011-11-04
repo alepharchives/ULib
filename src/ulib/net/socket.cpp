@@ -721,7 +721,7 @@ const char* USocket::getMsgError(char* buffer, uint32_t buffer_size)
       {
       errno = -iState;
 
-      (void) u_snprintf(buffer, buffer_size, "%R", 0); // NB: the last argument (0) is necessary...
+      (void) u_sn_printf(buffer, buffer_size, "%R", 0); // NB: the last argument (0) is necessary...
 
       buffer += 3;
 

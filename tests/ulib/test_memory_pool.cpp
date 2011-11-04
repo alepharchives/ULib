@@ -31,7 +31,7 @@ static void print_size()
 #ifdef HAVE_CURL
    U_PRINT_SIZEOF(UCrl)
 #endif
-   U_PRINT_SIZEOF(UDate)
+   U_PRINT_SIZEOF(UTimeDate)
    U_PRINT_SIZEOF(UDialog)
 // U_PRINT_SIZEOF(UFCgi)
    U_PRINT_SIZEOF(UFile)

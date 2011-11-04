@@ -335,7 +335,7 @@ const char* USSLSocket::status(SSL* _ssl, int _ret, bool flag, char* buffer, uin
          }
       }
 
-   uint32_t len, buffer_len = u_snprintf(buffer, buffer_size, "(%d, %s) - %s", _ret, descr, errstr);
+   uint32_t len, buffer_len = u_sn_printf(buffer, buffer_size, "(%d, %s) - %s", _ret, descr, errstr);
 
    char* sslerr = UServices::getOpenSSLError(0, 0, &len);
 

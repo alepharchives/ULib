@@ -31,7 +31,7 @@ public:
 
       if (str_time.empty() == false)
          {
-         DocumentClassifier::certsVerificationTime = UDate::getSecondFromTime(str_time.data(), false, "%4d-%02d-%02d+%02d:%02d:%02d");
+         DocumentClassifier::certsVerificationTime = UTimeDate::getSecondFromTime(str_time.data(), false, "%4d-%02d-%02d+%02d:%02d:%02d");
 
          U_INTERNAL_DUMP("certsVerificationTime = %ld", DocumentClassifier::certsVerificationTime)
          }

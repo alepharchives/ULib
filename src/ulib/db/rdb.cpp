@@ -478,7 +478,7 @@ U_NO_EXPORT void URDB::print1(uint32_t offset) // entry presenti nella cache...
    if (RDB_cache_node(n,data.dptr))
       {
       char tmp[40];
-      uint32_t size = u_snprintf(tmp, sizeof(tmp), "+%u,%u:", RDB_cache_node(n,key.dsize), RDB_cache_node(n,data.dsize));
+      uint32_t size = u_sn_printf(tmp, sizeof(tmp), "+%u,%u:", RDB_cache_node(n,key.dsize), RDB_cache_node(n,data.dsize));
 
       UCDB::pbuffer->append(tmp, size);
       UCDB::pbuffer->append((const char*)((ptrdiff_t)RDB_cache_node(n,key.dptr) +
@@ -720,7 +720,7 @@ UString URDB::printSorted()
 
          if (fetch())
             {
-            _size = u_snprintf(tmp, sizeof(tmp), "+%u,%u:", key.dsize, data.dsize);
+            _size = u_sn_printf(tmp, sizeof(tmp), "+%u,%u:", key.dsize, data.dsize);
 
             buffer.append(tmp, _size);
             buffer.append((const char*) key.dptr, key.dsize);

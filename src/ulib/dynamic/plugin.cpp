@@ -90,7 +90,7 @@ const char* UPlugIn<void*>::dump(bool reset) const
 
    char buffer[32];
 
-   UObjectIO::os->write(buffer, u_snprintf(buffer, sizeof(buffer), "%#.*S", name_len, name));
+   UObjectIO::os->write(buffer, u_sn_printf(buffer, sizeof(buffer), "%#.*S", name_len, name));
 
    *UObjectIO::os << '\n'
                   << "name_len " << name_len;

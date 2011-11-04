@@ -1420,7 +1420,7 @@ U_NO_EXPORT void UPosting::printDocName(UStringRep* doc_id, UStringRep* doc_name
 
    char _buffer[20];
 
-   os->write(_buffer, u_snprintf(_buffer, sizeof(_buffer), "%llX ", *((uint64_t*)(doc_id->data()))));
+   os->write(_buffer, u_sn_printf(_buffer, sizeof(_buffer), "%llX ", *((uint64_t*)(doc_id->data()))));
 
    doc_name->write(*os);
 

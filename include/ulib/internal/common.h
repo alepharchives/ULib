@@ -25,9 +25,9 @@
 #  include <ulib/debug/objectDB.h>
 #  include <ulib/debug/error_memory.h>
 
-#  define U_ULIB_INIT(argv)   U_SET_LOCATION_INFO, u_init(argv), u_debug_init(), ULib_init()
+#  define U_ULIB_INIT(argv)   U_SET_LOCATION_INFO, u_init_ulib(argv), u_debug_init(), ULib_init()
 #else
-#  define U_ULIB_INIT(argv)   U_SET_LOCATION_INFO, u_init(argv),                 ULib_init()
+#  define U_ULIB_INIT(argv)   U_SET_LOCATION_INFO, u_init_ulib(argv),                 ULib_init()
 #endif
 
 // Manage memory pool

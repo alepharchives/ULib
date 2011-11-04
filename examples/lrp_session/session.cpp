@@ -180,7 +180,7 @@ public:
             "<REQUEST sid=\"sid1\" version=\"1\"><IMPORT-POLICYLABEL  name=\"%s\">%s</IMPORT-POLICYLABEL></REQUEST>"
             "<REQUEST sid=\"sid2\" version=\"1\"><EXECUTE-POLICYLABEL name=\"%s\" command=\"%s\"/></REQUEST>";
 
-         request_size = u_snprintf(request_buffer, sizeof(request_buffer), request_tmpl, policy, ptr, policy, operation);
+         request_size = u_sn_printf(request_buffer, sizeof(request_buffer), request_tmpl, policy, ptr, policy, operation);
 
          request = UString(request_buffer, request_size);
 

@@ -23,14 +23,14 @@
 #include <time.h>
 
 /**
- * The UDate class uses a julian date representation of the current year, month, and day.
+ * The UTimeDate class uses a julian date representation of the current year, month, and day.
  * This is then manipulated in several forms and may be exported as needed
  */
 
 #define FIRST_DAY   2361222  // Julian day for 1752/09/14
 #define FIRST_YEAR  1752     // wrong for many countries
 
-class U_EXPORT UDate {
+class U_EXPORT UTimeDate {
 public:
 
    // Check for memory error
@@ -42,29 +42,29 @@ public:
 
    // COSTRUTTORI
 
-   UDate()
+   UTimeDate()
       {
-      U_TRACE_REGISTER_OBJECT(0, UDate, "")
+      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "")
 
       julian = _day = _month = _year = 0;
       }
 
    void fromTime(time_t tm);
 
-   UDate(time_t tm)
+   UTimeDate(time_t tm)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDate, "%#4D", tm)
+      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%#4D", tm)
 
       fromTime(tm);
       }
 
-   UDate(const char* str, bool UTC = false); // UTC is flag for date and time in Coordinated Universal Time: format YYMMDDMMSSZ
+   UTimeDate(const char* str, bool UTC = false); // UTC is flag for date and time in Coordinated Universal Time: format YYMMDDMMSSZ
 
    void setYear(int year);
 
    void set(int day, int month, int year)
       {
-      U_TRACE(0, "UDate::set(%d,%d,%d)", day, month, year)
+      U_TRACE(0, "UTimeDate::set(%d,%d,%d)", day, month, year)
 
       U_INTERNAL_ASSERT_RANGE(1,   day, 31)
       U_INTERNAL_ASSERT_RANGE(1, month, 12)
@@ -76,21 +76,21 @@ public:
       setYear(year);
       }
 
-   // Construct a UDate with a given day of the year and a given year.
+   // Construct a UTimeDate with a given day of the year and a given year.
    // The base date for this computation is 31 Dec. of the previous year.
-   // i.e., UDate(-1,1901) = 31 Dec. 1900 and UDate(1,1901) = 2 Jan. 1901
+   // i.e., UTimeDate(-1,1901) = 31 Dec. 1900 and UTimeDate(1,1901) = 2 Jan. 1901
 
-   UDate(int day,            int year);
-   UDate(int day, int month, int year);
+   UTimeDate(int day,              int year);
+   UTimeDate(int day, int month, int year);
 
-   ~UDate()
+   ~UTimeDate()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UDate)
+      U_TRACE_UNREGISTER_OBJECT(0, UTimeDate)
       }
 
    // ASSEGNAZIONI
 
-   void set(const UDate& d)
+   void set(const UTimeDate& d)
       {
       _day   = d._day;
       _month = d._month;
@@ -98,18 +98,18 @@ public:
       julian = d.julian;
       }
 
-   UDate(const UDate& d)
+   UTimeDate(const UTimeDate& d)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDate, "%O", U_OBJECT_TO_TRACE(d))
+      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%O", U_OBJECT_TO_TRACE(d))
 
       U_MEMORY_TEST_COPY(d)
 
       set(d);
       }
 
-   UDate& operator=(const UDate& d)
+   UTimeDate& operator=(const UTimeDate& d)
       {
-      U_TRACE(0, "UDate::operator=(%O)", U_OBJECT_TO_TRACE(d))
+      U_TRACE(0, "UTimeDate::operator=(%O)", U_OBJECT_TO_TRACE(d))
 
       U_MEMORY_TEST_COPY(d)
 
@@ -130,16 +130,16 @@ public:
 
    // The daysTo() function returns the number of days between two date
 
-   int daysTo(UDate& date)
+   int daysTo(UTimeDate& date)
       {
-      U_TRACE(0, "UDate::daysTo(%p)", &date)
+      U_TRACE(0, "UTimeDate::daysTo(%p)", &date)
 
       U_RETURN(date.getJulian() - getJulian());
       }
 
    void addDays(int days)
       {
-      U_TRACE(0, "UDate::addDays(%d)", days)
+      U_TRACE(0, "UTimeDate::addDays(%d)", days)
 
       julian = getJulian() + days;
 
@@ -152,7 +152,7 @@ public:
 
    void addYears(int years)
       {
-      U_TRACE(0, "UDate::addYears(%d)", years)
+      U_TRACE(0, "UTimeDate::addYears(%d)", years)
 
       _year += years;
 
@@ -161,7 +161,7 @@ public:
 
    int getDayOfWeek()
       {
-      U_TRACE(0, "UDate::getDayOfWeek()")
+      U_TRACE(0, "UTimeDate::getDayOfWeek()")
 
       // (julian + 1) % 7 gives the value 0 for Sunday ... 6 for Saturday
 
@@ -187,7 +187,7 @@ public:
 
    static time_t getSecondFromJulian(int _julian)
       {
-      U_TRACE(0, "UDate::getSecondFromJulian(%d)", _julian)
+      U_TRACE(0, "UTimeDate::getSecondFromJulian(%d)", _julian)
 
       U_INTERNAL_ASSERT(_julian >= 2440588) // 2440588 -> 01/01/1970
 
@@ -198,7 +198,7 @@ public:
 
    time_t getSecond()
       {
-      U_TRACE(0, "UDate::getSecond()")
+      U_TRACE(0, "UTimeDate::getSecond()")
 
       time_t t = getSecondFromJulian(getJulian());
 
@@ -207,7 +207,7 @@ public:
 
    static time_t getSecondFromTime(const char* str) // seconds from string in HH:MM:SS format
       {
-      U_TRACE(0, "UDate::getSecondFromTime(%.*S)", 8, str)
+      U_TRACE(0, "UTimeDate::getSecondFromTime(%.*S)", 8, str)
 
       U_INTERNAL_ASSERT_EQUALS(str[2], ':')
       U_INTERNAL_ASSERT_EQUALS(str[5], ':')
@@ -223,7 +223,7 @@ public:
 
    void setCurrentDate()
       {
-      U_TRACE(0, "UDate::setCurrentDate()")
+      U_TRACE(0, "UTimeDate::setCurrentDate()")
 
       // UNIX system time - SecsSince1Jan1970UTC
 
@@ -232,25 +232,25 @@ public:
       fromTime(u_now->tv_sec);
       }
 
-   static void setCurrentDate(UDate& date)
+   static void setCurrentDate(UTimeDate& date)
       {
-      U_TRACE(0, "UDate::setCurrentDate(%p)", &date)
+      U_TRACE(0, "UTimeDate::setCurrentDate(%p)", &date)
 
       date.setCurrentDate();
       }
 
    // OPERATOR
 
-   bool operator==(UDate& date);
-   bool operator!=(UDate& date);
-   bool operator< (UDate& date);
-   bool operator<=(UDate& date);
-   bool operator> (UDate& date);
-   bool operator>=(UDate& date);
+   bool operator==(UTimeDate& date);
+   bool operator!=(UTimeDate& date);
+   bool operator< (UTimeDate& date);
+   bool operator<=(UTimeDate& date);
+   bool operator> (UTimeDate& date);
+   bool operator>=(UTimeDate& date);
 
-   UDate& operator+=(UDate& d)
+   UTimeDate& operator+=(UTimeDate& d)
       {
-      U_TRACE(0, "UDate::operator+=(%p)", &d)
+      U_TRACE(0, "UTimeDate::operator+=(%p)", &d)
 
       julian = getJulian() + d.getJulian();
 
@@ -259,9 +259,9 @@ public:
       return *this;
       }
 
-   UDate& operator-=(UDate& d)
+   UTimeDate& operator-=(UTimeDate& d)
       {
-      U_TRACE(0, "UDate::operator-=(%p)", &d)
+      U_TRACE(0, "UTimeDate::operator-=(%p)", &d)
 
       julian = getJulian() - d.getJulian();
 
@@ -270,56 +270,56 @@ public:
       return *this;
       }
 
-   friend UDate operator+(const UDate& d1, UDate& d2)
+   friend UTimeDate operator+(const UTimeDate& d1, UTimeDate& d2)
       {
-      U_TRACE(0, "UDate::operator+(%p,%p)", &d1, &d2)
+      U_TRACE(0, "UTimeDate::operator+(%p,%p)", &d1, &d2)
 
-      return UDate(d1) += d2;
+      return UTimeDate(d1) += d2;
       }
 
-   friend UDate operator-(const UDate& d1, UDate& d2)
+   friend UTimeDate operator-(const UTimeDate& d1, UTimeDate& d2)
       {
-      U_TRACE(0, "UDate::operator+(%p,%p)", &d1, &d2)
+      U_TRACE(0, "UTimeDate::operator+(%p,%p)", &d1, &d2)
 
-      return UDate(d1) -= d2;
+      return UTimeDate(d1) -= d2;
       }
 
-   UDate& operator+=(int days)
+   UTimeDate& operator+=(int days)
       {
-      U_TRACE(0, "UDate::operator+=(%d)", days)
+      U_TRACE(0, "UTimeDate::operator+=(%d)", days)
 
       addDays(days);
 
       return *this;
       }
 
-   UDate& operator-=(int days)
+   UTimeDate& operator-=(int days)
       {
-      U_TRACE(0, "UDate::operator-=(%d)", days)
+      U_TRACE(0, "UTimeDate::operator-=(%d)", days)
 
       addDays(-days);
 
       return *this;
       }
 
-   friend UDate operator+(UDate& d, int days)
+   friend UTimeDate operator+(UTimeDate& d, int days)
       {
-      U_TRACE(0, "UDate::operator+(%p,%d)", &d, days)
+      U_TRACE(0, "UTimeDate::operator+(%p,%d)", &d, days)
 
-      return UDate(d) += days;
+      return UTimeDate(d) += days;
       }
 
-   friend UDate operator-(UDate& d, int days)
+   friend UTimeDate operator-(UTimeDate& d, int days)
       {
-      U_TRACE(0, "UDate::operator-(%p,%d)", &d, days)
+      U_TRACE(0, "UTimeDate::operator-(%p,%d)", &d, days)
 
-      return UDate(d) -= days;
+      return UTimeDate(d) -= days;
       }
 
    // STREAM
 
-   friend U_EXPORT istream& operator>>(istream& is,       UDate& d); // dd/mm/yyyy
-   friend U_EXPORT ostream& operator<<(ostream& os, const UDate& d); // dd/mm/yyyy
+   friend U_EXPORT istream& operator>>(istream& is,       UTimeDate& d); // dd/mm/yyyy
+   friend U_EXPORT ostream& operator<<(ostream& os, const UTimeDate& d); // dd/mm/yyyy
 
 #ifdef DEBUG
    bool invariant() { return (julian >= FIRST_DAY); } // 14/09/1752

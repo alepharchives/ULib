@@ -303,7 +303,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
       {
       bool flag;
       w32_cmd = buffer1;
-      int len = u_strlen(pathname);
+      int len = u_str_len(pathname);
 
       if (len)
          {
@@ -316,7 +316,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
          {
          w32_cmd[index++] = ' ';
 
-         len = u_strlen(argv[i]);
+         len = u_str_len(argv[i]);
 
          if (len)
             {
@@ -349,7 +349,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
 
       for (int len, i = 0; envp[i]; ++i, ++index)
          {
-         len = u_strlen(envp[i]);
+         len = u_str_len(envp[i]);
 
          if (len)
             {
@@ -523,18 +523,18 @@ char* UProcess::exitInfo(int _status)
 
    if (WIFEXITED(_status))
       {
-      n = u_snprintf(buffer, sizeof(buffer), "Exit %d", WEXITSTATUS(_status));
+      n = u_sn_printf(buffer, sizeof(buffer), "Exit %d", WEXITSTATUS(_status));
       }
    else if (WIFSIGNALED(_status))
       {
 #  ifndef WCOREDUMP
 #  define WCOREDUMP(status) ((status) & 0200) // settimo bit
 #  endif
-      n = u_snprintf(buffer, sizeof(buffer), "Signal %Y%s", WTERMSIG(_status), (WCOREDUMP(_status) ? " - core dumped" : ""));
+      n = u_sn_printf(buffer, sizeof(buffer), "Signal %Y%s", WTERMSIG(_status), (WCOREDUMP(_status) ? " - core dumped" : ""));
       }
    else if (WIFSTOPPED(_status))
       {
-      n = u_snprintf(buffer, sizeof(buffer), "Signal %Y", WSTOPSIG(_status));
+      n = u_sn_printf(buffer, sizeof(buffer), "Signal %Y", WSTOPSIG(_status));
       }
 #  ifndef WIFCONTINUED
 #  define WIFCONTINUED(status)  ((status) == 0xffff)

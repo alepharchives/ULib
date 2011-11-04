@@ -136,15 +136,15 @@ progpath="$0"
 
 : ${CP="cp -f"}
 test "${ECHO+set}" = set || ECHO=${as_echo-'printf %s\n'}
-: ${EGREP="/bin/grep -E"}
-: ${FGREP="/bin/grep -F"}
-: ${GREP="/bin/grep"}
+: ${EGREP="grep -E"}
+: ${FGREP="grep -F"}
+: ${GREP="grep"}
 : ${LN_S="ln -s"}
 : ${MAKE="make"}
 : ${MKDIR="mkdir"}
 : ${MV="mv -f"}
 : ${RM="rm -f"}
-: ${SED="/bin/sed"}
+: ${SED="sed"}
 : ${SHELL="${CONFIG_SHELL-/bin/sh}"}
 : ${Xsed="$SED -e 1s/^X//"}
 
@@ -5643,8 +5643,7 @@ func_mode_link ()
 	continue
 	;;
 
-      -mt|-mthreads|-kthread|-Kthread|-pthread|-pthreads|--thread-safe \
-      |-threads|-fopenmp|-openmp|-mp|-xopenmp|-omp|-qsmp=*)
+      -mt|-mthreads|-kthread|-Kthread|-pthread|-pthreads|--thread-safe|-threads)
 	func_append compiler_flags " $arg"
 	func_append compile_command " $arg"
 	func_append finalize_command " $arg"
@@ -6148,8 +6147,7 @@ func_mode_link ()
 	lib=
 	found=no
 	case $deplib in
-	-mt|-mthreads|-kthread|-Kthread|-pthread|-pthreads|--thread-safe \
-        |-threads|-fopenmp|-openmp|-mp|-xopenmp|-omp|-qsmp=*)
+	-mt|-mthreads|-kthread|-Kthread|-pthread|-pthreads|--thread-safe|-threads)
 	  if test "$linkmode,$pass" = "prog,link"; then
 	    compile_deplibs="$deplib $compile_deplibs"
 	    finalize_deplibs="$deplib $finalize_deplibs"

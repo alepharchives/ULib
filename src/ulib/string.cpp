@@ -82,7 +82,7 @@ UStringRep::UStringRep(const char* t)
 
    U_INTERNAL_ASSERT_POINTER(t)
 
-   set(u_strlen(t), 0, t);
+   set(u_str_len(t), 0, t);
 }
 
 UStringRep::UStringRep(const char* t, uint32_t tlen)
@@ -472,7 +472,7 @@ UString::UString(const char* t)
 {
    U_TRACE_REGISTER_OBJECT(0, UString, "%S", t)
 
-   uint32_t len = (t ? u_strlen(t) : 0);
+   uint32_t len = (t ? u_str_len(t) : 0);
 
    if (len) rep = UStringRep::create(t, len, 0U);
    else      copy(UStringRep::string_rep_null);
@@ -509,12 +509,12 @@ UString UString::substr(const char* t, uint32_t tlen) const
 char* UString::c_strdup() const                          { return strndup(rep->str, rep->_length); }
 char* UString::c_strndup(uint32_t pos, uint32_t n) const { return strndup(rep->str + pos, rep->fold(pos, n)); }
 
-UString& UString::assign(const char* s)                  { return assign(s, u_strlen(s)); }
-UString& UString::append(const char* s)                  { return append(s, u_strlen(s)); }
+UString& UString::assign(const char* s)                  { return assign(s, u_str_len(s)); }
+UString& UString::append(const char* s)                  { return append(s, u_str_len(s)); }
 UString& UString::append(const UString& str)             { return append(str.data(), str.size()); }
 
 __pure bool UString::equal(UStringRep* _rep) const          { return same(_rep) || rep->equal(_rep); }
-__pure bool UString::equal(const char* s) const             { return rep->equal(s, u_strlen(s)); }
+__pure bool UString::equal(const char* s) const             { return rep->equal(s, u_str_len(s)); }
 __pure bool UString::equal(const char* s, uint32_t n) const { return rep->equal(s, n); }
 __pure bool UString::equalnocase(const UString& str) const  { return equalnocase(str.rep); }
 
@@ -569,7 +569,7 @@ void UStringRep::size_adjust(uint32_t value)
       }
 #endif
 
-   _length = (value == U_NOT_FOUND ? u_strlen(str) : value);
+   _length = (value == U_NOT_FOUND ? u_str_len(str) : value);
 
    U_INTERNAL_ASSERT(invariant())
 }
@@ -803,7 +803,7 @@ void UString::setNullTerminated() const
       ((char*)rep->str)[rep->_length] = '\0';
       }
 
-   U_INTERNAL_ASSERT_EQUALS(u_strlen(rep->str),rep->_length)
+   U_INTERNAL_ASSERT_EQUALS(u_str_len(rep->str),rep->_length)
 }
 
 void UString::resize(uint32_t n, char c)
@@ -1579,7 +1579,7 @@ U_EXPORT UString operator+(const UString& lhs, const UString& rhs)
 
 U_EXPORT UString operator+(const char* lhs, const UString& rhs)
 {
-   uint32_t len = u_strlen(lhs);
+   uint32_t len = u_str_len(lhs);
    UString str(len + rhs.size());
 
    (void) str.append(lhs, len);
@@ -1599,7 +1599,7 @@ U_EXPORT UString operator+(char lhs, const UString& rhs)
 }
 
 U_EXPORT UString operator+(const UString& lhs, const char* rhs)
-{ UString str(lhs); (void) str.append(rhs, u_strlen(rhs)); return str; }
+{ UString str(lhs); (void) str.append(rhs, u_str_len(rhs)); return str; }
 
 U_EXPORT UString operator+(const UString& lhs, char rhs)
 { UString str(lhs); (void) str.append(uint32_t(1), rhs); return str; }
@@ -1620,7 +1620,7 @@ const char* UStringRep::dump(bool reset) const
 
    char buffer[1024];
 
-   UObjectIO::os->write(buffer, u_snprintf(buffer, sizeof(buffer), "%.*S", U_min(_length, 256U), str));
+   UObjectIO::os->write(buffer, u_sn_printf(buffer, sizeof(buffer), "%.*S", U_min(_length, 256U), str));
 
    if (reset)
       {

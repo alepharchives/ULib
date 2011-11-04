@@ -65,7 +65,7 @@ UString UPKCS10::getSubject(X509_REQ* _request)
 
    (void) U_SYSCALL(X509_NAME_oneline, "%p,%p,%d", name, ptr, subject.capacity());
 
-   len = u_strlen(ptr);
+   len = u_str_len(ptr);
 
    subject.size_adjust(len);
 
@@ -86,7 +86,7 @@ UString UPKCS10::getSignable(X509_REQ* _request)
 
    (void) U_SYSCALL(i2d_X509_REQ_INFO, "%p,%p", _request->req_info, &data);
 
-   // len = u_strlen(data);
+   // len = u_str_len(data);
 
    signable.size_adjust(len);
 

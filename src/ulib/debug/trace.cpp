@@ -191,7 +191,7 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
                {
                char msg_sys_error[sizeof(buffer_syscall)];
 
-               buffer_syscall_len += u_snprintf(msg_sys_error, sizeof(buffer_syscall), "%R", 0); // NB: the last argument (0) is necessary...
+               buffer_syscall_len += u_sn_printf(msg_sys_error, sizeof(buffer_syscall), "%R", 0); // NB: the last argument (0) is necessary...
 
                U_INTERNAL_ASSERT_MINOR(buffer_syscall_len, sizeof(buffer_syscall))
 
@@ -227,7 +227,7 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
                   char msg[sizeof(buffer_syscall)];
                   double rate = u_calcRate(bytes_read_or_write, dltime, &units);
 
-                  buffer_syscall_len += u_snprintf(msg, sizeof(buffer_syscall), " (%7.2f%s/s)", rate, u_short_units[units]);
+                  buffer_syscall_len += u_sn_printf(msg, sizeof(buffer_syscall), " (%7.2f%s/s)", rate, u_short_units[units]);
 
                   U_INTERNAL_ASSERT_MINOR(buffer_syscall_len, sizeof(buffer_syscall))
 

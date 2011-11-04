@@ -89,7 +89,7 @@ U_NO_EXPORT const char* USSHSocket::status()
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len,0)
 
-   uint32_t size = u_snprintf(u_buffer, sizeof(u_buffer), "(%d, %s) - %s", val, descr, errstr);
+   uint32_t size = u_sn_printf(u_buffer, sizeof(u_buffer), "(%d, %s) - %s", val, descr, errstr);
 
    U_INTERNAL_DUMP("u_buffer = %.*S", size, u_buffer)
 
@@ -186,7 +186,7 @@ bool USSHSocket::SSHConnection(int fd)
             {
             static char buf1[U_PATH_MAX];
 
-            (void) u_snprintf(buf1, sizeof(buf1), public_key, 0);
+            (void) u_sn_printf(buf1, sizeof(buf1), public_key, 0);
 
             public_key = buf1;
             }
@@ -204,7 +204,7 @@ bool USSHSocket::SSHConnection(int fd)
             {
             static char buf2[U_PATH_MAX];
 
-            (void) u_snprintf(buf2, sizeof(buf2), private_key, 0);
+            (void) u_sn_printf(buf2, sizeof(buf2), private_key, 0);
 
             private_key = buf2;
             }
@@ -250,7 +250,7 @@ const char* USSHSocket::getError()
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len,0)
 
-      (void) u_snprintf(u_buffer, sizeof(u_buffer), "%R", 0); // NB: the last argument (0) is necessary...
+      (void) u_sn_printf(u_buffer, sizeof(u_buffer), "%R", 0); // NB: the last argument (0) is necessary...
 
       U_RETURN(u_buffer+3);
       }

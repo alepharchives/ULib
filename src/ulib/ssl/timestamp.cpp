@@ -144,7 +144,7 @@ UString UTimeStamp::createQuery(int alg, const UString& content, const char* pol
          nonce->data = buffer;
          }
 
-      nonce->length = u_snprintf((char*)nonce->data, 8, "%ld", u_now->tv_sec);
+      nonce->length = u_sn_printf((char*)nonce->data, 8, "%ld", u_now->tv_sec);
 
       (void) U_SYSCALL(TS_REQ_set_nonce, "%p,%p", ts_req, nonce);
       }

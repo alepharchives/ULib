@@ -133,7 +133,7 @@ int UFile::open(const char* _pathname, int flags, mode_t mode)
    U_TRACE(1, "UFile::open(%S,%d,%d)", _pathname, flags, mode)
 
    U_INTERNAL_ASSERT_POINTER(_pathname)
-   U_INTERNAL_ASSERT_MAJOR(u_strlen(_pathname), 0)
+   U_INTERNAL_ASSERT_MAJOR(u_str_len(_pathname), 0)
 
    // NB: we centralize here O_BINARY...
 
@@ -231,7 +231,7 @@ bool UFile::chdir(const char* path, bool flag_save)
       else if (IS_DIR_SEPARATOR(path[0]) == false) u_getcwd();
       else
          {
-         u_cwd_len = u_strlen(path);
+         u_cwd_len = u_str_len(path);
 
          U_INTERNAL_ASSERT_MINOR(u_cwd_len,U_PATH_MAX)
 
@@ -1097,7 +1097,7 @@ bool UFile::rename(const char* newpath)
    if (result)
       {
       path_relativ     =  (char*) newpath;
-      path_relativ_len = u_strlen(newpath);
+      path_relativ_len = u_str_len(newpath);
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 

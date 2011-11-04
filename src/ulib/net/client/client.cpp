@@ -46,11 +46,11 @@ UClient_Base::UClient_Base(UFileConfig* cfg) : response(U_CAPACITY), buffer(U_CA
 {
    U_TRACE_REGISTER_OBJECT(0, UClient_Base, "%p", cfg)
 
-   u_init_hostname();
+   u_init_ulib_hostname();
 
    U_INTERNAL_DUMP("u_hostname(%u) = %.*S", u_hostname_len, u_hostname_len, u_hostname)
 
-   u_init_username();
+   u_init_ulib_username();
 
    U_INTERNAL_DUMP("u_user_name(%u) = %.*S", u_user_name_len, u_user_name_len, u_user_name)
 

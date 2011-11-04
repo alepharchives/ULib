@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
 {
    int operation = -1;
 
-   u_init(argv);
+   u_init_ulib(argv);
 
    U_INTERNAL_TRACE("main(%d,%p)", argc, argv)
 

@@ -300,7 +300,7 @@ U_NO_EXPORT void UHTTP::checkInotifyForCache(int wd, char* name, uint32_t len)
       {
       char buffer[U_PATH_MAX];
 
-      pkey->_length = u_snprintf(buffer, sizeof(buffer), "%.*s/%.*s", U_STRING_TO_TRACE(*pkey), len, name);
+      pkey->_length = u_sn_printf(buffer, sizeof(buffer), "%.*s/%.*s", U_STRING_TO_TRACE(*pkey), len, name);
       pkey->str     = buffer;
 
       file_data = (*cache_file)[pkey];
@@ -313,7 +313,7 @@ U_NO_EXPORT void UHTTP::in_CREATE()
 
    if (file_data == 0)
       {
-      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "./%.*s", U_STRING_TO_TRACE(*pkey));
+      u_buffer_len = u_sn_printf(u_buffer, sizeof(u_buffer), "./%.*s", U_STRING_TO_TRACE(*pkey));
 
       checkFileForCache();
 
@@ -379,7 +379,7 @@ void UHTTP::in_READ()
 
          for (len = event.ip->len; event.ip->name[len-1] == '\0'; --len) {}
 
-         U_INTERNAL_ASSERT_EQUALS(len,u_strlen(event.ip->name))
+         U_INTERNAL_ASSERT_EQUALS(len,u_str_len(event.ip->name))
 
          checkInotifyForCache(event.ip->wd, event.ip->name, len);
 
@@ -1921,7 +1921,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
             {
             if (memcmp(ptrI, p+1, 16) == 0)
                {
-               u_http_info.if_modified_since = UDate::getSecondFromTime(ptr + pos1, true);
+               u_http_info.if_modified_since = UTimeDate::getSecondFromTime(ptr + pos1, true);
 
                U_INTERNAL_DUMP("If-Modified-Since = %ld", u_http_info.if_modified_since)
                }
@@ -3857,7 +3857,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
             // NB: dlopen() fail if name is not prefixed with "./"...
 
-            pos = u_snprintf(buffer, U_PATH_MAX, "./%.*s", U_FILE_TO_TRACE(*file));
+            pos = u_sn_printf(buffer, U_PATH_MAX, "./%.*s", U_FILE_TO_TRACE(*file));
 
             if (usp_page->UDynamic::load(buffer) == false)
                {
@@ -3930,7 +3930,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
             U_INTERNAL_ASSERT_POINTER(csp_page->prog_main)
 
-            pos = u_snprintf(buffer, U_PATH_MAX, "%.*s", U_FILE_TO_TRACE(*file));
+            pos = u_sn_printf(buffer, U_PATH_MAX, "%.*s", U_FILE_TO_TRACE(*file));
 
             (void) key.replace(buffer, pos - U_CONSTANT_SIZE(".c"));
 
@@ -3959,7 +3959,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
             cgi->dir[pos + U_CONSTANT_SIZE("cgi-bin")] = '\0';
 
             U_INTERNAL_DUMP("cgi_dir = %S", cgi->dir)
-            U_INTERNAL_DUMP("cgi_doc = %S", cgi->dir + u_strlen(cgi->dir) + 1)
+            U_INTERNAL_DUMP("cgi_doc = %S", cgi->dir + u_str_len(cgi->dir) + 1)
 
             const char* ptr = pathname->c_pointer(pathname->size() - 2);
 
@@ -4053,7 +4053,7 @@ void UHTTP::renewDataCache()
 {
    U_TRACE(0, "UHTTP::renewDataCache()")
 
-   u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "./%.*s", U_STRING_TO_TRACE(*(cache_file->key())));
+   u_buffer_len = u_sn_printf(u_buffer, sizeof(u_buffer), "./%.*s", U_STRING_TO_TRACE(*(cache_file->key())));
 
    int fd = file_data->fd;
 
@@ -5311,7 +5311,7 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool pro
 
       // NB: we can't use U_HTTP_URI_TO_TRACE because this function can be called by SSI...
 
-      path.snprintf("%w/%s/%s", cgi_dir, cgi_dir + u_strlen(cgi_dir) + 1);
+      path.snprintf("%w/%s/%s", cgi_dir, cgi_dir + u_str_len(cgi_dir) + 1);
 
       U_INTERNAL_DUMP("path = %.*S", U_STRING_TO_TRACE(path))
 
@@ -5409,7 +5409,7 @@ bool UHTTP::checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos)
       char bp[12];
 
       uint32_t sz_len1 = nptr - ptr,
-               sz_len2 = u_snprintf(bp, sizeof(bp), "%u", length);
+               sz_len2 = u_sn_printf(bp, sizeof(bp), "%u", length);
 
       U_INTERNAL_DUMP("sz_len1 = %u sz_len2 = %u", sz_len1, sz_len2)
 
@@ -5482,7 +5482,7 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestIfRange(const UString& etag)
          }
       else // HTTP-date
          {
-         time_t since = UDate::getSecondFromTime(ptr, true);
+         time_t since = UTimeDate::getSecondFromTime(ptr, true);
 
          U_INTERNAL_DUMP("since = %ld", since)
          U_INTERNAL_DUMP("mtime = %ld", file->st_mtime)
@@ -5756,7 +5756,7 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestIfModified(const UString& request)
 
       if (ptr)
          {
-         time_t since = UDate::getSecondFromTime(ptr, true);
+         time_t since = UTimeDate::getSecondFromTime(ptr, true);
 
          U_INTERNAL_DUMP("since = %ld", since)
          U_INTERNAL_DUMP("mtime = %ld", file->st_mtime)

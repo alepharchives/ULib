@@ -13,8 +13,8 @@ un nome di link simbolico (PEC1-2007-03-22#2007-03-23.lnk) che specifica la corr
 
 #include "PEC_report.h"
 
-static UDate* inizio;
-static UDate* fine;
+static UTimeDate* inizio;
+static UTimeDate* fine;
 
 class Application : public PEC_report {
 public:
@@ -75,8 +75,8 @@ public:
       {
       U_TRACE(5, "Application::start()")
 
-      inizio = new UDate;
-      fine   = new UDate;
+      inizio = new UTimeDate;
+      fine   = new UTimeDate;
 
       resetDate();
 

@@ -57,7 +57,7 @@ static void u_do_cipher(char* pw, int operation)
 
 int main(int argc, char** argv)
 {
-   u_init(argv);
+   u_init_ulib(argv);
 
    U_INTERNAL_TRACE("main(%d,%p)", argc, argv)
 

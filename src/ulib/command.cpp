@@ -405,19 +405,19 @@ void UCommand::setMsgError(const char* cmd)
 
    if (isStarted() == false)
       {
-      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "command %S didn't start %R",  cmd, 0); // NB: the last argument (0) is necessary...
+      u_buffer_len = u_sn_printf(u_buffer, sizeof(u_buffer), "command %S didn't start %R",  cmd, 0); // NB: the last argument (0) is necessary...
       }
    else if (isTimeout())
       {
-      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "command %S excedeed time (%d secs) for execution", cmd, timeoutMS / 1000);
+      u_buffer_len = u_sn_printf(u_buffer, sizeof(u_buffer), "command %S excedeed time (%d secs) for execution", cmd, timeoutMS / 1000);
       }
    else if (exit_value)
       {
-      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "command %S exit with value %d", cmd, exit_value);
+      u_buffer_len = u_sn_printf(u_buffer, sizeof(u_buffer), "command %S exit with value %d", cmd, exit_value);
       }
    else
       {
-      u_buffer_len = u_snprintf(u_buffer, sizeof(u_buffer), "command %S started", cmd);
+      u_buffer_len = u_sn_printf(u_buffer, sizeof(u_buffer), "command %S started", cmd);
       }
 }
 

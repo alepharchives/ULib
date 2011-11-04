@@ -324,11 +324,11 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
 
    u_gettimeofday();
 
-   u_init_hostname();
+   u_init_ulib_hostname();
 
    U_INTERNAL_DUMP("u_hostname(%u) = %.*S", u_hostname_len, u_hostname_len, u_hostname)
 
-   u_init_username();
+   u_init_ulib_username();
 
    U_INTERNAL_DUMP("u_user_name(%u) = %.*S", u_user_name_len, u_user_name_len, u_user_name)
 
@@ -1548,6 +1548,8 @@ void UServer_Base::run()
              flag_loop) // check for SIGTERM event...
             {
             --nkids;
+
+            baffinity = false;
 
             U_INTERNAL_DUMP("down to %u children", nkids)
 
