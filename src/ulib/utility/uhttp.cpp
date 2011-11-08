@@ -3001,8 +3001,8 @@ void UHTTP::setHTTPRedirectResponse(bool refresh, UString& ext, const char* ptr_
 
    UString tmp(U_CAPACITY), msg(100U + len_location), body(500U + len_location);
 
-   msg.snprintf(refresh ? "The document has moved <a href=\"%.*s\">here</a>"
-                        :  "You need to <a href=\"%.*s\">authenticate with the local network</a> in order to get access",
+   msg.snprintf(refresh ? "You need to <a href=\"%.*s\">authenticate with the local network</a> in order to get access"
+                        : "The document has moved <a href=\"%.*s\">here</a>",
                   len_location, ptr_location);
 
    const char* status = getHTTPStatusDescription(u_http_info.nResponseCode);

@@ -4,7 +4,7 @@
 <li><a href="venus">Venus</a></li>
 
 <li><a href="/SSI/earth/index.shtml">Earth</a>
-   <!--#if expr="$REQUEST_URI ~= /SSI/earth" -->
+   <!--#if expr="$REQUEST_URI ^= /SSI/earth" -->
        <!--#include virtual="/SSI/earth/menu.shtml" -->
    <!--#endif -->
 </li>

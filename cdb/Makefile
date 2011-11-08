@@ -68,9 +68,9 @@ compile buffer_put.c buffer.h str.h byte.h error.h
 	./compile buffer_put.c
 
 byte.a: \
-makelib byte_copy.o byte_cr.o str_len.o fmt_ulong.o uint32_unpack.o \
+makelib byte_copy.o byte_cr.o strlen.o fmt_ulong.o uint32_unpack.o \
 byte_diff.o uint32_pack.o scan_ulong.o
-	./makelib byte.a byte_copy.o byte_cr.o str_len.o \
+	./makelib byte.a byte_copy.o byte_cr.o strlen.o \
 	fmt_ulong.o uint32_unpack.o byte_diff.o uint32_pack.o \
 	scan_ulong.o
 
@@ -333,9 +333,9 @@ setup: \
 it install
 	./install
 
-str_len.o: \
-compile str_len.c str.h
-	./compile str_len.c
+strlen.o: \
+compile strlen.c str.h
+	./compile strlen.c
 
 strerr_die.o: \
 compile strerr_die.c buffer.h exit.h strerr.h

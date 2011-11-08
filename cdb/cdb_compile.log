@@ -1,9 +1,0 @@
-make: `cdbdump' is up to date.
-make: `cdbget' is up to date.
-make: `cdbmake' is up to date.
-make: `cdbstats' is up to date.
-make: `cdbtest' is up to date.
-./compile cdbnumrecs.c
-cdbnumrecs.c: In function 'main':
-cdbnumrecs.c:77: warning: incompatible implicit declaration of built-in function '_exit'
-./load cdbnumrecs cdb.a buffer.a unix.a byte.a 

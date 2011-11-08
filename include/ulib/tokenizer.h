@@ -20,32 +20,31 @@
  * TOKEN ID
  **/
 
-#define U_TK_ERROR    -1
-#define U_TK_AND       1
-#define U_TK_OR        2
-#define U_TK_EQ        3
-#define U_TK_NE        4
-#define U_TK_GT        5
-#define U_TK_GE        6
-#define U_TK_LT        7
-#define U_TK_LE        8
-
+#define U_TK_ERROR       -1
+#define U_TK_AND          1
+#define U_TK_OR           2
+#define U_TK_EQ           3
+#define U_TK_NE           4
+#define U_TK_GT           5
+#define U_TK_GE           6
+#define U_TK_LT           7
+#define U_TK_LE           8
 #define U_TK_STARTS_WITH  9
 #define U_TK_ENDS_WITH   10
-#define U_TK_CONTAINS    11
-
-#define U_TK_PLUS     12
-#define U_TK_MINUS    13
-#define U_TK_MULT     14
-#define U_TK_DIV      15
-#define U_TK_MOD      16
-#define U_TK_NOT      17
-#define U_TK_FN_CALL  18
-#define U_TK_LPAREN   19
-#define U_TK_RPAREN   20
-#define U_TK_VALUE    21
-#define U_TK_COMMA    22
-#define U_TK_NAME     23
+#define U_TK_IS_PRESENT  11
+#define U_TK_CONTAINS    12
+#define U_TK_PLUS        13
+#define U_TK_MINUS       14
+#define U_TK_MULT        15
+#define U_TK_DIV         16
+#define U_TK_MOD         17
+#define U_TK_NOT         18
+#define U_TK_FN_CALL     19
+#define U_TK_LPAREN      20
+#define U_TK_RPAREN      21
+#define U_TK_VALUE       22
+#define U_TK_COMMA       23
+#define U_TK_NAME        24
 
 template <class T> class UVector;
 

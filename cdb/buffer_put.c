@@ -74,15 +74,15 @@ int buffer_putflush(buffer *s,char *buf,unsigned int len)
 
 int buffer_putsalign(buffer *s,char *buf)
 {
-  return buffer_putalign(s,buf,str_len(buf));
+  return buffer_putalign(s,buf,strlen(buf));
 }
 
 int buffer_puts(buffer *s,char *buf)
 {
-  return buffer_put(s,buf,str_len(buf));
+  return buffer_put(s,buf,strlen(buf));
 }
 
 int buffer_putsflush(buffer *s,char *buf)
 {
-  return buffer_putflush(s,buf,str_len(buf));
+  return buffer_putflush(s,buf,strlen(buf));
 }

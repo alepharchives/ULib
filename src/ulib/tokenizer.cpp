@@ -396,29 +396,6 @@ loop:
          }
       break;
 
-      case '$':
-         {
-         tid = U_TK_NAME;
-
-         if (*s == '{')
-            {
-            p1 = ++s;
-
-            while (s < end && *s != '}') ++s;
-
-            p2 = s++;
-            }
-         else
-            {
-            p1 = s;
-
-            while (s < end && (u_isalnum(*s) || *s == '_')) ++s;
-
-            p2 = s;
-            }
-         }
-      break;
-
       case '\'':
          {
          tid = U_TK_VALUE;
@@ -433,27 +410,57 @@ loop:
 
       case '+': tid = U_TK_PLUS;                                          p2 = s; break;
       case '-': tid = U_TK_MINUS;                                         p2 = s; break;
-      case '*': tid = U_TK_MULT;                                          p2 = s; break;
       case '%': tid = U_TK_MOD;                                           p2 = s; break;
       case '(': tid = U_TK_LPAREN;                                        p2 = s; break;
       case ')': tid = U_TK_RPAREN;                                        p2 = s; break;
       case ',': tid = U_TK_COMMA;                                         p2 = s; break;
-      case '^': tid = U_TK_CONTAINS;                                      p2 = s; break;
+
+      case '|': tid = (*s == '|' ? (++s, U_TK_OR)          : U_TK_ERROR); p2 = s; break;
+      case '&': tid = (*s == '&' ? (++s, U_TK_AND)         : U_TK_ERROR); p2 = s; break;
+
+      case '=': tid = (*s == '=' ? (++s, U_TK_EQ)          : U_TK_EQ);    p2 = s; break;
       case '>': tid = (*s == '=' ? (++s, U_TK_GE)          : U_TK_GT);    p2 = s; break;
       case '<': tid = (*s == '=' ? (++s, U_TK_LE)          : U_TK_LT);    p2 = s; break;
       case '!': tid = (*s == '=' ? (++s, U_TK_NE)          : U_TK_NOT);   p2 = s; break;
-      case '|': tid = (*s == '|' ? (++s, U_TK_OR)          : U_TK_ERROR); p2 = s; break;
-      case '&': tid = (*s == '&' ? (++s, U_TK_AND)         : U_TK_ERROR); p2 = s; break;
-      case '~': tid = (*s == '=' ? (++s, U_TK_STARTS_WITH) : U_TK_ERROR); p2 = s; break;
 
-      case '=':
+      // foo  = "bar" - Un elemento il cui attributo "foo" è uguale a "bar"
+      // foo ~= "bar" - Un elemento il cui attributo "foo" ha per valore un elenco di valori separati da spazio, uno dei quali uguale a "bar"
+      // foo ^= "bar" - Un elemento E il cui attributo "foo" ha un valore che inizia per "bar"
+      // foo $= "bar" - Un elemento E il cui attributo "foo" ha un valore che finisce per "bar"
+      // foo *= "bar" - Un elemento E il cui attributo "foo" ha un valore che contiene la sottostringa "bar"
+
+      case '~': tid = (*s == '=' ? (++s, U_TK_IS_PRESENT)  : U_TK_ERROR); p2 = s; break;
+      case '^': tid = (*s == '=' ? (++s, U_TK_STARTS_WITH) : U_TK_ERROR); p2 = s; break;
+      case '*': tid = (*s == '=' ? (++s, U_TK_CONTAINS)    : U_TK_MULT);  p2 = s; break;
+
+      case '$':
          {
-         tid = U_TK_EQ;
+         if (*s == '=')
+            {
+            p2  = ++s;
+            tid = U_TK_ENDS_WITH;
+            }
+         else
+            {
+            tid = U_TK_NAME;
 
-              if (*s == '=') ++s;
-         else if (*s == '~') ++s, tid = U_TK_ENDS_WITH;
+            if (*s == '{')
+               {
+               p1 = ++s;
 
-         p2 = s;
+               while (s < end && *s != '}') ++s;
+
+               p2 = s++;
+               }
+            else
+               {
+               p1 = s;
+
+               while (s < end && (u_isalnum(*s) || *s == '_')) ++s;
+
+               p2 = s;
+               }
+            }
          }
       break;
 

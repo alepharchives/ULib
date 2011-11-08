@@ -28,7 +28,7 @@ seek_cur.o
 unix.a
 byte_copy.o
 byte_cr.o
-str_len.o
+strlen.o
 fmt_ulong.o
 uint32_unpack.o
 byte_diff.o

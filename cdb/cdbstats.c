@@ -55,7 +55,7 @@ char strnum[FMT_ULONG];
 void putnum(char *label,unsigned long count)
 {
   unsigned int i;
-  put(label,str_len(label));
+  put(label,strlen(label));
   for (i = fmt_ulong(0,count);i < 10;++i) put(" ",1);
   put(strnum,fmt_ulong(strnum,count));
   put("\n",1);

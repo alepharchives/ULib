@@ -2,7 +2,7 @@
 
 #include "str.h"
 
-unsigned int str_len(const char *s)
+unsigned int strlen(const char *s)
 {
   register const char *t;
 

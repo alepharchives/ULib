@@ -31,7 +31,7 @@ main(int argc,char **argv)
 
   cdb_init(&c,0);
 
-  r=cdb_successor(&c,key,key?str_len(key):0);
+  r=cdb_successor(&c,key,key?strlen(key):0);
   if (r == -1) die_read();
   if (!r) _exit(100);
 

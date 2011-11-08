@@ -44,7 +44,7 @@ main(int argc,char **argv)
   cdb_findstart(&c);
 
   for (;;) {
-	 r = cdb_findnext(&c,key,str_len(key));
+	 r = cdb_findnext(&c,key,strlen(key));
 	 if (r == -1) die_read();
 	 if (!r) _exit(100);
 	 if (!u) break;

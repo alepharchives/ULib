@@ -81,14 +81,14 @@ void token_destructor(UString* token) {
 **                       defined, then do no error processing.
 */
 #define YYCODETYPE unsigned char
-#define YYNOCODE 40
+#define YYNOCODE 41
 #define YYACTIONTYPE unsigned char
 #define expressionParserTOKENTYPE  UString* 
 typedef union {
   expressionParserTOKENTYPE yy0;
-  UString* yy13;
-  int yy46;
-  Items* yy65;
+  UString* yy3;
+  int yy12;
+  Items* yy49;
 } YYMINORTYPE;
 #ifndef YYSTACKDEPTH
 #define YYSTACKDEPTH 100
@@ -97,8 +97,8 @@ typedef union {
 #define expressionParserARG_PDECL , UString* result 
 #define expressionParserARG_FETCH  UString* result  = yypParser->result 
 #define expressionParserARG_STORE yypParser->result  = result 
-#define YYNSTATE 50
-#define YYNRULE 37
+#define YYNSTATE 51
+#define YYNRULE 38
 #define YY_NO_ACTION      (YYNSTATE+YYNRULE+2)
 #define YY_ACCEPT_ACTION  (YYNSTATE+YYNRULE+1)
 #define YY_ERROR_ACTION   (YYNSTATE+YYNRULE)
@@ -151,46 +151,47 @@ typedef union {
 **  yy_default[]       Default action for each state.
 */
 static const YYACTIONTYPE yy_action[] = {
- /*     0 */    88,   12,    9,   11,   17,   15,   42,   43,   20,   14,
- /*    10 */     9,   11,   17,   15,   42,   43,   20,    8,   11,   17,
- /*    20 */    15,   42,   43,   20,   10,   17,   15,   42,   43,   20,
- /*    30 */    16,   15,   42,   43,   20,   28,   29,   13,   42,   43,
- /*    40 */    20,   30,   31,   32,    7,   21,    1,    3,   45,   33,
- /*    50 */    34,   35,   36,   23,   43,   20,   21,    1,    2,   45,
- /*    60 */    50,   27,   26,   39,   40,   41,   27,   26,   24,   20,
- /*    70 */    37,   38,   46,   49,   47,    4,   22,   89,   44,    6,
- /*    80 */    19,    5,   18,   48,   89,   25,
+ /*     0 */    90,   12,    9,   11,   17,   15,   43,   44,   20,   14,
+ /*    10 */     9,   11,   17,   15,   43,   44,   20,    8,   11,   17,
+ /*    20 */    15,   43,   44,   20,   10,   17,   15,   43,   44,   20,
+ /*    30 */    28,   29,   13,   43,   44,   20,   30,   31,   32,   33,
+ /*    40 */    16,   15,   43,   44,   20,    3,    7,   21,    1,    4,
+ /*    50 */    46,    2,   34,   35,   36,   37,   23,   44,   20,   21,
+ /*    60 */     1,    6,   46,   51,   27,   26,   40,   41,   42,   27,
+ /*    70 */    26,   24,   20,   38,   39,   47,   50,   48,    5,   22,
+ /*    80 */    19,   45,   18,   49,   91,   91,   91,   91,   91,   25,
 };
 static const YYCODETYPE yy_lookahead[] = {
- /*     0 */    30,   31,   32,   33,   34,   35,   36,   37,   38,   31,
- /*    10 */    32,   33,   34,   35,   36,   37,   38,   32,   33,   34,
- /*    20 */    35,   36,   37,   38,   33,   34,   35,   36,   37,   38,
- /*    30 */    34,   35,   36,   37,   38,    3,    4,   35,   36,   37,
- /*    40 */    38,    9,   10,   11,   17,   18,   19,   26,   21,    5,
- /*    50 */     6,    7,    8,   36,   37,   38,   18,   19,   25,   21,
- /*    60 */     0,    1,    2,   14,   15,   16,    1,    2,   37,   38,
- /*    70 */    12,   13,   20,   21,   20,   27,   22,   39,   21,   29,
- /*    80 */    24,   28,   19,   21,   39,   20,
+ /*     0 */    31,   32,   33,   34,   35,   36,   37,   38,   39,   32,
+ /*    10 */    33,   34,   35,   36,   37,   38,   39,   33,   34,   35,
+ /*    20 */    36,   37,   38,   39,   34,   35,   36,   37,   38,   39,
+ /*    30 */     3,    4,   36,   37,   38,   39,    9,   10,   11,   12,
+ /*    40 */    35,   36,   37,   38,   39,   27,   18,   19,   20,   28,
+ /*    50 */    22,   26,    5,    6,    7,    8,   37,   38,   39,   19,
+ /*    60 */    20,   30,   22,    0,    1,    2,   15,   16,   17,    1,
+ /*    70 */     2,   38,   39,   13,   14,   21,   22,   21,   29,   23,
+ /*    80 */    25,   22,   20,   22,   40,   40,   40,   40,   40,   21,
 };
 #define YY_SHIFT_USE_DFLT (-1)
 #define YY_SHIFT_MAX 22
 static const signed char yy_shift_ofst[] = {
- /*     0 */    27,   27,   27,   27,   27,   27,   27,   38,   32,   32,
- /*    10 */    44,   44,   60,   49,   65,   49,   58,   58,   52,   54,
- /*    20 */    57,   63,   62,
+ /*     0 */    28,   28,   28,   28,   28,   28,   28,   40,   27,   27,
+ /*    10 */    47,   47,   63,   51,   68,   51,   60,   60,   54,   56,
+ /*    20 */    59,   62,   61,
 };
-#define YY_REDUCE_USE_DFLT (-31)
+#define YY_REDUCE_USE_DFLT (-32)
 #define YY_REDUCE_MAX 18
 static const signed char yy_reduce_ofst[] = {
- /*     0 */   -30,  -22,  -15,   -9,   -4,    2,   17,   31,   21,   21,
- /*    10 */    48,   48,   33,   50,   33,   50,   53,   53,   56,
+ /*     0 */   -31,  -23,  -16,  -10,    5,   -4,   19,   33,   18,   18,
+ /*    10 */    21,   21,   25,   31,   25,   31,   49,   49,   55,
 };
 static const YYACTIONTYPE yy_default[] = {
- /*     0 */    87,   87,   87,   87,   87,   87,   87,   87,   51,   52,
- /*    10 */    53,   54,   87,   57,   87,   58,   55,   56,   87,   87,
- /*    20 */    64,   87,   87,   59,   61,   63,   67,   68,   69,   70,
- /*    30 */    71,   72,   73,   74,   75,   76,   77,   78,   79,   80,
- /*    40 */    81,   82,   60,   62,   66,   65,   83,   84,   86,   85,
+ /*     0 */    89,   89,   89,   89,   89,   89,   89,   89,   52,   53,
+ /*    10 */    54,   55,   89,   58,   89,   59,   56,   57,   89,   89,
+ /*    20 */    65,   89,   89,   60,   62,   64,   68,   69,   70,   71,
+ /*    30 */    72,   73,   74,   75,   76,   77,   78,   79,   80,   81,
+ /*    40 */    82,   83,   84,   61,   63,   67,   66,   85,   86,   88,
+ /*    50 */    87,
 };
 #define YY_SZ_ACTTAB (int)(sizeof(yy_action)/sizeof(yy_action[0]))
 
@@ -283,14 +284,14 @@ void expressionParserTrace(FILE *TraceFILE, char *zTracePrompt){
 static const char *const yyTokenName[] = {
   "$",             "AND",           "OR",            "EQ",          
   "NE",            "GT",            "GE",            "LT",          
-  "LE",            "STARTS_WITH",   "ENDS_WITH",     "CONTAINS",    
-  "PLUS",          "MINUS",         "MULT",          "DIV",         
-  "MOD",           "NOT",           "FN_CALL",       "LPAREN",      
-  "RPAREN",        "VALUE",         "COMMA",         "error",       
-  "params",        "booleanCond",   "equalityCond",  "relationalCond",
-  "additiveCond",  "multiplicativeCond",  "input",         "booleanExpression",
-  "equalityExpression",  "relationalExpression",  "additiveExpression",  "multiplicativeExpression",
-  "unaryExpression",  "primaryExpression",  "value",       
+  "LE",            "STARTS_WITH",   "ENDS_WITH",     "IS_PRESENT",  
+  "CONTAINS",      "PLUS",          "MINUS",         "MULT",        
+  "DIV",           "MOD",           "NOT",           "FN_CALL",     
+  "LPAREN",        "RPAREN",        "VALUE",         "COMMA",       
+  "error",         "params",        "booleanCond",   "equalityCond",
+  "relationalCond",  "additiveCond",  "multiplicativeCond",  "input",       
+  "booleanExpression",  "equalityExpression",  "relationalExpression",  "additiveExpression",
+  "multiplicativeExpression",  "unaryExpression",  "primaryExpression",  "value",       
 };
 #endif /* NDEBUG */
 
@@ -321,20 +322,21 @@ static const char *const yyRuleName[] = {
  /*  20 */ "equalityCond ::= NE",
  /*  21 */ "equalityCond ::= STARTS_WITH",
  /*  22 */ "equalityCond ::= ENDS_WITH",
- /*  23 */ "equalityCond ::= CONTAINS",
- /*  24 */ "relationalCond ::= GT",
- /*  25 */ "relationalCond ::= GE",
- /*  26 */ "relationalCond ::= LT",
- /*  27 */ "relationalCond ::= LE",
- /*  28 */ "additiveCond ::= PLUS",
- /*  29 */ "additiveCond ::= MINUS",
- /*  30 */ "multiplicativeCond ::= MULT",
- /*  31 */ "multiplicativeCond ::= DIV",
- /*  32 */ "multiplicativeCond ::= MOD",
- /*  33 */ "primaryExpression ::= FN_CALL LPAREN RPAREN",
- /*  34 */ "primaryExpression ::= FN_CALL LPAREN params RPAREN",
- /*  35 */ "params ::= VALUE",
- /*  36 */ "params ::= params COMMA VALUE",
+ /*  23 */ "equalityCond ::= IS_PRESENT",
+ /*  24 */ "equalityCond ::= CONTAINS",
+ /*  25 */ "relationalCond ::= GT",
+ /*  26 */ "relationalCond ::= GE",
+ /*  27 */ "relationalCond ::= LT",
+ /*  28 */ "relationalCond ::= LE",
+ /*  29 */ "additiveCond ::= PLUS",
+ /*  30 */ "additiveCond ::= MINUS",
+ /*  31 */ "multiplicativeCond ::= MULT",
+ /*  32 */ "multiplicativeCond ::= DIV",
+ /*  33 */ "multiplicativeCond ::= MOD",
+ /*  34 */ "primaryExpression ::= FN_CALL LPAREN RPAREN",
+ /*  35 */ "primaryExpression ::= FN_CALL LPAREN params RPAREN",
+ /*  36 */ "params ::= VALUE",
+ /*  37 */ "params ::= params COMMA VALUE",
 };
 #endif /* NDEBUG */
 
@@ -413,29 +415,30 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
     case 8: /* LE */
     case 9: /* STARTS_WITH */
     case 10: /* ENDS_WITH */
-    case 11: /* CONTAINS */
-    case 12: /* PLUS */
-    case 13: /* MINUS */
-    case 14: /* MULT */
-    case 15: /* DIV */
-    case 16: /* MOD */
-    case 17: /* NOT */
-    case 18: /* FN_CALL */
-    case 19: /* LPAREN */
-    case 20: /* RPAREN */
-    case 21: /* VALUE */
-    case 22: /* COMMA */
+    case 11: /* IS_PRESENT */
+    case 12: /* CONTAINS */
+    case 13: /* PLUS */
+    case 14: /* MINUS */
+    case 15: /* MULT */
+    case 16: /* DIV */
+    case 17: /* MOD */
+    case 18: /* NOT */
+    case 19: /* FN_CALL */
+    case 20: /* LPAREN */
+    case 21: /* RPAREN */
+    case 22: /* VALUE */
+    case 23: /* COMMA */
 #line 31 "expression.y"
 { token_destructor((yypminor->yy0)); }
-#line 432 "expression.c"
+#line 435 "expression.c"
       break;
-    case 24: /* params */
+    case 25: /* params */
 #line 33 "expression.y"
 {
-   U_TRACE(0, "::params_destructor(%p)", (yypminor->yy65))
-   delete (yypminor->yy65);
+   U_TRACE(0, "::params_destructor(%p)", (yypminor->yy49))
+   delete (yypminor->yy49);
 }
-#line 440 "expression.c"
+#line 443 "expression.c"
       break;
     default:  break;   /* If no destructor action specified: do nothing */
   }
@@ -500,7 +503,7 @@ void expressionParserFree(
 ** independent of the look-ahead.  If it is, return the action, otherwise
 ** return YY_NO_ACTION.
 */
-static __pure int yy_find_shift_action(
+static int yy_find_shift_action(
   yyParser *pParser,        /* The parser */
   YYCODETYPE iLookAhead     /* The look-ahead token */
 ){
@@ -556,7 +559,7 @@ static __pure int yy_find_shift_action(
 ** independent of the look-ahead.  If it is, return the action, otherwise
 ** return YY_NO_ACTION.
 */
-static __pure int yy_find_reduce_action(
+static int yy_find_reduce_action(
   int stateno,              /* Current state number */
   YYCODETYPE iLookAhead     /* The look-ahead token */
 ){
@@ -589,7 +592,7 @@ static void yyStackOverflow(yyParser *yypParser, YYMINORTYPE *yypMinor){
 
    U_TRACE(0, "::stack_overflow()")
    U_WARNING("Parse stack overflow");
-#line 595 "expression.c"
+#line 598 "expression.c"
    expressionParserARG_STORE; /* Suppress warning about unused %extra_argument var */
 }
 
@@ -641,8 +644,6 @@ static const struct {
   YYCODETYPE lhs;         /* Symbol on the left-hand side of the rule */
   unsigned char nrhs;     /* Number of right-hand side symbols in the rule */
 } yyRuleInfo[] = {
-  { 30, 1 },
-  { 31, 3 },
   { 31, 1 },
   { 32, 3 },
   { 32, 1 },
@@ -652,32 +653,35 @@ static const struct {
   { 34, 1 },
   { 35, 3 },
   { 35, 1 },
-  { 36, 2 },
+  { 36, 3 },
   { 36, 1 },
-  { 37, 3 },
+  { 37, 2 },
   { 37, 1 },
+  { 38, 3 },
   { 38, 1 },
-  { 38, 2 },
-  { 25, 1 },
-  { 25, 1 },
+  { 39, 1 },
+  { 39, 2 },
   { 26, 1 },
   { 26, 1 },
-  { 26, 1 },
-  { 26, 1 },
-  { 26, 1 },
+  { 27, 1 },
+  { 27, 1 },
   { 27, 1 },
   { 27, 1 },
   { 27, 1 },
   { 27, 1 },
   { 28, 1 },
   { 28, 1 },
+  { 28, 1 },
+  { 28, 1 },
   { 29, 1 },
   { 29, 1 },
-  { 29, 1 },
-  { 37, 3 },
-  { 37, 4 },
-  { 24, 1 },
-  { 24, 3 },
+  { 30, 1 },
+  { 30, 1 },
+  { 30, 1 },
+  { 38, 3 },
+  { 38, 4 },
+  { 25, 1 },
+  { 25, 3 },
 };
 
 static void yy_accept(yyParser*);  /* Forward Declaration */
@@ -734,127 +738,128 @@ static void yy_reduce(
       case 0: /* input ::= booleanExpression */
 #line 78 "expression.y"
 {
-   U_TRACE(0, "input ::= booleanExpression(yymsp[0].minor.yy13)")
+   U_TRACE(0, "input ::= booleanExpression(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
    U_INTERNAL_ASSERT_POINTER(result)
 
-   U_INTERNAL_DUMP("yymsp[0].minor.yy13 = %.*S result = %.*S", U_STRING_TO_TRACE(*yymsp[0].minor.yy13), U_STRING_TO_TRACE(*result))
+   U_INTERNAL_DUMP("yymsp[0].minor.yy3 = %.*S result = %.*S", U_STRING_TO_TRACE(*yymsp[0].minor.yy3), U_STRING_TO_TRACE(*result))
 
-   *result = *yymsp[0].minor.yy13;
+   *result = *yymsp[0].minor.yy3;
 
-   delete yymsp[0].minor.yy13;
+   delete yymsp[0].minor.yy3;
 }
-#line 751 "expression.c"
+#line 755 "expression.c"
         break;
       case 1: /* booleanExpression ::= booleanExpression booleanCond equalityExpression */
 #line 91 "expression.y"
 {
-   U_TRACE(0, "booleanExpression(yygotominor.yy13) ::= booleanExpression(yymsp[-2].minor.yy13) booleanCond(yymsp[-1].minor.yy46) equalityExpression(yymsp[0].minor.yy13)")
+   U_TRACE(0, "booleanExpression(yygotominor.yy3) ::= booleanExpression(yymsp[-2].minor.yy3) booleanCond(yymsp[-1].minor.yy12) equalityExpression(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[-2].minor.yy13)
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[-2].minor.yy3)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   U_INTERNAL_DUMP("yymsp[-2].minor.yy13 = %.*S yymsp[-1].minor.yy46 = %d yymsp[0].minor.yy13 = %.*S", U_STRING_TO_TRACE(*yymsp[-2].minor.yy13), yymsp[-1].minor.yy46, U_STRING_TO_TRACE(*yymsp[0].minor.yy13))
+   U_INTERNAL_DUMP("yymsp[-2].minor.yy3 = %.*S yymsp[-1].minor.yy12 = %d yymsp[0].minor.yy3 = %.*S", U_STRING_TO_TRACE(*yymsp[-2].minor.yy3), yymsp[-1].minor.yy12, U_STRING_TO_TRACE(*yymsp[0].minor.yy3))
 
-   bool Bbo = (yymsp[-2].minor.yy13->empty() == false),
-        Dbo = (yymsp[0].minor.yy13->empty() == false),
-         bo = (yymsp[-1].minor.yy46 == U_TK_AND ? Bbo && Dbo
+   bool Bbo = (yymsp[-2].minor.yy3->empty() == false),
+        Dbo = (yymsp[0].minor.yy3->empty() == false),
+         bo = (yymsp[-1].minor.yy12 == U_TK_AND ? Bbo && Dbo
                              : Bbo || Dbo);
 
-   yygotominor.yy13 = (bo ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
+   yygotominor.yy3 = (bo ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
 
-   delete yymsp[-2].minor.yy13;
-   delete yymsp[0].minor.yy13;
+   delete yymsp[-2].minor.yy3;
+   delete yymsp[0].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 775 "expression.c"
+#line 779 "expression.c"
         break;
       case 2: /* booleanExpression ::= equalityExpression */
 #line 112 "expression.y"
 {
-   U_TRACE(0, "booleanExpression(yygotominor.yy13) ::= equalityExpression(yymsp[0].minor.yy13)")
+   U_TRACE(0, "booleanExpression(yygotominor.yy3) ::= equalityExpression(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %p yymsp[0].minor.yy13 = %p", yygotominor.yy13, yymsp[0].minor.yy13)
+   U_INTERNAL_DUMP("yygotominor.yy3 = %p yymsp[0].minor.yy3 = %p", yygotominor.yy3, yymsp[0].minor.yy3)
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   yygotominor.yy13 = yymsp[0].minor.yy13;
+   yygotominor.yy3 = yymsp[0].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 790 "expression.c"
+#line 794 "expression.c"
         break;
       case 3: /* equalityExpression ::= equalityExpression equalityCond relationalExpression */
 #line 124 "expression.y"
 {
-   U_TRACE(0, "equalityExpression(yygotominor.yy13) ::= equalityExpression(yymsp[-2].minor.yy13) equalityCond(yymsp[-1].minor.yy46) relationalExpression(yymsp[0].minor.yy13)")
+   U_TRACE(0, "equalityExpression(yygotominor.yy3) ::= equalityExpression(yymsp[-2].minor.yy3) equalityCond(yymsp[-1].minor.yy12) relationalExpression(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[-2].minor.yy13)
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[-2].minor.yy3)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   U_INTERNAL_DUMP("yymsp[-2].minor.yy13 = %.*S yymsp[-1].minor.yy46 = %d yymsp[0].minor.yy13 = %.*S", U_STRING_TO_TRACE(*yymsp[-2].minor.yy13), yymsp[-1].minor.yy46, U_STRING_TO_TRACE(*yymsp[0].minor.yy13))
+   U_INTERNAL_DUMP("yymsp[-2].minor.yy3 = %.*S yymsp[-1].minor.yy12 = %d yymsp[0].minor.yy3 = %.*S", U_STRING_TO_TRACE(*yymsp[-2].minor.yy3), yymsp[-1].minor.yy12, U_STRING_TO_TRACE(*yymsp[0].minor.yy3))
 
    bool bo = false,
-       Bbo = (yymsp[-2].minor.yy13->empty() == false),
-       Dbo = (yymsp[0].minor.yy13->empty() == false);
+       Bbo = (yymsp[-2].minor.yy3->empty() == false),
+       Dbo = (yymsp[0].minor.yy3->empty() == false);
 
-   int cmp = (Bbo && Dbo ? yymsp[-2].minor.yy13->compare(yymsp[0].minor.yy13->rep) : Bbo - Dbo);
+   int cmp = (Bbo && Dbo ? yymsp[-2].minor.yy3->compare(yymsp[0].minor.yy3->rep) : Bbo - Dbo);
 
-   switch (yymsp[-1].minor.yy46)
+   switch (yymsp[-1].minor.yy12)
       {
       case U_TK_EQ: bo = (cmp == 0); break;
       case U_TK_NE: bo = (cmp != 0); break;
 
-      case U_TK_CONTAINS:     if (Bbo && Dbo) bo = (yymsp[-2].minor.yy13->find(*yymsp[0].minor.yy13) != U_NOT_FOUND);      break;
-      case U_TK_ENDS_WITH:    if (Bbo && Dbo) bo = UStringExt::endsWith(  *yymsp[-2].minor.yy13, *yymsp[0].minor.yy13); break;
-      case U_TK_STARTS_WITH:  if (Bbo && Dbo) bo = UStringExt::startsWith(*yymsp[-2].minor.yy13, *yymsp[0].minor.yy13); break;
+      case U_TK_ENDS_WITH:    if (Bbo && Dbo) bo = UStringExt::endsWith(  *yymsp[-2].minor.yy3, *yymsp[0].minor.yy3); break;
+      case U_TK_STARTS_WITH:  if (Bbo && Dbo) bo = UStringExt::startsWith(*yymsp[-2].minor.yy3, *yymsp[0].minor.yy3); break;
+      case U_TK_CONTAINS:     if (Bbo && Dbo) bo = (yymsp[-2].minor.yy3->find(*yymsp[0].minor.yy3) != U_NOT_FOUND);    break;
+      case U_TK_IS_PRESENT:   if (Bbo && Dbo) bo = Items(*yymsp[-2].minor.yy3).isContained(*yymsp[0].minor.yy3);       break;
       }
 
    U_INTERNAL_DUMP("bo = %b cmp = %d", bo, cmp)
 
-   yygotominor.yy13 = (bo ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
+   yygotominor.yy3 = (bo ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
 
-   delete yymsp[-2].minor.yy13;
-   delete yymsp[0].minor.yy13;
+   delete yymsp[-2].minor.yy3;
+   delete yymsp[0].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 827 "expression.c"
+#line 832 "expression.c"
         break;
       case 4: /* equalityExpression ::= relationalExpression */
-#line 158 "expression.y"
+#line 159 "expression.y"
 {
-   U_TRACE(0, "equalityExpression(yygotominor.yy13) ::= relationalExpression(yymsp[0].minor.yy13)")
+   U_TRACE(0, "equalityExpression(yygotominor.yy3) ::= relationalExpression(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %p yymsp[0].minor.yy13 = %p", yygotominor.yy13, yymsp[0].minor.yy13)
+   U_INTERNAL_DUMP("yygotominor.yy3 = %p yymsp[0].minor.yy3 = %p", yygotominor.yy3, yymsp[0].minor.yy3)
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   yygotominor.yy13 = yymsp[0].minor.yy13;
+   yygotominor.yy3 = yymsp[0].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 842 "expression.c"
+#line 847 "expression.c"
         break;
       case 5: /* relationalExpression ::= relationalExpression relationalCond additiveExpression */
-#line 170 "expression.y"
+#line 171 "expression.y"
 {
-   U_TRACE(0, "relationalExpression(yygotominor.yy13) ::= relationalExpression(yymsp[-2].minor.yy13) relationalCond(yymsp[-1].minor.yy46) additiveExpression(yymsp[0].minor.yy13)")
+   U_TRACE(0, "relationalExpression(yygotominor.yy3) ::= relationalExpression(yymsp[-2].minor.yy3) relationalCond(yymsp[-1].minor.yy12) additiveExpression(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[-2].minor.yy13)
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[-2].minor.yy3)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   U_INTERNAL_DUMP("yymsp[-2].minor.yy13 = %.*S yymsp[-1].minor.yy46 = %d yymsp[0].minor.yy13 = %.*S", U_STRING_TO_TRACE(*yymsp[-2].minor.yy13), yymsp[-1].minor.yy46, U_STRING_TO_TRACE(*yymsp[0].minor.yy13))
+   U_INTERNAL_DUMP("yymsp[-2].minor.yy3 = %.*S yymsp[-1].minor.yy12 = %d yymsp[0].minor.yy3 = %.*S", U_STRING_TO_TRACE(*yymsp[-2].minor.yy3), yymsp[-1].minor.yy12, U_STRING_TO_TRACE(*yymsp[0].minor.yy3))
 
    bool bo = false,
-       Bbo = (yymsp[-2].minor.yy13->empty() == false),
-       Dbo = (yymsp[0].minor.yy13->empty() == false);
+       Bbo = (yymsp[-2].minor.yy3->empty() == false),
+       Dbo = (yymsp[0].minor.yy3->empty() == false);
 
-   int cmp = (Bbo && Dbo ? yymsp[-2].minor.yy13->compare(yymsp[0].minor.yy13->rep) : Bbo - Dbo);
+   int cmp = (Bbo && Dbo ? yymsp[-2].minor.yy3->compare(yymsp[0].minor.yy3->rep) : Bbo - Dbo);
 
-   switch (yymsp[-1].minor.yy46)
+   switch (yymsp[-1].minor.yy12)
       {
       case U_TK_LT: bo = (cmp <  0); break;
       case U_TK_LE: bo = (cmp <= 0); break;
@@ -864,360 +869,369 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("bo = %b cmp = %d", bo, cmp)
 
-   yygotominor.yy13 = (bo ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
+   yygotominor.yy3 = (bo ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
 
-   delete yymsp[-2].minor.yy13;
-   delete yymsp[0].minor.yy13;
+   delete yymsp[-2].minor.yy3;
+   delete yymsp[0].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 877 "expression.c"
+#line 882 "expression.c"
         break;
       case 6: /* relationalExpression ::= additiveExpression */
-#line 202 "expression.y"
+#line 203 "expression.y"
 {
-   U_TRACE(0, "relationalExpression(yygotominor.yy13) ::= additiveExpression(yymsp[0].minor.yy13)")
+   U_TRACE(0, "relationalExpression(yygotominor.yy3) ::= additiveExpression(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %p yymsp[0].minor.yy13 = %p", yygotominor.yy13, yymsp[0].minor.yy13)
+   U_INTERNAL_DUMP("yygotominor.yy3 = %p yymsp[0].minor.yy3 = %p", yygotominor.yy3, yymsp[0].minor.yy3)
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   yygotominor.yy13 = yymsp[0].minor.yy13;
+   yygotominor.yy3 = yymsp[0].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 892 "expression.c"
+#line 897 "expression.c"
         break;
       case 7: /* additiveExpression ::= additiveExpression additiveCond multiplicativeExpression */
-#line 214 "expression.y"
+#line 215 "expression.y"
 {
-   U_TRACE(0, "additiveExpression(yygotominor.yy13) ::= additiveExpression(yymsp[-2].minor.yy13) additiveCond(yymsp[-1].minor.yy46) multiplicativeExpression(yymsp[0].minor.yy13)")
+   U_TRACE(0, "additiveExpression(yygotominor.yy3) ::= additiveExpression(yymsp[-2].minor.yy3) additiveCond(yymsp[-1].minor.yy12) multiplicativeExpression(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[-2].minor.yy13)
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[-2].minor.yy3)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   U_INTERNAL_DUMP("yymsp[-2].minor.yy13 = %.*S yymsp[-1].minor.yy46 = %d yymsp[0].minor.yy13 = %.*S", U_STRING_TO_TRACE(*yymsp[-2].minor.yy13), yymsp[-1].minor.yy46, U_STRING_TO_TRACE(*yymsp[0].minor.yy13))
+   U_INTERNAL_DUMP("yymsp[-2].minor.yy3 = %.*S yymsp[-1].minor.yy12 = %d yymsp[0].minor.yy3 = %.*S", U_STRING_TO_TRACE(*yymsp[-2].minor.yy3), yymsp[-1].minor.yy12, U_STRING_TO_TRACE(*yymsp[0].minor.yy3))
 
-   long Blo = yymsp[-2].minor.yy13->strtol(),
-        Dlo = yymsp[0].minor.yy13->strtol(),
-         lo = (yymsp[-1].minor.yy46 == U_TK_PLUS ? Blo + Dlo
+   long Blo = yymsp[-2].minor.yy3->strtol(),
+        Dlo = yymsp[0].minor.yy3->strtol(),
+         lo = (yymsp[-1].minor.yy12 == U_TK_PLUS ? Blo + Dlo
                               : Blo - Dlo);
 
-   yygotominor.yy13 = U_NEW(UString(UStringExt::numberToString(lo)));
+   yygotominor.yy3 = U_NEW(UString(UStringExt::numberToString(lo)));
 
-   delete yymsp[-2].minor.yy13;
-   delete yymsp[0].minor.yy13;
+   delete yymsp[-2].minor.yy3;
+   delete yymsp[0].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 916 "expression.c"
+#line 921 "expression.c"
         break;
       case 8: /* additiveExpression ::= multiplicativeExpression */
-#line 235 "expression.y"
+#line 236 "expression.y"
 {
-   U_TRACE(0, "additiveExpression(yygotominor.yy13) ::= multiplicativeExpression(yymsp[0].minor.yy13)")
+   U_TRACE(0, "additiveExpression(yygotominor.yy3) ::= multiplicativeExpression(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %p yymsp[0].minor.yy13 = %p", yygotominor.yy13, yymsp[0].minor.yy13)
+   U_INTERNAL_DUMP("yygotominor.yy3 = %p yymsp[0].minor.yy3 = %p", yygotominor.yy3, yymsp[0].minor.yy3)
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   yygotominor.yy13 = yymsp[0].minor.yy13;
+   yygotominor.yy3 = yymsp[0].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 931 "expression.c"
+#line 936 "expression.c"
         break;
       case 9: /* multiplicativeExpression ::= multiplicativeExpression multiplicativeCond unaryExpression */
-#line 247 "expression.y"
+#line 248 "expression.y"
 {
-   U_TRACE(0, "multiplicativeExpression(yygotominor.yy13) ::= multiplicativeExpression(yymsp[-2].minor.yy13) multiplicativeCond(yymsp[-1].minor.yy46) unaryExpression(yymsp[0].minor.yy13)")
+   U_TRACE(0, "multiplicativeExpression(yygotominor.yy3) ::= multiplicativeExpression(yymsp[-2].minor.yy3) multiplicativeCond(yymsp[-1].minor.yy12) unaryExpression(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[-2].minor.yy13)
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[-2].minor.yy3)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   U_INTERNAL_DUMP("yymsp[-2].minor.yy13 = %.*S yymsp[-1].minor.yy46 = %d yymsp[0].minor.yy13 = %.*S", U_STRING_TO_TRACE(*yymsp[-2].minor.yy13), yymsp[-1].minor.yy46, U_STRING_TO_TRACE(*yymsp[0].minor.yy13))
+   U_INTERNAL_DUMP("yymsp[-2].minor.yy3 = %.*S yymsp[-1].minor.yy12 = %d yymsp[0].minor.yy3 = %.*S", U_STRING_TO_TRACE(*yymsp[-2].minor.yy3), yymsp[-1].minor.yy12, U_STRING_TO_TRACE(*yymsp[0].minor.yy3))
 
-   long Blo = yymsp[-2].minor.yy13->strtol(),
-        Dlo = yymsp[0].minor.yy13->strtol(),
-         lo = (yymsp[-1].minor.yy46 == U_TK_MULT ? Blo * Dlo :
-               yymsp[-1].minor.yy46 == U_TK_DIV  ? Blo / Dlo :
+   long Blo = yymsp[-2].minor.yy3->strtol(),
+        Dlo = yymsp[0].minor.yy3->strtol(),
+         lo = (yymsp[-1].minor.yy12 == U_TK_MULT ? Blo * Dlo :
+               yymsp[-1].minor.yy12 == U_TK_DIV  ? Blo / Dlo :
                                 Blo % Dlo);
 
-   yygotominor.yy13 = U_NEW(UString(UStringExt::numberToString(lo)));
+   yygotominor.yy3 = U_NEW(UString(UStringExt::numberToString(lo)));
 
-   delete yymsp[-2].minor.yy13;
-   delete yymsp[0].minor.yy13;
+   delete yymsp[-2].minor.yy3;
+   delete yymsp[0].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 956 "expression.c"
+#line 961 "expression.c"
         break;
       case 10: /* multiplicativeExpression ::= unaryExpression */
-#line 269 "expression.y"
+#line 270 "expression.y"
 {
-   U_TRACE(0, "multiplicativeExpression(yygotominor.yy13) ::= unaryExpression(yymsp[0].minor.yy13)")
+   U_TRACE(0, "multiplicativeExpression(yygotominor.yy3) ::= unaryExpression(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %p yymsp[0].minor.yy13 = %p", yygotominor.yy13, yymsp[0].minor.yy13)
+   U_INTERNAL_DUMP("yygotominor.yy3 = %p yymsp[0].minor.yy3 = %p", yygotominor.yy3, yymsp[0].minor.yy3)
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   yygotominor.yy13 = yymsp[0].minor.yy13;
+   yygotominor.yy3 = yymsp[0].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 971 "expression.c"
+#line 976 "expression.c"
         break;
       case 11: /* unaryExpression ::= NOT primaryExpression */
-#line 281 "expression.y"
+#line 282 "expression.y"
 {
-   U_TRACE(0, "unaryExpression(yygotominor.yy13) ::= NOT primaryExpression(yymsp[0].minor.yy13)")
+   U_TRACE(0, "unaryExpression(yygotominor.yy3) ::= NOT primaryExpression(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %p yymsp[0].minor.yy13 = %p", yygotominor.yy13, yymsp[0].minor.yy13)
+   U_INTERNAL_DUMP("yygotominor.yy3 = %p yymsp[0].minor.yy3 = %p", yygotominor.yy3, yymsp[0].minor.yy3)
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   yygotominor.yy13 = (yymsp[0].minor.yy13->empty() ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
+   yygotominor.yy3 = (yymsp[0].minor.yy3->empty() ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
 
-   delete yymsp[0].minor.yy13;
+   delete yymsp[0].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
-  yy_destructor(17,&yymsp[-1].minor);
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
+  yy_destructor(18,&yymsp[-1].minor);
 }
-#line 989 "expression.c"
+#line 994 "expression.c"
         break;
       case 12: /* unaryExpression ::= primaryExpression */
-#line 295 "expression.y"
+#line 296 "expression.y"
 {
-   U_TRACE(0, "unaryExpression(yygotominor.yy13) ::= primaryExpression(yymsp[0].minor.yy13)")
+   U_TRACE(0, "unaryExpression(yygotominor.yy3) ::= primaryExpression(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %p yymsp[0].minor.yy13 = %p", yygotominor.yy13, yymsp[0].minor.yy13)
+   U_INTERNAL_DUMP("yygotominor.yy3 = %p yymsp[0].minor.yy3 = %p", yygotominor.yy3, yymsp[0].minor.yy3)
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   yygotominor.yy13 = yymsp[0].minor.yy13;
+   yygotominor.yy3 = yymsp[0].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 1004 "expression.c"
+#line 1009 "expression.c"
         break;
       case 13: /* primaryExpression ::= LPAREN booleanExpression RPAREN */
-#line 307 "expression.y"
+#line 308 "expression.y"
 {
-   U_TRACE(0, "primaryExpression(yygotominor.yy13) ::= LPAREN booleanExpression(yymsp[-1].minor.yy13) RPAREN")
+   U_TRACE(0, "primaryExpression(yygotominor.yy3) ::= LPAREN booleanExpression(yymsp[-1].minor.yy3) RPAREN")
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %p yymsp[-1].minor.yy13 = %p", yygotominor.yy13, yymsp[-1].minor.yy13)
+   U_INTERNAL_DUMP("yygotominor.yy3 = %p yymsp[-1].minor.yy3 = %p", yygotominor.yy3, yymsp[-1].minor.yy3)
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[-1].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[-1].minor.yy3)
 
-   yygotominor.yy13 = yymsp[-1].minor.yy13;
+   yygotominor.yy3 = yymsp[-1].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
-  yy_destructor(19,&yymsp[-2].minor);
-  yy_destructor(20,&yymsp[0].minor);
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
+  yy_destructor(20,&yymsp[-2].minor);
+  yy_destructor(21,&yymsp[0].minor);
 }
-#line 1021 "expression.c"
+#line 1026 "expression.c"
         break;
       case 14: /* primaryExpression ::= value */
-#line 319 "expression.y"
+#line 320 "expression.y"
 {
-   U_TRACE(0, "primaryExpression(yygotominor.yy13) ::= value(yymsp[0].minor.yy13)")
+   U_TRACE(0, "primaryExpression(yygotominor.yy3) ::= value(yymsp[0].minor.yy3)")
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %p yymsp[0].minor.yy13 = %p", yygotominor.yy13, yymsp[0].minor.yy13)
+   U_INTERNAL_DUMP("yygotominor.yy3 = %p yymsp[0].minor.yy3 = %p", yygotominor.yy3, yymsp[0].minor.yy3)
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   yygotominor.yy13 = yymsp[0].minor.yy13;
+   yygotominor.yy3 = yymsp[0].minor.yy3;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 1036 "expression.c"
+#line 1041 "expression.c"
         break;
       case 15: /* value ::= VALUE */
-#line 331 "expression.y"
+#line 332 "expression.y"
 {
-   U_TRACE(0, "value(yygotominor.yy13) ::= VALUE(yymsp[0].minor.yy0)")
+   U_TRACE(0, "value(yygotominor.yy3) ::= VALUE(yymsp[0].minor.yy0)")
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %p yymsp[0].minor.yy0 = %p", yygotominor.yy13, yymsp[0].minor.yy0)
+   U_INTERNAL_DUMP("yygotominor.yy3 = %p yymsp[0].minor.yy0 = %p", yygotominor.yy3, yymsp[0].minor.yy0)
 
    U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy0)
 
-   yygotominor.yy13 = yymsp[0].minor.yy0;
+   yygotominor.yy3 = yymsp[0].minor.yy0;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 1051 "expression.c"
+#line 1056 "expression.c"
         break;
       case 16: /* value ::= value VALUE */
-#line 343 "expression.y"
+#line 344 "expression.y"
 {
-   U_TRACE(0, "value(yygotominor.yy13) ::= value(yymsp[-1].minor.yy13) VALUE(yymsp[0].minor.yy0)")
+   U_TRACE(0, "value(yygotominor.yy3) ::= value(yymsp[-1].minor.yy3) VALUE(yymsp[0].minor.yy0)")
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[-1].minor.yy13)
+   U_INTERNAL_ASSERT_POINTER(yymsp[-1].minor.yy3)
    U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy0)
 
-   U_INTERNAL_DUMP("yymsp[-1].minor.yy13 = %.*S yymsp[0].minor.yy0 = %.*S", U_STRING_TO_TRACE(*yymsp[-1].minor.yy13), U_STRING_TO_TRACE(*yymsp[0].minor.yy0))
+   U_INTERNAL_DUMP("yymsp[-1].minor.yy3 = %.*S yymsp[0].minor.yy0 = %.*S", U_STRING_TO_TRACE(*yymsp[-1].minor.yy3), U_STRING_TO_TRACE(*yymsp[0].minor.yy0))
 
-    yygotominor.yy13  =  yymsp[-1].minor.yy13;
-   *yygotominor.yy13 += *yymsp[0].minor.yy0;
+    yygotominor.yy3  =  yymsp[-1].minor.yy3;
+   *yygotominor.yy3 += *yymsp[0].minor.yy0;
 
    delete yymsp[0].minor.yy0;
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy13))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %.*S", U_STRING_TO_TRACE(*yygotominor.yy3))
 }
-#line 1070 "expression.c"
+#line 1075 "expression.c"
         break;
       case 17: /* booleanCond ::= OR */
-#line 359 "expression.y"
+#line 360 "expression.y"
 {
-   U_TRACE(0, "booleanCond(yygotominor.yy46) ::= OR")
-   yygotominor.yy46 = U_TK_OR;
+   U_TRACE(0, "booleanCond(yygotominor.yy12) ::= OR")
+   yygotominor.yy12 = U_TK_OR;
   yy_destructor(2,&yymsp[0].minor);
 }
-#line 1079 "expression.c"
+#line 1084 "expression.c"
         break;
       case 18: /* booleanCond ::= AND */
-#line 363 "expression.y"
+#line 364 "expression.y"
 {
-   U_TRACE(0, "booleanCond(yygotominor.yy46) ::= AND")
-   yygotominor.yy46 = U_TK_AND;
+   U_TRACE(0, "booleanCond(yygotominor.yy12) ::= AND")
+   yygotominor.yy12 = U_TK_AND;
   yy_destructor(1,&yymsp[0].minor);
 }
-#line 1088 "expression.c"
+#line 1093 "expression.c"
         break;
       case 19: /* equalityCond ::= EQ */
-#line 367 "expression.y"
+#line 368 "expression.y"
 {
-   U_TRACE(0, "equalityCond(yygotominor.yy46) ::= EQ")
-   yygotominor.yy46 = U_TK_EQ;
+   U_TRACE(0, "equalityCond(yygotominor.yy12) ::= EQ")
+   yygotominor.yy12 = U_TK_EQ;
   yy_destructor(3,&yymsp[0].minor);
 }
-#line 1097 "expression.c"
+#line 1102 "expression.c"
         break;
       case 20: /* equalityCond ::= NE */
-#line 371 "expression.y"
+#line 372 "expression.y"
 {
-   U_TRACE(0, "equalityCond(yygotominor.yy46) ::= NE")
-   yygotominor.yy46 = U_TK_NE;
+   U_TRACE(0, "equalityCond(yygotominor.yy12) ::= NE")
+   yygotominor.yy12 = U_TK_NE;
   yy_destructor(4,&yymsp[0].minor);
 }
-#line 1106 "expression.c"
+#line 1111 "expression.c"
         break;
       case 21: /* equalityCond ::= STARTS_WITH */
-#line 375 "expression.y"
+#line 376 "expression.y"
 {
-   U_TRACE(0, "equalityCond(yygotominor.yy46) ::= STARTS_WITH")
-   yygotominor.yy46 = U_TK_STARTS_WITH;
+   U_TRACE(0, "equalityCond(yygotominor.yy12) ::= STARTS_WITH")
+   yygotominor.yy12 = U_TK_STARTS_WITH;
   yy_destructor(9,&yymsp[0].minor);
 }
-#line 1115 "expression.c"
+#line 1120 "expression.c"
         break;
       case 22: /* equalityCond ::= ENDS_WITH */
-#line 379 "expression.y"
+#line 380 "expression.y"
 {
-   U_TRACE(0, "equalityCond(yygotominor.yy46) ::= ENDS_WITH")
-   yygotominor.yy46 = U_TK_ENDS_WITH;
+   U_TRACE(0, "equalityCond(yygotominor.yy12) ::= ENDS_WITH")
+   yygotominor.yy12 = U_TK_ENDS_WITH;
   yy_destructor(10,&yymsp[0].minor);
 }
-#line 1124 "expression.c"
+#line 1129 "expression.c"
         break;
-      case 23: /* equalityCond ::= CONTAINS */
-#line 383 "expression.y"
+      case 23: /* equalityCond ::= IS_PRESENT */
+#line 384 "expression.y"
 {
-   U_TRACE(0, "equalityCond(yygotominor.yy46) ::= CONTAINS")
-   yygotominor.yy46 = U_TK_CONTAINS;
+   U_TRACE(0, "equalityCond(yygotominor.yy12) ::= IS_PRESENT")
+   yygotominor.yy12 = U_TK_IS_PRESENT;
   yy_destructor(11,&yymsp[0].minor);
 }
-#line 1133 "expression.c"
+#line 1138 "expression.c"
         break;
-      case 24: /* relationalCond ::= GT */
-#line 387 "expression.y"
+      case 24: /* equalityCond ::= CONTAINS */
+#line 388 "expression.y"
 {
-   U_TRACE(0, "relationalCond(yygotominor.yy46) ::= GT")
-   yygotominor.yy46 = U_TK_GT;
-  yy_destructor(5,&yymsp[0].minor);
-}
-#line 1142 "expression.c"
-        break;
-      case 25: /* relationalCond ::= GE */
-#line 391 "expression.y"
-{
-   U_TRACE(0, "relationalCond(yygotominor.yy46) ::= GE")
-   yygotominor.yy46 = U_TK_GE;
-  yy_destructor(6,&yymsp[0].minor);
-}
-#line 1151 "expression.c"
-        break;
-      case 26: /* relationalCond ::= LT */
-#line 395 "expression.y"
-{
-   U_TRACE(0, "relationalCond(yygotominor.yy46) ::= LT")
-   yygotominor.yy46 = U_TK_LT;
-  yy_destructor(7,&yymsp[0].minor);
-}
-#line 1160 "expression.c"
-        break;
-      case 27: /* relationalCond ::= LE */
-#line 399 "expression.y"
-{
-   U_TRACE(0, "relationalCond(yygotominor.yy46) ::= LE")
-   yygotominor.yy46 = U_TK_LE;
-  yy_destructor(8,&yymsp[0].minor);
-}
-#line 1169 "expression.c"
-        break;
-      case 28: /* additiveCond ::= PLUS */
-#line 403 "expression.y"
-{
-   U_TRACE(0, "additiveCond(yygotominor.yy46) ::= PLUS")
-   yygotominor.yy46 = U_TK_PLUS;
+   U_TRACE(0, "equalityCond(yygotominor.yy12) ::= CONTAINS")
+   yygotominor.yy12 = U_TK_CONTAINS;
   yy_destructor(12,&yymsp[0].minor);
 }
-#line 1178 "expression.c"
+#line 1147 "expression.c"
         break;
-      case 29: /* additiveCond ::= MINUS */
-#line 407 "expression.y"
+      case 25: /* relationalCond ::= GT */
+#line 392 "expression.y"
 {
-   U_TRACE(0, "additiveCond(yygotominor.yy46) ::= MINUS")
-   yygotominor.yy46 = U_TK_MINUS;
+   U_TRACE(0, "relationalCond(yygotominor.yy12) ::= GT")
+   yygotominor.yy12 = U_TK_GT;
+  yy_destructor(5,&yymsp[0].minor);
+}
+#line 1156 "expression.c"
+        break;
+      case 26: /* relationalCond ::= GE */
+#line 396 "expression.y"
+{
+   U_TRACE(0, "relationalCond(yygotominor.yy12) ::= GE")
+   yygotominor.yy12 = U_TK_GE;
+  yy_destructor(6,&yymsp[0].minor);
+}
+#line 1165 "expression.c"
+        break;
+      case 27: /* relationalCond ::= LT */
+#line 400 "expression.y"
+{
+   U_TRACE(0, "relationalCond(yygotominor.yy12) ::= LT")
+   yygotominor.yy12 = U_TK_LT;
+  yy_destructor(7,&yymsp[0].minor);
+}
+#line 1174 "expression.c"
+        break;
+      case 28: /* relationalCond ::= LE */
+#line 404 "expression.y"
+{
+   U_TRACE(0, "relationalCond(yygotominor.yy12) ::= LE")
+   yygotominor.yy12 = U_TK_LE;
+  yy_destructor(8,&yymsp[0].minor);
+}
+#line 1183 "expression.c"
+        break;
+      case 29: /* additiveCond ::= PLUS */
+#line 408 "expression.y"
+{
+   U_TRACE(0, "additiveCond(yygotominor.yy12) ::= PLUS")
+   yygotominor.yy12 = U_TK_PLUS;
   yy_destructor(13,&yymsp[0].minor);
 }
-#line 1187 "expression.c"
+#line 1192 "expression.c"
         break;
-      case 30: /* multiplicativeCond ::= MULT */
-#line 411 "expression.y"
+      case 30: /* additiveCond ::= MINUS */
+#line 412 "expression.y"
 {
-   U_TRACE(0, "multiplicativeCond(yygotominor.yy46) ::= MULT")
-   yygotominor.yy46 = U_TK_MULT;
+   U_TRACE(0, "additiveCond(yygotominor.yy12) ::= MINUS")
+   yygotominor.yy12 = U_TK_MINUS;
   yy_destructor(14,&yymsp[0].minor);
 }
-#line 1196 "expression.c"
+#line 1201 "expression.c"
         break;
-      case 31: /* multiplicativeCond ::= DIV */
-#line 415 "expression.y"
+      case 31: /* multiplicativeCond ::= MULT */
+#line 416 "expression.y"
 {
-   U_TRACE(0, "multiplicativeCond(yygotominor.yy46) ::= DIV")
-   yygotominor.yy46 = U_TK_DIV;
+   U_TRACE(0, "multiplicativeCond(yygotominor.yy12) ::= MULT")
+   yygotominor.yy12 = U_TK_MULT;
   yy_destructor(15,&yymsp[0].minor);
 }
-#line 1205 "expression.c"
+#line 1210 "expression.c"
         break;
-      case 32: /* multiplicativeCond ::= MOD */
-#line 419 "expression.y"
+      case 32: /* multiplicativeCond ::= DIV */
+#line 420 "expression.y"
 {
-   U_TRACE(0, "multiplicativeCond(yygotominor.yy46) ::= MOD")
-   yygotominor.yy46 = U_TK_MOD;
+   U_TRACE(0, "multiplicativeCond(yygotominor.yy12) ::= DIV")
+   yygotominor.yy12 = U_TK_DIV;
   yy_destructor(16,&yymsp[0].minor);
 }
-#line 1214 "expression.c"
+#line 1219 "expression.c"
         break;
-      case 33: /* primaryExpression ::= FN_CALL LPAREN RPAREN */
+      case 33: /* multiplicativeCond ::= MOD */
 #line 424 "expression.y"
 {
-   U_TRACE(0, "primaryExpression(yygotominor.yy13) ::= FN_CALL(yymsp[-2].minor.yy0) LPAREN RPAREN")
+   U_TRACE(0, "multiplicativeCond(yygotominor.yy12) ::= MOD")
+   yygotominor.yy12 = U_TK_MOD;
+  yy_destructor(17,&yymsp[0].minor);
+}
+#line 1228 "expression.c"
+        break;
+      case 34: /* primaryExpression ::= FN_CALL LPAREN RPAREN */
+#line 429 "expression.y"
+{
+   U_TRACE(0, "primaryExpression(yygotominor.yy3) ::= FN_CALL(yymsp[-2].minor.yy0) LPAREN RPAREN")
 
    U_INTERNAL_ASSERT_POINTER(yymsp[-2].minor.yy0)
 
-   U_INTERNAL_DUMP("yygotominor.yy13 = %p yymsp[-2].minor.yy0 = %.*S", yygotominor.yy13, U_STRING_TO_TRACE(*yymsp[-2].minor.yy0))
+   U_INTERNAL_DUMP("yygotominor.yy3 = %p yymsp[-2].minor.yy0 = %.*S", yygotominor.yy3, U_STRING_TO_TRACE(*yymsp[-2].minor.yy0))
 
    long lo;
 #ifdef __MINGW32__
@@ -1226,23 +1240,23 @@ static void yy_reduce(
    lPFv addr = (lPFv) U_SYSCALL(dlsym, "%p,%S", RTLD_DEFAULT, yymsp[-2].minor.yy0->c_str());
 #endif
 
-   yygotominor.yy13 = (addr ? (lo = (*addr)(), U_NEW(UString(UStringExt::numberToString(lo)))) : U_NEW(UString));
+   yygotominor.yy3 = (addr ? (lo = (*addr)(), U_NEW(UString(UStringExt::numberToString(lo)))) : U_NEW(UString));
 
    delete yymsp[-2].minor.yy0;
-  yy_destructor(19,&yymsp[-1].minor);
-  yy_destructor(20,&yymsp[0].minor);
+  yy_destructor(20,&yymsp[-1].minor);
+  yy_destructor(21,&yymsp[0].minor);
 }
-#line 1238 "expression.c"
+#line 1252 "expression.c"
         break;
-      case 34: /* primaryExpression ::= FN_CALL LPAREN params RPAREN */
-#line 443 "expression.y"
+      case 35: /* primaryExpression ::= FN_CALL LPAREN params RPAREN */
+#line 448 "expression.y"
 {
-   U_TRACE(0, "primaryExpression(yygotominor.yy13) ::= FN_CALL(yymsp[-3].minor.yy0) LPAREN params(yymsp[-1].minor.yy65) RPAREN")
+   U_TRACE(0, "primaryExpression(yygotominor.yy3) ::= FN_CALL(yymsp[-3].minor.yy0) LPAREN params(yymsp[-1].minor.yy49) RPAREN")
 
    U_INTERNAL_ASSERT_POINTER(yymsp[-3].minor.yy0)
-   U_INTERNAL_ASSERT_POINTER(yymsp[-1].minor.yy65)
+   U_INTERNAL_ASSERT_POINTER(yymsp[-1].minor.yy49)
 
-   U_INTERNAL_DUMP("yymsp[-3].minor.yy0 = %.*S yymsp[-1].minor.yy65 = %p", U_STRING_TO_TRACE(*yymsp[-3].minor.yy0), yymsp[-1].minor.yy65)
+   U_INTERNAL_DUMP("yymsp[-3].minor.yy0 = %.*S yymsp[-1].minor.yy49 = %p", U_STRING_TO_TRACE(*yymsp[-3].minor.yy0), yymsp[-1].minor.yy49)
 
    long lo, lo0, lo1;
 #ifdef __MINGW32__
@@ -1251,49 +1265,49 @@ static void yy_reduce(
    lPFll addr = (lPFll) U_SYSCALL(dlsym, "%p,%S", RTLD_DEFAULT, yymsp[-3].minor.yy0->c_str());
 #endif
 
-   yygotominor.yy13 = (addr ? (lo0 = (*yymsp[-1].minor.yy65)[0].strtol(), lo1 = (*yymsp[-1].minor.yy65)[1].strtol(), lo = (*addr)(lo0, lo1), U_NEW(UString(UStringExt::numberToString(lo)))) : U_NEW(UString));
+   yygotominor.yy3 = (addr ? (lo0 = (*yymsp[-1].minor.yy49)[0].strtol(), lo1 = (*yymsp[-1].minor.yy49)[1].strtol(), lo = (*addr)(lo0, lo1), U_NEW(UString(UStringExt::numberToString(lo)))) : U_NEW(UString));
 
    delete yymsp[-3].minor.yy0;
-  yy_destructor(19,&yymsp[-2].minor);
-  yy_destructor(20,&yymsp[0].minor);
+  yy_destructor(20,&yymsp[-2].minor);
+  yy_destructor(21,&yymsp[0].minor);
 }
-#line 1263 "expression.c"
+#line 1277 "expression.c"
         break;
-      case 35: /* params ::= VALUE */
-#line 463 "expression.y"
+      case 36: /* params ::= VALUE */
+#line 468 "expression.y"
 {
-   U_TRACE(0, "params(yygotominor.yy65) ::= VALUE(yymsp[0].minor.yy0)")
+   U_TRACE(0, "params(yygotominor.yy49) ::= VALUE(yymsp[0].minor.yy0)")
 
    U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy0)
 
-   U_INTERNAL_DUMP("yygotominor.yy65 = %p yymsp[0].minor.yy0 = %.*S", yygotominor.yy65, U_STRING_TO_TRACE(*yymsp[0].minor.yy0))
+   U_INTERNAL_DUMP("yygotominor.yy49 = %p yymsp[0].minor.yy0 = %.*S", yygotominor.yy49, U_STRING_TO_TRACE(*yymsp[0].minor.yy0))
 
-   yygotominor.yy65 = U_NEW(Items);
+   yygotominor.yy49 = U_NEW(Items);
 
-   yygotominor.yy65->push_back(*yymsp[0].minor.yy0);
+   yygotominor.yy49->push_back(*yymsp[0].minor.yy0);
 
    delete yymsp[0].minor.yy0;
 }
-#line 1280 "expression.c"
+#line 1294 "expression.c"
         break;
-      case 36: /* params ::= params COMMA VALUE */
-#line 477 "expression.y"
+      case 37: /* params ::= params COMMA VALUE */
+#line 482 "expression.y"
 {
-   U_TRACE(0, "params(yygotominor.yy65) ::= params(yymsp[-2].minor.yy65) COMMA VALUE(yymsp[0].minor.yy0)")
+   U_TRACE(0, "params(yygotominor.yy49) ::= params(yymsp[-2].minor.yy49) COMMA VALUE(yymsp[0].minor.yy0)")
 
-   U_INTERNAL_ASSERT_POINTER(yymsp[-2].minor.yy65)
+   U_INTERNAL_ASSERT_POINTER(yymsp[-2].minor.yy49)
    U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy0)
 
-   U_INTERNAL_DUMP("yymsp[-2].minor.yy65 = %p yymsp[0].minor.yy0 = %.*S", yymsp[-2].minor.yy65, U_STRING_TO_TRACE(*yymsp[0].minor.yy0))
+   U_INTERNAL_DUMP("yymsp[-2].minor.yy49 = %p yymsp[0].minor.yy0 = %.*S", yymsp[-2].minor.yy49, U_STRING_TO_TRACE(*yymsp[0].minor.yy0))
 
-   yymsp[-2].minor.yy65->push_back(*yymsp[0].minor.yy0);
+   yymsp[-2].minor.yy49->push_back(*yymsp[0].minor.yy0);
 
-   yygotominor.yy65 = yymsp[-2].minor.yy65;
+   yygotominor.yy49 = yymsp[-2].minor.yy49;
 
    delete yymsp[0].minor.yy0;
-  yy_destructor(22,&yymsp[-1].minor);
+  yy_destructor(23,&yymsp[-1].minor);
 }
-#line 1299 "expression.c"
+#line 1313 "expression.c"
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;
@@ -1344,7 +1358,7 @@ static void yy_parse_failed(
    U_INTERNAL_ASSERT_POINTER(result)
    result->clear();
    U_WARNING("Parse failure!");
-#line 1351 "expression.c"
+#line 1365 "expression.c"
   expressionParserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
@@ -1364,7 +1378,7 @@ static void yy_syntax_error(
    U_INTERNAL_ASSERT_POINTER(result)
    result->clear();
    U_WARNING("Syntax error!");
-#line 1372 "expression.c"
+#line 1386 "expression.c"
   expressionParserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
@@ -1388,7 +1402,7 @@ static void yy_accept(
    U_TRACE(0, "::parse_accept()")
    U_INTERNAL_ASSERT_POINTER(result)
    U_INTERNAL_DUMP("result = %.*S", U_STRING_TO_TRACE(*result))
-#line 1397 "expression.c"
+#line 1411 "expression.c"
   expressionParserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 

@@ -9,7 +9,7 @@ extern /*@null@*/char *env_get(const char *s)
   unsigned int len;
 
   if (!s) return 0;
-  len = str_len(s);
+  len = strlen(s);
   for (i = 0;environ[i];++i)
 	 if (str_start(environ[i],s) && (environ[i][len] == '='))
 		return environ[i] + len + 1;
