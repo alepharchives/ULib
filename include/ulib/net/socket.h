@@ -105,6 +105,7 @@ public:
    static const UString* str_content_type;
    static const UString* str_content_length;
    static const UString* str_content_disposition;
+   static const UString* str_accept;
    static const UString* str_accept_language;
    static const UString* str_accept_encoding;
    static const UString* str_if_range;

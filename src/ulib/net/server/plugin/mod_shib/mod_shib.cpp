@@ -672,12 +672,7 @@ int UShibPlugIn::handlerRequest()
       else
          {
          U_ASSERT(UHTTP::isHttpPOST())
-
-#     ifdef DEBUG
-         const char* ptr = UHTTP::getHTTPHeaderValuePtr(*UHTTP::pbuffer, *USocket::str_content_type, true);
-
-         U_INTERNAL_ASSERT(U_STRNEQ(ptr,"application/x-www-form-urlencoded"))
-#     endif
+         U_ASSERT(U_HTTP_CTYPE_STRNEQ("application/x-www-form-urlencoded"))
 
          UShibTarget::content_type = "application/x-www-form-urlencoded";
          UShibTarget::postdata_ptr = UClientImage_Base::body->data();

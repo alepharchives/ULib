@@ -266,7 +266,7 @@ public:
 
       U_INTERNAL_DUMP("preforked_num_kids = %d", preforked_num_kids)
 
-      bool result = (preforked_num_kids ==  1);
+      bool result = (preforked_num_kids == 1);
 
       U_RETURN(result);
       }

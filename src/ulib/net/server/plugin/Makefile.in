@@ -108,7 +108,10 @@ LTLIBRARIES = $(module_LTLIBRARIES)
 am__mod_echo_la_SOURCES_DIST = mod_echo.cpp
 @STATIC_HANDLER_ECHO_FALSE@am_mod_echo_la_OBJECTS = mod_echo.lo
 mod_echo_la_OBJECTS = $(am_mod_echo_la_OBJECTS)
-mod_echo_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
+mod_echo_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(mod_echo_la_LDFLAGS) $(LDFLAGS) -o $@
 @STATIC_HANDLER_ECHO_FALSE@am_mod_echo_la_rpath = -rpath $(moduledir)
@@ -116,7 +119,7 @@ mod_echo_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 am__mod_fcgi_la_SOURCES_DIST = mod_fcgi.cpp
 @STATIC_HANDLER_FCGI_FALSE@am_mod_fcgi_la_OBJECTS = mod_fcgi.lo
 mod_fcgi_la_OBJECTS = $(am_mod_fcgi_la_OBJECTS)
-mod_fcgi_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+mod_fcgi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(mod_fcgi_la_LDFLAGS) $(LDFLAGS) -o $@
 @STATIC_HANDLER_FCGI_FALSE@am_mod_fcgi_la_rpath = -rpath $(moduledir)
@@ -124,7 +127,7 @@ mod_fcgi_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 am__mod_http_la_SOURCES_DIST = mod_http.cpp
 @STATIC_HANDLER_HTTP_FALSE@am_mod_http_la_OBJECTS = mod_http.lo
 mod_http_la_OBJECTS = $(am_mod_http_la_OBJECTS)
-mod_http_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+mod_http_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(mod_http_la_LDFLAGS) $(LDFLAGS) -o $@
 @STATIC_HANDLER_HTTP_FALSE@am_mod_http_la_rpath = -rpath $(moduledir)
@@ -132,7 +135,7 @@ mod_http_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 am__mod_nocat_la_SOURCES_DIST = mod_nocat.cpp
 @STATIC_HANDLER_NOCAT_FALSE@am_mod_nocat_la_OBJECTS = mod_nocat.lo
 mod_nocat_la_OBJECTS = $(am_mod_nocat_la_OBJECTS)
-mod_nocat_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+mod_nocat_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(mod_nocat_la_LDFLAGS) $(LDFLAGS) -o $@
 @STATIC_HANDLER_NOCAT_FALSE@am_mod_nocat_la_rpath = -rpath \
@@ -144,7 +147,7 @@ am__mod_proxy_la_SOURCES_DIST = mod_proxy.cpp mod_proxy_service.cpp
 @PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@	mod_proxy.lo \
 @PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@	mod_proxy_service.lo
 mod_proxy_la_OBJECTS = $(am_mod_proxy_la_OBJECTS)
-mod_proxy_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+mod_proxy_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(mod_proxy_la_LDFLAGS) $(LDFLAGS) -o $@
 @PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am_mod_proxy_la_rpath = -rpath \
@@ -153,7 +156,7 @@ mod_proxy_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 am__mod_rpc_la_SOURCES_DIST = mod_rpc.cpp
 @STATIC_HANDLER_RPC_FALSE@am_mod_rpc_la_OBJECTS = mod_rpc.lo
 mod_rpc_la_OBJECTS = $(am_mod_rpc_la_OBJECTS)
-mod_rpc_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+mod_rpc_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(mod_rpc_la_LDFLAGS) $(LDFLAGS) -o $@
 @STATIC_HANDLER_RPC_FALSE@am_mod_rpc_la_rpath = -rpath $(moduledir)
@@ -161,7 +164,7 @@ mod_rpc_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 am__mod_scgi_la_SOURCES_DIST = mod_scgi.cpp
 @STATIC_HANDLER_SCGI_FALSE@am_mod_scgi_la_OBJECTS = mod_scgi.lo
 mod_scgi_la_OBJECTS = $(am_mod_scgi_la_OBJECTS)
-mod_scgi_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+mod_scgi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(mod_scgi_la_LDFLAGS) $(LDFLAGS) -o $@
 @STATIC_HANDLER_SCGI_FALSE@am_mod_scgi_la_rpath = -rpath $(moduledir)
@@ -171,7 +174,7 @@ am__mod_soap_la_SOURCES_DIST = mod_soap.cpp
 @EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am_mod_soap_la_OBJECTS =  \
 @EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@	mod_soap.lo
 mod_soap_la_OBJECTS = $(am_mod_soap_la_OBJECTS)
-mod_soap_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+mod_soap_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(mod_soap_la_LDFLAGS) $(LDFLAGS) -o $@
 @EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am_mod_soap_la_rpath = -rpath \
@@ -180,16 +183,17 @@ mod_soap_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 am__mod_socket_la_SOURCES_DIST = mod_socket.cpp
 @STATIC_HANDLER_SOCKET_FALSE@am_mod_socket_la_OBJECTS = mod_socket.lo
 mod_socket_la_OBJECTS = $(am_mod_socket_la_OBJECTS)
-mod_socket_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(mod_socket_la_LDFLAGS) $(LDFLAGS) -o $@
+mod_socket_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(mod_socket_la_LDFLAGS) $(LDFLAGS) \
+	-o $@
 @STATIC_HANDLER_SOCKET_FALSE@am_mod_socket_la_rpath = -rpath \
 @STATIC_HANDLER_SOCKET_FALSE@	$(moduledir)
 @STATIC_HANDLER_SSI_FALSE@mod_ssi_la_DEPENDENCIES = $(ulib_la)
 am__mod_ssi_la_SOURCES_DIST = mod_ssi.cpp
 @STATIC_HANDLER_SSI_FALSE@am_mod_ssi_la_OBJECTS = mod_ssi.lo
 mod_ssi_la_OBJECTS = $(am_mod_ssi_la_OBJECTS)
-mod_ssi_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+mod_ssi_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(mod_ssi_la_LDFLAGS) $(LDFLAGS) -o $@
 @STATIC_HANDLER_SSI_FALSE@am_mod_ssi_la_rpath = -rpath $(moduledir)
@@ -197,16 +201,17 @@ mod_ssi_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 am__mod_stream_la_SOURCES_DIST = mod_stream.cpp
 @STATIC_HANDLER_STREAM_FALSE@am_mod_stream_la_OBJECTS = mod_stream.lo
 mod_stream_la_OBJECTS = $(am_mod_stream_la_OBJECTS)
-mod_stream_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(mod_stream_la_LDFLAGS) $(LDFLAGS) -o $@
+mod_stream_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(mod_stream_la_LDFLAGS) $(LDFLAGS) \
+	-o $@
 @STATIC_HANDLER_STREAM_FALSE@am_mod_stream_la_rpath = -rpath \
 @STATIC_HANDLER_STREAM_FALSE@	$(moduledir)
 @STATIC_HANDLER_TSA_FALSE@mod_tsa_la_DEPENDENCIES = $(ulib_la)
 am__mod_tsa_la_SOURCES_DIST = mod_tsa.cpp
 @STATIC_HANDLER_TSA_FALSE@am_mod_tsa_la_OBJECTS = mod_tsa.lo
 mod_tsa_la_OBJECTS = $(am_mod_tsa_la_OBJECTS)
-mod_tsa_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+mod_tsa_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(mod_tsa_la_LDFLAGS) $(LDFLAGS) -o $@
 @STATIC_HANDLER_TSA_FALSE@am_mod_tsa_la_rpath = -rpath $(moduledir)
@@ -215,13 +220,26 @@ am__depfiles_maybe = depfiles
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CXXFLAGS) $(CXXFLAGS)
+AM_V_CXX = $(am__v_CXX_$(V))
+am__v_CXX_ = $(am__v_CXX_$(AM_DEFAULT_VERBOSITY))
+am__v_CXX_0 = @echo "  CXX   " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
 CXXLD = $(CXX)
-CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+CXXLINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CXXLD = $(am__v_CXXLD_$(V))
+am__v_CXXLD_ = $(am__v_CXXLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CXXLD_0 = @echo "  CXXLD " $@;
+AM_V_GEN = $(am__v_GEN_$(V))
+am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
+am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(mod_echo_la_SOURCES) $(mod_fcgi_la_SOURCES) \
 	$(mod_http_la_SOURCES) $(mod_nocat_la_SOURCES) \
 	$(mod_proxy_la_SOURCES) $(mod_rpc_la_SOURCES) \
@@ -282,6 +300,7 @@ am__relativize = \
   reldir="$$dir2"
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 AS = @AS@
 AUTOCONF = @AUTOCONF@
@@ -570,29 +589,29 @@ clean-moduleLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 mod_echo.la: $(mod_echo_la_OBJECTS) $(mod_echo_la_DEPENDENCIES) 
-	$(mod_echo_la_LINK) $(am_mod_echo_la_rpath) $(mod_echo_la_OBJECTS) $(mod_echo_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(mod_echo_la_LINK) $(am_mod_echo_la_rpath) $(mod_echo_la_OBJECTS) $(mod_echo_la_LIBADD) $(LIBS)
 mod_fcgi.la: $(mod_fcgi_la_OBJECTS) $(mod_fcgi_la_DEPENDENCIES) 
-	$(mod_fcgi_la_LINK) $(am_mod_fcgi_la_rpath) $(mod_fcgi_la_OBJECTS) $(mod_fcgi_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(mod_fcgi_la_LINK) $(am_mod_fcgi_la_rpath) $(mod_fcgi_la_OBJECTS) $(mod_fcgi_la_LIBADD) $(LIBS)
 mod_http.la: $(mod_http_la_OBJECTS) $(mod_http_la_DEPENDENCIES) 
-	$(mod_http_la_LINK) $(am_mod_http_la_rpath) $(mod_http_la_OBJECTS) $(mod_http_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(mod_http_la_LINK) $(am_mod_http_la_rpath) $(mod_http_la_OBJECTS) $(mod_http_la_LIBADD) $(LIBS)
 mod_nocat.la: $(mod_nocat_la_OBJECTS) $(mod_nocat_la_DEPENDENCIES) 
-	$(mod_nocat_la_LINK) $(am_mod_nocat_la_rpath) $(mod_nocat_la_OBJECTS) $(mod_nocat_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(mod_nocat_la_LINK) $(am_mod_nocat_la_rpath) $(mod_nocat_la_OBJECTS) $(mod_nocat_la_LIBADD) $(LIBS)
 mod_proxy.la: $(mod_proxy_la_OBJECTS) $(mod_proxy_la_DEPENDENCIES) 
-	$(mod_proxy_la_LINK) $(am_mod_proxy_la_rpath) $(mod_proxy_la_OBJECTS) $(mod_proxy_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(mod_proxy_la_LINK) $(am_mod_proxy_la_rpath) $(mod_proxy_la_OBJECTS) $(mod_proxy_la_LIBADD) $(LIBS)
 mod_rpc.la: $(mod_rpc_la_OBJECTS) $(mod_rpc_la_DEPENDENCIES) 
-	$(mod_rpc_la_LINK) $(am_mod_rpc_la_rpath) $(mod_rpc_la_OBJECTS) $(mod_rpc_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(mod_rpc_la_LINK) $(am_mod_rpc_la_rpath) $(mod_rpc_la_OBJECTS) $(mod_rpc_la_LIBADD) $(LIBS)
 mod_scgi.la: $(mod_scgi_la_OBJECTS) $(mod_scgi_la_DEPENDENCIES) 
-	$(mod_scgi_la_LINK) $(am_mod_scgi_la_rpath) $(mod_scgi_la_OBJECTS) $(mod_scgi_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(mod_scgi_la_LINK) $(am_mod_scgi_la_rpath) $(mod_scgi_la_OBJECTS) $(mod_scgi_la_LIBADD) $(LIBS)
 mod_soap.la: $(mod_soap_la_OBJECTS) $(mod_soap_la_DEPENDENCIES) 
-	$(mod_soap_la_LINK) $(am_mod_soap_la_rpath) $(mod_soap_la_OBJECTS) $(mod_soap_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(mod_soap_la_LINK) $(am_mod_soap_la_rpath) $(mod_soap_la_OBJECTS) $(mod_soap_la_LIBADD) $(LIBS)
 mod_socket.la: $(mod_socket_la_OBJECTS) $(mod_socket_la_DEPENDENCIES) 
-	$(mod_socket_la_LINK) $(am_mod_socket_la_rpath) $(mod_socket_la_OBJECTS) $(mod_socket_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(mod_socket_la_LINK) $(am_mod_socket_la_rpath) $(mod_socket_la_OBJECTS) $(mod_socket_la_LIBADD) $(LIBS)
 mod_ssi.la: $(mod_ssi_la_OBJECTS) $(mod_ssi_la_DEPENDENCIES) 
-	$(mod_ssi_la_LINK) $(am_mod_ssi_la_rpath) $(mod_ssi_la_OBJECTS) $(mod_ssi_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(mod_ssi_la_LINK) $(am_mod_ssi_la_rpath) $(mod_ssi_la_OBJECTS) $(mod_ssi_la_LIBADD) $(LIBS)
 mod_stream.la: $(mod_stream_la_OBJECTS) $(mod_stream_la_DEPENDENCIES) 
-	$(mod_stream_la_LINK) $(am_mod_stream_la_rpath) $(mod_stream_la_OBJECTS) $(mod_stream_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(mod_stream_la_LINK) $(am_mod_stream_la_rpath) $(mod_stream_la_OBJECTS) $(mod_stream_la_LIBADD) $(LIBS)
 mod_tsa.la: $(mod_tsa_la_OBJECTS) $(mod_tsa_la_DEPENDENCIES) 
-	$(mod_tsa_la_LINK) $(am_mod_tsa_la_rpath) $(mod_tsa_la_OBJECTS) $(mod_tsa_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(mod_tsa_la_LINK) $(am_mod_tsa_la_rpath) $(mod_tsa_la_OBJECTS) $(mod_tsa_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -615,22 +634,25 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mod_tsa.Plo@am__quote@
 
 .cpp.o:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
 
 .cpp.obj:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<

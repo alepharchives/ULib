@@ -104,7 +104,10 @@ LTLIBRARIES = $(noinst_LTLIBRARIES)
 am__product1_la_SOURCES_DIST = plugin/product1.cpp
 @PLUGIN_TRUE@am_product1_la_OBJECTS = product1.lo
 product1_la_OBJECTS = $(am_product1_la_OBJECTS)
-product1_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
+product1_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(product1_la_LDFLAGS) $(LDFLAGS) -o $@
 @PLUGIN_TRUE@am_product1_la_rpath =
@@ -112,7 +115,7 @@ product1_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
 am__product2_la_SOURCES_DIST = plugin/product2.cpp
 @PLUGIN_TRUE@am_product2_la_OBJECTS = product2.lo
 product2_la_OBJECTS = $(am_product2_la_OBJECTS)
-product2_la_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+product2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(product2_la_LDFLAGS) $(LDFLAGS) -o $@
 @PLUGIN_TRUE@am_product2_la_rpath =
@@ -473,31 +476,57 @@ am__depfiles_maybe = depfiles
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CXXFLAGS) $(CXXFLAGS)
+AM_V_CXX = $(am__v_CXX_$(V))
+am__v_CXX_ = $(am__v_CXX_$(AM_DEFAULT_VERBOSITY))
+am__v_CXX_0 = @echo "  CXX   " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
 CXXLD = $(CXX)
-CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+CXXLINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CXXLD = $(am__v_CXXLD_$(V))
+am__v_CXXLD_ = $(am__v_CXXLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CXXLD_0 = @echo "  CXXLD " $@;
 @MAINTAINER_MODE_FALSE@am__skiplex = test -f $@ ||
 LEXCOMPILE = $(LEX) $(LFLAGS) $(AM_LFLAGS)
-LTLEXCOMPILE = $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(LEX) $(LFLAGS) $(AM_LFLAGS)
+LTLEXCOMPILE = $(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(LEX) $(LFLAGS) $(AM_LFLAGS)
+AM_V_LEX = $(am__v_LEX_$(V))
+am__v_LEX_ = $(am__v_LEX_$(AM_DEFAULT_VERBOSITY))
+am__v_LEX_0 = @echo "  LEX   " $@;
 YLWRAP = $(top_srcdir)/autoconf/ylwrap
 @MAINTAINER_MODE_FALSE@am__skipyacc = test -f $@ ||
 YACCCOMPILE = $(YACC) $(YFLAGS) $(AM_YFLAGS)
-LTYACCCOMPILE = $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(YACC) $(YFLAGS) $(AM_YFLAGS)
+LTYACCCOMPILE = $(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(YACC) $(YFLAGS) $(AM_YFLAGS)
+AM_V_YACC = $(am__v_YACC_$(V))
+am__v_YACC_ = $(am__v_YACC_$(AM_DEFAULT_VERBOSITY))
+am__v_YACC_0 = @echo "  YACC  " $@;
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_$(V))
+am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
+am__v_CC_0 = @echo "  CC    " $@;
 CCLD = $(CC)
-LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_$(V))
+am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CCLD_0 = @echo "  CCLD  " $@;
+AM_V_GEN = $(am__v_GEN_$(V))
+am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
+am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(product1_la_SOURCES) $(product2_la_SOURCES) \
 	$(test_application_SOURCES) $(test_base64_SOURCES) \
 	$(test_bison_SOURCES) $(test_cache_SOURCES) \
@@ -576,6 +605,7 @@ red=; grn=; lgn=; blu=; std=
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 AS = @AS@
 AUTOCONF = @AUTOCONF@
@@ -903,9 +933,9 @@ clean-noinstLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 product1.la: $(product1_la_OBJECTS) $(product1_la_DEPENDENCIES) 
-	$(product1_la_LINK) $(am_product1_la_rpath) $(product1_la_OBJECTS) $(product1_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(product1_la_LINK) $(am_product1_la_rpath) $(product1_la_OBJECTS) $(product1_la_LIBADD) $(LIBS)
 product2.la: $(product2_la_OBJECTS) $(product2_la_DEPENDENCIES) 
-	$(product2_la_LINK) $(am_product2_la_rpath) $(product2_la_OBJECTS) $(product2_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(product2_la_LINK) $(am_product2_la_rpath) $(product2_la_OBJECTS) $(product2_la_LIBADD) $(LIBS)
 
 clean-checkPROGRAMS:
 	@list='$(check_PROGRAMS)'; test -n "$$list" || exit 0; \
@@ -917,10 +947,10 @@ clean-checkPROGRAMS:
 	rm -f $$list
 test_application$(EXEEXT): $(test_application_OBJECTS) $(test_application_DEPENDENCIES) 
 	@rm -f test_application$(EXEEXT)
-	$(CXXLINK) $(test_application_OBJECTS) $(test_application_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_application_OBJECTS) $(test_application_LDADD) $(LIBS)
 test_base64$(EXEEXT): $(test_base64_OBJECTS) $(test_base64_DEPENDENCIES) 
 	@rm -f test_base64$(EXEEXT)
-	$(CXXLINK) $(test_base64_OBJECTS) $(test_base64_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_base64_OBJECTS) $(test_base64_LDADD) $(LIBS)
 test_bison.h: test_bison.cc
 	@if test ! -f $@; then \
 	  rm -f test_bison.cc; \
@@ -928,199 +958,199 @@ test_bison.h: test_bison.cc
 	else :; fi
 test_bison$(EXEEXT): $(test_bison_OBJECTS) $(test_bison_DEPENDENCIES) 
 	@rm -f test_bison$(EXEEXT)
-	$(CXXLINK) $(test_bison_OBJECTS) $(test_bison_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_bison_OBJECTS) $(test_bison_LDADD) $(LIBS)
 test_cache$(EXEEXT): $(test_cache_OBJECTS) $(test_cache_DEPENDENCIES) 
 	@rm -f test_cache$(EXEEXT)
-	$(CXXLINK) $(test_cache_OBJECTS) $(test_cache_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_cache_OBJECTS) $(test_cache_LDADD) $(LIBS)
 test_cdb$(EXEEXT): $(test_cdb_OBJECTS) $(test_cdb_DEPENDENCIES) 
 	@rm -f test_cdb$(EXEEXT)
-	$(CXXLINK) $(test_cdb_OBJECTS) $(test_cdb_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_cdb_OBJECTS) $(test_cdb_LDADD) $(LIBS)
 test_certificate$(EXEEXT): $(test_certificate_OBJECTS) $(test_certificate_DEPENDENCIES) 
 	@rm -f test_certificate$(EXEEXT)
-	$(CXXLINK) $(test_certificate_OBJECTS) $(test_certificate_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_certificate_OBJECTS) $(test_certificate_LDADD) $(LIBS)
 test_command$(EXEEXT): $(test_command_OBJECTS) $(test_command_DEPENDENCIES) 
 	@rm -f test_command$(EXEEXT)
-	$(CXXLINK) $(test_command_OBJECTS) $(test_command_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_command_OBJECTS) $(test_command_LDADD) $(LIBS)
 test_compress$(EXEEXT): $(test_compress_OBJECTS) $(test_compress_DEPENDENCIES) 
 	@rm -f test_compress$(EXEEXT)
-	$(CXXLINK) $(test_compress_OBJECTS) $(test_compress_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_compress_OBJECTS) $(test_compress_LDADD) $(LIBS)
 test_crl$(EXEEXT): $(test_crl_OBJECTS) $(test_crl_DEPENDENCIES) 
 	@rm -f test_crl$(EXEEXT)
-	$(CXXLINK) $(test_crl_OBJECTS) $(test_crl_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_crl_OBJECTS) $(test_crl_LDADD) $(LIBS)
 test_curl$(EXEEXT): $(test_curl_OBJECTS) $(test_curl_DEPENDENCIES) 
 	@rm -f test_curl$(EXEEXT)
-	$(CXXLINK) $(test_curl_OBJECTS) $(test_curl_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_curl_OBJECTS) $(test_curl_LDADD) $(LIBS)
 test_date$(EXEEXT): $(test_date_OBJECTS) $(test_date_DEPENDENCIES) 
 	@rm -f test_date$(EXEEXT)
-	$(CXXLINK) $(test_date_OBJECTS) $(test_date_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_date_OBJECTS) $(test_date_LDADD) $(LIBS)
 test_dbi$(EXEEXT): $(test_dbi_OBJECTS) $(test_dbi_DEPENDENCIES) 
 	@rm -f test_dbi$(EXEEXT)
-	$(CXXLINK) $(test_dbi_OBJECTS) $(test_dbi_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_dbi_OBJECTS) $(test_dbi_LDADD) $(LIBS)
 test_des3$(EXEEXT): $(test_des3_OBJECTS) $(test_des3_DEPENDENCIES) 
 	@rm -f test_des3$(EXEEXT)
-	$(CXXLINK) $(test_des3_OBJECTS) $(test_des3_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_des3_OBJECTS) $(test_des3_LDADD) $(LIBS)
 test_dialog$(EXEEXT): $(test_dialog_OBJECTS) $(test_dialog_DEPENDENCIES) 
 	@rm -f test_dialog$(EXEEXT)
-	$(CXXLINK) $(test_dialog_OBJECTS) $(test_dialog_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_dialog_OBJECTS) $(test_dialog_LDADD) $(LIBS)
 test_digest$(EXEEXT): $(test_digest_OBJECTS) $(test_digest_DEPENDENCIES) 
 	@rm -f test_digest$(EXEEXT)
-	$(CXXLINK) $(test_digest_OBJECTS) $(test_digest_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_digest_OBJECTS) $(test_digest_LDADD) $(LIBS)
 test_entity$(EXEEXT): $(test_entity_OBJECTS) $(test_entity_DEPENDENCIES) 
 	@rm -f test_entity$(EXEEXT)
-	$(CXXLINK) $(test_entity_OBJECTS) $(test_entity_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_entity_OBJECTS) $(test_entity_LDADD) $(LIBS)
 test_event$(EXEEXT): $(test_event_OBJECTS) $(test_event_DEPENDENCIES) 
 	@rm -f test_event$(EXEEXT)
-	$(CXXLINK) $(test_event_OBJECTS) $(test_event_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_event_OBJECTS) $(test_event_LDADD) $(LIBS)
 test_expat$(EXEEXT): $(test_expat_OBJECTS) $(test_expat_DEPENDENCIES) 
 	@rm -f test_expat$(EXEEXT)
-	$(CXXLINK) $(test_expat_OBJECTS) $(test_expat_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_expat_OBJECTS) $(test_expat_LDADD) $(LIBS)
 test_file$(EXEEXT): $(test_file_OBJECTS) $(test_file_DEPENDENCIES) 
 	@rm -f test_file$(EXEEXT)
-	$(CXXLINK) $(test_file_OBJECTS) $(test_file_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_file_OBJECTS) $(test_file_LDADD) $(LIBS)
 test_file_config$(EXEEXT): $(test_file_config_OBJECTS) $(test_file_config_DEPENDENCIES) 
 	@rm -f test_file_config$(EXEEXT)
-	$(CXXLINK) $(test_file_config_OBJECTS) $(test_file_config_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_file_config_OBJECTS) $(test_file_config_LDADD) $(LIBS)
 test_flexer$(EXEEXT): $(test_flexer_OBJECTS) $(test_flexer_DEPENDENCIES) 
 	@rm -f test_flexer$(EXEEXT)
-	$(CXXLINK) $(test_flexer_OBJECTS) $(test_flexer_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_flexer_OBJECTS) $(test_flexer_LDADD) $(LIBS)
 test_ftp$(EXEEXT): $(test_ftp_OBJECTS) $(test_ftp_DEPENDENCIES) 
 	@rm -f test_ftp$(EXEEXT)
-	$(CXXLINK) $(test_ftp_OBJECTS) $(test_ftp_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_ftp_OBJECTS) $(test_ftp_LDADD) $(LIBS)
 test_header$(EXEEXT): $(test_header_OBJECTS) $(test_header_DEPENDENCIES) 
 	@rm -f test_header$(EXEEXT)
-	$(CXXLINK) $(test_header_OBJECTS) $(test_header_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_header_OBJECTS) $(test_header_LDADD) $(LIBS)
 test_http$(EXEEXT): $(test_http_OBJECTS) $(test_http_DEPENDENCIES) 
 	@rm -f test_http$(EXEEXT)
-	$(CXXLINK) $(test_http_OBJECTS) $(test_http_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_http_OBJECTS) $(test_http_LDADD) $(LIBS)
 test_https$(EXEEXT): $(test_https_OBJECTS) $(test_https_DEPENDENCIES) 
 	@rm -f test_https$(EXEEXT)
-	$(CXXLINK) $(test_https_OBJECTS) $(test_https_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_https_OBJECTS) $(test_https_LDADD) $(LIBS)
 test_imap$(EXEEXT): $(test_imap_OBJECTS) $(test_imap_DEPENDENCIES) 
 	@rm -f test_imap$(EXEEXT)
-	$(CXXLINK) $(test_imap_OBJECTS) $(test_imap_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_imap_OBJECTS) $(test_imap_LDADD) $(LIBS)
 test_interrupt$(EXEEXT): $(test_interrupt_OBJECTS) $(test_interrupt_DEPENDENCIES) 
 	@rm -f test_interrupt$(EXEEXT)
-	$(CXXLINK) $(test_interrupt_OBJECTS) $(test_interrupt_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_interrupt_OBJECTS) $(test_interrupt_LDADD) $(LIBS)
 test_ipaddress$(EXEEXT): $(test_ipaddress_OBJECTS) $(test_ipaddress_DEPENDENCIES) 
 	@rm -f test_ipaddress$(EXEEXT)
-	$(CXXLINK) $(test_ipaddress_OBJECTS) $(test_ipaddress_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_ipaddress_OBJECTS) $(test_ipaddress_LDADD) $(LIBS)
 test_json$(EXEEXT): $(test_json_OBJECTS) $(test_json_DEPENDENCIES) 
 	@rm -f test_json$(EXEEXT)
-	$(CXXLINK) $(test_json_OBJECTS) $(test_json_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_json_OBJECTS) $(test_json_LDADD) $(LIBS)
 test_ldap$(EXEEXT): $(test_ldap_OBJECTS) $(test_ldap_DEPENDENCIES) 
 	@rm -f test_ldap$(EXEEXT)
-	$(CXXLINK) $(test_ldap_OBJECTS) $(test_ldap_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_ldap_OBJECTS) $(test_ldap_LDADD) $(LIBS)
 test_log$(EXEEXT): $(test_log_OBJECTS) $(test_log_DEPENDENCIES) 
 	@rm -f test_log$(EXEEXT)
-	$(CXXLINK) $(test_log_OBJECTS) $(test_log_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_log_OBJECTS) $(test_log_LDADD) $(LIBS)
 test_magic$(EXEEXT): $(test_magic_OBJECTS) $(test_magic_DEPENDENCIES) 
 	@rm -f test_magic$(EXEEXT)
-	$(CXXLINK) $(test_magic_OBJECTS) $(test_magic_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_magic_OBJECTS) $(test_magic_LDADD) $(LIBS)
 test_memory_pool$(EXEEXT): $(test_memory_pool_OBJECTS) $(test_memory_pool_DEPENDENCIES) 
 	@rm -f test_memory_pool$(EXEEXT)
-	$(CXXLINK) $(test_memory_pool_OBJECTS) $(test_memory_pool_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_memory_pool_OBJECTS) $(test_memory_pool_LDADD) $(LIBS)
 test_multipart$(EXEEXT): $(test_multipart_OBJECTS) $(test_multipart_DEPENDENCIES) 
 	@rm -f test_multipart$(EXEEXT)
-	$(CXXLINK) $(test_multipart_OBJECTS) $(test_multipart_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_multipart_OBJECTS) $(test_multipart_LDADD) $(LIBS)
 test_notifier$(EXEEXT): $(test_notifier_OBJECTS) $(test_notifier_DEPENDENCIES) 
 	@rm -f test_notifier$(EXEEXT)
-	$(CXXLINK) $(test_notifier_OBJECTS) $(test_notifier_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_notifier_OBJECTS) $(test_notifier_LDADD) $(LIBS)
 test_options$(EXEEXT): $(test_options_OBJECTS) $(test_options_DEPENDENCIES) 
 	@rm -f test_options$(EXEEXT)
-	$(CXXLINK) $(test_options_OBJECTS) $(test_options_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_options_OBJECTS) $(test_options_LDADD) $(LIBS)
 test_pcre$(EXEEXT): $(test_pcre_OBJECTS) $(test_pcre_DEPENDENCIES) 
 	@rm -f test_pcre$(EXEEXT)
-	$(CXXLINK) $(test_pcre_OBJECTS) $(test_pcre_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_pcre_OBJECTS) $(test_pcre_LDADD) $(LIBS)
 test_pkcs10$(EXEEXT): $(test_pkcs10_OBJECTS) $(test_pkcs10_DEPENDENCIES) 
 	@rm -f test_pkcs10$(EXEEXT)
-	$(CXXLINK) $(test_pkcs10_OBJECTS) $(test_pkcs10_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_pkcs10_OBJECTS) $(test_pkcs10_LDADD) $(LIBS)
 test_pkcs7$(EXEEXT): $(test_pkcs7_OBJECTS) $(test_pkcs7_DEPENDENCIES) 
 	@rm -f test_pkcs7$(EXEEXT)
-	$(CXXLINK) $(test_pkcs7_OBJECTS) $(test_pkcs7_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_pkcs7_OBJECTS) $(test_pkcs7_LDADD) $(LIBS)
 test_plugin$(EXEEXT): $(test_plugin_OBJECTS) $(test_plugin_DEPENDENCIES) 
 	@rm -f test_plugin$(EXEEXT)
-	$(CXXLINK) $(test_plugin_OBJECTS) $(test_plugin_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_plugin_OBJECTS) $(test_plugin_LDADD) $(LIBS)
 test_pop3$(EXEEXT): $(test_pop3_OBJECTS) $(test_pop3_DEPENDENCIES) 
 	@rm -f test_pop3$(EXEEXT)
-	$(CXXLINK) $(test_pop3_OBJECTS) $(test_pop3_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_pop3_OBJECTS) $(test_pop3_LDADD) $(LIBS)
 test_process$(EXEEXT): $(test_process_OBJECTS) $(test_process_DEPENDENCIES) 
 	@rm -f test_process$(EXEEXT)
-	$(CXXLINK) $(test_process_OBJECTS) $(test_process_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_process_OBJECTS) $(test_process_LDADD) $(LIBS)
 test_query_parser$(EXEEXT): $(test_query_parser_OBJECTS) $(test_query_parser_DEPENDENCIES) 
 	@rm -f test_query_parser$(EXEEXT)
-	$(CXXLINK) $(test_query_parser_OBJECTS) $(test_query_parser_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_query_parser_OBJECTS) $(test_query_parser_LDADD) $(LIBS)
 test_rdb$(EXEEXT): $(test_rdb_OBJECTS) $(test_rdb_DEPENDENCIES) 
 	@rm -f test_rdb$(EXEEXT)
-	$(CXXLINK) $(test_rdb_OBJECTS) $(test_rdb_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_rdb_OBJECTS) $(test_rdb_LDADD) $(LIBS)
 test_rdb_client$(EXEEXT): $(test_rdb_client_OBJECTS) $(test_rdb_client_DEPENDENCIES) 
 	@rm -f test_rdb_client$(EXEEXT)
-	$(CXXLINK) $(test_rdb_client_OBJECTS) $(test_rdb_client_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_rdb_client_OBJECTS) $(test_rdb_client_LDADD) $(LIBS)
 test_rdb_server$(EXEEXT): $(test_rdb_server_OBJECTS) $(test_rdb_server_DEPENDENCIES) 
 	@rm -f test_rdb_server$(EXEEXT)
-	$(CXXLINK) $(test_rdb_server_OBJECTS) $(test_rdb_server_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_rdb_server_OBJECTS) $(test_rdb_server_LDADD) $(LIBS)
 test_server$(EXEEXT): $(test_server_OBJECTS) $(test_server_DEPENDENCIES) 
 	@rm -f test_server$(EXEEXT)
-	$(CXXLINK) $(test_server_OBJECTS) $(test_server_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_server_OBJECTS) $(test_server_LDADD) $(LIBS)
 test_services$(EXEEXT): $(test_services_OBJECTS) $(test_services_DEPENDENCIES) 
 	@rm -f test_services$(EXEEXT)
-	$(CXXLINK) $(test_services_OBJECTS) $(test_services_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_services_OBJECTS) $(test_services_LDADD) $(LIBS)
 test_smtp$(EXEEXT): $(test_smtp_OBJECTS) $(test_smtp_DEPENDENCIES) 
 	@rm -f test_smtp$(EXEEXT)
-	$(CXXLINK) $(test_smtp_OBJECTS) $(test_smtp_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_smtp_OBJECTS) $(test_smtp_LDADD) $(LIBS)
 test_soap_client$(EXEEXT): $(test_soap_client_OBJECTS) $(test_soap_client_DEPENDENCIES) 
 	@rm -f test_soap_client$(EXEEXT)
-	$(CXXLINK) $(test_soap_client_OBJECTS) $(test_soap_client_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_soap_client_OBJECTS) $(test_soap_client_LDADD) $(LIBS)
 test_soap_server$(EXEEXT): $(test_soap_server_OBJECTS) $(test_soap_server_DEPENDENCIES) 
 	@rm -f test_soap_server$(EXEEXT)
-	$(CXXLINK) $(test_soap_server_OBJECTS) $(test_soap_server_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_soap_server_OBJECTS) $(test_soap_server_LDADD) $(LIBS)
 test_socket$(EXEEXT): $(test_socket_OBJECTS) $(test_socket_DEPENDENCIES) 
 	@rm -f test_socket$(EXEEXT)
-	$(CXXLINK) $(test_socket_OBJECTS) $(test_socket_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_socket_OBJECTS) $(test_socket_LDADD) $(LIBS)
 test_ssh_client$(EXEEXT): $(test_ssh_client_OBJECTS) $(test_ssh_client_DEPENDENCIES) 
 	@rm -f test_ssh_client$(EXEEXT)
-	$(CXXLINK) $(test_ssh_client_OBJECTS) $(test_ssh_client_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_ssh_client_OBJECTS) $(test_ssh_client_LDADD) $(LIBS)
 test_ssl_client$(EXEEXT): $(test_ssl_client_OBJECTS) $(test_ssl_client_DEPENDENCIES) 
 	@rm -f test_ssl_client$(EXEEXT)
-	$(CXXLINK) $(test_ssl_client_OBJECTS) $(test_ssl_client_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_ssl_client_OBJECTS) $(test_ssl_client_LDADD) $(LIBS)
 test_ssl_server$(EXEEXT): $(test_ssl_server_OBJECTS) $(test_ssl_server_DEPENDENCIES) 
 	@rm -f test_ssl_server$(EXEEXT)
-	$(CXXLINK) $(test_ssl_server_OBJECTS) $(test_ssl_server_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_ssl_server_OBJECTS) $(test_ssl_server_LDADD) $(LIBS)
 test_string$(EXEEXT): $(test_string_OBJECTS) $(test_string_DEPENDENCIES) 
 	@rm -f test_string$(EXEEXT)
-	$(CXXLINK) $(test_string_OBJECTS) $(test_string_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_string_OBJECTS) $(test_string_LDADD) $(LIBS)
 test_thread$(EXEEXT): $(test_thread_OBJECTS) $(test_thread_DEPENDENCIES) 
 	@rm -f test_thread$(EXEEXT)
-	$(CXXLINK) $(test_thread_OBJECTS) $(test_thread_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_thread_OBJECTS) $(test_thread_LDADD) $(LIBS)
 test_timer$(EXEEXT): $(test_timer_OBJECTS) $(test_timer_DEPENDENCIES) 
 	@rm -f test_timer$(EXEEXT)
-	$(CXXLINK) $(test_timer_OBJECTS) $(test_timer_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_timer_OBJECTS) $(test_timer_LDADD) $(LIBS)
 test_timestamp$(EXEEXT): $(test_timestamp_OBJECTS) $(test_timestamp_DEPENDENCIES) 
 	@rm -f test_timestamp$(EXEEXT)
-	$(CXXLINK) $(test_timestamp_OBJECTS) $(test_timestamp_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_timestamp_OBJECTS) $(test_timestamp_LDADD) $(LIBS)
 test_timeval$(EXEEXT): $(test_timeval_OBJECTS) $(test_timeval_DEPENDENCIES) 
 	@rm -f test_timeval$(EXEEXT)
-	$(CXXLINK) $(test_timeval_OBJECTS) $(test_timeval_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_timeval_OBJECTS) $(test_timeval_LDADD) $(LIBS)
 test_tokenizer$(EXEEXT): $(test_tokenizer_OBJECTS) $(test_tokenizer_DEPENDENCIES) 
 	@rm -f test_tokenizer$(EXEEXT)
-	$(CXXLINK) $(test_tokenizer_OBJECTS) $(test_tokenizer_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_tokenizer_OBJECTS) $(test_tokenizer_LDADD) $(LIBS)
 test_tree$(EXEEXT): $(test_tree_OBJECTS) $(test_tree_DEPENDENCIES) 
 	@rm -f test_tree$(EXEEXT)
-	$(CXXLINK) $(test_tree_OBJECTS) $(test_tree_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_tree_OBJECTS) $(test_tree_LDADD) $(LIBS)
 test_unixsocket_client$(EXEEXT): $(test_unixsocket_client_OBJECTS) $(test_unixsocket_client_DEPENDENCIES) 
 	@rm -f test_unixsocket_client$(EXEEXT)
-	$(CXXLINK) $(test_unixsocket_client_OBJECTS) $(test_unixsocket_client_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_unixsocket_client_OBJECTS) $(test_unixsocket_client_LDADD) $(LIBS)
 test_unixsocket_server$(EXEEXT): $(test_unixsocket_server_OBJECTS) $(test_unixsocket_server_DEPENDENCIES) 
 	@rm -f test_unixsocket_server$(EXEEXT)
-	$(CXXLINK) $(test_unixsocket_server_OBJECTS) $(test_unixsocket_server_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_unixsocket_server_OBJECTS) $(test_unixsocket_server_LDADD) $(LIBS)
 test_url$(EXEEXT): $(test_url_OBJECTS) $(test_url_DEPENDENCIES) 
 	@rm -f test_url$(EXEEXT)
-	$(CXXLINK) $(test_url_OBJECTS) $(test_url_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_url_OBJECTS) $(test_url_LDADD) $(LIBS)
 test_vector$(EXEEXT): $(test_vector_OBJECTS) $(test_vector_DEPENDENCIES) 
 	@rm -f test_vector$(EXEEXT)
-	$(CXXLINK) $(test_vector_OBJECTS) $(test_vector_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_vector_OBJECTS) $(test_vector_LDADD) $(LIBS)
 test_zip$(EXEEXT): $(test_zip_OBJECTS) $(test_zip_DEPENDENCIES) 
 	@rm -f test_zip$(EXEEXT)
-	$(CXXLINK) $(test_zip_OBJECTS) $(test_zip_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_zip_OBJECTS) $(test_zip_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -1200,66 +1230,74 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_zip.Po@am__quote@
 
 .cc.o:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
 
 .cc.obj:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cc.lo:
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
 
 product1.lo: plugin/product1.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT product1.lo -MD -MP -MF $(DEPDIR)/product1.Tpo -c -o product1.lo `test -f 'plugin/product1.cpp' || echo '$(srcdir)/'`plugin/product1.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/product1.Tpo $(DEPDIR)/product1.Plo
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT product1.lo -MD -MP -MF $(DEPDIR)/product1.Tpo -c -o product1.lo `test -f 'plugin/product1.cpp' || echo '$(srcdir)/'`plugin/product1.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/product1.Tpo $(DEPDIR)/product1.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/product1.cpp' object='product1.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o product1.lo `test -f 'plugin/product1.cpp' || echo '$(srcdir)/'`plugin/product1.cpp
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o product1.lo `test -f 'plugin/product1.cpp' || echo '$(srcdir)/'`plugin/product1.cpp
 
 product2.lo: plugin/product2.cpp
-@am__fastdepCXX_TRUE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT product2.lo -MD -MP -MF $(DEPDIR)/product2.Tpo -c -o product2.lo `test -f 'plugin/product2.cpp' || echo '$(srcdir)/'`plugin/product2.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/product2.Tpo $(DEPDIR)/product2.Plo
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT product2.lo -MD -MP -MF $(DEPDIR)/product2.Tpo -c -o product2.lo `test -f 'plugin/product2.cpp' || echo '$(srcdir)/'`plugin/product2.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/product2.Tpo $(DEPDIR)/product2.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='plugin/product2.cpp' object='product2.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL)  --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o product2.lo `test -f 'plugin/product2.cpp' || echo '$(srcdir)/'`plugin/product2.cpp
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o product2.lo `test -f 'plugin/product2.cpp' || echo '$(srcdir)/'`plugin/product2.cpp
 
 .cpp.o:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
 
 .cpp.obj:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
 
 .ll.cc:
-	$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
+	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
 
 .yy.cc:
-	$(am__skipyacc) $(SHELL) $(YLWRAP) $< y.tab.c $@ y.tab.h $*.h y.output $*.output -- $(YACCCOMPILE)
+	$(AM_V_YACC)$(am__skipyacc) $(SHELL) $(YLWRAP) $< y.tab.c $@ y.tab.h $*.h y.output $*.output -- $(YACCCOMPILE)
 
 mostlyclean-libtool:
 	-rm -f *.lo

@@ -74,6 +74,9 @@ LTLIBRARIES = $(noinst_LTLIBRARIES)
 libIR_la_LIBADD =
 am_libIR_la_OBJECTS = IR.lo
 libIR_la_OBJECTS = $(am_libIR_la_OBJECTS)
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
 libcquery_la_LIBADD =
 am_libcquery_la_OBJECTS = cquery.lo
 libcquery_la_OBJECTS = $(am_libcquery_la_OBJECTS)
@@ -84,57 +87,70 @@ PROGRAMS = $(noinst_PROGRAMS)
 am_db_check_OBJECTS = db_check.$(OBJEXT)
 db_check_OBJECTS = $(am_db_check_OBJECTS)
 db_check_DEPENDENCIES = libIR.la libposting.la $(ulib_la)
-db_check_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+db_check_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(db_check_LDFLAGS) $(LDFLAGS) -o $@
 am_db_dump_OBJECTS = db_dump.$(OBJEXT)
 db_dump_OBJECTS = $(am_db_dump_OBJECTS)
 db_dump_DEPENDENCIES = libIR.la libposting.la $(ulib_la)
-db_dump_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
-	$(db_dump_LDFLAGS) $(LDFLAGS) -o $@
+db_dump_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(db_dump_LDFLAGS) $(LDFLAGS) -o $@
 am_gendoc_OBJECTS = gendoc.$(OBJEXT)
 gendoc_OBJECTS = $(am_gendoc_OBJECTS)
 gendoc_DEPENDENCIES = $(ulib_la)
-gendoc_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
-	$(gendoc_LDFLAGS) $(LDFLAGS) -o $@
+gendoc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(gendoc_LDFLAGS) $(LDFLAGS) -o $@
 am_index1_OBJECTS = index1.$(OBJEXT)
 index1_OBJECTS = $(am_index1_OBJECTS)
 index1_DEPENDENCIES = libIR.la libposting.la $(ulib_la)
-index1_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
-	$(index1_LDFLAGS) $(LDFLAGS) -o $@
+index1_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(index1_LDFLAGS) $(LDFLAGS) -o $@
 am_index2_OBJECTS = index2.$(OBJEXT)
 index2_OBJECTS = $(am_index2_OBJECTS)
 index2_DEPENDENCIES = libIR.la libposting.la $(ulib_la)
-index2_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
-	$(index2_LDFLAGS) $(LDFLAGS) -o $@
+index2_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(index2_LDFLAGS) $(LDFLAGS) -o $@
 am_query_OBJECTS = query.$(OBJEXT)
 query_OBJECTS = $(am_query_OBJECTS)
 query_DEPENDENCIES = libcquery.la libIR.la libposting.la $(ulib_la)
-query_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
-	$(query_LDFLAGS) $(LDFLAGS) -o $@
+query_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(query_LDFLAGS) $(LDFLAGS) -o $@
 am_update_OBJECTS = update.$(OBJEXT)
 update_OBJECTS = $(am_update_OBJECTS)
 update_DEPENDENCIES = libIR.la libposting.la $(ulib_la)
-update_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) \
-	$(update_LDFLAGS) $(LDFLAGS) -o $@
+update_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(update_LDFLAGS) $(LDFLAGS) -o $@
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CXXFLAGS) $(CXXFLAGS)
+AM_V_CXX = $(am__v_CXX_$(V))
+am__v_CXX_ = $(am__v_CXX_$(AM_DEFAULT_VERBOSITY))
+am__v_CXX_0 = @echo "  CXX   " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
 CXXLD = $(CXX)
-CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+CXXLINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CXXLD = $(am__v_CXXLD_$(V))
+am__v_CXXLD_ = $(am__v_CXXLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CXXLD_0 = @echo "  CXXLD " $@;
+AM_V_GEN = $(am__v_GEN_$(V))
+am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
+am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libIR_la_SOURCES) $(libcquery_la_SOURCES) \
 	$(libposting_la_SOURCES) $(db_check_SOURCES) \
 	$(db_dump_SOURCES) $(gendoc_SOURCES) $(index1_SOURCES) \
@@ -148,6 +164,7 @@ CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 AS = @AS@
 AUTOCONF = @AUTOCONF@
@@ -394,11 +411,11 @@ clean-noinstLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 libIR.la: $(libIR_la_OBJECTS) $(libIR_la_DEPENDENCIES) 
-	$(CXXLINK)  $(libIR_la_OBJECTS) $(libIR_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK)  $(libIR_la_OBJECTS) $(libIR_la_LIBADD) $(LIBS)
 libcquery.la: $(libcquery_la_OBJECTS) $(libcquery_la_DEPENDENCIES) 
-	$(CXXLINK)  $(libcquery_la_OBJECTS) $(libcquery_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK)  $(libcquery_la_OBJECTS) $(libcquery_la_LIBADD) $(LIBS)
 libposting.la: $(libposting_la_OBJECTS) $(libposting_la_DEPENDENCIES) 
-	$(CXXLINK)  $(libposting_la_OBJECTS) $(libposting_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK)  $(libposting_la_OBJECTS) $(libposting_la_LIBADD) $(LIBS)
 
 clean-noinstPROGRAMS:
 	@list='$(noinst_PROGRAMS)'; test -n "$$list" || exit 0; \
@@ -410,25 +427,25 @@ clean-noinstPROGRAMS:
 	rm -f $$list
 db_check$(EXEEXT): $(db_check_OBJECTS) $(db_check_DEPENDENCIES) 
 	@rm -f db_check$(EXEEXT)
-	$(db_check_LINK) $(db_check_OBJECTS) $(db_check_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(db_check_LINK) $(db_check_OBJECTS) $(db_check_LDADD) $(LIBS)
 db_dump$(EXEEXT): $(db_dump_OBJECTS) $(db_dump_DEPENDENCIES) 
 	@rm -f db_dump$(EXEEXT)
-	$(db_dump_LINK) $(db_dump_OBJECTS) $(db_dump_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(db_dump_LINK) $(db_dump_OBJECTS) $(db_dump_LDADD) $(LIBS)
 gendoc$(EXEEXT): $(gendoc_OBJECTS) $(gendoc_DEPENDENCIES) 
 	@rm -f gendoc$(EXEEXT)
-	$(gendoc_LINK) $(gendoc_OBJECTS) $(gendoc_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(gendoc_LINK) $(gendoc_OBJECTS) $(gendoc_LDADD) $(LIBS)
 index1$(EXEEXT): $(index1_OBJECTS) $(index1_DEPENDENCIES) 
 	@rm -f index1$(EXEEXT)
-	$(index1_LINK) $(index1_OBJECTS) $(index1_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(index1_LINK) $(index1_OBJECTS) $(index1_LDADD) $(LIBS)
 index2$(EXEEXT): $(index2_OBJECTS) $(index2_DEPENDENCIES) 
 	@rm -f index2$(EXEEXT)
-	$(index2_LINK) $(index2_OBJECTS) $(index2_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(index2_LINK) $(index2_OBJECTS) $(index2_LDADD) $(LIBS)
 query$(EXEEXT): $(query_OBJECTS) $(query_DEPENDENCIES) 
 	@rm -f query$(EXEEXT)
-	$(query_LINK) $(query_OBJECTS) $(query_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(query_LINK) $(query_OBJECTS) $(query_LDADD) $(LIBS)
 update$(EXEEXT): $(update_OBJECTS) $(update_DEPENDENCIES) 
 	@rm -f update$(EXEEXT)
-	$(update_LINK) $(update_OBJECTS) $(update_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(update_LINK) $(update_OBJECTS) $(update_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -448,22 +465,25 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/update.Po@am__quote@
 
 .cpp.o:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
 
 .cpp.obj:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<

@@ -15,8 +15,7 @@ rm -f web_server*.log \
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
-SOCK1=tmp/fcgi.socket-1
-SOCK2=tmp/scgi.socket-1
+SOCK1=tmp/fcgi.socket
 
 start_test() {
 
@@ -25,8 +24,9 @@ start_test() {
 	PIDS=`ps x | grep $CMD | grep -v grep | awk '{ print $1 }'`
 
 	if [ -z "$PIDS" ]; then
-#		rm -f										   $SOCK1
+#		rm -f	$SOCK1
 		../../src/ulib/net/server/plugin/mod_fcgi/$CMD $SOCK1 2>/tmp/$CMD.err &
+		chmod 777 $SOCK1
 	fi
 }
 
@@ -37,10 +37,18 @@ start_test() {
 DIR_CMD="../../examples/userver"
 
 if [ "$TERM" != "cygwin" ]; then
-	( mkdir -p usp; cd usp;
+	( mkdir -p servlet; cd servlet;
+	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/alldemos.so;
+	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/calc.so;
+	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/docalc.so;
+	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/calcajax.so;
 	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/jsonrequest.so;
 	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/upload_progress.so;
 	  cd ../../../src/ulib/net/server/plugin/usp/;
+	  make alldemos.la		  >/dev/null 2>&1 || exit 1;
+	  make calc.la				  >/dev/null 2>&1 || exit 1;
+	  make docalc.la			  >/dev/null 2>&1 || exit 1;
+	  make calcajax.la		  >/dev/null 2>&1 || exit 1;
 	  make jsonrequest.la	  >/dev/null 2>&1 || exit 1;
 	  make benchmarking.la	  >/dev/null 2>&1 || exit 1;
 	  make upload_progress.la >/dev/null 2>&1 || exit 1;
@@ -54,8 +62,6 @@ fi
 start_prg_background userver_tcp -c 'web_server.cfg'
 												# RA/RA.cfg
 												# deployment.properties
-
-chmod 777 $SOCK1
 
 # HTTP pseudo-streaming for FLV video
 

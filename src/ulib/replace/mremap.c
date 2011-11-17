@@ -53,7 +53,7 @@ U_EXPORT void* mremap(void* addr, size_t old_len, size_t new_len, int flags)
 
    if (old_len > new_len)
       {
-      munmap(addr+new_len, old_len - new_len);
+      munmap((char*)addr+new_len, old_len - new_len);
 
       return addr;
       }

@@ -74,6 +74,9 @@ LTLIBRARIES = $(noinst_LTLIBRARIES)
 libPEC_report_la_LIBADD =
 am_libPEC_report_la_OBJECTS = PEC_report.lo
 libPEC_report_la_OBJECTS = $(am_libPEC_report_la_OBJECTS)
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
 libPEC_report_anomalie_la_LIBADD =
 am__libPEC_report_anomalie_la_SOURCES_DIST = PEC_report_anomalie.cpp
 @SSL_TRUE@am_libPEC_report_anomalie_la_OBJECTS =  \
@@ -95,16 +98,18 @@ am__PEC_check_namefile_SOURCES_DIST = PEC_check_namefile.cpp
 PEC_check_namefile_OBJECTS = $(am_PEC_check_namefile_OBJECTS)
 @SSL_TRUE@PEC_check_namefile_DEPENDENCIES = libPEC_report.la \
 @SSL_TRUE@	$(top_builddir)/src/ulib/lib@ULIB@.la
-PEC_check_namefile_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(PEC_check_namefile_LDFLAGS) $(LDFLAGS) -o $@
+PEC_check_namefile_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(PEC_check_namefile_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am_PEC_date_generator_OBJECTS = PEC_date_generator.$(OBJEXT)
 PEC_date_generator_OBJECTS = $(am_PEC_date_generator_OBJECTS)
 PEC_date_generator_DEPENDENCIES =  \
 	$(top_builddir)/src/ulib/lib@ULIB@.la
-PEC_date_generator_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(PEC_date_generator_LDFLAGS) $(LDFLAGS) -o $@
+PEC_date_generator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(PEC_date_generator_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__PEC_report_anomalie1_SOURCES_DIST = PEC_report_anomalie1.cpp
 @SSL_TRUE@am_PEC_report_anomalie1_OBJECTS =  \
 @SSL_TRUE@	PEC_report_anomalie1.$(OBJEXT)
@@ -112,9 +117,10 @@ PEC_report_anomalie1_OBJECTS = $(am_PEC_report_anomalie1_OBJECTS)
 @SSL_TRUE@PEC_report_anomalie1_DEPENDENCIES =  \
 @SSL_TRUE@	libPEC_report_anomalie.la libPEC_report.la \
 @SSL_TRUE@	$(top_builddir)/src/ulib/lib@ULIB@.la
-PEC_report_anomalie1_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(PEC_report_anomalie1_LDFLAGS) $(LDFLAGS) -o $@
+PEC_report_anomalie1_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(PEC_report_anomalie1_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__PEC_report_anomalie2_SOURCES_DIST = PEC_report_anomalie2.cpp
 @SSL_TRUE@am_PEC_report_anomalie2_OBJECTS =  \
 @SSL_TRUE@	PEC_report_anomalie2.$(OBJEXT)
@@ -122,47 +128,64 @@ PEC_report_anomalie2_OBJECTS = $(am_PEC_report_anomalie2_OBJECTS)
 @SSL_TRUE@PEC_report_anomalie2_DEPENDENCIES =  \
 @SSL_TRUE@	libPEC_report_anomalie.la libPEC_report.la \
 @SSL_TRUE@	$(top_builddir)/src/ulib/lib@ULIB@.la
-PEC_report_anomalie2_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(PEC_report_anomalie2_LDFLAGS) $(LDFLAGS) -o $@
+PEC_report_anomalie2_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(PEC_report_anomalie2_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__PEC_report_messaggi_SOURCES_DIST = PEC_report_messaggi.cpp
 @SSL_TRUE@am_PEC_report_messaggi_OBJECTS =  \
 @SSL_TRUE@	PEC_report_messaggi.$(OBJEXT)
 PEC_report_messaggi_OBJECTS = $(am_PEC_report_messaggi_OBJECTS)
 @SSL_TRUE@PEC_report_messaggi_DEPENDENCIES = libPEC_report.la \
 @SSL_TRUE@	$(top_builddir)/src/ulib/lib@ULIB@.la
-PEC_report_messaggi_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(PEC_report_messaggi_LDFLAGS) $(LDFLAGS) -o $@
+PEC_report_messaggi_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(PEC_report_messaggi_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__PEC_report_rejected_SOURCES_DIST = PEC_report_rejected.cpp
 @LIBZ_TRUE@am_PEC_report_rejected_OBJECTS =  \
 @LIBZ_TRUE@	PEC_report_rejected.$(OBJEXT)
 PEC_report_rejected_OBJECTS = $(am_PEC_report_rejected_OBJECTS)
 @LIBZ_TRUE@PEC_report_rejected_DEPENDENCIES = libPEC_report.la \
 @LIBZ_TRUE@	$(top_builddir)/src/ulib/lib@ULIB@.la
-PEC_report_rejected_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(PEC_report_rejected_LDFLAGS) $(LDFLAGS) -o $@
+PEC_report_rejected_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(PEC_report_rejected_LDFLAGS) \
+	$(LDFLAGS) -o $@
 am__PEC_report_virus_SOURCES_DIST = PEC_report_virus.cpp
 @SSL_TRUE@am_PEC_report_virus_OBJECTS = PEC_report_virus.$(OBJEXT)
 PEC_report_virus_OBJECTS = $(am_PEC_report_virus_OBJECTS)
 @SSL_TRUE@PEC_report_virus_DEPENDENCIES = libPEC_report.la \
 @SSL_TRUE@	$(top_builddir)/src/ulib/lib@ULIB@.la
-PEC_report_virus_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(PEC_report_virus_LDFLAGS) $(LDFLAGS) -o $@
+PEC_report_virus_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(PEC_report_virus_LDFLAGS) \
+	$(LDFLAGS) -o $@
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CXXFLAGS) $(CXXFLAGS)
+AM_V_CXX = $(am__v_CXX_$(V))
+am__v_CXX_ = $(am__v_CXX_$(AM_DEFAULT_VERBOSITY))
+am__v_CXX_0 = @echo "  CXX   " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
 CXXLD = $(CXX)
-CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+CXXLINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CXXLD = $(am__v_CXXLD_$(V))
+am__v_CXXLD_ = $(am__v_CXXLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CXXLD_0 = @echo "  CXXLD " $@;
+AM_V_GEN = $(am__v_GEN_$(V))
+am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
+am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(libPEC_report_la_SOURCES) \
 	$(libPEC_report_anomalie_la_SOURCES) \
 	$(PEC_check_namefile_SOURCES) $(PEC_date_generator_SOURCES) \
@@ -183,6 +206,7 @@ CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 AS = @AS@
 AUTOCONF = @AUTOCONF@
@@ -427,9 +451,9 @@ clean-noinstLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 libPEC_report.la: $(libPEC_report_la_OBJECTS) $(libPEC_report_la_DEPENDENCIES) 
-	$(CXXLINK)  $(libPEC_report_la_OBJECTS) $(libPEC_report_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK)  $(libPEC_report_la_OBJECTS) $(libPEC_report_la_LIBADD) $(LIBS)
 libPEC_report_anomalie.la: $(libPEC_report_anomalie_la_OBJECTS) $(libPEC_report_anomalie_la_DEPENDENCIES) 
-	$(CXXLINK)  $(libPEC_report_anomalie_la_OBJECTS) $(libPEC_report_anomalie_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(CXXLINK)  $(libPEC_report_anomalie_la_OBJECTS) $(libPEC_report_anomalie_la_LIBADD) $(LIBS)
 
 clean-noinstPROGRAMS:
 	@list='$(noinst_PROGRAMS)'; test -n "$$list" || exit 0; \
@@ -441,25 +465,25 @@ clean-noinstPROGRAMS:
 	rm -f $$list
 PEC_check_namefile$(EXEEXT): $(PEC_check_namefile_OBJECTS) $(PEC_check_namefile_DEPENDENCIES) 
 	@rm -f PEC_check_namefile$(EXEEXT)
-	$(PEC_check_namefile_LINK) $(PEC_check_namefile_OBJECTS) $(PEC_check_namefile_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(PEC_check_namefile_LINK) $(PEC_check_namefile_OBJECTS) $(PEC_check_namefile_LDADD) $(LIBS)
 PEC_date_generator$(EXEEXT): $(PEC_date_generator_OBJECTS) $(PEC_date_generator_DEPENDENCIES) 
 	@rm -f PEC_date_generator$(EXEEXT)
-	$(PEC_date_generator_LINK) $(PEC_date_generator_OBJECTS) $(PEC_date_generator_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(PEC_date_generator_LINK) $(PEC_date_generator_OBJECTS) $(PEC_date_generator_LDADD) $(LIBS)
 PEC_report_anomalie1$(EXEEXT): $(PEC_report_anomalie1_OBJECTS) $(PEC_report_anomalie1_DEPENDENCIES) 
 	@rm -f PEC_report_anomalie1$(EXEEXT)
-	$(PEC_report_anomalie1_LINK) $(PEC_report_anomalie1_OBJECTS) $(PEC_report_anomalie1_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(PEC_report_anomalie1_LINK) $(PEC_report_anomalie1_OBJECTS) $(PEC_report_anomalie1_LDADD) $(LIBS)
 PEC_report_anomalie2$(EXEEXT): $(PEC_report_anomalie2_OBJECTS) $(PEC_report_anomalie2_DEPENDENCIES) 
 	@rm -f PEC_report_anomalie2$(EXEEXT)
-	$(PEC_report_anomalie2_LINK) $(PEC_report_anomalie2_OBJECTS) $(PEC_report_anomalie2_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(PEC_report_anomalie2_LINK) $(PEC_report_anomalie2_OBJECTS) $(PEC_report_anomalie2_LDADD) $(LIBS)
 PEC_report_messaggi$(EXEEXT): $(PEC_report_messaggi_OBJECTS) $(PEC_report_messaggi_DEPENDENCIES) 
 	@rm -f PEC_report_messaggi$(EXEEXT)
-	$(PEC_report_messaggi_LINK) $(PEC_report_messaggi_OBJECTS) $(PEC_report_messaggi_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(PEC_report_messaggi_LINK) $(PEC_report_messaggi_OBJECTS) $(PEC_report_messaggi_LDADD) $(LIBS)
 PEC_report_rejected$(EXEEXT): $(PEC_report_rejected_OBJECTS) $(PEC_report_rejected_DEPENDENCIES) 
 	@rm -f PEC_report_rejected$(EXEEXT)
-	$(PEC_report_rejected_LINK) $(PEC_report_rejected_OBJECTS) $(PEC_report_rejected_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(PEC_report_rejected_LINK) $(PEC_report_rejected_OBJECTS) $(PEC_report_rejected_LDADD) $(LIBS)
 PEC_report_virus$(EXEEXT): $(PEC_report_virus_OBJECTS) $(PEC_report_virus_DEPENDENCIES) 
 	@rm -f PEC_report_virus$(EXEEXT)
-	$(PEC_report_virus_LINK) $(PEC_report_virus_OBJECTS) $(PEC_report_virus_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(PEC_report_virus_LINK) $(PEC_report_virus_OBJECTS) $(PEC_report_virus_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -478,22 +502,25 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PEC_report_virus.Po@am__quote@
 
 .cpp.o:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
 
 .cpp.obj:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<

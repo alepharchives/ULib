@@ -182,17 +182,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x.empty() == false) UServer_Base::sendfile_threshold_nonblock = x.strtol();
 
-      if (cfg.readBoolean(*str_ENABLE_INOTIFY))
-         {
-         // NB: we ask to notify for change of file system (inotify)
-         // in the classic model or thread approach this interfere with UNotifier::empty() logic...
-
-         if (UServer_Base::isPreForked()) UServer_Base::handler_inotify = this;
-         else
-            {
-            U_SRV_LOG("Sorry, I can't enable inode based directory notification because PREFORK_CHILD <= 1");
-            }
-         }
+      if (cfg.readBoolean(*str_ENABLE_INOTIFY)) UServer_Base::handler_inotify = this; // NB: we ask to notify for change of file system (inotify)
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -346,8 +336,6 @@ next:
          U_SRV_LOG("ALIAS: URI request changed to: %.*s", len, ptr);
          }
 
-      if (UHTTP::real_ip->empty() == false) UHTTP::real_ip->setEmpty();
-
 #  ifdef HAVE_SSL
       if (uri_request_cert_mask.empty() == false &&
           u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(uri_request_cert_mask), 0))
@@ -380,6 +368,8 @@ int UHttpPlugIn::handlerRequest()
    U_TRACE(0, "UHttpPlugIn::handlerRequest()")
 
    // process the HTTP request
+
+   U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
    switch (U_http_request_check)
       {

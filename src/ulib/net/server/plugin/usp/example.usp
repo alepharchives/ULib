@@ -1,6 +1,6 @@
-<%!
+<!--%!
 #include <ulib/utility/services.h>
-%>
+/%-->
 <html>
 <head>
   <title>ULib start page</title>
@@ -12,7 +12,7 @@
         <tr>
           <td bgcolor="white">
             <center>
-              <h3>Welcome to Ulib (Ver. <%= U_CONSTANT_TO_TRACE(ULIB_VERSION) %>)!</h3>
+              <h3>Welcome to Ulib (Ver. <!--%= U_CONSTANT_TO_TRACE(ULIB_VERSION) /%-->)!</h3>
             </center>
           </td>
         </tr>
@@ -22,7 +22,7 @@
     <blockquote>
       <table width="750" cellpadding="5">
         <tr>
-          <td bgcolor="#E0E0FF"><% U_DYNAMIC_PAGE_OUTPUT("ULib Servlet Page (USP): %N (pid %P) [%U@%H] - %D", 0); %></td>
+          <td bgcolor="#E0E0FF"><!--% USP_PRINTF("ULib Servlet Page (USP): %N (pid %P) [%U@%H] - %D", 0); /%--></td>
         </tr>
       </table>
     </blockquote>
@@ -33,7 +33,7 @@
       <table width="750" cellpadding="5">
         <tr>
           <td bgcolor="#E0E0FF">
-			 <a href="http://www.unirel.com/ULib/index.html">Info</a><br>
+          <a href="http://www.unirel.com/ULib/index.html">Info</a><br>
           <a href="http://www.unirel.com/ULib/features.html">Features</a><br>
           <a href="http://www.unirel.com/ULib/tut.html">Tutorial</a><br>
           <a href="http://www.unirel.com/ULib/support.html">Support</a><br></td>

@@ -2,15 +2,15 @@
 <head>
   <meta http-equiv="Pragma" content="no-cache">
 <!--#set cgi=/cgi-bin/main.bash -->
-<!--#if expr=$OTHER -->
-  <meta http-equiv="Refresh" content="1; url=<!--#echo var=OTHER -->.shtml">
+<!--#if expr=$REDIRECT -->
+  <meta http-equiv="Refresh" content="1; url=<!--#echo var=$REDIRECT -->.shtml">
 <!--#endif -->
   <title><!--#echo var=$TITLE_TXT --></title>
   <link type="text/css" href="/css/style.css" rel="stylesheet">
   <!--#include direct=$FILE_HEAD_HTML -->
 </head>
 <body <!--#echo var=$BODY_STYLE -->>
-<!--#if expr="! ($REQUEST_URI ~= /stampa-rid)" -->
+<!--#if expr="! ($REQUEST_URI ^= /stampa-rid)" -->
   <table>
     <col width=140>
     <col width=500>
@@ -25,7 +25,7 @@
   <hr>
 <!--#endif -->
   <!--#include direct=$FILE_BODY_SHTML -->
-<!--#if expr="! ($REQUEST_URI ~= /stampa)" -->
+<!--#if expr="! ($REQUEST_URI ^= /stampa)" -->
   <hr><address>ULib Server</address>
 <!--#endif -->
 </body>

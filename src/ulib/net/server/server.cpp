@@ -365,7 +365,7 @@ UServer_Base::~UServer_Base()
 
    UNotifier::clear(preforked_num_kids == -1);
 
-   if (vClientImage) delete[] vClientImage;
+   if (vClientImage && isClassic() == false) delete[] vClientImage;
 
    U_INTERNAL_ASSERT_POINTER(senvironment)
 
@@ -1030,12 +1030,16 @@ void UServer_Base::init()
       U_ERROR("plugins initialization FAILED. Going down...");
       }
 
+   // init notifier event manager...
+
    USocket* csocket;
    UIPAddress* addr;
    UClientImage_Base* ptr;
 
+   UNotifier::min_connection = (isClassic() == false) + (handler_inotify != 0);
+
    if (UNotifier::max_connection == 0) UNotifier::max_connection  = 1020;
-   if (isPreForked())                  UNotifier::max_connection += (handler_inotify ? 2 : 1);
+                                       UNotifier::max_connection += (UNotifier::num_connection = UNotifier::min_connection);
 
    UNotifier::init();
 
@@ -1071,17 +1075,24 @@ void UServer_Base::init()
    UTrace::resume();
 #endif
 
+   socket->flags |= O_CLOEXEC;
+
    // NB: in the classic model we don't need to notify for request of connection
    // (loop: accept-fork) and the forked child don't accept new client, but we need
-   // event manager for the forked child to feel timeout for request of new client...
+   // event manager for the forked child to feel the eventually timeout of request from the new client...
 
-   if (preforked_num_kids <= 1) goto next;
+   if (isClassic())              goto next;
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+   if (preforked_num_kids == -1) goto next; 
+#endif
+
+   UNotifier::insert(pthis); // NB: we ask to notify for request of connection (=> accept)
 
    /* There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
     * a readability event because the connection might have been removed by an asynchronous network error or
     * another thread before accept() is called. If this happens then the call will block waiting for the next
     * connection to arrive. To ensure that accept() never blocks, the passed socket sockfd needs to have the
-    * O_NONBLOCK flag set (see socket(7)).
+    * O_NONBLOCK flag set (see socket(7))
     */
 
    socket->flags |= O_NONBLOCK;
@@ -1090,30 +1101,13 @@ void UServer_Base::init()
    if (bssl == false)
 #endif
       {
-      UEventFd::op_mask    |= EPOLLET;
-      accept_edge_triggered = true;
+      UEventFd::op_mask     |= EPOLLET;
+      accept_edge_triggered  = true;
       }
-
-   UNotifier::insert(pthis); // NB: we ask to notify for request of connection (=> accept)
-
-   UNotifier::num_connection = UNotifier::min_connection = 1;
-
-   if (handler_inotify)
-      {
-      // NB: we ask to notify for change of file system (inotify)
-      // in the classic model or thread approach this interfere with UNotifier::empty() logic...
-
-      U_ASSERT(isPreForked())
-
-      UNotifier::insert(handler_inotify);
-
-      UNotifier::num_connection = UNotifier::min_connection = 2;
-      }
-
 next:
-   socket->flags |= O_CLOEXEC;
-
    (void) U_SYSCALL(fcntl, "%d,%d,%d", socket->iSockDesc, F_SETFL, socket->flags);
+
+   if (handler_inotify) UNotifier::insert(handler_inotify); // NB: we ask to be notified for change of file system (inotify)
 
    if (timeoutMS != -1) ptime = U_NEW(UTimeoutConnection);
 }
@@ -1312,28 +1306,38 @@ next:
       if (proc->fork() &&
           proc->parent())
          {
-         csocket->close();
+         int pid, status;
 
-         --UNotifier::num_connection;
+         csocket->close();
 
          U_INTERNAL_DUMP("UNotifier::num_connection = %d", UNotifier::num_connection)
 
-         if (isLog() &&
-             UNotifier::num_connection == UNotifier::min_connection)
+         U_SRV_LOG("started new child (pid %d), up to %u children", proc->pid(), UNotifier::num_connection-1);
+
+         pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much zombie...
+
+         if (pid > 0)
             {
-            ULog::log("waiting for connection\n");
+            --UNotifier::num_connection;
+
+            U_SRV_LOG("child (pid %d) exited with value %d (%s), down to %u children", pid, status, UProcess::exitInfo(status), UNotifier::num_connection-1);
             }
 
-         (void) UProcess::waitpid(); // NB: to avoid too much zombie...
+         if (isLog()) ULog::log("waiting for connection\n");
 
          U_RETURN(U_NOTIFIER_OK);
          }
 
-      if (proc->child() && isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
+      if (proc->child())
+         {
+         if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
 
-      // NB: in the classic model we don't need to notify for request of connection
-      // (loop: accept-fork) and the forked child don't accept new client, but we need
-      // event manager for the forked child to feel timeout for other request of new client...
+         // NB: in the classic model we don't need to notify for request of connection
+         // (loop: accept-fork) and the forked child don't accept new client, but we need
+         // event manager for the forked child to feel the eventually timeout of request from the new client...
+
+         socket->close();
+         }
       }
 
    if (ptr->newConnection() == false)  goto check;
@@ -1402,11 +1406,14 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
       U_SRV_LOG("client closed connection from %.*s, %s clients still connected", U_STRING_TO_TRACE(*(ptr->logbuf)), getNumConnection());
 
       ptr->logbuf->setEmpty();
-
-      if (UNotifier::num_connection == UNotifier::min_connection) ULog::log("waiting for connection\n");
       }
 
-   if (isClassic()) U_EXIT(0);
+   if (isClassic() && proc->child())
+      {
+      U_INTERNAL_ASSERT(socket->isClosed())
+
+      U_EXIT(0);
+      }
 }
 
 bool UServer_Base::handlerTimeoutConnection(void* cimg)
@@ -1587,21 +1594,21 @@ void UServer_Base::run()
             continue;
             }
 
-         if (UNotifier::empty() ||
-             UNotifier::pthread)
-            {
-            U_INTERNAL_ASSERT((socket->flags & O_NONBLOCK) == 0)
+         // NB: in the classic model we don't need to notify for request of connection
+         // (loop: accept-fork) and the forked child don't accept new client, but we need
+         // event manager for the forked child to feel the eventually timeout of request from the new client...
 
-            (void) pthis->handlerRead();
-            }
-         else
+         if (socket->isClosed() ||
+             preforked_num_kids == 0)
             {
-            // NB: in the classic model we don't need to notify for request of connection
-            // (loop: accept-fork) and the forked child don't accept new client, but we need
-            // event manager for the forked child to feel timeout for other request of new client...
-
             (void) UNotifier::waitForEvent(ptime);
+
+            continue;
             }
+
+         U_INTERNAL_ASSERT((socket->flags & O_NONBLOCK) == 0)
+
+         (void) pthis->handlerRead();
          }
       }
 }

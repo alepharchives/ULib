@@ -82,6 +82,9 @@ am_crypto_base64_OBJECTS = crypto_base64.$(OBJEXT)
 crypto_base64_OBJECTS = $(am_crypto_base64_OBJECTS)
 crypto_base64_LDADD = $(LDADD)
 crypto_base64_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
 am__crypto_des3_SOURCES_DIST = crypto_des3.c
 @SSL_TRUE@am_crypto_des3_OBJECTS = crypto_des3.$(OBJEXT)
 crypto_des3_OBJECTS = $(am_crypto_des3_OBJECTS)
@@ -134,13 +137,26 @@ am__depfiles_maybe = depfiles
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_$(V))
+am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
+am__v_CC_0 = @echo "  CC    " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
 CCLD = $(CC)
-LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_$(V))
+am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CCLD_0 = @echo "  CCLD  " $@;
+AM_V_GEN = $(am__v_GEN_$(V))
+am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
+am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(crypto_base64_SOURCES) $(crypto_des3_SOURCES) \
 	$(crypto_dgst_SOURCES) $(crypto_qp_SOURCES) \
 	$(crypto_url_SOURCES) $(crypto_xml_SOURCES) \
@@ -161,6 +177,7 @@ red=; grn=; lgn=; blu=; std=
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 AS = @AS@
 AUTOCONF = @AUTOCONF@
@@ -399,40 +416,40 @@ clean-checkPROGRAMS:
 	rm -f $$list
 crypto_base64$(EXEEXT): $(crypto_base64_OBJECTS) $(crypto_base64_DEPENDENCIES) 
 	@rm -f crypto_base64$(EXEEXT)
-	$(LINK) $(crypto_base64_OBJECTS) $(crypto_base64_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(crypto_base64_OBJECTS) $(crypto_base64_LDADD) $(LIBS)
 crypto_des3$(EXEEXT): $(crypto_des3_OBJECTS) $(crypto_des3_DEPENDENCIES) 
 	@rm -f crypto_des3$(EXEEXT)
-	$(LINK) $(crypto_des3_OBJECTS) $(crypto_des3_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(crypto_des3_OBJECTS) $(crypto_des3_LDADD) $(LIBS)
 crypto_dgst$(EXEEXT): $(crypto_dgst_OBJECTS) $(crypto_dgst_DEPENDENCIES) 
 	@rm -f crypto_dgst$(EXEEXT)
-	$(LINK) $(crypto_dgst_OBJECTS) $(crypto_dgst_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(crypto_dgst_OBJECTS) $(crypto_dgst_LDADD) $(LIBS)
 crypto_qp$(EXEEXT): $(crypto_qp_OBJECTS) $(crypto_qp_DEPENDENCIES) 
 	@rm -f crypto_qp$(EXEEXT)
-	$(LINK) $(crypto_qp_OBJECTS) $(crypto_qp_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(crypto_qp_OBJECTS) $(crypto_qp_LDADD) $(LIBS)
 crypto_url$(EXEEXT): $(crypto_url_OBJECTS) $(crypto_url_DEPENDENCIES) 
 	@rm -f crypto_url$(EXEEXT)
-	$(LINK) $(crypto_url_OBJECTS) $(crypto_url_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(crypto_url_OBJECTS) $(crypto_url_LDADD) $(LIBS)
 crypto_xml$(EXEEXT): $(crypto_xml_OBJECTS) $(crypto_xml_DEPENDENCIES) 
 	@rm -f crypto_xml$(EXEEXT)
-	$(LINK) $(crypto_xml_OBJECTS) $(crypto_xml_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(crypto_xml_OBJECTS) $(crypto_xml_LDADD) $(LIBS)
 test_gzio$(EXEEXT): $(test_gzio_OBJECTS) $(test_gzio_DEPENDENCIES) 
 	@rm -f test_gzio$(EXEEXT)
-	$(LINK) $(test_gzio_OBJECTS) $(test_gzio_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(test_gzio_OBJECTS) $(test_gzio_LDADD) $(LIBS)
 test_misc$(EXEEXT): $(test_misc_OBJECTS) $(test_misc_DEPENDENCIES) 
 	@rm -f test_misc$(EXEEXT)
-	$(LINK) $(test_misc_OBJECTS) $(test_misc_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(test_misc_OBJECTS) $(test_misc_LDADD) $(LIBS)
 test_random$(EXEEXT): $(test_random_OBJECTS) $(test_random_DEPENDENCIES) 
 	@rm -f test_random$(EXEEXT)
-	$(LINK) $(test_random_OBJECTS) $(test_random_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(test_random_OBJECTS) $(test_random_LDADD) $(LIBS)
 test_sprintf$(EXEEXT): $(test_sprintf_OBJECTS) $(test_sprintf_DEPENDENCIES) 
 	@rm -f test_sprintf$(EXEEXT)
-	$(LINK) $(test_sprintf_OBJECTS) $(test_sprintf_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(test_sprintf_OBJECTS) $(test_sprintf_LDADD) $(LIBS)
 test_utility$(EXEEXT): $(test_utility_OBJECTS) $(test_utility_DEPENDENCIES) 
 	@rm -f test_utility$(EXEEXT)
-	$(LINK) $(test_utility_OBJECTS) $(test_utility_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(test_utility_OBJECTS) $(test_utility_LDADD) $(LIBS)
 test_zip$(EXEEXT): $(test_zip_OBJECTS) $(test_zip_DEPENDENCIES) 
 	@rm -f test_zip$(EXEEXT)
-	$(LINK) $(test_zip_OBJECTS) $(test_zip_LDADD) $(LIBS)
+	$(AM_V_CCLD)$(LINK) $(test_zip_OBJECTS) $(test_zip_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -454,22 +471,25 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_zip.Po@am__quote@
 
 .c.o:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c $<
 
 .c.obj:
-@am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
 
 .c.lo:
-@am__fastdepCC_TRUE@	$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LTCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<

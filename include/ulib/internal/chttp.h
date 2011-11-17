@@ -91,16 +91,22 @@
 // ----------------------------------------------------------------------------------------------------------------------------- */
 
 typedef struct uhttpinfo {
+         char  flag[8];
    const char* method;
    const char* uri;
    const char* query;
    const char* host;
-   const char* content_type;
    const char* range;
+   const char* accept;
+   const char* cookie;
+   const char* referer;
+   const char* ip_client;
+   const char* user_agent;
+   const char* content_type;
+   const char* accept_language;
    time_t      if_modified_since;
-   uint32_t    nResponseCode, startHeader, endHeader, szHeader, clength,
-               method_len, uri_len, query_len, host_len, host_vlen, content_type_len, range_len;
-   char        flag[8];
+   uint32_t    nResponseCode, startHeader, endHeader, szHeader, clength, method_len, uri_len, query_len, host_len, host_vlen,
+               range_len, accept_len, cookie_len, referer_len, ip_client_len, user_agent_len, content_type_len, accept_language_len;
 } uhttpinfo;
 
 #define U_http_upgrade             u_http_info.flag[0]
@@ -131,6 +137,24 @@ enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_G
 
 #define U_HTTP_RANGE_TO_PARAM      u_http_info.range, u_http_info.range_len
 #define U_HTTP_RANGE_TO_TRACE      u_http_info.range_len, u_http_info.range
+
+#define U_HTTP_ACCEPT_TO_PARAM     u_http_info.accept, u_http_info.accept_len
+#define U_HTTP_ACCEPT_TO_TRACE     u_http_info.accept_len, u_http_info.accept
+
+#define U_HTTP_COOKIE_TO_PARAM     u_http_info.cookie, u_http_info.cookie_len
+#define U_HTTP_COOKIE_TO_TRACE     u_http_info.cookie_len, u_http_info.cookie
+
+#define U_HTTP_REFERER_TO_PARAM    u_http_info.referer, u_http_info.referer_len
+#define U_HTTP_REFERER_TO_TRACE    u_http_info.referer_len, u_http_info.referer
+
+#define U_HTTP_IP_CLIENT_TO_PARAM  u_http_info.ip_client, u_http_info.ip_client_len
+#define U_HTTP_IP_CLIENT_TO_TRACE  u_http_info.ip_client_len, u_http_info.ip_client
+
+#define U_HTTP_USER_AGENT_TO_PARAM u_http_info.user_agent, u_http_info.user_agent_len
+#define U_HTTP_USER_AGENT_TO_TRACE u_http_info.user_agent_len, u_http_info.user_agent
+
+#define U_HTTP_ACCEPT_LANGUAGE_TO_PARAM   u_http_info.accept_language, u_http_info.accept_language_len
+#define U_HTTP_ACCEPT_LANGUAGE_TO_TRACE   u_http_info.accept_language_len, u_http_info.accept_language
 
 /* The hostname of your server from header's request.
  * The difference between U_HTTP_HOST_.. and U_HTTP_VHOST_.. is that

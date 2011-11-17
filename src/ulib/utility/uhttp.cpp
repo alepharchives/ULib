@@ -65,7 +65,6 @@ UString*    UHTTP::alias;
 UString*    UHTTP::cbuffer;
 UString*    UHTTP::geoip;
 UString*    UHTTP::tmpdir;
-UString*    UHTTP::real_ip;
 UString*    UHTTP::qcontent;
 UString*    UHTTP::pathname;
 UString*    UHTTP::htpasswd;
@@ -86,10 +85,14 @@ UStringRep* UHTTP::pkey;
 const char* UHTTP::ptrH;
 const char* UHTTP::ptrC;
 const char* UHTTP::ptrT;
-const char* UHTTP::ptrL;
 const char* UHTTP::ptrR;
 const char* UHTTP::ptrI;
 const char* UHTTP::ptrA;
+const char* UHTTP::ptrF;
+const char* UHTTP::ptrK;
+const char* UHTTP::ptrU;
+const char* UHTTP::ptrP;
+const char* UHTTP::ptrX;
 
 UMimeMultipart*                   UHTTP::formMulti;
 UVector<UString>*                 UHTTP::form_name_value;
@@ -527,7 +530,6 @@ void UHTTP::ctor()
    alias           = U_NEW(UString);
    geoip           = U_NEW(UString(U_CAPACITY));
    tmpdir          = U_NEW(UString(U_PATH_MAX));
-   real_ip         = U_NEW(UString(20U));
    cbuffer         = U_NEW(UString);
    qcontent        = U_NEW(UString);
    pathname        = U_NEW(UString(U_CAPACITY));
@@ -539,18 +541,23 @@ void UHTTP::ctor()
 
    U_INTERNAL_ASSERT_POINTER(USocket::str_host)
    U_INTERNAL_ASSERT_POINTER(USocket::str_range)
+   U_INTERNAL_ASSERT_POINTER(USocket::str_accept)
+   U_INTERNAL_ASSERT_POINTER(USocket::str_cookie)
    U_INTERNAL_ASSERT_POINTER(USocket::str_connection)
    U_INTERNAL_ASSERT_POINTER(USocket::str_content_type)
    U_INTERNAL_ASSERT_POINTER(USocket::str_content_length)
-   U_INTERNAL_ASSERT_POINTER(USocket::str_accept_encoding)
    U_INTERNAL_ASSERT_POINTER(USocket::str_if_modified_since)
 
    ptrH = USocket::str_host->c_pointer(1);              // "Host"
    ptrR = USocket::str_range->c_pointer(1);             // "Range"
+   ptrA = USocket::str_accept->c_pointer(1);            // "Accept"
+   ptrK = USocket::str_cookie->c_pointer(1);            // "Cookie"
+   ptrF = USocket::str_referer->c_pointer(1);           // "Referer"
+   ptrP = USocket::str_X_Real_IP->c_pointer(1);         // "X-Real-IP"
+   ptrU = USocket::str_user_agent->c_pointer(1);        // "User-Agent"
    ptrC = USocket::str_connection->c_pointer(1);        // "Connection"
-   ptrT = USocket::str_content_type->c_pointer(1);      // "Content-Type"
-   ptrL = USocket::str_content_length->c_pointer(1);    // "Content-Length"
-   ptrA = USocket::str_accept_encoding->c_pointer(1);   // "Accept-Encoding"
+   ptrT = USocket::str_content_type->c_pointer(1);      // "Content-"
+   ptrX = USocket::str_X_Forwarded_For->c_pointer(1);   // "X-Forwarded-For"
    ptrI = USocket::str_if_modified_since->c_pointer(1); // "If-Modified-Since"
 
 #ifdef HAVE_MAGIC
@@ -837,7 +844,6 @@ void UHTTP::dtor()
       delete geoip;
       delete tmpdir;
       delete cbuffer;
-      delete real_ip;
       delete qcontent;
       delete pathname;
       delete formMulti;
@@ -1547,7 +1553,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
          U_RETURN(false);
          }
 
-      count += chunk_terminator_len; // NB: il messaggio comprende anche la blank line...
+      count += chunk_terminator_len; // NB: the messagge include also the blank line...
 
       U_INTERNAL_DUMP("count = %u", count)
 
@@ -1610,9 +1616,9 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
          U_RETURN(false);
          }
 
-      // NB: check for Expect: 100-continue (as curl does)...
+      // NB: check for 'Expect: 100-continue' (as curl does)...
 
-      if (body_byte_read == 0   &&
+      if (body_byte_read == 0 &&
           getHTTPHeaderValuePtr(*pbuffer, *USocket::str_expect_100_continue, false))
          {
          U_INTERNAL_ASSERT_EQUALS(U_http_version, '1')
@@ -1622,7 +1628,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
          (void) UServer_Base::pClientImage->handlerWrite();
          }
 
-      UString* pstr;
+      UString* pstr = pbuffer;
 
       if (u_http_info.clength > (64 * 1024 * 1024) && // 64M
           UFile::mkTempStorage(body, u_http_info.clength))
@@ -1634,10 +1640,6 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
          body.size_adjust(body_byte_read);
 
          pstr = &body;
-         }
-      else
-         {
-         pstr = pbuffer;
          }
 
       // UPLOAD PROGRESS
@@ -1686,28 +1688,38 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 {
    U_TRACE(0, "UHTTP::checkHTTPRequestForHeader(%.*S)", U_STRING_TO_TRACE(request))
 
-   U_INTERNAL_ASSERT_MAJOR(u_http_info.szHeader,0)
-
    // --------------------------------
    // check in header request for:
    // --------------------------------
    // "Host: ..."
    // "Range: ..."
+   // "Accept: ..."
+   // "Cookie: ..."
+   // "Referer: ..."
+   // "X-Real-IP: ..."
+   // "User-Agent: ..."
    // "Connection: ..."
    // "Content-Type: ..."
    // "Content-Length: ..."
+   // "X-Forwarded-For: ..."
    // "Accept-Encoding: ..."
+   // "Accept-Language: ..."
    // "If-Modified-Since: ..."
    // --------------------------------
 
-   U_ASSERT_DIFFERS(request.empty(), true)
    U_INTERNAL_ASSERT_DIFFERS(ptrH, 0)
    U_INTERNAL_ASSERT_DIFFERS(ptrR, 0)
    U_INTERNAL_ASSERT_DIFFERS(ptrC, 0)
    U_INTERNAL_ASSERT_DIFFERS(ptrT, 0)
-   U_INTERNAL_ASSERT_DIFFERS(ptrL, 0)
    U_INTERNAL_ASSERT_DIFFERS(ptrA, 0)
    U_INTERNAL_ASSERT_DIFFERS(ptrI, 0)
+   U_INTERNAL_ASSERT_DIFFERS(ptrF, 0)
+   U_INTERNAL_ASSERT_DIFFERS(ptrK, 0)
+   U_INTERNAL_ASSERT_DIFFERS(ptrU, 0)
+   U_INTERNAL_ASSERT_DIFFERS(ptrP, 0)
+   U_INTERNAL_ASSERT_DIFFERS(ptrX, 0)
+   U_ASSERT_DIFFERS(request.empty(), true)
+   U_INTERNAL_ASSERT_MAJOR(u_http_info.szHeader,0)
 
    static const unsigned char ctable1[] = {
       0,   0,   0,   0,   0,   0,   0,   0,
@@ -1720,12 +1732,12 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
       0,   0,   0,   0,   0,   0,   0,   0, // '8',    '9',    ':',    ';',    '<',    '=',    '>',    '?',
       0, 'A',   0, 'C',   0,   0,   0,   0, // '@',    'A',    'B',    'C',    'D',    'E',    'F',    'G',
     'H', 'I',   0,   0,   0,   0,   0,   0, // 'H',    'I',    'J',    'K',    'L',    'M',    'N',    'O',
-      0,   0, 'R',   0,   0,   0,   0,   0, // 'P',    'Q',    'R',    'S',    'T',    'U',    'V',    'W',
-      0,   0,   0,   0,   0,   0,   0,   0, // 'X',    'Y',    'Z',    '[',    '\\',   ']',    '^',    '_',
+      0,   0, 'R',   0,   0, 'U',   0,   0, // 'P',    'Q',    'R',    'S',    'T',    'U',    'V',    'W',
+    'X',   0,   0,   0,   0,   0,   0,   0, // 'X',    'Y',    'Z',    '[',    '\\',   ']',    '^',    '_',
       0, 'A',   0, 'C',   0,   0,   0,   0, // '`',    'a',    'b',    'c',    'd',    'e',    'f',    'g',
-    'H',   0,   0,   0,   0,   0,   0,   0, // 'h',    'i',    'j',    'k',    'l',    'm',    'n',    'o',
-      0,   0, 'R',   0,   0,   0,   0,   0, // 'p',    'q',    'r',    's',    't',    'u',    'v',    'w',
-      0,   0,   0,   0,   0,   0,   0,   0  // 'x',    'y',    'z',    '{',    '|',    '}',    '~',    '\177'
+    'H', 'I',   0,   0,   0,   0,   0,   0, // 'h',    'i',    'j',    'k',    'l',    'm',    'n',    'o',
+      0,   0, 'R',   0,   0, 'U',   0,   0, // 'p',    'q',    'r',    's',    't',    'u',    'v',    'w',
+    'X',   0,   0,   0,   0,   0,   0,   0  // 'x',    'y',    'z',    '{',    '|',    '}',    '~',    '\177'
    };
 
    static const unsigned char ctable2[] = {
@@ -1752,7 +1764,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
    const char* p1;
    const char* p2;
    const char* p3;
-   unsigned char c;
+   unsigned char c, c1;
    const char* ptr = request.data();
    uint32_t pos1, pos2, n, char_r = (u_line_terminator_len == 2),
             end = (u_http_info.endHeader ? (result = true, u_http_info.endHeader - u_line_terminator_len) : (result = false, request.size()));
@@ -1767,11 +1779,14 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
       if ((c = ctable1[c])               &&
               (ctable2[(int)p[(n =  4)]] || // "Host:"
-               ctable2[(int)p[(n =  5)]] || // "Range:"
-               ctable2[(int)p[(n = 10)]] || // "Connection:"
+               ctable2[(int)p[(n =  5)]] || // "Range|Cookie:"
+               ctable2[(int)p[(n =  6)]] || // "Accept:"
+               ctable2[(int)p[(n =  7)]] || // "Referer:"
+               ctable2[(int)p[(n =  9)]] || // "X-Real-IP:"
+               ctable2[(int)p[(n = 10)]] || // "Connection|User-Agent:"
                ctable2[(int)p[(n = 12)]] || // "Content-Type:"
                ctable2[(int)p[(n = 14)]] || // "Content-Length:"
-               ctable2[(int)p[(n = 15)]] || // "Accept-Encoding:"
+               ctable2[(int)p[(n = 15)]] || // "Accept-Encoding/Language|X-Forwarded-For:"
                ctable2[(int)p[(n = 17)]]))  // "If-Modified-Since:"
          {
          pos1 += n;
@@ -1782,7 +1797,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
          if (ptr[pos1] != ':')
             {
-            pos1 -= n; // NB: we can have too much advanced... (Accept: */*)
+            pos1 -= n; // NB: we can have too much advanced...
 
             goto next;
             }
@@ -1797,152 +1812,240 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
       // U_INTERNAL_DUMP("pos2 = %.*S", 20, request.c_pointer(pos2))
 
-         if (c == 'H')
+         ++p;
+
+         switch (c)
             {
-            if (memcmp(ptrH, p+1, 3) == 0)
+            case 'C':
                {
-               u_http_info.host      = ptr + (ptrdiff_t)pos1;
-               u_http_info.host_len  =
-               u_http_info.host_vlen = pos2 - pos1 - char_r;
-
-               p2 = p1 = u_http_info.host;
-
-               U_INTERNAL_DUMP("u_http_info.host_len  = %u U_HTTP_HOST  = %.*S", u_http_info.host_len, U_HTTP_HOST_TO_TRACE)
-
-               // Host: hostname[:port]
-
-               for (p3 = p2 + u_http_info.host_len; p2 < p3; ++p2)  
+               if (memcmp(ptrT, p, 7) == 0) // 7 -> sizeof("ontent-")
                   {
-                  if (*p2 == ':')
-                     {
-                     u_http_info.host_vlen = p2 - p1;
+                  p += 8;
+                  c1 = u_toupper(p[-1]);
 
-                     break;
+                  if (c1 == 'T' &&
+                      U_MEMCMP(p, "ype") == 0)
+                     {
+                     u_http_info.content_type     = ptr + (ptrdiff_t)pos1;
+                     u_http_info.content_type_len = pos2 - pos1 - char_r;
+
+                     U_INTERNAL_DUMP("Content-Type: = %.*S", U_HTTP_CTYPE_TO_TRACE)
+                     }
+                  else if (c1 == 'L' &&
+                           U_MEMCMP(p, "ength") == 0)
+                     {
+                     u_http_info.clength = (uint32_t) strtoul(ptr + pos1, 0, 0);
+
+                     U_INTERNAL_DUMP("Content-Length: = %.*S u_http_info.clength = %u", 10, ptr + pos1, u_http_info.clength)
                      }
                   }
-
-               U_INTERNAL_DUMP("u_http_info.host_vlen = %u U_HTTP_VHOST = %.*S", u_http_info.host_vlen, U_HTTP_VHOST_TO_TRACE)
-               }
-
-            goto check_for_end_header;
-            }
-
-#     ifdef HAVE_LIBZ
-         if (c == 'A')
-            {
-            if (u_toupper(p[7]) == 'E'       &&
-                memcmp(ptrA,   p+1, 6) == 0  && // 6 -> sizeof("ccept-")
-                memcmp(ptrA+7, p+8, 7) == 0)    // 7 -> sizeof(       "ncoding")
-               {
-               p = ptr + pos1;
-
-               U_INTERNAL_DUMP("Accept-Encoding: = %.*S", pos2 - pos1 - 1, p)
-
-               if ((U_STRNEQ(p, "gzip") && U_STRNCMP(p+4, ";q=0")) ||
-                   u_find(p, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)
+               else if (memcmp(ptrC, p, 9) == 0) // 9 -> sizeof("onnection")
                   {
-                  U_http_is_accept_deflate = '1';
+                  p = ptr + pos1;
 
-                  U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
+                  U_INTERNAL_DUMP("Connection: = %.*S", pos2 - pos1 - 1, p)
 
-                  U_ASSERT(u_find(p, 30, U_CONSTANT_TO_PARAM("deflate")))
-                  }
-               }
-
-            goto check_for_end_header;
-            }
-#     endif
-
-         if (c == 'C')
-            {
-            if (memcmp(ptrC, p+1, 9) == 0)
-               {
-               p = ptr + pos1;
-
-               U_INTERNAL_DUMP("Connection: = %.*S", pos2 - pos1 - 1, p)
-
-               if (U_STRNEQ(p, "close"))
-                  {
-                  U_http_is_connection_close = U_YES;
-
-                  U_INTERNAL_DUMP("U_http_is_connection_close = %d", U_http_is_connection_close)
-                  }
-               else if (U_STRNCASECMP(p, "keep-alive") == 0)
-                  {
-                  U_http_keep_alive = '1';
-
-                  U_INTERNAL_DUMP("U_http_keep_alive = %C", U_http_keep_alive)
-                  }
-               else if (U_STRNEQ(p, "Upgrade"))
-                  {
-                  U_http_upgrade = '1';
-
-                  U_INTERNAL_DUMP("U_http_upgrade = %C", U_http_upgrade)
-
-                  // web socket
-               
-                  if (getHTTPHeaderValuePtr(request, *str_websocket,      false) &&
-                      getHTTPHeaderValuePtr(request, *str_websocket_key1, false))
+                  if (U_STRNEQ(p, "close"))
                      {
-                     U_ASSERT_POINTER(getHTTPHeaderValuePtr(request, *str_websocket_key2, false))
+                     U_http_is_connection_close = U_YES;
 
-                     u_http_info.clength = 8;
+                     U_INTERNAL_DUMP("U_http_is_connection_close = %d", U_http_is_connection_close)
+                     }
+                  else if (U_STRNCASECMP(p, "keep-alive") == 0)
+                     {
+                     U_http_keep_alive = '1';
+
+                     U_INTERNAL_DUMP("U_http_keep_alive = %C", U_http_keep_alive)
+                     }
+                  else if (U_STRNEQ(p, "Upgrade"))
+                     {
+                     U_http_upgrade = '1';
+
+                     U_INTERNAL_DUMP("U_http_upgrade = %C", U_http_upgrade)
+
+                     // web socket
+
+                     if (getHTTPHeaderValuePtr(request, *str_websocket_key1, false))
+                        {
+                        U_ASSERT_POINTER(getHTTPHeaderValuePtr(request, *str_websocket_key2, false))
+                        U_ASSERT_DIFFERS(request.find(*str_websocket,u_http_info.startHeader,u_http_info.szHeader),U_NOT_FOUND)
+
+                        u_http_info.clength = 8;
+                        }
                      }
                   }
+               else if (memcmp(ptrK, p, 5) == 0) // 5 -> sizeof("ookie")
+                  {
+                  u_http_info.cookie     = ptr + (ptrdiff_t)pos1;
+                  u_http_info.cookie_len = pos2 - pos1 - char_r;
 
-               goto check_for_end_header;
+                  U_INTERNAL_DUMP("Cookie: = %.*S", U_HTTP_COOKIE_TO_TRACE)
+                  }
                }
+            break;
 
-            if (u_toupper(p[8]) == 'T'      &&
-                memcmp(ptrT,   p+1, 7) == 0 && //  7 -> sizeof("ontent-")
-                memcmp(ptrT+8, p+9, 3) == 0)   //  3 -> sizeof(        "ype")
+            case 'A':
                {
-               u_http_info.content_type     = ptr + (ptrdiff_t)pos1;
-               u_http_info.content_type_len = pos2 - pos1 - char_r;
+               if (memcmp(ptrA, p, 5) == 0) // 5 -> sizeof("ccept")
+                  {
+                  if (p[5] != '-')
+                     {
+                     u_http_info.accept     = ptr + (ptrdiff_t)pos1;
+                     u_http_info.accept_len = pos2 - pos1 - char_r;
 
-               U_INTERNAL_DUMP("Content-Type: = %.*S", u_http_info.content_type_len, u_http_info.content_type)
+                     U_INTERNAL_DUMP("Accept: = %.*S", U_HTTP_ACCEPT_TO_TRACE)
+                     }
+                  else
+                     {
+                     p += 7;
+                     c1 = u_toupper(p[-1]);
 
-               goto check_for_end_header;
+                     if (c1 == 'E' &&
+                         U_MEMCMP(p, "ncoding") == 0)
+                        {
+                        p = ptr + pos1;
+
+                        U_INTERNAL_DUMP("Accept-Encoding: = %.*S", pos2 - pos1 - 1, p)
+
+                        if ((U_STRNEQ(p, "gzip") && U_STRNCMP(p+4, ";q=0")) ||
+                            u_find(p, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)
+                           {
+                           U_http_is_accept_deflate = '1';
+
+                           U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
+
+                           U_ASSERT(u_find(p, 30, U_CONSTANT_TO_PARAM("deflate")))
+                           }
+                        }
+                     else if (c1 == 'L' &&
+                              U_MEMCMP(p, "anguage") == 0)
+                        {
+                        u_http_info.accept_language     = ptr + (ptrdiff_t)pos1;
+                        u_http_info.accept_language_len = pos2 - pos1 - char_r;
+
+                        U_INTERNAL_DUMP("Accept-Language: = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
+                        }
+                     }
+                  }
                }
+            break;
 
-            if (u_toupper(p[8]) == 'L'       &&
-                memcmp(ptrL,   p+1, 7) == 0  && //  7 -> sizeof("ontent-")
-                memcmp(ptrL+8, p+9, 5) == 0)    //  5 -> sizeof(        "ength")
+            case 'R':
                {
-               u_http_info.clength = (uint32_t) strtoul(ptr + pos1, 0, 0);
+               if (memcmp(ptrF, p, 6) == 0) // 6 -> sizeof("eferer")
+                  {
+                  u_http_info.referer     = ptr + (ptrdiff_t)pos1;
+                  u_http_info.referer_len = pos2 - pos1 - char_r;
 
-               U_INTERNAL_DUMP("Content-Length: = %.*S u_http_info.clength = %u", 10, ptr + pos1, u_http_info.clength)
+                  U_INTERNAL_DUMP("Referer: = %.*S", U_HTTP_REFERER_TO_TRACE)
+                  }
+               else if (memcmp(ptrR, p, 4) == 0) // 4 -> sizeof("ange")
+                  {
+                  if (U_STRNEQ(ptr + pos1, "bytes="))
+                     {
+                     u_http_info.range     = ptr + (ptrdiff_t)pos1 + U_CONSTANT_SIZE("bytes=");
+                     u_http_info.range_len = pos2 - pos1 - char_r  - U_CONSTANT_SIZE("bytes=");
+
+                     U_INTERNAL_DUMP("Range = %.*S", U_HTTP_RANGE_TO_TRACE)
+                     }
+                  }
                }
+            break;
 
-            goto check_for_end_header;
+            case 'X':
+               {
+               if (p[0] == '-')
+                  {
+                  c1 = u_toupper(p[1]);
+
+                  if (c1 == 'F') // "X-Forwarded-For"
+                     {
+                     if (u_toupper(p[11]) == 'F'       &&
+                         memcmp(ptrX+2,  p+2,  9) == 0 && // 9 -> sizeof("orwarded-")
+                         memcmp(ptrX+12, p+12, 2) == 0)   // 2 -> sizeof("or")
+                        {
+                        u_http_info.ip_client     = ptr + (ptrdiff_t)pos1;
+                        u_http_info.ip_client_len = pos2 - pos1 - char_r;
+
+                        U_INTERNAL_DUMP("X-Forwarded-For: = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
+                        }
+                     }
+                  else if (c1 == 'R') // "X-Real-IP"
+                     {
+                     if (u_toupper(p[6]) == 'I' &&
+                         u_toupper(p[7]) == 'P' &&
+                         memcmp(ptrP+2, p+2, 4) == 0) // 4 -> sizeof("eal-")
+                        {
+                        u_http_info.ip_client     = ptr + (ptrdiff_t)pos1;
+                        u_http_info.ip_client_len = pos2 - pos1 - char_r;
+
+                        U_INTERNAL_DUMP("X-Real-IP: = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
+                        }
+                     }
+                  }
+               }
+            break;
+
+            case 'U':
+               {
+               if (u_toupper(p[4]) == 'A'       &&
+                   memcmp(ptrU,   p,   4) == 0  && // 4 -> sizeof("ser-")
+                   memcmp(ptrU+5, p+5, 4) == 0)    // 4 -> sizeof(     "gent")
+                  {
+                  u_http_info.user_agent     = ptr + (ptrdiff_t)pos1;
+                  u_http_info.user_agent_len = pos2 - pos1 - char_r;
+
+                  U_INTERNAL_DUMP("User-Agent: = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
+                  }
+               }
+            break;
+
+            case 'I':
+               {
+               if (u_toupper(p[2])  == 'M'        &&
+                   u_toupper(p[11]) == 'S'        &&
+                   memcmp(ptrI,    p,    2) == 0  && // 2 -> sizeof("f-")
+                   memcmp(ptrI+3,  p+3,  8) == 0  && // 8 -> sizeof(   "odified-")
+                   memcmp(ptrI+12, p+12, 4) == 0)    // 4 -> sizeof(            "ince")
+                  {
+                  u_http_info.if_modified_since = UTimeDate::getSecondFromTime(ptr + pos1, true);
+
+                  U_INTERNAL_DUMP("If-Modified-Since = %ld", u_http_info.if_modified_since)
+                  }
+               }
+            break;
+
+            case 'H':
+               {
+               if (memcmp(ptrH, p, 3) == 0)
+                  {
+                  u_http_info.host      = ptr + (ptrdiff_t)pos1;
+                  u_http_info.host_len  =
+                  u_http_info.host_vlen = pos2 - pos1 - char_r;
+
+                  p2 = p1 = u_http_info.host;
+
+                  U_INTERNAL_DUMP("u_http_info.host_len  = %u U_HTTP_HOST  = %.*S", u_http_info.host_len, U_HTTP_HOST_TO_TRACE)
+
+                  // Host: hostname[:port]
+
+                  for (p3 = p2 + u_http_info.host_len; p2 < p3; ++p2)  
+                     {
+                     if (*p2 == ':')
+                        {
+                        u_http_info.host_vlen = p2 - p1;
+
+                        break;
+                        }
+                     }
+
+                  U_INTERNAL_DUMP("u_http_info.host_vlen = %u U_HTTP_VHOST = %.*S", u_http_info.host_vlen, U_HTTP_VHOST_TO_TRACE)
+                  }
+               }
+            break;
             }
-
-         if (c == 'I')
-            {
-            if (memcmp(ptrI, p+1, 16) == 0)
-               {
-               u_http_info.if_modified_since = UTimeDate::getSecondFromTime(ptr + pos1, true);
-
-               U_INTERNAL_DUMP("If-Modified-Since = %ld", u_http_info.if_modified_since)
-               }
-
-            goto check_for_end_header;
-            }
-
-         if (c == 'R')
-            {
-            if (memcmp(ptrR, p+1, 4) == 0 &&
-                U_STRNEQ(ptr + pos1, "bytes="))
-               {
-               u_http_info.range     = ptr + (ptrdiff_t)pos1 + U_CONSTANT_SIZE("bytes=");
-               u_http_info.range_len = pos2 - pos1 - char_r  - U_CONSTANT_SIZE("bytes=");
-
-               U_INTERNAL_DUMP("Range = %.*S", u_http_info.range_len, u_http_info.range)
-               }
-            }
-
-         goto check_for_end_header;
          }
+
 next:
       pos2 = pos1;
 
@@ -1950,42 +2053,42 @@ next:
 
    // U_INTERNAL_DUMP("pos2 = %.*S", 20, request.c_pointer(pos2))
 
-check_for_end_header:
-      if (u_http_info.endHeader) continue;
-
-      c = (p1 = (ptr + pos2))[1];
-
-      U_INTERNAL_DUMP("c = %C", c)
-
-      // \n\n     (U_LF2)
-      // \r\n\r\n (U_CRLF2)
-
-      if (u_islterm(c))
+      if (u_http_info.endHeader == 0)
          {
-         if (p1[-1] == '\r' &&
-             p1[ 2] == '\n')
+         c = (p1 = (ptr + pos2))[1];
+
+         U_INTERNAL_DUMP("c = %C", c)
+
+         // \n\n     (U_LF2)
+         // \r\n\r\n (U_CRLF2)
+
+         if (u_islterm(c))
             {
-            U_INTERNAL_ASSERT_EQUALS(c,'\r')
-            U_ASSERT(request.isEndHeader(pos2-1))
-            U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len,2)
+            if (p1[-1] == '\r' &&
+                p1[ 2] == '\n')
+               {
+               U_INTERNAL_ASSERT_EQUALS(c,'\r')
+               U_ASSERT(request.isEndHeader(pos2-1))
+               U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len,2)
 
-            u_http_info.szHeader  =  pos2 - 1 - u_http_info.startHeader;
-            u_http_info.endHeader = (pos2 + 3);
+               u_http_info.szHeader  =  pos2 - 1 - u_http_info.startHeader;
+               u_http_info.endHeader = (pos2 + 3);
 
-            U_INTERNAL_DUMP("szHeader = %u endHeader(%u) = %.*S", u_http_info.szHeader, u_http_info.endHeader, 20, request.c_pointer(u_http_info.endHeader))
+               U_INTERNAL_DUMP("szHeader = %u endHeader(%u) = %.*S", u_http_info.szHeader,u_http_info.endHeader,20,request.c_pointer(u_http_info.endHeader))
+               }
+            else
+               {
+               U_ASSERT(request.isEndHeader(pos2))
+               U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len,1)
+
+               u_http_info.szHeader  =  pos2 - u_http_info.startHeader;
+               u_http_info.endHeader = (pos2 + 2);
+
+               U_INTERNAL_DUMP("szHeader = %u endHeader(%u) = %.*S", u_http_info.szHeader,u_http_info.endHeader,20,request.c_pointer(u_http_info.endHeader))
+               }
+
+            U_RETURN(true);
             }
-         else
-            {
-            U_ASSERT(request.isEndHeader(pos2))
-            U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len,1)
-
-            u_http_info.szHeader  =  pos2 - u_http_info.startHeader;
-            u_http_info.endHeader = (pos2 + 2);
-
-            U_INTERNAL_DUMP("szHeader = %u endHeader(%u) = %.*S", u_http_info.szHeader, u_http_info.endHeader, 20, request.c_pointer(u_http_info.endHeader))
-            }
-
-         U_RETURN(true);
          }
       }
 
@@ -2140,20 +2243,32 @@ bool UHTTP::readHTTPRequest(USocket* socket)
 
                ptrdiff_t diff = (rpointer2 - rpointer1);
 
-                                                 u_http_info.method       += diff;
-                                                 u_http_info.uri          += diff;
-               if (u_http_info.host_len)         u_http_info.host         += diff;
-               if (u_http_info.query_len)        u_http_info.query        += diff;
-               if (u_http_info.range_len)        u_http_info.range        += diff;
-               if (u_http_info.content_type_len) u_http_info.content_type += diff;
+                                                    u_http_info.method          += diff;
+                                                    u_http_info.uri             += diff;
+               if (u_http_info.host_len)            u_http_info.host            += diff;
+               if (u_http_info.query_len)           u_http_info.query           += diff;
+               if (u_http_info.range_len)           u_http_info.range           += diff;
+               if (u_http_info.accept_len)          u_http_info.accept          += diff;
+               if (u_http_info.cookie_len)          u_http_info.cookie          += diff;
+               if (u_http_info.referer_len)         u_http_info.referer         += diff;
+               if (u_http_info.ip_client_len)       u_http_info.ip_client       += diff;
+               if (u_http_info.user_agent_len)      u_http_info.user_agent      += diff;
+               if (u_http_info.content_type_len)    u_http_info.content_type    += diff;
+               if (u_http_info.accept_language_len) u_http_info.accept_language += diff;
 
-               U_INTERNAL_DUMP("method = %.*S", U_HTTP_METHOD_TO_TRACE)
-               U_INTERNAL_DUMP("uri    = %.*S", U_HTTP_URI_TO_TRACE)
-               U_INTERNAL_DUMP("host   = %.*S", U_HTTP_HOST_TO_TRACE)
-               U_INTERNAL_DUMP("vhost  = %.*S", U_HTTP_VHOST_TO_TRACE)
-               U_INTERNAL_DUMP("query  = %.*S", U_HTTP_QUERY_TO_TRACE)
-               U_INTERNAL_DUMP("range  = %.*S", U_HTTP_RANGE_TO_TRACE)
-               U_INTERNAL_DUMP("ctype  = %.*S", U_HTTP_CTYPE_TO_TRACE)
+               U_INTERNAL_DUMP("method          = %.*S", U_HTTP_METHOD_TO_TRACE)
+               U_INTERNAL_DUMP("uri             = %.*S", U_HTTP_URI_TO_TRACE)
+               U_INTERNAL_DUMP("host            = %.*S", U_HTTP_HOST_TO_TRACE)
+               U_INTERNAL_DUMP("vhost           = %.*S", U_HTTP_VHOST_TO_TRACE)
+               U_INTERNAL_DUMP("query           = %.*S", U_HTTP_QUERY_TO_TRACE)
+               U_INTERNAL_DUMP("ctype           = %.*S", U_HTTP_CTYPE_TO_TRACE)
+               U_INTERNAL_DUMP("range           = %.*S", U_HTTP_RANGE_TO_TRACE)
+               U_INTERNAL_DUMP("accept          = %.*S", U_HTTP_ACCEPT_TO_TRACE)
+               U_INTERNAL_DUMP("cookie          = %.*S", U_HTTP_COOKIE_TO_TRACE)
+               U_INTERNAL_DUMP("referer         = %.*S", U_HTTP_REFERER_TO_TRACE)
+               U_INTERNAL_DUMP("ip_client       = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
+               U_INTERNAL_DUMP("user_agent      = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
+               U_INTERNAL_DUMP("accept_language = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
                }
 
             UClientImage_Base::size_request += u_http_info.clength;
@@ -2190,13 +2305,16 @@ __pure const char* UHTTP::getHTTPHeaderValuePtr(const UString& buffer, const USt
    U_ASSERT_DIFFERS(buffer.empty(), true)
 
    const char* ptr_header_value;
-   uint32_t header_line = buffer.find(name, u_http_info.startHeader, u_http_info.szHeader);
+   uint32_t header_line, pos = u_http_info.startHeader, len = u_http_info.szHeader;
+
+loop:
+   header_line = buffer.find(name, pos, len);
 
    if (header_line == U_NOT_FOUND)
       {
       if (nocase)
          {
-         header_line = buffer.findnocase(name, u_http_info.startHeader, u_http_info.szHeader); 
+         header_line = buffer.findnocase(name, pos, len); 
 
          if (header_line != U_NOT_FOUND) goto next;
          }
@@ -2207,26 +2325,21 @@ __pure const char* UHTTP::getHTTPHeaderValuePtr(const UString& buffer, const USt
 next:
    U_INTERNAL_DUMP("header_line = %.*S", 20, buffer.c_pointer(header_line))
 
-   ptr_header_value = buffer.c_pointer(header_line + name.size() + 2);
+   ptr_header_value = buffer.c_pointer(header_line + name.size());
+
+   while (u_isspace(*ptr_header_value)) ++ptr_header_value;
+
+   if (*ptr_header_value != ':')
+      {
+      pos = buffer.distance(ptr_header_value);
+      len = u_http_info.endHeader - pos;
+
+      goto loop;
+      }
+
+   do { ++ptr_header_value; } while (u_isspace(*ptr_header_value));
 
    U_RETURN(ptr_header_value);
-}
-
-// Accept-Language: en-us,en;q=0.5
-// ----------------------------------------------------
-// take only the first 2 character (it, en, de fr, ...)
-
-__pure const char* UHTTP::getAcceptLanguage()
-{
-   U_TRACE(0, "UHTTP::getAcceptLanguage()")
-
-   const char* ptr = getHTTPHeaderValuePtr(*UClientImage_Base::request, *USocket::str_accept_language, false);
-
-   const char* accept_language = (ptr ? ptr : "en");
-
-   U_INTERNAL_DUMP("accept_language = %.2S", ptr)
-
-   U_RETURN_POINTER(accept_language,const char);
 }
 
 void UHTTP::getHTTPInfo(const UString& request, UString& method, UString& uri)
@@ -2380,21 +2493,15 @@ UString UHTTP::getHTTPCookie()
 {
    U_TRACE(1, "UHTTP::getHTTPCookie()")
 
-   const char* cookie_ptr = getHTTPHeaderValuePtr(*UClientImage_Base::request, *USocket::str_cookie, false);
-
-   if (cookie_ptr)
+   if (u_http_info.cookie_len)
       {
       U_INTERNAL_ASSERT_POINTER(file_data)
 
-      uint32_t cookie_len = 0;
+      U_INTERNAL_DUMP("cookie = %.*S", u_http_info.cookie_len, u_http_info.cookie)
 
-      for (char c = u_line_terminator[0]; cookie_ptr[cookie_len] != c; ++cookie_len) {}
-
-      U_INTERNAL_DUMP("cookie = %.*S", cookie_len, cookie_ptr)
-
-      if (U_STRNEQ(cookie_ptr, "ulib_sid="))
+      if (U_STRNEQ(u_http_info.cookie, "ulib_sid="))
          {
-         const char* token = cookie_ptr + U_CONSTANT_SIZE("ulib_sid=");
+         const char* token = u_http_info.cookie + U_CONSTANT_SIZE("ulib_sid=");
 
          UString data = UServices::getTokenData(token);
 
@@ -2403,13 +2510,49 @@ UString UHTTP::getHTTPCookie()
 
       if (((UHTTP::ucgi*)file_data->ptr)->sh_script == false)
          {
-         UString result(cookie_ptr, cookie_len);
+         UString result(u_http_info.cookie, u_http_info.cookie_len);
 
          U_RETURN_STRING(result);
          }
       }
 
    U_RETURN_STRING(UString::getStringNull());
+}
+
+UString UHTTP::getRemoteIP()
+{
+   U_TRACE(0, "UHTTP::getRemoteIP()")
+
+   if (u_http_info.ip_client_len)
+      {
+      // X-Forwarded-For: client, proxy1, proxy2
+
+      char c;
+      uint32_t len = 0;
+      const char* ptr = u_http_info.ip_client;
+
+      do {
+         c = ptr[len];
+
+         if (u_isspace(c) || c == ',') break;
+
+         ++len;
+         }
+      while (len < u_http_info.ip_client_len);
+
+      U_INTERNAL_DUMP("ip_client = %.*S", len, u_http_info.ip_client)
+
+      if (u_isIPAddr(UClientImage_Base::bIPv6, u_http_info.ip_client, len))
+         {
+         UString result((void*)u_http_info.ip_client, len);
+
+         U_RETURN_STRING(result);
+         }
+      }
+
+   UString result(UServer_Base::pClientImage->socket->remoteIPAddress().getAddressString());
+
+   U_RETURN_STRING(result);
 }
 
 const char* UHTTP::getHTTPStatusDescription(uint32_t nResponseCode)
@@ -2662,7 +2805,7 @@ void UHTTP::getFormValue(UString& buffer, uint32_t n)
 
    if (n >= form_name_value->size())
       {
-      buffer.setEmpty();
+      if (buffer.empty() == false) buffer.setEmpty(); // NB: we check because buffer can be the string null...
 
       return;
       }
@@ -3465,53 +3608,6 @@ bool UHTTP::isUserAuthorized(const UString& user, const UString& password)
    U_RETURN(false);
 }
 
-bool UHTTP::setRealIP()
-{
-   U_TRACE(0, "UHTTP::setRealIP()")
-
-   // check for X-Forwarded-For: client, proxy1, proxy2 and X-Real-IP: ...
-
-   uint32_t    ip_client_len = 0;
-   const char* ip_client     = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::request, *USocket::str_X_Forwarded_For, true);
-
-   if (ip_client)
-      {
-      char c;
-len:
-      while (true)
-         {
-         c = ip_client[ip_client_len];
-
-         if (u_isspace(c) || c == ',') break;
-
-         ++ip_client_len;
-         }
-
-      U_INTERNAL_DUMP("ip_client = %.*S", ip_client_len, ip_client)
-
-      (void) real_ip->replace(ip_client, ip_client_len);
-
-      U_RETURN(true);
-      }
-
-   ip_client = UHTTP::getHTTPHeaderValuePtr(*UClientImage_Base::request, *USocket::str_X_Real_IP, true);
-
-   if (ip_client) goto len;
-
-   U_RETURN(false);
-}
-
-UString UHTTP::getRemoteIP()
-{
-   U_TRACE(0, "UHTTP::getRemoteIP()")
-
-   if (real_ip->empty() && setRealIP() == false) (void) real_ip->replace(UServer_Base::pClientImage->socket->remoteIPAddress().getAddressString());
-
-   if (real_ip->isNullTerminated() == false) real_ip->setNullTerminated();
-
-   U_RETURN_STRING(*real_ip);
-}
-
 __pure bool UHTTP::isSOAPRequest()
 {
    U_TRACE(0, "UHTTP::isSOAPRequest()")
@@ -3563,7 +3659,7 @@ bool UHTTP::checkUriProtected()
       bool ok = UServer_Base::pClientImage->isAllowed(*vallow_IP);
 
       if (ok &&
-          setRealIP())
+          u_http_info.ip_client_len)
          {
          ok = UIPAllow::isAllowed(getRemoteIP(), *vallow_IP);
          }
@@ -4260,7 +4356,7 @@ U_NO_EXPORT void UHTTP::processRewriteRule()
  
 void UHTTP::manageHTTPServletRequest()
 {
-   U_TRACE(0, "UHTTP::checkHTTPServletRequest()")
+   U_TRACE(0, "UHTTP::manageHTTPServletRequest()")
 
    U_INTERNAL_ASSERT(isHTTPRequest())
 
@@ -4342,7 +4438,7 @@ int UHTTP::checkHTTPRequest()
 
    // ...process the HTTP message
 
-   U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
+   U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
    pathname->setBuffer(u_cwd_len + u_http_info.uri_len);
 
@@ -4375,7 +4471,7 @@ int UHTTP::checkHTTPRequest()
          }
       }
 
-   // NB: apply rewrite rule if requested and status is file forbidden or not exist...
+   // NB: apply rewrite rule if requested and if status is file forbidden or not exist...
 
    if (vRewriteRule &&
        U_http_request_check <= U_HTTP_REQUEST_IS_FORBIDDEN)
@@ -4390,7 +4486,7 @@ int UHTTP::checkHTTPRequest()
    // 1) file is forbidden (not in DOC_ROOT)
    // 2) DOC_ROOT dir need to be processed (can be forbidden)
    // 3) file is in FILE CACHE with/without content (stat() cache)
-   // 4) file not exist
+   // 4) file do not exist
 
    U_INTERNAL_DUMP("file_data = %p", file_data)
 
@@ -4434,7 +4530,7 @@ int UHTTP::checkHTTPRequest()
 
       u_http_info.nResponseCode = HTTP_OK;
 
-      // NB: check if we can server the content directly from cache...
+      // NB: check if we can service the content of file directly from cache...
 
       if (isDataFromCache() &&
           isHttpGETorHEAD() &&
@@ -4446,7 +4542,7 @@ next:
          goto end;
          }
 
-      // NB: if not, set status to file exist and need to be processed...
+      // NB: if not, set status to 'file exist and need to be processed'...
 
       setHTTPRequestNeedProcessing();
       }
@@ -4468,155 +4564,115 @@ end:
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
 
-// manage CGI
+/*
+Set up CGI environment variables.
+The following table describes common CGI environment variables that the server creates (some of these are not available with some servers):
+
+CGI server variable  Description
+-------------------------------------------------------------------------------------------------------------------------------------------
+SERVER_SOFTWARE
+   Name and version of the information server software answering the request (and running the gateway). Format: name/version.
+SERVER_NAME
+   Server's hostname, DNS alias, or IP address as it appears in self-referencing URLs.
+GATEWAY_INTERFACE
+   CGI specification revision with which this server complies. Format: CGI/revision.
+SERVER_PROTOCOL
+   Name and revision of the information protocol this request came in with. Format: protocol/revision.
+SERVER_PORT
+   Port number to which the request was sent.
+REQUEST_METHOD
+   Method with which the request was made. For HTTP, this is Get, Head, Post, and so on.
+PATH_INFO
+   Extra path information, as given by the client. Scripts can be accessed by their virtual pathname, followed by extra information at the end
+   of this path. The extra information is sent as PATH_INFO.
+PATH_TRANSLATED
+   Translated version of PATH_INFO after any virtual-to-physical mapping.
+SCRIPT_NAME
+   Virtual path to the script that is executing; used for self-referencing URLs.
+QUERY_STRING
+   Query information that follows the ? in the URL that referenced this script.
+REMOTE_HOST
+   Hostname making the request. If the server does not have this information, it sets REMOTE_ADDR and does not set REMOTE_HOST.
+REMOTE_ADDR
+   IP address of the remote host making the request.
+AUTH_TYPE
+   If the server supports user authentication, and the script is protected, the protocol-specific authentication method used to validate the user.
+AUTH_USER
+REMOTE_USER
+   If the server supports user authentication, and the script is protected, the username the user has authenticated as. (Also available as AUTH_USER.)
+REMOTE_IDENT
+   If the HTTP server supports RFC 931 identification, this variable is set to the remote username retrieved from the server.
+   Use this variable for logging only.
+CONTENT_TYPE
+   For queries that have attached information, such as HTTP POST and PUT, this is the content type of the data.
+CONTENT_LENGTH
+   Length of the content as given by the client.
+
+CERT_ISSUER
+   Issuer field of the client certificate (O=MS, OU=IAS, CN=user name, C=USA).
+CERT_SUBJECT
+   Subject field of the client certificate.
+CERT_SERIALNUMBER
+   Serial number field of the client certificate.
+-------------------------------------------------------------------------------------------------------------------------------------------
+
+The following table describes common CGI environment variables the browser creates and passes in the request header:
+
+CGI client variable  Description
+-------------------------------------------------------------------------------------------------------------------------------------------
+HTTP_REFERER
+   The referring document that linked to or submitted form data.
+HTTP_USER_AGENT
+   The browser that the client is currently using to send the request. Format: software/version library/version.
+HTTP_IF_MODIFIED_SINCE
+   The last time the page was modified. The browser determines whether to set this variable, usually in response to the server having sent
+   the LAST_MODIFIED HTTP header. It can be used to take advantage of browser-side caching.
+-------------------------------------------------------------------------------------------------------------------------------------------
+
+Example:
+----------------------------------------------------------------------------------------------------------------------------
+GATEWAY_INTERFACE=CGI/1.1
+QUERY_STRING=
+REMOTE_ADDR=127.0.0.1
+REQUEST_METHOD=GET
+SCRIPT_NAME=/cgi-bin/printenv
+SERVER_NAME=localhost
+SERVER_PORT=80
+SERVER_PROTOCOL=HTTP/1.1
+SERVER_SOFTWARE=Apache
+
+HTTP_ACCEPT_LANGUAGE="en-us,en;q=0.5"
+PATH="/lib64/rc/sbin:/lib64/rc/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
+SCRIPT_FILENAME="/var/www/localhost/cgi-bin/printenv"
+HTTP_COOKIE="_saml_idp=dXJuOm1hY2U6dGVzdC5zXRo; _redirect_user_idp=urn%3Amace%3Atest.shib%3Afederation%3Alocalhost;"
+
+DOCUMENT_ROOT="/var/www/localhost/htdocs"
+HTTP_ACCEPT="text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png"
+HTTP_ACCEPT_CHARSET="ISO-8859-1,utf-8;q=0.7,*;q=0.7"
+HTTP_ACCEPT_ENCODING="gzip,deflate"
+HTTP_ACCEPT_LANGUAGE="en-us,en;q=0.5"
+HTTP_CONNECTION="keep-alive"
+HTTP_HOST="localhost"
+HTTP_KEEP_ALIVE="300"
+HTTP_USER_AGENT="Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.8.1.14) Gecko/20080421 Firefox/2.0.0.14"
+REQUEST_URI="/cgi-bin/printenv"
+REMOTE_PORT="35653"
+SERVER_ADDR="127.0.0.1"
+SERVER_ADMIN="root@localhost"
+SERVER_SIGNATURE="<address>Apache Server at localhost Port 80</address>\n"
+UNIQUE_ID="b032zQoeAYMAAA-@BZwAAAAA"
+----------------------------------------------------------------------------------------------------------------------------
+
+http://$SERVER_NAME:$SERVER_PORT$SCRIPT_NAME$PATH_INFO will always be an accessible URL that points to the current script...
+*/
 
 UString UHTTP::getCGIEnvironment()
 {
    U_TRACE(0, "UHTTP::getCGIEnvironment()")
 
-   char c = u_line_terminator[0];
-
-   // Accept-Language: en-us,en;q=0.5
-
-   uint32_t    accept_language_len = 0;
-   const char* accept_language_ptr = getHTTPHeaderValuePtr(*UClientImage_Base::request, *USocket::str_accept_language, false);
-
-   if (accept_language_ptr)
-      {
-      while (accept_language_ptr[accept_language_len] != c) ++accept_language_len;
-
-      U_INTERNAL_DUMP("accept_language = %.*S", accept_language_len, accept_language_ptr)
-      }
-
-   // Referer: http://www.cgi101.com/class/ch3/text.html
-
-   uint32_t    referer_len = 0;
-   const char* referer_ptr = getHTTPHeaderValuePtr(*UClientImage_Base::request, *USocket::str_referer, false);
-
-   if (referer_ptr)
-      {
-      while (referer_ptr[referer_len] != c) ++referer_len;
-
-      U_INTERNAL_DUMP("referer = %.*S", referer_len, referer_ptr)
-      }
-
-   // User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)
-
-   uint32_t    user_agent_len = 0;
-   const char* user_agent_ptr = getHTTPHeaderValuePtr(*UClientImage_Base::request, *USocket::str_user_agent, false);
-
-   if (user_agent_ptr)
-      {
-      while (user_agent_ptr[user_agent_len] != c) ++user_agent_len;
-
-      U_INTERNAL_DUMP("user_agent = %.*S", user_agent_len, user_agent_ptr)
-      }
-
-   /*
-   Set up CGI environment variables.
-   The following table describes common CGI environment variables that the server creates (some of these are not available with some servers):
-
-   CGI server variable  Description
-   -------------------------------------------------------------------------------------------------------------------------------------------
-   SERVER_SOFTWARE
-      Name and version of the information server software answering the request (and running the gateway). Format: name/version.
-   SERVER_NAME
-      Server's hostname, DNS alias, or IP address as it appears in self-referencing URLs.
-   GATEWAY_INTERFACE
-      CGI specification revision with which this server complies. Format: CGI/revision.
-   SERVER_PROTOCOL
-      Name and revision of the information protocol this request came in with. Format: protocol/revision.
-   SERVER_PORT
-      Port number to which the request was sent.
-   REQUEST_METHOD
-      Method with which the request was made. For HTTP, this is Get, Head, Post, and so on.
-   PATH_INFO
-      Extra path information, as given by the client. Scripts can be accessed by their virtual pathname, followed by extra information at the end
-      of this path. The extra information is sent as PATH_INFO.
-   PATH_TRANSLATED
-      Translated version of PATH_INFO after any virtual-to-physical mapping.
-   SCRIPT_NAME
-      Virtual path to the script that is executing; used for self-referencing URLs.
-   QUERY_STRING
-      Query information that follows the ? in the URL that referenced this script.
-   REMOTE_HOST
-      Hostname making the request. If the server does not have this information, it sets REMOTE_ADDR and does not set REMOTE_HOST.
-   REMOTE_ADDR
-      IP address of the remote host making the request.
-   AUTH_TYPE
-      If the server supports user authentication, and the script is protected, the protocol-specific authentication method used to validate the user.
-   AUTH_USER
-   REMOTE_USER
-      If the server supports user authentication, and the script is protected, the username the user has authenticated as. (Also available as AUTH_USER.)
-   REMOTE_IDENT
-      If the HTTP server supports RFC 931 identification, this variable is set to the remote username retrieved from the server.
-      Use this variable for logging only.
-   CONTENT_TYPE
-      For queries that have attached information, such as HTTP POST and PUT, this is the content type of the data.
-   CONTENT_LENGTH
-      Length of the content as given by the client.
-
-   CERT_ISSUER
-      Issuer field of the client certificate (O=MS, OU=IAS, CN=user name, C=USA).
-   CERT_SUBJECT
-      Subject field of the client certificate.
-   CERT_SERIALNUMBER
-      Serial number field of the client certificate.
-   -------------------------------------------------------------------------------------------------------------------------------------------
-
-   The following table describes common CGI environment variables the browser creates and passes in the request header:
-
-   CGI client variable  Description
-   -------------------------------------------------------------------------------------------------------------------------------------------
-   HTTP_REFERER
-      The referring document that linked to or submitted form data.
-   HTTP_USER_AGENT
-      The browser that the client is currently using to send the request. Format: software/version library/version.
-   HTTP_IF_MODIFIED_SINCE
-      The last time the page was modified. The browser determines whether to set this variable, usually in response to the server having sent
-      the LAST_MODIFIED HTTP header. It can be used to take advantage of browser-side caching.
-   -------------------------------------------------------------------------------------------------------------------------------------------
-
-   Example:
-   ----------------------------------------------------------------------------------------------------------------------------
-   GATEWAY_INTERFACE=CGI/1.1
-   QUERY_STRING=
-   REMOTE_ADDR=127.0.0.1
-   REQUEST_METHOD=GET
-   SCRIPT_NAME=/cgi-bin/printenv
-   SERVER_NAME=localhost
-   SERVER_PORT=80
-   SERVER_PROTOCOL=HTTP/1.1
-   SERVER_SOFTWARE=Apache
-
-   HTTP_ACCEPT_LANGUAGE="en-us,en;q=0.5"
-   PATH="/lib64/rc/sbin:/lib64/rc/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
-   SCRIPT_FILENAME="/var/www/localhost/cgi-bin/printenv"
-   HTTP_COOKIE="_saml_idp=dXJuOm1hY2U6dGVzdC5zXRo; _redirect_user_idp=urn%3Amace%3Atest.shib%3Afederation%3Alocalhost;"
-
-   DOCUMENT_ROOT="/var/www/localhost/htdocs"
-   HTTP_ACCEPT="text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png"
-   HTTP_ACCEPT_CHARSET="ISO-8859-1,utf-8;q=0.7,*;q=0.7"
-   HTTP_ACCEPT_ENCODING="gzip,deflate"
-   HTTP_ACCEPT_LANGUAGE="en-us,en;q=0.5"
-   HTTP_CONNECTION="keep-alive"
-   HTTP_HOST="localhost"
-   HTTP_KEEP_ALIVE="300"
-   HTTP_USER_AGENT="Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.8.1.14) Gecko/20080421 Firefox/2.0.0.14"
-   REQUEST_URI="/cgi-bin/printenv"
-   REMOTE_PORT="35653"
-   SERVER_ADDR="127.0.0.1"
-   SERVER_ADMIN="root@localhost"
-   SERVER_SIGNATURE="<address>Apache Server at localhost Port 80</address>\n"
-   UNIQUE_ID="b032zQoeAYMAAA-@BZwAAAAA"
-   ----------------------------------------------------------------------------------------------------------------------------
-
-   http://$SERVER_NAME:$SERVER_PORT$SCRIPT_NAME$PATH_INFO will always be an accessible URL that points to the current script...
-   */
-
    const char* cgi_dir;
    UString uri = getRequestURI(false), ip_client = getRemoteIP(),
-           buffer(4000U + u_http_info.query_len + referer_len + user_agent_len);
+           buffer(4000U + u_http_info.query_len + u_http_info.referer_len + u_http_info.user_agent_len);
 
    U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
 
@@ -4638,7 +4694,7 @@ UString UHTTP::getCGIEnvironment()
                 // "REMOTE_USER=%.*s\n"  // The visitor's username (for .htaccess-protected pages)
                 // "SERVER_ADMIN=%.*s\n" // The email address for your server's webmaster
                    "SERVER_PROTOCOL=HTTP/1.%c\n"
-                   "SCRIPT_NAME=%.*s\n" // The interpreted pathname of the current CGI (relative to the document root)
+                   "SCRIPT_NAME=%.*s\n"  // The interpreted pathname of the current CGI (relative to the document root)
                    // ext
                    "PWD=%w/%s\n"
                    "SCRIPT_FILENAME=%w%.*s\n"   // The full pathname of the current CGI (is used by PHP for determining the name of script to execute)
@@ -4660,16 +4716,22 @@ UString UHTTP::getCGIEnvironment()
 
    if (u_http_info.host_len)
       {
-                                     buffer.snprintf_add("HTTP_HOST=%.*s\n",    U_HTTP_HOST_TO_TRACE);
-      if (virtual_host)              buffer.snprintf_add("VIRTUAL_HOST=%.*s\n", U_HTTP_VHOST_TO_TRACE);
+                                        buffer.snprintf_add("HTTP_HOST=%.*s\n",            U_HTTP_HOST_TO_TRACE);
+      if (virtual_host)                 buffer.snprintf_add("VIRTUAL_HOST=%.*s\n",         U_HTTP_VHOST_TO_TRACE);
       }
 
-   if (referer_len)                  buffer.snprintf_add("HTTP_REFERER=%.*s\n", referer_len, referer_ptr); // The URL of the page that called your script
-   if (user_agent_len)               buffer.snprintf_add("\"HTTP_USER_AGENT=%.*s\"\n", user_agent_len, user_agent_ptr); // The browser type of the visitor
-   if (accept_language_len)          buffer.snprintf_add("HTTP_ACCEPT_LANGUAGE=%.*s\n", accept_language_len, accept_language_ptr);
+   // contains the parameters of the request
+   if (u_http_info.query_len)           buffer.snprintf_add("QUERY_STRING=%.*s\n",         U_HTTP_QUERY_TO_TRACE);
 
-   if (u_http_info.query_len)        buffer.snprintf_add("QUERY_STRING=%.*s\n", U_HTTP_QUERY_TO_TRACE); // contains the parameters of the request
-   if (u_http_info.content_type_len) buffer.snprintf_add("\"CONTENT_TYPE=%.*s\"\n", U_HTTP_CTYPE_TO_TRACE);
+   // The URL of the page that called your script
+   if (u_http_info.referer_len)         buffer.snprintf_add("HTTP_REFERER=%.*s\n",         U_HTTP_REFERER_TO_TRACE);
+
+   // The browser type of the visitor
+   if (u_http_info.user_agent_len)      buffer.snprintf_add("\"HTTP_USER_AGENT=%.*s\"\n",  U_HTTP_USER_AGENT_TO_TRACE);
+
+   if (u_http_info.accept_len)          buffer.snprintf_add("HTTP_ACCEPT=%.*s\n",          U_HTTP_ACCEPT_TO_TRACE);
+   if (u_http_info.content_type_len)    buffer.snprintf_add("\"CONTENT_TYPE=%.*s\"\n",     U_HTTP_CTYPE_TO_TRACE);
+   if (u_http_info.accept_language_len) buffer.snprintf_add("HTTP_ACCEPT_LANGUAGE=%.*s\n", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE);
 
    // The interpreted pathname of the requested document or CGI (relative to the document root)
 
@@ -4764,8 +4826,7 @@ U_NO_EXPORT bool UHTTP::setCGIShellScript(UString& command)
       }
 
    if (n > 0) U_RETURN(true);
-
-   U_RETURN(false);
+              U_RETURN(false);
 }
 
 U_NO_EXPORT bool UHTTP::splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext)
@@ -4811,7 +4872,7 @@ bool UHTTP::processCGIOutput()
    Script naming conventions
 
    Normally, scripts produce output which is interpreted and sent back to the client. An advantage of this is that the scripts do not
-   need to send a full HTTP/1.0 header for every request.
+   need to send a full HTTP/1.x header for every request.
 
    Some scripts may want to avoid the extra overhead of the server parsing their output, and talk directly to the client. In order to
    distinguish these scripts from the other scripts, CGI requires that the script name begins with nph- if a script does not want the
@@ -4825,13 +4886,13 @@ bool UHTTP::processCGIOutput()
    Any headers which are not server directives are sent directly back to the client. Currently, this specification defines three server
    directives:
 
+   * Status:       This is used to give the server an HTTP status line to send to the client. The format is nnn xxxxx, where nnn is
+                   the 3-digit status code, and xxxxx is the reason string, such as "Forbidden".
+
    * Content-type: This is the MIME type of the document you are returning.
 
    * Location:     This is used to specify to the server that you are returning a reference to a document rather than an actual document.
                    If the argument to this is a URL, the server will issue a redirect to the client.
-
-   * Status:       This is used to give the server an HTTP status line to send to the client. The format is nnn xxxxx, where nnn is
-                   the 3-digit status code, and xxxxx is the reason string, such as "Forbidden".
    */
 
    const char* ptr;
@@ -4924,8 +4985,6 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                U_RETURN(true);
                }
-
-            goto next;
             }
          break;
 
@@ -4948,8 +5007,6 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                goto error;
                }
-
-            goto next;
             }
          break;
 
@@ -5062,8 +5119,6 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                goto error;
                }
-
-            goto next;
             }
          break;
 
@@ -5176,8 +5231,6 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                goto error;
                }
-
-            goto next;
             }
          break;
 
@@ -5243,28 +5296,15 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
                   ptr += U_CONSTANT_SIZE("ncoding: ");
                   }
                }
-
-            goto next;
-            }
-         break;
-
-         default:
-            {
-next:       // for next parsing...
-
-            ptr = (const char*) memchr(ptr, '\n', sz);
-
-            if (ptr)
-               {
-               ++ptr;
-
-               continue;
-               }
-
-            goto error;
             }
          break;
          }
+
+      ptr = (const char*) memchr(ptr, '\n', sz);
+
+      if (ptr == 0) goto error;
+
+      ++ptr;
       }
 
    U_INTERNAL_ASSERT_MAJOR(endHeader, 0)

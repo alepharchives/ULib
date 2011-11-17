@@ -2,7 +2,7 @@
 
 MAINTAINERCLEANFILES = Makefile.in
 
-EXTRA_DIST = *.usp usp2so.sh *.cpp
+EXTRA_DIST = *.usp usp2so.sh *.cpp README.alldemos
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 

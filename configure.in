@@ -51,7 +51,7 @@ if test ".`echo dummy $@ | grep help`" = .; then
     T_MD="`$ac_shtool echo -n -e %B 2>/dev/null`"
     T_ME="`$ac_shtool echo -n -e %b 2>/dev/null`"
     echo "Platform: ${T_MD}${PLATFORM}${T_ME}"
-    echo "Configuring ${T_MD}ULib${T_ME} (Library)"
+    echo "Configuring ${T_MD}ULib${T_ME} (C++ Library)"
 fi
 
 TWOCAN_CONF_MSG(Initial phase)
@@ -59,7 +59,8 @@ TWOCAN_CONF_MSG(Initial phase)
 # Check what platform we are running on.
 AC_CANONICAL_SYSTEM
 # pick a newer and better tar implementation like tar-pax
-AM_INIT_AUTOMAKE([1.11 no-define tar-pax])
+AM_INIT_AUTOMAKE([1.6 no-define tar-pax])
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # Versioning
 VERSION="1.1.0"
@@ -584,7 +585,7 @@ AC_HEADER_MAJOR
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([assert.h byteswap.h endian.h execinfo.h ndir.h string.h netpacket/packet.h sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h \
-						sched.h semaphore.h sysexits.h termios.h streambuf.h linux/netfilter_ipv4/ipt_ACCOUNT.h])
+						sched.h semaphore.h sys/syscall.h sysexits.h termios.h streambuf.h linux/netfilter_ipv4/ipt_ACCOUNT.h])
 
 AC_CHECK_HEADERS([sys/inotify.h mcheck.h])
 AC_LANG_C

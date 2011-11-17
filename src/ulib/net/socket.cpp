@@ -36,6 +36,7 @@ const UString* USocket::str_authorization;
 const UString* USocket::str_content_type;
 const UString* USocket::str_content_length;
 const UString* USocket::str_content_disposition;
+const UString* USocket::str_accept;
 const UString* USocket::str_accept_language;
 const UString* USocket::str_accept_encoding;
 const UString* USocket::str_if_range;
@@ -69,6 +70,7 @@ void USocket::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_content_type,0)
    U_INTERNAL_ASSERT_EQUALS(str_content_length,0)
    U_INTERNAL_ASSERT_EQUALS(str_content_disposition,0)
+   U_INTERNAL_ASSERT_EQUALS(str_accept,0)
    U_INTERNAL_ASSERT_EQUALS(str_accept_language,0)
    U_INTERNAL_ASSERT_EQUALS(str_accept_encoding,0)
    U_INTERNAL_ASSERT_EQUALS(str_if_range,0)
@@ -97,6 +99,7 @@ void USocket::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("Content-Type") },
       { U_STRINGREP_FROM_CONSTANT("Content-Length") },
       { U_STRINGREP_FROM_CONSTANT("Content-Disposition") },
+      { U_STRINGREP_FROM_CONSTANT("Accept") },
       { U_STRINGREP_FROM_CONSTANT("Accept-Language") },
       { U_STRINGREP_FROM_CONSTANT("Accept-Encoding") },
       { U_STRINGREP_FROM_CONSTANT("If-Range") },
@@ -125,18 +128,19 @@ void USocket::str_allocate()
    U_NEW_ULIB_OBJECT(str_content_type,          U_STRING_FROM_STRINGREP_STORAGE(11));
    U_NEW_ULIB_OBJECT(str_content_length,        U_STRING_FROM_STRINGREP_STORAGE(12));
    U_NEW_ULIB_OBJECT(str_content_disposition,   U_STRING_FROM_STRINGREP_STORAGE(13));
-   U_NEW_ULIB_OBJECT(str_accept_language,       U_STRING_FROM_STRINGREP_STORAGE(14));
-   U_NEW_ULIB_OBJECT(str_accept_encoding,       U_STRING_FROM_STRINGREP_STORAGE(15));
-   U_NEW_ULIB_OBJECT(str_if_range,              U_STRING_FROM_STRINGREP_STORAGE(16));
-   U_NEW_ULIB_OBJECT(str_if_none_match,         U_STRING_FROM_STRINGREP_STORAGE(17));
-   U_NEW_ULIB_OBJECT(str_if_modified_since,     U_STRING_FROM_STRINGREP_STORAGE(18));
-   U_NEW_ULIB_OBJECT(str_if_unmodified_since,   U_STRING_FROM_STRINGREP_STORAGE(19));
-   U_NEW_ULIB_OBJECT(str_referer,               U_STRING_FROM_STRINGREP_STORAGE(20));
-   U_NEW_ULIB_OBJECT(str_X_Real_IP,             U_STRING_FROM_STRINGREP_STORAGE(21));
-   U_NEW_ULIB_OBJECT(str_X_Forwarded_For,       U_STRING_FROM_STRINGREP_STORAGE(22));
-   U_NEW_ULIB_OBJECT(str_Transfer_Encoding,     U_STRING_FROM_STRINGREP_STORAGE(23));
-   U_NEW_ULIB_OBJECT(str_X_Progress_ID,         U_STRING_FROM_STRINGREP_STORAGE(24));
-   U_NEW_ULIB_OBJECT(str_expect_100_continue,   U_STRING_FROM_STRINGREP_STORAGE(25));
+   U_NEW_ULIB_OBJECT(str_accept,                U_STRING_FROM_STRINGREP_STORAGE(14));
+   U_NEW_ULIB_OBJECT(str_accept_language,       U_STRING_FROM_STRINGREP_STORAGE(15));
+   U_NEW_ULIB_OBJECT(str_accept_encoding,       U_STRING_FROM_STRINGREP_STORAGE(16));
+   U_NEW_ULIB_OBJECT(str_if_range,              U_STRING_FROM_STRINGREP_STORAGE(17));
+   U_NEW_ULIB_OBJECT(str_if_none_match,         U_STRING_FROM_STRINGREP_STORAGE(18));
+   U_NEW_ULIB_OBJECT(str_if_modified_since,     U_STRING_FROM_STRINGREP_STORAGE(19));
+   U_NEW_ULIB_OBJECT(str_if_unmodified_since,   U_STRING_FROM_STRINGREP_STORAGE(20));
+   U_NEW_ULIB_OBJECT(str_referer,               U_STRING_FROM_STRINGREP_STORAGE(21));
+   U_NEW_ULIB_OBJECT(str_X_Real_IP,             U_STRING_FROM_STRINGREP_STORAGE(22));
+   U_NEW_ULIB_OBJECT(str_X_Forwarded_For,       U_STRING_FROM_STRINGREP_STORAGE(23));
+   U_NEW_ULIB_OBJECT(str_Transfer_Encoding,     U_STRING_FROM_STRINGREP_STORAGE(24));
+   U_NEW_ULIB_OBJECT(str_X_Progress_ID,         U_STRING_FROM_STRINGREP_STORAGE(25));
+   U_NEW_ULIB_OBJECT(str_expect_100_continue,   U_STRING_FROM_STRINGREP_STORAGE(26));
 
 #ifdef HAVE_SSL
    ULib_init_openssl();

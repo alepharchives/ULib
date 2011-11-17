@@ -104,7 +104,7 @@ __pure UThread* UThread::getThread()
 
    U_INTERNAL_DUMP("first = %p", first)
 
-   pthread_t _tid = U_SYSCALL_NO_PARAM(pthread_self);
+   pthread_t _tid = (pthread_t) U_SYSCALL_NO_PARAM(pthread_self);
 
    for (UThread* obj = first; obj; obj = obj->next)
       {
@@ -294,7 +294,7 @@ void UThread::signal(int signo)
    // with. If called from a different process, the given signal
    // is sent to the process.
 
-   pthread_t _tid = U_SYSCALL_NO_PARAM(pthread_self);
+   pthread_t _tid = (pthread_t) U_SYSCALL_NO_PARAM(pthread_self);
 
    if (U_SYSCALL(pthread_equal, "%p,%p", _tid, priv->_tid)) sigHandler(signo);
    else
@@ -333,7 +333,7 @@ void UThread::execHandler(UThread* th)
 {
    U_TRACE(1, "UThread::execHandler(%p)", th)
 
-   th->priv->_tid = U_SYSCALL_NO_PARAM(pthread_self);
+   th->priv->_tid = (pthread_t) U_SYSCALL_NO_PARAM(pthread_self);
 
    U_INTERNAL_DUMP("_tid = %p", th->priv->_tid)
 

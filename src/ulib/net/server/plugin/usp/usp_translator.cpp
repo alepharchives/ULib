@@ -26,19 +26,26 @@
 
 #include <ulib/application.h>
 
-#define U_DYNAMIC_PAGE_TEMPLATE \
+#define USP_TEMPLATE \
 "#include <ulib/all.h>\n" \
 "\n" \
-"#define U_DYNAMIC_PAGE_APPEND(string)              (void)UClientImage_Base::wbuffer->append(string)\n" \
+"#define USP_FORM_NAME(n)  (UHTTP::getFormValue(*UClientImage_Base::_value,(0+(n*2))),*UClientImage_Base::_value)\n" \
 "\n" \
-"#define U_DYNAMIC_PAGE_OUTPUT(fmt,args...)         (UClientImage_Base::_buffer->snprintf(fmt , ##args),UClientImage_Base::wbuffer->append(*UClientImage_Base::_buffer))\n" \
+"#define USP_FORM_VALUE(n) (UHTTP::getFormValue(*UClientImage_Base::_value,(1+(n*2))),*UClientImage_Base::_value)\n" \
 "\n" \
-"#define U_DYNAMIC_PAGE_OUTPUT_ENCODED(fmt,args...) (UClientImage_Base::_buffer->snprintf(fmt , ##args),UXMLEscape::encode(*UClientImage_Base::_buffer,*UClientImage_Base::_encoded),UClientImage_Base::wbuffer->append(*UClientImage_Base::_encoded))\n" \
+"#define USP_PUTS(string) (void)UClientImage_Base::wbuffer->append(string)\n" \
 "\n" \
-"#define U_DYNAMIC_PAGE_GET_FORM_VALUE(n)                UHTTP::getFormValue(*UClientImage_Base::_value, n)\n" \
+"#define USP_PRINTF(fmt,args...) (UClientImage_Base::_buffer->snprintf(fmt , ##args),USP_PUTS(*UClientImage_Base::_buffer))\n" \
 "\n" \
-"#define U_DYNAMIC_PAGE_OUTPUT_FORM_VALUE(fmt,n)         (U_DYNAMIC_PAGE_GET_FORM_VALUE(n),U_DYNAMIC_PAGE_OUTPUT(fmt,U_STRING_TO_TRACE(*UClientImage_Base::_value)))\n" \
-"#define U_DYNAMIC_PAGE_OUTPUT_ENCODED_FORM_VALUE(fmt,n) (U_DYNAMIC_PAGE_GET_FORM_VALUE(n),U_DYNAMIC_PAGE_OUTPUT_ENCODED(fmt,U_STRING_TO_TRACE(*UClientImage_Base::_value)))\n" \
+"#define USP_PRINTF_XML(fmt,args...) (UClientImage_Base::_buffer->snprintf(fmt , ##args),UXMLEscape::encode(*UClientImage_Base::_buffer,*UClientImage_Base::_encoded),USP_PUTS(*UClientImage_Base::_encoded))\n" \
+"\n" \
+"#define USP_PRINTF_FORM_NAME(fmt,n) (USP_FORM_NAME(n),USP_PRINTF(fmt,U_STRING_TO_TRACE(*UClientImage_Base::_value)))\n" \
+"\n" \
+"#define USP_PRINTF_FORM_VALUE(fmt,n) (USP_FORM_VALUE(n),USP_PRINTF(fmt,U_STRING_TO_TRACE(*UClientImage_Base::_value)))\n" \
+"\n" \
+"#define USP_PRINTF_XML_FORM_NAME(fmt,n) ((void)USP_FORM_NAME(n),USP_PRINTF_XML(fmt,U_STRING_TO_TRACE(*UClientImage_Base::_value)))\n" \
+"\n" \
+"#define USP_PRINTF_XML_FORM_VALUE(fmt,n) ((void)USP_FORM_VALUE(n),USP_PRINTF_XML(fmt,U_STRING_TO_TRACE(*UClientImage_Base::_value)))\n" \
 "\n" \
 "%.*s\n" \
 "extern \"C\" {\n" \
@@ -98,10 +105,10 @@ public:
             }
          }
 
-      // Anything that is not enclosed in <% ... %> tags is assumed to be HTML
+      // Anything that is not enclosed in <!--% ... /%--> tags is assumed to be HTML
 
       UTokenizer t(usp);
-      t.setGroup(U_CONSTANT_TO_PARAM("<%%>"));
+      t.setGroup(U_CONSTANT_TO_PARAM("<!--%/%-->"));
 
       bool bgroup;
       const char* directive;
@@ -111,7 +118,7 @@ public:
       while (true)
          {
          distance = t.getDistance();
-         pos      = usp.find("<%", distance);
+         pos      = usp.find("<!--%", distance);
 
          if (pos)
             {
@@ -158,13 +165,13 @@ public:
 
          switch (token.first_char())
             {
-            case '!': // <%! ... %>
+            case '!': // <!--%! ... /%-->
                {
                declaration = UStringExt::trim(directive, n);
                }
             break;
 
-            case '=': // <%= ... %>
+            case '=': // <!--%= ... /%-->
                {
                token = UStringExt::trim(directive, n);
 
@@ -175,7 +182,7 @@ public:
                }
             break;
 
-            default: // plain code block <% ... %>
+            default: // plain code block <!--% ... /%-->
                {
                (void) output.append(UStringExt::trim(token));
                (void) output.push_back('\n');
@@ -184,9 +191,9 @@ public:
             }
          }
 
-      UString result(100U + sizeof(U_DYNAMIC_PAGE_TEMPLATE) + declaration.size() + output.size());
+      UString result(100U + sizeof(USP_TEMPLATE) + declaration.size() + output.size());
 
-      result.snprintf(U_DYNAMIC_PAGE_TEMPLATE,
+      result.snprintf(USP_TEMPLATE,
                       U_STRING_TO_TRACE(declaration),
                       (bcontent_type ? "" : "\nUClientImage_Base::wbuffer->snprintf(\"Content-Type: \" U_CTYPE_HTML \"\\r\\n\\r\\n\");\n"),
                       U_STRING_TO_TRACE(output));

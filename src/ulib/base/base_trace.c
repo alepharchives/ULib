@@ -19,12 +19,15 @@
 #  include <sys/mman.h>
 #  ifdef HAVE_PTHREAD_H
 #     include <pthread.h>
-#     include <sys/syscall.h>
 #  endif
 #endif
 
 #include <stdlib.h>
 #include <stddef.h>
+
+#ifdef HAVE_SYS_SYSCALL_H
+#  include <sys/syscall.h>
+#endif
 
 void*    u_plock;
 int      u_trace_fd;
@@ -73,7 +76,7 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
 
    U_INTERNAL_ASSERT_MINOR(u_trace_num_tab,sizeof(u_trace_tab))
 
-#ifdef HAVE_PTHREAD_H
+#if defined(HAVE_SYS_SYSCALL_H) && defined(HAVE_PTHREAD_H)
    if (u_plock)
       {
       char tid_buffer[32];
@@ -122,7 +125,7 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
          }
       }
 
-#ifdef HAVE_PTHREAD_H
+#if defined(HAVE_SYS_SYSCALL_H) && defined(HAVE_PTHREAD_H)
    if (u_plock) (void) pthread_mutex_unlock((pthread_mutex_t*)u_plock);
 #endif
 }

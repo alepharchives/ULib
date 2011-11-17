@@ -82,7 +82,10 @@ am__userver_ipc_SOURCES_DIST = userver.cpp
 userver_ipc_OBJECTS = $(am_userver_ipc_OBJECTS)
 @MINGW_FALSE@userver_ipc_DEPENDENCIES =  \
 @MINGW_FALSE@	$(top_builddir)/src/ulib/lib@ULIB@.la
-userver_ipc_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+AM_V_lt = $(am__v_lt_$(V))
+am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
+am__v_lt_0 = --silent
+userver_ipc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(userver_ipc_LDFLAGS) $(LDFLAGS) -o $@
 am__userver_ssl_SOURCES_DIST = userver.cpp
@@ -90,13 +93,13 @@ am__userver_ssl_SOURCES_DIST = userver.cpp
 userver_ssl_OBJECTS = $(am_userver_ssl_OBJECTS)
 @SSL_TRUE@userver_ssl_DEPENDENCIES =  \
 @SSL_TRUE@	$(top_builddir)/src/ulib/lib@ULIB@.la
-userver_ssl_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+userver_ssl_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(userver_ssl_LDFLAGS) $(LDFLAGS) -o $@
 am_userver_tcp_OBJECTS = userver_tcp-userver.$(OBJEXT)
 userver_tcp_OBJECTS = $(am_userver_tcp_OBJECTS)
 userver_tcp_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
-userver_tcp_LINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) \
+userver_tcp_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(userver_tcp_LDFLAGS) $(LDFLAGS) -o $@
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
@@ -104,13 +107,26 @@ am__depfiles_maybe = depfiles
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
-LTCXXCOMPILE = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
-	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CXXFLAGS) $(CXXFLAGS)
+AM_V_CXX = $(am__v_CXX_$(V))
+am__v_CXX_ = $(am__v_CXX_$(AM_DEFAULT_VERBOSITY))
+am__v_CXX_0 = @echo "  CXX   " $@;
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
 CXXLD = $(CXX)
-CXXLINK = $(LIBTOOL) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
-	--mode=link $(CXXLD) $(AM_CXXFLAGS) $(CXXFLAGS) $(AM_LDFLAGS) \
-	$(LDFLAGS) -o $@
+CXXLINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CXXLD = $(am__v_CXXLD_$(V))
+am__v_CXXLD_ = $(am__v_CXXLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CXXLD_0 = @echo "  CXXLD " $@;
+AM_V_GEN = $(am__v_GEN_$(V))
+am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
+am__v_GEN_0 = @echo "  GEN   " $@;
 SOURCES = $(userver_ipc_SOURCES) $(userver_ssl_SOURCES) \
 	$(userver_tcp_SOURCES)
 DIST_SOURCES = $(am__userver_ipc_SOURCES_DIST) \
@@ -142,6 +158,7 @@ CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 AS = @AS@
 AUTOCONF = @AUTOCONF@
@@ -417,13 +434,13 @@ clean-binPROGRAMS:
 	rm -f $$list
 userver_ipc$(EXEEXT): $(userver_ipc_OBJECTS) $(userver_ipc_DEPENDENCIES) 
 	@rm -f userver_ipc$(EXEEXT)
-	$(userver_ipc_LINK) $(userver_ipc_OBJECTS) $(userver_ipc_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(userver_ipc_LINK) $(userver_ipc_OBJECTS) $(userver_ipc_LDADD) $(LIBS)
 userver_ssl$(EXEEXT): $(userver_ssl_OBJECTS) $(userver_ssl_DEPENDENCIES) 
 	@rm -f userver_ssl$(EXEEXT)
-	$(userver_ssl_LINK) $(userver_ssl_OBJECTS) $(userver_ssl_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(userver_ssl_LINK) $(userver_ssl_OBJECTS) $(userver_ssl_LDADD) $(LIBS)
 userver_tcp$(EXEEXT): $(userver_tcp_OBJECTS) $(userver_tcp_DEPENDENCIES) 
 	@rm -f userver_tcp$(EXEEXT)
-	$(userver_tcp_LINK) $(userver_tcp_OBJECTS) $(userver_tcp_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(userver_tcp_LINK) $(userver_tcp_OBJECTS) $(userver_tcp_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -436,64 +453,73 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/userver_tcp-userver.Po@am__quote@
 
 .cpp.o:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ $<
 
 .cpp.obj:
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LTCXXCOMPILE) -c -o $@ $<
 
 userver_ipc-userver.o: userver.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ipc_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_ipc-userver.o -MD -MP -MF $(DEPDIR)/userver_ipc-userver.Tpo -c -o userver_ipc-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/userver_ipc-userver.Tpo $(DEPDIR)/userver_ipc-userver.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ipc_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_ipc-userver.o -MD -MP -MF $(DEPDIR)/userver_ipc-userver.Tpo -c -o userver_ipc-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/userver_ipc-userver.Tpo $(DEPDIR)/userver_ipc-userver.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='userver.cpp' object='userver_ipc-userver.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ipc_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o userver_ipc-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
 
 userver_ipc-userver.obj: userver.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ipc_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_ipc-userver.obj -MD -MP -MF $(DEPDIR)/userver_ipc-userver.Tpo -c -o userver_ipc-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/userver_ipc-userver.Tpo $(DEPDIR)/userver_ipc-userver.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ipc_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_ipc-userver.obj -MD -MP -MF $(DEPDIR)/userver_ipc-userver.Tpo -c -o userver_ipc-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/userver_ipc-userver.Tpo $(DEPDIR)/userver_ipc-userver.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='userver.cpp' object='userver_ipc-userver.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ipc_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o userver_ipc-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
 
 userver_ssl-userver.o: userver.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ssl_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_ssl-userver.o -MD -MP -MF $(DEPDIR)/userver_ssl-userver.Tpo -c -o userver_ssl-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/userver_ssl-userver.Tpo $(DEPDIR)/userver_ssl-userver.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ssl_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_ssl-userver.o -MD -MP -MF $(DEPDIR)/userver_ssl-userver.Tpo -c -o userver_ssl-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/userver_ssl-userver.Tpo $(DEPDIR)/userver_ssl-userver.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='userver.cpp' object='userver_ssl-userver.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ssl_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o userver_ssl-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
 
 userver_ssl-userver.obj: userver.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ssl_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_ssl-userver.obj -MD -MP -MF $(DEPDIR)/userver_ssl-userver.Tpo -c -o userver_ssl-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/userver_ssl-userver.Tpo $(DEPDIR)/userver_ssl-userver.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ssl_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_ssl-userver.obj -MD -MP -MF $(DEPDIR)/userver_ssl-userver.Tpo -c -o userver_ssl-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/userver_ssl-userver.Tpo $(DEPDIR)/userver_ssl-userver.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='userver.cpp' object='userver_ssl-userver.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_ssl_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o userver_ssl-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
 
 userver_tcp-userver.o: userver.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_tcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_tcp-userver.o -MD -MP -MF $(DEPDIR)/userver_tcp-userver.Tpo -c -o userver_tcp-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/userver_tcp-userver.Tpo $(DEPDIR)/userver_tcp-userver.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_tcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_tcp-userver.o -MD -MP -MF $(DEPDIR)/userver_tcp-userver.Tpo -c -o userver_tcp-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/userver_tcp-userver.Tpo $(DEPDIR)/userver_tcp-userver.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='userver.cpp' object='userver_tcp-userver.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_tcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o userver_tcp-userver.o `test -f 'userver.cpp' || echo '$(srcdir)/'`userver.cpp
 
 userver_tcp-userver.obj: userver.cpp
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_tcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_tcp-userver.obj -MD -MP -MF $(DEPDIR)/userver_tcp-userver.Tpo -c -o userver_tcp-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/userver_tcp-userver.Tpo $(DEPDIR)/userver_tcp-userver.Po
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_tcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT userver_tcp-userver.obj -MD -MP -MF $(DEPDIR)/userver_tcp-userver.Tpo -c -o userver_tcp-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/userver_tcp-userver.Tpo $(DEPDIR)/userver_tcp-userver.Po
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='userver.cpp' object='userver_tcp-userver.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(userver_tcp_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o userver_tcp-userver.obj `if test -f 'userver.cpp'; then $(CYGPATH_W) 'userver.cpp'; else $(CYGPATH_W) '$(srcdir)/userver.cpp'; fi`

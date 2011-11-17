@@ -65,11 +65,15 @@ public:
 
    static const char* ptrH; // "Host"
    static const char* ptrR; // "Range"
+   static const char* ptrA; // "Accept"
+   static const char* ptrK; // "Cookie"
+   static const char* ptrF; // "Referer"
+   static const char* ptrT; // "Content-"
    static const char* ptrC; // "Connection"
-   static const char* ptrT; // "Content-Type"
-   static const char* ptrL; // "Content-Lenght"
-   static const char* ptrA; // "Accept-Encoding"
+   static const char* ptrU; // "User-Agent"
    static const char* ptrI; // "If-Modified-Since"
+   static const char* ptrP; // "X-Real-IP"
+   static const char* ptrX; // "X-Forwarded-For"
 
    // COSTRUTTORE e DISTRUTTORE
 
@@ -290,6 +294,7 @@ public:
    static bool checkHTTPRequestForHeader(const UString& request);
    static bool checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
 
+   static UString     getRemoteIP();
    static UString     getDocumentName();
    static UString     getDirectoryURI();
    static UString     getRequestURI(bool bquery);
@@ -301,13 +306,6 @@ public:
    static int   checkHTTPRequestCache();
    static void manageHTTPRequestCache();
 #endif
-
-   // check for HTTP Header X-Forwarded-For: client, proxy1, proxy2 and X-Real-IP: client...
-
-   static UString* real_ip;
-
-   static bool    setRealIP();
-   static UString getRemoteIP();
 
    // request state processing
 
@@ -330,6 +328,8 @@ public:
       {
       U_TRACE(0, "UHTTP::isHTTPRequestAlreadyProcessed()")
 
+      U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
+
       U_INTERNAL_ASSERT(isHTTPRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
@@ -343,6 +343,8 @@ public:
       {
       U_TRACE(0, "UHTTP::setHTTPRequestInFileCache()")
 
+      U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
+
       U_INTERNAL_ASSERT(isHTTPRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
@@ -353,6 +355,8 @@ public:
    static bool isHTTPRequestInFileCache()
       {
       U_TRACE(0, "UHTTP::isHTTPRequestInFileCache()")
+
+      U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
@@ -367,6 +371,8 @@ public:
       {
       U_TRACE(0, "UHTTP::setHTTPRequestNeedProcessing()")
 
+      U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
+
       U_INTERNAL_ASSERT(isHTTPRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
@@ -377,6 +383,8 @@ public:
    static bool isHTTPRequestNeedProcessing()
       {
       U_TRACE(0, "UHTTP::isHTTPRequestNeedProcessing()")
+
+      U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
@@ -391,6 +399,8 @@ public:
       {
       U_TRACE(0, "UHTTP::setHTTPRequestNotFound()")
 
+      U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
+
       U_INTERNAL_ASSERT(isHTTPRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
@@ -401,6 +411,8 @@ public:
    static bool isHTTPRequestNotFound()
       {
       U_TRACE(0, "UHTTP::isHTTPRequestNotFound()")
+
+      U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
@@ -415,6 +427,8 @@ public:
       {
       U_TRACE(0, "UHTTP::setHTTPRequestForbidden()")
 
+      U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
+
       U_INTERNAL_ASSERT(isHTTPRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
@@ -425,6 +439,8 @@ public:
    static bool isHTTPRequestForbidden()
       {
       U_TRACE(0, "UHTTP::isHTTPRequestForbidden()")
+
+      U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
@@ -804,12 +820,6 @@ public:
    static void    renewDataCache();
    static void    checkFileForCache();
    static UString getDataFromCache(bool header, bool deflate);
-
-   // Accept-Language: en-us,en;q=0.5
-   // ----------------------------------------------------
-   // take only the first 2 character (it, en, de fr, ...)
-
-   static const char* getAcceptLanguage() __pure;
 
    // set HTTP main error message
 

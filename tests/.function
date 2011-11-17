@@ -23,11 +23,11 @@ export UTRACE UOBJDUMP USIMERR EXEC_ON_EXIT WINELOADER PID RESULT MALLOC_CHECK_ 
 # context
 
 if [ "$TERM" = "cygwin" ]; then
-	NC=/c/cygwin/bin/nc.exe
-	SYNC=/c/cygwin/bin/sync.exe
-	CURL=/c/cygwin/bin/curl.exe
-	CHOWN=/c/cygwin/bin/chown.exe
-	TRUSS="/c/cygwin/bin/strace.exe -t -f"
+	NC=/usr/bin/nc.exe
+	SYNC=/usr/bin/sync.exe
+	CURL=/usr/bin/curl.exe
+	CHOWN=/usr/bin/chown.exe
+	TRUSS="/usr/bin/strace.exe -t -f"
 	SLEEP="sleep 3"
 elif [ "$TERM" = "msys" ]; then
 	NC=/c/cygwin/bin/nc.exe

@@ -207,7 +207,7 @@ static void set_ENV(const UString& buffer)
    U_INTERNAL_ASSERT_POINTER(output)
 
    static char  old_accept_language[3];
-    const char*     accept_language = UHTTP::getAcceptLanguage();
+    const char*     accept_language = (u_http_info.accept_language_len ? u_http_info.accept_language : "en");
 
    if (memcmp(accept_language, old_accept_language, 2))
       {

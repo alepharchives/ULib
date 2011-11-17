@@ -57,6 +57,13 @@ typedef struct iphdr {
 #define ETH_P_ARP 0x0806 /* Address Resolution packet */
 #endif
 
+#ifndef ICMP_ECHOREPLY
+#define ICMP_ECHOREPLY 0
+#endif
+#ifndef ICMP_ECHO
+#define ICMP_ECHO      8
+#endif
+
 fd_set*   UPing::addrmask;
 UProcess* UPing::proc;
 

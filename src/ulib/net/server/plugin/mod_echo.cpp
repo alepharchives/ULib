@@ -21,6 +21,7 @@
 U_CREAT_FUNC(mod_echo, UEchoPlugIn)
 #endif
 
+/*
 #define U_RESPONSE_FOR_TEST \
 "HTTP/1.0 200 OK\r\n" \
 "Server: ULib\r\n" \
@@ -28,6 +29,7 @@ U_CREAT_FUNC(mod_echo, UEchoPlugIn)
 "Content-Type: text/html\r\n" \
 "Content-Length: 22\r\n\r\n" \
 "<h1>Hello stefano</h1>"
+*/
 
 // Server-wide hooks
 
@@ -37,10 +39,13 @@ int UEchoPlugIn::handlerRequest()
 {
    U_TRACE(0, "UEchoPlugIn::handlerRequest()")
 
+#ifdef U_RESPONSE_FOR_TEST
+   UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM(U_RESPONSE_FOR_TEST));
+#else
    *UClientImage_Base::wbuffer = *UClientImage_Base::request;
-//  UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM(U_RESPONSE_FOR_TEST));
+#endif
 
-    UClientImage_Base::body->clear();
+   UClientImage_Base::body->clear();
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }

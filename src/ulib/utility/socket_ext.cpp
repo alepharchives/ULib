@@ -24,6 +24,9 @@
 #  include <ws2tcpip.h>
 #elif defined(HAVE_NETPACKET_PACKET_H) && !defined(U_ALL_CPP)
 #  include <net/if.h>
+#endif
+
+#ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
 #endif
 
@@ -477,7 +480,7 @@ UString USocketExt::getNetworkDevice(const char* exclude)
 
    UString result(100U);
 
-#ifndef __MINGW32__
+#if !defined(__MINGW32__) && defined(HAVE_SYS_IOCTL_H)
    FILE* route = (FILE*) U_SYSCALL(fopen, "%S,%S", "/proc/net/route", "r");
 
    // Skip first line
@@ -515,7 +518,7 @@ UString USocketExt::getNetworkAddress(int fd, const char* device)
    U_INTERNAL_ASSERT_POINTER(device)
 
    UString result(100U);
-#ifndef __MINGW32__
+#if !defined(__MINGW32__) && defined(HAVE_SYS_IOCTL_H)
    struct ifreq ifaddr, ifnetmask;
 
    (void) u_strncpy(   ifaddr.ifr_name, device, IFNAMSIZ-1);
@@ -541,6 +544,77 @@ UString USocketExt::getNetworkAddress(int fd, const char* device)
    U_RETURN_STRING(result);
 }
 
+void USocketExt::getARPCache(UVector<UString>& vec)
+{
+   U_TRACE(1, "USocketExt::getARPCache(%p)", &vec)
+
+#if !defined(__MINGW32__) && defined(HAVE_SYS_IOCTL_H)
+   FILE* arp = (FILE*) U_SYSCALL(fopen, "%S,%S", "/proc/net/arp", "r");
+
+   // ------------------------------------------------------------------------------
+   // Skip the first line
+   // ------------------------------------------------------------------------------
+   // IP address       HW type     Flags       HW address            Mask     Device
+   // 192.168.253.1    0x1         0x2         00:14:a5:6e:9c:cb     *        ath0
+   // 10.30.1.131      0x1         0x2         00:16:ec:fb:46:da     *        eth0
+   // ------------------------------------------------------------------------------
+
+   if (U_SYSCALL(fscanf, "%p,%S", arp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s") != EOF)
+      {
+      char _ip[16];
+
+      while (U_SYSCALL(fscanf, "%p,%S", arp, "%15s %*s %*s %*s %*s %*s\n", _ip) != EOF)
+         {
+         UString item((void*)_ip);
+
+         vec.push(item);
+         }
+      }
+
+   (void) U_SYSCALL(fclose, "%p", arp);
+#endif
+}
+
+UString USocketExt::getNetworkInterfaceName(const UString& ip)
+{
+   U_TRACE(1, "USocketExt::getNetworkInterfaceName(%.*S)", U_STRING_TO_TRACE(ip))
+
+   U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(ip)))
+
+   UString result(100U);
+
+#if !defined(__MINGW32__) && defined(HAVE_SYS_IOCTL_H)
+   FILE* arp = (FILE*) U_SYSCALL(fopen, "%S,%S", "/proc/net/arp", "r");
+
+   // ------------------------------------------------------------------------------
+   // Skip the first line
+   // ------------------------------------------------------------------------------
+   // IP address       HW type     Flags       HW address            Mask     Device
+   // 192.168.253.1    0x1         0x2         00:14:a5:6e:9c:cb     *        ath0
+   // 10.30.1.131      0x1         0x2         00:16:ec:fb:46:da     *        eth0
+   // ------------------------------------------------------------------------------
+
+   if (U_SYSCALL(fscanf, "%p,%S", arp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s") != EOF)
+      {
+      char _ip[16], dev[7];
+
+      while (U_SYSCALL(fscanf, "%p,%S", arp, "%15s %*s %*s %*s %*s %6s\n", _ip, dev) != EOF)
+         {
+         if (ip == _ip)
+            {
+            (void) result.assign(dev);
+
+            break;
+            }
+         }
+      }
+
+   (void) U_SYSCALL(fclose, "%p", arp);
+#endif
+
+   U_RETURN_STRING(result);
+}
+
 UString USocketExt::getMacAddress(int fd, const char* device_or_ip)
 {
    U_TRACE(1, "USocketExt::getMacAddress(%d,%S)", fd, device_or_ip)
@@ -549,7 +623,7 @@ UString USocketExt::getMacAddress(int fd, const char* device_or_ip)
 
    UString result(100U);
 
-#ifndef __MINGW32__
+#if !defined(__MINGW32__) && defined(HAVE_SYS_IOCTL_H)
    if (u_isIPv4Addr(device_or_ip, u_str_len(device_or_ip)))
       {
       FILE* arp = (FILE*) U_SYSCALL(fopen, "%S,%S", "/proc/net/arp", "r");
@@ -607,77 +681,6 @@ UString USocketExt::getMacAddress(int fd, const char* device_or_ip)
    U_RETURN_STRING(result);
 }
 
-UString USocketExt::getNetworkInterfaceName(const UString& ip)
-{
-   U_TRACE(1, "USocketExt::getNetworkInterfaceName(%.*S)", U_STRING_TO_TRACE(ip))
-
-   U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(ip)))
-
-   UString result(100U);
-
-#ifndef __MINGW32__
-   FILE* arp = (FILE*) U_SYSCALL(fopen, "%S,%S", "/proc/net/arp", "r");
-
-   // ------------------------------------------------------------------------------
-   // Skip the first line
-   // ------------------------------------------------------------------------------
-   // IP address       HW type     Flags       HW address            Mask     Device
-   // 192.168.253.1    0x1         0x2         00:14:a5:6e:9c:cb     *        ath0
-   // 10.30.1.131      0x1         0x2         00:16:ec:fb:46:da     *        eth0
-   // ------------------------------------------------------------------------------
-
-   if (U_SYSCALL(fscanf, "%p,%S", arp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s") != EOF)
-      {
-      char _ip[16], dev[7];
-
-      while (U_SYSCALL(fscanf, "%p,%S", arp, "%15s %*s %*s %*s %*s %6s\n", _ip, dev) != EOF)
-         {
-         if (ip == _ip)
-            {
-            (void) result.assign(dev);
-
-            break;
-            }
-         }
-      }
-
-   (void) U_SYSCALL(fclose, "%p", arp);
-#endif
-
-   U_RETURN_STRING(result);
-}
-
-void USocketExt::getARPCache(UVector<UString>& vec)
-{
-   U_TRACE(1, "USocketExt::getARPCache(%p)", &vec)
-
-#ifndef __MINGW32__
-   FILE* arp = (FILE*) U_SYSCALL(fopen, "%S,%S", "/proc/net/arp", "r");
-
-   // ------------------------------------------------------------------------------
-   // Skip the first line
-   // ------------------------------------------------------------------------------
-   // IP address       HW type     Flags       HW address            Mask     Device
-   // 192.168.253.1    0x1         0x2         00:14:a5:6e:9c:cb     *        ath0
-   // 10.30.1.131      0x1         0x2         00:16:ec:fb:46:da     *        eth0
-   // ------------------------------------------------------------------------------
-
-   if (U_SYSCALL(fscanf, "%p,%S", arp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s") != EOF)
-      {
-      char _ip[16];
-
-      while (U_SYSCALL(fscanf, "%p,%S", arp, "%15s %*s %*s %*s %*s %*s\n", _ip) != EOF)
-         {
-         UString item((void*)_ip);
-
-         vec.push(item);
-         }
-      }
-
-   (void) U_SYSCALL(fclose, "%p", arp);
-#endif
-}
-
 UString USocketExt::getIPAddress(int fd, const char* device)
 {
    U_TRACE(1, "USocketExt::getIPAddress(%d,%S)", fd, device)
@@ -687,7 +690,7 @@ UString USocketExt::getIPAddress(int fd, const char* device)
 
    UString result(100U);
 
-#ifndef __MINGW32__
+#if !defined(__MINGW32__) && defined(HAVE_SYS_IOCTL_H)
    struct ifreq ifr;
 
    (void) u_strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
