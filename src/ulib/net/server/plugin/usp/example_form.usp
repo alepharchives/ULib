@@ -4,7 +4,7 @@
 </head>
 <body bgcolor="white" text="black">
   <center>
-    <h1>Welcome to ULib Web Server! (Ver. <!--%= U_CONSTANT_TO_TRACE(ULIB_VERSION) /%-->)</h1>
+    <h1>Welcome to ULib Web Server! (Ver. <!--%= ULIB_VERSION /%-->)</h1>
   </center>
 <!--%
 if (UHTTP::isHttpGET())

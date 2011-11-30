@@ -18,7 +18,7 @@
 
 #ifdef HAVE_LIBEVENT
 #  include <ulib/libevent/event.h>
-extern U_EXPORT struct event_base* u_ev_base;
+U_EXPORT struct event_base* u_ev_base;
 #endif
 
 class U_EXPORT UEventTime : public UTimeVal {

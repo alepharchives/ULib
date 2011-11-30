@@ -67,15 +67,15 @@ extern U_EXPORT const EVP_MD* restrict u_md;                         /* Digest i
 extern U_EXPORT unsigned char          u_mdValue[U_MAX_HASH_SIZE];   /* Final output */
 extern U_EXPORT uint32_t               u_mdLen;                      /* Length of digest */
 
-extern U_EXPORT HMAC_CTX             u_hctx;                         /* Context for HMAC */
-extern U_EXPORT const char* restrict u_hmac_key;                     /* The loaded key */
-extern U_EXPORT uint32_t             u_hmac_keylen;                  /* The loaded key length */
+extern U_EXPORT HMAC_CTX               u_hctx;                       /* Context for HMAC */
+extern U_EXPORT const char* restrict   u_hmac_key;                   /* The loaded key */
+extern U_EXPORT uint32_t               u_hmac_keylen;                /* The loaded key length */
 
-extern U_EXPORT void u_dgst_algoritm(int alg);
-extern U_EXPORT void u_dgst_hexdump(unsigned char* restrict buf);
-extern U_EXPORT int  u_dgst_get_algoritm(const char* restrict alg) __pure;
+U_EXPORT void u_dgst_algoritm(int alg);
+U_EXPORT void u_dgst_hexdump(unsigned char* restrict buf);
+U_EXPORT int  u_dgst_get_algoritm(const char* restrict alg) __pure;
 
-extern U_EXPORT void u_dgst_init(int alg, const char* restrict key, uint32_t keylen);
+U_EXPORT void u_dgst_init(int alg, const char* restrict key, uint32_t keylen);
 
 /**
  * \brief Hash some data.
@@ -113,15 +113,15 @@ static inline void u_dgst_hash(unsigned char* restrict data, uint32_t length)
  * @returns    The number of bytes copied into the hash buffer
  */
 
-extern U_EXPORT uint32_t u_dgst_finish(unsigned char* restrict hash, int base64); /* Finish and get hash */
+U_EXPORT uint32_t u_dgst_finish(unsigned char* restrict hash, int base64); /* Finish and get hash */
 
-extern U_EXPORT void u_dgst_reset(void); /* Reset the hash */
+U_EXPORT void u_dgst_reset(void); /* Reset the hash */
 
 /* The EVP signature routines are a high level interface to digital signatures
  */
 
-extern U_EXPORT void u_dgst_sign_init(int alg, ENGINE* restrict impl);
-extern U_EXPORT void u_dgst_verify_init(int alg, ENGINE* restrict impl);
+U_EXPORT void u_dgst_sign_init(int alg, ENGINE* restrict impl);
+U_EXPORT void u_dgst_verify_init(int alg, ENGINE* restrict impl);
 
 static inline void u_dgst_sign_hash(unsigned char* restrict data, uint32_t length)
 {

@@ -1,0 +1,495 @@
+#!/bin/sh
+
+# nodog.fw
+
+initialize_fw() {
+
+	#---------------------------------------------------------------
+	# Enable IP routing. Required if your firewall is protecting a
+	# network, NAT included
+	#---------------------------------------------------------------
+	echo "1" > /proc/sys/net/ipv4/ip_forward
+	#---------------------------------------------------------------
+	# Disable routing triangulation. Respond to queries out
+	# the same interface, not another. Helps to maintain state
+	# Also protects against IP spoofing
+	#---------------------------------------------------------------
+	echo "1" > /proc/sys/net/ipv4/conf/all/rp_filter
+
+	if [ -f /etc/init.d/qos ]; then
+
+		/etc/init.d/qos enabled && ( /etc/init.d/qos stop ; /etc/init.d/qos start )
+
+		# Removing conflicting rules
+		RULES=`$IPTABLES -t mangle -L FORWARD -n -v | awk '/^[ ]+[0-9]/{print "iptables -t mangle -A POSTROUTING -o " $7 " -j " $3 }'`
+
+		$IPTABLES -t mangle -F FORWARD
+		$IPTABLES -t mangle -F OUTPUT
+		$IPTABLES -t mangle -F POSTROUTING
+
+		$RULES
+	fi
+
+	# Load all the kernel modules we need
+	for module in ipt_TOS xt_mac ipt_ACCOUNT; do
+		lsmod | grep $module >/dev/null 2>&1
+		if [ $? -ne 0 ]; then
+			insmod $module 2>/dev/null
+		fi
+	done
+
+	clear_fw
+
+	# Flush all user-defined chains
+
+	$IPTABLES -t filter -N NoCat 2>/dev/null
+	$IPTABLES -t filter -F NoCat
+	for ifacein in $InternalDevice; do
+		for ifaceout in $ExternalDevice; do
+			$IPTABLES -t filter -D FORWARD -i $ifacein  -o $ifaceout -j NoCat 2>/dev/null
+			$IPTABLES -t filter -D FORWARD -i $ifaceout -o $ifacein  -j NoCat 2>/dev/null
+			$IPTABLES -t filter -A FORWARD -i $ifacein  -o $ifaceout -j NoCat
+			$IPTABLES -t filter -A FORWARD -i $ifaceout -o $ifacein  -j NoCat
+		done
+	done
+
+	$IPTABLES -t filter -N NoCat_Ports 2>/dev/null
+	$IPTABLES -t filter -F NoCat_Ports
+	$IPTABLES -t filter -D NoCat -j NoCat_Ports 2>/dev/null
+	$IPTABLES -t filter -A NoCat -j NoCat_Ports
+
+	$IPTABLES -t filter -N NoCat_Inbound 2>/dev/null
+	$IPTABLES -t filter -F NoCat_Inbound
+	$IPTABLES -t filter -D NoCat -j NoCat_Inbound 2>/dev/null
+	$IPTABLES -t filter -A NoCat -j NoCat_Inbound
+
+	$IPTABLES -t nat -N NoCat_Capture 2>/dev/null
+	$IPTABLES -t nat -F NoCat_Capture
+	$IPTABLES -t nat -D PREROUTING -j NoCat_Capture 2>/dev/null
+	$IPTABLES -t nat -A PREROUTING -j NoCat_Capture
+
+	$IPTABLES -t nat   -N NoCat_NAT  2>/dev/null
+	$IPTABLES -t nat   -F NoCat_NAT
+
+	# Only nat if we're not routing
+
+							  $IPTABLES -t nat -D POSTROUTING -j NoCat_NAT 2>/dev/null
+	[ "$RouteOnly" ] || $IPTABLES -t nat -A POSTROUTING -j NoCat_NAT
+
+	$IPTABLES -t mangle -N NoCat 2>/dev/null
+	$IPTABLES -t mangle -F NoCat
+	$IPTABLES -t mangle -D PREROUTING -j NoCat 2>/dev/null
+	$IPTABLES -t mangle -A PREROUTING -j NoCat
+
+		  fwd="$IPTABLES -t filter -A NoCat"
+		ports="$IPTABLES -t filter -A NoCat_Ports"
+		  nat="$IPTABLES -t nat    -A NoCat_NAT"
+	redirect="$IPTABLES -t nat    -A NoCat_Capture"
+	  mangle="$IPTABLES -t mangle -A NoCat"
+
+	if [ "$MembersOnly" ]; then
+	  classes="1 2"
+	else
+	  classes="1 2 3"
+	fi
+
+	# Handle tagged traffic. The current service classes by fwmark are:
+	# -----------------------------------------------------------------
+	# 1: Owner
+	# 2: Co-op
+	# 3: Public
+	# 4: Free
+	# -----------------------------------------------------------------
+	for iface in $InternalDevice; do
+		ifaceinout=0
+		for ifaceout in $ExternalDevice; do
+			if [ "$iface" == "$ifaceout" ]; then
+				ifaceinout=1
+			fi
+		done
+		for net in $LocalNetwork; do
+			for fwmark in $classes; do
+				# Only forward tagged traffic per class
+				$fwd -i $iface -s $net -m mark --mark $fwmark -j ACCEPT
+
+				# Masquerade permitted connections.
+				for ifaceout in $ExternalDevice; do
+					$nat -o $ifaceout -s $net -m mark --mark $fwmark -j MASQUERADE
+				done
+			done
+			if [ "$MembersOnly" ]; then
+				for ifaceout in $ExternalDevice; do
+					$nat -o $ifaceout -s $net -m mark --mark 3 -j MASQUERADE
+				done
+			fi
+
+			# Allow web traffic to the specified hosts, and don't capture connections intended for them
+			if [ "$AuthServiceAddr" -o "$AllowedWebHosts" ]; then 
+				for host in $AuthServiceAddr $AllowedWebHosts; do
+					for port in 80 443; do
+						$nat      -s $net -d $host -p tcp --dport $port -j MASQUERADE
+						$redirect -s $net -d $host -p tcp --dport $port -j RETURN
+						$fwd      -s $net -d $host -p tcp --dport $port -j ACCEPT
+						$fwd      -d $net -s $host -p tcp --sport $port -j ACCEPT
+					done
+				done
+			fi
+
+			# Accept forward and back traffic to/from DNSAddr
+			if [ "$DNSAddr" ]; then
+				for dns in $DNSAddr; do
+					$fwd -o $iface -d $net -s $dns -j ACCEPT
+
+					for prot in tcp udp; do
+						$fwd -i $iface -s $net -d $dns -p $prot --dport 53 -j ACCEPT
+						$nat -p  $prot -s $net -d $dns          --dport 53 -j MASQUERADE
+
+						# Force unauthenticated DNS traffic through this server.
+						# Of course, only the first rule of this type will match.
+						# But it's easier to leave them all in ATM.
+						$redirect -i $iface -m mark --mark 4 -p $prot --dport 53 -j DNAT --to-destination $dns:53
+					done
+				done
+			fi
+
+			if [ "$ifaceinout" == "1" ]; then
+				# Set packets from internal devices to fw mark 4, or 'denied', by default.
+				$mangle -i $iface -s $net -j MARK --set-mark 4
+			fi
+		done
+		if [ "$ifaceinout" != "1" ]; then
+			# Set packets from internal devices to fw mark 4, or 'denied', by default
+			$mangle -i $iface -j MARK --set-mark 4
+		fi
+	done
+
+	# Redirect outbound non-auth web traffic to the local gateway process except to windowsupdate.microsoft.com, which is broken.
+	# If MembersOnly is active, then redirect public class as well
+	#
+	#if [ "$MembersOnly" ]; then
+	#  nonauth="3 4"
+	#else
+		nonauth="4"
+	#fi
+
+	for port in 80; do
+		for mark in $nonauth; do
+			$redirect -m mark --mark $mark -p tcp --dport $port -j REDIRECT --to-port $GatewayPort
+		done
+	done
+
+	# Lock down more ports for public users, if specified. Port restrictions are not applied to co-op and owner class users
+	#
+	# There are two philosophies in restricting access:
+	#
+	# That Which Is Not Specifically Permitted Is Denied
+	# That Which Is Not Specifically    Denied Is Permitted
+	#
+	# If "IncludePorts" is defined, the default policy will be to  deny all traffic, and only allow the ports mentioned
+	# If "ExcludePorts" is defined, the default policy will be to allow all traffic,      except to the ports mentioned
+	#
+	# If both are defined, ExcludePorts will be ignored, and the default policy
+	# will be to deny all traffic, allowing everything in IncludePorts, and issue a warning
+
+	if [ "$IncludePorts" ]; then
+		if [ "$ExcludePorts" ]; then
+			echo "WARNING: ExcludePorts and IncludePorts are both defined"
+			echo "Ignoring 'ExcludePorts'. Please check your configuration"
+		fi
+
+		# Enable all ports in IncludePorts
+		for iface in $InternalDevice; do
+			for port in $IncludePorts; do
+				$ports -p tcp -i $iface --dport $port -m mark --mark 3 -j ACCEPT
+				$ports -p udp -i $iface --dport $port -m mark --mark 3 -j ACCEPT
+			done
+
+			# Always permit access to the GatewayPort (or we can't logout)
+			$ports -p tcp -i $iface --dport $GatewayPort -j ACCEPT
+			$ports -p udp -i $iface --dport $GatewayPort -j ACCEPT
+
+			# ...and disable access to the rest
+			$ports -p tcp -i $iface -m mark --mark 3 -j DROP
+			$ports -p udp -i $iface -m mark --mark 3 -j DROP
+		done
+
+	elif [ "$ExcludePorts" ]; then
+		# If ExcludePorts has entries, simply deny access to them
+		for iface in $InternalDevice; do
+			for port in $ExcludePorts; do
+				$ports -p tcp -i $iface --dport $port -m mark --mark 3 -j DROP
+				$ports -p udp -i $iface --dport $port -m mark --mark 3 -j DROP
+			done
+		done
+	fi
+
+	# Disable access on the external to GatewayPort from anything but the AuthServiceAddr
+	for src in $AuthServiceAddr; do
+		for ifaceout in $ExternalDevice; do
+			$fwd -i $ifaceout -s ! $src -p tcp --dport $GatewayPort -j DROP
+		done
+	done
+
+	# Filter policy
+	$fwd -j DROP
+
+	##
+	# Add any other local firewall rules below
+	##
+
+	AllowMACAddressListFile=/etc/nocat.allowed
+
+	# List of allowed MAC/IP pairs or NETWORKS
+	# (use 00:00:00:00:00:00 as MAC to match all)
+	# MAC IP [CLASS]
+
+	if [ -n "$AllowMACAddressListFile" -a -r "$AllowMACAddressListFile" ]; then
+		grep -v '^[ \t]*#' "$AllowMACAddressListFile" | sed '/^$/d' | while read MAC IP Class; do
+			if [ -n "$MAC" -a -n "$IP" ]; then
+				if [ -z "$Class" ]; then
+					Class="Member"
+				fi
+				access_fw "-A" $MAC $IP $Class
+			else
+				echo "Bad line: $MAC $IP $Class, skipped" >&2
+			fi
+		done
+	fi
+
+	# Questa regola serve per abbassare la MTU in quanto abbiamo davanti un tunnel ip/gre (Firenze WiFi - Siena)
+
+	if [ -n "$MaxSegmentSize" ]; then
+		for iface in $ExternalDevice; do
+			$IPTABLES -t mangle -A POSTROUTING -p tcp --tcp-flags SYN,RST SYN -o $iface -j TCPMSS --clamp-mss-to-pmtu
+		done
+	fi
+
+	# Account traffic
+
+	$IPTABLES -t mangle -N AccountIn 2>/dev/null
+	$IPTABLES -t mangle -F AccountIn
+	$IPTABLES -t mangle -N AccountOu 2>/dev/null
+	$IPTABLES -t mangle -F AccountOu
+
+	for iface in $InternalDevice; do
+		 $IPTABLES -t mangle -D POSTROUTING -o $iface -j AccountIn 2>/dev/null
+		 $IPTABLES -t mangle -A POSTROUTING -o $iface -j AccountIn
+	done
+
+	for iface in $ExternalDevice; do
+		 $IPTABLES -t mangle -D POSTROUTING -o $iface -j AccountOu 2>/dev/null
+		 $IPTABLES -t mangle -A POSTROUTING -o $iface -j AccountOu
+	done
+
+	for srv in "$AuthServiceAddr"; do
+		$IPTABLES -t mangle -A AccountIn -s "$srv" -j RETURN
+		$IPTABLES -t mangle -A AccountOu -d "$srv" -j RETURN
+	done
+
+	# ---------------------------------------------------------------
+	# List of free accounting sites (IP)
+	# ---------------------------------------------------------------
+	# FreeSiteFile="/etc/nodog.freesite"
+	#
+	# if [ -n "$FreeSiteFile" -a -r "$FreeSiteFile" ]; then
+	# 	grep -v '^[ \t]*#' "$FreeSiteFile" | while read IP Comment; do
+	# 		if [ -n "$IP" ]; then
+	# 			$IPTABLES -t mangle -A AccountIn -s "$IP" -j RETURN
+	# 			$IPTABLES -t mangle -A AccountOu -d "$IP" -j RETURN
+	# 		else
+	# 			echo "Bad line: $IP, skipped" >&2
+	# 		fi
+	# 	done
+	# fi
+	# ---------------------------------------------------------------
+
+	for net in $LocalNetwork; do
+		$IPTABLES -t mangle -A AccountIn -s "$net" -j RETURN
+		$IPTABLES -t mangle -A AccountOu -d "$net" -j RETURN
+	 	$IPTABLES -t mangle -A AccountIn -j ACCOUNT --addr "$net" --tname "$net"
+	 	$IPTABLES -t mangle -A AccountOu -j ACCOUNT --addr "$net" --tname "$net"
+	done
+	# --------------------------------------------------------------------------
+}
+
+access_fw() {
+
+	cmd=$1
+	mac=`echo $2 | tr '[A-Z]' '[a-z]'`
+	ip=$3
+	class=$4
+
+	if [ -z "$class" ]; then
+		class=Public
+	fi
+
+	  if [ "$class" = "Owner" ]; then
+		mark=1
+	elif [ "$class" = "Member" ]; then
+		mark=2
+	elif [ "$class" = "Public" ]; then
+		mark=3
+	else
+		echo "FATAL: Bad class: $class!"
+		exit 1
+	fi
+
+	# Mark outbound traffic from this node.
+	if [ "$mac" == "00:00:00:00:00:00" ]; then
+		$IPTABLES -t mangle $cmd NoCat -s $ip -j MARK --set-mark $mark
+	else
+		$IPTABLES -t mangle $cmd NoCat -m mac --mac-source $mac -s $ip -j MARK --set-mark $mark
+	fi
+
+	# Mark inbound traffic to this node.
+	$IPTABLES -t filter $cmd NoCat_Inbound -d $ip -j ACCEPT
+
+	# -------------------------------------------------------------------------
+	# ACCOUNT traffic of this node
+	# -------------------------------------------------------------------------
+	# if [ "$cmd" = "-A" ]; then
+	#		$IPTABLES -I FORWARD $5 -j ACCOUNT --addr $ip/32 --tname $ip
+	# elif [ "$cmd" = "-D" ]; then
+	#		RULENUM=`$IPTABLES -L FORWARD | tail -n +3 | grep -n $ip | cut -d':' -f1`
+	#		$IPTABLES -D FORWARD $RULENUM
+	# fi
+	# -------------------------------------------------------------------------
+}
+
+clear_fw() {
+
+	if [ -f /etc/init.d/qos ]; then
+		/etc/init.d/qos enabled && /etc/init.d/qos stop
+	fi
+
+	$IPTABLES -F
+	$IPTABLES -t nat -F
+	$IPTABLES -t mangle -F
+	$IPTABLES -t filter -F
+	$IPTABLES -t nat -X
+	$IPTABLES -t mangle -X
+	$IPTABLES -t filter -X
+
+	if [ -n "$EnableBandwidthLimits"  ]; then
+		if [ -z "$IMQdevice" ]; then
+			IMQdevice=imq1
+		fi
+		if [ -n "$UploadRate" ]; then
+			tc qdisc del dev $IMQdevice root >&- 2>&-
+		fi
+		for ifacein in $InternalDevice; do
+			tc qdisc del dev $ifacein root >&- 2>&-
+		done
+	fi
+
+	if [ -f /etc/init.d/qos ]; then
+		/etc/init.d/qos enabled && /etc/init.d/qos start
+	fi
+}
+
+reset_fw() {
+
+	$IPTABLES -t filter -D FORWARD -j NoCat 2>/dev/null
+	$IPTABLES -t nat -D PREROUTING -j NoCat_Capture 2>/dev/null
+
+	if [ -z "$RouteOnly" ]; then
+		$IPTABLES -t nat -D POSTROUTING -j NoCat_NAT 2>/dev/null
+	fi
+
+	$IPTABLES -t mangle -D PREROUTING -j NoCat 2>/dev/null
+}
+
+check_arp() {
+
+	for iface in $InternalDevice; do
+		arping -q -c 1 -I $iface $1
+	done
+
+	egrep -q "^$1 " /proc/$$/net/arp
+
+	exit $?
+}
+
+do_cmd() {
+
+	# ---------------------------------------------------------------------------------------------------------------------------------------------------
+	# RouteOnly       Required only if you DO NOT want your gateway to act as a NAT. Give this only if you're running a strictly routed
+	#                 network, and don't need the gateway to enable NAT for you
+   #
+	# DNSAddr         *If* you choose not to run DNS on your internal network, specify the address(es) of one or more domain name server
+	#                 on the Internet that wireless clients can use to get out. Should be the same DNS that your DHCP server hands out
+   #
+	# IncludePorts    Specify TCP ports to allow access to when public class users login. All others will be denied
+   #
+	# ExcludePorts    Specify TCP ports to denied access to when public class users login. All others will be allowed. Note that you should
+	#                 use either IncludePorts or ExcludePorts, but not both. If neither is specified, access is granted to all ports to public class users.
+	#                 You should *always* exclude port 25, unless you want to run an portal for wanton spam sending. Users should have their
+	#                 own way of sending mail. It sucks, but that's the way it is. Comment this out *only if* you're using IncludePorts instead
+   #
+	# AllowedWebHosts List any domains that you would like to allow web access (TCP port 80 and 443) BEFORE logging in (this is the
+	#                 pre-'skip' stage, so be careful about what you allow
+	#
+	# ExternalDevice  The interface connected to the Internet. Usually 'eth0' or 'eth1' under Linux, or maybe even 'ppp0' if you're running PPP or PPPoE
+   #
+	# InternalDevice  Required if and only if your machine has more than two network interfaces. Must be set to the interface connected to your local
+	#                 network, normally your wireless card
+   #
+	# LocalNetwork    Must be set to the network address and net mask of your internal network. You can use the number of bits in the netmask
+	#                 (e.g. /16, /24, etc.) or the full x.x.x.x specification
+	#
+	# GatewayPort     The TCP port to bind the gateway service to. 5280 is de-facto standard for NoCatAuth. Change this only if you absolutely need to
+   #
+	# AuthServiceAddr The address of your authentication service. You must use an IP address if DNS resolution isn't available at gateway startup
+   #
+	# MembersOnly     Give this if you want to disable public access (i.e. unauthenticated 'skip' button access). You'll also want to
+	#						point AuthServiceAddr somewhere that doesn't include a skip button (likeat your own Auth server)
+	#
+	# MaxSegmentSize  Give this if you want to reduce MTU in quanto abbiamo davanti un tunnel ip/gre (Firenze WiFi - Siena)
+	# ---------------------------------------------------------------------------------------------------------------------------------------------------
+	export RouteOnly DNSAddr IncludePorts ExcludePorts AllowedWebHosts ExternalDevice \
+			 InternalDevice LocalNetwork GatewayPort AuthServiceAddr MembersOnly MaxSegmentSize IPTABLES
+
+	if [ -n "$FW_CONF" -a -r "$FW_CONF" ]; then
+		. $FW_CONF
+	fi
+
+	RouteOnly=${RouteOnly:-1}
+	MembersOnly=${MembersOnly:-1}
+	GatewayPort=${GatewayPort:-5280}
+
+	export DosAllowTries=${DosAllowTries:-5}
+	export DosTimeInterval=${DosTimeInterval:-60}
+
+	# Note: your PATH is inherited from the gateway process
+	if [ -x /usr/sbin/iptables ]; then
+		IPTABLES=/usr/sbin/iptables
+	else
+		IPTABLES="echo iptables"
+	fi
+
+	case "$1" in
+		arp)			shift;	  check_arp		  "$@" ;; #				   (IP)
+		deny)			shift;     access_fw "-D" "$@" ;; # (CMD) (MAC) (IP) [Class]
+		permit)		shift;     access_fw "-A" "$@" ;; # (CMD) (MAC) (IP) [Class]
+		clear)      shift;      clear_fw		  "$@" ;;
+		reset)      shift;      reset_fw		  "$@" ;;
+		initialize) shift; initialize_fw		  "$@" ;;
+	esac
+}
+
+if [ -z "$DEBUG" ]; then
+	do_cmd "$@"
+else
+	(
+	echo "ENVIRONMENT:"
+	echo "-----------------------------------------------------------"
+	env
+	echo "-----------------------------------------------------------"
+	echo "STDERR:"
+	echo "-----------------------------------------------------------"
+	set -x
+	do_cmd "$@"
+	set +x
+	echo "-----------------------------------------------------------"
+	) 2>/tmp/nodog_fw.$$ >&2
+fi

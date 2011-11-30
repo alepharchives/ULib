@@ -72,13 +72,15 @@ public:
 
    // VARIE
 
-   void setCommand(const UString& access_cmd)
+   void setCommand(const UString& script)
       {
-      U_TRACE(0, "UModNoCatPeer::setCommand(%.*S)", U_STRING_TO_TRACE(access_cmd))
+      U_TRACE(0, "UModNoCatPeer::setCommand(%.*S)", U_STRING_TO_TRACE(script))
 
-      // NB: AUTOMATIC PARAMS(5) ADDED BY THIS PLUGIN: [action(permit|deny) mac ip class(Owner|Member|Public) rulenum]
+      // NB: request(arp|permit|deny|clear|reset|initialize) mac ip class(Owner|Member|Public) rulenum]
 
-      command.snprintf("%.*s (permit|deny) %.*s %.*s Member %u", U_STRING_TO_TRACE(access_cmd), U_STRING_TO_TRACE(mac), U_STRING_TO_TRACE(ip), rulenum);
+      UString command(100U);
+
+      command.snprintf("/bin/sh %.*s request %.*s %.*s Member %u", U_STRING_TO_TRACE(script), U_STRING_TO_TRACE(mac), U_STRING_TO_TRACE(ip), rulenum);
 
       cmd.set(command, (char**)0);
       }
@@ -98,7 +100,7 @@ protected:
    uint64_t traffic, ltraffic;
    time_t connected, expire, logout, ctime;
    uint32_t ifindex, ctraffic, rulenum, index_AUTH;
-   UString ip, mac, token, command, user, ifname, label;
+   UString ip, mac, token, user, ifname, label;
    UCommand cmd;
 
 private:
@@ -123,13 +125,10 @@ public:
    static const UString* str_INTERNAL_DEVICE;
    static const UString* str_INTERNAL_DEVICE_LABEL;
    static const UString* str_LOCAL_NETWORK;
-
    static const UString* str_AUTH_SERVICE_URL;
    static const UString* str_LOGOUT_URL;
    static const UString* str_LOGIN_TIMEOUT;
-   static const UString* str_INIT_CMD;
-   static const UString* str_ACCESS_CMD;
-   static const UString* str_RESET_CMD;
+   static const UString* str_FW_CMD;
    static const UString* str_DECRYPT_CMD;
    static const UString* str_DECRYPT_KEY;
    static const UString* str_CHECK_BY_ARPING;
@@ -145,6 +144,9 @@ public:
    static const UString* str_User;
    static const UString* str_anonymous;
    static const UString* str_Traffic;
+   static const UString* str_GATEWAY_PORT;
+   static const UString* str_FW_ENV;
+   static const UString* str_IPHONE_SUCCESS;
 
    static void str_allocate();
 
@@ -174,8 +176,9 @@ protected:
    UCommand cmd, pgp;
    UVector<UIPAllow*> vLocalNetworkMask;
    UVector<Url*> vauth_service_url, vlogout_url, vinfo_url;
-   UVector<UString> vfwopt, vInternalDevice, vInternalDeviceLabel, vLocalNetwork, vauth_login, vauth_logout, vauth_ip;
-   UString input, output, location, init_cmd, reset_cmd, access_cmd, decrypt_cmd, decrypt_key, mode, gateway, access_point;
+   UVector<UString> vInternalDevice, vInternalDeviceLabel, vLocalNetwork, vauth_login, vauth_logout, vauth_ip;
+   UString input, output, location, fw_cmd, decrypt_cmd, decrypt_key, mode, gateway, access_point, extdev, route_only,
+           dns_addr, include_ports, exclude_ports, allowed_web_hosts, intdev, localnet, auth_login;
 
    static bool arping;
    static vPF unatexit;
@@ -207,6 +210,7 @@ protected:
           UModNoCatPeer* creatNewPeer(const UString& peer_ip);
 
    static void notifyAuthOfUsersInfo();
+   static void setHTTPResponse(const UString& content);
    static void getPeerStatus(UStringRep* key, void* value);
    static void checkPeerInfo(UStringRep* key, void* value);
    static void executeCommand(UModNoCatPeer* peer, int type);

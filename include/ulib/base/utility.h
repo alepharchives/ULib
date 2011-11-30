@@ -48,27 +48,27 @@ union uuaddress {
 
 extern U_EXPORT const char* u_short_units[]; /* { "B", "KB", "MB", "GB", "TB", 0 } */
 
-extern U_EXPORT char*       u_inet_nstoa(uint8_t* ip);
-extern U_EXPORT char*       u_inet_nltoa(uint32_t ip);
-extern U_EXPORT int         u_getScreenWidth(void) __pure; /* Determine the width of the terminal we're running on */
-extern U_EXPORT int         u_get_num_random(int range);
-extern U_EXPORT const char* u_get_mimetype(const char* restrict suffix);
-extern U_EXPORT bool        u_isNumber(const char* restrict s, uint32_t n) __pure;
-extern U_EXPORT void        u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
-extern U_EXPORT uint32_t    u_findEndHeader(const char* restrict s, uint32_t n); /* find sequence of U_LF2 or U_CRLF2 */
-extern U_EXPORT char*       u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
-extern U_EXPORT double      u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
-extern U_EXPORT bool        u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len) __pure;
+U_EXPORT char*       u_inet_nstoa(uint8_t* ip);
+U_EXPORT char*       u_inet_nltoa(uint32_t ip);
+U_EXPORT int         u_getScreenWidth(void) __pure; /* Determine the width of the terminal we're running on */
+U_EXPORT int         u_get_num_random(int range);
+U_EXPORT const char* u_get_mimetype(const char* restrict suffix);
+U_EXPORT bool        u_isNumber(const char* restrict s, uint32_t n) __pure;
+U_EXPORT void        u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
+U_EXPORT uint32_t    u_findEndHeader(const char* restrict s, uint32_t n); /* find sequence of U_LF2 or U_CRLF2 */
+U_EXPORT char*       u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
+U_EXPORT double      u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
+U_EXPORT bool        u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len) __pure;
 
 #if defined(HAVE_MEMMEM) && !defined(__USE_GNU)
-extern U_EXPORT void* memmem(const void* restrict haystack, size_t haystacklen, const void* restrict needle, size_t needlelen);
+U_EXPORT void* memmem(const void* restrict haystack, size_t haystacklen, const void* restrict needle, size_t needlelen);
 #endif
 
 #ifdef DEBUG
-extern U_EXPORT size_t u_str_len(const char* restrict s);
-extern U_EXPORT char*  u_strcpy( char* restrict dest, const char* restrict src);
-extern U_EXPORT void*  u_memcpy( void* restrict dest, const void* restrict src, size_t n);
-extern U_EXPORT char*  u_strncpy(char* restrict dest, const char* restrict src, size_t n);
+U_EXPORT size_t u_str_len(const char* restrict s);
+U_EXPORT char*  u_strcpy( char* restrict dest, const char* restrict src);
+U_EXPORT void*  u_memcpy( void* restrict dest, const void* restrict src, size_t n);
+U_EXPORT char*  u_strncpy(char* restrict dest, const char* restrict src, size_t n);
 #else
 #  define u_str_len(s)          strlen((s))
 #  define u_strcpy(dest,src)    strcpy( (dest),(src))
@@ -88,35 +88,35 @@ static inline int u_equal(const void* restrict s1, const void* restrict s2, uint
                        :      memcmp(             s1,              s2, n));
 }
 
-extern U_EXPORT void* u_find(const char* restrict s, uint32_t n, const char* restrict a, uint32_t n1) __pure;
+U_EXPORT void* u_find(const char* restrict s, uint32_t n, const char* restrict a, uint32_t n1) __pure;
 
 /* check if string a start with string b */
 
-extern U_EXPORT bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure;
+U_EXPORT bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure;
 
 /* check if string a terminate with string b */
 
-extern U_EXPORT bool u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure;
+U_EXPORT bool u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure;
 
 /* find char not quoted */
 
-extern U_EXPORT const char* u_find_char(const char* restrict s, const char* restrict end, char c) __pure;
+U_EXPORT const char* u_find_char(const char* restrict s, const char* restrict end, char c) __pure;
 
 /* skip string delimiter or white space and line comment */
 
-extern U_EXPORT const char* u_skip(const char* restrict s, const char* restrict end, const char* restrict delim, char line_comment) __pure;
+U_EXPORT const char* u_skip(const char* restrict s, const char* restrict end, const char* restrict delim, char line_comment) __pure;
 
 /* delimit token */
 
-extern U_EXPORT const char* u_delimit_token(const char* restrict s, const char** restrict p, const char* restrict end, const char* restrict delim, char skip_line_comment);
+U_EXPORT const char* u_delimit_token(const char* restrict s, const char** restrict p, const char* restrict end, const char* restrict delim, char skip_line_comment);
 
 /* Search a string for any of a set of characters. Locates the first occurrence in the string s of any of the characters in the string accept */
 
-extern U_EXPORT const char* u_strpbrk(const char* restrict s, uint32_t slen, const char* restrict accept) __pure;
+U_EXPORT const char* u_strpbrk(const char* restrict s, uint32_t slen, const char* restrict accept) __pure;
 
 /* Search a string for a terminator of a group of delimitator {} [] () <%%>...*/
 
-extern U_EXPORT const char* u_strpend(const char* restrict s, uint32_t slen,
+U_EXPORT const char* u_strpend(const char* restrict s, uint32_t slen,
                                       const char* restrict group_delimitor, uint32_t group_delimitor_len,
                                       char skip_line_comment) __pure;
 
@@ -170,9 +170,9 @@ typedef bool (*bPFpcupcud)(const char*, uint32_t, const char*, uint32_t, int);
 extern U_EXPORT int        u_pfn_flags;
 extern U_EXPORT bPFpcupcud u_pfn_match;
 
-extern U_EXPORT bool u_fnmatch(         const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
-extern U_EXPORT bool u_dosmatch(        const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
-extern U_EXPORT bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure; /* multiple patterns separated by '|' */ 
+U_EXPORT bool u_fnmatch(         const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
+U_EXPORT bool u_dosmatch(        const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
+U_EXPORT bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure; /* multiple patterns separated by '|' */ 
 
 enum MatchType { U_FNMATCH = 0, U_DOSMATCH = 1, U_DOSMATCH_WITH_OR = 2 };
 
@@ -198,29 +198,29 @@ static inline void u_setPfnMatch(int match_type, int flags)
                                              u_dosmatch_with_OR);
 }
 
-extern U_EXPORT bool u_isURL(const char* restrict url, uint32_t len) __pure;
+U_EXPORT bool u_isURL(const char* restrict url, uint32_t len) __pure;
 
-extern U_EXPORT bool u_isMacAddr(const char* restrict p, uint32_t len) __pure;
+U_EXPORT bool u_isMacAddr(const char* restrict p, uint32_t len) __pure;
 
 /* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */
 
-extern U_EXPORT bool u_runAsUser(const char* restrict user, bool change_dir);
+U_EXPORT bool u_runAsUser(const char* restrict user, bool change_dir);
 
 /* Verifies that the passed string is actually an e-mail address */
 
-extern U_EXPORT bool u_validate_email_address(const char* restrict address, uint32_t address_len) __pure;
+U_EXPORT bool u_validate_email_address(const char* restrict address, uint32_t address_len) __pure;
 
 /* Perform 'natural order' comparisons of strings. */
 
-extern U_EXPORT int u_strnatcmp(char const* restrict a, char const* restrict b) __pure;
+U_EXPORT int u_strnatcmp(char const* restrict a, char const* restrict b) __pure;
 
 /* Get the number of the processors including offline CPUs */
 
-extern U_EXPORT int u_get_num_cpu(void);
+U_EXPORT int u_get_num_cpu(void);
 
 /* Pin the process to a particular core */
 
-extern U_EXPORT void u_bind2cpu(pid_t pid, int n);
+U_EXPORT void u_bind2cpu(pid_t pid, int n);
 
 /** -------------------------------------------------------------------------------
 // Canonicalize PATH, and build a new path. The new path differs from PATH in that:
@@ -232,7 +232,7 @@ extern U_EXPORT void u_bind2cpu(pid_t pid, int n);
 // Non-leading '../' and trailing '..' are handled by removing portions of the path
 // -------------------------------------------------------------------------------- */
 
-extern U_EXPORT bool u_canonicalize_pathname(char* restrict path);
+U_EXPORT bool u_canonicalize_pathname(char* restrict path);
 
 /** --------------------------------------------------------------
 // find a FILE MODE along PATH
@@ -242,12 +242,12 @@ extern U_EXPORT bool u_canonicalize_pathname(char* restrict path);
 // string, or NULL if not found.
 // -------------------------------------------------------------- */
 
-extern U_EXPORT bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_len, const char* restrict filename, int mode); /* R_OK | X_OK */
+U_EXPORT bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_len, const char* restrict filename, int mode); /* R_OK | X_OK */
 
 /* Prepare command for call to exec() */
 
-extern U_EXPORT uint32_t u_split(       char* restrict s, uint32_t n, char** restrict argv, const char* restrict delim);
-extern U_EXPORT int      u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* restrict pathbuf, uint32_t pathbuf_size);
+U_EXPORT uint32_t u_split(       char* restrict s, uint32_t n, char** restrict argv, const char* restrict delim);
+U_EXPORT int      u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* restrict pathbuf, uint32_t pathbuf_size);
 
 /* FTW - walks through the directory tree starting from the indicated directory dir. For each found entry in
  *       the tree, it calls fn() with the full pathname of the entry, his length and if it is a directory
@@ -268,9 +268,10 @@ struct u_ftw_ctx_s {
     */
 };
 
-extern U_EXPORT   void u_ftw(void);
 extern U_EXPORT struct u_ftw_ctx_s u_ftw_ctx;
-extern U_EXPORT    int u_ftw_ino_cmp(const void* restrict a, const void* restrict b) __pure;
+
+U_EXPORT void u_ftw(void);
+U_EXPORT  int u_ftw_ino_cmp(const void* restrict a, const void* restrict b) __pure;
 
 /* From RFC 3986 */
 
@@ -314,8 +315,8 @@ static inline bool u_isbase64(int c) { return (u_isalnum(c) || (c == '+') || (c 
 
 /* buffer type identification */
 
-extern U_EXPORT bool u_isBase64(    const char* restrict s, uint32_t n) __pure;
-extern U_EXPORT bool u_isWhiteSpace(const char* restrict s, uint32_t n) __pure;
+U_EXPORT bool u_isBase64(    const char* restrict s, uint32_t n) __pure;
+U_EXPORT bool u_isWhiteSpace(const char* restrict s, uint32_t n) __pure;
 
 enum TextType {
    U_TYPE_TEXT_ASCII, /* X3.4, ISO-8859, non-ISO ext. ASCII */
@@ -325,10 +326,10 @@ enum TextType {
    U_TYPE_BINARY_DATA
 };
 
-extern U_EXPORT bool u_isText(  const unsigned char* restrict s, uint32_t n) __pure;
-extern U_EXPORT bool u_isUTF8(  const unsigned char* restrict s, uint32_t n) __pure;
-extern U_EXPORT int  u_isUTF16( const unsigned char* restrict s, uint32_t n) __pure;
-extern U_EXPORT bool u_isBinary(const unsigned char* restrict s, uint32_t n) __pure;
+U_EXPORT bool u_isText(  const unsigned char* restrict s, uint32_t n) __pure;
+U_EXPORT bool u_isUTF8(  const unsigned char* restrict s, uint32_t n) __pure;
+U_EXPORT int  u_isUTF16( const unsigned char* restrict s, uint32_t n) __pure;
+U_EXPORT bool u_isBinary(const unsigned char* restrict s, uint32_t n) __pure;
 
 /* ip address type identification */
 
@@ -356,7 +357,7 @@ The actual length of the password must be returned to the calling function. rwfl
 callback is used for reading/decryption (rwflag=0) or writing/encryption (rwflag=1).
 See man SSL_CTX_set_default_passwd_cb(3) for more information
 */
-extern U_EXPORT int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict password);
+U_EXPORT int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict password);
 #endif
 
 #ifdef __cplusplus

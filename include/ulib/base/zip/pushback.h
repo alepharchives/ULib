@@ -16,9 +16,9 @@ typedef struct pb_file pb_file;
 extern "C" {
 #endif
 
-extern U_EXPORT int  pb_push(pb_file*, void*, int);
-extern U_EXPORT int  pb_read(pb_file*, void*, int);
-extern U_EXPORT void pb_init(pb_file*, int fd, ub1* data);
+U_EXPORT int  pb_push(pb_file*, void*, int);
+U_EXPORT int  pb_read(pb_file*, void*, int);
+U_EXPORT void pb_init(pb_file*, int fd, ub1* data);
 
 #ifdef __cplusplus
 }

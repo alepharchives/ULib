@@ -19,7 +19,7 @@
 
 #include <event.h>
 
-extern U_EXPORT struct event_base* u_ev_base;
+U_EXPORT struct event_base* u_ev_base;
 
 /*
  * libevent is a popular API that provides a mechanism to execute a callback

@@ -143,7 +143,7 @@ struct flock {
 #define isatty(fd)             _isatty(fd)
 
 /*
-extern __declspec(dllexport) int fsync(int fd);
+__declspec(dllexport) int fsync(int fd);
 */
 
 /**************** environment variables *****************/
@@ -270,59 +270,59 @@ struct timespec {
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern __declspec(dllexport) pid_t          fork(void);
-extern __declspec(dllexport) pid_t          vfork(void);
-extern __declspec(dllexport) uid_t          getuid(void);
-extern __declspec(dllexport) uid_t          geteuid(void);
-extern __declspec(dllexport) uid_t          getegid(void);
-extern __declspec(dllexport) pid_t          getppid(void);
-extern __declspec(dllexport) int            nice(int inc);
-extern __declspec(dllexport) int            setpgrp(void);
-extern __declspec(dllexport) int            setuid(uid_t uid);
-extern __declspec(dllexport) int            setgid(gid_t gid);
-extern __declspec(dllexport) int            mkstemp(char* name);
-extern __declspec(dllexport) struct passwd* getpwuid(uid_t uid);
-extern __declspec(dllexport) int            pipe(int filedes[2]);
-extern __declspec(dllexport) int            kill(pid_t pid, int sig);
-extern __declspec(dllexport) int            sigpending(sigset_t* set);
-extern __declspec(dllexport) struct passwd* getpwnam(const char* name);
-extern __declspec(dllexport) unsigned int   alarm(unsigned int seconds);
-extern __declspec(dllexport) int            setpgid(pid_t pid, pid_t pgid);
-extern __declspec(dllexport) int            sigsuspend(const sigset_t* mask);
-extern __declspec(dllexport) int            munmap(void* start, size_t length);
-extern __declspec(dllexport) int            truncate(const char* fname, off_t distance);
-extern __declspec(dllexport) int            msync(void* start, size_t length, int flags);
-extern __declspec(dllexport) pid_t          waitpid(pid_t pid, int* status, int options);
-extern __declspec(dllexport) char*          realpath(const char* path, char* resolved_path);
-extern __declspec(dllexport) int            setrlimit(int resource, const struct rlimit* rlim);
-extern __declspec(dllexport) int            socketpair(int d, int type, int protocol, int sv[2]);
-extern __declspec(dllexport) ssize_t        writev(int fd, const struct iovec* vector, int count);
-extern __declspec(dllexport) int            sigprocmask(int how, const sigset_t* set, sigset_t* oldset);
-extern __declspec(dllexport) void*          mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset);
-extern __declspec(dllexport) int            sigaction(int signum, const struct sigaction* act, struct sigaction* oldact);
-extern __declspec(dllexport) int            setitimer(int which, const struct itimerval* value, struct itimerval* ovalue);
+__declspec(dllexport) pid_t          fork(void);
+__declspec(dllexport) pid_t          vfork(void);
+__declspec(dllexport) uid_t          getuid(void);
+__declspec(dllexport) uid_t          geteuid(void);
+__declspec(dllexport) uid_t          getegid(void);
+__declspec(dllexport) pid_t          getppid(void);
+__declspec(dllexport) int            nice(int inc);
+__declspec(dllexport) int            setpgrp(void);
+__declspec(dllexport) int            setuid(uid_t uid);
+__declspec(dllexport) int            setgid(gid_t gid);
+__declspec(dllexport) int            mkstemp(char* name);
+__declspec(dllexport) struct passwd* getpwuid(uid_t uid);
+__declspec(dllexport) int            pipe(int filedes[2]);
+__declspec(dllexport) int            kill(pid_t pid, int sig);
+__declspec(dllexport) int            sigpending(sigset_t* set);
+__declspec(dllexport) struct passwd* getpwnam(const char* name);
+__declspec(dllexport) unsigned int   alarm(unsigned int seconds);
+__declspec(dllexport) int            setpgid(pid_t pid, pid_t pgid);
+__declspec(dllexport) int            sigsuspend(const sigset_t* mask);
+__declspec(dllexport) int            munmap(void* start, size_t length);
+__declspec(dllexport) int            truncate(const char* fname, off_t distance);
+__declspec(dllexport) int            msync(void* start, size_t length, int flags);
+__declspec(dllexport) pid_t          waitpid(pid_t pid, int* status, int options);
+__declspec(dllexport) char*          realpath(const char* path, char* resolved_path);
+__declspec(dllexport) int            setrlimit(int resource, const struct rlimit* rlim);
+__declspec(dllexport) int            socketpair(int d, int type, int protocol, int sv[2]);
+__declspec(dllexport) ssize_t        writev(int fd, const struct iovec* vector, int count);
+__declspec(dllexport) int            sigprocmask(int how, const sigset_t* set, sigset_t* oldset);
+__declspec(dllexport) void*          mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset);
+__declspec(dllexport) int            sigaction(int signum, const struct sigaction* act, struct sigaction* oldact);
+__declspec(dllexport) int            setitimer(int which, const struct itimerval* value, struct itimerval* ovalue);
 
 /* implemented in MINGW Runtime (3.10)
-extern __declspec(dllexport) int            gettimeofday(struct timeval* tv, void* tz);
+__declspec(dllexport) int            gettimeofday(struct timeval* tv, void* tz);
 */
 
-extern __declspec(dllexport) int            raise_w32(int nsig);
-extern __declspec(dllexport) int            unlink_w32(const char* path);
-extern __declspec(dllexport) int            fcntl_w32(int fd, int cmd, void* arg);
-extern __declspec(dllexport) sighandler_t   signal_w32(int nsig, sighandler_t handler);
-extern __declspec(dllexport) int            rename_w32(const char* oldpath, const char* newpath);
-extern __declspec(dllexport) int            select_w32(int nfds, fd_set* rd, fd_set* wr, fd_set* ex, struct timeval* timeout);
+__declspec(dllexport) int            raise_w32(int nsig);
+__declspec(dllexport) int            unlink_w32(const char* path);
+__declspec(dllexport) int            fcntl_w32(int fd, int cmd, void* arg);
+__declspec(dllexport) sighandler_t   signal_w32(int nsig, sighandler_t handler);
+__declspec(dllexport) int            rename_w32(const char* oldpath, const char* newpath);
+__declspec(dllexport) int            select_w32(int nfds, fd_set* rd, fd_set* wr, fd_set* ex, struct timeval* timeout);
 
-extern __declspec(dllexport) HANDLE         is_pipe(int fd);
-extern __declspec(dllexport) void           u_init_ulib_mingw(void);
-extern __declspec(dllexport) uint64_t       u_get_inode(int fd); /* INODE FOR WINDOWS - It is not stable for files on network drives (NFS) */
-extern __declspec(dllexport) const char*    getSysError_w32(unsigned* len);
-extern __declspec(dllexport) int            w32_open_osfhandle(long osfhandle, int flags);
-extern __declspec(dllexport) char*          u_slashify(const char* src, char slash_from, char slash_to);
+__declspec(dllexport) HANDLE         is_pipe(int fd);
+__declspec(dllexport) void           u_init_ulib_mingw(void);
+__declspec(dllexport) uint64_t       u_get_inode(int fd); /* INODE FOR WINDOWS - It is not stable for files on network drives (NFS) */
+__declspec(dllexport) const char*    getSysError_w32(unsigned* len);
+__declspec(dllexport) int            w32_open_osfhandle(long osfhandle, int flags);
+__declspec(dllexport) char*          u_slashify(const char* src, char slash_from, char slash_to);
 
-extern __declspec(dllexport) HANDLE u_hProcess;
-extern __declspec(dllexport) SECURITY_ATTRIBUTES sec_none;
-extern __declspec(dllexport) SECURITY_DESCRIPTOR sec_descr;
+__declspec(dllexport) HANDLE u_hProcess;
+__declspec(dllexport) SECURITY_ATTRIBUTES sec_none;
+__declspec(dllexport) SECURITY_DESCRIPTOR sec_descr;
 #ifdef __cplusplus
 }
 #endif

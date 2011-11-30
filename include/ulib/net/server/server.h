@@ -316,8 +316,7 @@ public:
 
       log = U_NEW(ULog(name, size));
 
-      if (preforked_num_kids) ULog::setServer(true);
-      else                    ULog::setClient();
+      ULog::setServer(true); // NB: is always shared cause of possibility of fork() by parallelization...
       }
 
    static void      logCommandMsgError(const char* cmd);

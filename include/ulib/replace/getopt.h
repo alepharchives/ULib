@@ -11,7 +11,7 @@ extern "C" {
  * Also, when `ordering' is RETURN_IN_ORDER, each non-option ARGV-element is returned here.
  */
 
-extern U_EXPORT char* optarg;
+U_EXPORT char* optarg;
 
 /* Index in ARGV of the next element to be scanned.  This is used for communication to and from the caller and for communication
  * between successive calls to `getopt'. On entry to `getopt', zero means this is the first call; initialize. When `getopt' returns
@@ -19,9 +19,9 @@ extern U_EXPORT char* optarg;
  * from one call to the next how much of ARGV has been scanned so far.
  */
 
-extern U_EXPORT int optind;
-extern U_EXPORT int opterr; /* Callers store zero here to inhibit the error message `getopt' prints for unrecognized options */
-extern U_EXPORT int optopt; /* Set to an option character which was unrecognized */
+U_EXPORT int optind;
+U_EXPORT int opterr; /* Callers store zero here to inhibit the error message `getopt' prints for unrecognized options */
+U_EXPORT int optopt; /* Set to an option character which was unrecognized */
 
 /* Describe the long-named options requested by the application. The LONG_OPTIONS argument to getopt_long or getopt_long_only is a vector
  * of `struct option' terminated by an element containing a name which is zero. The field `has_arg' is:
@@ -58,11 +58,11 @@ struct option {
  * as arguments to the option '\0'. This behavior is specific to the GNU `getopt'
  */
 
-extern U_EXPORT int u_getopt_long(int argc, char* const* argv, const char* shortopts, const struct option* longopts, int* longind);
+U_EXPORT int u_getopt_long(int argc, char* const* argv, const char* shortopts, const struct option* longopts, int* longind);
 
 /* I don't use this...
- * extern int u_getopt(int argc, char* const* argv, const char* optstring);
- * extern int u_getopt_long_only(int argc, char* const* argv, const char* shortopts, const struct option* longopts, int* longind);
+ * int u_getopt(int argc, char* const* argv, const char* optstring);
+ * int u_getopt_long_only(int argc, char* const* argv, const char* shortopts, const struct option* longopts, int* longind);
  */
 
 #ifdef __cplusplus

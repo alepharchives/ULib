@@ -22,6 +22,7 @@ class UFile;
 class UDialog;
 class UServer_Base;
 class UProxyPlugIn;
+class UNoCatPlugIn;
 
 #define U_ADD_ARGS  100 
 #define U_MAX_ARGS 8192 
@@ -308,6 +309,7 @@ private:
    friend class UDialog;
    friend class UServer_Base;
    friend class UProxyPlugIn;
+   friend class UNoCatPlugIn;
 };
 
 #endif

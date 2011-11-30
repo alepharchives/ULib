@@ -365,7 +365,12 @@ UServer_Base::~UServer_Base()
 
    UNotifier::clear(preforked_num_kids == -1);
 
-   if (vClientImage && isClassic() == false) delete[] vClientImage;
+   if (vClientImage)
+      {
+      if (isClassic()) UNotifier::num_connection = UNotifier::min_connection;
+
+      delete[] vClientImage;
+      }
 
    U_INTERNAL_ASSERT_POINTER(senvironment)
 
@@ -461,26 +466,24 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    //                                                                    >1 - pool of serialized processes plus monitoring process
    // --------------------------------------------------------------------------------------------------------------------------------------
 
-   server        = cfg[*str_SERVER];
-   as_user       = cfg[*str_RUN_AS_USER],
-   log_file      = cfg[*str_LOG_FILE];
-   allow_IP      = cfg[*str_ALLOWED_IP];
-   name_sock     = cfg[*str_SOCKET_NAME];
-   IP_address    = cfg[*str_IP_ADDRESS];
-   document_root = cfg[*str_DOCUMENT_ROOT];
+   server                     = cfg[*str_SERVER];
+   as_user                    = cfg[*str_RUN_AS_USER],
+   log_file                   = cfg[*str_LOG_FILE];
+   allow_IP                   = cfg[*str_ALLOWED_IP];
+   name_sock                  = cfg[*str_SOCKET_NAME];
+   IP_address                 = cfg[*str_IP_ADDRESS];
+
+   port                       = cfg.readLong(*str_PORT, U_DEFAULT_PORT);
+   iBackLog                   = cfg.readLong(*str_LISTEN_BACKLOG, SOMAXCONN);
+   timeoutMS                  = cfg.readLong(*str_REQ_TIMEOUT);
+   cgi_timeout                = cfg.readLong(*str_CGI_TIMEOUT);
+   flag_use_tcp_optimization  = cfg.readBoolean(*str_USE_TCP_OPTIMIZATION);
+   UNotifier::max_connection  = cfg.readLong(*str_MAX_KEEP_ALIVE);
+   u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE);
 
 #ifdef HAVE_IPV6
    UClientImage_Base::bIPv6   = cfg.readBoolean(*str_USE_IPV6);
 #endif
-   flag_use_tcp_optimization  = cfg.readBoolean(*str_USE_TCP_OPTIMIZATION);
-
-   port                       = cfg.readLong(*str_PORT,           U_DEFAULT_PORT);
-   iBackLog                   = cfg.readLong(*str_LISTEN_BACKLOG, SOMAXCONN);
-   UNotifier::max_connection  = cfg.readLong(*str_MAX_KEEP_ALIVE);
-
-   timeoutMS                  = cfg.readLong(*str_REQ_TIMEOUT);
-   cgi_timeout                = cfg.readLong(*str_CGI_TIMEOUT);
-   u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE);
 
    if (timeoutMS) timeoutMS *= 1000;
    else           timeoutMS  = -1;
@@ -550,6 +553,33 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
       openLog(log_file, cfg.readLong(*str_LOG_FILE_SZ));
       }
+
+   // DOCUMENT_ROOT: The directory out of which you will serve your documents
+
+   document_root = cfg[*str_DOCUMENT_ROOT];
+
+   if (document_root.empty() ||
+       document_root.equal(U_CONSTANT_TO_PARAM(".")))
+      {
+      (void) document_root.replace(u_cwd, u_cwd_len);
+      }
+   else
+      {
+      U_INTERNAL_ASSERT(document_root.isNullTerminated())
+
+      (void) u_canonicalize_pathname(document_root.data());
+
+      U_INTERNAL_DUMP("document_root = %S", document_root.data())
+      }
+
+   if (document_root.first_char() == '.') document_root = UFile::getRealPath(document_root.data());
+
+   if (UFile::chdir(document_root.data(), false) == false)
+      {
+      U_ERROR("chdir to working directory (DOCUMENT_ROOT) %S FAILED. Going down...", document_root.data());
+      }
+
+   U_SRV_LOG("working directory (DOCUMENT_ROOT) changed to %S", document_root.data());
 
    // load plugin modules and call server-wide hooks handlerConfig()...
 
@@ -898,31 +928,6 @@ void UServer_Base::init()
                 vallow_IP = 0;
          }
       }
-
-   // DOCUMENT_ROOT: The directory out of which you will serve your documents
-
-   if (document_root.empty() ||
-       document_root.equal(U_CONSTANT_TO_PARAM(".")))
-      {
-      (void) document_root.replace(u_cwd, u_cwd_len);
-      }
-   else
-      {
-      U_INTERNAL_ASSERT(document_root.isNullTerminated())
-
-      (void) u_canonicalize_pathname(document_root.data());
-
-      U_INTERNAL_DUMP("document_root = %S", document_root.data())
-      }
-
-   if (document_root.first_char() == '.') document_root = UFile::getRealPath(document_root.data());
-
-   if (UFile::chdir(document_root.data(), false) == false)
-      {
-      U_ERROR("chdir to working directory (DOCUMENT_ROOT) %S FAILED. Going down...", document_root.data());
-      }
-
-   U_SRV_LOG("working directory (DOCUMENT_ROOT) changed to %S", document_root.data());
 
    /* Let's say an application just issued a request to send a small block of data. Now, we could
     * either send the data immediately or wait for more data. Some interactive and client-server
@@ -1312,15 +1317,19 @@ next:
 
          U_INTERNAL_DUMP("UNotifier::num_connection = %d", UNotifier::num_connection)
 
-         U_SRV_LOG("started new child (pid %d), up to %u children", proc->pid(), UNotifier::num_connection-1);
+         U_SRV_LOG("started new child (pid %d), up to %u children", proc->pid(), UNotifier::num_connection - UNotifier::min_connection);
 
+retry:
          pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much zombie...
 
          if (pid > 0)
             {
             --UNotifier::num_connection;
 
-            U_SRV_LOG("child (pid %d) exited with value %d (%s), down to %u children", pid, status, UProcess::exitInfo(status), UNotifier::num_connection-1);
+            U_SRV_LOG("child (pid %d) exited with value %d (%s), down to %u children",
+                           pid, status, UProcess::exitInfo(status), UNotifier::num_connection - UNotifier::min_connection);
+
+            goto retry;
             }
 
          if (isLog()) ULog::log("waiting for connection\n");
@@ -1408,12 +1417,7 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
       ptr->logbuf->setEmpty();
       }
 
-   if (isClassic() && proc->child())
-      {
-      U_INTERNAL_ASSERT(socket->isClosed())
-
-      U_EXIT(0);
-      }
+   if (isClassic()) U_EXIT(0);
 }
 
 bool UServer_Base::handlerTimeoutConnection(void* cimg)
@@ -1647,6 +1651,9 @@ bool UServer_Base::parallelization()
             // NB: we need locking to write log...
 
             log = 0;
+
+            delete pClientImage->logbuf;
+                   pClientImage->logbuf = 0;
             }
          }
       }

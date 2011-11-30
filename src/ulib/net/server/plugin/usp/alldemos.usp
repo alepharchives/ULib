@@ -57,7 +57,7 @@
 		// skip empty urls and lines starting with '#'
 		if (url.empty() || line[0] == '#') continue;
 
-		USP_PRINTF("<tr><td><a href=\"%s\">%s</a></td><td>%s</td></tr>", url.c_str(), name.c_str(), description.c_str());
+		USP_PRINTF("<tr><td><a href=\"%s\">%s</a></td><td>%s</td></tr>\n", url.c_str(), name.c_str(), description.c_str());
 		}
 	/%-->
   </table>

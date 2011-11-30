@@ -33,6 +33,8 @@
 "\n" \
 "#define USP_FORM_VALUE(n) (UHTTP::getFormValue(*UClientImage_Base::_value,(1+(n*2))),*UClientImage_Base::_value)\n" \
 "\n" \
+"#define USP_FORM_VALUE_FROM_NAME(name) (UHTTP::getFormValue(*UClientImage_Base::_value,name),*UClientImage_Base::_value)\n" \
+"\n" \
 "#define USP_PUTS(string) (void)UClientImage_Base::wbuffer->append(string)\n" \
 "\n" \
 "#define USP_PRINTF(fmt,args...) (UClientImage_Base::_buffer->snprintf(fmt , ##args),USP_PUTS(*UClientImage_Base::_buffer))\n" \
@@ -76,6 +78,7 @@ public:
 
       UApplication::run(argc, argv, env);
 
+      const char* ptr;
       const char* filename = argv[1];
 
       if (filename == 0) U_ERROR("filename not specified...");
@@ -94,9 +97,11 @@ public:
       if (endHeader                                              == U_NOT_FOUND ||
           U_STRING_FIND_EXT(usp, 0, "Content-Type: ", endHeader) == U_NOT_FOUND)
          {
-         const char* ptr = usp.data();
+         ptr = usp.data();
 
          // NB: we check for <h(1|tml)> (HTML without HTTP headers..)
+
+         while (u_isspace(*ptr)) ++ptr; // skip space...
 
          if (         ptr[0]  != '<' ||
             u_toupper(ptr[1]) != 'H')
@@ -168,6 +173,14 @@ public:
             case '!': // <!--%! ... /%-->
                {
                declaration = UStringExt::trim(directive, n);
+
+               // NB: to avoid trailing \n...
+
+               ptr = t.getPointer();
+
+               while (u_isspace(*ptr)) ++ptr; // skip space...
+
+               t.setPointer(ptr);
                }
             break;
 
@@ -175,7 +188,7 @@ public:
                {
                token = UStringExt::trim(directive, n);
 
-               buffer.snprintf("UClientImage_Base::_buffer->snprintf(\"%%.*s\", %.*s);\n"
+               buffer.snprintf("UClientImage_Base::_buffer->snprintf(\"%%s\", %.*s);\n"
                                "(void) UClientImage_Base::wbuffer->append(*UClientImage_Base::_buffer);\n", U_STRING_TO_TRACE(token));
 
                (void) output.append(buffer);

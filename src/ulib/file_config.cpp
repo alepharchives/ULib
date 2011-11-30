@@ -111,6 +111,8 @@ bool UFileConfig::open()
          {
          U_INTERNAL_ASSERT_EQUALS(suffix[0], '.')
 
+         if (_size == 0) goto err;
+
          ++suffix;
 
               if (U_STRNEQ(suffix, "ini"))        { result = loadINI();        goto next; }
@@ -375,8 +377,6 @@ bool UFileConfig::loadINI()
 
    U_CHECK_MEMORY
 
-   if (_size == 0) U_RETURN(false);
-
    U_INTERNAL_DUMP("_size = %u _start = %.*S", _size, 10, _start)
 
    uint32_t len;
@@ -470,15 +470,11 @@ bool UFileConfig::loadINI()
    U_RETURN(result);
 }
 
-bool UFileConfig::loadProperties()
+bool UFileConfig::loadProperties(UHashMap<UString>& table, const char* _start, const char* _end)
 {
-   U_TRACE(0, "UFileConfig::loadProperties()")
+   U_TRACE(0, "UFileConfig::loadProperties(%p,%p,%p)", &table, _start, _end)
 
-   U_CHECK_MEMORY
-
-   if (_size == 0) U_RETURN(false);
-
-   U_INTERNAL_DUMP("_size = %u _start = %.*S", _size, 10, _start)
+   U_INTERNAL_DUMP("_start = %.*S", 10, _start)
 
    char c;
    const char* ptr;
@@ -558,13 +554,31 @@ bool UFileConfig::loadProperties()
       ++_start;
       }
 
-   _size = (_end - _start);
-
-   U_INTERNAL_DUMP("_size = %u", _size)
-
    bool result = (table.empty() == false);
 
    U_RETURN(result);
+}
+
+bool UFileConfig::loadProperties()
+{
+   U_TRACE(0, "UFileConfig::loadProperties()")
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_DUMP("_size = %u _start = %.*S", _size, 10, _start)
+
+   bool result = loadProperties(table, _start, _end);
+
+   if (result)
+      {
+      _size = (_end - _start);
+
+      U_INTERNAL_DUMP("_size = %u", _size)
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 // DEBUG

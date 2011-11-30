@@ -39,16 +39,22 @@ DIR_CMD="../../examples/userver"
 if [ "$TERM" != "cygwin" ]; then
 	( mkdir -p servlet; cd servlet;
 	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/alldemos.so;
+	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/hello.so;
 	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/calc.so;
 	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/docalc.so;
+	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/calcmvc.so;
 	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/calcajax.so;
+	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/strings.so;
 	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/jsonrequest.so;
 	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/upload_progress.so;
 	  cd ../../../src/ulib/net/server/plugin/usp/;
 	  make alldemos.la		  >/dev/null 2>&1 || exit 1;
+	  make hello.la			  >/dev/null 2>&1 || exit 1;
 	  make calc.la				  >/dev/null 2>&1 || exit 1;
 	  make docalc.la			  >/dev/null 2>&1 || exit 1;
+	  make calcmvc.la			  >/dev/null 2>&1 || exit 1;
 	  make calcajax.la		  >/dev/null 2>&1 || exit 1;
+	  make strings.la			  >/dev/null 2>&1 || exit 1;
 	  make jsonrequest.la	  >/dev/null 2>&1 || exit 1;
 	  make benchmarking.la	  >/dev/null 2>&1 || exit 1;
 	  make upload_progress.la >/dev/null 2>&1 || exit 1;

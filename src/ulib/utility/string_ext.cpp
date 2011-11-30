@@ -368,9 +368,11 @@ UString UStringExt::getEnvironmentVar(const char* s, uint32_t n, const UString* 
    if (environment)
       {
       char c, c1;
-      uint32_t start = 0, end;
+      const char* end;
+      uint32_t start = 0;
+      bool quoted, bexpand;
 
-loop: // NB: check if s param it is a environment-var
+loop: // NB: check if s param is a environment-var
       start = environment->find(s, start, n);
 
       if (start == U_NOT_FOUND) goto next;
@@ -396,25 +398,50 @@ loop: // NB: check if s param it is a environment-var
 
       if (c1 != '=') goto loop;
 
-      end = environment->find('\n', ++start);
+      quoted  = (c == '\'' || c == '"');
+      bexpand = false;
 
-      if (end == U_NOT_FOUND) end = environment->size();
-      else
+      U_INTERNAL_DUMP("quoted = %b", quoted)
+
+      s   = environment->c_pointer(++start);
+      end = environment->end();
+
+      U_INTERNAL_DUMP("end - s = %ld", end - s)
+
+      if (s < end)
          {
-         char c2 = environment->c_char(end-1);
+         const char* ptr = s;
 
-         if ((c2 == '"' || c2 == '\'') && (c == c2)) --end;
-         }
+         do {
+            if ((c1 = *ptr) == '$') bexpand = true;
 
-      n = end - start;
+            if (quoted)
+               {
+               if (c1 != c || ptr[-1] == '\\') continue;
+               }
+            else
+               {
+               if (u_isspace(c1) == false) continue;
+               }
 
-      if (n)
-         {
-         s = environment->c_pointer(start);
+            U_INTERNAL_DUMP("ptr - s = %ld", ptr - s)
 
-         (void) value.assign(s, n);
+            if (ptr == s) goto end; // NB: name=<empty>...
 
-         if (value.find('$', 0U) != U_NOT_FOUND) value = expandEnvironmentVar(value, environment);
+            n = ptr - s;
+
+            goto assign;
+            }
+         while (++ptr < end);
+
+         n = end - s;
+assign:
+         U_INTERNAL_DUMP("n = %u", n)
+
+         U_INTERNAL_ASSERT_MAJOR(n, 0)
+
+         if (bexpand) value = expandEnvironmentVar(s, n, environment);
+         else  (void) value.assign(s, n);
          }
       }
    else
@@ -432,7 +459,7 @@ next:
 
       if (ptr) (void) value.assign(ptr);
       }
-
+end:
    U_RETURN_STRING(value);
 }
 
@@ -466,10 +493,10 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
          token_id = U_TK_VALUE;
          }
 
-      expressionParser(pParser, token_id, U_NEW(UString(token)), &result);
+      expressionParser( pParser, token_id, U_NEW(UString(token)), &result);
       }
 
-   expressionParser(   pParser,        0,                     0, &result);
+   expressionParser(    pParser,        0,                     0, &result);
 
    expressionParserFree(pParser, free);
 

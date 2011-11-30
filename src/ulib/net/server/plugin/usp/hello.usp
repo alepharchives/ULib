@@ -1,0 +1,24 @@
+<html>
+ <head>
+  <title>Hello World-application for Ulib</title>
+ </head>
+
+ <body bgcolor="#FFFFFF">
+  <img src="/images/ulib_logo.jpg" align="right">
+
+	<!--%
+	UString name = USP_FORM_VALUE(0);
+
+	if (name.empty()) name = U_STRING_FROM_CONSTANT("World");
+	/%-->
+
+   <h1>Hello <!--% USP_PUTS(name); /%--></h1>
+
+  <form>
+   What's your name?
+   <input type="text" name="name" value=<!--% USP_PUTS(name); /%-->> <br>
+   <input type="submit">
+  </form>
+
+ </body>
+</html>

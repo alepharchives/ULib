@@ -81,9 +81,9 @@ USING(std) // Common C++
 
 // Init library
 
-extern U_EXPORT void ULib_init();
+U_EXPORT void ULib_init();
 #ifdef HAVE_SSL
-extern U_EXPORT void ULib_init_openssl();
+U_EXPORT void ULib_init_openssl();
 #endif
 
 #endif

@@ -466,7 +466,8 @@ public:
 
    static uint32_t processHTTPForm();
    static void     resetForm(bool brmdir);
-   static void     getFormValue(UString& value, uint32_t n);
+   static void     getFormValue(UString& value, uint32_t pos);
+   static void     getFormValue(UString& value, const UString& name);
 
    // param: "[ data expire path domain secure HttpOnly ]"
    // ----------------------------------------------------------------------------------------------------------------------------

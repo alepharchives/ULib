@@ -141,7 +141,8 @@ public:
    // removed from both keys and values. A property name can neither contain
    // a colon ':' nor an equal sign '=' character.
 
-   bool loadProperties();
+          bool loadProperties();
+   static bool loadProperties(UHashMap<UString>& table, const char* start, const char* end);
 
 #ifdef DEBUG
    const char* dump(bool reset) const;

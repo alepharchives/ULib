@@ -95,7 +95,7 @@ using namespace std;
 #  define U_STR_SIZE_ADJUST_FORCE(str,len) (str).resize(len)
 #  define U_STR_ASSIGN_MMAP(str,map,size)  (str)->reserve(size); (str)->assign(map,size)
 
-extern unsigned split(UVector<UString>& vec, const UString& buffer, const char* delim);
+unsigned split(UVector<UString>& vec, const UString& buffer, const char* delim);
 
 #  define U_VEC_SPLIT(vec,str,delim)      split(vec,str,delim)
 #  define U_VEC_ERASE1(vec,i)             vec.erase(vec.begin()+i)

@@ -1,0 +1,52 @@
+<!--%!
+#undef min
+#undef max
+#include <vector>
+#include <limits>
+#include <strstream>
+/%-->
+<html>
+ <head><title>Example USP</title></head>
+ <body>
+  <h1>Example USP</h1>
+
+   <p>This servlet enters strings into a table.</p>
+
+   <form method=get>
+    <p>Enter a string:
+    <input type=text size=64 name="string"></input>
+    <input type=submit       name="add" value="Go!"></input>
+    </p>
+   </form>
+
+	<!--%
+	UString add		= USP_FORM_VALUE(0),
+			  string = USP_FORM_VALUE(1);
+
+	std::vector<std::string> strings;
+	unsigned remove = std::numeric_limits<unsigned>::max();
+
+	if (add.empty() == false) strings.push_back(string.c_str());
+
+   if (remove < strings.size()) strings.erase(strings.begin() + remove);
+	/%-->
+
+	<p><table border=1>
+	<tr><th colspan=2>Strings entered so far: <!--% USP_PRINTF("%u", strings.size()); /%--></th></tr>
+
+	<!--%
+	std::string tmp;
+	std::ostrstream text;
+
+   for (std::vector<std::string>::const_iterator i = strings.begin(); i != strings.end(); ++i)
+		{
+		text << *i;
+		remove = i - strings.begin();
+
+		USP_PRINTF("<tr><td>%s</td><td><a href=\"?remove=%u\">remove</a></td></tr>", text.str(), remove);
+		}
+	/%-->
+
+	</table></p> 
+</body> 
+</html>

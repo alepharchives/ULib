@@ -4,6 +4,8 @@
 
 #define USP_FORM_VALUE(n) (UHTTP::getFormValue(*UClientImage_Base::_value,(1+(n*2))),*UClientImage_Base::_value)
 
+#define USP_FORM_VALUE_FROM_NAME(name) (UHTTP::getFormValue(*UClientImage_Base::_value,name),*UClientImage_Base::_value)
+
 #define USP_PUTS(string) (void)UClientImage_Base::wbuffer->append(string)
 
 #define USP_PRINTF(fmt,args...) (UClientImage_Base::_buffer->snprintf(fmt , ##args),USP_PUTS(*UClientImage_Base::_buffer))

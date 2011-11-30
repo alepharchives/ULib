@@ -28,10 +28,10 @@
   <form>
    <input type="text"   value="0" id="arg1"> <br>
    <input type="text"   value="0" id="arg2"> <br>
-   <input type="submit" value="+" onClick="calc('p')">
-   <input type="submit" value="-" onClick="calc('-')">
-   <input type="submit" value="*" onClick="calc('*')">
-   <input type="submit" value="/" onClick="calc('/')">
+   <input type="button" value="+" onClick="calc('p')">
+   <input type="button" value="-" onClick="calc('-')">
+   <input type="button" value="*" onClick="calc('*')">
+   <input type="button" value="/" onClick="calc('/')">
   </form>
 
   <div id="result" style="display:none">

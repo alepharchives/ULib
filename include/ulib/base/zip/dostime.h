@@ -7,8 +7,8 @@
 extern "C" {
 #endif
 
-extern U_EXPORT time_t        dos2unixtime(unsigned long dostime);
-extern U_EXPORT unsigned long unix2dostime(time_t*);
+U_EXPORT time_t        dos2unixtime(unsigned long dostime);
+U_EXPORT unsigned long unix2dostime(time_t*);
 
 #ifdef __cplusplus
 }

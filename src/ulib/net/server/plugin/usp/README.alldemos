@@ -53,13 +53,6 @@ Demo-application "hello"
 This application shows a very simple form and how to process arguments 
 received from the form.
 
-It also shows how to compile a image into the application.
-
-The shell-script creates 20 articles by default. When called with one
-parameter, the parameter is interpreted as the number of articles to generate.
-With 2 parameters the first parameter specifies a startvalue ant the second
-the number of articles to generate.
-
 Demo-application "sprintf" 
 ========================
 
@@ -70,3 +63,12 @@ Demo-application "upload"
 =========================
 
 This application demostrates how to handle an upload-button
+
+Demo-application "Newsdb" 
+========================
+
+The shell-script creates 20 articles by default. When called with one
+parameter, the parameter is interpreted as the number of articles to generate.
+With 2 parameters the first parameter specifies a startvalue ant the second
+the number of articles to generate.
+

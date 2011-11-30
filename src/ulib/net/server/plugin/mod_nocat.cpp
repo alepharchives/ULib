@@ -47,15 +47,12 @@ const UString* UNoCatPlugIn::str_EXTERNAL_DEVICE;
 const UString* UNoCatPlugIn::str_INTERNAL_DEVICE;
 const UString* UNoCatPlugIn::str_INTERNAL_DEVICE_LABEL;
 const UString* UNoCatPlugIn::str_LOCAL_NETWORK;
-
 const UString* UNoCatPlugIn::str_AUTH_SERVICE_URL;
 const UString* UNoCatPlugIn::str_LOGOUT_URL;
 const UString* UNoCatPlugIn::str_LOGIN_TIMEOUT;
 const UString* UNoCatPlugIn::str_DECRYPT_CMD;
 const UString* UNoCatPlugIn::str_DECRYPT_KEY;
-const UString* UNoCatPlugIn::str_INIT_CMD;
-const UString* UNoCatPlugIn::str_RESET_CMD;
-const UString* UNoCatPlugIn::str_ACCESS_CMD;
+const UString* UNoCatPlugIn::str_FW_CMD;
 const UString* UNoCatPlugIn::str_CHECK_BY_ARPING;
 const UString* UNoCatPlugIn::str_Action;
 const UString* UNoCatPlugIn::str_Permit;
@@ -69,6 +66,9 @@ const UString* UNoCatPlugIn::str_Token;
 const UString* UNoCatPlugIn::str_User;
 const UString* UNoCatPlugIn::str_anonymous;
 const UString* UNoCatPlugIn::str_Traffic;
+const UString* UNoCatPlugIn::str_GATEWAY_PORT;
+const UString* UNoCatPlugIn::str_FW_ENV;
+const UString* UNoCatPlugIn::str_IPHONE_SUCCESS;
 
 int                       UNoCatPlugIn::fd_stderr;
 vPF                       UNoCatPlugIn::unatexit;
@@ -109,7 +109,7 @@ UHashMap<UModNoCatPeer*>* UNoCatPlugIn::peers;
    "<tr><td>ExternalDevice</td><td>%.*s</td></tr>\n" \
    "<tr><td>InternalDevice</td><td>%.*s</td></tr>\n" \
    "<tr><td>LocalNetwork</td><td>%.*s</td></tr>\n" \
-   "<tr><td>GatewayPort</td><td>%.*s</td></tr>\n" \
+   "<tr><td>GatewayPort</td><td>%u</td></tr>\n" \
    "<tr><td>AuthServiceAddr</td><td>%.*s</td></tr>\n" \
    "<tr><td>LoginTimeout</td><td>%u</td></tr>\n" \
    "</table>\n" \
@@ -237,20 +237,22 @@ void UNoCatPlugIn::setStatusContent(UModNoCatPeer* peer)
       const char* name = access_point.data();
 
       buffer.snprintf(U_NOCAT_STATUS, name, name, u_start_time,
-                      U_STRING_TO_TRACE(vfwopt[0]), U_STRING_TO_TRACE(vfwopt[1]), U_STRING_TO_TRACE(vfwopt[2]),
-                      U_STRING_TO_TRACE(vfwopt[3]), U_STRING_TO_TRACE(vfwopt[4]), U_STRING_TO_TRACE(vfwopt[5]),
-                      U_STRING_TO_TRACE(vfwopt[6]), U_STRING_TO_TRACE(vfwopt[7]), U_STRING_TO_TRACE(vfwopt[8]),
-                      U_STRING_TO_TRACE(vfwopt[9]),
+                      U_STRING_TO_TRACE(route_only), U_STRING_TO_TRACE(dns_addr), U_STRING_TO_TRACE(include_ports),
+                      U_STRING_TO_TRACE(exclude_ports), U_STRING_TO_TRACE(allowed_web_hosts), U_STRING_TO_TRACE(extdev),
+                      U_STRING_TO_TRACE(intdev), U_STRING_TO_TRACE(localnet), UServer_Base::port,
+                      U_STRING_TO_TRACE(auth_login),
                       login_timeout, peers->size(), total_connections,
                       U_STRING_TO_TRACE(*status_content), "/images/auth_logo.png");
 
       *status_content = buffer;
       }
+
+   setHTTPResponse(*status_content);
 }
 
 // VARIE
 
-UModNoCatPeer::UModNoCatPeer(const UString& peer_ip) : ip(peer_ip), command(100U)
+UModNoCatPeer::UModNoCatPeer(const UString& peer_ip) : ip(peer_ip)
 {
    U_TRACE_REGISTER_OBJECT(0, UModNoCatPeer, "%.*S", U_STRING_TO_TRACE(peer_ip))
 
@@ -309,8 +311,8 @@ int UModNoCatPeer::handlerTime()
 }
 
 UNoCatPlugIn::UNoCatPlugIn() : vauth_service_url(4U), vlogout_url(4U), vinfo_url(4U),
-                               vfwopt(10U), vInternalDevice(4U), vInternalDeviceLabel(4U),
-                               vLocalNetwork(4U), vauth_login(4U), vauth_logout(4U), vauth_ip(4U),
+                               vInternalDevice(4U), vInternalDeviceLabel(4U), vLocalNetwork(4U),
+                               vauth_login(4U), vauth_logout(4U), vauth_ip(4U),
                                input(U_CAPACITY), output(U_CAPACITY), location(U_CAPACITY)
 {
    U_TRACE_REGISTER_OBJECT(0, UNoCatPlugIn, "")
@@ -357,13 +359,22 @@ void UNoCatPlugIn::executeCommand(UModNoCatPeer* peer, int type)
 {
    U_TRACE(0, "UNoCatPlugIn::executeCommand(%p,%d)", peer, type)
 
-   peer->cmd.setArgument(2, (type == UModNoCatPeer::PEER_ACCEPT ? "permit" : "deny"));
+   peer->cmd.setArgument(3, (type == UModNoCatPeer::PEER_ACCEPT ? "permit" : "deny"));
 
    if (peer->cmd.execute(0, 0, -1, fd_stderr))
       {
-      peer->status = type;
+      int pid, status;
+retry:
+      pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much zombie...
 
-      (void) UProcess::waitpid(); // per evitare piu' di 1 zombie...
+      if (pid > 0)
+         {
+         U_SRV_LOG("child (pid %d) exited with value %d (%s)", pid, status, UProcess::exitInfo(status));
+
+         goto retry;
+         }
+
+      peer->status = type;
       }
 
    UServer_Base::logCommandMsgError(peer->cmd.getCommand());
@@ -647,7 +658,7 @@ UModNoCatPeer* UNoCatPlugIn::creatNewPeer(const UString& peer_ip)
 
    *((UIPAddress*)peer) = UServer_Base::pClientImage->socket->remoteIPAddress();
 
-   if (peer->mac.empty() && peer_ip == gateway) peer->mac = UServer_Base::getMacAddress(vfwopt[5].data()); // extdev
+   if (peer->mac.empty() && peer_ip == gateway) peer->mac = UServer_Base::getMacAddress(extdev.data());
    if (peer->mac.empty())                       peer->mac = U_STRING_FROM_CONSTANT("00:00:00:00:00:00");
 
    peer->rulenum    = total_connections + 1; // iptables FORWARD
@@ -655,7 +666,7 @@ UModNoCatPeer* UNoCatPlugIn::creatNewPeer(const UString& peer_ip)
 
    U_INTERNAL_DUMP("peer->rulenum = %u peer->index_AUTH = %u", peer->rulenum, peer->index_AUTH)
 
-   peer->setCommand(access_cmd);
+   peer->setCommand(fw_cmd);
 
    peers->insertAfterFind(peer->ip, peer);
 
@@ -963,6 +974,17 @@ const char* UNoCatPlugIn::getIPAddress(const char* ptr, uint32_t len)
    U_RETURN(pcStrAddress);
 }
 
+void UNoCatPlugIn::setHTTPResponse(const UString& content)
+{
+   U_TRACE(0, "UNoCatPlugIn::setHTTPResponse(%.*S)", U_STRING_TO_TRACE(content))
+
+   u_http_info.clength         = content.size();
+   u_http_info.nResponseCode   = HTTP_OK;
+   *UClientImage_Base::wbuffer = content;
+
+   UHTTP::setHTTPCgiResponse(false, false, false);
+}
+
 void UNoCatPlugIn::str_allocate()
 {
    U_TRACE(0, "UNoCatPlugIn::str_allocate()")
@@ -975,13 +997,10 @@ void UNoCatPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_EXTERNAL_DEVICE,0)
    U_INTERNAL_ASSERT_EQUALS(str_INTERNAL_DEVICE,0)
    U_INTERNAL_ASSERT_EQUALS(str_LOCAL_NETWORK,0)
-
    U_INTERNAL_ASSERT_EQUALS(str_AUTH_SERVICE_URL,0)
    U_INTERNAL_ASSERT_EQUALS(str_LOGOUT_URL,0)
    U_INTERNAL_ASSERT_EQUALS(str_LOGIN_TIMEOUT,0)
-   U_INTERNAL_ASSERT_EQUALS(str_INIT_CMD,0)
-   U_INTERNAL_ASSERT_EQUALS(str_ACCESS_CMD,0)
-   U_INTERNAL_ASSERT_EQUALS(str_RESET_CMD,0)
+   U_INTERNAL_ASSERT_EQUALS(str_FW_CMD,0)
    U_INTERNAL_ASSERT_EQUALS(str_DECRYPT_CMD,0)
    U_INTERNAL_ASSERT_EQUALS(str_DECRYPT_KEY,0)
    U_INTERNAL_ASSERT_EQUALS(str_CHECK_BY_ARPING,0)
@@ -997,24 +1016,24 @@ void UNoCatPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_User,0)
    U_INTERNAL_ASSERT_EQUALS(str_anonymous,0)
    U_INTERNAL_ASSERT_EQUALS(str_Traffic,0)
+   U_INTERNAL_ASSERT_EQUALS(str_GATEWAY_PORT,0)
+   U_INTERNAL_ASSERT_EQUALS(str_FW_ENV,0)
+   U_INTERNAL_ASSERT_EQUALS(str_IPHONE_SUCCESS,0)
 
    static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("ROUTE_ONLY") },
-      { U_STRINGREP_FROM_CONSTANT("DNS_ADDR") },
-      { U_STRINGREP_FROM_CONSTANT("INCLUDE_PORTS") },
-      { U_STRINGREP_FROM_CONSTANT("EXCLUDE_PORTS") },
-      { U_STRINGREP_FROM_CONSTANT("ALLOWED_WEB_HOSTS") },
-      { U_STRINGREP_FROM_CONSTANT("EXTERNAL_DEVICE") },
-      { U_STRINGREP_FROM_CONSTANT("INTERNAL_DEVICE") },
+      { U_STRINGREP_FROM_CONSTANT("RouteOnly") },
+      { U_STRINGREP_FROM_CONSTANT("DNSAddr") },
+      { U_STRINGREP_FROM_CONSTANT("IncludePorts") },
+      { U_STRINGREP_FROM_CONSTANT("ExcludePorts") },
+      { U_STRINGREP_FROM_CONSTANT("AllowedWebHosts") },
+      { U_STRINGREP_FROM_CONSTANT("ExternalDevice") },
+      { U_STRINGREP_FROM_CONSTANT("InternalDevice") },
       { U_STRINGREP_FROM_CONSTANT("INTERNAL_DEVICE_LABEL") },
-      { U_STRINGREP_FROM_CONSTANT("LOCAL_NETWORK") },
-
-      { U_STRINGREP_FROM_CONSTANT("AUTH_SERVICE_URL") },
+      { U_STRINGREP_FROM_CONSTANT("LocalNetwork") },
+      { U_STRINGREP_FROM_CONSTANT("AuthServiceAddr") },
       { U_STRINGREP_FROM_CONSTANT("LOGOUT_URL") },
       { U_STRINGREP_FROM_CONSTANT("LOGIN_TIMEOUT") },
-      { U_STRINGREP_FROM_CONSTANT("INIT_CMD") },
-      { U_STRINGREP_FROM_CONSTANT("RESET_CMD") },
-      { U_STRINGREP_FROM_CONSTANT("ACCESS_CMD") },
+      { U_STRINGREP_FROM_CONSTANT("FW_CMD") },
       { U_STRINGREP_FROM_CONSTANT("DECRYPT_CMD") },
       { U_STRINGREP_FROM_CONSTANT("DECRYPT_KEY") },
       { U_STRINGREP_FROM_CONSTANT("CHECK_BY_ARPING") },
@@ -1029,7 +1048,18 @@ void UNoCatPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("Token") },
       { U_STRINGREP_FROM_CONSTANT("User") },
       { U_STRINGREP_FROM_CONSTANT("anonymous") },
-      { U_STRINGREP_FROM_CONSTANT("Traffic") }
+      { U_STRINGREP_FROM_CONSTANT("Traffic") },
+      { U_STRINGREP_FROM_CONSTANT("GatewayPort") },
+      { U_STRINGREP_FROM_CONSTANT("FW_ENV") },
+      { U_STRINGREP_FROM_CONSTANT("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\">\n"
+                                  "<HTML>\n"
+                                  "<HEAD>\n"
+                                  "   <TITLE>Success</TITLE>\n"
+                                  "</HEAD>\n"
+                                  "<BODY>\n"
+                                  "Success\n"
+                                  "</BODY>\n"
+                                  "</HTML>") }
    };
 
    U_NEW_ULIB_OBJECT(str_ROUTE_ONLY,            U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -1041,29 +1071,28 @@ void UNoCatPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_INTERNAL_DEVICE,       U_STRING_FROM_STRINGREP_STORAGE(6));
    U_NEW_ULIB_OBJECT(str_INTERNAL_DEVICE_LABEL, U_STRING_FROM_STRINGREP_STORAGE(7));
    U_NEW_ULIB_OBJECT(str_LOCAL_NETWORK,         U_STRING_FROM_STRINGREP_STORAGE(8));
-
    U_NEW_ULIB_OBJECT(str_AUTH_SERVICE_URL,      U_STRING_FROM_STRINGREP_STORAGE(9));
    U_NEW_ULIB_OBJECT(str_LOGOUT_URL,            U_STRING_FROM_STRINGREP_STORAGE(10));
    U_NEW_ULIB_OBJECT(str_LOGIN_TIMEOUT,         U_STRING_FROM_STRINGREP_STORAGE(11));
-   U_NEW_ULIB_OBJECT(str_INIT_CMD,              U_STRING_FROM_STRINGREP_STORAGE(12));
-   U_NEW_ULIB_OBJECT(str_RESET_CMD,             U_STRING_FROM_STRINGREP_STORAGE(13));
-   U_NEW_ULIB_OBJECT(str_ACCESS_CMD,            U_STRING_FROM_STRINGREP_STORAGE(14));
-   U_NEW_ULIB_OBJECT(str_DECRYPT_CMD,           U_STRING_FROM_STRINGREP_STORAGE(15));
-   U_NEW_ULIB_OBJECT(str_DECRYPT_KEY,           U_STRING_FROM_STRINGREP_STORAGE(16));
-   U_NEW_ULIB_OBJECT(str_CHECK_BY_ARPING,       U_STRING_FROM_STRINGREP_STORAGE(17));
-
-   U_NEW_ULIB_OBJECT(str_Action,                U_STRING_FROM_STRINGREP_STORAGE(18));
-   U_NEW_ULIB_OBJECT(str_Permit,                U_STRING_FROM_STRINGREP_STORAGE(19));
-   U_NEW_ULIB_OBJECT(str_Deny,                  U_STRING_FROM_STRINGREP_STORAGE(20));
-   U_NEW_ULIB_OBJECT(str_Mode,                  U_STRING_FROM_STRINGREP_STORAGE(21));
-   U_NEW_ULIB_OBJECT(str_Redirect,              U_STRING_FROM_STRINGREP_STORAGE(22));
-   U_NEW_ULIB_OBJECT(str_renew,                 U_STRING_FROM_STRINGREP_STORAGE(23));
-   U_NEW_ULIB_OBJECT(str_Mac,                   U_STRING_FROM_STRINGREP_STORAGE(24));
-   U_NEW_ULIB_OBJECT(str_Timeout,               U_STRING_FROM_STRINGREP_STORAGE(25));
-   U_NEW_ULIB_OBJECT(str_Token,                 U_STRING_FROM_STRINGREP_STORAGE(26));
-   U_NEW_ULIB_OBJECT(str_User,                  U_STRING_FROM_STRINGREP_STORAGE(27));
-   U_NEW_ULIB_OBJECT(str_anonymous,             U_STRING_FROM_STRINGREP_STORAGE(28));
-   U_NEW_ULIB_OBJECT(str_Traffic,               U_STRING_FROM_STRINGREP_STORAGE(29));
+   U_NEW_ULIB_OBJECT(str_FW_CMD,                U_STRING_FROM_STRINGREP_STORAGE(12));
+   U_NEW_ULIB_OBJECT(str_DECRYPT_CMD,           U_STRING_FROM_STRINGREP_STORAGE(13));
+   U_NEW_ULIB_OBJECT(str_DECRYPT_KEY,           U_STRING_FROM_STRINGREP_STORAGE(14));
+   U_NEW_ULIB_OBJECT(str_CHECK_BY_ARPING,       U_STRING_FROM_STRINGREP_STORAGE(15));
+   U_NEW_ULIB_OBJECT(str_Action,                U_STRING_FROM_STRINGREP_STORAGE(16));
+   U_NEW_ULIB_OBJECT(str_Permit,                U_STRING_FROM_STRINGREP_STORAGE(17));
+   U_NEW_ULIB_OBJECT(str_Deny,                  U_STRING_FROM_STRINGREP_STORAGE(18));
+   U_NEW_ULIB_OBJECT(str_Mode,                  U_STRING_FROM_STRINGREP_STORAGE(19));
+   U_NEW_ULIB_OBJECT(str_Redirect,              U_STRING_FROM_STRINGREP_STORAGE(20));
+   U_NEW_ULIB_OBJECT(str_renew,                 U_STRING_FROM_STRINGREP_STORAGE(21));
+   U_NEW_ULIB_OBJECT(str_Mac,                   U_STRING_FROM_STRINGREP_STORAGE(22));
+   U_NEW_ULIB_OBJECT(str_Timeout,               U_STRING_FROM_STRINGREP_STORAGE(23));
+   U_NEW_ULIB_OBJECT(str_Token,                 U_STRING_FROM_STRINGREP_STORAGE(24));
+   U_NEW_ULIB_OBJECT(str_User,                  U_STRING_FROM_STRINGREP_STORAGE(25));
+   U_NEW_ULIB_OBJECT(str_anonymous,             U_STRING_FROM_STRINGREP_STORAGE(26));
+   U_NEW_ULIB_OBJECT(str_Traffic,               U_STRING_FROM_STRINGREP_STORAGE(27));
+   U_NEW_ULIB_OBJECT(str_GATEWAY_PORT,          U_STRING_FROM_STRINGREP_STORAGE(28));
+   U_NEW_ULIB_OBJECT(str_FW_ENV,                U_STRING_FROM_STRINGREP_STORAGE(29));
+   U_NEW_ULIB_OBJECT(str_IPHONE_SUCCESS,        U_STRING_FROM_STRINGREP_STORAGE(30));
 }
 
 // Server-wide hooks
@@ -1075,94 +1104,90 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
    // -----------------------------------------------------------------------------------------------------------------------------------
    // mod_nocat - plugin parameters
    // -----------------------------------------------------------------------------------------------------------------------------------
+   // FW_ENV                environment for shell script to execute
+   // FW_CMD                shell script to manage the firewall
    //
-   // FIREWALL OPTIONS (8 + 2): params for setup the firewall rules, write data to /tmp/firewall.opt
-   // ********************************************************************************************************************
-   // ROUTE_ONLY, DNS_ADDR, INCLUDE_PORTS, EXCLUDE_PORTS,
-   // ALLOWED_WEB_HOSTS, EXTERNAL_DEVICE, INTERNAL_DEVICE, LOCAL_NETWORK
-   // ********************************************************************************************************************
+   // LOGOUT_URL            URL to redirect user after logout
+   // PUBLIC_ADDRESS        address to contact access point from portal
+   // INTERNAL_DEVICE_LABEL radio tag to be used from portal
    //
-   // AUTH_SERVICE_URL  URLs to the login script at the authservice. Must be set to the address of your authentication service
-   // LOGOUT_URL        URLs to redirect user after logout
+   // DECRYPT_CMD           PGP command stuff
+   // DECRYPT_KEY           DES3 password stuff
    //
-   // DECRYPT_CMD       PGP command stuff
-   // DECRYPT_KEY       DES3 password stuff
-   //
-   // INIT_CMD          shell commands to  init           the firewall
-   // RESET_CMD         shell commands to reset           the firewall
-   // ACCESS_CMD        shell commands to  open and close the firewall
-   //
-   // LOGIN_TIMEOUT     Number of seconds after a client's last login/renewal to terminate their connection
-   // CHECK_BY_ARPING   metodo aggiuntivo per verificare la presenza di un peer nella tabella ARP (yes -> abilitato)
+   // LOGIN_TIMEOUT         Number of seconds after a client last login/renewal to terminate their connection
+   // CHECK_BY_ARPING       metodo aggiuntivo per verificare la presenza di un peer nella tabella ARP (yes -> abilitato)
    // -----------------------------------------------------------------------------------------------------------------------------------
 
    if (cfg.loadTable())
       {
-      init_cmd    = cfg[*str_INIT_CMD];
-      reset_cmd   = cfg[*str_RESET_CMD];
-      access_cmd  = cfg[*str_ACCESS_CMD];
-      decrypt_cmd = cfg[*str_DECRYPT_CMD];
-      decrypt_key = cfg[*str_DECRYPT_KEY];
+      int port;
+      UString pathconf, fw_env, command(100U), intdevlbl, sport, tmp;
 
-      (void) vauth_login.split(cfg[*str_AUTH_SERVICE_URL], 0, true);
-      (void) vauth_logout.split(cfg[*str_LOGOUT_URL], 0, true);
+      fw_env = cfg[*str_FW_ENV];
 
-      U_INTERNAL_ASSERT_EQUALS(vauth_login.size(), vauth_logout.size())
+      if (fw_env.empty()) goto err;
+
+      fw_cmd        = cfg[*str_FW_CMD];
+      intdevlbl     = cfg[*str_INTERNAL_DEVICE_LABEL];
+      decrypt_cmd   = cfg[*str_DECRYPT_CMD];
+      decrypt_key   = cfg[*str_DECRYPT_KEY];
 
       arping        = cfg.readBoolean(*str_CHECK_BY_ARPING);
       login_timeout = cfg.readLong(*str_LOGIN_TIMEOUT);
+
+      (void) vauth_logout.split(cfg[*str_LOGOUT_URL], 0, true);
 
       U_INTERNAL_DUMP("login_timeout = %ld", login_timeout)
 
       if (login_timeout > U_NOCAT_MAX_TIMEOUT) login_timeout = U_NOCAT_MAX_TIMEOUT; // check for safe timeout...
 
-      /*
-      # ---------------------------------------------------------------------------------------------------------------------------------------------------
-      # FIREWALL OPTIONS (8 + 2): Allows you to tell the params to setup the default firewall rules
-      # ---------------------------------------------------------------------------------------------------------------------------------------------------
-      # 1 RouteOnly        Required only if you DO NOT want your gateway to act as a NAT. Give this only if you are running a strictly routed
-      #                    network, and do not need the gateway to enable NAT for you
-      #
-      # 2 DNSAddr          *If* you choose not to run DNS on your internal network, specify the address(es) of one or more domain name server
-      #                    on the Internet that wireless clients can use to get out. Should be the same DNS that your DHCP server hands out
-      #
-      # 3 IncludePorts     Specify TCP ports to allow access to when public class users login. All others will be denied
-      #
-      # 4 ExcludePorts     Specify TCP ports to denied access to when public class users login. All others will be allowed. Note that you should
-      #                    use either IncludePorts or ExcludePorts, but not both. If neither is specified, access is granted to all ports to public
-      #                    class users. You should *always* exclude port 25, unless you want to run an portal for wanton spam sending. Users should
-      #                    have their own way of sending mail. It sucks, but that is the way it is. Comment this out *only if* you are using
-      #                    IncludePorts instead
-      #
-      # 5 AllowedWebHosts  List any domains that you would like to allow web access (TCP port 80 and 443) BEFORE logging in (this is the
-      #                    pre-skip stage, so be careful about what you allow
-      # ---------------------------------------------------------------------------------------------------------------------------------------------------
-      */
+      tmp = UStringExt::getEnvironmentVar(*str_INTERNAL_DEVICE, &fw_env);
 
-      vfwopt.push(cfg[*str_ROUTE_ONLY]);
-      vfwopt.push(cfg[*str_DNS_ADDR]);
-      vfwopt.push(cfg[*str_INCLUDE_PORTS]);
-      vfwopt.push(cfg[*str_EXCLUDE_PORTS]);
-      vfwopt.push(cfg[*str_ALLOWED_WEB_HOSTS]);
+      if (tmp.empty() == false) intdev = tmp;
 
-      /*
-      # **************************************************************************************************************************************************
-      # NETWORK PARAMS (autodetected if not specified)
-      # **************************************************************************************************************************************************
-      # 6 ExternalDevice the interface connected to the Internet. Usually 'eth0' or 'eth1' under Linux, or maybe even 'ppp0' if you're running PPP or PPPoE
-      #
-      # 7 InternalDevice Required if and only if your machine has more than two network interfaces. Must be set to the interface connected to your local
-      #                  network, normally your wireless card
-      #
-      # 8 LocalNetwork   Must be set to the network address and net mask of your internal network. You can use the number of bits in the netmask
-      #                  (e.g. /16, /24, etc.) or the full x.x.x.x specification
-      # **************************************************************************************************************************************************
-      */
+      tmp = UStringExt::getEnvironmentVar(*str_EXTERNAL_DEVICE, &fw_env);
 
-      UString extdev    = cfg[*str_EXTERNAL_DEVICE],
-              intdev    = cfg[*str_INTERNAL_DEVICE],
-              intdevlbl = cfg[*str_INTERNAL_DEVICE_LABEL],
-              localnet  = cfg[*str_LOCAL_NETWORK];
+      if (tmp.empty() == false) extdev = tmp;
+
+      tmp = UStringExt::getEnvironmentVar(*str_LOCAL_NETWORK, &fw_env);
+
+      if (tmp.empty() == false) localnet = tmp;
+
+      tmp = UStringExt::getEnvironmentVar(*str_AUTH_SERVICE_URL, &fw_env);
+
+      if (tmp.empty() == false) auth_login = tmp;
+
+      tmp = UStringExt::getEnvironmentVar(*str_GATEWAY_PORT, &fw_env);
+
+      if (tmp.empty() == false) port = tmp.strtol();
+
+      pathconf = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("FW_CONF"), &fw_env);
+
+      if (pathconf.empty() == false)
+         {
+         UString data      = UFile::contentOf(pathconf);
+         const char* end   = data.end();
+         const char* start = data.data();
+
+         cfg.clear();
+
+         if (UFileConfig::loadProperties(cfg.table, start, end) == false) goto err;
+
+         intdev     = cfg[*str_INTERNAL_DEVICE];
+         extdev     = cfg[*str_EXTERNAL_DEVICE];
+         localnet   = cfg[*str_LOCAL_NETWORK];
+         auth_login = cfg[*str_AUTH_SERVICE_URL];
+         port       = cfg.readLong(*str_GATEWAY_PORT);
+         }
+
+      command.snprintf("/bin/sh %.*s request", U_STRING_TO_TRACE(fw_cmd));
+
+      cmd.set(command, (char**)0);
+      cmd.setEnvironment(&fw_env);
+
+      (void) vauth_login.split(auth_login, 0, true);
+
+      U_INTERNAL_ASSERT_EQUALS(vauth_login.size(), vauth_logout.size())
 
       if (extdev.empty())
          {
@@ -1173,8 +1198,6 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
          U_SRV_LOG("Autodetected ExternalDevice %S", extdev.data());
          }
 
-      vfwopt.push(extdev);
-
       if (intdev.empty())
          {
          intdev = UServer_Base::getNetworkDevice(extdev.data());
@@ -1184,13 +1207,10 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
          U_SRV_LOG("Autodetected InternalDevice %S", intdev.data());
          }
 
-      vfwopt.push(intdev);
-
+      (void) vInternalDeviceLabel.split(intdevlbl, 0, true);
       num_radio = vInternalDevice.split(intdev, 0, true);
 
       U_INTERNAL_DUMP("num_radio = %u", num_radio)
-
-      (void) vInternalDeviceLabel.split(intdevlbl, 0, true);
 
       if (localnet.empty())
          {
@@ -1201,42 +1221,35 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
          U_SRV_LOG("Autodetected LocalNetwork %S", localnet.data());
          }
 
-      vfwopt.push(localnet);
-
       (void) vLocalNetwork.split(localnet, 0, true);
       (void) UIPAllow::parseMask(localnet, vLocalNetworkMask);
 
-      /*
-      # **************************************************************************************************************************************************
-      # AUTOMATIC PARAMS ADDED BY THIS PLUGIN
-      # **************************************************************************************************************************************************
-      #  9 GatewayPort     The TCP port to bind the gateway service to. 5280 is de-facto standard for NoCatAuth. Change this only if you absolutely need to
-      # 10 AuthServiceAddr the address of your authentication service. You must use an IP address if DNS resolution isn't available at gateway startup
-      # **************************************************************************************************************************************************
-      */
+      UServer_Base::port = (port ? port : 5280);
 
-      int port      = UServer_Base::getPort();
-      UString sport = UStringExt::numberToString(port);
+      sport = UStringExt::numberToString(UServer_Base::port);
 
-      vfwopt.push(sport);
-
-      if (port != 80) gateway = ':' + sport;
+      if (UServer_Base::port != 80) gateway = ':' + sport;
 
       U_INTERNAL_DUMP("gateway = %.*S", U_STRING_TO_TRACE(gateway))
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+
+err:
+   U_SRV_LOG("configuration of plugin FAILED");
+
+   U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }
 
 int UNoCatPlugIn::handlerInit()
 {
    U_TRACE(0, "UNoCatPlugIn::handlerInit()")
 
-   if (init_cmd.empty() == false)
+   if (fw_cmd.empty() == false)
       {
       Url* url;
+      UString auth_ip;
       UIPAddress addr;
-      UString opt, auth_ip;
 
       // NB: get IP address of AUTH hosts...
 
@@ -1272,34 +1285,21 @@ int UNoCatPlugIn::handlerInit()
 
       U_INTERNAL_ASSERT_EQUALS(vauth_ip.size(), vauth_login.size())
 
-      opt = vauth_ip.join(U_CONSTANT_TO_PARAM(" "));
-
-      vfwopt.push(opt);
-
-      // FIREWALL OPTIONS (8 + 2): params for setup the firewall rules, write data to /tmp/firewall.opt
-
-      opt = vfwopt.join();
-
-      opt.push_back('\n');
-
-      (void) UFile::writeTo(U_STRING_FROM_CONSTANT("/tmp/firewall.opt"), opt);
-
       // crypto cmd
 
-                                        cmd.set(   init_cmd, (char**)0);
       if (decrypt_cmd.empty() == false) pgp.set(decrypt_cmd, (char**)0);
 
       U_INTERNAL_ASSERT(decrypt_key.isNullTerminated())
 
       if (decrypt_key.empty() == false) UDES3::setPassword(decrypt_key.data());
 
-#  ifdef DEBUG
-      fd_stderr = UFile::creat("/tmp/firewall.err", O_WRONLY | O_APPEND, PERM_FILE);
-#  else
-      fd_stderr = UServices::getDevNull();
-#  endif
+      // initialize the firewall: direct all port 80 traffic to us...
 
-      (void) cmd.executeAndWait(0, -1, fd_stderr); // initialize the firewall: direct all port 80 traffic to us...
+      fd_stderr = UServices::getDevNull();
+
+      cmd.setArgument(3, "initialize");
+
+      (void) cmd.executeAndWait(0, -1, fd_stderr);
 
       UServer_Base::logCommandMsgError(cmd.getCommand());
 
@@ -1366,7 +1366,7 @@ int UNoCatPlugIn::handlerRequest()
    U_TRACE(0, "UNoCatPlugIn::handlerRequest()")
 
    if (UHTTP::isHTTPRequestNotFound() &&
-       init_cmd.empty() == false)
+       fw_cmd.empty() == false)
       {
       Url url;
       bool refresh = false;
@@ -1422,12 +1422,6 @@ int UNoCatPlugIn::handlerRequest()
             // status
 
             setStatusContent(peer); // NB: peer == 0 -> request from AUTH to get status access point...
-
-            u_http_info.clength         = status_content->size();
-            u_http_info.nResponseCode   = HTTP_OK;
-            *UClientImage_Base::wbuffer = *status_content;
-
-            UHTTP::setHTTPCgiResponse(false, false, false);
 
             goto end;
             }
@@ -1562,6 +1556,34 @@ int UNoCatPlugIn::handlerRequest()
          goto redirect;
          }
 
+      // NB: check for strange initial WiFi behaviour of the iPhone...
+
+      if (U_HTTP_URI_STRNEQ("/library/test/success.html")  &&
+          host.equal(U_CONSTANT_TO_PARAM("www.apple.com")) &&
+          u_find(U_HTTP_USER_AGENT_TO_PARAM, U_CONSTANT_TO_PARAM("CaptiveNetworkSupport")) != 0)
+         {
+         /* When the iPhone automatically assesses the WiFi connection they appear to
+          * issue a HTTP GET request to http://www.apple.com/library/test/success.html.
+          * This is issued by a User Agent 'CaptiveNetworkSupport' and it does not attempt
+          * to use any proxy that may be configured on the iPhone. This attempt will obviously
+          * result in a 404 failure and the WLAN text. After this the iPhone attempts to connect
+          * to www.apple.com again, this time through Safari to some-kind of login page, again
+          * resulting in the WLAN text. The WiFi link on the iPhone is then discarded. It was clear
+          * that initial connection needed to succeed. When that connection was attempted a single
+          * page of HTML is returned which has the word 'Success' in it. Once this behaviour had
+          * been characterised casual Internet searching found that several people had noted this
+          * behaviour as well, and speculated upon its meaning. What is clear is that Apple fail
+          * to document it. Since the iPhone needs a positive response to its strange little query
+          * it was decided to give it one.
+          */
+
+         U_SRV_LOG("detected strange initial WiFi request from peer %.*S", U_STRING_TO_TRACE(ip_client));
+
+         setHTTPResponse(*str_IPHONE_SUCCESS);
+
+         goto end;
+         }
+
       if (U_http_version == '1' &&
           host           == gateway)
          {
@@ -1637,22 +1659,26 @@ const char* UNoCatPlugIn::dump(bool _reset) const
                   << "mode                 (UString                  " << (void*)&mode                 << ")\n"
                   << "input                (UString                  " << (void*)&input                << ")\n"
                   << "output               (UString                  " << (void*)&output               << ")\n"
+                  << "extdev               (UString                  " << (void*)&extdev               << ")\n"
+                  << "fw_cmd               (UString                  " << (void*)&fw_cmd               << ")\n"
                   << "gateway              (UString                  " << (void*)&gateway              << ")\n"
                   << "location             (UString                  " << (void*)&location             << ")\n"
-                  << "init_cmd             (UString                  " << (void*)&init_cmd             << ")\n"
-                  << "reset_cmd            (UString                  " << (void*)&reset_cmd            << ")\n"
-                  << "access_cmd           (UString                  " << (void*)&access_cmd           << ")\n"
+                  << "dns_addr             (UString                  " << (void*)&dns_addr             << ")\n"
+                  << "route_only           (UString                  " << (void*)&route_only           << ")\n"
+                  << "auth_login           (UString                  " << (void*)&auth_login           << ")\n"
                   << "decrypt_cmd          (UString                  " << (void*)&decrypt_cmd          << ")\n"
                   << "decrypt_key          (UString                  " << (void*)&decrypt_key          << ")\n"
                   << "access_point         (UString                  " << (void*)&access_point         << ")\n"
+                  << "include_ports        (UString                  " << (void*)&include_ports        << ")\n"
+                  << "exclude_ports        (UString                  " << (void*)&exclude_ports        << ")\n"
                   << "status_content       (UString                  " << (void*)status_content        << ")\n"
+                  << "allowed_web_hosts    (UString                  " << (void*)&allowed_web_hosts    << ")\n"
                   << "cmd                  (UCommand                 " << (void*)&cmd                  << ")\n"
                   << "pgp                  (UCommand                 " << (void*)&pgp                  << ")\n"
                   << "ipt                  (UIptAccount              " << (void*)ipt                   << ")\n"
                   << "vinfo_url            (UVector<Url*>            " << (void*)&vinfo_url            << ")\n"
                   << "vlogout_url          (UVector<Url*>            " << (void*)&vlogout_url          << ")\n"
                   << "vauth_service_url    (UVector<Url*>            " << (void*)&vauth_service_url    << ")\n"
-                  << "vfwopt               (UVector<UString>         " << (void*)&vfwopt               << ")\n"
                   << "vauth_ip             (UVector<UString>         " << (void*)&vauth_ip             << ")\n"
                   << "vauth_login          (UVector<UString>         " << (void*)&vauth_login          << ")\n"
                   << "vauth_logout         (UVector<UString>         " << (void*)&vauth_logout         << ")\n"

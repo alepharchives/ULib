@@ -22,8 +22,8 @@ extern "C" {
 
 /* Encode-Decode quoted_printable into a buffer */
 
-extern U_EXPORT uint32_t u_quoted_printable_encode(const unsigned char* restrict s, uint32_t n, unsigned char* restrict result);
-extern U_EXPORT uint32_t u_quoted_printable_decode(const          char* restrict s, uint32_t n, unsigned char* restrict result);
+U_EXPORT uint32_t u_quoted_printable_encode(const unsigned char* restrict s, uint32_t n, unsigned char* restrict result);
+U_EXPORT uint32_t u_quoted_printable_decode(const          char* restrict s, uint32_t n, unsigned char* restrict result);
 
 #ifdef __cplusplus
 }

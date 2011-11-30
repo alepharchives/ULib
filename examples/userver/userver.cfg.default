@@ -64,7 +64,7 @@ userver {
 # IP_ADDRESS     10.30.1.131
 # ALLOWED_IP     127.0.0.1,10.30.0.0/16
 
-# LISTEN_BACKLOG		  512
+  LISTEN_BACKLOG		  1024
   USE_TCP_OPTIMIZATION yes
 
   PID_FILE       /var/run/userver.pid
@@ -72,9 +72,9 @@ userver {
 # RUN_AS_USER    apache
   DOCUMENT_ROOT  /var/www/localhost/htdocs
 
-  LOG_FILE       /var/log/userver.log
-  LOG_FILE_SZ    1M
-  LOG_MSG_SIZE   -1
+# LOG_FILE       /var/log/userver.log
+# LOG_FILE_SZ    1M
+# LOG_MSG_SIZE   -1
 
   PLUGIN                     mod_http
 # PLUGIN         "mod_tsa    mod_http"
@@ -92,7 +92,7 @@ userver {
   REQ_TIMEOUT    30
   CGI_TIMEOUT    60
 
-  MAX_KEEP_ALIVE 1024
+# MAX_KEEP_ALIVE 1000
 
 # DH_FILE        ../ulib/CA/param.dh
 # CERT_FILE      ../ulib/CA/server.crt
@@ -538,105 +538,44 @@ mod_http {
 # --------------------------------------------------------------------------------------------------------------------
 # mod_nocat - plugin parameters
 # --------------------------------------------------------------------------------------------------------------------
+# FW_ENV                environment for shell script to execute
+# FW_CMD                shell script to manage the firewall
 #
-# FIREWALL OPTIONS (8 + 2): params for setup the firewall rules, write data to /tmp/firewall.opt
-# ********************************************************************************************************************
-# ROUTE_ONLY, DNS_ADDR, INCLUDE_PORTS, EXCLUDE_PORTS,
-# ALLOWED_WEB_HOSTS, EXTERNAL_DEVICE, INTERNAL_DEVICE, LOCAL_NETWORK
-# ********************************************************************************************************************
+# LOGOUT_URL            URL to redirect user after logout
+# PUBLIC_ADDRESS        address to contact access point from portal
+# INTERNAL_DEVICE_LABEL radio tag to be used from portal
 #
-# AUTH_SERVICE_URL  URL to the login service at the authservice. Must be set to the address of your authentication service
-# LOGOUT_URL        URL to redirect user after logout
+# DECRYPT_CMD           PGP command stuff
+# DECRYPT_KEY           DES3 password stuff
 #
-# DECRYPT_CMD       PGP command stuff
-# DECRYPT_KEY       DES3 password stuff
-#
-# INIT_CMD          shell commands to  init          the firewall
-# RESET_CMD         shell commands to reset          the firewall
-# ACCESS_CMD        shell commands to open and close the firewall
-#
-# LOGIN_TIMEOUT     Number of seconds after a client last login/renewal to terminate their connection
-# CHECK_BY_ARPING   metodo aggiuntivo per verificare la presenza di un peer nella tabella ARP (yes -> abilitato)
+# LOGIN_TIMEOUT         Number of seconds after a client last login/renewal to terminate their connection
+# CHECK_BY_ARPING       method to verify the presence of a peer in the ARP table (yes -> enabled)
 # --------------------------------------------------------------------------------------------------------------------
 
 # mod_nocat {
 
-   ## ********************************************************************************************************************
-   ## FIREWALL OPTIONS (8 + 2): Allows you to tell the params to setup the default firewall rules  
-   ## ********************************************************************************************************************
-   # Required only if you DO NOT want your gateway to act as a NAT. Give this only if you are running a strictly routed
-   # network, and do not need the gateway to enable NAT for you
-#  ROUTE_ONLY 1
-
-   # If you choose not to run DNS on your internal network, specify the address(es) of one or more domain name server
-   # on the Internet that wireless clients can use to get out. Should be the same DNS that your DHCP server hands out
-#  DNS_ADDR	  192.168.210.254
-
-   # Specify TCP ports to allow access to when public class users login. All others will be denied
-#  INCLUDE_PORTS "22 80 443"
-
-   # Specify TCP ports to denied access to when public class users login. All others will be allowed. Note that you should
-   # use either IncludePorts or ExcludePorts, but not both. If neither is specified, access is granted to all ports to public
-   # class users. You should *always* exclude port 25, unless you want to run an portal for wanton spam sending. Users should
-   # have their own way of sending mail. It sucks, but that is the way it is.
-	#  Comment this out *only if* you are using INCLUDE_PORTS instead
-#  EXCLUDE_PORTS "23 25 111"
-
-   # List any domains that you would like to allow web access (TCP port 80 and 443) BEFORE logging in (this is the
-   # pre-skip stage, so be careful about what you allow
-#  ALLOWED_WEB_HOSTS "159.213.247.45 159.213.248.2"
-
-   ## NETWORK PARAMS (autodetected if not specified)
-
-   # the interface connected to the Internet. Usually eth0 or eth1 under Linux, or maybe even ppp0 if you are running PPP or PPPoE
-#  EXTERNAL_DEVICE eth0
-
-   # Required if and only if your machine has more than two network interfaces. Must be set to the interface connected to your local
-   # network, normally your wireless card
-#  INTERNAL_DEVICE "ath0 ath1"
-#  INTERNAL_DEVICE_LABEL "radio1 radio2"
-
-   # Must be set to the network address and net mask of your internal network. You can use the number of bits in the netmask
-   # (e.g. /16, /24, etc.) or the full x.x.x.x specification
-#  LOCAL_NETWORK "192.168.210.0/24 192.168.211.0/24"
-
-   ## AUTOMATIC PARAMS ADDED BY THIS PLUGIN
-
-   #  9 GatewayPort     The TCP port to bind the gateway service to. 5280 is de-facto standard for NoCatAuth
-   # 10 AuthServiceAddr the address of your authentication service.
-   ## ********************************************************************************************************************
-
-   # URL to the login service at the authservice. Must be set to the address of your authentication service
-   # You must use an IP address if DNS resolution is not available at gateway startup
-#  AUTH_SERVICE_URL   "http://10.30.1.131/"
-#  AUTH_SERVICE_URL   "https://94.138.39.147/"
+   # shell script to manage the firewall
+#  FW_CMD firewall/nodog.fw
+#  FW_ENV "FW_CONF=/etc/nodog_fw.conf"
 
    # URL to redirect user after logout
-#  LOGOUT_URL         "http://10.30.1.131/logout"
-#  LOGOUT_URL         "https://94.138.39.147/logout"
+#  LOGOUT_URL "http://10.30.1.131/logout"
 
    # address to contat access point from portal
-#  PUBLIC_ADDRESS     10.30.1.131:5280
+#  PUBLIC_ADDRESS 10.30.1.131:5280
+
+   # radio tag to be used by portal
+#  INTERNAL_DEVICE_LABEL "radio1 radio2"
+
+   # PGP command stuff
+#  DECRYPT_CMD "/usr/bin/gpg --decrypt --homedir=/usr/share/nocat/pgp --batch --decrypt --no-tty --status-file /tmp/gpg.status -o -"
+
+   # DES3 password stuff
+#  DECRYPT_KEY PASSWORD
 
    # Number of seconds after a client last login/renewal to terminate their connection
    # Probably do not want to set this to less than 60 or a lot of bandwidth is likely to get consumed by the client renewal attempts
 #  LOGIN_TIMEOUT     86400 # one notification per day
-
-   # PGP command stuff
-#  DECRYPT_CMD       "/usr/bin/gpg --decrypt --homedir=/usr/share/nocat/pgp --batch --decrypt --no-tty --status-file /tmp/gpg.status -o -"
-
-   # DES3 password stuff
-#  DECRYPT_KEY       PASSWORD
-
-   # setup the default firewall rules
-#  INIT_CMD          firewall/initialize.fw
-
-   # reset the default firewall rules
-#  RESET_CMD         firewall/reset.fw
-
-   # access control script to open and close firewall
-   # AUTOMATIC PARAMS(5) ADDED BY THIS PLUGIN: [action(permit|deny) mac ip class(Owner|Member|Public)] rulenum
-#  ACCESS_CMD        firewall/access.fw
 
    # metodo aggiuntivo per verificare la presenza di un peer nella tabella ARP (yes -> abilitato)
 #  CHECK_BY_ARPING yes

@@ -1,30 +1,5 @@
 #!/bin/bash
 
-# set -x
-# env >/tmp/main.bash.env
-
-# load environment
-. $HOME/etc/$VIRTUAL_HOST/script.conf 2>/dev/null
-
-export TITLE_TXT HEAD_HTML BODY_SHTML BODY_STYLE \
-		 SESSION_ID CONNECTION_CLOSE SET_COOKIE TMPFILE OUTPUT HTTP_RESPONSE_HEADER HTTP_RESPONSE_BODY \
-		 OP FILE_CTX MAC IP GATEWAY AP TMP_FORM_FILE UUID CALLER_ID USER SIGNED_DATA UUID_TO_APPEND POLICY WA_UID
-
-# --------------------------------
-#  session cookie (no NAT)
-# --------------------------------
-SESSION_ID=$REMOTE_ADDR
-# --------------------------------
-#  session cookie (with NAT)
-# --------------------------------
-#  if [ -n "$HTTP_COOKIE" ]; then
-#     SESSION_ID=$HTTP_COOKIE
-#  else
-#     SET_COOKIE=SESS_$$
-#     SESSION_ID=$SET_COOKIE
-#  fi
-# --------------------------------
-
 #-----------------------------------
 # START STATISTICS FUNCTION
 #-----------------------------------
@@ -553,8 +528,6 @@ anomalia() {
 
 main_page() {
 
-#	set -x
-
 	# 1 -> mac
 	# 2 -> ip
 	# 3 -> redirect
@@ -576,6 +549,22 @@ main_page() {
 		BODY_SHTML=`printf "$FMT" $LOGIN_URL "$1" "$2" "$3" "$4" "$5" "$6" "$7" 2>/dev/null`
 
 	elif [ "$VIRTUAL_HOST" = "www.auth-firenze.com" ]; then
+
+		if [ "$REQUEST_URI" = "/login" ]; then
+
+			if [ -r $DIR_TEMPLATE/main.tmpl ]; then
+
+				BODY_SHTML=`cat $DIR_TEMPLATE/main.tmpl 2>/dev/null`
+
+				BODY_SHTML=`printf "$BODY_SHTML" "http://$HTTP_HOST/main?$QUERY_STRING" 2>/dev/null`
+
+				return
+			fi
+
+		elif [ "$REQUEST_URI" = "/main" ]; then
+
+			REQUEST_URI=/login
+		fi
 
 		get_user_context_connection
 
@@ -668,8 +657,6 @@ main_page() {
 					  $LOGOUT	  $LOGOUT \
 					  $STATUS	  $STATUS
 	fi
-
-#	set +x
 }
 
 get_user_context_connection() {
@@ -745,8 +732,6 @@ END
 }
 
 send_ticket_to_nodog() {
-
-#	set -x
 
 	# ------------------------
 	# $1 -> mac
@@ -913,6 +898,27 @@ user_has_valid_MAC() {
 	fi
 }
 
+check_if_user_connected_to_AP_with_NO_LIMIT() {
+
+	# List of Access Point with NO LIMIT
+
+	FILE=$HOME/etc/$VIRTUAL_HOST/.AP_NO_LIMIT
+
+	if [ -s $FILE ]; then
+
+		while read AP_NO_LIMIT
+		do
+			if [ "AP_NO_LIMIT" = "$1" ]; then
+				return
+			fi
+		done < $FILE
+	fi
+
+	LOGOUT=true
+
+	ask_nodog_to_logout_user
+}
+
 _date() { date '+%Y/%m/%d %H:%M:%S' ; }
 
 write_to_LOG() {
@@ -996,11 +1002,11 @@ send_request_to_nodog() {
 	fi
 }
 
+# NB: check if /etc/openldap/ldap.conf contains TLS_REQCERT never
+# --------------------------------------------------------------------------------------------------------------------
 # ldapsearch -v -H 'ldaps://94.138.39.149:636' -b ou=users,o=unwired-portal -D cn=admin,o=unwired-portal -w programmer
 
 ask_to_LDAP() {
-
-#	set -x
 
 	# $1 -> cmd
 	# $2 -> param
@@ -1033,13 +1039,9 @@ END
 			anomalia 8
 		fi
 	fi
-
-#	set +x
 }
 
 load_policy() {
-
-#	set -x
 
 	if [ -z "$POLICY" ]; then
 		anomalia 10
@@ -1054,8 +1056,6 @@ load_policy() {
 	source $DIR_POLICY/$POLICY
 
  	mkdir -p $DIR_CNT/$POLICY
-
-#	set +x
 }
 
 save_connection_request() {
@@ -1111,8 +1111,6 @@ get_user_context_connection() {
 
 check_for_user_already_connected() {
 
-# 	set -x
-
 	# $1 -> mac
 	# $2 -> ip
 	# $3 -> gateway
@@ -1131,8 +1129,6 @@ check_for_user_already_connected() {
 			OP=RENEW
 		fi
 	fi
-
-# 	set +x
 }
 
 user_has_valid_cert() {
@@ -1172,20 +1168,14 @@ logout_with_problem() {
 
 ask_nodog_status_user() {
 
-#	set -x
-
 	# we request the status of the indicated user...
 	# -----------------------------------------------------------------------------
 	# NB: we need PREFORK_CHILD > 2
 	# -----------------------------------------------------------------------------
 	send_request_to_nodog "status?ip=$REMOTE_ADDR"
-
-#	set +x
 }
 
 ask_nodog_to_logout_user() {
-
-#	set -x
 
 	# we request to logout this user with the old ip from the associated gateway...
 	# -----------------------------------------------------------------------------
@@ -1196,17 +1186,11 @@ ask_nodog_to_logout_user() {
 	sign_data
 
 	send_request_to_nodog "logout?$SIGNED_DATA"
-
-#	set +x
 }
 
 sign_data() {
 
-#	set -x
-
 	SIGNED_DATA=`echo -n -E "$SIGNED_DATA" | openssl des3 -pass pass:200912281747 -a -e | tr -d '\n'`
-
-#	set +x
 }
 
 info_notified_from_nodog() {
@@ -1219,8 +1203,6 @@ info_notified_from_nodog() {
 	# $6 -> logout
 	# $7 -> connected
 	# $8 -> traffic
-
-# 	set -x
 
 	OP=LOGOUT
 
@@ -1299,11 +1281,10 @@ info_notified_from_nodog() {
 		# ---------------------------------------------------------
 		write_FILE $TRAFFIC $FILE_CNT.traffic
 
-		if [ $TRAFFIC -eq 0 -a -z "$LOGOUT" ]; then
+		if [ $TRAFFIC -eq 0 -a \
+			  -z "$LOGOUT" ]; then
 
-			LOGOUT=true
-
-			ask_nodog_to_logout_user
+			check_if_user_connected_to_AP_with_NO_LIMIT $4
 
 		fi
 		# ---------------------------------------------------------
@@ -1341,10 +1322,9 @@ info_notified_from_nodog() {
 		if [ $TIMEOUT -eq 0 -a \
 			  -z "$LOGOUT" ]; then
 
-			LOGOUT=true
+			check_if_user_connected_to_AP_with_NO_LIMIT $4
 
-			ask_nodog_to_logout_user
-
+			fi
 		fi
 		# ---------------------------------------------------------
 	fi
@@ -1354,7 +1334,8 @@ info_notified_from_nodog() {
 
 		OP=EXIT
 
-		if [ $MAX_TRAFFIC -gt 0 -a $TRAFFIC -gt 0 ]; then
+		if [ $MAX_TRAFFIC -gt 0 -a \
+					$TRAFFIC -gt 0 ]; then
 
 			# bonus
 
@@ -1387,13 +1368,9 @@ info_notified_from_nodog() {
 	else
 		BODY_SHTML="OK"
 	fi
-
-# 	set +x
 }
 
 ask_nodog_to_check_for_users_info() {
-
-#	set -x
 
 	# we request nodog to check for users logout or disconnect...
 	# -----------------------------------------------------------------------------
@@ -1412,13 +1389,9 @@ ask_nodog_to_check_for_users_info() {
 			ask_nodog_to_check_for_users_info
 		fi
 	fi
-
-#	set +x
 }
 
 load_value_session() {
-
-#	set -x
 
 	if [ -s $TMP_FORM_FILE ]; then
 
@@ -1430,13 +1403,9 @@ load_value_session() {
 			let "i = i + 1"
 		done < $TMP_FORM_FILE
 	fi
-
-#	set +x
 }
 
 get_user_nome_cognome() {
-
-#	set -x
 
 	TMP_FORM_FILE=$DIR_REG/$UUID.reg
 
@@ -1447,8 +1416,6 @@ get_user_nome_cognome() {
 	else
 		USER=$UUID
 	fi
-
-#	set +x
 }
 
 logout() {
@@ -1767,8 +1734,6 @@ waNotAfter: $NOT_AFTER
 
 postlogin() {
 
-# set -x
-
 	if [ $# -eq 8 ]; then
 
 		unset BACK_TAG
@@ -1941,8 +1906,6 @@ END
 
 check_phone_number() {
 
-# 	set -x
-
 	# -----------------------------------------
 	# $1 -> CALLER_ID
 	# -----------------------------------------
@@ -2034,8 +1997,6 @@ waPolicy: $POLICY
 }
 
 card_activation() {
-
-# 	set -x
 
 	# -----------------------------------------
 	# $1 -> CALLER_ID
@@ -2154,8 +2115,6 @@ execute_recovery() {
 
 stato_utente() {
 
-#	set -x
-
 	get_user_context_connection
 
 	if [ -z "$GATEWAY" ]; then
@@ -2172,8 +2131,6 @@ stato_utente() {
 
 		BODY_SHTML=`printf "$FMT" "$DATE" $AP "$OUTPUT" "$BACK_TAG" 2>/dev/null`
 	fi
-
-#	set +x
 }
 
 view_user() {
@@ -2263,8 +2220,6 @@ view_user() {
 
 status_network() {
 
-# set -x
-
 	# --------------------------------------------------------------------------------------------
 	# NB: bisogna metterlo in cron (5 minuti)...
 	# --------------------------------------------------------------------------------------------
@@ -2304,13 +2259,9 @@ status_network() {
 
 	TITLE_TXT="Firenze WiFi: stato rete"
 	BODY_SHTML=` echo "$TMP3"; echo "$OUTPUT"; cat $DIR_TEMPLATE/status_network_end.tmpl 2>/dev/null`
-
-# set +x
 }
 
 start_ap() {
-
-# set -x
 
 	# $1 -> ap
 	# $2 -> public address to contact the access point
@@ -2390,13 +2341,9 @@ start_ap() {
 	fi
 
 	BODY_SHTML="OK"
-
-#	set +x
 }
 
 get_users_info() {
-
-#	set -x
 
 	# ------------------------------------------------------------------------------------------------------------------------------------------------
 	# stefano 10.30.1.131:5280 00:e0:4c:d4:63:f5 10.30.1.105 http://www.google.com 0 10.30.1.105&1257603166&2a2436611f452f8eebddce4992e88f8d 055340773
@@ -2423,13 +2370,9 @@ get_users_info() {
 
 	HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
 	HTTP_RESPONSE_HEADER="X-Sendfile: $TMPFILE\r\n"
-
-#	set +x
 }
 
 status_ap() {
-
-# set -x
 
 	# $1 -> ap
 
@@ -2442,8 +2385,6 @@ status_ap() {
 		HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
 		HTTP_RESPONSE_HEADER="X-Sendfile: $TMPFILE\r\n"
 	fi
-
-#	set +x
 }
 
 uploader() {
@@ -2456,8 +2397,6 @@ uploader() {
 }
 
 reset_policy() {
-
-# set -x
 
 	for POLICY in `ls $DIR_POLICY/* 2>/dev/null`
 	do
@@ -2480,13 +2419,9 @@ reset_policy() {
 	done
 
 	BODY_SHTML="OK"
-
-#	set +x
 }
 
 polling_attivazione() {
-
-#	set -x
 
 	# $1 WA_CELL
 
@@ -2540,6 +2475,8 @@ polling_attivazione() {
 }
 
 redirect_if_not_https() {
+
+	return
 
  	if [ "$HTTPS" != "on" ]; then
  		HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
@@ -2617,154 +2554,208 @@ write_SSI() {
 
 	uscita
 }
+
+do_cmd() {
+
+	export TITLE_TXT HEAD_HTML BODY_SHTML BODY_STYLE \
+			 SESSION_ID CONNECTION_CLOSE SET_COOKIE TMPFILE OUTPUT HTTP_RESPONSE_HEADER HTTP_RESPONSE_BODY \
+			 OP FILE_CTX MAC IP GATEWAY AP TMP_FORM_FILE UUID CALLER_ID USER SIGNED_DATA UUID_TO_APPEND POLICY WA_UID
+
+	# load environment
+
+	CONF=$HOME/etc/$VIRTUAL_HOST/script.conf
+
+   if [ -n "$CONF" -a -r "$CONF" ]; then
+		. $CONF 2>/dev/null
+	fi
+
+	# --------------------------------
+	#  session cookie (no NAT)
+	# --------------------------------
+	SESSION_ID=$REMOTE_ADDR
+	# --------------------------------
+	#  session cookie (with NAT)
+	# --------------------------------
+	#  if [ -n "$HTTP_COOKIE" ]; then
+	#     SESSION_ID=$HTTP_COOKIE
+	#  else
+	#     SET_COOKIE=SESS_$$
+	#     SESSION_ID=$SET_COOKIE
+	#  fi
+	# --------------------------------
+
+	# we can do services...
+	if [ -x $HOME/$VIRTUAL_HOST/ANOMALIA ]; then
+
+		unset BACK_TAG
+
+		message_page "$SERVICE" "$SERVICE per anomalia interna. Contattare l'assistenza: $TELEFONO"
+	fi
+
+	# -----------------------------------------------------------------------------------------------------------------------------------------------
+	# GET /login?mac=00%3A14%3AA5%3A6E%3A9C%3ACB&ip=192.168.226.2&redirect=http%3A%2F%2Fgoogle&gateway=192.168.226.1%3A5280&timeout=0&token=x&ap=lab2
+	# -----------------------------------------------------------------------------------------------------------------------------------------------
+	# $1 -> mac
+	# $2 -> ip
+	# $3 -> redirect
+	# $4 -> gateway
+	# $5 -> timeout
+	# $6 -> token
+	# $7 -> ap
+	# -----------------------------------------------------------------------------
+	# 00:e0:4c:d4:63:f5 10.30.1.105 http://google 10.30.1.131:5280 stefano 0 x lab2
+	# -----------------------------------------------------------------------------
+
+	if [ "$REQUEST_METHOD" = "GET" ]; then
+
+		case "$REQUEST_URI" in
+			/start_ap)													start_ap					"$@"	;;
+			/postlogin)													postlogin				"$@"	;;
+			/stato_utente)												stato_utente					;;
+			/registrazione)											registrazione					;;
+			/polling_attivazione)									polling_attivazione	"$@"	;;
+			/login | /cpe | /main | /personale | /circuito) main_page				"$@"	;;
+
+			/logout)
+				if [ $# -ge 8 ]; then 
+					logout_notified_from_nodog "$@"
+				else
+					logout_request
+				fi
+			;;
+
+			/card_activation)
+				if [ "$REMOTE_ADDR" = "$PORTAL_IP_ADDRESS" ]; then
+					card_activation "$@"
+				fi
+			;;
+			/get_users_info)
+				if [ "$REMOTE_ADDR" = "$PORTAL_IP_ADDRESS" ]; then
+					get_users_info
+				fi
+			;;
+			/reset_policy)
+				if [ "$REMOTE_ADDR" = "$PORTAL_IP_ADDRESS" ]; then
+					reset_policy
+				fi
+			;;
+
+			/admin)
+				redirect_if_not_https
+				print_page
+			;;
+			/admin_status_network)
+				redirect_if_not_https
+				status_network
+			;;
+			/admin_status_ap)
+				redirect_if_not_https
+				status_ap "$@"
+			;;
+			/admin_printlog)
+				redirect_if_not_https
+				printlog
+			;;
+			/admin_view_user)
+				REQUEST_URI=view_user
+				TITLE_TXT="Visualizzazione dati utente"
+				HEAD_HTML="<script type=\"text/javascript\" src=\"js/livevalidation_standalone.js\"></script>"
+
+				print_page "$BACK_TAG"
+			;;
+			/admin_recovery)
+				REQUEST_URI=recovery
+				TITLE_TXT="Recovery utente"
+				HEAD_HTML="<script type=\"text/javascript\" src=\"js/livevalidation_standalone.js\"></script>"
+
+				print_page "$BACK_TAG"
+			;;
+			/admin_statistics)
+				REQUEST_URI=statistics
+				TITLE_TXT="Statistiche"
+
+				print_page "$BACK_TAG"
+			;;
+			/admin_view_statistics_login)
+				redirect_if_not_https
+				view_statistics_login "$@"
+			;;
+			/admin_view_statistics_registration)
+				redirect_if_not_https
+				view_statistics_registration
+			;;
+			/admin_historical_statistics_login)
+				redirect_if_not_https
+
+				REQUEST_URI=historical_statistics_login
+				historical_statistics_login	
+			;;
+			/admin_export_statistics_login_as_csv)
+				redirect_if_not_https
+				export_statistics_login_as_csv "$@"
+			;;
+			/admin_export_statistics_registration_as_csv)
+				redirect_if_not_https
+				export_statistics_registration_as_csv
+			;;
+
+			*) print_page ;;
+		esac
+
+	elif [ "$REQUEST_METHOD" = "POST" ]; then
+
+		case "$REQUEST_URI" in
+			/login)				login_request					"$@" ;;
+			/logout)				logout_notified_from_popup "$@" ;;
+			/uploader)			uploader							"$@" ;;
+			/registrazione)	registrazione					"$@" ;;
+
+			/admin_view_user)
+				redirect_if_not_https
+				view_user "$@"
+			;;
+			/admin_recovery)
+				redirect_if_not_https
+
+				REQUEST_URI=confirm_page
+				TITLE_TXT="Conferma recovery"
+
+				print_page "$TITLE_TXT" "$1" "admin_execute_recovery" "$1" "$BACK_TAG"
+			;;
+			/admin_execute_recovery)
+				redirect_if_not_https
+				execute_recovery "$@"
+			;;
+		esac
+	fi
+
+	write_SSI
+}
 #-----------------------------------
 # END FUNCTION
 #-----------------------------------
 
-# we can do services... ?
+DEBUG=on
 
-if [ -x $HOME/$VIRTUAL_HOST/ANOMALIA ]; then
-
-	unset BACK_TAG
-
-	message_page "$SERVICE" "$SERVICE per anomalia interna. Contattare l'assistenza: $TELEFONO"
+if [ -z "$DEBUG" ]; then
+   do_cmd "$@"
+else
+	TMPFILE=`basename $0`
+	TMPFILE_OUT=/tmp/$TMPFILE_$$.out
+	TMPFILE_ERR=/tmp/$TMPFILE_$$.err
+	(
+	echo "ENVIRONMENT:"
+	echo "-----------------------------------------------------------"
+	env
+	echo "-----------------------------------------------------------"
+	echo "STDERR:"
+	echo "-----------------------------------------------------------"
+	) 2>$TMPFILE_ERR >&2
+	(
+   set -x
+   do_cmd "$@"
+   set +x
+   ) > $TMPFILE_OUT 2>>$TMPFILE_ERR
+   echo "-----------------------------------------------------------" 2>>$TMPFILE_ERR >&2
+	cat $TMPFILE_OUT
 fi
-
-# -----------------------------------------------------------------------------------------------------------------------------------------------
-# GET /login?mac=00%3A14%3AA5%3A6E%3A9C%3ACB&ip=192.168.226.2&redirect=http%3A%2F%2Fgoogle&gateway=192.168.226.1%3A5280&timeout=0&token=x&ap=lab2
-# -----------------------------------------------------------------------------------------------------------------------------------------------
-# $1 -> mac
-# $2 -> ip
-# $3 -> redirect
-# $4 -> gateway
-# $5 -> timeout
-# $6 -> token
-# $7 -> ap
-# -----------------------------------------------------------------------------
-# 00:e0:4c:d4:63:f5 10.30.1.105 http://google 10.30.1.131:5280 stefano 0 x lab2
-# -----------------------------------------------------------------------------
-
-if [ "$REQUEST_METHOD" = "GET" ]; then
-
-	case "$REQUEST_URI" in
-		/start_ap)										 start_ap				"$@"	;;
-		/postlogin)										 postlogin				"$@"	;;
-		/stato_utente)									 stato_utente					;;
-		/registrazione)								 registrazione					;;
-		/polling_attivazione)						 polling_attivazione	"$@"	;;
-		/login | /cpe | /personale | /circuito) main_page				"$@"	;;
-
-		/logout)
-			if [ $# -ge 8 ]; then 
-				logout_notified_from_nodog "$@"
-			else
-				logout_request
-			fi
-		;;
-
-		/card_activation)
-			if [ "$REMOTE_ADDR" = "$PORTAL_IP_ADDRESS" ]; then
-				card_activation "$@"
-			fi
-		;;
-		/get_users_info)
-			if [ "$REMOTE_ADDR" = "$PORTAL_IP_ADDRESS" ]; then
-				get_users_info
-			fi
-		;;
-		/reset_policy)
-			if [ "$REMOTE_ADDR" = "$PORTAL_IP_ADDRESS" ]; then
-				reset_policy
-			fi
-		;;
-
-		/admin)
-			redirect_if_not_https
-			print_page
-		;;
-		/admin_status_network)
-			redirect_if_not_https
-			status_network
-		;;
-		/admin_status_ap)
-			redirect_if_not_https
-			status_ap "$@"
-		;;
-		/admin_printlog)
-			redirect_if_not_https
-			printlog
-		;;
-		/admin_view_user)
-			REQUEST_URI=view_user
-			TITLE_TXT="Visualizzazione dati utente"
-			HEAD_HTML="<script type=\"text/javascript\" src=\"js/livevalidation_standalone.js\"></script>"
-
-			print_page "$BACK_TAG"
-		;;
-		/admin_recovery)
-			REQUEST_URI=recovery
-			TITLE_TXT="Recovery utente"
-			HEAD_HTML="<script type=\"text/javascript\" src=\"js/livevalidation_standalone.js\"></script>"
-
-			print_page "$BACK_TAG"
-		;;
-		/admin_statistics)
-			REQUEST_URI=statistics
-			TITLE_TXT="Statistiche"
-
-			print_page "$BACK_TAG"
-		;;
-		/admin_view_statistics_login)
-			redirect_if_not_https
-			view_statistics_login "$@"
-		;;
-		/admin_view_statistics_registration)
-			redirect_if_not_https
-			view_statistics_registration
-		;;
-		/admin_historical_statistics_login)
-			redirect_if_not_https
-
-			REQUEST_URI=historical_statistics_login
-			historical_statistics_login	
-		;;
-		/admin_export_statistics_login_as_csv)
-			redirect_if_not_https
-			export_statistics_login_as_csv "$@"
-		;;
-		/admin_export_statistics_registration_as_csv)
-			redirect_if_not_https
-			export_statistics_registration_as_csv
-		;;
-
-		*) print_page ;;
-	esac
-
-elif [ "$REQUEST_METHOD" = "POST" ]; then
-
-	case "$REQUEST_URI" in
-		/login)				login_request					"$@" ;;
-		/logout)				logout_notified_from_popup "$@" ;;
-		/uploader)			uploader							"$@" ;;
-		/registrazione)	registrazione					"$@" ;;
-
-		/admin_view_user)
-			redirect_if_not_https
-			view_user "$@"
-		;;
-		/admin_recovery)
-			redirect_if_not_https
-
-			REQUEST_URI=confirm_page
-			TITLE_TXT="Conferma recovery"
-
-			print_page "$TITLE_TXT" "$1" "admin_execute_recovery" "$1" "$BACK_TAG"
-		;;
-		/admin_execute_recovery)
-			redirect_if_not_https
-			execute_recovery "$@"
-		;;
-	esac
-fi
-
-write_SSI

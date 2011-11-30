@@ -26,8 +26,8 @@ Synopsis: Compress and Decompresses the source buffer into the destination buffe
 
 /* #define GZIP_MAGIC "\037\213" Magic header for gzip files, 1F 8B */ 
 
-extern U_EXPORT uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict result);
-extern U_EXPORT uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict result);
+U_EXPORT uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict result);
+U_EXPORT uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict result);
 
 #ifdef __cplusplus
 }

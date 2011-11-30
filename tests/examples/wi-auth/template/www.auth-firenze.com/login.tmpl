@@ -113,8 +113,8 @@
             Ti suggeriamo di prendere nota <!--#echo var="$LOGOUT_NOTE"-->
           </div>
         </td>
-      </tr><!--#if expr="(AppleWebKit ^ $HTTP_USER_AGENT && KHTML ^ $HTTP_USER_AGENT)"-->
-
+      </tr>
+		<!--#if expr="(AppleWebKit *= $HTTP_USER_AGENT && KHTML *= $HTTP_USER_AGENT)"-->
       <tr>
         <td class="test2">
           <div align="center">
@@ -140,8 +140,8 @@
             <h3>***** ******</h3>
           </div>
         </td>
-      </tr><!--#endif -->
-
+      </tr>
+		<!--#endif -->
       <tr>
         <td>&nbsp;</td>
       </tr>

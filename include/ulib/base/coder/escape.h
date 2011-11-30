@@ -39,11 +39,11 @@ extern "C" {
  * ---------------------------------------------------------------------------
  */
 
-extern U_EXPORT uint32_t      u_sprintc(char* restrict buffer, unsigned char c, bool json);
-extern U_EXPORT unsigned char u_escape_decode_ptr(const char** restrict s);
+U_EXPORT uint32_t      u_sprintc(char* restrict buffer, unsigned char c, bool json);
+U_EXPORT unsigned char u_escape_decode_ptr(const char** restrict s);
 
-extern U_EXPORT uint32_t u_escape_encode(const unsigned char* restrict s, uint32_t n,          char* restrict result, uint32_t max_length, bool json);
-extern U_EXPORT uint32_t u_escape_decode(const          char* restrict s, uint32_t n, unsigned char* restrict result);
+U_EXPORT uint32_t u_escape_encode(const unsigned char* restrict s, uint32_t n,          char* restrict result, uint32_t max_length, bool json);
+U_EXPORT uint32_t u_escape_decode(const          char* restrict s, uint32_t n, unsigned char* restrict result);
 
 #ifdef __cplusplus
 }

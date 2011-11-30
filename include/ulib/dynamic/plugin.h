@@ -21,7 +21,7 @@
 #define U_PLUGIN_TO_PARAM(mod) (mod).getName(),(mod).getNameLen()
 #define U_PLUGIN_TO_TRACE(mod) (mod).getNameLen(),(mod).getName()
 
-#define U_CREAT_FUNC(name, obj) extern "C" { extern void* u_creat_##name(); U_EXPORT void* u_creat_##name() { return new obj(); } }
+#define U_CREAT_FUNC(name, obj) extern "C" { void* u_creat_##name(); U_EXPORT void* u_creat_##name() { return new obj(); } }
 
                    class UHTTP;
 template <class T> class UPlugIn;

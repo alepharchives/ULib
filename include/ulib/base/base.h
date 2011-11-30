@@ -67,21 +67,21 @@ extern U_EXPORT       char* restrict u_pid_str;
 extern U_EXPORT const char* restrict u_progpath;
 extern U_EXPORT const char* restrict u_progname;
 
-extern U_EXPORT void u_init_ulib(char** restrict argv);
+U_EXPORT void u_init_ulib(char** restrict argv);
 
 /* AT EXIT */
 extern U_EXPORT vPF u_fns[32];
 extern U_EXPORT int u_fns_index;
 
-extern U_EXPORT void u_exit(void);
-extern U_EXPORT void u_atexit(vPF function);
-extern U_EXPORT void u_unatexit(vPF function);
+U_EXPORT void u_exit(void);
+U_EXPORT void u_atexit(vPF function);
+U_EXPORT void u_unatexit(vPF function);
 
 /* Current working directory */
 extern U_EXPORT char     u_cwd[U_PATH_MAX];
 extern U_EXPORT uint32_t u_cwd_len;
 
-extern U_EXPORT void u_getcwd(void);
+U_EXPORT void u_getcwd(void);
 
 /* Location info */
 extern U_EXPORT uint32_t             u_num_line;
@@ -95,13 +95,14 @@ extern U_EXPORT uint32_t u_buffer_len; /* assert that is busy */
 /* Time services */
 extern U_EXPORT time_t u_start_time;
 extern U_EXPORT time_t u_now_adjust; /* GMT based time */
+
 extern U_EXPORT struct tm u_strftime_tm;
 
 extern U_EXPORT void*  u_pthread_time; /* pthread clock */
 extern U_EXPORT struct timeval* u_now;
 extern U_EXPORT struct timeval u_timeval;
 
-extern U_EXPORT void u_gettimeofday(void); /* calculate number of seconds between UTC to current time zone */
+U_EXPORT void u_gettimeofday(void); /* calculate number of seconds between UTC to current time zone */
 
 /* Scan services */
 extern U_EXPORT uint32_t             u_line_terminator_len;
@@ -122,12 +123,12 @@ extern U_EXPORT const unsigned char   u_hex_upper[]; /* "0123456789ABCDEF" */
 extern U_EXPORT const unsigned char   u_hex_lower[]; /* "0123456789abcdef" */
 extern U_EXPORT const char* restrict  u_tmpdir;
 
-extern U_EXPORT void        u_setPid(void);
-extern U_EXPORT void        u_init_ulib_username(void);
-extern U_EXPORT void        u_init_ulib_hostname(void);
-extern U_EXPORT const char* u_basename(const char* restrict path) __pure;
-extern U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure;
-extern U_EXPORT uint32_t    u_strftime(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, time_t now);
+U_EXPORT void        u_setPid(void);
+U_EXPORT void        u_init_ulib_username(void);
+U_EXPORT void        u_init_ulib_hostname(void);
+U_EXPORT const char* u_basename(const char* restrict path) __pure;
+U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure;
+U_EXPORT uint32_t    u_strftime(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, time_t now);
 
 /* Print with format extension: bBCDHMNOPQrRSUYwW
 ---------------------------------------------------------------------------------
@@ -164,9 +165,9 @@ with flag '7' => format: %a, %d %b %Y %H:%M:%S %Z (LOCAL: use u_now + u_now_adju
 extern U_EXPORT int     u_printf_fileno;
 extern U_EXPORT int32_t u_printf_string_max_length;
 
-extern U_EXPORT void        u_printf(                                             const char* restrict format, ...);
-extern U_EXPORT uint32_t  u_sn_printf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
-extern U_EXPORT uint32_t u_vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp);
+U_EXPORT void        u_printf(                                             const char* restrict format, ...);
+U_EXPORT uint32_t  u_sn_printf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
+U_EXPORT uint32_t u_vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp);
 
 #ifdef __cplusplus
 }

@@ -2813,6 +2813,24 @@ void UHTTP::getFormValue(UString& buffer, uint32_t n)
    (void) buffer.replace((*form_name_value)[n]);
 }
 
+void UHTTP::getFormValue(UString& buffer, const UString& name)
+{
+   U_TRACE(0, "UHTTP::getFormValue(%.*S,%%.*S)", U_STRING_TO_TRACE(buffer), U_STRING_TO_TRACE(name))
+
+   U_INTERNAL_ASSERT_POINTER(form_name_value)
+
+   uint32_t n = form_name_value->find(name);
+
+   if (n == U_NOT_FOUND)
+      {
+      if (buffer.empty() == false) buffer.setEmpty(); // NB: we check because buffer can be the string null...
+
+      return;
+      }
+
+   (void) buffer.replace((*form_name_value)[n+1]);
+}
+
 uint32_t UHTTP::processHTTPForm()
 {
    U_TRACE(0, "UHTTP::processHTTPForm()")
@@ -4910,6 +4928,8 @@ bool UHTTP::processCGIOutput()
    U_INTERNAL_DUMP("ptr = %.*S", U_min(20, sz), ptr)
 
    // NB: we check for <h(1|tml)> (HTML without HTTP headers..)
+
+   while (u_isspace(*ptr)) ++ptr; // skip space...
 
    if (          ptr[0]  == '<' &&
        u_toupper(ptr[1]) == 'H')
