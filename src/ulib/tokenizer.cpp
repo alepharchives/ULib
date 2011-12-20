@@ -347,7 +347,7 @@ Additive operators: +, -
 precedence: ( )
 quoted strings: 'string with a dollar: $FOO'
 unquoted strings: string
-variable substitution: $REMOTE_ADDR ${REMOTE_ADDR}
+variable substitution: $REMOTE_ADDR ${REMOTE_ADDR} $$(pid)
 function call with optional params: FN_CALL([p1,p2,...,pn])
 
 contains:    ^
@@ -425,9 +425,9 @@ loop:
 
       // foo  = "bar" - Un elemento il cui attributo "foo" è uguale a "bar"
       // foo ~= "bar" - Un elemento il cui attributo "foo" ha per valore un elenco di valori separati da spazio, uno dei quali uguale a "bar"
-      // foo ^= "bar" - Un elemento E il cui attributo "foo" ha un valore che inizia per "bar"
-      // foo $= "bar" - Un elemento E il cui attributo "foo" ha un valore che finisce per "bar"
-      // foo *= "bar" - Un elemento E il cui attributo "foo" ha un valore che contiene la sottostringa "bar"
+      // foo ^= "bar" - Un elemento il cui attributo "foo" ha un valore che inizia per "bar"
+      // foo $= "bar" - Un elemento il cui attributo "foo" ha un valore che finisce per "bar"
+      // foo *= "bar" - Un elemento il cui attributo "foo" ha un valore che contiene la sottostringa "bar"
 
       case '~': tid = (*s == '=' ? (++s, U_TK_IS_PRESENT)  : U_TK_ERROR); p2 = s; break;
       case '^': tid = (*s == '=' ? (++s, U_TK_STARTS_WITH) : U_TK_ERROR); p2 = s; break;
@@ -439,6 +439,11 @@ loop:
             {
             p2  = ++s;
             tid = U_TK_ENDS_WITH;
+            }
+         else if (*s == '$')
+            {
+            p2  = ++s;
+            tid = U_TK_PID;
             }
          else
             {

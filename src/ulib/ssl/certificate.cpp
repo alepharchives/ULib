@@ -202,7 +202,7 @@ UString UCertificate::checkForSerialNumber(long number)
 
    (void) U_SYSCALL(ASN1_INTEGER_set, "%p,%ld", a, number);
 
-   BIGNUM* bn = (BIGNUM*) U_SYSCALL(ASN1_INTEGER_to_BN, "%p,%p", a, NULL);
+   BIGNUM* bn = (BIGNUM*) U_SYSCALL(ASN1_INTEGER_to_BN, "%p,%p", a, 0);
 
    char* itmp = (char*) U_SYSCALL(BN_bn2hex, "%p", bn);
 

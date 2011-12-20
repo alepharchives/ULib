@@ -50,8 +50,8 @@ int main(int argc, char* argv[])
 
    U_INTERNAL_TRACE("main(%d,%p)", argc, argv)
 
-   if      ((argc == 1))                                  do_cipher(argv[1], U_ENCRYPT);
-   else if ((argc == 2) && U_STRNCMP(argv[1], "-d") == 0) do_cipher(argv[2], U_DECRYPT);
+   if      (argc == 1)                                  do_cipher(argv[1], U_ENCRYPT);
+   else if (argc == 2 && U_STRNCMP(argv[1], "-d") == 0) do_cipher(argv[2], U_DECRYPT);
    else
       {
       fprintf(stderr, "%s", usage);

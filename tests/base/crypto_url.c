@@ -91,10 +91,8 @@ int main(int argc, char* argv[])
 
    U_INTERNAL_TRACE("main(%d,%p)", argc, argv)
 
-   if      (argc == 1) operation = U_ENCODE;
+   if      (argc == 1)                       operation = U_ENCODE;
    else if (argc == 2)
-
-
       {
       if      (strcmp(argv[1], "-d")   == 0) operation = U_DECODE;
       else if (strcmp(argv[1], "-gpg") == 0) operation = U_ENCODE_GPG;

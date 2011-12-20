@@ -4,7 +4,16 @@
 #ifndef W32_SYSTEM_H
 #define W32_SYSTEM_H 1
 
+#ifndef HAVE_LFS
+#  define __NO_MINGW_LFS
+#endif
+
+#undef  HAVE_GETOPT_LONG  /* with WINE don't work */
+#define FD_SETSIZE   1024 /* larger default than 64 */
+#define sighandler_t __p_sig_fn_t
+
 /* Basic Windows features only */
+#define WIN32_WINNT 0x0501
 #define WIN32_LEAN_AND_MEAN
 
 /* libstdc++-v3 _really_ dislikes min & max defined as macros. */
@@ -220,10 +229,10 @@ __declspec(dllexport) int fsync(int fd);
 
 #define EINPROGRESS  115 /* Operation now in progress */
 
-struct sigaction {       /* Structure describing the action to be taken when a signal arrives */
-sighandler_t sa_handler; /* Signal handler */
-sigset_t     sa_mask;    /* Additional set of signals to be blocked */
-int          sa_flags;   /* Special flags */
+struct sigaction {          /* Structure describing the action to be taken when a signal arrives */
+   sighandler_t sa_handler; /* Signal handler */
+   sigset_t     sa_mask;    /* Additional set of signals to be blocked */
+   int          sa_flags;   /* Special flags */
 };
 
 typedef int           uid_t;
@@ -320,9 +329,9 @@ __declspec(dllexport) const char*    getSysError_w32(unsigned* len);
 __declspec(dllexport) int            w32_open_osfhandle(long osfhandle, int flags);
 __declspec(dllexport) char*          u_slashify(const char* src, char slash_from, char slash_to);
 
-__declspec(dllexport) HANDLE u_hProcess;
-__declspec(dllexport) SECURITY_ATTRIBUTES sec_none;
-__declspec(dllexport) SECURITY_DESCRIPTOR sec_descr;
+extern __declspec(dllexport) HANDLE u_hProcess;
+extern __declspec(dllexport) SECURITY_ATTRIBUTES sec_none;
+extern __declspec(dllexport) SECURITY_DESCRIPTOR sec_descr;
 #ifdef __cplusplus
 }
 #endif

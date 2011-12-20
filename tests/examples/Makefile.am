@@ -6,7 +6,7 @@ DEFAULT_INCLUDES =  -I. -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/
 
 EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN XAdES nocat wi-auth WAGSM RA icons IR/WEB IR/benchmark IR/doc_dir *.cfg *.properties *.test *.sh \
 				 index.html calcajax.html .htpasswd .htdigest cgi-bin www.sito?.com error_msg workflow doc_parse favicon.ico robots.txt SSI css js \
-				 libraries/libcaptcha.c libraries/Makefile benchmark servlet demos.txt images
+				 libraries/libcaptcha.c libraries/Makefile benchmark servlet
 
 DEFS  = -DU_TEST @DEFS@
 

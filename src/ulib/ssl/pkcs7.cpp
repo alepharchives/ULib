@@ -69,6 +69,11 @@ UString UPKCS7::getContent(bool* valid_content) const
 
    U_INTERNAL_ASSERT_POINTER(pkcs7)
 
+#if defined(DEBUG) && defined(__clang__)
+#undef  NULL
+#define NULL 0
+#endif
+
    U_INTERNAL_DUMP("type = %p PKCS7_type_is_signed() = %d PKCS7_get_detached() = %d",
                      OBJ_obj2nid(pkcs7->type), PKCS7_type_is_signed(pkcs7), PKCS7_get_detached(pkcs7))
 

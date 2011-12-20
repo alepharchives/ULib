@@ -69,11 +69,13 @@ const UString* UNoCatPlugIn::str_Traffic;
 const UString* UNoCatPlugIn::str_GATEWAY_PORT;
 const UString* UNoCatPlugIn::str_FW_ENV;
 const UString* UNoCatPlugIn::str_IPHONE_SUCCESS;
+const UString* UNoCatPlugIn::str_CHECK_EXPIRE_INTERVAL;
 
 int                       UNoCatPlugIn::fd_stderr;
 vPF                       UNoCatPlugIn::unatexit;
 char                      UNoCatPlugIn::pcStrAddress[INET6_ADDRSTRLEN];
 bool                      UNoCatPlugIn::arping;
+bool                      UNoCatPlugIn::flag_check_peers_for_info;
 time_t                    UNoCatPlugIn::last_request_check;
 UPing**                   UNoCatPlugIn::sockp;
 fd_set*                   UNoCatPlugIn::addrmask;
@@ -310,8 +312,26 @@ int UModNoCatPeer::handlerTime()
    U_RETURN(-1);
 }
 
+int UNoCatPlugIn::handlerTime()
+{
+   U_TRACE(0, "UNoCatPlugIn::handlerTime()")
+
+   // NB: check if there is now a http request processing...
+
+   if (u_http_info.method == 0) checkPeersForInfo();
+   else                         flag_check_peers_for_info = true;
+
+   // return value:
+   // ---------------
+   // -1 - normal
+   //  0 - monitoring
+   // ---------------
+
+   U_RETURN(0);
+}
+
 UNoCatPlugIn::UNoCatPlugIn() : vauth_service_url(4U), vlogout_url(4U), vinfo_url(4U),
-                               vInternalDevice(4U), vInternalDeviceLabel(4U), vLocalNetwork(4U),
+                               vInternalDevice(64U), vInternalDeviceLabel(64U), vLocalNetwork(64U),
                                vauth_login(4U), vauth_logout(4U), vauth_ip(4U),
                                input(U_CAPACITY), output(U_CAPACITY), location(U_CAPACITY)
 {
@@ -323,6 +343,12 @@ UNoCatPlugIn::UNoCatPlugIn() : vauth_service_url(4U), vlogout_url(4U), vinfo_url
 UNoCatPlugIn::~UNoCatPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UNoCatPlugIn)
+
+   if (UEventTime::notZero() || login_timeout)
+      {
+      UTimer::stop();
+      UTimer::clear(true);
+      }
 
    if (ipt)
       {
@@ -347,12 +373,6 @@ UNoCatPlugIn::~UNoCatPlugIn()
       }
 
    if (status_content) delete status_content;
-
-   if (login_timeout)
-      {
-      UTimer::stop();
-      UTimer::clear(true);
-      }
 }
 
 void UNoCatPlugIn::executeCommand(UModNoCatPeer* peer, int type)
@@ -489,8 +509,8 @@ void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& redir
       // non corrisponda piu' a quello inviato dal portale per l'autorizzazione...
       // ---------------------------------------------------------------------------------------------------------------------
 
-      time_t expire = u_now->tv_sec + (30L * 60L);
-      peer->token   = UServices::generateToken(peer->mac, expire);
+      time_t _expire = u_now->tv_sec + (30L * 60L);
+      peer->token    = UServices::generateToken(peer->mac, _expire);
       }
 
    Url::encode(peer->token, value_encoded);
@@ -728,41 +748,46 @@ void UNoCatPlugIn::addPeerInfo(UModNoCatPeer* peer, time_t logout)
    // $7 -> connected
    // $8 -> traffic
 
-   U_INTERNAL_ASSERT(gateway.isNullTerminated())
-   U_INTERNAL_ASSERT(peer->ip.isNullTerminated())
-   U_INTERNAL_ASSERT(peer->mac.isNullTerminated())
-   U_INTERNAL_ASSERT(peer->user.isNullTerminated())
+   U_INTERNAL_ASSERT(     gateway.isNullTerminated())
+   U_INTERNAL_ASSERT(    peer->ip.isNullTerminated())
+   U_INTERNAL_ASSERT(   peer->mac.isNullTerminated())
+   U_INTERNAL_ASSERT(  peer->user.isNullTerminated())
    U_INTERNAL_ASSERT(access_point.isNullTerminated())
 
-   Url* info_url = pthis->vinfo_url[peer->index_AUTH];
+   U_INTERNAL_DUMP("u_http_info.method = %p", u_http_info.method)
 
-   U_INTERNAL_DUMP("peer->index_AUTH = %u info_url = %p", peer->index_AUTH, info_url)
+   if (u_http_info.method || logout > 0)
+      {
+      Url* info_url = pthis->vinfo_url[peer->index_AUTH];
 
-   UString buffer(100U);
+      U_INTERNAL_DUMP("peer->index_AUTH = %u info_url = %p", peer->index_AUTH, info_url)
 
-   buffer.snprintf("%.*s@%.*s", U_STRING_TO_TRACE(peer->label), U_STRING_TO_TRACE(access_point));
+      UString buffer(100U);
 
-   info_url->addQuery(U_STRING_TO_PARAM(*str_Mac),    U_STRING_TO_PARAM(peer->mac));
-   info_url->addQuery(U_CONSTANT_TO_PARAM("ip"),      U_STRING_TO_PARAM(peer->ip));
-   info_url->addQuery(U_CONSTANT_TO_PARAM("gateway"), U_STRING_TO_PARAM(gateway));
-   info_url->addQuery(U_CONSTANT_TO_PARAM("ap"),      U_STRING_TO_PARAM(buffer));
-   info_url->addQuery(U_STRING_TO_PARAM(*str_User),   U_STRING_TO_PARAM(peer->user));
+      buffer.snprintf("%.*s@%.*s", U_STRING_TO_TRACE(peer->label), U_STRING_TO_TRACE(access_point));
 
-   buffer = UStringExt::numberToString(logout); // NB: (-1|0) mean NOT logout (only info)...
+      info_url->addQuery(U_STRING_TO_PARAM(*str_Mac),    U_STRING_TO_PARAM(peer->mac));
+      info_url->addQuery(U_CONSTANT_TO_PARAM("ip"),      U_STRING_TO_PARAM(peer->ip));
+      info_url->addQuery(U_CONSTANT_TO_PARAM("gateway"), U_STRING_TO_PARAM(gateway));
+      info_url->addQuery(U_CONSTANT_TO_PARAM("ap"),      U_STRING_TO_PARAM(buffer));
+      info_url->addQuery(U_STRING_TO_PARAM(*str_User),   U_STRING_TO_PARAM(peer->user));
 
-   info_url->addQuery(U_CONSTANT_TO_PARAM("logout"), U_STRING_TO_PARAM(buffer));
+      buffer = UStringExt::numberToString(logout); // NB: (-1|0) mean NOT logout (only info)...
 
-   buffer = UStringExt::numberToString(u_now->tv_sec - peer->ctime);
-                                                       peer->ctime = u_now->tv_sec;
+      info_url->addQuery(U_CONSTANT_TO_PARAM("logout"), U_STRING_TO_PARAM(buffer));
 
-   info_url->addQuery(U_CONSTANT_TO_PARAM("connected"), U_STRING_TO_PARAM(buffer));
+      buffer = UStringExt::numberToString(u_now->tv_sec - peer->ctime);
+                                                          peer->ctime = u_now->tv_sec;
 
-   getTraffic();
+      info_url->addQuery(U_CONSTANT_TO_PARAM("connected"), U_STRING_TO_PARAM(buffer));
 
-   buffer.snprintf("%u", peer->ctraffic);
-                         peer->ctraffic = 0;
+      getTraffic();
 
-   info_url->addQuery(U_CONSTANT_TO_PARAM("traffic"), U_STRING_TO_PARAM(buffer));
+      buffer.snprintf("%u", peer->ctraffic);
+                            peer->ctraffic = 0;
+
+      info_url->addQuery(U_CONSTANT_TO_PARAM("traffic"), U_STRING_TO_PARAM(buffer));
+      }
 }
 
 void UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
@@ -908,7 +933,7 @@ result:
       addrmask = 0;
       }
 
-   notifyAuthOfUsersInfo();
+   flag_check_peers_for_info = false;
 }
 
 void UNoCatPlugIn::notifyAuthOfUsersInfo()
@@ -918,6 +943,8 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo()
    Url* info_url = pthis->vinfo_url[index_AUTH];
 
    U_INTERNAL_DUMP("index_AUTH = %u info_url = %p", index_AUTH, info_url)
+
+   // NB: if there are some data to transmit we need redirect...
 
    if (info_url->isQuery())
       {
@@ -1019,6 +1046,7 @@ void UNoCatPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_GATEWAY_PORT,0)
    U_INTERNAL_ASSERT_EQUALS(str_FW_ENV,0)
    U_INTERNAL_ASSERT_EQUALS(str_IPHONE_SUCCESS,0)
+   U_INTERNAL_ASSERT_EQUALS(str_CHECK_EXPIRE_INTERVAL,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("RouteOnly") },
@@ -1050,6 +1078,7 @@ void UNoCatPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("anonymous") },
       { U_STRINGREP_FROM_CONSTANT("Traffic") },
       { U_STRINGREP_FROM_CONSTANT("GatewayPort") },
+      { U_STRINGREP_FROM_CONSTANT("CHECK_EXPIRE_INTERVAL") },
       { U_STRINGREP_FROM_CONSTANT("FW_ENV") },
       { U_STRINGREP_FROM_CONSTANT("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\">\n"
                                   "<HTML>\n"
@@ -1091,8 +1120,9 @@ void UNoCatPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_anonymous,             U_STRING_FROM_STRINGREP_STORAGE(26));
    U_NEW_ULIB_OBJECT(str_Traffic,               U_STRING_FROM_STRINGREP_STORAGE(27));
    U_NEW_ULIB_OBJECT(str_GATEWAY_PORT,          U_STRING_FROM_STRINGREP_STORAGE(28));
-   U_NEW_ULIB_OBJECT(str_FW_ENV,                U_STRING_FROM_STRINGREP_STORAGE(29));
-   U_NEW_ULIB_OBJECT(str_IPHONE_SUCCESS,        U_STRING_FROM_STRINGREP_STORAGE(30));
+   U_NEW_ULIB_OBJECT(str_CHECK_EXPIRE_INTERVAL, U_STRING_FROM_STRINGREP_STORAGE(29));
+   U_NEW_ULIB_OBJECT(str_FW_ENV,                U_STRING_FROM_STRINGREP_STORAGE(30));
+   U_NEW_ULIB_OBJECT(str_IPHONE_SUCCESS,        U_STRING_FROM_STRINGREP_STORAGE(31));
 }
 
 // Server-wide hooks
@@ -1116,11 +1146,13 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
    //
    // LOGIN_TIMEOUT         Number of seconds after a client last login/renewal to terminate their connection
    // CHECK_BY_ARPING       metodo aggiuntivo per verificare la presenza di un peer nella tabella ARP (yes -> abilitato)
+   // CHECK_EXPIRE_INTERVAL Number of seconds to check if some client has terminate their connection
    // -----------------------------------------------------------------------------------------------------------------------------------
 
    if (cfg.loadTable())
       {
-      int port;
+      int port = 0;
+      long check_expire;
       UString pathconf, fw_env, command(100U), intdevlbl, sport, tmp;
 
       fw_env = cfg[*str_FW_ENV];
@@ -1133,11 +1165,14 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
       decrypt_key   = cfg[*str_DECRYPT_KEY];
 
       arping        = cfg.readBoolean(*str_CHECK_BY_ARPING);
+      check_expire  = cfg.readLong(*str_CHECK_EXPIRE_INTERVAL);
       login_timeout = cfg.readLong(*str_LOGIN_TIMEOUT);
 
       (void) vauth_logout.split(cfg[*str_LOGOUT_URL], 0, true);
 
-      U_INTERNAL_DUMP("login_timeout = %ld", login_timeout)
+      U_INTERNAL_DUMP("check_expire = %ld login_timeout = %ld", check_expire, login_timeout)
+
+      if (check_expire) UEventTime::setSecond(check_expire);
 
       if (login_timeout > U_NOCAT_MAX_TIMEOUT) login_timeout = U_NOCAT_MAX_TIMEOUT; // check for safe timeout...
 
@@ -1303,7 +1338,12 @@ int UNoCatPlugIn::handlerInit()
 
       UServer_Base::logCommandMsgError(cmd.getCommand());
 
-      if (login_timeout) UTimer::init(true); // async...
+      if (UEventTime::notZero() || login_timeout)
+         {
+         UTimer::init(true); // async...
+
+         if (UEventTime::notZero()) UTimer::insert(this, true);
+         }
 
       peers = U_NEW(UHashMap<UModNoCatPeer*>);
 
@@ -1390,6 +1430,8 @@ int UNoCatPlugIn::handlerRequest()
             // NB: request from AUTH to check and notify logout e/o disconnected users and info...
 
             checkPeersForInfo();
+
+            notifyAuthOfUsersInfo();
 
             goto end;
             }
@@ -1605,6 +1647,10 @@ redirect:
 
 end:
       UHTTP::setHTTPRequestProcessed();
+
+      // NB: maybe we have a check delayed because of http request processing...
+
+      if (flag_check_peers_for_info) checkPeersForInfo();
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

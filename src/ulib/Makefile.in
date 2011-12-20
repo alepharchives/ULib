@@ -175,9 +175,10 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	utility/interrupt.cpp utility/compress.cpp \
 	utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
 	utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp \
-	utility/uhttp.cpp utility/ring_buffer.cpp lemon/expression.cpp \
-	net/ipaddress.cpp net/socket.cpp net/ping.cpp \
-	net/tcpsocket.cpp net/server/server.cpp \
+	utility/uhttp.cpp utility/uhttp_session.cpp \
+	utility/data_session.cpp utility/ring_buffer.cpp \
+	lemon/expression.cpp net/ipaddress.cpp net/socket.cpp \
+	net/ping.cpp net/tcpsocket.cpp net/server/server.cpp \
 	net/server/client_image.cpp net/client/client_rdb.cpp \
 	net/server/client_image_rdb.cpp net/server/server_rdb.cpp \
 	net/rpc/rpc.cpp net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp \
@@ -288,27 +289,27 @@ am__objects_55 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo \
 	dynamic.lo plugin.lo header.lo entity.lo multipart.lo \
 	vector.lo hash_map.lo tree.lo interrupt.lo compress.lo \
 	services.lo semaphore.lo base64.lo lock.lo string_ext.lo \
-	socket_ext.lo uhttp.lo ring_buffer.lo expression.lo \
-	ipaddress.lo socket.lo ping.lo tcpsocket.lo server.lo \
-	client_image.lo client_rdb.lo client_image_rdb.lo \
-	server_rdb.lo rpc.lo rpc_envelope.lo rpc_fault.lo \
-	rpc_method.lo rpc_encoder.lo rpc_object.lo rpc_gen_method.lo \
-	rpc_parser.lo smtp.lo ftp.lo pop3.lo imap.lo http.lo client.lo \
-	ipt_ACCOUNT.lo value.lo query_parser.lo event_time.lo \
-	timeval.lo timer.lo notifier.lo string.lo file.lo process.lo \
-	file_config.lo log.lo options.lo application.lo cache.lo \
-	date.lo url.lo tokenizer.lo command.lo $(am__objects_23) \
-	$(am__objects_24) $(am__objects_25) $(am__objects_26) \
-	$(am__objects_27) $(am__objects_28) $(am__objects_29) \
-	$(am__objects_30) $(am__objects_31) $(am__objects_32) \
-	$(am__objects_33) $(am__objects_34) $(am__objects_35) \
-	$(am__objects_36) $(am__objects_37) $(am__objects_38) \
-	$(am__objects_39) $(am__objects_40) $(am__objects_41) \
-	$(am__objects_42) $(am__objects_43) $(am__objects_44) \
-	$(am__objects_45) $(am__objects_46) $(am__objects_47) \
-	$(am__objects_48) $(am__objects_49) $(am__objects_50) \
-	$(am__objects_51) $(am__objects_52) $(am__objects_53) \
-	$(am__objects_54)
+	socket_ext.lo uhttp.lo uhttp_session.lo data_session.lo \
+	ring_buffer.lo expression.lo ipaddress.lo socket.lo ping.lo \
+	tcpsocket.lo server.lo client_image.lo client_rdb.lo \
+	client_image_rdb.lo server_rdb.lo rpc.lo rpc_envelope.lo \
+	rpc_fault.lo rpc_method.lo rpc_encoder.lo rpc_object.lo \
+	rpc_gen_method.lo rpc_parser.lo smtp.lo ftp.lo pop3.lo imap.lo \
+	http.lo client.lo ipt_ACCOUNT.lo value.lo query_parser.lo \
+	event_time.lo timeval.lo timer.lo notifier.lo string.lo \
+	file.lo process.lo file_config.lo log.lo options.lo \
+	application.lo cache.lo date.lo url.lo tokenizer.lo command.lo \
+	$(am__objects_23) $(am__objects_24) $(am__objects_25) \
+	$(am__objects_26) $(am__objects_27) $(am__objects_28) \
+	$(am__objects_29) $(am__objects_30) $(am__objects_31) \
+	$(am__objects_32) $(am__objects_33) $(am__objects_34) \
+	$(am__objects_35) $(am__objects_36) $(am__objects_37) \
+	$(am__objects_38) $(am__objects_39) $(am__objects_40) \
+	$(am__objects_41) $(am__objects_42) $(am__objects_43) \
+	$(am__objects_44) $(am__objects_45) $(am__objects_46) \
+	$(am__objects_47) $(am__objects_48) $(am__objects_49) \
+	$(am__objects_50) $(am__objects_51) $(am__objects_52) \
+	$(am__objects_53) $(am__objects_54)
 @FINAL_FALSE@am_lib@ULIB@_la_OBJECTS = $(am__objects_22) \
 @FINAL_FALSE@	$(am__objects_55)
 @FINAL_TRUE@am_lib@ULIB@_la_OBJECTS = all_c.lo all_cpp.lo
@@ -566,9 +567,10 @@ SRC_CPP = internal/common.cpp internal/objectIO.cpp ui/dialog.cpp \
 	utility/interrupt.cpp utility/compress.cpp \
 	utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
 	utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp \
-	utility/uhttp.cpp utility/ring_buffer.cpp lemon/expression.cpp \
-	net/ipaddress.cpp net/socket.cpp net/ping.cpp \
-	net/tcpsocket.cpp net/server/server.cpp \
+	utility/uhttp.cpp utility/uhttp_session.cpp \
+	utility/data_session.cpp utility/ring_buffer.cpp \
+	lemon/expression.cpp net/ipaddress.cpp net/socket.cpp \
+	net/ping.cpp net/tcpsocket.cpp net/server/server.cpp \
 	net/server/client_image.cpp net/client/client_rdb.cpp \
 	net/server/client_image_rdb.cpp net/server/server_rdb.cpp \
 	net/rpc/rpc.cpp net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp \
@@ -704,6 +706,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/curl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/curl_coder.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cxml_coder.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/data_session.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/date.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dbi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/debug_common.Plo@am__quote@
@@ -823,6 +826,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trace.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tree.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uhttp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uhttp_session.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unixsocket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/url.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utility.Plo@am__quote@
@@ -1335,6 +1339,22 @@ uhttp.lo: utility/uhttp.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='utility/uhttp.cpp' object='uhttp.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o uhttp.lo `test -f 'utility/uhttp.cpp' || echo '$(srcdir)/'`utility/uhttp.cpp
+
+uhttp_session.lo: utility/uhttp_session.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT uhttp_session.lo -MD -MP -MF $(DEPDIR)/uhttp_session.Tpo -c -o uhttp_session.lo `test -f 'utility/uhttp_session.cpp' || echo '$(srcdir)/'`utility/uhttp_session.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/uhttp_session.Tpo $(DEPDIR)/uhttp_session.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='utility/uhttp_session.cpp' object='uhttp_session.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o uhttp_session.lo `test -f 'utility/uhttp_session.cpp' || echo '$(srcdir)/'`utility/uhttp_session.cpp
+
+data_session.lo: utility/data_session.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT data_session.lo -MD -MP -MF $(DEPDIR)/data_session.Tpo -c -o data_session.lo `test -f 'utility/data_session.cpp' || echo '$(srcdir)/'`utility/data_session.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/data_session.Tpo $(DEPDIR)/data_session.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='utility/data_session.cpp' object='data_session.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o data_session.lo `test -f 'utility/data_session.cpp' || echo '$(srcdir)/'`utility/data_session.cpp
 
 ring_buffer.lo: utility/ring_buffer.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ring_buffer.lo -MD -MP -MF $(DEPDIR)/ring_buffer.Tpo -c -o ring_buffer.lo `test -f 'utility/ring_buffer.cpp' || echo '$(srcdir)/'`utility/ring_buffer.cpp

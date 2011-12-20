@@ -1526,7 +1526,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             /* flag '#' => var-argument */
 
-            time_t t = (flags & ALT ? VA_ARG(time_t)              :
+            time_t t = (flags & ALT ? VA_ARG(time_t)               :
                         width == 0  ? u_now->tv_sec                :
                         width == 7  ? u_now->tv_sec + u_now_adjust : 0);
 

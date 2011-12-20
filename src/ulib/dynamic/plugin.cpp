@@ -13,10 +13,6 @@
 
 #include <ulib/dynamic/plugin.h>
 
-#if !defined(HAVE_CONFIG_H) && !defined(U_LIBEXECDIR)
-#define U_LIBEXECDIR "/usr/libexec/ulib"
-#endif
-
 const char*     UPlugIn<void*>::plugin_dir = U_LIBEXECDIR;
 UPlugIn<void*>* UPlugIn<void*>::first;
 

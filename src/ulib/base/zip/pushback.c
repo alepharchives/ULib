@@ -24,9 +24,9 @@ inline void pb_init(pb_file* pbf, int fd, ub1* data)
 
 int pb_push(pb_file* pbf, void* buff, int amt)
 {
-   U_INTERNAL_TRACE("pb_push(%p,%p,%d)", pbf, buff, amt)
-
    int in_amt, wrap = 0, n;
+
+   U_INTERNAL_TRACE("pb_push(%p,%p,%d)", pbf, buff, amt)
 
    U_INTERNAL_TRACE("%d bytes being pushed back to the buffer", amt)
 
@@ -77,10 +77,10 @@ int pb_push(pb_file* pbf, void* buff, int amt)
 
 int pb_read(pb_file* pbf, void* buff, int amt)
 {
-   U_INTERNAL_TRACE("pb_read(%p,%p,%d)", pbf, buff, amt)
-
    void* bp = buff;
    int tmp, wrap = 0, out_amt = 0, n;
+
+   U_INTERNAL_TRACE("pb_read(%p,%p,%d)", pbf, buff, amt)
 
    U_INTERNAL_TRACE("%d bytes requested from us", amt)
 

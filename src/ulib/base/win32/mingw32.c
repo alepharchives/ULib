@@ -9,10 +9,6 @@
 
 /* We need MS-defined signal and raise here */
 
-#undef raise
-#undef signal
-#undef select
-
 #include <io.h>
 #include <time.h>
 #include <errno.h>
@@ -21,6 +17,12 @@
 #include <tlhelp32.h>
 #include <ws2tcpip.h>
 #include <sys/timeb.h>
+
+#undef raise
+#undef signal
+#undef select
+#undef rename
+#undef unlink
 
 /* void* _alloca(size_t size); */
 
@@ -172,8 +174,6 @@ char* u_slashify(const char* src, char slash_from, char slash_to)
    return u_slashify_buffer;
 }
 
-#undef rename
-
 int rename_w32(const char* oldpath, const char* newpath)
 {
    int ok, oldatts, newatts;
@@ -243,8 +243,6 @@ int rename_w32(const char* oldpath, const char* newpath)
 
    return 0;
 }
-
-#undef unlink
 
 int unlink_w32(const char* path)
 {
@@ -1183,7 +1181,7 @@ int munmap(void* start, size_t length)
    UnmapViewOfFile(start);
 
    U_INTERNAL_PRINT("g_mmapInfos[%d].hMap     = %p", g_curMMapInfos, g_mmapInfos[g_curMMapInfos].hMap)
-   U_INTERNAL_PRINT("g_mmapInfos[%d].hdupFile = %p", g_curMMapInfos, g_mmapInfos[g_curMMapInfos].hdupFile)
+/* U_INTERNAL_PRINT("g_mmapInfos[%d].hdupFile = %p", g_curMMapInfos, g_mmapInfos[g_curMMapInfos].hdupFile) */
 
    bclose = CloseHandle(g_mmapInfos[g_curMMapInfos].hMap);
 
@@ -1448,6 +1446,13 @@ HANDLE is_pipe(int fd)
    return INVALID_HANDLE_VALUE;
 }
 
+/*
+typedef struct fd_set {
+   u_int  fd_count;
+   SOCKET fd_array[FD_SETSIZE];
+} fd_set;
+*/
+
 #ifdef DEBUG
 static int extract_file_fd(fd_set* set, fd_set* fileset)
 {
@@ -1455,24 +1460,25 @@ static int extract_file_fd(fd_set* set, fd_set* fileset)
 
    if (set)
       {
-      int i, idx, fd;
+      int fd;
+      u_int i, idx;
 
       fileset->fd_count = 0;
 
       U_INTERNAL_PRINT("set->fd_count = %d", set->fd_count)
 
-      for (idx = 0; idx < (int)set->fd_count; ++idx)
+      for (idx = 0; idx < set->fd_count; ++idx)
          {
          fd = set->fd_array[idx];
 
          if (is_fd_socket(fd) == FALSE)
             {
-            for (i = 0; i < (int)fileset->fd_count; ++i)
+            for (i = 0; i < fileset->fd_count; ++i)
                {
-               if ((int)fileset->fd_array[i] == fd) break;
+               if (fileset->fd_array[i] == fd) break;
                }
 
-            if (i == (int)fileset->fd_count)
+            if (i == fileset->fd_count)
                {
                U_INTERNAL_ASSERT_MINOR(fileset->fd_count, FD_SETSIZE)
 
@@ -1498,14 +1504,15 @@ static fd_set* fdset_fd2sock(fd_set* set, fd_set* fileset)
 
    if (set)
       {
+      int fd;
       SOCKET h;
-      int idx, fd;
+      u_int idx;
 
       fileset->fd_count = set->fd_count;
 
       U_INTERNAL_PRINT("set->fd_count = %d", set->fd_count)
 
-      for (idx = 0; idx < (int)set->fd_count; ++idx)
+      for (idx = 0; idx < set->fd_count; ++idx)
          {
          fd = set->fd_array[idx];
          h  = (SOCKET) _get_osfhandle(fd);
@@ -1513,7 +1520,7 @@ static fd_set* fdset_fd2sock(fd_set* set, fd_set* fileset)
          U_INTERNAL_ASSERT_DIFFERS((HANDLE)h, INVALID_HANDLE_VALUE)
          U_INTERNAL_ASSERT_EQUALS(is_fh_socket((HANDLE)h), TRUE)
 
-         U_INTERNAL_PRINT("h = %p", h)
+         U_INTERNAL_PRINT("fd = %d h = %p", fd, h)
 
          fileset->fd_array[idx] = h;
          }
@@ -1530,12 +1537,13 @@ static void fdset_sock2fd(fd_set* fileset, fd_set* set)
 
    if (set)
       {
-      int i, idx, fd;
+      int fd;
+      u_int i, idx;
       SOCKET h1, h2 = (SOCKET)INVALID_HANDLE_VALUE;
 
       U_INTERNAL_PRINT("fileset->fd_count = %d", fileset->fd_count)
 
-      for (idx = 0; idx < (int)fileset->fd_count; ++idx)
+      for (idx = 0; idx < fileset->fd_count; ++idx)
          {
          h1 = fileset->fd_array[idx];
 
@@ -1544,12 +1552,12 @@ static void fdset_sock2fd(fd_set* fileset, fd_set* set)
          U_INTERNAL_ASSERT_DIFFERS((HANDLE)h1, INVALID_HANDLE_VALUE)
          U_INTERNAL_ASSERT_EQUALS(is_fh_socket((HANDLE)h1), TRUE)
 
-         for (i = 0; i < (int)set->fd_count; ++i)
+         for (i = 0; i < set->fd_count; ++i)
             {
-            fd = set->fd_array[idx];
+            fd = set->fd_array[i];
             h2 = (SOCKET) _get_osfhandle(fd);
 
-            U_INTERNAL_PRINT("h2 = %p", h2)
+            U_INTERNAL_PRINT("fd = %d h2 = %p", fd, h2)
 
             U_INTERNAL_ASSERT_DIFFERS((HANDLE)h2, INVALID_HANDLE_VALUE)
             U_INTERNAL_ASSERT_EQUALS(is_fh_socket((HANDLE)h2), TRUE)
@@ -1581,7 +1589,10 @@ static void fdset_sock2fd(fd_set* fileset, fd_set* set)
 int select_w32(int nfds, fd_set* rd, fd_set* wr, fd_set* ex, struct timeval* timeout)
 {
    int r;
-   fd_set file_rd, file_wr, file_ex, sock_rd, sock_wr, sock_ex;
+   fd_set sock_rd, sock_wr, sock_ex;
+#ifdef DEBUG
+   fd_set file_rd, file_wr, file_ex;
+#endif
 
    U_INTERNAL_TRACE("select_w32(%d,%p,%p,%p,%p)", nfds, rd, wr, ex, timeout)
 
@@ -1610,19 +1621,22 @@ int select_w32(int nfds, fd_set* rd, fd_set* wr, fd_set* ex, struct timeval* tim
       }
    */
 
-   U_INTERNAL_ASSERT_EQUALS(extract_file_fd(rd,&file_rd) +
-                            extract_file_fd(wr,&file_wr) +
-                            extract_file_fd(ex,&file_ex), 0)
+   U_INTERNAL_ASSERT_EQUALS(extract_file_fd(rd, &file_rd) +
+                            extract_file_fd(wr, &file_wr) +
+                            extract_file_fd(ex, &file_ex), 0)
 
    /* nfds argument is ignored and included only for the sake of compatibility */
 
    r = select(nfds, fdset_fd2sock(rd, &sock_rd), fdset_fd2sock(wr, &sock_wr), fdset_fd2sock(ex, &sock_ex), timeout);
 
-   U_INTERNAL_PRINT("ret = %d", r)
+   U_INTERNAL_PRINT("r = %d", r)
 
-   fdset_sock2fd(&sock_rd, rd);
-   fdset_sock2fd(&sock_wr, wr);
-   fdset_sock2fd(&sock_ex, ex);
+   if (r > 0)
+      {
+      fdset_sock2fd(&sock_rd, rd);
+      fdset_sock2fd(&sock_wr, wr);
+      fdset_sock2fd(&sock_ex, ex);
+      }
 
    return r;
 }
@@ -1944,6 +1958,7 @@ EXTERN_C _CRTIMP ioinfo* __pioinfo[];
 #define FAPPEND      0x20  /* file handle opened O_APPEND */
 #define FDEV         0x40  /* file handle refers to device */
 #define FTEXT        0x80  /* file handle is in text mode */
+
 
 int fcntl_w32(int fd, int cmd, void* arg)
 {

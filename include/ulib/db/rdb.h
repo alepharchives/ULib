@@ -89,15 +89,15 @@ public:
 
    // Open a Reliable DataBase
 
-   bool open(uint32_t log_size = 1024 * 1024, int flag = 0);
+   bool open(uint32_t log_size = 1024 * 1024, bool btruncate = false);
 
-   bool open(const UString& pathdb, uint32_t log_size = 1024 * 1024, int flag = 0)
+   bool open(const UString& pathdb, uint32_t log_size = 1024 * 1024, bool btruncate = false)
       {
-      U_TRACE(0, "URDB::open(%.*S,%u,%d)", U_STRING_TO_TRACE(pathdb), log_size, flag)
+      U_TRACE(0, "URDB::open(%.*S,%u,%b)", U_STRING_TO_TRACE(pathdb), log_size, btruncate)
 
       UFile::setPath(pathdb);
 
-      return URDB::open(log_size, flag);
+      return URDB::open(log_size, btruncate);
       }
 
    // Close a Reliable DataBase

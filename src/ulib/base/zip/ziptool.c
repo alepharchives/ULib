@@ -10,27 +10,6 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#if HAVE_DIRENT_H
-#  include <dirent.h>
-#  ifdef DIRENT_HAVE_D_NAMLEN
-#     define NAMLEN(dirent) (dirent)->d_namlen
-#  else
-#     define NAMLEN(dirent) u_str_len((dirent)->d_name)
-#  endif
-#else
-#  define dirent direct
-#  define NAMLEN(dirent) (dirent)->d_namlen
-#  if HAVE_SYS_NDIR_H
-#     include <sys/ndir.h>
-#  endif
-#  if HAVE_SYS_DIR_H
-#     include <sys/dir.h>
-#  endif
-#  if HAVE_NDIR_H
-#     include <ndir.h>
-#  endif
-#endif
-
 #include <ulib/zip/ziptool.h>
 #include <ulib/base/zip/dostime.h>
 #include <ulib/base/zip/zipentry.h>

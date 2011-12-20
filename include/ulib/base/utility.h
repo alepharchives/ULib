@@ -18,6 +18,27 @@
 
 #include <stdlib.h>
 
+#if HAVE_DIRENT_H
+#  include <dirent.h>
+#  ifdef _DIRENT_HAVE_D_NAMLEN
+#     define NAMLEN(dirent) (dirent)->d_namlen
+#  else
+#     define NAMLEN(dirent) u_str_len((dirent)->d_name)
+#  endif
+#else
+#  define dirent direct
+#  define NAMLEN(dirent) (dirent)->d_namlen
+#  if HAVE_SYS_NDIR_H
+#     include <sys/ndir.h>
+#  endif
+#  if HAVE_SYS_DIR_H
+#     include <sys/dir.h>
+#  endif
+#  if HAVE_NDIR_H
+#     include <ndir.h>
+#  endif
+#endif
+
 #ifdef HAVE_SCHED_H
 #  include <sched.h>
 #endif
@@ -46,6 +67,7 @@ union uuaddress {
    struct in_addr addr;
 };
 
+extern U_EXPORT int u_num_cpu;
 extern U_EXPORT const char* u_short_units[]; /* { "B", "KB", "MB", "GB", "TB", 0 } */
 
 U_EXPORT char*       u_inet_nstoa(uint8_t* ip);

@@ -716,12 +716,12 @@ bool UFile::fallocate(uint32_t n)
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
 #ifdef FALLOCATE_IS_SUPPORTED
-   if (U_SYSCALL(fallocate, "%d,%d,%u,%u", fd, 0, 0, n) == 0) goto next;
+   if (U_SYSCALL(fallocate, "%d,%d,%u,%u", fd, 0, 0, n) == 0)
+#else
+   if (U_SYSCALL(ftruncate, "%d,%u",       fd,       n) == 0)
 #endif
-
-   if (U_SYSCALL(ftruncate, "%d,%u", fd, n) == 0)
       {
-next: st_size = n;
+      st_size = n;
 
       U_RETURN(true);
       }

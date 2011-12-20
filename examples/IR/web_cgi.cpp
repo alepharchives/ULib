@@ -2,16 +2,11 @@
 
 #include <ulib/cache.h>
 #include <ulib/debug/crono.h>
-#include <ulib/utility/uhttp.h>
 #include <ulib/net/server/server.h>
-#include <ulib/internal/objectIO.h>
 #include <ulib/utility/string_ext.h>
 #include <ulib/utility/xml_escape.h>
 
-#include "cquery.h"
-
-extern "C" {
-extern U_EXPORT int runDynamicPage(UClientImage_Base* client_image);
+#include "ir_session.h"
 
 #define FORM_PART1            FORM_PART[0]
 #define FORM_PART2            FORM_PART[1]
@@ -24,161 +19,8 @@ extern U_EXPORT int runDynamicPage(UClientImage_Base* client_image);
 #define FORM_FILE_DIR_DEFAULT "IR/WEB/form/en"                                               // default directory of form template...
 #define SESSION_SIZE          (16 * 1024)                                                    // num entry of session storage...
 
-class DataSession {
-public:
-
-   // Check Memory
-   U_MEMORY_TEST
-
-   // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
-
-   // COSTRUTTORE
-
-    DataSession(const UString& _QUERY, uint32_t _FOR_PAGE) : QUERY(_QUERY), FOR_PAGE(_FOR_PAGE)
-      {
-      U_TRACE_REGISTER_OBJECT(5, DataSession, "%.*S,%u", U_STRING_TO_TRACE(QUERY), FOR_PAGE)
-
-      vec     = 0;
-      TIME[0] = 0;
-      }
-
-    DataSession(const UString& data)
-      {
-      U_TRACE_REGISTER_OBJECT(5, DataSession, "%.*S", U_STRING_TO_TRACE(data))
-
-      istrstream is(data.data(), data.size());
-
-      is >> *this;
-      }
-
-   ~DataSession()
-      {
-      U_TRACE_UNREGISTER_OBJECT(5, DataSession)
-
-      if (vec) delete vec;
-      }
-
-   // SERVICES
-
-   UString toString()
-      {
-      U_TRACE(5, "DataSession::toString()")
-
-      if (WeightWord::size_streambuf_vec)
-         {
-         UString buffer(WeightWord::size_streambuf_vec);
-
-         uint32_t pcount = UObject2String<DataSession>(*this, buffer.data(), buffer.capacity());
-
-         buffer.size_adjust(pcount);
-
-         U_RETURN_STRING(buffer);
-         }
-
-      U_RETURN_STRING(UString::getStringNull());
-      }
-
-   // STREAM
-
-   friend istream& operator>>(istream& is, DataSession& d)
-      {
-      U_TRACE(5, "DataSession::operator>>(%p,%p)", &is, &d)
-
-      U_INTERNAL_ASSERT_EQUALS(is.peek(), '{')
-
-      is.get(); // skip '{'
-
-      is >> d.TIME
-         >> d.FOR_PAGE;
-
-      is.get(); // skip ' '
-
-      d.QUERY.get(is);
-
-      uint32_t vsize;
-         is >> vsize;
-
-      is.get(); // skip ' '
-
-      // load filenames
-
-      UVector<UString> vtmp(vsize);
-                 is >> vtmp;
-
-      WeightWord::clear();
-      WeightWord::allocVector(vsize);
-
-      UPosting::word_freq = 0;
-
-      for (uint32_t i = 0, sz = vtmp.size(); i < sz; ++i)
-         {
-         *UPosting::filename = vtmp[i];
-
-         WeightWord::push();
-         }
-
-      d.vec = WeightWord::vec;
-              WeightWord::vec = 0;
-
-      return is;
-      }
-
-   friend ostream& operator<<(ostream& os, const DataSession& d)
-      {
-      U_TRACE(5, "DataSession::operator<<(%p,%p)", &os, &d)
-
-      os.put('{');
-      os.put(' ');
-      os << d.TIME;
-      os.put(' ');
-      os << d.FOR_PAGE;
-      os.put(' ');
-      d.QUERY.write(os);
-      os.put(' ');
-      os << d.vec->size();
-      os.put(' ');
-      os << *d.vec;
-      os.put(' ');
-      os.put('}');
-
-      return os;
-      }
-
-#ifdef DEBUG
-#  include <ulib/internal/objectIO.h>
-
-   const char* dump(bool reset) const
-      {
-      *UObjectIO::os << "TIME                         ";
-
-      char buffer[20];
-
-      UObjectIO::os->write(buffer, u_sn_printf(buffer, sizeof(buffer), "%S", TIME));
-
-      *UObjectIO::os << '\n'
-                     << "FOR_PAGE                     " << FOR_PAGE      << '\n'
-                     << "QUERY (UString               " << (void*)&QUERY << ")\n"
-                     << "vec   (UVector<WeightWord*>) " << (void*)vec    << ')';
-
-      if (reset)
-         {
-         UObjectIO::output();
-
-         return UObjectIO::buffer_output;
-         }
-
-      return 0;
-      }
-#endif
-
-public:
-   UString QUERY;
-   UVector<WeightWord*>* vec;
-   uint32_t FOR_PAGE;
-   char TIME[9];
-};
+extern "C" {
+extern U_EXPORT int runDynamicPage(UClientImage_Base* client_image);
 
 // ENV
 static IR* ir;
@@ -189,9 +31,9 @@ static UString* footer;
 static UString* cookie;
 static URDB* rdb_session;
 static UString* set_cookie;
-static DataSession* session;
+static IRSession* session;
 static char FORM_FILE_DIR[256];
-static UHashMap<DataSession*>* tbl_session;
+static UHashMap<IRSession*>* tbl_session;
 static const char* FORM_PART[3] = { 0, 0, ULIB_VERSION };
 
 // paginazione
@@ -458,7 +300,7 @@ static void load_value_session()
 
       if (data.empty() == false)
          {
-         session = U_NEW(DataSession(data));
+         session = U_NEW(IRSession(data));
 
          U_ASSERT_EQUALS(data, session->toString())
          }
@@ -468,6 +310,30 @@ static void load_value_session()
 static void save_value_session()
 {
    U_TRACE(5, "::save_value_session()")
+
+   if (cookie->empty())
+      {
+      // set session cookie
+
+      static uint32_t counter;
+
+      UString ip_client = UHTTP::getRemoteIP();
+
+      // REQ: [ data expire path domain secure HttpOnly ]
+      // ----------------------------------------------------------------------------------------------------------------------------
+      // string -- Data to put into the cookie        -- must
+      // int    -- Lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
+      // string -- Path where the cookie can be used  --  opt
+      // string -- Domain which can read the cookie   --  opt
+      // bool   -- Secure mode                        --  opt
+      // bool   -- Only allow HTTP usage              --  opt
+      // ----------------------------------------------------------------------------------------------------------------------------
+      // RET: Set-Cookie: ulib_sid=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
+
+          cookie->setBuffer(100U);
+          cookie->snprintf("%.*s_%P_%u", U_STRING_TO_TRACE(ip_client), counter++);         // session key...
+      set_cookie->snprintf("Set-Cookie: TODO[ %.*s 24 ]\r\n", U_STRING_TO_TRACE(*cookie)); // like as shell script...
+      }
 
    if (UServer_Base::preforked_num_kids == 0) tbl_session->insert(*cookie, session);
    else
@@ -490,30 +356,6 @@ static void save_value_session()
 static void execute_query(UClientImage_Base* client_image)
 {
    U_TRACE(5, "::execute_query(%p)", client_image)
-
-   // set session cookie
-
-   if (cookie->empty())
-      {
-      static uint32_t counter;
-
-      UString ip_client = UHTTP::getRemoteIP();
-
-      // REQ: [ data expire path domain secure HttpOnly ]
-      // ----------------------------------------------------------------------------------------------------------------------------
-      // string -- Data to put into the cookie        -- must
-      // int    -- Lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
-      // string -- Path where the cookie can be used  --  opt
-      // string -- Domain which can read the cookie   --  opt
-      // bool   -- Secure mode                        --  opt
-      // bool   -- Only allow HTTP usage              --  opt
-      // ----------------------------------------------------------------------------------------------------------------------------
-      // RET: Set-Cookie: ulib_sid=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
-
-          cookie->setBuffer(100U);
-          cookie->snprintf("%.*s_%P_%u", U_STRING_TO_TRACE(ip_client), counter++);         // session key...
-      set_cookie->snprintf("Set-Cookie: TODO[ %.*s 24 ]\r\n", U_STRING_TO_TRACE(*cookie)); // like as shell script...
-      }
 
    // run query
 
@@ -558,9 +400,9 @@ static void view_page_result()
 
 // (Server-wide hooks)...
 
-static void init()
+static void usp_init()
 {
-   U_TRACE(5, "::init()")
+   U_TRACE(5, "::usp_init()")
 
    U_INTERNAL_ASSERT_EQUALS(ir, 0)
 
@@ -568,15 +410,14 @@ static void init()
 
    UString cfg_index;
 
-   bool ok = (ir->loadFileConfig(cfg_index) && ir->openCDB(false));
-
-   if (ok == false) U_ERROR("error on init query application...");
+   if ((ir->loadFileConfig(cfg_index) && ir->openCDB(false)) == false) U_ERROR("error on usp_init query application...");
 
    query            = U_NEW(Query);
    cache            = U_NEW(UCache);
    crono            = U_NEW(UCrono);
    cookie           = U_NEW(UString);
    output           = U_NEW(UString);
+   footer           = U_NEW(UString(200U));
    set_cookie       = U_NEW(UString(80U));
    link_paginazione = U_NEW(UString);
 
@@ -584,7 +425,7 @@ static void init()
 
    if (UServer_Base::preforked_num_kids == 0)
       {
-      tbl_session = U_NEW(UHashMap<DataSession*>);
+      tbl_session = U_NEW(UHashMap<IRSession*>);
 
       tbl_session->allocate(U_GET_NEXT_PRIME_NUMBER(SESSION_SIZE));
       }
@@ -595,36 +436,30 @@ static void init()
       // NB: the old sessions are automatically invalid...
       // (UServer generate the crypto key at startup...) 
 
-      if (rdb_session->open(SESSION_SIZE, O_TRUNC) == false) U_ERROR("error on open session db %S...", DB_SESSION);
+      if (rdb_session->open(SESSION_SIZE, true) == false) U_ERROR("error on open session db %S...", DB_SESSION);
       }
-
-   footer = U_NEW(UString(200U));
 
    footer->snprintf("%s, with %u documents and %u words.", ULIB_VERSION, cdb_names->size(), cdb_words->size());
 
-   bool exist = cache->open(U_STRING_FROM_CONSTANT("IR/WEB/form/cache.frm"), 32 * 1024);
-
-   if (exist == false) cache->loadContentOf(U_STRING_FROM_CONSTANT(FORM_FILE_DIR_DEFAULT));
+   if (cache->open(U_STRING_FROM_CONSTANT("IR/WEB/form/cache.frm"), 32 * 1024) == false) cache->loadContentOf(U_STRING_FROM_CONSTANT(FORM_FILE_DIR_DEFAULT));
 }
 
 // (Connection-wide hooks)...
 
-static void reset()
+static void usp_reset()
 {
-   U_TRACE(5, "::reset()")
+   U_TRACE(5, "::usp_reset()")
 
-   U_INTERNAL_ASSERT_POINTER(cookie)
    U_INTERNAL_ASSERT_POINTER(output)
    U_INTERNAL_ASSERT_POINTER(link_paginazione)
 
-             cookie->clear();
              output->clear();
    link_paginazione->clear();
 }
 
-static void end()
+static void usp_end()
 {
-   U_TRACE(5, "::end()")
+   U_TRACE(5, "::usp_end()")
 
    U_INTERNAL_ASSERT_POINTER(ir)
 
@@ -663,23 +498,15 @@ U_EXPORT int runDynamicPage(UClientImage_Base* client_image)
 {
    U_TRACE(5, "::runDynamicPage(%p)", client_image)
 
-        if (client_image ==         0) {  init(); return 0; } //  init (    Server-wide hooks)...
-   else if (client_image == (void*)-1) { reset(); return 0; } // reset (Connection-wide hooks)...
-   else if (client_image == (void*)-2) {   end(); return 0; } //   end
-
-   U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
-
-   U_INTERNAL_ASSERT_POINTER(UHTTP::form_name_value)
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_value)
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_buffer)
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::request)
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::rbuffer)
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::wbuffer)
-   U_INTERNAL_ASSERT_POINTER(UClientImage_Base::_encoded)
+        if (client_image ==         0) { usp_init();  return 0; } // usp_init  (    Server-wide hooks)...
+   else if (client_image == (void*)-1) { usp_reset(); return 0; } // usp_reset (Connection-wide hooks)...
+   else if (client_image == (void*)-2) { usp_end();   return 0; } // usp_end
 
    set_ENV(*client_image->request);
 
    uint32_t n = UHTTP::form_name_value->size() / 2;
+
+   U_INTERNAL_DUMP("n = %u", n)
 
    if (UHTTP::isHttpGET())
       {
@@ -689,7 +516,7 @@ U_EXPORT int runDynamicPage(UClientImage_Base* client_image)
          }
       else if (n == 1)
          {
-         if ((*UHTTP::form_name_value)[1] == U_STRING_FROM_CONSTANT("help"))
+         if ((*UHTTP::form_name_value)[1].equal(U_CONSTANT_TO_PARAM("help")))
             {
             view_form_with_help();
             }
@@ -711,7 +538,7 @@ U_EXPORT int runDynamicPage(UClientImage_Base* client_image)
 
       if (QUERY.empty()) goto bad_request;
 
-      session = U_NEW(DataSession(QUERY, (*UHTTP::form_name_value)[3].strtol()));
+      session = U_NEW(IRSession(QUERY, (*UHTTP::form_name_value)[3].strtol()));
 
       execute_query(client_image);
 
@@ -720,22 +547,17 @@ U_EXPORT int runDynamicPage(UClientImage_Base* client_image)
 
    if (output->empty() == false)
       {
-      if (set_cookie->empty() == false)
-         {
-         (void) client_image->wbuffer->append(*set_cookie);
-
-         set_cookie->setEmpty();
-         }
+      UClientImage_Base::checkCookie();
 
       (void) client_image->wbuffer->append(U_CONSTANT_TO_PARAM("Content-Type: " U_CTYPE_HTML "\r\n\r\n"));
       (void) client_image->wbuffer->append(*output);
 
-      return 0;
+      U_RETURN(0);
       }
 
 bad_request:
    UHTTP::setHTTPBadRequest();
 
-   return 0;
+   U_RETURN(0);
 }
 }

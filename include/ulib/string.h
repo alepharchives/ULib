@@ -1169,11 +1169,6 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-#ifdef __MINGW32__
-#undef  snprintf
-#undef vsnprintf
-#endif
-
    void snprintf(    const char* format, ...);
    void snprintf_add(const char* format, ...);
 

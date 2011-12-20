@@ -623,7 +623,7 @@ int UShibPlugIn::handlerRequest()
 
    if (service)
       {
-      cookies = UHTTP::getHTTPCookie(false);
+      cookies = UHTTP::getHTTPCookie();
 
       U_INTERNAL_DUMP("cookies = %.*S", U_STRING_TO_TRACE(cookies))
 

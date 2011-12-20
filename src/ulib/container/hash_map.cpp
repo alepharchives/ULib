@@ -62,13 +62,6 @@ void* UHashMap<void*>::erase(UStringRep* _key)
    U_RETURN((void*)0);
 }
 
-void UHashMap<UString>::insertAfterFind(const UString& _key, const UString& str)
-{
-   U_TRACE(0, "UHashMap<UString>::insertAfterFind(%.*S,%.*S)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(str))
-
-   UHashMap<UStringRep*>::insertAfterFind(_key, str.rep);
-}
-
 // OPERATOR []
 
 void* UHashMap<void*>::at(UStringRep* _key)
@@ -421,6 +414,13 @@ void UHashMap<void*>::_callForAllEntrySorted(vPFprpv function)
 }
 
 // specializzazione stringa
+
+void UHashMap<UString>::insertAfterFind(const UString& _key, const UString& str)
+{
+   U_TRACE(0, "UHashMap<UString>::insertAfterFind(%.*S,%.*S)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(str))
+
+   UHashMap<UStringRep*>::insertAfterFind(_key, str.rep);
+}
 
 UString UHashMap<UString>::erase(const UString& _key)
 {

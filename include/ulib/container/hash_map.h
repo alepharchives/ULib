@@ -189,6 +189,13 @@ public:
    void*       elem() const { return node->elem; }
    UStringRep*  key() const { return node->key; }
 
+   template <typename T> T* get(const UString& _key)
+      {
+      U_TRACE(0, "UHashMap<void*>::get(%.*S)", U_STRING_TO_TRACE(_key))
+
+      return (T*) operator[](_key);
+      }
+
    // dopo avere chiamato find() (non effettuano il lookup)
 
    void   eraseAfterFind();

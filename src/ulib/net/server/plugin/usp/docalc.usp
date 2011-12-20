@@ -1,4 +1,4 @@
-<!--%
+<!--#code
 UString arg1  = USP_FORM_VALUE(0),
 		  arg2  = USP_FORM_VALUE(1),
 		  opval = USP_FORM_VALUE(2);
@@ -13,4 +13,4 @@ else if (opval == "*") result = val1 * val2;
 else if (opval == "/") result = val1 / val2;
 
 if (opval.empty() == false) USP_PRINTF("<hr>\n%.*s %.*s %.*s = %g", U_STRING_TO_TRACE(arg1), U_STRING_TO_TRACE(opval), U_STRING_TO_TRACE(arg2), result);
-/%-->
+-->

@@ -39,6 +39,7 @@ class UValue;
 class UEventFd;
 class UCommand;
 class UPageSpeed;
+class UHTTPSession;
 class UMimeMultipart;
 
 template <class T> class UHashMap;
@@ -470,18 +471,18 @@ public:
    static void     getFormValue(UString& value, const UString& name);
 
    // param: "[ data expire path domain secure HttpOnly ]"
-   // ----------------------------------------------------------------------------------------------------------------------------
-   // string -- Data to put into the cookie        -- must
-   // int    -- Lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
-   // string -- Path where the cookie can be used  --  opt
-   // string -- Domain which can read the cookie   --  opt
-   // bool   -- Secure mode                        --  opt
-   // bool   -- Only allow HTTP usage              --  opt
-   // ----------------------------------------------------------------------------------------------------------------------------
-   // RET: Set-Cookie: ulib_sid=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
+   // -----------------------------------------------------------------------------------------------------------------------------------
+   // string -- key_id or data to put in cookie    -- must
+   // int    -- lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
+   // string -- path where the cookie can be used  --  opt
+   // string -- domain which can read the cookie   --  opt
+   // bool   -- secure mode                        --  opt
+   // bool   -- only allow HTTP usage              --  opt
+   // -----------------------------------------------------------------------------------------------------------------------------------
+   // RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
 
-   static UString getHTTPCookie();
-   static UString setHTTPCookie(const UString& param);
+   static UString getHTTPCookie(                      UHTTPSession* ptr = 0);
+   static UString setHTTPCookie(const UString& param, UHTTPSession* ptr = 0);
 
    // CGI
 

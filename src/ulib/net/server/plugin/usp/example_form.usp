@@ -4,12 +4,12 @@
 </head>
 <body bgcolor="white" text="black">
   <center>
-    <h1>Welcome to ULib Web Server! (Ver. <!--%= ULIB_VERSION /%-->)</h1>
+    <h1>Welcome to ULib Web Server! (Ver. <!--#puts ULIB_VERSION -->)</h1>
   </center>
-<!--%
+<!--#code
 if (UHTTP::isHttpGET())
 {
-/%-->
+-->
   <form action="/usp/example_form.usp" method="post">
     <p>First Name <input name="name" type="text" class="inputbox" title="Enter your first name"></p>
     <p>Last Name <input name="last" type="text" class="inputbox" title="Enter your last name"></p>
@@ -18,23 +18,23 @@ if (UHTTP::isHttpGET())
     <p><textarea name="comments" title="Enter your comments" rows="10" cols="10"></textarea></p>
     <p><input type="submit" value="Send Data"></p>
   </form>
-<!--%
+<!--#code
 }
 else
 {
-/%-->
+-->
 	<blockquote>
 	<table width="750" cellpadding="5">
 	  <tr>
-		 <td bgcolor="#E0E0FF"><!--% USP_PRINTF_FORM_VALUE(	 "First Name: %.*s",		0); /%-->td>
-		 <td bgcolor="#E0E0FF"><!--% USP_PRINTF_FORM_VALUE(	 "Last Name: %.*s",		1); /%-->td>
-		 <td bgcolor="#E0E0FF"><!--% USP_PRINTF_FORM_VALUE(	 "Email: %.*s",			2); /%-->td>
-		 <td bgcolor="#E0E0FF"><!--% USP_PRINTF_XML_FORM_VALUE("your comments: %.*s",	3); /%-->td>
+		 <td bgcolor="#E0E0FF"><!--#code USP_PRINTF_FORM_VALUE(	  "First Name: %.*s",	0); --></td>
+		 <td bgcolor="#E0E0FF"><!--#code USP_PRINTF_FORM_VALUE(	  "Last Name: %.*s",		1); --></td>
+		 <td bgcolor="#E0E0FF"><!--#code USP_PRINTF_FORM_VALUE(	  "Email: %.*s",			2); --></td>
+		 <td bgcolor="#E0E0FF"><!--#code USP_PRINTF_XML_FORM_VALUE("your comments: %.*s",3); --></td>
 	  </tr>
 	</table>
 	</blockquote>
-<!--%
+<!--#code
 }
-/%-->
+-->
 </body>
 </html>

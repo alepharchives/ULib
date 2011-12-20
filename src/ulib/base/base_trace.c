@@ -422,9 +422,9 @@ void u_trace_suspend(int resume)
       static int cnt_suspend; /* disabilita eventuale ricorsione... */
       static void* restrict flag_mask_level_save;
 
-      U_INTERNAL_PRINT("cnt_suspend=%d flag_mask_level=%p flag_mask_level_save=%p", cnt_suspend, flag_mask_level, flag_mask_level_save)
-
       int cnt = cnt_suspend + (resume ? -1 : 1);
+
+      U_INTERNAL_PRINT("cnt_suspend=%d flag_mask_level=%p flag_mask_level_save=%p", cnt_suspend, flag_mask_level, flag_mask_level_save)
 
       if (cnt == 0)
          {

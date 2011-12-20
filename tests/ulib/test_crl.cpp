@@ -10,7 +10,7 @@ static void check(const UString& dati_crl, const UString& dati_ca)
 {
    U_TRACE(5,"check(%p,%p)", &dati_crl, &dati_ca)
 
-   long revoked[10];
+// long revoked[10];
    UCrl c(dati_crl);
    UCertificate ca(dati_ca);
 

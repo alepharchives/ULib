@@ -30,6 +30,22 @@
 #  define U_ULIB_INIT(argv)   U_SET_LOCATION_INFO, u_init_ulib(argv),                 ULib_init()
 #endif
 
+#if !defined(HAVE_CONFIG_H) && !defined(U_LIBEXECDIR)
+#  define U_LIBEXECDIR "/usr/libexec/ulib"
+#endif
+
+#if defined(__clang__) && defined(HAVE_PTHREAD_H)
+#include <pthread.h>
+
+//typedef pthread_t        __gthread_t;
+//typedef pthread_key_t    __gthread_key_t;
+//typedef pthread_once_t   __gthread_once_t;
+  typedef pthread_mutex_t  __gthread_mutex_t;
+//typedef pthread_mutex_t  __gthread_recursive_mutex_t;
+//typedef pthread_cond_t   __gthread_cond_t;
+//typedef struct timespec  __gthread_time_t;
+#endif
+
 // Manage memory pool
 
 #include <cstdlib>

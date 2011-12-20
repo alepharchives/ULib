@@ -419,7 +419,7 @@ bool USSLSocket::askForClientCertificate()
    -------------------------------------------------------------------------------------
    */
 
-   U_SYSCALL_VOID(SSL_set_verify, "%p,%d,%p", ssl, SSL_VERIFY_PEER_STRICT, NULL); // | SSL_VERIFY_CLIENT_ONCE
+   U_SYSCALL_VOID(SSL_set_verify, "%p,%d,%p", ssl, SSL_VERIFY_PEER_STRICT, 0); // | SSL_VERIFY_CLIENT_ONCE
 
    /* Stop the client from just resuming the un-authenticated session */
 

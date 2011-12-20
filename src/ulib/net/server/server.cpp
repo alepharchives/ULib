@@ -186,7 +186,9 @@ public:
 };
 #endif
 
+#ifndef __MINGW32__
 static int sysctl_somaxconn, tcp_abort_on_overflow, sysctl_max_syn_backlog, tcp_fin_timeout;
+#endif
 
 void UServer_Base::str_allocate()
 {
@@ -1008,10 +1010,10 @@ void UServer_Base::init()
     */
 
    if (iBackLog == 1) tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
-#endif
 
    U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
                     sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
+#endif
 
    U_INTERNAL_ASSERT_EQUALS(proc,0)
 
@@ -1101,6 +1103,10 @@ void UServer_Base::init()
     */
 
    socket->flags |= O_NONBLOCK;
+
+#ifdef __MINGW32__
+   goto next; 
+#endif
 
 #ifdef HAVE_SSL
    if (bssl == false)
@@ -1365,9 +1371,10 @@ retry:
       goto check;
       }
 
+#ifndef __MINGW32__
    // NB: for non-keepalive connection we have chance to drop small last part of large file while sending to a slow client...
-
    if (ptr->bclose != U_YES) (void) csocket->setSockOpt(SOL_SOCKET, SO_LINGER, (const void*)&lng, sizeof(struct linger)); // send RST - ECONNRESET
+#endif
 
 insert:
    UNotifier::insert(ptr);

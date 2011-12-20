@@ -113,9 +113,9 @@ U_NO_EXPORT void URDB::htInsert()
 
 // open a Reliable DataBase
 
-bool URDB::open(uint32_t log_size, int flag)
+bool URDB::open(uint32_t log_size, bool btruncate)
 {
-   U_TRACE(0, "URDB::open(%u,%d)", log_size, flag)
+   U_TRACE(0, "URDB::open(%u,%b)", log_size, btruncate)
 
    if (UCDB::open() && log_size == 0) log_size = UFile::st_size;
 
@@ -125,7 +125,7 @@ bool URDB::open(uint32_t log_size, int flag)
 
    lock.lock();
 
-   if (journal.creat(flag | O_RDWR) &&
+   if (journal.creat(btruncate ? O_RDWR | O_TRUNC : O_RDWR) &&
        journal.ftruncate(journal.size() + (log_size ? log_size : 512L*1024L)))
       {
 #if defined(__CYGWIN__) || defined(__MINGW32__)

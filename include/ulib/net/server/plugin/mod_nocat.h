@@ -113,7 +113,7 @@ private:
 // override the default...
 template <> inline void u_destroy(UIPAddress** ptr, uint32_t n) { U_TRACE(0,"u_destroy<UIPAddress*>(%p,%u)", ptr, n) }
 
-class U_EXPORT UNoCatPlugIn : public UServerPlugIn {
+class U_EXPORT UNoCatPlugIn : public UServerPlugIn, UEventTime {
 public:
 
    static const UString* str_ROUTE_ONLY;
@@ -147,8 +147,13 @@ public:
    static const UString* str_GATEWAY_PORT;
    static const UString* str_FW_ENV;
    static const UString* str_IPHONE_SUCCESS;
+   static const UString* str_CHECK_EXPIRE_INTERVAL;
 
    static void str_allocate();
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
 
    // COSTRUTTORI
 
@@ -166,6 +171,10 @@ public:
 
    virtual int handlerRequest();
 
+   // define method VIRTUAL of class UEventTime
+
+   virtual int handlerTime();
+
    // DEBUG
 
 #ifdef DEBUG
@@ -180,7 +189,6 @@ protected:
    UString input, output, location, fw_cmd, decrypt_cmd, decrypt_key, mode, gateway, access_point, extdev, route_only,
            dns_addr, include_ports, exclude_ports, allowed_web_hosts, intdev, localnet, auth_login;
 
-   static bool arping;
    static vPF unatexit;
    static int fd_stderr;
    static UPing** sockp;
@@ -191,6 +199,7 @@ protected:
    static time_t last_request_check;
    static UVector<UIPAddress*>** vaddr;
    static UHashMap<UModNoCatPeer*>* peers;
+   static bool arping, flag_check_peers_for_info;
 
    static char pcStrAddress[INET6_ADDRSTRLEN];
    static uint32_t total_connections, login_timeout, nfds, num_radio, index_AUTH;
@@ -232,8 +241,8 @@ protected:
    static const char* getIPAddress(const char* ptr, uint32_t len);
 
 private:
-   UNoCatPlugIn(const UNoCatPlugIn&) : UServerPlugIn() {}
-   UNoCatPlugIn& operator=(const UNoCatPlugIn&)        { return *this; }
+   UNoCatPlugIn(const UNoCatPlugIn&) : UServerPlugIn(), UEventTime() {}
+   UNoCatPlugIn& operator=(const UNoCatPlugIn&)                      { return *this; }
 
    friend class UModNoCatPeer;
 };

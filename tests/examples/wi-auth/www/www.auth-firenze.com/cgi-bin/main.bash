@@ -446,7 +446,6 @@ anomalia() {
 	#  8 ask_to_LDAP
 	#  9 login_request (req without ctx)
 	# 10 load_policy (policy not set or policy without file)
-	# 11 login_request (policy with reset and waTime or waTraffic)
 	# ------------------------------------------------------------
 
 	EXIT_VALUE=$1
@@ -454,11 +453,6 @@ anomalia() {
 	unset BACK_TAG
 
 	case "$1" in
-	11)
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: login_request() failure (anomalia 011) POLICY=$POLICY"
-
-		message_page "$SERVICE" "$SERVICE (anomalia 011). Contattare l'assistenza: $TELEFONO"
-	;;
 	10)
 		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: load_policy() failure (anomalia 010) POLICY=$POLICY"
 
@@ -535,6 +529,10 @@ main_page() {
 	# 5 -> timeout
 	# 6 -> token
 	# 7 -> ap
+
+	if [ -n "$7" -a -n "$4" ]; then
+		update_ap_list "$7" "$4"
+	fi
 
 	if [ "$VIRTUAL_HOST" = "www.auth-ponza.com" ]; then
 
@@ -747,7 +745,7 @@ send_ticket_to_nodog() {
 	# -------------------------------------------------------------
 	# CHECK FOR CHANGE OF CONNECTION CONTEXT FOR SAME USER ID
 	# -------------------------------------------------------------
-	check_for_user_already_connected "$1" "$2" "$4" "$7" "$8"
+	check_if_user_is_connected "$1" "$2" "$4" "$7" "$8"
 
 	if [ "$OP" = "RENEW" ]; then
 		ask_nodog_to_logout_user
@@ -780,6 +778,7 @@ send_ticket_to_nodog() {
 		REMAIN=$FILE_CNT.timeout
 
 		if [ ! -s $REMAIN ]; then
+
 			TIMEOUT=$MAX_TIME
 			# ---------------------------------------------------------
 			# we save the time remain for connection (secs) on file
@@ -790,7 +789,12 @@ send_ticket_to_nodog() {
 			read TIMEOUT < $REMAIN 2>/dev/null
 
 			if [ $TIMEOUT -eq 0 ]; then
-				message_page "Tempo consumato" "Hai consumato il tempo disponibile del servizio!"
+
+				check_if_user_connected_to_AP_NO_CONSUME "$7"
+
+				if [ "CONSUME_ON" = "true" ]; then
+					message_page "Tempo consumato" "Hai consumato il tempo disponibile del servizio!"
+				fi
 			fi
 		fi
 		# --------------------------------------------------------------------
@@ -811,6 +815,7 @@ send_ticket_to_nodog() {
 		REMAIN=$FILE_CNT.traffic
 
 		if [ ! -s $REMAIN ]; then
+
 			TRAFFIC=$MAX_TRAFFIC
 			# ---------------------------------------------------------
 			# we save the remain traffic for connection (bytes) on file
@@ -821,7 +826,12 @@ send_ticket_to_nodog() {
 			read TRAFFIC < $REMAIN 2>/dev/null
 
 			if [ $TRAFFIC -eq 0 ]; then
-				message_page "Traffico consumato" "Hai consumato il traffico disponibile del servizio!"
+
+				check_if_user_connected_to_AP_NO_CONSUME "$7"
+
+				if [ "CONSUME_ON" = "true" ]; then
+					message_page "Traffico consumato" "Hai consumato il traffico disponibile del servizio!"
+				fi
 			fi
 		fi
 		# --------------------------------------------------------------------
@@ -898,25 +908,26 @@ user_has_valid_MAC() {
 	fi
 }
 
-check_if_user_connected_to_AP_with_NO_LIMIT() {
+check_if_user_connected_to_AP_NO_CONSUME() {
 
-	# List of Access Point with NO LIMIT
+	# List of Access Point with NO CONSUME
 
-	FILE=$HOME/etc/$VIRTUAL_HOST/.AP_NO_LIMIT
+	FILE=$HOME/etc/$VIRTUAL_HOST/.AP_NO_CONSUME
 
 	if [ -s $FILE ]; then
 
-		while read AP_NO_LIMIT
+		while read AP_WITH_NO_COMSUME
 		do
-			if [ "AP_NO_LIMIT" = "$1" ]; then
+			if [ "AP_WITH_NO_COMSUME" = "$1" ]; then
+
+				unset CONSUME_ON
+
 				return
 			fi
 		done < $FILE
 	fi
 
-	LOGOUT=true
-
-	ask_nodog_to_logout_user
+	CONSUME_ON=true
 }
 
 _date() { date '+%Y/%m/%d %H:%M:%S' ; }
@@ -935,7 +946,7 @@ write_to_LOG() {
 	# --------------------------------------------------------------------
 	FILE_UID=$DIR_REQ/$1.uid
 
-	read UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC < $FILE_UID 2>/dev/null
+	read UUID_TO_LOG POLICY < $FILE_UID 2>/dev/null
 
 	if [ -z "$UUID_TO_LOG" ]; then
 		UUID_TO_LOG=$1
@@ -959,11 +970,11 @@ send_request_to_nodog() {
 
 	ACCESS_POINT_NAME=${AP##*@}
 
-	ACCESS_POINT=`grep "^$ACCESS_POINT_NAME " ${ACCESS_POINT_LIST}.down 2>/dev/null`
+	ACCESS_POINT=`grep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.down 2>/dev/null`
 
 	if [ -z "$ACCESS_POINT" ]; then
 
-		ACCESS_POINT=`grep "^$ACCESS_POINT_NAME " ${ACCESS_POINT_LIST}.up 2>/dev/null`
+		ACCESS_POINT=`grep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.up 2>/dev/null`
 
 		if [ -n "$ACCESS_POINT" ]; then
 
@@ -986,7 +997,7 @@ send_request_to_nodog() {
 
 				# si aggiunge access point alla lista di quelli non contattabili...
 
-				append_to_FILE "$ACCESS_POINT_NAME $GATEWAY" ${ACCESS_POINT_LIST}.down
+				append_to_FILE "$ACCESS_POINT_NAME $GATEWAY" $ACCESS_POINT_LIST.down
 
 				anomalia 5
 			fi
@@ -1043,6 +1054,16 @@ END
 
 load_policy() {
 
+	USER_MAX_TIME=0
+	USER_MAX_TRAFFIC=0
+
+	if [ -n "$1" ]; then
+		# --------------------------------------------------------------------
+		# GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
+		# --------------------------------------------------------------------
+		read UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC < $1 2>/dev/null
+	fi
+
 	if [ -z "$POLICY" ]; then
 		anomalia 10
 	fi
@@ -1053,9 +1074,31 @@ load_policy() {
 		anomalia 10
 	fi
 
-	source $DIR_POLICY/$POLICY
-
  	mkdir -p $DIR_CNT/$POLICY
+
+	unset POLICY_RESET
+	unset BONUS_FOR_EXIT
+
+	source $DIR_POLICY/$POLICY
+	# --------------------------------------------------------------------
+	# TIME POLICY
+	# --------------------------------------------------------------------
+	if [ -z "$MAX_TIME" ]; then
+		MAX_TIME=0
+	fi
+	if [ $USER_MAX_TIME -ne $MAX_TIME ]; then
+		MAX_TIME=$USER_MAX_TIME
+	fi
+	# --------------------------------------------------------------------
+	# TRAFFIC POLICY
+	# --------------------------------------------------------------------
+	if [ -z "$MAX_TRAFFIC" ]; then
+		MAX_TRAFFIC=0
+	fi
+	if [ $USER_MAX_TRAFFIC -ne $MAX_TRAFFIC ]; then
+		MAX_TRAFFIC=$USER_MAX_TRAFFIC
+	fi
+	# --------------------------------------------------------------------
 }
 
 save_connection_request() {
@@ -1109,7 +1152,7 @@ get_user_context_connection() {
 	fi
 }
 
-check_for_user_already_connected() {
+check_if_user_is_connected() {
 
 	# $1 -> mac
 	# $2 -> ip
@@ -1214,21 +1257,9 @@ info_notified_from_nodog() {
 		return
 	fi
 
-	# --------------------------------------------------------------------
-	# GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
-	# --------------------------------------------------------------------
-	FILE_UID=$DIR_REQ/$5.uid
+	# NB: FILE_CTX e' settato da get_user_context_connection() che e' chiamato da check_if_user_is_connected()...
 
-	if [ -s "$FILE_UID" ]; then
-		read UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC < $FILE_UID 2>/dev/null
-	fi
-
-	load_policy
-	# --------------------------------------------------------------------
-
-	check_for_user_already_connected "$1" "$2" "$3" "$4" "$5"
-
-	# NB: FILE_CTX e' settato da get_user_context_connection() che e' chiamato da check_for_user_already_connected()...
+	check_if_user_is_connected "$1" "$2" "$3" "$4" "$5"
 
 	if [ -z "$FILE_CTX" -o \
 		  "$OP" = "RENEW" ]; then
@@ -1244,117 +1275,109 @@ info_notified_from_nodog() {
 
 			anomalia 6
 		fi
-
-	elif [ $6 -ne 0 ]; then # logout
-
-		LOGOUT=true
-
-		# we remove the connection context data saved on file and NoDog data saved on file
-		rm -f $FILE_CTX $DIR_REQ/$2.req
 	fi
 
-	FILE_CNT=$DIR_CNT/$POLICY/$UUID_TO_LOG
-	# --------------------------------------------------------------------
-	# TRAFFIC POLICY
-	# --------------------------------------------------------------------
-	if [ -z "$MAX_TRAFFIC" ]; then
-		MAX_TRAFFIC=0
-	fi
+	check_if_user_connected_to_AP_NO_CONSUME "$4"
 
-	if [ $MAX_TRAFFIC -gt 0 ]; then
+	if [ "$CONSUME_ON" = "true" ]; then
+
+		load_policy $DIR_REQ/$5.uid # GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
+
+		FILE_CNT=$DIR_CNT/$POLICY/$UUID_TO_LOG
+
 		# --------------------------------------------------------------------
-		# WE CHECK FOR THE TRAFFIC REMAIN FOR CONNECTION (BYTES) SAVED ON FILE
+		# TRAFFIC POLICY
 		# --------------------------------------------------------------------
-		TRAFFIC=0
+		if [ -z "$MAX_TRAFFIC" ]; then
+			MAX_TRAFFIC=0
+		fi
 
-		if [ -s $FILE_CNT.traffic ]; then
-			read TRAFFIC < $FILE_CNT.traffic 2>/dev/null
+		if [ $MAX_TRAFFIC -gt 0 ]; then
+			# --------------------------------------------------------------------
+			# WE CHECK FOR THE TRAFFIC REMAIN FOR CONNECTION (BYTES) SAVED ON FILE
+			# --------------------------------------------------------------------
+			TRAFFIC=0
 
-			let "TRAFFIC = TRAFFIC - $8"
+			if [ -s $FILE_CNT.traffic ]; then
+				read TRAFFIC < $FILE_CNT.traffic 2>/dev/null
 
-			if [ $TRAFFIC -lt 0 ]; then
-				TRAFFIC=0
+				let "TRAFFIC = TRAFFIC - $8"
+
+				if [ $TRAFFIC -lt 0 ]; then
+					TRAFFIC=0
+				fi
 			fi
+			# ---------------------------------------------------------
+			# we save the remain traffic for connection (bytes) on file
+			# ---------------------------------------------------------
+			write_FILE $TRAFFIC $FILE_CNT.traffic
+
+			if [ $TRAFFIC -eq 0 -a \
+				  -z "$LOGOUT" ]; then
+
+				LOGOUT=true
+
+				ask_nodog_to_logout_user
+			fi
+			# ---------------------------------------------------------
 		fi
 		# ---------------------------------------------------------
-		# we save the remain traffic for connection (bytes) on file
-		# ---------------------------------------------------------
-		write_FILE $TRAFFIC $FILE_CNT.traffic
 
-		if [ $TRAFFIC -eq 0 -a \
-			  -z "$LOGOUT" ]; then
-
-			check_if_user_connected_to_AP_with_NO_LIMIT $4
-
-		fi
-		# ---------------------------------------------------------
-	fi
-	# ---------------------------------------------------------
-
-	# --------------------------------------------------------------------
-	# TIME POLICY
-	# --------------------------------------------------------------------
-	if [ -z "$MAX_TIME" ]; then
-		MAX_TIME=0
-	fi
-
-	if [ $MAX_TIME -gt 0 ]; then
 		# --------------------------------------------------------------------
-		# WE CHECK FOR THE TIME REMAIN FOR CONNECTION (SECS) SAVED ON FILE
+		# TIME POLICY
 		# --------------------------------------------------------------------
-		TIMEOUT=0
-
-		if [ -s $FILE_CNT.timeout ]; then
-
-			read TIMEOUT < $FILE_CNT.timeout 2>/dev/null
-
-			let "TIMEOUT = TIMEOUT - $7"
-
-			if [ $TIMEOUT -lt 0 ]; then
-				TIMEOUT=0
-			fi
+		if [ -z "$MAX_TIME" ]; then
+			MAX_TIME=0
 		fi
-		# ---------------------------------------------------------
-		# we save the time remain for connection (secs) on file
-		# ---------------------------------------------------------
-		write_FILE $TIMEOUT $FILE_CNT.timeout
 
-		if [ $TIMEOUT -eq 0 -a \
-			  -z "$LOGOUT" ]; then
+		if [ $MAX_TIME -gt 0 ]; then
+			# --------------------------------------------------------------------
+			# WE CHECK FOR THE TIME REMAIN FOR CONNECTION (SECS) SAVED ON FILE
+			# --------------------------------------------------------------------
+			TIMEOUT=0
 
-			check_if_user_connected_to_AP_with_NO_LIMIT $4
+			if [ -s $FILE_CNT.timeout ]; then
 
+				read TIMEOUT < $FILE_CNT.timeout 2>/dev/null
+
+				let "TIMEOUT = TIMEOUT - $7"
+
+				if [ -n "$BONUS_FOR_EXIT" -a $6 -eq -1 ]; then # disconneted (logout implicito)
+					let "TIMEOUT = TIMEOUT + $BONUS_FOR_EXIT"
+				fi
+
+				if [ $TIMEOUT -lt 0 ]; then
+					TIMEOUT=0
+				fi
 			fi
-		fi
-		# ---------------------------------------------------------
-	fi
-	# ---------------------------------------------------------
-
-	if [ $6 -eq -1 ]; then # disconneted (logout implicito)
-
-		OP=EXIT
-
-		if [ $MAX_TRAFFIC -gt 0 -a \
-					$TRAFFIC -gt 0 ]; then
-
-			# bonus
-
-			if [ -z "$BONUS_FOR_EXIT" ]; then
-				BONUS_FOR_EXIT=0
-			fi
-
-			let "TIMEOUT = TIMEOUT + $BONUS_FOR_EXIT"
-
+			# ---------------------------------------------------------
+			# we save the time remain for connection (secs) on file
+			# ---------------------------------------------------------
 			write_FILE $TIMEOUT $FILE_CNT.timeout
+
+			if [ $TIMEOUT -eq 0 -a \
+				  -z "$LOGOUT" ]; then
+
+				LOGOUT=true
+
+				ask_nodog_to_logout_user
+			fi
+			# ---------------------------------------------------------
 		fi
+		# ---------------------------------------------------------
 	fi
 
 	if [ $6 -ne 0 ]; then # logout
 
+		LOGOUT=true
+
+		if [ $6 -eq -1 ]; then # disconneted (logout implicito)
+			OP=EXIT
+		fi
+
 		write_to_LOG "$5" "$4" "$2" "$1" "$TIMEOUT" "$TRAFFIC"
 
-		# we remove the data saved on file
-		rm -f $DIR_REQ/$5.uid
+		rm -f $FILE_CTX $DIR_REQ/$2.req $DIR_REQ/$5.uid # we remove the data saved on file (connection context data and NoDog data)
 	fi
 
 	if [ $# -gt 8 ]; then
@@ -1438,12 +1461,7 @@ logout() {
 	# --------------------------------------------------------------------
 	# GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
 	# --------------------------------------------------------------------
-	FILE_UID=$DIR_REQ/$UUID.uid
-
-	read UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC < $FILE_UID 2>/dev/null
-
-	load_policy
-	# --------------------------------------------------------------------
+	load_policy $DIR_REQ/$UUID.uid
 
 	ask_nodog_to_logout_user
 }
@@ -1672,27 +1690,26 @@ login_request() {
 			OP=FIRST_PASS_AUTH
 
 			# --------------------------------------------------------------------
-			# waTime - waTraffic sono eventuali valori di *** CONSUMO ***
+			# waTime - valore di *** CONSUMO ***
 			# --------------------------------------------------------------------
-			WA_TIME=`grep 'waTime: '		 $TMPFILE.out | cut -f2 -d' ' 2>/dev/null`
-			WA_TRAFFIC=`grep 'waTraffic: ' $TMPFILE.out | cut -f2 -d' ' 2>/dev/null`
+			if [ "$POLICY" != "FLAT" ]; then
 
-			if [ -n "$WA_TIME" ]; then
+				WA_TIME=`grep 'waTime: ' $TMPFILE.out | cut -f2 -d' ' 2>/dev/null`
 
-				if [ -n "$POLICY_RESET" ]; then
-					anomalia 11
+				if [ -n "$WA_TIME" ]; then
+					MAX_TIME=$WA_TIME
 				fi
-
-				MAX_TIME=$WA_TIME
 			fi
+			# --------------------------------------------------------------------
+			# waTraffic - valore di *** CONSUMO ***
+			# --------------------------------------------------------------------
+			if [ "$POLICY" != "FLAT" ]; then
 
-			if [ -n "$WA_TRAFFIC" ]; then
+				WA_TRAFFIC=`grep 'waTraffic: ' $TMPFILE.out | cut -f2 -d' ' 2>/dev/null`
 
-				if [ -n "$POLICY_RESET" ]; then
-					anomalia 11
+				if [ -n "$WA_TRAFFIC" ]; then
+					MAX_TRAFFIC=$WA_TRAFFIC
 				fi
-
-				MAX_TRAFFIC=$WA_TRAFFIC
 			fi
 			# --------------------------------------------------------------------
 
@@ -1782,15 +1799,6 @@ postlogin() {
 		BODY_STYLE=`printf "onload=\"doOnLoad('postlogin?uid=%s&gateway=%s','%s')\"" "$1" "$2" "$3" 2>/dev/null`
  		HEAD_HTML="<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>"
 
-# ------------------------------------------------------------------------------------------------------------------
-# FIREFOX 3.0.11 vuole il javascript dentro la pagina html
-# ------------------------------------------------------------------------------------------------------------------
-#		HEAD_HTML="<script language=\"JavaScript\" type=\"text/javascript\">
-# function doOnLoad(URL, redirurl) {
-#	popup = window.open(URL, 'logout_popup', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,width=800,height=600');
-#   if (redirurl) { self.location = redirurl; } }
-#</script>"
-
 		print_page "$1" "$3" "$3"
 
 	elif [ $# -eq 2 ]; then
@@ -1821,7 +1829,7 @@ logout_notified_from_popup() {
 	print_page "$1"
 }
 
-registrazione() {
+registrazione_form() {
 
 	# eventuali dati pre form input
 
@@ -1991,7 +1999,7 @@ waPolicy: $POLICY
 	fi
 
 	TITLE_TXT="Registrazione effettuata"
-	REQUST_URI=post_registrazione
+	REQUEST_URI=post_registrazione
 
 	print_page $CALLER_ID "polling_attivazione" $CALLER_ID
 }
@@ -2234,8 +2242,8 @@ status_network() {
 
 	# NB: wc se non legge da stdin stampa anche il nome del file...
 
-	NUM_USERS=`			wc -l < $TMPFILE					  2>/dev/null`
-	NUM_ACCESS_POINT=`wc -l < ${ACCESS_POINT_LIST}.up 2>/dev/null`
+	NUM_USERS=`			wc -l < $TMPFILE				   2>/dev/null`
+	NUM_ACCESS_POINT=`wc -l < $ACCESS_POINT_LIST.up 2>/dev/null`
 
 	if [ $NUM_USERS -gt 0 ]; then
 
@@ -2259,6 +2267,37 @@ status_network() {
 
 	TITLE_TXT="Firenze WiFi: stato rete"
 	BODY_SHTML=` echo "$TMP3"; echo "$OUTPUT"; cat $DIR_TEMPLATE/status_network_end.tmpl 2>/dev/null`
+}
+
+update_ap_list() {
+
+	# $1 -> ap
+	# $2 -> public address to contact the access point
+
+	ACCESS_POINT=`grep "^$1 " $ACCESS_POINT_LIST.up 2>/dev/null`
+
+	if [ -z "$ACCESS_POINT" ]; then
+
+		# si aggiunge access point alla lista di quelli contattabili...
+
+		append_to_FILE "$1 $2" $ACCESS_POINT_LIST.up
+	fi
+
+	ACCESS_POINT=`grep "^$1 " $ACCESS_POINT_LIST.down 2>/dev/null`
+
+	if [ -n "$ACCESS_POINT" ]; then
+
+		LIST=`grep -v "^$1 " $ACCESS_POINT_LIST.down 2>/dev/null`
+
+		if [ -n "$LIST" ]; then
+
+			# si toglie access point dalla lista di quelli non contattabili...
+
+			write_FILE "$LIST" $ACCESS_POINT_LIST.down
+		else
+			rm -f					 $ACCESS_POINT_LIST.down
+		fi
+	fi
 }
 
 start_ap() {
@@ -2313,32 +2352,7 @@ start_ap() {
 		rm -f $LIST_SAFE
 	fi
 
-	ACCESS_POINT=`grep "^$1 " ${ACCESS_POINT_LIST}.up 2>/dev/null`
-
-	if [ -z "$ACCESS_POINT" ]; then
-
-		# si aggiunge access point alla lista di quelli contattabili...
-
-		append_to_FILE "$1 $2" ${ACCESS_POINT_LIST}.up
-
-	else
-
-		ACCESS_POINT=`grep "^$1 " ${ACCESS_POINT_LIST}.down 2>/dev/null`
-
-		if [ -n "$ACCESS_POINT" ]; then
-
-			LIST=`grep -v "^$1 " ${ACCESS_POINT_LIST}.down 2>/dev/null`
-
-			if [ -n "$LIST" ]; then
-
-				# si toglie access point dalla lista di quelli non contattabili...
-
-				write_FILE "$LIST" ${ACCESS_POINT_LIST}.down
-			else
-				rm -f					 ${ACCESS_POINT_LIST}.down
-			fi
-		fi
-	fi
+	update_ap_list "$1" "$2"
 
 	BODY_SHTML="OK"
 }
@@ -2353,7 +2367,7 @@ get_users_info() {
 
 	# NB: wc se non legge da stdin stampa anche il nome del file...
 
-	NUM_ACCESS_POINT=`wc -l < ${ACCESS_POINT_LIST}.up 2>/dev/null`
+	NUM_ACCESS_POINT=`wc -l < $ACCESS_POINT_LIST.up 2>/dev/null`
 
 	if [ $NUM_ACCESS_POINT -gt 0 ]; then
 
@@ -2365,7 +2379,7 @@ get_users_info() {
 
 			ask_nodog_to_check_for_users_info
 
-		done < ${ACCESS_POINT_LIST}.up
+		done < $ACCESS_POINT_LIST.up
 	fi
 
 	HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
@@ -2400,21 +2414,10 @@ reset_policy() {
 
 	for POLICY in `ls $DIR_POLICY/* 2>/dev/null`
 	do
-		unset POLICY_RESET
-
 		load_policy
 
 		if [ -n "$POLICY_RESET" ]; then
-
-			for FILE in `ls $DIR_CNT/$POLICY/*.timeout 2>/dev/null`
-			do
-				write_FILE $MAX_TIME $FILE
-			done
-
-			for FILE in `ls $DIR_CNT/$POLICY/*.traffic 2>/dev/null`
-			do
-				write_FILE $MAX_TRAFFIC $FILE
-			done
+			rm	-rf $DIR_CNT/$POLICY/* 2>/dev/null
 		fi
 	done
 
@@ -2509,14 +2512,14 @@ write_SSI() {
 		# ----------------------------------------------------------------------------------------------------------------------------
 		# REQ: Set-Cookie: TODO[ data expire path domain secure HttpOnly ]
 		# ----------------------------------------------------------------------------------------------------------------------------
-		# string -- Data to put into the cookie         -- must
-		# int    -- Lifetime of the cookie in HOURS     -- must (0 -> valid until browser exit)
-		# string -- Path where the cookie can be used   --  opt
-		# string -- Domain which can read the cookie    --  opt
-		# bool   -- Secure mode                         --  opt
-		# bool   -- Only allow HTTP usage               --  opt
+		# string -- key_id or data to put into cookie   -- must
+		# int    -- lifetime of the cookie in HOURS     -- must (0 -> valid until browser exit)
+		# string -- path where the cookie can be used   --  opt
+		# string -- domain which can read the cookie    --  opt
+		# bool   -- secure mode                         --  opt
+		# bool   -- only allow HTTP usage               --  opt
 		# ----------------------------------------------------------------------------------------------------------------------------
-		# RET: Set-Cookie: ulib_sid=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
+		# RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
 		# ----------------------------------------------------------------------------------------------------------------------------
 
 		HTTP_RESPONSE_HEADER="Set-Cookie: TODO[ $SET_COOKIE 4320 ]\r\n$HTTP_RESPONSE_HEADER" # 180 days
@@ -2527,7 +2530,7 @@ write_SSI() {
 	fi
 
 	if [ -n "$HTTP_RESPONSE_BODY" ]; then
-		echo  "HTTP_RESPONSE_BODY=$HTTP_RESPONSE_BODY"
+		echo  \"HTTP_RESPONSE_BODY=$HTTP_RESPONSE_BODY\"
 	else
 		if [ ! -d $DIR_SSI ]; then
 			mkdir -p $DIR_SSI
@@ -2549,7 +2552,7 @@ write_SSI() {
 			TITLE_TXT="Firenze WiFi"
 		fi
 
-		echo -e "TITLE_TXT=$TITLE_TXT\nBODY_STYLE=$BODY_STYLE"
+		echo -e "'TITLE_TXT=$TITLE_TXT'\nBODY_STYLE=$BODY_STYLE"
 	fi
 
 	uscita
@@ -2559,7 +2562,7 @@ do_cmd() {
 
 	export TITLE_TXT HEAD_HTML BODY_SHTML BODY_STYLE \
 			 SESSION_ID CONNECTION_CLOSE SET_COOKIE TMPFILE OUTPUT HTTP_RESPONSE_HEADER HTTP_RESPONSE_BODY \
-			 OP FILE_CTX MAC IP GATEWAY AP TMP_FORM_FILE UUID CALLER_ID USER SIGNED_DATA UUID_TO_APPEND POLICY WA_UID
+			 OP FILE_CTX MAC IP GATEWAY AP TMP_FORM_FILE UUID CALLER_ID USER SIGNED_DATA UUID_TO_APPEND POLICY WA_UID CONSUME_ON
 
 	# load environment
 
@@ -2570,11 +2573,11 @@ do_cmd() {
 	fi
 
 	# --------------------------------
-	#  session cookie (no NAT)
+	#  session ID (no NAT)
 	# --------------------------------
 	SESSION_ID=$REMOTE_ADDR
 	# --------------------------------
-	#  session cookie (with NAT)
+	#  session ID (with NAT)
 	# --------------------------------
 	#  if [ -n "$HTTP_COOKIE" ]; then
 	#     SESSION_ID=$HTTP_COOKIE
@@ -2584,7 +2587,7 @@ do_cmd() {
 	#  fi
 	# --------------------------------
 
-	# we can do services...
+	# check if we are operative...
 	if [ -x $HOME/$VIRTUAL_HOST/ANOMALIA ]; then
 
 		unset BACK_TAG
@@ -2612,7 +2615,7 @@ do_cmd() {
 			/start_ap)													start_ap					"$@"	;;
 			/postlogin)													postlogin				"$@"	;;
 			/stato_utente)												stato_utente					;;
-			/registrazione)											registrazione					;;
+			/registrazione)											registrazione_form			;;
 			/polling_attivazione)									polling_attivazione	"$@"	;;
 			/login | /cpe | /main | /personale | /circuito) main_page				"$@"	;;
 
@@ -2708,7 +2711,7 @@ do_cmd() {
 			/login)				login_request					"$@" ;;
 			/logout)				logout_notified_from_popup "$@" ;;
 			/uploader)			uploader							"$@" ;;
-			/registrazione)	registrazione					"$@" ;;
+			/registrazione)	registrazione_request		"$@" ;;
 
 			/admin_view_user)
 				redirect_if_not_https

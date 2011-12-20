@@ -32,11 +32,12 @@ const char* UClientImage_Base::rpointer;
 SSL_CTX*    UClientImage_Base::ctx;
 #endif
 
-// NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
+// NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
 UString* UClientImage_Base::_value;
 UString* UClientImage_Base::_buffer;
 UString* UClientImage_Base::_encoded;
+UString* UClientImage_Base::_set_cookie;
 
 // NB: we cannot put this in .h for the dependency of UServer_Base class...
 // ------------------------------------------------------------------------
@@ -133,24 +134,26 @@ void UClientImage_Base::init()
 {
    U_TRACE(0, "UClientImage_Base::init()")
 
-   U_INTERNAL_ASSERT_EQUALS(body,     0)
-   U_INTERNAL_ASSERT_EQUALS(rbuffer,  0)
-   U_INTERNAL_ASSERT_EQUALS(wbuffer,  0)
-   U_INTERNAL_ASSERT_EQUALS(pbuffer,  0)
-   U_INTERNAL_ASSERT_EQUALS(_value,   0)
-   U_INTERNAL_ASSERT_EQUALS(_buffer,  0)
-   U_INTERNAL_ASSERT_EQUALS(_encoded, 0)
+   U_INTERNAL_ASSERT_EQUALS(body,        0)
+   U_INTERNAL_ASSERT_EQUALS(rbuffer,     0)
+   U_INTERNAL_ASSERT_EQUALS(wbuffer,     0)
+   U_INTERNAL_ASSERT_EQUALS(pbuffer,     0)
+   U_INTERNAL_ASSERT_EQUALS(_value,      0)
+   U_INTERNAL_ASSERT_EQUALS(_buffer,     0)
+   U_INTERNAL_ASSERT_EQUALS(_encoded,    0)
+   U_INTERNAL_ASSERT_EQUALS(_set_cookie, 0)
 
    body    = U_NEW(UString);
    rbuffer = U_NEW(UString(U_CAPACITY));
    wbuffer = U_NEW(UString);
    pbuffer = U_NEW(UString);
 
-   // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
+   // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
-   _value   = U_NEW(UString(U_CAPACITY));
-   _buffer  = U_NEW(UString(U_CAPACITY));
-   _encoded = U_NEW(UString(U_CAPACITY));
+   _value      = U_NEW(UString(U_CAPACITY));
+   _buffer     = U_NEW(UString(U_CAPACITY));
+   _encoded    = U_NEW(UString(U_CAPACITY));
+   _set_cookie = U_NEW(UString(100U));
 }
 
 void UClientImage_Base::clear()
@@ -171,15 +174,31 @@ void UClientImage_Base::clear()
       delete pbuffer;
       delete rbuffer;
 
-      // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
+      // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
       U_INTERNAL_ASSERT_POINTER(_value)
       U_INTERNAL_ASSERT_POINTER(_buffer)
       U_INTERNAL_ASSERT_POINTER(_encoded)
+      U_INTERNAL_ASSERT_POINTER(_set_cookie)
 
       delete _value;
       delete _buffer;
       delete _encoded;
+      delete _set_cookie;
+      }
+}
+
+void UClientImage_Base::checkCookie()
+{
+   U_TRACE(0, "UClientImage_Base::checkCookie()")
+
+   U_INTERNAL_DUMP("_set_cookie = %.*S", U_STRING_TO_TRACE(*_set_cookie))
+
+   if (_set_cookie->empty() == false)
+      {
+      (void) wbuffer->append(*_set_cookie);
+
+      _set_cookie->setEmpty();
       }
 }
 
@@ -515,14 +534,18 @@ loop:
 
    if (handlerWrite() == U_NOTIFIER_DELETE) state = U_PLUGIN_HANDLER_ERROR;
 
+   u_http_info.method = 0; // NB: mark end processing of http request...
+
+#ifdef U_HTTP_CACHE_REQUEST
    if ((state & U_PLUGIN_HANDLER_AGAIN) != 0)
       {
       if ((state & U_PLUGIN_HANDLER_ERROR) == 0) goto end;
-
-      state = U_PLUGIN_HANDLER_ERROR;
+           state = U_PLUGIN_HANDLER_ERROR;
       }
-   else if (UServer_Base::bpluginsHandlerReset &&
-            UServer_Base::pluginsHandlerReset() == U_PLUGIN_HANDLER_ERROR)
+   else
+#endif
+      if (UServer_Base::bpluginsHandlerReset &&
+          UServer_Base::pluginsHandlerReset() == U_PLUGIN_HANDLER_ERROR)
       {
       state = U_PLUGIN_HANDLER_ERROR;
       }

@@ -33,6 +33,7 @@
 #include <ulib/utility/compress.h>
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/xml_escape.h>
+#include <ulib/utility/uhttp_session.h>
 #include <ulib/utility/quoted_printable.h>
 
 #ifdef USE_PARSER

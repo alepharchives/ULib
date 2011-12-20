@@ -27,27 +27,6 @@
 #  include <ulib/base/replace/sysexits.h>
 #endif
 
-#if HAVE_DIRENT_H
-#  include <dirent.h>
-#  ifdef _DIRENT_HAVE_D_NAMLEN
-#     define NAMLEN(dirent) (dirent)->d_namlen
-#  else
-#     define NAMLEN(dirent) u_str_len((dirent)->d_name)
-#  endif
-#else
-#  define dirent direct
-#  define NAMLEN(dirent) (dirent)->d_namlen
-#  if HAVE_SYS_NDIR_H
-#     include <sys/ndir.h>
-#  endif
-#  if HAVE_SYS_DIR_H
-#     include <sys/dir.h>
-#  endif
-#  if HAVE_NDIR_H
-#     include <ndir.h>
-#  endif
-#endif
-
 #ifndef DT_UNKNOWN
 #define DT_UNKNOWN  0
 #endif
@@ -81,6 +60,8 @@ int        u_pfn_flags;
 bPFpcupcud u_pfn_match = u_dosmatch;
 
 /* Services */
+
+int u_num_cpu = -1;
 
 struct uhttpinfo u_http_info;
 
@@ -153,10 +134,9 @@ char* u_strncpy(char* restrict dest, const char* restrict src, size_t n)
 char* u_inet_nltoa(uint32_t ip)
 {
    char* result;
+   union uuaddress address;
 
    U_INTERNAL_TRACE("u_inet_nltoa(%u)", ip)
-
-   union uuaddress address;
 
    address.ip = ip;
 
@@ -168,10 +148,9 @@ char* u_inet_nltoa(uint32_t ip)
 char* u_inet_nstoa(uint8_t* ip)
 {
    char* result;
+   union uuaddress address;
 
    U_INTERNAL_TRACE("u_inet_nstoa(%p)", ip)
-
-   union uuaddress address;
 
    (void) u_memcpy(address.inaddr, ip, 4);
 
@@ -442,97 +421,99 @@ static inline bool scan_was_ok(int sret, char nextc, const char* ok_next_chars) 
 
 int u_get_num_cpu(void)
 {
-   static int n;
-
    U_INTERNAL_TRACE("u_get_num_cpu()")
 
-   if (n) goto end;
-
-#ifdef _SC_NPROCESSORS_ONLN
-   n = sysconf(_SC_NPROCESSORS_ONLN);
-#elif defined(_SC_NPROCESSORS_CONF)
-   n = sysconf(_SC_NPROCESSORS_CONF);
-#else
-   char buf[128];
-   FILE* fp = fopen("/sys/devices/system/cpu/present", "r");
-
-   if (fp)
+   if (u_num_cpu == -1)
       {
-      if (fgets(buf, sizeof(buf), fp))
+#  ifdef _SC_NPROCESSORS_ONLN
+      u_num_cpu = sysconf(_SC_NPROCESSORS_ONLN);
+#  elif defined(_SC_NPROCESSORS_CONF)
+      u_num_cpu = sysconf(_SC_NPROCESSORS_CONF);
+#  else
+      FILE* fp = fopen("/sys/devices/system/cpu/present", "r");
+
+      if (fp)
          {
+         char buf[128];
          const char* p;
-         const char* q = buf;
+         const char* q;
 
-         buf[strlen(buf)-1] = '\0';
+         unsigned int a;      /* begin of range */
+         unsigned int b;      /* end of range */
+         unsigned int s;      /* stride */
+         const char *c1, *c2; /* next tokens after '-' or ',' */
+         char nextc;          /* char after sscanf %u match */
+         int sret;            /* sscanf return (number of matches) */
 
-         /* Parses a comma-separated list of numbers and ranges of numbers, with optional ':%u' strides modifying ranges.
-          *
-          * Some examples of input lists and their equivalent simple list:
-          *
-          *  Input           Equivalent to
-          *   0-3             0,1,2,3
-          *   0-7:2           0,2,4,6
-          *   1,3,5-7         1,3,5,6,7
-          *   0-3:2,8-15:4    0,2,8,12
-          */
-
-         while (p = q, q = nexttoken(q, ','), p)
+         if (fgets(buf, sizeof(buf), fp))
             {
-            unsigned int a;      /* begin of range */
-            unsigned int b;      /* end of range */
-            unsigned int s;      /* stride */
-            const char *c1, *c2; /* next tokens after '-' or ',' */
-            char nextc;          /* char after sscanf %u match */
-            int sret;            /* sscanf return (number of matches) */
+            q = buf;
 
-            sret = sscanf(p, "%u%c", &a, &nextc);
+            buf[strlen(buf)-1] = '\0';
 
-            if (scan_was_ok(sret, nextc, ",-") == false) goto end;
+            /* Parses a comma-separated list of numbers and ranges of numbers, with optional ':%u' strides modifying ranges.
+             *
+             * Some examples of input lists and their equivalent simple list:
+             *
+             *  Input           Equivalent to
+             *   0-3             0,1,2,3
+             *   0-7:2           0,2,4,6
+             *   1,3,5-7         1,3,5,6,7
+             *   0-3:2,8-15:4    0,2,8,12
+             */
 
-            b  = a;
-            s  = 1;
-            c1 = nexttoken(p, '-');
-            c2 = nexttoken(p, ',');
-
-            if (c1 != 0 && (c2 == 0 || c1 < c2))
+            while (p = q, q = nexttoken(q, ','), p)
                {
-               sret = sscanf(c1, "%u%c", &b, &nextc);
+               sret = sscanf(p, "%u%c", &a, &nextc);
 
-               if (scan_was_ok(sret, nextc, ",:") == false) goto end;
+               if (scan_was_ok(sret, nextc, ",-") == false) break;
 
-               c1 = nexttoken(c1, ':');
+               b  = a;
+               s  = 1;
+               c1 = nexttoken(p, '-');
+               c2 = nexttoken(p, ',');
 
                if (c1 != 0 && (c2 == 0 || c1 < c2))
                   {
-                  sret = sscanf(c1, "%u%c", &s, &nextc);
+                  sret = sscanf(c1, "%u%c", &b, &nextc);
 
-                  if (scan_was_ok(sret, nextc, ",") == false) goto end;
+                  if (scan_was_ok(sret, nextc, ",:") == false) break;
+
+                  c1 = nexttoken(c1, ':');
+
+                  if (c1 != 0 && (c2 == 0 || c1 < c2))
+                     {
+                     sret = sscanf(c1, "%u%c", &s, &nextc);
+
+                     if (scan_was_ok(sret, nextc, ",") == false) break;
+                     }
+                  }
+
+               if (!(a <= b)) break;
+
+               while (a <= b)
+                  {
+                  u_num_cpu = a + 1; /* Number of highest set bit +1 is the number of the CPUs */
+
+                  a += s;
                   }
                }
-
-            if (!(a <= b)) goto end;
-
-            while (a <= b)
-               {
-               n = a + 1; /* Number of highest set bit +1 is the number of the CPUs */
-
-               a += s;
-               }
             }
+
+         (void) fclose(fp);
          }
-
-      (void) fclose(fp);
-      }
 #endif
+      }
 
-end:
-   return n;
+   return u_num_cpu;
 }
 
 /* Pin the process to a particular core */
 
 void u_bind2cpu(pid_t pid, int n)
 {
+   cpu_set_t cpuset;
+
    U_INTERNAL_TRACE("u_bind2cpu(%d,%d)", pid, n)
 
    /* CPU mask of CPUs available to this process,
@@ -541,7 +522,6 @@ void u_bind2cpu(pid_t pid, int n)
     * mask = 3  (11b):   cpu0, 1
     * mask = 13 (1101b): cpu0, 2, 3
     */
-   cpu_set_t cpuset;
 
    CPU_ZERO(&cpuset);
 
@@ -2330,9 +2310,9 @@ norm:
 
 bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
 {
-   U_INTERNAL_TRACE("u_fnmatch(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), string, n1, n2, pattern, n2, flags)
-
    int result;
+
+   U_INTERNAL_TRACE("u_fnmatch(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), string, n1, n2, pattern, n2, flags)
 
    U_INTERNAL_ASSERT_MAJOR(n1,0)
    U_INTERNAL_ASSERT_MAJOR(n2,0)
@@ -2348,14 +2328,17 @@ bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pa
    return (flags & FNM_INVERT ? (result != 0) : (result == 0));
 }
 
-#ifdef GCOV
-#  define U_LOOP_STRING( exec_code ) { for (unsigned char c = *s; n--; c = *(++s)) { exec_code; }; }
-#else
-/* This is INCREDIBLY ugly, but fast. We break the string up into 8 byte units. On the first time through
-// the loop we get the "leftover bytes" (strlen % 8). On every other iteration, we perform 8 BODY's so we
-// handle all 8 bytes. Essentially, this saves us 7 cmp & branch instructions. If this routine is heavily
-// used enough, it's worth the ugly coding
-*/
+#define U_LOOP_STRING( exec_code ) unsigned char c = *s; while (n--) { exec_code ; c = *(++s); }
+
+/*
+#if !defined(GCOV)
+
+* (Duff's device) This is INCREDIBLY ugly, but fast. We break the string up into 8 byte units. On the first
+* time through the loop we get the "leftover bytes" (strlen % 8). On every other iteration, we perform 8 BODY's
+* so we handle all 8 bytes. Essentially, this saves us 7 cmp & branch instructions. If this routine is heavily
+* used enough, it's worth the ugly coding
+
+#  undef  U_LOOP_STRING
 #  define U_LOOP_STRING( exec_code ) {     \
    unsigned char c;                        \
    uint32_t U_LOOP_CNT = (n + 8 - 1) >> 3; \
@@ -2371,6 +2354,7 @@ bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pa
       case 1: { c = *s++; exec_code; }     \
          } while (--U_LOOP_CNT); } }
 #endif
+*/
 
 __pure bool u_isBase64(const char* restrict s, uint32_t n)
 {

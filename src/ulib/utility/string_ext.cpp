@@ -463,6 +463,19 @@ end:
    U_RETURN_STRING(value);
 }
 
+UString UStringExt::getPidProcess()
+{
+   U_TRACE(0, "UStringExt::getPidProcess()")
+
+   UString value(32U);
+
+   (void) u_memcpy(value.data(), u_pid_str, u_pid_str_len);
+
+   value.size_adjust(u_pid_str_len);
+
+   U_RETURN_STRING(value);
+}
+
 extern void* expressionParserAlloc(void* (*mallocProc)(size_t));
 extern void  expressionParserFree(void* p, void (*freeProc)(void*));
 extern void  expressionParserTrace(FILE* stream, char* zPrefix);
@@ -490,6 +503,11 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
       if (token_id == U_TK_NAME)
          {
          token    = UStringExt::getEnvironmentVar(token, &environment);
+         token_id = U_TK_VALUE;
+         }
+      else if (token_id == U_TK_PID)
+         {
+         token    = UStringExt::getPidProcess();
          token_id = U_TK_VALUE;
          }
 
@@ -687,8 +705,6 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
 
    while (s < _end)
       {
-      // skip white space from start
-
       if (u_isspace(*s))
          {
          ++s;
@@ -714,6 +730,54 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
       }
 
    if (sz && u_isspace(str[sz-1])) --sz;
+
+   result.size_adjust(sz);
+
+   U_RETURN_STRING(result);
+}
+
+// returns a string that has suppressed repeated empty lines
+
+UString UStringExt::removeEmptyLine(const char* s, uint32_t n)
+{
+   U_TRACE(0, "UStringExt::removeEmptyLine(%.*S,%u)", n, s, n)
+
+// U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+
+   UString result(n);
+   uint32_t sz1, sz = 0;
+   char* str = result.data();
+
+   const char* p;
+   const char* _end = s + n;
+
+   while (s < _end)
+      {
+      if (u_islterm(*s))
+         {
+         ++s;
+
+         continue;
+         }
+
+      p = s++;
+
+      while (s < _end &&
+             u_islterm(*s) == false)
+         {
+         ++s;
+         }
+
+      sz1 = (s - p);
+
+      (void) u_memcpy(str + sz, p, sz1); // result.append(p, sz1);
+
+      sz += sz1;
+
+      if (++s < _end) str[sz++] = '\n';
+      }
+
+   if (sz && u_islterm(str[sz-1])) --sz;
 
    result.size_adjust(sz);
 

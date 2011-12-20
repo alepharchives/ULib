@@ -6,17 +6,17 @@
  <body bgcolor="#FFFFFF">
   <img src="/images/ulib_logo.jpg" align="right">
 
-	<!--%
+	<!--#code
 	UString name = USP_FORM_VALUE(0);
 
 	if (name.empty()) name = U_STRING_FROM_CONSTANT("World");
-	/%-->
+	-->
 
-   <h1>Hello <!--% USP_PUTS(name); /%--></h1>
+   <h1>Hello <!--#puts name --></h1>
 
   <form>
    What's your name?
-   <input type="text" name="name" value=<!--% USP_PUTS(name); /%-->> <br>
+   <input type="text" name="name" value="<!--#puts name -->" ><br>
    <input type="submit">
   </form>
 

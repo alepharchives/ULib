@@ -2,7 +2,7 @@
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
-EXTRA_DIST = IR.h posting.h cquery.h *.spec*
+EXTRA_DIST = IR.h ir_session.h posting.h cquery.h *.spec*
 
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 
@@ -48,11 +48,29 @@ noinst_PROGRAMS = gendoc index1 index2 db_dump db_check query update
 moduledir = $(libexecdir)/ulib
 MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
 
-SUFFIXES = .cpp .lo .la
+if !MINGW
+module_LTLIBRARIES = ir_web.la
+ir_web_la_SOURCES  = ir_web.cpp
+ir_web_la_LIBADD   = libcquery.la libIR.la libposting.la $(ulib_la)
+ir_web_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
+endif
+
+if !CROSS_COMPILING
+SUFFIXES = .cpp .usp .lo .la
+
+ir_web.cpp: ../../src/ulib/net/server/plugin/usp/usp_translator$(EXEEXT)
+
+.usp.cpp: ../../src/ulib/net/server/plugin/usp/usp_translator$(EXEEXT)
+	@$(WINELOADER) ../../src/ulib/net/server/plugin/usp/usp_translator$(EXEEXT) $<
 
 .lo.la:
 	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< libcquery.la libIR.la libposting.la $(ulib_la) $(LIBS)
-## --------------------------------------------------------------------------------------------------------------------------
+
+FOR_ALL = .libs/ir_web.so
+
+all: $(FOR_ALL)
+endif
+## ----------------------------------------------------------------------------------------------------
 
 clean-local:
 	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out

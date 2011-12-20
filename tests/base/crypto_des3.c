@@ -63,8 +63,8 @@ int main(int argc, char** argv)
 
    U_INTERNAL_PRINT("argv[0] = %s\nargv[1] = %s", argv[0], argv[1])
 
-   if      ((argc == 2))                                  u_do_cipher(argv[1], U_ENCRYPT);
-   else if ((argc == 3) && U_STRNCMP(argv[1], "-d") == 0) u_do_cipher(argv[2], U_DECRYPT);
+   if      (argc == 2)                                  u_do_cipher(argv[1], U_ENCRYPT);
+   else if (argc == 3 && U_STRNCMP(argv[1], "-d") == 0) u_do_cipher(argv[2], U_DECRYPT);
    else
       {
       fprintf(stderr, "%s", usage);

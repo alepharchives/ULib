@@ -62,8 +62,8 @@ int main(int argc, char* argv[])
 
    U_INTERNAL_TRACE("main(%d,%p)", argc, argv)
 
-   if      ((argc == 1))                               do_cipher(argv[1], U_ENCODE);
-   else if ((argc == 2) && strcmp(argv[1], "-d") == 0) do_cipher(argv[2], U_DECODE);
+   if      (argc == 1)                               do_cipher(argv[1], U_ENCODE);
+   else if (argc == 2 && strcmp(argv[1], "-d") == 0) do_cipher(argv[2], U_DECODE);
    else
       {
       fprintf(stderr, "%s", usage);

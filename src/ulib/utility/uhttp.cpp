@@ -20,7 +20,6 @@
 #include <ulib/tokenizer.h>
 #include <ulib/json/value.h>
 #include <ulib/mime/entity.h>
-#include <ulib/utility/uhttp.h>
 #include <ulib/mime/multipart.h>
 #include <ulib/utility/escape.h>
 #include <ulib/utility/base64.h>
@@ -30,6 +29,7 @@
 #include <ulib/utility/socket_ext.h>
 #include <ulib/utility/string_ext.h>
 #include <ulib/container/hash_map.h>
+#include <ulib/utility/uhttp_session.h>
 
 #ifdef HAVE_MAGIC
 #  include <ulib/magic/magic.h>
@@ -854,6 +854,8 @@ void UHTTP::dtor()
       if (htdigest)     delete htdigest;
       if (vallow_IP)    delete vallow_IP;
       if (vRewriteRule) delete vRewriteRule;
+
+      UHTTPSession::endDB();
 
       // CACHE FILE SYSTEM
 
@@ -2120,7 +2122,7 @@ void UHTTP::clearHTTPRequestCache()
 
 int UHTTP::checkHTTPRequestCache()
 {
-   U_TRACE(1, "UHTTP::checkHTTPRequestCache()")
+   U_TRACE(0, "UHTTP::checkHTTPRequestCache()")
 
    if (cbuffer->isNull() == false)
       {
@@ -2214,7 +2216,13 @@ bool UHTTP::readHTTPRequest(USocket* socket)
 {
    U_TRACE(0, "UHTTP::readHTTPRequest(%p)", socket)
 
-   if (u_http_info.method) initHTTPInfo();
+   U_INTERNAL_ASSERT_EQUALS(u_http_info.method,0)
+
+   // u_http_info.method
+   // u_http_info.uri
+   // ....
+
+   (void) U_SYSCALL(memset, "%p,%d,%u", (void*)&u_http_info.uri, 0, sizeof(uhttpinfo)-sizeof(u_http_info.method));
 
    if (readHTTPHeader(socket, *UClientImage_Base::request) &&
        (u_http_info.szHeader == 0 || checkHTTPRequestForHeader(*UClientImage_Base::request)))
@@ -2366,19 +2374,19 @@ void UHTTP::getHTTPInfo(const UString& request, UString& method, UString& uri)
 }
 
 // param: "[ data expire path domain secure HttpOnly ]"
-// ----------------------------------------------------------------------------------------------------------------------------
-// string -- Data to put into the cookie        -- must
-// int    -- Lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
-// string -- Path where the cookie can be used  --  opt
-// string -- Domain which can read the cookie   --  opt
-// bool   -- Secure mode                        --  opt
-// bool   -- Only allow HTTP usage              --  opt
-// ----------------------------------------------------------------------------------------------------------------------------
-// RET: Set-Cookie: ulib_sid=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
+// -----------------------------------------------------------------------------------------------------------------------------------
+// string -- key_id or data to put in cookie    -- must
+// int    -- lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
+// string -- path where the cookie can be used  --  opt
+// string -- domain which can read the cookie   --  opt
+// bool   -- secure mode                        --  opt
+// bool   -- only allow HTTP usage              --  opt
+// -----------------------------------------------------------------------------------------------------------------------------------
+// RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
 
-UString UHTTP::setHTTPCookie(const UString& param)
+UString UHTTP::setHTTPCookie(const UString& param, UHTTPSession* session)
 {
-   U_TRACE(0, "UHTTP::setHTTPCookie(%.*S)", U_STRING_TO_TRACE(param))
+   U_TRACE(0, "UHTTP::setHTTPCookie(%.*S,%p)", U_STRING_TO_TRACE(param), session)
 
    /*
    Set-Cookie: NAME=VALUE; expires=DATE; path=PATH; domain=DOMAIN_NAME; secure
@@ -2442,12 +2450,15 @@ UString UHTTP::setHTTPCookie(const UString& param)
    time_t expire;
    UVector<UString> vec(param);
    UString set_cookie(U_CAPACITY);
+   uint32_t counter = (session ? UHTTPSession::counter : 0);
 
    if (vec.empty())
       {
       expire = u_now->tv_sec - U_ONE_DAY_IN_SECOND;
 
-      set_cookie.snprintf("Set-Cookie: ulib_sid=deleted; expires=%#D", expire);
+      set_cookie.snprintf("Set-Cookie: ulib.s%u=deleted; expires=%#D", counter, expire);
+
+      U_SRV_LOG("delete session ulib.s%u", counter);
       }
    else
       {
@@ -2463,7 +2474,7 @@ UString UHTTP::setHTTPCookie(const UString& param)
 
       UString item, token = UServices::generateToken(vec[0], expire);
 
-      set_cookie.snprintf("Set-Cookie: ulib_sid=%.*s", U_STRING_TO_TRACE(token));
+      set_cookie.snprintf("Set-Cookie: ulib.s%u=%.*s", counter, U_STRING_TO_TRACE(token));
 
       if (num_hours) set_cookie.snprintf_add("; expires=%#D", expire);
 
@@ -2482,6 +2493,10 @@ UString UHTTP::setHTTPCookie(const UString& param)
                }
             }
          }
+
+      if (session) session->value_id.replace(token);
+
+      U_SRV_LOG("create new session ulib.s%u ID=%.*s", counter, U_STRING_TO_TRACE(token));
       }
 
    U_INTERNAL_DUMP("set_cookie = %.*S", U_STRING_TO_TRACE(set_cookie))
@@ -2489,9 +2504,9 @@ UString UHTTP::setHTTPCookie(const UString& param)
    U_RETURN_STRING(set_cookie);
 }
 
-UString UHTTP::getHTTPCookie()
+UString UHTTP::getHTTPCookie(UHTTPSession* session)
 {
-   U_TRACE(1, "UHTTP::getHTTPCookie()")
+   U_TRACE(0, "UHTTP::getHTTPCookie(%p)", session)
 
    if (u_http_info.cookie_len)
       {
@@ -2499,21 +2514,28 @@ UString UHTTP::getHTTPCookie()
 
       U_INTERNAL_DUMP("cookie = %.*S", u_http_info.cookie_len, u_http_info.cookie)
 
-      if (U_STRNEQ(u_http_info.cookie, "ulib_sid="))
+      if (U_STRNEQ(u_http_info.cookie, "ulib.s"))
          {
-         const char* token = u_http_info.cookie + U_CONSTANT_SIZE("ulib_sid=");
+               char* ptr;
+         const char* start = u_http_info.cookie + U_CONSTANT_SIZE("ulib.s");
+         uint32_t counter  = strtol(start, &ptr, 0);
 
-         UString data = UServices::getTokenData(token);
+         U_SRV_LOG("found session ulib.s%u", counter);
+
+         U_INTERNAL_DUMP("ptr[0] = %C", ptr[0])
+
+         U_INTERNAL_ASSERT_EQUALS(ptr[0], '=')
+
+         UString data = UServices::getTokenData(++ptr);
+
+         if (session) session->value_id.replace(ptr, u_http_info.cookie_len - (ptr - start));
 
          U_RETURN_STRING(data);
          }
 
-      if (((UHTTP::ucgi*)file_data->ptr)->sh_script == false)
-         {
-         UString result(u_http_info.cookie, u_http_info.cookie_len);
+      UString result(u_http_info.cookie, u_http_info.cookie_len);
 
-         U_RETURN_STRING(result);
-         }
+      U_RETURN_STRING(result);
       }
 
    U_RETURN_STRING(UString::getStringNull());
@@ -5209,14 +5231,14 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
                   {
                   // REQ: Set-Cookie: TODO[ data expire path domain secure HttpOnly ]
                   // ----------------------------------------------------------------------------------------------------------------------------
-                  // string -- Data to put into the cookie        -- must
-                  // int    -- Lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
-                  // string -- Path where the cookie can be used  --  opt
-                  // string -- Domain which can read the cookie   --  opt
-                  // bool   -- Secure mode                        --  opt
-                  // bool   -- Only allow HTTP usage              --  opt
+                  // string -- key_id or data to put in cookie    -- must
+                  // int    -- lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
+                  // string -- path where the cookie can be used  --  opt
+                  // string -- domain which can read the cookie   --  opt
+                  // bool   -- secure mode                        --  opt
+                  // bool   -- only allow HTTP usage              --  opt
                   // ----------------------------------------------------------------------------------------------------------------------------
-                  // RET: Set-Cookie: ulib_sid=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
+                  // RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
 
                   uint32_t len  = ptr - location;
                   UString param = UClientImage_Base::wbuffer->substr(location, len), set_cookie = setHTTPCookie(param);

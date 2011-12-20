@@ -69,7 +69,7 @@ U_EXPORT main (int argc, char* argv[])
                            "You know how it tastes", 0 };
 
    bool selected[]        = { false, true, false, false, true, true, true };
-   bool selected_result[] = { false, true, false, false, true, true, true };
+// bool selected_result[] = { false, true, false, false, true, true, true };
 
    x.setSize(20, 61);
 

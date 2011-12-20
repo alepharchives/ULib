@@ -1,1 +1,1 @@
-<h1><!--% USP_PRINTF_XML_FORM_VALUE("Hello %.*s", 0); /%--></h1>
+<h1><!--#code USP_PRINTF_XML_FORM_VALUE("Hello %.*s", 0); --></h1>

@@ -1,8 +1,8 @@
-<!--%!
+<!--#declaration
 #undef min
 #undef max
 #include <fstream>
-/%-->
+-->
 <html>
  <head>
   <style type="text/css">
@@ -29,11 +29,8 @@
  <body>
   <h1>ULib Servlet Page demos</h1>
   <table style="border: 1px solid black">
-   <tr>
-    <th>Demo</th>
-    <th>Description</th>
-   </tr>
-	<!--%
+   <tr><th>Demo</th><th>Description</th></tr>
+	<!--#code
 	std::string filename = "demos.txt";
 	std::ifstream demos(filename.c_str());
 
@@ -57,9 +54,10 @@
 		// skip empty urls and lines starting with '#'
 		if (url.empty() || line[0] == '#') continue;
 
-		USP_PRINTF("<tr><td><a href=\"%s\">%s</a></td><td>%s</td></tr>\n", url.c_str(), name.c_str(), description.c_str());
+		USP_PRINTF("<tr><td><a href=\"%.*s\">%.*s</a></td><td>%.*s</td></tr>\n",
+							U_STRING_TO_TRACE(url), U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(description));
 		}
-	/%-->
+	-->
   </table>
  </body>
 </html>

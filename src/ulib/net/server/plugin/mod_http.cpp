@@ -182,7 +182,17 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x.empty() == false) UServer_Base::sendfile_threshold_nonblock = x.strtol();
 
-      if (cfg.readBoolean(*str_ENABLE_INOTIFY)) UServer_Base::handler_inotify = this; // NB: we ask to notify for change of file system (inotify)
+      if (cfg.readBoolean(*str_ENABLE_INOTIFY))
+         {
+         // NB: we ask to notify for change of file system (inotify)
+         // in the thread approach this is very dangerous...
+
+         if (UNotifier::pthread == 0) UServer_Base::handler_inotify = this;
+         else
+            {
+            U_SRV_LOG("Sorry, I can't enable inode based directory notification because PREFORK_CHILD == -1");
+            }
+         }
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

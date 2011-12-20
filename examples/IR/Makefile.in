@@ -70,13 +70,44 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/ulib/internal/config.h
 CONFIG_CLEAN_FILES = searchengine-bin.spec
 CONFIG_CLEAN_VPATH_FILES =
-LTLIBRARIES = $(noinst_LTLIBRARIES)
-libIR_la_LIBADD =
-am_libIR_la_OBJECTS = IR.lo
-libIR_la_OBJECTS = $(am_libIR_la_OBJECTS)
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
+am__install_max = 40
+am__nobase_strip_setup = \
+  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
+am__nobase_strip = \
+  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
+am__nobase_list = $(am__nobase_strip_setup); \
+  for p in $$list; do echo "$$p $$p"; done | \
+  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
+  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
+    if (++n[$$2] == $(am__install_max)) \
+      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
+    END { for (dir in files) print dir, files[dir] }'
+am__base_list = \
+  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
+  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
+am__installdirs = "$(DESTDIR)$(moduledir)"
+LTLIBRARIES = $(module_LTLIBRARIES) $(noinst_LTLIBRARIES)
+@MINGW_FALSE@ir_web_la_DEPENDENCIES = libcquery.la libIR.la \
+@MINGW_FALSE@	libposting.la $(ulib_la)
+am__ir_web_la_SOURCES_DIST = ir_web.cpp
+@MINGW_FALSE@am_ir_web_la_OBJECTS = ir_web.lo
+ir_web_la_OBJECTS = $(am_ir_web_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
+ir_web_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(ir_web_la_LDFLAGS) $(LDFLAGS) -o $@
+@MINGW_FALSE@am_ir_web_la_rpath = -rpath $(moduledir)
+libIR_la_LIBADD =
+am_libIR_la_OBJECTS = IR.lo
+libIR_la_OBJECTS = $(am_libIR_la_OBJECTS)
 libcquery_la_LIBADD =
 am_libcquery_la_OBJECTS = cquery.lo
 libcquery_la_OBJECTS = $(am_libcquery_la_OBJECTS)
@@ -151,14 +182,16 @@ am__v_CXXLD_0 = @echo "  CXXLD " $@;
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(libIR_la_SOURCES) $(libcquery_la_SOURCES) \
-	$(libposting_la_SOURCES) $(db_check_SOURCES) \
-	$(db_dump_SOURCES) $(gendoc_SOURCES) $(index1_SOURCES) \
-	$(index2_SOURCES) $(query_SOURCES) $(update_SOURCES)
-DIST_SOURCES = $(libIR_la_SOURCES) $(libcquery_la_SOURCES) \
-	$(libposting_la_SOURCES) $(db_check_SOURCES) \
-	$(db_dump_SOURCES) $(gendoc_SOURCES) $(index1_SOURCES) \
-	$(index2_SOURCES) $(query_SOURCES) $(update_SOURCES)
+SOURCES = $(ir_web_la_SOURCES) $(libIR_la_SOURCES) \
+	$(libcquery_la_SOURCES) $(libposting_la_SOURCES) \
+	$(db_check_SOURCES) $(db_dump_SOURCES) $(gendoc_SOURCES) \
+	$(index1_SOURCES) $(index2_SOURCES) $(query_SOURCES) \
+	$(update_SOURCES)
+DIST_SOURCES = $(am__ir_web_la_SOURCES_DIST) $(libIR_la_SOURCES) \
+	$(libcquery_la_SOURCES) $(libposting_la_SOURCES) \
+	$(db_check_SOURCES) $(db_dump_SOURCES) $(gendoc_SOURCES) \
+	$(index1_SOURCES) $(index2_SOURCES) $(query_SOURCES) \
+	$(update_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -336,7 +369,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
-EXTRA_DIST = IR.h posting.h cquery.h *.spec*
+EXTRA_DIST = IR.h ir_session.h posting.h cquery.h *.spec*
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 gendoc_LDADD = $(ulib_la)
 gendoc_SOURCES = gendoc.cpp
@@ -364,11 +397,16 @@ libcquery_la_SOURCES = cquery.cpp
 libposting_la_SOURCES = posting.cpp
 noinst_LTLIBRARIES = libcquery.la libIR.la libposting.la
 moduledir = $(libexecdir)/ulib
-SUFFIXES = .cpp .lo .la
+@MINGW_FALSE@module_LTLIBRARIES = ir_web.la
+@MINGW_FALSE@ir_web_la_SOURCES = ir_web.cpp
+@MINGW_FALSE@ir_web_la_LIBADD = libcquery.la libIR.la libposting.la $(ulib_la)
+@MINGW_FALSE@ir_web_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@CROSS_COMPILING_FALSE@SUFFIXES = .cpp .usp .lo .la
+@CROSS_COMPILING_FALSE@FOR_ALL = .libs/ir_web.so
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .cpp .lo .la .o .obj
+.SUFFIXES: .cpp .usp .lo .la .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -401,6 +439,37 @@ $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 $(am__aclocal_m4_deps):
 searchengine-bin.spec: $(top_builddir)/config.status $(srcdir)/searchengine-bin.spec.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+install-moduleLTLIBRARIES: $(module_LTLIBRARIES)
+	@$(NORMAL_INSTALL)
+	test -z "$(moduledir)" || $(MKDIR_P) "$(DESTDIR)$(moduledir)"
+	@list='$(module_LTLIBRARIES)'; test -n "$(moduledir)" || list=; \
+	list2=; for p in $$list; do \
+	  if test -f $$p; then \
+	    list2="$$list2 $$p"; \
+	  else :; fi; \
+	done; \
+	test -z "$$list2" || { \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(moduledir)'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(moduledir)"; \
+	}
+
+uninstall-moduleLTLIBRARIES:
+	@$(NORMAL_UNINSTALL)
+	@list='$(module_LTLIBRARIES)'; test -n "$(moduledir)" || list=; \
+	for p in $$list; do \
+	  $(am__strip_dir) \
+	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(moduledir)/$$f'"; \
+	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(moduledir)/$$f"; \
+	done
+
+clean-moduleLTLIBRARIES:
+	-test -z "$(module_LTLIBRARIES)" || rm -f $(module_LTLIBRARIES)
+	@list='$(module_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" != "$$p" || dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done
 
 clean-noinstLTLIBRARIES:
 	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
@@ -410,6 +479,8 @@ clean-noinstLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
+ir_web.la: $(ir_web_la_OBJECTS) $(ir_web_la_DEPENDENCIES) 
+	$(AM_V_CXXLD)$(ir_web_la_LINK) $(am_ir_web_la_rpath) $(ir_web_la_OBJECTS) $(ir_web_la_LIBADD) $(LIBS)
 libIR.la: $(libIR_la_OBJECTS) $(libIR_la_DEPENDENCIES) 
 	$(AM_V_CXXLD)$(CXXLINK)  $(libIR_la_OBJECTS) $(libIR_la_LIBADD) $(LIBS)
 libcquery.la: $(libcquery_la_OBJECTS) $(libcquery_la_DEPENDENCIES) 
@@ -460,6 +531,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gendoc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/index1.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/index2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ir_web.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/posting.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/query.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/update.Po@am__quote@
@@ -580,6 +652,9 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS)
 installdirs:
+	for dir in "$(DESTDIR)$(moduledir)"; do \
+	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
+	done
 install: install-am
 install-exec: install-exec-am
 install-data: install-data-am
@@ -608,7 +683,8 @@ maintainer-clean-generic:
 clean: clean-am
 
 clean-am: clean-generic clean-libtool clean-local \
-	clean-noinstLTLIBRARIES clean-noinstPROGRAMS mostlyclean-am
+	clean-moduleLTLIBRARIES clean-noinstLTLIBRARIES \
+	clean-noinstPROGRAMS mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -628,7 +704,7 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-moduleLTLIBRARIES
 
 install-dvi: install-dvi-am
 
@@ -674,27 +750,35 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am:
+uninstall-am: uninstall-moduleLTLIBRARIES
 
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-libtool clean-local clean-noinstLTLIBRARIES \
-	clean-noinstPROGRAMS ctags distclean distclean-compile \
-	distclean-generic distclean-libtool distclean-tags distdir dvi \
-	dvi-am html html-am info info-am install install-am \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
+	clean-libtool clean-local clean-moduleLTLIBRARIES \
+	clean-noinstLTLIBRARIES clean-noinstPROGRAMS ctags distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-moduleLTLIBRARIES install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am
+	tags uninstall uninstall-am uninstall-moduleLTLIBRARIES
 
 
-.lo.la:
-	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< libcquery.la libIR.la libposting.la $(ulib_la) $(LIBS)
+@CROSS_COMPILING_FALSE@ir_web.cpp: ../../src/ulib/net/server/plugin/usp/usp_translator$(EXEEXT)
+
+@CROSS_COMPILING_FALSE@.usp.cpp: ../../src/ulib/net/server/plugin/usp/usp_translator$(EXEEXT)
+@CROSS_COMPILING_FALSE@	@$(WINELOADER) ../../src/ulib/net/server/plugin/usp/usp_translator$(EXEEXT) $<
+
+@CROSS_COMPILING_FALSE@.lo.la:
+@CROSS_COMPILING_FALSE@	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< libcquery.la libIR.la libposting.la $(ulib_la) $(LIBS)
+
+@CROSS_COMPILING_FALSE@all: $(FOR_ALL)
 
 clean-local:
 	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out

@@ -1,0 +1,52 @@
+<!--#declaration
+static void usp_end()  {		  UHTTPSession::endDB(); }
+static void usp_init() { (void) UHTTPSession::initDB(); }
+-->
+<html>
+ <head><title>Example of USP with HTTP session</title></head>
+ <body bgcolor="#FDF5E6">
+
+	<!--#code
+	const char* heading;
+	UHTTPSession session;
+	UString id, creation, last_access; 
+
+	if (session.getDataSession()) heading = " Back";
+	else
+		{
+		heading = ", Newcomer";
+
+		if (session.putDataSession())
+			{
+			id				= session.getId();
+			creation		= session.getCreationTime();
+			last_access = session.getLastAccessedTime();
+			}
+		}
+	-->
+
+   <h1 align="center">Welcome<!--#puts heading --></h1>
+	<h2>Information on Your Session:</h2>
+	<table border=1 align=center>
+	<tr bgcolor="#ffad00">
+	  <th>Info Type</th><th>Value</th>
+	</tr>
+	<tr>
+	  <td>ID</td>
+	  <td><!--#puts id --></td>
+	</tr>
+	<tr>
+	  <td>Creation Time</td>
+	  <td><!--#puts creation --></td>
+	</tr>
+	<tr>
+	  <td>Time of Last Access</td>
+	  <td><!--#puts last_access --></td>
+	</tr>
+	<tr>
+	  <td>Number of Previous Accesses</td>
+	  <td>accessCount</td>
+	</tr>
+	</table>
+</body> 
+</html>

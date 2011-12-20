@@ -3,4 +3,4 @@ Pragma: no-cache
 Expires: Thu, 19 Nov 1981 08:52:00 GMT
 Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0
 
-<!--% USP_PUTS(UHTTP::getUploadProgress()); /%-->
+<!--#puts UHTTP::getUploadProgress() -->

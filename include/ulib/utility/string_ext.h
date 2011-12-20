@@ -130,6 +130,7 @@ public:
 
    // eval expression 
 
+   static UString getPidProcess();
    static UString evalExpression(const UString& expr, const UString& environment);
 
    static void putenv(const char* name, uint32_t value)
@@ -214,6 +215,11 @@ public:
 
    static UString simplifyWhiteSpace(const char* s, uint32_t n);
    static UString simplifyWhiteSpace(const UString& s) { return simplifyWhiteSpace(U_STRING_TO_PARAM(s)); }
+
+   // returns a string that has suppressed repeated empty lines
+
+   static UString removeEmptyLine(const char* s, uint32_t n);
+   static UString removeEmptyLine(const UString& s) { return removeEmptyLine(U_STRING_TO_PARAM(s)); }
 
    // Minifies CSS/JS by removing comments and whitespaces
 

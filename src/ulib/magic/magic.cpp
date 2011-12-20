@@ -24,7 +24,7 @@ bool UMagic::init(int flags)
 
    magic = (magic_t) U_SYSCALL(magic_open, "%d", flags);
 
-   bool ok = (magic && U_SYSCALL(magic_load, "%p", magic, NULL) != -1);
+   bool ok = (magic && U_SYSCALL(magic_load, "%p", magic, 0) != -1);
 
    U_DUMP("ok = %b status = %.*S", ok, 512, getError())
 

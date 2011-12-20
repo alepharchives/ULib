@@ -1,6 +1,3 @@
-<!--%!
-#include <ulib/utility/services.h>
-/%-->
 <html>
 <head>
   <title>ULib start page</title>
@@ -12,7 +9,7 @@
         <tr>
           <td bgcolor="white">
             <center>
-              <h3>Welcome to Ulib (Ver. <!--%= ULIB_VERSION /%-->)!</h3>
+              <h3>Welcome to Ulib (Ver. <!--#puts ULIB_VERSION -->)!</h3>
             </center>
           </td>
         </tr>
@@ -22,7 +19,7 @@
     <blockquote>
       <table width="750" cellpadding="5">
         <tr>
-          <td bgcolor="#E0E0FF"><!--% USP_PRINTF("ULib Servlet Page (USP): %N (pid %P) [%U@%H] - %D", 0); /%--></td>
+          <td bgcolor="#E0E0FF"><!--#code USP_PRINTF("ULib Servlet Page (USP): %N (pid %P) [%U@%H] - %D", 0); --></td>
         </tr>
       </table>
     </blockquote>

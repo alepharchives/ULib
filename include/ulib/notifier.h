@@ -39,6 +39,7 @@ template <> struct UHashCodeFunctor<int> { uint32_t operator()(const int& fd) co
 class UThread;
 class USocket;
 class UTCPSocket;
+class UHttpPlugIn;
 class UServer_Base;
 class UClientImage_Base;
 
@@ -145,6 +146,7 @@ private:
 
    friend class USocket;
    friend class UTCPSocket;
+   friend class UHttpPlugIn;
    friend class UServer_Base;
    friend class UClientImage_Base;
 };

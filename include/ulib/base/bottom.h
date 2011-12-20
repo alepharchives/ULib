@@ -3,6 +3,52 @@
 #ifndef BOTTOM_H
 #define BOTTOM_H 1
 
+/* LFS */
+#if !defined(_OFF_T_) && defined(__MINGW32__) && defined(_FILE_OFFSET_BITS) && _FILE_OFFSET_BITS == 64
+#  define  _OFF_T_
+typedef long long _off_t; /* Type of file sizes and offsets (LFS) */
+typedef _off_t     off_t;
+#endif
+
+#ifdef _MSC_VER
+/* Visual Studio hasn't inttypes.h so it doesn't know uint32_t */
+typedef int int32_t;
+typedef unsigned int uint32_t;
+typedef unsigned short uint16_t;
+typedef unsigned char uint8_t;
+typedef unsigned long long uint64_t;
+typedef int mode_t;
+#else /* _MSC_VER */
+#  include <inttypes.h>
+#endif /* _MSC_VER */
+
+#if defined(SOLARIS) || defined(__hpux) || defined(MACOSX)
+#  ifndef __EXTENSIONS__
+#     define UNDEF__EXTENSIONS__
+#     define __EXTENSIONS__ 1 /* sys/stat.h won't compile without this */
+#  endif
+#endif
+
+#include <sys/stat.h>
+
+#if defined(SOLARIS) || defined(__hpux) || defined(MACOSX)
+#  ifdef UNDEF__EXTENSIONS__
+#     undef __EXTENSIONS__
+#  endif
+#endif
+
+#if defined(SOLARIS)
+#  define _VA_LIST /* can't define it in stdio.h */
+#endif
+
+#include <stdio.h>
+
+#if defined(SOLARIS)
+#  undef _VA_LIST
+#endif
+
+#include <stdarg.h> /* this is the place to define _VA_LIST */
+
 #ifndef ETC_PREFIX
 #  ifdef _WIN32
 #     define ETC_PREFIX "C:\\WINDOWS\\"
@@ -26,10 +72,7 @@
 #endif
 
 #if defined(__MINGW32__)
-#  define WIN32_WINNT 0x0501
-#  undef  HAVE_GETOPT_LONG /* with WINE don't work */
 #  define HAVE_WORKING_SOCKET_OPTION_SO_RCVTIMEO 1
-#  define sighandler_t __p_sig_fn_t
 #  define STRNCASECMP(x,y) strncasecmp((x),y,sizeof(y)-1)
 #  include <ulib/base/win32/system.h>
 #elif defined(__linux__)
@@ -213,13 +256,13 @@ int fallocate(int fd, int mode, off_t offset, off_t len);
 #endif
 
 #if !defined(PACKAGE) && defined(PACKAGE_NAME)
-#define PACKAGE PACKAGE_NAME
+#  define PACKAGE PACKAGE_NAME
 #endif
 #if !defined(ULIB_VERSION) && defined(PACKAGE_VERSION)
-#define ULIB_VERSION PACKAGE_VERSION
+#  define ULIB_VERSION PACKAGE_VERSION
 #endif
 #if !defined(REPORT_BUGS) && defined(PACKAGE_BUGREPORT)
-#define REPORT_BUGS PACKAGE_BUGREPORT
+#  define REPORT_BUGS PACKAGE_BUGREPORT
 #endif
 
 #endif

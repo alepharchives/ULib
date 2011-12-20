@@ -59,12 +59,12 @@ int main(int argc, char* argv[])
 
    U_INTERNAL_TRACE("main(%d,%p)", argc, argv)
 
-   if ((argc == 2))
+   if (argc == 2)
       {
       cipher   = U_ENCODE;
       filename = argv[1];
       }
-   else if ((argc == 3) && strcmp(argv[1], "-d") == 0)
+   else if (argc == 3 && strcmp(argv[1], "-d") == 0)
       {
       cipher   = U_DECODE;
       filename = argv[2];

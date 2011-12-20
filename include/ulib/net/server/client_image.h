@@ -68,11 +68,14 @@ public:
    static uint32_t rstart, size_request;
    static bool bIPv6, pipeline, write_off;
 
-   // NB: these are for ULib Servlet Page (USP) - U_DYNAMIC_PAGE_OUTPUT...
+   // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
    static UString* _value;
    static UString* _buffer;
    static UString* _encoded;
+   static UString* _set_cookie;
+
+   static void checkCookie();
 
    // SERVICES
 

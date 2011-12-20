@@ -91,7 +91,6 @@
 // ----------------------------------------------------------------------------------------------------------------------------- */
 
 typedef struct uhttpinfo {
-         char  flag[8];
    const char* method;
    const char* uri;
    const char* query;
@@ -107,6 +106,7 @@ typedef struct uhttpinfo {
    time_t      if_modified_since;
    uint32_t    nResponseCode, startHeader, endHeader, szHeader, clength, method_len, uri_len, query_len, host_len, host_vlen,
                range_len, accept_len, cookie_len, referer_len, ip_client_len, user_agent_len, content_type_len, accept_language_len;
+         char  flag[8];
 } uhttpinfo;
 
 #define U_http_upgrade             u_http_info.flag[0]

@@ -117,7 +117,7 @@ bool UClient_Base::setHostPort(const UString& host, int _port)
           _port != 80)
          {
          char tmp[6];
-         int size = snprintf(tmp, sizeof(tmp), "%d", _port);
+         int size = u_sn_printf(tmp, sizeof(tmp), "%d", _port);
 
          host_port.push_back(':');
          host_port.append(tmp, size);
