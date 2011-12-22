@@ -25,30 +25,32 @@
    the offset of the byte following the last byte that was read. Because this copying is done within the kernel, sendfile() does not need to spend
    time transferring data to and from user space.
 
-   @param offset  offset in input to start writing; updated on return to reflect the number of bytes sent.
-   @param size    is the number of bytes to copy between file descriptors.
+   @param offset offset in input to start writing; updated on return to reflect the number of bytes sent.
+   @param count  is the number of bytes to copy between file descriptors.
 
    sendfile() returns the number of bytes sent, if transmission succeeded. If there was an error, it returns -1 with errno set. It should never return 0
 */
 
-extern U_EXPORT ssize_t sendfile(int ofd, int ifd, off_t* offset, size_t size);
-
-U_EXPORT ssize_t sendfile(int ofd, int ifd, off_t* offset, size_t size)
+extern U_EXPORT ssize_t sendfile(int ofd, int ifd, off_t* offset, size_t count);
+       U_EXPORT ssize_t sendfile(int ofd, int ifd, off_t* offset, size_t count)
 {
    char* p;
    char buf[262144];    /* we're not recursive */
-   size_t n = size;
+   size_t n = count;
    ssize_t r_in, r_out, wanted;
+
+   count = 0;
 
    while (n > 0)
       {
-      wanted = (size > sizeof(buf) ? sizeof(buf) : n);
-      r_in   = read(ifd, buf, (size_t) wanted);
+      wanted = (n > sizeof(buf) ? sizeof(buf) : n);
+
+      r_in = (offset ? pread(ifd, buf, (size_t) wanted, *offset)
+                     :  read(ifd, buf, (size_t) wanted));
 
       if (r_in <= 0)
          {
-         if (errno == EINTR ||
-             errno == EAGAIN) continue;
+         if (count) goto end;
 
          return -1;
          }
@@ -60,26 +62,23 @@ U_EXPORT ssize_t sendfile(int ofd, int ifd, off_t* offset, size_t size)
 
       while (r_in > 0)
          {
-#     ifdef __MINGW32__
          r_out = send(ofd, p, (size_t) r_in, 0);
-#     else
-         r_out = write(ofd, p, (size_t) r_in);
-#     endif
 
          if (r_out <= 0)
             {
-            if (errno == EINTR ||
-                errno == EAGAIN) continue;
+            if (count) goto end;
 
             return -1;
             }
 
-         r_in -= r_out;
-         p    += r_out;
+         r_in  -= r_out;
+         p     += r_out;
+         count += r_out;
          }
       }
 
-   *offset += size;
+end:
+   if (offset) *offset += count;
 
-   return size;
+   return count;
 }

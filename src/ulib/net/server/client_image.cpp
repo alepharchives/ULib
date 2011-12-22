@@ -251,7 +251,7 @@ int UClientImage_Base::sendfile()
       U_INTERNAL_ASSERT_DIFFERS(socket->flags          & SOCK_NONBLOCK,0)
       U_INTERNAL_ASSERT_DIFFERS(USocket::accept4_flags & SOCK_NONBLOCK,0)
 
-      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", UEventFd::fd, sfd, &offset, count);
+      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", socket->getFd(), sfd, &offset, count);
       }
 
    if (value <= 0L)
@@ -654,7 +654,12 @@ send:
 
       U_INTERNAL_DUMP("state = %d %B pipeline = %b", state, state, pipeline)
 
-           if (ret == U_NOT) state = U_PLUGIN_HANDLER_ERROR | U_PLUGIN_HANDLER_AGAIN;
+      if (ret == U_NOT)
+         {
+         if (UEventFd::op_mask == U_WRITE_OUT) U_RETURN(U_NOTIFIER_DELETE); // NB: to avoid loop...
+
+         state = U_PLUGIN_HANDLER_ERROR | U_PLUGIN_HANDLER_AGAIN;
+         }
       else if (ret == U_YES)
          {
          U_INTERNAL_ASSERT_EQUALS(sfd,0)
