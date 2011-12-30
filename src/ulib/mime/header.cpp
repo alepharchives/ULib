@@ -147,7 +147,24 @@ uint32_t UMimeHeader::parse(const char* ptr, uint32_t len)
 
          (void) value.assign(pkv, ptr - pkv - cr);
 
-         table.insert(key, value);
+         // Check for duplication of header
+
+         if (containsHeader(key) == false) table.insertAfterFind(key, value);
+         else
+            {
+            UStringRep* rep = table.elem();
+
+            if (value.equal(rep) == false)
+               {
+               UString duplicate(rep->size() + 4U + key.size() + 2U);
+
+               duplicate.snprintf("%.*s%s%.*s: ", U_STRING_TO_TRACE(*rep), (cr ? U_CRLF : U_LF), U_STRING_TO_TRACE(key));
+
+               U_INTERNAL_DUMP("duplicate = %.*S", U_STRING_TO_TRACE(duplicate))
+
+               table.replaceAfterFind(duplicate);
+               }
+            }
          }
 
       prev = ptr + 1;
@@ -184,15 +201,13 @@ uint32_t UMimeHeader::getAttributeFromKeyValue(const UString& key_value, UVector
 
    if (key_value.empty() == false)
       {
-      // Content-Disposition: form-data; name="input_file"; filename="/tmp/4dcd39e8-2a84-4242-b7bc-ca74922d26e1"
-
-      uint32_t pos = key_value.find(';');
+      uint32_t pos = key_value.find(';'); // Content-Disposition: form-data; name="input_file"; filename="/tmp/4dcd39e8-2a84-4242-b7bc-ca74922d26e1"
 
       if (pos != U_NOT_FOUND)
          {
-         // NB: da notare che il risultato dipende da una substring che muore...
+         // NB: we must use substr() because of the possibility of unQuote()...
 
-         n = name_value.split(key_value.substr(pos + 1), " =;"); // NB: non posso usare anche '"'...
+         n = name_value.split(key_value.substr(pos + 1), " =;"); // NB: I can't use also '"' char...
 
          U_INTERNAL_ASSERT( n >= 2)
          U_INTERNAL_ASSERT((n  & 1) == 0) // pari...
@@ -202,40 +217,39 @@ uint32_t UMimeHeader::getAttributeFromKeyValue(const UString& key_value, UVector
    U_RETURN(n);
 }
 
-UString UMimeHeader::getValueAttributeFromKeyValue(const UString& name_attr, UVector<UString>& name_value, bool ignore_case)
+UString UMimeHeader::getValueAttributeFromKeyValue(const UString& name, UVector<UString>& name_value, bool ignore_case)
 {
-   U_TRACE(0, "UMimeHeader::getValueAttributeFromKeyValue(%.*S,%p,%b)", U_STRING_TO_TRACE(name_attr), &name_value, ignore_case)
+   U_TRACE(0, "UMimeHeader::getValueAttributeFromKeyValue(%.*S,%p,%b)", U_STRING_TO_TRACE(name), &name_value, ignore_case)
 
-   UString value_name;
+   UString value;
 
    for (int32_t i = 0, n = name_value.size(); i < n; ++i)
       {
-      if (name_value[i++].equal(name_attr, ignore_case))
+      if (name_value[i++].equal(name, ignore_case))
          {
-         value_name = name_value[i];
+         value = name_value[i];
 
-         if (value_name.isQuoted()) value_name.unQuote();
+         if (value.isQuoted()) value.unQuote();
 
          break;
          }
       }
 
-   U_INTERNAL_DUMP("value_name = %.*S", U_STRING_TO_TRACE(value_name))
+   U_INTERNAL_DUMP("value = %.*S", U_STRING_TO_TRACE(value))
 
-   U_RETURN_STRING(value_name);
+   U_RETURN_STRING(value);
 }
 
-UString UMimeHeader::getValueAttributeFromKeyValue(const UString& key_value, const UString& name_attr, bool ignore_case)
+UString UMimeHeader::getValueAttributeFromKeyValue(const UString& value, const UString& name, bool ignore_case)
 {
-   U_TRACE(0, "UMimeHeader::getValueAttributeFromKeyValue(%.*S,%.*S,%b)", U_STRING_TO_TRACE(key_value),
-                                                                          U_STRING_TO_TRACE(name_attr), ignore_case)
+   U_TRACE(0, "UMimeHeader::getValueAttributeFromKeyValue(%.*S,%.*S,%b)", U_STRING_TO_TRACE(value), U_STRING_TO_TRACE(name), ignore_case)
 
-   UString value_name;
+   UString result;
    UVector<UString> name_value;
 
-   if (getAttributeFromKeyValue(key_value, name_value)) value_name = getValueAttributeFromKeyValue(name_attr, name_value, ignore_case);
+   if (getAttributeFromKeyValue(value, name_value)) result = getValueAttributeFromKeyValue(name, name_value, ignore_case);
 
-   U_RETURN_STRING(value_name);
+   U_RETURN_STRING(result);
 }
 
 bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& filename)
@@ -269,6 +283,8 @@ bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& 
 
             if (filename.empty() == false)
                {
+               if (filename.isQuoted()) filename.unQuote();
+
                // This is hairy: Netscape and IE don't encode the filenames
                // The RFC says they should be encoded, so I will assume they are
 
@@ -279,8 +295,6 @@ bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& 
                Url::decode(filename.data(), len, filename_decoded);
 
                filename = filename_decoded;
-
-               if (filename.isQuoted()) filename.unQuote();
 
                U_INTERNAL_DUMP("filename = %.*S", U_STRING_TO_TRACE(filename))
 
@@ -301,7 +315,7 @@ UString UMimeHeader::getCharSet(const UString& content_type)
 
    UString charset = getValueAttributeFromKeyValue(content_type, *str_charset, false);
 
-   // Per some RFC, encoding is us-ascii if it's not specifief in header.
+   // For some RFC, encoding is us-ascii if it's not specifief in header.
 
    if (charset.empty()) charset = *str_ascii;
 

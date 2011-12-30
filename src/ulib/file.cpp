@@ -1316,9 +1316,10 @@ const char* UFile::getMimeType(bool bmagic)
 
 #ifdef HAVE_MAGIC
    if (bmagic                &&
-       u_mime_index != U_ssi &&
        u_mime_index != U_css &&
-       u_mime_index != U_js)
+       u_mime_index != U_js  &&
+       u_mime_index != U_ssi &&
+       u_mime_index != U_usp)
       {
       U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
 

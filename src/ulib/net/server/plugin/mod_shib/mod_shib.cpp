@@ -109,7 +109,7 @@ void UShibTarget::setCookie(const string& name, const string& value)
 {
    U_TRACE(0, "UShibTarget::setCookies(%S,%S)\n", name.c_str(), value.c_str())
 
-   if (!setcookie) setcookie = new UVector<UString>(10);
+   if (!setcookie) setcookie = new UVector<UString>();
 
    setcookie->push(UString((void*)name.c_str()));
    setcookie->push(UString((void*)value.c_str()));
@@ -623,10 +623,6 @@ int UShibPlugIn::handlerRequest()
 
    if (service)
       {
-      cookies = UHTTP::getHTTPCookie();
-
-      U_INTERNAL_DUMP("cookies = %.*S", U_STRING_TO_TRACE(cookies))
-
       uint32_t pos = host.find(':');
 
       if (pos == U_NOT_FOUND) pos               = host.size();
@@ -638,8 +634,8 @@ int UShibPlugIn::handlerRequest()
       UShibTarget::hostname    = strndup(host.data(), pos);
       UShibTarget::uri         = strndup(U_HTTP_URI_TO_PARAM);
       UShibTarget::method      = strndup(U_HTTP_METHOD_TO_PARAM);
-      UShibTarget::cookies     = (cookies.empty() ? "" : cookies.c_str());
       UShibTarget::remote_addr = ip_client->c_strdup();
+      UShibTarget::cookies     = (u_http_info.cookie_len ? ((void)cookies.replace(u_http_info.cookie, u_http_info.cookie_len), cookies.c_str()) : "");
 
       int mode              = 0;
       UShibTarget::location = 0;
@@ -736,8 +732,6 @@ int UShibPlugIn::handlerReset()
 
       UShibTarget::hostname = UShibTarget::uri = UShibTarget::method = 0;
       }
-
-   cookies.clear();
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }

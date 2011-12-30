@@ -75,8 +75,6 @@ public:
    static UString* _encoded;
    static UString* _set_cookie;
 
-   static void checkCookie();
-
    // SERVICES
 
    int  genericRead() __pure;
@@ -85,6 +83,7 @@ public:
    static void init();
    static void clear();
    static void initAfterGenericRead();
+   static void setCookie(const UString& cookie);
 
    // log
 
@@ -133,8 +132,6 @@ protected:
    int bclose;
 
    static UString* msg_welcome;
-
-   int sendfile();
 
    // COSTRUTTORI
 

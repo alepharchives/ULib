@@ -1,28 +1,14 @@
-<!--#declaration
-static void usp_end()  {		  UHTTPSession::endDB(); }
-static void usp_init() { (void) UHTTPSession::initDB(); }
--->
 <html>
  <head><title>Example of USP with HTTP session</title></head>
  <body bgcolor="#FDF5E6">
 
 	<!--#code
-	const char* heading;
-	UHTTPSession session;
-	UString id, creation, last_access; 
+	const char* heading = (UHTTP::getDataSession() ? " Back" :
+						 ((void)UHTTP::putDataSession(), ", Newcomer"));
 
-	if (session.getDataSession()) heading = " Back";
-	else
-		{
-		heading = ", Newcomer";
-
-		if (session.putDataSession())
-			{
-			id				= session.getId();
-			creation		= session.getCreationTime();
-			last_access = session.getLastAccessedTime();
-			}
-		}
+	UString id			  = UHTTP::psession->getKeyID(),
+			  creation	  = UHTTP::psession->getCreationTime(),
+			  last_access = UHTTP::psession->getLastAccessedTime();
 	-->
 
    <h1 align="center">Welcome<!--#puts heading --></h1>

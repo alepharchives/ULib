@@ -153,7 +153,7 @@ void UClientImage_Base::init()
    _value      = U_NEW(UString(U_CAPACITY));
    _buffer     = U_NEW(UString(U_CAPACITY));
    _encoded    = U_NEW(UString(U_CAPACITY));
-   _set_cookie = U_NEW(UString(100U));
+   _set_cookie = U_NEW(UString(U_CAPACITY));
 }
 
 void UClientImage_Base::clear()
@@ -188,18 +188,17 @@ void UClientImage_Base::clear()
       }
 }
 
-void UClientImage_Base::checkCookie()
+void UClientImage_Base::setCookie(const UString& cookie)
 {
-   U_TRACE(0, "UClientImage_Base::checkCookie()")
+   U_TRACE(0, "UClientImage_Base::setCookie(%.*S)", U_STRING_TO_TRACE(cookie))
+
+   U_ASSERT_DIFFERS(cookie.empty(), true)
+
+   if (_set_cookie->empty() == false) (void) _set_cookie->append(U_CONSTANT_TO_PARAM("\r\n"));
+                                      (void) _set_cookie->append(U_CONSTANT_TO_PARAM("Set-Cookie: "));
+                                      (void) _set_cookie->append(cookie);
 
    U_INTERNAL_DUMP("_set_cookie = %.*S", U_STRING_TO_TRACE(*_set_cookie))
-
-   if (_set_cookie->empty() == false)
-      {
-      (void) wbuffer->append(*_set_cookie);
-
-      _set_cookie->setEmpty();
-      }
 }
 
 // Check whether the ip address client ought to be allowed
@@ -229,78 +228,6 @@ void UClientImage_Base::setMsgWelcome(const UString& msg)
                 msg_welcome = 0;
          }
       }
-}
-
-int UClientImage_Base::sendfile()
-{
-   U_TRACE(1, "UClientImage_Base::sendfile()")
-
-   U_INTERNAL_ASSERT_MAJOR(sfd,0)
-   U_INTERNAL_ASSERT_MAJOR(count,0)
-   U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
-
-   ssize_t value;
-   off_t offset = start;
-
-   if (count < UServer_Base::sendfile_threshold_nonblock)
-      {
-      value = (socket->sendfile(sfd, &offset, count) ? count : 0); // NB: it can block if new data arrive within one second...
-      }
-   else
-      {
-      U_INTERNAL_ASSERT_DIFFERS(socket->flags          & SOCK_NONBLOCK,0)
-      U_INTERNAL_ASSERT_DIFFERS(USocket::accept4_flags & SOCK_NONBLOCK,0)
-
-      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", socket->getFd(), sfd, &offset, count);
-      }
-
-   if (value <= 0L)
-      {
-      U_INTERNAL_DUMP("errno = %d", errno)
-
-      if (errno == EAGAIN) goto maybe;
-
-      U_RETURN(U_NOT);
-      }
-
-   count -= value;
-
-   if (count == 0)
-      {
-      sfd = 0;
-
-      if (bclose != U_YES)
-         {
-         socket->setTcpCork(0U); // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
-
-         if (UEventFd::op_mask == U_WRITE_OUT)
-            {
-            UEventFd::op_mask = U_READ_IN;
-
-            UNotifier::modify(this);
-            }
-         else if ((socket->flags          &    O_NONBLOCK) == 0 &&
-                  (USocket::accept4_flags & SOCK_NONBLOCK) != 0)
-            {
-            socket->flags = UFile::setBlocking(UEventFd::fd, socket->flags, false);
-            }
-         }
-
-      U_RETURN(U_YES);
-      }
-
-   start += value;
-
-maybe:
-
-   if (UEventFd::op_mask != U_WRITE_OUT)
-      {
-      UEventFd::op_mask = U_WRITE_OUT;
-
-      if (UNotifier::find(UEventFd::fd)) UNotifier::modify(this);
-      }
-
-   U_RETURN(U_MAYBE);
 }
 
 // aggiungo nel log il certificato Peer del client ("issuer","serial")
@@ -626,13 +553,21 @@ int UClientImage_Base::handlerWrite()
    U_INTERNAL_ASSERT_POINTER(wbuffer)
    U_INTERNAL_ASSERT(socket->isOpen())
 
-   U_INTERNAL_DUMP("count = %u", count)
+   off_t offset;
+   ssize_t value;
 
    if (count)
       {
+      U_ASSERT(body->empty())
+      U_INTERNAL_ASSERT_MAJOR(sfd,0)
+      U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
+
       if (UEventFd::op_mask == U_WRITE_OUT) goto send;
 
-      socket->setTcpCork(1U); // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
+#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+      // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
+      socket->setTcpCork(1U);
+#  endif
       }
 
    U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer))
@@ -647,25 +582,53 @@ int UClientImage_Base::handlerWrite()
    if (count)
       {
 send:
-      U_ASSERT(body->empty())
-      U_INTERNAL_ASSERT_MAJOR(sfd,0)
+      offset = start;
 
-      int ret = sendfile();
+      U_INTERNAL_DUMP("sfd = %d bclose = %b count = %u", sfd, bclose, count)
 
-      U_INTERNAL_DUMP("state = %d %B pipeline = %b", state, state, pipeline)
+#  ifdef __MINGW32__
+      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", socket->getFd(), sfd, &offset, count);
+#  else
+      value = U_SYSCALL(sendfile, "%d,%d,%p,%u",    UEventFd::fd, sfd, &offset, count);
+#  endif
 
-      if (ret == U_NOT)
+      if (value < 0L)
          {
-         if (UEventFd::op_mask == U_WRITE_OUT) U_RETURN(U_NOTIFIER_DELETE); // NB: to avoid loop...
+         U_INTERNAL_DUMP("errno = %d", errno)
 
-         state = U_PLUGIN_HANDLER_ERROR | U_PLUGIN_HANDLER_AGAIN;
+         if (errno != EAGAIN) U_RETURN(U_NOTIFIER_DELETE);
          }
-      else if (ret == U_YES)
+
+      count -= value;
+
+#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+      // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
+      if (UEventFd::op_mask != U_WRITE_OUT) socket->setTcpCork(0U);
+#  endif
+
+      if (count)
          {
-         U_INTERNAL_ASSERT_EQUALS(sfd,0)
-         U_INTERNAL_ASSERT_EQUALS(count,0)
+         start += value;
+
+         if (UEventFd::op_mask != U_WRITE_OUT)
+            {
+             UEventFd::op_mask  = U_WRITE_OUT;
+
+            if (UNotifier::find(UEventFd::fd)) UNotifier::modify(this);
+            }
+         }
+      else
+         {
+         sfd = 0;
 
          if (bclose == U_YES) U_RETURN(U_NOTIFIER_DELETE);
+
+         if (UEventFd::op_mask == U_WRITE_OUT)
+            {
+             UEventFd::op_mask  = U_READ_IN;
+
+            UNotifier::modify(this);
+            }
          }
       }
 
@@ -698,11 +661,11 @@ void UClientImage_Base::handlerDelete()
 
          sfd   = 0;
          count = 0;
+
+         UEventFd::op_mask = U_READ_IN;
+
+      // if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;
          }
-
-      UEventFd::op_mask = U_READ_IN;
-
-      if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;
 
       // NB: to reuse object...
 

@@ -2579,10 +2579,10 @@ do_cmd() {
 	# --------------------------------
 	#  session ID (with NAT)
 	# --------------------------------
-	#  if [ -n "$HTTP_COOKIE" ]; then
-	#     SESSION_ID=$HTTP_COOKIE
+	#  if [ -n "$ULIB_SESSION" ]; then
+	#     SESSION_ID=$ULIB_SESSION
 	#  else
-	#     SET_COOKIE=SESS_$$
+	#     SET_COOKIE=SID$$
 	#     SESSION_ID=$SET_COOKIE
 	#  fi
 	# --------------------------------

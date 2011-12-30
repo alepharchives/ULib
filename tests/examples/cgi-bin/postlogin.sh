@@ -10,10 +10,12 @@ Connection: close
 Content-Length: 100
 X-Real-IP: 127.0.0.1
 Set-Cookie: TODO[ "$1" 24 ]
+Set-Cookie: TestCookie=pippo
 Content-Type: text/html; charset=iso-8859-1
 
-UID         = $1
-HTTP_COOKIE = $HTTP_COOKIE
+UID          = $1
+HTTP_COOKIE  = $HTTP_COOKIE
+ULIB_SESSION = $ULIB_SESSION
 END
 
 	exit 0

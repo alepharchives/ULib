@@ -4,9 +4,6 @@
 #include <vector>
 #include <limits>
 #include <strstream>
-
-static void usp_end()  {		  UHTTPSession::endDB(); }
-static void usp_init() { (void) UHTTPSession::initDB(); }
 -->
 <html>
  <head><title>Example USP</title></head>

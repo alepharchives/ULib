@@ -513,8 +513,6 @@ void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& redir
       peer->token    = UServices::generateToken(peer->mac, _expire);
       }
 
-   Url::encode(peer->token, value_encoded);
-
    location.snprintf_add("%.*s&ap=%.*s@%.*s", U_STRING_TO_TRACE(value_encoded), U_STRING_TO_TRACE(peer->label), U_STRING_TO_TRACE(access_point));
 }
 
@@ -577,16 +575,16 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    // check crypto token (valid for 30 minutes)...
 
-   token    = args[*str_Token];
-   peer_mac = UServices::getTokenData(token.data());
+   token = args[*str_Token];
 
-   U_INTERNAL_DUMP("token    = %.*S", U_STRING_TO_TRACE(token))
-   U_INTERNAL_DUMP("peer     = %.*S", U_STRING_TO_TRACE(peer->token))
-   U_INTERNAL_DUMP("peer_mac = %.*S", U_STRING_TO_TRACE(peer_mac))
-
-   if (peer->token != token ||
+   if (peer->token != token                              ||
+       UServices::getTokenData(peer_mac, token) == false ||
        peer->mac   != peer_mac)
       {
+      U_INTERNAL_DUMP("token    = %.*S", U_STRING_TO_TRACE(token))
+      U_INTERNAL_DUMP("peer     = %.*S", U_STRING_TO_TRACE(peer->token))
+      U_INTERNAL_DUMP("peer_mac = %.*S", U_STRING_TO_TRACE(peer_mac))
+
       U_SRV_LOG("Tampered token from peer %.*s: MAC %.*s", U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer_mac));
 
       goto error;
@@ -1168,7 +1166,9 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
       check_expire  = cfg.readLong(*str_CHECK_EXPIRE_INTERVAL);
       login_timeout = cfg.readLong(*str_LOGIN_TIMEOUT);
 
-      (void) vauth_logout.split(cfg[*str_LOGOUT_URL], 0, true);
+      tmp           = cfg[*str_LOGOUT_URL];
+
+      (void) vauth_logout.split(U_STRING_TO_PARAM(tmp));
 
       U_INTERNAL_DUMP("check_expire = %ld login_timeout = %ld", check_expire, login_timeout)
 
@@ -1220,7 +1220,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
       cmd.set(command, (char**)0);
       cmd.setEnvironment(&fw_env);
 
-      (void) vauth_login.split(auth_login, 0, true);
+      (void) vauth_login.split(U_STRING_TO_PARAM(auth_login));
 
       U_INTERNAL_ASSERT_EQUALS(vauth_login.size(), vauth_logout.size())
 
@@ -1242,8 +1242,8 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
          U_SRV_LOG("Autodetected InternalDevice %S", intdev.data());
          }
 
-      (void) vInternalDeviceLabel.split(intdevlbl, 0, true);
-      num_radio = vInternalDevice.split(intdev, 0, true);
+      (void) vInternalDeviceLabel.split(U_STRING_TO_PARAM(intdevlbl));
+      num_radio = vInternalDevice.split(U_STRING_TO_PARAM(intdev));
 
       U_INTERNAL_DUMP("num_radio = %u", num_radio)
 
@@ -1256,7 +1256,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
          U_SRV_LOG("Autodetected LocalNetwork %S", localnet.data());
          }
 
-      (void) vLocalNetwork.split(localnet, 0, true);
+      (void) vLocalNetwork.split(U_STRING_TO_PARAM(localnet));
       (void) UIPAllow::parseMask(localnet, vLocalNetworkMask);
 
       UServer_Base::port = (port ? port : 5280);

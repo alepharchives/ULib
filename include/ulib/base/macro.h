@@ -217,9 +217,9 @@ enum AffermationType { U_MAYBE = 0, U_YES = 1, U_NOT = 2, U_PARTIAL = 3  };
 #define U_ssi  's' /* SSI */
 #define U_gz   'z' /* gzip */
 
-#define U_usp  '0' /* USP (ULib Servlet Page) */
-#define U_csp  '1' /* CSP (C    Servlet Page) */
-#define U_cgi  '2' /* cgi-bin */
+#define U_usp  'u' /* USP (ULib Servlet Page) */
+#define U_csp  '2' /* CSP (C    Servlet Page) */
+#define U_cgi  '1' /* cgi-bin */
 
 #define U_CTYPE_HTML "text/html"
 #define U_CTYPE_ICO  "image/x-icon"

@@ -29,10 +29,7 @@ public:
 
    // COSTRUTTORI
 
-   UHTTPSession(UDataSession* ptr = 0) : data_session(ptr)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UHTTPSession, "%p", ptr)
-      }
+    UHTTPSession(const char* location = "http_session", uint32_t size = 1024 * 1024, UDataSession* ptr = 0);
 
    ~UHTTPSession()
       {
@@ -41,28 +38,26 @@ public:
 
    // SERVICES
 
-   UString getId() const                  { return value_id; }
+   UString getKeyID() const { return keyID; }
    UString getCreationTime() const;
    UString getLastAccessedTime() const;
-
-   static void  endDB();
-   static bool initDB(const char* location = "http_session", uint32_t size = 1024 * 1024);
-
-   // GET/PUT
-
-   bool getDataSession();
-   bool putDataSession(uint32_t lifetime = 0); // lifetime of the cookie in HOURS (0 -> valid until browser exit)
 
 #ifdef DEBUG
    const char* dump(bool reset) const;
 #endif
 
 protected:
-   UString key_id, value_id;
+   UString keyID;
    UDataSession* data_session;
 
    static void* db_session;
    static uint32_t counter;
+
+   bool getDataSession();
+   bool putDataSession();
+
+   static void  endDB();
+   static bool initDB(const char* location, uint32_t size);
 
 private:
    UHTTPSession(const UHTTPSession&)            {}

@@ -6,18 +6,33 @@ void UXAdESUtility::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(5, "UXAdESUtility::handlerConfig(%p)", &cfg)
 
+   UString tmp;
+
    MSname = cfg[U_STRING_FROM_CONSTANT(    "MS-WORD.SignatureContent")];
    OOname = cfg[U_STRING_FROM_CONSTANT("OPEN-OFFICE.SignatureContent")];
 
    MSname.duplicate();
    OOname.duplicate();
 
-   (void)   OOToBeSigned.split(cfg[U_STRING_FROM_CONSTANT("OPEN-OFFICE.ToBeSigned")], 0, true);
-   (void) OOZipStructure.split(cfg[U_STRING_FROM_CONSTANT("OPEN-OFFICE.ZipStructure")], 0, true);
+   tmp = cfg[U_STRING_FROM_CONSTANT("OPEN-OFFICE.ToBeSigned")];
 
-   (void)         MSToBeSigned.split(cfg[U_STRING_FROM_CONSTANT("MS-WORD.ToBeSigned")], 0, true);
-   (void)       MSZipStructure.split(cfg[U_STRING_FROM_CONSTANT("MS-WORD.ZipStructure")], 0, true);
-   (void) MSSignatureStructure.split(cfg[U_STRING_FROM_CONSTANT("MS-WORD.SignatureStructure")], 0, true);
+   (void) OOToBeSigned.split(U_STRING_TO_PARAM(tmp));
+
+   tmp = cfg[U_STRING_FROM_CONSTANT("OPEN-OFFICE.ZipStructure")];
+
+   (void) OOZipStructure.split(U_STRING_TO_PARAM(tmp));
+
+   tmp = cfg[U_STRING_FROM_CONSTANT("MS-WORD.ToBeSigned")];
+
+   (void) MSToBeSigned.split(U_STRING_TO_PARAM(tmp));
+
+   tmp = cfg[U_STRING_FROM_CONSTANT("MS-WORD.ZipStructure")];
+
+   (void) MSZipStructure.split(U_STRING_TO_PARAM(tmp));
+
+   tmp = cfg[U_STRING_FROM_CONSTANT("MS-WORD.SignatureStructure")];
+
+   (void) MSSignatureStructure.split(U_STRING_TO_PARAM(tmp));
 
    cfg.destroy();
 }

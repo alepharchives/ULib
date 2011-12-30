@@ -41,7 +41,7 @@ fi
 # eight MSS values that it can encode.) When the server receives an ACK, it checks that the secret
 # function works for a recent value of t, and then rebuilds the SYN queue entry from the encoded MSS. 
 
-#ulimit -n 100000
+ulimit -n 100000
 #echo 1024 > /proc/sys/net/core/somaxconn
 #echo    1 > /proc/sys/net/ipv4/tcp_syncookies
 #echo    2 > /proc/sys/net/ipv4/tcp_synack_retries # 5 -> 2 == 21 sec (Total time to keep half-open connections in the backlog queue)

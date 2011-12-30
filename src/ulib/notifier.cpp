@@ -143,7 +143,7 @@ next:
 #  if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
       U_INTERNAL_ASSERT_EQUALS(events,0)
 
-      pevents = events = U_CALLOC_N(max_connection, struct epoll_event);
+      pevents = events = U_CALLOC_N(max_connection+1, struct epoll_event);
 #  endif
       }
 }
@@ -759,7 +759,7 @@ void UNotifier::clear(bool bthread)
 #if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
    U_INTERNAL_ASSERT_POINTER(events)
 
-   if (bthread == false) U_FREE_N(events, max_connection, struct epoll_event);
+   if (bthread == false) U_FREE_N(events, max_connection+1, struct epoll_event);
 
    (void) U_SYSCALL(close, "%d", epollfd);
 #endif

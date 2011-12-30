@@ -635,44 +635,60 @@ UString UServices::generateToken(const UString& data, time_t expire)
 {
    U_TRACE(0, "UServices::generateToken(%.*S,%ld)", U_STRING_TO_TRACE(data), expire)
 
-   UString token(data.size() + 12U);
-
-   token.snprintf("%.*s&%ld&", U_STRING_TO_TRACE(data), expire);
+   UString token(data.size()+1U+10U+1U);
+                  // NB: ... '&'time'&' expire time must be of size 10...
+          token.snprintf("%.*s&%010ld&", U_STRING_TO_TRACE(data), expire);
 
    U_INTERNAL_DUMP("token = %.*S", U_STRING_TO_TRACE(token))
 
    // HMAC-MD5(data&expire)
 
-   UServices::generateHMAC(U_HASH_MD5, (unsigned char*)token.data(), token.size(), token);
+   generateHMAC(U_HASH_MD5, (unsigned char*)token.data(), token.size(), token);
 
-   U_RETURN_STRING(token);
+   UString value(token.size() * 4);
+
+   UBase64::encode(token, value);
+
+   U_RETURN_STRING(value);
 }
 
-UString UServices::getTokenData(const char* token)
+bool UServices::getTokenData(UString& data, const UString& value)
 {
-   U_TRACE(0, "UServices::getTokenData(%S)", token)
+   U_TRACE(0, "UServices::getTokenData(%.*S,%.*S)", U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(value))
 
-   time_t expire = 0;
-   UString data(100U), hmac(32U);
+   UString token(U_CAPACITY);
 
-   // try to parse the token...
-
-   int scanned = U_SYSCALL(sscanf, "%p,%S,%p,%p", token, "%[^&]&%ld&%32c", data.data(), &expire, hmac.data());
-
-   U_INTERNAL_DUMP("scanned = %d", scanned)
-
-   if (scanned == 3)
+   if (UBase64::decode(value, token))
       {
-      data.size_adjust();
-      hmac.size_adjust(32U); // 32 -> MD5 output len
+      data.setBuffer(100U);
 
-      U_INTERNAL_DUMP("data = %.*S u_now = %ld expire = %ld (u_now < expire) = %b", U_STRING_TO_TRACE(data), u_now->tv_sec, expire, (u_now->tv_sec < expire))
+      // try to parse the token...
 
-                                                                         //... '&' time '&'
-      if (UServices::checkHMAC(U_HASH_MD5, (unsigned char*)token, data.size() + 1 + 10 + 1, hmac) && u_now->tv_sec < expire) U_RETURN_STRING(data);
+      UString hmac(32U);
+      time_t expire = 0;
+      const char* ptr = token.data();
+      int scanned = U_SYSCALL(sscanf, "%p,%S,%p,%p", ptr, "%[^&]&%ld&%32c", data.data(), &expire, hmac.data());
+
+      U_INTERNAL_DUMP("scanned = %d", scanned)
+
+      if (scanned == 3)
+         {
+         data.size_adjust();
+         hmac.size_adjust(32U); // 32 -> MD5 output len
+
+         U_INTERNAL_DUMP("data = %.*S u_now = %ld expire = %ld", U_STRING_TO_TRACE(data), u_now->tv_sec, expire)
+
+                                                                          //... '&' time '&'
+         if (UServices::checkHMAC(U_HASH_MD5, (unsigned char*)ptr, data.size() + 1 + 10 + 1, hmac))
+            {
+            U_INTERNAL_DUMP("(u_now < expire) = %b", (u_now->tv_sec < expire))
+
+            if (expire == 0 || u_now->tv_sec < expire) U_RETURN(true);
+            }
+         }
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   U_RETURN(false);
 }
 
 bool UServices::checkHMAC(int alg, unsigned char* data, uint32_t size, const UString& hmac)
@@ -681,13 +697,11 @@ bool UServices::checkHMAC(int alg, unsigned char* data, uint32_t size, const USt
 
    bool result = false;
 
-#ifdef HAVE_SSL
    UString output(100U);
 
    generateHMAC(alg, data, size, output);
 
    result = (hmac == output);
-#endif
 
    U_RETURN(result);
 }

@@ -74,8 +74,8 @@ public:
                   @c false prevents this behaviour
    */
 
-   bool getFollowRedirects() const        { return bFollowRedirects; }
-   void setFollowRedirects(bool bFollow)  { bFollowRedirects = bFollow; }
+   bool getFollowRedirects() const                              { return bFollowRedirects; }
+   void setFollowRedirects(bool bFollow, bool _bproxy = false)  { bFollowRedirects = bFollow; bproxy = _bproxy; }
 
    // In response to a HTTP_UNAUTHORISED response from the HTTP server,
    // obtain a userid and password for the scheme/realm returned from the HTTP server
@@ -121,6 +121,7 @@ public:
    bool sendPost(const UString& url, const UString& pbody, const char* content_type = "application/x-www-form-urlencoded");
 
    UString getContent() const   { return body; }
+   UString getSetCookie() const { return setcookie; }
    int     responseCode() const { return u_http_info.nResponseCode; }
 
    // DEBUG
@@ -132,8 +133,8 @@ public:
 protected:
    UMimeHeader* requestHeader;
    UMimeHeader* responseHeader;
-   UString body, localhost, user, password, method;
-   bool bFollowRedirects;
+   UString body, localhost, user, password, method, setcookie;
+   bool bFollowRedirects, bproxy;
 
     UHttpClient_Base(UFileConfig* cfg);
    ~UHttpClient_Base();

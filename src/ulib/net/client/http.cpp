@@ -513,15 +513,6 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
             U_RETURN(-1);
             }
 
-         // not redirect if present "Set-Cookie:"
-
-         if (responseHeader->isSetCookie())
-            {
-            U_INTERNAL_DUMP("SET-COOKIE HEADER PRESENT FROM HTTP REDIRECT RESPONSE")
-
-            U_RETURN(2); // no redirection, read body
-            }
-
          UString newLocation = responseHeader->getLocation();
 
          if (newLocation.empty() &&
@@ -556,6 +547,19 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 
          requestHeader->removeHeader(*USocket::str_authorization);
 
+         // Store cookie if present "Set-Cookie:"
+
+         setcookie = responseHeader->getHeader(*USocket::str_setcookie);
+
+         U_INTERNAL_DUMP("Set-Cookie: %.*S", U_STRING_TO_TRACE(setcookie))
+
+         if (setcookie.empty() == false && bproxy) 
+            {
+            U_INTERNAL_DUMP("SET-COOKIE HEADER PRESENT FROM HTTP REDIRECT RESPONSE")
+
+            U_RETURN(2); // no redirection, read body
+            }
+
          // Combine the new location with our URL
 
          if (UClient_Base::setUrl(newLocation) == false &&
@@ -573,7 +577,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 
 void UHttpClient_Base::composeRequest(UString& data, uint32_t& startHeader)
 {
-   U_TRACE(0, "UHttpClient_Base::composeRequest(%.*S,%p)", U_STRING_TO_TRACE(data), &startHeader)
+   U_TRACE(0, "UHttpClient_Base::composeRequest(%.*S,%u)", U_STRING_TO_TRACE(data), startHeader)
 
    U_ASSERT_DIFFERS(UClient_Base::uri.empty(),true)
 
@@ -796,6 +800,7 @@ const char* UHttpClient_Base::dump(bool _reset) const
    UClient_Base::dump(false);
 
    *UObjectIO::os << '\n'
+                  << "bproxy                              " << bproxy                  << '\n'
                   << "bFollowRedirects                    " << bFollowRedirects        << '\n'
                   << "body           (UString             " << (void*)&body            << ")\n"
                   << "user           (UString             " << (void*)&user            << ")\n"

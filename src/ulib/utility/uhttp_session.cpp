@@ -18,6 +18,21 @@
 void*    UHTTPSession::db_session;
 uint32_t UHTTPSession::counter;
 
+UHTTPSession::UHTTPSession(const char* location, uint32_t size, UDataSession* ptr) : data_session(ptr)
+{
+   U_TRACE_REGISTER_OBJECT(0, UHTTPSession, "%S,%u,%p", location, size, ptr)
+
+   if (db_session             == 0 &&
+       initDB(location, size) == false)
+      {
+      U_SRV_LOG("db initialization of http session failed...");
+      }
+   else
+      {
+      U_SRV_LOG("db initialization of http session %S success", location);
+      }
+}
+
 bool UHTTPSession::initDB(const char* location, uint32_t size)
 {
    U_TRACE(0, "UHTTPSession::initDB(%S,%u)", location, size)
@@ -47,8 +62,6 @@ bool UHTTPSession::initDB(const char* location, uint32_t size)
 
          U_RETURN(false);
          }
-
-      U_SRV_LOG("db initialization of http session %S success", location);
       }
 
    U_RETURN(true);
@@ -78,54 +91,24 @@ void UHTTPSession::endDB()
       }
 }
 
-bool UHTTPSession::putDataSession(uint32_t lifetime) // lifetime of the cookie in HOURS (0 -> valid until browser exit)
+bool UHTTPSession::putDataSession()
 {
-   U_TRACE(0, "UHTTPSession::putDataSession(%u)", lifetime)
+   U_TRACE(0, "UHTTPSession::putDataSession()")
 
-   // set session cookie
+   U_ASSERT_DIFFERS(keyID.empty(), true)
 
-   if (db_session == 0 &&
-       initDB()   == false)
-      {
-      U_SRV_LOG("db initialization of http session failed...");
-
-      U_RETURN(false);
-      }
-
-   U_INTERNAL_ASSERT_POINTER(db_session)
+   if (db_session == 0) U_RETURN(false);
 
    if (data_session == 0) data_session = U_NEW(UDataSession);
 
-   UString param(100U), ip_client = UHTTP::getRemoteIP();
-
-   U_ASSERT(key_id.empty())
-
-   key_id.setBuffer(100U);
-   key_id.snprintf("%.*s_%P_%u", U_STRING_TO_TRACE(ip_client), ++counter);
-
-   // REQ: [ data expire path domain secure HttpOnly ]
-   // -------------------------------------------------------------------------------------------------------------------------------
-   // string -- key_id or data to put in cookie    -- must
-   // int    -- lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
-   // string -- path where the cookie can be used  --  opt
-   // string -- domain which can read the cookie   --  opt
-   // bool   -- secure mode                        --  opt
-   // bool   -- only allow HTTP usage              --  opt
-   // -------------------------------------------------------------------------------------------------------------------------------
-   // RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
-
-   param.snprintf("Set-Cookie: TODO[ %.*s %u ]\r\n", U_STRING_TO_TRACE(key_id), lifetime); // like as shell script...
-
-   *UClientImage_Base::_set_cookie = UHTTP::setHTTPCookie(param, this);
-
-   if (UServer_Base::preforked_num_kids == 0) ((UHashMap<UDataSession*>*)db_session)->insert(key_id, data_session);
+   if (UServer_Base::preforked_num_kids == 0) ((UHashMap<UDataSession*>*)db_session)->insert(keyID, data_session);
    else
       {
       UString data = data_session->toString();
 
       if (data.empty() == false)
          {
-         int result = ((URDB*)db_session)->store(key_id, data, RDB_REPLACE);
+         int result = ((URDB*)db_session)->store(keyID, data, RDB_REPLACE);
 
          if (result)
             {
@@ -143,43 +126,32 @@ bool UHTTPSession::getDataSession()
 {
    U_TRACE(0, "UHTTPSession::getDataSession()")
 
-   key_id = UHTTP::getHTTPCookie(this);
+   U_ASSERT_DIFFERS(keyID.empty(), true)
 
-   U_INTERNAL_DUMP("key_id = %.*S", U_STRING_TO_TRACE(key_id))
+   if (db_session == 0) U_RETURN(false);
 
-   if (key_id.empty() == false)
+   if (UServer_Base::preforked_num_kids == 0)
       {
-      if (db_session == 0 &&
-          initDB()   == false)
+      if ((data_session = (*(UHashMap<UDataSession*>*)db_session)[keyID]))
          {
-         U_SRV_LOG("db initialization of http session failed...");
+         data_session->last_access = u_now->tv_sec;
 
-         U_RETURN(false);
+         U_RETURN(true);
          }
+      }
+   else
+      {
+      UString data = (*(URDB*)db_session)[keyID];
 
-      if (UServer_Base::preforked_num_kids == 0)
+      if (data.empty() == false)
          {
-         if ((data_session = (*(UHashMap<UDataSession*>*)db_session)[key_id]))
-            {
-            data_session->last_access = u_now->tv_sec;
+         if (data_session == 0) data_session = U_NEW(UDataSession);
 
-            U_RETURN(true);
-            }
-         }
-      else
-         {
-         UString data = (*(URDB*)db_session)[key_id];
+         data_session->fromString(data);
 
-         if (data.empty() == false)
-            {
-            if (data_session == 0) data_session = U_NEW(UDataSession);
+         U_ASSERT_EQUALS(data, data_session->toString())
 
-            data_session->fromString(data);
-
-            U_ASSERT_EQUALS(data, data_session->toString())
-
-            U_RETURN(true);
-            }
+         U_RETURN(true);
          }
       }
 
@@ -214,8 +186,7 @@ UString UHTTPSession::getLastAccessedTime() const
 const char* UHTTPSession::dump(bool reset) const
 {
    *UObjectIO::os << "counter                    " << counter             << '\n'
-                  << "key_id       (UString      " << (void*)&key_id      << ")\n"
-                  << "value_id     (UString      " << (void*)&value_id    << ")\n"
+                  << "keyID        (UString      " << (void*)&keyID       << ")\n"
                   << "data_session (UDataSession " << (void*)data_session << ')';
 
    if (reset)

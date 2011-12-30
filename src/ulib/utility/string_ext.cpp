@@ -624,7 +624,7 @@ UString UStringExt::removeEscape(const char* s, uint32_t n)
    U_RETURN_STRING(result);
 }
 
-// Returns a string that has whitespace removed from the start and the end.
+// Returns a string that has whitespace removed from the start and the end
 
 UString UStringExt::trim(const char* s, uint32_t n)
 {

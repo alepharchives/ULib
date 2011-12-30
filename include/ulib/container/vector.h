@@ -976,10 +976,12 @@ public:
 
    // EXTENSION
 
-   uint32_t split(const UString& str,       char  delim);
-   uint32_t split(const UString& str, const char* delim = 0, bool dup = false);
-
    UString join(const char* delim = "\n", uint32_t delim_len = 1);
+
+   uint32_t split(const    char* str, uint32_t len,       char  delim);
+   uint32_t split(const UString& str,                     char  delim);     // NB: use substr(), so dependency from str...
+   uint32_t split(const    char* str, uint32_t len, const char* delim = 0);
+   uint32_t split(const UString& str,               const char* delim = 0); // NB: use substr(), so dependency from str...
 
    uint32_t contains(const UString& str,    bool ignore_case = false);
    bool     contains(UVector<UString>& vec, bool ignore_case = false);

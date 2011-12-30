@@ -107,7 +107,7 @@ Host: localhost
 GET /cgi-bin/postlogin.sh?user=Steve+Johnson HTTP/1.1
 Host: localhost
 Connection: Keep-Alive
-Cookie: ulib_sid=stefano&1221930499&07e0d88c2f5b6a385827adcee28ebdad
+Cookie: name1=value1, name2=value2; ulib.s1=c3RlZmFubyYxMjIxOTMwNDk5JjA3ZTBkODhjMmY1YjZhMzg1ODI3YWRjZWUyOGViZGFk; name3=value3, name4=value4;
 
 GET /cgi-bin/index.cgi HTTP/1.1
 Host: localhost

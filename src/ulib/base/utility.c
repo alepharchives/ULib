@@ -3378,11 +3378,11 @@ typedef struct mimeentry {
 */
 
 static struct mimeentry mimetab_a[] = {
-   MIME_ENTRY( "ai",   "application/postscript" ),
-   MIME_ENTRY( "arj",  "application/x-arj-compressed" ),
-   MIME_ENTRY( "asx",  "video/x-ms-asf" ),
-   MIME_ENTRY( "atom", "application/atom+xml" ),
-   MIME_ENTRY( "avi",  "video/x-msvideo" ),
+   MIME_ENTRY( "ai",       "application/postscript" ),
+   MIME_ENTRY( "arj",      "application/x-arj-compressed" ),
+   MIME_ENTRY( "asx",      "video/x-ms-asf" ),
+   MIME_ENTRY( "atom",     "application/atom+xml" ),
+   MIME_ENTRY( "avi",      "video/x-msvideo" ),
    MIME_ENTRY( "appcache", "text/cache-manifest" ),
 
    /*
@@ -3545,12 +3545,12 @@ static struct mimeentry mimetab_l[] = {
 */
 
 static struct mimeentry mimetab_m[] = {
-   MIME_ENTRY( "mng",  "video/x-mng" ),
-   MIME_ENTRY( "mp4",  "video/mp4" ),
-   MIME_ENTRY( "m4a",  "audio/mp4" ),
-   MIME_ENTRY( "mp",   "video/mpeg" ), /* (mp2, mp3, mpg, mpe, mpeg, mpga) */
-   MIME_ENTRY( "md5",  "text/plain" ),
-   MIME_ENTRY( "mov",  "video/quicktime" ),
+   MIME_ENTRY( "mng",      "video/x-mng" ),
+   MIME_ENTRY( "mp4",      "video/mp4" ),
+   MIME_ENTRY( "m4a",      "audio/mp4" ),
+   MIME_ENTRY( "mp",       "video/mpeg" ), /* (mp2, mp3, mpg, mpe, mpeg, mpga) */
+   MIME_ENTRY( "md5",      "text/plain" ),
+   MIME_ENTRY( "mov",      "video/quicktime" ),
    MIME_ENTRY( "mf",       "text/cache-manifest" ),
    MIME_ENTRY( "manifest", "text/cache-manifest" ),
 
@@ -3639,10 +3639,10 @@ static struct mimeentry mimetab_r[] = {
 };
 
 static struct mimeentry mimetab_s[] = {
-   MIME_ENTRY( "shtm", U_CTYPE_HTML ), /* (shtml) U_ssi */
-   MIME_ENTRY( "svg", "image/svg+xml" ), /* (svg, svgz) */
-   MIME_ENTRY( "swf", "application/x-shockwave-flash" ),
-   MIME_ENTRY( "sgm", "text/sgml" ), /* (sgml) */
+   MIME_ENTRY( "shtm",       U_CTYPE_HTML ), /* (shtml) U_ssi */
+   MIME_ENTRY( "svg",        "image/svg+xml" ), /* (svg, svgz) */
+   MIME_ENTRY( "swf",        "application/x-shockwave-flash" ),
+   MIME_ENTRY( "sgm",        "text/sgml" ), /* (sgml) */
    MIME_ENTRY( "safariextz", "application/octet-stream" ),
 
    /*
@@ -3684,12 +3684,17 @@ static struct mimeentry mimetab_t[] = {
    { 0, 0, 0 }
 };
 
-/*
 static struct mimeentry mimetab_u[] = {
+   MIME_ENTRY( "usp", "text/plain" ),
+
+   /*
    MIME_ENTRY( "untar",  "application/x-ustar" ),
+   */
+
    { 0, 0, 0 }
 };
 
+/*
 static struct mimeentry mimetab_v[] = {
    MIME_ENTRY( "vbxml", "application/vnd.wap.wbxml" ),
    MIME_ENTRY( "vcd",   "application/x-cdlink" ),
@@ -3699,8 +3704,8 @@ static struct mimeentry mimetab_v[] = {
 */
 
 static struct mimeentry mimetab_w[] = {
-   MIME_ENTRY( "wav", "audio/x-wav" ),
-   MIME_ENTRY( "wmv", "video/x-ms-wmv" ),
+   MIME_ENTRY( "wav",  "audio/x-wav" ),
+   MIME_ENTRY( "wmv",  "video/x-ms-wmv" ),
    MIME_ENTRY( "webm", "video/webm" ),
    MIME_ENTRY( "woff", "application/x-font-woff" ),
    MIME_ENTRY( "webp", "image/webp" ),
@@ -3776,7 +3781,7 @@ const char* u_get_mimetype(const char* restrict suffix)
       case 'r': mimetab = mimetab_r; break;
       case 's': mimetab = mimetab_s; break;
       case 't': mimetab = mimetab_t; break;
-   /* case 'u': mimetab = mimetab_null; break; */
+      case 'u': mimetab = mimetab_u; break;
    /* case 'v': mimetab = mimetab_null; break; */
       case 'w': mimetab = mimetab_w; break;
       case 'x': mimetab = mimetab_x; break;
@@ -3807,7 +3812,7 @@ const char* u_get_mimetype(const char* restrict suffix)
 
       U_INTERNAL_PRINT("diff = %u sizeof(mimeentry) = %u", diff, sizeof(mimeentry))
 
-           if (diff ==  0)                       u_mime_index =  c;  /* NB: 1 entry: c(U_css), j(U_js), h(U_html), g(U_gif), f(U_flv), p(U_png), s(U_ssi) */
+           if (diff ==  0)                       u_mime_index =  c;  /* NB: 1 entry: c(U_css), j(U_js), h(U_html), g(U_gif), f(U_flv), p(U_png), s(U_ssi), u(U_usp) */
       else if (diff == (ptrdiff_t)2 && c == 'j') u_mime_index = 'J'; /* NB: 3 entry: U_jpg */
 
       U_INTERNAL_PRINT("u_mime_index = %d", u_mime_index)

@@ -366,9 +366,9 @@ UString UVector<UString>::join(const char* t, uint32_t tlen)
    U_RETURN_STRING(str);
 }
 
-uint32_t UVector<UString>::split(const UString& str, const char* delim, bool dup)
+uint32_t UVector<UString>::split(const UString& str, const char* delim)
 {
-   U_TRACE(0, "UVector<UString>::split(%.*S,%S,%b)", U_STRING_TO_TRACE(str), delim, dup)
+   U_TRACE(0, "UVector<UString>::split(%.*S,%S)", U_STRING_TO_TRACE(str), delim)
 
    U_CHECK_MEMORY
 
@@ -399,9 +399,48 @@ uint32_t UVector<UString>::split(const UString& str, const char* delim, bool dup
       if (s <= _end)
          {
          len = s++ - p;
+         r   = str.rep->substr(p, len);
 
-         r = (dup ? UStringRep::create(len, len, p)
-                  : str.rep->substr(p, len));
+         UVector<void*>::push(r);
+         }
+      }
+
+   U_RETURN(_length - n);
+}
+
+uint32_t UVector<UString>::split(const char* s, uint32_t len, const char* delim)
+{
+   U_TRACE(0, "UVector<UString>::split(%.*S,%u,%S)", len, s, len, delim)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_DUMP("_length = %u", _length)
+
+   U_INTERNAL_ASSERT(_length <= _capacity)
+
+   const char* p;
+   UStringRep* r;
+
+   uint32_t n       = _length;
+   const char* _end = s + len;
+
+   if (*s == '"')
+      {
+      ++s;
+
+      _end -= 1;
+      }
+
+   while (s < _end)
+      {
+      s = u_delimit_token(s, &p, _end, delim, '#');
+
+      U_INTERNAL_DUMP("s = %p end = %p", s, _end)
+
+      if (s <= _end)
+         {
+         len = s++ - p;
+         r   = UStringRep::create(len, len, p);
 
          UVector<void*>::push(r);
          }
@@ -457,6 +496,56 @@ uint32_t UVector<UString>::split(const UString& str, char delim)
       UVector<void*>::push(r);
 
       ++s;
+      }
+
+   U_RETURN(_length - n);
+}
+
+uint32_t UVector<UString>::split(const char* s, uint32_t len, char delim)
+{
+   U_TRACE(0, "UVector<UString>::split(%.*S,%u,%C)", len, s, len, delim)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_DUMP("_length = %u", _length)
+
+   U_INTERNAL_ASSERT(_length <= _capacity)
+
+   const char* p;
+   UStringRep* r;
+
+   uint32_t n       = _length;
+   const char* _end = s + len;
+
+   if (*s == '"')
+      {
+      ++s;
+
+      _end -= 1;
+      }
+
+   while (s < _end)
+      {
+      // skip char delimiter
+
+      if (*s == delim)
+         {
+         ++s;
+
+         continue;
+         }
+
+      // delimit token with char delimiter
+
+      p = s;
+      s = (const char*) memchr(s, delim, _end - s);
+
+      if (s == 0) s = _end;
+
+      len = s++ - p;
+      r   = UStringRep::create(len, len, p);
+
+      UVector<void*>::push(r);
       }
 
    U_RETURN(_length - n);

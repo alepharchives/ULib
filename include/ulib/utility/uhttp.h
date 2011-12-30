@@ -462,6 +462,7 @@ public:
    static UValue* json;
    static UString* tmpdir;
    static UString* qcontent;
+   static UHTTPSession* psession;
    static UMimeMultipart* formMulti;
    static UVector<UString>* form_name_value;
 
@@ -481,8 +482,11 @@ public:
    // -----------------------------------------------------------------------------------------------------------------------------------
    // RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
 
-   static UString getHTTPCookie(                      UHTTPSession* ptr = 0);
-   static UString setHTTPCookie(const UString& param, UHTTPSession* ptr = 0);
+   static bool getHTTPCookie(UString* pcookie);
+   static void setHTTPCookie(const UString& param);
+
+   static bool getDataSession();
+   static bool putDataSession(uint32_t lifetime = 0); // lifetime of the cookie in HOURS (0 -> valid until browser exit)
 
    // CGI
 
@@ -497,9 +501,9 @@ public:
    static UString* scgi_uri_mask;
    static UCommand* pcmd;
 
-   static bool    isGenCGIRequest() __pure;
    static bool    processCGIOutput();
    static UString getCGIEnvironment();
+   static bool    isGenCGIRequest() __pure;
    static bool    processCGIRequest(UCommand* pcmd, UString* penvironment, bool async, bool process_output);
    static void    setHTTPCgiResponse(bool header_content_length, bool header_content_type, bool content_encoding);
 
@@ -822,6 +826,13 @@ public:
    static void    renewDataCache();
    static void    checkFileForCache();
    static UString getDataFromCache(bool header, bool deflate);
+
+   // X-Sendfile
+
+   static UString* xpathname;
+   static UFileCacheData* pobj;
+
+   static bool XSendfile(UString& pathname, UString& ext);
 
    // set HTTP main error message
 

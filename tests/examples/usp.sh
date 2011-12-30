@@ -21,7 +21,8 @@ DIR_CMD="../../examples/userver"
 
 if [ "$TERM" != "cygwin" ]; then
 	( cd ../../src/ulib/net/server/plugin/usp/; ./usp2so.sh >/tmp/usp2so.sh.out 2>&1 || exit 1 )
-	( mkdir -p servlet; cd servlet; rm -f *.so; for i in `ls ../../../src/ulib/net/server/plugin/usp/.libs/*.so`; do ln -sf $i; done )
+	( mkdir -p servlet; cd servlet; rm -f *.so *.usp; for i in `ls ../../../src/ulib/net/server/plugin/usp/.libs/*.so`; do ln -sf $i; done; \
+																	  for i in `ls ../../../src/ulib/net/server/plugin/usp/*.usp`;		  do ln -sf $i; done )
    ( cd benchmark/docroot; ln -sf ../../servlet )
 fi
 

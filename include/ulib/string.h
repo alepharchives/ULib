@@ -366,21 +366,10 @@ public:
 
    // Creation
 
-   static UStringRep* strdup(const char* t, uint32_t tlen)
-      {
-      U_TRACE(0, "UStringRep::strdup(%p,%u)", t, tlen)
-
-      U_INTERNAL_ASSERT_POINTER(t)
-
-      UStringRep* r = create(tlen, tlen, t);
-
-      U_RETURN_POINTER(r, UStringRep);
-      }
-
-   static UStringRep* create(uint32_t length, uint32_t capacity, const char* ptr);
-
    static UStringRep* create(const char* t, uint32_t tlen, uint32_t mode); // mode:  0 -> const
                                                                            //       -1 -> mmap
+
+   static UStringRep* create(uint32_t length, uint32_t capacity, const char* ptr);
 
    // Substring
 
@@ -443,6 +432,10 @@ public:
       U_RETURN(result);
       }
 
+   // for constant string
+
+   void trim();
+
    // if the string is quoted...
 
    bool isQuoted(char c) const
@@ -462,6 +455,7 @@ public:
       U_TRACE(0, "UStringRep::unQuote()")
 
       U_INTERNAL_ASSERT_MAJOR(_length,2)
+      U_INTERNAL_ASSERT_EQUALS(_capacity,0)
 
       ++str;
       _length -= 2;
@@ -836,6 +830,7 @@ public:
       }
 
    UString& append(const char* s);
+   UString& append(UStringRep* _rep);
    UString& append(const UString& str);
 
    UString& operator+=(char c)               { return append(1U, c); }
@@ -1101,6 +1096,10 @@ public:
 
    void hold()    const { rep->hold(); }
    void release() const { rep->release(); }
+
+   // for constant string
+
+   void trim() const { rep->trim(); }
 
    // if the string is quoted...
 

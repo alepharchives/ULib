@@ -145,13 +145,13 @@ struct U_EXPORT UServices {
 
    static bool setFtw(const UString* dir, const char* filter = 0, uint32_t filter_len = 0);
 
-   // manage stateless session cookies and hashing password...
+   // manage session cookies and hashing password...
 
    static void generateKey();
    static unsigned char key[16];
 
-   static UString getTokenData(const char* token);
    static UString generateToken(const UString& data, time_t expire);
+   static bool    getTokenData(       UString& data, const UString& value);
 
 #ifdef HAVE_SSL
    static void generateDigest(int alg, const UString& data) { generateDigest(alg, (unsigned char*)U_STRING_TO_PARAM(data)); }

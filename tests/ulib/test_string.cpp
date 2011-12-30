@@ -1606,6 +1606,12 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( y == "lots of white space" )
 
+   y = U_STRING_FROM_CONSTANT("   lots of white space  ");
+
+   y.trim();
+
+   U_ASSERT( y == "lots of white space" )
+
    y = UStringExt::insertEscape(U_CONSTANT_TO_PARAM("name=\"pippo\" file=\"pluto\""));
 
    U_ASSERT( y == "name=\\\"pippo\\\" file=\\\"pluto\\\"" )

@@ -3,7 +3,7 @@
 #ifndef IR_SESSION_H
 #define IR_SESSION_H 1
 
-#include <ulib/utility/uhttp_session.h>
+#include <ulib/utility/data_session.h>
 
 #include "cquery.h"
 
@@ -30,6 +30,16 @@ public:
       U_TRACE_UNREGISTER_OBJECT(5, IRDataSession)
 
       if (vec) delete vec;
+      }
+
+   // SERVICES
+
+   void set(const UString& _QUERY, uint32_t _FOR_PAGE)
+      {
+      U_TRACE(5, "IRDataSession::set(%.*S,%u)", U_STRING_TO_TRACE(_QUERY), _FOR_PAGE)
+
+      QUERY    = _QUERY;
+      FOR_PAGE = _FOR_PAGE;
       }
 
    // method VIRTUAL to define
@@ -140,36 +150,6 @@ public:
       return 0;
       }
 #endif
-};
-
-class IRSession : public UHTTPSession {
-public:
-
-   IRSession() : UHTTPSession(U_NEW(IRDataSession))
-      {
-      U_TRACE_REGISTER_OBJECT(5, UHTTPSession, "")
-      }
-
-   ~IRSession()
-      {
-      U_TRACE_UNREGISTER_OBJECT(5, IRSession)
-      }
-
-   void set(const UString& _QUERY, uint32_t _FOR_PAGE)
-      {
-      U_TRACE(5, "IRSession::set(%.*S,%u)", U_STRING_TO_TRACE(_QUERY), _FOR_PAGE)
-
-      ((IRDataSession*)data_session)->QUERY    = _QUERY;
-      ((IRDataSession*)data_session)->FOR_PAGE = _FOR_PAGE;
-      }
-
-#ifdef DEBUG
-   const char* dump(bool reset) const { return UHTTPSession::dump(reset); }
-#endif
-
-private:
-   IRSession(const IRSession&) : UHTTPSession(0) {}
-   IRSession& operator=(const IRSession&)        { return *this; }
 };
 
 #endif

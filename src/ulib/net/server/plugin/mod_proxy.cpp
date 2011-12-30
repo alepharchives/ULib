@@ -144,7 +144,7 @@ int UProxyPlugIn::handlerRequest()
             client_http.setRequestPasswordAuthentication(user, passwd);
             }
 
-         client_http.setFollowRedirects(service->isFollowRedirects());
+         client_http.setFollowRedirects(service->isFollowRedirects(), true);
 
          // ...but before check if server and/or port to connect has changed...
 

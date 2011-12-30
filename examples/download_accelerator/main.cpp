@@ -107,7 +107,7 @@ public:
 
       total_length     = initial + to_download;
       initial_length   = initial;
-      size_legible_len = u_sn_printf(size_legible, sizeof(size_legible), "%'lu", total_length);
+      size_legible_len = u_sn_printf(size_legible, sizeof(size_legible), "%lu", total_length);
 
       screen_width = u_getScreenWidth();
 
@@ -132,7 +132,7 @@ public:
 
       U_INTERNAL_ASSERT(size <= total_length)
 
-      size_legible_len = u_sn_printf(size_legible, sizeof(size_legible), "%'lu", size);
+      size_legible_len = u_sn_printf(size_legible, sizeof(size_legible), "%lu", size);
 
       unsigned dlbytes_size  = 1 + U_max(size_legible_len, 13),
                progress_size = screen_width - (4 + 2 + dlbytes_size + 11 + 13);
@@ -345,10 +345,7 @@ no_eta:
 #ifdef DEBUG
    const char* dump(bool reset) const
       {
-      *UObjectIO::os << "old             " << old            << '\n'
-                     << "it.tv_sec       " << it.tv_sec      << '\n'
-                     << "it.tv_usec      " << it.tv_usec     << '\n'
-                     << "units           " << units          << '\n'
+      *UObjectIO::os << "units           " << units          << '\n'
                      << "count           " << count          << '\n'
                      << "dltime          " << dltime         << '\n'
                      << "howmuch         " << howmuch        << '\n'
@@ -616,8 +613,8 @@ public:
          U_RETURN(false);
          }
 
-      rcvsock.setFd(rcvsock_fd);
-      sndsock.setFd(sndsock_fd);
+      rcvsock.iSockDesc = rcvsock_fd;
+      sndsock.iSockDesc = sndsock_fd;
 
       bool sent_one;
       unsigned must_continue = numhosts;

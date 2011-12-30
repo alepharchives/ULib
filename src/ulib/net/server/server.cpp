@@ -89,7 +89,6 @@ time_t                     UServer_Base::expire;
 uint32_t                   UServer_Base::start;
 uint32_t                   UServer_Base::count;
 uint32_t                   UServer_Base::shared_data_add;
-uint32_t                   UServer_Base::sendfile_threshold_nonblock = 100 * 1024; // 100k
 UString*                   UServer_Base::host;
 UString*                   UServer_Base::senvironment;
 USocket*                   UServer_Base::socket;
@@ -487,8 +486,8 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    UClientImage_Base::bIPv6   = cfg.readBoolean(*str_USE_IPV6);
 #endif
 
-   if (timeoutMS) timeoutMS *= 1000;
-   else           timeoutMS  = -1;
+   if (timeoutMS) timeoutMS *=      1000;
+   else           timeoutMS  = 10 * 1000; // NB: safety... sometimes epoll_wait() remain in wait also with no more localhost client
 
    if (cgi_timeout) UCommand::setTimeout(cgi_timeout);
 

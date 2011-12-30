@@ -41,12 +41,10 @@
 "%s" \
 "%s" \
 "%s" \
-"\t\n" \
-"\tUClientImage_Base::checkCookie();\n" \
 "%s" \
 "\t\n" \
 "%.*s" \
-"\n" \
+"\t\n" \
 "\tU_RETURN(0);\n" \
 "} }\n"
 
@@ -68,7 +66,7 @@ public:
 
       if (usp.empty()) U_ERROR("filename not valid...");
 
-      bool bcontent_type = true;
+      bool bflag         = false;
       uint32_t endHeader = u_findEndHeader(U_STRING_TO_PARAM(usp));
 
       U_INTERNAL_DUMP("endHeader = %u u_line_terminator_len = %d", endHeader, u_line_terminator_len)
@@ -87,7 +85,7 @@ public:
          if (         ptr[0]  != '<' ||
             u_toupper(ptr[1]) != 'H')
             {
-            bcontent_type = false;
+            bflag = true;
             }
          }
 
@@ -203,13 +201,13 @@ public:
                {
                bcout = true;
 
-               (void) output.append(U_CONSTANT_TO_PARAM("\n\tuint32_t sz;"
-                                                        "\n\tchar buffer[10 * 4096];"
+               (void) output.append(U_CONSTANT_TO_PARAM("\n\tuint32_t usp_sz;"
+                                                        "\n\tchar usp_buffer[10 * 4096];"
                                                         "\n\t"));
                }
 
-            buffer.snprintf("\n\tsz = UObject2String(%.*s, buffer, sizeof(buffer));"
-                            "\n\t(void) UClientImage_Base::wbuffer->append(buffer, sz);\n\t", U_STRING_TO_TRACE(token));
+            buffer.snprintf("\n\tusp_sz = UObject2String(%.*s, usp_buffer, sizeof(usp_buffer));"
+                            "\n\t(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n\t", U_STRING_TO_TRACE(token));
 
             (void) output.append(buffer);
             }
@@ -238,7 +236,8 @@ public:
                       ptr1,
                       ptr2,
                       ptr3,
-                      (bcontent_type ? "" : "\n\tUClientImage_Base::wbuffer->snprintf(\"Content-Type: \" U_CTYPE_HTML \"\\r\\n\\r\\n\");\n"),
+                      (bflag  == false ? ""
+                                       : "\n\tUClientImage_Base::wbuffer->snprintf(\"Content-Type: \" U_CTYPE_HTML \"\\r\\n\\r\\n\");\n"),
                       U_STRING_TO_TRACE(output));
 
       (void) UFile::writeTo(buffer, UStringExt::removeEmptyLine(result));

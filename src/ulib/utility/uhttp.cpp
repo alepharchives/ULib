@@ -66,9 +66,10 @@ UString*    UHTTP::cbuffer;
 UString*    UHTTP::geoip;
 UString*    UHTTP::tmpdir;
 UString*    UHTTP::qcontent;
-UString*    UHTTP::pathname;
 UString*    UHTTP::htpasswd;
 UString*    UHTTP::htdigest;
+UString*    UHTTP::pathname;
+UString*    UHTTP::xpathname;
 UString*    UHTTP::ssi_alias;
 UString*    UHTTP::request_uri;
 UString*    UHTTP::fcgi_uri_mask;
@@ -78,7 +79,7 @@ UString*    UHTTP::uri_protected_mask;
 uint32_t    UHTTP::range_size;
 uint32_t    UHTTP::range_start;
 uint32_t    UHTTP::request_read_timeout;
-uint32_t    UHTTP::min_size_for_sendfile; // NB: for major size it is better to use sendfile()
+uint32_t    UHTTP::min_size_for_sendfile; // NB: for major size it is better to use sendfile()...
 uint32_t    UHTTP::limit_request_body = U_STRING_LIMIT;
 UCommand*   UHTTP::pcmd;
 UStringRep* UHTTP::pkey;
@@ -94,18 +95,18 @@ const char* UHTTP::ptrU;
 const char* UHTTP::ptrP;
 const char* UHTTP::ptrX;
 
+UHTTPSession*                     UHTTP::psession;
 UMimeMultipart*                   UHTTP::formMulti;
 UVector<UString>*                 UHTTP::form_name_value;
 UVector<UIPAllow*>*               UHTTP::vallow_IP;
 UHTTP::upload_progress*           UHTTP::ptr_upload_progress;
 
+         UHTTP::UFileCacheData*   UHTTP::pobj;
          UHTTP::UFileCacheData*   UHTTP::file_data;
 UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
-
 #ifdef HAVE_PAGE_SPEED
 UHTTP::UPageSpeed*                UHTTP::page_speed;
 #endif
-
 #ifdef HAVE_V8
 UHTTP::UV8JavaScript*             UHTTP::v8_javascript;
 #endif
@@ -234,12 +235,14 @@ UHTTP::UFileCacheData::~UFileCacheData()
 
          delete usp;
          }
+#  ifdef HAVE_LIBTCC
       else if (mime_index == U_csp)
          {
          UCServletPage* csp = (UCServletPage*)ptr;
 
          delete csp;
          }
+#  endif
       else
          {
          U_INTERNAL_ASSERT_EQUALS(mime_index,U_cgi)
@@ -392,11 +395,12 @@ void UHTTP::in_READ()
                  if (event.ip->mask & IN_DELETE) in_DELETE();
             else if (event.ip->mask & IN_MODIFY)
                {
-               if (file_data &&
-                   isDataFromCache())
+               if (file_data)
                   {
-                  in_DELETE();
-                  in_CREATE();
+                  // NB: check if we have the content of file in cache...
+
+                  if (isDataFromCache()) file_data->expire = 0; // NB: we delay the renew...
+                  else                   renewDataCache();
                   }
                }
             }
@@ -526,6 +530,7 @@ void UHTTP::ctor()
 
    file            = U_NEW(UFile);
    pcmd            = U_NEW(UCommand);
+   pobj            = U_NEW(UFileCacheData);
    pkey            = UStringRep::create(0U, 100U, 0);
    alias           = U_NEW(UString);
    geoip           = U_NEW(UString(U_CAPACITY));
@@ -534,6 +539,7 @@ void UHTTP::ctor()
    qcontent        = U_NEW(UString);
    pathname        = U_NEW(UString(U_CAPACITY));
    formMulti       = U_NEW(UMimeMultipart);
+   xpathname       = U_NEW(UString);
    request_uri     = U_NEW(UString);
    form_name_value = U_NEW(UVector<UString>);
 
@@ -690,6 +696,8 @@ void UHTTP::ctor()
       u_buffer_len = 0;
       }
 
+   if (psession == 0) psession = U_NEW(UHTTPSession);
+
    if (virtual_host == false)
       {
       // manage single favicon...
@@ -840,12 +848,14 @@ void UHTTP::dtor()
       delete file;
       delete pcmd;
       delete pkey;
+      delete pobj;
       delete alias;
       delete geoip;
       delete tmpdir;
       delete cbuffer;
       delete qcontent;
       delete pathname;
+      delete xpathname;
       delete formMulti;
       delete request_uri;
       delete form_name_value;
@@ -855,7 +865,12 @@ void UHTTP::dtor()
       if (vallow_IP)    delete vallow_IP;
       if (vRewriteRule) delete vRewriteRule;
 
-      UHTTPSession::endDB();
+      if (psession)
+         {
+         UHTTPSession::endDB();
+
+         delete psession;
+         }
 
       // CACHE FILE SYSTEM
 
@@ -2384,9 +2399,9 @@ void UHTTP::getHTTPInfo(const UString& request, UString& method, UString& uri)
 // -----------------------------------------------------------------------------------------------------------------------------------
 // RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
 
-UString UHTTP::setHTTPCookie(const UString& param, UHTTPSession* session)
+void UHTTP::setHTTPCookie(const UString& param)
 {
-   U_TRACE(0, "UHTTP::setHTTPCookie(%.*S,%p)", U_STRING_TO_TRACE(param), session)
+   U_TRACE(0, "UHTTP::setHTTPCookie(%.*S)", U_STRING_TO_TRACE(param))
 
    /*
    Set-Cookie: NAME=VALUE; expires=DATE; path=PATH; domain=DOMAIN_NAME; secure
@@ -2447,98 +2462,160 @@ UString UHTTP::setHTTPCookie(const UString& param, UHTTPSession* session)
    a way to stop XSS vulnerabilities, but a way to stop one of the possible attacks (cookie stealing) that are possible through XSS.
    */
 
-   time_t expire;
    UVector<UString> vec(param);
-   UString set_cookie(U_CAPACITY);
-   uint32_t counter = (session ? UHTTPSession::counter : 0);
+   uint32_t i = 2, n = vec.size();
 
-   if (vec.empty())
+   U_INTERNAL_ASSERT_RANGE(2, n, 6)
+
+   long n_hours  = vec[1].strtol();
+   time_t expire = (n_hours ? u_now->tv_sec + (n_hours * 60L * 60L) : 0L);
+
+   // HMAC-MD5(data&expire)
+
+   UString cookie(U_CAPACITY), value = UServices::generateToken(vec[0], expire), item;
+
+   U_INTERNAL_ASSERT_POINTER(psession)
+
+   psession->counter++;
+
+   cookie.snprintf("ulib.s%u=%.*s", psession->counter, U_STRING_TO_TRACE(value));
+
+   U_SRV_LOG("create new session ulib.s%u", psession->counter);
+
+   if (n_hours) cookie.snprintf_add("; expires=%#D", expire);
+
+   for (; i < n; ++i)
       {
-      expire = u_now->tv_sec - U_ONE_DAY_IN_SECOND;
+      item = vec[i];
 
-      set_cookie.snprintf("Set-Cookie: ulib.s%u=deleted; expires=%#D", counter, expire);
-
-      U_SRV_LOG("delete session ulib.s%u", counter);
-      }
-   else
-      {
-      uint32_t n = vec.size();
-
-      U_INTERNAL_ASSERT_RANGE(2, n, 6)
-
-      long num_hours = vec[1].strtol();
-
-      expire = (num_hours ? u_now->tv_sec + (num_hours * 60L * 60L) : 0L);
-
-      // HMAC-MD5(data&expire)
-
-      UString item, token = UServices::generateToken(vec[0], expire);
-
-      set_cookie.snprintf("Set-Cookie: ulib.s%u=%.*s", counter, U_STRING_TO_TRACE(token));
-
-      if (num_hours) set_cookie.snprintf_add("; expires=%#D", expire);
-
-      for (uint32_t i = 2; i < n; ++i)
+      if (item.empty() == false)
          {
-         item = vec[i];
-
-         if (item.empty() == false)
+         switch (i)
             {
-            switch (i)
-               {
-               case 2: set_cookie.snprintf_add("; path=%.*s",   U_STRING_TO_TRACE(item)); break; // path
-               case 3: set_cookie.snprintf_add("; domain=%.*s", U_STRING_TO_TRACE(item)); break; // domain
-               case 4: (void) set_cookie.append(U_CONSTANT_TO_PARAM("; secure"));         break; // secure
-               case 5: (void) set_cookie.append(U_CONSTANT_TO_PARAM("; HttpOnly"));       break; // HttpOnly
-               }
+            case 2: cookie.snprintf_add("; path=%.*s",   U_STRING_TO_TRACE(item)); break; // path
+            case 3: cookie.snprintf_add("; domain=%.*s", U_STRING_TO_TRACE(item)); break; // domain
+            case 4: (void) cookie.append(U_CONSTANT_TO_PARAM("; secure"));         break; // secure
+            case 5: (void) cookie.append(U_CONSTANT_TO_PARAM("; HttpOnly"));       break; // HttpOnly
             }
          }
-
-      if (session) session->value_id.replace(token);
-
-      U_SRV_LOG("create new session ulib.s%u ID=%.*s", counter, U_STRING_TO_TRACE(token));
       }
 
-   U_INTERNAL_DUMP("set_cookie = %.*S", U_STRING_TO_TRACE(set_cookie))
-
-   U_RETURN_STRING(set_cookie);
+   UClientImage_Base::setCookie(cookie);
 }
 
-UString UHTTP::getHTTPCookie(UHTTPSession* session)
+bool UHTTP::getHTTPCookie(UString* pcookie)
 {
-   U_TRACE(0, "UHTTP::getHTTPCookie(%p)", session)
+   U_TRACE(0, "UHTTP::getHTTPCookie(%p)", pcookie)
 
-   if (u_http_info.cookie_len)
+   U_INTERNAL_ASSERT_MAJOR(u_http_info.cookie_len,0)
+
+   char* ptr;
+   const char* start;
+   bool bsession = false;
+   uint32_t len, counter;
+   UString cookies(u_http_info.cookie, u_http_info.cookie_len), cookie, value, remain(U_CAPACITY);
+   UVector<UString> cookie_list; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+
+   for (uint32_t i = 0, n = cookie_list.split(cookies, ';'); i < n; ++i)
       {
-      U_INTERNAL_ASSERT_POINTER(file_data)
+      cookie = cookie_list[i];
 
-      U_INTERNAL_DUMP("cookie = %.*S", u_http_info.cookie_len, u_http_info.cookie)
+      cookie.trim();
 
-      if (U_STRNEQ(u_http_info.cookie, "ulib.s"))
+      U_INTERNAL_DUMP("cookie[%u] = %.*S", i, U_STRING_TO_TRACE(cookie))
+
+      start = cookie.data();
+
+      if (U_STRNEQ(start, "ulib.s"))
          {
-               char* ptr;
-         const char* start = u_http_info.cookie + U_CONSTANT_SIZE("ulib.s");
-         uint32_t counter  = strtol(start, &ptr, 0);
-
-         U_SRV_LOG("found session ulib.s%u", counter);
+         counter = strtol(start + U_CONSTANT_SIZE("ulib.s"), &ptr, 0);
 
          U_INTERNAL_DUMP("ptr[0] = %C", ptr[0])
 
          U_INTERNAL_ASSERT_EQUALS(ptr[0], '=')
 
-         UString data = UServices::getTokenData(++ptr);
+         len = cookie.size() - (++ptr - start);
 
-         if (session) session->value_id.replace(ptr, u_http_info.cookie_len - (ptr - start));
+         (void) value.assign(ptr, len);
 
-         U_RETURN_STRING(data);
+         U_INTERNAL_ASSERT_POINTER(psession)
+
+         if (UServices::getTokenData(psession->keyID, value))
+            {
+            bsession = true;
+
+            U_SRV_LOG("found session ulib.s%u", counter);
+            }
+         else
+            {
+            UString set_cookie(100U);
+
+            set_cookie.snprintf("ulib.s%u=; expires=%#D", counter, u_now->tv_sec - U_ONE_DAY_IN_SECOND);
+
+            UClientImage_Base::setCookie(set_cookie);
+
+            U_SRV_LOG("delete session ulib.s%u", counter);
+            }
          }
-
-      UString result(u_http_info.cookie, u_http_info.cookie_len);
-
-      U_RETURN_STRING(result);
+      else if (pcookie)
+         {
+         if (remain.empty() == false) (void) remain.append(U_CONSTANT_TO_PARAM("; "));
+                                      (void) remain.append(cookie);
+         }
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   if (pcookie)
+      {
+      U_INTERNAL_DUMP("remain = %.*S", U_STRING_TO_TRACE(remain))
+
+      if (remain.empty()) U_RETURN(false);
+
+      *pcookie = remain;
+      }
+   else if (bsession == false) U_RETURN(false);
+
+   U_RETURN(true);
+}
+
+bool UHTTP::getDataSession()
+{
+   U_TRACE(0, "UHTTP::getDataSession()")
+
+   U_INTERNAL_ASSERT_POINTER(psession)
+
+   psession->keyID.clear();
+
+   if (u_http_info.cookie_len &&
+       getHTTPCookie(0)       &&
+       psession->getDataSession())
+      {
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+bool UHTTP::putDataSession(uint32_t lifetime) // lifetime of the cookie in HOURS (0 -> valid until browser exit)
+{
+   U_TRACE(0, "UHTTP::putDataSession(%u)", lifetime)
+
+   U_INTERNAL_ASSERT_POINTER(psession)
+
+   if (psession->keyID.empty())
+      {
+       psession->keyID.setBuffer(100U);
+
+       psession->keyID.snprintf("%s_%P_%u", UServer_Base::pClientImage->socket->remoteIPAddress().getAddressString(), psession->counter);
+      }
+
+   UString param(100U);
+           param.snprintf("%.*s %u", U_STRING_TO_TRACE(psession->keyID), lifetime);
+
+   setHTTPCookie(param);
+
+   if (psession->putDataSession()) U_RETURN(true);
+
+   U_RETURN(false);
 }
 
 UString UHTTP::getRemoteIP()
@@ -3327,7 +3404,7 @@ void UHTTP::setHTTPCgiResponse(bool header_content_length, bool header_content_t
 
    U_ASSERT_EQUALS(UClientImage_Base::wbuffer->empty(), false)
 
-   UString tmp(4000U);
+   UString tmp(U_CAPACITY);
 
    U_INTERNAL_DUMP("u_http_info.clength = %u", u_http_info.clength)
 
@@ -3372,6 +3449,8 @@ void UHTTP::setHTTPCgiResponse(bool header_content_length, bool header_content_t
 #     endif
 
          content = UStringExt::deflate(content);
+
+         (void) tmp.append(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
          }
 
       u_http_info.clength = content.size();
@@ -3389,14 +3468,22 @@ void UHTTP::setHTTPCgiResponse(bool header_content_length, bool header_content_t
          sz  = U_CONSTANT_SIZE(U_CRLF);
          }
 
-      tmp.snprintf("%s"
-                   "Content-Length: %u\r\n"
-                   "%s"
-                   "%.*s",
-                   (header_content_type ? "" : "Content-Type: " U_CTYPE_HTML "\r\n"),
-                   u_http_info.clength,
-                   (bcompress ? "Content-Encoding: deflate\r\n" : ""),
-                   sz, ptr);
+      if (header_content_type == false) (void) tmp.append(U_CONSTANT_TO_PARAM("Content-Type: " U_CTYPE_HTML "\r\n"));
+
+      uint32_t sz_cookie = UClientImage_Base::_set_cookie->size();
+
+      if (sz_cookie)
+         {
+         (void) tmp.append(UClientImage_Base::_set_cookie->data(), sz_cookie);
+         (void) tmp.append(U_CONSTANT_TO_PARAM("\r\n"));
+
+         UClientImage_Base::_set_cookie->setEmpty();
+         }
+
+      tmp.snprintf_add("Content-Length: %u\r\n"
+                       "%.*s",
+                       u_http_info.clength,
+                       sz, ptr);
 
       if (bcompress) *UClientImage_Base::wbuffer = content;
       else            UClientImage_Base::wbuffer->erase(0, endHeader);
@@ -4047,10 +4134,9 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
                UServer_Base::shared_data_add = sizeof(upload_progress) * U_MAX_UPLOAD_PROGRESS;
                }
             }
-         else
+#     ifdef HAVE_LIBTCC
+         else if (U_STRNEQ(suffix, "c"))
             {
-            U_INTERNAL_ASSERT(U_STRNEQ(suffix, "c"))
-
             UString program = file->getContent();
             UCServletPage* csp_page = U_NEW(UHTTP::UCServletPage);
 
@@ -4075,8 +4161,9 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
             file_data->ptr        = csp_page;
             file_data->mime_index = U_csp;
             }
+#        endif
 
-         cache_file->replaceKey(key);
+         if (key.empty() == false) cache_file->replaceKey(key);
          }
       else
          {
@@ -4426,6 +4513,7 @@ void UHTTP::manageHTTPServletRequest()
 
       u_http_info.nResponseCode = usp->runDynamicPage(UServer_Base::pClientImage);
       }
+#ifdef HAVE_LIBTCC
    else
       {
       UCServletPage* csp = (UCServletPage*)file_data->ptr;
@@ -4448,6 +4536,7 @@ void UHTTP::manageHTTPServletRequest()
 
       U_FREE_VECTOR(argv, n+1, const char);
       }
+#endif
 
    if (n) resetForm(true);
 
@@ -4534,17 +4623,15 @@ int UHTTP::checkHTTPRequest()
       {
       U_INTERNAL_ASSERT_POINTER(file_data)
 
+      // NB: check for dynamic page (servlet)...
+
       u_mime_index = file_data->mime_index;
 
-      U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
+      U_INTERNAL_DUMP("u_mime_index = %C U_http_is_navigation = %b", u_mime_index, U_http_is_navigation)
 
-      // NB: check for dynamic page...
-
-      if (u_isdigit(u_mime_index) &&
-          U_http_is_navigation == false)
+      if (U_http_is_navigation == false)
          {
-         if (u_mime_index != U_cgi) manageHTTPServletRequest();
-         else
+         if (u_mime_index == U_cgi)
             {
             // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
 
@@ -4563,9 +4650,25 @@ int UHTTP::checkHTTPRequest()
                   setHTTPInternalError();
                   }
                }
+
+            goto next;
             }
 
-         goto next;
+         if (u_mime_index == U_usp)
+            {
+            manageHTTPServletRequest();
+
+            goto next;
+            }
+
+#     ifdef HAVE_LIBTCC
+         if (u_mime_index == U_csp)
+            {
+            manageHTTPServletRequest();
+
+            goto next;
+            }
+#     endif
          }
 
       u_http_info.nResponseCode = HTTP_OK;
@@ -4591,7 +4694,7 @@ next:
       {
 end:
 #  ifdef U_HTTP_CACHE_REQUEST
-      if (u_mime_index != U_ssi) UHTTP::manageHTTPRequestCache(); 
+      if (u_mime_index != U_ssi) manageHTTPRequestCache();  
 #  endif
 
       // check for "Connection: close" in headers
@@ -4770,7 +4873,7 @@ UString UHTTP::getCGIEnvironment()
    if (u_http_info.user_agent_len)      buffer.snprintf_add("\"HTTP_USER_AGENT=%.*s\"\n",  U_HTTP_USER_AGENT_TO_TRACE);
 
    if (u_http_info.accept_len)          buffer.snprintf_add("HTTP_ACCEPT=%.*s\n",          U_HTTP_ACCEPT_TO_TRACE);
-   if (u_http_info.content_type_len)    buffer.snprintf_add("\"CONTENT_TYPE=%.*s\"\n",     U_HTTP_CTYPE_TO_TRACE);
+   if (u_http_info.content_type_len)    buffer.snprintf_add("'CONTENT_TYPE=%.*s'\n",       U_HTTP_CTYPE_TO_TRACE);
    if (u_http_info.accept_language_len) buffer.snprintf_add("HTTP_ACCEPT_LANGUAGE=%.*s\n", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE);
 
    // The interpreted pathname of the requested document or CGI (relative to the document root)
@@ -4787,8 +4890,8 @@ UString UHTTP::getCGIEnvironment()
          UString issuer  = UCertificate::getIssuer(x509),
                  subject = UCertificate::getSubject(x509);
 
-         buffer.snprintf_add("\"SSL_CLIENT_I_DN=%.*s\"\n"
-                             "\"SSL_CLIENT_S_DN=%.*s\"\n"
+         buffer.snprintf_add("'SSL_CLIENT_I_DN=%.*s'\n"
+                             "'SSL_CLIENT_S_DN=%.*s'\n"
                              "SSL_CLIENT_CERT_SERIAL=%ld\n",
                              U_STRING_TO_TRACE(issuer),
                              U_STRING_TO_TRACE(subject),
@@ -4800,18 +4903,35 @@ UString UHTTP::getCGIEnvironment()
 #endif
 
    // The visitor's cookie, if one is set
-   // -------------------------------------------------------------------------------------------------------------
-   // Cookie: _saml_idp=dXJuOm1hY2U6dGVzdC5zXRo; _redirect_user_idp=urn%3Amace%3Atest.shib%3Afederation%3Alocalhost;
+   // ------------------------------------------------------------------------------------------------------------------
+   // Cookie: _saml_idp=dXJuOm1hY2U6dGVzdC5zXRo, _redirect_user_idp=urn%3Amace%3Atest.shib%3Afederation%3Alocalhost; ...
+   // ------------------------------------------------------------------------------------------------------------------
 
-   UString cookie = getHTTPCookie();
-
-   U_INTERNAL_DUMP("cookie = %.*S", U_STRING_TO_TRACE(cookie))
-
-   if (cookie.empty() == false)
+   if (u_http_info.cookie_len)
       {
-      (void) buffer.append(U_CONSTANT_TO_PARAM("\"HTTP_COOKIE="));
-      (void) buffer.append(cookie);
-      (void) buffer.append(U_CONSTANT_TO_PARAM("\"\n"));
+      UString cookie;
+
+      if (getHTTPCookie(&cookie))
+         {
+         U_INTERNAL_DUMP("cookie = %.*S", U_STRING_TO_TRACE(cookie))
+
+         U_ASSERT_DIFFERS(cookie.empty(), true)
+
+         (void) buffer.append(U_CONSTANT_TO_PARAM("'HTTP_COOKIE="));
+         (void) buffer.append(cookie);
+         (void) buffer.append(U_CONSTANT_TO_PARAM("'\n"));
+         }
+
+      U_INTERNAL_ASSERT_POINTER(psession)
+
+      if (psession->keyID.empty() == false)
+         {
+         U_INTERNAL_DUMP("psession->keyID = %.*S", U_STRING_TO_TRACE(psession->keyID))
+
+         (void) buffer.append(U_CONSTANT_TO_PARAM("'ULIB_SESSION="));
+         (void) buffer.append(psession->keyID);
+         (void) buffer.append(U_CONSTANT_TO_PARAM("'\n"));
+         }
       }
 
    (void) buffer.append(*geoip);
@@ -4867,6 +4987,89 @@ U_NO_EXPORT bool UHTTP::setCGIShellScript(UString& command)
 
    if (n > 0) U_RETURN(true);
               U_RETURN(false);
+}
+
+/* X-Sendfile is a special, non-standard HTTP header. At first you might think it is no big deal, but think again.
+ * It can be enabled in any CGI, FastCGI or SCGI backend. Basically its job is to instruct the web server to ignore
+ * the content of the response and replace it by whatever is specified in the header. The main advantage of this is
+ * that it will be server the one serving the file, making use of all its optimizations. It is useful for processing
+ * script-output of e.g. php, perl, ruby or any cgi. This is particularly useful because it hands the load to server,
+ * all the response headers from the backend are forwarded, the whole application uses a lot less resources and performs
+ * several times faster not having to worry about a task best suited for a web server. You retain the ability to check for
+ * special privileges or dynamically deciding anything contemplated by your backend logic, you speed up things a lot while
+ * having more resources freed, and you can even specify the delivery of files outside of the web server's document root path.
+ * Of course, this is to be done solely in controlled environments. In short, it offers a huge performance gain at absolutely
+ * no cost. Note that the X-Sendfile feature also supports X-Accel-Redirect header, a similar feature offered by other web
+ * servers. This is to allow the migration of applications supporting it without having to make major code rewrites.
+ */
+
+bool UHTTP::XSendfile(UString& _pathname, UString& ext)
+{
+   U_TRACE(0, "UHTTP::XSendFile(%.*S,%.*S)", U_STRING_TO_TRACE(_pathname), U_STRING_TO_TRACE(ext))
+
+   U_INTERNAL_ASSERT_POINTER(pobj)
+   U_INTERNAL_ASSERT_POINTER(xpathname)
+
+   if (u_canonicalize_pathname(_pathname.data())) _pathname.size_adjust_force(); // NB: is referenced...
+
+   file->setPath(_pathname);
+
+   if (file->stat()    &&
+       file->st_size   &&
+       file->regular() &&
+       file->open())
+      {
+      U_SRV_LOG("header X-Sendfile found in CGI output: serving file %.*S", U_STRING_TO_TRACE(_pathname));
+
+      UClientImage_Base::body->clear();
+      UClientImage_Base::wbuffer->clear();
+
+      if (ext.empty() == false)
+         {
+         U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(ext), U_CONSTANT_TO_PARAM(U_CRLF)))
+
+         UString request(300U + _pathname.size() + ext.size());
+
+         request.snprintf("GET %.*s HTTP/1.1\r\n" \
+                          "%.*s" \
+                          "\r\n",
+                          U_STRING_TO_TRACE(_pathname),
+                          U_STRING_TO_TRACE(ext));
+
+         U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
+
+         char c = U_http_is_accept_deflate;
+
+         initHTTPInfo();
+
+         U_http_is_accept_deflate = c;
+
+         (void) readHTTPHeader(0, request);
+         (void) checkHTTPRequestForHeader(request);
+
+         ext.clear();
+         }
+
+      if (pobj->fd > 0)
+         {
+         UFile::close(pobj->fd);
+         UFile::unlink(xpathname->c_str());
+         }
+
+      file_data  = pobj;
+      *xpathname = file->getPath();
+
+      U_http_is_navigation = true;
+
+      file_data->fd   = file->fd;
+      file_data->size = file->st_size;
+
+      processHTTPGetRequest(UString::getStringNull(), ext);
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 U_NO_EXPORT bool UHTTP::splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext)
@@ -5085,78 +5288,10 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                   pathname->setBuffer(u_cwd_len + 1 + len);
 
-                  if (location[0] == '/') pathname->snprintf(   "%.*s", len, location);
-                  else                    pathname->snprintf("%w/%.*s", len, location);
+                  pathname->snprintf(location[0] == '/' ?    "%.*s"
+                                                        : "%w/%.*s", len, location);
 
-                  if (u_canonicalize_pathname(pathname->data())) pathname->size_adjust_force(); // NB: can be referenced by file...
-
-                  file->setPath(*pathname);
-
-                  if (file->stat()    &&
-                      file->st_size   &&
-                      file->regular() &&
-                      file->open())
-                     {
-                     U_SRV_LOG("header X-Sendfile found in CGI output: serving file %.*S", U_STRING_TO_TRACE(*pathname));
-
-                     UClientImage_Base::body->clear();
-                     UClientImage_Base::wbuffer->clear();
-
-                     if (ext.empty() == false)
-                        {
-                        U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(ext), U_CONSTANT_TO_PARAM(U_CRLF)))
-
-                        UString request(300U + pathname->size() + ext.size());
-
-                        request.snprintf("GET %.*s HTTP/1.1\r\n" \
-                                         "%.*s" \
-                                         "\r\n",
-                                         U_STRING_TO_TRACE(*pathname),
-                                         U_STRING_TO_TRACE(ext));
-
-                        U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
-
-                        char c = U_http_is_accept_deflate;
-
-                        initHTTPInfo();
-
-                        U_http_is_accept_deflate = c;
-
-                        (void) readHTTPHeader(0, request);
-                        (void) checkHTTPRequestForHeader(request);
-
-                        ext.clear();
-                        }
-
-                     static UString* xpathname;
-                     static UFileCacheData* pobj;
-
-                     if (pobj == 0)
-                        {
-                        pobj      = U_NEW(UFileCacheData);
-                        xpathname = U_NEW(UString);
-                        }
-                     else
-                        {
-                        U_INTERNAL_ASSERT_MAJOR(pobj->fd,0)
-                        U_INTERNAL_ASSERT_POINTER(xpathname)
-
-                        UFile::close(pobj->fd);
-                        UFile::unlink(xpathname->c_str());
-                        }
-
-                     file_data  = pobj;
-                     *xpathname = file->getPath();
-
-                     U_http_is_navigation = true;
-
-                     file_data->fd   = file->fd;
-                     file_data->size = file->st_size;
-
-                     processHTTPGetRequest(UString::getStringNull(), ext);
-
-                     U_RETURN(true);
-                     }
+                  if (XSendfile(*pathname, ext)) U_RETURN(true);
                   }
 
                goto error;
@@ -5229,25 +5364,13 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                if (ptr)
                   {
-                  // REQ: Set-Cookie: TODO[ data expire path domain secure HttpOnly ]
-                  // ----------------------------------------------------------------------------------------------------------------------------
-                  // string -- key_id or data to put in cookie    -- must
-                  // int    -- lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
-                  // string -- path where the cookie can be used  --  opt
-                  // string -- domain which can read the cookie   --  opt
-                  // bool   -- secure mode                        --  opt
-                  // bool   -- only allow HTTP usage              --  opt
-                  // ----------------------------------------------------------------------------------------------------------------------------
-                  // RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
-
-                  uint32_t len  = ptr - location;
-                  UString param = UClientImage_Base::wbuffer->substr(location, len), set_cookie = setHTTPCookie(param);
-
-                  U_INTERNAL_DUMP("set_cookie = %.*S", U_STRING_TO_TRACE(set_cookie))
+                  uint32_t len = ptr - location;
 
                   n1 += len + 1; // ']'
 
-                  uint32_t n2   = set_cookie.size() - pos2,
+                  setHTTPCookie(UClientImage_Base::wbuffer->substr(location, len));
+
+                  uint32_t n2   = UClientImage_Base::_set_cookie->size() - pos2,
                            diff = n2 - n1;
 
                   sz        += diff;
@@ -5257,7 +5380,9 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                   U_INTERNAL_ASSERT_MINOR(diff,512)
 
-                  (void) UClientImage_Base::wbuffer->replace(pos1, n1, set_cookie, pos2, n2);
+                  (void) UClientImage_Base::wbuffer->replace(pos1, n1, *UClientImage_Base::_set_cookie, pos2, n2);
+
+                  UClientImage_Base::_set_cookie->setEmpty();
 
                   U_INTERNAL_DUMP("wbuffer(%u) = %#.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
 
@@ -5630,12 +5755,11 @@ U_NO_EXPORT int UHTTP::checkHTTPGetRequestForRange(UString& ext, const UString& 
    HTTPRange* prev;
    const char* spec;
    UVector<HTTPRange*> array;
+   UVector<UString> range_list;
    uint32_t i, n, _end, cur_start, cur_end;
    UString range(u_http_info.range, u_http_info.range_len), item;
 
-   UVector<UString> range_list(range, ',');
-
-   for (i = 0, n = range_list.size(); i < n; ++i)
+   for (i = 0, n = range_list.split(u_http_info.range, u_http_info.range_len, ','); i < n; ++i)
       {
       item = range_list[i];
       spec = item.data();
@@ -5920,7 +6044,7 @@ U_NO_EXPORT bool UHTTP::openFile()
 
          if (file_data)
             {
-            if (isDataFromCache())
+            if (isDataFromCache()) // NB: check if we have the content of file in cache...
                {
                u_http_info.nResponseCode = HTTP_OK;
 

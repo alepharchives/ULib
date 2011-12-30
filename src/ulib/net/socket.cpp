@@ -636,58 +636,6 @@ bool USocket::sendBinary32Bits(uint32_t lData)
    U_RETURN(result);
 }
 
-/*
-sendfile() copies data between one file descriptor and another. Either or both of these file descriptors may refer to a socket.
-OUT_FD should be a descriptor opened for writing. POFFSET is a pointer to a variable holding the input file pointer position from
-which sendfile() will start reading data. When sendfile() returns, this variable will be set to the offset of the byte following
-the last byte that was read. COUNT is the number of bytes to copy between file descriptors. Because this copying is done within
-the kernel, sendfile() does not need to spend time transferring data to and from user space.
-*/
-
-bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count)
-{
-   U_TRACE(1, "USocket::sendfile(%d,%p,%u)", in_fd, poffset, count)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT(isOpen())
-   U_INTERNAL_ASSERT_MAJOR(count,0)
-
-   ssize_t value;
-
-   do {
-      U_INTERNAL_DUMP("count = %u", count)
-
-      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", getFd(), in_fd, poffset, count);
-
-      if (value == (ssize_t)count) U_RETURN(true);
-
-      if (value <= 0L)
-         {
-         U_INTERNAL_DUMP("errno = %d", errno)
-
-         if (errno == EAGAIN &&
-             UNotifier::waitForWrite(iSockDesc, 1 * 1000) == 1)
-            {
-            flags = UFile::setBlocking(iSockDesc, flags, true);
-
-            continue;
-            }
-
-         iState = BROKEN | EPOLLERROR;
-
-         U_RETURN(false);
-         }
-
-      count -= value;
-      }
-   while (count);
-
-   U_INTERNAL_ASSERT_EQUALS(count,0)
-
-   U_RETURN(true);
-}
-
 #ifdef closesocket
 #undef closesocket
 #endif
@@ -992,6 +940,56 @@ loop:
 
 end:
    U_RETURN(iBytesWrite);
+}
+
+/*
+sendfile() copies data between one file descriptor and another. Either or both of these file descriptors may refer to a socket.
+OUT_FD should be a descriptor opened for writing. POFFSET is a pointer to a variable holding the input file pointer position from
+which sendfile() will start reading data. When sendfile() returns, this variable will be set to the offset of the byte following
+the last byte that was read. COUNT is the number of bytes to copy between file descriptors. Because this copying is done within
+the kernel, sendfile() does not need to spend time transferring data to and from user space.
+*/
+
+bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count, int timeoutMS)
+{
+   U_TRACE(1, "USocket::sendfile(%d,%p,%u,%d)", in_fd, poffset, count, timeoutMS)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+   U_INTERNAL_ASSERT_MAJOR(count,0)
+
+   ssize_t value;
+
+   do {
+      U_INTERNAL_DUMP("count = %u", count)
+
+      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", getFd(), in_fd, poffset, count);
+
+      if (value == (ssize_t)count) U_RETURN(true);
+
+      if (value <= 0L)
+         {
+         U_INTERNAL_DUMP("errno = %d", errno)
+
+         if (errno == EAGAIN &&
+             UNotifier::waitForWrite(iSockDesc, timeoutMS) == 1)
+            {
+            continue;
+            }
+
+         iState = BROKEN | EPOLLERROR;
+
+         U_RETURN(false);
+         }
+
+      count -= value;
+      }
+   while (count);
+
+   U_INTERNAL_ASSERT_EQUALS(count,0)
+
+   U_RETURN(true);
 }
 
 // write data into multiple buffers

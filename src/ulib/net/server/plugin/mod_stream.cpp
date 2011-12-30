@@ -211,7 +211,7 @@ int UStreamPlugIn::handlerRequest()
          if (readd != -1)
             {
             if (fmetadata &&
-                csocket->sendfile(fmetadata->getFd(), 0, fmetadata->getSize()) == false) goto end;
+                csocket->sendfile(fmetadata->getFd(), 0, fmetadata->getSize(), 5 * 1000) == false) goto end;
 
             UTimeVal to_sleep(0L, 10 * 1000L);
 

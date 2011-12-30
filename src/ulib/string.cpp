@@ -360,6 +360,27 @@ uint32_t UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
    U_RETURN(n);
 }
 
+void UStringRep::trim()
+{
+   U_TRACE(0, "UStringRep::trim()")
+
+   U_INTERNAL_ASSERT_EQUALS(_capacity,0)
+
+   // skip white space from start
+
+   while (_length && u_isspace(*str))
+      {
+      ++str;
+      --_length;
+      }
+
+   U_INTERNAL_DUMP("_length = %u", _length)
+
+   // skip white space from end
+
+   while (_length && u_isspace(str[_length-1])) --_length;
+}
+
 // ----------------------------------------------
 // gcc: call is unlikely and code size would grow
 // ----------------------------------------------
@@ -511,6 +532,7 @@ char* UString::c_strndup(uint32_t pos, uint32_t n) const { return strndup(rep->s
 
 UString& UString::assign(const char* s)                  { return assign(s, u_str_len(s)); }
 UString& UString::append(const char* s)                  { return append(s, u_str_len(s)); }
+UString& UString::append(UStringRep* _rep)               { return append(_rep->str, _rep->_length); }
 UString& UString::append(const UString& str)             { return append(str.data(), str.size()); }
 
 __pure bool UString::equal(UStringRep* _rep) const          { return same(_rep) || rep->equal(_rep); }

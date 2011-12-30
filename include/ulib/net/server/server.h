@@ -363,8 +363,8 @@ protected:
    static UEventTime* ptime;
    static UServer_Base* pthis;
    static UString* senvironment;
+   static uint32_t start, count;
    static UVector<UIPAllow*>* vallow_IP;
-   static uint32_t start, count, sendfile_threshold_nonblock;
    static bool flag_loop, bssl, flag_use_tcp_optimization, accept_edge_triggered;
 
    // COSTRUTTORI
