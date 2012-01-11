@@ -1,4 +1,4 @@
-/** ============================================================================
+/* ============================================================================
 //
 // = LIBRARY
 //    ulibase - c library
@@ -41,6 +41,8 @@
 
 #ifdef HAVE_SCHED_H
 #  include <sched.h>
+#elif defined(HAVE_SYS_SCHED_H)
+#  include <sys/sched.h>
 #endif
 
 #ifndef CPU_SETSIZE
@@ -59,6 +61,19 @@ typedef uint64 cpu_set_t;
 extern "C" {
 #endif
 
+/* Security functions */
+
+U_EXPORT void u_init_security(void);
+
+U_EXPORT void u_dont_need_root(void);
+U_EXPORT void u_dont_need_group(void);
+
+U_EXPORT void u_never_need_root(void);
+U_EXPORT void u_never_need_group(void);
+
+U_EXPORT void u_need_root(bool necessary);
+U_EXPORT void u_need_group(bool necessary);
+
 /* Services */
 
 union uuaddress {
@@ -67,7 +82,7 @@ union uuaddress {
    struct in_addr addr;
 };
 
-extern U_EXPORT int u_num_cpu;
+extern U_EXPORT int         u_num_cpu;
 extern U_EXPORT const char* u_short_units[]; /* { "B", "KB", "MB", "GB", "TB", 0 } */
 
 U_EXPORT char*       u_inet_nstoa(uint8_t* ip);
@@ -89,12 +104,12 @@ U_EXPORT void* memmem(const void* restrict haystack, size_t haystacklen, const v
 #ifdef DEBUG
 U_EXPORT size_t u_str_len(const char* restrict s);
 U_EXPORT char*  u_strcpy( char* restrict dest, const char* restrict src);
-U_EXPORT void*  u_memcpy( void* restrict dest, const void* restrict src, size_t n);
+U_EXPORT void*  u_mem_cpy(void* restrict dest, const void* restrict src, size_t n);
 U_EXPORT char*  u_strncpy(char* restrict dest, const char* restrict src, size_t n);
 #else
 #  define u_str_len(s)          strlen((s))
 #  define u_strcpy(dest,src)    strcpy( (dest),(src))
-#  define u_memcpy(dest,src,n)  memcpy( (dest),(src),(n))
+#  define u_mem_cpy(dest,src,n) memcpy( (dest),(src),(n))
 #  define u_strncpy(dest,src,n) strncpy((dest),(src),(n))
 #endif
 
@@ -130,7 +145,9 @@ U_EXPORT const char* u_skip(const char* restrict s, const char* restrict end, co
 
 /* delimit token */
 
-U_EXPORT const char* u_delimit_token(const char* restrict s, const char** restrict p, const char* restrict end, const char* restrict delim, char skip_line_comment);
+U_EXPORT const char* u_delimit_token(const char* restrict s,   const char** restrict p,
+                                     const char* restrict end, const char*  restrict delim,
+                                     char skip_line_comment);
 
 /* Search a string for any of a set of characters. Locates the first occurrence in the string s of any of the characters in the string accept */
 
@@ -194,7 +211,8 @@ extern U_EXPORT bPFpcupcud u_pfn_match;
 
 U_EXPORT bool u_fnmatch(         const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
 U_EXPORT bool u_dosmatch(        const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
-U_EXPORT bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure; /* multiple patterns separated by '|' */ 
+/* multiple patterns separated by '|' */ 
+U_EXPORT bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
 
 enum MatchType { U_FNMATCH = 0, U_DOSMATCH = 1, U_DOSMATCH_WITH_OR = 2 };
 
@@ -243,6 +261,10 @@ U_EXPORT int u_get_num_cpu(void);
 /* Pin the process to a particular core */
 
 U_EXPORT void u_bind2cpu(pid_t pid, int n);
+
+/* Set the process to maximum priority that can be used with the scheduling algorithm */
+
+U_EXPORT bool u_switch_to_realtime_priority(pid_t pid);
 
 /** -------------------------------------------------------------------------------
 // Canonicalize PATH, and build a new path. The new path differs from PATH in that:

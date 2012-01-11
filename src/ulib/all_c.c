@@ -36,6 +36,7 @@
 #include "base/lzo/minilzo.c"
 #include "base/coder/cbase64.c"
 #include "base/coder/cescape.c"
+#include "base/coder/chexdump.c"
 #include "base/coder/curl_coder.c"
 #include "base/coder/cxml_coder.c"
 #include "base/coder/cquoted_printable.c"

@@ -11,7 +11,7 @@ DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 
 SRC = base.c base_error.c hash.c utility.c \
 		lzo/minilzo.c \
-		coder/cbase64.c coder/cquoted_printable.c coder/curl_coder.c coder/cxml_coder.c coder/cescape.c
+		coder/cbase64.c coder/cquoted_printable.c coder/curl_coder.c coder/cxml_coder.c coder/cescape.c coder/chexdump.c
 
 if DEBUG
 SRC += base_trace.c

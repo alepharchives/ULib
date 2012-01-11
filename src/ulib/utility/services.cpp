@@ -15,6 +15,7 @@
 #include <ulib/date.h>
 #include <ulib/notifier.h>
 #include <ulib/utility/base64.h>
+#include <ulib/utility/hexdump.h>
 #include <ulib/utility/services.h>
 
 unsigned char UServices::key[16];
@@ -57,7 +58,7 @@ bool UServices::setFtw(const UString* dir, const char* filter, uint32_t filter_l
          U_RETURN(false);
          }
 
-      (void) u_memcpy(u_buffer, ptr, u_buffer_len);
+      (void) u_mem_cpy(u_buffer, ptr, u_buffer_len);
       }
 
    u_buffer[u_buffer_len] = '\0';
@@ -535,9 +536,22 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
       U_INTERNAL_ASSERT_POINTER(u_pkey)
       }
 
-   UString output(2000);
+   UString output(2000U);
 
-   uint32_t bytes_written = u_dgst_sign_finish((unsigned char*)output.data(), base64);
+   if (base64 == -2)
+      {
+      (void) u_dgst_sign_finish(0, 0);
+
+      output.setConstant((const char*)u_mdValue, u_mdLen);
+      }
+   else
+      {
+      uint32_t bytes_written = u_dgst_sign_finish((unsigned char*)output.data(), base64);
+
+      output.size_adjust(bytes_written);
+      }
+
+   U_INTERNAL_DUMP("u_mdLen = %u output = %.*S", u_mdLen, U_STRING_TO_TRACE(output))
 
    if (bkey &&
        u_pkey)
@@ -546,9 +560,6 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
 
       u_pkey = 0;
       }
-
-   if (base64 == -1) output.setConstant((const char*)u_mdValue, u_mdLen);
-   else              output.size_adjust(bytes_written);
 
    U_RETURN_STRING(output);
 }
@@ -609,7 +620,7 @@ void UServices::generateKey()
 #elif defined(HAVE_LIBUUID)
    U_SYSCALL_VOID(uuid_generate, "%p", key);
 #else
-   (void) u_sn_printf((char*)key, 16, "%P%lu", u_now->tv_usec);
+   (void) u_sn_printf((char*)key, 16, "%lu%P", u_now->tv_usec);
 #endif
 }
 
@@ -622,64 +633,86 @@ void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, ui
 
    u_dgst_hash(data, size);
 
-   uint32_t bytes_written = u_dgst_finish((unsigned char*)output.end(), base64);
+   if (base64 == -2)
+      {
+      (void) u_dgst_finish(0, 0);
 
-   if (base64 == -1) output.setConstant((const char*)u_mdValue, u_mdLen);
-   else              output.size_adjust(output.size() + bytes_written);
+      output.setConstant((const char*)u_mdValue, u_mdLen);
+      }
+   else
+      {
+      uint32_t bytes_written = u_dgst_finish((unsigned char*)output.end(), base64);
 
-   U_INTERNAL_DUMP("output = %.*S", U_STRING_TO_TRACE(output))
+      output.size_adjust(output.size() + bytes_written);
+      }
+
+   U_INTERNAL_DUMP("u_mdLen = %u output = %.*S", u_mdLen, U_STRING_TO_TRACE(output))
 #endif
 }
+
+#define U_HMAC_SIZE  16U                           // MD5 ouput len
+#define U_TOKEN_SIZE (1U + 10U + 1U + U_HMAC_SIZE) // ... '&' time '&' hmac
 
 UString UServices::generateToken(const UString& data, time_t expire)
 {
    U_TRACE(0, "UServices::generateToken(%.*S,%ld)", U_STRING_TO_TRACE(data), expire)
 
-   UString token(data.size()+1U+10U+1U);
-                  // NB: ... '&'time'&' expire time must be of size 10...
-          token.snprintf("%.*s&%010ld&", U_STRING_TO_TRACE(data), expire);
+   UString token(data.size() + U_TOKEN_SIZE);
+
+   token.snprintf("%.*s&%010ld&", U_STRING_TO_TRACE(data), expire); // NB: expire time must be of size 10...
 
    U_INTERNAL_DUMP("token = %.*S", U_STRING_TO_TRACE(token))
 
-   // HMAC-MD5(data&expire)
+   // HMAC-MD5(data&expire&)
 
-   generateHMAC(U_HASH_MD5, (unsigned char*)token.data(), token.size(), token);
+   generateDigest(U_HASH_MD5, 16, (unsigned char*)U_STRING_TO_PARAM(token), token, -1);
 
-   UString value(token.size() * 4);
+   UString output(token.size() * 2);
 
-   UBase64::encode(token, value);
+   UHexDump::encode(token, output);
 
-   U_RETURN_STRING(value);
+   U_RETURN_STRING(output);
 }
 
 bool UServices::getTokenData(UString& data, const UString& value)
 {
    U_TRACE(0, "UServices::getTokenData(%.*S,%.*S)", U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(value))
 
-   UString token(U_CAPACITY);
+   uint32_t sz = value.size();
 
-   if (UBase64::decode(value, token))
+   if (sz > U_TOKEN_SIZE)
       {
-      data.setBuffer(100U);
+      UString token(sz);
 
-      // try to parse the token...
+      UHexDump::decode(value, token);
 
-      UString hmac(32U);
+      U_INTERNAL_DUMP("token = %.*S", U_STRING_TO_TRACE(token))
+
+      U_ASSERT_MAJOR(data.capacity(), token.size() - U_TOKEN_SIZE)
+
+      // token parsing (data '&' time '&' hmac)
+
       time_t expire = 0;
       const char* ptr = token.data();
-      int scanned = U_SYSCALL(sscanf, "%p,%S,%p,%p", ptr, "%[^&]&%ld&%32c", data.data(), &expire, hmac.data());
+      int scanned = U_SYSCALL(sscanf, "%p,%S,%p,%p", ptr, "%[^&]&%ld&", data.data(), &expire);
 
       U_INTERNAL_DUMP("scanned = %d", scanned)
 
-      if (scanned == 3)
+      if (scanned == 2)
          {
+         UString hmac;
+
          data.size_adjust();
-         hmac.size_adjust(32U); // 32 -> MD5 output len
 
          U_INTERNAL_DUMP("data = %.*S u_now = %ld expire = %ld", U_STRING_TO_TRACE(data), u_now->tv_sec, expire)
 
-                                                                          //... '&' time '&'
-         if (UServices::checkHMAC(U_HASH_MD5, (unsigned char*)ptr, data.size() + 1 + 10 + 1, hmac))
+         U_ASSERT_EQUALS(token.size(), data.size() + U_TOKEN_SIZE)
+
+         sz = data.size() + 1U + 10U + 1U;
+
+         generateDigest(U_HASH_MD5, 16, (unsigned char*)ptr, sz, hmac, -2);
+
+         if (hmac.equal(ptr + sz, U_HMAC_SIZE))
             {
             U_INTERNAL_DUMP("(u_now < expire) = %b", (u_now->tv_sec < expire))
 
@@ -689,21 +722,6 @@ bool UServices::getTokenData(UString& data, const UString& value)
       }
 
    U_RETURN(false);
-}
-
-bool UServices::checkHMAC(int alg, unsigned char* data, uint32_t size, const UString& hmac)
-{
-   U_TRACE(0, "UServices::checkHMAC(%d,%.*S,%u,%.*S)", alg, size, data, size, U_STRING_TO_TRACE(hmac))
-
-   bool result = false;
-
-   UString output(100U);
-
-   generateHMAC(alg, data, size, output);
-
-   result = (hmac == output);
-
-   U_RETURN(result);
 }
 
 #ifdef HAVE_SSL

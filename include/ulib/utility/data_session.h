@@ -37,6 +37,8 @@ public:
 
    // COSTRUTTORE
 
+   time_t creation, last_access;
+
    UDataSession()
       {
       U_TRACE_REGISTER_OBJECT(0, UDataSession, "")
@@ -56,17 +58,24 @@ public:
    virtual ~UDataSession()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UDataSession)
+
+      clear();
       }
 
    // SERVICES
 
-   void    fromString(const UString& _data);
    UString   toString();
+   void    fromString(const UString& data);
 
    // method VIRTUAL to define
 
-   virtual void fromStream(istream& is);
+   virtual void clear() {}
+
    virtual void   toStream(ostream& os);
+   virtual void fromStream(istream& is);
+
+   virtual UDataSession*   toDataSession();
+   virtual void          fromDataSession(UDataSession& data_session);
 
    // STREAM
 
@@ -79,7 +88,6 @@ public:
 
 protected:
    UString data;
-   time_t creation, last_access;
 
 private:
    UDataSession(const UDataSession&)            {}

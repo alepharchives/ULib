@@ -555,7 +555,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
    bool result = true;
    UHashMap<UString> args;
    UVector<UString> name_value;
-   UString token, action, peer_mac;
+   UString token, action, peer_mac(100U);
 
    args.allocate();
 
@@ -955,7 +955,7 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo()
       U_http_is_connection_close = U_YES;
       u_http_info.nResponseCode  = (isPingAsyncPending() ? HTTP_NO_CONTENT : HTTP_NOT_MODIFIED);
 
-      UHTTP::setHTTPResponse();
+      UHTTP::setHTTPResponse(0, 0);
       }
 }
 
@@ -1007,7 +1007,7 @@ void UNoCatPlugIn::setHTTPResponse(const UString& content)
    u_http_info.nResponseCode   = HTTP_OK;
    *UClientImage_Base::wbuffer = content;
 
-   UHTTP::setHTTPCgiResponse(false, false, false);
+   UHTTP::setHTTPCgiResponse(false, UHTTP::isCompressable(), false);
 }
 
 void UNoCatPlugIn::str_allocate()

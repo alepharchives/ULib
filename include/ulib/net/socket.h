@@ -89,8 +89,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    static const UString* str_host;
    static const UString* str_range;
    static const UString* str_close;
@@ -120,6 +118,10 @@ public:
    static const UString* str_expect_100_continue;
 
    static void str_allocate();
+
+   // COSTRUTTORI
+
+   static int accept4_flags; // If flags is 0, then accept4() is the same as accept()
 
    enum State {
       CLOSE       = 0x000,
@@ -634,8 +636,6 @@ protected:
    SOCKET fh;
 #endif
    bool bIPv6Socket, bLocalSet;
-
-   static int accept4_flags; // If flags is 0, then accept4() is the same as accept()
 
    bool connect();
    void setRemote();

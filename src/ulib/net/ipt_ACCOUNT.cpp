@@ -134,7 +134,7 @@ bool UIptAccount::readEntries(const char* table, bool dont_flush)
 
    // Copy data from kernel
 
-   (void) u_memcpy(data, handle, sizeof(struct ipt_acc_handle_sockopt));
+   (void) u_mem_cpy(data, handle, sizeof(struct ipt_acc_handle_sockopt));
 
    if (USocket::getSockOpt(IPPROTO_IP, IPT_SO_GET_ACCOUNT_GET_DATA, data, data_size) == false)
       {

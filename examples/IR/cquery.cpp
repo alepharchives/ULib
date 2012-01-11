@@ -42,6 +42,52 @@ void WeightWord::allocVector(uint32_t n)
    size_streambuf_vec = sizeof("(  )") - 1;
 }
 
+UVector<WeightWord*>* WeightWord::fromVector(UVector<UString>& v)
+{
+   U_TRACE(5, "WeightWord::fromVector(%p)", &v)
+
+   uint32_t i, sz = v.size();
+
+   clear();
+   allocVector(sz);
+
+   UPosting::word_freq = 0;
+
+   UVector<WeightWord*>* result = vec;
+
+   for (i = 0; i < sz; ++i)
+      {
+      *UPosting::filename = v[i];
+
+      push();
+      }
+
+   vec = 0;
+
+   U_RETURN_POINTER(result,UVector<WeightWord*>);
+}
+
+UVector<WeightWord*>* WeightWord::duplicate(UVector<WeightWord*>* v)
+{
+   U_TRACE(5, "WeightWord::duplicate(%p)", v)
+
+   U_INTERNAL_ASSERT_POINTER(v)
+
+   WeightWord* item;
+   uint32_t i, sz = v->size();
+
+   UVector<WeightWord*>* result = U_NEW(UVector<WeightWord*>(sz));
+
+   for (i = 0; i < sz; ++i)
+      {
+      item = (*v)[i];
+
+      result->push_back(U_NEW(WeightWord(item->filename, 0)));
+      }
+
+   U_RETURN_POINTER(result,UVector<WeightWord*>);
+}
+
 void WeightWord::push()
 {
    U_TRACE(5, "WeightWord::push()")
@@ -263,7 +309,7 @@ void Query::run(const char* ptr)
        (   strstr(ptr, " OR ")  != 0) ||
        (   strstr(ptr, " AND ") != 0) ||
        (   strstr(ptr, " NOT ") != 0) ||
-         U_STRNEQ(ptr, "NOT "))
+         U_STRNEQ(ptr,  "NOT "))
       {
       if (is_or)  *UPosting::word = UStringExt::substitute(*UPosting::word, U_CONSTANT_TO_PARAM(" or "),
                                                                             U_CONSTANT_TO_PARAM(" OR "));

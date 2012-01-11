@@ -94,10 +94,10 @@ public:
 
 #  ifdef HAVE_IPV6
       if (addr.psaGeneric.sa_family == AF_INET6)
-         (void) u_memcpy(&(addr.psaIP6Addr.sin6_addr), cAddr.get_in_addr(), cAddr.getInAddrLength());
+         (void) u_mem_cpy(&(addr.psaIP6Addr.sin6_addr), cAddr.get_in_addr(), cAddr.getInAddrLength());
       else
 #  endif
-         (void) u_memcpy(&(addr.psaIP4Addr.sin_addr),  cAddr.get_in_addr(), cAddr.getInAddrLength());
+         (void) u_mem_cpy(&(addr.psaIP4Addr.sin_addr),  cAddr.get_in_addr(), cAddr.getInAddrLength());
       }
 
    // Sets the port number part of the sockaddr structure. Based on the value
@@ -175,11 +175,11 @@ public:
 
 #  ifdef HAVE_IPV6
       if (addr.psaGeneric.sa_family == AF_INET6)
-         (void) u_memcpy(&(addr.psaIP6Addr.sin6_addr),
+         (void) u_mem_cpy(&(addr.psaIP6Addr.sin6_addr),
                          &((struct sockaddr_in6*)result->ai_addr)->sin6_addr, sizeof(in6_addr));
       else
 #  endif
-         (void) u_memcpy(&(addr.psaIP4Addr.sin_addr),
+         (void) u_mem_cpy(&(addr.psaIP4Addr.sin_addr),
                          &((struct sockaddr_in*)result->ai_addr)->sin_addr, sizeof(in_addr));
       }
 #endif

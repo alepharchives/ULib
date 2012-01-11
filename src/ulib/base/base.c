@@ -116,6 +116,20 @@ const unsigned char  u_alphabet[]  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop
 const unsigned char  u_hex_upper[] = "0123456789ABCDEF";
 const unsigned char  u_hex_lower[] = "0123456789abcdef";
 
+/*
+"FATAL: kernel too old"
+
+Even if you recompile the code with -static compiler command-line option to avoid any dependency on the dynamic Glibc library,
+you could still encounter the error in question, and your code will exit with Segmentation Fault error.
+
+This kernel version check is done by DL_SYSDEP_OSCHECK macro in Glibc's sysdeps/unix/sysv/linux/dl-osinfo.h
+It calls _dl_discover_osversion to get current kernel's version.
+
+The fix (or hack) is to add the following function in your code and compile your code with -static compiler command-line option.
+
+int _dl_discover_osversion() { return 0xffffff; }
+*/
+
 __pure const char* u_basename(const char* restrict path)
 {
    const char* restrict base;
@@ -192,8 +206,8 @@ void u_init_ulib_username(void)
 
    if (pw) u_user_name_len = u_str_len(pw->pw_name);
 
-   if (u_user_name_len) (void) u_memcpy(u_user_name, pw->pw_name,  u_user_name_len);
-   else                 (void) u_memcpy(u_user_name,      "root", (u_user_name_len = 4));
+   if (u_user_name_len) (void) u_mem_cpy(u_user_name, pw->pw_name,  u_user_name_len);
+   else                 (void) u_mem_cpy(u_user_name,      "root", (u_user_name_len = 4));
 }
 
 void u_init_ulib_hostname(void)
@@ -1358,7 +1372,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                len = sizeof(U_RESET_STR) - (n == RESET);
 
-               (void) u_memcpy(bp, tab_color[n], len);
+               (void) u_mem_cpy(bp, tab_color[n], len);
 
                bp  += len;
                ret += len;
@@ -1372,7 +1386,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             U_INTERNAL_ASSERT_MAJOR(u_hostname_len,0)
 
-            (void) u_memcpy(bp, u_hostname, u_hostname_len);
+            (void) u_mem_cpy(bp, u_hostname, u_hostname_len);
 
             bp  += u_hostname_len;
             ret += u_hostname_len;
@@ -1384,7 +1398,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             U_INTERNAL_ASSERT_MAJOR(u_cwd_len,0)
 
-            (void) u_memcpy(bp, u_cwd, u_cwd_len);
+            (void) u_mem_cpy(bp, u_cwd, u_cwd_len);
 
             bp  += u_cwd_len;
             ret += u_cwd_len;
@@ -1394,7 +1408,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'N': /* print program name */
             {
-            (void) u_memcpy(bp, u_progname, u_progname_len);
+            (void) u_mem_cpy(bp, u_progname, u_progname_len);
 
             bp  += u_progname_len;
             ret += u_progname_len;
@@ -1404,7 +1418,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'P': /* print process pid */
             {
-            (void) u_memcpy(bp, u_pid_str, u_pid_str_len);
+            (void) u_mem_cpy(bp, u_pid_str, u_pid_str_len);
 
             bp  += u_pid_str_len;
             ret += u_pid_str_len;
@@ -1430,7 +1444,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                {
                len = u_str_len(ccp);
 
-               (void) u_memcpy(bp, ccp, len);
+               (void) u_mem_cpy(bp, ccp, len);
 
                bp  += len;
                ret += len;
@@ -1454,7 +1468,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                ccp = getSysError_w32(&len);
 
-               (void) u_memcpy(bp, ccp, len);
+               (void) u_mem_cpy(bp, ccp, len);
 
                bp  += len;
                ret += len;
@@ -1470,7 +1484,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             ccp = u_getSysError(&len);
 
-            (void) u_memcpy(bp, ccp, len);
+            (void) u_mem_cpy(bp, ccp, len);
 
             bp  += len;
             ret += len;
@@ -1482,7 +1496,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             U_INTERNAL_ASSERT_MAJOR(u_user_name_len,0)
 
-            (void) u_memcpy(bp, u_user_name, u_user_name_len);
+            (void) u_mem_cpy(bp, u_user_name, u_user_name_len);
 
             bp  += u_user_name_len;
             ret += u_user_name_len;
@@ -1497,7 +1511,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             n   = VA_ARG(int);
             str = u_getSysSignal(n, &len);
 
-            (void) u_memcpy(bp, str, len);
+            (void) u_mem_cpy(bp, str, len);
 
             bp  += len;
             ret += len;
@@ -1512,7 +1526,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             n   = VA_ARG(int);
             str = u_getExitStatus(n, &len);
 
-            (void) u_memcpy(bp, str, len);
+            (void) u_mem_cpy(bp, str, len);
 
             bp  += len;
             ret += len;
@@ -1573,7 +1587,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                   len = strlen(tmp);
 
-                  (void) u_memcpy(bp, tmp, len);
+                  (void) u_mem_cpy(bp, tmp, len);
 
                   bp  += len;
                   ret += len;
@@ -1589,7 +1603,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                len = u_str_len(tmp);
 
-               (void) u_memcpy(bp, tmp, len);
+               (void) u_mem_cpy(bp, tmp, len);
 
                bp  += len;
                ret += len;
@@ -2035,9 +2049,14 @@ void u_printf(const char* format, ...)
 
       if (u_trace_fd > STDERR_FILENO)
          {
-         struct iovec iov[1] = { { (caddr_t)buffer, bytes_written } };
+         /* check if warning due to syscall */
 
-         u_trace_writev(iov, 1);
+         if (u_flag_exit != 2 || errno == 0)
+            {
+            struct iovec iov[1] = { { (caddr_t)buffer, bytes_written } };
+
+            u_trace_writev(iov, 1);
+            }
          }
 #  endif
 

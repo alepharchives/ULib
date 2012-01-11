@@ -98,7 +98,7 @@ void UIPAddress::setAddress(void* address, bool bIPv6)
       iAddressType   = AF_INET6;
       iAddressLength = sizeof(in6_addr);
 
-      (void) u_memcpy(pcAddress.p, address, iAddressLength);
+      (void) u_mem_cpy(pcAddress.p, address, iAddressLength);
       }
    else
 #endif
@@ -125,7 +125,7 @@ void UIPAddress::set(const UIPAddress& cOtherAddr)
       {
       U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in6_addr))
 
-      (void) u_memcpy(pcAddress.p, cOtherAddr.pcAddress.p, sizeof(in6_addr));
+      (void) u_mem_cpy(pcAddress.p, cOtherAddr.pcAddress.p, sizeof(in6_addr));
       }
    else
 #endif
@@ -190,7 +190,7 @@ void UIPAddress::setAddress(const char* pcNewAddress, int iNewAddressLength)
 
    iAddressLength = iNewAddressLength;
 
-   (void) u_memcpy(pcAddress.p, pcNewAddress, iAddressLength);
+   (void) u_mem_cpy(pcAddress.p, pcNewAddress, iAddressLength);
 
    U_INTERNAL_DUMP("addr = %u", getInAddr())
 }
@@ -477,7 +477,7 @@ void UIPAddress::convertToAddressFamily(int iNewAddressFamily)
 
             (void)   memset(pcAddress.p,                0, 10);
             (void)   memset(pcAddress.p + 10,        0xff,  2);
-            (void) u_memcpy(pcAddress.p + 12, pcAddress.p,  4);
+            (void) u_mem_cpy(pcAddress.p + 12, pcAddress.p,  4);
             }
          break;
          }

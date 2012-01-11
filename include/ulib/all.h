@@ -30,10 +30,10 @@
 #include <ulib/json/value.h>
 #include <ulib/utility/lock.h>
 #include <ulib/utility/base64.h>
+#include <ulib/utility/hexdump.h>
 #include <ulib/utility/compress.h>
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/xml_escape.h>
-#include <ulib/utility/uhttp_session.h>
 #include <ulib/utility/quoted_printable.h>
 
 #ifdef USE_PARSER

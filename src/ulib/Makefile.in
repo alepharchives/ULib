@@ -159,23 +159,23 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	base/hash.c base/utility.c base/lzo/minilzo.c \
 	base/coder/cbase64.c base/coder/cquoted_printable.c \
 	base/coder/curl_coder.c base/coder/cxml_coder.c \
-	base/coder/cescape.c base/base_trace.c replace/getopt_long.c \
-	replace/mremap.c replace/nanosleep.c replace/sendfile.c \
-	replace/strndup.c replace/sem.c replace/strptime.c \
-	replace/mkdtemp.c replace/memrchr.c replace/gmtime.c \
-	replace/timegm.c replace/fnmatch.c replace/fallocate.c \
-	replace/fallocate64.c replace/pread.c replace/assert.c \
-	base/zip/inflate.c base/zip/dostime.c base/zip/pushback.c \
-	base/zip/ziptool.c base/coder/cgzio.c base/ssl/des3.c \
-	base/ssl/dgst.c base/win32/mingw32.c internal/common.cpp \
-	internal/objectIO.cpp ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
-	dynamic/dynamic.cpp dynamic/plugin.cpp mime/header.cpp \
-	mime/entity.cpp mime/multipart.cpp container/vector.cpp \
-	container/hash_map.cpp container/tree.cpp \
+	base/coder/cescape.c base/coder/chexdump.c base/base_trace.c \
+	replace/getopt_long.c replace/mremap.c replace/nanosleep.c \
+	replace/sendfile.c replace/strndup.c replace/sem.c \
+	replace/strptime.c replace/mkdtemp.c replace/memrchr.c \
+	replace/gmtime.c replace/timegm.c replace/fnmatch.c \
+	replace/fallocate.c replace/fallocate64.c replace/pread.c \
+	replace/assert.c base/zip/inflate.c base/zip/dostime.c \
+	base/zip/pushback.c base/zip/ziptool.c base/coder/cgzio.c \
+	base/ssl/des3.c base/ssl/dgst.c base/win32/mingw32.c \
+	internal/common.cpp internal/objectIO.cpp ui/dialog.cpp \
+	db/cdb.cpp db/rdb.cpp dynamic/dynamic.cpp dynamic/plugin.cpp \
+	mime/header.cpp mime/entity.cpp mime/multipart.cpp \
+	container/vector.cpp container/hash_map.cpp container/tree.cpp \
 	utility/interrupt.cpp utility/compress.cpp \
 	utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
-	utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp \
-	utility/uhttp.cpp utility/uhttp_session.cpp \
+	utility/hexdump.cpp utility/lock.cpp utility/string_ext.cpp \
+	utility/socket_ext.cpp utility/uhttp.cpp \
 	utility/data_session.cpp utility/ring_buffer.cpp \
 	lemon/expression.cpp net/ipaddress.cpp net/socket.cpp \
 	net/ping.cpp net/tcpsocket.cpp net/server/server.cpp \
@@ -240,13 +240,14 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 @MINGW_TRUE@am__objects_21 = mingw32.lo
 am__objects_22 = base.lo base_error.lo hash.lo utility.lo minilzo.lo \
 	cbase64.lo cquoted_printable.lo curl_coder.lo cxml_coder.lo \
-	cescape.lo $(am__objects_1) $(am__objects_2) $(am__objects_3) \
-	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
-	$(am__objects_7) $(am__objects_8) $(am__objects_9) \
-	$(am__objects_10) $(am__objects_11) $(am__objects_12) \
-	$(am__objects_13) $(am__objects_14) $(am__objects_15) \
-	$(am__objects_16) $(am__objects_17) $(am__objects_18) \
-	$(am__objects_19) $(am__objects_20) $(am__objects_21)
+	cescape.lo chexdump.lo $(am__objects_1) $(am__objects_2) \
+	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
+	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
+	$(am__objects_9) $(am__objects_10) $(am__objects_11) \
+	$(am__objects_12) $(am__objects_13) $(am__objects_14) \
+	$(am__objects_15) $(am__objects_16) $(am__objects_17) \
+	$(am__objects_18) $(am__objects_19) $(am__objects_20) \
+	$(am__objects_21)
 @PTHREAD_TRUE@am__objects_23 = thread.lo
 @DEBUG_TRUE@am__objects_24 = trace.lo debug_common.lo error.lo \
 @DEBUG_TRUE@	error_memory.lo error_simulation.lo objectDB.lo
@@ -288,8 +289,8 @@ am__objects_22 = base.lo base_error.lo hash.lo utility.lo minilzo.lo \
 am__objects_55 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo \
 	dynamic.lo plugin.lo header.lo entity.lo multipart.lo \
 	vector.lo hash_map.lo tree.lo interrupt.lo compress.lo \
-	services.lo semaphore.lo base64.lo lock.lo string_ext.lo \
-	socket_ext.lo uhttp.lo uhttp_session.lo data_session.lo \
+	services.lo semaphore.lo base64.lo hexdump.lo lock.lo \
+	string_ext.lo socket_ext.lo uhttp.lo data_session.lo \
 	ring_buffer.lo expression.lo ipaddress.lo socket.lo ping.lo \
 	tcpsocket.lo server.lo client_image.lo client_rdb.lo \
 	client_image_rdb.lo server_rdb.lo rpc.lo rpc_envelope.lo \
@@ -552,22 +553,23 @@ pkgconfig_DATA = ULib.pc
 SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c \
 	base/lzo/minilzo.c base/coder/cbase64.c \
 	base/coder/cquoted_printable.c base/coder/curl_coder.c \
-	base/coder/cxml_coder.c base/coder/cescape.c $(am__append_2) \
-	$(am__append_4) $(am__append_5) $(am__append_6) \
-	$(am__append_7) $(am__append_8) $(am__append_9) \
-	$(am__append_10) $(am__append_11) $(am__append_12) \
-	$(am__append_13) $(am__append_14) $(am__append_15) \
-	$(am__append_16) $(am__append_17) $(am__append_18) \
-	$(am__append_19) $(am__append_21) $(am__append_23) \
-	$(am__append_26) $(am__append_38)
+	base/coder/cxml_coder.c base/coder/cescape.c \
+	base/coder/chexdump.c $(am__append_2) $(am__append_4) \
+	$(am__append_5) $(am__append_6) $(am__append_7) \
+	$(am__append_8) $(am__append_9) $(am__append_10) \
+	$(am__append_11) $(am__append_12) $(am__append_13) \
+	$(am__append_14) $(am__append_15) $(am__append_16) \
+	$(am__append_17) $(am__append_18) $(am__append_19) \
+	$(am__append_21) $(am__append_23) $(am__append_26) \
+	$(am__append_38)
 SRC_CPP = internal/common.cpp internal/objectIO.cpp ui/dialog.cpp \
 	db/cdb.cpp db/rdb.cpp dynamic/dynamic.cpp dynamic/plugin.cpp \
 	mime/header.cpp mime/entity.cpp mime/multipart.cpp \
 	container/vector.cpp container/hash_map.cpp container/tree.cpp \
 	utility/interrupt.cpp utility/compress.cpp \
 	utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
-	utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp \
-	utility/uhttp.cpp utility/uhttp_session.cpp \
+	utility/hexdump.cpp utility/lock.cpp utility/string_ext.cpp \
+	utility/socket_ext.cpp utility/uhttp.cpp \
 	utility/data_session.cpp utility/ring_buffer.cpp \
 	lemon/expression.cpp net/ipaddress.cpp net/socket.cpp \
 	net/ping.cpp net/tcpsocket.cpp net/server/server.cpp \
@@ -694,6 +696,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/certificate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cescape.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cgzio.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chexdump.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client_image.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/client_image_rdb.Plo@am__quote@
@@ -736,6 +739,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hash_map.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/header.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hexdump.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/http.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/imap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/inflate.Plo@am__quote@
@@ -826,7 +830,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/trace.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tree.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uhttp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/uhttp_session.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unixsocket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/url.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utility.Plo@am__quote@
@@ -939,6 +942,14 @@ cescape.lo: base/coder/cescape.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='base/coder/cescape.c' object='cescape.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cescape.lo `test -f 'base/coder/cescape.c' || echo '$(srcdir)/'`base/coder/cescape.c
+
+chexdump.lo: base/coder/chexdump.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT chexdump.lo -MD -MP -MF $(DEPDIR)/chexdump.Tpo -c -o chexdump.lo `test -f 'base/coder/chexdump.c' || echo '$(srcdir)/'`base/coder/chexdump.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/chexdump.Tpo $(DEPDIR)/chexdump.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='base/coder/chexdump.c' object='chexdump.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o chexdump.lo `test -f 'base/coder/chexdump.c' || echo '$(srcdir)/'`base/coder/chexdump.c
 
 base_trace.lo: base/base_trace.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT base_trace.lo -MD -MP -MF $(DEPDIR)/base_trace.Tpo -c -o base_trace.lo `test -f 'base/base_trace.c' || echo '$(srcdir)/'`base/base_trace.c
@@ -1308,6 +1319,14 @@ base64.lo: utility/base64.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o base64.lo `test -f 'utility/base64.cpp' || echo '$(srcdir)/'`utility/base64.cpp
 
+hexdump.lo: utility/hexdump.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT hexdump.lo -MD -MP -MF $(DEPDIR)/hexdump.Tpo -c -o hexdump.lo `test -f 'utility/hexdump.cpp' || echo '$(srcdir)/'`utility/hexdump.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/hexdump.Tpo $(DEPDIR)/hexdump.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='utility/hexdump.cpp' object='hexdump.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o hexdump.lo `test -f 'utility/hexdump.cpp' || echo '$(srcdir)/'`utility/hexdump.cpp
+
 lock.lo: utility/lock.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT lock.lo -MD -MP -MF $(DEPDIR)/lock.Tpo -c -o lock.lo `test -f 'utility/lock.cpp' || echo '$(srcdir)/'`utility/lock.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/lock.Tpo $(DEPDIR)/lock.Plo
@@ -1339,14 +1358,6 @@ uhttp.lo: utility/uhttp.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='utility/uhttp.cpp' object='uhttp.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o uhttp.lo `test -f 'utility/uhttp.cpp' || echo '$(srcdir)/'`utility/uhttp.cpp
-
-uhttp_session.lo: utility/uhttp_session.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT uhttp_session.lo -MD -MP -MF $(DEPDIR)/uhttp_session.Tpo -c -o uhttp_session.lo `test -f 'utility/uhttp_session.cpp' || echo '$(srcdir)/'`utility/uhttp_session.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/uhttp_session.Tpo $(DEPDIR)/uhttp_session.Plo
-@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='utility/uhttp_session.cpp' object='uhttp_session.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o uhttp_session.lo `test -f 'utility/uhttp_session.cpp' || echo '$(srcdir)/'`utility/uhttp_session.cpp
 
 data_session.lo: utility/data_session.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT data_session.lo -MD -MP -MF $(DEPDIR)/data_session.Tpo -c -o data_session.lo `test -f 'utility/data_session.cpp' || echo '$(srcdir)/'`utility/data_session.cpp

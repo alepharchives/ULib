@@ -41,6 +41,7 @@ dist-hook:
 		$(distdir)/tests/examples/WAGSM/log \
 		$(distdir)/tests/examples/CApath/*.*0 \
 		$(distdir)/tests/examples/servlet/*.so \
+		$(distdir)/tests/examples/servlet/*.usp \
 		$(distdir)/tests/examples/TSA/log \
 		$(distdir)/tests/examples/TSA/DB/log \
 		$(distdir)/tests/examples/TSA/DB/.rnd \
@@ -49,6 +50,9 @@ dist-hook:
 		$(distdir)/tests/examples/CSP/DB_CA/CA* \
 		$(distdir)/tests/examples/CSP/DB_CA/log \
 		$(distdir)/tests/examples/CSP/DB_CA/.rnd \
+		$(distdir)/tests/examples/IR/db* \
+		$(distdir)/tests/examples/IR/WEB/doc \
+		$(distdir)/tests/examples/IR/WEB/servlet/*.so \
 		$(distdir)/tests/examples/IR/benchmark/out \
 		$(distdir)/tests/examples/IR/benchmark/log \
 		$(distdir)/tests/examples/IR/benchmark/err \
@@ -64,7 +68,6 @@ dist-hook:
   		$(distdir)/src/ulib/net/server/plugin/*/*.l? \
   		$(distdir)/src/ulib/net/server/plugin/*/.deps \
   		$(distdir)/src/ulib/net/server/plugin/*/.libs \
-		$(distdir)/tests/examples/servlet/*.usp \
 		$(distdir)/tests/examples/benchmark/docroot/servlet \
   		$(distdir)/src/ulib/net/server/plugin/mod_fcgi/test_fcgi \
   		$(distdir)/src/ulib/net/server/plugin/usp/usp_translator

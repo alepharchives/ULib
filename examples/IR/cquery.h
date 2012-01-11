@@ -51,6 +51,9 @@ public:
 
    static uint32_t size() { return (vec ? vec->size() : 0); }
 
+   static UVector<WeightWord*>* fromVector(UVector<UString>& v);
+   static UVector<WeightWord*>* duplicate(UVector<WeightWord*>* v);
+
    // STREAM
 
    friend U_EXPORT istream& operator>>(istream& is,       WeightWord& w);

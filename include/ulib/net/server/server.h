@@ -95,8 +95,9 @@ public:
    // IP_ADDRESS    public ip address of host for the interface connected to the Internet (autodetected if not specified)
    // ALLOWED_IP    list of comma separated client address for IP-based access control (IPADDR[/MASK])
    //
-   // LISTEN_BACKLOG       max number of ready to be delivered connections to accept()
-   // USE_TCP_OPTIMIZATION flag indicating the use of TCP/IP options to optimize data transmission (DEFER_ACCEPT, QUICKACK)
+   // LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
+   // USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (DEFER_ACCEPT, QUICKACK)
+   // SET_REALTIME_PRIORITY flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
    //
    // PID_FILE      write pid on file indicated
    // WELCOME_MSG   message of welcome to send initially to client
@@ -166,6 +167,7 @@ public:
    static const UString* str_PID_FILE;
    static const UString* str_USE_TCP_OPTIMIZATION;
    static const UString* str_LISTEN_BACKLOG;
+   static const UString* str_SET_REALTIME_PRIORITY;
 
    static void str_allocate();
 
@@ -365,7 +367,7 @@ protected:
    static UString* senvironment;
    static uint32_t start, count;
    static UVector<UIPAllow*>* vallow_IP;
-   static bool flag_loop, bssl, flag_use_tcp_optimization, accept_edge_triggered;
+   static bool flag_loop, bssl, flag_use_tcp_optimization, accept_edge_triggered, set_realtime_priority;
 
    // COSTRUTTORI
 
@@ -395,22 +397,7 @@ protected:
 
    // define method VIRTUAL of class UEventTime
 
-   virtual int handlerTime()
-      {
-      U_TRACE(0, "UTimeoutConnection::handlerTime()")
-
-      // there are idle connection... (timeout)
-
-      UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
-
-      // return value:
-      // ---------------
-      // -1 - normal
-      //  0 - monitoring
-      // ---------------
-
-      U_RETURN(0);
-      }
+   virtual int handlerTime();
 
 #  ifdef DEBUG
    const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
@@ -424,8 +411,8 @@ protected:
    static UVector<UString>* vplugin_name;
    static UVector<UServerPlugIn*>* vplugin;
 
-   static void        runAsUser();
    static const char* getNumConnection();
+   static void        runAsUser(bool is_child);
 
    static bool handlerTimeoutConnection(void* cimg);
    static void handlerCloseConnection(UClientImage_Base* ptr);

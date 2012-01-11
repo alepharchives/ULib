@@ -16,15 +16,15 @@ pkgconfig_DATA = ULib.pc
 
 SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c \
 		  base/lzo/minilzo.c \
-		  base/coder/cbase64.c base/coder/cquoted_printable.c base/coder/curl_coder.c base/coder/cxml_coder.c base/coder/cescape.c
+		  base/coder/cbase64.c base/coder/cquoted_printable.c base/coder/curl_coder.c base/coder/cxml_coder.c base/coder/cescape.c base/coder/chexdump.c
 
 SRC_CPP = internal/common.cpp internal/objectIO.cpp \
 			 ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
 			 dynamic/dynamic.cpp dynamic/plugin.cpp \
 			 mime/header.cpp mime/entity.cpp mime/multipart.cpp \
 			 container/vector.cpp container/hash_map.cpp container/tree.cpp \
-			 utility/interrupt.cpp utility/compress.cpp utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
-			 utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp utility/uhttp.cpp utility/uhttp_session.cpp utility/data_session.cpp utility/ring_buffer.cpp \
+			 utility/interrupt.cpp utility/compress.cpp utility/services.cpp utility/semaphore.cpp utility/base64.cpp utility/hexdump.cpp \
+			 utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp utility/uhttp.cpp utility/data_session.cpp utility/ring_buffer.cpp \
 			 lemon/expression.cpp \
 			 net/ipaddress.cpp net/socket.cpp net/ping.cpp net/tcpsocket.cpp \
 			 net/server/server.cpp net/server/client_image.cpp \

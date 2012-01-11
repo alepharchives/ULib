@@ -277,7 +277,7 @@ bool UClient_Base::setUrl(const UString& location)
 
          U_INTERNAL_DUMP("segment = %.*S", len, src)
 
-         (void) u_memcpy(dest, src, len);
+         (void) u_mem_cpy(dest, src, len);
 
          src   = p + 1;
          dest += len;
@@ -285,7 +285,7 @@ bool UClient_Base::setUrl(const UString& location)
 
       len = location.size();
 
-      (void) u_memcpy(dest, location.data(), len);
+      (void) u_mem_cpy(dest, location.data(), len);
 
       u_http_info.uri     = _buffer;
       u_http_info.uri_len = dest - ptr + len;

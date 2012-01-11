@@ -71,6 +71,7 @@
 #include "utility/lock.cpp"
 #include "utility/uhttp.cpp"
 #include "utility/base64.cpp"
+#include "utility/hexdump.cpp"
 #include "utility/interrupt.cpp"
 #include "utility/compress.cpp"
 #include "utility/services.cpp"
@@ -79,7 +80,6 @@
 #include "utility/socket_ext.cpp"
 #include "utility/ring_buffer.cpp"
 #include "utility/data_session.cpp"
-#include "utility/uhttp_session.cpp"
 #include "lemon/expression.cpp"
 
 #ifndef __MINGW32__

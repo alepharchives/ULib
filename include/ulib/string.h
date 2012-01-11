@@ -320,7 +320,7 @@ public:
 
    bool equal(const char* s, uint32_t n) const
       {
-      U_TRACE(0, "UStringRep::equal(%.*S,%u)", n, s, n)
+      U_TRACE(0, "UStringRep::equal(%#.*S,%u)", n, s, n)
 
       U_INTERNAL_ASSERT_POINTER(s)
 

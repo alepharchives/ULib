@@ -276,7 +276,7 @@ public:
 
       void** new_pointer_block = (void**) UMemoryPool::_malloc(space * sizeof(void*));
 
-      (void) u_memcpy(new_pointer_block, pointer_block, old_size);
+      (void) u_mem_cpy(new_pointer_block, pointer_block, old_size);
 
       void** old_pointer_block = pointer_block;
 

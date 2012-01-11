@@ -61,13 +61,13 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:27 GMT
+Date: Tue, 03 Jan 2012 17:55:15 GMT
 Allow: GET, HEAD, POST, PUT, DELETE, COPY, OPTIONS
 Content-Length: 0
 
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:27 GMT
+Date: Tue, 03 Jan 2012 17:55:15 GMT
 Cache-Control: no-cache
 Content-Length: 254
 Content-Type: text/html
@@ -83,13 +83,13 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 411 Length Required
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:27 GMT
+Date: Tue, 03 Jan 2012 17:55:15 GMT
 Cache-Control: no-cache
 Content-Length: 0
 
 HTTP/1.1 413 Request Entity Too Large
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:27 GMT
+Date: Tue, 03 Jan 2012 17:55:15 GMT
 Cache-Control: no-cache
 Content-Length: 0
 
@@ -140,7 +140,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 302 Moved Temporarily
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:27 GMT
+Date: Tue, 03 Jan 2012 17:55:15 GMT
 Cache-Control: no-cache
 Content-Length: 365
 Content-Type: text/html
@@ -159,7 +159,7 @@ X-Powered-By: PHP/5.2.6-pl7-gentoo
 </body></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:27 GMT
+Date: Tue, 03 Jan 2012 17:55:15 GMT
 Content-Type: text/plain; charset=us-ascii
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -185,7 +185,7 @@ WWW-Authenticate: Basic realm="Protected Area"
 </body></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:27 GMT
+Date: Tue, 03 Jan 2012 17:55:15 GMT
 Connection: Keep-Alive
 Content-Type: text/html
 Last-Modified: Fri, 20 Feb 2009 14:50:49 GMT
@@ -197,7 +197,7 @@ Content-Length: 63
 this is the web_server testsuite inp/http/data/index.html file
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:27 GMT
+Date: Tue, 03 Jan 2012 17:55:15 GMT
 Connection: Keep-Alive
 Content-Range: bytes 0-63/64
 Content-Type: text/plain; charset=us-ascii
@@ -213,7 +213,7 @@ Content-Length: 64
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:27 GMT
+Date: Tue, 03 Jan 2012 17:55:15 GMT
 Connection: Keep-Alive
 Content-Range: bytes 0-31/64
 Content-Type: text/plain; charset=us-ascii
@@ -227,7 +227,7 @@ Content-Length: 32
 345678903456789
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:27 GMT
+Date: Tue, 03 Jan 2012 17:55:15 GMT
 Connection: Keep-Alive
 Content-Range: bytes 32-63/64
 Content-Type: text/plain; charset=us-ascii
@@ -241,11 +241,11 @@ Content-Length: 32
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:27 GMT
+Date: Tue, 03 Jan 2012 17:55:15 GMT
 Connection: Keep-Alive
 Content-Range: bytes 32-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Sat, 29 Dec 2012 16:42:24 GMT
+Expires: Wed, 02 Jan 2013 17:55:12 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -256,31 +256,31 @@ Content-Length: 32
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 Connection: Keep-Alive
 Content-Length: 217
-Content-Type: multipart/byteranges; boundary="=_1_301211_174227_049_17728"
+Content-Type: multipart/byteranges; boundary="=_1_030112_185515_844_20722"
 
 
---=_1_301211_174227_049_17728
+--=_1_030112_185515_844_20722
 Content-Range: bytes 0-0/64
 Content-Type: text/html
 
 1
---=_1_301211_174227_049_17728
+--=_1_030112_185515_844_20722
 Content-Range: bytes 63-63/64
 Content-Type: text/html
 
 
 
---=_1_301211_174227_049_17728--
+--=_1_030112_185515_844_20722--
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 Connection: Keep-Alive
 Content-Range: bytes 50-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Sat, 29 Dec 2012 16:42:24 GMT
+Expires: Wed, 02 Jan 2013 17:55:12 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -290,30 +290,30 @@ Content-Length: 14
 2345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 Connection: Keep-Alive
 Content-Length: 237
-Content-Type: multipart/byteranges; boundary="=_2_301211_174226_050_17728"
+Content-Type: multipart/byteranges; boundary="=_2_030112_185513_845_20722"
 
 
---=_2_301211_174226_050_17728
+--=_2_030112_185513_845_20722
 Content-Range: bytes 10-19/64
 Content-Type: text/html
 
 34567
 3456
---=_2_301211_174226_050_17728
+--=_2_030112_185513_845_20722
 Content-Range: bytes 50-59/64
 Content-Type: text/html
 
 2345670123
---=_2_301211_174226_050_17728--
+--=_2_030112_185513_845_20722--
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 Connection: Keep-Alive
 Content-Type: text/plain; charset=us-ascii
-Expires: Sat, 29 Dec 2012 16:42:24 GMT
+Expires: Wed, 02 Jan 2013 17:55:12 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -326,22 +326,22 @@ Content-Length: 64
 012345670123456
 HTTP/1.1 204 No Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 Connection: Keep-Alive
 Content-Length: 0
 
 HTTP/1.1 204 No Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 Connection: Keep-Alive
 Content-Length: 0
 
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 Connection: Keep-Alive
 Content-Type: text/html
-Last-Modified: Fri, 30 Dec 2011 16:16:01 GMT
+Last-Modified: Tue, 03 Jan 2012 17:44:36 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
 Accept-Ranges: bytes
@@ -349,25 +349,25 @@ Content-Length: 568
 
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 Connection: Keep-Alive
 Content-Type: text/html
-Last-Modified: Fri, 30 Dec 2011 16:16:01 GMT
+Last-Modified: Tue, 03 Jan 2012 17:44:36 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
 Accept-Ranges: bytes
 Content-Length: 568
 
-<html><head><title>Index of tmp</title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/..?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/menu.png"> Up one level</a></td><td></td><td></td></tr><tr><td><strong><a href="/tmp/c?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/gopher-unknown.gif"> c</a></strong></td><td align="right" valign="bottom">      4 Bytes</td><td align="right" valign="bottom">30/12/11 16:42:22</td></tr></table><hr><address>ULib Server</address></body></html>HTTP/1.1 304 Not Modified
+<html><head><title>Index of tmp</title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/..?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/menu.png"> Up one level</a></td><td></td><td></td></tr><tr><td><strong><a href="/tmp/c?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/gopher-unknown.gif"> c</a></strong></td><td align="right" valign="bottom">      4 Bytes</td><td align="right" valign="bottom">03/01/12 17:55:10</td></tr></table><hr><address>ULib Server</address></body></html>HTTP/1.1 304 Not Modified
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 Cache-Control: no-cache
 Connection: Keep-Alive
 Content-Length: 0
 
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 Content-Type: text/html
 Content-Length: 1669
 
@@ -414,12 +414,12 @@ Content-Length: 1669
 </html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 Content-Type: text/html
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
 Accept-Ranges: bytes
-Content-Length:   1921
+Content-Length:   1923
 
 <html><pre>
 ssi_begin
@@ -437,9 +437,9 @@ Document name: ssi1.shtml
 
 Document URI: /SSI/ssi1.shtml
 
-It's now: Friday, 30-Dec-2011 16:42:26 GMT
+It's now: Tuesday, 03-Jan-2012 17:55:13 GMT
 
-It's now: Friday, 30-Dec-2011 17:42:26 CEST
+It's now: Tuesday, 03-Jan-2012 18:55:13 CEST
 
 This page is:     177 Bytes
 
@@ -480,7 +480,7 @@ start LS
 --------------
 total 156
 drwxr-xr-x  3 apache apache   4096 Nov  8 15:38 .
-drwxr-xr-x 34 apache apache 126976 Dec 30 17:42 ..
+drwxr-xr-x 34 apache apache 126976 Jan  3 18:55 ..
 drwxr-xr-x  3 apache apache   4096 Nov  8 15:39 earth
 -rw-r--r--  1 apache apache    177 Jul 12 17:52 embed.c
 -rw-r--r--  3 apache apache    160 Mar 28  2011 index.shtml
@@ -515,23 +515,22 @@ ssi_end
 </pre></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
-Connection: Keep-Alive
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 X-Powered-By: ULib/1.1.0
 Connection: close
-Content-Length: 122
+Content-Length: 115
 X-Real-IP: 127.0.0.1
-Set-Cookie: ulib.s1=; expires=Thu, 29 Dec 2011 16:42:26 GMT
-Set-Cookie: ulib.s1=U3RldmUgSm9obnNvbiYxMzI1MzQ5NzQ2JmNiMDRkMzgyY2U5NzYzOWE0NTE2NzBiZTUzODVlNDQ5; expires=Sat, 31 Dec 2011 16:42:26 GMT
+Set-Cookie: ulib.s1=; expires=Mon, 02 Jan 2012 17:55:13 GMT
+Set-Cookie: ulib.s1=5374657665204a6f686e736f6e263133323536393937313326535be73371536e388b478eae76650810; expires=Wed, 04 Jan 2012 17:55:13 GMT
 Set-Cookie: TestCookie=pippo
 Content-Type: text/html; charset=iso-8859-1
 
 UID          = Steve Johnson
 HTTP_COOKIE  = name1=value1, name2=value2; name3=value3, name4=value4
-ULIB_SESSION = stefano
+ULIB_SESSION = 
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 Content-Encoding: deflate
 Content-Type: text/html
 Content-Length: 264
@@ -540,13 +539,13 @@ Content-Length: 264
 ¼ãñt¬9<lj²É…,!N€Ú;`äÙû›UìŠ!$5_(›š¯#Ê7#SíÑ1Kyn$Jý™q-A˜VT÷…3žU¿éML£ŒQ|Ø|îxuMl°ñT–Ì€½»ÝsF;¤c­t œOX’ØƒØ¢î…óª,öeQÕ¾â‘Š3¦íÏ1‰è‡×ñ¨@»
 Pèá^ÔÁv$µ†W¦ÄAŽ1sÁ)hXúþvFc—¦é{üö8·~i¯ªpÎæâln¶õ_|Ijzå§2i¾Ù|í/HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:26 GMT
+Date: Tue, 03 Jan 2012 17:55:13 GMT
 Content-Length: 72
 Content-Type: application/jsonrequest
 
 {"user":"doctoravatar@penzance.com","t":"vlIj","zip":94089,"forecast":7}HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:36 GMT
+Date: Tue, 03 Jan 2012 17:55:23 GMT
 Cache-Control: no-cache
 Content-Length: 246
 Content-Type: text/html
@@ -562,11 +561,11 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:36 GMT
+Date: Tue, 03 Jan 2012 17:55:23 GMT
 Connection: Keep-Alive
 Content-Encoding: deflate
 Content-Type: image/x-icon
-Expires: Sat, 29 Dec 2012 16:42:24 GMT
+Expires: Wed, 02 Jan 2013 17:55:12 GMT
 Last-Modified: Fri, 24 Jul 2009 16:01:29 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -591,7 +590,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:36 GMT
+Date: Tue, 03 Jan 2012 17:55:23 GMT
 Cache-Control: no-cache
 Content-Length: 262
 Content-Type: text/html
@@ -727,7 +726,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:36 GMT
+Date: Tue, 03 Jan 2012 17:55:23 GMT
 Cache-Control: no-cache
 Content-Length: 246
 Content-Type: text/html
@@ -773,7 +772,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:36 GMT
+Date: Tue, 03 Jan 2012 17:55:23 GMT
 Cache-Control: no-cache
 Content-Length: 246
 Content-Type: text/html
@@ -804,7 +803,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 400 Bad Request
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:36 GMT
+Date: Tue, 03 Jan 2012 17:55:23 GMT
 Cache-Control: no-cache
 Content-Length: 272
 Content-Type: text/html
@@ -880,7 +879,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:36 GMT
+Date: Tue, 03 Jan 2012 17:55:23 GMT
 Cache-Control: no-cache
 Content-Length: 255
 Content-Type: text/html
@@ -911,7 +910,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:36 GMT
+Date: Tue, 03 Jan 2012 17:55:23 GMT
 Cache-Control: no-cache
 Content-Length: 250
 Content-Type: text/html
@@ -927,7 +926,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 400 Bad Request
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:36 GMT
+Date: Tue, 03 Jan 2012 17:55:23 GMT
 Cache-Control: no-cache
 Content-Length: 272
 Content-Type: text/html
@@ -943,11 +942,10 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 204 No Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:46 GMT
-Connection: Keep-Alive
+Date: Tue, 03 Jan 2012 17:55:33 GMT
 Content-Length: 0
 Connection: close
-Set-Cookie: ulib.s2=U3RldmUgSm9obnNvbiYxMzI1MzQ5NzY2JmFlZmVkODY2OGRjYWU3OTVhYmI0NWZiZGIzY2Y2MDE0; expires=Sat, 31 Dec 2011 16:42:46 GMT
+Set-Cookie: ulib.s2=5374657665204a6f686e736f6e263133323536393937333326780e47cc4da1a5d631b3122aca3fa669; expires=Wed, 04 Jan 2012 17:55:33 GMT
 
 <html>
 <head>
@@ -1050,13 +1048,13 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:59 GMT
+Date: Tue, 03 Jan 2012 17:55:47 GMT
 Allow: GET, HEAD, POST, PUT, DELETE, COPY, OPTIONS
 Content-Length: 0
 
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:59 GMT
+Date: Tue, 03 Jan 2012 17:55:47 GMT
 Cache-Control: no-cache
 Content-Length: 254
 Content-Type: text/html
@@ -1072,13 +1070,13 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 411 Length Required
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:59 GMT
+Date: Tue, 03 Jan 2012 17:55:47 GMT
 Cache-Control: no-cache
 Content-Length: 0
 
 HTTP/1.1 413 Request Entity Too Large
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:59 GMT
+Date: Tue, 03 Jan 2012 17:55:47 GMT
 Cache-Control: no-cache
 Content-Length: 0
 
@@ -1129,7 +1127,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 302 Moved Temporarily
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:59 GMT
+Date: Tue, 03 Jan 2012 17:55:47 GMT
 Cache-Control: no-cache
 Content-Length: 365
 Content-Type: text/html
@@ -1148,7 +1146,7 @@ X-Powered-By: PHP/5.2.6-pl7-gentoo
 </body></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:59 GMT
+Date: Tue, 03 Jan 2012 17:55:47 GMT
 Content-Type: text/plain; charset=us-ascii
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -1174,7 +1172,7 @@ WWW-Authenticate: Basic realm="Protected Area"
 </body></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:59 GMT
+Date: Tue, 03 Jan 2012 17:55:47 GMT
 Connection: Keep-Alive
 Content-Type: text/html
 Last-Modified: Fri, 20 Feb 2009 14:50:49 GMT
@@ -1186,7 +1184,7 @@ Content-Length: 63
 this is the web_server testsuite inp/http/data/index.html file
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:59 GMT
+Date: Tue, 03 Jan 2012 17:55:47 GMT
 Connection: Keep-Alive
 Content-Range: bytes 0-63/64
 Content-Type: text/plain; charset=us-ascii
@@ -1202,7 +1200,7 @@ Content-Length: 64
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:59 GMT
+Date: Tue, 03 Jan 2012 17:55:47 GMT
 Connection: Keep-Alive
 Content-Range: bytes 0-31/64
 Content-Type: text/plain; charset=us-ascii
@@ -1216,7 +1214,7 @@ Content-Length: 32
 345678903456789
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:59 GMT
+Date: Tue, 03 Jan 2012 17:55:47 GMT
 Connection: Keep-Alive
 Content-Range: bytes 32-63/64
 Content-Type: text/plain; charset=us-ascii
@@ -1230,11 +1228,11 @@ Content-Length: 32
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:59 GMT
+Date: Tue, 03 Jan 2012 17:55:47 GMT
 Connection: Keep-Alive
 Content-Range: bytes 32-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Sat, 29 Dec 2012 16:42:56 GMT
+Expires: Wed, 02 Jan 2013 17:55:44 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -1245,31 +1243,31 @@ Content-Length: 32
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 Connection: Keep-Alive
 Content-Length: 217
-Content-Type: multipart/byteranges; boundary="=_1_301211_174259_449_17823"
+Content-Type: multipart/byteranges; boundary="=_1_030112_185547_247_20820"
 
 
---=_1_301211_174259_449_17823
+--=_1_030112_185547_247_20820
 Content-Range: bytes 0-0/64
 Content-Type: text/html
 
 1
---=_1_301211_174259_449_17823
+--=_1_030112_185547_247_20820
 Content-Range: bytes 63-63/64
 Content-Type: text/html
 
 
 
---=_1_301211_174259_449_17823--
+--=_1_030112_185547_247_20820--
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 Connection: Keep-Alive
 Content-Range: bytes 50-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Sat, 29 Dec 2012 16:42:56 GMT
+Expires: Wed, 02 Jan 2013 17:55:44 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -1279,30 +1277,30 @@ Content-Length: 14
 2345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 Connection: Keep-Alive
 Content-Length: 237
-Content-Type: multipart/byteranges; boundary="=_2_301211_174257_450_17823"
+Content-Type: multipart/byteranges; boundary="=_2_030112_185546_248_20820"
 
 
---=_2_301211_174257_450_17823
+--=_2_030112_185546_248_20820
 Content-Range: bytes 10-19/64
 Content-Type: text/html
 
 34567
 3456
---=_2_301211_174257_450_17823
+--=_2_030112_185546_248_20820
 Content-Range: bytes 50-59/64
 Content-Type: text/html
 
 2345670123
---=_2_301211_174257_450_17823--
+--=_2_030112_185546_248_20820--
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 Connection: Keep-Alive
 Content-Type: text/plain; charset=us-ascii
-Expires: Sat, 29 Dec 2012 16:42:56 GMT
+Expires: Wed, 02 Jan 2013 17:55:44 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -1315,22 +1313,22 @@ Content-Length: 64
 012345670123456
 HTTP/1.1 204 No Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 Connection: Keep-Alive
 Content-Length: 0
 
 HTTP/1.1 204 No Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 Connection: Keep-Alive
 Content-Length: 0
 
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 Connection: Keep-Alive
 Content-Type: text/html
-Last-Modified: Fri, 30 Dec 2011 16:16:01 GMT
+Last-Modified: Tue, 03 Jan 2012 17:44:36 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
 Accept-Ranges: bytes
@@ -1338,25 +1336,25 @@ Content-Length: 568
 
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 Connection: Keep-Alive
 Content-Type: text/html
-Last-Modified: Fri, 30 Dec 2011 16:16:01 GMT
+Last-Modified: Tue, 03 Jan 2012 17:44:36 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
 Accept-Ranges: bytes
 Content-Length: 568
 
-<html><head><title>Index of tmp</title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/..?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/menu.png"> Up one level</a></td><td></td><td></td></tr><tr><td><strong><a href="/tmp/c?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/gopher-unknown.gif"> c</a></strong></td><td align="right" valign="bottom">      4 Bytes</td><td align="right" valign="bottom">30/12/11 16:42:54</td></tr></table><hr><address>ULib Server</address></body></html>HTTP/1.1 304 Not Modified
+<html><head><title>Index of tmp</title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/..?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/menu.png"> Up one level</a></td><td></td><td></td></tr><tr><td><strong><a href="/tmp/c?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/gopher-unknown.gif"> c</a></strong></td><td align="right" valign="bottom">      4 Bytes</td><td align="right" valign="bottom">03/01/12 17:55:42</td></tr></table><hr><address>ULib Server</address></body></html>HTTP/1.1 304 Not Modified
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 Cache-Control: no-cache
 Connection: Keep-Alive
 Content-Length: 0
 
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 Content-Type: text/html
 Content-Length: 1669
 
@@ -1403,12 +1401,12 @@ Content-Length: 1669
 </html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 Content-Type: text/html
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
 Accept-Ranges: bytes
-Content-Length:   1921
+Content-Length:   1923
 
 <html><pre>
 ssi_begin
@@ -1426,9 +1424,9 @@ Document name: ssi1.shtml
 
 Document URI: /SSI/ssi1.shtml
 
-It's now: Friday, 30-Dec-2011 16:42:57 GMT
+It's now: Tuesday, 03-Jan-2012 17:55:46 GMT
 
-It's now: Friday, 30-Dec-2011 17:42:57 CEST
+It's now: Tuesday, 03-Jan-2012 18:55:46 CEST
 
 This page is:     177 Bytes
 
@@ -1469,7 +1467,7 @@ start LS
 --------------
 total 156
 drwxr-xr-x  3 apache apache   4096 Nov  8 15:38 .
-drwxr-xr-x 34 apache apache 126976 Dec 30 17:42 ..
+drwxr-xr-x 34 apache apache 126976 Jan  3 18:55 ..
 drwxr-xr-x  3 apache apache   4096 Nov  8 15:39 earth
 -rw-r--r--  1 apache apache    177 Jul 12 17:52 embed.c
 -rw-r--r--  3 apache apache    160 Mar 28  2011 index.shtml
@@ -1504,23 +1502,22 @@ ssi_end
 </pre></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
-Connection: Keep-Alive
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 X-Powered-By: ULib/1.1.0
 Connection: close
-Content-Length: 122
+Content-Length: 115
 X-Real-IP: 127.0.0.1
-Set-Cookie: ulib.s1=; expires=Thu, 29 Dec 2011 16:42:57 GMT
-Set-Cookie: ulib.s1=U3RldmUgSm9obnNvbiYxMzI1MzQ5Nzc3JjE1MGM3YmE2NDk2YjMzNDUyOWEzNmY1MmFhZWVmYzYw; expires=Sat, 31 Dec 2011 16:42:57 GMT
+Set-Cookie: ulib.s1=; expires=Mon, 02 Jan 2012 17:55:46 GMT
+Set-Cookie: ulib.s1=5374657665204a6f686e736f6e2631333235363939373436265db38e0505474ebf21deec70b86a1b18; expires=Wed, 04 Jan 2012 17:55:46 GMT
 Set-Cookie: TestCookie=pippo
 Content-Type: text/html; charset=iso-8859-1
 
 UID          = Steve Johnson
 HTTP_COOKIE  = name1=value1, name2=value2; name3=value3, name4=value4
-ULIB_SESSION = stefano
+ULIB_SESSION = 
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 Content-Encoding: deflate
 Content-Type: text/html
 Content-Length: 264
@@ -1529,13 +1526,13 @@ Content-Length: 264
 ¼ãñt¬9<lj²É…,!N€Ú;`äÙû›UìŠ!$5_(›š¯#Ê7#SíÑ1Kyn$Jý™q-A˜VT÷…3žU¿éML£ŒQ|Ø|îxuMl°ñT–Ì€½»ÝsF;¤c­t œOX’ØƒØ¢î…óª,öeQÕ¾â‘Š3¦íÏ1‰è‡×ñ¨@»
 Pèá^ÔÁv$µ†W¦ÄAŽ1sÁ)hXúþvFc—¦é{üö8·~i¯ªpÎæâln¶õ_|Ijzå§2i¾Ù|í/HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:42:57 GMT
+Date: Tue, 03 Jan 2012 17:55:46 GMT
 Content-Length: 72
 Content-Type: application/jsonrequest
 
 {"user":"doctoravatar@penzance.com","t":"vlIj","zip":94089,"forecast":7}HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:07 GMT
+Date: Tue, 03 Jan 2012 17:55:56 GMT
 Cache-Control: no-cache
 Content-Length: 246
 Content-Type: text/html
@@ -1551,11 +1548,11 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:07 GMT
+Date: Tue, 03 Jan 2012 17:55:56 GMT
 Connection: Keep-Alive
 Content-Encoding: deflate
 Content-Type: image/x-icon
-Expires: Sat, 29 Dec 2012 16:42:56 GMT
+Expires: Wed, 02 Jan 2013 17:55:44 GMT
 Last-Modified: Fri, 24 Jul 2009 16:01:29 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -1580,7 +1577,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:07 GMT
+Date: Tue, 03 Jan 2012 17:55:56 GMT
 Cache-Control: no-cache
 Content-Length: 262
 Content-Type: text/html
@@ -1716,7 +1713,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:07 GMT
+Date: Tue, 03 Jan 2012 17:55:56 GMT
 Cache-Control: no-cache
 Content-Length: 246
 Content-Type: text/html
@@ -1762,7 +1759,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:07 GMT
+Date: Tue, 03 Jan 2012 17:55:56 GMT
 Cache-Control: no-cache
 Content-Length: 246
 Content-Type: text/html
@@ -1793,7 +1790,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 400 Bad Request
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:07 GMT
+Date: Tue, 03 Jan 2012 17:55:56 GMT
 Cache-Control: no-cache
 Content-Length: 272
 Content-Type: text/html
@@ -1869,7 +1866,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:07 GMT
+Date: Tue, 03 Jan 2012 17:55:56 GMT
 Cache-Control: no-cache
 Content-Length: 255
 Content-Type: text/html
@@ -1900,7 +1897,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:07 GMT
+Date: Tue, 03 Jan 2012 17:55:56 GMT
 Cache-Control: no-cache
 Content-Length: 250
 Content-Type: text/html
@@ -1916,7 +1913,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 400 Bad Request
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:07 GMT
+Date: Tue, 03 Jan 2012 17:55:56 GMT
 Cache-Control: no-cache
 Content-Length: 272
 Content-Type: text/html
@@ -1932,11 +1929,10 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 204 No Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:17 GMT
-Connection: Keep-Alive
+Date: Tue, 03 Jan 2012 17:56:06 GMT
 Content-Length: 0
 Connection: close
-Set-Cookie: ulib.s1=U3RldmUgSm9obnNvbiYxMzI1MzQ5Nzk3Jjc1ZjI3YWIxM2JjY2JhYWQ0NmYzNTg4YmE5MmZiYTFj; expires=Sat, 31 Dec 2011 16:43:17 GMT
+Set-Cookie: ulib.s1=5374657665204a6f686e736f6e2631333235363939373636265b0131d65429ca970627a3232ad3362d; expires=Wed, 04 Jan 2012 17:56:06 GMT
 
 <html>
 <head>
@@ -2039,13 +2035,13 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:30 GMT
+Date: Tue, 03 Jan 2012 17:56:18 GMT
 Allow: GET, HEAD, POST, PUT, DELETE, COPY, OPTIONS
 Content-Length: 0
 
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:30 GMT
+Date: Tue, 03 Jan 2012 17:56:18 GMT
 Cache-Control: no-cache
 Content-Length: 254
 Content-Type: text/html
@@ -2061,13 +2057,13 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 411 Length Required
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:30 GMT
+Date: Tue, 03 Jan 2012 17:56:18 GMT
 Cache-Control: no-cache
 Content-Length: 0
 
 HTTP/1.1 413 Request Entity Too Large
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:30 GMT
+Date: Tue, 03 Jan 2012 17:56:18 GMT
 Cache-Control: no-cache
 Content-Length: 0
 
@@ -2118,7 +2114,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 302 Moved Temporarily
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:30 GMT
+Date: Tue, 03 Jan 2012 17:56:18 GMT
 Cache-Control: no-cache
 Content-Length: 365
 Content-Type: text/html
@@ -2137,7 +2133,7 @@ X-Powered-By: PHP/5.2.6-pl7-gentoo
 </body></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:30 GMT
+Date: Tue, 03 Jan 2012 17:56:18 GMT
 Content-Type: text/plain; charset=us-ascii
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -2163,7 +2159,7 @@ WWW-Authenticate: Basic realm="Protected Area"
 </body></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:30 GMT
+Date: Tue, 03 Jan 2012 17:56:18 GMT
 Connection: Keep-Alive
 Content-Type: text/html
 Last-Modified: Fri, 20 Feb 2009 14:50:49 GMT
@@ -2175,7 +2171,7 @@ Content-Length: 63
 this is the web_server testsuite inp/http/data/index.html file
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:30 GMT
+Date: Tue, 03 Jan 2012 17:56:18 GMT
 Connection: Keep-Alive
 Content-Range: bytes 0-63/64
 Content-Type: text/plain; charset=us-ascii
@@ -2191,7 +2187,7 @@ Content-Length: 64
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:30 GMT
+Date: Tue, 03 Jan 2012 17:56:18 GMT
 Connection: Keep-Alive
 Content-Range: bytes 0-31/64
 Content-Type: text/plain; charset=us-ascii
@@ -2205,7 +2201,7 @@ Content-Length: 32
 345678903456789
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:30 GMT
+Date: Tue, 03 Jan 2012 17:56:18 GMT
 Connection: Keep-Alive
 Content-Range: bytes 32-63/64
 Content-Type: text/plain; charset=us-ascii
@@ -2219,11 +2215,11 @@ Content-Length: 32
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:30 GMT
+Date: Tue, 03 Jan 2012 17:56:18 GMT
 Connection: Keep-Alive
 Content-Range: bytes 32-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Sat, 29 Dec 2012 16:43:27 GMT
+Expires: Wed, 02 Jan 2013 17:56:15 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -2234,31 +2230,31 @@ Content-Length: 32
 012345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 Connection: Keep-Alive
 Content-Length: 217
-Content-Type: multipart/byteranges; boundary="=_1_301211_174330_929_17899"
+Content-Type: multipart/byteranges; boundary="=_1_030112_185618_619_20897"
 
 
---=_1_301211_174330_929_17899
+--=_1_030112_185618_619_20897
 Content-Range: bytes 0-0/64
 Content-Type: text/html
 
 1
---=_1_301211_174330_929_17899
+--=_1_030112_185618_619_20897
 Content-Range: bytes 63-63/64
 Content-Type: text/html
 
 
 
---=_1_301211_174330_929_17899--
+--=_1_030112_185618_619_20897--
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 Connection: Keep-Alive
 Content-Range: bytes 50-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Sat, 29 Dec 2012 16:43:27 GMT
+Expires: Wed, 02 Jan 2013 17:56:15 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -2268,30 +2264,30 @@ Content-Length: 14
 2345670123456
 HTTP/1.1 206 Partial Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 Connection: Keep-Alive
 Content-Length: 237
-Content-Type: multipart/byteranges; boundary="=_2_301211_174328_930_17899"
+Content-Type: multipart/byteranges; boundary="=_2_030112_185616_620_20897"
 
 
---=_2_301211_174328_930_17899
+--=_2_030112_185616_620_20897
 Content-Range: bytes 10-19/64
 Content-Type: text/html
 
 34567
 3456
---=_2_301211_174328_930_17899
+--=_2_030112_185616_620_20897
 Content-Range: bytes 50-59/64
 Content-Type: text/html
 
 2345670123
---=_2_301211_174328_930_17899--
+--=_2_030112_185616_620_20897--
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 Connection: Keep-Alive
 Content-Type: text/plain; charset=us-ascii
-Expires: Sat, 29 Dec 2012 16:43:27 GMT
+Expires: Wed, 02 Jan 2013 17:56:15 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -2304,22 +2300,22 @@ Content-Length: 64
 012345670123456
 HTTP/1.1 204 No Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 Connection: Keep-Alive
 Content-Length: 0
 
 HTTP/1.1 204 No Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 Connection: Keep-Alive
 Content-Length: 0
 
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 Connection: Keep-Alive
 Content-Type: text/html
-Last-Modified: Fri, 30 Dec 2011 16:16:01 GMT
+Last-Modified: Tue, 03 Jan 2012 17:44:36 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
 Accept-Ranges: bytes
@@ -2327,25 +2323,25 @@ Content-Length: 568
 
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 Connection: Keep-Alive
 Content-Type: text/html
-Last-Modified: Fri, 30 Dec 2011 16:16:01 GMT
+Last-Modified: Tue, 03 Jan 2012 17:44:36 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
 Accept-Ranges: bytes
 Content-Length: 568
 
-<html><head><title>Index of tmp</title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/..?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/menu.png"> Up one level</a></td><td></td><td></td></tr><tr><td><strong><a href="/tmp/c?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/gopher-unknown.gif"> c</a></strong></td><td align="right" valign="bottom">      4 Bytes</td><td align="right" valign="bottom">30/12/11 16:43:25</td></tr></table><hr><address>ULib Server</address></body></html>HTTP/1.1 304 Not Modified
+<html><head><title>Index of tmp</title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/..?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/menu.png"> Up one level</a></td><td></td><td></td></tr><tr><td><strong><a href="/tmp/c?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/gopher-unknown.gif"> c</a></strong></td><td align="right" valign="bottom">      4 Bytes</td><td align="right" valign="bottom">03/01/12 17:56:13</td></tr></table><hr><address>ULib Server</address></body></html>HTTP/1.1 304 Not Modified
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 Cache-Control: no-cache
 Connection: Keep-Alive
 Content-Length: 0
 
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 Content-Type: text/html
 Content-Length: 1669
 
@@ -2392,12 +2388,12 @@ Content-Length: 1669
 </html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 Content-Type: text/html
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
 Accept-Ranges: bytes
-Content-Length:   1921
+Content-Length:   1923
 
 <html><pre>
 ssi_begin
@@ -2415,9 +2411,9 @@ Document name: ssi1.shtml
 
 Document URI: /SSI/ssi1.shtml
 
-It's now: Friday, 30-Dec-2011 16:43:28 GMT
+It's now: Tuesday, 03-Jan-2012 17:56:16 GMT
 
-It's now: Friday, 30-Dec-2011 17:43:28 CEST
+It's now: Tuesday, 03-Jan-2012 18:56:16 CEST
 
 This page is:     177 Bytes
 
@@ -2458,7 +2454,7 @@ start LS
 --------------
 total 156
 drwxr-xr-x  3 apache apache   4096 Nov  8 15:38 .
-drwxr-xr-x 34 apache apache 126976 Dec 30 17:43 ..
+drwxr-xr-x 34 apache apache 126976 Jan  3 18:56 ..
 drwxr-xr-x  3 apache apache   4096 Nov  8 15:39 earth
 -rw-r--r--  1 apache apache    177 Jul 12 17:52 embed.c
 -rw-r--r--  3 apache apache    160 Mar 28  2011 index.shtml
@@ -2493,23 +2489,22 @@ ssi_end
 </pre></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
-Connection: Keep-Alive
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 X-Powered-By: ULib/1.1.0
 Connection: close
-Content-Length: 122
+Content-Length: 115
 X-Real-IP: 127.0.0.1
-Set-Cookie: ulib.s1=; expires=Thu, 29 Dec 2011 16:43:28 GMT
-Set-Cookie: ulib.s1=U3RldmUgSm9obnNvbiYxMzI1MzQ5ODA4JjIyZDJhY2ZmNjc3OWI3NGNjNjlkYmVmYjc4Mzc3Zjll; expires=Sat, 31 Dec 2011 16:43:28 GMT
+Set-Cookie: ulib.s1=; expires=Mon, 02 Jan 2012 17:56:16 GMT
+Set-Cookie: ulib.s1=5374657665204a6f686e736f6e2631333235363939373736268b583ca596b087ff78b126a72b35d858; expires=Wed, 04 Jan 2012 17:56:16 GMT
 Set-Cookie: TestCookie=pippo
 Content-Type: text/html; charset=iso-8859-1
 
 UID          = Steve Johnson
 HTTP_COOKIE  = name1=value1, name2=value2; name3=value3, name4=value4
-ULIB_SESSION = stefano
+ULIB_SESSION = 
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 Content-Encoding: deflate
 Content-Type: text/html
 Content-Length: 264
@@ -2518,13 +2513,13 @@ Content-Length: 264
 ¼ãñt¬9<lj²É…,!N€Ú;`äÙû›UìŠ!$5_(›š¯#Ê7#SíÑ1Kyn$Jý™q-A˜VT÷…3žU¿éML£ŒQ|Ø|îxuMl°ñT–Ì€½»ÝsF;¤c­t œOX’ØƒØ¢î…óª,öeQÕ¾â‘Š3¦íÏ1‰è‡×ñ¨@»
 Pèá^ÔÁv$µ†W¦ÄAŽ1sÁ)hXúþvFc—¦é{üö8·~i¯ªpÎæâln¶õ_|Ijzå§2i¾Ù|í/HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:28 GMT
+Date: Tue, 03 Jan 2012 17:56:16 GMT
 Content-Length: 72
 Content-Type: application/jsonrequest
 
 {"user":"doctoravatar@penzance.com","t":"vlIj","zip":94089,"forecast":7}HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:38 GMT
+Date: Tue, 03 Jan 2012 17:56:26 GMT
 Cache-Control: no-cache
 Content-Length: 246
 Content-Type: text/html
@@ -2540,11 +2535,11 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 200 OK
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:38 GMT
+Date: Tue, 03 Jan 2012 17:56:26 GMT
 Connection: Keep-Alive
 Content-Encoding: deflate
 Content-Type: image/x-icon
-Expires: Sat, 29 Dec 2012 16:43:28 GMT
+Expires: Wed, 02 Jan 2013 17:56:15 GMT
 Last-Modified: Fri, 24 Jul 2009 16:01:29 GMT
 Cache-Control: public, max-age=31536000
 Vary: Accept-Encoding
@@ -2569,7 +2564,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:38 GMT
+Date: Tue, 03 Jan 2012 17:56:26 GMT
 Cache-Control: no-cache
 Content-Length: 262
 Content-Type: text/html
@@ -2705,7 +2700,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:38 GMT
+Date: Tue, 03 Jan 2012 17:56:26 GMT
 Cache-Control: no-cache
 Content-Length: 246
 Content-Type: text/html
@@ -2751,7 +2746,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:38 GMT
+Date: Tue, 03 Jan 2012 17:56:26 GMT
 Cache-Control: no-cache
 Content-Length: 246
 Content-Type: text/html
@@ -2782,7 +2777,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 400 Bad Request
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:38 GMT
+Date: Tue, 03 Jan 2012 17:56:26 GMT
 Cache-Control: no-cache
 Content-Length: 272
 Content-Type: text/html
@@ -2858,7 +2853,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:38 GMT
+Date: Tue, 03 Jan 2012 17:56:26 GMT
 Cache-Control: no-cache
 Content-Length: 255
 Content-Type: text/html
@@ -2889,7 +2884,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 404 Not Found
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:38 GMT
+Date: Tue, 03 Jan 2012 17:56:26 GMT
 Cache-Control: no-cache
 Content-Length: 250
 Content-Type: text/html
@@ -2905,7 +2900,7 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 400 Bad Request
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:38 GMT
+Date: Tue, 03 Jan 2012 17:56:26 GMT
 Cache-Control: no-cache
 Content-Length: 272
 Content-Type: text/html
@@ -2921,11 +2916,10 @@ Content-Type: text/html
 </body></html>
 HTTP/1.1 204 No Content
 Server: ULib
-Date: Fri, 30 Dec 2011 16:43:48 GMT
-Connection: Keep-Alive
+Date: Tue, 03 Jan 2012 17:56:36 GMT
 Content-Length: 0
 Connection: close
-Set-Cookie: ulib.s1=U3RldmUgSm9obnNvbiYxMzI1MzQ5ODI4JmVjNjc2NmI4YjZiYmU3MDRhYTZjNjY5YTJhNjg3Zjhj; expires=Sat, 31 Dec 2011 16:43:48 GMT
+Set-Cookie: ulib.s2=5374657665204a6f686e736f6e2631333235363939373936260270a80bb2a6b1c8a512dd6ebba66c34; expires=Wed, 04 Jan 2012 17:56:36 GMT
 
 <html>
 <head>

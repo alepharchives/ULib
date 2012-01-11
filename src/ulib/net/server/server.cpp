@@ -82,6 +82,7 @@ bool                       UServer_Base::bssl;
 bool                       UServer_Base::flag_loop;
 bool                       UServer_Base::bpluginsHandlerReset;
 bool                       UServer_Base::accept_edge_triggered;
+bool                       UServer_Base::set_realtime_priority;
 bool                       UServer_Base::flag_use_tcp_optimization;
 char                       UServer_Base::mod_name[20];
 ULog*                      UServer_Base::log;
@@ -142,6 +143,7 @@ const UString* UServer_Base::str_MAX_KEEP_ALIVE;
 const UString* UServer_Base::str_PID_FILE;
 const UString* UServer_Base::str_USE_TCP_OPTIMIZATION;
 const UString* UServer_Base::str_LISTEN_BACKLOG;
+const UString* UServer_Base::str_SET_REALTIME_PRIORITY;
 
 #ifdef HAVE_PTHREAD_H
 #  include "ulib/thread.h"
@@ -230,6 +232,7 @@ void UServer_Base::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_PID_FILE,0)
    U_INTERNAL_ASSERT_EQUALS(str_USE_TCP_OPTIMIZATION,0)
    U_INTERNAL_ASSERT_EQUALS(str_LISTEN_BACKLOG,0)
+   U_INTERNAL_ASSERT_EQUALS(str_SET_REALTIME_PRIORITY,0)
 
    static ustringrep stringrep_storage[] = {
    { U_STRINGREP_FROM_CONSTANT("USE_IPV6") },
@@ -268,7 +271,8 @@ void UServer_Base::str_allocate()
    { U_STRINGREP_FROM_CONSTANT("MAX_KEEP_ALIVE") },
    { U_STRINGREP_FROM_CONSTANT("PID_FILE") },
    { U_STRINGREP_FROM_CONSTANT("USE_TCP_OPTIMIZATION") },
-   { U_STRINGREP_FROM_CONSTANT("LISTEN_BACKLOG") }
+   { U_STRINGREP_FROM_CONSTANT("LISTEN_BACKLOG") },
+   { U_STRINGREP_FROM_CONSTANT("SET_REALTIME_PRIORITY") }
    };
 
    U_NEW_ULIB_OBJECT(str_USE_IPV6,              U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -308,6 +312,7 @@ void UServer_Base::str_allocate()
    U_NEW_ULIB_OBJECT(str_PID_FILE,              U_STRING_FROM_STRINGREP_STORAGE(34));
    U_NEW_ULIB_OBJECT(str_USE_TCP_OPTIMIZATION,  U_STRING_FROM_STRINGREP_STORAGE(35));
    U_NEW_ULIB_OBJECT(str_LISTEN_BACKLOG,        U_STRING_FROM_STRINGREP_STORAGE(36));
+   U_NEW_ULIB_OBJECT(str_SET_REALTIME_PRIORITY, U_STRING_FROM_STRINGREP_STORAGE(37));
 }
 
 UServer_Base::UServer_Base(UFileConfig* cfg)
@@ -332,6 +337,8 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    u_init_ulib_username();
 
    U_INTERNAL_DUMP("u_user_name(%u) = %.*S", u_user_name_len, u_user_name_len, u_user_name)
+
+   u_init_security();
 
 #if !defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
    U_INTERNAL_DUMP("SOMAXCONN = %d FD_SETSIZE = %d", SOMAXCONN, FD_SETSIZE)
@@ -387,12 +394,10 @@ UServer_Base::~UServer_Base()
    delete socket;
 
 #ifndef __MINGW32__
-   if (isChild() == false)
+   if (as_user.empty() &&
+       isChild() == false)
       {
-      (void) U_SYSCALL(setegid, "%d", 0);
-      (void) U_SYSCALL(seteuid, "%d", 0);
-
-      if (iBackLog == 1) (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", tcp_abort_on_overflow, true);
+      u_need_root(false);
 
       if (flag_use_tcp_optimization)
          {
@@ -404,6 +409,8 @@ UServer_Base::~UServer_Base()
             (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", sysctl_max_syn_backlog, true);
             }
          }
+
+      if (iBackLog == 1) (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", tcp_abort_on_overflow, true);
       }
 #endif
 
@@ -432,8 +439,9 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // IP_ADDRESS    public ip address of host for the interface connected to the Internet (autodetected if not specified)
    // ALLOWED_IP    list of comma separated client address for IP-based access control (IPADDR[/MASK])
    //
-   // LISTEN_BACKLOG       max number of ready to be delivered connections to accept()
-   // USE_TCP_OPTIMIZATION flag indicating the use of TCP/IP options to optimize data transmission (DEFER_ACCEPT, QUICKACK)
+   // LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
+   // USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (DEFER_ACCEPT, QUICKACK)
+   // SET_REALTIME_PRIORITY flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
    //
    // PID_FILE      write pid on file indicated
    // WELCOME_MSG   message of welcome to send initially to client
@@ -478,6 +486,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    iBackLog                   = cfg.readLong(*str_LISTEN_BACKLOG, SOMAXCONN);
    timeoutMS                  = cfg.readLong(*str_REQ_TIMEOUT);
    cgi_timeout                = cfg.readLong(*str_CGI_TIMEOUT);
+   set_realtime_priority      = cfg.readBoolean(*str_SET_REALTIME_PRIORITY);
    flag_use_tcp_optimization  = cfg.readBoolean(*str_USE_TCP_OPTIMIZATION);
    UNotifier::max_connection  = cfg.readLong(*str_MAX_KEEP_ALIVE);
    u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE);
@@ -486,8 +495,8 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    UClientImage_Base::bIPv6   = cfg.readBoolean(*str_USE_IPV6);
 #endif
 
-   if (timeoutMS) timeoutMS *=      1000;
-   else           timeoutMS  = 10 * 1000; // NB: safety... sometimes epoll_wait() remain in wait also with no more localhost client
+   if (timeoutMS) timeoutMS *= 1000;
+   else           timeoutMS  = -1;
 
    if (cgi_timeout) UCommand::setTimeout(cgi_timeout);
 
@@ -580,7 +589,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
       U_ERROR("chdir to working directory (DOCUMENT_ROOT) %S FAILED. Going down...", document_root.data());
       }
 
-   U_SRV_LOG("working directory (DOCUMENT_ROOT) changed to %S", document_root.data());
+   U_SRV_LOG("working directory (DOCUMENT_ROOT) changed to %S", u_cwd);
 
    // load plugin modules and call server-wide hooks handlerConfig()...
 
@@ -810,17 +819,31 @@ U_PLUGIN_HANDLER(READ)
 U_PLUGIN_HANDLER(Request)
 U_PLUGIN_HANDLER(Reset)
 
-void UServer_Base::runAsUser()
+void UServer_Base::runAsUser(bool is_child)
 {
-   U_TRACE(0, "UServer_Base::runAsUser()")
+   U_TRACE(0, "UServer_Base::runAsUser(%b)", is_child)
 
-   /* If you want the webserver to run as a process of a defined user, you can call it.
-    * For the change of user to work, it's necessary to execute the server with root privileges.
-    * If it's started by a user that that doesn't have root privileges, this step will be omitted.
-    */
-
-   if (pthis->as_user.empty() == false)
+   if (pthis->as_user.empty())
       {
+#  ifndef __MINGW32__
+      if (is_child       ||
+          (iBackLog != 1 &&
+           flag_use_tcp_optimization == false))
+         {
+         /* don't need these anymore. Good security policy says we get rid of them */
+
+         u_never_need_root();
+         u_never_need_group();
+         }
+#  endif
+      }
+   else
+      {
+      /* If you want the webserver to run as a process of a defined user, you can call it.
+       * For the change of user to work, it's necessary to execute the server with root privileges.
+       * If it's started by a user that that doesn't have root privileges, this step will be omitted.
+       */
+
       if (UServices::isSetuidRoot() == false)
          {
          U_SRV_LOG("the \"RUN_AS_USER\" directive makes sense only if the master process runs with super-user privileges, ignored");
@@ -844,8 +867,6 @@ void UServer_Base::runAsUser()
 #        endif
             }
          }
-
-      pthis->as_user.clear();
       }
 }
 
@@ -944,6 +965,8 @@ void UServer_Base::init()
 #ifndef __MINGW32__
    if (flag_use_tcp_optimization)
       {
+      u_need_root(false);
+
       U_ASSERT_EQUALS(socket->isIPC(),false) // no unix socket...
 
    // socket->setBufferRCV(128 * 1024);
@@ -1008,7 +1031,12 @@ void UServer_Base::init()
    /* sysctl_tcp_abort_on_overflow when its on, new connections are reset once the backlog is exhausted.
     */
 
-   if (iBackLog == 1) tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
+   if (iBackLog == 1)
+      {
+      u_need_root(false);
+
+      tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
+      }
 
    U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
                     sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
@@ -1021,8 +1049,6 @@ void UServer_Base::init()
    U_INTERNAL_ASSERT_POINTER(proc)
 
    proc->setProcessGroup();
-
-   runAsUser();
 
    UClientImage_Base::init();
 
@@ -1175,8 +1201,6 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       U_EXIT(0);
       }
 }
-
-static struct linger lng = { 1, 0 };
 
 int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
 {
@@ -1371,8 +1395,16 @@ retry:
       }
 
 #ifndef __MINGW32__
+   // -----------------------------------------------------------------------------------------------------------------------
    // NB: for non-keepalive connection we have chance to drop small last part of large file while sending to a slow client...
-   if (ptr->bclose != U_YES) (void) csocket->setSockOpt(SOL_SOCKET, SO_LINGER, (const void*)&lng, sizeof(struct linger)); // send RST - ECONNRESET
+   // -----------------------------------------------------------------------------------------------------------------------
+   // if (ptr->bclose != U_YES)
+   //    {
+   //    struct linger lng = { 1, 0 };
+   //
+   //    (void) csocket->setSockOpt(SOL_SOCKET, SO_LINGER, (const void*)&lng, sizeof(struct linger)); // send RST - ECONNRESET
+   //    }
+   // -----------------------------------------------------------------------------------------------------------------------
 #endif
 
 insert:
@@ -1448,6 +1480,27 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
    U_RETURN(false);
 }
 
+// define method VIRTUAL of class UEventTime
+
+int UServer_Base::UTimeoutConnection::handlerTime()
+{
+   U_TRACE(0, "UTimeoutConnection::handlerTime()")
+
+   // there are idle connection... (timeout)
+
+   UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
+
+   if (USocket::accept4_flags & SOCK_NONBLOCK) UServer_Base::pthis->handlerRead();
+
+   // return value:
+   // ---------------
+   // -1 - normal
+   //  0 - monitoring
+   // ---------------
+
+   U_RETURN(0);
+}
+
 void UServer_Base::run()
 {
    U_TRACE(0, "UServer_Base::run()")
@@ -1492,11 +1545,18 @@ void UServer_Base::run()
 
       while (flag_loop)
          {
+         u_need_root(false);
+
          while (nkids < preforked_num_kids)
             {
             if (proc->fork() &&
                 proc->parent())
                {
+               ++nkids;
+
+               U_INTERNAL_DUMP("up to %u children", nkids)
+               U_INTERNAL_DUMP("UNotifier::num_connection = %d tot_connection = %d", UNotifier::num_connection, U_TOT_CONNECTION)
+
                pid = proc->pid();
 
                cpu_set_t cpuset;
@@ -1511,18 +1571,20 @@ void UServer_Base::run()
 
                U_INTERNAL_DUMP("cpuset = %ld %B", CPUSET_BITS(&cpuset)[0], CPUSET_BITS(&cpuset)[0])
 
-               ++nkids;
+               U_SRV_LOG("started new child (pid %d), up to %u children, affinity mask: %x", pid, nkids, CPUSET_BITS(&cpuset)[0]);
 
-               U_INTERNAL_DUMP("up to %u children", nkids)
-
-               U_SRV_LOG("started new child (pid %d), up to %u children, affinity mask: %x", proc->pid(), nkids, CPUSET_BITS(&cpuset)[0]);
-
-               U_INTERNAL_DUMP("UNotifier::num_connection = %d tot_connection = %d", UNotifier::num_connection, U_TOT_CONNECTION)
+               if (set_realtime_priority &&
+                   u_switch_to_realtime_priority(pid) == false)
+                  {
+                  U_WARNING("cannot set posix realtime scheduling policy");
+                  }
                }
 
             if (proc->child())
                {
                U_INTERNAL_DUMP("UNotifier::num_connection = %d tot_connection = %d", UNotifier::num_connection, U_TOT_CONNECTION)
+
+               runAsUser(true);
 
                UNotifier::init();
 
@@ -1559,6 +1621,8 @@ void UServer_Base::run()
 
          /* wait for any children to exit, and then start some more */
 
+         u_dont_need_root();
+
          pid = UProcess::waitpid(-1, &status, 0);
 
          if (pid > 0 &&
@@ -1587,6 +1651,8 @@ void UServer_Base::run()
       }
    else
       {
+      runAsUser(false);
+
       if (isLog()) ULog::log("waiting for connection\n");
 
       U_INTERNAL_ASSERT(preforked_num_kids <= 1)

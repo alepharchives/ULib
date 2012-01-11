@@ -198,6 +198,7 @@ uint32_t u_escape_encode(const unsigned char* restrict inptr, uint32_t len, char
       }
 
    *outptr++ = '"';
+   *outptr   = 0;
 
    return (outptr - out);
 }
@@ -297,7 +298,7 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
 
          if (len)
             {
-            (void) u_memcpy(outptr, inptr, len);
+            (void) u_mem_cpy(outptr, inptr, len);
 
             outptr += len;
             }
@@ -308,7 +309,7 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
              (inptr[2] != '0' ||
               inptr[3] != '0'))
             {
-            (void) u_memcpy(outptr, inptr, 6);
+            (void) u_mem_cpy(outptr, inptr, 6);
 
             outptr += 6;
             inptr  += 6;
@@ -325,7 +326,7 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
 
          if (len)
             {
-            (void) u_memcpy(outptr, inptr, len);
+            (void) u_mem_cpy(outptr, inptr, len);
 
             outptr += len;
             }

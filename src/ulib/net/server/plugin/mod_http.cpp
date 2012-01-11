@@ -257,7 +257,7 @@ int UHttpPlugIn::handlerREAD()
                U_RETURN(U_PLUGIN_HANDLER_ERROR);
                }
 
-            UHTTP::setHTTPResponse();
+            UHTTP::setHTTPResponse(0, 0);
             }
 
          U_RETURN(U_PLUGIN_HANDLER_ERROR);
@@ -385,7 +385,7 @@ int UHttpPlugIn::handlerRequest()
                {
                u_http_info.nResponseCode = HTTP_OPTIONS_RESPONSE;
 
-               UHTTP::setHTTPResponse();
+               UHTTP::setHTTPResponse(0, 0);
 
                goto end;
                }
@@ -394,7 +394,7 @@ int UHttpPlugIn::handlerRequest()
 
             u_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
 
-            UHTTP::setHTTPResponse();
+            UHTTP::setHTTPResponse(0, 0);
 
             // NB: maybe there are other plugin after this...
 
@@ -413,7 +413,7 @@ int UHttpPlugIn::handlerRequest()
             {
             u_http_info.nResponseCode = HTTP_OPTIONS_RESPONSE;
 
-            UHTTP::setHTTPResponse();
+            UHTTP::setHTTPResponse(0, 0);
 
             goto end;
             }

@@ -11,8 +11,10 @@
 //
 // ============================================================================
 
+#include <ulib/base/utility.h>
 #include <ulib/base/ssl/dgst.h>
 #include <ulib/base/coder/base64.h>
+#include <ulib/base/coder/hexdump.h>
 
 UHashType              u_hashType;                 /* What type of hash is this? */
 EVP_PKEY* restrict     u_pkey;                     /* private key to sign the digest */
@@ -24,26 +26,6 @@ uint32_t               u_mdLen;                    /* Length of digest */
 HMAC_CTX             u_hctx;                       /* Context for HMAC */
 const char* restrict u_hmac_key;                   /* The loaded key */
 uint32_t             u_hmac_keylen;                /* The loaded key length */
-
-void u_dgst_hexdump(unsigned char* restrict buf)
-{
-   uint32_t i;
-   unsigned char c;
-
-   U_INTERNAL_TRACE("u_dgst_hexdump(%p)", buf)
-
-   /* Copy to output buffer */
-
-   for (i = 0; i < u_mdLen; ++i)
-      {
-      c = u_mdValue[i];
-
-      *buf++ = u_hex_lower[(c >> 4) & 0x0f];
-      *buf++ = u_hex_lower[(c     ) & 0x0f];
-
-   // (void) sprintf((char*)buf, "%02x", u_mdValue[i]);
-      }
-}
 
 int __pure u_dgst_get_algoritm(const char* restrict alg)
 {
@@ -156,27 +138,16 @@ void u_dgst_reset(void) /* Reset the hash */
 
 static uint32_t u_finish(unsigned char* restrict ptr, int base64)
 {
-   uint32_t len;
-
    U_INTERNAL_TRACE("u_finish(%p,%d)", ptr, base64)
 
+   U_INTERNAL_ASSERT_POINTER(ptr)
    U_INTERNAL_ASSERT_MINOR(u_mdLen,U_MAX_HASH_SIZE)
 
-   if (ptr == 0) return u_mdLen;
+   if (base64 ==  0) return u_hexdump_encode(u_mdValue, u_mdLen, ptr);
+   if (base64 ==  1) return u_base64_encode( u_mdValue, u_mdLen, ptr);
+   if (base64 == -1) (void)    u_mem_cpy(ptr, u_mdValue, u_mdLen);
 
-        if (base64 == 1) len = u_base64_encode(u_mdValue, u_mdLen, ptr);
-   else if (base64 == 0)
-      {
-      len = u_mdLen * 2;
-
-      u_dgst_hexdump(ptr);
-      }
-   else
-      {
-      return u_mdLen;
-      }
-
-   return len;
+   return u_mdLen;
 }
 
 uint32_t u_dgst_finish(unsigned char* restrict hash, int base64) /* Finish and get hash */
@@ -194,7 +165,9 @@ uint32_t u_dgst_finish(unsigned char* restrict hash, int base64) /* Finish and g
       (void) EVP_DigestFinal(&u_mdctx, u_mdValue, &u_mdLen);
       }
 
-   return u_finish(hash, base64);
+   if (hash) return u_finish(hash, base64);
+
+   return u_mdLen;
 }
 
 /* The EVP signature routines are a high level interface to digital signatures */
@@ -239,18 +212,16 @@ uint32_t u_dgst_sign_finish(unsigned char* restrict sig, int base64) /* Finish a
 
    (void) EVP_SignFinal(&u_mdctx, u_mdValue, &u_mdLen, u_pkey);
 
-   return u_finish(sig, base64);
+   if (sig) return u_finish(sig, base64);
+
+   return u_mdLen;
 }
 
 int u_dgst_verify_finish(unsigned char* restrict sigbuf, uint32_t siglen)
 {
-   int ret;
-
    U_INTERNAL_TRACE("u_dgst_verify_finish(%p,%u)", sigbuf, siglen)
 
    U_INTERNAL_ASSERT_POINTER(u_pkey)
 
-   ret = EVP_VerifyFinal(&u_mdctx, sigbuf, siglen, u_pkey);
-
-   return ret;
+   return EVP_VerifyFinal(&u_mdctx, sigbuf, siglen, u_pkey);
 }

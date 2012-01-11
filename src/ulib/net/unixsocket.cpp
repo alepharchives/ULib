@@ -35,7 +35,7 @@ void UUnixSocket::setPath(const char* pathname)
 
    addr.psaUnixAddr.sun_family = AF_UNIX;
 
-   (void) u_memcpy(addr.psaUnixAddr.sun_path, pathname, slen);
+   (void) u_mem_cpy(addr.psaUnixAddr.sun_path, pathname, slen);
 
 #ifdef __SUN_LEN
    addr.psaUnixAddr.sun_len = len = sizeof(addr.psaUnixAddr.sun_len) + slen + sizeof(addr.psaUnixAddr.sun_family) + 1;

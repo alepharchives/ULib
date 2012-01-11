@@ -82,7 +82,7 @@ void UWebSocketPlugIn::getPart(const char* key, unsigned char* part)
 
    division = htonl(division);
 
-   (void) u_memcpy(part, &division, sizeof(uint32_t));
+   (void) u_mem_cpy(part, &division, sizeof(uint32_t));
 }
 
 RETSIGTYPE UWebSocketPlugIn::handlerForSigTERM(int signo)
@@ -315,13 +315,13 @@ int UWebSocketPlugIn::handlerRequest()
 
               getPart(key1, challenge);
               getPart(key2, challenge+4);
-            (void) u_memcpy(challenge+8, UClientImage_Base::body->data(), UClientImage_Base::body->size());
+            (void) u_mem_cpy(challenge+8, UClientImage_Base::body->data(), UClientImage_Base::body->size());
 
             // MD5(challenge)
 
             UClientImage_Base::body->setBuffer(U_CAPACITY);
 
-            UServices::generateDigest(U_HASH_MD5, 0, challenge, sizeof(challenge), *UClientImage_Base::body, -1);
+            UServices::generateDigest(U_HASH_MD5, 0, challenge, sizeof(challenge), *UClientImage_Base::body, -2);
             }
 
          if (UServer_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)

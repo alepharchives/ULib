@@ -18,6 +18,7 @@
 #include <ulib/net/socket.h>
 #include <ulib/internal/chttp.h>
 #include <ulib/dynamic/dynamic.h>
+#include <ulib/utility/data_session.h>
 
 #ifdef HAVE_PCRE
 #  include <ulib/pcre/pcre.h>
@@ -39,7 +40,6 @@ class UValue;
 class UEventFd;
 class UCommand;
 class UPageSpeed;
-class UHTTPSession;
 class UMimeMultipart;
 
 template <class T> class UHashMap;
@@ -59,6 +59,7 @@ public:
    static const UString* str_frm_header;
    static const UString* str_ctype_html;
    static const UString* str_ctype_soap;
+   static const UString* str_ulib_header;
    static const UString* str_frm_websocket;
    static const UString* str_websocket_key1;
    static const UString* str_websocket_key2;
@@ -461,15 +462,15 @@ public:
 
    static UValue* json;
    static UString* tmpdir;
+   static UString* cookie;
    static UString* qcontent;
-   static UHTTPSession* psession;
    static UMimeMultipart* formMulti;
    static UVector<UString>* form_name_value;
 
    static uint32_t processHTTPForm();
    static void     resetForm(bool brmdir);
    static void     getFormValue(UString& value, uint32_t pos);
-   static void     getFormValue(UString& value, const UString& name);
+   static void     getFormValue(UString& value, const char* name, uint32_t len);
 
    // param: "[ data expire path domain secure HttpOnly ]"
    // -----------------------------------------------------------------------------------------------------------------------------------
@@ -482,13 +483,12 @@ public:
    // -----------------------------------------------------------------------------------------------------------------------------------
    // RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
 
-   static bool getHTTPCookie(UString* pcookie);
+   static bool getHTTPCookie();
    static void setHTTPCookie(const UString& param);
 
-   static bool getDataSession();
-   static bool putDataSession(uint32_t lifetime = 0); // lifetime of the cookie in HOURS (0 -> valid until browser exit)
-
    // CGI
+
+   static UCommand* pcmd;
 
    typedef struct ucgi {
       char        sh_script;
@@ -499,13 +499,25 @@ public:
    static UString* geoip;
    static UString* fcgi_uri_mask;
    static UString* scgi_uri_mask;
-   static UCommand* pcmd;
+
+   static bool isCompressable()
+      {
+      U_TRACE(0, "UHTTP::isCompressable()")
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      U_INTERNAL_DUMP("u_http_info.clength = %u U_http_is_accept_deflate = %C", u_http_info.clength, U_http_is_accept_deflate)
+
+      bool result = (u_http_info.clength > 150 && U_http_is_accept_deflate); // NB: google advice is 150...
+
+      U_RETURN(result);
+      }
 
    static bool    processCGIOutput();
    static UString getCGIEnvironment();
    static bool    isGenCGIRequest() __pure;
+   static void    setHTTPCgiResponse(bool header_content_type, bool bcompress, bool connection_close);
    static bool    processCGIRequest(UCommand* pcmd, UString* penvironment, bool async, bool process_output);
-   static void    setHTTPCgiResponse(bool header_content_length, bool header_content_type, bool content_encoding);
 
    // URI PROTECTED
 
@@ -625,7 +637,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UPageSpeed, "")
 
-      minify_html = 0;
+      minify_html  = 0;
       optimize_gif = optimize_png = optimize_jpg = 0;
       }
 
@@ -827,6 +839,65 @@ public:
    static void    checkFileForCache();
    static UString getDataFromCache(bool header, bool deflate);
 
+   // HTTP SESSION
+
+   static UString* keyID;
+   static void* db_session;
+   static uint32_t sid_counter;
+   static UDataSession* data_session;
+
+   static bool getDataSession();
+   static void putDataSession(uint32_t lifetime = 0); // lifetime of the cookie in HOURS (0 -> valid until browser exit)
+
+   static bool initSession(const char* location, uint32_t size);
+
+   static UString getSessionCreationTime()
+      {
+      U_TRACE(0, "UHTTP::getSessionCreationTime()")
+
+      UString x(40U);
+
+      if (data_session) x.snprintf("%#7D", data_session->creation);
+
+      U_RETURN_STRING(x);
+      }
+
+   static UString getSessionLastAccessedTime()
+      {
+      U_TRACE(0, "UHTTP::getSessionLastAccessedTime()")
+
+      UString x(40U);
+
+      if (data_session) x.snprintf("%#7D", data_session->last_access);
+
+      U_RETURN_STRING(x);
+      }
+
+   // HTML Pagination
+
+   static uint32_t num_page_tot,
+                   num_page_cur,
+                   num_page_end,
+                   num_page_start,
+                   num_item_for_page;
+
+   static UString getLinkPagination();
+
+   static void addLinkPagination(UString& link, uint32_t num_page)
+      {
+      U_TRACE(0, "UHTTP::addLinkPagination(%.*S,%u)", U_STRING_TO_TRACE(link), num_page)
+
+      UString x(100U);
+
+      U_INTERNAL_DUMP("num_page_cur = %u", num_page_cur)
+
+      if (num_page == num_page_cur) x.snprintf("<span class=\"pnow\">%u</span>",             num_page);
+      else                          x.snprintf("<a href=\"?page=%u\" class=\"pnum\">%u</a>", num_page, num_page);
+
+      (void) link.append(x);
+             link.push_back(' ');
+      }
+
    // X-Sendfile
 
    static UString* xpathname;
@@ -845,12 +916,12 @@ public:
 
    // set HTTP response message
 
-   static void setHTTPResponse(const UString* content_type = 0, const UString* body = 0);
+   static void setHTTPResponse(const UString* content_type, const UString* body);
    static void setHTTPRedirectResponse(bool refresh, UString& ext, const char* ptr_location, uint32_t len_location);
 
    // get HTTP response message
 
-   static UString getHTTPHeaderForResponse(const UString& content);
+   static UString getHTTPHeaderForResponse(const UString& content, bool connection_close);
 
 private:
    static UString getHTMLDirectoryList() U_NO_EXPORT;
@@ -865,6 +936,7 @@ private:
    static void updateUploadProgress(int byte_read) U_NO_EXPORT;
    static bool setCGIShellScript(UString& command) U_NO_EXPORT;
 
+   static void deleteSession() U_NO_EXPORT;
    static void manageDataForCache() U_NO_EXPORT;
    static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;
    static bool processHTTPAuthorization(const UString& request) U_NO_EXPORT;

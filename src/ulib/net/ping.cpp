@@ -384,13 +384,13 @@ void UPing::initArpPing(const char* device)
 
    if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFADDR,   (char*)&ifr) == -1) U_ERROR("ioctl(SIOCGIFADDR) failed for interface %S", device);
 
-   (void) u_memcpy(arp.sInaddr, ifr.ifr_addr.sa_data + sizeof(short), 4); /* source IP address */
+   (void) u_mem_cpy(arp.sInaddr, ifr.ifr_addr.sa_data + sizeof(short), 4); /* source IP address */
 
    if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFHWADDR, (char*)&ifr) == -1) U_ERROR("ioctl(SIOCGIFHWADDR) failed for interface %S", device);
 
    (void) U_SYSCALL(memset, "%p,%C,%u", arp.h_dest,                     0xff, 6); /* MAC DA */
-   (void)                      u_memcpy(arp.h_source, ifr.ifr_hwaddr.sa_data, 6); /* MAC SA */
-   (void)                      u_memcpy(arp.sHaddr,   ifr.ifr_hwaddr.sa_data, 6); /* source hardware address */
+   (void)                      u_mem_cpy(arp.h_source, ifr.ifr_hwaddr.sa_data, 6); /* MAC SA */
+   (void)                      u_mem_cpy(arp.sHaddr,   ifr.ifr_hwaddr.sa_data, 6); /* source hardware address */
 
    U_INTERNAL_DUMP("SOURCE = %s (%02x:%02x:%02x:%02x:%02x:%02x)",
                       u_inet_nstoa(arp.sInaddr),
@@ -408,7 +408,7 @@ void UPing::initArpPing(const char* device)
    // Target address - TODO...
    // -----------------------------------------------------------------------------------------------------------------------
    //                 arp.tHaddr is zero-filled             /* target hardware address */
-   // (void) u_memcpy(arp.tInaddr, addr.get_in_addr(), 4);  /* target IP address */
+   // (void) u_mem_cpy(arp.tInaddr, addr.get_in_addr(), 4);  /* target IP address */
    // -----------------------------------------------------------------------------------------------------------------------
 }
 
@@ -424,7 +424,7 @@ bool UPing::arping(UIPAddress& addr, const char* device)
    // Target address
    // -----------------------------------------------------------------------------------------------------------------------
    //              arp.tHaddr is zero-filled             /* target hardware address */
-   (void) u_memcpy(arp.tInaddr, addr.get_in_addr(), 4);  /* target IP address */
+   (void) u_mem_cpy(arp.tInaddr, addr.get_in_addr(), 4);  /* target IP address */
    // -----------------------------------------------------------------------------------------------------------------------
 
    U_DUMP("ARP request from %s (%02x:%02x:%02x:%02x:%02x:%02x) to %s (%02x:%02x:%02x:%02x:%02x:%02x)",

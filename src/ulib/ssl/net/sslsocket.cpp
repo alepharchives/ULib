@@ -343,7 +343,7 @@ const char* USSLSocket::status(SSL* _ssl, int _ret, bool flag, char* buffer, uin
       {
       buffer[buffer_len++] = ' ';
 
-      (void) u_memcpy((void*)(buffer + buffer_len), sslerr, len+1);
+      (void) u_mem_cpy((void*)(buffer + buffer_len), sslerr, len+1);
       }
 
    U_RETURN((const char*)buffer);

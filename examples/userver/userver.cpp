@@ -64,9 +64,10 @@ public:
       // IP_ADDRESS     public ip address of host for the interface connected to the Internet (autodetected if not specified)
       // ALLOWED_IP     list of comma separated client address for IP-based access control (IPADDR[/MASK])
       //
-      // LISTEN_BACKLOG       max number of ready to be delivered connections to accept()
-      // USE_TCP_OPTIMIZATION flag indicating the use of TCP/IP options to optimize data transmission (TCP_CORK, TCP_DEFER_ACCEPT, TCP_QUICKACK)
-
+      // LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
+      // USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (TCP_CORK, TCP_DEFER_ACCEPT, TCP_QUICKACK)
+      // SET_REALTIME_PRIORITY flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+      //
       // PID_FILE       write pid on file indicated
       // WELCOME_MSG    message of welcome to send initially to client
       // RUN_AS_USER    downgrade security to that user account

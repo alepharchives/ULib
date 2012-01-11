@@ -585,7 +585,7 @@ AC_HEADER_MAJOR
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([assert.h byteswap.h endian.h execinfo.h ndir.h string.h netpacket/packet.h sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h \
-						sched.h semaphore.h sys/syscall.h sysexits.h termios.h streambuf.h linux/netfilter_ipv4/ipt_ACCOUNT.h])
+						semaphore.h sys/syscall.h sysexits.h termios.h streambuf.h linux/netfilter_ipv4/ipt_ACCOUNT.h])
 
 AC_CHECK_HEADERS([sys/inotify.h mcheck.h])
 AC_LANG_C
@@ -650,7 +650,7 @@ TWOCAN_CONF_MSG(Checking for functions)
 AC_FUNC_NANOSLEEP
 AC_FUNC_CLOSEDIR_VOID
 # Check for functions in one big call, to reduce the size of configure
-AC_CHECK_FUNCS([accept4 clock_gettime daemon epoll_create1 epoll_wait fallocate fallocate64 fnmatch getaddrinfo getnameinfo inet_ntop memmem \
+AC_CHECK_FUNCS([accept4 clock_gettime daemon epoll_create1 epoll_wait fallocate fallocate64 fnmatch getaddrinfo getnameinfo getpriority inet_ntop memmem \
 					 mremap pread sendfile64 strndup mkdtemp strptime strtof strtoull strtold gmtime_r timegm strerror strsignal sched_getaffinity])
 
 if test "$ac_cv_func_inet_ntop" != "yes"; then
@@ -1056,7 +1056,7 @@ sysconfdir="$prefix/etc/ulib"
 pkglibexecdir="$prefix/libexec/ulib"
 
 # prefix dir
-AC_DEFINE_UNQUOTED(U_PREFIXDIR,	 "${prefix}", [install directory])
+AC_DEFINE_UNQUOTED(U_PREFIXDIR,	"${prefix}", [install directory])
 # plugin dir
 AC_DEFINE_UNQUOTED(U_LIBEXECDIR, "${pkglibexecdir}", [install directory for plugins])
 # config dir

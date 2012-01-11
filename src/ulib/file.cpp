@@ -251,8 +251,8 @@ uint32_t UFile::setPathFromFile(const UFile& file, char* buffer_path, const char
 
    U_INTERNAL_DUMP("file.path_relativ(%u) = %.*S", file.path_relativ_len, file.path_relativ_len, file.path_relativ)
 
-   (void) u_memcpy(buffer_path,                         file.path_relativ, file.path_relativ_len);
-   (void) u_memcpy(buffer_path + file.path_relativ_len,            suffix,                   len);
+   (void) u_mem_cpy(buffer_path,                         file.path_relativ, file.path_relativ_len);
+   (void) u_mem_cpy(buffer_path + file.path_relativ_len,            suffix,                   len);
 
    uint32_t new_path_relativ_len = file.path_relativ_len + len;
 
@@ -552,7 +552,7 @@ bool UFile::write(const UString& data, bool append, bool bmkdirs)
 
             uint32_t len = ptr - path_relativ;
 
-            (void) u_memcpy(buffer, path_relativ, len);
+            (void) u_mem_cpy(buffer, path_relativ, len);
 
             buffer[len] = '\0';
 
@@ -579,7 +579,7 @@ bool UFile::write(const UString& data, bool append, bool bmkdirs)
 
             if (esito)
                {
-               (void) u_memcpy(map + (map_size - st_size), ptr, sz);
+               (void) u_mem_cpy(map + (map_size - st_size), ptr, sz);
 
                munmap();
                }
@@ -985,7 +985,7 @@ bool UFile::mkdirs(const char* path, mode_t mode)
 
          uint32_t len = ptr - path;
 
-         (void) u_memcpy(buffer, path, len);
+         (void) u_mem_cpy(buffer, path, len);
 
          buffer[len] = '\0';
 
@@ -1071,7 +1071,7 @@ bool UFile::rmdirs(const char* path, bool remove_all)
 
          int length = ptr - path + 1;
 
-         (void) u_memcpy(newpath, path, length);
+         (void) u_mem_cpy(newpath, path, length);
 
          newpath[length] = '\0';
 

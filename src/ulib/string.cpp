@@ -109,7 +109,7 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
 
    char* _ptr = (char*)r->str;
 
-   if (ptr && length) (void) u_memcpy((void*)_ptr, ptr, length);
+   if (ptr && length) (void) u_mem_cpy((void*)_ptr, ptr, length);
 
    _ptr[length] = '\0';
 
@@ -263,7 +263,7 @@ void UStringRep::assign(UStringRep*& rep, const char* s, uint32_t n)
       U_INTERNAL_DUMP("src+n = %p (must be <=) dst = %p", s+n, ptr)
       U_INTERNAL_DUMP("dst+n = %p (must be <=) src = %p", ptr+n, s)
 
-      (void) u_memcpy(ptr, s, n);
+      (void) u_mem_cpy(ptr, s, n);
 
       ptr[(rep->_length = n)] = '\0';
       }
@@ -355,7 +355,7 @@ uint32_t UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
 
-   (void) u_memcpy(s, str + pos, n);
+   (void) u_mem_cpy(s, str + pos, n);
 
    U_RETURN(n);
 }
@@ -687,8 +687,8 @@ U_NO_EXPORT char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
 
       UStringRep* r = UStringRep::create(n, __capacity, 0);
 
-      if (pos)       (void) u_memcpy((void*)r->str,            str, pos);
-      if (how_much)  (void) u_memcpy((char*)r->str + pos + n2, src, how_much);
+      if (pos)       (void) u_mem_cpy((void*)r->str,            str, pos);
+      if (how_much)  (void) u_mem_cpy((char*)r->str + pos + n2, src, how_much);
 
       set(r);
 
@@ -711,7 +711,7 @@ UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
 
    char* ptr = __replace(pos, n1, n2);
 
-   if (ptr && n2) (void) u_memcpy(ptr, s, n2);
+   if (ptr && n2) (void) u_mem_cpy(ptr, s, n2);
 
    U_INTERNAL_ASSERT(invariant())
 
@@ -766,7 +766,7 @@ UString& UString::append(const char* s, uint32_t n)
       {
       char* ptr = __append(n);
 
-      (void) u_memcpy(ptr, s, n);
+      (void) u_mem_cpy(ptr, s, n);
       }
 
    U_INTERNAL_ASSERT(invariant())

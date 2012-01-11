@@ -1110,7 +1110,7 @@ unsigned zip_get_content(const char* zipdata, unsigned datalen, char*** filename
          ze.crc = crc32(ze.crc, 0, 0);                   /* initialize the crc */
          ze.crc = crc32(ze.crc, (Bytef*)pbf.next, csize);
 
-         (void) u_memcpy(contents[n], pbf.next, csize);
+         (void) u_mem_cpy(contents[n], pbf.next, csize);
 
          consume(csize);
          }

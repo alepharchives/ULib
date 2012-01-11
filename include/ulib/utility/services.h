@@ -162,10 +162,6 @@ struct U_EXPORT UServices {
    static void generateDigest(int alg, uint32_t keylen, const UString& data,                UString& output, int base64 = 0)
       { generateDigest(alg, keylen, (unsigned char*)U_STRING_TO_PARAM(data), output, base64); }
 
-   static bool    checkHMAC(int alg, unsigned char* data, uint32_t size, const UString& hmac);
-   static void generateHMAC(int alg, unsigned char* data, uint32_t size,       UString& output)
-      { generateDigest(alg, 16, data, size, output, false); }
-
 #ifdef HAVE_LIBUUID
    // creat a new unique UUID value - 16 bytes (128 bits) long
    // return from the binary representation a 36-byte string (plus tailing '\0') of the form 1b4e28ba-2fa1-11d2-883f-0016d3cca427

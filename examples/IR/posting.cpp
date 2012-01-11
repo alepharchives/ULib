@@ -1047,7 +1047,7 @@ inline UString UPosting::extractDocID()
          U_INTERNAL_DUMP("size_entry = %u",   size_entry)
          U_INTERNAL_DUMP("cur_doc_id = %llu", cur_doc_id)
 
-         (void) u_memcpy((void*)sptr, &cur_doc_id, sizeof(cur_doc_id));
+         (void) u_mem_cpy((void*)sptr, &cur_doc_id, sizeof(cur_doc_id));
 
           ptr += size_entry;
          sptr += sizeof(uint64_t);

@@ -556,22 +556,23 @@ int UClientImage_Base::handlerWrite()
    off_t offset;
    ssize_t value;
 
+   U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer))
+   U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body))
+
    if (count)
       {
-      U_ASSERT(body->empty())
       U_INTERNAL_ASSERT_MAJOR(sfd,0)
       U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
       if (UEventFd::op_mask == U_WRITE_OUT) goto send;
+
+      U_ASSERT(body->empty())
 
 #  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
       // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
       socket->setTcpCork(1U);
 #  endif
       }
-
-   U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer))
-   U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body))
 
    U_ASSERT_DIFFERS(wbuffer->empty(), true)
 
@@ -621,14 +622,12 @@ send:
          {
          sfd = 0;
 
+         bool bwrite = (UEventFd::op_mask == U_WRITE_OUT);
+                        UEventFd::op_mask =  U_READ_IN;
+
          if (bclose == U_YES) U_RETURN(U_NOTIFIER_DELETE);
 
-         if (UEventFd::op_mask == U_WRITE_OUT)
-            {
-             UEventFd::op_mask  = U_READ_IN;
-
-            UNotifier::modify(this);
-            }
+         if (bwrite) UNotifier::modify(this);
          }
       }
 

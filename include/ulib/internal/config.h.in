@@ -240,6 +240,9 @@ typedef unsigned long long uint64;
 /* Define to 1 if you have the `getopt_long' function. */
 #undef HAVE_GETOPT_LONG
 
+/* Define to 1 if you have the `getpriority' function. */
+#undef HAVE_GETPRIORITY
+
 /* reentrant getnam */
 #undef HAVE_GETPWNAM_R
 

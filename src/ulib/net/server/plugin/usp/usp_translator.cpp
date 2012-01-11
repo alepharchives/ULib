@@ -41,11 +41,10 @@
 "%s" \
 "%s" \
 "%s" \
-"%s" \
 "\t\n" \
 "%.*s" \
 "\t\n" \
-"\tU_RETURN(0);\n" \
+"\tU_RETURN(%u);\n" \
 "} }\n"
 
 class Application : public UApplication {
@@ -71,10 +70,9 @@ public:
 
       U_INTERNAL_DUMP("endHeader = %u u_line_terminator_len = %d", endHeader, u_line_terminator_len)
 
-      // NB: we check for HTTP Header and Content-Type...
+      // NB: we check for eventually HTTP Header...
 
-      if (endHeader                                              == U_NOT_FOUND ||
-          U_STRING_FIND_EXT(usp, 0, "Content-Type: ", endHeader) == U_NOT_FOUND)
+      if (endHeader == U_NOT_FOUND)
          {
          ptr = usp.data();
 
@@ -147,7 +145,7 @@ public:
 
          directive = token.c_pointer(2); // "-#"...
 
-         U_INTERNAL_DUMP("directive = %10s", directive)
+         U_INTERNAL_DUMP("directive = %10c", directive)
 
          if (U_STRNEQ(directive, "declaration"))
             {
@@ -187,6 +185,8 @@ public:
 
             token = UStringExt::trim(directive + U_CONSTANT_SIZE("puts"), n);
 
+            (void) buffer.reserve(token.size() + 100U);
+
             buffer.snprintf("\n\t(void) UClientImage_Base::wbuffer->append(%.*s);\n\t", U_STRING_TO_TRACE(token));
 
             (void) output.append(buffer);
@@ -206,6 +206,8 @@ public:
                                                         "\n\t"));
                }
 
+            (void) buffer.reserve(token.size() + 150U);
+
             buffer.snprintf("\n\tusp_sz = UObject2String(%.*s, usp_buffer, sizeof(usp_buffer));"
                             "\n\t(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n\t", U_STRING_TO_TRACE(token));
 
@@ -213,7 +215,7 @@ public:
             }
          }
 
-      UString result(200U + sizeof(USP_TEMPLATE) + declaration.size() + output.size());
+      UString result(300U + sizeof(USP_TEMPLATE) + declaration.size() + output.size());
 
       if (binit  == false &&
           bend   == false &&
@@ -223,9 +225,12 @@ public:
          }
       else
          {
-         if (binit)  ptr1 = "\n\tif (client_image == 0)         { usp_init();  U_RETURN(0); }\n"; // usp_init  (    Server-wide hooks)...
-         if (breset) ptr2 = "\n\tif (client_image == (void*)-1) { usp_reset(); U_RETURN(0); }\n"; // usp_reset (Connection-wide hooks)...
-         if (bend)   ptr3 = "\n\tif (client_image == (void*)-2) { usp_end();   U_RETURN(0); }\n"; // usp_end
+         if (binit)  ptr1 = "\n\tif (client_image == 0)         { usp_init();  U_RETURN(0); }\n"; // (    Server-wide hooks)...
+         else        ptr1 = "\n\tif (client_image == 0)         {              U_RETURN(0); }\n";
+         if (breset) ptr2 = "\n\tif (client_image == (void*)-1) { usp_reset(); U_RETURN(0); }\n"; // (Connection-wide hooks)...
+         else        ptr2 = "\n\tif (client_image == (void*)-1) {              U_RETURN(0); }\n";
+         if (bend)   ptr3 = "\n\tif (client_image == (void*)-2) { usp_end();   U_RETURN(0); }\n";
+         else        ptr3 = "\n\tif (client_image == (void*)-2) {              U_RETURN(0); }\n";
          }
 
       buffer.snprintf("%.*s.cpp", u_str_len(filename) - 4, filename);
@@ -236,9 +241,8 @@ public:
                       ptr1,
                       ptr2,
                       ptr3,
-                      (bflag  == false ? ""
-                                       : "\n\tUClientImage_Base::wbuffer->snprintf(\"Content-Type: \" U_CTYPE_HTML \"\\r\\n\\r\\n\");\n"),
-                      U_STRING_TO_TRACE(output));
+                      U_STRING_TO_TRACE(output),
+                      (bflag ? 200 : 0));
 
       (void) UFile::writeTo(buffer, UStringExt::removeEmptyLine(result));
       }

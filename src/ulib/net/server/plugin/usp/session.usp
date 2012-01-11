@@ -4,11 +4,10 @@
 
 	<!--#code
 	const char* heading = (UHTTP::getDataSession() ? " Back" :
-						 ((void)UHTTP::putDataSession(), ", Newcomer"));
+						       (UHTTP::putDataSession(), ", Newcomer"));
 
-	UString id			  = UHTTP::psession->getKeyID(),
-			  creation	  = UHTTP::psession->getCreationTime(),
-			  last_access = UHTTP::psession->getLastAccessedTime();
+	UString creation	  = UHTTP::getSessionCreationTime(),
+			  last_access = UHTTP::getSessionLastAccessedTime();
 	-->
 
    <h1 align="center">Welcome<!--#puts heading --></h1>
@@ -18,8 +17,8 @@
 	  <th>Info Type</th><th>Value</th>
 	</tr>
 	<tr>
-	  <td>ID</td>
-	  <td><!--#puts id --></td>
+	  <td>keyID</td>
+	  <td><!--#puts *UHTTP::keyID --></td>
 	</tr>
 	<tr>
 	  <td>Creation Time</td>

@@ -872,9 +872,8 @@ int USSIPlugIn::handlerRequest()
                (void) header.append(UHTTP::getHeaderMimeType(0, U_CTYPE_HTML, UClientImage_Base::body->size(), 0));
                }
 
-            u_http_info.nResponseCode = HTTP_OK; // NB: can be already set to 304 (Not Modified)...
-
-            *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(header);
+            u_http_info.nResponseCode   = HTTP_OK; // NB: can be already set to 304 (Not Modified)...
+            *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(header, false);
             }
          }
 

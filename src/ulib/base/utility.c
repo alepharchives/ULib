@@ -27,9 +27,6 @@
 #  include <ulib/base/replace/sysexits.h>
 #endif
 
-#ifndef DT_UNKNOWN
-#define DT_UNKNOWN  0
-#endif
 #ifndef DT_DIR
 #define DT_DIR      4
 #endif
@@ -38,6 +35,9 @@
 #endif
 #ifndef DT_LNK
 #define DT_LNK     10
+#endif
+#ifndef DT_UNKNOWN
+#define DT_UNKNOWN  0
 #endif
 
 #ifdef _DIRENT_HAVE_D_TYPE
@@ -61,11 +61,9 @@ bPFpcupcud u_pfn_match = u_dosmatch;
 
 /* Services */
 
-int u_num_cpu = -1;
-
+int              u_num_cpu       = -1;
+const char*      u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 struct uhttpinfo u_http_info;
-
-const char* u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 
 #ifdef DEBUG
 size_t u_str_len(const char* restrict s)
@@ -93,9 +91,9 @@ char* u_strcpy(char* restrict dest, const char* restrict src)
    return dest;
 }
 
-void* u_memcpy(void* restrict dst, const void* restrict src, size_t n)
+void* u_mem_cpy(void* restrict dst, const void* restrict src, size_t n)
 {
-   U_INTERNAL_TRACE("u_memcpy(%p,%p,%ld)", dst, src, n)
+   U_INTERNAL_TRACE("u_mem_cpy(%p,%p,%ld)", dst, src, n)
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT_POINTER(src)
@@ -131,6 +129,238 @@ char* u_strncpy(char* restrict dest, const char* restrict src, size_t n)
 }
 #endif
 
+/* Security functions */
+
+static uid_t real_uid      = (uid_t)(-1);
+static gid_t real_gid      = (gid_t)(-1);
+static uid_t effective_uid = (uid_t)(-1);
+static gid_t effective_gid = (gid_t)(-1);
+
+void u_init_security(void)
+{
+   /* Run this at the beginning of the program to initialize this code and
+    * to drop privileges before someone uses them to shoot us in the foot
+    */
+
+   int leffective_uid;
+
+   U_INTERNAL_TRACE("u_init_security()")
+
+#ifndef __MINGW32__
+   alarm(0); /* can be inherited from parent process */
+
+         real_uid = getuid();
+   leffective_uid = geteuid();
+
+   /* sanity check */
+
+   if (leffective_uid != (int) real_uid &&
+       leffective_uid != 0)
+      {
+      U_WARNING("setuid but not to root (uid=%ld, euid=%d), dropping setuid privileges now", (long) real_uid, leffective_uid);
+
+      u_never_need_root();
+      }
+   else
+      {
+      effective_uid = leffective_uid;
+      }
+
+   real_gid      = getgid();
+   effective_gid = getegid();
+
+   u_dont_need_root();
+   u_dont_need_group();
+#endif
+}
+
+/* Temporarily gain root privileges */
+
+void u_need_root(bool necessary)
+{
+   U_INTERNAL_TRACE("u_need_root(%d)", necessary)
+
+   U_INTERNAL_PRINT("(_euid_=%d, uid=%d), current=%d", effective_uid, real_uid, geteuid())
+
+#ifndef __MINGW32__
+   if (effective_uid)
+      {
+      if (necessary) U_ERROR(  "require root privilege but not setuid root");
+                     U_WARNING("require root privilege but not setuid root");
+
+      return;
+      }
+
+   if (real_uid == (uid_t)(-1)) U_ERROR("u_init_security() not called");
+
+   if (geteuid() == 0) return; /* nothing to do */
+
+   if (seteuid(effective_uid) == -1 ||
+       geteuid()              !=  0)
+      {
+      if (necessary) U_ERROR(  "did not get root privilege");
+                     U_WARNING("did not get root privilege");
+      }
+#endif
+}
+
+/* Temporarily drop root privileges */
+
+void u_dont_need_root(void)
+{
+   U_INTERNAL_TRACE("u_dont_need_root()")
+
+   U_INTERNAL_PRINT("(_euid_=%d, uid=%d), current=%d", effective_uid, real_uid, geteuid())
+
+#ifndef __MINGW32__
+   if (effective_uid) return;
+
+   if (real_uid == (uid_t)(-1)) U_ERROR("u_init_security() not called");
+
+   if (geteuid() != 0) return; /* nothing to do */
+
+   if (seteuid(real_uid) == -1 ||
+       geteuid()         != real_uid)
+      {
+      U_ERROR("did not drop root privilege");
+      }
+#endif
+}
+
+/* Permanently drop root privileges */
+
+void u_never_need_root(void)
+{
+   U_INTERNAL_TRACE("u_never_need_root()")
+
+   U_INTERNAL_PRINT("(_euid_=%d, uid=%d)", effective_uid, real_uid)
+
+#ifndef __MINGW32__
+   if (real_uid == (uid_t)(-1)) U_ERROR("u_init_security() not called");
+
+   if (geteuid() == 0) (void) setuid(real_uid);
+
+   if (geteuid() != real_uid ||
+       getuid()  != real_uid)
+      {
+      U_ERROR("did not drop root privilege");
+      }
+
+    effective_uid = real_uid;
+#endif
+}
+
+/* Temporarily gain group privileges */
+
+void u_need_group(bool necessary)
+{
+   U_INTERNAL_TRACE("u_need_group(%d)", necessary)
+
+   U_INTERNAL_PRINT("(egid_=%d, gid=%d)", effective_gid, real_gid)
+
+#ifndef __MINGW32__
+   if (real_gid == (gid_t)(-1)) U_ERROR("u_init_security() not called");
+
+   if (getegid() == effective_gid) return; /* nothing to do */
+
+    if (setegid(effective_gid) == -1 ||
+        getegid()              != effective_gid)
+      {
+      if (necessary) U_ERROR(  "did not get group privilege");
+                     U_WARNING("did not get group privilege");
+      }
+#endif
+}
+
+/* Temporarily drop group privileges */
+
+void u_dont_need_group(void)
+{
+   U_INTERNAL_TRACE("u_dont_need_group()")
+
+   U_INTERNAL_PRINT("(egid_=%d, gid=%d)", effective_gid, real_gid)
+
+#ifndef __MINGW32__
+   if (real_gid == (gid_t)(-1)) U_ERROR("u_init_security() not called");
+
+   if (getegid() != effective_gid) return; /* nothing to do */
+
+    if (setegid(real_gid) == -1 ||
+        getegid()         != real_gid)
+      {
+      U_ERROR("did not drop group privilege");
+      }
+#endif
+}
+
+/* Permanently drop group privileges */
+
+void u_never_need_group(void)
+{
+   U_INTERNAL_TRACE("u_never_need_group()")
+
+   U_INTERNAL_PRINT("(egid_=%d, gid=%d)", effective_gid, real_gid)
+
+#ifndef __MINGW32__
+   if (real_gid == (gid_t)(-1)) U_ERROR("u_init_security() not called");
+
+   if (getegid() != effective_gid) (void) setgid(real_gid);
+
+   if (getegid() != real_gid ||
+       getgid()  != real_gid)
+      {
+      U_ERROR("did not drop group privilege");
+      }
+
+    effective_gid = real_gid;
+#endif
+}
+
+/* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */
+
+bool u_runAsUser(const char* restrict user, bool change_dir)
+{
+#ifdef __MINGW32__
+   return false;
+#else
+   struct passwd* restrict pw;
+
+   U_INTERNAL_TRACE("u_runAsUser(%s,%d)", user, change_dir)
+
+   U_INTERNAL_ASSERT_POINTER(user)
+
+   if (!(pw = getpwnam(user)) ||
+       setgid(pw->pw_gid)     ||
+       setuid(pw->pw_uid))
+      {
+      return false;
+      }
+
+   {
+   static char buffer[128];
+
+   (void) snprintf(buffer, sizeof(buffer), "HOME=%s", pw->pw_dir);
+
+   (void) putenv(buffer);
+   }
+
+   (void) u_strncpy(u_user_name, user, (u_user_name_len = u_str_len(user))); /* change user name */
+
+   if (change_dir &&
+       pw->pw_dir &&
+       pw->pw_dir[0])
+      {
+      (void) chdir(pw->pw_dir);
+
+      u_getcwd(); /* get current working directory */
+
+      U_INTERNAL_ASSERT_EQUALS(strcmp(pw->pw_dir,u_cwd),0)
+      }
+
+   return true;
+#endif
+}
+
 char* u_inet_nltoa(uint32_t ip)
 {
    char* result;
@@ -152,7 +382,7 @@ char* u_inet_nstoa(uint8_t* ip)
 
    U_INTERNAL_TRACE("u_inet_nstoa(%p)", ip)
 
-   (void) u_memcpy(address.inaddr, ip, 4);
+   (void) u_mem_cpy(address.inaddr, ip, 4);
 
    result = inet_ntoa(address.addr);
 
@@ -273,51 +503,6 @@ uint32_t u_findEndHeader(const char* restrict str, uint32_t n)
       }
 
    return endHeader;
-}
-
-/* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */
-
-bool u_runAsUser(const char* restrict user, bool change_dir)
-{
-#ifdef __MINGW32__
-   return false;
-#else
-   struct passwd* restrict pw;
-
-   U_INTERNAL_TRACE("u_runAsUser(%s,%d)", user, change_dir)
-
-   U_INTERNAL_ASSERT_POINTER(user)
-
-   if (!(pw = getpwnam(user)) ||
-       setgid(pw->pw_gid)     ||
-       setuid(pw->pw_uid))
-      {
-      return false;
-      }
-
-   {
-   static char buffer[128];
-
-   (void) snprintf(buffer, sizeof(buffer), "HOME=%s", pw->pw_dir);
-
-   (void) putenv(buffer);
-   }
-
-   (void) u_strncpy(u_user_name, user, (u_user_name_len = u_str_len(user))); /* change user name */
-
-   if (change_dir &&
-       pw->pw_dir &&
-       pw->pw_dir[0])
-      {
-      (void) chdir(pw->pw_dir);
-
-      u_getcwd(); /* get current working directory */
-
-      U_INTERNAL_ASSERT_EQUALS(strcmp(pw->pw_dir,u_cwd),0)
-      }
-
-   return true;
-#endif
 }
 
 /* Determine the width of the terminal we're running on */
@@ -530,6 +715,34 @@ void u_bind2cpu(pid_t pid, int n)
 #ifdef HAVE_SCHED_GETAFFINITY
    (void) sched_setaffinity(pid, sizeof(cpuset), &cpuset);
 #endif
+}
+
+bool u_switch_to_realtime_priority(pid_t pid)
+{
+   bool result = false;
+
+#if defined(_POSIX_PRIORITY_SCHEDULING) && (_POSIX_PRIORITY_SCHEDULING > 0)
+   struct sched_param sp;
+
+   U_INTERNAL_TRACE("u_switch_to_realtime_priority(%d)", pid)
+
+   /* sched_getscheduler(pid); // SCHED_FIFO | SCHED_RR | SCHED_OTHER */
+
+   (void) sched_getparam(pid, &sp);
+
+   U_INTERNAL_PRINT("sp.sched_priority = %d", sp.sched_priority)
+
+   sp.sched_priority = sched_get_priority_max(SCHED_FIFO);
+
+   if (sched_setscheduler(pid, SCHED_FIFO, &sp) != -1)
+      {
+      U_INTERNAL_PRINT("sp.sched_priority = %d", sp.sched_priority)
+
+      result = true;
+      }
+#endif
+
+   return result;
 }
 
 __pure bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len)
@@ -1476,8 +1689,8 @@ static const char* u_check_for_suffix_exe(const char* restrict program)
 
    if (u_endsWith(program, len, U_CONSTANT_TO_PARAM(".exe")) == false)
       {
-      (void) u_memcpy(program_w32, program, len);
-      (void) u_memcpy(program_w32+len, ".exe", sizeof(".exe"));
+      (void) u_mem_cpy(program_w32, program, len);
+      (void) u_mem_cpy(program_w32+len, ".exe", sizeof(".exe"));
 
       program = program_w32;
 
@@ -1918,7 +2131,7 @@ static void u_ftw_call(char* restrict d_name, uint32_t d_namlen, unsigned char d
        d_type != DT_LNK &&
        d_type != DT_UNKNOWN) return;
 
-   (void) u_memcpy(u_buffer + u_buffer_len, d_name, d_namlen);
+   (void) u_mem_cpy(u_buffer + u_buffer_len, d_name, d_namlen);
 
    u_buffer_len += d_namlen;
 
@@ -1986,7 +2199,7 @@ static void u_ftw_readdir(DIR* restrict dirp)
             ds->d_ino  = dp->d_ino;
             ds->d_type = U_DT_TYPE;
 
-            (void) u_memcpy(u_dir.free + (ds->d_name = u_dir.pfree), dp->d_name, (ds->d_namlen = d_namlen));
+            (void) u_mem_cpy(u_dir.free + (ds->d_name = u_dir.pfree), dp->d_name, (ds->d_namlen = d_namlen));
 
             u_dir.pfree += d_namlen;
             u_dir.nfree -= d_namlen;
@@ -2071,7 +2284,7 @@ int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict passwor
 {
    U_INTERNAL_TRACE("u_passwd_cb(%p,%d,%d,%p)", buf, size, rwflag, password)
 
-   (void) u_memcpy(buf, (char* restrict)password, size);
+   (void) u_mem_cpy(buf, (char* restrict)password, size);
 
    buf[size-1] = '\0';
 

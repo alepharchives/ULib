@@ -50,8 +50,8 @@ void UVector<void*>::insert(uint32_t pos, void* elem) // add elem before pos
 
       allocate(_capacity * 2);
 
-      (void) u_memcpy(vec,           old_vec,                  pos  * sizeof(void*));
-      (void) u_memcpy(vec + pos + 1, old_vec + pos, (_length - pos) * sizeof(void*));
+      (void) u_mem_cpy(vec,           old_vec,                  pos  * sizeof(void*));
+      (void) u_mem_cpy(vec + pos + 1, old_vec + pos, (_length - pos) * sizeof(void*));
 
       U_FREE_VECTOR(old_vec, old_capacity, void);
       }
@@ -84,8 +84,8 @@ void UVector<void*>::insert(uint32_t pos, uint32_t n, void* elem) // add n copy 
 
       allocate(new_length * 2);
 
-      (void) u_memcpy(vec,           old_vec,                  pos  * sizeof(void*));
-      (void) u_memcpy(vec + pos + n, old_vec + pos, (_length - pos) * sizeof(void*));
+      (void) u_mem_cpy(vec,           old_vec,                  pos  * sizeof(void*));
+      (void) u_mem_cpy(vec + pos + n, old_vec + pos, (_length - pos) * sizeof(void*));
 
       U_FREE_VECTOR(old_vec, old_capacity, void);
       }
@@ -116,7 +116,7 @@ void UVector<void*>::reserve(uint32_t n)
 
       allocate(n);
 
-      if (_length) (void) u_memcpy(vec, old_vec, _length * sizeof(void*));
+      if (_length) (void) u_mem_cpy(vec, old_vec, _length * sizeof(void*));
 
       U_FREE_VECTOR(old_vec, old_capacity, void);
       }
@@ -344,7 +344,7 @@ UString UVector<UString>::join(const char* t, uint32_t tlen)
       {
       sz = (rep = (UStringRep*)vec[i])->size();
 
-      if (sz) (void) u_memcpy(ptr, rep->data(), sz);
+      if (sz) (void) u_mem_cpy(ptr, rep->data(), sz);
 
       if (++i < _length)
          {
@@ -352,7 +352,7 @@ UString UVector<UString>::join(const char* t, uint32_t tlen)
 
          if (tlen)
             {
-            (void) u_memcpy(ptr, t, tlen);
+            (void) u_mem_cpy(ptr, t, tlen);
 
             ptr += tlen;
             }

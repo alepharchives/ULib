@@ -97,7 +97,7 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
             {
             if ((file_ptr + sz) > file_limit) file_ptr = file_mem;
 
-            (void) u_memcpy(file_ptr, tid_buffer, sz);
+            (void) u_mem_cpy(file_ptr, tid_buffer, sz);
 
             file_ptr += sz;
             }
@@ -119,7 +119,7 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
 
          if ((file_ptr + iov[i].iov_len) > file_limit) file_ptr = file_mem;
 
-         (void) u_memcpy(file_ptr, iov[i].iov_base, iov[i].iov_len);
+         (void) u_mem_cpy(file_ptr, iov[i].iov_base, iov[i].iov_len);
 
          file_ptr += iov[i].iov_len;
          }

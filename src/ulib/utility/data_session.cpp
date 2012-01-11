@@ -19,6 +19,8 @@ void UDataSession::fromString(const UString& _data)
 
    U_ASSERT_DIFFERS(_data.empty(), true)
 
+   clear();
+
    data = _data;
 
    istrstream is(_data.data(), _data.size());
@@ -61,6 +63,28 @@ void UDataSession::toStream(ostream& os)
    os.put(' ');
    os << creation;
    os.put(' ');
+}
+
+void UDataSession::fromDataSession(UDataSession& data_session)
+{
+   U_TRACE(0, "UDataSession::fromDataSession(%p)", &data_session)
+
+   clear();
+
+   creation = data_session.creation;
+
+   last_access = u_now->tv_sec;
+}
+
+UDataSession* UDataSession::toDataSession()
+{
+   U_TRACE(0, "UDataSession::toDataSession()")
+
+   UDataSession* ptr = U_NEW(UDataSession);
+
+   ptr->creation = creation;
+
+   U_RETURN_POINTER(ptr,UDataSession);
 }
 
 #ifdef DEBUG

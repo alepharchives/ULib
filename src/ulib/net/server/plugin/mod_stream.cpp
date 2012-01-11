@@ -104,8 +104,6 @@ int UStreamPlugIn::handlerInit()
 
    if (command)
       {
-      UServer_Base::runAsUser();
-
 #  ifdef DEBUG
       int fd_stderr = UFile::creat("/tmp/UStreamPlugIn.err", O_WRONLY | O_APPEND, PERM_FILE);
 #  else
@@ -194,7 +192,7 @@ int UStreamPlugIn::handlerRequest()
       u_http_info.nResponseCode  = HTTP_OK;
       U_http_is_connection_close = U_YES;
 
-      UHTTP::setHTTPResponse(&content_type);
+      UHTTP::setHTTPResponse(&content_type, 0);
 
       csocket->setTcpCork(1U);
 

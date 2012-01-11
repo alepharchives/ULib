@@ -72,7 +72,6 @@ extern U_EXPORT const char* restrict   u_hmac_key;                   /* The load
 extern U_EXPORT uint32_t               u_hmac_keylen;                /* The loaded key length */
 
 U_EXPORT void u_dgst_algoritm(int alg);
-U_EXPORT void u_dgst_hexdump(unsigned char* restrict buf);
 U_EXPORT int  u_dgst_get_algoritm(const char* restrict alg) __pure;
 
 U_EXPORT void u_dgst_init(int alg, const char* restrict key, uint32_t keylen);

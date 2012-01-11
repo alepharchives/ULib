@@ -166,7 +166,7 @@ extern U_EXPORT int     u_printf_fileno;
 extern U_EXPORT int32_t u_printf_string_max_length;
 
 U_EXPORT void        u_printf(                                             const char* restrict format, ...);
-U_EXPORT uint32_t  u_sn_printf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
+U_EXPORT uint32_t u_sn_printf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
 U_EXPORT uint32_t u_vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp);
 
 #ifdef __cplusplus

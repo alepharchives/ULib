@@ -841,7 +841,7 @@ U_NO_EXPORT bool URDB::writev(const struct iovec* _iov, int n, uint32_t _size)
 
    for (int i = 0; i < n; ++i)
       {
-      (void) u_memcpy(journal_ptr, _iov[i].iov_base, _iov[i].iov_len);
+      (void) u_mem_cpy(journal_ptr, _iov[i].iov_base, _iov[i].iov_len);
 
       // NB: Una volta scritti i dati sul journal si cambiano i riferimenti in memoria ai dati
       // e alle chiavi in modo che puntino appunto sul journal mappato in memoria...

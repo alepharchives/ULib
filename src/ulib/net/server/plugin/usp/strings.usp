@@ -20,7 +20,6 @@
    </form>
 
 	<!--#code
-	UHTTPSession session;
 	std::vector<std::string> strings;
 
 	UString add		 = USP_FORM_VALUE(0),

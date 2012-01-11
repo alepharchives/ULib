@@ -701,7 +701,7 @@ UString USocketExt::getIPAddress(int fd, const char* device)
 
    uusockaddr addr;
 
-   (void) u_memcpy(&addr, &ifr.ifr_addr, sizeof(struct sockaddr));
+   (void) u_mem_cpy(&addr, &ifr.ifr_addr, sizeof(struct sockaddr));
 
    U_INTERNAL_ASSERT_EQUALS(addr.psaIP4Addr.sin_family, AF_INET)
 

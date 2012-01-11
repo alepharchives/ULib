@@ -246,10 +246,10 @@ void UCDB::makeAdd(const datum& _key, const datum& _data) // entry presenti nell
    ++ptr_hr;
    char* ptr = (char*)ptr_hr;
 
-   (void) u_memcpy(ptr, _key.dptr, _key.dsize);
+   (void) u_mem_cpy(ptr, _key.dptr, _key.dsize);
    ptr += _key.dsize;
 
-   (void) u_memcpy(ptr, _data.dptr, _data.dsize);
+   (void) u_mem_cpy(ptr, _data.dptr, _data.dsize);
    ptr += _data.dsize;
 
    internal.ptr_cdb->hr = (UCDB::cdb_record_header*)ptr;
@@ -274,7 +274,7 @@ void UCDB::makeAdd(char* src) // entry NON presenti nella cache...
 
    uint32_t sz = sizeof(UCDB::cdb_record_header) + u_get_unaligned(s_hr->klen) + u_get_unaligned(s_hr->dlen);
 
-   (void) u_memcpy((char*)d_hr, (char*)s_hr, sz);
+   (void) u_mem_cpy((char*)d_hr, (char*)s_hr, sz);
 
    U_INTERNAL_DUMP("hr(%p) = { %u, %u }", d_hr, u_get_unaligned(d_hr->klen), u_get_unaligned(d_hr->dlen))
 
@@ -862,13 +862,13 @@ bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, pvPFpvpb func)
 
                   ptr += sizeof(UCDB::cdb_record_header);
 
-                  (void) u_memcpy(ptr, _key->data(), klen);
+                  (void) u_mem_cpy(ptr, _key->data(), klen);
 
                   U_INTERNAL_DUMP("key = %.*S", klen, ptr)
 
                   ptr += klen;
 
-                  (void) u_memcpy(ptr, value->data(), dlen);
+                  (void) u_mem_cpy(ptr, value->data(), dlen);
 
                   U_INTERNAL_DUMP("data = %.*S", dlen, ptr)
 
