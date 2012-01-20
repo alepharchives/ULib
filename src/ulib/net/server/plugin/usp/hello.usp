@@ -1,3 +1,7 @@
+<!--#code
+UString name = USP_FORM_VALUE(0);
+if (name.empty()) name = U_STRING_FROM_CONSTANT("World");
+-->
 <html>
  <head>
   <title>Hello World-application for Ulib</title>
@@ -5,12 +9,6 @@
 
  <body bgcolor="#FFFFFF">
   <img src="/images/ulib_logo.jpg" align="right">
-
-	<!--#code
-	UString name = USP_FORM_VALUE(0);
-
-	if (name.empty()) name = U_STRING_FROM_CONSTANT("World");
-	-->
 
    <h1>Hello <!--#puts name --></h1>
 

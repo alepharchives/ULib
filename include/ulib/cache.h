@@ -180,9 +180,7 @@ protected:
 
       uint32_t value = u_get_unalignedp(x + pos);
 
-      U_INTERNAL_DUMP("value = %u", value)
-
-      U_INTERNAL_ASSERT(value <= (info->size - sizeof(uint32_t)))
+      U_INTERNAL_DUMP("value = %u info->size = %u", value, info->size)
 
       U_RETURN(value);
       }

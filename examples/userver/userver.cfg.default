@@ -131,8 +131,12 @@ userver {
 #
 # URI_REQUEST_CERT_MASK      mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
 #
-# This directive gives greater control over abnormal client request behavior, which may be useful for avoiding some forms of denial-of-service attacks
+# STRICT_TRANSPORT_SECURITY  for this period in seconds use HTTP Strict Transport Security to force client to use secure connections only
 #
+# SESSION_COOKIE_OPTION      eventual params for session cookie (lifetime, path, domain, secure, HttpOnly)	
+# ------------------------------------------------------------------------------------------------------------------------------------------
+# This directive gives greater control over abnormal client request behavior, which may be useful for avoiding some forms of denial-of-service attacks
+# ------------------------------------------------------------------------------------------------------------------------------------------
 # LIMIT_REQUEST_BODY			  restricts the total size of the HTTP request body sent from the client
 # REQUEST_READ_TIMEOUT       set timeout for receiving requests
 # ------------------------------------------------------------------------------------------------------------------------------------------
@@ -169,12 +173,17 @@ mod_http {
 # URI_PROTECTED_ALLOWED_IP  127.0.0.1,10.30.0.0/16
 #
 # URI_REQUEST_CERT_MASK     /wi-auth/cgi-bin/cpe.sh
-
+#
+# STRICT_TRANSPORT_SECURITY 3600
+#
+# SESSION_COOKIE_OPTION  "[\"\" 24 / www.example.com yes yes]"
+# ---------------------------------------------------------------------------
 # This directive gives greater control over abnormal client request behavior,
 # which may be useful for avoiding some forms of denial-of-service attacks
-#
-# LIMIT_REQUEST_BODY			  100K
-# REQUEST_READ_TIMEOUT       30 
+# ---------------------------------------------------------------------------
+# LIMIT_REQUEST_BODY    100K
+# REQUEST_READ_TIMEOUT  30 
+# ---------------------------------------------------------------------------
 }
 
 # -----------------------------------------------------------------------------------------------------

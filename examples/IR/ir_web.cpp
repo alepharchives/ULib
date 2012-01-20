@@ -23,17 +23,27 @@ public:
    virtual ~IRDataSession()
       {
       U_TRACE_UNREGISTER_OBJECT(5, IRDataSession)
+      if (vec) delete vec;
       }
    // method VIRTUAL to define
    virtual void clear()
       {
       U_TRACE(5, "IRDataSession::clear()")
-      if (vec) delete vec;
+      UDataSession::clear();
+      QUERY.clear();
+      FOR_PAGE   = 0;
+      timebuf[0] = 0;
+      if (vec)
+         {
+         delete vec;
+                vec = 0;
+         }
       }
    virtual void fromDataSession(UDataSession& data_session)
       {
       U_TRACE(5, "IRDataSession::fromDataSession(%p)", &data_session)
       UDataSession::fromDataSession(data_session);
+      U_INTERNAL_ASSERT_EQUALS(vec,0)
       vec      = WeightWord::duplicate((*(IRDataSession*)&data_session).vec);
       QUERY    =                       (*(IRDataSession*)&data_session).QUERY;
       FOR_PAGE =                       (*(IRDataSession*)&data_session).FOR_PAGE;
@@ -60,13 +70,8 @@ public:
          >> FOR_PAGE;
       is.get(); // skip ' '
       QUERY.get(is);
-      uint32_t vsize;
-      is >> vsize;
-      is.get(); // skip ' '
-      // load filenames
-      UVector<UString> vtmp(vsize);
-      is >> vtmp;
-      vec = WeightWord::fromVector(vtmp);
+      U_INTERNAL_ASSERT_EQUALS(vec,0)
+      vec = WeightWord::fromStream(is);
       }
    virtual void toStream(ostream& os)
       {
@@ -117,6 +122,10 @@ public:
       }
 #endif
 };
+union uudatasession {
+   UDataSession*  po;
+   IRDataSession* pe;
+};
 static IR* ir;
 static Query* query;
 static UCrono* crono;
@@ -148,10 +157,12 @@ static void usp_end()
    U_INTERNAL_ASSERT_POINTER(query)
    U_INTERNAL_ASSERT_POINTER(crono)
    U_INTERNAL_ASSERT_POINTER(footer)
+#ifdef DEBUG
    delete ir;
    delete query;
    delete crono;
    delete footer;
+#endif
 }
    
 extern "C" {
@@ -163,11 +174,7 @@ extern U_EXPORT int runDynamicPage(UClientImage_Base* client_image);
    if (client_image == 0)         { usp_init();  U_RETURN(0); }
    if (client_image == (void*)-1) {              U_RETURN(0); }
    if (client_image == (void*)-2) { usp_end();   U_RETURN(0); }
-   
-   (void) UClientImage_Base::wbuffer->append(
-      U_CONSTANT_TO_PARAM("<html>\n<head>\n  <title>ULib search engine: a full-text search system for communities</title>\n  <link title=\"Services\" rel=\"stylesheet\" href=\"/css/ir.css\" type=\"text/css\">\n</head>\n<body>\n  <div id=\"estform\" class=\"estform\">\n    <form action=\"ir_web\" method=\"post\" id=\"form_self\" name=\"form_self\">\n\n")
-   );
-   
+      
    const char* ref     = "?ext=help";
 uint32_t num_args   = UHTTP::form_name_value->size() / 2;
 bool form_with_help = false;
@@ -183,8 +190,10 @@ if (UHTTP::isHttpGET())
          }
       else
          {
-         if (UHTTP::getDataSession() == false) return HTTP_BAD_REQUEST;
+         if (UHTTP::getDataSession(0,0,0) == false) return HTTP_BAD_REQUEST;
          UHTTP::num_page_cur = USP_FORM_VALUE(0).strtol();
+         union uudatasession pd = { UHTTP::data_session };
+         UHTTP::num_item_tot = pd.pe->vec->size();
          }
       }
    }
@@ -192,14 +201,14 @@ else if (UHTTP::isHttpPOST())
    {
    UString phrase = USP_FORM_VALUE(0);
    if (num_args != 2 || phrase.empty()) return HTTP_BAD_REQUEST;
-   (void) UHTTP::getDataSession();
+   if (UHTTP::getDataSession(0,0,0) == false) UHTTP::setSessionCookie();
    IR_SESSION.QUERY    = phrase;
    IR_SESSION.FOR_PAGE = UHTTP::num_item_for_page = USP_FORM_VALUE(1).strtol();
    query->clear();
    crono->start();
    query->run(IR_SESSION.QUERY.c_str());
    crono->stop();
-   if ((UHTTP::num_page_tot = WeightWord::size()))
+   if ((UHTTP::num_item_tot = WeightWord::size()))
       {
       UHTTP::num_page_start = 1;
       UHTTP::num_page_end   = UHTTP::num_item_for_page;
@@ -209,15 +218,15 @@ else if (UHTTP::isHttpPOST())
       }
    (void) snprintf(IR_SESSION.timebuf, sizeof(IR_SESSION.timebuf), "%f", crono->getTimeElapsedInSecond());
    UHTTP::num_page_cur = 1;
-   UHTTP::putDataSession();
+   UHTTP::putDataSession(0,0,0,0);
    }
 else
    {
-   return HTTP_BAD_REQUEST;
+   return HTTP_BAD_METHOD;
    }
    
    (void) UClientImage_Base::wbuffer->append(
-      U_CONSTANT_TO_PARAM("\n\n      <div class=\"form_navi\">\n        <a href=\"")
+      U_CONSTANT_TO_PARAM("<html>\n<head>\n  <title>ULib search engine: a full-text search system for communities</title>\n  <link title=\"Services\" rel=\"stylesheet\" href=\"/css/ir.css\" type=\"text/css\">\n</head>\n<body>\n  <div id=\"estform\" class=\"estform\">\n    <form action=\"ir_web\" method=\"post\" id=\"form_self\" name=\"form_self\">\n\n      <div class=\"form_navi\">\n        <a href=\"")
    );
    
    (void) UClientImage_Base::wbuffer->append(ref);
@@ -229,14 +238,14 @@ else
    if (form_with_help) {
    
    (void) UClientImage_Base::wbuffer->append(
-      U_CONSTANT_TO_PARAM("\n\n\t<div class=\"help\">\n\t <h1 class=\"title\">Help</h1>\n\n\t <h2>What is This?</h2>\n\n\t <p>This is a full-text search system. You can search for documents including some specified words.</p>\n\n\t <h2>How to Use</h2>\n\n\t <p>Input search phrase into the field at the top of the page. For example, if you search for documents including \"computer\", input the\n\t following.</p>\n\t <pre>computer</pre>\n\n\t <p>If you search for documents including both of \"network\" and \"socket\", input the following.</p>\n\t <pre>network socket</pre>\n\n\t <p>It is the same as the following.</p>\n\t <pre>network AND socket</pre>\n\n\t <p>If you search for documents including \"network\" followed by \"socket\", input the following.</p>\n\t <pre>\"network socket\"</pre>\n\n\t <p>If you search for documents including one or both of \"network\" and \"socket\", input the following.</p>\n\t <pre>network OR socket</pre>\n\n\t <p>If you search for documents including \"network\" but without \"socket\", input the following.</p>\n\t <pre>network AND NOT socket</pre>\n\n\t <p>For more complex query, you can use \"<code>(</code>\". Note that the priority of \"<code>(</code>\" is higher than that of \"<code>AND</code>\",\n\t \"<code>OR</code>\" and \"<code>NOT</code>\". So, the following is to search for documents including one of \"F1\", \"F-1\", \"Formula One\", and including\n\t one of \"champion\" and \"victory\".</p>\n\t <pre>(F1 OR F-1 OR \"Formula One\") AND (champion OR victory)</pre>\n\n\t <h2>You can use DOS wildcard characters</h2>\n\n\t <p>If you search for documents including some words beginning with \"inter\", input the following.</p>\n\t <pre>inter*</pre>\n\n\t <p>If you search for documents including some words ending with \"sphere\", input the following.</p>\n\t <pre>*sphere</pre>\n\n\t <p>If you search for documents matching some words matching \"?n*able\" (unable, unavoidable, inevitable, ...), input the following.</p>\n\t <pre>?n*able</pre>\n\n\t <h2>Other Faculties</h2>\n\n\t <p>\"<code>[...] per page</code>\" specifies the number of shown documents per page. If documents over one page correspond, you can move to another\n\t page via anchors of \"<code>PREV</code>\" and \"<code>NEXT</code>\" at the bottom of the page.</p>\n\n\t <h2>Information</h2>\n\n\t <p>See <a href=\"http://www.unirel.com/\">the project site</a> for more detail.</p>\n\t</div>\n\n")
+      U_CONSTANT_TO_PARAM("\t<div class=\"help\">\n\t <h1 class=\"title\">Help</h1>\n\n\t <h2>What is This?</h2>\n\n\t <p>This is a full-text search system. You can search for documents including some specified words.</p>\n\n\t <h2>How to Use</h2>\n\n\t <p>Input search phrase into the field at the top of the page. For example, if you search for documents including \"computer\", input the\n\t following.</p>\n\t <pre>computer</pre>\n\n\t <p>If you search for documents including both of \"network\" and \"socket\", input the following.</p>\n\t <pre>network socket</pre>\n\n\t <p>It is the same as the following.</p>\n\t <pre>network AND socket</pre>\n\n\t <p>If you search for documents including \"network\" followed by \"socket\", input the following.</p>\n\t <pre>\"network socket\"</pre>\n\n\t <p>If you search for documents including one or both of \"network\" and \"socket\", input the following.</p>\n\t <pre>network OR socket</pre>\n\n\t <p>If you search for documents including \"network\" but without \"socket\", input the following.</p>\n\t <pre>network AND NOT socket</pre>\n\n\t <p>For more complex query, you can use \"<code>(</code>\". Note that the priority of \"<code>(</code>\" is higher than that of \"<code>AND</code>\",\n\t \"<code>OR</code>\" and \"<code>NOT</code>\". So, the following is to search for documents including one of \"F1\", \"F-1\", \"Formula One\", and including\n\t one of \"champion\" and \"victory\".</p>\n\t <pre>(F1 OR F-1 OR \"Formula One\") AND (champion OR victory)</pre>\n\n\t <h2>You can use DOS wildcard characters</h2>\n\n\t <p>If you search for documents including some words beginning with \"inter\", input the following.</p>\n\t <pre>inter*</pre>\n\n\t <p>If you search for documents including some words ending with \"sphere\", input the following.</p>\n\t <pre>*sphere</pre>\n\n\t <p>If you search for documents matching some words matching \"?n*able\" (unable, unavoidable, inevitable, ...), input the following.</p>\n\t <pre>?n*able</pre>\n\n\t <h2>Other Faculties</h2>\n\n\t <p>\"<code>[...] per page</code>\" specifies the number of shown documents per page. If documents over one page correspond, you can move to another\n\t page via anchors of \"<code>PREV</code>\" and \"<code>NEXT</code>\" at the bottom of the page.</p>\n\n\t <h2>Information</h2>\n\n\t <p>See <a href=\"http://www.unirel.com/\">the project site</a> for more detail.</p>\n\t</div>\n\n")
    );
    
    } else {
    if (num_args == 0) {
    
    (void) UClientImage_Base::wbuffer->append(
-      U_CONSTANT_TO_PARAM("\n\n\t<div class=\"logo\">\n\t\t<h1 class=\"title\">ULib search engine</h1>\n\t\t<div class=\"caption\">a full-text search system for communities</div>\n\t</div>\n\n")
+      U_CONSTANT_TO_PARAM("\t<div class=\"logo\">\n\t\t<h1 class=\"title\">ULib search engine</h1>\n\t\t<div class=\"caption\">a full-text search system for communities</div>\n\t</div>\n\n")
    );
    
    } else {
@@ -245,11 +254,11 @@ else
                  "  <div class=\"resinfo\">\n"
                  "  Results of <strong>%u</strong> - <strong>%u</strong> of about <strong>%u</strong> for <strong>%s</strong> (%s sec.)\n"
                  "  </div>\n",
-                 UHTTP::num_page_start, UHTTP::num_page_end, UHTTP::num_page_tot, IR_SESSION.QUERY.data(), IR_SESSION.timebuf);
-      if (UHTTP::num_page_tot == 0) {
+                 UHTTP::num_page_start, UHTTP::num_page_end, UHTTP::num_item_tot, IR_SESSION.QUERY.data(), IR_SESSION.timebuf);
+      if (UHTTP::num_item_tot == 0) {
    
    (void) UClientImage_Base::wbuffer->append(
-      U_CONSTANT_TO_PARAM("\n\t\t\t<p class=\"note\">Your search did not match any documents.</p>\n")
+      U_CONSTANT_TO_PARAM("\t\t\t<p class=\"note\">Your search did not match any documents.</p>\n")
    );
    
    } else {
@@ -275,14 +284,15 @@ else
 }
    
    (void) UClientImage_Base::wbuffer->append(
-      U_CONSTANT_TO_PARAM("\n\n  <div id=\"estinfo\" class=\"estinfo\">\n    Powered by <a href=\"http://www.unirel.com/\">ULib search engine</a> ")
+      U_CONSTANT_TO_PARAM("  <div id=\"estinfo\" class=\"estinfo\">\n    Powered by <a href=\"http://www.unirel.com/\">ULib search engine</a> ")
    );
    
    (void) UClientImage_Base::wbuffer->append(*footer);
    
    (void) UClientImage_Base::wbuffer->append(
-      U_CONSTANT_TO_PARAM("\n  </div>\n</body>\n</html>")
+      U_CONSTANT_TO_PARAM("  </div>\n</body>\n</html>")
    );
       
-   U_RETURN(0);
+   
+   U_RETURN(200);
 } }

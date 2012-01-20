@@ -175,7 +175,7 @@ public:
       {
       U_TRACE(0, "UCDB::cdb_hash(%.*S,%u)", tlen, t, tlen)
 
-      uint32_t h = u_hash((unsigned char*)t, tlen, ignore_case);
+      uint32_t h = u_cdb_hash((unsigned char*)t, tlen, ignore_case);
 
       U_RETURN(h);
       }

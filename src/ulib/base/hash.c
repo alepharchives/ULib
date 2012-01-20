@@ -266,22 +266,6 @@ uint32_t u_hash(unsigned char* k, uint32_t length, bool ignore_case)
 
    return c;
 }
-
-// the famous DJB hash function for strings
-
-uint32_t u_hash(unsigned char* t, uint32_t tlen, bool ignore_case)
-{
-   uint32_t h = 5381;
-
-   U_INTERNAL_TRACE("u_hash(%.*s,%u,%d)", U_min(tlen,128), t, tlen, ignore_case)
-
-   if (ignore_case) while (tlen--) h = ((h << 5) + h) + u_tolower(*t++);
-   else             while (tlen--) h = ((h << 5) + h) +           *t++;
-
-   h &= ~(1 << 31); // strip the highest bit
-
-   return h;
-}
 */
 
 /* 64 bit Fowler/Noll/Vo-0 hash code
@@ -406,7 +390,23 @@ uint64_t u_hash64(unsigned char* bp, uint32_t len)
 }
 */
 
+/* the famous DJB hash function for strings */
+
+uint32_t __pure u_cdb_hash(unsigned char* restrict t, uint32_t tlen, bool ignore_case)
+{
+   uint32_t h = 5381;
+
+   U_INTERNAL_TRACE("u_cdb_hash(%.*s,%u,%d)", U_min(tlen,128), t, tlen, ignore_case)
+
+   if (ignore_case) while (tlen--) h = ((h << 5) + h) ^ u_tolower(*t++);
+   else             while (tlen--) h = ((h << 5) + h) ^           *t++;
+
+   return h;
+}
+
 /* MurmurHash3 was written by Austin Appleby */
+
+uint32_t u_seed_hash = 0xc86b14f7;
 
 static inline uint32_t rotl32(uint32_t x, int8_t r) { return (x << r) | (x >> (32 - r)); }
 
@@ -417,7 +417,7 @@ uint32_t __pure u_hash(unsigned char* restrict bp, uint32_t len, bool ignore_cas
    const uint8_t* data = (const uint8_t*)bp;
 
    uint32_t k1;
-   uint32_t h1 = 0xc86b14f7; /* seed */
+   uint32_t h1 = u_seed_hash; /* seed */
    uint32_t c1 = 0xcc9e2d51;
    uint32_t c2 = 0x1b873593;
 

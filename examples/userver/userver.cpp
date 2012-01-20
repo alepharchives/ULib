@@ -50,6 +50,12 @@ public:
 
       if (UApplication::isOptions()) cfg_str = opt['c'];
 
+      // The "hash seed" is a feature to perturb the results to avoid "algorithmic complexity attacks"
+      // ---------------------------------------------------------------------------------------------
+      // http://lwn.net/Articles/474365/
+
+      u_init_ulib_seed_hash();
+
       // manage file configuration
 
       if (cfg_str.empty()) cfg_str = U_STRING_FROM_CONSTANT(U_SYSCONFDIR "/userver.cfg");
@@ -96,7 +102,7 @@ public:
       //
       // PREFORK_CHILD  number of child server processes created at startup ( 0 - serialize, no forking
       //                                                                      1 - classic, forking after accept client)
-      //                                                                     >1 - pool of process serialize plus monitoring   process)
+      //                                                                     >1 - pool of process serialize plus monitoring process)
       // ---------------------------------------------------------------------------------------------------------------------------------------
 
       (void) cfg.open(cfg_str);
@@ -108,7 +114,7 @@ public:
 
 private:
    Server* server;
-   UFileConfig cfg;
+   UFileConfig cfg; // NB: we put this here to avoid unnecessary destructor at runtime...
 };
 
 U_MAIN(Application)

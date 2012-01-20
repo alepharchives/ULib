@@ -606,7 +606,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                if (pathname.empty())
                   {
-                  if (name == *str_cmd) x = UCommand::outputCommand(value, 0, -1, UServices::getDevNull());
+                  if (name == *str_cmd) *UClientImage_Base::wbuffer = UCommand::outputCommand(value, 0, -1, UServices::getDevNull());
                   else
                      {
                      UHTTP::file->setPath(value, &environment);
@@ -619,60 +619,52 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                         U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
 
-                        if (name == *str_servlet)
-                           {
-                           UHTTP::manageHTTPServletRequest();
-
-                           x = *UClientImage_Base::wbuffer;
-                           }
-                        else if (name == *str_cgi)
-                           {
-                           (void) UHTTP::processCGIRequest((UCommand*)0, &environment, false, false);
-
-                           if (bset)
-                              {
-                              // NB: check if there is an alternative response to elaborate from #set...
-
-                              UString rheader = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_HEADER"), UClientImage_Base::wbuffer);
-
-                              U_INTERNAL_DUMP("response_header(%u) = %.*S", rheader.size(), U_STRING_TO_TRACE(rheader))
-
-                              if (rheader.empty() == false)
-                                 {
-                                 cgi_output = true;
-
-                                 size = rheader.size();
-
-                                 UString _tmp(size);
-
-                                 (void) UEscape::decode(rheader, _tmp);
-
-                                 // NB: we cannot use directly the body attribute because is bounded to the param content...
-
-                                 UString rbody = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_BODY"), UClientImage_Base::wbuffer);
-
-                                 U_INTERNAL_DUMP("response_body(%u) = %.*S", rbody.size(), U_STRING_TO_TRACE(rbody))
-
-                                 if (rbody.empty()) (void) header.insert(0, _tmp);
-                                 else
-                                    {
-                                    body = rbody;
-
-                                    // NB: with an alternative body response we cannot use the cached header response...
-
-                                    (void) header.replace(_tmp);
-
-                                    U_RETURN_STRING(UString::getStringNull());
-                                    }
-
-                                 UClientImage_Base::wbuffer->erase(0, U_CONSTANT_SIZE("HTTP_RESPONSE_HEADER=") + size + 3);
-                                 }
-                              }
-
-                           x = *UClientImage_Base::wbuffer;
-                           }
+                             if (name == *str_cgi) (void) UHTTP::processCGIRequest((UCommand*)0, &environment, false, false);
+                        else if (name == *str_servlet)    UHTTP::manageHTTPServletRequest();
                         }
                      }
+
+                  if (bset)
+                     {
+                     // NB: check if there is an alternative response to elaborate from #set...
+
+                     UString rheader = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_HEADER"), UClientImage_Base::wbuffer);
+
+                     U_INTERNAL_DUMP("response_header(%u) = %.*S", rheader.size(), U_STRING_TO_TRACE(rheader))
+
+                     if (rheader.empty() == false)
+                        {
+                        cgi_output = true;
+
+                        size = rheader.size();
+
+                        UString _tmp(size);
+
+                        (void) UEscape::decode(rheader, _tmp);
+
+                        // NB: we cannot use directly the body attribute because is bounded to the param content...
+
+                        UString rbody = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_BODY"), UClientImage_Base::wbuffer);
+
+                        U_INTERNAL_DUMP("response_body(%u) = %.*S", rbody.size(), U_STRING_TO_TRACE(rbody))
+
+                        if (rbody.empty()) (void) header.insert(0, _tmp);
+                        else
+                           {
+                           body = rbody;
+
+                           // NB: with an alternative body response we cannot use the cached header response...
+
+                           (void) header.replace(_tmp);
+
+                           U_RETURN_STRING(UString::getStringNull());
+                           }
+
+                        UClientImage_Base::wbuffer->erase(0, U_CONSTANT_SIZE("HTTP_RESPONSE_HEADER=") + size + 3);
+                        }
+                     }
+
+                  x = *UClientImage_Base::wbuffer;
                   }
                else // pathname.empty()...
                   {

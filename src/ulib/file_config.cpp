@@ -348,29 +348,6 @@ bool UFileConfig::load(const char* section, uint32_t len)
    U_RETURN(result);
 }
 
-bool UFileConfig::readBoolean(const UString& key)
-{
-   U_TRACE(0, "UFileConfig::readBoolean(%.*S)", U_STRING_TO_TRACE(key))
-
-   UString value = table[key];
-
-   if (value.empty() == false)
-      {
-      char c = value.first_char();
-
-      if (          c  == '1' ||
-          u_toupper(c) == 'Y')
-         {
-         U_RETURN(true);
-         }
-
-      U_INTERNAL_ASSERT(          c  == '0' ||
-                        u_toupper(c) == 'N')
-      }
-
-   U_RETURN(false);
-}
-
 bool UFileConfig::loadINI()
 {
    U_TRACE(0, "UFileConfig::loadINI()")

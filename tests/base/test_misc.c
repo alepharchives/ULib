@@ -103,10 +103,9 @@ main (int argc, char* argv[])
    if (strcmp(buf, buffer)) goto failed;
 
 #ifdef DEBUG
-   sprintf(buf, "%016X 70 69 70 70 | 6F FF 70 69 | 70 70 6F FF | 70 69 70 70  pippo.pippo.pipp\n", (unsigned int)bytes);
-   ptr = buf + strlen(buf);
-   sprintf(ptr, "%016X 6F FF 70 69 | 70 70 6F FF |             |              o.pippo.        \n", (unsigned int)bytes + 16);
-   u_sn_printf(buffer, 4096, "%M", bytes, sizeof(bytes));
+   sprintf(buf, "%s", "0000000|70 69 70 70 6f ff 70 69:70 70 6f ff 70 69 70 70 |pippo.pippo.pipp\n"
+                      "0000010|6f ff 70 69 70 70 6f ff:                        |o.pippo.        \n");
+   u_sn_printf(buffer, 4096, "%M", sizeof(bytes), bytes);
    if (strcmp(buf, buffer)) goto failed;
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN

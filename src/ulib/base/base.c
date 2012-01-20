@@ -15,6 +15,7 @@
 #define DEBUG_DEBUG
 */
 
+#include <ulib/base/hash.h>
 #include <ulib/base/error.h>
 #include <ulib/base/utility.h>
 #include <ulib/base/coder/escape.h>
@@ -194,6 +195,20 @@ void u_setPid(void)
    *--u_pid_str = pid_copy + '0';
 
    u_pid_str_len = buffer + sizeof(buffer) - u_pid_str;
+}
+
+void u_init_ulib_seed_hash(void)
+{
+   U_INTERNAL_TRACE("u_init_ulib_seed_hash()")
+
+   /* The "hash seed" is a feature to perturb the results to avoid "algorithmic complexity attacks"
+    *
+    * http://lwn.net/Articles/474365/
+    */
+
+   u_gettimeofday();
+
+   u_seed_hash = u_random(u_now->tv_usec);
 }
 
 void u_init_ulib_username(void)
@@ -1783,20 +1798,21 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             char text[16];
             unsigned char c;
+            unsigned int offset = 0;
             char* restrict start_buffer = bp;
             int i, j, line, remain, remain_flag = 16;
 
-            cp     = VA_ARG(char* restrict);
             n      = VA_ARG(int);
+            cp     = VA_ARG(char* restrict);
             line   = n / 16;
             remain = n % 16;
 
-            for (i = 0; i < line; ++i)
+            for (i = 0; i < line; ++i, offset += 16)
                {
 iteration:
-               (void) sprintf(bp, "%016lX ", ptr2int(cp));
+               (void) sprintf(bp, "%07X|", offset);
 
-               bp += 17;
+               bp += 8;
 
                for (j = 0; j < 16; ++j)
                   {
@@ -1804,31 +1820,22 @@ iteration:
                      {
                      c = *cp++;
 
-                     *bp++ = u_hex_upper[((c >> 4) & 0x0F)];
-                     *bp++ = u_hex_upper[( c       & 0x0F)];
+                     *bp++   = u_hex_lower[((c >> 4) & 0x0F)];
+                     *bp++   = u_hex_lower[( c       & 0x0F)];
 
                      text[j] = (isprint(c) ? c : '.');
                      }
                   else
                      {
-                     *bp++ = ' ';
-                     *bp++ = ' ';
-
+                     *bp++   = ' ';
+                     *bp++   = ' ';
                      text[j] = ' ';
                      }
 
-                  *bp++ = ' ';
-
-                  if ((j == 3) ||
-                      (j == 7) ||
-                      (j == 11))
-                     {
-                     *bp++ = '|';
-                     *bp++ = ' ';
-                     }
+                  *bp++ = (j == 7 ? ':' : ' ');
                   }
 
-                                        *bp++ = ' ';
+                                        *bp++ = '|';
                for (j = 0; j < 16; ++j) *bp++ = text[j];
                                         *bp++ = '\n';
                }

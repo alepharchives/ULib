@@ -10,7 +10,7 @@
 if (UHTTP::isHttpGET())
 {
 -->
-  <form action="/usp/example_form.usp" method="post">
+  <form action="example_form" method="post">
     <p>First Name <input name="name" type="text" class="inputbox" title="Enter your first name"></p>
     <p>Last Name <input name="last" type="text" class="inputbox" title="Enter your last name"></p>
     <p>Email <input name="email" type="text" class="inputbox" title="Enter your email address"></p>

@@ -66,21 +66,24 @@ UString*    UHTTP::cbuffer;
 UString*    UHTTP::geoip;
 UString*    UHTTP::tmpdir;
 UString*    UHTTP::keyID;
-UString*    UHTTP::cookie;
 UString*    UHTTP::qcontent;
 UString*    UHTTP::htpasswd;
 UString*    UHTTP::htdigest;
 UString*    UHTTP::pathname;
 UString*    UHTTP::xpathname;
 UString*    UHTTP::ssi_alias;
+UString*    UHTTP::set_cookie;
 UString*    UHTTP::request_uri;
 UString*    UHTTP::fcgi_uri_mask;
 UString*    UHTTP::scgi_uri_mask;
+UString*    UHTTP::cookie_option;
 UString*    UHTTP::cache_file_mask;
 UString*    UHTTP::uri_protected_mask;
-uint32_t    UHTTP::sid_counter;
+uint32_t    UHTTP::sid_counter_gen;
+uint32_t    UHTTP::sid_counter_cur;
 uint32_t    UHTTP::range_size;
 uint32_t    UHTTP::range_start;
+uint32_t    UHTTP::sts_age_seconds; // for this period in seconds use HTTP Strict Transport Security to force client to use secure connections only
 uint32_t    UHTTP::request_read_timeout;
 uint32_t    UHTTP::min_size_for_sendfile; // NB: for major size it is better to use sendfile()...
 uint32_t    UHTTP::limit_request_body = U_STRING_LIMIT;
@@ -196,7 +199,7 @@ void UHTTP::str_allocate()
 
 // HTML Pagination
 
-uint32_t UHTTP::num_page_tot;
+uint32_t UHTTP::num_item_tot;
 uint32_t UHTTP::num_page_cur;
 uint32_t UHTTP::num_page_end;    // modified by getLinkPagination()...
 uint32_t UHTTP::num_page_start;  // modified by getLinkPagination()...
@@ -206,17 +209,17 @@ UString UHTTP::getLinkPagination()
 {
    U_TRACE(0, "UHTTP::getLinkPagination()")
 
-   U_INTERNAL_DUMP("num_page_cur = %u num_page_tot = %u num_page_start = %u num_page_end = %u num_item_for_page = %u",
-                    num_page_cur,     num_page_tot,     num_page_start,     num_page_end,     num_item_for_page)
+   U_INTERNAL_DUMP("num_page_cur = %u num_item_tot = %u num_page_start = %u num_page_end = %u num_item_for_page = %u",
+                    num_page_cur,     num_item_tot,     num_page_start,     num_page_end,     num_item_for_page)
 
    U_INTERNAL_ASSERT_MAJOR(num_item_for_page,0)
 
    UString link(U_CAPACITY);
 
-   if (num_page_tot <= num_item_for_page)
+   if (num_item_tot <= num_item_for_page)
       {
-      num_page_end   =  num_page_tot;
-      num_page_start = (num_page_tot > 0);
+      num_page_end   =  num_item_tot;
+      num_page_start = (num_item_tot > 0);
 
       (void) link.assign(U_CONSTANT_TO_PARAM("<span class=\"void\">PREV</span><span class=\"void\">NEXT</span>"));
       }
@@ -224,9 +227,9 @@ UString UHTTP::getLinkPagination()
       {
       uint32_t pagina_precedente =  num_page_cur - 1,
                pagina_successiva =  num_page_cur + 1,
-               i, tot_pagine     = (num_page_tot / num_item_for_page);
+               i, tot_pagine     = (num_item_tot / num_item_for_page);
 
-      if ((num_page_tot % num_item_for_page) != 0) ++tot_pagine;
+      if ((num_item_tot % num_item_for_page) != 0) ++tot_pagine;
 
       uint32_t    ultima_pagina =    tot_pagine - 1,
                penultima_pagina = ultima_pagina - 1;
@@ -289,7 +292,7 @@ UString UHTTP::getLinkPagination()
 
       if (num_page_cur == tot_pagine)
          {
-         num_page_end = num_page_tot;
+         num_page_end = num_item_tot;
 
          (void) link.append(U_CONSTANT_TO_PARAM("<span class=\"void\">NEXT</span>"));
          }
@@ -301,8 +304,8 @@ UString UHTTP::getLinkPagination()
          }
       }
 
-   U_INTERNAL_DUMP("num_page_cur = %u num_page_tot = %u num_page_start = %u num_page_end = %u num_item_for_page = %u",
-                    num_page_cur,     num_page_tot,     num_page_start,     num_page_end,     num_item_for_page)
+   U_INTERNAL_DUMP("num_page_cur = %u num_item_tot = %u num_page_start = %u num_page_end = %u num_item_for_page = %u",
+                    num_page_cur,     num_item_tot,     num_page_start,     num_page_end,     num_item_for_page)
 
    U_RETURN_STRING(link);
 }
@@ -649,6 +652,7 @@ void UHTTP::ctor()
    U_INTERNAL_ASSERT_EQUALS(qcontent,0)
    U_INTERNAL_ASSERT_EQUALS(pathname,0)
    U_INTERNAL_ASSERT_EQUALS(formMulti,0)
+   U_INTERNAL_ASSERT_EQUALS(set_cookie,0)
    U_INTERNAL_ASSERT_EQUALS(request_uri,0)
    U_INTERNAL_ASSERT_EQUALS(form_name_value,0)
 
@@ -659,16 +663,17 @@ void UHTTP::ctor()
    keyID           = U_NEW(UString);
    alias           = U_NEW(UString);
    geoip           = U_NEW(UString(U_CAPACITY));
-   cookie          = U_NEW(UString);
    tmpdir          = U_NEW(UString(U_PATH_MAX));
    cbuffer         = U_NEW(UString);
    qcontent        = U_NEW(UString);
    pathname        = U_NEW(UString(U_CAPACITY));
    formMulti       = U_NEW(UMimeMultipart);
    xpathname       = U_NEW(UString);
+   set_cookie      = U_NEW(UString);
    request_uri     = U_NEW(UString);
    form_name_value = U_NEW(UVector<UString>);
 
+   if (cookie_option   == 0) cookie_option   = U_NEW(U_STRING_FROM_CONSTANT("[\"\" 0]"));
    if (cache_file_mask == 0) cache_file_mask = U_NEW(U_STRING_FROM_CONSTANT("*.css|*.js|*.*html|*.png|*.gif|*.jpg"));
 
    U_INTERNAL_ASSERT_POINTER(USocket::str_host)
@@ -964,6 +969,7 @@ void UHTTP::dtor()
    U_TRACE(0, "UHTTP::dtor()")
 
    if (ssi_alias)          delete ssi_alias;
+   if (cookie_option)      delete cookie_option;
    if (cache_file_mask)    delete cache_file_mask;
    if (uri_protected_mask) delete uri_protected_mask;
 
@@ -977,12 +983,12 @@ void UHTTP::dtor()
       delete alias;
       delete geoip;
       delete tmpdir;
-      delete cookie;
       delete cbuffer;
       delete qcontent;
       delete pathname;
       delete xpathname;
       delete formMulti;
+      delete set_cookie;
       delete request_uri;
       delete form_name_value;
 
@@ -994,8 +1000,6 @@ void UHTTP::dtor()
       // HTTP SESSION
 
       if (db_session) deleteSession();
-
-      if (data_session) delete data_session;
 
       // CACHE FILE SYSTEM
 
@@ -2318,6 +2322,7 @@ void UHTTP::manageHTTPRequestCache()
    if (cbuffer->isNull() == false) clearHTTPRequestCache();
 
    if (isHttpGETorHEAD()               &&
+       u_http_info.cookie_len == 0     && // NB: session mean no stateless...
        u_http_info.nResponseCode < 300 &&
        UClientImage_Base::isPipeline() == false)
       {
@@ -2513,199 +2518,278 @@ void UHTTP::getHTTPInfo(const UString& request, UString& method, UString& uri)
    (void)    uri.assign(U_HTTP_URI_QUERY_TO_PARAM);
 }
 
-// param: "[ data expire path domain secure HttpOnly ]"
-// -----------------------------------------------------------------------------------------------------------------------------------
-// string -- key_id or data to put in cookie    -- must
-// int    -- lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
-// string -- path where the cookie can be used  --  opt
-// string -- domain which can read the cookie   --  opt
-// bool   -- secure mode                        --  opt
-// bool   -- only allow HTTP usage              --  opt
-// -----------------------------------------------------------------------------------------------------------------------------------
-// RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
+/*
+Set-Cookie: NAME=VALUE; expires=DATE; path=PATH; domain=DOMAIN_NAME; secure
+
+NAME=VALUE
+------------------------------------------------------------------------------------------------------------------------------------
+This string is a sequence of characters excluding semi-colon, comma and white space. If there is a need to place such data
+in the name or value, some encoding method such as URL style %XX encoding is recommended, though no encoding is defined or required.
+This is the only required attribute on the Set-Cookie header.
+------------------------------------------------------------------------------------------------------------------------------------
+
+expires=DATE
+------------------------------------------------------------------------------------------------------------------------------------
+The expires attribute specifies a date string that defines the valid life time of that cookie. Once the expiration date has been
+reached, the cookie will no longer be stored or given out.
+The date string is formatted as: Wdy, DD-Mon-YYYY HH:MM:SS GMT
+expires is an optional attribute. If not specified, the cookie will expire when the user's session ends.
+
+Note: There is a bug in Netscape Navigator version 1.1 and earlier. Only cookies whose path attribute is set explicitly to "/" will
+be properly saved between sessions if they have an expires attribute.
+------------------------------------------------------------------------------------------------------------------------------------
+
+domain=DOMAIN_NAME
+------------------------------------------------------------------------------------------------------------------------------------
+When searching the cookie list for valid cookies, a comparison of the domain attributes of the cookie is made with the Internet
+domain name of the host from which the URL will be fetched. If there is a tail match, then the cookie will go through path matching
+to see if it should be sent. "Tail matching" means that domain attribute is matched against the tail of the fully qualified domain
+name of the host. A domain attribute of "acme.com" would match host names "anvil.acme.com" as well as "shipping.crate.acme.com".
+
+Only hosts within the specified domain can set a cookie for a domain and domains must have at least two (2) or three (3) periods in
+them to prevent domains of the form: ".com", ".edu", and "va.us". Any domain that fails within one of the seven special top level
+domains listed below only require two periods. Any other domain requires at least three. The seven special top level domains are:
+"COM", "EDU", "NET", "ORG", "GOV", "MIL", and "INT".
+
+The default value of domain is the host name of the server which generated the cookie response.
+------------------------------------------------------------------------------------------------------------------------------------
+
+path=PATH
+------------------------------------------------------------------------------------------------------------------------------------
+The path attribute is used to specify the subset of URLs in a domain for which the cookie is valid. If a cookie has already passed
+domain matching, then the pathname component of the URL is compared with the path attribute, and if there is a match, the cookie is
+considered valid and is sent along with the URL request. The path "/foo" would match "/foobar" and "/foo/bar.html". The path "/" is
+the most general path.
+
+If the path is not specified, it as assumed to be the same path as the document being described by the header which contains the
+cookie.
+
+secure
+------------------------------------------------------------------------------------------------------------------------------------
+If a cookie is marked secure, it will only be transmitted if the communications channel with the host is a secure one. Currently
+this means that secure cookies will only be sent to HTTPS (HTTP over SSL) servers.
+
+If secure is not specified, a cookie is considered safe to be sent in the clear over unsecured channels. 
+------------------------------------------------------------------------------------------------------------------------------------
+
+HttpOnly cookies are a Microsoft extension to the cookie standard. The idea is that cookies marked as httpOnly cannot be accessed
+from JavaScript. This was implemented to stop cookie stealing through XSS vulnerabilities. This is unlike many people believe not
+a way to stop XSS vulnerabilities, but a way to stop one of the possible attacks (cookie stealing) that are possible through XSS.
+*/
 
 void UHTTP::setHTTPCookie(const UString& param)
 {
    U_TRACE(0, "UHTTP::setHTTPCookie(%.*S)", U_STRING_TO_TRACE(param))
 
-   /*
-   Set-Cookie: NAME=VALUE; expires=DATE; path=PATH; domain=DOMAIN_NAME; secure
-
-   NAME=VALUE
-   ------------------------------------------------------------------------------------------------------------------------------------
-   This string is a sequence of characters excluding semi-colon, comma and white space. If there is a need to place such data
-   in the name or value, some encoding method such as URL style %XX encoding is recommended, though no encoding is defined or required.
-   This is the only required attribute on the Set-Cookie header.
-   ------------------------------------------------------------------------------------------------------------------------------------
-
-   expires=DATE
-   ------------------------------------------------------------------------------------------------------------------------------------
-   The expires attribute specifies a date string that defines the valid life time of that cookie. Once the expiration date has been
-   reached, the cookie will no longer be stored or given out.
-   The date string is formatted as: Wdy, DD-Mon-YYYY HH:MM:SS GMT
-   expires is an optional attribute. If not specified, the cookie will expire when the user's session ends.
-
-   Note: There is a bug in Netscape Navigator version 1.1 and earlier. Only cookies whose path attribute is set explicitly to "/" will
-   be properly saved between sessions if they have an expires attribute.
-   ------------------------------------------------------------------------------------------------------------------------------------
-
-   domain=DOMAIN_NAME
-   ------------------------------------------------------------------------------------------------------------------------------------
-   When searching the cookie list for valid cookies, a comparison of the domain attributes of the cookie is made with the Internet
-   domain name of the host from which the URL will be fetched. If there is a tail match, then the cookie will go through path matching
-   to see if it should be sent. "Tail matching" means that domain attribute is matched against the tail of the fully qualified domain
-   name of the host. A domain attribute of "acme.com" would match host names "anvil.acme.com" as well as "shipping.crate.acme.com".
-
-   Only hosts within the specified domain can set a cookie for a domain and domains must have at least two (2) or three (3) periods in
-   them to prevent domains of the form: ".com", ".edu", and "va.us". Any domain that fails within one of the seven special top level
-   domains listed below only require two periods. Any other domain requires at least three. The seven special top level domains are:
-   "COM", "EDU", "NET", "ORG", "GOV", "MIL", and "INT".
-
-   The default value of domain is the host name of the server which generated the cookie response.
-   ------------------------------------------------------------------------------------------------------------------------------------
-
-   path=PATH
-   ------------------------------------------------------------------------------------------------------------------------------------
-   The path attribute is used to specify the subset of URLs in a domain for which the cookie is valid. If a cookie has already passed
-   domain matching, then the pathname component of the URL is compared with the path attribute, and if there is a match, the cookie is
-   considered valid and is sent along with the URL request. The path "/foo" would match "/foobar" and "/foo/bar.html". The path "/" is
-   the most general path.
-
-   If the path is not specified, it as assumed to be the same path as the document being described by the header which contains the
-   cookie.
-
-   secure
-   ------------------------------------------------------------------------------------------------------------------------------------
-   If a cookie is marked secure, it will only be transmitted if the communications channel with the host is a secure one. Currently
-   this means that secure cookies will only be sent to HTTPS (HTTP over SSL) servers.
-
-   If secure is not specified, a cookie is considered safe to be sent in the clear over unsecured channels. 
-   ------------------------------------------------------------------------------------------------------------------------------------
-
-   HttpOnly cookies are a Microsoft extension to the cookie standard. The idea is that cookies marked as httpOnly cannot be accessed
-   from JavaScript. This was implemented to stop cookie stealing through XSS vulnerabilities. This is unlike many people believe not
-   a way to stop XSS vulnerabilities, but a way to stop one of the possible attacks (cookie stealing) that are possible through XSS.
-   */
-
+   time_t expire;
+   uint32_t n_hours;
    UVector<UString> vec(param);
-   uint32_t i = 2, n = vec.size();
+   UString item, cookie(U_CAPACITY);
 
-   U_INTERNAL_ASSERT_RANGE(2, n, 6)
+   // param: "[ data expire path domain secure HttpOnly ]"
+   // -----------------------------------------------------------------------------------------------------------------------------------
+   // string -- key_id or data to put in cookie    -- must
+   // int    -- lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
+   // string -- path where the cookie can be used  --  opt
+   // string -- domain which can read the cookie   --  opt
+   // bool   -- secure mode                        --  opt
+   // bool   -- only allow HTTP usage              --  opt
+   // -----------------------------------------------------------------------------------------------------------------------------------
+   // RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
 
-   long n_hours  = vec[1].strtol();
-   time_t expire = (n_hours ? u_now->tv_sec + (n_hours * 60L * 60L) : 0L);
-
-   // HMAC-MD5(data&expire)
-
-   UString set_cookie(U_CAPACITY), value = UServices::generateToken(vec[0], expire), item;
-
-   set_cookie.snprintf("ulib.s%u=%.*s", sid_counter, U_STRING_TO_TRACE(value));
-
-   U_SRV_LOG("create new session ulib.s%u", sid_counter);
-
-   if (n_hours) set_cookie.snprintf_add("; expires=%#D", expire);
-
-   for (; i < n; ++i)
+   for (uint32_t i = 0, n = vec.size(); i < n; ++i)
       {
       item = vec[i];
 
-      if (item.empty() == false)
+      switch (i)
          {
-         switch (i)
+         case 0:
             {
-            case 2: set_cookie.snprintf_add("; path=%.*s",   U_STRING_TO_TRACE(item)); break; // path
-            case 3: set_cookie.snprintf_add("; domain=%.*s", U_STRING_TO_TRACE(item)); break; // domain
-            case 4: (void) set_cookie.append(U_CONSTANT_TO_PARAM("; secure"));         break; // secure
-            case 5: (void) set_cookie.append(U_CONSTANT_TO_PARAM("; HttpOnly"));       break; // HttpOnly
+            // string -- key_id or data to put in cookie -- must
+
+            if (item.empty())
+               {
+               U_ASSERT(keyID->empty())
+
+               keyID->setBuffer(100U);
+
+               keyID->snprintf("%s_%u_%P_%u",
+                                 UServer_Base::pClientImage->socket->remoteIPAddress().getAddressString(),
+                                 (u_http_info.user_agent_len ? u_cdb_hash((unsigned char*)U_HTTP_USER_AGENT_TO_PARAM, false) : 0),
+                                 ++sid_counter_gen);
+
+               item = *keyID;
+               }
+
+            // int -- lifetime of the cookie in HOURS -- must (0 -> valid until browser exit)
+
+            n_hours = (++i < n ? vec[i].strtol() : 0);
+            expire  = (n_hours ? u_now->tv_sec + (n_hours * 60L * 60L) : 0L);
+
+            cookie.snprintf("ulib.s%u=", sid_counter_gen);
+
+            (void) cookie.append(UServices::generateToken(item, expire)); // HMAC-MD5(data&expire)
+
+            if (n_hours) cookie.snprintf_add("; expires=%#D", expire);
             }
+         break;
+
+         case 2:
+            {
+            // string -- path where the cookie can be used -- opt
+
+            if (item.empty() == false) cookie.snprintf_add("; path=%.*s", U_STRING_TO_TRACE(item));
+            }
+         break;
+
+         case 3:
+            {
+            // string -- domain which can read the cookie -- opt
+
+            if (item.empty() == false) cookie.snprintf_add("; domain=%.*s", U_STRING_TO_TRACE(item));
+            }
+         break;
+
+         case 4:
+            {
+            // bool -- secure mode -- opt
+
+            if (item.strtob()) (void) cookie.append(U_CONSTANT_TO_PARAM("; secure"));
+            }
+         break;
+
+         case 5:
+            {
+            // bool -- only allow HTTP usage -- opt
+
+            if (item.strtob()) (void) cookie.append(U_CONSTANT_TO_PARAM("; HttpOnly"));
+            }
+         break;
          }
       }
 
-   UClientImage_Base::setCookie(set_cookie);
+   U_SRV_LOG("create new session ulib.s%u", sid_counter_gen);
+
+   addSetCookie(cookie);
 }
 
-bool UHTTP::getHTTPCookie()
+void UHTTP::addSetCookie(const UString& cookie)
 {
-   U_TRACE(0, "UHTTP::getHTTPCookie()")
+   U_TRACE(0, "UHTTP::addSetCookie(%.*S)", U_STRING_TO_TRACE(cookie))
 
-   U_INTERNAL_DUMP("keyID  = %.*S", U_STRING_TO_TRACE(*keyID))
-   U_INTERNAL_DUMP("cookie = %.*S", U_STRING_TO_TRACE(*cookie))
+   U_ASSERT_DIFFERS(cookie.empty(), true)
+
+   if (set_cookie->empty() == false) (void) set_cookie->append(U_CONSTANT_TO_PARAM("\r\n"));
+                                     (void) set_cookie->append(U_CONSTANT_TO_PARAM("Set-Cookie: "));
+                                     (void) set_cookie->append(cookie);
+
+   U_INTERNAL_DUMP("set_cookie = %.*S", U_STRING_TO_TRACE(*set_cookie))
+}
+
+void UHTTP::setSessionCookie()
+{
+   U_TRACE(0, "UHTTP::setSessionCookie()")
+
+   U_INTERNAL_DUMP("keyID = %.*S", U_STRING_TO_TRACE(*keyID))
+
+   if (keyID->empty()) setHTTPCookie(*cookie_option);
+}
+
+bool UHTTP::getHTTPCookie(UString* cookie)
+{
+   U_TRACE(0, "UHTTP::getHTTPCookie(%p)", cookie)
 
    U_INTERNAL_ASSERT_MAJOR(u_http_info.cookie_len, 0)
 
-   if ( keyID->empty() &&
-       cookie->empty())
+   U_INTERNAL_DUMP("keyID = %.*S", U_STRING_TO_TRACE(*keyID))
+
+   U_ASSERT(keyID->empty())
+
+   char* ptr;
+   bool check;
+   time_t expire;
+   const char* p;
+   const char* start;
+   uint32_t len, agent;
+   UString cookies(u_http_info.cookie, u_http_info.cookie_len), item, value, token(100U);
+   UVector<UString> cookie_list; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+
+   for (uint32_t i = 0, n = cookie_list.split(cookies, ';'); i < n; ++i)
       {
-      char* ptr;
-      const char* start;
-      uint32_t len, counter;
-      UString cookies(u_http_info.cookie, u_http_info.cookie_len), item, value;
-      UVector<UString> cookie_list; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+      item = cookie_list[i];
 
-      for (uint32_t i = 0, n = cookie_list.split(cookies, ';'); i < n; ++i)
+      item.trim();
+
+      U_INTERNAL_DUMP("cookie[%u] = %.*S", i, U_STRING_TO_TRACE(item))
+
+      start = item.data();
+
+      if (U_STRNEQ(start, "ulib.s"))
          {
-         item = cookie_list[i];
+         sid_counter_cur = strtol(start + U_CONSTANT_SIZE("ulib.s"), &ptr, 0);
 
-         item.trim();
+         U_INTERNAL_DUMP("ptr[0] = %C", ptr[0])
 
-         U_INTERNAL_DUMP("cookie[%u] = %.*S", i, U_STRING_TO_TRACE(item))
+         U_INTERNAL_ASSERT_EQUALS(ptr[0], '=')
 
-         start = item.data();
+         len = item.size() - (++ptr - start);
 
-         if (U_STRNEQ(start, "ulib.s"))
+         (void) value.assign(ptr, len);
+
+         check = false;
+
+         /* XSRF (cross-site request forgery) is a problem that can be solved by using Crumbs.
+          * Crumbs is a large alphanumeric string you pass between each on your site, and it is
+          * a timestamp + a HMAC-MD5 encoded result of your IP address and browser user agent and a
+          * pre-defined key known only to the web server. So, the application checks the crumb
+          * value on every page, and the crumb value has a specific expiration time and also is
+          * based on IP and browser, so it is difficult to forge. If the crumb value is wrong,
+          * then it just prevents the user from viewing that page
+          */
+
+         if (UServices::getTokenData(token, value, expire))
             {
-            counter = strtol(start + U_CONSTANT_SIZE("ulib.s"), &ptr, 0);
+            // HTTP Session Hijacking mitigation: IP_USER-AGENT_PID_COUNTER
 
-            U_INTERNAL_DUMP("ptr[0] = %C", ptr[0])
+            p   = UServer_Base::pClientImage->socket->remoteIPAddress().getAddressString();
+            len = u_str_len(p);
 
-            U_INTERNAL_ASSERT_EQUALS(ptr[0], '=')
-
-            len = item.size() - (++ptr - start);
-
-            (void) value.assign(ptr, len);
-
-            keyID->setBuffer(100U);
-
-            if (UServices::getTokenData(*keyID, value))
+            if (token.compare(0U, len, p, len) == 0) // IP
                {
-               U_SRV_LOG("found session ulib.s%u", counter);
-               }
-            else
-               {
-               U_SRV_LOG("delete session ulib.s%u keyID=%.*S", counter, U_STRING_TO_TRACE(*keyID));
+               agent = strtol(token.c_pointer(len+1), &ptr, 0);
 
-               UString set_cookie(100U);
+               U_INTERNAL_DUMP("ptr[0] = %C", ptr[0])
 
-               set_cookie.snprintf("ulib.s%u=; expires=%#D", counter, u_now->tv_sec - U_ONE_DAY_IN_SECOND);
+               U_INTERNAL_ASSERT_EQUALS(ptr[0], '_')
 
-               UClientImage_Base::setCookie(set_cookie);
-
-               if (db_session)
+               if (agent == u_cdb_hash((unsigned char*)U_HTTP_USER_AGENT_TO_PARAM, false)) // USER-AGENT
                   {
-                  if (UServer_Base::preforked_num_kids == 0) (void) ((UHashMap<UDataSession*>*)db_session)->erase(*keyID);
-                  else
+                  if (UServer_Base::preforked_num_kids ||
+                      memcmp(ptr+1, u_pid_str, u_pid_str_len) == 0) // PID
                      {
-                     int result = ((URDB*)db_session)->remove(*keyID);
+                     do { ++ptr; } while (*ptr != '_');
 
-                     if (result) U_SRV_LOG("remove of session data on db failed with error %d", result);
+                     check = (sid_counter_cur == (uint32_t)strtol(ptr+1, 0, 0)); // COUNTER
                      }
                   }
-
-               keyID->clear();
                }
-
-            continue;
             }
 
+         checkDataSession(token, expire, check);
+         }
+      else if (cookie)
+         {
          if (cookie->empty() == false) (void) cookie->append(U_CONSTANT_TO_PARAM("; "));
                                        (void) cookie->append(item);
          }
-
-      if (keyID->empty() == false) U_RETURN(true);
       }
+
+   if (keyID->empty() == false) U_RETURN(true);
 
    U_RETURN(false);
 }
+
+// HTTP session
 
 bool UHTTP::initSession(const char* location, uint32_t size)
 {
@@ -2742,12 +2826,19 @@ bool UHTTP::initSession(const char* location, uint32_t size)
 
    U_SRV_LOG("db initialization of http session %S success", location);
 
+   if (data_session == 0) data_session = U_NEW(UDataSession);
+
    U_RETURN(true);
 }
 
 U_NO_EXPORT void UHTTP::deleteSession()
 {
    U_TRACE(0, "UHTTP::deleteSession()")
+
+   U_INTERNAL_ASSERT_POINTER(db_session)
+   U_INTERNAL_ASSERT_POINTER(data_session)
+
+   delete data_session;
 
    if (UServer_Base::preforked_num_kids == 0)
       {
@@ -2764,102 +2855,159 @@ U_NO_EXPORT void UHTTP::deleteSession()
       }
 }
 
-bool UHTTP::getDataSession()
+void UHTTP::removeDataSession(const UString& token)
 {
-   U_TRACE(0, "UHTTP::getDataSession()")
+   U_TRACE(0, "UHTTP::removeDataSession(%.*S)", U_STRING_TO_TRACE(token))
 
-   if ((db_session                                ||
-        initSession("http_session", 1024 * 1024)) &&
-       (u_http_info.cookie_len                    &&
-        getHTTPCookie()))
+   UString cookie(100U);
+
+   cookie.snprintf("ulib.s%u=; expires=%#D", sid_counter_cur, u_now->tv_sec - U_ONE_DAY_IN_SECOND);
+
+   addSetCookie(cookie);
+
+   U_SRV_LOG("delete session ulib.s%u keyID=%.*S", sid_counter_cur, U_STRING_TO_TRACE(token));
+
+   if (db_session)
       {
-      U_ASSERT_DIFFERS(keyID->empty(), true)
-
-      if (UServer_Base::preforked_num_kids == 0)
-         {
-         UDataSession* data = (*(UHashMap<UDataSession*>*)db_session)[*keyID];
-
-         if (data)
-            {
-            if (data_session == 0) data_session = U_NEW(UDataSession);
-
-            data_session->fromDataSession(*data);
-
-            U_RETURN(true);
-            }
-         }
+      if (UServer_Base::preforked_num_kids == 0) (void) ((UHashMap<UDataSession*>*)db_session)->erase(token);
       else
          {
-         UString data = (*(URDB*)db_session)[*keyID];
+         int result = ((URDB*)db_session)->remove(token);
 
-         if (data.empty() == false)
+         if (result) U_SRV_LOG("remove of session data on db failed with error %d", result);
+         }
+      }
+}
+
+U_NO_EXPORT void UHTTP::checkDataSession(const UString& token, time_t expire, bool checked)
+{
+   U_TRACE(0, "UHTTP::checkDataSession(%.*S,%ld,%b)", U_STRING_TO_TRACE(token), expire, checked)
+
+   U_ASSERT(keyID->empty())
+
+   if (checked)
+      {
+      U_ASSERT_DIFFERS(token.empty(), true)
+
+      if (db_session)
+         {
+         U_INTERNAL_ASSERT_POINTER(data_session)
+
+         if (UServer_Base::preforked_num_kids == 0)
             {
-            if (data_session == 0) data_session = U_NEW(UDataSession);
+            UDataSession* data = (*(UHashMap<UDataSession*>*)db_session)[token];
 
-            data_session->fromString(data);
+            if (data) data_session->fromDataSession(*data);
+            }
+         else
+            {
+            UString data = (*(URDB*)db_session)[token];
 
-            U_ASSERT_EQUALS(data, data_session->toString())
+            if (data.empty() == false)
+               {
+               data_session->fromString(data);
 
-            U_RETURN(true);
+               U_ASSERT_EQUALS(data, data_session->toString())
+               }
+            }
+
+         if (expire == 0 && // 0 -> valid until browser exit
+             (data_session->last_access - data_session->creation) > U_ONE_DAY_IN_SECOND)
+            {
+            data_session->clear();
+
+            goto remove;
             }
          }
 
-      if (data_session) data_session->clear();
+      *keyID = token;
+
+      U_SRV_LOG("found session ulib.s%u", sid_counter_cur);
+      }
+   else
+      {
+remove:
+      removeDataSession(token);
+      }
+}
+
+bool UHTTP::getDataSession(const char* key, uint32_t keylen, UString* value)
+{
+   U_TRACE(0, "UHTTP::getDataSession(%.*S,%u,%p)", keylen, key, keylen, value)
+
+   if (db_session ||
+       initSession("http_session", 1024 * 1024))
+      {
+      U_INTERNAL_ASSERT_POINTER(db_session)
+      U_INTERNAL_ASSERT_POINTER(data_session)
+
+      U_INTERNAL_DUMP("keyID = %.*S", U_STRING_TO_TRACE(*keyID))
+
+      if (keyID->empty() == false) goto next;
+
+      data_session->clear();
+
+      if (u_http_info.cookie_len &&
+          getHTTPCookie(0))
+         {
+         U_ASSERT_DIFFERS(keyID->empty(), true)
+next:
+         if (key &&
+             data_session->getValue(key, keylen, *value) == false)
+            {
+            U_RETURN(false);
+            }
+
+         U_RETURN(true);
+         }
       }
 
    U_RETURN(false);
 }
 
-void UHTTP::putDataSession(uint32_t n_hours) // lifetime of the cookie in HOURS (0 -> valid until browser exit)
+void UHTTP::putDataSession(const char* key, uint32_t keylen, const char* value, uint32_t size)
 {
-   U_TRACE(0, "UHTTP::putDataSession(%u)", n_hours)
+   U_TRACE(0, "UHTTP::putDataSession(%.*S,%u,%.*S,%u)", keylen, key, keylen, size, value, size)
 
+   U_INTERNAL_ASSERT_POINTER(db_session)
    U_INTERNAL_ASSERT_POINTER(data_session)
 
-   if (db_session ||
-       initSession("http_session", 1024 * 1024))
+   U_INTERNAL_DUMP("keyID = %.*S", U_STRING_TO_TRACE(*keyID))
+
+   U_ASSERT_DIFFERS(keyID->empty(), true)
+
+   if (key &&
+       size)
       {
-      // NB: check if we have already a cookie with a session key...
+      U_INTERNAL_ASSERT_MAJOR(keylen,0)
 
-      U_INTERNAL_DUMP("keyID = %.*S", U_STRING_TO_TRACE(*keyID))
+      UString _key(key, keylen), _value((void*)value, size);
 
-      if (keyID->empty())
+      data_session->putValue(_key, _value);
+      }
+
+   if (UServer_Base::preforked_num_kids == 0)
+      {
+      UDataSession* data = (*(UHashMap<UDataSession*>*)db_session)[*keyID];
+
+      if (data == 0)
          {
-         UString set_cookie(U_CAPACITY);
+         data = data_session->toDataSession();
 
-         time_t expire = (n_hours ? u_now->tv_sec + (n_hours * 60L * 60L) : 0L);
+         U_INTERNAL_ASSERT_POINTER(data)
 
-         keyID->setBuffer(100U);
-
-         keyID->snprintf("%u_%s_%P", ++sid_counter, UServer_Base::pClientImage->socket->remoteIPAddress().getAddressString());
-
-         U_SRV_LOG("create new session ulib.s%u", sid_counter);
-
-         set_cookie.snprintf("ulib.s%u=", sid_counter);
-
-         (void) set_cookie.append(UServices::generateToken(*keyID, expire)); // HMAC-MD5(data&expire)
-
-         if (n_hours) set_cookie.snprintf_add("; expires=%#D", expire);
-
-         UClientImage_Base::setCookie(set_cookie);
+         ((UHashMap<UDataSession*>*)db_session)->insertAfterFind(*keyID, data);
          }
+      }
+   else
+      {
+      UString data = data_session->toString();
 
-      if (UServer_Base::preforked_num_kids == 0)
-         {
-         UDataSession* data = data_session->toDataSession();
+      U_ASSERT_DIFFERS(data.empty(), true)
 
-         ((UHashMap<UDataSession*>*)db_session)->insert(*keyID, data);
-         }
-      else
-         {
-         UString data = data_session->toString();
+      int result = ((URDB*)db_session)->store(*keyID, data, RDB_REPLACE);
 
-         U_ASSERT_DIFFERS(data.empty(), true)
-
-         int result = ((URDB*)db_session)->store(*keyID, data, RDB_REPLACE);
-
-         if (result) U_SRV_LOG("store of session data on db failed with error %d", result);
-         }
+      if (result) U_SRV_LOG("store of session data on db failed with error %d", result);
       }
 }
 
@@ -3147,14 +3295,8 @@ void UHTTP::getFormValue(UString& buffer, uint32_t n)
 
    U_INTERNAL_ASSERT_POINTER(form_name_value)
 
-   if (n >= form_name_value->size())
-      {
-      if (buffer.empty() == false) buffer.setEmpty(); // NB: we check because buffer can be the string null...
-
-      return;
-      }
-
-   (void) buffer.replace((*form_name_value)[n]);
+   if (n >= form_name_value->size()) buffer.clear();
+   else (void) buffer.replace((*form_name_value)[n]);
 }
 
 void UHTTP::getFormValue(UString& buffer, const char* name, uint32_t len)
@@ -3165,14 +3307,8 @@ void UHTTP::getFormValue(UString& buffer, const char* name, uint32_t len)
 
    uint32_t index = form_name_value->find(name, len);
 
-   if (index == U_NOT_FOUND)
-      {
-      if (buffer.empty() == false) buffer.setEmpty(); // NB: we check because buffer can be the string null...
-
-      return;
-      }
-
-   (void) buffer.replace((*form_name_value)[index+1]);
+   if (index == U_NOT_FOUND) buffer.clear();
+   else (void) buffer.replace((*form_name_value)[index+1]);
 }
 
 uint32_t UHTTP::processHTTPForm()
@@ -3375,6 +3511,11 @@ UString UHTTP::getHTTPHeaderForResponse(const UString& content, bool connection_
                }
             }
          }
+
+#  ifdef HAVE_SSL
+      // Use HTTP Strict Transport Security to force client to use secure connections only
+      if (sts_age_seconds && UServer_Base::bssl) ext.snprintf_add("Strict-Transport-Security: max-age=%u; includeSubDomains\r\n", sts_age_seconds);
+#  endif
       }
 
    UString tmp(300U + ext.size() + sz);
@@ -3541,6 +3682,31 @@ void UHTTP::setHTTPRedirectResponse(bool refresh, UString& ext, const char* ptr_
    setHTTPResponse(&tmp, &body);
 }
 
+void UHTTP::setHTTPBadMethod()
+{
+   U_TRACE(0, "UHTTP::setHTTPBadMethod()")
+
+   U_http_is_connection_close = U_YES;
+   u_http_info.nResponseCode  = HTTP_BAD_METHOD;
+
+   UString msg(200U);
+
+   msg.snprintf("Your requested method %.*S was a request that this server could not understand", U_HTTP_METHOD_TO_TRACE);
+
+   const char* status = getHTTPStatusDescription(HTTP_BAD_METHOD);
+
+   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+
+   UString body(500U + msg.size());
+
+   body.snprintf(str_frm_body->data(),
+                 HTTP_BAD_METHOD, status,
+                 status,
+                 msg.data());
+
+   setHTTPResponse(str_ctype_html, &body);
+}
+
 void UHTTP::setHTTPBadRequest()
 {
    U_TRACE(0, "UHTTP::setHTTPBadRequest()")
@@ -3696,14 +3862,14 @@ void UHTTP::setHTTPCgiResponse(bool header_content_type, bool bcompress, bool co
 
    if (header_content_type == false) (void) tmp.append(U_CONSTANT_TO_PARAM("Content-Type: " U_CTYPE_HTML "\r\n"));
 
-   uint32_t sz_cookie = UClientImage_Base::_set_cookie->size();
+   uint32_t sz_cookie = set_cookie->size();
 
    if (sz_cookie)
       {
-      (void) tmp.append(UClientImage_Base::_set_cookie->data(), sz_cookie);
+      (void) tmp.append(set_cookie->data(), sz_cookie);
       (void) tmp.append(U_CONSTANT_TO_PARAM("\r\n"));
 
-      UClientImage_Base::_set_cookie->setEmpty();
+      set_cookie->setEmpty();
       }
 
    tmp.snprintf_add("Content-Length: %u\r\n"
@@ -3867,7 +4033,8 @@ U_NO_EXPORT bool UHTTP::processHTTPAuthorization(const UString& request)
       UString  a2(4 + 1 + uri.size()),       //     method : uri
               ha2(33U),                      // MD5(method : uri)
               ha1 = getUserHA1(user, realm), // MD5(user : realm : password)
-              a3(200U), ha3(33U);
+               a3(200U),
+              ha3(33U);
 
       // MD5(method : uri)
 
@@ -4763,26 +4930,33 @@ void UHTTP::manageHTTPServletRequest()
       }
 #endif
 
-   U_INTERNAL_DUMP("u_http_info.nResponseCode = %d", u_http_info.nResponseCode)
-
    if (n) resetForm(true);
 
-        if (u_http_info.nResponseCode ==       0) (void) processCGIOutput();
-   else if (u_http_info.nResponseCode == HTTP_OK)
-      {
-      // NB: we assume to have HTML without HTTP headers...
+   U_INTERNAL_DUMP("u_http_info.nResponseCode = %d", u_http_info.nResponseCode)
 
-      U_ASSERT_EQUALS(u_findEndHeader(U_STRING_TO_PARAM(*UClientImage_Base::wbuffer)), U_NOT_FOUND)
+   if (u_http_info.nResponseCode == HTTP_OK)
+      {
+      // NB: we assume to have as response a HTML without HTTP headers...
 
       u_http_info.clength = UClientImage_Base::wbuffer->size();
 
       setHTTPCgiResponse(false, isCompressable(), false);
       }
-   else if (u_http_info.nResponseCode == HTTP_BAD_REQUEST)    setHTTPBadRequest();
-   else if (u_http_info.nResponseCode == HTTP_NOT_FOUND)      setHTTPNotFound();
-   else if (u_http_info.nResponseCode == HTTP_UNAUTHORIZED)   setHTTPUnAuthorized();
-   else if (u_http_info.nResponseCode == HTTP_UNAVAILABLE)    setHTTPServiceUnavailable();
-   else if (u_http_info.nResponseCode == HTTP_INTERNAL_ERROR) setHTTPInternalError();
+   else if (u_http_info.nResponseCode ==           0) (void) processCGIOutput();
+   else if (u_http_info.nResponseCode != U_NOT_FOUND) // NB: we can have an output that must be elaborated by plugin mod_ssi...
+      {
+           if (u_http_info.nResponseCode == HTTP_BAD_REQUEST)  setHTTPBadRequest();
+      else if (u_http_info.nResponseCode == HTTP_BAD_METHOD)   setHTTPBadMethod();
+      else if (u_http_info.nResponseCode == HTTP_NOT_FOUND)    setHTTPNotFound();
+      else if (u_http_info.nResponseCode == HTTP_UNAUTHORIZED) setHTTPUnAuthorized();
+      else if (u_http_info.nResponseCode == HTTP_UNAVAILABLE)  setHTTPServiceUnavailable();
+      else
+         {
+         if (u_http_info.nResponseCode != HTTP_INTERNAL_ERROR) U_WARNING("received wrong response code from servlet: %d", u_http_info.nResponseCode);
+
+         setHTTPInternalError();
+         }
+      }
 }
 
 int UHTTP::checkHTTPRequest()
@@ -4867,9 +5041,6 @@ int UHTTP::checkHTTPRequest()
            u_isdigit(u_mime_index)) &&
           U_http_is_navigation == false)
          {
-          keyID->clear();
-         cookie->clear();
-
          if (u_mime_index != U_cgi) manageHTTPServletRequest();
          else
             {
@@ -4893,6 +5064,8 @@ int UHTTP::checkHTTPRequest()
                }
             }
 
+         keyID->clear();
+   
          goto next;
          }
 
@@ -4907,7 +5080,7 @@ int UHTTP::checkHTTPRequest()
 next:
          setHTTPRequestProcessed();
 
-         goto end;
+         goto check;
          }
 
       // NB: ...if not, set status to 'file exist and need to be processed'...
@@ -4917,7 +5090,7 @@ next:
 
    if (isHTTPRequestAlreadyProcessed())
       {
-end:
+check:
 #  ifdef U_HTTP_CACHE_REQUEST
       if (u_mime_index != U_ssi) manageHTTPRequestCache();  
 #  endif
@@ -5079,8 +5252,8 @@ UString UHTTP::getCGIEnvironment()
                    U_HTTP_METHOD_TO_TRACE);
 
    // The hostname of your server from header's request.
-   // The difference between HTTP_HOST and SERVER_NAME is that
-   // HTTP_HOST can include the «:PORT» text, and SERVER_NAME only the name
+   // The difference between HTTP_HOST and U_HTTP_VHOST is that
+   // HTTP_HOST can include the «:PORT» text, and U_HTTP_VHOST only the name
 
    if (u_http_info.host_len)
       {
@@ -5132,20 +5305,23 @@ UString UHTTP::getCGIEnvironment()
    // Cookie: _saml_idp=dXJuOm1hY2U6dGVzdC5zXRo, _redirect_user_idp=urn%3Amace%3Atest.shib%3Afederation%3Alocalhost; ...
    // ------------------------------------------------------------------------------------------------------------------
 
-   if (u_http_info.cookie_len) (void) getHTTPCookie();
-
-   if (cookie->empty() == false)
+   if (u_http_info.cookie_len)
       {
-      (void) buffer.append(U_CONSTANT_TO_PARAM("'HTTP_COOKIE="));
-      (void) buffer.append(*cookie);
-      (void) buffer.append(U_CONSTANT_TO_PARAM("'\n"));
-      }
+      UString cookie;
 
-   if (keyID->empty() == false)
-      {
-      (void) buffer.append(U_CONSTANT_TO_PARAM("'ULIB_SESSION="));
-      (void) buffer.append(*keyID);
-      (void) buffer.append(U_CONSTANT_TO_PARAM("'\n"));
+      if (getHTTPCookie(&cookie))
+         {
+         (void) buffer.append(U_CONSTANT_TO_PARAM("'ULIB_SESSION="));
+         (void) buffer.append(*keyID);
+         (void) buffer.append(U_CONSTANT_TO_PARAM("'\n"));
+         }
+
+      if (cookie.empty() == false)
+         {
+         (void) buffer.append(U_CONSTANT_TO_PARAM("'HTTP_COOKIE="));
+         (void) buffer.append(cookie);
+         (void) buffer.append(U_CONSTANT_TO_PARAM("'\n"));
+         }
       }
 
    (void) buffer.append(*geoip);
@@ -5584,7 +5760,7 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                   setHTTPCookie(UClientImage_Base::wbuffer->substr(location, len));
 
-                  uint32_t n2   = UClientImage_Base::_set_cookie->size() - pos2,
+                  uint32_t n2   = set_cookie->size() - pos2,
                            diff = n2 - n1;
 
                   sz        += diff;
@@ -5594,9 +5770,9 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
 
                   U_INTERNAL_ASSERT_MINOR(diff,512)
 
-                  (void) UClientImage_Base::wbuffer->replace(pos1, n1, *UClientImage_Base::_set_cookie, pos2, n2);
+                  (void) UClientImage_Base::wbuffer->replace(pos1, n1, *set_cookie, pos2, n2);
 
-                  UClientImage_Base::_set_cookie->setEmpty();
+                  set_cookie->setEmpty();
 
                   U_INTERNAL_DUMP("wbuffer(%u) = %#.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
 

@@ -1,16 +1,11 @@
+<!--#session
+unsigned access_count(0);
+-->
 <html>
  <head><title>Example of USP with HTTP session</title></head>
  <body bgcolor="#FDF5E6">
 
-	<!--#code
-	const char* heading = (UHTTP::getDataSession() ? " Back" :
-						       (UHTTP::putDataSession(), ", Newcomer"));
-
-	UString creation	  = UHTTP::getSessionCreationTime(),
-			  last_access = UHTTP::getSessionLastAccessedTime();
-	-->
-
-   <h1 align="center">Welcome<!--#puts heading --></h1>
+   <h1 align="center">Welcome<!--#puts (UHTTP::isNewSession() ?  ", Newcomer" : " Back") --></h1>
 	<h2>Information on Your Session:</h2>
 	<table border=1 align=center>
 	<tr bgcolor="#ffad00">
@@ -22,15 +17,15 @@
 	</tr>
 	<tr>
 	  <td>Creation Time</td>
-	  <td><!--#puts creation --></td>
+	  <td><!--#puts UHTTP::getSessionCreationTime() --></td>
 	</tr>
 	<tr>
 	  <td>Time of Last Access</td>
-	  <td><!--#puts last_access --></td>
+	  <td><!--#puts UHTTP::getSessionLastAccessedTime() --></td>
 	</tr>
 	<tr>
 	  <td>Number of Previous Accesses</td>
-	  <td>accessCount</td>
+	  <td><!--#number access_count++ --></td>
 	</tr>
 	</table>
 </body> 

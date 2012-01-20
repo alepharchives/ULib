@@ -41,7 +41,7 @@
 <li>Browser cache management (headers: If-Modified-Since/Last-modified).</li>
 <li>Chunk-encoding transfers support.</li>
 <li>HTTP multi-range request support.</li>
-<li>Memory caching of document root for (small) static pages with smart compression and CSS/JS reduction.</li>
+<li>Memory caching of document root for (small) static pages with smart deflate compression and CSS/JS reduction.</li>
 <li>Support for automatic update of caching document root with inotify (on Linux).</li>
 <li>Support for pipelining.</li>
 <li>Support for virtual hosts (also with SSL).</li>
@@ -59,7 +59,9 @@
 <li>CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.</li>
 <li>Support for minify HTML CGI output with wrapping <a href="http://code.google.com/speed/page-speed/download.html#pagespeed-sdk">google page speed SDK</a>.</li>
 <li>Support for running JavaScript code with wrapping <a href="http://code.google.com/apis/v8/intro.html">google V8 JavaScript Engine</a>.</li>
-<li><a href="http://www.phpmotionwiz.com/what-is-pseudo-streaming">HTTP pseudo-streaming</a> for FLV video supported.</li>
+<li>Support for <a href="http://www.phpmotionwiz.com/what-is-pseudo-streaming">HTTP pseudo-streaming</a> for FLV video.</li>
+<li>Support for <a href="https://developer.mozilla.org/en/Security/HTTP_Strict_Transport_Security">HTTP Strict Transport Security</a>.</li>
+<li>Support for <a href="http://cleverlogic.net/articles/kochure">HTTP Session Hijacking mitigation</a>.</li>
 <li><a href="http://bellard.org/tcc/">C Servlet Support</a> with libtcc (if available) as a backend for dynamic code generation (experimental).</li>
 <li>Support for Windows (without preforking), precompiled binaries are available <a href="https://github.com/stefanocasazza/ULib/tree/master/win32">here</a>.</li>
 <li>Requests cut in phases for modular architecture (apache-like).</li>

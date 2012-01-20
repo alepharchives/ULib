@@ -38,9 +38,13 @@
 "{\n" \
 "\tU_TRACE(0, \"::runDynamicPage(%%p)\", client_image)\n" \
 "\t\n" \
-"%s" \
-"%s" \
-"%s" \
+"%s"   \
+"%s"   \
+"%s"   \
+"\n\t" \
+"%.*s" \
+"\t\n" \
+"%.*s" \
 "\t\n" \
 "%.*s" \
 "\t\n" \
@@ -50,13 +54,28 @@
 class Application : public UApplication {
 public:
 
+   static void setGlobalVar(UString& output)
+      {
+      U_TRACE(5, "Application::setGlobalVar(%p)", &output)
+
+      static bool flag;
+
+      if (flag == false)
+         {
+         flag = true;
+
+         (void) output.append(U_CONSTANT_TO_PARAM("\n\tuint32_t usp_sz;"
+                                                  "\n\tchar usp_buffer[10 * 4096];"
+                                                  "\n\t"));
+         }
+      }
+
    void run(int argc, char* argv[], char* env[])
       {
       U_TRACE(5, "Application::run(%d,%p,%p)", argc, argv, env)
 
       UApplication::run(argc, argv, env);
 
-      const char* ptr;
       const char* filename = argv[1];
 
       if (filename == 0) U_ERROR("filename not specified...");
@@ -65,40 +84,19 @@ public:
 
       if (usp.empty()) U_ERROR("filename not valid...");
 
-      bool bflag         = false;
-      uint32_t endHeader = u_findEndHeader(U_STRING_TO_PARAM(usp));
-
-      U_INTERNAL_DUMP("endHeader = %u u_line_terminator_len = %d", endHeader, u_line_terminator_len)
-
-      // NB: we check for eventually HTTP Header...
-
-      if (endHeader == U_NOT_FOUND)
-         {
-         ptr = usp.data();
-
-         // NB: we check for <h(1|tml)> (HTML without HTTP headers..)
-
-         while (u_isspace(*ptr)) ++ptr; // skip space...
-
-         if (         ptr[0]  != '<' ||
-            u_toupper(ptr[1]) != 'H')
-            {
-            bflag = true;
-            }
-         }
+      const char* ptr;
+      const char* ptr1 = "";
+      const char* ptr2 = "";
+      const char* ptr3 = "";
+      const char* directive;
+      uint32_t i, n, distance, pos, size;
+      bool bgroup, binit = false, breset = false, bend = false;
+      UString token, declaration, http_header, session_var(U_CAPACITY), buffer(U_CAPACITY), output(U_CAPACITY);
 
       // Anything that is not enclosed in <!-- ... --> tags is assumed to be HTML
 
       UTokenizer t(usp);
       t.setGroup(U_CONSTANT_TO_PARAM("<!--->"));
-
-      const char* ptr1 = "";
-      const char* ptr2 = "";
-      const char* ptr3 = "";
-      const char* directive;
-      uint32_t n, distance, pos, size;
-      UString token, declaration, buffer(U_CAPACITY), output(U_CAPACITY);
-      bool bgroup, bcout = false, binit = false, breset = false, bend = false;
 
       while (true)
          {
@@ -117,7 +115,9 @@ public:
                while (usp.c_char(pos-1) == '\n') --pos; // no trailing \n...
                }
 
-            size = pos - distance;
+            size = (pos > distance ? pos - distance : 0);
+
+            U_INTERNAL_DUMP("size = %u", size)
 
             if (size)
                {
@@ -145,7 +145,7 @@ public:
 
          directive = token.c_pointer(2); // "-#"...
 
-         U_INTERNAL_DUMP("directive = %10c", directive)
+         U_INTERNAL_DUMP("directive(10) = %.*S", 10, directive)
 
          if (U_STRNEQ(directive, "declaration"))
             {
@@ -157,17 +157,45 @@ public:
 
             (void) declaration.append(U_CONSTANT_TO_PARAM("\n\t\n"));
 
-            // NB: to avoid trailing \n...
-
-            ptr = t.getPointer();
-
-            while (u_isspace(*ptr)) ++ptr; // skip space...
-
-            t.setPointer(ptr);
-
             binit  = (declaration.find("static void usp_init()")  != U_NOT_FOUND); // usp_init  (    Server-wide hooks)...
             breset = (declaration.find("static void usp_reset()") != U_NOT_FOUND); // usp_reset (Connection-wide hooks)...
             bend   = (declaration.find("static void usp_end()")   != U_NOT_FOUND); // usp_end
+            }
+         else if (U_STRNEQ(directive, "header"))
+            {
+            U_ASSERT(http_header.empty())
+
+            n = token.size() - U_CONSTANT_SIZE("header") - 2;
+
+            http_header = UStringExt::trim(directive + U_CONSTANT_SIZE("header"), n);
+            }
+         else if (U_STRNEQ(directive, "session"))
+            {
+            n = token.size() - U_CONSTANT_SIZE("session") - 2;
+
+            token = UStringExt::trim(directive + U_CONSTANT_SIZE("session"), n);
+
+            setGlobalVar(output);
+
+            (void) output.append(U_CONSTANT_TO_PARAM("\n\t"));
+            (void) output.append(token);
+            (void) output.append(U_CONSTANT_TO_PARAM("\n\t\n"));
+
+            UString type, name, tmp;
+            UVector<UString> vec(token, "\t\n ;");
+
+            for (i = 1, n = vec.size(); i < n; i += 2)
+               {
+               tmp  = vec[i];
+               pos  = tmp.find('(');
+               name = (pos == U_NOT_FOUND ? tmp : tmp.substr(0U, pos));
+
+               buffer.snprintf("\n\tUSP_SESSION_VAR_GET(%.*s);\n\t", U_STRING_TO_TRACE(name));
+
+               (void) output.append(buffer);
+
+               session_var.snprintf_add("\n\tUSP_SESSION_VAR_PUT(%.*s);\n\t", U_STRING_TO_TRACE(name));
+               }
             }
          else if (U_STRNEQ(directive, "code"))
             {
@@ -191,20 +219,35 @@ public:
 
             (void) output.append(buffer);
             }
+         else if (U_STRNEQ(directive, "xputs"))
+            {
+            n = token.size() - U_CONSTANT_SIZE("xputs") - 2;
+
+            token = UStringExt::trim(directive + U_CONSTANT_SIZE("xputs"), n);
+
+            buffer.snprintf("\n\tUSP_PUTS_XML(%.*s);\n\t", U_STRING_TO_TRACE(token));
+
+            (void) output.append(buffer);
+            }
+         else if (U_STRNEQ(directive, "number"))
+            {
+            n = token.size() - U_CONSTANT_SIZE("number") - 2;
+
+            token = UStringExt::trim(directive + U_CONSTANT_SIZE("number"), n);
+
+            (void) buffer.reserve(token.size() + 100U);
+
+            buffer.snprintf("\n\t(void) UClientImage_Base::wbuffer->append(UStringExt::numberToString(%.*s));\n\t", U_STRING_TO_TRACE(token));
+
+            (void) output.append(buffer);
+            }
          else if (U_STRNEQ(directive, "cout"))
             {
             n = token.size() - U_CONSTANT_SIZE("cout") - 2;
 
             token = UStringExt::trim(directive + U_CONSTANT_SIZE("cout"), n);
 
-            if (bcout == false)
-               {
-               bcout = true;
-
-               (void) output.append(U_CONSTANT_TO_PARAM("\n\tuint32_t usp_sz;"
-                                                        "\n\tchar usp_buffer[10 * 4096];"
-                                                        "\n\t"));
-               }
+            setGlobalVar(output);
 
             (void) buffer.reserve(token.size() + 150U);
 
@@ -213,9 +256,13 @@ public:
 
             (void) output.append(buffer);
             }
-         }
 
-      UString result(300U + sizeof(USP_TEMPLATE) + declaration.size() + output.size());
+         // no trailing \n...
+
+         for (ptr = t.getPointer(); u_islterm(*ptr); ++ptr) {}
+
+         t.setPointer(ptr);
+         }
 
       if (binit  == false &&
           bend   == false &&
@@ -233,7 +280,24 @@ public:
          else        ptr3 = "\n\tif (client_image == (void*)-2) {              U_RETURN(0); }\n";
          }
 
+      if (http_header.empty() == false)
+         {
+         UString header = UStringExt::dos2unix(http_header, true);
+
+         (void) header.append(U_CONSTANT_TO_PARAM("\r\n\r\n"));
+
+         UString tmp(header.size() * 4);
+
+         UEscape::encode(header, tmp, false);
+
+         http_header.setBuffer(tmp.size() + 100U);
+
+         http_header.snprintf("\n\t(void) UClientImage_Base::wbuffer->append(\n\t\tU_CONSTANT_TO_PARAM(%.*s)\n\t);\n\t", U_STRING_TO_TRACE(tmp));
+         }
+
       buffer.snprintf("%.*s.cpp", u_str_len(filename) - 4, filename);
+
+      UString result(300U + sizeof(USP_TEMPLATE) + declaration.size() + http_header.size() + output.size() + session_var.size());
 
       result.snprintf(USP_TEMPLATE,
                       U_STRING_TO_TRACE(buffer),
@@ -241,8 +305,10 @@ public:
                       ptr1,
                       ptr2,
                       ptr3,
+                      U_STRING_TO_TRACE(http_header),
                       U_STRING_TO_TRACE(output),
-                      (bflag ? 200 : 0));
+                      U_STRING_TO_TRACE(session_var),
+                      (http_header.empty() ? 200 : 0));
 
       (void) UFile::writeTo(buffer, UStringExt::removeEmptyLine(result));
       }

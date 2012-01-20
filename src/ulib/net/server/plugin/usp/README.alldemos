@@ -1,63 +1,23 @@
 There are some demo-applications that I taked from Tntnet for comparison.
 Tntnet is a web application server for web applications written in C++.
 
-calci18n
-========
-
-This demonstrates the i18n-feature of tntnet. Although this is a nice feature,
-the handling is somewhat ugly and may change in future releases. What I don't
-like is format the translations. Currently the system expects the original text
-and translated text separated by a tab-character. It is always bad habit to
-give tab-characters a special meaning. It would be better to have some more
-readable representation.
-
-Maybe something like this:
-
-    text="Calculator"
-    translation="Rechner"
-    text="Tommi's Tnt-Calculator"
-    translation="Tommi's Rechner"
-
-This give us the chance to add comments into the text, if needed, which is
-always a good idea.
-
-It is only a problem in handling the sources and therefore no real problem.
-When a new format is specified, a simple translation e.g. with awk is easily
-performed and will be either deliverer as a script or the old format will be
-supported with some special flag to ecppll (which is rather likely, because
-tab-separated files are really simple to parse). Comments are welcome.
-
-Tommi <tommi@tntnet.org>
-
 Demo-application "calc" 
 ========================
 
 This application shows, how arguments are converted to streameable types. It
 demonstrates a simple calculator-application.
 
-Demo-application "subcomp" 
-==========================
-
-This application shows various ways to embed subcomponents into a page and how
-to pass parameters to them.
-
 Demo-application "cookie" 
 ========================
 
 This application extends the "hello"-demo-application with cookie-support. The
-entered name is stored in a cookie for 1 hour.
+entered name is stored in a session cookie.
 
 Demo-application "hello" 
 ========================
 
 This application shows a very simple form and how to process arguments 
 received from the form.
-
-Demo-application "sprintf" 
-========================
-
-This application shows, how to get the output of a component into a variable
-(of type std::string).
 
 Demo-application "upload" 
 =========================
@@ -71,4 +31,3 @@ The shell-script creates 20 articles by default. When called with one
 parameter, the parameter is interpreted as the number of articles to generate.
 With 2 parameters the first parameter specifies a startvalue ant the second
 the number of articles to generate.
-

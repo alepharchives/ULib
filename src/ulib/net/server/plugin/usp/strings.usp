@@ -1,9 +1,20 @@
 <!--#declaration
 #undef min
 #undef max
-#include <vector>
 #include <limits>
-#include <strstream>
+-->
+<!--#session
+UVector<UString> strings;
+-->
+<!--#code
+uint32_t remove = std::numeric_limits<unsigned>::max();
+
+if (USP_FORM_VALUE_FROM_NAME("add").empty()) remove = USP_FORM_VALUE_FROM_NAME("remove").strtol();
+else											strings.push_back(USP_FORM_VALUE_FROM_NAME("string"));
+
+if (remove < strings.size()) strings.erase(remove);
+
+uint32_t sz = strings.size();
 -->
 <html>
  <head><title>Example USP</title></head>
@@ -19,31 +30,17 @@
     </p>
    </form>
 
-	<!--#code
-	std::vector<std::string> strings;
-
-	UString add		 = USP_FORM_VALUE(0),
-			  string  = USP_FORM_VALUE(1);
-	unsigned remove = std::numeric_limits<unsigned>::max();
-
-	if (add.empty() == false)    strings.push_back(string.c_str());
-   if (remove < strings.size()) strings.erase(strings.begin() + remove);
-	-->
-
 	<p><table border=1>
-	<tr><th colspan=2>Strings entered so far: <!--#code USP_PUTS(UStringExt::numberToString(strings.size())); --></th></tr>
+	<tr><th colspan=2>Strings entered so far: <!--#number sz --></th></tr>
 
 	<!--#code
-	std::string tmp;
-	std::ostrstream text;
+	UString item;
 
-   for (std::vector<std::string>::const_iterator i = strings.begin(); i != strings.end(); ++i)
+   for (uint32_t i = 0; i < sz; ++i)
 		{
-		text << *i;
+		item = strings[i];
 
-		remove = i - strings.begin();
-
-		USP_PRINTF("<tr><td>%s</td><td><a href=\"?remove=%u\">remove</a></td></tr>", text.str(), remove);
+		USP_PRINTF("<tr><td>%.*s</td><td><a href=\"?remove=%u\">remove</a></td></tr>", U_STRING_TO_TRACE(item), i);
 		}
 	-->
 

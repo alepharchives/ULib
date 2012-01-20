@@ -14,7 +14,7 @@ rm -f IR_WEB.log* \
       $DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]*
 
  UTRACE="0 50M 0"
- UOBJDUMP="0 100k 10"
+#UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 

@@ -63,6 +63,8 @@ public:
    static const UString* str_ENABLE_CACHING_BY_PROXY_SERVERS;
    static const UString* str_TELNET_ENABLE;
    static const UString* str_MIN_SIZE_FOR_SENDFILE;
+   static const UString* str_STRICT_TRANSPORT_SECURITY;
+   static const UString* str_SESSION_COOKIE_OPTION;
 
    static void str_allocate();
 

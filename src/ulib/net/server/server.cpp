@@ -65,6 +65,7 @@
 
 #ifndef __MINGW32__
 #  include <ulib/net/unixsocket.h>
+#  define U_TCP_SETTING yes
 #endif
 
 #define U_DEFAULT_PORT   80
@@ -328,7 +329,7 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    pthis        = this;
    senvironment = U_NEW(UString(U_CAPACITY));
 
-   u_gettimeofday();
+   U_INTERNAL_DUMP("u_seed_hash = %u", u_seed_hash)
 
    u_init_ulib_hostname();
 
@@ -401,6 +402,7 @@ UServer_Base::~UServer_Base()
 
       if (flag_use_tcp_optimization)
          {
+#     ifdef U_TCP_SETTING 
          (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", tcp_fin_timeout, true);
 
          if (iBackLog >= SOMAXCONN)
@@ -408,6 +410,7 @@ UServer_Base::~UServer_Base()
             (void) UFile::setSysParam("/proc/sys/net/core/somaxconn",           sysctl_somaxconn,       true);
             (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", sysctl_max_syn_backlog, true);
             }
+#     endif
          }
 
       if (iBackLog == 1) (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", tcp_abort_on_overflow, true);
@@ -1004,6 +1007,7 @@ void UServer_Base::init()
        * release, the creation of new connections, and a low throughput due to many connections sitting in the TIME_WAIT state.
        */
 
+#  ifdef U_TCP_SETTING 
                                 tcp_fin_timeout = UFile::getSysParam("/proc/sys/net/ipv4/tcp_fin_timeout");
       if (tcp_fin_timeout > 30) tcp_fin_timeout = UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", 30, true);
 
@@ -1026,6 +1030,7 @@ void UServer_Base::init()
          sysctl_somaxconn       = UFile::setSysParam("/proc/sys/net/core/somaxconn",           value);
          sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 2);
          }
+#  endif
       }
 
    /* sysctl_tcp_abort_on_overflow when its on, new connections are reset once the backlog is exhausted.

@@ -21,8 +21,10 @@ typedef void     (*vPFprpv)(UStringRep* key, void* elem);
 typedef bool     (*bPFprpv)(UStringRep* key, void* elem);
 
                    class UCDB;
+                   class UHTTP;
                    class UValue;
 template <class T> class UVector;
+                   class UDataSession;
 
 class U_NO_EXPORT UHashMapNode {
 public:
@@ -196,6 +198,17 @@ public:
       return (T*) operator[](_key);
       }
 
+   // Sets a field, overwriting any existing value
+
+   void insert(const UString& _key, void* _elem)
+      {
+      U_TRACE(0, "UHashMap<void*>::insert(%.*S,%p)", U_STRING_TO_TRACE(_key), _elem)
+
+      lookup(_key);
+
+      insertAfterFind(_key, _elem);
+      }
+
    // dopo avere chiamato find() (non effettuano il lookup)
 
    void   eraseAfterFind();
@@ -309,11 +322,11 @@ public:
       UHashMap<void*>::eraseAfterFind();
       }
 
-   void insertAfterFind(const UString& _key, void* _elem)
+   void insertAfterFind(const UString& _key, T* _elem)
       {
       U_TRACE(0, "UHashMap<T*>::insertAfterFind(%.*S,%p)", U_STRING_TO_TRACE(_key), _elem)
 
-      u_construct<T>((T*)_elem);
+      u_construct<T>(_elem);
 
       if (node)
          {
@@ -327,13 +340,13 @@ public:
          }
       }
 
-   void replaceAfterFind(void* _elem)
+   void replaceAfterFind(T* _elem)
       {
       U_TRACE(0, "UHashMap<T*>::replaceAfterFind(%p)", _elem)
 
       U_INTERNAL_ASSERT_POINTER(node)
 
-      u_construct<T>((T*)_elem);
+      u_construct<T>(_elem);
         u_destroy<T>((T*)node->elem);
 
       UHashMap<void*>::replaceAfterFind(_elem);
@@ -341,7 +354,7 @@ public:
 
    // Sets a field, overwriting any existing value
 
-   void insert(const UString& _key, void* _elem)
+   void insert(const UString& _key, T* _elem)
       {
       U_TRACE(0, "UHashMap<T*>::insert(%.*S,%p)", U_STRING_TO_TRACE(_key), _elem)
 
@@ -496,7 +509,7 @@ public:
       UHashMapNode* node;
       UHashMapNode* next;
 
-      _os.put('{');
+      _os.put('[');
       _os.put('\n');
 
       for (UHashMapNode** ptr = t.table; ptr < (t.table + t._capacity); ++ptr)
@@ -520,7 +533,7 @@ public:
             }
          }
 
-      _os.put('}');
+      _os.put(']');
 
       return _os;
       }
@@ -585,11 +598,28 @@ public:
    friend U_EXPORT ostream& operator<<(ostream& os, const UHashMap<UString>& t) { return operator<<(os, (const UHashMap<UStringRep*>&)t); }
 
 protected:
+   UString at(const char* _key, uint32_t keylen)
+      {
+      U_TRACE(0, "UHashMap<UString>::at(%.*S,%u)", keylen, _key, keylen)
+
+      UStringRep keyr(_key, keylen);
+
+      return at(&keyr);
+      }
+
    UString at(UStringRep* keyr);
+
+   // storage session
+
+   static UHashMap<UString>* fromStream(istream& is);
+   static UHashMap<UString>* duplicate(UHashMap<UString>* t);
 
 private:
    UHashMap<UString>(const UHashMap<UString>&) : UHashMap<UStringRep*>() {}
    UHashMap<UString>& operator=(const UHashMap<UString>&)                { return *this; }
+
+   friend class UHTTP;
+   friend class UDataSession;
 };
 
 #endif

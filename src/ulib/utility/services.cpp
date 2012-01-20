@@ -650,7 +650,7 @@ void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, ui
 #endif
 }
 
-#define U_HMAC_SIZE  16U                           // MD5 ouput len
+#define U_HMAC_SIZE  16U                           // MD5 output len
 #define U_TOKEN_SIZE (1U + 10U + 1U + U_HMAC_SIZE) // ... '&' time '&' hmac
 
 UString UServices::generateToken(const UString& data, time_t expire)
@@ -674,9 +674,9 @@ UString UServices::generateToken(const UString& data, time_t expire)
    U_RETURN_STRING(output);
 }
 
-bool UServices::getTokenData(UString& data, const UString& value)
+bool UServices::getTokenData(UString& data, const UString& value, time_t& expire)
 {
-   U_TRACE(0, "UServices::getTokenData(%.*S,%.*S)", U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(value))
+   U_TRACE(0, "UServices::getTokenData(%.*S,%.*S,%p)", U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(value), &expire)
 
    uint32_t sz = value.size();
 
@@ -692,9 +692,10 @@ bool UServices::getTokenData(UString& data, const UString& value)
 
       // token parsing (data '&' time '&' hmac)
 
-      time_t expire = 0;
+      expire = 0;
+
       const char* ptr = token.data();
-      int scanned = U_SYSCALL(sscanf, "%p,%S,%p,%p", ptr, "%[^&]&%ld&", data.data(), &expire);
+      int scanned     = U_SYSCALL(sscanf, "%p,%S,%p,%p", ptr, "%[^&]&%ld&", data.data(), &expire);
 
       U_INTERNAL_DUMP("scanned = %d", scanned)
 

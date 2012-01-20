@@ -141,12 +141,11 @@ void u_init_security(void)
    /* Run this at the beginning of the program to initialize this code and
     * to drop privileges before someone uses them to shoot us in the foot
     */
-
+#ifndef __MINGW32__
    int leffective_uid;
 
    U_INTERNAL_TRACE("u_init_security()")
 
-#ifndef __MINGW32__
    alarm(0); /* can be inherited from parent process */
 
          real_uid = getuid();
@@ -628,10 +627,11 @@ int u_get_num_cpu(void)
          unsigned int s;      /* stride */
          const char *c1, *c2; /* next tokens after '-' or ',' */
          char nextc;          /* char after sscanf %u match */
-         int sret;            /* sscanf return (number of matches) */
 
          if (fgets(buf, sizeof(buf), fp))
             {
+            int sret;        /* sscanf return (number of matches) */
+
             q = buf;
 
             buf[strlen(buf)-1] = '\0';

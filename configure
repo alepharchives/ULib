@@ -22313,7 +22313,7 @@ $as_echo "yes" >&6; }
 			echo "${T_MD}V8 JavaScript Engine found in $v8dir${T_ME}"
 			HAVE_V8=yes
 			CPPFLAGS="$CPPFLAGS -DHAVE_V8";
-			v8_version=$(strings $v8dir/lib*/libv8.so | grep -i 'libv8-' | head -n1 | cut -d'-' -f2 | head -c5)
+			v8_version=$(strings $v8dir/lib*/libv8.so | grep -i 'libv8-' | head -n1 | tail -c10)
 		fi
 	fi
 

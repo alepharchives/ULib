@@ -1,19 +1,27 @@
+<!--#code
+UString arg1  = USP_FORM_VALUE(0),
+		  arg2  = USP_FORM_VALUE(1),
+		  op	  = USP_FORM_NAME(2),
+		  opval = USP_FORM_VALUE(2);
+
+if (arg1.empty()) arg1 = U_STRING_FROM_CONSTANT("0");
+if (arg2.empty()) arg2 = U_STRING_FROM_CONSTANT("0");
+
+double val1   = arg1.strtod(),
+		 val2   = arg2.strtod(),
+		 result = 0.0;
+
+	  if (op == "plus")  result = val1 + val2;
+else if (op == "minus") result = val1 - val2;
+else if (op == "mul")	result = val1 * val2;
+else if (op == "div")	result = val1 / val2;
+-->
 <html>
  <head>
   <title>Calculator</title>
  </head>
  <body bgcolor=#ffffcc>
   <h1>Tommi's Calculator</h1>
-
-	<!--#code
-	UString arg1  = USP_FORM_VALUE(0),
-			  arg2  = USP_FORM_VALUE(1),
-			  op	  = USP_FORM_NAME(2),
-			  opval = USP_FORM_VALUE(2);
-
-	if (arg1.empty()) arg1 = U_STRING_FROM_CONSTANT("0");
-	if (arg2.empty()) arg2 = U_STRING_FROM_CONSTANT("0");
-	-->
 
   <form>
    <input type="text"   name="arg1"  value="<!--#puts arg1 -->" > <br>
@@ -24,18 +32,7 @@
    <input type="submit" name="div"   value="/">
   </form>
 
-	<!--#code
-	double val1   = arg1.strtod(),
-			 val2   = arg2.strtod(),
-			 result = 0.0;
-
-		  if (op == "plus")  result = val1 + val2;
-	else if (op == "minus") result = val1 - val2;
-	else if (op == "mul")	result = val1 * val2;
-	else if (op == "div")	result = val1 / val2;
-
-	if (op.empty() == false) USP_PRINTF("<hr>\n%.*s %.*s %.*s = %g", U_STRING_TO_TRACE(arg1), U_STRING_TO_TRACE(opval), U_STRING_TO_TRACE(arg2), result);
-	-->
+  <!--#code if (op.empty() == false) USP_PRINTF("<hr>\n%.*s %.*s %.*s = %g", U_STRING_TO_TRACE(arg1), U_STRING_TO_TRACE(opval), U_STRING_TO_TRACE(arg2), result); -->
 
  </body>
 </html>

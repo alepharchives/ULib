@@ -129,14 +129,14 @@ inline uint32_t UCache::hash(const char* key, uint32_t keylen)
 {
    U_TRACE(0, "UCache::hash(%.*S,%u)", keylen, key, keylen)
 
-   uint32_t keyhash = u_hash((unsigned char*)key, keylen, false) * sizeof(uint32_t);
+   uint32_t keyhash = u_cdb_hash((unsigned char*)key, keylen, false) * sizeof(uint32_t) % info->hsize;
 
-   U_RETURN(keyhash % info->hsize);
+   U_RETURN(keyhash);
 }
 
 char* UCache::add(const char* key, uint32_t keylen, uint32_t datalen, uint32_t _ttl)
 {
-   U_TRACE(1, "UCache::add(%.*S,%u,%u,%u)", keylen, key, keylen, datalen, _ttl)
+   U_TRACE(0, "UCache::add(%.*S,%u,%u,%u)", keylen, key, keylen, datalen, _ttl)
 
    U_CHECK_MEMORY
 
@@ -211,7 +211,7 @@ char* UCache::add(const char* key, uint32_t keylen, uint32_t datalen, uint32_t _
 
 UString UCache::operator[](const UString& _key)
 {
-   U_TRACE(1, "UCache::operator[](%.*S)", U_STRING_TO_TRACE(_key))
+   U_TRACE(0, "UCache::operator[](%.*S)", U_STRING_TO_TRACE(_key))
 
    U_CHECK_MEMORY
 
@@ -283,7 +283,7 @@ UString UCache::operator[](const UString& _key)
 
 U_EXPORT istream& operator>>(istream& is, UCache& cache)
 {
-   U_TRACE(1+256, "UCache::operator>>(%p,%p)", &is, &cache)
+   U_TRACE(0+256, "UCache::operator>>(%p,%p)", &is, &cache)
 
    char c;
    char* ptr;

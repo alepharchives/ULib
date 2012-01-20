@@ -35,6 +35,8 @@ if [ "$TERM" != "cygwin" ]; then
    ( cd benchmark/docroot; ln -sf ../../servlet )
 fi
 
+ulimit -n 100000
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # cat /proc/sys/net/ipv4/tcp_mem
 # ------------------------------
 # 47556   63410   95112
@@ -56,20 +58,19 @@ fi
 # of the new value in /proc/sys/net/ipv4/tcp_max_orphans, and don't forget to update the value of net.ipv4.tcp_max_orphans in /etc/sysctl.conf so that your change persists across
 # reboots.
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-echo 524288 > /proc/sys/net/ipv4/tcp_max_orphans
-
 # A server that uses SYN cookies doesn't have to drop connections when its SYN queue fills up.
 # Instead it sends back a SYN+ACK, exactly as if the SYN queue had been larger.
 # (Exceptions: the server must reject TCP options such as large windows, and it must use one of the
 # eight MSS values that it can encode.) When the server receives an ACK, it checks that the secret
 # function works for a recent value of t, and then rebuilds the SYN queue entry from the encoded MSS. 
-
-ulimit -n 100000
-#echo 1024 > /proc/sys/net/core/somaxconn
-#echo    1 > /proc/sys/net/ipv4/tcp_syncookies
-#echo    2 > /proc/sys/net/ipv4/tcp_synack_retries # 5 -> 2 == 21 sec (Total time to keep half-open connections in the backlog queue)
-#echo    0 > /proc/sys/kernel/printk_ratelimit # 5
-#echo    0 > /proc/sys/kernel/printk_ratelimit_burst # 10
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#echo   1024 > /proc/sys/net/core/somaxconn
+#echo      1 > /proc/sys/net/ipv4/tcp_syncookies
+#echo 524288 > /proc/sys/net/ipv4/tcp_max_orphans
+#echo      2 > /proc/sys/net/ipv4/tcp_synack_retries # 5 -> 2 == 21 sec (Total time to keep half-open connections in the backlog queue)
+#echo      0 > /proc/sys/kernel/printk_ratelimit # 5
+#echo      0 > /proc/sys/kernel/printk_ratelimit_burst # 10
+# --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 #STRACE=$TRUSS
 #VALGRIND="valgrind --tool=exp-dhat"

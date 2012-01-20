@@ -73,7 +73,6 @@ public:
    static UString* _value;
    static UString* _buffer;
    static UString* _encoded;
-   static UString* _set_cookie;
 
    // SERVICES
 
@@ -83,7 +82,6 @@ public:
    static void init();
    static void clear();
    static void initAfterGenericRead();
-   static void setCookie(const UString& cookie);
 
    // log
 

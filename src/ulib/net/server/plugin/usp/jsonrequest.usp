@@ -1,5 +1,6 @@
+<!--#header
 Content-Type: application/jsonrequest
-
+-->
 <!--#code
 if (UHTTP::json) USP_PUTS(UHTTP::json->output());
 else             USP_PUTS(U_CONSTANT_TO_PARAM("{}"));

@@ -577,6 +577,44 @@ uint32_t UVector<UString>::intersection(UVector<UString>& set1, UVector<UString>
    U_RETURN(_length - n);
 }
 
+// storage session
+
+UVector<UString>* UVector<UString>::fromStream(istream& is)
+{  
+   U_TRACE(0, "UVector<UString>::fromStream(%p)", &is)
+
+   U_INTERNAL_ASSERT_EQUALS(is.peek(), '(')
+
+   UVector<UString>* v = U_NEW(UVector<UString>);
+
+   is >> *v;
+
+   U_RETURN_POINTER(v,UVector<UString>);
+}
+
+UVector<UString>* UVector<UString>::duplicate(UVector<UString>* v)
+{
+   U_TRACE(0, "UVector<UString>::duplicate(%p)", v)
+
+   UVector<UString>* v1 = 0;
+
+   if (v)
+      {
+      v1 = U_NEW(UVector<UString>(v->_capacity));
+
+      UStringRep* r;
+
+      for (uint32_t i = 0; i < v->_length; ++i)
+         {
+         r = v->UVector<UStringRep*>::at(i);
+
+         v1->UVector<UStringRep*>::push(r);
+         }
+      }
+
+   U_RETURN_POINTER(v1,UVector<UString>);
+}
+
 // THREE-WAY RADIX QUICKSORT
 // ------------------------------------------------------
 // Multikey Quicksort - Dr. Dobb's Journal, November 1998
@@ -841,8 +879,8 @@ U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
 
       // U_INTERNAL_DUMP("c = %C", c)
 
-         if (c == ']' ||
-             c == ')' ||
+         if (c == ')' ||
+             c == ']' ||
              c == EOF) break;
 
          if (c == '#')

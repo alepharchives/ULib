@@ -16,4 +16,4 @@ rm -f tmp/test.cdb
 start_prg cdb <inp/cdb.input
 
 # Test against expected output
-test_output_diff cdb random.cdb
+test_output_diff cdb

@@ -28,6 +28,8 @@ public:
 	virtual ~IRDataSession()
 		{
 		U_TRACE_UNREGISTER_OBJECT(5, IRDataSession)
+
+		if (vec) delete vec;
 		}
 
 	// method VIRTUAL to define
@@ -36,7 +38,18 @@ public:
 		{
 		U_TRACE(5, "IRDataSession::clear()")
 
-		if (vec) delete vec;
+		UDataSession::clear();
+
+		QUERY.clear();
+
+		FOR_PAGE	  = 0;
+		timebuf[0] = 0;
+
+		if (vec)
+			{
+			delete vec;
+					 vec = 0;
+			}
 		}
 
 	virtual void fromDataSession(UDataSession& data_session)
@@ -44,6 +57,8 @@ public:
 		U_TRACE(5, "IRDataSession::fromDataSession(%p)", &data_session)
 
 		UDataSession::fromDataSession(data_session);
+
+		U_INTERNAL_ASSERT_EQUALS(vec,0)
 
 		vec		= WeightWord::duplicate((*(IRDataSession*)&data_session).vec);
 		QUERY    =								(*(IRDataSession*)&data_session).QUERY;
@@ -86,19 +101,9 @@ public:
 
 		QUERY.get(is);
 
-		uint32_t vsize;
+		U_INTERNAL_ASSERT_EQUALS(vec,0)
 
-		is >> vsize;
-
-		is.get(); // skip ' '
-
-		// load filenames
-
-		UVector<UString> vtmp(vsize);
-
-		is >> vtmp;
-
-		vec = WeightWord::fromVector(vtmp);
+		vec = WeightWord::fromStream(is);
 		}
 
 	virtual void toStream(ostream& os)
@@ -166,6 +171,11 @@ public:
 #endif
 };
 
+union uudatasession {
+	UDataSession*  po;
+	IRDataSession* pe;
+};
+
 static IR* ir;
 static Query* query;
 static UCrono* crono;
@@ -207,21 +217,14 @@ static void usp_end()
 	U_INTERNAL_ASSERT_POINTER(crono)
 	U_INTERNAL_ASSERT_POINTER(footer)
 
+#ifdef DEBUG
 	delete ir;
 	delete query;
 	delete crono;
 	delete footer;
+#endif
 }
 -->
-<html>
-<head>
-  <title>ULib search engine: a full-text search system for communities</title>
-  <link title="Services" rel="stylesheet" href="/css/ir.css" type="text/css">
-</head>
-<body>
-  <div id="estform" class="estform">
-    <form action="ir_web" method="post" id="form_self" name="form_self">
-
 <!--#code
 const char* ref	  = "?ext=help";
 uint32_t num_args	  = UHTTP::form_name_value->size() / 2;
@@ -240,9 +243,13 @@ if (UHTTP::isHttpGET())
 			}
 		else
 			{
-			if (UHTTP::getDataSession() == false) return HTTP_BAD_REQUEST;
+			if (UHTTP::getDataSession(0,0,0) == false) return HTTP_BAD_REQUEST;
 
 			UHTTP::num_page_cur = USP_FORM_VALUE(0).strtol();
+
+			union uudatasession pd = { UHTTP::data_session };
+
+			UHTTP::num_item_tot = pd.pe->vec->size();
 			}
 		}
 	}
@@ -252,7 +259,7 @@ else if (UHTTP::isHttpPOST())
 
 	if (num_args != 2 || phrase.empty()) return HTTP_BAD_REQUEST;
 
-	(void) UHTTP::getDataSession();
+	if (UHTTP::getDataSession(0,0,0) == false) UHTTP::setSessionCookie();
 
 	IR_SESSION.QUERY	  = phrase;
 	IR_SESSION.FOR_PAGE = UHTTP::num_item_for_page = USP_FORM_VALUE(1).strtol();
@@ -265,7 +272,7 @@ else if (UHTTP::isHttpPOST())
 
 	crono->stop();
 
-	if ((UHTTP::num_page_tot = WeightWord::size()))
+	if ((UHTTP::num_item_tot = WeightWord::size()))
 		{
 		UHTTP::num_page_start = 1;
 		UHTTP::num_page_end   = UHTTP::num_item_for_page;
@@ -280,13 +287,21 @@ else if (UHTTP::isHttpPOST())
 
 	UHTTP::num_page_cur = 1;
 
-	UHTTP::putDataSession();
+	UHTTP::putDataSession(0,0,0,0);
 	}
 else
 	{
-	return HTTP_BAD_REQUEST;
+	return HTTP_BAD_METHOD;
 	}
 -->
+<html>
+<head>
+  <title>ULib search engine: a full-text search system for communities</title>
+  <link title="Services" rel="stylesheet" href="/css/ir.css" type="text/css">
+</head>
+<body>
+  <div id="estform" class="estform">
+    <form action="ir_web" method="post" id="form_self" name="form_self">
 
       <div class="form_navi">
         <a href="<!--#puts ref -->" class="navilink">help</a>
@@ -390,9 +405,9 @@ if (form_with_help) {
 					  "  <div class=\"resinfo\">\n"
 					  "  Results of <strong>%u</strong> - <strong>%u</strong> of about <strong>%u</strong> for <strong>%s</strong> (%s sec.)\n"
 					  "  </div>\n",
-					  UHTTP::num_page_start, UHTTP::num_page_end, UHTTP::num_page_tot, IR_SESSION.QUERY.data(), IR_SESSION.timebuf);
+					  UHTTP::num_page_start, UHTTP::num_page_end, UHTTP::num_item_tot, IR_SESSION.QUERY.data(), IR_SESSION.timebuf);
 
-		if (UHTTP::num_page_tot == 0) {
+		if (UHTTP::num_item_tot == 0) {
 -->
 			<p class="note">Your search did not match any documents.</p>
 <!--#code

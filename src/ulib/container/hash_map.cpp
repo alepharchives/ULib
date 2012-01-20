@@ -458,6 +458,66 @@ UString UHashMap<UString>::at(UStringRep* _key)
    U_RETURN_STRING(UString::getStringNull());
 }
 
+// storage session
+
+UHashMap<UString>* UHashMap<UString>::fromStream(istream& is)
+{
+   U_TRACE(0, "UHashMap<UString>::fromStream(%p)", &is)
+
+   U_INTERNAL_ASSERT_EQUALS(is.peek(), '[')
+
+   UHashMap<UString>* t = U_NEW(UHashMap<UString>);
+
+   t->allocate();
+
+   is >> *t;
+
+   U_RETURN_POINTER(t,UHashMap<UString>);
+}
+
+UHashMap<UString>* UHashMap<UString>::duplicate(UHashMap<UString>* t)
+{
+   U_TRACE(0, "UHashMap<UString>::duplicate(%p)", t)
+
+   UHashMap<UString>* t1 = 0;
+
+   if (t)
+      {
+      t1 = U_NEW(UHashMap<UString>);
+
+      uint32_t index, n = t->_capacity;
+
+      t1->allocate(n);
+
+      // inserisco i vecchi elementi
+
+      UHashMapNode* _next;
+
+      for (uint32_t i = 0; i < n; ++i)
+         {
+         if (t->table[i])
+            {
+            t1->node = t->table[i];
+
+            do {
+               _next  = t1->node->next;
+               index  = t1->node->hash % n;
+
+               U_INTERNAL_DUMP("i = %u index = %u hash = %u", i, index, t1->node->hash)
+
+               // antepongo l'elemento all'inizio della lista delle collisioni
+
+               t1->node->next   = t1->table[index];
+               t1->table[index] = t1->node;
+               }
+            while ((t1->node = _next));
+            }
+         }
+      }
+
+   U_RETURN_POINTER(t1,UHashMap<UString>);
+}
+
 // STREAMS
 
 U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
@@ -476,14 +536,16 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
 
       // NB: we need this way for plugin...
 
-      if (is.peek() == '{') c = sb->sbumpc(); // skip '{'
+      if (is.peek() == '{' || is.peek() == '[') c = sb->sbumpc(); // skip '{' or '['
 
       do {
          do { c = sb->sbumpc(); } while (u_isspace(c) && c != EOF); // skip white-space
 
       // U_INTERNAL_DUMP("c = %C", c)
 
-         if (c == '}' || c == EOF) break;
+         if (c == '}' ||
+             c == ']' ||
+             c == EOF) break;
 
          if (c == '#')
             {
@@ -522,7 +584,7 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
       }
 
    if (c == EOF)       is.setstate(ios::eofbit);
-// if (t._length == 0) is.setstate(ios::failbit);
+   // if (t._length == 0) is.setstate(ios::failbit);
 
    return is;
 }

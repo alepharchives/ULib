@@ -84,8 +84,6 @@ public:
 
    // Facilities
 
-   bool readBoolean(const UString& key);
-
    long readLong(const UString& key, long default_value = 0)
       {
       U_TRACE(0, "UFileConfig::readLong(%.*S,%ld)", U_STRING_TO_TRACE(key), default_value)
@@ -96,6 +94,8 @@ public:
 
       U_RETURN(default_value);
       }
+
+   bool readBoolean(const UString& key) { return table[key].strtob(); }
 
    // Open a configuration file
 

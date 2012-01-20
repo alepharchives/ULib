@@ -22,7 +22,9 @@
   Simple vector template class. Supports pushing at end and random-access deletions. Dynamically sized.
 */
 
+                   class UHTTP;
 template <class T> class UVector;
+                   class UDataSession;
 
 template <> class U_EXPORT UVector<void*> {
 public:
@@ -745,8 +747,8 @@ public:
 
          // U_INTERNAL_DUMP("c = %C", c)
 
-            if (c == ']' ||
-                c == ')' ||
+            if (c == ')' ||
+                c == ']' ||
                 c == EOF) break;
 
             if (c == '#')
@@ -911,6 +913,20 @@ public:
       UVector<UStringRep*>::insert(pos, n, str.rep);
       }
 
+   void erase(uint32_t pos) // remove element at pos
+      {
+      U_TRACE(0, "UVector<UString>::erase(%u)", pos)
+
+      UVector<UStringRep*>::erase(pos);
+      }
+
+   void erase(uint32_t first, uint32_t last) // erase [first,last[
+      {
+      U_TRACE(0, "UVector<UString>::erase(%u,%u)",  first, last)
+
+      UVector<UStringRep*>::erase(first, last);
+      }
+
    // ASSIGNMENTS
 
    void assign(uint32_t n, const UString& str)
@@ -1052,12 +1068,21 @@ public:
    friend U_EXPORT istream& operator>>(istream& is,       UVector<UString>& v);
    friend          ostream& operator<<(ostream& os, const UVector<UString>& v) { return operator<<(os, (const UVector<UStringRep*>&)v); }
 
+protected:
+   // storage session
+
+   static UVector<UString>* fromStream(istream& is);
+   static UVector<UString>* duplicate(UVector<UString>* v);
+
 private:
    static void mksort(UStringRep** a, int n, int depth);
           bool _isEqual(UVector<UString>& vec, bool ignore_case);
 
    UVector<UString>(const UVector<UString>&) : UVector<UStringRep*>() {}
    UVector<UString>& operator=(const UVector<UString>&)               { return *this; }
+
+   friend class UHTTP;
+   friend class UDataSession;
 };
 
 #endif

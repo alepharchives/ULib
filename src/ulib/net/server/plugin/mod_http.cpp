@@ -32,6 +32,8 @@ const UString* UHttpPlugIn::str_ENABLE_INOTIFY;
 const UString* UHttpPlugIn::str_ENABLE_CACHING_BY_PROXY_SERVERS;
 const UString* UHttpPlugIn::str_TELNET_ENABLE;
 const UString* UHttpPlugIn::str_MIN_SIZE_FOR_SENDFILE;
+const UString* UHttpPlugIn::str_STRICT_TRANSPORT_SECURITY;
+const UString* UHttpPlugIn::str_SESSION_COOKIE_OPTION;
 
 void UHttpPlugIn::str_allocate()
 {
@@ -47,6 +49,8 @@ void UHttpPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_ENABLE_CACHING_BY_PROXY_SERVERS,0)
    U_INTERNAL_ASSERT_EQUALS(str_TELNET_ENABLE,0)
    U_INTERNAL_ASSERT_EQUALS(str_MIN_SIZE_FOR_SENDFILE,0)
+   U_INTERNAL_ASSERT_EQUALS(str_STRICT_TRANSPORT_SECURITY,0)
+   U_INTERNAL_ASSERT_EQUALS(str_SESSION_COOKIE_OPTION,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("CACHE_FILE_MASK") },
@@ -58,7 +62,9 @@ void UHttpPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("ENABLE_INOTIFY") },
       { U_STRINGREP_FROM_CONSTANT("ENABLE_CACHING_BY_PROXY_SERVERS") },
       { U_STRINGREP_FROM_CONSTANT("TELNET_ENABLE") },
-      { U_STRINGREP_FROM_CONSTANT("MIN_SIZE_FOR_SENDFILE") }
+      { U_STRINGREP_FROM_CONSTANT("MIN_SIZE_FOR_SENDFILE") },
+      { U_STRINGREP_FROM_CONSTANT("STRICT_TRANSPORT_SECURITY") },
+      { U_STRINGREP_FROM_CONSTANT("SESSION_COOKIE_OPTION") }
    };
 
    U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,                   U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -71,6 +77,8 @@ void UHttpPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_ENABLE_CACHING_BY_PROXY_SERVERS,   U_STRING_FROM_STRINGREP_STORAGE(7));
    U_NEW_ULIB_OBJECT(str_TELNET_ENABLE,                     U_STRING_FROM_STRINGREP_STORAGE(8));
    U_NEW_ULIB_OBJECT(str_MIN_SIZE_FOR_SENDFILE,             U_STRING_FROM_STRINGREP_STORAGE(9));
+   U_NEW_ULIB_OBJECT(str_STRICT_TRANSPORT_SECURITY,         U_STRING_FROM_STRINGREP_STORAGE(10));
+   U_NEW_ULIB_OBJECT(str_SESSION_COOKIE_OPTION,             U_STRING_FROM_STRINGREP_STORAGE(11));
 }
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -118,6 +126,9 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    //
    // URI_REQUEST_CERT_MASK        mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
    //
+   // STRICT_TRANSPORT_SECURITY    for this period in seconds use HTTP Strict Transport Security to force client to use secure connections only
+   //
+   // SESSION_COOKIE_OPTION        eventual params for session cookie (lifetime, path, domain, secure, HttpOnly)  
    // ----------------------------------------------------------------------------------------------------------------------------------------------------
    // This directive gives greater control over abnormal client request behavior, which may be useful for avoiding some forms of denial-of-service attacks
    // ----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -160,6 +171,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
 #  ifdef HAVE_SSL
       uri_request_cert_mask                  = cfg[*str_URI_REQUEST_CERT_MASK];
+      UHTTP::sts_age_seconds                 = cfg.readLong(*str_STRICT_TRANSPORT_SECURITY);
 #  endif
 
       UString x = cfg[*str_CACHE_FILE_MASK];
@@ -172,6 +184,10 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       x = cfg[*str_URI_PROTECTED_MASK];
 
       if (x.empty() == false) UHTTP::uri_protected_mask = U_NEW(UString(x));
+
+      x = cfg[*str_SESSION_COOKIE_OPTION];
+
+      if (x.empty() == false) UHTTP::cookie_option = U_NEW(UString(x));
 
       if (cfg.readBoolean(*str_ENABLE_INOTIFY))
          {
@@ -359,6 +375,21 @@ next:
          }
 
       result = UHTTP::checkHTTPRequest();
+
+      if (UHTTP::sts_age_seconds      && // use HTTP Strict Transport Security to force client to use secure connections only
+          UServer_Base::bssl == false &&
+          result == U_PLUGIN_HANDLER_FINISHED)
+         {
+         // we are in cleartext at the moment, prevent further execution and output
+    
+         UString redirect_url(U_CAPACITY);
+
+         redirect_url.snprintf("https://%.*s%.*s", U_HTTP_VHOST_TO_TRACE, U_HTTP_URI_QUERY_TO_TRACE);
+
+         UHTTP::setHTTPRedirectResponse(false, UString::getStringNull(), U_STRING_TO_PARAM(redirect_url));
+
+         UHTTP::setHTTPRequestProcessed();
+         }
       }
 
    U_RETURN(result);

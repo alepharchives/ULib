@@ -37,7 +37,6 @@ SSL_CTX*    UClientImage_Base::ctx;
 UString* UClientImage_Base::_value;
 UString* UClientImage_Base::_buffer;
 UString* UClientImage_Base::_encoded;
-UString* UClientImage_Base::_set_cookie;
 
 // NB: we cannot put this in .h for the dependency of UServer_Base class...
 // ------------------------------------------------------------------------
@@ -134,14 +133,13 @@ void UClientImage_Base::init()
 {
    U_TRACE(0, "UClientImage_Base::init()")
 
-   U_INTERNAL_ASSERT_EQUALS(body,        0)
-   U_INTERNAL_ASSERT_EQUALS(rbuffer,     0)
-   U_INTERNAL_ASSERT_EQUALS(wbuffer,     0)
-   U_INTERNAL_ASSERT_EQUALS(pbuffer,     0)
-   U_INTERNAL_ASSERT_EQUALS(_value,      0)
-   U_INTERNAL_ASSERT_EQUALS(_buffer,     0)
-   U_INTERNAL_ASSERT_EQUALS(_encoded,    0)
-   U_INTERNAL_ASSERT_EQUALS(_set_cookie, 0)
+   U_INTERNAL_ASSERT_EQUALS(body,0)
+   U_INTERNAL_ASSERT_EQUALS(_value,0)
+   U_INTERNAL_ASSERT_EQUALS(rbuffer,0)
+   U_INTERNAL_ASSERT_EQUALS(wbuffer,0)
+   U_INTERNAL_ASSERT_EQUALS(pbuffer,0)
+   U_INTERNAL_ASSERT_EQUALS(_buffer,0)
+   U_INTERNAL_ASSERT_EQUALS(_encoded,0)
 
    body    = U_NEW(UString);
    rbuffer = U_NEW(UString(U_CAPACITY));
@@ -150,10 +148,9 @@ void UClientImage_Base::init()
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
-   _value      = U_NEW(UString(U_CAPACITY));
-   _buffer     = U_NEW(UString(U_CAPACITY));
-   _encoded    = U_NEW(UString(U_CAPACITY));
-   _set_cookie = U_NEW(UString(U_CAPACITY));
+   _value   = U_NEW(UString(U_CAPACITY));
+   _buffer  = U_NEW(UString(U_CAPACITY));
+   _encoded = U_NEW(UString(U_CAPACITY));
 }
 
 void UClientImage_Base::clear()
@@ -179,26 +176,11 @@ void UClientImage_Base::clear()
       U_INTERNAL_ASSERT_POINTER(_value)
       U_INTERNAL_ASSERT_POINTER(_buffer)
       U_INTERNAL_ASSERT_POINTER(_encoded)
-      U_INTERNAL_ASSERT_POINTER(_set_cookie)
 
       delete _value;
       delete _buffer;
       delete _encoded;
-      delete _set_cookie;
       }
-}
-
-void UClientImage_Base::setCookie(const UString& cookie)
-{
-   U_TRACE(0, "UClientImage_Base::setCookie(%.*S)", U_STRING_TO_TRACE(cookie))
-
-   U_ASSERT_DIFFERS(cookie.empty(), true)
-
-   if (_set_cookie->empty() == false) (void) _set_cookie->append(U_CONSTANT_TO_PARAM("\r\n"));
-                                      (void) _set_cookie->append(U_CONSTANT_TO_PARAM("Set-Cookie: "));
-                                      (void) _set_cookie->append(cookie);
-
-   U_INTERNAL_DUMP("_set_cookie = %.*S", U_STRING_TO_TRACE(*_set_cookie))
 }
 
 // Check whether the ip address client ought to be allowed
@@ -553,9 +535,6 @@ int UClientImage_Base::handlerWrite()
    U_INTERNAL_ASSERT_POINTER(wbuffer)
    U_INTERNAL_ASSERT(socket->isOpen())
 
-   off_t offset;
-   ssize_t value;
-
    U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer))
    U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body))
 
@@ -583,14 +562,14 @@ int UClientImage_Base::handlerWrite()
    if (count)
       {
 send:
-      offset = start;
-
       U_INTERNAL_DUMP("sfd = %d bclose = %b count = %u", sfd, bclose, count)
 
+      off_t offset = start;
+
 #  ifdef __MINGW32__
-      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", socket->getFd(), sfd, &offset, count);
+      ssize_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u", socket->getFd(), sfd, &offset, count);
 #  else
-      value = U_SYSCALL(sendfile, "%d,%d,%p,%u",    UEventFd::fd, sfd, &offset, count);
+      ssize_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u",    UEventFd::fd, sfd, &offset, count);
 #  endif
 
       if (value < 0L)

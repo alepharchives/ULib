@@ -274,6 +274,7 @@ U_EXPORT main (int argc, char* argv[])
    // +10,2:systat/udp->11
    // +9,2:users/udp->11
 
+   bool ok;
    char buffer1[128];
    char buffer2[128];
    const char* tbl[9]  = { "@7",    "echo",    "@9",        "discard",
@@ -286,8 +287,10 @@ U_EXPORT main (int argc, char* argv[])
       strcat(strcpy(buffer1, tbl[i]), "/tcp");
       strcat(strcpy(buffer2, tbl[i]), "/udp");
 
-      U_ASSERT( c[UString(buffer1)] == UString(data[i]) )
-      U_ASSERT( c[UString(buffer2)] == UString(data[i]) )
+      ok = c[UString(buffer1)] == UString(data[i]);
+      U_INTERNAL_ASSERT( ok )
+      ok = c[UString(buffer2)] == UString(data[i]);
+      U_INTERNAL_ASSERT( ok )
       }
 
    // handles repeated keys
@@ -299,8 +302,10 @@ U_EXPORT main (int argc, char* argv[])
    // +3,7:two->Goodbye
    // +3,7:two->Another
 
-   U_ASSERT( c[U_STRING_FROM_CONSTANT("one")] == U_STRING_FROM_CONSTANT("Another") )
-   U_ASSERT( c[U_STRING_FROM_CONSTANT("two")] == U_STRING_FROM_CONSTANT("Another") )
+   ok = c[U_STRING_FROM_CONSTANT("one")] == U_STRING_FROM_CONSTANT("Another");
+   U_INTERNAL_ASSERT( ok )
+   ok = c[U_STRING_FROM_CONSTANT("two")] == U_STRING_FROM_CONSTANT("Another");
+   U_INTERNAL_ASSERT( ok )
 
    // handles long keys and data
    // --------------------------
@@ -309,7 +314,8 @@ U_EXPORT main (int argc, char* argv[])
 #     define LKEY "ba483b3442e75cace82def4b5df25bfca887b41687537c21dc4b82cb4c36315e2f6a0661d1af2e05e686c4c595c16561d8c1b3fbee8a6b99c54b3d10d61948445298e97e971f85a600c88164d6b0b09\nb5169a54910232db0a56938de61256721667bddc1c0a2b14f5d063ab586a87a957e87f704acb7246c5e8c25becef713a365efef79bb1f406fecee88f3261f68e239c5903e3145961eb0fbc538ff506a\n"
 #     define LDATA "152e113d5deec3638ead782b93e1b9666d265feb5aebc840e79aa69e2cfc1a2ce4b3254b79fa73c338d22a75e67cfed4cd17b92c405e204a48f21c31cdcf7da46312dc80debfbdaf6dc39d74694a711\n6d170c5fde1a81806847cf71732c7f3217a38c6234235951af7b7c1d32e62d480d7c82a63a9d94291d92767ed97dd6a6809d1eb856ce23eda20268cb53fda31c016a19fc20e80aec3bd594a3eb82a5a\n"
 
-   U_ASSERT( c[U_STRING_FROM_CONSTANT(LKEY)] == U_STRING_FROM_CONSTANT(LDATA) )
+   ok = c[U_STRING_FROM_CONSTANT(LKEY)] == U_STRING_FROM_CONSTANT(LDATA);
+   U_INTERNAL_ASSERT( ok )
 
    cout << c;
 }

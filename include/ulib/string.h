@@ -411,6 +411,7 @@ public:
    static UStringRep*   toUTF8(const unsigned char* t, uint32_t tlen);
    static UStringRep* fromUTF8(const unsigned char* t, uint32_t tlen);
 
+   bool strtob() const __pure;
 #ifdef HAVE_STRTOF
    float strtof() const;
 #endif
@@ -976,14 +977,17 @@ public:
 
    // Compare
 
-   int compare(UStringRep* _rep) const          { return rep->compare(_rep); }
+   int compare(const char* s) const             { return rep->compare(s, u_str_len(s)); }
    int compare(const char* s, uint32_t n) const { return rep->compare(s, n); }
+
+   int compare(UStringRep* _rep) const          { return rep->compare(_rep); }
    int compare(const UString& str) const        { return rep->compare(str.rep); }
+
+   int compare(uint32_t pos, const char* s) const
+      { return rep->compare(pos, u_str_len(s), s, u_str_len(s)); }
 
    int compare(uint32_t pos, uint32_t n1, const char* s, uint32_t n2) const
       { return rep->compare(pos, U_min(size() - pos, n1), s, U_min(u_str_len(s), n2)); }
-
-   int compare(const char* s) const { return rep->compare(s, u_str_len(s)); }
 
    int compare(uint32_t pos, uint32_t n, const char* s) const
       { return rep->compare(pos, U_min(size() - pos, n), s, u_str_len(s)); }
@@ -1209,14 +1213,15 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
+   bool strtob() const                 { return rep->strtob(); }
 #ifdef HAVE_STRTOF
-   float       strtof() const          { return rep->strtof(); }
+   float strtof() const                { return rep->strtof(); }
 #endif
-   double      strtod() const          { return rep->strtod(); }
+   double strtod() const               { return rep->strtod(); }
 #ifdef HAVE_STRTOLD
    long double strtold() const         { return rep->strtold(); }
 #endif
-   long     strtol(int base = 0) const { return rep->strtol(base); }
+   long strtol(int base = 0) const     { return rep->strtol(base); }
 #ifdef HAVE_STRTOULL
    int64_t strtoll(int base = 0) const { return rep->strtoll(base); }
 #endif

@@ -14,7 +14,7 @@
 #ifndef ULIB_DATA_SESSION_H
 #define ULIB_DATA_SESSION_H 1
 
-#include <ulib/string.h>
+#include <ulib/container/hash_map.h>
 
 #ifdef HAVE_STRSTREAM_H
 #  include <strstream.h>
@@ -37,12 +37,14 @@ public:
 
    // COSTRUTTORE
 
+   UHashMap<UString>* tbl;
    time_t creation, last_access;
 
    UDataSession()
       {
       U_TRACE_REGISTER_OBJECT(0, UDataSession, "")
 
+      tbl      = 0;
       creation = last_access = u_now->tv_sec;
       }
 
@@ -50,6 +52,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UDataSession, "%.*S", U_STRING_TO_TRACE(_data))
 
+      tbl      = 0;
       creation = u_now->tv_sec;
 
       fromString(_data);
@@ -59,7 +62,7 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UDataSession)
 
-      clear();
+      UDataSession::clear();
       }
 
    // SERVICES
@@ -67,9 +70,12 @@ public:
    UString   toString();
    void    fromString(const UString& data);
 
+   bool getValue(const    char* key, uint32_t keylen, UString& value);
+   void putValue(const UString& key,            const UString& value);
+
    // method VIRTUAL to define
 
-   virtual void clear() {}
+   virtual void clear();
 
    virtual void   toStream(ostream& os);
    virtual void fromStream(istream& is);

@@ -551,6 +551,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    U_INTERNAL_ASSERT_POINTER(peer)
 
+   time_t _expire;
    Url destination;
    bool result = true;
    UHashMap<UString> args;
@@ -577,10 +578,11 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    token = args[*str_Token];
 
-   if (peer->token != token                              ||
-       UServices::getTokenData(peer_mac, token) == false ||
+   if (peer->token != token                                       ||
+       UServices::getTokenData(peer_mac, token, _expire) == false ||
        peer->mac   != peer_mac)
       {
+      U_INTERNAL_DUMP("expire   = %ld", _expire)
       U_INTERNAL_DUMP("token    = %.*S", U_STRING_TO_TRACE(token))
       U_INTERNAL_DUMP("peer     = %.*S", U_STRING_TO_TRACE(peer->token))
       U_INTERNAL_DUMP("peer_mac = %.*S", U_STRING_TO_TRACE(peer_mac))

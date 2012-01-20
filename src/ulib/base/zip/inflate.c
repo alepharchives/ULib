@@ -223,9 +223,8 @@ int init_inflation(void)
 
 int inflate_file(pb_file* pbf, int out_fd, struct zipentry* ze)
 {
-   int rtval;
    ub4 crc = 0;
-   unsigned int rdamt;
+   int rtval, rdamt;
    Bytef  in_buff[RDSZ];
    Bytef out_buff[RDSZ];
 
@@ -241,7 +240,7 @@ int inflate_file(pb_file* pbf, int out_fd, struct zipentry* ze)
          {
          if ((rdamt = pb_read(pbf, in_buff, RDSZ)) == 0) break;
 
-         if (((int)rdamt) < 0)
+         if (rdamt < 0)
             {
             perror("read");
 

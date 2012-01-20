@@ -44,7 +44,7 @@ The current version offers the following features :
    * Browser cache management (headers: If-Modified-Since/Last-modified).
    * Chunk-encoding transfers support.
    * HTTP multi-range request support.
-   * Memory caching of document root for (small) static pages with smart compression and CSS/JS reduction.
+   * Memory caching of document root for (small) static pages with smart deflate compression and CSS/JS reduction.
    * Support for automatic update of caching document root with inotify (on Linux).
    * Support for pipelining.
    * Support for virtual hosts (also with SSL).
@@ -62,7 +62,9 @@ The current version offers the following features :
    * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
    * Support for minify HTML CGI output with wrapping [google page speed SDK](http://code.google.com/speed/page-speed/download.html#pagespeed-sdk).
    * Support for running JavaScript code with wrapping [google V8 JavaScript Engine](http://code.google.com/apis/v8/intro.html).
-   * [HTTP pseudo-streaming](http://www.phpmotionwiz.com/what-is-pseudo-streaming) for FLV video supported.
+   * Support for [HTTP pseudo-streaming](http://www.phpmotionwiz.com/what-is-pseudo-streaming) for FLV video.
+   * Support for [HTTP Strict Transport Security](https://developer.mozilla.org/en/Security/HTTP_Strict_Transport_Security).
+   * Support for [HTTP Session Hijacking mitigation](http://cleverlogic.net/articles/kochure).
    * [C Servlet Support](http://bellard.org/tcc/) with libtcc (if available) as a backend for dynamic code generation (experimental).
    * Support for Windows (without preforking), precompiled binaries are available [here](https://github.com/stefanocasazza/ULib/tree/master/win32).
    * Requests cut in phases for modular architecture (apache-like).

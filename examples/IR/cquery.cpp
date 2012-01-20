@@ -42,22 +42,32 @@ void WeightWord::allocVector(uint32_t n)
    size_streambuf_vec = sizeof("(  )") - 1;
 }
 
-UVector<WeightWord*>* WeightWord::fromVector(UVector<UString>& v)
+UVector<WeightWord*>* WeightWord::fromStream(istream& is)
 {
-   U_TRACE(5, "WeightWord::fromVector(%p)", &v)
+   U_TRACE(5, "WeightWord::fromStream(%p)", &is)
 
-   uint32_t i, sz = v.size();
+   uint32_t vsize;
+
+   is >> vsize;
 
    clear();
-   allocVector(sz);
+   allocVector(vsize);
+
+   // load filenames
+
+   UVector<UString> vtmp(vsize);
+
+   is.get(); // skip ' '
+
+   is >> vtmp;
 
    UPosting::word_freq = 0;
 
    UVector<WeightWord*>* result = vec;
 
-   for (i = 0; i < sz; ++i)
+   for (uint32_t i = 0; i < vsize; ++i)
       {
-      *UPosting::filename = v[i];
+      *UPosting::filename = vtmp[i];
 
       push();
       }

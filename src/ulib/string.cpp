@@ -1139,6 +1139,27 @@ void UString::snprintf_add(const char* format, ...)
    va_end(argp);
 }
 
+__pure bool UStringRep::strtob() const
+{
+   U_TRACE(0, "UStringRep::strtob()")
+
+   if (_length)
+      {
+      char c = str[0];
+
+      if (          c  == '1' ||
+          u_toupper(c) == 'Y')
+         {
+         U_RETURN(true);
+         }
+
+      U_INTERNAL_ASSERT(          c  == '0' ||
+                        u_toupper(c) == 'N')
+      }
+
+   U_RETURN(false);
+}
+
 long UStringRep::strtol(int base) const
 {
    U_TRACE(0, "UStringRep::strtol(%d)", base)
