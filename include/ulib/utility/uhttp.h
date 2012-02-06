@@ -36,7 +36,6 @@
 #define U_HTTP_URI_EQUAL(str) ((str).equal(U_HTTP_URI_TO_PARAM))
 
 class UFile;
-class UValue;
 class UEventFd;
 class UCommand;
 class UPageSpeed;
@@ -186,19 +185,6 @@ public:
 
    // TYPE
 
-   static bool isHTTPRequest() { return (U_http_method_type); }
-
-   static bool isHTTPRequestTooLarge()
-      {
-      U_TRACE(0, "UHTTP::isHTTPRequestTooLarge()")
-
-      U_INTERNAL_ASSERT_MAJOR(limit_request_body,0)
-
-      bool result = (u_http_info.clength > limit_request_body);
-
-      U_RETURN(result);
-      }
-
    static bool isHttpGETorHEAD()
       {
       U_TRACE(0, "UHTTP::isHttpGETorHEAD()")
@@ -262,9 +248,6 @@ public:
       U_RETURN(result);
       }
 
-   static bool isTSARequest() __pure;
-   static bool isSOAPRequest() __pure;
-
    static bool isSSIRequest()
       {
       U_TRACE(0, "UHTTP::isSSIRequest()")
@@ -275,6 +258,11 @@ public:
 
       U_RETURN(result);
       }
+
+   static bool isTSARequest() __pure;
+   static bool isSOAPRequest() __pure;
+
+   static bool isHTTPRequest() { return (U_http_method_type); }
 
    // SERVICES
 
@@ -291,7 +279,7 @@ public:
    static uint32_t limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size, sts_age_seconds;
 
    static int  checkHTTPRequest();
-   static void manageHTTPServletRequest();
+   static void manageHTTPServletRequest(bool as_service);
    static void processHTTPGetRequest(const UString& request);
    static bool checkHTTPRequestForHeader(const UString& request);
    static bool checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
@@ -302,6 +290,11 @@ public:
    static UString     getRequestURI(bool bquery);
    static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase) __pure;
    static UString     getHeaderMimeType(const char* content, const char* content_type, uint32_t size, time_t expire);
+
+   static void callService(const UString& path, bool servlet, UString* environment);
+
+   static void callCGI(    const UString& path, UString* environment = 0) { callService(path, false, environment); }
+   static void callServlet(const UString& path, UString* environment = 0) { callService(path, true,  environment); }
 
    // set HTTP main error message
 
@@ -479,7 +472,6 @@ public:
    // (such as checkboxes, radio buttons, and text fields), or uploaded files
    // -----------------------------------------------------------------------
 
-   static UValue* json;
    static UString* tmpdir;
    static UString* qcontent;
    static UMimeMultipart* formMulti;
@@ -517,6 +509,7 @@ public:
    static UString* keyID;
    static void* db_session;
    static UDataSession* data_session;
+   static UDataSession* data_storage;
    static uint32_t sid_counter_gen, sid_counter_cur;
 
    static bool isNewSession()
@@ -554,14 +547,15 @@ public:
       U_RETURN_STRING(x);
       }
 
-   static bool getDataSession(const char* key, uint32_t keylen, UString* value);
-   static void putDataSession(const char* key, uint32_t keylen, const char* val, uint32_t sz);
-
-   static void setSessionCookie();
-   static void removeDataSession(const UString& token);
+   static void removeDataSession();
+   static void setSessionCookie(UString* param);
    static bool initSession(const char* location, uint32_t sz);
 
-   static void removeDataSession() { removeDataSession(*keyID); }
+   static bool getDataSession(uint32_t index, UString* value);
+   static void putDataSession(uint32_t index, const char* val, uint32_t sz);
+
+   static bool getDataStorage(uint32_t index, UString* value);
+   static void putDataStorage(uint32_t index, const char* val, uint32_t sz);
 
    // HTML Pagination
 
@@ -650,6 +644,7 @@ public:
    public:
 
    iPFpv runDynamicPage;
+   bool alias;
 
    // COSTRUTTORI
 
@@ -658,6 +653,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UServletPage, "")
 
       runDynamicPage = 0;
+      alias          = false;
       }
 
    ~UServletPage()
@@ -673,6 +669,8 @@ public:
    UServletPage(const UServletPage&) : UDynamic() {}
    UServletPage& operator=(const UServletPage&)   { return *this; }
    };
+
+   static UServletPage* usp_page_to_check;
 
    // CSP (C Servlet Page)
 
@@ -963,6 +961,10 @@ private:
 
    static void deleteSession() U_NO_EXPORT;
    static void manageDataForCache() U_NO_EXPORT;
+   static bool isAlias(UServletPage* usp_page) U_NO_EXPORT;
+   static bool isHTTPRequestTooLarge(UString& buffer) U_NO_EXPORT;
+   static void removeDataSession(const UString& token) U_NO_EXPORT;
+   static void checkIfAlias(UStringRep* key, void* value) U_NO_EXPORT;
    static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;
    static bool processHTTPAuthorization(const UString& request) U_NO_EXPORT;
    static int  sortHTTPRange(const void* a, const void* b) __pure U_NO_EXPORT;

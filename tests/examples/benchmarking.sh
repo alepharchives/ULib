@@ -21,19 +21,7 @@ rm -f err/benchmarking.err \
 
 DIR_CMD="../../examples/userver"
 
-if [ "$TERM" != "cygwin" ]; then
-   ( mkdir -p servlet; cd servlet;
-     rm -f *.so;
-     ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/benchmarking.so;
-     cd ../../../src/ulib/net/server/plugin/usp/;
-     make benchmarking.la >/dev/null 2>&1 || exit 1;
-     test -d ../.libs &&
-     ( cd ../.libs;
-       ln -sf ../mod_shib/.libs/mod_shib.so;
-       ln -sf ../page_speed/.libs/mod_pagespeed.so;
-       ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
-   ( cd benchmark/docroot; ln -sf ../../servlet )
-fi
+compile_usp
 
 ulimit -n 100000
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

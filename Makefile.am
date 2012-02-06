@@ -40,8 +40,6 @@ dist-hook:
 		$(distdir)/tests/examples/RSIGN/log \
 		$(distdir)/tests/examples/WAGSM/log \
 		$(distdir)/tests/examples/CApath/*.*0 \
-		$(distdir)/tests/examples/servlet/*.so \
-		$(distdir)/tests/examples/servlet/*.usp \
 		$(distdir)/tests/examples/TSA/log \
 		$(distdir)/tests/examples/TSA/DB/log \
 		$(distdir)/tests/examples/TSA/DB/.rnd \
@@ -57,20 +55,20 @@ dist-hook:
 		$(distdir)/tests/examples/IR/benchmark/log \
 		$(distdir)/tests/examples/IR/benchmark/err \
 		$(distdir)/tests/examples/IR/benchmark/index.cfg \
-		$(distdir)/tests/examples/nocat/Pagine/index.html \
-		$(distdir)/src/ulib/net/server/plugin/Makefile \
   		$(distdir)/src/ulib/net/server/plugin/*.o \
   		$(distdir)/src/ulib/net/server/plugin/*.l? \
   		$(distdir)/src/ulib/net/server/plugin/.deps \
   		$(distdir)/src/ulib/net/server/plugin/.libs \
-  		$(distdir)/src/ulib/net/server/plugin/*/Makefile \
+  		$(distdir)/src/ulib/net/server/plugin/Makefile \
   		$(distdir)/src/ulib/net/server/plugin/*/*.o \
   		$(distdir)/src/ulib/net/server/plugin/*/*.l? \
   		$(distdir)/src/ulib/net/server/plugin/*/.deps \
   		$(distdir)/src/ulib/net/server/plugin/*/.libs \
-		$(distdir)/tests/examples/benchmark/docroot/servlet \
-  		$(distdir)/src/ulib/net/server/plugin/mod_fcgi/test_fcgi \
-  		$(distdir)/src/ulib/net/server/plugin/usp/usp_translator
+  		$(distdir)/src/ulib/net/server/plugin/*/Makefile \
+  		$(distdir)/src/ulib/net/server/plugin/usp/usp_translator \
+		$(distdir)/tests/examples/benchmark/docroot/servlet/*.so \
+		$(distdir)/tests/examples/benchmark/docroot/servlet/*.usp \
+		$(distdir)/tests/examples/benchmark/libraries/libcaptcha.o
 
 README.html: README.md
 	@Markdown.pl README.md > README.html

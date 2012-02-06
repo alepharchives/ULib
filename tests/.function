@@ -117,6 +117,22 @@ CApath_rehash() {
 	cd ../..
 }
 
+# function : compile_usp
+compile_usp() {
+
+if [ "$TERM" != "cygwin" ]; then
+	rm -f /usr/local/libexec/ulib/http_session.jnl
+   ( cd ../../src/ulib/net/server/plugin/usp/; ./usp2so.sh >/tmp/usp2so.sh.out 2>&1 || exit 1; \
+     test -d ../.libs && cd ../.libs; \
+     ln -sf ../mod_shib/.libs/mod_shib.so; \
+     ln -sf ../page_speed/.libs/mod_pagespeed.so; \
+     ln -sf ../mod_geoip/.libs/mod_geoip.so )
+   ( cd benchmark/docroot; mkdir -p servlet; cd servlet; rm -f *.so *.usp; \
+	  for i in `ls ../../../../../src/ulib/net/server/plugin/usp/.libs/*.so`; do ln -sf $i; done; \
+     for i in `ls ../../../../../src/ulib/net/server/plugin/usp/*.usp`;      do ln -sf $i; done )
+fi
+}
+
 # function : start_msg
 start_msg() {
 

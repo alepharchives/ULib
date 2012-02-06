@@ -2,6 +2,10 @@
 
 #include <ulib/pcre/pcre.h>
 
+#ifdef __MINGW32__
+#define _GLIBCXX_USE_C99_DYNAMIC 1
+#endif
+
 #include <map>
 #include <string>
 #include <vector>

@@ -85,6 +85,7 @@ class UValue;
 class UString;
 class UStringExt;
 class UHttpPlugIn;
+class UHashMapNode;
 template <class T> class UHashMap;
 
 class U_EXPORT UStringRep {
@@ -377,7 +378,7 @@ public:
 
    UStringRep* substr(uint32_t pos, uint32_t n) { return substr(str + pos, n); }
 
-   // Assignement
+   // Assignment
 
    static void assign(UStringRep*& rep, const char* s, uint32_t n);
 
@@ -494,6 +495,8 @@ private:
    explicit UStringRep(const char* t);
    explicit UStringRep(const char* t, uint32_t tlen);
 
+   static UStringRep* create(UStringRep*);
+
    UStringRep(const UStringRep&)            {}
    UStringRep& operator=(const UStringRep&) { return *this; }
 
@@ -504,6 +507,7 @@ private:
                       friend class UString;
                       friend class UStringExt;
                       friend class UHttpPlugIn;
+                      friend class UHashMapNode;
    template <class T> friend class UHashMap;
    template <class T> friend void u_construct(T*, uint32_t);
                       friend void ULib_init();
@@ -546,7 +550,7 @@ public:
    static uint32_t max_size() { return UStringRep::max_size(); }
 
 protected:
-   // in 'memory reference' si distingue tra set, copy, e assign...
+   // in 'memory reference' distinction is made between set, copy, e assign...
 
    void set(UStringRep* r)
       {
@@ -579,7 +583,7 @@ public:
 
       U_CHECK_MEMORY
 
-      // NB: funziona anche nel caso di (rep == r)...
+      // NB: works also int the case of (rep == r)...
 
       r->hold();        // 1. take a copy of new resource
 
@@ -626,14 +630,7 @@ public:
    explicit UString(const char* t, uint32_t tlen);
 
    explicit UString(uint32_t n);
-   explicit UString(uint32_t n, unsigned char c)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UString, "%u,%C", n, c)
-
-      rep = UStringRep::create(n, n, 0);
-
-      (void) U_SYSCALL(memset, "%p,%d,%u", (void*)rep->str, c, n);
-      }
+   explicit UString(uint32_t n, unsigned char c);
 
    // Copy from string
 
@@ -689,7 +686,7 @@ public:
 
    UString substr(uint32_t pos, uint32_t n = U_NOT_FOUND) const;
 
-   // distruttore
+   // destructor
 
    ~UString()
       {
@@ -719,7 +716,7 @@ public:
    UString& replace(uint32_t pos, uint32_t n, const char* s)      { return replace(pos,    n,          s, u_str_len(s)); }
    UString& replace(uint32_t pos, uint32_t n, const UString& str) { return replace(pos,    n, str.data(), str.size()); }
 
-   // Assignement
+   // Assignment
    // NB: assign() NON GARANTISCE PROPRIETA' DELLA STRINGA, replace() SI...
 
    UString& assign(const char* s, uint32_t n)
@@ -765,7 +762,7 @@ public:
 
    // Make room for a total of n element
 
-   bool reserve(uint32_t n); // NB: return true if changed rep...
+   bool reserve(uint32_t n); // NB: return true if has changed rep...
 
    // Element access
 

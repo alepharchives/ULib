@@ -21,21 +21,7 @@ fi
 
 DIR_CMD="../../examples/userver"
 
-if [ "$TERM" != "cygwin" ]; then
-	( mkdir -p servlet; cd servlet;
-	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/jsonrequest.so;
-	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/upload_progress.so;
-	  cd ../../../src/ulib/net/server/plugin/usp/;
-	  make jsonrequest.la	  >/dev/null 2>&1 || exit 1;
-	  make benchmarking.la	  >/dev/null 2>&1 || exit 1;
-	  make upload_progress.la >/dev/null 2>&1 || exit 1;
-	  test -d ../.libs &&
-	  ( cd ../.libs;
-		 ln -sf ../v8/.libs/mod_v8.so;
-	    ln -sf ../mod_shib/.libs/mod_shib.so;
-	    ln -sf ../page_speed/.libs/mod_pagespeed.so;
-	    ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
-fi
+compile_usp
 
 # function : creat_link
 creat_link() {
@@ -137,17 +123,18 @@ $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" htt
 	echo 127.0.0.1 www.sito2.com  >> /etc/hosts
  fi
 
- mkdir -p www.sito1.com/inp/http
+ mkdir -p www.sito1.com/inp/http \
+			 www.sito1.com/benchmark/docroot
 
- creat_link ../tmp					  www.sito1.com/tmp
- creat_link ../SSI					  www.sito1.com/SSI
- creat_link ../cgi-bin				  www.sito1.com/cgi-bin
- creat_link ../servlet				  www.sito1.com/servlet
- creat_link ../uploads				  www.sito1.com/uploads
- creat_link ../../../inp/http/data www.sito1.com/inp/http/data
- creat_link ../vuoto.txt			  www.sito1.com/vuoto.txt
+ creat_link ../tmp									  www.sito1.com/tmp
+ creat_link ../SSI									  www.sito1.com/SSI
+ creat_link ../cgi-bin								  www.sito1.com/cgi-bin
+ creat_link ../../../benchmark/docroot/servlet www.sito1.com/benchmark/docroot/servlet
+ creat_link ../uploads								  www.sito1.com/uploads
+ creat_link ../../../inp/http/data				  www.sito1.com/inp/http/data
+ creat_link ../vuoto.txt							  www.sito1.com/vuoto.txt
 
- start_test  web_serverV.cfg		  www.sito1.com
+ start_test  web_serverV.cfg						  www.sito1.com
 
 # for GDB
 # sed "s/Host: localhost/Host: www.sito1.com/" inp/http/all.inp | nc 127.0.0.1 80

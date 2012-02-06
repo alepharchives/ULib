@@ -1,180 +1,6 @@
 <!--#declaration
 
-#include <ulib/debug/crono.h>
-#include <ulib/utility/data_session.h>
-
-#include "cquery.h"
-
-#define IR_SESSION (*(IRDataSession*)UHTTP::data_session)
-
-class IRDataSession : public UDataSession {
-public:
-	UString QUERY;
-	UVector<WeightWord*>* vec;
-	uint32_t FOR_PAGE;
-	char timebuf[9];
-
-	// COSTRUTTORE
-
-	IRDataSession()
-		{
-		U_TRACE_REGISTER_OBJECT(5, IRDataSession, "")
-
-		vec		  = 0;
-		FOR_PAGE	  = 0;
-		timebuf[0] = 0;
-		}
-
-	virtual ~IRDataSession()
-		{
-		U_TRACE_UNREGISTER_OBJECT(5, IRDataSession)
-
-		if (vec) delete vec;
-		}
-
-	// method VIRTUAL to define
-
-   virtual void clear()
-		{
-		U_TRACE(5, "IRDataSession::clear()")
-
-		UDataSession::clear();
-
-		QUERY.clear();
-
-		FOR_PAGE	  = 0;
-		timebuf[0] = 0;
-
-		if (vec)
-			{
-			delete vec;
-					 vec = 0;
-			}
-		}
-
-	virtual void fromDataSession(UDataSession& data_session)
-		{
-		U_TRACE(5, "IRDataSession::fromDataSession(%p)", &data_session)
-
-		UDataSession::fromDataSession(data_session);
-
-		U_INTERNAL_ASSERT_EQUALS(vec,0)
-
-		vec		= WeightWord::duplicate((*(IRDataSession*)&data_session).vec);
-		QUERY    =								(*(IRDataSession*)&data_session).QUERY;
-		FOR_PAGE =								(*(IRDataSession*)&data_session).FOR_PAGE;
-
-		(void) u_mem_cpy(timebuf, (*(IRDataSession*)&data_session).timebuf, sizeof(timebuf));
-		}
-
-	virtual UDataSession* toDataSession()
-		{
-		U_TRACE(5, "IRDataSession::toDataSession()")
-
-		UDataSession* ptr = U_NEW(IRDataSession);
-
-		ptr->creation = creation;
-
-		(*(IRDataSession*)ptr).vec		  = WeightWord::duplicate(vec);
-		(*(IRDataSession*)ptr).QUERY	  = QUERY;
-		(*(IRDataSession*)ptr).FOR_PAGE = FOR_PAGE;
-
-		(void) u_mem_cpy((*(IRDataSession*)ptr).timebuf, timebuf, sizeof(timebuf));
-
-		U_RETURN_POINTER(ptr,UDataSession);
-		}
-
-	virtual void fromStream(istream& is)
-		{
-		U_TRACE(5, "IRDataSession::fromStream(%p)", &is)
-
-		UDataSession::fromStream(is);
-
-		U_INTERNAL_ASSERT_EQUALS(is.peek(), '{')
-
-		is.get(); // skip '{'
-
-		is >> timebuf
-			>> FOR_PAGE;
-
-		is.get(); // skip ' '
-
-		QUERY.get(is);
-
-		U_INTERNAL_ASSERT_EQUALS(vec,0)
-
-		vec = WeightWord::fromStream(is);
-		}
-
-	virtual void toStream(ostream& os)
-		{
-		U_TRACE(5, "IRDataSession::toStream(%p)", &os)
-
-		UDataSession::toStream(os);
-
-		os.put('{');
-		os.put(' ');
-		os << timebuf;
-		os.put(' ');
-		os << FOR_PAGE;
-		os.put(' ');
-		QUERY.write(os);
-		os.put(' ');
-		os << vec->size();
-		os.put(' ');
-		os << *vec;
-		os.put(' ');
-		os.put('}');
-		}
-
-	// STREAMS
-
-	friend istream& operator>>(istream& is, IRDataSession& d)
-		{
-		U_TRACE(5, "IRDataSession::operator>>(%p,%p)", &is, &d)
-
-		return operator>>(is, *(UDataSession*)&d);
-		}
-
-	friend ostream& operator<<(ostream& os, const IRDataSession& d)
-		{
-		U_TRACE(5, "IRDataSession::operator<<(%p,%p)", &os, &d)
-
-		return operator<<(os, *(UDataSession*)&d);
-		}
-
-#ifdef DEBUG
-#  include <ulib/internal/objectIO.h>
-
-	const char* dump(bool usp_reset) const
-		{
-		*UObjectIO::os << "timebuf                     ";
-
-		char buffer[20];
-
-		UObjectIO::os->write(buffer, u_sn_printf(buffer, sizeof(buffer), "%S", timebuf));
-
-		*UObjectIO::os << '\n'
-							<< "FOR_PAGE                    " << FOR_PAGE      << '\n'
-							<< "QUERY (UString              " << (void*)&QUERY << ")\n"
-							<< "vec   (UVector<WeightWord*> " << (void*)vec    << ')';
-
-		if (usp_reset)
-			{
-			UObjectIO::output();
-
-			return UObjectIO::buffer_output;
-			}
-
-		return 0;
-		}
-#endif
-};
-
-union uudatasession {
-	UDataSession*  po;
-	IRDataSession* pe;
-};
+#include "ir_session.h"
 
 static IR* ir;
 static Query* query;
@@ -183,49 +9,54 @@ static UString* footer;
 
 static void usp_init()
 {
-	U_TRACE(5, "::usp_init()")
+U_TRACE(5, "::usp_init()")
 
-	U_INTERNAL_ASSERT_EQUALS(ir,0)
-	U_INTERNAL_ASSERT_EQUALS(query,0)
-	U_INTERNAL_ASSERT_EQUALS(crono,0)
-	U_INTERNAL_ASSERT_EQUALS(footer,0)
+U_INTERNAL_ASSERT_EQUALS(ir,0)
+U_INTERNAL_ASSERT_EQUALS(query,0)
+U_INTERNAL_ASSERT_EQUALS(crono,0)
+U_INTERNAL_ASSERT_EQUALS(footer,0)
 
-	ir		 = U_NEW(IR);
-	query  = U_NEW(Query);
-	crono  = U_NEW(UCrono);
-	footer = U_NEW(UString(200U));
+ir		 = U_NEW(IR);
+query  = U_NEW(Query);
+crono  = U_NEW(UCrono);
+footer = U_NEW(UString(200U));
 
-	UString cfg_index;
+UString cfg_index;
 
-	if ((ir->loadFileConfig(cfg_index) &&
-		  ir->openCDB(false)) == false)
-		{
-		U_ERROR("usp_init() of servlet 'ir_web' failed...");
-		}
+if ((ir->loadFileConfig(cfg_index) &&
+	  ir->openCDB(false)) == false)
+	{
+	U_ERROR("usp_init() of servlet 'ir_web' failed...");
+	}
 
-	footer->snprintf("ver. %s, with %u documents and %u words.", ULIB_VERSION, cdb_names->size(), cdb_words->size());
+footer->snprintf("ver. %s, with %u documents and %u words.", ULIB_VERSION, cdb_names->size(), cdb_words->size());
 
-	UHTTP::data_session = U_NEW(IRDataSession);
+UHTTP::data_session = U_NEW(IRDataSession);
 }
 
 static void usp_end()
 {
-	U_TRACE(5, "::usp_end()")
+U_TRACE(5, "::usp_end()")
 
-	U_INTERNAL_ASSERT_POINTER(ir)
-	U_INTERNAL_ASSERT_POINTER(query)
-	U_INTERNAL_ASSERT_POINTER(crono)
-	U_INTERNAL_ASSERT_POINTER(footer)
+U_INTERNAL_ASSERT_POINTER(ir)
+U_INTERNAL_ASSERT_POINTER(query)
+U_INTERNAL_ASSERT_POINTER(crono)
+U_INTERNAL_ASSERT_POINTER(footer)
 
 #ifdef DEBUG
-	delete ir;
-	delete query;
-	delete crono;
-	delete footer;
+delete ir;
+delete query;
+delete crono;
+delete footer;
 #endif
 }
 -->
 <!--#code
+union uudatasession {
+	UDataSession*  po;
+	IRDataSession* pe;
+};
+
 const char* ref	  = "?ext=help";
 uint32_t num_args	  = UHTTP::form_name_value->size() / 2;
 bool form_with_help = false;
@@ -243,7 +74,7 @@ if (UHTTP::isHttpGET())
 			}
 		else
 			{
-			if (UHTTP::getDataSession(0,0,0) == false) return HTTP_BAD_REQUEST;
+			if (UHTTP::getDataSession(0,0) == false) return HTTP_BAD_REQUEST;
 
 			UHTTP::num_page_cur = USP_FORM_VALUE(0).strtol();
 
@@ -259,7 +90,7 @@ else if (UHTTP::isHttpPOST())
 
 	if (num_args != 2 || phrase.empty()) return HTTP_BAD_REQUEST;
 
-	if (UHTTP::getDataSession(0,0,0) == false) UHTTP::setSessionCookie();
+	if (UHTTP::getDataSession(0,0) == false) UHTTP::setSessionCookie(0);
 
 	IR_SESSION.QUERY	  = phrase;
 	IR_SESSION.FOR_PAGE = UHTTP::num_item_for_page = USP_FORM_VALUE(1).strtol();
@@ -287,7 +118,7 @@ else if (UHTTP::isHttpPOST())
 
 	UHTTP::num_page_cur = 1;
 
-	UHTTP::putDataSession(0,0,0,0);
+	UHTTP::putDataSession(0,0,0);
 	}
 else
 	{

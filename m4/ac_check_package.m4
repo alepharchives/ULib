@@ -624,7 +624,7 @@ dnl		printf "libxml2 found in $libxml2dir\n";
 			echo "${T_MD}V8 JavaScript Engine found in $v8dir${T_ME}"
 			HAVE_V8=yes
 			CPPFLAGS="$CPPFLAGS -DHAVE_V8";
-			v8_version=$(strings $v8dir/lib*/libv8.so | grep -i 'libv8-' | head -n1 | tail -c10)
+			v8_version=$(strings $v8dir/lib*/libv8.so | grep -i 'libv8' | head -n1 | cut -b10-)
 		fi
 	fi
 	AC_SUBST(HAVE_V8)],

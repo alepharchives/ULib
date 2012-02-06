@@ -3,16 +3,19 @@
 #ifndef IR_SESSION_H
 #define IR_SESSION_H 1
 
+#include <ulib/debug/crono.h>
 #include <ulib/utility/data_session.h>
 
 #include "cquery.h"
+
+#define IR_SESSION (*(IRDataSession*)UHTTP::data_session)
 
 class IRDataSession : public UDataSession {
 public:
    UString QUERY;
    UVector<WeightWord*>* vec;
    uint32_t FOR_PAGE;
-   char TIME[9];
+   char timebuf[9];
 
    // COSTRUTTORE
 
@@ -20,9 +23,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(5, IRDataSession, "")
 
-      vec      = 0;
-      TIME[0]  = 0;
-      FOR_PAGE = 0;
+      vec        = 0;
+      FOR_PAGE   = 0;
+      timebuf[0] = 0;
       }
 
    virtual ~IRDataSession()
@@ -32,59 +35,78 @@ public:
       if (vec) delete vec;
       }
 
-   // SERVICES
+   // method VIRTUAL to define
 
-   void set(const UString& _QUERY, uint32_t _FOR_PAGE)
+   virtual void clear()
       {
-      U_TRACE(5, "IRDataSession::set(%.*S,%u)", U_STRING_TO_TRACE(_QUERY), _FOR_PAGE)
+      U_TRACE(5, "IRDataSession::clear()")
 
-      QUERY    = _QUERY;
-      FOR_PAGE = _FOR_PAGE;
+      UDataSession::clear();
+
+      QUERY.clear();
+
+      FOR_PAGE   = 0;
+      timebuf[0] = 0;
+
+      if (vec)
+         {
+         delete vec;
+                vec = 0;
+         }
       }
 
-   // method VIRTUAL to define
+   virtual void fromDataSession(UDataSession& data_session)
+      {
+      U_TRACE(5, "IRDataSession::fromDataSession(%p)", &data_session)
+
+      UDataSession::fromDataSession(data_session);
+
+      U_INTERNAL_ASSERT_EQUALS(vec,0)
+
+      vec      = WeightWord::duplicate((*(IRDataSession*)&data_session).vec);
+      QUERY    =                       (*(IRDataSession*)&data_session).QUERY;
+      FOR_PAGE =                       (*(IRDataSession*)&data_session).FOR_PAGE;
+
+      (void) u_mem_cpy(timebuf, (*(IRDataSession*)&data_session).timebuf, sizeof(timebuf));
+      }
+
+   virtual UDataSession* toDataSession()
+      {
+      U_TRACE(5, "IRDataSession::toDataSession()")
+
+      UDataSession* ptr = U_NEW(IRDataSession);
+
+      ptr->creation = creation;
+
+      (*(IRDataSession*)ptr).vec      = WeightWord::duplicate(vec);
+      (*(IRDataSession*)ptr).QUERY    = QUERY;
+      (*(IRDataSession*)ptr).FOR_PAGE = FOR_PAGE;
+
+      (void) u_mem_cpy((*(IRDataSession*)ptr).timebuf, timebuf, sizeof(timebuf));
+
+      U_RETURN_POINTER(ptr,UDataSession);
+      }
 
    virtual void fromStream(istream& is)
       {
       U_TRACE(5, "IRDataSession::fromStream(%p)", &is)
 
-      U_INTERNAL_ASSERT_EQUALS(is.peek(), '{')
-
       UDataSession::fromStream(is);
+
+      U_INTERNAL_ASSERT_EQUALS(is.peek(), '{')
 
       is.get(); // skip '{'
 
-      is >> TIME
+      is >> timebuf
          >> FOR_PAGE;
 
       is.get(); // skip ' '
 
       QUERY.get(is);
 
-      uint32_t vsize;
-         is >> vsize;
+      U_INTERNAL_ASSERT_EQUALS(vec,0)
 
-      is.get(); // skip ' '
-
-      // load filenames
-
-      UVector<UString> vtmp(vsize);
-                 is >> vtmp;
-
-      WeightWord::clear();
-      WeightWord::allocVector(vsize);
-
-      UPosting::word_freq = 0;
-
-      for (uint32_t i = 0, sz = vtmp.size(); i < sz; ++i)
-         {
-         *UPosting::filename = vtmp[i];
-
-         WeightWord::push();
-         }
-
-      vec = WeightWord::vec;
-            WeightWord::vec = 0;
+      vec = WeightWord::fromStream(is);
       }
 
    virtual void toStream(ostream& os)
@@ -95,7 +117,7 @@ public:
 
       os.put('{');
       os.put(' ');
-      os << TIME;
+      os << timebuf;
       os.put(' ');
       os << FOR_PAGE;
       os.put(' ');
@@ -129,11 +151,11 @@ public:
 
    const char* dump(bool usp_reset) const
       {
-      *UObjectIO::os << "TIME                        ";
+      *UObjectIO::os << "timebuf                     ";
 
       char buffer[20];
 
-      UObjectIO::os->write(buffer, u_sn_printf(buffer, sizeof(buffer), "%S", TIME));
+      UObjectIO::os->write(buffer, u_sn_printf(buffer, sizeof(buffer), "%S", timebuf));
 
       *UObjectIO::os << '\n'
                      << "FOR_PAGE                    " << FOR_PAGE      << '\n'

@@ -1,0 +1,13 @@
+hello_world|Hello World|famous greeting application
+hello|Hello|famous greeting application
+cookie|Cookie|famous greeting application with session cookie to remember visitor
+example|Example|sample application
+example_form|Example Form|sample application with a form
+calc|Calc|online desktop-calculator
+calcmvc|Calcmvc|online desktop-calculator, model-view-controller-enterprise-architecture
+calcajax|Calcajax|ajax-version of the desktop-calculator
+session|Session|example of a session
+strings|Strings|sample application, which uses session to collect input from the client
+upload|Upload|how to upload files
+chat|Chat|simple chat-program using ajax
+remove|RemoveSessionCookie|you need to run this before to run the demos that use a session cookie

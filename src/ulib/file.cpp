@@ -566,26 +566,33 @@ bool UFile::write(const UString& data, bool append, bool bmkdirs)
       uint32_t sz     = data.size();
       const char* ptr = data.data();
 
-      if (sz > PAGESIZE)
+      if (sz)
          {
-         uint32_t offset = (append ? size() : 0);
-
-         esito = fallocate(offset + sz);
-
-         if (esito == false) U_WARNING("no more space on disk for size %u", offset + sz);
+         if (sz <= PAGESIZE) esito = UFile::write(fd, ptr, sz);
          else
             {
-            esito = memmap(PROT_READ | PROT_WRITE, 0, offset, st_size);
+            uint32_t offset = (append ? size() : 0);
 
-            if (esito)
+            esito = fallocate(offset + sz);
+
+            if (esito == false)
                {
-               (void) u_mem_cpy(map + (map_size - st_size), ptr, sz);
+               readSize();
+
+               U_WARNING("no more space on disk for requested size %u - acquired only %u bytes", offset + sz, st_size);
+
+               sz = (st_size > offset ? st_size - offset : 0);
+               }
+
+            if (sz &&
+                memmap(PROT_READ | PROT_WRITE, 0, offset, st_size))
+               {
+               (void) u_mem_cpy(map + offset, ptr, sz);
 
                munmap();
                }
             }
          }
-      else if (sz) esito = UFile::write(fd, ptr, sz);
       }
 
    U_RETURN(esito);
@@ -923,26 +930,7 @@ bool UFile::mkTemp(const char* name)
 
    fd = UFile::mkstemp(pathname.data());
 
-   bool result = (isOpen() && unlink());
-
-   U_RETURN(result);
-}
-
-// temporary space for upload file...
-
-bool UFile::mkTempStorage(UString& space, uint32_t size)
-{
-   U_TRACE(0, "UFile::mkTempStorage(%.*S,%u)", U_STRING_TO_TRACE(space), size)
-
-   U_ASSERT(space.empty())
-
-   UFile tmp;
-
-   bool result = tmp.mkTemp() &&
-                 tmp.fallocate(size) &&
-                 tmp.memmap(PROT_READ | PROT_WRITE, &space, 0, tmp.st_size);
-
-   tmp.close();
+   bool result = (isOpen() && _unlink());
 
    U_RETURN(result);
 }
@@ -975,7 +963,7 @@ bool UFile::mkdirs(const char* path, mode_t mode)
 {
    U_TRACE(1, "UFile::mkdirs(%S,%d)", path, mode)
 
-   if (mkdir(path, mode)) U_RETURN(true);
+   if (_mkdir(path, mode)) U_RETURN(true);
 
    U_INTERNAL_DUMP("errno = %d", errno)
 
@@ -995,8 +983,8 @@ bool UFile::mkdirs(const char* path, mode_t mode)
 
          buffer[len] = '\0';
 
-         bool result = mkdirs(buffer, mode) &&
-                       mkdir(   path, mode);
+         bool result =  mkdirs(buffer, mode) &&
+                       _mkdir(   path, mode);
 
          U_RETURN(result);
          }
@@ -1031,7 +1019,7 @@ bool UFile::rmdir(const char* path, bool remove_all)
 
             U_ASSERT_DIFFERS(tmp,file)
 
-            if (UFile::unlink(file) == false &&
+            if (UFile::_unlink(file) == false &&
 #        ifdef __MINGW32__
                 (errno == EISDIR || errno == EPERM || errno == EACCES))
 #        else
@@ -1088,9 +1076,9 @@ bool UFile::rmdirs(const char* path, bool remove_all)
    U_RETURN(result);
 }
 
-bool UFile::rename(const char* newpath)
+bool UFile::_rename(const char* newpath)
 {
-   U_TRACE(0, "UFile::rename(%S)", newpath)
+   U_TRACE(0, "UFile::_rename(%S)", newpath)
 
    U_CHECK_MEMORY
 
@@ -1098,7 +1086,7 @@ bool UFile::rename(const char* newpath)
 
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
-   bool result = rename(path_relativ, newpath);
+   bool result = UFile::_rename(path_relativ, newpath);
 
    if (result)
       {
@@ -1284,19 +1272,6 @@ uint32_t UFile::buildFilenameListFrom(UVector<UString>& vec, const UString& arg,
       }
 
    uint32_t result = (vec.size() - n);
-
-   U_RETURN(result);
-}
-
-bool UFile::mkdir(const char* path, mode_t mode)
-{
-   U_TRACE(1, "UFile::mkdir(%S,%d)", path, mode)
-
-#ifdef __MINGW32__
-   bool result = (U_SYSCALL(mkdir, "%S", U_PATH_CONV(path))      != -1 || errno == EEXIST);
-#else
-   bool result = (U_SYSCALL(mkdir, "%S,%d",          path, mode) != -1 || errno == EEXIST);
-#endif
 
    U_RETURN(result);
 }

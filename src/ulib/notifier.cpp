@@ -621,6 +621,17 @@ loop:
 
       U_INTERNAL_DUMP("fd = %d op_mask = %B handler_event = %p", handler_event->fd, handler_event->op_mask, handler_event)
 
+      /*
+#  ifdef HAVE_PTHREAD_H
+      if (handler_event->fd == 0)
+         {
+         U_INTERNAL_ASSERT_POINTER(pthread)
+
+         goto loop;
+         }
+#  endif
+      */
+
       U_INTERNAL_ASSERT_MAJOR(handler_event->fd,0)
 
       handlerResult(handler_event, bread, bexcept);

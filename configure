@@ -22313,7 +22313,7 @@ $as_echo "yes" >&6; }
 			echo "${T_MD}V8 JavaScript Engine found in $v8dir${T_ME}"
 			HAVE_V8=yes
 			CPPFLAGS="$CPPFLAGS -DHAVE_V8";
-			v8_version=$(strings $v8dir/lib*/libv8.so | grep -i 'libv8-' | head -n1 | tail -c10)
+			v8_version=$(strings $v8dir/lib*/libv8.so | grep -i 'libv8' | head -n1 | cut -b10-)
 		fi
 	fi
 
@@ -22653,7 +22653,7 @@ case "$target_os" in
 	if test "$HAVE_SSL" = "yes"; then
 		LIBS_SAVE="${LIBS_SAVE} -lwsock32 -lgdi32 -lz";
 	fi
-	 if true; then
+	 if false; then
   PTHREAD_TRUE=
   PTHREAD_FALSE='#'
 else
@@ -27184,8 +27184,7 @@ $as_echo "$ulib_cc_flag" >&6; }
 	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
 		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition" # -Wcast-qual
 
-	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti \
-		-Wno-deprecated"
+	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated -Wdelete-non-virtual-dtor"
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc supported flags" >&5
 $as_echo_n "checking for gcc supported flags... " >&6; }

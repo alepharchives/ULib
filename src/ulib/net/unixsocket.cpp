@@ -61,7 +61,7 @@ bool UUnixSocket::setServer(int port, int iBackLog)
    U_INTERNAL_ASSERT(isClosed())
    U_INTERNAL_ASSERT_POINTER(path)
 
-   (void) UFile::unlink(path);
+   (void) UFile::_unlink(path);
 
    iSockDesc = U_SYSCALL(socket, "%d,%d,%d", AF_UNIX, SOCK_STREAM, 0); 
 

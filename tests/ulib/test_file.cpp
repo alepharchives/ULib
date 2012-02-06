@@ -2,6 +2,10 @@
 
 #include <ulib/file.h>
 
+#ifdef __MINGW32__
+#define _GLIBCXX_USE_C99_DYNAMIC 1
+#endif
+
 #include <fstream>
 
 // #define U_TEST_C_STR
@@ -42,7 +46,7 @@ public:
             UFile::munmap(); // for rename()...
 #        endif
 
-            result = cdb.rename(UFile::path_relativ); // fallisce se __MINGW32__ && NFS...
+            result = cdb._rename(UFile::path_relativ); // fallisce se __MINGW32__ && NFS...
             }
 
          U_ASSERT( result == true )
@@ -139,7 +143,7 @@ U_EXPORT main (int argc, char* argv[])
 
       if (y.isOpen()) y.close();
 
-      y.unlink();
+      y._unlink();
       }
 
    bool result = UFile::chdir("tmp", true);

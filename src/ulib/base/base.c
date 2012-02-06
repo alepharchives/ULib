@@ -1470,11 +1470,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             bp  += l;
             ret += l;
 
-            if (errno == 0)
-               {
-                 errno = u_errno;
-               u_errno = 0;
-               }
+            if (errno == 0) errno = u_errno;
 
 #        ifdef __MINGW32__
             if (errno < 0)
@@ -1800,15 +1796,38 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             unsigned char c;
             unsigned int offset = 0;
             char* restrict start_buffer = bp;
-            int i, j, line, remain, remain_flag = 16;
+            int i, j, line, remain, _remain = 16;
+            bool prev_is_zero = false, print_nothing = false;
 
-            n      = VA_ARG(int);
-            cp     = VA_ARG(char* restrict);
+            static char bufzero[16];
+
+            n  = VA_ARG(int);
+            cp = VA_ARG(char* restrict);
+
             line   = n / 16;
             remain = n % 16;
 
             for (i = 0; i < line; ++i, offset += 16)
                {
+               if (memcmp(cp, bufzero, sizeof(bufzero))) prev_is_zero = print_nothing = false;
+               else
+                  {
+                  if (prev_is_zero == false) prev_is_zero = true;
+                  else
+                     {
+                     if (print_nothing == false)
+                        {
+                        print_nothing = true;
+
+                        *bp++ = '*';
+                        *bp++ = '\n';
+                        }
+
+                     cp += 16;
+
+                     continue;
+                     }
+                  }
 iteration:
                (void) sprintf(bp, "%07X|", offset);
 
@@ -1816,7 +1835,7 @@ iteration:
 
                for (j = 0; j < 16; ++j)
                   {
-                  if (j < remain_flag)
+                  if (j < _remain)
                      {
                      c = *cp++;
 
@@ -1840,11 +1859,19 @@ iteration:
                                         *bp++ = '\n';
                }
 
-            if (remain_flag != remain)
+            if (remain &&
+                remain != _remain)
                {
-               remain_flag = remain;
+               _remain = remain;
 
                goto iteration;
+               }
+
+            if (print_nothing)
+               {
+               (void) sprintf(bp, "%07X\n", offset);
+
+               bp += 8;
                }
 
             ret += bp - start_buffer;

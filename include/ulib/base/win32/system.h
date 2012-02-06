@@ -8,8 +8,12 @@
 #  define __NO_MINGW_LFS
 #endif
 
-#undef  HAVE_GETOPT_LONG  /* with WINE don't work */
+#ifdef FD_SETSIZE
+#undef FD_SETSIZE
+#endif
+
 #define FD_SETSIZE   1024 /* larger default than 64 */
+#undef  HAVE_GETOPT_LONG  /* with WINE don't work */
 #define sighandler_t __p_sig_fn_t
 
 /* Basic Windows features only */

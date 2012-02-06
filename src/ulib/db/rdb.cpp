@@ -197,7 +197,7 @@ bool URDB::closeReorganize()
       {
       URDB::close();
 
-      (void) journal.unlink();
+      (void) journal._unlink();
 
       U_RETURN(true);
       }
@@ -428,7 +428,7 @@ bool URDB::reorganize()
 #           endif
 #        endif
 
-            result = cdb.rename(UFile::path_relativ);
+            result = cdb._rename(UFile::path_relativ);
             }
 
          U_INTERNAL_ASSERT(result)
@@ -1005,10 +1005,17 @@ int URDB::store(int flag)
 
          goto end;
          }
+
+      if (flag       == RDB_REPLACE      &&
+          data.dsize == RDB_node_data_sz &&
+          memcmp(RDB_node_data, data.dptr, data.dsize) == 0)
+         {
+         goto end;
+         }
       }
    else
       {
-      UCDB::datum data1 = data;
+      UCDB::datum data_new = data;
 
       exist = cdbLookup(); // Search one key/data pair in the cdb
 
@@ -1020,9 +1027,16 @@ int URDB::store(int flag)
 
             goto end;
             }
+
+         if (flag       == RDB_REPLACE    &&
+             data.dsize == data_new.dsize &&
+             memcmp(data_new.dptr, data.dptr, data.dsize) == 0)
+            {
+            goto end;
+            }
          }
 
-      data = data1;
+      data = data_new;
       }
 
    U_INTERNAL_ASSERT_EQUALS(result,0)
@@ -1230,6 +1244,18 @@ bool URDB::find(const UString& _key)
    UCDB::setKey(_key);
 
    return fetch(); // Fetch the value for a given key from the database
+}
+
+int URDB::store(UStringRep* _key, const UString& _data, int flag)
+{
+   U_TRACE(0, "URDB::store(%.*S,%.*S,%d)", U_STRING_TO_TRACE(*_key), U_STRING_TO_TRACE(_data), flag)
+
+   UCDB::setKey(_key);
+   UCDB::setData(_data);
+
+   int result = store(flag);
+
+   U_RETURN(result);
 }
 
 int URDB::store(const UString& _key, const UString& _data, int flag)

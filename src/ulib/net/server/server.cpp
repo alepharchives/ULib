@@ -760,7 +760,7 @@ next:
          {
          cfg->clear();
 
-         if (isLog()) (void) snprintf(mod_name, sizeof(mod_name), "[%.*s] ", U_STRING_TO_TRACE(name));
+         if (isLog()) (void) u_sn_printf(mod_name, sizeof(mod_name), "[%.*s] ", U_STRING_TO_TRACE(name));
 
          result = _plugin->handlerConfig(*cfg);
 
@@ -781,40 +781,40 @@ end:
 
 // manage plugin handler hooks...
 
-#define U_PLUGIN_HANDLER(xxx)                                                             \
-                                                                                          \
-int UServer_Base::pluginsHandler##xxx()                                                   \
-{                                                                                         \
-   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                                     \
-                                                                                          \
-   U_INTERNAL_ASSERT_POINTER(vplugin)                                                     \
-                                                                                          \
-   int result;                                                                            \
-   UString name;                                                                          \
-   UServerPlugIn* _plugin;                                                                \
-                                                                                          \
-   for (uint32_t i = 0, length = vplugin->size(); i < length; ++i)                        \
-      {                                                                                   \
-      _plugin = (*vplugin)[i];                                                            \
-                                                                                          \
-      if (isLog())                                                                        \
-         {                                                                                \
-         name = (*vplugin_name)[i];                                                       \
-                                                                                          \
-         (void) snprintf(mod_name, sizeof(mod_name), "[%.*s] ", U_STRING_TO_TRACE(name)); \
-         }                                                                                \
-                                                                                          \
-      result = _plugin->handler##xxx();                                                   \
-                                                                                          \
-      if (result != U_PLUGIN_HANDLER_GO_ON) goto end;                                     \
-      }                                                                                   \
-                                                                                          \
-   result = U_PLUGIN_HANDLER_FINISHED;                                                    \
-                                                                                          \
-end:                                                                                      \
-   mod_name[0] = '\0';                                                                    \
-                                                                                          \
-   U_RETURN(result);                                                                      \
+#define U_PLUGIN_HANDLER(xxx)                                                                \
+                                                                                             \
+int UServer_Base::pluginsHandler##xxx()                                                      \
+{                                                                                            \
+   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                                        \
+                                                                                             \
+   U_INTERNAL_ASSERT_POINTER(vplugin)                                                        \
+                                                                                             \
+   int result;                                                                               \
+   UString name;                                                                             \
+   UServerPlugIn* _plugin;                                                                   \
+                                                                                             \
+   for (uint32_t i = 0, length = vplugin->size(); i < length; ++i)                           \
+      {                                                                                      \
+      _plugin = (*vplugin)[i];                                                               \
+                                                                                             \
+      if (isLog())                                                                           \
+         {                                                                                   \
+         name = (*vplugin_name)[i];                                                          \
+                                                                                             \
+         (void) u_sn_printf(mod_name, sizeof(mod_name), "[%.*s] ", U_STRING_TO_TRACE(name)); \
+         }                                                                                   \
+                                                                                             \
+      result = _plugin->handler##xxx();                                                      \
+                                                                                             \
+      if (result != U_PLUGIN_HANDLER_GO_ON) goto end;                                        \
+      }                                                                                      \
+                                                                                             \
+   result = U_PLUGIN_HANDLER_FINISHED;                                                       \
+                                                                                             \
+end:                                                                                         \
+   mod_name[0] = '\0';                                                                       \
+                                                                                             \
+   U_RETURN(result);                                                                         \
 }
 
 U_PLUGIN_HANDLER(Init)
@@ -1429,8 +1429,8 @@ const char* UServer_Base::getNumConnection()
 
    static char buffer[32];
 
-   if (isPreForked()) (void) snprintf(buffer, sizeof(buffer), "(%d/%d)", UNotifier::num_connection - UNotifier::min_connection, U_TOT_CONNECTION);
-   else               (void) snprintf(buffer, sizeof(buffer),  "%d",     UNotifier::num_connection - UNotifier::min_connection);
+   if (isPreForked()) (void) u_sn_printf(buffer, sizeof(buffer), "(%d/%d)", UNotifier::num_connection - UNotifier::min_connection, U_TOT_CONNECTION);
+   else               (void) u_sn_printf(buffer, sizeof(buffer),  "%d",     UNotifier::num_connection - UNotifier::min_connection);
 
    U_RETURN(buffer);
 }

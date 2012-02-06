@@ -36,6 +36,10 @@
 #include <ulib/utility/xml_escape.h>
 #include <ulib/utility/quoted_printable.h>
 
+#ifndef DEBUG
+#  include <ulib/internal/objectIO.h>
+#endif
+
 #ifdef USE_PARSER
 #  include <ulib/flex/flexer.h>
 #  include <ulib/flex/bison.h>

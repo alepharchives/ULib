@@ -60,7 +60,7 @@ U_EXPORT main(int argc, char* argv[])
       {
       directory.snprintf("%s/D%02d/", argv[2], k);
 
-      UFile::mkdir(directory.c_str(), PERM_DIRECTORY);
+      UFile::_mkdir(directory.c_str(), PERM_DIRECTORY);
 
       for (i = 1; i <= num; ++i)
          {

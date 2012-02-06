@@ -2,6 +2,11 @@
 Content-Type: application/jsonrequest
 -->
 <!--#code
-if (UHTTP::json) USP_PUTS(UHTTP::json->output());
-else             USP_PUTS(U_CONSTANT_TO_PARAM("{}"));
+if (U_HTTP_CTYPE_STRNEQ("application/jsonrequest"))
+	{
+	UValue json;
+
+	if (json.parse(*UClientImage_Base::body)) USP_PUTS(json.output());
+	else													USP_PUTS(U_CONSTANT_TO_PARAM("{}"));
+	}
 -->

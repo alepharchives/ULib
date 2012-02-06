@@ -132,6 +132,7 @@ public:
 #  define RDB_REPLACE 1 // Allow replacing existing entries
 
    int store(                                           int flag);
+   int store(   UStringRep* _key, const UString& _data, int flag);
    int store(const UString& _key, const UString& _data, int flag = RDB_INSERT);
 
    // ---------------------------------------------------------------------

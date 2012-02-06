@@ -246,150 +246,164 @@ int UHttpPlugIn::handlerREAD()
    int result;
 
 #ifdef U_HTTP_CACHE_REQUEST
-   result = UHTTP::checkHTTPRequestCache();
+   U_INTERNAL_DUMP("cbuffer(%u)   = %.*S",             UHTTP::cbuffer->size(), U_STRING_TO_TRACE(*UHTTP::cbuffer))
+   U_INTERNAL_DUMP("rbuffer(%u)   = %.*S", UClientImage_Base::rbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::rbuffer))
+   U_INTERNAL_DUMP("expire        = %ld", UServer_Base::expire)
+   U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
 
-   if (result == U_PLUGIN_HANDLER_FINISHED)
-#endif
+   if (UHTTP::cbuffer->isNull() == false &&
+       UServer_Base::expire >= u_now->tv_sec)
       {
-      if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket) == false)
+      result = UHTTP::checkHTTPRequestCache();
+
+      if (result != U_PLUGIN_HANDLER_FINISHED) U_RETURN(result);
+      }
+
+   if (UClientImage_Base::isPipeline() == false) UClientImage_Base::initAfterGenericRead();
+
+   if (UHTTP::cbuffer->isNull() == false) UHTTP::clearHTTPRequestCache();
+#endif
+
+   if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket) == false)
+      {
+      U_http_is_connection_close = U_YES;
+
+      if (UClientImage_Base::wbuffer->empty())
          {
-         U_http_is_connection_close = U_YES;
+         // HTTP/1.1 compliance:
+         // -----------------------------------------------------
+         // Sends 501 for request-method != (GET|POST|HEAD)
+         // Sends 505 for protocol != HTTP/1.[0-1]
+         // Sends 400 for broken Request-Line
+         // Sends 411 for missing Content-Length on POST requests
 
-         if (UClientImage_Base::wbuffer->empty())
+              if (U_http_method_type == 0)                        u_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
+         else if (U_http_version     == 0 && u_http_info.uri_len) u_http_info.nResponseCode = HTTP_VERSION;
+         else
             {
-            // HTTP/1.1 compliance:
-            // -----------------------------------------------------
-            // Sends 501 for request-method != (GET|POST|HEAD)
-            // Sends 505 for protocol != HTTP/1.[0-1]
-            // Sends 400 for broken Request-Line
-            // Sends 411 for missing Content-Length on POST requests
+            UHTTP::setHTTPBadRequest();
 
-                 if (U_http_method_type == 0)                        u_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
-            else if (U_http_version     == 0 && u_http_info.uri_len) u_http_info.nResponseCode = HTTP_VERSION;
-            else
-               {
-               UHTTP::setHTTPBadRequest();
-
-               U_RETURN(U_PLUGIN_HANDLER_ERROR);
-               }
-
-            UHTTP::setHTTPResponse(0, 0);
+            U_RETURN(U_PLUGIN_HANDLER_ERROR);
             }
 
-         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         UHTTP::setHTTPResponse(0, 0);
          }
 
-      if (UHTTP::alias->empty() == false)
+      U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      }
+
+   if (UHTTP::alias->empty() == false)
+      {
+      UHTTP::alias->clear();
+      UHTTP::request_uri->clear();
+      }
+
+   // manage virtual host
+
+   if (UHTTP::virtual_host &&
+       u_http_info.host_vlen)
+      {
+      // Host: hostname[:port]
+
+      UHTTP::alias->setBuffer(1 + u_http_info.host_vlen + u_http_info.uri_len);
+
+      UHTTP::alias->snprintf("/%.*s%.*s", U_HTTP_VHOST_TO_TRACE, U_HTTP_URI_TO_TRACE);
+      }
+
+   // manage alias uri
+
+   if (valias.empty() == false)
+      {
+      UString item;
+
+      for (int32_t i = 0, n = valias.size(); i < n; i += 2)
          {
-         UHTTP::alias->clear();
-         UHTTP::request_uri->clear();
-         }
+         item = valias[i];
 
-      // manage virtual host
+         if (U_HTTP_URI_EQUAL(item))
+            {
+            *UHTTP::request_uri = item;
+
+            (void) UHTTP::alias->append(valias[i+1]);
+
+            goto next;
+            }
+         }
+      }
+
+   // manage SSI alias
+
+   if (UHTTP::ssi_alias &&
+       u_getsuffix(U_HTTP_URI_TO_PARAM) == 0)
+      {
+      uint32_t len = UHTTP::ssi_alias->size();
+
+      (void) UHTTP::request_uri->assign(U_HTTP_URI_TO_PARAM);
 
       if (UHTTP::virtual_host &&
           u_http_info.host_vlen)
          {
-         // Host: hostname[:port]
+         UHTTP::alias->setBuffer(1 + u_http_info.host_vlen + 1 + len);
 
-         UHTTP::alias->setBuffer(1 + u_http_info.host_vlen + u_http_info.uri_len);
-
-         UHTTP::alias->snprintf("/%.*s%.*s", U_HTTP_VHOST_TO_TRACE, U_HTTP_URI_TO_TRACE);
+         UHTTP::alias->snprintf("/%.*s/%.*s", U_HTTP_VHOST_TO_TRACE, len, UHTTP::ssi_alias->data());
          }
-
-      // manage alias uri
-
-      if (valias.empty() == false)
+      else
          {
-         UString item;
+         UHTTP::alias->setBuffer(1 + len);
 
-         for (int32_t i = 0, n = valias.size(); i < n; i += 2)
-            {
-            item = valias[i];
-
-            if (U_HTTP_URI_EQUAL(item))
-               {
-               *UHTTP::request_uri = item;
-
-               (void) UHTTP::alias->append(valias[i+1]);
-
-               goto next;
-               }
-            }
+         UHTTP::alias->snprintf("/%.*s", len, UHTTP::ssi_alias->data());
          }
-
-      // manage SSI alias
-
-      if (UHTTP::ssi_alias &&
-          u_getsuffix(U_HTTP_URI_TO_PARAM) == 0)
-         {
-         uint32_t len = UHTTP::ssi_alias->size();
-
-         (void) UHTTP::request_uri->assign(U_HTTP_URI_TO_PARAM);
-
-         if (UHTTP::virtual_host &&
-             u_http_info.host_vlen)
-            {
-            UHTTP::alias->setBuffer(1 + u_http_info.host_vlen + 1 + len);
-
-            UHTTP::alias->snprintf("/%.*s/%.*s", U_HTTP_VHOST_TO_TRACE, len, UHTTP::ssi_alias->data());
-            }
-         else
-            {
-            UHTTP::alias->setBuffer(1 + len);
-
-            UHTTP::alias->snprintf("/%.*s", len, UHTTP::ssi_alias->data());
-            }
-         }
+      }
 
 next:
-      if (UHTTP::alias->empty() == false)
-         {
-         uint32_t len    = UHTTP::alias->size();
-         const char* ptr = UHTTP::alias->data();
+   if (UHTTP::alias->empty() == false)
+      {
+      uint32_t len    = UHTTP::alias->size();
+      const char* ptr = UHTTP::alias->data();
 
-         UHTTP::setHTTPUri(ptr, len);
+      UHTTP::setHTTPUri(ptr, len);
 
-         U_SRV_LOG("ALIAS: URI request changed to: %.*s", len, ptr);
-         }
+      U_SRV_LOG("ALIAS: URI request changed to: %.*s", len, ptr);
+      }
 
 #  ifdef HAVE_SSL
-      if (uri_request_cert_mask.empty() == false &&
-          u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(uri_request_cert_mask), 0))
+   if (uri_request_cert_mask.empty() == false &&
+       u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(uri_request_cert_mask), 0))
+      {
+      if (((UServer<USSLSocket>*)UServer_Base::pthis)->askForClientCertificate() == false)
          {
-         if (((UServer<USSLSocket>*)UServer_Base::pthis)->askForClientCertificate() == false)
-            {
-            U_SRV_LOG("URI_REQUEST_CERT: request %.*S denied by mandatory certificate from client", U_HTTP_URI_TO_TRACE);
+         U_SRV_LOG("URI_REQUEST_CERT: request %.*S denied by mandatory certificate from client", U_HTTP_URI_TO_TRACE);
 
-            UHTTP::setHTTPForbidden();
+         UHTTP::setHTTPForbidden();
 
-            U_RETURN(U_PLUGIN_HANDLER_ERROR);
-            }
-         }
-#  endif
-
-      if (UHTTP::uri_protected_mask &&
-          UHTTP::checkUriProtected() == false)
-         {
          U_RETURN(U_PLUGIN_HANDLER_ERROR);
          }
+      }
+#  endif
 
-      result = UHTTP::checkHTTPRequest();
+   if (UHTTP::uri_protected_mask &&
+       UHTTP::checkUriProtected() == false)
+      {
+      U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      }
 
-      if (UHTTP::sts_age_seconds      && // use HTTP Strict Transport Security to force client to use secure connections only
-          UServer_Base::bssl == false &&
-          result == U_PLUGIN_HANDLER_FINISHED)
-         {
-         // we are in cleartext at the moment, prevent further execution and output
-    
-         UString redirect_url(U_CAPACITY);
+   result = UHTTP::checkHTTPRequest();
 
-         redirect_url.snprintf("https://%.*s%.*s", U_HTTP_VHOST_TO_TRACE, U_HTTP_URI_QUERY_TO_TRACE);
+   if (UHTTP::sts_age_seconds      && // use HTTP Strict Transport Security to force client to use secure connections only
+       UServer_Base::bssl == false &&
+       result == U_PLUGIN_HANDLER_FINISHED)
+      {
+      // we are in cleartext at the moment, prevent further execution and output
+ 
+      UString redirect_url(U_CAPACITY);
 
-         UHTTP::setHTTPRedirectResponse(false, UString::getStringNull(), U_STRING_TO_PARAM(redirect_url));
+      redirect_url.snprintf("https://%.*s%.*s", U_HTTP_VHOST_TO_TRACE, U_HTTP_URI_QUERY_TO_TRACE);
 
-         UHTTP::setHTTPRequestProcessed();
-         }
+      UHTTP::setHTTPRedirectResponse(false, UString::getStringNull(), U_STRING_TO_PARAM(redirect_url));
+
+      UHTTP::setHTTPRequestProcessed();
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
    U_RETURN(result);

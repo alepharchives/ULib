@@ -216,6 +216,8 @@ protected:
          delete header;
                 header = 0;
          }
+
+      content.clear();
       }
 
    bool checkContentType()

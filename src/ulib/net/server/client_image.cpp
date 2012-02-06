@@ -233,9 +233,9 @@ void UClientImage_Base::logCertificate(void* x509)
 #endif
 }
 
-void UClientImage_Base::manageRequestSize(bool request_resize)
+void UClientImage_Base::manageRequestSize(bool request_buffer_resize)
 {
-   U_TRACE(0, "UClientImage_Base::manageRequestSize(%b)", request_resize)
+   U_TRACE(0, "UClientImage_Base::manageRequestSize(%b)", request_buffer_resize)
 
    U_INTERNAL_DUMP("pipeline = %b size_request = %u", pipeline, size_request)
 
@@ -243,22 +243,26 @@ void UClientImage_Base::manageRequestSize(bool request_resize)
 
    if (pipeline)
       {
-      U_INTERNAL_ASSERT_DIFFERS(rstart,0U)
-      U_INTERNAL_ASSERT_EQUALS(request,pbuffer)
       U_INTERNAL_ASSERT_DIFFERS(pbuffer->isNull(),true)
       U_INTERNAL_ASSERT_DIFFERS(pbuffer->same(*rbuffer),true)
 
-      if (request_resize == false) pbuffer->size_adjust(size_request);
+      if (rstart == 0U) pipeline = false;
       else
          {
-         // NB: we use request as the new read buffer... 
+         U_INTERNAL_ASSERT_EQUALS(request, pbuffer)
 
-         rstart   = size_request = 0;
-         pipeline = false;
-         rpointer = pbuffer->data();
+         if (request_buffer_resize == false) pbuffer->size_adjust(size_request);
+         else
+            {
+            // NB: we use request as the new read buffer... 
 
-         *rbuffer = *pbuffer;
-          request =  rbuffer;
+            rstart   = size_request = 0;
+            pipeline = false;
+            rpointer = pbuffer->data();
+
+            *rbuffer = *pbuffer;
+             request =  rbuffer;
+            }
          }
       }
    else
@@ -269,10 +273,12 @@ void UClientImage_Base::manageRequestSize(bool request_resize)
          {
          U_INTERNAL_ASSERT_EQUALS(rstart,0U)
 
-         *pbuffer = rbuffer->substr(0U,size_request);
+         *pbuffer = rbuffer->substr(0U, size_request);
           request = pbuffer;
          }
       }
+
+   U_INTERNAL_DUMP("pipeline = %b size_request = %u", pipeline, size_request)
 }
 
 __pure int UClientImage_Base::genericRead()
@@ -289,9 +295,6 @@ __pure int UClientImage_Base::genericRead()
    handlerError(USocket::CONNECT); // NB: we must call function cause of SSL (must be a virtual method)...
 
    // reset buffer before read
-
-   U_INTERNAL_ASSERT_EQUALS(rbuffer->isNull(), false);
-   U_ASSERT(                rbuffer->writeable())
 
    rbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
 
@@ -483,25 +486,31 @@ loop:
 
       U_INTERNAL_DUMP("size_request = %u request->size() = %u", size_request, request->size())
 
-      U_ASSERT_EQUALS(size_request, request->size())
-      U_ASSERT_EQUALS(rstart, rbuffer->distance(request->data()))
-
-      rstart += size_request;
-
-      U_INTERNAL_DUMP("rstart = %u rbuffer->size() = %u", rstart, rbuffer->size())
-
-      if (rbuffer->size() > rstart)
+      if (size_request != request->size())
          {
-         // NB: check for spurios white space (IE)...
+         U_INTERNAL_ASSERT_EQUALS(state, U_PLUGIN_HANDLER_ERROR)
+         }
+      else
+         {
+         U_ASSERT_EQUALS(rstart, rbuffer->distance(request->data()))
 
-         if (rbuffer->isWhiteSpace(rstart) == false)
+         rstart += size_request;
+
+         U_INTERNAL_DUMP("rstart = %u rbuffer->size() = %u", rstart, rbuffer->size())
+
+         if (rbuffer->size() > rstart)
             {
-            *pbuffer = rbuffer->substr(rstart);
+            // NB: check for spurios white space (IE)...
 
-               body->clear();
-            wbuffer->clear();
+            if (rbuffer->isWhiteSpace(rstart) == false)
+               {
+               *pbuffer = rbuffer->substr(rstart);
 
-            goto loop;
+                  body->clear();
+               wbuffer->clear();
+
+               goto loop;
+               }
             }
          }
       }

@@ -21,21 +21,7 @@ fi
 
 DIR_CMD="../../examples/userver"
 
-if [ "$TERM" != "cygwin" ]; then
-	( mkdir -p servlet; cd servlet;
-	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/jsonrequest.so;
-	  ln -sf ../../../src/ulib/net/server/plugin/usp/.libs/upload_progress.so;
-	  cd ../../../src/ulib/net/server/plugin/usp/;
-	  make jsonrequest.la	  >/dev/null 2>&1 || exit 1;
-	  make benchmarking.la	  >/dev/null 2>&1 || exit 1;
-	  make upload_progress.la >/dev/null 2>&1 || exit 1;
-     test -d ../.libs &&
-	  ( cd ../.libs;
-       ln -sf ../v8/.libs/mod_v8.so;
-	    ln -sf ../mod_shib/.libs/mod_shib.so;
-		 ln -sf ../page_speed/.libs/mod_pagespeed.so;
-	    ln -sf ../mod_geoip/.libs/mod_geoip.so ) )
-fi
+compile_usp
 
 CAPATH="../ulib/CA/CApath"
 CACERT="../ulib/CA/username.crt"

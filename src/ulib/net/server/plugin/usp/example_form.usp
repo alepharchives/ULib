@@ -1,3 +1,9 @@
+<!--#args
+first_name;
+last_name;
+email;
+comments;
+-->
 <html>
 <head>
   <title>Welcome to ULib Web Server!</title>
@@ -26,10 +32,10 @@ else
 	<blockquote>
 	<table width="750" cellpadding="5">
 	  <tr>
-		 <td bgcolor="#E0E0FF"><!--#code USP_PRINTF_FORM_VALUE(	  "First Name: %.*s",	0); --></td>
-		 <td bgcolor="#E0E0FF"><!--#code USP_PRINTF_FORM_VALUE(	  "Last Name: %.*s",		1); --></td>
-		 <td bgcolor="#E0E0FF"><!--#code USP_PRINTF_FORM_VALUE(	  "Email: %.*s",			2); --></td>
-		 <td bgcolor="#E0E0FF"><!--#code USP_PRINTF_XML_FORM_VALUE("your comments: %.*s",3); --></td>
+		 <td bgcolor="#E0E0FF">First Name: <!--#puts first_name --></td>
+		 <td bgcolor="#E0E0FF">Last Name: <!--#puts last_name --></td>
+		 <td bgcolor="#E0E0FF">Email: <!--#puts email --></td>
+		 <td bgcolor="#E0E0FF">your comments: <!--#xputs comments --></td>
 	  </tr>
 	</table>
 	</blockquote>

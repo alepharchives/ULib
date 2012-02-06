@@ -470,57 +470,50 @@ public:
 
    static int setBlocking(int fd, int flags, bool block);
 
-#ifdef __MINGW32__
-#undef mkdir
-#undef unlink
-#undef rename
-#endif
-
    // mkdir
 
-   static bool mkdir(const char* path, mode_t mode);
-
-   // unlink
-
-   static bool unlink(const char* _pathname)
+   static bool _mkdir(const char* path, mode_t mode = PERM_DIRECTORY)
       {
-      U_TRACE(1, "UFile::unlink(%S)", _pathname)
+      U_TRACE(1, "UFile::_mkdir(%S,%d)", path, mode)
 
-#  ifdef __MINGW32__
-      bool result = (U_SYSCALL(unlink_w32, "%S", U_PATH_CONV(_pathname)) == 0);
-#  else
-      bool result = (U_SYSCALL(unlink,     "%S",             _pathname)  == 0);
-#  endif
+      bool result = (U_SYSCALL(mkdir, "%S,%d", U_PATH_CONV(path), mode) != -1 || errno == EEXIST);
 
       U_RETURN(result);
       }
 
-   bool unlink()
+   // unlink
+
+   static bool _unlink(const char* _pathname)
       {
-      U_TRACE(0, "UFile::unlink()")
+      U_TRACE(1, "UFile::_unlink(%S)", _pathname)
+
+      bool result = (U_SYSCALL(unlink, "%S", U_PATH_CONV(_pathname)) == 0);
+
+      U_RETURN(result);
+      }
+
+   bool _unlink()
+      {
+      U_TRACE(0, "UFile::_unlink()")
 
       U_CHECK_MEMORY
       U_INTERNAL_ASSERT_POINTER(path_relativ)
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
-      bool result = UFile::unlink(path_relativ);
+      bool result = UFile::_unlink(path_relativ);
 
       U_RETURN(result);
       }
 
    // rename
 
-          bool rename(                     const char* newpath);
-   static bool rename(const char* oldpath, const char* newpath)
+          bool _rename(                     const char* newpath);
+   static bool _rename(const char* oldpath, const char* newpath)
       {
-      U_TRACE(1, "UFile::rename(%S,%S)", oldpath, newpath)
+      U_TRACE(1, "UFile::_rename(%S,%S)", oldpath, newpath)
 
-#  ifdef __MINGW32__
-      bool result = (U_SYSCALL(rename_w32, "%S,%S", oldpath, newpath) != -1);
-#  else
-      bool result = (U_SYSCALL(rename,     "%S,%S", oldpath, newpath) != -1);
-#  endif
+      bool result = (U_SYSCALL(rename, "%S,%S", oldpath, newpath) != -1);
 
       U_RETURN(result);
       }
@@ -625,13 +618,6 @@ public:
           UString getContent(                        bool brdonly = true,  bool bstat = false, bool bmap = true);
    static UString contentOf(const char*    pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
    static UString contentOf(const UString& pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
-
-   static void mkSharedMemory(UString& buffer, uint32_t size)
-      {
-      U_TRACE(0, "UFile::mkSharedMemory(%.*S,%u)", U_STRING_TO_TRACE(buffer), size)
-
-      buffer.mmap(mmap(size), size);
-      }  
 
    // MIME TYPE
 
@@ -759,8 +745,7 @@ public:
 
    // TEMP FILES
 
-          bool mkTemp(const char* _tmpl = "lockXXXXXX");     // temporary  file for locking...
-   static bool mkTempStorage(UString& space, uint32_t size); // temporary space for upload file...
+   bool mkTemp(const char* _tmpl = "lockXXXXXX"); // temporary  file for locking...
 
    // ----------------------------------------------------------------------------------------------------------------------
    // create a unique temporary file
@@ -841,6 +826,7 @@ private:
 
    friend class URDB;
    friend class UHTTP;
+   friend class UStringRep;
 };
 
 #endif

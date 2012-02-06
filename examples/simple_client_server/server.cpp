@@ -96,11 +96,11 @@ public:
 
       if (argv[optind] == NULL) U_ERROR("argument 'file_config' not specified...");
 
-      request_response  = new UVector<UString>();
-
       // load config file (section SERVER and section REQUEST_AND_RESPONSE)
 
       UString pathname(argv[optind]);
+
+      request_response = U_NEW(UVector<UString>);
 
       if (config_file.open(pathname)                == false ||
           config_file.loadVector(*request_response) == false)

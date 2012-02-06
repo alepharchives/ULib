@@ -51,12 +51,16 @@ bool USocketExt::read(USocket* s, UString& buffer, int count, int timeoutMS, uin
    long timeout = 0;
    int byte_read = 0;
    bool result = true;
-   uint32_t start = buffer.size(); // NB: il buffer di lettura potrebbe iniziare con una parte residua
+   uint32_t start  = buffer.size(), // NB: buffer read can start with prev data...
+            ncount = buffer.space();
 
-   (void) buffer.reserve(start + U_max(count,(int)U_CAPACITY));
+   if (ncount <       U_max(count,(int)U_CAPACITY) &&
+       buffer.reserve(U_max(count,(int)U_CAPACITY)))
+      {
+      ncount = buffer.space();
+      }
 
-   char* ptr       = buffer.c_pointer(start);
-   uint32_t ncount = buffer.space();
+   char* ptr = buffer.c_pointer(start);
 
 read:
    value = s->recv(ptr + byte_read, ncount, timeoutMS);

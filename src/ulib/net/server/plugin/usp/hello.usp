@@ -1,6 +1,5 @@
-<!--#code
-UString name = USP_FORM_VALUE(0);
-if (name.empty()) name = U_STRING_FROM_CONSTANT("World");
+<!--#args
+name("World");
 -->
 <html>
  <head>

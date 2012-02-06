@@ -41,32 +41,40 @@ UString UDataSession::toString()
    U_RETURN_STRING(x);
 }
 
-bool UDataSession::getValue(const char* key, uint32_t keylen, UString& value)
+bool UDataSession::getValue(uint32_t index, UString& value)
 {
-   U_TRACE(0, "UDataSession::getValue(%.*S,%u,%p)", keylen, key, keylen, &value)
+   U_TRACE(0, "UDataSession::getValue(%u,%p)", index, &value)
 
-   if (tbl)
+   if (vec)
       {
-      value = tbl->at(key, keylen);
+      value = vec->at(index);
 
-      if (value.empty() == false) U_RETURN(true);
+      U_INTERNAL_DUMP("value = %.*S", U_STRING_TO_TRACE(value))
+
+      U_RETURN(true);
       }
 
    U_RETURN(false);
 }
 
-void UDataSession::putValue(const UString& key, const UString& value)
+void UDataSession::putValue(uint32_t index, const UString& value)
 {
-   U_TRACE(0, "UDataSession::putValue(%.*S,%.*S)", U_STRING_TO_TRACE(key), U_STRING_TO_TRACE(value))
+   U_TRACE(0, "UDataSession::putValue(%u,%.*S)", index, U_STRING_TO_TRACE(value))
 
-   if (tbl == 0)
+   if (vec == 0)
       {
-      tbl = U_NEW(UHashMap<UString>);
+      U_INTERNAL_ASSERT_EQUALS(index,0)
 
-      tbl->allocate();
+      vec = U_NEW(UVector<UString>);
       }
 
-   tbl->insert(key, value);
+   if (index < vec->size()) vec->replace(index, value);
+   else
+      {
+      U_INTERNAL_ASSERT_EQUALS(index,vec->size())
+
+      vec->push_back(value);
+      }
 }
 
 // method VIRTUAL to define
@@ -75,13 +83,12 @@ void UDataSession::clear()
 {
    U_TRACE(0, "UDataSession::clear()")
 
-   if (tbl)
+   if (vec)
       {
-      tbl->clear();
-      tbl->deallocate();
+      vec->clear();
 
-      delete tbl;
-             tbl = 0;
+      delete vec;
+             vec = 0;
       }
 }
 
@@ -93,11 +100,11 @@ void UDataSession::fromStream(istream& is)
 
    is.get(); // skip ' '
 
-   if (is.peek() == '[')
+   if (is.peek() == '(')
       {
-      U_INTERNAL_ASSERT_EQUALS(tbl,0)
+      U_INTERNAL_ASSERT_EQUALS(vec,0)
 
-      tbl = UHashMap<UString>::fromStream(is);
+      vec = UVector<UString>::fromStream(is);
 
       is.get(); // skip ' '
       }
@@ -113,9 +120,9 @@ void UDataSession::toStream(ostream& os)
    os << creation;
    os.put(' ');
 
-   if (tbl)
+   if (vec)
       {
-      os << *tbl;
+      os << *vec;
 
       os.put(' ');
       }
@@ -125,9 +132,9 @@ void UDataSession::fromDataSession(UDataSession& data_session)
 {
    U_TRACE(0, "UDataSession::fromDataSession(%p)", &data_session)
 
-   U_INTERNAL_ASSERT_EQUALS(tbl,0)
+   U_INTERNAL_ASSERT_EQUALS(vec,0)
 
-   tbl      = UHashMap<UString>::duplicate(data_session.tbl);
+   vec      = UVector<UString>::duplicate(data_session.vec);
    creation = data_session.creation;
 
    last_access = u_now->tv_sec;
@@ -139,7 +146,7 @@ UDataSession* UDataSession::toDataSession()
 
    UDataSession* ptr = U_NEW(UDataSession);
 
-   ptr->tbl      = UHashMap<UString>::duplicate(tbl);
+   ptr->vec      = UVector<UString>::duplicate(vec);
    ptr->creation = ptr->last_access = creation;
 
    U_RETURN_POINTER(ptr,UDataSession);
@@ -153,7 +160,7 @@ const char* UDataSession::dump(bool reset) const
    *UObjectIO::os << "creation                 " << creation     << '\n'
                   << "last_access              " << last_access  << '\n'
                   << "data (UString            " << (void*)&data << ")\n"
-                  << "tbl  (UHashMap<UString*> " << (void*)tbl   << ')';
+                  << "vec  (UHashMap<UString*> " << (void*)vec   << ')';
 
    if (reset)
       {

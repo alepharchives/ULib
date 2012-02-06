@@ -35,15 +35,12 @@ public:
 		}
 };
 -->
+<!--#args
+arg1("0");
+arg2("0");
+opval(" ");
+-->
 <!--#code
-UString arg1  = USP_FORM_VALUE(0),
-		  arg2  = USP_FORM_VALUE(1),
-		  opval = USP_FORM_VALUE(2);
-
-if ( arg1.empty())  arg1 = U_STRING_FROM_CONSTANT("0");
-if ( arg2.empty())  arg2 = U_STRING_FROM_CONSTANT("0");
-if (opval.empty()) opval = U_STRING_FROM_CONSTANT(" ");
-
 calcBean calc;
 
 calc.set(arg1.strtod(), arg2.strtod(), opval.first_char());
@@ -64,7 +61,12 @@ calc.set(arg1.strtod(), arg2.strtod(), opval.first_char());
    <input type="submit" name="op"   value="/">
   </form>
 
-  <!--#code if (calc.isResultOk()) USP_PRINTF("<hr>\n%.*s %.*s %.*s = %g", U_STRING_TO_TRACE(arg1), U_STRING_TO_TRACE(opval), U_STRING_TO_TRACE(arg2), calc.getResult()); -->
+<!--#code
+if (calc.isResultOk())
+	{
+	USP_PRINTF("<hr>\n%.*s %.*s %.*s = %g", U_STRING_TO_TRACE(arg1), U_STRING_TO_TRACE(opval), U_STRING_TO_TRACE(arg2), calc.getResult());
+	}
+-->
 
  </body>
 </html>

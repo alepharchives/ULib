@@ -132,10 +132,10 @@ void UTrace::trace_syscall(const char* format, ...)
          }
       }
 
-   errno = 0;
 #ifdef __MINGW32__
    SetLastError(0);
 #endif
+   errno = u_errno = 0;
 }
 
 void UTrace::trace_sysreturn(bool error, const char* format, ...)

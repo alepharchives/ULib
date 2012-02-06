@@ -9,6 +9,10 @@
 #  include <ulib/replace/strstream.h>
 #endif
 
+#ifdef __MINGW32__
+#define _GLIBCXX_USE_C99_DYNAMIC 1
+#endif
+
 #undef min
 using std::min;
 #include <fstream>

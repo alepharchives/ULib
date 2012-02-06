@@ -1,3 +1,6 @@
+<!--#args
+filepath;
+-->
 <html>
  <body>
 
@@ -12,7 +15,6 @@
 		 UHTTP::form_name_value->size() == 2)
 	{
 	UString md5sum(33U), dump(10000U),
-			  filepath = USP_FORM_VALUE(0),
 			  content  = UFile::contentOf(filepath);
 
 	uint32_t size	 = content.size();
@@ -20,9 +22,7 @@
 
 	UServices::generateDigest(U_HASH_MD5, 0, (unsigned char*)ptr, size, md5sum, false);
 
-	if (size > 1024) size = 1024;
-
-	dump.snprintf("%M", size, ptr);
+	dump.snprintf("%M", U_min(size,1024), ptr);
 -->
 
     <p>

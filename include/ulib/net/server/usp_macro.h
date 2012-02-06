@@ -16,15 +16,8 @@
 
 #include <ulib/all.h>
 
-#define USP_PUTS(string)        (void)UClientImage_Base::wbuffer->append((string))
+#define USP_PUTS(string)        (void)UClientImage_Base::wbuffer->append(string)
 #define USP_PRINTF(fmt,args...) (UClientImage_Base::_buffer->snprintf(fmt , ##args),USP_PUTS(*UClientImage_Base::_buffer))
-
-#define USP_FORM_NAME(n)               (UHTTP::getFormValue(*UClientImage_Base::_value,(0+(n*2))),                *UClientImage_Base::_value)
-#define USP_FORM_VALUE(n)              (UHTTP::getFormValue(*UClientImage_Base::_value,(1+(n*2))),                *UClientImage_Base::_value)
-#define USP_FORM_VALUE_FROM_NAME(name) (UHTTP::getFormValue(*UClientImage_Base::_value,U_CONSTANT_TO_PARAM(name)),*UClientImage_Base::_value)
-
-#define USP_PRINTF_FORM_NAME(fmt,n)    (USP_FORM_NAME(n), USP_PRINTF(fmt,U_STRING_TO_TRACE(*UClientImage_Base::_value)))
-#define USP_PRINTF_FORM_VALUE(fmt,n)   (USP_FORM_VALUE(n),USP_PRINTF(fmt,U_STRING_TO_TRACE(*UClientImage_Base::_value)))
 
 #define USP_PUTS_XML(string) \
    ((void)UClientImage_Base::_encoded->reserve((string).size() * 4), \
@@ -35,23 +28,37 @@
    (UClientImage_Base::_buffer->snprintf(fmt , ##args), \
     USP_PUTS_XML(*UClientImage_Base::_buffer))
 
-#define USP_PRINTF_XML_FORM_NAME(fmt,n)  ((void)USP_FORM_NAME( n),USP_PRINTF_XML(fmt,U_STRING_TO_TRACE(*UClientImage_Base::_value)))
-#define USP_PRINTF_XML_FORM_VALUE(fmt,n) ((void)USP_FORM_VALUE(n),USP_PRINTF_XML(fmt,U_STRING_TO_TRACE(*UClientImage_Base::_value)))
+#define USP_FORM_NAME(n)               (UHTTP::getFormValue(*UClientImage_Base::_value,(0+(n*2))),                *UClientImage_Base::_value)
+#define USP_FORM_VALUE(n)              (UHTTP::getFormValue(*UClientImage_Base::_value,(1+(n*2))),                *UClientImage_Base::_value)
+#define USP_FORM_VALUE_FROM_NAME(name) (UHTTP::getFormValue(*UClientImage_Base::_value,U_CONSTANT_TO_PARAM(name)),*UClientImage_Base::_value)
 
-#define USP_SESSION_VAR_GET(varname) \
+#define USP_SESSION_VAR_GET(index,varname) \
    { \
    UString varname##_value; \
-   if (UHTTP::getDataSession(U_CONSTANT_TO_PARAM(#varname), &varname##_value) == false) UHTTP::setSessionCookie(); \
+   if (UHTTP::getDataSession(index, &varname##_value) == false) UHTTP::setSessionCookie(0); \
    else UString2Object(U_STRING_TO_PARAM(varname##_value), varname); \
    }
 
-#define USP_SESSION_VAR_PUT(varname) \
+#define USP_SESSION_VAR_PUT(index,varname) \
    { \
    if (UHTTP::keyID->empty() == false) \
       { \
       usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \
-      UHTTP::putDataSession(U_CONSTANT_TO_PARAM(#varname), usp_buffer, usp_sz); \
+      UHTTP::putDataSession(index, usp_buffer, usp_sz); \
       } \
+   }
+
+#define USP_STORAGE_VAR_GET(index,varname) \
+   { \
+   UString varname##_value; \
+   if (UHTTP::getDataStorage(index, &varname##_value)) \
+      UString2Object(U_STRING_TO_PARAM(varname##_value), varname); \
+   }
+
+#define USP_STORAGE_VAR_PUT(index,varname) \
+   { \
+   usp_sz = UObject2String(varname, usp_buffer, sizeof(usp_buffer)); \
+   UHTTP::putDataStorage(index, usp_buffer, usp_sz); \
    }
 
 #endif

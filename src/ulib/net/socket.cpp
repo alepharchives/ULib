@@ -782,7 +782,7 @@ loop:
        pcNewConnection->iSockDesc  = U_SYSCALL(accept,  "%d,%p,%p",    iSockDesc, (sockaddr*)cRemote, &slDummy);
 #endif
 // next:
-   if (pcNewConnection->iSockDesc == -1 && UInterrupt::checkForEventSignalPending()) goto loop;
+   if (pcNewConnection->iSockDesc == -1 && errno == EINTR && UInterrupt::checkForEventSignalPending()) goto loop; // NB: we never restart accept() in general is non blocking...
    if (pcNewConnection->iSockDesc != -1)
       {
       pcNewConnection->iState = CONNECT;

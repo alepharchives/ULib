@@ -138,7 +138,7 @@ void IR::parse()
       UPosting::processWord(operation);
       }
 
-   if (operation == 2) UPosting::file->unlink(); // del
+   if (operation == 2) UPosting::file->_unlink(); // del
 }
 
 void IR::processFile()

@@ -11,7 +11,7 @@
 //
 // ============================================================================
 
-#include <ulib/string.h>
+#include <ulib/file.h>
 
 #include <errno.h>
 
@@ -60,20 +60,21 @@ void UStringRep::set(uint32_t __length, uint32_t __capacity, const char* ptr)
 {
    U_TRACE(0, "UStringRep::set(%u,%u,%p)", __length, __capacity, ptr)
 
+   _length    = __length;
+   _capacity  = __capacity; // [0 const | -1 mmap]...
+   references = 0;
+   str        = ptr;
+
 #ifdef DEBUG
    U_SET_LOCATION_INFO; U_REGISTER_OBJECT_PTR(0, UStringRep, this)
    memory._this = (const UMemoryError*)this;
 #endif
 #if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-   parent       = 0;
+   parent = 0;
 #  ifdef DEBUG
-   child        = 0;
+   child  = 0;
 #  endif
 #endif
-   _length      = __length;
-   _capacity    = __capacity; // [0 const | -1 mmap]...
-   references   = 0;
-   str          = ptr;
 }
 
 UStringRep::UStringRep(const char* t)
@@ -82,7 +83,7 @@ UStringRep::UStringRep(const char* t)
 
    U_INTERNAL_ASSERT_POINTER(t)
 
-   set(u_str_len(t), 0, t);
+   set(u_str_len(t), 0U, t);
 }
 
 UStringRep::UStringRep(const char* t, uint32_t tlen)
@@ -91,29 +92,7 @@ UStringRep::UStringRep(const char* t, uint32_t tlen)
 
    U_INTERNAL_ASSERT_POINTER(t)
 
-   set(tlen, 0, t);
-}
-
-UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* ptr)
-{
-   U_TRACE(1, "UStringRep::create(%u,%u,%p)", length, capacity, ptr)
-
-   U_INTERNAL_ASSERT_RANGE(1,capacity,max_size())
-
-   // NB: Need an array of char[capacity], plus a terminating null char element,
-   //     plus enough for the UStringRep data structure. Whew. Seemingly so needy, yet so elemental...
-
-   UStringRep* r = (UStringRep*) U_MALLOC_STR(sizeof(UStringRep) + capacity + 1, capacity);
-
-   r->set(length, capacity - (sizeof(UStringRep) + 1), (const char*)(r + 1));
-
-   char* _ptr = (char*)r->str;
-
-   if (ptr && length) (void) u_mem_cpy((void*)_ptr, ptr, length);
-
-   _ptr[length] = '\0';
-
-   U_RETURN_POINTER(r, UStringRep);
+   set(tlen, 0U, t);
 }
 
 UStringRep* UStringRep::create(const char* t, uint32_t tlen, uint32_t mode)
@@ -132,15 +111,85 @@ UStringRep* UStringRep::create(const char* t, uint32_t tlen, uint32_t mode)
       {
       r = U_MALLOC_TYPE(UStringRep);
 
+      U_INTERNAL_ASSERT_RANGE(-1,(int32_t)mode,0) // [0 const | -1 mmap]...
+
       r->set(tlen, mode, t);
       }
 
    U_RETURN_POINTER(r, UStringRep);
 }
 
+#define U_SIZE1_THRESHOLD (  2U * 1024U * 1024U) //   2M
+#define U_SIZE2_THRESHOLD (512U * 1024U * 1024U) // 512M (save some swap pressure)
+
+UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* ptr)
+{
+   U_TRACE(1, "UStringRep::create(%u,%u,%p)", length, capacity, ptr)
+
+   UStringRep* r;
+
+   if (capacity < U_SIZE1_THRESHOLD)
+      {
+      // NB: Need an array of char[capacity], plus a terminating null char element,
+      //     plus enough for the UStringRep data structure. Whew. Seemingly so needy, yet so elemental...
+
+      r = (UStringRep*) U_MALLOC_STR(sizeof(UStringRep) + capacity + 1, capacity);
+
+      r->set(length, capacity - (sizeof(UStringRep) + 1), (const char*)(r + 1));
+
+      char* _ptr = (char*)r->str;
+
+      if (ptr && length) (void) u_mem_cpy((void*)_ptr, ptr, length);
+
+      _ptr[length] = '\0';
+      }
+   else
+      {
+      char* map = (char*) MAP_FAILED;
+
+      if (capacity < U_SIZE2_THRESHOLD)
+         {
+         map = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, capacity, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+         }
+      else
+         {
+         UFile tmp;
+
+         if (tmp.mkTemp() &&
+             tmp.fallocate(capacity))
+            {
+            map = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, tmp.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, tmp.fd, 0);
+            }
+
+         tmp.close();
+         }
+
+      if (map == MAP_FAILED) U_RETURN_POINTER(string_rep_null, UStringRep);
+
+      r = U_MALLOC_TYPE(UStringRep);
+
+      r->set(length, capacity, map);
+
+      if (ptr) (void) u_mem_cpy((void*)map, ptr, length);
+      }
+
+   U_RETURN_POINTER(r, UStringRep);
+}
+
+UStringRep* UStringRep::create(UStringRep* rep)
+{
+   U_TRACE(0, "UStringRep::create(%p)", rep)
+
+   U_INTERNAL_ASSERT_POINTER(rep)
+   U_INTERNAL_ASSERT_DIFFERS(rep,string_rep_null)
+
+   UStringRep* r = create(rep->_length, rep->_length, rep->str);
+
+   U_RETURN_POINTER(r, UStringRep);
+}
+
 #ifdef DEBUG
 // substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
-
 int32_t     UStringRep::max_child;
 UStringRep* UStringRep::parent_destroy;
 UStringRep* UStringRep::string_rep_share;
@@ -324,15 +373,21 @@ void UStringRep::release()
 #  endif
 #endif
 
-   if (_capacity == U_NOT_FOUND)
+   U_INTERNAL_DUMP("_capacity = %u", _capacity)
+
+   if (_capacity >= U_SIZE1_THRESHOLD)
       {
+      if (_capacity != U_NOT_FOUND) (void) U_SYSCALL(munmap, "%p,%u", (void*)str, _capacity);
+      else
+         {
+         ptrdiff_t resto = (ptrdiff_t)str % PAGESIZE;
+
+         U_INTERNAL_DUMP("resto = %u", resto)
+
+         (void) U_SYSCALL(munmap, "%p,%u", (void*)(str - resto), _length + resto);
+         }
+
       _capacity = 0;
-
-      ptrdiff_t resto = (ptrdiff_t)str % PAGESIZE;
-
-      U_INTERNAL_DUMP("resto = %u", resto)
-
-      (void) U_SYSCALL(munmap, "%p,%u", (void*)(str - resto), _length + resto);
       }
 
 #ifdef DEBUG
@@ -482,11 +537,22 @@ __pure bool UStringRep::isUTF16(uint32_t pos) const
    U_RETURN(result);
 }
 
-UString::UString(uint32_t n)
+void UStringRep::size_adjust(uint32_t value)
 {
-   U_TRACE_REGISTER_OBJECT(0, UString, "%u", n)
+   U_TRACE(0+256, "UStringRep::size_adjust(%u)", value)
 
-   rep = UStringRep::create(0U, n, 0);
+#ifdef DEBUG
+   if (references)
+      {
+      errorReferences(this);
+
+      U_INTERNAL_ASSERT_MSG(false, "CANNOT ADJUST SIZE OF A REFERENCED STRING...")
+      }
+#endif
+
+   _length = (value == U_NOT_FOUND ? u_str_len(str) : value);
+
+   U_INTERNAL_ASSERT(invariant())
 }
 
 UString::UString(const char* t)
@@ -577,49 +643,24 @@ UString UString::copy() const
 
    U_RETURN_STRING(copia);
 }
-
-void UStringRep::size_adjust(uint32_t value)
-{
-   U_TRACE(0+256, "UStringRep::size_adjust(%u)", value)
-
-#ifdef DEBUG
-   if (references)
-      {
-      errorReferences(this);
-
-      U_INTERNAL_ASSERT_MSG(false, "CANNOT ADJUST SIZE OF A REFERENCED STRING...")
-      }
-#endif
-
-   _length = (value == U_NOT_FOUND ? u_str_len(str) : value);
-
-   U_INTERNAL_ASSERT(invariant())
-}
 // ----------------------------------------------
 
 // SERVICES
 
-#define U_SIZE_TO_CHUNK(sz) ((sz <= U_CAPACITY ? U_CAPACITY : (sz * 2) + (10 * 1024))) // how much space we preallocate in reserve() and append()...
-
-bool UString::reserve(uint32_t n)
+UString::UString(uint32_t n)
 {
-   U_TRACE(0, "UString::reserve(%u)", n)
+   U_TRACE_REGISTER_OBJECT(0, UString, "%u", n)
 
-   U_INTERNAL_ASSERT(n <= max_size())
+   rep = UStringRep::create(0U, n, 0);
+}
 
-   if (rep->_capacity >= n) U_RETURN(false);
+UString::UString(uint32_t n, unsigned char c)
+{
+   U_TRACE_REGISTER_OBJECT(0, UString, "%u,%C", n, c)
 
-   // Make room for a total of n element
+   rep = UStringRep::create(n, n, 0);
 
-   U_INTERNAL_DUMP("rep = %p rep->parent = %p rep->references = %u rep->child = %d", rep, rep->parent, rep->references + 1, rep->child)
-
-   n = U_SIZE_TO_CHUNK(n);
-
-   set(UStringRep::create(rep->_length, n, rep->str));
-
-   U_INTERNAL_ASSERT(invariant())
-
-   U_RETURN(true);
+   (void) U_SYSCALL(memset, "%p,%d,%u", (void*)rep->str, c, n);
 }
 
 void UString::setBuffer(uint32_t n)
@@ -638,6 +679,51 @@ void UString::setBuffer(uint32_t n)
    else
       {
       set(UStringRep::create(0U, n, 0));
+      }
+
+   U_INTERNAL_ASSERT(invariant())
+}
+
+// how much space we preallocate in reserve() and append()...
+
+#define U_SIZE_TO_CHUNK(sz) \
+   (sz <= U_CAPACITY        ? U_CAPACITY : \
+    sz >  U_SIZE1_THRESHOLD ? sz         : (sz * 2U) + (10U * 1024U))
+
+bool UString::reserve(uint32_t n)
+{
+   U_TRACE(0, "UString::reserve(%u)", n)
+
+   U_INTERNAL_ASSERT(n <= max_size())
+
+   // Make room for a total of n element
+
+   U_INTERNAL_DUMP("rep = %p rep->parent = %p rep->references = %u rep->child = %d", rep, rep->parent, rep->references + 1, rep->child)
+
+   if (rep->_capacity >= n) U_RETURN(false);
+
+   n = U_SIZE_TO_CHUNK(n);
+
+   set(UStringRep::create(rep->_length, n, rep->str));
+
+   U_INTERNAL_ASSERT(invariant())
+
+   U_RETURN(true);
+}
+
+// manage UString as memory mapped area...
+
+void UString::mmap(const char* map, uint32_t len)
+{
+   U_TRACE(0, "UString::mmap(%.*S,%u)", len, map, len)
+
+   U_INTERNAL_ASSERT(map != MAP_FAILED)
+
+   if (isMmap() == false) set(UStringRep::create(map, len, U_NOT_FOUND));
+   else
+      {
+      rep->str     = map;
+      rep->_length = len;
       }
 
    U_INTERNAL_ASSERT(invariant())
@@ -800,7 +886,7 @@ void UString::duplicate(uint32_t _space) const
    uint32_t sz = size();
 
    UStringRep* r = (sz > 0 ? UStringRep::create(sz, sz + _space, rep->str)
-                           : UStringRep::create(0U,       100U,        0));
+                           : UStringRep::create(0U,        100U,        0));
 
    ((UString*)this)->set(r);
 
@@ -839,29 +925,6 @@ void UString::resize(uint32_t n, char c)
    if      (n > sz) (void) append(n - sz, c);
    else if (n < sz) erase(n);
    else             size_adjust(n);
-
-   U_INTERNAL_ASSERT(invariant())
-}
-
-// manage UString as memory mapped area...
-
-void UString::mmap(const char* map, uint32_t len)
-{
-   U_TRACE(0, "UString::mmap(%.*S,%u)", len, map, len)
-
-   U_INTERNAL_ASSERT(map != MAP_FAILED)
-
-   if (isMmap())
-      {
-      rep->str     = map;
-      rep->_length = len;
-      }
-   else
-      {
-      UStringRep* _rep = UStringRep::create(map, len, U_NOT_FOUND);
-
-      set(_rep);
-      }
 
    U_INTERNAL_ASSERT(invariant())
 }
@@ -1371,52 +1434,51 @@ void UStringRep::write(ostream& os) const
 {
    U_TRACE(0, "UStringRep::write(%p)", &os)
 
-   char* s    = (char*)str;
-   char* _end = s + _length;
+   bool need_quote;
 
-   while (s < _end)
+   if ((need_quote = (_length == 0)) == false)
       {
-      if (strchr(" \"\\\n\r\t\b", *s)) break;
+      for (char* s = (char*)str, *_end = s + _length; s < _end; ++s)
+         {
+         if (strchr(" \"\\\n\r\t\b", *s))
+            {
+            need_quote = true;
 
-      ++s;
+            break;
+            }
+         }
       }
 
-   if (s < _end ||
-       _length == 0) // need quote
+   if (need_quote == false) os.write(str, _length);
+   else
       {
-      char* p;
-
       os.put('"');
 
-      s    = (char*)str;
-      _end = s + _length;
+      char* p;
+      char* s    = (char*)str;
+      char* _end = s + _length;
 
       while (s < _end)
          {
          p = (char*) memchr(s, '"', _end - s);
 
-         if (p)
-            {
-            os.write(s, p - s);
-
-            os.put('\\');
-            os.put('"');
-
-            s = p + 1;
-            }
-         else
+         if (p == 0)
             {
             os.write(s, _end - s);
 
             break;
             }
+
+         os.write(s, p - s);
+
+         if (*(p-1) == '\\') os.put('\\');
+                             os.put('\\');
+                             os.put('"');
+
+         s = p + 1;
          }
 
       os.put('"');
-      }
-   else
-      {
-      os.write(str, _length);
       }
 }
 
@@ -1520,18 +1582,21 @@ istream& UString::getline(istream& in, char delim)
                continue;
                }
 
-            if (c != '\n') _append('\\');
-            else
+            if (strchr("nrt\nbfvae", c))
                {
-               // comprime serie di white-space in un singolo spazio...
-
-               do { c = sb->sbumpc(); } while (c != EOF && u_isspace(c));
-
-               if (c != EOF)
+               if (c != '\n') _append('\\');
+               else
                   {
-                  sb->sputbackc(c);
+                  // comprime serie di white-space in un singolo spazio...
 
-                  c = ' ';
+                  do { c = sb->sbumpc(); } while (c != EOF && u_isspace(c));
+
+                  if (c != EOF)
+                     {
+                     sb->sputbackc(c);
+
+                     c = ' ';
+                     }
                   }
                }
             }

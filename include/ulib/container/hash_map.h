@@ -42,6 +42,12 @@ public:
 
    // COSTRUTTORI
 
+   UHashMapNode(UStringRep* _key, void* _elem, UHashMapNode* _next, uint32_t _hash)
+                  : elem(_elem), key(UStringRep::create(_key)), next(_next), hash(_hash)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UHashMapNode, "%.*S,%p,%p,%u", U_STRING_TO_TRACE(*_key), _elem, _next, _hash)
+      }
+
    UHashMapNode(const UString& _key, void* _elem, UHashMapNode* _next, uint32_t _hash)
                   : elem(_elem), key(_key.rep), next(_next), hash(_hash)
       {
@@ -212,6 +218,7 @@ public:
    // dopo avere chiamato find() (non effettuano il lookup)
 
    void   eraseAfterFind();
+   void  insertAfterFind(   UStringRep* key, void*  elem);
    void  insertAfterFind(const UString& key, void*  elem);
    void replaceAfterFind(                    void* _elem)
       {
@@ -320,6 +327,24 @@ public:
       u_destroy<T>((T*)node->elem);
 
       UHashMap<void*>::eraseAfterFind();
+      }
+
+   void insertAfterFind(UStringRep* _key, T* _elem)
+      {
+      U_TRACE(0, "UHashMap<T*>::insertAfterFind(%.*S,%p)", U_STRING_TO_TRACE(*_key), _elem)
+
+      u_construct<T>(_elem);
+
+      if (node)
+         {
+         u_destroy<T>((T*)node->elem);
+
+         node->elem = _elem;
+         }
+      else
+         {
+         UHashMap<void*>::insertAfterFind(_key, _elem);
+         }
       }
 
    void insertAfterFind(const UString& _key, T* _elem)

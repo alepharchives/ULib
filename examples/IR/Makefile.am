@@ -2,7 +2,7 @@
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
-EXTRA_DIST = IR.h posting.h cquery.h ir_web.cpp ir_web.usp *.spec*
+EXTRA_DIST = IR.h posting.h cquery.h ir_session.h ir_web.cpp ir_web.usp *.spec*
 
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 

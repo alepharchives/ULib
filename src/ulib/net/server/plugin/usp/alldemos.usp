@@ -32,7 +32,7 @@
    <tr><th>Demo</th><th>Source</th><th>Description</th></tr>
 
 	<!--#code
-	std::string filename = "demos.txt";
+	std::string filename = "../demos.txt";
 	std::ifstream demos(filename.c_str());
 
 	while (demos)

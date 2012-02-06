@@ -113,7 +113,7 @@ GET /cgi-bin/index.cgi HTTP/1.1
 Host: localhost
 Accept-Encoding: gzip,deflate
 
-POST /servlet/jsonrequest HTTP/1.1
+POST /benchmark/docroot/servlet/jsonrequest HTTP/1.1
 Host: localhost
 Accept: application/jsonrequest
 Content-Encoding: identity

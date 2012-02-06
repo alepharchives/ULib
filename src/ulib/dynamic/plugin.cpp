@@ -30,11 +30,11 @@ void* UPlugIn<void*>::create(const char* _name, uint32_t _name_len)
 
    char buffer[U_PATH_MAX];
 
-   (void) snprintf(buffer, U_PATH_MAX, U_FMT_LIBPATH, U_PATH_CONV(plugin_dir), _name_len, _name);
+   (void) u_sn_printf(buffer, sizeof(buffer), U_FMT_LIBPATH, U_PATH_CONV(plugin_dir), _name_len, _name);
 
    if (item->UDynamic::load(buffer))
       {
-      (void) sprintf(buffer, "u_creat_%.*s", _name_len, _name);
+      (void) u_sn_printf(buffer, sizeof(buffer), "u_creat_%.*s", _name_len, _name);
 
       pvPF creator = (pvPF) item->operator[](buffer);
 

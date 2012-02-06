@@ -539,7 +539,7 @@ case "$target_os" in
 	if test "$HAVE_SSL" = "yes"; then
 		LIBS_SAVE="${LIBS_SAVE} -lwsock32 -lgdi32 -lz";
 	fi
-	AM_CONDITIONAL(PTHREAD, true)
+	AM_CONDITIONAL(PTHREAD, false)
 	AM_CONDITIONAL(SEMAPHORE, true)
 	AC_DEFINE(HAVE_MODULES, [1], [support for plugin modules])
 	;;
@@ -941,8 +941,7 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
 		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition" # -Wcast-qual
 
-	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti \
-		-Wno-deprecated"
+	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated -Wdelete-non-virtual-dtor"
 
 	AC_CACHE_CHECK([for gcc supported flags], ulib_cv_flags, [
 		echo

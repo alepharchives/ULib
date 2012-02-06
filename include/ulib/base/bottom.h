@@ -3,24 +3,17 @@
 #ifndef BOTTOM_H
 #define BOTTOM_H 1
 
-/* LFS */
-#if !defined(_OFF_T_) && defined(__MINGW32__) && defined(_FILE_OFFSET_BITS) && _FILE_OFFSET_BITS == 64
-#  define  _OFF_T_
-typedef long long _off_t; /* Type of file sizes and offsets (LFS) */
-typedef _off_t     off_t;
-#endif
-
-#ifdef _MSC_VER
-/* Visual Studio hasn't inttypes.h so it doesn't know uint32_t */
-typedef int int32_t;
-typedef unsigned int uint32_t;
-typedef unsigned short uint16_t;
-typedef unsigned char uint8_t;
-typedef unsigned long long uint64_t;
-typedef int mode_t;
-#else /* _MSC_VER */
+#ifndef _MSC_VER
 #  include <inttypes.h>
-#endif /* _MSC_VER */
+#else
+/* Visual Studio hasn't inttypes.h so it doesn't know uint32_t */
+typedef          int        int32_t;
+typedef unsigned int       uint32_t;
+typedef unsigned short     uint16_t;
+typedef unsigned char      uint8_t;
+typedef unsigned long long uint64_t;
+typedef          int       mode_t;
+#endif
 
 #if defined(SOLARIS) || defined(__hpux) || defined(MACOSX)
 #  ifndef __EXTENSIONS__
@@ -78,7 +71,6 @@ typedef int mode_t;
 #elif defined(__linux__)
 #  define HAVE_WORKING_SOCKET_OPTION_SO_RCVTIMEO 1
 #else
-#  define _snprintf snprintf
 #  define STRNCASECMP(x,y) strncasecmp(x,y,sizeof(y)-1)
 #endif
 

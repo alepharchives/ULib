@@ -43,9 +43,9 @@ int URDBClientImage::handlerRead()
 
    U_INTERNAL_ASSERT_EQUALS(result, U_PLUGIN_HANDLER_GO_ON)
 
-   UClientImage_Base::initAfterGenericRead();
+   if (UClientImage_Base::isPipeline() == false) UClientImage_Base::initAfterGenericRead();
 
-   if (UServer_Base::isLog()) UClientImage_Base::logRequest();
+   if (UClientImage_Base::logbuf) UClientImage_Base::logRequest();
 
    // check for RPC request
 

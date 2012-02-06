@@ -158,7 +158,7 @@ U_NO_EXPORT UString USSIPlugIn::getPathname(const UString& name, const UString& 
 
    /* "include file" looks in the current directory (the name must not start with /, ., or ..) and "include virtual" starts
     * in the root directory of your kiosk (so the name must start with "/".) You might want to make a "/includes" directory
-    * in your Kiosk and then you can say "include virtual="/includes/file.txt"" from any page. The "virtual" and "file"
+    * in your Kiosk and then you can say "include virtual=/includes/file.txt" from any page. The "virtual" and "file"
     * parameters are also used with "fsize" and "flastmod". With either method, you can only reference files that are within
     * your Kiosk directory (apart if "direct"...)
     */
@@ -257,30 +257,33 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
       /**
        * <!--#element attribute=value attribute=value ... -->
        *
-       * config       DONE
-       *   errmsg     DONE
-       *   sizefmt    DONE
-       *   timefmt    DONE
        * echo         DONE
        *   var        DONE
        *   encoding   DONE
+       * set          DONE
+       *   var        DONE
+       *   value      DONE
        * exec         DONE
        *   cmd        DONE
        *   cgi        DONE
        *   servlet    DONE
+       * include      DONE
+       *   file       DONE
+       *   direct     DONE
+       *   virtual    DONE
        * fsize        DONE
        *   file       DONE
+       *   direct     DONE
        *   virtual    DONE
        * flastmod     DONE
        *   file       DONE
+       *   direct     DONE
        *   virtual    DONE
-       * include      DONE
-       *   file       DONE
-       *   virtual    DONE
+       * config       DONE
+       *   errmsg     DONE
+       *   sizefmt    DONE
+       *   timefmt    DONE
        * printenv     DONE
-       * set          DONE
-       *   var        DONE
-       *   value      DONE
        *
        * if           DONE
        * elif         DONE
@@ -384,6 +387,14 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
       switch (op)
          {
+         /*
+         <!--#if expr="${Sec_Nav}" -->
+            <!--#include virtual="secondary_nav.txt" -->
+         <!--#elif expr="${Pri_Nav}" -->
+            <!--#include virtual="primary_nav.txt" -->
+         <!--#endif -->
+         */
+
          case SSI_IF:
          case SSI_ELIF:
             {
@@ -464,10 +475,16 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
       switch (op)
          {
-         case SSI_PRINTENV:
-            (void) output.append(U_STRING_TO_PARAM(environment));
-         break;
+         /*
+         <!--#printenv -->
+         */
+         case SSI_PRINTENV: (void) output.append(U_STRING_TO_PARAM(environment)); break;
 
+         /*
+         <!--#config sizefmt="bytes" -->
+         <!--#config timefmt="%y %m %d" -->
+         <!--#config errmsg="SSI command failed!" -->
+         */
          case SSI_CONFIG:
             {
             for (i = 0; i < n; i += 2)
@@ -482,10 +499,12 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
             }
          break;
 
+         /*
+         <!--#echo var=$BODY_STYLE -->
+         <!--#echo [encoding="..."] var="..." [encoding="..."] var="..." ... -->
+         */
          case SSI_ECHO:
             {
-            /* <!--#echo [encoding="..."] var="..." [encoding="..."] var="..." ... --> */
-
             encode = E_NONE;
 
             for (i = 0; i < n; i += 2)
@@ -559,6 +578,10 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
             }
          break;
 
+         /*
+         <!--#fsize file="script.pl" -->
+         <!--#flastmod virtual="index.html" -->
+         */
          case SSI_FSIZE:
          case SSI_FLASTMOD:
             {
@@ -586,131 +609,157 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                pathname.clear();
                }
 
-                 if (bfile == false)  (void) output.append(errmsg);
-            else if (op == SSI_FSIZE) (void) output.append(UStringExt::numberToString(UHTTP::file->getSize(), use_size_abbrev));
-            else                      (void) output.append(UTimeDate::strftime(timefmt.data(), UHTTP::file->st_mtime)); // SSI_FLASTMOD
+                 if (bfile == false)     (void) output.append(errmsg);
+            else if (   op == SSI_FSIZE) (void) output.append(UStringExt::numberToString(UHTTP::file->getSize(), use_size_abbrev));
+            else                         (void) output.append(UTimeDate::strftime(timefmt.data(), UHTTP::file->st_mtime)); // SSI_FLASTMOD
             }
          break;
 
-         case SSI_SET:
-         case SSI_EXEC:
+         /*
+         <!--#include file=footer.html -->
+         */
          case SSI_INCLUDE:
             {
-            bset = (op == SSI_SET);
-
             if (n == 2)
                {
                name     = name_value[0];
                value    = name_value[1];
                pathname = getPathname(name, value, directory);
+               }
 
-               if (pathname.empty())
+            if (pathname.empty() == false)
+               {
+               UHTTP::file->setPath(pathname, &environment);
+
+               if (UHTTP::isFileInCache() &&
+                   UHTTP::isDataFromCache())
                   {
-                  if (name == *str_cmd) *UClientImage_Base::wbuffer = UCommand::outputCommand(value, 0, -1, UServices::getDevNull());
+                  include = UHTTP::getDataFromCache(false, false);
+                  }
+               else if (UHTTP::file->open())
+                  {
+                  UHTTP::file->fstat();
+
+                  include = UHTTP::file->getContent();
+                  }
+               }
+
+            if (include.empty()) x = errmsg;
+            else
+               {
+               x = getInclude(include, include_level);
+
+               include.clear();
+               }
+
+            output.append(x);
+
+                                 x.clear();
+                          pathname.clear();
+            UHTTP::file->getPath().clear();
+            }
+         break;
+
+         /*
+         <!--#exec cmd="ls -l" -->
+         <!--#exec cgi=/cgi-bin/foo.cgi -->
+         <!--#exec servlet=/servlet/mchat -->
+         */
+         case SSI_EXEC:
+            {
+            if (n == 2)
+               {
+               name  = name_value[0];
+               value = name_value[1];
+
+               if (name == *str_cmd) *UClientImage_Base::wbuffer = UCommand::outputCommand(value, 0, -1, UServices::getDevNull());
+               else
+                  {
+                  U_ASSERT(name == *str_servlet || name == *str_cgi)
+
+                  UHTTP::callService(value, (name == *str_servlet), &environment);
+                  }
+
+               (void) output.append(*UClientImage_Base::wbuffer);
+               }
+            }
+         break;
+
+         /*
+         <!--#set cmd="env -l" -->
+         <!--#set var="foo" value="bar" -->
+         <!--#set servlet=/servlet/strings -->
+         <!--#set cgi=$VIRTUAL_HOST/cgi-bin/main.bash -->
+         */
+         case SSI_SET:
+            {
+            bset = false;
+
+            for (i = 0; i < n; i += 4)
+               {
+               if (name_value[i]   == *str_var &&
+                   name_value[i+2] == *str_value)
+                  {
+                  bset = true;
+
+                  (void) environment.append(name_value[i+1]);
+                  (void) environment.append(1U, '=');
+                  (void) environment.append(UStringExt::expandEnvironmentVar(name_value[i+3], &environment));
+                  (void) environment.append(1U, '\n');
+                  }
+               }
+
+            if (bset == false)
+               {
+               name  = name_value[0];
+               value = name_value[1];
+
+               if (name == *str_cmd) *UClientImage_Base::wbuffer = UCommand::outputCommand(value, 0, -1, UServices::getDevNull());
+               else
+                  {
+                  U_ASSERT(name == *str_servlet || name == *str_cgi)
+
+                  UHTTP::callService(value, (name == *str_servlet), &environment);
+                  }
+
+               // NB: check if there is an alternative response to elaborate from #set...
+
+               UString rheader = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_HEADER"), UClientImage_Base::wbuffer);
+
+               U_INTERNAL_DUMP("response_header(%u) = %.*S", rheader.size(), U_STRING_TO_TRACE(rheader))
+
+               if (rheader.empty() == false)
+                  {
+                  cgi_output = true;
+
+                  size = rheader.size();
+
+                  UString _tmp(size);
+
+                  (void) UEscape::decode(rheader, _tmp);
+
+                  // NB: we cannot use directly the body attribute because is bounded to the param content...
+
+                  UString rbody = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_BODY"), UClientImage_Base::wbuffer);
+
+                  U_INTERNAL_DUMP("response_body(%u) = %.*S", rbody.size(), U_STRING_TO_TRACE(rbody))
+
+                  if (rbody.empty()) (void) header.insert(0, _tmp);
                   else
                      {
-                     UHTTP::file->setPath(value, &environment);
+                     body = rbody;
 
-                     if (UHTTP::isFileInCache())
-                        {
-                        U_INTERNAL_ASSERT_POINTER(UHTTP::file_data)
+                     // NB: with an alternative body response we cannot use the cached header response...
 
-                        u_mime_index = UHTTP::file_data->mime_index;
+                     (void) header.replace(_tmp);
 
-                        U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
-
-                             if (name == *str_cgi) (void) UHTTP::processCGIRequest((UCommand*)0, &environment, false, false);
-                        else if (name == *str_servlet)    UHTTP::manageHTTPServletRequest();
-                        }
+                     U_RETURN_STRING(UString::getStringNull());
                      }
 
-                  if (bset)
-                     {
-                     // NB: check if there is an alternative response to elaborate from #set...
-
-                     UString rheader = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_HEADER"), UClientImage_Base::wbuffer);
-
-                     U_INTERNAL_DUMP("response_header(%u) = %.*S", rheader.size(), U_STRING_TO_TRACE(rheader))
-
-                     if (rheader.empty() == false)
-                        {
-                        cgi_output = true;
-
-                        size = rheader.size();
-
-                        UString _tmp(size);
-
-                        (void) UEscape::decode(rheader, _tmp);
-
-                        // NB: we cannot use directly the body attribute because is bounded to the param content...
-
-                        UString rbody = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_BODY"), UClientImage_Base::wbuffer);
-
-                        U_INTERNAL_DUMP("response_body(%u) = %.*S", rbody.size(), U_STRING_TO_TRACE(rbody))
-
-                        if (rbody.empty()) (void) header.insert(0, _tmp);
-                        else
-                           {
-                           body = rbody;
-
-                           // NB: with an alternative body response we cannot use the cached header response...
-
-                           (void) header.replace(_tmp);
-
-                           U_RETURN_STRING(UString::getStringNull());
-                           }
-
-                        UClientImage_Base::wbuffer->erase(0, U_CONSTANT_SIZE("HTTP_RESPONSE_HEADER=") + size + 3);
-                        }
-                     }
-
-                  x = *UClientImage_Base::wbuffer;
-                  }
-               else // pathname.empty()...
-                  {
-                  UHTTP::file->setPath(pathname, &environment);
-
-                  if (UHTTP::isFileInCache() &&
-                      UHTTP::isDataFromCache())
-                     {
-                     include = UHTTP::getDataFromCache(false, false);
-                     }
-                  else if (UHTTP::file->open())
-                     {
-                     UHTTP::file->fstat();
-
-                     include = UHTTP::file->getContent();
-                     }
-                  else if (bset == false) x = errmsg;
-
-                  if (include.empty() == false)
-                     {
-                     x = getInclude(include, include_level);
-
-                     include.clear();
-                     }
+                  UClientImage_Base::wbuffer->erase(0, U_CONSTANT_SIZE("HTTP_RESPONSE_HEADER=") + size + 3);
                   }
 
-               if (bset) (void) environment.append(x);
-               else      (void)      output.append(x);
-
-                                    x.clear();
-                             pathname.clear();
-               UHTTP::file->getPath().clear();
-               }
-            else if (bset)
-               {
-               for (i = 0; i < n; i += 4)
-                  {
-                  if (name_value[i]   == *str_var &&
-                      name_value[i+2] == *str_value)
-                     {
-                     (void) environment.append(name_value[i+1]);
-                     (void) environment.append(1U, '=');
-                     (void) environment.append(UStringExt::expandEnvironmentVar(name_value[i+3], &environment));
-                     (void) environment.append(1U, '\n');
-                     }
-                  }
+               (void) environment.append(*UClientImage_Base::wbuffer);
                }
             }
          break;
