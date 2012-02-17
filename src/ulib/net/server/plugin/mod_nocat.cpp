@@ -1582,7 +1582,7 @@ int UNoCatPlugIn::handlerRequest()
 
             UEscape::encode(output, printable, false);
 
-            UServer_Base::log->log("%sauth message: %.*s\n", UServer_Base::mod_name, U_STRING_TO_TRACE(printable));
+            UServer_Base::log->log("%.*sauth message: %.*s\n", U_STRING_TO_TRACE(*UServer_Base::mod_name), U_STRING_TO_TRACE(printable));
             }
 
          if (peer == 0 ||

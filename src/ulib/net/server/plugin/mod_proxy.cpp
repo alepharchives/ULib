@@ -164,7 +164,7 @@ int UProxyPlugIn::handlerRequest()
 
          if (client_http.isConnected() == false)
             {
-            if (UServer_Base::isLog()) ULog::log("%s%s\n", UServer_Base::mod_name, client_http.getResponseData());
+            if (UServer_Base::isLog()) ULog::log("%.*s%s\n", U_STRING_TO_TRACE(*UServer_Base::mod_name), client_http.getResponseData());
 
             err = UModProxyService::INTERNAL_ERROR;
 

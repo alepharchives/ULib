@@ -12,7 +12,7 @@ usp_translator_LDADD   = $(ulib_la)
 usp_translator_SOURCES = usp_translator.cpp
 usp_translator_LDFLAGS = $(PRG_LDFLAGS)
 
-noinst_PROGRAMS = usp_translator
+bin_PROGRAMS = usp_translator
 
 clean-local:
 	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out

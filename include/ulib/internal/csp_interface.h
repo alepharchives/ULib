@@ -11,3 +11,4 @@ char* runv8(const char* jssrc); /* compiles and executes javascript and returns 
 
 char*        get_reply(void);
 unsigned int get_reply_capacity(void);
+void         set_reply_capacity(unsigned int n);

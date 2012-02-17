@@ -85,12 +85,12 @@ bool                       UServer_Base::bpluginsHandlerReset;
 bool                       UServer_Base::accept_edge_triggered;
 bool                       UServer_Base::set_realtime_priority;
 bool                       UServer_Base::flag_use_tcp_optimization;
-char                       UServer_Base::mod_name[20];
 ULog*                      UServer_Base::log;
 time_t                     UServer_Base::expire;
 uint32_t                   UServer_Base::start;
 uint32_t                   UServer_Base::count;
 uint32_t                   UServer_Base::shared_data_add;
+UString*                   UServer_Base::mod_name;
 UString*                   UServer_Base::host;
 UString*                   UServer_Base::senvironment;
 USocket*                   UServer_Base::socket;
@@ -98,6 +98,7 @@ UProcess*                  UServer_Base::proc;
 UEventFd*                  UServer_Base::handler_inotify;
 UEventTime*                UServer_Base::ptime;
 UServer_Base*              UServer_Base::pthis;
+struct linger              UServer_Base::lng = { 1, 0 };
 UVector<UString>*          UServer_Base::vplugin_name;
 UClientImage_Base*         UServer_Base::pindex;
 UClientImage_Base*         UServer_Base::vClientImage;
@@ -327,7 +328,8 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
 
    port         = U_DEFAULT_PORT;
    pthis        = this;
-   senvironment = U_NEW(UString(U_CAPACITY));
+   mod_name     = U_NEW(UString(U_CAPACITY));
+   senvironment = U_NEW(UString(100U));
 
    U_INTERNAL_DUMP("u_seed_hash = %u", u_seed_hash)
 
@@ -383,6 +385,7 @@ UServer_Base::~UServer_Base()
 
    U_INTERNAL_ASSERT_POINTER(senvironment)
 
+   delete mod_name;
    delete senvironment;
 
    if (log)        delete log;
@@ -760,7 +763,7 @@ next:
          {
          cfg->clear();
 
-         if (isLog()) (void) u_sn_printf(mod_name, sizeof(mod_name), "[%.*s] ", U_STRING_TO_TRACE(name));
+         if (isLog()) mod_name->snprintf("[%.*s] ", U_STRING_TO_TRACE(name));
 
          result = _plugin->handlerConfig(*cfg);
 
@@ -774,7 +777,7 @@ ok:
    result = U_PLUGIN_HANDLER_FINISHED;
 
 end:
-   mod_name[0] = '\0';
+   mod_name->setEmpty();
 
    U_RETURN(result);
 }
@@ -790,19 +793,13 @@ int UServer_Base::pluginsHandler##xxx()                                         
    U_INTERNAL_ASSERT_POINTER(vplugin)                                                        \
                                                                                              \
    int result;                                                                               \
-   UString name;                                                                             \
    UServerPlugIn* _plugin;                                                                   \
                                                                                              \
    for (uint32_t i = 0, length = vplugin->size(); i < length; ++i)                           \
       {                                                                                      \
       _plugin = (*vplugin)[i];                                                               \
                                                                                              \
-      if (isLog())                                                                           \
-         {                                                                                   \
-         name = (*vplugin_name)[i];                                                          \
-                                                                                             \
-         (void) u_sn_printf(mod_name, sizeof(mod_name), "[%.*s] ", U_STRING_TO_TRACE(name)); \
-         }                                                                                   \
+      if (isLog()) mod_name->snprintf("[%.*s] ", U_STRING_TO_TRACE((*vplugin_name)[i]));     \
                                                                                              \
       result = _plugin->handler##xxx();                                                      \
                                                                                              \
@@ -812,7 +809,7 @@ int UServer_Base::pluginsHandler##xxx()                                         
    result = U_PLUGIN_HANDLER_FINISHED;                                                       \
                                                                                              \
 end:                                                                                         \
-   mod_name[0] = '\0';                                                                       \
+   mod_name->setEmpty();                                                                     \
                                                                                              \
    U_RETURN(result);                                                                         \
 }
@@ -1403,12 +1400,7 @@ retry:
    // -----------------------------------------------------------------------------------------------------------------------
    // NB: for non-keepalive connection we have chance to drop small last part of large file while sending to a slow client...
    // -----------------------------------------------------------------------------------------------------------------------
-   // if (ptr->bclose != U_YES)
-   //    {
-   //    struct linger lng = { 1, 0 };
-   //
-   //    (void) csocket->setSockOpt(SOL_SOCKET, SO_LINGER, (const void*)&lng, sizeof(struct linger)); // send RST - ECONNRESET
-   //    }
+   // if (ptr->bclose != U_YES) (void) csocket->setSockOpt(SOL_SOCKET, SO_LINGER, (const void*)&lng, sizeof(struct linger)); // send RST - ECONNRESET
    // -----------------------------------------------------------------------------------------------------------------------
 #endif
 
@@ -1416,7 +1408,7 @@ insert:
    UNotifier::insert(ptr);
 
 check:
-   if (accept_edge_triggered && ++counter < 100) goto back;
+   if (accept_edge_triggered && ++counter < 1000) goto back;
 
 end:
 
@@ -1778,7 +1770,7 @@ void UServer_Base::logCommandMsgError(const char* cmd)
       {
       UCommand::setMsgError(cmd);
 
-      ULog::log("%s%.*s\n", mod_name, u_buffer_len, u_buffer);
+      ULog::log("%.*s%.*s\n", U_STRING_TO_TRACE(*mod_name), u_buffer_len, u_buffer);
 
       u_buffer_len = 0;
       }
@@ -1810,6 +1802,7 @@ const char* UServer_Base::dump(bool reset) const
                   << "dh_file       (UString    " << (void*)&dh_file             << ")\n"
                   << "ca_file       (UString    " << (void*)&ca_file             << ")\n"
                   << "ca_path       (UString    " << (void*)&ca_path             << ")\n"
+                  << "mod_name      (UString    " << (void*)mod_name             << ")\n"
                   << "allow_IP      (UString    " << (void*)&allow_IP            << ")\n"
                   << "key_file      (UString    " << (void*)&key_file            << ")\n"
                   << "password      (UString    " << (void*)&password            << ")\n"

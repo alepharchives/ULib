@@ -1139,12 +1139,40 @@ minus:
             }
          break;
 
-         case 'n':
+         case 'n': /* NB: stores the number of characters printed so far to an integer pointer it pops off the stack */
             {
-            if      (flags & LLONGINT) *VA_ARG(long long*)  = ret;
-            else if (flags &  LONGINT) *VA_ARG(long*)       = ret;
-            else if (flags & SHORTINT) *VA_ARG(short*)      = ret;
-            else                       *VA_ARG(int*)        = ret;
+            if (flags & LLONGINT)
+               {
+               long long* p = VA_ARG(long long*);
+
+               U_INTERNAL_ASSERT_POINTER_MSG(p, "CHECK THE PARAMETERS OF printf()...")
+
+               *p = ret;
+               }
+            else if (flags &  LONGINT)
+               {
+               long* p = VA_ARG(long*);
+
+               U_INTERNAL_ASSERT_POINTER_MSG(p, "CHECK THE PARAMETERS OF printf()...")
+
+               *p = ret;
+               }
+            else if (flags & SHORTINT)
+               {
+               short* p = VA_ARG(short*);
+
+               U_INTERNAL_ASSERT_POINTER_MSG(p, "CHECK THE PARAMETERS OF printf()...")
+
+               *p = ret;
+               }
+            else
+               {
+               int* p = VA_ARG(int*);
+
+               U_INTERNAL_ASSERT_POINTER_MSG(p, "CHECK THE PARAMETERS OF printf()...")
+
+               *p = ret;
+               }
 
             continue; /* no output */
             }

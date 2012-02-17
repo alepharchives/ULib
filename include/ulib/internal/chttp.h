@@ -72,6 +72,7 @@
 #define HTTP_REQ_RANGE_NOT_OK                416
 #define HTTP_EXPECTATION_FAILED              417
 
+#define HTTP_UNPROCESSABLE_ENTITY            422
 #define HTTP_PRECONDITION_REQUIRED           428
 #define HTTP_TOO_MANY_REQUESTS               429
 #define HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE 431
@@ -85,6 +86,26 @@
 #define HTTP_VERSION                         505
 
 #define HTTP_NETWORK_AUTHENTICATION_REQUIRED 511
+
+#define U_IS_HTTP_INFO(x)           (((x) >= 100)&&((x) < 200)) /* is the status code informational */
+#define U_IS_HTTP_SUCCESS(x)        (((x) >= 200)&&((x) < 300)) /* is the status code OK ? */
+#define U_IS_HTTP_REDIRECT(x)       (((x) >= 300)&&((x) < 400)) /* is the status code a redirect */
+#define U_IS_HTTP_ERROR(x)          (((x) >= 400)&&((x) < 600)) /* is the status code a error (client or server) */
+#define U_IS_HTTP_CLIENT_ERROR(x)   (((x) >= 400)&&((x) < 500)) /* is the status code a client error  */
+#define U_IS_HTTP_SERVER_ERROR(x)   (((x) >= 500)&&((x) < 600)) /* is the status code a server error  */
+#define U_IS_HTTP_VALID_RESPONSE(x) (((x) >= 100)&&((x) < 600)) /* is the status code a (potentially) valid response code ? */
+ 
+/* should the status code drop the connection */
+#define U_STATUS_DROPS_CONNECTION(x) \
+(((x) == HTTP_BAD_REQUEST)       || \
+ ((x) == HTTP_CLIENT_TIMEOUT)    || \
+ ((x) == HTTP_LENGTH_REQUIRED)   || \
+ ((x) == HTTP_PRECON_FAILED)     || \
+ ((x) == HTTP_ENTITY_TOO_LARGE)  || \
+ ((x) == HTTP_REQ_TOO_LONG)      || \
+ ((x) == HTTP_INTERNAL_ERROR)    || \
+ ((x) == HTTP_UNAVAILABLE)       || \
+ ((x) == HTTP_NOT_IMPLEMENTED))
 
 /* -----------------------------------------------------------------------------------------------------------------------------
 // HTTP header representation
@@ -106,17 +127,21 @@ typedef struct uhttpinfo {
    time_t      if_modified_since;
    uint32_t    nResponseCode, startHeader, endHeader, szHeader, clength, method_len, uri_len, query_len, host_len, host_vlen,
                range_len, accept_len, cookie_len, referer_len, ip_client_len, user_agent_len, content_type_len, accept_language_len;
-         char  flag[8];
+         char  flag[12];
 } uhttpinfo;
 
-#define U_http_upgrade             u_http_info.flag[0]
-#define U_http_version             u_http_info.flag[1]
-#define U_http_keep_alive          u_http_info.flag[2]
-#define U_http_method_type         u_http_info.flag[3]
-#define U_http_request_check       u_http_info.flag[4]
-#define U_http_is_accept_deflate   u_http_info.flag[5]
-#define U_http_is_connection_close u_http_info.flag[6]
-#define U_http_is_navigation       u_http_info.flag[7]
+#define U_http_upgrade              u_http_info.flag[0]
+#define U_http_version              u_http_info.flag[1]
+#define U_http_keep_alive           u_http_info.flag[2]
+#define U_http_method_type          u_http_info.flag[3]
+#define U_http_request_check        u_http_info.flag[4]
+#define U_http_is_accept_deflate    u_http_info.flag[5]
+#define U_http_is_connection_close  u_http_info.flag[6]
+#define U_http_no_cache             u_http_info.flag[7]
+#define U_http_is_navigation        u_http_info.flag[8]
+#define U_http_unused1              u_http_info.flag[9]
+#define U_http_unused2              u_http_info.flag[10]
+#define U_http_unused3              u_http_info.flag[11]
 
 enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_GET = '4', HTTP_HEAD = '5', HTTP_OPTIONS = '6', HTTP_COPY = '7' };
 

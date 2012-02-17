@@ -65,6 +65,7 @@ public:
    static const UString* str_MIN_SIZE_FOR_SENDFILE;
    static const UString* str_STRICT_TRANSPORT_SECURITY;
    static const UString* str_SESSION_COOKIE_OPTION;
+   static const UString* str_MAINTENANCE_MODE;
 
    static void str_allocate();
 
@@ -73,6 +74,10 @@ public:
    UHttpPlugIn()
       {
       U_TRACE_REGISTER_OBJECT(0, UHttpPlugIn, "")
+
+      valias                = 0;
+      maintenance_mode_page = 0;
+      uri_request_cert_mask = 0;
 
       if (str_URI_PROTECTED_MASK == 0) str_allocate();
       }
@@ -110,8 +115,10 @@ public:
 #endif
 
 protected:
-   UVector<UString> valias;
-   UString uri_protected_mask, uri_protected_allowed_ip, uri_request_cert_mask;
+   UVector<UString>* valias;
+   UString* maintenance_mode_page;
+   UString* uri_request_cert_mask;
+   UString uri_protected_allowed_ip;
 
 private:
    UHttpPlugIn(const UHttpPlugIn&) : UServerPlugIn(), UEventFd() {}

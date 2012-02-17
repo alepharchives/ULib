@@ -867,11 +867,13 @@ U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
 
    if (is.good())
       {
-      streambuf* sb = is.rdbuf();
-
       UString str(U_CAPACITY);
 
+      streambuf* sb = is.rdbuf();
+
       c = sb->sbumpc(); // skip '[' or '('
+
+      int terminator = (c == '[' ? ']' : ')');
 
       while (c != EOF)
          {
@@ -879,8 +881,7 @@ U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
 
       // U_INTERNAL_DUMP("c = %C", c)
 
-         if (c == ')' ||
-             c == ']' ||
+         if (c == terminator ||
              c == EOF) break;
 
          if (c == '#')
@@ -890,13 +891,13 @@ U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
             continue;
             }
 
-         U_INTERNAL_ASSERT_EQUALS(u_isspace(c),false)
+         U_INTERNAL_ASSERT_EQUALS(u_isspace(c), false)
 
          sb->sputbackc(c);
 
          str.get(is);
 
-      // U_INTERNAL_ASSERT_EQUALS(str.empty(),false) (per file configurazione con elementi posizionali...)
+      // U_INTERNAL_ASSERT_EQUALS(str.empty(), false) (NB: per file configurazione con elementi posizionali...)
 
          v.push(str);
          }

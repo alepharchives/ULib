@@ -495,8 +495,6 @@ private:
    explicit UStringRep(const char* t);
    explicit UStringRep(const char* t, uint32_t tlen);
 
-   static UStringRep* create(UStringRep*);
-
    UStringRep(const UStringRep&)            {}
    UStringRep& operator=(const UStringRep&) { return *this; }
 
@@ -890,6 +888,8 @@ public:
 
    UString& insert(uint32_t pos, const char* s)             { return replace(pos, 0, s, u_str_len(s)); }
    UString& insert(uint32_t pos, const char* s, uint32_t n) { return replace(pos, 0, s, n); }
+
+   UString& insert(uint32_t pos,             char c)        { return replace(pos, 0, 1, c); }
    UString& insert(uint32_t pos, uint32_t n, char c)        { return replace(pos, 0, n, c); }
 
    void clear();

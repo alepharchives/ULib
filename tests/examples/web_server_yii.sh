@@ -18,20 +18,7 @@ rm -f web_server_yii*.log \
 
 DIR_CMD="../../examples/userver"
 
-SOCK1=tmp/fcgi.socket
-
-spawn_fcgi() {
-
-   PIDS=`ps x | grep php-cgi | grep -v grep | awk '{ print $1 }'`
-
-   if [ -z "$PIDS" ]; then
-		rm -f $SOCK1
-		/usr/bin/spawn-fcgi -s $SOCK1 -S -f /usr/bin/php-cgi -C 5 -P /var/run/spawn-fcgi.pid
-		chmod 777 $SOCK1
-   fi
-}
-
-spawn_fcgi
+spawn_fcgi /usr/bin/php-cgi
 
 #STRACE=$TRUSS
 start_prg_background userver_tcp -c web_server_yii.cfg

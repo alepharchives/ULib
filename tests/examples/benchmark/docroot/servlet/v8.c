@@ -6,7 +6,7 @@
 
 #include <ulib/internal/csp_interface.h>
 
-#pragma link "/usr/lib/libv8.so"
+#pragma link "libv8.so"
 
 int main(int argc, char* argv[])
 {

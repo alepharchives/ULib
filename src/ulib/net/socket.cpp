@@ -782,7 +782,13 @@ loop:
        pcNewConnection->iSockDesc  = U_SYSCALL(accept,  "%d,%p,%p",    iSockDesc, (sockaddr*)cRemote, &slDummy);
 #endif
 // next:
-   if (pcNewConnection->iSockDesc == -1 && errno == EINTR && UInterrupt::checkForEventSignalPending()) goto loop; // NB: we never restart accept() in general is non blocking...
+   if (pcNewConnection->iSockDesc == -1    &&
+       errno                      == EINTR &&
+       UInterrupt::checkForEventSignalPending())
+      {
+      goto loop; // NB: we never restart accept(), in general socket server is non blocking...
+      }
+
    if (pcNewConnection->iSockDesc != -1)
       {
       pcNewConnection->iState = CONNECT;
@@ -879,28 +885,18 @@ int USocket::recv(void* pBuffer, uint32_t iBufLength, int timeoutMS)
    U_INTERNAL_ASSERT(isOpen())
 
    int iBytesRead;
-   bool blocking = isBlocking(); 
 
-   if (blocking &&
-       timeoutMS != -1)
-      {
 loop:
-      iBytesRead = UNotifier::waitForRead(iSockDesc, timeoutMS);
-
-      if (iBytesRead <= 0) goto end;
-      }
-
    iBytesRead = recv(pBuffer, iBufLength);
 
    if (iBytesRead == -1     &&
        errno      == EAGAIN &&
-       blocking   == false  &&
-       timeoutMS  != -1)
+       timeoutMS  != 0      &&
+       UNotifier::waitForRead(iSockDesc, timeoutMS) == 1)
       {
       goto loop;
       }
 
-end:
    U_RETURN(iBytesRead);
 }
 
@@ -913,32 +909,18 @@ int USocket::send(const void* pPayload, uint32_t iPayloadLength, int timeoutMS)
    U_INTERNAL_ASSERT(isOpen())
 
    int iBytesWrite;
-   bool blocking = false;
 
-   if (timeoutMS != -1)
-      {
-      blocking = isBlocking();
-
-      if (blocking)
-         {  
 loop:
-         iBytesWrite = UNotifier::waitForWrite(iSockDesc, timeoutMS);
-
-         if (iBytesWrite <= 0) goto end;
-         }
-      }
-
    iBytesWrite = send((const char*)pPayload, iPayloadLength);
 
    if (iBytesWrite == -1     &&
        errno       == EAGAIN &&
-       timeoutMS   != -1     &&
-       blocking    == false)
+       timeoutMS   != 0      &&
+       UNotifier::waitForWrite(iSockDesc, timeoutMS) == 1)
       {
       goto loop;
       }
 
-end:
    U_RETURN(iBytesWrite);
 }
 
@@ -972,7 +954,8 @@ bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count, int timeoutMS)
          {
          U_INTERNAL_DUMP("errno = %d", errno)
 
-         if (errno == EAGAIN &&
+         if (errno     == EAGAIN &&
+             timeoutMS != 0      &&
              UNotifier::waitForWrite(iSockDesc, timeoutMS) == 1)
             {
             continue;
@@ -1048,17 +1031,8 @@ int USocket::writev(const struct iovec* _iov, int iovcnt, int timeoutMS)
    U_INTERNAL_ASSERT(isOpen())
 
    int iBytesWrite;
-   bool blocking = isBlocking();
 
-   if (blocking &&
-       timeoutMS != -1)
-      {
 loop:
-      iBytesWrite = UNotifier::waitForWrite(iSockDesc, timeoutMS);
-
-      if (iBytesWrite <= 0) goto end;
-      }
-
 #ifdef __MINGW32__
    iBytesWrite = _writev(_iov, iovcnt);
 #else
@@ -1067,13 +1041,12 @@ loop:
 
    if (iBytesWrite == -1     &&
        errno       == EAGAIN &&
-       blocking    == false  &&
-       timeoutMS   != -1)
+       timeoutMS   != 0      &&
+       UNotifier::waitForWrite(iSockDesc, timeoutMS) == 1)
       {
       goto loop;
       }
 
-end:
    U_RETURN(iBytesWrite);
 }
 

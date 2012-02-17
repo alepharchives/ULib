@@ -34,6 +34,7 @@ const UString* UHttpPlugIn::str_TELNET_ENABLE;
 const UString* UHttpPlugIn::str_MIN_SIZE_FOR_SENDFILE;
 const UString* UHttpPlugIn::str_STRICT_TRANSPORT_SECURITY;
 const UString* UHttpPlugIn::str_SESSION_COOKIE_OPTION;
+const UString* UHttpPlugIn::str_MAINTENANCE_MODE;
 
 void UHttpPlugIn::str_allocate()
 {
@@ -64,7 +65,8 @@ void UHttpPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("TELNET_ENABLE") },
       { U_STRINGREP_FROM_CONSTANT("MIN_SIZE_FOR_SENDFILE") },
       { U_STRINGREP_FROM_CONSTANT("STRICT_TRANSPORT_SECURITY") },
-      { U_STRINGREP_FROM_CONSTANT("SESSION_COOKIE_OPTION") }
+      { U_STRINGREP_FROM_CONSTANT("SESSION_COOKIE_OPTION") },
+      { U_STRINGREP_FROM_CONSTANT("MAINTENANCE_MODE") }
    };
 
    U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,                   U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -79,6 +81,7 @@ void UHttpPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_MIN_SIZE_FOR_SENDFILE,             U_STRING_FROM_STRINGREP_STORAGE(9));
    U_NEW_ULIB_OBJECT(str_STRICT_TRANSPORT_SECURITY,         U_STRING_FROM_STRINGREP_STORAGE(10));
    U_NEW_ULIB_OBJECT(str_SESSION_COOKIE_OPTION,             U_STRING_FROM_STRINGREP_STORAGE(11));
+   U_NEW_ULIB_OBJECT(str_MAINTENANCE_MODE,                  U_STRING_FROM_STRINGREP_STORAGE(12));
 }
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -109,6 +112,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // ALIAS                        vector of URI redirection (request -> alias)
    // REWRITE_RULE_NF              vector of URI rewrite rule applied after checks that files do not exist (regex1 -> uri1 ...)
    //
+   // MAINTENANCE_MODE             to switch the site to a maintenance page only
+   //
    // ENABLE_INOTIFY               enable automatic update of document root image with inotify
    // TELNET_ENABLE                accept fragmentation of header request (as happen with telnet)
    // CACHE_FILE_MASK              mask (DOS regexp) of pathfile that be cached in memory
@@ -136,20 +141,22 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // REQUEST_READ_TIMEOUT         set timeout for receiving requests
    // ------------------------------------------------------------------------------------------------------------------------------------------------
 
-   (void) cfg.loadVector(valias, "ALIAS");
-
    UVector<UString> tmp;
+
+   if (cfg.loadVector(tmp, "ALIAS") && tmp.empty() == false)
+      {
+      valias = UVector<UString>::duplicate(&tmp);
+
+      tmp.clear();
+      }
 
    if (cfg.loadVector(tmp, "REWRITE_RULE_NF") && tmp.empty() == false)
       {
-      uint32_t n = tmp.size();
-
-      U_INTERNAL_ASSERT_MAJOR(n, 0)
-
       UHTTP::RewriteRule* rule;
+      int32_t i, n = tmp.size();
       UHTTP::vRewriteRule = U_NEW(UVector<UHTTP::RewriteRule*>(n));
 
-      for (int32_t i = 0; i < (int32_t)n; i += 2)
+      for (i = 0; i < n; i += 2)
          {
          rule = U_NEW(UHTTP::RewriteRule(tmp[i], tmp[i+1]));
 
@@ -159,7 +166,9 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
    if (cfg.loadTable())
       {
-      uri_protected_allowed_ip = cfg[*str_URI_PROTECTED_ALLOWED_IP];
+#  ifdef HAVE_SSL
+      UHTTP::sts_age_seconds                 = cfg.readLong(*str_STRICT_TRANSPORT_SECURITY);
+#  endif
 
       UHTTP::virtual_host                    = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
       UHTTP::telnet_enable                   = cfg.readBoolean(*str_TELNET_ENABLE);
@@ -169,15 +178,11 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       UHTTP::digest_authentication           = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
       UHTTP::enable_caching_by_proxy_servers = cfg.readBoolean(*str_ENABLE_CACHING_BY_PROXY_SERVERS);
 
-#  ifdef HAVE_SSL
-      uri_request_cert_mask                  = cfg[*str_URI_REQUEST_CERT_MASK];
-      UHTTP::sts_age_seconds                 = cfg.readLong(*str_STRICT_TRANSPORT_SECURITY);
-#  endif
-
-      UString x = cfg[*str_CACHE_FILE_MASK];
-
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::cookie_option,0)
       U_INTERNAL_ASSERT_EQUALS(UHTTP::cache_file_mask,0)
       U_INTERNAL_ASSERT_EQUALS(UHTTP::uri_protected_mask,0)
+
+      UString x = cfg[*str_CACHE_FILE_MASK];
 
       if (x.empty() == false) UHTTP::cache_file_mask = U_NEW(UString(x));
 
@@ -185,9 +190,19 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x.empty() == false) UHTTP::uri_protected_mask = U_NEW(UString(x));
 
+#  ifdef HAVE_SSL
+      x = cfg[*str_URI_REQUEST_CERT_MASK];
+
+      if (x.empty() == false) uri_request_cert_mask = U_NEW(UString(x));
+#  endif
+
       x = cfg[*str_SESSION_COOKIE_OPTION];
 
       if (x.empty() == false) UHTTP::cookie_option = U_NEW(UString(x));
+
+      x = cfg[*str_MAINTENANCE_MODE];
+
+      if (x.empty() == false) maintenance_mode_page = U_NEW(UString(x));
 
       if (cfg.readBoolean(*str_ENABLE_INOTIFY))
          {
@@ -198,6 +213,21 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          else
             {
             U_SRV_LOG("Sorry, I can't enable inode based directory notification because PREFORK_CHILD == -1");
+            }
+         }
+
+      // URI PROTECTED
+
+      uri_protected_allowed_ip = cfg[*str_URI_PROTECTED_ALLOWED_IP];
+
+      if (uri_protected_allowed_ip.empty() == false)
+         {
+         UHTTP::vallow_IP = U_NEW(UVector<UIPAllow*>);
+
+         if (UIPAllow::parseMask(uri_protected_allowed_ip, *UHTTP::vallow_IP) == 0)
+            {
+            delete UHTTP::vallow_IP;
+                   UHTTP::vallow_IP = 0;
             }
          }
       }
@@ -215,22 +245,7 @@ int UHttpPlugIn::handlerInit()
    U_INTERNAL_DUMP("UServer_Base::bssl = %b min_size_for_sendfile = %u", UServer_Base::bssl, UHTTP::min_size_for_sendfile)
 #endif
 
-   // init HTTP context
-
-   UHTTP::ctor();
-
-   // URI PROTECTED
-
-   if (uri_protected_allowed_ip.empty() == false)
-      {
-      UHTTP::vallow_IP = U_NEW(UVector<UIPAllow*>);
-
-      if (UIPAllow::parseMask(uri_protected_allowed_ip, *UHTTP::vallow_IP) == 0)
-         {
-         delete UHTTP::vallow_IP;
-                UHTTP::vallow_IP = 0;
-         }
-      }
+   UHTTP::ctor(); // init HTTP context
 
    U_SRV_LOG("initialization of plugin success");
 
@@ -246,22 +261,25 @@ int UHttpPlugIn::handlerREAD()
    int result;
 
 #ifdef U_HTTP_CACHE_REQUEST
-   U_INTERNAL_DUMP("cbuffer(%u)   = %.*S",             UHTTP::cbuffer->size(), U_STRING_TO_TRACE(*UHTTP::cbuffer))
-   U_INTERNAL_DUMP("rbuffer(%u)   = %.*S", UClientImage_Base::rbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::rbuffer))
-   U_INTERNAL_DUMP("expire        = %ld", UServer_Base::expire)
-   U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
+   U_INTERNAL_DUMP("cbuffer(%u) = %.*S",             UHTTP::cbuffer->size(), U_STRING_TO_TRACE(*UHTTP::cbuffer))
+   U_INTERNAL_DUMP("rbuffer(%u) = %.*S", UClientImage_Base::rbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::rbuffer))
 
-   if (UHTTP::cbuffer->isNull() == false &&
-       UServer_Base::expire >= u_now->tv_sec)
+   if (UHTTP::cbuffer->isNull() == false)
       {
-      result = UHTTP::checkHTTPRequestCache();
+      U_INTERNAL_DUMP("expire        = %ld", UServer_Base::expire)
+      U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
 
-      if (result != U_PLUGIN_HANDLER_FINISHED) U_RETURN(result);
+      if (UServer_Base::expire >= u_now->tv_sec)
+         {
+         result = UHTTP::checkHTTPRequestCache();
+
+         if (result != U_PLUGIN_HANDLER_FINISHED) U_RETURN(result);
+         }
+
+      UHTTP::clearHTTPRequestCache();
       }
 
    if (UClientImage_Base::isPipeline() == false) UClientImage_Base::initAfterGenericRead();
-
-   if (UHTTP::cbuffer->isNull() == false) UHTTP::clearHTTPRequestCache();
 #endif
 
    if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket) == false)
@@ -295,6 +313,7 @@ int UHttpPlugIn::handlerREAD()
    if (UHTTP::alias->empty() == false)
       {
       UHTTP::alias->clear();
+
       UHTTP::request_uri->clear();
       }
 
@@ -312,19 +331,29 @@ int UHttpPlugIn::handlerREAD()
 
    // manage alias uri
 
-   if (valias.empty() == false)
+   if (maintenance_mode_page &&
+       U_HTTP_URI_STRNEQ("favicon.ico") == false)
+      {
+      (void) UHTTP::request_uri->assign(U_HTTP_URI_TO_PARAM);
+
+      (void) UHTTP::alias->append(*maintenance_mode_page);
+
+      goto next;
+      }
+
+   if (valias)
       {
       UString item;
 
-      for (int32_t i = 0, n = valias.size(); i < n; i += 2)
+      for (int32_t i = 0, n = valias->size(); i < n; i += 2)
          {
-         item = valias[i];
+         item = (*valias)[i];
 
          if (U_HTTP_URI_EQUAL(item))
             {
             *UHTTP::request_uri = item;
 
-            (void) UHTTP::alias->append(valias[i+1]);
+            (void) UHTTP::alias->append((*valias)[i+1]);
 
             goto next;
             }
@@ -358,6 +387,8 @@ int UHttpPlugIn::handlerREAD()
 next:
    if (UHTTP::alias->empty() == false)
       {
+      if (UHTTP::alias->first_char() != '/') (void) UHTTP::alias->insert(0, '/');
+
       uint32_t len    = UHTTP::alias->size();
       const char* ptr = UHTTP::alias->data();
 
@@ -367,8 +398,8 @@ next:
       }
 
 #  ifdef HAVE_SSL
-   if (uri_request_cert_mask.empty() == false &&
-       u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(uri_request_cert_mask), 0))
+   if (uri_request_cert_mask &&
+       u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*uri_request_cert_mask), 0))
       {
       if (((UServer<USSLSocket>*)UServer_Base::pthis)->askForClientCertificate() == false)
          {
@@ -496,9 +527,10 @@ end:
 
 const char* UHttpPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "uri_request_cert_mask    (UString          " << (void*)&uri_request_cert_mask      << ")\n"
-                  << "uri_protected_allowed_ip (UString          " << (void*)&uri_protected_allowed_ip   << ")\n"
-                  << "valias                   (UVector<UString> " << (void*)&valias                     << ')';
+   *UObjectIO::os << "maintenance_mode_page    (UString          " << (void*)maintenance_mode_page     << ")\n"
+                  << "uri_request_cert_mask    (UString          " << (void*)uri_request_cert_mask     << ")\n"
+                  << "uri_protected_allowed_ip (UString          " << (void*)&uri_protected_allowed_ip << ")\n"
+                  << "valias                   (UVector<UString> " << (void*)valias                    << ')';
 
    if (reset)
       {

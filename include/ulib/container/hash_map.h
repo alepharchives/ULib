@@ -43,7 +43,7 @@ public:
    // COSTRUTTORI
 
    UHashMapNode(UStringRep* _key, void* _elem, UHashMapNode* _next, uint32_t _hash)
-                  : elem(_elem), key(UStringRep::create(_key)), next(_next), hash(_hash)
+                  : elem(_elem), key(_key), next(_next), hash(_hash)
       {
       U_TRACE_REGISTER_OBJECT(0, UHashMapNode, "%.*S,%p,%p,%u", U_STRING_TO_TRACE(*_key), _elem, _next, _hash)
       }

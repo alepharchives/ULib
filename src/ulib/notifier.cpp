@@ -877,6 +877,7 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
    U_TRACE(0, "UNotifier::waitForRead(%d,%d)", fd, timeoutMS)
 
    U_INTERNAL_ASSERT_RANGE(0,fd,4096)
+   U_INTERNAL_ASSERT_DIFFERS(timeoutMS,0)
 
 #ifdef DEBUG
    if (timeoutMS != -1) U_INTERNAL_ASSERT_MAJOR(timeoutMS,499)
@@ -933,6 +934,7 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
    U_TRACE(0, "UNotifier::waitForWrite(%d,%d)", fd, timeoutMS)
 
    U_INTERNAL_ASSERT_RANGE(0,fd,4096)
+   U_INTERNAL_ASSERT_DIFFERS(timeoutMS,0)
 
 #ifdef DEBUG
    if (timeoutMS != -1) U_INTERNAL_ASSERT_MAJOR(timeoutMS,499)

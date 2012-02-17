@@ -284,7 +284,9 @@ loop:
 
    U_INTERNAL_ASSERT_MAJOR(ncount,0)
 
-   goto loop;
+   if (UNotifier::waitForWrite(s->iSockDesc, timeoutMS) == 1) goto loop;
+
+   U_RETURN(false);
 }
 
 // Send a command to a server and wait for a response (single line)

@@ -547,22 +547,36 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
 
    if (is.good())
       {
-      streambuf* sb = is.rdbuf();
-
       UString key(U_CAPACITY), str(U_CAPACITY);
+
+      streambuf* sb = is.rdbuf();
 
       // NB: we need this way for plugin...
 
-      if (is.peek() == '{' || is.peek() == '[') c = sb->sbumpc(); // skip '{' or '['
+      int terminator = EOF;
+
+      if (is.peek() == '{' ||
+          is.peek() == '[')
+         {
+         c = sb->sbumpc(); // skip '{' or '['
+
+         terminator = (c == '{' ? '}' : ']');
+         }
 
       do {
          do { c = sb->sbumpc(); } while (u_isspace(c) && c != EOF); // skip white-space
 
       // U_INTERNAL_DUMP("c = %C", c)
 
-         if (c == '}' ||
-             c == ']' ||
-             c == EOF) break;
+         if (terminator == c) break;
+
+         if (terminator == EOF &&
+             (c == '}' || c == ']'))
+            {
+            break;
+            }
+
+         if (c == EOF) break;
 
          if (c == '#')
             {
@@ -601,7 +615,7 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
       }
 
    if (c == EOF)       is.setstate(ios::eofbit);
-   // if (t._length == 0) is.setstate(ios::failbit);
+// if (t._length == 0) is.setstate(ios::failbit);
 
    return is;
 }

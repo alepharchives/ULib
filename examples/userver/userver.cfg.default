@@ -114,6 +114,8 @@ userver {
 # ALIAS                      vector of URI redirection (request -> alias)
 # REWRITE_RULE_NF            vector of URI rewrite rule applied after checks that files do not exist (regex1 -> uri1 ...)
 #
+# MAINTENANCE_MODE           to switch the site to a maintenance page only
+# 
 # ENABLE_INOTIFY             enable automatic update of cached document root image with inotify
 # TELNET_ENABLE              accept fragmentation of header request (as happen with telnet)
 # CACHE_FILE_MASK            mask (DOS regexp) of pathfile that be cached in memory (default: "*.css|*.js|*.*html|*.png|*.gif|*.jpg")
@@ -158,6 +160,8 @@ mod_http {
 #                  ^/(.*?)(\?|$)(.*)      /sapphire/main.php?url=$1&$3
 #                  ]
 
+# MAINTENANCE_MODE /ErrorDocument/down.html
+ 
 # TELNET_ENABLE   yes
 # ENABLE_INOTIFY  yes
 #

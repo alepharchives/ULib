@@ -138,6 +138,9 @@ public:
       {
       U_TRACE(0, "UHTTP::setHTTPUri(%.*S,%u)", uri_len, uri, uri_len)
 
+      U_INTERNAL_ASSERT_POINTER(uri)
+      U_INTERNAL_ASSERT_EQUALS(uri[0],'/')
+
       u_http_info.uri     = uri;
       u_http_info.uri_len = uri_len;
 
@@ -626,18 +629,6 @@ public:
    static UString getUserHA1(const UString& user, const UString& realm);
    static bool    isUserAuthorized(const UString& user, const UString& password);
 
-   // UPLOAD PROGRESS
-
-   typedef struct upload_progress {
-      char uuid[32];
-      in_addr_t client;
-      int byte_read, count;
-   } upload_progress;
-
-   static upload_progress* ptr_upload_progress;
-
-   static UString getUploadProgress();
-
    // USP (ULib Servlet Page)
 
    class UServletPage : public UDynamic {
@@ -671,6 +662,18 @@ public:
    };
 
    static UServletPage* usp_page_to_check;
+
+   // UPLOAD PROGRESS
+
+   typedef struct upload_progress {
+      char uuid[32];
+      in_addr_t client;
+      int byte_read, count;
+   } upload_progress;
+
+   static upload_progress* ptr_upload_progress;
+
+   static UString getUploadProgress();
 
    // CSP (C Servlet Page)
 
@@ -719,6 +722,22 @@ public:
    UCServletPage(const UCServletPage&)            {}
    UCServletPage& operator=(const UCServletPage&) { return *this; }
    };
+
+   static bool isDynamicPage()
+      {
+      U_TRACE(0, "UHTTP::isDynamicPage()")
+
+      U_INTERNAL_DUMP("u_mime_index = %C U_http_is_navigation = %b", u_mime_index, U_http_is_navigation)
+
+      if ((u_mime_index == U_usp    ||
+           u_isdigit(u_mime_index)) &&
+          U_http_is_navigation == false)
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
    typedef void (*vPFstr)(UString&);
 
@@ -933,11 +952,12 @@ public:
       U_RETURN(result);
       }
 
-   static void    in_READ();
-   static bool    isFileInCache();
-   static void    renewDataCache();
-   static void    checkFileForCache();
-   static UString getDataFromCache(bool header, bool deflate);
+   static void            in_READ();
+   static bool            isFileInCache();
+   static void            renewDataCache();
+   static void            checkFileForCache();
+   static UString         getDataFromCache(bool header, bool deflate);
+   static UFileCacheData* getFileInCache(const char* path, uint32_t len);
 
    // X-Sendfile
 

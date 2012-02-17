@@ -176,18 +176,6 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
    U_RETURN_POINTER(r, UStringRep);
 }
 
-UStringRep* UStringRep::create(UStringRep* rep)
-{
-   U_TRACE(0, "UStringRep::create(%p)", rep)
-
-   U_INTERNAL_ASSERT_POINTER(rep)
-   U_INTERNAL_ASSERT_DIFFERS(rep,string_rep_null)
-
-   UStringRep* r = create(rep->_length, rep->_length, rep->str);
-
-   U_RETURN_POINTER(r, UStringRep);
-}
-
 #ifdef DEBUG
 // substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
 int32_t     UStringRep::max_child;

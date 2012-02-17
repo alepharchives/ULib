@@ -24,9 +24,11 @@ fi
 start_prg_background server ../../src/ulib/net/server/plugin/.libs '"mod_http mod_echo"' # '"mod_http mod_soap"'
 $SLEEP
 
-#$TRUSS $NC -w 5 127.0.0.1 80 <inp/http/form_enctype.http     >out/server.out 2>trace.out
-        $NC -w 5 127.0.0.1 80 <inp/http/form_enctype.http     >out/server.out
-        $NC -w 5 127.0.0.1 80 <inp/http/form_enctype_1.http  >>out/server.out
+#$TRUSS socat -u open:inp/http/form_enctype.http tcp4-connect:127.0.0.1:80 >out/server.out 2>/tmp/trace.out
+
+#$TRUSS $NC -w 4 127.0.0.1 80 <inp/http/form_enctype.http						>out/server.out 2>/tmp/trace.out
+        $NC -w 4 127.0.0.1 80 <inp/http/form_enctype.http						>out/server.out
+        $NC -w 4 127.0.0.1 80 <inp/http/form_enctype_1.http					  >>out/server.out
 
 kill_prg test_server TERM
 

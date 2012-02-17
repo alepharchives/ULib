@@ -16,12 +16,12 @@
 
 #ifdef HAVE_LIBZ // check for crc32
 #  include <ulib/utility/interrupt.h>
-
 #  include <zlib.h>
 #endif
 
 #ifndef __MINGW32__
 #  include <syslog.h>
+#  include <sys/utsname.h>
 #endif
 
 vPF             ULog::backup_log_function;
@@ -125,7 +125,7 @@ void ULog::setShared()
 
 void ULog::init()
 {
-   U_TRACE(0, "ULog::init()")
+   U_TRACE(1, "ULog::init()")
 
    if (bsyslog) prefix = 0;
    else
@@ -140,7 +140,20 @@ void ULog::init()
 #  endif
       }
 
-   if (fmt) log(fmt, "STARTUP");
+   if (fmt)
+      {
+      log(fmt, "STARTUP");
+
+      log("Building Environment: " PLATFORM_VAR " (" __DATE__ ")\n", 0);
+
+#  ifndef __MINGW32__
+      struct utsname u;
+
+      (void) U_SYSCALL(uname, "%p", &u);
+
+      log("Current Operating System: %s %s v%s %s\n", u.sysname, u.machine, u.version, u.release);
+#  endif
+      }
 
    // NB: we need to check because all instance try to close the log... (inherits from its parent)
 
@@ -230,7 +243,7 @@ void ULog::log(const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-   if (prefix) iov[0].iov_len  = u_sn_printf( buffer,                 sizeof(buffer),                  prefix, 0);
+   if (prefix) iov[0].iov_len  = u_sn_printf(buffer,                  sizeof(buffer),                  prefix, 0);
                iov[0].iov_len += u_vsnprintf(buffer + iov[0].iov_len, sizeof(buffer) - iov[0].iov_len, format, argp); 
 
    va_end(argp);

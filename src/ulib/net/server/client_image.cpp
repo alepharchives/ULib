@@ -65,7 +65,8 @@ void UClientImage_Base::logRequest(const char* filereq)
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
-   UServer_Base::log->log("%sreceived request (%u bytes) %.*S from %.*s\n", UServer_Base::mod_name, sz, sz, ptr, U_STRING_TO_TRACE(*logbuf));
+   UServer_Base::log->log("%.*sreceived request (%u bytes) %.*S from %.*s\n",
+                           U_STRING_TO_TRACE(*UServer_Base::mod_name), sz, sz, ptr, U_STRING_TO_TRACE(*logbuf));
 
    u_printf_string_max_length = u_printf_string_max_length_save;
 
@@ -101,7 +102,8 @@ void UClientImage_Base::logResponse(const char* fileres)
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
-   UServer_Base::log->log("%ssent response (%u bytes) %.*S to %.*s\n", UServer_Base::mod_name, sz, sz, ptr, U_STRING_TO_TRACE(*logbuf));
+   UServer_Base::log->log("%.*ssent response (%u bytes) %.*S to %.*s\n",
+                              U_STRING_TO_TRACE(*UServer_Base::mod_name), sz, sz, ptr, U_STRING_TO_TRACE(*logbuf));
 
    u_printf_string_max_length = u_printf_string_max_length_save;
 
@@ -239,8 +241,6 @@ void UClientImage_Base::manageRequestSize(bool request_buffer_resize)
 
    U_INTERNAL_DUMP("pipeline = %b size_request = %u", pipeline, size_request)
 
-   U_INTERNAL_ASSERT_MAJOR(size_request, 0)
-
    if (pipeline)
       {
       U_INTERNAL_ASSERT_DIFFERS(pbuffer->isNull(),true)
@@ -298,22 +298,23 @@ __pure int UClientImage_Base::genericRead()
 
    rbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
 
-   if (USocketExt::read(socket, *rbuffer, U_SINGLE_READ, UServer_Base::timeoutMS) == false)
+   if (USocketExt::read(socket, *rbuffer, U_SINGLE_READ, 0) == false) // NB: the timeout at 0 means that we put the socket fd on epoll queue if EAGAIN...
       {
       // check if close connection... (read() == 0)
 
-      if (socket->isClosed()) goto error;
-      if (rbuffer->empty())   U_RETURN(U_PLUGIN_HANDLER_AGAIN); // NONBLOCKING...
+      if (socket->isClosed())
+         {
+         if (UServer_Base::isParallelization()) U_EXIT(0);
+
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
+
+      if (rbuffer->empty()) U_RETURN(U_PLUGIN_HANDLER_AGAIN); // NONBLOCKING...
       }
 
    request = rbuffer;
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-
-error:
-   if (UServer_Base::isParallelization()) U_EXIT(0);
-
-   U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }
 
 void UClientImage_Base::initAfterGenericRead()
@@ -566,7 +567,7 @@ int UClientImage_Base::handlerWrite()
 
    if (logbuf) logResponse();
 
-   if (USocketExt::write(socket, *wbuffer, *body) == false) U_RETURN(U_NOTIFIER_DELETE);  
+   if (USocketExt::write(socket, *wbuffer, *body, 3 * 1000) == false) U_RETURN(U_NOTIFIER_DELETE);  
 
    if (count)
       {

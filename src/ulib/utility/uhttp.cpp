@@ -542,12 +542,10 @@ void UHTTP::in_READ()
 
 // CSP (C Servlet Page)
 
-#define U_CSP_CPP_LIB        "#pragma link "
-#define U_CSP_REPLY_CAPACITY (4096 * 16)
-
 #ifdef HAVE_LIBTCC
-static char*        get_reply(void)          { return UClientImage_Base::wbuffer->data(); }
-static unsigned int get_reply_capacity(void) { return U_CSP_REPLY_CAPACITY; }
+static char*        get_reply(void)                    { return UClientImage_Base::wbuffer->data(); }
+static unsigned int get_reply_capacity(void)           { return UClientImage_Base::wbuffer->capacity(); }
+static void         set_reply_capacity(unsigned int n) {        UClientImage_Base::wbuffer->setBuffer(n); }
 #  ifdef HAVE_V8
 static char* runv8(const char* jssrc) // compiles and executes javascript and returns the script return value as string
    {
@@ -583,6 +581,7 @@ bool UHTTP::UCServletPage::compile(const UString& program)
 
       (void) U_SYSCALL(tcc_add_symbol, "%p,%S,%p", s, "get_reply",          (void*)get_reply);
       (void) U_SYSCALL(tcc_add_symbol, "%p,%S,%p", s, "get_reply_capacity", (void*)get_reply_capacity);
+      (void) U_SYSCALL(tcc_add_symbol, "%p,%S,%p", s, "set_reply_capacity", (void*)set_reply_capacity);
 #  ifdef HAVE_V8
       (void) U_SYSCALL(tcc_add_symbol, "%p,%S,%p", s, "runv8",              (void*)runv8);
 #  endif
@@ -599,22 +598,33 @@ bool UHTTP::UCServletPage::compile(const UString& program)
       (void) U_SYSCALL(tcc_add_file, "%p,%S,%d", s, U_PREFIXDIR "/lib/libulib.so");
 #  endif
 
+      int rc;
       UString token;
       uint32_t pos = 0;
       UTokenizer t(program);
       char buffer[U_PATH_MAX];
 
-      while ((pos = U_STRING_FIND(program,pos,U_CSP_CPP_LIB)) != U_NOT_FOUND)
+      while ((pos = U_STRING_FIND(program, pos, "#pragma link ")) != U_NOT_FOUND)
          {
-         pos += U_CONSTANT_SIZE(U_CSP_CPP_LIB);
+         pos += U_CONSTANT_SIZE("#pragma link ");
 
          t.setDistance(pos);
 
          if (t.next(token, (bool*)0) == false) break;
 
-         (void) snprintf(buffer, U_PATH_MAX, "%s%.*s", (token.first_char() == '/' ? "" : "../"), U_STRING_TO_TRACE(token));
+         if (token.first_char() != '/')
+            {
+            (void) snprintf(buffer, U_PATH_MAX, "../libraries/%.*s", U_STRING_TO_TRACE(token));
 
-         (void) U_SYSCALL(tcc_add_file, "%p,%S,%d", s, buffer);
+            if (UFile::access(buffer, R_OK))
+               {
+               rc = U_SYSCALL(tcc_add_file, "%p,%S,%d", s, buffer);
+
+               if (rc != -1) continue;
+               }
+            }
+
+         (void) U_SYSCALL(tcc_add_file, "%p,%S,%d", s, token.c_str());
          }
 
       size = U_SYSCALL(tcc_relocate, "%p,%p", s, 0);
@@ -804,7 +814,7 @@ void UHTTP::ctor()
 
    if (virtual_host) U_SRV_LOG("virtual host service enabled");
 
-   if (min_size_for_sendfile == 0) min_size_for_sendfile = 32 * 1024;
+   if (min_size_for_sendfile == 0) min_size_for_sendfile = 10 * 1024 * 1024; // 10M
 
    U_INTERNAL_DUMP("min_size_for_sendfile = %u", min_size_for_sendfile)
 
@@ -2274,27 +2284,34 @@ int UHTTP::checkHTTPRequestCache()
 
    if (cbuffer->compare(0U, len, UClientImage_Base::rbuffer->data(), len) == 0)
       {
-      int                                      result  = U_PLUGIN_HANDLER_AGAIN;
-      if (U_http_is_connection_close == U_YES) result |= U_PLUGIN_HANDLER_ERROR;
+      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
-      U_INTERNAL_DUMP("UServer_Base::sfd = %d", UServer_Base::sfd)
-
-      if (UServer_Base::sfd)
+      if (U_http_version != '0'                                  ||
+          (cbuffer->size() == UClientImage_Base::rbuffer->size() &&
+           cbuffer->compare(u_http_info.startHeader, U_NOT_FOUND, *UClientImage_Base::rbuffer, u_http_info.startHeader, U_NOT_FOUND) == 0))
          {
-         U_ASSERT(UClientImage_Base::body->isNull())
-         U_INTERNAL_ASSERT_MAJOR(UServer_Base::count,0)
+         int                                      result  = U_PLUGIN_HANDLER_AGAIN;
+         if (U_http_is_connection_close == U_YES) result |= U_PLUGIN_HANDLER_ERROR;
 
-         U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd = %d", UServer_Base::pClientImage->sfd)
+         U_INTERNAL_DUMP("UServer_Base::sfd = %d", UServer_Base::sfd)
 
-         U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd,0)
+         if (UServer_Base::sfd)
+            {
+            U_ASSERT(UClientImage_Base::body->isNull())
+            U_INTERNAL_ASSERT_MAJOR(UServer_Base::count,0)
 
-         UServer_Base::pClientImage->sfd    = UServer_Base::sfd;
-         UServer_Base::pClientImage->start  = UServer_Base::start;
-         UServer_Base::pClientImage->count  = UServer_Base::count;
-         UServer_Base::pClientImage->bclose = UServer_Base::bclose;
+            U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd = %d", UServer_Base::pClientImage->sfd)
+
+            U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd,0)
+
+            UServer_Base::pClientImage->sfd    = UServer_Base::sfd;
+            UServer_Base::pClientImage->start  = UServer_Base::start;
+            UServer_Base::pClientImage->count  = UServer_Base::count;
+            UServer_Base::pClientImage->bclose = UServer_Base::bclose;
+            }
+
+         U_RETURN(result);
          }
-
-      U_RETURN(result);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
@@ -2304,9 +2321,9 @@ void UHTTP::manageHTTPRequestCache()
 {
    U_TRACE(0, "UHTTP::manageHTTPRequestCache()")
 
-   if (isHttpGETorHEAD()               &&
-       u_http_info.cookie_len == 0     && // NB: session mean no stateless...
-       u_http_info.nResponseCode < 300 &&
+   if (isHttpGETorHEAD()                            &&
+       U_IS_HTTP_SUCCESS(u_http_info.nResponseCode) &&
+       U_http_no_cache                 == false     &&
        UClientImage_Base::isPipeline() == false)
       {
       U_INTERNAL_ASSERT(cbuffer->isNull())
@@ -2885,6 +2902,10 @@ U_NO_EXPORT void UHTTP::removeDataSession(const UString& token)
 
    if (db_session)
       {
+#  ifdef U_HTTP_CACHE_REQUEST
+      U_http_no_cache = true;
+#  endif
+
       if (UServer_Base::preforked_num_kids == 0) (void) ((UHashMap<UDataSession*>*)db_session)->erase(token);
       else
          {
@@ -3050,6 +3071,10 @@ void UHTTP::putDataSession(uint32_t index, const char* value, uint32_t size)
 
    U_ASSERT_DIFFERS(keyID->empty(), true)
 
+#ifdef U_HTTP_CACHE_REQUEST
+   U_http_no_cache = true;
+#endif
+
    if (size)
       {
       UString _value((void*)value, size);
@@ -3089,6 +3114,10 @@ void UHTTP::putDataStorage(uint32_t index, const char* value, uint32_t size)
    U_INTERNAL_ASSERT_POINTER(db_session)
    U_INTERNAL_ASSERT_POINTER(data_storage)
 
+#ifdef U_HTTP_CACHE_REQUEST
+   U_http_no_cache = true;
+#endif
+
    if (size)
       {
       UString _value((void*)value, size);
@@ -3109,7 +3138,7 @@ void UHTTP::putDataStorage(uint32_t index, const char* value, uint32_t size)
 
          U_INTERNAL_ASSERT_POINTER(data)
 
-         ((UHashMap<UDataSession*>*)db_session)->insertAfterFind(pkey, data);
+         ((UHashMap<UDataSession*>*)db_session)->insertAfterFind(UStringRep::create(U_STORAGE_KEYID, U_CONSTANT_SIZE(U_STORAGE_KEYID), 0U), data);
          }
       }
    else
@@ -3212,7 +3241,7 @@ const char* UHTTP::getHTTPStatusDescription(uint32_t nResponseCode)
       case HTTP_UNSUPPORTED_TYPE:                descr = "Unsupported Media Type";          break;
       case HTTP_REQ_RANGE_NOT_OK:                descr = "Requested Range not satisfiable"; break;
       case HTTP_EXPECTATION_FAILED:              descr = "Expectation Failed";              break;
-   // case 422:                                  descr = "Unprocessable Entity";            break;
+      case HTTP_UNPROCESSABLE_ENTITY:            descr = "Unprocessable Entity";            break;
    // case 423:                                  descr = "Locked";                          break;
    // case 424:                                  descr = "Failed Dependency";               break;
    // case 425:                                  descr = "No Matching Vhost";               break;
@@ -3583,6 +3612,10 @@ UString UHTTP::getHTTPHeaderForResponse(const UString& content, bool connection_
       {
       if (U_http_is_connection_close == U_YES)
          {
+#     ifdef DEBUG
+         if (U_http_keep_alive != '\0') U_INTERNAL_ASSERT(U_STATUS_DROPS_CONNECTION(u_http_info.nResponseCode))
+#     endif
+
          if (UClientImage_Base::isPipeline() == false) (void) ext.append(U_CONSTANT_TO_PARAM("Connection: close\r\n"));
          }
       else
@@ -3658,52 +3691,6 @@ void UHTTP::setHTTPResponse(const UString* content_type, const UString* body)
 
    U_INTERNAL_DUMP("UClientImage_Base::wbuffer(%u) = %.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
    U_INTERNAL_DUMP("UClientImage_Base::body(%u)    = %.*S", UClientImage_Base::body->size(),    U_STRING_TO_TRACE(*UClientImage_Base::body))
-}
-
-void UHTTP::setHTTPForbidden()
-{
-   U_TRACE(0, "UHTTP::setHTTPForbidden()")
-
-   U_http_is_connection_close = U_YES;
-   u_http_info.nResponseCode  = HTTP_FORBIDDEN;
-
-   UString msg(100U + u_http_info.uri_len), body(500U + u_http_info.uri_len);
-
-   msg.snprintf("You don't have permission to access %.*s on this server", U_HTTP_URI_TO_TRACE);
-
-   const char* status = getHTTPStatusDescription(HTTP_FORBIDDEN);
-
-   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
-
-   body.snprintf(str_frm_body->data(),
-                  HTTP_FORBIDDEN, status,
-                  status,
-                  msg.data());
-
-   setHTTPResponse(str_ctype_html, &body);
-}
-
-void UHTTP::setHTTPNotFound()
-{
-   U_TRACE(0, "UHTTP::setHTTPNotFound()")
-
-   U_http_is_connection_close = U_YES;
-   u_http_info.nResponseCode  = HTTP_NOT_FOUND;
-
-   UString msg(100U + u_http_info.uri_len), body(500U + u_http_info.uri_len);
-
-   msg.snprintf("The requested URL %.*s was not found on this server", U_HTTP_URI_TO_TRACE);
-
-   const char* status = getHTTPStatusDescription(HTTP_NOT_FOUND);
-
-   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
-
-   body.snprintf(str_frm_body->data(),
-                  HTTP_NOT_FOUND, status,
-                  status,
-                  msg.data());
-
-   setHTTPResponse(str_ctype_html, &body);
 }
 
 /* see: http://sebastians-pamphlets.com/the-anatomy-of-http-redirects-301-302-307/
@@ -3783,31 +3770,6 @@ void UHTTP::setHTTPRedirectResponse(bool refresh, UString& ext, const char* ptr_
    setHTTPResponse(&tmp, &body);
 }
 
-void UHTTP::setHTTPBadMethod()
-{
-   U_TRACE(0, "UHTTP::setHTTPBadMethod()")
-
-   U_http_is_connection_close = U_YES;
-   u_http_info.nResponseCode  = HTTP_BAD_METHOD;
-
-   UString msg(200U);
-
-   msg.snprintf("Your requested method %.*S was a request that this server could not understand", U_HTTP_METHOD_TO_TRACE);
-
-   const char* status = getHTTPStatusDescription(HTTP_BAD_METHOD);
-
-   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
-
-   UString body(500U + msg.size());
-
-   body.snprintf(str_frm_body->data(),
-                 HTTP_BAD_METHOD, status,
-                 status,
-                 msg.data());
-
-   setHTTPResponse(str_ctype_html, &body);
-}
-
 void UHTTP::setHTTPBadRequest()
 {
    U_TRACE(0, "UHTTP::setHTTPBadRequest()")
@@ -3815,34 +3777,44 @@ void UHTTP::setHTTPBadRequest()
    U_http_is_connection_close = U_YES;
    u_http_info.nResponseCode  = HTTP_BAD_REQUEST;
 
-   UString msg(200U);
+   UString body(500U + u_http_info.uri_len);
 
-   if (u_http_info.uri_len   == 0 &&
-       u_http_info.query_len == 0)
+   UFileCacheData* ptr_file_data = getFileInCache(U_CONSTANT_TO_PARAM("ErrorDocument/400.html"));
+
+   if (ptr_file_data &&
+       ptr_file_data->array != 0)
       {
-      (void) msg.assign(U_CONSTANT_TO_PARAM("You requested a URL that this server could not understand"));
+      body = (*ptr_file_data->array)[0];
       }
    else
       {
-      UString output(100U);
+      UString msg(200U);
 
-      // NB: the string space limit the size of output...
+      if (u_http_info.uri_len   == 0 &&
+          u_http_info.query_len == 0)
+         {
+         (void) msg.assign(U_CONSTANT_TO_PARAM("Your browser sent a request that this server could not understand"));
+         }
+      else
+         {
+         UString output(100U);
 
-      UEscape::encode((const unsigned char*)U_HTTP_URI_QUERY_TO_PARAM, output, false);
+         // NB: the string space limit the size of output...
 
-      msg.snprintf("Your requested URL %s was a request that this server could not understand", output.data());
+         UEscape::encode((const unsigned char*)U_HTTP_URI_QUERY_TO_PARAM, output, false);
+
+         msg.snprintf("Your requested URL %s was a request that this server could not understand", output.data());
+         }
+
+      const char* status = getHTTPStatusDescription(HTTP_BAD_REQUEST);
+
+      U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+
+      body.snprintf(str_frm_body->data(),
+                    HTTP_BAD_REQUEST, status,
+                    status,
+                    msg.data());
       }
-
-   const char* status = getHTTPStatusDescription(HTTP_BAD_REQUEST);
-
-   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
-
-   UString body(500U + msg.size());
-
-   body.snprintf(str_frm_body->data(),
-                 HTTP_BAD_REQUEST, status,
-                 status,
-                 msg.data());
 
    setHTTPResponse(str_ctype_html, &body);
 }
@@ -3851,14 +3823,31 @@ void UHTTP::setHTTPUnAuthorized()
 {
    U_TRACE(0, "UHTTP::setHTTPUnAuthorized()")
 
-   UString ext(100U), body(500U);
+   u_http_info.nResponseCode = HTTP_UNAUTHORIZED;
 
-   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+   UString body(500U + u_http_info.uri_len);
 
-   body.snprintf(str_frm_body->data(),
-                  HTTP_UNAUTHORIZED, getHTTPStatusDescription(HTTP_UNAUTHORIZED),
-                  "Sorry, Password Required",
-                  "An account (with a password) is required to view the page that you requested");
+   UFileCacheData* ptr_file_data = getFileInCache(U_CONSTANT_TO_PARAM("ErrorDocument/401.html"));
+
+   if (ptr_file_data &&
+       ptr_file_data->array != 0)
+      {
+      body = (*ptr_file_data->array)[0];
+      }
+   else
+      {
+      const char* status = getHTTPStatusDescription(HTTP_UNAUTHORIZED);
+
+      U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+
+      body.snprintf(str_frm_body->data(),
+                     HTTP_UNAUTHORIZED, status,
+                     status,
+                     "This server could not verify that you are authorized to access the document requested. Either you supplied the "
+                     "wrong credentials (e.g., bad password), or your browser doesn't understand how to supply the credentials required");
+      }
+
+   UString ext(100U);
 
    (void) ext.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\nWWW-Authenticate: "));
 
@@ -3867,9 +3856,109 @@ void UHTTP::setHTTPUnAuthorized()
 
    (void) ext.append(U_CONSTANT_TO_PARAM(" realm=\"" U_HTTP_REALM "\"\r\n"));
 
-   u_http_info.nResponseCode = HTTP_UNAUTHORIZED;
-
    setHTTPResponse(&ext, &body);
+}
+
+void UHTTP::setHTTPForbidden()
+{
+   U_TRACE(0, "UHTTP::setHTTPForbidden()")
+
+   u_http_info.nResponseCode = HTTP_FORBIDDEN;
+
+   UString body(500U + u_http_info.uri_len);
+
+   UFileCacheData* ptr_file_data = getFileInCache(U_CONSTANT_TO_PARAM("ErrorDocument/403.html"));
+
+   if (ptr_file_data &&
+       ptr_file_data->array != 0)
+      {
+      body = (*ptr_file_data->array)[0];
+      }
+   else
+      {
+      UString msg(100U + u_http_info.uri_len);
+
+      msg.snprintf("You don't have permission to access %.*s on this server", U_HTTP_URI_TO_TRACE);
+
+      const char* status = getHTTPStatusDescription(HTTP_FORBIDDEN);
+
+      U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+
+      body.snprintf(str_frm_body->data(),
+                     HTTP_FORBIDDEN, status,
+                     status,
+                     msg.data());
+      }
+
+   setHTTPResponse(str_ctype_html, &body);
+}
+
+void UHTTP::setHTTPNotFound()
+{
+   U_TRACE(0, "UHTTP::setHTTPNotFound()")
+
+   u_http_info.nResponseCode = HTTP_NOT_FOUND;
+
+   UString body(500U + u_http_info.uri_len);
+
+   UFileCacheData* ptr_file_data = getFileInCache(U_CONSTANT_TO_PARAM("ErrorDocument/404.html"));
+
+   if (ptr_file_data &&
+       ptr_file_data->array != 0)
+      {
+      body = (*ptr_file_data->array)[0];
+      }
+   else
+      {
+      UString msg(100U + u_http_info.uri_len);
+
+      msg.snprintf("The requested URL %.*s was not found on this server", U_HTTP_URI_TO_TRACE);
+
+      const char* status = getHTTPStatusDescription(HTTP_NOT_FOUND);
+
+      U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+
+      body.snprintf(str_frm_body->data(),
+                     HTTP_NOT_FOUND, status,
+                     status,
+                     msg.data());
+      }
+
+   setHTTPResponse(str_ctype_html, &body);
+}
+
+void UHTTP::setHTTPBadMethod()
+{
+   U_TRACE(0, "UHTTP::setHTTPBadMethod()")
+
+   u_http_info.nResponseCode = HTTP_BAD_METHOD;
+
+   UString body(500U + u_http_info.uri_len);
+
+   UFileCacheData* ptr_file_data = getFileInCache(U_CONSTANT_TO_PARAM("ErrorDocument/405.html"));
+
+   if (ptr_file_data &&
+       ptr_file_data->array != 0)
+      {
+      body = (*ptr_file_data->array)[0];
+      }
+   else
+      {
+      UString msg(200U);
+
+      msg.snprintf("The requested method %.*s is not allowed for the URL %.*s", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE);
+
+      const char* status = getHTTPStatusDescription(HTTP_BAD_METHOD);
+
+      U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+
+      body.snprintf(str_frm_body->data(),
+                    HTTP_BAD_METHOD, status,
+                    status,
+                    msg.data());
+      }
+
+   setHTTPResponse(str_ctype_html, &body);
 }
 
 void UHTTP::setHTTPInternalError()
@@ -3881,18 +3970,28 @@ void UHTTP::setHTTPInternalError()
 
    UString body(2000U);
 
-   const char* status = getHTTPStatusDescription(HTTP_INTERNAL_ERROR);
+   UFileCacheData* ptr_file_data = getFileInCache(U_CONSTANT_TO_PARAM("ErrorDocument/500.html"));
 
-   U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+   if (ptr_file_data &&
+       ptr_file_data->array != 0)
+      {
+      body = (*ptr_file_data->array)[0];
+      }
+   else
+      {
+      const char* status = getHTTPStatusDescription(HTTP_INTERNAL_ERROR);
 
-   body.snprintf(str_frm_body->data(),
-                 HTTP_INTERNAL_ERROR, status,
-                 status,
-                 "The server encountered an internal error or misconfiguration "
-                 "and was unable to complete your request. Please contact the server "
-                 "administrator, and inform them of the time the error occurred, and "
-                 "anything you might have done that may have caused the error. More "
-                 "information about this error may be available in the server error log");
+      U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
+
+      body.snprintf(str_frm_body->data(),
+                    HTTP_INTERNAL_ERROR, status,
+                    status,
+                    "The server encountered an internal error or misconfiguration "
+                    "and was unable to complete your request. Please contact the server "
+                    "administrator, and inform them of the time the error occurred, and "
+                    "anything you might have done that may have caused the error. More "
+                    "information about this error may be available in the server error log");
+      }
 
    setHTTPResponse(str_ctype_html, &body);
 }
@@ -4783,17 +4882,26 @@ void UHTTP::checkFileForCache()
    if (file->stat()) manageDataForCache();
 }
 
+UHTTP::UFileCacheData* UHTTP::getFileInCache(const char* path, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::getFileInCache(%.*S,%u)", len, path, len)
+
+   U_INTERNAL_ASSERT_MAJOR(len,0)
+   U_INTERNAL_ASSERT_POINTER(path)
+
+   pkey->str     = path;
+   pkey->_length = len;
+
+   UFileCacheData* ptr_file_data = (*cache_file)[pkey];
+
+   U_RETURN_POINTER(ptr_file_data, UFileCacheData);
+}
+
 bool UHTTP::isFileInCache()
 {
    U_TRACE(0, "UHTTP::isFileInCache()")
 
-   pkey->str     = file->getPathRelativ();
-   pkey->_length = file->getPathRelativLen();
-
-   U_INTERNAL_ASSERT_POINTER(pkey->str)
-   U_INTERNAL_ASSERT_MAJOR(pkey->_length, 0)
-
-   file_data = (*cache_file)[pkey];
+   file_data = getFileInCache(file->getPathRelativ(), file->getPathRelativLen());
 
    if (file_data)
       {
@@ -4890,7 +4998,7 @@ U_NO_EXPORT bool UHTTP::processFileCache()
       {
       U_INTERNAL_DUMP("min_size_for_sendfile = %u", min_size_for_sendfile)
 
-      if (range_size > min_size_for_sendfile)
+      if (range_size >= min_size_for_sendfile)
          {
          // NB: for major size it is better to use sendfile()...
 
@@ -5073,7 +5181,7 @@ void UHTTP::manageHTTPServletRequest(bool as_service)
       for (i = 0; i < n; ++i) argv[i] = (*form_name_value)[i].c_str();
                               argv[i] = 0;
 
-      UClientImage_Base::wbuffer->setBuffer(U_CSP_REPLY_CAPACITY);
+      UClientImage_Base::wbuffer->setBuffer(U_CAPACITY);
 
       u_http_info.nResponseCode = csp->prog_main(n, argv);
 
@@ -5214,11 +5322,7 @@ int UHTTP::checkHTTPRequest()
 
       u_mime_index = file_data->mime_index;
 
-      U_INTERNAL_DUMP("u_mime_index = %C U_http_is_navigation = %b", u_mime_index, U_http_is_navigation)
-
-      if ((u_mime_index == U_usp    ||
-           u_isdigit(u_mime_index)) &&
-          U_http_is_navigation == false)
+      if (isDynamicPage())
          {
          if (u_mime_index != U_cgi) manageHTTPServletRequest(false);
          else
@@ -5271,7 +5375,7 @@ next:
       {
 check:
 #  ifdef U_HTTP_CACHE_REQUEST
-      if (u_mime_index != U_ssi) manageHTTPRequestCache();  
+      manageHTTPRequestCache();  
 #  endif
 
       // check for "Connection: close" in headers
@@ -6423,8 +6527,7 @@ U_NO_EXPORT int UHTTP::checkHTTPGetRequestForRange(UString& ext, const UString& 
 
    if (n == 0)
       {
-      U_http_is_connection_close = U_YES;
-      u_http_info.nResponseCode  = HTTP_REQ_RANGE_NOT_OK;
+      u_http_info.nResponseCode = HTTP_REQ_RANGE_NOT_OK;
 
       setHTTPResponse(0, 0);
 
@@ -6760,7 +6863,7 @@ void UHTTP::processHTTPGetRequest(const UString& request)
       }
 
 #ifdef U_HTTP_CACHE_REQUEST
-   UHTTP::manageHTTPRequestCache(); 
+   manageHTTPRequestCache();  
 #endif
 }
 
@@ -6856,7 +6959,7 @@ next:
 
       // NB: we check if we need to send the body with sendfile()
 
-      if (range_size > min_size_for_sendfile)
+      if (range_size >= min_size_for_sendfile)
          {
          bsendfile = true;
 sendfile:
@@ -6864,7 +6967,7 @@ sendfile:
 
          U_ASSERT_EQUALS(isHttpHEAD(),false)
          U_ASSERT(UClientImage_Base::body->empty())
-         U_INTERNAL_ASSERT_MAJOR(range_size,min_size_for_sendfile)
+         U_INTERNAL_ASSERT(range_size >= min_size_for_sendfile)
          U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd,0)
 
          UServer_Base::pClientImage->sfd    = file->fd;

@@ -755,6 +755,8 @@ int UFile::getSysParam(const char* name)
       buffer[U_SYSCALL(read, "%d,%p,%u", fd, buffer, sizeof(buffer)-1)] = '\0';
 
       value = atoi(buffer);
+
+      close(fd);
       }
 
    U_RETURN(value);

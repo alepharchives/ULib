@@ -240,7 +240,7 @@ bool UClient_Base::connect()
    if (log)
       {
       ULog::log("%s%.*s\n",
-                  log_shared_with_server ? UServer_Base::mod_name : "",
+                  log_shared_with_server ? UServer_Base::mod_name->data() : "",
                   U_STRING_TO_TRACE(response));
       }
 
@@ -374,7 +374,7 @@ send:
          if (log)
             {
             ULog::log("%sconnection to %.*s reset by peer%R\n",
-                     log_shared_with_server ? UServer_Base::mod_name : "",
+                     log_shared_with_server ? UServer_Base::mod_name->data() : "",
                      U_STRING_TO_TRACE(logbuf), 0); // NB: the last argument (0) is necessary...
             }
          }
@@ -389,7 +389,7 @@ send:
          if (log)
             {
             ULog::log("%sconnection to %.*s reset by peer%R\n",
-                     log_shared_with_server ? UServer_Base::mod_name : "",
+                     log_shared_with_server ? UServer_Base::mod_name->data() : "",
                      U_STRING_TO_TRACE(logbuf), 0); // NB: the last argument (0) is necessary...
             }
 
@@ -408,7 +408,7 @@ send:
       if (log)
          {
          ULog::log("%ssend request (%u bytes) %.*S to %.*s\n",
-                     log_shared_with_server ? UServer_Base::mod_name : "",
+                     log_shared_with_server ? UServer_Base::mod_name->data() : "",
                      request.size(), U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(logbuf));
 
          if (bread_response) logResponse(response);
@@ -443,7 +443,7 @@ void UClient_Base::logResponse(const UString& data)
    U_INTERNAL_ASSERT_POINTER(log)
 
    ULog::log("%sreceived response (%u bytes) %.*S from %.*s\n",
-                  log_shared_with_server ? UServer_Base::mod_name : "",
+                  log_shared_with_server ? UServer_Base::mod_name->data() : "",
                   data.size(), U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(logbuf));
 }
 

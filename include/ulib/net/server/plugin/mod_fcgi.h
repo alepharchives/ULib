@@ -90,6 +90,9 @@ protected:
    UClient_Base* connection;
    bool fcgi_keep_conn;
 
+          void set_FCGIBeginRequest();
+   static void fill_FCGIBeginRequest(u_char type, u_short content_length);
+
 private:
    UFCGIPlugIn(const UFCGIPlugIn&) : UServerPlugIn() {}
    UFCGIPlugIn& operator=(const UFCGIPlugIn&)        { return *this; }

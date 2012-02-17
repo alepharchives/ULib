@@ -22,9 +22,11 @@
   Simple vector template class. Supports pushing at end and random-access deletions. Dynamically sized.
 */
 
-                   class UHTTP;
+class UHTTP;
+class UHttpPlugIn;
+class UDataSession;
+
 template <class T> class UVector;
-                   class UDataSession;
 
 template <> class U_EXPORT UVector<void*> {
 public:
@@ -1082,6 +1084,7 @@ private:
    UVector<UString>& operator=(const UVector<UString>&)               { return *this; }
 
    friend class UHTTP;
+   friend class UHttpPlugIn;
    friend class UDataSession;
 };
 

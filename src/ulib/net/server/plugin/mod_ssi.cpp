@@ -842,6 +842,10 @@ int USSIPlugIn::handlerRequest()
       last_modified   = UHTTP::file->st_mtime;
       use_size_abbrev = true;
 
+#  ifdef U_HTTP_CACHE_REQUEST
+      U_http_no_cache = true;
+#  endif
+
       header.setBuffer(U_CAPACITY);
 
       (docname = UHTTP::getDocumentName()).duplicate();

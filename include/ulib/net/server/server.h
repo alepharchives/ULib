@@ -66,8 +66,8 @@ virtual void preallocate() { vClientImage = new client_class[UNotifier::max_conn
 
 // manage write to log server
 
-#define U_SRV_LOG(          fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%s"fmt"\n",      UServer_Base::mod_name , ##args); }
-#define U_SRV_LOG_WITH_ADDR(fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%s"fmt" %.*s\n", UServer_Base::mod_name , ##args, \
+#define U_SRV_LOG(          fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%.*s"fmt"\n",      U_STRING_TO_TRACE(*UServer_Base::mod_name) , ##args); }
+#define U_SRV_LOG_WITH_ADDR(fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%.*s"fmt" %.*s\n", U_STRING_TO_TRACE(*UServer_Base::mod_name) , ##args, \
                                                                                  U_STRING_TO_TRACE(*(UServer_Base::pClientImage->logbuf))); }
 class UHTTP;
 class UCommand;
@@ -213,7 +213,7 @@ public:
    // MANAGE PLUGIN MODULES
    // -------------------------------------------------------------------
 
-   static char mod_name[20];
+   static UString* mod_name;
    static bool bpluginsHandlerReset;
    static UEventFd* handler_inotify;
 
@@ -455,6 +455,8 @@ private:
    friend class UStreamPlugIn;
    friend class UClientThread;
    friend class UClientImage_Base;
+
+   static struct linger lng;
 
    static void loadStaticLinkedModules(const char* name) U_NO_EXPORT;
 
