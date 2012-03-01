@@ -19,12 +19,10 @@
 
 /*
 Synopsis: Compress and Decompresses the source buffer into the destination buffer
-*/
 
-/*
-#define Z_OK            0
-#define Z_STREAM_END    1
-#define Z_NEED_DICT     2
+#define Z_OK              0
+#define Z_STREAM_END      1
+#define Z_NEED_DICT       2
 #define Z_ERRNO         (-1)
 #define Z_STREAM_ERROR  (-2)
 #define Z_DATA_ERROR    (-3)
@@ -36,18 +34,20 @@ Synopsis: Compress and Decompresses the source buffer into the destination buffe
 #ifdef DEBUG_DEBUG
 static const char* get_error_string(int err)
 {
+   const char* p;
+
    switch (err)
       {
-      case Z_NEED_DICT:     return "Need dict.";
-      case Z_ERRNO:         return "Errno";
-      case Z_STREAM_ERROR:  return "Stream error";
-      case Z_DATA_ERROR:    return "Data error";
-      case Z_MEM_ERROR:     return "Memory error";
-      case Z_BUF_ERROR:     return "Buffer error";
-      case Z_VERSION_ERROR: return "Version error";
+      case Z_ERRNO:           p = "Error occured while reading file";                                          break;  
+      case Z_STREAM_ERROR:    p = "The stream state was inconsistent (e.g., next_in or next_out was NULL)";    break;  
+      case Z_DATA_ERROR:      p = "The deflate data was invalid or incomplete";                                break;  
+      case Z_MEM_ERROR:       p = "Memory could not be allocated for processing";                              break;  
+      case Z_BUF_ERROR:       p = "Ran out of output buffer for writing compressed bytes";                     break;  
+      case Z_VERSION_ERROR:   p = "The version of zlib.h and the version of the library linked do not match";  break;  
+      default:                p = "Unknown error code.";                                                       break;
       }
 
-   return "unknown";
+   return p;
 }
 #endif
 
@@ -69,14 +69,36 @@ static char workspace[workspacesize];
 #  endif
 #endif
 
-uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict result)
+uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict result, bool bheader)
 {
    int err;
    z_stream stream;
 
-   U_INTERNAL_TRACE("u_gz_deflate(%p,%u,%p)", input, len, result)
+   /* stream.zalloc    = // Set zalloc, zfree, and opaque to Z_NULL so  
+    * stream.zfree     = // that when we call deflateInit2 they will be  
+    * stream.opaque    = // updated to use default allocation functions.  
+    * stream.total_out = // Total number of output bytes produced so far  
+    * stream.next_in   = // Pointer to input bytes  
+    * stream.avail_in  = // Number of input bytes left to process
+    */
+
+   U_INTERNAL_TRACE("u_gz_deflate(%p,%u,%p,%d)", input, len, result, bheader)
 
    U_INTERNAL_ASSERT_POINTER(input)
+
+   /* Before we can begin compressing (aka "deflating") data using the zlib 
+    * functions, we must initialize zlib. Normally this is done by calling the 
+    * deflateInit() function; in this case, however, we'll use deflateInit2() so 
+    * that the compressed data will have gzip headers. This will make it easy to 
+    * decompress the data later using a tool like gunzip, WinZip, etc.
+    *
+    * deflateInit2() accepts many parameters, the first of which is a C struct of 
+    * type "z_stream" defined in zlib.h. The properties of this struct are used to 
+    * control how the compression algorithms work. z_stream is also used to 
+    * maintain pointers to the "input" and "output" byte buffers (next_in/out) as 
+    * well as information about how many bytes have been processed, how many are 
+    * left to process, etc.
+    */
 
    (void) memset(&stream, 0, sizeof(z_stream));
 
@@ -86,9 +108,36 @@ uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict r
    stream.workspace = workspace; /* Set the workspace */
 #endif
 
-   /* -MAX_WBITS: suppresses zlib header & trailer */
+   /* Initialize the zlib deflation (i.e. compression) internals with deflateInit2(). 
+    * The parameters are as follows: 
 
-   err = deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
+     z_streamp strm - Pointer to a zstream struct 
+     int level      - Compression level. Must be Z_DEFAULT_COMPRESSION, or between 
+                      0 and 9: 1 gives best speed, 9 gives best compression, 0 gives 
+                      no compression. 
+     int method     - Compression method. Only method supported is "Z_DEFLATED". 
+     int windowBits - Base two logarithm of the maximum window size (the size of 
+                      the history buffer). It should be in the range 8..15.
+                      windowBits can also be -8..-15 for raw deflate. In this case,
+                      -windowBits determines the window size. deflate() will then
+                      generate raw deflate data with no zlib header or trailer, and
+                      will not compute an adler32 check value.
+                      Add 16 to windowBits to write a simple gzip header and trailer
+                      around the compressed data instead of a zlib wrapper. The gzip
+                      header will have no file name, no extra data, no comment, no
+                      modification time (set to zero), no header crc, and the
+                      operating system will be set to 255 (unknown). 
+     int memLevel   - Amount of memory allocated for internal compression state. 
+                      1 uses minimum memory but is slow and reduces compression 
+                      ratio; 9 uses maximum memory for optimal speed. Default value 
+                      is 8. 
+     int strategy   - Used to tune the compression algorithm. Use the value 
+                      Z_DEFAULT_STRATEGY for normal data, Z_FILTERED for data 
+                      produced by a filter (or predictor), or Z_HUFFMAN_ONLY to 
+                      force Huffman encoding only (no string match)
+   */
+
+   err = deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, (bheader ? MAX_WBITS+16 : -MAX_WBITS), MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
 
    if (err != Z_OK)
       {
@@ -100,46 +149,73 @@ uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict r
    stream.next_in  = (unsigned char*)input;
    stream.avail_in = len;
 
-   do {
-      /* Set up output buffer */
+   /* The zlib documentation states that destination buffer size must be
+    * at least 0.1% larger than avail_in plus 12 bytes.
+    */
 
-      stream.next_out  = (unsigned char*)result + stream.total_out;
+   do {
+      /* Store location where next byte should be put in next_out */
+
+      U_INTERNAL_PRINT("stream.total_out = %lu", stream.total_out)
+
+      stream.next_out = (unsigned char*)result + stream.total_out;
+
+      /* Calculate the amount of remaining free space in the output buffer  
+       * by subtracting the number of bytes that have been written so far  
+       * from the buffer's total capacity */
+
       stream.avail_out = 0xffff0000;
 
+      /* deflate() compresses as much data as possible, and stops/returns when 
+       * the input buffer becomes empty or the output buffer becomes full. If 
+       * deflate() returns Z_OK, it means that there are more bytes left to 
+       * compress in the input buffer but the output buffer is full; the output 
+       * buffer should be expanded and deflate should be called again (i.e., the 
+       * loop should continue to rune). If deflate() returns Z_STREAM_END, the 
+       * end of the input stream was reached (i.e.g, all of the data has been 
+       * compressed) and the loop should stop.
+       */
+
       err = zlib_deflate(&stream, Z_FINISH);
+      }
+   while (err == Z_OK);
 
-      switch (err)
-         {
-         case Z_OK: break;
+   /* Check for zlib error and convert code to usable error message if appropriate */
 
-         case Z_STREAM_END:
-            {
-            err = zlib_deflateEnd(&stream);
+   if (err != Z_STREAM_END)  
+      {
+      U_INTERNAL_PRINT("zlib_deflate() = (%d, %s)", err, get_error_string(err))
 
-            if (err != Z_OK)
-               {
-               U_INTERNAL_PRINT("zlib_deflateEnd() = (%d, %s)", err, get_error_string(err))
+      return 0;
+      }
 
-               return 0;
-               }
+   U_INTERNAL_ASSERT(stream.avail_out)
 
-            U_INTERNAL_PRINT("stream.total_in = %u len = %u", stream.total_in, len)
+   err = zlib_deflateEnd(&stream);
 
-            U_INTERNAL_ASSERT_EQUALS(stream.total_in, len)
+   if (err != Z_OK)
+      {
+      U_INTERNAL_PRINT("zlib_deflateEnd() = (%d, %s)", err, get_error_string(err))
 
-            return stream.total_out;
-            }
+      return 0;
+      }
 
-         default:
-            {
-            U_INTERNAL_PRINT("zlib_deflate() = (%d, %s)", err, get_error_string(err))
+   U_INTERNAL_PRINT("stream.total_in = %lu len = %u", stream.total_in, len)
 
-            return 0;
-            }
-         }
-   } while (stream.avail_out == 0);
+   U_INTERNAL_ASSERT_EQUALS(stream.total_in, len)
 
-   return 0;
+#ifdef DEBUG
+   if (bheader)
+      {
+      U_INTERNAL_ASSERT_EQUALS(U_MEMCMP(result, GZIP_MAGIC), 0)
+
+      U_INTERNAL_PRINT("size original = %u", *(uint32_t*)(result + stream.total_out - 4))
+
+      U_INTERNAL_ASSERT_EQUALS(len, *(uint32_t*)(result + stream.total_out - 4))
+      }
+#endif
+
+   return stream.total_out;
 }
 
 /* gzip flag byte */
@@ -168,12 +244,6 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
 
    stream.workspace = workspace;
 #endif
-
-   /* !! ZLIB UNDOCUMENTED FEATURE !!
-    * windowBits is passed < 0 to tell that there is no zlib header.
-    * Note that in this case inflate *requires* an extra "dummy" byte after the compressed stream in order
-    * to complete decompression and return Z_STREAM_END
-    */
 
    err = inflateInit2(&stream, -MAX_WBITS);
 
@@ -235,15 +305,15 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
          input += _len;
          }
 
-      if ((_flags & ORIG_NAME) != 0) while (*ptr++ != '\0') {} /* Discard file name if any */
+      if ((_flags & ORIG_NAME) != 0) while (*ptr++ != '\0') {} /* Discard file    name if any */
       if ((_flags & COMMENT)   != 0) while (*ptr++ != '\0') {} /* Discard file comment if any */
 
       header_size = (ptr - input);
 
-      U_INTERNAL_PRINT("header_size = %d *ptr = '%o'", header_size, *(unsigned char*)ptr)
-
-      len  -= header_size + 8; /* crc + size_original */
+      len  -= header_size + 8; /* crc + size original */
       input = ptr;
+
+      U_INTERNAL_PRINT("header_size = %d size original = %u *ptr = '%o'", header_size, *(uint32_t*)(ptr + len + 4), *(unsigned char*)ptr)
       }
 
    stream.next_in  = (unsigned char*)input;
@@ -289,7 +359,7 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
                return 0;
                }
 
-            U_INTERNAL_PRINT("stream.total_in = %u len = %u", stream.total_in, len)
+            U_INTERNAL_PRINT("stream.total_in = %lu len = %u", stream.total_in, len)
 
             U_INTERNAL_ASSERT_EQUALS(stream.total_in, len)
 

@@ -18,6 +18,7 @@
 #include <ulib/net/socket.h>
 #include <ulib/internal/chttp.h>
 #include <ulib/dynamic/dynamic.h>
+#include <ulib/utility/string_ext.h>
 #include <ulib/utility/data_session.h>
 
 #ifdef HAVE_PCRE
@@ -287,17 +288,25 @@ public:
    static bool checkHTTPRequestForHeader(const UString& request);
    static bool checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
 
-   static UString     getRemoteIP();
-   static UString     getDocumentName();
-   static UString     getDirectoryURI();
-   static UString     getRequestURI(bool bquery);
-   static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase) __pure;
-   static UString     getHeaderMimeType(const char* content, const char* content_type, uint32_t size, time_t expire);
+   static UString getRemoteIP();
+   static UString getDocumentName();
+   static UString getDirectoryURI();
+   static UString getRequestURI(bool bquery);
+   static UString getHeaderMimeType(const char* content, const char* content_type, uint32_t size, time_t expire);
 
    static void callService(const UString& path, bool servlet, UString* environment);
 
    static void callCGI(    const UString& path, UString* environment = 0) { callService(path, false, environment); }
    static void callServlet(const UString& path, UString* environment = 0) { callService(path, true,  environment); }
+
+   static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase)
+      {
+      U_TRACE(0, "UHTTP::getHTTPHeaderValuePtr(%.*S,%.*S,%b)", U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(name), nocase)
+
+      if (u_http_info.szHeader) return UStringExt::getValueFromName(request, u_http_info.startHeader, u_http_info.szHeader, name, nocase);
+
+      U_RETURN((const char*)0);
+      }
 
    // set HTTP main error message
 
@@ -605,9 +614,9 @@ public:
 
       U_INTERNAL_ASSERT(isHTTPRequest())
 
-      U_INTERNAL_DUMP("u_http_info.clength = %u U_http_is_accept_deflate = %C", u_http_info.clength, U_http_is_accept_deflate)
+      U_INTERNAL_DUMP("u_http_info.clength = %u U_http_is_accept_gzip = %C", u_http_info.clength, U_http_is_accept_gzip)
 
-      bool result = (u_http_info.clength > 150 && U_http_is_accept_deflate); // NB: google advice is 150...
+      bool result = (u_http_info.clength > 150 && U_http_is_accept_gzip); // NB: google advice is 150...
 
       U_RETURN(result);
       }
@@ -870,7 +879,7 @@ public:
    U_MEMORY_DEALLOCATOR
 
    void* ptr;               // data
-   UVector<UString>* array; // content, header, deflate(content, header)
+   UVector<UString>* array; // content, header, gzip(content, header)
    time_t mtime;            // time of last modification
    time_t expire;           // expire time of the entry
    uint32_t size;           // size content
@@ -956,7 +965,7 @@ public:
    static bool            isFileInCache();
    static void            renewDataCache();
    static void            checkFileForCache();
-   static UString         getDataFromCache(bool header, bool deflate);
+   static UString         getDataFromCache(bool header, bool gzip);
    static UFileCacheData* getFileInCache(const char* path, uint32_t len);
 
    // X-Sendfile

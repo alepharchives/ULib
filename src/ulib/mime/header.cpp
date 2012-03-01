@@ -14,7 +14,6 @@
 #include <ulib/url.h>
 #include <ulib/mime/header.h>
 #include <ulib/utility/uhttp.h>
-#include <ulib/container/vector.h>
 
 const UString* UMimeHeader::str_name;
 const UString* UMimeHeader::str_ascii;

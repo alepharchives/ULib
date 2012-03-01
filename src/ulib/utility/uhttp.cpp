@@ -27,7 +27,6 @@
 #include <ulib/utility/services.h>
 #include <ulib/net/server/server.h>
 #include <ulib/utility/socket_ext.h>
-#include <ulib/utility/string_ext.h>
 
 #ifdef HAVE_MAGIC
 #  include <ulib/magic/magic.h>
@@ -2021,10 +2020,10 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
                      // web socket
 
-                     if (getHTTPHeaderValuePtr(request, *str_websocket_key1, false))
+                     if (UStringExt::getValueFromName(request, u_http_info.startHeader, end, *str_websocket_key1, false))
                         {
-                        U_ASSERT_POINTER(getHTTPHeaderValuePtr(request, *str_websocket_key2, false))
-                        U_ASSERT_DIFFERS(request.find(*str_websocket,u_http_info.startHeader,u_http_info.szHeader),U_NOT_FOUND)
+                        U_ASSERT_POINTER(UStringExt::getValueFromName(request, u_http_info.startHeader, end, *str_websocket_key2, false))
+                        U_ASSERT_DIFFERS(request.find(*str_websocket,u_http_info.startHeader,end),U_NOT_FOUND)
 
                         u_http_info.clength = 8;
                         }
@@ -2059,18 +2058,19 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
                      if (c1 == 'E' &&
                          U_MEMCMP(p, "ncoding") == 0)
                         {
-                        p = ptr + pos1;
+                        p  = ptr + pos1;
+                        p1 = p + 4;
 
                         U_INTERNAL_DUMP("Accept-Encoding: = %.*S", pos2 - pos1 - 1, p)
 
-                        if ((U_STRNEQ(p, "gzip") && U_STRNCMP(p+4, ";q=0")) ||
-                            u_find(p, 30, U_CONSTANT_TO_PARAM("deflate")) != 0)
+                        if ((U_STRNEQ(p, "gzip") && U_STRNCMP(p1, ";q=0")) ||
+                            u_find(p1, 30, U_CONSTANT_TO_PARAM("gzip")) != 0)
                            {
-                           U_http_is_accept_deflate = '1';
+                           U_http_is_accept_gzip = '1';
 
-                           U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
+                           U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
 
-                           U_ASSERT(u_find(p, 30, U_CONSTANT_TO_PARAM("deflate")))
+                           U_ASSERT(u_find(p, 30, U_CONSTANT_TO_PARAM("gzip")))
                            }
                         }
                      else if (c1 == 'L' &&
@@ -2280,38 +2280,117 @@ int UHTTP::checkHTTPRequestCache()
 
    U_INTERNAL_ASSERT_EQUALS(cbuffer->isNull(), false)
 
-   uint32_t len = u_http_info.startHeader - 2;
+   uint32_t end    = u_http_info.startHeader - 2;
+   const char* ptr = UClientImage_Base::rbuffer->data();
 
-   if (cbuffer->compare(0U, len, UClientImage_Base::rbuffer->data(), len) == 0)
+   if (cbuffer->compare(0U, end, ptr, end) == 0)
       {
-      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+      int result;
 
-      if (U_http_version != '0'                                  ||
-          (cbuffer->size() == UClientImage_Base::rbuffer->size() &&
-           cbuffer->compare(u_http_info.startHeader, U_NOT_FOUND, *UClientImage_Base::rbuffer, u_http_info.startHeader, U_NOT_FOUND) == 0))
+      if ((end = UClientImage_Base::rbuffer->size()) != cbuffer->size())
          {
-         int                                      result  = U_PLUGIN_HANDLER_AGAIN;
-         if (U_http_is_connection_close == U_YES) result |= U_PLUGIN_HANDLER_ERROR;
+         const char* p;
+         unsigned char c;
+         bool http_gzip = false;
+         char http_keep_alive = '\0';
 
-         U_INTERNAL_DUMP("UServer_Base::sfd = %d", UServer_Base::sfd)
-
-         if (UServer_Base::sfd)
+         for (uint32_t pos = u_http_info.startHeader; pos < end; ++pos)
             {
-            U_ASSERT(UClientImage_Base::body->isNull())
-            U_INTERNAL_ASSERT_MAJOR(UServer_Base::count,0)
+            U_INTERNAL_DUMP("pos = %.*S", 20, UClientImage_Base::rbuffer->c_pointer(pos))
 
-            U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd = %d", UServer_Base::pClientImage->sfd)
+            c = *(p = (ptr + pos));
 
-            U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd,0)
+            U_INTERNAL_DUMP("c = %C", c)
 
-            UServer_Base::pClientImage->sfd    = UServer_Base::sfd;
-            UServer_Base::pClientImage->start  = UServer_Base::start;
-            UServer_Base::pClientImage->count  = UServer_Base::count;
-            UServer_Base::pClientImage->bclose = UServer_Base::bclose;
+            if (c == '\r') goto end;
+
+            if (c == 'C')
+               {
+               if (memcmp(ptrC, p+1, 9) == 0) // 9 -> sizeof("onnection")
+                  {
+                  p += 11;
+
+                  U_INTERNAL_DUMP("Connection: = %.*S", 13, p-1)
+
+                  for (uint32_t i = 0; i < 4; ++i)
+                     {
+                     if (u_toupper(p[i]) == 'K')
+                        {
+                        U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(p+i, "keep-alive"), 0);
+
+                        http_keep_alive = '1';
+
+                        U_INTERNAL_DUMP("http_keep_alive = %C", http_keep_alive)
+
+                        break;
+                        }
+                     }
+
+                  if (U_http_is_accept_gzip != '2' || http_gzip) goto end;
+
+                  pos = (p - ptr);
+                  }
+
+               goto next;
+               }
+
+            if (U_http_is_accept_gzip != '2' || http_gzip) goto next;
+
+            if (c == 'A'                    &&
+                memcmp(ptrA, p+1, 5) ==  0  && // 5 -> sizeof("ccept")
+                             p[6]    == '-' &&
+                    U_MEMCMP(p+7, "Encoding") == 0)
+               {
+               p += 16;
+
+               U_INTERNAL_DUMP("Accept-Encoding: = %.*S", 20, p-1)
+
+               p = (const char*) u_find(p, 30, U_CONSTANT_TO_PARAM("gzip"));
+
+               if (p && U_STRNCMP(p+4, ";q=0"))
+                  {
+                  http_gzip = true;
+
+                  U_INTERNAL_DUMP("http_gzip = %b", http_gzip)
+                  }
+               }
+next:
+            do { ++pos; } while (pos < end && ptr[pos] != '\n');
+            }
+end:
+         U_INTERNAL_DUMP("U_http_version = %C U_http_keep_alive = %C U_http_is_connection_close = %d U_http_is_accept_gzip = %C",
+                          U_http_version,     U_http_keep_alive,     U_http_is_connection_close,     U_http_is_accept_gzip)
+
+         if (http_keep_alive != U_http_keep_alive ||
+             (http_gzip == false && U_http_is_accept_gzip == '2'))
+            {
+            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
             }
 
-         U_RETURN(result);
+         (void) cbuffer->assign(UClientImage_Base::rbuffer->rep);
          }
+
+                                               result  = U_PLUGIN_HANDLER_AGAIN;
+      if (U_http_is_connection_close == U_YES) result |= U_PLUGIN_HANDLER_ERROR;
+
+      U_INTERNAL_DUMP("UServer_Base::sfd = %d", UServer_Base::sfd)
+
+      if (UServer_Base::sfd)
+         {
+         U_ASSERT(UClientImage_Base::body->isNull())
+         U_INTERNAL_ASSERT_MAJOR(UServer_Base::count,0)
+
+         U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd = %d", UServer_Base::pClientImage->sfd)
+
+         U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd,0)
+
+         UServer_Base::pClientImage->sfd    = UServer_Base::sfd;
+         UServer_Base::pClientImage->start  = UServer_Base::start;
+         UServer_Base::pClientImage->count  = UServer_Base::count;
+         UServer_Base::pClientImage->bclose = UServer_Base::bclose;
+         }
+
+      U_RETURN(result);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
@@ -2430,6 +2509,8 @@ bool UHTTP::readHTTPRequest(USocket* socket)
             }
          }
 
+   // if (UClientImage_Base::size_request == 0) UClientImage_Base::size_request = u_http_info.startHeader + u_http_info.szHeader;
+
       UClientImage_Base::manageRequestSize(request_buffer_resize);
 
       if (result)
@@ -2451,50 +2532,6 @@ bool UHTTP::readHTTPRequest(USocket* socket)
       }
 
    U_RETURN(false);
-}
-
-__pure const char* UHTTP::getHTTPHeaderValuePtr(const UString& buffer, const UString& name, bool nocase)
-{
-   U_TRACE(0, "UHTTP::getHTTPHeaderValuePtr(%.*S,%.*S,%b)", U_STRING_TO_TRACE(buffer), U_STRING_TO_TRACE(name), nocase)
-
-   U_ASSERT_DIFFERS(buffer.empty(), true)
-
-   const char* ptr_header_value;
-   uint32_t header_line, pos = u_http_info.startHeader, len = u_http_info.szHeader;
-
-loop:
-   header_line = buffer.find(name, pos, len);
-
-   if (header_line == U_NOT_FOUND)
-      {
-      if (nocase)
-         {
-         header_line = buffer.findnocase(name, pos, len); 
-
-         if (header_line != U_NOT_FOUND) goto next;
-         }
-
-      U_RETURN((const char*)0);
-      }
-
-next:
-   U_INTERNAL_DUMP("header_line = %.*S", 20, buffer.c_pointer(header_line))
-
-   ptr_header_value = buffer.c_pointer(header_line + name.size());
-
-   while (u_isspace(*ptr_header_value)) ++ptr_header_value;
-
-   if (*ptr_header_value != ':')
-      {
-      pos = buffer.distance(ptr_header_value);
-      len = u_http_info.endHeader - pos;
-
-      goto loop;
-      }
-
-   do { ++ptr_header_value; } while (u_isspace(*ptr_header_value));
-
-   U_RETURN(ptr_header_value);
 }
 
 void UHTTP::getHTTPInfo(const UString& request, UString& method, UString& uri)
@@ -3693,7 +3730,7 @@ void UHTTP::setHTTPResponse(const UString* content_type, const UString* body)
    U_INTERNAL_DUMP("UClientImage_Base::body(%u)    = %.*S", UClientImage_Base::body->size(),    U_STRING_TO_TRACE(*UClientImage_Base::body))
 }
 
-/* see: http://sebastians-pamphlets.com/the-anatomy-of-http-redirects-301-302-307/
+/* http://sebastians-pamphlets.com/the-anatomy-of-http-redirects-301-302-307/
  * ------------------------------------------------------------------------------------------------------------------
  * HTTP/1.0
  * ------------------------------------------------------------------------------------------------------------------
@@ -4040,9 +4077,9 @@ void UHTTP::setHTTPCgiResponse(bool header_content_type, bool bcompress, bool co
       page_speed->minify_html("UHTTP::setHTTPCgiResponse()", content);
 #  endif
 
-      content = UStringExt::deflate(content);
+      content = UStringExt::deflate(content, true);
 
-      (void) tmp.append(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+      (void) tmp.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
       }
 
    u_http_info.clength = content.size();
@@ -4416,10 +4453,9 @@ UString UHTTP::getHeaderMimeType(const char* content, const char* content_type, 
 
    // check magic byte
 
-   U_INTERNAL_DUMP("U_http_is_accept_deflate = %C u_mime_index = %C", U_http_is_accept_deflate, u_mime_index)
+   U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
 
-   if (content                  &&
-       U_http_is_accept_deflate &&
+   if (content &&
        U_MEMCMP(content, GZIP_MAGIC) == 0)
       {
       u_mime_index = U_gz;
@@ -4469,9 +4505,11 @@ UString UHTTP::getHeaderMimeType(const char* content, const char* content_type, 
     * even for resources that change more frequently than that. Of course, this technique requires that all of the pages that reference the resource
     * know about the fingerprinted URL, which may or may not be feasible, depending on how your pages are coded.
     *
-    * Set the Vary header correctly for Internet Explorer.Internet Explorer does not cache any resources that are served with the Vary header and any
+    * Set the Vary header correctly for Internet Explorer. Internet Explorer does not cache any resources that are served with the Vary header and any
     * fields but Accept-Encoding and User-Agent. To ensure these resources are cached by IE, make sure to strip out any other fields from the Vary
     * header, or remove the Vary header altogether if possible
+    *
+    * The rule is any resource that is cachable should not have a Vary: User-Agent header.
     *
     * Avoid URLs that cause cache collisions in Firefox. The Firefox disk cache hash functions can generate collisions for URLs that differ only
     * slightly, namely only on 8-character boundaries. When resources hash to the same key, only one of the resources is persisted to disk cache;
@@ -4543,7 +4581,7 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
 
    uint32_t size;
    int ratio = 100;
-   bool deflated = false;
+   bool gzip = false;
    const char*motivation = "";
    UString header(U_CAPACITY);
 
@@ -4607,8 +4645,33 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
    else if (u_mime_index != U_ssi &&
             u_mime_index != U_gz)
       {
-      content  = UStringExt::deflate(content);
-      deflated = true;
+      /* http://zoompf.com/blog/2012/02/lose-the-wait-http-compression
+       *
+       * Unfortunately, the HTTP/1.1 RFC does a poor job when describing the allowable compression schemes for the Accept-Encoding
+       * and Content-Encoding headers. It defines Content-Encoding: gzip to mean that the response body is composed of the GZIP
+       * data format (GZIP headers, deflated data, and a checksum). It also defines Content-Encoding: deflate but, despite its name,
+       * this does not mean the response body is a raw block of DEFLATE compressed data.
+       *
+       * According to RFC-2616, Content-Encoding: deflate means the response body is:
+       * [the] "zlib" format defined in RFC 1950 in combination with the "deflate" compression mechanism described in RFC 1951.
+       *
+       * So, DEFLATE, and Content-Encoding: deflate, actually means the response body is composed of the zlib format (zlib header,
+       * deflated data, and a checksum).
+       *
+       * This "deflate the identifier doesn't mean raw DEFLATE compressed data" idea was rather confusing.
+       *
+       * Browsers receive Content-Encoding: deflate had to handle two possible situations: the response body is raw DEFLATE data,
+       * or the response body is zlib wrapped DEFLATE. So, how well do modern browser handle raw DEFLATE or zlib wrapped DEFLATE
+       * responses? Verve Studios put together a test suite and tested a huge number of browsers. The results are not good. All
+       * those fractional results in the table means the browser handled raw-DEFLATE or zlib-wrapped-DEFLATE inconsistently,
+       * which is really another way of saying "It's broken and doesn't work reliably". This seems to be a tricky bug that
+       * browser creators keep re-introducing into their products. Safari 5.0.2? No problem. Safari 5.0.3? Complete failure.
+       * Safari 5.0.4? No problem. Safari 5.0.5? Inconsistent and broken.
+       *
+       * Sending raw DEFLATE data is just not a good idea. As Mark says "[it's] simply more reliable to only use GZIP."
+       */
+
+      content = UStringExt::deflate(content, (gzip = true));
       }
 #endif
 
@@ -4627,8 +4690,8 @@ next:
 
          header.setBuffer(U_CAPACITY);
 
-         if (deflated) (void) header.assign(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
-                              header.snprintf_add(fmt.data(), size);
+         if (gzip) (void) header.assign(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
+                          header.snprintf_add(fmt.data(), size);
 
          file_data->array->push_back(header);
          }
@@ -4940,9 +5003,9 @@ void UHTTP::renewDataCache()
    u_buffer_len = 0;
 }
 
-UString UHTTP::getDataFromCache(bool bheader, bool deflate)
+UString UHTTP::getDataFromCache(bool bheader, bool gzip)
 {
-   U_TRACE(0, "UHTTP::getDataFromCache(%b,%b)", bheader, deflate)
+   U_TRACE(0, "UHTTP::getDataFromCache(%b,%b)", bheader, gzip)
 
    U_INTERNAL_ASSERT_POINTER(file_data)
    U_INTERNAL_ASSERT_POINTER(file_data->array)
@@ -4952,9 +5015,9 @@ UString UHTTP::getDataFromCache(bool bheader, bool deflate)
 
    if (u_now->tv_sec > file_data->expire) renewDataCache();
 
-   U_INTERNAL_DUMP("idx = %u", (deflate * 2) + bheader)
+   U_INTERNAL_DUMP("idx = %u", (gzip * 2) + bheader)
 
-   UString result = file_data->array->operator[]((deflate * 2) + bheader);
+   UString result = file_data->array->operator[]((gzip * 2) + bheader);
 
    U_RETURN_STRING(result);
 }
@@ -4985,9 +5048,11 @@ U_NO_EXPORT bool UHTTP::processFileCache()
 
       u_http_info.nResponseCode = HTTP_PARTIAL;
       }
-   else if (U_http_is_accept_deflate &&
+   else if (U_http_is_accept_gzip &&
             isDataCompressFromCache())
       {
+      U_http_is_accept_gzip = '2';
+
                                                    header = getDataFromCache( true, true);
       if (isHttpHEAD() == false) *UClientImage_Base::body = getDataFromCache(false, true);
 
@@ -5473,7 +5538,7 @@ HTTP_COOKIE="_saml_idp=dXJuOm1hY2U6dGVzdC5zXRo; _redirect_user_idp=urn%3Amace%3A
 DOCUMENT_ROOT="/var/www/localhost/htdocs"
 HTTP_ACCEPT="text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png"
 HTTP_ACCEPT_CHARSET="ISO-8859-1,utf-8;q=0.7,*;q=0.7"
-HTTP_ACCEPT_ENCODING="gzip,deflate"
+HTTP_ACCEPT_ENCODING="gzip, deflate"
 HTTP_ACCEPT_LANGUAGE="en-us,en;q=0.5"
 HTTP_CONNECTION="keep-alive"
 HTTP_HOST="localhost"
@@ -5709,13 +5774,13 @@ bool UHTTP::XSendfile(UString& _pathname, UString& ext)
                           U_STRING_TO_TRACE(_pathname),
                           U_STRING_TO_TRACE(ext));
 
-         U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
+         U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
 
-         char c = U_http_is_accept_deflate;
+         char c = U_http_is_accept_gzip;
 
          initHTTPInfo();
 
-         U_http_is_accept_deflate = c;
+         U_http_is_accept_gzip = c;
 
          (void) readHTTPHeader(0, request);
          (void) checkHTTPRequestForHeader(request);
@@ -6747,10 +6812,13 @@ U_NO_EXPORT bool UHTTP::openFile()
                {
                u_http_info.nResponseCode = HTTP_OK;
 
-               bool deflate = (U_http_is_accept_deflate && isDataCompressFromCache());
+               bool gzip = (U_http_is_accept_gzip &&
+                            isDataCompressFromCache());
 
-               if (isHttpHEAD() == false) *UClientImage_Base::body    = getDataFromCache(false, deflate);
-                                          *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(getDataFromCache(true, deflate), false);
+               if (gzip) U_http_is_accept_gzip = '2';
+
+               if (isHttpHEAD() == false) *UClientImage_Base::body    = getDataFromCache(false, gzip);
+                                          *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(getDataFromCache(true, gzip), false);
 
                U_RETURN(false);
                }
@@ -6844,11 +6912,13 @@ void UHTTP::processHTTPGetRequest(const UString& request)
          {
          *UClientImage_Base::body = getHTMLDirectoryList();
 
-         if (U_http_is_accept_deflate)
+         if (U_http_is_accept_gzip)
             {
-            (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+            U_http_is_accept_gzip = '2';
 
-            *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
+            (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
+
+            *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body, true);
             }
 
          size = UClientImage_Base::body->size();

@@ -1746,7 +1746,7 @@ U_EXPORT main (int argc, char* argv[])
 
    z = U_STRING_FROM_CONSTANT(TEXT3);
 
-   U_ASSERT( z == UStringExt::gunzip(UStringExt::deflate(z)) )
+   U_ASSERT( z == UStringExt::gunzip(UStringExt::deflate(z, true)) )
 #endif
 
    y = U_STRING_FROM_CONSTANT("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/");

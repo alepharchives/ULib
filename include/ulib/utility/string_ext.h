@@ -55,7 +55,7 @@ public:
 
    static bool isCompress(const UString& s) { return U_STRNEQ(s.data(), U_LZOP_COMPRESS); }
 
-   static UString deflate(const UString& s);                       // .gz   compress
+   static UString deflate(const UString& s, bool bheader);         // .gz   compress
    static UString gunzip( const UString& s, uint32_t sz_orig = 0); // .gz uncompress
 
    // Convert numeric to string
@@ -236,11 +236,15 @@ public:
    static int compareversion(const UString& s, const UString& a) __pure;
    static int compareversion(const UString& s, const char* a, uint32_t n) __pure { return compareversion(U_STRING_TO_PARAM(s), a, n); }
 
-   /* Verifies that the passed string is actually an e-mail address */
+   // Verifies that the passed string is actually an e-mail address
 
    static bool isEmailAddress(const UString& s) __pure;
 
-   // retrieve information on form elements as couple <name1>=<value1>&<name2>=<value2>&...
+   // Gived the name retrieve pointer on value elements from headers "name1:value1\nname2:value2\n"...
+
+   static const char* getValueFromName(const UString& request, uint32_t pos, uint32_t len, const UString& name, bool nocase) __pure;
+
+   // Retrieve information on form elements as couple <name1>=<value1>&<name2>=<value2>&...
 
    static uint32_t getNameValueFromData(const UString& content,
                                         UVector<UString>& name_value,

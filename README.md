@@ -104,7 +104,7 @@ Use apachebench (ab)
 [Comparative Benchmarking](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark)
 --------------------------------------------------------------------------------------------
 
-I consider in this benchmark the performant server [G-WAN 2.8.21 (32 bit)] (http://www.gwan.ch/) and [NGINX 1.0.6 (stable)] (http://nginx.net/).
+I consider in this benchmark the server [G-WAN 3.2.24 (64 bit)] (http://www.gwan.ch/) and [NGINX 1.1.13] (http://nginx.net/).
 
 gwan run with the follow options:
 ---------------------------------
@@ -115,69 +115,87 @@ gwan run with the follow options:
 nginx is configured in this way:
 --------------------------------
 
-	$ CFLAGS=-O3 &&
-	./configure --prefix=/usr/local --conf-path=/etc/local/nginx/nginx.conf
-	--error-log-path=/var/log/nginx/error.log --pid-path=/var/run/nginx.pid --lock-path=/var/lock/nginx.lock
-	--http-log-path=/var/log/nginx/access.log --http-client-body-temp-path=/var/lib/nginx/body
-	--http-proxy-temp-path=/var/lib/nginx/proxy --http-fastcgi-temp-path=/var/lib/nginx/fastcgi
-	--with-ipv6 --without-http-cache --with-http_ssl_module --with-http_secure_link_module
-	--with-http_gzip_static_module --without-http_limit_zone_module --without-http_limit_req_module
-	--without-http_rewrite_module --without-http_charset_module --without-http_ssi_module
-	--without-http_userid_module --without-http_autoindex_module --without-http_geo_module
-	--without-http_map_module --without-http_split_clients_module --without-http_referer_module
-	--without-http_uwsgi_module --without-http_scgi_module --without-http_memcached_module
-	--without-http_empty_gif_module --without-http_browser_module --without-http_upstream_ip_hash_module
+	nginx version: nginx/1.1.13
+	TLS SNI support enabled
+	configure arguments: --prefix=/usr --sbin-path=/usr/sbin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error_log
+	--pid-path=/var/run/nginx.pid --lock-path=/var/lock/nginx.lock --user=nginx --group=nginx --with-cc-opt=-I/usr/include --with-ld-opt=-L/usr/lib
+	--http-log-path=/var/log/nginx/access_log --http-client-body-temp-path=/var/tmp/nginx/client --http-proxy-temp-path=/var/tmp/nginx/proxy
+	--http-fastcgi-temp-path=/var/tmp/nginx/fastcgi --http-scgi-temp-path=/var/tmp/nginx/scgi --http-uwsgi-temp-path=/var/tmp/nginx/uwsgi
+	--with-ipv6 --with-pcre --with-http_realip_module --with-http_ssl_module --without-mail_imap_module --without-mail_pop3_module
+	--without-mail_smtp_module
 
 nginx run with the follow configuration:
 ----------------------------------------
 
- 	user apache;
+	user nginx nginx;
  	worker_processes 2;
  
- 	pid /var/run/nginx.pid;
- 
  	events {
- 		 worker_connections 2048;
+		 use epoll;
+ 		 worker_connections 1024;
  		 multi_accept on;
  	}
  
  	http {
- 		 include       mime.types;
- 		 default_type  application/octet-stream;
- 
- 		 error_log   off;
- 		 access_log  off;
+		include /etc/nginx/mime.types;
+		default_type application/octet-stream;
 
- 		 open_file_cache max=1000 inactive=20s;
- 		 open_file_cache_valid 30s;
- 		 open_file_cache_min_uses 2;
+		log_format main
+			'$remote_addr - $remote_user [$time_local] '
+			'"$request" $status $bytes_sent '
+			'"$http_referer" "$http_user_agent" '
+			'"$gzip_ratio"';
+
+		client_header_timeout 10m;
+		client_body_timeout 10m;
+		send_timeout 10m;
+
+		connection_pool_size 256;
+		client_header_buffer_size 1k;
+		large_client_header_buffers 4 2k;
+		request_pool_size 4k;
+
+ 		gzip off;
+		gzip_min_length 1100;
+		gzip_buffers 4 8k;
+		gzip_types text/plain;
+
+		output_buffers 1 32k;
+		postpone_output 1460;
+
+ 		error_log   off;
+ 		access_log  off;
+
+ 		open_file_cache max=1000 inactive=20s;
+ 		open_file_cache_valid 30s;
+ 		open_file_cache_min_uses 2;
  
- 		 sendfile          on;
- 		 keepalive_timeout 15;
- 		 gzip              off;
- 		 server_tokens     off;
- 		 tcp_nopush        on;
- 		 tcp_nodelay       on;
- 
- 		 server {
- 			  listen       80;
- 			  server_name  localhost;
- 
- 			  access_log  off;
- 
- 			  location / {
- 					root   /usr/src/ULib-1.1.0/tests/examples/benchmark/docroot;
- 					index  index.html index.htm;
- 			  }
- 		 }
+ 		server_tokens off;
+
+		tcp_nopush on;
+		tcp_nodelay on;
+
+		keepalive_timeout 75 20;
+
+		ignore_invalid_headers on;
+
+		index index.html;
+
+		server {
+			listen 8080;
+			server_name localhost;
+
+ 			access_log  off;
+			error_log   off;
+
+ 			root /usr/src/ULib-1.1.0/tests/examples/benchmark/docroot;
+		}
  	}
 
-All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz running `Gentoo 64 bit (kernel 3.0.4)`.
+All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz running `Gentoo 2.0.3 AMD64 (kernel 3.2.6)`.
 Yes, this CPU is 11-year old (single-core) P4, but some test on more recent processor (dual-core AMD) give similar results.
 
-For better comparison with gwan (32 bit) userver_tcp and nginx are compiled and run (as gwan) in chrooted environment: `Ubuntu 11.04 (iX86)`
-
-The client [bench1.c](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark/bin/bench1.c)
+The client [ab.c](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark/bin/ab.c)
 relies on ApacheBench (ab) and it is a slightly modified version of [G-WAN client](http://gwan.ch/source/ab.c.txt).
 
 I have considered two scenario for benchmarking:

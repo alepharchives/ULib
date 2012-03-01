@@ -939,7 +939,7 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 	fi
 
 	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
-		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition" # -Wcast-qual
+		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wdelete-non-virtual-dtor" # -Wcast-qual -Wzero-as-null-pointer-constant
 
 	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated -Wdelete-non-virtual-dtor"
 

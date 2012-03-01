@@ -1,0 +1,243 @@
+--- ab.c.orig	2012-02-14 18:41:39.000000000 +0100
++++ ab.c	2012-02-15 19:18:47.000000000 +0100
+@@ -49,7 +49,7 @@
+ 
+ //#define IBM_APACHEBENCH // the classic, made better by Zeus' author
+ //#define HP_HTTPERF // HTTPerf, from HP, less practical than ApacheBench
+-#define LIGHTY_WEIGHTTP // Lighttpd's test, faster than AB (same interface)
++//#define LIGHTY_WEIGHTTP // Lighttpd's test, faster than AB (same interface)
+                         // but a loooong warm-up and no intermediate output
+                         // nor any statistics...
+                         //http://redmine.lighttpd.net/projects/weighttp/wiki
+@@ -74,7 +74,7 @@
+ #define TO      1000 // range to cover (1 - 1,000 concurrent clients)
+ #define STEP      10 // number of concurrency steps we actually skip
+ #define ITER      10 // number of iterations (3: worse, average, best)
+-#define KEEP_ALIVES  // comment this for no-HTTP Keep-Alive tests
++//#define KEEP_ALIVES// comment this for no-HTTP Keep-Alive tests
+ #ifdef KEEP_ALIVES
+    #define KEEP_ALIVES_STR "-k"
+  #else
+@@ -91,7 +91,7 @@
+ //       Select (uncomment) the URL that you want to test:
+ //
+ // ---- Static files ----------------------------------------------------------
+-#define URL "/100.html"
++//#define URL "/100.html"
+ //#define URL "/csp?fractal"
+ 
+ // ---- G-WAN/C ---------------------------------------------------------------
+@@ -797,6 +797,21 @@
+ #endif
+ // ============================================================================
+ 
++// -------------------------
++// STEFANO
++// -------------------------
++#undef IP
++#undef URL
++#undef PORT
++#undef FROM
++#undef TO
++static const char* IP;  // = (argv[2]?	    argv[2] :"localhost");
++static const char* URL; // = (argv[3]?	    argv[3] :"/index.html");
++static int PORT;			// = (argv[4]?atoi(argv[4]):80);
++static int FROM;			// = (argv[5]?atoi(argv[5]):0);
++static int TO;				// = (argv[6]?atoi(argv[6]):1000);
++// -------------------------
++
+ static int http_req(char *request);
+ // ----------------------------------------------------------------------------
+ // usage: 
+@@ -805,6 +820,19 @@
+ // ----------------------------------------------------------------------------
+ int main(int argc, char *argv[])
+ {
++// -------------------------
++// STEFANO
++// -------------------------
++IP   = (argv[2]?argv[2]:"localhost");
++URL  = (argv[3]?argv[3]:"/index.html");
++PORT = (argv[4]?atoi(argv[4]):80);
++FROM = (argv[5]?atoi(argv[5]):0);
++TO   = (argv[6]?atoi(argv[6]):1000);
++
++// #define U_SSL
++// #define GWAN_28x
++// -------------------------
++
+    int i, j, nbr, max_rps, min_rps, ave_rps;
+    char str[256], buf[4070], buffer[256], cpu_buf[256] = {0};
+    time_t st = time(NULL);
+@@ -816,7 +844,8 @@
+    //fprintf(stderr, "ret=%d\n", http_req(URL));
+    //exit(0);
+ 
+-   FILE *fo = fopen("test.txt", "w+b");
++   sprintf(str, "%s/test.txt", IP);
++   FILE *fo = fopen(str, "w+b");
+    if(!fo)
+    {
+       perror("can't open output file"); // "Permission denied"
+@@ -832,6 +861,7 @@
+ #ifndef _WIN32
+    int nbr_cpu = cpu_type(fo), nbr_cores = nbr_cpu & 0x0000ffff;
+    nbr_cpu >>= 16;
++	if (nbr_cores == 0) nbr_cores = 1;
+    {
+       u64 free = 0, total = 0;
+       sys_ram(&free, &total);
+@@ -908,22 +938,24 @@
+       th_resources(&res_args);
+    }
+    
+-   fprintf(fo, "\n" CLI_NAME " -n 1000000 -c [%u-%u step:%d] "
+-#ifdef IBM_APACHEBENCH
++   fprintf(fo, "\n" CLI_NAME " -n 10000 -c [%u-%u step:%d] "
++#  ifdef IBM_APACHEBENCH
+                "-S -d "
+-#endif               
+-#ifdef LIGHTY_WEIGHTTP
++#  endif               
++#  ifdef LIGHTY_WEIGHTTP
+                "-t %u "
+-#endif               
+-               "%s "
+-               "\"http://" IP ":" PORT URL "\"\n\n", 
+-               FROM, TO, STEP, 
+-#ifdef LIGHTY_WEIGHTTP
+-               nbr_cores, 
+-#endif               
+-               KEEP_ALIVES_STR);
+-      
++#  endif               
++#  ifdef KEEP_ALIVES
++				   "-k "
++#  endif               
++               "http:// %s : %d %s\n\n",
++               FROM, TO, STEP,
++#  ifdef LIGHTY_WEIGHTTP
++               nbr_cores,
++#  endif               
++               IP, PORT, URL);
+ #endif
++
+    fputs("  Client           Requests per second               CPU\n" 
+    "-----------  -------------------------------  ----------------  -------\n"
+    "Concurrency     min        ave        max      user     kernel   MB RAM\n"
+@@ -933,16 +965,28 @@
+    for(i = FROM; i <= TO; i += STEP)
+    {
+ #ifdef IBM_APACHEBENCH
+-      // ApacheBench makes it straight for you since you can directly tell
+-      // the 'concurrency' and 'duration' you wish:
+-      sprintf(str, "ab -n 1000000 -c %d -S -d -t 1 %s "
+-                   "-H \"Accept-Encoding: gzip\" " // HTTP compression
+-                   "\"http://" IP ":" PORT
+-                   URL "\""
+-#ifdef _WIN32                    
+-                   " > ab.txt"
+-#endif                    
+-                   , i ? i : 1, KEEP_ALIVES_STR);
++       // ApacheBench makes it straight for you since you can directly tell
++       // the 'concurrency' and 'duration' you wish:
++       sprintf(str, "ab -n 1000 -c %d -S -d -t 1 "	
++#	ifdef KEEP_ALIVES
++						  "-k "												/* KEEP-ALIVES */
++#	elif defined(GWAN_28x)
++						  "-H \"Connection: close\" "					/* GWAN 2.8.[8-14] need this if NO Keep-Alives */
++#	endif
++                    "-H \"Accept-Encoding: gzip,deflate\" " /* HTTP compression */
++#	ifdef U_SSL
++                    "\"https://%s" ":%d" "%s" "\""
++#	else
++                    "\"http://%s" ":%d" "%s" "\""
++#	endif
++#  ifdef _WIN32                    
++                    " >  %s/ab.txt"
++#  endif
++                    ,i?i:1, IP, PORT, URL
++#  ifdef _WIN32                    
++						  ,IP
++#  endif
++						  );
+ #elif defined HP_HTTPERF
+       // HTTPerf does not let you specify the 'concurrency'rate:
+       //
+@@ -977,26 +1021,30 @@
+       // As a result, HTTPerf can only be reliably used without Keep-Alives
+       // (with num-call=1)
+       //
+-      sprintf(str, "httperf --server=" IP " --port=" PORT " "
++      sprintf(str, "httperf --server=" "%s" " --port=" "%d" " "
+                "--rate=%d "
+-#ifdef KEEP_ALIVES               
+-               "--num-conns=%d --num-calls 100000 " // KEEP-ALIVES
+-#else               
+-               "--num-conns=1000000 --num-calls 1 " // NO Keep_Alives
+-#endif               
+-               "--timeout 5 --hog --uri=\""
+-               URL "\""
+-#ifdef _WIN32                    
++#  ifdef KEEP_ALIVES               
++               "--num-conns=%d --num-calls 1000 " // KEEP-ALIVES
++#  else               
++               "--num-conns=1000 --num-calls 1 " // NO Keep_Alives
++#  endif               
++               "--timeout 5 --hog --uri=\"" "%s" "\""
++#  ifdef _WIN32                    
+                " > ab.txt"
+-#endif                    
+-               , i?i:1, i?i:1);
++#  endif                    
++               , IP, PORT
++               , i?i:1
++#  ifdef KEEP_ALIVES               
++					, i?i:1
++#  endif               
++					, URL);
+ #elif defined LIGHTY_WEIGHTTP
+-      sprintf(str, "weighttp -n 1000000 -c %d -t %u %s "
++      sprintf(str, "weighttp -n 1000 -c %d -t %u %s "
+                    "-H \"Accept-Encoding: gzip\" "
+-                   "\"http://" IP ":" PORT
+-                   URL "\""
++                   "\"http://%s"  ":%d"  "%s" "\""
+                    // Weighttp rejects concurrency inferior to thread count:
+-                   , i > nbr_cores ? i : nbr_cores, nbr_cores, KEEP_ALIVES_STR);
++                   , i > nbr_cores ? i : nbr_cores, nbr_cores, KEEP_ALIVES_STR,
++                   IP, PORT, URL);
+ #endif
+       
+       for(max_rps = 0, ave_rps = 0, min_rps = 0xffff0, j = 0; j < ITER; j++)
+@@ -1007,8 +1055,10 @@
+          // this OS platform is -by far- the slowest and less scalable of all)
+          system(str);
+          Sleep(4000);
+-         // get the information we need from res.txt
+-         if(!(f = fopen("ab.txt", "rb")))
++         // get the information we need from ab.txt
++			sprintf(buff, "%s/ab.txt", IP);
++			sync();
++         if(!(f = fopen(buff, "rb")))
+          {
+             printf("Can't open ab.txt output\n");
+             return 1;
+@@ -1348,11 +1398,12 @@
+          break;
+ 
+       len = sprintf(buf, "GET %s HTTP/1.1\r\n"
+-         "Host: " IP ":" PORT "\r\n"
+-      "User-Agent: a.c\r\n"
+-      "Accept-Encoding: gzip\r\n"
+-      "Connection: close\r\n\r\n", request);
+-      
++                    "Host: %s" ":%d" "\r\n"
++                    "User-Agent: a.c\r\n"
++                    "Accept-Encoding: gzip,deflate\r\n"
++                    "Connection: close\r\n\r\n",
++                    request, IP, PORT);
++
+       if(write(s, buf, len) != len)
+       {
+          break;

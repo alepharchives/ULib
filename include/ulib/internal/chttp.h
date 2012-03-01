@@ -135,7 +135,7 @@ typedef struct uhttpinfo {
 #define U_http_keep_alive           u_http_info.flag[2]
 #define U_http_method_type          u_http_info.flag[3]
 #define U_http_request_check        u_http_info.flag[4]
-#define U_http_is_accept_deflate    u_http_info.flag[5]
+#define U_http_is_accept_gzip       u_http_info.flag[5]
 #define U_http_is_connection_close  u_http_info.flag[6]
 #define U_http_no_cache             u_http_info.flag[7]
 #define U_http_is_navigation        u_http_info.flag[8]

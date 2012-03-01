@@ -123,6 +123,7 @@ CApath_rehash() {
 compile_usp() {
 
 	if [ "$TERM" != "cygwin" ]; then
+		mkdir -p /usr/local/libexec/ulib
 		rm -f /usr/local/libexec/ulib/http_session.jnl
 		( cd ../../src/ulib/net/server/plugin/usp/; ./usp2so.sh >/tmp/usp2so.sh.out 2>&1 || exit 1; \
 		  test -d ../.libs && cd ../.libs; \

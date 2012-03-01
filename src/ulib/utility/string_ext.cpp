@@ -1015,16 +1015,16 @@ UString UStringExt::decompress(const UString& s)
    U_RETURN_STRING(r);
 }
 
-UString UStringExt::deflate(const UString& s) // .gz compress
+UString UStringExt::deflate(const UString& s, bool bheader) // .gz compress
 {
-   U_TRACE(0, "UStringExt::deflate(%.*S)", U_STRING_TO_TRACE(s))
+   U_TRACE(0, "UStringExt::deflate(%.*S,%b)", U_STRING_TO_TRACE(s), bheader)
 
    // compress with zlib
 
 #ifdef HAVE_LIBZ
    UString r(s.rep->_length * 2);
 
-   r.rep->_length = u_gz_deflate(s.rep->str, s.rep->_length, r.rep->data());
+   r.rep->_length = u_gz_deflate(s.rep->str, s.rep->_length, r.rep->data(), bheader);
 
    U_INTERNAL_DUMP("u_gz_deflate() = %d", r.rep->_length)
 
@@ -1044,7 +1044,12 @@ UString UStringExt::gunzip(const UString& s, uint32_t sz) // .gz uncompress
       {
       // check magic byte
 
-      if (U_MEMCMP(s.rep->str, GZIP_MAGIC)) sz = s.rep->_length * 10;
+      if (U_MEMCMP(s.rep->str, GZIP_MAGIC))
+         {
+         // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes
+
+         sz = s.rep->_length * 0.1 + 12;
+         }
       else
          {
          // read original size
@@ -1111,6 +1116,53 @@ UString UStringExt::toupper(const UString& x)
    U_INTERNAL_ASSERT(r.invariant())
 
    U_RETURN_STRING(r);
+}
+
+// gived the name retrieve pointer on value element from headers "name1:value1\nname2:value2\n"...
+
+__pure const char* UStringExt::getValueFromName(const UString& buffer, uint32_t pos, uint32_t len, const UString& name, bool nocase)
+{
+   U_TRACE(0, "UStringExt::getValueFromName(%.*S,%u,%u,%.*S,%b)", U_STRING_TO_TRACE(buffer), pos, len, U_STRING_TO_TRACE(name), nocase)
+
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
+   U_ASSERT_DIFFERS(buffer.empty(), true)
+
+   const char* ptr_header_value;
+   uint32_t header_line, end = pos + len;
+
+loop:
+   header_line = buffer.find(name, pos, len);
+
+   if (header_line == U_NOT_FOUND)
+      {
+      if (nocase)
+         {
+         header_line = buffer.findnocase(name, pos, len); 
+
+         if (header_line != U_NOT_FOUND) goto next;
+         }
+
+      U_RETURN((const char*)0);
+      }
+
+next:
+   U_INTERNAL_DUMP("header_line = %.*S", 20, buffer.c_pointer(header_line))
+
+   ptr_header_value = buffer.c_pointer(header_line + name.size());
+
+   while (u_isspace(*ptr_header_value)) ++ptr_header_value;
+
+   if (*ptr_header_value != ':')
+      {
+      pos = buffer.distance(ptr_header_value);
+      len = end - pos;
+
+      goto loop;
+      }
+
+   do { ++ptr_header_value; } while (u_isspace(*ptr_header_value));
+
+   U_RETURN(ptr_header_value);
 }
 
 // retrieve information on form elements as couple <name1>=<value1>&<name2>=<value2>&...

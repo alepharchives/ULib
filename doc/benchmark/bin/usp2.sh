@@ -2,14 +2,14 @@
 
 # usp2.sh
 
-# gcc -DKEEP_ALIVES	 -static bench2.c	-o bench2_keepalive    -lpthread
-# gcc						 -static bench2.c	-o bench2_NO_keepalive -lpthread
+# gcc -DKEEP_ALIVES -DLIGHTY_WEIGHTTP -static ab.c	-lpthread -o bench2_keepalive
+# gcc					  -DLIGHTY_WEIGHTTP -static ab.c	-lpthread -o bench2_NO_keepalive
 
-# const char* IP  = (argv[1]?	    argv[1] :"localhost");
-# const char* URL = (argv[2]?	    argv[2] :"/index.html");
-# int PORT			= (argv[3]?atoi(argv[3]):80);
-# int FROM			= (argv[4]?atoi(argv[4]):0);
-# int TO          = (argv[5]?atoi(argv[5]):1000);
+# const char* IP  = (argv[2]?	    argv[2] :"localhost");
+# const char* URL = (argv[3]?	    argv[3] :"/index.html");
+# int PORT			= (argv[4]?atoi(argv[4]):80);
+# int FROM			= (argv[5]?atoi(argv[5]):0);
+# int TO          = (argv[6]?atoi(argv[6]):1000);
 
 # I had to increase the local port range (because of the TIME_WAIT status of the TCP ports)
 
@@ -20,39 +20,49 @@
 #HOST=stefano
 #HOST=giallo
 
-mkdir -p				$HOST && chmod 777			 $HOST
-mkdir -p WEIGHTTP/$HOST && chmod 777 WEIGHTTP/$HOST
+mkdir -p		      $HOST && chmod 777	       $HOST
+mkdir -p	WEIGHTTP/$HOST && chmod 777 WEIGHTTP/$HOST
+
+# weighttp rejects concurrency inferior to thread count
+# ------------------------------------------------------------------------------------------------------------------------------------------
+# weighttp -n 10000 -c 10 -t 1    -H 'Accept-Encoding: gzip,deflate' "http://$HOST:8080/servlet/benchmarking?name=stefano" // NO Keep-Alives
+# weighttp -n 10000 -c 10 -t 1 -k -H 'Accept-Encoding: gzip,deflate' "http://$HOST:8080/servlet/benchmarking?name=stefano" // KEEP-ALIVES
+# ------------------------------------------------------------------------------------------------------------------------------------------
+
+date > WEIGHTTP/$1/start.txt
 
 # 100.html
-./bench2_keepalive	 $HOST "/100.html" 8080 0 1000 lt-userver_tcp
-mv $1/test.txt WEIGHTTP/$1/userver_tcp_100_keepalive.csv
+./bench2_keepalive	userver_tcp $HOST "/100.html" 8080 0 1000
+mv $1/test.txt			WEIGHTTP/$1/userver_tcp_100_keepalive.csv
 sleep 60
-./bench2_NO_keepalive $HOST "/100.html" 8080 0 1000 lt-userver_tcp
-mv $1/test.txt	WEIGHTTP/$1/userver_tcp_100_NO_keepalive.csv
+./bench2_NO_keepalive userver_tcp $HOST "/100.html" 8080 0 1000
+mv $1/test.txt			WEIGHTTP/$1/userver_tcp_100_NO_keepalive.csv
 
 sleep 60
 
 # 1000.html
-./bench2_NO_keepalive $HOST "/1000.html" 8080 0 1000 lt-userver_tcp
-mv $1/test.txt	WEIGHTTP/$1/userver_tcp_1000_NO_keepalive.csv
+./bench2_NO_keepalive userver_tcp $HOST "/1000.html" 8080 0 1000
+mv $1/test.txt			WEIGHTTP/$1/userver_tcp_1000_NO_keepalive.csv
 sleep 60
-./bench2_keepalive	$HOST "/1000.html" 8080 0 1000 lt-userver_tcp
-mv $1/test.txt	WEIGHTTP/$1/userver_tcp_1000_keepalive.csv
+./bench2_keepalive	userver_tcp $HOST "/1000.html" 8080 0 1000
+mv $1/test.txt			WEIGHTTP/$1/userver_tcp_1000_keepalive.csv
 
 sleep 60
 
 # servlet/benchmarking?name=stefano
-./bench2_NO_keepalive $HOST "/servlet/benchmarking?name=stefano"   8080 0 1000 lt-userver_tcp
-mv $1/test.txt	WEIGHTTP/$1/usp_NO_keepalive.csv
+./bench2_NO_keepalive userver_tcp $HOST "/servlet/benchmarking?name=stefano"   8080 0 1000
+mv $1/test.txt			WEIGHTTP/$1/usp_NO_keepalive.csv
 sleep 60
-./bench2_keepalive    $HOST "/servlet/benchmarking?name=stefano"   8080 0 1000 lt-userver_tcp
-mv $1/test.txt	WEIGHTTP/$1/usp_keepalive.csv
+./bench2_keepalive   userver_tcp  $HOST "/servlet/benchmarking?name=stefano"   8080 0 1000
+mv $1/test.txt			WEIGHTTP/$1/usp_keepalive.csv
 
 sleep 60
 
 # ws/flash-bridge/WebSocketMain.swf
-./bench2_keepalive    $HOST "/ws/flash-bridge/WebSocketMain.swf"   8080 0 1000 lt-userver_tcp
-mv $1/test.txt	WEIGHTTP/$1/userver_tcp_big_keepalive.csv
+./bench2_keepalive   userver_tcp  $HOST "/ws/flash-bridge/WebSocketMain.swf"   8080 0 1000
+mv $1/test.txt			WEIGHTTP/$1/userver_tcp_big_keepalive.csv
 sleep 60
-./bench2_NO_keepalive $HOST "/ws/flash-bridge/WebSocketMain.swf"   8080 0 1000 lt-userver_tcp
-mv $1/test.txt	WEIGHTTP/$1/userver_tcp_big_NO_keepalive.csv
+./bench2_NO_keepalive userver_tcp $HOST "/ws/flash-bridge/WebSocketMain.swf"   8080 0 1000
+mv $1/test.txt			WEIGHTTP/$1/userver_tcp_big_NO_keepalive.csv
+
+date > WEIGHTTP/$1/end.txt

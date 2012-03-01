@@ -25,4 +25,4 @@ $SYNC
 cat client.log server.log > out/client_server.out
 
 # Test against expected output
-test_output_wc w client_server
+test_output_wc l client_server

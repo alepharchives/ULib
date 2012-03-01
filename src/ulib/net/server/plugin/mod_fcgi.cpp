@@ -22,6 +22,23 @@
 #  include <ulib/net/unixsocket.h>
 #endif
 
+/* spawn-fcgi is used to spawn remote and local FastCGI processes.
+ *
+ * While it is obviously needed to spawn remote FastCGI backends (the web server
+ * can only spawn local ones), it is recommended to spawn local backends with spawn-fcgi, too.
+ *
+ * Reasons why you may want to use spawn-fcgi instead of something else:
+ *
+ * Privilege separation without needing a suid-binary or running a server as root.
+ *
+ * You can restart your web server and the FastCGI applications without restarting the others.
+ *
+ * You can run them in different chroot()s.
+ *
+ * Running your FastCGI applications doesn't depend on the web server you are running,
+ * which allows for easier testing of other web servers.
+ */
+
 // ---------------------------------------------------------------------------------------------------------------
 // START Fast CGI stuff
 // ---------------------------------------------------------------------------------------------------------------
@@ -232,8 +249,6 @@ int UFCGIPlugIn::handlerInit()
 
          set_FCGIBeginRequest();
 
-         UServer_Base::bpluginsHandlerReset = true;
-
          U_RETURN(U_PLUGIN_HANDLER_GO_ON);
          }
 
@@ -255,11 +270,9 @@ int UFCGIPlugIn::handlerRequest()
    if (connection &&
        UHTTP::isHTTPRequestAlreadyProcessed() == false)
       {
-      U_ASSERT(connection->isConnected())
       U_INTERNAL_ASSERT_POINTER(UHTTP::fcgi_uri_mask)
 
-      if (UHTTP::isHTTPRequestAlreadyProcessed() == false &&
-          u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*UHTTP::fcgi_uri_mask), 0))
+      if (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*UHTTP::fcgi_uri_mask), 0))
          {
          fill_FCGIBeginRequest(FCGI_BEGIN_REQUEST, sizeof(FCGI_BeginRequestBody));
 
@@ -463,24 +476,16 @@ int UFCGIPlugIn::handlerRequest()
 
 err:     UHTTP::setHTTPInternalError();
 end:     UHTTP::setHTTPRequestProcessed();
-         }
-      }
 
-   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-}
+         // reset
 
-int UFCGIPlugIn::handlerReset()
-{
-   U_TRACE(0, "UFCGIPlugIn::handlerReset()")
+         connection->clearData();
 
-   if (connection)
-      {
-      connection->clearData();
-
-      if (fcgi_keep_conn == false &&
-          connection->isConnected())
-         {
-         connection->close();
+         if (fcgi_keep_conn == false &&
+             connection->isConnected())
+            {
+            connection->close();
+            }
          }
       }
 

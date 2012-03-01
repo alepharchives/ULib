@@ -1,0 +1,69 @@
+[Tue Feb 28 19:09:16 2012 GMT] ------------------------------------------
+[Tue Feb 28 19:09:16 2012 GMT] G-WAN 3.2.24 64-bit (Feb 24 2012 16:20:53)
+[Tue Feb 28 19:09:16 2012 GMT] ------------------------------------------
+[Tue Feb 28 19:09:16 2012 GMT] fork: 1 (times parent started a child)
+[Tue Feb 28 19:09:16 2012 GMT] Local Time: Tue, 28 Feb 2012 20:09:16 GMT+1
+[Tue Feb 28 19:09:16 2012 GMT] RAM : (1.65 GB free + 0 shared + 37.10 MB buffers) / 1.99 GB total
+[Tue Feb 28 19:09:16 2012 GMT] DISK: 130.24 GB free / 480.66 GB total
+[Tue Feb 28 19:09:16 2012 GMT] 100 processes running
+[Tue Feb 28 19:09:16 2012 GMT] 1               Intel(R) Pentium(R) 4 CPU 2.80GHz (1 Cores/CPU, 2 threads/Core)
+[Tue Feb 28 19:09:16 2012 GMT] Using 1 worker threads
+[Tue Feb 28 19:09:16 2012 GMT] 64-bit little-endian (least significant byte first)
+[Tue Feb 28 19:09:16 2012 GMT]  (3.2.7) 64-bit
+[Tue Feb 28 19:09:16 2012 GMT] Glibc: 2.13 (stable)
+[Tue Feb 28 19:09:16 2012 GMT] user: root (uid:0), group: root (uid:0), members: root
+[Tue Feb 28 19:09:16 2012 GMT] system  fd_max: 1,024
+[Tue Feb 28 19:09:16 2012 GMT] program fd_max: 1,024
+[Tue Feb 28 19:09:16 2012 GMT] updated fd_max: 125,952
+[Tue Feb 28 19:09:16 2012 GMT] Available network interfaces (5):
+[Tue Feb 28 19:09:16 2012 GMT] 127.0.0.1
+[Tue Feb 28 19:09:16 2012 GMT] 10.30.1.131
+[Tue Feb 28 19:09:16 2012 GMT] 192.168.1.131
+[Tue Feb 28 19:09:16 2012 GMT] 192.168.201.131
+[Tue Feb 28 19:09:16 2012 GMT] 192.168.254.131
+[Tue Feb 28 19:09:17 2012 GMT] Host /mnt/storage/stefano/ulib/gwan/3.2.24/0.0.0.0_8080/#0.0.0.0:
+[Tue Feb 28 19:09:17 2012 GMT] loaded folder/argv.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded folder/hellox.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded folder/hello.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded httpdate.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded setheaders.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded kv_bench.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded sqlite.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded www_csp.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded forum.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded loan.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded hello.mm
+[Tue Feb 28 19:09:17 2012 GMT] loaded redirect.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded hello.m
+[Tue Feb 28 19:09:17 2012 GMT] loaded fractal.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded trace.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded servlet_name.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded noheaders.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded contact.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded served_from.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded json.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded report.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded hello.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded request.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded kv.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded chart.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded hellox.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded hello.cpp
+[Tue Feb 28 19:09:17 2012 GMT] loaded base64.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded argv.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded email.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded div_by_zero.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded data_uri.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded crash_libc.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded crash_gwcall.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded crash.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded cookies.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded charts.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded captcha.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded cache.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded 100.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded asm.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded persistence.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded json_bench.c
+[Tue Feb 28 19:09:17 2012 GMT] loaded getheaders.c
+[Tue Feb 28 19:09:17 2012 GMT] server started

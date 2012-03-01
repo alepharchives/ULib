@@ -895,13 +895,13 @@ int USSIPlugIn::handlerRequest()
 
          if (cgi_output == false)
             {
-            U_INTERNAL_DUMP("U_http_is_accept_deflate = %C", U_http_is_accept_deflate)
+            U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
 
-            if (U_http_is_accept_deflate)
+            if (U_http_is_accept_gzip)
                {
-               *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body);
+               *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body, true);
 
-               (void) header.insert(0, U_CONSTANT_TO_PARAM("Content-Encoding: deflate\r\n"));
+               (void) header.insert(0, U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
                }
 
             if (bcache)
