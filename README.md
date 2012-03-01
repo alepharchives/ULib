@@ -52,7 +52,7 @@ The current version offers the following features :
    * Support for directory listings via basic/digest authentication.
    * Support for uri protection.
    * Support for aliases/redirection.
-   * Support for to switch the site to a maintenance page only.
+   * Support for switch the site to a maintenance page only.
    * Support for overriden of error messages by local document (ErrorDocument/40x|500.html).
    * Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache,
      some CMS (SilverStripe) require it.
@@ -192,7 +192,7 @@ nginx run with the follow configuration:
 		}
  	}
 
-All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz running `Gentoo 2.0.3 AMD64 (kernel 3.2.6)`.
+All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz running `Gentoo 2.0.3 AMD64 (kernel 3.2.7)`.
 Yes, this CPU is 11-year old (single-core) P4, but some test on more recent processor (dual-core AMD) give similar results.
 
 The client [ab.c](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark/bin/ab.c)
@@ -211,9 +211,9 @@ I had to increase the local port range on client (because of the TIME_WAIT statu
 
 For serving static content I use 3 file of different size:
 
- *  100.html         ( 100 byte) (only 'XXX...' without CR/LF)
- * 1000.html	      (1000 byte) (only 'XXX...' without CR/LF)
- * WebSocketMain.swf (80K  byte)
+ * [100.html](https://github.com/stefanocasazza/ULib/tree/master/tests/examples/benchmark/docroot/100.html) (100 bytes - only 'XXX...' without CR/LF)
+ * [1000.html](https://github.com/stefanocasazza/ULib/tree/master/tests/examples/benchmark/docroot/1000.html) (1000 bytes - only 'XXX...' without CR/LF)
+ * [WebSocketMain.swf](https://github.com/stefanocasazza/ULib/tree/master/tests/examples/benchmark/docroot/ws/flash-bridge/WebSocketMain.swf) (80K bytes)
 
 For serving dynamic content I use a simple request: `Hello {name}`
 

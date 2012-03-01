@@ -49,7 +49,7 @@
 <li>Support for directory listings via basic/digest authentication.</li>
 <li>Support for uri protection.</li>
 <li>Support for aliases/redirection.</li>
-<li>Support for to switch the site to a maintenance page only.</li>
+<li>Support for switch the site to a maintenance page only.</li>
 <li>Support for overriden of error messages by local document (ErrorDocument/40x|500.html).</li>
 <li>Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache,
  some CMS (SilverStripe) require it.</li>
@@ -190,7 +190,7 @@ http {
 }
 </code></pre>
 
-<p>All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz running <code>Gentoo 2.0.3 AMD64 (kernel 3.2.6)</code>.
+<p>All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz running <code>Gentoo 2.0.3 AMD64 (kernel 3.2.7)</code>.
 Yes, this CPU is 11-year old (single-core) P4, but some test on more recent processor (dual-core AMD) give similar results.</p>
 
 <p>The client <a href="https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark/bin/ab.c">ab.c</a>
@@ -212,9 +212,9 @@ The client is running on different computer than the web server (networking is i
 <p>For serving static content I use 3 file of different size:</p>
 
 <ul>
-<li>100.html         ( 100 byte) (only 'XXX...' without CR/LF)</li>
-<li>1000.html          (1000 byte) (only 'XXX...' without CR/LF)</li>
-<li>WebSocketMain.swf (80K  byte)</li>
+<li><a href="https://github.com/stefanocasazza/ULib/tree/master/tests/examples/benchmark/docroot/100.html">100.html</a> (100 bytes - only 'XXX...' without CR/LF)</li>
+<li><a href="https://github.com/stefanocasazza/ULib/tree/master/tests/examples/benchmark/docroot/1000.html">1000.html</a> (1000 bytes - only 'XXX...' without CR/LF)</li>
+<li><a href="https://github.com/stefanocasazza/ULib/tree/master/tests/examples/benchmark/docroot/ws/flash-bridge/WebSocketMain.swf">WebSocketMain.swf</a> (80K bytes)</li>
 </ul>
 
 <p>For serving dynamic content I use a simple request: <code>Hello {name}</code></p>
