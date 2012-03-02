@@ -27177,12 +27177,19 @@ $as_echo "$ulib_cc_flag" >&6; }
 		MAYBE_FLAGS="$MAYBE_FLAGS -Winline -Wno-unused-parameter -Wno-unused-variable"
 	fi
 
-	if test "$use_distcc" != "yes" ; then
-		MAYBE_FLAGS="$MAYBE_FLAGS -mtune=native" # NB: distcc don't work with this...
+	if test "${enable_gcc_optimized}" = "yes"; then
+		if test "$use_distcc" != "yes" ; then
+			MAYBE_FLAGS="$MAYBE_FLAGS -mtune=native" # NB: distcc don't work with this...
+		fi
+		if test "$enable_final" = "yes"; then
+			MAYBE_FLAGS="$MAYBE_FLAGS -funit-at-a-time"
+		fi
 	fi
 
+	# -Wcast-qual
 	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
-		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wdelete-non-virtual-dtor" # -Wcast-qual -Wzero-as-null-pointer-constant
+		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition \
+		-Wdelete-non-virtual-dtor -Wzero-as-null-pointer-constant"
 
 	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated -Wdelete-non-virtual-dtor"
 
