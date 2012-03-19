@@ -16,7 +16,7 @@
 
 #include <ulib/timeval.h>
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
 #  include <ulib/libevent/event.h>
 U_EXPORT struct event_base* u_ev_base;
 #endif
@@ -34,7 +34,7 @@ public:
 
       reset();
 
-#  ifdef HAVE_LIBEVENT
+#  ifdef USE_LIBEVENT
       U_INTERNAL_ASSERT_POINTER(u_ev_base)
 
       pevent = U_NEW(UTimerEv<UEventTime>(*this));
@@ -47,7 +47,7 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UEventTime)
 
-#  ifdef HAVE_LIBEVENT
+#  ifdef USE_LIBEVENT
       UDispatcher::del(pevent);
                 delete pevent;
 #  endif
@@ -71,7 +71,7 @@ public:
 
    virtual int handlerTime() { return -1; }
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
    UTimerEv<UEventTime>* pevent;
 
    void operator()(int fd, short event);

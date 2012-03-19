@@ -21,7 +21,7 @@
 #include <ulib/utility/string_ext.h>
 #include <ulib/utility/data_session.h>
 
-#ifdef HAVE_PCRE
+#ifdef USE_LIBPCRE
 #  include <ulib/pcre/pcre.h>
 #else
 #  include <ulib/container/vector.h>
@@ -325,6 +325,7 @@ public:
 
    // get HTTP response message
 
+   static UString getUrlEncodedForResponse(const char* fmt);
    static UString getHTTPHeaderForResponse(const UString& content, bool connection_close);
 
 #ifdef U_HTTP_CACHE_REQUEST
@@ -750,7 +751,7 @@ public:
 
    typedef void (*vPFstr)(UString&);
 
-#ifdef HAVE_PAGE_SPEED // (Google Page Speed)
+#ifdef USE_PAGE_SPEED // (Google Page Speed)
    typedef void (*vPFpcstr)(const char*, UString&);
 
    class UPageSpeed : public UDynamic {
@@ -786,7 +787,7 @@ public:
    static UPageSpeed* page_speed;
 #endif
 
-#ifdef HAVE_V8 // (Google V8 JavaScript Engine)
+#ifdef USE_LIBV8 // (Google V8 JavaScript Engine)
    class UV8JavaScript : public UDynamic {
    public:
 
@@ -832,20 +833,20 @@ public:
 
    // COSTRUTTORI
 
-#ifdef HAVE_PCRE
+#ifdef USE_LIBPCRE
    UPCRE key;
 #endif
    UString replacement;
 
    RewriteRule(const UString& _key, const UString& _replacement) :
-#  ifdef HAVE_PCRE
+#  ifdef USE_LIBPCRE
       key(_key, PCRE_FOR_REPLACE),
 #  endif
        replacement(_replacement)
       {
       U_TRACE_REGISTER_OBJECT(0, RewriteRule, "%.*S,%.*S", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(_replacement))
 
-#  ifdef HAVE_PCRE
+#  ifdef USE_LIBPCRE
       key.study();
 #  endif
       }

@@ -189,7 +189,7 @@ bool UImapClient::_connectServer(const UString& server, int port, uint32_t timeo
 {
    U_TRACE(0, "UImapClient::_connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    U_INTERNAL_ASSERT(Socket::isSSL())
    ((USSLSocket*)this)->setActive(false);
 #endif
@@ -242,7 +242,7 @@ bool UImapClient::startTLS()
 {
    U_TRACE(0, "UImapClient::startTLS()")
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    U_INTERNAL_ASSERT(Socket::isSSL())
 
    if (state == NOT_AUTHENTICATED)

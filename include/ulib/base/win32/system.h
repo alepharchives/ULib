@@ -4,7 +4,7 @@
 #ifndef W32_SYSTEM_H
 #define W32_SYSTEM_H 1
 
-#ifndef HAVE_LFS
+#ifndef ENABLE_LFS
 #  define __NO_MINGW_LFS
 #endif
 

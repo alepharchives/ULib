@@ -72,7 +72,7 @@ bool UPop3Client::_connectServer(const UString& server, int port, uint32_t timeo
 {
    U_TRACE(0, "UPop3Client::_connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    U_INTERNAL_ASSERT(Socket::isSSL())
    ((USSLSocket*)this)->setActive(false);
 #endif
@@ -247,7 +247,7 @@ bool UPop3Client::startTLS()
 {
    U_TRACE(0, "UPop3Client::startTLS()")
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    U_INTERNAL_ASSERT(Socket::isSSL())
 
         if (state != AUTHORIZATION) response = BAD_STATE;

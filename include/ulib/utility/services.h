@@ -16,7 +16,7 @@
 
 #include <ulib/string.h>
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  include <openssl/pem.h>
 #  include <openssl/engine.h>
 #  include <openssl/x509_vfy.h>
@@ -30,7 +30,7 @@ typedef int (*verify_cb)(int,X509_STORE_CTX*); /* error callback */
 #  define U_STORE_FLAGS (X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL)
 #endif
 
-#ifdef HAVE_LIBUUID
+#ifdef USE_LIBUUID
 #  include <uuid/uuid.h>
 #endif
 
@@ -153,7 +153,7 @@ struct U_EXPORT UServices {
    static UString generateToken(const UString& data, time_t expire);
    static bool    getTokenData(       UString& data, const UString& value, time_t& expire);
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    static void generateDigest(int alg, const UString& data) { generateDigest(alg, (unsigned char*)U_STRING_TO_PARAM(data)); }
    static void generateDigest(int alg, unsigned char* data, uint32_t size);
 #endif
@@ -162,7 +162,7 @@ struct U_EXPORT UServices {
    static void generateDigest(int alg, uint32_t keylen, const UString& data,                UString& output, int base64 = 0)
       { generateDigest(alg, keylen, (unsigned char*)U_STRING_TO_PARAM(data), output, base64); }
 
-#ifdef HAVE_LIBUUID
+#ifdef USE_LIBUUID
    // creat a new unique UUID value - 16 bytes (128 bits) long
    // return from the binary representation a 36-byte string (plus tailing '\0') of the form 1b4e28ba-2fa1-11d2-883f-0016d3cca427
 
@@ -171,7 +171,7 @@ struct U_EXPORT UServices {
    static UString getUUID();
 #endif
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    /* setup OPENSSL standard certificate directory. The X509_STORE holds the tables etc for verification stuff.
    A X509_STORE_CTX is used while validating a single certificate. The X509_STORE has X509_LOOKUPs for looking
    up certs. The X509_STORE then calls a function to actually verify the certificate chain

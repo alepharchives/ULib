@@ -21,78 +21,102 @@
 #  include <ulib/replace/getopt.h>
 #endif
 
-#ifdef HAVE_LFS
-#  define LFS_ENABLE          "enabled"
+#ifdef ENABLE_MEMPOOL
+#  define MEMORY_POOL_ENABLE "enabled"
 #else
-#  define LFS_ENABLE          "no"
+#  define MEMORY_POOL_ENABLE "no"
+#endif
+#ifdef ENABLE_LFS
+#  define LFS_ENABLE         "enabled"
+#else
+#  define LFS_ENABLE         "no"
+#endif
+#ifdef ENABLE_IPV6
+#  define IPV6_ENABLE        "enabled"
+#else
+#  define IPV6_ENABLE        "no"
+#endif
+#ifdef ENABLE_ZIP
+#  define ZIP_ENABLE         "enabled"
+#else
+#  define ZIP_ENABLE         "no"
 #endif
 
-#ifdef HAVE_IPV6
-#  define IPV6_ENABLE         "enabled"
+#ifdef USE_LIBZ
+#  define LIBZ_ENABLE        "yes ( " _LIBZ_VERSION " )"
 #else
-#  define IPV6_ENABLE         "no"
+#  define LIBZ_ENABLE        "no"
 #endif
-
-#ifdef U_MEMORY_POOL
-#  define MEMORY_POOL_ENABLE  "enabled"
+#ifdef USE_LIBPCRE
+#  define LIBPCRE_ENABLE     "yes ( " _PCRE_VERSION " )"
 #else
-#  define MEMORY_POOL_ENABLE  "no"
+#  define LIBPCRE_ENABLE     "no" 
 #endif
-
-#ifdef HAVE_ZIP
-#  define ZIP_ENABLE          "enabled"
+#ifdef USE_LIBSSL
+#  define LIBSSL_ENABLE      "yes ( " _SSL_VERSION " )"
 #else
-#  define ZIP_ENABLE          "no"
+#  define LIBSSL_ENABLE      "no"
 #endif
-
-#ifdef HAVE_MAGIC
-#  define MAGIC_ENABLE        "enabled"
+#ifdef USE_LIBSSH
+#  define LIBSSH_ENABLE      "yes ( " _LIBSSH_VERSION " )"
 #else
-#  define MAGIC_ENABLE        "no"
+#  define LIBSSH_ENABLE      "no"
 #endif
-
-#ifdef HAVE_MYSQL
-#  define MYSQL_ENABLE        "enabled"
+#ifdef USE_LIBLDAP
+#  define LIBLDAP_ENABLE     "yes ( " _LDAP_VERSION " )"
 #else
-#  define MYSQL_ENABLE        "no"
+#  define LIBLDAP_ENABLE     "no"
 #endif
-
-#ifdef HAVE_DBI
-#  define DBI_ENABLE          "enabled"
+#ifdef USE_LIBCURL
+#  define LIBCURL_ENABLE     "yes ( " _CURL_VERSION " )"
 #else
-#  define DBI_ENABLE          "no"
+#  define LIBCURL_ENABLE     "no"
 #endif
-
-#ifdef HAVE_LIBUUID
-#  define LIBUUID_ENABLE     "enabled"
+#ifdef USE_LIBEXPAT
+#  define LIBEXPAT_ENABLE    "yes ( " _EXPAT_VERSION " )"
+#else
+#  define LIBEXPAT_ENABLE    "no"
+#endif
+#ifdef USE_LIBMAGIC
+#  define MAGIC_ENABLE       "yes ( " _MAGIC_VERSION " )"
+#else
+#  define MAGIC_ENABLE       "no"
+#endif
+#ifdef USE_LIBMYSQL
+#  define MYSQL_ENABLE       "yes ( " _MYSQL_VERSION " )" 
+#else
+#  define MYSQL_ENABLE       "no"
+#endif
+#ifdef USE_LIBDBI
+#  define DBI_ENABLE         "yes ( " _DBI_VERSION " )"
+#else
+#  define DBI_ENABLE         "no"
+#endif
+#ifdef USE_LIBUUID            
+#  define LIBUUID_ENABLE     "yes ( " _LIBUUID_VERSION " )" 
 #else
 #  define LIBUUID_ENABLE     "no"
 #endif
-
-#ifdef HAVE_LIBEVENT
-#  define LIBEVENT_ENABLE     "enabled"
+#ifdef USE_LIBEVENT
+#  define LIBEVENT_ENABLE    "yes ( " _LIBEVENT_VERSION " )" 
 #else
-#  define LIBEVENT_ENABLE     "no"
+#  define LIBEVENT_ENABLE    "no"
 #endif
-
-#ifdef HAVE_LIBXML2
-#  define LIBXML2_ENABLE     "enabled"
+#ifdef USE_LIBXML2
+#  define LIBXML2_ENABLE     "yes ( " _LIBXML2_VERSION " )"
 #else
 #  define LIBXML2_ENABLE     "no"
 #endif
-
-#ifdef HAVE_PAGE_SPEED
-#  define PAGE_SPEED_ENABLE     "enabled"
+#ifdef USE_PAGE_SPEED
+#  define PAGE_SPEED_ENABLE  "yes ( " _PAGE_SPEED_VERSION " )"
 #else
-#  define PAGE_SPEED_ENABLE     "no"
+#  define PAGE_SPEED_ENABLE  "no"
 #endif
-
-#ifdef HAVE_V8
-#  define V8_ENABLE     "enabled"
+#ifdef USE_LIBV8  
+#  define V8_ENABLE          "yes ( " _V8_VERSION " )"
 #else
-#  define V8_ENABLE     "no"
+#  define V8_ENABLE          "no"
 #endif
-
 
 struct option UOptions::long_options[128] = {
 { "help",    0, 0, 'h' },
@@ -557,37 +581,98 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
             u_is_tty        = isatty(STDOUT_FILENO);
             u_printf_fileno = STDOUT_FILENO;
 
+#        ifdef CONFIGURE_CALL
+            const char* p = (const char*) u_find(U_CONSTANT_TO_PARAM(CONFIGURE_CALL), U_CONSTANT_TO_PARAM("configure"));
+
+            U_INTERNAL_ASSERT_POINTER(p)
+
+            p += U_CONSTANT_SIZE("configure");
+#        endif
+
+/* -----------------------------------------------------------------------------
+         ULib version: 1.1.0
+            Build ULib: Shared=yes, Static=yes
+
+            Host setup: x86_64-unknown-linux-gnu
+        Install prefix: /usr/local
+        Install plugin: /usr/local/libexec/ulib
+    Configuration data: /usr/local/etc/ulib
+
+      Operating System: Linux stefano 3.2.11 #1 SMP Wed Mar 14 14:48:12 CET 2012 x86_64 Intel(R) Pentium(R) 4 CPU 2.80GHz GenuineIntel GNU/Linux
+          C++ Compiler: g++ ( 4.6.2 )
+                Linker: /usr/x86_64-pc-linux-gnu/bin/ld -m elf_x86_64 ( GNU ld (GNU Binutils) 2.20.1.20100303 )
+  Standard C   library: GNU C Library stable release version 2.13, by Roland McGrath et al.
+  Standard C++ library: libstdc++.so.6.0.16
+             Libraries: -ltcc -lxml2 -ldbi -lmysqlclient -lldap -llber -lcurl -lssh -lexpat -lpcre -lssl -lcrypto -lmagic -luuid -lz  -lpthread -ldl
+
+             C   Flags: -g -O2  -Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition
+             C++ Flags: -g -O2  -fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated -fvisibility=hidden -fvisibility-inlines-hidden
+          Linker Flags:  -Wl,-O1 -Wl,--as-needed -Wl,-z,now,-O1,--hash-style=gnu,--sort-common -Wl,--as-needed
+    Preprocessor Flags:  -DDEBUG -DHAVE_SSL_TS -I/usr/include/libxml2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -pipe -D_GNU_SOURCE  -fstrict-aliasing -fno-stack-protector -fomit-frame-pointer -finline -findirect-inlining -ftree-switch-conversion -floop-interchange -floop-strip-mine -floop-block -Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat -Wformat-extra-args -Wenum-compare -Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn -Ofast -flto -Wp,-D_FORTIFY_SOURCE=2 -Wunsafe-loop-optimizations -Wno-unused-parameter
+
+         debug support: enabled
+      final build mode: no (--enable-final)
+    precompiled header: no (--enable-pch)
+   memory pool support: enabled
+           LFS support: enabled
+          ipv6 support: no (--with-ipv6)
+           zip support: enabled
+          LIBZ support: yes ( 1.2.6 )
+          PCRE support: yes ( 8.12 )
+           SSL support: yes ( 1.0.0e )
+           SSH support: yes ( 0.4.8 )
+          LDAP support: yes ( 3001 )
+          cURL support: yes ( 7.24.0 )
+           XML support: yes ( 2.0.1 )
+         MAGIC support: yes ( 5.11 )
+         MySQL support: yes ( 50161 )
+           DBI support: yes ( 0.8.3 )
+       libuuid support: yes ( 1.41.14 )
+      libevent support: no (--with-libevent)
+       libxml2 support: yes ( 2.7.8 )
+    Page-Speed support: yes ( 1.9 )
+ V8 JavaScript support: yes ( 3.8.9 )
+
+      LEX/YACC support: enabled
+      Lexical analyzer: flex ( flex 2.5.35 )
+      Parser generator: bison -y ( bison (GNU Bison) 2.5 )
+----------------------------------------------------------------------------- */
+
             u_printf("%W%.*s%W (%W%.*s%W): %.*s\n\n"
                "%WDeveloped with ULib (C++ application development framework)%W\n\n"
+
+#           ifdef CONFIGURE_CALL
+               "configure arguments..:%W%s%W\n"
+#           endif
+#           ifdef CONFIGURE_DEFINES
+               "compile time defines.:%W" CONFIGURE_DEFINES "%W\n\n"
+#           endif
+
                "Building Environment.:%W " PLATFORM_VAR " (" __DATE__ ")%W\n"
                "Operating System.....:%W " _OS_VERSION "%W\n"
-               "C++ Compiler.........:%W " GCC_VERSION "%W\n"
-               "C   Flags............:%W " CFLAGS_VAR "%W\n"
-               "C++ Flags............:%W " CXXFLAGS_VAR "%W\n"
-               "Preprocessor Flags...:%W " CPPFLAGS_VAR "%W\n"
-               "Linker Flags.........:%W " LDFLAGS_VAR "%W\n"
-               "Linker...............:%W " LD_VERSION "%W\n"
-               "Libraries............:%W " LIBS_VAR "%W\n"
+               "C++ Compiler.........:%W " CXX_VAR " ( " GCC_VERSION " )%W\n"
+               "Linker...............:%W " LD_VAR " ( " LD_VERSION " )%W\n"
                "Standard C   library.:%W " LIBC_VERSION "%W\n"
                "Standard C++ library.:%W " STDGPP_VERSION "%W\n"
-               "Lexical analyzer.....:%W " _FLEX_VERSION "%W\n"
-               "Parser generator.....:%W " _BISON_VERSION "%W\n"
-               "LIBZ  library........:%W " _LIBZ_VERSION "%W\n"
-               "PCRE  library........:%W " _PCRE_VERSION "%W\n"
-               "SSL   library........:%W " _SSL_VERSION "%W\n"
-               "SSH   library........:%W " _LIBSSH_VERSION "%W\n"
-               "cURL  library........:%W " _CURL_VERSION "%W\n"
-               "LDAP  library........:%W " _LDAP_VERSION "%W\n"
-               "Expat library........:%W " _EXPAT_VERSION "%W\n"
-               "MAGIC library........:%W " _MAGIC_VERSION "%W\n"
-               "MySQL library........:%W " _MYSQL_VERSION "%W\n"
-               "DBI   library........:%W " _DBI_VERSION "%W\n"
-               "libuuid library......:%W " _LIBUUID_VERSION "%W\n"
-               "libevent library.....:%W " _LIBEVENT_VERSION "%W\n"
-               "libxml2 library......:%W " _LIBXML2_VERSION "%W\n"
-               "ZIP support..........:%W " ZIP_ENABLE "%W\n"
+               "Libraries............:%W " LIBS_VAR "%W\n\n"
+
+               "C   Flags............:%W " CFLAGS_VAR "%W\n"
+               "C++ Flags............:%W " CXXFLAGS_VAR "%W\n"
+               "Linker Flags.........:%W " LDFLAGS_VAR "%W\n"
+               "Preprocessor Flags...:%W " CPPFLAGS_VAR "%W\n\n"
+
+               "memory pool support..:%W " MEMORY_POOL_ENABLE "%W\n"
                "LFS support..........:%W " LFS_ENABLE "%W\n"
                "ipv6 support.........:%W " IPV6_ENABLE "%W\n"
+               "zip support..........:%W " ZIP_ENABLE "%W\n\n"
+
+               "LIBZ support.........:%W " LIBZ_ENABLE "%W\n"
+               "PCRE support.........:%W " LIBPCRE_ENABLE "%W\n"
+               "SSL support..........:%W " LIBSSL_ENABLE "%W\n"
+               "SSH support..........:%W " LIBSSH_ENABLE "%W\n"
+               "LDAP support.........:%W " LIBLDAP_ENABLE "%W\n"
+               "LDAP support.........:%W " LIBLDAP_ENABLE "%W\n"
+               "XML support..........:%W " LIBEXPAT_ENABLE "%W\n"
                "MAGIC support........:%W " MAGIC_ENABLE "%W\n"
                "MySQL support........:%W " MYSQL_ENABLE "%W\n"
                "DBI support..........:%W " DBI_ENABLE "%W\n"
@@ -595,49 +680,56 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
                "libevent support.....:%W " LIBEVENT_ENABLE "%W\n"
                "libxml2 support......:%W " LIBXML2_ENABLE "%W\n"
                "Page-Speed support...:%W " PAGE_SPEED_ENABLE "%W\n"
-               "V8 JavaScript support:%W " V8_ENABLE "%W\n"
-               "memory pool support..:%W " MEMORY_POOL_ENABLE "%W\n",
+               "V8 JavaScript support:%W " V8_ENABLE "%W\n\n"
+
+               "Lexical analyzer.....:%W " _FLEX_VERSION "%W\n"
+               "Parser generator.....:%W " _BISON_VERSION "%W\n",
                BRIGHTCYAN,  U_STRING_TO_TRACE(package), RESET,
                BRIGHTGREEN, U_STRING_TO_TRACE(version), RESET,
                U_STRING_TO_TRACE(purpose), BRIGHTWHITE, RESET,
+#           ifdef CONFIGURE_CALL
+               BRIGHTCYAN, p, RESET,
+#           endif
+#           ifdef CONFIGURE_DEFINES
                BRIGHTCYAN, RESET,
+#           endif
+               // ambient
+               BRIGHTCYAN, RESET,
+               BRIGHTCYAN, RESET,
+               BRIGHTCYAN, RESET,
+               BRIGHTCYAN, RESET,
+               BRIGHTCYAN, RESET,
+               BRIGHTCYAN, RESET,
+               BRIGHTCYAN, RESET,
+               // flags
+               BRIGHTWHITE, RESET,
+               BRIGHTWHITE, RESET,
+               BRIGHTWHITE, RESET,
+               BRIGHTWHITE, RESET,
+               // support
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET,
-               BRIGHTGREEN, RESET);
+               // warapping
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET,
+               // parser
+               BRIGHTYELLOW, RESET,
+               BRIGHTYELLOW, RESET);
 
             // Asking the system what it has
 

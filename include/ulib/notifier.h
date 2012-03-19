@@ -113,7 +113,7 @@ protected:
    static UEventFd** lo_map_fd;
    static UGenericHashMap<int,UEventFd*>* hi_map_fd; // maps a fd to a node pointer
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
 #elif defined(HAVE_EPOLL_WAIT)
    static int epollfd;
    static struct epoll_event*  events;
@@ -137,7 +137,7 @@ protected:
 private:
    static void handlerDelete(UEventFd* item) U_NO_EXPORT;
 
-#ifndef HAVE_LIBEVENT
+#ifndef USE_LIBEVENT
    static void handlerResult(UEventFd* handler_event, bool bread, bool bexcept) U_NO_EXPORT; 
 #endif
 

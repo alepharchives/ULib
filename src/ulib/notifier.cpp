@@ -21,7 +21,7 @@
 
 #include <errno.h>
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
 void UEventFd::operator()(int _fd, short event)
 {
    U_TRACE(0, "UEventFd::operator()(%d,%hd)", _fd, event)
@@ -59,7 +59,7 @@ void UNotifier::init()
 {
    U_TRACE(0, "UNotifier::init()")
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
    if (u_ev_base) (void) U_SYSCALL(event_reinit, "%p", u_ev_base); // NB: reinitialized the event base after fork()...
    else           u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
 
@@ -140,7 +140,7 @@ next:
 
       hi_map_fd->allocate(max_connection);
 
-#  if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+#  if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
       U_INTERNAL_ASSERT_EQUALS(events,0)
 
       pevents = events = U_CALLOC_N(max_connection+1, struct epoll_event);
@@ -202,7 +202,7 @@ void UNotifier::insert(UEventFd* item)
 #  endif
       }
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
    U_INTERNAL_ASSERT_POINTER(u_ev_base)
 
    int mask = EV_PERSIST | (item->op_mask == U_READ_IN ? EV_READ : EV_WRITE);
@@ -283,7 +283,7 @@ U_NO_EXPORT void UNotifier::handlerDelete(UEventFd* item)
 #  endif
       }
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
 #elif defined(HAVE_EPOLL_WAIT)
 #else
    if (item->op_mask == U_READ_IN)
@@ -339,7 +339,7 @@ void UNotifier::modify(UEventFd* item)
    U_INTERNAL_ASSERT_MAJOR(fd,0)
    U_ASSERT_EQUALS(item,find(fd))
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
    U_INTERNAL_ASSERT_POINTER(u_ev_base)
 
    int mask = EV_PERSIST | (item->op_mask == U_READ_IN ? EV_READ : EV_WRITE);
@@ -405,7 +405,7 @@ void UNotifier::erase(UEventFd* item)
 
    handlerDelete(item);
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
    UDispatcher::del(item->pevent);
              delete item->pevent;
                     item->pevent = 0;
@@ -418,7 +418,7 @@ int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEv
 
    int result;
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
    result = -1;
 #elif defined(HAVE_EPOLL_WAIT)
    int _timeout = (timeout ? timeout->getMilliSecond() : -1);
@@ -449,7 +449,7 @@ loop:
    result = U_SYSCALL(select, "%d,%p,%p,%p,%p", fd_max, read_set, write_set, 0, ptmp);
 #endif
 
-#ifndef HAVE_LIBEVENT
+#ifndef USE_LIBEVENT
    if (result == 0) // timeout
       {
       // call the manager of timeout
@@ -509,7 +509,7 @@ loop:
    U_RETURN(result);
 }
 
-#ifndef HAVE_LIBEVENT
+#ifndef USE_LIBEVENT
 U_NO_EXPORT void UNotifier::handlerResult(UEventFd* handler_event, bool bread, bool bexcept)
 {
    U_TRACE(0, "UNotifier::handlerResult(%p,%b,%b)", handler_event, bread, bexcept)
@@ -566,7 +566,7 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
 {
    U_TRACE(0, "UNotifier::waitForEvent(%p)", timeout)
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
    (void) UDispatcher::dispatch(UDispatcher::ONCE);
 #elif defined(HAVE_EPOLL_WAIT)
    nfd_ready = waitForEvent(0, 0, 0, timeout);
@@ -585,7 +585,7 @@ bool UNotifier::waitForEvent(UEventTime* timeout)
                               : 0),
                 timeout);
 #endif
-#ifndef HAVE_LIBEVENT
+#ifndef USE_LIBEVENT
    if (nfd_ready > 0)
       {
       bool bread;
@@ -767,7 +767,7 @@ void UNotifier::clear(bool bthread)
       delete hi_map_fd;
       }
 
-#if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+#if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
    U_INTERNAL_ASSERT_POINTER(events)
 
    if (bthread == false) U_FREE_N(events, max_connection+1, struct epoll_event);
@@ -776,7 +776,7 @@ void UNotifier::clear(bool bthread)
 #endif
 }
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
 #elif defined(HAVE_EPOLL_WAIT)
 #else
 int UNotifier::getNFDS() // nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
@@ -1078,7 +1078,7 @@ uint32_t UNotifier::write(int fd, const char* str, int count, int timeoutMS)
 
 const char* UNotifier::dump(bool reset) const
 {
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
 #elif defined(HAVE_EPOLL_WAIT)
    *UObjectIO::os << "epollfd                     " << epollfd        << '\n';
 #else

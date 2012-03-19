@@ -142,7 +142,7 @@ void USocket::str_allocate()
    U_NEW_ULIB_OBJECT(str_X_Progress_ID,         U_STRING_FROM_STRINGREP_STORAGE(25));
    U_NEW_ULIB_OBJECT(str_expect_100_continue,   U_STRING_FROM_STRINGREP_STORAGE(26));
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    ULib_init_openssl();
 #endif
 }
@@ -161,7 +161,7 @@ USocket::USocket(bool bSocketIsIPv6)
 #endif
    iSockDesc   = -1;
 
-#ifdef HAVE_IPV6
+#ifdef ENABLE_IPV6
    bIPv6Socket = bSocketIsIPv6;
 #else
    bIPv6Socket = false;

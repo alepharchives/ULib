@@ -128,11 +128,38 @@ typedef unsigned long long uint64;
 /* C++ Flags */
 #undef CXXFLAGS_VAR
 
+/* Compiler */
+#undef CXX_VAR
+
 /* define if you have d_namlen in struct dirent */
 #undef DIRENT_HAVE_D_NAMLEN
 
 /* define if you have d_reclen in struct dirent */
 #undef DIRENT_HAVE_D_RECLEN
+
+/* Define if disable ipv6 support */
+#undef DISABLE_IPV6
+
+/* disable Large File Support features */
+#undef DISABLE_LFS
+
+/* disable memory pool features */
+#undef DISABLE_MEMPOOL
+
+/* Define if disable ZIP support */
+#undef DISABLE_ZIP
+
+/* Define if enable ipv6 support */
+#undef ENABLE_IPV6
+
+/* enable Large File Support features */
+#undef ENABLE_LFS
+
+/* enable memory pool features */
+#undef ENABLE_MEMPOOL
+
+/* Define if enable ZIP support */
+#undef ENABLE_ZIP
 
 /* Define to 1 if the fallocate() function is supported */
 #undef FALLOCATE_IS_SUPPORTED
@@ -279,9 +306,6 @@ typedef unsigned long long uint64;
 /* struct iphdr needed for IPv6 support */
 #undef HAVE_IPHDR
 
-/* Define if enable ipv6 support */
-#undef HAVE_IPV6
-
 /* Define to 1 if you have the <ip_compat.h> header file. */
 #undef HAVE_IP_COMPAT_H
 
@@ -293,9 +317,6 @@ typedef unsigned long long uint64;
 
 /* Define to 1 if you have the <ip_nat.h> header file. */
 #undef HAVE_IP_NAT_H
-
-/* enable Large File Support features */
-#undef HAVE_LFS
 
 /* Define to 1 if you have the `GeoIP' library (-lGeoIP). */
 #undef HAVE_LIBGEOIP
@@ -559,6 +580,9 @@ typedef unsigned long long uint64;
 /* has socklen_t type */
 #undef HAVE_SOCKLEN_T
 
+/* Define if we have time stamp support in openssl */
+#undef HAVE_SSL_TS
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
 
@@ -716,11 +740,11 @@ typedef unsigned long long uint64;
 /* has usable atomic functions */
 #undef HAVE_WORKING_SYS_ATOMIC_H
 
-/* Define if enable ZIP support */
-#undef HAVE_ZIP
-
 /* Linker Flags */
 #undef LDFLAGS_VAR
+
+/* Linker */
+#undef LD_VAR
 
 /* LD Linker version */
 #undef LD_VERSION
@@ -818,6 +842,51 @@ typedef unsigned long long uint64;
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
 
+/* Define if enable libcurL support */
+#undef USE_LIBCURL
+
+/* Define if enable libdbi support */
+#undef USE_LIBDBI
+
+/* Define if enable libevent support */
+#undef USE_LIBEVENT
+
+/* Define if enable libexpat support */
+#undef USE_LIBEXPAT
+
+/* Define if enable libldap support */
+#undef USE_LIBLDAP
+
+/* Define if enable libmagic support */
+#undef USE_LIBMAGIC
+
+/* Define if enable libmysql support */
+#undef USE_LIBMYSQL
+
+/* Define if enable libpcre support */
+#undef USE_LIBPCRE
+
+/* Define if enable libssh support */
+#undef USE_LIBSSH
+
+/* Define if enable libssl support */
+#undef USE_LIBSSL
+
+/* Define if enable libuuid support */
+#undef USE_LIBUUID
+
+/* Define if enable libv8 support */
+#undef USE_LIBV8
+
+/* Define if enable libxml2 support */
+#undef USE_LIBXML2
+
+/* Define if enable libz support */
+#undef USE_LIBZ
+
+/* Define if enable libpagespeed support */
+#undef USE_PAGE_SPEED
+
 /* Define if use parser generator bison/yacc */
 #undef USE_PARSER
 
@@ -845,9 +914,6 @@ typedef unsigned long long uint64;
 
 /* install directory for plugins */
 #undef U_LIBEXECDIR
-
-/* enable memory pool features */
-#undef U_MEMORY_POOL
 
 /* enable use of our versions of the memory operators */
 #undef U_OVERLOAD_NEW_DELETE

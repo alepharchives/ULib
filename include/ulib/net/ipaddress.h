@@ -32,7 +32,7 @@
 union uusockaddr {
    struct sockaddr     psaGeneric;
    struct sockaddr_in  psaIP4Addr;
-#ifdef HAVE_IPV6
+#ifdef ENABLE_IPV6
    struct sockaddr_in6 psaIP6Addr;
 #endif
 };
@@ -137,7 +137,7 @@ private:
 
 union uupcAddress {
    uint32_t i;
-#ifdef HAVE_IPV6
+#ifdef ENABLE_IPV6
    struct in6_addr s;
 #endif
    char p[16];
@@ -186,7 +186,11 @@ public:
 
    u_short getAddressFamily() const { return iAddressType; }
 
-#ifdef HAVE_IPV6
+   // Returns if it belongs to a private IP address space (RFC 1918)
+
+   bool isPrivate() __pure;
+
+#ifdef ENABLE_IPV6
    /********************************************************************************/
    /* This method converts the IPAddress instance to the specified type - either   */
    /* AF_INET or AF_INET6. If the address family is already of the specified       */
@@ -225,7 +229,7 @@ public:
    // representation of the IP Address suitable for visual presentation
 
    const char* getAddressString() { resolveStrAddress(); return pcStrAddress; }
-
+   
    // Check equality with an existing UIPAddress object
 
    bool operator==(const UIPAddress& cOtherAddr) const

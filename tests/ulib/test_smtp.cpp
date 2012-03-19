@@ -15,7 +15,7 @@ U_EXPORT main (int argc, char* argv[])
    if (smtp._connectServer(tmp))
       {
       UString rcpt(argv[2], strlen(argv[2]));
-#  ifdef HAVE_SSL
+#  ifdef USE_LIBSSL
       bool secure = (argc == 4);
 #  else
       bool secure = false;

@@ -242,6 +242,10 @@ U_EXPORT bool u_isURL(const char* restrict url, uint32_t len) __pure;
 
 U_EXPORT bool u_isMacAddr(const char* restrict p, uint32_t len) __pure;
 
+U_EXPORT bool u_isHostName(const char* restrict hostname, uint32_t len) __pure;
+
+U_EXPORT const char* u_isUrlScheme(const char* restrict url, uint32_t len) __pure;
+
 /* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */
 
 U_EXPORT bool u_runAsUser(const char* restrict user, bool change_dir);
@@ -333,19 +337,20 @@ extern U_EXPORT const unsigned int  u__ct_tab[256];
 extern U_EXPORT const unsigned char u__ct_tol[256];
 extern U_EXPORT const unsigned char u__ct_tou[256];
 
-static inline bool u_iscntrl(int c)  { return ((u__ct_tab[c] & 0x001) != 0); } // __C } /* Control character. */
-static inline bool u_isdigit(int c)  { return ((u__ct_tab[c] & 0x002) != 0); } // __D } /* Digit. */
-static inline bool u_islower(int c)  { return ((u__ct_tab[c] & 0x004) != 0); } // __L } /* Lowercase. */
-static inline bool u_ispunct(int c)  { return ((u__ct_tab[c] & 0x008) != 0); } // __P } /* Punctuation. */
-static inline bool u_isspace(int c)  { return ((u__ct_tab[c] & 0x010) != 0); } // __S } /* Space. */
-static inline bool u_isupper(int c)  { return ((u__ct_tab[c] & 0x020) != 0); } // __U } /* Uppercase. */
-static inline bool u_isblank(int c)  { return ((u__ct_tab[c] & 0x080) != 0); } // __B } /* Blank (a space or a tab). */
-static inline bool u_islterm(int c)  { return ((u__ct_tab[c] & 0x100) != 0); } // __R } /* carriage return or new line (a \r or \n). */
+static inline bool u_iscntrl(int c)  { return ((u__ct_tab[c] & 0x001) != 0); } // __C } /* Control character */
+static inline bool u_isdigit(int c)  { return ((u__ct_tab[c] & 0x002) != 0); } // __D } /* Digit */
+static inline bool u_islower(int c)  { return ((u__ct_tab[c] & 0x004) != 0); } // __L } /* Lowercase */
+static inline bool u_ispunct(int c)  { return ((u__ct_tab[c] & 0x008) != 0); } // __P } /* Punctuation */
+static inline bool u_isspace(int c)  { return ((u__ct_tab[c] & 0x010) != 0); } // __S } /* Space */
+static inline bool u_isupper(int c)  { return ((u__ct_tab[c] & 0x020) != 0); } // __U } /* Uppercase */
+static inline bool u_isblank(int c)  { return ((u__ct_tab[c] & 0x080) != 0); } // __B } /* Blank (a space or a tab) */
+static inline bool u_islterm(int c)  { return ((u__ct_tab[c] & 0x100) != 0); } // __R } /* carriage return or new line (a \r or \n) */
 static inline bool u_istext( int c)  { return ((u__ct_tab[c] & 0x400) == 0); } // __F } /* character never appears in text */
 
 static inline bool u_isalpha( int c) { return ((u__ct_tab[c] & 0x024) != 0); } // (__L | __U)
 static inline bool u_isxdigit(int c) { return ((u__ct_tab[c] & 0x042) != 0); } // (__D | __X)
 static inline bool u_isalnum( int c) { return ((u__ct_tab[c] & 0x026) != 0); } // (__D | __L | __U)
+static inline bool u_isname(  int c) { return ((u__ct_tab[c] & 0x826) != 0); } // (__D | __L | __U | '_')
 static inline bool u_isgraph( int c) { return ((u__ct_tab[c] & 0x02E) != 0); } // (__D | __L | __P | __U)
 static inline bool u_isprint( int c) { return ((u__ct_tab[c] & 0x03E) != 0); } // (__D | __L | __P | __S | __U)
 
@@ -359,6 +364,7 @@ static inline bool u_isbase64(int c) { return (u_isalnum(c) || (c == '+') || (c 
 
 /* buffer type identification */
 
+U_EXPORT bool u_isName(      const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isBase64(    const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isWhiteSpace(const char* restrict s, uint32_t n) __pure;
 
@@ -394,7 +400,7 @@ static inline void u_int2hex(char* restrict p, uint32_t n)
 static inline uint32_t u_hex2int(const char* restrict p, uint32_t len)
    { uint32_t n = 0; const char* eos = p + len; while (p < eos) n = (n << 4) | u_hexc2int(*p++); return n; }
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 /*
 The u_passwd_cb() function must write the password into the provided buffer buf which is of size size.
 The actual length of the password must be returned to the calling function. rwflag indicates whether the

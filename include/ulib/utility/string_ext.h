@@ -16,18 +16,18 @@
 
 #include <ulib/container/vector.h>
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  include <openssl/pem.h>
 #endif
 
 class U_EXPORT UStringExt {
 public:
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    static UString BIOtoString(BIO* bio);
 #endif
 
-#ifdef HAVE_PCRE
+#ifdef USE_LIBPCRE
    // Searches subject for matches to pattern and replaces them with replacement
    static UString pregReplace(const UString& pattern, const UString& replacement, const UString& subject);
 #endif
@@ -118,15 +118,20 @@ public:
    static UString expandPath(const char* s, uint32_t n, const UString* environment);
    static UString expandPath(const UString& s,          const UString* environment) { return expandPath(U_STRING_TO_PARAM(s), environment); }
 
+   // prepare for environment variables (check if some of them need quoting...)
+
+   static UString prepareForEnvironmentVar(const UString& env)          { return prepareForEnvironmentVar(U_STRING_TO_PARAM(env)); }
+   static UString prepareForEnvironmentVar(const char* s, uint32_t n);
+
    // expand environment variables
 
-   static UString getEnvironmentVar(const char* s, uint32_t n, const UString* environment);
-   static UString getEnvironmentVar(const UString& name,       const UString* environment) { return getEnvironmentVar(U_STRING_TO_PARAM(name), environment); }
+   static UString getEnvironmentVar(const UString& name,       const UString* env) { return getEnvironmentVar(U_STRING_TO_PARAM(name), env); }
+   static UString getEnvironmentVar(const char* s, uint32_t n, const UString* env);
 
    // recursively expand environment variables if needed
 
-   static UString expandEnvironmentVar(const char* s, uint32_t n, const UString* environment);
-   static UString expandEnvironmentVar(const UString& s,          const UString* environment) { return expandEnvironmentVar(U_STRING_TO_PARAM(s), environment); }
+   static UString expandEnvironmentVar(const UString& s,          const UString* env) { return expandEnvironmentVar(U_STRING_TO_PARAM(s), env); }
+   static UString expandEnvironmentVar(const char* s, uint32_t n, const UString* env);
 
    // eval expression 
 

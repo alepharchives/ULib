@@ -125,7 +125,7 @@ U_NO_EXPORT void UCURL::setup()
 
    U_INTERNAL_ASSERT_POINTER(multiHandle)
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    ULib_init_openssl();
 #endif
 }

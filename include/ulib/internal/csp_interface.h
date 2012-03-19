@@ -5,7 +5,7 @@
 #include <ulib/base/base.h>
 #include <ulib/internal/chttp.h>
 
-#ifdef HAVE_V8
+#ifdef USE_LIBV8
 char* runv8(const char* jssrc); /* compiles and executes javascript and returns the script return value as string */
 #endif
 

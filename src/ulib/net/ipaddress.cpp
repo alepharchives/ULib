@@ -75,7 +75,7 @@ void UIPAddress::str_allocate()
 #  define IPADDR_TO_HOST(pheDetails, pcAddress, iAddressLength, iAddressType) \
 { pheDetails = (struct hostent*) U_SYSCALL(gethostbyaddr, "%p,%d,%d", pcAddress, iAddressLength, iAddressType); }
 
-#  if defined(HAVE_IPV6) && !defined(__MINGW32__)
+#  if defined(ENABLE_IPV6) && !defined(__MINGW32__)
 #     define IPNAME_TO_HOST(pheDetails, pcHostName, iAddressType, iError) \
          { pheDetails = (struct hostent*) U_SYSCALL(gethostbyname2, "%S,%d", pcHostName, iAddressType); iError = h_errno; }
 #  else
@@ -92,7 +92,7 @@ void UIPAddress::setAddress(void* address, bool bIPv6)
 
    U_CHECK_MEMORY
 
-#ifdef HAVE_IPV6
+#ifdef ENABLE_IPV6
    if (bIPv6)
       {
       iAddressType   = AF_INET6;
@@ -120,7 +120,7 @@ void UIPAddress::set(const UIPAddress& cOtherAddr)
    iAddressType   = cOtherAddr.iAddressType;
    iAddressLength = cOtherAddr.iAddressLength;
 
-#ifdef HAVE_IPV6
+#ifdef ENABLE_IPV6
    if (iAddressType == AF_INET6)
       {
       U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in6_addr))
@@ -150,7 +150,7 @@ void UIPAddress::setLocalHost(bool bIPv6)
 
    strHostName = *str_localhost;
 
-#ifdef HAVE_IPV6
+#ifdef ENABLE_IPV6
    if (bIPv6)
       {
       pcAddress.p[0] =
@@ -454,7 +454,7 @@ void UIPAddress::resolveHostName()
 /* Finally, the new address family is set along with both lazy evaluation flags */
 /********************************************************************************/
 
-#ifdef HAVE_IPV6
+#ifdef ENABLE_IPV6
 void UIPAddress::convertToAddressFamily(int iNewAddressFamily)
 {
    U_TRACE(1, "UIPAddress::convertToAddressFamily(%d)", iNewAddressFamily)
@@ -475,8 +475,8 @@ void UIPAddress::convertToAddressFamily(int iNewAddressFamily)
             {
             iAddressLength = sizeof(in6_addr);
 
-            (void)   memset(pcAddress.p,                0, 10);
-            (void)   memset(pcAddress.p + 10,        0xff,  2);
+            (void)    memset(pcAddress.p,                0, 10);
+            (void)    memset(pcAddress.p + 10,        0xff,  2);
             (void) u_mem_cpy(pcAddress.p + 12, pcAddress.p,  4);
             }
          break;
@@ -488,6 +488,53 @@ void UIPAddress::convertToAddressFamily(int iNewAddressFamily)
       }
 }
 #endif
+
+/* In the Internet addressing architecture, a private network is a network that uses private IP address space,
+ * following the standards set by RFC 1918 and RFC 4193. These addresses are commonly used for home, office, and
+ * enterprise local area networks (LANs), when globally routable addresses are not mandatory, or are not available
+ * for the intended network applications. Under Internet Protocol IPv4, private IP address spaces were originally
+ * defined in an effort to delay IPv4 address exhaustion[citation needed], but they are also a feature of the next
+ * generation Internet Protocol, IPv6.
+ *
+ * These addresses are characterized as private because they are not globally delegated, meaning they are not allocated
+ * to any specific organization, and IP packets addressed by them cannot be transmitted onto the public Internet.
+ * Anyone may use these addresses without approval from a regional Internet registry (RIR). If such a private network
+ * needs to connect to the Internet, it must use either a network address translator (NAT) gateway, or a proxy server.
+ */
+
+__pure bool UIPAddress::isPrivate()
+{
+   U_TRACE(0, "UIPAddress::isPrivate()")
+
+   U_CHECK_MEMORY
+
+#ifdef ENABLE_IPV6
+   if (bIPv6)
+      {
+      // TODO
+
+      U_RETURN(false);
+      }
+   else
+#endif
+      {
+      U_INTERNAL_ASSERT_EQUALS(iAddressType, AF_INET)
+      U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in_addr))
+
+      uint32_t a = htonl(pcAddress.i);
+
+      U_INTERNAL_DUMP("a = 0x%X", a)
+
+      if (((a >= 0x0A000000) && (a <= 0x0AFFFFFF)) ||
+          ((a >= 0xAC100000) && (a <= 0xAC1FFFFF)) ||
+          ((a >= 0xC0A80000) && (a <= 0xC0A8FFFF)))
+         {
+         U_RETURN(true);
+         }
+      }
+
+   U_RETURN(false);
+}
 
 // Simple IP-based access-control system
 // Interpret a "HOST/BITS" IP mask specification. (Ex. 192.168.1.64/28)

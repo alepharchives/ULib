@@ -178,7 +178,7 @@ private:
    UHttpClient& operator=(const UHttpClient&)                                                 { return *this; }
 };
 
-#ifdef HAVE_SSL // specializzazione con USSLSocket
+#ifdef USE_LIBSSL // specializzazione con USSLSocket
 
 template <> class U_EXPORT UHttpClient<USSLSocket> : public UHttpClient_Base,  public UClient<USSLSocket> {
 public:

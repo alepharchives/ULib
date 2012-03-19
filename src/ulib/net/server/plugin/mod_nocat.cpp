@@ -1159,6 +1159,8 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (fw_env.empty()) goto err;
 
+      fw_env = UStringExt::prepareForEnvironmentVar(fw_env); 
+
       fw_cmd        = cfg[*str_FW_CMD];
       intdevlbl     = cfg[*str_INTERNAL_DEVICE_LABEL];
       decrypt_cmd   = cfg[*str_DECRYPT_CMD];

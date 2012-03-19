@@ -18,7 +18,7 @@
 #  include <ulib/internal/objectIO.h>
 #endif
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  include <openssl/ssl.h>
 #  include <openssl/rand.h>
 #  include <openssl/conf.h>
@@ -89,7 +89,7 @@ void ULib_init()
 */
 }
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 void ULib_init_openssl()
 {
    U_TRACE(1, "ULib_init_openssl()")

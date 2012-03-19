@@ -112,7 +112,7 @@ bool USmtpClient::_connectServer(const UString& server, int port, uint32_t timeo
 {
    U_TRACE(0, "USmtpClient::_connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), port, timeoutMS)
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    U_INTERNAL_ASSERT(Socket::isSSL())
    ((USSLSocket*)this)->setActive(false);
 #endif
@@ -282,7 +282,7 @@ bool USmtpClient::startTLS()
 {
    U_TRACE(0, "USmtpClient::startTLS()")
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    U_INTERNAL_ASSERT(Socket::isSSL())
 
    if (syncCommand("STARTTLS") &&

@@ -14,15 +14,15 @@
 #ifndef U_IMAP_CLIENT_H
 #define U_IMAP_CLIENT_H 1
 
-#ifdef HAVE_SSL
+#include <ulib/container/vector.h>
+
+#ifdef USE_LIBSSL
 #  include <ulib/ssl/net/sslsocket.h>
 #  define Socket USSLSocket
 #else
 #  include <ulib/net/tcpsocket.h>
 #  define Socket UTCPSocket
 #endif
-
-#include <ulib/container/vector.h>
 
 /**
    @class UImapClient

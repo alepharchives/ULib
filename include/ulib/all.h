@@ -45,11 +45,11 @@
 #  include <ulib/flex/bison.h>
 #endif
 
-#ifdef HAVE_LIBZ
+#ifdef ENABLE_ZIP
 #  include <ulib/zip/zip.h>
 #endif
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  include <ulib/ssl/crl.h>
 #  include <ulib/ssl/pkcs10.h>
 #  include <ulib/ssl/digest.h>
@@ -60,35 +60,35 @@
 #  endif
 #endif
 
-#ifdef HAVE_SSH
+#ifdef USE_LIBSSH
 #  include <ulib/ssh/net/sshsocket.h>
 #endif
 
-#ifdef HAVE_PCRE
+#ifdef USE_LIBPCRE
 #  include <ulib/pcre/pcre.h>
 #endif
 
-#ifdef HAVE_CURL
+#ifdef USE_LIBCURL
 #  include <ulib/curl/curl.h>
 #endif
 
-#ifdef HAVE_MAGIC
+#ifdef USE_LIBMAGIC
 #  include <ulib/magic/magic.h>
 #endif
 
-#ifdef HAVE_MYSQL
+#ifdef USE_LIBMYSQL
 #  include <ulib/mysql/mysql.h>
 #endif
 
-#ifdef HAVE_LIBXML2
+#ifdef USE_LIBXML2
 #  include "ulib/xml/libxml2/schema.h"
 #endif
 
-#ifdef HAVE_EXPAT
+#ifdef USE_LIBEXPAT
 #  include <ulib/xml/soap/soap_client.h>
 #  include <ulib/xml/soap/soap_object.h>
 #endif
 
-#ifdef HAVE_LDAP
+#ifdef USE_LIBLDAP
 #  include <ulib/ldap/ldap.h>
 #endif

@@ -1,7 +1,7 @@
 ## ----------------------------------------------------------------------------------------------
 ## server - configuration parameters
 ## ----------------------------------------------------------------------------------------------
-## USE_IPV6		  flag to indicate use of ipv6
+## ENABLE_IPV6		  flag to indicate use of ipv6
 ## PORT			  port to listen
 ## WELCOME_MSG   message of welcome
 ## LOG_FILE      locations for file log
@@ -14,7 +14,7 @@
 
 SERVER {
 
-	USE_IPV6		no
+	ENABLE_IPV6		no
 
 	PORT			10001
 

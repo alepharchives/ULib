@@ -14,8 +14,10 @@
 #ifndef U_ZIP_H
 #define U_ZIP_H 1
 
+#include <ulib/base/base.h>
+#include <ulib/base/zip/ziptool.h>
+
 #include <ulib/file.h>
-#include <ulib/zip/ziptool.h>
 #include <ulib/container/vector.h>
 
 #define U_ZIP_ARCHIVE "PK\003\004"

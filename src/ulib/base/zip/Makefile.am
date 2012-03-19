@@ -5,7 +5,7 @@ MAINTAINERCLEANFILES	= Makefile.in
 
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 
-EXTRA_DIST = README all.c
+EXTRA_DIST = README
 
 SRC_H = compress.h dostime.h pushback.h zipentry.h zipfile.h
 SRC_C = dostime.c inflate.c pushback.c ziptool.c

@@ -14,7 +14,9 @@
 #ifndef U_SMTP_CLIENT_H
 #define U_SMTP_CLIENT_H 1
 
-#ifdef HAVE_SSL
+#include <ulib/internal/common.h>
+
+#ifdef USE_LIBSSL
 #  include <ulib/ssl/net/sslsocket.h>
 #  define Socket USSLSocket
 #else

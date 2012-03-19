@@ -350,7 +350,7 @@ public:
       // -----------------------------------------------------------------------------------------------
       // client XAdES - configuration parameters
       // -----------------------------------------------------------------------------------------------
-      // USE_IPV6     flag to indicate use of ipv6
+      // ENABLE_IPV6     flag to indicate use of ipv6
       // SERVER       host name or ip address for server
       // PORT         port number for the server
       // -----------------------------------------------------------------------------------------------

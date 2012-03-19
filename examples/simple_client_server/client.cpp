@@ -111,13 +111,13 @@ public:
       // -------------------------------------------
       // client - configuration parameters
       // -------------------------------------------
-      // USE_IPV6       flag to indicate use of ipv6
+      // ENABLE_IPV6       flag to indicate use of ipv6
       // MSG_WELCOME    message of welcome
       // SERVER_ADDRESS TCP/IP address of server
       // -------------------------------------------
 
       msg_welcome = config_file[U_STRING_FROM_CONSTANT("MSG_WELCOME")];
-      bool bIPv6  = config_file.readBoolean(U_STRING_FROM_CONSTANT("USE_IPV6"));
+      bool bIPv6  = config_file.readBoolean(U_STRING_FROM_CONSTANT("ENABLE_IPV6"));
 
       pcClientSocket = new UTCPSocket(bIPv6);
 

@@ -36,7 +36,7 @@
 
 #include <errno.h>
 
-#if !defined(HAVE_IPV6) && !defined(AF_INET6)
+#if !defined(ENABLE_IPV6) && !defined(AF_INET6)
 #  define AF_INET6 AF_INET
 #endif
 

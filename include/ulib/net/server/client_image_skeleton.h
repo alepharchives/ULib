@@ -59,7 +59,7 @@ private:
    USkeletonClientImage& operator=(const USkeletonClientImage&)                { return *this; }
 };
 
-#ifdef HAVE_SSL // specializzazione con USSLSocket
+#ifdef USE_LIBSSL // specializzazione con USSLSocket
 
 template <> class U_EXPORT USkeletonClientImage<USSLSocket> : public UClientImage<USSLSocket> {
 public:

@@ -626,8 +626,6 @@ DOXY_TRUE
 DOXYGEN
 FINAL_FALSE
 FINAL_TRUE
-ZIP_FALSE
-ZIP_TRUE
 MEMORY_POOL_FALSE
 MEMORY_POOL_TRUE
 ULIB
@@ -711,6 +709,8 @@ SEMAPHORE_FALSE
 SEMAPHORE_TRUE
 PTHREAD_FALSE
 PTHREAD_TRUE
+ZIP_FALSE
+ZIP_TRUE
 V8_FALSE
 V8_TRUE
 PAGE_SPEED_FALSE
@@ -735,30 +735,30 @@ LDAP_FALSE
 LDAP_TRUE
 PCRE_FALSE
 PCRE_TRUE
-SSL_TS_FALSE
-SSL_TS_TRUE
 SSH_FALSE
 SSH_TRUE
+SSL_TS_FALSE
+SSL_TS_TRUE
 SSL_FALSE
 SSL_TRUE
 PRG_LDFLAGS
-HAVE_V8
-HAVE_PAGE_SPEED
+USE_LIBV8
+USE_PAGE_SPEED
 PAGESPEED_ROOT_DIR
-HAVE_LIBXML2
-HAVE_LIBEVENT
-HAVE_DBI
-HAVE_MYSQL
-HAVE_LDAP
-HAVE_CURL
-HAVE_SSH
-HAVE_EXPAT
-HAVE_PCRE
+USE_LIBXML2
+USE_LIBEVENT
+USE_LIBDBI
+USE_LIBMYSQL
+USE_LIBLDAP
+USE_LIBCURL
+USE_LIBSSH
+USE_LIBEXPAT
+USE_LIBPCRE
 HAVE_SSL_TS
-HAVE_SSL
-HAVE_MAGIC
-HAVE_LIBUUID
-HAVE_LIBZ
+USE_LIBSSL
+USE_LIBMAGIC
+USE_LIBUUID
+USE_LIBZ
 USE_PARSER_FALSE
 USE_PARSER_TRUE
 XLEX
@@ -20744,30 +20744,30 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 #OST_SGI_STLPORT
 #OST_CXX_NOEXCEPTIONS
 
-      ulib_ssl_msg="no    (--with-ssl)"
-      ulib_ssh_msg="no    (--with-ssh)"
-     ulib_pcre_msg="no    (--with-pcre)"
-     ulib_ldap_msg="no    (--with-ldap)"
-     ulib_libz_msg="no    (--with-libz)"
-     ulib_curl_msg="no    (--with-curl)"
-    ulib_expat_msg="no    (--with-expat)"
-    ulib_magic_msg="no    (--with-magic)"
-   ulib_parser_msg="no    (--with-parser)"
-    ulib_mysql_msg="no    (--with-mysql)"
-  ulib_libuuid_msg="no    (--with-libuuid)"
- ulib_libevent_msg="no    (--with-libevent)"
-  ulib_libxml2_msg="no    (--with-libxml2)"
-      ulib_dbi_msg="no    (--with-libdbi)"
-ulib_pagespeed_msg="no    (--with-page-speed)"
-       ulib_v8_msg="no    (--with-v8-javascript)"
-     ulib_ipv6_msg="no    (--with-ipv6)"
-      ulib_pch_msg="no    (--enable-pch)"
-      ulib_LFS_msg="no    (--enable-LFS)"
-      ulib_dbg_msg="no    (--enable-debug)"
-    ulib_final_msg="no    (--enable-final)"
-      ulib_zip_msg="no    (--enable-zip)"
-     ulib_memp_msg="no    (--enable-memory-pool)"
-#  ulib_manual_msg="no    (--enable-manual)"
+      ulib_ssl_msg="no (--with-ssl)"
+      ulib_ssh_msg="no (--with-ssh)"
+     ulib_pcre_msg="no (--with-pcre)"
+     ulib_ldap_msg="no (--with-ldap)"
+     ulib_libz_msg="no (--with-libz)"
+     ulib_curl_msg="no (--with-curl)"
+    ulib_expat_msg="no (--with-expat)"
+    ulib_magic_msg="no (--with-magic)"
+   ulib_parser_msg="no (--with-parser)"
+    ulib_mysql_msg="no (--with-mysql)"
+  ulib_libuuid_msg="no (--with-libuuid)"
+ ulib_libevent_msg="no (--with-libevent)"
+  ulib_libxml2_msg="no (--with-libxml2)"
+      ulib_dbi_msg="no (--with-libdbi)"
+ulib_pagespeed_msg="no (--with-page-speed)"
+       ulib_v8_msg="no (--with-v8-javascript)"
+     ulib_ipv6_msg="no (--with-ipv6)"
+      ulib_pch_msg="no (--enable-pch)"
+      ulib_LFS_msg="no (--enable-LFS)"
+      ulib_dbg_msg="no (--enable-debug)"
+    ulib_final_msg="no (--enable-final)"
+      ulib_zip_msg="no (--enable-zip)"
+     ulib_memp_msg="no (--enable-memory-pool)"
+#  ulib_manual_msg="no (--enable-manual)"
 
 # Add --{enable,disable,with,without}-feature options.
 
@@ -20781,7 +20781,11 @@ fi
 	if test -z "$enable_memory_pool" ; then
 		enable_memory_pool="yes"
 
-$as_echo "#define U_MEMORY_POOL 1" >>confdefs.h
+$as_echo "#define ENABLE_MEMPOOL 1" >>confdefs.h
+
+	else
+
+$as_echo "#define DISABLE_MEMPOOL 1" >>confdefs.h
 
 	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${enable_memory_pool}" >&5
@@ -20797,7 +20801,11 @@ fi
 	if test -z "$enable_LFS" ; then
 		enable_LFS="yes"
 
-$as_echo "#define HAVE_LFS 1" >>confdefs.h
+$as_echo "#define ENABLE_LFS 1" >>confdefs.h
+
+	else
+
+$as_echo "#define DISABLE_LFS 1" >>confdefs.h
 
 	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_LFS" >&5
@@ -21548,21 +21556,21 @@ fi
 
 LIBS=${LIBS_SAVE}
 
-libz_version="None"
-pcre_version="None"
-ldap_version="None"
-expat_version="None"
-libssh_version="None"
-libcurl_version="None"
-ssl_version="None"
-libmagic_version="None"
-libmysql_version="None"
-libuuid_version="None"
-libevent_version="None"
-libxml2_version="None"
-libdbi_version="None"
-page_speed_version="None"
-v8_version="None"
+libz_version="no"
+pcre_version="no"
+ldap_version="no"
+expat_version="no"
+libssh_version="no"
+libcurl_version="no"
+ssl_version="no"
+libmagic_version="no"
+libmysql_version="no"
+libuuid_version="no"
+libevent_version="no"
+libxml2_version="no"
+libdbi_version="no"
+page_speed_version="no"
+v8_version="no"
 
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if LIBZ library is wanted" >&5
@@ -21599,11 +21607,13 @@ $as_echo "$msg" >&6; }
 			fi
 		else
 			echo "${T_MD}LIBZ found in $libzdir${T_ME}"
-			HAVE_LIBZ=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_LIBZ"
+			USE_LIBZ=yes
+
+$as_echo "#define USE_LIBZ 1" >>confdefs.h
+
 			libz_version=$(grep ZLIB_VERSION $libzdir/include/zlib.h | head -n1 | cut -d'"' -f2)
 			if test -z "${libz_version}"; then
-				libz_version="Unknown"
+				libz_version="unknown"
 			fi
 			LIBS="-lz $LIBS";
 			if test $libzdir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -21668,11 +21678,13 @@ $as_echo "$msg" >&6; }
 			fi
 		else
 			echo "${T_MD}libuuid found in $libuuiddir${T_ME}"
-			HAVE_LIBUUID=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_LIBUUID";
+			USE_LIBUUID=yes
+
+$as_echo "#define USE_LIBUUID 1" >>confdefs.h
+
 			libuuid_version=$(pkg-config --modversion ext2fs)
 			if test -z "${libuuid_version}"; then
-				libuuid_version="Unknown"
+				libuuid_version="unknown"
 			fi
 			LIBS="-luuid $LIBS";
 			if test $libuuiddir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -21722,11 +21734,13 @@ $as_echo "$msg" >&6; }
 			fi
 		else
 			echo "${T_MD}libmagic found in $magicdir${T_ME}"
-			HAVE_MAGIC=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_MAGIC";
+			USE_LIBMAGIC=yes
+
+$as_echo "#define USE_LIBMAGIC 1" >>confdefs.h
+
 			libmagic_version=$($magicdir/bin/file --version 2>&1 | head -n 1 | cut -d'-' -f2)
 			if test -z "${libmagic_version}"; then
-				libmagic_version="Unknown"
+				libmagic_version="unknown"
 			fi
 			LIBS="-lmagic $LIBS";
 			if test $magicdir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -21780,8 +21794,10 @@ $as_echo "yes" >&6; }
 $as_echo "$msg" >&6; }
 			fi
 		else
-			HAVE_SSL=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_SSL";
+			USE_LIBSSL=yes
+
+$as_echo "#define USE_LIBSSL 1" >>confdefs.h
+
 			if test "$found_cyassl" = "yes"; then
 				echo "${T_MD}CYASSL found in $ssldir${T_ME}";
 				ssl_version=$(grep VERSION $ssldir/include/cyassl/openssl/opensslv.h | cut -d' ' -f3 | tr -d '\r\n');
@@ -21790,13 +21806,15 @@ $as_echo "$msg" >&6; }
 				echo "${T_MD}OPENSSL found in $ssldir${T_ME}";
 				if test -f "$ssldir/include/openssl/ts.h"; then
 					HAVE_SSL_TS="yes";
-					CPPFLAGS="$CPPFLAGS -DHAVE_SSL_TS";
+
+$as_echo "#define HAVE_SSL_TS 1" >>confdefs.h
+
 				fi
 				ssl_version=$(pkg-config --modversion openssl);
 				LIBS="-lssl -lcrypto $LIBS";
 			fi
 			if test -z "${ssl_version}"; then
-				ssl_version="Unknown";
+				ssl_version="unknown";
 			fi
 			if test $ssldir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$ssldir/include";
@@ -21846,11 +21864,13 @@ $as_echo "$msg" >&6; }
 			fi
 		else
 			echo "${T_MD}PCRE found in $pcredir${T_ME}"
-			HAVE_PCRE=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_PCRE"
+			USE_LIBPCRE=yes
+
+$as_echo "#define USE_LIBPCRE 1" >>confdefs.h
+
 			pcre_version=$($pcredir/bin/pcre-config --version)
 			if test -z "${pcre_version}"; then
-				pcre_version="Unknown"
+				pcre_version="unknown"
 			fi
 			LIBS="-lpcre $LIBS";
 			if test $pcredir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -21900,11 +21920,13 @@ $as_echo "$msg" >&6; }
 			fi
 		else
 			echo "${T_MD}EXPAT found in $expatdir${T_ME}"
-			HAVE_EXPAT=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_EXPAT"
+			USE_LIBEXPAT=yes
+
+$as_echo "#define USE_LIBEXPAT 1" >>confdefs.h
+
 			expat_version=$(strings $expatdir/lib*/libexpat.* | grep "^expat_[0-9]" | head -n1 | cut -d'_' -f2)
 			if test -z "${expat_version}"; then
-				expat_version="Unknown"
+				expat_version="unknown"
 			fi
 			LIBS="-lexpat $LIBS";
 			if test $expatdir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -21943,11 +21965,13 @@ $as_echo "yes" >&6; }
 			as_fn_error $? "Cannot find SSH library" "$LINENO" 5
 		else
 			echo "${T_MD}libssh found in $sshdir${T_ME}"
-			HAVE_SSH=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_SSH";
+			USE_LIBSSH=yes
+
+$as_echo "#define USE_LIBSSH 1" >>confdefs.h
+
 			libssh_version=$(strings $sshdir/lib*/libssh.so | grep 'libssh-[0-9]' | head -n1 | cut -d'-' -f4)
 			if test -z "${libssh_version}"; then
-				libssh_version="Unknown"
+				libssh_version="unknown"
 			fi
 			LIBS="-lssh $LIBS";
 			if test $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -21986,11 +22010,13 @@ $as_echo "yes" >&6; }
 			as_fn_error $? "Cannot find cURL library" "$LINENO" 5
 		else
 			echo "${T_MD}libcurl found in $curldir${T_ME}"
-			HAVE_CURL=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_CURL";
+			USE_LIBCURL=yes
+
+$as_echo "#define USE_LIBCURL 1" >>confdefs.h
+
 			libcurl_version=$($curldir/bin/curl-config --version | sed -e "s/libcurl //g")
 			if test -z "${libcurl_version}"; then
-				libcurl_version="Unknown"
+				libcurl_version="unknown"
 			fi
 			LIBS="-lcurl $LIBS";
 			if test $curldir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -22047,14 +22073,16 @@ $as_echo "yes" >&6; }
 			as_fn_error $? "Cannot find LDAP include" "$LINENO" 5
 		else
 			echo "${T_MD}LDAP found in $ldapdir${T_ME}"
-			HAVE_LDAP=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_LDAP"
+			USE_LIBLDAP=yes
+
+$as_echo "#define USE_LIBLDAP 1" >>confdefs.h
+
 			if test -f "$LDAP_INCS/ldap_ssl.h"; then
 				CPPFLAGS="$CPPFLAGS -DHAVE_LDAP_SSL_H"
 			fi
 			ldap_version=$(grep LDAP_API_VERSION ${LDAP_INCS}/*ldap*.h | awk '{print $NF}')
 			if test -z "${ldap_version}"; then
-				ldap_version="Unknown"
+				ldap_version="unknown"
 			fi
 			LIBS="$LDAP_LIBS $LIBS"
 			if test $ldapdir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -22093,11 +22121,13 @@ $as_echo "yes" >&6; }
 			as_fn_error $? "Cannot find MYSQL library" "$LINENO" 5
 		else
 			echo "${T_MD}MySQL found in $mysqldir${T_ME}"
-			HAVE_MYSQL=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_MYSQL";
+			USE_LIBMYSQL=yes
+
+$as_echo "#define USE_LIBMYSQL 1" >>confdefs.h
+
 			libmysql_version=$(grep MYSQL_VERSION_ID $mysqldir/include/mysql/mysql_version.h | cut -f3)
 			if test -z "${libmysql_version}"; then
-				libmysql_version="Unknown"
+				libmysql_version="unknown"
 			fi
 			LIBS="-lmysqlclient $LIBS";
 			if test $mysqldir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -22141,11 +22171,13 @@ $as_echo "yes" >&6; }
 			as_fn_error $? "Cannot find DBI library" "$LINENO" 5
 		else
 			echo "${T_MD}DBI found in $dbidir${T_ME}"
-			HAVE_DBI=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_DBI";
+			USE_LIBDBI=yes
+
+$as_echo "#define USE_LIBDBI 1" >>confdefs.h
+
 			libdbi_version=$(strings $dbidir/lib*/libdbi.* | grep "^libdbi v[0-9]" | cut -d'v' -f2 | head -n1)
 			if test -z "${libdbi_version}"; then
-				libdbi_version="Unknown"
+				libdbi_version="unknown"
 			fi
 			LIBS="-ldbi $LIBS";
 			if test $dbidir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -22189,11 +22221,13 @@ $as_echo "yes" >&6; }
 			as_fn_error $? "Cannot find LIBEVENT library" "$LINENO" 5
 		else
 			echo "${T_MD}libevent found in $libeventdir${T_ME}"
-			HAVE_LIBEVENT=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_LIBEVENT";
+			USE_LIBEVENT=yes
+
+$as_echo "#define USE_LIBEVENT 1" >>confdefs.h
+
 			libevent_version=$(strings $libeventdir/lib*/libevent* | grep "^libevent-[0-9]" | head -n1 | cut -d'-' -f2 | awk -F'.so' '{n=1; print $n}')
 			if test -z "${libevent_version}"; then
-				libevent_version="Unknown"
+				libevent_version="unknown"
 			fi
 			LIBS="-levent $LIBS";
 			if test $libeventdir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -22232,11 +22266,13 @@ $as_echo "yes" >&6; }
 			as_fn_error $? "Cannot find LIBXML2 library" "$LINENO" 5
 		else
 			echo "${T_MD}libxml2 found in $libxml2dir${T_ME}"
-			HAVE_LIBXML2=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_LIBXML2";
+			USE_LIBXML2=yes
+
+$as_echo "#define USE_LIBXML2 1" >>confdefs.h
+
 			libxml2_version=$(pkg-config --modversion libxml-2.0)
 			if test -z "${libxml2_version}"; then
-				libxml2_version="Unknown"
+				libxml2_version="unknown"
 			fi
 			LIBS="-lxml2 $LIBS";
 			CPPFLAGS="$CPPFLAGS -I$libxml2dir/include/libxml2";
@@ -22275,8 +22311,10 @@ $as_echo "yes" >&6; }
 			as_fn_error $? "\"Cannot find page-speed SDK\"" "$LINENO" 5;
 		else
 			echo "${T_MD}page-speed SDK found in $page_speeddir${T_ME}"
-			HAVE_PAGE_SPEED=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_PAGE_SPEED";
+			USE_PAGE_SPEED=yes
+
+$as_echo "#define USE_PAGE_SPEED 1" >>confdefs.h
+
 			page_speed_version=$(ls -1 $page_speeddir | grep page-speed | cut -d'-' -f3)
 			PAGESPEED_ROOT_DIR=$page_speeddir/page-speed-$page_speed_version
 
@@ -22311,8 +22349,10 @@ $as_echo "yes" >&6; }
 			as_fn_error $? "\"Cannot find V8 JavaScript Engine\"" "$LINENO" 5;
 		else
 			echo "${T_MD}V8 JavaScript Engine found in $v8dir${T_ME}"
-			HAVE_V8=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_V8";
+			USE_LIBV8=yes
+
+$as_echo "#define USE_LIBV8 1" >>confdefs.h
+
 			v8_version=$(strings $v8dir/lib*/libv8.so | grep -i 'libv8' | head -n1 | cut -b10-)
 		fi
 	fi
@@ -22325,20 +22365,12 @@ fi
 
 
 
- if test "$HAVE_SSL"			= "yes"; then
+ if test "$USE_LIBSSL"		= "yes"; then
   SSL_TRUE=
   SSL_FALSE='#'
 else
   SSL_TRUE='#'
   SSL_FALSE=
-fi
-
- if test "$HAVE_SSH"			= "yes"; then
-  SSH_TRUE=
-  SSH_FALSE='#'
-else
-  SSH_TRUE='#'
-  SSH_FALSE=
 fi
 
  if test "$HAVE_SSL_TS"		= "yes"; then
@@ -22349,7 +22381,15 @@ else
   SSL_TS_FALSE=
 fi
 
- if test "$HAVE_PCRE"			= "yes"; then
+ if test "$USE_LIBSSH"		= "yes"; then
+  SSH_TRUE=
+  SSH_FALSE='#'
+else
+  SSH_TRUE='#'
+  SSH_FALSE=
+fi
+
+ if test "$USE_LIBPCRE"		= "yes"; then
   PCRE_TRUE=
   PCRE_FALSE='#'
 else
@@ -22357,7 +22397,7 @@ else
   PCRE_FALSE=
 fi
 
- if test "$HAVE_LDAP"			= "yes"; then
+ if test "$USE_LIBLDAP"		= "yes"; then
   LDAP_TRUE=
   LDAP_FALSE='#'
 else
@@ -22365,7 +22405,7 @@ else
   LDAP_FALSE=
 fi
 
- if test "$HAVE_CURL"			= "yes"; then
+ if test "$USE_LIBCURL"		= "yes"; then
   CURL_TRUE=
   CURL_FALSE='#'
 else
@@ -22373,7 +22413,7 @@ else
   CURL_FALSE=
 fi
 
- if test "$HAVE_LIBZ"			= "yes"; then
+ if test "$USE_LIBZ"			= "yes"; then
   LIBZ_TRUE=
   LIBZ_FALSE='#'
 else
@@ -22381,7 +22421,7 @@ else
   LIBZ_FALSE=
 fi
 
- if test "$HAVE_EXPAT"		= "yes"; then
+ if test "$USE_LIBEXPAT"		= "yes"; then
   EXPAT_TRUE=
   EXPAT_FALSE='#'
 else
@@ -22389,7 +22429,7 @@ else
   EXPAT_FALSE=
 fi
 
- if test "$HAVE_MAGIC"		= "yes"; then
+ if test "$USE_LIBMAGIC"		= "yes"; then
   MAGIC_TRUE=
   MAGIC_FALSE='#'
 else
@@ -22397,7 +22437,7 @@ else
   MAGIC_FALSE=
 fi
 
- if test "$HAVE_MYSQL"		= "yes"; then
+ if test "$USE_LIBMYSQL"		= "yes"; then
   MYSQL_TRUE=
   MYSQL_FALSE='#'
 else
@@ -22405,7 +22445,7 @@ else
   MYSQL_FALSE=
 fi
 
- if test "$HAVE_DBI"			= "yes"; then
+ if test "$USE_LIBDBI"		= "yes"; then
   DBI_TRUE=
   DBI_FALSE='#'
 else
@@ -22413,7 +22453,7 @@ else
   DBI_FALSE=
 fi
 
- if test "$HAVE_LIBEVENT"	= "yes"; then
+ if test "$USE_LIBEVENT"		= "yes"; then
   LIBEVENT_TRUE=
   LIBEVENT_FALSE='#'
 else
@@ -22421,7 +22461,7 @@ else
   LIBEVENT_FALSE=
 fi
 
- if test "$HAVE_LIBXML2"		= "yes"; then
+ if test "$USE_LIBXML2"		= "yes"; then
   LIBXML2_TRUE=
   LIBXML2_FALSE='#'
 else
@@ -22429,7 +22469,7 @@ else
   LIBXML2_FALSE=
 fi
 
- if test "$HAVE_PAGE_SPEED" = "yes"; then
+ if test "$USE_PAGE_SPEED"	= "yes"; then
   PAGE_SPEED_TRUE=
   PAGE_SPEED_FALSE='#'
 else
@@ -22437,7 +22477,7 @@ else
   PAGE_SPEED_FALSE=
 fi
 
- if test "$HAVE_V8"			= "yes"; then
+ if test "$USE_LIBV8"			= "yes"; then
   V8_TRUE=
   V8_FALSE='#'
 else
@@ -22534,8 +22574,8 @@ _ACEOF
 
 LIBS_SAVE=${LIBS}
 
-if test "$HAVE_LIBZ" = "yes"; then
-	ulib_libz_msg="enabled"
+if test "$USE_LIBZ" = "yes"; then
+	ulib_libz_msg="yes ( ${libz_version} )"
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for zlib_deflate_workspacesize in -lz" >&5
 $as_echo_n "checking for zlib_deflate_workspacesize in -lz... " >&6; }
 if ${ac_cv_lib_z_zlib_deflate_workspacesize+:} false; then :
@@ -22586,62 +22626,88 @@ fi
 $as_echo "#define U_ZLIB_DEFLATE_WORKSPACESIZE 1" >>confdefs.h
 
 	fi
+	if test "$enable_zip" = "yes"; then
+		ulib_zip_msg="enabled"
+
+$as_echo "#define ENABLE_ZIP 1" >>confdefs.h
+
+		 if true; then
+  ZIP_TRUE=
+  ZIP_FALSE='#'
+else
+  ZIP_TRUE='#'
+  ZIP_FALSE=
 fi
 
-if test "$HAVE_PCRE" = "yes"; then
-	ulib_pcre_msg="enabled"
+	else
+
+$as_echo "#define DISABLE_ZIP 1" >>confdefs.h
+
+		 if false; then
+  ZIP_TRUE=
+  ZIP_FALSE='#'
+else
+  ZIP_TRUE='#'
+  ZIP_FALSE=
 fi
 
-if test "$HAVE_CURL" = "yes"; then
-	ulib_curl_msg="enabled"
+	fi
 fi
 
-if test "$HAVE_LDAP" = "yes"; then
-	ulib_ldap_msg="enabled"
+if test "$USE_LIBPCRE" = "yes"; then
+	ulib_pcre_msg="yes ( ${pcre_version} )"
 fi
 
-if test "$HAVE_EXPAT" = "yes"; then
-	ulib_expat_msg="enabled"
+if test "$USE_LIBCURL" = "yes"; then
+	ulib_curl_msg="yes ( ${libcurl_version} )"
 fi
 
-if test "$HAVE_MAGIC" = "yes"; then
-	ulib_magic_msg="enabled"
+if test "$USE_LIBLDAP" = "yes"; then
+	ulib_ldap_msg="yes ( ${ldap_version} )"
 fi
 
-if test "$HAVE_SSL" = "yes"; then
-   ulib_ssl_msg="enabled"
+if test "$USE_LIBEXPAT" = "yes"; then
+	ulib_expat_msg="yes ( ${expat_version} )"
 fi
 
-if test "$HAVE_SSH" = "yes"; then
-   ulib_ssh_msg="enabled"
+if test "$USE_LIBMAGIC" = "yes"; then
+	ulib_magic_msg="yes ( ${libmagic_version} )"
 fi
 
-if test "$HAVE_MYSQL" = "yes"; then
-   ulib_mysql_msg="enabled"
+if test "$USE_LIBSSL" = "yes"; then
+   ulib_ssl_msg="yes ( ${ssl_version} )"
 fi
 
-if test "$HAVE_DBI" = "yes"; then
-   ulib_dbi_msg="enabled"
+if test "$USE_LIBSSH" = "yes"; then
+   ulib_ssh_msg="yes ( ${libssh_version} )"
 fi
 
-if test "$HAVE_LIBUUID" = "yes"; then
-   ulib_libuuid_msg="enabled"
+if test "$USE_LIBMYSQL" = "yes"; then
+   ulib_mysql_msg="yes ( ${libmysql_version} )"
 fi
 
-if test "$HAVE_LIBEVENT" = "yes"; then
-   ulib_libevent_msg="enabled"
+if test "$USE_LIBDBI" = "yes"; then
+   ulib_dbi_msg="yes ( ${libdbi_version} )"
 fi
 
-if test "$HAVE_LIBXML2" = "yes"; then
-   ulib_libxml2_msg="enabled"
+if test "$USE_LIBUUID" = "yes"; then
+   ulib_libuuid_msg="yes ( ${libuuid_version} )"
 fi
 
-if test "$HAVE_PAGE_SPEED" = "yes"; then
-   ulib_pagespeed_msg="enabled"
+if test "$USE_LIBEVENT" = "yes"; then
+   ulib_libevent_msg="yes ( ${libevent_version} )"
 fi
 
-if test "$HAVE_V8" = "yes"; then
-   ulib_v8_msg="enabled"
+if test "$USE_LIBXML2" = "yes"; then
+   ulib_libxml2_msg="yes ( ${libxml2_version} )"
+fi
+
+if test "$USE_PAGE_SPEED" = "yes"; then
+   ulib_pagespeed_msg="yes ( ${page_speed_version} )"
+fi
+
+if test "$USE_LIBV8" = "yes"; then
+   ulib_v8_msg="yes ( ${v8_version} )"
 fi
 
 case "$target_os" in
@@ -22650,7 +22716,7 @@ case "$target_os" in
 		LDFLAGS="${LDFLAGS} -Wl,--enable-auto-import"
 	fi
 	LIBS_SAVE="${LIBS_SAVE} -lwinmm -lws2_32"
-	if test "$HAVE_SSL" = "yes"; then
+	if test "$USE_LIBSSL" = "yes"; then
 		LIBS_SAVE="${LIBS_SAVE} -lwsock32 -lgdi32 -lz";
 	fi
 	 if false; then
@@ -26514,7 +26580,11 @@ fi
 if test "$ost_cv_ipv6" = "yes"; then
 	ulib_ipv6_msg="enabled"
 
-$as_echo "#define HAVE_IPV6 1" >>confdefs.h
+$as_echo "#define ENABLE_IPV6 1" >>confdefs.h
+
+else
+
+$as_echo "#define DISABLE_IPV6 1" >>confdefs.h
 
 fi
 
@@ -26681,10 +26751,10 @@ modules="mod_rpc mod_shib mod_stream mod_nocat mod_socket mod_scgi mod_fcgi mod_
 
 # Remove modules that will not be compiles
 
-if test "$HAVE_EXPAT" != "yes"; then
+if test "$USE_EXPAT" != "yes"; then
 	modules=`echo $modules | sed s/mod_soap//`
 fi
-if test "$HAVE_PCRE" != "yes"; then
+if test "$USE_PCRE" != "yes"; then
 	modules=`echo $modules | sed s/mod_proxy//`
 fi
 if test "x$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" != "xyes"; then
@@ -26990,30 +27060,6 @@ fi
 
 fi
 
-if test "$enable_zip" = "yes"; then
-	ulib_zip_msg="enabled"
-
-$as_echo "#define HAVE_ZIP 1" >>confdefs.h
-
-	 if true; then
-  ZIP_TRUE=
-  ZIP_FALSE='#'
-else
-  ZIP_TRUE='#'
-  ZIP_FALSE=
-fi
-
-else
-	 if false; then
-  ZIP_TRUE=
-  ZIP_FALSE='#'
-else
-  ZIP_TRUE='#'
-  ZIP_FALSE=
-fi
-
-fi
-
 if test "$enable_LFS" = "yes"; then
 	ulib_LFS_msg="enabled"
 	CPPFLAGS="${CPPFLAGS} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
@@ -27170,7 +27216,7 @@ $as_echo "$ulib_cc_flag" >&6; }
 
 	if test "$enable_debug" = "yes"; then
 		MAYBE_FLAGS="$MAYBE_FLAGS -Wp,-D_FORTIFY_SOURCE=2 -Wunsafe-loop-optimizations"
-		if test "$HAVE_SSL" = "yes"; then
+		if test "$USE_LIBSSL" = "yes"; then
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-parameter"
 		fi
 	else
@@ -27438,6 +27484,16 @@ ULIB_CPPFLAGS="${CPPFLAGS}"
 
 
 cat >>confdefs.h <<_ACEOF
+#define CXX_VAR "${CXX}"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define LD_VAR "${LD}"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
 #define LIBS_VAR "${LIBS}"
 _ACEOF
 
@@ -27583,62 +27639,52 @@ echo \
 configure: Configured to build src/ulib/libulib:
 
           ULib version: ${VERSION}
+            Build ULib: Shared=${enable_shared}, Static=${enable_static}
+
             Host setup: ${host}
         Install prefix: ${prefix}
         Install plugin: ${pkglibexecdir}
     Configuration data: ${sysconfdir}
+
       Operating System: $os_version
           C++ Compiler: ${CXX} ( $gcc_version )
-             C   Flags: ${CFLAGS}
-             C++ Flags: ${CXXFLAGS}
-    Preprocessor Flags: ${CPPFLAGS}
-          Linker Flags: ${LDFLAGS}
                 Linker: ${LD} ( $ld_version )
-             Libraries: ${LIBS}
   Standard C   library: ${libc_version}
   Standard C++ library: ${stdgpp_version}
+             Libraries: ${LIBS}
 
-           LFS support: ${ulib_LFS_msg}
+             C   Flags: ${CFLAGS}
+             C++ Flags: ${CXXFLAGS}
+          Linker Flags: ${LDFLAGS}
+    Preprocessor Flags: ${CPPFLAGS}
+
          debug support: ${ulib_dbg_msg}
-           zip support: ${ulib_zip_msg}
       final build mode: ${ulib_final_msg}
     precompiled header: ${ulib_pch_msg}
    memory pool support: ${ulib_memp_msg}
+           LFS support: ${ulib_LFS_msg}
           ipv6 support: ${ulib_ipv6_msg}
+           zip support: ${ulib_zip_msg}
+
           LIBZ support: ${ulib_libz_msg}
-          LIBZ library: ${libz_version}
           PCRE support: ${ulib_pcre_msg}
-          PCRE library: ${pcre_version}
            SSL support: ${ulib_ssl_msg}
-           SSL library: ${ssl_version}
            SSH support: ${ulib_ssh_msg}
-           SSH library: ${libssh_version}
           LDAP support: ${ulib_ldap_msg}
-          LDAP library: ${ldap_version}
           cURL support: ${ulib_curl_msg}
-          cURL library: ${libcurl_version}
            XML support: ${ulib_expat_msg}
-         Expat library: ${expat_version}
          MAGIC support: ${ulib_magic_msg}
-         MAGIC library: ${libmagic_version}
          MySQL support: ${ulib_mysql_msg}
-         MySQL library: ${libmysql_version}
            DBI support: ${ulib_dbi_msg}
-           DBI library: ${libdbi_version}
        libuuid support: ${ulib_libuuid_msg}
-       libuuid library: ${libuuid_version}
       libevent support: ${ulib_libevent_msg}
-      libevent library: ${libevent_version}
        libxml2 support: ${ulib_libxml2_msg}
-       libxml2 library: ${libxml2_version}
     Page-Speed support: ${ulib_pagespeed_msg}
-        Page-Speed SDK: ${page_speed_version}
  V8 JavaScript support: ${ulib_v8_msg}
-         V8 JavaScript: ${v8_version}
+
       LEX/YACC support: ${ulib_parser_msg}
       Lexical analyzer: ${LEX} ( ${flex_version} )
       Parser generator: ${YACC} ( ${bison_version} )
-            Build ULib: Shared=${enable_shared}, Static=${enable_static}
 
 See include/ulib/internal/config.h for further configuration information.
 ------------------------------------------------------------------------"
@@ -27954,12 +28000,12 @@ if test -z "${SSL_TRUE}" && test -z "${SSL_FALSE}"; then
   as_fn_error $? "conditional \"SSL\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${SSH_TRUE}" && test -z "${SSH_FALSE}"; then
-  as_fn_error $? "conditional \"SSH\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${SSL_TS_TRUE}" && test -z "${SSL_TS_FALSE}"; then
   as_fn_error $? "conditional \"SSL_TS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${SSH_TRUE}" && test -z "${SSH_FALSE}"; then
+  as_fn_error $? "conditional \"SSH\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PCRE_TRUE}" && test -z "${PCRE_FALSE}"; then
@@ -28008,6 +28054,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${V8_TRUE}" && test -z "${V8_FALSE}"; then
   as_fn_error $? "conditional \"V8\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ZIP_TRUE}" && test -z "${ZIP_FALSE}"; then
+  as_fn_error $? "conditional \"ZIP\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${ZIP_TRUE}" && test -z "${ZIP_FALSE}"; then
+  as_fn_error $? "conditional \"ZIP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PTHREAD_TRUE}" && test -z "${PTHREAD_FALSE}"; then
@@ -28192,14 +28246,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MEMORY_POOL_TRUE}" && test -z "${MEMORY_POOL_FALSE}"; then
   as_fn_error $? "conditional \"MEMORY_POOL\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ZIP_TRUE}" && test -z "${ZIP_FALSE}"; then
-  as_fn_error $? "conditional \"ZIP\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${ZIP_TRUE}" && test -z "${ZIP_FALSE}"; then
-  as_fn_error $? "conditional \"ZIP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${FINAL_TRUE}" && test -z "${FINAL_FALSE}"; then
@@ -30840,11 +30886,12 @@ fi
 #			 src/ulib/base/Makefile src/ulib/debug/Makefile \
 #			 ulib-config ,[chmod a+x ulib-config] )
 
-# Common C++
+awk -f configure_log.awk config.log							  > include/ulib/internal/config1.h
+awk -f configure_h.awk   include/ulib/internal/config.h > include/ulib/internal/config2.h
 cd include/ulib/internal
-mv config.h config.tmp
-sed -e s!"@thrprefix@/thread.h"!"thread.h"! < config.tmp > config.h
-rm -f config.tmp
+sed -e s!"@thrprefix@/thread.h"!"thread.h"! < config.h > config3.h # Common C++
+cat config3.h config2.h config1.h > config.h
+rm -f config3.h config2.h config1.h
 cd ../../..
 
 echo
@@ -30855,7 +30902,7 @@ CPPFLAGS="-DHAVE_CONFIG_H -I${srcdir}/include ${CPPFLAGS}"
 if test "$enable_pch" = "yes" ; then
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking build precompiled headers for ${srcdir}/include/ulib/all.h" >&5
 $as_echo_n "checking build precompiled headers for ${srcdir}/include/ulib/all.h... " >&6; }
-	echo "rm -f ${srcdir}/include/ulib/all.h.gch" >  ${srcdir}/PCH.cmd
+	echo "rm -f ${srcdir}/include/ulib/all.h.gch"																				  > ${srcdir}/PCH.cmd
 	echo "${CXX} ${CPPFLAGS} ${CXXFLAGS} -c ${srcdir}/include/ulib/all.h -o ${srcdir}/include/ulib/all.h.gch" >> ${srcdir}/PCH.cmd
 	rm -f ${srcdir}/include/ulib/all.h.gch
 	${CXX} ${CPPFLAGS} ${CXXFLAGS} -c ${srcdir}/include/ulib/all.h -o ${srcdir}/include/ulib/all.h.gch

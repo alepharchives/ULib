@@ -16,7 +16,6 @@
 
 #include <ulib/internal/common.h>
 
-
 #ifdef __MINGW32__
 #  define U_LIB_SUFFIX  "dll"
 #  define U_FMT_LIBPATH "%s/%.*s." U_LIB_SUFFIX

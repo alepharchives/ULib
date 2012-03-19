@@ -518,7 +518,7 @@ protected:
 private:
    /** prepeats the string to add a query.
    */
-   bool prepeareForQuery() U_NO_EXPORT;
+   bool prepareForQuery() U_NO_EXPORT;
 };
 
 #endif

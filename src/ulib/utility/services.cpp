@@ -179,7 +179,7 @@ read:
    U_RETURN(true);
 }
 
-#ifdef HAVE_LIBUUID
+#ifdef USE_LIBUUID
 // creat a new unique UUID value - 16 bytes (128 bits) long
 // return from the binary representation a 36-byte string (plus tailing '\0') of the form 1b4e28ba-2fa1-11d2-883f-0016d3cca427
 
@@ -200,7 +200,7 @@ UString UServices::getUUID()
 }
 #endif
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  include <openssl/err.h>
 #  include <openssl/engine.h>
 #  include <ulib/base/ssl/dgst.h>
@@ -617,7 +617,7 @@ void UServices::generateKey()
 
 #if defined(U_TEST)
    (void) U_MEMCPY(key, "1234567890123456");
-#elif defined(HAVE_LIBUUID)
+#elif defined(USE_LIBUUID)
    U_SYSCALL_VOID(uuid_generate, "%p", key);
 #else
    (void) u_sn_printf((char*)key, 16, "%lu%P", u_now->tv_usec);
@@ -628,7 +628,7 @@ void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, ui
 {
    U_TRACE(0, "UServices::generateDigest(%d,%u,%.*S,%u,%.*S,%d)", alg, keylen, size, data, size, U_STRING_TO_TRACE(output), base64)
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    u_dgst_init(alg, (const char*)key, keylen);
 
    u_dgst_hash(data, size);
@@ -725,7 +725,7 @@ bool UServices::getTokenData(UString& data, const UString& value, time_t& expire
    U_RETURN(false);
 }
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  if !defined(HAVE_OPENSSL_97) && !defined(HAVE_OPENSSL_98)
 #     ifdef DEBUG
 #        undef trace_sysreturn_type

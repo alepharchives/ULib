@@ -11,7 +11,7 @@
 //
 // ============================================================================
 
-#include <ulib/internal/common.h>
+#include <ulib/base/coder/xml.h>
 
 #include <ulib/url.h>
 #include <ulib/date.h>
@@ -28,7 +28,7 @@
 #include <ulib/net/server/server.h>
 #include <ulib/utility/socket_ext.h>
 
-#ifdef HAVE_MAGIC
+#ifdef USE_LIBMAGIC
 #  include <ulib/magic/magic.h>
 #endif
 #ifdef HAVE_LIBTCC
@@ -110,10 +110,10 @@ UHTTP::upload_progress*           UHTTP::ptr_upload_progress;
          UHTTP::UFileCacheData*   UHTTP::pobj;
          UHTTP::UFileCacheData*   UHTTP::file_data;
 UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
-#ifdef HAVE_PAGE_SPEED
+#ifdef USE_PAGE_SPEED
 UHTTP::UPageSpeed*                UHTTP::page_speed;
 #endif
-#ifdef HAVE_V8
+#ifdef USE_LIBV8
 UHTTP::UV8JavaScript*             UHTTP::v8_javascript;
 #endif
 
@@ -545,7 +545,7 @@ void UHTTP::in_READ()
 static char*        get_reply(void)                    { return UClientImage_Base::wbuffer->data(); }
 static unsigned int get_reply_capacity(void)           { return UClientImage_Base::wbuffer->capacity(); }
 static void         set_reply_capacity(unsigned int n) {        UClientImage_Base::wbuffer->setBuffer(n); }
-#  ifdef HAVE_V8
+#  ifdef USE_LIBV8
 static char* runv8(const char* jssrc) // compiles and executes javascript and returns the script return value as string
    {
    if (UHTTP::v8_javascript)
@@ -581,7 +581,7 @@ bool UHTTP::UCServletPage::compile(const UString& program)
       (void) U_SYSCALL(tcc_add_symbol, "%p,%S,%p", s, "get_reply",          (void*)get_reply);
       (void) U_SYSCALL(tcc_add_symbol, "%p,%S,%p", s, "get_reply_capacity", (void*)get_reply_capacity);
       (void) U_SYSCALL(tcc_add_symbol, "%p,%S,%p", s, "set_reply_capacity", (void*)set_reply_capacity);
-#  ifdef HAVE_V8
+#  ifdef USE_LIBV8
       (void) U_SYSCALL(tcc_add_symbol, "%p,%S,%p", s, "runv8",              (void*)runv8);
 #  endif
 
@@ -708,19 +708,19 @@ void UHTTP::ctor()
    ptrX = USocket::str_X_Forwarded_For->c_pointer(1);   // "X-Forwarded-For"
    ptrI = USocket::str_if_modified_since->c_pointer(1); // "If-Modified-Since"
 
-#ifdef HAVE_MAGIC
+#ifdef USE_LIBMAGIC
    (void) UMagic::init();
 #endif
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    if (UServer_Base::bssl) enable_caching_by_proxy_servers = true;
 #endif
 
-#if defined(HAVE_PAGE_SPEED) || defined(HAVE_V8)
+#if defined(USE_PAGE_SPEED) || defined(USE_LIBV8)
    char buffer[U_PATH_MAX];
 #endif
 
-#ifdef HAVE_PAGE_SPEED
+#ifdef USE_PAGE_SPEED
    U_INTERNAL_ASSERT_EQUALS(page_speed,0)
 
    (void) snprintf(buffer, U_PATH_MAX, U_FMT_LIBPATH, U_PATH_CONV(UPlugIn<void*>::plugin_dir), U_CONSTANT_TO_TRACE("mod_pagespeed"));
@@ -752,7 +752,7 @@ void UHTTP::ctor()
    U_INTERNAL_ASSERT_POINTER(page_speed)
 #endif
 
-#ifdef HAVE_V8
+#ifdef USE_LIBV8
    U_INTERNAL_ASSERT_EQUALS(v8_javascript,0)
 
    (void) snprintf(buffer, U_PATH_MAX, U_FMT_LIBPATH, U_PATH_CONV(UPlugIn<void*>::plugin_dir), U_CONSTANT_TO_TRACE("mod_v8"));
@@ -1037,11 +1037,11 @@ void UHTTP::dtor()
          UServer_Base::handler_inotify = 0;
          }
 
-#  ifdef HAVE_PAGE_SPEED
+#  ifdef USE_PAGE_SPEED
       if (page_speed) delete page_speed;
 #  endif
 
-#  ifdef HAVE_V8
+#  ifdef USE_LIBV8
       if (v8_javascript) delete v8_javascript;
 #  endif
       }
@@ -2515,16 +2515,24 @@ bool UHTTP::readHTTPRequest(USocket* socket)
 
       if (result)
          {
-         if (U_http_version == '1')
+         if (u_http_info.host_len)
+            {
+            // NB: as protection from DNS rebinding attack web servers can reject HTTP requests with an unrecognized Host header...
+
+            if (UServer_Base::public_address &&
+                ((u_http_info.host_len - u_http_info.host_vlen) > (1 + 5) || // NB: ':' + 0-65536
+                 u_isHostName(U_HTTP_VHOST_TO_PARAM) == false))
+               {
+               goto error;
+               }
+            }
+         else if (U_http_version == '1')
             {
             // HTTP 1.1 want header "Host: " ...
+error:
+            setHTTPBadRequest();
 
-            if (u_http_info.host_len == 0)
-               {
-               setHTTPBadRequest();
-
-               U_RETURN(false);
-               }
+            U_RETURN(false);
             }
 
          U_RETURN(true);
@@ -3683,7 +3691,7 @@ UString UHTTP::getHTTPHeaderForResponse(const UString& content, bool connection_
             }
          }
 
-#  ifdef HAVE_SSL
+#  ifdef USE_LIBSSL
       // Use HTTP Strict Transport Security to force client to use secure connections only
       if (sts_age_seconds && UServer_Base::bssl) ext.snprintf_add("Strict-Transport-Security: max-age=%u; includeSubDomains\r\n", sts_age_seconds);
 #  endif
@@ -3807,14 +3815,36 @@ void UHTTP::setHTTPRedirectResponse(bool refresh, UString& ext, const char* ptr_
    setHTTPResponse(&tmp, &body);
 }
 
+UString UHTTP::getUrlEncodedForResponse(const char* format)
+{
+   U_TRACE(0, "UHTTP::getUrlEncodedForResponse(%S)", format)
+
+   UString result(800U);
+   uint32_t sz = U_HTTP_URI_QUERY_LEN;
+
+   if (sz == 0) (void) result.assign(U_CONSTANT_TO_PARAM("Your browser sent a request that this server could not understand"));
+   else
+      {
+      char output[500U];
+
+      // NB: encoding to avoid cross-site scripting (XSS)...
+
+      sz = u_xml_encode((const unsigned char*)u_http_info.uri, U_min(100, U_HTTP_URI_QUERY_LEN), (unsigned char*)output);
+
+      result.snprintf(format, sz, output);
+      }
+
+   U_RETURN_STRING(result);
+}
+
 void UHTTP::setHTTPBadRequest()
 {
    U_TRACE(0, "UHTTP::setHTTPBadRequest()")
 
+   UString body(1000U);
+
    U_http_is_connection_close = U_YES;
    u_http_info.nResponseCode  = HTTP_BAD_REQUEST;
-
-   UString body(500U + u_http_info.uri_len);
 
    UFileCacheData* ptr_file_data = getFileInCache(U_CONSTANT_TO_PARAM("ErrorDocument/400.html"));
 
@@ -3825,25 +3855,9 @@ void UHTTP::setHTTPBadRequest()
       }
    else
       {
-      UString msg(200U);
-
-      if (u_http_info.uri_len   == 0 &&
-          u_http_info.query_len == 0)
-         {
-         (void) msg.assign(U_CONSTANT_TO_PARAM("Your browser sent a request that this server could not understand"));
-         }
-      else
-         {
-         UString output(100U);
-
-         // NB: the string space limit the size of output...
-
-         UEscape::encode((const unsigned char*)U_HTTP_URI_QUERY_TO_PARAM, output, false);
-
-         msg.snprintf("Your requested URL %s was a request that this server could not understand", output.data());
-         }
-
       const char* status = getHTTPStatusDescription(HTTP_BAD_REQUEST);
+
+      UString msg = getUrlEncodedForResponse("Your requested URL %.*S was a request that this server could not understand");
 
       U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
 
@@ -3860,9 +3874,9 @@ void UHTTP::setHTTPUnAuthorized()
 {
    U_TRACE(0, "UHTTP::setHTTPUnAuthorized()")
 
-   u_http_info.nResponseCode = HTTP_UNAUTHORIZED;
+   UString body(1000U);
 
-   UString body(500U + u_http_info.uri_len);
+   u_http_info.nResponseCode = HTTP_UNAUTHORIZED;
 
    UFileCacheData* ptr_file_data = getFileInCache(U_CONSTANT_TO_PARAM("ErrorDocument/401.html"));
 
@@ -3900,9 +3914,9 @@ void UHTTP::setHTTPForbidden()
 {
    U_TRACE(0, "UHTTP::setHTTPForbidden()")
 
-   u_http_info.nResponseCode = HTTP_FORBIDDEN;
+   UString body(1000U);
 
-   UString body(500U + u_http_info.uri_len);
+   u_http_info.nResponseCode = HTTP_FORBIDDEN;
 
    UFileCacheData* ptr_file_data = getFileInCache(U_CONSTANT_TO_PARAM("ErrorDocument/403.html"));
 
@@ -3913,11 +3927,9 @@ void UHTTP::setHTTPForbidden()
       }
    else
       {
-      UString msg(100U + u_http_info.uri_len);
-
-      msg.snprintf("You don't have permission to access %.*s on this server", U_HTTP_URI_TO_TRACE);
-
       const char* status = getHTTPStatusDescription(HTTP_FORBIDDEN);
+
+      UString msg = getUrlEncodedForResponse("You don't have permission to access %.*S on this server");
 
       U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
 
@@ -3934,9 +3946,9 @@ void UHTTP::setHTTPNotFound()
 {
    U_TRACE(0, "UHTTP::setHTTPNotFound()")
 
-   u_http_info.nResponseCode = HTTP_NOT_FOUND;
+   UString body(1000U);
 
-   UString body(500U + u_http_info.uri_len);
+   u_http_info.nResponseCode = HTTP_NOT_FOUND;
 
    UFileCacheData* ptr_file_data = getFileInCache(U_CONSTANT_TO_PARAM("ErrorDocument/404.html"));
 
@@ -3947,11 +3959,9 @@ void UHTTP::setHTTPNotFound()
       }
    else
       {
-      UString msg(100U + u_http_info.uri_len);
-
-      msg.snprintf("The requested URL %.*s was not found on this server", U_HTTP_URI_TO_TRACE);
-
       const char* status = getHTTPStatusDescription(HTTP_NOT_FOUND);
+
+      UString msg = getUrlEncodedForResponse("The requested URL %.*S was not found on this server");
 
       U_INTERNAL_ASSERT(str_frm_body->isNullTerminated())
 
@@ -3968,9 +3978,9 @@ void UHTTP::setHTTPBadMethod()
 {
    U_TRACE(0, "UHTTP::setHTTPBadMethod()")
 
-   u_http_info.nResponseCode = HTTP_BAD_METHOD;
+   UString body(1000U);
 
-   UString body(500U + u_http_info.uri_len);
+   u_http_info.nResponseCode = HTTP_BAD_METHOD;
 
    UFileCacheData* ptr_file_data = getFileInCache(U_CONSTANT_TO_PARAM("ErrorDocument/405.html"));
 
@@ -3981,9 +3991,11 @@ void UHTTP::setHTTPBadMethod()
       }
    else
       {
-      UString msg(200U);
+      char format[100];
 
-      msg.snprintf("The requested method %.*s is not allowed for the URL %.*s", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE);
+      (void) u_sn_printf(format, sizeof(format), "The requested method %.*s is not allowed for the URL %%.*S", U_HTTP_METHOD_TO_TRACE);
+
+      UString msg = getUrlEncodedForResponse(format);
 
       const char* status = getHTTPStatusDescription(HTTP_BAD_METHOD);
 
@@ -4073,7 +4085,7 @@ void UHTTP::setHTTPCgiResponse(bool header_content_type, bool bcompress, bool co
 
    if (bcompress)
       {
-#  ifdef HAVE_PAGE_SPEED
+#  ifdef USE_PAGE_SPEED
       page_speed->minify_html("UHTTP::setHTTPCgiResponse()", content);
 #  endif
 
@@ -4606,7 +4618,7 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
                         u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".jpg")) ||
                         u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".jpeg")))
 
-#if defined(HAVE_PAGE_SPEED) && defined(DEBUG)
+#if defined(USE_PAGE_SPEED) && defined(DEBUG)
            if (u_mime_index == U_gif) page_speed->optimize_gif(content);
       else if (u_mime_index == U_png) page_speed->optimize_png(content);
       else                            page_speed->optimize_jpg(content);
@@ -4627,7 +4639,7 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
 
       if (content.empty()) goto end;
       }
-#ifdef HAVE_PAGE_SPEED
+#ifdef USE_PAGE_SPEED
    else if (u_mime_index == U_html)
       {
       U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".htm")) ||
@@ -4641,7 +4653,7 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
 
         if (file_data->size >= min_size_for_sendfile)  motivation = " (size exceeded)";  // NB: for major size it is better to use sendfile()
 // else if (file_data->size <= U_MIN_SIZE_FOR_DEFLATE) motivation = " (size too small)";
-#ifdef HAVE_LIBZ
+#ifdef USE_LIBZ
    else if (u_mime_index != U_ssi &&
             u_mime_index != U_gz)
       {
@@ -5142,7 +5154,7 @@ U_NO_EXPORT void UHTTP::processRewriteRule()
 {
    U_TRACE(0, "UHTTP::processRewriteRule()")
 
-#ifndef HAVE_PCRE
+#ifndef USE_LIBPCRE
    U_SRV_LOG("REWRITE_RULE_NF: pcre support is missing, please install libpcre and the headers and recompile ULib...");
 #else
    uint32_t pos, len;
@@ -5626,7 +5638,7 @@ UString UHTTP::getCGIEnvironment()
 
    buffer.snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(uri));
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    if (UServer_Base::bssl)
       {
       X509* x509 = ((USSLSocket*)UServer_Base::pClientImage->socket)->getPeerCertificate();
@@ -5911,7 +5923,7 @@ rescan:
       {
 no_headers: // NB: we assume to have HTML without HTTP headers...
 
-#  ifdef HAVE_MAGIC
+#  ifdef USE_LIBMAGIC
       U_ASSERT(U_STRNEQ(UMagic::getType(ptr, sz).data(), "text"))
 #  endif
 
@@ -6786,8 +6798,9 @@ U_NO_EXPORT bool UHTTP::openFile()
 
       result = (u_fnmatch(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("servlet"), 0) == false);
 
-      if (result &&
-          U_http_is_navigation == false)
+      if (result                         &&
+          U_http_is_navigation  == false &&
+          u_http_info.query_len == 0)
          {
          // Check if there is an index file (index.html) in the directory... (we check in the CACHE FILE SYSTEM)
 
@@ -7251,7 +7264,7 @@ U_EXPORT const char* UHTTP::UCServletPage::dump(bool reset) const
    return 0;
 }
 
-#  ifdef HAVE_PAGE_SPEED
+#  ifdef USE_PAGE_SPEED
 U_EXPORT const char* UHTTP::UPageSpeed::dump(bool reset) const
 {
    UDynamic::dump(false);
@@ -7273,7 +7286,7 @@ U_EXPORT const char* UHTTP::UPageSpeed::dump(bool reset) const
 }
 #  endif
 
-#  ifdef HAVE_V8
+#  ifdef USE_LIBV8
 U_EXPORT const char* UHTTP::UV8JavaScript::dump(bool reset) const
 {
    UDynamic::dump(false);
@@ -7295,7 +7308,7 @@ U_EXPORT const char* UHTTP::UV8JavaScript::dump(bool reset) const
 U_EXPORT const char* UHTTP::RewriteRule::dump(bool reset) const
 {
    *UObjectIO::os
-#              ifdef HAVE_PCRE
+#              ifdef USE_LIBPCRE
                   << "key         (UPCRE   " << (void*)&key         << ")\n"
 #              endif
                   << "replacement (UString " << (void*)&replacement << ')';

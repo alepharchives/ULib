@@ -1575,7 +1575,7 @@ istream& UString::getline(istream& in, char delim)
                if (c != '\n') _append('\\');
                else
                   {
-                  // comprime serie di white-space in un singolo spazio...
+                  // compress multiple white-space in a single new-line...
 
                   do { c = sb->sbumpc(); } while (c != EOF && u_isspace(c));
 
@@ -1583,7 +1583,7 @@ istream& UString::getline(istream& in, char delim)
                      {
                      sb->sputbackc(c);
 
-                     c = ' ';
+                     c = '\n';
                      }
                   }
                }

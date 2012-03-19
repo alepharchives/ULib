@@ -105,12 +105,12 @@
 #  include "base/base_trace.c"
 #endif
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  include "base/ssl/des3.c"
 #  include "base/ssl/dgst.c"
 #endif
 
-#ifdef HAVE_ZIP
+#ifdef ENABLE_ZIP
 /*
 #undef  U_INTERNAL_TRACE
 #define U_INTERNAL_TRACE(format,args...) \
@@ -125,6 +125,6 @@
 #  include "base/zip/ziptool.c"
 #endif
 
-#ifdef HAVE_LIBZ
+#ifdef USE_LIBZ
 #  include "base/coder/cgzio.c"
 #endif

@@ -14,7 +14,9 @@
 #ifndef U_FTP_CLIENT_H
 #define U_FTP_CLIENT_H 1
 
-#ifdef HAVE_SSL
+#include <ulib/internal/common.h>
+
+#ifdef USE_LIBSSL
 #  include <ulib/ssl/net/sslsocket.h>
 #  define Socket USSLSocket
 #else
@@ -164,7 +166,7 @@ public:
       {
       U_TRACE(0, "UFtpClient::_connectServer(%.*S,%d,%u)", U_STRING_TO_TRACE(server), _port, timeoutMS)
 
-#  ifdef HAVE_SSL
+#  ifdef USE_LIBSSL
       U_INTERNAL_ASSERT(Socket::isSSL())
       ((USSLSocket*)this)->setActive(false);
 #  endif

@@ -10,7 +10,7 @@
 #include <errno.h>
 #include <stdlib.h>
 
-#include <ulib/zip/ziptool.h>
+#include <ulib/base/zip/ziptool.h>
 #include <ulib/base/zip/dostime.h>
 #include <ulib/base/zip/zipentry.h>
 #include <ulib/base/zip/zipfile.h>

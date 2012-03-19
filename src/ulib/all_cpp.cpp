@@ -90,11 +90,11 @@
 #  include "thread.cpp"
 #endif
 
-#ifdef HAVE_ZIP
+#ifdef ENABLE_ZIP
 #  include "zip/zip.cpp"
 #endif
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  include "ssl/certificate.cpp"
 #  include "ssl/pkcs7.cpp"
 #  include "ssl/crl.cpp"
@@ -106,15 +106,15 @@
 #  endif
 #endif
 
-#ifdef HAVE_SSH
+#ifdef USE_LIBSSH
 #  include "ssh/net/sshsocket.cpp"
 #endif
 
-#ifdef HAVE_PCRE
+#ifdef USE_LIBPCRE
 #  include "pcre/pcre.cpp"
 #endif
 
-#ifdef HAVE_EXPAT
+#ifdef USE_LIBEXPAT
 #  include "xml/expat/attribute.cpp"
 #  include "xml/expat/element.cpp"
 #  include "xml/expat/xml_parser.cpp"
@@ -124,13 +124,13 @@
 #  include "xml/soap/soap_parser.cpp"
 #endif
 
-#ifdef HAVE_LIBXML2
+#ifdef USE_LIBXML2
 #  include "xml/libxml2/node.cpp"
 #  include "xml/libxml2/schema.cpp"
 #  include "xml/libxml2/document.cpp"
 #endif
 
-#ifdef HAVE_CURL
+#ifdef USE_LIBCURL
 #  include "curl/curl.cpp"
 #endif
 
@@ -139,19 +139,19 @@
 #  include "flex/bison.cpp"
 #endif
 
-#ifdef HAVE_MAGIC
+#ifdef USE_LIBMAGIC
 #  include "magic/magic.cpp"
 #endif
 
-#ifdef HAVE_MYSQL
+#ifdef USE_LIBMYSQL
 #  include "mysql/mysql.cpp"
 #endif
 
-#ifdef HAVE_DBI
+#ifdef USE_LIBDBI
 #  include "dbi/dbi.cpp"
 #endif
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
 #  include "libevent/event.cpp"
 #endif
 
@@ -195,12 +195,12 @@
 #  include "net/server/plugin/mod_geoip/mod_geoip.cpp"
 #endif
 
-#if defined(HAVE_PCRE) && defined(U_STATIC_HANDLER_PROXY)
+#if defined(USE_LIBPCRE) && defined(U_STATIC_HANDLER_PROXY)
 #  include "net/server/plugin/mod_proxy.cpp"
 #  include "net/server/plugin/mod_proxy_service.cpp"
 #endif
 
-#if defined(HAVE_EXPAT) && defined(U_STATIC_HANDLER_SOAP)
+#if defined(USE_LIBEXPAT) && defined(U_STATIC_HANDLER_SOAP)
 #  include "net/server/plugin/mod_soap.cpp"
 #endif
 
@@ -220,7 +220,7 @@
 #  include "net/server/plugin/mod_rpc.cpp"
 #endif
 
-#ifdef HAVE_LDAP
+#ifdef USE_LIBLDAP
 #  include "ldap/ldap.cpp"
 #endif
 

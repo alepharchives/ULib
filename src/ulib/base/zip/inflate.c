@@ -16,7 +16,7 @@
 
 static z_stream zs;
 
-#ifdef HAVE_LIBZ // check for crc32
+#ifdef USE_LIBZ // check for crc32
 #  define zlib_deflateInit2(strm, level, method, windowBits, memLevel, strategy) \
                deflateInit2_((strm),(level),(method),(windowBits),(memLevel),(strategy),ZLIB_VERSION,sizeof(z_stream))
 #  define zlib_inflateInit2(strm, windowBits) \

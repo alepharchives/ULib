@@ -17,7 +17,7 @@
 #include <ulib/event/event_fd.h>
 #include <ulib/utility/socket_ext.h>
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  include <ulib/ssl/certificate.h>
 #  include <ulib/ssl/net/sslsocket.h>
 #endif
@@ -54,7 +54,7 @@ public:
 
    // NB: we need that (not put on it in class UClientImage<USSLSocket>) otherwise there are problem with delete[]...
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
           SSL* ssl;
    static SSL_CTX* ctx;
 #endif
@@ -181,7 +181,7 @@ private:
    UClientImage& operator=(const UClientImage&)            { return *this; }
 };
 
-#ifdef HAVE_SSL // specializzazione con USSLSocket
+#ifdef USE_LIBSSL // specializzazione con USSLSocket
 
 template <> class U_EXPORT UClientImage<USSLSocket> : public UClientImage_Base {
 public:

@@ -1521,10 +1521,11 @@ U_EXPORT main (int argc, char* argv[])
    test_split();
 #endif
 
+   int i;
    UCrono crono;
    crono.start();
 
-   for (int i = 0; i < n; ++i)
+   for (i = 0; i < n; ++i)
       {
 #ifdef TEST_MEMMOVE
       test_memmove_01();
@@ -1738,7 +1739,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( z == U_STRING_FROM_CONSTANT(ENV_2) )
 
-#ifdef HAVE_LIBZ
+#ifdef USE_LIBZ
 #  define TEXT3 \
 "Apr 12 10:03:22 www sm-mta[2031]: l3C834YF002031: from=<tddiaz@thai.com>, size=2426, class=0, nrcpts=1, msgid=<c69d01c77cd8$9471501e$6aa9eea9@thai.com>, proto=SMTP, daemon=MTA, relay=adsl-d36.87-197-150.t-com.sk [87.197.150.36]\n" \
 "Apr 12 10:03:22 www sm-mta[2034]: l3C834YF002031: to=<marcodd@unirel.it>, delay=00:00:13, xdelay=00:00:00, mailer=cyrusv2, pri=122426, relay=localhost, dsn=5.1.1, stat=User unknown\n" \
@@ -1827,7 +1828,7 @@ U_EXPORT main (int argc, char* argv[])
       cout << UStringExt::evalExpression(expressions[i], UString::getStringNull()) << "\n";
       }
 
-#ifdef HAVE_PCRE
+#ifdef USE_LIBPCRE
    // date (YYYY/MM/DD) --> (DD/MM/YYYY)
 
    z = UStringExt::pregReplace(U_STRING_FROM_CONSTANT("([0-9]{4})\\/([0-9]{2})\\/([0-9]{2})"),
@@ -1852,6 +1853,47 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( z == U_STRING_FROM_CONSTANT("April1,2003") )
 #endif
+
+   U_ASSERT( u_isName(                      U_CONSTANT_TO_PARAM("QUESTO_E_UN_NOME")) )
+   U_ASSERT( u_isText((const unsigned char*)U_CONSTANT_TO_PARAM("QUESTO_E_UN_NOME")) )
+   U_ASSERT( u_isText((const unsigned char*)U_CONSTANT_TO_PARAM("QUESTO-NON-E_UN_NOME")) )
+   U_ASSERT( u_isName(                      U_CONSTANT_TO_PARAM("QUESTO-NON-E_UN_NOME")) == false )
+
+   z = UStringExt::prepareForEnvironmentVar(U_STRING_FROM_CONSTANT("foo=bar \n\n"
+                                                                   "#pippo=pluto \n\n"
+                                                                   "UTRACE=0 5M 0 \n\n"));
+
+   U_ASSERT( z == U_STRING_FROM_CONSTANT("foo=bar\n'UTRACE=0 5M 0'\n") )
+
+   z = UStringExt::prepareForEnvironmentVar(U_STRING_FROM_CONSTANT("#pippo=pluto\n\n"
+                                                                   "foo=bar\n\n"
+                                                                   "'UTRACE=0 5M 0' \n\n"));
+
+   U_ASSERT( z == U_STRING_FROM_CONSTANT("foo=bar\n'UTRACE=0 5M 0'\n") )
+
+   istrstream istrs02(U_CONSTANT_TO_PARAM("\"DEBUG=1 \\\n"
+                                          "  FW_CONF=etc/nodog_fw.conf \\\n"
+                                          "  AllowedWebHosts=159.213.0.0/16 \\\n"
+                                          "  InternalDevice=ath0 ath0 \\\n"
+                                          "  LocalNetwork=10.30.1.0/24 10.1.0.1/16 \\\n"
+                                          "  AuthServiceAddr=http://www.auth-firenze.com/login http://localhost\""));
+
+   z.get(istrs02);
+
+   z = UStringExt::prepareForEnvironmentVar(z);
+
+   U_INTERNAL_DUMP("z = %#.*S", U_STRING_TO_TRACE(z))
+
+   U_ASSERT( z == U_STRING_FROM_CONSTANT("DEBUG=1\n"
+                                         "FW_CONF=etc/nodog_fw.conf\n"
+                                         "AllowedWebHosts=159.213.0.0/16\n"
+                                         "'InternalDevice=ath0 ath0'\n"
+                                         "'LocalNetwork=10.30.1.0/24 10.1.0.1/16'\n"
+                                         "'AuthServiceAddr=http://www.auth-firenze.com/login http://localhost'\n") )
+
+   y = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("LocalNetwork"), &z);
+
+   U_ASSERT( y == U_STRING_FROM_CONSTANT("10.30.1.0/24 10.1.0.1/16") )
 
    crono.stop();
 

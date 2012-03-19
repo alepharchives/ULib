@@ -323,7 +323,7 @@ UString UTokenizer::getTokenQueryParser()
       }
    else
       {
-      while (s < end &&                // (isalnum(*s) || *s == '_'))
+      while (s < end &&  // u_isname(*s)
              (u_isspace(*s) == false &&
               *s != '(' &&
               *s != ')'))
@@ -461,7 +461,7 @@ loop:
                {
                p1 = s;
 
-               while (s < end && (u_isalnum(*s) || *s == '_')) ++s;
+               while (s < end && u_isname(*s)) ++s;
 
                p2 = s;
                }

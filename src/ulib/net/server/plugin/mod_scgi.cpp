@@ -64,7 +64,7 @@ int USCGIPlugIn::handlerConfig(UFileConfig& cfg)
    //
    // NAME_SOCKET    file name for the scgi socket
    //
-   // USE_IPV6       flag to indicate use of ipv6
+   // ENABLE_IPV6       flag to indicate use of ipv6
    // SERVER         host name or ip address for the scgi host
    // PORT           port number             for the scgi host
    //

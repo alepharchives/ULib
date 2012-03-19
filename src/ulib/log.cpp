@@ -14,7 +14,7 @@
 #include <ulib/log.h>
 #include <ulib/utility/lock.h>
 
-#ifdef HAVE_LIBZ // check for crc32
+#ifdef USE_LIBZ // check for crc32
 #  include <ulib/utility/interrupt.h>
 #  include <zlib.h>
 #endif
@@ -133,7 +133,7 @@ void ULog::init()
       U_INTERNAL_ASSERT_POINTER(pthis)
       U_INTERNAL_ASSERT_DIFFERS(pthis->UFile::fd,-1)
 
-#  ifdef HAVE_LIBZ
+#  ifdef USE_LIBZ
       backup_log_function = &ULog::backup;
 
       UInterrupt::setHandlerForSignal(SIGUSR1, (sighandler_t)ULog::handlerSIGUSR1);
@@ -313,7 +313,7 @@ void ULog::reopen()
       }
 }
 
-#ifdef HAVE_LIBZ
+#ifdef USE_LIBZ
 void ULog::backup()
 {
    U_TRACE(1, "ULog::backup()")
@@ -348,7 +348,7 @@ void ULog::backup()
 
    U_ASSERT_EQUALS(UFile::access(buffer_path, R_OK | W_OK), false)
 
-   gzFile fp = U_SYSCALL(gzopen, "%S,%S", buffer_path, "wb");
+   gzFile fp = (gzFile) U_SYSCALL(gzopen, "%S,%S", buffer_path, "wb");
 
    if (fp)
       {

@@ -28,7 +28,7 @@ UString*    UClientImage_Base::pbuffer;
 UString*    UClientImage_Base::msg_welcome;
 const char* UClientImage_Base::rpointer;
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 SSL_CTX*    UClientImage_Base::ctx;
 #endif
 
@@ -120,7 +120,7 @@ UClientImage_Base::UClientImage_Base()
    logbuf        = (UServer_Base::isLog() ? U_NEW(UString(4000U)) : 0);
    last_response = 0;
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    ssl = 0;
 #endif
 
@@ -222,7 +222,7 @@ void UClientImage_Base::logCertificate(void* x509)
 
    // NB: OpenSSL already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    if (x509)
       {
       U_INTERNAL_ASSERT_POINTER(logbuf)
@@ -707,7 +707,7 @@ const char* UClientImage_Base::dump(bool _reset) const
    return 0;
 }
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 const char* UClientImage<USSLSocket>::dump(bool _reset) const
 {
    UClientImage_Base::dump(false);

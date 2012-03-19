@@ -14,7 +14,7 @@
 #ifndef ULIB_EVENT_FD_H
 #define ULIB_EVENT_FD_H 1
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
 #  include <ulib/libevent/event.h>
 #endif
 
@@ -59,7 +59,7 @@ public:
       fd      = 0;
       op_mask = U_READ_IN;
 
-#  ifdef HAVE_LIBEVENT
+#  ifdef USE_LIBEVENT
       pevent = 0;
 #  endif
       }
@@ -68,7 +68,7 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UEventFd)
 
-#  ifdef HAVE_LIBEVENT
+#  ifdef USE_LIBEVENT
       if (pevent)
          {
          UDispatcher::del(pevent);
@@ -84,7 +84,7 @@ public:
    virtual void handlerDelete()         { delete this; }
    virtual void handlerError(int state) {}
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
    UEvent<UEventFd>* pevent;
 
    void operator()(int fd, short event);

@@ -76,7 +76,7 @@ typedef          int       mode_t;
 
 #if defined(SOLARIS) || defined(__APPLE__)
 #  if defined(MACOSX)
-#     define HAVE_LFS 1
+#     define ENABLE_LFS 1
 #  endif
 #  define HAVE_STRTOULL  1
 #  define HAVE_INET_NTOP 1
@@ -236,7 +236,7 @@ int fallocate(int fd, int mode, off_t offset, off_t len);
 #  endif
 #endif
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  include <openssl/opensslv.h>
 #  if   (OPENSSL_VERSION_NUMBER < 0x00905100L)
 #     error "Must use OpenSSL 0.9.6 or later, Aborting..."

@@ -3,7 +3,7 @@
 #include <ulib/file.h>
 #include <ulib/mime/entity.h>
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  include <ulib/utility/services.h>
 #  include <ulib/ssl/mime/mime_pkcs7.h>
 #endif
@@ -52,7 +52,7 @@ static void check_multipart(UMimeMultipart& item, const UString& file)
       }
 }
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 static void check_pkcs7(UMimePKCS7& item, const UString& file)
 {
    U_TRACE(5, "check_pkcs7(%p,%p)", &item, file.data())
@@ -102,7 +102,7 @@ static void parse(const UString& dati, const UString& file)
          {
          type = "application/pkcs7";
 
-#     ifdef HAVE_SSL
+#     ifdef USE_LIBSSL
          UMimePKCS7 item(tmp);
 
          /*

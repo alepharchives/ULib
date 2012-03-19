@@ -1093,6 +1093,42 @@ const char* u_delimit_token(const char* restrict s, const char** restrict p, con
    return s;
 }
 
+uint32_t u_split(char* restrict s, uint32_t n, char** restrict argv, const char* restrict delim)
+{
+   const char* restrict p;
+   char* restrict end  = s + n;
+   char** restrict ptr = argv;
+
+   U_INTERNAL_TRACE("u_split(%.*s,%u,%p,%s)", U_min(n,128), s, n, argv, delim)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_MAJOR(n,0)
+   U_INTERNAL_ASSERT_POINTER(argv)
+   U_INTERNAL_ASSERT_EQUALS(u_isBinary((const unsigned char*)s,n),false)
+
+   while (s < end)
+      {
+      s = (char* restrict) u_delimit_token(s, (const char** restrict)&p, end, delim, 0);
+
+      U_INTERNAL_PRINT("s = %.*s", 20, s)
+
+      if (s <= end)
+         {
+         *argv++ = (char* restrict) p;
+
+         *s++ = '\0';
+
+         U_INTERNAL_PRINT("u_split() = %s", p)
+         }
+      }
+
+   *argv = 0;
+
+   n = (argv - ptr);
+
+   return n;
+}
+
 /* Match STRING against the filename pattern MASK, returning true if it matches, false if not, inversion if flags contain FNM_INVERT */
 
 __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
@@ -1280,14 +1316,67 @@ __pure bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* 
       }
 }
 
-__pure bool u_isURL(const char* restrict url, uint32_t len)
+__pure bool u_isHostName(const char* restrict ptr, uint32_t len)
 {
    int ch;
+   const char* restrict end = ptr + len;
+
+   U_INTERNAL_TRACE("u_isHostName(%.*s,%u)", U_min(len,128), ptr, len)
+
+   U_INTERNAL_ASSERT_POINTER(ptr)
+
+   if (ptr[ 0] == '[' &&
+       end[-1] == ']')
+      {
+      if (u_isIPv6Addr(ptr+1, len-1)) return true;
+
+      return false;
+      }
+
+   ch = *(unsigned char*)ptr;
+
+   /* Host names may contain only alphanumeric characters, minus signs ("-"), and periods (".").
+    * They must begin with an alphabetic character and end with an alphanumeric character
+    */
+
+   if (u_isalpha(ch))
+      {
+      if (u_isalnum(end[-1]) == false) return false;
+
+      while (++ptr < end)
+         {
+         ch = *(unsigned char*)ptr;
+
+         if (u_isalnum(ch) == 0 && ch != '.' && ch != '-') return false;
+         }
+
+      return true;
+      }
+
+   while (ptr < end)
+      {
+      ch = *(unsigned char*)ptr;
+
+      if ((u_isdigit( ch) == 0 && ch != '.') &&
+          (u_isxdigit(ch) == 0 && ch != '.'  && ch != ':'))
+         {
+         return false;
+         }
+
+      ++ptr;
+      }
+
+   return true;
+}
+
+__pure const char* u_isUrlScheme(const char* restrict url, uint32_t len)
+{
+   int ch;
+   const char* restrict ptr;
    bool alphanumeric, special;
-   const char* restrict url2;
    const char* restrict first_slash;
 
-   U_INTERNAL_TRACE("u_isURL(%.*s,%u)", U_min(len,128), url, len)
+   U_INTERNAL_TRACE("u_isUrlScheme(%.*s,%u)", U_min(len,128), url, len)
 
    U_INTERNAL_ASSERT_POINTER(url)
 
@@ -1299,36 +1388,102 @@ __pure bool u_isURL(const char* restrict url, uint32_t len)
        first_slash[ 1] != '/' ||     /* Character before must be : and next must be / */
        first_slash     == (url + 1)) /* There must be something before the :// */
       {
-      return false;
+      return 0;
       }
 
    /* Check all characters up to first slash - 1. Only alphanum is allowed */
 
-   url2 = url;
+   ptr = url;
 
    --first_slash;
 
-   while (url2 < first_slash)
-      {
-      ch = *(unsigned char*)url2;
+   U_INTERNAL_ASSERT_EQUALS(first_slash[0], ':')
 
-      /* The set of valid URL schemes, as per STD66 (RFC3986) is
-       * '[A-Za-z][A-Za-z0-9+.-]*'. But use sightly looser check
-       * of '[A-Za-z0-9][A-Za-z0-9+.-]*' because earlier version
-       * of check used '[A-Za-z0-9]+' so not to break any remote helpers.
+   while (ptr < first_slash)
+      {
+      ch = *(unsigned char*)ptr;
+
+      /* The set of valid URL schemes, as per STD66 (RFC3986) is '[A-Za-z][A-Za-z0-9+.-]*'.
+       * But use sightly looser check of '[A-Za-z0-9][A-Za-z0-9+.-]*' because earlier version
+       * of check used '[A-Za-z0-9]+' so not to break any remote helpers
        */
 
       special      = (ch == '+' || ch == '-' || ch == '.');
       alphanumeric = (ch > 0 && u_isalnum(ch));
 
-      if (alphanumeric == false && (url2 != url && special) == false) return false;
+      if (alphanumeric            == false &&
+          (ptr != url && special) == false)
+         {
+         return 0;
+         }
 
-      ++url2;
+      ++ptr;
       }
 
-   /* Valid enough */
+   U_INTERNAL_ASSERT_EQUALS(ptr[1], '/')
+   U_INTERNAL_ASSERT_EQUALS(ptr[2], '/')
 
-   return true;
+   return ptr+3;
+}
+
+__pure bool u_isURL(const char* restrict url, uint32_t len)
+{
+   int ch;
+   const char* restrict ptr;
+   const char* restrict end;
+   const char* restrict tmp;
+
+   U_INTERNAL_TRACE("u_isURL(%.*s,%u)", U_min(len,128), url, len)
+
+   /* proto://hostname[:port]/[path]?[query] */
+
+   ptr = (const char* restrict) u_isUrlScheme(url, len);
+
+   if (ptr)
+      {
+      len -= (ptr - url);
+
+      tmp  = ptr;
+      end  = ptr + len;
+
+      while (tmp < end)
+         {
+         ch = *(unsigned char*)tmp;
+
+         if (ch == '/' ||
+             ch == '?')
+            {
+            len = (end = tmp) - ptr;
+
+            break;
+            }
+
+         ++tmp;
+         }
+
+      U_INTERNAL_PRINT("ptr = %.*s", U_min(len,128), ptr)
+
+      tmp = (const char* restrict) memrchr(ptr, ':', len);
+
+      if (        tmp &&
+          ((end - tmp) <= 5)) /* NB: port number: 0-65536 */
+         {
+         len = tmp - ptr;
+
+         while (++tmp < end)
+            {
+            ch = *(unsigned char*)tmp;
+
+            U_INTERNAL_PRINT("ch = %c", ch)
+
+            if (u_isdigit(ch) == 0) return false;
+            }
+         }
+
+      if (u_isHostName(ptr, len)) return true;
+      }
+
+   return false;
 }
 
 __pure bool u_isMacAddr(const char* restrict p, uint32_t len)
@@ -1339,7 +1494,7 @@ __pure bool u_isMacAddr(const char* restrict p, uint32_t len)
 
    /* cisco-style: 0123.4567.89ab */
 
-   if (3*5-1 == len)
+   if (len == (3 * 5) - 1)
       {
       for (c = 0; c < len; ++c)
          {
@@ -1358,7 +1513,7 @@ __pure bool u_isMacAddr(const char* restrict p, uint32_t len)
 
    /* windows-style: 01-23-45-67-89-ab, 01:23:45:67:89:ab */
 
-   if (6*3-1 == len)
+   if (len == (6 * 3) - 1)
       {
       for (c = 0; c < len; ++c)
          {
@@ -1550,42 +1705,6 @@ done_number:
       }
 }
 
-uint32_t u_split(char* restrict s, uint32_t n, char** restrict argv, const char* restrict delim)
-{
-   const char* restrict p;
-   char* restrict end  = s + n;
-   char** restrict ptr = argv;
-
-   U_INTERNAL_TRACE("u_split(%.*s,%u,%p,%s)", U_min(n,128), s, n, argv, delim)
-
-   U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_MAJOR(n,0)
-   U_INTERNAL_ASSERT_POINTER(argv)
-   U_INTERNAL_ASSERT_EQUALS(u_isBinary((const unsigned char*)s,n),false)
-
-   while (s < end)
-      {
-      s = (char* restrict) u_delimit_token(s, (const char** restrict)&p, end, delim, 0);
-
-      U_INTERNAL_PRINT("s = %.*s", 20, s)
-
-      if (s <= end)
-         {
-         *argv++ = (char* restrict) p;
-
-         *s++ = '\0';
-
-         U_INTERNAL_PRINT("u_split() = %s", p)
-         }
-      }
-
-   *argv = 0;
-
-   n = (argv - ptr);
-
-   return n;
-}
-
 #ifdef __MINGW32__
 #  define PATH_LIST_SEP ';'
 #else
@@ -1670,11 +1789,11 @@ static inline void make_absolute(char* restrict result, const char* restrict dot
 }
 
 /* --------------------------------------------------------------------------------------------------------------------------------------------------------
-// find a FILE MODE along PATH
-// --------------------------------------------------------------------------------------------------------------------------------------------------------
-// pathfind looks for a a file with name FILENAME and MODE access along colon delimited PATH, and build the full pathname as a string, or NULL if not found
-// --------------------------------------------------------------------------------------------------------------------------------------------------------
-*/
+ * find a FILE MODE along PATH
+ * --------------------------------------------------------------------------------------------------------------------------------------------------------
+ * pathfind looks for a a file with name FILENAME and MODE access along colon delimited PATH, and build the full pathname as a string, or NULL if not found
+ * --------------------------------------------------------------------------------------------------------------------------------------------------------
+ */
 
 #ifdef __MINGW32__
 #  define U_PATH_DEFAULT "C:\\msys\\1.0\\bin;C:\\MinGW\\bin;C:\\windows;C:\\windows\\system;C:\\windows\\system32"
@@ -1759,14 +1878,15 @@ bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_
 }
 
 /* ----------------------------------------------------------------------------------
-// Canonicalize PATH, and build a new path. The new path differs from PATH in that:
-// ----------------------------------------------------------------------------------
-// Multiple    '/'                     are collapsed to a single '/'
-// Leading     './'  and trailing '/.' are removed
-// Trailing    '/'                     are removed
-// Trailing    '/.'                    are removed
-// Non-leading '../' and trailing '..' are handled by removing portions of the path
-// ---------------------------------------------------------------------------------- */
+ * Canonicalize PATH, and build a new path. The new path differs from PATH in that:
+ * ----------------------------------------------------------------------------------
+ * Multiple    '/'                     are collapsed to a single '/'
+ * Leading     './'  and trailing '/.' are removed
+ * Trailing    '/'                     are removed
+ * Trailing    '/.'                    are removed
+ * Non-leading '../' and trailing '..' are handled by removing portions of the path
+ * ----------------------------------------------------------------------------------
+ */
 
 bool u_canonicalize_pathname(char* restrict path)
 {
@@ -2279,7 +2399,7 @@ int u_get_num_random(int range)
    return ((_random % range) + 1);
 }
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict password)
 {
    U_INTERNAL_TRACE("u_passwd_cb(%p,%d,%d,%p)", buf, size, rwflag, password)
@@ -2569,6 +2689,15 @@ bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pa
 #endif
 */
 
+__pure bool u_isName(const char* restrict s, uint32_t n)
+{
+   U_LOOP_STRING( if (u_isname(c) == false) return false )
+
+   U_INTERNAL_TRACE("u_isName(%.*s,%u)", U_min(n,128), s, n)
+
+   return true;
+}
+
 __pure bool u_isBase64(const char* restrict s, uint32_t n)
 {
    U_LOOP_STRING( if (u_isbase64(c) == false) return false )
@@ -2744,11 +2873,11 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define R 0x100 /* carriage return or new line (a \r or \n) */
 #define T 0x200 /* character appears in plain ASCII text */
 #define F 0x400 /* character never appears in text */
+#define N 0x800 /* character underbar '_' (95 0x60) */
 
 #define CS   (C | S)
 #define CT   (C | T)
 #define CF   (C | F)
-#define PT   (P | T)
 #define DT   (D | T)
 #define UT   (U | T)
 #define LU   (L | U)
@@ -2756,6 +2885,8 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define LT   (L | T)
 #define UX   (U | X)
 #define SB   (S | B)
+#define PT   (P | T)
+#define PTN  (P | T | N)
 #define LXT  (L | X | T)
 #define UXT  (U | X | T)
 #define SBT  (S | B | T)
@@ -2770,14 +2901,14 @@ const unsigned int u__ct_tab[256] = {
    /*                                BEL  BS    HT    LF        FF    CR      */
    CF,  CF,  CF,  CF,  CF,  CF,  CF,  CT, CT, CSBT, CSRT, CSF, CST, CSRT, CF, CF, /* 0x0X */
    /*                                                     ESC                 */
-   CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF, CF,   CF,   CF,  CT,  CF,   CF, CF, CF, /* 0x1X */
+   CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF, CF,   CF,   CF,  CT,  CF,  CF,  CF, CF, /* 0x1X */
 
-   SBT, PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   PT,  PT,  PT,   PT, PT, PT, /* 0x2X */
-   DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,   PT,  PT,  PT,   PT, PT, PT, /* 0x3X */
-   PT,  UXT, UXT, UXT, UXT, UXT, UXT, UT,  UT,  UT,   UT,  UT,  UT,   UT, UT, UT, /* 0x4X */
-   UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,   UT,  PT,  PT,   PT, PT, PT, /* 0x5X */
-   PT,  LXT, LXT, LXT, LXT, LXT, LXT, LT,  LT,  LT,   LT,  LT,  LT,   LT, LT, LT, /* 0x6X */
-   LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,   LT,  PT,  PT,   PT, PT, CF, /* 0x7X */
+   SBT, PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   PT,  PT,  PT,  PT,  PT, PT, /* 0x2X */
+   DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,   PT,  PT,  PT,  PT,  PT, PT, /* 0x3X */
+   PT,  UXT, UXT, UXT, UXT, UXT, UXT, UT,  UT,  UT,   UT,  UT,  UT,  UT,  UT, UT, /* 0x4X */
+   UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,   UT,  PT,  PT,  PT,  PT, PTN,/* 0x5X */
+   PT, LXT, LXT, LXT, LXT, LXT, LXT,  LT,  LT,  LT,   LT,  LT,  LT,  LT,  LT, LT, /* 0x6X */
+   LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,   LT,  PT,  PT,  PT,  PT, CF, /* 0x7X */
 
    /* Assume an ISO-1 character set */
 
@@ -2803,6 +2934,7 @@ const unsigned int u__ct_tab[256] = {
 #undef R
 #undef T
 #undef F
+#undef N
 
 #undef CS
 #undef CT
@@ -2811,10 +2943,11 @@ const unsigned int u__ct_tab[256] = {
 #undef LX
 #undef UX
 #undef SB
-#undef PT
 #undef DT
 #undef UT
 #undef LT
+#undef PT
+#undef PTN
 #undef CSB
 #undef CSR
 #undef LXT

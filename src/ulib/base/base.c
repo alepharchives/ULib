@@ -30,7 +30,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  include <openssl/err.h>
 #endif
 
@@ -2149,7 +2149,7 @@ void u_printf(const char* format, ...)
       u_debug_at_exit(); /* manage for U_ERROR(), U_ABORT(), etc... */
 #  endif
 
-#  ifdef HAVE_SSL
+#  ifdef USE_LIBSSL
       ERR_print_errors_fp(stderr);
 #  endif
 

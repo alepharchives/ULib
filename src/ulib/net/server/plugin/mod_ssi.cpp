@@ -889,7 +889,7 @@ int USSIPlugIn::handlerRequest()
          }
       else
          {
-#     ifdef HAVE_PAGE_SPEED
+#     ifdef USE_PAGE_SPEED
          UHTTP::page_speed->minify_html("USSIPlugIn::handlerRequest()", *UClientImage_Base::body);
 #     endif
 

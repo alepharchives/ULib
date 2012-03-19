@@ -18,7 +18,7 @@
 #include <ulib/net/rpc/rpc.h>
 #include <ulib/utility/uhttp.h>
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  include <ulib/ssl/certificate.h>
 #  include <ulib/ssl/net/sslsocket.h>
 #endif
@@ -231,7 +231,7 @@ private:
    UClient& operator=(const UClient&)        { return *this; }
 };
 
-#ifdef HAVE_SSL // specializzazione con USSLSocket
+#ifdef USE_LIBSSL // specializzazione con USSLSocket
 
 template <> class U_EXPORT UClient<USSLSocket> : virtual public UClient_Base {
 public:

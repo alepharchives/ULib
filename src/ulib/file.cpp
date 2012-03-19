@@ -17,7 +17,7 @@
 #include <ulib/utility/services.h>
 #include <ulib/utility/string_ext.h>
 
-#ifdef HAVE_MAGIC
+#ifdef USE_LIBMAGIC
 #  include <ulib/magic/magic.h>
 #endif
 
@@ -727,18 +727,19 @@ bool UFile::fallocate(uint32_t n)
 
    U_INTERNAL_DUMP("errno = %d", errno)
 
-   if (errno != EOPNOTSUPP) goto end;
+   if (errno != EOPNOTSUPP) U_RETURN(false);
 #endif
 
    if (U_SYSCALL(ftruncate, "%d,%u", fd, n) == 0)
       {
-next:
+#ifdef FALLOCATE_IS_SUPPORTED
+   next:
+#endif
       st_size = n;
 
       U_RETURN(true);
       }
 
-end:
    U_RETURN(false);
 }
 
@@ -1297,7 +1298,7 @@ const char* UFile::getMimeType(bool bmagic)
       U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
       }
 
-#ifdef HAVE_MAGIC
+#ifdef USE_LIBMAGIC
    if (bmagic                &&
        u_mime_index != U_css &&
        u_mime_index != U_js  &&
@@ -1314,7 +1315,7 @@ const char* UFile::getMimeType(bool bmagic)
 
    if (content_type == 0)
       {
-#  ifdef HAVE_MAGIC
+#  ifdef USE_LIBMAGIC
       if (map != MAP_FAILED) content_type = UMagic::getType(map, map_size).data();
 
       if (content_type == 0)

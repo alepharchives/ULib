@@ -13,7 +13,7 @@
 
 #include <ulib/event/event_time.h>
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
 struct event_base* u_ev_base;
 
 void UEventTime::operator()(int fd, short event)

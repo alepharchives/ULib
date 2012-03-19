@@ -80,7 +80,9 @@ int                        UServer_Base::cgi_timeout;
 int                        UServer_Base::verify_mode;
 int                        UServer_Base::preforked_num_kids;
 bool                       UServer_Base::bssl;
+bool                       UServer_Base::bipc;
 bool                       UServer_Base::flag_loop;
+bool                       UServer_Base::public_address;
 bool                       UServer_Base::bpluginsHandlerReset;
 bool                       UServer_Base::accept_edge_triggered;
 bool                       UServer_Base::set_realtime_priority;
@@ -108,7 +110,7 @@ UVector<UIPAllow*>*        UServer_Base::vallow_IP;
 UVector<UServerPlugIn*>*   UServer_Base::vplugin;
 UServer_Base::shared_data* UServer_Base::ptr_shared_data;
 
-const UString* UServer_Base::str_USE_IPV6;
+const UString* UServer_Base::str_ENABLE_IPV6;
 const UString* UServer_Base::str_PORT;
 const UString* UServer_Base::str_MSG_WELCOME;
 const UString* UServer_Base::str_COMMAND;
@@ -197,7 +199,7 @@ void UServer_Base::str_allocate()
 {
    U_TRACE(0, "UServer_Base::str_allocate()")
 
-   U_INTERNAL_ASSERT_EQUALS(str_USE_IPV6,0)
+   U_INTERNAL_ASSERT_EQUALS(str_ENABLE_IPV6,0)
    U_INTERNAL_ASSERT_EQUALS(str_PORT,0)
    U_INTERNAL_ASSERT_EQUALS(str_MSG_WELCOME,0)
    U_INTERNAL_ASSERT_EQUALS(str_COMMAND,0)
@@ -237,7 +239,7 @@ void UServer_Base::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_SET_REALTIME_PRIORITY,0)
 
    static ustringrep stringrep_storage[] = {
-   { U_STRINGREP_FROM_CONSTANT("USE_IPV6") },
+   { U_STRINGREP_FROM_CONSTANT("ENABLE_IPV6") },
    { U_STRINGREP_FROM_CONSTANT("PORT") },
    { U_STRINGREP_FROM_CONSTANT("WELCOME_MSG") },
    { U_STRINGREP_FROM_CONSTANT("COMMAND") },
@@ -277,7 +279,7 @@ void UServer_Base::str_allocate()
    { U_STRINGREP_FROM_CONSTANT("SET_REALTIME_PRIORITY") }
    };
 
-   U_NEW_ULIB_OBJECT(str_USE_IPV6,              U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_ENABLE_IPV6,              U_STRING_FROM_STRINGREP_STORAGE(0));
    U_NEW_ULIB_OBJECT(str_PORT,                  U_STRING_FROM_STRINGREP_STORAGE(1));
    U_NEW_ULIB_OBJECT(str_MSG_WELCOME,           U_STRING_FROM_STRINGREP_STORAGE(2));
    U_NEW_ULIB_OBJECT(str_COMMAND,               U_STRING_FROM_STRINGREP_STORAGE(3));
@@ -324,7 +326,7 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    U_INTERNAL_ASSERT_EQUALS(pthis,0)
    U_INTERNAL_ASSERT_EQUALS(senvironment,0)
 
-   if (str_USE_IPV6 == 0) str_allocate();
+   if (str_ENABLE_IPV6 == 0) str_allocate();
 
    port         = U_DEFAULT_PORT;
    pthis        = this;
@@ -343,7 +345,7 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
 
    u_init_security();
 
-#if !defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT) && defined(DEBUG)
+#if !defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(DEBUG)
    U_INTERNAL_DUMP("SOMAXCONN = %d FD_SETSIZE = %d", SOMAXCONN, FD_SETSIZE)
 #endif
 
@@ -424,7 +426,7 @@ UServer_Base::~UServer_Base()
 
    if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add);
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    if (UServices::CApath) delete UServices::CApath;
 #endif
 }
@@ -438,7 +440,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // --------------------------------------------------------------------------------------------------------------------------------------
    // userver - configuration parameters
    // --------------------------------------------------------------------------------------------------------------------------------------
-   // USE_IPV6      flag indicating the use of ipv6
+   // ENABLE_IPV6      flag indicating the use of ipv6
    // SERVER        host name or ip address for the listening socket
    // PORT          port number             for the listening socket
    // SOCKET_NAME   file name               for the listening socket
@@ -497,8 +499,8 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    UNotifier::max_connection  = cfg.readLong(*str_MAX_KEEP_ALIVE);
    u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE);
 
-#ifdef HAVE_IPV6
-   UClientImage_Base::bIPv6   = cfg.readBoolean(*str_USE_IPV6);
+#ifdef ENABLE_IPV6
+   UClientImage_Base::bIPv6   = cfg.readBoolean(*str_ENABLE_IPV6);
 #endif
 
    if (timeoutMS) timeoutMS *= 1000;
@@ -508,7 +510,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    UClientImage_Base::setMsgWelcome(cfg[*str_MSG_WELCOME]);
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    dh_file     = cfg[*str_DH_FILE];
    ca_file     = cfg[*str_CA_FILE];
    ca_path     = cfg[*str_CA_PATH];
@@ -877,11 +879,18 @@ void UServer_Base::init()
    U_INTERNAL_ASSERT_POINTER(socket)
 
 #ifndef __MINGW32__
-   if (socket->isIPC())
+#  ifdef USE_LIBSSL
+   if (bssl == false)
+#  endif
       {
-      if (name_sock.empty() == false) UUnixSocket::setPath(name_sock.data());
+      if (socket->isIPC())
+         {
+         if (name_sock.empty() == false) UUnixSocket::setPath(name_sock.data());
 
-      if (UUnixSocket::path == 0) U_ERROR("UNIX domain socket is not bound to a file system pathname...");
+         if (UUnixSocket::path == 0) U_ERROR("UNIX domain socket is not bound to a file system pathname...");
+
+         bipc = true;
+         }
       }
 #endif
 
@@ -932,117 +941,124 @@ void UServer_Base::init()
       if (IP_address.empty()) IP_address = UString(socket->getLocalInfo());
       }
 
-   U_SRV_LOG("SERVER IP ADDRESS registered as: %.*s", U_STRING_TO_TRACE(IP_address));
-
-   // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be
-   // supplied optionally after a trailing slash, e.g. 192.168.0.0/24, in which case addresses that
-   // match in the most significant MASK bits will be allowed. If no options are specified, all clients
-   // are allowed. Unauthorized connections are rejected by closing the TCP connection immediately. A
-   // warning is logged on the server but nothing is sent to the client.
-
-   if (allow_IP.empty() == false)
-      {
-      vallow_IP = U_NEW(UVector<UIPAllow*>);
-
-      if (UIPAllow::parseMask(allow_IP, *vallow_IP) == 0)
-         {
-         delete vallow_IP;
-                vallow_IP = 0;
-         }
-      }
-
-   /* Let's say an application just issued a request to send a small block of data. Now, we could
-    * either send the data immediately or wait for more data. Some interactive and client-server
-    * applications will benefit greatly if we send the data right away. For example, when we are
-    * sending a short request and awaiting a large response, the relative overhead is low compared
-    * to the total amount of data transferred, and the response time could be much better if the
-    * request is sent immediately. This is achieved by setting the TCP_NODELAY option on the socket,
-    * which disables the Nagle algorithm.
-    */
-
-   socket->setTcpNoDelay(1U);
-
 #ifndef __MINGW32__
-   if (flag_use_tcp_optimization)
+   if (bipc == false)
+#endif
       {
-      u_need_root(false);
+      public_address = (socket->cLocalAddress.isPrivate() == false);
 
-      U_ASSERT_EQUALS(socket->isIPC(),false) // no unix socket...
+      U_SRV_LOG("SERVER IP ADDRESS registered as: %.*s (%s)", U_STRING_TO_TRACE(IP_address), (public_address ? "public" : "private"));
 
-   // socket->setBufferRCV(128 * 1024);
-   // socket->setBufferSND(128 * 1024);
+      // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be
+      // supplied optionally after a trailing slash, e.g. 192.168.0.0/24, in which case addresses that
+      // match in the most significant MASK bits will be allowed. If no options are specified, all clients
+      // are allowed. Unauthorized connections are rejected by closing the TCP connection immediately. A
+      // warning is logged on the server but nothing is sent to the client.
 
-      /* Linux (along with some other OSs) includes a TCP_DEFER_ACCEPT option in its TCP implementation.
-       * Set on a server-side listening socket, it instructs the kernel not to wait for the final ACK packet
-       * and not to initiate the process until the first packet of real data has arrived. After sending the SYN/ACK,
-       * the server will then wait for a data packet from a client. Now, only three packets will be sent over the
-       * network, and the connection establishment delay will be significantly reduced, which is typical for HTTP.
-       *
-       * NB: Takes an integer value (seconds)
-       */
-
-      socket->setTcpDeferAccept(1U);
-
-      /* Another way to prevent delays caused by sending useless packets is to use the TCP_QUICKACK option.
-       * This option is different from TCP_DEFER_ACCEPT, as it can be used not only to manage the process of
-       * connection establishment, but it can be used also during the normal data transfer process. In addition,
-       * it can be set on either side of the client-server connection. Delaying sending of the ACK packet could
-       * be useful if it is known that the user data will be sent soon, and it is better to set the ACK flag on
-       * that data packet to minimize overhead. When the sender is sure that data will be immediately be sent
-       * (multiple packets), the TCP_QUICKACK option can be set to 0. The default value of this option is 1 for
-       * sockets in the connected state, which will be reset by the kernel to 1 immediately after the first use.
-       * (This is a one-time option)
-       */
-
-      socket->setTcpQuickAck(0U);
-
-      /* timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
-       * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
-       * maximum segment lifetime (2MSL) state. During this time, reopening the connection to the client and server cost
-       * less than establishing a new connection. By reducing the value of this entry, TCP/IP can release closed connections
-       * faster, providing more resources for new connections. Adjust this parameter if the running application requires rapid
-       * release, the creation of new connections, and a low throughput due to many connections sitting in the TIME_WAIT state.
-       */
-
-#  ifdef U_TCP_SETTING 
-                                tcp_fin_timeout = UFile::getSysParam("/proc/sys/net/ipv4/tcp_fin_timeout");
-      if (tcp_fin_timeout > 30) tcp_fin_timeout = UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", 30, true);
-
-      /* sysctl_somaxconn (SOMAXCONN: 128) specifies the maximum number of sockets in state SYN_RECV per listen socket queue.
-       * At listen(2) time the backlog is adjusted to this limit if bigger then that.
-       *
-       * sysctl_max_syn_backlog on the other hand is dynamically adjusted, depending on the memory characteristic of the system.
-       * Default is 256, 128 for small systems and up to 1024 for bigger systems.
-       *
-       * The system limits (somaxconn & tcp_max_syn_backlog) specify a _maximum_, the user cannot exceed this limit with listen(2).
-       * The backlog argument for listen on the other  hand  specify a _minimum_
-       */
-
-      if (iBackLog >= SOMAXCONN)
+      if (allow_IP.empty() == false)
          {
-         int value = iBackLog * (flag_use_tcp_optimization ? 2 : 1);
+         vallow_IP = U_NEW(UVector<UIPAllow*>);
 
-         // NB: take a look at `netstat -s | grep overflowed`
-
-         sysctl_somaxconn       = UFile::setSysParam("/proc/sys/net/core/somaxconn",           value);
-         sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 2);
+         if (UIPAllow::parseMask(allow_IP, *vallow_IP) == 0)
+            {
+            delete vallow_IP;
+                   vallow_IP = 0;
+            }
          }
+
+      /* Let's say an application just issued a request to send a small block of data. Now, we could
+       * either send the data immediately or wait for more data. Some interactive and client-server
+       * applications will benefit greatly if we send the data right away. For example, when we are
+       * sending a short request and awaiting a large response, the relative overhead is low compared
+       * to the total amount of data transferred, and the response time could be much better if the
+       * request is sent immediately. This is achieved by setting the TCP_NODELAY option on the socket,
+       * which disables the Nagle algorithm.
+       */
+
+      socket->setTcpNoDelay(1U);
+
+#  ifndef __MINGW32__
+      if (flag_use_tcp_optimization)
+         {
+         u_need_root(false);
+
+         U_ASSERT_EQUALS(bipc, false) // no unix socket...
+
+      // socket->setBufferRCV(128 * 1024);
+      // socket->setBufferSND(128 * 1024);
+
+         /* Linux (along with some other OSs) includes a TCP_DEFER_ACCEPT option in its TCP implementation.
+          * Set on a server-side listening socket, it instructs the kernel not to wait for the final ACK packet
+          * and not to initiate the process until the first packet of real data has arrived. After sending the SYN/ACK,
+          * the server will then wait for a data packet from a client. Now, only three packets will be sent over the
+          * network, and the connection establishment delay will be significantly reduced, which is typical for HTTP.
+          *
+          * NB: Takes an integer value (seconds)
+          */
+
+         socket->setTcpDeferAccept(1U);
+
+         /* Another way to prevent delays caused by sending useless packets is to use the TCP_QUICKACK option.
+          * This option is different from TCP_DEFER_ACCEPT, as it can be used not only to manage the process of
+          * connection establishment, but it can be used also during the normal data transfer process. In addition,
+          * it can be set on either side of the client-server connection. Delaying sending of the ACK packet could
+          * be useful if it is known that the user data will be sent soon, and it is better to set the ACK flag on
+          * that data packet to minimize overhead. When the sender is sure that data will be immediately be sent
+          * (multiple packets), the TCP_QUICKACK option can be set to 0. The default value of this option is 1 for
+          * sockets in the connected state, which will be reset by the kernel to 1 immediately after the first use.
+          * (This is a one-time option)
+          */
+
+         socket->setTcpQuickAck(0U);
+
+         /* timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
+          * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
+          * maximum segment lifetime (2MSL) state. During this time, reopening the connection to the client and server cost
+          * less than establishing a new connection. By reducing the value of this entry, TCP/IP can release closed connections
+          * faster, providing more resources for new connections. Adjust this parameter if the running application requires rapid
+          * release, the creation of new connections, and a low throughput due to many connections sitting in the TIME_WAIT state.
+          */
+
+#     ifdef U_TCP_SETTING 
+                                   tcp_fin_timeout = UFile::getSysParam("/proc/sys/net/ipv4/tcp_fin_timeout");
+         if (tcp_fin_timeout > 30) tcp_fin_timeout = UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", 30, true);
+
+         /* sysctl_somaxconn (SOMAXCONN: 128) specifies the maximum number of sockets in state SYN_RECV per listen socket queue.
+          * At listen(2) time the backlog is adjusted to this limit if bigger then that.
+          *
+          * sysctl_max_syn_backlog on the other hand is dynamically adjusted, depending on the memory characteristic of the system.
+          * Default is 256, 128 for small systems and up to 1024 for bigger systems.
+          *
+          * The system limits (somaxconn & tcp_max_syn_backlog) specify a _maximum_, the user cannot exceed this limit with listen(2).
+          * The backlog argument for listen on the other  hand  specify a _minimum_
+          */
+
+         if (iBackLog >= SOMAXCONN)
+            {
+            int value = iBackLog * (flag_use_tcp_optimization ? 2 : 1);
+
+            // NB: take a look at `netstat -s | grep overflowed`
+
+            sysctl_somaxconn       = UFile::setSysParam("/proc/sys/net/core/somaxconn",           value);
+            sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 2);
+            }
+#     endif
+         }
+
+      /* sysctl_tcp_abort_on_overflow when its on, new connections are reset once the backlog is exhausted.
+       */
+
+      if (iBackLog == 1)
+         {
+         u_need_root(false);
+
+         tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
+         }
+
+      U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
+                       sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
 #  endif
       }
-
-   /* sysctl_tcp_abort_on_overflow when its on, new connections are reset once the backlog is exhausted.
-    */
-
-   if (iBackLog == 1)
-      {
-      u_need_root(false);
-
-      tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
-      }
-
-   U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
-                    sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
-#endif
 
    U_INTERNAL_ASSERT_EQUALS(proc,0)
 
@@ -1116,7 +1132,7 @@ void UServer_Base::init()
    // event manager for the forked child to feel the eventually timeout of request from the new client...
 
    if (isClassic())              goto next;
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
    if (preforked_num_kids == -1) goto next; 
 #endif
 
@@ -1135,7 +1151,7 @@ void UServer_Base::init()
    goto next; 
 #endif
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    if (bssl == false)
 #endif
       {
@@ -1170,7 +1186,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    sendSigTERM();
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
    UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); //  sync signal
 #else
    UInterrupt::insert(             SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
@@ -1194,7 +1210,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       }
    else
       {
-#  ifdef HAVE_LIBEVENT
+#  ifdef USE_LIBEVENT
       (void) UDispatcher::exit(0);
 #  else
       UInterrupt::erase(SIGTERM); // async signal
@@ -1277,25 +1293,45 @@ next:
          if (msg_error) ULog::log("accept new client failed %S\n", msg_error);
          }
 
-      goto end;
+      U_RETURN(U_NOTIFIER_OK);
       }
 
    U_INTERNAL_ASSERT(csocket->isConnected())
 
-   // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be supplied optionally after
-   // a trailing slash, e.g. 192.168.0.0/24, in which case addresses that match in the most significant MASK bits will be allowed.
-   // If no options are specified, all clients are allowed. Unauthorized connections are rejected by closing the TCP connection
-   // immediately. A warning is logged on the server but nothing is sent to the client.
-
    if (vallow_IP &&
        ptr->isAllowed(*vallow_IP) == false)
       {
-      U_SRV_LOG("new client connected from %S, connection denied by Access Control List", csocket->remoteIPAddress().getAddressString());
+      // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be supplied optionally after
+      // a trailing slash, e.g. 192.168.0.0/24, in which case addresses that match in the most significant MASK bits will be allowed.
+      // If no options are specified, all clients are allowed. Unauthorized connections are rejected by closing the TCP connection
+      // immediately. A warning is logged on the server but nothing is sent to the client.
 
-      csocket->close();
+      U_SRV_LOG("new client connected from %S, connection denied by Access Control List",
+                  csocket->remoteIPAddress().getAddressString());
 
-      goto end;
+      goto error;
       }
+
+   // RFC1918 filtering (DNS rebinding countermeasure)
+
+   if (public_address &&
+       csocket->remoteIPAddress().isPrivate())
+      {
+      U_SRV_LOG("new client connected from %S, connection denied by RFC1918 filtering (reject request from private IP to public server address)",
+                  csocket->remoteIPAddress().getAddressString());
+
+      goto error;
+      }
+
+#if !defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
+   if (csocket->iSockDesc >= FD_SETSIZE)
+      {
+      U_SRV_LOG("new client connected from %S, connection denied by FD_SETSIZE (%d)",
+                  csocket->remoteIPAddress().getAddressString(), FD_SETSIZE);
+
+      goto error;
+      }
+#endif
 
    if (++UNotifier::num_connection >= UNotifier::max_connection)
       {
@@ -1304,23 +1340,8 @@ next:
       U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%d)",
                   csocket->remoteIPAddress().getAddressString(), UNotifier::max_connection - UNotifier::min_connection);
 
-      csocket->close();
-
-      goto end;
+      goto error;
       }
-
-#if !defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
-   if (csocket->iSockDesc >= FD_SETSIZE)
-      {
-       --UNotifier::num_connection;
-
-      U_SRV_LOG("new client connected from %S, connection denied by FD_SETSIZE (%d)", csocket->remoteIPAddress().getAddressString(), FD_SETSIZE);
-
-      csocket->close();
-
-      goto end;
-      }
-#endif
 
    // -------------------------------------------------------------------------------------------------------------------------
    // PREFORK_CHILD number of child server processes created at startup: -1 - thread approach (experimental)
@@ -1382,7 +1403,7 @@ retry:
 
    if (ptr->newConnection() == false)  goto check;
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    if (bssl)                           goto insert;
 #endif
 #ifdef HAVE_PTHREAD_H
@@ -1410,7 +1431,10 @@ insert:
 check:
    if (accept_edge_triggered && ++counter < 1000) goto back;
 
-end:
+   U_RETURN(U_NOTIFIER_OK);
+
+error:
+   csocket->close();
 
    U_RETURN(U_NOTIFIER_OK);
 }
@@ -1510,7 +1534,7 @@ void UServer_Base::run()
 
    flag_loop = UInterrupt::exit_loop_wait_event_for_signal = true;
 
-#ifdef HAVE_LIBEVENT
+#ifdef USE_LIBEVENT
    UInterrupt::setHandlerForSignal( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  //  sync signal
    UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); //  sync signal
 #else
@@ -1654,7 +1678,7 @@ void UServer_Base::run()
 
       U_INTERNAL_ASSERT(preforked_num_kids <= 1)
 
-#  if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+#  if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
       if (preforked_num_kids == -1) ((UThread*)(UNotifier::pthread = U_NEW(UClientThread)))->start();
 #  endif
 
@@ -1756,7 +1780,12 @@ UCommand* UServer_Base::loadConfigCommand(UFileConfig& cfg)
 
       UString environment = cfg[*str_ENVIRONMENT];
 
-      if (environment.empty() == false) cmd->setEnvironment(&environment);
+      if (environment.empty() == false)
+         {
+         environment = UStringExt::prepareForEnvironmentVar(environment); 
+
+         cmd->setEnvironment(&environment);
+         }
       }
 
    U_RETURN_POINTER(cmd,UCommand);

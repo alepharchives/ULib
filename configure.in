@@ -330,30 +330,30 @@ OST_CXX_NEW_INIT
 #OST_CXX_NOEXCEPTIONS
 
 dnl initialize all the info variables to 'no'
-      ulib_ssl_msg="no    (--with-ssl)"
-      ulib_ssh_msg="no    (--with-ssh)"
-     ulib_pcre_msg="no    (--with-pcre)"
-     ulib_ldap_msg="no    (--with-ldap)"
-     ulib_libz_msg="no    (--with-libz)"
-     ulib_curl_msg="no    (--with-curl)"
-    ulib_expat_msg="no    (--with-expat)"
-    ulib_magic_msg="no    (--with-magic)"
-   ulib_parser_msg="no    (--with-parser)"
-    ulib_mysql_msg="no    (--with-mysql)"
-  ulib_libuuid_msg="no    (--with-libuuid)"
- ulib_libevent_msg="no    (--with-libevent)"
-  ulib_libxml2_msg="no    (--with-libxml2)"
-      ulib_dbi_msg="no    (--with-libdbi)"
-ulib_pagespeed_msg="no    (--with-page-speed)"
-       ulib_v8_msg="no    (--with-v8-javascript)"
-     ulib_ipv6_msg="no    (--with-ipv6)"
-      ulib_pch_msg="no    (--enable-pch)"
-      ulib_LFS_msg="no    (--enable-LFS)"
-      ulib_dbg_msg="no    (--enable-debug)"
-    ulib_final_msg="no    (--enable-final)"
-      ulib_zip_msg="no    (--enable-zip)"
-     ulib_memp_msg="no    (--enable-memory-pool)"
-#  ulib_manual_msg="no    (--enable-manual)"
+      ulib_ssl_msg="no (--with-ssl)"
+      ulib_ssh_msg="no (--with-ssh)"
+     ulib_pcre_msg="no (--with-pcre)"
+     ulib_ldap_msg="no (--with-ldap)"
+     ulib_libz_msg="no (--with-libz)"
+     ulib_curl_msg="no (--with-curl)"
+    ulib_expat_msg="no (--with-expat)"
+    ulib_magic_msg="no (--with-magic)"
+   ulib_parser_msg="no (--with-parser)"
+    ulib_mysql_msg="no (--with-mysql)"
+  ulib_libuuid_msg="no (--with-libuuid)"
+ ulib_libevent_msg="no (--with-libevent)"
+  ulib_libxml2_msg="no (--with-libxml2)"
+      ulib_dbi_msg="no (--with-libdbi)"
+ulib_pagespeed_msg="no (--with-page-speed)"
+       ulib_v8_msg="no (--with-v8-javascript)"
+     ulib_ipv6_msg="no (--with-ipv6)"
+      ulib_pch_msg="no (--enable-pch)"
+      ulib_LFS_msg="no (--enable-LFS)"
+      ulib_dbg_msg="no (--enable-debug)"
+    ulib_final_msg="no (--enable-final)"
+      ulib_zip_msg="no (--enable-zip)"
+     ulib_memp_msg="no (--enable-memory-pool)"
+#  ulib_manual_msg="no (--enable-manual)"
 
 # Add --{enable,disable,with,without}-feature options.
 AC_COMPILATION_OPTIONS
@@ -411,40 +411,40 @@ LIBS="-ldl"
 AC_CHECK_LIB(tcc,tcc_compile_string)
 LIBS=${LIBS_SAVE}
 
-libz_version="None"
-pcre_version="None"
-ldap_version="None"
-expat_version="None"
-libssh_version="None"
-libcurl_version="None"
-ssl_version="None"
-libmagic_version="None"
-libmysql_version="None"
-libuuid_version="None"
-libevent_version="None"
-libxml2_version="None"
-libdbi_version="None"
-page_speed_version="None"
-v8_version="None"
+libz_version="no"
+pcre_version="no"
+ldap_version="no"
+expat_version="no"
+libssh_version="no"
+libcurl_version="no"
+ssl_version="no"
+libmagic_version="no"
+libmysql_version="no"
+libuuid_version="no"
+libevent_version="no"
+libxml2_version="no"
+libdbi_version="no"
+page_speed_version="no"
+v8_version="no"
 
 AC_CHECK_PACKAGE
 AC_SUBST(PRG_LDFLAGS)
 
-AM_CONDITIONAL(SSL,			test "$HAVE_SSL"			= "yes")
-AM_CONDITIONAL(SSH,			test "$HAVE_SSH"			= "yes")
+AM_CONDITIONAL(SSL,			test "$USE_LIBSSL"		= "yes")
 AM_CONDITIONAL(SSL_TS,		test "$HAVE_SSL_TS"		= "yes")
-AM_CONDITIONAL(PCRE,			test "$HAVE_PCRE"			= "yes")
-AM_CONDITIONAL(LDAP,			test "$HAVE_LDAP"			= "yes")
-AM_CONDITIONAL(CURL,			test "$HAVE_CURL"			= "yes")
-AM_CONDITIONAL(LIBZ,			test "$HAVE_LIBZ"			= "yes")
-AM_CONDITIONAL(EXPAT,		test "$HAVE_EXPAT"		= "yes")
-AM_CONDITIONAL(MAGIC,		test "$HAVE_MAGIC"		= "yes")
-AM_CONDITIONAL(MYSQL,		test "$HAVE_MYSQL"		= "yes")
-AM_CONDITIONAL(DBI,			test "$HAVE_DBI"			= "yes")
-AM_CONDITIONAL(LIBEVENT,	test "$HAVE_LIBEVENT"	= "yes")
-AM_CONDITIONAL(LIBXML2,		test "$HAVE_LIBXML2"		= "yes")
-AM_CONDITIONAL(PAGE_SPEED, test "$HAVE_PAGE_SPEED" = "yes")
-AM_CONDITIONAL(V8,			test "$HAVE_V8"			= "yes")
+AM_CONDITIONAL(SSH,			test "$USE_LIBSSH"		= "yes")
+AM_CONDITIONAL(PCRE,			test "$USE_LIBPCRE"		= "yes")
+AM_CONDITIONAL(LDAP,			test "$USE_LIBLDAP"		= "yes")
+AM_CONDITIONAL(CURL,			test "$USE_LIBCURL"		= "yes")
+AM_CONDITIONAL(LIBZ,			test "$USE_LIBZ"			= "yes")
+AM_CONDITIONAL(EXPAT,		test "$USE_LIBEXPAT"		= "yes")
+AM_CONDITIONAL(MAGIC,		test "$USE_LIBMAGIC"		= "yes")
+AM_CONDITIONAL(MYSQL,		test "$USE_LIBMYSQL"		= "yes")
+AM_CONDITIONAL(DBI,			test "$USE_LIBDBI"		= "yes")
+AM_CONDITIONAL(LIBEVENT,	test "$USE_LIBEVENT"		= "yes")
+AM_CONDITIONAL(LIBXML2,		test "$USE_LIBXML2"		= "yes")
+AM_CONDITIONAL(PAGE_SPEED, test "$USE_PAGE_SPEED"	= "yes")
+AM_CONDITIONAL(V8,			test "$USE_LIBV8"			= "yes")
 
 AC_DEFINE_UNQUOTED(_FLEX_VERSION,		 "${flex_version}",			[Flex version])
 AC_DEFINE_UNQUOTED(_BISON_VERSION,		 "${bison_version}",			[Bison version])
@@ -466,68 +466,76 @@ AC_DEFINE_UNQUOTED(_V8_VERSION,			 "${v8_version}",				[V8 - version of Google V
  
 LIBS_SAVE=${LIBS}
 
-if test "$HAVE_LIBZ" = "yes"; then
-	ulib_libz_msg="enabled"
+if test "$USE_LIBZ" = "yes"; then
+	ulib_libz_msg="yes ( ${libz_version} )"
 	AC_CHECK_LIB(z,zlib_deflate_workspacesize)
 	if test "$ac_cv_lib_z_zlib_deflate_workspacesize" = "yes"; then
 		AC_DEFINE(U_ZLIB_DEFLATE_WORKSPACESIZE, 1, [Define if we have zlib with this function])
 	fi
+	if test "$enable_zip" = "yes"; then
+		ulib_zip_msg="enabled"
+		AC_DEFINE(ENABLE_ZIP, 1, [Define if enable ZIP support])
+		AM_CONDITIONAL(ZIP, true)
+	else
+		AC_DEFINE(DISABLE_ZIP, 1, [Define if disable ZIP support])
+		AM_CONDITIONAL(ZIP, false)
+	fi
 fi
 
-if test "$HAVE_PCRE" = "yes"; then
-	ulib_pcre_msg="enabled"
+if test "$USE_LIBPCRE" = "yes"; then
+	ulib_pcre_msg="yes ( ${pcre_version} )"
 fi
 
-if test "$HAVE_CURL" = "yes"; then
-	ulib_curl_msg="enabled"
+if test "$USE_LIBCURL" = "yes"; then
+	ulib_curl_msg="yes ( ${libcurl_version} )"
 fi
 
-if test "$HAVE_LDAP" = "yes"; then
-	ulib_ldap_msg="enabled"
+if test "$USE_LIBLDAP" = "yes"; then
+	ulib_ldap_msg="yes ( ${ldap_version} )"
 fi
 
-if test "$HAVE_EXPAT" = "yes"; then
-	ulib_expat_msg="enabled"
+if test "$USE_LIBEXPAT" = "yes"; then
+	ulib_expat_msg="yes ( ${expat_version} )"
 fi
 
-if test "$HAVE_MAGIC" = "yes"; then
-	ulib_magic_msg="enabled"
+if test "$USE_LIBMAGIC" = "yes"; then
+	ulib_magic_msg="yes ( ${libmagic_version} )"
 fi
 
-if test "$HAVE_SSL" = "yes"; then
-   ulib_ssl_msg="enabled"
+if test "$USE_LIBSSL" = "yes"; then
+   ulib_ssl_msg="yes ( ${ssl_version} )"
 fi
 
-if test "$HAVE_SSH" = "yes"; then
-   ulib_ssh_msg="enabled"
+if test "$USE_LIBSSH" = "yes"; then
+   ulib_ssh_msg="yes ( ${libssh_version} )"
 fi
 
-if test "$HAVE_MYSQL" = "yes"; then
-   ulib_mysql_msg="enabled"
+if test "$USE_LIBMYSQL" = "yes"; then
+   ulib_mysql_msg="yes ( ${libmysql_version} )"
 fi
 
-if test "$HAVE_DBI" = "yes"; then
-   ulib_dbi_msg="enabled"
+if test "$USE_LIBDBI" = "yes"; then
+   ulib_dbi_msg="yes ( ${libdbi_version} )"
 fi
 
-if test "$HAVE_LIBUUID" = "yes"; then
-   ulib_libuuid_msg="enabled"
+if test "$USE_LIBUUID" = "yes"; then
+   ulib_libuuid_msg="yes ( ${libuuid_version} )"
 fi
 
-if test "$HAVE_LIBEVENT" = "yes"; then
-   ulib_libevent_msg="enabled"
+if test "$USE_LIBEVENT" = "yes"; then
+   ulib_libevent_msg="yes ( ${libevent_version} )"
 fi
 
-if test "$HAVE_LIBXML2" = "yes"; then
-   ulib_libxml2_msg="enabled"
+if test "$USE_LIBXML2" = "yes"; then
+   ulib_libxml2_msg="yes ( ${libxml2_version} )"
 fi
 
-if test "$HAVE_PAGE_SPEED" = "yes"; then
-   ulib_pagespeed_msg="enabled"
+if test "$USE_PAGE_SPEED" = "yes"; then
+   ulib_pagespeed_msg="yes ( ${page_speed_version} )"
 fi
 
-if test "$HAVE_V8" = "yes"; then
-   ulib_v8_msg="enabled"
+if test "$USE_LIBV8" = "yes"; then
+   ulib_v8_msg="yes ( ${v8_version} )"
 fi
 
 case "$target_os" in
@@ -536,7 +544,7 @@ case "$target_os" in
 		LDFLAGS="${LDFLAGS} -Wl,--enable-auto-import"
 	fi
 	LIBS_SAVE="${LIBS_SAVE} -lwinmm -lws2_32"
-	if test "$HAVE_SSL" = "yes"; then
+	if test "$USE_LIBSSL" = "yes"; then
 		LIBS_SAVE="${LIBS_SAVE} -lwsock32 -lgdi32 -lz";
 	fi
 	AM_CONDITIONAL(PTHREAD, false)
@@ -681,7 +689,9 @@ AM_CONDITIONAL(PLUGIN,		 test "$enable_shared"							 = "yes") # NB: if not don'
 
 if test "$ost_cv_ipv6" = "yes"; then
 	ulib_ipv6_msg="enabled"
-	AC_DEFINE(HAVE_IPV6, 1, [Define if enable ipv6 support])
+	AC_DEFINE(ENABLE_IPV6,  1, [Define if  enable ipv6 support])
+else
+	AC_DEFINE(DISABLE_IPV6, 1, [Define if disable ipv6 support])
 fi
 
 # SECTION 12: checks for type characteristics
@@ -706,10 +716,10 @@ modules="mod_rpc mod_shib mod_stream mod_nocat mod_socket mod_scgi mod_fcgi mod_
 
 # Remove modules that will not be compiles
 
-if test "$HAVE_EXPAT" != "yes"; then
+if test "$USE_EXPAT" != "yes"; then
 	modules=`echo $modules | sed s/mod_soap//`
 fi
-if test "$HAVE_PCRE" != "yes"; then
+if test "$USE_PCRE" != "yes"; then
 	modules=`echo $modules | sed s/mod_proxy//`
 fi
 if test "x$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" != "xyes"; then
@@ -840,14 +850,6 @@ else
 	AM_CONDITIONAL(MEMORY_POOL, false)
 fi
 
-if test "$enable_zip" = "yes"; then
-	ulib_zip_msg="enabled"
-	AC_DEFINE(HAVE_ZIP, 1, [Define if enable ZIP support])
-	AM_CONDITIONAL(ZIP,  true)
-else
-	AM_CONDITIONAL(ZIP, false)
-fi
-
 if test "$enable_LFS" = "yes"; then
 	ulib_LFS_msg="enabled"
 	CPPFLAGS="${CPPFLAGS} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
@@ -927,7 +929,7 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 
 	if test "$enable_debug" = "yes"; then
 		MAYBE_FLAGS="$MAYBE_FLAGS -Wp,-D_FORTIFY_SOURCE=2 -Wunsafe-loop-optimizations"
-		if test "$HAVE_SSL" = "yes"; then
+		if test "$USE_LIBSSL" = "yes"; then
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-parameter"
 		fi
 	else
@@ -1037,6 +1039,8 @@ AC_SUBST(ULIB_LDFLAGS)
 AC_SUBST(ULIB_CXXFLAGS)
 AC_SUBST(ULIB_CPPFLAGS)
 
+AC_DEFINE_UNQUOTED(CXX_VAR, 		"${CXX}", 		[Compiler])
+AC_DEFINE_UNQUOTED(LD_VAR, 		"${LD}", 		[Linker])
 AC_DEFINE_UNQUOTED(LIBS_VAR, 		"${LIBS}", 		[Libraries])
 AC_DEFINE_UNQUOTED(CFLAGS_VAR,	"${CFLAGS}",	[C Flags])
 AC_DEFINE_UNQUOTED(LDFLAGS_VAR, 	"${LDFLAGS}", 	[Linker Flags])
@@ -1073,62 +1077,52 @@ echo \
 configure: Configured to build src/ulib/libulib:
 
           ULib version: ${VERSION}
+            Build ULib: Shared=${enable_shared}, Static=${enable_static}
+
             Host setup: ${host}
         Install prefix: ${prefix}
         Install plugin: ${pkglibexecdir}
     Configuration data: ${sysconfdir}
+
       Operating System: $os_version
           C++ Compiler: ${CXX} ( $gcc_version )
-             C   Flags: ${CFLAGS}
-             C++ Flags: ${CXXFLAGS}
-    Preprocessor Flags: ${CPPFLAGS}
-          Linker Flags: ${LDFLAGS}
                 Linker: ${LD} ( $ld_version )
-             Libraries: ${LIBS}
   Standard C   library: ${libc_version}
   Standard C++ library: ${stdgpp_version}
+             Libraries: ${LIBS}
 
-           LFS support: ${ulib_LFS_msg}
+             C   Flags: ${CFLAGS}
+             C++ Flags: ${CXXFLAGS}
+          Linker Flags: ${LDFLAGS}
+    Preprocessor Flags: ${CPPFLAGS}
+
          debug support: ${ulib_dbg_msg}
-           zip support: ${ulib_zip_msg}
       final build mode: ${ulib_final_msg}
     precompiled header: ${ulib_pch_msg}
    memory pool support: ${ulib_memp_msg}
+           LFS support: ${ulib_LFS_msg}
           ipv6 support: ${ulib_ipv6_msg}
+           zip support: ${ulib_zip_msg}
+
           LIBZ support: ${ulib_libz_msg}
-          LIBZ library: ${libz_version}
           PCRE support: ${ulib_pcre_msg}
-          PCRE library: ${pcre_version}
            SSL support: ${ulib_ssl_msg}
-           SSL library: ${ssl_version}
            SSH support: ${ulib_ssh_msg}
-           SSH library: ${libssh_version}
           LDAP support: ${ulib_ldap_msg}
-          LDAP library: ${ldap_version}
           cURL support: ${ulib_curl_msg}
-          cURL library: ${libcurl_version}
            XML support: ${ulib_expat_msg}
-         Expat library: ${expat_version}
          MAGIC support: ${ulib_magic_msg}
-         MAGIC library: ${libmagic_version}
          MySQL support: ${ulib_mysql_msg}
-         MySQL library: ${libmysql_version}
            DBI support: ${ulib_dbi_msg}
-           DBI library: ${libdbi_version}
        libuuid support: ${ulib_libuuid_msg}
-       libuuid library: ${libuuid_version}
       libevent support: ${ulib_libevent_msg}
-      libevent library: ${libevent_version}
        libxml2 support: ${ulib_libxml2_msg}
-       libxml2 library: ${libxml2_version}
     Page-Speed support: ${ulib_pagespeed_msg}
-        Page-Speed SDK: ${page_speed_version}
  V8 JavaScript support: ${ulib_v8_msg}
-         V8 JavaScript: ${v8_version}
+
       LEX/YACC support: ${ulib_parser_msg}
       Lexical analyzer: ${LEX} ( ${flex_version} )
       Parser generator: ${YACC} ( ${bison_version} )
-            Build ULib: Shared=${enable_shared}, Static=${enable_static}
 
 See include/ulib/internal/config.h for further configuration information.
 ------------------------------------------------------------------------"
@@ -1194,11 +1188,12 @@ AC_OUTPUT(Makefile \
 #			 src/ulib/base/Makefile src/ulib/debug/Makefile \
 #			 ulib-config ,[chmod a+x ulib-config] )
 
-# Common C++
+awk -f configure_log.awk config.log							  > include/ulib/internal/config1.h
+awk -f configure_h.awk   include/ulib/internal/config.h > include/ulib/internal/config2.h
 cd include/ulib/internal
-mv config.h config.tmp
-sed -e s!"@thrprefix@/thread.h"!"thread.h"! < config.tmp > config.h
-rm -f config.tmp
+sed -e s!"@thrprefix@/thread.h"!"thread.h"! < config.h > config3.h # Common C++
+cat config3.h config2.h config1.h > config.h
+rm -f config3.h config2.h config1.h
 cd ../../..
 
 echo
@@ -1208,7 +1203,7 @@ CPPFLAGS="-DHAVE_CONFIG_H -I${srcdir}/include ${CPPFLAGS}"
 
 if test "$enable_pch" = "yes" ; then
 	AC_MSG_CHECKING(build precompiled headers for ${srcdir}/include/ulib/all.h)
-	echo "rm -f ${srcdir}/include/ulib/all.h.gch" >  ${srcdir}/PCH.cmd
+	echo "rm -f ${srcdir}/include/ulib/all.h.gch"																				  > ${srcdir}/PCH.cmd
 	echo "${CXX} ${CPPFLAGS} ${CXXFLAGS} -c ${srcdir}/include/ulib/all.h -o ${srcdir}/include/ulib/all.h.gch" >> ${srcdir}/PCH.cmd
 	rm -f ${srcdir}/include/ulib/all.h.gch
 	${CXX} ${CPPFLAGS} ${CXXFLAGS} -c ${srcdir}/include/ulib/all.h -o ${srcdir}/include/ulib/all.h.gch

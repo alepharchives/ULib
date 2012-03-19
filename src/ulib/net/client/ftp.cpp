@@ -120,7 +120,7 @@ bool UFtpClient::negotiateEncryption()
 {
    U_TRACE(0, "UFtpClient::negotiateEncryption()")
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    U_INTERNAL_ASSERT(Socket::isSSL())
 
    if (syncCommand("AUTH TLS") &&
@@ -139,7 +139,7 @@ bool UFtpClient::setDataEncryption(bool secure)
 {
    U_TRACE(0, "UFtpClient::setDataEncryption(%b)", secure)
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    U_INTERNAL_ASSERT(Socket::isSSL())
 
    if (syncCommand("PBSZ 0")                        && response == FTP_COMMAND_OK &&

@@ -44,7 +44,7 @@ The current version offers the following features :
    * Browser cache management (headers: If-Modified-Since/Last-modified).
    * Chunk-encoding transfers support.
    * HTTP multi-range request support.
-   * Memory caching of document root for (small) static pages with smart deflate compression and CSS/JS reduction.
+   * Memory caching of document root for (small) static pages with smart gzip compression and CSS/JS reduction.
    * Support for automatic update of caching document root with inotify (on Linux).
    * Support for pipelining.
    * Support for virtual hosts (also with SSL).
@@ -59,14 +59,12 @@ The current version offers the following features :
    * Support for [JSONRequest](http://json.org/JSONRequest.html).
    * Accept HTTP uploads up to 4 GB without increasing memory usage.
    * Support for upload progress via USP (ULib Servlet Page).
-   * General [CGI](http://it.wikipedia.org/wiki/Common_Gateway_Interface) support (run any CGI script) with automatic output compression (using deflate method).
+   * General [CGI](http://it.wikipedia.org/wiki/Common_Gateway_Interface) support (run any CGI script) with automatic output compression (using gzip method).
    * CGI support for shell script processes (with automatic management of form and cookie).
    * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
    * Support for minify HTML CGI output with wrapping [google page speed SDK](http://code.google.com/speed/page-speed/download.html#pagespeed-sdk).
    * Support for running JavaScript code with wrapping [google V8 JavaScript Engine](http://code.google.com/apis/v8/intro.html).
-   * Support for [HTTP pseudo-streaming](http://www.phpmotionwiz.com/what-is-pseudo-streaming) for FLV video.
-   * Support for [HTTP Strict Transport Security](https://developer.mozilla.org/en/Security/HTTP_Strict_Transport_Security).
-   * Support for [HTTP Session Hijacking mitigation](http://cleverlogic.net/articles/kochure).
+   * [HTTP pseudo-streaming](http://www.phpmotionwiz.com/what-is-pseudo-streaming) for FLV video managed transparently.
    * [C Servlet Support](http://bellard.org/tcc/) with libtcc (if available) as a backend for dynamic code generation (experimental).
    * Support for Windows (without preforking), precompiled binaries are available [here](https://github.com/stefanocasazza/ULib/tree/master/win32).
    * Requests cut in phases for modular architecture (apache-like).
@@ -86,6 +84,11 @@ The current version offers the following features :
        * `mod_geoip` : [geolocation support](http://www.maxmind.com/geoip/api/c.shtml) (experimental).
        * `mod_stream` : simple streaming support (experimental).
        * `mod_socket` : [Web Socket](http://dev.w3.org/html5/websockets) application framework (experimental).
+   * Security protection :
+       * [HTTP Session Hijacking](http://cleverlogic.net/articles/kochure) mitigation.
+       * [Algorithmic Complexity Attacks](http://lwn.net/Articles/474365/) prevention by randomizing hash seed.
+       * [DNS rebinding](http://en.wikipedia.org/wiki/DNS_rebinding) prevention by RFC1918 filtering and Host header validation.
+       * support for [HTTP Strict Transport Security](https://developer.mozilla.org/en/Security/HTTP_Strict_Transport_Security).
 
 
 Benchmarking
@@ -104,7 +107,7 @@ Use apachebench (ab)
 [Comparative Benchmarking](https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark)
 --------------------------------------------------------------------------------------------
 
-I consider in this benchmark the server [G-WAN 3.2.24 (64 bit)] (http://www.gwan.ch/) and [NGINX 1.1.13] (http://nginx.net/).
+I consider in this benchmark the server [G-WAN 3.2.24 (64 bit)] (http://www.gwan.ch/) and [NGINX 1.1.16] (http://nginx.net/).
 
 gwan run with the follow options:
 ---------------------------------
@@ -115,14 +118,13 @@ gwan run with the follow options:
 nginx is configured in this way:
 --------------------------------
 
-	nginx version: nginx/1.1.13
+	nginx version: nginx/1.1.16
 	TLS SNI support enabled
-	configure arguments: --prefix=/usr --sbin-path=/usr/sbin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error_log
-	--pid-path=/var/run/nginx.pid --lock-path=/var/lock/nginx.lock --user=nginx --group=nginx --with-cc-opt=-I/usr/include --with-ld-opt=-L/usr/lib
-	--http-log-path=/var/log/nginx/access_log --http-client-body-temp-path=/var/tmp/nginx/client --http-proxy-temp-path=/var/tmp/nginx/proxy
-	--http-fastcgi-temp-path=/var/tmp/nginx/fastcgi --http-scgi-temp-path=/var/tmp/nginx/scgi --http-uwsgi-temp-path=/var/tmp/nginx/uwsgi
-	--with-ipv6 --with-pcre --with-http_realip_module --with-http_ssl_module --without-mail_imap_module --without-mail_pop3_module
-	--without-mail_smtp_module
+	configure arguments: --prefix=/usr --sbin-path=/usr/sbin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error_log --pid-path=/var/run/nginx.pid
+	--lock-path=/var/lock/nginx.lock --user=nginx --group=nginx --with-cc-opt=-I/usr/include --with-ld-opt=-L/usr/lib --http-log-path=/var/log/nginx/access_log
+	--http-client-body-temp-path=/var/tmp/nginx/client --http-proxy-temp-path=/var/tmp/nginx/proxy --http-fastcgi-temp-path=/var/tmp/nginx/fastcgi
+	--http-scgi-temp-path=/var/tmp/nginx/scgi --http-uwsgi-temp-path=/var/tmp/nginx/uwsgi --with-ipv6 --with-pcre --with-http_realip_module --with-http_ssl_module
+	--without-mail_imap_module --without-mail_pop3_module --without-mail_smtp_module
 
 nginx run with the follow configuration:
 ----------------------------------------

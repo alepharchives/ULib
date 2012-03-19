@@ -49,7 +49,7 @@ static void print_size()
 #endif
    U_PRINT_SIZEOF(ULock)
    U_PRINT_SIZEOF(ULog)
-#ifdef HAVE_MAGIC
+#ifdef USE_LIBMAGIC
    U_PRINT_SIZEOF(UMagic)
 #endif
 // U_PRINT_SIZEOF(UMethodSlot)
@@ -62,7 +62,7 @@ static void print_size()
    U_PRINT_SIZEOF(UMimePKCS7)
    U_PRINT_SIZEOF(UNotifier)
    U_PRINT_SIZEOF(UOptions)
-#ifdef HAVE_PCRE
+#ifdef USE_LIBPCRE
    U_PRINT_SIZEOF(UPCRE)
 #endif
    U_PRINT_SIZEOF(UPKCS10)
@@ -84,7 +84,7 @@ static void print_size()
 #ifdef HAVE_SSH
    U_PRINT_SIZEOF(USSHSocket)
 #endif
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    U_PRINT_SIZEOF(USSLSocket)
 #endif
    U_PRINT_SIZEOF(USemaphore)
@@ -109,7 +109,7 @@ static void print_size()
    U_PRINT_SIZEOF(UXMLElement)
    U_PRINT_SIZEOF(UXMLParser)
 #endif
-#ifdef HAVE_LIBZ
+#ifdef USE_LIBZ
    U_PRINT_SIZEOF(UZIP)
 #endif
    U_PRINT_SIZEOF(Url)
@@ -247,7 +247,7 @@ U_EXPORT main(int argc, char** argv)
    // RISULTATI
 
 #ifdef NDEBUG
-#  ifdef U_MEMORY_POOL
+#  ifdef ENABLE_MEMPOOL
    // Time Consumed with U_NUM_ENTRY_MEM_BLOCK(32)   =     3 ms
    // Time Consumed with U_NUM_ENTRY_MEM_BLOCK(320)  =    44 ms
    // Time Consumed with U_NUM_ENTRY_MEM_BLOCK(3200) =   670 ms
@@ -257,7 +257,7 @@ U_EXPORT main(int argc, char** argv)
    // Time Consumed with U_NUM_ENTRY_MEM_BLOCK(3200) =  3680 ms
 #  endif
 #else
-#  ifdef U_MEMORY_POOL
+#  ifdef ENABLE_MEMPOOL
    // Time Consumed with U_NUM_ENTRY_MEM_BLOCK(32)   =    60 ms
    // Time Consumed with U_NUM_ENTRY_MEM_BLOCK(320)  =  1463 ms
    // Time Consumed with U_NUM_ENTRY_MEM_BLOCK(3200) = 15500 ms

@@ -31,11 +31,11 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 		else
 			echo "${T_MD}LIBZ found in $libzdir${T_ME}"
 dnl		printf "LIBZ found in $libzdir\n";
-			HAVE_LIBZ=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_LIBZ"
+			USE_LIBZ=yes
+			AC_DEFINE(USE_LIBZ, 1, [Define if enable libz support])
 			libz_version=$(grep ZLIB_VERSION $libzdir/include/zlib.h | head -n1 | cut -d'"' -f2)
 			if test -z "${libz_version}"; then
-				libz_version="Unknown"
+				libz_version="unknown"
 			fi
 			LIBS="-lz $LIBS";
 			if test $libzdir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -45,7 +45,7 @@ dnl		printf "LIBZ found in $libzdir\n";
 			fi
 		fi
 	fi
-	AC_SUBST(HAVE_LIBZ)],
+	AC_SUBST(USE_LIBZ)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if you want to enable build of ZIP support)
@@ -86,11 +86,11 @@ dnl		printf "LIBZ found in $libzdir\n";
 		else
 			echo "${T_MD}libuuid found in $libuuiddir${T_ME}"
 dnl		printf "libuuid found in $libuuiddir\n";
-			HAVE_LIBUUID=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_LIBUUID";
+			USE_LIBUUID=yes
+			AC_DEFINE(USE_LIBUUID, 1, [Define if enable libuuid support])
 			libuuid_version=$(pkg-config --modversion ext2fs)
 			if test -z "${libuuid_version}"; then
-				libuuid_version="Unknown"
+				libuuid_version="unknown"
 			fi
 			LIBS="-luuid $LIBS";
 			if test $libuuiddir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -100,7 +100,7 @@ dnl		printf "libuuid found in $libuuiddir\n";
 			fi
 		fi
 	fi
-	AC_SUBST(HAVE_LIBUUID)],
+	AC_SUBST(USE_LIBUUID)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if MAGIC library is wanted)
@@ -131,11 +131,11 @@ dnl		printf "libuuid found in $libuuiddir\n";
 		else
 			echo "${T_MD}libmagic found in $magicdir${T_ME}"
 dnl		printf "libmagic found in $magicdir\n";
-			HAVE_MAGIC=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_MAGIC";
+			USE_LIBMAGIC=yes
+			AC_DEFINE(USE_LIBMAGIC, 1, [Define if enable libmagic support])
 			libmagic_version=$($magicdir/bin/file --version 2>&1 | head -n 1 | cut -d'-' -f2)
 			if test -z "${libmagic_version}"; then
-				libmagic_version="Unknown"
+				libmagic_version="unknown"
 			fi
 			LIBS="-lmagic $LIBS";
 			if test $magicdir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -145,7 +145,7 @@ dnl		printf "libmagic found in $magicdir\n";
 			fi
 		fi
 	fi
-	AC_SUBST(HAVE_MAGIC)],
+	AC_SUBST(USE_LIBMAGIC)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if SSL library is wanted)
@@ -179,8 +179,8 @@ dnl		printf "libmagic found in $magicdir\n";
 				AC_MSG_RESULT($msg)
 			fi
 		else
-			HAVE_SSL=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_SSL";
+			USE_LIBSSL=yes
+			AC_DEFINE(USE_LIBSSL, 1, [Define if enable libssl support])
 			if test "$found_cyassl" = "yes"; then
 				echo "${T_MD}CYASSL found in $ssldir${T_ME}";
 				ssl_version=$(grep VERSION $ssldir/include/cyassl/openssl/opensslv.h | cut -d' ' -f3 | tr -d '\r\n');
@@ -189,14 +189,14 @@ dnl		printf "libmagic found in $magicdir\n";
 				echo "${T_MD}OPENSSL found in $ssldir${T_ME}";
 				if test -f "$ssldir/include/openssl/ts.h"; then
 					HAVE_SSL_TS="yes";
-					CPPFLAGS="$CPPFLAGS -DHAVE_SSL_TS";
+					AC_DEFINE(HAVE_SSL_TS, 1, [Define if we have time stamp support in openssl])
 				fi
 				ssl_version=$(pkg-config --modversion openssl);
 dnl			ssl_version=$($ssldir/bin/openssl version | cut -d' ' -f2)
 				LIBS="-lssl -lcrypto $LIBS";
 			fi
 			if test -z "${ssl_version}"; then
-				ssl_version="Unknown";
+				ssl_version="unknown";
 			fi
 			if test $ssldir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$ssldir/include";
@@ -205,7 +205,7 @@ dnl			ssl_version=$($ssldir/bin/openssl version | cut -d' ' -f2)
 			fi
 		fi
 	fi
-	AC_SUBST(HAVE_SSL)
+	AC_SUBST(USE_LIBSSL)
 	AC_SUBST(HAVE_SSL_TS)],
 	[AC_MSG_RESULT(no)])
 
@@ -237,11 +237,11 @@ dnl			ssl_version=$($ssldir/bin/openssl version | cut -d' ' -f2)
 		else
 			echo "${T_MD}PCRE found in $pcredir${T_ME}"
 dnl		printf "PCRE found in $pcredir\n";
-			HAVE_PCRE=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_PCRE"
+			USE_LIBPCRE=yes
+			AC_DEFINE(USE_LIBPCRE, 1, [Define if enable libpcre support])
 			pcre_version=$($pcredir/bin/pcre-config --version)
 			if test -z "${pcre_version}"; then
-				pcre_version="Unknown"
+				pcre_version="unknown"
 			fi
 			LIBS="-lpcre $LIBS";
 			if test $pcredir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -251,7 +251,7 @@ dnl		printf "PCRE found in $pcredir\n";
 			fi
 		fi
 	fi
-	AC_SUBST(HAVE_PCRE)],
+	AC_SUBST(USE_LIBPCRE)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if EXPAT library for XML parsing is wanted)
@@ -282,11 +282,11 @@ dnl		printf "PCRE found in $pcredir\n";
 		else
 			echo "${T_MD}EXPAT found in $expatdir${T_ME}"
 dnl		printf "EXPAT found in $expatdir\n";
-			HAVE_EXPAT=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_EXPAT"
+			USE_LIBEXPAT=yes
+			AC_DEFINE(USE_LIBEXPAT, 1, [Define if enable libexpat support])
 			expat_version=$(strings $expatdir/lib*/libexpat.* | grep "^expat_[[0-9]]" | head -n1 | cut -d'_' -f2)
 			if test -z "${expat_version}"; then
-				expat_version="Unknown"
+				expat_version="unknown"
 			fi
 			LIBS="-lexpat $LIBS";
 			if test $expatdir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -296,7 +296,7 @@ dnl		printf "EXPAT found in $expatdir\n";
 			fi
 		fi
 	fi
-	AC_SUBST(HAVE_EXPAT)],
+	AC_SUBST(USE_LIBEXPAT)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if SSH library is wanted)
@@ -317,12 +317,12 @@ dnl		printf "EXPAT found in $expatdir\n";
 		else
 			echo "${T_MD}libssh found in $sshdir${T_ME}"
 dnl		printf "libSSH found in $sshdir\n";
-			HAVE_SSH=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_SSH";
+			USE_LIBSSH=yes
+			AC_DEFINE(USE_LIBSSH, 1, [Define if enable libssh support])
 dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -d' ' -f3)
 			libssh_version=$(strings $sshdir/lib*/libssh.so | grep 'libssh-[[0-9]]' | head -n1 | cut -d'-' -f4)
 			if test -z "${libssh_version}"; then
-				libssh_version="Unknown"
+				libssh_version="unknown"
 			fi
 			LIBS="-lssh $LIBS";
 			if test $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -332,7 +332,7 @@ dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -
 			fi
 		fi
 	fi
-	AC_SUBST(HAVE_SSH)],
+	AC_SUBST(USE_LIBSSH)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if cURL library is wanted)
@@ -353,11 +353,11 @@ dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -
 		else
 			echo "${T_MD}libcurl found in $curldir${T_ME}"
 dnl		printf "cURL found in $curldir\n";
-			HAVE_CURL=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_CURL";
+			USE_LIBCURL=yes
+			AC_DEFINE(USE_LIBCURL, 1, [Define if enable libcurL support])
 			libcurl_version=$($curldir/bin/curl-config --version | sed -e "s/libcurl //g")
 			if test -z "${libcurl_version}"; then
-				libcurl_version="Unknown"
+				libcurl_version="unknown"
 			fi
 			LIBS="-lcurl $LIBS";
 			if test $curldir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -367,7 +367,7 @@ dnl		printf "cURL found in $curldir\n";
 			fi
 		fi
 	fi
-	AC_SUBST(HAVE_CURL)],
+	AC_SUBST(USE_LIBCURL)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if LDAP library is wanted)
@@ -406,8 +406,8 @@ dnl		printf "cURL found in $curldir\n";
 		else
 			echo "${T_MD}LDAP found in $ldapdir${T_ME}"
 dnl		printf "LDAP found in $ldapdir\n"
-			HAVE_LDAP=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_LDAP"
+			USE_LIBLDAP=yes
+			AC_DEFINE(USE_LIBLDAP, 1, [Define if enable libldap support])
 			if test -f "$LDAP_INCS/ldap_ssl.h"; then
 				CPPFLAGS="$CPPFLAGS -DHAVE_LDAP_SSL_H"
 			fi
@@ -415,7 +415,7 @@ dnl		ldap_version=$(strings $LDAP_LDFLAGS/libldap.so | grep "@(#)")
 dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -f1)
 			ldap_version=$(grep LDAP_API_VERSION ${LDAP_INCS}/*ldap*.h | awk '{print $NF}')
 			if test -z "${ldap_version}"; then
-				ldap_version="Unknown"
+				ldap_version="unknown"
 			fi
 			LIBS="$LDAP_LIBS $LIBS"
 			if test $ldapdir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -425,7 +425,7 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 			fi
 		fi
 	fi
-	AC_SUBST(HAVE_LDAP)],
+	AC_SUBST(USE_LIBLDAP)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if MySQL library is wanted)
@@ -446,11 +446,11 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 		else
 			echo "${T_MD}MySQL found in $mysqldir${T_ME}"
 dnl		printf "MySQL found in $mysqldir\n";
-			HAVE_MYSQL=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_MYSQL";
+			USE_LIBMYSQL=yes
+			AC_DEFINE(USE_LIBMYSQL, 1, [Define if enable libmysql support])
 			libmysql_version=$(grep MYSQL_VERSION_ID $mysqldir/include/mysql/mysql_version.h | cut -f3)
 			if test -z "${libmysql_version}"; then
-				libmysql_version="Unknown"
+				libmysql_version="unknown"
 			fi
 			LIBS="-lmysqlclient $LIBS";
 			if test $mysqldir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -465,7 +465,7 @@ dnl		printf "MySQL found in $mysqldir\n";
 			fi
 		fi
 	fi
-	AC_SUBST(HAVE_MYSQL)],
+	AC_SUBST(USE_LIBMYSQL)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if DBI library is wanted)
@@ -486,11 +486,11 @@ dnl		printf "MySQL found in $mysqldir\n";
 		else
 			echo "${T_MD}DBI found in $dbidir${T_ME}"
 dnl		printf "DBI found in $dbidir\n";
-			HAVE_DBI=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_DBI";
+			USE_LIBDBI=yes
+			AC_DEFINE(USE_LIBDBI, 1, [Define if enable libdbi support])
 			libdbi_version=$(strings $dbidir/lib*/libdbi.* | grep "^libdbi v[[0-9]]" | cut -d'v' -f2 | head -n1)
 			if test -z "${libdbi_version}"; then
-				libdbi_version="Unknown"
+				libdbi_version="unknown"
 			fi
 			LIBS="-ldbi $LIBS";
 			if test $dbidir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -505,7 +505,7 @@ dnl		printf "DBI found in $dbidir\n";
 			fi
 		fi
 	fi
-	AC_SUBST(HAVE_DBI)],
+	AC_SUBST(USE_LIBDBI)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if libevent library is wanted)
@@ -526,11 +526,11 @@ dnl		printf "DBI found in $dbidir\n";
 		else
 			echo "${T_MD}libevent found in $libeventdir${T_ME}"
 dnl		printf "libevent found in $libeventdir\n";
-			HAVE_LIBEVENT=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_LIBEVENT";
+			USE_LIBEVENT=yes
+			AC_DEFINE(USE_LIBEVENT, 1, [Define if enable libevent support])
 			libevent_version=$(strings $libeventdir/lib*/libevent* | grep "^libevent-[[0-9]]" | head -n1 | cut -d'-' -f2 | awk -F'.so' '{n=1; print $n}')
 			if test -z "${libevent_version}"; then
-				libevent_version="Unknown"
+				libevent_version="unknown"
 			fi
 			LIBS="-levent $LIBS";
 			if test $libeventdir != "${CROSS_ENVIRONMENT}/usr"; then
@@ -540,7 +540,7 @@ dnl		printf "libevent found in $libeventdir\n";
 			fi
 		fi
 	fi
-	AC_SUBST(HAVE_LIBEVENT)],
+	AC_SUBST(USE_LIBEVENT)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if libxml2 library is wanted)
@@ -561,11 +561,11 @@ dnl		printf "libevent found in $libeventdir\n";
 		else
 			echo "${T_MD}libxml2 found in $libxml2dir${T_ME}"
 dnl		printf "libxml2 found in $libxml2dir\n";
-			HAVE_LIBXML2=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_LIBXML2";
+			USE_LIBXML2=yes
+			AC_DEFINE(USE_LIBXML2, 1, [Define if enable libxml2 support])
 			libxml2_version=$(pkg-config --modversion libxml-2.0)
 			if test -z "${libxml2_version}"; then
-				libxml2_version="Unknown"
+				libxml2_version="unknown"
 			fi
 			LIBS="-lxml2 $LIBS";
 			CPPFLAGS="$CPPFLAGS -I$libxml2dir/include/libxml2";
@@ -575,7 +575,7 @@ dnl		printf "libxml2 found in $libxml2dir\n";
 			fi
 		fi
 	fi
-	AC_SUBST(HAVE_LIBXML2)],
+	AC_SUBST(USE_LIBXML2)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if you want to use page-speed SDK)
@@ -595,14 +595,14 @@ dnl		printf "libxml2 found in $libxml2dir\n";
 			AC_MSG_ERROR("Cannot find page-speed SDK");
 		else
 			echo "${T_MD}page-speed SDK found in $page_speeddir${T_ME}"
-			HAVE_PAGE_SPEED=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_PAGE_SPEED";
+			USE_PAGE_SPEED=yes
+			AC_DEFINE(USE_PAGE_SPEED, 1, [Define if enable libpagespeed support])
 			page_speed_version=$(ls -1 $page_speeddir | grep page-speed | cut -d'-' -f3)
 			PAGESPEED_ROOT_DIR=$page_speeddir/page-speed-$page_speed_version
 			AC_SUBST(PAGESPEED_ROOT_DIR)
 		fi
 	fi
-	AC_SUBST(HAVE_PAGE_SPEED)],
+	AC_SUBST(USE_PAGE_SPEED)],
 	[AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if you want to use V8 JavaScript Engine)
@@ -622,11 +622,11 @@ dnl		printf "libxml2 found in $libxml2dir\n";
 			AC_MSG_ERROR("Cannot find V8 JavaScript Engine");
 		else
 			echo "${T_MD}V8 JavaScript Engine found in $v8dir${T_ME}"
-			HAVE_V8=yes
-			CPPFLAGS="$CPPFLAGS -DHAVE_V8";
+			USE_LIBV8=yes
+			AC_DEFINE(USE_LIBV8, 1, [Define if enable libv8 support])
 			v8_version=$(strings $v8dir/lib*/libv8.so | grep -i 'libv8' | head -n1 | cut -b10-)
 		fi
 	fi
-	AC_SUBST(HAVE_V8)],
+	AC_SUBST(USE_LIBV8)],
 	[AC_MSG_RESULT(no)])
 ])

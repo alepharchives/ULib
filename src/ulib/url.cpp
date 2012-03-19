@@ -330,7 +330,7 @@ bool Url::setQuery(const char* query_, uint32_t n)
 
    U_INTERNAL_ASSERT_POINTER(query_)
 
-   if (prepeareForQuery())
+   if (prepareForQuery())
       {
       if (*query_ == '?') ++query_;
 
@@ -348,7 +348,7 @@ bool Url::setQuery(UVector<UString>& vec)
 
    U_INTERNAL_ASSERT_EQUALS(vec.empty(),false)
 
-   if (prepeareForQuery())
+   if (prepareForQuery())
       {
       UString name, value;
 
@@ -393,7 +393,7 @@ void Url::findpos()
       return;
       }
 
-   U_INTERNAL_ASSERT(u_isURL(U_STRING_TO_PARAM(url)))
+   U_INTERNAL_ASSERT(u_isUrlScheme(U_STRING_TO_PARAM(url)))
 
    user_begin = service_end + 2;
 
@@ -469,11 +469,20 @@ void Url::findpos()
 
    U_INTERNAL_DUMP("service_end = %d user_begin = %d user_end = %d host_begin = %d host_end = %d path_begin = %d path_end = %d query = %d",
                     service_end,     user_begin,     user_end,     host_begin,     host_end,     path_begin,     path_end,     query)
+
+#ifdef DEBUG
+   if (service_end > 0        &&
+       user_begin == user_end &&
+       U_STRNEQ(url.data(), "http"))
+      {
+      U_ASSERT(u_isURL(U_STRING_TO_PARAM(url)))
+      }
+#endif
 }
 
-U_NO_EXPORT bool Url::prepeareForQuery()
+U_NO_EXPORT bool Url::prepareForQuery()
 {
-   U_TRACE(0, "Url::prepeareForQuery()")
+   U_TRACE(0, "Url::prepareForQuery()")
 
    // NB: Only posible if there is a url
 
@@ -500,7 +509,7 @@ void Url::addQuery(const char* entry, uint32_t entry_len, const char* value, uin
 
    U_INTERNAL_ASSERT_POINTER(entry)
 
-   if (prepeareForQuery())
+   if (prepareForQuery())
       {
       uint32_t v_size = 0, b_size = entry_len, e_size = b_size;
 

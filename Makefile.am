@@ -5,7 +5,7 @@ ACLOCAL_AMFLAGS  = -I m4
 
 EXTRA_DIST = autoconf cdb configure.help TODO LICENSE* README* *.spec* \
 				 ULib.m4 rpm.sh rpmpkgreq.lst rpmpkgreq.lst.suse openwrt \
-				 doc/Doxyfile doc/benchmark doc/readme.txt shtool
+				 doc/Doxyfile doc/benchmark doc/readme.txt shtool *.awk
 
 MAINTAINERCLEANFILES = configure aclocal.m4 libtool Makefile.in Makefile INSTALL
 

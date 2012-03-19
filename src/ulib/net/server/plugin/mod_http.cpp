@@ -166,7 +166,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
    if (cfg.loadTable())
       {
-#  ifdef HAVE_SSL
+#  ifdef USE_LIBSSL
       UHTTP::sts_age_seconds                 = cfg.readLong(*str_STRICT_TRANSPORT_SECURITY);
 #  endif
 
@@ -190,7 +190,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x.empty() == false) UHTTP::uri_protected_mask = U_NEW(UString(x));
 
-#  ifdef HAVE_SSL
+#  ifdef USE_LIBSSL
       x = cfg[*str_URI_REQUEST_CERT_MASK];
 
       if (x.empty() == false) uri_request_cert_mask = U_NEW(UString(x));
@@ -239,7 +239,7 @@ int UHttpPlugIn::handlerInit()
 {
    U_TRACE(0, "UHttpPlugIn::handlerInit()")
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    if (UServer_Base::bssl) UHTTP::min_size_for_sendfile = U_NOT_FOUND;
 
    U_INTERNAL_DUMP("UServer_Base::bssl = %b min_size_for_sendfile = %u", UServer_Base::bssl, UHTTP::min_size_for_sendfile)
@@ -397,7 +397,7 @@ next:
       U_SRV_LOG("ALIAS: URI request changed to: %.*s", len, ptr);
       }
 
-#  ifdef HAVE_SSL
+#  ifdef USE_LIBSSL
    if (uri_request_cert_mask &&
        u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*uri_request_cert_mask), 0))
       {

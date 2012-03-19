@@ -135,7 +135,7 @@ public:
 protected:
    bool open(uint32_t size, mode_t mode = 0664);
 
-#ifdef HAVE_LIBZ
+#ifdef USE_LIBZ
    static void backup(); // if overwrite log file compress it with gzip...
 
    static RETSIGTYPE handlerSIGUSR1(int signo) // manage signal SIGUSR1

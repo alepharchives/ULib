@@ -8,7 +8,9 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 				[  --enable-memory-pool    enable memory pool features [[default=yes]]])
 	if test -z "$enable_memory_pool" ; then
 		enable_memory_pool="yes"
-      AC_DEFINE(U_MEMORY_POOL, 1, [enable memory pool features])
+      AC_DEFINE( ENABLE_MEMPOOL, 1, [ enable memory pool features])
+	else
+      AC_DEFINE(DISABLE_MEMPOOL, 1, [disable memory pool features])
 	fi
 	AC_MSG_RESULT([${enable_memory_pool}])
 
@@ -17,7 +19,9 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 				[  --enable-LFS            enable Large File Support [[default=yes]]])
 	if test -z "$enable_LFS" ; then
 		enable_LFS="yes"
-      AC_DEFINE(HAVE_LFS, 1, [enable Large File Support features])
+      AC_DEFINE( ENABLE_LFS, 1, [ enable Large File Support features])
+	else
+      AC_DEFINE(DISABLE_LFS, 1, [disable Large File Support features])
 	fi
 	AC_MSG_RESULT([$enable_LFS])
 

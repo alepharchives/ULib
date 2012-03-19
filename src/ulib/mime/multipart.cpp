@@ -15,7 +15,7 @@
 #include <ulib/utility/base64.h>
 #include <ulib/utility/quoted_printable.h>
 
-#ifdef HAVE_MAGIC
+#ifdef USE_LIBMAGIC
 #  include <ulib/magic/magic.h>
 #endif
 
@@ -174,7 +174,7 @@ UString UMimeMultipartMsg::section(const UString& content,
 
    if (*type == 0)
       {
-#  ifdef HAVE_MAGIC
+#  ifdef USE_LIBMAGIC
       if (UMagic::magic == 0) (void) UMagic::init();
 
       charset = "";

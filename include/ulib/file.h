@@ -26,7 +26,7 @@
 #  define MAP_ANONYMOUS MAP_ANON /* Don't use a file */
 #endif
 
-#ifdef HAVE_LFS
+#ifdef ENABLE_LFS
 #  define U_SEEK_BEGIN 0LL
 #else
 #  define U_SEEK_BEGIN 0L

@@ -466,7 +466,7 @@ void* UMemoryPool::pop(int stack_index)
 
    U_INTERNAL_ASSERT_MINOR(stack_index,U_NUM_STACK_TYPE)
 
-#ifdef U_MEMORY_POOL
+#ifdef ENABLE_MEMPOOL
    void* ptr = ((UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index))->pop();
 #else
    void* ptr = U_SYSCALL(malloc, "%u", U_STACK_INDEX_TO_SIZE(stack_index));
@@ -481,7 +481,7 @@ void UMemoryPool::push(void* ptr, int stack_index)
 
    U_INTERNAL_ASSERT_MINOR(stack_index,U_NUM_STACK_TYPE)
 
-#ifdef U_MEMORY_POOL
+#ifdef ENABLE_MEMPOOL
    ((UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index))->push(ptr);
 #else
    U_SYSCALL_VOID(free, "%p", ptr);

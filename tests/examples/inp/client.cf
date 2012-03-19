@@ -1,14 +1,14 @@
 ## -----------------------------------------------------------------------------
 ## client - configuration parameters
 ## -----------------------------------------------------------------------------
-## USE_IPV6			flag to indicate use of ipv6
+## ENABLE_IPV6			flag to indicate use of ipv6
 ## MSG_WELCOME		message of welcome
 ## SERVER_ADDRESS	TCP/IP address of server
 ## -----------------------------------------------------------------------------
 
 SERVER {
 
-	USE_IPV6			no
+	ENABLE_IPV6			no
 	MSG_WELCOME		"generic server ready."
 	SERVER_ADDRESS	localhost
 }

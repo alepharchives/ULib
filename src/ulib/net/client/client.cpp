@@ -145,7 +145,7 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
    // ----------------------------------------------------------------------------------------------------------------------
    // SOCKET_NAME   name file for the listening socket
    //
-   // USE_IPV6      flag to indicate use of ipv6
+   // ENABLE_IPV6      flag to indicate use of ipv6
    // SERVER        host name or ip address for server
    // PORT          port number for the server
    //
@@ -188,8 +188,8 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
          }
       }
 
-#ifdef HAVE_IPV6
-   bIPv6       = cfg.readBoolean(*UServer_Base::str_USE_IPV6);
+#ifdef ENABLE_IPV6
+   bIPv6       = cfg.readBoolean(*UServer_Base::str_ENABLE_IPV6);
 #endif
    verify_mode = cfg.readLong(*UServer_Base::str_VERIFY_MODE);
    timeoutMS   = cfg.readLong(*str_RES_TIMEOUT);
@@ -253,7 +253,7 @@ bool UClient_Base::setUrl(const UString& location)
 
    // Check we've been passed a absolute URL
 
-   if (u_isURL(U_STRING_TO_PARAM(location)) == false)
+   if (u_isUrlScheme(U_STRING_TO_PARAM(location)) == 0)
       {
       U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
 
@@ -301,7 +301,7 @@ bool UClient_Base::setUrl(const UString& location)
 
    url.set(location);
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
    if (socket->isSSL()) ((USSLSocket*)socket)->setActive(url.isHTTPS());
 #endif
 

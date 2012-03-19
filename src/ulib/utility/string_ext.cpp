@@ -16,11 +16,11 @@
 #include <ulib/utility/compress.h>
 #include <ulib/utility/string_ext.h>
 
-#ifdef HAVE_PCRE
+#ifdef USE_LIBPCRE
 #  include <ulib/pcre/pcre.h>
 #endif
 
-#ifdef HAVE_LIBZ
+#ifdef USE_LIBZ
 #  include <ulib/base/coder/gzio.h>
 #endif
 
@@ -30,7 +30,7 @@
 
 #include <errno.h>
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 UString UStringExt::BIOtoString(BIO* bio)
 {
    U_TRACE(1, "UStringExt::BIOtoString(%p)", bio)
@@ -57,7 +57,7 @@ UString UStringExt::BIOtoString(BIO* bio)
 }
 #endif
 
-#ifdef HAVE_PCRE
+#ifdef USE_LIBPCRE
 // Replace parts of a string using regular expressions. This method is the counterpart of the perl s// operator.
 // It replaces the substrings which matched the given regular expression with the supplied string
 
@@ -278,6 +278,105 @@ end:
    U_RETURN_STRING(x);
 }
 
+// prepare for environment variables (check if some of them need quoting...)
+
+UString UStringExt::prepareForEnvironmentVar(const char* s, uint32_t n)
+{
+   U_TRACE(0, "UStringExt::prepareForEnvironmentVar(%.*S,%u)", n, s, n)
+
+   U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
+
+   char c;
+   const char* p;
+   const char* ptr;
+   uint32_t len, sz = 0;
+   const char* _end = s + n;
+
+   UString result(n + 100U);
+
+   char* str = result.data();
+
+   while (s < _end)
+      {
+      if (u_isspace(*s))
+         {
+         ++s;
+
+         continue;
+         }
+
+      if (*s == '#')
+         {
+         // skip line comment
+
+         s = (const char* restrict) memchr(s, '\n', _end - s);
+
+         if (s) continue;
+
+         goto end;
+         }
+
+      p = s;
+      s = (const char* restrict) memchr(p, '\n', _end - p);
+
+      ptr = (s ? s - 1 : (s = _end));
+      len = (s - p);
+        c = *ptr;
+
+      U_INTERNAL_DUMP("len = %u *ptr = %C", len, c)
+
+      U_INTERNAL_ASSERT_MAJOR(len, 0)
+      U_INTERNAL_ASSERT_DIFFERS(memchr(p, '=', len), 0)
+
+      while (u_isspace(c))
+         {
+         --len;
+
+         if (--ptr <= p) break;
+
+         c = *ptr;
+         }
+
+      if (c != '\'')
+         {
+         U_INTERNAL_ASSERT_DIFFERS(*p, '\'')
+
+         while (--ptr > p)
+            {
+            c = *ptr;
+
+            if (u_isspace(c))
+               {
+               str[sz++] = '\'';
+
+               break;
+               }
+
+            if (c == '=') break;
+            }
+
+         U_INTERNAL_DUMP("len = %u c = %C", len, c)
+
+         U_INTERNAL_ASSERT_MAJOR(len, 0)
+         U_INTERNAL_ASSERT_EQUALS(memchr(p, '\'', len), 0)
+         }
+
+      (void) u_mem_cpy(str + sz, p, len);
+
+      sz += len;
+
+      if (u_isspace(c)) str[sz++] = '\'';
+                        str[sz++] = '\n';
+      }
+
+end:
+   result.size_adjust(sz);
+
+   U_INTERNAL_ASSERT(result.invariant())
+
+   U_RETURN_STRING(result);
+}
+
 // recursively expand environment variables if needed
 
 UString UStringExt::expandEnvironmentVar(const char* s, uint32_t n, const UString* environment)
@@ -301,7 +400,7 @@ UString UStringExt::expandEnvironmentVar(const char* s, uint32_t n, const UStrin
 
       _end = 1;
 
-      while (_end < n && (u_isalnum(p[_end]) || p[_end] == '_'))
+      while (_end < n && u_isname(p[_end]))
          {
          U_INTERNAL_ASSERT_DIFFERS(p[_end], '$')
          U_INTERNAL_ASSERT_EQUALS(u_isspace(p[_end]), false)
@@ -1021,7 +1120,7 @@ UString UStringExt::deflate(const UString& s, bool bheader) // .gz compress
 
    // compress with zlib
 
-#ifdef HAVE_LIBZ
+#ifdef USE_LIBZ
    UString r(s.rep->_length * 2);
 
    r.rep->_length = u_gz_deflate(s.rep->str, s.rep->_length, r.rep->data(), bheader);
@@ -1042,34 +1141,37 @@ UString UStringExt::gunzip(const UString& s, uint32_t sz) // .gz uncompress
 
    if (sz == 0)
       {
+      sz        = s.size();
+      char* ptr = s.data();
+
       // check magic byte
 
-      if (U_MEMCMP(s.rep->str, GZIP_MAGIC))
+      if (U_MEMCMP(ptr, GZIP_MAGIC))
          {
          // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes
 
-         sz = s.rep->_length * 0.1 + 12;
+         sz += (sz / 10) + 12U;
          }
       else
          {
          // read original size
 
-         char* ptr = s.rep->data() + s.rep->_length - 4;
-         sz        = *((uint32_t*)ptr);
+         ptr += sz - 4;
+         sz   = *((uint32_t*)ptr);
          }
       }
 
-   UString r(sz);
+   UString result(sz);
 
-#ifdef HAVE_LIBZ // decompress with zlib
-   r.rep->_length = u_gz_inflate(s.rep->str, s.rep->_length, r.rep->data());
+#ifdef USE_LIBZ // decompress with zlib
+   result.rep->_length = u_gz_inflate(U_STRING_TO_PARAM(s), result.rep->data());
 
-   U_INTERNAL_DUMP("u_gz_inflate() = %d", r.rep->_length)
+   U_INTERNAL_DUMP("u_gz_inflate() = %d", result.rep->_length)
 #endif
 
-   U_INTERNAL_ASSERT(r.invariant())
+   U_INTERNAL_ASSERT(result.invariant())
 
-   U_RETURN_STRING(r);
+   U_RETURN_STRING(result);
 }
 
 // convert letter to upper or lower case

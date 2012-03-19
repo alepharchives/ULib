@@ -54,7 +54,7 @@ OtpAuthToken::OtpAuthToken(CryptEngine* eng_, const UString& buf)
    pos = eng->decrypt(ptr, pos, (unsigned char*)buffer.data());
 #else
    pos = u_base64_decode(buf.data(), buf.size(), ptr);
-#  ifdef HAVE_SSL
+#  ifdef USE_LIBSSL
    pos = u_des3_decode(ptr, pos, (unsigned char*)buffer.data());
 #  endif
 #endif
@@ -242,7 +242,7 @@ void OtpAuthToken::stringify(UString& field)
    pos = eng->encrypt((unsigned char*)tmp1.data(), (long)tmp1.size(), ptr);
    pos = eng1.encode(ptr, pos, (unsigned char*)buffer.data());
 #else
-#  ifdef HAVE_SSL
+#  ifdef USE_LIBSSL
    pos = u_des3_encode((const unsigned char*)tmp1.data(), (long)tmp1.size(), ptr);
 #  endif
    pos = u_base64_encode(ptr, pos, (unsigned char*)buffer.data());

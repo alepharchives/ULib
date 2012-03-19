@@ -16,7 +16,7 @@
 #include <ulib/net/client/http.h>
 #include <ulib/utility/services.h>
 
-#ifdef HAVE_MAGIC
+#ifdef USE_LIBMAGIC
 #  include <ulib/magic/magic.h>
 #endif
 
@@ -772,7 +772,7 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file)
 {
    U_TRACE(0, "UHttpClient_Base::upload(%.*S,%.*S)", U_STRING_TO_TRACE(_url), U_FILE_TO_TRACE(file))
 
-#ifdef HAVE_MAGIC
+#ifdef USE_LIBMAGIC
    if (UMagic::magic == 0) (void) UMagic::init();
 #endif
 

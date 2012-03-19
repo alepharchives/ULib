@@ -16,7 +16,7 @@
 #include <ulib/container/vector.h>
 #include <ulib/utility/socket_ext.h>
 
-#ifdef HAVE_SSL
+#ifdef USE_LIBSSL
 #  include <ulib/ssl/net/sslsocket.h>
 #endif
 
@@ -52,10 +52,11 @@ bool USocketExt::read(USocket* s, UString& buffer, int count, int timeoutMS, uin
    int byte_read = 0;
    bool result = true;
    uint32_t start  = buffer.size(), // NB: buffer read can start with prev data...
-            ncount = buffer.space();
+            ncount = buffer.space(),
+            chunk  = U_max(count,(int)U_CAPACITY);
 
-   if (ncount <       U_max(count,(int)U_CAPACITY) &&
-       buffer.reserve(U_max(count,(int)U_CAPACITY)))
+   if (ncount < chunk &&
+       buffer.reserve(chunk))
       {
       ncount = buffer.space();
       }
@@ -133,7 +134,7 @@ read:
 
       if (buffer.reserve(start + byte_read + ncount)) ptr = buffer.c_pointer(start);
 
-#  ifdef HAVE_SSL
+#  ifdef USE_LIBSSL
       if (s->isSSL())
          {
          /* 

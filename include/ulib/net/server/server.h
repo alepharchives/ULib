@@ -88,7 +88,7 @@ public:
    // -----------------------------------------------------------------------------------------------------------------------------
    // UServer - configuration parameters
    // -----------------------------------------------------------------------------------------------------------------------------
-   // USE_IPV6      flag indicating the use of ipv6
+   // ENABLE_IPV6      flag indicating the use of ipv6
    // SERVER        host name or ip address for the listening socket
    // PORT          port number             for the listening socket
    // SOCKET_NAME   file name               for the listening socket
@@ -130,7 +130,7 @@ public:
    //                                                                    >1 - pool of serialized processes plus monitoring process)
    // -----------------------------------------------------------------------------------------------------------------------------
 
-   static const UString* str_USE_IPV6;
+   static const UString* str_ENABLE_IPV6;
    static const UString* str_PORT;
    static const UString* str_MSG_WELCOME;
    static const UString* str_COMMAND;
@@ -367,7 +367,8 @@ protected:
    static UString* senvironment;
    static uint32_t start, count;
    static UVector<UIPAllow*>* vallow_IP;
-   static bool flag_loop, bssl, flag_use_tcp_optimization, accept_edge_triggered, set_realtime_priority;
+   static bool flag_loop, bssl, bipc, flag_use_tcp_optimization,
+               accept_edge_triggered, set_realtime_priority, public_address;
 
    // COSTRUTTORI
 
@@ -515,7 +516,7 @@ private:
    UServer& operator=(const UServer&)        { return *this; }
 };
 
-#ifdef HAVE_SSL // specializzazione con USSLSocket
+#ifdef USE_LIBSSL // specializzazione con USSLSocket
 
 template <> class U_EXPORT UServer<USSLSocket> : public UServer_Base {
 public:

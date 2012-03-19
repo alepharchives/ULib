@@ -35,7 +35,7 @@ void UTCPSocket::closesocket()
 
    if (USocket::isBroken())
       {
-#  if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+#  if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
       if (USocket::isEpollErr())
          {
          U_INTERNAL_ASSERT_MAJOR(UNotifier::epollfd,0)
@@ -75,7 +75,7 @@ void UTCPSocket::closesocket()
 
    // NB: to avoid epoll_wait() fire events on file descriptor already closed...
 
-#if defined(HAVE_EPOLL_WAIT) && !defined(HAVE_LIBEVENT)
+#if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
    if (UNotifier::isDynamicConnection(iSockDesc))
       {
 next1:

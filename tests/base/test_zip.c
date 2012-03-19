@@ -5,7 +5,7 @@
 */
 
 #include <ulib/base/base.h>
-#include <ulib/zip/ziptool.h>
+#include <ulib/base/zip/ziptool.h>
 
 #include <stdio.h>
 

@@ -154,8 +154,10 @@ enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_G
 #define U_HTTP_QUERY_TO_PARAM      u_http_info.query, u_http_info.query_len
 #define U_HTTP_QUERY_TO_TRACE      u_http_info.query_len, u_http_info.query
 
-#define U_HTTP_URI_QUERY_TO_PARAM  u_http_info.uri, (u_http_info.uri_len + u_http_info.query_len + (u_http_info.query_len ? 1 : 0))
-#define U_HTTP_URI_QUERY_TO_TRACE  (u_http_info.uri_len + u_http_info.query_len + (u_http_info.query_len ? 1 : 0)), u_http_info.uri
+#define U_HTTP_URI_QUERY_LEN       (u_http_info.uri_len + u_http_info.query_len + (u_http_info.query_len ? 1 : 0))
+
+#define U_HTTP_URI_QUERY_TO_PARAM  u_http_info.uri, U_HTTP_URI_QUERY_LEN 
+#define U_HTTP_URI_QUERY_TO_TRACE  U_HTTP_URI_QUERY_LEN, u_http_info.uri
 
 #define U_HTTP_CTYPE_TO_PARAM      u_http_info.content_type, u_http_info.content_type_len
 #define U_HTTP_CTYPE_TO_TRACE      u_http_info.content_type_len, u_http_info.content_type
