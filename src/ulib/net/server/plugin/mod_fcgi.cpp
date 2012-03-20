@@ -198,7 +198,6 @@ int UFCGIPlugIn::handlerConfig(UFileConfig& cfg)
    //
    // NAME_SOCKET    file name for the fcgi socket
    //
-   // ENABLE_IPV6       flag to indicate use of ipv6
    // SERVER         host name or ip address for the fcgi host
    // PORT           port number             for the fcgi host
    //

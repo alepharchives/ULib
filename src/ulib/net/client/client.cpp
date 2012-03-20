@@ -145,7 +145,7 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
    // ----------------------------------------------------------------------------------------------------------------------
    // SOCKET_NAME   name file for the listening socket
    //
-   // ENABLE_IPV6      flag to indicate use of ipv6
+   // ENABLE_IPV6   flag to indicate use of ipv6
    // SERVER        host name or ip address for server
    // PORT          port number for the server
    //

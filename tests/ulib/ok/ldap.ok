@@ -94,3 +94,7 @@ dn:   uid=amministrazione,o=mail
 cn:   Amministrazione
 mail: amministrazione@unirel.com
 
+dn:   uid=bnlbanca,o=mail
+cn:   BNL Banca
+mail: bnlbanca@unirel.com
+

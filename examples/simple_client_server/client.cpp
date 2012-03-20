@@ -111,7 +111,7 @@ public:
       // -------------------------------------------
       // client - configuration parameters
       // -------------------------------------------
-      // ENABLE_IPV6       flag to indicate use of ipv6
+      // ENABLE_IPV6    flag to indicate use of ipv6
       // MSG_WELCOME    message of welcome
       // SERVER_ADDRESS TCP/IP address of server
       // -------------------------------------------

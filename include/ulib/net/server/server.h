@@ -88,7 +88,7 @@ public:
    // -----------------------------------------------------------------------------------------------------------------------------
    // UServer - configuration parameters
    // -----------------------------------------------------------------------------------------------------------------------------
-   // ENABLE_IPV6      flag indicating the use of ipv6
+   // ENABLE_IPV6   flag indicating the use of ipv6
    // SERVER        host name or ip address for the listening socket
    // PORT          port number             for the listening socket
    // SOCKET_NAME   file name               for the listening socket

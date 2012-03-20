@@ -279,7 +279,7 @@ void UServer_Base::str_allocate()
    { U_STRINGREP_FROM_CONSTANT("SET_REALTIME_PRIORITY") }
    };
 
-   U_NEW_ULIB_OBJECT(str_ENABLE_IPV6,              U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_ENABLE_IPV6,           U_STRING_FROM_STRINGREP_STORAGE(0));
    U_NEW_ULIB_OBJECT(str_PORT,                  U_STRING_FROM_STRINGREP_STORAGE(1));
    U_NEW_ULIB_OBJECT(str_MSG_WELCOME,           U_STRING_FROM_STRINGREP_STORAGE(2));
    U_NEW_ULIB_OBJECT(str_COMMAND,               U_STRING_FROM_STRINGREP_STORAGE(3));
@@ -440,7 +440,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // --------------------------------------------------------------------------------------------------------------------------------------
    // userver - configuration parameters
    // --------------------------------------------------------------------------------------------------------------------------------------
-   // ENABLE_IPV6      flag indicating the use of ipv6
+   // ENABLE_IPV6   flag indicating the use of ipv6
    // SERVER        host name or ip address for the listening socket
    // PORT          port number             for the listening socket
    // SOCKET_NAME   file name               for the listening socket
