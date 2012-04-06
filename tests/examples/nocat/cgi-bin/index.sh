@@ -6,22 +6,21 @@
 
 IMAGE=bannerWorldBF3.jpg
 INTERNET=www.worldbachfest.it
-AP_ADDRESS=192.168.112.254:5280
-EVENTI=$AP_ADDRESS/cgi-bin/index.sh
-
-# env		    > /tmp/env.$$
-# echo "$@" >> /tmp/env.$$
+AP_ADDRESS=`grep AuthServiceAddr /etc/nodog.conf | tr -d \\\\ | grep -v '#' | tr -d \\" | cut -d'/' -f3`
+EVENTI=`echo $AP_ADDRESS`/cgi-bin/index.sh
 
 allow_internet() {
 
-	/usr/lib/nodog/firewall/access.fw permit $1 $2 Member
+	/usr/lib/nodog/firewall/nodog.fw permit $1 $2 Member
 
-	echo -e "Refresh: 0; url=http://${INTERNET}\r\n\r\n<html><body>OK</body></html>"
+	echo -e "Refresh: 1; url=http://${INTERNET}\r\n\r\n<html><body>OK</body></html>"
 
 	logger "Access allowed for MAC: $1 with IP: $2"
 }
 
-if [ $# -eq 7 -a \
+do_cmd() {
+
+	if [ $# -eq 7 -a \
 	  "$REQUEST_METHOD" = "GET" ]; then
 
 		# $1 -> mac
@@ -34,48 +33,23 @@ if [ $# -eq 7 -a \
 
 		if [ "$REQUEST_URI" = "/login" ]; then
 
-		# --------------------------------------------------------------------------------
-		# NB: we need this for the old version...
-		# --------------------------------------------------------------------------------
-		 	if [ "$3" = "http://${AP_ADDRESS}/images/${IMAGE}" -o \
-				  "$3" = "http://${AP_ADDRESS}/images/firenze-wifi2.png" ]; then
-		 
-		 		if [ "$3" = "http://$AP_ADDRESS/images/firenze-wifi2.png" ]; then
-
-					echo -e "Content-Type: image/png; charset=binary\r\n\r"
-
-		 			cat /usr/lib/nodog/images/firenze-wifi2.png
-		 		else
-					echo -e "Content-Type: image/jpeg; charset=binary\r\n\r"
-
-		 			cat /usr/lib/nodog/images/$IMAGE
-		 		fi
-		 
-		 		exit 0
-		 	fi
-		# --------------------------------------------------------------------------------
-
 			OUTPUT=`cat /etc/nodog_index.tmpl 2>/dev/null`
 			OUTPUT=`printf "$OUTPUT" "$EVENTI?$QUERY_STRING" "$IMAGE" "$EVENTI?$QUERY_STRING" 2>/dev/null`
 
 			echo -e "Content-Type: text/html; charset=utf-8\r\n\r"
 			echo -n -E "$OUTPUT"
 
-			exit 0
+			return
 
-	#	elif [ "$REQUEST_URI" = "/cgi-bin/index.sh" ]; then
-		# --------------------------------------------------------------------------------
-		# NB: for the old version REQUEST_URI now is not set...
-		# --------------------------------------------------------------------------------
-      elif [ -z "$REQUEST_URI" ]; then
+	 	elif [ "$REQUEST_URI" = "/cgi-bin/index.sh" ]; then
 
-			allow_internet $1 $2
+		 	allow_internet $1 $2
 
-			exit 0
+			return
 		fi
-fi
+	fi
 
-echo -e "Status: 400\r\n\r\n" \
+	echo -e "Status: 400\r\n\r\n" \
         "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n" \
         "<html><head>\r\n" \
         "<title>400 Bad Request</title>\r\n" \
@@ -86,5 +60,6 @@ echo -e "Status: 400\r\n\r\n" \
         "<hr>\r\n" \
         "<address>ULib Server</address>\r\n" \
         "</body></html>\r"
+}
 
-exit 1
+do_cmd "$@"

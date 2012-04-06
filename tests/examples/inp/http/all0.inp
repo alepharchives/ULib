@@ -1,0 +1,13 @@
+GET /__utm.gif?utmwv=4.7mi&utmn=1662819187&utmcs=UTF-8&utmsr=320x480&utmsc=24-bit&utmul=it-it&utmp=%2Ftt%2Flauncher&utmac=UA-25578576-1&utmhid=1405268026&utmcc=__utma%3D1.1668521870.1321411624.1333567819.1333627405.238%3B&utmht=1333627454638&utmqt=10943883 HTTP/1.1
+Host: www.google-analytics.com
+User-Agent: GoogleAnalytics/1.3 (iPhone; U; CPU iPhone OS 5.0.1 like Mac OS X; it-it)
+
+GET /__utm.gif?utmwv=4.7mi&utmn=67174493&utmcs=UTF-8&utmsr=320x480&utmsc=24-bit&utmul=it-it&utmp=%2Ftt&utmac=UA-25578576-1&utmhid=1405268026&utmcc=__utma%3D1.1668521870.1321411624.1333567819.1333627405.238%3B&utmht=1333627455892&utmqt=10942630 HTTP/1.1
+Host: www.google-analytics.com
+User-Agent: GoogleAnalytics/1.3 (iPhone; U; CPU iPhone OS 5.0.1 like Mac OS X; it-it)
+
+GET /__utm.gif?utmwv=4.7mi&utmn=1847999631&utmcs=UTF-8&utmsr=320x480&utmsc=24-bit&utmul=it-it&utmp=%2Ftt&utmac=UA-25578576-1&utmhid=1405268026&utmcc=__utma%3D1.1668521870.1321411624.1333567819.1333627405.238%3B&utmht=1333627456159&utmqt=10942363 HTTP/1.1
+Host: www.google-analytics.com
+User-Agent: GoogleAnalytics/1.3 (iPhone; U; CPU iPhone OS 5.0.1 like Mac OS X; it-it)
+
+GET /__utm.gif?utmwv=4.7mi&utmn=1797984431&utmt=event&utme=5(action*signOut*)(0)&utmcs=UTF-8&utmsr=320x480&utmsc=24-bit&

@@ -18,9 +18,6 @@ GET /../../../linux HTTP/1.0
 
 GET /cgi-bin/internal-error.sh HTTP/1.0
 
-GET /cgi-bin/redirect.sh HTTP/1.1
-Host: localhost
-
 GET /cgi-bin/sendfile.sh HTTP/1.1
 Host: localhost
 
@@ -121,3 +118,7 @@ Content-Type: application/jsonrequest
 Content-Length: 72
 
 {"user":"doctoravatar@penzance.com","forecast":7,"t":"vlIj","zip":94089}
+
+GET /cgi-bin/redirect.sh HTTP/1.1
+Host: localhost
+

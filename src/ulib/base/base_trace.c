@@ -17,7 +17,7 @@
 #ifndef __MINGW32__
 #  include <sys/uio.h>
 #  include <sys/mman.h>
-#  ifdef HAVE_PTHREAD_H
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
 #     include <pthread.h>
 #  endif
 #endif
@@ -76,7 +76,7 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
 
    U_INTERNAL_ASSERT_MINOR(u_trace_num_tab,sizeof(u_trace_tab))
 
-#if defined(HAVE_SYS_SYSCALL_H) && defined(HAVE_PTHREAD_H)
+#if defined(HAVE_SYS_SYSCALL_H) && defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
    if (u_plock)
       {
       char tid_buffer[32];
@@ -125,7 +125,7 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
          }
       }
 
-#if defined(HAVE_SYS_SYSCALL_H) && defined(HAVE_PTHREAD_H)
+#if defined(HAVE_SYS_SYSCALL_H) && defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
    if (u_plock) (void) pthread_mutex_unlock((pthread_mutex_t*)u_plock);
 #endif
 }

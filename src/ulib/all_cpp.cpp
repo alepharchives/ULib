@@ -86,7 +86,7 @@
 #  include "net/unixsocket.cpp"
 #endif
 
-#ifdef HAVE_PTHREAD_H
+#ifdef ENABLE_THREAD
 #  include "thread.cpp"
 #endif
 

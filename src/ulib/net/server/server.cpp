@@ -107,6 +107,7 @@ UClientImage_Base*         UServer_Base::vClientImage;
 UClientImage_Base*         UServer_Base::pClientImage;
 UClientImage_Base*         UServer_Base::eClientImage;
 UVector<UIPAllow*>*        UServer_Base::vallow_IP;
+UVector<UIPAllow*>*        UServer_Base::vallow_IP_prv;
 UVector<UServerPlugIn*>*   UServer_Base::vplugin;
 UServer_Base::shared_data* UServer_Base::ptr_shared_data;
 
@@ -128,6 +129,7 @@ const UString* UServer_Base::str_CA_FILE;
 const UString* UServer_Base::str_CA_PATH;
 const UString* UServer_Base::str_VERIFY_MODE;
 const UString* UServer_Base::str_ALLOWED_IP;
+const UString* UServer_Base::str_ALLOWED_IP_PRIVATE;
 const UString* UServer_Base::str_SOCKET_NAME;
 const UString* UServer_Base::str_DOCUMENT_ROOT;
 const UString* UServer_Base::str_PLUGIN;
@@ -149,7 +151,7 @@ const UString* UServer_Base::str_USE_TCP_OPTIMIZATION;
 const UString* UServer_Base::str_LISTEN_BACKLOG;
 const UString* UServer_Base::str_SET_REALTIME_PRIORITY;
 
-#ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
 #  include "ulib/thread.h"
 
 class UTimeThread : public UThread {
@@ -217,6 +219,7 @@ void UServer_Base::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_CA_PATH,0)
    U_INTERNAL_ASSERT_EQUALS(str_VERIFY_MODE,0)
    U_INTERNAL_ASSERT_EQUALS(str_ALLOWED_IP,0)
+   U_INTERNAL_ASSERT_EQUALS(str_ALLOWED_IP_PRIVATE,0)
    U_INTERNAL_ASSERT_EQUALS(str_SOCKET_NAME,0)
    U_INTERNAL_ASSERT_EQUALS(str_DOCUMENT_ROOT,0)
    U_INTERNAL_ASSERT_EQUALS(str_PLUGIN,0)
@@ -257,6 +260,7 @@ void UServer_Base::str_allocate()
    { U_STRINGREP_FROM_CONSTANT("CA_PATH") },
    { U_STRINGREP_FROM_CONSTANT("VERIFY_MODE") },
    { U_STRINGREP_FROM_CONSTANT("ALLOWED_IP") },
+   { U_STRINGREP_FROM_CONSTANT("ALLOWED_IP_PRIVATE") },
    { U_STRINGREP_FROM_CONSTANT("SOCKET_NAME") },
    { U_STRINGREP_FROM_CONSTANT("DOCUMENT_ROOT") },
    { U_STRINGREP_FROM_CONSTANT("PLUGIN") },
@@ -297,26 +301,27 @@ void UServer_Base::str_allocate()
    U_NEW_ULIB_OBJECT(str_CA_PATH,               U_STRING_FROM_STRINGREP_STORAGE(15));
    U_NEW_ULIB_OBJECT(str_VERIFY_MODE,           U_STRING_FROM_STRINGREP_STORAGE(16));
    U_NEW_ULIB_OBJECT(str_ALLOWED_IP,            U_STRING_FROM_STRINGREP_STORAGE(17));
-   U_NEW_ULIB_OBJECT(str_SOCKET_NAME,           U_STRING_FROM_STRINGREP_STORAGE(18));
-   U_NEW_ULIB_OBJECT(str_DOCUMENT_ROOT,         U_STRING_FROM_STRINGREP_STORAGE(19));
-   U_NEW_ULIB_OBJECT(str_PLUGIN,                U_STRING_FROM_STRINGREP_STORAGE(20));
-   U_NEW_ULIB_OBJECT(str_PLUGIN_DIR,            U_STRING_FROM_STRINGREP_STORAGE(21));
-   U_NEW_ULIB_OBJECT(str_REQ_TIMEOUT,           U_STRING_FROM_STRINGREP_STORAGE(22));
-   U_NEW_ULIB_OBJECT(str_CGI_TIMEOUT,           U_STRING_FROM_STRINGREP_STORAGE(23));
-   U_NEW_ULIB_OBJECT(str_VIRTUAL_HOST,          U_STRING_FROM_STRINGREP_STORAGE(24));
-   U_NEW_ULIB_OBJECT(str_DIGEST_AUTHENTICATION, U_STRING_FROM_STRINGREP_STORAGE(25));
-   U_NEW_ULIB_OBJECT(str_URI,                   U_STRING_FROM_STRINGREP_STORAGE(26));
-   U_NEW_ULIB_OBJECT(str_HOST,                  U_STRING_FROM_STRINGREP_STORAGE(27));
-   U_NEW_ULIB_OBJECT(str_USER,                  U_STRING_FROM_STRINGREP_STORAGE(28));
-   U_NEW_ULIB_OBJECT(str_SERVER,                U_STRING_FROM_STRINGREP_STORAGE(29));
-   U_NEW_ULIB_OBJECT(str_METHOD_NAME,           U_STRING_FROM_STRINGREP_STORAGE(30));
-   U_NEW_ULIB_OBJECT(str_RESPONSE_TYPE,         U_STRING_FROM_STRINGREP_STORAGE(31));
-   U_NEW_ULIB_OBJECT(str_IP_ADDRESS,            U_STRING_FROM_STRINGREP_STORAGE(32));
-   U_NEW_ULIB_OBJECT(str_MAX_KEEP_ALIVE,        U_STRING_FROM_STRINGREP_STORAGE(33));
-   U_NEW_ULIB_OBJECT(str_PID_FILE,              U_STRING_FROM_STRINGREP_STORAGE(34));
-   U_NEW_ULIB_OBJECT(str_USE_TCP_OPTIMIZATION,  U_STRING_FROM_STRINGREP_STORAGE(35));
-   U_NEW_ULIB_OBJECT(str_LISTEN_BACKLOG,        U_STRING_FROM_STRINGREP_STORAGE(36));
-   U_NEW_ULIB_OBJECT(str_SET_REALTIME_PRIORITY, U_STRING_FROM_STRINGREP_STORAGE(37));
+   U_NEW_ULIB_OBJECT(str_ALLOWED_IP_PRIVATE,    U_STRING_FROM_STRINGREP_STORAGE(18));
+   U_NEW_ULIB_OBJECT(str_SOCKET_NAME,           U_STRING_FROM_STRINGREP_STORAGE(19));
+   U_NEW_ULIB_OBJECT(str_DOCUMENT_ROOT,         U_STRING_FROM_STRINGREP_STORAGE(20));
+   U_NEW_ULIB_OBJECT(str_PLUGIN,                U_STRING_FROM_STRINGREP_STORAGE(21));
+   U_NEW_ULIB_OBJECT(str_PLUGIN_DIR,            U_STRING_FROM_STRINGREP_STORAGE(22));
+   U_NEW_ULIB_OBJECT(str_REQ_TIMEOUT,           U_STRING_FROM_STRINGREP_STORAGE(23));
+   U_NEW_ULIB_OBJECT(str_CGI_TIMEOUT,           U_STRING_FROM_STRINGREP_STORAGE(24));
+   U_NEW_ULIB_OBJECT(str_VIRTUAL_HOST,          U_STRING_FROM_STRINGREP_STORAGE(25));
+   U_NEW_ULIB_OBJECT(str_DIGEST_AUTHENTICATION, U_STRING_FROM_STRINGREP_STORAGE(26));
+   U_NEW_ULIB_OBJECT(str_URI,                   U_STRING_FROM_STRINGREP_STORAGE(27));
+   U_NEW_ULIB_OBJECT(str_HOST,                  U_STRING_FROM_STRINGREP_STORAGE(28));
+   U_NEW_ULIB_OBJECT(str_USER,                  U_STRING_FROM_STRINGREP_STORAGE(29));
+   U_NEW_ULIB_OBJECT(str_SERVER,                U_STRING_FROM_STRINGREP_STORAGE(30));
+   U_NEW_ULIB_OBJECT(str_METHOD_NAME,           U_STRING_FROM_STRINGREP_STORAGE(31));
+   U_NEW_ULIB_OBJECT(str_RESPONSE_TYPE,         U_STRING_FROM_STRINGREP_STORAGE(32));
+   U_NEW_ULIB_OBJECT(str_IP_ADDRESS,            U_STRING_FROM_STRINGREP_STORAGE(33));
+   U_NEW_ULIB_OBJECT(str_MAX_KEEP_ALIVE,        U_STRING_FROM_STRINGREP_STORAGE(34));
+   U_NEW_ULIB_OBJECT(str_PID_FILE,              U_STRING_FROM_STRINGREP_STORAGE(35));
+   U_NEW_ULIB_OBJECT(str_USE_TCP_OPTIMIZATION,  U_STRING_FROM_STRINGREP_STORAGE(36));
+   U_NEW_ULIB_OBJECT(str_LISTEN_BACKLOG,        U_STRING_FROM_STRINGREP_STORAGE(37));
+   U_NEW_ULIB_OBJECT(str_SET_REALTIME_PRIORITY, U_STRING_FROM_STRINGREP_STORAGE(38));
 }
 
 UServer_Base::UServer_Base(UFileConfig* cfg)
@@ -331,7 +336,7 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    port         = U_DEFAULT_PORT;
    pthis        = this;
    mod_name     = U_NEW(UString(U_CAPACITY));
-   senvironment = U_NEW(UString(100U));
+   senvironment = U_NEW(UString(U_CAPACITY));
 
    U_INTERNAL_DUMP("u_seed_hash = %u", u_seed_hash)
 
@@ -390,10 +395,11 @@ UServer_Base::~UServer_Base()
    delete mod_name;
    delete senvironment;
 
-   if (log)        delete log;
-   if (host)       delete host;
-   if (ptime)      delete ptime;
-   if (vallow_IP)  delete vallow_IP;
+   if (log)           delete log;
+   if (host)          delete host;
+   if (ptime)         delete ptime;
+   if (vallow_IP)     delete vallow_IP;
+   if (vallow_IP_prv) delete vallow_IP_prv;
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
@@ -440,12 +446,13 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // --------------------------------------------------------------------------------------------------------------------------------------
    // userver - configuration parameters
    // --------------------------------------------------------------------------------------------------------------------------------------
-   // ENABLE_IPV6   flag indicating the use of ipv6
-   // SERVER        host name or ip address for the listening socket
-   // PORT          port number             for the listening socket
-   // SOCKET_NAME   file name               for the listening socket
-   // IP_ADDRESS    public ip address of host for the interface connected to the Internet (autodetected if not specified)
-   // ALLOWED_IP    list of comma separated client address for IP-based access control (IPADDR[/MASK])
+   // ENABLE_IPV6        flag indicating the use of ipv6
+   // SERVER             host name or ip address for the listening socket
+   // PORT               port number             for the listening socket
+   // SOCKET_NAME        file name               for the listening socket
+   // IP_ADDRESS         public ip address of host for the interface connected to the Internet (autodetected if not specified)
+   // ALLOWED_IP         list of comma separated client         address for IP-based access control (IPADDR[/MASK])
+   // ALLOWED_IP_PRIVATE list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
    //
    // LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
    // USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (DEFER_ACCEPT, QUICKACK)
@@ -487,6 +494,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    as_user                    = cfg[*str_RUN_AS_USER],
    log_file                   = cfg[*str_LOG_FILE];
    allow_IP                   = cfg[*str_ALLOWED_IP];
+   allow_IP_prv               = cfg[*str_ALLOWED_IP_PRIVATE];
    name_sock                  = cfg[*str_SOCKET_NAME];
    IP_address                 = cfg[*str_IP_ADDRESS];
 
@@ -549,7 +557,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
       u_now = &(ptr_shared_data->_timeval);
 
-#  if defined(HAVE_PTHREAD_H) && defined(U_HTTP_CACHE_REQUEST)
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_HTTP_CACHE_REQUEST)
       ((UTimeThread*)(u_pthread_time = U_NEW(UTimeThread)))->start();
 #  endif
       }
@@ -565,7 +573,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    if (log_file.empty() == false)
       {
-#  if defined(HAVE_PTHREAD_H)
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
       if (u_pthread_time == 0) ((UTimeThread*)(u_pthread_time = U_NEW(UTimeThread)))->start();
 #  endif
 
@@ -584,6 +592,19 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    else
       {
       U_INTERNAL_ASSERT(document_root.isNullTerminated())
+
+      char c = document_root.c_char(0);
+
+      if (c == '~' ||
+          c == '$')
+         {
+         document_root = UStringExt::expandPath(document_root, 0);
+
+         if (document_root.empty())
+            {
+            U_ERROR("var DOCUMENT_ROOT %S expansion FAILED. Going down...", document_root.data());
+            }
+         }
 
       (void) u_canonicalize_pathname(document_root.data());
 
@@ -786,34 +807,34 @@ end:
 
 // manage plugin handler hooks...
 
-#define U_PLUGIN_HANDLER(xxx)                                                                \
-                                                                                             \
-int UServer_Base::pluginsHandler##xxx()                                                      \
-{                                                                                            \
-   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                                        \
-                                                                                             \
-   U_INTERNAL_ASSERT_POINTER(vplugin)                                                        \
-                                                                                             \
-   int result;                                                                               \
-   UServerPlugIn* _plugin;                                                                   \
-                                                                                             \
-   for (uint32_t i = 0, length = vplugin->size(); i < length; ++i)                           \
-      {                                                                                      \
-      _plugin = (*vplugin)[i];                                                               \
-                                                                                             \
-      if (isLog()) mod_name->snprintf("[%.*s] ", U_STRING_TO_TRACE((*vplugin_name)[i]));     \
-                                                                                             \
-      result = _plugin->handler##xxx();                                                      \
-                                                                                             \
-      if (result != U_PLUGIN_HANDLER_GO_ON) goto end;                                        \
-      }                                                                                      \
-                                                                                             \
-   result = U_PLUGIN_HANDLER_FINISHED;                                                       \
-                                                                                             \
-end:                                                                                         \
-   mod_name->setEmpty();                                                                     \
-                                                                                             \
-   U_RETURN(result);                                                                         \
+#define U_PLUGIN_HANDLER(xxx)                                                            \
+                                                                                         \
+int UServer_Base::pluginsHandler##xxx()                                                  \
+{                                                                                        \
+   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                                    \
+                                                                                         \
+   U_INTERNAL_ASSERT_POINTER(vplugin)                                                    \
+                                                                                         \
+   int result;                                                                           \
+   UServerPlugIn* _plugin;                                                               \
+                                                                                         \
+   for (uint32_t i = 0, length = vplugin->size(); i < length; ++i)                       \
+      {                                                                                  \
+      _plugin = (*vplugin)[i];                                                           \
+                                                                                         \
+      if (isLog()) mod_name->snprintf("[%.*s] ", U_STRING_TO_TRACE((*vplugin_name)[i])); \
+                                                                                         \
+      result = _plugin->handler##xxx();                                                  \
+                                                                                         \
+      if (result != U_PLUGIN_HANDLER_GO_ON) goto end;                                    \
+      }                                                                                  \
+                                                                                         \
+   result = U_PLUGIN_HANDLER_FINISHED;                                                   \
+                                                                                         \
+end:                                                                                     \
+   mod_name->setEmpty();                                                                 \
+                                                                                         \
+   U_RETURN(result);                                                                     \
 }
 
 U_PLUGIN_HANDLER(Init)
@@ -858,9 +879,15 @@ void UServer_Base::runAsUser(bool is_child)
 
          if (u_runAsUser(user, false))
             {
-            U_INTERNAL_DUMP("$HOME = %S", getenv("HOME"))
-
             U_SRV_LOG("server run with user %S permission", user);
+
+            U_INTERNAL_ASSERT_POINTER(senvironment)
+
+            const char* home = U_SYSCALL(getenv, "%S", "HOME");
+
+            if (home) senvironment->snprintf_add("HOME=%s\n", home);
+
+            U_ASSERT_EQUALS(senvironment->isBinary(), false)
             }
          else
             {
@@ -938,7 +965,13 @@ void UServer_Base::init()
       {
       socket->cLocalAddress = cClientSocket.cLocalAddress;
 
-      if (IP_address.empty()) IP_address = UString(socket->getLocalInfo());
+      UString ip = UString(socket->getLocalInfo());
+
+           if (IP_address.empty()) IP_address = ip;
+      else if (IP_address != ip)
+         {
+         U_SRV_LOG("SERVER IP ADDRESS from configuration : %.*S differ from system interface: %.*S", U_STRING_TO_TRACE(IP_address), U_STRING_TO_TRACE(ip));
+         }
       }
 
 #ifndef __MINGW32__
@@ -963,6 +996,17 @@ void UServer_Base::init()
             {
             delete vallow_IP;
                    vallow_IP = 0;
+            }
+         }
+
+      if (allow_IP_prv.empty() == false)
+         {
+         vallow_IP_prv = U_NEW(UVector<UIPAllow*>);
+
+         if (UIPAllow::parseMask(allow_IP_prv, *vallow_IP_prv) == 0)
+            {
+            delete vallow_IP_prv;
+                   vallow_IP_prv = 0;
             }
          }
 
@@ -1132,7 +1176,7 @@ void UServer_Base::init()
    // event manager for the forked child to feel the eventually timeout of request from the new client...
 
    if (isClassic())              goto next;
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
    if (preforked_num_kids == -1) goto next; 
 #endif
 
@@ -1315,7 +1359,9 @@ next:
    // RFC1918 filtering (DNS rebinding countermeasure)
 
    if (public_address &&
-       csocket->remoteIPAddress().isPrivate())
+       csocket->remoteIPAddress().isPrivate() &&
+       (vallow_IP_prv == 0 ||
+        ptr->isAllowed(*vallow_IP_prv) == false))
       {
       U_SRV_LOG("new client connected from %S, connection denied by RFC1918 filtering (reject request from private IP to public server address)",
                   csocket->remoteIPAddress().getAddressString());
@@ -1406,7 +1452,7 @@ retry:
 #ifdef USE_LIBSSL
    if (bssl)                           goto insert;
 #endif
-#ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
    if (UNotifier::pthread)             goto insert;
 #endif
 
@@ -1833,6 +1879,7 @@ const char* UServer_Base::dump(bool reset) const
                   << "ca_path       (UString    " << (void*)&ca_path             << ")\n"
                   << "mod_name      (UString    " << (void*)mod_name             << ")\n"
                   << "allow_IP      (UString    " << (void*)&allow_IP            << ")\n"
+                  << "allow_IP_prv  (UString    " << (void*)&allow_IP_prv        << ")\n"
                   << "key_file      (UString    " << (void*)&key_file            << ")\n"
                   << "password      (UString    " << (void*)&password            << ")\n"
                   << "cert_file     (UString    " << (void*)&cert_file           << ")\n"

@@ -34,8 +34,8 @@
 #define EPOLLRDHUP 0x2000
 #endif
 
-#define U_READ_IN     EPOLLIN
-#define U_WRITE_OUT  (EPOLLOUT | EPOLLET)
+#define U_READ_IN    (uint32_t)EPOLLIN
+#define U_WRITE_OUT  (uint32_t)(EPOLLOUT | EPOLLET)
 
 #define U_NOTIFIER_OK      0
 #define U_NOTIFIER_DELETE -1
@@ -50,7 +50,8 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   int fd, op_mask; // [ U_READ_IN | U_WRITE_OUT ]
+   int fd;
+   uint32_t op_mask; // [ U_READ_IN | U_WRITE_OUT ]
 
    UEventFd()
       {

@@ -11,20 +11,14 @@ STOP=39
 #export UTRACE="-0 10M 0"
 #export UOBJDUMP="0 100k 10"
 #export USIMERR="error.sim"
+ export DIR_LOG_GZ=/tmp
 
 descr='nodog the excellent'
 cmdline='/usr/sbin/userver_tcp -c /etc/nodog.conf'
 errfile=/tmp/nodog.err
-
-send_info_to_authserver() {
-
-   public=`grep '^[ \t]*PUBLIC_ADDRESS[ \t]' nodog.conf | tr -s ' ' | cut -d' ' -f3`
-
-   for url in `grep '^[ \t]*AUTH_SERVICE_URL[ \t]' /etc/nodog.conf | tr -d \"` ; do
-      test $url = AUTH_SERVICE_URL && continue
-      /usr/sbin/uclient -c /etc/uclient.conf "${url}start_ap?ap=`uname -n`&public=$public" &
-   done
-}
+log_file=/tmp/nodog.log
+conf_file=/etc/nodog.conf
+ip_address=/tmp/IP_ADDRESS
 
 _pgrep() {
 	test "$1" || return
@@ -38,14 +32,18 @@ _pkill() {
 	test "$pids" && kill -$1 $pids ; }
 
 start() {
+	{
 	_pgrep "$cmdline" > /dev/null && {
 		echo "$descr is ALREADY running." ; return ; }
 
 	echo "starting $descr"
 
-	send_info_to_authserver
-	rm -f /tmp/firewall.err
+	rm -f /tmp/nodog* $ip_address
+	until test `date '+%Y'` -gt 1970 ; do sleep 1 ; done
 	$cmdline 2>> $errfile &
+	sleep 2
+	/usr/lib/nodog/bin/send_info_to_auth_server.sh # send public address to AUTH
+	} &
 }
 
 stop() {

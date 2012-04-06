@@ -42,7 +42,7 @@ void ULib_init()
 
    u_tmpdir = (const char*) U_SYSCALL(getenv, "%S", "TMPDIR");
 
-   if (u_tmpdir == 0) u_tmpdir = "/tmp";
+   if (u_tmpdir == NullPtr) u_tmpdir = "/tmp";
 
 #ifdef DEBUG
    UObjectIO::init();

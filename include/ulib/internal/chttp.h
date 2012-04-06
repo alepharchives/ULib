@@ -96,15 +96,17 @@
 #define U_IS_HTTP_VALID_RESPONSE(x) (((x) >= 100)&&((x) < 600)) /* is the status code a (potentially) valid response code ? */
  
 /* should the status code drop the connection */
-#define U_STATUS_DROPS_CONNECTION(x) \
-(((x) == HTTP_BAD_REQUEST)       || \
- ((x) == HTTP_CLIENT_TIMEOUT)    || \
- ((x) == HTTP_LENGTH_REQUIRED)   || \
- ((x) == HTTP_PRECON_FAILED)     || \
- ((x) == HTTP_ENTITY_TOO_LARGE)  || \
- ((x) == HTTP_REQ_TOO_LONG)      || \
- ((x) == HTTP_INTERNAL_ERROR)    || \
- ((x) == HTTP_UNAVAILABLE)       || \
+#define U_STATUS_DROPS_CONNECTION(x)              \
+(((x) == HTTP_MOVED_TEMP)                      || \
+ ((x) == HTTP_BAD_REQUEST)                     || \
+ ((x) == HTTP_CLIENT_TIMEOUT)                  || \
+ ((x) == HTTP_LENGTH_REQUIRED)                 || \
+ ((x) == HTTP_PRECON_FAILED)                   || \
+ ((x) == HTTP_ENTITY_TOO_LARGE)                || \
+ ((x) == HTTP_REQ_TOO_LONG)                    || \
+ ((x) == HTTP_INTERNAL_ERROR)                  || \
+ ((x) == HTTP_UNAVAILABLE)                     || \
+ ((x) == HTTP_NETWORK_AUTHENTICATION_REQUIRED) || \
  ((x) == HTTP_NOT_IMPLEMENTED))
 
 /* -----------------------------------------------------------------------------------------------------------------------------
@@ -145,43 +147,43 @@ typedef struct uhttpinfo {
 
 enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_GET = '4', HTTP_HEAD = '5', HTTP_OPTIONS = '6', HTTP_COPY = '7' };
 
-#define U_HTTP_METHOD_TO_PARAM     u_http_info.method, u_http_info.method_len
-#define U_HTTP_METHOD_TO_TRACE     u_http_info.method_len, u_http_info.method
+#define U_HTTP_METHOD_TO_PARAM          u_http_info.method, u_http_info.method_len
+#define U_HTTP_METHOD_TO_TRACE          u_http_info.method_len, u_http_info.method
 
-#define U_HTTP_URI_TO_TRACE        u_http_info.uri_len, u_http_info.uri
-#define U_HTTP_URI_TO_PARAM        u_http_info.uri, u_http_info.uri_len
+#define U_HTTP_URI_TO_TRACE             u_http_info.uri_len, u_http_info.uri
+#define U_HTTP_URI_TO_PARAM             u_http_info.uri, u_http_info.uri_len
 
-#define U_HTTP_QUERY_TO_PARAM      u_http_info.query, u_http_info.query_len
-#define U_HTTP_QUERY_TO_TRACE      u_http_info.query_len, u_http_info.query
+#define U_HTTP_QUERY_TO_PARAM           u_http_info.query, u_http_info.query_len
+#define U_HTTP_QUERY_TO_TRACE           u_http_info.query_len, u_http_info.query
 
-#define U_HTTP_URI_QUERY_LEN       (u_http_info.uri_len + u_http_info.query_len + (u_http_info.query_len ? 1 : 0))
+#define U_HTTP_URI_QUERY_LEN            (u_http_info.uri_len + u_http_info.query_len + (u_http_info.query_len ? 1 : 0))
 
-#define U_HTTP_URI_QUERY_TO_PARAM  u_http_info.uri, U_HTTP_URI_QUERY_LEN 
-#define U_HTTP_URI_QUERY_TO_TRACE  U_HTTP_URI_QUERY_LEN, u_http_info.uri
+#define U_HTTP_URI_QUERY_TO_PARAM       u_http_info.uri, U_HTTP_URI_QUERY_LEN 
+#define U_HTTP_URI_QUERY_TO_TRACE       U_HTTP_URI_QUERY_LEN, u_http_info.uri
 
-#define U_HTTP_CTYPE_TO_PARAM      u_http_info.content_type, u_http_info.content_type_len
-#define U_HTTP_CTYPE_TO_TRACE      u_http_info.content_type_len, u_http_info.content_type
+#define U_HTTP_CTYPE_TO_PARAM           u_http_info.content_type, u_http_info.content_type_len
+#define U_HTTP_CTYPE_TO_TRACE           u_http_info.content_type_len, u_http_info.content_type
 
-#define U_HTTP_RANGE_TO_PARAM      u_http_info.range, u_http_info.range_len
-#define U_HTTP_RANGE_TO_TRACE      u_http_info.range_len, u_http_info.range
+#define U_HTTP_RANGE_TO_PARAM           u_http_info.range, u_http_info.range_len
+#define U_HTTP_RANGE_TO_TRACE           u_http_info.range_len, u_http_info.range
 
-#define U_HTTP_ACCEPT_TO_PARAM     u_http_info.accept, u_http_info.accept_len
-#define U_HTTP_ACCEPT_TO_TRACE     u_http_info.accept_len, u_http_info.accept
+#define U_HTTP_ACCEPT_TO_PARAM          u_http_info.accept, u_http_info.accept_len
+#define U_HTTP_ACCEPT_TO_TRACE          u_http_info.accept_len, u_http_info.accept
 
-#define U_HTTP_COOKIE_TO_PARAM     u_http_info.cookie, u_http_info.cookie_len
-#define U_HTTP_COOKIE_TO_TRACE     u_http_info.cookie_len, u_http_info.cookie
+#define U_HTTP_COOKIE_TO_PARAM          u_http_info.cookie, u_http_info.cookie_len
+#define U_HTTP_COOKIE_TO_TRACE          u_http_info.cookie_len, u_http_info.cookie
 
-#define U_HTTP_REFERER_TO_PARAM    u_http_info.referer, u_http_info.referer_len
-#define U_HTTP_REFERER_TO_TRACE    u_http_info.referer_len, u_http_info.referer
+#define U_HTTP_REFERER_TO_PARAM         u_http_info.referer, u_http_info.referer_len
+#define U_HTTP_REFERER_TO_TRACE         u_http_info.referer_len, u_http_info.referer
 
-#define U_HTTP_IP_CLIENT_TO_PARAM  u_http_info.ip_client, u_http_info.ip_client_len
-#define U_HTTP_IP_CLIENT_TO_TRACE  u_http_info.ip_client_len, u_http_info.ip_client
+#define U_HTTP_IP_CLIENT_TO_PARAM       u_http_info.ip_client, u_http_info.ip_client_len
+#define U_HTTP_IP_CLIENT_TO_TRACE       u_http_info.ip_client_len, u_http_info.ip_client
 
-#define U_HTTP_USER_AGENT_TO_PARAM u_http_info.user_agent, u_http_info.user_agent_len
-#define U_HTTP_USER_AGENT_TO_TRACE u_http_info.user_agent_len, u_http_info.user_agent
+#define U_HTTP_USER_AGENT_TO_PARAM      u_http_info.user_agent, u_http_info.user_agent_len
+#define U_HTTP_USER_AGENT_TO_TRACE      u_http_info.user_agent_len, u_http_info.user_agent
 
-#define U_HTTP_ACCEPT_LANGUAGE_TO_PARAM   u_http_info.accept_language, u_http_info.accept_language_len
-#define U_HTTP_ACCEPT_LANGUAGE_TO_TRACE   u_http_info.accept_language_len, u_http_info.accept_language
+#define U_HTTP_ACCEPT_LANGUAGE_TO_PARAM u_http_info.accept_language, u_http_info.accept_language_len
+#define U_HTTP_ACCEPT_LANGUAGE_TO_TRACE u_http_info.accept_language_len, u_http_info.accept_language
 
 /* The hostname of your server from header's request.
  * The difference between U_HTTP_HOST_.. and U_HTTP_VHOST_.. is that

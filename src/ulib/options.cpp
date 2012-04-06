@@ -41,6 +41,11 @@
 #else
 #  define ZIP_ENABLE         "no"
 #endif
+#ifdef ENABLE_THREAD
+#  define THREAD_ENABLE      "enabled"
+#else
+#  define THREAD_ENABLE      "no"
+#endif
 
 #ifdef USE_LIBZ
 #  define LIBZ_ENABLE        "yes ( " _LIBZ_VERSION " )"
@@ -617,6 +622,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
            LFS support: enabled
           ipv6 support: no (--with-ipv6)
            zip support: enabled
+        thread support: enabled
           LIBZ support: yes ( 1.2.6 )
           PCRE support: yes ( 8.12 )
            SSL support: yes ( 1.0.0e )
@@ -664,7 +670,8 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
                "memory pool support..:%W " MEMORY_POOL_ENABLE "%W\n"
                "LFS support..........:%W " LFS_ENABLE "%W\n"
                "ipv6 support.........:%W " IPV6_ENABLE "%W\n"
-               "zip support..........:%W " ZIP_ENABLE "%W\n\n"
+               "zip support..........:%W " ZIP_ENABLE "%W\n"
+               "thread support.......:%W " THREAD_ENABLE "%W\n\n"
 
                "LIBZ support.........:%W " LIBZ_ENABLE "%W\n"
                "PCRE support.........:%W " LIBPCRE_ENABLE "%W\n"
@@ -707,6 +714,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
                BRIGHTWHITE, RESET,
                BRIGHTWHITE, RESET,
                // support
+               BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,

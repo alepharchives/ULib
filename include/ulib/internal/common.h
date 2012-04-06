@@ -34,7 +34,7 @@
 #  define U_LIBEXECDIR "/usr/libexec/ulib"
 #endif
 
-#if defined(__clang__) && defined(HAVE_PTHREAD_H)
+#if defined(__clang__) && defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
 #include <pthread.h>
 
 //typedef pthread_t        __gthread_t;

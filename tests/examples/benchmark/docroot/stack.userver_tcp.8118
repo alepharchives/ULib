@@ -1,0 +1,12 @@
+/usr/src/ULib-1.1.0/src/ulib/.libs/libulib_g-1.1.0.so.1(_ZN6UError9stackDumpEv+0x31)[0x7faca9c2ecc1]
+/usr/src/ULib-1.1.0/src/ulib/.libs/libulib_g-1.1.0.so.1(u_debug_at_exit+0x1c)[0x7faca9c2e5ec]
+/usr/src/ULib-1.1.0/src/ulib/.libs/libulib_g-1.1.0.so.1(u_printf+0x12c)[0x7faca9a6deac]
+/usr/src/ULib-1.1.0/src/ulib/.libs/libulib_g-1.1.0.so.1(_ZN12UServer_Base4initEv+0xcef)[0x7faca9b59d9f]
+/usr/src/ULib-1.1.0/src/ulib/.libs/libulib_g-1.1.0.so.1(_ZN12UServer_Base3runEv+0x45)[0x7faca9b5a745]
+/usr/src/ULib-1.1.0/examples/userver/.libs/userver_tcp[0x403c5e]
+/usr/src/ULib-1.1.0/examples/userver/.libs/userver_tcp[0x404a4b]
+/lib64/libc.so.6(__libc_start_main+0xed)[0x7faca93bcd2d]
+/usr/src/ULib-1.1.0/examples/userver/.libs/userver_tcp[0x402049]
+=== STACK TRACE ===
+UServer_Base::init()
+UServer_Base::run()

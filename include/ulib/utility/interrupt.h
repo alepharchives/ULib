@@ -48,7 +48,7 @@ struct U_EXPORT UInterrupt {
 
       if (!mask)
          {
-         if (!mask_interrupt) setMaskInterrupt(0, 0);
+         if (!mask_interrupt) setMaskInterrupt(NullPtr, 0);
 
          mask = mask_interrupt;
          }
@@ -64,12 +64,12 @@ struct U_EXPORT UInterrupt {
 
       if (!mask)
          {
-         if (!mask_interrupt) setMaskInterrupt(0, 0);
+         if (!mask_interrupt) setMaskInterrupt(NullPtr, 0);
 
          mask = mask_interrupt;
          }
 
-      bool result = (U_SYSCALL(sigprocmask, "%d,%p,%p", SIG_BLOCK, mask, 0) == 0);
+      bool result = (U_SYSCALL(sigprocmask, "%d,%p,%p", SIG_BLOCK, mask, 0) == NullPtr);
 
       U_RETURN(result);
       }
@@ -85,7 +85,7 @@ struct U_EXPORT UInterrupt {
 
       act.sa_handler = function;
 
-      (void) U_SYSCALL(sigaction, "%d,%p,%p", signo, &act, 0);
+      (void) U_SYSCALL(sigaction, "%d,%p,%p", signo, &act, NullPtr);
       }
 
    static void waitForSignal(int signo);

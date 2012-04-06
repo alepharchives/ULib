@@ -2,6 +2,9 @@
 
 # nodog.fw
 
+#-----------------------------------
+# START FUNCTION
+#-----------------------------------
 initialize_fw() {
 
 	#---------------------------------------------------------------
@@ -73,8 +76,8 @@ initialize_fw() {
 
 	# Only nat if we're not routing
 
-							  $IPTABLES -t nat -D POSTROUTING -j NoCat_NAT 2>/dev/null
-	[ "$RouteOnly" ] || $IPTABLES -t nat -A POSTROUTING -j NoCat_NAT
+	$IPTABLES -t nat -D POSTROUTING -j NoCat_NAT 2>/dev/null
+	[ $RouteOnly -gt 0 ] || $IPTABLES -t nat -A POSTROUTING -j NoCat_NAT
 
 	$IPTABLES -t mangle -N NoCat 2>/dev/null
 	$IPTABLES -t mangle -F NoCat
@@ -87,7 +90,7 @@ initialize_fw() {
 	redirect="$IPTABLES -t nat    -A NoCat_Capture"
 	  mangle="$IPTABLES -t mangle -A NoCat"
 
-	if [ "$MembersOnly" ]; then
+	if [ $MembersOnly -gt 0 ]; then
 	  classes="1 2"
 	else
 	  classes="1 2 3"
@@ -113,21 +116,23 @@ initialize_fw() {
 				$fwd -i $iface -s $net -m mark --mark $fwmark -j ACCEPT
 
 				# Masquerade permitted connections.
-				for ifaceout in $ExternalDevice; do
+				for ifaceout in $MasqueradeDevice; do
 					$nat -o $ifaceout -s $net -m mark --mark $fwmark -j MASQUERADE
 				done
 			done
-			if [ "$MembersOnly" ]; then
-				for ifaceout in $ExternalDevice; do
+			if [ $MembersOnly -gt 0 ]; then
+				for ifaceout in $MasqueradeDevice; do
 					$nat -o $ifaceout -s $net -m mark --mark 3 -j MASQUERADE
 				done
 			fi
 
 			# Allow web traffic to the specified hosts, and don't capture connections intended for them
-			if [ "$AuthServiceAddr" -o "$AllowedWebHosts" ]; then 
-				for host in $AuthServiceAddr $AllowedWebHosts; do
+			if [ "$AuthServiceIP" -o "$AllowedWebHosts" ]; then 
+				for host in $AuthServiceIP $AllowedWebHosts; do
 					for port in 80 443; do
-						$nat      -s $net -d $host -p tcp --dport $port -j MASQUERADE
+						for ifaceout in $MasqueradeDevice; do
+							$nat -o $ifaceout -s $net -d $host -p tcp --dport $port -j MASQUERADE
+						done
 						$redirect -s $net -d $host -p tcp --dport $port -j RETURN
 						$fwd      -s $net -d $host -p tcp --dport $port -j ACCEPT
 						$fwd      -d $net -s $host -p tcp --sport $port -j ACCEPT
@@ -166,7 +171,7 @@ initialize_fw() {
 	# Redirect outbound non-auth web traffic to the local gateway process except to windowsupdate.microsoft.com, which is broken.
 	# If MembersOnly is active, then redirect public class as well
 	#
-	#if [ "$MembersOnly" ]; then
+	#if [ $MembersOnly -gt 0 ]; then
 	#  nonauth="3 4"
 	#else
 		nonauth="4"
@@ -223,8 +228,8 @@ initialize_fw() {
 		done
 	fi
 
-	# Disable access on the external to GatewayPort from anything but the AuthServiceAddr
-	for src in $AuthServiceAddr; do
+	# Disable access on the external to GatewayPort from anything but the AuthServiceIP
+	for src in $AuthServiceIP; do
 		for ifaceout in $ExternalDevice; do
 			$fwd -i $ifaceout -s ! $src -p tcp --dport $GatewayPort -j DROP
 		done
@@ -256,9 +261,7 @@ initialize_fw() {
 		done
 	fi
 
-	# Questa regola serve per abbassare la MTU in quanto abbiamo davanti un tunnel ip/gre (Firenze WiFi - Siena)
-
-	if [ -n "$MaxSegmentSize" ]; then
+	if [ $MaxSegmentSize -gt 0 ]; then
 		for iface in $ExternalDevice; do
 			$IPTABLES -t mangle -A POSTROUTING -p tcp --tcp-flags SYN,RST SYN -o $iface -j TCPMSS --clamp-mss-to-pmtu
 		done
@@ -281,27 +284,10 @@ initialize_fw() {
 		 $IPTABLES -t mangle -A POSTROUTING -o $iface -j AccountOu
 	done
 
-	for srv in "$AuthServiceAddr"; do
+	for srv in "$AuthServiceIP"; do
 		$IPTABLES -t mangle -A AccountIn -s "$srv" -j RETURN
 		$IPTABLES -t mangle -A AccountOu -d "$srv" -j RETURN
 	done
-
-	# ---------------------------------------------------------------
-	# List of free accounting sites (IP)
-	# ---------------------------------------------------------------
-	# FreeSiteFile="/etc/nodog.freesite"
-	#
-	# if [ -n "$FreeSiteFile" -a -r "$FreeSiteFile" ]; then
-	# 	grep -v '^[ \t]*#' "$FreeSiteFile" | while read IP Comment; do
-	# 		if [ -n "$IP" ]; then
-	# 			$IPTABLES -t mangle -A AccountIn -s "$IP" -j RETURN
-	# 			$IPTABLES -t mangle -A AccountOu -d "$IP" -j RETURN
-	# 		else
-	# 			echo "Bad line: $IP, skipped" >&2
-	# 		fi
-	# 	done
-	# fi
-	# ---------------------------------------------------------------
 
 	for net in $LocalNetwork; do
 		$IPTABLES -t mangle -A AccountIn -s "$net" -j RETURN
@@ -343,17 +329,6 @@ access_fw() {
 
 	# Mark inbound traffic to this node.
 	$IPTABLES -t filter $cmd NoCat_Inbound -d $ip -j ACCEPT
-
-	# -------------------------------------------------------------------------
-	# ACCOUNT traffic of this node
-	# -------------------------------------------------------------------------
-	# if [ "$cmd" = "-A" ]; then
-	#		$IPTABLES -I FORWARD $5 -j ACCOUNT --addr $ip/32 --tname $ip
-	# elif [ "$cmd" = "-D" ]; then
-	#		RULENUM=`$IPTABLES -L FORWARD | tail -n +3 | grep -n $ip | cut -d':' -f1`
-	#		$IPTABLES -D FORWARD $RULENUM
-	# fi
-	# -------------------------------------------------------------------------
 }
 
 clear_fw() {
@@ -392,7 +367,7 @@ reset_fw() {
 	$IPTABLES -t filter -D FORWARD -j NoCat 2>/dev/null
 	$IPTABLES -t nat -D PREROUTING -j NoCat_Capture 2>/dev/null
 
-	if [ -z "$RouteOnly" ]; then
+	if [ $RouteOnly -eq 0 ]; then
 		$IPTABLES -t nat -D POSTROUTING -j NoCat_NAT 2>/dev/null
 	fi
 
@@ -412,54 +387,6 @@ check_arp() {
 
 do_cmd() {
 
-	# ---------------------------------------------------------------------------------------------------------------------------------------------------
-	# RouteOnly       Required only if you DO NOT want your gateway to act as a NAT. Give this only if you're running a strictly routed
-	#                 network, and don't need the gateway to enable NAT for you
-   #
-	# DNSAddr         *If* you choose not to run DNS on your internal network, specify the address(es) of one or more domain name server
-	#                 on the Internet that wireless clients can use to get out. Should be the same DNS that your DHCP server hands out
-   #
-	# IncludePorts    Specify TCP ports to allow access to when public class users login. All others will be denied
-   #
-	# ExcludePorts    Specify TCP ports to denied access to when public class users login. All others will be allowed. Note that you should
-	#                 use either IncludePorts or ExcludePorts, but not both. If neither is specified, access is granted to all ports to public class users.
-	#                 You should *always* exclude port 25, unless you want to run an portal for wanton spam sending. Users should have their
-	#                 own way of sending mail. It sucks, but that's the way it is. Comment this out *only if* you're using IncludePorts instead
-   #
-	# AllowedWebHosts List any domains that you would like to allow web access (TCP port 80 and 443) BEFORE logging in (this is the
-	#                 pre-'skip' stage, so be careful about what you allow
-	#
-	# ExternalDevice  The interface connected to the Internet. Usually 'eth0' or 'eth1' under Linux, or maybe even 'ppp0' if you're running PPP or PPPoE
-   #
-	# InternalDevice  Required if and only if your machine has more than two network interfaces. Must be set to the interface connected to your local
-	#                 network, normally your wireless card
-   #
-	# LocalNetwork    Must be set to the network address and net mask of your internal network. You can use the number of bits in the netmask
-	#                 (e.g. /16, /24, etc.) or the full x.x.x.x specification
-	#
-	# GatewayPort     The TCP port to bind the gateway service to. 5280 is de-facto standard for NoCatAuth. Change this only if you absolutely need to
-   #
-	# AuthServiceAddr The address of your authentication service. You must use an IP address if DNS resolution isn't available at gateway startup
-   #
-	# MembersOnly     Give this if you want to disable public access (i.e. unauthenticated 'skip' button access). You'll also want to
-	#						point AuthServiceAddr somewhere that doesn't include a skip button (likeat your own Auth server)
-	#
-	# MaxSegmentSize  Give this if you want to reduce MTU in quanto abbiamo davanti un tunnel ip/gre (Firenze WiFi - Siena)
-	# ---------------------------------------------------------------------------------------------------------------------------------------------------
-	export RouteOnly DNSAddr IncludePorts ExcludePorts AllowedWebHosts ExternalDevice \
-			 InternalDevice LocalNetwork GatewayPort AuthServiceAddr MembersOnly MaxSegmentSize IPTABLES
-
-	if [ -n "$FW_CONF" -a -r "$FW_CONF" ]; then
-		. $FW_CONF
-	fi
-
-	RouteOnly=${RouteOnly:-1}
-	MembersOnly=${MembersOnly:-1}
-	GatewayPort=${GatewayPort:-5280}
-
-	export DosAllowTries=${DosAllowTries:-5}
-	export DosTimeInterval=${DosTimeInterval:-60}
-
 	# Note: your PATH is inherited from the gateway process
 	if [ -x /usr/sbin/iptables ]; then
 		IPTABLES=/usr/sbin/iptables
@@ -476,20 +403,70 @@ do_cmd() {
 		initialize) shift; initialize_fw		  "$@" ;;
 	esac
 }
+#-----------------------------------
+# END FUNCTION
+#-----------------------------------
 
-if [ -z "$DEBUG" ]; then
-	do_cmd "$@"
-else
-	(
-	echo "ENVIRONMENT:"
-	echo "-----------------------------------------------------------"
-	env
-	echo "-----------------------------------------------------------"
-	echo "STDERR:"
-	echo "-----------------------------------------------------------"
-	set -x
-	do_cmd "$@"
-	set +x
-	echo "-----------------------------------------------------------"
-	) 2>/tmp/nodog_fw.$$ >&2
+export RouteOnly MasqueradeDevice DNSAddr IncludePorts ExcludePorts AllowedWebHosts ExternalDevice \
+		 InternalDevice LocalNetwork GatewayPort AuthServiceIP MembersOnly MaxSegmentSize IPTABLES
+
+# load eventuale script configuration
+
+if [ -n "$FW_CONF" -a -r "$FW_CONF" ]; then
+	. $FW_CONF 2>/dev/null
 fi
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+# RouteOnly       Required only if you DO NOT want your gateway to act as a NAT. Give this only if you're running a strictly routed
+#                 network, and don't need the gateway to enable NAT for you
+#
+# DNSAddr         *If* you choose not to run DNS on your internal network, specify the address(es) of one or more domain name server
+#                 on the Internet that wireless clients can use to get out. Should be the same DNS that your DHCP server hands out
+#
+# IncludePorts    Specify TCP ports to allow access to when public class users login. All others will be denied
+#
+# ExcludePorts    Specify TCP ports to denied access to when public class users login. All others will be allowed. Note that you should
+#                 use either IncludePorts or ExcludePorts, but not both. If neither is specified, access is granted to all ports to public class users.
+#                 You should *always* exclude port 25, unless you want to run an portal for wanton spam sending. Users should have their
+#                 own way of sending mail. It sucks, but that's the way it is. Comment this out *only if* you're using IncludePorts instead
+#
+# AllowedWebHosts List any domains that you would like to allow web access (TCP port 80 and 443) BEFORE logging in (this is the
+#                 pre-'skip' stage, so be careful about what you allow
+#
+# ExternalDevice  The interface connected to the Internet. Usually 'eth0' or 'eth1' under Linux, or maybe even 'ppp0' if you're running PPP or PPPoE
+#
+# InternalDevice  Required if and only if your machine has more than two network interfaces. Must be set to the interface connected to your local
+#                 network, normally your wireless card
+#
+# LocalNetwork    Must be set to the network address and net mask of your internal network. You can use the number of bits in the netmask
+#                 (e.g. /16, /24, etc.) or the full x.x.x.x specification
+#
+# GatewayPort     The TCP port to bind the gateway service to. 5280 is de-facto standard for NoCatAuth. Change this only if you absolutely need to
+#
+# AuthServiceIP   The address of your authentication service. You must use an IP address if DNS resolution isn't available at gateway startup
+#
+# MembersOnly     Give this if you want to disable public access (i.e. unauthenticated 'skip' button access). You'll also want to
+#						point AuthServiceIP somewhere that doesn't include a skip button (likeat your own Auth server)
+#
+# MaxSegmentSize  Give this if you want to reduce MTU
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+RouteOnly=${RouteOnly:-0}
+MembersOnly=${MembersOnly:-1}
+GatewayPort=${GatewayPort:-5280}
+MaxSegmentSize=${MaxSegmentSize:-0}
+
+export DosAllowTries=${DosAllowTries:-5}
+export DosTimeInterval=${DosTimeInterval:-60}
+
+  (
+  echo "ENVIRONMENT:"
+  echo "-----------------------------------------------------------"
+  env
+  echo "-----------------------------------------------------------"
+  echo "STDERR:"
+  echo "-----------------------------------------------------------"
+  set -x
+do_cmd "$@"
+  set +x
+  echo "-----------------------------------------------------------"
+  ) 2>/tmp/nodog_fw.$$ >&2

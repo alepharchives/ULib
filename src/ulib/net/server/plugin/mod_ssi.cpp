@@ -724,39 +724,56 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                // NB: check if there is an alternative response to elaborate from #set...
 
-               UString rheader = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_HEADER"), UClientImage_Base::wbuffer);
+               UString rfile = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("FILE_RESPONSE_HTML"), UClientImage_Base::wbuffer);
 
-               U_INTERNAL_DUMP("response_header(%u) = %.*S", rheader.size(), U_STRING_TO_TRACE(rheader))
+               U_INTERNAL_DUMP("FILE_RESPONSE_HTML(%u) = %.*S", rfile.size(), U_STRING_TO_TRACE(rfile))
 
-               if (rheader.empty() == false)
+               if (rfile.empty() == false)
                   {
-                  cgi_output = true;
+                  set_alternative_response = 2;
 
-                  size = rheader.size();
+                  header = UFile::contentOf(rfile);
 
-                  UString _tmp(size);
+                  // NB: with an alternative response we cannot use the cached header response...
 
-                  (void) UEscape::decode(rheader, _tmp);
+                  U_RETURN_STRING(UString::getStringNull());
+                  }
+               else
+                  {
+                  UString rheader = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_HEADER"), UClientImage_Base::wbuffer);
 
-                  // NB: we cannot use directly the body attribute because is bounded to the param content...
+                  U_INTERNAL_DUMP("response_header(%u) = %.*S", rheader.size(), U_STRING_TO_TRACE(rheader))
 
-                  UString rbody = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_BODY"), UClientImage_Base::wbuffer);
-
-                  U_INTERNAL_DUMP("response_body(%u) = %.*S", rbody.size(), U_STRING_TO_TRACE(rbody))
-
-                  if (rbody.empty()) (void) header.insert(0, _tmp);
-                  else
+                  if (rheader.empty() == false)
                      {
-                     body = rbody;
+                     set_alternative_response = 1;
 
-                     // NB: with an alternative body response we cannot use the cached header response...
+                     size = rheader.size();
 
-                     (void) header.replace(_tmp);
+                     UString _tmp(size);
 
-                     U_RETURN_STRING(UString::getStringNull());
+                     (void) UEscape::decode(rheader, _tmp);
+
+                     // NB: we cannot use directly the body attribute because is bounded to the param content...
+
+                     UString rbody = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_BODY"), UClientImage_Base::wbuffer);
+
+                     U_INTERNAL_DUMP("response_body(%u) = %.*S", rbody.size(), U_STRING_TO_TRACE(rbody))
+
+                     if (rbody.empty()) (void) header.insert(0, _tmp);
+                     else
+                        {
+                        body = rbody;
+
+                        // NB: with an alternative body response we cannot use the cached header response...
+
+                        (void) header.replace(_tmp);
+
+                        U_RETURN_STRING(UString::getStringNull());
+                        }
+
+                     UClientImage_Base::wbuffer->erase(0, U_CONSTANT_SIZE("HTTP_RESPONSE_HEADER=") + size + 3);
                      }
-
-                  UClientImage_Base::wbuffer->erase(0, U_CONSTANT_SIZE("HTTP_RESPONSE_HEADER=") + size + 3);
                   }
 
                (void) environment.append(*UClientImage_Base::wbuffer);
@@ -807,7 +824,10 @@ int USSIPlugIn::handlerInit()
 
    // NB: it must be here because now runAsUser() was called...
 
-   if (environment.empty() == false) (void) UServer_Base::senvironment->append(UFile::contentOf(environment));
+   if (environment.empty() == false)
+      {
+      (void) UServer_Base::senvironment->append(UStringExt::prepareForEnvironmentVar(UFile::contentOf(environment)));
+      }
 
    U_SRV_LOG("initialization of plugin success");
 
@@ -835,12 +855,12 @@ int USSIPlugIn::handlerRequest()
 
       // init
 
-      errmsg          = *str_errmsg_default;
-      timefmt         = *str_timefmt_default;
-      cgi_output      = false;
-      environment     = UHTTP::getCGIEnvironment();
-      last_modified   = UHTTP::file->st_mtime;
-      use_size_abbrev = true;
+      errmsg                   = *str_errmsg_default;
+      timefmt                  = *str_timefmt_default;
+      environment              = UHTTP::getCGIEnvironment();
+      last_modified            = UHTTP::file->st_mtime;
+      use_size_abbrev          = true;
+      set_alternative_response = 0;
 
 #  ifdef U_HTTP_CACHE_REQUEST
       U_http_no_cache = true;
@@ -873,7 +893,7 @@ int USSIPlugIn::handlerRequest()
       if (UHTTP::isHttpPOST()) *UClientImage_Base::body = U_HTTP_BODY(*UClientImage_Base::request);
                                *UClientImage_Base::body = processSSIRequest(body, 0);
 
-      U_INTERNAL_DUMP("cgi_output = %b", cgi_output)
+      U_INTERNAL_DUMP("set_alternative_response = %d", set_alternative_response)
 
       if (UClientImage_Base::body->empty())
          {
@@ -881,8 +901,8 @@ int USSIPlugIn::handlerRequest()
 
          U_INTERNAL_DUMP("body(%u) = %.*S", body.size(), U_STRING_TO_TRACE(body))
 
-         U_INTERNAL_ASSERT(cgi_output)
          U_ASSERT_DIFFERS(body.empty(), true)
+         U_INTERNAL_ASSERT(set_alternative_response)
 
          *UClientImage_Base::body = body;
                                     body.clear();
@@ -893,7 +913,7 @@ int USSIPlugIn::handlerRequest()
          UHTTP::page_speed->minify_html("USSIPlugIn::handlerRequest()", *UClientImage_Base::body);
 #     endif
 
-         if (cgi_output == false)
+         if (set_alternative_response == 0)
             {
             U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
 
@@ -922,13 +942,20 @@ int USSIPlugIn::handlerRequest()
             }
          }
 
-      if (cgi_output)
+      if (set_alternative_response)
          {
+         U_INTERNAL_DUMP("set_alternative_response = %d", set_alternative_response)
+
          // NB: there is an alternative response to elaborate from #set...
 
          (void) UClientImage_Base::wbuffer->replace(header);
-         (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_CRLF));
-         (void) UClientImage_Base::wbuffer->append(*UClientImage_Base::body);
+
+         if (set_alternative_response == 2) header.clear();
+         else
+            {
+            (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_CRLF));
+            (void) UClientImage_Base::wbuffer->append(*UClientImage_Base::body);
+            }
 
          (void) UHTTP::processCGIOutput();
          }
@@ -946,15 +973,15 @@ int USSIPlugIn::handlerRequest()
 
 const char* USSIPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "cgi_output               " << cgi_output          << '\n'
-                  << "last_modified            " << last_modified       << '\n'
-                  << "use_size_abbrev          " << use_size_abbrev     << '\n'
-                  << "body            (UString " << (void*)&body        << ")\n"
-                  << "errmsg          (UString " << (void*)&errmsg      << ")\n"
-                  << "header          (UString " << (void*)&header      << ")\n"
-                  << "timefmt         (UString " << (void*)&timefmt     << ")\n"
-                  << "docname         (UString " << (void*)&docname     << ")\n"
-                  << "environment     (UString " << (void*)&environment << ')';
+   *UObjectIO::os << "set_alternative_response " << set_alternative_response << '\n'
+                  << "last_modified            " << last_modified            << '\n'
+                  << "use_size_abbrev          " << use_size_abbrev          << '\n'
+                  << "body            (UString " << (void*)&body             << ")\n"
+                  << "errmsg          (UString " << (void*)&errmsg           << ")\n"
+                  << "header          (UString " << (void*)&header           << ")\n"
+                  << "timefmt         (UString " << (void*)&timefmt          << ")\n"
+                  << "docname         (UString " << (void*)&docname          << ")\n"
+                  << "environment     (UString " << (void*)&environment      << ')';
 
    if (reset)
       {

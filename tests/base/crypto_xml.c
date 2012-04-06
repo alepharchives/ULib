@@ -6,7 +6,7 @@
 
 #define U_ENCODE  1
 #define U_DECODE  0
-#define U_BUFLEN  4096
+#define U_BUFLEN  8196
 
 static const char* usage = "Usage: crypto_xml [-d]\n";
 

@@ -352,6 +352,7 @@ ulib_pagespeed_msg="no (--with-page-speed)"
       ulib_dbg_msg="no (--enable-debug)"
     ulib_final_msg="no (--enable-final)"
       ulib_zip_msg="no (--enable-zip)"
+   ulib_thread_msg="no (--enable-thread)"
      ulib_memp_msg="no (--enable-memory-pool)"
 #  ulib_manual_msg="no (--enable-manual)"
 
@@ -472,14 +473,15 @@ if test "$USE_LIBZ" = "yes"; then
 	if test "$ac_cv_lib_z_zlib_deflate_workspacesize" = "yes"; then
 		AC_DEFINE(U_ZLIB_DEFLATE_WORKSPACESIZE, 1, [Define if we have zlib with this function])
 	fi
-	if test "$enable_zip" = "yes"; then
-		ulib_zip_msg="enabled"
-		AC_DEFINE(ENABLE_ZIP, 1, [Define if enable ZIP support])
-		AM_CONDITIONAL(ZIP, true)
-	else
-		AC_DEFINE(DISABLE_ZIP, 1, [Define if disable ZIP support])
-		AM_CONDITIONAL(ZIP, false)
-	fi
+fi
+
+if test "$enable_zip" = "yes" && test "$USE_LIBZ" = "yes"; then
+	ulib_zip_msg="enabled"
+	AC_DEFINE(ENABLE_ZIP, 1, [Define if enable ZIP support])
+	AM_CONDITIONAL(ZIP, true)
+else
+	AC_DEFINE(DISABLE_ZIP, 1, [Define if disable ZIP support])
+	AM_CONDITIONAL(ZIP, false)
 fi
 
 if test "$USE_LIBPCRE" = "yes"; then
@@ -550,20 +552,28 @@ case "$target_os" in
 	AM_CONDITIONAL(PTHREAD, false)
 	AM_CONDITIONAL(SEMAPHORE, true)
 	AC_DEFINE(HAVE_MODULES, [1], [support for plugin modules])
+	AC_DEFINE(DISABLE_THREAD, 1, [Define if disable thread support])
 	;;
 	*)
+	LIBS=""
 	AC_CHECK_LIB(pthread,sem_init)
-	if test "$ac_cv_lib_pthread_sem_init" = "yes"; then
+	if test "$ac_cv_lib_pthread_sem_init" = "yes" && test "$enable_thread" = "yes"; then
 		OST_LIB_PTHREAD
+		ulib_thread_msg="enabled"
 		AM_CONDITIONAL(PTHREAD, true)
 		AM_CONDITIONAL(SEMAPHORE, true)
+		AC_DEFINE(ENABLE_THREAD, 1, [Define if enable thread support])
+		AC_DEFINE(USE_SEMAPHORE, 1, [Define if we have semaphore support])
 		LIBS_SAVE="${LIBS_SAVE} -l$ost_cv_thread_library";
 	else
 		AM_CONDITIONAL(PTHREAD, false)
+		AC_DEFINE(DISABLE_THREAD, 1, [Define if disable thread support])
+		LIBS=""
 		AC_CHECK_LIB(rt,sem_init)
 		if test "$ac_cv_lib_rt_sem_init" = "yes"; then
 			LIBS_SAVE="${LIBS_SAVE} -lrt";
 			AM_CONDITIONAL(SEMAPHORE, true)
+			AC_DEFINE(USE_SEMAPHORE, 1, [Define if we have semaphore support])
 		else
 			AM_CONDITIONAL(SEMAPHORE, false)
 		fi
@@ -880,10 +890,13 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 	AC_CC_TRY_FLAG
 
 	# -freorder-blocks (give some problem, maybe need -Os...)
+	#
+	# Graphite loop optimizations: -fgraphite, -fgraphite-identity, -floop-block, -floop-flatten,
+	#										 -floop-interchange, -floop-strip-mine, -floop-parallelize-all, -ftree-loop-linear
 
 	if test "${enable_gcc_optimized}" = "yes"; then
 		MAYBE_FLAGS="$MAYBE_FLAGS -fstrict-aliasing -fno-stack-protector -fomit-frame-pointer -finline \
-				-findirect-inlining -ftree-switch-conversion -floop-interchange -floop-strip-mine -floop-block"
+										  -findirect-inlining -ftree-switch-conversion"
 	fi
 
 	# Also to turn various gcc/glibc-specific preprocessor checks
@@ -891,7 +904,8 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 	# -Wno-format -Wno-format-extra-args
 	# -------------------------------------------------------------------------------------
 	MAYBE_FLAGS="$MAYBE_FLAGS -Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op \
-		-Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat -Wformat-extra-args -Wenum-compare"
+									  -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat \
+									  -Wformat-extra-args -Wenum-compare"
 
 	case "${gcc_version}" in
 		2*)
@@ -947,10 +961,14 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 
 	# -Wcast-qual
 	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
-		-Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition \
-		-Wdelete-non-virtual-dtor -Wzero-as-null-pointer-constant"
+						 -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition"
 
 	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated -Wdelete-non-virtual-dtor"
+
+	if test "$enable_debug" = "yes"; then
+		# -Wzero-as-null-pointer-constant"
+		CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat"
+	fi
 
 	AC_CACHE_CHECK([for gcc supported flags], ulib_cv_flags, [
 		echo
@@ -1103,6 +1121,7 @@ configure: Configured to build src/ulib/libulib:
            LFS support: ${ulib_LFS_msg}
           ipv6 support: ${ulib_ipv6_msg}
            zip support: ${ulib_zip_msg}
+        thread support: ${ulib_thread_msg}
 
           LIBZ support: ${ulib_libz_msg}
           PCRE support: ${ulib_pcre_msg}

@@ -8,7 +8,7 @@ rm -f WI-AUTH.log /tmp/processCGIRequest.err err/wi-auth.err \
 		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* \
  		$DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]*
 
-#UTRACE="0 50M 0"
+ UTRACE="0 50M 0"
 #UOBJDUMP="0 1M 500"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR

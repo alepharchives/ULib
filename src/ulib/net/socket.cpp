@@ -800,10 +800,11 @@ loop:
                        pcNewConnection->iSockDesc, pcNewConnection->flags, pcNewConnection->flags)
 
       U_INTERNAL_ASSERT_EQUALS(pcNewConnection->bIPv6Socket, (cRemoteAddress.getAddressFamily() == AF_INET6))
+
+#  ifdef HAVE_ACCEPT4
       U_INTERNAL_ASSERT_EQUALS(((accept4_flags & SOCK_CLOEXEC)  != 0),((pcNewConnection->flags & O_CLOEXEC)  != 0))
       U_INTERNAL_ASSERT_EQUALS(((accept4_flags & SOCK_NONBLOCK) != 0),((pcNewConnection->flags & O_NONBLOCK) != 0))
-
-#  ifndef HAVE_ACCEPT4
+#  else
       if (accept4_flags) (void) U_SYSCALL(fcntl, "%d,%d,%d", pcNewConnection->iSockDesc, F_SETFL, pcNewConnection->flags);
 #  endif
 

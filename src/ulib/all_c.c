@@ -65,10 +65,6 @@
 #  include "replace/sendfile.c"
 #endif
 
-#ifndef HAVE_SEMAPHORE_H
-#  include "replace/sem.c"
-#endif
-
 #ifndef HAVE_MKDTEMP
 #  include "replace/mkdtemp.c"
 #endif
@@ -99,6 +95,10 @@
 
 #ifndef HAVE_ASSERT_H
 #  include "replace/assert.c"
+#endif
+
+#ifndef USE_SEMAPHORE
+#  include "replace/sem.c"
 #endif
 
 #ifdef DEBUG

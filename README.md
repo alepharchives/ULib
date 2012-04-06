@@ -14,6 +14,7 @@ Take a look at:
 
    * ......
    * --enable-zip            enable build of ZIP support - require libz `[default: use if present libz]`
+   * --enable-thread         enable build of thread support - require libpthread `[default: use if present libpthread]`
    * --with-libz             use system     LIBZ library - [will check /usr /usr/local] `[default=use if present]`
    * --with-libuuid          use system  libuuid library - [will check /usr /usr/local] `[default=use if present]`
    * --with-magic            use system libmagic library - [will check /usr /usr/local] `[default=use if present]`

@@ -211,15 +211,26 @@ public:
    void convertToAddressFamily(int iNewAddressFamily);
 #endif
 
-   // Returns the address represented by UIPAddress
-
-   in_addr_t getInAddr() const       { return *(in_addr_t*)(pcAddress.p + (iAddressType == AF_INET6 ? 12 : 0)); }
-   int       getInAddrLength() const { return iAddressLength; }
+   int getInAddrLength() const { return iAddressLength; }
 
    // Returns a (void*) to the address represented by UIPAddress.
    // This must be cast to (in_addr*) or to (in6_addr*) for use
 
    void* get_in_addr() const { return (void*) (pcAddress.p + (iAddressType == AF_INET6 ? 12 : 0)); }
+
+   // Returns the address represented by UIPAddress
+
+   in_addr_t getInAddr() const
+      {
+      union uuaddr {
+         void*      generic;
+         in_addr_t* addr;
+      };
+
+      union uuaddr u = { get_in_addr() };
+
+      return *(u.addr);
+      }
 
    // Returns a string of the hostname of the represented IP Address
 

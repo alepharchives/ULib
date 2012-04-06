@@ -1124,6 +1124,8 @@ minus:
 
          case 's':
             {
+            int32_t remaining;
+
             cp = VA_ARG(char*);
 
             if (!cp) cp = (char* restrict)"(null)";
@@ -1132,6 +1134,10 @@ minus:
 
             sign = '\0';
             size = (prec >= 0 ? prec : (int) u_str_len(cp));
+
+            remaining = (buffer_size - ret);
+
+            U_INTERNAL_ASSERT_MINOR_MSG(size, remaining, "WE ARE GOING TO BUFFER OVERFLOW - CHECK THE PARAMETERS OF printf()...")
 
             /* if a width from format is specified, the 0 flag for padding will be ignored... */
 
@@ -1208,7 +1214,7 @@ minus:
          case 'd':
          case 'i':
             {
-#if SIZEOF_OFF_T == 4 || defined(__MINGW32__)
+#if SIZEOF_OFF_T == 4 || defined(__MINGW32__) || defined(DISABLE_LFS)
 integer:
 #endif
             argument = SARG();
@@ -1380,11 +1386,11 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          /* End field conversion specifier: % c s n p [d,i] [o,u,x,X] [e,E] [f,F] [g,G] [a,A] (C P S) */
 
-         /* Start extension : bBCDHMNOPQrRSUYwW */
+         /* Start extension : bBCDHIMNOPQrRSUYwW */
 
          case 'I': /* print off_t */
             {
-#        if SIZEOF_OFF_T == 4 || defined(__MINGW32__)
+#        if SIZEOF_OFF_T == 4 || defined(__MINGW32__) || defined(DISABLE_LFS)
             goto integer;
 #        endif
 
@@ -1971,7 +1977,8 @@ iteration:
 
       if (ret >= buffer_size)
          {
-         U_ABORT("BUFFER OVERFLOW at u_vsnprintf() - ret = %u buffer_size = %u", ret, buffer_size);
+         U_ABORT("BUFFER OVERFLOW at u_vsnprintf() - ret = %u buffer_size = %u - size = %d width = %d prec = %d dprec = %d sign = %C",
+                                                     ret,     buffer_size,       size,     width,     prec,     dprec,     sign);
 
          ret -= (width > fieldsz ? width : fieldsz);
 

@@ -49,7 +49,7 @@
 #define U_FLV_HEAD             "FLV\x1\x1\0\0\0\x9\0\0\0\x9"
 #define U_STORAGE_KEYID        "STID"
 #define U_TIME_FOR_EXPIRE      (u_now->tv_sec + (365 * U_ONE_DAY_IN_SECOND))
-#define U_MIN_SIZE_FOR_DEFLATE 100
+#define U_MIN_SIZE_FOR_DEFLATE 150
 
 int         UHTTP::inotify_wd;
 bool        UHTTP::bsendfile;
@@ -954,7 +954,6 @@ void UHTTP::ctor()
 
    U_INTERNAL_ASSERT_POINTER(UServer_Base::senvironment)
 
-   const char* home = U_SYSCALL(getenv, "%S", "HOME");
    UString name = USocketExt::getNodeName(), ip_server = UServer_Base::getIPAddress();
 
    UServer_Base::senvironment->snprintf_add("SERVER_NAME=%.*s\n"  // Your server's fully qualified domain name (e.g. www.cgi101.com)
@@ -964,8 +963,6 @@ void UHTTP::ctor()
                                             U_STRING_TO_TRACE(name),
                                             U_STRING_TO_TRACE(ip_server),
                                             UServer_Base::port);
-
-   if (home) UServer_Base::senvironment->snprintf_add("HOME=%s\n", home);
 
    (void) UServer_Base::senvironment->append(U_CONSTANT_TO_PARAM("GATEWAY_INTERFACE=CGI/1.1\n"
                                              "SERVER_SOFTWARE=" PACKAGE_NAME "/" ULIB_VERSION "\n" // The server software you're using (such as Apache 1.3)
@@ -1256,80 +1253,101 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
 
    u_http_info.method = ptr;
 
-   if (c == 'G') // GET
+   switch (c)
       {
-      U_http_method_type   = HTTP_GET;
-      u_http_info.method_len = 3;
-
-      U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "GET "), 0)
-      }
-   else if (c == 'P') // POST/PUT
-      {
-      if (u_toupper(ptr[1]) == 'O')
+      case 'G': // GET
          {
-         U_http_method_type   = HTTP_POST;
-         u_http_info.method_len = 4;
-
-         U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "POST "), 0)
-         }
-      else
-         {
-         U_http_method_type   = HTTP_PUT;
+         U_http_method_type     = HTTP_GET;
          u_http_info.method_len = 3;
 
-         U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "PUT "), 0)
+      // U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "GET "), 0)
          }
-      }
-   else if (c == 'H') // HEAD or response
-      {
-      if (ptr[1] == 'T')
+      break;
+
+      case 'P': // POST/PUT
          {
-         // try to parse the response line: HTTP/1.n nnn <ssss>
+         if (u_toupper(ptr[1]) == 'O')
+            {
+            U_http_method_type     = HTTP_POST;
+            u_http_info.method_len = 4;
 
-         if (U_STRNCMP(ptr, "HTTP/1.")) U_RETURN(false);
+         // U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "POST "), 0)
+            }
+         else
+            {
+            U_http_method_type     = HTTP_PUT;
+            u_http_info.method_len = 3;
 
-         ptr += U_CONSTANT_SIZE("HTTP/1.") + 2;
-
-         u_http_info.nResponseCode = strtol(ptr, (char**)&ptr, 10);
-
-         U_INTERNAL_DUMP("u_http_info.nResponseCode = %d", u_http_info.nResponseCode)
-
-         goto end;
+         // U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "PUT "), 0)
+            }
          }
+      break;
 
-      U_http_method_type     = HTTP_HEAD;
-      u_http_info.method_len = 4;
-
-      U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "HEAD "), 0)
-      }
-   else if (c == 'D') // DELETE
-      {
-      U_http_method_type     = HTTP_DELETE;
-      u_http_info.method_len = 6;
-
-      U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "DELETE "), 0)
-      }
-   else if (c == 'C') // COPY
-      {
-      if (u_toupper(ptr[2]) == 'P')
+      case 'H': // HEAD or response
          {
+         if (ptr[1] == 'T')
+            {
+            // try to parse the response line: HTTP/1.n nnn <ssss>
+
+            if (U_STRNCMP(ptr, "HTTP/1.")) U_RETURN(false);
+
+            ptr += U_CONSTANT_SIZE("HTTP/1.") + 2;
+
+            u_http_info.nResponseCode = strtol(ptr, (char**)&ptr, 10);
+
+            U_INTERNAL_DUMP("u_http_info.nResponseCode = %d", u_http_info.nResponseCode)
+
+            goto end;
+            }
+
+         U_http_method_type     = HTTP_HEAD;
+         u_http_info.method_len = 4;
+
+      // U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "HEAD "), 0)
+         }
+      break;
+
+      case 'D': // DELETE
+         {
+         U_http_method_type     = HTTP_DELETE;
+         u_http_info.method_len = 6;
+
+      // U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "DELETE "), 0)
+         }
+      break;
+
+      case 'C': // COPY
+         {
+         if (u_toupper(ptr[2]) != 'P') U_RETURN(false);
+
          U_http_method_type     = HTTP_COPY;
          u_http_info.method_len = 4;
 
-         U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "COPY "), 0)
+      // U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "COPY "), 0)
          }
-      }
-   else // OPTIONS
-      {
-      U_http_method_type     = HTTP_OPTIONS;
-      u_http_info.method_len = 7;
+      break;
 
-      U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "OPTIONS "), 0)
+      case 'O': // OPTIONS
+         {
+         U_http_method_type     = HTTP_OPTIONS;
+         u_http_info.method_len = 7;
+
+      // U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(u_http_info.method, "OPTIONS "), 0)
+         }
+      break;
+
+      default: U_RETURN(false);
       }
 
    U_INTERNAL_DUMP("method = %.*S method_type = %C", U_HTTP_METHOD_TO_TRACE, U_http_method_type)
 
+   U_INTERNAL_ASSERT_MAJOR(u_http_info.method_len,0)
+
    ptr += u_http_info.method_len;
+
+   U_INTERNAL_DUMP("c (after method) = %C", *ptr)
+
+   if (u_isspace((*ptr)) == false) U_RETURN(false);
 
    while (u_isspace(*++ptr)) {} // RFC 2616 19.3 "[servers] SHOULD accept any amount of SP or HT characters between [Request-Line] fields"
 
@@ -1448,11 +1466,14 @@ bool UHTTP::readHTTPHeader(USocket* s, UString& buffer)
    U_INTERNAL_ASSERT_EQUALS(u_http_info.endHeader,0)
    U_INTERNAL_ASSERT_EQUALS(u_http_info.startHeader,0)
 
-   uint32_t count = 0;
    const char* rpointer1 = 0;
    const char* rpointer2 = 0;
+   uint32_t count = 0, sz = buffer.size();
 
-   if (buffer.empty())
+   U_INTERNAL_DUMP("sz = %u", sz)
+
+   if ( sz < 18 && // 18 -> "GET / HTTP/1.0\r\n\r\n"
+       (sz <  4 || (*(uint32_t*)(buffer.c_pointer(sz - 4)) != (*(uint32_t*)U_CRLF2))))
       {
       // NB: it is possible a resize of the buffer string...
 read:
@@ -1470,6 +1491,10 @@ read:
 
          U_RETURN(false);
          }
+
+      sz = buffer.size();
+
+      U_INTERNAL_DUMP("sz = %u", sz)
 
       if (telnet_enable)
          {
@@ -1498,6 +1523,8 @@ start:
       if (scanfHTTPHeader(buffer.c_pointer(u_http_info.startHeader)) == false) U_RETURN(false);
 
       // check if HTTP response line: HTTP/1.n 100 Continue
+
+      U_INTERNAL_DUMP("u_http_info.nResponseCode = %d", u_http_info.nResponseCode)
 
       if (u_http_info.nResponseCode == HTTP_CONTINUE)
          {
@@ -1533,10 +1560,14 @@ start:
          U_http_method_type        = 0;
          u_http_info.nResponseCode = 0;
 
-         if (buffer.size() <= u_http_info.startHeader) goto read;
-                                                       goto start;
+         if (sz <= u_http_info.startHeader) goto read;
+                                            goto start;
          }
       }
+
+   U_INTERNAL_DUMP("sz = %u u_http_info.startHeader = %u", sz, u_http_info.startHeader)
+
+   if (u_http_info.startHeader >= sz) U_RETURN(false);
 
    // NB: endHeader comprende anche la blank line...
 
@@ -1816,14 +1847,10 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
 
       if (USocketExt::read(s, *pbuffer, u_http_info.clength - body_byte_read, timeoutMS, request_read_timeout) == false)
          {
-         if (s->isOpen() == false) UClientImage_Base::write_off = true;
-         else
-            {
-            U_http_is_connection_close = U_YES;
-            u_http_info.nResponseCode  = HTTP_CLIENT_TIMEOUT;
+         U_http_is_connection_close = U_YES;
+         u_http_info.nResponseCode  = HTTP_CLIENT_TIMEOUT;
 
-            setHTTPResponse(0, 0);
-            }
+         setHTTPResponse(0, 0);
 
          U_RETURN(false);
          }
@@ -2205,15 +2232,18 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 next:
       pos2 = pos1;
 
-      while (pos2 < end && ptr[pos2] != '\n') ++pos2;
+      while (ptr[pos2] != '\n')
+         {
+         if (++pos2 >= end) U_RETURN(false); // NB: we can have too much advanced...
+         }
 
-   // U_INTERNAL_DUMP("pos2 = %.*S", 20, request.c_pointer(pos2))
+      U_INTERNAL_DUMP("pos2 = %.*S", 10, request.c_pointer(pos2))
 
       if (u_http_info.endHeader == 0)
          {
          c = (p1 = (ptr + pos2))[1];
 
-         U_INTERNAL_DUMP("c = %C", c)
+         U_INTERNAL_DUMP("c (after newline) = %C", c)
 
          // \n\n     (U_LF2)
          // \r\n\r\n (U_CRLF2)
@@ -3779,7 +3809,16 @@ void UHTTP::setHTTPRedirectResponse(bool refresh, UString& ext, const char* ptr_
 
    u_http_info.nResponseCode = (refresh ? HTTP_NETWORK_AUTHENTICATION_REQUIRED : HTTP_MOVED_TEMP);
 
-   if (U_http_is_connection_close == U_MAYBE) U_http_is_connection_close = U_YES;
+   if (U_http_is_connection_close == U_MAYBE)
+      {
+      U_http_is_connection_close = U_YES;
+
+      // NB: because we close the connection we don't need to process other request in pipeline... (ex. nodog)
+
+      U_INTERNAL_DUMP("pipeline = %b", UClientImage_Base::pipeline)
+
+      UClientImage_Base::pipeline = false;
+      }
 
    UString tmp(U_CAPACITY), msg(100U + len_location), body(500U + len_location);
 
@@ -4594,8 +4633,8 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
    uint32_t size;
    int ratio = 100;
    bool gzip = false;
-   const char*motivation = "";
    UString header(U_CAPACITY);
+   const char* motivation = "";
 
    file_data->array = U_NEW(UVector<UString>(4U));
 
@@ -4635,7 +4674,12 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
       U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".css")) ||
                         u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".js")))
 
-      UStringExt::minifyCssJs(content); // minifies CSS/JS by removing comments and whitespaces...
+      if ((u_mime_index == U_js && 
+           u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("compressed.js")  == false)) ||
+           u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("compressed.css") == false))
+         {
+         UStringExt::minifyCssJs(content); // minifies CSS/JS by removing comments and whitespaces...
+         }
 
       if (content.empty()) goto end;
       }
@@ -4652,7 +4696,7 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
 #endif
 
         if (file_data->size >= min_size_for_sendfile)  motivation = " (size exceeded)";  // NB: for major size it is better to use sendfile()
-// else if (file_data->size <= U_MIN_SIZE_FOR_DEFLATE) motivation = " (size too small)";
+   else if (file_data->size <= U_MIN_SIZE_FOR_DEFLATE) motivation = " (size too small)";
 #ifdef USE_LIBZ
    else if (u_mime_index != U_ssi &&
             u_mime_index != U_gz)
@@ -4996,11 +5040,18 @@ void UHTTP::renewDataCache()
 {
    U_TRACE(0, "UHTTP::renewDataCache()")
 
-   u_buffer_len = u_sn_printf(u_buffer, sizeof(u_buffer), "./%.*s", U_STRING_TO_TRACE(*(cache_file->key())));
+   // NB: we need to do this before call erase...
 
-   int fd = file_data->fd;
+   int fd          = file_data->fd;
+   UStringRep* key = cache_file->key();
+
+   U_INTERNAL_DUMP("file_data->fd = %d cache_file->key = %.*S", file_data->fd, U_STRING_TO_TRACE(*key))
+
+   u_buffer_len = u_sn_printf(u_buffer, sizeof(u_buffer), "./%.*s", U_STRING_TO_TRACE(*key));
 
    cache_file->eraseAfterFind();
+
+   u_ftw_ctx.is_directory = false;
 
    checkFileForCache();
 
@@ -5020,16 +5071,27 @@ UString UHTTP::getDataFromCache(bool bheader, bool gzip)
    U_TRACE(0, "UHTTP::getDataFromCache(%b,%b)", bheader, gzip)
 
    U_INTERNAL_ASSERT_POINTER(file_data)
-   U_INTERNAL_ASSERT_POINTER(file_data->array)
 
    U_INTERNAL_DUMP("u_now->tv_sec     = %#D", u_now->tv_sec)
    U_INTERNAL_DUMP("file_data->expire = %#D", file_data->expire)
 
-   if (u_now->tv_sec > file_data->expire) renewDataCache();
+   if (u_now->tv_sec > file_data->expire)
+      {
+      renewDataCache();
 
-   U_INTERNAL_DUMP("idx = %u", (gzip * 2) + bheader)
+      U_INTERNAL_DUMP("file_data->array = %p", file_data->array)
+      }
 
-   UString result = file_data->array->operator[]((gzip * 2) + bheader);
+   UString result;
+
+   if (file_data->array)
+      {
+      U_INTERNAL_DUMP("idx = %u", (gzip * 2) + bheader)
+
+      U_INTERNAL_ASSERT_POINTER(file_data->array)
+
+      result = file_data->array->operator[]((gzip * 2) + bheader);
+      }
 
    U_RETURN_STRING(result);
 }

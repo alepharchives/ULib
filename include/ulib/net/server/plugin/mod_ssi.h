@@ -111,7 +111,8 @@ public:
 protected:
    time_t last_modified;
    UString environment, docname, timefmt, errmsg, header, body;
-   bool use_size_abbrev, cgi_output;
+   int set_alternative_response;
+   bool use_size_abbrev;
 
 private:
    UString getInclude(const UString& include, int include_level) U_NO_EXPORT;

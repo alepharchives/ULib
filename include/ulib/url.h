@@ -351,6 +351,20 @@ public:
 
    bool setPort(uint32_t port);
 
+   /** This methode check the existence of the path from the url.
+    *
+    * @return bool.
+    */
+
+   bool isPath() const
+      {
+      U_TRACE(0, "Url::isPath()")
+
+      bool result = (path_begin < path_end);
+
+      U_RETURN(result);
+      }
+
    /** This methode returns the path for this URL.
     *
     * The path consists of the file name part of the URL without any query information.

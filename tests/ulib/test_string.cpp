@@ -1,6 +1,6 @@
 // test_string.cpp
 
-#include <ulib/string.h>
+#include <ulib/file.h>
 #include <ulib/debug/crono.h>
 #include <ulib/utility/escape.h>
 #include <ulib/utility/string_ext.h>
@@ -1747,7 +1747,11 @@ U_EXPORT main (int argc, char* argv[])
 
    z = U_STRING_FROM_CONSTANT(TEXT3);
 
-   U_ASSERT( z == UStringExt::gunzip(UStringExt::deflate(z, true)) )
+   x = UStringExt::deflate(z, true);
+
+   y = UStringExt::gunzip(x);
+
+   U_ASSERT( z == y )
 #endif
 
    y = U_STRING_FROM_CONSTANT("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/");
@@ -1861,15 +1865,32 @@ U_EXPORT main (int argc, char* argv[])
 
    z = UStringExt::prepareForEnvironmentVar(U_STRING_FROM_CONSTANT("foo=bar \n\n"
                                                                    "#pippo=pluto \n\n"
+                                                                   "#pippo pluto \n\n"
                                                                    "UTRACE=0 5M 0 \n\n"));
 
    U_ASSERT( z == U_STRING_FROM_CONSTANT("foo=bar\n'UTRACE=0 5M 0'\n") )
 
    z = UStringExt::prepareForEnvironmentVar(U_STRING_FROM_CONSTANT("#pippo=pluto\n\n"
                                                                    "foo=bar\n\n"
+                                                                   "WIAUTH_CARD_BASEDN=ou=cards,o=unwired-portal\n\n"
+                                                                   "#WIAUTH_CARD_BASEDN=ou=cards,o=unwired-portal\n\n"
                                                                    "'UTRACE=0 5M 0' \n\n"));
 
-   U_ASSERT( z == U_STRING_FROM_CONSTANT("foo=bar\n'UTRACE=0 5M 0'\n") )
+   U_ASSERT( z == U_STRING_FROM_CONSTANT("foo=bar\nWIAUTH_CARD_BASEDN=ou=cards,o=unwired-portal\n'UTRACE=0 5M 0'\n") )
+
+   z = UStringExt::prepareForEnvironmentVar(U_STRING_FROM_CONSTANT("HOME=TSA  "
+                                               "                    OPENSSL=bin/openssl  "
+                                               "                    OPENSSL_CNF=CA/openssl.cnf  "
+                                               "                   #OPENSSL_CNF=CA/openssl.cnf  "
+                                               "                   #OPENSSL_CNF=CA/openssl.cnf  "
+                                               "                   'UTRACE=0 5M 0' "
+                                               "                    TSA_CACERT=CA/cacert.pem  "
+                                               "                   #WIAUTH_CARD_BASEDN=ou=cards,o=unwired-portal  "
+                                               "                    TSA_CERT=CA/server.crt  "
+                                               "                    TSA_KEY=CA/server.key  "));
+
+   U_ASSERT( z == U_STRING_FROM_CONSTANT("HOME=TSA\nOPENSSL=bin/openssl\nOPENSSL_CNF=CA/openssl.cnf\n'UTRACE=0 5M 0'\n"
+                                         "TSA_CACERT=CA/cacert.pem\nTSA_CERT=CA/server.crt\nTSA_KEY=CA/server.key\n") )
 
    istrstream istrs02(U_CONSTANT_TO_PARAM("\"DEBUG=1 \\\n"
                                           "  FW_CONF=etc/nodog_fw.conf \\\n"
@@ -1882,8 +1903,6 @@ U_EXPORT main (int argc, char* argv[])
 
    z = UStringExt::prepareForEnvironmentVar(z);
 
-   U_INTERNAL_DUMP("z = %#.*S", U_STRING_TO_TRACE(z))
-
    U_ASSERT( z == U_STRING_FROM_CONSTANT("DEBUG=1\n"
                                          "FW_CONF=etc/nodog_fw.conf\n"
                                          "AllowedWebHosts=159.213.0.0/16\n"
@@ -1894,6 +1913,67 @@ U_EXPORT main (int argc, char* argv[])
    y = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("LocalNetwork"), &z);
 
    U_ASSERT( y == U_STRING_FROM_CONSTANT("10.30.1.0/24 10.1.0.1/16") )
+
+   z = UStringExt::prepareForEnvironmentVar(UFile::contentOf("inp/environment.conf"));
+
+   y = U_STRING_FROM_CONSTANT("DIR_WEB=$HOME/www\n"
+                          "DIR_POLICY=$HOME/policy\n"
+                          "DIR_AP=$HOME/ap/$VIRTUAL_HOST\n"
+                          "DIR_CTX=$HOME/login/$VIRTUAL_HOST\n"
+                          "DIR_CNT=$HOME/counter/$VIRTUAL_HOST\n"
+                          "DIR_REQ=$HOME/request/$VIRTUAL_HOST\n"
+                          "DIR_CLIENT=$HOME/client/$VIRTUAL_HOST\n"
+                          "DIR_REG=$HOME/registration/$VIRTUAL_HOST\n"
+                          "DIR_TEMPLATE=$HOME/template/$VIRTUAL_HOST\n"
+                          "DIR_SSI=$DIR_CLIENT/$REMOTE_ADDR/$REQUEST_URI\n"
+                          "FILE_HEAD_HTML=$DIR_SSI/head.html\n"
+                          "FILE_BODY_SHTML=$DIR_SSI/body.shtml\n"
+                          "ACCESS_POINT_LIST=$DIR_AP/ACCESS_POINT\n"
+                          "WIAUTH_CARD_LDAP_PWD=programmer\n"
+                          "WIAUTH_USER_LDAP_PWD=programmer\n"
+                          "WIAUTH_CARD_BASEDN=ou=cards,o=unwired-portal\n"
+                          "WIAUTH_USER_BASEDN=ou=users,o=unwired-portal\n"
+                          "WIAUTH_CARD_LDAP_URL=ldaps://94.138.39.149:636\n"
+                          "WIAUTH_USER_LDAP_URL=ldaps://94.138.39.149:636\n"
+                          "WIAUTH_CARD_LDAP_BINDDN=cn=admin,o=unwired-portal\n"
+                          "WIAUTH_USER_LDAP_BINDDN=cn=admin,o=unwired-portal\n"
+                          "'LDAP_USER_PARAM=-x -D $WIAUTH_USER_LDAP_BINDDN -w $WIAUTH_USER_LDAP_PWD -H $WIAUTH_USER_LDAP_URL'\n"
+                          "'LDAP_CARD_PARAM=-x -D $WIAUTH_CARD_LDAP_BINDDN -w $WIAUTH_CARD_LDAP_PWD -H $WIAUTH_CARD_LDAP_URL'\n"
+                          "TIMEOUT=0\n"
+                          "TRAFFIC=0\n"
+                          "POLICY=DAILY\n"
+                          "EXIT_VALUE=0\n"
+                          "'CLIENT_HTTP=/srv/userver/bin/uclient -c /srv/userver/etc/uclient-firenze.cfg'\n"
+                          "LOGIN_URL=http://$HTTP_HOST/login\n"
+                          "REDIRECT_DEFAULT=http://www.google.it\n"
+                          "REGISTRAZIONE_URL=http://$HTTP_HOST/registrazione\n"
+                          "FILE_LOG=/var/log/LOG-firenze\n"
+                          "LOCAL_SYSLOG_SELECTOR=user.alert\n"
+                          "REMOTE_SYSLOG_SELECTOR=user.info\n"
+                          "UNCOMPRESS_COMMAND_HISTORICAL_LOGS=zcat\n"
+                          "REGEX_HISTORICAL_LOGS=LOG-firenze-*.gz\n"
+                          "HISTORICAL_LOG_DIR=/var/log/wi-auth-logs-archives\n"
+                          "'HEAD_HTML=<link type=\"text/css\" href=\"css/layout.css\" rel=\"stylesheet\">'\n"
+                          "'BACK_TAG=<a class=\"back\" href=\"#\" onclick=\"history.go(-1);return false;\">INDIETRO</a>'\n"
+                          "TELEFONO=055-055\n"
+                          "PORTAL_NAME=wi-auth\n"
+                          "'SERVICE=Servizio non disponibile'\n"
+                          "'MANUTENZIONE=dalle 9 alle 10 di domani'\n"
+                          "'LOGOUT_HTML=La pagina di uscita (logout):<br><a href=\"http://$HTTP_HOST/logout_page\">http://$HTTP_HOST/logout_page</a>'\n"
+                          "'MSG_ANOMALIA=Problema in autenticazione (anomalia %s). Si prega di riprovare, se il problema persiste contattare: $TELEFONO'\n"
+                          "'LOGOUT_NOTE=della pagina di uscita (logout),<br>magari inserendola tra i tuoi segnalibri (bookmarks).<br>Se utilizzerai questa pagina, quando hai finito di navigare,<br>il tempo e traffico della tua navigazione, e quindi quanto<br>ti rimane, saranno corrispondenti a quelli effettivi.'\n");
+
+   U_ASSERT( z == y )
+
+/*
+   y = z = UFile::contentOf("inp/livevalidation_standalone.compressed.js");
+
+   UStringExt::minifyCssJs(z);
+
+   (void) UFile::writeToTmpl("tmp/livevalidation_standalone.compressed.js", z);
+
+   U_ASSERT( z == y )
+*/
 
    crono.stop();
 

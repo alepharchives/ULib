@@ -1,91 +1,48 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="it" lang="it">
+ <head>
+   <meta http-equiv="x-ua-compatible" content="ie=edge" />
+   <meta name="viewport" content="width=device-width; initial-scale=1; minimum-scale=1; maximum-scale=1" />
+   <meta name="description" content="Wi-auth portal" />
+   <meta name="keywords" content="wi-auth portal wifi" />
+   <meta name="author" content="UniRel S.r.L." />
+   <meta name="copyright" content="Licensed under GPL and MIT." />
 
-<html>
-<head>
-  <title>Firenze WiFi</title>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <style type="text/css">
-  .link {
-        color:#666666;
-        font-size: 20px;
-        TEXT-DECORATION: none;
-        font-family: Verdana, Arial, Helvetica, sans-serif;
-        font-weight: bold;
-        background-color: #CCCCCC;
-  }
-  .link:hover {color:#990000; TEXT-DECORATION: none
-  }
-  .tabella {
-        background-image: none;
-        /*border: 1px solid #666666;*/
-  }
- .rssbutton{
-	background-color: #ff6600;
-	border: 1px #ff6600 outset;
-	padding: 0 2px;
-	color: white;
-	text-decoration: none;
-	font: bold 10px Verdana;
- }
-
- .rssbutton:visited, .rssbutton:hover, .rssbutton:active {
-	color: white;
- }
-
- .cssbutton{
-	background-color: red;
-	border: 2px #d1ec4c outset;
-	padding: 1px 4px;
-	color: white;
-	text-decoration: none;
-	font: bold 150%% "Lucida Grande", "Trebuchet MS", Verdana, Helvetica, sans-serif;
- }
-
- .cssbutton:visited {
-	color: white;
-	}
-
-	.cssbutton:hover {
-	border-style: inset;
-	background-color: #CECFD1;
-	padding: 2px 3px 0 5px; /*shift text 1px to the right and down*/
-	}
-
- .cssbutton:active {
-	color: black;
- }
-  </style>
-
-</head>
-
-<body>
-
-    <table width="700" border="0" align="center" class="tabella">
-
-      <tr>
-        <td>&nbsp;</td>
-      </tr>
-
-      <tr>
-        <td colspan="2">
-          <div align="center"><a class="link" href="http://news.comune.fi.it/20venti"><img src="images/partecipaa20venti.jpg" width="100%%" height="251" /></div>
-        </td>
-      </tr>
-
-      <tr>
-        <td>&nbsp;</td>
-      </tr>
-
-      <tr>
-        <td>
-		<div align="center"><img src="images/firenze-wifi2.png" /></div>
-        </td>
-	<td>
-	    <a class="cssbutton" href="%s">&nbsp;NAVIGA IN INTERNET&nbsp;</a>
-	</td>
-      </tr>
-
-    </table>
-
-</body>
+   <title>Wi-Move</title>
+   <link rel="stylesheet" href="css/master.css" />
+   <link rel="stylesheet" href="css/mobile.css" />
+   <script src="js/mobile.js"></script>
+ </head>
+ <body>
+  <div id="distance"></div>
+  <div id="container">
+   <div id="wrapper">
+	<div id="menubox" style="width:100%%;height:100%%;padding:0px;margin:0px;">
+	    <div id="menulogo" class="menurow">
+	    	<img src="images/logo_fiwifi.png"/>
+	    </div>
+	    <div id="menufirst" class="menurow">
+	      <button id="topleftbox" onClick="window.location.href='help.html'">
+		<img src="images/btn_help.png"/>
+	      </button>
+	      <button id="toprightbox" onClick="window.location.href='http://www.comune.fi.it/opencms/opencms/index_wifi.html'">
+	        <img src="images/btn_withus.png"/>
+	      </button>
+	    </div>
+	    <div id="menusecond" class="menurow">
+	      <button id="bottomleftbox" onClick="window.location.href='/registrazione'">
+	        <img src="images/btn_signin.png"/>
+	      </button>
+	      <button id="bottomrightbox" onClick="window.location.href='%s'">
+	        <img src="images/btn_login.png"/>
+	      </button>
+	    </div>
+	</div>
+   </div>
+  </div>
+<!--
+  <div id="topBanner">
+     <img src="images/banner.jpg" width="800" height="100"/>
+  </div>
+-->
+ </body>
 </html>

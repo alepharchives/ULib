@@ -69,8 +69,11 @@ done
 #LS=`ls inp/http/and`
 #mkdir -p /tmp/web_server
 #for i in $LS; do
-# $NC -w 4 127.0.0.1 80 <inp/http/and/$i >/tmp/web_server/$i
+#   $NC -w 4 127.0.0.1 80 <inp/http/and/$i >/tmp/web_server/$i
 #done
+
+#./sendbytes.pl 
+#return
 
 LS=`ls inp/http/close`
 for i in $LS; do
@@ -81,7 +84,10 @@ for i in $LS; do
 done
 
  send_req $2 inp/http/all.inp  4
+#send_req $2 inp/http/all0.inp 2
  send_req $2 inp/http/all1.inp 4
+ send_req $2 inp/http/all2.inp 2
+#send_req $2 inp/http/all3.inp 2
  send_req $2 inp/http/post.inp 2
 
 # test upload

@@ -721,7 +721,7 @@ bool u_switch_to_realtime_priority(pid_t pid)
 {
    bool result = false;
 
-#if defined(_POSIX_PRIORITY_SCHEDULING) && (_POSIX_PRIORITY_SCHEDULING > 0)
+#if defined(_POSIX_PRIORITY_SCHEDULING) && (_POSIX_PRIORITY_SCHEDULING > 0) && (defined(HAVE_SCHED_H) || defined(HAVE_SYS_SCHED_H))
    struct sched_param sp;
 
    U_INTERNAL_TRACE("u_switch_to_realtime_priority(%d)", pid)
@@ -1428,10 +1428,7 @@ __pure const char* u_isUrlScheme(const char* restrict url, uint32_t len)
 
 __pure bool u_isURL(const char* restrict url, uint32_t len)
 {
-   int ch;
    const char* restrict ptr;
-   const char* restrict end;
-   const char* restrict tmp;
 
    U_INTERNAL_TRACE("u_isURL(%.*s,%u)", U_min(len,128), url, len)
 
@@ -1441,6 +1438,10 @@ __pure bool u_isURL(const char* restrict url, uint32_t len)
 
    if (ptr)
       {
+      int ch;
+      const char* restrict end;
+      const char* restrict tmp;
+
       len -= (ptr - url);
 
       tmp  = ptr;
@@ -2487,7 +2488,7 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
    return (ok == negate ? 0 : 1);
 }
 
-static inline __pure int kfnmatch(const char* restrict pattern, const char* restrict string, int flags, int nesting)
+static __pure int kfnmatch(const char* restrict pattern, const char* restrict string, int flags, int nesting)
 {
    char c, test;
    char* restrict newp;

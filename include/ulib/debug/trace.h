@@ -93,12 +93,12 @@ public:
    U_MANAGE_SYSRETURN_VALUE(unsigned long long, "%llu", ret == 0ULL)
    U_MANAGE_SYSRETURN_VALUE(float,              "%f",   ret == 0.0)
    U_MANAGE_SYSRETURN_VALUE(double,             "%g",   ret == 0.0)
-   U_MANAGE_SYSRETURN_VALUE(pvoid_t,            "%p",   ret ==  0 ||
+   U_MANAGE_SYSRETURN_VALUE(pvoid_t,            "%p",   ret == NullPtr ||
                                                         ret == (void*)-1)
-   U_MANAGE_SYSRETURN_VALUE(pchar_t,            "%S",   ret ==  0)
-   U_MANAGE_SYSRETURN_VALUE(pcchar_t,           "%S",   ret ==  0)
-   U_MANAGE_SYSRETURN_VALUE(puchar_t,           "%S",   ret ==  0)
-   U_MANAGE_SYSRETURN_VALUE(pcuchar_t,          "%S",   ret ==  0)
+   U_MANAGE_SYSRETURN_VALUE(pchar_t,            "%S",   ret == NullPtr)
+   U_MANAGE_SYSRETURN_VALUE(pcchar_t,           "%S",   ret == NullPtr)
+   U_MANAGE_SYSRETURN_VALUE(puchar_t,           "%S",   ret == NullPtr)
+   U_MANAGE_SYSRETURN_VALUE(pcuchar_t,          "%S",   ret == NullPtr)
    U_MANAGE_SYSRETURN_VALUE(sighandler_t,       "%p",   ret == (sighandler_t)SIG_ERR)
 
    /* Type of file sizes and offsets (LFS)

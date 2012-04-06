@@ -91,14 +91,14 @@
 #  define U_SYSCALL(name,format,args...)        (utr.trace_syscall("::"#name"("format")" , ##args), \
                                                  utr.trace_sysreturn_type(::name(args)))
 
-#  define U_SYSCALL_NO_PARAM(name)              (utr.trace_syscall("::"#name"()",0), \
+#  define U_SYSCALL_NO_PARAM(name)              (utr.trace_syscall("::"#name"()",NullPtr), \
                                                  utr.trace_sysreturn_type(::name()))
 
 #  define U_SYSCALL_VOID(name,format,args...)   {utr.trace_syscall("::"#name"("format")" , ##args); \
-                                                 name(args); utr.trace_sysreturn(false,0);}
+                                                 name(args); utr.trace_sysreturn(false,NullPtr);}
 
-#  define U_SYSCALL_VOID_NO_PARAM(name)         {utr.trace_syscall("::"#name"()",0); \
-                                                 name(); utr.trace_sysreturn(false,0);}
+#  define U_SYSCALL_VOID_NO_PARAM(name)         {utr.trace_syscall("::"#name"()",NullPtr); \
+                                                 name(); utr.trace_sysreturn(false,NullPtr);}
 
 #  define U_RETURN(r)                  return (utr.trace_return_type((r)))
 #  define U_RETURN_STRING(str)         return (utr.trace_return("%.*S",U_STRING_TO_TRACE((str))),(str))

@@ -47,7 +47,7 @@ endef
 
 NODOG_OPTIONS:= --with-ssl --with-libz \
 					 --without-pcre --without-expat --without-magic \
-					 --disable-static --disable-new-ldflags --disable-zip --disable-LFS --disable-gcc-optimized \
+					 --disable-static --disable-new-ldflags --disable-zip --disable-thread --disable-LFS --disable-gcc-optimized \
 					 --enable-static-module="mod_nocat mod_http" \
 					 $(if $(CONFIG_NODOG_UUID),--with-libuuid,--without-libuuid) $(if $(CONFIG_NODOG_DEBUG),--enable-debug)
 
@@ -75,7 +75,7 @@ define Package/nodog/install
 	$(CP) -r  $(PKG_BUILD_DIR)/tests/examples/nocat/* 	 $(1)/usr/lib/nodog
 	$(CP) -r  $(PKG_BUILD_DIR)/tests/examples/nocat/.ht* $(1)/usr/lib/nodog
 	$(CP) -r  $(1)/usr/lib/nodog/etc  						 $(1)/
-	$(RM) -rf $(1)/usr/lib/nodog/etc
+	$(RM) -rf $(1)/usr/lib/nodog/etc $(1)/usr/lib/nodog/doc
 endef
 
 $(eval $(call BuildPackage,nodog))

@@ -234,8 +234,8 @@ bool USocketExt::write(USocket* s, const UString& header, const UString& body, i
 
    U_INTERNAL_ASSERT(s->isOpen())
 
-   int sz1 = header.size(),
-       sz2 =   body.size();
+   size_t sz1 = header.size(),
+          sz2 =   body.size();
 
    const char* ptr = header.data();
 
@@ -262,7 +262,7 @@ loop:
 
    if (sz1)
       {
-      if (sz1 >= value)
+      if (sz1 >= (size_t)value)
          {
          sz1             -= value;
          _iov[0].iov_base = (char*)_iov[0].iov_base + value;

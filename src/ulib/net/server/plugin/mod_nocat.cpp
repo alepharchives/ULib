@@ -15,6 +15,7 @@
 #include <ulib/file_config.h>
 #include <ulib/utility/des3.h>
 #include <ulib/utility/uhttp.h>
+#include <ulib/net/udpsocket.h>
 #include <ulib/utility/base64.h>
 #include <ulib/utility/escape.h>
 #include <ulib/net/ipt_ACCOUNT.h>
@@ -48,7 +49,6 @@ const UString* UNoCatPlugIn::str_INTERNAL_DEVICE;
 const UString* UNoCatPlugIn::str_INTERNAL_DEVICE_LABEL;
 const UString* UNoCatPlugIn::str_LOCAL_NETWORK;
 const UString* UNoCatPlugIn::str_AUTH_SERVICE_URL;
-const UString* UNoCatPlugIn::str_LOGOUT_URL;
 const UString* UNoCatPlugIn::str_LOGIN_TIMEOUT;
 const UString* UNoCatPlugIn::str_DECRYPT_CMD;
 const UString* UNoCatPlugIn::str_DECRYPT_KEY;
@@ -268,10 +268,15 @@ UModNoCatPeer::UModNoCatPeer(const UString& peer_ip) : ip(peer_ip)
 
    U_INTERNAL_DUMP("ifindex = %u", ifindex)
 
-   U_INTERNAL_ASSERT(ifindex <= UNoCatPlugIn::num_radio)
+   if (ifindex <= UNoCatPlugIn::num_radio)
+      {
+      label = (UNoCatPlugIn::pthis->vInternalDeviceLabel.empty() ? UNoCatPlugIn::pthis->vInternalDevice[ifindex]
+                                                                 : UNoCatPlugIn::pthis->vInternalDeviceLabel[ifindex]);
+      }
 
-   label = (UNoCatPlugIn::pthis->vInternalDeviceLabel.empty() ? UNoCatPlugIn::pthis->vInternalDevice[ifindex]
-                                                              : UNoCatPlugIn::pthis->vInternalDeviceLabel[ifindex]);
+   if (label.empty()) label = ifname;
+
+   U_INTERNAL_DUMP("label = %.*S", U_STRING_TO_TRACE(label))
 
    status = UModNoCatPeer::PEER_DENY;
 
@@ -330,10 +335,9 @@ int UNoCatPlugIn::handlerTime()
    U_RETURN(0);
 }
 
-UNoCatPlugIn::UNoCatPlugIn() : vauth_service_url(4U), vlogout_url(4U), vinfo_url(4U),
-                               vInternalDevice(64U), vInternalDeviceLabel(64U), vLocalNetwork(64U),
-                               vauth_login(4U), vauth_logout(4U), vauth_ip(4U),
-                               input(U_CAPACITY), output(U_CAPACITY), location(U_CAPACITY)
+UNoCatPlugIn::UNoCatPlugIn() : vauth_url(4U), vinfo_url(4U),
+                               vInternalDevice(64U), vInternalDeviceLabel(64U), vLocalNetwork(64U), vauth(4U), vauth_ip(4U),
+                               input(U_CAPACITY), output(U_CAPACITY), location(U_CAPACITY), gateway(500U)
 {
    U_TRACE_REGISTER_OBJECT(0, UNoCatPlugIn, "")
 
@@ -485,7 +489,7 @@ void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& redir
 
    Url::encode(peer->mac, value_encoded);
 
-   location.snprintf("%.*s?mac=%.*s&ip=", U_URL_TO_TRACE(auth), U_STRING_TO_TRACE(value_encoded));
+   location.snprintf("%.*s/%s?mac=%.*s&ip=", U_URL_TO_TRACE(auth), (auth.isPath() ? "" : "login"), U_STRING_TO_TRACE(value_encoded));
 
    Url::encode(peer->ip, value_encoded);
 
@@ -512,6 +516,8 @@ void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& redir
       time_t _expire = u_now->tv_sec + (30L * 60L);
       peer->token    = UServices::generateToken(peer->mac, _expire);
       }
+
+   Url::encode(peer->token, value_encoded);
 
    location.snprintf_add("%.*s&ap=%.*s@%.*s", U_STRING_TO_TRACE(value_encoded), U_STRING_TO_TRACE(peer->label), U_STRING_TO_TRACE(access_point));
 }
@@ -570,6 +576,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
    Redirect http://wi-auth:443/postlogin?uid=s.casazza&gateway=10.30.1.131&redirect=http%3A//stefano%3A5280/pippo
    Mac      00:e0:4c:d4:63:f5
    Timeout  3000
+   Traffic  0
    Token    10.30.1.105&1237907630&05608a4cbd42c9f72d2bd3a0e19ed23f
    User     s.casazza
    */
@@ -587,7 +594,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
       U_INTERNAL_DUMP("peer     = %.*S", U_STRING_TO_TRACE(peer->token))
       U_INTERNAL_DUMP("peer_mac = %.*S", U_STRING_TO_TRACE(peer_mac))
 
-      U_SRV_LOG("Tampered token from peer %.*s: MAC %.*s", U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer_mac));
+      U_SRV_LOG("Tampered token from peer: %.*s MAC %.*s", U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer_mac));
 
       goto error;
       }
@@ -596,7 +603,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    if (peer->mac != args[*str_Mac])
       {
-      U_SRV_LOG("Different MAC %.*S in ticket from peer %.*s", U_STRING_TO_TRACE(peer->mac), U_STRING_TO_TRACE(peer->ip));
+      U_SRV_LOG("Different MAC %.*s in ticket from peer: %.*s", U_STRING_TO_TRACE(peer->mac), U_STRING_TO_TRACE(peer->ip));
 
       goto error;
       }
@@ -609,7 +616,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
    else if (action == *str_Deny)     deny(peer, false, false);
    else
       {
-      U_SRV_LOG("Can't make sense of action %.*S in ticket from peer %.*s", U_STRING_TO_TRACE(action), U_STRING_TO_TRACE(peer->ip));
+      U_SRV_LOG("Can't make sense of action %.*S in ticket from peer: %.*s", U_STRING_TO_TRACE(action), U_STRING_TO_TRACE(peer->ip));
 
       goto error;
       }
@@ -620,7 +627,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    if (destination.getQuery(name_value) == 0)
       {
-      U_SRV_LOG("Can't make sense of Redirect %.*S in ticket from peer %.*s", U_URL_TO_TRACE(destination), U_STRING_TO_TRACE(peer->ip));
+      U_SRV_LOG("Can't make sense of Redirect %.*S in ticket from peer: %.*s", U_URL_TO_TRACE(destination), U_STRING_TO_TRACE(peer->ip));
 
       goto error;
       }
@@ -629,7 +636,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    if (destination.setQuery(name_value) == false)
       {
-      U_SRV_LOG("Error on setting Redirect in ticket from peer %.*s", U_STRING_TO_TRACE(peer->ip));
+      U_SRV_LOG("Error on setting Redirect in ticket from peer: %.*s", U_STRING_TO_TRACE(peer->ip));
 
       goto error;
       }
@@ -759,6 +766,8 @@ void UNoCatPlugIn::addPeerInfo(UModNoCatPeer* peer, time_t logout)
    if (u_http_info.method || logout > 0)
       {
       Url* info_url = pthis->vinfo_url[peer->index_AUTH];
+
+      info_url->setPath(U_CONSTANT_TO_PARAM("/logout"));
 
       U_INTERNAL_DUMP("peer->index_AUTH = %u info_url = %p", peer->index_AUTH, info_url)
 
@@ -950,7 +959,7 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo()
       {
       UHTTP::setHTTPRedirectResponse(false, UString::getStringNull(), U_URL_TO_PARAM(*info_url));
 
-      *info_url = *(pthis->vlogout_url[index_AUTH]);
+      *info_url = *(pthis->vauth_url[index_AUTH]);
       }
    else
       {
@@ -1025,7 +1034,6 @@ void UNoCatPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_INTERNAL_DEVICE,0)
    U_INTERNAL_ASSERT_EQUALS(str_LOCAL_NETWORK,0)
    U_INTERNAL_ASSERT_EQUALS(str_AUTH_SERVICE_URL,0)
-   U_INTERNAL_ASSERT_EQUALS(str_LOGOUT_URL,0)
    U_INTERNAL_ASSERT_EQUALS(str_LOGIN_TIMEOUT,0)
    U_INTERNAL_ASSERT_EQUALS(str_FW_CMD,0)
    U_INTERNAL_ASSERT_EQUALS(str_DECRYPT_CMD,0)
@@ -1059,7 +1067,6 @@ void UNoCatPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("INTERNAL_DEVICE_LABEL") },
       { U_STRINGREP_FROM_CONSTANT("LocalNetwork") },
       { U_STRINGREP_FROM_CONSTANT("AuthServiceAddr") },
-      { U_STRINGREP_FROM_CONSTANT("LOGOUT_URL") },
       { U_STRINGREP_FROM_CONSTANT("LOGIN_TIMEOUT") },
       { U_STRINGREP_FROM_CONSTANT("FW_CMD") },
       { U_STRINGREP_FROM_CONSTANT("DECRYPT_CMD") },
@@ -1101,28 +1108,27 @@ void UNoCatPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_INTERNAL_DEVICE_LABEL, U_STRING_FROM_STRINGREP_STORAGE(7));
    U_NEW_ULIB_OBJECT(str_LOCAL_NETWORK,         U_STRING_FROM_STRINGREP_STORAGE(8));
    U_NEW_ULIB_OBJECT(str_AUTH_SERVICE_URL,      U_STRING_FROM_STRINGREP_STORAGE(9));
-   U_NEW_ULIB_OBJECT(str_LOGOUT_URL,            U_STRING_FROM_STRINGREP_STORAGE(10));
-   U_NEW_ULIB_OBJECT(str_LOGIN_TIMEOUT,         U_STRING_FROM_STRINGREP_STORAGE(11));
-   U_NEW_ULIB_OBJECT(str_FW_CMD,                U_STRING_FROM_STRINGREP_STORAGE(12));
-   U_NEW_ULIB_OBJECT(str_DECRYPT_CMD,           U_STRING_FROM_STRINGREP_STORAGE(13));
-   U_NEW_ULIB_OBJECT(str_DECRYPT_KEY,           U_STRING_FROM_STRINGREP_STORAGE(14));
-   U_NEW_ULIB_OBJECT(str_CHECK_BY_ARPING,       U_STRING_FROM_STRINGREP_STORAGE(15));
-   U_NEW_ULIB_OBJECT(str_Action,                U_STRING_FROM_STRINGREP_STORAGE(16));
-   U_NEW_ULIB_OBJECT(str_Permit,                U_STRING_FROM_STRINGREP_STORAGE(17));
-   U_NEW_ULIB_OBJECT(str_Deny,                  U_STRING_FROM_STRINGREP_STORAGE(18));
-   U_NEW_ULIB_OBJECT(str_Mode,                  U_STRING_FROM_STRINGREP_STORAGE(19));
-   U_NEW_ULIB_OBJECT(str_Redirect,              U_STRING_FROM_STRINGREP_STORAGE(20));
-   U_NEW_ULIB_OBJECT(str_renew,                 U_STRING_FROM_STRINGREP_STORAGE(21));
-   U_NEW_ULIB_OBJECT(str_Mac,                   U_STRING_FROM_STRINGREP_STORAGE(22));
-   U_NEW_ULIB_OBJECT(str_Timeout,               U_STRING_FROM_STRINGREP_STORAGE(23));
-   U_NEW_ULIB_OBJECT(str_Token,                 U_STRING_FROM_STRINGREP_STORAGE(24));
-   U_NEW_ULIB_OBJECT(str_User,                  U_STRING_FROM_STRINGREP_STORAGE(25));
-   U_NEW_ULIB_OBJECT(str_anonymous,             U_STRING_FROM_STRINGREP_STORAGE(26));
-   U_NEW_ULIB_OBJECT(str_Traffic,               U_STRING_FROM_STRINGREP_STORAGE(27));
-   U_NEW_ULIB_OBJECT(str_GATEWAY_PORT,          U_STRING_FROM_STRINGREP_STORAGE(28));
-   U_NEW_ULIB_OBJECT(str_CHECK_EXPIRE_INTERVAL, U_STRING_FROM_STRINGREP_STORAGE(29));
-   U_NEW_ULIB_OBJECT(str_FW_ENV,                U_STRING_FROM_STRINGREP_STORAGE(30));
-   U_NEW_ULIB_OBJECT(str_IPHONE_SUCCESS,        U_STRING_FROM_STRINGREP_STORAGE(31));
+   U_NEW_ULIB_OBJECT(str_LOGIN_TIMEOUT,         U_STRING_FROM_STRINGREP_STORAGE(10));
+   U_NEW_ULIB_OBJECT(str_FW_CMD,                U_STRING_FROM_STRINGREP_STORAGE(11));
+   U_NEW_ULIB_OBJECT(str_DECRYPT_CMD,           U_STRING_FROM_STRINGREP_STORAGE(12));
+   U_NEW_ULIB_OBJECT(str_DECRYPT_KEY,           U_STRING_FROM_STRINGREP_STORAGE(13));
+   U_NEW_ULIB_OBJECT(str_CHECK_BY_ARPING,       U_STRING_FROM_STRINGREP_STORAGE(14));
+   U_NEW_ULIB_OBJECT(str_Action,                U_STRING_FROM_STRINGREP_STORAGE(15));
+   U_NEW_ULIB_OBJECT(str_Permit,                U_STRING_FROM_STRINGREP_STORAGE(16));
+   U_NEW_ULIB_OBJECT(str_Deny,                  U_STRING_FROM_STRINGREP_STORAGE(17));
+   U_NEW_ULIB_OBJECT(str_Mode,                  U_STRING_FROM_STRINGREP_STORAGE(18));
+   U_NEW_ULIB_OBJECT(str_Redirect,              U_STRING_FROM_STRINGREP_STORAGE(19));
+   U_NEW_ULIB_OBJECT(str_renew,                 U_STRING_FROM_STRINGREP_STORAGE(20));
+   U_NEW_ULIB_OBJECT(str_Mac,                   U_STRING_FROM_STRINGREP_STORAGE(21));
+   U_NEW_ULIB_OBJECT(str_Timeout,               U_STRING_FROM_STRINGREP_STORAGE(22));
+   U_NEW_ULIB_OBJECT(str_Token,                 U_STRING_FROM_STRINGREP_STORAGE(23));
+   U_NEW_ULIB_OBJECT(str_User,                  U_STRING_FROM_STRINGREP_STORAGE(24));
+   U_NEW_ULIB_OBJECT(str_anonymous,             U_STRING_FROM_STRINGREP_STORAGE(25));
+   U_NEW_ULIB_OBJECT(str_Traffic,               U_STRING_FROM_STRINGREP_STORAGE(26));
+   U_NEW_ULIB_OBJECT(str_GATEWAY_PORT,          U_STRING_FROM_STRINGREP_STORAGE(27));
+   U_NEW_ULIB_OBJECT(str_CHECK_EXPIRE_INTERVAL, U_STRING_FROM_STRINGREP_STORAGE(28));
+   U_NEW_ULIB_OBJECT(str_FW_ENV,                U_STRING_FROM_STRINGREP_STORAGE(29));
+   U_NEW_ULIB_OBJECT(str_IPHONE_SUCCESS,        U_STRING_FROM_STRINGREP_STORAGE(30));
 }
 
 // Server-wide hooks
@@ -1136,9 +1142,6 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
    // -----------------------------------------------------------------------------------------------------------------------------------
    // FW_ENV                environment for shell script to execute
    // FW_CMD                shell script to manage the firewall
-   //
-   // LOGOUT_URL            URL to redirect user after logout
-   // PUBLIC_ADDRESS        address to contact access point from portal
    // INTERNAL_DEVICE_LABEL radio tag to be used from portal
    //
    // DECRYPT_CMD           PGP command stuff
@@ -1153,7 +1156,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
       {
       int port = 0;
       long check_expire;
-      UString pathconf, fw_env, command(100U), intdevlbl, sport, tmp;
+      UString pathconf, intdevlbl, tmp;
 
       fw_env = cfg[*str_FW_ENV];
 
@@ -1169,10 +1172,6 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
       arping        = cfg.readBoolean(*str_CHECK_BY_ARPING);
       check_expire  = cfg.readLong(*str_CHECK_EXPIRE_INTERVAL);
       login_timeout = cfg.readLong(*str_LOGIN_TIMEOUT);
-
-      tmp           = cfg[*str_LOGOUT_URL];
-
-      (void) vauth_logout.split(U_STRING_TO_PARAM(tmp));
 
       U_INTERNAL_DUMP("check_expire = %ld login_timeout = %ld", check_expire, login_timeout)
 
@@ -1200,6 +1199,8 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (tmp.empty() == false) port = tmp.strtol();
 
+      auth_login = UStringExt::getEnvironmentVar(*str_AUTH_SERVICE_URL, &fw_env);
+
       pathconf = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("FW_CONF"), &fw_env);
 
       if (pathconf.empty() == false)
@@ -1215,18 +1216,10 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
          intdev     = cfg[*str_INTERNAL_DEVICE];
          extdev     = cfg[*str_EXTERNAL_DEVICE];
          localnet   = cfg[*str_LOCAL_NETWORK];
-         auth_login = cfg[*str_AUTH_SERVICE_URL];
          port       = cfg.readLong(*str_GATEWAY_PORT);
          }
 
-      command.snprintf("/bin/sh %.*s request", U_STRING_TO_TRACE(fw_cmd));
-
-      cmd.set(command, (char**)0);
-      cmd.setEnvironment(&fw_env);
-
-      (void) vauth_login.split(U_STRING_TO_PARAM(auth_login));
-
-      U_INTERNAL_ASSERT_EQUALS(vauth_login.size(), vauth_logout.size())
+      (void) vauth.split(U_STRING_TO_PARAM(auth_login));
 
       if (extdev.empty())
          {
@@ -1263,13 +1256,9 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
       (void) vLocalNetwork.split(U_STRING_TO_PARAM(localnet));
       (void) UIPAllow::parseMask(localnet, vLocalNetworkMask);
 
+      U_INTERNAL_DUMP("port = %d", port)
+
       UServer_Base::port = (port ? port : 5280);
-
-      sport = UStringExt::numberToString(UServer_Base::port);
-
-      if (UServer_Base::port != 80) gateway = ':' + sport;
-
-      U_INTERNAL_DUMP("gateway = %.*S", U_STRING_TO_TRACE(gateway))
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -1284,122 +1273,143 @@ int UNoCatPlugIn::handlerInit()
 {
    U_TRACE(0, "UNoCatPlugIn::handlerInit()")
 
-   if (fw_cmd.empty() == false)
+   if (fw_cmd.empty())
       {
-      Url* url;
-      UString auth_ip;
-      UIPAddress addr;
+      U_SRV_LOG("initialization of plugin FAILED");
 
-      // NB: get IP address of AUTH hosts...
-
-      for (uint32_t i = 0, n = vauth_login.size(); i < n; ++i)
-         {
-         url = U_NEW(Url(vauth_login[i]));
-
-         vauth_service_url.push(url);
-
-         auth_ip = url->getHost();
-
-         if (addr.setHostName(auth_ip, UClientImage_Base::bIPv6) == false)
-            {
-            U_SRV_LOG("unknown AUTH host %.*S", U_STRING_TO_TRACE(auth_ip));
-            }
-         else
-            {
-            (void) auth_ip.replace(addr.getAddressString());
-
-            U_SRV_LOG("AUTH host registered: %.*s", U_STRING_TO_TRACE(auth_ip));
-
-            vauth_ip.push(auth_ip);
-            }
-
-         url = U_NEW(Url(vauth_logout[i]));
-
-         vlogout_url.push(url);
-
-         url = U_NEW(Url(vauth_logout[i]));
-
-         vinfo_url.push(url);
-         }
-
-      U_INTERNAL_ASSERT_EQUALS(vauth_ip.size(), vauth_login.size())
-
-      // crypto cmd
-
-      if (decrypt_cmd.empty() == false) pgp.set(decrypt_cmd, (char**)0);
-
-      U_INTERNAL_ASSERT(decrypt_key.isNullTerminated())
-
-      if (decrypt_key.empty() == false) UDES3::setPassword(decrypt_key.data());
-
-      // initialize the firewall: direct all port 80 traffic to us...
-
-      fd_stderr = UServices::getDevNull();
-
-      cmd.setArgument(3, "initialize");
-
-      (void) cmd.executeAndWait(0, -1, fd_stderr);
-
-      UServer_Base::logCommandMsgError(cmd.getCommand());
-
-      if (UEventTime::notZero() || login_timeout)
-         {
-         UTimer::init(true); // async...
-
-         if (UEventTime::notZero()) UTimer::insert(this, true);
-         }
-
-      peers = U_NEW(UHashMap<UModNoCatPeer*>);
-
-      peers->allocate();
-
-      access_point   = USocketExt::getNodeName();
-      status_content = U_NEW(UString(U_CAPACITY));
-
-      gateway.insert(0, UServer_Base::getIPAddress());
-
-      U_INTERNAL_DUMP("gateway = %.*S access_point = %.*S", U_STRING_TO_TRACE(gateway), U_STRING_TO_TRACE(access_point))
-
-      // users traffic
-
-      ipt = U_NEW(UIptAccount(UClientImage_Base::bIPv6));
-
-      // NB: needed because all instance try to close the log... (inherits from its parent)
-
-      unatexit = (UServer_Base::isLog() ? &ULog::close : 0);
-
-      // manage internal device...
-
-      sockp = U_MALLOC_VECTOR(num_radio, UPing);
-      vaddr = U_MALLOC_VECTOR(num_radio, UVector<UIPAddress*>);
-
-      for (uint32_t i = 0; i < num_radio; ++i)
-         {
-         vaddr[i] = U_NEW(UVector<UIPAddress*>);
-         sockp[i] = U_NEW(UPing(3000, UClientImage_Base::bIPv6));
-
-         if (arping)
-            {
-            sockp[i]->setLocal(UServer_Base::socket->localIPAddress());
-
-#        ifdef HAVE_NETPACKET_PACKET_H
-            U_INTERNAL_ASSERT(vInternalDevice[i].isNullTerminated())
-
-            sockp[i]->initArpPing(vInternalDevice[i].data());
-#        endif
-            }
-         }
-
-      pthis = this;
-
-      U_SRV_LOG("initialization of plugin success");
-
-      goto end;
+      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
 
-   U_SRV_LOG("initialization of plugin FAILED");
+   Url* url;
+   UString auth_ip;
+   UIPAddress addr;
 
-end:
+   // NB: get IP address of AUTH hosts...
+
+   for (uint32_t i = 0, n = vauth.size(); i < n; ++i)
+      {
+      url = U_NEW(Url(vauth[i]));
+
+      vauth_url.push(url);
+
+      auth_ip = url->getHost();
+
+      if (addr.setHostName(auth_ip, UClientImage_Base::bIPv6) == false)
+         {
+         U_SRV_LOG("unknown AUTH host %.*S", U_STRING_TO_TRACE(auth_ip));
+         }
+      else
+         {
+         (void) auth_ip.replace(addr.getAddressString());
+
+         U_SRV_LOG("AUTH host registered: %.*s", U_STRING_TO_TRACE(auth_ip));
+
+         vauth_ip.push(auth_ip);
+         }
+
+      url = U_NEW(Url(vauth[i]));
+
+      vinfo_url.push(url);
+      }
+
+   U_INTERNAL_ASSERT_EQUALS(vauth.size(), vauth_ip.size())
+
+   // crypto cmd
+
+   if (decrypt_cmd.empty() == false) pgp.set(decrypt_cmd, (char**)0);
+
+   U_INTERNAL_ASSERT(decrypt_key.isNullTerminated())
+
+   if (decrypt_key.empty() == false) UDES3::setPassword(decrypt_key.data());
+
+   // initialize the firewall: direct all port 80 traffic to us...
+
+   auth_ip = vauth_ip.join(U_CONSTANT_TO_PARAM(" "));
+
+   fw_env.snprintf_add("'AuthServiceIP=%.*s'\n", U_STRING_TO_TRACE(auth_ip));
+
+   UString command(100U);
+
+   command.snprintf("/bin/sh %.*s request", U_STRING_TO_TRACE(fw_cmd));
+
+   cmd.set(command, (char**)0);
+   cmd.setEnvironment(&fw_env);
+   cmd.setArgument(3, "initialize");
+
+   fd_stderr = UServices::getDevNull();
+
+   (void) cmd.executeAndWait(0, -1, fd_stderr);
+
+   UServer_Base::logCommandMsgError(cmd.getCommand());
+
+   if (UEventTime::notZero() || login_timeout)
+      {
+      UTimer::init(true); // async...
+
+      if (UEventTime::notZero()) UTimer::insert(this, true);
+      }
+
+   peers = U_NEW(UHashMap<UModNoCatPeer*>);
+
+   peers->allocate();
+
+   access_point   = USocketExt::getNodeName();
+   status_content = U_NEW(UString(U_CAPACITY));
+
+   gateway.snprintf("%.*s:%d", U_STRING_TO_TRACE(UServer_Base::getIPAddress()), UServer_Base::port);
+
+   U_INTERNAL_DUMP("gateway = %.*S access_point = %.*S", U_STRING_TO_TRACE(gateway), U_STRING_TO_TRACE(access_point))
+
+   // users traffic
+
+   ipt = U_NEW(UIptAccount(UClientImage_Base::bIPv6));
+
+   // NB: needed because all instance try to close the log... (inherits from its parent)
+
+   unatexit = (UServer_Base::isLog() ? &ULog::close : 0);
+
+   // manage internal device...
+
+   sockp = U_MALLOC_VECTOR(num_radio, UPing);
+   vaddr = U_MALLOC_VECTOR(num_radio, UVector<UIPAddress*>);
+
+   for (uint32_t i = 0; i < num_radio; ++i)
+      {
+      vaddr[i] = U_NEW(UVector<UIPAddress*>);
+      sockp[i] = U_NEW(UPing(3000, UClientImage_Base::bIPv6));
+
+      if (arping)
+         {
+         sockp[i]->setLocal(UServer_Base::socket->localIPAddress());
+
+#     ifdef HAVE_NETPACKET_PACKET_H
+         U_INTERNAL_ASSERT(vInternalDevice[i].isNullTerminated())
+
+         sockp[i]->initArpPing(vInternalDevice[i].data());
+#     endif
+         }
+      }
+
+   pthis = this;
+
+   UUDPSocket cClientSocket(UClientImage_Base::bIPv6);
+
+   auth_ip = vauth_ip[0];
+
+   if (cClientSocket.connectServer(auth_ip, 1001))
+      {
+      UString ip = UString(cClientSocket.getLocalInfo());
+
+      if (ip != UServer_Base::getIPAddress())
+         {
+         (void) UFile::writeToTmpl("/tmp/IP_ADDRESS", ip);
+
+         U_SRV_LOG("SERVER IP ADDRESS differ from IP address: %.*S to connect to AUTH: %.*S", U_STRING_TO_TRACE(ip), U_STRING_TO_TRACE(auth_ip));
+         }
+      }
+
+   U_SRV_LOG("initialization of plugin success");
+
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
@@ -1537,7 +1547,7 @@ int UNoCatPlugIn::handlerRequest()
 
       if (index_AUTH >= vauth_ip.size()) index_AUTH = 0;
 
-      url  = *(vauth_service_url[index_AUTH]);
+      url  = *(vauth_url[index_AUTH]);
       peer = (*peers)[ip_client];
 
       U_INTERNAL_DUMP("peer = %p", peer)
@@ -1648,7 +1658,7 @@ set_redirect_to_AUTH:
 
 redirect:
       UHTTP::setHTTPRedirectResponse(refresh, UString::getStringNull(), U_STRING_TO_PARAM(location));
-
+      
 end:
       UHTTP::setHTTPRequestProcessed();
 
@@ -1711,6 +1721,7 @@ const char* UNoCatPlugIn::dump(bool _reset) const
                   << "output               (UString                  " << (void*)&output               << ")\n"
                   << "extdev               (UString                  " << (void*)&extdev               << ")\n"
                   << "fw_cmd               (UString                  " << (void*)&fw_cmd               << ")\n"
+                  << "fw_env               (UString                  " << (void*)&fw_env               << ")\n"
                   << "gateway              (UString                  " << (void*)&gateway              << ")\n"
                   << "location             (UString                  " << (void*)&location             << ")\n"
                   << "dns_addr             (UString                  " << (void*)&dns_addr             << ")\n"
@@ -1726,12 +1737,10 @@ const char* UNoCatPlugIn::dump(bool _reset) const
                   << "cmd                  (UCommand                 " << (void*)&cmd                  << ")\n"
                   << "pgp                  (UCommand                 " << (void*)&pgp                  << ")\n"
                   << "ipt                  (UIptAccount              " << (void*)ipt                   << ")\n"
+                  << "vauth_url            (UVector<Url*>            " << (void*)&vauth_url            << ")\n"
                   << "vinfo_url            (UVector<Url*>            " << (void*)&vinfo_url            << ")\n"
-                  << "vlogout_url          (UVector<Url*>            " << (void*)&vlogout_url          << ")\n"
-                  << "vauth_service_url    (UVector<Url*>            " << (void*)&vauth_service_url    << ")\n"
+                  << "vauth                (UVector<UString>         " << (void*)&vauth                << ")\n"
                   << "vauth_ip             (UVector<UString>         " << (void*)&vauth_ip             << ")\n"
-                  << "vauth_login          (UVector<UString>         " << (void*)&vauth_login          << ")\n"
-                  << "vauth_logout         (UVector<UString>         " << (void*)&vauth_logout         << ")\n"
                   << "vLocalNetwork        (UVector<UString>         " << (void*)&vLocalNetwork        << ")\n"
                   << "vInternalDevice      (UVector<UString>         " << (void*)&vInternalDevice      << ")\n"
                   << "vInternalDeviceLabel (UVector<UString>         " << (void*)&vInternalDeviceLabel << ")\n"

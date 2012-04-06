@@ -88,12 +88,13 @@ public:
    // -----------------------------------------------------------------------------------------------------------------------------
    // UServer - configuration parameters
    // -----------------------------------------------------------------------------------------------------------------------------
-   // ENABLE_IPV6   flag indicating the use of ipv6
-   // SERVER        host name or ip address for the listening socket
-   // PORT          port number             for the listening socket
-   // SOCKET_NAME   file name               for the listening socket
-   // IP_ADDRESS    public ip address of host for the interface connected to the Internet (autodetected if not specified)
-   // ALLOWED_IP    list of comma separated client address for IP-based access control (IPADDR[/MASK])
+   // ENABLE_IPV6        flag indicating the use of ipv6
+   // SERVER             host name or ip address for the listening socket
+   // PORT               port number             for the listening socket
+   // SOCKET_NAME        file name               for the listening socket
+   // IP_ADDRESS         public ip address of host for the interface connected to the Internet (autodetected if not specified)
+   // ALLOWED_IP         list of comma separated client         address for IP-based access control (IPADDR[/MASK])
+   // ALLOWED_IP_PRIVATE list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
    //
    // LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
    // USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (DEFER_ACCEPT, QUICKACK)
@@ -148,6 +149,7 @@ public:
    static const UString* str_CA_PATH;
    static const UString* str_VERIFY_MODE;
    static const UString* str_ALLOWED_IP;
+   static const UString* str_ALLOWED_IP_PRIVATE;
    static const UString* str_SOCKET_NAME;
    static const UString* str_DOCUMENT_ROOT;
    static const UString* str_PLUGIN;
@@ -318,7 +320,11 @@ public:
 
       log = U_NEW(ULog(name, size));
 
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
       ULog::setServer(true); // NB: is always shared cause of possibility of fork() by parallelization...
+#  else
+      ULog::setServer(preforked_num_kids > 1);
+#  endif
       }
 
    static void      logCommandMsgError(const char* cmd);
@@ -347,9 +353,10 @@ protected:
            password,    // password for private key of server
            ca_file,     // locations of trusted CA certificates used in the verification
            ca_path,     // locations of trusted CA certificates used in the verification
-           allow_IP,    // Interpret a "HOST/BITS" IP mask specification. (Ex. 192.168.1.64/28)
            name_sock,   // name file for the listening socket
-           IP_address;  // IP address of this server
+           IP_address,  // IP address of this server
+           allow_IP,    // Interpret a "HOST/BITS" IP mask specification. (Ex. 192.168.1.64/28)
+           allow_IP_prv;// Interpret a "HOST/BITS" IP mask specification. (Ex. 192.168.1.64/28)
 
    static int port,           // the port number to bind to
               iBackLog,       // max number of ready to be delivered connections to accept()
@@ -367,6 +374,7 @@ protected:
    static UString* senvironment;
    static uint32_t start, count;
    static UVector<UIPAllow*>* vallow_IP;
+   static UVector<UIPAllow*>* vallow_IP_prv;
    static bool flag_loop, bssl, bipc, flag_use_tcp_optimization,
                accept_edge_triggered, set_realtime_priority, public_address;
 

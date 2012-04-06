@@ -286,13 +286,14 @@ UString UStringExt::prepareForEnvironmentVar(const char* s, uint32_t n)
 
    U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 
-   char c;
+   bool quoted;
    const char* p;
    const char* ptr;
+   const char* ptr1;
    uint32_t len, sz = 0;
-   const char* _end = s + n;
-
-   UString result(n + 100U);
+   UString result(n + (n / 4));
+   const char* _end = s + n - 1;
+   char c = 0, delimiter = (memchr(s, '\n', n) ? '\n' : ' ');
 
    char* str = result.data();
 
@@ -305,72 +306,96 @@ UString UStringExt::prepareForEnvironmentVar(const char* s, uint32_t n)
          continue;
          }
 
-      if (*s == '#')
+      U_INTERNAL_DUMP("s = %.*S", 10, s)
+
+      if (*s == '#') // skip line comment
          {
-         // skip line comment
+         s = (const char* restrict) memchr(s, delimiter, _end - s + 1);
 
-         s = (const char* restrict) memchr(s, '\n', _end - s);
+         if (s == 0) goto end;
 
-         if (s) continue;
-
-         goto end;
+         continue;
          }
 
       p = s;
-      s = (const char* restrict) memchr(p, '\n', _end - p);
+      s = (const char* restrict) memchr(s, '=', _end - s + 1);
 
-      ptr = (s ? s - 1 : (s = _end));
-      len = (s - p);
-        c = *ptr;
+      if (s == 0) goto end;
 
-      U_INTERNAL_DUMP("len = %u *ptr = %C", len, c)
+      U_INTERNAL_DUMP("name = %.*S", s - p, p)
 
-      U_INTERNAL_ASSERT_MAJOR(len, 0)
-      U_INTERNAL_ASSERT_DIFFERS(memchr(p, '=', len), 0)
+      ++s;
+      quoted = false;
 
-      while (u_isspace(c))
+      if (*p == '\'')
          {
-         --len;
+         s = (const char* restrict) memchr(s, '\'', _end - s + 1);
 
-         if (--ptr <= p) break;
+         if (s == 0) goto end;
 
-         c = *ptr;
+         len = (++s - p);
+
+         U_INTERNAL_DUMP("copy = %.*S", len, p)
          }
-
-      if (c != '\'')
+      else
          {
-         U_INTERNAL_ASSERT_DIFFERS(*p, '\'')
+         s = (const char* restrict) memchr(s, delimiter, _end - s + 1);
 
-         while (--ptr > p)
+         if (s == 0) s = _end;
+
+         ptr = s;
+
+         U_INTERNAL_DUMP("*ptr = %C", *ptr)
+
+         for (c = *ptr; u_isspace(c) && --ptr > p; c = *ptr) {}
+
+         len = (ptr - p) + 1;
+
+         U_INTERNAL_ASSERT_MAJOR(len, 0)
+
+         ptr1 = p;
+
+         while (++ptr1 < ptr)
             {
-            c = *ptr;
+            c = *ptr1;
 
-            if (u_isspace(c))
+            if (c == '=')
                {
-               str[sz++] = '\'';
+               U_INTERNAL_DUMP("name = %.*S value = %.*S", ptr1 - p, p, ptr - ptr1, ptr1+1)
+
+               while (++ptr1 < ptr)
+                  {
+                  c = *ptr1;
+
+                  if (c == ' ' ||
+                      c == '"')
+                     {
+                     quoted    = true;
+                     str[sz++] = '\'';
+
+                     break;
+                     }
+                  }
 
                break;
                }
 
-            if (c == '=') break;
+            U_INTERNAL_ASSERT(u_isname(c))
             }
-
-         U_INTERNAL_DUMP("len = %u c = %C", len, c)
-
-         U_INTERNAL_ASSERT_MAJOR(len, 0)
-         U_INTERNAL_ASSERT_EQUALS(memchr(p, '\'', len), 0)
          }
 
       (void) u_mem_cpy(str + sz, p, len);
 
       sz += len;
 
-      if (u_isspace(c)) str[sz++] = '\'';
-                        str[sz++] = '\n';
+      if (quoted) str[sz++] = '\'';
+                  str[sz++] = '\n';
       }
 
 end:
    result.size_adjust(sz);
+
+   U_INTERNAL_DUMP("result(%d) = %#.*S", sz, U_STRING_TO_TRACE(result))
 
    U_INTERNAL_ASSERT(result.invariant())
 
@@ -1118,14 +1143,31 @@ UString UStringExt::deflate(const UString& s, bool bheader) // .gz compress
 {
    U_TRACE(0, "UStringExt::deflate(%.*S,%b)", U_STRING_TO_TRACE(s), bheader)
 
+#ifdef USE_LIBZ
    // compress with zlib
 
-#ifdef USE_LIBZ
-   UString r(s.rep->_length * 2);
+   uint32_t sz = s.size();
 
-   r.rep->_length = u_gz_deflate(s.rep->str, s.rep->_length, r.rep->data(), bheader);
+   U_INTERNAL_DUMP("size = %u", sz)
 
+   UString r(sz + (sz / 10) + 12U); // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes 
+
+   r.rep->_length = u_gz_deflate(s.data(), sz, r.rep->data(), bheader);
+
+#ifdef DEBUG
    U_INTERNAL_DUMP("u_gz_deflate() = %d", r.rep->_length)
+
+   if (bheader)
+      {
+      uint32_t* psize_original = (uint32_t*)r.c_pointer(r.rep->_length - 4);
+
+#  if __BYTE_ORDER == __LITTLE_ENDIAN
+      U_INTERNAL_DUMP("size original = %u (le)",                 *psize_original)
+#  else
+      U_INTERNAL_DUMP("size original = %u (be)", u_invert_uint32(*psize_original))
+#  endif
+      }
+#endif
 
    U_INTERNAL_ASSERT(r.invariant())
 
@@ -1135,36 +1177,37 @@ UString UStringExt::deflate(const UString& s, bool bheader) // .gz compress
 #endif
 }
 
-UString UStringExt::gunzip(const UString& s, uint32_t sz) // .gz uncompress
+UString UStringExt::gunzip(const UString& s, uint32_t space) // .gz uncompress
 {
-   U_TRACE(0, "UStringExt::gunzip(%.*S,%u)", U_STRING_TO_TRACE(s), sz)
+   U_TRACE(0, "UStringExt::gunzip(%.*S,%u)", U_STRING_TO_TRACE(s), space)
 
-   if (sz == 0)
+   uint32_t sz     = s.size();
+   const char* ptr = s.data();
+
+   if (space == 0)
       {
-      sz        = s.size();
-      char* ptr = s.data();
-
       // check magic byte
 
-      if (U_MEMCMP(ptr, GZIP_MAGIC))
+      if (U_MEMCMP(ptr, GZIP_MAGIC) == 0)
          {
-         // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes
+         uint32_t* psize_original = (uint32_t*)(ptr + sz - 4); // read original size
 
-         sz += (sz / 10) + 12U;
-         }
-      else
-         {
-         // read original size
+#     if __BYTE_ORDER == __LITTLE_ENDIAN
+         space =                 *psize_original;
+#     else
+         space = u_invert_uint32(*psize_original);
+#     endif
 
-         ptr += sz - 4;
-         sz   = *((uint32_t*)ptr);
+         U_INTERNAL_DUMP("space = %u", space)
          }
+
+      if (space == 0) space = sz * 4;
       }
 
-   UString result(sz);
+   UString result(space);
 
 #ifdef USE_LIBZ // decompress with zlib
-   result.rep->_length = u_gz_inflate(U_STRING_TO_PARAM(s), result.rep->data());
+   result.rep->_length = u_gz_inflate(ptr, sz, result.rep->data());
 
    U_INTERNAL_DUMP("u_gz_inflate() = %d", result.rep->_length)
 #endif

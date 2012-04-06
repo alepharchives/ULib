@@ -243,8 +243,8 @@ void UClientImage_Base::manageRequestSize(bool request_buffer_resize)
 
    if (pipeline)
       {
-      U_INTERNAL_ASSERT_DIFFERS(pbuffer->isNull(),true)
-      U_INTERNAL_ASSERT_DIFFERS(pbuffer->same(*rbuffer),true)
+      U_INTERNAL_ASSERT_EQUALS(pbuffer->isNull(),false)
+      U_INTERNAL_ASSERT_EQUALS(pbuffer->same(*rbuffer),false)
 
       if (rstart == 0U) pipeline = false;
       else
@@ -321,8 +321,9 @@ void UClientImage_Base::initAfterGenericRead()
 {
    U_TRACE(0, "UClientImage_Base::initAfterGenericRead()")
 
-   U_INTERNAL_DUMP("pipeline = %b", pipeline)
+   U_INTERNAL_DUMP("pipeline = %b pbuffer = %.*S", pipeline, U_STRING_TO_TRACE(*pbuffer))
 
+// U_INTERNAL_ASSERT(pbuffer->isNull())
    U_INTERNAL_ASSERT_DIFFERS(pipeline, true)
 
    if (pbuffer->isNull() == false) pbuffer->clear();
@@ -423,7 +424,7 @@ int UClientImage_Base::handlerRead()
    rpointer = rbuffer->data();
 
 #ifndef U_HTTP_CACHE_REQUEST
-   UClientImage_Base::initAfterGenericRead();
+   initAfterGenericRead();
 #endif
 
 loop:
@@ -507,6 +508,10 @@ loop:
                {
                *pbuffer = rbuffer->substr(rstart);
 
+               // 18 -> "GET / HTTP/1.0\r\n\r\n"
+
+               if (pbuffer->size() < 18) pbuffer->reserve(U_CAPACITY);
+
                   body->clear();
                wbuffer->clear();
 
@@ -514,6 +519,8 @@ loop:
                }
             }
          }
+
+      pbuffer->clear();
       }
 
 end:
@@ -660,8 +667,10 @@ void UClientImage_Base::handlerDelete()
       UEventFd::fd = 0;
 
       U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, U_READ_IN)
+#  ifdef HAVE_ACCEPT4
       U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_CLOEXEC)  != 0),((socket->flags & O_CLOEXEC)  != 0))
       U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_NONBLOCK) != 0),((socket->flags & O_NONBLOCK) != 0))
+#  endif
       }
 #ifdef DEBUG
    else

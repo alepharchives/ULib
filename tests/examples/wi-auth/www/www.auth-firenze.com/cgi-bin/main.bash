@@ -483,14 +483,14 @@ anomalia() {
 	7)
 		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: info_notified_from_nodog() failure (anomalia 007)"
 
-		ask_nodog_to_logout_user
+		ask_nodog_to_logout_user $IP $MAC
 
 		return
 	;;
 	6)
 		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: info_notified_from_nodog() failure (anomalia 006) file_ctx=$FILE_CTX"
 
-		ask_nodog_to_logout_user
+		ask_nodog_to_logout_user $IP $MAC
 
 		return
 	;;
@@ -511,7 +511,7 @@ anomalia() {
 	;;
 
 	*)
-		chmod 777 $HOME/ANOMALIA
+		chmod 777 $DIR_WEB/$VIRTUAL_HOST/ANOMALIA
 
 		message_page "$SERVICE" "$SERVICE per anomalia interna. Contattare l'assistenza: $TELEFONO"
 	;;
@@ -542,29 +542,13 @@ main_page() {
 					  <script type=\"text/javascript\" src=\"js/curvycorners.js\"></script>
 					  <script type=\"text/javascript\" src=\"js/effetti.js\"></script>"
 
-		FMT=`cat $DIR_TEMPLATE/login.tmpl`
+		FMT=`cat $DIR_TEMPLATE/login.tmpl 2>/dev/null`
 
 		BODY_SHTML=`printf "$FMT" $LOGIN_URL "$1" "$2" "$3" "$4" "$5" "$6" "$7" 2>/dev/null`
 
-	elif [ "$VIRTUAL_HOST" = "www.auth-firenze.com" ]; then
+	elif [ "$VIRTUAL_HOST" = "wifi-aaa.comune.fi.it" ]; then
 
-		if [ "$REQUEST_URI" = "/login" ]; then
-
-			if [ -r $DIR_TEMPLATE/main.tmpl ]; then
-
-				BODY_SHTML=`cat $DIR_TEMPLATE/main.tmpl 2>/dev/null`
-
-				BODY_SHTML=`printf "$BODY_SHTML" "http://$HTTP_HOST/main?$QUERY_STRING" 2>/dev/null`
-
-				return
-			fi
-
-		elif [ "$REQUEST_URI" = "/main" ]; then
-
-			REQUEST_URI=/login
-		fi
-
-		get_user_context_connection
+		get_user_context_connection "" "$1"
 
 		if [ -n "$GATEWAY" ]; then
 
@@ -628,6 +612,19 @@ main_page() {
 			fi
 		fi
 
+		if [ "$REQUEST_URI" = "/login" -a -r $DIR_TEMPLATE/main.tmpl ]; then
+
+			mkdir -p $DIR_SSI
+
+			FMT=`cat $DIR_TEMPLATE/main.tmpl 2>/dev/null`
+
+			FILE_RESPONSE_HTML=$DIR_SSI/response.html
+
+			printf "$FMT" "http://$HTTP_HOST/main?$QUERY_STRING" >$FILE_RESPONSE_HTML
+
+			return
+		fi
+
 		CA_CERT_URL="$HTTP_HOST/CA/ServerCA.cer"
 
 		if [ -n "$BROWSER_MSIE" ]; then
@@ -638,6 +635,19 @@ main_page() {
 			HEAD_HTML="$HEAD_HTML<link type=\"text/css\" href=\"css/button.css\" rel=\"stylesheet\">"
 		elif [ "$REQUEST_URI" = "/login" ]; then
 			HEAD_HTML="<link type=\"text/css\" href=\"css/firenze.css\" rel=\"stylesheet\">"
+		elif [ "$REQUEST_URI" = "/main" ]; then
+
+			mkdir -p $DIR_SSI
+
+			REQUEST_URI=/login
+
+			FMT=`cat $DIR_TEMPLATE/login.tmpl 2>/dev/null`
+
+			FILE_RESPONSE_HTML=$DIR_SSI/response.html
+
+			printf "$FMT" "$LOGIN_URL" "$1" "$2" "$3" "$4" "$5" "$6" "$7" >$FILE_RESPONSE_HTML
+
+			return
 		fi
 
 		# post
@@ -646,7 +656,7 @@ main_page() {
 		# registrazione
 		# bottoni 1-2-3-4
 
-		print_page $LOGIN_URL \
+		print_page "$LOGIN_URL" \
 					  "$1" "$2" "$3" "$4" "$5" "$6" "$7" \
 					  $CA_CERT_URL \
 					  $REGISTRAZIONE_URL \
@@ -660,18 +670,17 @@ main_page() {
 get_user_context_connection() {
 
 	# $1 -> uid
+	# $2 -> mac
 
-	if [ $# -eq 1 ]; then
+	if [ -n "$1" ]; then
 		FILE_CTX=$DIR_CTX/$1.ctx
 	else
 		FILE_CTX=`grep -l $REMOTE_ADDR $DIR_CTX/*.ctx 2>/dev/null`
 	fi
 
-	# -------------------------------------
 	# data connection context saved on file
 	# -------------------------------------
 	# ap uid gateway mac ip
-	# -------------------------------------
 
 	if [ -n "$FILE_CTX" -a -s "$FILE_CTX" ]; then
 		read AP UUID GATEWAY MAC IP < $FILE_CTX 2>/dev/null
@@ -695,7 +704,7 @@ send_ticket_to_nocat() {
 	# ------------------------
 
 	SIGNED_DATA_FILE=/tmp/signed.$$
- 	GPG_CMD="gpg --homedir=$HOME/gpg --keyring=$HOME/gpg/trustdb.gpg --sign --armor --no-tty"
+ 	GPG_CMD="gpg --homedir=$DIR_ROOT/gpg --keyring=$DIR_ROOT/gpg/trustdb.gpg --sign --armor --no-tty"
 
 	# ----------------------------------------------------------
 	# NoCat auth message format (must be PGP signed & encrypted) 
@@ -748,12 +757,12 @@ send_ticket_to_nodog() {
 	check_if_user_is_connected "$1" "$2" "$4" "$7" "$8"
 
 	if [ "$OP" = "RENEW" ]; then
-		ask_nodog_to_logout_user
+		ask_nodog_to_logout_user $IP $MAC
 	fi
 
-	# --------------------------------------------------------------------------
-	# SAVE REAL UID AND POLICY ON FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
-	# --------------------------------------------------------------------------
+	# ------------------------------------------------------------------------------------
+	# SAVE REAL UID AND POLICY ON FILE (UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC)
+	# ------------------------------------------------------------------------------------
 	FILE_UID=$DIR_REQ/$8.uid
 
 	if [ -z "$WA_UID" ]; then
@@ -888,7 +897,7 @@ user_has_valid_MAC() {
 
 	# List of allowed MAC
 
-	FILE=$HOME/etc/$VIRTUAL_HOST/.MAC_WHITE_LIST
+	FILE=$DIR_ROOT/etc/$VIRTUAL_HOST/.MAC_WHITE_LIST
 
 	if [ -s $FILE ]; then
 
@@ -912,7 +921,7 @@ check_if_user_connected_to_AP_NO_CONSUME() {
 
 	# List of Access Point with NO CONSUME
 
-	FILE=$HOME/etc/$VIRTUAL_HOST/.AP_NO_CONSUME
+	FILE=$DIR_ROOT/etc/$VIRTUAL_HOST/.AP_NO_CONSUME
 
 	if [ -s $FILE ]; then
 
@@ -946,7 +955,9 @@ write_to_LOG() {
 	# --------------------------------------------------------------------
 	FILE_UID=$DIR_REQ/$1.uid
 
-	read UUID_TO_LOG POLICY < $FILE_UID 2>/dev/null
+	if [ -s $FILE_UID ]; then
+		read UUID_TO_LOG POLICY < $FILE_UID 2>/dev/null
+	fi
 
 	if [ -z "$UUID_TO_LOG" ]; then
 		UUID_TO_LOG=$1
@@ -1054,13 +1065,10 @@ END
 
 load_policy() {
 
-	USER_MAX_TIME=0
-	USER_MAX_TRAFFIC=0
-
-	if [ -n "$1" ]; then
-		# --------------------------------------------------------------------
-		# GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
-		# --------------------------------------------------------------------
+	if [ -n "$1" -a -s "$1" ]; then
+		# ------------------------------------------------------------------------
+		# GET POLICY FROM FILE (UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC)
+		# ------------------------------------------------------------------------
 		read UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC < $1 2>/dev/null
 	fi
 
@@ -1086,8 +1094,11 @@ load_policy() {
 	if [ -z "$MAX_TIME" ]; then
 		MAX_TIME=0
 	fi
-	if [ $USER_MAX_TIME -ne $MAX_TIME ]; then
-		MAX_TIME=$USER_MAX_TIME
+
+	if [ -n "$USER_MAX_TIME" ]; then
+		if [ $USER_MAX_TIME -ne $MAX_TIME ]; then
+			MAX_TIME=$USER_MAX_TIME
+		fi
 	fi
 	# --------------------------------------------------------------------
 	# TRAFFIC POLICY
@@ -1095,8 +1106,11 @@ load_policy() {
 	if [ -z "$MAX_TRAFFIC" ]; then
 		MAX_TRAFFIC=0
 	fi
-	if [ $USER_MAX_TRAFFIC -ne $MAX_TRAFFIC ]; then
-		MAX_TRAFFIC=$USER_MAX_TRAFFIC
+
+	if [ -n "$USER_MAX_TRAFFIC" ]; then
+		if [ $USER_MAX_TRAFFIC -ne $MAX_TRAFFIC ]; then
+			MAX_TRAFFIC=$USER_MAX_TRAFFIC
+		fi
 	fi
 	# --------------------------------------------------------------------
 }
@@ -1129,27 +1143,6 @@ save_connection_context() {
 
 	write_FILE "$1 $2 $3 $4 $5" $FILE_CTX
 	# --------------------------------------------------------------------
-}
-
-get_user_context_connection() {
-
-	# $1 -> uid
-
-	if [ $# -eq 1 ]; then
-		FILE_CTX=$DIR_CTX/$1.ctx
-	else
-		FILE_CTX=`grep -l $REMOTE_ADDR $DIR_CTX/*.ctx 2>/dev/null`
-	fi
-
-	# data connection context saved on file
-	# -------------------------------------
-	# ap uid gateway mac ip
-
-	if [ -n "$FILE_CTX" -a -s "$FILE_CTX" ]; then
-		read AP UUID GATEWAY MAC IP < $FILE_CTX 2>/dev/null
-	else
-		unset FILE_CTX AP UUID GATEWAY MAC IP
-	fi
 }
 
 check_if_user_is_connected() {
@@ -1224,7 +1217,7 @@ ask_nodog_to_logout_user() {
 	# -----------------------------------------------------------------------------
 	# NB: we need PREFORK_CHILD > 2
 	# -----------------------------------------------------------------------------
-	SIGNED_DATA="ip=$IP&mac=$MAC"
+	SIGNED_DATA="ip=$1&mac=$2"
 
 	sign_data
 
@@ -1233,7 +1226,7 @@ ask_nodog_to_logout_user() {
 
 sign_data() {
 
-	SIGNED_DATA=`echo -n -E "$SIGNED_DATA" | openssl des3 -pass pass:200912281747 -a -e | tr -d '\n'`
+	SIGNED_DATA=`echo -n -E "$SIGNED_DATA" | openssl des3 -pass pass:vivalatopa -a -e | tr -d '\n'`
 }
 
 info_notified_from_nodog() {
@@ -1281,7 +1274,7 @@ info_notified_from_nodog() {
 
 	if [ "$CONSUME_ON" = "true" ]; then
 
-		load_policy $DIR_REQ/$5.uid # GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
+		load_policy $DIR_REQ/$5.uid # GET POLICY FROM FILE (UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC)
 
 		FILE_CNT=$DIR_CNT/$POLICY/$UUID_TO_LOG
 
@@ -1317,7 +1310,7 @@ info_notified_from_nodog() {
 
 				LOGOUT=true
 
-				ask_nodog_to_logout_user
+				ask_nodog_to_logout_user $IP $MAC
 			fi
 			# ---------------------------------------------------------
 		fi
@@ -1360,7 +1353,7 @@ info_notified_from_nodog() {
 
 				LOGOUT=true
 
-				ask_nodog_to_logout_user
+				ask_nodog_to_logout_user $IP $MAC
 			fi
 			# ---------------------------------------------------------
 		fi
@@ -1399,11 +1392,11 @@ ask_nodog_to_check_for_users_info() {
 	# -----------------------------------------------------------------------------
 	# NB: we need PREFORK_CHILD > 2
 	# -----------------------------------------------------------------------------
-	send_request_to_nodog "check" $FILE_TMP "-i"
+	send_request_to_nodog "check" $TMPFILE "-i"
 
-	if [ -s $FILE_TMP ]; then
+	if [ -s "$TMPFILE" ]; then
 
-		read HTTP_VERSION HTTP_STATUS HTTP_DESCR < $FILE_TMP 2>/dev/null
+		read HTTP_VERSION HTTP_STATUS HTTP_DESCR < $TMPFILE 2>/dev/null
 
 		if [ "$HTTP_STATUS" = "204" ]; then # 204 - HTTP_NO_CONTENT
 
@@ -1451,19 +1444,18 @@ logout() {
 
 	read AP GATEWAY MAC IP REDIRECT TIMEOUT TOKEN UUID < $REQ_FILE 2>/dev/null
 
-	if [	 -z "$UUID" -o \
-		  ! -s $DIR_CTX/$UUID.ctx ]; then
+	if [ -z "$UUID" -o ! -s $DIR_CTX/$UUID.ctx ]; then
 		unset BACK_TAG
 
 		message_page "Utente non connesso" "Utente non connesso"
 	fi
 
-	# --------------------------------------------------------------------
-	# GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
-	# --------------------------------------------------------------------
+	# ------------------------------------------------------------------------
+	# GET POLICY FROM FILE (UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC)
+	# ------------------------------------------------------------------------
 	load_policy $DIR_REQ/$UUID.uid
 
-	ask_nodog_to_logout_user
+	ask_nodog_to_logout_user $IP $MAC
 }
 
 logout_request() {
@@ -1472,8 +1464,7 @@ logout_request() {
 
 	PARAM=""
 
-	if [ -s $DIR_CNT/$POLICY/$UUID_TO_LOG.timeout -o \
-		  -s $DIR_CNT/$POLICY/$UUID_TO_LOG.traffic ]; then
+	if [ -s $DIR_CNT/$POLICY/$UUID_TO_LOG.timeout -o -s $DIR_CNT/$POLICY/$UUID_TO_LOG.traffic ]; then
 
 		PARAM="<table class=\"centered\" border=\"1\">
 				<tr>
@@ -1525,7 +1516,7 @@ logout_notified_from_nodog() {
 
 	info_notified_from_nodog "$@"
 
-	rm -f $TMPFILE
+ 	rm -f $TMPFILE
 }
 
 get_timeout_secs() {
@@ -1573,6 +1564,13 @@ login_request() {
 		message_page "Login" "Sei già loggato! (login_request)"
 	fi
 
+	if [ -z "$9" -o \
+		  -z "${10}" ]; then
+		unset BACK_TAG
+
+		message_page "Impostare utente e/o password" "Impostare utente e/o password"
+	fi
+
 	if [ -n "$7" -a "$7" != "$AP" ]; then
 		login_with_problem
 	fi
@@ -1597,41 +1595,66 @@ login_request() {
 
 	UUID_TO_APPEND=1
 
-	if [ "$8" = "paas" ]; then
+	if [ "$8" != "10_piazze" -a \
+		  "$8" != "auth_service" ]; then
+		unset BACK_TAG
 
-		OP=AUTH_PAAS
+		message_page "Errore" "Errore Autorizzazione - dominio sconosciuto: $8"
+	fi
 
-		# TODO:
-		# ---------------------------------------------------------------------------------
-		# ask_to_LDAP ldapsearch ...
-		# ---------------------------------------------------------------------------------
+	# Check 1: Wrong user and/or password
 
-		if [ ! -s $TMPFILE.out ]; then
-			unset BACK_TAG
+	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waLogin=$9"
 
-			message_page "Errore" "Errore Autorizzazione dominio PASS"
-		fi
+	if [ -s $TMPFILE.out ]; then
+		PASSWORD=`awk '/^waPassword/{print $2}' $TMPFILE.out 2>/dev/null`
+	fi
 
-	elif [ "$8" = "10_piazze" ]; then
+	if [ -n "$PASSWORD" -a \
+		  "${PASSWORD:0:5}" = "{MD5}" ]; then
+
+		  MD5SUM=`/usr/sbin/slappasswd -h {MD5} -s ${10}`
+
+		  if [ $PASSWORD != "$MD5SUM" ]; then
+				unset BACK_TAG
+
+				message_page "Utente e/o Password errato/i" "Credenziali errate!"
+		  fi
 
 		OP=PASS_AUTH
+	else
 
-		if [ -z "$9" -o -z "${10}" ]; then
-			unset BACK_TAG
-
-			message_page "Impostare utente e/o password" "Impostare utente e/o password"
-		fi
-
-		# Check 1: Wrong user and/or password
-
-		ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "(&(waLogin=$9)(waPassword=${10}))"
-
-		if [ ! -s $TMPFILE.out ]; then
+		if [ "$8" != "auth_service" ]; then
 			unset BACK_TAG
 
 			message_page "Utente e/o Password errato/i" "Credenziali errate!"
 		fi
 
+		# $9  -> uid
+		# $10 -> password
+
+		AUTH_CMD=`printf "$FMT_AUTH_CMD" "$9" "${10}" 2>/dev/null`
+
+		RESPONSE=`$AUTH_CMD 2>/dev/null`
+
+		if [ $? -eq 1 ]; then
+			unset BACK_TAG
+
+			message_page "Utente e/o Password errato/i" "Credenziali errate!"
+		fi
+
+		if [ $? -gt 1 ]; then
+			unset BACK_TAG
+
+			message_page "Errore" "Errore Autorizzazione: $RESPONSE"
+		fi
+
+		POLICY=DAILY
+
+		OP=AUTH_$RESPONSE
+	fi
+
+	if [ "$OP" = "PASS_AUTH" ]; then
 		# --------------------------------------------------------------------
 		# GET USER FOR THIS CARD
 		# --------------------------------------------------------------------
@@ -1664,8 +1687,11 @@ login_request() {
 		if [ -n "$WA_POLICY" ]; then
 			POLICY=$WA_POLICY
 		fi
+	fi
 
-		load_policy
+	load_policy
+
+	if [ "$OP" = "PASS_AUTH" ]; then
 
 		# Check 4: Not After
 
@@ -1727,12 +1753,9 @@ dn: $DN
 changetype: modify
 add: waNotAfter
 waNotAfter: $NOT_AFTER
+-
 "
 		fi
-	else
-		unset BACK_TAG
-
-		message_page "Errore" "Errore Autorizzazione - dominio sconosciuto: $8"
 	fi
 
 	# redirect back to the gateway appending a signed ticket that will signal NoDog to unlock the firewall...
@@ -1837,6 +1860,8 @@ registrazione_form() {
 
 	load_value_session
 
+	CONNECTION_CLOSE=1
+
 	# --------------------------------------
 	# value to skip: (input type select)
 	# --------------------------------------
@@ -1859,11 +1884,9 @@ registrazione_form() {
 	# rilasciato il	 = "${v14}"
 	# cellulare			 = "${v16}"
 
-	CONNECTION_CLOSE=1
-
 	TITLE_TXT="Registrazione utente"
-	HEAD_HTML="<link type=\"text/css\" href=\"css/style.css\" rel=\"stylesheet\">
-				  <script type=\"text/javascript\" src=\"js/livevalidation_standalone.js\"></script>"
+	HEAD_HTML="<link type=\"text/css\" href=\"css/livevalidation.css\" rel=\"stylesheet\">
+				  <script type=\"text/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>"
 
 	print_page $REGISTRAZIONE_URL \
 			"$v1" \
@@ -1879,7 +1902,7 @@ registrazione_form() {
 			"${v13}" \
 			"${v14}" \
 			"${v16}" \
-			"iframe/tutela_dati.txt"
+			"`cat ../iframe/tutela_dati.txt`"
 }
 
 save_value_session() {
@@ -1953,12 +1976,46 @@ check_phone_number() {
 
 registrazione_request() {
 
-	load_policy
+	if [ "$VIRTUAL_HOST" != "wifi-aaa.comune.fi.it" ]; then
 
-	check_phone_number "${15}${16}" # numero cellulare
+		PASSWORD=`apg -a 1 -M n -n 1 -m 6 -x 6` # generate PASSWORD
+
+		check_phone_number "${15}${16}" # numero cellulare
+	else
+
+		# $1 -> nome
+		# $2 -> cognome
+		# $3 -> luogo_di_nascita
+		# $4 -> data_di_nascita
+		# $5 -> cellulare_prefisso
+		# $6 -> telefono_cellulare
+		# $7 -> password
+		# $8 -> password_conferma
+		# $9 -> submit
+
+		if [ "$7" != "$8" ]; then
+			message_page "Conferma Password errata" "Conferma Password errata"
+		fi
+
+							 # egrep "[ABCDEFGHIJKLMNOPQRSTUVXYZ]" |
+		RESULT=`echo $7 | egrep "^.{8,255}" | \
+							   egrep "[abcdefghijklmnopqrstuvxyz"] | \
+							   egrep "[0-9]"`
+
+		# if the result string is empty, one of the conditions has failed
+
+		if [ -z "$RESULT" ]; then
+			message_page "Password non conforme" \
+							 "Password non conforme: deve contenere almeno una lettera minuscola ed un numero ed essere di almeno 8 caratteri"
+		fi
+
+		PASSWORD=`/usr/sbin/slappasswd -h {MD5} -s $7`
+
+		check_phone_number "${5}${6}"   # numero cellulare
+	fi
 
 	if [ $EXIT_VALUE -ne 0 ]; then
-		message_page "$CALLER_ID" "$CALLER_ID"
+		message_page "$CALLER_ID check fallito" "$CALLER_ID check fallito"
 	fi
 
 	TMP_FORM_FILE=$DIR_REG/$CALLER_ID.reg
@@ -1982,6 +2039,10 @@ waCell: $CALLER_ID
 
 	WA_CARDID=${UUID:24:12}
 
+	# Update card with a new LOGIN/PASSWORD
+
+	load_policy
+
 	ask_to_LDAP ldapadd "$LDAP_CARD_PARAM" "
 dn: waCid=$UUID,$WIAUTH_CARD_BASEDN
 objectClass: top
@@ -1989,19 +2050,28 @@ objectClass: waCard
 waCid: $UUID
 waPin: $CALLER_ID
 waCardId: $WA_CARDID
+waLogin: $CALLER_ID
+waPassword: $PASSWORD
 waRevoked: FALSE
-waValidity: 180
+waValidity: 9403
 waPolicy: $POLICY
+waTime: $MAX_TIME
+waTraffic: $MAX_TRAFFIC
 "
 
 	if [ $EXIT_VALUE -eq 68 ]; then
 		message_page "Utente già registrato" "Utente già registrato (ldap branch card)"
 	fi
 
-	TITLE_TXT="Registrazione effettuata"
 	REQUEST_URI=post_registrazione
 
-	print_page $CALLER_ID "polling_attivazione" $CALLER_ID
+	TITLE_TXT="Registrazione effettuata"
+
+	if [ "$VIRTUAL_HOST" = "wifi-aaa.comune.fi.it" ]; then
+		print_page $CALLER_ID "$7"		    "polling_attivazione" $CALLER_ID "$7"
+	else
+		print_page $CALLER_ID "$PASSWORD" "polling_attivazione" $CALLER_ID
+	fi
 }
 
 card_activation() {
@@ -2043,19 +2113,11 @@ card_activation() {
 
 	WA_CID=`awk '/^waCid/{print $2}'	$TMPFILE.out 2>/dev/null`
 
-	PASSWORD=`apg -a 1 -M n -n 1 -m 6 -x 6` # generate PASSWORD
-
-	# Update card with a new LOGIN/PASSWORD
+	# Update card
 
 	ask_to_LDAP ldapmodify "-c $LDAP_CARD_PARAM" "
-dn: waCid=$WA_CID,ou=cards,o=unwired-portal
+dn: waCid=$WA_CID,$WIAUTH_CARD_BASEDN
 changetype: modify
-add: waLogin
-waLogin: $CALLER_ID
--
-add: waPassword
-waPassword: $PASSWORD
--
 add: waUsedBy
 waUsedBy: $CALLER_ID
 -
@@ -2069,6 +2131,11 @@ waUsedBy: $CALLER_ID
 	fi
 
 	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: card_activation: Login    <$CALLER_ID>"
+
+	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waLogin=$CALLER_ID"
+
+	PASSWORD=`awk '/^waPassword/{print $2}'	$TMPFILE.out 2>/dev/null`
+
 	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: card_activation: Password <$PASSWORD>"
 
 	BODY_SHTML="OK"
@@ -2097,7 +2164,7 @@ execute_recovery() {
 	get_user_context_connection $1
 
 	if [ -n "$AP" ]; then
-		ask_nodog_to_logout_user
+		ask_nodog_to_logout_user $IP $MAC
 	fi
 
 	ask_to_LDAP ldapdelete "$LDAP_CARD_PARAM" "$CARD_DN"
@@ -2123,14 +2190,16 @@ execute_recovery() {
 
 stato_utente() {
 
-	get_user_context_connection
+	# $1 -> mac
+
+	get_user_context_connection "" $1 
 
 	if [ -z "$GATEWAY" ]; then
 		message_page "Utente non connesso" "Utente non connesso"
 	else
 		get_user_nome_cognome
 
-		ask_nodog_status_user
+		ask_nodog_status_user $REMOTE_ADDR $MAC
 
 		TITLE_TXT="Stato utente"
 
@@ -2251,7 +2320,6 @@ status_network() {
 
 		while read AP UUID GATEWAY MAC IP
 		do
-
 			RIGA=`printf "$BODY" $UUID $IP $MAC $AP $AP 2>/dev/null`
 
 			OUTPUT=`echo "$OUTPUT"; echo "$RIGA" 2>/dev/null`
@@ -2274,20 +2342,22 @@ update_ap_list() {
 	# $1 -> ap
 	# $2 -> public address to contact the access point
 
-	ACCESS_POINT=`grep "^$1 " $ACCESS_POINT_LIST.up 2>/dev/null`
+	ACCESS_POINT_NAME=${1##*@}
+
+	ACCESS_POINT=`grep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.up 2>/dev/null`
 
 	if [ -z "$ACCESS_POINT" ]; then
 
 		# si aggiunge access point alla lista di quelli contattabili...
 
-		append_to_FILE "$1 $2" $ACCESS_POINT_LIST.up
+		append_to_FILE "$ACCESS_POINT_NAME $2" $ACCESS_POINT_LIST.up
 	fi
 
-	ACCESS_POINT=`grep "^$1 " $ACCESS_POINT_LIST.down 2>/dev/null`
+	ACCESS_POINT=`grep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.down 2>/dev/null`
 
 	if [ -n "$ACCESS_POINT" ]; then
 
-		LIST=`grep -v "^$1 " $ACCESS_POINT_LIST.down 2>/dev/null`
+		LIST=`grep -v "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.down 2>/dev/null`
 
 		if [ -n "$LIST" ]; then
 
@@ -2301,6 +2371,9 @@ update_ap_list() {
 }
 
 start_ap() {
+
+	# for safety...
+	mkdir -p $DIR_POLICY $DIR_AP $DIR_CTX $DIR_CNT $DIR_REQ $DIR_CLIENT $DIR_REG $DIR_TEMPLATE $HISTORICAL_LOG_DIR
 
 	# $1 -> ap
 	# $2 -> public address to contact the access point
@@ -2352,9 +2425,9 @@ start_ap() {
 		rm -f $LIST_SAFE
 	fi
 
-	update_ap_list "$1" "$2"
-
 	BODY_SHTML="OK"
+
+	update_ap_list "$1" "$2"
 }
 
 get_users_info() {
@@ -2369,7 +2442,8 @@ get_users_info() {
 
 	NUM_ACCESS_POINT=`wc -l < $ACCESS_POINT_LIST.up 2>/dev/null`
 
-	if [ $NUM_ACCESS_POINT -gt 0 ]; then
+	if [ -n "$NUM_ACCESS_POINT" -a \
+				$NUM_ACCESS_POINT -gt 0 ]; then
 
 		TMPFILE=/tmp/nodog_check.$$
 
@@ -2377,13 +2451,12 @@ get_users_info() {
 		do
 			# we request nodog to check for users logout or disconnect...
 
-			ask_nodog_to_check_for_users_info
+			ask_nodog_to_check_for_users_info &
 
 		done < $ACCESS_POINT_LIST.up
 	fi
 
 	HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
-	HTTP_RESPONSE_HEADER="X-Sendfile: $TMPFILE\r\n"
 }
 
 status_ap() {
@@ -2427,10 +2500,7 @@ reset_policy() {
 polling_attivazione() {
 
 	# $1 WA_CELL
-
-	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waUsedBy=$1" waPassword
-
-	WA_PASSWORD=`grep 'waPassword:' $TMPFILE.out | cut -d':' -f2 2>/dev/null`
+	# $2 password
 
 	INFO=""
 	LOGIN_FORM=""
@@ -2438,7 +2508,23 @@ polling_attivazione() {
 	HEAD_HTML="<meta http-equiv=\"refresh\" content=\"3\">"
 	CREDENTIALS_TAG="<p class=\"bigger\">&nbsp;</p><p class=\"bigger\">&nbsp;</p>"
 
-	if [ -n "$WA_PASSWORD" ]; then
+	# ldapsearch -LLL -b ou=cards,o=unwired-portal -x -D cn=admin,o=unwired-portal -w programmer -H ldap://127.0.0.1
+
+	if [ "$VIRTUAL_HOST" = "wifi-aaa.comune.fi.it" ]; then
+		ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waLogin=$1"
+
+		WA_PASSWORD=$2
+
+		ATTIVATO=`awk '/^waUsedBy/{print $2}' $TMPFILE.out 2>/dev/null`
+	else
+		ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waUsedBy=$1" waPassword
+
+		WA_PASSWORD=`awk '/^waPassword/{print $2}' $TMPFILE.out 2>/dev/null`
+
+		ATTIVATO="$WA_PASSWORD"
+	fi
+
+	if [ -n "$ATTIVATO" ]; then
 
 		INFO="
 <p>Ti suggeriamo di prendere nota: </p>
@@ -2451,15 +2537,27 @@ polling_attivazione() {
 <br/>
 <p class=\"bigger\">Ora puoi accedere al servizio cliccando il bottone</p>
 "
+	# $1	-> mac
+	# $2  -> ip
+	# $3	-> redirect
+	# $4	-> gateway
+	# $5	-> timeout
+	# $6	-> token
+	# $7	-> ap
+	# $8  -> realm (10_piazze, paas, ...)
+	# $9  -> uid
+	# $10 -> password
+	# $11 -> bottone
+
 		LOGIN_FORM="
 <form action=\"/login\" method=\"post\">
 <input type=\"hidden\" name=\"mac\" value=\"\">
-<input type=\"hidden\" name=\"token\" value=\"\">
-<input type=\"hidden\" name=\"redirect\" value=\"\">
-<input type=\"hidden\" name=\"timeout\" value=\"\">
-<input type=\"hidden\" name=\"gateway\" value=\"\">
-<input type=\"hidden\" name=\"ap\" value=\"\">
 <input type=\"hidden\" name=\"ip\" value=\"\">
+<input type=\"hidden\" name=\"redirect\" value=\"\">
+<input type=\"hidden\" name=\"gateway\" value=\"\">
+<input type=\"hidden\" name=\"timeout\" value=\"\">
+<input type=\"hidden\" name=\"token\" value=\"\">
+<input type=\"hidden\" name=\"ap\" value=\"\">
 <input type=\"hidden\" name=\"realm\" value=\"10_piazze\" />
 <input type=\"hidden\" name=\"uid\" value=\"$1\">
 <input type=\"hidden\" name=\"pass\" value=\"$WA_PASSWORD\">
@@ -2467,9 +2565,9 @@ polling_attivazione() {
 </form>
 "
 
-		HEAD_HTML=""
+		HEAD_HTML="<!-- -->"
 		TITLE="LE TUE CREDENZIALI SONO:"
-		CREDENTIALS_TAG="<p class=\"bigger\">Utente: $1</p><p class=\"bigger\">Password: $WA_PASSWORD</p>"
+		CREDENTIALS_TAG="<p class=\"bigger\">Utente: $1</p><!-- <p class=\"bigger\">Password: $WA_PASSWORD</p> -->"
 	fi
 
 	TITLE_TXT="Verifica attivazione"
@@ -2478,8 +2576,6 @@ polling_attivazione() {
 }
 
 redirect_if_not_https() {
-
-	return
 
  	if [ "$HTTPS" != "on" ]; then
  		HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
@@ -2525,52 +2621,42 @@ write_SSI() {
 		HTTP_RESPONSE_HEADER="Set-Cookie: TODO[ $SET_COOKIE 4320 ]\r\n$HTTP_RESPONSE_HEADER" # 180 days
 	fi
 
-	if [ -n  "$HTTP_RESPONSE_HEADER" ]; then
-		echo \"HTTP_RESPONSE_HEADER=$HTTP_RESPONSE_HEADER\"
-	fi
-
-	if [ -n "$HTTP_RESPONSE_BODY" ]; then
-		echo  \"HTTP_RESPONSE_BODY=$HTTP_RESPONSE_BODY\"
+	if [ -n "$FILE_RESPONSE_HTML" ]; then
+		echo \"FILE_RESPONSE_HTML=$FILE_RESPONSE_HTML\"
 	else
-		if [ ! -d $DIR_SSI ]; then
+		if [ -n  "$HTTP_RESPONSE_HEADER" ]; then
+			echo \"HTTP_RESPONSE_HEADER=$HTTP_RESPONSE_HEADER\"
+		fi
+
+		if [ -n "$HTTP_RESPONSE_BODY" ]; then
+			echo  \"HTTP_RESPONSE_BODY=$HTTP_RESPONSE_BODY\"
+		else
 			mkdir -p $DIR_SSI
+
+			if [ -z "$BODY_SHTML" ]; then
+
+				TITLE_TXT="400 Bad Request"
+				HEAD_HTML=""
+				BODY_SHTML="<h1>Bad Request</h1><p>Your browser sent a request that this server could not understand<br></p>"
+
+				EXIT_VALUE=1
+			fi
+
+			echo -n -e "$HEAD_HTML"	 > $FILE_HEAD_HTML
+			echo -n -e "$BODY_SHTML" > $FILE_BODY_SHTML
+
+			if [ -z "$TITLE_TXT" ]; then
+				TITLE_TXT="Firenze WiFi"
+			fi
+
+			echo -e "'TITLE_TXT=$TITLE_TXT'\nBODY_STYLE=$BODY_STYLE"
 		fi
-
-		if [ -z "$BODY_SHTML" ]; then
-
-			TITLE_TXT="400 Bad Request"
-			HEAD_HTML=""
-			BODY_SHTML="<h1>Bad Request</h1><p>Your browser sent a request that this server could not understand<br></p>"
-
-			EXIT_VALUE=1
-		fi
-
-		echo -n -e "$HEAD_HTML"	 > $FILE_HEAD_HTML
-		echo -n -e "$BODY_SHTML" > $FILE_BODY_SHTML
-
-		if [ -z "$TITLE_TXT" ]; then
-			TITLE_TXT="Firenze WiFi"
-		fi
-
-		echo -e "'TITLE_TXT=$TITLE_TXT'\nBODY_STYLE=$BODY_STYLE"
 	fi
 
 	uscita
 }
 
 do_cmd() {
-
-	export TITLE_TXT HEAD_HTML BODY_SHTML BODY_STYLE \
-			 SESSION_ID CONNECTION_CLOSE SET_COOKIE TMPFILE OUTPUT HTTP_RESPONSE_HEADER HTTP_RESPONSE_BODY \
-			 OP FILE_CTX MAC IP GATEWAY AP TMP_FORM_FILE UUID CALLER_ID USER SIGNED_DATA UUID_TO_APPEND POLICY WA_UID CONSUME_ON
-
-	# load environment
-
-	CONF=$HOME/etc/$VIRTUAL_HOST/script.conf
-
-   if [ -n "$CONF" -a -r "$CONF" ]; then
-		. $CONF 2>/dev/null
-	fi
 
 	# --------------------------------
 	#  session ID (no NAT)
@@ -2588,7 +2674,7 @@ do_cmd() {
 	# --------------------------------
 
 	# check if we are operative...
-	if [ -x $HOME/$VIRTUAL_HOST/ANOMALIA ]; then
+	if [ -x $DIR_WEB/$VIRTUAL_HOST/ANOMALIA ]; then
 
 		unset BACK_TAG
 
@@ -2614,7 +2700,7 @@ do_cmd() {
 		case "$REQUEST_URI" in
 			/start_ap)													start_ap					"$@"	;;
 			/postlogin)													postlogin				"$@"	;;
-			/stato_utente)												stato_utente					;;
+			/stato_utente)												stato_utente			"$@"	;;
 			/registrazione)											registrazione_form			;;
 			/polling_attivazione)									polling_attivazione	"$@"	;;
 			/login | /cpe | /main | /personale | /circuito) main_page				"$@"	;;
@@ -2628,17 +2714,17 @@ do_cmd() {
 			;;
 
 			/card_activation)
-				if [ "$REMOTE_ADDR" = "$PORTAL_IP_ADDRESS" ]; then
+				if [ "$REMOTE_ADDR" = "$SERVER_ADDR" ]; then
 					card_activation "$@"
 				fi
 			;;
 			/get_users_info)
-				if [ "$REMOTE_ADDR" = "$PORTAL_IP_ADDRESS" ]; then
+				if [ "$REMOTE_ADDR" = "$SERVER_ADDR" ]; then
 					get_users_info
 				fi
 			;;
 			/reset_policy)
-				if [ "$REMOTE_ADDR" = "$PORTAL_IP_ADDRESS" ]; then
+				if [ "$REMOTE_ADDR" = "$SERVER_ADDR" ]; then
 					reset_policy
 				fi
 			;;
@@ -2662,14 +2748,14 @@ do_cmd() {
 			/admin_view_user)
 				REQUEST_URI=view_user
 				TITLE_TXT="Visualizzazione dati utente"
-				HEAD_HTML="<script type=\"text/javascript\" src=\"js/livevalidation_standalone.js\"></script>"
+				HEAD_HTML="<script type=\"text/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>"
 
 				print_page "$BACK_TAG"
 			;;
 			/admin_recovery)
 				REQUEST_URI=recovery
 				TITLE_TXT="Recovery utente"
-				HEAD_HTML="<script type=\"text/javascript\" src=\"js/livevalidation_standalone.js\"></script>"
+				HEAD_HTML="<script type=\"text/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>"
 
 				print_page "$BACK_TAG"
 			;;
@@ -2738,27 +2824,35 @@ do_cmd() {
 # END FUNCTION
 #-----------------------------------
 
-DEBUG=on
+export TITLE_TXT HEAD_HTML BODY_SHTML BODY_STYLE \
+		 SESSION_ID CONNECTION_CLOSE SET_COOKIE TMPFILE OUTPUT HTTP_RESPONSE_HEADER HTTP_RESPONSE_BODY FILE_RESPONSE_HTML \
+		 OP FILE_CTX MAC IP GATEWAY AP TMP_FORM_FILE UUID CALLER_ID USER SIGNED_DATA UUID_TO_APPEND POLICY WA_UID CONSUME_ON
 
-if [ -z "$DEBUG" ]; then
-   do_cmd "$@"
+# load eventuale script configuration
+
+if [ -n "$SCRIPT_CONF" -a -r "$SCRIPT_CONF" ]; then
+	. $SCRIPT_CONF 2>/dev/null
+fi
+
+DEBUG=0
+
+if [ $DEBUG -eq 0 ]; then
+do_cmd "$@"
 else
-	TMPFILE=`basename $0`
-	TMPFILE_OUT=/tmp/$TMPFILE_$$.out
-	TMPFILE_ERR=/tmp/$TMPFILE_$$.err
-	(
-	echo "ENVIRONMENT:"
-	echo "-----------------------------------------------------------"
-	env
-	echo "-----------------------------------------------------------"
-	echo "STDERR:"
-	echo "-----------------------------------------------------------"
-	) 2>$TMPFILE_ERR >&2
-	(
-   set -x
-   do_cmd "$@"
-   set +x
-   ) > $TMPFILE_OUT 2>>$TMPFILE_ERR
-   echo "-----------------------------------------------------------" 2>>$TMPFILE_ERR >&2
-	cat $TMPFILE_OUT
+  TMPFILE=`basename $0`
+  TMPFILE_OUT=/tmp/$TMPFILE_$$.out
+  TMPFILE_ERR=/tmp/$TMPFILE_$$.err
+  (
+  echo "ENVIRONMENT:"
+  echo "-----------------------------------------------------------"
+  env
+  echo "-----------------------------------------------------------"
+  echo "STDERR:"
+  echo "-----------------------------------------------------------"
+  set -x
+do_cmd "$@"
+  set +x
+  ) > $TMPFILE_OUT 2>>$TMPFILE_ERR
+  echo "-----------------------------------------------------------" 2>>$TMPFILE_ERR >&2
+  cat $TMPFILE_OUT
 fi

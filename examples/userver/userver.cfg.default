@@ -1,12 +1,13 @@
 # ----------------------------------------------------------------------------------------------------------------------------------------
 # userver - configuration parameters
 # ----------------------------------------------------------------------------------------------------------------------------------------
-# ENABLE_IPV6   flag to indicate use of ipv6
-# SERVER        host name or ip address for the listening socket
-# PORT          port number             for the listening socket
-# SOCKET_NAME   file name               for the listening socket
-# IP_ADDRESS    public ip address of host for the interface connected to the Internet (autodetected if not specified)
-# ALLOWED_IP    client address IP-based access control (IPADDR[/MASK])
+# ENABLE_IPV6			flag to indicate use of ipv6
+# SERVER					host name or ip address for the listening socket
+# PORT					port number             for the listening socket
+# SOCKET_NAME			file name               for the listening socket
+# IP_ADDRESS			public ip address of host for the interface connected to the Internet (autodetected if not specified)
+# ALLOWED_IP			list of comma separated client			address for IP-based access control (IPADDR[/MASK])
+# ALLOWED_IP_PRIVATE list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
 #
 # LISTEN_BACKLOG			max number of ready to be delivered connections to accept()
 # USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (DEFER_ACCEPT, QUICKACK)
@@ -31,7 +32,7 @@
 # MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
 #                (Value <= 0 will disable Keep-Alive)
 #
-# DH_FILE       dh param
+# DH_FILE       [Diffie-Hellman Key Agreement protocol](http://www.rsa.com/rsalabs/node.asp?id=2248) cmd: openssl dhparam -out dh.pem 1024
 # CERT_FILE     certificate of server
 # KEY_FILE      private key of server
 # PASSWORD      password for private key of server
@@ -59,12 +60,13 @@
 
 userver {
 
-# ENABLE_IPV6    no
-# SERVER         localhost
-# PORT           80
-# SOCKET_NAME    tmp/socket
-# IP_ADDRESS     10.30.1.131
-# ALLOWED_IP     127.0.0.1,10.30.0.0/16
+# ENABLE_IPV6			no
+# SERVER					localhost
+# PORT					80
+# SOCKET_NAME			tmp/socket
+# IP_ADDRESS			10.30.1.131
+# ALLOWED_IP			127.0.0.1,10.30.0.0/16
+# ALLOWED_IP_PRIVATE 127.0.0.1,10.30.0.0/16
 
   LISTEN_BACKLOG		   1024
   USE_TCP_OPTIMIZATION  yes
@@ -552,9 +554,6 @@ mod_http {
 # --------------------------------------------------------------------------------------------------------------------
 # FW_ENV                environment for shell script to execute
 # FW_CMD                shell script to manage the firewall
-#
-# LOGOUT_URL            URL to redirect user after logout
-# PUBLIC_ADDRESS        address to contact access point from portal
 # INTERNAL_DEVICE_LABEL radio tag to be used from portal
 #
 # DECRYPT_CMD           PGP command stuff
@@ -569,13 +568,8 @@ mod_http {
 
    # shell script to manage the firewall
 #  FW_CMD firewall/nodog.fw
-#  FW_ENV "FW_CONF=/etc/nodog_fw.conf"
-
-   # URL to redirect user after logout
-#  LOGOUT_URL "http://10.30.1.131/logout"
-
-   # address to contat access point from portal
-#  PUBLIC_ADDRESS 10.30.1.131:5280
+#  FW_ENV "FW_CONF=/etc/nodog_fw.conf \
+#          AuthServiceAddr=http://www.auth-firenze.com/login"
 
    # radio tag to be used by portal
 #  INTERNAL_DEVICE_LABEL "radio1 radio2"

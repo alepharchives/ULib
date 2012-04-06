@@ -58,6 +58,16 @@ dnl		printf "LIBZ found in $libzdir\n";
 	fi
 	AC_MSG_RESULT([$enable_zip])
 
+	AC_MSG_CHECKING(if you want to enable build of thread support)
+	AC_ARG_ENABLE(thread,
+				[  --enable-thread         enable build of thread support - require libpthread [[default: use if present libpthread]]])
+	if test "$enable_thread" != "no" && test x_$found_libz = x_yes; then
+		enable_thread="yes"
+	else
+		enable_thread="no"
+	fi
+	AC_MSG_RESULT([$enable_thread])
+
 	AC_MSG_CHECKING(if libuuid library is wanted)
 	wanted=1;
 	if test -z "$with_libuuid" ; then

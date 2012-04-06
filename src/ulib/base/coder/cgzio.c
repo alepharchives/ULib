@@ -207,11 +207,22 @@ uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict r
 #ifdef DEBUG
    if (bheader)
       {
+      uint32_t   size_original;
+      uint32_t* psize_original = (uint32_t*)(result + stream.total_out - 4);
+
       U_INTERNAL_ASSERT_EQUALS(U_MEMCMP(result, GZIP_MAGIC), 0)
 
-      U_INTERNAL_PRINT("size original = %u", *(uint32_t*)(result + stream.total_out - 4))
+#  if __BYTE_ORDER == __LITTLE_ENDIAN
+      size_original = *psize_original;
 
-      U_INTERNAL_ASSERT_EQUALS(len, *(uint32_t*)(result + stream.total_out - 4))
+      U_INTERNAL_PRINT("size original = %u (le)",                 *psize_original)
+#  else
+      size_original = u_invert_uint32(*psize_original);
+
+      U_INTERNAL_PRINT("size original = %u (be)", u_invert_uint32(*psize_original))
+#  endif
+
+      U_INTERNAL_ASSERT_EQUALS(len, size_original)
       }
 #endif
 

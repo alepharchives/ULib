@@ -146,6 +146,9 @@ typedef unsigned long long uint64;
 /* disable memory pool features */
 #undef DISABLE_MEMPOOL
 
+/* Define if disable thread support */
+#undef DISABLE_THREAD
+
 /* Define if disable ZIP support */
 #undef DISABLE_ZIP
 
@@ -157,6 +160,9 @@ typedef unsigned long long uint64;
 
 /* enable memory pool features */
 #undef ENABLE_MEMPOOL
+
+/* Define if enable thread support */
+#undef ENABLE_THREAD
 
 /* Define if enable ZIP support */
 #undef ENABLE_ZIP
@@ -889,6 +895,9 @@ typedef unsigned long long uint64;
 
 /* Define if use parser generator bison/yacc */
 #undef USE_PARSER
+
+/* Define if we have semaphore support */
+#undef USE_SEMAPHORE
 
 /* Enable extensions on AIX 3, Interix.  */
 #ifndef _ALL_SOURCE

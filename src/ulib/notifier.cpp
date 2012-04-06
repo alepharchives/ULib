@@ -15,7 +15,7 @@
 #include <ulib/net/socket.h>
 #include <ulib/utility/interrupt.h>
 
-#ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
 #  include "ulib/thread.h"
 #endif
 
@@ -76,7 +76,7 @@ void UNotifier::init()
    epollfd = U_SYSCALL(epoll_create, "%d", max_connection);
 next:
    U_INTERNAL_ASSERT_MAJOR(epollfd,0)
-   U_INTERNAL_ASSERT_EQUALS(U_WRITE_OUT,EPOLLOUT|EPOLLET)
+   U_INTERNAL_ASSERT_EQUALS(U_WRITE_OUT,(uint32_t)(EPOLLOUT|EPOLLET))
 
    if (old)
       {
@@ -162,13 +162,13 @@ UEventFd* UNotifier::find(int fd)
       U_RETURN_POINTER(lo_map_fd[fd],UEventFd);
       }
 
-#ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
    if (pthread) ((UThread*)pthread)->lock();
 #endif
 
    UEventFd* handler_event = (hi_map_fd->find(fd) ? hi_map_fd->elem() : 0);
 
-#ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
    if (pthread) ((UThread*)pthread)->unlock();
 #endif
 
@@ -191,13 +191,13 @@ void UNotifier::insert(UEventFd* item)
    if (fd < max_connection) lo_map_fd[fd] = item;
    else
       {
-#  ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
       if (pthread) ((UThread*)pthread)->lock();
 #  endif
 
       hi_map_fd->insert(fd, item);
 
-#  ifdef HAVE_PTHREAD_H
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
       if (pthread) ((UThread*)pthread)->unlock();
 #  endif
       }
@@ -272,13 +272,13 @@ U_NO_EXPORT void UNotifier::handlerDelete(UEventFd* item)
    if (fd < max_connection) lo_map_fd[fd] = 0;
    else
       {
-#  ifdef HAVE_PTHREAD_H
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
       if (pthread) ((UThread*)pthread)->lock();
 #  endif
 
       (void) hi_map_fd->erase(fd);
 
-#  ifdef HAVE_PTHREAD_H
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
       if (pthread) ((UThread*)pthread)->unlock();
 #  endif
       }
@@ -622,7 +622,7 @@ loop:
       U_INTERNAL_DUMP("fd = %d op_mask = %B handler_event = %p", handler_event->fd, handler_event->op_mask, handler_event)
 
       /*
-#  ifdef HAVE_PTHREAD_H
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
       if (handler_event->fd == 0)
          {
          U_INTERNAL_ASSERT_POINTER(pthread)
@@ -631,8 +631,6 @@ loop:
          }
 #  endif
       */
-
-      U_INTERNAL_ASSERT_MAJOR(handler_event->fd,0)
 
       handlerResult(handler_event, bread, bexcept);
 

@@ -126,7 +126,6 @@ public:
    static const UString* str_INTERNAL_DEVICE_LABEL;
    static const UString* str_LOCAL_NETWORK;
    static const UString* str_AUTH_SERVICE_URL;
-   static const UString* str_LOGOUT_URL;
    static const UString* str_LOGIN_TIMEOUT;
    static const UString* str_FW_CMD;
    static const UString* str_DECRYPT_CMD;
@@ -183,11 +182,11 @@ public:
 
 protected:
    UCommand cmd, pgp;
+   UVector<Url*> vauth_url, vinfo_url;
    UVector<UIPAllow*> vLocalNetworkMask;
-   UVector<Url*> vauth_service_url, vlogout_url, vinfo_url;
-   UVector<UString> vInternalDevice, vInternalDeviceLabel, vLocalNetwork, vauth_login, vauth_logout, vauth_ip;
+   UVector<UString> vInternalDevice, vInternalDeviceLabel, vLocalNetwork, vauth, vauth_ip;
    UString input, output, location, fw_cmd, decrypt_cmd, decrypt_key, mode, gateway, access_point, extdev, route_only,
-           dns_addr, include_ports, exclude_ports, allowed_web_hosts, intdev, localnet, auth_login;
+           dns_addr, include_ports, exclude_ports, allowed_web_hosts, intdev, localnet, auth_login, fw_env;
 
    static vPF unatexit;
    static int fd_stderr;

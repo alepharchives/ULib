@@ -347,6 +347,11 @@ typedef enum {
 #        define __cold                    __attribute__((cold))
 #     endif
 #  endif
+#  ifndef __cplusplus
+#     define NullPtr (NULL)
+#  elif GCC_VERSION_NUM > 40600 /* || __cplusplus >= 201103L */
+#     define NullPtr 0 /* nullptr */
+#  endif
 #else
 #  define GCC_VERSION_NUM 0
 #  define PRINTF_ATTRIBUTE(a,b)
@@ -358,6 +363,10 @@ typedef enum {
 #  define __noreturn
 #  define PREFETCH_ATTRIBUTE(addr,rw)
 #endif /* __GNUC__ */
+
+#ifndef NullPtr
+#define NullPtr 0
+#endif
 
 /* Provide convenience macros for handling structure fields through their offsets */
 
