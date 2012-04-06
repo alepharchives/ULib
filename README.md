@@ -203,8 +203,8 @@ relies on ApacheBench (ab) and it is a slightly modified version of [G-WAN clien
 
 I have considered two scenario for benchmarking:
 
-The client as well as the web server tested are hosted on the same computer.
-The client is running on different computer than the web server (networking is involved).
+ * The client as well as the web server tested are hosted on the same computer.
+ * The client is running on different computer than the web server (networking is involved).
 
 I had to increase the local port range on client (because of the TIME_WAIT status of the TCP ports).
 
