@@ -31,6 +31,7 @@
 #     include <sys/ioctl.h>
 #     include <arpa/inet.h>
 #     include <net/if_arp.h>
+#     include <netinet/ether.h>
 #  endif
 #endif
 
@@ -49,6 +50,75 @@ typedef struct iphdr {
    /* The options start here */
 } iphdr;
 #endif
+
+/*
+#ifndef HAVE_SOCKADDR_LL
+
+// The sockaddr_ll is a device independent physical layer address
+
+typedef struct sockaddr_ll {
+   uint16_t sll_family;    // Always AF_PACKET
+   uint16_t sll_protocol;  // Physical layer protocol
+   int      sll_ifindex;   // Interface number
+   uint16_t sll_hatype;    // Header type
+   uint8_t  sll_pkttype;   // Packet type
+   uint8_t  sll_halen;     // Length of address
+   uint8_t  sll_addr[8];   // Physical layer address
+};
+
+// sll_protocol is the standard ethernet protocol type in network order as defined in the <linux/if_ether.h> include file.
+// It defaults to the socket's protocol.
+//
+// sll_ifindex is the interface index of the interface (see netdevice(7)); 0 matches any interface (only legal for binding).
+//
+// sll_hatype is a ARP type as defined in the <linux/if_arp.h> include file.
+//
+// sll_pkttype contains the packet type.
+//    Valid types are PACKET_HOST      for a packet addressed to the local host,
+//                    PACKET_BROADCAST for a physical layer broadcast packet,
+//                    PACKET_MULTICAST for a packet sent to a physical layer multicast address,
+//                    PACKET_OTHERHOST for a packet to some other host that has been caught by a device driver in promiscuous mode,
+//                and PACKET_OUTGOING  for a packet originated from the local host that is looped back to a packet socket.
+//    These types make only sense for receiving.
+//
+// sll_addr and sll_halen contain the physical layer (e.g. IEEE 802.3) address and its length. The exact interpretation depends on the device.
+//
+// When you send packets it is enough to specify
+// sll_family,
+// sll_ifindex.
+// sll_halen,
+// sll_addr,
+// The other fields should be 0.
+//
+// sll_hatype and sll_pkttype are set on received packets for your information.
+// For bind only sll_protocol and sll_ifindex are used.
+
+#endif
+*/
+
+/* See RFC 826 for protocol description. ARP packets are variable in size; the arphdr structure defines the fixed-length portion.
+ * Protocol type values are the same as those for 10 Mb/s Ethernet. It is followed by the variable-sized fields ar_sha, arp_spa,
+ * arp_tha and arp_tpa in that order, according to the lengths specified. Field names used correspond to RFC 826.
+
+#ifndef HAVE_ARPHDR
+typedef struct arphdr {
+   uint16_t ar_hrd;              // Format of hardware address
+   uint16_t ar_pro;              // Format of protocol address
+   uint8_t  ar_hln;              // Length of hardware address
+   uint8_t  ar_pln;              // Length of protocol address
+   uint16_t ar_op;               // ARP opcode (command)
+// ----------------------------------------------------------------
+// Ethernet looks like this : This bit is variable sized however...
+// ETH_ALEN == 6 (Octets in one ethernet addr)
+// ----------------------------------------------------------------
+// uint8_t __ar_sha[ETH_ALEN];   // Sender hardware address
+// uint8_t __ar_sip[4];          // Sender IP address
+// uint8_t __ar_tha[ETH_ALEN];   // Target hardware address
+// uint8_t __ar_tip[4];          // Target IP address
+// ----------------------------------------------------------------
+} arphdr;
+#endif
+*/
 
 #ifndef ETH_P_IP
 #define ETH_P_IP  0x0800 /* Internet Protocol packet */
@@ -200,8 +270,7 @@ bool UPing::ping(UIPAddress& addr)
 
       if (checkIO(ret, sizeof(req)) == false) U_RETURN(false);
 
-      // wait for response
-loop:
+loop: // wait for response
       ret = recvFrom(buf, sizeof(buf), 0, cResponseIP, iSourcePortNumber);
 
       if (ret <= 0)
@@ -341,75 +410,222 @@ fd_set* UPing::ping(UVector<UIPAddress*>& vaddr, bool async, vPF unatexit, const
 
 #ifdef HAVE_NETPACKET_PACKET_H
 
+int UPing::recvArpPing()
+{
+   U_TRACE(0, "UPing::recvArpPing()")
+
+   int ret;
+   UPing::arpmsg reply;
+
+#ifndef U_ARP_WITH_BROADCAST
+   union uuarphdr {
+      unsigned char* pc;
+      struct arphdr* ph;
+   };
+
+   socklen_t alen;
+   union uuarphdr ah;
+   union uusockaddr_ll from;
+
+   ah.pc = (unsigned char*)&(reply.htype);
+#endif
+
+loop: // wait for ARP reply
+#ifdef U_ARP_WITH_BROADCAST
+   ret = U_SYSCALL(recv,      "%d,%p,%d,%u,%p,%p", USocket::iSockDesc, &reply, sizeof(reply),    0);
+#else
+   alen = sizeof(struct sockaddr);
+   ret  = U_SYSCALL(recvfrom, "%d,%p,%d,%u,%p,%p", USocket::iSockDesc,  ah.pc, sizeof(reply)-14, 0, &(from.s), &alen);
+#endif
+
+   if (ret <= 0)
+      {
+      checkErrno(ret);
+
+      if (isTimeout()) U_RETURN(2);
+
+      U_RETURN(0);
+      }
+
+   if (ret < 42                              && // ARP_MSG_SIZE
+       reply.operation != htons(ARPOP_REPLY) &&
+       reply.operation != htons(ARPOP_REQUEST))
+      {
+      goto loop;
+      }
+
+#ifndef U_ARP_WITH_BROADCAST
+   // Filter out wild packets
+
+   U_INTERNAL_DUMP("sll_pkttype = %u", from.l.sll_pkttype)
+
+   if (from.l.sll_pkttype != PACKET_HOST      &&
+       from.l.sll_pkttype != PACKET_BROADCAST &&
+       from.l.sll_pkttype != PACKET_MULTICAST)
+      {
+      goto loop;
+      }
+
+   // Protocol must be IP
+
+   if (ah.ph->ar_pro != htons(ETH_P_IP) ||
+       ah.ph->ar_pln != 4               ||
+       ah.ph->ar_hln != 6               ||
+       (ret < (int)(sizeof(ah) + 2 * (4 + 6))))
+      {
+      goto loop;
+      }
+#endif
+
+   U_DUMP("ARP re%s from %s (%02x:%02x:%02x:%02x:%02x:%02x) to %s (%02x:%02x:%02x:%02x:%02x:%02x)",
+           (reply.operation == htons(ARPOP_REPLY) ? "ply" : "quest"),
+            UIPAddress::toString(reply.sInaddr).data(),
+            reply.sHaddr[0] & 0xFF, reply.sHaddr[1] & 0xFF, reply.sHaddr[2] & 0xFF,
+            reply.sHaddr[3] & 0xFF, reply.sHaddr[4] & 0xFF, reply.sHaddr[5] & 0xFF,
+            UIPAddress::toString(reply.tInaddr).data(),
+            reply.tHaddr[0] & 0xFF, reply.tHaddr[1] & 0xFF, reply.tHaddr[2] & 0xFF,
+            reply.tHaddr[3] & 0xFF, reply.tHaddr[4] & 0xFF, reply.tHaddr[5] & 0xFF)
+
+   if (memcmp(reply.sInaddr, arp.tInaddr, 4) ||
+       memcmp(reply.tHaddr,  arp.sHaddr,  6)) // don't check tHaddr: Linux doesn't return proper target's hardware address (fixed in 2.6.24?)
+      {
+      goto loop;
+      }
+
+   U_RETURN(1);
+}
+
 void UPing::initArpPing(const char* device)
 {
    U_TRACE(0, "UPing::initArpPing(%S)", device)
 
+#ifdef U_ARP_WITH_BROADCAST
    USocket::iSockDesc = USocket::socket(PF_PACKET, SOCK_PACKET, htons(ETH_P_ARP));
+#else
+   USocket::iSockDesc = USocket::socket(PF_PACKET, SOCK_DGRAM,                 0);
+#endif
 
    if (USocket::isClosed())
       {
-      if (UServices::isSetuidRoot() == false) U_ERROR("Must run as root to create packet socket...");
+      if (UServices::isSetuidRoot() == false) U_ERROR("Must be run as root to create packet socket...");
 
       U_ERROR("Sorry, could not create packet socket");
       }
 
+#ifdef U_ARP_WITH_BROADCAST
    uint32_t value = 1;
 
    if (USocket::setSockOpt(SOL_SOCKET, SO_BROADCAST, (const void*)&value, sizeof(uint32_t)) == false)
       {
       U_ERROR("can't enable bcast on packet socket");
       }
+#endif
 
    struct ifreq ifr;
 
+   (void) U_SYSCALL(memset, "%p,%C,%u", &arp, '\0', sizeof(arp));
    (void) U_SYSCALL(memset, "%p,%C,%u", &ifr, '\0', sizeof(struct ifreq));
 
    (void) u_strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
 
-   if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFINDEX, (char*)&ifr) == -1) U_ERROR("Unknown iface for interface %S", device);
-   if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFFLAGS, (char*)&ifr) == -1) U_ERROR("ioctl(SIOCGIFFLAGS) failed for interface %S", device);
+   if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFINDEX, (char*)&ifr) == -1)
+      {
+      U_ERROR("Unknown iface for interface %S", device);
+      }
 
-   if (!(ifr.ifr_flags &  IFF_UP))                   U_ERROR("Interface %S is down",        device);
-   if (  ifr.ifr_flags & (IFF_NOARP | IFF_LOOPBACK)) U_ERROR("Interface %S is not ARPable", device);
+   U_INTERNAL_DUMP("ifr_ifindex = %u", ifr.ifr_ifindex)
 
-   (void) U_SYSCALL(memset, "%p,%C,%u", &arp, '\0', sizeof(arp));
+#ifdef U_ARP_WITH_BROADCAST
+   arp.h_proto = htons(ETH_P_ARP);        // protocol type (Ethernet)
+#else
+   (void) U_SYSCALL(memset, "%p,%C,%u", &he, '\0', sizeof(he));
 
-   arp.h_proto    = htons(ETH_P_ARP);     /* protocol type (Ethernet) */
-   arp.htype      = htons(ARPHRD_ETHER);  /* hardware type */
-   arp.ptype      = htons(ETH_P_IP);      /* protocol type (ARP message) */
-   arp.hlen       = 6;                    /* hardware address length */
-   arp.plen       = 4;                    /* protocol address length */
-   arp.operation  = htons(ARPOP_REQUEST); /* ARP op code */
+   he.l.sll_protocol = htons(ETH_P_ARP); // protocol type (Ethernet)
+   he.l.sll_family   = AF_PACKET;
+   he.l.sll_ifindex  = ifr.ifr_ifindex;
 
-   if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFADDR,   (char*)&ifr) == -1) U_ERROR("ioctl(SIOCGIFADDR) failed for interface %S", device);
+   socklen_t alen = sizeof(struct sockaddr_ll);
 
-   (void) u_mem_cpy(arp.sInaddr, ifr.ifr_addr.sa_data + sizeof(short), 4); /* source IP address */
+   U_INTERNAL_DUMP("alen = %u", alen)
 
-   if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFHWADDR, (char*)&ifr) == -1) U_ERROR("ioctl(SIOCGIFHWADDR) failed for interface %S", device);
+   if (U_SYSCALL(bind,        "%d,%p,%d", USocket::iSockDesc, &(he.s),  alen) == -1) U_ERROR_SYSCALL("bind");
+   if (U_SYSCALL(getsockname, "%d,%p,%p", USocket::iSockDesc, &(he.s), &alen) == -1) U_ERROR_SYSCALL("getsockname");
 
-   (void) U_SYSCALL(memset, "%p,%C,%u", arp.h_dest,                     0xff, 6); /* MAC DA */
-   (void)                      u_mem_cpy(arp.h_source, ifr.ifr_hwaddr.sa_data, 6); /* MAC SA */
-   (void)                      u_mem_cpy(arp.sHaddr,   ifr.ifr_hwaddr.sa_data, 6); /* source hardware address */
+   U_INTERNAL_DUMP("alen = %d he.sll_halen = %u", alen, he.l.sll_halen) // 6
 
-   U_INTERNAL_DUMP("SOURCE = %s (%02x:%02x:%02x:%02x:%02x:%02x)",
-                      u_inet_nstoa(arp.sInaddr),
-                      arp.sHaddr[0] & 0xFF,
-                      arp.sHaddr[1] & 0xFF,
-                      arp.sHaddr[2] & 0xFF,
-                      arp.sHaddr[3] & 0xFF,
-                      arp.sHaddr[4] & 0xFF,
-                      arp.sHaddr[5] & 0xFF)
+   if (he.l.sll_halen == 0) U_ERROR("Interface '%s' is not ARPable (no ll address)", device);
+
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.sHaddr, he.l.sll_addr, 6); // source hardware address
+
+   (void) U_SYSCALL(memset, "%p,%C,%u", he.l.sll_addr, 0xff, 6);
+#endif
+
+   if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFFLAGS, (char*)&ifr) == -1)
+      {
+      U_ERROR("ioctl(SIOCGIFFLAGS) failed for interface %S", device);
+      }
+
+   if (!(ifr.ifr_flags & IFF_UP))
+      {
+      U_ERROR("Interface %S is down", device);
+      }
+
+   if (ifr.ifr_flags & (IFF_NOARP | IFF_LOOPBACK))
+      {
+      U_ERROR("Interface %S is not ARPable", device);
+      }
+
+   if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFADDR, (char*)&ifr)  == -1)
+      {
+      U_ERROR("ioctl(SIOCGIFADDR) failed for interface %S", device);
+      }
+
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.sInaddr, ifr.ifr_addr.sa_data + sizeof(short), 4); // source IP address
+
+   // struct arphdr {
+   //  unsigned short int ar_hrd; // Format of hardware address
+   //  unsigned short int ar_pro; // Format of protocol address
+   //  unsigned char ar_hln;      // Length of hardware address
+   //  unsigned char ar_pln;      // Length of protocol address
+   //  unsigned short int ar_op;  // ARP opcode (command) };
+
+   arp.htype     = htons(ARPHRD_ETHER);   // hardware type
+   arp.ptype     = htons(ETH_P_IP);       // protocol type (ARP message)
+   arp.hlen      = 6;                     // hardware address length
+   arp.plen      = 4;                     // protocol address length
+   arp.operation = htons(ARPOP_REQUEST);  // ARP op code
+
+   U_INTERNAL_DUMP("ar_op = %u", arp.operation)
+
+#ifdef U_ARP_WITH_BROADCAST
+   if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFHWADDR, (char*)&ifr) == -1)
+      {
+      U_ERROR("ioctl(SIOCGIFHWADDR) failed for interface %S", device);
+      }
+
+   (void) U_SYSCALL(memset, "%p,%C,%u", arp.h_dest,                     0xff, 6); // MAC DA
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.h_source, ifr.ifr_hwaddr.sa_data, 6); // MAC SA
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.sHaddr,   ifr.ifr_hwaddr.sa_data, 6); // source hardware address
+#endif
+
+// --------------------------------------------------------------------------------------------
+// Target address - TODO...
+// --------------------------------------------------------------------------------------------
+//                                      arp.tHaddr is zero-filled                 // target hardware address
+// (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.tInaddr,      addr.get_in_addr(), 4); // target IP address
+// --------------------------------------------------------------------------------------------
+
+   U_DUMP("SOURCE = %s (%02x:%02x:%02x:%02x:%02x:%02x)",
+             UIPAddress::toString(arp.sInaddr).data(),
+             arp.sHaddr[0] & 0xFF,
+             arp.sHaddr[1] & 0xFF,
+             arp.sHaddr[2] & 0xFF,
+             arp.sHaddr[3] & 0xFF,
+             arp.sHaddr[4] & 0xFF,
+             arp.sHaddr[5] & 0xFF)
 
    (void) setTimeoutSND(timeoutMS);
    (void) setTimeoutRCV(timeoutMS);
-
-   // -----------------------------------------------------------------------------------------------------------------------
-   // Target address - TODO...
-   // -----------------------------------------------------------------------------------------------------------------------
-   //                 arp.tHaddr is zero-filled             /* target hardware address */
-   // (void) u_mem_cpy(arp.tInaddr, addr.get_in_addr(), 4);  /* target IP address */
-   // -----------------------------------------------------------------------------------------------------------------------
 }
 
 bool UPing::arping(UIPAddress& addr, const char* device)
@@ -418,84 +634,66 @@ bool UPing::arping(UIPAddress& addr, const char* device)
 
    U_CHECK_MEMORY
 
-   if (USocket::isClosed()) initArpPing(device);
+   int i, ret;
+   bool restarted = false;
+
+   if (USocket::isClosed())
+      {
+retry:
+      initArpPing(device);
+      }
 
    // -----------------------------------------------------------------------------------------------------------------------
    // Target address
    // -----------------------------------------------------------------------------------------------------------------------
-   //              arp.tHaddr is zero-filled             /* target hardware address */
-   (void) u_mem_cpy(arp.tInaddr, addr.get_in_addr(), 4);  /* target IP address */
+   //                                   arp.tHaddr is zero-filled            // target hardware address
+   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.tInaddr, addr.get_in_addr(), 4); // target IP address
    // -----------------------------------------------------------------------------------------------------------------------
 
+#ifdef U_ARP_WITH_BROADCAST
+   struct sockaddr _saddr;
+
+   (void) U_SYSCALL(memset, "%p,%C,%u", &_saddr, '\0', sizeof(struct sockaddr));
+   (void) u_strncpy(_saddr.sa_data, device, sizeof(_saddr.sa_data));
+
+   size_t len             = sizeof(arp);
+   socklen_t alen         = sizeof(struct sockaddr);
+   const void* buf        = &arp;
+   struct sockaddr* saddr = &_saddr;
+#else
+   size_t len             = 28;
+   socklen_t alen         = sizeof(struct sockaddr_ll);
+   const void* buf        = &(arp.htype);
+   struct sockaddr* saddr = &(he.s);
+#endif
+
    U_DUMP("ARP request from %s (%02x:%02x:%02x:%02x:%02x:%02x) to %s (%02x:%02x:%02x:%02x:%02x:%02x)",
-            u_inet_nstoa(arp.sInaddr),
+            UIPAddress::toString(arp.sInaddr).data(),
             arp.sHaddr[0] & 0xFF, arp.sHaddr[1] & 0xFF, arp.sHaddr[2] & 0xFF,
             arp.sHaddr[3] & 0xFF, arp.sHaddr[4] & 0xFF, arp.sHaddr[5] & 0xFF,
-            addr.getAddressString(),
+            UIPAddress::toString(arp.tInaddr).data(),
             arp.tHaddr[0] & 0xFF, arp.tHaddr[1] & 0xFF, arp.tHaddr[2] & 0xFF,
             arp.tHaddr[3] & 0xFF, arp.tHaddr[4] & 0xFF, arp.tHaddr[5] & 0xFF)
 
-   int ret;
-   arpmsg reply;
-   struct sockaddr saddr;
-
-   (void) U_SYSCALL(memset, "%p,%C,%u", &saddr, '\0', sizeof(struct sockaddr));
-
-   (void) u_strncpy(saddr.sa_data, device, sizeof(saddr.sa_data));
-
-   for (int i = 0; i < 3; ++i)
+   for (i = 0; i < 3; ++i)
       {
-      // send ARP request
+      ret = U_SYSCALL(sendto, "%d,%p,%d,%u,%p,%d", USocket::iSockDesc, buf, len, 0, saddr, alen);
 
-      ret = U_SYSCALL(sendto, "%d,%p,%d,%u,%p,%d", USocket::iSockDesc, &arp, sizeof(arp), 0, &saddr, sizeof(struct sockaddr));
+      if (checkIO(ret, len) == false) U_RETURN(false);
 
-      if (checkIO(ret, sizeof(arp)) == false) U_RETURN(false);
+      ret = recvArpPing();
 
-      // wait for ARP reply
-loop:
-      ret = U_SYSCALL(recv, "%d,%p,%d,%u,%p,%p", USocket::iSockDesc, &reply, sizeof(reply), 0);
+      if (ret == 2) continue;
+      if (ret == 0) U_RETURN(false);
 
-      if (ret <= 0)
+      if (i         == 0 &&
+          restarted == false)
          {
-         checkErrno(ret);
+         USocket::close();
 
-         if (isTimeout()) continue;
+         restarted = true;
 
-         U_RETURN(false);
-         }
-
-      U_INTERNAL_DUMP("h_proto = %u htype = %u ptype = %u hlen = %u plen = %u operation = %u",
-                        reply.h_proto, reply.htype, reply.ptype, reply.hlen, reply.plen, reply.operation)
-
-      if (ret < 42 && // ARP_MSG_SIZE
-          reply.operation != htons(ARPOP_REPLY))
-         {
-         goto loop;
-         }
-
-#  ifdef DEBUG
-      char str_from[32], str_to[32];
-
-      str_from[0] = str_to[0] = '\0';
-
-      (void) u_strcpy(str_from, u_inet_nstoa(reply.sInaddr));
-      (void) u_strcpy(str_to,   u_inet_nstoa(reply.tInaddr));
-
-      U_INTERNAL_DUMP("ARP reply from %s (%02x:%02x:%02x:%02x:%02x:%02x) to %s (%02x:%02x:%02x:%02x:%02x:%02x)",
-                        str_from,
-                        reply.sHaddr[0] & 0xFF, reply.sHaddr[1] & 0xFF, reply.sHaddr[2] & 0xFF,
-                        reply.sHaddr[3] & 0xFF, reply.sHaddr[4] & 0xFF, reply.sHaddr[5] & 0xFF,
-                        str_to,
-                        reply.tHaddr[0] & 0xFF, reply.tHaddr[1] & 0xFF, reply.tHaddr[2] & 0xFF,
-                        reply.tHaddr[3] & 0xFF, reply.tHaddr[4] & 0xFF, reply.tHaddr[5] & 0xFF)
-#  endif
-
-      // NB: don't check tHaddr: Linux doesn't return proper target's hardware address (fixed in 2.6.24?)
-
-      if (memcmp(reply.tInaddr, arp.sInaddr, 4) ||
-          memcmp(reply.tHaddr,  arp.sHaddr,  6))
-         {
-         goto loop;
+         goto retry;
          }
 
       U_RETURN(true);

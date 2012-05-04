@@ -116,6 +116,23 @@ public:
       U_RETURN(pipeline);
       }
 
+   static void resetPipeline()
+      {
+      U_TRACE(0, "UClientImage_Base::resetPipeline()")
+
+      U_INTERNAL_DUMP("pipeline = %b", pipeline)
+
+      if (pipeline)
+         {
+         U_INTERNAL_ASSERT_POINTER(request)
+         U_INTERNAL_ASSERT(request == pbuffer && pbuffer->isNull() == false && pbuffer->same(*rbuffer) == false)
+
+         pbuffer->clear();
+
+         pipeline = false;
+         }
+      }
+
    static void manageRequestSize(bool request_resize);
 
    // DEBUG

@@ -1,92 +1,51 @@
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="it" lang="it">
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="x-ua-compatible" content="ie=edge" />
-  <meta name="viewport" content="width=device-width; initial-scale=1; minimum-scale=1; maximum-scale=1" />
-  <meta name="description" content="Wi-auth portal" />
-  <meta name="keywords" content="wi-auth portal wifi" />
-  <meta name="author" content="UniRel S.r.L." />
-  <meta name="copyright" content="Licensed under GPL and MIT." />
+<!--#if expr="$AP_OK && $URL_BANNER_AP" -->
+  <div id="topBanner">
+	 <script language='JavaScript' type='text/javascript'>wimoveBuildBanner('<!--#echo var=$URL_BANNER_AP -->');</script>
+	 <noscript></noscript>
+  </div>
+<!--#endif -->
 
-  <title>Wi-Move - Login</title>
-  <link rel="stylesheet" href="css/master.css" type="text/css" />
-  <link rel="stylesheet" href="css/mobile.css" type="text/css" />
-  <script src="js/mobile.js" type="text/javascript"></script>
-</head>
+  <div id="distance"></div>
 
-<body>
-  <div id="containerBig">
-    <div id="wrapperAuto">
-      <div id="loginbox" style="width:100%%;height:100%%;padding:0px;margin:0px;">
-        <div id="menulogo" class="menurow"><img src="images/logo_fiwifi.png" /></div>
+  <div id="container">
+    <div id="wrapper">
+      <div id="menubox" style="width:100%%;height:100%%;padding:0px;margin:0px;">
+        <div id="menulogo" class="menurow">
 
-        <form method="post" name="form" action="%s" id="form">
+<!--#if expr=$AP_OK -->
+		  <img src="images/logo_fiwifi.png"></div>
 
-			  <input type="hidden" name="mac" value="%s">
-			  <input type="hidden" name="ip" value="%s">
-			  <input type="hidden" name="redirect" value="%s">
-			  <input type="hidden" name="gateway" value="%s">
-			  <input type="hidden" name="timeout" value="%s">
-			  <input type="hidden" name="token" value="%s">
-			  <input type="hidden" name="ap" value="%s">
-			  <input type="hidden" name="realm" value="auth_service">
+        <div id="menufirst" class="menurow">
+          <button id="topleftbox" onclick="window.location.href='%s'">
+			 <img src="images/btn_help.png">
+			 </button> <button id="toprightbox" onclick="window.location.href='%s'">
+			 <img src="images/btn_withus.png">
+			 </button>
+        </div>
 
-          <div id="page-wrap">
-            <div id="inside">
-              <div id="left-sidebar">
-                <ul>
-                  <li>
-						  <!--
-                    <p>Seleziona il cuircuito presso cui si è registrati e inserire le credenziali</p>
-						  -->
-                    <p>Inserire le credenziali</p>
-                  </li>
-                </ul><br />
-                <br />
-                <br />
-					 <!--
-                <select id="realm" name="realm">
-                  <option value="10_piazze">
-                    10 Piazze
-                  </option>
+        <div id="menusecond" class="menurow">
+          <button id="bottomleftbox" onclick="window.location.href='/registrazione?ap=%s'">
+			 <img src="images/btn_signin.png">
+			 </button> <button id="bottomrightbox" onclick="window.location.href='%s'"><img src="images/btn_login.png"></button>
+<!--#else -->
+		  <img src="images/firenze-wifi2.png" style="height:115px;width:457px;"></div>
 
-                  <option value="lineacomune">
-                    Linea Comune
-                  </option>
+        <div id="menufirst" class="menurow">
+          <button id="topleftbox" onclick="window.location.href='%s'">
+          <h2>Aiuto</h2>
+			 </button> <button id="toprightbox" disabled="disabled" onclick="window.location.href='%s'">
+          <h2>Accesso libero</h2>
+			 </button>
+        </div>
 
-                  <option value="paas">
-                    PAAS
-                  </option>
-                </select>
-					 -->
-              </div>
-
-              <div id="main-content">
-                <br />
-                <br />
-              </div>
-
-              <p>Login (numero del cellulare):</p>
-
-              <p><input class="login_input" type="text" name="uid" /></p>
-
-              <p>Password:</p>
-
-              <p><input class="login_input" type="password" name="pass" /></p>
-
-              <p><input id="login_button" type="submit" name="submit" value="Entra" /></p>
-            </div><br />
-            <br />
-          </div>
-        </form>
-
-        <div style="clear: both;"></div>
-
-        <div id="footer"></div>
+        <div id="menusecond" class="menurow">
+          <button id="bottomleftbox" onclick="window.location.href='/registrazione?ap=%s'">
+          <h2>Registrati</h2>
+			 </button> <button id="bottomrightbox" onclick="window.location.href='%s'">
+          <h2>Naviga</h2></button>
+<!--#endif -->
+		  
+        </div>
       </div>
-
-      <div style="clear: both;"></div>
     </div>
   </div>
-</body>
-</html>

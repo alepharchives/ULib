@@ -322,11 +322,21 @@ void ULog::backup()
 
    if (pthis == 0 || bsyslog) return;
 
-   bool locked = lock->isLocked();
-   char buffer_path[MAX_FILENAME_LEN], suffix[32];
+   static const char* dir_log_gz = (const char*) U_SYSCALL(getenv, "%S", "DIR_LOG_GZ");
+
+   uint32_t len_suffix;
+   char suffix[32], buffer_path[MAX_FILENAME_LEN];
    char* path = buffer_path;
 
-   static const char* dir_log_gz = (const char*) U_SYSCALL(getenv, "%S", "DIR_LOG_GZ");
+   bool locked = lock->isLocked();
+
+   if (file_limit &&
+       locked == false)
+      {
+      lock->lock();
+      }
+
+   len_suffix = u_sn_printf(suffix, sizeof(suffix), ".%6D.gz");
 
    if (dir_log_gz)
       {
@@ -336,15 +346,21 @@ void ULog::backup()
 
        path  += len;
       *path++ = '/';
-      }
 
-   if (file_limit &&
-       locked == false)
+      len += 1 + len_suffix;
+
+      U_INTERNAL_ASSERT_MINOR(len, (int32_t)MAX_FILENAME_LEN)
+
+      (void) U_SYSCALL(u_mem_cpy, "%p,%p,%u", path, suffix, len_suffix);
+
+      buffer_path[len] = '\0';
+
+      U_INTERNAL_DUMP("buffer_path(%u) = %S", len, buffer_path)
+      }
+   else
       {
-      lock->lock();
+      (void) UFile::setPathFromFile(*pthis, path, suffix, len_suffix);
       }
-
-   (void) UFile::setPathFromFile(*pthis, path, suffix, u_sn_printf(suffix, sizeof(suffix), ".%6D.gz"));
 
    U_ASSERT_EQUALS(UFile::access(buffer_path, R_OK | W_OK), false)
 

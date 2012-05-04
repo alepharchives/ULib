@@ -338,11 +338,15 @@ int UWebSocketPlugIn::handlerRequest()
 
             // Set environment for the command application server
 
-            UClientImage_Base::body->setBuffer(U_CAPACITY);
+            UString environment = UHTTP::getCGIEnvironment();
 
-            UString environment = UHTTP::getCGIEnvironment() + command->getStringEnvironment();
+            if (environment.empty()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+
+            (void) environment.append(command->getStringEnvironment());
 
             command->setEnvironment(&environment);
+
+            UClientImage_Base::body->setBuffer(U_CAPACITY);
 
             if (command->execute((UString*)-1, (UString*)-1, -1, fd_stderr))
                {

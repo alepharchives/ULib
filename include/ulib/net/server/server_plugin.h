@@ -23,18 +23,19 @@ The plugin interface is an integral part of UServer which provides a flexible wa
 Plugins allow you to enhance the functionality of UServer without changing the core of the server. They can be loaded at
 startup time and can change virtually some aspect of the behaviour of the server.
 
-UServer has 5 hooks which are used in different states of the execution of the request:
+UServer has 6 hooks which are used in different states of the execution of the request:
 --------------------------------------------------------------------------------------------
 * Server-wide hooks:
 ````````````````````
 1) handlerConfig: called when the server finished to process its configuration
 2) handlerInit:   called when the server finished its init, and before start to run
+3) handlerFork:   called when the server finished its forks, and before start to run
 
 * Connection-wide hooks:
 ````````````````````````
-3) handlerREAD:
-4) handlerRequest:
-5) handlerReset:
+4) handlerREAD:
+5) handlerRequest:
+6) handlerReset:
   called in `UClientImage_Base::handlerRead()`
 --------------------------------------------------------------------------------------------
 
@@ -75,6 +76,13 @@ public:
    virtual int handlerInit()
       {
       U_TRACE(0, "UServerPlugIn::handlerInit()")
+
+      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+      }
+
+   virtual int handlerFork()
+      {
+      U_TRACE(0, "UServerPlugIn::handlerFork()")
 
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }

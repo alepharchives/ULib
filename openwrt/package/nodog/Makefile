@@ -68,6 +68,7 @@ endef
 
 define Package/nodog/install
 	mkdir -p $(PKG_INSTALL_DIR)
+#	$(MAKE) -i -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" check 
 	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" install
 	$(INSTALL_DIR) $(1)/etc $(1)/usr/sbin $(1)/usr/libexec/ulib $(1)/usr/lib/nodog
 	$(CP) -a  $(PKG_INSTALL_DIR)/usr/lib/libulib* $(1)/usr/lib/

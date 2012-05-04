@@ -52,7 +52,11 @@ bool USocketExt::read(USocket* s, UString& buffer, int count, int timeoutMS, uin
    int byte_read = 0;
    bool result = true;
    uint32_t start  = buffer.size(), // NB: buffer read can start with prev data...
+#ifdef DEBUG
+            ncount = (buffer.isNull() ? 0 : buffer.space()),
+#else
             ncount = buffer.space(),
+#endif
             chunk  = U_max(count,(int)U_CAPACITY);
 
    if (ncount < chunk &&

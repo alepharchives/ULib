@@ -2,9 +2,8 @@
 
 # reset_policy.sh
 
-# environment
-source /srv/wifi-portal-firenze/etc/environment.conf
+# echo '00 00 * * * /home/unirel/userver/bin/reset_policy.sh' | crontab
 
 PROGRAM=`basename $0 .sh`
 
-exec $WIFI_PORTAL_HOME/bin/send_req_to_portal.sh $PROGRAM $PROGRAM
+exec /home/unirel/userver/bin/send_req_to_portal.sh $PROGRAM "reset_policy"

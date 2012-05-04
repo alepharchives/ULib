@@ -284,31 +284,27 @@ int UHttpPlugIn::handlerREAD()
 
    if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket) == false)
       {
-      if (UServer_Base::pClientImage->socket->isOpen() == false) UClientImage_Base::write_off = true;
-      else
+      U_http_is_connection_close = U_YES;
+
+      if (UClientImage_Base::wbuffer->empty())
          {
-         U_http_is_connection_close = U_YES;
+         // HTTP/1.1 compliance:
+         // -----------------------------------------------------
+         // Sends 501 for request-method != (GET|POST|HEAD)
+         // Sends 505 for protocol != HTTP/1.[0-1]
+         // Sends 400 for broken Request-Line
+         // Sends 411 for missing Content-Length on POST requests
 
-         if (UClientImage_Base::wbuffer->empty())
+              if (U_http_method_type == 0)                        u_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
+         else if (U_http_version     == 0 && u_http_info.uri_len) u_http_info.nResponseCode = HTTP_VERSION;
+         else
             {
-            // HTTP/1.1 compliance:
-            // -----------------------------------------------------
-            // Sends 501 for request-method != (GET|POST|HEAD)
-            // Sends 505 for protocol != HTTP/1.[0-1]
-            // Sends 400 for broken Request-Line
-            // Sends 411 for missing Content-Length on POST requests
+            UHTTP::setHTTPBadRequest();
 
-                 if (U_http_method_type == 0)                        u_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
-            else if (U_http_version     == 0 && u_http_info.uri_len) u_http_info.nResponseCode = HTTP_VERSION;
-            else
-               {
-               UHTTP::setHTTPBadRequest();
-
-               U_RETURN(U_PLUGIN_HANDLER_ERROR);
-               }
-
-            UHTTP::setHTTPResponse(0, 0);
+            U_RETURN(U_PLUGIN_HANDLER_ERROR);
             }
+
+         UHTTP::setHTTPResponse(0, 0);
          }
 
       U_RETURN(U_PLUGIN_HANDLER_ERROR);

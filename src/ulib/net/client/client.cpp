@@ -54,12 +54,13 @@ UClient_Base::UClient_Base(UFileConfig* cfg) : response(U_CAPACITY), buffer(U_CA
 
    U_INTERNAL_DUMP("u_user_name(%u) = %.*S", u_user_name_len, u_user_name_len, u_user_name)
 
+   timeoutMS = U_TIMEOUT_MS;
+
    if (cfg) loadConfigParam(*cfg);
    else
       {
-      bIPv6     = false;
-      port      = verify_mode = 0;
-      timeoutMS = U_TIMEOUT_MS;
+      bIPv6 = false;
+      port  = verify_mode = 0;
       }
 }
 
@@ -192,10 +193,6 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
    bIPv6       = cfg.readBoolean(*UServer_Base::str_ENABLE_IPV6);
 #endif
    verify_mode = cfg.readLong(*UServer_Base::str_VERIFY_MODE);
-   timeoutMS   = cfg.readLong(*str_RES_TIMEOUT);
-
-   if (timeoutMS) timeoutMS *= 1000;
-   else           timeoutMS  = -1;
 
    UString host      = cfg[*UServer_Base::str_SERVER],
            name_sock = cfg[*UServer_Base::str_SOCKET_NAME];
@@ -206,8 +203,20 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
       (void) setHostPort(name_sock.empty() ? host : name_sock, cfg.readLong(*UServer_Base::str_PORT));
       }
 
-   // cfg.clear();
-   // cfg.deallocate();
+   UString value = cfg[*str_RES_TIMEOUT];
+
+   if (value.empty() == false)
+      {
+      timeoutMS = value.strtol();
+
+      if (timeoutMS) timeoutMS *= 1000;
+      else           timeoutMS  = -1;
+      }
+
+   U_INTERNAL_DUMP("timeoutMS = %u", timeoutMS)
+
+// cfg.clear();
+// cfg.deallocate();
 }
 
 bool UClient_Base::connect()
@@ -379,6 +388,8 @@ send:
             }
          }
       }
+
+   U_INTERNAL_DUMP("result = %b", result)
 
    if (result)
       {

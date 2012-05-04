@@ -144,6 +144,14 @@ int USCGIPlugIn::handlerRequest()
          char* equalPtr;
          char* envp[128];
          UString environment = UHTTP::getCGIEnvironment();
+
+         if (environment.empty())
+            {
+            UHTTP::setHTTPBadRequest();
+
+            U_RETURN(U_PLUGIN_HANDLER_ERROR);
+            }
+
          int n = u_split(U_STRING_TO_PARAM(environment), envp, 0);
 
          U_INTERNAL_ASSERT_MINOR(n, 128)

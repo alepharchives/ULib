@@ -239,7 +239,7 @@ void UClientImage_Base::manageRequestSize(bool request_buffer_resize)
 {
    U_TRACE(0, "UClientImage_Base::manageRequestSize(%b)", request_buffer_resize)
 
-   U_INTERNAL_DUMP("pipeline = %b size_request = %u", pipeline, size_request)
+   U_INTERNAL_DUMP("pipeline = %b size_request = %u pbuffer->size() = %u", pipeline, size_request, pbuffer->size())
 
    if (pipeline)
       {
@@ -256,16 +256,16 @@ void UClientImage_Base::manageRequestSize(bool request_buffer_resize)
             {
             // NB: we use request as the new read buffer... 
 
-            rstart   = size_request = 0;
             pipeline = false;
+            rstart   = size_request = 0;
             rpointer = pbuffer->data();
 
-            *rbuffer = *pbuffer;
-             request =  rbuffer;
+            *(request = rbuffer) = *pbuffer;
+                                    pbuffer->clear();
             }
          }
       }
-   else
+   else if (size_request)
       {
       pipeline = (rbuffer->size() > size_request);
 
@@ -273,12 +273,11 @@ void UClientImage_Base::manageRequestSize(bool request_buffer_resize)
          {
          U_INTERNAL_ASSERT_EQUALS(rstart,0U)
 
-         *pbuffer = rbuffer->substr(0U, size_request);
-          request = pbuffer;
+         *(request = pbuffer) = rbuffer->substr(0U, size_request);
          }
       }
 
-   U_INTERNAL_DUMP("pipeline = %b size_request = %u", pipeline, size_request)
+   U_INTERNAL_DUMP("pipeline = %b size_request = %u pbuffer->size() = %u", pipeline, size_request, pbuffer->size())
 }
 
 __pure int UClientImage_Base::genericRead()
@@ -323,10 +322,10 @@ void UClientImage_Base::initAfterGenericRead()
 
    U_INTERNAL_DUMP("pipeline = %b pbuffer = %.*S", pipeline, U_STRING_TO_TRACE(*pbuffer))
 
-// U_INTERNAL_ASSERT(pbuffer->isNull())
+   U_INTERNAL_ASSERT(pbuffer->isNull())
    U_INTERNAL_ASSERT_DIFFERS(pipeline, true)
 
-   if (pbuffer->isNull() == false) pbuffer->clear();
+// if (pbuffer->isNull() == false) pbuffer->clear();
    if (   body->isNull() == false)    body->clear();
                                    wbuffer->clear();
 }
@@ -386,7 +385,6 @@ void UClientImage_Base::handlerError(int sock_state)
    U_TRACE(0, "UClientImage_Base::handlerError(%d)", sock_state)
 
    U_INTERNAL_ASSERT_POINTER(socket)
-   U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc,UEventFd::fd)
 
    U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->iSockDesc)
 
@@ -448,8 +446,6 @@ loop:
 
    if (handlerWrite() == U_NOTIFIER_DELETE) state = U_PLUGIN_HANDLER_ERROR;
 
-   u_http_info.method = 0; // NB: mark end processing of http request...
-
 #ifdef U_HTTP_CACHE_REQUEST
    if ((state & U_PLUGIN_HANDLER_AGAIN) != 0)
       {
@@ -494,11 +490,9 @@ loop:
          }
       else
          {
-         U_ASSERT_EQUALS(rstart, rbuffer->distance(request->data()))
+         U_INTERNAL_DUMP("rstart = %u rbuffer->size() = %u", rstart, rbuffer->size())
 
          rstart += size_request;
-
-         U_INTERNAL_DUMP("rstart = %u rbuffer->size() = %u", rstart, rbuffer->size())
 
          if (rbuffer->size() > rstart)
             {
@@ -523,7 +517,9 @@ loop:
       pbuffer->clear();
       }
 
+#ifdef U_HTTP_CACHE_REQUEST
 end:
+#endif
    if (u_pthread_time)
       {
       last_response = u_now->tv_sec;
@@ -542,7 +538,8 @@ int UClientImage_Base::handlerWrite()
 
    U_INTERNAL_DUMP("write_off = %b", write_off)
 
-   if (write_off)
+   if (write_off ||
+       socket->isClosed())
       {
       write_off = false;
 
@@ -550,7 +547,6 @@ int UClientImage_Base::handlerWrite()
       }
 
    U_INTERNAL_ASSERT_POINTER(wbuffer)
-   U_INTERNAL_ASSERT(socket->isOpen())
 
    U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer))
    U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body))
@@ -570,7 +566,7 @@ int UClientImage_Base::handlerWrite()
 #  endif
       }
 
-   U_ASSERT_DIFFERS(wbuffer->empty(), true)
+   U_ASSERT_EQUALS(wbuffer->empty(), false)
 
    if (logbuf) logResponse();
 
@@ -578,10 +574,11 @@ int UClientImage_Base::handlerWrite()
 
    if (count)
       {
+      off_t offset;
 send:
       U_INTERNAL_DUMP("sfd = %d bclose = %b count = %u", sfd, bclose, count)
 
-      off_t offset = start;
+      offset = start;
 
 #  ifdef __MINGW32__
       ssize_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u", socket->getFd(), sfd, &offset, count);
@@ -640,12 +637,13 @@ void UClientImage_Base::handlerDelete()
 
    if (UNotifier::num_connection > UNotifier::min_connection)
       {
-      --UNotifier::num_connection;
-
       UServer_Base::handlerCloseConnection(this);
 
       if (socket->isOpen()) socket->closesocket();
 
+      --UNotifier::num_connection;
+
+      U_INTERNAL_DUMP("UNotifier::num_connection = %d UNotifier::min_connection = %d", UNotifier::num_connection, UNotifier::min_connection)
       U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B", sfd, count, UEventFd::op_mask)
 
       if (count)

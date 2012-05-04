@@ -555,7 +555,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                      case E_URL:
                         {
-                        encoded.setBuffer(x.size());
+                        encoded.setBuffer(x.size() * 3);
 
                         Url::encode(x, encoded);
                         }
@@ -842,7 +842,7 @@ int USSIPlugIn::handlerRequest()
 
    U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
 
-   bool bcache = (u_mime_index == U_ssi);
+   bool bcache = u_is_ssi();
 
    U_INTERNAL_DUMP("bcache = %b", bcache)
 
@@ -855,9 +855,17 @@ int USSIPlugIn::handlerRequest()
 
       // init
 
+      environment = UHTTP::getCGIEnvironment();
+
+      if (environment.empty())
+         {
+         UHTTP::setHTTPBadRequest();
+
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
+
       errmsg                   = *str_errmsg_default;
       timefmt                  = *str_timefmt_default;
-      environment              = UHTTP::getCGIEnvironment();
       last_modified            = UHTTP::file->st_mtime;
       use_size_abbrev          = true;
       set_alternative_response = 0;

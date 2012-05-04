@@ -26,9 +26,8 @@ char              UFile::cwd_save[U_PATH_MAX];
 uint32_t          UFile::cwd_len_save;
 UTree<UString>*   UFile::tree;
 UVector<UString>* UFile::vector;
-
 #ifdef DEBUG
-int         UFile::num_file_object;
+int               UFile::num_file_object;
 
 void UFile::inc_num_file_object() { ++num_file_object; }
 void UFile::dec_num_file_object() { --num_file_object; }
@@ -1299,11 +1298,11 @@ const char* UFile::getMimeType(bool bmagic)
       }
 
 #ifdef USE_LIBMAGIC
-   if (bmagic                &&
-       u_mime_index != U_css &&
-       u_mime_index != U_js  &&
-       u_mime_index != U_ssi &&
-       u_mime_index != U_usp)
+   if (bmagic              &&
+       u_is_css() == false &&
+       u_is_js () == false &&
+       u_is_ssi() == false &&
+       u_is_usp() == false)
       {
       U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
 

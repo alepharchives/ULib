@@ -51,7 +51,9 @@ void UProcess::setProcessGroup(pid_t pid, pid_t pgid)
 {
    U_TRACE(1, "UProcess::setProcessGroup(%d,%d)", pid, pgid)
 
+#ifndef __MINGW32__
    (void) U_SYSCALL(setpgid, "%d,%d", pid, pgid);
+#endif
 }
 
 bool UProcess::fork()

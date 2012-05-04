@@ -98,9 +98,9 @@ extern U_EXPORT time_t u_now_adjust; /* GMT based time */
 
 extern U_EXPORT struct tm u_strftime_tm;
 
-extern U_EXPORT void*  u_pthread_time; /* pthread clock */
+extern U_EXPORT void*           u_pthread_time; /* pthread clock */
 extern U_EXPORT struct timeval* u_now;
-extern U_EXPORT struct timeval u_timeval;
+extern U_EXPORT struct timeval  u_timeval;
 
 U_EXPORT void u_gettimeofday(void); /* calculate number of seconds between UTC to current time zone */
 
@@ -130,6 +130,21 @@ U_EXPORT void        u_init_ulib_seed_hash(void);
 U_EXPORT const char* u_basename(const char* restrict path) __pure;
 U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure;
 U_EXPORT uint32_t    u_strftime(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, time_t now);
+
+/* mime type identification */
+
+static inline bool u_is_gz(void)   { return (u_mime_index == U_gz); }
+static inline bool u_is_js(void)   { return (u_mime_index == U_js); }
+static inline bool u_is_css(void)  { return (u_mime_index == U_css); }
+static inline bool u_is_cgi(void)  { return (u_mime_index == U_cgi); }
+static inline bool u_is_usp(void)  { return (u_mime_index == U_usp); }
+static inline bool u_is_ssi(void)  { return (u_mime_index == U_ssi); }
+static inline bool u_is_flv(void)  { return (u_mime_index == U_flv); }
+static inline bool u_is_gif(void)  { return (u_mime_index == U_gif); }
+static inline bool u_is_jpg(void)  { return (u_mime_index == U_jpg); }
+static inline bool u_is_png(void)  { return (u_mime_index == U_png); }
+static inline bool u_is_img(void)  { return (u_mime_index == U_png || u_mime_index == U_gif || u_mime_index == U_jpg); }
+static inline bool u_is_html(void) { return (u_mime_index == U_html); }
 
 /* Print with format extension: bBCDHMNOPQrRSUYwW
 ---------------------------------------------------------------------------------

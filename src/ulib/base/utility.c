@@ -360,34 +360,6 @@ bool u_runAsUser(const char* restrict user, bool change_dir)
 #endif
 }
 
-char* u_inet_nltoa(uint32_t ip)
-{
-   char* result;
-   union uuaddress address;
-
-   U_INTERNAL_TRACE("u_inet_nltoa(%u)", ip)
-
-   address.ip = ip;
-
-   result = inet_ntoa(address.addr);
-
-   return result;
-}
-
-char* u_inet_nstoa(uint8_t* ip)
-{
-   char* result;
-   union uuaddress address;
-
-   U_INTERNAL_TRACE("u_inet_nstoa(%p)", ip)
-
-   (void) u_mem_cpy(address.inaddr, ip, 4);
-
-   result = inet_ntoa(address.addr);
-
-   return result;
-}
-
 char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_path_len)
 {
    U_INTERNAL_TRACE("u_getPathRelativ(%s,%u)", path, *ptr_path_len)

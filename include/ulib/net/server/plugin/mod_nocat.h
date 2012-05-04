@@ -27,18 +27,19 @@ The plugin interface is an integral part of UServer which provides a flexible wa
 Plugins allow you to enhance the functionality of UServer without changing the core of the server. They can be loaded at
 startup time and can change virtually some aspect of the behaviour of the server.
 
-UServer has 5 hooks which are used in different states of the execution of the request:
+UServer has 6 hooks which are used in different states of the execution of the request:
 --------------------------------------------------------------------------------------------
 * Server-wide hooks:
 ````````````````````
 1) handlerConfig: called when the server finished to process its configuration
-2) handlerInit:   called when the server finished its init, and before start to run
+2) handlerInit:   called when the server finished its init,  and before start to run
+3) handlerFork:   called when the server finished its forks, and before start to run
 
 * Connection-wide hooks:
 ````````````````````````
-3) handlerREAD:
-4) handlerRequest:
-5) handlerReset:
+4) handlerREAD:
+5) handlerRequest:
+6) handlerReset:
   called in `UClientImage_Base::handlerRead()`
 --------------------------------------------------------------------------------------------
 
@@ -165,6 +166,7 @@ public:
 
    virtual int handlerConfig(UFileConfig& cfg);
    virtual int handlerInit();
+   virtual int handlerFork();
 
    // Connection-wide hooks
 
@@ -185,14 +187,14 @@ protected:
    UVector<Url*> vauth_url, vinfo_url;
    UVector<UIPAllow*> vLocalNetworkMask;
    UVector<UString> vInternalDevice, vInternalDeviceLabel, vLocalNetwork, vauth, vauth_ip;
-   UString input, output, location, fw_cmd, decrypt_cmd, decrypt_key, mode, gateway, access_point, extdev, route_only,
-           dns_addr, include_ports, exclude_ports, allowed_web_hosts, intdev, localnet, auth_login, fw_env;
+   UString input, output, location, fw_cmd, decrypt_cmd, decrypt_key, mode, gateway, access_point, extdev, intdev, localnet, auth_login, fw_env;
 
    static vPF unatexit;
    static int fd_stderr;
    static UPing** sockp;
    static fd_set* addrmask;
    static UIptAccount* ipt;
+   static long check_expire;
    static UNoCatPlugIn* pthis;
    static UString* status_content;
    static time_t last_request_check;

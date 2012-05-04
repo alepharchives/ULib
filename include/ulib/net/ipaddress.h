@@ -188,7 +188,23 @@ public:
 
    // Returns if it belongs to a private IP address space (RFC 1918)
 
+   static bool isPrivate(uint32_t i)
+      {
+      U_TRACE(0, "UIPAddress::isPrivate(0x%X)", i)
+
+      if (((i >= 0x0A000000) && (i <= 0x0AFFFFFF)) ||
+          ((i >= 0xAC100000) && (i <= 0xAC1FFFFF)) ||
+          ((i >= 0xC0A80000) && (i <= 0xC0A8FFFF)))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
    bool isPrivate() __pure;
+
+   static UString toString(uint8_t* paddr);
 
 #ifdef ENABLE_IPV6
    /********************************************************************************/

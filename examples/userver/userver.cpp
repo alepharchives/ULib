@@ -67,8 +67,11 @@ public:
       // SERVER         host name or ip address for the listening socket
       // PORT           port number for the listening socket
       // SOCKET_NAME    file name   for the listening socket
-      // IP_ADDRESS     public ip address of host for the interface connected to the Internet (autodetected if not specified)
+      // IP_ADDRESS     ip address of host for the interface connected to the Internet (autodetected if not specified)
       // ALLOWED_IP     list of comma separated client address for IP-based access control (IPADDR[/MASK])
+      //
+      // ENABLE_RFC1918_FILTER reject request from private IP to public server address
+      // ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
       //
       // LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
       // USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (TCP_CORK, TCP_DEFER_ACCEPT, TCP_QUICKACK)

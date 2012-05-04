@@ -191,7 +191,9 @@ public:
 
       U_INTERNAL_ASSERT(_julian >= 2440588) // 2440588 -> 01/01/1970
 
-      time_t t = U_ONE_DAY_IN_SECOND * (_julian - 2440588);
+      time_t t = (_julian - 2440588);
+
+      t *= U_ONE_DAY_IN_SECOND;
 
       U_RETURN(t);
       }

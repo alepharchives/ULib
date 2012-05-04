@@ -1,0 +1,1 @@
+GET /vicidial/project_auth_entries.txt HTTP/1.1

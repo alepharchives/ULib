@@ -887,6 +887,13 @@ int USocket::recv(void* pBuffer, uint32_t iBufLength, int timeoutMS)
 
    int iBytesRead;
 
+   if (timeoutMS != 0 &&
+       isBlocking()   &&
+       UNotifier::waitForRead(iSockDesc, timeoutMS) != 1)
+      {
+      U_RETURN(-1);
+      }
+
 loop:
    iBytesRead = recv(pBuffer, iBufLength);
 

@@ -191,7 +191,7 @@
 #endif
 
 #ifndef   U_ONE_DAY_IN_SECOND
-#  define U_ONE_DAY_IN_SECOND (24 * 60 * 60)
+#  define U_ONE_DAY_IN_SECOND (24L * 60L * 60L)
 #endif
 
 #ifdef  NULL

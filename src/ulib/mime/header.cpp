@@ -395,7 +395,7 @@ bool UMimeHeader::readHeader(USocket* socket, UString& data)
 
    U_ASSERT(empty())
 
-   UHTTP::initHTTPInfo();
+   U_HTTP_INFO_INIT(0);
 
    bool result = (UHTTP::readHTTPHeader(socket, data) &&
                   UHTTP::findEndHeader(         data)

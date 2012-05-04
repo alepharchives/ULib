@@ -85,8 +85,6 @@ union uuaddress {
 extern U_EXPORT int         u_num_cpu;
 extern U_EXPORT const char* u_short_units[]; /* { "B", "KB", "MB", "GB", "TB", 0 } */
 
-U_EXPORT char*       u_inet_nstoa(uint8_t* ip);
-U_EXPORT char*       u_inet_nltoa(uint32_t ip);
 U_EXPORT int         u_getScreenWidth(void) __pure; /* Determine the width of the terminal we're running on */
 U_EXPORT int         u_get_num_random(int range);
 U_EXPORT const char* u_get_mimetype(const char* restrict suffix);

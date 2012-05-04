@@ -650,6 +650,7 @@ AC_CHECK_SIZEOF(unsigned char)
 AC_CHECK_SIZEOF(short)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(long)
+AC_CHECK_SIZEOF(time_t)
 AC_CHECK_SIZEOF(size_t)
 AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(__int64)
@@ -1011,6 +1012,10 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 
 	# NB: "-g -O2" e' gia' inserito in configure...
 	CPPFLAGS="${CPPFLAGS} -pipe -D_GNU_SOURCE"
+
+	if test "$enable_shared" = "yes"; then
+		CPPFLAGS="${CPPFLAGS} -fPIC"
+	fi
 
 	CFLAGS="${CFLAGS} $ulib_cv_CC_flags"
 	CPPFLAGS="${CPPFLAGS} $ulib_cv_flags"

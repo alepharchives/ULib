@@ -98,3 +98,11 @@ dn:   uid=bnlbanca,o=mail
 cn:   BNL Banca
 mail: bnlbanca@unirel.com
 
+dn:   uid=serviziobonifici,o=mail
+cn:   BNL Banca Servizio Bonifici
+mail: serviziobonifici@unirel.com
+
+dn:   uid=clientebanca,o=mail
+cn:   Cliente Banca
+mail: clientebanca@unirel.com
+

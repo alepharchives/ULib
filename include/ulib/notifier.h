@@ -83,6 +83,8 @@ public:
       {
       U_TRACE(0, "UNotifier::isDynamicConnection(%d)", fd)
 
+      U_INTERNAL_DUMP("num_connection = %d min_connection = %d", num_connection, min_connection)
+
       if (num_connection > min_connection && find(fd)) U_RETURN(true);
 
       U_RETURN(false);

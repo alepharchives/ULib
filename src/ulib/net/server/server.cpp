@@ -83,8 +83,10 @@ bool                       UServer_Base::bssl;
 bool                       UServer_Base::bipc;
 bool                       UServer_Base::flag_loop;
 bool                       UServer_Base::public_address;
+bool                       UServer_Base::monitoring_process;
 bool                       UServer_Base::bpluginsHandlerReset;
 bool                       UServer_Base::accept_edge_triggered;
+bool                       UServer_Base::enable_rfc1918_filter;
 bool                       UServer_Base::set_realtime_priority;
 bool                       UServer_Base::flag_use_tcp_optimization;
 ULog*                      UServer_Base::log;
@@ -150,6 +152,7 @@ const UString* UServer_Base::str_PID_FILE;
 const UString* UServer_Base::str_USE_TCP_OPTIMIZATION;
 const UString* UServer_Base::str_LISTEN_BACKLOG;
 const UString* UServer_Base::str_SET_REALTIME_PRIORITY;
+const UString* UServer_Base::str_ENABLE_RFC1918_FILTER;
 
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
 #  include "ulib/thread.h"
@@ -240,6 +243,7 @@ void UServer_Base::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_USE_TCP_OPTIMIZATION,0)
    U_INTERNAL_ASSERT_EQUALS(str_LISTEN_BACKLOG,0)
    U_INTERNAL_ASSERT_EQUALS(str_SET_REALTIME_PRIORITY,0)
+   U_INTERNAL_ASSERT_EQUALS(str_ENABLE_RFC1918_FILTER,0)
 
    static ustringrep stringrep_storage[] = {
    { U_STRINGREP_FROM_CONSTANT("ENABLE_IPV6") },
@@ -280,7 +284,8 @@ void UServer_Base::str_allocate()
    { U_STRINGREP_FROM_CONSTANT("PID_FILE") },
    { U_STRINGREP_FROM_CONSTANT("USE_TCP_OPTIMIZATION") },
    { U_STRINGREP_FROM_CONSTANT("LISTEN_BACKLOG") },
-   { U_STRINGREP_FROM_CONSTANT("SET_REALTIME_PRIORITY") }
+   { U_STRINGREP_FROM_CONSTANT("SET_REALTIME_PRIORITY") },
+   { U_STRINGREP_FROM_CONSTANT("ENABLE_RFC1918_FILTER") }
    };
 
    U_NEW_ULIB_OBJECT(str_ENABLE_IPV6,           U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -322,6 +327,7 @@ void UServer_Base::str_allocate()
    U_NEW_ULIB_OBJECT(str_USE_TCP_OPTIMIZATION,  U_STRING_FROM_STRINGREP_STORAGE(36));
    U_NEW_ULIB_OBJECT(str_LISTEN_BACKLOG,        U_STRING_FROM_STRINGREP_STORAGE(37));
    U_NEW_ULIB_OBJECT(str_SET_REALTIME_PRIORITY, U_STRING_FROM_STRINGREP_STORAGE(38));
+   U_NEW_ULIB_OBJECT(str_ENABLE_RFC1918_FILTER, U_STRING_FROM_STRINGREP_STORAGE(39));
 }
 
 UServer_Base::UServer_Base(UFileConfig* cfg)
@@ -450,9 +456,11 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // SERVER             host name or ip address for the listening socket
    // PORT               port number             for the listening socket
    // SOCKET_NAME        file name               for the listening socket
-   // IP_ADDRESS         public ip address of host for the interface connected to the Internet (autodetected if not specified)
+   // IP_ADDRESS         ip address of host for the interface connected to the Internet (autodetected if not specified)
    // ALLOWED_IP         list of comma separated client         address for IP-based access control (IPADDR[/MASK])
-   // ALLOWED_IP_PRIVATE list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
+   //
+   // ENABLE_RFC1918_FILTER reject request from private IP to public server address
+   // ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
    //
    // LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
    // USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (DEFER_ACCEPT, QUICKACK)
@@ -502,6 +510,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    iBackLog                   = cfg.readLong(*str_LISTEN_BACKLOG, SOMAXCONN);
    timeoutMS                  = cfg.readLong(*str_REQ_TIMEOUT);
    cgi_timeout                = cfg.readLong(*str_CGI_TIMEOUT);
+   enable_rfc1918_filter      = cfg.readBoolean(*str_ENABLE_RFC1918_FILTER);
    set_realtime_priority      = cfg.readBoolean(*str_SET_REALTIME_PRIORITY);
    flag_use_tcp_optimization  = cfg.readBoolean(*str_USE_TCP_OPTIMIZATION);
    UNotifier::max_connection  = cfg.readLong(*str_MAX_KEEP_ALIVE);
@@ -544,6 +553,8 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    if (isPreForked())
       {
+      monitoring_process = true;
+
       // manage shared data...
 
       U_INTERNAL_ASSERT_EQUALS(ptr_shared_data,0)
@@ -838,6 +849,7 @@ end:                                                                            
 }
 
 U_PLUGIN_HANDLER(Init)
+U_PLUGIN_HANDLER(Fork)
 U_PLUGIN_HANDLER(READ)
 U_PLUGIN_HANDLER(Request)
 U_PLUGIN_HANDLER(Reset)
@@ -952,6 +964,14 @@ void UServer_Base::init()
       IP_address = server;
       }
 
+#ifdef __MINGW32__
+   if (IP_address.empty())
+      {
+      U_ERROR("On windows we need to set IP_ADDRESS on configuration file. Going down...");
+      }
+
+   socket->cLocalAddress.setHostName(IP_address, UClientImage_Base::bIPv6);
+#else
    /* The above code does NOT make a connection or send any packets (to 64.233.187.99 which is google).
     * Since UDP is a stateless protocol connect() merely makes a system call which figures out how to
     * route the packets based on the address and what interface (and therefore IP address) it should
@@ -973,11 +993,21 @@ void UServer_Base::init()
          U_SRV_LOG("SERVER IP ADDRESS from configuration : %.*S differ from system interface: %.*S", U_STRING_TO_TRACE(IP_address), U_STRING_TO_TRACE(ip));
          }
       }
+#endif
 
 #ifndef __MINGW32__
    if (bipc == false)
 #endif
       {
+      struct in_addr ia;
+
+      if (inet_aton(IP_address.c_str(), &ia) == 0)
+         {
+         U_ERROR("IP_ADDRESS conversion fail. Going down...");
+         }
+
+      socket->cLocalAddress.setAddress(&ia, UClientImage_Base::bIPv6);
+
       public_address = (socket->cLocalAddress.isPrivate() == false);
 
       U_SRV_LOG("SERVER IP ADDRESS registered as: %.*s (%s)", U_STRING_TO_TRACE(IP_address), (public_address ? "public" : "private"));
@@ -1358,7 +1388,8 @@ next:
 
    // RFC1918 filtering (DNS rebinding countermeasure)
 
-   if (public_address &&
+   if (public_address                         &&
+       enable_rfc1918_filter                  &&
        csocket->remoteIPAddress().isPrivate() &&
        (vallow_IP_prv == 0 ||
         ptr->isAllowed(*vallow_IP_prv) == false))
@@ -1557,7 +1588,11 @@ int UServer_Base::UTimeoutConnection::handlerTime()
 
    UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
 
+/*
+#ifndef __MINGW32__
    if (USocket::accept4_flags & SOCK_NONBLOCK) UServer_Base::pthis->handlerRead();
+#endif
+*/
 
    // return value:
    // ---------------
@@ -1595,40 +1630,49 @@ void UServer_Base::run()
    //                                                                    >1 - pool of process serialize plus monitoring process
    // -------------------------------------------------------------------------------------------------------------------------
 
-   if (isPreForked())
+   if (monitoring_process)
       {
-      U_INTERNAL_ASSERT_MAJOR(preforked_num_kids,1)
-
       /**
       * Main loop for the parent process with the new preforked implementation.
       * The parent is just responsible for keeping a pool of children and they accept connections themselves...
       **/
 
-      int pid, status, nkids = 0;
+      pid_t pid_to_wait;
+      int pid, status, i = 0, nkids;
       UTimeVal to_sleep(0L, 500 * 1000L);
-      bool baffinity = (preforked_num_kids <= u_get_num_cpu());
+      bool baffinity = (preforked_num_kids <= u_get_num_cpu() && u_num_cpu > 1);
 
-      U_INTERNAL_DUMP("baffinity = %b", baffinity)
+      if (isPreForked())
+         {
+         pid_to_wait = -1;
+         nkids       = preforked_num_kids;
+         }
+      else
+         {
+         nkids       = 1;
+         }
+
+      U_INTERNAL_DUMP("nkids = %d baffinity = %b", nkids, baffinity)
 
       while (flag_loop)
          {
          u_need_root(false);
 
-         while (nkids < preforked_num_kids)
+         while (i < nkids)
             {
             if (proc->fork() &&
                 proc->parent())
                {
-               ++nkids;
+               ++i;
 
-               U_INTERNAL_DUMP("up to %u children", nkids)
-               U_INTERNAL_DUMP("UNotifier::num_connection = %d tot_connection = %d", UNotifier::num_connection, U_TOT_CONNECTION)
+               U_INTERNAL_DUMP("up to %u children", i)
+               U_INTERNAL_DUMP("UNotifier::num_connection = %d", UNotifier::num_connection)
 
                pid = proc->pid();
 
                cpu_set_t cpuset;
 
-               if (baffinity) u_bind2cpu(pid, nkids); // Pin the process to a particular core...
+               if (baffinity) u_bind2cpu(pid, i); // Pin the process to a particular core...
 
                CPU_ZERO(&cpuset);
 
@@ -1638,18 +1682,26 @@ void UServer_Base::run()
 
                U_INTERNAL_DUMP("cpuset = %ld %B", CPUSET_BITS(&cpuset)[0], CPUSET_BITS(&cpuset)[0])
 
-               U_SRV_LOG("started new child (pid %d), up to %u children, affinity mask: %x", pid, nkids, CPUSET_BITS(&cpuset)[0]);
+               U_SRV_LOG("started new child (pid %d), up to %u children, affinity mask: %x", pid, i, CPUSET_BITS(&cpuset)[0]);
 
                if (set_realtime_priority &&
                    u_switch_to_realtime_priority(pid) == false)
                   {
                   U_WARNING("cannot set posix realtime scheduling policy");
                   }
+
+               if (isPreForked() == false) pid_to_wait = pid;
                }
 
             if (proc->child())
                {
-               U_INTERNAL_DUMP("UNotifier::num_connection = %d tot_connection = %d", UNotifier::num_connection, U_TOT_CONNECTION)
+               U_INTERNAL_DUMP("UNotifier::num_connection = %d", UNotifier::num_connection)
+
+               if (vplugin &&
+                   pluginsHandlerFork() != U_PLUGIN_HANDLER_FINISHED)
+                  {
+                  U_ERROR("plugins forking FAILED. Going down...");
+                  }
 
                runAsUser(true);
 
@@ -1690,20 +1742,18 @@ void UServer_Base::run()
 
          u_dont_need_root();
 
-         pid = UProcess::waitpid(-1, &status, 0);
+         pid = UProcess::waitpid(pid_to_wait, &status, 0);
 
          if (pid > 0 &&
              flag_loop) // check for SIGTERM event...
             {
-            --nkids;
+            --i;
 
             baffinity = false;
 
-            U_INTERNAL_DUMP("down to %u children", nkids)
+            U_INTERNAL_DUMP("down to %u children", i)
 
-            U_SRV_LOG("child (pid %d) exited with value %d (%s), down to %u children", pid, status, UProcess::exitInfo(status), nkids);
-
-            U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+            U_SRV_LOG("child (pid %d) exited with value %d (%s), down to %u children", pid, status, UProcess::exitInfo(status), i);
             }
 
          /* Another little safety brake here: since children should not exit

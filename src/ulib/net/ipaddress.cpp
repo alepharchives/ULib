@@ -521,19 +521,32 @@ __pure bool UIPAddress::isPrivate()
       U_INTERNAL_ASSERT_EQUALS(iAddressType, AF_INET)
       U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in_addr))
 
-      uint32_t a = htonl(pcAddress.i);
-
-      U_INTERNAL_DUMP("a = 0x%X", a)
-
-      if (((a >= 0x0A000000) && (a <= 0x0AFFFFFF)) ||
-          ((a >= 0xAC100000) && (a <= 0xAC1FFFFF)) ||
-          ((a >= 0xC0A80000) && (a <= 0xC0A8FFFF)))
-         {
-         U_RETURN(true);
-         }
+      if (isPrivate(htonl(pcAddress.i))) U_RETURN(true);
       }
 
    U_RETURN(false);
+}
+
+UString UIPAddress::toString(uint8_t* addr)
+{
+   U_TRACE(0, "UIPAddress::toString(%p)", addr)
+
+   union uuaddr {
+      uint8_t*        p;
+      struct in_addr* paddr;
+   };
+
+   union uuaddr u = { addr };
+
+   /* The inet_ntoa() function converts the Internet host address in, given in network byte order, to a string in IPv4 dotted-decimal notation.
+   * The string is returned in a statically allocated buffer, which subsequent calls will overwrite.
+   */
+
+   char* result = inet_ntoa(*(u.paddr));
+
+   UString x((void*)result);
+
+   U_RETURN_STRING(x);
 }
 
 // Simple IP-based access-control system

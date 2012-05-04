@@ -410,22 +410,26 @@ UString UStringExt::expandEnvironmentVar(const char* s, uint32_t n, const UStrin
 
    U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 
-   char* p2;
+   char* new_ptr;
    const char* p;
-   const char* p1 = 0;
-   UString value, x(n+100);
-   uint32_t _end, len, n1, n2 = 0;
+   const char* var_ptr = 0;
+   UString value, result(n+500U);
+   uint32_t _end, len, var_size, new_size = 0;
 
    while ((p = (const char*) memchr(s, '$', n)))
       {
+      U_INTERNAL_DUMP("p = %.*S", 10, p)
+
       len = p - s;
       n  -= len;
 
-      // read name $var
+      // read name=$var
+      //          =>...
 
       _end = 1;
 
-      while (_end < n && u_isname(p[_end]))
+      while (_end < n &&
+             u_isname(p[_end]))
          {
          U_INTERNAL_ASSERT_DIFFERS(p[_end], '$')
          U_INTERNAL_ASSERT_EQUALS(u_isspace(p[_end]), false)
@@ -435,52 +439,52 @@ UString UStringExt::expandEnvironmentVar(const char* s, uint32_t n, const UStrin
 
       U_INTERNAL_DUMP("len = %u n = %u _end = %u", len, n, _end)
 
-      if (_end == 1) n1 = 0;
+      if (_end == 1) var_size = 0;
       else
          {
-         value = getEnvironmentVar(p + 1, _end - 1, environment);
+         var_ptr  = p + 1;
+         var_size = _end - 1;
 
-         if (n2 &&
+         U_INTERNAL_DUMP("var = %.*S", var_size, var_ptr)
+
+         value = getEnvironmentVar(var_ptr, var_size, environment);
+
+         if (new_size &&
              value.find('$', 0U) != U_NOT_FOUND)
             {
-            value = getEnvironmentVar(p + 1, _end - 1, &x);
+            value = getEnvironmentVar(var_ptr, var_size, &result);
             }
 
-         n1 = value.size();
-         p1 = value.data();
+         var_ptr  = value.data();
+         var_size = value.size();
          }
 
-      // check for space
+      (void) result.reserve(new_size + len + var_size);
 
-      if (n1 > _end) (void) x.reserve(n2 + (n1 - _end));
+      new_ptr = result.c_pointer(new_size);
 
-      p2 = x.c_pointer(n2);
+      if (len) (void) u_mem_cpy(new_ptr, s, len);
 
-      if (n1)
+      if (var_size)
          {
-         if (len) (void) u_mem_cpy(p2,        s, len);
-                  (void) u_mem_cpy(p2 + len, p1,  n1);
+         (void) u_mem_cpy(new_ptr + len, var_ptr, var_size);
 
-         n2 += n1;
-         }
-      else
-         {
-         if (len) (void) u_mem_cpy(p2, s, len);
+         new_size += var_size;
          }
 
-      n2 += len;
+      new_size += len;
 
-      x.size_adjust(n2);
+      result.size_adjust(new_size);
 
       s  = p + _end;
       n -=     _end;
       }
 
-   if (n) (void) x.append(s, n);
+   if (n) (void) result.append(s, n);
 
-   U_INTERNAL_ASSERT(x.invariant())
+   U_INTERNAL_ASSERT(result.invariant())
 
-   U_RETURN_STRING(x);
+   U_RETURN_STRING(result);
 }
 
 UString UStringExt::getEnvironmentVar(const char* s, uint32_t n, const UString* environment)
@@ -1270,7 +1274,8 @@ __pure const char* UStringExt::getValueFromName(const UString& buffer, uint32_t 
    U_TRACE(0, "UStringExt::getValueFromName(%.*S,%u,%u,%.*S,%b)", U_STRING_TO_TRACE(buffer), pos, len, U_STRING_TO_TRACE(name), nocase)
 
    U_INTERNAL_ASSERT_MAJOR(len, 0)
-   U_ASSERT_DIFFERS(buffer.empty(), true)
+   U_ASSERT_EQUALS(buffer.empty(), false)
+   U_ASSERT_EQUALS(name.find(':'), U_NOT_FOUND)
 
    const char* ptr_header_value;
    uint32_t header_line, end = pos + len;

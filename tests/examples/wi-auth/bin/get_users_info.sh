@@ -2,9 +2,8 @@
 
 # get_users_info.sh
 
-# environment
-source /srv/wifi-portal-firenze/etc/environment.conf
+# echo '*/5 * * * * /home/unirel/userver/bin/get_users_info.sh' | crontab
 
 PROGRAM=`basename $0 .sh`
 
-exec $WIFI_PORTAL_HOME/bin/send_req_to_portal.sh $PROGRAM $PROGRAM
+exec /home/unirel/userver/bin/send_req_to_portal.sh $PROGRAM "get_users_info"

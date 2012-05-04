@@ -82,29 +82,14 @@ public:
       }
 
 #ifdef HAVE_NETPACKET_PACKET_H
-   /** The arping command tests whether a given IP network address is in use on the local network, and can get additional information about the
+
+   /* The arping command tests whether a given IP network address is in use on the local network, and can get additional information about the
     * device using that address. The arping command is similar in function to ping, but it operates using Address Resolution Protocol (ARP)
     * instead of Internet Control Message Protocol. Because it uses ARP, arping is only usable on the local network; in some cases the response
     * will be coming, not from the arpinged host, but rather from an intermediate system that engages in proxy ARP (such as a router).
     */
 
-   typedef struct arpmsg {
-      /* Ethernet header */
-      uint8_t  h_dest[6];     /* 00 destination ether addr */
-      uint8_t  h_source[6];   /* 06 source ether addr */
-      uint16_t h_proto;       /* 0c packet type ID field */
-      /* ARP packet */
-      uint16_t htype;         /* 0e hardware type (must be ARPHRD_ETHER) */
-      uint16_t ptype;         /* 10 protocol type (must be ETH_P_IP) */
-      uint8_t  hlen;          /* 12 hardware address length (must be 6) */
-      uint8_t  plen;          /* 13 protocol address length (must be 4) */
-      uint16_t operation;     /* 14 ARP opcode */
-      uint8_t  sHaddr[6];     /* 16 sender's hardware address */
-      uint8_t  sInaddr[4];    /* 1c sender's IP address */
-      uint8_t  tHaddr[6];     /* 20 target's hardware address */
-      uint8_t  tInaddr[4];    /* 26 target's IP address */
-      uint8_t  pad[18];       /* 2a pad for min. ethernet payload (60 bytes) */
-   } arpmsg;
+// #define U_ARP_WITH_BROADCAST
 
    void initArpPing(const char* device);
 
@@ -139,12 +124,41 @@ public:
 #endif
 
 protected:
-   rephdr* rep;
    reqhdr  req;
+   rephdr* rep;
    int timeoutMS;
 
 #ifdef HAVE_NETPACKET_PACKET_H
+   typedef struct arpmsg {
+      // Ethernet header
+      uint8_t  h_dest[6];     // 00 destination ether addr
+      uint8_t  h_source[6];   // 06 source ether addr
+      uint16_t h_proto;       // 0c packet type ID field
+      // ARP packet
+      uint16_t htype;         // 0e hardware type (must be ARPHRD_ETHER)
+      uint16_t ptype;         // 10 protocol type (must be ETH_P_IP)
+      uint8_t  hlen;          // 12 hardware address length (must be 6)
+      uint8_t  plen;          // 13 protocol address length (must be 4)
+      uint16_t operation;     // 14 ARP opcode
+      uint8_t  sHaddr[6];     // 16 sender's hardware address
+      uint8_t  sInaddr[4];    // 1c sender's IP address
+      uint8_t  tHaddr[6];     // 20 target's hardware address
+      uint8_t  tInaddr[4];    // 26 target's IP address
+      uint8_t  pad[18];       // 2a pad for min. ethernet payload (60 bytes)
+   } arpmsg;
+
    arpmsg arp;
+
+   union uusockaddr_ll {
+      struct sockaddr    s;
+      struct sockaddr_ll l;
+   };
+
+#  ifndef U_ARP_WITH_BROADCAST
+   union uusockaddr_ll he;
+#  endif
+
+   int recvArpPing();
 #endif
 
    static UProcess* proc;

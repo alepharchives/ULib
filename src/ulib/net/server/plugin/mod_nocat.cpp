@@ -76,6 +76,7 @@ vPF                       UNoCatPlugIn::unatexit;
 char                      UNoCatPlugIn::pcStrAddress[INET6_ADDRSTRLEN];
 bool                      UNoCatPlugIn::arping;
 bool                      UNoCatPlugIn::flag_check_peers_for_info;
+long                      UNoCatPlugIn::check_expire;
 time_t                    UNoCatPlugIn::last_request_check;
 UPing**                   UNoCatPlugIn::sockp;
 fd_set*                   UNoCatPlugIn::addrmask;
@@ -95,7 +96,10 @@ UHashMap<UModNoCatPeer*>* UNoCatPlugIn::peers;
 
 #define U_NOCAT_STATUS \
 "<html>\n" \
-"<head><title>Access Point: %s</title></head>\n" \
+"<head>\n" \
+"<meta http-equiv=\"Pragma\" content=\"no-cache\">\n" \
+"<title>Access Point: %s</title>" \
+"</head>\n" \
 "<body bgcolor=\"#FFFFFF\" text=\"#000000\">\n" \
 "<h1>Access Point: %s</h1>\n" \
 "<hr noshade=\"1\"/>\n" \
@@ -103,11 +107,6 @@ UHashMap<UModNoCatPeer*>* UNoCatPlugIn::peers;
    "<tr><td>Current Time</td><td>%7D</td></tr>\n" \
    "<tr><td>Gateway Up Since</td><td>%#7D</td></tr>\n" \
    "<tr><td>GatewayVersion</td><td>" ULIB_VERSION "</td></tr>\n" \
-   "<tr><td>RouteOnly</td><td>%.*s</td></tr>\n" \
-   "<tr><td>DNSAddr</td><td>%.*s</td></tr>\n" \
-   "<tr><td>IncludePorts</td><td>%.*s</td></tr>\n" \
-   "<tr><td>ExcludePorts</td><td>%.*s</td></tr>\n" \
-   "<tr><td>AllowedWebHosts</td><td>%.*s</td></tr>\n" \
    "<tr><td>ExternalDevice</td><td>%.*s</td></tr>\n" \
    "<tr><td>InternalDevice</td><td>%.*s</td></tr>\n" \
    "<tr><td>LocalNetwork</td><td>%.*s</td></tr>\n" \
@@ -239,10 +238,7 @@ void UNoCatPlugIn::setStatusContent(UModNoCatPeer* peer)
       const char* name = access_point.data();
 
       buffer.snprintf(U_NOCAT_STATUS, name, name, u_start_time,
-                      U_STRING_TO_TRACE(route_only), U_STRING_TO_TRACE(dns_addr), U_STRING_TO_TRACE(include_ports),
-                      U_STRING_TO_TRACE(exclude_ports), U_STRING_TO_TRACE(allowed_web_hosts), U_STRING_TO_TRACE(extdev),
-                      U_STRING_TO_TRACE(intdev), U_STRING_TO_TRACE(localnet), UServer_Base::port,
-                      U_STRING_TO_TRACE(auth_login),
+                      U_STRING_TO_TRACE(extdev), U_STRING_TO_TRACE(intdev), U_STRING_TO_TRACE(localnet), UServer_Base::port, U_STRING_TO_TRACE(auth_login),
                       login_timeout, peers->size(), total_connections,
                       U_STRING_TO_TRACE(*status_content), "/images/auth_logo.png");
 
@@ -297,7 +293,7 @@ UModNoCatPeer::UModNoCatPeer(const UString& peer_ip) : ip(peer_ip)
    // set traffic
 
    ctraffic = traffic = 0;
-   ltraffic = ULLONG_MAX;
+   ltraffic = 4L * 1024L * 1024L * 1024L; // 10G
 }
 
 // define method VIRTUAL of class UEventTime
@@ -317,14 +313,32 @@ int UModNoCatPeer::handlerTime()
    U_RETURN(-1);
 }
 
+#define U_TIME_FOR_ARPING_ASYNC_COMPLETION 15
+
 int UNoCatPlugIn::handlerTime()
 {
    U_TRACE(0, "UNoCatPlugIn::handlerTime()")
 
-   // NB: check if there is now a http request processing...
+   U_INTERNAL_ASSERT_MAJOR(check_expire, 0)
 
-   if (u_http_info.method == 0) checkPeersForInfo();
-   else                         flag_check_peers_for_info = true;
+   // NB: maybe we have a check delayed because of http request processing...
+
+   U_INTERNAL_DUMP("flag_check_peers_for_info = %b u_http_info.method = %p", flag_check_peers_for_info, u_http_info.method)
+
+   if (flag_check_peers_for_info == false)
+      {
+      // NB: check if there is now a http request processing...
+
+      if (u_http_info.method) flag_check_peers_for_info = true;
+      else
+         {
+         checkPeersForInfo();
+
+         // NB: check for pending arping...
+
+         UEventTime::setSecond(isPingAsyncPending() ? U_TIME_FOR_ARPING_ASYNC_COMPLETION - 2 : check_expire);
+         }
+      }
 
    // return value:
    // ---------------
@@ -440,7 +454,9 @@ void UNoCatPlugIn::deny(UModNoCatPeer* peer, bool alarm, bool disconnected)
          peer->logout = u_now->tv_sec;
          }
 
-      pthis->addPeerInfo(peer, (disconnected ? -1 : peer->logout));
+      time_t logout = (disconnected ? -1 : peer->logout); // -1 => disconnected (logout implicito)
+
+      pthis->addPeerInfo(peer, logout);
 
       executeCommand(peer, UModNoCatPeer::PEER_DENY);
 
@@ -485,7 +501,7 @@ void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& redir
 {
    U_TRACE(0, "UNoCatPlugIn::setRedirectLocation(%p,%.*S,%.*S)", peer, U_STRING_TO_TRACE(redirect), U_URL_TO_TRACE(auth))
 
-   UString value_encoded(U_CAPACITY);
+   UString value_encoded((redirect.size() + 1024U) * 3U);
 
    Url::encode(peer->mac, value_encoded);
 
@@ -705,6 +721,12 @@ void UNoCatPlugIn::getTraffic()
    U_TRACE(0, "UNoCatPlugIn::getTraffic()")
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
+   union uuaddr {
+      uint32_t       a;
+      struct in_addr addr;
+   };
+
+   union uuaddr u;
    const char* ip;
    const char* table;
    UModNoCatPeer* peer;
@@ -720,7 +742,8 @@ void UNoCatPlugIn::getTraffic()
          {
          while ((entry = ipt->getNextEntry()))
             {
-            ip = u_inet_nltoa(entry->ip);
+            u.a = entry->ip;
+            ip  = inet_ntoa(u.addr);
 
             U_INTERNAL_DUMP("IP: %s SRC packets: %u bytes: %u DST packets: %u bytes: %u",
                              ip, entry->src_packets, entry->src_bytes, entry->dst_packets, entry->dst_bytes)
@@ -763,40 +786,37 @@ void UNoCatPlugIn::addPeerInfo(UModNoCatPeer* peer, time_t logout)
 
    U_INTERNAL_DUMP("u_http_info.method = %p", u_http_info.method)
 
-   if (u_http_info.method || logout > 0)
-      {
-      Url* info_url = pthis->vinfo_url[peer->index_AUTH];
+   Url* info_url = pthis->vinfo_url[peer->index_AUTH];
 
-      info_url->setPath(U_CONSTANT_TO_PARAM("/logout"));
+   info_url->setPath(U_CONSTANT_TO_PARAM("/info"));
 
-      U_INTERNAL_DUMP("peer->index_AUTH = %u info_url = %p", peer->index_AUTH, info_url)
+   U_INTERNAL_DUMP("peer->index_AUTH = %u info_url = %p", peer->index_AUTH, info_url)
 
-      UString buffer(100U);
+   UString buffer(U_CAPACITY);
 
-      buffer.snprintf("%.*s@%.*s", U_STRING_TO_TRACE(peer->label), U_STRING_TO_TRACE(access_point));
+   buffer.snprintf("%.*s@%.*s", U_STRING_TO_TRACE(peer->label), U_STRING_TO_TRACE(access_point));
 
-      info_url->addQuery(U_STRING_TO_PARAM(*str_Mac),    U_STRING_TO_PARAM(peer->mac));
-      info_url->addQuery(U_CONSTANT_TO_PARAM("ip"),      U_STRING_TO_PARAM(peer->ip));
-      info_url->addQuery(U_CONSTANT_TO_PARAM("gateway"), U_STRING_TO_PARAM(gateway));
-      info_url->addQuery(U_CONSTANT_TO_PARAM("ap"),      U_STRING_TO_PARAM(buffer));
-      info_url->addQuery(U_STRING_TO_PARAM(*str_User),   U_STRING_TO_PARAM(peer->user));
+   info_url->addQuery(U_STRING_TO_PARAM(*str_Mac),    U_STRING_TO_PARAM(peer->mac));
+   info_url->addQuery(U_CONSTANT_TO_PARAM("ip"),      U_STRING_TO_PARAM(peer->ip));
+   info_url->addQuery(U_CONSTANT_TO_PARAM("gateway"), U_STRING_TO_PARAM(gateway));
+   info_url->addQuery(U_CONSTANT_TO_PARAM("ap"),      U_STRING_TO_PARAM(buffer));
+   info_url->addQuery(U_STRING_TO_PARAM(*str_User),   U_STRING_TO_PARAM(peer->user));
 
-      buffer = UStringExt::numberToString(logout); // NB: (-1|0) mean NOT logout (only info)...
+   buffer = UStringExt::numberToString(logout); // NB: (-1|0) mean NOT logout (only info)...
 
-      info_url->addQuery(U_CONSTANT_TO_PARAM("logout"), U_STRING_TO_PARAM(buffer));
+   info_url->addQuery(U_CONSTANT_TO_PARAM("logout"), U_STRING_TO_PARAM(buffer));
 
-      buffer = UStringExt::numberToString(u_now->tv_sec - peer->ctime);
-                                                          peer->ctime = u_now->tv_sec;
+   buffer = UStringExt::numberToString(u_now->tv_sec - peer->ctime);
+                                                       peer->ctime = u_now->tv_sec;
 
-      info_url->addQuery(U_CONSTANT_TO_PARAM("connected"), U_STRING_TO_PARAM(buffer));
+   info_url->addQuery(U_CONSTANT_TO_PARAM("connected"), U_STRING_TO_PARAM(buffer));
 
-      getTraffic();
+   getTraffic();
 
-      buffer.snprintf("%u", peer->ctraffic);
-                            peer->ctraffic = 0;
+   buffer.snprintf("%u", peer->ctraffic);
+                         peer->ctraffic = 0;
 
-      info_url->addQuery(U_CONSTANT_TO_PARAM("traffic"), U_STRING_TO_PARAM(buffer));
-      }
+   info_url->addQuery(U_CONSTANT_TO_PARAM("traffic"), U_STRING_TO_PARAM(buffer));
 }
 
 void UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
@@ -885,6 +905,8 @@ void UNoCatPlugIn::checkPeersForInfo()
 
    U_INTERNAL_DUMP("last_request = %ld", last_request)
 
+   flag_check_peers_for_info = true;
+
    // NB: check for pending arping...
 
    if (isPingAsyncPending())
@@ -893,10 +915,12 @@ void UNoCatPlugIn::checkPeersForInfo()
 
       addrmask = UPing::checkForPingAsyncCompletion(nfds);
 
-      if (addrmask || last_request < 15) goto result; // NB: check for something wrong (must complete within 15 secs)...
+      if (addrmask || last_request < U_TIME_FOR_ARPING_ASYNC_COMPLETION) goto result; // NB: check for something wrong (must complete within 15 secs)...
+
+      goto end;
       }
 
-   if (last_request >= 15) // NB: protection from DoS...
+   if (last_request >= U_TIME_FOR_ARPING_ASYNC_COMPLETION) // NB: protection from DoS...
       {
       last_request_check = u_now->tv_sec;
 
@@ -928,7 +952,10 @@ result:
 
          if (peer)
             {
-            if (FD_ISSET(i, addrmask)) addPeerInfo(peer, 0);
+            if (FD_ISSET(i, addrmask))
+               {
+               if (u_http_info.method) addPeerInfo(peer, 0);
+               }
             else
                {
                U_SRV_LOG("Peer %.*s don't return ARP reply, I assume he is disconnected...", U_STRING_TO_TRACE(peer->ip));
@@ -942,6 +969,7 @@ result:
       addrmask = 0;
       }
 
+end:
    flag_check_peers_for_info = false;
 }
 
@@ -1155,7 +1183,6 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
    if (cfg.loadTable())
       {
       int port = 0;
-      long check_expire;
       UString pathconf, intdevlbl, tmp;
 
       fw_env = cfg[*str_FW_ENV];
@@ -1273,6 +1300,8 @@ int UNoCatPlugIn::handlerInit()
 {
    U_TRACE(0, "UNoCatPlugIn::handlerInit()")
 
+   pthis = this;
+
    if (fw_cmd.empty())
       {
       U_SRV_LOG("initialization of plugin FAILED");
@@ -1314,6 +1343,32 @@ int UNoCatPlugIn::handlerInit()
 
    U_INTERNAL_ASSERT_EQUALS(vauth.size(), vauth_ip.size())
 
+   access_point = USocketExt::getNodeName();
+
+   gateway.snprintf("%.*s:%d", U_STRING_TO_TRACE(UServer_Base::getIPAddress()), UServer_Base::port);
+
+   U_INTERNAL_DUMP("gateway = %.*S access_point = %.*S", U_STRING_TO_TRACE(gateway), U_STRING_TO_TRACE(access_point))
+
+   UUDPSocket cClientSocket(UClientImage_Base::bIPv6);
+
+   auth_ip = vauth_ip[0];
+
+   if (cClientSocket.connectServer(auth_ip, 1001))
+      {
+      UString ip = UString(cClientSocket.getLocalInfo());
+
+      if (ip != UServer_Base::getIPAddress())
+         {
+         (void) UFile::writeToTmpl("/tmp/IP_ADDRESS", ip);
+
+         U_SRV_LOG("SERVER IP ADDRESS differ from IP address: %.*S to connect to AUTH: %.*S", U_STRING_TO_TRACE(ip), U_STRING_TO_TRACE(auth_ip));
+         }
+      }
+
+   auth_ip = vauth_ip.join(U_CONSTANT_TO_PARAM(" "));
+
+   fw_env.snprintf_add("'AuthServiceIP=%.*s'\n", U_STRING_TO_TRACE(auth_ip));
+
    // crypto cmd
 
    if (decrypt_cmd.empty() == false) pgp.set(decrypt_cmd, (char**)0);
@@ -1321,12 +1376,6 @@ int UNoCatPlugIn::handlerInit()
    U_INTERNAL_ASSERT(decrypt_key.isNullTerminated())
 
    if (decrypt_key.empty() == false) UDES3::setPassword(decrypt_key.data());
-
-   // initialize the firewall: direct all port 80 traffic to us...
-
-   auth_ip = vauth_ip.join(U_CONSTANT_TO_PARAM(" "));
-
-   fw_env.snprintf_add("'AuthServiceIP=%.*s'\n", U_STRING_TO_TRACE(auth_ip));
 
    UString command(100U);
 
@@ -1338,27 +1387,11 @@ int UNoCatPlugIn::handlerInit()
 
    fd_stderr = UServices::getDevNull();
 
-   (void) cmd.executeAndWait(0, -1, fd_stderr);
-
-   UServer_Base::logCommandMsgError(cmd.getCommand());
-
-   if (UEventTime::notZero() || login_timeout)
-      {
-      UTimer::init(true); // async...
-
-      if (UEventTime::notZero()) UTimer::insert(this, true);
-      }
-
    peers = U_NEW(UHashMap<UModNoCatPeer*>);
 
    peers->allocate();
 
-   access_point   = USocketExt::getNodeName();
    status_content = U_NEW(UString(U_CAPACITY));
-
-   gateway.snprintf("%.*s:%d", U_STRING_TO_TRACE(UServer_Base::getIPAddress()), UServer_Base::port);
-
-   U_INTERNAL_DUMP("gateway = %.*S access_point = %.*S", U_STRING_TO_TRACE(gateway), U_STRING_TO_TRACE(access_point))
 
    // users traffic
 
@@ -1367,6 +1400,23 @@ int UNoCatPlugIn::handlerInit()
    // NB: needed because all instance try to close the log... (inherits from its parent)
 
    unatexit = (UServer_Base::isLog() ? &ULog::close : 0);
+
+   UServer_Base::monitoring_process = true;
+
+   U_SRV_LOG("initialization of plugin success");
+
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+}
+
+int UNoCatPlugIn::handlerFork()
+{
+   U_TRACE(0, "UNoCatPlugIn::handlerFork()")
+
+   // initialize the firewall: direct all port 80 traffic to us...
+
+   (void) cmd.executeAndWait(0, -1, fd_stderr);
+
+   UServer_Base::logCommandMsgError(cmd.getCommand());
 
    // manage internal device...
 
@@ -1390,25 +1440,21 @@ int UNoCatPlugIn::handlerInit()
          }
       }
 
-   pthis = this;
+   // manage internal timer...
 
-   UUDPSocket cClientSocket(UClientImage_Base::bIPv6);
-
-   auth_ip = vauth_ip[0];
-
-   if (cClientSocket.connectServer(auth_ip, 1001))
+   if (UEventTime::notZero() || login_timeout)
       {
-      UString ip = UString(cClientSocket.getLocalInfo());
+      UTimer::init(true); // async...
 
-      if (ip != UServer_Base::getIPAddress())
+      U_SRV_LOG("initialization of timer success");
+
+      if (UEventTime::notZero())
          {
-         (void) UFile::writeToTmpl("/tmp/IP_ADDRESS", ip);
+         UTimer::insert(this, true);
 
-         U_SRV_LOG("SERVER IP ADDRESS differ from IP address: %.*S to connect to AUTH: %.*S", U_STRING_TO_TRACE(ip), U_STRING_TO_TRACE(auth_ip));
+         U_SRV_LOG("set monitoring for every %d secs", UEventTime::getSecond());
          }
       }
-
-   U_SRV_LOG("initialization of plugin success");
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
@@ -1419,7 +1465,8 @@ int UNoCatPlugIn::handlerRequest()
 {
    U_TRACE(0, "UNoCatPlugIn::handlerRequest()")
 
-   if (UHTTP::isHTTPRequestNotFound() &&
+   if (UHTTP::isHTTPRequestNotFound()               &&
+       UServer_Base::pClientImage->socket->isOpen() &&
        fw_cmd.empty() == false)
       {
       Url url;
@@ -1647,6 +1694,8 @@ int UNoCatPlugIn::handlerRequest()
          }
 
 set_redirection_url:
+      (void) buffer.reserve(7 + u_http_info.host_len + u_http_info.uri_len);
+
       buffer.snprintf("http://%.*s%.*s", U_STRING_TO_TRACE(host), U_HTTP_URI_TO_TRACE);
 
 set_redirect_to_AUTH:
@@ -1664,7 +1713,14 @@ end:
 
       // NB: maybe we have a check delayed because of http request processing...
 
-      if (flag_check_peers_for_info) checkPeersForInfo();
+      u_http_info.method = 0;
+
+      if (flag_check_peers_for_info)
+         {
+         flag_check_peers_for_info = false;
+
+         (void) handlerTime();
+         }
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -1724,16 +1780,11 @@ const char* UNoCatPlugIn::dump(bool _reset) const
                   << "fw_env               (UString                  " << (void*)&fw_env               << ")\n"
                   << "gateway              (UString                  " << (void*)&gateway              << ")\n"
                   << "location             (UString                  " << (void*)&location             << ")\n"
-                  << "dns_addr             (UString                  " << (void*)&dns_addr             << ")\n"
-                  << "route_only           (UString                  " << (void*)&route_only           << ")\n"
                   << "auth_login           (UString                  " << (void*)&auth_login           << ")\n"
                   << "decrypt_cmd          (UString                  " << (void*)&decrypt_cmd          << ")\n"
                   << "decrypt_key          (UString                  " << (void*)&decrypt_key          << ")\n"
                   << "access_point         (UString                  " << (void*)&access_point         << ")\n"
-                  << "include_ports        (UString                  " << (void*)&include_ports        << ")\n"
-                  << "exclude_ports        (UString                  " << (void*)&exclude_ports        << ")\n"
                   << "status_content       (UString                  " << (void*)status_content        << ")\n"
-                  << "allowed_web_hosts    (UString                  " << (void*)&allowed_web_hosts    << ")\n"
                   << "cmd                  (UCommand                 " << (void*)&cmd                  << ")\n"
                   << "pgp                  (UCommand                 " << (void*)&pgp                  << ")\n"
                   << "ipt                  (UIptAccount              " << (void*)ipt                   << ")\n"

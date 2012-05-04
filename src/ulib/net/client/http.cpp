@@ -737,7 +737,7 @@ bool UHttpClient_Base::sendPost(const UString& _url, const UString& pbody, const
 
    bool ok = connectServer(_url);
 
-   UHTTP::initHTTPInfo();
+   U_HTTP_INFO_INIT(0);
 
    if (ok == false) body = UClient_Base::response;
    else

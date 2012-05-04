@@ -1,7 +1,14 @@
   <div id="containerBig">
     <div id="wrapperAuto">
       <div id="registerbox" style="width:100%%;height:100%%;padding:0px;margin:0px;">
-        <div id="menulogo" class="menurow"><img src="images/logo_fiwifi.png" /></div>
+
+        <div id="menulogo" class="menurow">
+<!--#if expr=$AP_OK -->
+		  <img src="images/logo_fiwifi.png" />
+<!--#else -->
+		  <img src="images/firenze-wifi2.png" style="height:115px;width:457px;" />
+<!--#endif -->
+		  </div>
 
         <table width="100%%">
           <tbody>
@@ -20,8 +27,7 @@
 
           <tr>
             <td valign="top">
-              <p class="western" style="background: #b3b3b3"><font face="URW Bookman L, Times New Roman"><font size="2" style=
-              "font-size: 9pt"><b>DATI UTENTE:</b></font></font></p>
+              <p class="western" style="background: #b3b3b3"><font face="URW Bookman L, Times New Roman"><font size="2" style="font-size: 9pt"><b>DATI UTENTE:</b></font></font></p>
             </td>
           </tr>
         </table><br />
@@ -29,112 +35,34 @@
         <form method="post" name="form" action="%s">
           <table width="100%%" class="racss_formtable">
             <tr>
-              <td class="racss_label">Nome:</td>
+              <td class="racss_label">Nome: *</td>
 
-              <td class="racss_field"><input type="text" id="dati_utente_nome" name="dati_utente_nome" value="%s" /><strong class=
-              "Stile3">*</strong></td>
+              <td class="racss_field"><input type="text" id="dati_utente_nome" name="dati_utente_nome" /></td>
             </tr>
 
             <tr>
-              <td class="racss_label">Cognome:</td>
+              <td class="racss_label">Cognome: *</td>
 
-              <td class="racss_field"><input type="text" id="dati_utente_cognome" name="dati_utente_cognome" value="%s" /><strong class=
-              "Stile3">*</strong></td>
+              <td class="racss_field"><input type="text" id="dati_utente_cognome" name="dati_utente_cognome" /></td>
             </tr>
 
             <tr>
               <td class="racss_label">Nato a:</td>
 
-              <td class="racss_field"><input type="text" id="dati_utente_luogo_di_nascita" name="dati_utente_luogo_di_nascita" value="%s" /></td>
+              <td class="racss_field"><input type="text" id="dati_utente_luogo_di_nascita" name="dati_utente_luogo_di_nascita" /></td>
             </tr>
 
             <tr>
               <td class="racss_label">Data di Nascita (dd/mm/yyyy):</td>
 
-              <td class="racss_field"><input type="text" id="dati_utente_data_di_nascita" name="dati_utente_data_di_nascita" value="%s" /></td>
+              <td class="racss_field"><input type="text" id="dati_utente_data_di_nascita" name="dati_utente_data_di_nascita" /></td>
             </tr>
 
-				<!--
-            <tr>
-              <td class="racss_label">Sesso:</td>
+			   <tr>
+					<td class="racss_label">Email:</td>
 
-              <td class="racss_field"><select id="dati_utente_sesso" name="dati_utente_sesso">
-                <option value="M">
-                  M
-                </option>
-
-                <option value="F">
-                  F
-                </option>
-              </select></td>
-            </tr>
-
-            <tr>
-              <td class="racss_label">Codice Fiscale:</td>
-
-              <td class="racss_field"><input type="text" id="dati_utente_cf" name="dati_utente_cf" value="%s" /></td>
-            </tr>
-
-            <tr>
-              <td class="racss_label">Indirizzo:</td>
-
-              <td class="racss_field"><input type="text" id="dati_utente_indirizzo" name="dati_utente_indirizzo" value="%s" /></td>
-            </tr>
-
-            <tr>
-              <td class="racss_label">Comune:</td>
-
-              <td class="racss_field"><input type="text" id="dati_utente_comune" name="dati_utente_comune" value="%s" /></td>
-            </tr>
-
-            <tr>
-              <td class="racss_label">Provincia:</td>
-
-              <td class="racss_field"><input type="text" id="dati_utente_provincia" name="dati_utente_provincia" value="%s" /></td>
-            </tr>
-
-            <tr>
-              <td class="racss_label">Cap:</td>
-
-              <td class="racss_field"><input type="text" id="dati_utente_cap" name="dati_utente_cap" value="%s" /></td>
-            </tr>
-
-            <tr>
-              <td class="racss_label">Tipo di documento:</td>
-
-              <td class="racss_field"><select id="dati_utente_tipo_di_documento" name="dati_utente_tipo_di_documento">
-                <option value="ci">
-                  Carta di identita'
-                </option>
-
-                <option value="patente">
-                  Patente di guida
-                </option>
-
-                <option value="passaporto">
-                  Passaporto
-                </option>
-              </select></td>
-            </tr>
-
-            <tr>
-              <td class="racss_label">Num. documento:</td>
-
-              <td class="racss_field"><input type="text" id="dati_utente_numero_documento" name="dati_utente_numero_documento" value="%s" /></td>
-            </tr>
-
-            <tr>
-              <td class="racss_label">Emesso da:</td>
-
-              <td class="racss_field"><input type="text" id="dati_utente_ente_di_emissione" name="dati_utente_ente_di_emissione" value="%s" /></td>
-            </tr>
-
-            <tr>
-              <td class="racss_label">Rilasciato il (dd/mm/yyyy):</td>
-
-              <td class="racss_field"><input type="text" id="dati_utente_data_rilascio" name="dati_utente_data_rilascio" value="%s" /></td>
-            </tr>
-				-->
+					<td class="racss_field"><input type="text" id="dati_utente_email" name="dati_utente_email" /></td>
+				</tr>
 
             <tr>
               <td valign="top" colspan="2">
@@ -144,7 +72,7 @@
             </tr>
 
             <tr>
-              <td class="racss_label">Cellulare:</td>
+              <td class="racss_label">Cellulare: *</td>
 
               <td class="racss_field">+39 <select id="cellulare_prefisso" name="cellulare_prefisso">
                 <option value="xxx">
@@ -289,8 +217,7 @@
                   393
                 </option>
               </select>
-				  <input type="text" id="dati_utente_telefono_cellulare" name="dati_utente_telefono_cellulare" value="%s" />
-				  <strong class="Stile3">*</strong>
+				  <input type="text" id="dati_utente_telefono_cellulare" name="dati_utente_telefono_cellulare" />
 				  </td>
             </tr>
 
@@ -301,15 +228,13 @@
               </td>
             </tr>
             <tr>
-              <td class="racss_label">Password:</td>
+              <td class="racss_label">Password: *</td>
               <td class="racss_field"><input type="password" id="dati_utente_password" name="dati_utente_password" value="" />
-				  <strong class="Stile3">*</strong>
 				  </td>
             </tr>
             <tr>
-              <td class="racss_label">Conferma password:</td>
+              <td class="racss_label">Conferma password: *</td>
               <td class="racss_field"><input type="password" id="dati_utente_password_conferma" name="dati_utente_password_conferma" value="" />
-				  <strong class="Stile3">*</strong>
 				  </td>
             </tr>
           </table>
@@ -336,67 +261,41 @@
             </tr>
 
             <tr>
-              <td nowrap="nowrap"><label>Accetto</label> <input type="checkbox" id="privacy_accepted" value="1" class="checkbox" /></td>
+				  <td nowrap="" style="text-align:center;padding:1em;">
+                <strong>Accetto</strong>
+                <input type="checkbox" id="privacy_accepted" value="1" class="checkbox" />
+				  </td>
             </tr>
           </table>
           <hr />
           <br />
-          <input type="reset" value="Reset" /><input type="submit" name="submit" value="Registrazione" />
+			 <div style="text-align:center;">
+          <input type="reset"						value="Reset"			 style="height:3em;width:10em;margin:1em;" />
+			 <input type="submit" name="submit" value="Registrazione" style="height:3em;width:10em;margin:1em;" />
+		    </div>
         </form>
-        <br />
-        <br />
-        <br />
-        <br />
 		  <script type="text/javascript">
 //<![CDATA[
-        var valComm1 = new LiveValidation( 'dati_utente_nome', {onlyOnSubmit: true, validMessage: "OK" } );
-        valComm1.add( Validate.Presence, {failureMessage: "Devi inserire il nome"} );
-        //valComm1.add( Validate.Format, {pattern: /^([A-Za-z '\-]+)$/, failureMessage: "nome non valido"} );
-        var valComm2 = new LiveValidation( 'dati_utente_cognome', {onlyOnSubmit: true, validMessage: "OK" } );
-        valComm2.add( Validate.Presence, {failureMessage: "Devi inserire il cognome"} );
-        //valComm2.add( Validate.Format, {pattern: /^([A-Za-z '\-]+)$/, failureMessage: "cognome non valido"} );
-        var valComm3 = new LiveValidation( 'dati_utente_luogo_di_nascita', {onlyOnSubmit: true, validMessage: "OK" } );
-        //valComm3.add( Validate.Presence, {failureMessage: "Devi inserire il luogo di nascita"} );
-        //valComm3.add( Validate.Format, {pattern: /^([A-Za-z '\-.]+)$/, failureMessage: "luogo di nascita non valido"} );
-        var valComm4 = new LiveValidation( 'dati_utente_data_di_nascita', {onlyOnSubmit: true, validMessage: "OK" } );
-        //valComm4.add( Validate.Presence, {failureMessage: "Devi inserire la data di nascita"} );
-        valComm4.add( Validate.Format, {pattern: /^[\d]{1,2}\/[\d]{1,2}\/[\d]{4}$/, failureMessage: "data di nascita non valida"} );
-        //var valComm5 = new LiveValidation( 'dati_utente_cf', {onlyOnSubmit: true, validMessage: "OK" } );
-        //valComm5.add( Validate.Presence, {failureMessage: "Devi inserire il codice fiscale"} );
-        //valComm5.add( Validate.Format, {pattern: /^[A-Za-z]{6}[\d]{2}[A-Za-z]{1}[\d]{2}[A-Za-z]{1}[\d]{3}[A-Za-z]{1}$/, failureMessage: "codice fiscale non valido"} );
-        //var valComm6 = new LiveValidation( 'dati_utente_indirizzo', {onlyOnSubmit: true, validMessage: "OK" } );
-        //valComm6.add( Validate.Presence, {failureMessage: "Devi inserire l'indirizzo"} );
-        //var valComm7 = new LiveValidation( 'dati_utente_comune', {onlyOnSubmit: true, validMessage: "OK" } );
-        //valComm7.add( Validate.Presence, {failureMessage: "Devi inserire il comune"} );
-        //valComm7.add( Validate.Format, {pattern: /^([A-Za-z '\-.]+)$/, failureMessage: "comune non valido"} );
-        //var valComm8 = new LiveValidation( 'dati_utente_provincia', {onlyOnSubmit: true, validMessage: "OK" } );
-        //valComm8.add( Validate.Presence, {failureMessage: "Devi inserire la provincia"} );
-        //valComm8.add( Validate.Format, {pattern: /^([A-Za-z ]+)$/, failureMessage: "provincia non valida"} );
-        //var valComm9 = new LiveValidation( 'dati_utente_cap', {onlyOnSubmit: true, validMessage: "OK" } );
-        //valComm9.add( Validate.Presence, {failureMessage: "Devi inserire il cap"} );
-        //valComm9.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "cap non valido"} );
-        //var valComm10 = new LiveValidation( 'dati_utente_numero_documento', {onlyOnSubmit: true, validMessage: "OK" } );
-        //valComm10.add( Validate.Presence, {failureMessage: "Devi inserire il numero documento"} );
-        //valComm10.add( Validate.Format, {pattern: /^\w{1,}$/, failureMessage: "numero documento non valido"} );
-        //var valComm11 = new LiveValidation( 'dati_utente_ente_di_emissione', {onlyOnSubmit: true, validMessage: "OK" } );
-        //valComm11.add( Validate.Presence, {failureMessage: "Devi inserire l'ente di emissione"} );
-        //var valComm12 = new LiveValidation( 'dati_utente_data_rilascio', {onlyOnSubmit: true, validMessage: "OK" } );
-        //valComm12.add( Validate.Presence, {failureMessage: "Devi inserire la data di rilascio"} );
-        //valComm12.add( Validate.Format, {pattern: /^[\d]{1,2}\/[\d]{1,2}\/[\d]{4}$/, failureMessage: "data di rilascio non valida"} );
-        var valComm13 = new LiveValidation('cellulare_prefisso', {onlyOnSubmit: true, validMessage: "OK" });
-        valComm13.add( Validate.Format, {pattern: /^([0-9]+)/, failureMessage: "Devi scegliere il prefisso"} );
-        var valComm14 = new LiveValidation( 'dati_utente_telefono_cellulare', {onlyOnSubmit: true, validMessage: "OK" } );
-        valComm14.add( Validate.Presence, {failureMessage: "Devi inserire il numero di cellulare"} );
-        valComm14.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "numero di cellulare non valido"} );
-        valComm14.add( Validate.Exclusion, { within: [ ' ' ], allowNull: true, partialMatch: true, caseSensitive: false, failureMessage: "sono presenti spazi nel numero" } );
-        var valComm15 = new LiveValidation( 'dati_utente_password', {onlyOnSubmit: true, validMessage: "OK" } );
-        valComm15.add( Validate.Presence, {failureMessage: "Devi inserire la password"} );
-        var valComm16 = new LiveValidation( 'dati_utente_password_conferma', {onlyOnSubmit: true, validMessage: "OK" } );
-        valComm16.add( Validate.Presence, {failureMessage: "Devi inserire la conferma password"} );
-        var valComm17 = new LiveValidation('privacy_accepted', {onlyOnSubmit: true, validMessage: "OK" });
-        valComm17.add(Validate.Acceptance, {failureMessage: "Devi confermare di aver letto ed accettare la privacy"} );
-
-        //]]>
+var valComm1 = new LiveValidation( 'dati_utente_nome', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm1.add( Validate.Presence, {failureMessage: "Devi inserire il nome"} );
+var valComm2 = new LiveValidation( 'dati_utente_cognome', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm2.add( Validate.Presence, {failureMessage: "Devi inserire il cognome"} );
+var valComm3 = new LiveValidation( 'dati_utente_luogo_di_nascita', {onlyOnSubmit: true, validMessage: "OK" } );
+var valComm4 = new LiveValidation( 'dati_utente_data_di_nascita', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm4.add( Validate.Format, {pattern: /^[\d]{1,2}\/[\d]{1,2}\/[\d]{4}$/, failureMessage: "data di nascita non valida"} );
+var valComm13 = new LiveValidation('cellulare_prefisso', {onlyOnSubmit: true, validMessage: "OK" });
+valComm13.add( Validate.Format, {pattern: /^([0-9]+)/, failureMessage: "Devi scegliere il prefisso"} );
+var valComm14 = new LiveValidation( 'dati_utente_telefono_cellulare', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm14.add( Validate.Presence, {failureMessage: "Devi inserire il numero di cellulare"} );
+valComm14.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "numero di cellulare non valido"} );
+valComm14.add( Validate.Exclusion, { within:[' '],allowNull:true,partialMatch:true,caseSensitive:false,failureMessage:"sono presenti spazi nel numero" } );
+var valComm15 = new LiveValidation( 'dati_utente_password', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm15.add( Validate.Presence, {failureMessage: "Devi inserire la password"} );
+var valComm16 = new LiveValidation( 'dati_utente_password_conferma', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm16.add( Validate.Presence, {failureMessage: "Devi inserire la conferma password"} );
+var valComm17 = new LiveValidation('privacy_accepted', {onlyOnSubmit: true, validMessage: "OK" });
+valComm17.add(Validate.Acceptance, {failureMessage: "Devi confermare di aver letto ed accettare la privacy"} );
+//]]>
         </script>
       </div>
     </div>

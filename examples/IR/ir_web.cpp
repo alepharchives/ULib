@@ -65,8 +65,8 @@ extern U_EXPORT int runDynamicPage(UClientImage_Base* client_image);
    
    if (client_image == (void*)-2) { usp_end();   U_RETURN(0); }
    
+   uint32_t usp_sz;
    char usp_buffer[10 * 4096];
-   uint32_t usp_sz, usp_num_args = 0;
    bool usp_as_service = (client_image == (UClientImage_Base*)-3);
    
    union uudatasession {

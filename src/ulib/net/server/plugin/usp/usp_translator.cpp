@@ -43,8 +43,8 @@
 "%s"   \
 "%s"   \
 "%s"   \
+"\n\tuint32_t usp_sz;\n" \
 "\n\tchar usp_buffer[10 * 4096];\n" \
-"\n\tuint32_t usp_sz, usp_num_args = 0;\n" \
 "\n\tbool usp_as_service = (client_image == (UClientImage_Base*)-3);\n" \
 "\t\n" \
 "%.*s" \
@@ -235,9 +235,9 @@ public:
 
             token = UStringExt::trim(directive + U_CONSTANT_SIZE("args"), n);
 
-            (void) output.append(U_CONSTANT_TO_PARAM("\n\tif (usp_as_service == false) usp_num_args = UHTTP::processHTTPForm();\n\t"));
+            (void) output.append(U_CONSTANT_TO_PARAM("\n\tif (usp_as_service == false) UHTTP::processHTTPForm();\n\t"));
 
-            (void) output1.append(U_CONSTANT_TO_PARAM("\n\tif (usp_num_args) UHTTP::resetForm(true);\n\t"));
+            (void) output1.append(U_CONSTANT_TO_PARAM("\n\tif (UHTTP::form_name_value->size()) UHTTP::resetForm(true);\n\t"));
 
             UString tmp, name;
             UVector<UString> vec(token, "\t\n;");

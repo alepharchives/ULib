@@ -172,8 +172,9 @@ test_event_SOURCES = test_event.cpp
 endif
 
 if !MINGW
-PRG += test_process test_interrupt test_unixsocket_client test_unixsocket_server
+PRG += test_process test_interrupt test_unixsocket_client test_unixsocket_server test_arping
 TST += process.test interrupt.test unixsocket.test
+test_arping_SOURCES = test_arping.cpp
 test_process_SOURCES = test_process.cpp
 test_interrupt_SOURCES = test_interrupt.cpp
 test_unixsocket_client_SOURCES = test_unixsocket_client.cpp

@@ -155,12 +155,7 @@ UEventFd* UNotifier::find(int fd)
    U_INTERNAL_ASSERT_POINTER(lo_map_fd)
    U_INTERNAL_ASSERT_POINTER(hi_map_fd)
 
-   if (fd < max_connection)
-      {
-      U_INTERNAL_DUMP("num_connection = %u", num_connection)
-
-      U_RETURN_POINTER(lo_map_fd[fd],UEventFd);
-      }
+   if (fd < max_connection) U_RETURN_POINTER(lo_map_fd[fd], UEventFd);
 
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
    if (pthread) ((UThread*)pthread)->lock();
@@ -185,7 +180,6 @@ void UNotifier::insert(UEventFd* item)
 
    U_INTERNAL_DUMP("fd = %d op_mask = %B num_connection = %d", fd, item->op_mask, num_connection)
 
-   U_INTERNAL_ASSERT_MAJOR(fd,0)
    U_ASSERT_EQUALS(find(fd),0)
 
    if (fd < max_connection) lo_map_fd[fd] = item;
@@ -262,12 +256,17 @@ U_NO_EXPORT void UNotifier::handlerDelete(UEventFd* item)
 
    U_INTERNAL_ASSERT_POINTER(item)
 
-   int fd = item->fd;
+   int fd   = item->fd,
+       mask = item->op_mask;
 
-   U_INTERNAL_DUMP("fd = %d op_mask = %B num_connection = %d", fd, item->op_mask, num_connection)
+   U_INTERNAL_DUMP("fd = %d op_mask = %B num_connection = %d", fd, mask, num_connection)
 
    U_INTERNAL_ASSERT_MAJOR(fd,0)
-   U_ASSERT_EQUALS(item,find(fd))
+   U_ASSERT_EQUALS(item, find(fd))
+
+   item->handlerDelete();
+
+   U_INTERNAL_ASSERT_EQUALS(item->fd,0)
 
    if (fd < max_connection) lo_map_fd[fd] = 0;
    else
@@ -286,7 +285,7 @@ U_NO_EXPORT void UNotifier::handlerDelete(UEventFd* item)
 #ifdef USE_LIBEVENT
 #elif defined(HAVE_EPOLL_WAIT)
 #else
-   if (item->op_mask == U_READ_IN)
+   if (mask == U_READ_IN)
       {
       U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_read))
       U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_write),0)
@@ -303,8 +302,8 @@ U_NO_EXPORT void UNotifier::handlerDelete(UEventFd* item)
       }
    else
       {
+      U_INTERNAL_ASSERT_EQUALS(mask, U_WRITE_OUT)
       U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_write))
-      U_INTERNAL_ASSERT_EQUALS(item->op_mask, U_WRITE_OUT)
       U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_read),0)
 
       FD_CLR(fd, &fd_set_write);
@@ -320,10 +319,6 @@ U_NO_EXPORT void UNotifier::handlerDelete(UEventFd* item)
 
    if (empty() == false) fd_set_max = getNFDS();
 #endif
-
-   item->handlerDelete();
-
-   U_INTERNAL_ASSERT_EQUALS(item->fd,0)
 }
 
 void UNotifier::modify(UEventFd* item)
@@ -336,8 +331,7 @@ void UNotifier::modify(UEventFd* item)
 
    U_INTERNAL_DUMP("fd = %d op_mask = %B", fd, item->op_mask)
 
-   U_INTERNAL_ASSERT_MAJOR(fd,0)
-   U_ASSERT_EQUALS(item,find(fd))
+   U_ASSERT_EQUALS(item, find(fd))
 
 #ifdef USE_LIBEVENT
    U_INTERNAL_ASSERT_POINTER(u_ev_base)

@@ -3,7 +3,7 @@
       <div id="header">
         <table class="centered" width="784" border="0">
           <tr>
-            <td><img src="images/sfondo2_wifi.jpg" width="784" height="251"></td>
+            <td><img src="images/logo_fiwifi.png" width="784" height="251"></td>
           </tr>
         </table>
       </div>
@@ -35,13 +35,16 @@
           </tr>
 
           <tr>
-            <td class="header"><a href="admin_statistics">STATISTICHE</a></td>
+            <td class="header"><a href="admin_view_statistics_login">STATISTICHE: Accessi</a></td>
           </tr>
 
-          <!--#if expr=$SNMP -->
-				<tr><td class="header"><a href="<!--#echo var="$SNMP"-->">SNMP</a></td></tr>
-            </tr>
-          <!--#endif -->
+          <tr>
+            <td class="header"><a href="admin_historical_statistics_login">STATISTICHE: Accessi (storico)</a></td>
+          </tr>
+
+          <tr>
+            <td class="header"><a href="admin_view_statistics_registration">STATISTICHE: Registrazioni</a></td>
+          </tr>
 
         </table>
       </div>

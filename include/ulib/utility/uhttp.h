@@ -158,13 +158,11 @@ public:
       U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
       }
 
-   static void initHTTPInfo();
-
    static void setHTTPInfo(const char* method, uint32_t method_len, const char* uri, uint32_t uri_len)
       {
       U_TRACE(0, "UHTTP::setHTTPInfo(%.*S,%u,%.*S,%u)", method_len, method, method_len, uri_len, uri, uri_len)
 
-      initHTTPInfo();
+      U_HTTP_INFO_INIT(0);
 
       setHTTPMethod(     method, method_len);
       setHTTPMethodType(*method);
@@ -490,10 +488,10 @@ public:
    static UMimeMultipart* formMulti;
    static UVector<UString>* form_name_value;
 
-   static uint32_t processHTTPForm();
-   static void     resetForm(bool brmdir);
-   static void     getFormValue(UString& value, uint32_t pos);
-   static void     getFormValue(UString& value, const char* name, uint32_t len);
+   static void processHTTPForm();
+   static void resetForm(bool brmdir);
+   static void getFormValue(UString& value, uint32_t pos);
+   static void getFormValue(UString& value, const char* name, uint32_t len);
 
    // COOKIE
 
@@ -739,7 +737,7 @@ public:
 
       U_INTERNAL_DUMP("u_mime_index = %C U_http_is_navigation = %b", u_mime_index, U_http_is_navigation)
 
-      if ((u_mime_index == U_usp    ||
+      if ((u_is_usp()               ||
            u_isdigit(u_mime_index)) &&
           U_http_is_navigation == false)
          {
@@ -987,7 +985,7 @@ private:
    static void processRewriteRule() U_NO_EXPORT;
    static bool initUploadProgress(int byte_read) U_NO_EXPORT;
    static void updateUploadProgress(int byte_read) U_NO_EXPORT;
-   static bool setCGIShellScript(UString& command) U_NO_EXPORT;
+   static void setCGIShellScript(UString& command) U_NO_EXPORT;
 
    static void deleteSession() U_NO_EXPORT;
    static void manageDataForCache() U_NO_EXPORT;

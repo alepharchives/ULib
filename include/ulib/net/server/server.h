@@ -92,9 +92,11 @@ public:
    // SERVER             host name or ip address for the listening socket
    // PORT               port number             for the listening socket
    // SOCKET_NAME        file name               for the listening socket
-   // IP_ADDRESS         public ip address of host for the interface connected to the Internet (autodetected if not specified)
+   // IP_ADDRESS         ip address of host for the interface connected to the Internet (autodetected if not specified)
    // ALLOWED_IP         list of comma separated client         address for IP-based access control (IPADDR[/MASK])
-   // ALLOWED_IP_PRIVATE list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
+   //
+   // ENABLE_RFC1918_FILTER reject request from private IP to public server address
+   // ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
    //
    // LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
    // USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (DEFER_ACCEPT, QUICKACK)
@@ -170,6 +172,7 @@ public:
    static const UString* str_USE_TCP_OPTIMIZATION;
    static const UString* str_LISTEN_BACKLOG;
    static const UString* str_SET_REALTIME_PRIORITY;
+   static const UString* str_ENABLE_RFC1918_FILTER;
 
    static void str_allocate();
 
@@ -224,6 +227,7 @@ public:
 
    // Server-wide hooks
    static int pluginsHandlerInit();
+   static int pluginsHandlerFork();
 
    // Connection-wide hooks
    static int pluginsHandlerREAD();
@@ -375,8 +379,8 @@ protected:
    static uint32_t start, count;
    static UVector<UIPAllow*>* vallow_IP;
    static UVector<UIPAllow*>* vallow_IP_prv;
-   static bool flag_loop, bssl, bipc, flag_use_tcp_optimization,
-               accept_edge_triggered, set_realtime_priority, public_address;
+   static bool flag_loop, bssl, bipc, flag_use_tcp_optimization, monitoring_process,
+               accept_edge_triggered, set_realtime_priority, enable_rfc1918_filter, public_address;
 
    // COSTRUTTORI
 

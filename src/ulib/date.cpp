@@ -13,6 +13,8 @@
 
 #include <ulib/date.h>
 
+#include <limits.h>
+
 static const short monthDays[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 static const char* months[]    = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
 static const char* months_it[] = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" };
@@ -405,14 +407,23 @@ scanf:
       {
       int _julian = toJulian(tm->tm_mday, tm->tm_mon, tm->tm_year);
 
-      t = tm->tm_sec + (tm->tm_min * 60) + (tm->tm_hour * 3600) + getSecondFromJulian(_julian);
+      t = getSecondFromJulian(_julian);
 
+#  if SIZEOF_TIME_T == 8
+      if (t < 0L) t  = LONG_MAX;
+#  else
+      if (t < 0L) t  =  INT_MAX;
+#endif
+      else        t += tm->tm_sec + (tm->tm_min * 60) + (tm->tm_hour * 3600);
+
+      /*
 #  if defined(DEBUG) && !defined(__MINGW32__)
-      tm->tm_year -= 1900; /* tm relative format year  - is number of years since 1900 */
-      tm->tm_mon  -=    1; /* tm relative format month - range from 0-11 */
+      tm->tm_year -= 1900; // tm relative format year  - is number of years since 1900
+      tm->tm_mon  -=    1; // tm relative format month - range from 0-11
 
       U_INTERNAL_ASSERT_EQUALS(t, timegm(tm))
 #  endif
+      */
       }
    else
       {

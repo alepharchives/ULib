@@ -1,0 +1,56 @@
+  <div id="containerBig">
+    <div id="wrapperAuto">
+      <div id="loginbox" style="width:100%%;height:100%%;padding:0px;margin:0px;">
+        <div id="menulogo" class="menurow">
+<!--#if expr=$AP_OK -->
+        <img src="images/logo_fiwifi.png" />
+<!--#else -->
+        <img src="images/firenze-wifi2.png" style="height:115px;width:457px;" />
+<!--#endif -->
+		  </div>
+
+        <form method="post" name="form" action="%s" id="form">
+
+			  <input type="hidden" name="mac" value="%s">
+			  <input type="hidden" name="ip" value="%s">
+			  <input type="hidden" name="redirect" value="%s">
+			  <input type="hidden" name="gateway" value="%s">
+			  <input type="hidden" name="timeout" value="%s">
+			  <input type="hidden" name="token" value="%s">
+			  <input type="hidden" name="ap" value="%s">
+			  <input type="hidden" name="realm" value="auth_service">
+
+          <div id="page-wrap">
+            <div id="inside">
+              <div id="left-sidebar">
+                <p>Inserire le credenziali</p>
+				    <br />
+				    <br />
+              </div>
+
+              <div id="main-content">
+              </div>
+
+              <p>Login (numero del cellulare):</p>
+
+              <p><input class="login_input" type="text" name="uid" /></p>
+
+				  <br />
+              <p>Password:</p>
+
+              <p><input class="login_input" type="password" name="pass" /></p>
+
+              <p><input id="login_button" type="submit" name="submit" value="Entra" style="height:3em;width:10em;margin:1em;" /></p>
+            </div><br />
+            <br />
+          </div>
+        </form>
+
+        <div style="clear: both;"></div>
+
+        <div id="footer"></div>
+      </div>
+
+      <div style="clear: both;"></div>
+    </div>
+  </div>

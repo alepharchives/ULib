@@ -211,4 +211,6 @@ extern U_EXPORT uhttpinfo u_http_info;
 }
 #endif
 
+#define U_HTTP_INFO_INIT(c) (void)U_SYSCALL(memset,"%p,%d,%u",&u_http_info,c,sizeof(uhttpinfo))
+
 #endif

@@ -61,6 +61,8 @@ void UTCPSocket::closesocket()
           * Once recv() returns 0 (or less), 1/2 of the socket is closed
           */
 
+         if (USocket::isBlocking()) (void) UFile::setBlocking(iSockDesc, flags, false);
+
          do {
             if (++count > 5) break;
 

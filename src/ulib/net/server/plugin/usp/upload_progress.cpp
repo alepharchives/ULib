@@ -12,8 +12,8 @@ extern U_EXPORT int runDynamicPage(UClientImage_Base* client_image);
    
    if (client_image == 0 || client_image == (UClientImage_Base*)-1 || client_image == (UClientImage_Base*)-2) U_RETURN(0);
    
+   uint32_t usp_sz;
    char usp_buffer[10 * 4096];
-   uint32_t usp_sz, usp_num_args = 0;
    bool usp_as_service = (client_image == (UClientImage_Base*)-3);
    
    if (usp_as_service == false) (void) UClientImage_Base::wbuffer->append(

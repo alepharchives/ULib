@@ -371,7 +371,7 @@ UHTTP::UFileCacheData::~UFileCacheData()
 #  endif
       else
          {
-         U_INTERNAL_ASSERT_EQUALS(mime_index,U_cgi)
+         U_INTERNAL_ASSERT_EQUALS(mime_index, U_cgi)
 
          U_FREE_TYPE(ptr, UHTTP::ucgi);
          }
@@ -1297,7 +1297,9 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
 
             U_INTERNAL_DUMP("u_http_info.nResponseCode = %d", u_http_info.nResponseCode)
 
-            goto end;
+            if (U_IS_HTTP_VALID_RESPONSE(u_http_info.nResponseCode)) goto end;
+
+            U_RETURN(false);
             }
 
          U_http_method_type     = HTTP_HEAD;
@@ -1370,7 +1372,8 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
          U_RETURN(false);
          }
 
-      if (c == '?')
+      if (c == '?' &&
+          u_http_info.uri_len == 0)
          {
          u_http_info.uri_len = ptr - u_http_info.uri;
          u_http_info.query   = ++ptr;
@@ -1661,8 +1664,14 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
             U_RETURN(false);
             }
 
-         U_INTERNAL_ASSERT_MAJOR(u_http_info.szHeader,0)
          U_ASSERT_EQUALS(UClientImage_Base::isPipeline(), false)
+
+         if (u_http_info.szHeader == 0)
+            {
+            setHTTPBadRequest();
+
+            U_RETURN(false);
+            }
 
          // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
 
@@ -1757,9 +1766,16 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
          U_RETURN(false);
          }
 
-      count += chunk_terminator_len; // NB: the messagge include also the blank line...
+      count += chunk_terminator_len; // NB: the message include also the blank line...
 
-      U_INTERNAL_DUMP("count = %u", count)
+      U_INTERNAL_DUMP("count = %u u_http_info.endHeader = %u", count, u_http_info.endHeader)
+
+      if (count <= u_http_info.endHeader)
+         {
+         setHTTPBadRequest();
+
+         U_RETURN(false);
+         }
 
       u_http_info.clength = (count - u_http_info.endHeader);
 
@@ -1823,7 +1839,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
       // NB: check for 'Expect: 100-continue' (as curl does)...
 
       if (body_byte_read == 0 &&
-          getHTTPHeaderValuePtr(*pbuffer, *USocket::str_expect_100_continue, false))
+          pbuffer->find(*USocket::str_expect_100_continue, u_http_info.startHeader, u_http_info.szHeader) != U_NOT_FOUND)
          {
          U_INTERNAL_ASSERT_EQUALS(U_http_version, '1')
 
@@ -1950,6 +1966,8 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
    const char* ptr = request.data();
    uint32_t pos1, pos2, n, char_r = (u_line_terminator_len == 2),
             end = (u_http_info.endHeader ? (result = true, u_http_info.endHeader - u_line_terminator_len) : (result = false, request.size()));
+
+   U_INTERNAL_DUMP("end = %u result = %b", end, result)
 
    for (pos1 = pos2 = u_http_info.startHeader; pos1 < end; pos1 = pos2 + 1)
       {
@@ -2253,27 +2271,27 @@ next:
             if (p1[-1] == '\r' &&
                 p1[ 2] == '\n')
                {
-               U_INTERNAL_ASSERT_EQUALS(c,'\r')
-               U_ASSERT(request.isEndHeader(pos2-1))
-               U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len,2)
-
                u_http_info.szHeader  =  pos2 - 1 - u_http_info.startHeader;
                u_http_info.endHeader = (pos2 + 3);
 
-               U_INTERNAL_DUMP("szHeader = %u endHeader(%u) = %.*S", u_http_info.szHeader,u_http_info.endHeader,20,request.c_pointer(u_http_info.endHeader))
+               U_INTERNAL_DUMP("szHeader = %u endHeader(%u) = %.*S", u_http_info.szHeader,u_http_info.endHeader,
+                                                                     20,request.c_pointer(u_http_info.endHeader))
+
+               if (u_http_info.endHeader <= end) U_RETURN(true);
                }
-            else
+            else if (u_line_terminator_len == 1)
                {
                U_ASSERT(request.isEndHeader(pos2))
-               U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len,1)
 
                u_http_info.szHeader  =  pos2 - u_http_info.startHeader;
                u_http_info.endHeader = (pos2 + 2);
 
                U_INTERNAL_DUMP("szHeader = %u endHeader(%u) = %.*S", u_http_info.szHeader,u_http_info.endHeader,20,request.c_pointer(u_http_info.endHeader))
+
+               U_RETURN(true);
                }
 
-            U_RETURN(true);
+            U_RETURN(false);
             }
          }
       }
@@ -2282,13 +2300,6 @@ next:
 }
 
 // inlining failed in call to ...: call is unlikely and code size would grow
-
-void UHTTP::initHTTPInfo()
-{
-   U_TRACE(0, "UHTTP::initHTTPInfo()")
-
-   (void) U_SYSCALL(memset, "%p,%d,%u", &u_http_info, 0, sizeof(uhttpinfo));
-}
 
 #ifdef U_HTTP_CACHE_REQUEST
 void UHTTP::clearHTTPRequestCache()
@@ -2472,13 +2483,7 @@ bool UHTTP::readHTTPRequest(USocket* socket)
 {
    U_TRACE(0, "UHTTP::readHTTPRequest(%p)", socket)
 
-   U_INTERNAL_ASSERT_EQUALS(u_http_info.method,0)
-
-   // u_http_info.method
-   // u_http_info.uri
-   // ....
-
-   (void) U_SYSCALL(memset, "%p,%d,%u", (void*)&u_http_info.uri, 0, sizeof(uhttpinfo)-sizeof(u_http_info.method));
+   U_HTTP_INFO_INIT(0);
 
    if (readHTTPHeader(socket, *UClientImage_Base::request) &&
        (u_http_info.szHeader == 0 || checkHTTPRequestForHeader(*UClientImage_Base::request)))
@@ -2537,9 +2542,11 @@ bool UHTTP::readHTTPRequest(USocket* socket)
 
             UClientImage_Base::size_request += u_http_info.clength;
             }
+         else if (UServer_Base::pClientImage->socket->isClosed())
+            {
+            UClientImage_Base::size_request = UClientImage_Base::request->size();
+            }
          }
-
-   // if (UClientImage_Base::size_request == 0) UClientImage_Base::size_request = u_http_info.startHeader + u_http_info.szHeader;
 
       UClientImage_Base::manageRequestSize(request_buffer_resize);
 
@@ -3523,13 +3530,11 @@ void UHTTP::getFormValue(UString& buffer, const char* name, uint32_t len)
    else (void) buffer.replace((*form_name_value)[index+1]);
 }
 
-uint32_t UHTTP::processHTTPForm()
+void UHTTP::processHTTPForm()
 {
    U_TRACE(0, "UHTTP::processHTTPForm()")
 
-   U_ASSERT_EQUALS(form_name_value->size(),0)
-
-   uint32_t n = 0;
+   U_ASSERT_EQUALS(form_name_value->size(), 0)
 
    if (isHttpGETorHEAD())
       {
@@ -3564,7 +3569,7 @@ uint32_t UHTTP::processHTTPForm()
    formMulti->setBoundary(boundary);
    formMulti->setContent(*UClientImage_Base::body);
 
-   if (formMulti->parse() == false) U_RETURN(0);
+   if (formMulti->parse() == false) return;
    }
 
    // create temporary directory with files upload...
@@ -3572,7 +3577,7 @@ uint32_t UHTTP::processHTTPForm()
    {
    tmpdir->snprintf("%s/formXXXXXX", u_tmpdir);
 
-   if (UFile::mkdtemp(*tmpdir) == false) U_RETURN(0);
+   if (UFile::mkdtemp(*tmpdir) == false) return;
 
    UMimeEntity* item;
    const char* ptr = tmpdir->data();
@@ -3607,16 +3612,12 @@ uint32_t UHTTP::processHTTPForm()
       form_name_value->push_back(content);
       }
 
-   n = form_name_value->size();
-
-   U_RETURN(n);
+   return;
    }
 
 get_name_value:
 
-   if (qcontent->empty() == false) n = UStringExt::getNameValueFromData(*qcontent, *form_name_value, U_CONSTANT_TO_PARAM("&"));
-
-   U_RETURN(n);
+   if (qcontent->empty() == false) (void) UStringExt::getNameValueFromData(*qcontent, *form_name_value, U_CONSTANT_TO_PARAM("&"));
 }
 
 // set HTTP main error message
@@ -3809,16 +3810,11 @@ void UHTTP::setHTTPRedirectResponse(bool refresh, UString& ext, const char* ptr_
 
    u_http_info.nResponseCode = (refresh ? HTTP_NETWORK_AUTHENTICATION_REQUIRED : HTTP_MOVED_TEMP);
 
-   if (U_http_is_connection_close == U_MAYBE)
-      {
-      U_http_is_connection_close = U_YES;
+   U_INTERNAL_DUMP("U_http_is_connection_close = %d", U_http_is_connection_close)
 
-      // NB: because we close the connection we don't need to process other request in pipeline... (ex. nodog)
+   U_http_is_connection_close = U_YES;
 
-      U_INTERNAL_DUMP("pipeline = %b", UClientImage_Base::pipeline)
-
-      UClientImage_Base::pipeline = false;
-      }
+   UClientImage_Base::resetPipeline(); // NB: because we close the connection we don't need to process other request in pipeline... (ex. nodog)
 
    UString tmp(U_CAPACITY), msg(100U + len_location), body(500U + len_location);
 
@@ -4580,8 +4576,8 @@ UString UHTTP::getHeaderMimeType(const char* content, const char* content_type, 
 
    const char* fmt;
 
-   if (u_mime_index == U_ssi ||
-       u_mime_index == U_cgi)
+   if (u_is_ssi() ||
+       u_is_cgi())
       {
       fmt = "Content-Length: " "   " "%u\r\n\r\n";
       }
@@ -4593,14 +4589,14 @@ UString UHTTP::getHeaderMimeType(const char* content, const char* content_type, 
                   header.snprintf_add("Last-Modified: %#D\r\n", file->st_mtime);
       }
 
-   if (u_mime_index == U_css)
+   if (u_is_css())
       {
       U_INTERNAL_ASSERT(U_STRNEQ(content_type, "text/css"))
       U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".css")))
 
       (void) header.append("Content-Style-Type: text/css\r\n");
       }
-   else if (u_mime_index == U_js)
+   else if (u_is_js())
       {
       U_INTERNAL_ASSERT(U_STRNEQ(content_type, "text/javascript"))
       U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".js")))
@@ -4648,9 +4644,7 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
 
    U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
 
-   if (u_mime_index == U_gif ||
-       u_mime_index == U_png ||
-       u_mime_index == U_jpg)
+   if (u_is_img())
       {
       U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".gif")) ||
                         u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".png")) ||
@@ -4658,9 +4652,9 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
                         u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".jpeg")))
 
 #if defined(USE_PAGE_SPEED) && defined(DEBUG)
-           if (u_mime_index == U_gif) page_speed->optimize_gif(content);
-      else if (u_mime_index == U_png) page_speed->optimize_png(content);
-      else                            page_speed->optimize_jpg(content);
+           if (u_is_gif()) page_speed->optimize_gif(content);
+      else if (u_is_png()) page_speed->optimize_png(content);
+      else                 page_speed->optimize_jpg(content);
 
       if (content.size() < file_data->size) U_SRV_LOG("warning: found not optimized image: %S", pathname->data());
 #endif
@@ -4668,13 +4662,13 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
       goto next;
       }
 
-   if (u_mime_index == U_js ||
-       u_mime_index == U_css)
+   if (u_is_js() ||
+       u_is_css())
       {
       U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".css")) ||
                         u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".js")))
 
-      if ((u_mime_index == U_js && 
+      if ((u_is_js() && 
            u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("compressed.js")  == false)) ||
            u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("compressed.css") == false))
          {
@@ -4684,7 +4678,7 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
       if (content.empty()) goto end;
       }
 #ifdef USE_PAGE_SPEED
-   else if (u_mime_index == U_html)
+   else if (u_is_html())
       {
       U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".htm")) ||
                         u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".html")))
@@ -4698,8 +4692,8 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
         if (file_data->size >= min_size_for_sendfile)  motivation = " (size exceeded)";  // NB: for major size it is better to use sendfile()
    else if (file_data->size <= U_MIN_SIZE_FOR_DEFLATE) motivation = " (size too small)";
 #ifdef USE_LIBZ
-   else if (u_mime_index != U_ssi &&
-            u_mime_index != U_gz)
+   else if (u_is_ssi() == false &&
+            u_is_gz()  == false)
       {
       /* http://zoompf.com/blog/2012/02/lose-the-wait-http-compression
        *
@@ -5150,7 +5144,7 @@ U_NO_EXPORT bool UHTTP::processFileCache()
       *UClientImage_Base::body = getDataFromCache(false, false).substr(range_start, range_size);
       }
 
-   if (u_mime_index != U_ssi)
+   if (u_is_ssi() == false)
       {
 build_response:
 
@@ -5271,7 +5265,7 @@ void UHTTP::manageHTTPServletRequest(bool as_service)
 
    U_INTERNAL_ASSERT(isHTTPRequest())
 
-   if (u_mime_index == U_usp)
+   if (u_is_usp())
       {
       UServletPage* usp = (UServletPage*)file_data->ptr;
 
@@ -5314,7 +5308,7 @@ void UHTTP::manageHTTPServletRequest(bool as_service)
       // retrieve information on specific HTML form elements
       // (such as checkboxes, radio buttons, and text fields), or uploaded files
 
-      uint32_t i, n = processHTTPForm();
+      uint32_t i, n = (processHTTPForm(), form_name_value->size());
       const char** argv = U_MALLOC_VECTOR(n+1, const char);
 
       for (i = 0; i < n; ++i) argv[i] = (*form_name_value)[i].c_str();
@@ -5327,8 +5321,6 @@ void UHTTP::manageHTTPServletRequest(bool as_service)
       UClientImage_Base::wbuffer->size_adjust();
 
       U_FREE_VECTOR(argv, n+1, const char);
-
-      if (n) resetForm(true);
       }
 #endif
 
@@ -5380,6 +5372,8 @@ void UHTTP::callService(const UString& path, bool servlet, UString* environment)
 
       if (servlet) manageHTTPServletRequest(true);
       else         (void) processCGIRequest((UCommand*)0, environment, false, false);
+
+      if (form_name_value->size()) resetForm(true);
 
       U_INTERNAL_DUMP("wbuffer(%u) = %.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
       }
@@ -5463,7 +5457,7 @@ int UHTTP::checkHTTPRequest()
 
       if (isDynamicPage())
          {
-         if (u_mime_index != U_cgi) manageHTTPServletRequest(false);
+         if (u_is_cgi() == false) manageHTTPServletRequest(false);
          else
             {
             // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
@@ -5487,7 +5481,9 @@ int UHTTP::checkHTTPRequest()
             }
 
          keyID->clear();
-   
+
+         if (form_name_value->size()) resetForm(true);
+
          goto next;
          }
 
@@ -5521,7 +5517,11 @@ check:
 
       U_INTERNAL_DUMP("U_http_is_connection_close = %d", U_http_is_connection_close)
 
-      if (U_http_is_connection_close == U_YES) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      if (U_http_is_connection_close == U_YES &&
+          u_is_ssi()                 == false)
+         {
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
       }
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
@@ -5639,7 +5639,7 @@ UString UHTTP::getCGIEnvironment()
 
    U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
 
-   if (u_mime_index != U_cgi) cgi_dir = "";
+   if (u_is_cgi() == false) cgi_dir = "";
    else
       {
       U_INTERNAL_ASSERT_POINTER(file_data)
@@ -5660,9 +5660,9 @@ UString UHTTP::getCGIEnvironment()
                    "SCRIPT_NAME=%.*s\n"  // The interpreted pathname of the current CGI (relative to the document root)
                    // ext
                    "PWD=%w/%s\n"
-                   "SCRIPT_FILENAME=%w%.*s\n"   // The full pathname of the current CGI (is used by PHP for determining the name of script to execute)
+                   "SCRIPT_FILENAME=%w%.*s\n" // The full pathname of the current CGI (is used by PHP for determining the name of script to execute)
                    // PHP
-                   "REQUEST_METHOD=%.*s\n",     // dealing with POST requests
+                   "REQUEST_METHOD=%.*s\n",   // dealing with POST requests
                    (isHttpPOST() ? UClientImage_Base::body->size() : 0),
                    U_STRING_TO_TRACE(ip_client),
                    (U_http_version ? U_http_version : '0'),
@@ -5679,26 +5679,9 @@ UString UHTTP::getCGIEnvironment()
 
    if (u_http_info.host_len)
       {
-                                        buffer.snprintf_add("HTTP_HOST=%.*s\n",            U_HTTP_HOST_TO_TRACE);
-      if (virtual_host)                 buffer.snprintf_add("VIRTUAL_HOST=%.*s\n",         U_HTTP_VHOST_TO_TRACE);
+                        buffer.snprintf_add("HTTP_HOST=%.*s\n",    U_HTTP_HOST_TO_TRACE);
+      if (virtual_host) buffer.snprintf_add("VIRTUAL_HOST=%.*s\n", U_HTTP_VHOST_TO_TRACE);
       }
-
-   // contains the parameters of the request
-   if (u_http_info.query_len)           buffer.snprintf_add("QUERY_STRING=%.*s\n",         U_HTTP_QUERY_TO_TRACE);
-
-   // The URL of the page that called your script
-   if (u_http_info.referer_len)         buffer.snprintf_add("HTTP_REFERER=%.*s\n",         U_HTTP_REFERER_TO_TRACE);
-
-   // The browser type of the visitor
-   if (u_http_info.user_agent_len)      buffer.snprintf_add("\"HTTP_USER_AGENT=%.*s\"\n",  U_HTTP_USER_AGENT_TO_TRACE);
-
-   if (u_http_info.accept_len)          buffer.snprintf_add("HTTP_ACCEPT=%.*s\n",          U_HTTP_ACCEPT_TO_TRACE);
-   if (u_http_info.content_type_len)    buffer.snprintf_add("'CONTENT_TYPE=%.*s'\n",       U_HTTP_CTYPE_TO_TRACE);
-   if (u_http_info.accept_language_len) buffer.snprintf_add("HTTP_ACCEPT_LANGUAGE=%.*s\n", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE);
-
-   // The interpreted pathname of the requested document or CGI (relative to the document root)
-
-   buffer.snprintf_add("REQUEST_URI=%.*s\n", U_STRING_TO_TRACE(uri));
 
 #ifdef USE_LIBSSL
    if (UServer_Base::bssl)
@@ -5746,6 +5729,23 @@ UString UHTTP::getCGIEnvironment()
          }
       }
 
+   // The URL of the page that called your script
+   if (u_http_info.referer_len) buffer.snprintf_add("'HTTP_REFERER=%.*s'\n",  U_HTTP_REFERER_TO_TRACE);
+
+   // The browser type of the visitor
+   if (u_http_info.accept_len)          buffer.snprintf_add("'HTTP_ACCEPT=%.*s'\n",        U_HTTP_ACCEPT_TO_TRACE);
+   if (u_http_info.user_agent_len)      buffer.snprintf_add("'HTTP_USER_AGENT=%.*s'\n",    U_HTTP_USER_AGENT_TO_TRACE);
+   if (u_http_info.content_type_len)    buffer.snprintf_add("'CONTENT_TYPE=%.*s'\n",       U_HTTP_CTYPE_TO_TRACE);
+   if (u_http_info.accept_language_len) buffer.snprintf_add("'HTTP_ACCEPT_LANGUAGE=%.*s'\n", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE);
+
+   if (buffer.isBinary()) U_RETURN_STRING(UString::getStringNull());
+
+   // contains the parameters of the request
+   if (u_http_info.query_len) buffer.snprintf_add("'QUERY_STRING=%.*s'\n", U_HTTP_QUERY_TO_TRACE);
+
+   // The interpreted pathname of the requested document or CGI (relative to the document root)
+   buffer.snprintf_add("'REQUEST_URI=%.*s'\n", U_STRING_TO_TRACE(uri));
+
    (void) buffer.append(*geoip);
    (void) buffer.append(*UServer_Base::senvironment);
 
@@ -5754,20 +5754,20 @@ UString UHTTP::getCGIEnvironment()
    U_RETURN_STRING(buffer);
 }
 
-U_NO_EXPORT bool UHTTP::setCGIShellScript(UString& command)
+U_NO_EXPORT void UHTTP::setCGIShellScript(UString& command)
 {
    U_TRACE(0, "UHTTP::setCGIShellScript(%.*S)", U_STRING_TO_TRACE(command))
+
+   U_INTERNAL_ASSERT_POINTER(form_name_value)
 
    // ULIB facility: check if present form data and convert it in parameters for shell script...
 
    char c;
    UString item;
    const char* ptr;
-   uint32_t n = processHTTPForm(), sz;
+   uint32_t i, sz, n = (processHTTPForm(), form_name_value->size());
 
-   U_INTERNAL_ASSERT_POINTER(form_name_value)
-
-   for (uint32_t i = 1; i < n; i += 2)
+   for (i = 1; i < n; i += 2)
       {
       item = (*form_name_value)[i];
 
@@ -5796,9 +5796,6 @@ U_NO_EXPORT bool UHTTP::setCGIShellScript(UString& command)
 
       command.snprintf_add(" %c%.*s%c ", c, sz, ptr, c);
       }
-
-   if (n > 0) U_RETURN(true);
-              U_RETURN(false);
 }
 
 /* X-Sendfile is a special, non-standard HTTP header. At first you might think it is no big deal, but think again.
@@ -5852,7 +5849,7 @@ bool UHTTP::XSendfile(UString& _pathname, UString& ext)
 
          char c = U_http_is_accept_gzip;
 
-         initHTTPInfo();
+         U_HTTP_INFO_INIT(0);
 
          U_http_is_accept_gzip = c;
 
@@ -6338,8 +6335,9 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool pro
 
    U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
+   bool result;
+   UString* pinput;
    const char* cgi_dir;
-   bool reset_form = false;
 
    if (cmd) cgi_dir = "";
    else
@@ -6367,15 +6365,13 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool pro
 
       // ULIB facility: check if present form data and convert it in parameters for shell script...
 
-      if (cgi->sh_script) reset_form = setCGIShellScript(command);
+      if (cgi->sh_script) setCGIShellScript(command);
 
       (cmd = pcmd)->setCommand(command);
       }
 
    if (cmd->checkForExecute() == false)
       {
-      // set forbidden error response...
-
       setHTTPForbidden();
 
       U_RETURN(false);
@@ -6390,15 +6386,26 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool pro
    if (async &&
        UServer_Base::parallelization())
       {
-      if (reset_form) resetForm(false);
+      if (form_name_value->size()) resetForm(false);
 
       U_RETURN(true);
       }
 
    UString environment;
 
-   if (penv)                environment = *penv;
-   if (environment.empty()) environment = getCGIEnvironment();
+   if (penv) environment = *penv;
+
+   if (environment.empty())
+      {
+      environment = getCGIEnvironment();
+
+      if (environment.empty())
+         {
+         setHTTPBadRequest();
+
+         U_RETURN(false);
+         }
+      }
 
    cmd->setEnvironment(&environment);
 
@@ -6411,15 +6418,13 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool pro
 
    // execute script...
 
-   UString* pinput = (isHttpPOST() == false || UClientImage_Base::body->empty() ? 0 : UClientImage_Base::body);
+   pinput = (isHttpPOST() == false || UClientImage_Base::body->empty() ? 0 : UClientImage_Base::body);
 
-   bool result = cmd->execute(pinput, UClientImage_Base::wbuffer, -1, fd_stderr);
+   result = cmd->execute(pinput, UClientImage_Base::wbuffer, -1, fd_stderr);
 
    if (cgi_dir[0]) (void) UFile::chdir(0, true);
 
    UServer_Base::logCommandMsgError(cmd->getCommand());
-
-   if (reset_form) resetForm(true);
 
    cmd->reset(penv);
 
@@ -6963,7 +6968,7 @@ void UHTTP::processHTTPGetRequest(const UString& request)
 
    if (openFile() == false)
       {
-      U_ASSERT_DIFFERS(file->isOpen(),true)
+      U_ASSERT_DIFFERS(file->isOpen(), true)
 
       return;
       }
@@ -7066,7 +7071,7 @@ U_NO_EXPORT void UHTTP::processHTTPGetRequest(const UString& etag, UString& ext)
    // FLV Header ("FLV\x1\x1\0\0\0\x9\0\0\0\x9") before the requested data.
    // ---------------------------------------------------------------------
 
-   if (u_mime_index == U_flv &&
+   if (u_is_flv() &&
        U_HTTP_QUERY_STRNEQ("start="))
       {
       U_INTERNAL_ASSERT_DIFFERS(u_http_info.nResponseCode, HTTP_PARTIAL)

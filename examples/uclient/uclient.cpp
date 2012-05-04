@@ -62,6 +62,12 @@ public:
       // ENABLE_IPV6  flag to indicate use of ipv6
       // SERVER       host name or ip address for server
       // PORT         port number for the server
+      //
+      // RES_TIMEOUT  timeout for response from server
+      //
+      // LOG_FILE     locations   for file log
+      // LOG_FILE_SZ  memory size for file log
+      //
       // CERT_FILE    certificate of client
       // KEY_FILE     private key of client
       // PASSWORD     password for private key of client
