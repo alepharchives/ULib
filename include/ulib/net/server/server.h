@@ -66,8 +66,8 @@ virtual void preallocate() { vClientImage = new client_class[UNotifier::max_conn
 
 // manage write to log server
 
-#define U_SRV_LOG(          fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%.*s"fmt"\n",      U_STRING_TO_TRACE(*UServer_Base::mod_name) , ##args); }
-#define U_SRV_LOG_WITH_ADDR(fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%.*s"fmt" %.*s\n", U_STRING_TO_TRACE(*UServer_Base::mod_name) , ##args, \
+#define U_SRV_LOG(          fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%.*s" fmt "\n",      U_STRING_TO_TRACE(*UServer_Base::mod_name) , ##args); }
+#define U_SRV_LOG_WITH_ADDR(fmt,args...)  { if (UServer_Base::isLog()) ULog::log("%.*s" fmt " %.*s\n", U_STRING_TO_TRACE(*UServer_Base::mod_name) , ##args, \
                                                                                  U_STRING_TO_TRACE(*(UServer_Base::pClientImage->logbuf))); }
 class UHTTP;
 class UCommand;
@@ -314,9 +314,11 @@ public:
 
    // manage log server...
 
-   static ULog* log;
+   static ULog*         log;
+   static UFile* anotherLog;
 
-   static bool isLog() { return (log != 0); }
+   static bool isLog()        { return (       log != 0); }
+   static bool isAnotherLog() { return (anotherLog != 0); }
 
    static void openLog(const UString& name, uint32_t size)
       {
@@ -540,7 +542,6 @@ public:
       bssl   = true;
       socket = U_NEW(USSLSocket(UClientImage_Base::bIPv6));
 
-      USSLSocket::method     = (SSL_METHOD*) SSLv23_server_method();
       UClientImage_Base::ctx = getSocket()->ctx;
       }
 

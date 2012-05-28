@@ -22,9 +22,16 @@
 #define SSL_ERROR_WANT_ACCEPT SSL_ERROR_WANT_READ
 #endif
 
-SSL_METHOD* USSLSocket::method;
+int USSLSocket::session_cache_index;
 
-/*
+/* The OpenSSL ssl library implements the Secure Sockets Layer (SSL v2/v3) and Transport Layer Security (TLS v1) protocols.
+ * It provides a rich API. At first the library must be initialized; see SSL_library_init(3). Then an SSL_CTX object is created
+ * as a framework to establish TLS/SSL enabled connections (see SSL_CTX_new(3)). Various options regarding certificates, algorithms
+ * etc. can be set in this object. When a network connection has been created, it can be assigned to an SSL object. After the SSL
+ * object has been created using SSL_new(3), SSL_set_fd(3) or SSL_set_bio(3) can be used to associate the network connection with
+ * the object. Then the TLS/SSL handshake is performed using SSL_accept(3) or SSL_connect(3) respectively. SSL_read(3) and SSL_write(3)
+ * are used to read and write data on the TLS/SSL connection. SSL_shutdown(3) can be used to shut down the TLS/SSL connection. 
+ *
  * When packets in SSL arrive at a destination, they are pulled off the socket in chunks of sizes controlled by the encryption protocol being
  * used, decrypted, and placed in SSL-internal buffers. The buffer content is then transferred to the application program through SSL_read().
  * If you've read only part of the decrypted data, there will still be pending input data on the SSL connection, but it won't show up on the
@@ -38,32 +45,20 @@ SSL_METHOD* USSLSocket::method;
  * requiring a bi-directional message exchange; both SSL_read() and SSL_write() will try to continue any pending handshake.
  */
 
-USSLSocket::USSLSocket(bool bSocketIsIPv6, SSL_CTX* _ctx, bool tls) : UTCPSocket(bSocketIsIPv6)
+USSLSocket::USSLSocket(bool bSocketIsIPv6, SSL_CTX* _ctx, bool server) : UTCPSocket(bSocketIsIPv6)
 {
-   U_TRACE_REGISTER_OBJECT(0, USSLSocket, "%b,%p,%b", bSocketIsIPv6, _ctx, tls)
+   U_TRACE_REGISTER_OBJECT(0, USSLSocket, "%b,%p,%b", bSocketIsIPv6, _ctx, server)
 
-   // init new generic CTX object as framework to establish TLS/SSL enabled connections
-
-   if (_ctx)
+   if (_ctx == 0) ctx = (server ? getServerContext() : getClientContext());
+   else
       {
       ctx = _ctx;
 
       ctx->references++; // We don't want our destructor to delete ctx if still in use...
       }
-   else
-      {
-      if (method == 0) method = (SSL_METHOD*) (tls ? TLSv1_method() : SSLv3_method());
 
-      ctx = (SSL_CTX*) U_SYSCALL(SSL_CTX_new, "%p", method);
-
-      (void) U_SYSCALL(SSL_CTX_set_mode,    "%p,%d", ctx, SSL_MODE_ENABLE_PARTIAL_WRITE | SSL_MODE_AUTO_RETRY);
-      (void) U_SYSCALL(SSL_CTX_set_options, "%p,%d", ctx, SSL_OP_NO_SSLv2);
-      }
-
-   U_INTERNAL_ASSERT_POINTER(ctx)
-
-   ret    = 0;
    ssl    = 0;
+   ret    = renegotiations = 0;
    active = true;
 }
 
@@ -71,9 +66,210 @@ USSLSocket::~USSLSocket()
 {
    U_TRACE_UNREGISTER_OBJECT(0, USSLSocket)
 
-   if (ssl) U_SYSCALL_VOID(SSL_free, "%p", ssl); /* SSL_free will free UServices::store */
+   U_INTERNAL_ASSERT_POINTER(ctx)
 
-   if (ctx) U_SYSCALL_VOID(SSL_CTX_free, "%p", ctx);
+   if (ssl) U_SYSCALL_VOID(SSL_free,     "%p", ssl); /* SSL_free will free UServices::store */
+            U_SYSCALL_VOID(SSL_CTX_free, "%p", ctx);
+}
+
+void USSLSocket::info_callback(const SSL* ssl, int where, int ret)
+{
+   U_TRACE(0, "USSLSocket::info_callback(%p,%d,%d)", ssl, where, ret)
+
+   if ((where & SSL_CB_HANDSHAKE_START) != 0)
+      {
+      U_INTERNAL_DUMP("SSL_CB_HANDSHAKE_START")
+
+      USSLSocket* pobj = (USSLSocket*) SSL_get_app_data(ssl);
+
+      if (pobj)
+         {
+         pobj->renegotiations++;
+
+         U_INTERNAL_DUMP("pobj->renegotiations = %d", pobj->renegotiations)
+         }
+      }
+   else if ((where & SSL_CB_HANDSHAKE_DONE) != 0)
+      {
+      U_INTERNAL_DUMP("SSL_CB_HANDSHAKE_DONE")
+
+      ssl->s3->flags |= SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS;
+      }
+}
+
+SSL_CTX* USSLSocket::getContext(SSL_METHOD* method, bool server, long options)
+{
+   U_TRACE(0, "USSLSocket::getContext(%p,%b,%ld)", method, server, options)
+
+   if (method == 0)
+      {
+      if (server)
+         {
+#     if !defined(OPENSSL_NO_TLS1) && defined(TLS1_2_VERSION)
+         method = (SSL_METHOD*)TLSv1_2_server_method();
+#     elif !defined(OPENSSL_NO_SSL3)
+         method = (SSL_METHOD*)SSLv23_server_method();
+#     elif !defined(OPENSSL_NO_SSL2)
+         method = (SSL_METHOD*)SSLv2_server_method();
+#     endif
+         }
+      else
+         {
+#     if !defined(OPENSSL_NO_TLS1) && defined(TLS1_2_VERSION)
+         method = (SSL_METHOD*)TLSv1_2_client_method();
+#     elif !defined(OPENSSL_NO_SSL3)
+         method = (SSL_METHOD*)SSLv3_client_method();
+#     elif !defined(OPENSSL_NO_SSL2)
+         method = (SSL_METHOD*)SSLv2_client_method();
+#     endif
+         }
+      }
+
+   SSL_CTX* ctx = (SSL_CTX*) U_SYSCALL(SSL_CTX_new, "%p", method);
+
+   U_SYSCALL_VOID(SSL_CTX_set_quiet_shutdown,     "%p,%d", ctx, 1);
+   U_SYSCALL_VOID(SSL_CTX_set_default_read_ahead, "%p,%d", ctx, 1);
+
+   (void) U_SYSCALL(SSL_CTX_set_options, "%p,%d", ctx, (options ? options 
+                                                                : SSL_OP_NO_SSLv2        |
+#                                                              ifdef SSL_OP_NO_COMPRESSION
+                                                                  SSL_OP_NO_COMPRESSION |
+#                                                              endif
+                                                                  SSL_OP_CIPHER_SERVER_PREFERENCE));
+
+   if (server)
+      {
+      U_INTERNAL_ASSERT_MINOR(u_progname_len, SSL_MAX_SSL_SESSION_ID_LENGTH)
+
+      (void) U_SYSCALL(SSL_CTX_set_session_cache_mode, "%p,%d",    ctx, SSL_SESS_CACHE_SERVER);
+      (void) U_SYSCALL(SSL_CTX_set_session_id_context, "%p,%p,%u", ctx, (const unsigned char*)u_progname, u_progname_len);
+
+      // We need this to disable client-initiated renegotiation
+
+      U_SYSCALL_VOID(SSL_CTX_set_info_callback, "%p,%p", ctx, USSLSocket::info_callback);
+      }
+
+   // Disable support for low encryption ciphers
+
+   (void) U_SYSCALL(SSL_CTX_set_cipher_list, "%p,%S", ctx, "ECDHE-RSA-AES256-SHA384:AES256-SHA256:RC4-SHA:RC4:HIGH:!MD5:!aNULL:!EDH:!AESGCM");
+
+// (void) U_SYSCALL(SSL_CTX_set_mode, "%p,%d", ctx, SSL_CTX_get_mode(ctx) | SSL_MODE_AUTO_RETRY);
+
+   U_RETURN_POINTER(ctx,SSL_CTX);
+}
+
+/* get OpenSSL-specific options (default: NO_SSLv2, CIPHER_SERVER_PREFERENCE, NO_COMPRESSION)
+ * to overwrite defaults you need to explicitly specify the reverse flag (toggle "NO_" prefix)
+ *
+ * example: use sslv2 and compression: [ options: ("SSLv2", "COMPRESSION") ]
+ */
+
+long USSLSocket::getOptions(const UVector<UString>& vec)
+{
+   U_TRACE(0, "USSLSocket::getOptions(%p", &vec)
+
+   static const struct {
+      const char*   name;      // without "NO_" prefix
+      uint32_t      name_len;
+      unsigned long value;
+      char          positive;  // 0 means option is usually prefixed with "NO_"; otherwise use 1
+   } option_table[] = {
+   {U_CONSTANT_TO_PARAM("MICROSOFT_SESS_ID_BUG"), SSL_OP_MICROSOFT_SESS_ID_BUG, 1},
+   {U_CONSTANT_TO_PARAM("NETSCAPE_CHALLENGE_BUG"), SSL_OP_NETSCAPE_CHALLENGE_BUG, 1},
+#ifdef SSL_OP_LEGACY_SERVER_CONNECT
+   {U_CONSTANT_TO_PARAM("LEGACY_SERVER_CONNECT"), SSL_OP_LEGACY_SERVER_CONNECT, 1},
+#endif
+   {U_CONSTANT_TO_PARAM("NETSCAPE_REUSE_CIPHER_CHANGE_BUG"), SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG, 1},
+   {U_CONSTANT_TO_PARAM("SSLREF2_REUSE_CERT_TYPE_BUG"), SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG, 1},
+   {U_CONSTANT_TO_PARAM("MICROSOFT_BIG_SSLV3_BUFFER"), SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER, 1},
+   {U_CONSTANT_TO_PARAM("MSIE_SSLV2_RSA_PADDING"), SSL_OP_MSIE_SSLV2_RSA_PADDING, 1},
+   {U_CONSTANT_TO_PARAM("SSLEAY_080_CLIENT_DH_BUG"), SSL_OP_SSLEAY_080_CLIENT_DH_BUG, 1},
+   {U_CONSTANT_TO_PARAM("TLS_D5_BUG"), SSL_OP_TLS_D5_BUG, 1},
+   {U_CONSTANT_TO_PARAM("TLS_BLOCK_PADDING_BUG"), SSL_OP_TLS_BLOCK_PADDING_BUG, 1},
+#ifdef SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
+   {U_CONSTANT_TO_PARAM("DONT_INSERT_EMPTY_FRAGMENTS"), SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS, 1},
+#endif
+   {U_CONSTANT_TO_PARAM("ALL"), SSL_OP_ALL, 1},
+#ifdef SSL_OP_NO_QUERY_MTU
+   {U_CONSTANT_TO_PARAM("QUERY_MTU"), SSL_OP_NO_QUERY_MTU, 0},
+#endif
+#ifdef SSL_OP_COOKIE_EXCHANGE
+   {U_CONSTANT_TO_PARAM("COOKIE_EXCHANGE"), SSL_OP_COOKIE_EXCHANGE, 1},
+#endif
+#ifdef SSL_OP_NO_TICKET
+   {U_CONSTANT_TO_PARAM("TICKET"), SSL_OP_NO_TICKET, 0},
+#endif
+#ifdef SSL_OP_CISCO_ANYCONNECT
+   {U_CONSTANT_TO_PARAM("CISCO_ANYCONNECT"), SSL_OP_CISCO_ANYCONNECT, 1},
+#endif
+#ifdef SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+   {U_CONSTANT_TO_PARAM("SESSION_RESUMPTION_ON_RENEGOTIATION"), SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION, 0},
+#endif
+#ifdef SSL_OP_NO_COMPRESSION
+   {U_CONSTANT_TO_PARAM("COMPRESSION"), SSL_OP_NO_COMPRESSION, 0},
+#endif
+#ifdef SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
+   {U_CONSTANT_TO_PARAM("ALLOW_UNSAFE_LEGACY_RENEGOTIATION"), SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION, 1},
+#endif
+#ifdef SSL_OP_SINGLE_ECDH_USE
+   {U_CONSTANT_TO_PARAM("SINGLE_ECDH_USE"), SSL_OP_SINGLE_ECDH_USE, 1},
+#endif
+   {U_CONSTANT_TO_PARAM("SINGLE_DH_USE"), SSL_OP_SINGLE_DH_USE, 1},
+   {U_CONSTANT_TO_PARAM("EPHEMERAL_RSA"), SSL_OP_EPHEMERAL_RSA, 1},
+#ifdef SSL_OP_CIPHER_SERVER_PREFERENCE
+   {U_CONSTANT_TO_PARAM("CIPHER_SERVER_PREFERENCE"), SSL_OP_CIPHER_SERVER_PREFERENCE, 1},
+#endif
+   {U_CONSTANT_TO_PARAM("TLS_ROLLBACK_BUG"), SSL_OP_TLS_ROLLBACK_BUG, 1},
+   {U_CONSTANT_TO_PARAM("SSLv2"), SSL_OP_NO_SSLv2, 0},
+   {U_CONSTANT_TO_PARAM("SSLv3"), SSL_OP_NO_SSLv3, 0},
+   {U_CONSTANT_TO_PARAM("TLSv1"), SSL_OP_NO_TLSv1, 0},
+   {U_CONSTANT_TO_PARAM("PKCS1_CHECK_1"), SSL_OP_PKCS1_CHECK_1, 1},
+   {U_CONSTANT_TO_PARAM("PKCS1_CHECK_2"), SSL_OP_PKCS1_CHECK_2, 1},
+   {U_CONSTANT_TO_PARAM("NETSCAPE_CA_DN_BUG"), SSL_OP_NETSCAPE_CA_DN_BUG, 1},
+   {U_CONSTANT_TO_PARAM("NETSCAPE_DEMO_CIPHER_CHANGE_BUG"), SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG, 1},
+#ifdef SSL_OP_CRYPTOPRO_TLSEXT_BUG
+   {U_CONSTANT_TO_PARAM("CRYPTOPRO_TLSEXT_BUG"), SSL_OP_CRYPTOPRO_TLSEXT_BUG, 1}
+#endif
+   };
+
+   UString key;
+   char positive;
+   const char* ptr;
+   uint32_t j, len;
+
+   long options = SSL_OP_NO_SSLv2 |
+                  SSL_OP_CIPHER_SERVER_PREFERENCE
+#ifdef SSL_OP_NO_COMPRESSION
+                | SSL_OP_NO_COMPRESSION
+#endif
+   ;
+
+   for (uint32_t i = 0, n = vec.size(); i < n; ++i)
+      {
+      len      = key.size();
+      ptr      = key.data();
+      positive = 1;
+
+      if (U_STRNCASECMP(ptr, "NO_") == 0)
+         {
+         ptr += 3;
+         len -= 3;
+
+         positive = 0;
+         }
+
+      for (j = 0; j < sizeof(option_table)/sizeof(option_table[0]); ++j)
+         {
+         if (option_table[j].name_len == len &&
+             strcasecmp(ptr, option_table[j].name) == 0)
+            {
+            if (option_table[j].positive == positive) options |=  option_table[j].value;
+            else                                      options &= ~option_table[j].value;
+            }
+         }
+      }
+
+   U_RETURN(options);
 }
 
 bool USSLSocket::useDHFile(const char* dh_file)
@@ -148,6 +344,10 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
    U_TRACE(1, "USSLSocket::setContext(%S,%S,%S,%S,%S,%S,%d)", dh_file, cert_file, private_key_file, passwd, CAfile, CApath, verify_mode)
 
    U_INTERNAL_ASSERT_POINTER(ctx)
+
+   // These are the 1024 bit DH parameters from "Assigned Number for SKIP Protocols"
+   // (http://www.skip-vpn.org/spec/numbers.html).
+   // See there for how they were generated.
 
    if (useDHFile(dh_file) == false) U_RETURN(false);
 
@@ -225,18 +425,6 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
       }
 
    setVerifyCallback(UServices::X509Callback, verify_mode);
-
-   static int s_server_session_id_context = 1;
-
-   ret = U_SYSCALL(SSL_CTX_set_session_id_context, "%p,%p,%u", ctx,
-                     (const unsigned char*)&s_server_session_id_context, sizeof(s_server_session_id_context));
-
-   if (ret != 1)
-      {
-      U_DUMP("status = %.*S", 512, status(true))
-
-      U_RETURN(false);
-      }
 
    U_RETURN(true);
 }
@@ -335,7 +523,7 @@ const char* USSLSocket::status(SSL* _ssl, int _ret, bool flag, char* buffer, uin
          }
       }
 
-   uint32_t len, buffer_len = u_sn_printf(buffer, buffer_size, "(%d, %s) - %s", _ret, descr, errstr);
+   uint32_t len, buffer_len = u__snprintf(buffer, buffer_size, "(%d, %s) - %s", _ret, descr, errstr);
 
    char* sslerr = UServices::getOpenSSLError(0, 0, &len);
 
@@ -343,7 +531,7 @@ const char* USSLSocket::status(SSL* _ssl, int _ret, bool flag, char* buffer, uin
       {
       buffer[buffer_len++] = ' ';
 
-      (void) u_mem_cpy((void*)(buffer + buffer_len), sslerr, len+1);
+      (void) u__memcpy((void*)(buffer + buffer_len), sslerr, len+1);
       }
 
    U_RETURN((const char*)buffer);
@@ -417,23 +605,17 @@ bool USSLSocket::askForClientCertificate()
                 Do not ask for a client certificate again in case of a renegotiation.
                 This flag must be used together with SSL_VERIFY_PEER.
    -------------------------------------------------------------------------------------
+
+   The only difference between the calls is that SSL_CTX_set_verify() sets the verification mode
+   for all SSL objects derived from a given SSL_CTX —as long as they are created after SSL_CTX_set_verify()
+   is called—whereas SSL_set_verify() only affects the SSL object that it is called on
    */
 
    U_SYSCALL_VOID(SSL_set_verify, "%p,%d,%p", ssl, SSL_VERIFY_PEER_STRICT, 0); // | SSL_VERIFY_CLIENT_ONCE
 
    /* Stop the client from just resuming the un-authenticated session */
 
-   static int s_server_auth_session_id_context = 2;
-
-   ret = U_SYSCALL(SSL_set_session_id_context, "%p,%p,%u", ssl,
-                     (const unsigned char*)&s_server_auth_session_id_context, sizeof(s_server_auth_session_id_context));
-
-   if (ret != 1)
-      {
-      U_DUMP("status = %.*S", 512, status(true))
-
-      U_RETURN(false);
-      }
+   (void) U_SYSCALL(SSL_set_session_id_context, "%p,%p,%u", ssl, (const unsigned char*)this, sizeof(void*));
 
    ret = U_SYSCALL(SSL_renegotiate, "%p", ssl);
 
@@ -472,14 +654,13 @@ bool USSLSocket::acceptSSL(USSLSocket* pcNewConnection)
    U_TRACE(1, "USSLSocket::acceptSSL(%p)", pcNewConnection)
 
    int fd         = pcNewConnection->iSockDesc;
-   bool reuse     = (ssl != 0);
    uint32_t count = 0;
 
-   U_DUMP("fd = %d reuse = %b isBlocking() = %b", fd, reuse, pcNewConnection->isBlocking())
+   U_DUMP("fd = %d isBlocking() = %b", fd, pcNewConnection->isBlocking())
 
-retry:
-   if (reuse) (void) U_SYSCALL(SSL_clear, "%p", ssl); // reuse old
-   else ssl = (SSL*) U_SYSCALL(SSL_new,   "%p", ctx);
+   U_INTERNAL_ASSERT_EQUALS(ssl, 0)
+
+   ssl = (SSL*) U_SYSCALL(SSL_new, "%p", ctx);
 
    // --------------------------------------------------------------------------------------------------
    // When beginning a new handshake, the SSL engine must know whether it must call the connect (client)
@@ -497,11 +678,14 @@ loop:
 
    if (ret == 1)
       {
-      pcNewConnection->ssl = ssl;
-                             ssl = 0;
+      SSL_set_app_data(ssl, pcNewConnection);
 
-      pcNewConnection->ret    = SSL_ERROR_NONE;
-      pcNewConnection->iState = CONNECT;
+      pcNewConnection->ssl            = ssl;
+      pcNewConnection->ret            = SSL_ERROR_NONE;
+      pcNewConnection->iState         = CONNECT;
+      pcNewConnection->renegotiations = 0;
+
+      ssl = 0;
 
       U_RETURN(true);
       }
@@ -527,13 +711,6 @@ loop:
    U_SYSCALL_VOID(SSL_free, "%p", ssl);
                                   ssl = 0;
 
-   if (reuse)
-      {
-      reuse = false;
-
-      goto retry;
-      }
-
    pcNewConnection->USocket::_closesocket();
 
    U_INTERNAL_DUMP("pcNewConnection->ret = %d", pcNewConnection->ret)
@@ -553,11 +730,30 @@ void USSLSocket::closesocket()
 
    if (ssl)
       {
+      U_INTERNAL_DUMP("isTimeout() = %b", USocket::isTimeout())
+
+      int mode = SSL_SENT_SHUTDOWN     |
+                 SSL_RECEIVED_SHUTDOWN |
+                 (USocket::isTimeout() ? 0
+                                       : SSL_get_shutdown(ssl));
+
+      U_SYSCALL_VOID(SSL_set_shutdown,       "%p,%d", ssl, mode);
+      U_SYSCALL_VOID(SSL_set_quiet_shutdown, "%p,%d", ssl, 1);
+
+loop:
       ret = U_SYSCALL(SSL_shutdown, "%p", ssl); // Send SSL shutdown signal to peer
 
-      U_DUMP("status = %.*S", 512, status(true))
+      /* SSL_shutdown() never returns -1, on error it returns 0 */
 
-      U_SYSCALL_VOID(SSL_set_shutdown, "%p,%d", ssl, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
+      if (ret == 0)
+         {
+         ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
+
+         U_DUMP("status = %.*S", 512, status(ssl, ret, false, 0, 0))
+
+              if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+         else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+         }
 
       U_SYSCALL_VOID(SSL_free, "%p", ssl);
                                      ssl = 0;                
@@ -600,6 +796,22 @@ int USSLSocket::recv(void* pBuffer, uint32_t iBufferLen)
 loop:
    errno      = 0;
    iBytesRead = U_SYSCALL(SSL_read, "%p,%p,%d", ssl, CAST(pBuffer), iBufferLen);
+
+   U_INTERNAL_DUMP("renegotiations = %d", renegotiations)
+
+   if (renegotiations > 1)
+      {
+      U_WARNING("SSL: renegotiation initiated by client");
+
+      while (ERR_peek_error())
+         {
+         U_WARNING("SSL: ignoring stale global SSL error");
+         }
+
+      ERR_clear_error();
+
+      U_RETURN(-1);
+      }
 
    if (iBytesRead > 0)
       {
@@ -684,7 +896,8 @@ const char* USSLSocket::dump(bool reset) const
                   << "ret                           " << ret        << '\n'
                   << "ssl                           " << (void*)ssl << '\n'
                   << "ctx                           " << (void*)ctx << '\n'
-                  << "active                        " << active;
+                  << "active                        " << active     << '\n'
+                  << "renegotiations                " << renegotiations;
 
    if (reset)
       {

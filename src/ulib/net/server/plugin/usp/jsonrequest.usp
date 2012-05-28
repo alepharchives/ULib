@@ -3,10 +3,10 @@ Content-Type: application/jsonrequest
 -->
 <!--#code
 if (U_HTTP_CTYPE_STRNEQ("application/jsonrequest"))
-	{
-	UValue json;
+   {
+   UValue json;
 
-	if (json.parse(*UClientImage_Base::body)) USP_PUTS(json.output());
-	else													USP_PUTS(U_CONSTANT_TO_PARAM("{}"));
-	}
+   if (json.parse(*UClientImage_Base::body)) USP_PUTS(json.output());
+   else                                      USP_PUTS(U_CONSTANT_TO_PARAM("{}"));
+   }
 -->

@@ -18,7 +18,7 @@ void UXMLElement::splitNamespaceAndName(const UString& _str, UString& _namespace
 {
    U_TRACE(0+256, "UXMLElement::splitNamespaceAndName(%.*S,%p,%p)", U_STRING_TO_TRACE(_str), &_namespaceName, &_accessorName)
 
-   U_ASSERT_DIFFERS(_str.empty(),true)
+   U_ASSERT_EQUALS(_str.empty(), false)
 
    uint32_t nColonPos = _str.find(':');
 

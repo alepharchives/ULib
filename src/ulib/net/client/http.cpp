@@ -562,6 +562,8 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 
          // Combine the new location with our URL
 
+         newLocation.duplicate(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+
          if (UClient_Base::setUrl(newLocation) == false &&
              U_http_is_connection_close        != U_YES)
             {
@@ -579,7 +581,7 @@ void UHttpClient_Base::composeRequest(UString& data, uint32_t& startHeader)
 {
    U_TRACE(0, "UHttpClient_Base::composeRequest(%.*S,%u)", U_STRING_TO_TRACE(data), startHeader)
 
-   U_ASSERT_DIFFERS(UClient_Base::uri.empty(),true)
+   U_ASSERT_EQUALS(UClient_Base::uri.empty(), false)
 
    UHTTP::setHTTPInfo(method, UClient_Base::uri);
 

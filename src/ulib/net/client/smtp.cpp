@@ -62,16 +62,6 @@ void USmtpClient::str_allocate()
    U_NEW_ULIB_OBJECT(str_REPLY_TO_ADDRESS, U_STRING_FROM_STRINGREP_STORAGE(7));
 }
 
-USmtpClient::USmtpClient(bool bSocketIsIPv6) : Socket(bSocketIsIPv6)
-{
-   U_TRACE_REGISTER_OBJECT(0, USmtpClient, "%b", bSocketIsIPv6)
-
-   state    = INIT;
-   response = NONE;
-
-   if (str_empty == 0) str_allocate();
-}
-
 USmtpClient::~USmtpClient()
 {
    U_TRACE_UNREGISTER_OBJECT(0, USmtpClient)
@@ -121,7 +111,7 @@ bool USmtpClient::_connectServer(const UString& server, int port, uint32_t timeo
       {
       response = CONNREFUSED;
 
-      (void) u_sn_printf(buffer, sizeof(buffer), "Sorry, couldn't connect to server '%.*s:%d'%R", U_STRING_TO_TRACE(server), port, 0); // NB: the last argument (0) is necessary...
+      (void) u__snprintf(buffer, sizeof(buffer), "Sorry, couldn't connect to server '%.*s:%d'%R", U_STRING_TO_TRACE(server), port, 0); // NB: the last argument (0) is necessary...
       }
    else
       {

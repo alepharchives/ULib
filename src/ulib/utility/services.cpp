@@ -58,7 +58,7 @@ bool UServices::setFtw(const UString* dir, const char* filter, uint32_t filter_l
          U_RETURN(false);
          }
 
-      (void) u_mem_cpy(u_buffer, ptr, u_buffer_len);
+      (void) u__memcpy(u_buffer, ptr, u_buffer_len);
       }
 
    u_buffer[u_buffer_len] = '\0';
@@ -249,10 +249,10 @@ char* UServices::getOpenSSLError(char* buffer, uint32_t buffer_size, uint32_t* p
 
       (void) ERR_error_string_n(i, _buf, sizeof(_buf));
 
-      U_INTERNAL_DUMP("buf = %.*S", u_str_len(_buf), _buf)
+      U_INTERNAL_DUMP("buf = %.*S", u__strlen(_buf), _buf)
 
       ptr  += size;
-      size += u_sn_printf(ptr, buffer_size - (ptr - buffer), "(%ld, %s)", i, _buf);
+      size += u__snprintf(ptr, buffer_size - (ptr - buffer), "(%ld, %s)", i, _buf);
 
       U_INTERNAL_ASSERT_MINOR(size,buffer_size)
       }
@@ -620,7 +620,7 @@ void UServices::generateKey()
 #elif defined(USE_LIBUUID)
    U_SYSCALL_VOID(uuid_generate, "%p", key);
 #else
-   (void) u_sn_printf((char*)key, 16, "%lu%P", u_now->tv_usec);
+   (void) u__snprintf((char*)key, 16, "%lu%P", u_now->tv_usec);
 #endif
 }
 

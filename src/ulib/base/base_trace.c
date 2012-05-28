@@ -97,7 +97,7 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
             {
             if ((file_ptr + sz) > file_limit) file_ptr = file_mem;
 
-            (void) u_mem_cpy(file_ptr, tid_buffer, sz);
+            (void) u__memcpy(file_ptr, tid_buffer, sz);
 
             file_ptr += sz;
             }
@@ -119,7 +119,7 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
 
          if ((file_ptr + iov[i].iov_len) > file_limit) file_ptr = file_mem;
 
-         (void) u_mem_cpy(file_ptr, iov[i].iov_base, iov[i].iov_len);
+         (void) u__memcpy(file_ptr, iov[i].iov_base, iov[i].iov_len);
 
          file_ptr += iov[i].iov_len;
          }
@@ -245,7 +245,7 @@ void u_trace_init(bool force, bool info, bool offset)
          {
          char name[128];
 
-         (void) u_sn_printf(name, 128, "trace.%N.%P", 0);
+         (void) u__snprintf(name, 128, "trace.%N.%P", 0);
 
          /* NB: O_RDWR e' necessario per mmap(MAP_SHARED)... */
 
@@ -388,7 +388,7 @@ void u_trace_check_init(void)
       {
       char name[128];
 
-      (void) u_sn_printf(name, 128, "trace.%N.%P", 0);
+      (void) u__snprintf(name, 128, "trace.%N.%P", 0);
 
       (void) rename("trace..", name);
       }

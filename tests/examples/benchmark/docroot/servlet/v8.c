@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
 
    char* reply = get_reply();
 
-   (void) u_sn_printf(reply, get_reply_capacity(), "<h1>%s</h1>", run);
+   (void) u__snprintf(reply, get_reply_capacity(), "<h1>%s</h1>", run);
 
    free(run);
 

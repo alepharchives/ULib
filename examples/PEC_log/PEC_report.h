@@ -265,10 +265,6 @@ public:
 
       UApplication::run(argc, argv, env);
 
-      u_gettimeofday();
-
-      ULib_init_openssl();
-
       // manage options
 
       if (UApplication::isOptions() == false) U_ERROR("you must specify at least parameters directory and title report...");

@@ -1,0 +1,167 @@
+#distance { 
+	width:1px;
+	height:60%;
+	background-color:#fc6;
+	margin-bottom:-13.75em; /* half of container's height */
+	float:left;
+	}
+
+#container {
+	letter-spacing:1px;
+	margin:0 auto;
+	position:relative; /* puts container in front of distance */
+	text-align:left;
+	/*height:27.5em;*/
+	/*width:45em;*/
+	width:35.000em;
+	clear:left;
+	overflow:hidden;
+        behavior: url(css/ie-css3.htc);
+/*	border:1px solid #21384F;*/
+/*
+        -webkit-border-radius: 15px;
+        -moz-border-radius: 15px;
+        border-radius: 15px;
+        -webkit-box-shadow: 0px 0px 25px rgba(0,0,0,.35);
+        -moz-box-shadow: 0px 0px 25px rgba(0,0,0,.35);
+        box-shadow: 0px 0px 25px rgba(0,0,0,.35);
+*/
+	}
+#container #wrapper {
+	/*height:20.000em;*/
+	}
+#containerBig {
+	letter-spacing:1px;
+	margin:0 auto;
+	margin-top:3em;
+	position:relative; /* puts container in front of distance */
+	text-align:left;
+	/*height:27.5em;*/
+	/*width:45em;*/
+	width:60%;
+	clear:left;
+	overflow:hidden;
+        behavior: url(css/ie-css3.htc);
+/*	border:1px solid #21384F;*/
+/*
+        -webkit-border-radius: 15px;
+        -moz-border-radius: 15px;
+        border-radius: 15px;
+        -webkit-box-shadow: 0px 0px 25px rgba(0,0,0,.35);
+        -moz-box-shadow: 0px 0px 25px rgba(0,0,0,.35);
+        box-shadow: 0px 0px 25px rgba(0,0,0,.35);
+*/
+	}
+#container #wrapperAuto {
+	height:auto;
+	}
+#loginbox {
+	display:block;
+	width:17.000em;
+	float:right;
+	}
+#creditsbox {
+	background-image:url('images/logo_t.service_NoSfondo.png');
+	background-repeat:no-repeat;
+	/*background-attachment:fixed;*/
+	background-position:50% 20%;
+	display:block;
+	width:9.900em;
+	height:23.5em;
+	float:left;
+	text-shadow:2px 2px 2px rgba(0, 0, 0, .25);
+	color:#FF0000;
+	text-align:center;
+	}
+#creditsbox a {
+	display:block;
+	padding-top:16em;
+	}
+div#topBanner {
+	position:absolute;
+	display:block;
+	/*background-color:#FF0000;*/
+	width:auto;
+	height:auto;
+	top:20px;
+	right:0;
+	left:0;
+	text-align:center;
+	}
+div#bottomBanner {
+	position:absolute;
+	display:block;
+	/*background-color:#FFFF00;*/
+	width:auto;
+	height:100px;
+	right:0;
+	left:0;
+	bottom:20px;
+	text-align:center;
+	}
+div#rightBanner {
+	position:absolute;
+	display:block;
+	/*background-color:#00FF00;*/
+	width:300px;
+	height:auto;
+	top:20px;
+	bottom:20px;
+	right:20px;
+	margin-top:auto;
+	margin-bottom:auto;
+	}
+div#leftBanner {
+	position:absolute;
+	display:block;
+	/*background-color:#00FFFF;*/
+	width:300px;
+	height:auto;
+	top:20px;
+	bottom:20px;
+	left:20px;
+	margin-top:auto;
+	margin-bottom:auto;
+	}
+div.banner300x250 {
+	display:block;
+	width:300px;
+	height:250px;
+	right:0;
+	left:0;
+	margin-left:auto;
+	margin-right:auto;
+	position:relative;
+	padding-top:5px;
+	padding-bottom:5px;
+	}
+div.banner300x600 {
+	display:block;
+	width:300px;
+	height:600px;
+	right:0;
+	left:0;
+	margin-left:auto;
+	margin-right:auto;
+	position:relative;
+	}
+div.banner468x60 {
+	display:block;
+	width:468px;
+	height:60px;
+	right:0;
+	left:0;
+	margin-left:auto;
+	margin-right:auto;
+	position:relative;
+	}
+div.banner728x90 {
+	display:block;
+	width:728px;
+	height:90px;
+	right:0;
+	left:0;
+	margin-left:auto;
+	margin-right:auto;
+	position:relative;
+	}

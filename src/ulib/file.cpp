@@ -132,7 +132,7 @@ int UFile::open(const char* _pathname, int flags, mode_t mode)
    U_TRACE(1, "UFile::open(%S,%d,%d)", _pathname, flags, mode)
 
    U_INTERNAL_ASSERT_POINTER(_pathname)
-   U_INTERNAL_ASSERT_MAJOR(u_str_len(_pathname), 0)
+   U_INTERNAL_ASSERT_MAJOR(u__strlen(_pathname), 0)
 
    // NB: we centralize here O_BINARY...
 
@@ -230,7 +230,7 @@ bool UFile::chdir(const char* path, bool flag_save)
       else if (IS_DIR_SEPARATOR(path[0]) == false) u_getcwd();
       else
          {
-         u_cwd_len = u_str_len(path);
+         u_cwd_len = u__strlen(path);
 
          U_INTERNAL_ASSERT_MINOR(u_cwd_len,U_PATH_MAX)
 
@@ -250,8 +250,8 @@ uint32_t UFile::setPathFromFile(const UFile& file, char* buffer_path, const char
 
    U_INTERNAL_DUMP("file.path_relativ(%u) = %.*S", file.path_relativ_len, file.path_relativ_len, file.path_relativ)
 
-   (void) u_mem_cpy(buffer_path,                         file.path_relativ, file.path_relativ_len);
-   (void) u_mem_cpy(buffer_path + file.path_relativ_len,            suffix,                   len);
+   (void) u__memcpy(buffer_path,                         file.path_relativ, file.path_relativ_len);
+   (void) u__memcpy(buffer_path + file.path_relativ_len,            suffix,                   len);
 
    uint32_t new_path_relativ_len = file.path_relativ_len + len;
 
@@ -292,32 +292,42 @@ void UFile::setPath(const UFile& file, char* buffer_path, const char* suffix, ui
    U_INTERNAL_DUMP("path_relativ = %.*S", path_relativ_len, path_relativ)
 }
 
-bool UFile::isName(const UString& name) const
+UString UFile::getName() const
 {
-   U_TRACE(0, "UFile::isName(%.*S)", U_STRING_TO_TRACE(name))
+   U_TRACE(0, "UFile::getName()")
 
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
    U_INTERNAL_ASSERT_POINTER(path_relativ)
-   U_INTERNAL_ASSERT_MAJOR(path_relativ_len,0)
+   U_INTERNAL_ASSERT_MAJOR(path_relativ_len, 0)
 
-   UString s(path_relativ, path_relativ_len), basename = UStringExt::basename(s);
+   uint32_t pos;
+   UString result;
+   const char* base = 0;
+   ptrdiff_t name_len = path_relativ_len;
 
-   bool result = name.equal(basename);
+   for (const char* ptr = path_relativ, *end = path_relativ + path_relativ_len; ptr < end; ++ptr) if (*ptr == '/') base = ptr + 1;
 
-   U_RETURN(result);
+   if (base) name_len -= (base - path_relativ);
+
+   pos = pathname.size() - name_len;
+
+   U_INTERNAL_DUMP("name = %.*S", name_len, pathname.c_pointer(pos))
+
+   U_ASSERT(UStringExt::endsWith(pathname, pathname.c_pointer(pos), name_len))
+
+   result = pathname.substr(pos);
+
+   U_INTERNAL_ASSERT(result.invariant())
+
+   U_RETURN_STRING(result);
 }
 
 bool UFile::isNameDosMatch(const char* mask, uint32_t mask_len) const
 {
    U_TRACE(0, "UFile::isNameDosMatch(%.*S,%u)", mask_len, mask, mask_len)
 
-   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
-   U_INTERNAL_ASSERT_POINTER(path_relativ)
-   U_INTERNAL_ASSERT_MAJOR(path_relativ_len,0)
-
-   UString s(path_relativ, path_relativ_len), basename = UStringExt::basename(s);
+   UString basename = getName();
 
    bool result = u_dosmatch_with_OR(U_STRING_TO_PARAM(basename), mask, mask_len, 0);
 
@@ -551,7 +561,7 @@ bool UFile::write(const UString& data, bool append, bool bmkdirs)
 
             uint32_t len = ptr - path_relativ;
 
-            (void) u_mem_cpy(buffer, path_relativ, len);
+            (void) u__memcpy(buffer, path_relativ, len);
 
             buffer[len] = '\0';
 
@@ -586,7 +596,7 @@ bool UFile::write(const UString& data, bool append, bool bmkdirs)
             if (sz &&
                 memmap(PROT_READ | PROT_WRITE, 0, offset, st_size))
                {
-               (void) u_mem_cpy(map + offset, ptr, sz);
+               (void) u__memcpy(map + offset, ptr, sz);
 
                munmap();
                }
@@ -981,7 +991,7 @@ bool UFile::mkdirs(const char* path, mode_t mode)
 
          uint32_t len = ptr - path;
 
-         (void) u_mem_cpy(buffer, path, len);
+         (void) u__memcpy(buffer, path, len);
 
          buffer[len] = '\0';
 
@@ -1067,7 +1077,7 @@ bool UFile::rmdirs(const char* path, bool remove_all)
 
          int length = ptr - path + 1;
 
-         (void) u_mem_cpy(newpath, path, length);
+         (void) u__memcpy(newpath, path, length);
 
          newpath[length] = '\0';
 
@@ -1093,7 +1103,7 @@ bool UFile::_rename(const char* newpath)
    if (result)
       {
       path_relativ     =  (char*) newpath;
-      path_relativ_len = u_str_len(newpath);
+      path_relativ_len = u__strlen(newpath);
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 

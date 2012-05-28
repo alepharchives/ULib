@@ -104,8 +104,8 @@ public:
 
       char* ptr = add(key, keylen, datalen, _ttl);
 
-      (void) u_mem_cpy(ptr,           key,  keylen);
-      (void) u_mem_cpy(ptr + keylen, data, datalen);
+      (void) u__memcpy(ptr,           key,  keylen);
+      (void) u__memcpy(ptr + keylen, data, datalen);
       }
 
    // operator []

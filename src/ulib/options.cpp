@@ -225,7 +225,7 @@ void UOptions::add(const UString& desc,
 
       item = U_MALLOC_N(capacity, option_item);
 
-      (void) u_mem_cpy(item, old_item, length * sizeof(option_item));
+      (void) u__memcpy(item, old_item, length * sizeof(option_item));
 
       U_FREE_N(old_item, old_capacity, option_item);
       }
@@ -356,11 +356,11 @@ void UOptions::printHelp(vPF func)
    u_is_tty        = isatty(STDOUT_FILENO);
    u_printf_fileno = STDOUT_FILENO;
 
-   u_printf("%W%.*s%W: %.*s", BRIGHTWHITE, U_STRING_TO_TRACE(package), RESET, U_STRING_TO_TRACE(version));
+   u__printf("%W%.*s%W: %.*s", BRIGHTWHITE, U_STRING_TO_TRACE(package), RESET, U_STRING_TO_TRACE(version));
 
-   if (purpose.size()) u_printf("%WPurpose:%W %.*s", BRIGHTWHITE, RESET, U_STRING_TO_TRACE(purpose));
+   if (purpose.size()) u__printf("%WPurpose:%W %.*s", BRIGHTWHITE, RESET, U_STRING_TO_TRACE(purpose));
 
-   u_printf("%WUsage:\n  %W%.*s%W [ %WOptions%W ] %W%.*s\n%WOptions:%W",
+   u__printf("%WUsage:\n  %W%.*s%W [ %WOptions%W ] %W%.*s\n%WOptions:%W",
                BRIGHTWHITE, BRIGHTCYAN, u_progname_len, u_progname, RESET, BRIGHTGREEN, RESET,
                BRIGHTGREEN, U_STRING_TO_TRACE(args), BRIGHTWHITE, RESET);
 
@@ -403,9 +403,9 @@ void UOptions::printHelp(vPF func)
 
       ptr += 4;
 
-      name_len = u_str_len(ptr_long_options->name);
+      name_len = u__strlen(ptr_long_options->name);
 
-      (void) u_mem_cpy(ptr, ptr_long_options->name, name_len); 
+      (void) u__memcpy(ptr, ptr_long_options->name, name_len); 
 
       ptr += name_len;
 
@@ -437,7 +437,7 @@ void UOptions::printHelp(vPF func)
          (void) u_strcpy(ptr, (i ? "Show version information"
                                  : "Show help about options"));
 
-         ptr += u_str_len(ptr);
+         ptr += u__strlen(ptr);
          }
       else
          {
@@ -447,7 +447,7 @@ void UOptions::printHelp(vPF func)
 
          if (n)
             {
-            (void) u_mem_cpy(ptr, x->data(), n);
+            (void) u__memcpy(ptr, x->data(), n);
 
             ptr += n;
             }
@@ -460,7 +460,7 @@ void UOptions::printHelp(vPF func)
 
             ptr += 10;
 
-            (void) u_mem_cpy(ptr, item[j].value->data(), n);
+            (void) u__memcpy(ptr, item[j].value->data(), n);
 
             ptr += n;
 
@@ -470,14 +470,14 @@ void UOptions::printHelp(vPF func)
 
       *ptr = '\0';
 
-      u_printf("%W%s%W", BRIGHTCYAN, buffer, RESET);
+      u__printf("%W%s%W", BRIGHTCYAN, buffer, RESET);
       }
 
    if (func) func();
 
    if (report_bugs.empty() == false)
       {
-      u_printf("%W\nMaintained by Stefano Casazza <stefano.casazza@gmail.com>\nReport bugs to <%.*s>%W", BRIGHTYELLOW, U_STRING_TO_TRACE(report_bugs), RESET);
+      u__printf("%W\nMaintained by Stefano Casazza <stefano.casazza@gmail.com>\nReport bugs to <%.*s>%W", BRIGHTYELLOW, U_STRING_TO_TRACE(report_bugs), RESET);
       }
 
    U_EXIT(EXIT_SUCCESS);
@@ -644,7 +644,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
       Parser generator: bison -y ( bison (GNU Bison) 2.5 )
 ----------------------------------------------------------------------------- */
 
-            u_printf("%W%.*s%W (%W%.*s%W): %.*s\n\n"
+            u__printf("%W%.*s%W (%W%.*s%W): %.*s\n\n"
                "%WDeveloped with ULib (C++ application development framework)%W\n\n"
 
 #           ifdef CONFIGURE_CALL
@@ -741,49 +741,49 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
             // Asking the system what it has
 
-            u_printf("%WRequest:%W", BRIGHTWHITE, BRIGHTGREEN);
+            u__printf("%WRequest:%W", BRIGHTWHITE, BRIGHTGREEN);
 #        ifdef _POSIX_SOURCE
-            u_printf("\t_POSIX_SOURCE defined");
-            u_printf("\t_POSIX_C_SOURCE = %ld", _POSIX_C_SOURCE);
+            u__printf("\t_POSIX_SOURCE defined");
+            u__printf("\t_POSIX_C_SOURCE = %ld", _POSIX_C_SOURCE);
 #        else
-            u_printf("%W\t_POSIX_SOURCE undefined%W", BRIGHTRED, BRIGHTGREEN);
+            u__printf("%W\t_POSIX_SOURCE undefined%W", BRIGHTRED, BRIGHTGREEN);
 #        endif
 
 #     ifdef _XOPEN_SOURCE
 #        if _XOPEN_SOURCE == 0
-            u_printf("\t_XOPEN_SOURCE defined (0 or no value)");
+            u__printf("\t_XOPEN_SOURCE defined (0 or no value)");
 #        else
-            u_printf("\t_XOPEN_SOURCE = %d", _XOPEN_SOURCE);
+            u__printf("\t_XOPEN_SOURCE = %d", _XOPEN_SOURCE);
 #        endif
 #     else
-            u_printf("%W\t_XOPEN_SOURCE undefined%W", BRIGHTRED, BRIGHTGREEN);
+            u__printf("%W\t_XOPEN_SOURCE undefined%W", BRIGHTRED, BRIGHTGREEN);
 #     endif
 
 #        ifdef _XOPEN_SOURCE_EXTENDED
-            u_printf("\t_XOPEN_SOURCE_EXTENDED defined");
+            u__printf("\t_XOPEN_SOURCE_EXTENDED defined");
 #        else
-            u_printf("%W\t_XOPEN_SOURCE_EXTENDED undefined", BRIGHTRED);
+            u__printf("%W\t_XOPEN_SOURCE_EXTENDED undefined", BRIGHTRED);
 #        endif
 
-            u_printf("%WClaims:%W", BRIGHTWHITE, BRIGHTYELLOW);
+            u__printf("%WClaims:%W", BRIGHTWHITE, BRIGHTYELLOW);
 #        ifdef _POSIX_VERSION
-            u_printf("\t_POSIX_VERSION = %ld", _POSIX_VERSION);
+            u__printf("\t_POSIX_VERSION = %ld", _POSIX_VERSION);
 #        else
-            u_printf("%W\tNot POSIX%W", BRIGHTRED, BRIGHTYELLOW);
+            u__printf("%W\tNot POSIX%W", BRIGHTRED, BRIGHTYELLOW);
 #        endif
 
 #     ifdef _XOPEN_UNIX
-            u_printf("\tX/Open");
+            u__printf("\tX/Open");
 #        ifdef _XOPEN_VERSION
-            u_printf("\t_XOPEN_VERSION = %d", _XOPEN_VERSION);
+            u__printf("\t_XOPEN_VERSION = %d", _XOPEN_VERSION);
 #        else
-            u_printf("\tError: _XOPEN_UNIX defined, but not _XOPEN_VERSION");
+            u__printf("\tError: _XOPEN_UNIX defined, but not _XOPEN_VERSION");
 #        endif
 #     else
-            u_printf("%W\tNot X/Open%W", BRIGHTRED, BRIGHTYELLOW);
+            u__printf("%W\tNot X/Open%W", BRIGHTRED, BRIGHTYELLOW);
 #     endif
 
-            u_printf("%W", RESET);
+            u__printf("%W", RESET);
 
             U_EXIT(EXIT_SUCCESS);
             }
@@ -823,7 +823,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
             if (optarg)
                {
-               UStringRep::assign(item[longindex - 2].value, optarg, u_str_len(optarg));
+               UStringRep::assign(item[longindex - 2].value, optarg, u__strlen(optarg));
                }
             else
                {

@@ -206,14 +206,14 @@ public:
 
       (void) u_strcpy(old_prefix, prefix);
 
-      (void) u_mem_cpy(old_buffer, u_buffer_ptr, (old_buffer_len = u_buffer_len));
+      (void) u__memcpy(old_buffer, u_buffer_ptr, (old_buffer_len = u_buffer_len));
       }
 
    static void printHTMLElement()
       {
       U_TRACE(5, "Application::printHTMLElement()")
 
-      uint32_t len = u_sn_printf(buffer, sizeof(buffer), U_HTML_ELEMENT_TEMPLATE, icon, filename, old_prefix, old_buffer_len, old_buffer);
+      uint32_t len = u__snprintf(buffer, sizeof(buffer), U_HTML_ELEMENT_TEMPLATE, icon, filename, old_prefix, old_buffer_len, old_buffer);
 
       cout.write(buffer, len);
 
@@ -246,10 +246,10 @@ public:
 
       char branch[10], folder[10];
 
-      (void) u_sn_printf(branch, sizeof(branch), "branch%02u", num_tag),
-      (void) u_sn_printf(folder, sizeof(folder), "folder%02u", num_tag++);
+      (void) u__snprintf(branch, sizeof(branch), "branch%02u", num_tag),
+      (void) u__snprintf(folder, sizeof(folder), "folder%02u", num_tag++);
 
-      uint32_t len = u_sn_printf(buffer, sizeof(buffer), U_HTML_FOLDER_TEMPLATE, branch, folder, folder, folder, old_buffer_len, old_buffer, branch);
+      uint32_t len = u__snprintf(buffer, sizeof(buffer), U_HTML_FOLDER_TEMPLATE, branch, folder, folder, folder, old_buffer_len, old_buffer, branch);
 
       cout.write(buffer, len);
       }
@@ -273,7 +273,7 @@ public:
       if (treeview ||
           extract_tag)
          {
-         nt = u_sn_printf(tag, sizeof(tag), " tag%03u \"", num_tag++);
+         nt = u__snprintf(tag, sizeof(tag), " tag%03u \"", num_tag++);
 
          if (extract_tag &&
              strncmp(extract_tag, tag + sizeof("tag"), 3) == 0)
@@ -369,7 +369,7 @@ public:
          if (treeview)
             {
             char depth[10];
-            uint32_t nd = u_sn_printf(depth, sizeof(depth), "\" on %u", num_tab);
+            uint32_t nd = u__snprintf(depth, sizeof(depth), "\" on %u", num_tab);
 
             (void) output->append(tag, nt);
             (void) output->append(u_buffer_ptr, u_buffer_len);

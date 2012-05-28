@@ -12,11 +12,11 @@ UApplication*      PEC_report::pthis;
 
 time_t             PEC_report::nseconds;
 uint64_t           PEC_report::bytes;
-UTimeDate*             PEC_report::to;
-UTimeDate*             PEC_report::fix;
-UTimeDate*             PEC_report::from;
-UTimeDate*             PEC_report::date;
-UTimeDate*             PEC_report::date1;
+UTimeDate*         PEC_report::to;
+UTimeDate*         PEC_report::fix;
+UTimeDate*         PEC_report::from;
+UTimeDate*         PEC_report::date;
+UTimeDate*         PEC_report::date1;
 UFile*             PEC_report::file;
 UString*           PEC_report::title;
 UString*           PEC_report::domain;

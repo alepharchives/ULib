@@ -196,13 +196,15 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 {
    U_TRACE(0, "USSIPlugIn::processSSIRequest(%.*S,%d)", U_STRING_TO_TRACE(content), include_level)
 
+   U_ASSERT_EQUALS(content.empty(), false)
+
    UString tmp; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
    int32_t i, n;
    const char* directive;
    UVector<UString> name_value;
-   uint32_t distance, pos, size;
    enum {E_NONE, E_URL, E_ENTITY} encode;
    int op, if_level = 0, if_is_false_level = 0;
+   uint32_t distance, pos, size, sz = content.size();
    bool bgroup, bfile, bset, if_is_false = false, if_is_false_endif = false;
    UString token, name, value, pathname, include, directory, output(U_CAPACITY), x, encoded;
 
@@ -214,26 +216,17 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
    enum { SSI_NONE, SSI_INCLUDE, SSI_EXEC, SSI_ECHO, SSI_CONFIG, SSI_FLASTMOD,
           SSI_FSIZE, SSI_PRINTENV, SSI_SET, SSI_IF, SSI_ELSE, SSI_ELIF, SSI_ENDIF };
 
-   while (true)
-      {
+   do {
       // Find next SSI tag
-
-      U_INTERNAL_DUMP("content(%u) = %.*S", content.size(), U_STRING_TO_TRACE(content))
-
-      U_ASSERT_DIFFERS(content.empty(), true)
 
       distance = t.getDistance();
       pos      = content.find("<!--#", distance);
 
       if (pos)
          {
-         if (pos != U_NOT_FOUND) t.setDistance(pos);
-         else
-            {
-            pos = content.size();
+         if (pos == U_NOT_FOUND) pos = sz;
 
-            t.setDistance(pos);
-            }
+         t.setDistance(pos);
 
          size = pos - distance;
 
@@ -249,6 +242,8 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
       U_INTERNAL_ASSERT(bgroup)
 
       U_INTERNAL_DUMP("token = %.*S", U_STRING_TO_TRACE(token))
+
+      U_ASSERT(token.size() >= 2) 
 
       directive = token.c_pointer((i = 2)); // "-#"...
 
@@ -782,6 +777,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
          break;
          }
       }
+   while (t.atEnd() == false);
 
    U_INTERNAL_DUMP("if_is_false = %b if_is_false_level = %d if_level = %d if_is_false_endif = %b",
                     if_is_false,     if_is_false_level,     if_level,     if_is_false_endif)
@@ -808,7 +804,7 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
       {
       UString x = cfg[*str_SSI_AUTOMATIC_ALIASING];
 
-      U_INTERNAL_ASSERT_EQUALS(UHTTP::ssi_alias,0)
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::ssi_alias, 0)
 
       if (x.empty() == false) UHTTP::ssi_alias = U_NEW(UString(x));
 
@@ -909,7 +905,7 @@ int USSIPlugIn::handlerRequest()
 
          U_INTERNAL_DUMP("body(%u) = %.*S", body.size(), U_STRING_TO_TRACE(body))
 
-         U_ASSERT_DIFFERS(body.empty(), true)
+         U_ASSERT_EQUALS(body.empty(), false)
          U_INTERNAL_ASSERT(set_alternative_response)
 
          *UClientImage_Base::body = body;

@@ -20,6 +20,10 @@
 #include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
 
+#ifdef USE_LIBSSL
+#  include <ulib/ssl/net/ssl_session.h>
+#endif
+
 #ifdef U_STATIC_HANDLER_RPC
 #  include <ulib/net/server/plugin/mod_rpc.h>
 #endif
@@ -94,6 +98,7 @@ time_t                     UServer_Base::expire;
 uint32_t                   UServer_Base::start;
 uint32_t                   UServer_Base::count;
 uint32_t                   UServer_Base::shared_data_add;
+UFile*                     UServer_Base::anotherLog;
 UString*                   UServer_Base::mod_name;
 UString*                   UServer_Base::host;
 UString*                   UServer_Base::senvironment;
@@ -407,6 +412,16 @@ UServer_Base::~UServer_Base()
    if (vallow_IP)     delete vallow_IP;
    if (vallow_IP_prv) delete vallow_IP_prv;
 
+   if (anotherLog)
+      {
+             anotherLog->close();
+      delete anotherLog;
+      }
+
+#ifdef USE_LIBSSL
+   if (USSLSession::db_ssl_session) USSLSession::deleteSessionCache();
+#endif
+
    U_INTERNAL_ASSERT_POINTER(socket)
 
    delete socket;
@@ -568,6 +583,8 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
       u_now = &(ptr_shared_data->_timeval);
 
+      (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
 #  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_HTTP_CACHE_REQUEST)
       ((UTimeThread*)(u_pthread_time = U_NEW(UTimeThread)))->start();
 #  endif
@@ -590,6 +607,8 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
       openLog(log_file, cfg.readLong(*str_LOG_FILE_SZ));
       }
+
+   U_INTERNAL_DUMP("u_pthread_time = %p", u_pthread_time)
 
    // DOCUMENT_ROOT: The directory out of which you will serve your documents
 
@@ -1222,16 +1241,21 @@ void UServer_Base::init()
    socket->flags |= O_NONBLOCK;
 
 #ifdef __MINGW32__
-   goto next; 
+   goto next;
 #endif
 
 #ifdef USE_LIBSSL
-   if (bssl == false)
-#endif
+   if (bssl)
       {
-      UEventFd::op_mask     |= EPOLLET;
-      accept_edge_triggered  = true;
+      if (isPreForked()) (void) USSLSession::initSessionCache(UClientImage_Base::ctx, "session.ssl", 1024 * 1024);
+
+      goto next;
       }
+#endif
+
+   UEventFd::op_mask     |= EPOLLET;
+   accept_edge_triggered  = true;
+
 next:
    (void) U_SYSCALL(fcntl, "%d,%d,%d", socket->iSockDesc, F_SETFL, socket->flags);
 
@@ -1256,7 +1280,9 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
    UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)SIG_IGN);
 
    // NB: for logrotate...
-   if (isLog()) ULog::reopen();
+
+   if (isLog())              ULog::reopen();
+   if (isAnotherLog()) anotherLog->reopen();
 
    sendSigTERM();
 
@@ -1478,13 +1504,10 @@ retry:
          }
       }
 
-   if (ptr->newConnection() == false)  goto check;
+   if (ptr->newConnection() == false) goto check;
 
-#ifdef USE_LIBSSL
-   if (bssl)                           goto insert;
-#endif
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-   if (UNotifier::pthread)             goto insert;
+   if (UNotifier::pthread) goto insert;
 #endif
 
    if (ptr->handlerRead() == U_NOTIFIER_DELETE)
@@ -1522,8 +1545,8 @@ const char* UServer_Base::getNumConnection()
 
    static char buffer[32];
 
-   if (isPreForked()) (void) u_sn_printf(buffer, sizeof(buffer), "(%d/%d)", UNotifier::num_connection - UNotifier::min_connection, U_TOT_CONNECTION);
-   else               (void) u_sn_printf(buffer, sizeof(buffer),  "%d",     UNotifier::num_connection - UNotifier::min_connection);
+   if (isPreForked()) (void) u__snprintf(buffer, sizeof(buffer), "(%d/%d)", UNotifier::num_connection - UNotifier::min_connection -1, U_TOT_CONNECTION);
+   else               (void) u__snprintf(buffer, sizeof(buffer),  "%d",     UNotifier::num_connection - UNotifier::min_connection -1);
 
    U_RETURN(buffer);
 }
@@ -1588,12 +1611,7 @@ int UServer_Base::UTimeoutConnection::handlerTime()
 
    UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
 
-/*
-#ifndef __MINGW32__
-   if (USocket::accept4_flags & SOCK_NONBLOCK) UServer_Base::pthis->handlerRead();
-#endif
-*/
-
+   // ---------------
    // return value:
    // ---------------
    // -1 - normal
@@ -1632,6 +1650,8 @@ void UServer_Base::run()
 
    if (monitoring_process)
       {
+      U_INTERNAL_DUMP("u_pthread_time = %p", u_pthread_time)
+
       /**
       * Main loop for the parent process with the new preforked implementation.
       * The parent is just responsible for keeping a pool of children and they accept connections themselves...

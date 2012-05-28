@@ -27,7 +27,10 @@
 #  include <ulib/container/vector.h>
 #endif
 
+#ifndef U_HTTP_CACHE_REQUEST_DISABLE
 #define U_HTTP_CACHE_REQUEST
+#endif
+
 #define U_MAX_UPLOAD_PROGRESS 32
 
 #define U_HTTP_REALM "Protected Area" // HTTP Access Authentication
@@ -275,12 +278,16 @@ public:
    static UString* pathname;
    static UString* ssi_alias;
    static UString* request_uri;
+   static UVector<UString>* valias;
    static UString* uri_protected_mask;
+   static UString* uri_request_cert_mask;
+   static UString* maintenance_mode_page;
 
    static bool     virtual_host, enable_caching_by_proxy_servers, telnet_enable, bsendfile;
    static uint32_t limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size, sts_age_seconds;
 
    static int  checkHTTPRequest();
+   static void writeApacheLikeLog(int fd);
    static void manageHTTPServletRequest(bool as_service);
    static void processHTTPGetRequest(const UString& request);
    static bool checkHTTPRequestForHeader(const UString& request);
@@ -319,7 +326,7 @@ public:
    // set HTTP response message
 
    static void setHTTPResponse(const UString* content_type, const UString* body);
-   static void setHTTPRedirectResponse(bool refresh, UString& ext, const char* ptr_location, uint32_t len_location);
+   static void setHTTPRedirectResponse(int mode, UString& ext, const char* ptr_location, uint32_t len_location);
 
    // get HTTP response message
 

@@ -228,7 +228,7 @@ void Query::query_meta(UStringRep* word_rep, UStringRep* value)
    if (u_pfn_match(      word_rep->data(),       word_rep->size(),
                UPosting::word->data(), UPosting::word->size(), u_pfn_flags))
       {
-      UPosting::posting->assign(value);
+      UPosting::posting->_assign(value);
 
       UPosting::callForPostingAndSetFilename(WeightWord::push);
       }
@@ -238,7 +238,7 @@ void Query::push(UStringRep* str_inode, UStringRep* filename)
 {
    U_TRACE(5, "Query::push(%#.*S,%.*S)", U_STRING_TO_TRACE(*str_inode), U_STRING_TO_TRACE(*filename))
 
-   UPosting::filename->assign(filename);
+   UPosting::filename->_assign(filename);
 
    UPosting::word_freq = 0;
 
@@ -304,7 +304,7 @@ void Query::run(const char* ptr)
 {
    U_TRACE(5, "Query::run(%S)", ptr)
 
-   *UPosting::word = UStringExt::removeEscape(UStringExt::trim(ptr, u_str_len(ptr)));
+   *UPosting::word = UStringExt::removeEscape(UStringExt::trim(ptr, u__strlen(ptr)));
 
    U_INTERNAL_DUMP("UPosting::word = %.*S", U_STRING_TO_TRACE(*UPosting::word))
 

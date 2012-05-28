@@ -373,7 +373,7 @@ U_NO_EXPORT bool UPosting::findCurrentDocIdOnPosting(UStringRep* value)
 {
    U_TRACE(5, "UPosting::findCurrentDocIdOnPosting(%.*S)", U_STRING_TO_TRACE(*value))
 
-   posting->assign(value);
+   posting->_assign(value);
 
 #ifdef U_COMPRESS_ENTRY
    (void) decompress();
@@ -571,7 +571,7 @@ U_NO_EXPORT void UPosting::add()
       }
    else
       {
-      if (tbl_words) posting->assign(tbl_words->elem());
+      if (tbl_words) posting->_assign(tbl_words->elem());
       else           readPosting(0, false);
 
    // U_ASSERT_EQUALS(0,find(posting->data() + sizeof(uint32_t), posting->size() - sizeof(uint32_t)))
@@ -732,7 +732,7 @@ U_NO_EXPORT void UPosting::checkDocument(UStringRep* word_rep, UStringRep* value
 
    if (findCurrentDocIdOnPosting(value))
       {
-      word->assign(word_rep);
+      word->_assign(word_rep);
 
       U_INTERNAL_DUMP("cdb_words->ignoreCase() = %b", cdb_words->ignoreCase())
 
@@ -749,7 +749,7 @@ U_NO_EXPORT void UPosting::checkAllEntry(UStringRep* word_rep, UStringRep* value
 {
    U_TRACE(5, "UPosting::checkAllEntry(%.*S,%p)", U_STRING_TO_TRACE(*word_rep), value)
 
-   word->assign(word_rep);
+   word->_assign(word_rep);
 
    callForPostingAndSetFilename(0);
 
@@ -769,13 +769,13 @@ U_NO_EXPORT void UPosting::substitute(UStringRep* word_rep, UStringRep* value)
 {
    U_TRACE(5, "UPosting::substitute(%.*S,%p)", U_STRING_TO_TRACE(*word_rep), value)
 
-   posting->assign(value);
+   posting->_assign(value);
 
 #ifdef U_COMPRESS_ENTRY
    (void) decompress();
 #endif
 
-   word->assign(word_rep);
+   word->_assign(word_rep);
 
    if (setPosting(false)) del();
 }
@@ -1031,7 +1031,7 @@ inline UString UPosting::extractDocID()
       r = vec_entry->UVector<UStringRep*>::at(i);
 
 #  ifdef U_COMPRESS_ENTRY
-      posting->assign(r);
+      posting->_assign(r);
       if (decompress()) r = posting->rep;
 #  endif
 
@@ -1047,7 +1047,7 @@ inline UString UPosting::extractDocID()
          U_INTERNAL_DUMP("size_entry = %u",   size_entry)
          U_INTERNAL_DUMP("cur_doc_id = %llu", cur_doc_id)
 
-         (void) u_mem_cpy((void*)sptr, &cur_doc_id, sizeof(cur_doc_id));
+         (void) u__memcpy((void*)sptr, &cur_doc_id, sizeof(cur_doc_id));
 
           ptr += size_entry;
          sptr += sizeof(uint64_t);
@@ -1080,7 +1080,7 @@ bool UPosting::findDocID(UStringRep* word_rep)
 
    uint32_t i;
 
-   word->assign(word_rep);
+   word->_assign(word_rep);
 
    if (vec_word) i = vec_word->find(*word);
    else
@@ -1403,13 +1403,13 @@ U_NO_EXPORT void UPosting::print(UStringRep* word_rep, UStringRep* value)
 {
    U_TRACE(5, "UPosting::print(%.*S,%p)", U_STRING_TO_TRACE(*word_rep), value)
 
-   posting->assign(value);
+   posting->_assign(value);
 
 #ifdef U_COMPRESS_ENTRY
    (void) decompress();
 #endif
 
-   word->assign(word_rep);
+   word->_assign(word_rep);
 
    callForPosting(printPosting);
 }
@@ -1420,7 +1420,7 @@ U_NO_EXPORT void UPosting::printDocName(UStringRep* doc_id, UStringRep* doc_name
 
    char _buffer[20];
 
-   os->write(_buffer, u_sn_printf(_buffer, sizeof(_buffer), "%llX ", *((uint64_t*)(doc_id->data()))));
+   os->write(_buffer, u__snprintf(_buffer, sizeof(_buffer), "%llX ", *((uint64_t*)(doc_id->data()))));
 
    doc_name->write(*os);
 

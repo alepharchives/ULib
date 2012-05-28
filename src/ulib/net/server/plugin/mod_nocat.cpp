@@ -31,10 +31,6 @@
 #  include <ulib/replace/strstream.h>
 #endif
 
-#ifndef   ULLONG_MAX
-#  define ULLONG_MAX 0xffffffffffffffffULL
-#endif
-
 #ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_nocat, UNoCatPlugIn)
 #endif
@@ -79,7 +75,8 @@ bool                      UNoCatPlugIn::flag_check_peers_for_info;
 long                      UNoCatPlugIn::check_expire;
 time_t                    UNoCatPlugIn::last_request_check;
 UPing**                   UNoCatPlugIn::sockp;
-fd_set*                   UNoCatPlugIn::addrmask;
+fd_set                    UNoCatPlugIn::addrmask;
+fd_set*                   UNoCatPlugIn::paddrmask;
 uint32_t                  UNoCatPlugIn::nfds;
 uint32_t                  UNoCatPlugIn::num_radio;
 uint32_t                  UNoCatPlugIn::index_AUTH;
@@ -97,7 +94,7 @@ UHashMap<UModNoCatPeer*>* UNoCatPlugIn::peers;
 #define U_NOCAT_STATUS \
 "<html>\n" \
 "<head>\n" \
-"<meta http-equiv=\"Pragma\" content=\"no-cache\">\n" \
+"<meta http-equiv=\"Cache Control\" content=\"max-age=0\">\n" \
 "<title>Access Point: %s</title>" \
 "</head>\n" \
 "<body bgcolor=\"#FFFFFF\" text=\"#000000\">\n" \
@@ -231,7 +228,7 @@ void UNoCatPlugIn::setStatusContent(UModNoCatPeer* peer)
       {
       peers->callForAllEntry(getPeerStatus);
 
-      UString buffer(800U + sizeof(U_NOCAT_STATUS) + status_content->size());
+      UString buffer(1024U + sizeof(U_NOCAT_STATUS) + intdev.size() + localnet.size() + status_content->size());
 
       U_INTERNAL_ASSERT(access_point.isNullTerminated())
 
@@ -250,7 +247,7 @@ void UNoCatPlugIn::setStatusContent(UModNoCatPeer* peer)
 
 // VARIE
 
-UModNoCatPeer::UModNoCatPeer(const UString& peer_ip) : ip(peer_ip)
+UModNoCatPeer::UModNoCatPeer(const UString& peer_ip) : ip(peer_ip), token(100U)
 {
    U_TRACE_REGISTER_OBJECT(0, UModNoCatPeer, "%.*S", U_STRING_TO_TRACE(peer_ip))
 
@@ -293,7 +290,7 @@ UModNoCatPeer::UModNoCatPeer(const UString& peer_ip) : ip(peer_ip)
    // set traffic
 
    ctraffic = traffic = 0;
-   ltraffic = 4L * 1024L * 1024L * 1024L; // 10G
+   ltraffic = 4UL * 1024UL * 1024UL * 1024UL; // 4G
 }
 
 // define method VIRTUAL of class UEventTime
@@ -350,7 +347,8 @@ int UNoCatPlugIn::handlerTime()
 }
 
 UNoCatPlugIn::UNoCatPlugIn() : vauth_url(4U), vinfo_url(4U),
-                               vInternalDevice(64U), vInternalDeviceLabel(64U), vLocalNetwork(64U), vauth(4U), vauth_ip(4U),
+                               vInternalDevice(64U), vInternalDeviceLabel(64U), vLocalNetwork(64U),
+                               vauth(4U), vauth_ip(4U),
                                input(U_CAPACITY), output(U_CAPACITY), location(U_CAPACITY), gateway(500U)
 {
    U_TRACE_REGISTER_OBJECT(0, UNoCatPlugIn, "")
@@ -378,8 +376,8 @@ UNoCatPlugIn::~UNoCatPlugIn()
          delete sockp[i];
          }
 
-      U_FREE_VECTOR(sockp, num_radio, UPing);
       U_FREE_VECTOR(vaddr, num_radio, UVector<UIPAddress*>);
+      U_FREE_VECTOR(sockp, num_radio, UPing);
       }
 
    if (peers)
@@ -430,7 +428,7 @@ void UNoCatPlugIn::deny(UModNoCatPeer* peer, bool alarm, bool disconnected)
       {
       --total_connections;
 
-      U_SRV_LOG("Removing peer %.*s", U_STRING_TO_TRACE(peer->ip));
+      U_SRV_LOG("Removing peer: IP %.*s", U_STRING_TO_TRACE(peer->ip));
 
       bool bdelete;
       time_t t         = peer->expire - u_now->tv_sec;
@@ -475,11 +473,11 @@ void UNoCatPlugIn::permit(UModNoCatPeer* peer, time_t timeout)
 
    if (peer->status == UModNoCatPeer::PEER_ACCEPT)
       {
-      U_SRV_LOG("Peer %.*s already permit", U_STRING_TO_TRACE(peer->ip));
+      U_SRV_LOG("Peer %.*S already permit", U_STRING_TO_TRACE(peer->ip));
       }
    else
       {
-      U_SRV_LOG("Accepting peer %.*s", U_STRING_TO_TRACE(peer->ip));
+      U_SRV_LOG("Accepting peer: %.*S %.*S", U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer->mac));
 
       executeCommand(peer, UModNoCatPeer::PEER_ACCEPT);
 
@@ -505,7 +503,7 @@ void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& redir
 
    Url::encode(peer->mac, value_encoded);
 
-   location.snprintf("%.*s/%s?mac=%.*s&ip=", U_URL_TO_TRACE(auth), (auth.isPath() ? "" : "login"), U_STRING_TO_TRACE(value_encoded));
+   location.snprintf("%.*s%s?mac=%.*s&ip=", U_URL_TO_TRACE(auth), (auth.isPath() ? "" : "/login"), U_STRING_TO_TRACE(value_encoded));
 
    Url::encode(peer->ip, value_encoded);
 
@@ -521,21 +519,21 @@ void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& redir
 
    if (peer->token.empty())
       {
-      // ---------------------------------------------------------------------------------------------------------------------
+      /* ---------------------------------------------------------------------------------------------------------------------
       // set crypto token (valid for 30 minutes)...
       // ---------------------------------------------------------------------------------------------------------------------
       // NB: tutto il traffico viene rediretto sulla 80 (CAPTIVE PORTAL) e quindi windows update, antivrus, etc...
       // questo introduce la possibilita' che durante la fase di autorizzazione il token generato per il ticket autorizzativo
       // non corrisponda piu' a quello inviato dal portale per l'autorizzazione...
       // ---------------------------------------------------------------------------------------------------------------------
-
       time_t _expire = u_now->tv_sec + (30L * 60L);
       peer->token    = UServices::generateToken(peer->mac, _expire);
+      */
+
+      peer->token.snprintf("%u", u_random(u_now->tv_usec));
       }
 
-   Url::encode(peer->token, value_encoded);
-
-   location.snprintf_add("%.*s&ap=%.*s@%.*s", U_STRING_TO_TRACE(value_encoded), U_STRING_TO_TRACE(peer->label), U_STRING_TO_TRACE(access_point));
+   location.snprintf_add("%.*s&ap=%.*s@%.*s", U_STRING_TO_TRACE(peer->token), U_STRING_TO_TRACE(peer->label), U_STRING_TO_TRACE(access_point));
 }
 
 bool UNoCatPlugIn::checkSignedData(const char* ptr, uint32_t len)
@@ -544,11 +542,12 @@ bool UNoCatPlugIn::checkSignedData(const char* ptr, uint32_t len)
 
    UString buffer(U_CAPACITY);
 
-   if (decrypt_key.empty() == false)
+// if (decrypt_key.empty() == false)
       {
       if (UBase64::decode(ptr, len, buffer)) UDES3::decode(buffer, output);
       else                                   output.setEmpty();
       }
+   /*
    else
       {
       Url::decode(ptr, len, buffer);
@@ -561,6 +560,7 @@ bool UNoCatPlugIn::checkSignedData(const char* ptr, uint32_t len)
 
       UServer_Base::logCommandMsgError(pgp.getCommand());
       }
+   */
 
    bool result = (output.empty() == false);
 
@@ -573,12 +573,12 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    U_INTERNAL_ASSERT_POINTER(peer)
 
-   time_t _expire;
+   uint32_t pos;
+   UString action;
    Url destination;
    bool result = true;
    UHashMap<UString> args;
    UVector<UString> name_value;
-   UString token, action, peer_mac(100U);
 
    args.allocate();
 
@@ -597,31 +597,37 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
    User     s.casazza
    */
 
-   // check crypto token (valid for 30 minutes)...
-
-   token = args[*str_Token];
-
-   if (peer->token != token                                       ||
-       UServices::getTokenData(peer_mac, token, _expire) == false ||
-       peer->mac   != peer_mac)
-      {
-      U_INTERNAL_DUMP("expire   = %ld", _expire)
-      U_INTERNAL_DUMP("token    = %.*S", U_STRING_TO_TRACE(token))
-      U_INTERNAL_DUMP("peer     = %.*S", U_STRING_TO_TRACE(peer->token))
-      U_INTERNAL_DUMP("peer_mac = %.*S", U_STRING_TO_TRACE(peer_mac))
-
-      U_SRV_LOG("Tampered token from peer: %.*s MAC %.*s", U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer_mac));
-
-      goto error;
-      }
-
    // check mac address
 
    if (peer->mac != args[*str_Mac])
       {
-      U_SRV_LOG("Different MAC %.*s in ticket from peer: %.*s", U_STRING_TO_TRACE(peer->mac), U_STRING_TO_TRACE(peer->ip));
+      U_SRV_LOG("Different MAC in ticket from peer: IP %.*s MAC %.*s", U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer->mac));
 
       goto error;
+      }
+
+   // check token
+
+   if (peer->token != args[*str_Token])
+      {
+      U_SRV_LOG("Tampered token from peer: IP %.*s MAC %.*s", U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer->mac));
+
+      goto error;
+      }
+
+   // check user id
+
+   peer->user = args[*str_User].copy();
+
+   pos = vLoginValidate.contains(peer->user);
+
+   if (pos != U_NOT_FOUND)
+      {
+      U_SRV_LOG("user id %.*S validate in ticket from peer: IP %.*s MAC %.*s", U_STRING_TO_TRACE(peer->user),
+                                                                               U_STRING_TO_TRACE(peer->ip),
+                                                                               U_STRING_TO_TRACE(peer->mac));
+
+      vLoginValidate.erase(pos);
       }
 
    // get action
@@ -632,7 +638,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
    else if (action == *str_Deny)     deny(peer, false, false);
    else
       {
-      U_SRV_LOG("Can't make sense of action %.*S in ticket from peer: %.*s", U_STRING_TO_TRACE(action), U_STRING_TO_TRACE(peer->ip));
+      U_SRV_LOG("Can't make sense of action %.*S in ticket from peer: IP %.*s", U_STRING_TO_TRACE(action), U_STRING_TO_TRACE(peer->ip));
 
       goto error;
       }
@@ -643,7 +649,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    if (destination.getQuery(name_value) == 0)
       {
-      U_SRV_LOG("Can't make sense of Redirect %.*S in ticket from peer: %.*s", U_URL_TO_TRACE(destination), U_STRING_TO_TRACE(peer->ip));
+      U_SRV_LOG("Can't make sense of Redirect %.*S in ticket from peer: IP %.*s", U_URL_TO_TRACE(destination), U_STRING_TO_TRACE(peer->ip));
 
       goto error;
       }
@@ -652,16 +658,12 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    if (destination.setQuery(name_value) == false)
       {
-      U_SRV_LOG("Error on setting Redirect in ticket from peer: %.*s", U_STRING_TO_TRACE(peer->ip));
+      U_SRV_LOG("Error on setting Redirect in ticket from peer: IP %.*s", U_STRING_TO_TRACE(peer->ip));
 
       goto error;
       }
 
    (void) location.replace(destination.get());
-
-   // set user name
-
-   peer->user = args[*str_User].copy();
 
    // get mode
 
@@ -688,7 +690,7 @@ end:
    // non corrisponda piu' a quello inviato dal portale per l'autorizzazione...
    // ---------------------------------------------------------------------------------------------------------------------
 
-   peer->token.clear();
+   peer->token.setEmpty();
 
    U_RETURN(result);
 }
@@ -714,6 +716,33 @@ UModNoCatPeer* UNoCatPlugIn::creatNewPeer(const UString& peer_ip)
    peers->insertAfterFind(peer->ip, peer);
 
    U_RETURN_POINTER(peer, UModNoCatPeer);
+}
+
+void UNoCatPlugIn::checkOldPeer(UModNoCatPeer* peer, const UString& peer_ip)
+{
+   U_TRACE(0, "UNoCatPlugIn::checkOldPeer(%p, %.*S)", peer, U_STRING_TO_TRACE(peer_ip))
+
+   UString mac = UServer_Base::getMacAddress(peer_ip.data()); // NB: get mac from arp cache...
+
+   if (mac != peer->mac)
+      {
+      U_SRV_LOG("Different MAC (%.*s) from arp cache for peer: %.*S %.*S", U_STRING_TO_TRACE(mac),
+                                                                           U_STRING_TO_TRACE(peer->ip),
+                                                                           U_STRING_TO_TRACE(peer->mac));
+
+      deny(peer, false, false);
+
+      peer->mac = mac;
+
+      peer->cmd.setArgument(4, peer->mac.data());
+
+      // ---------------------------------------------------------------------------------------------------------------------
+      // NB: tutto il traffico viene rediretto sulla 80 (CAPTIVE PORTAL) e quindi windows update, antivrus, etc...
+      // questo introduce la possibilita' che durante la fase di autorizzazione il token generato per il ticket autorizzativo
+      // non corrisponda piu' a quello inviato dal portale per l'autorizzazione...
+      // ---------------------------------------------------------------------------------------------------------------------
+      peer->token.setEmpty();
+      }
 }
 
 void UNoCatPlugIn::getTraffic()
@@ -861,6 +890,8 @@ void UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
 
       if (ifindex != U_NOT_FOUND)
          {
+         FD_SET(nfds, &addrmask);
+
          ++nfds;
 
          vaddr[ifindex]->push(peer);
@@ -913,9 +944,9 @@ void UNoCatPlugIn::checkPeersForInfo()
       {
       U_SRV_LOG("Pending arping in process (%u), waiting for completion...", nfds);
 
-      addrmask = UPing::checkForPingAsyncCompletion(nfds);
+      paddrmask = UPing::checkForPingAsyncCompletion(nfds);
 
-      if (addrmask || last_request < U_TIME_FOR_ARPING_ASYNC_COMPLETION) goto result; // NB: check for something wrong (must complete within 15 secs)...
+      if (paddrmask || last_request < U_TIME_FOR_ARPING_ASYNC_COMPLETION) goto result; // NB: check for something wrong (must complete within 15 secs)...
 
       goto end;
       }
@@ -928,19 +959,32 @@ void UNoCatPlugIn::checkPeersForInfo()
 
       for (nfds = i = 0; i < num_radio; ++i) vaddr[i]->clear();
 
+      FD_ZERO(&addrmask);
+
       peers->callForAllEntry(checkPeerInfo);
 
-#  ifdef HAVE_NETPACKET_PACKET_H
-      addrmask = (nfds ? (arping ? UPing::arping(sockp, vaddr, num_radio, true, unatexit, vInternalDevice) // parallel ARPING (async)...
-                                 : UPing::arpcache(     vaddr, num_radio))                                 // ARP cache...
-                       : 0);
-#  else
-      addrmask = (nfds ? (UPing::arpcache(vaddr, num_radio)) : 0);
-#  endif
+      U_INTERNAL_DUMP("nfds = %u addrmask = %B", nfds, __FDS_BITS(&addrmask)[0])
+
+      if (nfds)
+         {
+         if (arping || check_expire)
+            {
+#        ifndef HAVE_NETPACKET_PACKET_H
+            paddrmask =           UPing::arpcache(     vaddr, num_radio);
+#        else
+            paddrmask = (arping ? UPing::arping(sockp, vaddr, num_radio, true, unatexit, vInternalDevice) // parallel ARPING (async)...
+                                : UPing::arpcache(     vaddr, num_radio));                                // ARP cache...
+#        endif
+            }
+         else
+            {
+            paddrmask = &addrmask;
+            }
+         }
       }
 
 result:
-   if (addrmask)
+   if (paddrmask)
       {
       U_INTERNAL_ASSERT_MAJOR(nfds,0)
 
@@ -952,7 +996,7 @@ result:
 
          if (peer)
             {
-            if (FD_ISSET(i, addrmask))
+            if (FD_ISSET(i, paddrmask))
                {
                if (u_http_info.method) addPeerInfo(peer, 0);
                }
@@ -965,8 +1009,8 @@ result:
             }
          }
 
-      nfds     = 0;
-      addrmask = 0;
+      nfds      = 0;
+      paddrmask = 0;
       }
 
 end:
@@ -985,7 +1029,7 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo()
 
    if (info_url->isQuery())
       {
-      UHTTP::setHTTPRedirectResponse(false, UString::getStringNull(), U_URL_TO_PARAM(*info_url));
+      UHTTP::setHTTPRedirectResponse(0, UString::getStringNull(), U_URL_TO_PARAM(*info_url));
 
       *info_url = *(pthis->vauth_url[index_AUTH]);
       }
@@ -1226,8 +1270,6 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (tmp.empty() == false) port = tmp.strtol();
 
-      auth_login = UStringExt::getEnvironmentVar(*str_AUTH_SERVICE_URL, &fw_env);
-
       pathconf = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("FW_CONF"), &fw_env);
 
       if (pathconf.empty() == false)
@@ -1371,19 +1413,29 @@ int UNoCatPlugIn::handlerInit()
 
    // crypto cmd
 
-   if (decrypt_cmd.empty() == false) pgp.set(decrypt_cmd, (char**)0);
+// if (decrypt_cmd.empty() == false) pgp.set(decrypt_cmd, (char**)0);
+// if (decrypt_key.empty() == false)
+      {
+      U_INTERNAL_ASSERT(decrypt_key.isNullTerminated())
+      
+      UDES3::setPassword(decrypt_key.data());
+      }
 
-   U_INTERNAL_ASSERT(decrypt_key.isNullTerminated())
+   // firewall cmd
 
-   if (decrypt_key.empty() == false) UDES3::setPassword(decrypt_key.data());
-
-   UString command(100U);
+   UString command(500U);
 
    command.snprintf("/bin/sh %.*s request", U_STRING_TO_TRACE(fw_cmd));
 
    cmd.set(command, (char**)0);
    cmd.setEnvironment(&fw_env);
    cmd.setArgument(3, "initialize");
+
+   // start_ap cmd
+
+   (void) command.assign(U_CONSTANT_TO_PARAM("/usr/sbin/uclient -c /etc/uclient.conf {url}"));
+
+   start_ap.set(command, (char**)0);
 
    fd_stderr = UServices::getDevNull();
 
@@ -1412,6 +1464,8 @@ int UNoCatPlugIn::handlerFork()
 {
    U_TRACE(0, "UNoCatPlugIn::handlerFork()")
 
+   uint32_t i, n;
+
    // initialize the firewall: direct all port 80 traffic to us...
 
    (void) cmd.executeAndWait(0, -1, fd_stderr);
@@ -1420,10 +1474,12 @@ int UNoCatPlugIn::handlerFork()
 
    // manage internal device...
 
-   sockp = U_MALLOC_VECTOR(num_radio, UPing);
-   vaddr = U_MALLOC_VECTOR(num_radio, UVector<UIPAddress*>);
+   U_INTERNAL_DUMP("num_radio = %u", num_radio)
 
-   for (uint32_t i = 0; i < num_radio; ++i)
+   vaddr = U_MALLOC_VECTOR(num_radio, UVector<UIPAddress*>);
+   sockp = U_MALLOC_VECTOR(num_radio, UPing);
+
+   for (i = 0; i < num_radio; ++i)
       {
       vaddr[i] = U_NEW(UVector<UIPAddress*>);
       sockp[i] = U_NEW(UPing(3000, UClientImage_Base::bIPv6));
@@ -1456,6 +1512,30 @@ int UNoCatPlugIn::handlerFork()
          }
       }
 
+   // send start to portal
+
+   Url* auth;
+   UString auth_host, auth_service, url(300U);
+
+   for (i = 0, n = vinfo_url.size(); i < n; ++i)
+      {
+      auth         = vinfo_url[i];
+      auth_host    = auth->getHost();
+      auth_service = auth->getService();
+
+      url.snprintf("%.*s://%.*s/start_ap?ap=%.*s&public=%.*s:%u", U_STRING_TO_TRACE(auth_service),
+                                                                  U_STRING_TO_TRACE(auth_host),
+                                                                  U_STRING_TO_TRACE(access_point),
+                                                                  U_STRING_TO_TRACE(UServer_Base::getIPAddress()),
+                                                                  UServer_Base::port);
+
+      start_ap.setLastArgument(url.data());
+
+      (void) start_ap.executeAndWait(0, -1, fd_stderr);
+
+      UServer_Base::logCommandMsgError(start_ap.getCommand());
+      }
+
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
@@ -1470,11 +1550,15 @@ int UNoCatPlugIn::handlerRequest()
        fw_cmd.empty() == false)
       {
       Url url;
-      bool refresh = false;
+      int refresh = 0;
       UModNoCatPeer* peer = 0;
       UString host(U_HTTP_HOST_TO_PARAM), buffer(U_CAPACITY), ip_client = UHTTP::getRemoteIP();
 
       U_INTERNAL_DUMP("host = %.*S ip_client = %.*S", U_STRING_TO_TRACE(host), U_STRING_TO_TRACE(ip_client))
+
+      U_INTERNAL_ASSERT_EQUALS(u_pthread_time,0)
+
+      (void) gettimeofday(u_now, 0);
 
       // NB: check for request from AUTHs
 
@@ -1536,7 +1620,7 @@ int UNoCatPlugIn::handlerRequest()
 
             if (checkSignedData(U_HTTP_QUERY_TO_PARAM) == false)
                {
-               U_SRV_LOG("Tampered request of logout user");
+               U_SRV_LOG("Tampered request to logout user");
 
                goto set_redirection_url;
                }
@@ -1616,6 +1700,34 @@ int UNoCatPlugIn::handlerRequest()
          goto set_redirect_to_AUTH;
          }
 
+      if (U_HTTP_URI_STRNEQ("/login_validate") &&
+          u_http_info.query_len)
+         {
+         // user has pushed the login button
+
+         if (checkSignedData(U_HTTP_QUERY_TO_PARAM) == false)
+            {
+            U_SRV_LOG("Tampered request to validate login");
+
+            goto set_redirection_url;
+            }
+
+         uint32_t len    = output.size() - U_CONSTANT_SIZE("uid=");
+         const char* ptr = output.data() + U_CONSTANT_SIZE("uid=");
+
+         (void) buffer.assign(ptr, len);
+
+         U_SRV_LOG("validation login request for uid %.*S from peer: IP %.*s", U_STRING_TO_TRACE(buffer), U_STRING_TO_TRACE(ip_client));
+
+         if (vLoginValidate.isContained(buffer) == false) vLoginValidate.push(buffer);
+
+         url.setPath(U_CONSTANT_TO_PARAM("/login_validate"));
+
+         refresh = 2; // no body
+
+         goto set_redirect_to_AUTH;
+         }
+
       if (U_HTTP_URI_STRNEQ( "/ticket") &&
           U_HTTP_QUERY_STRNEQ("ticket="))
          {
@@ -1630,7 +1742,7 @@ int UNoCatPlugIn::handlerRequest()
 
          if (checkSignedData(ptr, len) == false)
             {
-            U_SRV_LOG("Invalid ticket from peer %.*S", U_STRING_TO_TRACE(ip_client));
+            U_SRV_LOG("Invalid ticket from peer: IP %.*s", U_STRING_TO_TRACE(ip_client));
 
             goto set_redirection_url;
             }
@@ -1647,8 +1759,6 @@ int UNoCatPlugIn::handlerRequest()
          if (peer == 0 ||
              checkAuthMessage(peer) == false)
             {
-            U_SRV_LOG("Tampered ticket from peer %.*S", U_STRING_TO_TRACE(ip_client));
-
             goto set_redirection_url;
             }
 
@@ -1680,7 +1790,7 @@ int UNoCatPlugIn::handlerRequest()
           * it was decided to give it one.
           */
 
-         U_SRV_LOG("detected strange initial WiFi request from peer %.*S", U_STRING_TO_TRACE(ip_client));
+         U_SRV_LOG("detected strange initial WiFi request from peer: IP %.*s", U_STRING_TO_TRACE(ip_client));
 
          setHTTPResponse(*str_IPHONE_SUCCESS);
 
@@ -1690,7 +1800,7 @@ int UNoCatPlugIn::handlerRequest()
       if (U_http_version == '1' &&
           host           == gateway)
          {
-         U_SRV_LOG("Missing ticket from peer %.*S", U_STRING_TO_TRACE(ip_client));
+         U_SRV_LOG("Missing ticket from peer: IP %.*s", U_STRING_TO_TRACE(ip_client));
          }
 
 set_redirection_url:
@@ -1700,10 +1810,11 @@ set_redirection_url:
 
 set_redirect_to_AUTH:
       if (peer == 0) peer = creatNewPeer(ip_client);
+      else           checkOldPeer(peer,  ip_client);
 
       setRedirectLocation(peer, buffer, url);
 
-      refresh = true;
+      if (refresh == 0) refresh = 1;
 
 redirect:
       UHTTP::setHTTPRedirectResponse(refresh, UString::getStringNull(), U_STRING_TO_PARAM(location));
@@ -1764,8 +1875,8 @@ const char* UNoCatPlugIn::dump(bool _reset) const
    *UObjectIO::os << "nfds                                           " << nfds                         <<  '\n'
                   << "vaddr                                          " << (void*)vaddr                 <<  '\n' 
                   << "sockp                                          " << (void*)sockp                 <<  '\n'
-                  << "addrmask                                       " << (void*)addrmask              <<  '\n'
                   << "unatexit                                       " << (void*)unatexit              <<  '\n'
+                  << "paddrmask                                      " << (void*)paddrmask             <<  '\n'
                   << "fd_stderr                                      " << fd_stderr                    <<  '\n'
                   << "num_radio                                      " << num_radio                    <<  '\n'
                   << "index_AUTH                                     " << index_AUTH                   <<  '\n'
@@ -1786,7 +1897,7 @@ const char* UNoCatPlugIn::dump(bool _reset) const
                   << "access_point         (UString                  " << (void*)&access_point         << ")\n"
                   << "status_content       (UString                  " << (void*)status_content        << ")\n"
                   << "cmd                  (UCommand                 " << (void*)&cmd                  << ")\n"
-                  << "pgp                  (UCommand                 " << (void*)&pgp                  << ")\n"
+                  << "start_ap             (UCommand                 " << (void*)&start_ap             << ")\n"
                   << "ipt                  (UIptAccount              " << (void*)ipt                   << ")\n"
                   << "vauth_url            (UVector<Url*>            " << (void*)&vauth_url            << ")\n"
                   << "vinfo_url            (UVector<Url*>            " << (void*)&vinfo_url            << ")\n"

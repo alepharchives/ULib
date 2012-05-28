@@ -252,8 +252,6 @@ int U_EXPORT main(int argc, char* argv[])
    UFile filex;
    UString filename;
 
-   ULib_init_openssl();
-
    UServices::setupOpenSSLStore(0, argv[1]);
 
    while (cin >> filename &&

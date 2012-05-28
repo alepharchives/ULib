@@ -12,7 +12,7 @@ UVector<UString> strings;
 uint32_t remove = std::numeric_limits<unsigned>::max();
 
 if (USP_FORM_VALUE_FROM_NAME("add").empty()) remove = USP_FORM_VALUE_FROM_NAME("remove").strtol();
-else											strings.push_back(USP_FORM_VALUE_FROM_NAME("string"));
+else                                strings.push_back(USP_FORM_VALUE_FROM_NAME("string"));
 
 if (remove < strings.size()) strings.erase(remove);
 
@@ -32,20 +32,20 @@ uint32_t sz = strings.size();
     </p>
    </form>
 
-	<p><table border=1>
-	<tr><th colspan=2>Strings entered so far: <!--#number sz --></th></tr>
+   <p><table border=1>
+   <tr><th colspan=2>Strings entered so far: <!--#number sz --></th></tr>
 
-	<!--#code
-	UString item;
+   <!--#code
+   UString item;
 
    for (uint32_t i = 0; i < sz; ++i)
-		{
-		item = strings[i];
+      {
+      item = strings[i];
 
-		USP_PRINTF("<tr><td>%.*s</td><td><a href=\"?remove=%u\">remove</a></td></tr>", U_STRING_TO_TRACE(item), i);
-		}
-	-->
+      USP_PRINTF("<tr><td>%.*s</td><td><a href=\"?remove=%u\">remove</a></td></tr>", U_STRING_TO_TRACE(item), i);
+      }
+   -->
 
-	</table></p>
+   </table></p>
 </body> 
 </html>

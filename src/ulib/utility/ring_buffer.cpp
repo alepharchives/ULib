@@ -194,7 +194,7 @@ int URingBuffer::write(const char* buf, int len, bool pkt)
 
    if (split > 0)
       {
-      (void) u_mem_cpy(ptrd + ptr->pwrite, buf, split);
+      (void) u__memcpy(ptrd + ptr->pwrite, buf, split);
 
       buf  += split;
       todo -= split;
@@ -202,7 +202,7 @@ int URingBuffer::write(const char* buf, int len, bool pkt)
       ptr->pwrite = 0;
       }
 
-   (void) u_mem_cpy(ptrd + ptr->pwrite, buf, todo);
+   (void) u__memcpy(ptrd + ptr->pwrite, buf, todo);
 
    ptr->pwrite = (ptr->pwrite + todo) % size;
 
@@ -309,7 +309,7 @@ int URingBuffer::read(int readd, char* buf, int len)
 
    if (split > 0)
       {
-      (void) u_mem_cpy(buf, ptrd + ptr->pread[readd], split);
+      (void) u__memcpy(buf, ptrd + ptr->pread[readd], split);
 
       buf  += split;
       todo -= split;
@@ -317,7 +317,7 @@ int URingBuffer::read(int readd, char* buf, int len)
       ptr->pread[readd] = 0;
       }
 
-   (void) u_mem_cpy(buf, ptrd + ptr->pread[readd], todo);
+   (void) u__memcpy(buf, ptrd + ptr->pread[readd], todo);
 
    ptr->pread[readd] = (ptr->pread[readd] + todo) % size;
 

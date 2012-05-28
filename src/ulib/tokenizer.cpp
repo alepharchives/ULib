@@ -546,12 +546,12 @@ const char* UTokenizer::dump(bool reset) const
 
    char buffer[32];
 
-   UObjectIO::os->write(buffer, u_sn_printf(buffer, sizeof(buffer), "%S", group));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%S", group));
 
    *UObjectIO::os << '\n'
                   << "delim                       ";
 
-   UObjectIO::os->write(buffer, u_sn_printf(buffer, sizeof(buffer), "%S", delim));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%S", delim));
 
    *UObjectIO::os << '\n'
                   << "group_skip                  " << group_skip  << '\n'

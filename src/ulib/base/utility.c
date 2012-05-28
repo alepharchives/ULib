@@ -66,9 +66,9 @@ const char*      u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 struct uhttpinfo u_http_info;
 
 #ifdef DEBUG
-size_t u_str_len(const char* restrict s)
+size_t u__strlen(const char* restrict s)
 {
-   U_INTERNAL_TRACE("u_str_len(%s)", s)
+   U_INTERNAL_TRACE("u__strlen(%s)", s)
 
    U_INTERNAL_ASSERT_POINTER(s)
 
@@ -77,7 +77,7 @@ size_t u_str_len(const char* restrict s)
 
 char* u_strcpy(char* restrict dest, const char* restrict src)
 {
-   size_t n = u_str_len(src);
+   size_t n = u__strlen(src);
 
    U_INTERNAL_TRACE("u_strcpy(%p,%p,%ld)", dest, src, n)
 
@@ -91,9 +91,9 @@ char* u_strcpy(char* restrict dest, const char* restrict src)
    return dest;
 }
 
-void* u_mem_cpy(void* restrict dst, const void* restrict src, size_t n)
+void* u__memcpy(void* restrict dst, const void* restrict src, size_t n)
 {
-   U_INTERNAL_TRACE("u_mem_cpy(%p,%p,%ld)", dst, src, n)
+   U_INTERNAL_TRACE("u__memcpy(%p,%p,%ld)", dst, src, n)
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT_POINTER(src)
@@ -343,7 +343,7 @@ bool u_runAsUser(const char* restrict user, bool change_dir)
    (void) putenv(buffer);
    }
 
-   (void) u_strncpy(u_user_name, user, (u_user_name_len = u_str_len(user))); /* change user name */
+   (void) u_strncpy(u_user_name, user, (u_user_name_len = u__strlen(user))); /* change user name */
 
    if (change_dir &&
        pw->pw_dir &&
@@ -1741,7 +1741,7 @@ static inline void make_absolute(char* restrict result, const char* restrict dot
       {
       u_strcpy(result, dot_path);
 
-      result_len = u_str_len(result);
+      result_len = u__strlen(result);
 
       if (result[result_len - 1] != PATH_SEPARATOR)
          {
@@ -1775,14 +1775,14 @@ static const char* u_check_for_suffix_exe(const char* restrict program)
 {
    static char program_w32[MAX_FILENAME_LEN + 1];
 
-   int len = u_str_len(program);
+   int len = u__strlen(program);
 
    U_INTERNAL_TRACE("u_check_for_suffix_exe(%s)", program)
 
    if (u_endsWith(program, len, U_CONSTANT_TO_PARAM(".exe")) == false)
       {
-      (void) u_mem_cpy(program_w32, program, len);
-      (void) u_mem_cpy(program_w32+len, ".exe", sizeof(".exe"));
+      (void) u__memcpy(program_w32, program, len);
+      (void) u__memcpy(program_w32+len, ".exe", sizeof(".exe"));
 
       program = program_w32;
 
@@ -1807,7 +1807,7 @@ bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_
       {
       path = getenv("PATH");
 
-      if (path) path_len = u_str_len(path);
+      if (path) path_len = u__strlen(path);
       else
          {
          path     = U_PATH_DEFAULT;
@@ -1920,7 +1920,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
    /* Remove trailing slashes */
 
-   p = lpath + u_str_len(lpath) - 1;
+   p = lpath + u__strlen(lpath) - 1;
 
    if ( p > lpath &&
        *p == '/')
@@ -1951,7 +1951,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
    /* Remove trailing "/" or "/." */
 
-   len = u_str_len(lpath);
+   len = u__strlen(lpath);
 
    if (len < 2) goto end;
 
@@ -2106,7 +2106,7 @@ int u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* res
 
       if (u_pathfind(pathbuf, 0, 0, argv[1], R_OK | X_OK) == false) return -1;
 
-      U_INTERNAL_ASSERT_MINOR(u_str_len(pathbuf), pathbuf_size)
+      U_INTERNAL_ASSERT_MINOR(u__strlen(pathbuf), pathbuf_size)
       }
 
    return result;
@@ -2224,7 +2224,7 @@ static void u_ftw_call(char* restrict d_name, uint32_t d_namlen, unsigned char d
        d_type != DT_LNK &&
        d_type != DT_UNKNOWN) return;
 
-   (void) u_mem_cpy(u_buffer + u_buffer_len, d_name, d_namlen);
+   (void) u__memcpy(u_buffer + u_buffer_len, d_name, d_namlen);
 
    u_buffer_len += d_namlen;
 
@@ -2292,7 +2292,7 @@ static void u_ftw_readdir(DIR* restrict dirp)
             ds->d_ino  = dp->d_ino;
             ds->d_type = U_DT_TYPE;
 
-            (void) u_mem_cpy(u_dir.free + (ds->d_name = u_dir.pfree), dp->d_name, (ds->d_namlen = d_namlen));
+            (void) u__memcpy(u_dir.free + (ds->d_name = u_dir.pfree), dp->d_name, (ds->d_namlen = d_namlen));
 
             u_dir.pfree += d_namlen;
             u_dir.nfree -= d_namlen;
@@ -2331,7 +2331,7 @@ void u_ftw(void)
 
    U_INTERNAL_TRACE("u_ftw()")
 
-   U_INTERNAL_ASSERT_EQUALS(u_str_len(u_buffer), u_buffer_len)
+   U_INTERNAL_ASSERT_EQUALS(u__strlen(u_buffer), u_buffer_len)
 
    /*
     * NB: if is present the char 'filetype' this item isn't a directory and we don't need to try opendir()...
@@ -2377,11 +2377,11 @@ int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict passwor
 {
    U_INTERNAL_TRACE("u_passwd_cb(%p,%d,%d,%p)", buf, size, rwflag, password)
 
-   (void) u_mem_cpy(buf, (char* restrict)password, size);
+   (void) u__memcpy(buf, (char* restrict)password, size);
 
    buf[size-1] = '\0';
 
-   size = u_str_len(buf);
+   size = u__strlen(buf);
 
    U_INTERNAL_PRINT("buf(%d) = %.*s", size, U_min(size,128), buf)
 

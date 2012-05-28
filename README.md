@@ -1,8 +1,7 @@
 ULib - C++ library
 ==================
 
-ULib is a highly optimized class framework for writing C++ applications. I wrote this framework as my tool for writing applications in various contexts. It is a result of many years of work as C++ programmer. I think, in my opinion, that its strongest points are simplicity, efficiency and sophisticate debugging. This framework offers a class foundation that disables language features that consume memory or introduce runtime overhead, such as rtti and exception handling, and assumes one will mostly be linking applications with other pure C based libraries rather than using the overhead of the standard C++ library and other similar class frameworks. It include as application example a powerful search engine with relative web interface and a multi purpose server (plugin oriented) which results, out of [John Fremlin accurate investigations](http://john.freml.in/ulib-fast-io-framework), to be one of the faster web application frameworks for serving small dynamic webpages (and also make easier the usage of shell scripts for CGI application)
-
+ULib is a highly optimized class framework for writing C++ applications. I wrote this framework as my tool for writing applications in various contexts. It is a result of many years of work as C++ programmer. I think, in my opinion, that its strongest points are simplicity, efficiency and sophisticate debugging. This framework offers a class foundation that disables language features that consume memory or introduce runtime overhead, such as rtti and exception handling, and assumes one will mostly be linking applications with other pure C based libraries rather than using the overhead of the standard C++ library and other similar class frameworks. It include as application example a powerful search engine with relative [web interface](https://github.com/stefanocasazza/ULib/blob/master/examples/IR/ir_web.usp) and a multi purpose server (plugin oriented) which results, out of [John Fremlin accurate investigations](http://john.freml.in/ulib-fast-io-framework), to be one of the fastest web application frameworks for serving small dynamic webpages (and also make easier the usage of shell scripts for CGI application)
 
 
 Quickstart
@@ -55,8 +54,8 @@ The current version offers the following features :
    * Support for aliases/redirection.
    * Support for switch the site to a maintenance page only.
    * Support for overriden of error messages by local document (ErrorDocument/40x|500.html).
-   * Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache,
-     some CMS (SilverStripe) require it.
+   * Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache, some CMS (SilverStripe) require it.
+   * Support for (apache-like) log [NCSA extended/combined format](http://httpd.apache.org/docs/2.0/mod/mod_log_config.html)
    * Support for [JSONRequest](http://json.org/JSONRequest.html).
    * Accept HTTP uploads up to 4 GB without increasing memory usage.
    * Support for upload progress via USP (ULib Servlet Page).
@@ -90,7 +89,8 @@ The current version offers the following features :
        * [Algorithmic Complexity Attacks](http://lwn.net/Articles/474365/) prevention by randomizing hash seed.
        * [DNS rebinding](http://en.wikipedia.org/wiki/DNS_rebinding) prevention by RFC1918 filtering and Host header validation.
        * support for [HTTP Strict Transport Security](https://developer.mozilla.org/en/Security/HTTP_Strict_Transport_Security).
-
+   * Immune to [Slow Read DoS attack](http://code.google.com/p/slowhttptest/)
+   * [High SSL server quality score](https://www.ssllabs.com/ssltest/analyze.html?d=wifi-aaa.comune.fi.it)
 
 Benchmarking
 ------------

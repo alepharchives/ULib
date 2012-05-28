@@ -374,7 +374,7 @@ public:
                               U_STRING_TO_TRACE(tmp));
          }
 
-      buffer.snprintf("%.*s.cpp", u_str_len(filename) - 4, filename);
+      buffer.snprintf("%.*s.cpp", u__strlen(filename) - 4, filename);
 
       UString result(300U + sizeof(USP_TEMPLATE) + declaration.size() + http_header.size() + output.size() + output1.size() + xoutput.size());
 

@@ -1,25 +1,23 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="it" lang="it">
 <head>
-  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Cache Control" content="max-age=0">
   <!--#set cgi=$VIRTUAL_HOST/cgi-bin/main.bash -->
   <!--#if expr=$MOBILE -->
-   <meta charset="UTF-8" />
-   <meta http-equiv="x-ua-compatible" content="ie=edge" />
-   <meta name="viewport" content="width=device-width; initial-scale=1; minimum-scale=1; maximum-scale=1" />
+    <meta charset="UTF-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width; initial-scale=1; minimum-scale=1; maximum-scale=1" />
+    <link rel="stylesheet" href="css/masterv2.css" />
+    <noscript>
+    <link rel="stylesheet" href="css/mobilev3.css" />
+    </noscript>
+    <script src="js/mobile.js"></script>
+    <script src="js/wimove.js"></script>
+    <script>
 <!--
-   <link rel="stylesheet" href="css/masterv1.css" />
--->
-   <link rel="stylesheet" href="css/masterprv.css" />
-   <noscript>
-   <link rel="stylesheet" href="css/mobilev1.css" />
-   </noscript>
-   <script src="js/mobile.js"></script>
-   <script>
-<!--
-   loadCss("css/fullv1.css","css/mobilev1.css");
+    loadCss("css/fullv2.css","css/mobilev3.css");
 //-->
-   </script>
+    </script>
   <!--#endif -->
   <title><!--#echo var=$TITLE_TXT --></title>
   <!--#include direct=$FILE_HEAD_HTML -->
@@ -27,7 +25,7 @@
 <body <!--#echo var=$BODY_STYLE -->>
   <!--#include direct=$FILE_BODY_SHTML -->
   <!--#if expr="! $MOBILE" -->
-  <hr><address>ULib Server</address>
+    <hr><address>ULib Server</address>
   <!--#endif -->
 </body>
 </html>

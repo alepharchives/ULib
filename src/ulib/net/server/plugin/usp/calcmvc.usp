@@ -1,38 +1,38 @@
 <!--#declaration
 class calcBean {
-	double arg1;
-	double arg2;
-	double result;
-	char op;
-	bool resultOk;
+   double arg1;
+   double arg2;
+   double result;
+   char op;
+   bool resultOk;
 
 public:
-	calcBean() : arg1(0), arg2(0), op('+'), resultOk(false) { }
+   calcBean() : arg1(0), arg2(0), op('+'), resultOk(false) { }
 
-	double getArg1() const    { return arg1; }
-	double getArg2() const    { return arg2; }
-	char   getOp() const      { return op; }
-	bool   isResultOk() const { return resultOk; }
-	double getResult() const  { return result; }
+   double getArg1() const    { return arg1; }
+   double getArg2() const    { return arg2; }
+   char   getOp() const      { return op; }
+   bool   isResultOk() const { return resultOk; }
+   double getResult() const  { return result; }
 
-	void set(double arg1_, double arg2_, char op_)
-		{
-		op	  = op_;
-		arg1 = arg1_;
-		arg2 = arg2_;
+   void set(double arg1_, double arg2_, char op_)
+      {
+      op   = op_;
+      arg1 = arg1_;
+      arg2 = arg2_;
 
-		resultOk = true;
+      resultOk = true;
 
-		switch (op)
-			{
-			case '+': result = arg1 + arg2; break;
-			case '-': result = arg1 - arg2; break;
-			case '*': result = arg1 * arg2; break;
-			case '/': result = arg1 / arg2; break;
+      switch (op)
+         {
+         case '+': result = arg1 + arg2; break;
+         case '-': result = arg1 - arg2; break;
+         case '*': result = arg1 * arg2; break;
+         case '/': result = arg1 / arg2; break;
 
-			default:  resultOk = false;
-			}
-		}
+         default:  resultOk = false;
+         }
+      }
 };
 -->
 <!--#args
@@ -63,9 +63,9 @@ calc.set(arg1.strtod(), arg2.strtod(), opval.first_char());
 
 <!--#code
 if (calc.isResultOk())
-	{
-	USP_PRINTF("<hr>\n%.*s %.*s %.*s = %g", U_STRING_TO_TRACE(arg1), U_STRING_TO_TRACE(opval), U_STRING_TO_TRACE(arg2), calc.getResult());
-	}
+   {
+   USP_PRINTF("<hr>\n%.*s %.*s %.*s = %g", U_STRING_TO_TRACE(arg1), U_STRING_TO_TRACE(opval), U_STRING_TO_TRACE(arg2), calc.getResult());
+   }
 -->
 
  </body>

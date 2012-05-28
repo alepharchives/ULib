@@ -35,12 +35,7 @@ UTimeStamp::UTimeStamp(UString& request, const UString& TSA) : UPKCS7(0,0)
 {
    U_TRACE_REGISTER_OBJECT(0, UTimeStamp, "%.*S,%.*S", U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(TSA))
 
-   SSL_METHOD* method = USSLSocket::method;
-   USSLSocket::method = (SSL_METHOD*) SSLv3_client_method();
-
    UHttpClient<USSLSocket> client(0);
-
-   USSLSocket::method = method;
 
    response = (client.sendPost(TSA, request, "application/timestamp-query")
                      ? readTimeStampResponse(client.getContent())
@@ -144,7 +139,7 @@ UString UTimeStamp::createQuery(int alg, const UString& content, const char* pol
          nonce->data = buffer;
          }
 
-      nonce->length = u_sn_printf((char*)nonce->data, 8, "%ld", u_now->tv_sec);
+      nonce->length = u__snprintf((char*)nonce->data, 8, "%ld", u_now->tv_sec);
 
       (void) U_SYSCALL(TS_REQ_set_nonce, "%p,%p", ts_req, nonce);
       }

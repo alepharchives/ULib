@@ -27,7 +27,7 @@ public:
       {
       U_TRACE(5, "Application::parse(%p)", name)
 
-      UPosting::filename->assign((UStringRep*)name);
+      UPosting::filename->_assign((UStringRep*)name);
 
       IR::parse();
       }

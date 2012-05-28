@@ -73,6 +73,7 @@ endif
 dist-hook:
 	find $(distdir) -type f -name \*.h   -exec /utility/expand_tab '{}' ';'
 	find $(distdir) -type f -name \*.cpp -exec /utility/expand_tab '{}' ';'
+	find $(distdir) -type f -name \*.usp -exec /utility/expand_tab '{}' ';'
 
 clean-local:
 	-rm -rf core

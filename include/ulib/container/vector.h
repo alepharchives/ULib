@@ -954,7 +954,7 @@ public:
 
       if (UVector<UStringRep*>::get(rep))
          {
-         str.set(rep);
+         str._set(rep);
 
          U_RETURN(true);
          }

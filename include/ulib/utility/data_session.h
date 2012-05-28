@@ -23,7 +23,6 @@
 #endif
 
 class UHTTP;
-class UHTTPSession;
 
 class U_EXPORT UDataSession {
 public:
@@ -60,7 +59,7 @@ public:
    UString   toString();
    void    fromString(const UString& data);
 
-   bool getValue(uint32_t index, UString& value);
+   bool getValue(uint32_t index,       UString& value);
    void putValue(uint32_t index, const UString& value);
 
    // method VIRTUAL to define
@@ -90,7 +89,6 @@ private:
    UDataSession& operator=(const UDataSession&) { return *this; }
 
    friend class UHTTP;
-   friend class UHTTPSession;
 };
 
 #endif

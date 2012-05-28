@@ -16,12 +16,12 @@ static struct iovec iov[] = { { 0, 0 }, { (caddr_t)"\n", 1 } };
 
 static char ubuffer[4096];
 
-#  define   printf(fmt,args...)               write(STDOUT_FILENO,ubuffer,u_sn_printf(ubuffer,sizeof(ubuffer),fmt,args))
-#  define  sprintf(buf,fmt,args...)           u_sn_printf(buf,sizeof(buf),fmt,args)
+#  define   printf(fmt,args...)               write(STDOUT_FILENO,ubuffer,u__snprintf(ubuffer,sizeof(ubuffer),fmt,args))
+#  define  sprintf(buf,fmt,args...)           u__snprintf(buf,sizeof(buf),fmt,args)
 #  ifdef __MINGW32__
-#     define _snprintf(buf,szbuf,fmt,args...) u_sn_printf(buf,szbuf,fmt,args)
+#     define _snprintf(buf,szbuf,fmt,args...) u__snprintf(buf,szbuf,fmt,args)
 #  else
-#     define  snprintf(buf,szbuf,fmt,args...) u_sn_printf(buf,szbuf,fmt,args)
+#     define  snprintf(buf,szbuf,fmt,args...) u__snprintf(buf,szbuf,fmt,args)
 #  endif
 #else
 #  include <stdio.h>

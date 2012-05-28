@@ -52,17 +52,13 @@ bool USocketExt::read(USocket* s, UString& buffer, int count, int timeoutMS, uin
    int byte_read = 0;
    bool result = true;
    uint32_t start  = buffer.size(), // NB: buffer read can start with prev data...
-#ifdef DEBUG
-            ncount = (buffer.isNull() ? 0 : buffer.space()),
-#else
             ncount = buffer.space(),
-#endif
             chunk  = U_max(count,(int)U_CAPACITY);
 
    if (ncount < chunk &&
        buffer.reserve(chunk))
       {
-      ncount = buffer.space();
+      ncount = buffer.rep->space();
       }
 
    char* ptr = buffer.c_pointer(start);
@@ -105,7 +101,7 @@ read:
 
       if (time_limit)
          {
-         u_gettimeofday();
+         if (u_pthread_time == 0) (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
          if (timeout == 0) timeout = u_now->tv_sec + time_limit;
 
@@ -161,7 +157,7 @@ read:
 
       timeoutMS = 500; // wait max for half second...
 
-      ncount = buffer.space();
+      ncount = buffer.rep->space();
 
       goto read;
       }
@@ -344,7 +340,7 @@ int USocketExt::vsyncCommandToken(USocket* s, UString& buffer, const char* forma
    static uint32_t cmd_count;
 
    char token[32];
-   uint32_t token_len = u_sn_printf(token, sizeof(token), "U%04u ", cmd_count++);
+   uint32_t token_len = u__snprintf(token, sizeof(token), "U%04u ", cmd_count++);
 
    U_INTERNAL_DUMP("token = %.*S", token_len, token)
 
@@ -607,9 +603,9 @@ UString USocketExt::getNetworkInterfaceName(const UString& ip)
 
    if (U_SYSCALL(fscanf, "%p,%S", arp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s") != EOF)
       {
-      char _ip[16], dev[7];
+      char _ip[16], dev[16];
 
-      while (U_SYSCALL(fscanf, "%p,%S", arp, "%15s %*s %*s %*s %*s %6s\n", _ip, dev) != EOF)
+      while (U_SYSCALL(fscanf, "%p,%S", arp, "%15s %*s %*s %*s %*s %15s\n", _ip, dev) != EOF)
          {
          if (ip == _ip)
             {
@@ -635,7 +631,7 @@ UString USocketExt::getMacAddress(int fd, const char* device_or_ip)
    UString result(100U);
 
 #if !defined(__MINGW32__) && defined(HAVE_SYS_IOCTL_H)
-   if (u_isIPv4Addr(device_or_ip, u_str_len(device_or_ip)))
+   if (u_isIPv4Addr(device_or_ip, u__strlen(device_or_ip)))
       {
       FILE* arp = (FILE*) U_SYSCALL(fopen, "%S,%S", "/proc/net/arp", "r");
 
@@ -712,7 +708,7 @@ UString USocketExt::getIPAddress(int fd, const char* device)
 
    uusockaddr addr;
 
-   (void) u_mem_cpy(&addr, &ifr.ifr_addr, sizeof(struct sockaddr));
+   (void) u__memcpy(&addr, &ifr.ifr_addr, sizeof(struct sockaddr));
 
    U_INTERNAL_ASSERT_EQUALS(addr.psaIP4Addr.sin_family, AF_INET)
 

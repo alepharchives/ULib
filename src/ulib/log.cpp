@@ -205,8 +205,8 @@ void ULog::write(const struct iovec* iov, int n)
             LOG_ptr = LOG_page = pthis->UFile::map;
             }
 
-         (void) u_mem_cpy(LOG_ptr, iov[i].iov_base, iov[i].iov_len);
-                         LOG_ptr +=                iov[i].iov_len;
+         (void) u__memcpy(LOG_ptr, iov[i].iov_base, iov[i].iov_len);
+                          LOG_ptr +=                iov[i].iov_len;
 
          U_INTERNAL_DUMP("memcpy() -> %.*S", iov[i].iov_len, LOG_ptr - iov[i].iov_len)
          }
@@ -243,7 +243,7 @@ void ULog::log(const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-   if (prefix) iov[0].iov_len  = u_sn_printf(buffer,                  sizeof(buffer),                  prefix, 0);
+   if (prefix) iov[0].iov_len  = u__snprintf(buffer,                  sizeof(buffer),                  prefix, 0);
                iov[0].iov_len += u_vsnprintf(buffer + iov[0].iov_len, sizeof(buffer) - iov[0].iov_len, format, argp); 
 
    va_end(argp);
@@ -297,22 +297,6 @@ void ULog::close()
       }
 }
 
-void ULog::reopen()
-{
-   U_TRACE(1, "ULog::reopen()")
-
-   U_INTERNAL_DUMP("pthis = %p", pthis)
-
-   if (pthis            &&
-       bsyslog == false &&
-       file_limit == 0)
-      {
-      pthis->UFile::close();
-
-      (void) pthis->UFile::creat(O_CREAT | O_RDWR | O_APPEND, 0664);
-      }
-}
-
 #ifdef USE_LIBZ
 void ULog::backup()
 {
@@ -336,22 +320,24 @@ void ULog::backup()
       lock->lock();
       }
 
-   len_suffix = u_sn_printf(suffix, sizeof(suffix), ".%6D.gz");
+   len_suffix = u__snprintf(suffix, sizeof(suffix), ".%6D.gz");
 
    if (dir_log_gz)
       {
-      uint32_t len = u_str_len(dir_log_gz);
+      UString name = pthis->UFile::getName();
+      uint32_t len = u__strlen(dir_log_gz), sz = name.size();
 
-      (void) U_SYSCALL(u_mem_cpy, "%p,%p,%u", path, dir_log_gz, len);
+      (void) U_SYSCALL(u__memcpy, "%p,%p,%u", path, dir_log_gz, len);
 
        path  += len;
       *path++ = '/';
 
-      len += 1 + len_suffix;
+      len += 1 + sz + len_suffix;
 
       U_INTERNAL_ASSERT_MINOR(len, (int32_t)MAX_FILENAME_LEN)
 
-      (void) U_SYSCALL(u_mem_cpy, "%p,%p,%u", path, suffix, len_suffix);
+      (void) U_SYSCALL(u__memcpy, "%p,%p,%u", path, name.data(), sz);
+      (void) U_SYSCALL(u__memcpy, "%p,%p,%u", path+sz,   suffix, len_suffix);
 
       buffer_path[len] = '\0';
 
@@ -421,12 +407,12 @@ const char* ULog::dump(bool _reset) const
 
    char buffer[1024];
 
-   if (fmt) UObjectIO::os->write(buffer, u_sn_printf(buffer, 1024, "%.*s", u_str_len(fmt), fmt));
+   if (fmt) UObjectIO::os->write(buffer, u__snprintf(buffer, 1024, "%.*s", u__strlen(fmt), fmt));
 
    *UObjectIO::os << "\"\n"
                   << "prefix                    ";
 
-   if (prefix) UObjectIO::os->write(buffer, u_sn_printf(buffer, 1024, "%.*S", u_str_len(prefix), prefix));
+   if (prefix) UObjectIO::os->write(buffer, u__snprintf(buffer, 1024, "%.*S", u__strlen(prefix), prefix));
 
    *UObjectIO::os << '\n'
                   << "bsyslog                   " << bsyslog                    << '\n'

@@ -197,20 +197,6 @@ void u_setPid(void)
    u_pid_str_len = buffer + sizeof(buffer) - u_pid_str;
 }
 
-void u_init_ulib_seed_hash(void)
-{
-   U_INTERNAL_TRACE("u_init_ulib_seed_hash()")
-
-   /* The "hash seed" is a feature to perturb the results to avoid "algorithmic complexity attacks"
-    *
-    * http://lwn.net/Articles/474365/
-    */
-
-   u_gettimeofday();
-
-   u_seed_hash = u_random(u_now->tv_usec);
-}
-
 void u_init_ulib_username(void)
 {
    struct passwd* restrict pw;
@@ -219,10 +205,10 @@ void u_init_ulib_username(void)
 
    pw = getpwuid(getuid());
 
-   if (pw) u_user_name_len = u_str_len(pw->pw_name);
+   if (pw) u_user_name_len = u__strlen(pw->pw_name);
 
-   if (u_user_name_len) (void) u_mem_cpy(u_user_name, pw->pw_name,  u_user_name_len);
-   else                 (void) u_mem_cpy(u_user_name,      "root", (u_user_name_len = 4));
+   if (u_user_name_len) (void) u__memcpy(u_user_name, pw->pw_name,  u_user_name_len);
+   else                 (void) u__memcpy(u_user_name,      "root", (u_user_name_len = 4));
 }
 
 void u_init_ulib_hostname(void)
@@ -255,7 +241,7 @@ void u_init_ulib_hostname(void)
          }
       }
 
-   u_hostname_len = u_str_len(u_hostname);
+   u_hostname_len = u__strlen(u_hostname);
 
    if (u_hostname_len == 0) (void) strncpy(u_hostname, "localhost", (u_hostname_len = 9));
 }
@@ -270,7 +256,7 @@ void u_getcwd(void) /* get current working directory */
    (void) u_strcpy(u_cwd, u_slashify(u_cwd, PATH_SEPARATOR, '/'));
 #endif
 
-   u_cwd_len = u_str_len(u_cwd);
+   u_cwd_len = u__strlen(u_cwd);
 
    U_INTERNAL_ASSERT_MAJOR(u_cwd_len,0)
    U_INTERNAL_ASSERT_MINOR(u_cwd_len,U_PATH_MAX)
@@ -348,7 +334,7 @@ void u_init_ulib(char** restrict argv)
 
    U_INTERNAL_ASSERT_POINTER(u_progname)
 
-   u_progname_len = u_str_len(u_progname);
+   u_progname_len = u__strlen(u_progname);
 
 #ifdef __MINGW32__
    u_init_ulib_mingw();
@@ -373,11 +359,11 @@ void u_init_ulib(char** restrict argv)
    (void) atexit(u_exit);
 }
 
-uint32_t u_sn_printf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...)
+uint32_t u__snprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...)
 {
    uint32_t bytes_written;
 
-// U_INTERNAL_TRACE("u_sn_printf(%s)", format)
+// U_INTERNAL_TRACE("u__snprintf(%s)", format)
 
    va_list argp;
    va_start(argp, format);
@@ -467,6 +453,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
    %T The time in 24-hour notation (%H:%M:%S). (SU)
    %y The last two digits of the year
    %Y The full year, formatted with four digits to include the century
+   %z The +hhmm or -hhmm numeric timezone (that is, the hour and minute offset from UTC)
    %Z Defined by ANSI C as eliciting the time zone if available
    %% A single character, %
    */
@@ -748,10 +735,22 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
             }
          break;
 
+         case 'z': /* %z The +hhmm or -hhmm numeric timezone (that is, the hour and minute offset from UTC) */
+            {
+            U_INTERNAL_ASSERT_MINOR(count,maxsize-5)
+
+         // if (count >= (maxsize - 5)) return 0;
+
+            (void) sprintf(&s[count], "%+.2ld%.2lu", (u_now_adjust / 3600), (u_now_adjust % 3600));
+
+            count += 5;
+            }
+         break;
+
          case 'Z': /* %Z Defined by ANSI C as eliciting the time zone if available */
             {
             i = (daylight != 0);
-            n = u_str_len(tzname[i]);
+            n = u__strlen(tzname[i]);
 
             U_INTERNAL_ASSERT_MINOR(count,maxsize-n)
 
@@ -849,6 +848,7 @@ with flag '4' => format: %d/%m/%y %T
 with flag '5' => format: %d/%m/%Y %T
 with flag '6' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
 with flag '7' => format: %a, %d %b %Y %H:%M:%S %Z (LOCAL: use u_now + u_now_adjust)
+with flag '8' => format: %d/%b/%Y:%H:%M:%S %z
          default format: %a, %d %b %Y %H:%M:%S GMT (HTTP header) (use u_now)
 ----------------------------------------------------------------------------
 */
@@ -1124,7 +1124,9 @@ minus:
 
          case 's':
             {
-            int32_t remaining;
+#        ifdef DEBUG
+            int32_t remaining = (buffer_size - ret);
+#        endif
 
             cp = VA_ARG(char*);
 
@@ -1133,9 +1135,7 @@ minus:
             U_INTERNAL_ASSERT_POINTER_MSG(cp, "CHECK THE PARAMETERS OF printf()...")
 
             sign = '\0';
-            size = (prec >= 0 ? prec : (int) u_str_len(cp));
-
-            remaining = (buffer_size - ret);
+            size = (prec >= 0 ? prec : (int) u__strlen(cp));
 
             U_INTERNAL_ASSERT_MINOR_MSG(size, remaining, "WE ARE GOING TO BUFFER OVERFLOW - CHECK THE PARAMETERS OF printf()...")
 
@@ -1376,7 +1376,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                (void) sprintf(bp, (const char* restrict)fmt_float, width, prec, dbl);
                }
 
-            len = u_str_len(bp);
+            len = u__strlen(bp);
 
             bp  += len;
             ret += len;
@@ -1421,7 +1421,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                len = sizeof(U_RESET_STR) - (n == RESET);
 
-               (void) u_mem_cpy(bp, tab_color[n], len);
+               (void) u__memcpy(bp, tab_color[n], len);
 
                bp  += len;
                ret += len;
@@ -1435,7 +1435,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             U_INTERNAL_ASSERT_MAJOR(u_hostname_len,0)
 
-            (void) u_mem_cpy(bp, u_hostname, u_hostname_len);
+            (void) u__memcpy(bp, u_hostname, u_hostname_len);
 
             bp  += u_hostname_len;
             ret += u_hostname_len;
@@ -1447,7 +1447,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             U_INTERNAL_ASSERT_MAJOR(u_cwd_len,0)
 
-            (void) u_mem_cpy(bp, u_cwd, u_cwd_len);
+            (void) u__memcpy(bp, u_cwd, u_cwd_len);
 
             bp  += u_cwd_len;
             ret += u_cwd_len;
@@ -1457,7 +1457,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'N': /* print program name */
             {
-            (void) u_mem_cpy(bp, u_progname, u_progname_len);
+            (void) u__memcpy(bp, u_progname, u_progname_len);
 
             bp  += u_progname_len;
             ret += u_progname_len;
@@ -1467,7 +1467,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'P': /* print process pid */
             {
-            (void) u_mem_cpy(bp, u_pid_str, u_pid_str_len);
+            (void) u__memcpy(bp, u_pid_str, u_pid_str_len);
 
             bp  += u_pid_str_len;
             ret += u_pid_str_len;
@@ -1491,9 +1491,9 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             if (ccp)
                {
-               len = u_str_len(ccp);
+               len = u__strlen(ccp);
 
-               (void) u_mem_cpy(bp, ccp, len);
+               (void) u__memcpy(bp, ccp, len);
 
                bp  += len;
                ret += len;
@@ -1513,7 +1513,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                ccp = getSysError_w32(&len);
 
-               (void) u_mem_cpy(bp, ccp, len);
+               (void) u__memcpy(bp, ccp, len);
 
                bp  += len;
                ret += len;
@@ -1529,7 +1529,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             ccp = u_getSysError(&len);
 
-            (void) u_mem_cpy(bp, ccp, len);
+            (void) u__memcpy(bp, ccp, len);
 
             bp  += len;
             ret += len;
@@ -1541,7 +1541,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             U_INTERNAL_ASSERT_MAJOR(u_user_name_len,0)
 
-            (void) u_mem_cpy(bp, u_user_name, u_user_name_len);
+            (void) u__memcpy(bp, u_user_name, u_user_name_len);
 
             bp  += u_user_name_len;
             ret += u_user_name_len;
@@ -1556,7 +1556,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             n   = VA_ARG(int);
             str = u_getSysSignal(n, &len);
 
-            (void) u_mem_cpy(bp, str, len);
+            (void) u__memcpy(bp, str, len);
 
             bp  += len;
             ret += len;
@@ -1571,7 +1571,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             n   = VA_ARG(int);
             str = u_getExitStatus(n, &len);
 
-            (void) u_mem_cpy(bp, str, len);
+            (void) u__memcpy(bp, str, len);
 
             bp  += len;
             ret += len;
@@ -1605,6 +1605,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             with flag '5' => format: %d/%m/%Y %T
             with flag '6' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
             with flag '7' => format: %a, %d %b %Y %H:%M:%S %Z (LOCAL: use u_now + u_now_adjust)
+            with flag '8' => format: %d/%b/%Y:%H:%M:%S %z
                      default format: %a, %d %b %Y %H:%M:%S GMT (HTTP header) (use u_now)
             */
 
@@ -1615,7 +1616,8 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                        width == 4 ? "%d/%m/%y %H:%M:%S"         :
                        width == 5 ? "%d/%m/%Y %H:%M:%S"         :
                        width == 6 ? "%d%m%y_%H%M%S"             :
-                                    "%a, %d %b %Y %H:%M:%S %Z");
+                       width == 7 ? "%a, %d %b %Y %H:%M:%S %Z"  :
+                                    "%d/%b/%Y:%H:%M:%S %z");
 
             len = u_strftime(bp, 36, fmtdate, t);
 
@@ -1632,7 +1634,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                   len = strlen(tmp);
 
-                  (void) u_mem_cpy(bp, tmp, len);
+                  (void) u__memcpy(bp, tmp, len);
 
                   bp  += len;
                   ret += len;
@@ -1646,9 +1648,9 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                (void) sprintf(tmp, "_%03lu", u_now->tv_usec / 1000L);
 
-               len = u_str_len(tmp);
+               len = u__strlen(tmp);
 
-               (void) u_mem_cpy(bp, tmp, len);
+               (void) u__memcpy(bp, tmp, len);
 
                bp  += len;
                ret += len;
@@ -2066,7 +2068,7 @@ static bool u_askForContinue(void)
       {
       char ch[2];
 
-      // NB: we use U_MESSAGE here, but we are already inside u_printf()...
+      // NB: we use U_MESSAGE here, but we are already inside u__printf()...
 
       int u_flag_exit_save = u_flag_exit;
                              u_flag_exit = 0;
@@ -2089,12 +2091,12 @@ static bool u_askForContinue(void)
 }
 #endif
 
-void u_printf(const char* format, ...)
+void u__printf(const char* format, ...)
 {
    char buffer[4096];
    uint32_t bytes_written;
 
-// U_INTERNAL_TRACE("u_printf(%s)", format)
+// U_INTERNAL_TRACE("u__printf(%s)", format)
 
    va_list argp;
    va_start(argp, format);

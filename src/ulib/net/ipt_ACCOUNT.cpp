@@ -134,7 +134,7 @@ bool UIptAccount::readEntries(const char* table, bool dont_flush)
 
    // Copy data from kernel
 
-   (void) u_mem_cpy(data, handle, sizeof(struct ipt_acc_handle_sockopt));
+   (void) u__memcpy(data, handle, sizeof(struct ipt_acc_handle_sockopt));
 
    if (USocket::getSockOpt(IPPROTO_IP, IPT_SO_GET_ACCOUNT_GET_DATA, data, data_size) == false)
       {
@@ -234,7 +234,7 @@ const char* UIptAccount::getNextName()
 
    rtn = (const char*)data + pos;
 
-   pos += u_str_len((char*)data + pos) + 1;
+   pos += u__strlen((char*)data + pos) + 1;
 #endif
 
    U_RETURN(rtn);

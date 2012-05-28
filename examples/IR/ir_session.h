@@ -67,7 +67,7 @@ public:
       QUERY    =                       (*(IRDataSession*)&data_session).QUERY;
       FOR_PAGE =                       (*(IRDataSession*)&data_session).FOR_PAGE;
 
-      (void) u_mem_cpy(timebuf, (*(IRDataSession*)&data_session).timebuf, sizeof(timebuf));
+      (void) u__memcpy(timebuf, (*(IRDataSession*)&data_session).timebuf, sizeof(timebuf));
       }
 
    virtual UDataSession* toDataSession()
@@ -82,7 +82,7 @@ public:
       (*(IRDataSession*)ptr).QUERY    = QUERY;
       (*(IRDataSession*)ptr).FOR_PAGE = FOR_PAGE;
 
-      (void) u_mem_cpy((*(IRDataSession*)ptr).timebuf, timebuf, sizeof(timebuf));
+      (void) u__memcpy((*(IRDataSession*)ptr).timebuf, timebuf, sizeof(timebuf));
 
       U_RETURN_POINTER(ptr,UDataSession);
       }
@@ -155,7 +155,7 @@ public:
 
       char buffer[20];
 
-      UObjectIO::os->write(buffer, u_sn_printf(buffer, sizeof(buffer), "%S", timebuf));
+      UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%S", timebuf));
 
       *UObjectIO::os << '\n'
                      << "FOR_PAGE                    " << FOR_PAGE      << '\n'

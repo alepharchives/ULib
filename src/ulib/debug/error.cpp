@@ -39,7 +39,7 @@ void UError::stackDump()
    int size                    = backtrace(array, 256);
    char** __restrict__ strings = backtrace_symbols(array, size);
 
-   (void) u_sn_printf(name, sizeof(name), "stack.%N.%P", 0);
+   (void) u__snprintf(name, sizeof(name), "stack.%N.%P", 0);
 
    int fd = open(name, O_CREAT | O_WRONLY | O_APPEND | O_BINARY, 0666);
 
@@ -63,7 +63,7 @@ void UError::stackDump()
     * ------------------------
     * UError::stackDump()
     * u_debug_at_exit()
-    * u_printf()
+    * u__printf()
     * ------------------------
     */
 

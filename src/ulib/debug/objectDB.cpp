@@ -310,7 +310,7 @@ void UObjectDB::init(bool flag, bool info)
 
       if (file_size) U_NUMBER_SUFFIX(file_size, suffix);
 
-      (void) u_sn_printf(name, 128, "object.%N.%P", 0);
+      (void) u__snprintf(name, 128, "object.%N.%P", 0);
 
       // NB: O_RDWR e' necessario per mmap(MAP_SHARED)...
 
@@ -381,7 +381,7 @@ U_NO_EXPORT void UObjectDB::_write(const struct iovec* iov, int _n)
 
          if ((file_ptr + iov[i].iov_len) > file_limit) file_ptr = file_mem;
 
-         (void) u_mem_cpy(file_ptr, iov[i].iov_base, iov[i].iov_len);
+         (void) u__memcpy(file_ptr, iov[i].iov_base, iov[i].iov_len);
 
          file_ptr += iov[i].iov_len;
          }
@@ -463,7 +463,7 @@ void UObjectDB::dumpObject(const UObjectDumpable* dumper)
 
    U_INTERNAL_ASSERT(dumper->level >= level_active)
 
-   liov[0].iov_len  =  u_str_len(dumper->name_class);
+   liov[0].iov_len  =  u__strlen(dumper->name_class);
    liov[0].iov_base = (caddr_t) dumper->name_class;
 
    (void) sprintf(buffer1, " %p size %d level %d", // cnt %09d",
@@ -471,14 +471,14 @@ void UObjectDB::dumpObject(const UObjectDumpable* dumper)
 
    (void) sprintf(buffer2, "\n%s(%d)\n", dumper->name_file, dumper->num_line);
 
-   liov[1].iov_len = u_str_len(buffer1);
-   liov[2].iov_len = u_str_len(buffer2);
+   liov[1].iov_len = u__strlen(buffer1);
+   liov[2].iov_len = u__strlen(buffer2);
 
-   liov[3].iov_len  = u_str_len(dumper->name_function);
+   liov[3].iov_len  = u__strlen(dumper->name_function);
    liov[3].iov_base = (caddr_t) dumper->name_function;
 
    liov[5].iov_base = (caddr_t) dumper->dump();
-   liov[5].iov_len  = u_str_len((const char*)liov[5].iov_base);
+   liov[5].iov_len  = u__strlen((const char*)liov[5].iov_base);
 }
 
 // dump single object...
@@ -496,7 +496,7 @@ U_NO_EXPORT bool UObjectDB::printObjLive(const UObjectDumpable* dumper)
          {
          if ((lbuf + liov[i].iov_len) > lend) return false;
 
-         (void) u_mem_cpy(lbuf, liov[i].iov_base, liov[i].iov_len);
+         (void) u__memcpy(lbuf, liov[i].iov_base, liov[i].iov_len);
 
          lbuf += liov[i].iov_len;
          }

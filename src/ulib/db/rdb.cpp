@@ -478,7 +478,7 @@ U_NO_EXPORT void URDB::print1(uint32_t offset) // entry presenti nella cache...
    if (RDB_cache_node(n,data.dptr))
       {
       char tmp[40];
-      uint32_t size = u_sn_printf(tmp, sizeof(tmp), "+%u,%u:", RDB_cache_node(n,key.dsize), RDB_cache_node(n,data.dsize));
+      uint32_t size = u__snprintf(tmp, sizeof(tmp), "+%u,%u:", RDB_cache_node(n,key.dsize), RDB_cache_node(n,data.dsize));
 
       UCDB::pbuffer->append(tmp, size);
       UCDB::pbuffer->append((const char*)((ptrdiff_t)RDB_cache_node(n,key.dptr) +
@@ -720,7 +720,7 @@ UString URDB::printSorted()
 
          if (fetch())
             {
-            _size = u_sn_printf(tmp, sizeof(tmp), "+%u,%u:", key.dsize, data.dsize);
+            _size = u__snprintf(tmp, sizeof(tmp), "+%u,%u:", key.dsize, data.dsize);
 
             buffer.append(tmp, _size);
             buffer.append((const char*) key.dptr, key.dsize);
@@ -841,7 +841,7 @@ U_NO_EXPORT bool URDB::writev(const struct iovec* _iov, int n, uint32_t _size)
 
    for (int i = 0; i < n; ++i)
       {
-      (void) u_mem_cpy(journal_ptr, _iov[i].iov_base, _iov[i].iov_len);
+      (void) u__memcpy(journal_ptr, _iov[i].iov_base, _iov[i].iov_len);
 
       // NB: Una volta scritti i dati sul journal si cambiano i riferimenti in memoria ai dati
       // e alle chiavi in modo che puntino appunto sul journal mappato in memoria...

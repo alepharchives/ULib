@@ -23,7 +23,7 @@
 #  ifdef _DIRENT_HAVE_D_NAMLEN
 #     define NAMLEN(dirent) (dirent)->d_namlen
 #  else
-#     define NAMLEN(dirent) u_str_len((dirent)->d_name)
+#     define NAMLEN(dirent) u__strlen((dirent)->d_name)
 #  endif
 #else
 #  define dirent direct
@@ -100,14 +100,15 @@ U_EXPORT void* memmem(const void* restrict haystack, size_t haystacklen, const v
 #endif
 
 #ifdef DEBUG
-U_EXPORT size_t u_str_len(const char* restrict s);
+/* NB: u_strlen() and u_memcpy conflit with /usr/include/unicode/urename.h */
+U_EXPORT size_t u__strlen(const char* restrict s);
 U_EXPORT char*  u_strcpy( char* restrict dest, const char* restrict src);
-U_EXPORT void*  u_mem_cpy(void* restrict dest, const void* restrict src, size_t n);
+U_EXPORT void*  u__memcpy(void* restrict dest, const void* restrict src, size_t n);
 U_EXPORT char*  u_strncpy(char* restrict dest, const char* restrict src, size_t n);
 #else
-#  define u_str_len(s)          strlen((s))
+#  define u__strlen(s)          strlen((s))
 #  define u_strcpy(dest,src)    strcpy( (dest),(src))
-#  define u_mem_cpy(dest,src,n) memcpy( (dest),(src),(n))
+#  define u__memcpy(dest,src,n) memcpy( (dest),(src),(n))
 #  define u_strncpy(dest,src,n) strncpy((dest),(src),(n))
 #endif
 

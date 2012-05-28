@@ -73,9 +73,10 @@ done
 #done
 
 #./sendbytes.pl
+#$NC -w 2 10.30.1.111 80 < inp/http/all4.inp >>out/web_server.out
 #$NC -w 2 10.30.1.111 80 < inp/http/all5.inp >>out/web_server.out
 #exit 0
-#send_req $2 inp/http/all5.inp 2
+#send_req $2 inp/http/all.inp 4
 #return
 
 LS=`ls inp/http/close`
@@ -93,7 +94,6 @@ done
 #send_req $2 inp/http/all3.inp 2
 #send_req $2 inp/http/all4.inp 2
 #send_req $2 inp/http/all5.inp 2
-#send_req $2 inp/http/all6.inp 2
  send_req $2 inp/http/post.inp 2
 
 # test upload

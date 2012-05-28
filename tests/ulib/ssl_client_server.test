@@ -2,6 +2,8 @@
 
 . ../.function
 
+rm -rf /tmp/ssl_session.txt
+
 ## ssl_client_server.test -- Test ssl client server feature
 
 start_msg ssl_server

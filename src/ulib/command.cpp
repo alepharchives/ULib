@@ -112,7 +112,7 @@ void UCommand::setCommand()
 
    argv_exec = U_MALLOC_VECTOR(1+ncmd+1 + U_ADD_ARGS, char); // U_ADD_ARGS -> space for addArgument()...
 
-   (void) u_mem_cpy(argv_exec, argv, (1+ncmd+1) * sizeof(char*)); // NB: copia anche null terminator...
+   (void) u__memcpy(argv_exec, argv, (1+ncmd+1) * sizeof(char*)); // NB: copia anche null terminator...
 
    U_DUMP_ATTRS(argv_exec)
 }
@@ -137,7 +137,7 @@ U_NO_EXPORT void UCommand::setEnvironment(const UString& env)
 
    envp = envp_exec = U_MALLOC_VECTOR(nenv+1, char); // NB: considera anche null terminator...
 
-   (void) u_mem_cpy(envp_exec, argp, (nenv+1) * sizeof(char*)); // NB: copia anche null terminator...
+   (void) u__memcpy(envp_exec, argp, (nenv+1) * sizeof(char*)); // NB: copia anche null terminator...
 
    U_INTERNAL_DUMP("envp = %p", envp)
 
@@ -405,19 +405,19 @@ void UCommand::setMsgError(const char* cmd)
 
    if (isStarted() == false)
       {
-      u_buffer_len = u_sn_printf(u_buffer, sizeof(u_buffer), "command %S didn't start %R",  cmd, 0); // NB: the last argument (0) is necessary...
+      u_buffer_len = u__snprintf(u_buffer, sizeof(u_buffer), "command %S didn't start %R",  cmd, 0); // NB: the last argument (0) is necessary...
       }
    else if (isTimeout())
       {
-      u_buffer_len = u_sn_printf(u_buffer, sizeof(u_buffer), "command %S excedeed time (%d secs) for execution", cmd, timeoutMS / 1000);
+      u_buffer_len = u__snprintf(u_buffer, sizeof(u_buffer), "command %S excedeed time (%d secs) for execution", cmd, timeoutMS / 1000);
       }
    else if (exit_value)
       {
-      u_buffer_len = u_sn_printf(u_buffer, sizeof(u_buffer), "command %S exit with value %d", cmd, exit_value);
+      u_buffer_len = u__snprintf(u_buffer, sizeof(u_buffer), "command %S exit with value %d", cmd, exit_value);
       }
    else
       {
-      u_buffer_len = u_sn_printf(u_buffer, sizeof(u_buffer), "command %S started", cmd);
+      u_buffer_len = u__snprintf(u_buffer, sizeof(u_buffer), "command %S started", cmd);
       }
 }
 

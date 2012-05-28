@@ -18,10 +18,12 @@
 
 #ifdef USE_LIBSSL
 #  include <ulib/ssl/net/sslsocket.h>
-#  define Socket USSLSocket
+#  define Socket        USSLSocket
+#  define SocketInit(b) USSLSocket(b,0,false)
 #else
 #  include <ulib/net/tcpsocket.h>
-#  define Socket UTCPSocket
+#  define Socket        UTCPSocket
+#  define SocketInit(b) UTCPSocket(b)
 #endif
 
 /**
@@ -98,7 +100,16 @@ public:
    Constructs a new USmtpClient with default values for all properties
    */
 
-            USmtpClient(bool bSocketIsIPv6 = false);
+   USmtpClient(bool bSocketIsIPv6 = false) : SocketInit(bSocketIsIPv6)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USmtpClient, "%b", bSocketIsIPv6)
+
+      state    = INIT;
+      response = NONE;
+
+      if (str_empty == 0) str_allocate();
+      }
+
    virtual ~USmtpClient();
 
    /**
@@ -144,8 +155,8 @@ private:
    void setStateFromResponse() U_NO_EXPORT;
    bool syncCommand(const char* format, ...) U_NO_EXPORT; // Send a command to the SMTP server and wait for a response
 
-   USmtpClient(const USmtpClient&) : Socket(false) {}
-   USmtpClient& operator=(const USmtpClient&)      { return *this; }
+   USmtpClient(const USmtpClient&) : SocketInit(false) {}
+   USmtpClient& operator=(const USmtpClient&)          { return *this; }
 };
 
 #endif

@@ -124,10 +124,6 @@ U_NO_EXPORT void UCURL::setup()
    multiHandle = U_SYSCALL_NO_PARAM(curl_multi_init);
 
    U_INTERNAL_ASSERT_POINTER(multiHandle)
-
-#ifdef USE_LIBSSL
-   ULib_init_openssl();
-#endif
 }
 
 U_NO_EXPORT size_t UCURL::writeFunction(void* ptr, size_t size, size_t nmemb, void* obj)

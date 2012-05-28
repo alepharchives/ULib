@@ -25,6 +25,17 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([$enable_LFS])
 
+	AC_MSG_CHECKING(if you want to enable HTTP Cache Request Support)
+	AC_ARG_ENABLE(HCRS,
+				[  --enable-HCRS           enable HTTP Cache Request Support [[default=yes]]])
+	if test -z "$enable_HCRS" ; then
+		enable_HCRS="yes"
+	fi
+	if test "x$enable_HCRS" != xyes; then
+      AC_DEFINE(U_HTTP_CACHE_REQUEST_DISABLE, 1, [disable HTTP Cache Request Support features])
+	fi
+	AC_MSG_RESULT([$enable_HCRS])
+
 	AC_MSG_CHECKING(if you want to enable use of precompiled headers)
 	AC_ARG_ENABLE(pch,
 				[  --enable-pch            enables precompiled header support (currently only gcc >= 3.4) [[default=no]]])

@@ -64,11 +64,9 @@ template <class T> class UClientImage;
 class U_EXPORT USSLSocket : public UTCPSocket {
 public:
 
-   static SSL_METHOD* method;
-
    // COSTRUTTORI
 
-    USSLSocket(bool bSocketIsIPv6 = false, SSL_CTX* ctx = 0, bool tls = false);
+    USSLSocket(bool bSocketIsIPv6 = false, SSL_CTX* ctx = 0, bool server = true);
    ~USSLSocket();
 
    // VARIE
@@ -82,6 +80,8 @@ public:
 
    bool secureConnection(int fd);
    bool acceptSSL(USSLSocket* pcConnection);
+
+   static long getOptions(const UVector<UString>& vec);
 
    /**
    Load Diffie-Hellman parameters from file. These are used to generate a DH key exchange.
@@ -186,9 +186,11 @@ public:
 
    uint32_t pending() const
       {
-      U_TRACE(0, "USocket::pending()")
+      U_TRACE(0, "USSLSocket::pending()")
 
       if (active == false) U_RETURN(0);
+
+      U_INTERNAL_DUMP("this = %p ssl = %p", this, ssl)
 
       U_INTERNAL_ASSERT_POINTER(ssl)
 
@@ -259,12 +261,20 @@ public:
 protected:
    SSL* ssl;
    SSL_CTX* ctx;
-   int ret;
+   int ret, renegotiations;
    bool active;
 
+   static int session_cache_index;
+
+   static void        info_callback(const SSL* ssl, int where, int ret);
    static const char* status(SSL* ssl, int ret, bool flag, char* buffer, uint32_t buffer_size);
 
           const char* status(bool flag) const { return status(ssl, ret, flag, 0, 0); }
+
+   static SSL_CTX* getClientContext() { return getContext(0, false, 0); }
+   static SSL_CTX* getServerContext() { return getContext(0, true,  0); }
+
+   static SSL_CTX* getContext(SSL_METHOD* method, bool server, long options);
 
 private:
    USSLSocket(const USSLSocket&) : UTCPSocket(false) {}

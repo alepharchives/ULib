@@ -54,7 +54,7 @@ public:
       // ---------------------------------------------------------------------------------------------
       // http://lwn.net/Articles/474365/
 
-      u_init_ulib_seed_hash();
+      u_seed_hash = u_random(u_now->tv_usec);
 
       // manage file configuration
 

@@ -339,11 +339,11 @@ void UValue::output(UString& result, UValue& _value)
       case BOOLEAN_VALUE: _value.asBool() ? (void) result.append(U_CONSTANT_TO_PARAM("true"))
                                           : (void) result.append(U_CONSTANT_TO_PARAM("false")); break;
 
-      case  INT_VALUE: (void) result.append(buffer, u_sn_printf(buffer, sizeof(buffer), "%d", _value.asInt()));  break;
-      case UINT_VALUE: (void) result.append(buffer, u_sn_printf(buffer, sizeof(buffer), "%u", _value.asUInt())); break;
+      case  INT_VALUE: (void) result.append(buffer, u__snprintf(buffer, sizeof(buffer), "%d", _value.asInt()));  break;
+      case UINT_VALUE: (void) result.append(buffer, u__snprintf(buffer, sizeof(buffer), "%u", _value.asUInt())); break;
       case REAL_VALUE:
          {
-         uint32_t n = u_sn_printf(buffer, sizeof(buffer), "%#.16g", _value.asDouble());
+         uint32_t n = u__snprintf(buffer, sizeof(buffer), "%#.16g", _value.asDouble());
 
          const char* ch = buffer + n - 1;
 

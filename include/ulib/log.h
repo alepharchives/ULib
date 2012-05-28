@@ -64,8 +64,21 @@ public:
 
    static void init();
    static void close();
-   static void reopen();
    static bool isSysLog() { return bsyslog; }
+
+   static void reopen()
+      {
+      U_TRACE(0, "ULog::reopen()")
+
+      U_INTERNAL_DUMP("pthis = %p", pthis)
+
+      if (pthis            &&
+          bsyslog == false &&
+          file_limit == 0)
+         {
+         pthis->UFile::reopen();
+         }
+      }
 
    // manage shared log
 

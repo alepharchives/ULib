@@ -141,10 +141,6 @@ void USocket::str_allocate()
    U_NEW_ULIB_OBJECT(str_Transfer_Encoding,     U_STRING_FROM_STRINGREP_STORAGE(24));
    U_NEW_ULIB_OBJECT(str_X_Progress_ID,         U_STRING_FROM_STRINGREP_STORAGE(25));
    U_NEW_ULIB_OBJECT(str_expect_100_continue,   U_STRING_FROM_STRINGREP_STORAGE(26));
-
-#ifdef USE_LIBSSL
-   ULib_init_openssl();
-#endif
 }
 
 USocket::USocket(bool bSocketIsIPv6)
@@ -673,7 +669,7 @@ const char* USocket::getMsgError(char* buffer, uint32_t buffer_size)
       {
       errno = -iState;
 
-      (void) u_sn_printf(buffer, buffer_size, "%R", 0); // NB: the last argument (0) is necessary...
+      (void) u__snprintf(buffer, buffer_size, "%R", 0); // NB: the last argument (0) is necessary...
 
       buffer += 3;
 

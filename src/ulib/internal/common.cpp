@@ -22,11 +22,54 @@
 #  include <openssl/ssl.h>
 #  include <openssl/rand.h>
 #  include <openssl/conf.h>
+
+void ULib_init_openssl()
+{
+   U_TRACE(1, "ULib_init_openssl()")
+
+   // A typical TLS/SSL application will start with the library initialization,
+   // will provide readable error messages and will seed the PRNG (Pseudo Random Number Generator).
+   // The environment variable OPENSSL_CONFIG can be set to specify the location of the configuration file
+
+   U_SYSCALL_VOID_NO_PARAM(SSL_load_error_strings);
+   U_SYSCALL_VOID_NO_PARAM(SSL_library_init);
+
+#  ifdef HAVE_OPENSSL_97
+   U_SYSCALL_VOID(OPENSSL_config, "%S", 0);
+#  endif
+   U_SYSCALL_VOID_NO_PARAM(OpenSSL_add_all_ciphers);
+   U_SYSCALL_VOID_NO_PARAM(OpenSSL_add_all_digests);
+
+   // OpenSSL makes sure that the PRNG state is unique for each thread. On systems that provide "/dev/urandom",
+   // the randomness device is used to seed the PRNG transparently. However, on all other systems, the application
+   // is responsible for seeding the PRNG by calling RAND_add(),
+
+#  ifdef __MINGW32__
+   U_SYSCALL_VOID(srand, "%ld", u_start_time); // seed with time
+
+   while (RAND_status() == 0) // Seed PRNG only if needed
+      {
+      // PRNG may need lots of seed data
+
+      int tmp = U_SYSCALL_NO_PARAM(rand);
+
+      RAND_seed(&tmp, sizeof(int));
+      }
+#  endif
+}
 #endif
 
 void ULib_init()
 {
    U_TRACE(1, "ULib_init()")
+
+#ifdef DEBUG
+   static bool init;
+
+   U_INTERNAL_ASSERT_EQUALS(init, false)
+
+   init = true;
+#endif
 
    // setting from u_init_ulib(char** argv)...
 
@@ -87,41 +130,8 @@ void ULib_init()
    U_INTERNAL_ASSERT_EQUALS(sizeof(off_t), SIZEOF_OFF_T)
 #endif
 */
-}
 
 #ifdef USE_LIBSSL
-void ULib_init_openssl()
-{
-   U_TRACE(1, "ULib_init_openssl()")
-
-   // A typical TLS/SSL application will start with the library initialization,
-   // will provide readable error messages and will seed the PRNG (Pseudo Random Number Generator).
-   // The environment variable OPENSSL_CONFIG can be set to specify the location of the configuration file
-
-   U_SYSCALL_VOID_NO_PARAM(SSL_load_error_strings);
-   U_SYSCALL_VOID_NO_PARAM(SSL_library_init);
-
-#  ifdef HAVE_OPENSSL_97
-   U_SYSCALL_VOID(OPENSSL_config, "%S", 0);
-#  endif
-   U_SYSCALL_VOID_NO_PARAM(OpenSSL_add_all_ciphers);
-   U_SYSCALL_VOID_NO_PARAM(OpenSSL_add_all_digests);
-
-   // OpenSSL makes sure that the PRNG state is unique for each thread. On systems that provide "/dev/urandom",
-   // the randomness device is used to seed the PRNG transparently. However, on all other systems, the application
-   // is responsible for seeding the PRNG by calling RAND_add(),
-
-#  ifdef __MINGW32__
-   U_SYSCALL_VOID(srand, "%ld", u_start_time); // seed with time
-
-   while (RAND_status() == 0) // Seed PRNG only if needed
-      {
-      // PRNG may need lots of seed data
-
-      int tmp = U_SYSCALL_NO_PARAM(rand);
-
-      RAND_seed(&tmp, sizeof(int));
-      }
-#  endif
-}
+   ULib_init_openssl();
 #endif
+}

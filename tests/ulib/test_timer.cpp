@@ -31,7 +31,7 @@ public:
       //  0 - monitoring
       // ---------------
 
-      cout.write(buffer, u_sn_printf(buffer, sizeof(buffer), "MyAlarm1::handlerTime() u_now = %2D expire = %#2D\n", UEventTime::expire()));
+      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "MyAlarm1::handlerTime() u_now = %2D expire = %#2D\n", UEventTime::expire()));
 
       U_RETURN(-1);
       }
@@ -66,7 +66,7 @@ public:
       //  0 - monitoring
       // ---------------
 
-      cout.write(buffer, u_sn_printf(buffer, sizeof(buffer), "MyAlarm2::handlerTime() u_now = %2D expire = %#2D\n", UEventTime::expire()));
+      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "MyAlarm2::handlerTime() u_now = %2D expire = %#2D\n", UEventTime::expire()));
 
       U_RETURN(0);
       }

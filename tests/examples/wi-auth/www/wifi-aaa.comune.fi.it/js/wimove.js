@@ -26,18 +26,29 @@ var wimoveFetchUrl = this.wimoveFetchUrl = function(url) {
 };
 
 var wimoveBuildBanner = this.wimoveBuildBanner =  function(baseUrl) {
-  var gateway=wimoveGetQueryVar("ap");
-  if (!gateway) {
-    gateway='default';
+  var bannerUrls = new Array();
+  var ap=wimoveGetQueryVar("ap");
+  var gateway=wimoveGetQueryVar("gateway");
+
+  if (ap)
+    ap=ap.replace(/@.*$/,'');
+  else
+    ap='ap';
+
+  if (gateway) {
+    gateway=gateway.replace(/:.*$/,'');
+    ip=gateway.match(/[0-9]+/g);
+    certid = ''+(parseInt(ip[2]) * 254 + parseInt(ip[3]))+'';
+    for (var i = certid.length; i < 4; i++) certid = '0'+certid;
+    bannerUrls.push(baseUrl + '/X' + certid + 'R' + ap + (isMobile()?'/mobile':'/full') + '/banner.html');
   }
-  var bannerUrl = baseUrl + '/' + gateway + (isMobile()?'/mobile':'/full') + '/banner.html';
+  bannerUrls.push(baseUrl + '/default' + (isMobile()?'/mobile':'/full') + '/banner.html');
+
   var banner;
-  if (gateway !== 'default') {
-    banner = wimoveFetchUrl(bannerUrl);
-    if (banner === false) {
-          bannerUrl = baseUrl + '/default' + (isMobile()?'/mobile':'/full') + '/banner.html';
-          banner = wimoveFetchUrl(bannerUrl);
-    }
+  for (var idx in bannerUrls) {  
+    banner = wimoveFetchUrl(bannerUrls[idx]);
+    if (banner !== false)
+      break;
   }
   if (banner !== false) {
     document.write(banner);

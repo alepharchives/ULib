@@ -82,7 +82,7 @@ void UWebSocketPlugIn::getPart(const char* key, unsigned char* part)
 
    division = htonl(division);
 
-   (void) u_mem_cpy(part, &division, sizeof(uint32_t));
+   (void) u__memcpy(part, &division, sizeof(uint32_t));
 }
 
 RETSIGTYPE UWebSocketPlugIn::handlerForSigTERM(int signo)
@@ -315,7 +315,7 @@ int UWebSocketPlugIn::handlerRequest()
 
               getPart(key1, challenge);
               getPart(key2, challenge+4);
-            (void) u_mem_cpy(challenge+8, UClientImage_Base::body->data(), UClientImage_Base::body->size());
+            (void) u__memcpy(challenge+8, UClientImage_Base::body->data(), UClientImage_Base::body->size());
 
             // MD5(challenge)
 

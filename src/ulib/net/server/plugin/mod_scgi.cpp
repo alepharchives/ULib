@@ -166,10 +166,10 @@ int USCGIPlugIn::handlerRequest()
 
             U_INTERNAL_ASSERT_POINTER(equalPtr)
             U_INTERNAL_ASSERT_MAJOR(equalPtr-envp[i], 0)
-            U_INTERNAL_ASSERT_MAJOR(u_str_len(equalPtr+1), 0)
+            U_INTERNAL_ASSERT_MAJOR(u__strlen(equalPtr+1), 0)
 
 #        if defined(DEBUG) || defined(U_TEST)
-            hlength += (equalPtr - envp[i]) + u_str_len(equalPtr) + 1;
+            hlength += (equalPtr - envp[i]) + u__strlen(equalPtr) + 1;
 #        endif
 
             *equalPtr = '\0';

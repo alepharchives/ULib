@@ -282,7 +282,7 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
    if (sub_vec)  U_FREE_N(sub_vec, sub_len, int);
        sub_vec = U_MALLOC_N(       sub_len, int);
 
-   if (stuff_len == 0) stuff_len = u_str_len(stuff);
+   if (stuff_len == 0) stuff_len = u__strlen(stuff);
 
    int num = U_SYSCALL(pcre_exec, "%p,%p,%S,%u,%d,%d,%p,%d", p_pcre, p_pcre_extra, stuff, stuff_len, offset, options, sub_vec, sub_len);
 

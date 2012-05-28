@@ -141,11 +141,13 @@ public:
 
    // NB: la stringa potrebbe non essere scrivibile e quindi path_relativ[path_relativ_len] potrebbe non essere '\0'...
 
-   UString&    getPath()                 { return pathname; }
-   const char* getPathRelativ() const    { return path_relativ; }
-   int32_t     getPathRelativLen() const { return path_relativ_len; }
+   UString&    getPath()                  { return pathname; }
+   UString     getName() const;
+   const char* getPathRelativ() const     { return path_relativ; }
+   int32_t     getPathRelativLen() const  { return path_relativ_len; }
 
-   bool isName(const UString& name) const;
+   bool isName(const UString& name) const { return name.equal(getName()); }
+
    bool isNameDosMatch(const char* mask, uint32_t mask_len) const;
 
    const char* getSuffix() const
@@ -191,7 +193,7 @@ public:
 
    // OPEN - CLOSE
 
-   static int  open(const char*  pathname, int flags,                    mode_t mode);
+   static int  open(const char* _pathname, int flags,                    mode_t mode);
    static int creat(const char* _pathname, int flags = O_TRUNC | O_RDWR, mode_t mode = PERM_FILE)
       {
       U_TRACE(0, "UFile::creat(%S,%d,%d)", _pathname, flags, mode)
@@ -231,6 +233,21 @@ public:
 
    bool creat(                     int flags = O_TRUNC | O_RDWR, mode_t mode = PERM_FILE);
    bool creat(const UString& path, int flags = O_TRUNC | O_RDWR, mode_t mode = PERM_FILE);
+
+   void reopen()
+      {
+      U_TRACE(0, "UFile::reopen()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
+
+      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      close();
+
+      creat(O_CREAT | O_RDWR | O_APPEND, PERM_FILE);
+      }
 
    bool isOpen()
       {
@@ -615,9 +632,9 @@ public:
       U_RETURN(result);
       }
 
-          UString getContent(                        bool brdonly = true,  bool bstat = false, bool bmap = true);
-   static UString contentOf(const char*    pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
-   static UString contentOf(const UString& pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
+          UString getContent(                         bool brdonly = true,  bool bstat = false, bool bmap = true);
+   static UString contentOf(const char*    _pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
+   static UString contentOf(const UString& _pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
 
    // MIME TYPE
 

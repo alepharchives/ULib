@@ -275,7 +275,7 @@ int unlink_w32(const char* path)
 int mkstemp(char* tmplate)
 {
    char* pChr;
-   int ret, iLen = u_str_len(tmplate);
+   int ret, iLen = u__strlen(tmplate);
 
    U_INTERNAL_TRACE("mkstemp(%s)", tmplate)
 
@@ -1320,7 +1320,7 @@ ssize_t writev(int fd, const struct iovec* iov, int count)
       {
       if (iov[i].iov_len)
          {
-         (void) u_mem_cpy(ptr, iov[i].iov_base, iov[i].iov_len);
+         (void) u__memcpy(ptr, iov[i].iov_base, iov[i].iov_len);
 
          ptr += iov[i].iov_len;
          }
@@ -1897,7 +1897,7 @@ const char* getSysError_w32(unsigned* len)
    if (ret == 0) lenMsg = 0;
    else
       {
-      lenMsg = u_str_len(pBuffer);
+      lenMsg = u__strlen(pBuffer);
 
       U_INTERNAL_ASSERT_MINOR(lenMsg, sizeof(buffer))
 
@@ -1918,7 +1918,7 @@ const char* getSysError_w32(unsigned* len)
 
    LocalFree(pBuffer);
 
-   *len = u_str_len(buffer);
+   *len = u__strlen(buffer);
 
    U_INTERNAL_PRINT("ret = %s", buffer)
 

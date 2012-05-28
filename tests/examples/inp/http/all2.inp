@@ -24,7 +24,9 @@ Accept-Language: it;q=1.0,en;q=0.5,fr;q=0.5,de;q=0.5,pt;q=0.5,es;q=0.5
 Cookie: __utmc=12873125
 Cookie2: $Version=1
 Referer: http://wifi-aaa.comune.fi.it/login?mac=9c%3A4a%3A7b%3Ac3%3A9d%3Aa5&ip=172.16.9.230&redirect=http%3A%2F%2Fwww.google.it%2Fm&gateway=10.8.0.9%3A5280&timeout=0&token=39633a34613a37623a63333a39643a613526313333333534323432342641dcee8c824e0cd9bf43bd58d2a0a3f7&ap=ap@Beccaria-r29587_rspro
-User-Agent: Mozilla/5.0 (Symbian/3; Series60/5.2 NokiaC7-00/012.003; Profile/MIDP-2.1 Configuration/CLDC-1.1 ) AppleWebKit/525 (KHTML, like Gecko) Version/3.0 BrowserNG/7.2.7.3 3gpp-gba\r\nX-Nokia-MusicShop-Bearer: WLAN\r\nX-Nokia-MusicShop-Version: 13.1036.15
+User-Agent: Mozilla/5.0 (Symbian/3; Series60/5.2 NokiaC7-00/012.003; Profile/MIDP-2.1 Configuration/CLDC-1.1 ) AppleWebKit/525 (KHTML, like Gecko) Version/3.0 BrowserNG/7.2.7.3 3gpp-gba
+X-Nokia-MusicShop-Bearer: WLAN
+X-Nokia-MusicShop-Version: 13.1036.15
 x-wap-profile: "http://nds1.nds.nokia.com/uaprof/NC7-00r100.xml"
 
 cc=__utma%3D1.1469286449.1293816537.1322904284.1322904285.138%3B&utmht=1322904285732&utmqt=10642539067 HTTP/1.1

@@ -15,7 +15,6 @@
 #define U_MOD_HTTP_H 1
 
 #include <ulib/event/event_fd.h>
-#include <ulib/container/vector.h>
 #include <ulib/net/server/server_plugin.h>
 
 /*
@@ -67,6 +66,7 @@ public:
    static const UString* str_STRICT_TRANSPORT_SECURITY;
    static const UString* str_SESSION_COOKIE_OPTION;
    static const UString* str_MAINTENANCE_MODE;
+   static const UString* str_APACHE_LIKE_LOG;
 
    static void str_allocate();
 
@@ -75,10 +75,6 @@ public:
    UHttpPlugIn()
       {
       U_TRACE_REGISTER_OBJECT(0, UHttpPlugIn, "")
-
-      valias                = 0;
-      maintenance_mode_page = 0;
-      uri_request_cert_mask = 0;
 
       if (str_URI_PROTECTED_MASK == 0) str_allocate();
       }
@@ -112,14 +108,8 @@ public:
    // DEBUG
 
 #ifdef DEBUG
-   const char* dump(bool reset) const;
+   const char* dump(bool reset) const { return UEventFd::dump(reset); }
 #endif
-
-protected:
-   UVector<UString>* valias;
-   UString* maintenance_mode_page;
-   UString* uri_request_cert_mask;
-   UString uri_protected_allowed_ip;
 
 private:
    UHttpPlugIn(const UHttpPlugIn&) : UServerPlugIn(), UEventFd() {}

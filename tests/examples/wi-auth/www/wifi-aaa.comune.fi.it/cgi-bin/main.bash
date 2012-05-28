@@ -489,7 +489,7 @@ anomalia() {
 	9)
 		write_ENV
 
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: login_request() failure (anomalia 009)"
+		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: login_request() failure (anomalia 009) IP=$IP MAC=$MAC"
 
 		MSG=`printf "$MSG_ANOMALIA" 009`
 		BACK_TAG="<a class=\"back\" href=\"$REDIRECT_DEFAULT\">RIPROVA</a>"
@@ -596,9 +596,11 @@ is_ap_OK() {
 
 	MOBILE=yes
 
-	if [ -n "$AP_LIST_OK" -a -n "$1" ]; then
-		AP_OK=`echo $AP_LIST_OK | egrep $1`
-	fi
+#	if [ -z "$AP_LIST_OK" ]; then
+#		AP_OK=yes
+#	elif [ -n "$1" ]; then
+#		AP_OK=`echo $AP_LIST_OK | egrep $1`
+#	fi
 }
 
 main_page() {
@@ -665,10 +667,27 @@ main_page() {
 		fi
 	fi
 
-	is_ap_OK $7
+ 	is_ap_OK $7
 
-	print_page "$HELP_URL" "$WALLET_URL" "$7" "/login_request?$QUERY_STRING" \
-				  "$HELP_URL" "$WALLET_URL" "$7" "/login_request?$QUERY_STRING"
+	print_page "$HELP_URL" "$WALLET_URL" "$7" "/login_request?$QUERY_STRING"
+}
+
+unifi_page() {
+
+	is_ap_OK unifi
+
+	REQUEST_URI=login
+
+	print_page "$HELP_URL" "$WALLET_URL" unifi "/unifi_login_request"
+}
+
+logged_page() {
+
+	get_user_context_connection "" ""
+
+	is_ap_OK "$AP"
+
+	print_page "$HELP_URL" "$WALLET_URL" $AP "/logged_login_request"
 }
 
 get_user_context_connection() {
@@ -684,12 +703,12 @@ get_user_context_connection() {
 
 	# data connection context saved on file
 	# -------------------------------------
-	# ap uid gateway mac ip
+	# ap uid gateway mac ip auth_domain
 
 	if [ -n "$FILE_CTX" -a -s "$FILE_CTX" ]; then
-		read AP UUID GATEWAY MAC IP < $FILE_CTX 2>/dev/null
+		read				AP UUID GATEWAY MAC IP AUTH_DOMAIN < $FILE_CTX 2>/dev/null
 	else
-		unset FILE_CTX AP UUID GATEWAY MAC IP
+		unset FILE_CTX AP UUID GATEWAY MAC IP AUTH_DOMAIN
 	fi
 }
 
@@ -790,7 +809,7 @@ send_ticket_to_nodog() {
 		# --------------------------------------------------------------------
 		REMAIN=$FILE_CNT.timeout
 
-		if [ -s $REMAIN ]; then
+		if [ -s "$REMAIN" ]; then
 
 			read TIMEOUT < $REMAIN 2>/dev/null
 
@@ -827,7 +846,7 @@ send_ticket_to_nodog() {
 		# --------------------------------------------------------------------
 		REMAIN=$FILE_CNT.traffic
 
-		if [ -s $REMAIN ]; then
+		if [ -s "$REMAIN" ]; then
 
 			read TRAFFIC < $REMAIN 2>/dev/null
 
@@ -858,7 +877,7 @@ send_ticket_to_nodog() {
 	sign_data "
 Action   Permit
 Mode	   Login
-Redirect	http://$HTTP_HOST/postlogin?uid=$8&gateway=$4&redirect=$REDIRECT_DEFAULT&ap=$7&ip=$2&mac=$1&timeout=$TIMEOUT&traffic=$TRAFFIC
+Redirect	http://$HTTP_HOST/postlogin?uid=$8&gateway=$4&redirect=$REDIRECT_DEFAULT&ap=$7&ip=$2&mac=$1&timeout=$TIMEOUT&traffic=$TRAFFIC&auth_domain=$OP
 Mac		$1
 Timeout	$TIMEOUT
 Traffic	$TRAFFIC
@@ -955,13 +974,21 @@ write_to_LOG() {
 	# $5 -> timeout
 	# $6 -> traffic
 
+	SPACE=`echo $1 | egrep " "`
+
+	if [ -n "$SPACE" ]; then
+		write_ENV
+
+		return
+	fi
+
 	# --------------------------------------------------------------------
 	# GET REAL UID FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
 	# --------------------------------------------------------------------
 	FILE_UID=$DIR_REQ/$1.uid
 
-	if [ -s $FILE_UID ]; then
-		read UUID_TO_LOG POLICY < $FILE_UID 2>/dev/null
+	if [ -s "$FILE_UID" ]; then
+		read UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC < $FILE_UID 2>/dev/null
 	fi
 
 	if [ -z "$UUID_TO_LOG" ]; then
@@ -1159,14 +1186,15 @@ save_connection_context() {
 	# $3 -> gateway
 	# $4 -> mac
 	# $5 -> ip
+	# $6 -> auth_domain
 
-	# --------------------------------------------------------------------
-	# SAVE CONNECTION CONTEXT DATA ON FILE (AP UUID GATEWAY MAC IP)
-	# --------------------------------------------------------------------
+	# -------------------------------------------------------------------------
+	# SAVE CONNECTION CONTEXT DATA ON FILE (AP UUID GATEWAY MAC IP AUTH_DOMAIN)
+	# -------------------------------------------------------------------------
 	FILE_CTX=$DIR_CTX/$2.ctx
 
-	write_FILE "$1 $2 $3 $4 $5" $FILE_CTX
-	# --------------------------------------------------------------------
+	write_FILE "$1 $2 $3 $4 $5 $6" $FILE_CTX
+	# -------------------------------------------------------------------------
 }
 
 check_if_user_is_connected() {
@@ -1177,7 +1205,7 @@ check_if_user_is_connected() {
 	# $4 -> ap
 	# $5 -> uid
 
-	get_user_context_connection $5
+	get_user_context_connection "$5" "$1"
 
 	if [ -n "$FILE_CTX" ]; then
 
@@ -1217,12 +1245,16 @@ user_has_valid_cert() {
 
 login_with_problem() {
 
+	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: ${REQUEST_URI}() failure REQ_FILE=$REQ_FILE IP=$IP MAC=$MAC"
+
 	BACK_TAG="<a class=\"back\" href=\"$REDIRECT_DEFAULT\">RIPROVA</a>"
 
 	message_page "Login" "Problema in fase di autenticazione. Si prega di riprovare, se il problema persiste contattare: $TELEFONO"
 }
 
 logout_with_problem() {
+
+	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: ${REQUEST_URI}() failure REQ_FILE=$REQ_FILE"
 
 	unset BACK_TAG
 
@@ -1247,6 +1279,10 @@ ask_nodog_to_logout_user() {
 
 info_notified_from_nodog() {
 
+	local LOGOUT=0
+	local	TRAFFIC=0
+	local	TIMEOUT=0
+
 	# $1 -> mac
 	# $2 -> ip
 	# $3 -> gateway
@@ -1257,8 +1293,6 @@ info_notified_from_nodog() {
 	# $8 -> traffic
 
 	OP=LOGOUT
-
-	unset LOGOUT
 
 	append_to_FILE "`_date` op: INFO uid: $5, ap: $4, ip: $2, mac: $1, logout: $6, connected: $7, traffic: $8" $FILE_LOG.info
 
@@ -1280,116 +1314,137 @@ info_notified_from_nodog() {
 		if [ "$OP" = "RENEW" ]; then
 			anomalia 7
 		else
-			save_connection_context "$4" "$5" "$3" "$1" "$2" # save connection context data on file (ap uuid gateway mac ip) to avoid another anomalia...
+			save_connection_context "$4" "$5" "$3" "$1" "$2" "$OP" # save connection context data on file (ap uuid gateway mac ip) to avoid another anomalia...
 
 			# NB: succede che arrivino 2 info su stesso utente di cui la prima e' un logout...
-
 			anomalia 6
 		fi
 	else
+		load_policy $DIR_REQ/$5.uid # GET POLICY FROM FILE (UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC)
 
-		check_if_user_connected_to_AP_NO_CONSUME "$4"
+		FILE_CNT=$DIR_CNT/$POLICY/$UUID_TO_LOG
 
-		if [ "$CONSUME_ON" = "true" ]; then
+		if [ $8 -eq 0 -a $6 -le 0 ]; then # no traffic and no logout => logout implicito
 
-			load_policy $DIR_REQ/$5.uid # GET POLICY FROM FILE (UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC)
+			LOGOUT=1
 
-			FILE_CNT=$DIR_CNT/$POLICY/$UUID_TO_LOG
+			ask_nodog_to_logout_user $IP $MAC
 
-			# --------------------------------------------------------------------
-			# TRAFFIC POLICY
-			# --------------------------------------------------------------------
-			if [ -z "$MAX_TRAFFIC" ]; then
-				MAX_TRAFFIC=0
-			fi
-
-			if [ $MAX_TRAFFIC -gt 0 ]; then
-				# --------------------------------------------------------------------
-				# WE CHECK FOR THE TRAFFIC REMAIN FOR CONNECTION (BYTES) SAVED ON FILE
-				# --------------------------------------------------------------------
-				TRAFFIC=0
-
-				if [ -s $FILE_CNT.traffic ]; then
-					read TRAFFIC < $FILE_CNT.traffic 2>/dev/null
-
-					let "TRAFFIC = TRAFFIC - $8"
-
-					if [ $TRAFFIC -lt 0 ]; then
-						TRAFFIC=0
-					fi
-				fi
-				# ---------------------------------------------------------
-				# we save the remain traffic for connection (bytes) on file
-				# ---------------------------------------------------------
-				write_FILE $TRAFFIC $FILE_CNT.traffic
-
-				if [ $TRAFFIC -eq 0 -a \
-					  -z "$LOGOUT" ]; then
-
-					LOGOUT=true
-
-					ask_nodog_to_logout_user $IP $MAC
-				fi
-				# ---------------------------------------------------------
-			fi
-			# ---------------------------------------------------------
-
-			# --------------------------------------------------------------------
-			# TIME POLICY
-			# --------------------------------------------------------------------
-			if [ -z "$MAX_TIME" ]; then
-				MAX_TIME=0
-			fi
-
-			if [ $MAX_TIME -gt 0 ]; then
+			if [ -n "$GET_USER_INFO_INTERVAL" ]; then
 				# --------------------------------------------------------------------
 				# WE CHECK FOR THE TIME REMAIN FOR CONNECTION (SECS) SAVED ON FILE
 				# --------------------------------------------------------------------
-				TIMEOUT=0
-
 				if [ -s $FILE_CNT.timeout ]; then
 
 					read TIMEOUT < $FILE_CNT.timeout 2>/dev/null
 
-					let "TIMEOUT = TIMEOUT - $7"
+					let "TIMEOUT = TIMEOUT + $GET_USER_INFO_INTERVAL"
+					# ---------------------------------------------------------
+					# we save the time remain for connection (secs) on file
+					# ---------------------------------------------------------
+					write_FILE $TIMEOUT $FILE_CNT.timeout
+				fi
+			fi
+		else
+			check_if_user_connected_to_AP_NO_CONSUME "$4"
 
-					if [ -n "$BONUS_FOR_EXIT" -a $6 -eq -1 ]; then # disconneted (logout implicito)
-						let "TIMEOUT = TIMEOUT + $BONUS_FOR_EXIT"
-					fi
+			if [ "$CONSUME_ON" = "true" ]; then
+				# --------------------------------------------------------------------
+				# TRAFFIC POLICY
+				# --------------------------------------------------------------------
+				if [ -z "$MAX_TRAFFIC" ]; then
+					MAX_TRAFFIC=0
+				fi
 
-					if [ $TIMEOUT -lt 0 ]; then
-						TIMEOUT=0
+				if [ $MAX_TRAFFIC -gt 0 ]; then
+					# --------------------------------------------------------------------
+					# WE CHECK FOR THE TRAFFIC REMAIN FOR CONNECTION (BYTES) SAVED ON FILE
+					# --------------------------------------------------------------------
+					if [ -s $FILE_CNT.traffic ]; then
+						read TRAFFIC < $FILE_CNT.traffic 2>/dev/null
+
+						let "TRAFFIC = TRAFFIC - $8"
+
+						if [ $TRAFFIC -lt 0 ]; then
+							TRAFFIC=0
+						fi
 					fi
+					# ---------------------------------------------------------
+					# we save the remain traffic for connection (bytes) on file
+					# ---------------------------------------------------------
+					write_FILE $TRAFFIC $FILE_CNT.traffic
+
+					if [ $TRAFFIC -eq 0 -a $LOGOUT -eq 0 ]; then
+
+						LOGOUT=1
+
+						ask_nodog_to_logout_user $IP $MAC
+					fi
+					# ---------------------------------------------------------
 				fi
 				# ---------------------------------------------------------
-				# we save the time remain for connection (secs) on file
-				# ---------------------------------------------------------
-				write_FILE $TIMEOUT $FILE_CNT.timeout
 
-				if [ $TIMEOUT -eq 0 -a \
-					  -z "$LOGOUT" ]; then
+				# --------------------------------------------------------------------
+				# TIME POLICY
+				# --------------------------------------------------------------------
+				if [ -z "$MAX_TIME" ]; then
+					MAX_TIME=0
+				fi
 
-					LOGOUT=true
+				if [ $MAX_TIME -gt 0 ]; then
+					# --------------------------------------------------------------------
+					# WE CHECK FOR THE TIME REMAIN FOR CONNECTION (SECS) SAVED ON FILE
+					# --------------------------------------------------------------------
+					if [ -s $FILE_CNT.timeout ]; then
 
-					ask_nodog_to_logout_user $IP $MAC
+						read TIMEOUT < $FILE_CNT.timeout 2>/dev/null
+
+						let "TIMEOUT = TIMEOUT - $7"
+
+						if [ -n "$BONUS_FOR_EXIT" -a $6 -eq -1 ]; then # disconneted (logout implicito)
+							let "TIMEOUT = TIMEOUT + $BONUS_FOR_EXIT"
+						fi
+
+						if [ $TIMEOUT -lt 0 ]; then
+							TIMEOUT=0
+						fi
+					fi
+					# ---------------------------------------------------------
+					# we save the time remain for connection (secs) on file
+					# ---------------------------------------------------------
+					write_FILE $TIMEOUT $FILE_CNT.timeout
+
+					if [ $TIMEOUT -eq 0 -a $LOGOUT -eq 0 ]; then
+
+						LOGOUT=1
+
+						ask_nodog_to_logout_user $IP $MAC
+					fi
+					# ---------------------------------------------------------
 				fi
 				# ---------------------------------------------------------
 			fi
-			# ---------------------------------------------------------
 		fi
 
 		if [ $6 -ne 0 ]; then # logout
 
-			LOGOUT=true
+			LOGOUT=1
 
 			if [ $6 -eq -1 ]; then # -1 => disconnected (logout implicito)
 				OP=EXIT
 			fi
 
-			write_to_LOG "$5" "$4" "$2" "$1" "$TIMEOUT" "$TRAFFIC"
-
-			rm -f $FILE_CTX $DIR_REQ/$2.req $DIR_REQ/$5.uid # we remove the data saved on file (connection context data and NoDog data)
 		fi
+	fi
+
+	if [ $LOGOUT -eq 0 ]; then
+		BODY_SHTML="OK"
+	else
+		BODY_SHTML="LOGOUT"
+
+		write_to_LOG "$5" "$4" "$2" "$1" "$TIMEOUT" "$TRAFFIC"
+
+		rm -f $FILE_CTX $DIR_REQ/$2.req $DIR_REQ/$5.uid # we remove the data saved on file (connection context data and NoDog data)
 	fi
 
 	if [ $# -gt 8 ]; then
@@ -1397,11 +1452,6 @@ info_notified_from_nodog() {
 		shift 8
 
 		info_notified_from_nodog "$@"
-
-	elif [ -n "$LOGOUT" ]; then
-		BODY_SHTML="LOGOUT"
-	else
-		BODY_SHTML="OK"
 	fi
 }
 
@@ -1428,6 +1478,31 @@ ask_nodog_to_check_for_users_info() {
 	fi
 }
 
+ask_nodog_to_validate_user_login() {
+
+	# $1 -> ap
+
+	AP=$1
+	TMPFILE=/tmp/nodog_validate.$$
+
+	# we request nodog to check for users login...
+	# -----------------------------------------------------------------------------
+	# NB: we need PREFORK_CHILD > 2
+	# -----------------------------------------------------------------------------
+	send_request_to_nodog "validate" $TMPFILE "-i"
+
+	if [ -s "$TMPFILE" ]; then
+
+		read HTTP_VERSION HTTP_STATUS HTTP_DESCR < $TMPFILE 2>/dev/null
+
+		if [ "$HTTP_STATUS" = "204" ]; then # 204 - HTTP_NO_CONTENT
+			echo "HTTP_STATUS=$HTTP_STATUS"
+		fi
+
+		rm -f "$TMPFILE"
+	fi
+}
+
 load_value_session() {
 
 	if [ -s $TMP_FORM_FILE ]; then
@@ -1444,7 +1519,9 @@ load_value_session() {
 
 get_user_nome_cognome() {
 
-	TMP_FORM_FILE=$DIR_REG/$UUID.reg
+	# $1 -> uuid
+
+	TMP_FORM_FILE=$DIR_REG/$1.reg
 
 	load_value_session
 
@@ -1455,15 +1532,29 @@ get_user_nome_cognome() {
 	fi
 }
 
-logout() {
+read_connection_request() {
 
-	REQ_FILE=$DIR_REQ/$SESSION_ID.req # nodog data saved on file
+	# ------------------------------------------------------------------------------------------------------------------------------------------------
+	# nodog data saved on file
+	# ------------------------------------------------------------------------------------------------------------------------------------------------
+	# stefano 10.30.1.131:5280 00:e0:4c:d4:63:f5 10.30.1.105 http://www.google.com 0 10.30.1.105&1257603166&2a2436611f452f8eebddce4992e88f8d 055340773
+	# ------------------------------------------------------------------------------------------------------------------------------------------------
 
-	if [ ! -s $REQ_FILE ]; then
+	unset	  AP GATEWAY MAC IP REDIRECT TIMEOUT TOKEN UUID
+	if [ -s $REQ_FILE ]; then
+		read AP GATEWAY MAC IP REDIRECT TIMEOUT TOKEN UUID < $REQ_FILE 2>/dev/null
+	fi
+}
+
+logout_user() {
+
+	REQ_FILE=$DIR_REQ/$SESSION_ID.req
+
+	read_connection_request
+
+	if [ -z $AP ]; then
 		logout_with_problem
 	fi
-
-	read AP GATEWAY MAC IP REDIRECT TIMEOUT TOKEN UUID < $REQ_FILE 2>/dev/null
 
 	if [ -z "$UUID" -o ! -s $DIR_CTX/$UUID.ctx ]; then
 
@@ -1480,55 +1571,41 @@ logout() {
 	ask_nodog_to_logout_user $IP $MAC
 }
 
+read_counter() {
+
+	# $1 -> uuid
+
+	if [ -s "$DIR_CNT/$POLICY/$1.timeout" ]; then
+
+		REMAINING_TIME=`cat $DIR_CNT/$POLICY/$1.timeout`
+
+		# expressing the time in minutes
+		REMAINING_TIME_MIN=`expr $REMAINING_TIME / 60`
+	else
+		REMAINING_TIME_MIN="Non disponibile"
+	fi
+
+	if [ -s "$DIR_CNT/$POLICY/$1.traffic" ]; then
+
+		REMAINING_TRAFFIC=`cat $DIR_CNT/$POLICY/$1.traffic`
+
+		# expressing the traffic in MB 1024*1024=1048576
+		REMAINING_TRAFFIC_MB=`expr $REMAINING_TRAFFIC / 1048576`
+	else
+		REMAINING_TRAFFIC_MB="Non disponibile"
+	fi
+}
+
 logout_request() {
 
-	logout
+	logout_user
 
-	PARAM=""
-
-	if [ -s $DIR_CNT/$POLICY/$UUID_TO_LOG.timeout -o -s $DIR_CNT/$POLICY/$UUID_TO_LOG.traffic ]; then
-
-		PARAM="<table class=\"centered\" border=\"1\">
-				<tr>
-					<th class=\"header\" colspan=\"2\" align=\"left\">Utente&nbsp;&nbsp;&nbsp;$UUID</th>
-				</tr>"
-
-		if [ -s $DIR_CNT/$POLICY/$UUID_TO_LOG.timeout ]; then
-
-			REMAINING_TIME=`cat $DIR_CNT/$POLICY/$UUID_TO_LOG.timeout`
-
-			# expressing the time in minutes
-			REMAINING_TIME_MIN=`expr $REMAINING_TIME / 60`
-
-			PARAM="$PARAM
-				<tr>
-					<td class=\"header\">Tempo residuo (min.)</td>
-					<td class=\"data_italic\">$REMAINING_TIME_MIN</td>
-				</tr>"
-		fi
-
-		if [ -s $DIR_CNT/$POLICY/$UUID_TO_LOG.traffic ]; then
-
-			REMAINING_TRAFFIC=`cat $DIR_CNT/$POLICY/$UUID_TO_LOG.traffic`
-
-			# expressing the traffic in MB 1024*1024=1048576
-			REMAINING_TRAFFIC_MB=`expr $REMAINING_TRAFFIC / 1048576`
-
-			PARAM="$PARAM
-				<tr>
-					<td class=\"header\">Traffico residuo (MB)</td>
-					<td class=\"data_italic\">$REMAINING_TRAFFIC_MB</td>
-				</tr>"
-		fi
-
-		PARAM="$PARAM
-				</table>"
-	fi
+	read_counter "$UUID_TO_LOG"
 
 	MOBILE=yes
 	REQUEST_URI=ringraziamenti
 
-	print_page "$PARAM"
+	print_page "$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB"
 }
 
 get_timeout_secs() {
@@ -1571,12 +1648,6 @@ login_request() {
 	# $10 -> password
 	# $11 -> bottone
 
-	REQ_FILE=$DIR_REQ/$SESSION_ID.req # nodog data saved on file
-
-	if [ ! -s $REQ_FILE ]; then
-		login_with_problem
-	fi
-
 	if [ -z "$9" -o \
 		  -z "${10}" ]; then
 
@@ -1585,7 +1656,11 @@ login_request() {
 		message_page "Impostare utente e/o password" "Impostare utente e/o password"
 	fi
 
-	read AP GATEWAY MAC IP REDIRECT TIMEOUT TOKEN UUID < $REQ_FILE 2>/dev/null
+	ask_nodog_to_validate_user_login "$7"
+
+	REQ_FILE=$DIR_REQ/$SESSION_ID.req # nodog data saved on file
+
+	read_connection_request
 
 	if [ -n "$7" -a "$7" != "$AP" ]; then
 		login_with_problem
@@ -1655,7 +1730,7 @@ login_request() {
 
 		  MD5SUM=`/usr/sbin/slappasswd -h {MD5} -s "${10}"`
 
-		  if [ $PASSWORD != "$MD5SUM" ]; then
+		  if [ "$PASSWORD" != "$MD5SUM" ]; then
 
 				unset BACK_TAG
 
@@ -1678,19 +1753,20 @@ login_request() {
 		AUTH_CMD=`printf "$FMT_AUTH_CMD" "$9" "${10}" 2>/dev/null`
 
 		RESPONSE=`$AUTH_CMD 2>/dev/null`
+		EXIT_VALUE=$?
 
-		if [ $? -eq 1 ]; then
+		if [ $EXIT_VALUE -eq 1 ]; then
 
 			unset BACK_TAG
 
 			message_page "Utente e/o Password errato/i" "Credenziali errate!"
 		fi
 
-		if [ $? -gt 1 ]; then
+		if [ $EXIT_VALUE -ne 0 -o -z "$RESPONSE" ]; then
 
 			unset BACK_TAG
 
-			message_page "Errore" "Errore Autorizzazione: $RESPONSE"
+			message_page "Errore" "Esito comando richiesta autorizzazione: EXIT_VALUE=$EXIT_VALUE RESPONSE=$RESPONSE"
 		fi
 
 		POLICY=DAILY
@@ -1825,7 +1901,7 @@ waNotAfter: $NOT_AFTER
 
 postlogin() {
 
-	if [ $# -eq 8 ]; then
+	if [ $# -eq 9 ]; then
 
 		unset BACK_TAG
 
@@ -1837,22 +1913,17 @@ postlogin() {
 		# $6 -> mac
 		# $7 -> timeout
 		# $8 -> traffic
-
-		REQ_FILE=$DIR_REQ/$SESSION_ID.req
-
-		if [ ! -s $REQ_FILE ]; then
-			login_with_problem
-		fi
+		# $9 -> auth_domain
 
 		FILE_CTX=$DIR_CTX/$1.ctx
 
-		test -s $FILE_CTX && ! is_group_ACCOUNT "$1" "" && {
+		test -s "$FILE_CTX" && ! is_group_ACCOUNT "$1" "" && {
 			message_page "PostLogin" "Sei già loggato! (postlogin)"
 		}
 
-		# stefano 10.30.1.131:5280 00:e0:4c:d4:63:f5 10.30.1.105 http://www.google.com 0 10.30.1.105&1257603166&2a2436611f452f8eebddce4992e88f8d 055340773
+		REQ_FILE=$DIR_REQ/$SESSION_ID.req
 
-		read AP GATEWAY MAC IP REDIRECT TIMEOUT TOKEN UUID < $REQ_FILE 2>/dev/null
+		read_connection_request
 
 		if [ -z "$UUID" ]; then
 			login_with_problem
@@ -1865,7 +1936,7 @@ postlogin() {
 		# --------------------------------------------------------------------
 		# SAVE CONNECTION CONTEXT DATA ON FILE (AP UUID GATEWAY MAC IP)
 		# --------------------------------------------------------------------
-		save_connection_context "$4" "$1" "$2" "$6" "$5"
+		save_connection_context "$4" "$1" "$2" "$6" "$5" "$9"
 		# --------------------------------------------------------------------
 
 		CONNECTION_CLOSE=1
@@ -1891,7 +1962,7 @@ postlogin() {
 
 logout_notified_from_popup() {
 
-	logout
+	logout_user
 
 	CONNECTION_CLOSE=1
 
@@ -2183,7 +2254,7 @@ execute_recovery() {
 
 	CARD_DN=`cut -f2 -d':' $TMPFILE.out 2>/dev/null`
 
-	get_user_context_connection $1
+	get_user_context_connection "$1" ""
 
 	if [ -n "$AP" ]; then
 		ask_nodog_to_logout_user $IP $MAC
@@ -2212,14 +2283,16 @@ execute_recovery() {
 
 stato_utente() {
 
+	MOBILE=yes
+
 	# $1 -> mac
 
-	get_user_context_connection "" $1 
+	get_user_context_connection "" "$1"
 
 	if [ -z "$GATEWAY" ]; then
 		message_page "Utente non connesso" "Utente non connesso"
 	else
-		get_user_nome_cognome
+		get_user_nome_cognome $UUID
 
 		# we request the status of the indicated user...
 		# -----------------------------------------------------------------------------
@@ -2232,7 +2305,7 @@ stato_utente() {
 		FMT=`cat $DIR_TEMPLATE/stato_utente.tmpl 2>/dev/null`
 		DATE=`date`
 
-		BODY_SHTML=`printf "$FMT" "$DATE" $AP "$OUTPUT" 2>/dev/null`
+		BODY_SHTML=`printf "$FMT" "$USER" $UUID $AP $GATEWAY "$OUTPUT" 2>/dev/null`
 	fi
 }
 
@@ -2283,25 +2356,7 @@ view_user() {
 
 	load_policy
 
-	if [ -s "$DIR_CNT/$POLICY/$1.timeout" ]; then
-
-		REMAINING_TIME=`cat $DIR_CNT/$POLICY/$1.timeout`
-
-		# expressing the time in minutes
-		REMAINING_TIME_MIN=`expr $REMAINING_TIME / 60`
-	else
-		REMAINING_TIME_MIN="Non disponibile"
-	fi
-
-	if [ -s "$DIR_CNT/$POLICY/$1.traffic" ]; then
-
-		REMAINING_TRAFFIC=`cat $DIR_CNT/$POLICY/$1.traffic`
-
-		# expressing the traffic in MB 1024*1024=1048576
-		REMAINING_TRAFFIC_MB=`expr $REMAINING_TRAFFIC / 1048576`
-	else
-		REMAINING_TRAFFIC_MB="Non disponibile"
-	fi
+	read_counter "$1"
 
 	if [ -z "$WA_NOTAFTER" ]; then
 		WA_NOTAFTER="Non disponibile"
@@ -2318,15 +2373,15 @@ view_user() {
 	REQUEST_URI=print_user_data
 	TITLE_TXT="Visualizzazione dati registrazione utente"
 
-	print_page $1 "$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB" $WA_PASSWORD "$WA_NOTAFTER" $WA_VALIDITY $REVOKED $POLICY
+	get_user_nome_cognome $1
+
+	print_page "$USER" $1 "$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB" $WA_PASSWORD "$WA_NOTAFTER" $WA_VALIDITY $REVOKED $POLICY
 }
 
 status_network() {
 
 	# --------------------------------------------------------------------------------------------
-	# NB: bisogna metterlo in cron (11 minuti)...
-	# --------------------------------------------------------------------------------------------
-	# get_users_info
+	# NB: bisogna mettere in cron get_users_info (6 minuti)...
 	# --------------------------------------------------------------------------------------------
 
 	TMPFILE=/tmp/wi-auth-stat.$$
@@ -2344,9 +2399,22 @@ status_network() {
 
 		BODY=`cat $DIR_TEMPLATE/status_network_body.tmpl 2>/dev/null`
 
-		while read AP UUID GATEWAY MAC IP
+		while read AP UUID GATEWAY MAC IP AUTH_DOMAIN
 		do
-			RIGA=`printf "$BODY" $UUID $IP $MAC $AP $AP 2>/dev/null`
+			LOGIN_TIME=`date -r $DIR_CTX/$UUID.ctx`
+
+			# --------------------------------------------------------------------
+			# GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
+			# --------------------------------------------------------------------
+			FILE_UID=$DIR_REQ/$UUID.uid
+
+			if [ -s "$FILE_UID" ]; then
+				read UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC < $FILE_UID 2>/dev/null
+			fi
+
+			read_counter "$UUID_TO_LOG"
+
+			RIGA=`printf "$BODY" $UUID "$AUTH_DOMAIN" "$LOGIN_TIME" $POLICY "$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB" $IP $MAC $GATEWAY $AP $AP 2>/dev/null`
 
 			OUTPUT=`echo "$OUTPUT"; echo "$RIGA" 2>/dev/null`
 
@@ -2428,12 +2496,9 @@ start_ap() {
 			SUFFIX="${FILE##*.}"
 
 			if [ "$SUFFIX" = "req" ]; then
-
 				read AP GATEWAY MAC IP REDIRECT TIMEOUT TOKEN UUID < $FILE 2>/dev/null
-
 			elif [ "$SUFFIX" = "ctx" ]; then
-
-				read AP UUID GATEWAY MAC IP < $FILE 2>/dev/null
+				read AP UUID GATEWAY MAC IP AUTH_DOMAIN < $FILE 2>/dev/null
 			fi
 
 			ACCESS_POINT_NAME=${AP##*@}
@@ -2528,8 +2593,9 @@ reset_policy() {
 	done
 
 	# cleaning
-	find $DIR_CTX -mtime +2 -exec rm -f {} \;
-	find $DIR_REQ -mtime +2 -exec rm -f {} \;
+	find $DIR_CTX	  -type f -mtime +2 -exec rm -f  {} \; 2>/dev/null
+	find $DIR_REQ	  -type f -mtime +2 -exec rm -f  {} \; 2>/dev/null
+	find $DIR_CLIENT -type d -mtime +1 -exec rm -rf {} \; 2>/dev/null
 
 	BODY_SHTML="OK"
 }
@@ -2617,12 +2683,11 @@ polling_attivazione() {
 
 redirect_if_not_https() {
 
- 	if [ "$HTTPS" != "on" ]; then
- 		HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
- 		HTTP_RESPONSE_HEADER="Refresh: 0; url=https://${HTTP_HOST}${REQUEST_URI}\r\n"
-
- 		write_SSI
- 	fi
+  	if [ "$HTTPS" != "on" ]; then
+  		HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
+  		HTTP_RESPONSE_HEADER="Refresh: 0; url=https://${HTTP_HOST}${REQUEST_URI}\r\n"
+   	write_SSI
+   fi
 
 	HEAD_HTML="<link type=\"text/css\" href=\"css/layoutv1.css\" rel=\"stylesheet\">"
 }
@@ -2699,10 +2764,6 @@ write_SSI() {
 				echo "MOBILE=yes"
 			fi
 
-			if [ -n "$AP_OK" ]; then
-				echo "AP_OK=yes"
-			fi
-
 			echo -e "'TITLE_TXT=$TITLE_TXT'\nBODY_STYLE=$BODY_STYLE"
 		fi
 	fi
@@ -2763,6 +2824,13 @@ do_cmd() {
 			/registrazione)			registrazione_request		"$@"	;;
 			/login_request)			login_request					"$@"	;;
 			/logout)						logout_request							;;
+			/unifi)						unifi_page								;;
+			/logged)						logged_page								;;
+
+			/unifi_login_request)
+				MOBILE=yes
+				print_page
+			;;
 
 			/logout_page)
 				MOBILE=yes
@@ -2858,10 +2926,14 @@ do_cmd() {
 			/admin_recovery)
 				redirect_if_not_https
 
+				# $1 -> uid
+
 				REQUEST_URI=confirm_page
 				TITLE_TXT="Conferma recovery"
 
-				print_page "$TITLE_TXT" "$1" "admin_execute_recovery" "$1"
+				get_user_nome_cognome "$1"
+
+				print_page "$TITLE_TXT" "$USER" "$1" "admin_execute_recovery" "$1"
 			;;
 			/admin_execute_recovery)
 				redirect_if_not_https
@@ -2876,7 +2948,7 @@ do_cmd() {
 # END FUNCTION
 #-----------------------------------
 
-export TITLE_TXT HEAD_HTML BODY_SHTML BODY_STYLE MOBILE AP_OK \
+export TITLE_TXT HEAD_HTML BODY_SHTML BODY_STYLE MOBILE REQ_FILE AUTH_DOMAIN REMAINING_TIME_MIN REMAINING_TRAFFIC_MB \
 		 SESSION_ID CONNECTION_CLOSE SET_COOKIE TMPFILE OUTPUT HTTP_RESPONSE_HEADER HTTP_RESPONSE_BODY FILE_RESPONSE_HTML \
 		 OP FILE_CTX MAC IP GATEWAY AP TMP_FORM_FILE UUID CALLER_ID USER SIGNED_DATA UUID_TO_APPEND POLICY WA_UID CONSUME_ON
 

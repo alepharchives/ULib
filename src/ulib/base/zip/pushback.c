@@ -60,11 +60,11 @@ int pb_push(pb_file* pbf, void* buff, int amt)
 
    n = in_amt - wrap;
 
-   if (n > 0) (void) u_mem_cpy(pbf->next, buff, n);
+   if (n > 0) (void) u__memcpy(pbf->next, buff, n);
 
    /* finish writing what's wrapped around */
 
-   if (wrap > 0) (void) u_mem_cpy(pbf->pb_buff, ((char*)buff + n), wrap);
+   if (wrap > 0) (void) u__memcpy(pbf->pb_buff, ((char*)buff + n), wrap);
 
    /* update the buff_amt field */
 
@@ -90,7 +90,7 @@ int pb_read(pb_file* pbf, void* buff, int amt)
 
       if (amt > 0)
          {
-         (void) u_mem_cpy(buff, pbf->next, amt);
+         (void) u__memcpy(buff, pbf->next, amt);
 
          /* update the buff_amt field */
 
@@ -125,7 +125,7 @@ int pb_read(pb_file* pbf, void* buff, int amt)
 
          n = tmp - wrap;
 
-         if (n > 0) (void) u_mem_cpy(bp, pbf->next, n);
+         if (n > 0) (void) u__memcpy(bp, pbf->next, n);
 
          bp = &(((char*)bp)[n]);
 
@@ -133,7 +133,7 @@ int pb_read(pb_file* pbf, void* buff, int amt)
 
          if (wrap > 0)
             {
-            (void) u_mem_cpy(bp, pbf->pb_buff, wrap);
+            (void) u__memcpy(bp, pbf->pb_buff, wrap);
 
             bp = &(((char *)bp)[wrap]);
             }

@@ -59,7 +59,7 @@ public:
       {
       U_TRACE(5, "UPosting::setDocID(%#.*S)", U_STRING_TO_TRACE(*str_inode))
 
-      str_cur_doc_id->assign(str_inode);
+      str_cur_doc_id->_assign(str_inode);
 
       ptr_cur_doc_id = str_cur_doc_id->data();
 

@@ -65,7 +65,7 @@ target_triplet = @target@
 @PCRE_TRUE@am__append_25 = pcre/pcre.cpp
 @SSL_TRUE@am__append_26 = base/ssl/des3.c base/ssl/dgst.c
 @SSL_TRUE@am__append_27 = ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
-@SSL_TRUE@		     ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp
+@SSL_TRUE@		     ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp ssl/net/ssl_session.cpp
 
 @SSL_TRUE@@SSL_TS_TRUE@am__append_28 = ssl/timestamp.cpp
 @SSH_TRUE@am__append_29 = ssh/net/sshsocket.cpp
@@ -197,8 +197,9 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	flex/flexer.cpp flex/bison.cpp pcre/pcre.cpp \
 	ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
 	ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp \
-	ssl/timestamp.cpp ssh/net/sshsocket.cpp ldap/ldap.cpp \
-	curl/curl.cpp xml/expat/attribute.cpp xml/expat/element.cpp \
+	ssl/net/ssl_session.cpp ssl/timestamp.cpp \
+	ssh/net/sshsocket.cpp ldap/ldap.cpp curl/curl.cpp \
+	xml/expat/attribute.cpp xml/expat/element.cpp \
 	xml/expat/xml_parser.cpp xml/soap/soap_fault.cpp \
 	xml/soap/soap_gen_method.cpp xml/soap/soap_parser.cpp \
 	xml/soap/soap_encoder.cpp xml/libxml2/node.cpp \
@@ -256,7 +257,7 @@ am__objects_22 = base.lo base_error.lo hash.lo utility.lo minilzo.lo \
 @USE_PARSER_TRUE@am__objects_27 = flexer.lo bison.lo
 @PCRE_TRUE@am__objects_28 = pcre.lo
 @SSL_TRUE@am__objects_29 = certificate.lo pkcs7.lo crl.lo pkcs10.lo \
-@SSL_TRUE@	mime_pkcs7.lo sslsocket.lo
+@SSL_TRUE@	mime_pkcs7.lo sslsocket.lo ssl_session.lo
 @SSL_TRUE@@SSL_TS_TRUE@am__objects_30 = timestamp.lo
 @SSH_TRUE@am__objects_31 = sshsocket.lo
 @LDAP_TRUE@am__objects_32 = ldap.lo
@@ -815,6 +816,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/socket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/socket_ext.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sshsocket.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ssl_session.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sslsocket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/string.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/string_ext.Plo@am__quote@
@@ -1735,6 +1737,14 @@ sslsocket.lo: ssl/net/sslsocket.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o sslsocket.lo `test -f 'ssl/net/sslsocket.cpp' || echo '$(srcdir)/'`ssl/net/sslsocket.cpp
 
+ssl_session.lo: ssl/net/ssl_session.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ssl_session.lo -MD -MP -MF $(DEPDIR)/ssl_session.Tpo -c -o ssl_session.lo `test -f 'ssl/net/ssl_session.cpp' || echo '$(srcdir)/'`ssl/net/ssl_session.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/ssl_session.Tpo $(DEPDIR)/ssl_session.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ssl/net/ssl_session.cpp' object='ssl_session.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ssl_session.lo `test -f 'ssl/net/ssl_session.cpp' || echo '$(srcdir)/'`ssl/net/ssl_session.cpp
+
 timestamp.lo: ssl/timestamp.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT timestamp.lo -MD -MP -MF $(DEPDIR)/timestamp.Tpo -c -o timestamp.lo `test -f 'ssl/timestamp.cpp' || echo '$(srcdir)/'`ssl/timestamp.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/timestamp.Tpo $(DEPDIR)/timestamp.Plo
@@ -2244,6 +2254,7 @@ uninstall-am: uninstall-libLTLIBRARIES uninstall-local \
 dist-hook:
 	find $(distdir) -type f -name \*.c   -exec /utility/expand_tab '{}' ';'
 	find $(distdir) -type f -name \*.cpp -exec /utility/expand_tab '{}' ';'
+	find $(distdir) -type f -name \*.usp -exec /utility/expand_tab '{}' ';'
 
 clean-local:
 	-rm -rf core .libs *.bb* *.da *.gcov *.la gmon.out

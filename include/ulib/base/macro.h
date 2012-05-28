@@ -41,7 +41,7 @@
 #ifdef DEBUG
 #  define U_ASSERT_MACRO(assertion,msg,info) \
       if ((bool)(assertion) == false) { \
-         u_printf("%W%N%W: %Q%W%s%W\n" \
+         u__printf("%W%N%W: %Q%W%s%W\n" \
          "-------------------------------------\n" \
          " pid: %W%P%W\n" \
          " file: %W%s%W\n" \
@@ -114,10 +114,10 @@
 
 /* Manage message info */
 
-#  define U_ERROR(  format,args...) (u_flag_exit = -1, u_printf("%W%N%W: %WERROR: "  format"%W",BRIGHTCYAN,RESET,RED    , ##args,RESET))
-#  define U_ABORT(  format,args...) (u_flag_exit = -2, u_printf("%W%N%W: %WABORT: "  format"%W",BRIGHTCYAN,RESET,RED    , ##args,RESET))
-#  define U_WARNING(format,args...) (u_flag_exit =  2, u_printf("%W%N%W: %WWARNING: "format"%W",BRIGHTCYAN,RESET,YELLOW , ##args,RESET))
-#  define U_MESSAGE(format,args...)                    u_printf("%W%N%W: "           format,    BRIGHTCYAN,RESET        , ##args)
+#  define U_ERROR(  format,args...) (u_flag_exit = -1, u__printf("%W%N%W: %WERROR: "   format "%W",BRIGHTCYAN,RESET,RED    , ##args,RESET))
+#  define U_ABORT(  format,args...) (u_flag_exit = -2, u__printf("%W%N%W: %WABORT: "   format "%W",BRIGHTCYAN,RESET,RED    , ##args,RESET))
+#  define U_WARNING(format,args...) (u_flag_exit =  2, u__printf("%W%N%W: %WWARNING: " format "%W",BRIGHTCYAN,RESET,YELLOW , ##args,RESET))
+#  define U_MESSAGE(format,args...)                    u__printf("%W%N%W: "            format,     BRIGHTCYAN,RESET        , ##args)
 
 #  define   U_ERROR_SYSCALL(msg)      U_ERROR("%R",msg)
 #  define   U_ABORT_SYSCALL(msg)      U_ABORT("%R",msg)

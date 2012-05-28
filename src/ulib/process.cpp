@@ -305,20 +305,20 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
       {
       bool flag;
       w32_cmd = buffer1;
-      int len = u_str_len(pathname);
+      int len = u__strlen(pathname);
 
       if (len)
          {
          index = len;
 
-         (void) u_mem_cpy(w32_cmd, pathname, len);
+         (void) u__memcpy(w32_cmd, pathname, len);
          }
 
       for (int i = 1; argv[i]; ++i)
          {
          w32_cmd[index++] = ' ';
 
-         len = u_str_len(argv[i]);
+         len = u__strlen(argv[i]);
 
          if (len)
             {
@@ -328,7 +328,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
 
             if (flag) w32_cmd[index++] = '"';
 
-            (void) u_mem_cpy(w32_cmd+index, argv[i], len);
+            (void) u__memcpy(w32_cmd+index, argv[i], len);
 
             index += len;
 
@@ -351,13 +351,13 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
 
       for (int len, i = 0; envp[i]; ++i, ++index)
          {
-         len = u_str_len(envp[i]);
+         len = u__strlen(envp[i]);
 
          if (len)
             {
             U_INTERNAL_ASSERT_MINOR(index+len+1,32000)
 
-            (void) u_mem_cpy(w32_envp+index, envp[i], len);
+            (void) u__memcpy(w32_envp+index, envp[i], len);
 
             index += len;
 
@@ -525,25 +525,25 @@ char* UProcess::exitInfo(int _status)
 
    if (WIFEXITED(_status))
       {
-      n = u_sn_printf(buffer, sizeof(buffer), "Exit %d", WEXITSTATUS(_status));
+      n = u__snprintf(buffer, sizeof(buffer), "Exit %d", WEXITSTATUS(_status));
       }
    else if (WIFSIGNALED(_status))
       {
 #  ifndef WCOREDUMP
 #  define WCOREDUMP(status) ((status) & 0200) // settimo bit
 #  endif
-      n = u_sn_printf(buffer, sizeof(buffer), "Signal %Y%s", WTERMSIG(_status), (WCOREDUMP(_status) ? " - core dumped" : ""));
+      n = u__snprintf(buffer, sizeof(buffer), "Signal %Y%s", WTERMSIG(_status), (WCOREDUMP(_status) ? " - core dumped" : ""));
       }
    else if (WIFSTOPPED(_status))
       {
-      n = u_sn_printf(buffer, sizeof(buffer), "Signal %Y", WSTOPSIG(_status));
+      n = u__snprintf(buffer, sizeof(buffer), "Signal %Y", WSTOPSIG(_status));
       }
 #  ifndef WIFCONTINUED
 #  define WIFCONTINUED(status)  ((status) == 0xffff)
 #  endif
    else if (WIFCONTINUED(_status))
       {
-      (void) u_mem_cpy(buffer, "SIGCONT", (n = U_CONSTANT_SIZE("SIGCONT")));
+      (void) u__memcpy(buffer, "SIGCONT", (n = U_CONSTANT_SIZE("SIGCONT")));
       }
 
    buffer[n] = '\0';

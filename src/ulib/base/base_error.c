@@ -864,7 +864,7 @@ void u_execOnExit(void)
 
       char command[U_PATH_MAX];
 
-      (void) u_sn_printf(command, sizeof(command), "%s %s %P %N", cmd_on_exit, u_progpath);
+      (void) u__snprintf(command, sizeof(command), "%s %s %P %N", cmd_on_exit, u_progpath);
 
       U_INTERNAL_PRINT("command = %s", command)
 

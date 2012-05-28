@@ -18,10 +18,12 @@
 
 #ifdef USE_LIBSSL
 #  include <ulib/ssl/net/sslsocket.h>
-#  define Socket USSLSocket
+#  define Socket        USSLSocket
+#  define SocketInit(b) USSLSocket(b,0,false)
 #else
 #  include <ulib/net/tcpsocket.h>
-#  define Socket UTCPSocket
+#  define Socket        UTCPSocket
+#  define SocketInit(b) UTCPSocket(b)
 #endif
 
 /**
@@ -95,7 +97,7 @@ public:
    Constructs a new UImapClient with default values for all properties
    */
 
-   UImapClient(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6), buffer(4000)
+   UImapClient(bool bSocketIsIPv6 = false) : SocketInit(bSocketIsIPv6), buffer(4000)
       {
       U_TRACE_REGISTER_OBJECT(0, UImapClient, "%b", bSocketIsIPv6)
 
@@ -372,8 +374,8 @@ private:
    */
    bool syncCommand(const char* format, ...) U_NO_EXPORT;
 
-   UImapClient(const UImapClient&) : Socket(false) {}
-   UImapClient& operator=(const UImapClient&)      { return *this; }
+   UImapClient(const UImapClient&) : SocketInit(false) {}
+   UImapClient& operator=(const UImapClient&)          { return *this; }
 };
 
 #endif

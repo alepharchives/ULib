@@ -1,8 +1,8 @@
-GET /login?mac=68%3A09%3A27%3A7c%3A28%3A8a&ip=172.16.10.23&redirect=http%3A%2F%2Fnews.offerteregalo.com%2Ff%2Ftr.aspx%2F&gateway=10.8.0.10%3A5280&timeout=0&token=36383a30393a32373a37633a32383a38612631333335383932343733260041d467016090a59b55d01a7e3d8fa9&ap=ap@Smarianovella-r29587_rspro HTTP/1.1
+GET /js/mobile.js HTTP/1.1
+Connection: Keep-Alive
 Host: wifi-aaa.comune.fi.it
-User-Agent: Mozilla/5.0 (iPhone; CPU iPhone OS 5_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9B179 Safari/7534.48.3
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-Referer: http://news.offerteregalo.com/f/tr.aspx/?&x=pv&5Ug&h=oqx_xqt107eb=qr/xyiib=9hkfzpsj:3kh26b&x=pv&.00e.868aa3hQS$zdie8f7cI5=q1/pst2dQS*/7&7:c&x=pv&2h&I9=oz1/xs3hQS*z6i02h.l0hpI9=oztws/iQS*2b4i6&x=pv&z=OFFERTEREGALO3hQS*zd7h2at=/oa7:8:f2dQS*/g6d4dt=zfQS*3f2f7cq=/iQS*2b4i6&x=pv&t=3hQS*ziib=9hkf&x=pp&q4&x=pp&u&&x=pp&p9ie04670n&x=pp&u&fg&x=pp&u&.&x=pp&r:I5&x=pv&-mgoBAAMA&1MAAA/3Q0AA&x=pv&KBcMQA_A&x=pp&r:NCLM
-Accept-Language: it-it\r\nAccept-Encoding: gzip, deflate
-Connection: keep-alive
-
+Accept: */*
+Accept-Charset: iso-8859-1,utf-8;q=0.7,*;q=0.7
+Accept-Encoding: gzip, deflate, x-gzip, identity; q=0.9
+Accept-Language: it;q=1.0,en;q=0.5,fr;q=0.5,de;q=0.5,pt;q=0.5,es;q=0.5
+Referer: http://wifi-aaa.comune.fi.it/login?mac=04%3Aa8%3A2a%3Ab8%3A01%3A5

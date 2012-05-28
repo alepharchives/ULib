@@ -924,6 +924,9 @@ typedef unsigned long long uint64;
 #endif
 
 
+/* disable HTTP Cache Request Support features */
+#undef U_HTTP_CACHE_REQUEST_DISABLE
+
 /* install directory for plugins */
 #undef U_LIBEXECDIR
 

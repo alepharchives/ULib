@@ -90,7 +90,7 @@ public:
             id     = template_file[id_key];
             result = template_file[result_key];
 
-            buffer_len = u_sn_printf(buffer, sizeof(buffer),
+            buffer_len = u__snprintf(buffer, sizeof(buffer),
                                "\nStart TestID <%W%s%W>\n"
                                "----------------------------------"
                                "----------------------------------\n",
@@ -140,7 +140,7 @@ public:
                if (flag_log ||
                    n == -1)
                   {
-                  buffer_len = u_sn_printf(buffer, sizeof(buffer), "command '%s' didn't start %R\n", argv_exec[(n == -1 ? 1 : 0)], 0); // NB: the last argument (0) is necessary...
+                  buffer_len = u__snprintf(buffer, sizeof(buffer), "command '%s' didn't start %R\n", argv_exec[(n == -1 ? 1 : 0)], 0); // NB: the last argument (0) is necessary...
 
                   print(0);
                   }
@@ -182,7 +182,7 @@ public:
 
             if (pass)
                {
-               buffer_len = u_sn_printf(buffer, sizeof(buffer),
+               buffer_len = u__snprintf(buffer, sizeof(buffer),
                                         "----------------------------------"
                                         "----------------------------------\n"
                                         "End   TestID <%W%s%W> - %WPASS%W\n\n",
@@ -190,7 +190,7 @@ public:
                }
             else
                {
-               buffer_len = u_sn_printf(buffer, sizeof(buffer),
+               buffer_len = u__snprintf(buffer, sizeof(buffer),
                                         "----------------------------------"
                                         "----------------------------------\n"
                                         "End   TestID <%W%s%W> - %WFAIL%W\n"

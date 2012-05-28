@@ -246,15 +246,7 @@ public:
       U_INTERNAL_ASSERT(password.isNullTerminated())
       U_INTERNAL_ASSERT(cert_file.isNullTerminated())
 
-      USSLSocket::method = (SSL_METHOD*) SSLv3_client_method();
-
-      socket = U_NEW(USSLSocket(bIPv6));
-
-      // These are the 1024 bit DH parameters from "Assigned Number for SKIP Protocols"
-      // (http://www.skip-vpn.org/spec/numbers.html).
-      // See there for how they were generated.
-
-      getSocket()->useDHFile();
+      socket = U_NEW(USSLSocket(bIPv6, 0, false));
 
       // Load our certificate
 

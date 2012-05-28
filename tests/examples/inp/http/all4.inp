@@ -1,8 +1,13 @@
-POST /Send/Raw HTTP/1.1
-User-Agent: Mozilla/5.0 (compatible; PowerOffer10; 1.1.0.9; )
-Content-Type: application/x-www-form-urlencoded
-Host: www.poweroffer.net
-Content-Length: 143
-Expect: 100-continue
+GET /css/masterprv.css HTTP/1.1
+Connection: Keep-Alive
+Host: wifi-aaa.comune.fi.it
+Accept: text/css,*/*;q=0.1
+Accept-Charset: iso-8859-1,utf-8;q=0.7,*;q=0.7
+Accept-Encoding: gzip, deflate, x-gzip, identity; q=0.9
+Accept-Language: it;q=1.0,en;q=0.5,fr;q=0.5,de;q=0.5,pt;q=0.5,es;q=0.5
+Referer: http://wifi-aaa.comune.fi.it/login?mac=04%3Aa8%3A2a%3Ab8%3A01%3A5c&ip=172.16.3.163&redirect=http%3A%2F%2Fd.facebook.com%2Fapperror&gateway=10.8.0.3%3A5280&timeout=0&token=30343a61383a32613a62383a30313a35632631333336343936343738261935a63737da174f557105da4714ca57&ap=ap@Calza-r29587_rspro
+User-Agent: Mozilla/5.0 (Symbian/3; Series60/5.3 NokiaN8-00; Profile/MIDP-2.1 Configuration/CLDC-1.1 ) AppleWebKit/533.4 (KHTML, like Gecko) NokiaBrowser/7.4.2.6 Mobile Safari/533.4 3gpp-gba
+X-Nokia-MusicShop-Bearer: WLAN
+X-Nokia-MusicShop-Version: 14.1139.31
+x-wap-profile: "http://nds1.nds.nokia.com/uaprof/NN8-00r300-3G.xml"
 
-uno=a&due=b&tre=c&quattro=adadsasdasdasdd

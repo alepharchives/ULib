@@ -83,7 +83,7 @@ UStringRep::UStringRep(const char* t)
 
    U_INTERNAL_ASSERT_POINTER(t)
 
-   set(u_str_len(t), 0U, t);
+   set(u__strlen(t), 0U, t);
 }
 
 UStringRep::UStringRep(const char* t, uint32_t tlen)
@@ -139,7 +139,7 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
 
       char* _ptr = (char*)r->str;
 
-      if (ptr && length) (void) u_mem_cpy((void*)_ptr, ptr, length);
+      if (ptr && length) (void) u__memcpy((void*)_ptr, ptr, length);
 
       _ptr[length] = '\0';
       }
@@ -170,7 +170,7 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
 
       r->set(length, capacity, map);
 
-      if (ptr) (void) u_mem_cpy((void*)map, ptr, length);
+      if (ptr) (void) u__memcpy((void*)map, ptr, length);
       }
 
    U_RETURN_POINTER(r, UStringRep);
@@ -300,7 +300,7 @@ void UStringRep::assign(UStringRep*& rep, const char* s, uint32_t n)
       U_INTERNAL_DUMP("src+n = %p (must be <=) dst = %p", s+n, ptr)
       U_INTERNAL_DUMP("dst+n = %p (must be <=) src = %p", ptr+n, s)
 
-      (void) u_mem_cpy(ptr, s, n);
+      (void) u__memcpy(ptr, s, n);
 
       ptr[(rep->_length = n)] = '\0';
       }
@@ -398,7 +398,7 @@ uint32_t UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
 
-   (void) u_mem_cpy(s, str + pos, n);
+   (void) u__memcpy(s, str + pos, n);
 
    U_RETURN(n);
 }
@@ -538,7 +538,7 @@ void UStringRep::size_adjust(uint32_t value)
       }
 #endif
 
-   _length = (value == U_NOT_FOUND ? u_str_len(str) : value);
+   _length = (value == U_NOT_FOUND ? u__strlen(str) : value);
 
    U_INTERNAL_ASSERT(invariant())
 }
@@ -547,10 +547,10 @@ UString::UString(const char* t)
 {
    U_TRACE_REGISTER_OBJECT(0, UString, "%S", t)
 
-   uint32_t len = (t ? u_str_len(t) : 0);
+   uint32_t len = (t ? u__strlen(t) : 0);
 
    if (len) rep = UStringRep::create(t, len, 0U);
-   else      copy(UStringRep::string_rep_null);
+   else     _copy(UStringRep::string_rep_null);
 }
 
 UString::UString(const char* t, uint32_t len)
@@ -558,7 +558,7 @@ UString::UString(const char* t, uint32_t len)
    U_TRACE_REGISTER_OBJECT(0, UString, "%.*S,%u", len, t, len)
 
    if (len) rep = UStringRep::create(t, len, 0U);
-   else     copy( UStringRep::string_rep_null);
+   else     _copy(UStringRep::string_rep_null);
 }
 
 UString& UString::operator=(const UString& str)
@@ -567,7 +567,7 @@ UString& UString::operator=(const UString& str)
 
    U_MEMORY_TEST_COPY(str)
 
-   assign(str.rep);
+   _assign(str.rep);
 
    return *this;
 }
@@ -581,28 +581,28 @@ UString UString::substr(const char* t, uint32_t tlen) const
    U_RETURN_STRING(result);
 }
 
-char* UString::c_strdup() const                          { return strndup(rep->str, rep->_length); }
-char* UString::c_strndup(uint32_t pos, uint32_t n) const { return strndup(rep->str + pos, rep->fold(pos, n)); }
+char* UString::c_strdup() const                             { return strndup(rep->str, rep->_length); }
+char* UString::c_strndup(uint32_t pos, uint32_t n) const    { return strndup(rep->str + pos, rep->fold(pos, n)); }
 
-UString& UString::assign(const char* s)                  { return assign(s, u_str_len(s)); }
-UString& UString::append(const char* s)                  { return append(s, u_str_len(s)); }
-UString& UString::append(UStringRep* _rep)               { return append(_rep->str, _rep->_length); }
-UString& UString::append(const UString& str)             { return append(str.data(), str.size()); }
+UString& UString::assign(const char* s)                     { return assign(s, u__strlen(s)); }
+UString& UString::append(const char* s)                     { return append(s, u__strlen(s)); }
+UString& UString::append(UStringRep* _rep)                  { return append(_rep->str, _rep->_length); }
+UString& UString::append(const UString& str)                { return append(str.data(), str.size()); }
 
 __pure bool UString::equal(UStringRep* _rep) const          { return same(_rep) || rep->equal(_rep); }
-__pure bool UString::equal(const char* s) const             { return rep->equal(s, u_str_len(s)); }
+__pure bool UString::equal(const char* s) const             { return rep->equal(s, u__strlen(s)); }
 __pure bool UString::equal(const char* s, uint32_t n) const { return rep->equal(s, n); }
 __pure bool UString::equalnocase(const UString& str) const  { return equalnocase(str.rep); }
 
-void UString::size_adjust_force(uint32_t value)      { rep->size_adjust_force(value); }
+void UString::size_adjust_force(uint32_t value)             { rep->size_adjust_force(value); }
 
-void UString::setEmpty()                             { rep->size_adjust(0); }
+void UString::setEmpty()                                    { rep->size_adjust(0); }
 
-UString  UString::substr(uint32_t pos, uint32_t n) const { return substr(rep->str + pos, rep->fold(pos, n)); }
+UString  UString::substr(uint32_t pos, uint32_t n) const    { return substr(rep->str + pos, rep->fold(pos, n)); }
 
-UString& UString::operator+=(const UString& str)         { return append(str.data(), str.size()); }
+UString& UString::operator+=(const UString& str)            { return append(str.data(), str.size()); }
 
-UString& UString::erase(uint32_t pos, uint32_t n)        { return replace(pos, rep->fold(pos, n), "", 0); }
+UString& UString::erase(uint32_t pos, uint32_t n)           { return replace(pos, rep->fold(pos, n), "", 0); }
 
 __pure uint32_t UString::find(const UString& str, uint32_t pos, uint32_t how_much) const
    { return find(str.data(), pos, str.size(), how_much); }
@@ -614,7 +614,7 @@ void UString::clear()
 {
    U_TRACE(0, "UString::clear()")
 
-   assign(UStringRep::string_rep_null);
+   _assign(UStringRep::string_rep_null);
 
    U_INTERNAL_ASSERT(invariant())
 }
@@ -666,7 +666,7 @@ void UString::setBuffer(uint32_t n)
       }
    else
       {
-      set(UStringRep::create(0U, n, 0));
+      _set(UStringRep::create(0U, n, 0));
       }
 
    U_INTERNAL_ASSERT(invariant())
@@ -692,7 +692,7 @@ bool UString::reserve(uint32_t n)
 
    n = U_SIZE_TO_CHUNK(n);
 
-   set(UStringRep::create(rep->_length, n, rep->str));
+   _set(UStringRep::create(rep->_length, n, rep->str));
 
    U_INTERNAL_ASSERT(invariant())
 
@@ -707,7 +707,7 @@ void UString::mmap(const char* map, uint32_t len)
 
    U_INTERNAL_ASSERT(map != MAP_FAILED)
 
-   if (isMmap() == false) set(UStringRep::create(map, len, U_NOT_FOUND));
+   if (isMmap() == false) _set(UStringRep::create(map, len, U_NOT_FOUND));
    else
       {
       rep->str     = map;
@@ -734,7 +734,7 @@ U_NO_EXPORT char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
 
    if (n == 0)
       {
-      assign(UStringRep::string_rep_null);
+      _assign(UStringRep::string_rep_null);
 
       return 0;
       }
@@ -761,10 +761,10 @@ U_NO_EXPORT char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
 
       UStringRep* r = UStringRep::create(n, __capacity, 0);
 
-      if (pos)       (void) u_mem_cpy((void*)r->str,            str, pos);
-      if (how_much)  (void) u_mem_cpy((char*)r->str + pos + n2, src, how_much);
+      if (pos)       (void) u__memcpy((void*)r->str,            str, pos);
+      if (how_much)  (void) u__memcpy((char*)r->str + pos + n2, src, how_much);
 
-      set(r);
+      _set(r);
 
       str = (char*)r->str;
       }
@@ -785,7 +785,7 @@ UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
 
    char* ptr = __replace(pos, n1, n2);
 
-   if (ptr && n2) (void) u_mem_cpy(ptr, s, n2);
+   if (ptr && n2) (void) u__memcpy(ptr, s, n2);
 
    U_INTERNAL_ASSERT(invariant())
 
@@ -822,7 +822,7 @@ U_NO_EXPORT char* UString::__append(uint32_t n)
       {
       r = UStringRep::create(sz, U_SIZE_TO_CHUNK(sz1), str);
 
-      set(r);
+      _set(r);
 
       str = (char*)r->str;
       }
@@ -840,7 +840,7 @@ UString& UString::append(const char* s, uint32_t n)
       {
       char* ptr = __append(n);
 
-      (void) u_mem_cpy(ptr, s, n);
+      (void) u__memcpy(ptr, s, n);
       }
 
    U_INTERNAL_ASSERT(invariant())
@@ -864,19 +864,19 @@ UString& UString::append(uint32_t n, char c)
    return *this;
 }
 
-void UString::duplicate(uint32_t _space) const
+void UString::duplicate(uint32_t with_space) const
 {
-   U_TRACE(0, "UString::duplicate(%u)", _space)
+   U_TRACE(0, "UString::duplicate(%u)", with_space)
 
    // NB: it is not only for a substring...
    // U_INTERNAL_ASSERT(rep->_capacity == 0) // [0 const | -1 mmap]...
 
    uint32_t sz = size();
 
-   UStringRep* r = (sz > 0 ? UStringRep::create(sz, sz + _space, rep->str)
-                           : UStringRep::create(0U,        100U,        0));
+   UStringRep* r = (sz > 0 ? UStringRep::create(sz, sz + with_space, rep->str)
+                           : UStringRep::create(0U,            100U,        0));
 
-   ((UString*)this)->set(r);
+   ((UString*)this)->_set(r);
 
    U_INTERNAL_ASSERT(invariant())
    U_INTERNAL_ASSERT(isNullTerminated())
@@ -899,7 +899,7 @@ void UString::setNullTerminated() const
       ((char*)rep->str)[rep->_length] = '\0';
       }
 
-   U_INTERNAL_ASSERT_EQUALS(u_str_len(rep->str),rep->_length)
+   U_INTERNAL_ASSERT_EQUALS(u__strlen(rep->str),rep->_length)
 }
 
 void UString::resize(uint32_t n, char c)
@@ -1675,7 +1675,7 @@ U_EXPORT UString operator+(const UString& lhs, const UString& rhs)
 
 U_EXPORT UString operator+(const char* lhs, const UString& rhs)
 {
-   uint32_t len = u_str_len(lhs);
+   uint32_t len = u__strlen(lhs);
    UString str(len + rhs.size());
 
    (void) str.append(lhs, len);
@@ -1695,7 +1695,7 @@ U_EXPORT UString operator+(char lhs, const UString& rhs)
 }
 
 U_EXPORT UString operator+(const UString& lhs, const char* rhs)
-{ UString str(lhs); (void) str.append(rhs, u_str_len(rhs)); return str; }
+{ UString str(lhs); (void) str.append(rhs, u__strlen(rhs)); return str; }
 
 U_EXPORT UString operator+(const UString& lhs, char rhs)
 { UString str(lhs); (void) str.append(uint32_t(1), rhs); return str; }
@@ -1716,7 +1716,7 @@ const char* UStringRep::dump(bool reset) const
 
    char buffer[1024];
 
-   UObjectIO::os->write(buffer, u_sn_printf(buffer, sizeof(buffer), "%.*S", U_min(_length, 256U), str));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%.*S", U_min(_length, 256U), str));
 
    if (reset)
       {

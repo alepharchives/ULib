@@ -17,7 +17,7 @@ void UDataSession::fromString(const UString& _data)
 {
    U_TRACE(0, "UDataSession::fromString(%.*S)", U_STRING_TO_TRACE(_data))
 
-   U_ASSERT_DIFFERS(_data.empty(), true)
+   U_ASSERT_EQUALS(_data.empty(), false)
 
    data = _data;
 

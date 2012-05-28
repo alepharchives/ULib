@@ -462,7 +462,7 @@ public:
       U_TRACE(0, "USocket::setTcpCongestion(%S)", value)
 
 #  ifdef TCP_CONGESTION
-      (void) setSockOpt(IPPROTO_TCP, TCP_CONGESTION, (const void*)&value, u_str_len(value) + 1);
+      (void) setSockOpt(IPPROTO_TCP, TCP_CONGESTION, (const void*)&value, u__strlen(value) + 1);
 #  endif
       }
 

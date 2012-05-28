@@ -16,7 +16,7 @@ U_INTERNAL_ASSERT_EQUALS(query,0)
 U_INTERNAL_ASSERT_EQUALS(crono,0)
 U_INTERNAL_ASSERT_EQUALS(footer,0)
 
-ir		 = U_NEW(IR);
+ir     = U_NEW(IR);
 query  = U_NEW(Query);
 crono  = U_NEW(UCrono);
 footer = U_NEW(UString(200U));
@@ -24,10 +24,10 @@ footer = U_NEW(UString(200U));
 UString cfg_index;
 
 if ((ir->loadFileConfig(cfg_index) &&
-	  ir->openCDB(false)) == false)
-	{
-	U_ERROR("usp_init() of servlet 'ir_web' failed...");
-	}
+     ir->openCDB(false)) == false)
+   {
+   U_ERROR("usp_init() of servlet 'ir_web' failed...");
+   }
 
 footer->snprintf("ver. %s, with %u documents and %u words.", ULIB_VERSION, cdb_names->size(), cdb_words->size());
 
@@ -53,77 +53,77 @@ delete footer;
 -->
 <!--#code
 union uudatasession {
-	UDataSession*  po;
-	IRDataSession* pe;
+   UDataSession*  po;
+   IRDataSession* pe;
 };
 
-const char* ref	  = "?ext=help";
-uint32_t num_args	  = UHTTP::form_name_value->size() / 2;
+const char* ref     = "?ext=help";
+uint32_t num_args   = UHTTP::form_name_value->size() / 2;
 bool form_with_help = false;
 
 if (UHTTP::isHttpGET())
-	{
-	if (num_args == 1)
-		{
-		UString ext_val = USP_FORM_VALUE_FROM_NAME("ext");
+   {
+   if (num_args == 1)
+      {
+      UString ext_val = USP_FORM_VALUE_FROM_NAME("ext");
 
-		if (ext_val.equal(U_CONSTANT_TO_PARAM("help")))
-			{
-			ref				= "ir_web";
-			form_with_help = true;
-			}
-		else
-			{
-			if (UHTTP::getDataSession(0,0) == false) return HTTP_BAD_REQUEST;
+      if (ext_val.equal(U_CONSTANT_TO_PARAM("help")))
+         {
+         ref            = "ir_web";
+         form_with_help = true;
+         }
+      else
+         {
+         if (UHTTP::getDataSession(0,0) == false) return HTTP_BAD_REQUEST;
 
-			UHTTP::num_page_cur = USP_FORM_VALUE(0).strtol();
+         UHTTP::num_page_cur = USP_FORM_VALUE(0).strtol();
 
-			union uudatasession pd = { UHTTP::data_session };
+         union uudatasession pd = { UHTTP::data_session };
 
-			UHTTP::num_item_tot = pd.pe->vec->size();
-			}
-		}
-	}
+         UHTTP::num_item_tot = pd.pe->vec->size();
+         }
+      }
+   }
 else if (UHTTP::isHttpPOST())
-	{
-	UString phrase = USP_FORM_VALUE(0);
+   {
+   UString phrase = USP_FORM_VALUE(0);
 
-	if (num_args != 2 || phrase.empty()) return HTTP_BAD_REQUEST;
+   if (num_args != 2 || phrase.empty()) return HTTP_BAD_REQUEST;
 
-	if (UHTTP::getDataSession(0,0) == false) UHTTP::setSessionCookie(0);
+   if (UHTTP::getDataSession(0,0) == false) UHTTP::setSessionCookie(0);
 
-	IR_SESSION.QUERY	  = phrase;
-	IR_SESSION.FOR_PAGE = UHTTP::num_item_for_page = USP_FORM_VALUE(1).strtol();
+   IR_SESSION.QUERY    = phrase;
+   IR_SESSION.FOR_PAGE = UHTTP::num_item_for_page = USP_FORM_VALUE(1).strtol();
 
-	query->clear();
+   query->clear();
 
-	crono->start();
+   crono->start();
 
-	query->run(IR_SESSION.QUERY.c_str());
+   query->run(IR_SESSION.QUERY.c_str());
 
-	crono->stop();
+   crono->stop();
 
-	if ((UHTTP::num_item_tot = WeightWord::size()))
-		{
-		UHTTP::num_page_start = 1;
-		UHTTP::num_page_end   = UHTTP::num_item_for_page;
+   if ((UHTTP::num_item_tot = WeightWord::size()))
+      {
+      UHTTP::num_page_start = 1;
+      UHTTP::num_page_end   = UHTTP::num_item_for_page;
 
-		WeightWord::sortObjects();
+      WeightWord::sortObjects();
 
-		IR_SESSION.vec = WeightWord::vec;
-							  WeightWord::vec = 0;
-		}
+      IR_SESSION.vec = WeightWord::vec;
+                       WeightWord::vec = 0;
+      }
 
-	(void) snprintf(IR_SESSION.timebuf, sizeof(IR_SESSION.timebuf), "%f", crono->getTimeElapsedInSecond());
+   (void) snprintf(IR_SESSION.timebuf, sizeof(IR_SESSION.timebuf), "%f", crono->getTimeElapsedInSecond());
 
-	UHTTP::num_page_cur = 1;
+   UHTTP::num_page_cur = 1;
 
-	UHTTP::putDataSession(0,0,0);
-	}
+   UHTTP::putDataSession(0,0,0);
+   }
 else
-	{
-	return HTTP_BAD_METHOD;
-	}
+   {
+   return HTTP_BAD_METHOD;
+   }
 -->
 <html>
 <head>
@@ -140,7 +140,7 @@ else
 
       <div class="form_basic">
         <input type="text" name="phrase" value="" size="80" id="phrase" class="text" tabindex="1" accesskey="0">
-		  <input type="submit" value="Search" id="search" class="submit" tabindex="2" accesskey="1">
+        <input type="submit" value="Search" id="search" class="submit" tabindex="2" accesskey="1">
       </div>
 
       <div class="form_extension">
@@ -163,112 +163,112 @@ else
 if (form_with_help) {
 -->
 
-	<div class="help">
-	 <h1 class="title">Help</h1>
+   <div class="help">
+    <h1 class="title">Help</h1>
 
-	 <h2>What is This?</h2>
+    <h2>What is This?</h2>
 
-	 <p>This is a full-text search system. You can search for documents including some specified words.</p>
+    <p>This is a full-text search system. You can search for documents including some specified words.</p>
 
-	 <h2>How to Use</h2>
+    <h2>How to Use</h2>
 
-	 <p>Input search phrase into the field at the top of the page. For example, if you search for documents including "computer", input the
-	 following.</p>
-	 <pre>computer</pre>
+    <p>Input search phrase into the field at the top of the page. For example, if you search for documents including "computer", input the
+    following.</p>
+    <pre>computer</pre>
 
-	 <p>If you search for documents including both of "network" and "socket", input the following.</p>
-	 <pre>network socket</pre>
+    <p>If you search for documents including both of "network" and "socket", input the following.</p>
+    <pre>network socket</pre>
 
-	 <p>It is the same as the following.</p>
-	 <pre>network AND socket</pre>
+    <p>It is the same as the following.</p>
+    <pre>network AND socket</pre>
 
-	 <p>If you search for documents including "network" followed by "socket", input the following.</p>
-	 <pre>"network socket"</pre>
+    <p>If you search for documents including "network" followed by "socket", input the following.</p>
+    <pre>"network socket"</pre>
 
-	 <p>If you search for documents including one or both of "network" and "socket", input the following.</p>
-	 <pre>network OR socket</pre>
+    <p>If you search for documents including one or both of "network" and "socket", input the following.</p>
+    <pre>network OR socket</pre>
 
-	 <p>If you search for documents including "network" but without "socket", input the following.</p>
-	 <pre>network AND NOT socket</pre>
+    <p>If you search for documents including "network" but without "socket", input the following.</p>
+    <pre>network AND NOT socket</pre>
 
-	 <p>For more complex query, you can use "<code>(</code>". Note that the priority of "<code>(</code>" is higher than that of "<code>AND</code>",
-	 "<code>OR</code>" and "<code>NOT</code>". So, the following is to search for documents including one of "F1", "F-1", "Formula One", and including
-	 one of "champion" and "victory".</p>
-	 <pre>(F1 OR F-1 OR "Formula One") AND (champion OR victory)</pre>
+    <p>For more complex query, you can use "<code>(</code>". Note that the priority of "<code>(</code>" is higher than that of "<code>AND</code>",
+    "<code>OR</code>" and "<code>NOT</code>". So, the following is to search for documents including one of "F1", "F-1", "Formula One", and including
+    one of "champion" and "victory".</p>
+    <pre>(F1 OR F-1 OR "Formula One") AND (champion OR victory)</pre>
 
-	 <h2>You can use DOS wildcard characters</h2>
+    <h2>You can use DOS wildcard characters</h2>
 
-	 <p>If you search for documents including some words beginning with "inter", input the following.</p>
-	 <pre>inter*</pre>
+    <p>If you search for documents including some words beginning with "inter", input the following.</p>
+    <pre>inter*</pre>
 
-	 <p>If you search for documents including some words ending with "sphere", input the following.</p>
-	 <pre>*sphere</pre>
+    <p>If you search for documents including some words ending with "sphere", input the following.</p>
+    <pre>*sphere</pre>
 
-	 <p>If you search for documents matching some words matching "?n*able" (unable, unavoidable, inevitable, ...), input the following.</p>
-	 <pre>?n*able</pre>
+    <p>If you search for documents matching some words matching "?n*able" (unable, unavoidable, inevitable, ...), input the following.</p>
+    <pre>?n*able</pre>
 
-	 <h2>Other Faculties</h2>
+    <h2>Other Faculties</h2>
 
-	 <p>"<code>[...] per page</code>" specifies the number of shown documents per page. If documents over one page correspond, you can move to another
-	 page via anchors of "<code>PREV</code>" and "<code>NEXT</code>" at the bottom of the page.</p>
+    <p>"<code>[...] per page</code>" specifies the number of shown documents per page. If documents over one page correspond, you can move to another
+    page via anchors of "<code>PREV</code>" and "<code>NEXT</code>" at the bottom of the page.</p>
 
-	 <h2>Information</h2>
+    <h2>Information</h2>
 
-	 <p>See <a href="http://www.unirel.com/">the project site</a> for more detail.</p>
-	</div>
+    <p>See <a href="http://www.unirel.com/">the project site</a> for more detail.</p>
+   </div>
 
 <!--#code
 } else {
-	if (num_args == 0) {
+   if (num_args == 0) {
 -->
 
-	<div class="logo">
-		<h1 class="title">ULib search engine</h1>
-		<div class="caption">a full-text search system for communities</div>
-	</div>
+   <div class="logo">
+      <h1 class="title">ULib search engine</h1>
+      <div class="caption">a full-text search system for communities</div>
+   </div>
 
 <!--#code
-	} else {
+   } else {
 
-		UString link_paginazione = UHTTP::getLinkPagination();
+      UString link_paginazione = UHTTP::getLinkPagination();
 
       USP_PRINTF("<div id=\"estresult\" class=\"estresult\">\n"
-					  "  <div class=\"resinfo\">\n"
-					  "  Results of <strong>%u</strong> - <strong>%u</strong> of about <strong>%u</strong> for <strong>%s</strong> (%s sec.)\n"
-					  "  </div>\n",
-					  UHTTP::num_page_start, UHTTP::num_page_end, UHTTP::num_item_tot, IR_SESSION.QUERY.data(), IR_SESSION.timebuf);
+                 "  <div class=\"resinfo\">\n"
+                 "  Results of <strong>%u</strong> - <strong>%u</strong> of about <strong>%u</strong> for <strong>%s</strong> (%s sec.)\n"
+                 "  </div>\n",
+                 UHTTP::num_page_start, UHTTP::num_page_end, UHTTP::num_item_tot, IR_SESSION.QUERY.data(), IR_SESSION.timebuf);
 
-		if (UHTTP::num_item_tot == 0) {
+      if (UHTTP::num_item_tot == 0) {
 -->
-			<p class="note">Your search did not match any documents.</p>
+         <p class="note">Your search did not match any documents.</p>
 <!--#code
-			} else {
+         } else {
 
-			UString DOC, SNIPPET_DOC(U_CAPACITY), _basename, filename, pathname1(U_CAPACITY), pathname2(U_CAPACITY);
+         UString DOC, SNIPPET_DOC(U_CAPACITY), _basename, filename, pathname1(U_CAPACITY), pathname2(U_CAPACITY);
 
-			for (uint32_t i = UHTTP::num_page_start-1; i < UHTTP::num_page_end; ++i)
-				{
-				filename  = (*IR_SESSION.vec)[i]->filename;
-				_basename = UStringExt::basename(filename);
+         for (uint32_t i = UHTTP::num_page_start-1; i < UHTTP::num_page_end; ++i)
+            {
+            filename  = (*IR_SESSION.vec)[i]->filename;
+            _basename = UStringExt::basename(filename);
 
-				pathname1.snprintf(  "/doc/%.*s", U_STRING_TO_TRACE(filename));
-				pathname2.snprintf("%w/doc/%.*s", U_STRING_TO_TRACE(filename));
+            pathname1.snprintf(  "/doc/%.*s", U_STRING_TO_TRACE(filename));
+            pathname2.snprintf("%w/doc/%.*s", U_STRING_TO_TRACE(filename));
 
-				DOC = UFile::contentOf(pathname2);
+            DOC = UFile::contentOf(pathname2);
 
-				UXMLEscape::encode(DOC, SNIPPET_DOC);
+            UXMLEscape::encode(DOC, SNIPPET_DOC);
 
-				USP_PRINTF("<dl class=\"doc\"\n"
-							  "  <dt><a href=\"%s\" class=\"doc_title\">%.*s</a></dt>\n"
-							  "  <dd class=\"doc_text\">%s <code class=\"delim\">...</code></dd>\n"
-							  "  <dd class=\"doc_navi\"><span class=\"doc_link\">file://%s</span></dd>\n"
-							  "</dl>\n",
-							  pathname1.data(), U_STRING_TO_TRACE(_basename), SNIPPET_DOC.data(), pathname2.data());
-				}
-			}
+            USP_PRINTF("<dl class=\"doc\"\n"
+                       "  <dt><a href=\"%s\" class=\"doc_title\">%.*s</a></dt>\n"
+                       "  <dd class=\"doc_text\">%s <code class=\"delim\">...</code></dd>\n"
+                       "  <dd class=\"doc_navi\"><span class=\"doc_link\">file://%s</span></dd>\n"
+                       "</dl>\n",
+                       pathname1.data(), U_STRING_TO_TRACE(_basename), SNIPPET_DOC.data(), pathname2.data());
+            }
+         }
 
-		USP_PRINTF("<div class=\"paging\">%.*s</div></div>\n", U_STRING_TO_TRACE(link_paginazione));
-		}
+      USP_PRINTF("<div class=\"paging\">%.*s</div></div>\n", U_STRING_TO_TRACE(link_paginazione));
+      }
 }
 -->
 

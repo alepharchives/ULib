@@ -31,37 +31,37 @@
   <table style="border: 1px solid black">
    <tr><th>Demo</th><th>Source</th><th>Description</th></tr>
 
-	<!--#code
-	std::string filename = "../demos.txt";
-	std::ifstream demos(filename.c_str());
+   <!--#code
+   std::string filename = "../demos.txt";
+   std::ifstream demos(filename.c_str());
 
-	while (demos)
-		{
-		// read line
-		std::string line;
-		getline(demos, line);
+   while (demos)
+      {
+      // read line
+      std::string line;
+      getline(demos, line);
 
-		// find delimiters '|'
-		std::string::size_type n0 = line.find('|');
-		if (n0 == std::string::npos) continue;
-		std::string::size_type n1 = line.find('|', n0 + 1);
-		if (n1 == std::string::npos) continue;
+      // find delimiters '|'
+      std::string::size_type n0 = line.find('|');
+      if (n0 == std::string::npos) continue;
+      std::string::size_type n1 = line.find('|', n0 + 1);
+      if (n1 == std::string::npos) continue;
 
-		// extract parts
-		std::string url(line, 0, n0);
-		std::string name(line, n0 + 1, n1 - n0 - 1);
-		std::string description(line, n1 + 1);
+      // extract parts
+      std::string url(line, 0, n0);
+      std::string name(line, n0 + 1, n1 - n0 - 1);
+      std::string description(line, n1 + 1);
 
-		// skip empty urls and lines starting with '#'
-		if (url.empty() || line[0] == '#') continue;
+      // skip empty urls and lines starting with '#'
+      if (url.empty() || line[0] == '#') continue;
 
-		USP_PRINTF("<tr>"
-					  "<td><a href=\"%.*s\">%.*s</a></td>"
-					  "<td><a href=\"%.*s.usp?_nav_\">%.*s.usp</a></td>"
-					  "<td>%.*s</td>"
-					  "</tr>\n", U_STRING_TO_TRACE(url), U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(url), U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(description));
-		}
-	-->
+      USP_PRINTF("<tr>"
+                 "<td><a href=\"%.*s\">%.*s</a></td>"
+                 "<td><a href=\"%.*s.usp?_nav_\">%.*s.usp</a></td>"
+                 "<td>%.*s</td>"
+                 "</tr>\n", U_STRING_TO_TRACE(url), U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(url), U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(description));
+      }
+   -->
 
   </table>
  </body>

@@ -183,16 +183,17 @@ public:
 #endif
 
 protected:
-   UCommand cmd, pgp;
+   UCommand cmd, start_ap;
    UVector<Url*> vauth_url, vinfo_url;
    UVector<UIPAllow*> vLocalNetworkMask;
-   UVector<UString> vInternalDevice, vInternalDeviceLabel, vLocalNetwork, vauth, vauth_ip;
+   UVector<UString> vInternalDevice, vInternalDeviceLabel, vLocalNetwork, vauth, vauth_ip, vLoginValidate;
    UString input, output, location, fw_cmd, decrypt_cmd, decrypt_key, mode, gateway, access_point, extdev, intdev, localnet, auth_login, fw_env;
 
    static vPF unatexit;
    static int fd_stderr;
    static UPing** sockp;
-   static fd_set* addrmask;
+   static fd_set addrmask;
+   static fd_set* paddrmask;
    static UIptAccount* ipt;
    static long check_expire;
    static UNoCatPlugIn* pthis;
@@ -215,9 +216,11 @@ protected:
    void addPeerInfo(UModNoCatPeer* peer, time_t logout);
    void setRedirectLocation(UModNoCatPeer* peer, const UString& redirect, const Url& auth);
 
+   UModNoCatPeer* creatNewPeer(                     const UString& peer_ip);
+   void           checkOldPeer(UModNoCatPeer* peer, const UString& peer_ip);
+
    static UModNoCatPeer* getPeer(uint32_t i) __pure;
           UModNoCatPeer* getPeerFromMAC(const UString& mac);
-          UModNoCatPeer* creatNewPeer(const UString& peer_ip);
 
    static void notifyAuthOfUsersInfo();
    static void setHTTPResponse(const UString& content);
@@ -232,9 +235,9 @@ protected:
       {
       U_TRACE(0, "UNoCatPlugIn::isPingAsyncPending()")
 
-      U_INTERNAL_DUMP("nfds = %u addrmask = %p", nfds, addrmask)
+      U_INTERNAL_DUMP("arping = %b nfds = %u paddrmask = %p", arping, nfds, paddrmask)
 
-      bool result = (nfds && addrmask == 0);
+      bool result = (arping && nfds && paddrmask == 0);
 
       U_RETURN(result);
       }

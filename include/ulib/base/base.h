@@ -126,7 +126,6 @@ extern U_EXPORT const char* restrict  u_tmpdir;
 U_EXPORT void        u_setPid(void);
 U_EXPORT void        u_init_ulib_username(void);
 U_EXPORT void        u_init_ulib_hostname(void);
-U_EXPORT void        u_init_ulib_seed_hash(void);
 U_EXPORT const char* u_basename(const char* restrict path) __pure;
 U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure;
 U_EXPORT uint32_t    u_strftime(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, time_t now);
@@ -175,14 +174,17 @@ with flag '4' => format: %d/%m/%y %T
 with flag '5' => format: %d/%m/%Y %T
 with flag '6' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
 with flag '7' => format: %a, %d %b %Y %H:%M:%S %Z (LOCAL: use u_now + u_now_adjust)
+with flag '8' => format: %d/%b/%Y:%H:%M:%S %z
          default format: %a, %d %b %Y %H:%M:%S GMT (HTTP header) (use u_now)
 ---------------------------------------------------------------------------------
 */
 extern U_EXPORT int     u_printf_fileno;
 extern U_EXPORT int32_t u_printf_string_max_length;
 
-U_EXPORT void        u_printf(                                             const char* restrict format, ...);
-U_EXPORT uint32_t u_sn_printf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
+/* NB: u_printf() and u_snprintf conflit with /usr/include/unicode/urename.h */
+
+U_EXPORT void       u__printf(                                             const char* restrict format, ...);
+U_EXPORT uint32_t u__snprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
 U_EXPORT uint32_t u_vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp);
 
 #ifdef __cplusplus

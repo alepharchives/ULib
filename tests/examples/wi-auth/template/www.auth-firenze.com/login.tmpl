@@ -1,4 +1,4 @@
-<!--#if expr="$AP_OK && $URL_BANNER_AP" -->
+<!--#if expr=$URL_BANNER_AP -->
   <div id="topBanner">
 	 <script language='JavaScript' type='text/javascript'>wimoveBuildBanner('<!--#echo var=$URL_BANNER_AP -->');</script>
 	 <noscript></noscript>
@@ -12,7 +12,6 @@
       <div id="menubox" style="width:100%%;height:100%%;padding:0px;margin:0px;">
         <div id="menulogo" class="menurow">
 
-<!--#if expr=$AP_OK -->
 		  <img src="images/logo_fiwifi.png"></div>
 
         <div id="menufirst" class="menurow">
@@ -27,25 +26,16 @@
           <button id="bottomleftbox" onclick="window.location.href='/registrazione?ap=%s'">
 			 <img src="images/btn_signin.png">
 			 </button> <button id="bottomrightbox" onclick="window.location.href='%s'"><img src="images/btn_login.png"></button>
-<!--#else -->
-		  <img src="images/firenze-wifi2.png" style="height:115px;width:457px;"></div>
-
-        <div id="menufirst" class="menurow">
-          <button id="topleftbox" onclick="window.location.href='%s'">
-          <h2>Aiuto</h2>
-			 </button> <button id="toprightbox" disabled="disabled" onclick="window.location.href='%s'">
-          <h2>Accesso libero</h2>
-			 </button>
-        </div>
-
-        <div id="menusecond" class="menurow">
-          <button id="bottomleftbox" onclick="window.location.href='/registrazione?ap=%s'">
-          <h2>Registrati</h2>
-			 </button> <button id="bottomrightbox" onclick="window.location.href='%s'">
-          <h2>Naviga</h2></button>
-<!--#endif -->
 		  
         </div>
       </div>
     </div>
   </div>
+
+<!--#if expr=$URL_BANNER_COMUNE -->
+  <div id="bottomBanner">
+        <script language='JavaScript' type='text/javascript'>wimoveBuildBanner('<!--#echo var=$URL_BANNER_COMUNE -->');</script>
+        <noscript></noscript>
+  </div>
+<!--#endif -->
+

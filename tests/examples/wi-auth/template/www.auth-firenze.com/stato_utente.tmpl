@@ -1,35 +1,19 @@
-  <div id="page-wrap">
-    <div id="inside">
-      <div id="header">
-        <table class="centered" width="784" border="0">
-          <tr>
-            <td><img src="images/logo_fiwifi.png" width="784" height="251"></td>
-          </tr>
-        </table>
-      </div>
 
-      <div id="left-sidebar-no-dimension"></div>
+  <div id="containerBig">
+    <div id="wrapperAuto">
+      <div id="loginbox" style="width:100%%;height:100%%;padding:0px;margin:0px;">
+        <div id="menulogo" class="menurow">
+				<img src="images/logo_fiwifi.png" />
+		  </div>
 
-      <div id="main-content-without-sidebar">
-		<br/>
-        <center>
-          <h1>Stato utente</h1>
-        </center>
-
-        <hr noshade="1">
-
-        <table border="0" cellpadding="5" cellspacing="0">
-          <tr><td>Version</td><td>1.1.0</td></tr> 
-          <tr><td>Current Time</td><td>%s</td></tr>
-        </table>
-        <hr noshade="1">
+        <center><h1>Stato utente</h1></center>
 		  <br />
-        <table border="0" cellpadding="5" cellspacing="0">
-          <tr><td>Access Point</td><td>%s</td></tr>
-          <tr><td></td></tr>
-			 <tr><td align="center"><h2>Current User</h2></td>
-
-			 <table border="1" cellpadding="5">
+		  <table border="1" cellpadding="5">
+          <tr><th>Utente:&nbsp;&nbsp;%s&nbsp;&nbsp;(%s)</th></tr>
+          <tr><th>Access Point:&nbsp;&nbsp;%s&nbsp;&nbsp;(IP:%s)</th></tr>
+		  </table>
+		  <br />
+		  <table border="1" cellpadding="5">
           <tr>
             <th>User UID</th>
             <th>IP address</th>
@@ -42,13 +26,12 @@
             <th>Status</th>
           </tr>
 		    %s
-          </table>
-          </table>
-          <br />
-          <br />
+		  </table>
 
-      <div id="footer">
-        %s
+        <div style="clear: both;"></div>
+        <div id="footer"></div>
       </div>
+
+      <div style="clear: both;"></div>
     </div>
   </div>

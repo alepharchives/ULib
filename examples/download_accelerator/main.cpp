@@ -76,7 +76,7 @@ static struct timeval now;
    "=====>..."       - progress bar             - the rest
 */
 
-#define APPEND_LITERAL(s) (void) u_mem_cpy(p, s, sizeof(s) - 1); p += sizeof(s) - 1;
+#define APPEND_LITERAL(s) (void) u__memcpy(p, s, sizeof(s) - 1); p += sizeof(s) - 1;
 
 class ProgressBar : public UEventTime {
 public:
@@ -107,7 +107,7 @@ public:
 
       total_length     = initial + to_download;
       initial_length   = initial;
-      size_legible_len = u_sn_printf(size_legible, sizeof(size_legible), "%lu", total_length);
+      size_legible_len = u__snprintf(size_legible, sizeof(size_legible), "%lu", total_length);
 
       screen_width = u_getScreenWidth();
 
@@ -132,7 +132,7 @@ public:
 
       U_INTERNAL_ASSERT(size <= total_length)
 
-      size_legible_len = u_sn_printf(size_legible, sizeof(size_legible), "%lu", size);
+      size_legible_len = u__snprintf(size_legible, sizeof(size_legible), "%lu", size);
 
       unsigned dlbytes_size  = 1 + U_max(size_legible_len, 13),
                progress_size = screen_width - (4 + 2 + dlbytes_size + 11 + 13);
@@ -189,7 +189,7 @@ public:
 
       (void) sprintf(p, " %-13s", size_legible);
 
-      p += u_str_len(p);
+      p += u__strlen(p);
 
    // U_INTERNAL_DUMP("p - buffer = %u", p - buffer)
 
@@ -203,7 +203,7 @@ public:
 
          (void) sprintf(p, " %7.2f%s/s", dlspeed, u_short_units[units]);
 
-         p += u_str_len(p);
+         p += u__strlen(p);
 
       // U_INTERNAL_DUMP("p - buffer = %u", p - buffer)
 
@@ -242,7 +242,7 @@ public:
             (void) sprintf(p, " ETA %d:%02d:%02d", eta_hrs, eta_min, eta_sec);
             }
 
-         p += u_str_len(p);
+         p += u__strlen(p);
          }
       else
          {
@@ -411,7 +411,7 @@ public:
       U_INTERNAL_ASSERT(up->check  == 0)
       U_INTERNAL_ASSERT(up->source == htons(ident))
 
-      (void) u_mem_cpy(&ip->ip_dst, host->ip.get_in_addr(), host->ip.getInAddrLength()); /* remote address */
+      (void) u__memcpy(&ip->ip_dst, host->ip.get_in_addr(), host->ip.getInAddrLength()); /* remote address */
 
       outpacket.tv  = host->send_time;
       outpacket.seq = host->seq;
@@ -955,7 +955,7 @@ public:
 
       if (argv[optind] == NULL) U_ERROR("arg <url> not specified...");
 
-      Url url(argv[optind], u_str_len(argv[optind]));
+      Url url(argv[optind], u__strlen(argv[optind]));
 
       // create file dest
 

@@ -71,27 +71,27 @@ main (int argc, char* argv[])
    U_INTERNAL_ASSERT(argc >= 5)
 
    sprintf(buf, "%s %s", argv[3], argv[4]);
-   u_sn_printf(buffer, 4096, "%4D", 0);
+   u__snprintf(buffer, 4096, "%4D", 0);
    if (strncmp(buf, buffer, strlen(buf) - n_cmp)) goto failed;
 
    sprintf(buf, "%s %s", argv[1], argv[2]);
-   u_sn_printf(buffer, 4096, "%U %H", 0);
+   u__snprintf(buffer, 4096, "%U %H", 0);
    if (stricmp(buf, buffer)) goto failed;
 
    sprintf(buf, "%s", u_basename(argv[0]));
-   u_sn_printf(buffer, 4096, "%N", 0);
+   u__snprintf(buffer, 4096, "%N", 0);
    if (strcmp(buf, buffer)) goto failed;
 
    sprintf(buf, "%d", getpid());
-   u_sn_printf(buffer, 4096, "%P", 0);
+   u__snprintf(buffer, 4096, "%P", 0);
    if (strcmp(buf, buffer)) goto failed;
 
    sprintf(buf, "%s", "true false");
-   u_sn_printf(buffer, 4096, "%b %b", true, false);
+   u__snprintf(buffer, 4096, "%b %b", true, false);
    if (strcmp(buf, buffer)) goto failed;
 
    sprintf(buf, "%s", "-2,000,000 -200 2,000 2,000,000,000 -2,147,483,648");
-   u_sn_printf(buffer, 4096, "%'d %'d %'d %'d %'d", -2000000, -200, 2000, 2000000000, INT_MIN);
+   u__snprintf(buffer, 4096, "%'d %'d %'d %'d %'d", -2000000, -200, 2000, 2000000000, INT_MIN);
    if (strcmp(buf, buffer)) goto failed;
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -105,7 +105,7 @@ main (int argc, char* argv[])
 #ifdef DEBUG
    sprintf(buf, "%s", "0000000|70 69 70 70 6f ff 70 69:70 70 6f ff 70 69 70 70 |pippo.pippo.pipp\n"
                       "0000010|6f ff 70 69 70 70 6f ff:                        |o.pippo.        \n");
-   u_sn_printf(buffer, 4096, "%M", sizeof(bytes), bytes);
+   u__snprintf(buffer, 4096, "%M", sizeof(bytes), bytes);
    if (strcmp(buf, buffer)) goto failed;
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -113,38 +113,38 @@ main (int argc, char* argv[])
 #else
    sprintf(buf, "%s", "<10001111 01011101 00000000 00000000>");
 #endif
-   u_sn_printf(buffer, 4096, "%B", 23951);
+   u__snprintf(buffer, 4096, "%B", 23951);
    if (strcmp(buf, buffer)) goto failed;
 #endif
 
 #ifndef HAVE_STRSIGNAL
    sprintf(buf, "SIGILL (%d, Illegal instruction)", SIGILL);
-   u_sn_printf(buffer, 4096, "%Y", SIGILL);
+   u__snprintf(buffer, 4096, "%Y", SIGILL);
    if (strcmp(buf, buffer)) goto failed;
 
    sprintf(buf, "SIGSEGV (%d, Segmentation fault)", SIGSEGV);
-   u_sn_printf(buffer, 4096, "%Y", SIGSEGV);
+   u__snprintf(buffer, 4096, "%Y", SIGSEGV);
    if (strcmp(buf, buffer)) goto failed;
 
    sprintf(buf, "SIGHUP (%d, Hangup)", SIGHUP);
-   u_sn_printf(buffer, 4096, "%Y", SIGHUP);
+   u__snprintf(buffer, 4096, "%Y", SIGHUP);
    if (strcmp(buf, buffer)) goto failed;
 #endif
 
 #ifndef HAVE_STRERROR
    sprintf(buf, "test - EFAULT (%d, Bad address)", EFAULT);
    errno = EFAULT;
-   u_sn_printf(buffer, 4096, "%R", "test");
+   u__snprintf(buffer, 4096, "%R", "test");
    if (strcmp(buf, buffer)) goto failed;
 
    sprintf(buf, "test - E2BIG (%d, Argument list too long)", E2BIG);
    errno = E2BIG;
-   u_sn_printf(buffer, 4096, "%R", "test");
+   u__snprintf(buffer, 4096, "%R", "test");
    if (strcmp(buf, buffer)) goto failed;
 #endif
 
    sprintf(buf, "test - EX_PROTOCOL (%d, remote error in protocol)", EX_PROTOCOL);
-   u_sn_printf(buffer, 4096, "test - %r", EX_PROTOCOL);
+   u__snprintf(buffer, 4096, "test - %r", EX_PROTOCOL);
    if (strcmp(buf, buffer)) goto failed;
 
    len = u_escape_encode((unsigned char*)U_CONSTANT_TO_PARAM("stringa che continua 01234567890"), buf, 25, false);

@@ -18,10 +18,12 @@
 
 #ifdef USE_LIBSSL
 #  include <ulib/ssl/net/sslsocket.h>
-#  define Socket USSLSocket
+#  define Socket        USSLSocket
+#  define SocketInit(b) USSLSocket(b,0,false)
 #else
 #  include <ulib/net/tcpsocket.h>
-#  define Socket UTCPSocket
+#  define Socket        UTCPSocket
+#  define SocketInit(b) UTCPSocket(b)
 #endif
 
 #include <ulib/container/vector.h>
@@ -117,7 +119,7 @@ public:
    Constructs a new UPop3Client with default values for all properties
    */
 
-   UPop3Client(bool bSocketIsIPv6 = false) : Socket(bSocketIsIPv6), buffer(4000)
+   UPop3Client(bool bSocketIsIPv6 = false) : SocketInit(bSocketIsIPv6), buffer(4000)
       {
       U_TRACE_REGISTER_OBJECT(0, UPop3Client, "%b", bSocketIsIPv6)
 
@@ -193,11 +195,12 @@ protected:
 
 private:
    const char* status() U_NO_EXPORT;
+
    bool syncCommand(int eod, const char* format, ...) U_NO_EXPORT;
    bool syncCommandML(const UString& req, int* vpos, int* vend) U_NO_EXPORT;
 
-   UPop3Client(const UPop3Client&) : Socket(false) {}
-   UPop3Client& operator=(const UPop3Client&)      { return *this; }
+   UPop3Client(const UPop3Client&) : SocketInit(false) {}
+   UPop3Client& operator=(const UPop3Client&)          { return *this; }
 };
 
 #endif

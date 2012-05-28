@@ -198,7 +198,7 @@ void OtpAuthToken::stringify(UString& field)
 
       (void) U_SYSCALL(strftime, "%S,%d,%S,%p", (char*)ts.data(), 32, (char*)"%Y%m%d%H%M%S", localtime(&timestamp));
 
-      len = u_str_len(ts.data());
+      len = u__strlen(ts.data());
 
       U_STR_SIZE_ADJUST_FORCE(ts, len);
       }

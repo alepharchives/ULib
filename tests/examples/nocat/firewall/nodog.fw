@@ -2,6 +2,68 @@
 
 # nodog.fw
 
+networkMatchIface_do() {
+	awk -f - $* <<EOF
+function ip2int(ip) {
+	for (ret=0,n=split(ip,a,"\."),x=1;x<=n;x++) ret=or(lshift(ret,8),a[x]) 
+	return ret
+}
+
+BEGIN {
+	slpos=index(ARGV[1],"/")
+	tipaddr=ip2int(substr(ARGV[1],0,slpos-1))
+	tnetmask=compl(2**(32-int(substr(ARGV[1],slpos+1)))-1)
+	tnetwork=and(tipaddr,tnetmask)
+
+	slpos=index(ARGV[2],"/")
+	if (slpos == 0) {
+		ipaddr=ip2int(ARGV[2])
+		netmask=ip2int(ARGV[3])
+	} else {
+		ipaddr=ip2int(substr(ARGV[2],0,slpos-1))
+		netmask=compl(2**(32-int(substr(ARGV[2],slpos+1)))-1)
+	}
+	network=and(ipaddr,netmask)
+
+	if (network == tnetwork)
+		exit(1)
+
+	m=and(tnetwork,network)
+	if (m == network)
+		exit(2)
+	if (m == tnetwork)
+		exit(3)
+	exit(0)
+}
+EOF
+}
+
+networkMatchIface() {
+	iface=$1
+	net=$2
+
+	match=0
+	if which ip >/dev/null; then
+		ip addr show dev $iface | awk '/inet/{print $2}' | while read ip; do
+			networkMatchIface_do $net $ip
+			match=$?
+			if [ $match -gt 0 ]; then
+				exit $match
+			fi
+		done
+		match=$?
+	else
+		ifconfig $iface | awk '/inet/{i=$2;n=$4;gsub("^[^:]*:","",i);gsub("^[^:]*:","",n);print i" "n}' | while read ip nm; do
+			networkMatchIface_do $net $ip $nm
+			if [ $match -gt 0 ]; then
+				exit $match
+			fi
+		done
+		match=$?
+	fi
+	return $match
+}
+
 #-----------------------------------
 # START FUNCTION
 #-----------------------------------
@@ -111,6 +173,9 @@ initialize_fw() {
 			fi
 		done
 		for net in $LocalNetwork; do
+			networkMatchIface $iface $net
+			[ $? -eq 1 ] || continue
+
 			for fwmark in $classes; do
 				# Only forward tagged traffic per class
 				$fwd -i $iface -s $net -m mark --mark $fwmark -j ACCEPT
@@ -458,15 +523,15 @@ MaxSegmentSize=${MaxSegmentSize:-0}
 export DosAllowTries=${DosAllowTries:-5}
 export DosTimeInterval=${DosTimeInterval:-60}
 
-  (
-  echo "ENVIRONMENT:"
-  echo "-----------------------------------------------------------"
-  env
-  echo "-----------------------------------------------------------"
-  echo "STDERR:"
-  echo "-----------------------------------------------------------"
-  set -x
+# (
+# echo "ENVIRONMENT:"
+# echo "-----------------------------------------------------------"
+# env
+# echo "-----------------------------------------------------------"
+# echo "STDERR:"
+# echo "-----------------------------------------------------------"
+# set -x
 do_cmd "$@"
-  set +x
-  echo "-----------------------------------------------------------"
-  ) 2>/tmp/nodog_fw.$$ >&2
+# set +x
+# echo "-----------------------------------------------------------"
+# ) 2>/tmp/nodog_fw.$$ >&2

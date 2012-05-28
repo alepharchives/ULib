@@ -137,7 +137,7 @@ endif
 if SSL
 SRC_C   += base/ssl/des3.c base/ssl/dgst.c
 SRC_CPP += ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
-		     ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp
+		     ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp ssl/net/ssl_session.cpp
 if SSL_TS
 SRC_CPP += ssl/timestamp.cpp
 endif
@@ -267,6 +267,7 @@ lib_LTLIBRARIES = lib@ULIB@.la
 dist-hook:
 	find $(distdir) -type f -name \*.c   -exec /utility/expand_tab '{}' ';'
 	find $(distdir) -type f -name \*.cpp -exec /utility/expand_tab '{}' ';'
+	find $(distdir) -type f -name \*.usp -exec /utility/expand_tab '{}' ';'
 
 clean-local:
 	-rm -rf core .libs *.bb* *.da *.gcov *.la gmon.out

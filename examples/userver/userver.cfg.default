@@ -122,6 +122,8 @@ userver {
 #
 # MAINTENANCE_MODE           to switch the site to a maintenance page only
 # 
+# APACHE_LIKE_LOG            file to write NCSA extended/combined log format: "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\""
+# 
 # ENABLE_INOTIFY             enable automatic update of cached document root image with inotify
 # TELNET_ENABLE              accept fragmentation of header request (as happen with telnet)
 # CACHE_FILE_MASK            mask (DOS regexp) of pathfile that be cached in memory (default: "*.css|*.js|*.*html|*.png|*.gif|*.jpg")
@@ -167,6 +169,8 @@ mod_http {
 #                  ]
 
 # MAINTENANCE_MODE /ErrorDocument/down.html
+ 
+# APACHE_LIKE_LOG  /var/log/httpd/access_log
  
 # TELNET_ENABLE   yes
 # ENABLE_INOTIFY  yes

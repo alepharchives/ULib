@@ -118,7 +118,7 @@ bool UClient_Base::setHostPort(const UString& host, int _port)
           _port != 80)
          {
          char tmp[6];
-         int size = u_sn_printf(tmp, sizeof(tmp), "%d", _port);
+         int size = u__snprintf(tmp, sizeof(tmp), "%d", _port);
 
          host_port.push_back(':');
          host_port.append(tmp, size);
@@ -286,7 +286,7 @@ bool UClient_Base::setUrl(const UString& location)
 
          U_INTERNAL_DUMP("segment = %.*S", len, src)
 
-         (void) u_mem_cpy(dest, src, len);
+         (void) u__memcpy(dest, src, len);
 
          src   = p + 1;
          dest += len;
@@ -294,7 +294,7 @@ bool UClient_Base::setUrl(const UString& location)
 
       len = location.size();
 
-      (void) u_mem_cpy(dest, location.data(), len);
+      (void) u__memcpy(dest, location.data(), len);
 
       u_http_info.uri     = _buffer;
       u_http_info.uri_len = dest - ptr + len;

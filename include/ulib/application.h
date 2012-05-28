@@ -118,6 +118,8 @@ public:
 
          num_args = opt.getopt(argc, argv, &optind);
          }
+
+      u_gettimeofday();
       }
 
    static bool isOptions()

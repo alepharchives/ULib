@@ -65,8 +65,8 @@ void UClientImage_Base::logRequest(const char* filereq)
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
-   UServer_Base::log->log("%.*sreceived request (%u bytes) %.*S from %.*s\n",
-                           U_STRING_TO_TRACE(*UServer_Base::mod_name), sz, sz, ptr, U_STRING_TO_TRACE(*logbuf));
+   UServer_Base::log->log("%.*sreceived request (%u bytes) %s%.*S from %.*s\n",
+                           U_STRING_TO_TRACE(*UServer_Base::mod_name), sz, (pipeline ? "[pipeline] " : "" ), sz, ptr, U_STRING_TO_TRACE(*logbuf));
 
    u_printf_string_max_length = u_printf_string_max_length_save;
 
@@ -91,19 +91,26 @@ void UClientImage_Base::logResponse(const char* fileres)
 
    if (u_printf_string_max_length == -1)
       {
-      U_ASSERT_DIFFERS(wbuffer->empty(), true)
+      U_ASSERT_EQUALS(wbuffer->empty(), false)
 
       u_printf_string_max_length = u_findEndHeader(ptr, sz);
 
       if (u_printf_string_max_length == -1) u_printf_string_max_length = sz;
+#ifdef DEBUG
+      else
+         {
+         U_ASSERT(wbuffer->isEndHeader(u_printf_string_max_length-4))
+         }
+#endif
 
       U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
       }
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
+   U_INTERNAL_DUMP("pipeline = %b size_request = %u pbuffer->size() = %u", pipeline, size_request, pbuffer->size())
 
-   UServer_Base::log->log("%.*ssent response (%u bytes) %.*S to %.*s\n",
-                              U_STRING_TO_TRACE(*UServer_Base::mod_name), sz, sz, ptr, U_STRING_TO_TRACE(*logbuf));
+   UServer_Base::log->log("%.*ssent response (%u bytes) %s%.*S to %.*s\n",
+         U_STRING_TO_TRACE(*UServer_Base::mod_name), sz + body->size(), (pipeline ? "[pipeline] " : "" ), sz, ptr, U_STRING_TO_TRACE(*logbuf));
 
    u_printf_string_max_length = u_printf_string_max_length_save;
 
@@ -119,10 +126,6 @@ UClientImage_Base::UClientImage_Base()
    socket        = 0;
    logbuf        = (UServer_Base::isLog() ? U_NEW(UString(4000U)) : 0);
    last_response = 0;
-
-#ifdef USE_LIBSSL
-   ssl = 0;
-#endif
 
    sfd    = state = 0;
    start  = count = 0;
@@ -272,6 +275,7 @@ void UClientImage_Base::manageRequestSize(bool request_buffer_resize)
       if (pipeline)
          {
          U_INTERNAL_ASSERT_EQUALS(rstart,0U)
+         U_INTERNAL_ASSERT(pbuffer->isNull())
 
          *(request = pbuffer) = rbuffer->substr(0U, size_request);
          }
@@ -323,11 +327,10 @@ void UClientImage_Base::initAfterGenericRead()
    U_INTERNAL_DUMP("pipeline = %b pbuffer = %.*S", pipeline, U_STRING_TO_TRACE(*pbuffer))
 
    U_INTERNAL_ASSERT(pbuffer->isNull())
-   U_INTERNAL_ASSERT_DIFFERS(pipeline, true)
+   U_INTERNAL_ASSERT_EQUALS(pipeline,false)
 
-// if (pbuffer->isNull() == false) pbuffer->clear();
-   if (   body->isNull() == false)    body->clear();
-                                   wbuffer->clear();
+   if (body->isNull() == false) body->clear();
+                             wbuffer->clear();
 }
 
 // method VIRTUAL to redefine
@@ -392,12 +395,7 @@ void UClientImage_Base::handlerError(int sock_state)
 
    UServer_Base::pClientImage = this;
 
-   /* maybe we need some specific processing...
-
-   if (socket->isTimeout())
-      {
-      }
-   */
+// if (socket->isTimeout()) {} // maybe we need some specific processing...
 }
 
 int UClientImage_Base::handlerRead()
@@ -444,6 +442,21 @@ loop:
       state = UServer_Base::pluginsHandlerRequest(); // manage request...
       }
 
+   U_INTERNAL_DUMP("state = %d pipeline = %b socket->isClosed() = %b write_off = %b", state, pipeline, socket->isClosed(), write_off)
+
+   if (write_off ||
+       socket->isClosed())
+      {
+      if (write_off)
+         {
+         write_off = false;
+
+         goto next;
+         }
+      
+      goto error;
+      }
+
    if (handlerWrite() == U_NOTIFIER_DELETE) state = U_PLUGIN_HANDLER_ERROR;
 
 #ifdef U_HTTP_CACHE_REQUEST
@@ -454,6 +467,7 @@ loop:
       }
    else
 #endif
+next:
       if (UServer_Base::bpluginsHandlerReset &&
           UServer_Base::pluginsHandlerReset() == U_PLUGIN_HANDLER_ERROR)
       {
@@ -469,7 +483,10 @@ loop:
         pipeline == false)                 ||
         UServer_Base::flag_loop == false)
       {
+error:
       if (UServer_Base::isParallelization()) U_EXIT(0);
+  
+      resetPipeline();
 
       U_RETURN(U_NOTIFIER_DELETE);
       }
@@ -534,22 +551,11 @@ int UClientImage_Base::handlerWrite()
 {
    U_TRACE(0, "UClientImage_Base::handlerWrite()")
 
-   U_INTERNAL_ASSERT_POINTER(socket)
-
-   U_INTERNAL_DUMP("write_off = %b", write_off)
-
-   if (write_off ||
-       socket->isClosed())
-      {
-      write_off = false;
-
-      U_RETURN(U_NOTIFIER_OK);
-      }
-
-   U_INTERNAL_ASSERT_POINTER(wbuffer)
-
    U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer))
    U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body))
+
+   U_INTERNAL_ASSERT(socket->isOpen())
+   U_INTERNAL_ASSERT_EQUALS(write_off, false)
 
    if (count)
       {
@@ -631,8 +637,6 @@ void UClientImage_Base::handlerDelete()
 {
    U_TRACE(0, "UClientImage_Base::handlerDelete()")
 
-   U_INTERNAL_ASSERT_POINTER(socket)
-
    U_INTERNAL_DUMP("UNotifier::num_connection = %d UNotifier::min_connection = %d", UNotifier::num_connection, UNotifier::min_connection)
 
    if (UNotifier::num_connection > UNotifier::min_connection)
@@ -713,23 +717,4 @@ const char* UClientImage_Base::dump(bool _reset) const
 
    return 0;
 }
-
-#ifdef USE_LIBSSL
-const char* UClientImage<USSLSocket>::dump(bool _reset) const
-{
-   UClientImage_Base::dump(false);
-
-   *UObjectIO::os << '\n'
-                  << "ssl                                " << (void*)ssl;
-
-   if (_reset)
-      {
-      UObjectIO::output();
-
-      return UObjectIO::buffer_output;
-      }
-
-   return 0;
-}
-#endif
 #endif
