@@ -44,18 +44,20 @@ networkMatchIface() {
 
 	match=0
 	if which ip >/dev/null; then
-		ip addr show dev $iface | awk '/inet/{print $2}' | while read ip; do
+		#ip addr show dev $iface | awk '/inet/{print $2}' | while read ip; do
+		ip route show | grep "dev $iface " |  awk '{print $1}' | while read ip; do
 			networkMatchIface_do $net $ip
 			match=$?
-			if [ $match -gt 0 ]; then
+			if [ $match -eq 1 ]; then
 				exit $match
 			fi
 		done
 		match=$?
 	else
-		ifconfig $iface | awk '/inet/{i=$2;n=$4;gsub("^[^:]*:","",i);gsub("^[^:]*:","",n);print i" "n}' | while read ip nm; do
+		#ifconfig $iface | awk '/inet/{i=$2;n=$4;gsub("^[^:]*:","",i);gsub("^[^:]*:","",n);print i" "n}' | while read ip nm; do
+		route | awk '{if($8=="$iface"){print $1" "$3}}' | while read ip nm; do
 			networkMatchIface_do $net $ip $nm
-			if [ $match -gt 0 ]; then
+			if [ $match -eq 1 ]; then
 				exit $match
 			fi
 		done
@@ -80,20 +82,6 @@ initialize_fw() {
 	# Also protects against IP spoofing
 	#---------------------------------------------------------------
 	echo "1" > /proc/sys/net/ipv4/conf/all/rp_filter
-
-	if [ -f /etc/init.d/qos ]; then
-
-		/etc/init.d/qos enabled && ( /etc/init.d/qos stop ; /etc/init.d/qos start )
-
-		# Removing conflicting rules
-		RULES=`$IPTABLES -t mangle -L FORWARD -n -v | awk '/^[ ]+[0-9]/{print "iptables -t mangle -A POSTROUTING -o " $7 " -j " $3 }'`
-
-		$IPTABLES -t mangle -F FORWARD
-		$IPTABLES -t mangle -F OUTPUT
-		$IPTABLES -t mangle -F POSTROUTING
-
-		$RULES
-	fi
 
 	# Load all the kernel modules we need
 	for module in ipt_TOS xt_mac ipt_ACCOUNT; do
@@ -133,8 +121,8 @@ initialize_fw() {
 	$IPTABLES -t nat -D PREROUTING -j NoCat_Capture 2>/dev/null
 	$IPTABLES -t nat -A PREROUTING -j NoCat_Capture
 
-	$IPTABLES -t nat   -N NoCat_NAT  2>/dev/null
-	$IPTABLES -t nat   -F NoCat_NAT
+	$IPTABLES -t nat -N NoCat_NAT  2>/dev/null
+	$IPTABLES -t nat -F NoCat_NAT
 
 	# Only nat if we're not routing
 
@@ -145,12 +133,6 @@ initialize_fw() {
 	$IPTABLES -t mangle -F NoCat
 	$IPTABLES -t mangle -D PREROUTING -j NoCat 2>/dev/null
 	$IPTABLES -t mangle -A PREROUTING -j NoCat
-
-		  fwd="$IPTABLES -t filter -A NoCat"
-		ports="$IPTABLES -t filter -A NoCat_Ports"
-		  nat="$IPTABLES -t nat    -A NoCat_NAT"
-	redirect="$IPTABLES -t nat    -A NoCat_Capture"
-	  mangle="$IPTABLES -t mangle -A NoCat"
 
 	if [ $MembersOnly -gt 0 ]; then
 	  classes="1 2"
@@ -172,6 +154,7 @@ initialize_fw() {
 				ifaceinout=1
 			fi
 		done
+
 		for net in $LocalNetwork; do
 			networkMatchIface $iface $net
 			[ $? -eq 1 ] || continue
@@ -192,18 +175,7 @@ initialize_fw() {
 			fi
 
 			# Allow web traffic to the specified hosts, and don't capture connections intended for them
-			if [ "$AuthServiceIP" -o "$AllowedWebHosts" ]; then 
-				for host in $AuthServiceIP $AllowedWebHosts; do
-					for port in 80 443; do
-						for ifaceout in $MasqueradeDevice; do
-							$nat -o $ifaceout -s $net -d $host -p tcp --dport $port -j MASQUERADE
-						done
-						$redirect -s $net -d $host -p tcp --dport $port -j RETURN
-						$fwd      -s $net -d $host -p tcp --dport $port -j ACCEPT
-						$fwd      -d $net -s $host -p tcp --sport $port -j ACCEPT
-					done
-				done
-			fi
+			open_fw "$AuthServiceIP $1 $AllowedWebHosts"
 
 			# Accept forward and back traffic to/from DNSAddr
 			if [ "$DNSAddr" ]; then
@@ -227,6 +199,7 @@ initialize_fw() {
 				$mangle -i $iface -s $net -j MARK --set-mark 4
 			fi
 		done
+
 		if [ "$ifaceinout" != "1" ]; then
 			# Set packets from internal devices to fw mark 4, or 'denied', by default
 			$mangle -i $iface -j MARK --set-mark 4
@@ -303,29 +276,6 @@ initialize_fw() {
 	# Filter policy
 	$fwd -j DROP
 
-	##
-	# Add any other local firewall rules below
-	##
-
-	AllowMACAddressListFile=/etc/nocat.allowed
-
-	# List of allowed MAC/IP pairs or NETWORKS
-	# (use 00:00:00:00:00:00 as MAC to match all)
-	# MAC IP [CLASS]
-
-	if [ -n "$AllowMACAddressListFile" -a -r "$AllowMACAddressListFile" ]; then
-		grep -v '^[ \t]*#' "$AllowMACAddressListFile" | sed '/^$/d' | while read MAC IP Class; do
-			if [ -n "$MAC" -a -n "$IP" ]; then
-				if [ -z "$Class" ]; then
-					Class="Member"
-				fi
-				access_fw "-A" $MAC $IP $Class
-			else
-				echo "Bad line: $MAC $IP $Class, skipped" >&2
-			fi
-		done
-	fi
-
 	if [ $MaxSegmentSize -gt 0 ]; then
 		for iface in $ExternalDevice; do
 			$IPTABLES -t mangle -A POSTROUTING -p tcp --tcp-flags SYN,RST SYN -o $iface -j TCPMSS --clamp-mss-to-pmtu
@@ -398,10 +348,6 @@ access_fw() {
 
 clear_fw() {
 
-	if [ -f /etc/init.d/qos ]; then
-		/etc/init.d/qos enabled && /etc/init.d/qos stop
-	fi
-
 	$IPTABLES -F
 	$IPTABLES -t nat -F
 	$IPTABLES -t mangle -F
@@ -409,22 +355,6 @@ clear_fw() {
 	$IPTABLES -t nat -X
 	$IPTABLES -t mangle -X
 	$IPTABLES -t filter -X
-
-	if [ -n "$EnableBandwidthLimits"  ]; then
-		if [ -z "$IMQdevice" ]; then
-			IMQdevice=imq1
-		fi
-		if [ -n "$UploadRate" ]; then
-			tc qdisc del dev $IMQdevice root >&- 2>&-
-		fi
-		for ifacein in $InternalDevice; do
-			tc qdisc del dev $ifacein root >&- 2>&-
-		done
-	fi
-
-	if [ -f /etc/init.d/qos ]; then
-		/etc/init.d/qos enabled && /etc/init.d/qos start
-	fi
 }
 
 reset_fw() {
@@ -437,6 +367,30 @@ reset_fw() {
 	fi
 
 	$IPTABLES -t mangle -D PREROUTING -j NoCat 2>/dev/null
+}
+
+open_fw() {
+
+	# $1 host list
+
+	if [ "$1" ]; then
+		for host in $1; do
+			for port in 80 443; do
+				for ifaceout in $MasqueradeDevice; do
+					$nat -o $ifaceout -s $net -d $host -p tcp --dport $port -j MASQUERADE
+				done
+
+				$redirect -s $net -d $host -p tcp --dport $port -j RETURN
+				$fwd      -s $net -d $host -p tcp --dport $port -j ACCEPT
+				$fwd      -d $net -s $host -p tcp --sport $port -j ACCEPT
+			done
+		done
+	fi
+}
+
+list_open_fw() {
+
+	echo `$IPTABLES -L -nt mangle | grep 'MARK set 0x2'| cut -d' ' -f12`
 }
 
 check_arp() {
@@ -453,19 +407,28 @@ check_arp() {
 do_cmd() {
 
 	# Note: your PATH is inherited from the gateway process
+
 	if [ -x /usr/sbin/iptables ]; then
 		IPTABLES=/usr/sbin/iptables
 	else
 		IPTABLES="echo iptables"
 	fi
 
+		  fwd="$IPTABLES -t filter -A NoCat"
+		ports="$IPTABLES -t filter -A NoCat_Ports"
+		  nat="$IPTABLES -t nat    -A NoCat_NAT"
+	redirect="$IPTABLES -t nat    -A NoCat_Capture"
+	  mangle="$IPTABLES -t mangle -A NoCat"
+
 	case "$1" in
 		arp)			shift;	  check_arp		  "$@" ;; #				   (IP)
 		deny)			shift;     access_fw "-D" "$@" ;; # (CMD) (MAC) (IP) [Class]
-		permit)		shift;     access_fw "-A" "$@" ;; # (CMD) (MAC) (IP) [Class]
 		clear)      shift;      clear_fw		  "$@" ;;
 		reset)      shift;      reset_fw		  "$@" ;;
-		initialize) shift; initialize_fw		  "$@" ;;
+		permit)		shift;     access_fw "-A" "$@" ;; # (CMD) (MAC) (IP) [Class]
+
+		openlist)			  list_open_fw				 ;;
+		initialize) shift; initialize_fw		  "$1" ;;
 	esac
 }
 #-----------------------------------
@@ -477,8 +440,8 @@ export RouteOnly MasqueradeDevice DNSAddr IncludePorts ExcludePorts AllowedWebHo
 
 # load eventuale script configuration
 
-if [ -n "$FW_CONF" -a -r "$FW_CONF" ]; then
-	. $FW_CONF 2>/dev/null
+if [ -n "$FW_CONF" -a -s "$FW_CONF" ]; then
+	. $FW_CONF
 fi
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -497,6 +460,8 @@ fi
 #
 # AllowedWebHosts List any domains that you would like to allow web access (TCP port 80 and 443) BEFORE logging in (this is the
 #                 pre-'skip' stage, so be careful about what you allow
+#
+# MasqueradeDevice
 #
 # ExternalDevice  The interface connected to the Internet. Usually 'eth0' or 'eth1' under Linux, or maybe even 'ppp0' if you're running PPP or PPPoE
 #

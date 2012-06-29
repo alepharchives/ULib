@@ -215,7 +215,7 @@ public:
 
       uint32_t len = u__snprintf(buffer, sizeof(buffer), U_HTML_ELEMENT_TEMPLATE, icon, filename, old_prefix, old_buffer_len, old_buffer);
 
-      cout.write(buffer, len);
+      std::cout.write(buffer, len);
 
       if (xsltproc_out &&
           xsltproc_out->empty() == false)
@@ -226,11 +226,11 @@ public:
             {
             *row = (*vec)[i];
 
-            cout.write(row->data(), row->size());
-            cout.put('\n');
+            std::cout.write(row->data(), row->size());
+            std::cout.put('\n');
             }
 
-         cout.write(U_CONSTANT_TO_PARAM("</br>\n"));
+         std::cout.write(U_CONSTANT_TO_PARAM("</br>\n"));
 
          row->clear();
          vec->clear();
@@ -251,14 +251,14 @@ public:
 
       uint32_t len = u__snprintf(buffer, sizeof(buffer), U_HTML_FOLDER_TEMPLATE, branch, folder, folder, folder, old_buffer_len, old_buffer, branch);
 
-      cout.write(buffer, len);
+      std::cout.write(buffer, len);
       }
 
    static void printHTMLClose(uint32_t n)
       {
       U_TRACE(5, "Application::printHTMLClose(%u)", n)
 
-      for (uint32_t i = 0; i < n; ++i) cout.write(U_CONSTANT_TO_PARAM("</span>\n"));
+      for (uint32_t i = 0; i < n; ++i) std::cout.write(U_CONSTANT_TO_PARAM("</span>\n"));
       }
 
    // representation function
@@ -278,7 +278,7 @@ public:
          if (extract_tag &&
              strncmp(extract_tag, tag + sizeof("tag"), 3) == 0)
             {
-         // cout.write(content->data(), content->size());
+         // std::cout.write(content->data(), content->size());
 
             u_buffer_len = 0;
 
@@ -353,7 +353,7 @@ public:
          {
          if (extract->equal(prefix))
             {
-            cout.write(content->data(), content->size());
+            std::cout.write(content->data(), content->size());
 
             U_EXIT(0);
             }
@@ -406,9 +406,9 @@ public:
 
          UFile::writev(STDOUT_FILENO, iov+skip, 3-skip);
 #     else
-         cout << prefix << ' ';
-         cout.write(u_buffer_ptr, u_buffer_len);
-         cout << '\n';
+         std::cout << prefix << ' ';
+         std::cout.write(u_buffer_ptr, u_buffer_len);
+         std::cout << '\n';
 #     endif
          }
 
@@ -725,22 +725,22 @@ public:
             }
          else if (htmlview)
             {
-            cout.write(U_CONSTANT_TO_PARAM(U_HTML_TEMPLATE_START));
+            std::cout.write(U_CONSTANT_TO_PARAM(U_HTML_TEMPLATE_START));
 
             if (css_url)
                {
-               cout.write(U_CONSTANT_TO_PARAM("<link type=\"text/css\" href=\""));
-               cout.write(U_STRING_TO_PARAM(*css_url));
-               cout.write(U_CONSTANT_TO_PARAM("\" rel=\"stylesheet\">\n"));
+               std::cout.write(U_CONSTANT_TO_PARAM("<link type=\"text/css\" href=\""));
+               std::cout.write(U_STRING_TO_PARAM(*css_url));
+               std::cout.write(U_CONSTANT_TO_PARAM("\" rel=\"stylesheet\">\n"));
                }
             else
                {
-               cout.write(U_CONSTANT_TO_PARAM(U_HTML_CSS));
+               std::cout.write(U_CONSTANT_TO_PARAM(U_HTML_CSS));
                }
 
-            cout.write(U_CONSTANT_TO_PARAM(U_HTML_JAVASCRIPT));
+            std::cout.write(U_CONSTANT_TO_PARAM(U_HTML_JAVASCRIPT));
 
-            cout.write(U_CONSTANT_TO_PARAM(U_HTML_TEMPLATE_END));
+            std::cout.write(U_CONSTANT_TO_PARAM(U_HTML_TEMPLATE_END));
             }
 
 #     ifdef U_PRINT_TAB
@@ -765,7 +765,7 @@ public:
             printHTMLElement();
             printHTMLClose(old_tab);
 
-            cout.write(U_CONSTANT_TO_PARAM("\n</body>\n</html>"));
+            std::cout.write(U_CONSTANT_TO_PARAM("\n</body>\n</html>"));
             }
          else if (treeview)
             {

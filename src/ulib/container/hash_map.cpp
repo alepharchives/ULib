@@ -92,23 +92,6 @@ void UHashMap<void*>::insertAfterFind(UStringRep* _key, void* _elem)
    U_INTERNAL_DUMP("_length = %u", _length)
 }
 
-void UHashMap<void*>::insertAfterFind(const UString& _key, void* _elem)
-{
-   U_TRACE(0, "UHashMap<void*>::insertAfterFind(%.*S,%p)", U_STRING_TO_TRACE(_key), _elem)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_EQUALS(node,0)
-
-   // antepongo l'elemento all'inizio della lista delle collisioni
-
-   node = table[index] = U_NEW(UHashMapNode(_key, _elem, table[index], hash));
-
-   ++_length;
-
-   U_INTERNAL_DUMP("_length = %u", _length)
-}
-
 void UHashMap<void*>::_eraseAfterFind()
 {
    U_TRACE(0, "UHashMap<void*>::_eraseAfterFind()")

@@ -140,7 +140,7 @@ U_NO_EXPORT bool UPop3Client::syncCommand(int eod, const char* format, ...)
 
          if (end == (int)U_NOT_FOUND)
             {
-            end = USocketExt::read(this, buffer, U_CONSTANT_TO_PARAM(U_POP3_EOD));
+            end = USocketExt::readWhileNotToken(this, buffer, U_CONSTANT_TO_PARAM(U_POP3_EOD));
 
             if (end == (int)U_NOT_FOUND) U_RETURN(false);
             }
@@ -164,7 +164,7 @@ U_NO_EXPORT bool UPop3Client::syncCommandML(const UString& req, int* vpos, int* 
 
    end = Socket::send(req.data(), sz);
 
-   if (USocket::checkIO(end, sz) == false) U_RETURN(false);
+   if (USocket::checkIO(end) == false) U_RETURN(false);
 
    bool ok;
    int i = 0;

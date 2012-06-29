@@ -94,10 +94,7 @@ void UVector<void*>::insert(uint32_t pos, uint32_t n, void* elem) // add n copy 
       (void) U_SYSCALL(memmove, "%p,%p,%u", vec + pos + n, vec + pos, (_length - pos) * sizeof(void*));
       }
 
-   for (uint32_t i = 0; i < n; ++i)
-      {
-      vec[pos++] = elem;
-      }
+   for (uint32_t i = 0; i < n; ++i) vec[pos++] = elem;
 
    _length = new_length;
 }
@@ -346,20 +343,15 @@ UString UVector<UString>::join(const char* t, uint32_t tlen)
 
       if (sz) (void) u__memcpy(ptr, rep->data(), sz);
 
-      if (++i < _length)
-         {
-         ptr += sz;
+      if (++i >= _length) break;
 
-         if (tlen)
-            {
-            (void) u__memcpy(ptr, t, tlen);
+      ptr += sz;
 
-            ptr += tlen;
-            }
-         }
-      else
+      if (tlen)
          {
-         break;
+         (void) u__memcpy(ptr, t, tlen);
+
+         ptr += tlen;
          }
       }
 
@@ -856,12 +848,13 @@ uint32_t UVector<UString>::readline(istream& is)
    U_RETURN(_length - n);
 }
 
-U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
+void UVector<UString>::readVector(istream& is, int terminator)
 {
-   U_TRACE(0+256,"UVector<UString>::operator>>(%p,%p)", &is, &v)
+   U_TRACE(0, "UVector<UString>::readVector(%p,%d)", &is, terminator)
 
-   U_INTERNAL_ASSERT_MAJOR(v._capacity,0)
-   U_INTERNAL_ASSERT(is.peek() == '[' || is.peek() == '(')
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT_MAJOR(_capacity,0)
 
    int c = EOF;
 
@@ -871,11 +864,7 @@ U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
 
       streambuf* sb = is.rdbuf();
 
-      c = sb->sbumpc(); // skip '[' or '('
-
-      int terminator = (c == '[' ? ']' : ')');
-
-      while (c != EOF)
+      while (true)
          {
          do { c = sb->sbumpc(); } while (u_isspace(c) && c != EOF); // skip white-space
 
@@ -899,16 +888,34 @@ U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
 
       // U_INTERNAL_ASSERT_EQUALS(str.empty(), false) (NB: per file configurazione con elementi posizionali...)
 
-         v.push(str);
+         push(str);
          }
       }
 
    if (c == EOF) is.setstate(ios::eofbit);
+}
 
-// NB: we can load an empty vector (ex. mod_http)...
-// -------------------------------------------------
-// if (v._length == 0) is.setstate(ios::failbit);
-// -------------------------------------------------
+U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
+{
+   U_TRACE(0+256,"UVector<UString>::operator>>(%p,%p)", &is, &v)
+
+   U_INTERNAL_ASSERT_MAJOR(v._capacity,0)
+   U_INTERNAL_ASSERT(is.peek() == '[' || is.peek() == '(')
+
+   if (is.good())
+      {
+      streambuf* sb = is.rdbuf();
+
+      int c = sb->sbumpc(); // skip '[' or '('
+
+      if (c == EOF) is.setstate(ios::eofbit);
+      else          v.readVector(is, (c == '[' ? ']' : ')'));
+      }
+
+   // NB: we can load an empty vector (ex. mod_http)...
+   // -------------------------------------------------
+   // if (v._length == 0) is.setstate(ios::failbit);
+   // -------------------------------------------------
 
    return is;
 }

@@ -141,9 +141,9 @@ typedef struct uhttpinfo {
 #define U_http_is_connection_close  u_http_info.flag[6]
 #define U_http_no_cache             u_http_info.flag[7]
 #define U_http_is_navigation        u_http_info.flag[8]
-#define U_http_unused1              u_http_info.flag[9]
-#define U_http_unused2              u_http_info.flag[10]
-#define U_http_unused3              u_http_info.flag[11]
+#define U_http_chunked              u_http_info.flag[9]
+#define U_http_unused1              u_http_info.flag[10]
+#define U_http_unused2              u_http_info.flag[11]
 
 enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_GET = '4', HTTP_HEAD = '5', HTTP_OPTIONS = '6', HTTP_COPY = '7' };
 

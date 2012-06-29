@@ -160,7 +160,7 @@ protected:
    pthread_mutex_t     mutex;
    pthread_mutexattr_t mutex_attr;
 #  endif
-   bool flag, broken;
+   bool bmmap, broken;
 #endif
 
 #if defined(DEBUG) || defined(U_TEST)

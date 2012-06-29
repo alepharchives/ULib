@@ -184,8 +184,8 @@ public:
                   (void) setmode(1, O_BINARY);
 #              endif
 
-               // cout.write(U_STRING_TO_PARAM(certificate));
-                  cout.write(U_STRING_TO_PARAM(content));
+               // std::cout.write(U_STRING_TO_PARAM(certificate));
+                  std::cout.write(U_STRING_TO_PARAM(content));
                   }
 
                U_SYSCALL_VOID(EVP_PKEY_free, "%p", u_pkey);

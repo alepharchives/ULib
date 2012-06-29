@@ -86,7 +86,7 @@ public:
                              error_type,
                              U_STRING_TO_TRACE(*reason));
 
-      cout << buffer;
+      std::cout << buffer;
       }
 
    static void parseLineForError()
@@ -131,7 +131,7 @@ public:
 
       // append to report
 
-      cout << U_XML_REJECTED_START;
+      std::cout << U_XML_REJECTED_START;
 
       // setting for virus
 
@@ -149,7 +149,7 @@ public:
 
       // end report
 
-      cout << U_XML_REJECTED_END;
+      std::cout << U_XML_REJECTED_END;
       }
 
    void run(int argc, char* argv[], char* env[]) // MUST BE INLINE...

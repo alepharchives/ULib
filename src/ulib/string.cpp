@@ -116,6 +116,8 @@ UStringRep* UStringRep::create(const char* t, uint32_t tlen, uint32_t mode)
       r->set(tlen, mode, t);
       }
 
+   U_INTERNAL_ASSERT(r->invariant())
+
    U_RETURN_POINTER(r, UStringRep);
 }
 
@@ -172,6 +174,8 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
 
       if (ptr) (void) u__memcpy((void*)map, ptr, length);
       }
+
+   U_INTERNAL_ASSERT(r->invariant())
 
    U_RETURN_POINTER(r, UStringRep);
 }
@@ -447,6 +451,20 @@ __pure bool UStringRep::isWhiteSpace(uint32_t pos) const
    bool result = u_isWhiteSpace(str + pos, _length - pos);
 
    U_RETURN(result);
+}
+
+__pure bool UStringRep::someWhiteSpace(uint32_t pos) const
+{
+   U_TRACE(0, "UStringRep::someWhiteSpace(%u)", pos)
+
+   U_INTERNAL_ASSERT_MINOR(pos,_length)
+
+   for (; pos < _length; ++pos)
+      {
+      if (u_isspace(str[pos])) U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 __pure bool UStringRep::isEndHeader(uint32_t pos) const
@@ -896,7 +914,7 @@ void UString::setNullTerminated() const
       }
    else
       {
-      ((char*)rep->str)[rep->_length] = '\0';
+      rep->setNullTerminated();
       }
 
    U_INTERNAL_ASSERT_EQUALS(u__strlen(rep->str),rep->_length)
@@ -1281,7 +1299,7 @@ float UStringRep::strtof() const
 
    if (_length)
       {
-      if (isNullTerminated() == false && writeable()) ((char*)str)[_length] = '\0';
+      if (isNullTerminated() == false && writeable()) setNullTerminated();
 
       float result = ::strtof(str, 0);
 
@@ -1301,7 +1319,7 @@ double UStringRep::strtod() const
 
    if (_length)
       {
-      if (isNullTerminated() == false && writeable()) ((char*)str)[_length] = '\0';
+      if (isNullTerminated() == false && writeable()) setNullTerminated();
 
       double result = ::strtod(str, 0);
 
@@ -1323,7 +1341,7 @@ long double UStringRep::strtold() const
 
    if (_length)
       {
-      if (isNullTerminated() == false && writeable()) ((char*)str)[_length] = '\0';
+      if (isNullTerminated() == false && writeable()) setNullTerminated();
 
       long double result = ::strtold(str, 0);
 
@@ -1733,6 +1751,15 @@ bool UStringRep::invariant() const
    if (this != string_rep_null)
       {
       U_CHECK_MEMORY
+
+      return string_rep_null->invariant();
+      }
+   else if (_length)
+      {
+      U_WARNING("error on string_rep_null: (not empty)\n"
+                "--------------------------------------------------\n%s", UStringRep::dump(true));
+
+      return false;
       }
 
    if (_capacity < _length &&

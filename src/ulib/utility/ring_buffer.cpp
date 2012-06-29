@@ -13,30 +13,44 @@
 
 #include <ulib/utility/ring_buffer.h>
 
-URingBuffer::~URingBuffer()
+URingBuffer::URingBuffer(rbuf_data* _ptr, int _size)
 {
-   U_TRACE_UNREGISTER_OBJECT(0, URingBuffer)
+   U_TRACE_REGISTER_OBJECT(0, URingBuffer, "%p,%d", _ptr, _size)
 
-   if (ptr) UFile::munmap(ptr, size + sizeof(rbuf_data));
-}
-
-// Initialize ring buffer and queue
-
-void URingBuffer::init(int _size)
-{
-   U_TRACE(0, "URingBuffer::init(%d)", _size)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_EQUALS(ptr, 0)
-   U_INTERNAL_ASSERT_MAJOR(_size, 0)
-
-   ptr = (rbuf_data*) UFile::mmap(_size);
+       bmmap = ((ptr = _ptr) == 0);
+   if (bmmap)    ptr = (rbuf_data*) UFile::mmap(_size);
 
    U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
 
    size = _size      - sizeof(rbuf_data);
    ptrd = (char*)ptr + sizeof(rbuf_data);
+}
+
+URingBuffer::~URingBuffer()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, URingBuffer)
+
+   if (ptr && bmmap) UFile::munmap(ptr, size + sizeof(rbuf_data));
+}
+
+U_NO_EXPORT void URingBuffer::checkLocking()
+{
+   U_TRACE(0, "URingBuffer::checkLocking()")
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT_POINTER(ptr)
+
+   U_INTERNAL_DUMP("readd_cnt = %d", ptr->readd_cnt)
+
+   if (lock.isShared() == false)
+      {
+      if (ptr->readd_cnt  > 1) lock.init((&ptr->lock_readers));
+      }
+   else
+      {
+      if (ptr->readd_cnt <= 1) lock.destroy();
+      }
 }
 
 // Returns a read descriptor
@@ -85,26 +99,6 @@ void URingBuffer::close(int readd)
    ptr->readd_cnt--;
 
    checkLocking();
-}
-
-U_NO_EXPORT void URingBuffer::checkLocking()
-{
-   U_TRACE(0, "URingBuffer::checkLocking()")
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_POINTER(ptr)
-
-   U_INTERNAL_DUMP("readd_cnt = %d", ptr->readd_cnt)
-
-   if (lock.isShared() == false)
-      {
-      if (ptr->readd_cnt  > 1) lock.init(0);
-      }
-   else
-      {
-      if (ptr->readd_cnt <= 1) lock.destroy();
-      }
 }
 
 U_NO_EXPORT __pure int URingBuffer::min_pread()
@@ -384,6 +378,7 @@ const char* URingBuffer::dump(bool reset) const
 {
    *UObjectIO::os << "ptr         " << (void*)ptr   << '\n'
                   << "size        " << size         << '\n'
+                  << "bmmap       " << bmmap        << '\n'
                   << "lock (ULock " << (void*)&lock << ')';
 
    if (reset)

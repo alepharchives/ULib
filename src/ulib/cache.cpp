@@ -78,7 +78,7 @@ UString UCache::addContentOf(const UString& pathname)
 {
    U_TRACE(1, "UCache::addContentOf(%.*S)", U_STRING_TO_TRACE(pathname))
 
-   UString content = UFile::contentOf(pathname, O_RDONLY, false, false); // NB: force read()...
+   UString content = UFile::contentOf(pathname);
 
    const char*  key = pathname.data();
    const char* data =  content.data();

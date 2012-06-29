@@ -199,6 +199,8 @@ public:
       {
       U_TRACE(5, "PEC_report::getTime()")
 
+      U_INTERNAL_DUMP("line->c_pointer(U_LINEDATA+1) = %.*S", 20, line->c_pointer(U_LINEDATA+1))
+
       time_t _t = UTimeDate::getSecondFromTime(line->c_pointer(U_LINEDATA+1));
 
       U_RETURN(_t);

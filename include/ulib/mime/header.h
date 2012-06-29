@@ -192,6 +192,19 @@ public:
       U_RETURN(result);
       }
 
+   // Transfer-Encoding: chunked
+
+   bool isChunked()
+      {
+      U_TRACE(0, "UMimeHeader::isChunked()")
+
+      U_ASSERT(empty() == false)
+
+      bool result = (getHeader(*USocket::str_Transfer_Encoding) == *USocket::str_chunked);
+
+      U_RETURN(result);
+      }
+
    // Cookie
 
    UString getCookie()

@@ -488,7 +488,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
           (u_http_info.nResponseCode == HTTP_PROXY_AUTH   && requestHeader->containsHeader(*str_proxy_authorization))    ||
           createAuthorizationHeader() == false)
          {
-         U_RETURN(-1);
+         U_RETURN(-2);
          }
 
       // check if you can use the same socket connection
@@ -649,7 +649,7 @@ bool UHttpClient_Base::sendRequest(UString& data)
    U_TRACE(0, "UHttpClient_Base::sendRequest(%.*S)", U_STRING_TO_TRACE(data))
 
    uint32_t startHeader;
-   int result = -1, redirectCount = 0;
+   int result = -1, redirectCount = 0, send_count = 0;
 
    // check if we need to compose the request to the HTTP server...
 
@@ -704,24 +704,39 @@ bool UHttpClient_Base::sendRequest(UString& data)
                      ? checkResponse(redirectCount)
                      : -1);
 
-      if (result ==  2) break;           // no redirection, read body...
+      if (result ==  1) continue;       // redirection, use the same socket connection...
+      if (result == -2) U_RETURN(true); // pass HTTP_UNAUTHORISED response to the HTTP client...
+      if (result ==  2)                 // no redirection, read body...
+         {
+         U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", u_http_info.nResponseCode)
 
-      if (result == -1) U_RETURN(false); // same error...
+         u_http_info.clength = responseHeader->getHeader(*USocket::str_content_length).strtol();
 
-      if (result ==  1) continue;        // redirection, use the same socket connection...
+         if ((u_http_info.clength == 0                                 &&
+              (U_http_chunked = responseHeader->isChunked()) == false) ||
+              UHTTP::readHTTPBody(socket, &response, body))
+            {
+            U_RETURN(true);
+            }
+
+         if (u_http_info.nResponseCode == HTTP_CLIENT_TIMEOUT ||
+             u_http_info.nResponseCode == HTTP_ENTITY_TOO_LARGE)
+            {
+            break;
+            }
+         }
+
+      if (result < 0        &&
+          (++send_count > 5 ||
+           UClient_Base::socket->isConnected() == false))
+         {
+         break; // NB: same error or may be we are in a loop...
+         }
 
       UClient_Base::socket->close();
-
-      if (UClient_Base::connect() == false) U_RETURN(false);
       }
 
-   U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", u_http_info.nResponseCode)
-
-   u_http_info.clength = responseHeader->getHeader(*USocket::str_content_length).strtol();
-
-   bool ok = UHTTP::readHTTPBody(socket, &response, body);
-
-   U_RETURN(ok);
+   U_RETURN(false);
 }
 
 #define U_HTTP_POST_REQUEST \

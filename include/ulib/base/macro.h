@@ -203,7 +203,12 @@
 
 #define GZIP_MAGIC "\037\213" /* Magic header for gzip files, 1F 8B */
 
-enum AffermationType { U_MAYBE = 0, U_YES = 1, U_NOT = 2, U_PARTIAL = 3  };
+enum AffermationType {
+   U_MAYBE   = 0x000,
+   U_YES     = 0x001,
+   U_NOT     = 0x002,
+   U_PARTIAL = 0x004
+};
 
 /* MIME type */
 
@@ -260,7 +265,6 @@ typedef enum {
 } UHashType;
 
 #define int2ptr(x) ((void*)(long)x)
-#define ptr2int(x) ((long)x)
 
 /* Type of file sizes and offsets (LFS) */
 

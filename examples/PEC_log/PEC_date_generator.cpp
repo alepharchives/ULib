@@ -52,7 +52,7 @@ public:
          {
          U_WARNING("the number of days between <from> and <to> date is minor of param <days_between>...");
 
-         cout << from << ' ' << to << '\n';
+         std::cout << from << ' ' << to << '\n';
          }
       else
          {
@@ -62,7 +62,7 @@ public:
 
          while (true)
             {
-            cout << from << ' ';
+            std::cout << from << ' ';
 
             if (days_between)
                {
@@ -71,7 +71,7 @@ public:
                if (from > to) from = to;
                }
 
-            cout << from << '\n';
+            std::cout << from << '\n';
 
             from += 1;
 

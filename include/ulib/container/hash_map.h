@@ -46,12 +46,6 @@ public:
                   : elem(_elem), key(_key), next(_next), hash(_hash)
       {
       U_TRACE_REGISTER_OBJECT(0, UHashMapNode, "%.*S,%p,%p,%u", U_STRING_TO_TRACE(*_key), _elem, _next, _hash)
-      }
-
-   UHashMapNode(const UString& _key, void* _elem, UHashMapNode* _next, uint32_t _hash)
-                  : elem(_elem), key(_key.rep), next(_next), hash(_hash)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UHashMapNode, "%.*S,%p,%p,%u", U_STRING_TO_TRACE(_key), _elem, _next, _hash)
 
       key->hold(); // NB: si incrementa la reference della stringa...
       }
@@ -217,10 +211,11 @@ public:
 
    // dopo avere chiamato find() (non effettuano il lookup)
 
+   void insertAfterFind(UStringRep*    _key, void* _elem);
+   void insertAfterFind(const UString& _key, void* _elem) { insertAfterFind(_key.rep, _elem); }
+
    void   eraseAfterFind();
-   void  insertAfterFind(   UStringRep* key, void*  elem);
-   void  insertAfterFind(const UString& key, void*  elem);
-   void replaceAfterFind(                    void* _elem)
+   void replaceAfterFind(void* _elem)
       {
       U_TRACE(0, "UHashMap<void*>::replaceAfterFind(%p)", _elem)
 
@@ -229,8 +224,9 @@ public:
 
    void replaceKey(const UString& key);
 
+   void* erase(const char*    _key) { UStringRep keyr(_key); return erase(&keyr); }
    void* erase(UStringRep*    _key);
-   void* erase(const UString& _key) { return erase(_key.rep); }
+   void* erase(const UString& _key) {                        return erase(_key.rep); }
 
    // Make room for a total of n element
 
@@ -241,10 +237,9 @@ public:
    bool next();
    bool first();
 
-   void callForAllEntry(vPFprpv function);
-
    void getKeys(UVector<UString>& vec);
 
+   void callForAllEntry(vPFprpv function);
    void callForAllEntrySorted(vPFprpv function)
       {
       U_TRACE(0, "UHashMap<void*>::callForAllEntrySorted(%p)", function)
@@ -309,6 +304,7 @@ public:
 
    // Inserimento e cancellazione elementi dalla tabella
 
+   T* erase(const char*    _key) { return (T*) UHashMap<void*>::erase(_key); }
    T* erase(UStringRep*    _key) { return (T*) UHashMap<void*>::erase(_key); }
    T* erase(const UString& _key) { return (T*) UHashMap<void*>::erase(_key.rep); }
 
@@ -347,23 +343,7 @@ public:
          }
       }
 
-   void insertAfterFind(const UString& _key, T* _elem)
-      {
-      U_TRACE(0, "UHashMap<T*>::insertAfterFind(%.*S,%p)", U_STRING_TO_TRACE(_key), _elem)
-
-      u_construct<T>(_elem);
-
-      if (node)
-         {
-         u_destroy<T>((T*)node->elem);
-
-         node->elem = _elem;
-         }
-      else
-         {
-         UHashMap<void*>::insertAfterFind(_key, _elem);
-         }
-      }
+   void insertAfterFind(const UString& _key, T* _elem) { insertAfterFind(_key.rep, _elem); }
 
    void replaceAfterFind(T* _elem)
       {
@@ -591,8 +571,6 @@ public:
 
    // Inserimento e cancellazione elementi dalla tabella
 
-   void insertAfterFind(const UString& key, const UString& str);
-
    void replaceAfterFind(const UString& str)
       {
       U_TRACE(0, "UHashMap<T*>::replaceAfterFind(%.*S)", U_STRING_TO_TRACE(str))
@@ -610,6 +588,8 @@ public:
       }
 
    UString erase(const UString& key);
+
+   void insertAfterFind(const UString& key, const UString& str);
 
    // OPERATOR []
 

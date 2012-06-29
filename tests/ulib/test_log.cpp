@@ -12,9 +12,7 @@ U_EXPORT main (int argc, char* argv[])
    u_init_ulib_hostname();
    u_init_ulib_username();
 
-   ULog y(U_STRING_FROM_CONSTANT("$PWD/test_log.log"), 1024);
-
-   y.setClient();
+   ULog y(U_STRING_FROM_CONSTANT("$PWD/test_log.log"), 1024, "%10D> ");
 
    int i, n = (argc > 1 ? atoi(argv[1]) : 10);
 

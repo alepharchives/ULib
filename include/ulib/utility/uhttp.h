@@ -31,7 +31,7 @@
 #define U_HTTP_CACHE_REQUEST
 #endif
 
-#define U_MAX_UPLOAD_PROGRESS 32
+#define U_MAX_UPLOAD_PROGRESS 16
 
 #define U_HTTP_REALM "Protected Area" // HTTP Access Authentication
 
@@ -52,8 +52,6 @@ public:
 
    // HTTP strings 
 
-   static void str_allocate();
-
    static const UString* str_origin;
    static const UString* str_frm_body;
    static const UString* str_indexhtml;
@@ -67,6 +65,9 @@ public:
    static const UString* str_websocket_key1;
    static const UString* str_websocket_key2;
    static const UString* str_websocket_prot;
+   static const UString* str_strict_transport_security;
+
+   static void str_allocate();
 
    static const char* ptrH; // "Host"
    static const char* ptrR; // "Range"
@@ -282,9 +283,10 @@ public:
    static UString* uri_protected_mask;
    static UString* uri_request_cert_mask;
    static UString* maintenance_mode_page;
+   static UString* uri_strict_transport_security_mask;
 
    static bool     virtual_host, enable_caching_by_proxy_servers, telnet_enable, bsendfile;
-   static uint32_t limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size, sts_age_seconds;
+   static uint32_t limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size;
 
    static int  checkHTTPRequest();
    static void writeApacheLikeLog(int fd);
@@ -293,11 +295,11 @@ public:
    static bool checkHTTPRequestForHeader(const UString& request);
    static bool checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
 
-   static UString getRemoteIP();
-   static UString getDocumentName();
-   static UString getDirectoryURI();
-   static UString getRequestURI(bool bquery);
-   static UString getHeaderMimeType(const char* content, const char* content_type, uint32_t size, time_t expire);
+   static uint32_t getUserAgent();
+   static UString  getDocumentName();
+   static UString  getDirectoryURI();
+   static UString  getRequestURI(bool bquery);
+   static UString  getHeaderMimeType(const char* content, const char* content_type, uint32_t size, time_t expire);
 
    static void callService(const UString& path, bool servlet, UString* environment);
 
@@ -326,7 +328,7 @@ public:
    // set HTTP response message
 
    static void setHTTPResponse(const UString* content_type, const UString* body);
-   static void setHTTPRedirectResponse(int mode, UString& ext, const char* ptr_location, uint32_t len_location);
+   static void setHTTPRedirectResponse(int mode, const UString& ext, const char* ptr_location, uint32_t len_location);
 
    // get HTTP response message
 
@@ -367,6 +369,23 @@ public:
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
       bool result = (U_http_request_check == U_HTTP_REQUEST_IS_ALREADY_PROCESSED);
+
+      U_RETURN(result);
+      }
+
+   static bool isHTTPRequestRedirected()
+      {
+      U_TRACE(0, "UHTTP::isHTTPRequestRedirected()")
+
+      U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
+
+      U_INTERNAL_ASSERT(isHTTPRequest())
+
+      U_INTERNAL_DUMP("U_http_request_check = %C u_http_info.nResponseCode = %d", U_http_request_check, u_http_info.nResponseCode)
+
+      bool result = (U_http_request_check       == U_HTTP_REQUEST_IS_ALREADY_PROCESSED &&
+                     (u_http_info.nResponseCode == HTTP_MOVED_TEMP                     ||
+                      u_http_info.nResponseCode == HTTP_NETWORK_AUTHENTICATION_REQUIRED));
 
       U_RETURN(result);
       }
@@ -549,7 +568,7 @@ public:
 
       UString x(40U);
 
-      if (data_session) x.snprintf("%#7D", data_session->creation);
+      if (data_session) x.snprintf("%#5D", data_session->creation);
 
       U_RETURN_STRING(x);
       }
@@ -560,7 +579,7 @@ public:
 
       UString x(40U);
 
-      if (data_session) x.snprintf("%#7D", data_session->last_access);
+      if (data_session) x.snprintf("%#5D", data_session->last_access);
 
       U_RETURN_STRING(x);
       }
@@ -678,15 +697,19 @@ public:
 
    static UServletPage* usp_page_to_check;
 
-   // UPLOAD PROGRESS
-
+#ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
    typedef struct upload_progress {
       char uuid[32];
       in_addr_t client;
+      uint32_t user_agent;
       int byte_read, count;
    } upload_progress;
 
+   static uint32_t upload_progress_index;
    static upload_progress* ptr_upload_progress;
+
+   static upload_progress* getUploadProgressPointer();
+#endif
 
    static UString getUploadProgress();
 
@@ -976,13 +999,20 @@ public:
 
    // X-Sendfile
 
-   static UString* xpathname;
-   static UFileCacheData* pobj;
-
-   static bool XSendfile(UString& pathname, UString& ext);
+   static bool XSendfile(UString& pathname, const UString& ext);
 
 private:
    static UString getHTMLDirectoryList() U_NO_EXPORT;
+
+#ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
+   static bool   initUploadProgress(int byte_read) U_NO_EXPORT;
+   static void updateUploadProgress(int byte_read) U_NO_EXPORT;
+#endif
+
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
+   static void getInotifyPathDirectory(UStringRep* key, void* value) U_NO_EXPORT;
+   static void checkInotifyForCache(int wd, char* name, uint32_t len) U_NO_EXPORT;
+#endif
 
    static bool openFile() U_NO_EXPORT;
    static void in_CREATE() U_NO_EXPORT;
@@ -990,9 +1020,9 @@ private:
    static void checkPath() U_NO_EXPORT;
    static bool processFileCache() U_NO_EXPORT;
    static void processRewriteRule() U_NO_EXPORT;
-   static bool initUploadProgress(int byte_read) U_NO_EXPORT;
-   static void updateUploadProgress(int byte_read) U_NO_EXPORT;
+   static bool checkPath(uint32_t len) U_NO_EXPORT;
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
+   static void manageBufferResize(const char* rpointer1, const char* rpointer2) U_NO_EXPORT;
 
    static void deleteSession() U_NO_EXPORT;
    static void manageDataForCache() U_NO_EXPORT;
@@ -1004,9 +1034,7 @@ private:
    static bool processHTTPAuthorization(const UString& request) U_NO_EXPORT;
    static int  sortHTTPRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
-   static void getInotifyPathDirectory(UStringRep* key, void* value) U_NO_EXPORT;
    static bool checkHTTPGetRequestIfModified(const UString& request) U_NO_EXPORT;
-   static void checkInotifyForCache(int wd, char* name, uint32_t len) U_NO_EXPORT;
    static void processHTTPGetRequest(const UString& etag, UString& ext) U_NO_EXPORT;
    static int  checkHTTPGetRequestForRange(UString& ext, const UString& data) U_NO_EXPORT;
    static void checkDataSession(const UString& token, time_t expire, bool check) U_NO_EXPORT;

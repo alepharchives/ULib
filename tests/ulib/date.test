@@ -11,6 +11,7 @@ start_msg date
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
+#STRACE=$TRUSS
 start_prg date < inp/date.input
 
 # Test against expected output

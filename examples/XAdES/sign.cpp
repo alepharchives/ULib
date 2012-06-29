@@ -366,7 +366,7 @@ public:
 
       if (signing_time)
          {
-         UString dateTime = UTimeDate::strftime("%Y-%m-%dT%H:%M:%SZ", 0);
+         UString dateTime = UTimeDate::strftime("%Y-%m-%dT%H:%M:%SZ", u_now->tv_sec);
 
          signingTime.snprintf(U_XADES_SIGNING_TIME_TEMPLATE, U_STRING_TO_TRACE(dateTime));
          }

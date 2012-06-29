@@ -203,7 +203,7 @@ public:
                      ((CasellaIdCounter*)elem)->count.PreseInCaricoOut,
                      ((CasellaIdCounter*)elem)->count.RilevazioneVirusOut);
 
-      cout << buffer;
+      std::cout << buffer;
       }
 
    static void reportMessaggi(UStringRep* key, void* list)
@@ -212,11 +212,11 @@ public:
 
       (void) sprintf(buffer, U_XML_MSG_ENTRY_START, U_STRING_TO_TRACE(*key));
 
-      cout << buffer;
+      std::cout << buffer;
 
       ((VCasellaIdCounter*)list)->callForAllEntry(Application::reportCasella);
 
-      cout << U_XML_MSG_ENTRY_END;
+      std::cout << U_XML_MSG_ENTRY_END;
       }
 
    static bool checkCasella(void* elem)
@@ -411,7 +411,7 @@ public:
 
       // append to report
 
-      cout << U_XML_MSG_START;
+      std::cout << U_XML_MSG_START;
 
       // setting for messaggi
 
@@ -431,7 +431,7 @@ public:
 
       table->callForAllEntrySorted(Application::reportMessaggi);
 
-      cout << U_XML_MSG_END;
+      std::cout << U_XML_MSG_END;
       }
 
    void run(int argc, char* argv[], char* env[]) // MUST BE INLINE...

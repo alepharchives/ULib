@@ -4,7 +4,7 @@
 
 ## PEC.test -- Test PEC feature
 
-#UTRACE="0 5M 1"
+#UTRACE="5 5M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
 #VALGRIND=valgrind
@@ -22,7 +22,6 @@ c
 EOF
 
 start_msg PEC_report_anomalie
-
 start_prg PEC_report_anomalie1 -c PEC_report_anomalie1.cfg
 start_prg PEC_report_anomalie1 -T '"MsgRicevutoBustaTrasportoMancanteTest"' \
 										 -d inp/PEC/6/TestCase_10 -F pippo \

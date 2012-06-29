@@ -58,8 +58,8 @@ public:
    static UString* request; // NB: it is only a pointer, not a string object...
    static UString* pbuffer;
    static const char* rpointer;
-   static uint32_t rstart, size_request;
    static bool bIPv6, pipeline, write_off;
+   static uint32_t rstart, size_request, counter;
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
@@ -141,9 +141,8 @@ public:
 #endif
 
 protected:
-   int sfd, state;
    uint32_t start, count;
-   int bclose;
+   int state, sfd, bclose;
 
    static UString* msg_welcome;
 

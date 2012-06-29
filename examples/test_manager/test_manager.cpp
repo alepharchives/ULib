@@ -41,11 +41,11 @@ public:
       {
       U_TRACE(5, "Application::print(%d)", mode)
 
-      if (flag_log)
+      if (ulog)
          {
          iov[0].iov_len = buffer_len;
 
-         ulog.write(iov, 1);
+         ulog->write(iov, 1);
 
          if (mode)
             {
@@ -116,7 +116,7 @@ public:
                   envp = envp_exec;
                   }
 
-               if (flag_log)
+               if (ulog)
                   {
                   UProcess::pipe(STDOUT_FILENO); // UProcess::filedes[2] is for READING,
                                                  // UProcess::filedes[3] is for WRITING.
@@ -127,7 +127,7 @@ public:
 
                pid = UProcess::execute(argv_exec[0], argv_exec+1, envp, false, flag_stdout, flag_stderr);
 
-               if (flag_log)
+               if (ulog)
                   {
                   // UProcess::filedes[3] for WRITING...
 
@@ -137,7 +137,7 @@ public:
 
             if (pid <= 0)
                {
-               if (flag_log ||
+               if (ulog ||
                    n == -1)
                   {
                   buffer_len = u__snprintf(buffer, sizeof(buffer), "command '%s' didn't start %R\n", argv_exec[(n == -1 ? 1 : 0)], 0); // NB: the last argument (0) is necessary...
@@ -149,7 +149,7 @@ public:
                }
             else
                {
-               if (flag_log)
+               if (ulog)
                   {
                   if (output.empty() == false) output.setEmpty();
 
@@ -161,7 +161,7 @@ public:
                      {
                      struct iovec _iov[1] = { { (caddr_t)output.data(), output_len } };
 
-                     ulog.write(_iov, 1);
+                     ulog->write(_iov, 1);
                      }
 
                   UFile::close(UProcess::filedes[2]);
@@ -229,18 +229,11 @@ public:
 
       // maybe manage logging...
 
-      flag_log = false;
-
       UString log_file = opt['l'];
 
-      if (log_file.empty() == false && ulog.open(log_file))
-         {
-         ulog.init();
+      ulog = (log_file.empty() == false ? U_NEW(ULog(log_file, 1024 * 1024, "%10D> ")) : 0);
 
-         flag_log = true;
-         }
-
-      if (flag_log)
+      if (ulog)
          {
          flag_stdout = flag_stderr = true;
 
@@ -255,17 +248,17 @@ public:
 
       executeTests(); // ciclo esecuzione test
 
-      if (flag_log) ulog.close();
+      if (ulog) ulog->close();
       }
 
 private:
+   ULog* ulog;
    size_t buffer_len;
    struct iovec iov[1];
    UString data, output;
    UFileConfig template_file;
-   ULog ulog;
    char buffer[4096];
-   bool flag_log, flag_stdout, flag_stderr;
+   bool flag_stdout, flag_stderr;
 };
 
 U_MAIN(Application)

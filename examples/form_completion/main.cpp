@@ -110,7 +110,7 @@ public:
 
       // write to stdout
 
-      (void) U_SYSCALL(printf, "%S,%S,%S", UFile::contentOf(form_template, O_RDONLY, false, false).data(), sname, spassword); // NB: force read()...
+      (void) U_SYSCALL(printf, "%S,%S,%S", UFile::contentOf(form_template).data(), sname, spassword);
       }
 
 private:

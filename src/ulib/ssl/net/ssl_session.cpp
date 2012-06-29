@@ -18,13 +18,6 @@
 URDB*       USSLSession::db_ssl_session;
 UStringRep* USSLSession::pkey;
 
-USSLSession::~USSLSession()
-{
-   U_TRACE_UNREGISTER_OBJECT(0, USSLSession)
-
-   if (_session) U_SYSCALL_VOID(SSL_SESSION_free, "%p", (SSL_SESSION*)_session);
-}
-
 void USSLSession::deleteSessionCache()
 {
    U_TRACE(0, "USSLSession::deleteSessionCache()")
@@ -48,9 +41,9 @@ bool USSLSession::initSessionCache(SSL_CTX* ctx, const char* location, uint32_t 
 
    pathdb.snprintf("%s%s", (location[0] == '/' ? "" : U_LIBEXECDIR "/"), location);
 
-   db_ssl_session = U_NEW(URDB(pathdb, false)); // NB: no truncate...
+   db_ssl_session = U_NEW(URDB(pathdb, false));
 
-   if (((URDB*)db_ssl_session)->open(sz, false) == false)
+   if (((URDB*)db_ssl_session)->open(sz, true) == false) // NB: we want truncate...
       {
       U_SRV_LOG("db initialization of SSL session failed...");
 
@@ -105,11 +98,6 @@ UString USSLSession::toString(SSL_SESSION* sess)
 
    U_INTERNAL_ASSERT_POINTER(sess)
 
-#ifdef DEBUG
-   static FILE* fp = (FILE*) U_SYSCALL(fopen, "%S,%S", "/tmp/ssl_session.txt", "a");
-                      (void) U_SYSCALL(SSL_SESSION_print_fp, "%p,%p", fp, sess);
-#endif
-
    unsigned char buffer[256 * 1024];
    unsigned char* p = buffer;
 
@@ -140,6 +128,14 @@ SSL_SESSION* USSLSession::fromString(const UString& x)
 int USSLSession::newSession(SSL* ssl, SSL_SESSION* sess)
 {
    U_TRACE(0, "USSLSession::newSession(%p,%p)", ssl, sess)
+
+/*
+#ifdef DEBUG
+   static FILE* fp = (FILE*) U_SYSCALL(fopen, "%S,%S", "/tmp/ssl_session.new", "a");
+
+   if (fp) (void) U_SYSCALL(SSL_SESSION_print_fp, "%p,%p", fp, sess);
+#endif
+*/
 
    UString value = toString(sess);
 
@@ -177,12 +173,28 @@ SSL_SESSION* USSLSession::getCachedSession(SSL* ssl, unsigned char* id, int len,
 
    SSL_SESSION* sess = fromString(value);
 
+/*
+#ifdef DEBUG
+   static FILE* fp = (FILE*) U_SYSCALL(fopen, "%S,%S", "/tmp/ssl_session.get", "a");
+
+   if (fp) (void) U_SYSCALL(SSL_SESSION_print_fp, "%p,%p", fp, sess);
+#endif
+*/
+
    U_RETURN_POINTER(sess,SSL_SESSION);
 }
 
 void USSLSession::removeSession(SSL_CTX* ctx, SSL_SESSION* sess)
 {
    U_TRACE(0, "USSLSession::removeSession(%p,%p)", ctx, sess)
+
+/*
+#ifdef DEBUG
+   static FILE* fp = (FILE*) U_SYSCALL(fopen, "%S,%S", "/tmp/ssl_session.del", "a");
+
+   if (fp) (void) U_SYSCALL(SSL_SESSION_print_fp, "%p,%p", fp, sess);
+#endif
+*/
 
    UString key((const char*)sess->session_id, (uint32_t)sess->session_id_length);
 
@@ -192,22 +204,3 @@ void USSLSession::removeSession(SSL_CTX* ctx, SSL_SESSION* sess)
 
    if (result) U_SRV_LOG("remove of SSL session on db failed with error %d", result);
 }
-
-#ifdef DEBUG
-#  include <ulib/internal/objectIO.h>
-
-const char* USSLSession::dump(bool reset) const
-{
-   *UObjectIO::os << "_session " << _session;
-
-   if (reset)
-      {
-      UObjectIO::output();
-
-      return UObjectIO::buffer_output;
-      }
-
-   return 0;
-}
-
-#endif

@@ -71,16 +71,20 @@ virtual void preallocate() { vClientImage = new client_class[UNotifier::max_conn
                                                                                  U_STRING_TO_TRACE(*(UServer_Base::pClientImage->logbuf))); }
 class UHTTP;
 class UCommand;
-class UFileConfig;
 class USSIPlugIn;
+class UTimeThread;
+class UFileConfig;
 class UHttpPlugIn;
 class UFCGIPlugIn;
 class USCGIPlugIn;
 class UNoCatPlugIn;
+class UGeoIPPlugIn;
 class UClient_Base;
 class UProxyPlugIn;
 class UStreamPlugIn;
+class UModNoCatPeer;
 class UClientThread;
+class UModProxyService;
 
 class U_EXPORT UServer_Base : public UEventFd {
 public:
@@ -184,11 +188,12 @@ public:
 
    // tipologia server...
 
-   static int     getPort()       { return port; }
-   static int     getCgiTimeout() { return cgi_timeout; }
-   static int     getReqTimeout() { return (timeoutMS / 1000); }
-   static bool    isIPv6()        { return UClientImage_Base::bIPv6; }
-   static UString getHost()       { return *host; }
+   static int         getPort()          { return port; }
+   static int         getCgiTimeout()    { return cgi_timeout; }
+   static int         getReqTimeout()    { return (timeoutMS / 1000); }
+   static bool        isIPv6()           { return UClientImage_Base::bIPv6; }
+   static UString     getHost()          { return *host; }
+   static const char* getClientAddress() { return client_address; }
 
    // The directory out of which you will serve your documents...
 
@@ -227,6 +232,7 @@ public:
 
    // Server-wide hooks
    static int pluginsHandlerInit();
+   static int pluginsHandlerRun();
    static int pluginsHandlerFork();
 
    // Connection-wide hooks
@@ -244,13 +250,55 @@ public:
    // ----------------------------------------------------------------------------------------------------------------------------
 
    typedef struct shared_data {
-      struct timeval _timeval;
+   // ---------------------------------
       sig_atomic_t tot_connection;
+   // ---------------------------------
+      ULog::log_data data_log_shared;
+      sem_t          lock_log_shared;
+   // ---------------------------------
+      sem_t          lock_ssl_session;
+   // ---------------------------------
+      sem_t          lock_http_session;
+   // ---------------------------------
+      sem_t          lock_rdb_server;
+   // ---------------------------------
+      struct timeval _timeval;
+      char data_1[17]; // 18/06/12 18:45:56
+      char data_2[26]; // 04/Jun/2012:18:18:37 +0200
+      char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
+                       // 123456789012345678901234567890
+   // -------------------------------
    } shared_data;
+
+#define U_TOT_CONNECTION      UServer_Base::ptr_shared_data->tot_connection
+#define U_LOG_DATA_SHARED   &(UServer_Base::ptr_shared_data->data_log_shared)
+#define U_LOCK_SSL_SESSION  &(UServer_Base::ptr_shared_data->lock_ssl_session)
+#define U_LOCK_HTTP_SESSION &(UServer_Base::ptr_shared_data->lock_http_session)
+#define U_LOCK_RDB_SERVER   &(UServer_Base::ptr_shared_data->lock_rdb_server)
+#define U_NOW               &(UServer_Base::ptr_shared_data->_timeval)
 
    static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves
    static uint32_t shared_data_add;
    static shared_data* ptr_shared_data;
+
+   static void* getOffsetToDataShare(uint32_t shared_data_size)
+      {
+      U_TRACE(0, "UServer_Base::getOffsetToDataShare(%u)", shared_data_size)
+
+      long offset = shared_data_add;
+                    shared_data_add += shared_data_size;
+
+      U_RETURN_POINTER(offset, void);
+      }
+
+   static void* getPointerToDataShare(void* shared_data_ptr)
+      {
+      U_TRACE(0, "UServer_Base::getPointerToDataShare(%p)", shared_data_ptr)
+
+      shared_data_ptr = (void*)((ptrdiff_t)ptr_shared_data + (ptrdiff_t)shared_data_ptr);
+
+      U_RETURN_POINTER(shared_data_ptr, void);
+      }
 
    static UClientImage_Base* pindex;
    static UClientImage_Base* vClientImage;
@@ -320,19 +368,6 @@ public:
    static bool isLog()        { return (       log != 0); }
    static bool isAnotherLog() { return (anotherLog != 0); }
 
-   static void openLog(const UString& name, uint32_t size)
-      {
-      U_TRACE(0, "UServer_Base::openLog(%.*S,%u)", U_STRING_TO_TRACE(name), size)
-
-      log = U_NEW(ULog(name, size));
-
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-      ULog::setServer(true); // NB: is always shared cause of possibility of fork() by parallelization...
-#  else
-      ULog::setServer(preforked_num_kids > 1);
-#  endif
-      }
-
    static void      logCommandMsgError(const char* cmd);
    static UCommand* loadConfigCommand(UFileConfig& cfg);
 
@@ -374,12 +409,13 @@ protected:
    static UString* host;
    static UProcess* proc;
    static USocket* socket;
-   static int sfd, bclose;
    static UEventTime* ptime;
    static UServer_Base* pthis;
    static UString* senvironment;
    static uint32_t start, count;
+   static const char* client_address;
    static UVector<UIPAllow*>* vallow_IP;
+   static int sfd, bclose, watch_counter;
    static UVector<UIPAllow*>* vallow_IP_prv;
    static bool flag_loop, bssl, bipc, flag_use_tcp_optimization, monitoring_process,
                accept_edge_triggered, set_realtime_priority, enable_rfc1918_filter, public_address;
@@ -426,8 +462,10 @@ protected:
    static UVector<UString>* vplugin_name;
    static UVector<UServerPlugIn*>* vplugin;
 
+   static void runWatch();
+   static void runAsUser(bool is_child);
+
    static const char* getNumConnection();
-   static void        runAsUser(bool is_child);
 
    static bool handlerTimeoutConnection(void* cimg);
    static void handlerCloseConnection(UClientImage_Base* ptr);
@@ -461,14 +499,18 @@ protected:
 private:
    friend class UHTTP;
    friend class USSIPlugIn;
+   friend class UTimeThread;
    friend class UHttpPlugIn;
    friend class USCGIPlugIn;
    friend class UFCGIPlugIn;
    friend class UProxyPlugIn;
    friend class UNoCatPlugIn;
+   friend class UGeoIPPlugIn;
    friend class UClient_Base;
    friend class UStreamPlugIn;
    friend class UClientThread;
+   friend class UModNoCatPeer;
+   friend class UModProxyService;
    friend class UClientImage_Base;
 
    static struct linger lng;

@@ -34,6 +34,8 @@
 // -------------------------------------
 
 class UProcess;
+class UNoCatPlugIn;
+
 template <class T> class UVector;
 
 class U_EXPORT UPing : public USocket {
@@ -161,6 +163,7 @@ protected:
    int recvArpPing();
 #endif
 
+   static bool bmmap;
    static UProcess* proc;
    static fd_set* addrmask;
 
@@ -174,6 +177,8 @@ private:
 
    UPing(const UPing&) : USocket(false) {}
    UPing& operator=(const UPing&)       { return *this; }
+
+   friend class UNoCatPlugIn;
 };
 
 #endif

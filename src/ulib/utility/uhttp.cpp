@@ -34,8 +34,11 @@
 #ifdef HAVE_LIBTCC
 #  include <libtcc.h>
 #endif
+#ifndef __MINGW32__
+#  include <sys/resource.h>
+#endif
 
-#ifdef SYS_INOTIFY_H_EXISTS_AND_WORKS
+#if defined(SYS_INOTIFY_H_EXISTS_AND_WORKS) && defined(U_HTTP_INOTIFY_SUPPORT)
 #  include <sys/inotify.h>
 #elif defined(LINUX) || defined(__LINUX__) || defined(__linux__)
 #  ifdef HAVE_SYS_INOTIFY_H
@@ -68,7 +71,6 @@ UString*    UHTTP::qcontent;
 UString*    UHTTP::htpasswd;
 UString*    UHTTP::htdigest;
 UString*    UHTTP::pathname;
-UString*    UHTTP::xpathname;
 UString*    UHTTP::ssi_alias;
 UString*    UHTTP::set_cookie;
 UString*    UHTTP::request_uri;
@@ -79,11 +81,11 @@ UString*    UHTTP::cache_file_mask;
 UString*    UHTTP::uri_protected_mask;
 UString*    UHTTP::uri_request_cert_mask;
 UString*    UHTTP::maintenance_mode_page;
+UString*    UHTTP::uri_strict_transport_security_mask;
 uint32_t    UHTTP::sid_counter_gen;
 uint32_t    UHTTP::sid_counter_cur;
 uint32_t    UHTTP::range_size;
 uint32_t    UHTTP::range_start;
-uint32_t    UHTTP::sts_age_seconds; // for this period in seconds use HTTP Strict Transport Security to force client to use secure connections only
 uint32_t    UHTTP::request_read_timeout;
 uint32_t    UHTTP::min_size_for_sendfile; // NB: for major size it is better to use sendfile()...
 uint32_t    UHTTP::limit_request_body = U_STRING_LIMIT;
@@ -108,9 +110,7 @@ UVector<UString>*                 UHTTP::valias;
 UVector<UString>*                 UHTTP::form_name_value;
 UVector<UIPAllow*>*               UHTTP::vallow_IP;
 UHTTP::UServletPage*              UHTTP::usp_page_to_check;
-UHTTP::upload_progress*           UHTTP::ptr_upload_progress;
 
-         UHTTP::UFileCacheData*   UHTTP::pobj;
          UHTTP::UFileCacheData*   UHTTP::file_data;
 UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
 #ifdef USE_PAGE_SPEED
@@ -118,6 +118,10 @@ UHTTP::UPageSpeed*                UHTTP::page_speed;
 #endif
 #ifdef USE_LIBV8
 UHTTP::UV8JavaScript*             UHTTP::v8_javascript;
+#endif
+#ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
+uint32_t                          UHTTP::upload_progress_index;
+UHTTP::upload_progress*           UHTTP::ptr_upload_progress;
 #endif
 
 const UString* UHTTP::str_origin;
@@ -133,6 +137,7 @@ const UString* UHTTP::str_frm_websocket;
 const UString* UHTTP::str_websocket_key1;
 const UString* UHTTP::str_websocket_key2;
 const UString* UHTTP::str_websocket_prot;
+const UString* UHTTP::str_strict_transport_security;
 
 void UHTTP::str_allocate()
 {
@@ -151,6 +156,7 @@ void UHTTP::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_websocket_prot,0)
    U_INTERNAL_ASSERT_EQUALS(str_frm_websocket,0)
    U_INTERNAL_ASSERT_EQUALS(str_ulib_header,0)
+   U_INTERNAL_ASSERT_EQUALS(str_strict_transport_security,0)
 
    static ustringrep stringrep_storage[] = {
    { U_STRINGREP_FROM_CONSTANT("index.html") },
@@ -182,22 +188,24 @@ void UHTTP::str_allocate()
                                "WebSocket-Location: ws://%.*s%.*s\r\n"
                                "%.*s"
                                "\r\n") },
-   { U_STRINGREP_FROM_CONSTANT("X-Powered-By: ULib/" ULIB_VERSION "\r\n") }
+   { U_STRINGREP_FROM_CONSTANT("X-Powered-By: ULib/" ULIB_VERSION "\r\n") },
+   { U_STRINGREP_FROM_CONSTANT("Strict-Transport-Security: max-age=31536000; includeSubDomains\r\n") }
    };
 
-   U_NEW_ULIB_OBJECT(str_indexhtml,       U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_ctype_tsa,       U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_ctype_html,      U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_ctype_soap,      U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_frm_header,      U_STRING_FROM_STRINGREP_STORAGE(4));
-   U_NEW_ULIB_OBJECT(str_frm_body,        U_STRING_FROM_STRINGREP_STORAGE(5));
-   U_NEW_ULIB_OBJECT(str_origin,          U_STRING_FROM_STRINGREP_STORAGE(6));
-   U_NEW_ULIB_OBJECT(str_websocket,       U_STRING_FROM_STRINGREP_STORAGE(7));
-   U_NEW_ULIB_OBJECT(str_websocket_key1,  U_STRING_FROM_STRINGREP_STORAGE(8));
-   U_NEW_ULIB_OBJECT(str_websocket_key2,  U_STRING_FROM_STRINGREP_STORAGE(9));
-   U_NEW_ULIB_OBJECT(str_websocket_prot,  U_STRING_FROM_STRINGREP_STORAGE(10));
-   U_NEW_ULIB_OBJECT(str_frm_websocket,   U_STRING_FROM_STRINGREP_STORAGE(11));
-   U_NEW_ULIB_OBJECT(str_ulib_header,     U_STRING_FROM_STRINGREP_STORAGE(12));
+   U_NEW_ULIB_OBJECT(str_indexhtml,                   U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_ctype_tsa,                   U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_ctype_html,                  U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_ctype_soap,                  U_STRING_FROM_STRINGREP_STORAGE(3));
+   U_NEW_ULIB_OBJECT(str_frm_header,                  U_STRING_FROM_STRINGREP_STORAGE(4));
+   U_NEW_ULIB_OBJECT(str_frm_body,                    U_STRING_FROM_STRINGREP_STORAGE(5));
+   U_NEW_ULIB_OBJECT(str_origin,                      U_STRING_FROM_STRINGREP_STORAGE(6));
+   U_NEW_ULIB_OBJECT(str_websocket,                   U_STRING_FROM_STRINGREP_STORAGE(7));
+   U_NEW_ULIB_OBJECT(str_websocket_key1,              U_STRING_FROM_STRINGREP_STORAGE(8));
+   U_NEW_ULIB_OBJECT(str_websocket_key2,              U_STRING_FROM_STRINGREP_STORAGE(9));
+   U_NEW_ULIB_OBJECT(str_websocket_prot,              U_STRING_FROM_STRINGREP_STORAGE(10));
+   U_NEW_ULIB_OBJECT(str_frm_websocket,               U_STRING_FROM_STRINGREP_STORAGE(11));
+   U_NEW_ULIB_OBJECT(str_ulib_header,                 U_STRING_FROM_STRINGREP_STORAGE(12));
+   U_NEW_ULIB_OBJECT(str_strict_transport_security,   U_STRING_FROM_STRINGREP_STORAGE(13));
 }
 
 // HTML Pagination
@@ -328,7 +336,7 @@ UHTTP::UFileCacheData::UFileCacheData()
    expire     = U_TIME_FOR_EXPIRE;
    mime_index = wd = fd = -1;
 
-#ifdef HAVE_SYS_INOTIFY_H
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
    if (UServer_Base::handler_inotify &&
        (u_ftw_ctx.is_directory || file->dir()))
       {
@@ -382,7 +390,7 @@ UHTTP::UFileCacheData::~UFileCacheData()
 
    if (array) delete array;
 
-#ifdef HAVE_SYS_INOTIFY_H
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
    if (UServer_Base::handler_inotify)
       {
       U_INTERNAL_ASSERT_MAJOR(UServer_Base::handler_inotify->fd,0)
@@ -398,6 +406,7 @@ UHTTP::UFileCacheData::~UFileCacheData()
 
 // INOTIFY FOR CACHE FILE SYSTEM
 
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
 U_NO_EXPORT void UHTTP::getInotifyPathDirectory(UStringRep* key, void* value)
 {
    U_TRACE(0+256, "UHTTP::getInotifyPathDirectory(%.*S,%p)", U_STRING_TO_TRACE(*key), value)
@@ -443,6 +452,7 @@ U_NO_EXPORT void UHTTP::checkInotifyForCache(int wd, char* name, uint32_t len)
       file_data = (*cache_file)[pkey];
       }
 }
+#endif
 
 U_NO_EXPORT void UHTTP::in_CREATE()
 {
@@ -478,7 +488,7 @@ void UHTTP::in_READ()
 
    U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_inotify)
 
-#ifdef HAVE_SYS_INOTIFY_H
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
    /*
    struct inotify_event {
       int wd;           // The watch descriptor
@@ -651,7 +661,7 @@ bool UHTTP::UCServletPage::compile(const UString& program)
 
 void UHTTP::ctor()
 {
-   U_TRACE(0, "UHTTP::ctor()")
+   U_TRACE(1, "UHTTP::ctor()")
 
    str_allocate();
 
@@ -672,7 +682,6 @@ void UHTTP::ctor()
 
    file            = U_NEW(UFile);
    pcmd            = U_NEW(UCommand);
-   pobj            = U_NEW(UFileCacheData);
    pkey            = UStringRep::create(0U, 100U, 0);
    keyID           = U_NEW(UString);
    alias           = U_NEW(UString);
@@ -682,13 +691,12 @@ void UHTTP::ctor()
    qcontent        = U_NEW(UString);
    pathname        = U_NEW(UString(U_CAPACITY));
    formMulti       = U_NEW(UMimeMultipart);
-   xpathname       = U_NEW(UString);
    set_cookie      = U_NEW(UString);
    request_uri     = U_NEW(UString);
    form_name_value = U_NEW(UVector<UString>);
 
    if (cookie_option   == 0) cookie_option   = U_NEW(U_STRING_FROM_CONSTANT("[\"\" 0]"));
-   if (cache_file_mask == 0) cache_file_mask = U_NEW(U_STRING_FROM_CONSTANT("*.css|*.js|*.*html|*.png|*.gif|*.jpg"));
+   if (cache_file_mask == 0) cache_file_mask = U_NEW(U_STRING_FROM_CONSTANT("*.css|*.js|*.*html|*.png|*.gif|*.jpg|*.shtml"));
 
    U_INTERNAL_ASSERT_POINTER(USocket::str_host)
    U_INTERNAL_ASSERT_POINTER(USocket::str_range)
@@ -783,9 +791,7 @@ void UHTTP::ctor()
 
    // CACHE FILE SYSTEM
 
-#ifndef HAVE_SYS_INOTIFY_H
-   UServer_Base::handler_inotify = 0;
-#else
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
    if (UServer_Base::handler_inotify)
       {
       // INIT INOTIFY FOR CACHE FILE SYSTEM
@@ -800,7 +806,7 @@ void UHTTP::ctor()
 
       (void) U_SYSCALL(fcntl, "%d,%d,%d", UServer_Base::handler_inotify->fd, F_SETFL, O_NONBLOCK | O_CLOEXEC);
 
-   next:
+next:
       if (UServer_Base::handler_inotify->fd != -1)
          {
          U_SRV_LOG("Inode based directory notification enabled");
@@ -812,6 +818,8 @@ void UHTTP::ctor()
          U_WARNING("Inode based directory notification failed");
          }
       }
+#else
+   UServer_Base::handler_inotify = 0;
 #endif
 
    if (virtual_host) U_SRV_LOG("virtual host service enabled");
@@ -841,34 +849,32 @@ void UHTTP::ctor()
       u_buffer_len = 0;
       }
 
-   if (virtual_host == false)
+   // manage single favicon...
+
+   file_data = (*cache_file)["favicon.ico"];
+
+   if (file_data &&
+       file_data->array == 0)
       {
-      // manage single favicon...
+      (void) pathname->replace(U_CONSTANT_TO_PARAM("favicon.ico"));
 
-      file_data = (*cache_file)["favicon.ico"];
+      file->setPath(*pathname);
 
-      if (file_data &&
-          file_data->array == 0)
-         {
-         (void) pathname->replace(U_CONSTANT_TO_PARAM("favicon.ico"));
+      U_INTERNAL_ASSERT(file->stat())
 
-         file->setPath(*pathname);
+      UString content = file->getContent();
 
-         U_INTERNAL_ASSERT(file->stat())
+      u_mime_index = -1;
 
-         UString content = file->getContent();
+      putDataInCache(getHeaderMimeType(0, U_CTYPE_ICO, 0, U_TIME_FOR_EXPIRE), content);
 
-         u_mime_index = -1;
-
-         putDataInCache(getHeaderMimeType(0, U_CTYPE_ICO, 0, U_TIME_FOR_EXPIRE), content);
-
-         U_INTERNAL_ASSERT_POINTER(file_data->array)
-         }
+      U_INTERNAL_ASSERT_POINTER(file_data->array)
       }
 
    // manage ssi_alias...
 
-   if (ssi_alias)
+   if (ssi_alias &&
+       virtual_host == false)
       {
       file_data = (*cache_file)[*ssi_alias];
 
@@ -892,11 +898,30 @@ void UHTTP::ctor()
          }
       }
 
-   // resize hash table...
+   // resize hash table and set fd_max limit...
 
    uint32_t sz = cache_file->size();
 
    U_INTERNAL_DUMP("cache size = %u", sz)
+
+#ifndef __MINGW32__
+   uint32_t rlim = (100 + sz + 3 * UNotifier::max_connection);
+
+   U_INTERNAL_DUMP("rlim = %u", rlim)
+
+   if (rlim > 1024)
+      {
+      struct rlimit nofile = {
+         rlim, /* Soft limit */
+         rlim  /* Hard limit (ceiling for rlim_cur) */
+      };
+
+      if (U_SYSCALL(setrlimit, "%d,%p", RLIMIT_NOFILE, &nofile) == 0)
+         {
+         U_SRV_LOG("updated program fd_max: %u", rlim);
+         }
+      }
+#endif
 
    sz += (sz / 100) * 25;
 
@@ -979,20 +1004,20 @@ void UHTTP::dtor()
 {
    U_TRACE(0, "UHTTP::dtor()")
 
-   if (valias)                delete valias;
-   if (ssi_alias)             delete ssi_alias;
-   if (cookie_option)         delete cookie_option;
-   if (cache_file_mask)       delete cache_file_mask;
-   if (uri_protected_mask)    delete uri_protected_mask;
-   if (uri_request_cert_mask) delete uri_request_cert_mask;
-   if (maintenance_mode_page) delete maintenance_mode_page;
+   if (valias)                             delete valias;
+   if (ssi_alias)                          delete ssi_alias;
+   if (cookie_option)                      delete cookie_option;
+   if (cache_file_mask)                    delete cache_file_mask;
+   if (uri_protected_mask)                 delete uri_protected_mask;
+   if (uri_request_cert_mask)              delete uri_request_cert_mask;
+   if (maintenance_mode_page)              delete maintenance_mode_page;
+   if (uri_strict_transport_security_mask) delete uri_strict_transport_security_mask;
 
    if (file)
       {
       delete file;
       delete pcmd;
       delete pkey;
-      delete pobj;
       delete keyID;
       delete alias;
       delete geoip;
@@ -1000,7 +1025,6 @@ void UHTTP::dtor()
       delete cbuffer;
       delete qcontent;
       delete pathname;
-      delete xpathname;
       delete formMulti;
       delete set_cookie;
       delete request_uri;
@@ -1017,7 +1041,7 @@ void UHTTP::dtor()
 
       // CACHE FILE SYSTEM
 
-#  if defined(HAVE_SYS_INOTIFY_H) && defined(DEBUG_DEBUG)
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && defined(DEBUG_DEBUG)
       UStringRep* rep = UObject2StringRep(cache_file);
 
       (void) UFile::writeToTmpl("/tmp/doc_root_cache.%P", UString(rep));
@@ -1076,38 +1100,153 @@ UString UHTTP::getRequestURI(bool bquery)
 {
    U_TRACE(0, "UHTTP::getRequestURI(%b)", bquery)
 
-   // NB: there may be an ALIAS...
-
    U_INTERNAL_ASSERT_POINTER(request_uri)
 
-   UString uri(U_CAPACITY);
+   static UString* uri;
+   static bool old_bquery;
+   static uint32_t old_counter;
 
-   if (request_uri->empty())
+   if (old_bquery  != bquery ||
+       old_counter != UClientImage_Base::counter)
       {
-      if (bquery &&
-          u_http_info.query_len)
+       old_bquery  = false;
+       old_counter = UClientImage_Base::counter;
+
+      if (uri == 0) U_NEW_ULIB_OBJECT(uri, UString(U_CAPACITY));
+      
+      // NB: there may be an ALIAS...
+
+      if (request_uri->empty())
          {
-         (void) uri.assign(U_HTTP_URI_QUERY_TO_PARAM);
+         if (bquery &&
+             u_http_info.query_len)
+            {
+            old_bquery = true;
+
+            (void) uri->assign(U_HTTP_URI_QUERY_TO_PARAM);
+            }
+         else
+            {
+            (void) uri->assign(U_HTTP_URI_TO_PARAM);
+            }
          }
       else
          {
-         (void) uri.assign(U_HTTP_URI_TO_PARAM);
+         *uri = *request_uri;
+
+         if (bquery &&
+             u_http_info.query_len)
+            {
+            old_bquery = true;
+
+            uri->push_back('?');
+
+            (void) uri->append(U_HTTP_QUERY_TO_PARAM);
+            }
          }
+      }
+
+   U_RETURN_STRING(*uri);
+}
+
+uint32_t UHTTP::getUserAgent()
+{
+   U_TRACE(0, "UHTTP::getUserAgent()")
+
+   static uint32_t agent;
+   static uint32_t old_counter;
+
+   if (old_counter != UClientImage_Base::counter)
+      {
+       old_counter  = UClientImage_Base::counter;
+
+      agent = (u_http_info.user_agent_len ? u_cdb_hash((unsigned char*)U_HTTP_USER_AGENT_TO_PARAM, false) : 0);
+      }
+
+   U_RETURN(agent);
+}
+
+void UHTTP::writeApacheLikeLog(int fd)
+{
+   U_TRACE(0, "UHTTP::writeApacheLikeLog(%d)", fd)
+
+   const char* body;
+   const char* agent;
+   const char* referer;
+   const char* request = UClientImage_Base::request->data();
+   uint32_t referer_len, agent_len, request_len = u_http_info.startHeader, body_len = UClientImage_Base::body->size();
+
+   char buffer[4096U];
+
+   U_INTERNAL_DUMP("u_http_info.startHeader = %u", u_http_info.startHeader)
+
+   if (u_isspace(request[request_len]) == false &&
+       u_isspace(request[request_len-1]))
+      {
+      while (u_isspace(request[--request_len])) {}
+
+      ++request_len;
+      }
+
+   U_INTERNAL_DUMP("request(%u) = %.*S", request_len, request_len, request)
+
+   while (u_isspace(*request))
+      {
+      ++request;
+      --request_len;
+      }
+
+   if (body_len)
+      {
+      static char buf[16];
+
+      body     = buf;
+      body_len = u__snprintf(buf, sizeof(buf), "%u", body_len);
       }
    else
       {
-      uri = *request_uri;
-
-      if (bquery &&
-          u_http_info.query_len)
-         {
-         uri.push_back('?');
-
-         (void) uri.append(U_HTTP_QUERY_TO_PARAM);
-         }
+      body     = "-";
+      body_len = 1;
       }
 
-   U_RETURN_STRING(uri);
+   if (u_http_info.referer_len)
+      {
+      referer     = u_http_info.referer;
+      referer_len = u_http_info.referer_len; 
+      }
+   else
+      {
+      referer     = "-";
+      referer_len = 1;
+      }
+
+   if (u_http_info.user_agent_len)
+      {
+      agent     = u_http_info.user_agent;
+      agent_len = u_http_info.user_agent_len; 
+      }
+   else
+      {
+      agent     = "-";
+      agent_len = 1;
+      }
+
+   /* Example
+   ------------------------------------------------------------------------------------------------------------------------------------------------- 
+    10.10.25.2 - - [21/May/2012:16:29:41 +0200] "GET / HTTP/1.1" 200 598 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.5 (KHTML, like Gecko)"
+    10.10.25.2 - - [21/May/2012:16:29:41 +0200] "GET /unirel_logo.gif HTTP/1.1" 200 3414 "http://www.unirel.com/" "Mozilla/5.0 (X11; Linux x86_64)"
+   ------------------------------------------------------------------------------------------------------------------------------------------------- 
+   */
+
+   (void) U_SYSCALL(write, "%d,%p,%u", fd, buffer,
+                        u__snprintf(buffer, sizeof(buffer),
+                                    "%s - - [%11D] \"%.*s\" %u %.*s \"%.*s\" \"%.*s\"\n",
+                                    UServer_Base::client_address,
+                                    request_len, request,
+                                    u_http_info.nResponseCode,
+                                    body_len,    body,
+                                    referer_len, referer,
+                                    agent_len,   agent));
 }
 
 /* read HTTP message
@@ -1464,90 +1603,45 @@ bool UHTTP::findEndHeader(const UString& buffer)
       U_RETURN(true);
       }
 
+   u_http_info.endHeader = 0;
+
    U_RETURN(false);
 }
 
-void UHTTP::writeApacheLikeLog(int fd)
+U_NO_EXPORT void UHTTP::manageBufferResize(const char* rpointer1, const char* rpointer2)
 {
-   U_TRACE(0, "UHTTP::writeApacheLikeLog(%d)", fd)
+   U_TRACE(0, "UHTTP::manageBufferResize(%p)", rpointer1, rpointer2)
 
-   const char* body;
-   const char* agent;
-   const char* referer;
-   const char* request = UClientImage_Base::request->data();
-   uint32_t referer_len, agent_len, request_len = u_http_info.startHeader, body_len = UClientImage_Base::body->size();
+   U_INTERNAL_ASSERT_DIFFERS(rpointer1, rpointer2)
 
-   char buffer[4096U];
+   ptrdiff_t diff = (rpointer2 - rpointer1);
 
-   U_INTERNAL_DUMP("u_http_info.startHeader = %u", u_http_info.startHeader)
+                                        u_http_info.method          += diff;
+                                        u_http_info.uri             += diff;
+   if (u_http_info.query_len)           u_http_info.query           += diff;
+   if (u_http_info.host_len)            u_http_info.host            += diff;
+   if (u_http_info.range_len)           u_http_info.range           += diff;
+   if (u_http_info.accept_len)          u_http_info.accept          += diff;
+   if (u_http_info.cookie_len)          u_http_info.cookie          += diff;
+   if (u_http_info.referer_len)         u_http_info.referer         += diff;
+   if (u_http_info.ip_client_len)       u_http_info.ip_client       += diff;
+   if (u_http_info.user_agent_len)      u_http_info.user_agent      += diff;
+   if (u_http_info.content_type_len)    u_http_info.content_type    += diff;
+   if (u_http_info.accept_language_len) u_http_info.accept_language += diff;
 
-   if (u_isspace(request[request_len]) == false &&
-       u_isspace(request[request_len-1]))
-      {
-      while (u_isspace(request[--request_len])) {}
-
-      ++request_len;
-      }
-
-   U_INTERNAL_DUMP("request(%u) = %.*S", request_len, request_len, request)
-
-   while (u_isspace(*request))
-      {
-      ++request;
-      --request_len;
-      }
-
-   if (body_len)
-      {
-      static char buf[16];
-
-      body     = buf;
-      body_len = u__snprintf(buf, sizeof(buf), "%u", body_len);
-      }
-   else
-      {
-      body     = "-";
-      body_len = 1;
-      }
-
-   if (u_http_info.referer_len)
-      {
-      referer     = u_http_info.referer;
-      referer_len = u_http_info.referer_len; 
-      }
-   else
-      {
-      referer     = "-";
-      referer_len = 1;
-      }
-
-   if (u_http_info.user_agent_len)
-      {
-      agent     = u_http_info.user_agent;
-      agent_len = u_http_info.user_agent_len; 
-      }
-   else
-      {
-      agent     = "-";
-      agent_len = 1;
-      }
-
-   /* Example
-   ------------------------------------------------------------------------------------------------------------------------------------------------- 
-    10.10.25.2 - - [21/May/2012:16:29:41 +0200] "GET / HTTP/1.1" 200 598 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.5 (KHTML, like Gecko)"
-    10.10.25.2 - - [21/May/2012:16:29:41 +0200] "GET /unirel_logo.gif HTTP/1.1" 200 3414 "http://www.unirel.com/" "Mozilla/5.0 (X11; Linux x86_64)"
-   ------------------------------------------------------------------------------------------------------------------------------------------------- 
-   */
-
-   (void) U_SYSCALL(write, "%d,%p,%u", fd, buffer,
-                        u__snprintf(buffer, sizeof(buffer),
-                                    "%s - - [%8D] \"%.*s\" %u %.*s \"%.*s\" \"%.*s\"\n",
-                                    UServer_Base::pClientImage->socket->remoteIPAddress().getAddressString(),
-                                    request_len, request,
-                                    u_http_info.nResponseCode,
-                                    body_len,    body,
-                                    referer_len, referer,
-                                    agent_len,   agent));
+   U_INTERNAL_DUMP("method          = %.*S", U_HTTP_METHOD_TO_TRACE)
+   U_INTERNAL_DUMP("uri             = %.*S", U_HTTP_URI_TO_TRACE)
+   U_INTERNAL_DUMP("host            = %.*S", U_HTTP_HOST_TO_TRACE)
+   U_INTERNAL_DUMP("vhost           = %.*S", U_HTTP_VHOST_TO_TRACE)
+   U_INTERNAL_DUMP("query           = %.*S", U_HTTP_QUERY_TO_TRACE)
+   U_INTERNAL_DUMP("ctype           = %.*S", U_HTTP_CTYPE_TO_TRACE)
+   U_INTERNAL_DUMP("range           = %.*S", U_HTTP_RANGE_TO_TRACE)
+   U_INTERNAL_DUMP("accept          = %.*S", U_HTTP_ACCEPT_TO_TRACE)
+   U_INTERNAL_DUMP("cookie          = %.*S", U_HTTP_COOKIE_TO_TRACE)
+   U_INTERNAL_DUMP("referer         = %.*S", U_HTTP_REFERER_TO_TRACE)
+   U_INTERNAL_DUMP("ip_client       = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
+   U_INTERNAL_DUMP("user_agent      = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
+   U_INTERNAL_DUMP("accept_language = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
 }
 
 bool UHTTP::readHTTPHeader(USocket* s, UString& buffer)
@@ -1558,20 +1652,16 @@ bool UHTTP::readHTTPHeader(USocket* s, UString& buffer)
    U_INTERNAL_ASSERT_EQUALS(u_http_info.endHeader,0)
    U_INTERNAL_ASSERT_EQUALS(u_http_info.startHeader,0)
 
-   const char* rpointer1 = 0;
-   const char* rpointer2 = 0;
-   uint32_t count = 0, sz = buffer.size();
+   uint32_t sz     = buffer.size();
+   const char* ptr = buffer.data(); // NB: it is possible a resize of the buffer string...
 
    U_INTERNAL_DUMP("sz = %u", sz)
 
    if ( sz < 18 && // 18 -> "GET / HTTP/1.0\r\n\r\n"
        (sz <  4 || (*(uint32_t*)(buffer.c_pointer(sz - 4)) != (*(uint32_t*)U_CRLF2))))
       {
-      // NB: it is possible a resize of the buffer string...
 read:
-      if (telnet_enable) rpointer1 = buffer.data();
-
-      if (USocketExt::read(s, buffer, U_SINGLE_READ, UServer_Base::timeoutMS) == false)
+      if (USocketExt::read(s, buffer, 18, UServer_Base::timeoutMS, request_read_timeout) == false)
          {
          if (s->isTimeout())
             {
@@ -1588,22 +1678,11 @@ read:
 
       U_INTERNAL_DUMP("sz = %u", sz)
 
-      if (telnet_enable)
+      if (ptr != buffer.data())
          {
-         rpointer2 = buffer.data();
+         manageBufferResize(ptr, buffer.data());
 
-         if (rpointer1 != rpointer2)
-            {
-            ptrdiff_t diff = (rpointer2 - rpointer1);
-
-                                       u_http_info.method += diff;
-                                       u_http_info.uri    += diff;
-            if (u_http_info.query_len) u_http_info.query  += diff;
-
-            U_INTERNAL_DUMP("method = %.*S", U_HTTP_METHOD_TO_TRACE)
-            U_INTERNAL_DUMP("uri    = %.*S", U_HTTP_URI_TO_TRACE)
-            U_INTERNAL_DUMP("query  = %.*S", U_HTTP_QUERY_TO_TRACE)
-            }
+         ptr = buffer.data();
          }
       }
 
@@ -1647,9 +1726,8 @@ start:
 
          U_ASSERT(buffer.isEndHeader(u_http_info.startHeader))
 
-         u_http_info.startHeader += u_line_terminator_len * 2;
-
          U_http_method_type        = 0;
+         u_http_info.startHeader  += u_line_terminator_len * 2;
          u_http_info.nResponseCode = 0;
 
          if (sz <= u_http_info.startHeader) goto read;
@@ -1663,43 +1741,52 @@ start:
 
    // NB: endHeader comprende anche la blank line...
 
-   if (buffer.isEndHeader(u_http_info.startHeader)) u_http_info.endHeader = u_http_info.startHeader + (u_line_terminator_len * 2);
-   else
+   if (buffer.isEndHeader(u_http_info.startHeader))
       {
-      if (telnet_enable)
+      u_http_info.endHeader = u_http_info.startHeader + (u_line_terminator_len * 2);
+
+      U_INTERNAL_DUMP("u_http_info.endHeader = %u", u_http_info.endHeader)
+
+      U_RETURN(true);
+      }
+
+   if (telnet_enable &&
+       findEndHeader(buffer) == false)
+      {
+      const char* terminator;
+      uint32_t terminator_len;
+
+      if (u_line_terminator_len == 1)
          {
-         if (findEndHeader(buffer) == false)
-            {
-            u_http_info.endHeader = 0;
-
-            // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
-
-            U_INTERNAL_DUMP("slow loris count = %u", count)
-
-            if (++count > 10)
-               {
-               U_http_is_connection_close = U_YES;
-               u_http_info.nResponseCode  = HTTP_PRECON_FAILED;
-
-               setHTTPResponse(0, 0);
-
-               U_RETURN(false);
-               }
-
-            goto read;
-            }
-
-         u_http_info.startHeader += u_line_terminator_len;
+         terminator     = U_LF2;
+         terminator_len = U_CONSTANT_SIZE(U_LF2);
          }
       else
          {
-         u_http_info.startHeader += u_line_terminator_len;
-         u_http_info.szHeader     = buffer.size() - u_http_info.startHeader;
-
-         U_INTERNAL_DUMP("u_http_info.szHeader = %u u_http_info.startHeader(%u) = %.*S",
-                          u_http_info.szHeader, u_http_info.startHeader, 20, buffer.c_pointer(u_http_info.startHeader))
+         terminator     = U_CRLF2;
+         terminator_len = U_CONSTANT_SIZE(U_CRLF2);
          }
+
+      if (USocketExt::readWhileNotToken(s, buffer,
+                                        terminator, terminator_len,
+                                        16, UServer_Base::timeoutMS, request_read_timeout) == U_NOT_FOUND)
+         {
+         U_http_is_connection_close = U_YES;
+         u_http_info.nResponseCode  = HTTP_PRECON_FAILED;
+
+         setHTTPResponse(0, 0);
+
+         U_RETURN(false);
+         }
+
+      if (ptr != buffer.data()) manageBufferResize(ptr, buffer.data());
       }
+
+   u_http_info.startHeader += u_line_terminator_len;
+   u_http_info.szHeader     = buffer.size() - u_http_info.startHeader;
+
+   U_INTERNAL_DUMP("u_http_info.szHeader = %u u_http_info.startHeader(%u) = %.*S",
+                    u_http_info.szHeader, u_http_info.startHeader, 20, buffer.c_pointer(u_http_info.startHeader))
 
    U_RETURN(true);
 }
@@ -1729,243 +1816,236 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
 
    // NB: check if request includes an entity-body (as indicated by the presence of Content-Length or Transfer-Encoding)
 
-   uint32_t body_byte_read;
-
-   if (u_http_info.clength == 0)
+   if (u_http_info.clength)
       {
-            char* out;
-      const char* inp;
-      const char* chunk_terminator;
-      uint32_t count, chunkSize, chunk_terminator_len;
-      const char* chunk_ptr = getHTTPHeaderValuePtr(*pbuffer, *USocket::str_Transfer_Encoding, true);
+      uint32_t body_byte_read = (pbuffer->size() - u_http_info.endHeader);
 
-      if (chunk_ptr == 0)
+      U_INTERNAL_DUMP("pbuffer->size() = %u body_byte_read = %u Content-Length = %u", pbuffer->size(), body_byte_read, u_http_info.clength)
+
+      if (u_http_info.clength > body_byte_read)
          {
-         if (U_http_version == '1')
+         if (isHTTPRequestTooLarge(*pbuffer))
             {
-            // HTTP/1.1 compliance: no missing Content-Length on POST requests
-
             U_http_is_connection_close = U_YES;
-            u_http_info.nResponseCode  = HTTP_LENGTH_REQUIRED;
+            u_http_info.nResponseCode  = HTTP_ENTITY_TOO_LARGE;
 
             setHTTPResponse(0, 0);
 
             U_RETURN(false);
             }
 
-         U_ASSERT_EQUALS(UClientImage_Base::isPipeline(), false)
+         // NB: check for 'Expect: 100-continue' (as curl does)...
 
-         if (u_http_info.szHeader == 0)
+         if (body_byte_read == 0 &&
+             pbuffer->find(*USocket::str_expect_100_continue, u_http_info.startHeader, u_http_info.szHeader) != U_NOT_FOUND)
+            {
+            U_INTERNAL_ASSERT_EQUALS(U_http_version, '1')
+
+            (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM("HTTP/1.1 100 Continue\r\n\r\n"));
+
+            (void) UServer_Base::pClientImage->handlerWrite();
+            }
+
+#     ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
+         if (USocketExt::byte_read_hook)
+            {
+            (void) initUploadProgress(u_http_info.clength);
+
+            if (body_byte_read) updateUploadProgress(body_byte_read);
+            }
+#     endif
+
+         // NB: wait for other data...
+
+         if (USocketExt::read(s, *pbuffer, u_http_info.clength - body_byte_read, UServer_Base::timeoutMS, request_read_timeout) == false)
+            {
+            U_http_is_connection_close = U_YES;
+            u_http_info.nResponseCode  = HTTP_CLIENT_TIMEOUT;
+
+            setHTTPResponse(0, 0);
+
+            U_RETURN(false);
+            }
+
+#     ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
+         if (USocketExt::byte_read_hook) updateUploadProgress(u_http_info.clength); // done...
+#     endif
+         }
+      }
+   else
+      {
+      U_INTERNAL_DUMP("U_http_chunked = %b", U_http_chunked)
+
+      if (U_http_chunked == false)
+         {
+         const char* chunk_ptr = getHTTPHeaderValuePtr(*pbuffer, *USocket::str_Transfer_Encoding, true);
+
+         if (chunk_ptr)
+            {
+            if (USocket::str_chunked->equal(chunk_ptr, U_CONSTANT_SIZE("chunked")) == false)
+               {
+               setHTTPBadRequest();
+
+               U_RETURN(false);
+               }
+
+            U_http_chunked = true;
+            }
+         }
+
+      if (U_http_chunked)
+         {
+               char* out;
+         const char* inp;
+         const char* chunk_terminator;
+         uint32_t count, chunkSize, chunk_terminator_len;
+         /* ----------------------------------------------------------------------------------------------------------
+         If a server wants to start sending a response before knowing its total length (like with long script output),
+         it might use the simple chunked transfer-encoding, which breaks the complete response into smaller chunks and
+         sends them in series. You can identify such a response because it contains the "Transfer-Encoding: chunked"
+         header. All HTTP 1.1 clients must be able to receive chunked messages. A chunked message body contains a
+         series of chunks, followed by a line with a single "0" (zero), followed by optional footers (just like headers),
+         and a blank line. Each chunk consists of two parts: a line with the size of the chunk data, in hex, possibly
+         followed by a semicolon and extra parameters you can ignore (none are currently standard), and ending with
+         CRLF. the data itself, followed by CRLF. An example:
+
+         HTTP/1.1 200 OK
+         Date: Fri, 31 Dec 1999 23:59:59 GMT
+         Content-Type: text/plain
+         Transfer-Encoding: chunked
+         [blank line here]
+         1a; ignore-stuff-here
+         abcdefghijklmnopqrstuvwxyz
+         10
+         1234567890abcdef
+         0
+         some-footer: some-value
+         another-footer: another-value
+         [blank line here]
+
+         Note the blank line after the last footer. The length of the text data is 42 bytes (1a + 10, in hex),
+         and the data itself is abcdefghijklmnopqrstuvwxyz1234567890abcdef. The footers should be treated like
+         headers, as if they were at the top of the response. The chunks can contain any binary data, and may
+         be much larger than the examples here. The size-line parameters are rarely used, but you should at
+         least ignore them correctly. Footers are also rare, but might be appropriate for things like checksums
+         or digital signatures
+         -------------------------------------------------------------------------------------------------------- */
+
+         if (u_line_terminator_len == 1)
+            {
+            chunk_terminator     = U_LF2;
+            chunk_terminator_len = U_CONSTANT_SIZE(U_LF2);
+            }
+         else
+            {
+            chunk_terminator     = U_CRLF2;
+            chunk_terminator_len = U_CONSTANT_SIZE(U_CRLF2);
+            }
+
+                                   count = pbuffer->find(chunk_terminator, u_http_info.endHeader, chunk_terminator_len);
+
+         if (count == U_NOT_FOUND) count = USocketExt::readWhileNotToken(s, *pbuffer,
+                                                                         chunk_terminator, chunk_terminator_len,
+                                                                         16 * 1024, UServer_Base::timeoutMS, request_read_timeout);
+
+         if (count == U_NOT_FOUND)
+            {
+            if (s->isOpen()) setHTTPBadRequest();
+            else
+               {
+               U_http_is_connection_close = U_YES;
+               u_http_info.nResponseCode  = HTTP_CLIENT_TIMEOUT;
+
+               setHTTPResponse(0, 0);
+               }
+
+            U_RETURN(false);
+            }
+
+         count += chunk_terminator_len; // NB: the message include also the blank line...
+
+         U_INTERNAL_DUMP("count = %u u_http_info.endHeader = %u", count, u_http_info.endHeader)
+
+         if (count <= u_http_info.endHeader)
             {
             setHTTPBadRequest();
 
             U_RETURN(false);
             }
 
-         // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
-
-         count = 0;
-
-         do {
-            U_INTERNAL_DUMP("slow loris count = %u", count)
-
-            if (++count > 10)
-               {
-               U_http_is_connection_close = U_YES;
-               u_http_info.nResponseCode  = HTTP_PRECON_FAILED;
-
-               setHTTPResponse(0, 0);
-
-               U_RETURN(false);
-               }
-            }
-         while (USocketExt::read(s, *pbuffer, U_SINGLE_READ, 3 * 1000)); // wait max 3 sec for other data...
-
-         u_http_info.clength = (pbuffer->size() - u_http_info.endHeader);
+         u_http_info.clength = (count - u_http_info.endHeader);
 
          U_INTERNAL_DUMP("u_http_info.clength = %u", u_http_info.clength)
 
-         if (u_http_info.clength == 0) U_RETURN(true);
+         body.setBuffer(u_http_info.clength);
 
-         goto end;
-         }
+         inp = pbuffer->c_pointer(u_http_info.endHeader);
+         out = body.data();
 
-      /* ----------------------------------------------------------------------------------------------------------
-      If a server wants to start sending a response before knowing its total length (like with long script output),
-      it might use the simple chunked transfer-encoding, which breaks the complete response into smaller chunks and
-      sends them in series. You can identify such a response because it contains the "Transfer-Encoding: chunked"
-      header. All HTTP 1.1 clients must be able to receive chunked messages. A chunked message body contains a
-      series of chunks, followed by a line with a single "0" (zero), followed by optional footers (just like headers),
-      and a blank line. Each chunk consists of two parts: a line with the size of the chunk data, in hex, possibly
-      followed by a semicolon and extra parameters you can ignore (none are currently standard), and ending with
-      CRLF. the data itself, followed by CRLF. An example:
-
-      HTTP/1.1 200 OK
-      Date: Fri, 31 Dec 1999 23:59:59 GMT
-      Content-Type: text/plain
-      Transfer-Encoding: chunked
-      [blank line here]
-      1a; ignore-stuff-here
-      abcdefghijklmnopqrstuvwxyz
-      10
-      1234567890abcdef
-      0
-      some-footer: some-value
-      another-footer: another-value
-      [blank line here]
-
-      Note the blank line after the last footer. The length of the text data is 42 bytes (1a + 10, in hex),
-      and the data itself is abcdefghijklmnopqrstuvwxyz1234567890abcdef. The footers should be treated like
-      headers, as if they were at the top of the response. The chunks can contain any binary data, and may
-      be much larger than the examples here. The size-line parameters are rarely used, but you should at
-      least ignore them correctly. Footers are also rare, but might be appropriate for things like checksums
-      or digital signatures
-      -------------------------------------------------------------------------------------------------------- */
-
-      U_INTERNAL_ASSERT(U_STRNEQ(chunk_ptr, "chunk"))
-
-      // manage buffered read
-
-      if (u_line_terminator_len == 1)
-         {
-         chunk_terminator     = U_LF2;
-         chunk_terminator_len = U_CONSTANT_SIZE(U_LF2);
-         }
-      else
-         {
-         chunk_terminator     = U_CRLF2;
-         chunk_terminator_len = U_CONSTANT_SIZE(U_CRLF2);
-         }
-
-      count = pbuffer->find(chunk_terminator, u_http_info.endHeader, chunk_terminator_len);
-
-      if (count == U_NOT_FOUND) count = USocketExt::read(s, *pbuffer, chunk_terminator, chunk_terminator_len);
-
-      if (count == U_NOT_FOUND)
-         {
-         if (s->isOpen()) setHTTPBadRequest();
-         else
+         while (true)
             {
-            U_http_is_connection_close = U_YES;
-            u_http_info.nResponseCode  = HTTP_CLIENT_TIMEOUT;
+            // Decode the hexadecimal chunk size into an understandable number
 
-            setHTTPResponse(0, 0);
+            chunkSize = strtol(inp, 0, 16);
+
+            U_INTERNAL_DUMP("chunkSize = %u inp[0] = %C", chunkSize, inp[0])
+
+            // The last chunk is followed by zero or more trailers, followed by a blank line
+
+            if (chunkSize == 0)
+               {
+               body.size_adjust(body.distance(out));
+
+               U_INTERNAL_DUMP("body = %.*S", U_STRING_TO_TRACE(body))
+
+               break;
+               }
+
+            U_INTERNAL_ASSERT(u_isxdigit(*inp))
+
+            while (*inp++ != '\n') {} // discard the rest of the line
+
+            (void) u__memcpy(out, inp, chunkSize);
+
+            inp += chunkSize + u_line_terminator_len;
+            out += chunkSize;
+
+            U_INTERNAL_ASSERT(inp <= (pbuffer->c_pointer(count)))
             }
+
+         U_RETURN(true);
+         }
+
+      if (U_http_version == '1')
+         {
+         // HTTP/1.1 compliance: no missing Content-Length on POST requests
+
+         U_http_is_connection_close = U_YES;
+         u_http_info.nResponseCode  = HTTP_LENGTH_REQUIRED;
+
+         setHTTPResponse(0, 0);
 
          U_RETURN(false);
          }
 
-      count += chunk_terminator_len; // NB: the message include also the blank line...
+      U_ASSERT_EQUALS(UClientImage_Base::isPipeline(), false)
 
-      U_INTERNAL_DUMP("count = %u u_http_info.endHeader = %u", count, u_http_info.endHeader)
-
-      if (count <= u_http_info.endHeader)
+      if (u_http_info.szHeader == 0)
          {
          setHTTPBadRequest();
 
          U_RETURN(false);
          }
 
-      u_http_info.clength = (count - u_http_info.endHeader);
+      (void) USocketExt::read(s, *pbuffer, 256 * 1024, UServer_Base::timeoutMS, request_read_timeout); // wait for other data (max 256k)...
+
+      u_http_info.clength = (pbuffer->size() - u_http_info.endHeader);
 
       U_INTERNAL_DUMP("u_http_info.clength = %u", u_http_info.clength)
 
-      body.setBuffer(u_http_info.clength);
-
-      inp = pbuffer->c_pointer(u_http_info.endHeader);
-      out = body.data();
-
-      while (true)
-         {
-         // Decode the hexadecimal chunk size into an understandable number
-
-         chunkSize = strtol(inp, 0, 16);
-
-         U_INTERNAL_DUMP("chunkSize = %u inp[0] = %C", chunkSize, inp[0])
-
-         // The last chunk is followed by zero or more trailers, followed by a blank line
-
-         if (chunkSize == 0)
-            {
-            body.size_adjust(body.distance(out));
-
-            U_INTERNAL_DUMP("body = %.*S", U_STRING_TO_TRACE(body))
-
-            break;
-            }
-
-         U_INTERNAL_ASSERT(u_isxdigit(*inp))
-
-         while (*inp++ != '\n') {} // discard the rest of the line
-
-         (void) u__memcpy(out, inp, chunkSize);
-
-         inp += chunkSize + u_line_terminator_len;
-         out += chunkSize;
-
-         U_INTERNAL_ASSERT(inp <= (pbuffer->c_pointer(count)))
-         }
-
-      U_RETURN(true);
+      if (u_http_info.clength == 0) U_RETURN(true);
       }
 
-   body_byte_read = (pbuffer->size() - u_http_info.endHeader);
-
-   U_INTERNAL_DUMP("pbuffer->size() = %u body_byte_read = %u Content-Length = %u", pbuffer->size(), body_byte_read, u_http_info.clength)
-
-   if (u_http_info.clength > body_byte_read)
-      {
-      if (isHTTPRequestTooLarge(*pbuffer))
-         {
-         U_http_is_connection_close = U_YES;
-         u_http_info.nResponseCode  = HTTP_ENTITY_TOO_LARGE;
-
-         setHTTPResponse(0, 0);
-
-         U_RETURN(false);
-         }
-
-      // NB: check for 'Expect: 100-continue' (as curl does)...
-
-      if (body_byte_read == 0 &&
-          pbuffer->find(*USocket::str_expect_100_continue, u_http_info.startHeader, u_http_info.szHeader) != U_NOT_FOUND)
-         {
-         U_INTERNAL_ASSERT_EQUALS(U_http_version, '1')
-
-         (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM("HTTP/1.1 100 Continue\r\n\r\n"));
-
-         (void) UServer_Base::pClientImage->handlerWrite();
-         }
-
-      // UPLOAD PROGRESS
-
-      if (USocketExt::byte_read_hook)
-         {
-         (void) initUploadProgress(u_http_info.clength);
-
-         if (body_byte_read) updateUploadProgress(body_byte_read);
-         }
-
-      // NB: wait for other data...
-
-      int timeoutMS = (UServer_Base::timeoutMS != -1 ? UServer_Base::timeoutMS : U_TIMEOUT_MS);
-
-      if (USocketExt::read(s, *pbuffer, u_http_info.clength - body_byte_read, timeoutMS, request_read_timeout) == false)
-         {
-         U_http_is_connection_close = U_YES;
-         u_http_info.nResponseCode  = HTTP_CLIENT_TIMEOUT;
-
-         setHTTPResponse(0, 0);
-
-         U_RETURN(false);
-         }
-
-      // UPLOAD PROGRESS
-
-      if (USocketExt::byte_read_hook) updateUploadProgress(u_http_info.clength); // done...
-      }
-
-end:
    body = pbuffer->substr(u_http_info.endHeader, u_http_info.clength);
 
    U_RETURN(true);
@@ -2272,6 +2352,34 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
                         U_INTERNAL_DUMP("X-Real-IP: = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
                         }
                      }
+
+                  if (u_http_info.ip_client_len)
+                     {
+                     n  = 0;
+                     p2 = u_http_info.ip_client;
+
+                     do {
+                        c = p2[n];
+
+                        if (u_isspace(c) || c == ',') break;
+                        }
+                     while (++n < u_http_info.ip_client_len);
+
+                     U_INTERNAL_DUMP("ip_client = %.*S", n, u_http_info.ip_client)
+
+                     if (u_isIPAddr(UClientImage_Base::bIPv6, u_http_info.ip_client, n))
+                        {
+                        static char buffer[32];
+
+                        (void) u__memcpy(buffer, u_http_info.ip_client, n);
+
+                        buffer[n] = '\0';
+
+                        UServer_Base::client_address = buffer;
+
+                        U_INTERNAL_DUMP("UServer_Base::client_address = %S", UServer_Base::client_address)
+                        }
+                     }
                   }
                }
             break;
@@ -2559,7 +2667,7 @@ void UHTTP::manageHTTPRequestCache()
             U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd   = %d", UServer_Base::pClientImage->sfd)
             U_INTERNAL_DUMP("UServer_Base::pClientImage->state = %d", UServer_Base::pClientImage->state)
 
-            U_INTERNAL_ASSERT_EQUALS(UServer_Base::sfd,0)
+            U_INTERNAL_ASSERT_EQUALS(UServer_Base::sfd, 0)
 
             UServer_Base::sfd = file_data->fd;
             }
@@ -2579,54 +2687,23 @@ bool UHTTP::readHTTPRequest(USocket* socket)
       {
       bool result = true, request_buffer_resize = false;
 
-      U_INTERNAL_DUMP("u_http_info.clength = %u", u_http_info.clength)
-
       UClientImage_Base::size_request = u_http_info.endHeader;
+
+      U_INTERNAL_DUMP("u_http_info.clength = %u", u_http_info.clength)
 
       if (u_http_info.clength || isHttpPOST())
          {
-         // NB: it is possible a resize of the request string...
-
-         const char* rpointer1 = UClientImage_Base::request->data();
+         const char* ptr = UClientImage_Base::request->data(); // NB: it is possible a resize of the request string...
 
          result = readHTTPBody(socket, UClientImage_Base::request, *UClientImage_Base::body);
 
          if (result)
             {
-            const char* rpointer2 = UClientImage_Base::request->data();
-
-            if (rpointer1 != rpointer2)
+            if (ptr != UClientImage_Base::request->data())
                {
                request_buffer_resize = true;
 
-               ptrdiff_t diff = (rpointer2 - rpointer1);
-
-                                                    u_http_info.method          += diff;
-                                                    u_http_info.uri             += diff;
-               if (u_http_info.host_len)            u_http_info.host            += diff;
-               if (u_http_info.query_len)           u_http_info.query           += diff;
-               if (u_http_info.range_len)           u_http_info.range           += diff;
-               if (u_http_info.accept_len)          u_http_info.accept          += diff;
-               if (u_http_info.cookie_len)          u_http_info.cookie          += diff;
-               if (u_http_info.referer_len)         u_http_info.referer         += diff;
-               if (u_http_info.ip_client_len)       u_http_info.ip_client       += diff;
-               if (u_http_info.user_agent_len)      u_http_info.user_agent      += diff;
-               if (u_http_info.content_type_len)    u_http_info.content_type    += diff;
-               if (u_http_info.accept_language_len) u_http_info.accept_language += diff;
-
-               U_INTERNAL_DUMP("method          = %.*S", U_HTTP_METHOD_TO_TRACE)
-               U_INTERNAL_DUMP("uri             = %.*S", U_HTTP_URI_TO_TRACE)
-               U_INTERNAL_DUMP("host            = %.*S", U_HTTP_HOST_TO_TRACE)
-               U_INTERNAL_DUMP("vhost           = %.*S", U_HTTP_VHOST_TO_TRACE)
-               U_INTERNAL_DUMP("query           = %.*S", U_HTTP_QUERY_TO_TRACE)
-               U_INTERNAL_DUMP("ctype           = %.*S", U_HTTP_CTYPE_TO_TRACE)
-               U_INTERNAL_DUMP("range           = %.*S", U_HTTP_RANGE_TO_TRACE)
-               U_INTERNAL_DUMP("accept          = %.*S", U_HTTP_ACCEPT_TO_TRACE)
-               U_INTERNAL_DUMP("cookie          = %.*S", U_HTTP_COOKIE_TO_TRACE)
-               U_INTERNAL_DUMP("referer         = %.*S", U_HTTP_REFERER_TO_TRACE)
-               U_INTERNAL_DUMP("ip_client       = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
-               U_INTERNAL_DUMP("user_agent      = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
-               U_INTERNAL_DUMP("accept_language = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
+               manageBufferResize(ptr, UClientImage_Base::request->data());
                }
 
             UClientImage_Base::size_request += u_http_info.clength;
@@ -2786,10 +2863,7 @@ void UHTTP::setHTTPCookie(const UString& param)
 
                keyID->setBuffer(100U);
 
-               keyID->snprintf("%s_%u_%P_%u",
-                                 UServer_Base::pClientImage->socket->remoteIPAddress().getAddressString(),
-                                 (u_http_info.user_agent_len ? u_cdb_hash((unsigned char*)U_HTTP_USER_AGENT_TO_PARAM, false) : 0),
-                                 ++sid_counter_gen);
+               keyID->snprintf("%s_%u_%P_%u", UServer_Base::client_address, getUserAgent(), ++sid_counter_gen);
 
                item = *keyID;
                }
@@ -2803,7 +2877,7 @@ void UHTTP::setHTTPCookie(const UString& param)
 
             (void) cookie.append(UServices::generateToken(item, expire)); // HMAC-MD5(data&expire)
 
-            if (n_hours) cookie.snprintf_add("; expires=%#D", expire);
+            if (n_hours) cookie.snprintf_add("; expires=%#12D", expire);
             }
          break;
 
@@ -2903,7 +2977,6 @@ bool UHTTP::getHTTPCookie(UString* cookie)
    char* ptr;
    bool check;
    time_t expire;
-   const char* p;
    const char* start;
    uint32_t len, agent;
    UString cookies(u_http_info.cookie, u_http_info.cookie_len), item, value, token;
@@ -2951,10 +3024,9 @@ bool UHTTP::getHTTPCookie(UString* cookie)
                {
                // HTTP Session Hijacking mitigation: IP_USER-AGENT_PID_COUNTER
 
-               p   = UServer_Base::pClientImage->socket->remoteIPAddress().getAddressString();
-               len = u__strlen(p);
+               len = u__strlen(UServer_Base::client_address);
 
-               if (token.compare(0U, len, p, len) == 0) // IP
+               if (token.compare(0U, len, UServer_Base::client_address, len) == 0) // IP
                   {
                   agent = strtol(token.c_pointer(len+1), &ptr, 0);
 
@@ -2962,7 +3034,7 @@ bool UHTTP::getHTTPCookie(UString* cookie)
 
                   U_INTERNAL_ASSERT_EQUALS(ptr[0], '_')
 
-                  if (agent == u_cdb_hash((unsigned char*)U_HTTP_USER_AGENT_TO_PARAM, false)) // USER-AGENT
+                  if (agent == getUserAgent()) // USER-AGENT
                      {
                      if (UServer_Base::preforked_num_kids ||
                          memcmp(ptr+1, u_pid_str, u_pid_str_len) == 0) // PID
@@ -3010,9 +3082,9 @@ bool UHTTP::initSession(const char* location, uint32_t size)
 
       pathdb.snprintf("%s%s", (location[0] == '/' ? "" : U_LIBEXECDIR "/"), location);
 
-      db_session = U_NEW(URDB(pathdb, false)); // NB: no truncate, we can have be started as replacement of child preforked...
+      db_session = U_NEW(URDB(pathdb, false));
 
-      if (((URDB*)db_session)->open(size, false) == false)
+      if (((URDB*)db_session)->open(size, false) == false) // NB: no truncate, we can have be started as replacement of child preforked...
          {
          U_SRV_LOG("db initialization of http session failed...");
 
@@ -3021,6 +3093,10 @@ bool UHTTP::initSession(const char* location, uint32_t size)
 
          U_RETURN(false);
          }
+
+      U_INTERNAL_ASSERT_POINTER(U_LOCK_HTTP_SESSION)
+
+      ((URDB*)db_session)->setShared(U_LOCK_HTTP_SESSION);
       }
 
    U_SRV_LOG("db initialization of http session %S success", location);
@@ -3065,7 +3141,7 @@ U_NO_EXPORT void UHTTP::removeDataSession(const UString& token)
 
    UString cookie(100U);
 
-   cookie.snprintf("ulib.s%u=; expires=%#D", sid_counter_cur, u_now->tv_sec - U_ONE_DAY_IN_SECOND);
+   cookie.snprintf("ulib.s%u=; expires=%#12D", sid_counter_cur, u_now->tv_sec - U_ONE_DAY_IN_SECOND);
 
    addSetCookie(cookie);
 
@@ -3154,7 +3230,7 @@ bool UHTTP::getDataSession(uint32_t index, UString* value)
    U_TRACE(0, "UHTTP::getDataSession(%u,%p)", index, value)
 
    if (db_session ||
-       initSession("http_session", 1024 * 1024))
+       initSession("session.http", 1024 * 1024))
       {
       U_INTERNAL_ASSERT_POINTER(db_session)
       U_INTERNAL_ASSERT_POINTER(data_session)
@@ -3188,7 +3264,7 @@ bool UHTTP::getDataStorage(uint32_t index, UString* value)
    U_TRACE(0, "UHTTP::getDataStorage(%u,%p)", index, value)
 
    if (db_session ||
-       initSession("http_session", 1024 * 1024))
+       initSession("session.http", 1024 * 1024))
       {
       U_INTERNAL_ASSERT_POINTER(db_session)
       U_INTERNAL_ASSERT_POINTER(data_storage)
@@ -3322,42 +3398,6 @@ void UHTTP::putDataStorage(uint32_t index, const char* value, uint32_t size)
 
       if (result) U_SRV_LOG("store of data on db failed with error %d", result);
       }
-}
-
-UString UHTTP::getRemoteIP()
-{
-   U_TRACE(0, "UHTTP::getRemoteIP()")
-
-   if (u_http_info.ip_client_len)
-      {
-      // X-Forwarded-For: client, proxy1, proxy2
-
-      char c;
-      uint32_t len = 0;
-      const char* ptr = u_http_info.ip_client;
-
-      do {
-         c = ptr[len];
-
-         if (u_isspace(c) || c == ',') break;
-
-         ++len;
-         }
-      while (len < u_http_info.ip_client_len);
-
-      U_INTERNAL_DUMP("ip_client = %.*S", len, u_http_info.ip_client)
-
-      if (u_isIPAddr(UClientImage_Base::bIPv6, u_http_info.ip_client, len))
-         {
-         UString result((void*)u_http_info.ip_client, len);
-
-         U_RETURN_STRING(result);
-         }
-      }
-
-   UString result(UServer_Base::pClientImage->socket->remoteIPAddress().getAddressString());
-
-   U_RETURN_STRING(result);
 }
 
 const char* UHTTP::getHTTPStatusDescription(uint32_t nResponseCode)
@@ -3524,7 +3564,7 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
                   "<a href=\"/%.*s?_nav_\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/%s\"> %.*s</a>"
                "</strong></td>"
                "<td align=\"right\" valign=\"bottom\">%.*s</td>"
-               "<td align=\"right\" valign=\"bottom\">%#4D</td>"
+               "<td align=\"right\" valign=\"bottom\">%#3D</td>"
             "</tr>",
             U_STRING_TO_TRACE(value_encoded), (is_dir ? "menu.png" : "gopher-unknown.gif"), item_len, item_ptr,
             U_STRING_TO_TRACE(size),
@@ -3538,7 +3578,7 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
                   "<a href=\"/%.*s/%.*s?_nav_\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/%s\"> %.*s</a>"
                "</strong></td>"
                "<td align=\"right\" valign=\"bottom\">%.*s</td>"
-               "<td align=\"right\" valign=\"bottom\">%#4D</td>"
+               "<td align=\"right\" valign=\"bottom\">%#3D</td>"
             "</tr>",
             len, ptr, U_STRING_TO_TRACE(value_encoded), (is_dir ? "menu.png" : "gopher-unknown.gif"), item_len, item_ptr,
             U_STRING_TO_TRACE(size),
@@ -3717,7 +3757,7 @@ UString UHTTP::getHTTPHeaderForResponse(const UString& content, bool connection_
    U_TRACE(0, "UHTTP::getHTTPHeaderForResponse(%.*S,%b)", U_STRING_TO_TRACE(content), connection_close)
 
    U_INTERNAL_ASSERT_MAJOR(u_http_info.nResponseCode,0)
-
+   
    // NB: All 1xx (informational), 204 (no content), and 304 (not modified) responses MUST not include a body...
 
    U_INTERNAL_DUMP("u_http_info.nResponseCode = %d", u_http_info.nResponseCode)
@@ -3763,7 +3803,7 @@ UString UHTTP::getHTTPHeaderForResponse(const UString& content, bool connection_
 
    UString ext(200U);
 
-   if (U_http_version == '1') ext.snprintf_add("Date: %D\r\n", 0);
+   if (U_http_version == '1') ext.snprintf_add("Date: %12D\r\n", 0);
    else
       {
       // HTTP/1.0 compliance: if not Keep-Alive we force close...
@@ -3810,11 +3850,6 @@ UString UHTTP::getHTTPHeaderForResponse(const UString& content, bool connection_
                }
             }
          }
-
-#  ifdef USE_LIBSSL
-      // Use HTTP Strict Transport Security to force client to use secure connections only
-      if (sts_age_seconds && UServer_Base::bssl) ext.snprintf_add("Strict-Transport-Security: max-age=%u; includeSubDomains\r\n", sts_age_seconds);
-#  endif
       }
 
    UString tmp(300U + ext.size() + sz);
@@ -3889,7 +3924,7 @@ void UHTTP::setHTTPResponse(const UString* content_type, const UString* body)
  * information necessary for a user to repeat the original request on the new URI.
  */
 
-void UHTTP::setHTTPRedirectResponse(int mode, UString& ext, const char* ptr_location, uint32_t len_location)
+void UHTTP::setHTTPRedirectResponse(int mode, const UString& ext, const char* ptr_location, uint32_t len_location)
 {
    U_TRACE(0, "UHTTP::setHTTPRedirectResponse(%d,%.*S,%.*S,%u)", mode, U_STRING_TO_TRACE(ext), len_location, ptr_location, len_location)
 
@@ -3917,10 +3952,6 @@ void UHTTP::setHTTPRedirectResponse(int mode, UString& ext, const char* ptr_loca
       U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(ext), U_CONSTANT_TO_PARAM(U_CRLF)))
 
       (void) tmp.append(ext);
-
-#  ifdef DEBUG
-      ext.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-#  endif
       }
 
    if (mode == 2) setHTTPResponse(&tmp, 0);
@@ -4552,7 +4583,7 @@ bool UHTTP::checkUriProtected()
       if (ok &&
           u_http_info.ip_client_len)
          {
-         ok = UIPAllow::isAllowed(getRemoteIP(), *vallow_IP);
+         ok = UIPAllow::isAllowed(UServer_Base::client_address, *vallow_IP);
          }
 
       if (ok == false)
@@ -4673,8 +4704,8 @@ UString UHTTP::getHeaderMimeType(const char* content, const char* content_type, 
       {
       fmt = "Content-Length: "       "%u\r\n\r\n";
 
-      if (expire) header.snprintf_add("Expires: %#D\r\n", expire);
-                  header.snprintf_add("Last-Modified: %#D\r\n", file->st_mtime);
+      if (expire) header.snprintf_add("Expires: %#12D\r\n", expire);
+                  header.snprintf_add("Last-Modified: %#12D\r\n", file->st_mtime);
       }
 
    if (u_is_css())
@@ -4956,6 +4987,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
             file_data->ptr        = usp_page;
             file_data->mime_index = U_usp;
 
+#        ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
             if (UServer_Base::isPreForked() &&
                 UStringExt::endsWith(key, U_CONSTANT_TO_PARAM("upload_progress")) &&
                 USocketExt::byte_read_hook == 0)
@@ -4966,10 +4998,11 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
                USocketExt::byte_read_hook = updateUploadProgress;
 
-               U_INTERNAL_ASSERT_EQUALS(UServer_Base::shared_data_add,0)
+               U_INTERNAL_ASSERT_EQUALS(ptr_upload_progress,0)
 
-               UServer_Base::shared_data_add = sizeof(upload_progress) * U_MAX_UPLOAD_PROGRESS;
+               ptr_upload_progress = (upload_progress*) UServer_Base::getOffsetToDataShare(sizeof(upload_progress) * U_MAX_UPLOAD_PROGRESS);
                }
+#        endif
             }
 #     ifdef HAVE_LIBTCC
          else if (U_STRNEQ(suffix, "c"))
@@ -5043,10 +5076,9 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
             }
          }
       }
-   else if ((ssi_alias && file->isSuffix(".shtml")) || // check for ssi_alias...
-            u_dosmatch_with_OR(U_FILE_TO_PARAM(*file), U_STRING_TO_PARAM(*cache_file_mask), 0))
+   else if (u_dosmatch_with_OR(U_FILE_TO_PARAM(*file), U_STRING_TO_PARAM(*cache_file_mask), 0))
       {
-      UString content = file->getContent();
+      UString content = file->getContent(true,  false, true);
 
       if (content.empty() == false)
          {
@@ -5081,6 +5113,8 @@ void UHTTP::checkFileForCache()
    // NB: file->stat() get also the size of file...
 
    if (file->stat()) manageDataForCache();
+
+   U_INTERNAL_DUMP("file_data->mime_index = %C", file_data->mime_index)
 }
 
 UHTTP::UFileCacheData* UHTTP::getFileInCache(const char* path, uint32_t len)
@@ -5154,8 +5188,8 @@ UString UHTTP::getDataFromCache(bool bheader, bool gzip)
 
    U_INTERNAL_ASSERT_POINTER(file_data)
 
-   U_INTERNAL_DUMP("u_now->tv_sec     = %#D", u_now->tv_sec)
-   U_INTERNAL_DUMP("file_data->expire = %#D", file_data->expire)
+   U_INTERNAL_DUMP("u_now->tv_sec     = %#3D", u_now->tv_sec)
+   U_INTERNAL_DUMP("file_data->expire = %#3D", file_data->expire)
 
    if (u_now->tv_sec > file_data->expire)
       {
@@ -5288,6 +5322,27 @@ U_NO_EXPORT void UHTTP::checkPath()
       }
 
    U_INTERNAL_DUMP("file = %.*S", U_FILE_TO_TRACE(*file))
+}
+
+U_NO_EXPORT bool UHTTP::checkPath(uint32_t len)
+{
+   U_TRACE(0, "UHTTP::checkPath(%u)", len)
+
+   // NB: pathname is referenced by file...
+
+   file->path_relativ_len = len;
+
+   pathname->size_adjust_force(u_cwd_len + len);
+
+   pathname->rep->setNullTerminated();
+
+   U_INTERNAL_DUMP("file = %.*S", U_FILE_TO_TRACE(*file))
+
+   checkPath();
+
+   if (isHTTPRequestNotFound()) U_RETURN(false);
+
+   U_RETURN(true);
 }
 
 // REWRITE RULE
@@ -5475,6 +5530,9 @@ int UHTTP::checkHTTPRequest()
    U_INTERNAL_ASSERT(isHTTPRequest())
    U_ASSERT_EQUALS(UClientImage_Base::request->empty(), false)
 
+   const char* ptr;
+   uint32_t len1, len2;
+
    // reset
 
    file_data    = 0;
@@ -5485,21 +5543,8 @@ int UHTTP::checkHTTPRequest()
 
    if (alias->empty() == false)
       {
-      alias->clear();
-
+            alias->clear();
       request_uri->clear();
-      }
-
-   // manage virtual host
-
-   if (virtual_host &&
-       u_http_info.host_vlen)
-      {
-      // Host: hostname[:port]
-
-      alias->setBuffer(1 + u_http_info.host_vlen + u_http_info.uri_len);
-
-      alias->snprintf("/%.*s%.*s", U_HTTP_VHOST_TO_TRACE, U_HTTP_URI_TO_TRACE);
       }
 
    // manage alias uri
@@ -5514,9 +5559,23 @@ int UHTTP::checkHTTPRequest()
       goto next1;
       }
 
+   // manage virtual host
+
+   if (virtual_host &&
+       u_http_info.host_vlen)
+      {
+      // Host: hostname[:port]
+
+      alias->setBuffer(1 + u_http_info.host_vlen + u_http_info.uri_len);
+
+      alias->snprintf("/%.*s", U_HTTP_VHOST_TO_TRACE);
+      }
+
    if (valias)
       {
       UString item;
+
+      // Ex: /admin /admin.html
 
       for (int32_t i = 0, n = valias->size(); i < n; i += 2)
          {
@@ -5524,50 +5583,45 @@ int UHTTP::checkHTTPRequest()
 
          if (U_HTTP_URI_EQUAL(item))
             {
+            // NB: this is exclusive with SSI alias...
+
             *request_uri = item;
 
             (void) alias->append((*valias)[i+1]);
-
-            goto next1;
             }
          }
       }
 
    // manage SSI alias
 
-   if (ssi_alias &&
+   if (ssi_alias             &&
+       request_uri->isNull() &&
        u_getsuffix(U_HTTP_URI_TO_PARAM) == 0)
       {
-      uint32_t len = ssi_alias->size();
-
       (void) request_uri->assign(U_HTTP_URI_TO_PARAM);
 
-      if (virtual_host &&
-          u_http_info.host_vlen)
-         {
-         alias->setBuffer(1 + u_http_info.host_vlen + 1 + len);
-
-         alias->snprintf("/%.*s/%.*s", U_HTTP_VHOST_TO_TRACE, len, ssi_alias->data());
-         }
-      else
-         {
-         alias->setBuffer(1 + len);
-
-         alias->snprintf("/%.*s", len, ssi_alias->data());
-         }
+      (void) alias->append(*ssi_alias);
       }
 
-next1:
    if (alias->empty() == false)
       {
-      if (alias->first_char() != '/') (void) alias->insert(0, '/');
+      U_INTERNAL_ASSERT_EQUALS(alias->first_char(), '/')
 
-      uint32_t len    = alias->size();
-      const char* ptr = alias->data();
+      if (request_uri->isNull())
+         {
+         U_INTERNAL_ASSERT(virtual_host)
 
-      setHTTPUri(ptr, len);
+         (void) request_uri->assign(U_HTTP_URI_TO_PARAM);
 
-      U_SRV_LOG("ALIAS: URI request changed to: %.*s", len, ptr);
+         (void) alias->append(U_HTTP_URI_TO_PARAM);
+         }
+next1:
+      ptr  = alias->data();
+      len1 = alias->size();
+
+      setHTTPUri(ptr, len1);
+
+      U_SRV_LOG("ALIAS: URI request changed to: %.*s", len1, ptr);
       }
 
    // ...process the HTTP message
@@ -5586,23 +5640,31 @@ next1:
 
    if (isHTTPRequestNotFound())
       {
+      ptr  = pathname->c_pointer(u_cwd_len);
+      len1 = pathname->size() -  u_cwd_len;
+
+      // NB: if status is file not found and we have virtual host
+      //     we check if it is present as shared file (without the virtual host prefix...)
+
+      if (virtual_host &&
+          u_http_info.host_vlen)
+         {
+         len2 = u_http_info.uri_len - u_http_info.host_vlen - 1;
+
+         (void) U_SYSCALL(memmove, "%p,%p,%u", (void*)ptr, ptr + 1 + u_http_info.host_vlen, len2);
+
+         if (checkPath(len2)) goto next2;
+         }
+
       // URI request can be URL encoded...
 
-      uint32_t len1 = pathname->size() - u_cwd_len,
-               len2 = u_url_decode(U_HTTP_URI_TO_PARAM, (unsigned char*)pathname->c_pointer(u_cwd_len), true);
+      len2 = u_url_decode(U_HTTP_URI_TO_PARAM, (unsigned char*)ptr, true);
 
-      if (len1 != len2)
-         {
-         // NB: pathname is referenced by file...
-
-         pathname->size_adjust_force(u_cwd_len + len2);
-
-         file->path_relativ_len = pathname->size() - u_cwd_len;
-
-         U_INTERNAL_DUMP("file = %.*S", U_FILE_TO_TRACE(*file))
-
-         checkPath();
-         }
+      if (len1 != len2 &&
+          checkPath(len2))
+          {
+          goto next2;
+          }
       }
 
    // NB: apply rewrite rule if requested and if status is file forbidden or not exist...
@@ -5613,8 +5675,7 @@ next1:
       processRewriteRule();
       }
 
-   U_INTERNAL_DUMP("U_http_request_check = %C u_http_info.flag = %.8S", U_http_request_check, u_http_info.flag)
-
+next2:
    // in general at this point, after checkPath(), we can have as status:
    // ------------------------------------------------------------------
    // 1) file is forbidden (not in DOC_ROOT)
@@ -5622,7 +5683,7 @@ next1:
    // 3) file is in FILE CACHE with/without content (stat() cache)
    // 4) file do not exist
 
-   U_INTERNAL_DUMP("file_data = %p", file_data)
+   U_INTERNAL_DUMP("file_data = %p U_http_request_check = %C u_http_info.flag = %.8S", file_data, U_http_request_check, u_http_info.flag)
 
    if (isHTTPRequestInFileCache())
       {
@@ -5642,26 +5703,14 @@ next1:
             bool async = (UServer_Base::preforked_num_kids <= 0 &&
                           UClientImage_Base::isPipeline()  == false);
 
-            if (processCGIRequest((UCommand*)0, 0, async, true) == false)
-               {
-               if (UCommand::isTimeout())
-                  {
-                  u_http_info.nResponseCode = HTTP_GATEWAY_TIMEOUT;
-
-                  setHTTPResponse(0, 0);
-                  }
-               else if (UClientImage_Base::wbuffer->empty())
-                  {
-                  setHTTPInternalError();
-                  }
-               }
+            (void) processCGIRequest((UCommand*)0, 0, async, true);
             }
 
          keyID->clear();
 
          if (form_name_value->size()) resetForm(true);
 
-         goto next2;
+         goto next3;
          }
 
       u_http_info.nResponseCode = HTTP_OK;
@@ -5672,7 +5721,7 @@ next1:
           isHttpGETorHEAD() &&
           (checkHTTPGetRequestIfModified(*UClientImage_Base::request) == false || processFileCache()))
          {
-next2:
+next3:
          setHTTPRequestProcessed();
 
          goto check;
@@ -5701,16 +5750,33 @@ check:
          }
       }
 
-   // check if the uri is protected
+   U_INTERNAL_DUMP("u_is_ssi() = %b", u_is_ssi())
 
-   if (uri_protected_mask                                                                                 &&
-       isHTTPRequestNotFound() == false                                                                   &&
-       (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM,              U_STRING_TO_PARAM(*uri_protected_mask), 0)   ||
-        (request_uri->empty() == false                                                                    &&
-         u_dosmatch_with_OR(U_STRING_TO_PARAM(*request_uri), U_STRING_TO_PARAM(*uri_protected_mask), 0))) &&
-       checkUriProtected() == false)
+   // check if the uri use HTTP Strict Transport Security to force client to use secure connections only
+
+   if (uri_strict_transport_security_mask                                                                                 &&
+#     ifdef USE_LIBSSL
+       UServer_Base::bssl == false                                                                                        &&
+#     endif
+       isHTTPRequestNotFound() == false                                                                                   &&
+       (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM,              U_STRING_TO_PARAM(*uri_strict_transport_security_mask), 0)   ||
+        (request_uri->empty() == false                                                                                    &&
+         u_dosmatch_with_OR(U_STRING_TO_PARAM(*request_uri), U_STRING_TO_PARAM(*uri_strict_transport_security_mask), 0))))
       {
-      U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      // we are in cleartext at the moment, prevent further execution and output
+
+      char redirect_url[32 * 1024];
+
+      UString uri = getRequestURI(true), ip_server = UServer_Base::getIPAddress();
+
+      setHTTPRedirectResponse(2, *str_strict_transport_security, (const char*)redirect_url,
+                              u__snprintf(redirect_url, sizeof(redirect_url), "https:/%.*s%.*s", U_STRING_TO_TRACE(ip_server), U_STRING_TO_TRACE(uri)));
+
+      U_SRV_LOG("URI_STRICT_TRANSPORT_SECURITY: request redirected to %S", redirect_url);
+
+      setHTTPRequestProcessed();
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
    // check if the uri need a certificate
@@ -5723,7 +5789,7 @@ check:
          u_dosmatch_with_OR(U_STRING_TO_PARAM(*request_uri), U_STRING_TO_PARAM(*uri_request_cert_mask), 0))) &&
        ((UServer<USSLSocket>*)UServer_Base::pthis)->askForClientCertificate() == false)
       {
-      U_SRV_LOG("URI_REQUEST_CERT: request %.*S denied by mandatory certificate from client", U_HTTP_URI_TO_TRACE);
+      U_SRV_LOG("URI_REQUEST_CERT: request denied by mandatory certificate from client");
 
       setHTTPForbidden();
 
@@ -5731,20 +5797,16 @@ check:
       }
 #endif
 
-   // check if we use HTTP Strict Transport Security to force client to use secure connections only
+   // check if the uri is protected
 
-   if (sts_age_seconds &&
-       UServer_Base::bssl == false)
+   if (uri_protected_mask                                                                                 &&
+       isHTTPRequestNotFound() == false                                                                   &&
+       (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM,              U_STRING_TO_PARAM(*uri_protected_mask), 0)   ||
+        (request_uri->empty() == false                                                                    &&
+         u_dosmatch_with_OR(U_STRING_TO_PARAM(*request_uri), U_STRING_TO_PARAM(*uri_protected_mask), 0))) &&
+       checkUriProtected() == false)
       {
-      // we are in cleartext at the moment, prevent further execution and output
-
-      UString redirect_url(U_CAPACITY);
-
-      redirect_url.snprintf("https://%.*s%.*s", U_HTTP_VHOST_TO_TRACE, U_HTTP_URI_QUERY_TO_TRACE);
-
-      setHTTPRedirectResponse(0, UString::getStringNull(), U_STRING_TO_PARAM(redirect_url));
-
-      setHTTPRequestProcessed();
+      U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
@@ -5857,7 +5919,7 @@ UString UHTTP::getCGIEnvironment()
    U_TRACE(0, "UHTTP::getCGIEnvironment()")
 
    const char* cgi_dir;
-   UString uri = getRequestURI(false), ip_client = getRemoteIP(),
+   UString uri = getRequestURI(false),
            buffer(4000U + u_http_info.query_len + u_http_info.referer_len + u_http_info.user_agent_len);
 
    U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
@@ -5877,8 +5939,9 @@ UString UHTTP::getCGIEnvironment()
                 // "REMOTE_HOST=%.*s\n"  // The hostname of the visitor (if your server has reverse-name-lookups on; otherwise this is the IP address again)
                 // "REMOTE_USER=%.*s\n"  // The visitor's username (for .htaccess-protected pages)
                 // "SERVER_ADMIN=%.*s\n" // The email address for your server's webmaster
-                   "REMOTE_ADDR=%.*s\n"  // The IP address of the visitor
+                   "REMOTE_ADDR=%s\n"    // The IP address of the visitor
                    "REMOTE_PORT=%u\n"    // The port the visitor is connected to on the web server
+                   "SESSION_ID=%s:%u\n"  // The IP address of the visitor + HTTP_USER_AGENT hashed
                    "SERVER_PROTOCOL=HTTP/1.%c\n"
                    "SCRIPT_NAME=%.*s\n"  // The interpreted pathname of the current CGI (relative to the document root)
                    // ext
@@ -5887,8 +5950,9 @@ UString UHTTP::getCGIEnvironment()
                    // PHP
                    "REQUEST_METHOD=%.*s\n",   // dealing with POST requests
                    (isHttpPOST() ? UClientImage_Base::body->size() : 0),
-                   U_STRING_TO_TRACE(ip_client),
+                   UServer_Base::client_address,
                    UServer_Base::pClientImage->socket->remotePortNumber(),
+                   UServer_Base::client_address, getUserAgent(),
                    (U_http_version ? U_http_version : '0'),
                    U_HTTP_URI_TO_TRACE,
                    // ext
@@ -6036,14 +6100,11 @@ U_NO_EXPORT void UHTTP::setCGIShellScript(UString& command)
  * servers. This is to allow the migration of applications supporting it without having to make major code rewrites.
  */
 
-bool UHTTP::XSendfile(UString& _pathname, UString& ext)
+bool UHTTP::XSendfile(UString& _pathname, const UString& ext)
 {
-   U_TRACE(0, "UHTTP::XSendFile(%.*S,%.*S)", U_STRING_TO_TRACE(_pathname), U_STRING_TO_TRACE(ext))
+   U_TRACE(0, "UHTTP::XSendfile(%.*S,%.*S)", U_STRING_TO_TRACE(_pathname), U_STRING_TO_TRACE(ext))
 
-   U_INTERNAL_ASSERT_POINTER(pobj)
-   U_INTERNAL_ASSERT_POINTER(xpathname)
-
-   if (u_canonicalize_pathname(_pathname.data())) _pathname.size_adjust_force(); // NB: is referenced...
+   if (u_canonicalize_pathname(_pathname.data())) _pathname.size_adjust_force(); // NB: _pathname is referenced...
 
    file->setPath(_pathname);
 
@@ -6079,25 +6140,22 @@ bool UHTTP::XSendfile(UString& _pathname, UString& ext)
 
          (void) readHTTPHeader(0, request);
          (void) checkHTTPRequestForHeader(request);
-
-         ext.clear();
          }
 
-      if (pobj->fd > 0)
-         {
-         UFile::close(pobj->fd);
-         UFile::_unlink(xpathname->c_str());
-         }
-
-      file_data  = pobj;
-      *xpathname = file->getPath();
-
-      U_http_is_navigation = true;
+      file->_unlink();
 
       file_data->fd   = file->fd;
       file_data->size = file->st_size;
 
-      processHTTPGetRequest(UString::getStringNull(), ext);
+      UString tmp;
+      U_http_is_navigation = true;
+
+      processHTTPGetRequest(UString::getStringNull(), tmp);
+
+      U_INTERNAL_DUMP("bsendfile = %b", bsendfile)
+
+      if (bsendfile) UServer_Base::pClientImage->bclose |= U_PARTIAL;
+      else           file->close();
 
       U_RETURN(true);
       }
@@ -6107,7 +6165,7 @@ bool UHTTP::XSendfile(UString& _pathname, UString& ext)
 
 U_NO_EXPORT bool UHTTP::splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext)
 {
-   U_TRACE(0, "UHTTP::splitCGIOutput(%p,%p,%u,%p)", ptr1, ptr2, endHeader, &ext)
+   U_TRACE(0, "UHTTP::splitCGIOutput(%p,%p,%u,%.*S)", ptr1, ptr2, endHeader, U_STRING_TO_TRACE(ext))
 
    uint32_t pos = UClientImage_Base::wbuffer->distance(ptr1);
 
@@ -6127,7 +6185,7 @@ U_NO_EXPORT bool UHTTP::splitCGIOutput(const char*& ptr1, const char* ptr2, uint
 
       if (diff > U_CONSTANT_SIZE(U_CRLF2)) ext += UClientImage_Base::wbuffer->substr(pos, diff - U_CONSTANT_SIZE(U_CRLF)); // NB: we cut one couple of \r\n
 
-      U_INTERNAL_DUMP("value = %.*S ext = %.*S", (uint32_t)(ptr2int(ptr1) - ptr2int(ptr2)), ptr2, U_STRING_TO_TRACE(ext))
+      U_INTERNAL_DUMP("value = %.*S ext = %.*S", (uint32_t)((ptrdiff_t)ptr1 - (ptrdiff_t)ptr2), ptr2, U_STRING_TO_TRACE(ext))
 
       U_RETURN(true);
       }
@@ -6559,8 +6617,6 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool pro
 
    U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
-   bool result;
-   UString* pinput;
    const char* cgi_dir;
 
    if (cmd) cgi_dir = "";
@@ -6642,9 +6698,9 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool pro
 
    // execute script...
 
-   pinput = (isHttpPOST() == false || UClientImage_Base::body->empty() ? 0 : UClientImage_Base::body);
+   UString* pinput = (isHttpPOST() == false || UClientImage_Base::body->empty() ? 0 : UClientImage_Base::body);
 
-   result = cmd->execute(pinput, UClientImage_Base::wbuffer, -1, fd_stderr);
+   bool result = cmd->execute(pinput, UClientImage_Base::wbuffer, -1, fd_stderr);
 
    if (cgi_dir[0]) (void) UFile::chdir(0, true);
 
@@ -6652,9 +6708,38 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool pro
 
    cmd->reset(penv);
 
-   if (process_output) result = (processCGIOutput() && result);
+   if (result == false)
+      {
+      if (UCommand::isTimeout())
+         {
+         u_http_info.nResponseCode = HTTP_GATEWAY_TIMEOUT;
 
-   U_RETURN(result);
+         setHTTPResponse(0, 0);
+         }
+      else
+         {
+         // NB: exit_value consists of the least significant 8 bits of the status argument that the child specified in a call to exit()...
+
+         if (UCommand::exit_value > 128 &&
+             U_IS_HTTP_ERROR(UCommand::exit_value + 256))
+            {
+            u_http_info.nResponseCode = UCommand::exit_value + 256;
+
+            setHTTPResponse(0, 0);
+            }
+         else if (UClientImage_Base::wbuffer->empty()) setHTTPInternalError();
+         }
+
+      U_RETURN(false);
+      }
+
+   if (process_output &&
+       processCGIOutput() == false)
+      {
+      U_RETURN(false);
+      }
+
+   U_RETURN(true);
 }
 
 bool UHTTP::checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos)
@@ -6816,7 +6901,7 @@ U_NO_EXPORT void UHTTP::setResponseForRange(uint32_t _start, uint32_t _end, uint
 U_NO_EXPORT int UHTTP::checkHTTPGetRequestForRange(UString& ext, const UString& data)
 {
    U_TRACE(0, "UHTTP::checkHTTPGetRequestForRange(%.*S,%.*S)", U_STRING_TO_TRACE(ext), U_STRING_TO_TRACE(data))
-
+ 
    U_INTERNAL_ASSERT_MAJOR(u_http_info.range_len, 0)
 
    char* pend;
@@ -7366,6 +7451,7 @@ error:
       }
 }
 
+#ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
 // ------------------------------------------------------------------------------------------------------------------------------
 // UPLOAD PROGRESS
 // ------------------------------------------------------------------------------------------------------------------------------
@@ -7375,7 +7461,6 @@ error:
 // uploaded, the JavaScript on the upload page makes periodic requests asking for the upload progress, and updates a progress
 // widget accordingly. On the server, you need two views: one to handle the upload form, and one to respond to progress requests.
 // ------------------------------------------------------------------------------------------------------------------------------
-
 U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
 {
    U_TRACE(0, "UHTTP::initUploadProgress(%d)", byte_read)
@@ -7384,8 +7469,8 @@ U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
    U_ASSERT_EQUALS(UClientImage_Base::request->empty(), false)
 
    int i;
-   in_addr_t client = UServer_Base::pClientImage->socket->remoteIPAddress().getInAddr();
-   ptr_upload_progress = (upload_progress*)((char*)UServer_Base::ptr_shared_data + sizeof(UServer_Base::shared_data));
+   in_addr_t client     = UServer_Base::pClientImage->socket->remoteIPAddress().getInAddr();
+   upload_progress* ptr = (upload_progress*) UServer_Base::getPointerToDataShare(ptr_upload_progress);
 
    if (byte_read > 0)
       {
@@ -7396,16 +7481,17 @@ U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
       for (i = 0; i < U_MAX_UPLOAD_PROGRESS; ++i)
          {
          U_INTERNAL_DUMP("i = %2d uuid = %.32S byte_read = %d count = %d",
-                          i, ptr_upload_progress[i].uuid, ptr_upload_progress[i].byte_read, ptr_upload_progress[i].count)
+                          i, ptr[i].uuid, ptr[i].byte_read, ptr[i].count)
 
-         if (ptr_upload_progress[i].byte_read ==
-             ptr_upload_progress[i].count)
+         if (ptr[i].byte_read ==
+             ptr[i].count)
             {
-            ptr_upload_progress += i;
+            ptr += i;
 
-            ptr_upload_progress->count     = byte_read;
-            ptr_upload_progress->client    = client;
-            ptr_upload_progress->byte_read = 0;
+            ptr->count      = byte_read;
+            ptr->client     = client;
+            ptr->user_agent = getUserAgent();
+            ptr->byte_read  = 0;
 
             // The HTTP POST request can contain a query parameter, 'X-Progress-ID', which should contain a
             // unique string to identify the upload to be tracked.
@@ -7415,9 +7501,9 @@ U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
                {
                U_INTERNAL_DUMP("query(%u) = %.*S", u_http_info.query_len, U_HTTP_QUERY_TO_TRACE)
 
-               (void) u__memcpy(ptr_upload_progress->uuid, u_http_info.query + (u_http_info.query_len == 32 ? 0 : uuid_key_size), 32);
+               (void) u__memcpy(ptr->uuid, u_http_info.query + (u_http_info.query_len == 32 ? 0 : uuid_key_size), 32);
 
-               U_INTERNAL_DUMP("uuid = %.32S", ptr_upload_progress->uuid)
+               U_INTERNAL_DUMP("uuid = %.32S", ptr->uuid)
                }
 
             break;
@@ -7442,26 +7528,34 @@ U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
       for (i = 0; i < U_MAX_UPLOAD_PROGRESS; ++i)
          {
          U_INTERNAL_DUMP("i = %2d uuid = %.32S byte_read = %d count = %d",
-                          i, ptr_upload_progress[i].uuid, ptr_upload_progress[i].byte_read, ptr_upload_progress[i].count)
+                          i, ptr[i].uuid, ptr[i].byte_read, ptr[i].count)
 
-         if ((uuid_ptr ? memcmp(uuid_ptr, ptr_upload_progress[i].uuid, 32) == 0
-                       :                  ptr_upload_progress[i].client == client)) 
+         if ((uuid_ptr ? memcmp(uuid_ptr, ptr[i].uuid, 32)  == 0
+                       :                  ptr[i].client     == client &&
+                                          ptr[i].user_agent == getUserAgent()))
             {
-            ptr_upload_progress += i;
+            ptr += i;
 
             break;
             }
          }
       }
 
-   if (i == U_MAX_UPLOAD_PROGRESS)
-      {
-      ptr_upload_progress = 0;
+   upload_progress_index = i;
 
-      U_RETURN(false);
-      }
+   U_RETURN(upload_progress_index < U_MAX_UPLOAD_PROGRESS);
+}
 
-   U_RETURN(true);
+UHTTP::upload_progress* UHTTP::getUploadProgressPointer()
+{
+   U_TRACE(0, "UHTTP::getUploadProgressPointer()")
+
+   U_INTERNAL_ASSERT_MINOR(upload_progress_index, U_MAX_UPLOAD_PROGRESS)
+
+   upload_progress* ptr  = (upload_progress*) UServer_Base::getPointerToDataShare(ptr_upload_progress);
+                    ptr += upload_progress_index;
+
+   U_RETURN_POINTER(ptr, upload_progress);
 }
 
 U_NO_EXPORT void UHTTP::updateUploadProgress(int byte_read)
@@ -7472,15 +7566,18 @@ U_NO_EXPORT void UHTTP::updateUploadProgress(int byte_read)
 
    U_ASSERT(UServer_Base::isPreForked())
 
-   if (ptr_upload_progress)
+   if (upload_progress_index < U_MAX_UPLOAD_PROGRESS)
       {
-      U_INTERNAL_DUMP("byte_read = %d count = %d", ptr_upload_progress->byte_read, ptr_upload_progress->count)
+      upload_progress* ptr = getUploadProgressPointer();
 
-      U_INTERNAL_ASSERT_MAJOR(ptr_upload_progress->count,0)
+      U_INTERNAL_DUMP("byte_read = %d count = %d", ptr->byte_read, ptr->count)
 
-      ptr_upload_progress->byte_read = byte_read;
+      U_INTERNAL_ASSERT_MAJOR(ptr->count,0)
+
+      ptr->byte_read = byte_read;
       }
 }
+#endif
 
 // Return JSON object with information about the progress of an upload.
 // The JSON returned is what the JavaScript uses to render the progress bar...
@@ -7491,27 +7588,36 @@ UString UHTTP::getUploadProgress()
 
    U_ASSERT(UServer_Base::isPreForked())
 
-   if (ptr_upload_progress == 0)
+   UString result(100U);
+
+#ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
+   if (upload_progress_index >= U_MAX_UPLOAD_PROGRESS)
       {
       UTimeVal to_sleep(0L, 300 * 1000L);
 
       for (int i = 0; i < 10 && initUploadProgress(0) == false; ++i) to_sleep.nanosleep();
       }
 
-   UString result(100U);
+   if (upload_progress_index >= U_MAX_UPLOAD_PROGRESS)
+#endif
 
-   if (ptr_upload_progress == 0) (void) result.assign(U_CONSTANT_TO_PARAM("{ 'state' : 'error' }"));
+   (void) result.assign(U_CONSTANT_TO_PARAM("{ 'state' : 'error' }"));
+
+#ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
    else
       {
-      U_INTERNAL_DUMP("byte_read = %d count = %d", ptr_upload_progress->byte_read, ptr_upload_progress->count)
+      upload_progress* ptr = getUploadProgressPointer();
 
-      U_INTERNAL_ASSERT_MAJOR(ptr_upload_progress->count,0)
+      U_INTERNAL_DUMP("byte_read = %d count = %d", ptr->byte_read, ptr->count)
+
+      U_INTERNAL_ASSERT_MAJOR(ptr->count,0)
 
       result.snprintf("{ 'state' : '%s', 'received' : %d, 'size' : %d }",
-                              (ptr_upload_progress->byte_read < ptr_upload_progress->count ? "uploading" : "done"),
-                               ptr_upload_progress->byte_read,
-                               ptr_upload_progress->count);
+                              (ptr->byte_read < ptr->count ? "uploading" : "done"),
+                               ptr->byte_read,
+                               ptr->count);
       }
+#endif
 
    U_RETURN_STRING(result);
 }

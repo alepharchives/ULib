@@ -353,20 +353,19 @@ void UIPAddress::resolveStrAddress()
 
    U_CHECK_MEMORY
 
-   if (bStrAddressUnresolved)
-      {
-      const char* result = 0;
+   U_INTERNAL_ASSERT(bStrAddressUnresolved)
 
-#  ifdef HAVE_INET_NTOP
-      result = U_SYSCALL(inet_ntop, "%d,%p,%p,%u", iAddressType, pcAddress.p, pcStrAddress, INET6_ADDRSTRLEN);
-#  else
-      result = U_SYSCALL(inet_ntoa, "%p", *((struct in_addr*)pcAddress.p));
+   const char* result = 0;
 
-      if (result) (void) u_strcpy(pcStrAddress, result);
-#  endif
+#ifdef HAVE_INET_NTOP
+   result = U_SYSCALL(inet_ntop, "%d,%p,%p,%u", iAddressType, pcAddress.p, pcStrAddress, INET6_ADDRSTRLEN);
+#else
+   result = U_SYSCALL(inet_ntoa, "%p", *((struct in_addr*)pcAddress.p));
 
-      if (result) bStrAddressUnresolved = false;
-      }
+   if (result) (void) u_strcpy(pcStrAddress, result);
+#endif
+
+   if (result) bStrAddressUnresolved = false;
 }
 
 /****************************************************************************/
@@ -405,7 +404,7 @@ void UIPAddress::resolveHostName()
          {
          U_WARNING("getnameinfo() error: %s", gai_strerror(gai_err));
 
-         resolveStrAddress();
+         if (bStrAddressUnresolved) resolveStrAddress();
 
          (void) strHostName.replace(pcStrAddress);
          }
@@ -427,7 +426,7 @@ void UIPAddress::resolveHostName()
       if (pheDetails) (void) strHostName.replace(pheDetails->h_name);
       else
          {
-         resolveStrAddress();
+         if (bStrAddressUnresolved) resolveStrAddress();
 
          (void) strHostName.replace(pcStrAddress);
          }
@@ -509,7 +508,7 @@ __pure bool UIPAddress::isPrivate()
    U_CHECK_MEMORY
 
 #ifdef ENABLE_IPV6
-   if (bIPv6)
+   if (iAddressType == AF_INET6)
       {
       // TODO
 
@@ -646,9 +645,9 @@ __pure uint32_t UIPAllow::contains(in_addr_t client, UVector<UIPAllow*>& vipallo
    U_RETURN(U_NOT_FOUND);
 }
 
-__pure uint32_t UIPAllow::contains(const UString& ip_client, UVector<UIPAllow*>& vipallow)
+__pure uint32_t UIPAllow::contains(const char* ip_client, UVector<UIPAllow*>& vipallow)
 {
-   U_TRACE(0, "UIPAllow::contains(%.*S,%p)", U_STRING_TO_TRACE(ip_client), &vipallow)
+   U_TRACE(0, "UIPAllow::contains(%S,%p)", ip_client, &vipallow)
 
    for (uint32_t i = 0, vlen = vipallow.size(); i < vlen; ++i)
       {

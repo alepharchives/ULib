@@ -34,7 +34,7 @@ public:
       }
 
    static void    getARPCache(UVector<UString>& vec);
-   static UString getNetworkInterfaceName(const UString& ip);
+   static UString getNetworkInterfaceName(const char* ip);
 
    static UString getIPAddress(     int fd, const char* device);        // eth0
    static UString getMacAddress(    int fd, const char* device_or_ip);  // eth0 | 192.168.1.1
@@ -56,7 +56,7 @@ public:
 
    // read while not received token, return position of token in buffer
 
-   static uint32_t read(USocket* s, UString& buffer, const char* token, uint32_t token_len);
+   static uint32_t readWhileNotToken(USocket* s, UString& buffer, const char* token, uint32_t token_len, uint32_t max_read = 10, int timeoutMS = -1, uint32_t time_limit = 0);
 
    // read while received data
 
@@ -69,9 +69,24 @@ public:
 
    // write while sending data
 
-   static bool write(USocket* s, const char* ptr, uint32_t count,            int timeoutMS = -1);
-   static bool write(USocket* s, const UString& buffer,                      int timeoutMS = -1) { return write(s, U_STRING_TO_PARAM(buffer), timeoutMS); }
-   static bool write(USocket* s, const UString& header, const UString& body, int timeoutMS = -1);
+   static int  write(USocket* s, const char* ptr, uint32_t count, int timeoutMS = -1);
+
+   static bool write(USocket* s, const UString& buffer, int timeoutMS = -1)
+      {
+      U_TRACE(0, "USocketExt::write(%p,%.*S,%d)", s, U_STRING_TO_TRACE(buffer), timeoutMS)
+
+      U_INTERNAL_ASSERT(s->isOpen())
+
+      uint32_t count = buffer.size();
+
+      bool result = (write(s, buffer.data(), count, timeoutMS) == (int)count);
+
+      U_RETURN(result);
+      }
+
+   // write data into multiple buffers
+
+   static int writev(USocket* s, struct iovec* iov, int iovcnt, uint32_t ncount, int timeoutMS);
 
    // Send a command to a server and wait for a response (single line)
 

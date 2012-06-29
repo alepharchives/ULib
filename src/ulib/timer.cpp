@@ -82,7 +82,7 @@ inline void UTimer::callHandlerTime()
 {
    U_TRACE(0, "UTimer::callHandlerTime()")
 
-   U_INTERNAL_DUMP("u_now = %#4D (next alarm expire) = %#4D", u_now->tv_sec, (next ? next->alarm->expire() : 0))
+   U_INTERNAL_DUMP("u_now = %#9D (next alarm expire) = %#9D", u_now->tv_sec, (next ? next->alarm->expire() : u_now->tv_sec))
 
    int result = alarm->handlerTime(); // chiama il gestore dell'evento scadenza temporale
 

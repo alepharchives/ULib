@@ -146,7 +146,7 @@ public:
 
          if (result.empty() == false)
             {
-            cout.write(result.data(), result.size());
+            std::cout.write(result.data(), result.size());
 
             UApplication::exit_value = 0;
             }

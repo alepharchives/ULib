@@ -94,7 +94,7 @@ public:
 
       (void) sprintf(buffer, form, U_STRING_TO_TRACE(tmp));
 
-      cout << buffer;
+      std::cout << buffer;
 
       U_RETURN(false);
       }
@@ -166,7 +166,7 @@ public:
                              U_STRING_TO_TRACE(*id), 
                              U_STRING_TO_TRACE(tmp2));
 
-      cout << buffer;
+      std::cout << buffer;
 
       // report entry recipients
 
@@ -187,7 +187,7 @@ public:
 
       (void) sprintf(buffer, U_XML_VIRUS_ENTRY_END, (input ? "Input" : "Output"));
 
-      cout << buffer;
+      std::cout << buffer;
       }
 
    static void start()
@@ -196,7 +196,7 @@ public:
 
       // append to report
 
-      cout << U_XML_VIRUS_START;
+      std::cout << U_XML_VIRUS_START;
 
       // setting for virus
 
@@ -218,11 +218,11 @@ public:
 
          (void) sprintf(buffer, U_XML_VIRUS_SUMMARY, U_STRING_TO_TRACE(elem), U_VIRUS_IN, U_VIRUS_OUT);
 
-         cout << buffer;
+         std::cout << buffer;
          }
       */
 
-      cout << U_XML_VIRUS_END;
+      std::cout << U_XML_VIRUS_END;
       }
 
    void run(int argc, char* argv[], char* env[]) // MUST BE INLINE...

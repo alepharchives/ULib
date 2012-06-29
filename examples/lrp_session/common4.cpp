@@ -79,7 +79,7 @@
 
          if (response_size)
             {
-            name.snprintf("%s/%s_%s_%s_%#6D.res", directory.c_str(), filtro, policy, ip_device, tm_session);
+            name.snprintf("%s/%s_%s_%s_%#4D.res", directory.c_str(), filtro, policy, ip_device, tm_session);
 
             (void) UFile::writeTo(name, UString(response_buffer, response_size));
             }

@@ -156,7 +156,8 @@ public:
       U_RETURN(_capacity != 0); // mode: 0 -> const
       }
 
-   bool isNullTerminated() const { return (str[_length] == '\0'); }
+   bool isNullTerminated() const  { return (str [_length] == '\0'); }
+   void setNullTerminated() const { ((char*)str)[_length]  = '\0'; }
 
    bool isMmap() const
       {
@@ -407,6 +408,7 @@ public:
    bool isBinary(uint32_t pos) const __pure;
    bool isEndHeader(uint32_t pos) const __pure;
    bool isWhiteSpace(uint32_t pos) const __pure;
+   bool someWhiteSpace(uint32_t pos) const __pure;
 
    // UTF8 <--> ISO Latin 1
 
@@ -524,7 +526,15 @@ public:
    U_MEMORY_DEALLOCATOR
 
    // null string (for container etc...)
-   static UString& getStringNull() { return *string_null; }
+
+   static UString& getStringNull()
+      {
+      U_TRACE(0, "UString::getStringNull()")
+
+      U_ASSERT(string_null->empty())
+
+      return *string_null;
+      }
 
 protected:
    static UString* string_null;
@@ -599,6 +609,8 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UString, "")
 
       _copy(UStringRep::string_rep_null);
+
+      U_INTERNAL_ASSERT(invariant())
       }
 
    explicit UString(UStringRep* r)
@@ -1072,16 +1084,17 @@ public:
    // START EXTENSION TO STDLIBC++
    // -----------------------------------------------------------------------------------------------------------------------
 
-   bool isNull() const                       { return (rep == UStringRep::string_rep_null); }
-   bool isMmap() const                       { return rep->isMmap(); }
-   bool isNullTerminated() const             { return rep->isNullTerminated(); }
-   bool isText(uint32_t pos = 0) const       { return rep->isText(pos); }
-   bool isUTF8(uint32_t pos = 0) const       { return rep->isUTF8(pos); }
-   bool isUTF16(uint32_t pos = 0) const      { return rep->isUTF16(pos); }
-   bool isBinary(uint32_t pos = 0) const     { return rep->isBinary(pos); }
-   bool isBase64(uint32_t pos = 0) const     { return rep->isBase64(pos); }
-   bool isEndHeader(uint32_t pos = 0) const  { return rep->isEndHeader(pos); }
-   bool isWhiteSpace(uint32_t pos = 0) const { return rep->isWhiteSpace(pos); }
+   bool isNull() const                         { return (rep == UStringRep::string_rep_null); }
+   bool isMmap() const                         { return rep->isMmap(); }
+   bool isNullTerminated() const               { return rep->isNullTerminated(); }
+   bool isText(uint32_t pos = 0) const         { return rep->isText(pos); }
+   bool isUTF8(uint32_t pos = 0) const         { return rep->isUTF8(pos); }
+   bool isUTF16(uint32_t pos = 0) const        { return rep->isUTF16(pos); }
+   bool isBinary(uint32_t pos = 0) const       { return rep->isBinary(pos); }
+   bool isBase64(uint32_t pos = 0) const       { return rep->isBase64(pos); }
+   bool isEndHeader(uint32_t pos = 0) const    { return rep->isEndHeader(pos); }
+   bool isWhiteSpace(uint32_t pos = 0) const   { return rep->isWhiteSpace(pos); }
+   bool someWhiteSpace(uint32_t pos = 0) const { return rep->someWhiteSpace(pos); }
 
    char  last_char() const             { return rep->last_char(); }
    char  first_char() const            { return rep->first_char(); }

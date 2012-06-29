@@ -19,6 +19,7 @@ bool        UClientImage_Base::bIPv6;
 bool        UClientImage_Base::pipeline;
 bool        UClientImage_Base::write_off;
 uint32_t    UClientImage_Base::rstart;
+uint32_t    UClientImage_Base::counter;
 uint32_t    UClientImage_Base::size_request;
 UString*    UClientImage_Base::body;
 UString*    UClientImage_Base::rbuffer;
@@ -127,9 +128,8 @@ UClientImage_Base::UClientImage_Base()
    logbuf        = (UServer_Base::isLog() ? U_NEW(UString(4000U)) : 0);
    last_response = 0;
 
-   sfd    = state = 0;
-   start  = count = 0;
-   bclose = U_MAYBE;
+   start = count = 0;
+   state = sfd = bclose = 0;
 }
 
 // ------------------------------------------------------------------------
@@ -424,6 +424,10 @@ int UClientImage_Base::handlerRead()
 #endif
 
 loop:
+   ++counter;
+
+   U_INTERNAL_DUMP("counter = %u", counter)
+
    if (logbuf) logRequest();
 
    state = UServer_Base::pluginsHandlerREAD(); // check request type...
@@ -559,7 +563,7 @@ int UClientImage_Base::handlerWrite()
 
    if (count)
       {
-      U_INTERNAL_ASSERT_MAJOR(sfd,0)
+      U_INTERNAL_ASSERT_MAJOR(sfd, 0)
       U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
       if (UEventFd::op_mask == U_WRITE_OUT) goto send;
@@ -567,8 +571,7 @@ int UClientImage_Base::handlerWrite()
       U_ASSERT(body->empty())
 
 #  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
-      // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
-      socket->setTcpCork(1U);
+      socket->setTcpCork(1U); // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
 #  endif
       }
 
@@ -576,13 +579,74 @@ int UClientImage_Base::handlerWrite()
 
    if (logbuf) logResponse();
 
-   if (USocketExt::write(socket, *wbuffer, *body, 3 * 1000) == false) U_RETURN(U_NOTIFIER_DELETE);  
+   {
+   size_t sz1      = wbuffer->size(),
+          sz2      =    body->size();
+   uint32_t ncount = sz1;
+   const char* ptr = wbuffer->data();
+
+   struct iovec _iov[2] = { { (caddr_t)ptr,          sz1 },
+                            { (caddr_t)body->data(), sz2 } };
+
+   int iBytesWrite = (sz2 ? (ncount += sz2, USocketExt::writev(socket, _iov, 2, ncount, UServer_Base::timeoutMS))
+                          :                 USocketExt::write( socket,        ptr, sz1, UServer_Base::timeoutMS));
+
+   if (iBytesWrite < (int)ncount)
+      {
+      U_INTERNAL_ASSERT_EQUALS(_iov[0].iov_len + _iov[1].iov_len, ncount - iBytesWrite)
+
+      if (sfd      == 0               &&
+          pipeline == false           &&
+#        ifdef USE_LIBSSL
+          UServer_Base::bssl == false &&
+#        endif
+          socket->isOpen())
+         {
+         char path[MAX_FILENAME_LEN];
+
+         uint32_t len = u__snprintf(path, sizeof(path), "%s/pwrite.%P.%4D", u_tmpdir);
+
+         sfd = UFile::creat(path);
+
+         if (sfd != -1            &&
+             UFile::_unlink(path) &&
+             (ncount -= iBytesWrite, UFile::writev(sfd, _iov, 2) == (int)ncount))
+            {
+            if (logbuf)
+               {
+               UServer_Base::log->log("%.*spartial write (%u bytes): create temporary file %.*S\n",
+                                       U_STRING_TO_TRACE(*UServer_Base::mod_name), iBytesWrite, len, path);
+               }
+
+            start  = 0;
+            count  = ncount;
+            bclose = U_PARTIAL | U_http_is_connection_close;
+                                 U_http_is_connection_close = U_NOT;
+
+            UEventFd::op_mask = U_WRITE_OUT;
+
+            if (UNotifier::find(UEventFd::fd)) UNotifier::modify(this);
+
+#        ifdef U_HTTP_CACHE_REQUEST
+            U_http_no_cache = true; 
+#        endif
+
+            U_RETURN(U_NOTIFIER_OK);
+            }
+
+         UFile::close(sfd);
+                      sfd = 0;
+         }
+
+      U_RETURN(U_NOTIFIER_DELETE);
+      }
+   }
 
    if (count)
       {
       off_t offset;
 send:
-      U_INTERNAL_DUMP("sfd = %d bclose = %b count = %u", sfd, bclose, count)
+      U_INTERNAL_DUMP("sfd = %d count = %u bclose = %B", sfd, count, bclose)
 
       offset = start;
 
@@ -619,12 +683,13 @@ send:
          }
       else
          {
-         sfd = 0;
-
          bool bwrite = (UEventFd::op_mask == U_WRITE_OUT);
-                        UEventFd::op_mask =  U_READ_IN;
+                        UEventFd::op_mask  = U_READ_IN;
 
-         if (bclose == U_YES) U_RETURN(U_NOTIFIER_DELETE);
+         if ((bclose & U_PARTIAL) != 0) UFile::close(sfd);
+                                                     sfd = 0;
+
+         if ((bclose & U_YES)     != 0) U_RETURN(U_NOTIFIER_DELETE);
 
          if (bwrite) UNotifier::modify(this);
          }
@@ -654,7 +719,7 @@ void UClientImage_Base::handlerDelete()
          {
          // NB: pending sendfile...
 
-         U_INTERNAL_ASSERT_MAJOR(sfd,0)
+         U_INTERNAL_ASSERT_MAJOR(sfd, 0)
 
          sfd   = 0;
          count = 0;

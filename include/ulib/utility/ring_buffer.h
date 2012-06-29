@@ -30,6 +30,7 @@ public:
    U_MEMORY_DEALLOCATOR
 
    typedef struct rbuf_data {
+      sem_t lock_readers;
       fd_set readers; // bitmask
       int pwrite, readd_cnt;
       int pread[FD_SETSIZE];
@@ -37,19 +38,12 @@ public:
 
    // Costruttori
 
-   URingBuffer()
-      {
-      U_TRACE_REGISTER_OBJECT(0, URingBuffer, "")
-
-      ptr = 0;
-      }
-
+    URingBuffer(rbuf_data* _ptr, int _size);
    ~URingBuffer();
 
    // SERVICES
 
    int  open();            // Returns a read descriptor
-   void init(int size);    // Initialize ring buffer
    void close(int readd);  // Close a read descriptor
 
    /**
@@ -157,9 +151,10 @@ public:
 
 protected:
    char* ptrd;
+   rbuf_data* ptr;
    ULock lock;
    int size;
-   rbuf_data* ptr;
+   bool bmmap;
 
 private:
    /**

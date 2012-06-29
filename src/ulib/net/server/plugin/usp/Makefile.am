@@ -22,11 +22,13 @@ clean-local:
 moduledir = $(libexecdir)/ulib/usp
 MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
 
+if HUPS
 if !MINGW
 module_LTLIBRARIES 			= upload_progress.la
 upload_progress_la_SOURCES = upload_progress.cpp
 upload_progress_la_LIBADD  = $(ulib_la)
 upload_progress_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+endif
 endif
 
 if !CROSS_COMPILING
@@ -40,8 +42,10 @@ upload_progress.cpp: ./usp_translator$(EXEEXT)
 .lo.la:
 	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) -no-undefined $< $(ulib_la) $(LIBS)
 
+if HUPS
 FOR_ALL = .libs/upload_progress.so
 
 all: $(FOR_ALL)
+endif
 endif
 ## ----------------------------------------------------------------------------------------------------

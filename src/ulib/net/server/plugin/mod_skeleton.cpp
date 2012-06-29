@@ -39,6 +39,15 @@ int USkeletonPlugIn::handlerInit()
    U_RETURN(result);
 }
 
+int USkeletonPlugIn::handlerRun()
+{
+   U_TRACE(0, "USkeletonPlugIn::handlerRun()")
+
+   int result = U_PLUGIN_HANDLER_GO_ON;
+
+   U_RETURN(result);
+}
+
 int USkeletonPlugIn::handlerFork()
 {
    U_TRACE(0, "USkeletonPlugIn::handlerFork()")

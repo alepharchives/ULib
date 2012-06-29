@@ -134,6 +134,7 @@ typedef struct arphdr {
 #define ICMP_ECHO      8
 #endif
 
+bool      UPing::bmmap;
 fd_set*   UPing::addrmask;
 UProcess* UPing::proc;
 
@@ -143,9 +144,10 @@ UPing::UPing(int _timeoutMS, bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
 
    timeoutMS = _timeoutMS;
 
+   if (proc     == 0) proc = U_NEW(UProcess);
    if (addrmask == 0)
       {
-      proc     = U_NEW(UProcess);
+      bmmap    = true;
       addrmask = (fd_set*) UFile::mmap(sizeof(fd_set) + sizeof(uint32_t));
       }
 }
@@ -154,10 +156,14 @@ UPing::~UPing()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UPing)
 
-   if (addrmask)
+   if (proc)
       {
       delete proc;
+             proc= 0;
+      }
 
+   if (addrmask && bmmap)
+      {
       UFile::munmap(addrmask, sizeof(fd_set) + sizeof(uint32_t));
                     addrmask = 0;
       }
@@ -268,14 +274,14 @@ bool UPing::ping(UIPAddress& addr)
 
       ret = sendTo((void*)&req, sizeof(req), 0, addr, 0);
 
-      if (checkIO(ret, sizeof(req)) == false) U_RETURN(false);
+      if (checkIO(ret) == false) U_RETURN(false);
 
 loop: // wait for response
       ret = recvFrom(buf, sizeof(buf), 0, cResponseIP, iSourcePortNumber);
 
       if (ret <= 0)
          {
-         checkErrno(ret);
+         checkErrno();
 
          if (isTimeout()) continue;
 
@@ -440,7 +446,7 @@ loop: // wait for ARP reply
 
    if (ret <= 0)
       {
-      checkErrno(ret);
+      checkErrno();
 
       if (isTimeout()) U_RETURN(2);
 
@@ -679,7 +685,7 @@ retry:
       {
       ret = U_SYSCALL(sendto, "%d,%p,%d,%u,%p,%d", USocket::iSockDesc, buf, len, 0, saddr, alen);
 
-      if (checkIO(ret, len) == false) U_RETURN(false);
+      if (checkIO(ret) == false) U_RETURN(false);
 
       ret = recvArpPing();
 

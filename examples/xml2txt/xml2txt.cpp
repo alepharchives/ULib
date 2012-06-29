@@ -49,7 +49,7 @@ public:
 
       if (U_NOT_TO_PRINT) return;
 
-      if (attrs) for (int i = 0; attrs[i]; ++i) cout << ' ' << attrs[i];
+      if (attrs) for (int i = 0; attrs[i]; ++i) std::cout << ' ' << attrs[i];
       }
 
    virtual void characterData(const XML_Char* str, int len)
@@ -66,7 +66,7 @@ public:
          --len;
          }
 
-      if (len > 0) cout.write(str, len);
+      if (len > 0) std::cout.write(str, len);
       }
 
    virtual void endElement(const XML_Char* name)
@@ -75,7 +75,7 @@ public:
 
       U_INTERNAL_DUMP("active = %b", active)
 
-      if (U_NOT_TO_PRINT == false) cout.put('\n');
+      if (U_NOT_TO_PRINT == false) std::cout.put('\n');
 
       if (active && taglist && taglist->at(tagn) == name)
          {

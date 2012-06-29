@@ -491,7 +491,7 @@ UString UStringExt::getEnvironmentVar(const char* s, uint32_t n, const UString* 
 {
    U_TRACE(1, "UStringExt::getEnvironmentVar(%.*S,%u,%p)", n, s, n, environment)
 
-   UString value(100U);
+   UString value(300U);
 
    if (environment)
       {
@@ -500,7 +500,8 @@ UString UStringExt::getEnvironmentVar(const char* s, uint32_t n, const UString* 
       uint32_t start = 0;
       bool quoted, bexpand;
 
-loop: // NB: check if s param is a environment-var
+      // NB: check if param 's' is a environment-var
+loop:
       start = environment->find(s, start, n);
 
       if (start == U_NOT_FOUND) goto next;
@@ -509,13 +510,17 @@ loop: // NB: check if s param is a environment-var
 
       if (start)
          {
-         // NB: check if comment...
-
          c = environment->c_char(start-1);
 
          U_INTERNAL_DUMP("c = %C", c)
 
-         if (c == '#') goto loop;
+         if (u_isname(c) ||
+             c == '#') // NB: check if commented...
+            {
+            start += n;
+
+            goto loop;
+            }
          }
 
       start += n;
@@ -814,8 +819,8 @@ UString UStringExt::trimPunctuation(const char* s, uint32_t n)
    U_RETURN_STRING(result);
 }
 
-// returns a string that has whitespace removed from the start and the end, and which has each sequence of internal
-// whitespace replaced with a single space.
+// returns a string that has whitespace removed from the start and the end,
+// and which has each sequence of internal whitespace replaced with a single space.
 
 UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
 {
@@ -854,6 +859,52 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
       sz += sz1;
 
       if (++s < _end) str[sz++] = ' ';
+      }
+
+   if (sz && u_isspace(str[sz-1])) --sz;
+
+   result.size_adjust(sz);
+
+   U_RETURN_STRING(result);
+}
+
+// returns a string that has suppressed all whitespace
+
+UString UStringExt::removeWhiteSpace(const char* s, uint32_t n)
+{
+   U_TRACE(0, "UStringExt::removeWhiteSpace(%.*S,%u)", n, s, n)
+
+   // U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+
+   UString result(n);
+   uint32_t sz1, sz = 0;
+   char* str = result.data();
+
+   const char* p;
+   const char* _end = s + n;
+
+   while (s < _end)
+      {
+      if (u_isspace(*s))
+         {
+         ++s;
+
+         continue;
+         }
+
+      p = s++;
+
+      while (s < _end &&
+             u_isspace(*s) == false)
+         {
+         ++s;
+         }
+
+      sz1 = (s - p);
+
+      (void) u__memcpy(str + sz, p, sz1); // result.append(p, sz1);
+
+      sz += sz1;
       }
 
    if (sz && u_isspace(str[sz-1])) --sz;
@@ -1333,20 +1384,18 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
    bool form  = (dlen == 1 && *delim == '&');
    uint32_t n = name_value.size(), size = content.size(), result, pos, oldPos = 0, len;
 
-   while (true)
+loop:
+   pos = content.find_first_of('=', oldPos); // Find the '=' separating the name from its value
+
+   // If no '=', we're finished
+
+   if (pos == U_NOT_FOUND) goto end;
+
+   len = pos - oldPos;
+
+   if (len == 0) name_value.push_back(UString::getStringNull());
+   else
       {
-      // Find the '=' separating the name from its value
-
-      pos = content.find_first_of('=', oldPos);
-
-      // If no '=', we're finished
-
-      if (pos == U_NOT_FOUND) break;
-
-      len = pos - oldPos;
-
-      U_INTERNAL_ASSERT_MAJOR(len,0)
-
       if (form == false) name_value.push_back(content.substr(oldPos, len));
       else
          {
@@ -1358,66 +1407,68 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 
          name_value.push_back(name);
          }
-
-      // Find the delimitator separating subsequent name/value pairs
-
-      oldPos = ++pos;
-
-      if (form) pos = content.find_first_of('&', oldPos);
-      else
-         {
-         // check if string is quoted...
-
-         if (content.c_char(pos) == '"')
-            {
-            ptr = u_find_char(content.c_pointer(++pos), end, '"');
-
-            pos = content.distance(ptr);
-            }
-
-         pos = content.find_first_of(delim, pos, dlen);
-         }
-
-      // Even if an delimitator wasn't found the rest of the string is a value and value is already decoded...
-
-      len = (pos == U_NOT_FOUND ? size : pos) - oldPos;
-
-      if (len == 0) name_value.push_back(UString::getStringNull());
-      else
-         {
-         if (form)
-            {
-            value.setBuffer(len);
-
-            Url::decode(content.c_pointer(oldPos), len, value);
-            }
-         else
-            {
-            value = content.substr(oldPos, len);
-
-            if (value.isQuoted()) value.unQuote();
-            }
-
-         name_value.push_back(value);
-         }
-
-      if (pos == U_NOT_FOUND) break;
-
-      // Update parse position
-
-      if (form) oldPos = ++pos;
-      else
-         {
-         ptr = content.c_pointer(pos);
-
-         do {
-            if (++ptr >= end) goto end;
-            }
-         while (memchr(delim, *ptr, dlen));
-
-         oldPos = content.distance(ptr);
-         }
       }
+
+   // Find the delimitator separating subsequent name/value pairs
+
+   oldPos = ++pos;
+
+   if (form) pos = content.find_first_of('&', oldPos);
+   else
+      {
+      // check if string is quoted...
+
+      if (content.c_char(pos) == '"')
+         {
+         ptr = u_find_char(content.c_pointer(++pos), end, '"');
+
+         pos = content.distance(ptr);
+         }
+
+      pos = content.find_first_of(delim, pos, dlen);
+      }
+
+   // Even if an delimitator wasn't found the rest of the string is a value and value is already decoded...
+
+   len = (pos == U_NOT_FOUND ? size : pos) - oldPos;
+
+   if (len == 0) name_value.push_back(UString::getStringNull());
+   else
+      {
+      if (form)
+         {
+         value.setBuffer(len);
+
+         Url::decode(content.c_pointer(oldPos), len, value);
+         }
+      else
+         {
+         value = content.substr(oldPos, len);
+
+         if (value.isQuoted()) value.unQuote();
+         }
+
+      name_value.push_back(value);
+      }
+
+   if (pos == U_NOT_FOUND) goto end;
+
+   // Update parse position
+
+   if (form) oldPos = ++pos;
+   else
+      {
+      ptr = content.c_pointer(pos);
+
+      do {
+         if (++ptr >= end) goto end;
+         }
+      while (memchr(delim, *ptr, dlen));
+
+      oldPos = content.distance(ptr);
+      }
+
+   goto loop;
 
 end:
    result = (name_value.size() - n);

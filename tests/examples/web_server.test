@@ -7,6 +7,7 @@
 start_msg web_server
 
 rm -f web_server*.log* uploads/* \
+      /var/log/httpd/access_log \
       out/userver_tcp.out err/userver_tcp.err web_server.err \
       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
 
@@ -76,7 +77,7 @@ done
 #$NC -w 2 10.30.1.111 80 < inp/http/all4.inp >>out/web_server.out
 #$NC -w 2 10.30.1.111 80 < inp/http/all5.inp >>out/web_server.out
 #exit 0
-#send_req $2 inp/http/all.inp 4
+#send_req $2 inp/http/all5.inp 4
 #return
 
 LS=`ls inp/http/close`

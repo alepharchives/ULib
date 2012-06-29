@@ -628,13 +628,11 @@ int UShibPlugIn::handlerRequest()
       if (pos == U_NOT_FOUND) pos               = host.size();
       else                    UShibTarget::port = atoi(host.c_pointer(pos+1));
 
-      UString ip_client = UHTTP::getRemoteIP();
-
    // UShibTarget::protocol    = "http";
       UShibTarget::hostname    = strndup(host.data(), pos);
       UShibTarget::uri         = strndup(U_HTTP_URI_TO_PARAM);
       UShibTarget::method      = strndup(U_HTTP_METHOD_TO_PARAM);
-      UShibTarget::remote_addr = ip_client->c_strdup();
+      UShibTarget::remote_addr = strdup(UServer_Base::client_address);
       UShibTarget::cookies     = (u_http_info.cookie_len ? ((void)cookies.replace(u_http_info.cookie, u_http_info.cookie_len), cookies.c_str()) : "");
 
       int mode              = 0;

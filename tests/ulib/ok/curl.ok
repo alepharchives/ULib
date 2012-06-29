@@ -2,7 +2,7 @@ URL: http://www.unirel.com/index.html
 <HTML>
 
 <HEAD>
-<TITLE>Unirel s.r.l.</TITLE> <LINK rel="shortcut icon" href=http://www.unirel.com/favicon.ico>
+<TITLE>UniRel s.r.l.</TITLE> <LINK rel="shortcut icon" href=http://www.unirel.com/favicon.ico>
 </HEAD>
 
 
@@ -14,17 +14,17 @@ URL: http://www.unirel.com/index.html
 		<TABLE border=0>
 		<TR>
 			<TD> <IMG src="unirel_logo.gif" alt="Unirel logo"> </TD>
-			<TD valign=bottom> <H1><B><I>Unirel s.r.l.</I></B></H1> </TD>
+			<TD valign=bottom> <H1><B><I>UniRel s.r.l.</I></B></H1> </TD>
 		</TR>
 		</TABLE>
 	</TD>
 	<TD align=right>
 		<ADDRESS>
+			<A HREF=http://maps.google.it/maps?q=via+volturno+12+50019+sesto+fiorentino+fi>Via Volturno 12 interno A/4/4 50019 Sesto Fiorentino (FI)</A> <BR>
 			Tel ++39 055 340773 <BR>
 			Fax ++39 055 318525 <BR>
 			<A HREF=mailto:info@unirel.com>info@unirel.com</A>
 		</ADDRESS>
-		
 	</TD>
 </TR>
 </TABLE>
@@ -36,8 +36,8 @@ URL: ftp://ftp.at.debian.org/debian/README
 See http://www.debian.org/ for information about Debian GNU/Linux.
 Four Debian releases are available on the main site:
 
-Debian 6.0.4, or squeeze.  Access this release through dists/stable
-Debian 6.0.4 was released Saturday, 28 January 2012.
+Debian 6.0.5, or squeeze.  Access this release through dists/stable
+Debian 6.0.5 was released Saturday, 12 May 2012.
 
 Testing, or wheezy.  Access this release through dists/testing.  The
 current tested development snapshot is named wheezy.  Packages which

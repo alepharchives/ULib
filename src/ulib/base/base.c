@@ -357,6 +357,8 @@ void u_init_ulib(char** restrict argv)
    /* initialize AT EXIT */
 
    (void) atexit(u_exit);
+
+   u_gettimeofday();
 }
 
 uint32_t u__snprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...)
@@ -384,7 +386,7 @@ uint32_t u__snprintf(char* restrict buffer, uint32_t buffer_size, const char* re
  * the array indeterminate.
  */
 
-uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict format, time_t t)
+uint32_t u__strftime(char* restrict s, uint32_t maxsize, const char* restrict format)
 {
    static const char* dname[7]  = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
    static const char* mname[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September",
@@ -398,34 +400,10 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
    uint32_t count = 0;           /* return value accumulator */
    const char* restrict fmark;   /* for remembering a place in format */
 
-   static time_t old_now;
-
-   U_INTERNAL_TRACE("u_strftime(%u,%s,%ld)", maxsize, format, t)
+   U_INTERNAL_TRACE("u__strftime(%u,%s)", maxsize, format)
 
    U_INTERNAL_ASSERT_POINTER(format)
    U_INTERNAL_ASSERT_MAJOR(maxsize,0)
-
-   if (t == -1) old_now = 0;
-   else
-      {
-      if (t == 0)
-         {
-         u_gettimeofday();
-
-         t = u_now->tv_sec + u_now_adjust;
-         }
-
-      if (t != old_now)
-         {
-         old_now = t;
-
-         (void) gmtime_r(&t, &u_strftime_tm);
-         }
-      }
-
-   /* call stat("etc/localtime") everytime...
-   (void) strftime(s, maxsize, format, &u_strftime_tm);
-   */
 
    /*
    %a An abbreviation for the day of the week
@@ -509,7 +487,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'c': /* %c A string representing the complete date and time, in the form Mon Apr 01 13:13:13 1992 */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-24)
+            U_INTERNAL_ASSERT(count <= (maxsize-24))
 
          // if (count >= (maxsize - 24)) return 0;
 
@@ -527,7 +505,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'd': /* %d The day of the month, formatted with two digits */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+            U_INTERNAL_ASSERT(count <= (maxsize-2))
 
          // if (count >= (maxsize - 2)) return 0;
 
@@ -539,7 +517,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'e': /* %e Like %d, the day of the month as a decimal number, but a leading zero is replaced by a space */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+            U_INTERNAL_ASSERT(count <= (maxsize-2))
 
          // if (count >= (maxsize - 2)) return 0;
 
@@ -551,7 +529,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'H': /* %H The hour (on a 24-hour clock), formatted with two digits */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+            U_INTERNAL_ASSERT(count <= (maxsize-2))
 
          // if (count >= (maxsize - 2)) return 0;
 
@@ -563,7 +541,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'I': /* %I The hour (on a 12-hour clock), formatted with two digits */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+            U_INTERNAL_ASSERT(count <= (maxsize-2))
 
          // if (count >= (maxsize - 2)) return 0;
 
@@ -584,7 +562,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'j': /* %j The count of days in the year, formatted with three digits (from 1 to 366) */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-3)
+            U_INTERNAL_ASSERT(count <= (maxsize-3))
 
          // if (count >= (maxsize - 3)) return 0;
 
@@ -596,7 +574,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'm': /* %m The month number, formatted with two digits */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+            U_INTERNAL_ASSERT(count <= (maxsize-2))
 
          // if (count >= (maxsize - 2)) return 0;
             
@@ -608,7 +586,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'M': /* %M The minute, formatted with two digits */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+            U_INTERNAL_ASSERT(count <= (maxsize-2))
 
          // if (count >= (maxsize - 2)) return 0;
 
@@ -620,7 +598,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'p': /* %p Either AM or PM as appropriate */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+            U_INTERNAL_ASSERT(count <= (maxsize-2))
 
          // if (count >= (maxsize - 2)) return 0;
 
@@ -631,7 +609,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'S': /* %S The second, formatted with two digits */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+            U_INTERNAL_ASSERT(count <= (maxsize-2))
 
          // if (count >= (maxsize - 2)) return 0;
 
@@ -644,7 +622,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
          case 'U': /* %U The week number, formatted with two digits (from 0 to 53; week number 1
                       is taken as beginning with the first Sunday in a year). See also %W */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+            U_INTERNAL_ASSERT(count <= (maxsize-2))
 
          // if (count >= (maxsize - 2)) return 0;
 
@@ -656,7 +634,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'w': /* %w A single digit representing the day of the week: Sunday is day 0 */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-1)
+            U_INTERNAL_ASSERT(count <= (maxsize-1))
 
          // if (count >= (maxsize - 1)) return 0;
 
@@ -668,7 +646,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'W': /* %W Another version of the week number: like %U, but counting week 1 as beginning with the first Monday in a year */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+            U_INTERNAL_ASSERT(count <= (maxsize-2))
 
          // if (count >= (maxsize - 2)) return 0;
 
@@ -680,7 +658,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'x': /* %x A string representing the complete date, in a format like Mon Apr 01 1992 */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-15)
+            U_INTERNAL_ASSERT(count <= (maxsize-15))
 
          // if (count >= (maxsize - 15)) return 0;
 
@@ -697,7 +675,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
          case 'X': /* %X A string representing the full time of day (hours, minutes, and seconds), in a format like 13:13:13 */
          case 'T': /* %T The time in 24-hour notation (%H:%M:%S). (SU) */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-8)
+            U_INTERNAL_ASSERT(count <= (maxsize-8))
 
          // if (count >= (maxsize - 8)) return 0;
 
@@ -709,7 +687,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'y': /* %y The last two digits of the year */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-2)
+            U_INTERNAL_ASSERT(count <= (maxsize-2))
 
          // if (count >= (maxsize - 2)) return 0;
 
@@ -725,7 +703,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'Y': /* %Y The full year, formatted with four digits to include the century */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-4)
+            U_INTERNAL_ASSERT(count <= (maxsize-4))
 
          // if (count >= (maxsize - 4)) return 0;
 
@@ -737,7 +715,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
          case 'z': /* %z The +hhmm or -hhmm numeric timezone (that is, the hour and minute offset from UTC) */
             {
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-5)
+            U_INTERNAL_ASSERT(count <= (maxsize-5))
 
          // if (count >= (maxsize - 5)) return 0;
 
@@ -752,7 +730,7 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
             i = (daylight != 0);
             n = u__strlen(tzname[i]);
 
-            U_INTERNAL_ASSERT_MINOR(count,maxsize-n)
+            U_INTERNAL_ASSERT(count <= (maxsize-n))
 
          // if (count >= (maxsize - n)) return 0;
 
@@ -792,23 +770,23 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
 
    U_INTERNAL_PRINT("count = %u maxsize = %u", count, maxsize)
 
-   U_INTERNAL_ASSERT_MINOR(count,maxsize)
-
-#ifdef DEBUG
-   {
-   char dbg[4096];
-
-   if (strftime(dbg, maxsize, format, &u_strftime_tm))
-      {
-      U_INTERNAL_PRINT("s   = %s", s)
-      U_INTERNAL_PRINT("dbg = %s", dbg)
-
-      U_INTERNAL_ASSERT_EQUALS(strcmp(s,dbg),0)
-      }
-   }
-#endif
+   U_INTERNAL_ASSERT(count <= maxsize)
 
    return count;
+}
+
+uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict format, time_t t)
+{
+   U_INTERNAL_TRACE("u_strftime(%u,%s,%ld)", maxsize, format, t)
+
+   U_INTERNAL_ASSERT_POINTER(format)
+   U_INTERNAL_ASSERT_MAJOR(maxsize,0)
+
+   (void) memset(&u_strftime_tm, 0, sizeof(struct tm));
+
+   (void) gmtime_r(&t, &u_strftime_tm);
+
+   return u__strftime(s, maxsize, format);
 }
 
 #ifndef __MINGW32__
@@ -837,19 +815,7 @@ static const char* tab_color[] = { U_RESET_STR,
 '%Y': print u_getSysSignal(signo)
 '%w': print current working directory
 '%W': print COLOR (index to ANSI ESCAPE STR)
-
 '%D': print date and time in various format
-
-with flag '#' => var-argument
-with flag '1' => format: %d/%m/%y
-with flag '2' => format:          %T (=> "%H:%M:%S)
-with flag '3' => format:          %T (=> "%H:%M:%S) +n days
-with flag '4' => format: %d/%m/%y %T
-with flag '5' => format: %d/%m/%Y %T
-with flag '6' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
-with flag '7' => format: %a, %d %b %Y %H:%M:%S %Z (LOCAL: use u_now + u_now_adjust)
-with flag '8' => format: %d/%b/%Y:%H:%M:%S %z
-         default format: %a, %d %b %Y %H:%M:%S GMT (HTTP header) (use u_now)
 ----------------------------------------------------------------------------
 */
 
@@ -864,13 +830,13 @@ uint32_t u_vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* re
    int dprec;    /* a copy of prec if [diouxX], 0 otherwise */
    int fieldsz;  /* field size expanded by sign, dpad etc */
 
-   char sign;                    /* sign prefix (' ', '+', '-', or \0) */
-   char buf_number[32];          /* space for %[diouxX] */
-   char* restrict cp = 0;        /* handy char pointer (short term usage) */
-   const char* restrict fmark;   /* for remembering a place in format */
+   char sign;                      /* sign prefix (' ', '+', '-', or \0) */
+   const char* restrict fmark;     /* for remembering a place in format */
+   unsigned char buf_number[32];   /* space for %[cdiouxX] */
+   unsigned char* restrict cp = 0; /* handy char pointer (short term usage) */
 
-   uint64_t argument = 0;        /* integer arguments %[diIouxX] */
-   enum { OCT, DEC, HEX } base;  /* base for [diIouxX] conversion */
+   uint64_t argument = 0;          /* integer arguments %[diIouxX] */
+   enum { OCT, DEC, HEX } base;    /* base for [diIouxX] conversion */
 
    int flags; /* flags as above */
 
@@ -1128,14 +1094,14 @@ minus:
             int32_t remaining = (buffer_size - ret);
 #        endif
 
-            cp = VA_ARG(char*);
+            cp = VA_ARG(unsigned char*);
 
-            if (!cp) cp = (char* restrict)"(null)";
+            if (!cp) cp = (unsigned char* restrict)"(null)";
 
             U_INTERNAL_ASSERT_POINTER_MSG(cp, "CHECK THE PARAMETERS OF printf()...")
 
             sign = '\0';
-            size = (prec >= 0 ? prec : (int) u__strlen(cp));
+            size = (prec >= 0 ? prec : (int) u__strlen((const char*)cp));
 
             U_INTERNAL_ASSERT_MINOR_MSG(size, remaining, "WE ARE GOING TO BUFFER OVERFLOW - CHECK THE PARAMETERS OF printf()...")
 
@@ -1344,7 +1310,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
          case 'g':
          case 'G':
             {
-            char fmt_float[32] = { '%' };
+            unsigned char fmt_float[32] = { '%' };
 
             cp = fmt_float + 1;
 
@@ -1581,80 +1547,106 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'D': /* print date and time in various format */
             {
-            const char* restrict fmtdate;
+            /*
+            --------------------------------------------------------------
+                       0   => format: %d/%m/%y
+            with flag '1'  => format:          %T (=> "%H:%M:%S)
+            with flag '2'  => format:          %T (=> "%H:%M:%S) +n days
+            with flag '3'  => format: %d/%m/%Y %T
+            with flag '4'  => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
+            with flag '5'  => format: %a, %d %b %Y %H:%M:%S %Z
+            with flag '9'  => format: %d/%m/%y %T
+            --------------------------------------------------------------
+            with flag '10' => format: %d/%m/%y %T *** private for ULog ***
+            with flag '11' => format: %d/%b/%Y:%H:%M:%S %z
+            with flag '12' => format: %a, %d %b %Y %H:%M:%S GMT
+            --------------------------------------------------------------
+            */
+            time_t t;
+            const char* restrict fmtdate =
+                (width ==  0 ? "%d/%m/%y"                  :
+                 width <=  2 ? "%T"                        :
+                 width ==  3 ? "%d/%m/%Y %H:%M:%S"         :
+                 width ==  4 ? "%d%m%y_%H%M%S"             :
+                 width ==  5 ? "%a, %d %b %Y %H:%M:%S %Z"  :
+              /* ------------------------------------------- */
+                 width <= 10 ? "%d/%m/%y %H:%M:%S"         :
+                 width == 11 ? "%d/%b/%Y:%H:%M:%S %z"      :
+                               "%a, %d %b %Y %H:%M:%S GMT");
+
+            /* NB: optimization for high traffic */
+
+            if (width >= 10 &&
+                u_pthread_time)
+               {
+               /*
+               u_now = &(ptr_shared_data->_timeval);
+
+               struct timeval _timeval;
+               char data_1[17]; // 18/06/12 18:45:56
+               char data_2[26]; // 04/Jun/2012:18:18:37 +0200
+               char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
+               *                   123456789012345678901234567890
+               */
+               const char* ptr = (const char*)u_now + sizeof(struct timeval);
+
+               len = (width == 10 ?                17  :
+                      width == 11 ? (ptr += 17,    26) :
+                                    (ptr += 17+26, 29));
+
+               U_INTERNAL_ASSERT_EQUALS(u_isBinary((const unsigned char*)ptr, len), false)
+
+               (void) u__memcpy(bp, ptr, len);
+
+               bp  += len;
+               ret += len;
+
+               continue;
+               }
 
             /* flag '#' => var-argument */
 
-            time_t t = (flags & ALT ? VA_ARG(time_t)               :
-                        width == 0  ? u_now->tv_sec                :
-                        width == 7  ? u_now->tv_sec + u_now_adjust : 0);
-
-            if (t == 0 &&
-                (flags & ALT))
-               {
-               t = -1;
-
-               (void) memset(&u_strftime_tm, 0, sizeof(struct tm));
-               }
-
-            /*
-            with flag '1' => format: %d/%m/%y
-            with flag '2' => format:          %T (=> "%H:%M:%S)
-            with flag '3' => format:          %T (=> "%H:%M:%S) +n days
-            with flag '4' => format: %d/%m/%y %T
-            with flag '5' => format: %d/%m/%Y %T
-            with flag '6' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
-            with flag '7' => format: %a, %d %b %Y %H:%M:%S %Z (LOCAL: use u_now + u_now_adjust)
-            with flag '8' => format: %d/%b/%Y:%H:%M:%S %z
-                     default format: %a, %d %b %Y %H:%M:%S GMT (HTTP header) (use u_now)
-            */
-
-            fmtdate = (width == 0 ? "%a, %d %b %Y %H:%M:%S GMT" : /* default */
-                       width == 1 ? "%d/%m/%y"                  :
-                       width == 2 ? "%T"                        :
-                       width == 3 ? "%T"                        :
-                       width == 4 ? "%d/%m/%y %H:%M:%S"         :
-                       width == 5 ? "%d/%m/%Y %H:%M:%S"         :
-                       width == 6 ? "%d%m%y_%H%M%S"             :
-                       width == 7 ? "%a, %d %b %Y %H:%M:%S %Z"  :
-                                    "%d/%b/%Y:%H:%M:%S %z");
+            t = (flags & ALT ? VA_ARG(time_t) :
+                 width == 12 ? u_now->tv_sec  :
+                               u_now->tv_sec + u_now_adjust);
 
             len = u_strftime(bp, 36, fmtdate, t);
 
-            bp  += len;
-            ret += len;
-
-            if (width == 3) /* check for days */
+            if (width == 2) /* check for days */
                {
-               if (t > U_ONE_DAY_IN_SECOND)
+               if (flags & ALT &&
+                   t > U_ONE_DAY_IN_SECOND)
                   {
                   char tmp[16];
+                  uint32_t len1;
 
                   (void) sprintf(tmp, " +%ld days", t / U_ONE_DAY_IN_SECOND);
 
-                  len = strlen(tmp);
+                  len1 = u__strlen(tmp);
 
-                  (void) u__memcpy(bp, tmp, len);
+                  (void) u__memcpy(bp+len, tmp, len1);
 
-                  bp  += len;
-                  ret += len;
+                  len += len1;
                   }
                }
-            else if (width == 6) /* _millisec */
+            else if (width == 4) /* _millisec */
                {
                char tmp[16];
+               uint32_t len1;
 
                (void) gettimeofday(u_now, 0);
 
                (void) sprintf(tmp, "_%03lu", u_now->tv_usec / 1000L);
 
-               len = u__strlen(tmp);
+               len1 = u__strlen(tmp);
 
-               (void) u__memcpy(bp, tmp, len);
+               (void) u__memcpy(bp+len, tmp, len1);
 
-               bp  += len;
-               ret += len;
+               len += len1;
                }
+
+            bp  += len;
+            ret += len;
 
             continue;
             }
@@ -1716,7 +1708,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             char* restrict _base = bp;
             int32_t h, maxlen, remaining;
 
-            cp = VA_ARG(char* restrict);
+            cp = VA_ARG(unsigned char* restrict);
 
             if (!cp)
                {
@@ -1746,7 +1738,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                {
                if (cp[n] == '\0' && ((flags & ALT) == 0)) break;
 
-               h = u_sprintc(bp, ((unsigned char* restrict)cp)[n], false);
+               h = u_sprintc(bp, cp[n], false);
 
                bp        += h;
                remaining -= h;
@@ -1780,7 +1772,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             int i = sizeof(int), j;
 
             n  = VA_ARG(int);
-            cp = (char* restrict)&n;
+            cp = (unsigned char* restrict)&n;
 
 #        if __BYTE_ORDER == __BIG_ENDIAN
             cp += sizeof(int);
@@ -1838,7 +1830,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             static char bufzero[16];
 
             n  = VA_ARG(int);
-            cp = VA_ARG(char* restrict);
+            cp = VA_ARG(unsigned char* restrict);
 
             line   = n / 16;
             remain = n % 16;

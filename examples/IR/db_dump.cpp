@@ -24,7 +24,7 @@ public:
 
       if (IR::openCDB(false))
          {
-         UPosting::printDB(cout);
+         UPosting::printDB(std::cout);
 
          UApplication::exit_value = 0;
          }

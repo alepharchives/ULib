@@ -31,27 +31,22 @@ public:
 
    static ULog* pthis;
    static ULock* lock;
-   static bool bsyslog;
    static log_data* ptr;
    static const char* fmt;
    static char* file_limit;
    static const char* prefix;
    static vPF backup_log_function;
+   static bool bsyslog, log_data_mmap;
 
    // COSTRUTTORI
 
-   ULog()
+   ULog(const UString& path, uint32_t _size, const char* _prefix) : UFile(path)
       {
-      U_TRACE_REGISTER_OBJECT(0, ULog, "")
+      U_TRACE_REGISTER_OBJECT(0, ULog, "%.*S,%u,%S", U_STRING_TO_TRACE(path), _size, _prefix)
 
       U_INTERNAL_ASSERT_EQUALS(ptr,0)
-      }
 
-   ULog(const UString& path, uint32_t _size = 1024 * 1024) : UFile(path)
-      {
-      U_TRACE_REGISTER_OBJECT(0, ULog, "%.*S,%u", U_STRING_TO_TRACE(path), _size)
-
-      U_INTERNAL_ASSERT_EQUALS(ptr,0)
+      prefix = _prefix;
 
       (void) ULog::open(_size);
       }
@@ -62,7 +57,6 @@ public:
 
    bool open(const UString& path, uint32_t _size = 1024 * 1024, mode_t mode = 0664) { UFile::setPath(path); return ULog::open(_size, mode); }
 
-   static void init();
    static void close();
    static bool isSysLog() { return bsyslog; }
 
@@ -81,30 +75,6 @@ public:
       }
 
    // manage shared log
-
-   static void setShared();
-
-   // set log mode
-
-   static void setClient()
-      {
-      U_TRACE(0, "ULog::setClient()")
-
-      prefix = "%4D> ";
-
-      init();
-      }
-
-   static void setServer(bool shared)
-      {
-      U_TRACE(0, "ULog::setServer(%b)", shared)
-
-      if (shared) setShared();
-
-      prefix = "(pid %P) %4D> ";
-
-      init();
-      }
 
    static bool isShared()
       {
@@ -127,6 +97,9 @@ public:
 
       U_RETURN(result);
       }
+
+   static void startup();
+   static void setShared(log_data* log_data_ptr);
 
    // write with prefix
 

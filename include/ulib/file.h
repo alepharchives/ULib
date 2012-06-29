@@ -617,24 +617,9 @@ public:
 
    bool memmap(int prot = PROT_READ, UString* str = 0, uint32_t offset = 0, uint32_t length = 0);
 
-   char* eof() const
-      {
-      U_TRACE(0, "UFile::eof()")
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
-
-      U_INTERNAL_DUMP("st_size = %I map_size = %u", st_size, map_size)
-
-      char* result = map + (st_size ? (uint32_t)st_size : map_size);
-
-      U_RETURN(result);
-      }
-
-          UString getContent(                         bool brdonly = true,  bool bstat = false, bool bmap = true);
-   static UString contentOf(const char*    _pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
-   static UString contentOf(const UString& _pathname, int flags = O_RDONLY, bool bstat = false, bool bmap = true);
+   static UString contentOf(const char*    _pathname, int flags = O_RDONLY, bool bstat = false);
+   static UString contentOf(const UString& _pathname, int flags = O_RDONLY, bool bstat = false);
+          UString getContent(                         bool brdonly = true,  bool bstat = false, bool bmap = false);
 
    // MIME TYPE
 

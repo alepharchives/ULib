@@ -528,7 +528,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                    */
 
                        if (value == *str_DATE_GMT)      x = UTimeDate::strftime(timefmt.data(), u_now->tv_sec);
-                  else if (value == *str_DATE_LOCAL)    x = UTimeDate::strftime(timefmt.data(), u_now->tv_sec + u_now_adjust);
+                  else if (value == *str_DATE_LOCAL)    x = UTimeDate::strftime(timefmt.data(), u_now->tv_sec, true);
                   else if (value == *str_LAST_MODIFIED) x = UTimeDate::strftime(timefmt.data(), last_modified);
                   else if (value == *str_USER_NAME)     (void) x.assign(u_user_name, u_user_name_len);
                   else if (value == *str_DOCUMENT_URI)  (void) x.assign(U_HTTP_URI_TO_PARAM);
@@ -731,6 +731,10 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                   // NB: with an alternative response we cannot use the cached header response...
 
+#              ifdef DEBUG // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+                  token.clear();
+#              endif
+
                   U_RETURN_STRING(UString::getStringNull());
                   }
                else
@@ -763,6 +767,10 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                         // NB: with an alternative body response we cannot use the cached header response...
 
                         (void) header.replace(_tmp);
+
+#                    ifdef DEBUG // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+                        token.clear();
+#                    endif
 
                         U_RETURN_STRING(UString::getStringNull());
                         }
@@ -806,7 +814,12 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
 
       U_INTERNAL_ASSERT_EQUALS(UHTTP::ssi_alias, 0)
 
-      if (x.empty() == false) UHTTP::ssi_alias = U_NEW(UString(x));
+      if (x.empty() == false)
+         {
+         if (x.first_char() != '/') (void) x.insert(0, '/');
+
+         UHTTP::ssi_alias = U_NEW(UString(x));
+         }
 
       environment = cfg[*UServer_Base::str_ENVIRONMENT];
       }
@@ -838,133 +851,139 @@ int USSIPlugIn::handlerRequest()
 
    U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
 
-   bool bcache = u_is_ssi();
-
-   U_INTERNAL_DUMP("bcache = %b", bcache)
-
-   if (bcache                                    ||
-       (UHTTP::isHTTPRequestNotFound()  == false &&
-        UHTTP::isHTTPRequestForbidden() == false &&
-        UHTTP::file->isSuffix(".shtml")))
+   if (UHTTP::isHTTPRequestRedirected() == false)
       {
-      U_ASSERT(UHTTP::isSSIRequest())
+      bool bcache = u_is_ssi();
 
-      // init
+      U_DUMP("bcache = %b", bcache)
 
-      environment = UHTTP::getCGIEnvironment();
-
-      if (environment.empty())
+      if (bcache                                    ||
+          (UHTTP::file->isSuffix(".shtml")          &&
+           UHTTP::isHTTPRequestNotFound()  == false &&
+           UHTTP::isHTTPRequestForbidden() == false))
          {
-         UHTTP::setHTTPBadRequest();
+         U_ASSERT(UHTTP::isSSIRequest())
 
-         U_RETURN(U_PLUGIN_HANDLER_ERROR);
-         }
+         // init
 
-      errmsg                   = *str_errmsg_default;
-      timefmt                  = *str_timefmt_default;
-      last_modified            = UHTTP::file->st_mtime;
-      use_size_abbrev          = true;
-      set_alternative_response = 0;
+         environment = UHTTP::getCGIEnvironment();
 
-#  ifdef U_HTTP_CACHE_REQUEST
-      U_http_no_cache = true;
-#  endif
+         if (environment.empty())
+            {
+            UHTTP::setHTTPBadRequest();
 
-      header.setBuffer(U_CAPACITY);
+            U_RETURN(U_PLUGIN_HANDLER_ERROR);
+            }
 
-      (docname = UHTTP::getDocumentName()).duplicate();
+         errmsg                   = *str_errmsg_default;
+         timefmt                  = *str_timefmt_default;
+         last_modified            = UHTTP::file->st_mtime;
+         use_size_abbrev          = true;
+         set_alternative_response = 0;
 
-      // read the SSI file
-
-      if (bcache == false) body = UHTTP::file->getContent();
-      else
-         {
-         U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %.*S", UClientImage_Base::body->size(), U_STRING_TO_TRACE(*UClientImage_Base::body))
-
-         U_ASSERT(UHTTP::isDataFromCache())
-         U_INTERNAL_ASSERT_POINTER(UHTTP::file_data->array)
-         U_INTERNAL_ASSERT_EQUALS(UHTTP::file_data->array->size(),2)
-
-         (void) header.append(UHTTP::getDataFromCache(true, false)); // NB: after file_data can change...
-
-         body = (UHTTP::isHttpGETorHEAD() && UClientImage_Base::body->empty() == false
-                                          ? *UClientImage_Base::body
-                                          : UHTTP::getDataFromCache(false, false));
-         }
-
-      // process the SSI file
-
-      if (UHTTP::isHttpPOST()) *UClientImage_Base::body = U_HTTP_BODY(*UClientImage_Base::request);
-                               *UClientImage_Base::body = processSSIRequest(body, 0);
-
-      U_INTERNAL_DUMP("set_alternative_response = %d", set_alternative_response)
-
-      if (UClientImage_Base::body->empty())
-         {
-         // NB: there is an alternative response to elaborate from #set...
-
-         U_INTERNAL_DUMP("body(%u) = %.*S", body.size(), U_STRING_TO_TRACE(body))
-
-         U_ASSERT_EQUALS(body.empty(), false)
-         U_INTERNAL_ASSERT(set_alternative_response)
-
-         *UClientImage_Base::body = body;
-                                    body.clear();
-         }
-      else
-         {
-#     ifdef USE_PAGE_SPEED
-         UHTTP::page_speed->minify_html("USSIPlugIn::handlerRequest()", *UClientImage_Base::body);
+#     ifdef U_HTTP_CACHE_REQUEST
+         U_http_no_cache = true;
 #     endif
 
-         if (set_alternative_response == 0)
-            {
-            U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
+         header.setBuffer(U_CAPACITY);
 
-            if (U_http_is_accept_gzip)
-               {
-               *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body, true);
+         (docname = UHTTP::getDocumentName()).duplicate();
 
-               (void) header.insert(0, U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
-               }
+         // read the SSI file
 
-            if (bcache)
-               {
-               // NB: adjusting the size of response...
-
-               (void) UHTTP::checkHTTPContentLength(header, UClientImage_Base::body->size());
-               }
-            else
-               {
-               u_mime_index = U_ssi;
-
-               (void) header.append(UHTTP::getHeaderMimeType(0, U_CTYPE_HTML, UClientImage_Base::body->size(), 0));
-               }
-
-            u_http_info.nResponseCode   = HTTP_OK; // NB: can be already set to 304 (Not Modified)...
-            *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(header, false);
-            }
-         }
-
-      if (set_alternative_response)
-         {
-         U_INTERNAL_DUMP("set_alternative_response = %d", set_alternative_response)
-
-         // NB: there is an alternative response to elaborate from #set...
-
-         (void) UClientImage_Base::wbuffer->replace(header);
-
-         if (set_alternative_response == 2) header.clear();
+         if (bcache == false) body = UHTTP::file->getContent();
          else
             {
-            (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_CRLF));
-            (void) UClientImage_Base::wbuffer->append(*UClientImage_Base::body);
+            U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %.*S", UClientImage_Base::body->size(), U_STRING_TO_TRACE(*UClientImage_Base::body))
+
+            U_ASSERT(UHTTP::isDataFromCache())
+            U_INTERNAL_ASSERT_POINTER(UHTTP::file_data->array)
+            U_INTERNAL_ASSERT_EQUALS(UHTTP::file_data->array->size(),2)
+
+            (void) header.append(UHTTP::getDataFromCache(true, false)); // NB: after file_data can change...
+
+            body = (UHTTP::isHttpGETorHEAD() && UClientImage_Base::body->empty() == false
+                                             ? *UClientImage_Base::body
+                                             : UHTTP::getDataFromCache(false, false));
             }
 
-         (void) UHTTP::processCGIOutput();
-         }
+         // process the SSI file
 
-      UHTTP::setHTTPRequestProcessed();
+         if (UHTTP::isHttpPOST()) *UClientImage_Base::body = U_HTTP_BODY(*UClientImage_Base::request);
+                                  *UClientImage_Base::body = processSSIRequest(body, 0);
+
+         U_INTERNAL_DUMP("set_alternative_response = %d", set_alternative_response)
+
+         if (UClientImage_Base::body->empty())
+            {
+            // NB: there is an alternative response to elaborate from #set...
+
+            U_INTERNAL_DUMP("body(%u) = %.*S", body.size(), U_STRING_TO_TRACE(body))
+
+            U_ASSERT_EQUALS(body.empty(), false)
+            U_INTERNAL_ASSERT(set_alternative_response)
+
+            *UClientImage_Base::body = body;
+                                       body.clear();
+            }
+         else
+            {
+#        ifdef USE_PAGE_SPEED
+            UHTTP::page_speed->minify_html("USSIPlugIn::handlerRequest()", *UClientImage_Base::body);
+#        endif
+
+            if (set_alternative_response == 0)
+               {
+               U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
+
+               if (U_http_is_accept_gzip)
+                  {
+                  *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body, true);
+
+                  (void) header.insert(0, U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
+                  }
+
+               if (bcache)
+                  {
+                  // NB: adjusting the size of response...
+
+                  (void) UHTTP::checkHTTPContentLength(header, UClientImage_Base::body->size());
+                  }
+               else
+                  {
+                  u_mime_index = U_ssi;
+
+                  (void) header.append(UHTTP::getHeaderMimeType(0, U_CTYPE_HTML, UClientImage_Base::body->size(), 0));
+                  }
+
+               // NB: can be already set...
+
+               if (U_IS_HTTP_ERROR(u_http_info.nResponseCode) == false) u_http_info.nResponseCode = HTTP_OK;
+
+               *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(header, false);
+               }
+            }
+
+         if (set_alternative_response)
+            {
+            U_INTERNAL_DUMP("set_alternative_response = %d", set_alternative_response)
+
+            // NB: there is an alternative response to elaborate from #set...
+
+            (void) UClientImage_Base::wbuffer->replace(header);
+
+            if (set_alternative_response == 2) header.clear();
+            else
+               {
+               (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_CRLF));
+               (void) UClientImage_Base::wbuffer->append(*UClientImage_Base::body);
+               }
+
+            (void) UHTTP::processCGIOutput();
+            }
+
+         UHTTP::setHTTPRequestProcessed();
+         }
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

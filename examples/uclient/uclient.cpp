@@ -112,7 +112,7 @@ public:
       result = (include ? client->getResponse()
                         : client->getContent());
 
-      if (result.empty() == false) cout.write(U_STRING_TO_PARAM(result));
+      if (result.empty() == false) std::cout.write(U_STRING_TO_PARAM(result));
       }
 
 private:

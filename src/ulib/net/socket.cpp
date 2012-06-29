@@ -49,6 +49,7 @@ const UString* USocket::str_X_Forwarded_For;
 const UString* USocket::str_Transfer_Encoding;
 const UString* USocket::str_X_Progress_ID;
 const UString* USocket::str_expect_100_continue;
+const UString* USocket::str_chunked;
 
 #include "socket_address.cpp"
 
@@ -83,6 +84,7 @@ void USocket::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_Transfer_Encoding,0)
    U_INTERNAL_ASSERT_EQUALS(str_X_Progress_ID,0)
    U_INTERNAL_ASSERT_EQUALS(str_expect_100_continue,0)
+   U_INTERNAL_ASSERT_EQUALS(str_chunked,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("Host") },
@@ -111,7 +113,8 @@ void USocket::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("X-Forwarded-For") },
       { U_STRINGREP_FROM_CONSTANT("Transfer-Encoding") },
       { U_STRINGREP_FROM_CONSTANT("X-Progress-ID") },
-      { U_STRINGREP_FROM_CONSTANT("Expect: 100-continue") }
+      { U_STRINGREP_FROM_CONSTANT("Expect: 100-continue") },
+      { U_STRINGREP_FROM_CONSTANT("chunked") }
    };
 
    U_NEW_ULIB_OBJECT(str_host,                  U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -141,6 +144,7 @@ void USocket::str_allocate()
    U_NEW_ULIB_OBJECT(str_Transfer_Encoding,     U_STRING_FROM_STRINGREP_STORAGE(24));
    U_NEW_ULIB_OBJECT(str_X_Progress_ID,         U_STRING_FROM_STRINGREP_STORAGE(25));
    U_NEW_ULIB_OBJECT(str_expect_100_continue,   U_STRING_FROM_STRINGREP_STORAGE(26));
+   U_NEW_ULIB_OBJECT(str_chunked,               U_STRING_FROM_STRINGREP_STORAGE(27));
 }
 
 USocket::USocket(bool bSocketIsIPv6)
@@ -244,23 +248,38 @@ int USocket::recv(void* pBuffer, uint32_t iBufLength)
    U_RETURN(iBytesRead);
 }
 
-bool USocket::checkIO(int iBytesTransferred, int iMaxBytesTransfer)
+void USocket::checkErrno()
 {
-   U_TRACE(0, "USocket::checkIO(%d,%d)", iBytesTransferred, iMaxBytesTransfer)
+   U_TRACE(0, "USocket::checkErrno()")
 
-   U_INTERNAL_ASSERT(iBytesTransferred <= iMaxBytesTransfer)
+   U_INTERNAL_DUMP("errno = %d", errno)
 
-   if (iBytesTransferred <= 0)
+   if (errno == EAGAIN) iState = TIMEOUT;
+   else
       {
-      if (iBytesTransferred < 0) checkErrno(iBytesTransferred);
+      iState = (errno == ECONNRESET ? EPOLLERROR : BROKEN);
 
-#  ifdef DEBUG
-      if (isOpen() &&
-          isTimeout())
-         {
-         U_ASSERT_EQUALS(UFile::isBlocking(iSockDesc, flags), false)
-         }
-#  endif
+      closesocket();
+      }
+
+   U_INTERNAL_DUMP("state = %d", iState)
+}
+
+bool USocket::checkTime(long time_limit, long& timeout)
+{
+   U_TRACE(0, "USocket::checkTime(%ld,%ld)", time_limit, timeout)
+
+   U_INTERNAL_ASSERT_RANGE(1,time_limit,8L*60L) // 8 minuts
+
+   if (u_pthread_time == 0) (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+   if (timeout == 0) timeout = u_now->tv_sec + time_limit;
+
+   if (u_now->tv_sec > timeout)
+      {
+      iState = USocket::BROKEN | USocket::TIMEOUT;
+
+      close();
 
       U_RETURN(false);
       }
@@ -556,25 +575,6 @@ bool USocket::setTimeoutSND(uint32_t timeoutMS)
    U_RETURN(result);
 }
 
-void USocket::checkErrno(int value)
-{
-   U_TRACE(0, "USocket::checkErrno(%d)", value)
-
-   U_INTERNAL_ASSERT(value < 0)
-
-   U_INTERNAL_DUMP("errno = %d", errno)
-
-   if (errno == EAGAIN) iState = TIMEOUT;
-   else
-      {
-      iState = (errno == ECONNRESET ? EPOLLERROR : BROKEN);
-
-      closesocket();
-      }
-
-   U_INTERNAL_DUMP("state = %d", iState)
-}
-
 int USocket::recvBinary16Bits()
 {
    U_TRACE(0, "USocket::recvBinary16Bits()")
@@ -796,7 +796,7 @@ loop:
                        pcNewConnection->iSockDesc, pcNewConnection->flags, pcNewConnection->flags)
 
       U_INTERNAL_ASSERT_EQUALS(pcNewConnection->bIPv6Socket, (cRemoteAddress.getAddressFamily() == AF_INET6))
-
+      
 #  ifdef HAVE_ACCEPT4
       U_INTERNAL_ASSERT_EQUALS(((accept4_flags & SOCK_CLOEXEC)  != 0),((pcNewConnection->flags & O_CLOEXEC)  != 0))
       U_INTERNAL_ASSERT_EQUALS(((accept4_flags & SOCK_NONBLOCK) != 0),((pcNewConnection->flags & O_NONBLOCK) != 0))

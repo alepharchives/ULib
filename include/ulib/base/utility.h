@@ -100,12 +100,14 @@ U_EXPORT void* memmem(const void* restrict haystack, size_t haystacklen, const v
 #endif
 
 #ifdef DEBUG
+U_EXPORT uint32_t u_ptr2int(void* ptr);
 /* NB: u_strlen() and u_memcpy conflit with /usr/include/unicode/urename.h */
-U_EXPORT size_t u__strlen(const char* restrict s);
-U_EXPORT char*  u_strcpy( char* restrict dest, const char* restrict src);
-U_EXPORT void*  u__memcpy(void* restrict dest, const void* restrict src, size_t n);
-U_EXPORT char*  u_strncpy(char* restrict dest, const char* restrict src, size_t n);
+U_EXPORT size_t   u__strlen(const char* restrict s);
+U_EXPORT char*    u_strcpy( char* restrict dest, const char* restrict src);
+U_EXPORT void*    u__memcpy(void* restrict dest, const void* restrict src, size_t n);
+U_EXPORT char*    u_strncpy(char* restrict dest, const char* restrict src, size_t n);
 #else
+#  define u_ptr2int(x)          ((long)x)
 #  define u__strlen(s)          strlen((s))
 #  define u_strcpy(dest,src)    strcpy( (dest),(src))
 #  define u__memcpy(dest,src,n) memcpy( (dest),(src),(n))
@@ -327,39 +329,40 @@ U_EXPORT  int u_ftw_ino_cmp(const void* restrict a, const void* restrict b) __pu
 #define U_URI_GEN_DELIMS  2 /* ':' '/' '?' '#' '[' ']' '@' */
 #define U_URI_SUB_DELIMS  4 /* '!' '$' '&' '\'' '(' ')' '*' '+' ',' ';' '=' */
 
-extern U_EXPORT int                 u_uri_encoded_char_mask;
+extern U_EXPORT       unsigned      u_uri_encoded_char_mask;
 extern U_EXPORT const unsigned char u_uri_encoded_char[256];
 
 /* character type identification - Assumed an ISO-1 character set */
 
-extern U_EXPORT const unsigned int  u__ct_tab[256];
-extern U_EXPORT const unsigned char u__ct_tol[256];
-extern U_EXPORT const unsigned char u__ct_tou[256];
+extern U_EXPORT const unsigned char  u__ct_tol[256];
+extern U_EXPORT const unsigned char  u__ct_tou[256];
+extern U_EXPORT const unsigned short u__ct_tab[256];
 
-static inline bool u_iscntrl(int c)  { return ((u__ct_tab[c] & 0x001) != 0); } // __C } /* Control character */
-static inline bool u_isdigit(int c)  { return ((u__ct_tab[c] & 0x002) != 0); } // __D } /* Digit */
-static inline bool u_islower(int c)  { return ((u__ct_tab[c] & 0x004) != 0); } // __L } /* Lowercase */
-static inline bool u_ispunct(int c)  { return ((u__ct_tab[c] & 0x008) != 0); } // __P } /* Punctuation */
-static inline bool u_isspace(int c)  { return ((u__ct_tab[c] & 0x010) != 0); } // __S } /* Space */
-static inline bool u_isupper(int c)  { return ((u__ct_tab[c] & 0x020) != 0); } // __U } /* Uppercase */
-static inline bool u_isblank(int c)  { return ((u__ct_tab[c] & 0x080) != 0); } // __B } /* Blank (a space or a tab) */
-static inline bool u_islterm(int c)  { return ((u__ct_tab[c] & 0x100) != 0); } // __R } /* carriage return or new line (a \r or \n) */
-static inline bool u_istext( int c)  { return ((u__ct_tab[c] & 0x400) == 0); } // __F } /* character never appears in text */
+static inline unsigned      u_cttab(  unsigned char c) { return u__ct_tab[c]; }
+static inline unsigned char u_tolower(unsigned char c) { return u__ct_tol[c]; }
+static inline unsigned char u_toupper(unsigned char c) { return u__ct_tou[c]; }
 
-static inline bool u_isalpha( int c) { return ((u__ct_tab[c] & 0x024) != 0); } // (__L | __U)
-static inline bool u_isxdigit(int c) { return ((u__ct_tab[c] & 0x042) != 0); } // (__D | __X)
-static inline bool u_isalnum( int c) { return ((u__ct_tab[c] & 0x026) != 0); } // (__D | __L | __U)
-static inline bool u_isname(  int c) { return ((u__ct_tab[c] & 0x826) != 0); } // (__D | __L | __U | '_')
-static inline bool u_isgraph( int c) { return ((u__ct_tab[c] & 0x02E) != 0); } // (__D | __L | __P | __U)
-static inline bool u_isprint( int c) { return ((u__ct_tab[c] & 0x03E) != 0); } // (__D | __L | __P | __S | __U)
+static inline bool u_iscntrl(unsigned char c)  { return ((u_cttab(c) & 0x0001) != 0); } // __C } /* Control character */
+static inline bool u_isdigit(unsigned char c)  { return ((u_cttab(c) & 0x0002) != 0); } // __D } /* Digit */
+static inline bool u_islower(unsigned char c)  { return ((u_cttab(c) & 0x0004) != 0); } // __L } /* Lowercase */
+static inline bool u_ispunct(unsigned char c)  { return ((u_cttab(c) & 0x0008) != 0); } // __P } /* Punctuation */
+static inline bool u_isspace(unsigned char c)  { return ((u_cttab(c) & 0x0010) != 0); } // __S } /* Space */
+static inline bool u_isupper(unsigned char c)  { return ((u_cttab(c) & 0x0020) != 0); } // __U } /* Uppercase */
+static inline bool u_isblank(unsigned char c)  { return ((u_cttab(c) & 0x0080) != 0); } // __B } /* Blank (a space or a tab) */
+static inline bool u_islterm(unsigned char c)  { return ((u_cttab(c) & 0x0100) != 0); } // __R } /* carriage return or new line (a \r or \n) */
+static inline bool u_istext( unsigned char c)  { return ((u_cttab(c) & 0x0400) == 0); } // __F } /* character never appears in text */
 
-static inline int u_tolower(int c)   { return u__ct_tol[c]; }
-static inline int u_toupper(int c)   { return u__ct_tou[c]; }
+static inline bool u_isalpha( unsigned char c) { return ((u_cttab(c) & 0x0024) != 0); } // (__L | __U)
+static inline bool u_isxdigit(unsigned char c) { return ((u_cttab(c) & 0x0042) != 0); } // (__D | __X)
+static inline bool u_isalnum( unsigned char c) { return ((u_cttab(c) & 0x0026) != 0); } // (__D | __L | __U)
+static inline bool u_isname(  unsigned char c) { return ((u_cttab(c) & 0x0826) != 0); } // (__D | __L | __U | '_')
+static inline bool u_isgraph( unsigned char c) { return ((u_cttab(c) & 0x002E) != 0); } // (__D | __L | __P | __U)
+static inline bool u_isprint( unsigned char c) { return ((u_cttab(c) & 0x003E) != 0); } // (__D | __L | __P | __S | __U)
 
-static inline bool u_isoctal( int c) { return ('0' <= c && c <= '7'); }
-static inline char u_octc2int(int c) { return ((c - '0') & 07); }
-static inline char u_hexc2int(int c) { return (u_isdigit(c) ? c - '0' : u_toupper(c) - 'A' + 10); }
-static inline bool u_isbase64(int c) { return (u_isalnum(c) || (c == '+') || (c == '/') || (c == '=')); }
+static inline bool     u_isoctal( unsigned char c) { return ('0' <= c && c <= '7'); }
+static inline bool     u_isbase64(unsigned char c) { return (u_isalnum(c) || (c == '+') || (c == '/') || (c == '=')); }
+static inline unsigned u_hexc2int(unsigned char c) { return (u_isdigit(c) ? c - '0' : u_toupper(c) - 'A' + 10); }
+static inline unsigned u_octc2int(unsigned char c) { return ((c - '0') & 07); }
 
 /* buffer type identification */
 

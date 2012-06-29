@@ -147,7 +147,7 @@ public:
       escape();
       }
 
-   UDBI& operator<<(const char*    q) { query(q, u__strlen(q));         return *this; } // Syntactic sugar for query(q)
+   UDBI& operator<<(const char*    q) { query(q, u__strlen(q));      return *this; } // Syntactic sugar for query(q)
    UDBI& operator<<(const UString& q) { query(U_STRING_TO_PARAM(q)); return *this; } // Syntactic sugar for query(q)
 
    // BIND

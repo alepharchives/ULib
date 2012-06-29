@@ -48,10 +48,10 @@ public:
          {
          DocumentClassifier dc(argv[i]);
 
-         cout << dc.whatIs()           << '\n';
-         cout << dc.print()            << '\n';
-         cout << dc.printLabel()       << '\n';
-         cout << dc.printCertificate() << '\n';
+         std::cout << dc.whatIs()           << '\n';
+         std::cout << dc.print()            << '\n';
+         std::cout << dc.printLabel()       << '\n';
+         std::cout << dc.printCertificate() << '\n';
          }
       }
 };

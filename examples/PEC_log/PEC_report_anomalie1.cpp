@@ -243,7 +243,7 @@ public:
 
          if (rdb == 0)
             {
-            rdbname->snprintf("%s/PEC_report_anomalie1.%6D.cdb", u_tmpdir);
+            rdbname->snprintf("%s/PEC_report_anomalie1.%4D.cdb", u_tmpdir);
 
             U_INTERNAL_DUMP("rdbname = %.*S", U_STRING_TO_TRACE(*rdbname))
       

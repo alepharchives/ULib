@@ -28,6 +28,9 @@ const UString* UStreamPlugIn::str_URI_PATH;
 const UString* UStreamPlugIn::str_METADATA;
 const UString* UStreamPlugIn::str_CONTENT_TYPE;
 
+// 1M size ring buffer
+#define U_RING_BUFFER_SIZE (1 * 1024 * 1024)
+
 void UStreamPlugIn::str_allocate()
 {
    U_TRACE(0, "UStreamPlugIn::str_allocate()")
@@ -63,6 +66,7 @@ UStreamPlugIn::~UStreamPlugIn()
    if (command)
       {
                      delete command;
+      if (rbuf)      delete rbuf;
       if (fmetadata) delete fmetadata;
 
       if (pid != -1) UProcess::kill(pid, SIGTERM);
@@ -102,79 +106,100 @@ int UStreamPlugIn::handlerInit()
 {
    U_TRACE(0, "UStreamPlugIn::handlerInit()")
 
-   if (command)
+   bool result;
+   int fd_stderr;
+
+   if (command == 0) goto error;
+
+#ifdef DEBUG
+   fd_stderr = UFile::creat("/tmp/UStreamPlugIn.err", O_WRONLY | O_APPEND, PERM_FILE);
+#else
+   fd_stderr = UServices::getDevNull();
+#endif
+
+   result = command->execute(0, (UString*)-1, -1, fd_stderr);
+
+   UServer_Base::logCommandMsgError(command->getCommand());
+
+   if (result == false)
       {
-#  ifdef DEBUG
-      int fd_stderr = UFile::creat("/tmp/UStreamPlugIn.err", O_WRONLY | O_APPEND, PERM_FILE);
-#  else
-      int fd_stderr = UServices::getDevNull();
-#  endif
+      delete command;
+             command = 0;
 
-      if (command->execute(0, (UString*)-1, -1, fd_stderr))
-         {
-         UServer_Base::logCommandMsgError(command->getCommand());
-
-         rbuf.init(2 * 1024 * 1024); // 2M size ring buffer
-
-         if (metadata.empty() == false)
-            {
-            fmetadata = U_NEW(UFile(metadata));
-
-            if (fmetadata->open()) fmetadata->readSize();
-            }
-
-         // NB: feeding by a child of this...
-
-         U_INTERNAL_ASSERT_POINTER(UServer_Base::proc)
-
-         if (UServer_Base::proc->fork() &&
-             UServer_Base::proc->parent())
-            {
-            pid = UServer_Base::proc->pid();
-
-            /*
-            pid_t pgid = U_SYSCALL_NO_PARAM(getpgrp);
-
-            UProcess::setProcessGroup(pid, pgid);
-            */
-
-            (void) content_type.append(U_CONSTANT_TO_PARAM(U_CRLF));
-
-            U_SRV_LOG("initialization of plugin success");
-
-            goto end;
-            }
-
-         if (UServer_Base::proc->child())
-            {
-            UTimeVal to_sleep(0L, 50 * 1000L);
-
-            pid = UCommand::pid;
-
-            if (UServer_Base::isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
-
-            UInterrupt::insert(SIGTERM, (sighandler_t)UStreamPlugIn::handlerForSigTERM); // async signal
-
-            int nread;
-
-            while (UNotifier::waitForRead(UProcess::filedes[2]) >= 1)
-               {
-               nread = rbuf.readFromFdAndWrite(UProcess::filedes[2]);
-
-               if (nread == 0) break;                // EOF
-               if (nread  < 0) to_sleep.nanosleep(); // EAGAIN
-               }
-
-            handlerForSigTERM(SIGTERM);
-
-            goto end;
-            }
-         }
+      goto error;
       }
 
+   ptr = (URingBuffer::rbuf_data*) UServer_Base::getOffsetToDataShare(sizeof(URingBuffer::rbuf_data) + U_RING_BUFFER_SIZE);
+
+   if (metadata.empty() == false)
+      {
+      fmetadata = U_NEW(UFile(metadata));
+
+      if (fmetadata->open()) fmetadata->readSize();
+      }
+
+   (void) content_type.append(U_CONSTANT_TO_PARAM(U_CRLF));
+
+   U_SRV_LOG("initialization of plugin success");
+
+   goto end;
+
+error:
    U_SRV_LOG("initialization of plugin FAILED");
 
 end:
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+}
+
+int UStreamPlugIn::handlerRun()
+{
+   U_TRACE(0, "UStreamPlugIn::handlerRun()")
+
+   U_INTERNAL_ASSERT_EQUALS(pid,-1)
+
+   rbuf = U_NEW(URingBuffer((URingBuffer::rbuf_data*) UServer_Base::getPointerToDataShare(ptr), U_RING_BUFFER_SIZE));
+
+   // NB: feeding by a child of this...
+
+   U_INTERNAL_ASSERT_POINTER(UServer_Base::proc)
+
+   if (UServer_Base::proc->fork() &&
+       UServer_Base::proc->parent())
+      {
+      pid = UServer_Base::proc->pid();
+
+      /*
+      pid_t pgid = U_SYSCALL_NO_PARAM(getpgrp);
+
+      UProcess::setProcessGroup(pid, pgid);
+      */
+
+      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+      }
+
+   if (UServer_Base::proc->child())
+      {
+      UTimeVal to_sleep(0L, 50 * 1000L);
+
+      pid = UCommand::pid;
+
+      if (UServer_Base::isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
+
+      UInterrupt::insert(SIGTERM, (sighandler_t)UStreamPlugIn::handlerForSigTERM); // async signal
+
+      int nread;
+
+      while (UNotifier::waitForRead(UProcess::filedes[2]) >= 1)
+         {
+         nread = rbuf->readFromFdAndWrite(UProcess::filedes[2]);
+
+         if (nread == 0) break;                // EOF
+         if (nread  < 0) to_sleep.nanosleep(); // EAGAIN
+         }
+
+      handlerForSigTERM(SIGTERM);
+      }
+
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
@@ -184,7 +209,9 @@ int UStreamPlugIn::handlerRequest()
 {
    U_TRACE(0, "UStreamPlugIn::handlerRequest()")
 
-   if (command &&
+   if (UHTTP::isHTTPRequestNotFound()               &&
+       UServer_Base::pClientImage->socket->isOpen() &&
+       command                                      &&
        U_HTTP_URI_EQUAL(uri_path))
       {
       USocket* csocket = UServer_Base::pClientImage->socket;
@@ -204,7 +231,7 @@ int UStreamPlugIn::handlerRequest()
 
          if (UHTTP::isHttpHEAD()) goto end;
 
-         readd = rbuf.open();
+         readd = rbuf->open();
 
          if (readd != -1)
             {
@@ -215,13 +242,13 @@ int UStreamPlugIn::handlerRequest()
 
             while (UServer_Base::flag_loop)
                {
-               if (rbuf.isEmpty(readd) == false &&
-                   (rbuf.readAndWriteToFd(readd, csocket->iSockDesc) <= 0 && errno != EAGAIN)) break;
+               if (rbuf->isEmpty(readd) == false &&
+                   (rbuf->readAndWriteToFd(readd, csocket->iSockDesc) <= 0 && errno != EAGAIN)) break;
 
                to_sleep.nanosleep();
                }
 
-            rbuf.close(readd);
+            rbuf->close(readd);
             }
          }
 
@@ -245,7 +272,7 @@ const char* UStreamPlugIn::dump(bool reset) const
                   << "metadata     (UString     " << (void*)&metadata     << ")\n"
                   << "content_type (UString     " << (void*)&content_type << ")\n"
                   << "command      (UCommand    " << (void*)command       << ")\n"
-                  << "rbuf         (URingBuffer " << (void*)&rbuf         << ')';
+                  << "rbuf         (URingBuffer " << (void*)rbuf          << ')';
 
    if (reset)
       {

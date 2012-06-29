@@ -26,6 +26,7 @@
 
 vPF             ULog::backup_log_function;
 bool            ULog::bsyslog;
+bool            ULog::log_data_mmap;
 ULog*           ULog::pthis;
 char*           ULog::file_limit;
 ULock*          ULog::lock;
@@ -47,12 +48,36 @@ ULog::~ULog()
    if (lock) delete lock;
 }
 
+void ULog::startup()
+{
+   U_TRACE(0, "ULog::startup()")
+
+   U_INTERNAL_ASSERT_POINTER(fmt)
+
+   log(fmt, "STARTUP");
+
+   log("Building Environment: " PLATFORM_VAR " (" __DATE__ ")\n", 0);
+
+#ifndef __MINGW32__
+   struct utsname u;
+
+   (void) U_SYSCALL(uname, "%p", &u);
+
+   log("Current Operating System: %s %s v%s %s\n", u.sysname, u.machine, u.version, u.release);
+#endif
+}
+
 bool ULog::open(uint32_t _size, mode_t mode)
 {
    U_TRACE(0, "ULog::open(%u,%d)", _size, mode)
 
+   // NB: we need to check because all instance try to close the log... (inherits from its parent)
+
+   u_atexit(&ULog::close); // register function of close at exit()...
+
    if (UFile::getPath() == U_STRING_FROM_CONSTANT("syslog"))
       {
+      prefix  = 0;
       pthis   = this;
       bsyslog = true;
 
@@ -90,6 +115,14 @@ bool ULog::open(uint32_t _size, mode_t mode)
 
       U_INTERNAL_ASSERT_POINTER(lock)
 
+#  ifdef USE_LIBZ
+      backup_log_function = &ULog::backup;
+
+      UInterrupt::setHandlerForSignal(SIGUSR1, (sighandler_t)ULog::handlerSIGUSR1);
+#  endif
+
+      if (fmt) startup();
+
       U_RETURN(true);
       }
 
@@ -99,9 +132,9 @@ end:
    U_RETURN(false);
 }
 
-void ULog::setShared()
+void ULog::setShared(log_data* log_data_ptr)
 {
-   U_TRACE(0, "ULog::setShared()")
+   U_TRACE(0, "ULog::setShared(%p)", log_data_ptr)
 
    if (file_limit &&
        bsyslog == false)
@@ -111,7 +144,8 @@ void ULog::setShared()
 
       log_data* tmp = ptr;
 
-      ptr = (log_data*) UFile::mmap(sizeof(log_data) + sizeof(sem_t));
+      ptr = (log_data_ptr ? log_data_ptr
+                          : (log_data_mmap = true, (log_data*)UFile::mmap(sizeof(log_data) + sizeof(sem_t))));
 
       U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
 
@@ -121,43 +155,6 @@ void ULog::setShared()
 
       lock->init((sem_t*)((char*)ptr + sizeof(log_data)));
       }
-}
-
-void ULog::init()
-{
-   U_TRACE(1, "ULog::init()")
-
-   if (bsyslog) prefix = 0;
-   else
-      {
-      U_INTERNAL_ASSERT_POINTER(pthis)
-      U_INTERNAL_ASSERT_DIFFERS(pthis->UFile::fd,-1)
-
-#  ifdef USE_LIBZ
-      backup_log_function = &ULog::backup;
-
-      UInterrupt::setHandlerForSignal(SIGUSR1, (sighandler_t)ULog::handlerSIGUSR1);
-#  endif
-      }
-
-   if (fmt)
-      {
-      log(fmt, "STARTUP");
-
-      log("Building Environment: " PLATFORM_VAR " (" __DATE__ ")\n", 0);
-
-#  ifndef __MINGW32__
-      struct utsname u;
-
-      (void) U_SYSCALL(uname, "%p", &u);
-
-      log("Current Operating System: %s %s v%s %s\n", u.sysname, u.machine, u.version, u.release);
-#  endif
-      }
-
-   // NB: we need to check because all instance try to close the log... (inherits from its parent)
-
-   u_atexit(&ULog::close); // register function of close at exit()...
 }
 
 void ULog::msync()
@@ -259,13 +256,19 @@ void ULog::close()
       {
       U_INTERNAL_DUMP("pthis = %p", pthis)
 
-      if (bsyslog == false) lock->lock();
-
-      if (fmt) log(fmt, "SHUTDOWN");
-
-      if (bsyslog == false)
+      if (bsyslog)
+         {
+#     ifndef __MINGW32__
+         U_SYSCALL_VOID_NO_PARAM(closelog);
+#     endif
+         }
+      else
          {
          U_INTERNAL_ASSERT_POINTER(pthis)
+
+         lock->lock();
+
+         if (fmt) log(fmt, "SHUTDOWN");
 
          if (file_limit)
             {
@@ -286,14 +289,8 @@ void ULog::close()
 
          lock->unlock();
 
-         if (lock->isShared()) UFile::munmap(ptr, sizeof(log_data) + sizeof(sem_t));
-
-         return;
+         if (lock->isShared() && log_data_mmap) UFile::munmap(ptr, sizeof(log_data) + sizeof(sem_t));
          }
-
-#  ifndef __MINGW32__
-      U_SYSCALL_VOID_NO_PARAM(closelog);
-#  endif
       }
 }
 
@@ -320,7 +317,7 @@ void ULog::backup()
       lock->lock();
       }
 
-   len_suffix = u__snprintf(suffix, sizeof(suffix), ".%6D.gz");
+   len_suffix = u__snprintf(suffix, sizeof(suffix), ".%4D.gz");
 
    if (dir_log_gz)
       {

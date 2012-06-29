@@ -90,9 +90,10 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(moduledir)" "$(DESTDIR)$(bindir)"
 LTLIBRARIES = $(module_LTLIBRARIES)
-@MINGW_FALSE@upload_progress_la_DEPENDENCIES = $(ulib_la)
+@HUPS_TRUE@@MINGW_FALSE@upload_progress_la_DEPENDENCIES = $(ulib_la)
 am__upload_progress_la_SOURCES_DIST = upload_progress.cpp
-@MINGW_FALSE@am_upload_progress_la_OBJECTS = upload_progress.lo
+@HUPS_TRUE@@MINGW_FALSE@am_upload_progress_la_OBJECTS =  \
+@HUPS_TRUE@@MINGW_FALSE@	upload_progress.lo
 upload_progress_la_OBJECTS = $(am_upload_progress_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
@@ -101,7 +102,8 @@ upload_progress_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(upload_progress_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-@MINGW_FALSE@am_upload_progress_la_rpath = -rpath $(moduledir)
+@HUPS_TRUE@@MINGW_FALSE@am_upload_progress_la_rpath = -rpath \
+@HUPS_TRUE@@MINGW_FALSE@	$(moduledir)
 PROGRAMS = $(bin_PROGRAMS)
 am_usp_translator_OBJECTS = usp_translator.$(OBJEXT)
 usp_translator_OBJECTS = $(am_usp_translator_OBJECTS)
@@ -322,12 +324,12 @@ usp_translator_LDADD = $(ulib_la)
 usp_translator_SOURCES = usp_translator.cpp
 usp_translator_LDFLAGS = $(PRG_LDFLAGS)
 moduledir = $(libexecdir)/ulib/usp
-@MINGW_FALSE@module_LTLIBRARIES = upload_progress.la
-@MINGW_FALSE@upload_progress_la_SOURCES = upload_progress.cpp
-@MINGW_FALSE@upload_progress_la_LIBADD = $(ulib_la)
-@MINGW_FALSE@upload_progress_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+@HUPS_TRUE@@MINGW_FALSE@module_LTLIBRARIES = upload_progress.la
+@HUPS_TRUE@@MINGW_FALSE@upload_progress_la_SOURCES = upload_progress.cpp
+@HUPS_TRUE@@MINGW_FALSE@upload_progress_la_LIBADD = $(ulib_la)
+@HUPS_TRUE@@MINGW_FALSE@upload_progress_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
 @CROSS_COMPILING_FALSE@SUFFIXES = .cpp .usp .lo .la
-@CROSS_COMPILING_FALSE@FOR_ALL = .libs/upload_progress.so
+@CROSS_COMPILING_FALSE@@HUPS_TRUE@FOR_ALL = .libs/upload_progress.so
 all: all-am
 
 .SUFFIXES:
@@ -697,7 +699,7 @@ clean-local:
 @CROSS_COMPILING_FALSE@.lo.la:
 @CROSS_COMPILING_FALSE@	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) -no-undefined $< $(ulib_la) $(LIBS)
 
-@CROSS_COMPILING_FALSE@all: $(FOR_ALL)
+@CROSS_COMPILING_FALSE@@HUPS_TRUE@all: $(FOR_ALL)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

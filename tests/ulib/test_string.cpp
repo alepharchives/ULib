@@ -1515,6 +1515,9 @@ U_EXPORT main (int argc, char* argv[])
    U_INTERNAL_DUMP("u__ct_tab[0xBC] = %d %B", u__ct_tab[0xBC], u__ct_tab[0xBC]) // @
    U_INTERNAL_DUMP("u_istext( 0xBC) = %b", u_istext(0xBC))
 
+   U_INTERNAL_DUMP("u__ct_tab['\377'] = %d %B", u_cttab('\377'), u_cttab('\377'))
+   U_INTERNAL_DUMP("u_isdigit('\377') = %b", u_isdigit('\377'))
+
    int n = (argc > 1 ? atoi(argv[1]) : 1);
 
 #ifdef TEST_SPLIT

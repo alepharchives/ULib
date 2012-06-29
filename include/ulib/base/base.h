@@ -128,7 +128,9 @@ U_EXPORT void        u_init_ulib_username(void);
 U_EXPORT void        u_init_ulib_hostname(void);
 U_EXPORT const char* u_basename(const char* restrict path) __pure;
 U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure;
-U_EXPORT uint32_t    u_strftime(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, time_t now);
+
+U_EXPORT uint32_t u__strftime(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt);
+U_EXPORT uint32_t u_strftime( char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, time_t when);
 
 /* mime type identification */
 
@@ -163,19 +165,21 @@ static inline bool u_is_html(void) { return (u_mime_index == U_html); }
 '%Y': print u_getSysSignal(signo)
 '%w': print current working directory
 '%W': print COLOR (index to ANSI ESCAPE STR)
-
+---------------------------------------------------
 '%D': print date and time in various format
 
 with flag '#' => var-argument
-with flag '1' => format: %d/%m/%y
-with flag '2' => format:          %T (=> "%H:%M:%S)
-with flag '3' => format:          %T (=> "%H:%M:%S) +n days
-with flag '4' => format: %d/%m/%y %T
-with flag '5' => format: %d/%m/%Y %T
-with flag '6' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
-with flag '7' => format: %a, %d %b %Y %H:%M:%S %Z (LOCAL: use u_now + u_now_adjust)
-with flag '8' => format: %d/%b/%Y:%H:%M:%S %z
-         default format: %a, %d %b %Y %H:%M:%S GMT (HTTP header) (use u_now)
+---------------------------------------------------------------------------------
+           0  => format: %d/%m/%y
+with flag '1' => format:          %T (=> "%H:%M:%S)
+with flag '2' => format:          %T (=> "%H:%M:%S) +n days
+with flag '3' => format: %d/%m/%Y %T
+with flag '4' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
+with flag '5' => format: %a, %d %b %Y %H:%M:%S %Z
+---------------------------------------------------------------------------------
+with flag '10' => format: %d/%m/%y %T
+with flag '11' => format: %d/%b/%Y:%H:%M:%S %z
+with flag '12' => format: %a, %d %b %Y %H:%M:%S GMT
 ---------------------------------------------------------------------------------
 */
 extern U_EXPORT int     u_printf_fileno;

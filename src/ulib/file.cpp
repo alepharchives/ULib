@@ -389,8 +389,6 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
 
 #ifdef HAVE_ARCH64
    U_INTERNAL_ASSERT_MINOR_MSG(length, U_STRING_LIMIT, "we can't manage file bigger than 4G...") // limit of UString
-#else
-   U_INTERNAL_ASSERT_RANGE(1, length, 2U*1024U*1024U*1024U) // limit of linux system
 #endif
 
    U_INTERNAL_ASSERT_EQUALS((offset % PAGESIZE),0) // offset should be a multiple of the page size as returned by getpagesize(2)
@@ -503,30 +501,30 @@ end:
    U_RETURN_STRING(fileContent);
 }
 
-UString UFile::contentOf(const char* _pathname, int flags, bool bstat, bool bmap)
+UString UFile::contentOf(const char* _pathname, int flags, bool bstat)
 {
-   U_TRACE(0, "UFile::contentOf(%S,%d,%b,%b)", _pathname, flags, bstat, bmap)
+   U_TRACE(0, "UFile::contentOf(%S,%d,%b)", _pathname, flags, bstat)
 
    UFile file;
    UString content;
 
    file.reset();
 
-   if (file.open(_pathname, flags)) content = file.getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat, bmap);
+   if (file.open(_pathname, flags)) content = file.getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat);
 
    U_RETURN_STRING(content);
 }
 
-UString UFile::contentOf(const UString& _pathname, int flags, bool bstat, bool bmap)
+UString UFile::contentOf(const UString& _pathname, int flags, bool bstat)
 {
-   U_TRACE(0, "UFile::contentOf(%.*S,%d,%b,%b)", U_STRING_TO_TRACE(_pathname), flags, bstat, bmap)
+   U_TRACE(0, "UFile::contentOf(%.*S,%d,%b)", U_STRING_TO_TRACE(_pathname), flags, bstat)
 
    UFile file;
    UString content;
 
    file.reset();
 
-   if (file.open(_pathname, flags)) content = file.getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat, bmap);
+   if (file.open(_pathname, flags)) content = file.getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat);
 
    U_RETURN_STRING(content);
 }
@@ -694,10 +692,6 @@ bool UFile::ftruncate(uint32_t n)
    if (map != MAP_FAILED &&
        map_size < (uint32_t)n)
       {
-#  ifndef HAVE_ARCH64
-      if (n >= 512UL*1024UL*1024UL) U_RETURN(false); // NB: on 32 bit, i can't trust mremap beyond this limit for linux system...
-#  endif
-
       uint32_t _map_size = n * 2;
       char* _map         = (char*) mremap(map, map_size, _map_size, MREMAP_MAYMOVE);
 

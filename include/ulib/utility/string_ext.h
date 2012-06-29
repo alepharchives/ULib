@@ -178,7 +178,7 @@ public:
       }
 
    // manage escaping for delimiter character
-   
+
    static UString removeEscape(const char* s, uint32_t n);
    static UString insertEscape(const char* s, uint32_t n, char delimiter = '"');
 
@@ -220,6 +220,11 @@ public:
 
    static UString simplifyWhiteSpace(const char* s, uint32_t n);
    static UString simplifyWhiteSpace(const UString& s) { return simplifyWhiteSpace(U_STRING_TO_PARAM(s)); }
+
+   // returns a string that has suppressed all whitespace 
+
+   static UString removeWhiteSpace(const char* s, uint32_t n);
+   static UString removeWhiteSpace(const UString& s) { return removeWhiteSpace(U_STRING_TO_PARAM(s)); }
 
    // returns a string that has suppressed repeated empty lines
 

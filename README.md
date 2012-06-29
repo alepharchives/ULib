@@ -66,7 +66,7 @@ The current version offers the following features :
    * Support for running JavaScript code with wrapping [google V8 JavaScript Engine](http://code.google.com/apis/v8/intro.html).
    * [HTTP pseudo-streaming](http://www.phpmotionwiz.com/what-is-pseudo-streaming) for FLV video managed transparently.
    * [C Servlet Support](http://bellard.org/tcc/) with libtcc (if available) as a backend for dynamic code generation (experimental).
-   * Support for Windows (without preforking), precompiled binaries are available [here](https://github.com/stefanocasazza/ULib/tree/master/win32).
+   * Support for Windows (without preforking).
    * Requests cut in phases for modular architecture (apache-like).
    * Configuration file with dedicated section.
    * Built-in modules :
@@ -75,12 +75,12 @@ The current version offers the following features :
        * `mod_http` : core features, static file handler and dynamic page (ULib Servlet Page).
        * `mod_ssi` : [Server Side Includes]( http://en.wikipedia.org/wiki/Server_Side_Include) support with enhanced #set, direct include and #exec servlet (C/ULib Servlet Page).
        * `mod_nocat` : [captive portal](http://nocat.net/) implementation.
+       * `mod_proxy` : multi-features reverse proxy support.
        * `mod_tsa` : server side [Time Stamp](http://www.opentsa.org) support.
        * `mod_soap` : generic [SOAP](http://java.sun.com/developer/technicalArticles/xml/webservices) server services support.
        * `mod_fcgi` : third-party applications support thru [FastCGI](http://www.fastcgi.com/drupal) interface.
        * `mod_scgi` : module that implements the client side of the [SCGI](http://www.mems-exchange.org/software/scgi) protocol (experimental).
        * `mod_shib` : [web single sign-on support](http://shibboleth.internet2.edu) (experimental).
-       * `mod_proxy` : proxy support (experimental).
        * `mod_geoip` : [geolocation support](http://www.maxmind.com/geoip/api/c.shtml) (experimental).
        * `mod_stream` : simple streaming support (experimental).
        * `mod_socket` : [Web Socket](http://dev.w3.org/html5/websockets) application framework (experimental).

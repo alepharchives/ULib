@@ -174,18 +174,15 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
 
    if (log_file.empty() == false)
       {
-      if (UServer_Base::isLog())
+      if (UServer_Base::isLog() == false) log = U_NEW(ULog(log_file, cfg.readLong(*UServer_Base::str_LOG_FILE_SZ), "(pid %P) %10D> "));
+      else
          {
          U_ASSERT_EQUALS(log_file, UServer_Base::pthis->log_file)
 
          log                    = UServer_Base::log;
          log_shared_with_server = true;
-         }
-      else
-         {
-         log = U_NEW(ULog(log_file, cfg.readLong(*UServer_Base::str_LOG_FILE_SZ)));
 
-         ULog::setServer(false);
+         log->startup();
          }
       }
 

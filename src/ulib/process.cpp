@@ -379,7 +379,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
                              sec_none.bInheritHandle, // inherit handles from the parent
                              DETACHED_PROCESS,        // the new process does not inherit its parent's console
                              w32_envp,                // if NULL use the same environment as the parent
-                             NULL,                    // Launch in the current directory
+                             0,                       // Launch in the current directory
                              &aStartupInfo,           // Startup Information
                              &aProcessInformation);   // Process information stored upon return
 

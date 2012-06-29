@@ -11,6 +11,10 @@
 //
 // ============================================================================
 
+/*
+#define DEBUG_DEBUG
+*/
+
 #include <ulib/base/utility.h>
 #include <ulib/debug/error_simulation.h>
 
@@ -114,7 +118,8 @@ void* USimulationError::checkForMatch(const char* call_name)
 
                U_INTERNAL_PRINT("file_ptr = %.*s", len, file_ptr);
 
-               if (memcmp(file_ptr, call_name, len) == 0)
+               if (u_isspace(file_ptr[len]) &&
+                   memcmp(file_ptr, call_name, len) == 0)
                   {
                   match = true;
 

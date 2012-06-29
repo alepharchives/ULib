@@ -9,7 +9,7 @@ LRESULT CALLBACK Window::FirstWindowProcReflector(HWND hwnd, UINT uMsg, WPARAM w
 {
    U_TRACE(2, "Window::FirstWindowProcReflector(%d,%d,%d,%d)", hwnd, uMsg, wParam, lParam)
 
-   Window* wnd = NULL;
+   Window* wnd = 0;
 
    if (uMsg == WM_NCCREATE)
       {
@@ -61,15 +61,15 @@ bool Window::Create(Window* parent, DWORD Style)
                 CW_USEDEFAULT,
                 CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                 // Parent Window 
-                (parent == NULL ? (HWND)NULL : parent->GetHWND()),
+                (parent == 0 ? 0 : parent->GetHWND()),
                 // use class menu 
-                (HMENU)NULL,
+                0,
                 // The application instance 
                 GetInstance(),
                 // The this ptr, which we'll use to set up the WindowProc reflection.
                 (LPVOID)this);
 
-   U_RETURN(WindowHandle != NULL);
+   U_RETURN(WindowHandle != 0);
 }
 
 bool Window::registerWindowClass()
@@ -94,12 +94,12 @@ bool Window::registerWindowClass()
       // The app instance
       wc.hInstance = GetInstance();
       // Use a bunch of system defaults for the GUI elements
-      wc.hIcon   = NULL;
-      wc.hIconSm = NULL;
-      wc.hCursor = NULL;
+      wc.hIcon   = 0;
+      wc.hIconSm = 0;
+      wc.hCursor = 0;
       wc.hbrBackground = (HBRUSH) (COLOR_BACKGROUND + 1);
       // No menu
-      wc.lpszMenuName = NULL;
+      wc.lpszMenuName = 0;
       // We'll get a little crazy here with the class name
       wc.lpszClassName = "MainWindowClass";
 
@@ -120,8 +120,8 @@ bool Window::MessageLoop()
 
    MSG msg;
 
-   while (GetMessage(&msg, NULL, 0, 0) != 0 &&
-          GetMessage(&msg, (HWND) NULL, 0, 0) != -1)
+   while (GetMessage(&msg, 0, 0, 0) != 0 &&
+          GetMessage(&msg, 0, 0, 0) != -1)
       {
       if (!IsWindow(WindowHandle) ||
           !IsDialogMessage(WindowHandle, &msg))
@@ -145,7 +145,7 @@ void Window::CenterWindow()
    // Get the window rectangle
    WindowRect = GetWindowRect();
 
-   if (GetParent() == NULL) ::GetWindowRect(GetDesktopWindow(),     &ParentRect); // Center on desktop window
+   if (GetParent() == 0) ::GetWindowRect(GetDesktopWindow(),     &ParentRect); // Center on desktop window
    else                     ::GetClientRect(GetParent()->GetHWND(), &ParentRect); // Center on client area of parent
 
    WindowWidth  = WindowRect.right  - WindowRect.left;
@@ -156,7 +156,7 @@ void Window::CenterWindow()
    p.y = (ParentRect.bottom - ParentRect.top) / 2;
 
    // Convert that to screen coords
-   if (GetParent() == NULL) ClientToScreen(GetDesktopWindow(), &p);
+   if (GetParent() == 0) ClientToScreen(GetDesktopWindow(), &p);
    else                     ClientToScreen(GetParent()->GetHWND(), &p);
 
    // Calculate new top left corner for window
@@ -173,7 +173,7 @@ bool Window::SetDlgItemFont(int id, const TCHAR* fontname, int Pointsize, int We
 
    HWND ctrl = GetDlgItem(id);
 
-   if (ctrl == NULL) U_RETURN(false); // Couldn't get that ID
+   if (ctrl == 0) U_RETURN(false); // Couldn't get that ID
 
    // We need the DC for the point size calculation.
    HDC hdc = GetDC(ctrl);
@@ -187,7 +187,7 @@ bool Window::SetDlgItemFont(int id, const TCHAR* fontname, int Pointsize, int We
                            Strikeout ? TRUE : FALSE,
                            ANSI_CHARSET, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS, PROOF_QUALITY, DEFAULT_PITCH | FF_DONTCARE, fontname);
 
-   if (hfnt == NULL) U_RETURN(false); // Font creation failed
+   if (hfnt == 0) U_RETURN(false); // Font creation failed
 
    // Set the new font, and redraw any text which was already in the item.
    SendMessage(ctrl, WM_SETFONT, (WPARAM) hfnt, TRUE);
@@ -226,13 +226,13 @@ void Window::ActivateTooltips()
 {
    U_TRACE(2, "Window::ActivateTooltips()")
 
-   if (TooltipHandle != NULL) return; // already initialized
+   if (TooltipHandle != 0) return; // already initialized
 
    // create a window for the tool tips - will be invisible most of the time
-   if ((TooltipHandle = CreateWindowEx(0, (LPCTSTR) TOOLTIPS_CLASS, NULL, 
+   if ((TooltipHandle = CreateWindowEx(0, (LPCTSTR) TOOLTIPS_CLASS, 0, 
                                        WS_POPUP | TTS_NOPREFIX | TTS_ALWAYSTIP, CW_USEDEFAULT,
                                        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, GetHWND(),
-                                       (HMENU)0, GetInstance(), (LPVOID)0)) == (HWND) NULL)
+                                       0, GetInstance(), 0)) == 0)
       {
       cerr << "Warning: call to CreateWindowEx failed when initializing tooltips.  Error = %8.8x" << GetLastError() << '\n';
 
@@ -295,7 +295,7 @@ BOOL Window::TooltipNotificationHandler(LPARAM lParam)
 
       // set this flag so that the control will not ask for this again
       dispinfo->uFlags |= TTF_DI_SETITEM;
-      dispinfo->hinst   = NULL;
+      dispinfo->hinst   = 0;
 
       U_RETURN(TRUE);
       }

@@ -28,6 +28,7 @@ U_NO_EXPORT bool URDB::htLookup()
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT_POINTER(key.dptr)
+   U_INTERNAL_ASSERT_MAJOR(key.dsize,0)
 
    // Because the insertion routine has to know where to insert the cache_node, this code has to assign
    // a pointer to the empty pointer to manipulate in that case, so we have to do a nasty indirection...
@@ -36,20 +37,34 @@ U_NO_EXPORT bool URDB::htLookup()
 
    U_INTERNAL_DUMP("pnode = %p slot = %u", pnode, UCDB::khash % CACHE_HASHTAB_LEN)
 
+   int result;
+   uint32_t len;
+
    while ((node = u_get_unalignedp(pnode)))
       {
       U_INTERNAL_DUMP("pnode = %p node = %u", pnode, node)
 
-      int result = u_equal(key.dptr, RDB_node_key, U_min(key.dsize, RDB_node_key_sz), UCDB::ignore_case);
+      len = RDB_node_key_sz;
 
-      if (result    == 0 &&
-          key.dsize == RDB_node_key_sz)
+      U_INTERNAL_ASSERT_MAJOR(len,0)
+
+      result = u_equal(key.dptr, RDB_node_key, U_min(key.dsize, len), UCDB::ignore_case);
+
+      // RDB_node => ((URDB::cache_node*)(journal.map+node))
+
+      U_INTERNAL_DUMP("result = %d len = %d", result, len)
+
+      if (result < 0) pnode = &(RDB_node->left);
+      else
          {
-         U_RETURN(true);
-         }
+         if (result == 0 &&
+             len    == key.dsize)
+            {
+            U_RETURN(true);
+            }
 
-      pnode = &(result < 0 ? RDB_node->left
-                           : RDB_node->right);
+         pnode = &(RDB_node->right);
+         }
       }
 
    // NB: i riferimenti in memoria alla cache dati devono puntare sulla memoria mappata...
@@ -57,38 +72,207 @@ U_NO_EXPORT bool URDB::htLookup()
    U_INTERNAL_DUMP("pnode = %p node = %u", pnode, node)
 
    U_INTERNAL_ASSERT(node <= RDB_capacity)
-   U_INTERNAL_ASSERT_RANGE(RDB_hashtab, pnode, (uint32_t*)RDB_eof)
+   U_INTERNAL_ASSERT_RANGE(RDB_hashtab, pnode, (uint32_t*)RDB_allocate)
 
    U_RETURN(false);
+}
+
+// Alloc one node for the hash tree
+
+U_NO_EXPORT void URDB::htAlloc()
+{
+   U_TRACE(0, "URDB::htAlloc()")
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT_EQUALS(node,0)
+   U_INTERNAL_ASSERT_POINTER(key.dptr)
+   U_INTERNAL_ASSERT_MAJOR(key.dsize,0)
+
+   U_INTERNAL_DUMP("RDB_capacity = %u", RDB_capacity)
+
+   U_INTERNAL_ASSERT_MAJOR((uint32_t)RDB_capacity,sizeof(URDB::cache_node))
+
+   node = RDB_off;
+
+   u_put_unalignedp(node, pnode);
+
+   RDB_off += sizeof(URDB::cache_node);
+
+   u_put_unaligned(0, RDB_node->left);
+   u_put_unaligned(0, RDB_node->right);
+}
+
+U_NO_EXPORT inline bool URDB::resizeJournal(uint32_t oversize)
+{
+   U_TRACE(0, "URDB::resizeJournal(%u)", oversize)
+
+   U_CHECK_MEMORY
+
+   uint32_t _size = (journal.st_size / 2);
+
+   if (oversize < _size) oversize = _size;
+
+   U_INTERNAL_DUMP("oversize = %u", oversize)
+
+// msync();
+
+   uint32_t _offset = (char*)pnode - journal.map;
+
+   U_INTERNAL_DUMP("pnode = %p node = %u offset = %u", pnode, node, _offset)
+
+#if defined(__CYGWIN__) || defined(__MINGW32__)
+   journal.munmap(); // for ftruncate()...
+#endif
+
+   if (journal.ftruncate(journal.st_size + oversize))
+      {
+#  if defined(__CYGWIN__) || defined(__MINGW32__)
+      (void) journal.memmap(PROT_READ | PROT_WRITE);
+#  endif
+
+      pnode = (uint32_t*)(journal.map + _offset);
+
+      U_INTERNAL_DUMP("pnode = %p node = %u offset = %u", pnode, node, _offset)
+
+      U_RETURN(true);
+      }
+
+   // save entry
+
+   key1              = key;
+   UCDB::datum data1 = data;
+
+   uint32_t save = UCDB::khash;
+
+   if (reorganize())
+      {
+      // set old entry
+
+      key  = key1;
+      data = data1;
+
+      UCDB::khash = save;
+      
+      (void) htLookup();
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+U_NO_EXPORT bool URDB::writev(const struct iovec* _iov, int n, uint32_t _size)
+{
+   U_TRACE(0, "URDB::writev(%p,%d,%u)", _iov, n, _size)
+
+   U_INTERNAL_ASSERT_MAJOR(_size,0)
+
+   U_INTERNAL_DUMP("RDB_off = %u", RDB_off)
+
+   uint32_t sz = RDB_off + _size + (sizeof(URDB::cache_node) * 2);
+
+   if (sz > journal.st_size &&
+       resizeJournal(sz - journal.st_size) == false)
+      {
+      U_RETURN(false);
+      }
+
+   char* journal_ptr = journal.map + RDB_off;
+
+   for (int i = 0; i < n; ++i)
+      {
+      (void) u__memcpy(journal_ptr, _iov[i].iov_base, _iov[i].iov_len);
+
+      // NB: Una volta scritti i dati sul journal si cambiano i riferimenti in memoria ai dati
+      // e alle chiavi in modo che puntino appunto sul journal mappato in memoria...
+
+      if (n < 5) // remove(), store()
+         {
+         if      (i == 1)  key.dptr = journal_ptr; // remove(), store()
+         else if (i == 2) data.dptr = journal_ptr; // store()
+         }
+      else // substitute()
+         {
+         if      (i == 1) key1.dptr = journal_ptr;
+         if      (i == 3)  key.dptr = journal_ptr;
+         else if (i == 4) data.dptr = journal_ptr;
+         }
+
+      journal_ptr += _iov[i].iov_len;
+      }
+
+   RDB_off = (journal_ptr - journal.map);
+
+   U_INTERNAL_DUMP("RDB_off = %u", RDB_off)
+
+   U_RETURN(true);
+}
+
+bool URDB::logJournal(int op)
+{
+   U_TRACE(0, "URDB::logJournal(%d)", op)
+
+   // Records are stored without special alignment. A record
+   // states a key length, a data length, the key, and the data
+
+   if (op == 0) // remove
+      {
+      UCDB::cdb_record_header hrec = { key.dsize, U_NOT_FOUND };
+
+      U_INTERNAL_DUMP("hrec = { %u, %u }", hrec.klen, hrec.dlen)
+
+      struct iovec _iov[2] = { { (caddr_t)&hrec, sizeof(UCDB::cdb_record_header) },
+                               { (caddr_t)key.dptr, key.dsize } };
+
+      if (writev(_iov, 2, sizeof(UCDB::cdb_record_header) + key.dsize) == false) U_RETURN(false);
+      }
+   else if (op == 1) // store
+      {
+      UCDB::cdb_record_header hrec = { key.dsize, data.dsize };
+
+      U_INTERNAL_DUMP("hrec = { %u, %u }", hrec.klen, hrec.dlen)
+
+      struct iovec _iov[3] = { { (caddr_t)&hrec, sizeof(UCDB::cdb_record_header) },
+                               { (caddr_t) key.dptr,  key.dsize },
+                               { (caddr_t)data.dptr, data.dsize } };
+
+      if (writev(_iov, 3, sizeof(UCDB::cdb_record_header) + key.dsize + data.dsize) == false) U_RETURN(false);
+      }
+   else // substitute
+      {
+      U_INTERNAL_ASSERT_EQUALS(op,2)
+      U_INTERNAL_ASSERT_POINTER(key.dptr)
+      U_INTERNAL_ASSERT_POINTER(key1.dptr)
+      U_INTERNAL_ASSERT_POINTER(data.dptr)
+      U_INTERNAL_ASSERT_MAJOR(key.dsize,0)
+      U_INTERNAL_ASSERT_MAJOR(key1.dsize,0)
+      U_INTERNAL_ASSERT_MAJOR(data.dsize,0)
+
+      UCDB::cdb_record_header hrec1 = { key1.dsize, U_NOT_FOUND },
+                              hrec  = {  key.dsize, data.dsize };
+
+      U_INTERNAL_DUMP("hrec1 = { %u, %u } hrec = { %u, %u }", hrec1.klen, hrec1.dlen, hrec.klen, hrec.dlen)
+
+      struct iovec _iov[5] = { { (caddr_t)&hrec1, sizeof(UCDB::cdb_record_header) },
+                               { (caddr_t)key1.dptr, key1.dsize },
+                               { (caddr_t)&hrec, sizeof(UCDB::cdb_record_header) },
+                               { (caddr_t)key.dptr, key.dsize },
+                               { (caddr_t)data.dptr, data.dsize } };
+
+      if (writev(_iov, 5, (sizeof(UCDB::cdb_record_header) * 2) + key1.dsize + key.dsize + data.dsize) == false) U_RETURN(false);
+      }
+
+   U_RETURN(true);
 }
 
 // Insert one key/data pair in the cache
 
 U_NO_EXPORT void URDB::htInsert()
 {
-   U_TRACE(1, "URDB::htInsert()")
+   U_TRACE(0, "URDB::htInsert()")
 
    U_CHECK_MEMORY
-
-   if (node == 0) // Alloc one node for the hash tree
-      {
-      U_INTERNAL_ASSERT_POINTER(key.dptr)
-
-      U_INTERNAL_DUMP("RDB_capacity = %u", RDB_capacity)
-
-      U_INTERNAL_ASSERT_MAJOR(RDB_capacity,sizeof(URDB::cache_node))
-
-      node = RDB_off;
-
-      u_put_unalignedp(node, pnode);
-
-      RDB_off += sizeof(URDB::cache_node);
-
-      U_INTERNAL_DUMP("pnode = %p node = %u", pnode, node)
-
-      u_put_unaligned(0, RDB_node->left);
-      u_put_unaligned(0, RDB_node->right);
-      }
 
    // NB: i riferimenti in memoria ai dati e alle chiavi devono puntare sul journal mappato in memoria...
 
@@ -96,19 +280,24 @@ U_NO_EXPORT void URDB::htInsert()
    U_INTERNAL_DUMP("data = { %p, %u }", data.dptr, data.dsize)
 
 #ifdef DEBUG
-                    U_INTERNAL_ASSERT_RANGE(RDB_ptr,  key.dptr, RDB_eof)
-   if (data.dptr) { U_INTERNAL_ASSERT_RANGE(RDB_ptr, data.dptr, RDB_eof) }
+                    U_INTERNAL_ASSERT_RANGE(RDB_ptr,  key.dptr, RDB_allocate)
+   if (data.dptr) { U_INTERNAL_ASSERT_RANGE(RDB_ptr, data.dptr, RDB_allocate) }
 #endif
 
    // NB: i riferimenti in memoria alla cache dati devono puntare sulla memoria mappata...
 
-   U_INTERNAL_ASSERT_RANGE(sizeof(URDB::cache_struct), node, RDB_size - sizeof(URDB::cache_node))
-   U_INTERNAL_ASSERT_RANGE(RDB_hashtab,               pnode, (uint32_t*)RDB_eof)
+   U_INTERNAL_DUMP("pnode = %p node = %u", pnode, node)
 
-   u_put_unaligned(((char*)key.dptr - journal.map),                    RDB_node->key.dptr);
-   u_put_unaligned(key.dsize,                                          RDB_node->key.dsize);
-   u_put_unaligned((data.dptr ? ((char*)data.dptr - journal.map) : 0), RDB_node->data.dptr);
-   u_put_unaligned(data.dsize,                                         RDB_node->data.dsize);
+   U_INTERNAL_ASSERT_RANGE(sizeof(URDB::cache_struct), node, journal.st_size - sizeof(URDB::cache_node))
+   U_INTERNAL_ASSERT_RANGE(RDB_hashtab,               pnode, (uint32_t*)RDB_allocate)
+
+   uint32_t offset1 =               (char*) key.dptr - journal.map,
+            offset2 = (data.dptr ? ((char*)data.dptr - journal.map) : 0);
+
+   u_put_unaligned(offset1,    RDB_node->key.dptr);
+   u_put_unaligned(key.dsize,  RDB_node->key.dsize);
+   u_put_unaligned(offset2,    RDB_node->data.dptr);
+   u_put_unaligned(data.dsize, RDB_node->data.dsize);
 }
 
 // open a Reliable DataBase
@@ -118,42 +307,34 @@ bool URDB::open(uint32_t log_size, bool btruncate)
    U_TRACE(0, "URDB::open(%u,%b)", log_size, btruncate)
 
    if (UCDB::open() && log_size == 0) log_size = UFile::st_size;
+   if (                log_size == 0) log_size = 512 * 1024;
 
    journal.setPath(*(const UFile*)this, 0, U_CONSTANT_TO_PARAM(".jnl"));
 
-   bool result = false;
+   int            flags  = O_RDWR;
+   if (btruncate) flags |= O_TRUNC;
 
-   lock.lock();
-
-   if (journal.creat(btruncate ? O_RDWR | O_TRUNC : O_RDWR) &&
-       journal.ftruncate(journal.size() + (log_size ? log_size : 512L*1024L)))
+   if (journal.creat(flags) &&
+       journal.ftruncate(journal.size() + log_size))
       {
 #if defined(__CYGWIN__) || defined(__MINGW32__)
       uint32_t journal_size =       journal.st_size;
 #  else
-      uint32_t journal_size = U_max(journal.st_size, 32*1024*1024); // oversize mmap for optimize resizeJournal() with ftruncate()
+      uint32_t journal_size = U_max(journal.st_size, 32 * 1024 * 1024); // oversize mmap for optimize resizeJournal() with ftruncate()
 #  endif
 
       if (journal.memmap(PROT_READ | PROT_WRITE, 0, 0, journal_size))
          {
-      // U_INTERNAL_ASSERT_EQUALS(RDB_off, RDB_size)
+         if (RDB_off == 0) RDB_off = sizeof(URDB::cache_struct);
 
-                           RDB_page = RDB_size;
-                           RDB_size = journal.st_size;
-         if (RDB_off == 0) RDB_off  = sizeof(URDB::cache_struct);
+         U_INTERNAL_DUMP("RDB_off = %u RDB_sync = %u capacity = %u nrecord = %u", RDB_off, RDB_sync, RDB_capacity, RDB_nrecord)
 
-         U_INTERNAL_DUMP("RDB_off = %u RDB_page = %u capacity = %u lrecord = %d", RDB_off, RDB_page, RDB_capacity, RDB_lrecord)
-
-         result = true;
+         U_RETURN(true);
          }
       }
 
-   lock.unlock();
-
-   U_RETURN(result);
+   U_RETURN(false);
 }
-
-// Close a Reliable DataBase
 
 void URDB::close()
 {
@@ -165,29 +346,81 @@ void URDB::close()
 
    lock.lock();
 
-   bool bactive = isActive(); // there are diff's ?...
+   uint32_t sz = RDB_sync = RDB_off;
 
-   if (bactive)
-      {
-      RDB_size = RDB_off;
-
-#  if defined(__CYGWIN__) || defined(__MINGW32__)
-      journal.munmap(); // for ftruncate()...
-#  endif
-
-      (void) journal.ftruncate(RDB_off);
-      }
-
-   journal.close();
-
-#if defined(__CYGWIN__) || defined(__MINGW32__)
-   if (bactive == false)
-#endif
-   journal.munmap();
-   journal.reset();
+          journal.munmap();
+   (void) journal.ftruncate(sz);
+          journal.close();
+          journal.reset();
 
    lock.unlock();
 }
+
+void URDB::reset()
+{
+   U_TRACE(1, "URDB::reset()")
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT_DIFFERS(journal.map,MAP_FAILED)
+
+   RDB_off     = sizeof(URDB::cache_struct);
+   RDB_sync    = 0;
+   RDB_nrecord = 0;
+
+   // Initialize the cache to contain no entries
+
+   (void) U_SYSCALL(memset, "%p,%C,%d", RDB_hashtab, 0, sizeof(RDB_hashtab));
+}
+
+bool URDB::beginTransaction()
+{
+   U_TRACE(0, "URDB::beginTransaction()")
+
+   lock.lock();
+
+   return reorganize();
+}
+
+void URDB::commitTransaction()
+{
+   U_TRACE(0, "URDB::commitTransaction()")
+
+   msync();
+   fsync();
+
+   lock.unlock();
+}
+
+void URDB::abortTransaction()
+{
+   U_TRACE(0, "URDB::abortTransaction()")
+
+   reset();
+
+   lock.unlock();
+}
+
+void URDB::msync()
+{
+   U_TRACE(0, "URDB::msync()")
+
+   U_CHECK_MEMORY
+
+   lock.lock();
+
+   U_INTERNAL_DUMP("RDB_off = %u RDB_sync = %u", RDB_off, RDB_sync)
+
+   UFile::msync(journal.map+RDB_off, journal.map+RDB_sync);
+
+   RDB_sync = RDB_off;
+
+   U_INTERNAL_DUMP("RDB_off = %u RDB_sync = %u", RDB_off, RDB_sync)
+
+   lock.unlock();
+}
+
+// Close a Reliable DataBase
 
 bool URDB::closeReorganize()
 {
@@ -203,6 +436,89 @@ bool URDB::closeReorganize()
       }
 
    U_RETURN(false);
+}
+
+// Combines the old cdb file and the diffs in a new cdb file
+
+U_NO_EXPORT bool URDB::reorganize()
+{
+   U_TRACE(0, "URDB::reorganize()")
+
+   U_CHECK_MEMORY
+
+   bool result = true;
+
+   lock.lock();
+
+   U_INTERNAL_DUMP("RDB_off = %u", RDB_off)
+
+   if (RDB_off > sizeof(URDB::cache_struct))
+      {
+      UCDB cdb(UCDB::ignore_case);
+      char cdb_buffer_path[MAX_FILENAME_LEN];
+
+      cdb.setPath(*(const UFile*)this, cdb_buffer_path, U_CONSTANT_TO_PARAM(".tmp"));
+
+      result = cdb.creat(O_RDWR) &&
+               cdb.ftruncate(UFile::st_size + journal.st_size + UCDB::sizeFor(4096));
+
+      if (result)
+         {
+         if (cdb.memmap(PROT_READ | PROT_WRITE) == false) U_RETURN(false);
+
+         // prima si leggono le entry nella cache
+         // poi si scansiona il constant database e si cercano le entry NON presenti nella cache...
+
+         cdb.makeStart();
+
+         ptr_rdb = this;
+         UCDB::setCDB(&cdb);
+
+         makeAdd();
+
+         uint32_t pos = cdb.makeFinish(false);
+
+         U_INTERNAL_ASSERT(pos <= cdb.st_size)
+
+#     if defined(__CYGWIN__) || defined(__MINGW32__)
+         cdb.munmap(); // for ftruncate()...
+#     endif
+
+         if (cdb.ftruncate(pos) == false) U_RETURN(false);
+
+#     if defined(__MINGW32__) || defined(__CYGWIN__)
+         UFile::munmap(); // for rename()...
+#        ifdef   __MINGW32__
+         cdb.UFile::close();
+#        endif
+#     endif
+
+         if (cdb._rename(UFile::path_relativ) == false) U_RETURN(false);
+
+         URDB::reset();
+
+#     if defined(__MINGW32__) || defined(__CYGWIN__)
+#        ifdef   __MINGW32__
+         result = cdb.UFile::open(UFile::path_relativ);
+                  cdb.st_size = pos;
+#        endif
+         result = cdb.memmap(); // read only...
+#     endif
+
+         cdb.UFile::close();
+
+         UFile::substitute(cdb);
+
+         UCDB::nrecord               = cdb.nrecord;
+         UCDB::start_hash_table_slot = cdb.start_hash_table_slot;
+
+         U_INTERNAL_DUMP("UCDB::nrecord = %u RDB_nrecord = %u", UCDB::nrecord, RDB_nrecord)
+         }
+      }
+
+   lock.unlock();
+
+   U_RETURN(result);
 }
 
 char* URDB::parseLine(const char* ptr, UCDB::datum* _key, UCDB::datum* _data)
@@ -322,144 +638,6 @@ U_NO_EXPORT inline void URDB::makeAdd()
    U_TRACE(0, "URDB::makeAdd()")
 
    call(&URDB::makeAdd1, &URDB::makeAdd2);
-}
-
-void URDB::reset()
-{
-   U_TRACE(1, "URDB::reset()")
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_DIFFERS(journal.map,MAP_FAILED)
-
-   RDB_off     = sizeof(URDB::cache_struct);
-   RDB_page    = 0;
-   RDB_lrecord = 0;
-
-   // Initialize the cache to contain no entries
-
-   (void) U_SYSCALL(memset, "%p,%C,%d", RDB_hashtab, 0, sizeof(RDB_hashtab));
-}
-
-bool URDB::beginTransaction()
-{
-   U_TRACE(0, "URDB::beginTransaction()")
-
-   lock.lock();
-
-   return reorganize();
-}
-
-void URDB::commitTransaction()
-{
-   U_TRACE(0, "URDB::commitTransaction()")
-
-   msync();
-   fsync();
-
-   lock.unlock();
-}
-
-void URDB::abortTransaction()
-{
-   U_TRACE(0, "URDB::abortTransaction()")
-
-   URDB::reset();
-
-   lock.unlock();
-}
-
-// Combines the old cdb file and the diffs in a new cdb file
-
-bool URDB::reorganize()
-{
-   U_TRACE(0, "URDB::reorganize()")
-
-   U_CHECK_MEMORY
-
-   lock.lock();
-
-   bool result = true;
-
-   if (isActive()) // there are diff's ?...
-      {
-      UCDB cdb(UCDB::ignore_case);
-      char cdb_buffer_path[MAX_FILENAME_LEN];
-
-      cdb.setPath(*(const UFile*)this, cdb_buffer_path, U_CONSTANT_TO_PARAM(".tmp"));
-
-      result = cdb.creat(O_RDWR) &&
-               cdb.ftruncate(UFile::st_size + RDB_size + sizeFor(4096));
-
-      if (result)
-         {
-         result = cdb.memmap(PROT_READ | PROT_WRITE);
-
-         if (result == false) U_RETURN(false);
-
-         // prima si leggono le entry nella cache
-         // poi si scansiona il constant database e si cercano le entry NON presenti nella cache...
-
-         cdb.makeStart();
-
-         ptr_rdb = this;
-         UCDB::setCDB(&cdb);
-
-         makeAdd();
-
-         uint32_t pos = cdb.makeFinish(false);
-
-         U_INTERNAL_ASSERT(pos <= cdb.st_size)
-
-#     if defined(__CYGWIN__) || defined(__MINGW32__)
-         cdb.munmap(); // for ftruncate()...
-#     endif
-
-         result = cdb.ftruncate(pos);
-
-         U_INTERNAL_ASSERT(result)
-
-         if (result)
-            {
-#        if defined(__MINGW32__) || defined(__CYGWIN__)
-            UFile::munmap(); // for rename()...
-#           ifdef   __MINGW32__
-            cdb.UFile::close();
-#           endif
-#        endif
-
-            result = cdb._rename(UFile::path_relativ);
-            }
-
-         U_INTERNAL_ASSERT(result)
-
-         if (result)
-            {
-            URDB::reset();
-
-#        if defined(__MINGW32__) || defined(__CYGWIN__)
-#           ifdef   __MINGW32__
-            result = cdb.UFile::open(UFile::path_relativ);
-                     cdb.st_size = pos;
-#           endif
-            result = cdb.memmap(); // read only...
-#        endif
-
-            cdb.UFile::close();
-
-            UFile::substitute(cdb);
-
-            UCDB::nrecord               = cdb.nrecord;
-            UCDB::start_hash_table_slot = cdb.start_hash_table_slot;
-
-            U_INTERNAL_DUMP("UCDB::nrecord = %u RDB_lrecord = %u", UCDB::nrecord, RDB_lrecord)
-            }
-         }
-      }
-
-   lock.unlock();
-
-   U_RETURN(result);
 }
 
 // PRINT DATABASE
@@ -651,9 +829,9 @@ void URDB::callForAllEntrySorted(vPFprpr function)
 {
    U_TRACE(0, "URDB::callForAllEntrySorted(%p)", function)
 
-   U_INTERNAL_DUMP("UCDB::nrecord = %u RDB_lrecord = %u", UCDB::nrecord, RDB_lrecord)
+   U_INTERNAL_DUMP("UCDB::nrecord = %u RDB_nrecord = %u", UCDB::nrecord, RDB_nrecord)
 
-   uint32_t n = UCDB::nrecord + RDB_lrecord;
+   uint32_t n = UCDB::nrecord + RDB_nrecord;
 
    U_INTERNAL_DUMP("n = %u", n)
 
@@ -697,9 +875,9 @@ UString URDB::printSorted()
       {
       UString buffer(_size);
 
-      U_INTERNAL_DUMP("UCDB::nrecord = %u RDB_lrecord = %u", UCDB::nrecord, RDB_lrecord)
+      U_INTERNAL_DUMP("UCDB::nrecord = %u RDB_nrecord = %u", UCDB::nrecord, RDB_nrecord)
 
-      uint32_t n = UCDB::nrecord + RDB_lrecord;
+      uint32_t n = UCDB::nrecord + RDB_nrecord;
 
       U_INTERNAL_DUMP("n = %u", n)
 
@@ -738,193 +916,6 @@ UString URDB::printSorted()
 
 // SERVICES
 
-void URDB::msync()
-{
-   U_TRACE(0, "URDB::msync()")
-
-   U_CHECK_MEMORY
-
-   lock.lock();
-
-   U_INTERNAL_DUMP("RDB_off = %u RDB_page = %u", RDB_off, RDB_page)
-
-   UFile::msync(RDB_ptr_off, RDB_ptr_page);
-
-   RDB_page = RDB_off;
-
-   U_INTERNAL_DUMP("RDB_off = %u RDB_page = %u", RDB_off, RDB_page)
-
-   lock.unlock();
-}
-
-U_NO_EXPORT inline bool URDB::resizeJournal(char* ptr)
-{
-   U_TRACE(0, "URDB::resizeJournal(%p)", ptr)
-
-   U_CHECK_MEMORY
-
-   uint32_t _size = (journal.st_size / 2),
-         oversize = (ptr - RDB_eof);
-
-   if (oversize < _size) oversize = _size;
-
-   U_INTERNAL_DUMP("oversize = %u", oversize)
-
-// msync();
-
-   uint32_t _offset = (char*)pnode - journal.map;
-
-   U_INTERNAL_DUMP("pnode = %p node = %u offset = %u", pnode, node, _offset)
-
-#if defined(__CYGWIN__) || defined(__MINGW32__)
-   journal.munmap(); // for ftruncate()...
-#endif
-
-   if (journal.ftruncate(journal.st_size + oversize))
-      {
-#  if defined(__CYGWIN__) || defined(__MINGW32__)
-      (void) journal.memmap(PROT_READ | PROT_WRITE);
-#  endif
-
-      RDB_size = journal.st_size;
-
-      U_INTERNAL_DUMP("RDB_size = %u", RDB_size)
-
-      pnode = (uint32_t*)(journal.map + _offset);
-
-      U_INTERNAL_DUMP("pnode = %p node = %u offset = %u", pnode, node, _offset)
-
-      U_RETURN(true);
-      }
-
-   // save entry
-
-   key1              = key;
-   UCDB::datum data1 = data;
-
-   uint32_t save = UCDB::khash;
-
-   if (reorganize())
-      {
-      // set old entry
-
-      key  = key1;
-      data = data1;
-
-      UCDB::khash = save;
-      
-      (void) htLookup();
-
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
-U_NO_EXPORT bool URDB::writev(const struct iovec* _iov, int n, uint32_t _size)
-{
-   U_TRACE(0, "URDB::writev(%p,%d,%u)", _iov, n, _size)
-
-   U_INTERNAL_ASSERT_MAJOR(_size,0)
-
-   char* ptr = RDB_ptr_off + _size + (sizeof(URDB::cache_node) * 2);
-
-   if (ptr > RDB_eof &&
-       resizeJournal(ptr) == false)
-      {
-      U_RETURN(false);
-      }
-
-   U_INTERNAL_DUMP("RDB_off = %u", RDB_off)
-
-   char* journal_ptr = RDB_ptr_off;
-
-   for (int i = 0; i < n; ++i)
-      {
-      (void) u__memcpy(journal_ptr, _iov[i].iov_base, _iov[i].iov_len);
-
-      // NB: Una volta scritti i dati sul journal si cambiano i riferimenti in memoria ai dati
-      // e alle chiavi in modo che puntino appunto sul journal mappato in memoria...
-
-      if (n < 5) // remove(), store()
-         {
-         if      (i == 1)  key.dptr = journal_ptr; // remove(), store()
-         else if (i == 2) data.dptr = journal_ptr; // store()
-         }
-      else // substitute()
-         {
-         if      (i == 1) key1.dptr = journal_ptr;
-         if      (i == 3)  key.dptr = journal_ptr;
-         else if (i == 4) data.dptr = journal_ptr;
-         }
-
-      journal_ptr += _iov[i].iov_len;
-      }
-
-   RDB_off = (journal_ptr - journal.map);
-
-   U_INTERNAL_DUMP("RDB_off = %u", RDB_off)
-
-   U_RETURN(true);
-}
-
-bool URDB::logJournal(int op)
-{
-   U_TRACE(0, "URDB::logJournal(%d)", op)
-
-   // Records are stored without special alignment. A record
-   // states a key length, a data length, the key, and the data
-
-   if (op == 0) // remove
-      {
-      UCDB::cdb_record_header hrec = { key.dsize, U_NOT_FOUND };
-
-      U_INTERNAL_DUMP("hrec = { %u, %u }", hrec.klen, hrec.dlen)
-
-      struct iovec _iov[2] = { { (caddr_t)&hrec, sizeof(UCDB::cdb_record_header) },
-                               { (caddr_t)key.dptr, key.dsize } };
-
-      if (writev(_iov, 2, sizeof(UCDB::cdb_record_header) + key.dsize) == false) U_RETURN(false);
-      }
-   else if (op == 1) // store
-      {
-      UCDB::cdb_record_header hrec = { key.dsize, data.dsize };
-
-      U_INTERNAL_DUMP("hrec = { %u, %u }", hrec.klen, hrec.dlen)
-
-      struct iovec _iov[3] = { { (caddr_t)&hrec, sizeof(UCDB::cdb_record_header) },
-                               { (caddr_t) key.dptr,  key.dsize },
-                               { (caddr_t)data.dptr, data.dsize } };
-
-      if (writev(_iov, 3, sizeof(UCDB::cdb_record_header) + key.dsize + data.dsize) == false) U_RETURN(false);
-      }
-   else // substitute
-      {
-      U_INTERNAL_ASSERT_EQUALS(op,2)
-      U_INTERNAL_ASSERT_POINTER(key.dptr)
-      U_INTERNAL_ASSERT_POINTER(key1.dptr)
-      U_INTERNAL_ASSERT_POINTER(data.dptr)
-      U_INTERNAL_ASSERT_MAJOR(key.dsize,0)
-      U_INTERNAL_ASSERT_MAJOR(key1.dsize,0)
-      U_INTERNAL_ASSERT_MAJOR(data.dsize,0)
-
-      UCDB::cdb_record_header hrec1 = { key1.dsize, U_NOT_FOUND },
-                              hrec  = {  key.dsize, data.dsize };
-
-      U_INTERNAL_DUMP("hrec1 = { %u, %u } hrec = { %u, %u }", hrec1.klen, hrec1.dlen, hrec.klen, hrec.dlen)
-
-      struct iovec _iov[5] = { { (caddr_t)&hrec1, sizeof(UCDB::cdb_record_header) },
-                               { (caddr_t)key1.dptr, key1.dsize },
-                               { (caddr_t)&hrec, sizeof(UCDB::cdb_record_header) },
-                               { (caddr_t)key.dptr, key.dsize },
-                               { (caddr_t)data.dptr, data.dsize } };
-
-      if (writev(_iov, 5, 2*sizeof(UCDB::cdb_record_header) + key1.dsize + key.dsize + data.dsize) == false) U_RETURN(false);
-      }
-
-   U_RETURN(true);
-}
-
 // --------------------------------------------------------------------
 // Fetch the value for a given key from the database.
 // --------------------------------------------------------------------
@@ -944,20 +935,16 @@ bool URDB::fetch()
 
    // Search one key/data pair in the cache or in the cdb
 
-   if (htLookup())
+   if (htLookup() == false) result = cdbLookup();
+   else
       {
       if (isDeleted()) result = false;
       else
          {
+         result     = true;
          data.dptr  = RDB_node_data;
          data.dsize = RDB_node_data_sz;
-
-         result = true;
          }
-      }
-   else
-      {
-      result = cdbLookup();
       }
 
    lock.unlock();
@@ -1036,6 +1023,8 @@ int URDB::store(int flag)
             }
          }
 
+      htAlloc();
+
       data = data_new;
       }
 
@@ -1052,9 +1041,9 @@ int URDB::store(int flag)
 
    htInsert(); // Insertion of new entry in the cache
 
-   if (exist == false) RDB_lrecord++;
+   if (exist == false) RDB_nrecord++;
 
-   U_INTERNAL_DUMP("lrecord = %d", RDB_lrecord)
+   U_INTERNAL_DUMP("nrecord = %u", RDB_nrecord)
 
 end:
    lock.unlock();
@@ -1091,7 +1080,8 @@ int URDB::remove()
       {
       // Search one key/data pair in the cdb
 
-      if (cdbLookup() == false) result = -1; // -1: The entry was not in the database
+      if (cdbLookup()) htAlloc();
+      else             result = -1; // -1: The entry was not in the database
       }
 
    if (result == 0)
@@ -1110,9 +1100,9 @@ int URDB::remove()
 
       htInsert(); // Insertion or update of new entry of the cache
 
-      RDB_lrecord--;
+      RDB_nrecord--;
 
-      U_INTERNAL_DUMP("lrecord = %d", RDB_lrecord)
+      U_INTERNAL_DUMP("nrecord = %u", RDB_nrecord)
       }
 
 end:
@@ -1193,11 +1183,18 @@ int URDB::substitute(UCDB::datum* key2, int flag)
             result = -4; // -4: flag was RDB_INSERT and this key already existed
             }
          }
-      else if (cdbLookup()) // Search one key/data pair in the cdb
+      else
          {
-         if (flag == RDB_INSERT) // Insertion of new entries only
+         if (cdbLookup() &&      // Search one key/data pair in the cdb
+             flag == RDB_INSERT) // Insertion of new entries only
             {
             result = -4; // -4: flag was RDB_INSERT and this key already existed
+            }
+         else
+            {
+            U_INTERNAL_ASSERT_EQUALS(result,0)
+
+            htAlloc();
             }
          }
 
@@ -1218,12 +1215,13 @@ int URDB::substitute(UCDB::datum* key2, int flag)
 
          // remove of old entry
 
-          node =  node1;
-         pnode = pnode1;
-
          key        = key1;
          data.dptr  = 0;
          data.dsize = U_NOT_FOUND;
+
+                   pnode = pnode1;
+         if (node1) node =  node1;
+         else       htAlloc();
 
          htInsert(); // Insertion or update of new entry in the cache
          }

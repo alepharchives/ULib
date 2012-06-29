@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/db/rdb.h>
 #include <ulib/command.h>
 #include <ulib/notifier.h>
 #include <ulib/file_config.h>
@@ -72,8 +73,7 @@
 #  define U_TCP_SETTING yes
 #endif
 
-#define U_DEFAULT_PORT   80
-#define U_TOT_CONNECTION ptr_shared_data->tot_connection
+#define U_DEFAULT_PORT 80
 
 int                        UServer_Base::sfd;
 int                        UServer_Base::port;
@@ -81,6 +81,7 @@ int                        UServer_Base::bclose;
 int                        UServer_Base::iBackLog = SOMAXCONN;
 int                        UServer_Base::timeoutMS = -1;
 int                        UServer_Base::cgi_timeout;
+int                        UServer_Base::watch_counter;
 int                        UServer_Base::verify_mode;
 int                        UServer_Base::preforked_num_kids;
 bool                       UServer_Base::bssl;
@@ -105,6 +106,7 @@ UString*                   UServer_Base::senvironment;
 USocket*                   UServer_Base::socket;
 UProcess*                  UServer_Base::proc;
 UEventFd*                  UServer_Base::handler_inotify;
+const char*                UServer_Base::client_address;
 UEventTime*                UServer_Base::ptime;
 UServer_Base*              UServer_Base::pthis;
 struct linger              UServer_Base::lng = { 1, 0 };
@@ -169,18 +171,15 @@ public:
 
    virtual void run()
       {
-      int counter        = 1;
-      struct timespec ts = {  1L, 0L };
+      U_TRACE(0, "UTimeThread::run()")
 
-      while (true)
+      struct timespec ts = { 1L, 0L };
+
+      UServer_Base::watch_counter = 1;
+
+      while (UServer_Base::flag_loop)
          {
-         if (--counter) u_now->tv_sec += 1L;
-         else
-            {
-            counter = 30;
-
-            (void) gettimeofday(u_now, 0);
-            }
+         UServer_Base::runWatch();
 
          (void) nanosleep(&ts, 0);
          }
@@ -566,29 +565,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
       if (preforked_num_kids < 2) preforked_num_kids = 2;
       }
 
-   if (isPreForked())
-      {
-      monitoring_process = true;
-
-      // manage shared data...
-
-      U_INTERNAL_ASSERT_EQUALS(ptr_shared_data,0)
-
-      U_INTERNAL_DUMP("shared_data_add = %u", shared_data_add)
-
-      ptr_shared_data = (shared_data*) UFile::mmap(sizeof(shared_data) + shared_data_add);
-
-      U_INTERNAL_ASSERT_EQUALS(U_TOT_CONNECTION,0)
-      U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
-
-      u_now = &(ptr_shared_data->_timeval);
-
-      (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
-
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_HTTP_CACHE_REQUEST)
-      ((UTimeThread*)(u_pthread_time = U_NEW(UTimeThread)))->start();
-#  endif
-      }
+   if (isPreForked()) monitoring_process = true;
 #endif
 
    // write pid on file...
@@ -599,16 +576,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    // open log
 
-   if (log_file.empty() == false)
-      {
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-      if (u_pthread_time == 0) ((UTimeThread*)(u_pthread_time = U_NEW(UTimeThread)))->start();
-#  endif
-
-      openLog(log_file, cfg.readLong(*str_LOG_FILE_SZ));
-      }
-
-   U_INTERNAL_DUMP("u_pthread_time = %p", u_pthread_time)
+   if (log_file.empty() == false) log = U_NEW(ULog(log_file, cfg.readLong(*str_LOG_FILE_SZ), "(pid %P) %10D> "));
 
    // DOCUMENT_ROOT: The directory out of which you will serve your documents
 
@@ -670,9 +638,6 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
    U_TRACE(0, "UServer_Base::loadStaticLinkedModules(%S)", name)
 
    UString x(name);
-
-   vplugin_name->push_back(x);
-
    UServerPlugIn* _plugin = 0;
 
 #ifdef U_STATIC_HANDLER_RPC
@@ -686,9 +651,6 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 #endif
 #ifdef U_STATIC_HANDLER_STREAM
    if (x.equal(U_CONSTANT_TO_PARAM("mod_stream"))) { _plugin = U_NEW(UStreamPlugIn); goto next; }
-#endif
-#ifdef U_STATIC_HANDLER_NOCAT
-   if (x.equal(U_CONSTANT_TO_PARAM("mod_nocat")))  { _plugin = U_NEW(UNoCatPlugIn); goto next; }
 #endif
 #ifdef U_STATIC_HANDLER_SOCKET
    if (x.equal(U_CONSTANT_TO_PARAM("mod_socket"))) { _plugin = U_NEW(UWebSocketPlugIn); goto next; }
@@ -714,6 +676,9 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 #ifdef U_STATIC_HANDLER_TSA
    if (x.equal(U_CONSTANT_TO_PARAM("mod_tsa")))    { _plugin = U_NEW(UTsaPlugIn); goto next; }
 #endif
+#ifdef U_STATIC_HANDLER_NOCAT
+   if (x.equal(U_CONSTANT_TO_PARAM("mod_nocat")))  { _plugin = U_NEW(UNoCatPlugIn); goto next; }
+#endif
 #ifdef U_STATIC_HANDLER_HTTP
    if (x.equal(U_CONSTANT_TO_PARAM("mod_http")))   { _plugin = U_NEW(UHttpPlugIn); goto next; }
 #endif
@@ -723,7 +688,8 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 next:
    U_INTERNAL_ASSERT_POINTER(_plugin)
 
-   vplugin->push_back(_plugin);
+   vplugin_name->push_back(x);
+        vplugin->push_back(_plugin);
 
    if (isLog()) ULog::log("[%s] link of static plugin ok\n", name);
 }
@@ -734,99 +700,105 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list, U
 
    UString name;
    bool bnostatic;
-   uint32_t i, length;
+   UVector<UString> vec;
+   uint32_t i, length, pos;
    UServerPlugIn* _plugin = 0;
-   UVector<UString> vec(plugin_list);
    int result = U_PLUGIN_HANDLER_ERROR;
 
    vplugin_name = U_NEW(UVector<UString>(10U));
    vplugin      = U_NEW(UVector<UServerPlugIn*>(10U));
 
-   /* I do know that to include code in the middle of a function is hacky and dirty,
-    * but this is the best solution that I could figure out. If you have some idea to
-    * clean it up, please, don't hesitate and let me know.
-    */
-
-#include "plugin/loader.autoconf.cpp"
-
-   if (plugin_list.empty()) goto next;
-
-   bnostatic = vplugin->empty();
-
-#ifdef HAVE_MODULES
-   if (plugin_dir.empty() == false)
+   if (plugin_list.empty() == false)
       {
-      // NB: we can't use relativ path because after we call chdir()...
-
-      if (plugin_dir.first_char() == '.')
-         {
-         U_INTERNAL_ASSERT(plugin_dir.isNullTerminated())
-
-         plugin_dir = UFile::getRealPath(plugin_dir.data());
-         }
-
-      UPlugIn<void*>::setPluginDirectory(plugin_dir.c_strdup());
-      }
-#endif
-
-   for (i = 0, length = vec.size(); i < length; ++i)
-      {
-      name = vec[i];
-
-      if (vplugin_name->find(name) != U_NOT_FOUND) continue;
-
 #  ifdef HAVE_MODULES
-      _plugin = UPlugIn<UServerPlugIn*>::create(U_STRING_TO_PARAM(name));
+      if (plugin_dir.empty() == false)
+         {
+         // NB: we can't use relativ path because after we call chdir()...
+
+         if (plugin_dir.first_char() == '.')
+            {
+            U_INTERNAL_ASSERT(plugin_dir.isNullTerminated())
+
+            plugin_dir = UFile::getRealPath(plugin_dir.data());
+            }
+
+         UPlugIn<void*>::setPluginDirectory(plugin_dir.c_strdup());
+         }
 #  endif
 
-      if (_plugin == 0)
+      /* I do know that to include code in the middle of a function is hacky and dirty,
+       * but this is the best solution that I could figure out. If you have some idea to
+       * clean it up, please, don't hesitate and let me know.
+       */
+
+#     include "plugin/loader.autoconf.cpp"
+
+      bnostatic = vplugin->empty();
+
+      for (i = 0, length = vec.split(plugin_list); i < length; ++i)
          {
-         U_SRV_LOG("load of plugin '%.*s' FAILED", U_STRING_TO_TRACE(name));
+         name = vec[i];
+         pos  = vplugin_name->find(name);
 
-         goto end;
-         }
+         U_INTERNAL_DUMP("i = %u name = %.*S pos = %u", i, U_STRING_TO_TRACE(name), pos)
 
-      name.duplicate();
+         if (pos == U_NOT_FOUND)
+            {
+#        ifdef HAVE_MODULES
+            _plugin = UPlugIn<UServerPlugIn*>::create(U_STRING_TO_PARAM(name));
+#        endif
 
-      if (isLog()) ULog::log("[%.*s] load of plugin success\n", U_STRING_TO_TRACE(name));
+            if (_plugin == 0)
+               {
+               U_SRV_LOG("load of plugin '%.*s' FAILED", U_STRING_TO_TRACE(name));
 
-      if (bnostatic)
-         {
-         vplugin->push_back(_plugin);
-         vplugin_name->push_back(name);
-         }
-      else
-         {
-         vplugin->insert(0, _plugin);
-         vplugin_name->insert(0, name);
+               goto end;
+               }
+
+            name.duplicate();
+
+                 vplugin->push_back(_plugin);
+            vplugin_name->push_back(name);
+
+            if (isLog()) ULog::log("[%.*s] load of plugin success\n", U_STRING_TO_TRACE(name));
+            }
+         else
+            {
+            U_INTERNAL_ASSERT_EQUALS(bnostatic, false)
+
+            if (pos != i)
+               {
+                    vplugin->swap(pos, i);
+               vplugin_name->swap(pos, i);
+               }
+            }
+
+         U_INTERNAL_ASSERT_EQUALS(vplugin->size(), vplugin_name->size())
          }
       }
 
-next:
-   U_INTERNAL_ASSERT_EQUALS(vplugin->size(), vplugin_name->size())
-
-   if (cfg == 0) goto ok;
-
-   for (i = 0, length = vplugin->size(); i < length; ++i)
+   if (cfg)
       {
-      name    = (*vplugin_name)[i];
-      _plugin = (*vplugin)[i];
-
-      if (cfg->searchForObjectStream(U_STRING_TO_PARAM(name)))
+      for (i = 0, length = vplugin->size(); i < length; ++i)
          {
-         cfg->clear();
+         name = vplugin_name->at(i);
 
-         if (isLog()) mod_name->snprintf("[%.*s] ", U_STRING_TO_TRACE(name));
+         if (cfg->searchForObjectStream(U_STRING_TO_PARAM(name)))
+            {
+            cfg->clear();
 
-         result = _plugin->handlerConfig(*cfg);
+            if (isLog()) mod_name->snprintf("[%.*s] ", U_STRING_TO_TRACE(name));
 
-         cfg->reset();
+            _plugin = vplugin->at(i);
+            result  = _plugin->handlerConfig(*cfg);
 
-         if (result != U_PLUGIN_HANDLER_GO_ON) goto end;
+            cfg->reset();
+
+            if (result != U_PLUGIN_HANDLER_GO_ON) goto end;
+            }
          }
       }
 
-ok:
    result = U_PLUGIN_HANDLER_FINISHED;
 
 end:
@@ -869,6 +841,7 @@ end:                                                                            
 
 U_PLUGIN_HANDLER(Init)
 U_PLUGIN_HANDLER(Fork)
+U_PLUGIN_HANDLER(Run)
 U_PLUGIN_HANDLER(READ)
 U_PLUGIN_HANDLER(Request)
 U_PLUGIN_HANDLER(Reset)
@@ -1165,6 +1138,8 @@ void UServer_Base::init()
 
    USocket::accept4_flags = SOCK_CLOEXEC | SOCK_NONBLOCK;
 
+   if (UNotifier::max_connection == 0) UNotifier::max_connection  = 1020;
+
    // init plugin modules...
 
    if (vplugin &&
@@ -1173,16 +1148,66 @@ void UServer_Base::init()
       U_ERROR("plugins initialization FAILED. Going down...");
       }
 
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+   if (isLog() ||
+       isAnotherLog())
+      {
+      U_INTERNAL_ASSERT_EQUALS(u_pthread_time,0)
+
+      u_pthread_time = U_NEW(UTimeThread);
+      }
+#endif
+
+   U_INTERNAL_DUMP("u_pthread_time = %p shared_data_add = %u", u_pthread_time, shared_data_add)
+
+   if (isPreForked()   ||
+       u_pthread_time  ||
+       shared_data_add)
+      {
+      // manage shared data...
+
+      U_INTERNAL_ASSERT_EQUALS(ptr_shared_data,0)
+
+      ptr_shared_data = (shared_data*) UFile::mmap(sizeof(shared_data) + shared_data_add);
+
+      U_INTERNAL_ASSERT_EQUALS(U_TOT_CONNECTION,0)
+      U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
+
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+      if (u_pthread_time)
+         {
+         watch_counter = 1;
+
+         u_now = U_NOW;
+
+         runWatch();
+
+         ((UTimeThread*)u_pthread_time)->start();
+         }
+#  endif
+      }
+
+   if (isLog())
+      {
+      bool shared;
+
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+      shared = true; // NB: is always shared cause of possibility of fork() by parallelization...
+#  else
+      shared = (preforked_num_kids > 1); // NB: for nodog it is not shared...
+#  endif
+
+      if (shared) ULog::setShared((ptr_shared_data ? U_LOG_DATA_SHARED : 0));
+      }
+
    // init notifier event manager...
 
    USocket* csocket;
    UIPAddress* addr;
    UClientImage_Base* ptr;
 
-   UNotifier::min_connection = (isClassic() == false) + (handler_inotify != 0);
-
-   if (UNotifier::max_connection == 0) UNotifier::max_connection  = 1020;
-                                       UNotifier::max_connection += (UNotifier::num_connection = UNotifier::min_connection);
+   UNotifier::min_connection  = (isClassic() == false) + (handler_inotify != 0);
+   UNotifier::max_connection += (UNotifier::num_connection = UNotifier::min_connection);
 
    UNotifier::init();
 
@@ -1247,7 +1272,11 @@ void UServer_Base::init()
 #ifdef USE_LIBSSL
    if (bssl)
       {
-      if (isPreForked()) (void) USSLSession::initSessionCache(UClientImage_Base::ctx, "session.ssl", 1024 * 1024);
+      if (isPreForked() &&
+          USSLSession::initSessionCache(UClientImage_Base::ctx, "session.ssl", 1024 * 1024))
+         {
+         ((URDB*)USSLSession::db_ssl_session)->setShared(U_LOCK_SSL_SESSION);
+         }
 
       goto next;
       }
@@ -1262,6 +1291,37 @@ next:
    if (handler_inotify) UNotifier::insert(handler_inotify); // NB: we ask to be notified for change of file system (inotify)
 
    if (timeoutMS != -1) ptime = U_NEW(UTimeoutConnection);
+}
+
+void UServer_Base::runWatch()
+{
+   U_TRACE(0, "UServer_Base::runWatch()")
+
+   U_INTERNAL_DUMP("watch_counter = %d", watch_counter)
+
+   if (--watch_counter) u_now->tv_sec += 1L;
+   else
+      {
+      watch_counter = 30;
+
+      (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+      }
+
+   /*
+   u_now = &(ptr_shared_data->_timeval);
+
+   struct timeval _timeval;
+   char data_1[17]; // 18/06/12 18:45:56
+   char data_2[26]; // 04/Jun/2012:18:18:37 +0200
+   char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
+                    // 123456789012345678901234567890
+   */
+
+   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_2,(char*)u_now+sizeof(struct timeval)+17)
+
+   if (isLog())        (void) u_strftime(ptr_shared_data->data_1, 17, "%d/%m/%y %H:%M:%S",         u_now->tv_sec + u_now_adjust);
+   if (isAnotherLog()) (void) u_strftime(ptr_shared_data->data_2, 26, "%d/%b/%Y:%H:%M:%S %z",      u_now->tv_sec + u_now_adjust);
+                       (void) u_strftime(ptr_shared_data->data_3, 29, "%a, %d %b %Y %H:%M:%S GMT", u_now->tv_sec);
 }
 
 RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
@@ -1398,6 +1458,10 @@ next:
 
    U_INTERNAL_ASSERT(csocket->isConnected())
 
+   client_address = csocket->remoteIPAddress().getAddressString();
+
+   U_INTERNAL_DUMP("client_address = %S", client_address)
+
    if (vallow_IP &&
        ptr->isAllowed(*vallow_IP) == false)
       {
@@ -1406,8 +1470,7 @@ next:
       // If no options are specified, all clients are allowed. Unauthorized connections are rejected by closing the TCP connection
       // immediately. A warning is logged on the server but nothing is sent to the client.
 
-      U_SRV_LOG("new client connected from %S, connection denied by Access Control List",
-                  csocket->remoteIPAddress().getAddressString());
+      U_SRV_LOG("new client connected from %S, connection denied by Access Control List", client_address);
 
       goto error;
       }
@@ -1421,7 +1484,7 @@ next:
         ptr->isAllowed(*vallow_IP_prv) == false))
       {
       U_SRV_LOG("new client connected from %S, connection denied by RFC1918 filtering (reject request from private IP to public server address)",
-                  csocket->remoteIPAddress().getAddressString());
+                  client_address); 
 
       goto error;
       }
@@ -1429,8 +1492,7 @@ next:
 #if !defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
    if (csocket->iSockDesc >= FD_SETSIZE)
       {
-      U_SRV_LOG("new client connected from %S, connection denied by FD_SETSIZE (%d)",
-                  csocket->remoteIPAddress().getAddressString(), FD_SETSIZE);
+      U_SRV_LOG("new client connected from %S, connection denied by FD_SETSIZE (%d)", client_address, FD_SETSIZE);
 
       goto error;
       }
@@ -1441,7 +1503,7 @@ next:
        --UNotifier::num_connection;
 
       U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%d)",
-                  csocket->remoteIPAddress().getAddressString(), UNotifier::max_connection - UNotifier::min_connection);
+                        client_address, UNotifier::max_connection - UNotifier::min_connection);
 
       goto error;
       }
@@ -1628,6 +1690,12 @@ void UServer_Base::run()
    U_INTERNAL_ASSERT_POINTER(pthis)
 
    pthis->init();
+
+   if (vplugin &&
+       pluginsHandlerRun() != U_PLUGIN_HANDLER_FINISHED)
+      {
+      U_ERROR("plugins running FAILED. Going down...");
+      }
 
    UInterrupt::syscall_restart = false;
 

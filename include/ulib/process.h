@@ -100,9 +100,8 @@ public:
       {
       U_TRACE(0, "UProcess::exitValue(%d)", _status)
 
-      int exit_value = (WIFEXITED(_status)
-                      ? WEXITSTATUS(_status)
-                      : (WTERMSIG(_status) << 8));
+      int exit_value = (  WIFEXITED(_status) ? WEXITSTATUS(_status)       :
+                        WIFSIGNALED(_status) ? - (WTERMSIG(_status) << 8) : -1);
 
       U_RETURN(exit_value);
       }

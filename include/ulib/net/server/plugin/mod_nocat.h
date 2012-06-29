@@ -22,35 +22,6 @@
 #include <ulib/container/hash_map.h>
 #include <ulib/net/server/server_plugin.h>
 
-/*
-The plugin interface is an integral part of UServer which provides a flexible way to add specific functionality to UServer.
-Plugins allow you to enhance the functionality of UServer without changing the core of the server. They can be loaded at
-startup time and can change virtually some aspect of the behaviour of the server.
-
-UServer has 6 hooks which are used in different states of the execution of the request:
---------------------------------------------------------------------------------------------
-* Server-wide hooks:
-````````````````````
-1) handlerConfig: called when the server finished to process its configuration
-2) handlerInit:   called when the server finished its init,  and before start to run
-3) handlerFork:   called when the server finished its forks, and before start to run
-
-* Connection-wide hooks:
-````````````````````````
-4) handlerREAD:
-5) handlerRequest:
-6) handlerReset:
-  called in `UClientImage_Base::handlerRead()`
---------------------------------------------------------------------------------------------
-
-RETURNS:
-  U_PLUGIN_HANDLER_GO_ON    if ok
-  U_PLUGIN_HANDLER_FINISHED if the final output is prepared
-  U_PLUGIN_HANDLER_AGAIN    if the request is empty (NONBLOCKING)
-
-  U_PLUGIN_HANDLER_ERROR    on error
-*/
-
 class UIptAccount;
 class UNoCatPlugIn;
 
@@ -65,7 +36,7 @@ public:
 
    // COSTRUTTORI
 
-            UModNoCatPeer(const UString& peer_ip);
+            UModNoCatPeer();
    virtual ~UModNoCatPeer()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UModNoCatPeer)
@@ -81,9 +52,9 @@ public:
 
       UString command(100U);
 
-      command.snprintf("/bin/sh %.*s request %.*s %.*s Member %u", U_STRING_TO_TRACE(script), U_STRING_TO_TRACE(mac), U_STRING_TO_TRACE(ip), rulenum);
+      command.snprintf("/bin/sh %.*s request %.*s %s Member %u", U_STRING_TO_TRACE(script), U_STRING_TO_TRACE(mac), UIPAddress::pcStrAddress, rulenum);
 
-      cmd.set(command, (char**)0);
+      fw.set(command, (char**)0);
       }
 
    // define method VIRTUAL of class UEventTime
@@ -97,12 +68,13 @@ public:
 #endif
 
 protected:
-   int status;
-   uint64_t traffic, ltraffic;
    time_t connected, expire, logout, ctime;
+   uint64_t traffic_done, traffic_available;
    uint32_t ifindex, ctraffic, rulenum, index_AUTH;
    UString ip, mac, token, user, ifname, label;
-   UCommand cmd;
+   UCommand fw;
+   int status;
+   bool allowed;
 
 private:
    UModNoCatPeer(const UModNoCatPeer&) : UIPAddress(), UEventTime() {}
@@ -117,6 +89,10 @@ template <> inline void u_destroy(UIPAddress** ptr, uint32_t n) { U_TRACE(0,"u_d
 class U_EXPORT UNoCatPlugIn : public UServerPlugIn, UEventTime {
 public:
 
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
    static const UString* str_ROUTE_ONLY;
    static const UString* str_DNS_ADDR;
    static const UString* str_INCLUDE_PORTS;
@@ -124,14 +100,14 @@ public:
    static const UString* str_ALLOWED_WEB_HOSTS;
    static const UString* str_EXTERNAL_DEVICE;
    static const UString* str_INTERNAL_DEVICE;
-   static const UString* str_INTERNAL_DEVICE_LABEL;
    static const UString* str_LOCAL_NETWORK;
+   static const UString* str_LOCAL_NETWORK_LABEL;
    static const UString* str_AUTH_SERVICE_URL;
    static const UString* str_LOGIN_TIMEOUT;
    static const UString* str_FW_CMD;
    static const UString* str_DECRYPT_CMD;
    static const UString* str_DECRYPT_KEY;
-   static const UString* str_CHECK_BY_ARPING;
+   static const UString* str_CHECK_TYPE;
    static const UString* str_Action;
    static const UString* str_Permit;
    static const UString* str_Deny;
@@ -142,18 +118,26 @@ public:
    static const UString* str_Timeout;
    static const UString* str_Token;
    static const UString* str_User;
+   static const UString* str_allowed;
    static const UString* str_anonymous;
    static const UString* str_Traffic;
    static const UString* str_GATEWAY_PORT;
    static const UString* str_FW_ENV;
    static const UString* str_IPHONE_SUCCESS;
    static const UString* str_CHECK_EXPIRE_INTERVAL;
+   static const UString* str_ALLOWED_MEMBERS;
+   static const UString* str_without_mac;
+   static const UString* str_without_label;
+   static const UString* str_allowed_members_default;
 
    static void str_allocate();
 
-   // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
+   enum CheckType {
+      U_CHECK_NONE      = 0x000,
+      U_CHECK_ARP_CACHE = 0x001,
+      U_CHECK_ARP_PING  = 0x002,
+      U_CHECK_TRAFFIC   = 0x004
+   };
 
    // COSTRUTTORI
 
@@ -183,49 +167,61 @@ public:
 #endif
 
 protected:
-   UCommand cmd, start_ap;
+   UCommand fw, uclient;
    UVector<Url*> vauth_url, vinfo_url;
    UVector<UIPAllow*> vLocalNetworkMask;
-   UVector<UString> vInternalDevice, vInternalDeviceLabel, vLocalNetwork, vauth, vauth_ip, vLoginValidate;
-   UString input, output, location, fw_cmd, decrypt_cmd, decrypt_key, mode, gateway, access_point, extdev, intdev, localnet, auth_login, fw_env;
+   UVector<UString> vInternalDevice, vLocalNetwork, vLocalNetworkLabel, vauth, vauth_ip, vLoginValidate;
+   UString input, output, location, fw_cmd, decrypt_key, mode, gateway, access_point, extdev, intdev, localnet, auth_login, fw_env, allowed_members;
 
    static vPF unatexit;
-   static int fd_stderr;
    static UPing** sockp;
    static fd_set addrmask;
    static fd_set* paddrmask;
    static UIptAccount* ipt;
-   static long check_expire;
    static UNoCatPlugIn* pthis;
    static UString* status_content;
-   static time_t last_request_check;
+   static int fd_stderr, check_type;
    static UVector<UIPAddress*>** vaddr;
+   static bool flag_check_peers_for_info;
    static UHashMap<UModNoCatPeer*>* peers;
-   static bool arping, flag_check_peers_for_info;
-
-   static char pcStrAddress[INET6_ADDRSTRLEN];
-   static uint32_t total_connections, login_timeout, nfds, num_radio, index_AUTH;
+   static time_t last_request, last_request_check, check_expire;
+   static uint32_t total_connections, login_timeout, nfds, num_radio;
 
    // VARIE
 
-   void getTraffic();
+   uint32_t getIndexAUTH(const char* ip_address);
+
+   void           checkOldPeer(UModNoCatPeer* peer);
+   void             setNewPeer(UModNoCatPeer* peer, uint32_t index_AUTH);
+   UModNoCatPeer* creatNewPeer(uint32_t index_AUTH);
+
+   void setPeerListInfo();
    void checkPeersForInfo();
    void setStatusContent(UModNoCatPeer* peer);
    bool checkAuthMessage(UModNoCatPeer* peer);
    bool checkSignedData(const char* ptr, uint32_t len);
    void addPeerInfo(UModNoCatPeer* peer, time_t logout);
+   void sendMsgToPortal(uint32_t index_AUTH, const UString& msg, UString* poutput = 0);
    void setRedirectLocation(UModNoCatPeer* peer, const UString& redirect, const Url& auth);
 
-   UModNoCatPeer* creatNewPeer(                     const UString& peer_ip);
-   void           checkOldPeer(UModNoCatPeer* peer, const UString& peer_ip);
+   void sendMsgToPortal(const UString& msg)
+      {
+      U_TRACE(0, "UNoCatPlugIn::sendMsgToPortal(%.*S)", U_STRING_TO_TRACE(msg))
+
+      for (uint32_t i = 0, n = pthis->vinfo_url.size(); i < n; ++i) sendMsgToPortal(i, msg, 0);
+      }
 
    static UModNoCatPeer* getPeer(uint32_t i) __pure;
           UModNoCatPeer* getPeerFromMAC(const UString& mac);
 
-   static void notifyAuthOfUsersInfo();
+   static UString getIPAddress(const char* ptr, uint32_t len);
+
+   static void getTraffic();
    static void setHTTPResponse(const UString& content);
+   static void notifyAuthOfUsersInfo(uint32_t index_AUTH);
    static void getPeerStatus(UStringRep* key, void* value);
    static void checkPeerInfo(UStringRep* key, void* value);
+   static void getPeerListInfo(UStringRep* key, void* value);
    static void executeCommand(UModNoCatPeer* peer, int type);
 
    static void permit(UModNoCatPeer* peer, time_t timeout);
@@ -235,14 +231,12 @@ protected:
       {
       U_TRACE(0, "UNoCatPlugIn::isPingAsyncPending()")
 
-      U_INTERNAL_DUMP("arping = %b nfds = %u paddrmask = %p", arping, nfds, paddrmask)
+      U_INTERNAL_DUMP("check_type = %B nfds = %u paddrmask = %p", check_type, nfds, paddrmask)
 
-      bool result = (arping && nfds && paddrmask == 0);
+      bool result = (((check_type & U_CHECK_ARP_PING) != 0) && nfds && paddrmask == 0);
 
       U_RETURN(result);
       }
-
-   static const char* getIPAddress(const char* ptr, uint32_t len);
 
 private:
    UNoCatPlugIn(const UNoCatPlugIn&) : UServerPlugIn(), UEventTime() {}

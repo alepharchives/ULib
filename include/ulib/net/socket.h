@@ -116,6 +116,7 @@ public:
    static const UString* str_Transfer_Encoding;
    static const UString* str_X_Progress_ID;
    static const UString* str_expect_100_continue;
+   static const UString* str_chunked;
 
    static void str_allocate();
 
@@ -154,13 +155,26 @@ public:
    This method is called after read block of data of remote connection
    */
 
-   void checkErrno(int value);
+   void checkErrno();
+   bool checkTime(long time_limit, long& timeout);
 
    /**
    This method is called after send block of data to remote connection
    */
 
-   bool checkIO(int iBytesTransferred, int iMaxBytesTransfer);
+   bool checkIO(int iBytesTransferred)
+      {
+      U_TRACE(0, "USocket::checkIO(%d)", iBytesTransferred)
+
+      if (iBytesTransferred <= 0)
+         {
+         if (iBytesTransferred < 0) checkErrno();
+
+         U_RETURN(false);
+         }
+
+      U_RETURN(true);
+      }
 
    /**
    The socket() function is called to create the socket of the specified type.
@@ -324,8 +338,6 @@ public:
       U_TRACE(0, "USocket::remoteIPAddress()")
 
       U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_MAJOR(iRemotePort, 0)
 
       return cRemoteAddress;
       }
@@ -609,8 +621,8 @@ public:
 
    // write data into multiple buffers
 
-   virtual int writev(const struct iovec* _iov, int iovcnt);
-           int writev(const struct iovec*  iov, int iovcnt, int timeoutMS);
+   virtual int writev(const struct iovec* iov, int iovcnt);
+           int writev(const struct iovec* iov, int iovcnt, int timeoutMS);
    // -----------------------------------------------------------------------------------------------------------
 
    /*
@@ -641,7 +653,7 @@ protected:
    void setRemote();
    void _closesocket();
    bool bind(SocketAddress& cLocal);
-   int  _writev(const struct iovec* _iov, int iovcnt);
+   int  _writev(const struct iovec* iov, int iovcnt);
    bool setServer(SocketAddress& cLocal, int iBackLog);
 
 private:

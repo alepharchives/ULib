@@ -207,7 +207,7 @@ handle_data:
 
       U_SRV_LOG_WITH_ADDR("sent message (%u bytes) %.*S to", frame.size(), U_STRING_TO_TRACE(frame))
 
-      if (USocketExt::write(csocket, U_STRING_TO_PARAM(frame))) goto loop;
+      if (USocketExt::write(csocket, frame)) goto loop;
       }
 
 end:
@@ -362,13 +362,13 @@ int UWebSocketPlugIn::handlerRequest()
 
                   char closing[9] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
 
-                  if (USocketExt::write(csocket, closing, sizeof(closing)))
+                  if (USocketExt::write(csocket, closing, sizeof(closing)) == sizeof(closing))
                      {
                      UClientImage_Base::wbuffer->setEmpty();
 
                      // client terminated: receive nine 0x00 bytes
 
-                     (void) USocketExt::read(csocket, *UClientImage_Base::rbuffer, closing, sizeof(closing));
+                     (void) USocketExt::readWhileNotToken(csocket, *UClientImage_Base::rbuffer, closing, sizeof(closing), 1024);
                      }
                   }
                }

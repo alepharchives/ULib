@@ -624,6 +624,8 @@ ULIB_LIBS
 DOXY_FALSE
 DOXY_TRUE
 DOXYGEN
+HUPS_FALSE
+HUPS_TRUE
 FINAL_FALSE
 FINAL_TRUE
 MEMORY_POOL_FALSE
@@ -635,6 +637,8 @@ STATIC_HANDLER_ECHO_FALSE
 STATIC_HANDLER_ECHO_TRUE
 STATIC_HANDLER_HTTP_FALSE
 STATIC_HANDLER_HTTP_TRUE
+STATIC_HANDLER_NOCAT_FALSE
+STATIC_HANDLER_NOCAT_TRUE
 STATIC_HANDLER_TSA_FALSE
 STATIC_HANDLER_TSA_TRUE
 STATIC_HANDLER_SSI_FALSE
@@ -651,8 +655,6 @@ STATIC_HANDLER_SCGI_FALSE
 STATIC_HANDLER_SCGI_TRUE
 STATIC_HANDLER_SOCKET_FALSE
 STATIC_HANDLER_SOCKET_TRUE
-STATIC_HANDLER_NOCAT_FALSE
-STATIC_HANDLER_NOCAT_TRUE
 STATIC_HANDLER_STREAM_FALSE
 STATIC_HANDLER_STREAM_TRUE
 STATIC_HANDLER_SHIB_FALSE
@@ -661,6 +663,8 @@ STATIC_HANDLER_RPC_FALSE
 STATIC_HANDLER_RPC_TRUE
 MOD_SHIB_FALSE
 MOD_SHIB_TRUE
+GEOIP_FALSE
+GEOIP_TRUE
 PLUGIN_FALSE
 PLUGIN_TRUE
 ASSERT_FALSE
@@ -695,8 +699,6 @@ DAEMON_FALSE
 DAEMON_TRUE
 PREAD_FALSE
 PREAD_TRUE
-GEOIP_FALSE
-GEOIP_TRUE
 TCC_FALSE
 TCC_TRUE
 LIBOBJS
@@ -933,7 +935,9 @@ enable_debug
 enable_profiling
 enable_memory_pool
 enable_LFS
+enable_HIS
 enable_HCRS
+enable_HUPS
 enable_pch
 enable_coverage
 enable_gcc_optimized
@@ -1615,7 +1619,9 @@ Optional Features:
   --enable-profiling      compile for profiling
   --enable-memory-pool    enable memory pool features [default=yes]
   --enable-LFS            enable Large File Support [default=yes]
+  --enable-HIS            enable HTTP Inotify Support [default=no]
   --enable-HCRS           enable HTTP Cache Request Support [default=yes]
+  --enable-HUPS           enable HTTP Upload Progress Support [default=no]
   --enable-pch            enables precompiled header support (currently only gcc >= 3.4) [default=no]
   --enable-coverage       enable coverage [default=no]
   --enable-gcc-optimized  compile with GCC optimizations flags enabled (-finline,-fstrict-aliasing,...) [default=yes]
@@ -20816,8 +20822,26 @@ $as_echo "#define DISABLE_LFS 1" >>confdefs.h
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_LFS" >&5
 $as_echo "$enable_LFS" >&6; }
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable HTTP Cache Request Support" >&5
-$as_echo_n "checking if you want to enable HTTP Cache Request Support... " >&6; }
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable HTTP inotify support" >&5
+$as_echo_n "checking if you want to enable HTTP inotify support... " >&6; }
+	# Check whether --enable-HIS was given.
+if test "${enable_HIS+set}" = set; then :
+  enableval=$enable_HIS;
+fi
+
+	if test -z "$enable_HIS" ; then
+		enable_HIS="no"
+	fi
+	if test "$enable_HIS" = "yes"; then
+
+$as_echo "#define U_HTTP_INOTIFY_SUPPORT 1" >>confdefs.h
+
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_HIS" >&5
+$as_echo "$enable_HIS" >&6; }
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable HTTP cache request support" >&5
+$as_echo_n "checking if you want to enable HTTP cache request support... " >&6; }
 	# Check whether --enable-HCRS was given.
 if test "${enable_HCRS+set}" = set; then :
   enableval=$enable_HCRS;
@@ -20826,13 +20850,31 @@ fi
 	if test -z "$enable_HCRS" ; then
 		enable_HCRS="yes"
 	fi
-	if test "x$enable_HCRS" != xyes; then
+	if test "$enable_HCRS" != "yes"; then
 
 $as_echo "#define U_HTTP_CACHE_REQUEST_DISABLE 1" >>confdefs.h
 
 	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_HCRS" >&5
 $as_echo "$enable_HCRS" >&6; }
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable HTTP upload progress support" >&5
+$as_echo_n "checking if you want to enable HTTP upload progress support... " >&6; }
+	# Check whether --enable-HUPS was given.
+if test "${enable_HUPS+set}" = set; then :
+  enableval=$enable_HUPS;
+fi
+
+	if test -z "$enable_HUPS" ; then
+		enable_HUPS="no"
+	fi
+	if test "$enable_HUPS" = "yes"; then
+
+$as_echo "#define U_HTTP_UPLOAD_PROGRESS_SUPPORT 1" >>confdefs.h
+
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_HUPS" >&5
+$as_echo "$enable_HUPS" >&6; }
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable use of precompiled headers" >&5
 $as_echo_n "checking if you want to enable use of precompiled headers... " >&6; }
@@ -22693,8 +22735,12 @@ fi
 
 fi
 
+modules="mod_rpc mod_shib mod_stream mod_nocat mod_socket mod_scgi mod_fcgi mod_geoip mod_proxy mod_soap mod_ssi mod_tsa mod_http mod_echo"
+
 if test "$USE_LIBPCRE" = "yes"; then
 	ulib_pcre_msg="yes ( ${pcre_version} )"
+else
+	modules=`echo $modules | sed s/mod_proxy//`
 fi
 
 if test "$USE_LIBCURL" = "yes"; then
@@ -22707,6 +22753,8 @@ fi
 
 if test "$USE_LIBEXPAT" = "yes"; then
 	ulib_expat_msg="yes ( ${expat_version} )"
+else
+	modules=`echo $modules | sed s/mod_soap//`
 fi
 
 if test "$USE_LIBMAGIC" = "yes"; then
@@ -26520,14 +26568,6 @@ else
   TCC_FALSE=
 fi
 
- if test "$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" = "yes"; then
-  GEOIP_TRUE=
-  GEOIP_FALSE='#'
-else
-  GEOIP_TRUE='#'
-  GEOIP_FALSE=
-fi
-
  if test "$ac_cv_func_pread"						 = "yes"; then
   PREAD_TRUE=
   PREAD_FALSE='#'
@@ -26664,6 +26704,49 @@ else
   PLUGIN_FALSE=
 fi
  # NB: if not don't build .so object...
+
+if test "$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" = "yes"; then
+	 if true; then
+  GEOIP_TRUE=
+  GEOIP_FALSE='#'
+else
+  GEOIP_TRUE='#'
+  GEOIP_FALSE=
+fi
+
+else
+	 if false; then
+  GEOIP_TRUE=
+  GEOIP_FALSE='#'
+else
+  GEOIP_TRUE='#'
+  GEOIP_FALSE=
+fi
+
+	modules=`echo $modules | sed s/mod_geoip//`
+fi
+
+# NB: this is the only version of gcc compiler that work with...
+if test "$gcc_version" = "4.2.2" && test "$enable_debug" = "yes"; then
+	 if true; then
+  MOD_SHIB_TRUE=
+  MOD_SHIB_FALSE='#'
+else
+  MOD_SHIB_TRUE='#'
+  MOD_SHIB_FALSE=
+fi
+
+else
+	 if false; then
+  MOD_SHIB_TRUE=
+  MOD_SHIB_FALSE='#'
+else
+  MOD_SHIB_TRUE='#'
+  MOD_SHIB_FALSE=
+fi
+
+	modules=`echo $modules | sed s/mod_shib//`
+fi
 
 # SECTION 11: checks for function characteristics
 
@@ -26830,53 +26913,11 @@ fi
 
 # SECTION 14: checks for aggregated features
 
-use_static_module=""
-# Check whether --enable-static-module was given.
-if test "${enable_static_module+set}" = set; then :
-  enableval=$enable_static_module; use_static_module="$use_static_module $enableval "
-fi
-
-
-modules="mod_rpc mod_shib mod_stream mod_nocat mod_socket mod_scgi mod_fcgi mod_geoip mod_proxy mod_soap mod_ssi mod_tsa mod_http mod_echo"
-
-# Remove modules that will not be compiles
-
-if test "$USE_EXPAT" != "yes"; then
-	modules=`echo $modules | sed s/mod_soap//`
-fi
-if test "$USE_PCRE" != "yes"; then
-	modules=`echo $modules | sed s/mod_proxy//`
-fi
-if test "x$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" != "xyes"; then
-	modules=`echo $modules | sed s/mod_geoip//`
-fi
-# NB: this is the only version of gcc compiler that work with...
-if test "$gcc_version" = "4.2.2" && test "$enable_debug" = "yes"; then
-	 if true; then
-  MOD_SHIB_TRUE=
-  MOD_SHIB_FALSE='#'
-else
-  MOD_SHIB_TRUE='#'
-  MOD_SHIB_FALSE=
-fi
-
-else
-	 if false; then
-  MOD_SHIB_TRUE=
-  MOD_SHIB_FALSE='#'
-else
-  MOD_SHIB_TRUE='#'
-  MOD_SHIB_FALSE=
-fi
-
-	modules=`echo $modules | sed s/mod_shib//`
-fi
-
 add_calls=""
+use_static_module=""
 static_handler_rcp=""
 static_handler_shib=""
 static_handler_stream=""
-static_handler_nocat=""
 static_handler_socket=""
 static_handler_scgi=""
 static_handler_fcgi=""
@@ -26885,8 +26926,15 @@ static_handler_proxy=""
 static_handler_soap=""
 static_handler_ssi=""
 static_handler_tsa=""
+static_handler_nocat=""
 static_handler_http=""
 static_handler_echo=""
+
+# Check whether --enable-static-module was given.
+if test "${enable_static_module+set}" = set; then :
+  enableval=$enable_static_module; use_static_module="$use_static_module $enableval "
+fi
+
 
 for mod in $modules; do
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking module \"$mod\"" >&5
@@ -26911,11 +26959,6 @@ $as_echo "#define U_STATIC_HANDLER_SHIB /**/" >>confdefs.h
 			static_handler_stream="yes"
 
 $as_echo "#define U_STATIC_HANDLER_STREAM /**/" >>confdefs.h
-
-		elif test "$mod" = "mod_nocat"; then
-			static_handler_nocat="yes"
-
-$as_echo "#define U_STATIC_HANDLER_NOCAT /**/" >>confdefs.h
 
 		elif test "$mod" = "mod_socket"; then
 			static_handler_socket="yes"
@@ -26957,6 +27000,11 @@ $as_echo "#define U_STATIC_HANDLER_SSI /**/" >>confdefs.h
 			static_handler_tsa="yes"
 
 $as_echo "#define U_STATIC_HANDLER_TSA /**/" >>confdefs.h
+
+		elif test "$mod" = "mod_nocat"; then
+			static_handler_nocat="yes"
+
+$as_echo "#define U_STATIC_HANDLER_NOCAT /**/" >>confdefs.h
 
 		elif test "$mod" = "mod_http"; then
 			static_handler_http="yes"
@@ -27006,14 +27054,6 @@ fi
 else
   STATIC_HANDLER_STREAM_TRUE='#'
   STATIC_HANDLER_STREAM_FALSE=
-fi
-
- if test "$static_handler_nocat"  = "yes"; then
-  STATIC_HANDLER_NOCAT_TRUE=
-  STATIC_HANDLER_NOCAT_FALSE='#'
-else
-  STATIC_HANDLER_NOCAT_TRUE='#'
-  STATIC_HANDLER_NOCAT_FALSE=
 fi
 
  if test "$static_handler_socket" = "yes"; then
@@ -27078,6 +27118,14 @@ fi
 else
   STATIC_HANDLER_TSA_TRUE='#'
   STATIC_HANDLER_TSA_FALSE=
+fi
+
+ if test "$static_handler_nocat"  = "yes"; then
+  STATIC_HANDLER_NOCAT_TRUE=
+  STATIC_HANDLER_NOCAT_FALSE='#'
+else
+  STATIC_HANDLER_NOCAT_TRUE='#'
+  STATIC_HANDLER_NOCAT_FALSE=
 fi
 
  if test "$static_handler_http"	  = "yes"; then
@@ -27215,6 +27263,26 @@ else
 else
   FINAL_TRUE='#'
   FINAL_FALSE=
+fi
+
+fi
+
+if test "$enable_HUPS" = "yes"; then
+	 if true; then
+  HUPS_TRUE=
+  HUPS_FALSE='#'
+else
+  HUPS_TRUE='#'
+  HUPS_FALSE=
+fi
+
+else
+	 if false; then
+  HUPS_TRUE=
+  HUPS_FALSE='#'
+else
+  HUPS_TRUE='#'
+  HUPS_FALSE=
 fi
 
 fi
@@ -27469,10 +27537,6 @@ $as_echo "$ulib_cv_flags" >&6; }
 
 	# NB: "-g -O2" e' gia' inserito in configure...
 	CPPFLAGS="${CPPFLAGS} -pipe -D_GNU_SOURCE"
-
-	if test "$enable_shared" = "yes"; then
-		CPPFLAGS="${CPPFLAGS} -fPIC"
-	fi
 
 	CFLAGS="${CFLAGS} $ulib_cv_CC_flags"
 	CPPFLAGS="${CPPFLAGS} $ulib_cv_flags"
@@ -28199,10 +28263,6 @@ if test -z "${TCC_TRUE}" && test -z "${TCC_FALSE}"; then
   as_fn_error $? "conditional \"TCC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${GEOIP_TRUE}" && test -z "${GEOIP_FALSE}"; then
-  as_fn_error $? "conditional \"GEOIP\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${PREAD_TRUE}" && test -z "${PREAD_FALSE}"; then
   as_fn_error $? "conditional \"PREAD\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -28271,6 +28331,14 @@ if test -z "${PLUGIN_TRUE}" && test -z "${PLUGIN_FALSE}"; then
   as_fn_error $? "conditional \"PLUGIN\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${GEOIP_TRUE}" && test -z "${GEOIP_FALSE}"; then
+  as_fn_error $? "conditional \"GEOIP\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${GEOIP_TRUE}" && test -z "${GEOIP_FALSE}"; then
+  as_fn_error $? "conditional \"GEOIP\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${MOD_SHIB_TRUE}" && test -z "${MOD_SHIB_FALSE}"; then
   as_fn_error $? "conditional \"MOD_SHIB\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -28289,10 +28357,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${STATIC_HANDLER_STREAM_TRUE}" && test -z "${STATIC_HANDLER_STREAM_FALSE}"; then
   as_fn_error $? "conditional \"STATIC_HANDLER_STREAM\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${STATIC_HANDLER_NOCAT_TRUE}" && test -z "${STATIC_HANDLER_NOCAT_FALSE}"; then
-  as_fn_error $? "conditional \"STATIC_HANDLER_NOCAT\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${STATIC_HANDLER_SOCKET_TRUE}" && test -z "${STATIC_HANDLER_SOCKET_FALSE}"; then
@@ -28327,6 +28391,10 @@ if test -z "${STATIC_HANDLER_TSA_TRUE}" && test -z "${STATIC_HANDLER_TSA_FALSE}"
   as_fn_error $? "conditional \"STATIC_HANDLER_TSA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${STATIC_HANDLER_NOCAT_TRUE}" && test -z "${STATIC_HANDLER_NOCAT_FALSE}"; then
+  as_fn_error $? "conditional \"STATIC_HANDLER_NOCAT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${STATIC_HANDLER_HTTP_TRUE}" && test -z "${STATIC_HANDLER_HTTP_FALSE}"; then
   as_fn_error $? "conditional \"STATIC_HANDLER_HTTP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -28357,6 +28425,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${FINAL_TRUE}" && test -z "${FINAL_FALSE}"; then
   as_fn_error $? "conditional \"FINAL\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HUPS_TRUE}" && test -z "${HUPS_FALSE}"; then
+  as_fn_error $? "conditional \"HUPS\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${HUPS_TRUE}" && test -z "${HUPS_FALSE}"; then
+  as_fn_error $? "conditional \"HUPS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${DOXY_TRUE}" && test -z "${DOXY_FALSE}"; then

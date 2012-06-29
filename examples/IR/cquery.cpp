@@ -162,7 +162,7 @@ void WeightWord::dumpObjects()
 
       if (sz > 1) vec->sort(compareObj);
 
-      for (uint32_t i = 0; i < sz; ++i) cout << (*vec)[i]->filename << "\n";
+      for (uint32_t i = 0; i < sz; ++i) std::cout << (*vec)[i]->filename << "\n";
       }
 }
 

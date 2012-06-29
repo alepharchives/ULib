@@ -55,8 +55,6 @@ public:
 
       bool result = rdb->open(pathdb, log_size);
 
-      rdb->setShared();
-
       U_RETURN(result);
       }
 
@@ -74,6 +72,13 @@ protected:
    virtual void preallocate()
       {
       U_TRACE(0, "URDBServer::preallocate()")
+
+      if (UServer_Base::isPreForked())
+         {
+         U_INTERNAL_ASSERT_POINTER(U_LOCK_RDB_SERVER)
+
+         rdb->setShared(U_LOCK_RDB_SERVER);
+         }
 
       vClientImage = U_NEW_VEC(UNotifier::max_connection, URDBClientImage);
       }

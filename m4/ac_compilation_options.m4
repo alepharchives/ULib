@@ -25,16 +25,38 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([$enable_LFS])
 
-	AC_MSG_CHECKING(if you want to enable HTTP Cache Request Support)
+	AC_MSG_CHECKING(if you want to enable HTTP inotify support)
+	AC_ARG_ENABLE(HIS,
+				[  --enable-HIS            enable HTTP Inotify Support [[default=no]]])
+	if test -z "$enable_HIS" ; then
+		enable_HIS="no"
+	fi
+	if test "$enable_HIS" = "yes"; then
+      AC_DEFINE(U_HTTP_INOTIFY_SUPPORT, 1, [enable HTTP inotify support])
+	fi
+	AC_MSG_RESULT([$enable_HIS])
+
+	AC_MSG_CHECKING(if you want to enable HTTP cache request support)
 	AC_ARG_ENABLE(HCRS,
 				[  --enable-HCRS           enable HTTP Cache Request Support [[default=yes]]])
 	if test -z "$enable_HCRS" ; then
 		enable_HCRS="yes"
 	fi
-	if test "x$enable_HCRS" != xyes; then
-      AC_DEFINE(U_HTTP_CACHE_REQUEST_DISABLE, 1, [disable HTTP Cache Request Support features])
+	if test "$enable_HCRS" != "yes"; then
+      AC_DEFINE(U_HTTP_CACHE_REQUEST_DISABLE, 1, [disable HTTP cache request support])
 	fi
 	AC_MSG_RESULT([$enable_HCRS])
+
+	AC_MSG_CHECKING(if you want to enable HTTP upload progress support)
+	AC_ARG_ENABLE(HUPS,
+				[  --enable-HUPS           enable HTTP Upload Progress Support [[default=no]]])
+	if test -z "$enable_HUPS" ; then
+		enable_HUPS="no"
+	fi
+	if test "$enable_HUPS" = "yes"; then
+      AC_DEFINE(U_HTTP_UPLOAD_PROGRESS_SUPPORT, 1, [enable HTTP upload progress support])
+	fi
+	AC_MSG_RESULT([$enable_HUPS])
 
 	AC_MSG_CHECKING(if you want to enable use of precompiled headers)
 	AC_ARG_ENABLE(pch,

@@ -292,6 +292,7 @@ endif
 ULib-win32-res.o: ULib.rc
 	$(WINDRES) $< $@
 	$(DLLTOOL) -export-all-symbols -z $(srcdir)/@ULIB@.def $(srcdir)/.libs/all_c.o $(srcdir)/.libs/all_cpp.o
+	$(SED) -i s/EXPORTS// $(srcdir)/@ULIB@.def
 
 if MINGW
 install-def-file:

@@ -12,6 +12,8 @@ U_EXPORT main (int argc, char* argv[], char* environ[])
    U_TRACE(5,"main(%d)",argc)
 
    UProcess x;
+   int exit_value;
+   const char* info;
 
    if (x.fork())
       {
@@ -19,8 +21,11 @@ U_EXPORT main (int argc, char* argv[], char* environ[])
          {
          x.wait();
 
-         U_ASSERT( x.exitValue() == 1536 )
-         U_ASSERT( U_STRNCMP(x.exitInfo(), "Signal SIGABRT (6, Abort") == 0 )
+         exit_value = x.exitValue();
+         info       = x.exitInfo();
+
+         U_ASSERT( exit_value == -1536 )
+         U_ASSERT( U_STRNCMP(info, "Signal SIGABRT (6, Abort") == 0 )
          }
       else
          {

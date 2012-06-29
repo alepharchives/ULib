@@ -69,7 +69,7 @@ UString UPKCS7::getContent(bool* valid_content) const
 
    U_INTERNAL_ASSERT_POINTER(pkcs7)
 
-#if defined(DEBUG) && defined(__clang__)
+#if defined(__MINGW32__) || (defined(DEBUG) && defined(__clang__))
 #undef  NULL
 #define NULL 0
 #endif

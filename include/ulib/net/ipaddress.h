@@ -46,6 +46,8 @@ union uusockaddr {
 /****************************************************************************/
 
 class USocket;
+class UNoCatPlugIn;
+
 template <class T> class UVector;
 
 class U_EXPORT UIPAllow {
@@ -102,25 +104,24 @@ public:
       U_RETURN(result);
       }
 
-   bool isAllowed(const UString& ip_client)
+   bool isAllowed(const char* ip_client)
       {
-      U_TRACE(0, "UIPAllow::isAllowed(%.*S)", U_STRING_TO_TRACE(ip_client))
+      U_TRACE(0, "UIPAllow::isAllowed(%S)", ip_client)
 
-      U_INTERNAL_ASSERT(ip_client.isNullTerminated())
-      U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(ip_client)))
+      U_INTERNAL_ASSERT(u_isIPv4Addr(ip_client,u__strlen(ip_client)))
 
       struct in_addr ia;
 
-      bool result = (inet_aton(ip_client.data(), &ia) && isAllowed(ia.s_addr));
+      bool result = (inet_aton(ip_client, &ia) && isAllowed(ia.s_addr));
 
       U_RETURN(result);
       }
 
-   static uint32_t contains(in_addr_t         client, UVector<UIPAllow*>& vipallow) __pure;
-   static uint32_t contains(const UString& ip_client, UVector<UIPAllow*>& vipallow) __pure;
+   static uint32_t contains(in_addr_t      client, UVector<UIPAllow*>& vipallow) __pure;
+   static uint32_t contains(const char* ip_client, UVector<UIPAllow*>& vipallow) __pure;
 
-   static bool isAllowed(in_addr_t         client, UVector<UIPAllow*>& vipallow) { return (contains(   client, vipallow) != U_NOT_FOUND); }
-   static bool isAllowed(const UString& ip_client, UVector<UIPAllow*>& vipallow) { return (contains(ip_client, vipallow) != U_NOT_FOUND); }
+   static bool isAllowed(in_addr_t      client, UVector<UIPAllow*>& vipallow) { return (contains(   client, vipallow) != U_NOT_FOUND); }
+   static bool isAllowed(const char* ip_client, UVector<UIPAllow*>& vipallow) { return (contains(ip_client, vipallow) != U_NOT_FOUND); }
 
    // DEBUG
 
@@ -255,7 +256,7 @@ public:
    // Returns a constant string pointer to the string
    // representation of the IP Address suitable for visual presentation
 
-   const char* getAddressString() { resolveStrAddress(); return pcStrAddress; }
+   const char* getAddressString() { if (bStrAddressUnresolved) resolveStrAddress(); return pcStrAddress; }
    
    // Check equality with an existing UIPAddress object
 
@@ -325,6 +326,7 @@ protected:
 
 private:
    friend class USocket;
+   friend class UNoCatPlugIn;
 };
 
 #endif

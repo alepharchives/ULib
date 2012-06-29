@@ -2262,6 +2262,7 @@ clean-local:
 ULib-win32-res.o: ULib.rc
 	$(WINDRES) $< $@
 	$(DLLTOOL) -export-all-symbols -z $(srcdir)/@ULIB@.def $(srcdir)/.libs/all_c.o $(srcdir)/.libs/all_cpp.o
+	$(SED) -i s/EXPORTS// $(srcdir)/@ULIB@.def
 
 @MINGW_TRUE@install-def-file:
 @MINGW_TRUE@	$(INSTALL) $(srcdir)/@ULIB@.def $(DESTDIR)$(libdir)

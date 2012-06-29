@@ -23,9 +23,9 @@ bool Action::loadFileConfig(UString& cfg_str)
       //    ERROR_TEMPLATE printf form to output error response
       // -----------------------------------------------------------------------------------------------
 
-      req_tmpl = UFile::contentOf(cfg[U_STRING_FROM_CONSTANT( "REQUEST_TEMPLATE")], O_RDONLY, false, false);
-      res_tmpl = UFile::contentOf(cfg[U_STRING_FROM_CONSTANT("RESPONSE_TEMPLATE")], O_RDONLY, false, false);
-      err_tmpl = UFile::contentOf(cfg[U_STRING_FROM_CONSTANT(   "ERROR_TEMPLATE")], O_RDONLY, false, false);
+      req_tmpl = UFile::contentOf(cfg[U_STRING_FROM_CONSTANT( "REQUEST_TEMPLATE")]);
+      res_tmpl = UFile::contentOf(cfg[U_STRING_FROM_CONSTANT("RESPONSE_TEMPLATE")]);
+      err_tmpl = UFile::contentOf(cfg[U_STRING_FROM_CONSTANT(   "ERROR_TEMPLATE")]);
 
       U_RETURN(true);
       }

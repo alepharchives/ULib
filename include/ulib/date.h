@@ -53,7 +53,7 @@ public:
 
    UTimeDate(time_t tm)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%#4D", tm)
+      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%#9D", tm)
 
       fromTime(tm);
       }
@@ -183,7 +183,7 @@ public:
    // print date with format
 
           UString strftime(const char* fmt);
-   static UString strftime(const char* fmt, time_t t);
+   static UString strftime(const char* fmt, time_t t, bool blocale = false);
 
    static time_t getSecondFromJulian(int _julian)
       {

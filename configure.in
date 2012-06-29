@@ -484,8 +484,12 @@ else
 	AM_CONDITIONAL(ZIP, false)
 fi
 
+modules="mod_rpc mod_shib mod_stream mod_nocat mod_socket mod_scgi mod_fcgi mod_geoip mod_proxy mod_soap mod_ssi mod_tsa mod_http mod_echo"
+
 if test "$USE_LIBPCRE" = "yes"; then
 	ulib_pcre_msg="yes ( ${pcre_version} )"
+else
+	modules=`echo $modules | sed s/mod_proxy//`
 fi
 
 if test "$USE_LIBCURL" = "yes"; then
@@ -498,6 +502,8 @@ fi
 
 if test "$USE_LIBEXPAT" = "yes"; then
 	ulib_expat_msg="yes ( ${expat_version} )"
+else
+	modules=`echo $modules | sed s/mod_soap//`
 fi
 
 if test "$USE_LIBMAGIC" = "yes"; then
@@ -677,7 +683,6 @@ if test "$ac_cv_func_inet_ntop" != "yes"; then
 fi
 
 AM_CONDITIONAL(TCC,			 test "$ac_cv_lib_tcc_tcc_compile_string"	 = "yes")
-AM_CONDITIONAL(GEOIP,		 test "$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" = "yes")
 AM_CONDITIONAL(PREAD,		 test "$ac_cv_func_pread"						 = "yes")
 AM_CONDITIONAL(DAEMON,		 test "$ac_cv_func_daemon"						 = "yes")
 AM_CONDITIONAL(TIMEGM,		 test "$ac_cv_func_timegm"						 = "yes")
@@ -695,6 +700,21 @@ AM_CONDITIONAL(NANOSLEEP,   test "$ac_cv_func_nanosleep"					 = "yes")
 AM_CONDITIONAL(GETOPT_LONG, test "$ac_cv_func_getopt_long"				 = "yes")
 AM_CONDITIONAL(ASSERT,		 test "$ac_cv_header_assert_h"				 = "yes")
 AM_CONDITIONAL(PLUGIN,		 test "$enable_shared"							 = "yes") # NB: if not don't build .so object...
+
+if test "$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" = "yes"; then
+	AM_CONDITIONAL(GEOIP, true)
+else
+	AM_CONDITIONAL(GEOIP, false)
+	modules=`echo $modules | sed s/mod_geoip//`
+fi
+
+# NB: this is the only version of gcc compiler that work with...
+if test "$gcc_version" = "4.2.2" && test "$enable_debug" = "yes"; then
+	AM_CONDITIONAL(MOD_SHIB, true)
+else
+	AM_CONDITIONAL(MOD_SHIB, false)
+	modules=`echo $modules | sed s/mod_shib//`
+fi
 
 # SECTION 11: checks for function characteristics
 
@@ -718,37 +738,11 @@ fi
 
 # SECTION 14: checks for aggregated features
 
-use_static_module=""
-AC_ARG_ENABLE(static-module,
-	   AC_HELP_STRING([--enable-static-module=MODULES][]),
-	   [use_static_module="$use_static_module $enableval "],[])
-
-modules="mod_rpc mod_shib mod_stream mod_nocat mod_socket mod_scgi mod_fcgi mod_geoip mod_proxy mod_soap mod_ssi mod_tsa mod_http mod_echo"
-
-# Remove modules that will not be compiles
-
-if test "$USE_EXPAT" != "yes"; then
-	modules=`echo $modules | sed s/mod_soap//`
-fi
-if test "$USE_PCRE" != "yes"; then
-	modules=`echo $modules | sed s/mod_proxy//`
-fi
-if test "x$ac_cv_lib_GeoIP_GeoIP_id_by_ipnum" != "xyes"; then
-	modules=`echo $modules | sed s/mod_geoip//`
-fi
-# NB: this is the only version of gcc compiler that work with...
-if test "$gcc_version" = "4.2.2" && test "$enable_debug" = "yes"; then
-	AM_CONDITIONAL(MOD_SHIB, true)
-else
-	AM_CONDITIONAL(MOD_SHIB, false)
-	modules=`echo $modules | sed s/mod_shib//`
-fi
-
 add_calls=""
+use_static_module=""
 static_handler_rcp=""
 static_handler_shib=""
 static_handler_stream=""
-static_handler_nocat=""
 static_handler_socket=""
 static_handler_scgi=""
 static_handler_fcgi=""
@@ -757,8 +751,13 @@ static_handler_proxy=""
 static_handler_soap=""
 static_handler_ssi=""
 static_handler_tsa=""
+static_handler_nocat=""
 static_handler_http=""
 static_handler_echo=""
+
+AC_ARG_ENABLE(static-module,
+	   AC_HELP_STRING([--enable-static-module=MODULES][]),
+	   [use_static_module="$use_static_module $enableval "],[])
 
 for mod in $modules; do
 	AC_MSG_CHECKING([module "$mod"])
@@ -777,9 +776,6 @@ for mod in $modules; do
 		elif test "$mod" = "mod_stream"; then
 			static_handler_stream="yes"
 			AC_DEFINE(U_STATIC_HANDLER_STREAM,, [STATIC_HANDLER_STREAM])
-		elif test "$mod" = "mod_nocat"; then
-			static_handler_nocat="yes"
-			AC_DEFINE(U_STATIC_HANDLER_NOCAT,, [STATIC_HANDLER_NOCAT])
 		elif test "$mod" = "mod_socket"; then
 			static_handler_socket="yes"
 			AC_DEFINE(U_STATIC_HANDLER_SOCKET,, [STATIC_HANDLER_SOCKET])
@@ -805,6 +801,9 @@ for mod in $modules; do
 		elif test "$mod" = "mod_tsa"; then
 			static_handler_tsa="yes"
 			AC_DEFINE(U_STATIC_HANDLER_TSA,, [STATIC_HANDLER_TSA])
+		elif test "$mod" = "mod_nocat"; then
+			static_handler_nocat="yes"
+			AC_DEFINE(U_STATIC_HANDLER_NOCAT,, [STATIC_HANDLER_NOCAT])
 		elif test "$mod" = "mod_http"; then
 			static_handler_http="yes"
 			AC_DEFINE(U_STATIC_HANDLER_HTTP,, [STATIC_HANDLER_HTTP])
@@ -826,7 +825,6 @@ AC_MSG_RESULT([done])
 AM_CONDITIONAL(STATIC_HANDLER_RPC,    test "$static_handler_rpc"	  = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_SHIB,	  test "$static_handler_shib"	  = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_STREAM, test "$static_handler_stream" = "yes")
-AM_CONDITIONAL(STATIC_HANDLER_NOCAT,  test "$static_handler_nocat"  = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_SOCKET, test "$static_handler_socket" = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_SCGI,	  test "$static_handler_scgi"	  = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_FCGI,	  test "$static_handler_fcgi"	  = "yes")
@@ -835,6 +833,7 @@ AM_CONDITIONAL(STATIC_HANDLER_PROXY,  test "$static_handler_proxy"  = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_SOAP,   test "$static_handler_soap"   = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_SSI,    test "$static_handler_ssi"    = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_TSA,    test "$static_handler_tsa"    = "yes")
+AM_CONDITIONAL(STATIC_HANDLER_NOCAT,  test "$static_handler_nocat"  = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_HTTP,   test "$static_handler_http"	  = "yes")
 AM_CONDITIONAL(STATIC_HANDLER_ECHO,	  test "$static_handler_echo"   = "yes")
 
@@ -880,6 +879,12 @@ if test "$enable_final" = "yes"; then
 	AM_CONDITIONAL(FINAL, true)
 else
 	AM_CONDITIONAL(FINAL, false)
+fi
+
+if test "$enable_HUPS" = "yes"; then
+	AM_CONDITIONAL(HUPS, true)
+else
+	AM_CONDITIONAL(HUPS, false)
 fi
 
 # if gcc compiler add values to *FLAGS...
@@ -1012,10 +1017,6 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 
 	# NB: "-g -O2" e' gia' inserito in configure...
 	CPPFLAGS="${CPPFLAGS} -pipe -D_GNU_SOURCE"
-
-	if test "$enable_shared" = "yes"; then
-		CPPFLAGS="${CPPFLAGS} -fPIC"
-	fi
 
 	CFLAGS="${CFLAGS} $ulib_cv_CC_flags"
 	CPPFLAGS="${CPPFLAGS} $ulib_cv_flags"

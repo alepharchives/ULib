@@ -7,19 +7,16 @@
 
    tmp.snprintf("%s/%s.log", directory.c_str(), log_name);
 
-   ULog log(tmp);
+   ULog::fmt = "%P|%4D|%s  %N\n";
+
+   ULog log(tmp, 1024 * 1024, "%P|%4D|");
 
    if (log.isOpen())
       {
-      log.setShared();
+      Ulog::setShared();
 
-      log.fmt    = "%P|%4D|%s  %N\n";
-      log.prefix = "%P|%4D|";
-
-      log.init();
+      Ulog::init();
       }
-
-   (void) log.ready();
 
    time_t tm_session = u_now->tv_sec;
 

@@ -800,6 +800,7 @@ int kill(pid_t pid, int sig)
 WINBASEAPI BOOL WINAPI GetFileSizeEx(HANDLE,PLARGE_INTEGER);
 #endif
 
+/*
 int truncate(const char* fname, off_t length)
 {
    BOOL bclose;
@@ -876,7 +877,6 @@ int truncate(const char* fname, off_t length)
    return 0;
 }
 
-/*
 int fsync(int fd)
 {
    HANDLE h = (HANDLE) _get_osfhandle(fd);

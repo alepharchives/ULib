@@ -26,9 +26,9 @@ static ULog* ulog;
 class Application : public UApplication {
 public:
 
-#define LOG_MSG0(msg)            if (flag_log) ulog->log("%.*s\n",U_CONSTANT_TO_TRACE(msg))
-#define LOG_MSGb(msg)            if (flag_log) ulog->log(msg" %.*s\n",U_STRING_TO_TRACE(buffer))
-#define LOG_MSGB(format,args...) if (flag_log) ulog->log(format" %.*s\n",args,U_STRING_TO_TRACE(buffer))
+#define LOG_MSG0(msg)            if (ulog) ulog->log("%.*s\n",U_CONSTANT_TO_TRACE(msg))
+#define LOG_MSGb(msg)            if (ulog) ulog->log(msg" %.*s\n",U_STRING_TO_TRACE(buffer))
+#define LOG_MSGB(format,args...) if (ulog) ulog->log(format" %.*s\n",args,U_STRING_TO_TRACE(buffer))
 
    void get_welcome()
       {
@@ -38,7 +38,7 @@ public:
          {
          iBytesTransferred = pcClientSocket->recv(pcBuffer, sizeof(pcBuffer));
 
-         if (pcClientSocket->checkIO(iBytesTransferred, sizeof(pcBuffer)))
+         if (pcClientSocket->checkIO(iBytesTransferred))
             {
             LOG_MSGB("received welcome message %#.*S from", iBytesTransferred, pcBuffer);
 
@@ -60,7 +60,7 @@ public:
 
       iBytesTransferred = pcClientSocket->send(U_STRING_TO_PARAM(req));
 
-      bool result = pcClientSocket->checkIO(iBytesTransferred, req.size());
+      bool result = pcClientSocket->checkIO(iBytesTransferred);
 
       U_RETURN(result);
       }
@@ -71,7 +71,7 @@ public:
 
       iBytesTransferred = pcClientSocket->recv(pcBuffer, sizeof(pcBuffer));
 
-      if (pcClientSocket->checkIO(iBytesTransferred, sizeof(pcBuffer)))
+      if (pcClientSocket->checkIO(iBytesTransferred))
          {
          LOG_MSGB("received response %#.*S from", iBytesTransferred, pcBuffer);
 
@@ -138,27 +138,18 @@ public:
 
       // maybe manage logging...
 
-      ulog = new ULog;
-
-      flag_log = false;
       UString log_file = opt['l'];
 
-      if (log_file.empty() == false &&
-          ulog->open(log_file))
+      if (log_file.empty() == false)
          {
-         flag_log = true;
-
          u_init_ulib_hostname();
 
          U_INTERNAL_DUMP("u_hostname(%u) = %.*S", u_hostname_len, u_hostname_len, u_hostname)
 
          u_init_ulib_username();
 
-         ulog->setClient();
-         }
+         ulog = U_NEW(ULog(log_file, 1024 * 1024, "%10D> "));
 
-      if (flag_log)
-         {
          // manage max string length for log request and response
 
          UString maxlength = opt['m'];
@@ -187,7 +178,7 @@ public:
          LOG_MSGb("closing client connection to");
          }
 
-      if (flag_log) ulog->close();
+      if (ulog) ulog->close();
 
 #ifdef DEBUG
       delete ulog;
@@ -202,7 +193,6 @@ private:
    UString buffer, msg_welcome;
    UFileConfig config_file;
    UVector<UString> request_response;
-   bool flag_log;
 
 private:
    char pcBuffer[65535];

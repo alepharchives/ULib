@@ -17,7 +17,7 @@
 #define sighandler_t __p_sig_fn_t
 
 /* Basic Windows features only */
-#define WIN32_WINNT 0x0501
+#define WIN32_WINNT           0x0501
 #define WIN32_LEAN_AND_MEAN
 
 /* libstdc++-v3 _really_ dislikes min & max defined as macros. */
@@ -27,8 +27,9 @@
 #endif
 
 /* Require at least Internet Explorer 3, in order to have access to */
-/* sufficient Windows Common Controls features from <commctrl.h> . */
+/* sufficient Windows Common Controls features from <commctrl.h>
 #define _WIN32_IE 0x0300
+*/
 
 #include <_mingw.h>
 #include <w32api.h>
@@ -66,6 +67,7 @@
 #define O_CLOEXEC       02000000 /* Set close_on_exec */
 #define S_ISSOCK(mode)  0
 
+/*
 #if defined _FILE_OFFSET_BITS && _FILE_OFFSET_BITS == 64
 #  define lseek _lseeki64
 #   undef stat
@@ -73,6 +75,7 @@
 #  define fstat _fstati64
 #  define wstat _wstati64
 #endif
+*/
 
 struct flock {
   short l_type;
@@ -150,8 +153,9 @@ struct flock {
 #define sleep(seconds)        (Sleep(seconds * 1000))
 /* Make all changes done to FD actually appear on disk */
 #define fsync(fd)             _commit(fd)
-/* Truncate the file FD refers to to LENGTH bytes */
+/* Truncate the file FD refers to to LENGTH bytes
 #define ftruncate             _chsize
+*/
 /* Determines whether a file descriptor is associated with a character device */
 #define isatty(fd)             _isatty(fd)
 
@@ -171,6 +175,7 @@ __declspec(dllexport) int fsync(int fd);
 /* These depend upon the type of sigset_t, which right now is always a long..
    They're in the POSIX namespace, but are not ANSI.
 */
+#define sigset_t long
 #define sigemptyset(what)   (*(what) = 0)
 #define sigaddset(what,sig) (*(what) |= (1<<(sig)))
 
@@ -270,15 +275,15 @@ struct rlimit {
   rlim_t rlim_max;   /* Hard limit (ceiling for rlim_cur) */
 };
 
-/* POSIX.1b structure for a time value. This is like a `struct timeval' but has nanoseconds instead of microseconds. */
-
+/* POSIX.1b structure for a time value. This is like a `struct timeval' but has nanoseconds instead of microseconds
 #ifndef HAVE_STRUCT_TIMESPEC
 #define HAVE_STRUCT_TIMESPEC 1
 struct timespec {
-   time_t   tv_sec;  /* Seconds. */
-   long int tv_nsec; /* Nanoseconds. */
+   time_t   tv_sec;  // Seconds
+   long int tv_nsec; // Nanoseconds
 };
 #endif
+*/
 
 #ifdef __cplusplus
 extern "C" {
@@ -303,7 +308,6 @@ __declspec(dllexport) unsigned int   alarm(unsigned int seconds);
 __declspec(dllexport) int            setpgid(pid_t pid, pid_t pgid);
 __declspec(dllexport) int            sigsuspend(const sigset_t* mask);
 __declspec(dllexport) int            munmap(void* start, size_t length);
-__declspec(dllexport) int            truncate(const char* fname, off_t distance);
 __declspec(dllexport) int            msync(void* start, size_t length, int flags);
 __declspec(dllexport) pid_t          waitpid(pid_t pid, int* status, int options);
 __declspec(dllexport) char*          realpath(const char* path, char* resolved_path);
@@ -315,8 +319,9 @@ __declspec(dllexport) void*          mmap(void* start, size_t length, int prot, 
 __declspec(dllexport) int            sigaction(int signum, const struct sigaction* act, struct sigaction* oldact);
 __declspec(dllexport) int            setitimer(int which, const struct itimerval* value, struct itimerval* ovalue);
 
-/* implemented in MINGW Runtime (3.10)
+/* implemented in MINGW Runtime
 __declspec(dllexport) int            gettimeofday(struct timeval* tv, void* tz);
+__declspec(dllexport) int            truncate(const char* fname, off_t distance);
 */
 
 __declspec(dllexport) int            raise_w32(int nsig);

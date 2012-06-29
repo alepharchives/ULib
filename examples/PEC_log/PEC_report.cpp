@@ -1412,7 +1412,7 @@ void PEC_report::startReport()
 
    (void) sprintf(buffer, U_XML_OUT_START, U_STRING_TO_TRACE(*title), U_STRING_TO_TRACE(cfg_from), U_STRING_TO_TRACE(cfg_to));
 
-   cout << buffer;
+   std::cout << buffer;
 
    UString elem;
 
@@ -1422,10 +1422,10 @@ void PEC_report::startReport()
 
       (void) sprintf(buffer, U_XML_OUT_START_A, U_STRING_TO_TRACE(elem));
 
-      cout << buffer;
+      std::cout << buffer;
       }
 
-   cout << U_XML_OUT_START_B;
+   std::cout << U_XML_OUT_START_B;
 }
 
 void PEC_report::endReport()
@@ -1436,7 +1436,7 @@ void PEC_report::endReport()
 
    end_func();
 
-   cout << U_XML_OUT_END;
+   std::cout << U_XML_OUT_END;
 
    clearData();
 }

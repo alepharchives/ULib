@@ -33,7 +33,7 @@ public:
       // ELECTRONIC_ARCHIVATION_SERVICE_URL  url to do request of archive
       // --------------------------------------------------------------------------------------------------------------
 
-      UString arch_tmpl = UFile::contentOf(cfg[U_STRING_FROM_CONSTANT("ARCHIVE_TEMPLATE")], O_RDONLY, false, false),
+      UString arch_tmpl = UFile::contentOf(cfg[U_STRING_FROM_CONSTANT("ARCHIVE_TEMPLATE")]),
               url       =                  cfg[U_STRING_FROM_CONSTANT("ELECTRONIC_ARCHIVATION_SERVICE_URL")];
 
       UString body(arch_tmpl.size() + request_decoded.size() + (u__strlen(uid) * 3) + 100U);

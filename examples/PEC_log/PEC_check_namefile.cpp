@@ -66,7 +66,7 @@ public:
       (void) sprintf(PEC_report::buffer, "suggested symbolic link name <%.*s> for file <%s>...\n",
                      U_STRING_TO_TRACE(l), PEC_report::file->getPathRelativ());
 
-      cout << PEC_report::buffer;
+      std::cout << PEC_report::buffer;
 
       resetDate();
       }

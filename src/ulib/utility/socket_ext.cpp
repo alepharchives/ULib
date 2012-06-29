@@ -71,7 +71,7 @@ read:
       if (value == 0L) s->close(); // EOF
       else
          {
-         s->checkErrno(value);
+         s->checkErrno();
 
          // NB: maybe we have failed to read more bytes...
 
@@ -99,24 +99,12 @@ read:
       {
       U_INTERNAL_ASSERT_DIFFERS(count,U_SINGLE_READ)
 
-      if (time_limit)
+      if (time_limit &&
+          s->checkTime(time_limit, timeout) == false) // NB: may be is attacked by a "slow loris"... http://lwn.net/Articles/337853/
          {
-         if (u_pthread_time == 0) (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+         result = false;
 
-         if (timeout == 0) timeout = u_now->tv_sec + time_limit;
-
-         // NB: may be is attacked by a "slow loris"... http://lwn.net/Articles/337853/
-
-         if (u_now->tv_sec > timeout)
-            {
-            s->iState = USocket::BROKEN | USocket::TIMEOUT;
-
-            s->close();
-
-            result = false;
-
-            goto done;
-            }
+         goto done;
          }
 
       if (byte_read_hook) byte_read_hook(byte_read);
@@ -173,27 +161,37 @@ done:
 
 // read while not received token, return position of token in buffer
 
-uint32_t USocketExt::read(USocket* s, UString& buffer, const char* token, uint32_t token_len)
+uint32_t
+USocketExt::readWhileNotToken(USocket* s, UString& buffer, const char* token, uint32_t token_len, uint32_t max_read, int timeoutMS, uint32_t time_limit)
 {
-   U_TRACE(0, "USocketExt::read(%p,%.*S,%.*S,%u)", s, U_STRING_TO_TRACE(buffer), token_len, token, token_len)
+   U_TRACE(0, "USocketExt::readWhileNotToken(%p,%.*S,%.*S,%u,%u,%u)", s, U_STRING_TO_TRACE(buffer),
+                                                                      token_len, token, token_len, max_read, timeoutMS, time_limit)
 
    U_INTERNAL_ASSERT(s->isConnected())
 
-   uint32_t count = 0, pos_token, start = buffer.size(); // il buffer di lettura potrebbe iniziare con una parte residua...
+   long timeout = 0;
+   uint32_t count = 0, pos_token, start = buffer.size();
 
-   while (USocketExt::read(s, buffer, U_SINGLE_READ, 3 * 1000))
+   while (USocketExt::read(s, buffer, U_SINGLE_READ, timeoutMS, time_limit))
       {
-      pos_token = buffer.find(token, (start > token_len ? start - token_len - 1 : 0), token_len);
+      pos_token = buffer.find(token, start, token_len);
 
       if (pos_token != U_NOT_FOUND) U_RETURN(pos_token);
 
-      start = buffer.size();
-
-      // NB: attacked by a "slow loris"... http://lwn.net/Articles/337853/
+      // NB: may be is attacked by a "slow loris"... http://lwn.net/Articles/337853/
 
       U_INTERNAL_DUMP("slow loris count = %u", count)
 
-      if (count++ > 10) break;
+      if (count++ > max_read ||
+          (time_limit &&
+           s->checkTime(time_limit, timeout) == false))
+         {
+         U_RETURN(U_NOT_FOUND);
+         }
+
+      U_ASSERT_MAJOR(buffer.size(), token_len)
+
+      start = buffer.size() - token_len;
       }
 
    U_RETURN(U_NOT_FOUND);
@@ -201,93 +199,86 @@ uint32_t USocketExt::read(USocket* s, UString& buffer, const char* token, uint32
 
 // write while sending data
 
-bool USocketExt::write(USocket* s, const char* ptr, uint32_t ncount, int timeoutMS)
+int USocketExt::write(USocket* s, const char* ptr, uint32_t ncount, int timeoutMS)
 {
    U_TRACE(0, "USocketExt::write(%p,%.*S,%u,%d)", s, ncount, ptr, ncount, timeoutMS)
 
    U_INTERNAL_ASSERT(s->isOpen())
 
    ssize_t value;
+   int iBytesWrite = 0;
 
-   do {
-      U_INTERNAL_DUMP("ncount = %u", ncount)
-
+   while (true)
+      {
       value = s->send(ptr, ncount, timeoutMS);
 
-      if (value == (ssize_t)ncount) U_RETURN(true);
+      if (s->checkIO(value) == false) break;
 
-      if (s->checkIO(value, ncount) == false) U_RETURN(false);
+      iBytesWrite += value;
+      ncount      -= value;
 
-      ptr    += value;
-      ncount -= value;
+      U_INTERNAL_DUMP("ncount = %u", ncount)
+
+      if (ncount == 0) break;
+
+      ptr += value;
       }
-   while (ncount);
 
-   U_INTERNAL_ASSERT_EQUALS(ncount,0)
-
-   U_RETURN(true);
+   U_RETURN(iBytesWrite);
 }
 
-bool USocketExt::write(USocket* s, const UString& header, const UString& body, int timeoutMS)
+int USocketExt::writev(USocket* s, struct iovec* _iov, int iovcnt, uint32_t ncount, int timeoutMS)
 {
-   U_TRACE(0, "USocketExt::write(%p,%.*S,%.*S,%d)", s, U_STRING_TO_TRACE(header), U_STRING_TO_TRACE(body), timeoutMS)
+   U_TRACE(0, "USocketExt::writev(%p,%p,%d,%u,%d)", s, _iov, iovcnt, ncount, timeoutMS)
 
    U_INTERNAL_ASSERT(s->isOpen())
+   U_INTERNAL_ASSERT_MAJOR(ncount, 0)
 
-   size_t sz1 = header.size(),
-          sz2 =   body.size();
-
-   const char* ptr = header.data();
-
-   if (sz2 == 0)
-      {
-      if (write(s, ptr, sz1, timeoutMS)) U_RETURN(true);
-
-      U_RETURN(false);
-      }
-
-   ssize_t value, ncount = sz1 + sz2;
-
-   struct iovec _iov[2] = { { (caddr_t)ptr,         sz1 },
-                            { (caddr_t)body.data(), sz2 } };
+   ssize_t value;
+   int idx = 0, iBytesWrite = 0;
 
 loop:
-   U_INTERNAL_DUMP("ncount = %u sz1 = %d", ncount, sz1)
+   U_INTERNAL_DUMP("ncount = %u _iov[%d].iov_len = %d", ncount, idx, _iov[idx].iov_len)
 
-   value = s->writev(_iov, 2, timeoutMS);
+   value = s->writev(_iov, iovcnt, timeoutMS);
 
-   if (value == ncount) U_RETURN(true);
+   if (s->checkIO(value) == false) U_RETURN(iBytesWrite);
 
-   if (s->checkIO(value, ncount) == false) U_RETURN(false);
+   iBytesWrite += value;
+   ncount      -= value;
 
-   if (sz1)
+   U_INTERNAL_DUMP("ncount = %u", ncount)
+
+   if (ncount == 0) U_RETURN(iBytesWrite);
+
+   U_INTERNAL_ASSERT_MAJOR(_iov[idx].iov_len, 0)
+
+   if ((size_t)value >= _iov[idx].iov_len)
       {
-      if (sz1 >= (size_t)value)
-         {
-         sz1             -= value;
-         _iov[0].iov_base = (char*)_iov[0].iov_base + value;
+      value -= _iov[idx].iov_len;
+               _iov[idx].iov_len = 0;
 
-         value = 0;
-         }
-      else
-         {
-         value -= sz1;
-                  sz1 = 0;
-         }
+      ++idx;
 
-      _iov[0].iov_len = sz1;
+      U_INTERNAL_ASSERT_MINOR(idx, iovcnt)
       }
 
-   _iov[1].iov_len  -= value;
-   _iov[1].iov_base  = (char*)_iov[1].iov_base + value;
+   _iov[idx].iov_len -= value;
+   _iov[idx].iov_base = (char*)_iov[idx].iov_base + value;
 
-   ncount = sz1 + _iov[1].iov_len;
+#ifdef DEBUG
+   uint32_t sum = 0;
 
-   U_INTERNAL_ASSERT_MAJOR(ncount,0)
+   for (int i = 0; i < iovcnt; ++i) sum += _iov[i].iov_len;
+
+   U_INTERNAL_DUMP("sum = %u", sum)
+
+   U_INTERNAL_ASSERT_EQUALS(sum, ncount)
+#endif
 
    if (UNotifier::waitForWrite(s->iSockDesc, timeoutMS) == 1) goto loop;
 
-   U_RETURN(false);
+   U_RETURN(iBytesWrite);
 }
 
 // Send a command to a server and wait for a response (single line)
@@ -304,7 +295,7 @@ int USocketExt::vsyncCommand(USocket* s, char* buffer, uint32_t buffer_size, con
    buffer[buffer_len++] = '\n';
 
    int n        = s->send(buffer, buffer_len),
-       response = (s->checkIO(n, buffer_len) ? readLineReply(s, buffer, buffer_size) : (int)USocket::BROKEN);
+       response = (s->checkIO(n) ? readLineReply(s, buffer, buffer_size) : (int)USocket::BROKEN);
 
    U_RETURN(response);
 }
@@ -323,7 +314,7 @@ int USocketExt::vsyncCommandML(USocket* s, char* buffer, uint32_t buffer_size, c
    buffer[buffer_len++] = '\n';
 
    int n        = s->send(buffer, buffer_len),
-       response = (s->checkIO(n, buffer_len) ? readMultilineReply(s, buffer, buffer_size) : (int)USocket::BROKEN);
+       response = (s->checkIO(n) ? readMultilineReply(s, buffer, buffer_size) : (int)USocket::BROKEN);
 
    U_RETURN(response);
 }
@@ -355,9 +346,9 @@ int USocketExt::vsyncCommandToken(USocket* s, UString& buffer, const char* forma
 
    int n = s->send(p, buffer_len);
 
-   if (s->checkIO(n, buffer_len))
+   if (s->checkIO(n))
       {
-      uint32_t pos_token = USocketExt::read(s, buffer, token, token_len);
+      uint32_t pos_token = USocketExt::readWhileNotToken(s, buffer, token, token_len);
 
       if (pos_token != U_NOT_FOUND)
          {
@@ -444,11 +435,7 @@ int USocketExt::readLineReply(USocket* s, char* buffer, uint32_t buffer_size) //
 
       i = s->recv(buffer + r, count);
 
-      if (i == 0 ||
-          s->checkIO(i, count) == false)
-         {
-         U_RETURN(USocket::BROKEN);
-         }
+      if (s->checkIO(i) == false) U_RETURN(USocket::BROKEN);
 
       r += i;
       }
@@ -582,11 +569,11 @@ void USocketExt::getARPCache(UVector<UString>& vec)
 #endif
 }
 
-UString USocketExt::getNetworkInterfaceName(const UString& ip)
+UString USocketExt::getNetworkInterfaceName(const char* ip)
 {
-   U_TRACE(1, "USocketExt::getNetworkInterfaceName(%.*S)", U_STRING_TO_TRACE(ip))
+   U_TRACE(1, "USocketExt::getNetworkInterfaceName(%S)", ip)
 
-   U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(ip)))
+   U_INTERNAL_ASSERT(u_isIPv4Addr(ip,u__strlen(ip)))
 
    UString result(100U);
 
@@ -607,7 +594,7 @@ UString USocketExt::getNetworkInterfaceName(const UString& ip)
 
       while (U_SYSCALL(fscanf, "%p,%S", arp, "%15s %*s %*s %*s %*s %15s\n", _ip, dev) != EOF)
          {
-         if (ip == _ip)
+         if (strcmp(ip, _ip) == 0)
             {
             (void) result.assign(dev);
 

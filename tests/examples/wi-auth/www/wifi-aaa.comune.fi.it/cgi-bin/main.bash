@@ -127,7 +127,7 @@ historical_statistics_login() {
 
 	for file in `ls -rt $HISTORICAL_LOG_DIR/$REGEX_HISTORICAL_LOGS`
 	do
-		filename=`basename $file`
+		filename=`basename $file 2>/dev/null`
 		TAG=`printf "$URL_TAG_START" $filename $filename`
 
 		TABLE="$TABLE\t$TR_TAG_START\n\t\t$TD_DATA_TAG_START\n\t\t\t$TAG\n\t\t$TD_TAG_END\n\t$TR_TAG_END\n"
@@ -185,7 +185,10 @@ view_statistics_login() {
 		printf "%s\n", ENVIRON["TABLE_TAG_START"];
 	}
 
-	/LOGIN/ { a=$8; gsub(",","",a) ; login[a $1]+=1 ; login[a]+=1 ; login[$1]+=1 ; if (!date[$1]) date[$1]+=1 ; if (!ap[a]) ap[a]+=1 }
+	/LOGIN/ { a2=$8; gsub(",","",a2)			###				  label@hostname
+				 a1=a2; sub("[^@]*@","",a1)   ### hostname
+				 a=a1 " " a2						### hostname " " label@hostname
+				 login[a $1]+=1 ; login[a]+=1 ; login[$1]+=1 ; if (!date[$1]) date[$1]+=1 ; if (!ap[a]) ap[a]+=1 }
 
 	END {
 		n=asorti(date, sorted_date);
@@ -199,15 +202,19 @@ view_statistics_login() {
 		printf "\t\t%s%s%s\n", thTagStart, "Totale x AP", thTagEnd 
 		printf "\t%s\n", trTagEnd
 
-		for (j in ap) { 
+		m=asorti(ap, sorted_ap);
 
-			printf "\t%s\n\t\t%sAP %s%s\n", trTagStart, tdTagHeaderStart, j, tdTagEnd
+		for (j = 1; j <= m; j++) {
+
+			a=sorted_ap[j]; sub("[^ ]* ", "", a) ### label@hostname
+
+			printf "\t%s\n\t\t%s%s%s\n", trTagStart, tdTagHeaderStart, a, tdTagEnd
 
 			for (i = 1; i <= n; i++) {
-				printf "\t\t%s%.0f%s\n", tdTagDataStart, login[j sorted_date[i]], tdTagEnd
+				printf "\t\t%s%.0f%s\n", tdTagDataStart, login[sorted_ap[j] sorted_date[i]], tdTagEnd
 			}
 
-			printf "\t\t%s%.0f%s\n", tdTagHeaderAlignedStart, login[j], tdTagEnd
+			printf "\t\t%s%.0f%s\n", tdTagHeaderAlignedStart, login[sorted_ap[j]], tdTagEnd
 			printf "\t%s\n", trTagEnd
 		}
 
@@ -401,7 +408,9 @@ write_FILE() {
 	# $2 -> filename
 	# $3 -> option
 
-	if [ -d $2 ]; then
+	local filename=`basename $2 2>/dev/null`
+
+	if [ -d $2 -o "${filename:0:1}" = "." ]; then
 		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: write_FILE() failure (anomalia 002) on data=$1 filename=$2 option=$3"
 
 		write_ENV
@@ -419,7 +428,9 @@ append_to_FILE() {
 	# $1 -> data
 	# $2 -> filename
 
-	if [ -d $2 ]; then
+	local filename=`basename $2 2>/dev/null`
+
+	if [ -d $2 -o "${filename:0:1}" = "." ]; then
 		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: append_to_FILE() failure (anomalia 003) on data=$1 filename=$2"
 
 		write_ENV
@@ -563,33 +574,6 @@ is_group_ACCOUNT() {
 	test -s $file && awk -F : '$1 == "'"$uid"'" && (! length("'"$password"'") || $2 == "'"$password"'") {found = 1} END {exit found ? 0 : 1}' $file
 }
 
-user_has_group_ACCOUNT() {
-
-	# $1 -> mac
-	# $2 -> ip
-	# $3 -> redirect
-	# $4 -> gateway
-	# $5 -> timeout
-	# $6 -> token
-	# $7 -> ap
-	# $8 -> uid
-	# $9 -> password
-
-	is_group_ACCOUNT "$8" "$9" && {
-
-		# ap is calling for auth, redirect back to the gateway appending a signed ticket that will signal ap to unlock the firewall...
-
-		OP=ACCOUNT_AUTH
-		POLICY=FLAT
-
-		load_policy
-
-		# redirect back to the gateway appending a signed ticket that will signal NoDog to unlock the firewall...
-
-		send_ticket "$@"
-	}
-}
-
 is_ap_OK() {
 
 	# 1 -> ap
@@ -652,7 +636,7 @@ main_page() {
 		# 7 -> token
 		# 8 -> uuid
 		# ------------------------------------------------------------------------------------------------------------------------------------------------
-		# stefano 10.30.1.131:5280 00:e0:4c:d4:63:f5 10.30.1.105 http://www.google.com 0 10.30.1.105&1257603166&2a2436611f452f8eebddce4992e88f8d 055340773
+		# 10.30.1.131:5280 00:e0:4c:d4:63:f5 10.30.1.105 http://www.google.com 0 10.30.1.105&1257603166&2a2436611f452f8eebddce4992e88f8d 055340773
 		# ------------------------------------------------------------------------------------------------------------------------------------------------
 		if [ "$PARAM" != "      " ]; then
 			save_connection_request "$PARAM" # save nodog data on file
@@ -676,7 +660,7 @@ unifi_page() {
 
 	is_ap_OK unifi
 
-	REQUEST_URI=login
+	REQUEST_URI=unifi_page
 
 	print_page "$HELP_URL" "$WALLET_URL" unifi "/unifi_login_request"
 }
@@ -685,9 +669,16 @@ logged_page() {
 
 	get_user_context_connection "" ""
 
-	is_ap_OK "$AP"
+	if [ -n "$AP" ]; then
 
-	print_page "$HELP_URL" "$WALLET_URL" $AP "/logged_login_request"
+		is_ap_OK "$AP"
+
+		print_page "$HELP_URL" "$WALLET_URL" $AP "/logged_login_request"
+	else
+
+		HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
+		HTTP_RESPONSE_HEADER="Refresh: 0; url=http://www.google.com\r\n"
+	fi
 }
 
 get_user_context_connection() {
@@ -712,53 +703,6 @@ get_user_context_connection() {
 	fi
 }
 
-#send_ticket_to_nocat() {
-
-	# ------------------------
-	# 1 -> mac
-	# 2 -> ip
-	# 3 -> redirect
-	# 4 -> gateway
-	# 5 -> timeout
-	# 6 -> token
-	# 7 -> ap
-	# ------------------------
-	# 00:e0:4c:d4:63:f5 10.30.1.105 http://www.google.com 10.30.1.131:5280 stefano 86400 lOosGl9h1aHxo lab2.wpp54
-	# ------------------------
-
-#	SIGNED_DATA_FILE=/tmp/signed.$$
-# 	GPG_CMD="gpg --homedir=$DIR_ROOT/gpg --keyring=$DIR_ROOT/gpg/trustdb.gpg --sign --armor --no-tty"
-
-	# ----------------------------------------------------------
-	# NoCat auth message format (must be PGP signed & encrypted) 
-	# ----------------------------------------------------------
-	# Action   Permit|Deny
-	# Mode     login|??? (popup/renew?)
-	# Redirect URL_requested
-	# Mac      00:11:22:33:44:55:66
-	# Timeout  to_in_seconds
-	# Token    token
-	# ----------------------------------------------------------
-
-#	$GPG_CMD <<END >$SIGNED_DATA_FILE 2>/dev/null
-#
-#Action   Permit
-#Mode	   Login
-#Redirect	http://$HTTP_HOST/postlogin?gateway=$4&redirect=$3&ap=$7&ip=$2&mac=$1&timeout=$5
-#Mac		$1
-#Timeout	$5
-#Token		$6
-#END
-#
-#	if [ -s $SIGNED_DATA_FILE ]; then
-#		SIGNED_DATA=`tail -n +4 $SIGNED_DATA_FILE | head -n -1 | tr -d '\r\n' 2>/dev/null`
-#	 	rm -f $SIGNED_DATA_FILE
-#	fi
-#
-#	HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
-#	HTTP_RESPONSE_HEADER="Refresh: 0; url=http://$4/?ticket=$SIGNED_DATA\r\n"
-#}
-
 send_ticket_to_nodog() {
 
 	# ------------------------
@@ -772,17 +716,6 @@ send_ticket_to_nodog() {
 	# $8 -> uid
 	# ------------------------
 
-	if [ "$OP" != "ACCOUNT_AUTH" ]; then
-		# -------------------------------------------------------------
-		# CHECK FOR CHANGE OF CONNECTION CONTEXT FOR SAME USER ID
-		# -------------------------------------------------------------
-		check_if_user_is_connected "$1" "$2" "$4" "$7" "$8"
-
-		if [ "$OP" = "RENEW" ]; then
-			ask_nodog_to_logout_user $IP $MAC
-		fi
-	fi
-
 	# ------------------------------------------------------------------------------------
 	# SAVE REAL UID AND POLICY ON FILE (UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC)
 	# ------------------------------------------------------------------------------------
@@ -794,6 +727,17 @@ send_ticket_to_nodog() {
 
 	write_FILE "$WA_UID $POLICY $MAX_TIME $MAX_TRAFFIC" $FILE_UID
 	# --------------------------------------------------------------------
+
+	if [ "$OP" != "ACCOUNT_AUTH" ]; then
+		# -------------------------------------------------------------
+		# CHECK FOR CHANGE OF CONNECTION CONTEXT FOR SAME USER ID
+		# -------------------------------------------------------------
+		check_if_user_is_connected "$1" "$2" "$4" "$7" "$8"
+
+		if [ "$OP" = "RENEW" ]; then
+			ask_nodog_to_logout_user $IP $MAC
+		fi
+	fi
 
 	FILE_CNT=$DIR_CNT/$POLICY/$WA_UID
 	# --------------------------------------------------------------------
@@ -896,14 +840,6 @@ User		$8"
 	HTTP_RESPONSE_HEADER="Refresh: 0; url=http://$4/ticket?ticket=$SIGNED_DATA\r\n"
 }
 
-send_ticket() {
-
-#	send_ticket_to_nocat "$@" 
-	send_ticket_to_nodog "$@" 
-
-	write_SSI
-}
-
 user_has_valid_MAC() {
 
 	# ------------------------
@@ -935,9 +871,37 @@ user_has_valid_MAC() {
 
 				load_policy
 
-				send_ticket "$@" "$MAC" 
+				send_ticket_to_nodog "$@" "$MAC" 
+
+				write_SSI
 			fi
 		done < $FILE
+	fi
+}
+
+user_has_valid_cert() {
+
+ 	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_USER_BASEDN $LDAP_USER_PARAM" \
+			"(&(objectClass=waUser)(&(waIssuer=$SSL_CLIENT_I_DN)(waSerial=$SSL_CLIENT_CERT_SERIAL)(waActive=TRUE)))"
+
+	if [ -s $TMPFILE.out ]; then
+
+		USER=`cat $TMPFILE.out | grep 'waUid: ' | cut -f2 -d' ' 2>/dev/null`
+
+		if [ -z "$USER" ]; then
+			USER=unknow
+		fi
+
+		# NoDog is calling for auth, redirect back to the gateway appending a signed ticket that will signal NoDog to unlock the firewall...
+
+		OP=CERT_AUTH
+		POLICY=FLAT
+
+		load_policy
+
+		send_ticket_to_nodog "$@" "$USER"
+
+		write_SSI
 	fi
 }
 
@@ -1219,30 +1183,6 @@ check_if_user_is_connected() {
 	fi
 }
 
-user_has_valid_cert() {
-
- 	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_USER_BASEDN $LDAP_USER_PARAM" \
-			"(&(objectClass=waUser)(&(waIssuer=$SSL_CLIENT_I_DN)(waSerial=$SSL_CLIENT_CERT_SERIAL)(waActive=TRUE)))"
-
-	if [ -s $TMPFILE.out ]; then
-
-		USER=`cat $TMPFILE.out | grep 'waUid: ' | cut -f2 -d' ' 2>/dev/null`
-
-		if [ -z "$USER" ]; then
-			USER=unknow
-		fi
-
-		# NoDog is calling for auth, redirect back to the gateway appending a signed ticket that will signal NoDog to unlock the firewall...
-
-		OP=CERT_AUTH
-		POLICY=FLAT
-
-		load_policy
-
-		send_ticket "$@" "$USER"
-	fi
-}
-
 login_with_problem() {
 
 	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: ${REQUEST_URI}() failure REQ_FILE=$REQ_FILE IP=$IP MAC=$MAC"
@@ -1282,6 +1222,7 @@ info_notified_from_nodog() {
 	local LOGOUT=0
 	local	TRAFFIC=0
 	local	TIMEOUT=0
+	local ASK_LOGOUT=0
 
 	# $1 -> mac
 	# $2 -> ip
@@ -1292,13 +1233,13 @@ info_notified_from_nodog() {
 	# $7 -> connected
 	# $8 -> traffic
 
-	OP=LOGOUT
-
 	append_to_FILE "`_date` op: INFO uid: $5, ap: $4, ip: $2, mac: $1, logout: $6, connected: $7, traffic: $8" $FILE_LOG.info
 
 	if [ -z "$5" ]; then
 		return
 	fi
+
+	OP=INFO
 
 	# NB: FILE_CTX e' settato da get_user_context_connection() che e' chiamato da check_if_user_is_connected()...
 
@@ -1322,11 +1263,13 @@ info_notified_from_nodog() {
 	else
 		load_policy $DIR_REQ/$5.uid # GET POLICY FROM FILE (UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC)
 
-		FILE_CNT=$DIR_CNT/$POLICY/$UUID_TO_LOG
+		FILE_CNT=$DIR_CNT/$POLICY/$5
+
+		check_if_user_connected_to_AP_NO_CONSUME "$4"
 
 		if [ $8 -eq 0 -a $6 -le 0 ]; then # no traffic and no logout => logout implicito
 
-			LOGOUT=1
+			ASK_LOGOUT=1
 
 			ask_nodog_to_logout_user $IP $MAC
 
@@ -1338,7 +1281,9 @@ info_notified_from_nodog() {
 
 					read TIMEOUT < $FILE_CNT.timeout 2>/dev/null
 
-					let "TIMEOUT = TIMEOUT + $GET_USER_INFO_INTERVAL"
+					if [ "$CONSUME_ON" = "true" ]; then
+						let "TIMEOUT = TIMEOUT + $GET_USER_INFO_INTERVAL"
+					fi
 					# ---------------------------------------------------------
 					# we save the time remain for connection (secs) on file
 					# ---------------------------------------------------------
@@ -1346,8 +1291,6 @@ info_notified_from_nodog() {
 				fi
 			fi
 		else
-			check_if_user_connected_to_AP_NO_CONSUME "$4"
-
 			if [ "$CONSUME_ON" = "true" ]; then
 				# --------------------------------------------------------------------
 				# TRAFFIC POLICY
@@ -1374,9 +1317,9 @@ info_notified_from_nodog() {
 					# ---------------------------------------------------------
 					write_FILE $TRAFFIC $FILE_CNT.traffic
 
-					if [ $TRAFFIC -eq 0 -a $LOGOUT -eq 0 ]; then
+					if [ $TRAFFIC -eq 0 -a $ASK_LOGOUT -eq 0 ]; then
 
-						LOGOUT=1
+						ASK_LOGOUT=1
 
 						ask_nodog_to_logout_user $IP $MAC
 					fi
@@ -1414,9 +1357,9 @@ info_notified_from_nodog() {
 					# ---------------------------------------------------------
 					write_FILE $TIMEOUT $FILE_CNT.timeout
 
-					if [ $TIMEOUT -eq 0 -a $LOGOUT -eq 0 ]; then
+					if [ $TIMEOUT -eq 0 -a $ASK_LOGOUT -eq 0 ]; then
 
-						LOGOUT=1
+						ASK_LOGOUT=1
 
 						ask_nodog_to_logout_user $IP $MAC
 					fi
@@ -1433,13 +1376,13 @@ info_notified_from_nodog() {
 			if [ $6 -eq -1 ]; then # -1 => disconnected (logout implicito)
 				OP=EXIT
 			fi
-
 		fi
 	fi
 
 	if [ $LOGOUT -eq 0 ]; then
 		BODY_SHTML="OK"
 	else
+		OP=LOGOUT
 		BODY_SHTML="LOGOUT"
 
 		write_to_LOG "$5" "$4" "$2" "$1" "$TIMEOUT" "$TRAFFIC"
@@ -1472,31 +1415,6 @@ ask_nodog_to_check_for_users_info() {
 			sleep 13
 
 			ask_nodog_to_check_for_users_info
-		fi
-
-		rm -f "$TMPFILE"
-	fi
-}
-
-ask_nodog_to_validate_user_login() {
-
-	# $1 -> ap
-
-	AP=$1
-	TMPFILE=/tmp/nodog_validate.$$
-
-	# we request nodog to check for users login...
-	# -----------------------------------------------------------------------------
-	# NB: we need PREFORK_CHILD > 2
-	# -----------------------------------------------------------------------------
-	send_request_to_nodog "validate" $TMPFILE "-i"
-
-	if [ -s "$TMPFILE" ]; then
-
-		read HTTP_VERSION HTTP_STATUS HTTP_DESCR < $TMPFILE 2>/dev/null
-
-		if [ "$HTTP_STATUS" = "204" ]; then # 204 - HTTP_NO_CONTENT
-			echo "HTTP_STATUS=$HTTP_STATUS"
 		fi
 
 		rm -f "$TMPFILE"
@@ -1600,7 +1518,7 @@ logout_request() {
 
 	logout_user
 
-	read_counter "$UUID_TO_LOG"
+	read_counter $UUID
 
 	MOBILE=yes
 	REQUEST_URI=ringraziamenti
@@ -1625,13 +1543,13 @@ login_request() {
 
 		# GET
 		# ------------
-		# $1	-> mac
-		# $2  -> ip
-		# $3	-> redirect
-		# $4	-> gateway
-		# $5	-> timeout
-		# $6	-> token
-		# $7	-> ap
+		# $1 -> mac
+		# $2 -> ip
+		# $3 -> redirect
+		# $4 -> gateway
+		# $5 -> timeout
+		# $6 -> token
+		# $7 -> ap
 
 		is_ap_OK $7
 
@@ -1648,74 +1566,19 @@ login_request() {
 	# $10 -> password
 	# $11 -> bottone
 
+	if [ "$8" != "10_piazze" -a "$8" != "auth_service" ]; then
+
+		unset BACK_TAG
+
+		message_page "Errore" "Errore Autorizzazione - dominio sconosciuto: $8"
+	fi
+
 	if [ -z "$9" -o \
 		  -z "${10}" ]; then
 
 		unset BACK_TAG
 
 		message_page "Impostare utente e/o password" "Impostare utente e/o password"
-	fi
-
-	ask_nodog_to_validate_user_login "$7"
-
-	REQ_FILE=$DIR_REQ/$SESSION_ID.req # nodog data saved on file
-
-	read_connection_request
-
-	if [ -n "$7" -a "$7" != "$AP" ]; then
-		login_with_problem
-	fi
-	if [ -n "$4" -a "$4" != "$GATEWAY" ]; then
-		login_with_problem
-	fi
-	if [ -n "$1" -a "$1" != "$MAC" ]; then
-		login_with_problem
-	fi
-	if [ -n "$2" -a "$2" != "$IP" ]; then
-		login_with_problem
-	fi
-	if [ -n "$5" -a "$5" != "$TIMEOUT" ]; then
-		login_with_problem
-	fi
-	if [ -n "$3" -a "$3" != "$REDIRECT" ]; then
-		login_with_problem
-	fi
-	if [ -n "$6" -a "$6" != "$TOKEN" ]; then
-		login_with_problem
-	fi
-
-	UUID_TO_APPEND=1
-
-	# $1	-> mac
-	# $2  -> ip
-	# $3	-> redirect
-	# $4	-> gateway
-	# $5	-> timeout
-	# $6	-> token
-	# $7	-> ap
-	# $8	-> uid
-	# $9 -> password
-
-	user_has_group_ACCOUNT "$MAC" "$IP" "$REDIRECT" "$GATEWAY" "$TIMEOUT" "$TOKEN" "$AP" "$9" "${10}"
-
-	if [ -n "$UUID" ]; then
-
-		FILE_CTX=$DIR_CTX/$UUID.ctx
-
-		if [ ! -s $FILE_CTX ]; then
-			anomalia 9
-		fi
-
-		unset BACK_TAG
-
-		message_page "Login" "Sei già loggato! (login_request)"
-	fi
-
-	if [ "$8" != "10_piazze" -a "$8" != "auth_service" ]; then
-
-		unset BACK_TAG
-
-		message_page "Errore" "Errore Autorizzazione - dominio sconosciuto: $8"
 	fi
 
 	# Check 1: Wrong user and/or password
@@ -1763,6 +1626,8 @@ login_request() {
 		fi
 
 		if [ $EXIT_VALUE -ne 0 -o -z "$RESPONSE" ]; then
+
+			logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: login_request() AUTH_CMD failure EXIT_VALUE=$EXIT_VALUE RESPONSE=$RESPONSE"
 
 			unset BACK_TAG
 
@@ -1885,18 +1750,138 @@ waNotAfter: $NOT_AFTER
 		fi
 	fi
 
+	is_group_ACCOUNT "$9" "${10}"
+
+	if [ $? -eq 0 ]; then
+		POLICY=FLAT
+
+		OP=ACCOUNT_AUTH
+	fi
+
+	LOGIN_VALIDATE=0
+
+	REQ_FILE=$DIR_REQ/$SESSION_ID.req # nodog data saved on file
+
+	read_connection_request
+
+	if [ "$7" != "$AP" ]; then
+		LOGIN_VALIDATE=1
+	elif [ "$4" != "$GATEWAY" ]; then
+		LOGIN_VALIDATE=1
+	elif [ "$1" != "$MAC" ]; then
+		LOGIN_VALIDATE=1
+	elif [ "$2" != "$IP" ]; then
+		LOGIN_VALIDATE=1
+	elif [ "$5" != "$TIMEOUT" ]; then
+		LOGIN_VALIDATE=1
+	elif [ "$3" != "$REDIRECT" ]; then
+		LOGIN_VALIDATE=1
+	elif [ "$6" != "$TOKEN" ]; then
+		LOGIN_VALIDATE=1
+	fi
+
+	if [ $LOGIN_VALIDATE -eq 0 ]; then
+		# ------------------------------------------------------------------------------------------------------------------------------------------------
+		# redirect back to the gateway appending a signed ticket that will signal NoDog to unlock the firewall...
+		# ------------------------------------------------------------------------------------------------------------------------------------------------
+		# $1 -> mac
+		# $2 -> ip
+		# $3 -> redirect
+		# $4 -> gateway
+		# $5 -> timeout
+		# $6 -> token
+		# $7 -> ap
+		# $8 -> uid
+		# ------------------------------------------------------------------------------------------------------------------------------------------------
+		UUID_TO_APPEND=1
+
+		send_ticket_to_nodog "$MAC" $IP "$REDIRECT" $GATEWAY $TIMEOUT "$TOKEN" $AP "$9"
+	else
+		# ------------------------------------------------------------------------------------
+		# SAVE DATA ON FILE
+		# ------------------------------------------------------------------------------------
+		FILE_UID=$DIR_REQ/$9.uid
+
+		write_FILE "$OP $POLICY $MAX_TIME $MAX_TRAFFIC" $FILE_UID
+		# --------------------------------------------------------------------
+
+		sign_data "uid=$9"
+
+		HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
+		HTTP_RESPONSE_HEADER="Refresh: 0; url=http://www.google.com/login_validate?$SIGNED_DATA\r\n"
+	fi
+
+	write_SSI
+}
+
+login_validate() {
+
+	# 1 -> mac
+	# 2 -> ip
+	# 3 -> uid
+	# 4 -> gateway
+	# 5 -> timeout
+	# 6 -> token
+	# 7 -> ap
+
+	# ----------------------
+	# GET DATA FROM FILE
+	# ----------------------
+	FILE_UID=$DIR_REQ/$3.uid
+
+	if [ -s "$FILE_UID" ]; then
+		read OP POLICY MAX_TIME MAX_TRAFFIC < $FILE_UID 2>/dev/null
+	else
+		login_with_problem
+	fi
+
+	if [ "$OP" != "ACCOUNT_AUTH" ]; then
+
+		FILE_CTX=$DIR_CTX/$3
+
+		if [ -s $FILE_CTX ]; then
+
+			unset BACK_TAG
+
+			message_page "Login" "Sei già loggato! (login_request)"
+		fi
+	fi
+
+	load_policy
+
+	PARAM="$7 $4 $1 $2 http://www.google.com $5 $6 $3"
+	# ------------------------------------------------------------------------------------------------------------------------------------------------
+	# SAVE REQUEST CONTEXT DATA ON FILE (AP GATEWAY MAC IP REDIRECT TIMEOUT TOKEN UUID)
+	# ------------------------------------------------------------------------------------------------------------------------------------------------
+	# 1 -> ap
+	# 2 -> gateway
+	# 3 -> mac
+	# 4 -> ip
+	# 5 -> redirect
+	# 6 -> timeout
+	# 7 -> token
+	# 8 -> uuid
+	# ------------------------------------------------------------------------------------------------------------------------------------------------
+	# 10.30.1.131:5280 00:e0:4c:d4:63:f5 10.30.1.105 http://www.google.com 0 10.30.1.105&1257603166&2a2436611f452f8eebddce4992e88f8d 055340773
+	# ------------------------------------------------------------------------------------------------------------------------------------------------
+	save_connection_request "$PARAM" # save nodog data on file
+
+	# ------------------------------------------------------------------------------------------------------------------------------------------------
 	# redirect back to the gateway appending a signed ticket that will signal NoDog to unlock the firewall...
+	# ------------------------------------------------------------------------------------------------------------------------------------------------
+	# $1 -> mac
+	# $2 -> ip
+	# $3 -> redirect
+	# $4 -> gateway
+	# $5 -> timeout
+	# $6 -> token
+	# $7 -> ap
+	# $8 -> uid
+	# ------------------------------------------------------------------------------------------------------------------------------------------------
 
-	# $1	-> mac
-	# $2  -> ip
-	# $3	-> redirect
-	# $4	-> gateway
-	# $5	-> timeout
-	# $6	-> token
-	# $7	-> ap
-	# $8	-> uid
+	send_ticket_to_nodog "$1" "$2" "http://www.google.com" "$4" "$5" "$6" "$7" "$3"
 
-	send_ticket "$MAC" $IP "$REDIRECT" $GATEWAY $TIMEOUT "$TOKEN" $AP "$9"
+	write_SSI
 }
 
 postlogin() {
@@ -2401,8 +2386,6 @@ status_network() {
 
 		while read AP UUID GATEWAY MAC IP AUTH_DOMAIN
 		do
-			LOGIN_TIME=`date -r $DIR_CTX/$UUID.ctx`
-
 			# --------------------------------------------------------------------
 			# GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
 			# --------------------------------------------------------------------
@@ -2412,12 +2395,27 @@ status_network() {
 				read UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC < $FILE_UID 2>/dev/null
 			fi
 
-			read_counter "$UUID_TO_LOG"
+			read_counter $UUID
 
-			RIGA=`printf "$BODY" $UUID "$AUTH_DOMAIN" "$LOGIN_TIME" $POLICY "$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB" $IP $MAC $GATEWAY $AP $AP 2>/dev/null`
+			check_if_user_connected_to_AP_NO_CONSUME "$AP"
 
-			OUTPUT=`echo "$OUTPUT"; echo "$RIGA" 2>/dev/null`
+			if [ "$CONSUME_ON" = "true" ]; then
+				COLOR="green"
+				CONSUME="yes"
+			else
+				COLOR="orange"
+				CONSUME="no"
+			fi
 
+			if [ -s $DIR_CTX/$UUID.ctx ]; then
+				LOGIN_TIME=`date -r $DIR_CTX/$UUID.ctx 2>/dev/null`
+
+				RIGA=`printf "$BODY" $UUID "$AUTH_DOMAIN" "$LOGIN_TIME" $POLICY \
+											"$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB" \
+											$IP $MAC $GATEWAY $COLOR $CONSUME $AP $AP 2>/dev/null`
+
+				OUTPUT=`echo "$OUTPUT"; echo "$RIGA" 2>/dev/null`
+			fi
 		done < $TMPFILE
 	fi
 
@@ -2442,9 +2440,13 @@ update_ap_list() {
 
 	if [ -z "$ACCESS_POINT" ]; then
 
-		# si aggiunge access point alla lista di quelli contattabili...
+		# si controlla che non ci sia un access point con lo stesso ip...
+		ACCESS_POINT=`egrep " $2" $ACCESS_POINT_LIST.up 2>/dev/null`
 
-		append_to_FILE "$ACCESS_POINT_NAME $2" $ACCESS_POINT_LIST.up
+		if [ -z "$ACCESS_POINT" ]; then
+			# si aggiunge access point alla lista di quelli contattabili...
+			append_to_FILE "$ACCESS_POINT_NAME $2" $ACCESS_POINT_LIST.up
+		fi
 	fi
 
 	ACCESS_POINT=`egrep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.down 2>/dev/null`
@@ -2582,7 +2584,7 @@ reset_policy() {
 
 	for POLICY_FILEPATH in `ls $DIR_POLICY/* 2>/dev/null`
 	do
-		POLICY=`basename $POLICY_FILEPATH`
+		POLICY=`basename $POLICY_FILEPATH 2>/dev/null`
 
 		load_policy
 
@@ -2823,6 +2825,7 @@ do_cmd() {
 			/polling_attivazione)	polling_attivazione			"$@"	;;
 			/registrazione)			registrazione_request		"$@"	;;
 			/login_request)			login_request					"$@"	;;
+			/login_validate)			login_validate					"$@"	;;
 			/logout)						logout_request							;;
 			/unifi)						unifi_page								;;
 			/logged)						logged_page								;;
@@ -2950,7 +2953,8 @@ do_cmd() {
 
 export TITLE_TXT HEAD_HTML BODY_SHTML BODY_STYLE MOBILE REQ_FILE AUTH_DOMAIN REMAINING_TIME_MIN REMAINING_TRAFFIC_MB \
 		 SESSION_ID CONNECTION_CLOSE SET_COOKIE TMPFILE OUTPUT HTTP_RESPONSE_HEADER HTTP_RESPONSE_BODY FILE_RESPONSE_HTML \
-		 OP FILE_CTX MAC IP GATEWAY AP TMP_FORM_FILE UUID CALLER_ID USER SIGNED_DATA UUID_TO_APPEND POLICY WA_UID CONSUME_ON
+		 OP FILE_CTX MAC IP GATEWAY AP TMP_FORM_FILE UUID UUID_TO_LOG UUID_TO_APPEND CALLER_ID USER SIGNED_DATA POLICY WA_UID \
+		 CONSUME_ON FILE_CNT POLICY_FILE FILE_UID
 
 # load eventuale script configuration
 

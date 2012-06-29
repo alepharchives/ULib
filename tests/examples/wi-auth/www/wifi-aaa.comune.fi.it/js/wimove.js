@@ -25,7 +25,7 @@ var wimoveFetchUrl = this.wimoveFetchUrl = function(url) {
   return false;
 };
 
-var wimoveBuildBanner = this.wimoveBuildBanner =  function(baseUrl) {
+var wimoveBuildBanner = this.wimoveBuildBanner = function(baseUrl) {
   var bannerUrls = new Array();
   var ap=wimoveGetQueryVar("ap");
   var gateway=wimoveGetQueryVar("gateway");
@@ -40,9 +40,26 @@ var wimoveBuildBanner = this.wimoveBuildBanner =  function(baseUrl) {
     ip=gateway.match(/[0-9]+/g);
     certid = ''+(parseInt(ip[2]) * 254 + parseInt(ip[3]))+'';
     for (var i = certid.length; i < 4; i++) certid = '0'+certid;
-    bannerUrls.push(baseUrl + '/X' + certid + 'R' + ap + (isMobile()?'/mobile':'/full') + '/banner.html');
+    bannerUrls.push(baseUrl + '/X' + certid + 'R' + ap + (isMobile() ? '/mobile' : '/full') + '/banner.html');
   }
-  bannerUrls.push(baseUrl + '/default' + (isMobile()?'/mobile':'/full') + '/banner.html');
+  bannerUrls.push(baseUrl + '/default' + (isMobile() ? '/mobile' : '/full') + '/banner.html');
+
+  var banner;
+  for (var idx in bannerUrls) {  
+    banner = wimoveFetchUrl(bannerUrls[idx]);
+    if (banner !== false)
+      break;
+  }
+  if (banner !== false) {
+    document.write(banner);
+  }
+};
+
+var wimoveBuildBannerStatic = this.wimoveBuildBannerStatic = function(baseUrl) {
+  var bannerUrls = new Array();
+
+  bannerUrls.push(baseUrl					+ (isMobile() ? '/mobile' : '/full') + '/banner.html');
+  bannerUrls.push(baseUrl + '/default' + (isMobile() ? '/mobile' : '/full') + '/banner.html');
 
   var banner;
   for (var idx in bannerUrls) {  

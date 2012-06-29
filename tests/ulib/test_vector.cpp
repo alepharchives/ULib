@@ -398,6 +398,14 @@ U_EXPORT main (int argc, char* argv[])
    tmp = y[9];
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("\"/acme\"") )
 
+   y.swap(7, 3);
+   tmp = y[3];
+   U_INTERNAL_DUMP("tmp = %.*S", U_STRING_TO_TRACE(tmp))
+   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("\"Rocket_Launcher_0001\"") )
+   tmp = y[7];
+   U_INTERNAL_DUMP("tmp = %.*S", U_STRING_TO_TRACE(tmp))
+   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("\"Riding_Rocket_0023\"") )
+
    y.UVector<void*>::sort(compareObj);
 
    cout << y;

@@ -114,7 +114,7 @@
 
          if (client->creatCA(ca, days, cnf)) UApplication::exit_value = 0;
 
-      // cout << "CSP_CA() = " << (client->creatCA(ca, days, cnf) ? 1 : 0) << "\n";
+      // std::cout << "CSP_CA() = " << (client->creatCA(ca, days, cnf) ? 1 : 0) << "\n";
          }
       break;
 
@@ -126,7 +126,7 @@
 
          result = client->listCA();
 
-      // cout << "CSP_LIST_CA() = " << client->listCA() << "\n";
+      // std::cout << "CSP_LIST_CA() = " << client->listCA() << "\n";
          }
       break;
 
@@ -168,8 +168,8 @@
          result = (op == 3 ? client->signP10(  ca, pkcs, policy)
                            : client->signSPKAC(ca, pkcs, policy));
 
-      // cout << "CSP_SIGN_P10()   = " << client->signP10(  ca, pkcs10, policy) << "\n";
-      // cout << "CSP_SIGN_SPACK() = " << client->signSPKAC(ca,  spack, policy) << "\n";
+      // std::cout << "CSP_SIGN_P10()   = " << client->signP10(  ca, pkcs10, policy) << "\n";
+      // std::cout << "CSP_SIGN_SPACK() = " << client->signSPKAC(ca,  spack, policy) << "\n";
          }
       break;
 
@@ -195,7 +195,7 @@
 
          result = client->listCerts(ca, compress);
 
-      // cout << "CSP_LIST_CERTS() = " << client->listCerts(ca, compress) << "\n";
+      // std::cout << "CSP_LIST_CERTS() = " << client->listCerts(ca, compress) << "\n";
          }
       break;
 
@@ -280,8 +280,8 @@
          if (op == 6 ? client->removeCert(ca, serial)
                      : client->revokeCert(ca, serial)) UApplication::exit_value = 0;
 
-      // cout << "CSP_REMOVE_CERT() = " << (client->removeCert(ca, serial) ? 1 : 0) << "\n";
-      // cout << "CSP_REVOKE_CERT() = " << (client->revokeCert(ca, serial) ? 1 : 0) << "\n";
+      // std::cout << "CSP_REMOVE_CERT() = " << (client->removeCert(ca, serial) ? 1 : 0) << "\n";
+      // std::cout << "CSP_REVOKE_CERT() = " << (client->revokeCert(ca, serial) ? 1 : 0) << "\n";
          }
       break;
 
@@ -300,7 +300,7 @@
 
          if (client->zeroCerts(ca)) UApplication::exit_value = 0;
 
-      // cout << "CSP_ZERO_CERTS() = " << (client->zeroCerts(ca) ? 1 : 0) << "\n";
+      // std::cout << "CSP_ZERO_CERTS() = " << (client->zeroCerts(ca) ? 1 : 0) << "\n";
          }
       break;
 
@@ -318,7 +318,7 @@
 
          if (client->emitCRL(ca)) UApplication::exit_value = 0;
 
-      // cout << "CSP_EMIT_CRL() = " << (client->emitCRL(ca) ? 1 : 0) << "\n";
+      // std::cout << "CSP_EMIT_CRL() = " << (client->emitCRL(ca) ? 1 : 0) << "\n";
          }
       break;
 
@@ -336,7 +336,7 @@
 
          result = client->getCRL(ca);
 
-      // cout << "CSP_GET_CRL() = " << client->getCRL(ca) << "\n";
+      // std::cout << "CSP_GET_CRL() = " << client->getCRL(ca) << "\n";
          }
       break;
 
@@ -354,7 +354,7 @@
 
          result = client->getCA(ca);
 
-      // cout << "CSP_GET_CA() = " << client->getCA(ca) << "\n";
+      // std::cout << "CSP_GET_CA() = " << client->getCA(ca) << "\n";
          }
       break;
 
@@ -366,7 +366,7 @@
 end:
    if (result.empty() == false)
       {
-      cout << result << "\n";
+      std::cout << result << "\n";
 
       UApplication::exit_value = 0;
       }

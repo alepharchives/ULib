@@ -39,9 +39,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(2, Window, "", 0)
 
-      Parent        = NULL;
-      WindowHandle  = NULL;
-      TooltipHandle = NULL;
+      Parent        = 0;
+      WindowHandle  = 0;
+      TooltipHandle = 0;
       }
 
    virtual ~Window()
@@ -122,8 +122,8 @@ public:
 
       HWND target, parent;
 
-      if ((target = GetDlgItem(id)) != NULL &&
-          (parent = ::GetParent(target)) != NULL) AddTooltip(target, parent, text);
+      if ((target = GetDlgItem(id)) != 0 &&
+          (parent = ::GetParent(target)) != 0) AddTooltip(target, parent, text);
       }
 
    // adds a tooltip that's represented by a string resource
@@ -138,7 +138,7 @@ public:
    // VIRTUAL
 
    virtual bool    MessageLoop();
-   virtual bool    Create(Window* Parent = NULL, DWORD Style = WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN);
+   virtual bool    Create(Window* Parent = 0, DWORD Style = WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN);
    virtual LRESULT WindowProc(UINT uMsg, WPARAM wParam, LPARAM lParam) { return DefWindowProc(WindowHandle, uMsg, wParam, lParam); }
 
    // Not processed by default. Override in derived classes to do something with app messages if you need to.

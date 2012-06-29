@@ -32,7 +32,7 @@ const UString* UHttpPlugIn::str_ENABLE_INOTIFY;
 const UString* UHttpPlugIn::str_ENABLE_CACHING_BY_PROXY_SERVERS;
 const UString* UHttpPlugIn::str_TELNET_ENABLE;
 const UString* UHttpPlugIn::str_MIN_SIZE_FOR_SENDFILE;
-const UString* UHttpPlugIn::str_STRICT_TRANSPORT_SECURITY;
+const UString* UHttpPlugIn::str_URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK;
 const UString* UHttpPlugIn::str_SESSION_COOKIE_OPTION;
 const UString* UHttpPlugIn::str_MAINTENANCE_MODE;
 const UString* UHttpPlugIn::str_APACHE_LIKE_LOG;
@@ -51,7 +51,7 @@ void UHttpPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_ENABLE_CACHING_BY_PROXY_SERVERS,0)
    U_INTERNAL_ASSERT_EQUALS(str_TELNET_ENABLE,0)
    U_INTERNAL_ASSERT_EQUALS(str_MIN_SIZE_FOR_SENDFILE,0)
-   U_INTERNAL_ASSERT_EQUALS(str_STRICT_TRANSPORT_SECURITY,0)
+   U_INTERNAL_ASSERT_EQUALS(str_URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK,0)
    U_INTERNAL_ASSERT_EQUALS(str_SESSION_COOKIE_OPTION,0)
    U_INTERNAL_ASSERT_EQUALS(str_MAINTENANCE_MODE,0)
    U_INTERNAL_ASSERT_EQUALS(str_APACHE_LIKE_LOG,0)
@@ -67,26 +67,26 @@ void UHttpPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("ENABLE_CACHING_BY_PROXY_SERVERS") },
       { U_STRINGREP_FROM_CONSTANT("TELNET_ENABLE") },
       { U_STRINGREP_FROM_CONSTANT("MIN_SIZE_FOR_SENDFILE") },
-      { U_STRINGREP_FROM_CONSTANT("STRICT_TRANSPORT_SECURITY") },
+      { U_STRINGREP_FROM_CONSTANT("URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK") },
       { U_STRINGREP_FROM_CONSTANT("SESSION_COOKIE_OPTION") },
       { U_STRINGREP_FROM_CONSTANT("MAINTENANCE_MODE") },
       { U_STRINGREP_FROM_CONSTANT("APACHE_LIKE_LOG") }
    };
 
-   U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,                   U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_MASK,                U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_URI_REQUEST_CERT_MASK,             U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP,          U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_LIMIT_REQUEST_BODY,                U_STRING_FROM_STRINGREP_STORAGE(4));
-   U_NEW_ULIB_OBJECT(str_REQUEST_READ_TIMEOUT,              U_STRING_FROM_STRINGREP_STORAGE(5));
-   U_NEW_ULIB_OBJECT(str_ENABLE_INOTIFY,                    U_STRING_FROM_STRINGREP_STORAGE(6));
-   U_NEW_ULIB_OBJECT(str_ENABLE_CACHING_BY_PROXY_SERVERS,   U_STRING_FROM_STRINGREP_STORAGE(7));
-   U_NEW_ULIB_OBJECT(str_TELNET_ENABLE,                     U_STRING_FROM_STRINGREP_STORAGE(8));
-   U_NEW_ULIB_OBJECT(str_MIN_SIZE_FOR_SENDFILE,             U_STRING_FROM_STRINGREP_STORAGE(9));
-   U_NEW_ULIB_OBJECT(str_STRICT_TRANSPORT_SECURITY,         U_STRING_FROM_STRINGREP_STORAGE(10));
-   U_NEW_ULIB_OBJECT(str_SESSION_COOKIE_OPTION,             U_STRING_FROM_STRINGREP_STORAGE(11));
-   U_NEW_ULIB_OBJECT(str_MAINTENANCE_MODE,                  U_STRING_FROM_STRINGREP_STORAGE(12));
-   U_NEW_ULIB_OBJECT(str_APACHE_LIKE_LOG,                   U_STRING_FROM_STRINGREP_STORAGE(13));
+   U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,                            U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_MASK,                         U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_URI_REQUEST_CERT_MASK,                      U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_URI_PROTECTED_ALLOWED_IP,                   U_STRING_FROM_STRINGREP_STORAGE(3));
+   U_NEW_ULIB_OBJECT(str_LIMIT_REQUEST_BODY,                         U_STRING_FROM_STRINGREP_STORAGE(4));
+   U_NEW_ULIB_OBJECT(str_REQUEST_READ_TIMEOUT,                       U_STRING_FROM_STRINGREP_STORAGE(5));
+   U_NEW_ULIB_OBJECT(str_ENABLE_INOTIFY,                             U_STRING_FROM_STRINGREP_STORAGE(6));
+   U_NEW_ULIB_OBJECT(str_ENABLE_CACHING_BY_PROXY_SERVERS,            U_STRING_FROM_STRINGREP_STORAGE(7));
+   U_NEW_ULIB_OBJECT(str_TELNET_ENABLE,                              U_STRING_FROM_STRINGREP_STORAGE(8));
+   U_NEW_ULIB_OBJECT(str_MIN_SIZE_FOR_SENDFILE,                      U_STRING_FROM_STRINGREP_STORAGE(9));
+   U_NEW_ULIB_OBJECT(str_URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK, U_STRING_FROM_STRINGREP_STORAGE(10));
+   U_NEW_ULIB_OBJECT(str_SESSION_COOKIE_OPTION,                      U_STRING_FROM_STRINGREP_STORAGE(11));
+   U_NEW_ULIB_OBJECT(str_MAINTENANCE_MODE,                           U_STRING_FROM_STRINGREP_STORAGE(12));
+   U_NEW_ULIB_OBJECT(str_APACHE_LIKE_LOG,                            U_STRING_FROM_STRINGREP_STORAGE(13));
 }
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -136,9 +136,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // URI_PROTECTED_MASK           mask (DOS regexp) of URI protected from prying eyes
    // URI_PROTECTED_ALLOWED_IP     list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
    //
-   // URI_REQUEST_CERT_MASK        mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
-   //
-   // STRICT_TRANSPORT_SECURITY    for this period in seconds use HTTP Strict Transport Security to force client to use secure connections only
+   // URI_REQUEST_CERT_MASK                      mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
+   // URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK mask (DOS regexp) of URI where use HTTP Strict Transport Security to force client to use only SSL
    //
    // SESSION_COOKIE_OPTION        eventual params for session cookie (lifetime, path, domain, secure, HttpOnly)  
    // ----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -177,16 +176,11 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
    if (cfg.loadTable())
       {
-#  ifdef USE_LIBSSL
-      UHTTP::sts_age_seconds                 = cfg.readLong(*str_STRICT_TRANSPORT_SECURITY);
-#  endif
-
       UHTTP::virtual_host                    = cfg.readBoolean(*UServer_Base::str_VIRTUAL_HOST);
       UHTTP::telnet_enable                   = cfg.readBoolean(*str_TELNET_ENABLE);
       UHTTP::limit_request_body              = cfg.readLong(*str_LIMIT_REQUEST_BODY, U_STRING_LIMIT);
       UHTTP::request_read_timeout            = cfg.readLong(*str_REQUEST_READ_TIMEOUT);
       UHTTP::min_size_for_sendfile           = cfg.readLong(*str_MIN_SIZE_FOR_SENDFILE);
-      UHTTP::digest_authentication           = cfg.readBoolean(*UServer_Base::str_DIGEST_AUTHENTICATION);
       UHTTP::enable_caching_by_proxy_servers = cfg.readBoolean(*str_ENABLE_CACHING_BY_PROXY_SERVERS);
 
       U_INTERNAL_ASSERT_EQUALS(UHTTP::cookie_option,0)
@@ -194,20 +188,57 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       U_INTERNAL_ASSERT_EQUALS(UHTTP::uri_protected_mask,0)
       U_INTERNAL_ASSERT_EQUALS(UHTTP::uri_request_cert_mask,0)
       U_INTERNAL_ASSERT_EQUALS(UHTTP::maintenance_mode_page,0)
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::uri_strict_transport_security_mask,0)
 
-      UString x = cfg[*str_CACHE_FILE_MASK];
+      UString x = cfg[*UServer_Base::str_DIGEST_AUTHENTICATION];
 
-      if (x.empty() == false) UHTTP::cache_file_mask = U_NEW(UString(x));
-
-      x = cfg[*str_URI_PROTECTED_MASK];
-
-      if (x.empty() == false) UHTTP::uri_protected_mask = U_NEW(UString(x));
+      if (x.empty() == false) UHTTP::digest_authentication = x.strtob();
+      else
+         {
+#     ifdef USE_LIBSSL
+         if (UServer_Base::bssl) UHTTP::digest_authentication = false;
+         else
+#     endif
+                                 UHTTP::digest_authentication = true;
+         }
 
 #  ifdef USE_LIBSSL
       x = cfg[*str_URI_REQUEST_CERT_MASK];
 
-      if (x.empty() == false) UHTTP::uri_request_cert_mask = U_NEW(UString(x));
+      if (x.empty() == false)
+         {
+         if (x.someWhiteSpace()) x = UStringExt::removeWhiteSpace(x);
+
+         UHTTP::uri_request_cert_mask = U_NEW(UString(x));
+         }
+
+      x = cfg[*str_URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK];
+
+      if (x.empty() == false)
+         {
+         if (x.someWhiteSpace()) x = UStringExt::removeWhiteSpace(x);
+
+         UHTTP::uri_strict_transport_security_mask = U_NEW(UString(x));
+         }
 #  endif
+
+      x = cfg[*str_CACHE_FILE_MASK];
+
+      if (x.empty() == false)
+         {
+         if (x.someWhiteSpace()) x = UStringExt::removeWhiteSpace(x);
+
+         UHTTP::cache_file_mask = U_NEW(UString(x));
+         }
+
+      x = cfg[*str_URI_PROTECTED_MASK];
+
+      if (x.empty() == false)
+         {
+         if (x.someWhiteSpace()) x = UStringExt::removeWhiteSpace(x);
+
+         UHTTP::uri_protected_mask = U_NEW(UString(x));
+         }
 
       x = cfg[*str_SESSION_COOKIE_OPTION];
 
@@ -217,6 +248,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x.empty() == false) UHTTP::maintenance_mode_page = U_NEW(UString(x));
 
+#  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
       if (cfg.readBoolean(*str_ENABLE_INOTIFY))
          {
          // NB: we ask to notify for change of file system (inotify)
@@ -228,6 +260,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
             U_SRV_LOG("Sorry, I can't enable inode based directory notification because PREFORK_CHILD == -1");
             }
          }
+#  endif
 
       // URI PROTECTED
 

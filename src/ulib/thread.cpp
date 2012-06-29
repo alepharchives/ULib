@@ -269,11 +269,11 @@ void UThread::sigHandler(int signo)
    if (signo == U_SIGSTOP &&
        th->priv->_suspendCount++ == 0)
       {
-      U_INTERNAL_DUMP("SUSPEND: start(%6D)")
+      U_INTERNAL_DUMP("SUSPEND: start(%2D)")
 
       (void) U_SYSCALL(pthread_cond_wait, "%p,%p", &cond, &_lock);
 
-      U_INTERNAL_DUMP("SUSPEND: end(%6D)")
+      U_INTERNAL_DUMP("SUSPEND: end(%2D)")
       }
    else if (signo == U_SIGCONT             &&
             th->priv->_suspendCount    > 0 &&

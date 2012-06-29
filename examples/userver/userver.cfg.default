@@ -15,7 +15,6 @@
 # USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (DEFER_ACCEPT, QUICKACK)
 # SET_REALTIME_PRIORITY flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
 #
-#
 # PID_FILE      write pid on file indicated
 # WELCOME_MSG   message of welcome to send initially to client
 # RUN_AS_USER   downgrade security to that user account
@@ -98,7 +97,7 @@ userver {
 
 # PLUGIN_DIR     /usr/local/libexec/ulib
 
-  REQ_TIMEOUT    30
+  REQ_TIMEOUT     5
   CGI_TIMEOUT    60
 
 # MAX_KEEP_ALIVE 1000
@@ -139,9 +138,8 @@ userver {
 # URI_PROTECTED_MASK         mask (DOS regexp) of URI protected from prying eyes
 # URI_PROTECTED_ALLOWED_IP   list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
 #
-# URI_REQUEST_CERT_MASK      mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
-#
-# STRICT_TRANSPORT_SECURITY  for this period in seconds use HTTP Strict Transport Security to force client to use secure connections only
+# URI_REQUEST_CERT_MASK							   mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
+# URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK mask (DOS regexp) of URI where use HTTP Strict Transport Security to force client to use only SSL
 #
 # SESSION_COOKIE_OPTION      eventual params for session cookie (lifetime, path, domain, secure, HttpOnly)	
 # ------------------------------------------------------------------------------------------------------------------------------------------
@@ -186,9 +184,8 @@ mod_http {
 # URI_PROTECTED_MASK        /RA/admin/cgi-bin/*
 # URI_PROTECTED_ALLOWED_IP  127.0.0.1,10.30.0.0/16
 #
-# URI_REQUEST_CERT_MASK     /wi-auth/cgi-bin/cpe.sh
-#
-# STRICT_TRANSPORT_SECURITY 3600
+# URI_REQUEST_CERT_MASK                      /wi-auth/cgi-bin/cpe.sh
+# URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK /admin/*
 #
 # SESSION_COOKIE_OPTION  "[\"\" 24 / www.example.com yes yes]"
 # ---------------------------------------------------------------------------
@@ -213,9 +210,8 @@ mod_http {
 #
 # ENVIRONMENT ~/etc/environment.conf 
 #
-# SSI_AUTOMATIC_ALIASING index.shtml
+# SSI_AUTOMATIC_ALIASING /index.shtml
 # }
-
 
 # -----------------------------------------------------------------------------------------------
 # mod_fcgi - plugin parameters
@@ -462,20 +458,23 @@ mod_http {
 # ---------------------------------------------------------------------------------------------------------------------------------
 # ERROR MESSAGE      Allows you to tell clients about what type of error occurred
 #
-# REPLACE_RESPONSE   if NOT manage to follow redirects, vector of substitution string
-#
 # URI                uri trigger
 # HOST               name host client
 # METHOD_NAME        what type of HTTP method is considered (GET|HEAD|POST)
-# CLIENT_CERTIFICATE if yes client must comunicate a certificate in the SSL connection
-# PORT               port of server for connection
-# SERVER             name of server for connection
+# CLIENT_CERTIFICATE yes if client must comunicate a certificate in the SSL connection
+# REMOTE_ADDRESS_IP  list of comma separated client address for IP-based control (IPADDR[/MASK]) for routing-like policy
+#
 # COMMAND            command to execute
 # ENVIRONMENT        environment for command to execute
 # RESPONSE_TYPE      output type of the command (yes = response for client, no = request to server)
-# FOLLOW_REDIRECTS   if yes manage to automatically follow redirects from server
-# USER               if manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: user
-# PASSWORD           if manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: password
+#
+# PORT               port of server for connection
+# SERVER             name of server for connection
+#
+# FOLLOW_REDIRECTS   yes if     manage to automatically follow redirects from server
+# USER                   if     manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: user
+# PASSWORD               if     manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: password
+# REPLACE_RESPONSE       if NOT manage to follow redirects, vector of substitution string
 # ---------------------------------------------------------------------------------------------------------------------------------
 
 # mod_proxy {
@@ -557,20 +556,18 @@ mod_http {
 # COUNTRY_FORBIDDEN_MASK CN|JP
 # }
 
-# --------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------
 # mod_nocat - plugin parameters
-# --------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------
 # FW_ENV                environment for shell script to execute
 # FW_CMD                shell script to manage the firewall
-# INTERNAL_DEVICE_LABEL radio tag to be used from portal
-#
-# DECRYPT_CMD           PGP command stuff
 # DECRYPT_KEY           DES3 password stuff
-#
+# ALLOWED_MEMBERS			file with list of allowed MAC/IP pairs or NETWORKS (default: /etc/nodog.allowed)
+# LOCAL_NETWORK_LABEL   access point localization tag to be used from portal
 # LOGIN_TIMEOUT         Number of seconds after a client last login/renewal to terminate their connection
-# CHECK_BY_ARPING       method to verify the presence of a peer in the ARP table (yes -> enabled)
+# CHECK_TYPE            mode of verification (U_CHECK_NONE=0, U_CHECK_ARP_CACHE=1, U_CHECK_ARP_PING=2, U_CHECK_TRAFFIC=4)
 # CHECK_EXPIRE_INTERVAL Number of seconds to check if some client has terminate their connection
-# --------------------------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------------------------
 
 # mod_nocat {
 
@@ -579,21 +576,15 @@ mod_http {
 #  FW_ENV "FW_CONF=/etc/nodog_fw.conf \
 #          AuthServiceAddr=http://www.auth-firenze.com/login"
 
-   # radio tag to be used by portal
-#  INTERNAL_DEVICE_LABEL "radio1 radio2"
-
-   # PGP command stuff
-#  DECRYPT_CMD "/usr/bin/gpg --decrypt --homedir=/usr/share/nocat/pgp --batch --decrypt --no-tty --status-file /tmp/gpg.status -o -"
-
    # DES3 password stuff
 #  DECRYPT_KEY PASSWORD
+
+   # access point localization tag to be used from portal
+#  LOCAL_NETWORK_LABEL "radio1 radio2"
 
    # Number of seconds after a client last login/renewal to terminate their connection
    # Probably do not want to set this to less than 60 or a lot of bandwidth is likely to get consumed by the client renewal attempts
 #  LOGIN_TIMEOUT 86400 # one notification per day
-
-   # metodo aggiuntivo per verificare la presenza di un peer nella tabella ARP (yes -> abilitato)
-#  CHECK_BY_ARPING yes
 
   # Number of seconds to check if some client has terminate their connection
 # CHECK_EXPIRE_INTERVAL 360

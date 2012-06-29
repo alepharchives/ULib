@@ -71,7 +71,7 @@ main (int argc, char* argv[])
    U_INTERNAL_ASSERT(argc >= 5)
 
    sprintf(buf, "%s %s", argv[3], argv[4]);
-   u__snprintf(buffer, 4096, "%4D", 0);
+   u__snprintf(buffer, 4096, "%9D", 0);
    if (strncmp(buf, buffer, strlen(buf) - n_cmp)) goto failed;
 
    sprintf(buf, "%s %s", argv[1], argv[2]);

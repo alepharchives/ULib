@@ -451,7 +451,7 @@ void UCDB::callForAllEntryExt(vPFpc function)
    U_INTERNAL_ASSERT_DIFFERS(UFile::map, MAP_FAILED)
 
    char* ptr;
-   char* _eof = UFile::eof();
+   char* _eof = UFile::map + (ptrdiff_t)UFile::st_size;
    slot       = (UCDB::cdb_hash_table_slot*) UCDB::end();
 
    uint32_t pos;

@@ -66,6 +66,16 @@ const char*      u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 struct uhttpinfo u_http_info;
 
 #ifdef DEBUG
+uint32_t u_ptr2int(void* ptr)
+{
+   U_INTERNAL_TRACE("u_ptr2int(%p)", ptr)
+
+   U_INTERNAL_ASSERT_POINTER(ptr)
+   U_INTERNAL_ASSERT((unsigned long)ptr <= 4294967295UL)
+
+   return (uint32_t)((unsigned long)ptr);
+}
+
 size_t u__strlen(const char* restrict s)
 {
    U_INTERNAL_TRACE("u__strlen(%s)", s)
@@ -131,10 +141,12 @@ char* u_strncpy(char* restrict dest, const char* restrict src, size_t n)
 
 /* Security functions */
 
+#ifndef __MINGW32__
 static uid_t real_uid      = (uid_t)(-1);
 static gid_t real_gid      = (gid_t)(-1);
 static uid_t effective_uid = (uid_t)(-1);
 static gid_t effective_gid = (gid_t)(-1);
+#endif
 
 void u_init_security(void)
 {
@@ -2708,7 +2720,7 @@ __pure bool u_isBinary(const unsigned char* restrict s, uint32_t n) { return ((u
 #define U_URI_SUB_DELIMS  4 // '!' '$' '&' '\'' '(' ')' '*' '+' ',' ';' '='
 */
 
-int u_uri_encoded_char_mask = (U_URI_PCT_ENCODED | U_URI_GEN_DELIMS | U_URI_SUB_DELIMS);
+unsigned u_uri_encoded_char_mask = (U_URI_PCT_ENCODED | U_URI_GEN_DELIMS | U_URI_SUB_DELIMS);
 
 const unsigned char u_uri_encoded_char[256] = {
    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  /* 0x00 - 0x0f */
@@ -2770,7 +2782,7 @@ __pure bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
          * Even if the whole file is valid UTF-8 sequences,
          * still reject it if it uses weird control characters.
          */
-         if ((u__ct_tab[c] & 0x200) == 0) return false;
+         if ((u_cttab(c) & 0x0200) == 0) return false;
          }
       else if ((c & 0x40) == 0) return false; /* 10xxxxxx never 1st byte */
       else
@@ -2822,7 +2834,7 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
               : buf[i]   + 256 * buf[i+1]);
 
       if ( c == 0xfffe ||
-          (c  < 128 && ((u__ct_tab[c] & 0x200) == 0)))
+          (c  < 128 && ((u_cttab(c) & 0x0200) == 0)))
          {
          return 0;
          }
@@ -2835,18 +2847,18 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
  * Shorter definitions to make the data more compact
  */
 
-#define C 0x001 /* Control character */
-#define D 0x002 /* Digit */
-#define L 0x004 /* Lowercase */
-#define P 0x008 /* Punctuation */
-#define S 0x010 /* Space */
-#define U 0x020 /* Uppercase */
-#define X 0x040 /* Hexadecimal */
-#define B 0x080 /* Blank (a space or a tab) */
-#define R 0x100 /* carriage return or new line (a \r or \n) */
-#define T 0x200 /* character appears in plain ASCII text */
-#define F 0x400 /* character never appears in text */
-#define N 0x800 /* character underbar '_' (95 0x60) */
+#define C 0x0001 /* Control character */
+#define D 0x0002 /* Digit */
+#define L 0x0004 /* Lowercase */
+#define P 0x0008 /* Punctuation */
+#define S 0x0010 /* Space */
+#define U 0x0020 /* Uppercase */
+#define X 0x0040 /* Hexadecimal */
+#define B 0x0080 /* Blank (a space or a tab) */
+#define R 0x0100 /* carriage return or new line (a \r or \n) */
+#define T 0x0200 /* character appears in plain ASCII text */
+#define F 0x0400 /* character never appears in text */
+#define N 0x0800 /* character underbar '_' (95 0x60) */
 
 #define CS   (C | S)
 #define CT   (C | T)
@@ -2870,7 +2882,7 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define CSBT (C | S | B | T)
 #define CSRT (C | S | R | T)
 
-const unsigned int u__ct_tab[256] = {
+const unsigned short u__ct_tab[256] = {
    /*                                BEL  BS    HT    LF        FF    CR      */
    CF,  CF,  CF,  CF,  CF,  CF,  CF,  CT, CT, CSBT, CSRT, CSF, CST, CSRT, CF, CF, /* 0x0X */
    /*                                                     ESC                 */

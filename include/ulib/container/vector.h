@@ -220,6 +220,21 @@ public:
       _length = (_length - (last - first));
       }
 
+   void swap(uint32_t from, uint32_t to)
+      {
+      U_TRACE(0, "UVector<void*>::swap(%u,%u)", from, to)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT(to <= _length)
+      U_INTERNAL_ASSERT(from <= _length)
+      U_INTERNAL_ASSERT_RANGE(1,_length,_capacity)
+
+      void* tmp = vec[from];
+      vec[from] = vec[to];
+      vec[to]   = tmp;
+      }
+
    // BINARY HEAP
 
    // The binary heap is a heap ordered binary tree. A binary tree allows each node
@@ -1004,6 +1019,21 @@ public:
    uint32_t contains(const UString& str,    bool ignore_case = false);
    bool     contains(UVector<UString>& vec, bool ignore_case = false);
 
+   uint32_t contains(const char* str, bool ignore_case = false)
+      {
+      U_TRACE(0, "UVector<UString>::contains(%S,%b)", str, ignore_case)
+
+      U_CHECK_MEMORY
+
+      if (empty()) U_RETURN(U_NOT_FOUND);
+
+      UString x(str);
+
+      uint32_t pos = contains(x, ignore_case);
+
+      U_RETURN(pos);
+      }
+
    bool isContained(const UString& str, bool ignore_case = false) { return (contains(str, ignore_case) != U_NOT_FOUND); }
 
    // Check equality with string at pos
@@ -1065,7 +1095,8 @@ public:
 
    // STREAMS
 
-   uint32_t readline(istream& is);
+   uint32_t readline(  istream& is);
+   void     readVector(istream& is, int terminator = EOF);
 
    friend U_EXPORT istream& operator>>(istream& is,       UVector<UString>& v);
    friend          ostream& operator<<(ostream& os, const UVector<UString>& v) { return operator<<(os, (const UVector<UStringRep*>&)v); }

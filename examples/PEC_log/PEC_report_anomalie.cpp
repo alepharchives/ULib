@@ -75,6 +75,9 @@ Messaggio::Messaggio() : id(*PEC_report::id), mittente(*PEC_report::mittente), i
    start       = PEC_report::nseconds + PEC_report::getTime();
    destinatari = PEC_report::getValueField(U_destinatari);
 
+   U_INTERNAL_DUMP("start                = %ld (%#9D)", start, start)
+   U_INTERNAL_DUMP("PEC_report::nseconds = %ld (%#9D)", PEC_report::nseconds, PEC_report::nseconds)
+
    // NB: need duplicate string because depends on mmap()'s content of document...
 
             id.duplicate();
@@ -342,7 +345,7 @@ void PEC_report_anomalie::processLine(bool bnew)
       (void) PEC_report::callForAllEntryField(U_value, U_function);
       }
 
-   // cerr << *Messaggio::msg << endl;
+   // cerr << *Messaggio::msg << std::endl;
 }
 
 bool Messaggio::isAnomalia()
@@ -469,7 +472,7 @@ void PEC_report_anomalie::reportDestinatari(void* elem)
 
    (void) sprintf(buffer, U_XML_MSG_ENTRY_Recipients, U_STRING_TO_TRACE(tmp));
 
-   cout << buffer;
+   std::cout << buffer;
 }
 
 void PEC_report_anomalie::reportAnomalie(UStringRep* key, void* elem)
@@ -494,7 +497,7 @@ void PEC_report_anomalie::reportAnomalie(UStringRep* key, void* elem)
                   U_STRING_TO_TRACE(Messaggio::msg->id),
                   U_STRING_TO_TRACE(tmp2));
 
-   cout << buffer;
+   std::cout << buffer;
 
    Messaggio::msg->vdestinatari.callForAllEntry(PEC_report_anomalie::reportDestinatari);
 
@@ -502,14 +505,14 @@ void PEC_report_anomalie::reportAnomalie(UStringRep* key, void* elem)
       {
       (void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, "Mittente incoerente");
 
-      cout << buffer;
+      std::cout << buffer;
       }
 
    if (Messaggio::msg->flag[U_DESTINATARI_CHANGE] == '1')
       {
       (void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, "Destinatari incoerenti");
 
-      cout << buffer;
+      std::cout << buffer;
       }
 
    const char* testo;
@@ -524,7 +527,7 @@ void PEC_report_anomalie::reportAnomalie(UStringRep* key, void* elem)
       if (Messaggio::msg->flag[U_BUSTA_TRASPORTO] == '0')(void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, "Busta di trasporto mancante");
       else                                               (void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, "Busta di trasporto duplicata");
 
-      cout << buffer;
+      std::cout << buffer;
       }
 
    if (Messaggio::msg->flag[U_OUTPUT] != Messaggio::msg->flag[U_ACCETTAZIONE])
@@ -533,7 +536,7 @@ void PEC_report_anomalie::reportAnomalie(UStringRep* key, void* elem)
       else if (Messaggio::msg->flag[U_ACCETTAZIONE] == '1') (void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, "Accettazione incoerente");
       else                                                  (void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, "Accettazione duplicata");
 
-      cout << buffer;
+      std::cout << buffer;
       }
 
    flag_presa_in_carico_mancante = flag_presa_in_carico_duplicato = flag_consegna_mancante = flag_consegna_duplicato = false;
@@ -578,7 +581,7 @@ void PEC_report_anomalie::reportAnomalie(UStringRep* key, void* elem)
 
          (void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, testo);
 
-         cout << buffer;
+         std::cout << buffer;
          }
 
       // destinatari NON CERTIFICATI...
@@ -634,7 +637,7 @@ void PEC_report_anomalie::reportAnomalie(UStringRep* key, void* elem)
 
                (void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, testo);
 
-               cout << buffer;
+               std::cout << buffer;
                }
 
             num_consegne = (Messaggio::msg->vdestinatari_mancata_consegna[i]  - '0') +
@@ -666,7 +669,7 @@ void PEC_report_anomalie::reportAnomalie(UStringRep* key, void* elem)
 
                (void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, testo);
 
-               cout << buffer;
+               std::cout << buffer;
                }
             }
          else
@@ -696,7 +699,7 @@ void PEC_report_anomalie::reportAnomalie(UStringRep* key, void* elem)
 
                   (void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, testo);
 
-                  cout << buffer;
+                  std::cout << buffer;
                   }
 
                num_consegne = (Messaggio::msg->vdestinatari_mancata_consegna[i]  - '0') +
@@ -730,7 +733,7 @@ void PEC_report_anomalie::reportAnomalie(UStringRep* key, void* elem)
 
                   (void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, testo);
 
-                  cout << buffer;
+                  std::cout << buffer;
                   }
                }
             else
@@ -763,7 +766,7 @@ void PEC_report_anomalie::reportAnomalie(UStringRep* key, void* elem)
       {
       (void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, "Presa in carico incoerente per almeno un destinatario");
 
-      cout << buffer;
+      std::cout << buffer;
       }
 
    // 4B
@@ -772,7 +775,7 @@ void PEC_report_anomalie::reportAnomalie(UStringRep* key, void* elem)
       {
       (void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, "Rilevazione virus incoerente per almeno un destinatario");
 
-      cout << buffer;
+      std::cout << buffer;
       }
 
    // 5
@@ -781,13 +784,13 @@ void PEC_report_anomalie::reportAnomalie(UStringRep* key, void* elem)
       {
       (void) sprintf(buffer, U_XML_MSG_ENTRY_Exception, "Avvenuta consegna o errore consegna incoerente per almeno un destinatario");
 
-      cout << buffer;
+      std::cout << buffer;
       }
 
 end:
    (void) sprintf(buffer, U_XML_MSG_ENTRY_END, Messaggio::msg->flag[U_OUTPUT] == '1' ? "Output" : "Input");
 
-   cout << buffer;
+   std::cout << buffer;
 }
 
 // STREAM

@@ -217,7 +217,7 @@ void UTimeDate::fromJulian(int j)
 
 void UTimeDate::fromTime(time_t tm)
 {
-   U_TRACE(1, "UTimeDate::fromTime(%#4D)", tm)
+   U_TRACE(1, "UTimeDate::fromTime(%#9D)", tm)
 
    if (tm)
       {
@@ -280,9 +280,9 @@ UTimeDate::UTimeDate(const char* str, bool UTC)
       u_gettimeofday();
 
 #  if defined(DEBUG) && !defined(__MINGW32__)
-      U_SYSCALL_VOID(localtime_r, "%p,%p", &(u_now->tv_sec), &u_strftime_tm);
+      U_SYSCALL_VOID(localtime_r, "%p,%p",      &(u_now->tv_sec), &u_strftime_tm);
 #  else
-                     localtime_r(          &(u_now->tv_sec), &u_strftime_tm);
+                     localtime_r((const time_t*)&(u_now->tv_sec), &u_strftime_tm);
 #  endif
 
       switch (scanned)
@@ -306,26 +306,41 @@ UString UTimeDate::strftime(const char* fmt)
    u_strftime_tm.tm_mon  = _month - 1;
    u_strftime_tm.tm_year = _year  - 1900;
 
-   uint32_t length = u_strftime(result.data(), result.capacity(), fmt, -1);
+   uint32_t length = u__strftime(result.data(), result.capacity(), fmt);
 
    result.size_adjust(length);
 
    U_RETURN_STRING(result);
 }
 
-UString UTimeDate::strftime(const char* fmt, time_t t)
+UString UTimeDate::strftime(const char* fmt, time_t t, bool blocale)
 {
-   U_TRACE(0, "UTimeDate::strftime(%S,%ld)", fmt, t)
+   U_TRACE(0, "UTimeDate::strftime(%S,%ld,%b)", fmt, t, blocale)
 
-   UString result(100U);
+   UString res(100U);
 
-   (void) memset(&u_strftime_tm, 0, sizeof(struct tm));
+   uint32_t length = u_strftime(res.data(), res.capacity(), fmt, t + (blocale ? u_now_adjust : 0));
 
-   uint32_t length = u_strftime(result.data(), result.capacity(), fmt, t);
+   res.size_adjust(length);
 
-   result.size_adjust(length);
+#ifdef DEBUG
+   char dbg[4096];
 
-   U_RETURN_STRING(result);
+   /* NB: strftime(3) call stat("etc/localtime") everytime... */
+
+   if (blocale) (void) localtime_r(&t, &u_strftime_tm);
+   else         (void)    gmtime_r(&t, &u_strftime_tm);
+
+   if (::strftime(dbg, sizeof(dbg), fmt, &u_strftime_tm))
+      {
+      U_INTERNAL_DUMP("res = %s", res.data())
+      U_INTERNAL_DUMP("dbg = %s", dbg)
+
+      U_INTERNAL_ASSERT_EQUALS(strcmp(res.data(),dbg),0)
+      }
+#endif
+
+   U_RETURN_STRING(res);
 }
 
 time_t UTimeDate::getSecondFromTime(const char* str, bool gmt, const char* fmt, struct tm* tm)

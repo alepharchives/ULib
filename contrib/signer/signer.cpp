@@ -47,7 +47,7 @@ public:
 
       // form_template = cfg[U_STRING_FROM_CONSTANT("TEMPLATE")];
 
-      hinstance = GetModuleHandle(NULL);
+      hinstance = GetModuleHandle(0);
 
       Window MainWindow;
       //PropSheet MainWindow;

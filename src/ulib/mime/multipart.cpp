@@ -40,7 +40,7 @@ inline char* UMimeMultipartMsg::mkboundary()
 {
    U_TRACE(0, "UMimeMultipartMsg::mkboundary()")
 
-   boundary_len = u__snprintf(boundary, sizeof(boundary), "%s--=_%u_%6D_%P", u_line_terminator, ++counter);
+   boundary_len = u__snprintf(boundary, sizeof(boundary), "%s--=_%u_%4D_%P", u_line_terminator, ++counter);
 
    char* ptr = boundary + u_line_terminator_len + 2;
 

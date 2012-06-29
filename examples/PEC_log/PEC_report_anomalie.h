@@ -196,6 +196,8 @@ public:
 
       U_CHECK_MEMORY
 
+      U_INTERNAL_DUMP("start = %ld", start)
+
       (void) u_strftime(PEC_report::data, sizeof(PEC_report::data), "%b %e %T %Y", start);
 
       U_RETURN(PEC_report::data);
@@ -274,7 +276,7 @@ public:
 
       // append to report
 
-      cout << U_XML_MSG_START;
+      std::cout << U_XML_MSG_START;
 
       // setting for anomalie
       }
@@ -285,7 +287,7 @@ public:
 
       // end report
 
-      cout << U_XML_MSG_END;
+      std::cout << U_XML_MSG_END;
       }
 };
 

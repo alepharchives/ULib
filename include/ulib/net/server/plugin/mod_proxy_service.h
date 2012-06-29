@@ -31,6 +31,7 @@ public:
 
    static const UString* str_FOLLOW_REDIRECTS;
    static const UString* str_CLIENT_CERTIFICATE;
+   static const UString* str_REMOTE_ADDRESS_IP;
 
    static void str_allocate();
 
@@ -49,23 +50,14 @@ public:
 
    // COSTRUTTORI
 
-   UModProxyService()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UModProxyService, "")
-
-      if (str_FOLLOW_REDIRECTS == 0) str_allocate();
-      }
-
-   ~UModProxyService()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UModProxyService)
-      }
+    UModProxyService();
+   ~UModProxyService();
 
    // VARIE
 
    int     getPort() const           { return port; }
    UString getUser() const           { return user; }
-   UString getServer() const         { return server; }
+   UString getServer() const;
    UString getPassword() const       { return password; }
 
    bool isReplaceResponse() const    { return (vreplace_response.empty() == false); }
@@ -92,6 +84,7 @@ public:
 
 protected:
    UVector<UString> vreplace_response;
+   UVector<UIPAllow*>* vremote_address;
    UString host_mask, server, user, password, method_mask;
    UPCRE uri_mask;
    int port;

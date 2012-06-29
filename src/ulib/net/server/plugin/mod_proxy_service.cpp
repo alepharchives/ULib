@@ -31,6 +31,7 @@
 
 const UString* UModProxyService::str_FOLLOW_REDIRECTS;
 const UString* UModProxyService::str_CLIENT_CERTIFICATE;
+const UString* UModProxyService::str_REMOTE_ADDRESS_IP;
 
 void UModProxyService::str_allocate()
 {
@@ -38,14 +39,33 @@ void UModProxyService::str_allocate()
 
    U_INTERNAL_ASSERT_EQUALS(str_FOLLOW_REDIRECTS,0)
    U_INTERNAL_ASSERT_EQUALS(str_CLIENT_CERTIFICATE,0)
+   U_INTERNAL_ASSERT_EQUALS(str_REMOTE_ADDRESS_IP,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("FOLLOW_REDIRECTS") },
-      { U_STRINGREP_FROM_CONSTANT("CLIENT_CERTIFICATE") }
+      { U_STRINGREP_FROM_CONSTANT("CLIENT_CERTIFICATE") },
+      { U_STRINGREP_FROM_CONSTANT("REMOTE_ADDRESS_IP") }
    };
 
    U_NEW_ULIB_OBJECT(str_FOLLOW_REDIRECTS,   U_STRING_FROM_STRINGREP_STORAGE(0));
    U_NEW_ULIB_OBJECT(str_CLIENT_CERTIFICATE, U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_REMOTE_ADDRESS_IP,  U_STRING_FROM_STRINGREP_STORAGE(2));
+}
+
+UModProxyService::UModProxyService()
+{
+   U_TRACE_REGISTER_OBJECT(0, UModProxyService, "")
+
+   vremote_address = 0;
+
+   if (str_FOLLOW_REDIRECTS == 0) str_allocate();
+}
+
+UModProxyService::~UModProxyService()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UModProxyService)
+
+   if (vremote_address) delete vremote_address;
 }
 
 void UModProxyService::loadConfig(UFileConfig& cfg, UVector<UModProxyService*>& vservice, UVector<UString>* vmsg_error)
@@ -57,23 +77,26 @@ void UModProxyService::loadConfig(UFileConfig& cfg, UVector<UModProxyService*>& 
    // -----------------------------------------------------------------------------------------------------------------------------------
    // ERROR MESSAGE        Allows you to tell clients about what type of error
    //
-   // REPLACE_RESPONSE     if NOT manage to follow redirects, maybe vector of substitution string
-   //
    // URI                  uri mask trigger
    // HOST                 name host client
-   // METHOD_NAME          mask type of HTTP method is considered (GET|POST)
-   // CLIENT_CERTIFICATE   if yes client must comunicate a certificate in the SSL connection
-   // PORT                 port of server for connection
-   // SERVER               name of server for connection
+   // METHOD_NAME          mask type of what type of HTTP method is considered (GET|POST)
+   // CLIENT_CERTIFICATE   yes if client must comunicate a certificate in the SSL connection
+   // REMOTE_ADDRESS_IP    list of comma separated client address for IP-based control (IPADDR[/MASK]) for routing-like policy
+   //
    // COMMAND              command to execute
    // ENVIRONMENT          environment for command to execute
    // RESPONSE_TYPE        output type of the command (yes = response for client, no = request to server)
-   // FOLLOW_REDIRECTS     if yes manage to automatically follow redirects from server
-   // USER                 if     manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: user
-   // PASSWORD             if     manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: password
+   //
+   // PORT                 port of server for connection
+   // SERVER               name of server for connection
+   //
+   // FOLLOW_REDIRECTS     yes if     manage to automatically follow redirects from server
+   // USER                     if     manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: user
+   // PASSWORD                 if     manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: password
+   // REPLACE_RESPONSE         if NOT manage to follow redirects, maybe vector of substitution string
    // -----------------------------------------------------------------------------------------------------------------------------------
 
-   UString uri;
+   UString x;
    UModProxyService* service;
 
    if (vmsg_error) (void) cfg.loadVector(*vmsg_error, "ERROR MESSAGE");
@@ -86,22 +109,36 @@ void UModProxyService::loadConfig(UFileConfig& cfg, UVector<UModProxyService*>& 
 
       if (cfg.loadTable())
          {
-         uri                       = cfg[*UServer_Base::str_URI];
+         x                         = cfg[*UServer_Base::str_URI];
          service->host_mask        = cfg[*UServer_Base::str_HOST];
          service->method_mask      = cfg[*UServer_Base::str_METHOD_NAME];
          service->server           = cfg[*UServer_Base::str_SERVER];
          service->user             = cfg[*UServer_Base::str_USER];
          service->password         = cfg[*UServer_Base::str_PASSWORD];
 
-         service->command          = UServer_Base::loadConfigCommand(cfg);
-         service->environment      = service->command->getStringEnvironment();
-
          service->port             = cfg.readLong(*UServer_Base::str_PORT, 80);
          service->request_cert     = cfg.readBoolean(*str_CLIENT_CERTIFICATE);
          service->response_client  = cfg.readBoolean(*UServer_Base::str_RESPONSE_TYPE);
          service->follow_redirects = cfg.readBoolean(*str_FOLLOW_REDIRECTS);
 
-         if (uri.empty() == false) service->uri_mask.set(uri, 0);
+         if (x.empty() == false) service->uri_mask.set(x, 0);
+
+         if ((service->command = UServer_Base::loadConfigCommand(cfg))) service->environment = service->command->getStringEnvironment();
+
+         // REMOTE ADDRESS IP
+
+         x = cfg[*str_REMOTE_ADDRESS_IP];
+
+         if (x.empty() == false)
+            {
+            service->vremote_address = U_NEW(UVector<UIPAllow*>);
+
+            if (UIPAllow::parseMask(x, *(service->vremote_address)) == 0)
+               {
+               delete service->vremote_address;
+                      service->vremote_address = 0;
+               }
+            }
 
          vservice.push_back(service);
 
@@ -117,6 +154,7 @@ UModProxyService* UModProxyService::findService(const UString& host, const UStri
    U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
 
    UModProxyService* elem;
+   UString uri = UHTTP::getRequestURI(false);
 
    for (uint32_t i = 0, n = vservice.size(); i < n; ++i)
       {
@@ -126,13 +164,54 @@ UModProxyService* UModProxyService::findService(const UString& host, const UStri
 
       if ((elem->host_mask.empty()       || UServices::dosMatchWithOR(host, elem->host_mask, 0))     &&
           (elem->method_mask.empty()     || UServices::dosMatchWithOR(method, elem->method_mask, 0)) &&
-          (elem->uri_mask.getPcre() == 0 || elem->uri_mask.search(U_HTTP_URI_TO_PARAM)))
+          (elem->uri_mask.getPcre() == 0 || elem->uri_mask.search(U_STRING_TO_PARAM(uri)))           &&
+          (elem->vremote_address == 0    || UServer_Base::pClientImage->isAllowed(*(elem->vremote_address))))
          {
          U_RETURN_POINTER(elem, UModProxyService);
          }
       }
 
    U_RETURN_POINTER(0, UModProxyService);
+}
+
+UString UModProxyService::getServer() const
+{
+   U_TRACE(0, "UModProxyService::getServer()")
+
+   char c = server.c_char(0);
+
+   if (c == '~' ||
+       c == '$')
+      {
+      UString x;
+
+      if (server.c_char(1) == '<')
+         {
+         (void) x.assign(U_HTTP_VHOST_TO_PARAM);
+
+         U_RETURN_STRING(x);
+         }
+
+      x = UStringExt::expandPath(server, 0);
+
+      if (x.empty() == false)
+         {
+         UString pathname(U_CAPACITY);
+
+         pathname.snprintf("%.*s/%s:%u.srv", U_STRING_TO_TRACE(x), UServer_Base::client_address, UHTTP::getUserAgent());
+
+         x = UFile::contentOf(pathname);
+
+         if (x.empty() == false)
+            {
+            U_INTERNAL_ASSERT_EQUALS(x.someWhiteSpace(),false)
+
+            U_RETURN_STRING(x);
+            }
+         }
+      }
+
+   U_RETURN_STRING(server);
 }
 
 UString UModProxyService::replaceResponse(const UString& msg)
@@ -189,18 +268,19 @@ void UModProxyService::setMsgError(int err, UVector<UString>& vmsg_error)
 
 const char* UModProxyService::dump(bool reset) const
 {
-   *UObjectIO::os << "port                                " << port                       << '\n'
-                  << "request_cert                        " << request_cert               << '\n'
-                  << "response_client                     " << response_client            << '\n'
-                  << "follow_redirects                    " << follow_redirects           << '\n'
-                  << "uri_mask          (UPCRE            " << (void*)&uri_mask           << ")\n"
-                  << "method_mask       (UPCRE            " << (void*)&method_mask        << ")\n"
-                  << "user              (UString          " << (void*)&user               << ")\n"
-                  << "server            (UString          " << (void*)&server             << ")\n"
-                  << "host_mask         (UString          " << (void*)&host_mask          << ")\n"
-                  << "password          (UString          " << (void*)&password           << ")\n"
-                  << "environment       (UString          " << (void*)&environment        << ")\n"
-                  << "vreplace_response (UVector<UString> " << (void*)&vreplace_response  << ')';
+   *UObjectIO::os << "port                                 " << port                       << '\n'
+                  << "request_cert                         " << request_cert               << '\n'
+                  << "response_client                      " << response_client            << '\n'
+                  << "follow_redirects                     " << follow_redirects           << '\n'
+                  << "uri_mask          (UPCRE             " << (void*)&uri_mask           << ")\n"
+                  << "user              (UString           " << (void*)&user               << ")\n"
+                  << "server            (UString           " << (void*)&server             << ")\n"
+                  << "host_mask         (UString           " << (void*)&host_mask          << ")\n"
+                  << "password          (UString           " << (void*)&password           << ")\n"
+                  << "environment       (UString           " << (void*)&environment        << ")\n"
+                  << "method_mask       (UString           " << (void*)&method_mask        << ")\n"
+                  << "vremote_address   (UVector<UIPAllow> " << (void*)vremote_address     << ")\n"
+                  << "vreplace_response (UVector<UString>  " << (void*)&vreplace_response  << ')';
 
    if (reset)
       {

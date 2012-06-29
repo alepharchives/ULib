@@ -297,7 +297,7 @@ void UXAdESUtility::outputDocument(const UString& firma)
    (void) setmode(1, O_BINARY);
 #endif
 
-   cout.write(U_STRING_TO_PARAM(output));
+   std::cout.write(U_STRING_TO_PARAM(output));
 
    output.clear();
 

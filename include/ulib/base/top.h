@@ -8,11 +8,15 @@
 #  define HAVE_SNPRINTF
 #elif defined(__MINGW32__)
 #  define HAVE_SNPRINTF
+/*
 #  if !defined(_OFF_T_) && defined(_FILE_OFFSET_BITS) && _FILE_OFFSET_BITS == 64
 #     define  _OFF_T_
-typedef long long _off_t; /* Type of file sizes and offsets (LFS) */
+typedef long long _off_t;
 typedef _off_t     off_t;
 #  endif
+*/
+#  include <_mingw.h>
+#  include <_mingw_off_t.h>
 #endif
 
 #if defined(__CYGWIN__)

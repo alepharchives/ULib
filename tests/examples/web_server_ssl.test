@@ -7,6 +7,7 @@
 start_msg web_server_ssl
 
 rm -f /tmp/ssl_session.txt \
+		/var/log/httpd/access_log \
 	   web_server_ssl?.log* uploads/* \
 		/usr/local/libexec/ulib/session.ssl* \
       out/userver_ssl.out err/userver_ssl.err web_server_ssl.err \
