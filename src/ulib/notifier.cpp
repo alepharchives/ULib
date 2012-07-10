@@ -683,33 +683,32 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
 {
    U_TRACE(0, "UNotifier::callForAllEntryDynamic(%p)", function)
 
-   UEventFd* item;
-
    U_INTERNAL_DUMP("num_connection = %u", num_connection)
 
-   if (num_connection > min_connection)
+   U_INTERNAL_ASSERT_MAJOR(num_connection,min_connection)
+
+   UEventFd* item;
+
+   for (int fd = 1; fd < max_connection; ++fd)
       {
-      for (int fd = 1; fd < max_connection; ++fd)
+      if ((item = lo_map_fd[fd]))
          {
-         if ((item = lo_map_fd[fd]))
-            {
-            U_INTERNAL_DUMP("fd = %d op_mask = %B", item->fd, item->op_mask)
+         U_INTERNAL_DUMP("fd = %d op_mask = %B", item->fd, item->op_mask)
 
-            if (function(item)) erase(item);
-            }
+         if (function(item)) erase(item);
          }
+      }
 
-      if (hi_map_fd->first())
-         {
-         do {
-            item = hi_map_fd->elem();
+   if (hi_map_fd->first())
+      {
+      do {
+         item = hi_map_fd->elem();
 
-            U_INTERNAL_DUMP("fd = %d op_mask = %B", item->fd, item->op_mask)
+         U_INTERNAL_DUMP("fd = %d op_mask = %B", item->fd, item->op_mask)
 
-            if (function(item)) erase(item);
-            }
-         while (hi_map_fd->next());
+         if (function(item)) erase(item);
          }
+      while (hi_map_fd->next());
       }
 }
 

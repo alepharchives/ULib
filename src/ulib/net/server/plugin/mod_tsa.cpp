@@ -69,8 +69,7 @@ int UTsaPlugIn::handlerRequest()
 {
    U_TRACE(0, "UTsaPlugIn::handlerRequest()")
 
-   if (command &&
-       UHTTP::isTSARequest())
+   if (UHTTP::isTSARequest())
       {
       // process TSA request
 

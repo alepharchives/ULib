@@ -1,393 +1,50 @@
 #!/bin/bash
 
-#-----------------------------------
-# START STATISTICS FUNCTION
-#-----------------------------------
-export_statistics_login_as_csv() {
-
-	COMMAND=cat
-
-	if [ -n "$1" ]; then
-		FILE_LOG="$HISTORICAL_LOG_DIR/$1"
-		COMMAND=$UNCOMPRESS_COMMAND_HISTORICAL_LOGS
-	fi
-
-	TMPFILE=/tmp/statistics_login_$$.csv
-
-	$COMMAND $FILE_LOG | \
-	awk '
-	/LOGIN/ { a=$8; gsub(",","",a) ; login[a $1]+=1 ; if (!date[$1]) date[$1]+=1 ; if (!ap[a]) ap[a]+=1 }
-
-	END {
-		n=asorti(date, sorted_date);
-
-		printf "\"\","; 
-		
-		for (i = 1; i <= n; i++) {
-			printf "\"%s\",", sorted_date[i] 
-		}; 
-		
-		printf "\n"
-		
-		for (j in ap) { 
-
-			printf "\"AP %s\",", j
-			
-			for (i = 1; i <= n; i++) {
-				printf "%.0f,", login[j sorted_date[i]] 
-			}
-
-			printf "\n"
-		}
-	}
-	' > $TMPFILE 2>/dev/null
-
-	HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
-	HTTP_RESPONSE_HEADER="X-Sendfile: $TMPFILE\r\n"
-}
-
-export_statistics_registration_as_csv() {
-
-	TMPFILE=/tmp/statistics_registration_$$.csv
-
-	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waNotAfter=*" waNotAfter
-
-	awk '
-	/^waNotAfter/ {
-		year=substr(	$2, 0,4); 
-		month=substr(	$2, 5,2); 
-		day=substr(		$2, 7,2); 
-		hour=substr(	$2, 9,2); 
-		minutes=substr($2,11,2); 
-		seconds=substr($2,13,2); 
-
-		expire_date=year" "month" "day" "hour" "minutes" "seconds;
-
-		# print expire_date;
-
-		expire_date_in_seconds = mktime(expire_date);
-
-		# print expire_date_in_seconds;
-
-		validity=180*60*60*24;
-
-		date=expire_date_in_seconds-validity;
-
-		# print date;
-
-		date_formatted = strftime("%Y/%m/%d", date);
-
-		# print date_formatted;
-
-		registrations[date_formatted]+=1;
-		total+=1;
-	}
-
-	END {
-		n=asorti(registrations, sorted_registrations);
-
-		printf "\"%s\"", "Data";
-		printf ",";
-		printf "\"%s\"", "Registrazioni";
-		printf "\n";
-
-		for (i = 1; i <= n; i++) {
-
-			printf "\"%s\"", sorted_registrations[i];
-			printf ",";
-			printf "%.0f", registrations[sorted_registrations[i]];
-			printf "\n";
-		}
-
-		printf "\"%s\"", "Totale";
-		printf ",";
-		printf "%.0f", total;
-		printf "\n";
-	}
-	' $TMPFILE.out > $TMPFILE 2>/dev/null
-
-	HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
-	HTTP_RESPONSE_HEADER="X-Sendfile: $TMPFILE\r\n"
-}
-
-historical_statistics_login() {
-
-	TABLE_TAG_START="<table class=\"centered\" border=\"1\">"
-	TABLE_TAG_END="</table>"
-	TR_TAG_START="<tr>"
-	TR_TAG_END="</tr>"
-	TD_HEADER_TAG_START="<td class=\"header_smaller\">"
-	TD_DATA_TAG_START="<td class=\"data_smaller\" align=\"right\">"
-	TD_TAG_END="</td>"
-	TH_TAG_START="<th class=\"header_smaller\">"
-	TH_TAG_END="</th>"
-	URL_TAG_START="<a href=\"admin_view_statistics_login?file=%s\">%s</a>"
-
-	TABLE="$TABLE_TAG_START\n\t$TH_TAG_START\n\t\tARCHIVI\t$TH_TAG_END\n"
-
-	for file in `ls -rt $HISTORICAL_LOG_DIR/$REGEX_HISTORICAL_LOGS`
-	do
-		filename=`basename $file 2>/dev/null`
-		TAG=`printf "$URL_TAG_START" $filename $filename`
-
-		TABLE="$TABLE\t$TR_TAG_START\n\t\t$TD_DATA_TAG_START\n\t\t\t$TAG\n\t\t$TD_TAG_END\n\t$TR_TAG_END\n"
-	done
-
-	TABLE=`echo -e "$TABLE$TABLE_TAG_END"`
-
-	TITLE_TXT="Storico"
-
-	print_page "Storico" "$TABLE"
-}
-
-view_statistics_login() {
-
-	REQUEST_URI=view_statistics
-	HREF_TAG="admin_export_statistics_login_as_csv"
-
-	if [ -n "$1" ]; then
-		HREF_TAG="$HREF_TAG?file=$1"
-		FILE_LOG=$HISTORICAL_LOG_DIR/$1
-		COMMAND=$UNCOMPRESS_COMMAND_HISTORICAL_LOGS
-		TITLE_TXT="Numero LOGIN per Access Point: file $1"
-	else
-		COMMAND=cat
-		TITLE_TXT="Numero LOGIN per Access Point"
-	fi
-
-	export TABLE_TAG_START="<table class=\"centered\" border=\"1\">"
-	export TABLE_TAG_END="</table>"
-	export TR_TAG_START="<tr>"
-	export TR_TAG_END="</tr>"
-	export TD_HEADER_TAG_START="<td class=\"header_smaller\">"
-	export TD_HEADER_ALIGNED_TAG_START="<td class=\"header_smaller\" align=\"right\">"
-	export TD_DATA_TAG_START="<td class=\"data_smaller\" align=\"right\">"
-	export TD_TAG_END="</td>"
-	export TH_TAG_START="<th class=\"header_smaller\">"
-	export TH_TAG_END="</th>"
-
-	TABLE=`$COMMAND $FILE_LOG | awk '
-	BEGIN {
-
-		trTagStart=ENVIRON["TR_TAG_START"];
-		trTagEnd=ENVIRON["TR_TAG_END"];
-
-		tdTagHeaderStart=ENVIRON["TD_HEADER_TAG_START"];
-		tdTagHeaderAlignedStart=ENVIRON["TD_HEADER_ALIGNED_TAG_START"];
-
-		tdTagDataStart=ENVIRON["TD_DATA_TAG_START"];
-
-		tdTagEnd=ENVIRON["TD_TAG_END"];
-
-		thTagStart=ENVIRON["TH_TAG_START"];
-		thTagEnd=ENVIRON["TH_TAG_END"];
-
-		printf "%s\n", ENVIRON["TABLE_TAG_START"];
-	}
-
-	/LOGIN/ { a2=$8; gsub(",","",a2)			###				  label@hostname
-				 a1=a2; sub("[^@]*@","",a1)   ### hostname
-				 a=a1 " " a2						### hostname " " label@hostname
-				 login[a $1]+=1 ; login[a]+=1 ; login[$1]+=1 ; if (!date[$1]) date[$1]+=1 ; if (!ap[a]) ap[a]+=1 }
-
-	END {
-		n=asorti(date, sorted_date);
-
-		printf "\t%s\n\t\t%s%s%s\n", trTagStart, thTagStart, thTagEnd, "" ; 
-
-		for (i = 1; i <= n; i++) {
-			printf "\t\t%s%s%s\n", thTagStart, sorted_date[i], thTagEnd 
-		} 
-
-		printf "\t\t%s%s%s\n", thTagStart, "Totale x AP", thTagEnd 
-		printf "\t%s\n", trTagEnd
-
-		m=asorti(ap, sorted_ap);
-
-		for (j = 1; j <= m; j++) {
-
-			a=sorted_ap[j]; sub("[^ ]* ", "", a) ### label@hostname
-
-			printf "\t%s\n\t\t%s%s%s\n", trTagStart, tdTagHeaderStart, a, tdTagEnd
-
-			for (i = 1; i <= n; i++) {
-				printf "\t\t%s%.0f%s\n", tdTagDataStart, login[sorted_ap[j] sorted_date[i]], tdTagEnd
-			}
-
-			printf "\t\t%s%.0f%s\n", tdTagHeaderAlignedStart, login[sorted_ap[j]], tdTagEnd
-			printf "\t%s\n", trTagEnd
-		}
-
-		printf "\t%s\n\t\t%sTotale x data%s\n", trTagStart, tdTagHeaderStart, tdTagEnd
-
-		for (i = 1; i <= n; i++) {
-			printf "\t\t%s%.0f%s\n", tdTagHeaderAlignedStart, login[sorted_date[i]], tdTagEnd
-			totale+=login[sorted_date[i]]
-		}
-
-		printf "\t\t%s%.0f%s\n", tdTagHeaderAlignedStart, totale, tdTagEnd
-		printf "\t%s\n", trTagEnd
-		printf "%s\n", ENVIRON["TABLE_TAG_END"];
-	}
-	'`
-
-	print_page "$TITLE_TXT" "$TABLE" "$BACK_TAG" "<a class=\"back\" href=\"$HREF_TAG\">Esporta in formato CSV</a>"
-}
-
-view_statistics_registration() {
-
-	export TABLE_TAG_START="<table class=\"centered\" border=\"1\">"
-	export TABLE_TAG_END="</table>"
-	export TR_TAG_START="<tr>"
-	export TR_TAG_END="</tr>"
-	export TD_HEADER_TAG_START="<td class=\"header_smaller\">"
-	export TD_DATA_TAG_START="<td class=\"data_smaller\" align=\"right\">"
-	export TD_TAG_END="</td>"
-	export TH_TAG_START="<th class=\"header_smaller\">"
-	export TH_TAG_END="</th>"
-
-	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waUsedBy=*" "waUsedBy modifyTimestamp"
-
-	TABLE=`awk '
-	BEGIN {
-
-		trTagStart=ENVIRON["TR_TAG_START"];
-		trTagEnd=ENVIRON["TR_TAG_END"];
-
-		tdTagHeaderStart=ENVIRON["TD_HEADER_TAG_START"];
-		tdTagDataStart=ENVIRON["TD_DATA_TAG_START"];
-
-		tdTagEnd=ENVIRON["TD_TAG_END"];
-
-		thTagStart=ENVIRON["TH_TAG_START"];
-		thTagEnd=ENVIRON["TH_TAG_END"];
-
-		printf "%s\n", ENVIRON["TABLE_TAG_START"];
-	}
-
-	/^modifyTimestamp/ { 
-		year=substr($2, 0 , 4); 
-
-		month=substr($2, 5 , 2); 
-
-		day=substr($2, 7 , 2); 
-
-		hour=substr($2, 9 , 2); 
-
-		minutes=substr($2, 11 , 2); 
-
-		seconds=substr($2, 13 , 2); 
-
-		expire_date=year" "month" "day" "hour" "minutes" "seconds;
-
-		#print expire_date;
-
-		expire_date_in_seconds = mktime(expire_date);
-
-		#print expire_date_in_seconds;
-
-		validity=ENVIRON["REG_VALIDITY"];
-
-		date=expire_date_in_seconds-validity;
-
-		#print date;
-
-		date_formatted = strftime("%Y/%m/%d", date);
-
-		#print date_formatted;
-
-		registrations[date_formatted]+=1;
-
-		total+=1;
-	}
-
-	END {
-		n=asorti(registrations, sorted_registrations);
-
-		printf "\t%s\n", trTagStart;
-		printf "\t\t%s\n", thTagStart;
-		printf "\t\t\t%s\n", "Data";
-		printf "\t\t%s\n", thTagEnd;
-		printf "\t\t%s\n", thTagStart;
-		printf "\t\t\t%s\n", "Registrazioni";
-		printf "\t\t%s\n", thTagEnd;
-		printf "\t%s\n", trTagEnd;
-
-		for (i = 1; i <= n; i++) {
-			printf "\t%s\n", trTagStart;
-
-			printf "\t\t%s\n", tdTagDataStart;
-			printf "\t\t\t%s\n", sorted_registrations[i];
-			printf "\t\t%s\n", tdTagEnd;
-
-			printf "\t\t%s\n", tdTagDataStart;
-			printf "\t\t\t%.0f\n", registrations[sorted_registrations[i]];
-			printf "\t\t%s\n", tdTagEnd;
-
-			printf "\t%s\n", trTagEnd;
-		}
-
-		printf "\t%s\n", trTagStart;
-
-		printf "\t\t%s\n", tdTagDataStart;
-		printf "\t\t\t%s\n", "Totale";
-		printf "\t\t%s\n", tdTagEnd;
-
-		printf "\t\t%s\n", tdTagDataStart;
-		printf "\t\t\t%.0f\n", total;
-		printf "\t\t%s\n", tdTagEnd;
-
-		printf "\t%s\n", trTagEnd;
-
-		printf "%s\n", ENVIRON["TABLE_TAG_END"];
-	}
-	' $TMPFILE.out`
-
-	REQUEST_URI=view_statistics
-	TITLE_TXT="Numero Registrazioni per data"
-	HREF_TAG="admin_export_statistics_registration_as_csv"
-
-	print_page "$TITLE_TXT" "$TABLE" "$BACK_TAG" "<a class=\"back\" href=\"$HREF_TAG\">Esporta in formato CSV</a>"
-}
-
-printlog() {
-
-	TMPFILE=/tmp/printlog_$$
-
-	# 2009/11/07 13:14:35 op: PASS_AUTH, uid: 3397363258, ap: dev, ip: 10.30.1.105, mac: 00:e0:4c:d4:63:f5, timeout: 86400, traffic: 300
-
-	awk '
-	{
-	for (f = 1 ; f <= NF ; f++)
-		{
-		row[NR,f] = $f
-
-		l = length($f) ; if (l > max[f]) max[f] = l
-		}
-
-	if (NF > maxNF) maxNF = NF
-	}
-
-	END {
-		for (r = (NR > 200 ? NR : 201) - 200 ; r <= NR ; r++)
-			for (f = 1 ; f <= maxNF ; f++)
-				printf "%-*s%s",
-								 (max[f] > 999 ? 999 : max[f]),
-					(length(row[r,f]) > 999 ? substr(row[r,f], 1, 999 -3) "..." : row[r,f]),
-					(f < maxNF ? " " : "\n")
-	}
-	' $FILE_LOG > $TMPFILE 2>/dev/null
-
-	if [ ! -s "$TMPFILE" ]; then
-		echo "EMPTY" > $TMPFILE
-	fi
-
-	HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
-	HTTP_RESPONSE_HEADER="X-Sendfile: $TMPFILE\r\n"
-}
-#-----------------------------------
-# END STATISTICS FUNCTION
-#-----------------------------------
+# set -x
+
+# internal var
+OP=""
+AP=""
+IP=""
+MAC=""
+UUID=""
+USER=""
+WA_UID=""
+OUTPUT=""
+TMPFILE=""
+GATEWAY=""
+FILE_CTX=""
+FILE_CNT=""
+FILE_UID=""
+REQ_FILE=""
+TITLE_TXT=""
+EXIT_VALUE=0
+CALLER_ID=""
+HEAD_HTML=""
+SET_COOKIE=""
+BODY_STYLE=""
+BODY_SHTML=""
+CONSUME_ON=""
+SIGNED_DATA=""
+UUID_TO_LOG=""
+AUTH_DOMAIN=""
+POLICY_FILE=""
+TMP_FORM_FILE=""
+USER_MAX_TIME=""
+UUID_TO_APPEND=""
+CONNECTION_CLOSE=""
+USER_MAX_TRAFFIC=""
+ACCESS_POINT_NAME=""
+FILE_RESPONSE_HTML=""
+HTTP_RESPONSE_BODY=""
+REMAINING_TIME_MIN=""
+REMAINING_TRAFFIC_MB=""
+HTTP_RESPONSE_HEADER=""
+
+# external var
+. $DIR_ROOT/etc/$VIRTUAL_HOST/script.conf
+# common func
+. $DIR_ROOT/etc/common.sh
 
 #-----------------------------------
 # START FUNCTION
@@ -397,9 +54,14 @@ write_ENV() {
 	(
 	echo "ENVIRONMENT:"
 	echo "-----------------------------------------------------------"
-	env
+	env | sort
 	echo "-----------------------------------------------------------"
 	) > /tmp/main_$$.env
+}
+
+write_LOG() {
+
+	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: $1"
 }
 
 write_FILE() {
@@ -411,9 +73,8 @@ write_FILE() {
 	local filename=`basename $2 2>/dev/null`
 
 	if [ -d $2 -o "${filename:0:1}" = "." ]; then
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: write_FILE() failure (anomalia 002) on data=$1 filename=$2 option=$3"
-
 		write_ENV
+		write_LOG "write_FILE() failure (anomalia 002) on data=$1 filename=$2 option=$3"
 	else
 		echo $3 "$1" > $2
 
@@ -431,9 +92,8 @@ append_to_FILE() {
 	local filename=`basename $2 2>/dev/null`
 
 	if [ -d $2 -o "${filename:0:1}" = "." ]; then
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: append_to_FILE() failure (anomalia 003) on data=$1 filename=$2"
-
 		write_ENV
+		write_LOG "append_to_FILE() failure (anomalia 003) on data=$1 filename=$2"
 	else
 		echo "$1" >> $2
 
@@ -441,31 +101,6 @@ append_to_FILE() {
 			anomalia 3 "$2"
 		fi
 	fi
-}
-
-print_page() {
-
-	if [ -r $DIR_TEMPLATE/$REQUEST_URI.tmpl ]; then
-
-		BODY_SHTML=`cat $DIR_TEMPLATE/$REQUEST_URI.tmpl 2>/dev/null`
-
-		if [ $# -ne 0 ]; then
-			BODY_SHTML=`printf "$BODY_SHTML" "$@" 2>/dev/null`
-		fi
-	fi
-}
-
-message_page() {
-
-	MOBILE=yes
-	TITLE_TXT="$1"
-	REQUEST_URI=message_page
-
-	shift
-
-	print_page "$@"
-
-	write_SSI
 }
 
 anomalia() {
@@ -492,15 +127,13 @@ anomalia() {
 	case "$1" in
 	10)
 		write_ENV
-
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: load_policy() failure (anomalia 010) POLICY=$POLICY"
+		write_LOG "load_policy() failure (anomalia 010) POLICY=$POLICY"
 
 		message_page "$SERVICE" "$SERVICE (anomalia 010). Contattare l'assistenza: $TELEFONO"
 	;;
 	9)
 		write_ENV
-
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: login_request() failure (anomalia 009) IP=$IP MAC=$MAC"
+		write_LOG "login_request() failure (anomalia 009) IP=$IP MAC=$MAC"
 
 		MSG=`printf "$MSG_ANOMALIA" 009`
 		BACK_TAG="<a class=\"back\" href=\"$REDIRECT_DEFAULT\">RIPROVA</a>"
@@ -508,7 +141,7 @@ anomalia() {
 		message_page "$SERVICE" "$MSG"
 	;;
 	8)
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: Servizio LDAP non disponibile (anomalia 008)"
+		write_LOG "Servizio LDAP non disponibile (anomalia 008)"
 
 		if [ "$HTTPS" = "on" ]; then
 			MSG="Servizio LDAP non disponibile (anomalia 008). Contattare l'assistenza: $TELEFONO"
@@ -521,36 +154,33 @@ anomalia() {
 	;;
 	7)
 		write_ENV
-
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: info_notified_from_nodog() failure (anomalia 007) IP=$IP MAC=$MAC"
+		write_LOG "info_notified_from_nodog() failure (anomalia 007) IP=$IP MAC=$MAC"
 
 		ask_nodog_to_logout_user $IP $MAC
 
 		return
 	;;
 	6)
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: info_notified_from_nodog() failure (anomalia 006) IP=$IP MAC=$MAC file_ctx=$FILE_CTX"
+		write_LOG "info_notified_from_nodog() failure (anomalia 006) IP=$IP MAC=$MAC file_ctx=$FILE_CTX"
 
 		ask_nodog_to_logout_user $IP $MAC
 
 		return
 	;;
 	5)
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: send_request_to_nodog() failure (anomalia 005) gateway=$GATEWAY"
+		write_LOG "info_notified_from_nodog() failure (anomalia 005) gateway=$GATEWAY"
 
 		message_page "$SERVICE" "$SERVICE (anomalia 005). Contattare l'assistenza: $TELEFONO"
 	;;
 	4)
 		write_ENV
-
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: send_request_to_nodog() failure (anomalia 004) gateway=$GATEWAY"
+		write_LOG "info_notified_from_nodog() failure (anomalia 004) gateway=$GATEWAY"
 
 		message_page "$SERVICE" "$SERVICE (anomalia 004). Contattare l'assistenza: $TELEFONO"
 	;;
 	*)
 	  #chmod 777 $DIR_WEB/$VIRTUAL_HOST/ANOMALIA
-
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: write failure (anomalia 00$1) on file=$2"
+		write_LOG "info_notified_from_nodog() failure (anomalia 00$1) on file=$2"
 
 		message_page "$SERVICE" "$SERVICE per anomalia interna. Contattare l'assistenza: $TELEFONO"
 	;;
@@ -574,28 +204,65 @@ is_group_ACCOUNT() {
 	test -s $file && awk -F : '$1 == "'"$uid"'" && (! length("'"$password"'") || $2 == "'"$password"'") {found = 1} END {exit found ? 0 : 1}' $file
 }
 
-is_ap_OK() {
+get_user_context_connection() {
 
-	# 1 -> ap
+   # $1 -> uid
+   # $2 -> mac
 
-	MOBILE=yes
+   if [ -n "$1" ]; then
+      FILE_CTX=$DIR_CTX/$1.ctx
+   else
+      FILE_CTX=`grep -l $REMOTE_ADDR $DIR_CTX/*.ctx 2>/dev/null`
+   fi
 
-#	if [ -z "$AP_LIST_OK" ]; then
-#		AP_OK=yes
-#	elif [ -n "$1" ]; then
-#		AP_OK=`echo $AP_LIST_OK | egrep $1`
-#	fi
+   # data connection context saved on file
+   # -------------------------------------
+   # ap uid gateway mac ip auth_domain
+
+   if [ -n "$FILE_CTX" -a -s "$FILE_CTX" ]; then
+      read           AP UUID GATEWAY MAC IP AUTH_DOMAIN < $FILE_CTX 2>/dev/null
+   else
+      unset FILE_CTX AP UUID GATEWAY MAC IP AUTH_DOMAIN
+   fi
+}
+
+check_if_user_connected_to_AP_NO_CONSUME() {
+
+	# List of Access Point with NO CONSUME
+
+	FILE=$DIR_ROOT/etc/.AP_NO_CONSUME
+
+	if [ -s $FILE ]; then
+
+		while read AP_WITH_NO_CONSUME
+		do
+			if [ "$AP_WITH_NO_CONSUME" = "$1" ]; then
+
+				unset CONSUME_ON
+
+				return
+			fi
+		done < $FILE
+	fi
+
+	CONSUME_ON=true
 }
 
 main_page() {
 
-	# 1 -> mac
-	# 2 -> ip
-	# 3 -> redirect
-	# 4 -> gateway
-	# 5 -> timeout
-	# 6 -> token
-	# 7 -> ap
+	# -----------------------------------------------------------------------------------------------------------------------------------------------
+	# GET /login?mac=00%3A14%3AA5%3A6E%3A9C%3ACB&ip=192.168.226.2&redirect=http%3A%2F%2Fgoogle&gateway=192.168.226.1%3A5280&timeout=0&token=x&ap=lab2
+	# -----------------------------------------------------------------------------------------------------------------------------------------------
+	# $1 -> mac
+	# $2 -> ip
+	# $3 -> redirect
+	# $4 -> gateway
+	# $5 -> timeout
+	# $6 -> token
+	# $7 -> ap
+	# -----------------------------------------------------------------------------
+	# 00:e0:4c:d4:63:f5 10.30.1.105 http://google 10.30.1.131:5280 stefano 0 x lab2
+	# -----------------------------------------------------------------------------
 
 	if [ -n "$7" -a -n "$4" ]; then
 		update_ap_list "$7" "$4"
@@ -651,18 +318,14 @@ main_page() {
 		fi
 	fi
 
- 	is_ap_OK $7
-
-	print_page "$HELP_URL" "$WALLET_URL" "$7" "/login_request?$QUERY_STRING"
+	print_page "$URL_BANNER_AP" "$HELP_URL" "$WALLET_URL" "$7" "/login_request?$QUERY_STRING" "$URL_BANNER_COMUNE"
 }
 
 unifi_page() {
 
-	is_ap_OK unifi
-
 	REQUEST_URI=unifi_page
 
-	print_page "$HELP_URL" "$WALLET_URL" unifi "/unifi_login_request"
+	print_page "$URL_BANNER_AP" "$HELP_URL" "$WALLET_URL" unifi "/unifi_login_request" "$URL_BANNER_COMUNE"
 }
 
 logged_page() {
@@ -670,36 +333,10 @@ logged_page() {
 	get_user_context_connection "" ""
 
 	if [ -n "$AP" ]; then
-
-		is_ap_OK "$AP"
-
-		print_page "$HELP_URL" "$WALLET_URL" $AP "/logged_login_request"
+		print_page "$URL_BANNER_AP" "$HELP_URL" "$WALLET_URL" $AP "/logged_login_request" "$URL_BANNER_COMUNE"
 	else
-
 		HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
 		HTTP_RESPONSE_HEADER="Refresh: 0; url=http://www.google.com\r\n"
-	fi
-}
-
-get_user_context_connection() {
-
-	# $1 -> uid
-	# $2 -> mac
-
-	if [ -n "$1" ]; then
-		FILE_CTX=$DIR_CTX/$1.ctx
-	else
-		FILE_CTX=`grep -l $REMOTE_ADDR $DIR_CTX/*.ctx 2>/dev/null`
-	fi
-
-	# data connection context saved on file
-	# -------------------------------------
-	# ap uid gateway mac ip auth_domain
-
-	if [ -n "$FILE_CTX" -a -s "$FILE_CTX" ]; then
-		read				AP UUID GATEWAY MAC IP AUTH_DOMAIN < $FILE_CTX 2>/dev/null
-	else
-		unset FILE_CTX AP UUID GATEWAY MAC IP AUTH_DOMAIN
 	fi
 }
 
@@ -739,6 +376,8 @@ send_ticket_to_nodog() {
 		fi
 	fi
 
+	check_if_user_connected_to_AP_NO_CONSUME "$7"
+
 	FILE_CNT=$DIR_CNT/$POLICY/$WA_UID
 	# --------------------------------------------------------------------
 	# TIME POLICY
@@ -757,13 +396,8 @@ send_ticket_to_nodog() {
 
 			read TIMEOUT < $REMAIN 2>/dev/null
 
-			if [ $TIMEOUT -eq 0 ]; then
-
-				check_if_user_connected_to_AP_NO_CONSUME "$7"
-
-				if [ "$CONSUME_ON" = "true" ]; then
-					message_page "Tempo consumato" "Hai consumato il tempo disponibile del servizio!"
-				fi
+			if [ $TIMEOUT -eq 0 -a "$CONSUME_ON" = "true" ]; then
+				message_page "Tempo consumato" "Hai consumato il tempo disponibile del servizio!"
 			fi
 		else
 			TIMEOUT=$MAX_TIME
@@ -794,13 +428,8 @@ send_ticket_to_nodog() {
 
 			read TRAFFIC < $REMAIN 2>/dev/null
 
-			if [ $TRAFFIC -eq 0 ]; then
-
-				check_if_user_connected_to_AP_NO_CONSUME "$7"
-
-				if [ "$CONSUME_ON" = "true" ]; then
-					message_page "Traffico consumato" "Hai consumato il traffico disponibile del servizio!"
-				fi
+			if [ $TRAFFIC -eq 0 -a "$CONSUME_ON" = "true" ]; then
+				message_page "Traffico consumato" "Hai consumato il traffico disponibile del servizio!"
 			fi
 		else
 			TRAFFIC=$MAX_TRAFFIC
@@ -816,6 +445,11 @@ send_ticket_to_nodog() {
 
 	if [ -z "$REDIRECT_DEFAULT" ]; then
 		REDIRECT_DEFAULT=$3
+	fi
+
+	if [ "$POLICY" = "FLAT" -o -z "$CONSUME_ON" ]; then
+		TIMEOUT=86400
+		TRAFFIC=4294967296
 	fi
 
 	sign_data "
@@ -905,28 +539,6 @@ user_has_valid_cert() {
 	fi
 }
 
-check_if_user_connected_to_AP_NO_CONSUME() {
-
-	# List of Access Point with NO CONSUME
-
-	FILE=$DIR_ROOT/etc/$VIRTUAL_HOST/.AP_NO_CONSUME
-
-	if [ -s $FILE ]; then
-
-		while read AP_WITH_NO_CONSUME
-		do
-			if [ "$AP_WITH_NO_CONSUME" = "$1" ]; then
-
-				unset CONSUME_ON
-
-				return
-			fi
-		done < $FILE
-	fi
-
-	CONSUME_ON=true
-}
-
 _date() { date '+%Y/%m/%d %H:%M:%S' ; }
 
 write_to_LOG() {
@@ -969,21 +581,12 @@ write_to_LOG() {
 	logger -p $REMOTE_SYSLOG_SELECTOR "$PORTAL_NAME: $RIGA"
 }
 
-send_request_to_nodog() {
+set_ap() {
 
-	# $1 -> request
-	# $2 -> filename to save output
-	# $3 -> option
+	# $1 -> ap
 
-	if [ -z "$AP" ]; then
-		anomalia 4
-	fi
-
-	if [ -n "$2" ]; then
-		rm -f "$2"
-	fi
-
-	ACCESS_POINT_NAME=${AP##*@}
+	GATEWAY=""
+	ACCESS_POINT_NAME=${1##*@}
 
 	ACCESS_POINT=`egrep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.down 2>/dev/null`
 
@@ -992,142 +595,57 @@ send_request_to_nodog() {
 		ACCESS_POINT=`egrep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.up 2>/dev/null`
 
 		if [ -n "$ACCESS_POINT" ]; then
-
 			GATEWAY=`echo -n $ACCESS_POINT | cut -d' ' -f2 2>/dev/null`
-
-			# -----------------------------------------------------------------------------
-			# we send request to nodog
-			# -----------------------------------------------------------------------------
-			# NB: we need PREFORK_CHILD > 2
-			# -----------------------------------------------------------------------------
-			# UTRACE="0 10M 0"
-			# UOBJDUMP="0 100k 10"
-			# USIMERR="error.sim"
-			# export UTRACE UOBJDUMP USIMERR
-			# -----------------------------------------------------------------------------
-
-			OUTPUT=`$CLIENT_HTTP $3 http://$GATEWAY/$1 2>>/tmp/CLIENT_HTTP.err`
-
-			if [ $? -ne 0 ]; then
-
-				# si aggiunge access point alla lista di quelli non contattabili...
-
-				ACCESS_POINT=`egrep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.down 2>/dev/null`
-
-				if [ -z "$ACCESS_POINT" ]; then
-					append_to_FILE "$ACCESS_POINT_NAME $GATEWAY" $ACCESS_POINT_LIST.down
-				fi
-
-				anomalia 5
-			fi
-
-			if [ -n "$OUTPUT" -a -n "$2" ]; then
-
-				write_FILE "$OUTPUT" $2
-
-				unset OUTPUT
-			fi
 		fi
 	fi
 }
 
-# NB: check if /etc/openldap/ldap.conf contains TLS_REQCERT never
-# --------------------------------------------------------------------------------------------------------------------
-# ldapsearch -v -H 'ldaps://94.138.39.149:636' -b ou=users,o=unwired-portal -D cn=admin,o=unwired-portal -w programmer
+send_request_to_nodog() {
 
-ask_to_LDAP() {
-
-	# $1 -> cmd
-	# $2 -> param
+	# $1 -> request
+	# $2 -> filename to save output
 	# $3 -> option
-	# $4 -> filter_option
 
-	TMPFILE=/tmp/ask_to_LDAP.$$
-
-	if [ "$1" = ldapsearch ]; then
-		ldapsearch $2 "$3" $4 >$TMPFILE.out 2>$TMPFILE.err
-	else
-				  $1 $2 <<END   >$TMPFILE.out 2>$TMPFILE.err
-$3
-END
+	if [ -n "$2" ]; then
+		rm -f "$2"
 	fi
 
-	EXIT_VALUE=$?
+	set_ap $AP
 
-	if [ $EXIT_VALUE -eq 0 ]; then
+	if [ -n "$GATEWAY" ]; then
+		# -----------------------------------------------------------------------------
+		# we send request to nodog
+		# -----------------------------------------------------------------------------
+		# NB: we need PREFORK_CHILD > 2
+		# -----------------------------------------------------------------------------
+		# UTRACE="0 10M 0"
+		# UOBJDUMP="0 100k 10"
+		# USIMERR="error.sim"
+		# export UTRACE UOBJDUMP USIMERR
+		# -----------------------------------------------------------------------------
 
-		rm -f $TMPFILE.err
+		OUTPUT=`$CLIENT_HTTP $3 http://$GATEWAY/$1 2>>/tmp/CLIENT_HTTP.err`
 
-	elif [ -s $TMPFILE.err ]; then
+		if [ $? -ne 0 ]; then
 
-		rm -f $TMPFILE.out
+			# si aggiunge access point alla lista di quelli non contattabili...
 
-		grep '(-1)' < $TMPFILE.err # Can't contact LDAP server (-1)
+			ACCESS_POINT=`egrep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.down 2>/dev/null`
 
-		if [ $? -eq 0 ]; then
-			anomalia 8
+			if [ -z "$ACCESS_POINT" ]; then
+				append_to_FILE "$ACCESS_POINT_NAME $GATEWAY" $ACCESS_POINT_LIST.down
+			fi
+
+			anomalia 5
+		fi
+
+		if [ -n "$OUTPUT" -a -n "$2" ]; then
+
+			write_FILE "$OUTPUT" $2
+
+			unset OUTPUT
 		fi
 	fi
-}
-
-load_policy() {
-
-	if [ -n "$1" -a -s "$1" ]; then
-
-		POLICY=""
-		# ------------------------------------------------------------------------
-		# GET POLICY FROM FILE (UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC)
-		# ------------------------------------------------------------------------
-		read UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC < $1 2>/dev/null
-
-		SPACE=`echo $POLICY | egrep " "`
-
-		if [ -n "$SPACE" ]; then
-			anomalia 10
-		fi
-	fi
-
-	if [ -z "$POLICY" ]; then
-		anomalia 10
-	fi
-
-	POLICY_FILE=$DIR_POLICY/$POLICY
-
-	if [ ! -f "$POLICY_FILE" ]; then
-		anomalia 10
-	fi
-
- 	mkdir -p $DIR_CNT/$POLICY
-
-	unset POLICY_RESET
-	unset BONUS_FOR_EXIT
-
-	source $DIR_POLICY/$POLICY
-	# --------------------------------------------------------------------
-	# TIME POLICY
-	# --------------------------------------------------------------------
-	if [ -z "$MAX_TIME" ]; then
-		MAX_TIME=0
-	fi
-
-	if [ -n "$USER_MAX_TIME" ]; then
-		if [ $USER_MAX_TIME -ne $MAX_TIME ]; then
-			MAX_TIME=$USER_MAX_TIME
-		fi
-	fi
-	# --------------------------------------------------------------------
-	# TRAFFIC POLICY
-	# --------------------------------------------------------------------
-	if [ -z "$MAX_TRAFFIC" ]; then
-		MAX_TRAFFIC=0
-	fi
-
-	if [ -n "$USER_MAX_TRAFFIC" ]; then
-		if [ $USER_MAX_TRAFFIC -ne $MAX_TRAFFIC ]; then
-			MAX_TRAFFIC=$USER_MAX_TRAFFIC
-		fi
-	fi
-	# --------------------------------------------------------------------
 }
 
 save_connection_request() {
@@ -1185,20 +703,11 @@ check_if_user_is_connected() {
 
 login_with_problem() {
 
-	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: ${REQUEST_URI}() failure REQ_FILE=$REQ_FILE IP=$IP MAC=$MAC"
+	write_LOG "failure REQ_FILE=$REQ_FILE IP=$IP MAC=$MAC"
 
 	BACK_TAG="<a class=\"back\" href=\"$REDIRECT_DEFAULT\">RIPROVA</a>"
 
 	message_page "Login" "Problema in fase di autenticazione. Si prega di riprovare, se il problema persiste contattare: $TELEFONO"
-}
-
-logout_with_problem() {
-
-	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: ${REQUEST_URI}() failure REQ_FILE=$REQ_FILE"
-
-	unset BACK_TAG
-
-	message_page "ID di sessione mancante" "Utente non connesso (session id: $SESSION_ID)"
 }
 
 sign_data() {
@@ -1283,6 +792,10 @@ info_notified_from_nodog() {
 
 					if [ "$CONSUME_ON" = "true" ]; then
 						let "TIMEOUT = TIMEOUT + $GET_USER_INFO_INTERVAL"
+
+						if [ $TIMEOUT -gt $MAX_TIME ]; then
+							let "TIMEOUT = TIMEOUT - $GET_USER_INFO_INTERVAL"
+						fi
 					fi
 					# ---------------------------------------------------------
 					# we save the time remain for connection (secs) on file
@@ -1350,6 +863,8 @@ info_notified_from_nodog() {
 
 						if [ $TIMEOUT -lt 0 ]; then
 							TIMEOUT=0
+						elif [ $TIMEOUT -gt $MAX_TIME ]; then
+							let "TIMEOUT = TIMEOUT - $BONUS_FOR_EXIT"
 						fi
 					fi
 					# ---------------------------------------------------------
@@ -1379,11 +894,13 @@ info_notified_from_nodog() {
 		fi
 	fi
 
+	HTTP_RESPONSE_HEADER="Connection: close\r\n"
+
 	if [ $LOGOUT -eq 0 ]; then
-		BODY_SHTML="OK"
+		HTTP_RESPONSE_BODY="OK"
 	else
 		OP=LOGOUT
-		BODY_SHTML="LOGOUT"
+		HTTP_RESPONSE_BODY="LOGOUT"
 
 		write_to_LOG "$5" "$4" "$2" "$1" "$TIMEOUT" "$TRAFFIC"
 
@@ -1421,35 +938,6 @@ ask_nodog_to_check_for_users_info() {
 	fi
 }
 
-load_value_session() {
-
-	if [ -s $TMP_FORM_FILE ]; then
-
-		i=1
-		while read LINE
-		do
-			eval v$i=\"$LINE\"
-
-			let "i = i + 1"
-		done < $TMP_FORM_FILE
-	fi
-}
-
-get_user_nome_cognome() {
-
-	# $1 -> uuid
-
-	TMP_FORM_FILE=$DIR_REG/$1.reg
-
-	load_value_session
-
-	if [ -n "$v1$v2" ]; then
-		USER="$v1 $v2"
-	else
-		USER=$UUID
-	fi
-}
-
 read_connection_request() {
 
 	# ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1471,7 +959,12 @@ logout_user() {
 	read_connection_request
 
 	if [ -z $AP ]; then
-		logout_with_problem
+
+		write_LOG "failure REQ_FILE=$REQ_FILE"
+
+		unset BACK_TAG
+
+		message_page "ID di sessione mancante" "Utente non connesso (session id: $SESSION_ID)"
 	fi
 
 	if [ -z "$UUID" -o ! -s $DIR_CTX/$UUID.ctx ]; then
@@ -1491,27 +984,27 @@ logout_user() {
 
 read_counter() {
 
-	# $1 -> uuid
+   # $1 -> uuid
 
-	if [ -s "$DIR_CNT/$POLICY/$1.timeout" ]; then
+   if [ -s "$DIR_CNT/$POLICY/$1.timeout" ]; then
 
-		REMAINING_TIME=`cat $DIR_CNT/$POLICY/$1.timeout`
+      REMAINING_TIME=`cat $DIR_CNT/$POLICY/$1.timeout`
 
-		# expressing the time in minutes
-		REMAINING_TIME_MIN=`expr $REMAINING_TIME / 60`
-	else
-		REMAINING_TIME_MIN="Non disponibile"
-	fi
+      # expressing the time in minutes
+      REMAINING_TIME_MIN=`expr $REMAINING_TIME / 60`
+   else
+      REMAINING_TIME_MIN="Non disponibile"
+   fi
 
-	if [ -s "$DIR_CNT/$POLICY/$1.traffic" ]; then
+   if [ -s "$DIR_CNT/$POLICY/$1.traffic" ]; then
 
-		REMAINING_TRAFFIC=`cat $DIR_CNT/$POLICY/$1.traffic`
+      REMAINING_TRAFFIC=`cat $DIR_CNT/$POLICY/$1.traffic`
 
-		# expressing the traffic in MB 1024*1024=1048576
-		REMAINING_TRAFFIC_MB=`expr $REMAINING_TRAFFIC / 1048576`
-	else
-		REMAINING_TRAFFIC_MB="Non disponibile"
-	fi
+      # expressing the traffic in MB 1024*1024=1048576
+      REMAINING_TRAFFIC_MB=`expr $REMAINING_TRAFFIC / 1048576`
+   else
+      REMAINING_TRAFFIC_MB="Non disponibile"
+   fi
 }
 
 logout_request() {
@@ -1520,10 +1013,27 @@ logout_request() {
 
 	read_counter $UUID
 
-	MOBILE=yes
 	REQUEST_URI=ringraziamenti
 
-	print_page "$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB"
+	print_page $UUID "$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB"
+}
+
+recovery_user() {
+
+	# $1 -> uid
+
+	get_user_context_connection "$1" ""
+
+	if [ -n "$AP" ]; then
+		ask_nodog_to_logout_user $IP $MAC
+	fi
+
+	rm -f $DIR_CTX/$1.ctx $DIR_REG/$1.reg $DIR_CNT/$POLICY/$1.*
+
+	write_LOG "User <$1> recovered"
+
+	HTTP_RESPONSE_BODY="OK"
+	HTTP_RESPONSE_HEADER="Connection: close\r\n"
 }
 
 get_timeout_secs() {
@@ -1550,8 +1060,6 @@ login_request() {
 		# $5 -> timeout
 		# $6 -> token
 		# $7 -> ap
-
-		is_ap_OK $7
 
       print_page "$LOGIN_URL" \
                  "$1" "$2" "$3" "$4" "$5" "$6" "$7"
@@ -1627,7 +1135,7 @@ login_request() {
 
 		if [ $EXIT_VALUE -ne 0 -o -z "$RESPONSE" ]; then
 
-			logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: login_request() AUTH_CMD failure EXIT_VALUE=$EXIT_VALUE RESPONSE=$RESPONSE"
+			write_LOG "AUTH_CMD failure EXIT_VALUE=$EXIT_VALUE RESPONSE=$RESPONSE"
 
 			unset BACK_TAG
 
@@ -2045,8 +1553,6 @@ registrazione_request() {
 
 		# $1 -> ap
 
-		is_ap_OK $1
-
 		CONNECTION_CLOSE=1
 		TITLE_TXT="Registrazione utente"
 		HEAD_HTML="<link type=\"text/css\" href=\"css/livevalidation.css\" rel=\"stylesheet\">
@@ -2145,7 +1651,6 @@ waTraffic: $MAX_TRAFFIC
 
 	save_value_session "$@"
 
-	MOBILE=yes
 	REQUEST_URI=post_registrazione
 	TITLE_TXT="Registrazione effettuata"
 
@@ -2162,7 +1667,7 @@ card_activation() {
 
 	if [ $EXIT_VALUE -ne 0 ]; then
 
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: card_activation: $CALLER_ID"
+		write_LOG "$CALLER_ID not valid!"
 
 		uscita
 	fi
@@ -2173,7 +1678,7 @@ card_activation() {
 
 	if [ ! -s $TMPFILE.out ]; then
 
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: card_activation: Utente $CALLER_ID non registrato!"
+		write_LOG "Utente $CALLER_ID non registrato!"
 
 		uscita
 	fi
@@ -2184,7 +1689,7 @@ card_activation() {
 
 	if [ -n "$WA_USEDBY" ]; then
 
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: card_activation: Utente $CALLER_ID già attivato!"
+		write_LOG "Utente $CALLER_ID già attivato!"
 
 		uscita
 	fi
@@ -2203,72 +1708,24 @@ waUsedBy: $CALLER_ID
 
 	if [ $EXIT_VALUE -ne 0 ]; then
 
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: card_activation: Update card failed!"
+		write_LOG "Update card failed!"
 
 		uscita
 	fi
 
-	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: card_activation: Login    <$CALLER_ID>"
+	write_LOG "Login    <$CALLER_ID>"
 
 	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waLogin=$CALLER_ID"
 
 	PASSWORD=`awk '/^waPassword/{print $2}'	$TMPFILE.out 2>/dev/null`
 
-	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: card_activation: Password <$PASSWORD>"
+	write_LOG "Password <$PASSWORD>"
 
-	BODY_SHTML="OK"
-}
-
-execute_recovery() {
-
-	# $1 -> uid
-
-	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_USER_BASEDN $LDAP_USER_PARAM" "waUid=$1" dn:
-
-	if [ ! -s $TMPFILE.out ]; then
-		message_page "Recovery utente: utente non registrato" "Recovery utente: $1 non registrato!"
-	fi
-
-	USER_DN=`cut -f2 -d':' $TMPFILE.out 2>/dev/null`
-
-	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waPin=$1" dn:
-
-	if [ ! -s $TMPFILE.out ]; then
-		message_page "Errore recovery utente" "Errore recovery utente: $1 (card)"
-	fi
-
-	CARD_DN=`cut -f2 -d':' $TMPFILE.out 2>/dev/null`
-
-	get_user_context_connection "$1" ""
-
-	if [ -n "$AP" ]; then
-		ask_nodog_to_logout_user $IP $MAC
-	fi
-
-	ask_to_LDAP ldapdelete "$LDAP_CARD_PARAM" "$CARD_DN"
-
-	if [ $EXIT_VALUE -ne 0 ]; then
-		message_page "Errore" "Errore recovery: fallita cancellazione utente $1 (ldap branch card)"
-	fi
-
-	ask_to_LDAP ldapdelete "$LDAP_USER_PARAM" "$USER_DN"
-
-	if [ $EXIT_VALUE -ne 0 ]; then
-		message_page "Errore" "Errore recovery: fallita cancellazione utente $1 (ldap branch user)"
-	fi
-
-	rm -f $DIR_CTX/"$1".ctx $DIR_REG/"$1".reg $DIR_CNT/$POLICY/"$1".*
-
-	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: recovery: User <$1> recovered"
-
-#	BACK_TAG="<a href=\"admin\">TORNA AL MENU</a>"
-
-	message_page "Esito recovery" "Recovery completato!"
+	HTTP_RESPONSE_BODY="OK"
+	HTTP_RESPONSE_HEADER="Connection: close\r\n"
 }
 
 stato_utente() {
-
-	MOBILE=yes
 
 	# $1 -> mac
 
@@ -2292,141 +1749,6 @@ stato_utente() {
 
 		BODY_SHTML=`printf "$FMT" "$USER" $UUID $AP $GATEWAY "$OUTPUT" 2>/dev/null`
 	fi
-}
-
-view_user() {
-
-	# $1 -> uid
-
-	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_USER_BASEDN $LDAP_USER_PARAM" "waUid=$1"
-
-	if [ ! -s $TMPFILE.out ]; then
-		message_page "Visualizzazione dati utente: utente non registrato" "Visualizzazione dati utente: $1 non registrato!"
-	fi
-
-	WA_ACTIVE=`awk '/^waActive/{print $2}' $TMPFILE.out 2>/dev/null`
-	WA_UID=`	  awk	'/^waUid/{print $2}'		$TMPFILE.out 2>/dev/null`
-	WA_CELL=`  awk	'/^waCell/{print $2}'	$TMPFILE.out 2>/dev/null`
-
-	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waUsedBy=$1"
-
-	if [ ! -s $TMPFILE.out ]; then
-		message_page "Visualizzazione dati utente: utente non attivato" "Visualizzazione dati utente: $1 non attivato!"
-	fi
-
-	WA_CID=`		 awk	'/^waCid/{print $2}'			$TMPFILE.out 2>/dev/null`
-	WA_PIN=`		 awk	'/^waPin/{print $2}'			$TMPFILE.out 2>/dev/null`
-	WA_CARDID=`	 awk	'/^waCardId/{print $2}'		$TMPFILE.out 2>/dev/null`
-	WA_REVOKED=` awk	'/^waRevoked/{print $2}'	$TMPFILE.out 2>/dev/null`
-	WA_VALIDITY=`awk	'/^waValidity/{print $2}'	$TMPFILE.out 2>/dev/null`
-	WA_LOGIN=`	 awk	'/^waLogin/{print $2}'		$TMPFILE.out 2>/dev/null`
-	WA_PASSWORD=`awk	'/^waPassword/{print $2}'	$TMPFILE.out 2>/dev/null`
-	WA_USEDBY=`	 awk	'/^waUsedBy/{print $2}'		$TMPFILE.out 2>/dev/null`
-	WA_NOTAFTER=`awk	'/^waNotAfter/{print $2}'	$TMPFILE.out 2>/dev/null`
-
-	YEAR=`	echo ${WA_NOTAFTER:0:4}`
-	MONTH=`	echo ${WA_NOTAFTER:4:2}`
-	DAY=`		echo ${WA_NOTAFTER:6:2}`
-	HOUR=`	echo ${WA_NOTAFTER:8:2}`
-	MINUTES=`echo ${WA_NOTAFTER:10:2}`
-
-	# --------------------------------------------------------------------
-	# GET POLICY FOR THIS CARD
-	# --------------------------------------------------------------------
-	WA_POLICY=`grep 'waPolicy: ' $TMPFILE.out | cut -f2 -d' ' 2>/dev/null`
-
-	if [ -n "$WA_POLICY" ]; then
-		POLICY=$WA_POLICY
-	fi
-
-	load_policy
-
-	read_counter "$1"
-
-	if [ -z "$WA_NOTAFTER" ]; then
-		WA_NOTAFTER="Non disponibile"
-	else
-		WA_NOTAFTER="$DAY/$MONTH/$YEAR - $HOUR:$MINUTES"
-	fi
-
-	REVOKED=NO
-
-	if [ "$WA_REVOKED" = "TRUE" ]; then
-		REVOKED=SI
-	fi
-
-	REQUEST_URI=print_user_data
-	TITLE_TXT="Visualizzazione dati registrazione utente"
-
-	get_user_nome_cognome $1
-
-	print_page "$USER" $1 "$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB" $WA_PASSWORD "$WA_NOTAFTER" $WA_VALIDITY $REVOKED $POLICY
-}
-
-status_network() {
-
-	# --------------------------------------------------------------------------------------------
-	# NB: bisogna mettere in cron get_users_info (6 minuti)...
-	# --------------------------------------------------------------------------------------------
-
-	TMPFILE=/tmp/wi-auth-stat.$$
-
-	# stefano 055340773 10.30.1.131:5280 00:e0:4c:d4:63:f5 10.30.1.105
-
-	cat $DIR_CTX/*.ctx 2>/dev/null | sort > $TMPFILE 2>/dev/null
-
-	# NB: wc se non legge da stdin stampa anche il nome del file...
-
-	NUM_USERS=`			wc -l < $TMPFILE				   2>/dev/null`
-	NUM_ACCESS_POINT=`wc -l < $ACCESS_POINT_LIST.up 2>/dev/null`
-
-	if [ $NUM_USERS -gt 0 ]; then
-
-		BODY=`cat $DIR_TEMPLATE/status_network_body.tmpl 2>/dev/null`
-
-		while read AP UUID GATEWAY MAC IP AUTH_DOMAIN
-		do
-			# --------------------------------------------------------------------
-			# GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
-			# --------------------------------------------------------------------
-			FILE_UID=$DIR_REQ/$UUID.uid
-
-			if [ -s "$FILE_UID" ]; then
-				read UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC < $FILE_UID 2>/dev/null
-			fi
-
-			read_counter $UUID
-
-			check_if_user_connected_to_AP_NO_CONSUME "$AP"
-
-			if [ "$CONSUME_ON" = "true" ]; then
-				COLOR="green"
-				CONSUME="yes"
-			else
-				COLOR="orange"
-				CONSUME="no"
-			fi
-
-			if [ -s $DIR_CTX/$UUID.ctx ]; then
-				LOGIN_TIME=`date -r $DIR_CTX/$UUID.ctx 2>/dev/null`
-
-				RIGA=`printf "$BODY" $UUID "$AUTH_DOMAIN" "$LOGIN_TIME" $POLICY \
-											"$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB" \
-											$IP $MAC $GATEWAY $COLOR $CONSUME $AP $AP 2>/dev/null`
-
-				OUTPUT=`echo "$OUTPUT"; echo "$RIGA" 2>/dev/null`
-			fi
-		done < $TMPFILE
-	fi
-
-	TMP1=`cat $DIR_TEMPLATE/status_network_head.tmpl 2>/dev/null`
-	TMP2=`date`
-	TMP3=`printf "$TMP1" "$TMP2" $NUM_ACCESS_POINT $NUM_USERS 2>/dev/null`
-
-	rm -f $TMPFILE 2>/dev/null
-
-	TITLE_TXT="Firenze WiFi: stato rete"
-	BODY_SHTML=` echo "$TMP3"; echo "$OUTPUT"; cat $DIR_TEMPLATE/status_network_end.tmpl 2>/dev/null`
 }
 
 update_ap_list() {
@@ -2466,13 +1788,9 @@ update_ap_list() {
 	fi
 }
 
-start_ap() {
-
-	# for safety...
-	mkdir -p $DIR_POLICY $DIR_AP $DIR_CTX $DIR_CNT $DIR_REQ $DIR_CLIENT $DIR_REG $DIR_TEMPLATE $HISTORICAL_LOG_DIR
+quit_user_logged() {
 
 	# $1 -> ap
-	# $2 -> public address to contact the access point
 
 	# ------------------------------------------------------------------------------------------------------------------------------------------------
 	# *.req (AP GATEWAY MAC IP REDIRECT TIMEOUT TOKEN UUID)
@@ -2517,41 +1835,92 @@ start_ap() {
 
 		rm -f $LIST_SAFE
 	fi
+}
 
-	BODY_SHTML="OK"
+start_ap() {
+
+	# for safety...
+	mkdir -p $DIR_POLICY $DIR_AP $DIR_CTX $DIR_CNT $DIR_REQ $DIR_CLIENT $DIR_REG $DIR_TEMPLATE $HISTORICAL_LOG_DIR
+
+	# $1 -> ap
+	# $2 -> public address to contact the access point
+	# $3 -> pid (0 => start)
+
+	quit_user_logged "$1"
 
 	update_ap_list "$1" "$2"
+
+	INFO=start
+
+	if [ "$3" != "0" ]; then
+		INFO=CRASH
+	fi
+
+	write_LOG "$1 $INFO"
+
+	HTTP_RESPONSE_BODY=`egrep -v '^#' $DIR_ROOT/etc/AllowedWebHosts.txt | tr '\n' ' '`
+	HTTP_RESPONSE_HEADER="Connection: close\r\n"
+}
+
+error_ap() {
+
+	# $1 -> ap
+	# $2 -> public address to contact the access point
+
+	update_ap_list "$1" "$2"
+
+	write_LOG "$1 FIREWALL NOT ALIGNED"
+
+	HTTP_RESPONSE_BODY=OK
+	HTTP_RESPONSE_HEADER="Connection: close\r\n"
 }
 
 get_users_info() {
 
-	# ------------------------------------------------------------------------------------------------------------------------------------------------
-	# stefano 10.30.1.131:5280 00:e0:4c:d4:63:f5 10.30.1.105 http://www.google.com 0 10.30.1.105&1257603166&2a2436611f452f8eebddce4992e88f8d 055340773
-	# ------------------------------------------------------------------------------------------------------------------------------------------------
-	# cat $DIR_REQ/*.req 2>/dev/null | cut -f 1-2 -d' ' | uniq >/tmp/ACCESS_POINT.lst 2>/dev/null
-	# ------------------------------------------------------------------------------------------------------------------------------------------------
+	# $1 -> ap
+	# $2 -> gateway
 
-	# NB: wc se non legge da stdin stampa anche il nome del file...
+	if [ -n "$1" -a -n "$2" ]; then
 
-	NUM_ACCESS_POINT=`wc -l < $ACCESS_POINT_LIST.up 2>/dev/null`
-
-	if [ -n "$NUM_ACCESS_POINT" -a \
-				$NUM_ACCESS_POINT -gt 0 ]; then
-
+		AP=$1
+		GATEWAY=$2
 		TMPFILE=/tmp/nodog_check.$$
 
-		while read AP GATEWAY
-		do
-			# we request nodog to check for users logout or disconnect...
+		ask_nodog_to_check_for_users_info &
+	else
+		# ------------------------------------------------------------------------------------------------------------------------------------------------
+		# stefano 10.30.1.131:5280 00:e0:4c:d4:63:f5 10.30.1.105 http://www.google.com 0 10.30.1.105&1257603166&2a2436611f452f8eebddce4992e88f8d 055340773
+		# ------------------------------------------------------------------------------------------------------------------------------------------------
+		# cat $DIR_REQ/*.req 2>/dev/null | cut -f 1-2 -d' ' | uniq >/tmp/ACCESS_POINT.lst 2>/dev/null
+		# ------------------------------------------------------------------------------------------------------------------------------------------------
 
-			ask_nodog_to_check_for_users_info &
+		# NB: wc se non legge da stdin stampa anche il nome del file...
 
-			sleep 1
+		NUM_ACCESS_POINT=`wc -l < $ACCESS_POINT_LIST.up 2>/dev/null`
 
-		done < $ACCESS_POINT_LIST.up
+		if [ -n "$NUM_ACCESS_POINT" -a \
+					$NUM_ACCESS_POINT -gt 0 ]; then
+
+			local i=0
+
+			while read AP GATEWAY
+			do
+				let "i = i + 1"
+
+				# we request nodog to check for users logout or disconnect...
+
+				TMPFILE=/tmp/nodog_check.$i
+
+				ask_nodog_to_check_for_users_info &
+
+				sleep 1
+
+			done < $ACCESS_POINT_LIST.up
+		fi
 	fi
 
-	HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
+	HTTP_RESPONSE_BODY="OK"
+	HTTP_RESPONSE_HEADER="Connection: close\r\n"
 }
 
 status_ap() {
@@ -2566,9 +1935,145 @@ status_ap() {
 	if [ -s "$TMPFILE" ]; then
 		HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
 		HTTP_RESPONSE_HEADER="X-Sendfile: $TMPFILE\r\n"
+
+#		send_request_to_nodog "users" /tmp/$1.users
 	else
 		message_page "$SERVICE" "$SERVICE (access point non contattabile). Riprovare piu' tardi"
 	fi
+}
+
+view_user() {
+
+	# $1 -> uid
+	# $2 -> outfile
+
+	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_USER_BASEDN $LDAP_USER_PARAM" "waUid=$1"
+
+	WA_ACTIVE=`awk '/^waActive/{print $2}' $TMPFILE.out 2>/dev/null`
+	WA_UID=`	  awk	'/^waUid/{print $2}'		$TMPFILE.out 2>/dev/null`
+	WA_CELL=`  awk	'/^waCell/{print $2}'	$TMPFILE.out 2>/dev/null`
+
+	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waUsedBy=$1"
+
+	WA_CID=`		 awk	'/^waCid/{print $2}'			$TMPFILE.out 2>/dev/null`
+	WA_PIN=`		 awk	'/^waPin/{print $2}'			$TMPFILE.out 2>/dev/null`
+	WA_CARDID=`	 awk	'/^waCardId/{print $2}'		$TMPFILE.out 2>/dev/null`
+	WA_REVOKED=` awk	'/^waRevoked/{print $2}'	$TMPFILE.out 2>/dev/null`
+	WA_VALIDITY=`awk	'/^waValidity/{print $2}'	$TMPFILE.out 2>/dev/null`
+	WA_LOGIN=`	 awk	'/^waLogin/{print $2}'		$TMPFILE.out 2>/dev/null`
+	WA_PASSWORD=`awk	'/^waPassword/{print $2}'	$TMPFILE.out 2>/dev/null`
+	WA_USEDBY=`	 awk	'/^waUsedBy/{print $2}'		$TMPFILE.out 2>/dev/null`
+	WA_NOTAFTER=`awk	'/^waNotAfter/{print $2}'	$TMPFILE.out 2>/dev/null`
+
+	YEAR=`	echo ${WA_NOTAFTER:0:4}`
+	MONTH=`	echo ${WA_NOTAFTER:4:2}`
+	DAY=`		echo ${WA_NOTAFTER:6:2}`
+	HOUR=`	echo ${WA_NOTAFTER:8:2}`
+	MINUTES=`echo ${WA_NOTAFTER:10:2}`
+
+	# --------------------------------------------------------------------
+	# GET POLICY FOR THIS CARD
+	# --------------------------------------------------------------------
+	WA_POLICY=`grep 'waPolicy: ' $TMPFILE.out | cut -f2 -d' ' 2>/dev/null`
+
+	if [ -n "$WA_POLICY" ]; then
+		POLICY=$WA_POLICY
+	fi
+
+	load_policy
+
+	read_counter "$1"
+
+	if [ -z "$WA_NOTAFTER" ]; then
+		WA_NOTAFTER="Non disponibile"
+	else
+		WA_NOTAFTER="$DAY/$MONTH/$YEAR - $HOUR:$MINUTES"
+	fi
+
+	REVOKED=NO
+
+	if [ "$WA_REVOKED" = "TRUE" ]; then
+		REVOKED=SI
+	fi
+
+	get_user_nome_cognome $1
+
+	printf "`cat $DIR_TEMPLATE/view_user.tmpl`" "$USER" $1 \
+															  "$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB" \
+															  $WA_PASSWORD "$WA_NOTAFTER" $WA_VALIDITY $REVOKED $POLICY > $2
+
+	HTTP_RESPONSE_BODY="OK"
+	HTTP_RESPONSE_HEADER="Connection: close\r\n"
+}
+
+status_network() {
+
+	TMPFILE=/tmp/wi-auth-stat.$$
+
+	# stefano 055340773 10.30.1.131:5280 00:e0:4c:d4:63:f5 10.30.1.105
+
+	cat $DIR_CTX/*.ctx 2>/dev/null | sort > $TMPFILE 2>/dev/null
+
+	# NB: wc se non legge da stdin stampa anche il nome del file...
+
+	NUM_USERS=`			wc -l < $TMPFILE				   2>/dev/null`
+	NUM_ACCESS_POINT=`wc -l < $ACCESS_POINT_LIST.up 2>/dev/null`
+
+	# $1 -> outfile
+
+	printf "`cat $DIR_TEMPLATE/status_network_head.tmpl`" $NUM_ACCESS_POINT $NUM_USERS > $1
+
+	if [ $NUM_USERS -gt 0 ]; then
+
+		BODY=`cat $DIR_TEMPLATE/status_network_body.tmpl 2>/dev/null`
+
+		while read AP UUID GATEWAY MAC IP AUTH_DOMAIN
+		do
+			# --------------------------------------------------------------------
+			# GET POLICY FROM FILE (UUID_TO_LOG POLICY MAX_TIME MAX_TRAFFIC)
+			# --------------------------------------------------------------------
+			FILE_UID=$DIR_REQ/$UUID.uid
+
+			if [ -s "$FILE_UID" ]; then
+				read UUID_TO_LOG POLICY USER_MAX_TIME USER_MAX_TRAFFIC < $FILE_UID 2>/dev/null
+			fi
+
+			read_counter $UUID
+
+			check_if_user_connected_to_AP_NO_CONSUME "$AP"
+
+			if [ "$CONSUME_ON" = "true" ]; then
+				COLOR="green"
+				CONSUME="yes"
+			else
+				COLOR="orange"
+				CONSUME="no"
+			fi
+
+			if [ -s $DIR_CTX/$UUID.ctx ]; then
+				LOGIN_TIME=`date -r $DIR_CTX/$UUID.ctx 2>/dev/null`
+
+				get_user_nome_cognome $UUID
+
+				RIGA=`printf "$BODY" "$USER" $UUID "$AUTH_DOMAIN" $IP $MAC \
+											"$LOGIN_TIME" $POLICY \
+											"$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB" \
+											$COLOR $CONSUME \
+											"http://$VIRTUAL_NAME/webif_ap?ap=$AP"  $GATEWAY \
+											"http://$VIRTUAL_NAME/status_ap?ap=$AP" $AP \
+											2>/dev/null`
+
+				OUTPUT=`echo "$OUTPUT"; echo "$RIGA" 2>/dev/null`
+			fi
+		done < $TMPFILE
+	fi
+
+	rm -f $TMPFILE
+
+	echo "$OUTPUT" >> $1
+
+	HTTP_RESPONSE_BODY="OK"
+	HTTP_RESPONSE_HEADER="Connection: close\r\n"
 }
 
 uploader() {
@@ -2577,7 +2082,8 @@ uploader() {
 
 	mv $1 $HISTORICAL_LOG_DIR
 
-	BODY_SHTML="OK"
+	HTTP_RESPONSE_BODY="OK"
+	HTTP_RESPONSE_HEADER="Connection: close\r\n"
 }
 
 reset_policy() {
@@ -2599,7 +2105,8 @@ reset_policy() {
 	find $DIR_REQ	  -type f -mtime +2 -exec rm -f  {} \; 2>/dev/null
 	find $DIR_CLIENT -type d -mtime +1 -exec rm -rf {} \; 2>/dev/null
 
-	BODY_SHTML="OK"
+	HTTP_RESPONSE_BODY="OK"
+	HTTP_RESPONSE_HEADER="Connection: close\r\n"
 }
 
 polling_attivazione() {
@@ -2608,7 +2115,6 @@ polling_attivazione() {
 	# $2 password
 
 	INFO=""
-	MOBILE=yes
 	LOGIN_FORM=""
 	TITLE="VERIFICA ATTIVAZIONE: ATTENDERE..."
 	HEAD_HTML="<meta http-equiv=\"refresh\" content=\"3\">"
@@ -2673,7 +2179,6 @@ polling_attivazione() {
 </form>
 "
 
-		HEAD_HTML="<!-- -->"
 		TITLE="LE TUE CREDENZIALI SONO:"
 		CREDENTIALS_TAG="<p class=\"bigger\">Utente: $1</p><!-- <p class=\"bigger\">Password: $WA_PASSWORD</p> -->"
 	fi
@@ -2683,25 +2188,9 @@ polling_attivazione() {
 	print_page "$TITLE" "$CREDENTIALS_TAG" "$INFO" "$LOGIN_FORM"
 }
 
-redirect_if_not_https() {
-
-  	if [ "$HTTPS" != "on" ]; then
-  		HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
-  		HTTP_RESPONSE_HEADER="Refresh: 0; url=https://${HTTP_HOST}${REQUEST_URI}\r\n"
-   	write_SSI
-   fi
-
-	HEAD_HTML="<link type=\"text/css\" href=\"css/layoutv1.css\" rel=\"stylesheet\">"
-}
-
 uscita() {
 
-	if [ -e $TMPFILE.out ]; then
-		rm -f $TMPFILE.out
-	fi
-	if [ -e $TMPFILE.err ]; then
-		rm -f $TMPFILE.err
-	fi
+	rm -f $TMPFILE.out $TMPFILE.err
 
 	exit $EXIT_VALUE
 }
@@ -2740,33 +2229,22 @@ write_SSI() {
 		if [ -n "$HTTP_RESPONSE_BODY" ]; then
 			echo  \"HTTP_RESPONSE_BODY=$HTTP_RESPONSE_BODY\"
 		else
-			mkdir -p $DIR_SSI
-
 			if [ -z "$BODY_SHTML" ]; then
-
-				TITLE_TXT="400 Bad Request"
-				HEAD_HTML=""
-				BODY_SHTML="<h1>Bad Request</h1><p>Your browser sent a request that this server could not understand<br></p>"
-
-				EXIT_VALUE=1
+				EXIT_VALUE=400
+				uscita
 			fi
 
 			if [ -z "$TITLE_TXT" ]; then
 				TITLE_TXT="Firenze WiFi"
 			fi
 
-			if [ -z "$HEAD_HTML" ]; then
-				HEAD_HTML="<!-- -->"
+         echo -e "'TITLE_TXT=$TITLE_TXT'\nBODY_STYLE=$BODY_STYLE"
+			
+			if [ -n "$HEAD_HTML" ]; then
+				echo "'HEAD_HTML=$HEAD_HTML'"
 			fi
 
-			echo -n -e "$HEAD_HTML"	 > $FILE_HEAD_HTML
 			echo -n -e "$BODY_SHTML" > $FILE_BODY_SHTML
-
-			if [ -n "$MOBILE" ]; then
-				echo "MOBILE=yes"
-			fi
-
-			echo -e "'TITLE_TXT=$TITLE_TXT'\nBODY_STYLE=$BODY_STYLE"
 		fi
 	fi
 
@@ -2775,51 +2253,23 @@ write_SSI() {
 
 do_cmd() {
 
-	# --------------------------------
-	#  session ID (no NAT)
-	# --------------------------------
-	SESSION_ID=$REMOTE_ADDR
-	# --------------------------------
-	#  session ID (with NAT)
-	# --------------------------------
-	#  if [ -n "$ULIB_SESSION" ]; then
-	#     SESSION_ID=$ULIB_SESSION
-	#  else
-	#     SET_COOKIE=SID$$
-	#     SESSION_ID=$SET_COOKIE
-	#  fi
-	# --------------------------------
-
 	# check if we are operative...
+
 	if [ -x $DIR_WEB/$VIRTUAL_HOST/ANOMALIA ]; then
 
 		unset BACK_TAG
 
-		logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $REQUEST_URI: Sistema non disponibile"
+		write_LOG "Sistema non disponibile"
 
 		message_page "$SERVICE" "$SERVICE per anomalia interna. Contattare l'assistenza: $TELEFONO"
 	fi
-
-	# -----------------------------------------------------------------------------------------------------------------------------------------------
-	# GET /login?mac=00%3A14%3AA5%3A6E%3A9C%3ACB&ip=192.168.226.2&redirect=http%3A%2F%2Fgoogle&gateway=192.168.226.1%3A5280&timeout=0&token=x&ap=lab2
-	# -----------------------------------------------------------------------------------------------------------------------------------------------
-	# $1 -> mac
-	# $2 -> ip
-	# $3 -> redirect
-	# $4 -> gateway
-	# $5 -> timeout
-	# $6 -> token
-	# $7 -> ap
-	# -----------------------------------------------------------------------------
-	# 00:e0:4c:d4:63:f5 10.30.1.105 http://google 10.30.1.131:5280 stefano 0 x lab2
-	# -----------------------------------------------------------------------------
 
 	if [ "$REQUEST_METHOD" = "GET" ]; then
 
 		case "$REQUEST_URI" in
 			/info)						info_notified_from_nodog	"$@"	;;
-			/login)						main_page						"$@"	;;
 			/start_ap)					start_ap							"$@"	;;
+			/error_ap)					error_ap							"$@"	;;
 			/postlogin)					postlogin						"$@"	;;
 			/stato_utente)				stato_utente					"$@"	;;
 			/polling_attivazione)	polling_attivazione			"$@"	;;
@@ -2827,17 +2277,36 @@ do_cmd() {
 			/login_request)			login_request					"$@"	;;
 			/login_validate)			login_validate					"$@"	;;
 			/logout)						logout_request							;;
+			/login)						main_page						"$@"	;;
 			/unifi)						unifi_page								;;
 			/logged)						logged_page								;;
 
-			/unifi_login_request)
-				MOBILE=yes
-				print_page
+		 # /unifi_login_request|/logout_page) print_page ;;
+
+			/admin)
+				HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
+				HTTP_RESPONSE_HEADER="Refresh: 0; url=https://$SERVER_ADDR/admin.html\r\n"
 			;;
 
-			/logout_page)
-				MOBILE=yes
-				print_page
+			/status_ap)
+				if [ "$VIRTUAL_HOST" = "$VIRTUAL_NAME" ]; then
+					status_ap "$@"
+				fi
+			;;
+
+			/webif_ap)
+				if [ "$VIRTUAL_HOST" = "$VIRTUAL_NAME" ]; then
+
+					set_ap $1
+
+					if [ -n "$GATEWAY" ]; then
+
+						echo -n ${GATEWAY%:*} > $DIR_ROOT/client/$SESSION_ID.srv
+
+						HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
+						HTTP_RESPONSE_HEADER="Refresh: 0; url=http://$VIRTUAL_NAME/cgi-bin/webif/status-basic.sh?cat=Status\r\n"
+					fi
+				fi
 			;;
 
 			/card_activation)
@@ -2847,7 +2316,7 @@ do_cmd() {
 			;;
 			/get_users_info)
 				if [ "$REMOTE_ADDR" = "$SERVER_ADDR" ]; then
-					get_users_info
+					get_users_info "$@" 
 				fi
 			;;
 			/reset_policy)
@@ -2855,60 +2324,20 @@ do_cmd() {
 					reset_policy
 				fi
 			;;
-
-			/admin)
-				redirect_if_not_https
-				print_page
+			/recovery)
+				if [ "$REMOTE_ADDR" = "$SERVER_ADDR" ]; then
+					recovery_user "$@" 
+				fi
 			;;
-			/admin_status_network)
-				redirect_if_not_https
-				status_network
+			/view_user)
+				if [ "$REMOTE_ADDR" = "$SERVER_ADDR" ]; then
+					view_user "$@"
+				fi
 			;;
-			/admin_status_ap)
-				redirect_if_not_https
-				status_ap "$@"
-			;;
-			/admin_printlog)
-				redirect_if_not_https
-				printlog
-			;;
-			/admin_view_user)
-				REQUEST_URI=view_user
-				TITLE_TXT="Visualizzazione dati utente"
-				HEAD_HTML="<link type=\"text/css\" href=\"css/layoutv1.css\" rel=\"stylesheet\">
-							  <script type=\"text/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>"
-
-				print_page
-			;;
-			/admin_recovery)
-				REQUEST_URI=recovery
-				TITLE_TXT="Recovery utente"
-				HEAD_HTML="<link type=\"text/css\" href=\"css/layoutv1.css\" rel=\"stylesheet\">
-							  <script type=\"text/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>"
-
-				print_page
-			;;
-			/admin_view_statistics_login)
-				redirect_if_not_https
-				view_statistics_login "$@"
-			;;
-			/admin_view_statistics_registration)
-				redirect_if_not_https
-				view_statistics_registration
-			;;
-			/admin_historical_statistics_login)
-				redirect_if_not_https
-
-				REQUEST_URI=historical_statistics_login
-				historical_statistics_login	
-			;;
-			/admin_export_statistics_login_as_csv)
-				redirect_if_not_https
-				export_statistics_login_as_csv "$@"
-			;;
-			/admin_export_statistics_registration_as_csv)
-				redirect_if_not_https
-				export_statistics_registration_as_csv
+			/status_network)
+				if [ "$REMOTE_ADDR" = "$SERVER_ADDR" ]; then
+					status_network "$@"
+				fi
 			;;
 
 			*) print_page ;;
@@ -2921,27 +2350,6 @@ do_cmd() {
 			/uploader)			uploader							"$@" ;;
 			/login_request)	login_request					"$@" ;;
 			/registrazione)	registrazione_request		"$@" ;;
-
-			/admin_view_user)
-				redirect_if_not_https
-				view_user "$@"
-			;;
-			/admin_recovery)
-				redirect_if_not_https
-
-				# $1 -> uid
-
-				REQUEST_URI=confirm_page
-				TITLE_TXT="Conferma recovery"
-
-				get_user_nome_cognome "$1"
-
-				print_page "$TITLE_TXT" "$USER" "$1" "admin_execute_recovery" "$1"
-			;;
-			/admin_execute_recovery)
-				redirect_if_not_https
-				execute_recovery "$@"
-			;;
 		esac
 	fi
 
@@ -2950,18 +2358,6 @@ do_cmd() {
 #-----------------------------------
 # END FUNCTION
 #-----------------------------------
-
-export TITLE_TXT HEAD_HTML BODY_SHTML BODY_STYLE MOBILE REQ_FILE AUTH_DOMAIN REMAINING_TIME_MIN REMAINING_TRAFFIC_MB \
-		 SESSION_ID CONNECTION_CLOSE SET_COOKIE TMPFILE OUTPUT HTTP_RESPONSE_HEADER HTTP_RESPONSE_BODY FILE_RESPONSE_HTML \
-		 OP FILE_CTX MAC IP GATEWAY AP TMP_FORM_FILE UUID UUID_TO_LOG UUID_TO_APPEND CALLER_ID USER SIGNED_DATA POLICY WA_UID \
-		 CONSUME_ON FILE_CNT POLICY_FILE FILE_UID
-
-# load eventuale script configuration
-
-if [ -n "$SCRIPT_CONF" -a -r "$SCRIPT_CONF" ]; then
-	. $SCRIPT_CONF 2>/dev/null
-fi
-
 DEBUG=0
 
 if [ $DEBUG -eq 0 ]; then

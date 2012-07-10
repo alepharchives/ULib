@@ -147,11 +147,12 @@ void UModProxyService::loadConfig(UFileConfig& cfg, UVector<UModProxyService*>& 
       }
 }
 
-UModProxyService* UModProxyService::findService(const UString& host, const UString& method, UVector<UModProxyService*>& vservice)
+UModProxyService*
+UModProxyService::findService(const char* host, uint32_t host_len, const char* method, uint32_t method_len, UVector<UModProxyService*>& vservice)
 {
-   U_TRACE(0, "UModProxyService::findService(%.*S,%.*S,%p)", U_STRING_TO_TRACE(host), U_STRING_TO_TRACE(method), &vservice)
+   U_TRACE(0, "UModProxyService::findService(%.*S,%u,%.*S,%u,%p)", host_len, host, host_len, method_len, method, method_len, &vservice)
 
-   U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
+   U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
 
    UModProxyService* elem;
    UString uri = UHTTP::getRequestURI(false);
@@ -162,10 +163,10 @@ UModProxyService* UModProxyService::findService(const UString& host, const UStri
 
       U_INTERNAL_DUMP("method_mask = %.*S uri_mask = %.*S", U_STRING_TO_TRACE(elem->method_mask), U_STRING_TO_TRACE(elem->uri_mask.getMask()))
 
-      if ((elem->host_mask.empty()       || UServices::dosMatchWithOR(host, elem->host_mask, 0))     &&
-          (elem->method_mask.empty()     || UServices::dosMatchWithOR(method, elem->method_mask, 0)) &&
-          (elem->uri_mask.getPcre() == 0 || elem->uri_mask.search(U_STRING_TO_PARAM(uri)))           &&
-          (elem->vremote_address == 0    || UServer_Base::pClientImage->isAllowed(*(elem->vremote_address))))
+      if ((elem->vremote_address == 0    || UServer_Base::pClientImage->isAllowed(*(elem->vremote_address)))                 &&
+          (elem->host_mask.empty()       || u_dosmatch_with_OR(host,     host_len, U_STRING_TO_PARAM(elem->host_mask),   0)) &&
+          (elem->method_mask.empty()     || u_dosmatch_with_OR(method, method_len, U_STRING_TO_PARAM(elem->method_mask), 0)) &&
+          (elem->uri_mask.getPcre() == 0 || elem->uri_mask.search(U_STRING_TO_PARAM(uri))))
          {
          U_RETURN_POINTER(elem, UModProxyService);
          }

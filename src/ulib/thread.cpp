@@ -368,7 +368,6 @@ void UThread::execHandler(UThread* th)
       // but the stop/abort action that is taken by the signal affects the whole process. In the earlier implementation
       // of Linux threads, it was possible to stop a single thread with SIGSTOP, but this behaviour has now been fixed
       // to conform to the Posix standard (so it stops all threads in the process).
-      //
 
 #     ifdef sigemptyset
       sigemptyset(&mask);

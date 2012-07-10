@@ -313,6 +313,19 @@ int UHttpPlugIn::handlerInit()
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
+int UHttpPlugIn::handlerRun()
+{
+   U_TRACE(0, "UHttpPlugIn::handlerRun()")
+
+   U_INTERNAL_ASSERT_POINTER(UHTTP::cache_file)
+
+   // NB: now we have shared data allocated by UServer...
+
+   UHTTP::cache_file->callForAllEntry(UHTTP::callInitForAllUSP);
+
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+}
+
 // Connection-wide hooks
 
 int UHttpPlugIn::handlerREAD()
@@ -373,6 +386,16 @@ int UHttpPlugIn::handlerREAD()
 
    result = UHTTP::checkHTTPRequest();
 
+   if (result == U_PLUGIN_HANDLER_FINISHED)
+      {
+      UServer_Base::bpluginsHandlerRequest = (UServer_Base::pClientImage->socket->isOpen() &&
+                                              UHTTP::isHTTPRequestAlreadyProcessed() == false);
+
+      U_INTERNAL_DUMP("UServer_Base::bpluginsHandlerRequest = %b", UServer_Base::bpluginsHandlerRequest)
+
+      if (UServer_Base::bpluginsHandlerRequest == false) result = handlerRequest();
+      }
+
    U_RETURN(result);
 }
 
@@ -386,6 +409,32 @@ int UHttpPlugIn::handlerRequest()
 
    switch (U_http_request_check)
       {
+      case U_HTTP_REQUEST_IS_FORBIDDEN:
+         {
+         U_ASSERT(UHTTP::isHTTPRequestForbidden())
+
+         UHTTP::setHTTPForbidden(); // set forbidden error response...
+         }
+      break;
+
+      case U_HTTP_REQUEST_IS_NOT_FOUND:
+         {
+         U_ASSERT(UHTTP::isHTTPRequestNotFound())
+
+         if (U_http_method_type == HTTP_OPTIONS)
+            {
+            u_http_info.nResponseCode = HTTP_OPTIONS_RESPONSE;
+
+            UHTTP::setHTTPResponse(0, 0);
+
+            goto end;
+            }
+
+         UHTTP::setHTTPNotFound(); // set not found error response...
+         }
+      break;
+
+#  ifdef DEBUG
       case U_HTTP_REQUEST_NEED_PROCESSING:
          {
          U_ASSERT(UHTTP::isHTTPRequestNeedProcessing())
@@ -417,32 +466,6 @@ int UHttpPlugIn::handlerRequest()
          }
       break;
 
-      case U_HTTP_REQUEST_IS_NOT_FOUND:
-         {
-         U_ASSERT(UHTTP::isHTTPRequestNotFound())
-
-         if (U_http_method_type == HTTP_OPTIONS)
-            {
-            u_http_info.nResponseCode = HTTP_OPTIONS_RESPONSE;
-
-            UHTTP::setHTTPResponse(0, 0);
-
-            goto end;
-            }
-
-         UHTTP::setHTTPNotFound(); // set not found error response...
-         }
-      break;
-
-      case U_HTTP_REQUEST_IS_FORBIDDEN:
-         {
-         U_ASSERT(UHTTP::isHTTPRequestForbidden())
-
-         UHTTP::setHTTPForbidden(); // set forbidden error response...
-         }
-      break;
-
-#  ifdef DEBUG
       default: U_ASSERT(UHTTP::isHTTPRequestAlreadyProcessed()) break;
 #  endif
       }

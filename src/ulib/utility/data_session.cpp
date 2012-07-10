@@ -157,10 +157,10 @@ UDataSession* UDataSession::toDataSession()
 
 const char* UDataSession::dump(bool reset) const
 {
-   *UObjectIO::os << "creation                 " << creation     << '\n'
-                  << "last_access              " << last_access  << '\n'
-                  << "data (UString            " << (void*)&data << ")\n"
-                  << "vec  (UHashMap<UString*> " << (void*)vec   << ')';
+   *UObjectIO::os << "creation                " << creation     << '\n'
+                  << "last_access             " << last_access  << '\n'
+                  << "data (UString           " << (void*)&data << ")\n"
+                  << "vec  (UVector<UString*> " << (void*)vec   << ')';
 
    if (reset)
       {

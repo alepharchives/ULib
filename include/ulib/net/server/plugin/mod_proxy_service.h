@@ -72,9 +72,15 @@ public:
    UCommand* command;
    UString environment;
 
-   static void              setMsgError(int err, UVector<UString>& vmsg_error);
-   static UModProxyService* findService(const UString& host, const UString& method, UVector<UModProxyService*>& vservice);
-   static void              loadConfig(UFileConfig& cfg, UVector<UModProxyService*>& vservice, UVector<UString>* vmsg_error);
+   static UModProxyService* findService(const char* host, uint32_t host_len,
+                                        const char* method, uint32_t method_len,
+                                        UVector<UModProxyService*>& vservice);
+
+   static void setMsgError(int err, UVector<UString>& vmsg_error);
+   static void loadConfig(UFileConfig& cfg, UVector<UModProxyService*>& vservice, UVector<UString>* vmsg_error);
+
+   static UModProxyService* findService(const UString& host, const UString& method, UVector<UModProxyService*>& vservice)
+      { return findService(U_STRING_TO_PARAM(host), U_STRING_TO_PARAM(method), vservice); }
 
    // DEBUG
 

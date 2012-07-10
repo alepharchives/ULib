@@ -1633,6 +1633,8 @@ int UNoCatPlugIn::handlerInit()
 
    fd_stderr = UServices::getDevNull();
 
+   // users table
+
    peers = U_NEW(UHashMap<UModNoCatPeer*>);
 
    peers->allocate();
@@ -1711,7 +1713,7 @@ int UNoCatPlugIn::handlerFork()
 
    UString msg(300U), allowed_web_hosts(U_CAPACITY), ip = UServer_Base::getIPAddress();
 
-   msg.snprintf("/start_ap?ap=%.*s&public=%.*s:%u", U_STRING_TO_TRACE(access_point), U_STRING_TO_TRACE(ip), UServer_Base::port);
+   msg.snprintf("/start_ap?ap=%.*s&public=%.*s:%u&pid=%u", U_STRING_TO_TRACE(access_point), U_STRING_TO_TRACE(ip), UServer_Base::port, UServer_Base::pid);
 
    for (i = 0, n = pthis->vinfo_url.size(); i < n; ++i)
       {
@@ -1773,9 +1775,7 @@ int UNoCatPlugIn::handlerRequest()
 {
    U_TRACE(0, "UNoCatPlugIn::handlerRequest()")
 
-   if (UHTTP::isHTTPRequestNotFound()               &&
-       UServer_Base::pClientImage->socket->isOpen() &&
-       fw_cmd.empty() == false)
+   if (UHTTP::isHTTPRequestNotFound())
       {
       Url url;
       int refresh = 0;

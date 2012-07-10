@@ -266,232 +266,229 @@ int UFCGIPlugIn::handlerRequest()
 {
    U_TRACE(0, "UFCGIPlugIn::handlerRequest()")
 
-   if (connection &&
-       UHTTP::isHTTPRequestAlreadyProcessed() == false)
+   U_INTERNAL_ASSERT_POINTER(connection)
+   U_INTERNAL_ASSERT_POINTER(UHTTP::fcgi_uri_mask)
+
+   if (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*UHTTP::fcgi_uri_mask), 0))
       {
-      U_INTERNAL_ASSERT_POINTER(UHTTP::fcgi_uri_mask)
+      fill_FCGIBeginRequest(FCGI_BEGIN_REQUEST, sizeof(FCGI_BeginRequestBody));
 
-      if (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*UHTTP::fcgi_uri_mask), 0))
+      FCGI_Header* h;
+      char* equalPtr;
+      char* envp[128];
+      uint32_t clength, pos, size;
+      unsigned char  headerBuff[8];
+      unsigned char* headerBuffPtr;
+      UString request(U_CAPACITY), params(U_CAPACITY);
+      int nameLen, valueLen, headerLen, byte_to_read, i, n;
+
+      (void) request.append((const char*)&beginRecord, sizeof(FCGI_BeginRequestRecord));
+
+      // Set environment for the FCGI application server
+
+      UString environment = UHTTP::getCGIEnvironment();
+
+      if (environment.empty())
          {
-         fill_FCGIBeginRequest(FCGI_BEGIN_REQUEST, sizeof(FCGI_BeginRequestBody));
+         UHTTP::setHTTPBadRequest();
 
-         FCGI_Header* h;
-         char* equalPtr;
-         char* envp[128];
-         uint32_t clength, pos, size;
-         unsigned char  headerBuff[8];
-         unsigned char* headerBuffPtr;
-         UString request(U_CAPACITY), params(U_CAPACITY);
-         int nameLen, valueLen, headerLen, byte_to_read, i, n;
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
 
-         (void) request.append((const char*)&beginRecord, sizeof(FCGI_BeginRequestRecord));
+      n = u_split(U_STRING_TO_PARAM(environment), envp, 0);
 
-         // Set environment for the FCGI application server
+      U_INTERNAL_ASSERT_MINOR(n, 128)
 
-         UString environment = UHTTP::getCGIEnvironment();
+      for (i = 0; i < n; ++i)
+         {
+         equalPtr = strchr(envp[i], '=');
 
-         if (environment.empty())
+         U_INTERNAL_ASSERT_POINTER(equalPtr)
+
+          nameLen = (equalPtr - envp[i]);
+         valueLen = u__strlen(++equalPtr);
+
+         U_INTERNAL_ASSERT_MAJOR( nameLen, 0)
+         U_INTERNAL_ASSERT_MAJOR(valueLen, 0)
+
+         // Builds a name-value pair header from the name length and the value length
+
+         headerBuffPtr = headerBuff;
+
+         if (nameLen < 0x80) *headerBuffPtr++ = (unsigned char) nameLen;
+         else
             {
-            UHTTP::setHTTPBadRequest();
-
-            U_RETURN(U_PLUGIN_HANDLER_ERROR);
+            *headerBuffPtr++ = (unsigned char) ((nameLen >> 24) | 0x80);
+            *headerBuffPtr++ = (unsigned char)  (nameLen >> 16);
+            *headerBuffPtr++ = (unsigned char)  (nameLen >>  8);
+            *headerBuffPtr++ = (unsigned char)   nameLen;
             }
 
-         n = u_split(U_STRING_TO_PARAM(environment), envp, 0);
-
-         U_INTERNAL_ASSERT_MINOR(n, 128)
-
-         for (i = 0; i < n; ++i)
+         if (valueLen < 0x80) *headerBuffPtr++ = (unsigned char) valueLen;
+         else
             {
-            equalPtr = strchr(envp[i], '=');
-
-            U_INTERNAL_ASSERT_POINTER(equalPtr)
-
-             nameLen = (equalPtr - envp[i]);
-            valueLen = u__strlen(++equalPtr);
-
-            U_INTERNAL_ASSERT_MAJOR( nameLen, 0)
-            U_INTERNAL_ASSERT_MAJOR(valueLen, 0)
-
-            // Builds a name-value pair header from the name length and the value length
-
-            headerBuffPtr = headerBuff;
-
-            if (nameLen < 0x80) *headerBuffPtr++ = (unsigned char) nameLen;
-            else
-               {
-               *headerBuffPtr++ = (unsigned char) ((nameLen >> 24) | 0x80);
-               *headerBuffPtr++ = (unsigned char)  (nameLen >> 16);
-               *headerBuffPtr++ = (unsigned char)  (nameLen >>  8);
-               *headerBuffPtr++ = (unsigned char)   nameLen;
-               }
-
-            if (valueLen < 0x80) *headerBuffPtr++ = (unsigned char) valueLen;
-            else
-               {
-               *headerBuffPtr++ = (unsigned char) ((valueLen >> 24) | 0x80);
-               *headerBuffPtr++ = (unsigned char)  (valueLen >> 16);
-               *headerBuffPtr++ = (unsigned char)  (valueLen >>  8);
-               *headerBuffPtr++ = (unsigned char)   valueLen;
-               }
-
-            headerLen = headerBuffPtr - headerBuff;
-
-            U_INTERNAL_ASSERT_MAJOR(valueLen, 0)
-
-            (void) params.append((const char*)headerBuff, headerLen);
-            (void) params.append(envp[i], nameLen);
-            (void) params.append(equalPtr, valueLen);
+            *headerBuffPtr++ = (unsigned char) ((valueLen >> 24) | 0x80);
+            *headerBuffPtr++ = (unsigned char)  (valueLen >> 16);
+            *headerBuffPtr++ = (unsigned char)  (valueLen >>  8);
+            *headerBuffPtr++ = (unsigned char)   valueLen;
             }
 
-         fill_FCGIBeginRequest(FCGI_PARAMS, params.size());
+         headerLen = headerBuffPtr - headerBuff;
+
+         U_INTERNAL_ASSERT_MAJOR(valueLen, 0)
+
+         (void) params.append((const char*)headerBuff, headerLen);
+         (void) params.append(envp[i], nameLen);
+         (void) params.append(equalPtr, valueLen);
+         }
+
+      fill_FCGIBeginRequest(FCGI_PARAMS, params.size());
+
+      (void) request.append((const char*)&beginRecord, FCGI_HEADER_LEN);
+      (void) request.append(params);
+
+      // maybe we have some data to put on stdin of cgi process (POST)
+
+      U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %.*S", UClientImage_Base::body->size(), U_STRING_TO_TRACE(*UClientImage_Base::body))
+
+      size = UClientImage_Base::body->size();
+
+      if (size)
+         {
+         U_INTERNAL_ASSERT(UHTTP::isHttpPOST())
+
+         fill_FCGIBeginRequest(FCGI_PARAMS, 0);
 
          (void) request.append((const char*)&beginRecord, FCGI_HEADER_LEN);
-         (void) request.append(params);
+         }
 
-         // maybe we have some data to put on stdin of cgi process (POST)
+      fill_FCGIBeginRequest(FCGI_STDIN, size);
 
-         U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %.*S", UClientImage_Base::body->size(), U_STRING_TO_TRACE(*UClientImage_Base::body))
+      (void) request.append((const char*)&beginRecord, FCGI_HEADER_LEN);
 
-         size = UClientImage_Base::body->size();
+      if (size)
+         {
+         (void) request.append(*UClientImage_Base::body);
 
-         if (size)
-            {
-            U_INTERNAL_ASSERT(UHTTP::isHttpPOST())
-
-            fill_FCGIBeginRequest(FCGI_PARAMS, 0);
-
-            (void) request.append((const char*)&beginRecord, FCGI_HEADER_LEN);
-            }
-
-         fill_FCGIBeginRequest(FCGI_STDIN, size);
+         fill_FCGIBeginRequest(FCGI_STDIN, 0);
 
          (void) request.append((const char*)&beginRecord, FCGI_HEADER_LEN);
+         }
 
-         if (size)
+      // Send request and read fast cgi header+record
+
+      if (connection->sendRequest(request, true) == false) goto err;
+
+      if (fcgi_keep_conn == false)
+         {
+         /* The shutdown() tells the receiver the server is done sending data. No
+          * more data is going to be send. More importantly, it doesn't close the
+          * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
+          */
+
+         if (connection->shutdown() == false) goto err;
+         }
+
+      pos = 0;
+
+      while (true)
+         {
+         U_INTERNAL_DUMP("response.c_pointer(%u) = %#.*S", pos, 16, connection->response.c_pointer(pos))
+
+         U_INTERNAL_ASSERT((connection->response.size() - pos) >= FCGI_HEADER_LEN)
+
+         h = (FCGI_Header*) connection->response.c_pointer(pos);
+
+         U_INTERNAL_DUMP("version = %C request_id = %u", h->version, ntohs(h->request_id))
+
+         U_INTERNAL_ASSERT_EQUALS(h->version,    FCGI_VERSION_1)
+         U_INTERNAL_ASSERT_EQUALS(h->request_id, htons((uint16_t)u_pid))
+
+         h->content_length = ntohs(h->content_length);
+
+         clength      = h->content_length + h->padding_length;
+         byte_to_read = pos + FCGI_HEADER_LEN + clength - connection->response.size();
+
+         U_INTERNAL_DUMP("pos = %u clength = %u response.size() = %u byte_to_read = %d", pos, clength, connection->response.size(), byte_to_read)
+
+         if (byte_to_read > 0 &&
+             connection->readResponse(byte_to_read) == false)
             {
-            (void) request.append(*UClientImage_Base::body);
-
-            fill_FCGIBeginRequest(FCGI_STDIN, 0);
-
-            (void) request.append((const char*)&beginRecord, FCGI_HEADER_LEN);
+            break;
             }
 
-         // Send request and read fast cgi header+record
+         // NB: connection->response can be resized...
 
-         if (connection->sendRequest(request, true) == false) goto err;
+         h = (FCGI_Header*) connection->response.c_pointer(pos);
 
-         if (fcgi_keep_conn == false)
+         // Record fully read
+
+         pos += FCGI_HEADER_LEN;
+
+         // Process this fcgi record
+
+         U_INTERNAL_DUMP("h->type = %C", h->type)
+
+         switch (h->type)
             {
-            /* The shutdown() tells the receiver the server is done sending data. No
-             * more data is going to be send. More importantly, it doesn't close the
-             * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
-             */
-
-            if (connection->shutdown() == false) goto err;
-            }
-
-         pos = 0;
-
-         while (true)
-            {
-            U_INTERNAL_DUMP("response.c_pointer(%u) = %#.*S", pos, 16, connection->response.c_pointer(pos))
-
-            U_INTERNAL_ASSERT((connection->response.size() - pos) >= FCGI_HEADER_LEN)
-
-            h = (FCGI_Header*) connection->response.c_pointer(pos);
-
-            U_INTERNAL_DUMP("version = %C request_id = %u", h->version, ntohs(h->request_id))
-
-            U_INTERNAL_ASSERT_EQUALS(h->version,    FCGI_VERSION_1)
-            U_INTERNAL_ASSERT_EQUALS(h->request_id, htons((uint16_t)u_pid))
-
-            h->content_length = ntohs(h->content_length);
-
-            clength      = h->content_length + h->padding_length;
-            byte_to_read = pos + FCGI_HEADER_LEN + clength - connection->response.size();
-
-            U_INTERNAL_DUMP("pos = %u clength = %u response.size() = %u byte_to_read = %d", pos, clength, connection->response.size(), byte_to_read)
-
-            if (byte_to_read > 0 &&
-                connection->readResponse(byte_to_read) == false)
+            case FCGI_STDOUT:
                {
-               break;
+               if (clength) (void) UClientImage_Base::wbuffer->append(connection->response.substr(pos, clength));
                }
+            break;
 
-            // NB: connection->response can be resized...
+            case FCGI_STDERR:
+               (void) UFile::write(STDERR_FILENO, connection->response.c_pointer(pos), clength);
+            break;
 
-            h = (FCGI_Header*) connection->response.c_pointer(pos);
-
-            // Record fully read
-
-            pos += FCGI_HEADER_LEN;
-
-            // Process this fcgi record
-
-            U_INTERNAL_DUMP("h->type = %C", h->type)
-
-            switch (h->type)
+            case FCGI_END_REQUEST:
                {
-               case FCGI_STDOUT:
+               FCGI_EndRequestBody* body = (FCGI_EndRequestBody*)connection->response.c_pointer(pos);
+
+               U_INTERNAL_DUMP("protocol_status = %C app_status = %u", body->protocol_status, ntohl(body->app_status))
+
+               if (body->protocol_status == FCGI_REQUEST_COMPLETE)
                   {
-                  if (clength) (void) UClientImage_Base::wbuffer->append(connection->response.substr(pos, clength));
+                  U_INTERNAL_ASSERT_EQUALS(pos + clength, connection->response.size())
+
+                  (void) UHTTP::processCGIOutput();
+
+                  goto end;
                   }
-               break;
-
-               case FCGI_STDERR:
-                  (void) UFile::write(STDERR_FILENO, connection->response.c_pointer(pos), clength);
-               break;
-
-               case FCGI_END_REQUEST:
-                  {
-                  FCGI_EndRequestBody* body = (FCGI_EndRequestBody*)connection->response.c_pointer(pos);
-
-                  U_INTERNAL_DUMP("protocol_status = %C app_status = %u", body->protocol_status, ntohl(body->app_status))
-
-                  if (body->protocol_status == FCGI_REQUEST_COMPLETE)
-                     {
-                     U_INTERNAL_ASSERT_EQUALS(pos + clength, connection->response.size())
-
-                     (void) UHTTP::processCGIOutput();
-
-                     goto end;
-                     }
-                  }
-            // break; NB: intenzionale...
-
-               // not  implemented
-               case FCGI_UNKNOWN_TYPE:
-               case FCGI_GET_VALUES_RESULT:
-               default:
-               goto err;
                }
+         // break; NB: intenzionale...
 
-            pos += clength;
-
-            U_INTERNAL_DUMP("pos = %u response.size() = %u", pos, connection->response.size())
-
-            if ((connection->response.size() - pos) < FCGI_HEADER_LEN &&
-                connection->readResponse() == false)
-               {
-               break;
-               }
+            // not  implemented
+            case FCGI_UNKNOWN_TYPE:
+            case FCGI_GET_VALUES_RESULT:
+            default:
+            goto err;
             }
 
-         goto end; // skip error...
+         pos += clength;
 
-err:     UHTTP::setHTTPInternalError();
-end:     UHTTP::setHTTPRequestProcessed();
+         U_INTERNAL_DUMP("pos = %u response.size() = %u", pos, connection->response.size())
 
-         // reset
-
-         connection->clearData();
-
-         if (fcgi_keep_conn == false &&
-             connection->isConnected())
+         if ((connection->response.size() - pos) < FCGI_HEADER_LEN &&
+             connection->readResponse() == false)
             {
-            connection->close();
+            break;
             }
+         }
+
+      goto end; // skip error...
+
+err:  UHTTP::setHTTPInternalError();
+end:  UHTTP::setHTTPRequestProcessed();
+
+      // reset
+
+      connection->clearData();
+
+      if (fcgi_keep_conn == false &&
+          connection->isConnected())
+         {
+         connection->close();
          }
       }
 

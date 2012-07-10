@@ -209,10 +209,7 @@ int UStreamPlugIn::handlerRequest()
 {
    U_TRACE(0, "UStreamPlugIn::handlerRequest()")
 
-   if (UHTTP::isHTTPRequestNotFound()               &&
-       UServer_Base::pClientImage->socket->isOpen() &&
-       command                                      &&
-       U_HTTP_URI_EQUAL(uri_path))
+   if (U_HTTP_URI_EQUAL(uri_path))
       {
       USocket* csocket = UServer_Base::pClientImage->socket;
 

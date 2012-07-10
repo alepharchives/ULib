@@ -330,6 +330,10 @@ typedef unsigned long long uint64;
 /* Define to 1 if you have the `malloc' library (-lmalloc). */
 #undef HAVE_LIBMALLOC
 
+/* Define to 1 if you have the
+   <libnetfilter_conntrack/libnetfilter_conntrack.h> header file. */
+#undef HAVE_LIBNETFILTER_CONNTRACK_LIBNETFILTER_CONNTRACK_H
+
 /* Define to 1 if you have the `nsl' library (-lnsl). */
 #undef HAVE_LIBNSL
 

@@ -10,12 +10,10 @@ MAINTAINERCLEANFILES	= Makefile.in
 
 DEFAULT_INCLUDES =  -I. -I$(top_builddir)/include
 
-DEFS = -DU_TEST @DEFS@
-
 LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la
 
+## DEFS = -DU_TEST @DEFS@
 ## TESTS_ENVIRONMENT = srcdir=$(srcdir)
-
 ## AM_LFLAGS = -olex.yy.c -S$(shell pwd)/../../include/ulib/flex/flex.skl
 ## NB: il comando per generare il file .cc dal file .ll viene lanciato in una subdirectory:
 ## sh -x /mnt/source/ulib/autoconf/ylwrap test_flexer.ll lex.yy.c test_flexer.cc -- \

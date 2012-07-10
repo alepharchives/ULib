@@ -27,16 +27,17 @@ public:
    typedef struct log_data {
       char* file_ptr;
       char* file_page;
+      sem_t lock_shared;
    } log_data;
 
    static ULog* pthis;
    static ULock* lock;
-   static log_data* ptr;
    static const char* fmt;
    static char* file_limit;
    static const char* prefix;
+   static log_data* ptr_log_data;
    static vPF backup_log_function;
-   static bool bsyslog, log_data_mmap;
+   static bool bsyslog, log_data_must_be_unmapped;
 
    // COSTRUTTORI
 
@@ -44,7 +45,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, ULog, "%.*S,%u,%S", U_STRING_TO_TRACE(path), _size, _prefix)
 
-      U_INTERNAL_ASSERT_EQUALS(ptr,0)
+      U_INTERNAL_ASSERT_EQUALS(ptr_log_data,0)
 
       prefix = _prefix;
 
@@ -99,16 +100,22 @@ public:
       }
 
    static void startup();
-   static void setShared(log_data* log_data_ptr);
+   static void setShared(log_data* ptr);
 
    // write with prefix
 
-   static void log(const char* format, ...);           // (buffer write == 4096)
+   static void log(const char* format, ...);                  // (buffer write == 4096)
 
    // write direct without prefix
 
-   static void write(const char* format, ...);         // (buffer write == 4096)
+   static void write(const char* format, ...);                // (buffer write == 4096)
    static void write(const struct iovec* iov, int n);
+
+   // logger
+
+   static int getPriorityForLogger(char* s); // decode a symbolic name to a numeric value
+
+   static void logger(int priority, const char* format, ...); // (buffer write == 4096)
 
    // flushes changes made to memory mapped log file back to disk
 
@@ -133,6 +140,8 @@ protected:
 #endif
 
 private:
+   static int decode(const char* name, bool bfacility) __pure U_NO_EXPORT;
+
    ULog(const ULog&) : UFile()  {}
    ULog& operator=(const ULog&) { return *this; }
 };

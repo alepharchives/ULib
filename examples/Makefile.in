@@ -96,8 +96,8 @@ AM_RECURSIVE_TARGETS = $(RECURSIVE_TARGETS:-recursive=) \
 	distdir
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = userver test_manager IR simple_client_server workflow \
-	lcsp http_header uclient csp rsign PEC_log doc_parse \
+DIST_SUBDIRS = userver WiAuth test_manager IR simple_client_server \
+	workflow lcsp http_header uclient csp rsign PEC_log doc_parse \
 	doc_classifier XAdES xml2txt form_completion
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 am__relativize = \
@@ -300,6 +300,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = no-dependencies
 EXTRA_DIST = README \
+				 WiAuth/Makefile.* \
 				 XAdES/*.h XAdES/*.cpp XAdES/Makefile.* \
 				 IR/*.h IR/*.cpp IR/Makefile.* \
 				 userver/*.cpp userver/Makefile.* \
@@ -320,7 +321,7 @@ EXTRA_DIST = README \
 				 workflow/*.h workflow/*.cpp workflow/Makefile.*
 
 MAINTAINERCLEANFILES = Makefile.in
-SUBDIRS = userver test_manager IR simple_client_server workflow \
+SUBDIRS = userver WiAuth test_manager IR simple_client_server workflow \
 	$(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4) $(am__append_5) $(am__append_6) \
 	$(am__append_7) $(am__append_8)

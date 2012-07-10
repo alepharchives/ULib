@@ -72,7 +72,10 @@ public:
     * also terminate.
     */
 
-   virtual void run() {} 
+   virtual void run()
+      {
+      U_TRACE(0, "UThread::run()")
+      } 
 
    /**
     * When a new thread is created, it does not begin immediate

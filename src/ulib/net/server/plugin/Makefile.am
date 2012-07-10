@@ -88,7 +88,7 @@ if PCRE
 if !STATIC_HANDLER_PROXY
 module_LTLIBRARIES  += mod_proxy.la
 mod_proxy_la_SOURCES = mod_proxy.cpp mod_proxy_service.cpp
-mod_proxy_la_LIBADD  = $(ulib_la)
+mod_proxy_la_LIBADD  = $(pkg_cv_LIBNETFILTER_CONNTRACK_LIBS) $(ulib_la)
 mod_proxy_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
 endif
 endif

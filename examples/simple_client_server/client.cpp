@@ -148,7 +148,7 @@ public:
 
          u_init_ulib_username();
 
-         ulog = U_NEW(ULog(log_file, 1024 * 1024, "%10D> "));
+         ulog = U_NEW(ULog(log_file, 1024 * 1024, "%9D> "));
 
          // manage max string length for log request and response
 

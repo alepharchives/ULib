@@ -594,8 +594,6 @@ int UShibPlugIn::handlerInit()
             {
             U_SRV_LOG("initialization of plugin success");
 
-            UServer_Base::bpluginsHandlerReset = true;
-
             U_RETURN(U_PLUGIN_HANDLER_GO_ON);
             }
          }
@@ -623,6 +621,8 @@ int UShibPlugIn::handlerRequest()
 
    if (service)
       {
+      UServer_Base::bpluginsHandlerReset = true;
+
       uint32_t pos = host.find(':');
 
       if (pos == U_NOT_FOUND) pos               = host.size();
@@ -721,15 +721,14 @@ int UShibPlugIn::handlerReset()
 {
    U_TRACE(0, "UShibPlugIn::handlerReset()")
 
-   if (UShibTarget::hostname)
-      {
-      U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::uri);
-      U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::method);
-      U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::hostname);
-      U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::remote_addr);
+   U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::uri);
+   U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::method);
+   U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::hostname);
+   U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::remote_addr);
 
-      UShibTarget::hostname = UShibTarget::uri = UShibTarget::method = 0;
-      }
+   UShibTarget::hostname = UShibTarget::uri = UShibTarget::method = 0;
+
+   UServer_Base::bpluginsHandlerReset = false;
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }

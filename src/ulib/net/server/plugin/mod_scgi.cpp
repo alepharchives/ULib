@@ -132,91 +132,88 @@ int USCGIPlugIn::handlerRequest()
 {
    U_TRACE(0, "USCGIPlugIn::handlerRequest()")
 
-   if (connection &&
-       UHTTP::isHTTPRequestAlreadyProcessed() == false)
+   U_INTERNAL_ASSERT_POINTER(connection)
+   U_INTERNAL_ASSERT_POINTER(UHTTP::scgi_uri_mask)
+
+   if (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*UHTTP::scgi_uri_mask), 0))
       {
-      U_INTERNAL_ASSERT_POINTER(UHTTP::scgi_uri_mask)
+      // Set environment for the SCGI application server
 
-      if (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*UHTTP::scgi_uri_mask), 0))
+      char* equalPtr;
+      char* envp[128];
+      UString environment = UHTTP::getCGIEnvironment();
+
+      if (environment.empty())
          {
-         // Set environment for the SCGI application server
+         UHTTP::setHTTPBadRequest();
 
-         char* equalPtr;
-         char* envp[128];
-         UString environment = UHTTP::getCGIEnvironment();
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
 
-         if (environment.empty())
-            {
-            UHTTP::setHTTPBadRequest();
+      int n = u_split(U_STRING_TO_PARAM(environment), envp, 0);
 
-            U_RETURN(U_PLUGIN_HANDLER_ERROR);
-            }
+      U_INTERNAL_ASSERT_MINOR(n, 128)
 
-         int n = u_split(U_STRING_TO_PARAM(environment), envp, 0);
+#  if defined(DEBUG) || defined(U_TEST)
+      uint32_t hlength = 0; // calculate the total length of the headers
+#  endif
 
-         U_INTERNAL_ASSERT_MINOR(n, 128)
+      for (int i = 0; i < n; ++i)
+         {
+         equalPtr = strchr(envp[i], '=');
+
+         U_INTERNAL_ASSERT_POINTER(equalPtr)
+         U_INTERNAL_ASSERT_MAJOR(equalPtr-envp[i], 0)
+         U_INTERNAL_ASSERT_MAJOR(u__strlen(equalPtr+1), 0)
 
 #     if defined(DEBUG) || defined(U_TEST)
-         uint32_t hlength = 0; // calculate the total length of the headers
+         hlength += (equalPtr - envp[i]) + u__strlen(equalPtr) + 1;
 #     endif
 
-         for (int i = 0; i < n; ++i)
-            {
-            equalPtr = strchr(envp[i], '=');
+         *equalPtr = '\0';
+         }
 
-            U_INTERNAL_ASSERT_POINTER(equalPtr)
-            U_INTERNAL_ASSERT_MAJOR(equalPtr-envp[i], 0)
-            U_INTERNAL_ASSERT_MAJOR(u__strlen(equalPtr+1), 0)
+      n = environment.size();
 
-#        if defined(DEBUG) || defined(U_TEST)
-            hlength += (equalPtr - envp[i]) + u__strlen(equalPtr) + 1;
-#        endif
+      U_INTERNAL_ASSERT_EQUALS((int)hlength, n)
 
-            *equalPtr = '\0';
-            }
+      // send header data as netstring -> [len]":"[string]","
 
-         n = environment.size();
+      UString request(10U + n);
 
-         U_INTERNAL_ASSERT_EQUALS((int)hlength, n)
+      request.snprintf("%u:%.*s,", environment.size(), U_STRING_TO_TRACE(environment));
 
-         // send header data as netstring -> [len]":"[string]","
+      (void) request.append(*UClientImage_Base::body);
 
-         UString request(10U + n);
+      if (connection->sendRequest(request, true) == false) goto err;
 
-         request.snprintf("%u:%.*s,", environment.size(), U_STRING_TO_TRACE(environment));
+      if (scgi_keep_conn == false)
+         {
+         /* The shutdown() tells the receiver the server is done sending data. No
+          * more data is going to be send. More importantly, it doesn't close the
+          * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
+          */
 
-         (void) request.append(*UClientImage_Base::body);
+         if (connection->shutdown() == false) goto err;
+         }
 
-         if (connection->sendRequest(request, true) == false) goto err;
+      *UClientImage_Base::wbuffer = connection->getResponse();
 
-         if (scgi_keep_conn == false)
-            {
-            /* The shutdown() tells the receiver the server is done sending data. No
-             * more data is going to be send. More importantly, it doesn't close the
-             * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
-             */
+      (void) UHTTP::processCGIOutput();
 
-            if (connection->shutdown() == false) goto err;
-            }
+      goto end; // skip error...
 
-         *UClientImage_Base::wbuffer = connection->getResponse();
+err:  UHTTP::setHTTPInternalError();
+end:  UHTTP::setHTTPRequestProcessed();
 
-         (void) UHTTP::processCGIOutput();
+      // reset
 
-         goto end; // skip error...
+      connection->clearData();
 
-err:     UHTTP::setHTTPInternalError();
-end:     UHTTP::setHTTPRequestProcessed();
-
-         // reset
-
-         connection->clearData();
-
-         if (scgi_keep_conn == false &&
-             connection->isConnected())
-            {
-            connection->close();
-            }
+      if (scgi_keep_conn == false &&
+          connection->isConnected())
+         {
+         connection->close();
          }
       }
 

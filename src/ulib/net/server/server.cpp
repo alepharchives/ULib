@@ -90,11 +90,13 @@ bool                       UServer_Base::flag_loop;
 bool                       UServer_Base::public_address;
 bool                       UServer_Base::monitoring_process;
 bool                       UServer_Base::bpluginsHandlerReset;
+bool                       UServer_Base::bpluginsHandlerRequest;
 bool                       UServer_Base::accept_edge_triggered;
 bool                       UServer_Base::enable_rfc1918_filter;
 bool                       UServer_Base::set_realtime_priority;
 bool                       UServer_Base::flag_use_tcp_optimization;
 ULog*                      UServer_Base::log;
+pid_t                      UServer_Base::pid;
 time_t                     UServer_Base::expire;
 uint32_t                   UServer_Base::start;
 uint32_t                   UServer_Base::count;
@@ -699,7 +701,6 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list, U
    U_TRACE(0, "UServer_Base::loadPlugins(%.*S,%.*S,%p)", U_STRING_TO_TRACE(plugin_dir), U_STRING_TO_TRACE(plugin_list), cfg)
 
    UString name;
-   bool bnostatic;
    UVector<UString> vec;
    uint32_t i, length, pos;
    UServerPlugIn* _plugin = 0;
@@ -733,7 +734,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list, U
 
 #     include "plugin/loader.autoconf.cpp"
 
-      bnostatic = vplugin->empty();
+      bool bnostatic = vplugin->empty();
 
       for (i = 0, length = vec.split(plugin_list); i < length; ++i)
          {
@@ -1158,10 +1159,14 @@ void UServer_Base::init()
       }
 #endif
 
+   flag_loop = true;
+
    U_INTERNAL_DUMP("u_pthread_time = %p shared_data_add = %u", u_pthread_time, shared_data_add)
 
    if (isPreForked()   ||
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
        u_pthread_time  ||
+#  endif
        shared_data_add)
       {
       // manage shared data...
@@ -1176,9 +1181,8 @@ void UServer_Base::init()
 #  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
       if (u_pthread_time)
          {
+         u_now         = U_NOW;
          watch_counter = 1;
-
-         u_now = U_NOW;
 
          runWatch();
 
@@ -1265,10 +1269,6 @@ void UServer_Base::init()
 
    socket->flags |= O_NONBLOCK;
 
-#ifdef __MINGW32__
-   goto next;
-#endif
-
 #ifdef USE_LIBSSL
    if (bssl)
       {
@@ -1282,8 +1282,10 @@ void UServer_Base::init()
       }
 #endif
 
+#ifndef __MINGW32__
    UEventFd::op_mask     |= EPOLLET;
    accept_edge_triggered  = true;
+#endif
 
 next:
    (void) U_SYSCALL(fcntl, "%d,%d,%d", socket->iSockDesc, F_SETFL, socket->flags);
@@ -1314,7 +1316,7 @@ void UServer_Base::runWatch()
    char data_1[17]; // 18/06/12 18:45:56
    char data_2[26]; // 04/Jun/2012:18:18:37 +0200
    char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
-                    // 123456789012345678901234567890
+   char    null[1]; // 123456789012345678901234567890
    */
 
    U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_2,(char*)u_now+sizeof(struct timeval)+17)
@@ -1528,7 +1530,7 @@ next:
       if (proc->fork() &&
           proc->parent())
          {
-         int pid, status;
+         int status;
 
          csocket->close();
 
@@ -1544,7 +1546,7 @@ retry:
             --UNotifier::num_connection;
 
             U_SRV_LOG("child (pid %d) exited with value %d (%s), down to %u children",
-                           pid, status, UProcess::exitInfo(status), UNotifier::num_connection - UNotifier::min_connection);
+                              pid, status, UProcess::exitInfo(status), UNotifier::num_connection - UNotifier::min_connection);
 
             goto retry;
             }
@@ -1667,11 +1669,16 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 
 int UServer_Base::UTimeoutConnection::handlerTime()
 {
-   U_TRACE(0, "UTimeoutConnection::handlerTime()")
+   U_TRACE(0, "UServer_Base::UTimeoutConnection::handlerTime()")
 
-   // there are idle connection... (timeout)
+   U_INTERNAL_DUMP("UNotifier::num_connection = %d", UNotifier::num_connection)
 
-   UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
+   if (UNotifier::num_connection > UNotifier::min_connection)
+      {
+      // there are idle connection... (timeout)
+
+      UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
+      }
 
    // ---------------
    // return value:
@@ -1697,9 +1704,11 @@ void UServer_Base::run()
       U_ERROR("plugins running FAILED. Going down...");
       }
 
-   UInterrupt::syscall_restart = false;
+   bpluginsHandlerReset   = false; // default is NOT call...
+   bpluginsHandlerRequest = true;  // default is     call...
 
-   flag_loop = UInterrupt::exit_loop_wait_event_for_signal = true;
+   UInterrupt::syscall_restart                 = false;
+   UInterrupt::exit_loop_wait_event_for_signal = true;
 
 #ifdef USE_LIBEVENT
    UInterrupt::setHandlerForSignal( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  //  sync signal
@@ -1726,7 +1735,7 @@ void UServer_Base::run()
       **/
 
       pid_t pid_to_wait;
-      int pid, status, i = 0, nkids;
+      int status, i = 0, nkids;
       UTimeVal to_sleep(0L, 500 * 1000L);
       bool baffinity = (preforked_num_kids <= u_get_num_cpu() && u_num_cpu > 1);
 

@@ -306,30 +306,34 @@ bool URDB::open(uint32_t log_size, bool btruncate)
 {
    U_TRACE(0, "URDB::open(%u,%b)", log_size, btruncate)
 
-   if (UCDB::open() && log_size == 0) log_size = UFile::st_size;
-   if (                log_size == 0) log_size = 512 * 1024;
+   (void) UCDB::open();
 
    journal.setPath(*(const UFile*)this, 0, U_CONSTANT_TO_PARAM(".jnl"));
 
    int            flags  = O_RDWR;
    if (btruncate) flags |= O_TRUNC;
 
-   if (journal.creat(flags) &&
-       journal.ftruncate(journal.size() + log_size))
+   if (journal.creat(flags))
       {
-#if defined(__CYGWIN__) || defined(__MINGW32__)
-      uint32_t journal_size =       journal.st_size;
-#  else
-      uint32_t journal_size = U_max(journal.st_size, 32 * 1024 * 1024); // oversize mmap for optimize resizeJournal() with ftruncate()
-#  endif
+      uint32_t journal_size = journal.size();
 
-      if (journal.memmap(PROT_READ | PROT_WRITE, 0, 0, journal_size))
+      if (journal_size == 0) journal_size = (log_size       ? log_size       :
+                                             UFile::st_size ? UFile::st_size : 512 * 1024);
+
+      if (journal.ftruncate(journal_size))
          {
-         if (RDB_off == 0) RDB_off = sizeof(URDB::cache_struct);
+#     if !defined(__CYGWIN__) && !defined(__MINGW32__)
+         if (journal_size < 32 * 1024 * 1024) journal_size = 32 * 1024 * 1024; // oversize mmap for optimize resizeJournal() with ftruncate()
+#     endif
 
-         U_INTERNAL_DUMP("RDB_off = %u RDB_sync = %u capacity = %u nrecord = %u", RDB_off, RDB_sync, RDB_capacity, RDB_nrecord)
+         if (journal.memmap(PROT_READ | PROT_WRITE, 0, 0, journal_size))
+            {
+            if (RDB_off == 0) RDB_off = sizeof(URDB::cache_struct);
 
-         U_RETURN(true);
+            U_INTERNAL_DUMP("RDB_off = %u RDB_sync = %u capacity = %u nrecord = %u", RDB_off, RDB_sync, RDB_capacity, RDB_nrecord)
+
+            U_RETURN(true);
+            }
          }
       }
 

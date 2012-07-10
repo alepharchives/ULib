@@ -373,9 +373,9 @@ test_output_diff() {
 
 	post_processing $1 $2 $3
 
-	N1=`diff -bB $FILE_OK $FILE_OUT`
+	N1=`diff -bB $FILE_OUT $FILE_OK`
 
-	test_output "$N1"
+	test_output "$N1" ""
 }
 
 # function : test_output_wc
@@ -383,8 +383,8 @@ test_output_wc() {
 
 	post_processing $2 $3 $4
 
-	N1=`cat $FILE_OK  | wc -$1 2>/dev/null`
-	N2=`cat $FILE_OUT | wc -$1 2>/dev/null`
+	N1=`cat $FILE_OUT | wc -$1 2>/dev/null`
+	N2=`cat $FILE_OK  | wc -$1 2>/dev/null`
 
 	test_output "$N1" "$N2"
 }

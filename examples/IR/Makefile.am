@@ -45,7 +45,7 @@ noinst_PROGRAMS = gendoc index1 index2 db_dump db_check query update
 
 ## usp web section
 ## --------------------------------------------------------------------------------------------------------------------------
-moduledir = $(libexecdir)/ulib
+moduledir = $(libexecdir)/ulib/usp
 MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
 
 if !MINGW

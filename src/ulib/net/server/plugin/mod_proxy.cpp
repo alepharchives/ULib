@@ -18,6 +18,12 @@
 #include <ulib/net/server/plugin/mod_proxy.h>
 #include <ulib/net/server/plugin/mod_proxy_service.h>
 
+/*
+#ifdef HAVE_LIBNETFILTER_CONNTRACK_LIBNETFILTER_CONNTRACK_H
+#include <libnetfilter_conntrack/libnetfilter_conntrack.h>
+#endif
+*/
+
 #ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_proxy, UProxyPlugIn)
 #endif
@@ -56,6 +62,11 @@ int UProxyPlugIn::handlerInit()
 
    if (UServer_Base::preforked_num_kids == 0) client_http.setLocalHost(UServer_Base::getHost());
 
+/*
+#ifdef LINUX_NETFILTER
+#endif
+*/
+
    U_SRV_LOG("initialization of plugin success");
 
 end:
@@ -68,14 +79,16 @@ int UProxyPlugIn::handlerRequest()
 {
    U_TRACE(0, "UProxyPlugIn::handlerRequest()")
 
+   U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
+
    // ------------------------------------------------------------------------------
-   // find the eventaully proxy service for the HTTP request
+   // find the eventually proxy service for the HTTP request
    // ------------------------------------------------------------------------------
    // The difference between U_HTTP_HOST_.. and U_HTTP_VHOST_.. is that
    // U_HTTP_HOST_.. can include the «:PORT» text, and U_HTTP_VHOST_.. only the name
    // ------------------------------------------------------------------------------
 
-   UModProxyService* service = (vservice ? UModProxyService::findService(UString(U_HTTP_VHOST_TO_PARAM), UHTTP::getHTTPMethod(), *vservice) : 0);
+   UModProxyService* service = (vservice ? UModProxyService::findService(U_HTTP_VHOST_TO_PARAM, U_HTTP_METHOD_TO_PARAM, *vservice) : 0);
 
    if (service == 0) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 
@@ -104,7 +117,11 @@ int UProxyPlugIn::handlerRequest()
 
    if (service->command)
       {
-      if (UHTTP::processCGIRequest(service->command, &(service->environment), async, true) == false) goto end;
+      if (UHTTP::processCGIRequest(*(service->command), &(service->environment), "", async) == false ||
+          UHTTP::processCGIOutput()                                                         == false)
+         {
+         goto end;
+         }
 
       if (service->isResponseForClient()) output_to_client = true; // send output as response to client...
       else                                output_to_server = true; // send output as request  to server...

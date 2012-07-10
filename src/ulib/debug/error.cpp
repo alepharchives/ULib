@@ -32,7 +32,7 @@ void UError::stackDump()
    char name[128];
    void* array[256];
 
-   (void) memset(array, 0, sizeof(array));
+   (void) memset(array, 0, sizeof(void*) * 256);
 
    /* use -rdynamic flag when compiling */
 

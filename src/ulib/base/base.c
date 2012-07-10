@@ -1586,7 +1586,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                char data_1[17]; // 18/06/12 18:45:56
                char data_2[26]; // 04/Jun/2012:18:18:37 +0200
                char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
-               *                   123456789012345678901234567890
+               char    null[1]; // 123456789012345678901234567890
                */
                const char* ptr = (const char*)u_now + sizeof(struct timeval);
 

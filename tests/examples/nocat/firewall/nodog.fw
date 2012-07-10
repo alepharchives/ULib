@@ -359,7 +359,7 @@ clear_fw() {
 
 reset_fw() {
 
-	$IPTABLES -t filter -D FORWARD -j NoCat 2>/dev/null
+	$IPTABLES -t filter -D FORWARD -j NoCat			2>/dev/null
 	$IPTABLES -t nat -D PREROUTING -j NoCat_Capture 2>/dev/null
 
 	if [ $RouteOnly -eq 0 ]; then

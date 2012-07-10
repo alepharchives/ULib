@@ -6,7 +6,7 @@ DEFAULT_INCLUDES =  -I. -I$(top_srcdir) -I$(top_srcdir)/include
 
 EXTRA_DIST = inp ok HCSP.test RSIGN.test
 
-DEFS = -DU_TEST @DEFS@
+## DEFS = -DU_TEST @DEFS@
 
 TST =
 

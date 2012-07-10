@@ -8,7 +8,7 @@ EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN XAdES nocat wi-auth WAGSM RA icons IR/
 				 index.html .htpasswd .htdigest cgi-bin www.sito2.com error_msg workflow doc_parse favicon.ico robots.txt SSI css js \
 				 benchmark
 
-DEFS  = -DU_TEST @DEFS@
+## DEFS  = -DU_TEST @DEFS@
 
 TESTS = client_server.test test_manager.test IR.test web_server.test web_server_multiclient.test web_socket.test ## workflow.test
 

@@ -58,6 +58,7 @@ public:
 
    virtual int handlerConfig(UFileConfig& cfg);
    virtual int handlerInit();
+   virtual int handlerRun();
 
    // Connection-wide hooks
 

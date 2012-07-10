@@ -37,7 +37,7 @@
   <div id="chat">
 
 <!--#code
-UHTTP::callServlet(U_STRING_FROM_CONSTANT("servlet/cchat"));
+(void) UHTTP::callService(U_STRING_FROM_CONSTANT("servlet/cchat"));
 -->
 
   </div>

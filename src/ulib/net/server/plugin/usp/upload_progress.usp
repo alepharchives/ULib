@@ -1,7 +1,16 @@
+<!--#declaration
+static void usp_init()
+{
+U_TRACE(5, "::usp_init()")
+
+UHTTP::ptr_upload_progress = (UHTTP::upload_progress*) UServer_Base::getPointerToDataShare(UHTTP::ptr_upload_progress);
+
+U_INTERNAL_ASSERT_EQUALS(UHTTP::ptr_upload_progress->byte_read,0)
+}
+-->
 <!--#header
 Content-Type: application/json
-Pragma: no-cache
+Cache Control: max-age=0
 Expires: Thu, 19 Nov 1981 08:52:00 GMT
-Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0
 -->
 <!--#puts UHTTP::getUploadProgress() -->

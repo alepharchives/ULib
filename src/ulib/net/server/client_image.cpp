@@ -26,6 +26,7 @@ UString*    UClientImage_Base::rbuffer;
 UString*    UClientImage_Base::wbuffer;
 UString*    UClientImage_Base::request; // NB: it is only a pointer, not a string object...
 UString*    UClientImage_Base::pbuffer;
+UString*    UClientImage_Base::environment;
 UString*    UClientImage_Base::msg_welcome;
 const char* UClientImage_Base::rpointer;
 
@@ -146,16 +147,17 @@ void UClientImage_Base::init()
    U_INTERNAL_ASSERT_EQUALS(_buffer,0)
    U_INTERNAL_ASSERT_EQUALS(_encoded,0)
 
-   body    = U_NEW(UString);
-   rbuffer = U_NEW(UString(U_CAPACITY));
-   wbuffer = U_NEW(UString);
-   pbuffer = U_NEW(UString);
+   body        = U_NEW(UString);
+   rbuffer     = U_NEW(UString(U_CAPACITY));
+   wbuffer     = U_NEW(UString);
+   pbuffer     = U_NEW(UString);
+   environment = U_NEW(UString(U_CAPACITY));
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
-   _value   = U_NEW(UString(U_CAPACITY));
-   _buffer  = U_NEW(UString(U_CAPACITY));
-   _encoded = U_NEW(UString(U_CAPACITY));
+   _value      = U_NEW(UString(U_CAPACITY));
+   _buffer     = U_NEW(UString(U_CAPACITY));
+   _encoded    = U_NEW(UString(U_CAPACITY));
 }
 
 void UClientImage_Base::clear()
@@ -175,6 +177,7 @@ void UClientImage_Base::clear()
       delete wbuffer;
       delete pbuffer;
       delete rbuffer;
+      delete environment;
 
       // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
@@ -293,7 +296,10 @@ __pure int UClientImage_Base::genericRead()
    U_INTERNAL_ASSERT_POINTER(rbuffer)
    U_INTERNAL_ASSERT_POINTER(pbuffer)
    U_INTERNAL_ASSERT_POINTER(wbuffer)
-   U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc,UEventFd::fd)
+
+   U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->iSockDesc)
+
+   U_INTERNAL_ASSERT_EQUALS(UEventFd::fd, socket->iSockDesc)
 
    handlerError(USocket::CONNECT); // NB: we must call function cause of SSL (must be a virtual method)...
 
@@ -443,7 +449,7 @@ loop:
          if (pipeline) *pbuffer = rbuffer->substr(rstart);
          }
 
-      state = UServer_Base::pluginsHandlerRequest(); // manage request...
+      if (UServer_Base::bpluginsHandlerRequest) state = UServer_Base::pluginsHandlerRequest(); // manage request...
       }
 
    U_INTERNAL_DUMP("state = %d pipeline = %b socket->isClosed() = %b write_off = %b", state, pipeline, socket->isClosed(), write_off)
@@ -564,7 +570,7 @@ int UClientImage_Base::handlerWrite()
    if (count)
       {
       U_INTERNAL_ASSERT_MAJOR(sfd, 0)
-      U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
+      U_INTERNAL_ASSERT_EQUALS(UEventFd::fd, socket->iSockDesc)
 
       if (UEventFd::op_mask == U_WRITE_OUT) goto send;
 
@@ -764,13 +770,14 @@ const char* UClientImage_Base::dump(bool _reset) const
                   << "bclose                             " << bclose             << '\n'
                   << "write_off                          " << write_off          << '\n'
                   << "last_response                      " << last_response      << '\n'
+                  << "socket          (USocket           " << (void*)socket      << ")\n"
                   << "body            (UString           " << (void*)body        << ")\n"
                   << "logbuf          (UString           " << (void*)logbuf      << ")\n"
                   << "rbuffer         (UString           " << (void*)rbuffer     << ")\n"
                   << "wbuffer         (UString           " << (void*)wbuffer     << ")\n"
                   << "request         (UString           " << (void*)request     << ")\n"
                   << "pbuffer         (UString           " << (void*)pbuffer     << ")\n"
-                  << "socket          (USocket           " << (void*)socket      << ")\n"
+                  << "environment     (UString           " << (void*)environment << ")\n"
                   << "msg_welcome     (UString           " << (void*)msg_welcome << ')';
 
    if (_reset)

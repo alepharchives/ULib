@@ -188,6 +188,8 @@ public:
 
    // tipologia server...
 
+   static bool bssl, bipc;
+
    static int         getPort()          { return port; }
    static int         getCgiTimeout()    { return cgi_timeout; }
    static int         getReqTimeout()    { return (timeoutMS / 1000); }
@@ -224,8 +226,8 @@ public:
    // -------------------------------------------------------------------
 
    static UString* mod_name;
-   static bool bpluginsHandlerReset;
    static UEventFd* handler_inotify;
+   static bool bpluginsHandlerRequest, bpluginsHandlerReset;
 
    // load plugin modules and call server-wide hooks handlerConfig()...
    static int loadPlugins(UString& plugin_dir, const UString& plugin_list, UFileConfig* cfg);
@@ -251,32 +253,38 @@ public:
 
    typedef struct shared_data {
    // ---------------------------------
-      sig_atomic_t tot_connection;
+      sem_t lock_user1;
+      sem_t lock_user2;
+      sem_t lock_rdb_server;
+      sem_t lock_ssl_session;
+      sem_t lock_http_session;
    // ---------------------------------
-      ULog::log_data data_log_shared;
-      sem_t          lock_log_shared;
+      sig_atomic_t cnt_user1;
+      sig_atomic_t cnt_user2;
+      sig_atomic_t cnt_connection;
    // ---------------------------------
-      sem_t          lock_ssl_session;
-   // ---------------------------------
-      sem_t          lock_http_session;
-   // ---------------------------------
-      sem_t          lock_rdb_server;
+      ULog::log_data log_data_shared;
    // ---------------------------------
       struct timeval _timeval;
       char data_1[17]; // 18/06/12 18:45:56
       char data_2[26]; // 04/Jun/2012:18:18:37 +0200
       char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
-                       // 123456789012345678901234567890
+      char    null[1]; // 123456789012345678901234567890
    // -------------------------------
    } shared_data;
 
-#define U_TOT_CONNECTION      UServer_Base::ptr_shared_data->tot_connection
-#define U_LOG_DATA_SHARED   &(UServer_Base::ptr_shared_data->data_log_shared)
+#define U_LOCK_USER1        &(UServer_Base::ptr_shared_data->lock_user1)
+#define U_LOCK_USER2        &(UServer_Base::ptr_shared_data->lock_user2)
+#define U_LOCK_RDB_SERVER   &(UServer_Base::ptr_shared_data->lock_rdb_server)
 #define U_LOCK_SSL_SESSION  &(UServer_Base::ptr_shared_data->lock_ssl_session)
 #define U_LOCK_HTTP_SESSION &(UServer_Base::ptr_shared_data->lock_http_session)
-#define U_LOCK_RDB_SERVER   &(UServer_Base::ptr_shared_data->lock_rdb_server)
+#define U_LOG_DATA_SHARED   &(UServer_Base::ptr_shared_data->log_data_shared)
+#define U_CNT_USER1           UServer_Base::ptr_shared_data->cnt_user1
+#define U_CNT_USER2           UServer_Base::ptr_shared_data->cnt_user2
+#define U_TOT_CONNECTION      UServer_Base::ptr_shared_data->cnt_connection
 #define U_NOW               &(UServer_Base::ptr_shared_data->_timeval)
 
+   static pid_t pid;
    static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves
    static uint32_t shared_data_add;
    static shared_data* ptr_shared_data;
@@ -285,8 +293,8 @@ public:
       {
       U_TRACE(0, "UServer_Base::getOffsetToDataShare(%u)", shared_data_size)
 
-      long offset = shared_data_add;
-                    shared_data_add += shared_data_size;
+      long offset = sizeof(shared_data) + shared_data_add;
+                                          shared_data_add += shared_data_size;
 
       U_RETURN_POINTER(offset, void);
       }
@@ -417,7 +425,7 @@ protected:
    static UVector<UIPAllow*>* vallow_IP;
    static int sfd, bclose, watch_counter;
    static UVector<UIPAllow*>* vallow_IP_prv;
-   static bool flag_loop, bssl, bipc, flag_use_tcp_optimization, monitoring_process,
+   static bool flag_loop, flag_use_tcp_optimization, monitoring_process,
                accept_edge_triggered, set_realtime_priority, enable_rfc1918_filter, public_address;
 
    // COSTRUTTORI
@@ -577,7 +585,7 @@ private:
 template <> class U_EXPORT UServer<USSLSocket> : public UServer_Base {
 public:
 
-   UServer(UFileConfig* cfg) : UServer_Base(cfg)
+   UServer(UFileConfig* cfg) : UServer_Base(0)
       {
       U_TRACE_REGISTER_OBJECT(0, UServer<USSLSocket>, "%p", cfg)
 
@@ -585,6 +593,8 @@ public:
       socket = U_NEW(USSLSocket(UClientImage_Base::bIPv6));
 
       UClientImage_Base::ctx = getSocket()->ctx;
+
+      if (cfg) UServer_Base::loadConfigParam(*cfg);
       }
 
    virtual ~UServer()

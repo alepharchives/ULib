@@ -51,17 +51,8 @@ public:
 
    // COSTRUTTORI
 
-   USSIPlugIn()
-      {
-      U_TRACE_REGISTER_OBJECT(0, USSIPlugIn, "")
-
-      if (str_SSI_AUTOMATIC_ALIASING == 0) str_allocate();
-      }
-
-   virtual ~USSIPlugIn()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, USSIPlugIn)
-      }
+            USSIPlugIn();
+   virtual ~USSIPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
 
@@ -82,14 +73,18 @@ public:
 
 protected:
    time_t last_modified;
-   UString environment, docname, timefmt, errmsg, header, body;
-   int set_alternative_response;
+   UString file_environment, docname, timefmt, errmsg;
    bool use_size_abbrev;
+
+   static UString* body;
+   static UString* header;
+   static int alternative_response;
 
 private:
    UString getInclude(const UString& include, int include_level) U_NO_EXPORT;
    UString processSSIRequest(const UString& content, int include_level) U_NO_EXPORT;
 
+   static bool    callService(const UString& name, const UString& value, bool bset) U_NO_EXPORT;
    static UString getPathname(const UString& name, const UString& value, const UString& directory) U_NO_EXPORT;
 
    USSIPlugIn(const USSIPlugIn&) : UServerPlugIn() {}

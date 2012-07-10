@@ -254,17 +254,6 @@ public:
       U_RETURN(result);
       }
 
-   static bool isSSIRequest()
-      {
-      U_TRACE(0, "UHTTP::isSSIRequest()")
-
-      U_INTERNAL_ASSERT(isHTTPRequest())
-
-      bool result = (u_endsWith(U_HTTP_URI_TO_PARAM, U_CONSTANT_TO_PARAM(".shtml")));
-
-      U_RETURN(result);
-      }
-
    static bool isTSARequest() __pure;
    static bool isSOAPRequest() __pure;
 
@@ -290,6 +279,7 @@ public:
 
    static int  checkHTTPRequest();
    static void writeApacheLikeLog(int fd);
+   static bool callService(const UString& path);
    static void manageHTTPServletRequest(bool as_service);
    static void processHTTPGetRequest(const UString& request);
    static bool checkHTTPRequestForHeader(const UString& request);
@@ -300,11 +290,6 @@ public:
    static UString  getDirectoryURI();
    static UString  getRequestURI(bool bquery);
    static UString  getHeaderMimeType(const char* content, const char* content_type, uint32_t size, time_t expire);
-
-   static void callService(const UString& path, bool servlet, UString* environment);
-
-   static void callCGI(    const UString& path, UString* environment = 0) { callService(path, false, environment); }
-   static void callServlet(const UString& path, UString* environment = 0) { callService(path, true,  environment); }
 
    static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase)
       {
@@ -621,8 +606,6 @@ public:
 
    // CGI
 
-   static UCommand* pcmd;
-
    typedef struct ucgi {
       char        sh_script;
       char        dir[503];
@@ -646,11 +629,12 @@ public:
       U_RETURN(result);
       }
 
-   static bool    processCGIOutput();
    static UString getCGIEnvironment();
-   static bool    isGenCGIRequest() __pure;
-   static void    setHTTPCgiResponse(bool header_content_type, bool bcompress, bool connection_close);
-   static bool    processCGIRequest(UCommand* pcmd, UString* penvironment, bool async, bool process_output);
+
+   static bool processCGIOutput();
+   static bool isGenCGIRequest() __pure;
+   static void setHTTPCgiResponse(bool header_content_type, bool bcompress, bool connection_close);
+   static bool processCGIRequest(UCommand& cmd, UString* environment, const char* cgi_dir, bool async);
 
    // URI PROTECTED
 
@@ -659,9 +643,10 @@ public:
    static bool digest_authentication; // authentication method (digest|basic), for example directory listing...
    static UVector<UIPAllow*>* vallow_IP;
 
-   static bool    checkUriProtected();
    static UString getUserHA1(const UString& user, const UString& realm);
-   static bool    isUserAuthorized(const UString& user, const UString& password);
+
+   static bool checkUriProtected();
+   static bool isUserAuthorized(const UString& user, const UString& password);
 
    // USP (ULib Servlet Page)
 
@@ -697,7 +682,8 @@ public:
 
    static UServletPage* usp_page_to_check;
 
-#ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
+   static void callInitForAllUSP(UStringRep* key, void* value);
+
    typedef struct upload_progress {
       char uuid[32];
       in_addr_t client;
@@ -707,9 +693,6 @@ public:
 
    static uint32_t upload_progress_index;
    static upload_progress* ptr_upload_progress;
-
-   static upload_progress* getUploadProgressPointer();
-#endif
 
    static UString getUploadProgress();
 
@@ -760,22 +743,6 @@ public:
    UCServletPage(const UCServletPage&)            {}
    UCServletPage& operator=(const UCServletPage&) { return *this; }
    };
-
-   static bool isDynamicPage()
-      {
-      U_TRACE(0, "UHTTP::isDynamicPage()")
-
-      U_INTERNAL_DUMP("u_mime_index = %C U_http_is_navigation = %b", u_mime_index, U_http_is_navigation)
-
-      if ((u_is_usp()               ||
-           u_isdigit(u_mime_index)) &&
-          U_http_is_navigation == false)
-         {
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
 
    typedef void (*vPFstr)(UString&);
 
@@ -895,7 +862,7 @@ public:
 
    static UVector<RewriteRule*>* vRewriteRule;
 
-   // FILE SYSTEM CACHE
+   // DOCUMENT ROOT CACHE
 
    class UFileCacheData {
    public:
@@ -990,10 +957,12 @@ public:
       U_RETURN(result);
       }
 
-   static void            in_READ();
-   static bool            isFileInCache();
-   static void            renewDataCache();
-   static void            checkFileForCache();
+   static void in_READ();
+   static bool isFileInCache();
+   static void renewDataCache();
+   static void checkFileForCache();
+   static void setCacheForDocumentRoot();
+
    static UString         getDataFromCache(bool header, bool gzip);
    static UFileCacheData* getFileInCache(const char* path, uint32_t len);
 
@@ -1022,6 +991,7 @@ private:
    static void processRewriteRule() U_NO_EXPORT;
    static bool checkPath(uint32_t len) U_NO_EXPORT;
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
+   static bool runDynamicPage(UString* penvironment) U_NO_EXPORT;
    static void manageBufferResize(const char* rpointer1, const char* rpointer2) U_NO_EXPORT;
 
    static void deleteSession() U_NO_EXPORT;

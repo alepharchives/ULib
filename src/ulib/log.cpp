@@ -20,22 +20,27 @@
 #endif
 
 #ifndef __MINGW32__
+#  ifdef __clang__
+#  undef  NULL
+#  define NULL 0
+#  endif
+#  define SYSLOG_NAMES
 #  include <syslog.h>
 #  include <sys/utsname.h>
 #endif
 
 vPF             ULog::backup_log_function;
 bool            ULog::bsyslog;
-bool            ULog::log_data_mmap;
+bool            ULog::log_data_must_be_unmapped;
 ULog*           ULog::pthis;
 char*           ULog::file_limit;
 ULock*          ULog::lock;
 const char*     ULog::fmt = "*** %s %N (pid %P) [%U@%H] ***\n";
 const char*     ULog::prefix;
-ULog::log_data* ULog::ptr;
+ULog::log_data* ULog::ptr_log_data;
 
-#define LOG_ptr  ptr->file_ptr
-#define LOG_page ptr->file_page
+#define LOG_ptr  ptr_log_data->file_ptr
+#define LOG_page ptr_log_data->file_page
 
 ULog::~ULog()
 {
@@ -103,8 +108,8 @@ bool ULog::open(uint32_t _size, mode_t mode)
             }
          }
 
-      pthis = this;
-      ptr   = U_MALLOC_TYPE(log_data);
+      pthis        = this;
+      ptr_log_data = U_MALLOC_TYPE(log_data);
 
       LOG_ptr = LOG_page = (_size ? (UFile::map + file_size)      : 0); // append mode...
               file_limit = (_size ? (UFile::map + UFile::st_size) : 0);
@@ -132,28 +137,33 @@ end:
    U_RETURN(false);
 }
 
-void ULog::setShared(log_data* log_data_ptr)
+void ULog::setShared(log_data* ptr)
 {
-   U_TRACE(0, "ULog::setShared(%p)", log_data_ptr)
+   U_TRACE(0, "ULog::setShared(%p)", ptr)
 
    if (file_limit &&
        bsyslog == false)
       {
-      U_INTERNAL_ASSERT_POINTER(ptr)
       U_INTERNAL_ASSERT_POINTER(lock)
+      U_INTERNAL_ASSERT_POINTER(ptr_log_data)
 
-      log_data* tmp = ptr;
+      if (ptr == 0)
+         {
+         ptr = (log_data*) UFile::mmap(sizeof(log_data));
 
-      ptr = (log_data_ptr ? log_data_ptr
-                          : (log_data_mmap = true, (log_data*)UFile::mmap(sizeof(log_data) + sizeof(sem_t))));
+         U_INTERNAL_ASSERT_DIFFERS(ptr, MAP_FAILED)
 
-      U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
+         log_data_must_be_unmapped = true;
+         }
 
-      *ptr = *tmp; // copy structure...
+      ptr->file_ptr  = LOG_ptr;
+      ptr->file_page = LOG_page;
 
-      U_FREE_TYPE(tmp, log_data);
+      U_FREE_TYPE(ptr_log_data, log_data);
 
-      lock->init((sem_t*)((char*)ptr + sizeof(log_data)));
+      ptr_log_data = ptr;
+
+      lock->init(&(ptr_log_data->lock_shared));
       }
 }
 
@@ -163,11 +173,10 @@ void ULog::msync()
 
    if (bsyslog == false)
       {
-      U_INTERNAL_ASSERT_POINTER(ptr)
+      U_INTERNAL_ASSERT_POINTER(ptr_log_data)
 
       UFile::msync(LOG_ptr, LOG_page);
-
-      LOG_page = LOG_ptr;
+                            LOG_page = LOG_ptr;
       }
 }
 
@@ -241,11 +250,83 @@ void ULog::log(const char* format, ...)
    va_start(argp, format);
 
    if (prefix) iov[0].iov_len  = u__snprintf(buffer,                  sizeof(buffer),                  prefix, 0);
-               iov[0].iov_len += u_vsnprintf(buffer + iov[0].iov_len, sizeof(buffer) - iov[0].iov_len, format, argp); 
+               iov[0].iov_len += u_vsnprintf(buffer + iov[0].iov_len, sizeof(buffer) - iov[0].iov_len, format, argp);
 
    va_end(argp);
 
    write(iov, 1);
+}
+
+void ULog::logger(int priority, const char* format, ...)
+{
+   U_TRACE(0, "ULog::logger(%d,%S)", priority, format)
+
+#ifndef __MINGW32__
+   static bool bopenlog;
+
+   if (bopenlog == false)
+      {
+       bopenlog  = true;
+
+      U_SYSCALL_VOID(openlog, "%S,%d,%d", getlogin(), 0, 0);
+      }
+
+   uint32_t len;
+   char buffer[4096];
+
+   va_list argp;
+   va_start(argp, format);
+
+   len = u_vsnprintf(buffer, sizeof(buffer), format, argp);
+
+   va_end(argp);
+
+   U_SYSCALL_VOID(syslog, "%d,%S,%d,%p", LOG_INFO, "%.*s", len, buffer);
+#endif
+}
+
+// Decode a symbolic name to a numeric value
+
+__pure U_NO_EXPORT int ULog::decode(const char* name, bool bfacility)
+{
+   U_TRACE(0, "ULog::decode(%S,%b)", name, bfacility)
+
+#ifndef __MINGW32__
+   for (CODE* c = (bfacility ? facilitynames : prioritynames); c->c_name; ++c)
+      {
+      if (strcasecmp(name, c->c_name) == 0) U_RETURN(c->c_val);
+      }
+#endif
+
+   U_RETURN(-1);
+}
+
+int ULog::getPriorityForLogger(char* s)
+{
+   U_TRACE(0, "ULog::getPriorityForLogger(%S)", s)
+
+   char* save;
+   int fac, lev, res;
+
+   for (save = s; *s && *s != '.'; ++s) {}
+
+   if (*s)
+      {
+      *s   = '\0';
+      fac  = decode(save, true);
+      *s++ = '.';
+      }
+   else
+      {
+      s    = save;
+      fac  = LOG_USER;
+      }
+
+   lev = decode(s, false);
+
+   res = ((lev & LOG_PRIMASK) | (fac & LOG_FACMASK));
+
+   U_RETURN(res);
 }
 
 void ULog::close()
@@ -289,7 +370,12 @@ void ULog::close()
 
          lock->unlock();
 
-         if (lock->isShared() && log_data_mmap) UFile::munmap(ptr, sizeof(log_data) + sizeof(sem_t));
+         if (log_data_must_be_unmapped)
+            {
+            U_ASSERT(lock->isShared())
+
+            UFile::munmap(ptr_log_data, sizeof(log_data));
+            }
          }
       }
 }

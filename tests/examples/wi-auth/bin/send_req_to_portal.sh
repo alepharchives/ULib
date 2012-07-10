@@ -2,6 +2,21 @@
 
 # send_req_to_portal.sh
 
+# set -x 
+
+# load var
+
+HOME=/home/unirel
+
+for i in $HOME/wi-auth/etc/*/script.conf
+do
+	. $i
+done
+
+CLIENT_HTTP=`grep CLIENT_HTTP $HOME/wi-auth/etc/environment.conf | cut -d'=' -f2`
+PORTAL_NAME=`grep PORTAL_NAME $HOME/wi-auth/etc/environment.conf | cut -d'=' -f2`
+LOCAL_SYSLOG_SELECTOR=`grep LOCAL_SYSLOG_SELECTOR $HOME/wi-auth/etc/environment.conf | cut -d'=' -f2`
+
 do_cmd() {
 
 	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $1 BEGIN"
@@ -31,14 +46,6 @@ do_cmd() {
 			  logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $1 END SYNCHRONIZING PORTAL STATUS INFO: FAILURE"
 	fi
 }
-
-# env
-
-export HOME=/home/unirel
-export ENV=$HOME/wi-auth/etc/environment.conf
-export PORTAL_NAME=`grep PORTAL_NAME $ENV | cut -d'=' -f2`
-export CLIENT_HTTP="`grep CLIENT_HTTP $ENV | cut -d'=' -f2`"
-export LOCAL_SYSLOG_SELECTOR=`grep LOCAL_SYSLOG_SELECTOR $ENV | cut -d'=' -f2`
 
 # TMPFILE=`basename $0`
 # TMPFILE_OUT=/tmp/$1_$$.out

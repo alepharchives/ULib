@@ -89,7 +89,6 @@ uint32_t    UHTTP::range_start;
 uint32_t    UHTTP::request_read_timeout;
 uint32_t    UHTTP::min_size_for_sendfile; // NB: for major size it is better to use sendfile()...
 uint32_t    UHTTP::limit_request_body = U_STRING_LIMIT;
-UCommand*   UHTTP::pcmd;
 UStringRep* UHTTP::pkey;
 const char* UHTTP::ptrH;
 const char* UHTTP::ptrC;
@@ -103,6 +102,7 @@ const char* UHTTP::ptrU;
 const char* UHTTP::ptrP;
 const char* UHTTP::ptrX;
 
+uint32_t                          UHTTP::upload_progress_index;
 UDataSession*                     UHTTP::data_session;
 UDataSession*                     UHTTP::data_storage;
 UMimeMultipart*                   UHTTP::formMulti;
@@ -110,6 +110,7 @@ UVector<UString>*                 UHTTP::valias;
 UVector<UString>*                 UHTTP::form_name_value;
 UVector<UIPAllow*>*               UHTTP::vallow_IP;
 UHTTP::UServletPage*              UHTTP::usp_page_to_check;
+UHTTP::upload_progress*           UHTTP::ptr_upload_progress;
 
          UHTTP::UFileCacheData*   UHTTP::file_data;
 UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
@@ -118,10 +119,6 @@ UHTTP::UPageSpeed*                UHTTP::page_speed;
 #endif
 #ifdef USE_LIBV8
 UHTTP::UV8JavaScript*             UHTTP::v8_javascript;
-#endif
-#ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
-uint32_t                          UHTTP::upload_progress_index;
-UHTTP::upload_progress*           UHTTP::ptr_upload_progress;
 #endif
 
 const UString* UHTTP::str_origin;
@@ -365,7 +362,7 @@ UHTTP::UFileCacheData::~UFileCacheData()
          //  0 -> init
          // -1 -> reset
          // -2 -> destroy
-         // -3 -> call as service
+         // -3 -> call it as service
          // ------------------------------
 
          if (usp_page->alias == false) (void) usp_page->runDynamicPage((void*)-2);
@@ -681,7 +678,6 @@ void UHTTP::ctor()
    U_INTERNAL_ASSERT_EQUALS(form_name_value,0)
 
    file            = U_NEW(UFile);
-   pcmd            = U_NEW(UCommand);
    pkey            = UStringRep::create(0U, 100U, 0);
    keyID           = U_NEW(UString);
    alias           = U_NEW(UString);
@@ -789,12 +785,71 @@ void UHTTP::ctor()
    U_INTERNAL_ASSERT_POINTER(v8_javascript)
 #endif
 
-   // CACHE FILE SYSTEM
+   if (virtual_host) U_SRV_LOG("virtual host service enabled");
+
+   if (min_size_for_sendfile == 0) min_size_for_sendfile = 10 * 1024 * 1024; // 10M
+
+   U_INTERNAL_DUMP("min_size_for_sendfile = %u", min_size_for_sendfile)
+
+   UServices::generateKey(); // For ULIB facility request TODO session cookies... 
+
+   /*
+   Set up static environment variables
+
+   server static variable  Description
+   -------------------------------------------------------------------------------------------------------------------------------------------
+   SERVER_PORT
+   SERVER_ADDR
+   SERVER_NAME
+      Server's hostname, DNS alias, or IP address as it appears in self-referencing URLs.
+   SERVER_SOFTWARE
+      Name and version of the information server software answering the request (and running the gateway). Format: name/version.
+   GATEWAY_INTERFACE
+      CGI specification revision with which this server complies. Format: CGI/revision.
+   DOCUMENT_ROOT
+      The root directory of your server.
+
+   Example:
+   ----------------------------------------------------------------------------------------------------------------------------
+   SERVER_PORT=80
+   SERVER_ADDR=127.0.0.1
+   SERVER_NAME=localhost
+   SERVER_SOFTWARE=Apache
+   GATEWAY_INTERFACE=CGI/1.1
+   DOCUMENT_ROOT="/var/www/localhost/htdocs"
+   ----------------------------------------------------------------------------------------------------------------------------
+   */
+
+   U_INTERNAL_ASSERT_POINTER(UServer_Base::senvironment)
+
+   UString name = USocketExt::getNodeName(), ip_server = UServer_Base::getIPAddress();
+
+   UServer_Base::senvironment->snprintf_add("SERVER_NAME=%.*s\n"  // Your server's fully qualified domain name (e.g. www.cgi101.com)
+                                            "SERVER_ADDR=%.*s\n"
+                                            "SERVER_PORT=%d\n"    // The port number your server is listening on
+                                            "DOCUMENT_ROOT=%w\n", // The root directory of your server
+                                            U_STRING_TO_TRACE(name),
+                                            U_STRING_TO_TRACE(ip_server),
+                                            UServer_Base::port);
+
+   (void) UServer_Base::senvironment->append(U_CONSTANT_TO_PARAM("GATEWAY_INTERFACE=CGI/1.1\n"
+                                             "SERVER_SOFTWARE=" PACKAGE_NAME "/" ULIB_VERSION "\n" // The server software you're using (such as Apache 1.3)
+                                             "PATH=/usr/local/bin:/usr/bin:/bin\n"                 // The system path your server is running under
+                                             "REDIRECT_STATUS=200\n"));
+
+   U_ASSERT_EQUALS(UServer_Base::senvironment->isBinary(), false)
+
+   setCacheForDocumentRoot();
+}
+
+void UHTTP::setCacheForDocumentRoot()
+{
+   U_TRACE(1, "UHTTP::setCacheForDocumentRoot()")
 
 #if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
    if (UServer_Base::handler_inotify)
       {
-      // INIT INOTIFY FOR CACHE FILE SYSTEM
+      // INIT INOTIFY FOR DOCUMENT ROOT CACHE
 
 #  ifdef HAVE_INOTIFY_INIT1
       UServer_Base::handler_inotify->fd = U_SYSCALL(inotify_init1, "%d", IN_NONBLOCK | IN_CLOEXEC);
@@ -805,7 +860,6 @@ void UHTTP::ctor()
       UServer_Base::handler_inotify->fd = U_SYSCALL_NO_PARAM(inotify_init);
 
       (void) U_SYSCALL(fcntl, "%d,%d,%d", UServer_Base::handler_inotify->fd, F_SETFL, O_NONBLOCK | O_CLOEXEC);
-
 next:
       if (UServer_Base::handler_inotify->fd != -1)
          {
@@ -821,12 +875,6 @@ next:
 #else
    UServer_Base::handler_inotify = 0;
 #endif
-
-   if (virtual_host) U_SRV_LOG("virtual host service enabled");
-
-   if (min_size_for_sendfile == 0) min_size_for_sendfile = 10 * 1024 * 1024; // 10M
-
-   U_INTERNAL_DUMP("min_size_for_sendfile = %u", min_size_for_sendfile)
 
    U_INTERNAL_ASSERT_EQUALS(cache_file,0)
 
@@ -905,7 +953,7 @@ next:
    U_INTERNAL_DUMP("cache size = %u", sz)
 
 #ifndef __MINGW32__
-   uint32_t rlim = (100 + sz + 3 * UNotifier::max_connection);
+   uint32_t rlim = (sz + UNotifier::max_connection + 100);
 
    U_INTERNAL_DUMP("rlim = %u", rlim)
 
@@ -950,54 +998,6 @@ next:
 
       U_SRV_LOG("file data users permission: '.htdigest' loaded");
       }
-
-   UServices::generateKey(); // For ULIB facility request TODO session cookies... 
-
-   /*
-   Set up static environment variables
-
-   server static variable  Description
-   -------------------------------------------------------------------------------------------------------------------------------------------
-   SERVER_PORT
-   SERVER_ADDR
-   SERVER_NAME
-      Server's hostname, DNS alias, or IP address as it appears in self-referencing URLs.
-   SERVER_SOFTWARE
-      Name and version of the information server software answering the request (and running the gateway). Format: name/version.
-   GATEWAY_INTERFACE
-      CGI specification revision with which this server complies. Format: CGI/revision.
-   DOCUMENT_ROOT
-      The root directory of your server.
-
-   Example:
-   ----------------------------------------------------------------------------------------------------------------------------
-   SERVER_PORT=80
-   SERVER_ADDR=127.0.0.1
-   SERVER_NAME=localhost
-   SERVER_SOFTWARE=Apache
-   GATEWAY_INTERFACE=CGI/1.1
-   DOCUMENT_ROOT="/var/www/localhost/htdocs"
-   ----------------------------------------------------------------------------------------------------------------------------
-   */
-
-   U_INTERNAL_ASSERT_POINTER(UServer_Base::senvironment)
-
-   UString name = USocketExt::getNodeName(), ip_server = UServer_Base::getIPAddress();
-
-   UServer_Base::senvironment->snprintf_add("SERVER_NAME=%.*s\n"  // Your server's fully qualified domain name (e.g. www.cgi101.com)
-                                            "SERVER_ADDR=%.*s\n"
-                                            "SERVER_PORT=%d\n"    // The port number your server is listening on
-                                            "DOCUMENT_ROOT=%w\n", // The root directory of your server
-                                            U_STRING_TO_TRACE(name),
-                                            U_STRING_TO_TRACE(ip_server),
-                                            UServer_Base::port);
-
-   (void) UServer_Base::senvironment->append(U_CONSTANT_TO_PARAM("GATEWAY_INTERFACE=CGI/1.1\n"
-                                             "SERVER_SOFTWARE=" PACKAGE_NAME "/" ULIB_VERSION "\n" // The server software you're using (such as Apache 1.3)
-                                             "PATH=/usr/local/bin:/usr/bin:/bin\n"                 // The system path your server is running under
-                                             "REDIRECT_STATUS=200\n"));
-
-   U_ASSERT_EQUALS(UServer_Base::senvironment->isBinary(), false)
 }
 
 void UHTTP::dtor()
@@ -1016,7 +1016,6 @@ void UHTTP::dtor()
    if (file)
       {
       delete file;
-      delete pcmd;
       delete pkey;
       delete keyID;
       delete alias;
@@ -1035,13 +1034,16 @@ void UHTTP::dtor()
       if (vallow_IP)    delete vallow_IP;
       if (vRewriteRule) delete vRewriteRule;
 
-      // HTTP SESSION
+#  ifdef USE_PAGE_SPEED
+      if (page_speed) delete page_speed;
+#  endif
+#  ifdef USE_LIBV8
+      if (v8_javascript) delete v8_javascript;
+#  endif
 
-      if (db_session) deleteSession();
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
 
-      // CACHE FILE SYSTEM
-
-#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && defined(DEBUG_DEBUG)
+#  ifdef DEBUG_DEBUG
       UStringRep* rep = UObject2StringRep(cache_file);
 
       (void) UFile::writeToTmpl("/tmp/doc_root_cache.%P", UString(rep));
@@ -1049,28 +1051,25 @@ void UHTTP::dtor()
       delete rep;
 #  endif
 
-             cache_file->clear();
-             cache_file->deallocate();
-      delete cache_file;
-
-      // inotify: Inode based directory notification...
-
       if (UServer_Base::handler_inotify)
          {
+         // inotify: Inode based directory notification...
+
          U_INTERNAL_ASSERT_MAJOR(UServer_Base::handler_inotify->fd,0)
 
          (void) U_SYSCALL(close, "%d", UServer_Base::handler_inotify->fd);
 
          UServer_Base::handler_inotify = 0;
          }
+#endif
 
-#  ifdef USE_PAGE_SPEED
-      if (page_speed) delete page_speed;
-#  endif
+      // CACHE DOCUMENT ROOT
 
-#  ifdef USE_LIBV8
-      if (v8_javascript) delete v8_javascript;
-#  endif
+             cache_file->clear();
+             cache_file->deallocate();
+      delete cache_file;
+
+      if (db_session) deleteSession();
       }
 }
 
@@ -3084,7 +3083,9 @@ bool UHTTP::initSession(const char* location, uint32_t size)
 
       db_session = U_NEW(URDB(pathdb, false));
 
-      if (((URDB*)db_session)->open(size, false) == false) // NB: no truncate, we can have be started as replacement of child preforked...
+      bool btruncate = (UServer_Base::pid == 0); // NB: no truncate, if we have started as replacement of child preforked...
+
+      if (((URDB*)db_session)->open(size, btruncate) == false)
          {
          U_SRV_LOG("db initialization of http session failed...");
 
@@ -4749,7 +4750,7 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
    int ratio = 100;
    bool gzip = false;
    UString header(U_CAPACITY);
-   const char* motivation = "";
+   const char* motivation = 0;
 
    file_data->array = U_NEW(UVector<UString>(4U));
 
@@ -4853,7 +4854,8 @@ next:
 
       U_INTERNAL_DUMP("ratio = %d", ratio)
 
-      if (ratio < 85) // NB: we accept only if ratio compression is better than 15%...
+      if (ratio < 85 && // NB: we accept only if ratio compression is better than 15%...
+          motivation == 0)
          {
          file_data->array->push_back(content);
 
@@ -4867,7 +4869,36 @@ next:
       }
 
 end:
-   U_SRV_LOG("file cached: %S - %u bytes - (%d%%) compressed ratio%s", pathname->data(), file_data->size, 100 - ratio, motivation);
+   U_SRV_LOG("file cached: %S - %u bytes - (%d%%) compressed ratio%s", pathname->data(), file_data->size, 100 - ratio, (motivation ? motivation : ""));
+}
+
+void UHTTP::callInitForAllUSP(UStringRep* key, void* value)
+{
+   U_TRACE(0+256, "UHTTP::callInitForAllUSP(%.*S,%p)", U_STRING_TO_TRACE(*key), value)
+
+   U_INTERNAL_ASSERT_POINTER(value)
+
+   UFileCacheData* cptr = (UFileCacheData*)value;
+
+   if (cptr->mime_index == U_usp)
+      {
+      UServletPage* usp_page = (UServletPage*)cptr->ptr;
+
+      U_INTERNAL_DUMP("usp_page->runDynamicPage = %p usp_page->alias", usp_page->runDynamicPage, usp_page->alias)
+
+      U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
+
+      // ------------------------------
+      // argument value for usp module:
+      // ------------------------------
+      //  0 -> init
+      // -1 -> reset
+      // -2 -> destroy
+      // -3 -> call it as service
+      // ------------------------------
+
+      if (usp_page->alias == false) (void) usp_page->runDynamicPage(0);
+      }
 }
 
 U_NO_EXPORT void UHTTP::checkIfAlias(UStringRep* key, void* value)
@@ -4961,28 +4992,11 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
             U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
 
-            // ------------------------------
-            // argument value for usp module:
-            // ------------------------------
-            //  0 -> init
-            // -1 -> reset
-            // -2 -> destroy
-            // -3 -> call as service
-            // ------------------------------
-
-            if (isAlias(usp_page) == false &&
-                usp_page->runDynamicPage(0))
-               {
-               U_SRV_LOG("USP init failed: %.*S", U_FILE_TO_TRACE(*file));
-
-               delete usp_page;
-
-               return;
-               }
+            const char* alias = (isAlias(usp_page) ? " (alias)" : "");
 
             (void) key.replace(buffer + 2, pos - 2 - 1 - U_CONSTANT_SIZE(U_LIB_SUFFIX));
 
-            U_SRV_LOG("USP found: %S, USP service registered (URI): %.*s", buffer, U_STRING_TO_TRACE(key));
+            U_SRV_LOG("USP found: %S%s, USP service registered (URI): %.*s", buffer, alias, U_STRING_TO_TRACE(key));
 
             file_data->ptr        = usp_page;
             file_data->mime_index = U_usp;
@@ -5408,6 +5422,8 @@ void UHTTP::manageHTTPServletRequest(bool as_service)
 
    U_INTERNAL_ASSERT(isHTTPRequest())
 
+   U_INTERNAL_DUMP("u_http_info.nResponseCode = %d", u_http_info.nResponseCode)
+
    if (u_is_usp())
       {
       UServletPage* usp = (UServletPage*)file_data->ptr;
@@ -5421,7 +5437,7 @@ void UHTTP::manageHTTPServletRequest(bool as_service)
       //  0 -> init
       // -1 -> reset
       // -2 -> destroy
-      // -3 -> call as service
+      // -3 -> call it as service
       // ------------------------------
 
       if (as_service)
@@ -5466,60 +5482,125 @@ void UHTTP::manageHTTPServletRequest(bool as_service)
       U_FREE_VECTOR(argv, n+1, const char);
       }
 #endif
+}
 
-   U_INTERNAL_DUMP("u_http_info.nResponseCode = %d", u_http_info.nResponseCode)
+U_NO_EXPORT bool UHTTP::runDynamicPage(UString* penvironment)
+{
+   U_TRACE(0, "UHTTP::runDynamicPage(%p)", penvironment)
+
+   U_INTERNAL_ASSERT_POINTER(file_data)
+
+   U_INTERNAL_DUMP("u_mime_index = %C u_is_cgi() = %b u_is_usp() = %b", u_mime_index, u_is_cgi(), u_is_usp())
+
+   bool as_service = (penvironment != 0);
+
+   if (u_is_cgi() == false) manageHTTPServletRequest(as_service);
+   else
+      {
+      UHTTP::ucgi* cgi = (UHTTP::ucgi*)file_data->ptr;
+
+      U_INTERNAL_DUMP("cgi->dir = %S cgi->sh_script = %d cgi->interpreter = %S", cgi->dir, cgi->sh_script, cgi->interpreter)
+
+      const char* cgi_dir = cgi->dir;
+
+      // NB: we can't use relativ path because after we call chdir()...
+
+      UString command(U_CAPACITY), path(U_CAPACITY);
+
+      // NB: we can't use U_HTTP_URI_TO_TRACE because this function can be called by SSI...
+
+      path.snprintf("%w/%s/%s", cgi_dir, cgi_dir + u__strlen(cgi_dir) + 1);
+
+      U_INTERNAL_DUMP("path = %.*S", U_STRING_TO_TRACE(path))
+
+      if (cgi->interpreter) command.snprintf("%s %.*s", cgi->interpreter, U_STRING_TO_TRACE(path));
+      else           (void) command.assign(path);
+
+      // ULIB facility: check if present form data and convert it in parameters for shell script...
+
+      if (cgi->sh_script) setCGIShellScript(command);
+
+      UCommand cmd(command);
+
+      // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
+
+      bool async = (as_service == false                   &&
+                    UServer_Base::preforked_num_kids <= 0 &&
+                    UClientImage_Base::isPipeline()  == false);
+
+      (void) processCGIRequest(cmd, penvironment, cgi_dir, async);
+      }
+
+   if (form_name_value->size()) resetForm(true);
+
+   U_INTERNAL_DUMP("u_http_info.nResponseCode = %d wbuffer(%u) = %.*S",
+                    u_http_info.nResponseCode, UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
 
    switch (u_http_info.nResponseCode)
       {
-      case 0: (void) processCGIOutput(); break;
-
       case HTTP_OK:
          {
-         // NB: we assume to have as response a HTML without HTTP headers...
+         // NB: we assume to have as response an HTML without HTTP headers...
 
          u_http_info.clength = UClientImage_Base::wbuffer->size();
 
          setHTTPCgiResponse(false, isCompressable(), false);
-         }
-      break;
 
-      case HTTP_NOT_FOUND:    setHTTPNotFound();            break;
-      case HTTP_BAD_METHOD:   setHTTPBadMethod();           break;
-      case HTTP_BAD_REQUEST:  setHTTPBadRequest();          break;
-      case HTTP_UNAVAILABLE:  setHTTPServiceUnavailable();  break;
-      case HTTP_UNAUTHORIZED: setHTTPUnAuthorized();        break;
+         U_RETURN(true);
+         }
+
+      case HTTP_NOT_FOUND:       setHTTPNotFound();            break;
+      case HTTP_BAD_METHOD:      setHTTPBadMethod();           break;
+      case HTTP_BAD_REQUEST:     setHTTPBadRequest();          break;
+      case HTTP_UNAVAILABLE:     setHTTPServiceUnavailable();  break;
+      case HTTP_UNAUTHORIZED:    setHTTPUnAuthorized();        break;
+      case HTTP_GATEWAY_TIMEOUT: setHTTPResponse(0, 0);        break;
+
+      case 0:
+         {
+         if (as_service ||
+             processCGIOutput())
+            {
+            U_RETURN(true);
+            }
+
+         u_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+         }
 
       default:
          {
-         if (u_http_info.nResponseCode != HTTP_INTERNAL_ERROR) U_WARNING("received wrong response code from servlet: %d", u_http_info.nResponseCode);
+         if (u_http_info.nResponseCode != HTTP_INTERNAL_ERROR) U_WARNING("received from dynamic page wrong response code: %d", u_http_info.nResponseCode);
 
          setHTTPInternalError();
          }
       break;
       }
+
+   U_RETURN(false);
 }
 
-void UHTTP::callService(const UString& path, bool servlet, UString* environment)
+bool UHTTP::callService(const UString& path)
 {
-   U_TRACE(0, "UHTTP::callService(%.*S,%b,%p)", U_STRING_TO_TRACE(path), servlet, environment)
+   U_TRACE(0, "UHTTP::callService(%.*S)", U_STRING_TO_TRACE(path))
 
-   file->setPath(path, environment);
+   file->setPath(path, UClientImage_Base::environment);
 
-   if (isFileInCache())
+   if (isFileInCache() == false)
       {
-      U_INTERNAL_ASSERT_POINTER(file_data)
+      setHTTPNotFound();
 
-      u_mime_index = file_data->mime_index;
-
-      U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
-
-      if (servlet) manageHTTPServletRequest(true);
-      else         (void) processCGIRequest((UCommand*)0, environment, false, false);
-
-      if (form_name_value->size()) resetForm(true);
-
-      U_INTERNAL_DUMP("wbuffer(%u) = %.*S", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
+      U_RETURN(false);
       }
+
+   U_INTERNAL_ASSERT_POINTER(file_data)
+
+   u_mime_index = file_data->mime_index;
+
+   if (runDynamicPage(UClientImage_Base::environment)) U_RETURN(true);
+
+   U_INTERNAL_ASSERT_MAJOR(u_http_info.nResponseCode, 0)
+
+   U_RETURN(false);
 }
 
 int UHTTP::checkHTTPRequest()
@@ -5693,22 +5774,15 @@ next2:
 
       u_mime_index = file_data->mime_index;
 
-      if (isDynamicPage())
+      U_INTERNAL_DUMP("u_mime_index = %C U_http_is_navigation = %b", u_mime_index, U_http_is_navigation)
+
+      if ((u_is_usp()               ||
+           u_isdigit(u_mime_index)) &&
+          U_http_is_navigation == false)
          {
-         if (u_is_cgi() == false) manageHTTPServletRequest(false);
-         else
-            {
-            // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
-
-            bool async = (UServer_Base::preforked_num_kids <= 0 &&
-                          UClientImage_Base::isPipeline()  == false);
-
-            (void) processCGIRequest((UCommand*)0, 0, async, true);
-            }
+         (void) runDynamicPage(0);
 
          keyID->clear();
-
-         if (form_name_value->size()) resetForm(true);
 
          goto next3;
          }
@@ -5735,78 +5809,78 @@ next3:
    if (isHTTPRequestAlreadyProcessed())
       {
 check:
+      U_INTERNAL_DUMP("u_is_ssi() = %b", u_is_ssi())
+
+      if (u_is_ssi())
+         {
+         setHTTPRequestNeedProcessing();
+
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         }
+
 #  ifdef U_HTTP_CACHE_REQUEST
-      manageHTTPRequestCache();  
+      manageHTTPRequestCache();
+#  endif
+      }
+
+   U_INTERNAL_DUMP("isHTTPRequestNotFound() = %b", isHTTPRequestNotFound())
+
+   if (isHTTPRequestNotFound() == false)
+      {
+      // check if the uri use HTTP Strict Transport Security to force client to use secure connections only
+
+      if (uri_strict_transport_security_mask                                                                                 &&
+#     ifdef USE_LIBSSL
+          UServer_Base::bssl == false                                                                                        &&
+#     endif
+          (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM,              U_STRING_TO_PARAM(*uri_strict_transport_security_mask), 0)   ||
+           (request_uri->empty() == false                                                                                    &&
+            u_dosmatch_with_OR(U_STRING_TO_PARAM(*request_uri), U_STRING_TO_PARAM(*uri_strict_transport_security_mask), 0))))
+         {
+         // we are in cleartext at the moment, prevent further execution and output
+
+         char redirect_url[32 * 1024];
+
+         UString uri = getRequestURI(true), ip_server = UServer_Base::getIPAddress();
+
+         setHTTPRedirectResponse(2, *str_strict_transport_security, (const char*)redirect_url,
+                                 u__snprintf(redirect_url, sizeof(redirect_url), "https:/%.*s%.*s", U_STRING_TO_TRACE(ip_server), U_STRING_TO_TRACE(uri)));
+
+         U_SRV_LOG("URI_STRICT_TRANSPORT_SECURITY: request redirected to %S", redirect_url);
+
+         setHTTPRequestProcessed();
+
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         }
+
+      // check if the uri need a certificate
+
+#  ifdef USE_LIBSSL
+      if (UServer_Base::bssl                                                                                    &&
+          uri_request_cert_mask                                                                                 &&
+          (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM,              U_STRING_TO_PARAM(*uri_request_cert_mask), 0)   ||
+           (request_uri->empty() == false                                                                       &&
+            u_dosmatch_with_OR(U_STRING_TO_PARAM(*request_uri), U_STRING_TO_PARAM(*uri_request_cert_mask), 0))) &&
+          ((UServer<USSLSocket>*)UServer_Base::pthis)->askForClientCertificate() == false)
+         {
+         U_SRV_LOG("URI_REQUEST_CERT: request denied by mandatory certificate from client");
+
+         setHTTPForbidden();
+
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
 #  endif
 
-      // check for "Connection: close" in headers
+      // check if the uri is protected
 
-      U_INTERNAL_DUMP("U_http_is_connection_close = %d", U_http_is_connection_close)
-
-      if (U_http_is_connection_close == U_YES &&
-          u_is_ssi()                 == false)
+      if (uri_protected_mask                                                                                 &&
+          (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM,              U_STRING_TO_PARAM(*uri_protected_mask), 0)   ||
+           (request_uri->empty() == false                                                                    &&
+            u_dosmatch_with_OR(U_STRING_TO_PARAM(*request_uri), U_STRING_TO_PARAM(*uri_protected_mask), 0))) &&
+          checkUriProtected() == false)
          {
          U_RETURN(U_PLUGIN_HANDLER_ERROR);
          }
-      }
-
-   U_INTERNAL_DUMP("u_is_ssi() = %b", u_is_ssi())
-
-   // check if the uri use HTTP Strict Transport Security to force client to use secure connections only
-
-   if (uri_strict_transport_security_mask                                                                                 &&
-#     ifdef USE_LIBSSL
-       UServer_Base::bssl == false                                                                                        &&
-#     endif
-       isHTTPRequestNotFound() == false                                                                                   &&
-       (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM,              U_STRING_TO_PARAM(*uri_strict_transport_security_mask), 0)   ||
-        (request_uri->empty() == false                                                                                    &&
-         u_dosmatch_with_OR(U_STRING_TO_PARAM(*request_uri), U_STRING_TO_PARAM(*uri_strict_transport_security_mask), 0))))
-      {
-      // we are in cleartext at the moment, prevent further execution and output
-
-      char redirect_url[32 * 1024];
-
-      UString uri = getRequestURI(true), ip_server = UServer_Base::getIPAddress();
-
-      setHTTPRedirectResponse(2, *str_strict_transport_security, (const char*)redirect_url,
-                              u__snprintf(redirect_url, sizeof(redirect_url), "https:/%.*s%.*s", U_STRING_TO_TRACE(ip_server), U_STRING_TO_TRACE(uri)));
-
-      U_SRV_LOG("URI_STRICT_TRANSPORT_SECURITY: request redirected to %S", redirect_url);
-
-      setHTTPRequestProcessed();
-
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-      }
-
-   // check if the uri need a certificate
-
-#ifdef USE_LIBSSL
-   if (uri_request_cert_mask                                                                                 &&
-       isHTTPRequestNotFound() == false                                                                      &&
-       (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM,              U_STRING_TO_PARAM(*uri_request_cert_mask), 0)   ||
-        (request_uri->empty() == false                                                                       &&
-         u_dosmatch_with_OR(U_STRING_TO_PARAM(*request_uri), U_STRING_TO_PARAM(*uri_request_cert_mask), 0))) &&
-       ((UServer<USSLSocket>*)UServer_Base::pthis)->askForClientCertificate() == false)
-      {
-      U_SRV_LOG("URI_REQUEST_CERT: request denied by mandatory certificate from client");
-
-      setHTTPForbidden();
-
-      U_RETURN(U_PLUGIN_HANDLER_ERROR);
-      }
-#endif
-
-   // check if the uri is protected
-
-   if (uri_protected_mask                                                                                 &&
-       isHTTPRequestNotFound() == false                                                                   &&
-       (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM,              U_STRING_TO_PARAM(*uri_protected_mask), 0)   ||
-        (request_uri->empty() == false                                                                    &&
-         u_dosmatch_with_OR(U_STRING_TO_PARAM(*request_uri), U_STRING_TO_PARAM(*uri_protected_mask), 0))) &&
-       checkUriProtected() == false)
-      {
-      U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
@@ -6609,59 +6683,26 @@ error:
    U_RETURN(false);
 }
 
-bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool process_output)
+bool UHTTP::processCGIRequest(UCommand& cmd, UString* penv, const char* cgi_dir, bool async)
 {
-   U_TRACE(0, "UHTTP::processCGIRequest(%p,%p,%b,%b)", cmd, penv, async, process_output)
-
-   // process the CGI or script request
-
-   U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
-
-   const char* cgi_dir;
-
-   if (cmd) cgi_dir = "";
-   else
-      {
-      U_INTERNAL_ASSERT_POINTER(file_data)
-
-      UHTTP::ucgi* cgi = (UHTTP::ucgi*)file_data->ptr;
-
-      U_INTERNAL_DUMP("cgi->dir = %S cgi->sh_script = %d cgi->interpreter = %S", cgi->dir, cgi->sh_script, cgi->interpreter)
-
-      cgi_dir = cgi->dir;
-
-      // NB: we can't use relativ path because after we call chdir()...
-
-      UString command(U_CAPACITY), path(U_CAPACITY);
-
-      // NB: we can't use U_HTTP_URI_TO_TRACE because this function can be called by SSI...
-
-      path.snprintf("%w/%s/%s", cgi_dir, cgi_dir + u__strlen(cgi_dir) + 1);
-
-      U_INTERNAL_DUMP("path = %.*S", U_STRING_TO_TRACE(path))
-
-      if (cgi->interpreter) command.snprintf("%s %.*s", cgi->interpreter, U_STRING_TO_TRACE(path));
-      else           (void) command.assign(path);
-
-      // ULIB facility: check if present form data and convert it in parameters for shell script...
-
-      if (cgi->sh_script) setCGIShellScript(command);
-
-      (cmd = pcmd)->setCommand(command);
-      }
-
-   if (cmd->checkForExecute() == false)
-      {
-      setHTTPForbidden();
-
-      U_RETURN(false);
-      }
+   U_TRACE(0, "UHTTP::processCGIRequest(%p,%p,%S,%b)", &cmd, penv, cgi_dir, async)
 
 #ifdef DEBUG
    static int fd_stderr = UFile::creat("/tmp/processCGIRequest.err", O_WRONLY | O_APPEND, PERM_FILE);
 #else
    static int fd_stderr = UServices::getDevNull();
 #endif
+
+   // process the CGI or script request
+
+   U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
+
+   if (cmd.checkForExecute() == false)
+      {
+      setHTTPForbidden();
+
+      U_RETURN(false);
+      }
 
    if (async &&
        UServer_Base::parallelization())
@@ -6687,7 +6728,7 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool pro
          }
       }
 
-   cmd->setEnvironment(&environment);
+   cmd.setEnvironment(&environment);
 
    /* When a url ends by "cgi-bin/" it is assumed to be a cgi script.
     * The server changes directory to the location of the script and
@@ -6698,24 +6739,23 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool pro
 
    // execute script...
 
+   U_INTERNAL_DUMP("u_http_info.nResponseCode = %d", u_http_info.nResponseCode)
+
+   u_http_info.nResponseCode = 0;
+
    UString* pinput = (isHttpPOST() == false || UClientImage_Base::body->empty() ? 0 : UClientImage_Base::body);
 
-   bool result = cmd->execute(pinput, UClientImage_Base::wbuffer, -1, fd_stderr);
+   bool result = cmd.execute(pinput, UClientImage_Base::wbuffer, -1, fd_stderr);
 
    if (cgi_dir[0]) (void) UFile::chdir(0, true);
 
-   UServer_Base::logCommandMsgError(cmd->getCommand());
+   UServer_Base::logCommandMsgError(cmd.getCommand());
 
-   cmd->reset(penv);
+   cmd.reset(penv);
 
    if (result == false)
       {
-      if (UCommand::isTimeout())
-         {
-         u_http_info.nResponseCode = HTTP_GATEWAY_TIMEOUT;
-
-         setHTTPResponse(0, 0);
-         }
+      if (UCommand::isTimeout()) u_http_info.nResponseCode = HTTP_GATEWAY_TIMEOUT;
       else
          {
          // NB: exit_value consists of the least significant 8 bits of the status argument that the child specified in a call to exit()...
@@ -6724,18 +6764,13 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UString* penv, bool async, bool pro
              U_IS_HTTP_ERROR(UCommand::exit_value + 256))
             {
             u_http_info.nResponseCode = UCommand::exit_value + 256;
-
-            setHTTPResponse(0, 0);
             }
-         else if (UClientImage_Base::wbuffer->empty()) setHTTPInternalError();
+         else if (UClientImage_Base::wbuffer->empty())
+            {
+            u_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+            }
          }
 
-      U_RETURN(false);
-      }
-
-   if (process_output &&
-       processCGIOutput() == false)
-      {
       U_RETURN(false);
       }
 
@@ -7470,7 +7505,11 @@ U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
 
    int i;
    in_addr_t client     = UServer_Base::pClientImage->socket->remoteIPAddress().getInAddr();
-   upload_progress* ptr = (upload_progress*) UServer_Base::getPointerToDataShare(ptr_upload_progress);
+   upload_progress* ptr = ptr_upload_progress;
+
+   U_INTERNAL_DUMP("ptr = %p", ptr)
+
+   U_INTERNAL_ASSERT_POINTER(ptr)
 
    if (byte_read > 0)
       {
@@ -7546,18 +7585,6 @@ U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
    U_RETURN(upload_progress_index < U_MAX_UPLOAD_PROGRESS);
 }
 
-UHTTP::upload_progress* UHTTP::getUploadProgressPointer()
-{
-   U_TRACE(0, "UHTTP::getUploadProgressPointer()")
-
-   U_INTERNAL_ASSERT_MINOR(upload_progress_index, U_MAX_UPLOAD_PROGRESS)
-
-   upload_progress* ptr  = (upload_progress*) UServer_Base::getPointerToDataShare(ptr_upload_progress);
-                    ptr += upload_progress_index;
-
-   U_RETURN_POINTER(ptr, upload_progress);
-}
-
 U_NO_EXPORT void UHTTP::updateUploadProgress(int byte_read)
 {
    U_TRACE(0, "UHTTP::updateUploadProgress(%d)", byte_read)
@@ -7568,7 +7595,11 @@ U_NO_EXPORT void UHTTP::updateUploadProgress(int byte_read)
 
    if (upload_progress_index < U_MAX_UPLOAD_PROGRESS)
       {
-      upload_progress* ptr = getUploadProgressPointer();
+      upload_progress* ptr = ptr_upload_progress + upload_progress_index;
+
+      U_INTERNAL_DUMP("ptr = %p", ptr)
+
+      U_INTERNAL_ASSERT_POINTER(ptr)
 
       U_INTERNAL_DUMP("byte_read = %d count = %d", ptr->byte_read, ptr->count)
 
@@ -7606,7 +7637,11 @@ UString UHTTP::getUploadProgress()
 #ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
    else
       {
-      upload_progress* ptr = getUploadProgressPointer();
+      upload_progress* ptr = ptr_upload_progress + upload_progress_index;
+
+      U_INTERNAL_DUMP("ptr = %p", ptr)
+
+      U_INTERNAL_ASSERT_POINTER(ptr)
 
       U_INTERNAL_DUMP("byte_read = %d count = %d", ptr->byte_read, ptr->count)
 

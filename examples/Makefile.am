@@ -3,6 +3,7 @@
 AUTOMAKE_OPTIONS = no-dependencies
 
 EXTRA_DIST = README \
+				 WiAuth/Makefile.* \
 				 XAdES/*.h XAdES/*.cpp XAdES/Makefile.* \
 				 IR/*.h IR/*.cpp IR/Makefile.* \
 				 userver/*.cpp userver/Makefile.* \
@@ -24,7 +25,7 @@ EXTRA_DIST = README \
 
 MAINTAINERCLEANFILES = Makefile.in
 
-SUBDIRS = userver test_manager IR simple_client_server workflow
+SUBDIRS = userver WiAuth test_manager IR simple_client_server workflow
 
 ## MINGW don't have unix socket...
 if !MINGW
